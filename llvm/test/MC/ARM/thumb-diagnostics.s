@@ -39,3 +39,13 @@ error: invalid operand for instruction
 error: invalid operand for instruction
         bkpt #-1
              ^
+
+@ Invalid writeback and register lists for LDM
+        ldm r2!, {r5, r8}
+        ldm r2, {r5, r7}
+@ CHECK-ERRORS: error: registers must be in range r0-r7
+@ CHECK-ERRORS:         ldm r2!, {r5, r8}
+@ CHECK-ERRORS:                  ^
+@ CHECK-ERRORS: error: writeback operator '!' expected
+@ CHECK-ERRORS:         ldm r2, {r5, r7}
+@ CHECK-ERRORS:             ^

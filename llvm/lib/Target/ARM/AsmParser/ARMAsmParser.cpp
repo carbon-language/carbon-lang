@@ -2988,6 +2988,29 @@ validateInstruction(MCInst &Inst,
                    "bitfield width must be in range [1,32-lsb]");
     return false;
   }
+  case ARM::tLDMIA: {
+    // Thumb LDM instructions are writeback iff the base register is not
+    // in the register list.
+    unsigned Rn = Inst.getOperand(0).getReg();
+    bool doesWriteback = true;
+    for (unsigned i = 3; i < Inst.getNumOperands(); ++i) {
+      unsigned Reg = Inst.getOperand(i).getReg();
+      if (Reg == Rn)
+        doesWriteback = false;
+      // Anything other than a low register isn't legal here.
+      if (getARMRegisterNumbering(Reg) > 7)
+        return Error(Operands[4]->getStartLoc(),
+                     "registers must be in range r0-r7");
+    }
+    // If we should have writeback, then there should be a '!' token.
+    if (doesWriteback &&
+        (!static_cast<ARMOperand*>(Operands[3])->isToken() ||
+         static_cast<ARMOperand*>(Operands[3])->getToken() != "!"))
+      return Error(Operands[2]->getStartLoc(),
+                   "writeback operator '!' expected");
+
+    break;
+  }
   }
 
   return false;

@@ -162,3 +162,15 @@ _func:
         eors r4, r5
 
 @ CHECK: eors	r4, r5                  @ encoding: [0x6c,0x40]
+
+
+@------------------------------------------------------------------------------
+@ LDM
+@------------------------------------------------------------------------------
+        ldm r3, {r0, r1, r2, r3, r4, r5, r6, r7}
+        ldm r2!, {r1, r3, r4, r5, r7}
+        ldm r1, {r1}
+
+@ CHECK: ldm	r3, {r0, r1, r2, r3, r4, r5, r6, r7} @ encoding: [0xff,0xcb]
+@ CHECK: ldm	r2!, {r1, r3, r4, r5, r7} @ encoding: [0xba,0xca]
+@ CHECK: ldm	r1, {r1}                @ encoding: [0x02,0xc9]

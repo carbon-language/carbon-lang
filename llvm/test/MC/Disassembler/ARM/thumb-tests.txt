@@ -27,7 +27,7 @@
 # CHECK:	cmn.w	r0, #31
 0x10 0xf1 0x1f 0x0f
 
-# CHECK:	ldmia	r0!, {r1}
+# CHECK:	ldm	r0!, {r1}
 0x02 0xc8
 
 # CHECK:	ldr	r5, #432
@@ -112,7 +112,7 @@
 # CHECK:	lsleq	r1, r0, #28
 0x01 0x07
 
-# CHECK:	stmiane	r0!, {r1, r2, r3}
+# CHECK:	stmne	r0!, {r1, r2, r3}
 0x0e 0xc0
 
 # IT block end
@@ -146,13 +146,13 @@
 # CHECK:	stmdb.w	sp, {r0, r2, r3, r8, r11, lr}
 0x0d 0xe9 0x0d 0x49
 
-# CHECK:	stmia	r5!, {r0, r1, r2, r3, r4}
+# CHECK:	stm	r5!, {r0, r1, r2, r3, r4}
 0x1f 0xc5
 
-# CHECK:	ldmia	r5, {r0, r1, r2, r3, r4, r5}
+# CHECK:	ldm	r5, {r0, r1, r2, r3, r4, r5}
 0x3f 0xcd
 
-# CHECK:	ldmia	r5!, {r0, r1, r2, r3, r4}
+# CHECK:	ldm	r5!, {r0, r1, r2, r3, r4}
 0x1f 0xcd
 
 # CHECK:	addw	r0, pc, #1050

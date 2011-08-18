@@ -155,9 +155,9 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O) {
     }
 
     if (Opcode == ARM::tLDMIA)
-      O << "\tldmia";
+      O << "\tldm";
     else if (Opcode == ARM::tSTMIA)
-      O << "\tstmia";
+      O << "\tstm";
     else
       llvm_unreachable("Unknown opcode!");
 

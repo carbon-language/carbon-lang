@@ -683,8 +683,8 @@ multiclass thumb_ldst_mult<string asm, InstrItinClass itin,
                            InstrItinClass itin_upd, bits<6> T1Enc,
                            bit L_bit, string baseOpc> {
   def IA :
-    T1I<(outs), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
-        itin, !strconcat(asm, "ia${p}\t$Rn, $regs"), []>,
+    T1I<(outs), (ins tGPR:$Rn, pred:$p, reglist:$regs, variable_ops),
+        itin, !strconcat(asm, "${p}\t$Rn, $regs"), []>,
        T1Encoding<T1Enc> {
     bits<3> Rn;
     bits<8> regs;
@@ -696,7 +696,7 @@ multiclass thumb_ldst_mult<string asm, InstrItinClass itin,
     InstTemplate<AddrModeNone, 0, IndexModeNone, Pseudo, GenericDomain, 
                  "$Rn = $wb", itin_upd>,
     PseudoInstExpansion<(!cast<Instruction>(!strconcat(baseOpc, "IA"))
-                       GPR:$Rn, pred:$p, reglist:$regs)> {
+                       tGPR:$Rn, pred:$p, reglist:$regs)> {
     let Size = 2;
     let OutOperandList = (outs GPR:$wb);
     let InOperandList = (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops);
@@ -719,6 +719,11 @@ defm tSTM : thumb_ldst_mult<"stm", IIC_iStore_m, IIC_iStore_mu,
                             {1,1,0,0,0,?}, 0, "tSTM">;
 
 } // neverHasSideEffects
+
+def : InstAlias<"ldm${p} $Rn!, $regs",
+                (tLDMIA tGPR:$Rn, pred:$p, reglist:$regs)>,
+        Requires<[IsThumb, IsThumb1Only]>;
+
 
 let mayLoad = 1, Uses = [SP], Defs = [SP], hasExtraDefRegAllocReq = 1 in
 def tPOP : T1I<(outs), (ins pred:$p, reglist:$regs, variable_ops),
