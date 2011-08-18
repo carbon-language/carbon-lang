@@ -76,7 +76,7 @@ def run_command(ci, cmd, res, echoInput=True, echoOutput=True):
             print "run command failed!"
             print "run_command error:", res.GetError()
 
-def do_lldb_disassembly(lldb_commands, exe, disassemble_options, num_symbols, symbols_to_disassemble):
+def do_lldb_disassembly(lldb_commands, exe, disassemble_options, num_symbols, symbols_to_disassemble, quiet_disassembly):
     import lldb, atexit, re
 
     # Create the debugger instance now.
@@ -115,7 +115,7 @@ def do_lldb_disassembly(lldb_commands, exe, disassemble_options, num_symbols, sy
         return symbol.GetType() == lldb.eSymbolTypeCode
 
     # Define a generator for the symbols to disassemble.
-    def symbol_iter(num, symbols, target):
+    def symbol_iter(num, symbols, target, verbose):
         # If we specify the symbols to disassemble, ignore symbol table dump.
         if symbols:
             for i in range(len(symbols)):
@@ -135,18 +135,20 @@ def do_lldb_disassembly(lldb_commands, exe, disassemble_options, num_symbols, sy
                     if IsCodeType(s):
                         if limited:
                             count = count + 1
-                            print "returning symbol:", s.GetName()
+                            if verbose:
+                                print "returning symbol:", s.GetName()
                         yield s.GetName()
-                    print "start address:", s.GetStartAddress()
-                    print "end address:", s.GetEndAddress()
-                    s.GetDescription(stream)
-                    print "symbol description:", stream.GetData()
-                    stream.Clear()
+                    if verbose:
+                        print "start address:", s.GetStartAddress()
+                        print "end address:", s.GetEndAddress()
+                        s.GetDescription(stream)
+                        print "symbol description:", stream.GetData()
+                        stream.Clear()
 
     # Disassembly time.
-    for symbol in symbol_iter(num_symbols, symbols_to_disassemble, target):
+    for symbol in symbol_iter(num_symbols, symbols_to_disassemble, target, not quiet_disassembly):
         cmd = "disassemble %s '%s'" % (disassemble_options, symbol)
-        run_command(ci, cmd, res)
+        run_command(ci, cmd, res, True, not quiet_disassembly)
 
 
 def main():
@@ -176,6 +178,10 @@ Usage: %prog [options]
                       type='int', action='store', default=-1,
                       dest='num_symbols',
                       help="""The number of symbols to disassemble, if specified.""")
+    parser.add_option('-q', '--quiet-disassembly',
+                      action='store_true', default=False,
+                      dest='quiet_disassembly',
+                      help="""The symbol(s) to invoke lldb's 'disassemble' command on, if specified.""")
     parser.add_option('-s', '--symbol',
                       type='string', action='append', metavar='SYMBOL', default=[],
                       dest='symbols_to_disassemble',
@@ -192,6 +198,7 @@ Usage: %prog [options]
     executable = opts.executable
     disassemble_options = opts.disassemble_options
     num_symbols = opts.num_symbols
+    quiet_disassembly = opts.quiet_disassembly
     symbols_to_disassemble = opts.symbols_to_disassemble
 
     # We have parsed the options.
@@ -199,10 +206,14 @@ Usage: %prog [options]
     print "executable:", executable
     print "disassemble options:", disassemble_options
     print "num of symbols to disassemble:", num_symbols
+    print "quiet disassembly output:", quiet_disassembly
     print "symbols to disassemble:", symbols_to_disassemble
 
     setupSysPath()
-    do_lldb_disassembly(lldb_commands, executable, disassemble_options, num_symbols, symbols_to_disassemble)
+    do_lldb_disassembly(lldb_commands, executable, disassemble_options,
+                        num_symbols,
+                        symbols_to_disassemble,
+                        quiet_disassembly)
 
 if __name__ == '__main__':
     main()
