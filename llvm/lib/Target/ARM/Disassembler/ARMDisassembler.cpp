@@ -1340,9 +1340,12 @@ static DecodeStatus DecodeCPSInstruction(llvm::MCInst &Inst, unsigned Insn,
     Inst.setOpcode(ARM::CPS1p);
     Inst.addOperand(MCOperand::CreateImm(mode));
     if (iflags) CHECK(S, Unpredictable);
-  } else
+  } else {
     // imod == '00' && M == '0' --> UNPREDICTABLE
+    Inst.setOpcode(ARM::CPS1p);
+    Inst.addOperand(MCOperand::CreateImm(mode));
     CHECK(S, Unpredictable);
+  }
 
   return S;
 }
