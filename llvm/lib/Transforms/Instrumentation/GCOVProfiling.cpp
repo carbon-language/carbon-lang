@@ -380,7 +380,7 @@ void GCOVProfiler::emitGCNO() {
       for (unsigned i = 0, e = SPs.getNumElements(); i != e; ++i) {
         DISubprogram SP(SPs.getElement(i));
         if (!SP.Verify()) continue;
-        raw_fd_ostream *&os = GcnoFiles[SP.getCompileUnit()];
+        raw_fd_ostream *&os = GcnoFiles[CU];
         
         Function *F = SP.getFunction();
         if (!F) continue;
