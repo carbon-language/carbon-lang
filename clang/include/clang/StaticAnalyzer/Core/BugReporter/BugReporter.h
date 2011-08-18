@@ -166,7 +166,10 @@ public:
                                          BugReporterContext &BR);
 
   virtual void registerInitialVisitors(BugReporterContext &BRC,
-                                       const ExplodedNode *N) {}
+                                       const ExplodedNode *N) {
+    for (Creators::iterator I = creators.begin(), E = creators.end(); I!=E; ++I)
+      I->first(BRC, I->second, N);
+  }
 };
 
 //===----------------------------------------------------------------------===//
