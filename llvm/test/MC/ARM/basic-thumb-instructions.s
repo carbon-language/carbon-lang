@@ -106,3 +106,15 @@ _func:
 
 @ CHECK: bkpt	#0                      @ encoding: [0x00,0xbe]
 @ CHECK: bkpt	#255                    @ encoding: [0xff,0xbe]
+
+
+@------------------------------------------------------------------------------
+@ BL/BLX (immediate)
+@------------------------------------------------------------------------------
+        bl _bar
+        blx _baz
+
+@ CHECK: bl	_bar                    @ encoding: [A,0xf0'A',A,0xf8'A']
+             @   fixup A - offset: 0, value: _bar, kind: fixup_arm_thumb_bl
+@ CHECK: blx	_baz                    @ encoding: [A,0xf0'A',A,0xe8'A']
+             @   fixup A - offset: 0, value: _baz, kind: fixup_arm_thumb_blx
