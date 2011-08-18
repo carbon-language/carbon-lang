@@ -146,7 +146,8 @@ public:
   /// MacroExpands - This is called by
   /// Preprocessor::HandleMacroExpandedIdentifier when a macro invocation is
   /// found.
-  virtual void MacroExpands(const Token &MacroNameTok, const MacroInfo* MI) {
+  virtual void MacroExpands(const Token &MacroNameTok, const MacroInfo* MI,
+                            SourceRange Range) {
   }
 
   /// MacroDefined - This hook is called whenever a macro definition is seen.
@@ -269,9 +270,10 @@ public:
     Second->PragmaDiagnostic(Loc, Namespace, mapping, Str);
   }
 
-  virtual void MacroExpands(const Token &MacroNameTok, const MacroInfo* MI) {
-    First->MacroExpands(MacroNameTok, MI);
-    Second->MacroExpands(MacroNameTok, MI);
+  virtual void MacroExpands(const Token &MacroNameTok, const MacroInfo* MI,
+                            SourceRange Range) {
+    First->MacroExpands(MacroNameTok, MI, Range);
+    Second->MacroExpands(MacroNameTok, MI, Range);
   }
 
   virtual void MacroDefined(const Token &MacroNameTok, const MacroInfo *MI) {

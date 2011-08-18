@@ -185,7 +185,8 @@ bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
 
   // If this is a builtin macro, like __LINE__ or _Pragma, handle it specially.
   if (MI->isBuiltinMacro()) {
-    if (Callbacks) Callbacks->MacroExpands(Identifier, MI);
+    if (Callbacks) Callbacks->MacroExpands(Identifier, MI,
+                                           Identifier.getLocation());
     ExpandBuiltinMacro(Identifier);
     return false;
   }
@@ -226,12 +227,13 @@ bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
   // Notice that this macro has been used.
   markMacroAsUsed(MI);
 
-  if (Callbacks) Callbacks->MacroExpands(Identifier, MI);
-  
-  // If we started lexing a macro, enter the macro expansion body.
-
   // Remember where the token is expanded.
   SourceLocation ExpandLoc = Identifier.getLocation();
+
+  if (Callbacks) Callbacks->MacroExpands(Identifier, MI,
+                                         SourceRange(ExpandLoc, ExpansionEnd));
+  
+  // If we started lexing a macro, enter the macro expansion body.
 
   // If this macro expands to no tokens, don't bother to push it onto the
   // expansion stack, only to take it right back off.

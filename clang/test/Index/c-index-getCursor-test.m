@@ -165,4 +165,4 @@ void f() {
 // CHECK: [55:9 - 55:26] macro definition=CONCAT
 // CHECK: [57:1 - 57:10] FunctionDecl=f:57:6 (Definition)
 // CHECK: [58:4 - 58:8] VarDecl=my_var:58:8 (Definition)
-// CHECK: [58:8 - 58:14] macro expansion=CONCAT:55:9
+// CHECK: [58:8 - 58:15] macro expansion=CONCAT:55:9

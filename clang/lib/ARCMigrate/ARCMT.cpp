@@ -399,7 +399,8 @@ public:
   ARCMTMacroTrackerPPCallbacks(std::vector<SourceLocation> &ARCMTMacroLocs)
     : ARCMTMacroLocs(ARCMTMacroLocs) { }
 
-  virtual void MacroExpands(const Token &MacroNameTok, const MacroInfo *MI) {
+  virtual void MacroExpands(const Token &MacroNameTok, const MacroInfo *MI,
+                            SourceRange Range) {
     if (MacroNameTok.getIdentifierInfo()->getName() == getARCMTMacroName())
       ARCMTMacroLocs.push_back(MacroNameTok.getLocation());
   }

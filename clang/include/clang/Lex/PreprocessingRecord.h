@@ -470,7 +470,8 @@ namespace clang {
     /// \c MacroInfo.
     MacroDefinition *findMacroDefinition(const MacroInfo *MI);
         
-    virtual void MacroExpands(const Token &Id, const MacroInfo* MI);
+    virtual void MacroExpands(const Token &Id, const MacroInfo* MI,
+                              SourceRange Range);
     virtual void MacroDefined(const Token &Id, const MacroInfo *MI);
     virtual void MacroUndefined(const Token &Id, const MacroInfo *MI);
     virtual void InclusionDirective(SourceLocation HashLoc,

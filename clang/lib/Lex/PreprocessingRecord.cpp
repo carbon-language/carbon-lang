@@ -108,14 +108,15 @@ MacroDefinition *PreprocessingRecord::findMacroDefinition(const MacroInfo *MI) {
   return Pos->second;
 }
 
-void PreprocessingRecord::MacroExpands(const Token &Id, const MacroInfo* MI) {
+void PreprocessingRecord::MacroExpands(const Token &Id, const MacroInfo* MI,
+                                       SourceRange Range) {
   if (!IncludeNestedMacroExpansions && Id.getLocation().isMacroID())
     return;
 
   if (MacroDefinition *Def = findMacroDefinition(MI))
     PreprocessedEntities.push_back(
                        new (*this) MacroExpansion(Id.getIdentifierInfo(),
-                                                  Id.getLocation(), Def));
+                                                  Range, Def));
 }
 
 void PreprocessingRecord::MacroDefined(const Token &Id,
