@@ -314,6 +314,79 @@ BasicBlock *llvm::SplitBlock(BasicBlock *Old, Instruction *SplitPt, Pass *P) {
   return New;
 }
 
+namespace {
+
+/// UpdateAnalysisInformation - Update DominatorTree, LoopInfo, and LCCSA
+/// analysis information.
+void UpdateAnalysisInformation(BasicBlock *OldBB, BasicBlock *NewBB,
+                               BasicBlock *const *Preds,
+                               unsigned NumPreds, Pass *P, bool &HasLoopExit) {
+  if (!P) return;
+
+  LoopInfo *LI = P->getAnalysisIfAvailable<LoopInfo>();
+  Loop *L = LI ? LI->getLoopFor(OldBB) : 0;
+  bool PreserveLCSSA = P->mustPreserveAnalysisID(LCSSAID);
+
+  // If we need to preserve loop analyses, collect some information about how
+  // this split will affect loops.
+  bool IsLoopEntry = !!L;
+  bool SplitMakesNewLoopHeader = false;
+  if (LI) {
+    for (unsigned i = 0; i != NumPreds; ++i) {
+      // If we need to preserve LCSSA, determine if any of the preds is a loop
+      // exit.
+      if (PreserveLCSSA)
+        if (Loop *PL = LI->getLoopFor(Preds[i]))
+          if (!PL->contains(OldBB))
+            HasLoopExit = true;
+
+      // If we need to preserve LoopInfo, note whether any of the preds crosses
+      // an interesting loop boundary.
+      if (!L) continue;
+      if (L->contains(Preds[i]))
+        IsLoopEntry = false;
+      else
+        SplitMakesNewLoopHeader = true;
+    }
+  }
+
+  // Update dominator tree if available.
+  DominatorTree *DT = P->getAnalysisIfAvailable<DominatorTree>();
+  if (DT)
+    DT->splitBlock(NewBB);
+
+  if (!L) return;
+
+  if (IsLoopEntry) {
+    // Add the new block to the nearest enclosing loop (and not an adjacent
+    // loop). To find this, examine each of the predecessors and determine which
+    // loops enclose them, and select the most-nested loop which contains the
+    // loop containing the block being split.
+    Loop *InnermostPredLoop = 0;
+    for (unsigned i = 0; i != NumPreds; ++i)
+      if (Loop *PredLoop = LI->getLoopFor(Preds[i])) {
+        // Seek a loop which actually contains the block being split (to avoid
+        // adjacent loops).
+        while (PredLoop && !PredLoop->contains(OldBB))
+          PredLoop = PredLoop->getParentLoop();
+
+        // Select the most-nested of these loops which contains the block.
+        if (PredLoop && PredLoop->contains(OldBB) &&
+            (!InnermostPredLoop ||
+             InnermostPredLoop->getLoopDepth() < PredLoop->getLoopDepth()))
+          InnermostPredLoop = PredLoop;
+      }
+
+    if (InnermostPredLoop)
+      InnermostPredLoop->addBasicBlockToLoop(NewBB, LI->getBase());
+  } else {
+    L->addBasicBlockToLoop(NewBB, LI->getBase());
+    if (SplitMakesNewLoopHeader)
+      L->moveToHeader(NewBB);
+  }
+}
+
+} // end anonymous namespace
 
 /// SplitBlockPredecessors - This method transforms BB by introducing a new
 /// basic block into the function, and moving some of the predecessors of BB to
@@ -337,47 +410,15 @@ BasicBlock *llvm::SplitBlockPredecessors(BasicBlock *BB,
   // The new block unconditionally branches to the old block.
   BranchInst *BI = BranchInst::Create(BB, NewBB);
   
-  LoopInfo *LI = P ? P->getAnalysisIfAvailable<LoopInfo>() : 0;
-  Loop *L = LI ? LI->getLoopFor(BB) : 0;
-  bool PreserveLCSSA = P->mustPreserveAnalysisID(LCSSAID);
-
   // Move the edges from Preds to point to NewBB instead of BB.
-  // While here, if we need to preserve loop analyses, collect
-  // some information about how this split will affect loops.
-  bool HasLoopExit = false;
-  bool IsLoopEntry = !!L;
-  bool SplitMakesNewLoopHeader = false;
   for (unsigned i = 0; i != NumPreds; ++i) {
     // This is slightly more strict than necessary; the minimum requirement
     // is that there be no more than one indirectbr branching to BB. And
     // all BlockAddress uses would need to be updated.
     assert(!isa<IndirectBrInst>(Preds[i]->getTerminator()) &&
            "Cannot split an edge from an IndirectBrInst");
-
     Preds[i]->getTerminator()->replaceUsesOfWith(BB, NewBB);
-
-    if (LI) {
-      // If we need to preserve LCSSA, determine if any of
-      // the preds is a loop exit.
-      if (PreserveLCSSA)
-        if (Loop *PL = LI->getLoopFor(Preds[i]))
-          if (!PL->contains(BB))
-            HasLoopExit = true;
-      // If we need to preserve LoopInfo, note whether any of the
-      // preds crosses an interesting loop boundary.
-      if (L) {
-        if (L->contains(Preds[i]))
-          IsLoopEntry = false;
-        else
-          SplitMakesNewLoopHeader = true;
-      }
-    }
   }
-
-  // Update dominator tree if available.
-  DominatorTree *DT = P ? P->getAnalysisIfAvailable<DominatorTree>() : 0;
-  if (DT)
-    DT->splitBlock(NewBB);
 
   // Insert a new PHI node into NewBB for every PHI node in BB and that new PHI
   // node becomes an incoming value for BB's phi node.  However, if the Preds
@@ -390,38 +431,12 @@ BasicBlock *llvm::SplitBlockPredecessors(BasicBlock *BB,
     return NewBB;
   }
 
-  AliasAnalysis *AA = P ? P->getAnalysisIfAvailable<AliasAnalysis>() : 0;
+  // Update DominatorTree, LoopInfo, and LCCSA analysis information.
+  bool HasLoopExit = false;
+  UpdateAnalysisInformation(BB, NewBB, Preds, NumPreds, P, HasLoopExit);
 
-  if (L) {
-    if (IsLoopEntry) {
-      // Add the new block to the nearest enclosing loop (and not an
-      // adjacent loop). To find this, examine each of the predecessors and
-      // determine which loops enclose them, and select the most-nested loop
-      // which contains the loop containing the block being split.
-      Loop *InnermostPredLoop = 0;
-      for (unsigned i = 0; i != NumPreds; ++i)
-        if (Loop *PredLoop = LI->getLoopFor(Preds[i])) {
-          // Seek a loop which actually contains the block being split (to
-          // avoid adjacent loops).
-          while (PredLoop && !PredLoop->contains(BB))
-            PredLoop = PredLoop->getParentLoop();
-          // Select the most-nested of these loops which contains the block.
-          if (PredLoop &&
-              PredLoop->contains(BB) &&
-              (!InnermostPredLoop ||
-               InnermostPredLoop->getLoopDepth() < PredLoop->getLoopDepth()))
-            InnermostPredLoop = PredLoop;
-        }
-      if (InnermostPredLoop)
-        InnermostPredLoop->addBasicBlockToLoop(NewBB, LI->getBase());
-    } else {
-      L->addBasicBlockToLoop(NewBB, LI->getBase());
-      if (SplitMakesNewLoopHeader)
-        L->moveToHeader(NewBB);
-    }
-  }
-  
   // Otherwise, create a new PHI node in NewBB for each PHI node in BB.
+  AliasAnalysis *AA = P ? P->getAnalysisIfAvailable<AliasAnalysis>() : 0;
   for (BasicBlock::iterator I = BB->begin(); isa<PHINode>(I); ) {
     PHINode *PN = cast<PHINode>(I++);
     
@@ -462,7 +477,7 @@ BasicBlock *llvm::SplitBlockPredecessors(BasicBlock *BB,
     // edge.
     PN->addIncoming(InVal, NewBB);
   }
-  
+
   return NewBB;
 }
 
