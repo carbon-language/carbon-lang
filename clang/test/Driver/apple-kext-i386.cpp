@@ -16,9 +16,13 @@
 // CHECK-MKERNEL: "-mkernel"
 
 // RUN: %clang -ccc-host-triple i386-apple-darwin10 \
-// RUN:   -Wno-self-assign \
+// RUN:   -Wno-self-assign -Wc++0x-extensions \
+// RUN:   -Wno-microsoft -Wmicrosoft \
 // RUN:   -fapple-kext -### -fsyntax-only %s 2> %t
 // RUN: FileCheck --check-prefix=CHECK-UNSUPPORTED < %t %s
 
 // CHECK-UNSUPPORTED: cc1plus"
 // CHECK-UNSUPPORTED-NOT: "-Wno-self-assign"
+// CHECK-UNSUPPORTED-NOT: "-Wc++0x-extensions"
+// CHECK-UNSUPPORTED-NOT: "-Wno-microsoft"
+// CHECK-UNSUPPORTED-NOT: "-Wmicrosoft"

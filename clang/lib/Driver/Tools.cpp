@@ -2448,11 +2448,105 @@ darwin::CC1::getDependencyFileName(const ArgList &Args,
 void darwin::CC1::RemoveCC1UnsupportedArgs(ArgStringList &CmdArgs) const {
   for (ArgStringList::iterator it = CmdArgs.begin(), ie = CmdArgs.end(); 
        it != ie;) {
-    if (!strcmp(*it, "-Wno-self-assign") ||
-	!strcmp(*it, "-Wno-c++0x-extensions") ||
-	!strcmp(*it, "-Wc++0x-extensions") ||
-	!strcmp(*it, "-Wno-sign-conversion") ||
-	!strcmp(*it, "-Wsign-conversion")) {
+    const char *Option = *it;
+
+    // We only remove warning options.
+    if (!strncmp(Option, "-W", 3)) {
+      ++it;
+      continue;
+    }
+
+    if (strncmp(Option, "-Wno-", 5))
+      Option = &Option[2];
+    else
+      Option = &Option[5];
+
+    bool RemoveOption = llvm::StringSwitch<bool>(Option)
+      .Case("address-of-temporary", true)
+      .Case("ambiguous-member-template", true)
+      .Case("analyzer-incompatible-plugin", true)
+      .Case("array-bounds", true)
+      .Case("array-bounds-pointer-arithmetic", true)
+      .Case("bind-to-temporary-copy", true)
+      .Case("bitwise-op-parentheses", true)
+      .Case("bool-conversions", true)
+      .Case("builtin-macro-redefined", true)
+      .Case("c++-hex-floats", true)
+      .Case("c++0x-compat", true)
+      .Case("c++0x-extensions", true)
+      .Case("c++0x-narrowing", true)
+      .Case("c++0x-static-nonintegral-init", true)
+      .Case("conditional-uninitialized", true)
+      .Case("constant-conversion", true)
+      .Case("CFString-literal", true)
+      .Case("constant-logical-operand", true)
+      .Case("custom-atomic-properties", true)
+      .Case("default-arg-special-member", true)
+      .Case("delegating-ctor-cycles", true)
+      .Case("delete-non-virtual-dtor", true)
+      .Case("deprecated-implementations", true)
+      .Case("deprecated-writable-strings", true)
+      .Case("distributed-object-modifiers", true)
+      .Case("duplicate-method-arg", true)
+      .Case("dynamic-class-memaccess", true)
+      .Case("enum-compare", true)
+      .Case("exit-time-destructors", true)
+      .Case("gnu", true)
+      .Case("gnu-designator", true)
+      .Case("header-hygiene", true)
+      .Case("idiomatic-parentheses", true)
+      .Case("ignored-qualifiers", true)
+      .Case("implicit-atomic-properties", true)
+      .Case("incompatible-pointer-types", true)
+      .Case("incomplete-implementation", true)
+      .Case("initializer-overrides", true)
+      .Case("invalid-noreturn", true)
+      .Case("invalid-token-paste", true)
+      .Case("literal-conversion", true)
+      .Case("literal-range", true)
+      .Case("local-type-template-args", true)
+      .Case("logical-op-parentheses", true)
+      .Case("method-signatures", true)
+      .Case("microsoft", true)
+      .Case("mismatched-tags", true)
+      .Case("missing-method-return-type", true)
+      .Case("non-pod-varargs", true)
+      .Case("nonfragile-abi2", true)
+      .Case("null-arithmetic", true)
+      .Case("null-dereference", true)
+      .Case("out-of-line-declaration", true)
+      .Case("overriding-method-mismatch", true)
+      .Case("readonly-setter-attrs", true)
+      .Case("return-stack-address", true)
+      .Case("self-assign", true)
+      .Case("semicolon-before-method-body", true)
+      .Case("sentinel", true)
+      .Case("shift-overflow", true)
+      .Case("shift-sign-overflow", true)
+      .Case("sign-conversion", true)
+      .Case("sizeof-array-argument", true)
+      .Case("sizeof-pointer-memaccess", true)
+      .Case("string-compare", true)
+      .Case("super-class-method-mismatch", true)
+      .Case("tautological-compare", true)
+      .Case("typedef-redefinition", true)
+      .Case("typename-missing", true)
+      .Case("undefined-reinterpret-cast", true)
+      .Case("unknown-warning-option", true)
+      .Case("unnamed-type-template-args", true)
+      .Case("unneeded-internal-declaration", true)
+      .Case("unneeded-member-function", true)
+      .Case("unused-comparison", true)
+      .Case("unused-exception-parameter", true)
+      .Case("unused-member-function", true)
+      .Case("unused-result", true)
+      .Case("vector-conversions", true)
+      .Case("vla", true)
+      .Case("used-but-marked-unused", true)
+      .Case("weak-vtables", true)
+      .Default(false);
+
+    if (RemoveOption) {
       it = CmdArgs.erase(it);
       ie = CmdArgs.end();
     } else {
