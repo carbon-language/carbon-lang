@@ -521,44 +521,6 @@ StructType *StructType::create(StringRef Name, Type *type, ...) {
 }
 
 
-#if 1
-
-StructType *StructType::createNamed(LLVMContext &Context, StringRef Name,
-                                    ArrayRef<Type*> Elements, bool isPacked) {
-  StructType *ST = createNamed(Context, Name);
-  ST->setBody(Elements, isPacked);
-  return ST;
-}
-
-StructType *StructType::createNamed(LLVMContext &Context, StringRef Name) {
-  StructType *ST = new (Context.pImpl->TypeAllocator) StructType(Context);
-  if (!Name.empty())
-    ST->setName(Name);
-  return ST;
-}
-
-
-StructType *StructType::createNamed(StringRef Name, ArrayRef<Type*> Elements,
-                                    bool isPacked) {
-  assert(!Elements.empty() &&
-         "This method may not be invoked with an empty list");
-  return createNamed(Elements[0]->getContext(), Name, Elements, isPacked);
-}
-
-StructType *StructType::createNamed(StringRef Name, Type *type, ...) {
-  assert(type != 0 && "Cannot create a struct type with no elements with this");
-  LLVMContext &Ctx = type->getContext();
-  va_list ap;
-  SmallVector<llvm::Type*, 8> StructFields;
-  va_start(ap, type);
-  while (type) {
-    StructFields.push_back(type);
-    type = va_arg(ap, llvm::Type*);
-  }
-  return llvm::StructType::createNamed(Ctx, Name, StructFields);
-}
-#endif
-
 StringRef StructType::getName() const {
   assert(!isLiteral() && "Literal structs never have names");
   if (SymbolTableEntry == 0) return StringRef();
