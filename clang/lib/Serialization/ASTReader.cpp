@@ -2831,23 +2831,7 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
 ASTReader::ASTReadResult ASTReader::ReadASTCore(StringRef FileName,
                                                 ModuleKind Type,
                                                 Module *ImportedBy) {
-  Module *M;
-  bool NewModule;
-  llvm::tie(M, NewModule) = ModuleMgr.addModule(FileName, Type, ImportedBy);
-
-  if (!M) {
-    // We couldn't load the module.
-    std::string Msg = "Unable to load module \"" + FileName.str() + "\"";
-    Error(Msg);
-    return Failure;
-  }
-
-  if (!NewModule) {
-    // We've already loaded this module.
-    return Success;
-  }
-
-  Module &F = *M;
+  Module &F = ModuleMgr.addModule(FileName, Type, ImportedBy);
 
   if (FileName != "-") {
     CurrentDir = llvm::sys::path::parent_path(FileName);
@@ -5725,34 +5709,25 @@ llvm::MemoryBuffer *ModuleManager::lookupBuffer(StringRef Name) {
   return InMemoryBuffers[Entry];
 }
 
-std::pair<Module *, bool>
-ModuleManager::addModule(StringRef FileName, ModuleKind Type, 
-                         Module *ImportedBy) {
-  const FileEntry *Entry = FileMgr.getFile(FileName);
-  if (!Entry)
-    return std::make_pair(static_cast<Module*>(0), false);
+/// \brief Creates a new module and adds it to the list of known modules
+Module &ModuleManager::addModule(StringRef FileName, ModuleKind Type,
+                                 Module *ImportedBy) {
+  Module *Current = new Module(Type);
+  Current->FileName = FileName.str();
+  Chain.push_back(Current);
 
-  // Check whether we already loaded this module, before 
-  Module *&ModuleEntry = Modules[Entry];
-  bool NewModule = false;
-  if (!ModuleEntry) {
-    // Allocate a new module.
-    Module *New = new Module(Type);
-    New->FileName = FileName.str();
-    Chain.push_back(New);
-  
-    NewModule = true;
-    ModuleEntry = New;
-  }
+  const FileEntry *Entry = FileMgr.getFile(FileName);
+  // FIXME: Check whether we already loaded this module, before 
+  Modules[Entry] = Current;
 
   if (ImportedBy) {
-    ModuleEntry->ImportedBy.insert(ImportedBy);
-    ImportedBy->Imports.insert(ModuleEntry);
+    Current->ImportedBy.insert(ImportedBy);
+    ImportedBy->Imports.insert(Current);
   } else {
-    ModuleEntry->DirectlyImported = true;
+    Current->DirectlyImported = true;
   }
   
-  return std::make_pair(ModuleEntry, NewModule);
+  return *Current;
 }
 
 void ModuleManager::addInMemoryBuffer(StringRef FileName, 
