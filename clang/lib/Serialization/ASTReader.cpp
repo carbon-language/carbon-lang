@@ -2045,7 +2045,7 @@ ASTReader::ReadASTBlock(Module &F) {
         Idx += Length;
 
         // Load the AST file.
-        switch(ReadASTCore(ImportedFile, ImportedKind)) {
+        switch(ReadASTCore(ImportedFile, ImportedKind, &F)) {
         case Failure: return Failure;
           // If we have to ignore the dependency, we'll have to ignore this too.
         case IgnorePCH: return IgnorePCH;
@@ -2724,7 +2724,7 @@ ASTReader::ASTReadResult ASTReader::validateFileEntries() {
 
 ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
                                             ModuleKind Type) {
-  switch(ReadASTCore(FileName, Type)) {
+  switch(ReadASTCore(FileName, Type, /*ImportedBy=*/0)) {
   case Failure: return Failure;
   case IgnorePCH: return IgnorePCH;
   case Success: break;
@@ -2829,8 +2829,9 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
 }
 
 ASTReader::ASTReadResult ASTReader::ReadASTCore(StringRef FileName,
-                                                ModuleKind Type) {
-  Module &F = ModuleMgr.addModule(FileName, Type);
+                                                ModuleKind Type,
+                                                Module *ImportedBy) {
+  Module &F = ModuleMgr.addModule(FileName, Type, ImportedBy);
 
   if (FileName != "-") {
     CurrentDir = llvm::sys::path::parent_path(FileName);
@@ -5610,7 +5611,8 @@ ASTReader::~ASTReader() {
 }
 
 Module::Module(ModuleKind Kind)
-  : Kind(Kind), SizeInBits(0), LocalNumSLocEntries(0), SLocEntryBaseID(0),
+  : Kind(Kind), DirectlyImported(false), SizeInBits(0), 
+    LocalNumSLocEntries(0), SLocEntryBaseID(0),
     SLocEntryBaseOffset(0), SLocEntryOffsets(0),
     SLocFileOffsets(0), LocalNumIdentifiers(0), 
     IdentifierOffsets(0), BaseIdentifierID(0), IdentifierTableData(0),
@@ -5708,19 +5710,21 @@ llvm::MemoryBuffer *ModuleManager::lookupBuffer(StringRef Name) {
 }
 
 /// \brief Creates a new module and adds it to the list of known modules
-Module &ModuleManager::addModule(StringRef FileName, ModuleKind Type) {
-  Module *Prev = !size() ? 0 : &getLastModule();
+Module &ModuleManager::addModule(StringRef FileName, ModuleKind Type,
+                                 Module *ImportedBy) {
   Module *Current = new Module(Type);
-
   Current->FileName = FileName.str();
-
   Chain.push_back(Current);
+
   const FileEntry *Entry = FileMgr.getFile(FileName);
+  // FIXME: Check whether we already loaded this module, before 
   Modules[Entry] = Current;
 
-  if (Prev) {
-    Current->ImportedBy.insert(Prev);
-    Prev->Imports.insert(Current);
+  if (ImportedBy) {
+    Current->ImportedBy.insert(ImportedBy);
+    ImportedBy->Imports.insert(Current);
+  } else {
+    Current->DirectlyImported = true;
   }
   
   return *Current;

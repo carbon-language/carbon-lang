@@ -972,18 +972,23 @@ void ASTWriter::WriteMetadata(ASTContext &Context, StringRef isysroot,
   Stream.EmitRecordWithBlob(MetaAbbrevCode, Record, Triple);
 
   if (Chain) {
-    // FIXME: Add all of the "directly imported" modules, not just
-    // "the one we're chaining to".
     serialization::ModuleManager &Mgr = Chain->getModuleManager();
     llvm::SmallVector<char, 128> ModulePaths;
     Record.clear();
-    Module &PrimaryModule = Mgr.getPrimaryModule();
-    Record.push_back((unsigned)PrimaryModule.Kind); // FIXME: Stable encoding
-    // FIXME: Write import location, once it matters.
-    // FIXME: This writes the absolute path for AST files we depend on.
-    const std::string &MainFileName = PrimaryModule.FileName;
-    Record.push_back(MainFileName.size());
-    Record.append(MainFileName.begin(), MainFileName.end());
+
+    for (ModuleManager::ModuleIterator M = Mgr.begin(), MEnd = Mgr.end();
+         M != MEnd; ++M) {
+      // Skip modules that weren't directly imported.
+      if (!(*M)->isDirectlyImported())
+        continue;
+
+      Record.push_back((unsigned)(*M)->Kind); // FIXME: Stable encoding
+      // FIXME: Write import location, once it matters.
+      // FIXME: This writes the absolute path for AST files we depend on.
+      const std::string &FileName = (*M)->FileName;
+      Record.push_back(FileName.size());
+      Record.append(FileName.begin(), FileName.end());
+    }
     Stream.EmitRecord(IMPORTS, Record);
   }
 
@@ -3855,7 +3860,7 @@ void ASTWriter::AddCXXDefinitionData(const CXXRecordDecl *D, RecordDataImpl &Rec
 
 void ASTWriter::ReaderInitialized(ASTReader *Reader) {
   assert(Reader && "Cannot remove chain");
-  assert(!Chain && "Cannot replace chain");
+  assert((!Chain || Chain == Reader) && "Cannot replace chain");
   assert(FirstDeclID == NextDeclID &&
          FirstTypeID == NextTypeID &&
          FirstIdentID == NextIdentID &&
@@ -3865,11 +3870,11 @@ void ASTWriter::ReaderInitialized(ASTReader *Reader) {
 
   Chain = Reader;
 
-  FirstDeclID += Chain->getTotalNumDecls();
-  FirstTypeID += Chain->getTotalNumTypes();
-  FirstIdentID += Chain->getTotalNumIdentifiers();
-  FirstSelectorID += Chain->getTotalNumSelectors();
-  FirstMacroID += Chain->getTotalNumMacroDefinitions();
+  FirstDeclID = NUM_PREDEF_DECL_IDS + Chain->getTotalNumDecls();
+  FirstTypeID = NUM_PREDEF_TYPE_IDS + Chain->getTotalNumTypes();
+  FirstIdentID = NUM_PREDEF_IDENT_IDS + Chain->getTotalNumIdentifiers();
+  FirstSelectorID = NUM_PREDEF_SELECTOR_IDS + Chain->getTotalNumSelectors();
+  FirstMacroID = NUM_PREDEF_MACRO_IDS + Chain->getTotalNumMacroDefinitions();
   NextDeclID = FirstDeclID;
   NextTypeID = FirstTypeID;
   NextIdentID = FirstIdentID;

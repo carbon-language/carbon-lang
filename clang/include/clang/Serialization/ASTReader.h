@@ -190,6 +190,10 @@ public:
   /// \brief The file name of the module file.
   std::string FileName;
   
+  /// \brief Whether this module has been directly imported by the
+  /// user.
+  bool DirectlyImported;
+
   /// \brief The memory buffer that stores the data associated with
   /// this AST file.
   llvm::OwningPtr<llvm::MemoryBuffer> Buffer;
@@ -418,7 +422,11 @@ public:
   
   /// \brief List of modules which this module depends on
   llvm::SetVector<Module *> Imports;
-  
+
+  /// \brief Determine whether this module was directly imported at
+  /// any point during translation.
+  bool isDirectlyImported() const { return DirectlyImported; }
+
   /// \brief Dump debugging output for this module.
   void dump();
 };
@@ -490,8 +498,17 @@ public:
   /// \brief Number of modules loaded
   unsigned size() const { return Chain.size(); }
 
-  /// \brief Creates a new module and adds it to the list of known modules
-  Module &addModule(StringRef FileName, ModuleKind Type);
+  /// \brief Attempts to create a new module and add it to the list of known
+  /// modules.
+  ///
+  /// \param FileName The file name of the module to be loaded.
+  ///
+  /// \param Type The kind of module being loaded.
+  ///
+  /// \param ImportedBy The module that is importing this module, or NULL if
+  /// this module is imported directly by the user.
+  Module &addModule(StringRef FileName, ModuleKind Type,
+                    Module *ImportedBy);
   
   /// \brief Add an in-memory buffer the list of known buffers
   void addInMemoryBuffer(StringRef FileName, llvm::MemoryBuffer *Buffer);
@@ -1007,7 +1024,8 @@ private:
 
   void MaybeAddSystemRootToFilename(std::string &Filename);
 
-  ASTReadResult ReadASTCore(StringRef FileName, ModuleKind Type);
+  ASTReadResult ReadASTCore(StringRef FileName, ModuleKind Type,
+                            Module *ImportedBy);
   ASTReadResult ReadASTBlock(Module &F);
   bool CheckPredefinesBuffers();
   bool ParseLineTable(Module &F, SmallVectorImpl<uint64_t> &Record);
@@ -1104,8 +1122,7 @@ public:
             bool DisableValidation = false, bool DisableStatCache = false);
   ~ASTReader();
 
-  /// \brief Load the precompiled header designated by the given file
-  /// name.
+  /// \brief Load the AST file designated by the given file name.
   ASTReadResult ReadAST(const std::string &FileName, ModuleKind Type);
 
   /// \brief Checks that no file that is stored in PCH is out-of-sync with
