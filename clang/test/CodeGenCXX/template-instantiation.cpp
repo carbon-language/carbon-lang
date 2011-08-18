@@ -17,6 +17,19 @@
 // CHECK: define linkonce_odr void @_ZN5test21CIiE6foobarIdEEvT_(
 // CHECK: define available_externally void @_ZN5test21CIiE6zedbarEd(
 
+// CHECK: define linkonce_odr void @_ZN7PR106662g1ENS_1SILi1EEE()
+// CHECK: define linkonce_odr void @_ZN7PR106662g1ENS_1SILi2EEE()
+// CHECK: define linkonce_odr void @_ZN7PR106662g1ENS_1SILi3EEE()
+// CHECK: define linkonce_odr void @_ZN7PR106662g2ENS_1SILi1EEE()
+// CHECK: define linkonce_odr void @_ZN7PR106662g2ENS_1SILi2EEE()
+// CHECK: define linkonce_odr void @_ZN7PR106662g2ENS_1SILi3EEE()
+// CHECK: declare void @_ZN7PR106662h1ENS_1SILi1EEE()
+// CHECK: declare void @_ZN7PR106662h1ENS_1SILi2EEE()
+// CHECK: declare void @_ZN7PR106662h1ENS_1SILi3EEE()
+// CHECK: declare void @_ZN7PR106662h2ENS_1SILi1EEE()
+// CHECK: declare void @_ZN7PR106662h2ENS_1SILi2EEE()
+// CHECK: declare void @_ZN7PR106662h2ENS_1SILi3EEE()
+
 namespace test0 {
   struct  basic_streambuf   {
     virtual       ~basic_streambuf();
@@ -151,4 +164,27 @@ namespace PR10001 {
   template <typename T> int S<T>::f() { return x + y; }
 
   int x = S<int>::f();
+}
+
+// Ensure that definitions are emitted for all friend functions defined within
+// class templates. Order of declaration is extremely important here. Different
+// instantiations of the class happen at different points during the deferred
+// method body parsing and afterward. Those different points of instantiation
+// change the exact form the class template appears to have.
+namespace PR10666 {
+  template <int N> struct S {
+    void f1() { S<1> s; }
+    friend void g1(S s) {}
+    friend void h1(S s);
+    void f2() { S<2> s; }
+    friend void g2(S s) {}
+    friend void h2(S s);
+    void f3() { S<3> s; }
+  };
+  void test(S<1> s1, S<2> s2, S<3> s3) {
+    g1(s1); g1(s2); g1(s3);
+    g2(s1); g2(s2); g2(s3);
+    h1(s1); h1(s2); h1(s3);
+    h2(s1); h2(s2); h2(s3);
+  }
 }

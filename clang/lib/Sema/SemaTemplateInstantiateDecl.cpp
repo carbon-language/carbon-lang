@@ -1153,9 +1153,13 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
                                                              Innermost.first,
                                                              Innermost.second),
                                                 InsertPos);
-  } else if (isFriend && D->isThisDeclarationADefinition()) {
-    // TODO: should we remember this connection regardless of whether
-    // the friend declaration provided a body?
+  } else if (isFriend) {
+    // Note, we need this connection even if the friend doesn't have a body.
+    // Its body may exist but not have been attached yet due to deferred
+    // parsing.
+    // FIXME: It might be cleaner to set this when attaching the body to the
+    // friend function declaration, however that would require finding all the
+    // instantiations and modifying them.
     Function->setInstantiationOfMemberFunction(D, TSK_ImplicitInstantiation);
   }
     
