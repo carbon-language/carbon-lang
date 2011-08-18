@@ -392,7 +392,7 @@ let isCall = 1,
 
   // ARMv5T and above, also used for Thumb2
   def tBLXi : TIx2<0b11110, 0b11, 0,
-                   (outs), (ins pred:$p, t_blxtarget:$func, variable_ops), IIC_Br,
+                 (outs), (ins pred:$p, t_blxtarget:$func, variable_ops), IIC_Br,
                    "blx${p}\t$func",
                    [(ARMcall tglobaladdr:$func)]>,
               Requires<[IsThumb, HasV5T, IsNotDarwin]> {
