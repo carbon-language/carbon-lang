@@ -406,15 +406,13 @@ class ReadHardware: FR<0x1f, 0x3b, (outs CPURegs:$dst), (ins HWRegs:$src),
 }
 
 // Ext and Ins
-class ExtIns<bits<6> _funct, string instr_asm, dag ins,
+class ExtIns<bits<6> _funct, string instr_asm, dag outs, dag ins,
              list<dag> pattern, InstrItinClass itin>:
-  FR<0x1f, _funct, (outs CPURegs:$rt), ins,
-     !strconcat(instr_asm, "\t$rt, $rs, $pos, $size"), pattern, itin> {
-  bits<5> src;
+  FR<0x1f, _funct, outs, ins, !strconcat(instr_asm, " $rt, $rs, $pos, $sz"),
+     pattern, itin>, Requires<[IsMips32r2]> {
   bits<5> pos;
-  bits<5> size;
-  let rs = src;
-  let rd = size;
+  bits<5> sz;
+  let rd = sz;
   let shamt = pos;
 }
 
@@ -689,21 +687,19 @@ def MUL   : ArithR<0x1c, 0x02, "mul", mul, IIImul, 1>, Requires<[IsMips32]>;
 
 def RDHWR : ReadHardware;
 
-let Predicates = [IsMips32r2] in {
-
-def EXT : ExtIns<0, "ext", (ins CPURegs:$rs, uimm16:$pos, uimm16:$size),
-                 [(set CPURegs:$rt, 
-                   (MipsExt CPURegs:$rs, immZExt5:$pos, immZExt5:$size))],
+def EXT : ExtIns<0, "ext", (outs CPURegs:$rt),
+                 (ins CPURegs:$rs, uimm16:$pos, uimm16:$sz),
+                 [(set CPURegs:$rt,
+                   (MipsExt CPURegs:$rs, immZExt5:$pos, immZExt5:$sz))],
                  NoItinerary>;
 
 let Constraints = "$src = $rt" in
-def INS : ExtIns<4, "ins",
-                 (ins CPURegs:$rs, uimm16:$pos, uimm16:$size, CPURegs:$src),
-                 [(set CPURegs:$rt, 
-                   (MipsIns CPURegs:$rs, immZExt5:$pos, immZExt5:$size,
+def INS : ExtIns<4, "ins", (outs CPURegs:$rt),
+                 (ins CPURegs:$rs, uimm16:$pos, uimm16:$sz, CPURegs:$src),
+                 [(set CPURegs:$rt,
+                   (MipsIns CPURegs:$rs, immZExt5:$pos, immZExt5:$sz,
                     CPURegs:$src))],
                  NoItinerary>;
-}
 
 //===----------------------------------------------------------------------===//
 //  Arbitrary patterns that map to one or more instructions
