@@ -297,20 +297,23 @@ bool TempScopInfo::isReduction(BasicBlock &BB) {
 void TempScopInfo::buildAccessFunctions(Region &R, ParamSetType &Params,
                                         BasicBlock &BB) {
   AccFuncSetType Functions;
+
   for (BasicBlock::iterator I = BB.begin(), E = --BB.end(); I != E; ++I) {
     Instruction &Inst = *I;
     if (isa<LoadInst>(&Inst) || isa<StoreInst>(&Inst)) {
-      // Create the SCEVAffFunc.
-      if (LoadInst *ld = dyn_cast<LoadInst>(&Inst)) {
-        unsigned size = TD->getTypeStoreSize(ld->getType());
-        Functions.push_back(
-          std::make_pair(SCEVAffFunc(SCEVAffFunc::ReadMem, size), &Inst));
-      } else {//Else it must be a StoreInst.
-        StoreInst *st = cast<StoreInst>(&Inst);
-        unsigned size = TD->getTypeStoreSize(st->getValueOperand()->getType());
-        Functions.push_back(
-          std::make_pair(SCEVAffFunc(SCEVAffFunc::WriteMem, size), &Inst));
+      unsigned Size;
+      enum SCEVAffFunc::SCEVAffFuncType Type;
+
+      if (LoadInst *Load = dyn_cast<LoadInst>(&Inst)) {
+        Size = TD->getTypeStoreSize(Load->getType());
+        Type = SCEVAffFunc::ReadMem;
+      } else {
+        StoreInst *Store = cast<StoreInst>(&Inst);
+        Size = TD->getTypeStoreSize(Store->getValueOperand()->getType());
+        Type = SCEVAffFunc::WriteMem;
       }
+
+      Functions.push_back(std::make_pair(SCEVAffFunc(Type, Size), &Inst));
 
       Value *Ptr = getPointerOperand(Inst);
       buildAffineFunction(SE->getSCEV(Ptr), Functions.back().first, R, Params);
