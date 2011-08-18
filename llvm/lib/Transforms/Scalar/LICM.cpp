@@ -466,7 +466,7 @@ void LICM::sink(Instruction &I) {
     } else {
       // Move the instruction to the start of the exit block, after any PHI
       // nodes in it.
-      I.moveBefore(ExitBlocks[0]->getFirstNonPHI());
+      I.moveBefore(ExitBlocks[0]->getFirstInsertionPt());
 
       // This instruction is no longer in the AST for the current loop, because
       // we just sunk it out of the loop.  If we just sunk it into an outer
@@ -509,7 +509,7 @@ void LICM::sink(Instruction &I) {
       continue;
 
     // Insert the code after the last PHI node.
-    BasicBlock::iterator InsertPt = ExitBlock->getFirstNonPHI();
+    BasicBlock::iterator InsertPt = ExitBlock->getFirstInsertionPt();
 
     // If this is the first exit block processed, just move the original
     // instruction, otherwise clone the original instruction and insert
@@ -644,7 +644,7 @@ namespace {
       for (unsigned i = 0, e = LoopExitBlocks.size(); i != e; ++i) {
         BasicBlock *ExitBlock = LoopExitBlocks[i];
         Value *LiveInValue = SSA.GetValueInMiddleOfBlock(ExitBlock);
-        Instruction *InsertPos = ExitBlock->getFirstNonPHI();
+        Instruction *InsertPos = ExitBlock->getFirstInsertionPt();
         StoreInst *NewSI = new StoreInst(LiveInValue, SomePtr, InsertPos);
         NewSI->setAlignment(Alignment);
         NewSI->setDebugLoc(DL);
