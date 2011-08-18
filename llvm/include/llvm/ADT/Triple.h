@@ -94,7 +94,8 @@ public:
     Win32,
     Haiku,
     Minix,
-    RTEMS
+    RTEMS,
+    NativeClient
   };
   enum EnvironmentType {
     UnknownEnvironment,

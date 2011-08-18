@@ -110,6 +110,7 @@ const char *Triple::getOSTypeName(OSType Kind) {
   case Haiku: return "haiku";
   case Minix: return "minix";
   case RTEMS: return "rtems";
+  case NativeClient: return "nacl";
   }
 
   return "<invalid>";
