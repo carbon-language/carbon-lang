@@ -33,27 +33,6 @@ using namespace clang;
 using namespace ento;
 
 BugReporterVisitor::~BugReporterVisitor() {}
-BugReporterContext::~BugReporterContext() {
-  for (visitor_iterator I = visitor_begin(), E = visitor_end(); I != E; ++I)
-    if ((*I)->isOwnedByReporterContext()) delete *I;
-}
-
-void BugReporterContext::addVisitor(BugReporterVisitor* visitor) {
-  if (!visitor)
-    return;
-
-  llvm::FoldingSetNodeID ID;
-  visitor->Profile(ID);
-  void *InsertPos;
-
-  if (CallbacksSet.FindNodeOrInsertPos(ID, InsertPos)) {
-    delete visitor;
-    return;
-  }
-
-  CallbacksSet.InsertNode(visitor, InsertPos);
-  Callbacks = F.add(visitor, Callbacks);
-}
 
 //===----------------------------------------------------------------------===//
 // Helper routines for walking the ExplodedGraph and fetching statements.
@@ -161,14 +140,14 @@ public:
                         BugReport *r, NodeBackMap *Backmap,
                         PathDiagnosticClient *pdc)
     : BugReporterContext(br),
-      R(r), PDC(pdc), NMC(Backmap) {
-    addVisitor(R);
-  }
+      R(r), PDC(pdc), NMC(Backmap) {}
 
   PathDiagnosticLocation ExecutionContinues(const ExplodedNode *N);
 
   PathDiagnosticLocation ExecutionContinues(llvm::raw_string_ostream &os,
                                             const ExplodedNode *N);
+
+  BugReport *getBugReport() { return R; }
 
   Decl const &getCodeDecl() { return R->getErrorNode()->getCodeDecl(); }
 
@@ -791,9 +770,11 @@ static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
     }
 
     if (NextNode) {
-      for (BugReporterContext::visitor_iterator I = PDB.visitor_begin(),
-           E = PDB.visitor_end(); I!=E; ++I) {
-        if (PathDiagnosticPiece *p = (*I)->VisitNode(N, NextNode, PDB))
+      // Add diagnostic pieces from custom visitors.
+      BugReport *R = PDB.getBugReport();
+      for (BugReport::visitor_iterator I = R->visitor_begin(),
+           E = R->visitor_end(); I!=E; ++I) {
+        if (PathDiagnosticPiece *p = (*I)->VisitNode(N, NextNode, PDB, *R))
           PD.push_front(p);
       }
     }
@@ -1198,9 +1179,11 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
     if (!NextNode)
       continue;
 
-    for (BugReporterContext::visitor_iterator I = PDB.visitor_begin(),
-         E = PDB.visitor_end(); I!=E; ++I) {
-      if (PathDiagnosticPiece *p = (*I)->VisitNode(N, NextNode, PDB)) {
+    // Add pieces from custom visitors.
+    BugReport *R = PDB.getBugReport();
+    for (BugReport::visitor_iterator I = R->visitor_begin(),
+                                     E = R->visitor_end(); I!=E; ++I) {
+      if (PathDiagnosticPiece *p = (*I)->VisitNode(N, NextNode, PDB, *R)) {
         const PathDiagnosticLocation &Loc = p->getLocation();
         EB.addEdge(Loc, true);
         PD.push_front(p);
@@ -1222,7 +1205,30 @@ void BugType::FlushReports(BugReporter &BR) {}
 // Methods for BugReport and subclasses.
 //===----------------------------------------------------------------------===//
 
-BugReport::~BugReport() {}
+void BugReport::addVisitor(BugReporterVisitor* visitor) {
+  if (!visitor)
+    return;
+
+  llvm::FoldingSetNodeID ID;
+  visitor->Profile(ID);
+  void *InsertPos;
+
+  if (CallbacksSet.FindNodeOrInsertPos(ID, InsertPos)) {
+    delete visitor;
+    return;
+  }
+
+  CallbacksSet.InsertNode(visitor, InsertPos);
+  Callbacks = F.add(visitor, Callbacks);
+}
+
+BugReport::~BugReport() {
+  for (visitor_iterator I = visitor_begin(), E = visitor_end(); I != E; ++I) {
+    // TODO: Remove the isOwned method; use reference counting to track visitors?.
+    assert((*I)->isOwnedByReporterContext());
+    delete *I;
+  }
+}
 
 void BugReport::Profile(llvm::FoldingSetNodeID& hash) const {
   hash.AddPointer(&BT);
@@ -1336,7 +1342,8 @@ SourceLocation BugReport::getLocation() const {
 
 PathDiagnosticPiece *BugReport::VisitNode(const ExplodedNode *N,
                                           const ExplodedNode *PrevN,
-                                          BugReporterContext &BRC) {
+                                          BugReporterContext &BRC,
+                                          BugReport &BR) {
   return NULL;
 }
 
@@ -1655,10 +1662,9 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
   else
     return;
 
-  // Register node visitors.
-  R->registerInitialVisitors(PDB, N);
-  bugreporter::registerNilReceiverVisitor(PDB);
-  bugreporter::registerConditionVisitor(PDB);
+  // Register additional node visitors.
+  bugreporter::registerNilReceiverVisitor(*R);
+  bugreporter::registerConditionVisitor(*R);
 
   switch (PDB.getGenerationScheme()) {
     case PathDiagnosticClient::Extensive:

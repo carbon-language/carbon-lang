@@ -1994,7 +1994,8 @@ namespace {
 
     PathDiagnosticPiece *VisitNode(const ExplodedNode *N,
                                    const ExplodedNode *PrevN,
-                                   BugReporterContext &BRC);
+                                   BugReporterContext &BRC,
+                                   BugReport &BR);
   };
 
   class CFRefLeakReport : public CFRefReport {
@@ -2061,7 +2062,8 @@ static inline bool contains(const SmallVectorImpl<ArgEffect>& V,
 
 PathDiagnosticPiece *CFRefReport::VisitNode(const ExplodedNode *N,
                                             const ExplodedNode *PrevN,
-                                            BugReporterContext &BRC) {
+                                            BugReporterContext &BRC,
+                                            BugReport &BR) {
 
   if (!isa<PostStmt>(N->getLocation()))
     return NULL;

@@ -91,7 +91,8 @@ public:
 
   PathDiagnosticPiece *VisitNode(const ExplodedNode *N,
                                  const ExplodedNode *PrevN,
-                                 BugReporterContext &BRC) {
+                                 BugReporterContext &BRC,
+                                 BugReport &BR) {
 
     if (satisfied)
       return NULL;
@@ -221,9 +222,9 @@ public:
 };
 
 
-static void registerFindLastStore(BugReporterContext &BRC, const MemRegion *R,
+static void registerFindLastStore(BugReport &BR, const MemRegion *R,
                                   SVal V) {
-  BRC.addVisitor(new FindLastStoreBRVisitor(V, R));
+  BR.addVisitor(new FindLastStoreBRVisitor(V, R));
 }
 
 class TrackConstraintBRVisitor : public BugReporterVisitor {
@@ -243,7 +244,8 @@ public:
 
   PathDiagnosticPiece *VisitNode(const ExplodedNode *N,
                                  const ExplodedNode *PrevN,
-                                 BugReporterContext &BRC) {
+                                 BugReporterContext &BRC,
+                                 BugReport &BR) {
     if (isSatisfied)
       return NULL;
 
@@ -297,23 +299,23 @@ public:
 };
 } // end anonymous namespace
 
-static void registerTrackConstraint(BugReporterContext &BRC,
+static void registerTrackConstraint(BugReport &BR,
                                     DefinedSVal Constraint,
                                     bool Assumption) {
-  BRC.addVisitor(new TrackConstraintBRVisitor(Constraint, Assumption));
+  BR.addVisitor(new TrackConstraintBRVisitor(Constraint, Assumption));
 }
 
-void bugreporter::registerTrackNullOrUndefValue(BugReporterContext &BRC,
-                                                const void *data,
-                                                const ExplodedNode *N) {
+void bugreporter::registerTrackNullOrUndefValue(BugReport &BR,
+                                                const void *data) {
 
   const Stmt *S = static_cast<const Stmt*>(data);
+  const ExplodedNode *N = BR.getErrorNode();
 
   if (!S)
     return;
-
-  ProgramStateManager &StateMgr = BRC.getStateManager();
   
+  ProgramStateManager &StateMgr = N->getState()->getStateManager();
+
   // Walk through nodes until we get one that matches the statement
   // exactly.
   while (N) {
@@ -341,7 +343,7 @@ void bugreporter::registerTrackNullOrUndefValue(BugReporterContext &BRC,
 
       if (isa<loc::ConcreteInt>(V) || isa<nonloc::ConcreteInt>(V)
           || V.isUndef()) {
-        ::registerFindLastStore(BRC, R, V);
+        ::registerFindLastStore(BR, R, V);
       }
     }
   }
@@ -361,16 +363,16 @@ void bugreporter::registerTrackNullOrUndefValue(BugReporterContext &BRC,
 
     if (R) {
       assert(isa<SymbolicRegion>(R));
-      registerTrackConstraint(BRC, loc::MemRegionVal(R), false);
+      registerTrackConstraint(BR, loc::MemRegionVal(R), false);
     }
   }
 }
 
-void bugreporter::registerFindLastStore(BugReporterContext &BRC,
-                                        const void *data,
-                                        const ExplodedNode *N) {
+void bugreporter::registerFindLastStore(BugReport &BR,
+                                        const void *data) {
 
   const MemRegion *R = static_cast<const MemRegion*>(data);
+  const ExplodedNode *N = BR.getErrorNode();
 
   if (!R)
     return;
@@ -381,7 +383,7 @@ void bugreporter::registerFindLastStore(BugReporterContext &BRC,
   if (V.isUnknown())
     return;
 
-  BRC.addVisitor(new FindLastStoreBRVisitor(V, R));
+  BR.addVisitor(new FindLastStoreBRVisitor(V, R));
 }
 
 
@@ -397,7 +399,8 @@ public:
 
   PathDiagnosticPiece *VisitNode(const ExplodedNode *N,
                                  const ExplodedNode *PrevN,
-                                 BugReporterContext &BRC) {
+                                 BugReporterContext &BRC,
+                                 BugReport &BR) {
 
     const PostStmt *P = N->getLocationAs<PostStmt>();
     if (!P)
@@ -420,7 +423,7 @@ public:
     // The receiver was nil, and hence the method was skipped.
     // Register a BugReporterVisitor to issue a message telling us how
     // the receiver was null.
-    bugreporter::registerTrackNullOrUndefValue(BRC, Receiver, N);
+    bugreporter::registerTrackNullOrUndefValue(BR, Receiver);
     // Issue a message saying that the method was skipped.
     PathDiagnosticLocation L(Receiver, BRC.getSourceManager());
     return new PathDiagnosticEventPiece(L, "No method actually called "
@@ -429,15 +432,15 @@ public:
 };
 } // end anonymous namespace
 
-void bugreporter::registerNilReceiverVisitor(BugReporterContext &BRC) {
-  BRC.addVisitor(new NilReceiverVisitor());
+void bugreporter::registerNilReceiverVisitor(BugReport &BR) {
+  BR.addVisitor(new NilReceiverVisitor());
 }
 
-// Registers every VarDecl inside a Stmt with a last store vistor.
-void bugreporter::registerVarDeclsLastStore(BugReporterContext &BRC,
-                                                   const void *stmt,
-                                                   const ExplodedNode *N) {
+// Registers every VarDecl inside a Stmt with a last store visitor.
+void bugreporter::registerVarDeclsLastStore(BugReport &BR,
+                                            const void *stmt) {
   const Stmt *S = static_cast<const Stmt *>(stmt);
+  const ExplodedNode *N = BR.getErrorNode();
 
   std::deque<const Stmt *> WorkList;
 
@@ -447,8 +450,8 @@ void bugreporter::registerVarDeclsLastStore(BugReporterContext &BRC,
     const Stmt *Head = WorkList.front();
     WorkList.pop_front();
 
-    ProgramStateManager &StateMgr = BRC.getStateManager();
     const ProgramState *state = N->getState();
+    ProgramStateManager &StateMgr = state->getStateManager();
 
     if (const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(Head)) {
       if (const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl())) {
@@ -459,7 +462,7 @@ void bugreporter::registerVarDeclsLastStore(BugReporterContext &BRC,
         SVal V = state->getSVal(S);
 
         if (isa<loc::ConcreteInt>(V) || isa<nonloc::ConcreteInt>(V)) {
-          ::registerFindLastStore(BRC, R, V);
+          ::registerFindLastStore(BR, R, V);
         }
       }
     }
@@ -484,7 +487,8 @@ public:
 
   virtual PathDiagnosticPiece *VisitNode(const ExplodedNode *N,
                                          const ExplodedNode *Prev,
-                                         BugReporterContext &BRC);
+                                         BugReporterContext &BRC,
+                                         BugReport &BR);
   
   PathDiagnosticPiece *VisitTerminator(const Stmt *Term,
                                        const ProgramState *CurrentState,
@@ -515,7 +519,8 @@ public:
 
 PathDiagnosticPiece *ConditionVisitor::VisitNode(const ExplodedNode *N,
                                                  const ExplodedNode *Prev,
-                                                 BugReporterContext &BRC) {
+                                                 BugReporterContext &BRC,
+                                                 BugReport &BR) {
   
   const ProgramPoint &progPoint = N->getLocation();
 
@@ -752,7 +757,7 @@ ConditionVisitor::VisitTrueTest(const Expr *Cond,
   return new PathDiagnosticEventPiece(Loc, Out.str());
 }
 
-void bugreporter::registerConditionVisitor(BugReporterContext &BRC) {
-  BRC.addVisitor(new ConditionVisitor());
+void bugreporter::registerConditionVisitor(BugReport &BR) {
+  BR.addVisitor(new ConditionVisitor());
 }
 

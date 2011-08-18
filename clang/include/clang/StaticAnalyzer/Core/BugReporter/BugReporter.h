@@ -37,6 +37,7 @@ class PathDiagnosticPiece;
 class PathDiagnosticClient;
 class ExplodedNode;
 class ExplodedGraph;
+class BugReport;
 class BugReporter;
 class BugReporterContext;
 class ExprEngine;
@@ -50,9 +51,16 @@ class BugType;
 class BugReporterVisitor : public llvm::FoldingSetNode {
 public:
   virtual ~BugReporterVisitor();
+
+  /// \brief Return a diagnostic piece which should be associated with the
+  /// given node.
+  ///
+  /// The last parameter can be used to register a new visitor with the given
+  /// BugReport while processing a node.
   virtual PathDiagnosticPiece *VisitNode(const ExplodedNode *N,
                                          const ExplodedNode *PrevN,
-                                         BugReporterContext &BRC) = 0;
+                                         BugReporterContext &BRC,
+                                         BugReport &BR) = 0;
 
   virtual bool isOwnedByReporterContext() { return true; }
   virtual void Profile(llvm::FoldingSetNodeID &ID) const = 0;
@@ -69,9 +77,9 @@ public:
             getOriginalNode(const ExplodedNode *N) = 0;
   };
 
-  typedef void (*VisitorCreator)(BugReporterContext &BRcC, const void *data,
-                                 const ExplodedNode *N);
+  typedef void (*VisitorCreator)(BugReport &BR, const void *data);
   typedef const SourceRange *ranges_iterator;
+  typedef llvm::ImmutableList<BugReporterVisitor*>::iterator visitor_iterator;
 
 protected:
   friend class BugReporter;
@@ -84,7 +92,12 @@ protected:
   FullSourceLoc Location;
   const ExplodedNode *ErrorNode;
   SmallVector<SourceRange, 4> Ranges;
-  Creators creators;
+
+  // Not the most efficient data structure, but we use an ImmutableList for the
+  // Callbacks because it is safe to make additions to list during iteration.
+  llvm::ImmutableList<BugReporterVisitor*>::Factory F;
+  llvm::ImmutableList<BugReporterVisitor*> Callbacks;
+  llvm::FoldingSet<BugReporterVisitor> CallbacksSet;
 
   /// Profile to identify equivalent bug reports for error report coalescing.
   /// Reports are uniqued to ensure that we do not emit multiple diagnostics
@@ -95,15 +108,23 @@ protected:
 
 public:
   BugReport(BugType& bt, StringRef desc, const ExplodedNode *errornode)
-    : BT(bt), Description(desc), ErrorNode(errornode) {}
+    : BT(bt), Description(desc), ErrorNode(errornode),
+      Callbacks(F.getEmptyList()) {
+      addVisitor(this);
+    }
 
   BugReport(BugType& bt, StringRef shortDesc, StringRef desc,
             const ExplodedNode *errornode)
-  : BT(bt), ShortDescription(shortDesc), Description(desc),
-    ErrorNode(errornode) {}
+    : BT(bt), ShortDescription(shortDesc), Description(desc),
+      ErrorNode(errornode), Callbacks(F.getEmptyList()) {
+      addVisitor(this);
+    }
 
   BugReport(BugType& bt, StringRef desc, FullSourceLoc l)
-    : BT(bt), Description(desc), Location(l), ErrorNode(0) {}
+    : BT(bt), Description(desc), Location(l), ErrorNode(0),
+      Callbacks(F.getEmptyList()) {
+      addVisitor(this);
+    }
 
   virtual ~BugReport();
 
@@ -158,18 +179,19 @@ public:
   /// registerFindLastStore(), registerNilReceiverVisitor(), and
   /// registerVarDeclsLastStore().
   void addVisitorCreator(VisitorCreator creator, const void *data) {
-    creators.push_back(std::make_pair(creator, data));
+    creator(*this, data);
   }
+
+  void addVisitor(BugReporterVisitor* visitor);
+
+	/// Iterators through the custom diagnostic visitors.
+  visitor_iterator visitor_begin() { return Callbacks.begin(); }
+  visitor_iterator visitor_end() { return Callbacks.end(); }
 
   virtual PathDiagnosticPiece *VisitNode(const ExplodedNode *N,
                                          const ExplodedNode *PrevN,
-                                         BugReporterContext &BR);
-
-  virtual void registerInitialVisitors(BugReporterContext &BRC,
-                                       const ExplodedNode *N) {
-    for (Creators::iterator I = creators.begin(), E = creators.end(); I!=E; ++I)
-      I->first(BRC, I->second, N);
-  }
+                                         BugReporterContext &BRC,
+                                         BugReport &BR);
 };
 
 //===----------------------------------------------------------------------===//
@@ -383,20 +405,10 @@ public:
 
 class BugReporterContext {
   GRBugReporter &BR;
-  // Not the most efficient data structure, but we use an ImmutableList for the
-  // Callbacks because it is safe to make additions to list during iteration.
-  llvm::ImmutableList<BugReporterVisitor*>::Factory F;
-  llvm::ImmutableList<BugReporterVisitor*> Callbacks;
-  llvm::FoldingSet<BugReporterVisitor> CallbacksSet;
 public:
-  BugReporterContext(GRBugReporter& br) : BR(br), Callbacks(F.getEmptyList()) {}
-  virtual ~BugReporterContext();
+  BugReporterContext(GRBugReporter& br) : BR(br) {}
 
-  void addVisitor(BugReporterVisitor* visitor);
-
-  typedef llvm::ImmutableList<BugReporterVisitor*>::iterator visitor_iterator;
-  visitor_iterator visitor_begin() { return Callbacks.begin(); }
-  visitor_iterator visitor_end() { return Callbacks.end(); }
+  virtual ~BugReporterContext() {}
 
   GRBugReporter& getBugReporter() { return BR; }
 
@@ -441,18 +453,15 @@ const Stmt *GetDenomExpr(const ExplodedNode *N);
 const Stmt *GetCalleeExpr(const ExplodedNode *N);
 const Stmt *GetRetValExpr(const ExplodedNode *N);
 
-void registerConditionVisitor(BugReporterContext &BRC);
+void registerConditionVisitor(BugReport &BR);
 
-void registerTrackNullOrUndefValue(BugReporterContext &BRC, const void *stmt,
-                                   const ExplodedNode *N);
+void registerTrackNullOrUndefValue(BugReport &BR, const void *stmt);
 
-void registerFindLastStore(BugReporterContext &BRC, const void *memregion,
-                           const ExplodedNode *N);
+void registerFindLastStore(BugReport &BR, const void *memregion);
 
-void registerNilReceiverVisitor(BugReporterContext &BRC);  
+void registerNilReceiverVisitor(BugReport &BR);
 
-void registerVarDeclsLastStore(BugReporterContext &BRC, const void *stmt,
-                               const ExplodedNode *N);
+void registerVarDeclsLastStore(BugReport &BR, const void *stmt);
 
 } // end namespace clang::bugreporter
 
