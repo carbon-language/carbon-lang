@@ -35,22 +35,20 @@
 #include "llvm/Support/ErrorHandling.h"
 using namespace llvm;
 
-namespace {
-  // If I is a shifted mask, set the size (Size) and the first bit of the 
-  // mask (Pos), and return true.
-  bool IsShiftedMask(uint64_t I, unsigned SizeInBits, uint64_t &Pos,
-                     uint64_t &Size) {
-    assert(SizeInBits == 32 || SizeInBits == 64);
-    bool Is32Bits = (SizeInBits == 32);
+// If I is a shifted mask, set the size (Size) and the first bit of the 
+// mask (Pos), and return true.
+static bool IsShiftedMask(uint64_t I, unsigned SizeInBits, uint64_t &Pos,
+                          uint64_t &Size) {
+  assert(SizeInBits == 32 || SizeInBits == 64);
+  bool Is32Bits = (SizeInBits == 32);
 
-    if ((Is32Bits == 32 && !isShiftedMask_32(I)) ||
-        (!Is32Bits && !isShiftedMask_64(I)))
-      return false;
+  if ((Is32Bits == 32 && !isShiftedMask_32(I)) ||
+      (!Is32Bits && !isShiftedMask_64(I)))
+    return false;
 
-    Size = Is32Bits ? CountPopulation_32(I) : CountPopulation_64(I);
-    Pos = Is32Bits ? CountTrailingZeros_32(I) : CountTrailingZeros_64(I);
-    return true;
-  }
+  Size = Is32Bits ? CountPopulation_32(I) : CountPopulation_64(I);
+  Pos = Is32Bits ? CountTrailingZeros_32(I) : CountTrailingZeros_64(I);
+  return true;
 }
 
 const char *MipsTargetLowering::getTargetNodeName(unsigned Opcode) const {
