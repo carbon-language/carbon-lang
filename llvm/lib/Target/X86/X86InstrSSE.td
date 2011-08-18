@@ -1840,23 +1840,17 @@ multiclass sse1_fp_unop_s<bits<8> opc, string OpcodeStr,
 }
 
 /// sse1_fp_unop_s_avx - AVX SSE1 unops in scalar form.
-multiclass sse1_fp_unop_s_avx<bits<8> opc, string OpcodeStr,
-                              SDNode OpNode, Intrinsic F32Int> {
+multiclass sse1_fp_unop_s_avx<bits<8> opc, string OpcodeStr> {
   def SSr : SSI<opc, MRMSrcReg, (outs FR32:$dst), (ins FR32:$src1, FR32:$src2),
                 !strconcat(OpcodeStr,
                            "ss\t{$src2, $src1, $dst|$dst, $src1, $src2}"), []>;
-  def SSm : I<opc, MRMSrcMem, (outs FR32:$dst), (ins FR32:$src1, f32mem:$src2),
+  def SSm : SSI<opc, MRMSrcMem, (outs FR32:$dst), (ins FR32:$src1,f32mem:$src2),
                 !strconcat(OpcodeStr,
-                           "ss\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                []>, XS, Requires<[HasAVX, OptForSize]>;
-  def SSr_Int : SSI<opc, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
+                           "ss\t{$src2, $src1, $dst|$dst, $src1, $src2}"), []>;
+  def SSm_Int : SSI<opc, MRMSrcMem, (outs VR128:$dst),
+                (ins ssmem:$src1, VR128:$src2),
                 !strconcat(OpcodeStr,
-                           "ss\t{$src, $dst, $dst|$dst, $dst, $src}"),
-                [(set VR128:$dst, (F32Int VR128:$src))]>;
-  def SSm_Int : SSI<opc, MRMSrcMem, (outs VR128:$dst), (ins ssmem:$src),
-                !strconcat(OpcodeStr,
-                           "ss\t{$src, $dst, $dst|$dst, $dst, $src}"),
-                [(set VR128:$dst, (F32Int sse_load_f32:$src))]>;
+                           "ss\t{$src2, $src1, $dst|$dst, $src1, $src2}"), []>;
 }
 
 /// sse1_fp_unop_p - SSE1 unops in packed form.
@@ -1921,21 +1915,17 @@ multiclass sse2_fp_unop_s<bits<8> opc, string OpcodeStr,
 }
 
 /// sse2_fp_unop_s_avx - AVX SSE2 unops in scalar form.
-multiclass sse2_fp_unop_s_avx<bits<8> opc, string OpcodeStr,
-                              SDNode OpNode, Intrinsic F64Int> {
+multiclass sse2_fp_unop_s_avx<bits<8> opc, string OpcodeStr> {
   def SDr : SDI<opc, MRMSrcReg, (outs FR64:$dst), (ins FR64:$src1, FR64:$src2),
                !strconcat(OpcodeStr,
                           "sd\t{$src2, $src1, $dst|$dst, $src1, $src2}"), []>;
-  def SDm : SDI<opc, MRMSrcMem, (outs FR64:$dst),
-               (ins FR64:$src1, f64mem:$src2),
+  def SDm : SDI<opc, MRMSrcMem, (outs FR64:$dst), (ins FR64:$src1,f64mem:$src2),
                !strconcat(OpcodeStr,
                           "sd\t{$src2, $src1, $dst|$dst, $src1, $src2}"), []>;
-  def SDr_Int : SDI<opc, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
-           !strconcat(OpcodeStr, "sd\t{$src, $dst, $dst|$dst, $dst, $src}"),
-           [(set VR128:$dst, (F64Int VR128:$src))]>;
-  def SDm_Int : SDI<opc, MRMSrcMem, (outs VR128:$dst), (ins sdmem:$src),
-           !strconcat(OpcodeStr, "sd\t{$src, $dst, $dst|$dst, $dst, $src}"),
-           [(set VR128:$dst, (F64Int sse_load_f64:$src))]>;
+  def SDm_Int : SDI<opc, MRMSrcMem, (outs VR128:$dst),
+               (ins VR128:$src1, sdmem:$src2),
+               !strconcat(OpcodeStr,
+                          "sd\t{$src2, $src1, $dst|$dst, $src1, $src2}"), []>;
 }
 
 /// sse2_fp_unop_p - SSE2 unops in vector forms.
@@ -1983,9 +1973,8 @@ multiclass sse2_fp_unop_p_y_int<bits<8> opc, string OpcodeStr,
 
 let Predicates = [HasAVX] in {
   // Square root.
-  defm VSQRT  : sse1_fp_unop_s_avx<0x51, "vsqrt", fsqrt, int_x86_sse_sqrt_ss>,
-                sse2_fp_unop_s_avx<0x51, "vsqrt", fsqrt, int_x86_sse2_sqrt_sd>,
-                VEX_4V;
+  defm VSQRT  : sse1_fp_unop_s_avx<0x51, "vsqrt">,
+                sse2_fp_unop_s_avx<0x51, "vsqrt">, VEX_4V;
 
   defm VSQRT  : sse1_fp_unop_p<0x51, "vsqrt", fsqrt>,
                 sse2_fp_unop_p<0x51, "vsqrt", fsqrt>,
@@ -1999,15 +1988,13 @@ let Predicates = [HasAVX] in {
 
   // Reciprocal approximations. Note that these typically require refinement
   // in order to obtain suitable precision.
-  defm VRSQRT : sse1_fp_unop_s_avx<0x52, "vrsqrt", X86frsqrt,
-                                   int_x86_sse_rsqrt_ss>, VEX_4V;
+  defm VRSQRT : sse1_fp_unop_s_avx<0x52, "vrsqrt">, VEX_4V;
   defm VRSQRT : sse1_fp_unop_p<0x52, "vrsqrt", X86frsqrt>,
                 sse1_fp_unop_p_y<0x52, "vrsqrt", X86frsqrt>,
                 sse1_fp_unop_p_y_int<0x52, "vrsqrt", int_x86_avx_rsqrt_ps_256>,
                 sse1_fp_unop_p_int<0x52, "vrsqrt", int_x86_sse_rsqrt_ps>, VEX;
 
-  defm VRCP   : sse1_fp_unop_s_avx<0x53, "vrcp", X86frcp, int_x86_sse_rcp_ss>,
-                                   VEX_4V;
+  defm VRCP   : sse1_fp_unop_s_avx<0x53, "vrcp">, VEX_4V;
   defm VRCP   : sse1_fp_unop_p<0x53, "vrcp", X86frcp>,
                 sse1_fp_unop_p_y<0x53, "vrcp", X86frcp>,
                 sse1_fp_unop_p_y_int<0x53, "vrcp", int_x86_avx_rcp_ps_256>,
@@ -2016,14 +2003,60 @@ let Predicates = [HasAVX] in {
 
 def : Pat<(f32 (fsqrt FR32:$src)),
           (VSQRTSSr (f32 (IMPLICIT_DEF)), FR32:$src)>, Requires<[HasAVX]>;
+def : Pat<(f32 (fsqrt (load addr:$src))),
+          (VSQRTSSm (f32 (IMPLICIT_DEF)), addr:$src)>,
+          Requires<[HasAVX, OptForSize]>;
 def : Pat<(f64 (fsqrt FR64:$src)),
           (VSQRTSDr (f64 (IMPLICIT_DEF)), FR64:$src)>, Requires<[HasAVX]>;
 def : Pat<(f64 (fsqrt (load addr:$src))),
           (VSQRTSDm (f64 (IMPLICIT_DEF)), addr:$src)>,
           Requires<[HasAVX, OptForSize]>;
-def : Pat<(f32 (fsqrt (load addr:$src))),
-          (VSQRTSSm (f32 (IMPLICIT_DEF)), addr:$src)>,
+
+def : Pat<(f32 (X86frsqrt FR32:$src)),
+          (VRSQRTSSr (f32 (IMPLICIT_DEF)), FR32:$src)>, Requires<[HasAVX]>;
+def : Pat<(f32 (X86frsqrt (load addr:$src))),
+          (VRSQRTSSm (f32 (IMPLICIT_DEF)), addr:$src)>,
           Requires<[HasAVX, OptForSize]>;
+
+def : Pat<(f32 (X86frcp FR32:$src)),
+          (VRCPSSr (f32 (IMPLICIT_DEF)), FR32:$src)>, Requires<[HasAVX]>;
+def : Pat<(f32 (X86frcp (load addr:$src))),
+          (VRCPSSm (f32 (IMPLICIT_DEF)), addr:$src)>,
+          Requires<[HasAVX, OptForSize]>;
+
+let Predicates = [HasAVX] in {
+def : Pat<(int_x86_sse_sqrt_ss VR128:$src),
+          (INSERT_SUBREG (v4f32 (IMPLICIT_DEF)),
+              (VSQRTSSr (f32 (IMPLICIT_DEF)),
+                        (EXTRACT_SUBREG (v4f32 VR128:$src), sub_ss)),
+              sub_ss)>;
+def : Pat<(int_x86_sse_sqrt_ss sse_load_f32:$src),
+          (VSQRTSSm_Int (v4f32 (IMPLICIT_DEF)), sse_load_f32:$src)>;
+
+def : Pat<(int_x86_sse2_sqrt_sd VR128:$src),
+          (INSERT_SUBREG (v2f64 (IMPLICIT_DEF)),
+              (VSQRTSDr (f64 (IMPLICIT_DEF)),
+                        (EXTRACT_SUBREG (v2f64 VR128:$src), sub_sd)),
+              sub_sd)>;
+def : Pat<(int_x86_sse2_sqrt_sd sse_load_f64:$src),
+          (VSQRTSDm_Int (v2f64 (IMPLICIT_DEF)), sse_load_f64:$src)>;
+
+def : Pat<(int_x86_sse_rsqrt_ss VR128:$src),
+          (INSERT_SUBREG (v4f32 (IMPLICIT_DEF)),
+              (VRSQRTSSr (f32 (IMPLICIT_DEF)),
+                        (EXTRACT_SUBREG (v4f32 VR128:$src), sub_ss)),
+              sub_ss)>;
+def : Pat<(int_x86_sse_rsqrt_ss sse_load_f32:$src),
+          (VRSQRTSSm_Int (v4f32 (IMPLICIT_DEF)), sse_load_f32:$src)>;
+
+def : Pat<(int_x86_sse_rcp_ss VR128:$src),
+          (INSERT_SUBREG (v4f32 (IMPLICIT_DEF)),
+              (VRCPSSr (f32 (IMPLICIT_DEF)),
+                       (EXTRACT_SUBREG (v4f32 VR128:$src), sub_ss)),
+              sub_ss)>;
+def : Pat<(int_x86_sse_rcp_ss sse_load_f32:$src),
+          (VRCPSSm_Int (v4f32 (IMPLICIT_DEF)), sse_load_f32:$src)>;
+}
 
 // Square root.
 defm SQRT  : sse1_fp_unop_s<0x51, "sqrt",  fsqrt, int_x86_sse_sqrt_ss>,
