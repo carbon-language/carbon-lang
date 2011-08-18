@@ -156,7 +156,7 @@ FormatManager::GetFormatAsCString (Format format)
 
 template<>
 bool
-FormatNavigator<lldb::RegularExpressionSP, SummaryFormat>::Get(ConstString key, SummaryFormat::SharedPointer& value)
+FormatNavigator<lldb::RegularExpressionSP, SummaryFormat>::Get(ConstString key, lldb::SummaryFormatSP& value)
 {
     Mutex::Locker(m_format_map.mutex());
     MapIterator pos, end = m_format_map.map().end();
@@ -268,6 +268,194 @@ FormatNavigator<lldb::RegularExpressionSP, SyntheticScriptProvider>::Delete(Cons
     return false;
 }
 
+FormatCategory::FormatCategory(IFormatChangeListener* clist,
+                               std::string name) :
+    m_summary_nav(new SummaryNavigator("summary",clist)),
+    m_regex_summary_nav(new RegexSummaryNavigator("regex-summary",clist)),
+    m_filter_nav(new FilterNavigator("filter",clist)),
+    m_regex_filter_nav(new RegexFilterNavigator("regex-filter",clist)),
+    m_synth_nav(new SynthNavigator("synth",clist)),
+    m_regex_synth_nav(new RegexSynthNavigator("regex-synth",clist)),
+    m_enabled(false),
+    m_change_listener(clist),
+    m_mutex(Mutex::eMutexTypeRecursive),
+    m_name(name)
+{}
+
+bool
+FormatCategory::Get(ValueObject& valobj,
+                    lldb::SyntheticChildrenSP& entry,
+                    lldb::DynamicValueType use_dynamic,
+                    uint32_t* reason)
+{
+    if (!IsEnabled())
+        return false;
+    SyntheticFilter::SharedPointer filter;
+    SyntheticScriptProvider::SharedPointer synth;
+    bool regex_filter, regex_synth;
+    uint32_t reason_filter;
+    uint32_t reason_synth;
+    
+    bool pick_synth = false;
+    
+    // first find both Filter and Synth, and then check which is most recent
+    
+    if (!GetFilterNavigator()->Get(valobj, filter, use_dynamic, &reason_filter))
+        regex_filter = GetRegexFilterNavigator()->Get(valobj, filter, use_dynamic, &reason_filter);
+    
+    if (!GetSyntheticNavigator()->Get(valobj, synth, use_dynamic, &reason_synth))
+        regex_synth = GetRegexSyntheticNavigator()->Get(valobj, synth, use_dynamic, &reason_synth);
+    
+    if (!filter.get() && !synth.get())
+        return false;
+    
+    else if (!filter.get() && synth.get())
+        pick_synth = true;
+    
+    else if (filter.get() && !synth.get())
+        pick_synth = false;
+    
+    else /*if (filter.get() && synth.get())*/
+    {
+        if (filter->m_my_revision > synth->m_my_revision)
+            pick_synth = false;
+        else
+            pick_synth = true;
+    }
+    
+    if (pick_synth)
+    {
+        if (regex_synth && reason)
+            *reason |= lldb::eFormatterChoiceCriterionRegularExpressionFilter;
+        entry = synth;
+        return true;
+    }
+    else
+    {
+        if (regex_filter && reason)
+            *reason |= lldb::eFormatterChoiceCriterionRegularExpressionFilter;
+        entry = filter;
+        return true;
+    }
+}
+
+bool
+FormatCategory::AnyMatches(ConstString type_name,
+                           FormatCategoryItems items,
+                           bool only_enabled,
+                           const char** matching_category,
+                           FormatCategoryItems* matching_type)
+{
+    if (!IsEnabled() && only_enabled)
+        return false;
+    
+    lldb::SummaryFormatSP summary;
+    SyntheticFilter::SharedPointer filter;
+    SyntheticScriptProvider::SharedPointer synth;
+    
+    if ( (items & eSummary) == eSummary )
+    {
+        if (m_summary_nav->Get(type_name, summary))
+        {
+            if (matching_category)
+                *matching_category = m_name.c_str();
+            if (matching_type)
+                *matching_type = eSummary;
+            return true;
+        }
+    }
+    if ( (items & eRegexSummary) == eRegexSummary )
+    {
+        if (m_regex_summary_nav->Get(type_name, summary))
+        {
+            if (matching_category)
+                *matching_category = m_name.c_str();
+            if (matching_type)
+                *matching_type = eRegexSummary;
+            return true;
+        }
+    }
+    if ( (items & eFilter)  == eFilter )
+    {
+        if (m_filter_nav->Get(type_name, filter))
+        {
+            if (matching_category)
+                *matching_category = m_name.c_str();
+            if (matching_type)
+                *matching_type = eFilter;
+            return true;
+        }
+    }
+    if ( (items & eRegexFilter) == eRegexFilter )
+    {
+        if (m_regex_filter_nav->Get(type_name, filter))
+        {
+            if (matching_category)
+                *matching_category = m_name.c_str();
+            if (matching_type)
+                *matching_type = eRegexFilter;
+            return true;
+        }
+    }
+    if ( (items & eSynth)  == eSynth )
+    {
+        if (m_synth_nav->Get(type_name, synth))
+        {
+            if (matching_category)
+                *matching_category = m_name.c_str();
+            if (matching_type)
+                *matching_type = eSynth;
+            return true;
+        }
+    }
+    if ( (items & eRegexSynth) == eRegexSynth )
+    {
+        if (m_regex_synth_nav->Get(type_name, synth))
+        {
+            if (matching_category)
+                *matching_category = m_name.c_str();
+            if (matching_type)
+                *matching_type = eRegexSynth;
+            return true;
+        }
+    }
+    return false;
+}
+
+void
+CategoryMap::LoopThrough(CallbackType callback, void* param)
+{
+    if (callback)
+    {
+        Mutex::Locker(m_map_mutex);
+        
+        // loop through enabled categories in respective order
+        {
+            ActiveCategoriesIterator begin, end = m_active_categories.end();
+            for (begin = m_active_categories.begin(); begin != end; begin++)
+            {
+                lldb::FormatCategorySP category = *begin;
+                const char* type = category->GetName().c_str();
+                if (!callback(param, type, category))
+                    break;
+            }
+        }
+        
+        // loop through disabled categories in just any order
+        {
+            MapIterator pos, end = m_map.end();
+            for (pos = m_map.begin(); pos != end; pos++)
+            {
+                if (pos->second->IsEnabled())
+                    continue;
+                KeyType type = pos->first;
+                if (!callback(param, type, pos->second))
+                    break;
+            }
+        }
+    }
+}
+
 lldb::Format
 FormatManager::GetSingleItemFormat(lldb::Format vector_format)
 {
@@ -316,7 +504,7 @@ FormatManager::FormatManager() :
     
     // add some default stuff
     // most formats, summaries, ... actually belong to the users' lldbinit file rather than here
-    SummaryFormat::SharedPointer string_format(new StringSummaryFormat(false,
+    lldb::SummaryFormatSP string_format(new StringSummaryFormat(false,
                                                                        true,
                                                                        false,
                                                                        true,
@@ -325,7 +513,7 @@ FormatManager::FormatManager() :
                                                                        "${var%s}"));
     
     
-    SummaryFormat::SharedPointer string_array_format(new StringSummaryFormat(false,
+    lldb::SummaryFormatSP string_array_format(new StringSummaryFormat(false,
                                                                              true,
                                                                              false,
                                                                              false,
@@ -336,9 +524,9 @@ FormatManager::FormatManager() :
     lldb::RegularExpressionSP any_size_char_arr(new RegularExpression("char \\[[0-9]+\\]"));
     
     
-    Category(m_system_category_name)->Summary()->Add(ConstString("char *"), string_format);
-    Category(m_system_category_name)->Summary()->Add(ConstString("const char *"), string_format);
-    Category(m_system_category_name)->RegexSummary()->Add(any_size_char_arr, string_array_format);
+    Category(m_system_category_name)->GetSummaryNavigator()->Add(ConstString("char *"), string_format);
+    Category(m_system_category_name)->GetSummaryNavigator()->Add(ConstString("const char *"), string_format);
+    Category(m_system_category_name)->GetRegexSummaryNavigator()->Add(any_size_char_arr, string_array_format);
     
     Category(m_default_category_name); // this call is there to force LLDB into creating an empty "default" category
     
@@ -356,24 +544,24 @@ FormatManager::FormatManager() :
                                                                         true,
                                                                         false,
                                                                         "${var._M_dataplus._M_p}"));
-    Category(m_gnu_cpp_category_name)->Summary()->Add(ConstString("std::string"),
+    Category(m_gnu_cpp_category_name)->GetSummaryNavigator()->Add(ConstString("std::string"),
                                                       std_string_summary_sp);
-    Category(m_gnu_cpp_category_name)->Summary()->Add(ConstString("std::basic_string<char>"),
+    Category(m_gnu_cpp_category_name)->GetSummaryNavigator()->Add(ConstString("std::basic_string<char>"),
                                                       std_string_summary_sp);
-    Category(m_gnu_cpp_category_name)->Summary()->Add(ConstString("std::basic_string<char,std::char_traits<char>,std::allocator<char> >"),
+    Category(m_gnu_cpp_category_name)->GetSummaryNavigator()->Add(ConstString("std::basic_string<char,std::char_traits<char>,std::allocator<char> >"),
                                                       std_string_summary_sp);
     
-    Category(m_gnu_cpp_category_name)->RegexSynth()->Add(RegularExpressionSP(new RegularExpression("std::vector<")),
+    Category(m_gnu_cpp_category_name)->GetRegexSyntheticNavigator()->Add(RegularExpressionSP(new RegularExpression("std::vector<")),
                                      SyntheticChildrenSP(new SyntheticScriptProvider(true,
                                                                                      false,
                                                                                      false,
                                                                                      "StdVectorSynthProvider")));
-    Category(m_gnu_cpp_category_name)->RegexSynth()->Add(RegularExpressionSP(new RegularExpression("std::map<")),
+    Category(m_gnu_cpp_category_name)->GetRegexSyntheticNavigator()->Add(RegularExpressionSP(new RegularExpression("std::map<")),
                                      SyntheticChildrenSP(new SyntheticScriptProvider(true,
                                                                                      false,
                                                                                      false,
                                                                                      "StdMapSynthProvider")));
-    Category(m_gnu_cpp_category_name)->RegexSynth()->Add(RegularExpressionSP(new RegularExpression("std::list<")),
+    Category(m_gnu_cpp_category_name)->GetRegexSyntheticNavigator()->Add(RegularExpressionSP(new RegularExpression("std::list<")),
                                      SyntheticChildrenSP(new SyntheticScriptProvider(true,
                                                                                      false,
                                                                                      false,
@@ -388,7 +576,8 @@ FormatManager::FormatManager() :
 
 
 static FormatManager&
-GetFormatManager() {
+GetFormatManager()
+{
     static FormatManager g_format_manager;
     return g_format_manager;
 }
@@ -399,14 +588,20 @@ DataVisualization::ForceUpdate()
     GetFormatManager().Changed();
 }
 
+uint32_t
+DataVisualization::GetCurrentRevision ()
+{
+    return GetFormatManager().GetCurrentRevision();
+}
+
 bool
-DataVisualization::ValueFormats::Get(ValueObject& valobj, lldb::DynamicValueType use_dynamic, ValueFormat::SharedPointer &entry)
+DataVisualization::ValueFormats::Get(ValueObject& valobj, lldb::DynamicValueType use_dynamic, lldb::ValueFormatSP &entry)
 {
     return GetFormatManager().Value().Get(valobj,entry, use_dynamic);
 }
 
 void
-DataVisualization::ValueFormats::Add(const ConstString &type, const ValueFormat::SharedPointer &entry)
+DataVisualization::ValueFormats::Add(const ConstString &type, const lldb::ValueFormatSP &entry)
 {
     GetFormatManager().Value().Add(type,entry);
 }
@@ -427,12 +622,6 @@ void
 DataVisualization::ValueFormats::LoopThrough(ValueFormat::ValueCallback callback, void* callback_baton)
 {
     GetFormatManager().Value().LoopThrough(callback, callback_baton);
-}
-
-uint32_t
-DataVisualization::ValueFormats::GetCurrentRevision()
-{
-    return GetFormatManager().GetCurrentRevision();
 }
 
 uint32_t
@@ -528,25 +717,19 @@ DataVisualization::Categories::LoopThrough(FormatManager::CategoryCallback callb
 }
 
 uint32_t
-DataVisualization::Categories::GetCurrentRevision()
-{
-    return GetFormatManager().GetCurrentRevision();
-}
-
-uint32_t
 DataVisualization::Categories::GetCount()
 {
     return GetFormatManager().Categories().GetCount();
 }
 
 bool
-DataVisualization::NamedSummaryFormats::Get(const ConstString &type, SummaryFormat::SharedPointer &entry)
+DataVisualization::NamedSummaryFormats::Get(const ConstString &type, lldb::SummaryFormatSP &entry)
 {
     return GetFormatManager().NamedSummary().Get(type,entry);
 }
 
 void
-DataVisualization::NamedSummaryFormats::Add(const ConstString &type, const SummaryFormat::SharedPointer &entry)
+DataVisualization::NamedSummaryFormats::Add(const ConstString &type, const lldb::SummaryFormatSP &entry)
 {
     GetFormatManager().NamedSummary().Add(type,entry);
 }
@@ -567,12 +750,6 @@ void
 DataVisualization::NamedSummaryFormats::LoopThrough(SummaryFormat::SummaryCallback callback, void* callback_baton)
 {
     GetFormatManager().NamedSummary().LoopThrough(callback, callback_baton);
-}
-
-uint32_t
-DataVisualization::NamedSummaryFormats::GetCurrentRevision()
-{
-    return GetFormatManager().GetCurrentRevision();
 }
 
 uint32_t

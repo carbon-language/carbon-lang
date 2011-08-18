@@ -69,13 +69,13 @@ class IFormatChangeListener
 {
 public:
     virtual void
-    Changed() = 0;
+    Changed () = 0;
     
     virtual
-    ~IFormatChangeListener() {}
+    ~IFormatChangeListener () {}
     
     virtual uint32_t
-    GetCurrentRevision() = 0;
+    GetCurrentRevision () = 0;
     
 };
     
@@ -85,32 +85,12 @@ class FormatNavigator;
 template<typename KeyType, typename ValueType>
 class FormatMap
 {
-    friend class FormatNavigator<KeyType, ValueType>;
-    friend class FormatManager;
-
 public:
 
     typedef typename ValueType::SharedPointer ValueSP;
     typedef std::map<KeyType, ValueSP> MapType;
     typedef typename MapType::iterator MapIterator;
     typedef bool(*CallbackType)(void*, KeyType, const ValueSP&);
-    
-private:
-    MapType m_map;    
-    Mutex m_map_mutex;
-    IFormatChangeListener* listener;
-    
-    MapType& map()
-    {
-        return m_map;
-    }
-    
-    Mutex& mutex()
-    {
-        return m_map_mutex;
-    }
-
-public:
     
     FormatMap(IFormatChangeListener* lst = NULL) :
     m_map(),
@@ -135,7 +115,7 @@ public:
     }
     
     bool
-    Delete(KeyType name)
+    Delete (KeyType name)
     {
         Mutex::Locker(m_map_mutex);
         MapIterator iter = m_map.find(name);
@@ -148,7 +128,7 @@ public:
     }
     
     void
-    Clear()
+    Clear ()
     {
         Mutex::Locker(m_map_mutex);
         m_map.clear();
@@ -169,7 +149,7 @@ public:
     }
     
     void
-    LoopThrough(CallbackType callback, void* param)
+    LoopThrough (CallbackType callback, void* param)
     {
         if (callback)
         {
@@ -185,10 +165,30 @@ public:
     }
     
     uint32_t
-    GetCount()
+    GetCount ()
     {
         return m_map.size();
     }
+    
+private:
+    MapType m_map;    
+    Mutex m_map_mutex;
+    IFormatChangeListener* listener;
+    
+    MapType&
+    map ()
+    {
+        return m_map;
+    }
+    
+    Mutex&
+    mutex ()
+    {
+        return m_map_mutex;
+    }
+    
+    friend class FormatNavigator<KeyType, ValueType>;
+    friend class FormatManager;
     
 };
     
@@ -222,7 +222,7 @@ public:
     }
     
     void
-    Add(const MapKeyType &type, const MapValueType& entry)
+    Add (const MapKeyType &type, const MapValueType& entry)
     {
         m_format_map.Add(type,entry);
     }
@@ -230,7 +230,7 @@ public:
     // using ConstString instead of MapKeyType is necessary here
     // to make the partial template specializations below work
     bool
-    Delete(ConstString type)
+    Delete (ConstString type)
     {
         return m_format_map.Delete(type);
     }
@@ -254,19 +254,19 @@ public:
     }
     
     void
-    Clear()
+    Clear ()
     {
         m_format_map.Clear();
     }
     
     void
-    LoopThrough(CallbackType callback, void* param)
+    LoopThrough (CallbackType callback, void* param)
     {
         m_format_map.LoopThrough(callback,param);
     }
     
     uint32_t
-    GetCount()
+    GetCount ()
     {
         return m_format_map.GetCount();
     }
@@ -280,7 +280,7 @@ private:
     // using ConstString instead of MapKeyType is necessary here
     // to make the partial template specializations below work
     bool
-    Get(ConstString type, MapValueType& entry)
+    Get (ConstString type, MapValueType& entry)
     {
         return m_format_map.Get(type, entry);
     }
@@ -580,7 +580,7 @@ private:
 
 template<>
 bool
-FormatNavigator<lldb::RegularExpressionSP, SummaryFormat>::Get(ConstString key, SummaryFormat::SharedPointer& value);
+FormatNavigator<lldb::RegularExpressionSP, SummaryFormat>::Get(ConstString key, lldb::SummaryFormatSP& value);
 
 template<>
 bool
@@ -624,47 +624,6 @@ private:
     typedef SynthNavigator::MapType SynthMap;
     typedef RegexSynthNavigator::MapType RegexSynthMap;
 
-    SummaryNavigator::SharedPointer m_summary_nav;
-    RegexSummaryNavigator::SharedPointer m_regex_summary_nav;
-    FilterNavigator::SharedPointer m_filter_nav;
-    RegexFilterNavigator::SharedPointer m_regex_filter_nav;
-    SynthNavigator::SharedPointer m_synth_nav;
-    RegexSynthNavigator::SharedPointer m_regex_synth_nav;
-
-    bool m_enabled;
-    
-    IFormatChangeListener* m_change_listener;
-    
-    Mutex m_mutex;
-    
-    std::string m_name;
-    
-    void
-    Enable(bool value = true)
-    {
-        Mutex::Locker(m_mutex);
-        m_enabled = value;        
-        if (m_change_listener)
-            m_change_listener->Changed();
-    }
-    
-    void
-    Disable()
-    {
-        Enable(false);
-    }
-    
-    friend class CategoryMap;
-    
-    friend class FormatNavigator<ConstString, SummaryFormat>;
-    friend class FormatNavigator<lldb::RegularExpressionSP, SummaryFormat>;
-
-    friend class FormatNavigator<ConstString, SyntheticFilter>;
-    friend class FormatNavigator<lldb::RegularExpressionSP, SyntheticFilter>;
-
-    friend class FormatNavigator<ConstString, SyntheticScriptProvider>;
-    friend class FormatNavigator<lldb::RegularExpressionSP, SyntheticScriptProvider>;
-    
 public:
     
     enum FormatCategoryItem
@@ -688,57 +647,46 @@ public:
     typedef RegexSynthNavigator::SharedPointer RegexSynthNavigatorSP;
 
     FormatCategory(IFormatChangeListener* clist,
-                   std::string name) :
-    m_summary_nav(new SummaryNavigator("summary",clist)),
-    m_regex_summary_nav(new RegexSummaryNavigator("regex-summary",clist)),
-    m_filter_nav(new FilterNavigator("filter",clist)),
-    m_regex_filter_nav(new RegexFilterNavigator("regex-filter",clist)),
-    m_synth_nav(new SynthNavigator("synth",clist)),
-    m_regex_synth_nav(new RegexSynthNavigator("regex-synth",clist)),
-    m_enabled(false),
-    m_change_listener(clist),
-    m_mutex(Mutex::eMutexTypeRecursive),
-    m_name(name)
-    {}
+                   std::string name);
     
     SummaryNavigatorSP
-    Summary()
+    GetSummaryNavigator ()
     {
         return SummaryNavigatorSP(m_summary_nav);
     }
     
     RegexSummaryNavigatorSP
-    RegexSummary()
+    GetRegexSummaryNavigator ()
     {
         return RegexSummaryNavigatorSP(m_regex_summary_nav);
     }
     
     FilterNavigatorSP
-    Filter()
+    GetFilterNavigator ()
     {
         return FilterNavigatorSP(m_filter_nav);
     }
     
     RegexFilterNavigatorSP
-    RegexFilter()
+    GetRegexFilterNavigator ()
     {
         return RegexFilterNavigatorSP(m_regex_filter_nav);
     }
     
     SynthNavigatorSP
-    Synth()
+    GetSyntheticNavigator ()
     {
         return SynthNavigatorSP(m_synth_nav);
     }
     
     RegexSynthNavigatorSP
-    RegexSynth()
+    GetRegexSyntheticNavigator ()
     {
         return RegexSynthNavigatorSP(m_regex_synth_nav);
     }
     
     bool
-    IsEnabled() const
+    IsEnabled () const
     {
         return m_enabled;
     }
@@ -751,9 +699,9 @@ public:
     {
         if (!IsEnabled())
             return false;
-        if (Summary()->Get(valobj, entry, use_dynamic, reason))
+        if (GetSummaryNavigator()->Get(valobj, entry, use_dynamic, reason))
             return true;
-        bool regex = RegexSummary()->Get(valobj, entry, use_dynamic, reason);
+        bool regex = GetRegexSummaryNavigator()->Get(valobj, entry, use_dynamic, reason);
         if (regex && reason)
             *reason |= lldb::eFormatterChoiceCriterionRegularExpressionSummary;
         return regex;
@@ -763,76 +711,25 @@ public:
     Get(ValueObject& valobj,
         lldb::SyntheticChildrenSP& entry,
         lldb::DynamicValueType use_dynamic,
-        uint32_t* reason = NULL)
-    {
-        if (!IsEnabled())
-            return false;
-        SyntheticFilter::SharedPointer filter;
-        SyntheticScriptProvider::SharedPointer synth;
-        bool regex_filter, regex_synth;
-        uint32_t reason_filter;
-        uint32_t reason_synth;
-        
-        bool pick_synth = false;
-        
-        // first find both Filter and Synth, and then check which is most recent
-        
-        if (!Filter()->Get(valobj, filter, use_dynamic, &reason_filter))
-            regex_filter = RegexFilter()->Get(valobj, filter, use_dynamic, &reason_filter);
-        
-        if (!Synth()->Get(valobj, synth, use_dynamic, &reason_synth))
-            regex_synth = RegexSynth()->Get(valobj, synth, use_dynamic, &reason_synth);
-        
-        if (!filter.get() && !synth.get())
-            return false;
-        
-        else if (!filter.get() && synth.get())
-            pick_synth = true;
-
-        else if (filter.get() && !synth.get())
-            pick_synth = false;
-        
-        else /*if (filter.get() && synth.get())*/
-        {
-            if (filter->m_my_revision > synth->m_my_revision)
-                pick_synth = false;
-            else
-                pick_synth = true;
-        }
-        
-        if (pick_synth)
-        {
-            if (regex_synth && reason)
-                *reason |= lldb::eFormatterChoiceCriterionRegularExpressionFilter;
-            entry = synth;
-            return true;
-        }
-        else
-        {
-            if (regex_filter && reason)
-                *reason |= lldb::eFormatterChoiceCriterionRegularExpressionFilter;
-            entry = filter;
-            return true;
-        }
-    }
+        uint32_t* reason = NULL);
     
-    // just a shortcut for Summary()->Clear; RegexSummary()->Clear()
+    // just a shortcut for GetSummaryNavigator()->Clear; GetRegexSummaryNavigator()->Clear()
     void
-    ClearSummaries()
+    ClearSummaries ()
     {
         Clear(eSummary | eRegexSummary);
     }
     
-    // just a shortcut for (Summary()->Delete(name) || RegexSummary()->Delete(name))
+    // just a shortcut for (GetSummaryNavigator()->Delete(name) || GetRegexSummaryNavigator()->Delete(name))
     bool
-    DeleteSummaries(ConstString name)
+    DeleteSummaries (ConstString name)
     {
         return Delete(name, (eSummary | eRegexSummary));
     }
     
     
     void
-    Clear(FormatCategoryItems items = ALL_ITEM_TYPES)
+    Clear (FormatCategoryItems items = ALL_ITEM_TYPES)
     {
         if ( (items & eSummary) == eSummary )
             m_summary_nav->Clear();
@@ -869,7 +766,7 @@ public:
     }
     
     uint32_t
-    GetCount(FormatCategoryItems items = ALL_ITEM_TYPES)
+    GetCount (FormatCategoryItems items = ALL_ITEM_TYPES)
     {
         uint32_t count = 0;
         if ( (items & eSummary) == eSummary )
@@ -888,7 +785,7 @@ public:
     }
     
     std::string
-    GetName()
+    GetName ()
     {
         return m_name;
     }
@@ -898,85 +795,53 @@ public:
                FormatCategoryItems items = ALL_ITEM_TYPES,
                bool only_enabled = true,
                const char** matching_category = NULL,
-               FormatCategoryItems* matching_type = NULL)
-    {
-        if (!IsEnabled() && only_enabled)
-            return false;
-        
-        SummaryFormat::SharedPointer summary;
-        SyntheticFilter::SharedPointer filter;
-        SyntheticScriptProvider::SharedPointer synth;
-        
-        if ( (items & eSummary) == eSummary )
-        {
-            if (m_summary_nav->Get(type_name, summary))
-            {
-                if (matching_category)
-                    *matching_category = m_name.c_str();
-                if (matching_type)
-                    *matching_type = eSummary;
-                return true;
-            }
-        }
-        if ( (items & eRegexSummary) == eRegexSummary )
-        {
-            if (m_regex_summary_nav->Get(type_name, summary))
-            {
-                if (matching_category)
-                    *matching_category = m_name.c_str();
-                if (matching_type)
-                    *matching_type = eRegexSummary;
-                return true;
-            }
-        }
-        if ( (items & eFilter)  == eFilter )
-        {
-            if (m_filter_nav->Get(type_name, filter))
-            {
-                if (matching_category)
-                    *matching_category = m_name.c_str();
-                if (matching_type)
-                    *matching_type = eFilter;
-                return true;
-            }
-        }
-        if ( (items & eRegexFilter) == eRegexFilter )
-        {
-            if (m_regex_filter_nav->Get(type_name, filter))
-            {
-                if (matching_category)
-                    *matching_category = m_name.c_str();
-                if (matching_type)
-                    *matching_type = eRegexFilter;
-                return true;
-            }
-        }
-        if ( (items & eSynth)  == eSynth )
-        {
-            if (m_synth_nav->Get(type_name, synth))
-            {
-                if (matching_category)
-                    *matching_category = m_name.c_str();
-                if (matching_type)
-                    *matching_type = eSynth;
-                return true;
-            }
-        }
-        if ( (items & eRegexSynth) == eRegexSynth )
-        {
-            if (m_regex_synth_nav->Get(type_name, synth))
-            {
-                if (matching_category)
-                    *matching_category = m_name.c_str();
-                if (matching_type)
-                    *matching_type = eRegexSynth;
-                return true;
-            }
-        }
-        return false;
-    }
+               FormatCategoryItems* matching_type = NULL);
     
     typedef lldb::SharedPtr<FormatCategory>::Type SharedPointer;
+    
+private:
+    SummaryNavigator::SharedPointer m_summary_nav;
+    RegexSummaryNavigator::SharedPointer m_regex_summary_nav;
+    FilterNavigator::SharedPointer m_filter_nav;
+    RegexFilterNavigator::SharedPointer m_regex_filter_nav;
+    SynthNavigator::SharedPointer m_synth_nav;
+    RegexSynthNavigator::SharedPointer m_regex_synth_nav;
+    
+    bool m_enabled;
+    
+    IFormatChangeListener* m_change_listener;
+    
+    Mutex m_mutex;
+    
+    std::string m_name;
+    
+    void
+    Enable (bool value = true)
+    {
+        Mutex::Locker(m_mutex);
+        m_enabled = value;        
+        if (m_change_listener)
+            m_change_listener->Changed();
+    }
+    
+    void
+    Disable ()
+    {
+        Enable(false);
+    }
+    
+    friend class CategoryMap;
+    
+    friend class FormatNavigator<ConstString, SummaryFormat>;
+    friend class FormatNavigator<lldb::RegularExpressionSP, SummaryFormat>;
+    
+    friend class FormatNavigator<ConstString, SyntheticFilter>;
+    friend class FormatNavigator<lldb::RegularExpressionSP, SyntheticFilter>;
+    
+    friend class FormatNavigator<ConstString, SyntheticScriptProvider>;
+    friend class FormatNavigator<lldb::RegularExpressionSP, SyntheticScriptProvider>;
+    
+
 };
 
 class CategoryMap
@@ -985,40 +850,11 @@ private:
     typedef const char* KeyType;
     typedef FormatCategory ValueType;
     typedef ValueType::SharedPointer ValueSP;
-    typedef std::list<FormatCategory::SharedPointer> ActiveCategoriesList;
+    typedef std::list<lldb::FormatCategorySP> ActiveCategoriesList;
     typedef ActiveCategoriesList::iterator ActiveCategoriesIterator;
-    
-    Mutex m_map_mutex;
-    IFormatChangeListener* listener;
-    
-    
-    friend class FormatNavigator<KeyType, ValueType>;
-    friend class FormatManager;
-    
+        
 public:
     typedef std::map<KeyType, ValueSP> MapType;
-    
-private:    
-    MapType m_map;
-    ActiveCategoriesList m_active_categories;
-    
-    MapType& map()
-    {
-        return m_map;
-    }
-    
-    ActiveCategoriesList& active_list()
-    {
-        return m_active_categories;
-    }
-    
-    Mutex& mutex()
-    {
-        return m_map_mutex;
-    }
-    
-public:
-    
     typedef MapType::iterator MapIterator;
     typedef bool(*CallbackType)(void*, KeyType, const ValueSP&);
     
@@ -1041,7 +877,7 @@ public:
     }
     
     bool
-    Delete(KeyType name)
+    Delete (KeyType name)
     {
         Mutex::Locker(m_map_mutex);
         MapIterator iter = m_map.find(name);
@@ -1055,7 +891,7 @@ public:
     }
     
     void
-    EnableCategory(KeyType category_name)
+    EnableCategory (KeyType category_name)
     {
         Mutex::Locker(m_map_mutex);
         ValueSP category;
@@ -1067,19 +903,19 @@ public:
     
     class delete_matching_categories
     {
-        FormatCategory::SharedPointer ptr;
+        lldb::FormatCategorySP ptr;
     public:
-        delete_matching_categories(FormatCategory::SharedPointer p) : ptr(p)
+        delete_matching_categories(lldb::FormatCategorySP p) : ptr(p)
         {}
         
-        bool operator()(const FormatCategory::SharedPointer& other)
+        bool operator()(const lldb::FormatCategorySP& other)
         {
             return ptr.get() == other.get();
         }
     };
     
     void
-    DisableCategory(KeyType category_name)
+    DisableCategory (KeyType category_name)
     {
         Mutex::Locker(m_map_mutex);
         ValueSP category;
@@ -1090,7 +926,7 @@ public:
     }
     
     void
-    Clear()
+    Clear ()
     {
         Mutex::Locker(m_map_mutex);
         m_map.clear();
@@ -1112,38 +948,7 @@ public:
     }
     
     void
-    LoopThrough(CallbackType callback, void* param)
-    {
-        if (callback)
-        {
-            Mutex::Locker(m_map_mutex);
-            
-            // loop through enabled categories in respective order
-            {
-                ActiveCategoriesIterator begin, end = m_active_categories.end();
-                for (begin = m_active_categories.begin(); begin != end; begin++)
-                {
-                    FormatCategory::SharedPointer category = *begin;
-                    const char* type = category->GetName().c_str();
-                    if (!callback(param, type, category))
-                        break;
-                }
-            }
-            
-            // loop through disabled categories in just any order
-            {
-                MapIterator pos, end = m_map.end();
-                for (pos = m_map.begin(); pos != end; pos++)
-                {
-                    if (pos->second->IsEnabled())
-                        continue;
-                    KeyType type = pos->first;
-                    if (!callback(param, type, pos->second))
-                        break;
-                }
-            }
-        }
-    }
+    LoopThrough (CallbackType callback, void* param);
     
     bool
     AnyMatches(ConstString type_name,
@@ -1168,7 +973,7 @@ public:
     }
     
     uint32_t
-    GetCount()
+    GetCount ()
     {
         return m_map.size();
     }
@@ -1185,20 +990,10 @@ public:
         
         for (begin = m_active_categories.begin(); begin != end; begin++)
         {
-            FormatCategory::SharedPointer category = *begin;
+            lldb::FormatCategorySP category = *begin;
             lldb::SummaryFormatSP current_format;
             if (!category->Get(valobj, current_format, use_dynamic, &reason_why))
                 continue;
-            /*if (reason_why == lldb::eFormatterChoiceCriterionDirectChoice)
-             {
-             entry = current_format;
-             return true;
-             }
-             else if (first)
-             {
-             entry = current_format;
-             first = false;
-             }*/
             entry = current_format;
             return true;
         }
@@ -1218,26 +1013,40 @@ public:
         
         for (begin = m_active_categories.begin(); begin != end; begin++)
         {
-            FormatCategory::SharedPointer category = *begin;
+            lldb::FormatCategorySP category = *begin;
             lldb::SyntheticChildrenSP current_format;
             if (!category->Get(valobj, current_format, use_dynamic, &reason_why))
                 continue;
-            /*if (reason_why == lldb::eFormatterChoiceCriterionDirectChoice)
-            {
-                entry = current_format;
-                return true;
-            }
-            else if (first)
-            {
-                entry = current_format;
-                first = false;
-            }*/
             entry = current_format;
             return true;
         }
         return false;
     }
-
+    
+private:
+    Mutex m_map_mutex;
+    IFormatChangeListener* listener;
+    
+    MapType m_map;
+    ActiveCategoriesList m_active_categories;
+    
+    MapType& map ()
+    {
+        return m_map;
+    }
+    
+    ActiveCategoriesList& active_list()
+    {
+        return m_active_categories;
+    }
+    
+    Mutex& mutex ()
+    {
+        return m_map_mutex;
+    }
+    
+    friend class FormatNavigator<KeyType, ValueType>;
+    friend class FormatManager;
 };
 
 
@@ -1249,46 +1058,46 @@ private:
 
     typedef ValueNavigator::MapType ValueMap;
     typedef FormatMap<ConstString, SummaryFormat> NamedSummariesMap;
-        
-    ValueNavigator m_value_nav;
-    NamedSummariesMap m_named_summaries_map;
-    uint32_t m_last_revision;
-    CategoryMap m_categories_map;
-    
-    const char* m_default_category_name;
-    const char* m_system_category_name;
-    const char* m_gnu_cpp_category_name;
-        
     typedef CategoryMap::MapType::iterator CategoryMapIterator;
-    
-    ConstString m_default_cs;
-    ConstString m_system_cs;
-    ConstString m_gnu_stdcpp_cs;
 
 public:
     
-    typedef bool (*CategoryCallback)(void*, const char*, const FormatCategory::SharedPointer&);
+    typedef bool (*CategoryCallback)(void*, const char*, const lldb::FormatCategorySP&);
     
-    FormatManager();
+    FormatManager ();
     
-    CategoryMap& Categories() { return m_categories_map; }
-    ValueNavigator& Value() { return m_value_nav; }
-    NamedSummariesMap& NamedSummary() { return m_named_summaries_map; }
-
+    CategoryMap&
+    Categories ()
+    {
+        return m_categories_map;
+    }
+    
+    ValueNavigator&
+    Value ()
+    {
+        return m_value_nav;
+    }
+    
+    NamedSummariesMap&
+    NamedSummary ()
+    {
+        return m_named_summaries_map;
+    }
+    
     void
-    EnableCategory(const char* category_name)
+    EnableCategory (const char* category_name)
     {
         m_categories_map.EnableCategory(category_name);
     }
     
     void
-    DisableCategory(const char* category_name)
+    DisableCategory (const char* category_name)
     {
         m_categories_map.DisableCategory(category_name);
     }
     
     void
-    LoopThroughCategories(CategoryCallback callback, void* param)
+    LoopThroughCategories (CategoryCallback callback, void* param)
     {
         m_categories_map.LoopThrough(callback, param);
     }
@@ -1296,17 +1105,17 @@ public:
     FormatCategory::SummaryNavigatorSP
     Summary(const char* category_name = NULL)
     {
-        return Category(category_name)->Summary();
+        return Category(category_name)->GetSummaryNavigator();
     }
     
     FormatCategory::RegexSummaryNavigatorSP
-    RegexSummary(const char* category_name = NULL)
+    RegexSummary (const char* category_name = NULL)
     {
-        return Category(category_name)->RegexSummary();
+        return Category(category_name)->GetRegexSummaryNavigator();
     }
     
     lldb::FormatCategorySP
-    Category(const char* category_name = NULL)
+    Category (const char* category_name = NULL)
     {
         if (!category_name)
             return Category(m_default_category_name);
@@ -1363,21 +1172,34 @@ public:
     GetSingleItemFormat(lldb::Format vector_format);
     
     void
-    Changed()
+    Changed ()
     {
         __sync_add_and_fetch(&m_last_revision, +1);
     }
     
     uint32_t
-    GetCurrentRevision()
+    GetCurrentRevision ()
     {
         return m_last_revision;
     }
     
-    ~FormatManager()
+    ~FormatManager ()
     {
     }
 
+private:    
+    ValueNavigator m_value_nav;
+    NamedSummariesMap m_named_summaries_map;
+    uint32_t m_last_revision;
+    CategoryMap m_categories_map;
+    
+    const char* m_default_category_name;
+    const char* m_system_category_name;
+    const char* m_gnu_cpp_category_name;
+    
+    ConstString m_default_cs;
+    ConstString m_system_cs;
+    ConstString m_gnu_stdcpp_cs;
 };
 
 class DataVisualization
@@ -1388,29 +1210,29 @@ public:
     static void
     ForceUpdate();
     
+    static uint32_t
+    GetCurrentRevision ();
+    
     class ValueFormats
     {
     public:
         static bool
-        Get(ValueObject& valobj, lldb::DynamicValueType use_dynamic, ValueFormat::SharedPointer &entry);
+        Get (ValueObject& valobj, lldb::DynamicValueType use_dynamic, lldb::ValueFormatSP &entry);
         
         static void
-        Add(const ConstString &type, const ValueFormat::SharedPointer &entry);
+        Add (const ConstString &type, const lldb::ValueFormatSP &entry);
         
         static bool
-        Delete(const ConstString &type);
+        Delete (const ConstString &type);
         
         static void
-        Clear();
+        Clear ();
         
         static void
-        LoopThrough(ValueFormat::ValueCallback callback, void* callback_baton);
+        LoopThrough (ValueFormat::ValueCallback callback, void* callback_baton);
         
         static uint32_t
-        GetCurrentRevision();
-        
-        static uint32_t
-        GetCount();
+        GetCount ();
     };
     
     static bool
@@ -1433,25 +1255,22 @@ public:
     {
     public:
         static bool
-        Get(const ConstString &type, lldb::SummaryFormatSP &entry);
+        Get (const ConstString &type, lldb::SummaryFormatSP &entry);
         
         static void
-        Add(const ConstString &type, const lldb::SummaryFormatSP &entry);
+        Add (const ConstString &type, const lldb::SummaryFormatSP &entry);
         
         static bool
-        Delete(const ConstString &type);
+        Delete (const ConstString &type);
         
         static void
-        Clear();
+        Clear ();
         
         static void
-        LoopThrough(SummaryFormat::SummaryCallback callback, void* callback_baton);
+        LoopThrough (SummaryFormat::SummaryCallback callback, void* callback_baton);
         
         static uint32_t
-        GetCurrentRevision();
-        
-        static uint32_t
-        GetCount();
+        GetCount ();
     };
     
     class Categories
@@ -1459,34 +1278,31 @@ public:
     public:
         
         static bool
-        Get(const ConstString &category, lldb::FormatCategorySP &entry);
+        Get (const ConstString &category, lldb::FormatCategorySP &entry);
         
         static void
-        Add(const ConstString &category);
+        Add (const ConstString &category);
         
         static bool
-        Delete(const ConstString &category);
+        Delete (const ConstString &category);
         
         static void
-        Clear();
+        Clear ();
         
         static void
-        Clear(ConstString &category);
+        Clear (ConstString &category);
         
         static void
-        Enable(ConstString& category);
+        Enable (ConstString& category);
         
         static void
-        Disable(ConstString& category);
+        Disable (ConstString& category);
         
         static void
-        LoopThrough(FormatManager::CategoryCallback callback, void* callback_baton);
+        LoopThrough (FormatManager::CategoryCallback callback, void* callback_baton);
         
         static uint32_t
-        GetCurrentRevision();
-        
-        static uint32_t
-        GetCount();
+        GetCount ();
     };
 };
 

@@ -1055,16 +1055,20 @@ Debugger::FormatPrompt
                                 int64_t index_higher = -1;
                                 bool is_array_range = false;
                                 const char* first_unparsed;
+                                bool was_plain_var = false;
+                                bool was_var_format = false;
 
                                 if (!valobj) break;
                                 // simplest case ${var}, just print valobj's value
                                 if (::strncmp (var_name_begin, "var}", strlen("var}")) == 0)
                                 {
+                                    was_plain_var = true;
                                     target = valobj;
                                     val_obj_display = ValueObject::eDisplayValue;
                                 }
                                 else if (::strncmp(var_name_begin,"var%",strlen("var%")) == 0)
                                 {
+                                    was_var_format = true;
                                     // this is a variable with some custom format applied to it
                                     const char* percent_position;
                                     target = valobj;
@@ -1151,19 +1155,38 @@ Debugger::FormatPrompt
                                     do_deref_pointer = false;
                                 }
                                 
+                                // TODO use flags for these
                                 bool is_array = ClangASTContext::IsArrayType(target->GetClangType());
                                 bool is_pointer = ClangASTContext::IsPointerType(target->GetClangType());
+                                bool is_aggregate = ClangASTContext::IsAggregateType(target->GetClangType());
                                 
                                 if ((is_array || is_pointer) && (!is_array_range) && val_obj_display == ValueObject::eDisplayValue) // this should be wrong, but there are some exceptions
                                 {
+                                    StreamString str_temp;
                                     if (log)
                                         log->Printf("I am into array || pointer && !range");
                                     // try to use the special cases
-                                    var_success = target->DumpPrintableRepresentation(s,val_obj_display, custom_format);
-                                    if (!var_success)
-                                        s << "<invalid, please use [] operator>";
+                                    var_success = target->DumpPrintableRepresentation(str_temp,
+                                                                                      val_obj_display,
+                                                                                      custom_format);
                                     if (log)
                                         log->Printf("special cases did%s match", var_success ? "" : "n't");
+                                    if (!var_success)
+                                    {
+                                        s << "<invalid usage of pointer value as object>";
+                                        var_success = true;
+                                    }
+                                    else
+                                        s << str_temp.GetData();
+                                    break;
+                                }
+                                
+                                // if directly trying to print ${var} using its value, and this is an aggregate, display a nice
+                                // error message about it (and avoid recursion in DumpPrintableRepresentation)
+                                if (is_aggregate && ((was_var_format && val_obj_display == ValueObject::eDisplayValue) || was_plain_var))
+                                {
+                                    s << "<invalid use of aggregate type>";
+                                    var_success = true;
                                     break;
                                 }
                                                                 

@@ -57,7 +57,7 @@ struct ValueFormat
     }
     
     typedef lldb::SharedPtr<ValueFormat>::Type SharedPointer;
-    typedef bool(*ValueCallback)(void*, ConstString, const ValueFormat::SharedPointer&);
+    typedef bool(*ValueCallback)(void*, ConstString, const lldb::ValueFormatSP&);
     
     ~ValueFormat()
     {
@@ -295,7 +295,10 @@ public:
     
     
     std::string
-    GetPythonClassName() { return m_python_class; }
+    GetPythonClassName()
+    {
+        return m_python_class;
+    }
     
     std::string
     GetDescription();
@@ -453,8 +456,8 @@ struct SummaryFormat
     GetDescription() = 0;
     
     typedef lldb::SharedPtr<SummaryFormat>::Type SharedPointer;
-    typedef bool(*SummaryCallback)(void*, ConstString, const SummaryFormat::SharedPointer&);
-    typedef bool(*RegexSummaryCallback)(void*, lldb::RegularExpressionSP, const SummaryFormat::SharedPointer&);
+    typedef bool(*SummaryCallback)(void*, ConstString, const lldb::SummaryFormatSP&);
+    typedef bool(*RegexSummaryCallback)(void*, lldb::RegularExpressionSP, const lldb::SummaryFormatSP&);
     
 };
 

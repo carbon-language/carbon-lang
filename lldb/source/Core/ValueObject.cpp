@@ -224,13 +224,13 @@ ValueObject::UpdateFormatsIfNeeded(lldb::DynamicValueType use_dynamic)
         log->Printf("checking for FormatManager revisions. VO named %s is at revision %d, while the format manager is at revision %d",
            GetName().GetCString(),
            m_last_format_mgr_revision,
-           DataVisualization::ValueFormats::GetCurrentRevision());
+           DataVisualization::GetCurrentRevision());
     if (HasCustomSummaryFormat() && m_update_point.GetModID() != m_user_id_of_forced_summary)
     {
         ClearCustomSummaryFormat();
         m_summary_str.clear();
     }
-    if ( (m_last_format_mgr_revision != DataVisualization::ValueFormats::GetCurrentRevision()) ||
+    if ( (m_last_format_mgr_revision != DataVisualization::GetCurrentRevision()) ||
           m_last_format_mgr_dynamic != use_dynamic)
     {
         if (m_last_summary_format.get())
@@ -246,7 +246,7 @@ ValueObject::UpdateFormatsIfNeeded(lldb::DynamicValueType use_dynamic)
         DataVisualization::GetSummaryFormat(*this, use_dynamic, m_last_summary_format);
         DataVisualization::GetSyntheticChildren(*this, use_dynamic, m_last_synthetic_filter);
 
-        m_last_format_mgr_revision = DataVisualization::ValueFormats::GetCurrentRevision();
+        m_last_format_mgr_revision = DataVisualization::GetCurrentRevision();
         m_last_format_mgr_dynamic = use_dynamic;
 
         ClearUserVisibleData();
@@ -1029,7 +1029,8 @@ ValueObject::GetPrintableRepresentation(Stream& s,
 bool
 ValueObject::DumpPrintableRepresentation(Stream& s,
                                          ValueObjectRepresentationStyle val_obj_display,
-                                         lldb::Format custom_format)
+                                         lldb::Format custom_format,
+                                         bool only_special)
 {
 
     clang_type_t elem_or_pointee_type;
@@ -1147,6 +1148,10 @@ ValueObject::DumpPrintableRepresentation(Stream& s,
             (custom_format == lldb::eFormatDefault)) // use the [] operator
             return false;
     }
+    
+    if (only_special)
+        return false;
+    
     bool var_success = GetPrintableRepresentation(s, val_obj_display, custom_format);
     if (custom_format != eFormatInvalid)
         SetFormat(eFormatDefault);
@@ -1727,7 +1732,8 @@ ValueObject::GetExpressionPath (Stream &s, bool qualify_cxx_base_classes, GetExp
 {
     const bool is_deref_of_parent = IsDereferenceOfParent ();
 
-    if (is_deref_of_parent && epformat == eDereferencePointers) {
+    if (is_deref_of_parent && epformat == eDereferencePointers)
+    {
         // this is the original format of GetExpressionPath() producing code like *(a_ptr).memberName, which is entirely
         // fine, until you put this into StackFrame::GetValueForVariableExpressionPath() which prefers to see a_ptr->memberName.
         // the eHonorPointers mode is meant to produce strings in this latter format
@@ -1789,7 +1795,8 @@ ValueObject::GetExpressionPath (Stream &s, bool qualify_cxx_base_classes, GetExp
         }
     }
     
-    if (is_deref_of_parent && epformat == eDereferencePointers) {
+    if (is_deref_of_parent && epformat == eDereferencePointers)
+    {
         s.PutChar(')');
     }
 }

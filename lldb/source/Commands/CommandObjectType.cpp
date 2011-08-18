@@ -195,7 +195,8 @@ public:
 
         // now I have a valid format, let's add it to every type
         
-        for (size_t i = 0; i < argc; i++) {
+        for (size_t i = 0; i < argc; i++)
+        {
             const char* typeA = command.GetArgumentAtIndex(i);
             ConstString typeCS(typeA);
             if (typeCS)
@@ -325,7 +326,7 @@ public:
 // CommandObjectTypeFormatList
 //-------------------------------------------------------------------------
 
-bool CommandObjectTypeFormatList_LoopCallback(void* pt2self, ConstString type, const ValueFormat::SharedPointer& entry);
+bool CommandObjectTypeFormatList_LoopCallback(void* pt2self, ConstString type, const lldb::ValueFormatSP& entry);
 
 class CommandObjectTypeFormatList;
 
@@ -368,7 +369,8 @@ public:
         
         CommandObjectTypeFormatList_LoopCallbackParam *param;
         
-        if (argc == 1) {
+        if (argc == 1)
+        {
             RegularExpression* regex = new RegularExpression(command.GetArgumentAtIndex(0));
             regex->Compile(command.GetArgumentAtIndex(0));
             param = new CommandObjectTypeFormatList_LoopCallbackParam(this,&result,regex);
@@ -385,7 +387,7 @@ private:
     
     bool
     LoopCallback (ConstString type,
-                  const ValueFormat::SharedPointer& entry,
+                  const lldb::ValueFormatSP& entry,
                   RegularExpression* regex,
                   CommandReturnObject *result)
     {
@@ -400,7 +402,7 @@ private:
         return true;
     }
     
-    friend bool CommandObjectTypeFormatList_LoopCallback(void* pt2self, ConstString type, const ValueFormat::SharedPointer& entry);
+    friend bool CommandObjectTypeFormatList_LoopCallback(void* pt2self, ConstString type, const lldb::ValueFormatSP& entry);
     
 };
 
@@ -408,7 +410,7 @@ bool
 CommandObjectTypeFormatList_LoopCallback (
                                     void* pt2self,
                                     ConstString type,
-                                    const ValueFormat::SharedPointer& entry)
+                                    const lldb::ValueFormatSP& entry)
 {
     CommandObjectTypeFormatList_LoopCallbackParam* param = (CommandObjectTypeFormatList_LoopCallbackParam*)pt2self;
     return param->self->LoopCallback(type, entry, param->regex, param->result);
@@ -788,7 +790,8 @@ CommandObjectTypeSummaryAdd::Execute_ScriptSummary (Args& command, CommandReturn
                                                          m_options.m_name,
                                                          m_options.m_category);
         
-        for (size_t i = 0; i < argc; i++) {
+        for (size_t i = 0; i < argc; i++)
+        {
             const char* typeA = command.GetArgumentAtIndex(i);
             if (typeA && *typeA)
                 options->m_target_types << typeA;
@@ -872,7 +875,7 @@ CommandObjectTypeSummaryAdd::Execute_StringSummary (Args& command, CommandReturn
     
     Error error;
     
-    SummaryFormat::SharedPointer entry(new StringSummaryFormat(m_options.m_cascade,
+    lldb::SummaryFormatSP entry(new StringSummaryFormat(m_options.m_cascade,
                                                                m_options.m_skip_pointers,
                                                                m_options.m_skip_references,
                                                                m_options.m_no_children,
@@ -889,7 +892,8 @@ CommandObjectTypeSummaryAdd::Execute_StringSummary (Args& command, CommandReturn
     
     // now I have a valid format, let's add it to every type
     
-    for (size_t i = 0; i < argc; i++) {
+    for (size_t i = 0; i < argc; i++)
+    {
         const char* typeA = command.GetArgumentAtIndex(i);
         if (!typeA || typeA[0] == '\0')
         {
@@ -1049,8 +1053,8 @@ CommandObjectTypeSummaryAdd::AddSummary(const ConstString& type_name,
             return false;
         }
         
-        category->RegexSummary()->Delete(type_name);
-        category->RegexSummary()->Add(typeRX, entry);
+        category->GetRegexSummaryNavigator()->Delete(type_name);
+        category->GetRegexSummaryNavigator()->Add(typeRX, entry);
         
         return true;
     }
@@ -1062,7 +1066,7 @@ CommandObjectTypeSummaryAdd::AddSummary(const ConstString& type_name,
     }
     else
     {
-        category->Summary()->Add(type_name, entry);
+        category->GetSummaryNavigator()->Add(type_name, entry);
         return true;
     }
 }    
@@ -1163,7 +1167,7 @@ private:
     static bool
     PerCategoryCallback(void* param,
                         const char* cate_name,
-                        const FormatCategory::SharedPointer& cate)
+                        const lldb::FormatCategorySP& cate)
     {
         ConstString *name = (ConstString*)param;
         cate->Delete(*name, FormatCategory::eSummary | FormatCategory::eRegexSummary);
@@ -1319,10 +1323,10 @@ private:
     static bool
     PerCategoryCallback(void* param,
                         const char* cate_name,
-                        const FormatCategory::SharedPointer& cate)
+                        const lldb::FormatCategorySP& cate)
     {
-        cate->Summary()->Clear();
-        cate->RegexSummary()->Clear();
+        cate->GetSummaryNavigator()->Clear();
+        cate->GetRegexSummaryNavigator()->Clear();
         return true;
         
     }
@@ -1491,7 +1495,8 @@ public:
         m_options.m_category_regex.empty() ? NULL :
         new RegularExpression(m_options.m_category_regex.c_str());
         
-        if (argc == 1) {
+        if (argc == 1)
+        {
             RegularExpression* regex = new RegularExpression(command.GetArgumentAtIndex(0));
             regex->Compile(command.GetArgumentAtIndex(0));
             param = new CommandObjectTypeSummaryList_LoopCallbackParam(this,&result,regex,cate_regex);
@@ -1504,7 +1509,8 @@ public:
         if (DataVisualization::NamedSummaryFormats::GetCount() > 0)
         {
             result.GetOutputStream().Printf("Named summaries:\n");
-            if (argc == 1) {
+            if (argc == 1)
+            {
                 RegularExpression* regex = new RegularExpression(command.GetArgumentAtIndex(0));
                 regex->Compile(command.GetArgumentAtIndex(0));
                 param = new CommandObjectTypeSummaryList_LoopCallbackParam(this,&result,regex);
@@ -1527,7 +1533,7 @@ private:
     static bool
     PerCategoryCallback(void* param_vp,
                         const char* cate_name,
-                        const FormatCategory::SharedPointer& cate)
+                        const lldb::FormatCategorySP& cate)
     {
         
         CommandObjectTypeSummaryList_LoopCallbackParam* param = 
@@ -1546,12 +1552,12 @@ private:
                                          cate_name,
                                          (cate->IsEnabled() ? "enabled" : "disabled"));
                 
-        cate->Summary()->LoopThrough(CommandObjectTypeSummaryList_LoopCallback, param_vp);
+        cate->GetSummaryNavigator()->LoopThrough(CommandObjectTypeSummaryList_LoopCallback, param_vp);
         
-        if (cate->RegexSummary()->GetCount() > 0)
+        if (cate->GetRegexSummaryNavigator()->GetCount() > 0)
         {
             result->GetOutputStream().Printf("Regex-based summaries (slower):\n");
-            cate->RegexSummary()->LoopThrough(CommandObjectTypeRXSummaryList_LoopCallback, param_vp);
+            cate->GetRegexSummaryNavigator()->LoopThrough(CommandObjectTypeRXSummaryList_LoopCallback, param_vp);
         }
         return true;
     }
@@ -1559,7 +1565,7 @@ private:
     
     bool
     LoopCallback (const char* type,
-                  const SummaryFormat::SharedPointer& entry,
+                  const lldb::SummaryFormatSP& entry,
                   RegularExpression* regex,
                   CommandReturnObject *result)
     {
@@ -1568,15 +1574,15 @@ private:
         return true;
     }
     
-    friend bool CommandObjectTypeSummaryList_LoopCallback(void* pt2self, ConstString type, const SummaryFormat::SharedPointer& entry);
-    friend bool CommandObjectTypeRXSummaryList_LoopCallback(void* pt2self, lldb::RegularExpressionSP regex, const SummaryFormat::SharedPointer& entry);
+    friend bool CommandObjectTypeSummaryList_LoopCallback(void* pt2self, ConstString type, const lldb::SummaryFormatSP& entry);
+    friend bool CommandObjectTypeRXSummaryList_LoopCallback(void* pt2self, lldb::RegularExpressionSP regex, const lldb::SummaryFormatSP& entry);
 };
 
 bool
 CommandObjectTypeSummaryList_LoopCallback (
                                           void* pt2self,
                                           ConstString type,
-                                          const SummaryFormat::SharedPointer& entry)
+                                          const lldb::SummaryFormatSP& entry)
 {
     CommandObjectTypeSummaryList_LoopCallbackParam* param = (CommandObjectTypeSummaryList_LoopCallbackParam*)pt2self;
     return param->self->LoopCallback(type.AsCString(), entry, param->regex, param->result);
@@ -1586,7 +1592,7 @@ bool
 CommandObjectTypeRXSummaryList_LoopCallback (
                                            void* pt2self,
                                            lldb::RegularExpressionSP regex,
-                                           const SummaryFormat::SharedPointer& entry)
+                                           const lldb::SummaryFormatSP& entry)
 {
     CommandObjectTypeSummaryList_LoopCallbackParam* param = (CommandObjectTypeSummaryList_LoopCallbackParam*)pt2self;
     return param->self->LoopCallback(regex->GetText(), entry, param->regex, param->result);
@@ -1819,7 +1825,7 @@ private:
     static bool
     PerCategoryCallback(void* param_vp,
                         const char* cate_name,
-                        const FormatCategory::SharedPointer& cate)
+                        const lldb::FormatCategorySP& cate)
     {
         CommandObjectTypeCategoryList_CallbackParam* param =
             (CommandObjectTypeCategoryList_CallbackParam*)param_vp;
@@ -2000,7 +2006,8 @@ public:
         m_options.m_category_regex.empty() ? NULL :
         new RegularExpression(m_options.m_category_regex.c_str());
         
-        if (argc == 1) {
+        if (argc == 1)
+        {
             RegularExpression* regex = new RegularExpression(command.GetArgumentAtIndex(0));
             regex->Compile(command.GetArgumentAtIndex(0));
             param = new CommandObjectTypeFilterList_LoopCallbackParam(this,&result,regex,cate_regex);
@@ -2022,7 +2029,7 @@ private:
     static bool
     PerCategoryCallback(void* param_vp,
                         const char* cate_name,
-                        const FormatCategory::SharedPointer& cate)
+                        const lldb::FormatCategorySP& cate)
     {
         
         CommandObjectTypeFilterList_LoopCallbackParam* param = 
@@ -2041,12 +2048,12 @@ private:
                                          cate_name,
                                          (cate->IsEnabled() ? "enabled" : "disabled"));
         
-        cate->Filter()->LoopThrough(CommandObjectTypeFilterList_LoopCallback, param_vp);
+        cate->GetFilterNavigator()->LoopThrough(CommandObjectTypeFilterList_LoopCallback, param_vp);
         
-        if (cate->RegexFilter()->GetCount() > 0)
+        if (cate->GetRegexFilterNavigator()->GetCount() > 0)
         {
             result->GetOutputStream().Printf("Regex-based filters (slower):\n");
-            cate->RegexFilter()->LoopThrough(CommandObjectTypeFilterRXList_LoopCallback, param_vp);
+            cate->GetRegexFilterNavigator()->LoopThrough(CommandObjectTypeFilterRXList_LoopCallback, param_vp);
         }
         
         return true;
@@ -2208,7 +2215,8 @@ public:
         m_options.m_category_regex.empty() ? NULL :
         new RegularExpression(m_options.m_category_regex.c_str());
         
-        if (argc == 1) {
+        if (argc == 1)
+        {
             RegularExpression* regex = new RegularExpression(command.GetArgumentAtIndex(0));
             regex->Compile(command.GetArgumentAtIndex(0));
             param = new CommandObjectTypeSynthList_LoopCallbackParam(this,&result,regex,cate_regex);
@@ -2230,7 +2238,7 @@ private:
     static bool
     PerCategoryCallback(void* param_vp,
                         const char* cate_name,
-                        const FormatCategory::SharedPointer& cate)
+                        const lldb::FormatCategorySP& cate)
     {
         
         CommandObjectTypeSynthList_LoopCallbackParam* param = 
@@ -2249,12 +2257,12 @@ private:
                                          cate_name,
                                          (cate->IsEnabled() ? "enabled" : "disabled"));
         
-        cate->Synth()->LoopThrough(CommandObjectTypeSynthList_LoopCallback, param_vp);
+        cate->GetSyntheticNavigator()->LoopThrough(CommandObjectTypeSynthList_LoopCallback, param_vp);
         
-        if (cate->RegexSynth()->GetCount() > 0)
+        if (cate->GetRegexSyntheticNavigator()->GetCount() > 0)
         {
             result->GetOutputStream().Printf("Regex-based synthetic providers (slower):\n");
-            cate->RegexSynth()->LoopThrough(CommandObjectTypeSynthRXList_LoopCallback, param_vp);
+            cate->GetRegexSyntheticNavigator()->LoopThrough(CommandObjectTypeSynthRXList_LoopCallback, param_vp);
         }
         
         return true;
@@ -2377,7 +2385,7 @@ private:
     static bool
     PerCategoryCallback(void* param,
                         const char* cate_name,
-                        const FormatCategory::SharedPointer& cate)
+                        const lldb::FormatCategorySP& cate)
     {
         ConstString *name = (ConstString*)param;
         return cate->Delete(*name, FormatCategory::eFilter | FormatCategory::eRegexFilter);
@@ -2438,8 +2446,8 @@ public:
         lldb::FormatCategorySP category;
         DataVisualization::Categories::Get(ConstString(m_options.m_category.c_str()), category);
         
-        bool delete_category = category->Filter()->Delete(typeCS);
-        delete_category = category->RegexFilter()->Delete(typeCS) || delete_category;
+        bool delete_category = category->GetFilterNavigator()->Delete(typeCS);
+        delete_category = category->GetRegexFilterNavigator()->Delete(typeCS) || delete_category;
         
         if (delete_category)
         {
@@ -2540,7 +2548,7 @@ private:
     static bool
     PerCategoryCallback(void* param,
                         const char* cate_name,
-                        const FormatCategory::SharedPointer& cate)
+                        const lldb::FormatCategorySP& cate)
     {
         ConstString* name = (ConstString*)param;
         return cate->Delete(*name, FormatCategory::eSynth | FormatCategory::eRegexSynth);
@@ -2601,8 +2609,8 @@ public:
         lldb::FormatCategorySP category;
         DataVisualization::Categories::Get(ConstString(m_options.m_category.c_str()), category);
         
-        bool delete_category = category->Synth()->Delete(typeCS);
-        delete_category = category->RegexSynth()->Delete(typeCS) || delete_category;
+        bool delete_category = category->GetSyntheticNavigator()->Delete(typeCS);
+        delete_category = category->GetRegexSyntheticNavigator()->Delete(typeCS) || delete_category;
         
         if (delete_category)
         {
@@ -2699,7 +2707,7 @@ private:
     static bool
     PerCategoryCallback(void* param,
                         const char* cate_name,
-                        const FormatCategory::SharedPointer& cate)
+                        const lldb::FormatCategorySP& cate)
     {
         cate->Clear(FormatCategory::eFilter | FormatCategory::eRegexFilter);
         return true;
@@ -2737,8 +2745,8 @@ public:
             }
             else
                 DataVisualization::Categories::Get(ConstString(NULL), category);
-            category->Filter()->Clear();
-            category->RegexFilter()->Clear();
+            category->GetFilterNavigator()->Clear();
+            category->GetRegexFilterNavigator()->Clear();
         }
         
         result.SetStatus(eReturnStatusSuccessFinishResult);
@@ -2826,7 +2834,7 @@ private:
     static bool
     PerCategoryCallback(void* param,
                         const char* cate_name,
-                        const FormatCategory::SharedPointer& cate)
+                        const lldb::FormatCategorySP& cate)
     {
         cate->Clear(FormatCategory::eSynth | FormatCategory::eRegexSynth);
         return true;
@@ -2864,8 +2872,8 @@ public:
             }
             else
                 DataVisualization::Categories::Get(ConstString(NULL), category);
-            category->Synth()->Clear();
-            category->RegexSynth()->Clear();
+            category->GetSyntheticNavigator()->Clear();
+            category->GetRegexSyntheticNavigator()->Clear();
         }
         
         result.SetStatus(eReturnStatusSuccessFinishResult);
@@ -3018,7 +3026,8 @@ public:
         
         Error error;
         
-        for (size_t i = 0; i < options->m_target_types.GetSize(); i++) {
+        for (size_t i = 0; i < options->m_target_types.GetSize(); i++)
+        {
             const char *type_name = options->m_target_types.GetStringAtIndex(i);
             ConstString typeCS(type_name);
             if (typeCS)
@@ -3084,7 +3093,8 @@ CommandObjectTypeSynthAdd::Execute_HandwritePython (Args& command, CommandReturn
     
     const size_t argc = command.GetArgumentCount();
     
-    for (size_t i = 0; i < argc; i++) {
+    for (size_t i = 0; i < argc; i++)
+    {
         const char* typeA = command.GetArgumentAtIndex(i);
         if (typeA && *typeA)
             options->m_target_types << typeA;
@@ -3135,7 +3145,8 @@ CommandObjectTypeSynthAdd::Execute_PythonClass (Args& command, CommandReturnObje
     
     Error error;
     
-    for (size_t i = 0; i < argc; i++) {
+    for (size_t i = 0; i < argc; i++)
+    {
         const char* typeA = command.GetArgumentAtIndex(i);
         ConstString typeCS(typeA);
         if (typeCS)
@@ -3210,14 +3221,14 @@ CommandObjectTypeSynthAdd::AddSynth(const ConstString& type_name,
             return false;
         }
         
-        category->RegexSynth()->Delete(type_name);
-        category->RegexSynth()->Add(typeRX, entry);
+        category->GetRegexSyntheticNavigator()->Delete(type_name);
+        category->GetRegexSyntheticNavigator()->Add(typeRX, entry);
         
         return true;
     }
     else
     {
-        category->Synth()->Add(type_name, entry);
+        category->GetSyntheticNavigator()->Add(type_name, entry);
         return true;
     }
 }
@@ -3387,14 +3398,14 @@ private:
                 return false;
             }
             
-            category->RegexFilter()->Delete(type_name);
-            category->RegexFilter()->Add(typeRX, entry);
+            category->GetRegexFilterNavigator()->Delete(type_name);
+            category->GetRegexFilterNavigator()->Add(typeRX, entry);
             
             return true;
         }
         else
         {
-            category->Filter()->Add(type_name, entry);
+            category->GetFilterNavigator()->Add(type_name, entry);
             return true;
         }
     }
@@ -3466,7 +3477,8 @@ public:
         
         Error error;
         
-        for (size_t i = 0; i < argc; i++) {
+        for (size_t i = 0; i < argc; i++)
+        {
             const char* typeA = command.GetArgumentAtIndex(i);
             ConstString typeCS(typeA);
             if (typeCS)

@@ -59,7 +59,8 @@ CommandObjectScript::ExecuteRawCommandString
 
     DataVisualization::ForceUpdate(); // script might change Python code we use for formatting.. make sure we keep up to date with it
     
-    if (command == NULL || command[0] == '\0') {
+    if (command == NULL || command[0] == '\0')
+    {
         script_interpreter->ExecuteInterpreterLoop ();
         result.SetStatus (eReturnStatusSuccessFinishNoResult);
         return result.Succeeded();

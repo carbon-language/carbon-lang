@@ -57,7 +57,7 @@ class DataFormatterTestCase(TestBase):
         self.runCmd("type summary add -f \"${var%V}\" SomeData")
 
         self.expect("frame variable data",
-            substrs = ['no printable representation'])
+            substrs = ['invalid use of aggregate type'])
 # ${var%s}
         self.runCmd("type summary add -f \"ptr = ${var%s}\" \"char *\"")
 
@@ -169,12 +169,10 @@ class DataFormatterTestCase(TestBase):
         self.runCmd("type summary add -f \"arr = ${var%x}\" \"int [5]\"")
         
         self.expect("frame variable intarr",
-                    substrs = ['intarr = {',
-                               '[0] = 1'])
+                    substrs = ['<invalid usage of pointer value as object>'])
         
         self.expect("frame variable other.intarr",
-                    substrs = ['intarr = {',
-                               '[0] = 9'])
+                    substrs = ['<invalid usage of pointer value as object>'])
 
         self.runCmd("type summary add -f \"arr = ${var[]%x}\" \"int [5]\"")
         

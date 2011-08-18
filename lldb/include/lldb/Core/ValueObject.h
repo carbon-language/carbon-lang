@@ -660,7 +660,8 @@ public:
     bool
     DumpPrintableRepresentation(Stream& s,
                                 ValueObjectRepresentationStyle val_obj_display = eDisplaySummary,
-                                lldb::Format custom_format = lldb::eFormatInvalid);
+                                lldb::Format custom_format = lldb::eFormatInvalid,
+                                bool only_special = false);
     bool
     GetValueIsValid () const;
 
