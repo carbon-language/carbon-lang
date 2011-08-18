@@ -417,9 +417,6 @@ private:
   /// metadata node with tag DW_TAG_compile_unit.
   CompileUnit *constructCompileUnit(const MDNode *N);
 
-  /// constructGlobalVariableDIE - Construct global variable DIE.
-  void constructGlobalVariableDIE(CompileUnit *TheCU, const MDNode *N);
-
   /// construct SubprogramDIE - Construct subprogram DIE.
   void constructSubprogramDIE(CompileUnit *TheCU, const MDNode *N);
 

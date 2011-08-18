@@ -1035,6 +1035,9 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
     return;
 
   DIGlobalVariable GV(N);
+  if (!GV.Verify())
+    return;
+
   DIE *VariableDIE = new DIE(GV.getTag());
   // Add to map.
   insertDIE(N, VariableDIE);

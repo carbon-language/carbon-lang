@@ -510,19 +510,6 @@ CompileUnit *DwarfDebug::constructCompileUnit(const MDNode *N) {
   return NewCU;
 }
 
-/// constructGlobalVariableDIE - Construct global variable DIE.
-void DwarfDebug::constructGlobalVariableDIE(CompileUnit *TheCU,
-                                            const MDNode *N) {
-  DIGlobalVariable GV(N);
-
-  // If debug information is malformed then ignore it.
-  if (GV.Verify() == false)
-    return;
-
-  TheCU->createGlobalVariableDIE(N);
-  return;
-}
-
 /// construct SubprogramDIE - Construct subprogram DIE.
 void DwarfDebug::constructSubprogramDIE(CompileUnit *TheCU, 
                                         const MDNode *N) {
@@ -561,7 +548,7 @@ void DwarfDebug::collectInfoFromNamedMDNodes(Module *M) {
     for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i) {
       const MDNode *N = NMD->getOperand(i);
       if (CompileUnit *CU = CUMap.lookup(DIGlobalVariable(N).getCompileUnit()))
-        constructGlobalVariableDIE(CU, N);
+        CU->createGlobalVariableDIE(N);
     }
   
   if (NamedMDNode *NMD = M->getNamedMetadata("llvm.dbg.enum"))
@@ -607,7 +594,7 @@ bool DwarfDebug::collectLegacyDebugInfo(Module *M) {
          E = DbgFinder.global_variable_end(); I != E; ++I) {
     const MDNode *N = *I;
     if (CompileUnit *CU = CUMap.lookup(DIGlobalVariable(N).getCompileUnit()))
-      constructGlobalVariableDIE(CU, N);
+      CU->createGlobalVariableDIE(N);
   }
     
   // Create DIEs for each subprogram.
@@ -637,7 +624,7 @@ void DwarfDebug::beginModule(Module *M) {
       CompileUnit *CU = constructCompileUnit(CUNode);
       DIArray GVs = CUNode.getGlobalVariables();
       for (unsigned i = 0, e = GVs.getNumElements(); i != e; ++i)
-        constructGlobalVariableDIE(CU, GVs.getElement(i));
+        CU->createGlobalVariableDIE(GVs.getElement(i));
       DIArray SPs = CUNode.getSubprograms();
       for (unsigned i = 0, e = SPs.getNumElements(); i != e; ++i)
         constructSubprogramDIE(CU, SPs.getElement(i));
