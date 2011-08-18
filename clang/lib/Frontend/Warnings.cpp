@@ -98,6 +98,13 @@ void clang::ProcessWarningOptions(Diagnostic &Diags,
       Mapping = isPositive ? diag::MAP_ERROR : diag::MAP_WARNING_NO_WERROR;
       Opt = Specifier;
     }
+    
+    // -Weverything is a special case as well.  It implicitly enables all
+    // warnings, including ones not explicitly in a warning group.
+    if (Opt == "everything") {
+      Diags.setEnableAllWarnings(true);
+      continue;
+    }
 
     // -Wfatal-errors is yet another special case.
     if (Opt.startswith("fatal-errors")) {

@@ -149,7 +149,8 @@ public:
 private:
   unsigned char AllExtensionsSilenced; // Used by __extension__
   bool IgnoreAllWarnings;        // Ignore all warnings: -w
-  bool WarningsAsErrors;         // Treat warnings like errors:
+  bool WarningsAsErrors;         // Treat warnings like errors.
+  bool EnableAllWarnings;        // Enable all warnings.
   bool ErrorsAsFatal;            // Treat errors like fatal errors.
   bool SuppressSystemWarnings;   // Suppress warnings in system headers.
   bool SuppressAllDiagnostics;   // Suppress all diagnostics.
@@ -370,6 +371,12 @@ public:
   void setIgnoreAllWarnings(bool Val) { IgnoreAllWarnings = Val; }
   bool getIgnoreAllWarnings() const { return IgnoreAllWarnings; }
 
+  /// setEnableAllWarnings - When set to true, any unmapped ignored warnings
+  /// are no longer ignored.  If this and IgnoreAllWarnings are both set,
+  /// then that one wins.
+  void setEnableAllWarnings(bool Val) { EnableAllWarnings = Val; }
+  bool getEnableAllWarnngs() const { return EnableAllWarnings; }
+  
   /// setWarningsAsErrors - When set to true, any warnings reported are issued
   /// as errors.
   void setWarningsAsErrors(bool Val) { WarningsAsErrors = Val; }
