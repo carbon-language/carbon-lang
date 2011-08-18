@@ -193,7 +193,7 @@ bool LTOCodeGenerator::compile_to_file(const char** name, std::string& errMsg)
   bool genResult = false;
   tool_output_file objFile(uniqueObjPath.c_str(), errMsg);
   if (!errMsg.empty())
-    return NULL;
+    return true;
   genResult = this->generateObjectFile(objFile.os(), errMsg);
   objFile.os().close();
   if (objFile.os().has_error()) {
