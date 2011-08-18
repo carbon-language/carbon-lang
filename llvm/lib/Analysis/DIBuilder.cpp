@@ -434,9 +434,9 @@ DIType DIBuilder::createSubroutineType(DIFile File, DIArray ParameterTypes) {
   // TAG_subroutine_type is encoded in DICompositeType format.
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_subroutine_type),
-    getNonCompileUnitScope(File),
+    llvm::Constant::getNullValue(Type::getInt32Ty(VMContext)),
     MDString::get(VMContext, ""),
-    File,
+    llvm::Constant::getNullValue(Type::getInt32Ty(VMContext)),
     ConstantInt::get(Type::getInt32Ty(VMContext), 0),
     ConstantInt::get(Type::getInt64Ty(VMContext), 0),
     ConstantInt::get(Type::getInt64Ty(VMContext), 0),
