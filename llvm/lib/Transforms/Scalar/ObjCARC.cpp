@@ -2596,8 +2596,9 @@ ObjCARCOpt::Visit(Function &F,
     Order.push_back(Stack.pop_back_val().first);
   }
   bool BottomUpNestingDetected = false;
-  while (!Order.empty()) {
-    BasicBlock *BB = Order.pop_back_val();
+  for (SmallVectorImpl<BasicBlock *>::const_reverse_iterator I =
+         Order.rbegin(), E = Order.rend(); I != E; ++I) {
+    BasicBlock *BB = *I;
     BottomUpNestingDetected |= VisitBottomUp(BB, BBStates, Retains);
   }
 
