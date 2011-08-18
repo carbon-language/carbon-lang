@@ -1,0 +1,1 @@
+float left(float *);

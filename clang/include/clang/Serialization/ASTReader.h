@@ -507,8 +507,11 @@ public:
   ///
   /// \param ImportedBy The module that is importing this module, or NULL if
   /// this module is imported directly by the user.
-  Module &addModule(StringRef FileName, ModuleKind Type,
-                    Module *ImportedBy);
+  ///
+  /// \return A pointer to the module that corresponds to this file name,
+  /// and a boolean indicating whether the module was newly added.
+  std::pair<Module *, bool> 
+  addModule(StringRef FileName, ModuleKind Type, Module *ImportedBy);
   
   /// \brief Add an in-memory buffer the list of known buffers
   void addInMemoryBuffer(StringRef FileName, llvm::MemoryBuffer *Buffer);
