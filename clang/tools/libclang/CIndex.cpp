@@ -141,7 +141,6 @@ public:
               TypeLocVisitKind, OverloadExprPartsKind,
               DeclRefExprPartsKind, LabelRefVisitKind,
               ExplicitTemplateArgsVisitKind,
-              NestedNameSpecifierVisitKind,
               NestedNameSpecifierLocVisitKind,
               DeclarationNameInfoVisitKind,
               MemberRefVisitKind, SizeOfPackExprPartsKind };
@@ -1714,27 +1713,6 @@ public:
   SourceLocation getLoc() const { 
     return SourceLocation::getFromPtrEncoding(data[1]); }
 };
-class NestedNameSpecifierVisit : public VisitorJob {
-public:
-  NestedNameSpecifierVisit(NestedNameSpecifier *NS, SourceRange R,
-                           CXCursor parent)
-    : VisitorJob(parent, VisitorJob::NestedNameSpecifierVisitKind,
-                 NS, R.getBegin().getPtrEncoding(),
-                 R.getEnd().getPtrEncoding()) {}
-  static bool classof(const VisitorJob *VJ) {
-    return VJ->getKind() == VisitorJob::NestedNameSpecifierVisitKind;
-  }
-  NestedNameSpecifier *get() const {
-    return static_cast<NestedNameSpecifier*>(data[0]);
-  }
-  SourceRange getSourceRange() const {
-    SourceLocation A =
-      SourceLocation::getFromRawEncoding((unsigned)(uintptr_t) data[1]);
-    SourceLocation B =
-      SourceLocation::getFromRawEncoding((unsigned)(uintptr_t) data[2]);
-    return SourceRange(A, B);
-  }
-};
   
 class NestedNameSpecifierLocVisit : public VisitorJob {
 public:
@@ -1836,7 +1814,6 @@ public:
   
 private:
   void AddDeclarationNameInfo(Stmt *S);
-  void AddNestedNameSpecifier(NestedNameSpecifier *NS, SourceRange R);
   void AddNestedNameSpecifierLoc(NestedNameSpecifierLoc Qualifier);
   void AddExplicitTemplateArgs(const ExplicitTemplateArgumentList *A);
   void AddMemberRef(FieldDecl *D, SourceLocation L);
@@ -1851,11 +1828,6 @@ void EnqueueVisitor::AddDeclarationNameInfo(Stmt *S) {
   // 'S' should always be non-null, since it comes from the
   // statement we are visiting.
   WL.push_back(DeclarationNameInfoVisit(S, Parent));
-}
-void EnqueueVisitor::AddNestedNameSpecifier(NestedNameSpecifier *N,
-                                            SourceRange R) {
-  if (N)
-    WL.push_back(NestedNameSpecifierVisit(N, R, Parent));
 }
 
 void 
@@ -2201,14 +2173,7 @@ bool CursorVisitor::RunVisitorWorkList(VisitorWorkList &WL) {
         }
         continue;
       }
-        
-      case VisitorJob::NestedNameSpecifierVisitKind: {
-        NestedNameSpecifierVisit *V = cast<NestedNameSpecifierVisit>(&LI);
-        if (VisitNestedNameSpecifier(V->get(), V->getSourceRange()))
-          return true;
-        continue;
-      }
-        
+
       case VisitorJob::NestedNameSpecifierLocVisitKind: {
         NestedNameSpecifierLocVisit *V = cast<NestedNameSpecifierLocVisit>(&LI);
         if (VisitNestedNameSpecifierLoc(V->get()))
