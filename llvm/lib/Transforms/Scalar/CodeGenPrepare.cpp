@@ -58,6 +58,7 @@ STATISTIC(NumMemoryInsts, "Number of memory instructions whose address "
 STATISTIC(NumExtsMoved,  "Number of [s|z]ext instructions combined with loads");
 STATISTIC(NumExtUses,    "Number of uses of [s|z]ext instructions optimized");
 STATISTIC(NumRetsDup,    "Number of return instructions duplicated");
+STATISTIC(NumDbgValueMoved, "Number of debug value instructions moved");
 
 static cl::opt<bool> DisableBranchOpts(
   "disable-cgp-branch-opts", cl::Hidden, cl::init(false),
@@ -110,6 +111,7 @@ namespace {
     bool MoveExtToFormExtLoad(Instruction *I);
     bool OptimizeExtUses(Instruction *I);
     bool DupRetToEnableTailCallOpts(ReturnInst *RI);
+    bool PlaceDbgValues(Function &F);
   };
 }
 
@@ -131,6 +133,11 @@ bool CodeGenPrepare::runOnFunction(Function &F) {
   // First pass, eliminate blocks that contain only PHI nodes and an
   // unconditional branch.
   EverMadeChange |= EliminateMostlyEmptyBlocks(F);
+
+  // llvm.dbg.value is far away from the value then iSel may not be able
+  // handle it properly. iSel will drop llvm.dbg.value if it can not 
+  // find a node corresponding to the value.
+  EverMadeChange |= PlaceDbgValues(F);
 
   bool MadeChange = true;
   while (MadeChange) {
@@ -548,22 +555,6 @@ bool CodeGenPrepare::OptimizeCallInst(CallInst *CI) {
 
   // From here on out we're working with named functions.
   if (CI->getCalledFunction() == 0) return false;
-
-  // llvm.dbg.value is far away from the value then iSel may not be able
-  // handle it properly. iSel will drop llvm.dbg.value if it can not 
-  // find a node corresponding to the value.
-  if (DbgValueInst *DVI = dyn_cast<DbgValueInst>(CI))
-    if (Instruction *VI = dyn_cast_or_null<Instruction>(DVI->getValue()))
-      if (!VI->isTerminator() &&
-          (DVI->getParent() != VI->getParent() || DT->dominates(DVI, VI))) {
-        DEBUG(dbgs() << "Moving Debug Value before :\n" << *DVI << ' ' << *VI);
-        DVI->removeFromParent();
-        if (isa<PHINode>(VI))
-          DVI->insertBefore(VI->getParent()->getFirstInsertionPt());
-        else
-          DVI->insertAfter(VI);
-        return true;
-      }
 
   // We'll need TargetData from here on out.
   const TargetData *TD = TLI ? TLI->getTargetData() : 0;
@@ -1154,5 +1145,36 @@ bool CodeGenPrepare::OptimizeBlock(BasicBlock &BB) {
   for (BasicBlock::iterator E = BB.end(); CurInstIterator != E; )
     MadeChange |= OptimizeInst(CurInstIterator++);
 
+  return MadeChange;
+}
+
+// llvm.dbg.value is far away from the value then iSel may not be able
+// handle it properly. iSel will drop llvm.dbg.value if it can not 
+// find a node corresponding to the value.
+bool CodeGenPrepare::PlaceDbgValues(Function &F) {
+  bool MadeChange = false;
+  for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
+    Instruction *PrevNonDbgInst = NULL;
+    for (BasicBlock::iterator BI = I->begin(), BE = I->end(); BI != BE;) {
+      Instruction *Insn = BI; ++BI;
+      DbgValueInst *DVI = dyn_cast<DbgValueInst>(Insn);
+      if (!DVI) {
+        PrevNonDbgInst = Insn;
+        continue;
+      }
+
+      Instruction *VI = dyn_cast_or_null<Instruction>(DVI->getValue());
+      if (VI && VI != PrevNonDbgInst && !VI->isTerminator()) {
+        DEBUG(dbgs() << "Moving Debug Value before :\n" << *DVI << ' ' << *VI);
+        DVI->removeFromParent();
+        if (isa<PHINode>(VI))
+          DVI->insertBefore(VI->getParent()->getFirstInsertionPt());
+        else
+          DVI->insertAfter(VI);
+        MadeChange = true;
+        ++NumDbgValueMoved;
+      }
+    }
+  }
   return MadeChange;
 }
