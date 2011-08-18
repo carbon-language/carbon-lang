@@ -292,21 +292,16 @@ def warn_unusual_main_decl : Warning<"'main' should not be declared "
     "%select{static|inline|static or inline}0">,
     InGroup<Main>;
 def err_unusual_main_decl : Error<"'main' is not allowed to be declared "
-    "%select{static|inline|static or inline}0">,
-    InGroup<Main>;
-def err_main_template_decl : Error<"'main' cannot be a template">,
-    InGroup<Main>;
-def err_main_returns_nonint : Error<"'main' must return 'int'">,
-    InGroup<Main>;
+    "%select{static|inline|static or inline}0">;
+def err_main_template_decl : Error<"'main' cannot be a template">;
+def err_main_returns_nonint : Error<"'main' must return 'int'">;
 def err_main_surplus_args : Error<"too many parameters (%0) for 'main': "
-    "must be 0, 2, or 3">,
-    InGroup<Main>;
+    "must be 0, 2, or 3">;
 def warn_main_one_arg : Warning<"only one parameter on 'main' declaration">,
     InGroup<Main>;
 def err_main_arg_wrong : Error<"%select{first|second|third|fourth}0 "
     "parameter of 'main' (%select{argument count|argument array|environment|"
-    "platform-specific data}0) must be of type %1">,
-    InGroup<Main>;
+    "platform-specific data}0) must be of type %1">;
 
 /// parser diagnostics
 def ext_typedef_without_a_name : ExtWarn<"typedef requires a name">,
