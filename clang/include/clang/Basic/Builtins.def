@@ -664,6 +664,9 @@ LIBBUILTIN(_exit, "vi",           "fr",    "unistd.h", ALL_LANGUAGES)
 // POSIX setjmp.h
 LIBBUILTIN(_longjmp, "vJi",       "fr",    "setjmp.h", ALL_LANGUAGES)
 LIBBUILTIN(siglongjmp, "vSJi",    "fr",    "setjmp.h", ALL_LANGUAGES)
+// non-standard but very common
+LIBBUILTIN(strlcpy, "zc*cC*z",    "f",     "string.h", ALL_LANGUAGES)
+LIBBUILTIN(strlcat, "zc*cC*z",    "f",     "string.h", ALL_LANGUAGES)
 //   id objc_msgSend(id, SEL, ...)
 LIBBUILTIN(objc_msgSend, "GGH.",   "f",     "objc/message.h", OBJC_LANG)
 
