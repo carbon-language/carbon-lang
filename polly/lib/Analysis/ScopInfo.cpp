@@ -38,6 +38,8 @@
 #include "isl/constraint.h"
 #include "isl/set.h"
 #include "isl/map.h"
+#include "isl/aff.h"
+#include "isl/printer.h"
 #include <sstream>
 #include <string>
 #include <vector>
@@ -48,65 +50,261 @@ using namespace polly;
 STATISTIC(ScopFound,  "Number of valid Scops");
 STATISTIC(RichScopFound,   "Number of Scops containing a loop");
 
-
-//===----------------------------------------------------------------------===//
-static void setCoefficient(const SCEV *Coeff, mpz_t v, bool negative,
-                           bool isSigned = true) {
-  if (Coeff) {
-    const SCEVConstant *C = dyn_cast<SCEVConstant>(Coeff);
-    const APInt &CI = C->getValue()->getValue();
-    MPZ_from_APInt(v, negative ? (-CI) : CI, isSigned);
-  } else
-    isl_int_set_si(v, 0);
+/// Convert an int into a string.
+static std::string convertInt(int number)
+{
+  if (number == 0)
+    return "0";
+  std::string temp = "";
+  std::string returnvalue = "";
+  while (number > 0)
+  {
+    temp += number % 10 + 48;
+    number /= 10;
+  }
+  for (unsigned i = 0; i < temp.length(); i++)
+    returnvalue+=temp[temp.length() - i - 1];
+  return returnvalue;
 }
+
+static isl_map *map_remove_dim_ids(isl_map *map) {
+  isl_ctx *ctx = isl_map_get_ctx(map);
+  int numParams = isl_map_n_param(map);
+  isl_printer *p = isl_printer_to_str(ctx);
+  char *str;
+
+  p = isl_printer_set_output_format (p, ISL_FORMAT_EXT_POLYLIB);
+  p = isl_printer_print_map(p, map);
+  isl_map_free (map);
+
+  str = isl_printer_get_str (p);
+  map = isl_map_read_from_str (ctx, str, numParams);
+  free (str);
+  isl_printer_free (p);
+  return map;
+}
+
+/// Translate a SCEVExpression into an isl_pw_aff object.
+struct SCEVAffinator : public SCEVVisitor<SCEVAffinator, isl_pw_aff*> {
+private:
+  isl_ctx *ctx;
+  int NbLoopDims;
+  const Scop *scop;
+
+  /// baseAdress is set if we analyze a memory access. It holds the base address
+  /// of this memory access.
+  const Value *baseAddress;
+
+public:
+  static isl_pw_aff *getPwAff(const ScopStmt *stmt, const SCEV *scev,
+                              const Value *baseAddress) {
+    SCEVAffinator Affinator(stmt, baseAddress);
+    return Affinator.visit(scev);
+  }
+
+  isl_pw_aff *visit(const SCEV *scev) {
+    // In case the scev is contained in our list of parameters, we do not
+    // further analyze this expression, but create a new parameter in the
+    // isl_pw_aff. This allows us to treat subexpressions that we cannot
+    // translate into an piecewise affine expression, as constant parameters of
+    // the piecewise affine expression.
+    int i = 0;
+    for (Scop::const_param_iterator PI = scop->param_begin(),
+         PE = scop->param_end(); PI != PE; ++PI) {
+      if (*PI == scev) {
+        isl_id *ID = isl_id_alloc(ctx, ("p" + convertInt(i)).c_str(),
+                                  (void *) scev);
+        isl_dim *Dim = isl_dim_set_alloc(ctx, 1, NbLoopDims);
+        Dim = isl_dim_set_dim_id(Dim, isl_dim_param, 0, ID);
+
+        isl_set *Domain = isl_set_universe(isl_dim_copy(Dim));
+        isl_aff *Affine = isl_aff_zero(isl_local_space_from_dim(Dim));
+        Affine = isl_aff_add_coefficient_si(Affine, isl_dim_param, 0, 1);
+
+        return isl_pw_aff_alloc(Domain, Affine);
+      }
+      i++;
+    }
+
+    return SCEVVisitor<SCEVAffinator, isl_pw_aff*>::visit(scev);
+  }
+
+  SCEVAffinator(const ScopStmt *stmt, const Value *baseAddress) :
+    ctx(stmt->getParent()->getCtx()),
+    NbLoopDims(stmt->getNumIterators()),
+    scop(stmt->getParent()),
+    baseAddress(baseAddress) {};
+
+  __isl_give isl_pw_aff *visitConstant(const SCEVConstant *Constant) {
+    ConstantInt *Value = Constant->getValue();
+    isl_int v;
+    isl_int_init(v);
+
+    // LLVM does not define if an integer value is interpreted as a signed or
+    // unsigned value. Hence, without further information, it is unknown how
+    // this value needs to be converted to GMP. At the moment, we only support
+    // signed operations. So we just interpret it as signed. Later, there are
+    // two options:
+    //
+    // 1. We always interpret any value as signed and convert the values on
+    //    demand.
+    // 2. We pass down the signedness of the calculation and use it to interpret
+    //    this constant correctly.
+    MPZ_from_APInt(v, Value->getValue(), /* isSigned */ true);
+
+    isl_dim *dim = isl_dim_set_alloc(ctx, 0, NbLoopDims);
+    isl_local_space *ls = isl_local_space_from_dim(isl_dim_copy(dim));
+    isl_aff *Affine = isl_aff_zero(ls);
+    isl_set *Domain = isl_set_universe(dim);
+
+    Affine = isl_aff_add_constant(Affine, v);
+    isl_int_clear(v);
+
+    return isl_pw_aff_alloc(Domain, Affine);
+  }
+
+  __isl_give isl_pw_aff *visitTruncateExpr(const SCEVTruncateExpr* Expr) {
+    assert(0 && "Not yet supported");
+  }
+
+  __isl_give isl_pw_aff *visitZeroExtendExpr(const SCEVZeroExtendExpr * Expr) {
+    assert(0 && "Not yet supported");
+  }
+
+  __isl_give isl_pw_aff *visitSignExtendExpr(const SCEVSignExtendExpr* Expr) {
+    // Assuming the value is signed, a sign extension is basically a noop.
+    // TODO: Reconsider this as soon as we support unsigned values.
+    return visit(Expr->getOperand());
+  }
+
+  __isl_give isl_pw_aff *visitAddExpr(const SCEVAddExpr* Expr) {
+    isl_pw_aff *Sum = visit(Expr->getOperand(0));
+
+    for (int i = 1, e = Expr->getNumOperands(); i < e; ++i) {
+      isl_pw_aff *NextSummand = visit(Expr->getOperand(i));
+      Sum = isl_pw_aff_add(Sum, NextSummand);
+    }
+
+    // TODO: Check for NSW and NUW.
+
+    return Sum;
+  }
+
+  __isl_give isl_pw_aff *visitMulExpr(const SCEVMulExpr* Expr) {
+    isl_pw_aff *Product = visit(Expr->getOperand(0));
+
+    for (int i = 1, e = Expr->getNumOperands(); i < e; ++i) {
+      isl_pw_aff *NextOperand = visit(Expr->getOperand(i));
+
+      if (!isl_pw_aff_is_cst(Product) && !isl_pw_aff_is_cst(NextOperand)) {
+        isl_pw_aff_free(Product);
+        isl_pw_aff_free(NextOperand);
+        return NULL;
+      }
+
+      Product = isl_pw_aff_mul(Product, NextOperand);
+    }
+
+    // TODO: Check for NSW and NUW.
+    return Product;
+  }
+
+  __isl_give isl_pw_aff *visitUDivExpr(const SCEVUDivExpr* Expr) {
+    assert(0 && "Not yet supported");
+  }
+
+  int getLoopDepth(const Loop *L) {
+    Loop *outerLoop =
+      scop->getRegion().outermostLoopInRegion(const_cast<Loop*>(L));
+    return L->getLoopDepth() - outerLoop->getLoopDepth();
+  }
+
+  __isl_give isl_pw_aff *visitAddRecExpr(const SCEVAddRecExpr* Expr) {
+    assert(Expr->isAffine() && "Only affine AddRecurrences allowed");
+
+    isl_pw_aff *Start = visit(Expr->getStart());
+    isl_pw_aff *Step = visit(Expr->getOperand(1));
+    isl_dim *Dim = isl_dim_set_alloc (ctx, 0, NbLoopDims);
+    isl_local_space *LocalSpace = isl_local_space_from_dim (Dim);
+
+    int loopDimension = getLoopDepth(Expr->getLoop());
+
+    isl_aff *LAff = isl_aff_set_coefficient_si (isl_aff_zero (LocalSpace),
+                                                isl_dim_set, loopDimension, 1);
+    isl_pw_aff *LPwAff = isl_pw_aff_from_aff(LAff);
+
+    // TODO: Do we need to check for NSW and NUW?
+    return isl_pw_aff_add(Start, isl_pw_aff_mul(Step, LPwAff));
+  }
+
+  __isl_give isl_pw_aff *visitSMaxExpr(const SCEVSMaxExpr* Expr) {
+    isl_pw_aff *Max = visit(Expr->getOperand(0));
+
+    for (int i = 1, e = Expr->getNumOperands(); i < e; ++i) {
+      isl_pw_aff *NextOperand = visit(Expr->getOperand(i));
+      Max = isl_pw_aff_max(Max, NextOperand);
+    }
+
+    return Max;
+  }
+
+  __isl_give isl_pw_aff *visitUMaxExpr(const SCEVUMaxExpr* Expr) {
+    assert(0 && "Not yet supported");
+  }
+
+  __isl_give isl_pw_aff *visitUnknown(const SCEVUnknown* Expr) {
+    Value *Value = Expr->getValue();
+
+    isl_dim *Dim;
+
+    /// If baseAddress is set, we ignore its Value object in the scev and do not
+    /// add it to the isl_pw_aff. This is because it is regarded as defining the
+    /// name of an array, in contrast to its array subscript.
+    if (baseAddress != Value) {
+      isl_id *ID = isl_id_alloc(ctx, Value->getNameStr().c_str(), Value);
+      Dim = isl_dim_set_alloc(ctx, 1, NbLoopDims);
+      Dim = isl_dim_set_dim_id(Dim, isl_dim_param, 0, ID);
+    } else {
+      Dim = isl_dim_set_alloc(ctx, 0, NbLoopDims);
+    }
+
+    isl_set *Domain = isl_set_universe(isl_dim_copy(Dim));
+    isl_aff *Affine = isl_aff_zero(isl_local_space_from_dim(Dim));
+
+    if (baseAddress != Value)
+      Affine = isl_aff_add_coefficient_si(Affine, isl_dim_param, 0, 1);
+
+    return isl_pw_aff_alloc(Domain, Affine);
+  }
+};
 
 static isl_map *getValueOf(const SCEVAffFunc &AffFunc,
                            const ScopStmt *Statement, isl_dim *dim) {
-
-  const SmallVectorImpl<const SCEV*> &Params =
-    Statement->getParent()->getParams();
-  unsigned num_in = Statement->getNumIterators(), num_param = Params.size();
-
-  const char *dimname = isl_dim_get_tuple_name(dim, isl_dim_set);
-  dim = isl_dim_alloc(isl_dim_get_ctx(dim), num_param,
-                      isl_dim_size(dim, isl_dim_set), 1);
-  dim = isl_dim_set_tuple_name(dim, isl_dim_in, dimname);
-
   assert((AffFunc.getType() == SCEVAffFunc::Eq
           || AffFunc.getType() == SCEVAffFunc::ReadMem
           || AffFunc.getType() == SCEVAffFunc::WriteMem)
           && "AffFunc is not an equality");
+  isl_pw_aff *Affine = SCEVAffinator::getPwAff(Statement, AffFunc.OriginalSCEV,
+                                               AffFunc.getBaseAddr());
+  isl_map *Map = isl_map_from_pw_aff(Affine);
+  isl_dim *CtxDim = isl_set_get_dim(Statement->getParent()->getContext());
 
-  isl_constraint *c = isl_equality_alloc(isl_dim_copy(dim));
-
-  isl_int v;
-  isl_int_init(v);
-
-  // Set single output dimension.
-  isl_int_set_si(v, -1);
-  isl_constraint_set_coefficient(c, isl_dim_out, 0, v);
-
-  // Set the coefficient for induction variables.
-  for (unsigned i = 0, e = num_in; i != e; ++i) {
-    setCoefficient(AffFunc.getCoeff(Statement->getSCEVForDimension(i)), v,
-                   false, AffFunc.isSigned());
-    isl_constraint_set_coefficient(c, isl_dim_in, i, v);
+  int i = 0;
+  for (Scop::const_param_iterator PI = Statement->getParent()->param_begin(),
+       PE = Statement->getParent()->param_end(); PI != PE; ++PI) {
+    const SCEV *scev = *PI;
+    isl_id *id = isl_id_alloc(isl_dim_get_ctx(CtxDim),
+                              ("p" + convertInt(i)).c_str(),
+                              (void *) scev);
+    CtxDim = isl_dim_set_dim_id(CtxDim, isl_dim_param, i, id);
+    i++;
   }
 
-  // Set the coefficient of parameters
-  for (unsigned i = 0, e = num_param; i != e; ++i) {
-    setCoefficient(AffFunc.getCoeff(Params[i]), v, false, AffFunc.isSigned());
-    isl_constraint_set_coefficient(c, isl_dim_param, i, v);
-  }
-
-  // Set the constant.
-  setCoefficient(AffFunc.getTransComp(), v, false, AffFunc.isSigned());
-  isl_constraint_set_constant(c, v);
-  isl_int_clear(v);
-
-  isl_basic_map *BasicMap = isl_basic_map_universe(isl_dim_copy(dim));
-  BasicMap = isl_basic_map_add_constraint(BasicMap, c);
-  return isl_map_from_basic_map(BasicMap);
+  isl_map_align_params(Map, CtxDim);
+  const char *dimname = isl_dim_get_tuple_name(dim, isl_dim_set);
+  Map = map_remove_dim_ids(Map);
+  Map = isl_map_set_tuple_name(Map, isl_dim_in, dimname);
+  return Map;
 }
 //===----------------------------------------------------------------------===//
 
