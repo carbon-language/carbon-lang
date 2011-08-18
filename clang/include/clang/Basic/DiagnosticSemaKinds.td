@@ -278,13 +278,6 @@ def warn_sizeof_pointer_type_memaccess : Warning<
   "argument to 'sizeof' in %0 call is the same pointer type %1 as the "
   "%select{destination|source}2; expected %3 or an explicit length">,
   InGroup<DiagGroup<"sizeof-pointer-memaccess">>;
-def warn_strlcpycat_wrong_size : Warning<
-  "size argument in %0 call appears to be size of the source; expected the size of "
-  "the destination">,
-  DefaultIgnore,
-  InGroup<DiagGroup<"strlcpy-size">>;
-def note_strlcpycat_wrong_size : Note<
-  "change size argument to be the size of the destination">;
 
 /// main()
 // static/inline main() are not errors in C, just in C++.
