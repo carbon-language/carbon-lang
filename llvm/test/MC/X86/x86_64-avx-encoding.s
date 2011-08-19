@@ -3332,3 +3332,7 @@ vdivpd  -4(%rcx,%rbx,8), %xmm10, %xmm11
 // CHECK: encoding: [0xc4,0xc1,0x78,0x28,0x1c,0x1e]
           vmovaps	(%r14,%rbx), %xmm3
 
+// CHECK: vmovaps %xmm3, (%rax,%r11)
+// CHECK: encoding: [0xc4,0xa1,0x78,0x29,0x1c,0x18]
+          vmovaps %xmm3, (%rax,%r11)
+
