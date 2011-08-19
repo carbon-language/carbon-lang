@@ -17,6 +17,7 @@
 #include "llvm/CodeGen/RegAllocRegistry.h"
 #include "llvm/CodeGen/SchedulerRegistry.h"
 #include "llvm/Target/TargetRegistry.h"
+#include "llvm/Support/DynamicLibrary.h"
 
 using namespace llvm;
 
@@ -59,6 +60,16 @@ bool SPUTargetMachine::addInstSelector(PassManagerBase &PM,
 bool SPUTargetMachine::
 addPreEmitPass(PassManagerBase &PM, CodeGenOpt::Level OptLevel) 
 {
+
+  // load the TCE instruction scheduler, if available via
+  // loaded plugins
+  typedef llvm::FunctionPass* (*BuilderFunc)(const char*);
+  BuilderFunc schedulerCreator = 
+      (BuilderFunc)llvm::sys::DynamicLibrary::SearchForAddressOfSymbol(
+          "createTCESchedulerPass");
+  if (schedulerCreator != NULL)
+      PM.add(schedulerCreator("cellspu"));
+
   //align instructions with nops/lnops for dual issue
   PM.add(createSPUNopFillerPass(*this));
   return true;
