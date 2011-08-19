@@ -1114,6 +1114,10 @@ def tRSB :                      // A8.6.141
                "rsb", "\t$Rd, $Rn, #0",
                [(set tGPR:$Rd, (ineg tGPR:$Rn))]>;
 
+def : InstAlias<"neg${s}${p} $Rd, $Rm",
+                (tRSB tGPR:$Rd, CPSR, tGPR:$Rm, pred:$p)>,
+        Requires<[IsThumb]>;
+
 // Subtract with carry register
 let Uses = [CPSR] in
 def tSBC :                      // A8.6.151
