@@ -161,7 +161,7 @@ def cc_out : OptionalDefOperand<OtherVT, (ops CCR), (ops (i32 zero_reg))> {
   let EncoderMethod = "getCCOutOpValue";
   let PrintMethod = "printSBitModifierOperand";
   let ParserMatchClass = CCOutOperand;
-	let DecoderMethod = "DecodeCCOutOperand";
+  let DecoderMethod = "DecodeCCOutOperand";
 }
 
 // Same as cc_out except it defaults to setting CPSR.
@@ -169,7 +169,7 @@ def s_cc_out : OptionalDefOperand<OtherVT, (ops CCR), (ops (i32 CPSR))> {
   let EncoderMethod = "getCCOutOpValue";
   let PrintMethod = "printSBitModifierOperand";
   let ParserMatchClass = CCOutOperand;
-	let DecoderMethod = "DecodeCCOutOperand";
+  let DecoderMethod = "DecodeCCOutOperand";
 }
 
 // ARM special operands for disassembly only.
