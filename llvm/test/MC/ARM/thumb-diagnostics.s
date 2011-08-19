@@ -49,3 +49,14 @@ error: invalid operand for instruction
 @ CHECK-ERRORS: error: writeback operator '!' expected
 @ CHECK-ERRORS:         ldm r2, {r5, r7}
 @ CHECK-ERRORS:             ^
+
+
+@ Out of range immediates for LSL instruction.
+        lsls r4, r5, #-1
+        lsls r4, r5, #32
+@ CHECK-ERRORS: error: invalid operand for instruction
+@ CHECK-ERRORS:         lsls r4, r5, #-1
+@ CHECK-ERRORS:                      ^
+@ CHECK-ERRORS: error: invalid operand for instruction
+@ CHECK-ERRORS:         lsls r4, r5, #32
+@ CHECK-ERRORS:                      ^

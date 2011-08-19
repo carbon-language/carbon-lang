@@ -970,7 +970,7 @@ def tEOR :                      // A8.6.45
 
 // LSL immediate
 def tLSLri :                    // A8.6.88
-  T1sIGenEncodeImm<{0,0,0,?,?}, (outs tGPR:$Rd), (ins tGPR:$Rm, i32imm:$imm5),
+  T1sIGenEncodeImm<{0,0,0,?,?}, (outs tGPR:$Rd), (ins tGPR:$Rm, imm0_31:$imm5),
                    IIC_iMOVsi,
                    "lsl", "\t$Rd, $Rm, $imm5",
                    [(set tGPR:$Rd, (shl tGPR:$Rm, (i32 imm:$imm5)))]> {

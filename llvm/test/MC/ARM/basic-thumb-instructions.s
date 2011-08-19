@@ -260,3 +260,13 @@ _func:
 
 @ CHECK: ldrsb	r6, [r2, r6]            @ encoding: [0x96,0x57]
 @ CHECK: ldrsh	r3, [r7, r1]            @ encoding: [0x7b,0x5e]
+
+
+@------------------------------------------------------------------------------
+@ LSL (immediate)
+@------------------------------------------------------------------------------
+        lsls r4, r5, #0
+        lsls r4, r5, #4
+
+@ CHECK: lsls	r4, r5, #0              @ encoding: [0x2c,0x00]
+@ CHECK: lsls	r4, r5, #4              @ encoding: [0x2c,0x01]
