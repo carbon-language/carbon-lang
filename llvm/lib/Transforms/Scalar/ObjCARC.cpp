@@ -877,7 +877,9 @@ bool ObjCARCExpand::runOnFunction(Function &F) {
 // usually can't sink them past other calls, which would be the main
 // case where it would be useful.
 
-/// TODO: The pointer returned from objc_loadWeakRetained is retained.
+// TODO: The pointer returned from objc_loadWeakRetained is retained.
+
+// TODO: Delete release+retain pairs (rare).
 
 #include "llvm/GlobalAlias.h"
 #include "llvm/Constants.h"
@@ -1124,13 +1126,19 @@ namespace {
   /// retain-decrement-use-release sequence or release-use-decrement-retain
   /// reverese sequence.
   struct RRInfo {
-    /// KnownIncremented - After an objc_retain, the reference count of the
-    /// referenced object is known to be positive. Similarly, before an
-    /// objc_release, the reference count of the referenced object is known to
-    /// be positive. If there are retain-release pairs in code regions where the
-    /// retain count is known to be positive, they can be eliminated, regardless
-    /// of any side effects between them.
-    bool KnownIncremented;
+    /// KnownSafe - After an objc_retain, the reference count of the referenced
+    /// object is known to be positive. Similarly, before an objc_release, the
+    /// reference count of the referenced object is known to be positive. If
+    /// there are retain-release pairs in code regions where the retain count
+    /// is known to be positive, they can be eliminated, regardless of any side
+    /// effects between them.
+    ///
+    /// Also, a retain+release pair nested within another retain+release
+    /// pair all on the known same pointer value can be eliminated, regardless
+    /// of any intervening side effects.
+    ///
+    /// KnownSafe is true when either of these conditions is satisfied.
+    bool KnownSafe;
 
     /// IsRetainBlock - True if the Calls are objc_retainBlock calls (as
     /// opposed to objc_retain calls).
@@ -1153,7 +1161,7 @@ namespace {
     SmallPtrSet<Instruction *, 2> ReverseInsertPts;
 
     RRInfo() :
-      KnownIncremented(false), IsRetainBlock(false), IsTailCallRelease(false),
+      KnownSafe(false), IsRetainBlock(false), IsTailCallRelease(false),
       ReleaseMetadata(0) {}
 
     void clear();
@@ -1161,7 +1169,7 @@ namespace {
 }
 
 void RRInfo::clear() {
-  KnownIncremented = false;
+  KnownSafe = false;
   IsRetainBlock = false;
   IsTailCallRelease = false;
   ReleaseMetadata = 0;
@@ -1176,6 +1184,9 @@ namespace {
     /// RefCount - The known minimum number of reference count increments.
     unsigned RefCount;
 
+    /// NestCount - The known minimum level of retain+release nesting.
+    unsigned NestCount;
+
     /// Seq - The current position in the sequence.
     Sequence Seq;
 
@@ -1184,7 +1195,7 @@ namespace {
     /// TODO: Encapsulate this better.
     RRInfo RRI;
 
-    PtrState() : RefCount(0), Seq(S_None) {}
+    PtrState() : RefCount(0), NestCount(0), Seq(S_None) {}
 
     void SetAtLeastOneRefCount()  {
       if (RefCount == 0) RefCount = 1;
@@ -1200,6 +1211,18 @@ namespace {
 
     bool IsKnownIncremented() const {
       return RefCount > 0;
+    }
+
+    void IncrementNestCount() {
+      if (NestCount != UINT_MAX) ++NestCount;
+    }
+
+    void DecrementNestCount() {
+      if (NestCount != 0) --NestCount;
+    }
+
+    bool IsKnownNested() const {
+      return NestCount > 0;
     }
 
     void SetSeq(Sequence NewSeq) {
@@ -1233,6 +1256,7 @@ void
 PtrState::Merge(const PtrState &Other, bool TopDown) {
   Seq = MergeSeqs(Seq, Other.Seq, TopDown);
   RefCount = std::min(RefCount, Other.RefCount);
+  NestCount = std::min(NestCount, Other.NestCount);
 
   // We can't merge a plain objc_retain with an objc_retainBlock.
   if (RRI.IsRetainBlock != Other.RRI.IsRetainBlock)
@@ -1245,7 +1269,7 @@ PtrState::Merge(const PtrState &Other, bool TopDown) {
     if (RRI.ReleaseMetadata != Other.RRI.ReleaseMetadata)
       RRI.ReleaseMetadata = 0;
 
-    RRI.KnownIncremented = RRI.KnownIncremented && Other.RRI.KnownIncremented;
+    RRI.KnownSafe = RRI.KnownSafe && Other.RRI.KnownSafe;
     RRI.IsTailCallRelease = RRI.IsTailCallRelease && Other.RRI.IsTailCallRelease;
     RRI.Calls.insert(Other.RRI.Calls.begin(), Other.RRI.Calls.end());
     RRI.ReverseInsertPts.insert(Other.RRI.ReverseInsertPts.begin(),
@@ -2166,7 +2190,7 @@ ObjCARCOpt::CheckForCFGHazards(const BasicBlock *BB,
         switch (SuccS.GetSeq()) {
         case S_None:
         case S_CanRelease: {
-          if (!S.RRI.KnownIncremented && !SuccS.RRI.KnownIncremented)
+          if (!S.RRI.KnownSafe && !SuccS.RRI.KnownSafe)
             S.ClearSequenceProgress();
           continue;
         }
@@ -2176,7 +2200,7 @@ ObjCARCOpt::CheckForCFGHazards(const BasicBlock *BB,
         case S_Stop:
         case S_Release:
         case S_MovableRelease:
-          if (!S.RRI.KnownIncremented && !SuccS.RRI.KnownIncremented)
+          if (!S.RRI.KnownSafe && !SuccS.RRI.KnownSafe)
             AllSuccsHaveSame = false;
           break;
         case S_Retain:
@@ -2199,7 +2223,7 @@ ObjCARCOpt::CheckForCFGHazards(const BasicBlock *BB,
         PtrState &SuccS = BBStates[*SI].getPtrBottomUpState(Arg);
         switch (SuccS.GetSeq()) {
         case S_None: {
-          if (!S.RRI.KnownIncremented && !SuccS.RRI.KnownIncremented)
+          if (!S.RRI.KnownSafe && !SuccS.RRI.KnownSafe)
             S.ClearSequenceProgress();
           continue;
         }
@@ -2210,7 +2234,7 @@ ObjCARCOpt::CheckForCFGHazards(const BasicBlock *BB,
         case S_Release:
         case S_MovableRelease:
         case S_Use:
-          if (!S.RRI.KnownIncremented && !SuccS.RRI.KnownIncremented)
+          if (!S.RRI.KnownSafe && !SuccS.RRI.KnownSafe)
             AllSuccsHaveSame = false;
           break;
         case S_Retain:
@@ -2285,11 +2309,12 @@ ObjCARCOpt::VisitBottomUp(BasicBlock *BB,
 
       S.SetSeqToRelease(Inst->getMetadata(ImpreciseReleaseMDKind));
       S.RRI.clear();
-      S.RRI.KnownIncremented = S.IsKnownIncremented();
+      S.RRI.KnownSafe = S.IsKnownNested() || S.IsKnownIncremented();
       S.RRI.IsTailCallRelease = cast<CallInst>(Inst)->isTailCall();
       S.RRI.Calls.insert(Inst);
 
       S.IncrementRefCount();
+      S.IncrementNestCount();
       break;
     }
     case IC_RetainBlock:
@@ -2300,6 +2325,7 @@ ObjCARCOpt::VisitBottomUp(BasicBlock *BB,
       PtrState &S = MyStates.getPtrBottomUpState(Arg);
       S.DecrementRefCount();
       S.SetAtLeastOneRefCount();
+      S.DecrementNestCount();
 
       switch (S.GetSeq()) {
       case S_Stop:
@@ -2322,7 +2348,7 @@ ObjCARCOpt::VisitBottomUp(BasicBlock *BB,
       case S_Retain:
         llvm_unreachable("bottom-up pointer in retain state!");
       }
-      break;
+      continue;
     }
     case IC_AutoreleasepoolPop:
       // Conservatively, clear MyStates for all known pointers.
@@ -2346,11 +2372,9 @@ ObjCARCOpt::VisitBottomUp(BasicBlock *BB,
       PtrState &S = MI->second;
       Sequence Seq = S.GetSeq();
 
-      // Check for possible releases. Note that we don't have to update
-      // S's RefCount because any reference count modifications would be
-      // done through a different provenance.
-      if (!IsRetain(Class) && Class != IC_RetainBlock &&
-          CanAlterRefCount(Inst, Ptr, PA, Class))
+      // Check for possible releases.
+      if (CanAlterRefCount(Inst, Ptr, PA, Class)) {
+        S.DecrementRefCount();
         switch (Seq) {
         case S_Use:
           S.SetSeq(S_CanRelease);
@@ -2364,6 +2388,7 @@ ObjCARCOpt::VisitBottomUp(BasicBlock *BB,
         case S_Retain:
           llvm_unreachable("bottom-up pointer in retain state!");
         }
+      }
 
       // Check for possible direct uses.
       switch (Seq) {
@@ -2464,19 +2489,23 @@ ObjCARCOpt::VisitTopDown(BasicBlock *BB,
         S.SetSeq(S_Retain);
         S.RRI.clear();
         S.RRI.IsRetainBlock = Class == IC_RetainBlock;
-        S.RRI.KnownIncremented = S.IsKnownIncremented();
+        // Don't check S.IsKnownIncremented() here because it's not
+        // sufficient.
+        S.RRI.KnownSafe = S.IsKnownNested();
         S.RRI.Calls.insert(Inst);
       }
 
       S.SetAtLeastOneRefCount();
       S.IncrementRefCount();
-      break;
+      S.IncrementNestCount();
+      continue;
     }
     case IC_Release: {
       Arg = GetObjCArg(Inst);
 
       PtrState &S = MyStates.getPtrTopDownState(Arg);
       S.DecrementRefCount();
+      S.DecrementNestCount();
 
       switch (S.GetSeq()) {
       case S_Retain:
@@ -2520,11 +2549,9 @@ ObjCARCOpt::VisitTopDown(BasicBlock *BB,
       PtrState &S = MI->second;
       Sequence Seq = S.GetSeq();
 
-      // Check for possible releases. Note that we don't have to update
-      // S's RefCount because any reference count modifications would be
-      // done through a different provenance.
-      if (!IsRetain(Class) && Class != IC_RetainBlock &&
-          CanAlterRefCount(Inst, Ptr, PA, Class))
+      // Check for possible releases.
+      if (CanAlterRefCount(Inst, Ptr, PA, Class)) {
+        S.DecrementRefCount();
         switch (Seq) {
         case S_Retain:
           S.SetSeq(S_CanRelease);
@@ -2544,6 +2571,7 @@ ObjCARCOpt::VisitTopDown(BasicBlock *BB,
         case S_MovableRelease:
           llvm_unreachable("top-down pointer in release state!");
         }
+      }
 
       // Check for possible direct uses.
       switch (Seq) {
@@ -2718,7 +2746,7 @@ ObjCARCOpt::PerformCodePlacement(DenseMap<const BasicBlock *, BBState>
 
     // If a pair happens in a region where it is known that the reference count
     // is already incremented, we can similarly ignore possible decrements.
-    bool KnownIncrementedTD = true, KnownIncrementedBU = true;
+    bool KnownSafeTD = true, KnownSafeBU = true;
 
     // Connect the dots between the top-down-collected RetainsToMove and
     // bottom-up-collected ReleasesToMove to form sets of related calls.
@@ -2738,7 +2766,7 @@ ObjCARCOpt::PerformCodePlacement(DenseMap<const BasicBlock *, BBState>
         MapVector<Value *, RRInfo>::const_iterator It = Retains.find(NewRetain);
         assert(It != Retains.end());
         const RRInfo &NewRetainRRI = It->second;
-        KnownIncrementedTD &= NewRetainRRI.KnownIncremented;
+        KnownSafeTD &= NewRetainRRI.KnownSafe;
         for (SmallPtrSet<Instruction *, 2>::const_iterator
              LI = NewRetainRRI.Calls.begin(),
              LE = NewRetainRRI.Calls.end(); LI != LE; ++LI) {
@@ -2794,7 +2822,7 @@ ObjCARCOpt::PerformCodePlacement(DenseMap<const BasicBlock *, BBState>
           Releases.find(NewRelease);
         assert(It != Releases.end());
         const RRInfo &NewReleaseRRI = It->second;
-        KnownIncrementedBU &= NewReleaseRRI.KnownIncremented;
+        KnownSafeBU &= NewReleaseRRI.KnownSafe;
         for (SmallPtrSet<Instruction *, 2>::const_iterator
              LI = NewReleaseRRI.Calls.begin(),
              LE = NewReleaseRRI.Calls.end(); LI != LE; ++LI) {
@@ -2842,9 +2870,9 @@ ObjCARCOpt::PerformCodePlacement(DenseMap<const BasicBlock *, BBState>
       if (NewRetains.empty()) break;
     }
 
-    // If the pointer is known incremented, we can safely delete the pair
-    // regardless of what's between them.
-    if (KnownIncrementedTD || KnownIncrementedBU) {
+    // If the pointer is known incremented or nested, we can safely delete the
+    // pair regardless of what's between them.
+    if (KnownSafeTD || KnownSafeBU) {
       RetainsToMove.ReverseInsertPts.clear();
       ReleasesToMove.ReverseInsertPts.clear();
       NewCount = 0;

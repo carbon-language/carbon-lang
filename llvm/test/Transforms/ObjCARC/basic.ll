@@ -1569,6 +1569,74 @@ if.end:                                           ; preds = %entry, %if.then
   ret void
 }
 
+; When there are adjacent retain+release pairs, the first one is
+; known unnecessary because the presence of the second one means that
+; the first one won't be deleting the object.
+
+; CHECK:      define void @test57(
+; CHECK-NEXT: entry:
+; CHECK-NEXT:   call void @use_pointer(i8* %x)
+; CHECK-NEXT:   call void @use_pointer(i8* %x)
+; CHECK-NEXT:   %0 = tail call i8* @objc_retain(i8* %x) nounwind
+; CHECK-NEXT:   call void @use_pointer(i8* %x)
+; CHECK-NEXT:   call void @use_pointer(i8* %x)
+; CHECK-NEXT:   call void @objc_release(i8* %x) nounwind
+; CHECK-NEXT:   ret void
+; CHECK-NEXT: }
+define void @test57(i8* %x) nounwind {
+entry:
+  call i8* @objc_retain(i8* %x) nounwind
+  call void @use_pointer(i8* %x)
+  call void @use_pointer(i8* %x)
+  call void @objc_release(i8* %x) nounwind
+  call i8* @objc_retain(i8* %x) nounwind
+  call void @use_pointer(i8* %x)
+  call void @use_pointer(i8* %x)
+  call void @objc_release(i8* %x) nounwind
+  ret void
+}
+
+; An adjacent retain+release pair is sufficient even if it will be
+; removed itself.
+
+; CHECK:      define void @test58(
+; CHECK-NEXT: entry:
+; CHECK-NEXT:   call void @use_pointer(i8* %x)
+; CHECK-NEXT:   call void @use_pointer(i8* %x)
+; CHECK-NEXT:   ret void
+; CHECK-NEXT: }
+define void @test58(i8* %x) nounwind {
+entry:
+  call i8* @objc_retain(i8* %x) nounwind
+  call void @use_pointer(i8* %x)
+  call void @use_pointer(i8* %x)
+  call void @objc_release(i8* %x) nounwind
+  call i8* @objc_retain(i8* %x) nounwind
+  call void @objc_release(i8* %x) nounwind
+  ret void
+}
+
+; Don't delete the second retain+release pair in an adjacent set.
+
+; CHECK:      define void @test59(
+; CHECK-NEXT: entry:
+; CHECK-NEXT:   %0 = tail call i8* @objc_retain(i8* %x) nounwind
+; CHECK-NEXT:   call void @use_pointer(i8* %x)
+; CHECK-NEXT:   call void @use_pointer(i8* %x)
+; CHECK-NEXT:   call void @objc_release(i8* %x) nounwind
+; CHECK-NEXT:   ret void
+; CHECK-NEXT: }
+define void @test59(i8* %x) nounwind {
+entry:
+  %a = call i8* @objc_retain(i8* %x) nounwind
+  call void @objc_release(i8* %x) nounwind
+  %b = call i8* @objc_retain(i8* %x) nounwind
+  call void @use_pointer(i8* %x)
+  call void @use_pointer(i8* %x)
+  call void @objc_release(i8* %x) nounwind
+  ret void
+}
+
 declare void @bar(i32 ()*)
 
 ; A few real-world testcases.
