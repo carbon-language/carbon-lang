@@ -37,17 +37,13 @@ using namespace llvm;
 
 // If I is a shifted mask, set the size (Size) and the first bit of the 
 // mask (Pos), and return true.
-static bool IsShiftedMask(uint64_t I, unsigned SizeInBits, uint64_t &Pos,
-                          uint64_t &Size) {
-  assert(SizeInBits == 32 || SizeInBits == 64);
-  bool Is32Bits = (SizeInBits == 32);
+// For example, if I is 0x003ff800, (Pos, Size) = (11, 11).  
+static bool IsShiftedMask(uint64_t I, uint64_t &Pos, uint64_t &Size) {
+  if (!isUInt<32>(I) || !isShiftedMask_32(I))
+     return false;
 
-  if ((Is32Bits == 32 && !isShiftedMask_32(I)) ||
-      (!Is32Bits && !isShiftedMask_64(I)))
-    return false;
-
-  Size = Is32Bits ? CountPopulation_32(I) : CountPopulation_64(I);
-  Pos = Is32Bits ? CountTrailingZeros_32(I) : CountTrailingZeros_64(I);
+  Size = CountPopulation_32(I);
+  Pos = CountTrailingZeros_32(I);
   return true;
 }
 
@@ -546,7 +542,7 @@ static SDValue PerformANDCombine(SDNode *N, SelectionDAG& DAG,
   uint64_t SMPos, SMSize;
   // Op's second operand must be a shifted mask.
   if (!(CN = dyn_cast<ConstantSDNode>(Mask)) ||
-      !IsShiftedMask(CN->getZExtValue(), 32, SMPos, SMSize))
+      !IsShiftedMask(CN->getZExtValue(), SMPos, SMSize))
     return SDValue();
 
   // Return if the shifted mask does not start at bit 0 or the sum of its size
@@ -579,7 +575,7 @@ static SDValue PerformORCombine(SDNode *N, SelectionDAG& DAG,
     return SDValue();
 
   if (!(CN = dyn_cast<ConstantSDNode>(And0.getOperand(1))) ||
-      !IsShiftedMask(~CN->getZExtValue(), 32, SMPos0, SMSize0))
+      !IsShiftedMask(~CN->getSExtValue(), SMPos0, SMSize0))
     return SDValue();
 
   // See if Op's second operand matches (and (shl $src, pos), mask1).
@@ -587,8 +583,7 @@ static SDValue PerformORCombine(SDNode *N, SelectionDAG& DAG,
     return SDValue();
   
   if (!(CN = dyn_cast<ConstantSDNode>(And1.getOperand(1))) ||
-      !IsShiftedMask(CN->getZExtValue(), CN->getValueSizeInBits(0), SMPos1,
-                     SMSize1))
+      !IsShiftedMask(CN->getZExtValue(), SMPos1, SMSize1))
     return SDValue();
 
   // The shift masks must have the same position and size.
