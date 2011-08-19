@@ -351,7 +351,6 @@ def python_api_test(func):
     wrapper.__python_api_test__ = True
     return wrapper
 
-from functools import wraps
 def benchmarks_test(func):
     """Decorate the item as a benchmarks test."""
     if isinstance(func, type) and issubclass(func, unittest2.TestCase):
@@ -367,6 +366,27 @@ def benchmarks_test(func):
 
     # Mark this function as such to separate them from the regular tests.
     wrapper.__benchmarks_test__ = True
+    return wrapper
+
+def expectedFailureClang(func):
+    """Decorate the item as a Clang only expectedFailure."""
+    if isinstance(func, type) and issubclass(func, unittest2.TestCase):
+        raise Exception("@expectedFailureClang can only be used to decorate a test method")
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        from unittest2 import case
+        self = args[0]
+        compiler = self.getCompiler()
+        try:
+            func(*args, **kwargs)
+        except Exception, e:
+            if "clang" in compiler:
+                raise case._ExpectedFailure(sys.exc_info())
+            else:
+                raise e
+
+        if "clang" in compiler:
+            raise case._UnexpectedSuccess
     return wrapper
 
 class Base(unittest2.TestCase):
