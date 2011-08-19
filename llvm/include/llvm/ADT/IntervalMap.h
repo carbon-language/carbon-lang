@@ -1335,6 +1335,9 @@ public:
   /// valid - Return true if the current position is valid, false for end().
   bool valid() const { return path.valid(); }
 
+  /// atBegin - Return true if the current position is the first map entry.
+  bool atBegin() const { return path.atBegin(); }
+
   /// start - Return the beginning of the current interval.
   const KeyT &start() const { return unsafeStart(); }
 
