@@ -4975,25 +4975,25 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
             (TemplateParamLists.size() ||
              D.getCXXScopeSpec().getScopeRep()->isDependent() ||
              CurContext->isDependentContext())) {
-              // ignore these
-            } else {
-              // The user tried to provide an out-of-line definition for a
-              // function that is a member of a class or namespace, but there
-              // was no such member function declared (C++ [class.mfct]p2,
-              // C++ [namespace.memdef]p2). For example:
-              //
-              // class X {
-              //   void f() const;
-              // };
-              //
-              // void X::f() { } // ill-formed
-              //
-              // Complain about this problem, and attempt to suggest close
-              // matches (e.g., those that differ only in cv-qualifiers and
-              // whether the parameter types are references).
+          // ignore these
+        } else {
+          // The user tried to provide an out-of-line definition for a
+          // function that is a member of a class or namespace, but there
+          // was no such member function declared (C++ [class.mfct]p2,
+          // C++ [namespace.memdef]p2). For example:
+          //
+          // class X {
+          //   void f() const;
+          // };
+          //
+          // void X::f() { } // ill-formed
+          //
+          // Complain about this problem, and attempt to suggest close
+          // matches (e.g., those that differ only in cv-qualifiers and
+          // whether the parameter types are references).
 
-              DiagnoseInvalidRedeclaration(*this, NewFD, false);
-            }
+          DiagnoseInvalidRedeclaration(*this, NewFD, false);
+        }
 
         // Unqualified local friend declarations are required to resolve
         // to something.
