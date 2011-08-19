@@ -202,3 +202,11 @@ _func:
 
 @ CHECK: ldr	r1, _foo                @ encoding: [A,0x49]
              @   fixup A - offset: 0, value: _foo, kind: fixup_arm_thumb_cp
+
+
+@------------------------------------------------------------------------------
+@ LDR (register)
+@------------------------------------------------------------------------------
+        ldr r1, [r2, r3]
+
+@ CHECK: ldr	r1, [r2, r3]            @ encoding: [0xd1,0x58]
