@@ -8,6 +8,9 @@
 @ This gives us good coverage while keeping the overall size of the test
 @ more reasonable.
 
+
+@ FIXME: Some 3-operand instructions have a 2-operand assembly syntax.
+
 _func:
 @ CHECK: _func
 
