@@ -179,11 +179,13 @@ def t_addrmode_is2 : Operand<i32>,
 
 // t_addrmode_is1 := reg + imm5
 //
+def t_addrmode_is1_asm_operand : AsmOperandClass { let Name = "MemThumbRIs1"; }
 def t_addrmode_is1 : Operand<i32>,
                      ComplexPattern<i32, 2, "SelectThumbAddrModeImm5S1", []> {
   let EncoderMethod = "getAddrModeISOpValue";
   let DecoderMethod = "DecodeThumbAddrModeIS";
   let PrintMethod = "printThumbAddrModeImm5S1Operand";
+  let ParserMatchClass = t_addrmode_is1_asm_operand;
   let MIOperandInfo = (ops tGPR:$base, i32imm:$offsimm);
 }
 
