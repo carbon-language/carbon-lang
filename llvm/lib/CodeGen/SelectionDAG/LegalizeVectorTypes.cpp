@@ -43,8 +43,9 @@ void DAGTypeLegalizer::ScalarizeVectorResult(SDNode *N, unsigned ResNo) {
     dbgs() << "ScalarizeVectorResult #" << ResNo << ": ";
     N->dump(&DAG);
     dbgs() << "\n";
+    dbgs() << "Do not know how to scalarize the result of this operator!\n";
 #endif
-    llvm_unreachable("Do not know how to scalarize the result of this operator!");
+    abort();
 
   case ISD::BITCAST:           R = ScalarizeVecRes_BITCAST(N); break;
   case ISD::BUILD_VECTOR:      R = N->getOperand(0); break;
