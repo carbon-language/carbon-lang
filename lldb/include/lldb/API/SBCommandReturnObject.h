@@ -25,8 +25,15 @@ public:
     SBCommandReturnObject (const lldb::SBCommandReturnObject &rhs);
 
 #ifndef SWIG
+
     const lldb::SBCommandReturnObject &
     operator = (const lldb::SBCommandReturnObject &rhs);
+    
+
+    SBCommandReturnObject (lldb_private::CommandReturnObject *ptr);
+    
+    lldb_private::CommandReturnObject *
+    Release ();
 #endif
 
     ~SBCommandReturnObject ();

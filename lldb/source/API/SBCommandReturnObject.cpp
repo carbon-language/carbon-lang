@@ -28,6 +28,17 @@ SBCommandReturnObject::SBCommandReturnObject (const SBCommandReturnObject &rhs):
         m_opaque_ap.reset (new CommandReturnObject (*rhs.m_opaque_ap));
 }
 
+SBCommandReturnObject::SBCommandReturnObject (CommandReturnObject *ptr) :
+    m_opaque_ap (ptr)
+{
+}
+
+CommandReturnObject *
+SBCommandReturnObject::Release ()
+{
+    return m_opaque_ap.release();
+}
+
 const SBCommandReturnObject &
 SBCommandReturnObject::operator = (const SBCommandReturnObject &rhs)
 {
@@ -57,7 +68,7 @@ SBCommandReturnObject::IsValid() const
 const char *
 SBCommandReturnObject::GetOutput ()
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     if (m_opaque_ap.get())
     {
@@ -77,7 +88,7 @@ SBCommandReturnObject::GetOutput ()
 const char *
 SBCommandReturnObject::GetError ()
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     if (m_opaque_ap.get())
     {
