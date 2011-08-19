@@ -152,7 +152,7 @@ def pred : PredicateOperand<OtherVT, (ops i32imm, CCR),
                                      (ops (i32 14), (i32 zero_reg))> {
   let PrintMethod = "printPredicateOperand";
   let ParserMatchClass = CondCodeOperand;
-	let DecoderMethod = "DecodePredicateOperand";
+  let DecoderMethod = "DecodePredicateOperand";
 }
 
 // Conditional code result for instructions whose 's' bit is set, e.g. subs.
