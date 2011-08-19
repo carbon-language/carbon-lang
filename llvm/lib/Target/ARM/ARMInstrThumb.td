@@ -120,6 +120,7 @@ def t_addrmode_rr : Operand<i32>,
   let EncoderMethod = "getThumbAddrModeRegRegOpValue";
   let PrintMethod = "printThumbAddrModeRROperand";
   let DecoderMethod = "DecodeThumbAddrModeRR";
+  let ParserMatchClass = t_addrmode_rr_asm_operand;
   let MIOperandInfo = (ops tGPR:$base, tGPR:$offsreg);
 }
 
