@@ -145,6 +145,8 @@ class ARMAsmParser : public MCTargetAsmParser {
                   const SmallVectorImpl<MCParsedAsmOperand*> &);
   bool cvtLdWriteBackRegAddrMode3(MCInst &Inst, unsigned Opcode,
                                   const SmallVectorImpl<MCParsedAsmOperand*> &);
+  bool cvtThumbMultiply(MCInst &Inst, unsigned Opcode,
+                        const SmallVectorImpl<MCParsedAsmOperand*> &);
 
   bool validateInstruction(MCInst &Inst,
                            const SmallVectorImpl<MCParsedAsmOperand*> &Ops);
@@ -2371,6 +2373,29 @@ cvtLdWriteBackRegAddrMode3(MCInst &Inst, unsigned Opcode,
   return true;
 }
 
+/// cvtThumbMultiple- Convert parsed operands to MCInst.
+/// Needed here because the Asm Gen Matcher can't handle properly tied operands
+/// when they refer multiple MIOperands inside a single one.
+bool ARMAsmParser::
+cvtThumbMultiply(MCInst &Inst, unsigned Opcode,
+           const SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+  // The second source operand must be the same register as the destination
+  // operand.
+  if (Operands.size() == 6 &&
+      ((ARMOperand*)Operands[3])->getReg() !=
+      ((ARMOperand*)Operands[5])->getReg()) {
+    Error(Operands[3]->getStartLoc(),
+          "destination register must match second source register");
+    return false;
+  }
+  ((ARMOperand*)Operands[3])->addRegOperands(Inst, 1);
+  ((ARMOperand*)Operands[1])->addCCOutOperands(Inst, 1);
+  ((ARMOperand*)Operands[4])->addRegOperands(Inst, 1);
+  Inst.addOperand(Inst.getOperand(0));
+  ((ARMOperand*)Operands[2])->addCondCodeOperands(Inst, 2);
+
+  return true;
+}
 
 /// Parse an ARM memory expression, return false if successful else return true
 /// or an error.  The first token must be a '[' when called.
@@ -3220,7 +3245,8 @@ MatchAndEmitInstruction(SMLoc IDLoc,
   case Match_MnemonicFail:
     return Error(IDLoc, "invalid instruction");
   case Match_ConversionFail:
-    return Error(IDLoc, "unable to convert operands to instruction");
+    // The converter function will have already emited a diagnostic.
+    return true;
   case Match_RequiresITBlock:
     return Error(IDLoc, "instruction only valid inside IT block");
   case Match_RequiresV6:

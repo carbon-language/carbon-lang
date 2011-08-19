@@ -62,3 +62,9 @@ error: invalid operand for instruction
 @ CHECK-ERRORS: error: invalid operand for instruction
 @ CHECK-ERRORS:         lsls r4, r5, #32
 @ CHECK-ERRORS:                      ^
+
+@ Mismatched source/destination operands for MUL instruction.
+        muls r1, r2, r3
+@ CHECK-ERRORS: error: destination register must match second source register
+@ CHECK-ERRORS:         muls r1, r2, r3
+@ CHECK-ERRORS:              ^

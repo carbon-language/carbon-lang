@@ -1049,10 +1049,20 @@ def tMOVSr      : T1I<(outs tGPR:$Rd), (ins tGPR:$Rm), IIC_iMOVr,
 // Multiply register
 let isCommutable = 1 in
 def tMUL :                      // A8.6.105 T1
-  T1sItDPEncode<0b1101, (outs tGPR:$Rdn), (ins tGPR:$Rn, tGPR:$Rm),
-                IIC_iMUL32,
-                "mul", "\t$Rdn, $Rm, $Rdn",
-                [(set tGPR:$Rdn, (mul tGPR:$Rn, tGPR:$Rm))]>;
+  Thumb1sI<(outs tGPR:$Rd), (ins tGPR:$Rn, tGPR:$Rm), AddrModeNone, 2,
+           IIC_iMUL32, "mul", "\t$Rd, $Rn, $Rm", "$Rm = $Rd",
+           [(set tGPR:$Rd, (mul tGPR:$Rn, tGPR:$Rm))]>,
+      T1DataProcessing<0b1101> {
+  bits<3> Rd;
+  bits<3> Rn;
+  let Inst{5-3} = Rn;
+  let Inst{2-0} = Rd;
+  let AsmMatchConverter = "cvtThumbMultiply";
+}
+
+def : InstAlias<"mul${s}${p} $Rdm, $Rn", (tMUL tGPR:$Rdm, s_cc_out:$s, tGPR:$Rn,
+                                               pred:$p)>,
+          Requires<[IsThumb]>;
 
 // Move inverse register
 def tMVN :                      // A8.6.107
