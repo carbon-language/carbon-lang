@@ -379,11 +379,11 @@ def expectedFailureClang(func):
         compiler = self.getCompiler()
         try:
             func(*args, **kwargs)
-        except Exception, e:
+        except Exception:
             if "clang" in compiler:
                 raise case._ExpectedFailure(sys.exc_info())
             else:
-                raise e
+                raise
 
         if "clang" in compiler:
             raise case._UnexpectedSuccess
