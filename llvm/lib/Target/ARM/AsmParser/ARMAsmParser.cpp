@@ -2382,16 +2382,23 @@ cvtThumbMultiply(MCInst &Inst, unsigned Opcode,
   // The second source operand must be the same register as the destination
   // operand.
   if (Operands.size() == 6 &&
-      ((ARMOperand*)Operands[3])->getReg() !=
-      ((ARMOperand*)Operands[5])->getReg()) {
+      (((ARMOperand*)Operands[3])->getReg() !=
+       ((ARMOperand*)Operands[5])->getReg()) &&
+      (((ARMOperand*)Operands[3])->getReg() !=
+       ((ARMOperand*)Operands[4])->getReg())) {
     Error(Operands[3]->getStartLoc(),
-          "destination register must match second source register");
+          "destination register must match source register");
     return false;
   }
   ((ARMOperand*)Operands[3])->addRegOperands(Inst, 1);
   ((ARMOperand*)Operands[1])->addCCOutOperands(Inst, 1);
   ((ARMOperand*)Operands[4])->addRegOperands(Inst, 1);
-  Inst.addOperand(Inst.getOperand(0));
+  // If we have a three-operand form, use that, else the second source operand
+  // is just the destination operand again.
+  if (Operands.size() == 6)
+    ((ARMOperand*)Operands[5])->addRegOperands(Inst, 1);
+  else
+    Inst.addOperand(Inst.getOperand(0));
   ((ARMOperand*)Operands[2])->addCondCodeOperands(Inst, 2);
 
   return true;
