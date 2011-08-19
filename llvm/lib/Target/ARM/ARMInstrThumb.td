@@ -125,6 +125,11 @@ def t_addrmode_rr : Operand<i32>,
 
 // t_addrmode_rrs := reg + reg
 //
+// We use separate scaled versions because the Select* functions need
+// to explicitly check for a matching constant and return false here so that
+// the reg+imm forms will match instead. This is a horrible way to do that,
+// as it forces tight coupling between the methods, but it's how selectiondag
+// currently works.
 def t_addrmode_rrs1 : Operand<i32>,
                       ComplexPattern<i32, 2, "SelectThumbAddrModeRI5S1", []> {
   let EncoderMethod = "getThumbAddrModeRegRegOpValue";
