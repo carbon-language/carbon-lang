@@ -3316,3 +3316,19 @@ vdivpd  -4(%rcx,%rbx,8), %xmm10, %xmm11
 // CHECK: encoding: [0xc4,0x63,0x1d,0x4b,0xac,0x20,0xad,0xde,0x00,0x00,0xb0]
           vblendvpd  %ymm11, 0xdead(%rax,%riz), %ymm12, %ymm13
 
+// CHECK: vmovaps	%xmm3, (%r14,%r11)
+// CHECK: encoding: [0xc4,0x81,0x78,0x29,0x1c,0x1e]
+          vmovaps	%xmm3, (%r14,%r11)
+
+// CHECK: vmovaps	(%r14,%r11), %xmm3
+// CHECK: encoding: [0xc4,0x81,0x78,0x28,0x1c,0x1e]
+          vmovaps	(%r14,%r11), %xmm3
+
+// CHECK: vmovaps	%xmm3, (%r14,%rbx)
+// CHECK: encoding: [0xc4,0xc1,0x78,0x29,0x1c,0x1e]
+          vmovaps	%xmm3, (%r14,%rbx)
+
+// CHECK: vmovaps	(%r14,%rbx), %xmm3
+// CHECK: encoding: [0xc4,0xc1,0x78,0x28,0x1c,0x1e]
+          vmovaps	(%r14,%rbx), %xmm3
+

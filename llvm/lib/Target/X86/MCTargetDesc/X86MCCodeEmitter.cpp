@@ -533,9 +533,14 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
       const MCOperand &MO = MI.getOperand(CurOp);
       if (MO.isReg() && X86II::isX86_64ExtendedReg(MO.getReg()))
         VEX_B = 0x0;
-      if (!VEX_B && MO.isReg() &&
-          ((TSFlags & X86II::FormMask) == X86II::MRMSrcMem) &&
-          X86II::isX86_64ExtendedReg(MO.getReg()))
+      // Only set VEX_X if the Index Register is extended
+      if (VEX_B || !MO.isReg())
+        continue;
+      if (!X86II::isX86_64ExtendedReg(MO.getReg()))
+        continue;
+      unsigned Frm = TSFlags & X86II::FormMask;
+      if ((Frm == X86II::MRMSrcMem && CurOp-1 == X86::AddrIndexReg) ||
+          (Frm == X86II::MRMDestMem && CurOp == X86::AddrIndexReg))
         VEX_X = 0x0;
     }
     break;
