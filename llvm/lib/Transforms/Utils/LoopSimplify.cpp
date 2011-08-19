@@ -410,13 +410,24 @@ BasicBlock *LoopSimplify::RewriteLoopExitBlock(Loop *L, BasicBlock *Exit) {
   }
 
   assert(!LoopBlocks.empty() && "No edges coming in from outside the loop?");
-  BasicBlock *NewBB = SplitBlockPredecessors(Exit, &LoopBlocks[0],
-                                             LoopBlocks.size(), ".loopexit",
-                                             this);
+  BasicBlock *NewExitBB = 0;
+
+  if (Exit->isLandingPad()) {
+    SmallVector<BasicBlock*, 2> NewBBs;
+    SplitLandingPadPredecessors(Exit, ArrayRef<BasicBlock*>(&LoopBlocks[0],
+                                                            LoopBlocks.size()),
+                                ".loopexit", ".nonloopexit",
+                                this, NewBBs);
+    NewExitBB = NewBBs[0];
+  } else {
+    NewExitBB = SplitBlockPredecessors(Exit, &LoopBlocks[0],
+                                       LoopBlocks.size(), ".loopexit",
+                                       this);
+  }
 
   DEBUG(dbgs() << "LoopSimplify: Creating dedicated exit block "
-               << NewBB->getName() << "\n");
-  return NewBB;
+               << NewExitBB->getName() << "\n");
+  return NewExitBB;
 }
 
 /// AddBlockAndPredsToSet - Add the specified block, and all of its
