@@ -1224,9 +1224,9 @@ void BugReport::addVisitor(BugReporterVisitor* visitor) {
 
 BugReport::~BugReport() {
   for (visitor_iterator I = visitor_begin(), E = visitor_end(); I != E; ++I) {
-    // TODO: Remove the isOwned method; use reference counting to track visitors?.
-    assert((*I)->isOwnedByReporterContext());
-    delete *I;
+    if ((*I)->isOwnedByReporterContext()) {
+      delete *I;
+    }
   }
 }
 
@@ -1363,7 +1363,16 @@ ExplodedGraph &GRBugReporter::getGraph() { return Eng.getGraph(); }
 ProgramStateManager&
 GRBugReporter::getStateManager() { return Eng.getStateManager(); }
 
-BugReporter::~BugReporter() { FlushReports(); }
+BugReporter::~BugReporter() {
+  FlushReports();
+
+  // Free the bug reports we are tracking.
+  typedef std::vector<BugReportEquivClass *> ContTy;
+  for (ContTy::iterator I = EQClassesVector.begin(), E = EQClassesVector.end();
+       I != E; ++I) {
+    delete *I;
+  }
+}
 
 void BugReporter::FlushReports() {
   if (BugTypes.isEmpty())
@@ -1694,6 +1703,7 @@ void BugReporter::EmitReport(BugReport* R) {
   if (!EQ) {
     EQ = new BugReportEquivClass(R);
     EQClasses.InsertNode(EQ, InsertPos);
+    EQClassesVector.push_back(EQ);
   }
   else
     EQ->AddReport(R);

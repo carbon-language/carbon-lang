@@ -128,7 +128,7 @@ public:
 
   virtual ~BugReport();
 
-  bool isOwnedByReporterContext() { return false; }
+  virtual bool isOwnedByReporterContext() { return false; }
 
   const BugType& getBugType() const { return BT; }
   BugType& getBugType() { return BT; }
@@ -275,6 +275,8 @@ private:
 
   /// The set of bug reports tracked by the BugReporter.
   llvm::FoldingSet<BugReportEquivClass> EQClasses;
+  /// A vector of BugReports for tracking the allocated pointers and cleanup.
+  std::vector<BugReportEquivClass *> EQClassesVector;
 
 protected:
   BugReporter(BugReporterData& d, Kind k) : BugTypes(F.getEmptySet()), kind(k),
