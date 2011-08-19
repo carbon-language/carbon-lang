@@ -170,6 +170,14 @@ private:
   /// definition, returns the appropriate source location pointing at the
   /// macro expansion source location entry.
   SourceLocation getExpansionLocForMacroDefLoc(SourceLocation loc) const;
+
+  /// \brief Creates SLocEntries and updates the locations of macro argument
+  /// tokens to their new expanded locations.
+  ///
+  /// \param ArgIdSpellLoc the location of the macro argument id inside the
+  /// macro definition.
+  void updateLocForMacroArgTokens(SourceLocation ArgIdSpellLoc,
+                                  Token *begin_tokens, Token *end_tokens);
 };
 
 }  // end namespace clang

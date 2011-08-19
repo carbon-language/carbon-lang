@@ -121,7 +121,6 @@ void TokenLexer::destroy() {
 /// Expand the arguments of a function-like macro so that we can quickly
 /// return preexpanded tokens from Tokens.
 void TokenLexer::ExpandFunctionArguments() {
-  SourceManager &SM = PP.getSourceManager();
 
   SmallVector<Token, 128> ResultToks;
 
@@ -225,16 +224,9 @@ void TokenLexer::ExpandFunctionArguments() {
         }
 
         if(ExpandLocStart.isValid()) {
-          SourceLocation curInst =
-              getExpansionLocForMacroDefLoc(CurTok.getLocation());
-          assert(curInst.isValid() &&
-                 "Expected arg identifier to come from definition");
-          for (unsigned i = FirstResult, e = ResultToks.size(); i != e; ++i) {
-            Token &Tok = ResultToks[i];
-            Tok.setLocation(SM.createMacroArgExpansionLoc(Tok.getLocation(),
-                                                          curInst,
-                                                          Tok.getLength()));
-          }
+          updateLocForMacroArgTokens(CurTok.getLocation(),
+                                     ResultToks.begin()+FirstResult,
+                                     ResultToks.end());
         }
 
         // If any tokens were substituted from the argument, the whitespace
@@ -282,17 +274,8 @@ void TokenLexer::ExpandFunctionArguments() {
       }
 
       if (ExpandLocStart.isValid()) {
-        SourceLocation curInst =
-            getExpansionLocForMacroDefLoc(CurTok.getLocation());
-        assert(curInst.isValid() &&
-               "Expected arg identifier to come from definition");
-        for (unsigned i = ResultToks.size() - NumToks, e = ResultToks.size();
-               i != e; ++i) {
-          Token &Tok = ResultToks[i];
-          Tok.setLocation(SM.createMacroArgExpansionLoc(Tok.getLocation(),
-                                                        curInst,
-                                                        Tok.getLength()));
-        }
+        updateLocForMacroArgTokens(CurTok.getLocation(),
+                                   ResultToks.end()-NumToks, ResultToks.end());
       }
 
       // If this token (the macro argument) was supposed to get leading
@@ -685,4 +668,68 @@ TokenLexer::getExpansionLocForMacroDefLoc(SourceLocation loc) const {
   }
 
   return SourceLocation();
+}
+
+/// \brief Finds the tokens that are consecutive (from the same FileID)
+/// creates a single SLocEntry, and assigns SourceLocations to each token that
+/// point to that SLocEntry. e.g for
+///   assert(foo == bar);
+/// There will be a single SLocEntry for the "foo == bar" chunk and locations
+/// for the 'foo', '==', 'bar' tokens will point inside that chunk.
+///
+/// \arg begin_tokens will be updated to a position past all the found
+/// consecutive tokens.
+static void updateConsecutiveMacroArgTokens(SourceManager &SM,
+                                            SourceLocation InstLoc,
+                                            Token *&begin_tokens,
+                                            Token * end_tokens) {
+  assert(begin_tokens < end_tokens);
+  Token &FirstTok = *begin_tokens;
+  FileID SpellFID = SM.getFileID(FirstTok.getLocation());
+
+  // Look for the first token that is not from the same FileID.
+  Token *NextFIDTok = begin_tokens + 1;
+  for (; NextFIDTok < end_tokens; ++NextFIDTok)
+    if (!SM.isInFileID(NextFIDTok->getLocation(), SpellFID))
+      break;
+
+  // For the consecutive tokens, find the length of the SLocEntry to contain
+  // all of them.
+  unsigned FirstOffs, LastOffs;
+  SM.isInFileID(FirstTok.getLocation(), SpellFID, &FirstOffs);
+  SM.isInFileID((NextFIDTok-1)->getLocation(), SpellFID, &LastOffs);
+  unsigned FullLength = (LastOffs - FirstOffs) + (NextFIDTok-1)->getLength();
+
+  // Create a macro expansion SLocEntry that will "contain" all of the tokens.
+  SourceLocation Expansion =
+      SM.createMacroArgExpansionLoc(FirstTok.getLocation(), InstLoc,FullLength);
+
+  // Change the location of the tokens from the spelling location to the new
+  // expanded location.
+  for (; begin_tokens < NextFIDTok; ++begin_tokens) {
+    Token &Tok = *begin_tokens;
+    unsigned Offs;
+    SM.isInFileID(Tok.getLocation(), SpellFID, &Offs);
+    Tok.setLocation(Expansion.getFileLocWithOffset(Offs - FirstOffs));
+  }
+}
+
+/// \brief Creates SLocEntries and updates the locations of macro argument
+/// tokens to their new expanded locations.
+///
+/// \param ArgIdDefLoc the location of the macro argument id inside the macro
+/// definition.
+/// \param Tokens the macro argument tokens to update.
+void TokenLexer::updateLocForMacroArgTokens(SourceLocation ArgIdSpellLoc,
+                                            Token *begin_tokens,
+                                            Token *end_tokens) {
+  SourceManager &SM = PP.getSourceManager();
+
+  SourceLocation curInst =
+      getExpansionLocForMacroDefLoc(ArgIdSpellLoc);
+  assert(curInst.isValid() &&
+         "Expected arg identifier to come from definition");
+  
+  while (begin_tokens < end_tokens)
+    updateConsecutiveMacroArgTokens(SM, curInst, begin_tokens, end_tokens);
 }

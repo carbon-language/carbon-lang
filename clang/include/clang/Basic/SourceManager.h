@@ -933,6 +933,14 @@ public:
     return NextOffset - Entry.getOffset() - 1;
   }
 
+  /// \brief Given a specific FileID, returns true if \arg Loc is inside that
+  /// FileID chunk and sets relative offset (offset of \arg Loc from beginning
+  /// of FileID) to \arg relativeOffset.
+  bool isInFileID(SourceLocation Loc, FileID FID,
+                  unsigned *RelativeOffset = 0) const {
+    return isInFileID(Loc, FID, 0, getFileIDSize(FID), RelativeOffset);
+  }
+
   /// \brief Given a specific chunk of a FileID (FileID with offset+length),
   /// returns true if \arg Loc is inside that chunk and sets relative offset
   /// (offset of \arg Loc from beginning of chunk) to \arg relativeOffset.
