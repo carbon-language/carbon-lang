@@ -303,22 +303,6 @@ public:
   }
 };
 
-static isl_map *getValueOf(const SCEVAffFunc &AffFunc,
-                           const ScopStmt *Statement, isl_dim *dim) {
-  assert((AffFunc.getType() == SCEVAffFunc::Eq
-          || AffFunc.getType() == SCEVAffFunc::ReadMem
-          || AffFunc.getType() == SCEVAffFunc::WriteMem)
-          && "AffFunc is not an equality");
-  isl_pw_aff *Affine = SCEVAffinator::getPwAff(Statement, AffFunc.OriginalSCEV,
-                                               AffFunc.getBaseAddr());
-  isl_map *Map = isl_map_from_pw_aff(Affine);
-  isl_dim *CtxDim = isl_set_get_dim(Statement->getParent()->getContext());
-
-  isl_map_align_params(Map, CtxDim);
-  const char *dimname = isl_dim_get_tuple_name(dim, isl_dim_set);
-  Map = isl_map_set_tuple_name(Map, isl_dim_in, dimname);
-  return Map;
-}
 //===----------------------------------------------------------------------===//
 
 MemoryAccess::~MemoryAccess() {
@@ -376,35 +360,30 @@ MemoryAccess::MemoryAccess(const SCEVAffFunc &AffFunc, ScopStmt *Statement) {
 
   setBaseName();
 
-  isl_dim *dim = isl_dim_set_alloc(Statement->getIslContext(),
-                                   Statement->getNumParams(),
-                                   Statement->getNumIterators());
-  dim = isl_dim_set_tuple_name(dim, isl_dim_set, Statement->getBaseName());
+  isl_pw_aff *Affine = SCEVAffinator::getPwAff(Statement, AffFunc.OriginalSCEV,
+                                               AffFunc.getBaseAddr());
 
-  AccessRelation = getValueOf(AffFunc, Statement, dim);
-
-  // Devide the access function by the size of the elements in the function.
-  isl_dim *dim2 = isl_dim_alloc(Statement->getIslContext(),
-                                0, 1, 1);
-  isl_basic_map *bmap = isl_basic_map_universe(isl_dim_copy(dim2));
-  isl_constraint *c = isl_equality_alloc(dim2);
+  // Devide the access function by the size of the elements in the array.
+  //
+  // A stride one array access in C expressed as A[i] is expressed in LLVM-IR
+  // as something like A[i * elementsize]. This hides the fact that two
+  // subsequent values of 'i' index two values that are stored next to each
+  // other in memory. By this devision we make this characteristic obvious
+  // again.
   isl_int v;
   isl_int_init(v);
-  isl_int_set_si(v, -1);
-  isl_constraint_set_coefficient(c, isl_dim_in, 0, v);
   isl_int_set_si(v, AffFunc.getElemSizeInBytes());
-  isl_constraint_set_coefficient(c, isl_dim_out, 0, v);
+  Affine = isl_pw_aff_scale_down(Affine, v);
+  isl_int_clear(v);
 
-  bmap = isl_basic_map_add_constraint(bmap, c);
-  isl_map* dataSizeMap = isl_map_from_basic_map(bmap);
-
-  isl_dim *Model = isl_set_get_dim(Statement->getParent()->getContext());
-  dataSizeMap = isl_map_align_params(dataSizeMap, Model);
-
-  AccessRelation = isl_map_apply_range(AccessRelation, dataSizeMap);
-
+  AccessRelation = isl_map_from_pw_aff(Affine);
+  AccessRelation = isl_map_set_tuple_name(AccessRelation, isl_dim_in,
+                                          Statement->getBaseName());
   AccessRelation = isl_map_set_tuple_name(AccessRelation, isl_dim_out,
                                           getBaseName().c_str());
+
+  isl_dim *Model = isl_set_get_dim(Statement->getParent()->getContext());
+  AccessRelation = isl_map_align_params(AccessRelation, Model);
 
   // FIXME: Temporarily remove dimension ids.
   AccessRelation = map_remove_dim_ids(AccessRelation);
