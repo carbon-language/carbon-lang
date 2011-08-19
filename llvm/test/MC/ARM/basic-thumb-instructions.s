@@ -174,3 +174,16 @@ _func:
 @ CHECK: ldm	r3, {r0, r1, r2, r3, r4, r5, r6, r7} @ encoding: [0xff,0xcb]
 @ CHECK: ldm	r2!, {r1, r3, r4, r5, r7} @ encoding: [0xba,0xca]
 @ CHECK: ldm	r1, {r1}                @ encoding: [0x02,0xc9]
+
+
+@------------------------------------------------------------------------------
+@ LDR (immediate)
+@------------------------------------------------------------------------------
+        ldr r1, [r5]
+        ldr r2, [r6, #32]
+        ldr r3, [r7, #124]
+
+@ CHECK: ldr	r1, [r5]                @ encoding: [0x29,0x68]
+@ CHECK: ldr	r2, [r6, #32]           @ encoding: [0x32,0x6a]
+@ CHECK: ldr	r3, [r7, #124]          @ encoding: [0xfb,0x6f]
+
