@@ -1585,10 +1585,10 @@ def FsMOVAPDrm : PDI<0x28, MRMSrcMem, (outs FR64:$dst), (ins f128mem:$src),
 multiclass sse12_fp_alias_pack_logical<bits<8> opc, string OpcodeStr,
                                        SDNode OpNode> {
   defm V#NAME#PS : sse12_fp_packed<opc, !strconcat(OpcodeStr, "ps"), OpNode,
-              FR32, f32, f128mem, memopfsf32, SSEPackedSingle, 0>, VEX_4V;
+              FR32, f32, f128mem, memopfsf32, SSEPackedSingle, 0>, TB, VEX_4V;
 
   defm V#NAME#PD : sse12_fp_packed<opc, !strconcat(OpcodeStr, "pd"), OpNode,
-        FR64, f64, f128mem, memopfsf64, SSEPackedDouble, 0>, OpSize, VEX_4V;
+        FR64, f64, f128mem, memopfsf64, SSEPackedDouble, 0>, TB, OpSize, VEX_4V;
 
   let Constraints = "$src1 = $dst" in {
     defm PS : sse12_fp_packed<opc, !strconcat(OpcodeStr, "ps"), OpNode, FR32,
@@ -1620,7 +1620,7 @@ multiclass sse12_fp_packed_logical<bits<8> opc, string OpcodeStr,
   defm V#NAME#PS : sse12_fp_packed_logical_rm<opc, VR128, SSEPackedSingle,
        !strconcat(OpcodeStr, "ps"), f128mem, [],
        [(set VR128:$dst, (OpNode (bc_v2i64 (v4f32 VR128:$src1)),
-                                 (memopv2i64 addr:$src2)))], 0>, VEX_4V;
+                                 (memopv2i64 addr:$src2)))], 0>, TB, VEX_4V;
 
   defm V#NAME#PD : sse12_fp_packed_logical_rm<opc, VR128, SSEPackedDouble,
        !strconcat(OpcodeStr, "pd"), f128mem,
@@ -1628,7 +1628,7 @@ multiclass sse12_fp_packed_logical<bits<8> opc, string OpcodeStr,
                                  (bc_v2i64 (v2f64 VR128:$src2))))],
        [(set VR128:$dst, (OpNode (bc_v2i64 (v2f64 VR128:$src1)),
                                  (memopv2i64 addr:$src2)))], 0>,
-                                                 OpSize, VEX_4V;
+                                                 TB, OpSize, VEX_4V;
   let Constraints = "$src1 = $dst" in {
     defm PS : sse12_fp_packed_logical_rm<opc, VR128, SSEPackedSingle,
          !strconcat(OpcodeStr, "ps"), f128mem,
@@ -1653,7 +1653,7 @@ multiclass sse12_fp_packed_logical_y<bits<8> opc, string OpcodeStr,
           !strconcat(OpcodeStr, "ps"), f256mem,
           [(set VR256:$dst, (v4i64 (OpNode VR256:$src1, VR256:$src2)))],
           [(set VR256:$dst, (OpNode (bc_v4i64 (v8f32 VR256:$src1)),
-                                    (memopv4i64 addr:$src2)))], 0>, VEX_4V;
+                                    (memopv4i64 addr:$src2)))], 0>, TB, VEX_4V;
 
     defm PDY : sse12_fp_packed_logical_rm<opc, VR256, SSEPackedDouble,
           !strconcat(OpcodeStr, "pd"), f256mem,
@@ -1661,7 +1661,7 @@ multiclass sse12_fp_packed_logical_y<bits<8> opc, string OpcodeStr,
                                     (bc_v4i64 (v4f64 VR256:$src2))))],
           [(set VR256:$dst, (OpNode (bc_v4i64 (v4f64 VR256:$src1)),
                                     (memopv4i64 addr:$src2)))], 0>,
-                                    OpSize, VEX_4V;
+                                    TB, OpSize, VEX_4V;
 }
 
 // AVX 256-bit packed logical ops forms
