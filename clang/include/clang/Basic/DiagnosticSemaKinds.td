@@ -282,7 +282,7 @@ def warn_strlcpycat_wrong_size : Warning<
   "size argument in %0 call appears to be size of the source; expected the size of "
   "the destination">,
   DefaultIgnore,
-  InGroup<DiagGroup<"strl-incorrect-size">>;
+  InGroup<DiagGroup<"strlcpy-strlcat-size">>;
 def note_strlcpycat_wrong_size : Note<
   "change size argument to be the size of the destination">;
 

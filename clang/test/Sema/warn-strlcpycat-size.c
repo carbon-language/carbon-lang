@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -Wstrl-incorrect-size -verify -fsyntax-only %s
+// RUN: %clang_cc1 -Wstrlcpy-strlcat-size -verify -fsyntax-only %s
 
 typedef __SIZE_TYPE__ size_t;
 size_t strlcpy (char * restrict dst, const char * restrict src, size_t size);
