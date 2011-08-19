@@ -1498,21 +1498,8 @@ SourceLocation SourceManager::getMacroArgExpandedLocation(SourceLocation Loc) {
     // that was lexed.
 
     SourceLocation SpellLoc = Entry.getExpansion().getSpellingLoc();
-    unsigned NextOffset;
-    if (ID > 0) {
-      if (unsigned(ID+1) == local_sloc_entry_size())
-        NextOffset = getNextLocalOffset();
-      else
-        NextOffset = getLocalSLocEntry(ID+1).getOffset();
-    } else {
-      if (ID+1 == -1)
-        NextOffset = MaxLoadedOffset;
-      else
-        NextOffset = getSLocEntry(FileID::get(ID+1)).getOffset();
-    }
-    unsigned EntrySize = NextOffset - Entry.getOffset() - 1;
     unsigned BeginOffs = SpellLoc.getOffset();
-    unsigned EndOffs = BeginOffs + EntrySize;
+    unsigned EndOffs = BeginOffs + getFileIDSize(FileID::get(ID));
     if (BeginOffs <= Loc.getOffset() && Loc.getOffset() < EndOffs) {
       SourceLocation ExpandLoc = SourceLocation::getMacroLoc(Entry.getOffset());
       // Replace current Loc with the expanded location and continue.
