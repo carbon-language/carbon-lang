@@ -349,7 +349,7 @@ void Clang::AddPreprocessingOptions(const Driver &D,
   if (types::isCXX(InputType)) {
     bool ObjCXXAutoRefCount
       = types::isObjC(InputType) && isObjCAutoRefCount(Args);
-    getToolChain().AddClangCXXStdlibIncludeArgs(Args, CmdArgs, 
+    getToolChain().AddClangCXXStdlibIncludeArgs(Args, CmdArgs,
                                                 ObjCXXAutoRefCount);
     Args.AddAllArgs(CmdArgs, options::OPT_stdlib_EQ);
   }
@@ -883,7 +883,7 @@ void Clang::AddX86TargetArgs(const ArgList &Args,
   }
 }
 
-static bool 
+static bool
 shouldUseExceptionTablesForObjCExceptions(unsigned objcABIVersion,
                                           const llvm::Triple &Triple) {
   // We use the zero-cost exception tables for Objective-C if the non-fragile
@@ -898,7 +898,7 @@ shouldUseExceptionTablesForObjCExceptions(unsigned objcABIVersion,
 
   return (!Triple.isMacOSXVersionLT(10,5) &&
           (Triple.getArch() == llvm::Triple::x86_64 ||
-           Triple.getArch() == llvm::Triple::arm));  
+           Triple.getArch() == llvm::Triple::arm));
 }
 
 /// addExceptionArgs - Adds exception related arguments to the driver command
@@ -924,7 +924,7 @@ static void addExceptionArgs(const ArgList &Args, types::ID InputType,
                                options::OPT_fno_exceptions)) {
     if (A->getOption().matches(options::OPT_fexceptions))
       ExceptionsEnabled = true;
-    else 
+    else
       ExceptionsEnabled = false;
 
     DidHaveExplicitExceptionFlag = true;
@@ -940,20 +940,20 @@ static void addExceptionArgs(const ArgList &Args, types::ID InputType,
   // Obj-C exceptions are enabled by default, regardless of -fexceptions. This
   // is not necessarily sensible, but follows GCC.
   if (types::isObjC(InputType) &&
-      Args.hasFlag(options::OPT_fobjc_exceptions, 
+      Args.hasFlag(options::OPT_fobjc_exceptions,
                    options::OPT_fno_objc_exceptions,
                    true)) {
     CmdArgs.push_back("-fobjc-exceptions");
 
-    ShouldUseExceptionTables |= 
+    ShouldUseExceptionTables |=
       shouldUseExceptionTablesForObjCExceptions(objcABIVersion, Triple);
   }
 
   if (types::isCXX(InputType)) {
     bool CXXExceptionsEnabled = ExceptionsEnabled;
 
-    if (Arg *A = Args.getLastArg(options::OPT_fcxx_exceptions, 
-                                 options::OPT_fno_cxx_exceptions, 
+    if (Arg *A = Args.getLastArg(options::OPT_fcxx_exceptions,
+                                 options::OPT_fno_cxx_exceptions,
                                  options::OPT_fexceptions,
                                  options::OPT_fno_exceptions)) {
       if (A->getOption().matches(options::OPT_fcxx_exceptions))
@@ -1454,7 +1454,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       }
     }
   }
-    
+
   // Add preprocessing options like -I, -D, etc. if we are using the
   // preprocessor.
   //
@@ -1683,7 +1683,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-backend-option");
     CmdArgs.push_back("-force-align-stack");
   }
-  
+
   // Forward -f options with positive and negative forms; we translate
   // these by hand.
 
@@ -1902,7 +1902,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // rewriter.
   if (IsRewriter)
     CmdArgs.push_back("-fno-objc-infer-related-result-type");
-  
+
   // Handle -fobjc-gc and -fobjc-gc-only. They are exclusive, and -fobjc-gc-only
   // takes precedence.
   const Arg *GCArg = Args.getLastArg(options::OPT_fobjc_gc_only);
@@ -1990,7 +1990,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   if (!Args.hasFlag(options::OPT_fdiagnostics_fixit_info,
                     options::OPT_fno_diagnostics_fixit_info))
     CmdArgs.push_back("-fno-diagnostics-fixit-info");
-  
+
   // Enable -fdiagnostics-show-name by default.
   if (Args.hasFlag(options::OPT_fdiagnostics_show_name,
                    options::OPT_fno_diagnostics_show_name, false))
@@ -2088,7 +2088,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                                options::OPT_traditional_cpp)) {
     if (isa<PreprocessJobAction>(JA))
       CmdArgs.push_back("-traditional-cpp");
-    else 
+    else
       D.Diag(diag::err_drv_clang_unsupported) << A->getAsString(Args);
   }
 
@@ -2446,7 +2446,7 @@ darwin::CC1::getDependencyFileName(const ArgList &Args,
 }
 
 void darwin::CC1::RemoveCC1UnsupportedArgs(ArgStringList &CmdArgs) const {
-  for (ArgStringList::iterator it = CmdArgs.begin(), ie = CmdArgs.end(); 
+  for (ArgStringList::iterator it = CmdArgs.begin(), ie = CmdArgs.end();
        it != ie;) {
 
     StringRef Option = *it;
@@ -2959,8 +2959,14 @@ void darwin::Compile::ConstructJob(Compilation &C, const JobAction &JA,
     C.addTempFile(TmpPath);
     CmdArgs.push_back(TmpPath);
 
-    CmdArgs.push_back("--output-pch=");
-    CmdArgs.push_back(Output.getFilename());
+    // If we're emitting a pch file with the last 4 characters of ".pth"
+    // and falling back to llvm-gcc we want to use ".gch" instead.
+    std::string OutputFile(Output.getFilename());
+    size_t loc = OutputFile.rfind(".pth");
+    if (loc != std::string::npos)
+      OutputFile.replace(loc, 4, ".gch");
+    const char *Tmp = C.getArgs().MakeArgString("--output-pch="+OutputFile);
+    CmdArgs.push_back(Tmp);
   }
 
   RemoveCC1UnsupportedArgs(CmdArgs);
@@ -2989,7 +2995,7 @@ void darwin::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   // Forward -g, assuming we are dealing with an actual assembly file.
-  if (SourceAction->getType() == types::TY_Asm || 
+  if (SourceAction->getType() == types::TY_Asm ||
       SourceAction->getType() == types::TY_PP_Asm) {
     if (Args.hasArg(options::OPT_gstabs))
       CmdArgs.push_back("--gstabs");
@@ -4128,7 +4134,7 @@ void linuxtools::Link::ConstructJob(Compilation &C, const JobAction &JA,
   CmdArgs.push_back("-m");
   if (ToolChain.getArch() == llvm::Triple::x86)
     CmdArgs.push_back("elf_i386");
-  else if (ToolChain.getArch() == llvm::Triple::arm 
+  else if (ToolChain.getArch() == llvm::Triple::arm
            ||  ToolChain.getArch() == llvm::Triple::thumb)
     CmdArgs.push_back("armelf_linux_eabi");
   else if (ToolChain.getArch() == llvm::Triple::ppc)
