@@ -65,7 +65,7 @@ void VLASizeChecker::checkPreStmt(const DeclStmt *DS, CheckerContext &C) const {
     BugReport *report =
       new BugReport(*BT_undef, BT_undef->getName(), N);
     report->addRange(SE->getSourceRange());
-    report->addVisitorCreator(bugreporter::registerTrackNullOrUndefValue, SE);
+    report->addVisitor(bugreporter::getTrackNullOrUndefValueVisitor(N, SE));
     C.EmitReport(report);
     return;
   }
@@ -90,7 +90,7 @@ void VLASizeChecker::checkPreStmt(const DeclStmt *DS, CheckerContext &C) const {
     BugReport *report =
       new BugReport(*BT_zero, BT_zero->getName(), N);
     report->addRange(SE->getSourceRange());
-    report->addVisitorCreator(bugreporter::registerTrackNullOrUndefValue, SE);
+    report->addVisitor(bugreporter::getTrackNullOrUndefValueVisitor(N, SE));
     C.EmitReport(report);
     return;
   }

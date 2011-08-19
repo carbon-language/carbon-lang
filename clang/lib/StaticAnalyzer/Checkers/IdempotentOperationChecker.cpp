@@ -413,12 +413,12 @@ void IdempotentOperationChecker::checkEndAnalysis(ExplodedGraph &G,
       if (LHSRelevant) {
         const Expr *LHS = i->first->getLHS();
         report->addRange(LHS->getSourceRange());
-        report->addVisitorCreator(bugreporter::registerVarDeclsLastStore, LHS);
+        FindLastStoreBRVisitor::registerStatementVarDecls(*report, LHS);
       }
       if (RHSRelevant) {
         const Expr *RHS = i->first->getRHS();
         report->addRange(i->first->getRHS()->getSourceRange());
-        report->addVisitorCreator(bugreporter::registerVarDeclsLastStore, RHS);
+        FindLastStoreBRVisitor::registerStatementVarDecls(*report, RHS);
       }
 
       BR.EmitReport(report);

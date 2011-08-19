@@ -75,8 +75,8 @@ void DereferenceChecker::checkLocation(SVal l, bool isLoad,
 
       BugReport *report =
         new BugReport(*BT_undef, BT_undef->getDescription(), N);
-      report->addVisitorCreator(bugreporter::registerTrackNullOrUndefValue,
-                                bugreporter::GetDerefExpr(N));
+      report->addVisitor(bugreporter::getTrackNullOrUndefValueVisitor(N,
+                                        bugreporter::GetDerefExpr(N)));
       C.EmitReport(report);
     }
     return;
@@ -162,8 +162,8 @@ void DereferenceChecker::checkLocation(SVal l, bool isLoad,
                               buf.empty() ? BT_null->getDescription():buf.str(),
                               N);
 
-      report->addVisitorCreator(bugreporter::registerTrackNullOrUndefValue,
-                                bugreporter::GetDerefExpr(N));
+      report->addVisitor(bugreporter::getTrackNullOrUndefValueVisitor(N,
+                                        bugreporter::GetDerefExpr(N)));
 
       for (SmallVectorImpl<SourceRange>::iterator
             I = Ranges.begin(), E = Ranges.end(); I!=E; ++I)

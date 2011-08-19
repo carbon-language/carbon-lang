@@ -63,8 +63,8 @@ void DivZeroChecker::checkPreStmt(const BinaryOperator *B,
       BugReport *R = 
         new BugReport(*BT, BT->getDescription(), N);
 
-      R->addVisitorCreator(bugreporter::registerTrackNullOrUndefValue,
-                           bugreporter::GetDenomExpr(N));
+      R->addVisitor(bugreporter::getTrackNullOrUndefValueVisitor(N,
+                                   bugreporter::GetDenomExpr(N)));
 
       C.EmitReport(R);
     }

@@ -231,7 +231,7 @@ const ProgramState *CStringChecker::checkNonNull(CheckerContext &C,
     BugReport *report = new BugReport(*BT, os.str(), N);
 
     report->addRange(S->getSourceRange());
-    report->addVisitorCreator(bugreporter::registerTrackNullOrUndefValue, S);
+    report->addVisitor(bugreporter::getTrackNullOrUndefValueVisitor(N, S));
     C.EmitReport(report);
     return NULL;
   }

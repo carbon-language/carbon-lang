@@ -206,8 +206,8 @@ void UnixAPIChecker::CheckMallocZero(CheckerContext &C,
       new BugReport(*BT_mallocZero, "Call to 'malloc' has an allocation"
                                             " size of 0 bytes", N);
     report->addRange(CE->getArg(0)->getSourceRange());
-    report->addVisitorCreator(bugreporter::registerTrackNullOrUndefValue,
-                              CE->getArg(0));
+    report->addVisitor(bugreporter::getTrackNullOrUndefValueVisitor(N,
+                                                                CE->getArg(0)));
     C.EmitReport(report);
     return;
   }

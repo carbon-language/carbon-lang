@@ -16,6 +16,7 @@
 #define LLVM_CLANG_GR_BUGREPORTER
 
 #include "clang/Basic/SourceLocation.h"
+#include "clang/StaticAnalyzer/Core/BugReporter/BugReporterVisitor.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/ImmutableList.h"
@@ -48,24 +49,6 @@ class BugType;
 // Interface for individual bug reports.
 //===----------------------------------------------------------------------===//
 
-class BugReporterVisitor : public llvm::FoldingSetNode {
-public:
-  virtual ~BugReporterVisitor();
-
-  /// \brief Return a diagnostic piece which should be associated with the
-  /// given node.
-  ///
-  /// The last parameter can be used to register a new visitor with the given
-  /// BugReport while processing a node.
-  virtual PathDiagnosticPiece *VisitNode(const ExplodedNode *N,
-                                         const ExplodedNode *PrevN,
-                                         BugReporterContext &BRC,
-                                         BugReport &BR) = 0;
-
-  virtual bool isOwnedByReporterContext() { return true; }
-  virtual void Profile(llvm::FoldingSetNodeID &ID) const = 0;
-};
-
 /// This class provides an interface through which checkers can create
 /// individual bug reports.
 class BugReport : public BugReporterVisitor {
@@ -77,14 +60,12 @@ public:
             getOriginalNode(const ExplodedNode *N) = 0;
   };
 
-  typedef void (*VisitorCreator)(BugReport &BR, const void *data);
   typedef const SourceRange *ranges_iterator;
   typedef llvm::ImmutableList<BugReporterVisitor*>::iterator visitor_iterator;
 
 protected:
   friend class BugReporter;
   friend class BugReportEquivClass;
-  typedef SmallVector<std::pair<VisitorCreator, const void*>, 2> Creators;
 
   BugType& BT;
   std::string ShortDescription;
@@ -178,11 +159,7 @@ public:
   /// \sa registerConditionVisitor(), registerTrackNullOrUndefValue(),
   /// registerFindLastStore(), registerNilReceiverVisitor(), and
   /// registerVarDeclsLastStore().
-  void addVisitorCreator(VisitorCreator creator, const void *data) {
-    creator(*this, data);
-  }
-
-  void addVisitor(BugReporterVisitor* visitor);
+  void addVisitor(BugReporterVisitor *visitor);
 
 	/// Iterators through the custom diagnostic visitors.
   visitor_iterator visitor_begin() { return Callbacks.begin(); }
@@ -444,30 +421,6 @@ public:
 
   virtual BugReport::NodeResolver& getNodeResolver() = 0;
 };
-
-//===----------------------------------------------------------------------===//
-//===----------------------------------------------------------------------===//
-
-namespace bugreporter {
-
-const Stmt *GetDerefExpr(const ExplodedNode *N);
-const Stmt *GetDenomExpr(const ExplodedNode *N);
-const Stmt *GetCalleeExpr(const ExplodedNode *N);
-const Stmt *GetRetValExpr(const ExplodedNode *N);
-
-void registerConditionVisitor(BugReport &BR);
-
-void registerTrackNullOrUndefValue(BugReport &BR, const void *stmt);
-
-void registerFindLastStore(BugReport &BR, const void *memregion);
-
-void registerNilReceiverVisitor(BugReport &BR);
-
-void registerVarDeclsLastStore(BugReport &BR, const void *stmt);
-
-} // end namespace clang::bugreporter
-
-//===----------------------------------------------------------------------===//
 
 } // end GR namespace
 

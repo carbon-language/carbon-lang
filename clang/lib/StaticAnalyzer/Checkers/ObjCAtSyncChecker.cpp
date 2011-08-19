@@ -49,7 +49,7 @@ void ObjCAtSyncChecker::checkPreStmt(const ObjCAtSynchronizedStmt *S,
                                   "for @synchronized"));
       BugReport *report =
         new BugReport(*BT_undef, BT_undef->getDescription(), N);
-      report->addVisitorCreator(bugreporter::registerTrackNullOrUndefValue, Ex);
+      report->addVisitor(bugreporter::getTrackNullOrUndefValueVisitor(N, Ex));
       C.EmitReport(report);
     }
     return;
@@ -72,8 +72,7 @@ void ObjCAtSyncChecker::checkPreStmt(const ObjCAtSynchronizedStmt *S,
                                    "(no synchronization will occur)"));
         BugReport *report =
           new BugReport(*BT_null, BT_null->getDescription(), N);
-        report->addVisitorCreator(bugreporter::registerTrackNullOrUndefValue,
-                                  Ex);
+        report->addVisitor(bugreporter::getTrackNullOrUndefValueVisitor(N, Ex));
 
         C.EmitReport(report);
         return;

@@ -99,8 +99,8 @@ void UndefBranchChecker::checkBranchCondition(const Stmt *Condition,
       Ex = FindIt.FindExpr(Ex);
 
       // Emit the bug report.
-      BugReport *R = new BugReport(*BT, BT->getDescription(),N);
-      R->addVisitorCreator(bugreporter::registerTrackNullOrUndefValue, Ex);
+      BugReport *R = new BugReport(*BT, BT->getDescription(), N);
+      R->addVisitor(bugreporter::getTrackNullOrUndefValueVisitor(N, Ex));
       R->addRange(Ex->getSourceRange());
 
       Eng.getBugReporter().EmitReport(R);
