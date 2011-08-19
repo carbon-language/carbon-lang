@@ -628,6 +628,15 @@ public:
     int64_t Val = Mem.OffsetImm->getValue();
     return Val >= 0 && Val <= 124 && (Val % 4) == 0;
   }
+  bool isMemThumbRIs2() const {
+    if (Kind != Memory || Mem.OffsetRegNum != 0 ||
+        !isARMLowRegister(Mem.BaseRegNum))
+      return false;
+    // Immediate offset, multiple of 4 in range [0, 62].
+    if (!Mem.OffsetImm) return true;
+    int64_t Val = Mem.OffsetImm->getValue();
+    return Val >= 0 && Val <= 62 && (Val % 2) == 0;
+  }
   bool isMemThumbRIs1() const {
     if (Kind != Memory || Mem.OffsetRegNum != 0 ||
         !isARMLowRegister(Mem.BaseRegNum))
@@ -1005,6 +1014,13 @@ public:
   void addMemThumbRIs4Operands(MCInst &Inst, unsigned N) const {
     assert(N == 2 && "Invalid number of operands!");
     int64_t Val = Mem.OffsetImm ? (Mem.OffsetImm->getValue() / 4) : 0;
+    Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
+    Inst.addOperand(MCOperand::CreateImm(Val));
+  }
+
+  void addMemThumbRIs2Operands(MCInst &Inst, unsigned N) const {
+    assert(N == 2 && "Invalid number of operands!");
+    int64_t Val = Mem.OffsetImm ? (Mem.OffsetImm->getValue() / 2) : 0;
     Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
     Inst.addOperand(MCOperand::CreateImm(Val));
   }
