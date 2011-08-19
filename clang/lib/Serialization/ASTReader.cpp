@@ -5765,16 +5765,6 @@ void ModuleManager::addInMemoryBuffer(StringRef FileName,
     Buffer->getBufferSize(), 0);
   InMemoryBuffers[Entry] = Buffer;
 }
-/// \brief Exports the list of loaded modules with their corresponding names
-void ModuleManager::exportLookup(SmallVector<ModuleOffset, 16> &Target) {
-  Target.reserve(size());
-  for (ModuleConstIterator I = Chain.begin(), E = Chain.end();
-       I != E; ++I) {
-    Target.push_back(ModuleOffset((*I)->SLocEntryBaseOffset,
-                                  (*I)->FileName));
-  }
-  std::sort(Target.begin(), Target.end());
-}
 
 ModuleManager::ModuleManager(const FileSystemOptions &FSO) : FileMgr(FSO) { }
 

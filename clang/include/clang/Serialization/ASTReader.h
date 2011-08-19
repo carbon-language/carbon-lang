@@ -519,9 +519,6 @@ public:
   
   /// \brief Add an in-memory buffer the list of known buffers
   void addInMemoryBuffer(StringRef FileName, llvm::MemoryBuffer *Buffer);
-
-  /// \brief Exports the list of loaded modules with their corresponding names
-  void exportLookup(SmallVector<ModuleOffset, 16> &Target);
 };
 
 } // end namespace serialization
