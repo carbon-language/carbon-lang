@@ -1839,3 +1839,19 @@ void test62(void) {
 
   // CHECK:      ret void
 }
+
+// rdar://9971982
+@class NSString;
+
+@interface Person  {
+  NSString *name;
+}
+@property NSString *address;
+@end
+
+@implementation Person
+@synthesize address;
+@end
+// CHECK: call i8* @objc_getProperty
+// CHECK: call void @objc_setProperty 
+

@@ -605,7 +605,8 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
           !PropertyIvarType.getObjCLifetime()) {
 
         if (!property->hasWrittenStorageAttribute() &&
-            property->getType()->isObjCRetainableType()) {
+            property->getType()->isObjCRetainableType() &&
+            !(kind & ObjCPropertyDecl::OBJC_PR_strong) ) {
           Diag(PropertyLoc,
                diag::err_arc_objc_property_default_assign_on_object);
           Diag(property->getLocation(), diag::note_property_declare);
@@ -1707,13 +1708,19 @@ void Sema::CheckObjCPropertyAttributes(Decl *PDecl,
                       ObjCDeclSpec::DQ_PR_weak)) &&
       !(Attributes & ObjCDeclSpec::DQ_PR_readonly) &&
       PropertyTy->isObjCObjectPointerType()) {
-    // Skip this warning in gc-only mode.
-    if (getLangOptions().getGCMode() != LangOptions::GCOnly)
-      Diag(Loc, diag::warn_objc_property_no_assignment_attribute);
+      if (getLangOptions().ObjCAutoRefCount)
+        // With arc,  @property definitions should default to (strong) when 
+        // not specified
+        PropertyDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_strong);
+      else {
+          // Skip this warning in gc-only mode.
+          if (getLangOptions().getGCMode() != LangOptions::GCOnly)
+            Diag(Loc, diag::warn_objc_property_no_assignment_attribute);
 
-    // If non-gc code warn that this is likely inappropriate.
-    if (getLangOptions().getGCMode() == LangOptions::NonGC)
-      Diag(Loc, diag::warn_objc_property_default_assign_on_object);
+          // If non-gc code warn that this is likely inappropriate.
+          if (getLangOptions().getGCMode() == LangOptions::NonGC)
+            Diag(Loc, diag::warn_objc_property_default_assign_on_object);
+      }
 
     // FIXME: Implement warning dependent on NSCopying being
     // implemented. See also:
