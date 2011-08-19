@@ -51,7 +51,7 @@ class BugType;
 
 /// This class provides an interface through which checkers can create
 /// individual bug reports.
-class BugReport : public BugReporterVisitor {
+class BugReport {
 public:
   class NodeResolver {
   public:
@@ -90,26 +90,18 @@ protected:
 public:
   BugReport(BugType& bt, StringRef desc, const ExplodedNode *errornode)
     : BT(bt), Description(desc), ErrorNode(errornode),
-      Callbacks(F.getEmptyList()) {
-      addVisitor(this);
-    }
+      Callbacks(F.getEmptyList()) {}
 
   BugReport(BugType& bt, StringRef shortDesc, StringRef desc,
             const ExplodedNode *errornode)
     : BT(bt), ShortDescription(shortDesc), Description(desc),
-      ErrorNode(errornode), Callbacks(F.getEmptyList()) {
-      addVisitor(this);
-    }
+      ErrorNode(errornode), Callbacks(F.getEmptyList()) {}
 
   BugReport(BugType& bt, StringRef desc, FullSourceLoc l)
     : BT(bt), Description(desc), Location(l), ErrorNode(0),
-      Callbacks(F.getEmptyList()) {
-      addVisitor(this);
-    }
+      Callbacks(F.getEmptyList()) {}
 
   virtual ~BugReport();
-
-  virtual bool isOwnedByReporterContext() { return false; }
 
   const BugType& getBugType() const { return BT; }
   BugType& getBugType() { return BT; }
@@ -164,11 +156,6 @@ public:
 	/// Iterators through the custom diagnostic visitors.
   visitor_iterator visitor_begin() { return Callbacks.begin(); }
   visitor_iterator visitor_end() { return Callbacks.end(); }
-
-  virtual PathDiagnosticPiece *VisitNode(const ExplodedNode *N,
-                                         const ExplodedNode *PrevN,
-                                         BugReporterContext &BRC,
-                                         BugReport &BR);
 };
 
 //===----------------------------------------------------------------------===//

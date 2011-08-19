@@ -1224,9 +1224,7 @@ void BugReport::addVisitor(BugReporterVisitor* visitor) {
 
 BugReport::~BugReport() {
   for (visitor_iterator I = visitor_begin(), E = visitor_end(); I != E; ++I) {
-    if ((*I)->isOwnedByReporterContext()) {
-      delete *I;
-    }
+    delete *I;
   }
 }
 
@@ -1338,13 +1336,6 @@ SourceLocation BugReport::getLocation() const {
   }
 
   return FullSourceLoc();
-}
-
-PathDiagnosticPiece *BugReport::VisitNode(const ExplodedNode *N,
-                                          const ExplodedNode *PrevN,
-                                          BugReporterContext &BRC,
-                                          BugReport &BR) {
-  return NULL;
 }
 
 //===----------------------------------------------------------------------===//

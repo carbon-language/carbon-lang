@@ -42,7 +42,6 @@ public:
                                          BugReporterContext &BRC,
                                          BugReport &BR) = 0;
 
-  virtual bool isOwnedByReporterContext() { return true; }
   virtual void Profile(llvm::FoldingSetNodeID &ID) const = 0;
 };
 

@@ -1959,6 +1959,26 @@ namespace {
   // Bug Reports.  //
   //===---------===//
 
+  class CFRefReportVisitor : public BugReporterVisitor {
+    SymbolRef Sym;
+    const CFRefCount &TF;
+  public:
+
+    CFRefReportVisitor(SymbolRef sym, const CFRefCount &tf)
+       : Sym(sym), TF(tf) {}
+
+    void Profile(llvm::FoldingSetNodeID &ID) const {
+      static int x = 0;
+      ID.AddPointer(&x);
+      ID.AddPointer(Sym);
+    }
+
+    PathDiagnosticPiece *VisitNode(const ExplodedNode *N,
+                                   const ExplodedNode *PrevN,
+                                   BugReporterContext &BRC,
+                                   BugReport &BR);
+  };
+
   class CFRefReport : public BugReport {
   protected:
     SymbolRef Sym;
@@ -1966,11 +1986,15 @@ namespace {
   public:
     CFRefReport(CFRefBug& D, const CFRefCount &tf,
                 ExplodedNode *n, SymbolRef sym)
-      : BugReport(D, D.getDescription(), n), Sym(sym), TF(tf) {}
+      : BugReport(D, D.getDescription(), n), Sym(sym), TF(tf) {
+      addVisitor(new CFRefReportVisitor(sym, tf));
+    }
 
     CFRefReport(CFRefBug& D, const CFRefCount &tf,
                 ExplodedNode *n, SymbolRef sym, StringRef endText)
-      : BugReport(D, D.getDescription(), endText, n), Sym(sym), TF(tf) {}
+      : BugReport(D, D.getDescription(), endText, n), Sym(sym), TF(tf) {
+      addVisitor(new CFRefReportVisitor(sym, tf));
+    }
 
     virtual ~CFRefReport() {}
 
@@ -1991,11 +2015,6 @@ namespace {
                                     const ExplodedNode *N);
 
     std::pair<const char**,const char**> getExtraDescriptiveText();
-
-    PathDiagnosticPiece *VisitNode(const ExplodedNode *N,
-                                   const ExplodedNode *PrevN,
-                                   BugReporterContext &BRC,
-                                   BugReport &BR);
   };
 
   class CFRefLeakReport : public CFRefReport {
@@ -2060,10 +2079,10 @@ static inline bool contains(const SmallVectorImpl<ArgEffect>& V,
   return false;
 }
 
-PathDiagnosticPiece *CFRefReport::VisitNode(const ExplodedNode *N,
-                                            const ExplodedNode *PrevN,
-                                            BugReporterContext &BRC,
-                                            BugReport &BR) {
+PathDiagnosticPiece *CFRefReportVisitor::VisitNode(const ExplodedNode *N,
+                                                   const ExplodedNode *PrevN,
+                                                   BugReporterContext &BRC,
+                                                   BugReport &BR) {
 
   if (!isa<PostStmt>(N->getLocation()))
     return NULL;
@@ -2113,7 +2132,7 @@ PathDiagnosticPiece *CFRefReport::VisitNode(const ExplodedNode *N,
     if (CurrV.isOwned()) {
       os << "+1 retain count";
 
-      if (static_cast<CFRefBug&>(getBugType()).getTF().isGCEnabled()) {
+      if (TF.isGCEnabled()) {
         assert(CurrV.getObjKind() == RetEffect::CF);
         os << ".  "
         "Core Foundation objects are not automatically garbage collected.";
@@ -2507,6 +2526,8 @@ CFRefLeakReport::CFRefLeakReport(CFRefBug& D, const CFRefCount &tf,
   // FIXME: AllocBinding doesn't get populated for RegionStore yet.
   if (AllocBinding)
     os << " and stored into '" << AllocBinding->getString() << '\'';
+
+  addVisitor(new CFRefReportVisitor(sym, tf));
 }
 
 //===----------------------------------------------------------------------===//
