@@ -4997,9 +4997,9 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
 
         // Unqualified local friend declarations are required to resolve
         // to something.
-        } else if (isFriend && cast<CXXRecordDecl>(CurContext)->isLocalClass()) {
-          DiagnoseInvalidRedeclaration(*this, NewFD, true);
-        }
+      } else if (isFriend && cast<CXXRecordDecl>(CurContext)->isLocalClass()) {
+        DiagnoseInvalidRedeclaration(*this, NewFD, true);
+      }
 
     } else if (!IsFunctionDefinition && D.getCXXScopeSpec().isSet() &&
                !isFriend && !isFunctionTemplateSpecialization &&
