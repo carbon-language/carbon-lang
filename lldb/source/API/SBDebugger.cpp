@@ -128,6 +128,11 @@ SBDebugger::SBDebugger () :
 {
 }
 
+SBDebugger::SBDebugger(const lldb::DebuggerSP &debugger_sp) :
+    m_opaque_sp(debugger_sp)
+{
+}
+
 SBDebugger::SBDebugger(const SBDebugger &rhs) :
     m_opaque_sp (rhs.m_opaque_sp)
 {

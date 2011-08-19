@@ -40,6 +40,8 @@ public:
     SBDebugger(const lldb::SBDebugger &rhs);
 
 #ifndef SWIG
+    SBDebugger(const lldb::DebuggerSP &debugger_sp);
+    
     lldb::SBDebugger &
     operator = (const lldb::SBDebugger &rhs);
 #endif

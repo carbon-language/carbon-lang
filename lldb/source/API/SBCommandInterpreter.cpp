@@ -344,7 +344,7 @@ extern "C" bool           LLDBSwigPythonCallCommand
     lldb::DebuggerSP& debugger,
     const char* args,
     std::string& err_msg,
-    void* cmd_retobj
+    lldb_private::CommandReturnObject& cmd_retobj
 );
 
 

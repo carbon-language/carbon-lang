@@ -136,7 +136,7 @@ LLDBSwigPythonCallTypeScript
 
     std::string retval = "";
 
-    PyObject *ValObj_PyObj = SWIG_NewPointerObj((void *) &valobj_sp, SWIGTYPE_p_lldb__SBValue, 0);
+    PyObject *ValObj_PyObj = SWIG_NewPointerObj((void *) &sb_value, SWIGTYPE_p_lldb__SBValue, 0);
     
     if (ValObj_PyObj == NULL)
         return retval;
@@ -263,9 +263,11 @@ LLDBSwigPythonCreateSyntheticProvider
     if (python_class_name.empty() || !session_dictionary_name)
         Py_RETURN_NONE;
 
-    lldb::ValueObjectSP* valobj_sp_ptr = new lldb::ValueObjectSP(valobj_sp);
+    // I do not want the SBValue to be deallocated when going out of scope because python
+    // has ownership of it and will manage memory for this object by itself
+    lldb::SBValue *valobj_sb = new lldb::SBValue(valobj_sp);
 
-    PyObject *ValObj_PyObj = SWIG_NewPointerObj((void *) valobj_sp_ptr, SWIGTYPE_p_lldb__SBValue, SWIG_POINTER_OWN);
+    PyObject *ValObj_PyObj = SWIG_NewPointerObj((void *)valobj_sb, SWIGTYPE_p_lldb__SBValue, SWIG_POINTER_OWN);
 
     if (ValObj_PyObj == NULL)
         Py_RETURN_NONE;
@@ -582,6 +584,14 @@ LLDBSWIGPython_CastPyObjectToSBValue
     return sb_ptr;
 }
 
+// we use this macro to bail out of LLDBSwigPythonCallCommand in order
+// to make sure that the that the SBCommandReturnObject will not destroy
+// the contained CommandReturnObject when going out of scope
+#define RETURN_RETVAL { \
+    cmd_retobj_sb.Release(); \
+    return retval; \
+}
+
 SWIGEXPORT bool
 LLDBSwigPythonCallCommand 
 (
@@ -590,25 +600,26 @@ LLDBSwigPythonCallCommand
     lldb::DebuggerSP& debugger,
     const char* args,
     std::string& err_msg,
-    void* cmd_retobj
+    lldb_private::CommandReturnObject& cmd_retobj
 )
 {
 
-    not_owning_ap<lldb_private::CommandReturnObject> auto_cmd_retobj((lldb_private::CommandReturnObject*)cmd_retobj);
+    lldb::SBCommandReturnObject cmd_retobj_sb(&cmd_retobj);
+    lldb::SBDebugger debugger_sb(debugger);
 
     bool retval = false;
 
-    PyObject *DebuggerObj_PyObj = SWIG_NewPointerObj((void *) &debugger, SWIGTYPE_p_lldb__SBDebugger, 0);
-    PyObject *CmdRetObj_PyObj = SWIG_NewPointerObj((void *) &auto_cmd_retobj, SWIGTYPE_p_lldb__SBCommandReturnObject, 0);
+    PyObject *DebuggerObj_PyObj = SWIG_NewPointerObj((void *) &debugger_sb, SWIGTYPE_p_lldb__SBDebugger, 0);
+    PyObject *CmdRetObj_PyObj = SWIG_NewPointerObj((void *) &cmd_retobj_sb, SWIGTYPE_p_lldb__SBCommandReturnObject, 0);
 
     if (DebuggerObj_PyObj == NULL)
-        return retval;
+        RETURN_RETVAL;
         
     if (CmdRetObj_PyObj == NULL)
-        return retval;
+        RETURN_RETVAL;
 
     if (!python_function_name || !session_dictionary_name)
-        return retval;
+        RETURN_RETVAL;
 
     PyObject *pmodule, *main_dict, *session_dict, *pfunc;
     PyObject *pargs, *pvalue;
@@ -642,7 +653,7 @@ LLDBSwigPythonCallCommand
             }
             
             if (!session_dict || !PyDict_Check (session_dict))
-                return retval;
+                RETURN_RETVAL;
                 
             // Find the function we need to call in the current session's dictionary.
 
@@ -673,7 +684,7 @@ LLDBSwigPythonCallCommand
                 {
                     if (PyErr_Occurred())
                         PyErr_Clear();
-                    return retval;
+                    RETURN_RETVAL;
                 }
                 
                 PyTuple_SetItem (pargs, 0, DebuggerObj_PyObj);  // This "steals" a reference to DebuggerObj_PyObj
@@ -721,7 +732,9 @@ LLDBSwigPythonCallCommand
         PyErr_Print();
         PyErr_Clear ();
     }
-    return retval;
+    RETURN_RETVAL;
 }
+
+#undef RETURN_RETVAL
 
 %}

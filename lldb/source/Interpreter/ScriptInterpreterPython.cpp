@@ -20,6 +20,7 @@
 
 #include "lldb/API/SBFrame.h"
 #include "lldb/API/SBBreakpointLocation.h"
+#include "lldb/API/SBCommandReturnObject.h"
 #include "lldb/Breakpoint/StoppointCallbackContext.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/Timer.h"
@@ -1930,7 +1931,7 @@ ScriptInterpreterPython::RunScriptBasedCommand(const char* impl_function,
     }
     
     ScriptInterpreterPython *python_interpreter = this;
-    
+
     lldb::DebuggerSP debugger_sp = m_interpreter.GetDebugger().GetSP();
     
     bool ret_val;
@@ -1946,7 +1947,7 @@ ScriptInterpreterPython::RunScriptBasedCommand(const char* impl_function,
                                              debugger_sp,
                                              args,
                                              err_msg,
-                                             (void*)&cmd_retobj);
+                                             cmd_retobj);
         python_interpreter->LeaveSession ();
     }
     else
@@ -1960,7 +1961,7 @@ ScriptInterpreterPython::RunScriptBasedCommand(const char* impl_function,
                                              debugger_sp,
                                              args,
                                              err_msg,
-                                             (void*)&cmd_retobj);
+                                             cmd_retobj);
         python_interpreter->LeaveSession ();
         ReleasePythonLock ();
     }
@@ -1969,7 +1970,7 @@ ScriptInterpreterPython::RunScriptBasedCommand(const char* impl_function,
         error.SetErrorString(err_msg.c_str());
     else
         error.Clear();
-    
+        
     return ret_val;
 
     
