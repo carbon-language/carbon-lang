@@ -218,8 +218,9 @@ class DataFormatterTestCase(TestBase):
         self.expect("frame variable the_coolest_guy",
                     substrs = ['(i_am_cooler) the_coolest_guy = goofy'])
 
+        # many spaces, but we still do the right thing
         self.runCmd("type summary delete i_am_cool")
-        self.runCmd("type summary add -f \"goofy\" \"union i_am_cool\"")
+        self.runCmd("type summary add -f \"goofy\" \"union     i_am_cool\"")
         self.expect("frame variable the_coolest_guy",
                     substrs = ['(i_am_cooler) the_coolest_guy = goofy'])
 

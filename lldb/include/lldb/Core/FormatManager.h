@@ -79,12 +79,24 @@ public:
     
 };
     
+static inline bool
+IsWhitespace (char c)
+{
+    return ( (c == ' ') || (c == '\t') || (c == '\v') || (c == '\f') );
+}
+
+static inline bool
+HasPrefix (const char* str1, const char* str2)
+{
+    return ( ::strstr(str1, str2) == str1 );
+}
+    
 // if the user tries to add formatters for, say, "struct Foo"
 // those will not match any type because of the way we strip qualifiers from typenames
 // this method looks for the case where the user is adding a "class","struct","enum" or "union" Foo
 // and strips the unnecessary qualifier
 static ConstString
-GetValidTypeName_Impl(const ConstString& type)
+GetValidTypeName_Impl (const ConstString& type)
 {
     int strip_len = 0;
     
@@ -93,19 +105,23 @@ GetValidTypeName_Impl(const ConstString& type)
     
     const char* type_cstr = type.AsCString();
     
-    if ( ::strstr(type_cstr, "class ") == type_cstr)
+    if ( HasPrefix(type_cstr, "class ") )
         strip_len = 6;
-    if ( ::strstr(type_cstr, "enum ") == type_cstr)
+    else if ( HasPrefix(type_cstr, "enum ") )
         strip_len = 5;
-    if ( ::strstr(type_cstr, "struct ") == type_cstr)
+    else if ( HasPrefix(type_cstr, "struct ") )
         strip_len = 7;
-    if ( ::strstr(type_cstr, "union ") == type_cstr)
+    else if ( HasPrefix(type_cstr, "union ") )
         strip_len = 6;
     
     if (strip_len == 0)
         return type;
     
-    return ConstString(type_cstr + strip_len);
+    type_cstr += strip_len;
+    while (IsWhitespace(*type_cstr) && ++type_cstr)
+        ;
+    
+    return ConstString(type_cstr);
 }
     
 template<typename KeyType, typename ValueType>
