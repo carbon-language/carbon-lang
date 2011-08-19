@@ -23,7 +23,7 @@ our @llvm_clang_slices; # paths to the single architecture static libraries (arc
 our $llvm_configuration = $ENV{LLVM_CONFIGURATION};
 
 our $llvm_revision = "137143";
-our $clang_revision = "137311";
+our $clang_revision = "137143";
 
 our $llvm_source_dir = "$ENV{SRCROOT}";
 our @archs = split (/\s+/, $ENV{ARCHS});
@@ -156,7 +156,16 @@ sub build_llvm
 		do_command ("cd '$llvm_source_dir' && svn co $svn_options --revision $llvm_revision http://llvm.org/svn/llvm-project/llvm/trunk llvm", "checking out llvm from repository", 1); 
 		print "Checking out clang sources from revision $clang_revision...\n";
 		do_command ("cd '$llvm_source_dir/llvm/tools' && svn co $svn_options --revision $clang_revision http://llvm.org/svn/llvm-project/cfe/trunk clang", "checking out clang from repository", 1);
-		print "Removing the llvm/test directory...\n";
+        print "Applying any local patches to LLVM...";
+        
+        my @llvm_patches = bsd_glob("$ENV{SRCROOT}/scripts/llvm.*.diff");
+        
+        foreach my $patch (@llvm_patches)
+        {
+            do_command ("cd '$llvm_source_dir/llvm' && patch -p0 < $patch");
+        }
+		
+        print "Removing the llvm/test directory...\n";
 		do_command ("cd '$llvm_source_dir' && rm -rf llvm/test", "removing test directory", 1); 
 	}
 

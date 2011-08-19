@@ -1,0 +1,12 @@
+Index: lib/Target/ARM/AsmParser/ARMAsmParser.cpp
+===================================================================
+--- lib/Target/ARM/AsmParser/ARMAsmParser.cpp	(revision 137143)
++++ lib/Target/ARM/AsmParser/ARMAsmParser.cpp	(working copy)
+@@ -2619,6 +2619,7 @@
+   if (Mnemonic == "mov" && Operands.size() > 4 &&
+       !static_cast<ARMOperand*>(Operands[4])->isARMSOImm() &&
+       static_cast<ARMOperand*>(Operands[4])->isImm0_65535Expr() &&
++      static_cast<ARMOperand*>(Operands[1])->isReg() &&
+       static_cast<ARMOperand*>(Operands[1])->getReg() == 0) {
+     ARMOperand *Op = static_cast<ARMOperand*>(Operands[1]);
+     Operands.erase(Operands.begin() + 1);
