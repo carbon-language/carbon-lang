@@ -1526,12 +1526,6 @@ SDValue DAGCombiner::visitADDE(SDNode *N) {
   ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0);
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1);
 
-  // If both operands are null we know that carry out will always be false.
-  if (N0C && N0C->isNullValue() && N0 == N1)
-    DAG.ReplaceAllUsesOfValueWith(SDValue(N, 1), DAG.getNode(ISD::CARRY_FALSE,
-                                                             N->getDebugLoc(),
-                                                             MVT::Glue));
-
   // canonicalize constant to RHS
   if (N0C && !N1C)
     return DAG.getNode(ISD::ADDE, N->getDebugLoc(), N->getVTList(),
