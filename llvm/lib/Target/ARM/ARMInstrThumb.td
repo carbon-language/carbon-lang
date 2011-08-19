@@ -1014,6 +1014,11 @@ def tMOVi8 : T1sI<(outs tGPR:$Rd), (ins imm0_255:$imm8), IIC_iMOVi,
   let Inst{10-8} = Rd;
   let Inst{7-0}  = imm8;
 }
+// Because we have an explicit tMOVSr below, we need an alias to handle
+// the immediate "movs" form here. Blech.
+def : InstAlias <"movs $Rdn, $imm",
+                 (tMOVi8 tGPR:$Rdn, CPSR, imm0_255:$imm, 14, 0)>,
+        Requires<[IsThumb]>;
 
 // A7-73: MOV(2) - mov setting flag.
 

@@ -3173,7 +3173,7 @@ unsigned ARMAsmParser::checkTargetMatchPredicate(MCInst &Inst) {
            isARMLowRegister(Inst.getOperand(2).getReg()))
     return Match_RequiresThumb2;
   // Others only require ARMv6 or later.
-  else if (Opc == ARM::tMOVr && isThumbOne() &&
+  else if (Opc == ARM::tMOVr && isThumbOne() && !hasV6Ops() &&
            isARMLowRegister(Inst.getOperand(0).getReg()) &&
            isARMLowRegister(Inst.getOperand(1).getReg()))
     return Match_RequiresV6;

@@ -148,7 +148,7 @@ def iflags_op : Operand<i32> {
 // ARM Predicate operand. Default to 14 = always (AL). Second part is CC
 // register whose default is 0 (no register).
 def CondCodeOperand : AsmOperandClass { let Name = "CondCode"; }
-def pred : PredicateOperand<OtherVT, (ops i32imm, CCR),
+def pred : PredicateOperand<OtherVT, (ops i32imm, i32imm),
                                      (ops (i32 14), (i32 zero_reg))> {
   let PrintMethod = "printPredicateOperand";
   let ParserMatchClass = CondCodeOperand;

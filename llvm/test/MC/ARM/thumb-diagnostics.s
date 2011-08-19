@@ -1,5 +1,7 @@
 @ RUN: not llvm-mc -triple=thumbv6-apple-darwin < %s 2> %t
 @ RUN: FileCheck --check-prefix=CHECK-ERRORS < %t %s
+@ RUN: not llvm-mc -triple=thumbv5-apple-darwin < %s 2> %t
+@ RUN: FileCheck --check-prefix=CHECK-ERRORS-V5 < %t %s
 
 @ Check for various assembly diagnostic messages on invalid input.
 
@@ -15,9 +17,9 @@
 @ CHECK-ERRORS: error: instruction variant requires Thumb2
 @ CHECK-ERRORS:         add r2, r3
 @ CHECK-ERRORS:         ^
-@ CHECK-ERRORS: error: instruction variant requires ARMv6 or later
-@ CHECK-ERRORS:         mov r2, r3
-@ CHECK-ERRORS:         ^
+@ CHECK-ERRORS-V5: error: instruction variant requires ARMv6 or later
+@ CHECK-ERRORS-V5:         mov r2, r3
+@ CHECK-ERRORS-V5:         ^
 
 
 @ Out of range immediates for ASR instruction.
