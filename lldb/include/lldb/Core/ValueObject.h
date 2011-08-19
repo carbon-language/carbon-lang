@@ -79,7 +79,7 @@ public:
         eDisplaySummary,
         eDisplayLanguageSpecific,
         eDisplayLocation,
-        eDisplayChildrenCount,
+        eDisplayChildrenCount
     };
     
     enum ExpressionPathScanEndReason

@@ -79,6 +79,35 @@ public:
     
 };
     
+// if the user tries to add formatters for, say, "struct Foo"
+// those will not match any type because of the way we strip qualifiers from typenames
+// this method looks for the case where the user is adding a "class","struct","enum" or "union" Foo
+// and strips the unnecessary qualifier
+static ConstString
+GetValidTypeName_Impl(const ConstString& type)
+{
+    int strip_len = 0;
+    
+    if (type == false)
+        return type;
+    
+    const char* type_cstr = type.AsCString();
+    
+    if ( ::strstr(type_cstr, "class ") == type_cstr)
+        strip_len = 6;
+    if ( ::strstr(type_cstr, "enum ") == type_cstr)
+        strip_len = 5;
+    if ( ::strstr(type_cstr, "struct ") == type_cstr)
+        strip_len = 7;
+    if ( ::strstr(type_cstr, "union ") == type_cstr)
+        strip_len = 6;
+    
+    if (strip_len == 0)
+        return type;
+    
+    return ConstString(type_cstr + strip_len);
+}
+    
 template<typename KeyType, typename ValueType>
 class FormatNavigator;
 
@@ -170,7 +199,7 @@ public:
         return m_map.size();
     }
     
-private:
+protected:
     MapType m_map;    
     Mutex m_map_mutex;
     IFormatChangeListener* listener;
@@ -195,20 +224,19 @@ private:
 template<typename KeyType, typename ValueType>
 class FormatNavigator
 {
-private:
+protected:
     typedef FormatMap<KeyType,ValueType> BackEndType;
     
-    BackEndType m_format_map;
-    
-    std::string m_name;
-        
+    template<typename, typename>
+    struct Types { };
+
 public:
     typedef typename BackEndType::MapType MapType;
     typedef typename MapType::iterator MapIterator;
     typedef typename MapType::key_type MapKeyType;
     typedef typename MapType::mapped_type MapValueType;
     typedef typename BackEndType::CallbackType CallbackType;
-    
+        
     typedef typename lldb::SharedPtr<FormatNavigator<KeyType, ValueType> >::Type SharedPointer;
     
     friend class FormatCategory;
@@ -224,15 +252,13 @@ public:
     void
     Add (const MapKeyType &type, const MapValueType& entry)
     {
-        m_format_map.Add(type,entry);
+        Add_Impl(type, entry, Types<KeyType,ValueType>());
     }
     
-    // using ConstString instead of MapKeyType is necessary here
-    // to make the partial template specializations below work
     bool
     Delete (ConstString type)
     {
-        return m_format_map.Delete(type);
+        return Delete_Impl(type, Types<KeyType, ValueType>());
     }
         
     bool
@@ -270,19 +296,88 @@ public:
     {
         return m_format_map.GetCount();
     }
+    
+protected:
         
-private:
+    BackEndType m_format_map;
+    
+    std::string m_name;
     
     DISALLOW_COPY_AND_ASSIGN(FormatNavigator);
     
     ConstString m_id_cs;
-    
-    // using ConstString instead of MapKeyType is necessary here
-    // to make the partial template specializations below work
+                           
+    template<typename K, typename V>
+    void
+    Add_Impl (const MapKeyType &type, const MapValueType& entry, Types<K,V>)
+    {
+       m_format_map.Add(type,entry);
+    }
+
+    template<typename V>
+    void Add_Impl (const ConstString &type, const MapValueType& entry, Types<ConstString,V>)
+    {
+       m_format_map.Add(GetValidTypeName_Impl(type), entry);
+    }
+
+    template<typename K, typename V>
+    bool
+    Delete_Impl (ConstString type, Types<K,V>)
+    {
+       return m_format_map.Delete(type);
+    }
+
+    template<typename V>
+    bool
+    Delete_Impl (ConstString type, Types<lldb::RegularExpressionSP,V>)
+    {
+       Mutex& x_mutex = m_format_map.mutex();
+        lldb_private::Mutex::Locker locker(x_mutex);
+       MapIterator pos, end = m_format_map.map().end();
+       for (pos = m_format_map.map().begin(); pos != end; pos++)
+       {
+           lldb::RegularExpressionSP regex = pos->first;
+           if ( ::strcmp(type.AsCString(),regex->GetText()) == 0)
+           {
+               m_format_map.map().erase(pos);
+               if (m_format_map.listener)
+                   m_format_map.listener->Changed();
+               return true;
+           }
+       }
+       return false;
+    }    
+
+    template<typename K, typename V>
+    bool
+    Get_Impl (ConstString type, MapValueType& entry, Types<K,V>)
+    {
+       return m_format_map.Get(type, entry);
+    }
+
+    template<typename V>
+    bool
+    Get_Impl (ConstString key, MapValueType& value, Types<lldb::RegularExpressionSP,V>)
+    {
+        Mutex& x_mutex = m_format_map.mutex();
+        lldb_private::Mutex::Locker locker(x_mutex);
+       MapIterator pos, end = m_format_map.map().end();
+       for (pos = m_format_map.map().begin(); pos != end; pos++)
+       {
+           lldb::RegularExpressionSP regex = pos->first;
+           if (regex->Execute(key.AsCString()))
+           {
+               value = pos->second;
+               return true;
+           }
+       }
+       return false;
+    }
+
     bool
     Get (ConstString type, MapValueType& entry)
     {
-        return m_format_map.Get(type, entry);
+        return Get_Impl(type, entry, Types<KeyType,ValueType>());
     }
     
     bool Get_ObjC(ValueObject& valobj,
@@ -577,30 +672,6 @@ private:
         return false;
     }
 };
-
-template<>
-bool
-FormatNavigator<lldb::RegularExpressionSP, SummaryFormat>::Get(ConstString key, lldb::SummaryFormatSP& value);
-
-template<>
-bool
-FormatNavigator<lldb::RegularExpressionSP, SummaryFormat>::Delete(ConstString type);
-
-template<>
-bool
-FormatNavigator<lldb::RegularExpressionSP, SyntheticFilter>::Get(ConstString key, SyntheticFilter::SharedPointer& value);
-
-template<>
-bool
-FormatNavigator<lldb::RegularExpressionSP, SyntheticFilter>::Delete(ConstString type);
-
-template<>
-bool
-FormatNavigator<lldb::RegularExpressionSP, SyntheticScriptProvider>::Get(ConstString key, SyntheticFilter::SharedPointer& value);
-
-template<>
-bool
-FormatNavigator<lldb::RegularExpressionSP, SyntheticScriptProvider>::Delete(ConstString type);
     
 class CategoryMap;
     
@@ -633,7 +704,7 @@ public:
         eFilter =          0x0002,
         eRegexFilter =     0x1002,
         eSynth =           0x0004,
-        eRegexSynth =      0x1004,
+        eRegexSynth =      0x1004
     };
     
     typedef uint16_t FormatCategoryItems;
@@ -1165,6 +1236,13 @@ public:
 
     static const char *
     GetFormatAsCString (lldb::Format format);
+    
+    // if the user tries to add formatters for, say, "struct Foo"
+    // those will not match any type because of the way we strip qualifiers from typenames
+    // this method looks for the case where the user is adding a "class","struct","enum" or "union" Foo
+    // and strips the unnecessary qualifier
+    static ConstString
+    GetValidTypeName (const ConstString& type);
     
     // when DataExtractor dumps a vectorOfT, it uses a predefined format for each item
     // this method returns it, or eFormatInvalid if vector_format is not a vectorOf

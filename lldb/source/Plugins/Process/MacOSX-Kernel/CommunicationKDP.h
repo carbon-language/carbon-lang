@@ -62,12 +62,12 @@ public:
         KDP_WRITEMEM64,
         KDP_BREAKPOINT_SET64,
         KDP_BREAKPOINT_REMOVE64,
-        KDP_KERNELVERSION,
+        KDP_KERNELVERSION
     } CommandType;
 
     enum 
     {
-        KDP_FEATURE_BP = (1u << 0),
+        KDP_FEATURE_BP = (1u << 0)
     };
 
     typedef enum

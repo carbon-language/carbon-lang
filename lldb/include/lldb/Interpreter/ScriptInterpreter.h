@@ -66,7 +66,7 @@ public:
         eFloat,
         eDouble,
         eChar,
-        eCharStrOrNone,
+        eCharStrOrNone
     } ReturnType;
 
 

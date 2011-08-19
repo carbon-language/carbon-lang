@@ -154,120 +154,6 @@ FormatManager::GetFormatAsCString (Format format)
     return NULL;
 }
 
-template<>
-bool
-FormatNavigator<lldb::RegularExpressionSP, SummaryFormat>::Get(ConstString key, lldb::SummaryFormatSP& value)
-{
-    Mutex::Locker(m_format_map.mutex());
-    MapIterator pos, end = m_format_map.map().end();
-    for (pos = m_format_map.map().begin(); pos != end; pos++)
-    {
-        lldb::RegularExpressionSP regex = pos->first;
-        if (regex->Execute(key.AsCString()))
-        {
-            value = pos->second;
-            return true;
-        }
-    }
-    return false;
-}
-
-template<>
-bool
-FormatNavigator<lldb::RegularExpressionSP, SummaryFormat>::Delete(ConstString type)
-{
-    Mutex::Locker(m_format_map.mutex());
-    MapIterator pos, end = m_format_map.map().end();
-    for (pos = m_format_map.map().begin(); pos != end; pos++)
-    {
-        lldb::RegularExpressionSP regex = pos->first;
-        if ( ::strcmp(type.AsCString(),regex->GetText()) == 0)
-        {
-            m_format_map.map().erase(pos);
-            if (m_format_map.listener)
-                m_format_map.listener->Changed();
-            return true;
-        }
-    }
-    return false;
-}
-
-template<>
-bool
-FormatNavigator<lldb::RegularExpressionSP, SyntheticFilter>::Get(ConstString key, SyntheticFilter::SharedPointer& value)
-{
-    Mutex::Locker(m_format_map.mutex());
-    MapIterator pos, end = m_format_map.map().end();
-    for (pos = m_format_map.map().begin(); pos != end; pos++)
-    {
-        lldb::RegularExpressionSP regex = pos->first;
-        if (regex->Execute(key.AsCString()))
-        {
-            value = pos->second;
-            return true;
-        }
-    }
-    return false;
-}
-
-template<>
-bool
-FormatNavigator<lldb::RegularExpressionSP, SyntheticFilter>::Delete(ConstString type)
-{
-    Mutex::Locker(m_format_map.mutex());
-    MapIterator pos, end = m_format_map.map().end();
-    for (pos = m_format_map.map().begin(); pos != end; pos++)
-    {
-        lldb::RegularExpressionSP regex = pos->first;
-        if ( ::strcmp(type.AsCString(),regex->GetText()) == 0)
-        {
-            m_format_map.map().erase(pos);
-            if (m_format_map.listener)
-                m_format_map.listener->Changed();
-            return true;
-        }
-    }
-    return false;
-}
-
-template<>
-bool
-FormatNavigator<lldb::RegularExpressionSP, SyntheticScriptProvider>::Get(ConstString key, SyntheticFilter::SharedPointer& value)
-{
-    Mutex::Locker(m_format_map.mutex());
-    MapIterator pos, end = m_format_map.map().end();
-    for (pos = m_format_map.map().begin(); pos != end; pos++)
-    {
-        lldb::RegularExpressionSP regex = pos->first;
-        if (regex->Execute(key.AsCString()))
-        {
-            value = pos->second;
-            return true;
-        }
-    }
-    return false;
-}
-
-template<>
-bool
-FormatNavigator<lldb::RegularExpressionSP, SyntheticScriptProvider>::Delete(ConstString type)
-{
-    Mutex::Locker(m_format_map.mutex());
-    MapIterator pos, end = m_format_map.map().end();
-    for (pos = m_format_map.map().begin(); pos != end; pos++)
-    {
-        lldb::RegularExpressionSP regex = pos->first;
-        if ( ::strcmp(type.AsCString(),regex->GetText()) == 0)
-        {
-            m_format_map.map().erase(pos);
-            if (m_format_map.listener)
-                m_format_map.listener->Changed();
-            return true;
-        }
-    }
-    return false;
-}
-
 FormatCategory::FormatCategory(IFormatChangeListener* clist,
                                std::string name) :
     m_summary_nav(new SummaryNavigator("summary",clist)),
@@ -486,6 +372,12 @@ FormatManager::GetSingleItemFormat(lldb::Format vector_format)
     }
 }
 
+ConstString
+FormatManager::GetValidTypeName (const ConstString& type)
+{
+    return ::GetValidTypeName_Impl(type);
+}
+
 FormatManager::FormatManager() : 
     m_value_nav("format",this),
     m_named_summaries_map(this),
@@ -574,7 +466,6 @@ FormatManager::FormatManager() :
     
 }
 
-
 static FormatManager&
 GetFormatManager()
 {
@@ -603,7 +494,7 @@ DataVisualization::ValueFormats::Get(ValueObject& valobj, lldb::DynamicValueType
 void
 DataVisualization::ValueFormats::Add(const ConstString &type, const lldb::ValueFormatSP &entry)
 {
-    GetFormatManager().Value().Add(type,entry);
+    GetFormatManager().Value().Add(FormatManager::GetValidTypeName(type),entry);
 }
 
 bool
@@ -731,7 +622,7 @@ DataVisualization::NamedSummaryFormats::Get(const ConstString &type, lldb::Summa
 void
 DataVisualization::NamedSummaryFormats::Add(const ConstString &type, const lldb::SummaryFormatSP &entry)
 {
-    GetFormatManager().NamedSummary().Add(type,entry);
+    GetFormatManager().NamedSummary().Add(FormatManager::GetValidTypeName(type),entry);
 }
 
 bool

@@ -187,7 +187,7 @@ public:
     {
         eRegularSummary,
         eRegexSummary,
-        eNamedSummary,
+        eNamedSummary
     };
 
     CommandObjectTypeSummaryAdd (CommandInterpreter &interpreter);
@@ -330,7 +330,7 @@ public:
     enum SynthFormatType
     {
         eRegularSynth,
-        eRegexSynth,
+        eRegexSynth
     };
     
     CommandObjectTypeSynthAdd (CommandInterpreter &interpreter);

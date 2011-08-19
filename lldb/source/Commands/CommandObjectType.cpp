@@ -3366,7 +3366,7 @@ private:
     enum FilterFormatType
     {
         eRegularFilter,
-        eRegexFilter,
+        eRegexFilter
     };
     
     bool

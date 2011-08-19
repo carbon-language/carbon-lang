@@ -202,6 +202,34 @@ class DataFormatterTestCase(TestBase):
         self.expect("frame variable the_coolest_guy",
             substrs = ['(i_am_cooler) the_coolest_guy = goofy'])
 
+        # check that unwanted type specifiers are removed
+        self.runCmd("type summary delete i_am_cool")
+        self.runCmd("type summary add -f \"goofy\" \"class i_am_cool\"")
+        self.expect("frame variable the_coolest_guy",
+                substrs = ['(i_am_cooler) the_coolest_guy = goofy'])
+
+        self.runCmd("type summary delete i_am_cool")
+        self.runCmd("type summary add -f \"goofy\" \"enum i_am_cool\"")
+        self.expect("frame variable the_coolest_guy",
+                    substrs = ['(i_am_cooler) the_coolest_guy = goofy'])
+
+        self.runCmd("type summary delete i_am_cool")
+        self.runCmd("type summary add -f \"goofy\" \"struct i_am_cool\"")
+        self.expect("frame variable the_coolest_guy",
+                    substrs = ['(i_am_cooler) the_coolest_guy = goofy'])
+
+        self.runCmd("type summary delete i_am_cool")
+        self.runCmd("type summary add -f \"goofy\" \"union i_am_cool\"")
+        self.expect("frame variable the_coolest_guy",
+                    substrs = ['(i_am_cooler) the_coolest_guy = goofy'])
+
+        # but that not *every* specifier is removed
+        self.runCmd("type summary delete i_am_cool")
+        self.runCmd("type summary add -f \"goofy\" \"wrong i_am_cool\"")
+        self.expect("frame variable the_coolest_guy", matching=False,
+                    substrs = ['(i_am_cooler) the_coolest_guy = goofy'])
+
+
 if __name__ == '__main__':
     import atexit
     lldb.SBDebugger.Initialize()

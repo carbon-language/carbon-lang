@@ -98,7 +98,7 @@ enum
     fpu_fiseg = fpu_cs,
     fpu_fioff = fpu_ip,
     fpu_foseg = fpu_ds,
-    fpu_fooff = fpu_dp,
+    fpu_fooff = fpu_dp
 };
 
 enum gcc_dwarf_regnums
@@ -143,7 +143,7 @@ enum gcc_dwarf_regnums
     gcc_dwarf_fpu_stmm4,
     gcc_dwarf_fpu_stmm5,
     gcc_dwarf_fpu_stmm6,
-    gcc_dwarf_fpu_stmm7,
+    gcc_dwarf_fpu_stmm7
 
 };
 
@@ -205,7 +205,7 @@ enum gdb_regnums
     gdb_fpu_xmm13   =  53,
     gdb_fpu_xmm14   =  54,
     gdb_fpu_xmm15   =  55,
-    gdb_fpu_mxcsr   =  56,
+    gdb_fpu_mxcsr   =  56
 };
 
 RegisterContextDarwin_x86_64::RegisterContextDarwin_x86_64 (Thread &thread, uint32_t concrete_frame_idx) :
