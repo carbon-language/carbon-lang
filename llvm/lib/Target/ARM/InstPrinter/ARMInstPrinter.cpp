@@ -169,6 +169,13 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O) {
     return;
   }
 
+  // Thumb1 NOP
+  if (Opcode == ARM::tMOVr && MI->getOperand(0).getReg() == ARM::R8 &&
+      MI->getOperand(1).getReg() == ARM::R8) {
+    O << "\tnop";
+    return;
+  }
+
   printInstruction(MI, O);
 }
 

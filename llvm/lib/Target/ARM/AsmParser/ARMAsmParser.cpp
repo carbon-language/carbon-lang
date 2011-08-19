@@ -2846,6 +2846,7 @@ getMnemonicAcceptInfo(StringRef Mnemonic, bool &CanAcceptCarrySet,
       Mnemonic == "trap" || Mnemonic == "mrc2" || Mnemonic == "mrrc2" ||
       Mnemonic == "dsb" || Mnemonic == "isb" || Mnemonic == "clrex" ||
       Mnemonic == "setend" ||
+      (Mnemonic == "nop" && isThumbOne()) ||
       ((Mnemonic == "pld" || Mnemonic == "pli") && !isThumb()) ||
       ((Mnemonic.startswith("rfe") || Mnemonic.startswith("srs"))
         && !isThumb()) ||

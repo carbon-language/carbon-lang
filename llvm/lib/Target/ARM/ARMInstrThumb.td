@@ -237,7 +237,8 @@ class T1SystemEncoding<bits<8> opc>
 }
 
 def tNOP : T1pI<(outs), (ins), NoItinerary, "nop", "", []>,
-           T1SystemEncoding<0x00>; // A8.6.110
+           T1SystemEncoding<0x00>, // A8.6.110
+        Requires<[IsThumb2]>;
 
 def tYIELD : T1pI<(outs), (ins), NoItinerary, "yield", "", []>,
            T1SystemEncoding<0x10>; // A8.6.410
@@ -1382,3 +1383,8 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
                   2, IIC_Br, [(brind GPR:$Rm)],
                   (tMOVr PC, GPR:$Rm, pred:$p)>;
 }
+
+
+// In Thumb1, "nop" is encoded as a "mov r8, r8". Technically, the bf00
+// encoding is available on ARMv6K, but we don't differentiate that finely.
+def : InstAlias<"nop", (tMOVr R8, R8, 14, 0)>,Requires<[IsThumb, IsThumb1Only]>;

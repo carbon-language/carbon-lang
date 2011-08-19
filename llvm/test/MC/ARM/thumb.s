@@ -42,7 +42,7 @@
 @ CHECK: bkpt  #2                       @ encoding: [0x02,0xbe]
 
         nop
-@ CHECK: nop @ encoding: [0x00,0xbf]
+@ CHECK: nop @ encoding: [0xc0,0x46]
 
         wfe
         wfi
