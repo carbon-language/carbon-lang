@@ -261,14 +261,15 @@ static bool checkIsPointer(Sema &S, const Decl *D, const AttributeList &Attr) {
 
 /// \brief Checks that the passed in QualType either is of RecordType or points
 /// to RecordType. Returns the relevant RecordType, null if it does not exit.
-const RecordType *getRecordType(QualType QT) {
-    const RecordType *RT = QT->getAs<RecordType>();
-    // now check if we point to record type
-    if(!RT && QT->isPointerType()){
-        QualType PT = QT->getAs<PointerType>()->getPointeeType();
-        RT = PT->getAs<RecordType>();
-    }
+static const RecordType *getRecordType(QualType QT) {
+  if (const RecordType *RT = QT->getAs<RecordType>())
     return RT;
+
+  // Now check if we point to record type.
+  if (const PointerType *PT = QT->getAs<PointerType>())
+    return PT->getPointeeType()->getAs<RecordType>();
+
+  return 0;
 }
 
 /// \brief Thread Safety Analysis: Checks that all attribute arguments, starting
