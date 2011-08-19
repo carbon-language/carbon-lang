@@ -132,13 +132,6 @@ static inline void RStrip(llvm::StringRef &Str, char c)
     if (!Str.empty() && Str.back() == c)
         Str = Str.substr(0, Str.size()-1);
 }
-static inline void RStripNumber(llvm::StringRef &Str)
-{
-    while (!Str.empty() && isnumber(Str.back()))
-        Str = Str.substr(0, Str.size()-1);
-    if (!Str.empty() && Str.back() == '-')
-        Str = Str.substr(0, Str.size()-1);
-}
 // Aligns the raw disassembly (passed as 'str') with the rest of edis'ed disassembly output.
 // This is called from non-raw mode when edis of the current m_inst fails for some reason.
 static void
@@ -151,19 +144,6 @@ Align(Stream *s, const char *str, size_t opcodeColWidth, size_t operandColWidth)
     PadString(s, p.first, opcodeColWidth);
     if (!p.second.empty())
         PadString(s, p.second, operandColWidth);
-}
-
-static bool
-apply_workaround(const char *str)
-{
-  llvm::StringRef Str(str);
-  StripSpaces(Str);
-  if (Str.startswith("mov.w")) {
-      RStripNumber(Str);
-      if (Str.endswith("#"))
-          return true;
-  }
-  return false;
 }
 
 #define AlignPC(pc_val) (pc_val & 0xFFFFFFFC)
@@ -232,16 +212,7 @@ InstructionLLVM::Dump
     */
     /* .... when we fix the edis for arm/thumb. */
 
-    const char *lookahead;
-    bool workaround = false;
-    if (EDGetInstString(&lookahead, m_inst)) // 0 on success
-      return;
-    else if (m_arch_type == llvm::Triple::thumb) {
-        if (apply_workaround(lookahead))
-            workaround = true;
-    }
-
-    if (!raw && !workaround)
+    if (!raw)
         numTokens = EDNumTokens(m_inst);
 
     int currentOpIndex = -1;
