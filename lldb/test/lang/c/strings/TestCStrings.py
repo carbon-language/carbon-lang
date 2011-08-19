@@ -8,16 +8,12 @@ class CStringsTestCase(TestBase):
     
     mydir = os.path.join("lang", "c", "strings")
     
-    # Due to rollback of llvm/clang?
-    @unittest2.expectedFailure
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_with_dsym_and_run_command(self):
         """Tests that C strings work as expected in expressions"""
         self.buildDsym()
         self.static_method_commands()
 
-    # Due to rollback of llvm/clang?
-    @unittest2.expectedFailure
     def test_with_dwarf_and_run_command(self):
         """Tests that C strings work as expected in expressions"""
         self.buildDwarf()
