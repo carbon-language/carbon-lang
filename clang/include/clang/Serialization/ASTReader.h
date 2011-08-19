@@ -482,10 +482,6 @@ public:
   /// the first module loaded.
   Module &getPrimaryModule() const { return *Chain[0]; }
 
-  /// \brief Returns the latest module associated with the manager, that is,
-  /// the last module loaded
-  Module &getLastModule() { return *Chain.back(); }
-
   /// \brief Returns the module associated with the given index
   Module &operator[](unsigned Index) const { return *Chain[Index]; }
 
