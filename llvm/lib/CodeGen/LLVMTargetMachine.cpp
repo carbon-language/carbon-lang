@@ -57,8 +57,12 @@ static cl::opt<bool> DisableCodePlace("disable-code-place", cl::Hidden,
     cl::desc("Disable code placement"));
 static cl::opt<bool> DisableSSC("disable-ssc", cl::Hidden,
     cl::desc("Disable Stack Slot Coloring"));
+static cl::opt<bool> DisableMachineDCE("disable-machine-dce", cl::Hidden,
+    cl::desc("Disable Machine Dead Code Elimination"));
 static cl::opt<bool> DisableMachineLICM("disable-machine-licm", cl::Hidden,
     cl::desc("Disable Machine LICM"));
+static cl::opt<bool> DisableMachineCSE("disable-machine-cse", cl::Hidden,
+    cl::desc("Disable Machine Common Subexpression Elimination"));
 static cl::opt<bool> DisablePostRAMachineLICM("disable-postra-machine-licm",
     cl::Hidden,
     cl::desc("Disable Machine LICM"));
@@ -398,12 +402,14 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
     // there is one known exception: lowered code for arguments that are only
     // used by tail calls, where the tail calls reuse the incoming stack
     // arguments directly (see t11 in test/CodeGen/X86/sibcall.ll).
-    PM.add(createDeadMachineInstructionElimPass());
+    if (!DisableMachineDCE)
+      PM.add(createDeadMachineInstructionElimPass());
     printAndVerify(PM, "After codegen DCE pass");
 
     if (!DisableMachineLICM)
       PM.add(createMachineLICMPass());
-    PM.add(createMachineCSEPass());
+    if (!DisableMachineCSE)
+      PM.add(createMachineCSEPass());
     if (!DisableMachineSink)
       PM.add(createMachineSinkingPass());
     printAndVerify(PM, "After Machine LICM, CSE and Sinking passes");
