@@ -194,3 +194,11 @@ _func:
 @ CHECK: ldr	r2, [sp, #24]           @ encoding: [0x06,0x9a]
 @ CHECK: ldr	r3, [sp, #1020]         @ encoding: [0xff,0x9b]
 
+
+@------------------------------------------------------------------------------
+@ LDR (literal)
+@------------------------------------------------------------------------------
+        ldr r1, _foo
+
+@ CHECK: ldr	r1, _foo                @ encoding: [A,0x49]
+             @   fixup A - offset: 0, value: _foo, kind: fixup_arm_thumb_cp
