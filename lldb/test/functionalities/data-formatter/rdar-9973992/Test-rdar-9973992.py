@@ -9,8 +9,8 @@ from lldbtest import *
 
 class DataFormatterTestCase(TestBase):
 
-    # test for rdar://problem/9973865 (If you use "${var}" in the summary string for an aggregate type, the summary doesn't print for a pointer to that type)
-    mydir = os.path.join("functionalities", "data-formatter", "rdar-9973865")
+    # test for rdar://problem/9973992 (What should we do for "${var}" in summaries of aggregate types?)
+    mydir = os.path.join("functionalities", "data-formatter", "rdar-9973992")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_with_dsym_and_run_command(self):
@@ -68,6 +68,20 @@ class DataFormatterTestCase(TestBase):
 
         self.expect('frame variable *mine_ptr',
                     substrs = ['SUMMARY SUCCESS 10'])
+            
+        self.runCmd("type summary add -f \"${var}\" Summarize")
+        self.runCmd("type summary add -f \"${var}\" -e TwoSummarizes")
+            
+        self.expect('frame variable',
+            substrs = ['(TwoSummarizes) twos = TwoSummarizes @ ',
+                       'first = summarize_t @ ',
+                       'second = summarize_t @ '])
+                    
+        self.runCmd("type summary add -f \"SUMMARY SUCCESS ${var.first}\" Summarize")
+        self.expect('frame variable',
+                    substrs = ['(TwoSummarizes) twos = TwoSummarizes @ ',
+                               'first = SUMMARY SUCCESS 1',
+                               'second = SUMMARY SUCCESS 3'])
 
 if __name__ == '__main__':
     import atexit

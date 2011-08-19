@@ -40,6 +40,7 @@ ValueObjectSynthetic::ValueObjectSynthetic (ValueObject &parent, lldb::Synthetic
     m_address (),
     m_type_sp(),
     m_use_synthetic (lldb::eUseSyntheticFilter),
+    m_synth_sp(filter),
     m_synth_filter(filter->GetFrontEnd(parent.GetSP())),
     m_children_byindex(),
     m_name_toindex()

@@ -526,6 +526,7 @@ StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr,
         const bool check_ptr_vs_member = (options & eExpressionPathOptionCheckPtrVsMember) != 0;
         const bool no_fragile_ivar = (options & eExpressionPathOptionsNoFragileObjcIvar) != 0;
         const bool no_synth_child = (options & eExpressionPathOptionsNoSyntheticChildren) != 0;
+        const bool no_synth_array = (options & eExpressionPathOptionsNoSyntheticArrayRange) != 0;
         error.Clear();
         bool deref = false;
         bool address_of = false;
@@ -861,6 +862,7 @@ StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr,
                                 // this is most probably a BitField, let's take a look
                                 char *real_end = NULL;
                                 long final_index = ::strtol (end+1, &real_end, 0);
+                                bool expand_bitfield = true;
                                 if (real_end && *real_end == ']')
                                 {
                                     // if the format given is [high-low], swap range
@@ -908,15 +910,31 @@ StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr,
                                         valobj_sp = temp;
                                         deref = false;
                                     }
-
-                                    child_valobj_sp = valobj_sp->GetSyntheticBitFieldChild(child_index, final_index, true);
-                                    if (!child_valobj_sp)
+                                    /*else if (valobj_sp->IsArrayType() || valobj_sp->IsPointerType())
                                     {
-                                        valobj_sp->GetExpressionPath (var_expr_path_strm, false);
-                                        error.SetErrorStringWithFormat ("bitfield range %i-%i is not valid for \"(%s) %s\"", 
-                                                                        child_index, final_index, 
-                                                                        valobj_sp->GetTypeName().AsCString("<invalid type>"),
-                                                                        var_expr_path_strm.GetString().c_str());
+                                        child_valobj_sp = valobj_sp->GetSyntheticArrayRangeChild(child_index, final_index, true);
+                                        expand_bitfield = false;
+                                        if (!child_valobj_sp)
+                                        {
+                                            valobj_sp->GetExpressionPath (var_expr_path_strm, false);
+                                            error.SetErrorStringWithFormat ("array range %i-%i is not valid for \"(%s) %s\"", 
+                                                                            child_index, final_index, 
+                                                                            valobj_sp->GetTypeName().AsCString("<invalid type>"),
+                                                                            var_expr_path_strm.GetString().c_str());
+                                        }
+                                    }*/
+
+                                    if (expand_bitfield)
+                                    {
+                                        child_valobj_sp = valobj_sp->GetSyntheticBitFieldChild(child_index, final_index, true);
+                                        if (!child_valobj_sp)
+                                        {
+                                            valobj_sp->GetExpressionPath (var_expr_path_strm, false);
+                                            error.SetErrorStringWithFormat ("bitfield range %i-%i is not valid for \"(%s) %s\"", 
+                                                                            child_index, final_index, 
+                                                                            valobj_sp->GetTypeName().AsCString("<invalid type>"),
+                                                                            var_expr_path_strm.GetString().c_str());
+                                        }
                                     }
                                 }
                                 

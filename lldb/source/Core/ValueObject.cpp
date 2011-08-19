@@ -989,6 +989,9 @@ ValueObject::GetPrintableRepresentation(Stream& s,
             snprintf((char*)return_value, 512, "%d", count);
             break;
         }
+        case eDisplayType:
+            return_value = GetTypeName().AsCString();
+            break;
         default:
             break;
     }
@@ -1007,7 +1010,11 @@ ValueObject::GetPrintableRepresentation(Stream& s,
                 // this thing has no value, and it seems to have no summary
                 // some combination of unitialized data and other factors can also
                 // raise this condition, so let's print a nice generic error message
-                return_value = "<no available summary>";
+                {
+                    alloc_mem.resize(684);
+                    return_value = &alloc_mem[0];
+                    snprintf((char*)return_value, 684, "%s @ %s", GetTypeName().AsCString(), GetLocationAsCString());
+                }
             }
             else
                 return_value = GetValueAsCString();
@@ -1024,6 +1031,50 @@ ValueObject::GetPrintableRepresentation(Stream& s,
     // from our callers' perspective, so return true
     return true;
     
+}
+
+// if any more "special cases" are added to ValueObject::DumpPrintableRepresentation() please keep
+// this call up to date by returning true for your new special cases. We will eventually move
+// to checking this call result before trying to display special cases
+bool
+ValueObject::HasSpecialCasesForPrintableRepresentation(ValueObjectRepresentationStyle val_obj_display,
+                                                       lldb::Format custom_format)
+{
+    clang_type_t elem_or_pointee_type;
+    Flags flags(ClangASTContext::GetTypeInfo(GetClangType(), GetClangAST(), &elem_or_pointee_type));
+    
+    if (flags.AnySet(ClangASTContext::eTypeIsArray | ClangASTContext::eTypeIsPointer)
+        && val_obj_display == ValueObject::eDisplayValue)
+    {        
+        if (IsCStringContainer(true) && 
+            (custom_format == lldb::eFormatCString ||
+             custom_format == lldb::eFormatCharArray ||
+             custom_format == lldb::eFormatChar ||
+             custom_format == lldb::eFormatVectorOfChar))
+            return true;
+
+        if (flags.Test(ClangASTContext::eTypeIsArray))
+        {
+            if ((custom_format == lldb::eFormatBytes) ||
+                (custom_format == lldb::eFormatBytesWithASCII))
+                return true;
+            
+            if ((custom_format == lldb::eFormatVectorOfChar) ||
+                (custom_format == lldb::eFormatVectorOfFloat32) ||
+                (custom_format == lldb::eFormatVectorOfFloat64) ||
+                (custom_format == lldb::eFormatVectorOfSInt16) ||
+                (custom_format == lldb::eFormatVectorOfSInt32) ||
+                (custom_format == lldb::eFormatVectorOfSInt64) ||
+                (custom_format == lldb::eFormatVectorOfSInt8) ||
+                (custom_format == lldb::eFormatVectorOfUInt128) ||
+                (custom_format == lldb::eFormatVectorOfUInt16) ||
+                (custom_format == lldb::eFormatVectorOfUInt32) ||
+                (custom_format == lldb::eFormatVectorOfUInt64) ||
+                (custom_format == lldb::eFormatVectorOfUInt8))
+                return true;
+        }
+    }
+    return false;
 }
 
 bool
@@ -1380,6 +1431,19 @@ ValueObject::IsPossibleDynamicType ()
     return ClangASTContext::IsPossibleDynamicType (GetClangAST (), GetClangType());
 }
 
+lldb::ValueObjectSP
+ValueObject::GetSyntheticArrayMember (int32_t index, bool can_create)
+{
+    if (IsArrayType())
+        return GetSyntheticArrayMemberFromArray(index, can_create);
+
+    if (IsPointerType())
+        return GetSyntheticArrayMemberFromPointer(index, can_create);
+    
+    return ValueObjectSP();
+    
+}
+
 ValueObjectSP
 ValueObject::GetSyntheticArrayMemberFromPointer (int32_t index, bool can_create)
 {
@@ -1482,6 +1546,42 @@ ValueObject::GetSyntheticBitFieldChild (uint32_t from, uint32_t to, bool can_cre
                                                       from,
                                                       false,
                                                       false);
+            
+            // Cache the value if we got one back...
+            if (synthetic_child)
+            {
+                AddSyntheticChild(index_const_str, synthetic_child);
+                synthetic_child_sp = synthetic_child->GetSP();
+                synthetic_child_sp->SetName(ConstString(index_str));
+                synthetic_child_sp->m_is_bitfield_for_scalar = true;
+            }
+        }
+    }
+    return synthetic_child_sp;
+}
+
+lldb::ValueObjectSP
+ValueObject::GetSyntheticArrayRangeChild (uint32_t from, uint32_t to, bool can_create)
+{
+    ValueObjectSP synthetic_child_sp;
+    if (IsArrayType () || IsPointerType ())
+    {
+        char index_str[64];
+        snprintf(index_str, sizeof(index_str), "[%i-%i]", from, to);
+        ConstString index_const_str(index_str);
+        // Check if we have already created a synthetic array member in this
+        // valid object. If we have we will re-use it.
+        synthetic_child_sp = GetSyntheticChild (index_const_str);
+        if (!synthetic_child_sp)
+        {
+            ValueObjectSynthetic *synthetic_child;
+            
+            // We haven't made a synthetic array member for INDEX yet, so
+            // lets make one and cache it for any future reference.
+            SyntheticArrayView *view = new SyntheticArrayView();
+            view->AddRange(from,to);
+            SyntheticChildrenSP view_sp(view);
+            synthetic_child = new ValueObjectSynthetic(*this, view_sp);
             
             // Cache the value if we got one back...
             if (synthetic_child)

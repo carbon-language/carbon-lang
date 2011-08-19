@@ -181,6 +181,31 @@ SyntheticFilter::GetDescription()
     return sstr.GetString();
 }
 
+std::string
+SyntheticArrayView::GetDescription()
+{
+    StreamString sstr;
+    sstr.Printf("%s%s%s {\n",
+                m_cascades ? "" : " (not cascading)",
+                m_skip_pointers ? " (skip pointers)" : "",
+                m_skip_references ? " (skip references)" : "");
+    SyntheticArrayRange* ptr = &m_head;
+    while (ptr && ptr != m_tail)
+    {
+        if (ptr->GetLow() == ptr->GetHigh())
+            sstr.Printf("    [%d]\n",
+                        ptr->GetLow());
+        else
+            sstr.Printf("    [%d-%d]\n",
+                        ptr->GetLow(),
+                        ptr->GetHigh());
+        ptr = ptr->GetNext();
+    }
+    
+    sstr.Printf("}");
+    return sstr.GetString();
+}
+
 SyntheticScriptProvider::FrontEnd::FrontEnd(std::string pclass,
                                             lldb::ValueObjectSP be) :
 SyntheticChildrenFrontEnd(be),

@@ -195,7 +195,34 @@ class DataFormatterTestCase(TestBase):
                        '[2] = cool object @ 0x',
                        '[3] = cool object @ 0x',
                        '[4] = cool object @ 0x'])
+                            
+        # test getting similar output by exploiting ${var} = 'type @ location' for aggregates
+        self.runCmd("type summary add -f \"${var}\" i_am_cool")
+        
+        # this test might fail if the compiler tries to store
+        # these values into registers.. hopefully this is not
+        # going to be the case
+        self.expect("frame variable cool_array",
+                    substrs = ['[0] = i_am_cool @ 0x',
+                               '[1] = i_am_cool @ 0x',
+                               '[2] = i_am_cool @ 0x',
+                               '[3] = i_am_cool @ 0x',
+                               '[4] = i_am_cool @ 0x'])
+
             
+        # test getting same output by exploiting %T and %L together for aggregates
+        self.runCmd("type summary add -f \"${var%T} @ ${var%L}\" i_am_cool")
+        
+        # this test might fail if the compiler tries to store
+        # these values into registers.. hopefully this is not
+        # going to be the case
+        self.expect("frame variable cool_array",
+                    substrs = ['[0] = i_am_cool @ 0x',
+                               '[1] = i_am_cool @ 0x',
+                               '[2] = i_am_cool @ 0x',
+                               '[3] = i_am_cool @ 0x',
+                               '[4] = i_am_cool @ 0x'])
+                            
         self.runCmd("type summary add -f \"goofy\" i_am_cool")
         self.runCmd("type summary add -f \"${var.second_cool%S}\" i_am_cooler")
 

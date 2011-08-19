@@ -24,9 +24,9 @@ namespace lldb_private {
 //----------------------------------------------------------------------
 // A ValueObject that obtains its children from some source other than
 // real information
-// This is currently used to implement children filtering, where only
-// a subset of the real children are shown, but it can be used for any
-// source of made-up children information
+// This is currently used to implement Python-based children and filters
+// but you can bind it to any source of synthetic information and have
+// it behave accordingly
 //----------------------------------------------------------------------
 class ValueObjectSynthetic : public ValueObject
 {
@@ -121,6 +121,7 @@ protected:
     lldb::TypeSP m_type_sp;
     lldb::ValueObjectSP m_owning_valobj_sp;
     lldb::SyntheticValueType m_use_synthetic;
+    lldb::SyntheticChildrenSP m_synth_sp;   // hold on to your synthetic children provider
     lldb::SyntheticChildrenFrontEndSP m_synth_filter;
     
     typedef std::map<uint32_t, lldb::ValueObjectSP> ByIndexMap;

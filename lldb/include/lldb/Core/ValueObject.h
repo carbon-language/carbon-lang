@@ -79,7 +79,8 @@ public:
         eDisplaySummary,
         eDisplayLanguageSpecific,
         eDisplayLocation,
-        eDisplayChildrenCount
+        eDisplayChildrenCount,
+        eDisplayType
     };
     
     enum ExpressionPathScanEndReason
@@ -658,6 +659,10 @@ public:
                                lldb::Format custom_format = lldb::eFormatInvalid);
 
     bool
+    HasSpecialCasesForPrintableRepresentation(ValueObjectRepresentationStyle val_obj_display,
+                                              lldb::Format custom_format);
+    
+    bool
     DumpPrintableRepresentation(Stream& s,
                                 ValueObjectRepresentationStyle val_obj_display = eDisplaySummary,
                                 lldb::Format custom_format = lldb::eFormatInvalid,
@@ -693,6 +698,9 @@ protected:
 public:
     lldb::ValueObjectSP
     GetSyntheticChild (const ConstString &key) const;
+    
+    lldb::ValueObjectSP
+    GetSyntheticArrayMember (int32_t index, bool can_create);
 
     lldb::ValueObjectSP
     GetSyntheticArrayMemberFromPointer (int32_t index, bool can_create);
@@ -702,6 +710,9 @@ public:
     
     lldb::ValueObjectSP
     GetSyntheticBitFieldChild (uint32_t from, uint32_t to, bool can_create);
+    
+    lldb::ValueObjectSP
+    GetSyntheticArrayRangeChild (uint32_t from, uint32_t to, bool can_create);
     
     lldb::ValueObjectSP
     GetSyntheticExpressionPathChild(const char* expression, bool can_create);

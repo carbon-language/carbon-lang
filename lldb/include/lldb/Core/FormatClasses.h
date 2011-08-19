@@ -384,6 +384,241 @@ public:
     
 };
 
+struct SyntheticArrayRange
+{
+private:
+    int m_low;
+    int m_high;
+    SyntheticArrayRange* m_next;
+    
+public:
+    
+    SyntheticArrayRange () : 
+        m_low(-1),
+        m_high(-2),
+        m_next(NULL)
+    {}
+
+    SyntheticArrayRange (int L) : 
+        m_low(L),
+        m_high(L),
+        m_next(NULL)
+    {}
+    
+    SyntheticArrayRange (int L, int H) : 
+        m_low(L),
+        m_high(H),
+        m_next(NULL)
+    {}
+    
+    SyntheticArrayRange (int L, int H, SyntheticArrayRange* N) : 
+        m_low(L),
+        m_high(H),
+        m_next(N)
+    {}
+    
+    inline int
+    GetLow ()
+    {
+        return m_low;
+    }
+    
+    inline int
+    GetHigh ()
+    {
+        return m_high;
+    }
+    
+    inline void
+    SetLow (int L)
+    {
+        m_low = L;
+    }
+    
+    inline void
+    SetHigh (int H)
+    {
+        m_high = H;
+    }
+    
+    inline  int
+    GetSelfCount()
+    {
+        return GetHigh() - GetLow() + 1;
+    }
+    
+    int
+    GetCount()
+    {
+        int count = GetSelfCount();
+        if (m_next)
+            count += m_next->GetCount();
+        return count;
+    }
+    
+    inline SyntheticArrayRange*
+    GetNext()
+    {
+        return m_next;
+    }
+    
+    void
+    SetNext(SyntheticArrayRange* N)
+    {
+        if (m_next)
+            delete m_next;
+        m_next = N;
+    }
+    
+    void
+    SetNext(int L, int H)
+    {
+        if (m_next)
+            delete m_next;
+        m_next = new SyntheticArrayRange(L, H);
+    }
+    
+    void
+    SetNext(int L)
+    {
+        if (m_next)
+            delete m_next;
+        m_next = new SyntheticArrayRange(L);
+    }
+    
+    ~SyntheticArrayRange()
+    {
+        delete m_next;
+        m_next = NULL;
+    }
+    
+};
+    
+class SyntheticArrayView : public SyntheticChildren
+{
+    SyntheticArrayRange m_head;
+    SyntheticArrayRange *m_tail;
+public:
+    SyntheticArrayView(bool casc = false,
+                       bool skipptr = false,
+                       bool skipref = false) :
+    SyntheticChildren(casc, skipptr, skipref),
+    m_head(),
+    m_tail(&m_head)
+    {
+    }
+    
+    void
+    AddRange(int L, int H)
+    {
+        m_tail->SetLow(L);
+        m_tail->SetHigh(H);
+        m_tail->SetNext(new SyntheticArrayRange());
+        m_tail = m_tail->GetNext();
+    }
+    
+    int
+    GetCount()
+    {
+        return m_head.GetCount();
+    }
+    
+    const int
+    GetRealIndexForIndex(int i)
+    {
+        if (i >= GetCount())
+            return -1;
+        
+        SyntheticArrayRange* ptr = &m_head;
+        
+        int residual = i;
+        
+        while(ptr && ptr != m_tail)
+        {
+            if (residual >= ptr->GetSelfCount())
+            {
+                residual -= ptr->GetSelfCount();
+                ptr = ptr->GetNext();
+            }
+            
+            return ptr->GetLow() + residual;
+        }
+        
+        return -1;
+        
+    }
+    
+    bool
+    IsScripted()
+    {
+        return false;
+    }
+    
+    std::string
+    GetDescription();
+    
+    class FrontEnd : public SyntheticChildrenFrontEnd
+    {
+    private:
+        SyntheticArrayView* filter;
+    public:
+        
+        FrontEnd(SyntheticArrayView* flt,
+                 lldb::ValueObjectSP be) :
+        SyntheticChildrenFrontEnd(be),
+        filter(flt)
+        {}
+        
+        virtual
+        ~FrontEnd()
+        {
+        }
+        
+        virtual uint32_t
+        CalculateNumChildren()
+        {
+            return filter->GetCount();
+        }
+        
+        virtual lldb::ValueObjectSP
+        GetChildAtIndex (uint32_t idx, bool can_create)
+        {
+            if (idx >= filter->GetCount())
+                return lldb::ValueObjectSP();
+            return m_backend->GetSyntheticArrayMember(filter->GetRealIndexForIndex(idx), can_create);
+        }
+        
+        virtual void
+        Update() {}
+        
+        virtual uint32_t
+        GetIndexOfChildWithName (const ConstString &name_cs)
+        {
+            const char* name_cstr = name_cs.GetCString();
+            if (*name_cstr != '[')
+                return UINT32_MAX;
+            std::string name(name_cstr+1);
+            if (name[name.size()-1] != ']')
+                return UINT32_MAX;
+            name = name.erase(name.size()-1,1);
+            int index = Args::StringToSInt32 (name.c_str(), -1);
+            if (index < 0)
+                return UINT32_MAX;
+            return index;
+        }
+        
+        typedef lldb::SharedPtr<SyntheticChildrenFrontEnd>::Type SharedPointer;
+        
+    };
+    
+    virtual SyntheticChildrenFrontEnd::SharedPointer
+    GetFrontEnd(lldb::ValueObjectSP backend)
+    {
+        return SyntheticChildrenFrontEnd::SharedPointer(new FrontEnd(this, backend));
+    }
+    
+};
+
 
 struct SummaryFormat
 {

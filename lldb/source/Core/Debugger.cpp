@@ -744,6 +744,8 @@ ScanFormatDescriptor(const char* var_name_begin,
                 *val_obj_display = ValueObject::eDisplaySummary;
             else if (*format_name == '#')
                 *val_obj_display = ValueObject::eDisplayChildrenCount;
+            else if (*format_name == 'T')
+                *val_obj_display = ValueObject::eDisplayType;
             else if (log)
                 log->Printf("%s is an error, leaving the previous value alone", format_name);
         }
@@ -1165,25 +1167,52 @@ Debugger::FormatPrompt
                                     StreamString str_temp;
                                     if (log)
                                         log->Printf("I am into array || pointer && !range");
-                                    // try to use the special cases
-                                    var_success = target->DumpPrintableRepresentation(str_temp,
-                                                                                      val_obj_display,
-                                                                                      custom_format);
-                                    if (log)
-                                        log->Printf("special cases did%s match", var_success ? "" : "n't");
-                                    if (!var_success)
+                                    
+                                    if (target->HasSpecialCasesForPrintableRepresentation(val_obj_display,
+                                                                                          custom_format))
                                     {
-                                        s << "<invalid usage of pointer value as object>";
+                                        // try to use the special cases
+                                        var_success = target->DumpPrintableRepresentation(str_temp,
+                                                                                          val_obj_display,
+                                                                                          custom_format);
+                                        if (log)
+                                            log->Printf("special cases did%s match", var_success ? "" : "n't");
+                                        
+                                        // should not happen
+                                        if (!var_success)
+                                            s << "<invalid usage of pointer value as object>";
+                                        else
+                                            s << str_temp.GetData();
                                         var_success = true;
+                                        break;
                                     }
                                     else
-                                        s << str_temp.GetData();
+                                    {
+                                        // if ${var}
+                                        if (was_plain_var)
+                                        {
+                                            s << target->GetTypeName() << " @ " << target->GetLocationAsCString();
+                                        }
+                                        else
+                                        {
+                                            s << "<invalid usage of pointer value as object>";
+                                        }
+                                        var_success = true;
+                                        break;
+                                    }
+                                }
+                                
+                                // if directly trying to print ${var}, and this is an aggregate, display a nice
+                                // type @ location message
+                                if (is_aggregate && was_plain_var)
+                                {
+                                    s << target->GetTypeName() << " @ " << target->GetLocationAsCString();
+                                    var_success = true;
                                     break;
                                 }
                                 
-                                // if directly trying to print ${var} using its value, and this is an aggregate, display a nice
-                                // error message about it (and avoid recursion in DumpPrintableRepresentation)
-                                if (is_aggregate && ((was_var_format && val_obj_display == ValueObject::eDisplayValue) || was_plain_var))
+                                // if directly trying to print ${var%V}, and this is an aggregate, do not let the user do it
+                                if (is_aggregate && ((was_var_format && val_obj_display == ValueObject::eDisplayValue)))
                                 {
                                     s << "<invalid use of aggregate type>";
                                     var_success = true;
