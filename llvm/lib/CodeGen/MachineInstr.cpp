@@ -901,7 +901,8 @@ MachineInstr::readsWritesVirtualRegister(unsigned Reg,
       Ops->push_back(i);
     if (MO.isUse())
       Use |= !MO.isUndef();
-    else if (MO.getSubReg())
+    else if (MO.getSubReg() && !MO.isUndef())
+      // A partial <def,undef> doesn't count as reading the register.
       PartDef = true;
     else
       FullDef = true;
