@@ -893,6 +893,11 @@ public:
     return DeclKind == Decl::Block;
   }
 
+  bool isObjCContainer() const {
+    return (DeclKind >= (int)Decl::ObjCCategory &&
+            DeclKind <= (int)Decl::ObjCProtocol);
+  }
+
   bool isFunctionOrMethod() const {
     switch (DeclKind) {
     case Decl::Block:
