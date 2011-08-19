@@ -169,7 +169,7 @@ private:
   /// \brief If \arg loc is a FileID and points inside the current macro
   /// definition, returns the appropriate source location pointing at the
   /// macro expansion source location entry.
-  SourceLocation getMacroExpansionLocation(SourceLocation loc) const;
+  SourceLocation getExpansionLocForMacroDefLoc(SourceLocation loc) const;
 };
 
 }  // end namespace clang

@@ -146,7 +146,7 @@ void TokenLexer::ExpandFunctionArguments() {
 
       SourceLocation hashInstLoc;
       if(ExpandLocStart.isValid()) {
-        hashInstLoc = getMacroExpansionLocation(CurTok.getLocation());
+        hashInstLoc = getExpansionLocForMacroDefLoc(CurTok.getLocation());
         assert(hashInstLoc.isValid() && "Expected '#' to come from definition");
       }
 
@@ -226,7 +226,7 @@ void TokenLexer::ExpandFunctionArguments() {
 
         if(ExpandLocStart.isValid()) {
           SourceLocation curInst =
-              getMacroExpansionLocation(CurTok.getLocation());
+              getExpansionLocForMacroDefLoc(CurTok.getLocation());
           assert(curInst.isValid() &&
                  "Expected arg identifier to come from definition");
           for (unsigned i = FirstResult, e = ResultToks.size(); i != e; ++i) {
@@ -283,7 +283,7 @@ void TokenLexer::ExpandFunctionArguments() {
 
       if (ExpandLocStart.isValid()) {
         SourceLocation curInst =
-            getMacroExpansionLocation(CurTok.getLocation());
+            getExpansionLocForMacroDefLoc(CurTok.getLocation());
         assert(curInst.isValid() &&
                "Expected arg identifier to come from definition");
         for (unsigned i = ResultToks.size() - NumToks, e = ResultToks.size();
@@ -426,7 +426,7 @@ void TokenLexer::Lex(Token &Tok) {
                                       ExpandLocEnd,
                                       Tok.getLength());
     } else {
-      instLoc = getMacroExpansionLocation(Tok.getLocation());
+      instLoc = getExpansionLocForMacroDefLoc(Tok.getLocation());
       assert(instLoc.isValid() &&
              "Location for token not coming from definition was not set!");
     }
@@ -611,7 +611,7 @@ bool TokenLexer::PasteTokens(Token &Tok) {
   if (ExpandLocStart.isValid()) {
     SourceManager &SM = PP.getSourceManager();
     SourceLocation pasteLocInst =
-        getMacroExpansionLocation(PasteOpLoc);
+        getExpansionLocForMacroDefLoc(PasteOpLoc);
     assert(pasteLocInst.isValid() &&
            "Expected '##' to come from definition");
 
@@ -665,10 +665,12 @@ void TokenLexer::HandleMicrosoftCommentPaste(Token &Tok) {
   PP.HandleMicrosoftCommentPaste(Tok);
 }
 
-/// \brief If \arg loc is a FileID and points inside the current macro
+/// \brief If \arg loc is a file ID and points inside the current macro
 /// definition, returns the appropriate source location pointing at the
-/// macro expansion source location entry.
-SourceLocation TokenLexer::getMacroExpansionLocation(SourceLocation loc) const {
+/// macro expansion source location entry, otherwise it returns an invalid
+/// SourceLocation.
+SourceLocation
+TokenLexer::getExpansionLocForMacroDefLoc(SourceLocation loc) const {
   assert(ExpandLocStart.isValid() && MacroExpansionStart.isValid() &&
          "Not appropriate for token streams");
   assert(loc.isValid());
