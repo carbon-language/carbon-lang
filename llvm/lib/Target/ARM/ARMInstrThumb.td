@@ -189,11 +189,13 @@ def t_addrmode_is1 : Operand<i32>,
 
 // t_addrmode_sp := sp + imm8 * 4
 //
+def t_addrmode_sp_asm_operand : AsmOperandClass { let Name = "MemThumbSPI"; }
 def t_addrmode_sp : Operand<i32>,
                     ComplexPattern<i32, 2, "SelectThumbAddrModeSP", []> {
   let EncoderMethod = "getAddrModeThumbSPOpValue";
   let DecoderMethod = "DecodeThumbAddrModeSP";
   let PrintMethod = "printThumbAddrModeSPOperand";
+  let ParserMatchClass = t_addrmode_sp_asm_operand;
   let MIOperandInfo = (ops GPR:$base, i32imm:$offsimm);
 }
 

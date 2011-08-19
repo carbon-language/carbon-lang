@@ -626,7 +626,15 @@ public:
     // Immediate offset, multiple of 4 in range [0, 124].
     if (!Mem.OffsetImm) return true;
     int64_t Val = Mem.OffsetImm->getValue();
-    return Val >= 0 && Val < 125 && (Val % 4) == 0;
+    return Val >= 0 && Val <= 124 && (Val % 4) == 0;
+  }
+  bool isMemThumbSPI() const {
+    if (Kind != Memory || Mem.OffsetRegNum != 0 || Mem.BaseRegNum != ARM::SP)
+      return false;
+    // Immediate offset, multiple of 4 in range [0, 1020].
+    if (!Mem.OffsetImm) return true;
+    int64_t Val = Mem.OffsetImm->getValue();
+    return Val >= 0 && Val <= 1020 && (Val % 4) == 0;
   }
   bool isMemImm8Offset() const {
     if (Kind != Memory || Mem.OffsetRegNum != 0)
@@ -986,6 +994,13 @@ public:
   }
 
   void addMemThumbRIs4Operands(MCInst &Inst, unsigned N) const {
+    assert(N == 2 && "Invalid number of operands!");
+    int64_t Val = Mem.OffsetImm ? (Mem.OffsetImm->getValue() / 4) : 0;
+    Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
+    Inst.addOperand(MCOperand::CreateImm(Val));
+  }
+
+  void addMemThumbSPIOperands(MCInst &Inst, unsigned N) const {
     assert(N == 2 && "Invalid number of operands!");
     int64_t Val = Mem.OffsetImm ? (Mem.OffsetImm->getValue() / 4) : 0;
     Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));

@@ -182,8 +182,15 @@ _func:
         ldr r1, [r5]
         ldr r2, [r6, #32]
         ldr r3, [r7, #124]
+        ldr r1, [sp]
+        ldr r2, [sp, #24]
+        ldr r3, [sp, #1020]
+
 
 @ CHECK: ldr	r1, [r5]                @ encoding: [0x29,0x68]
 @ CHECK: ldr	r2, [r6, #32]           @ encoding: [0x32,0x6a]
 @ CHECK: ldr	r3, [r7, #124]          @ encoding: [0xfb,0x6f]
+@ CHECK: ldr	r1, [sp]                @ encoding: [0x00,0x99]
+@ CHECK: ldr	r2, [sp, #24]           @ encoding: [0x06,0x9a]
+@ CHECK: ldr	r3, [sp, #1020]         @ encoding: [0xff,0x9b]
 
