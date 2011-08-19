@@ -5,3 +5,4 @@
 extern "C" { @implementation Foo  - (id)initWithBar:(Baz<WozBar>)pepper {
 
 // CHECK: warning: cannot find interface declaration for 'Foo'
+// CHECK: error: '@end' is missing in implementation context

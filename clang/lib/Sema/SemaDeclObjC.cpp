@@ -2052,14 +2052,15 @@ void Sema::DiagnoseDuplicateIvars(ObjCInterfaceDecl *ID,
 // Note: For class/category implemenations, allMethods/allProperties is
 // always null.
 void Sema::ActOnAtEnd(Scope *S, SourceRange AtEnd,
+                      Decl *ClassDecl,
                       Decl **allMethods, unsigned allNum,
                       Decl **allProperties, unsigned pNum,
                       DeclGroupPtrTy *allTUVars, unsigned tuvNum) {
-
-  if (!CurContext->isObjCContainer())
+  // FIXME: If we don't have a ClassDecl, we have an error. We should consider
+  // always passing in a decl. If the decl has an error, isInvalidDecl()
+  // should be true.
+  if (!ClassDecl)
     return;
-  ObjCContainerDecl *OCD = dyn_cast<ObjCContainerDecl>(CurContext);
-  Decl *ClassDecl = cast<Decl>(OCD);
   
   bool isInterfaceDeclKind =
         isa<ObjCInterfaceDecl>(ClassDecl) || isa<ObjCCategoryDecl>(ClassDecl)
@@ -2426,7 +2427,7 @@ private:
 Decl *Sema::ActOnMethodDeclaration(
     Scope *S,
     SourceLocation MethodLoc, SourceLocation EndLoc,
-    tok::TokenKind MethodType, 
+    tok::TokenKind MethodType, Decl *ClassDecl,
     ObjCDeclSpec &ReturnQT, ParsedType ReturnType,
     SourceLocation SelectorStartLoc,
     Selector Sel,
@@ -2437,12 +2438,10 @@ Decl *Sema::ActOnMethodDeclaration(
     AttributeList *AttrList, tok::ObjCKeywordKind MethodDeclKind,
     bool isVariadic, bool MethodDefinition) {
   // Make sure we can establish a context for the method.
-  if (!CurContext->isObjCContainer()) {
+  if (!ClassDecl) {
     Diag(MethodLoc, diag::error_missing_method_context);
     return 0;
   }
-  ObjCContainerDecl *OCD = dyn_cast<ObjCContainerDecl>(CurContext);
-  Decl *ClassDecl = cast<Decl>(OCD); 
   QualType resultDeclType;
 
   TypeSourceInfo *ResultTInfo = 0;
@@ -2465,7 +2464,7 @@ Decl *Sema::ActOnMethodDeclaration(
   ObjCMethodDecl* ObjCMethod =
     ObjCMethodDecl::Create(Context, MethodLoc, EndLoc, Sel, resultDeclType,
                            ResultTInfo,
-                           CurContext,
+                           cast<DeclContext>(ClassDecl),
                            MethodType == tok::minus, isVariadic,
                            /*isSynthesized=*/false,
                            /*isImplicitlyDeclared=*/false, /*isDefined=*/false,
@@ -2657,12 +2656,7 @@ Decl *Sema::ActOnMethodDeclaration(
 bool Sema::CheckObjCDeclScope(Decl *D) {
   if (isa<TranslationUnitDecl>(CurContext->getRedeclContext()))
     return false;
-  // Following is also an error. But it is caused my a missing @end
-  // and diagnostic is issued elsewere.
-  if (isa<ObjCContainerDecl>(CurContext->getRedeclContext())) {
-    return false;
-  }
-  
+
   Diag(D->getLocation(), diag::err_objc_decls_may_only_appear_in_global_scope);
   D->setInvalidDecl();
 
