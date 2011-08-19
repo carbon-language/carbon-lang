@@ -512,6 +512,23 @@ unsigned DISubprogram::isOptimized() const {
   return 0;
 }
 
+MDNode *DISubprogram::getVariablesNodes() const {
+  if (!DbgNode || DbgNode->getNumOperands() <= 19)
+    return NULL;
+  if (MDNode *Temp = dyn_cast_or_null<MDNode>(DbgNode->getOperand(19)))
+    return dyn_cast_or_null<MDNode>(Temp->getOperand(0));
+  return NULL;
+}
+
+DIArray DISubprogram::getVariables() const {
+  if (!DbgNode || DbgNode->getNumOperands() <= 19)
+    return DIArray();
+  if (MDNode *T = dyn_cast_or_null<MDNode>(DbgNode->getOperand(19)))
+    if (MDNode *A = dyn_cast_or_null<MDNode>(T->getOperand(0)))
+      return DIArray(A);
+  return DIArray();
+}
+
 StringRef DIScope::getFilename() const {
   if (!DbgNode)
     return StringRef();
@@ -825,19 +842,34 @@ static void fixupObjcLikeName(StringRef Str, SmallVectorImpl<char> &Out) {
 
 /// getFnSpecificMDNode - Return a NameMDNode, if available, that is 
 /// suitable to hold function specific information.
-NamedMDNode *llvm::getFnSpecificMDNode(const Module &M, StringRef FuncName) {
+NamedMDNode *llvm::getFnSpecificMDNode(const Module &M, DISubprogram Fn) {
   SmallString<32> Name = StringRef("llvm.dbg.lv.");
-  fixupObjcLikeName(FuncName, Name);
-
+  StringRef FName = "fn";
+  if (Fn.getFunction())
+    FName = Fn.getFunction()->getName();
+  else
+    FName = Fn.getName();
+  char One = '\1';
+  if (FName.startswith(StringRef(&One, 1)))
+    FName = FName.substr(1);
+  fixupObjcLikeName(FName, Name);
   return M.getNamedMetadata(Name.str());
 }
 
 /// getOrInsertFnSpecificMDNode - Return a NameMDNode that is suitable
 /// to hold function specific information.
-NamedMDNode *llvm::getOrInsertFnSpecificMDNode(Module &M, StringRef FuncName) {
+NamedMDNode *llvm::getOrInsertFnSpecificMDNode(Module &M, DISubprogram Fn) {
   SmallString<32> Name = StringRef("llvm.dbg.lv.");
-  fixupObjcLikeName(FuncName, Name);
-
+  StringRef FName = "fn";
+  if (Fn.getFunction())
+    FName = Fn.getFunction()->getName();
+  else
+    FName = Fn.getName();
+  char One = '\1';
+  if (FName.startswith(StringRef(&One, 1)))
+    FName = FName.substr(1);
+  fixupObjcLikeName(FName, Name);
+  
   return M.getOrInsertNamedMetadata(Name.str());
 }
 

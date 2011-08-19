@@ -667,31 +667,24 @@ void DwarfDebug::endModule() {
         if (ProcessedSPNodes.count(SP) != 0) continue;
         if (!SP.Verify()) continue;
         if (!SP.isDefinition()) continue;
-        StringRef FName = SP.getLinkageName();
-        if (FName.empty())
-          FName = SP.getName();
-        NamedMDNode *NMD = getFnSpecificMDNode(*(MMI->getModule()), FName);
-        if (!NMD) continue;
-        unsigned E = NMD->getNumOperands();
-        if (!E) continue;
+        DIArray Variables = SP.getVariables();
+        if (Variables.getNumElements() == 0) continue;
+
         LexicalScope *Scope = 
           new LexicalScope(NULL, DIDescriptor(SP), NULL, false);
         DeadFnScopeMap[SP] = Scope;
         
         // Construct subprogram DIE and add variables DIEs.
-        SmallVector<DbgVariable, 8> Variables;
-        for (unsigned I = 0; I != E; ++I) {
-          DIVariable DV(NMD->getOperand(I));
-          if (!DV.Verify()) continue;
-          Variables.push_back(DbgVariable(DV, NULL));
-        }
         CompileUnit *SPCU = CUMap.lookup(TheCU);
         assert (SPCU && "Unable to find Compile Unit!");
         constructSubprogramDIE(SPCU, SP);
         DIE *ScopeDIE = SPCU->getDIE(SP);
-        for (unsigned i = 0, N = Variables.size(); i < N; ++i) {
+        for (unsigned vi = 0, ve = Variables.getNumElements(); vi != ve; ++vi) {
+          DIVariable DV(Variables.getElement(vi));
+          if (!DV.Verify()) continue;
+          DbgVariable *NewVar = new DbgVariable(DV, NULL);
           if (DIE *VariableDIE = 
-              SPCU->constructVariableDIE(&Variables[i], Scope->isAbstractScope()))
+              SPCU->constructVariableDIE(NewVar, Scope->isAbstractScope()))
             ScopeDIE->addChild(VariableDIE);
         }
       }
@@ -977,15 +970,14 @@ DwarfDebug::collectVariableInfo(const MachineFunction *MF,
   }
 
   // Collect info for variables that were optimized out.
-  const Function *F = MF->getFunction();
-  if (NamedMDNode *NMD = getFnSpecificMDNode(*(F->getParent()), F->getName())) {
-    for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i) {
-      DIVariable DV(cast<MDNode>(NMD->getOperand(i)));
-      if (!DV || !Processed.insert(DV))
-        continue;
-      if (LexicalScope *Scope = LScopes.findLexicalScope(DV.getContext()))
-        addScopeVariable(Scope, new DbgVariable(DV, NULL));
-    }
+  LexicalScope *FnScope = LScopes.getCurrentFunctionScope();
+  DIArray Variables = DISubprogram(FnScope->getScopeNode()).getVariables();
+  for (unsigned i = 0, e = Variables.getNumElements(); i != e; ++i) {
+    DIVariable DV(Variables.getElement(i));
+    if (!DV || !DV.Verify() || !Processed.insert(DV))
+      continue;
+    if (LexicalScope *Scope = LScopes.findLexicalScope(DV.getContext()))
+      addScopeVariable(Scope, new DbgVariable(DV, NULL));
   }
 }
 
@@ -1320,18 +1312,13 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
     DISubprogram SP(AScope->getScopeNode());
     if (SP.Verify()) {
       // Collect info for variables that were optimized out.
-      StringRef FName = SP.getLinkageName();
-      if (FName.empty())
-        FName = SP.getName();
-      if (NamedMDNode *NMD = 
-          getFnSpecificMDNode(*(MF->getFunction()->getParent()), FName)) {
-        for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i) {
-          DIVariable DV(cast<MDNode>(NMD->getOperand(i)));
-          if (!DV || !ProcessedVars.insert(DV))
-            continue;
-          if (LexicalScope *Scope = LScopes.findAbstractScope(DV.getContext()))
-            addScopeVariable(Scope, new DbgVariable(DV, NULL));
-        }
+      DIArray Variables = SP.getVariables();
+      for (unsigned i = 0, e = Variables.getNumElements(); i != e; ++i) {
+        DIVariable DV(Variables.getElement(i));
+        if (!DV || !DV.Verify() || !ProcessedVars.insert(DV))
+          continue;
+        if (LexicalScope *Scope = LScopes.findAbstractScope(DV.getContext()))
+          addScopeVariable(Scope, new DbgVariable(DV, NULL));
       }
     }
     if (ProcessedSPNodes.count(AScope->getScopeNode()) == 0)

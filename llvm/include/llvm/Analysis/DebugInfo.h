@@ -558,6 +558,8 @@ namespace llvm {
     DISubprogram getFunctionDeclaration() const {
       return getFieldAs<DISubprogram>(18);
     }
+    MDNode *getVariablesNodes() const;
+    DIArray getVariables() const;
   };
 
   /// DIGlobalVariable - This is a wrapper for a global variable.
@@ -736,11 +738,11 @@ namespace llvm {
 
   /// getOrInsertFnSpecificMDNode - Return a NameMDNode that is suitable
   /// to hold function specific information.
-  NamedMDNode *getOrInsertFnSpecificMDNode(Module &M, StringRef Name);
+  NamedMDNode *getOrInsertFnSpecificMDNode(Module &M, DISubprogram SP);
 
   /// getFnSpecificMDNode - Return a NameMDNode, if available, that is 
   /// suitable to hold function specific information.
-  NamedMDNode *getFnSpecificMDNode(const Module &M, StringRef Name);
+  NamedMDNode *getFnSpecificMDNode(const Module &M, DISubprogram SP);
 
   /// createInlinedVariable - Create a new inlined variable based on current
   /// variable.

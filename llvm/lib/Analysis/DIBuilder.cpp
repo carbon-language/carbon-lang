@@ -43,6 +43,19 @@ void DIBuilder::finalize() {
 
   DIArray SPs = getOrCreateArray(AllSubprograms);
   DIType(TempSubprograms).replaceAllUsesWith(SPs);
+  for (unsigned i = 0, e = SPs.getNumElements(); i != e; ++i) {
+    DISubprogram SP(SPs.getElement(i));
+    if (NamedMDNode *NMD = getFnSpecificMDNode(M, SP)) {
+      SmallVector<Value *, 4> Variables;
+      for (unsigned ii = 0, ee = NMD->getNumOperands(); ii != ee; ++ii)
+        Variables.push_back(NMD->getOperand(ii));
+      if (MDNode *Temp = SP.getVariablesNodes()) {
+        DIArray AV = getOrCreateArray(Variables);
+        DIType(Temp).replaceAllUsesWith(AV);
+      }
+      NMD->eraseFromParent();
+    }
+  }
 
   DIArray GVs = getOrCreateArray(AllGVs);
   DIType(TempGVs).replaceAllUsesWith(GVs);
@@ -674,13 +687,7 @@ DIVariable DIBuilder::createLocalVariable(unsigned Tag, DIDescriptor Scope,
     // to preserve variable info in such situation then stash it in a
     // named mdnode.
     DISubprogram Fn(getDISubprogram(Scope));
-    StringRef FName = "fn";
-    if (Fn.getFunction())
-      FName = Fn.getFunction()->getName();
-    char One = '\1';
-    if (FName.startswith(StringRef(&One, 1)))
-      FName = FName.substr(1);
-    NamedMDNode *FnLocals = getOrInsertFnSpecificMDNode(M, FName);
+    NamedMDNode *FnLocals = getOrInsertFnSpecificMDNode(M, Fn);
     FnLocals->addOperand(Node);
   }
   return DIVariable(Node);
@@ -718,6 +725,11 @@ DISubprogram DIBuilder::createFunction(DIDescriptor Context,
                                        Function *Fn,
                                        MDNode *TParams,
                                        MDNode *Decl) {
+  Value *TElts[] = { GetTagConstant(VMContext, DW_TAG_base_type) };
+  MDNode *Temp = MDNode::getTemporary(VMContext, TElts);
+  Value *TVElts[] = { Temp };
+  MDNode *THolder = MDNode::get(VMContext, TVElts);
+
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_subprogram),
     llvm::Constant::getNullValue(Type::getInt32Ty(VMContext)),
@@ -737,7 +749,8 @@ DISubprogram DIBuilder::createFunction(DIDescriptor Context,
     ConstantInt::get(Type::getInt1Ty(VMContext), isOptimized),
     Fn,
     TParams,
-    Decl
+    Decl,
+    THolder
   };
   MDNode *Node = MDNode::get(VMContext, Elts);
 
@@ -760,6 +773,11 @@ DISubprogram DIBuilder::createMethod(DIDescriptor Context,
                                      bool isOptimized,
                                      Function *Fn,
                                      MDNode *TParam) {
+  Value *TElts[] = { GetTagConstant(VMContext, DW_TAG_base_type) };
+  MDNode *Temp = MDNode::getTemporary(VMContext, TElts);
+  Value *TVElts[] = { Temp };
+  MDNode *THolder = MDNode::get(VMContext, TVElts);
+
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_subprogram),
     llvm::Constant::getNullValue(Type::getInt32Ty(VMContext)),
@@ -779,6 +797,8 @@ DISubprogram DIBuilder::createMethod(DIDescriptor Context,
     ConstantInt::get(Type::getInt1Ty(VMContext), isOptimized),
     Fn,
     TParam,
+    llvm::Constant::getNullValue(Type::getInt32Ty(VMContext)),
+    THolder
   };
   MDNode *Node = MDNode::get(VMContext, Elts);
   return DISubprogram(Node);
