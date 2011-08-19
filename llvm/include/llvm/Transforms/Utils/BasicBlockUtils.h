@@ -174,6 +174,23 @@ BasicBlock *SplitBlockPredecessors(BasicBlock *BB, BasicBlock *const *Preds,
                                    unsigned NumPreds, const char *Suffix,
                                    Pass *P = 0);
 
+/// SplitLandingPadPredecessors - This method transforms the landing pad,
+/// OrigBB, by introducing two new basic blocks into the function. One of those
+/// new basic blocks gets the predecessors listed in Preds. The other basic
+/// block gets the remaining predecessors of OrigBB. The landingpad instruction
+/// OrigBB is clone into both of the new basic blocks. The new blocks are given
+/// the suffixes 'Suffix1' and 'Suffix2', and are returned in the NewBBs vector.
+/// 
+/// This currently updates the LLVM IR, AliasAnalysis, DominatorTree,
+/// DominanceFrontier, LoopInfo, and LCCSA but no other analyses. In particular,
+/// it does not preserve LoopSimplify (because it's complicated to handle the
+/// case where one of the edges being split is an exit of a loop with other
+/// exits).
+/// 
+void SplitLandingPadPredecessors(BasicBlock *OrigBB,ArrayRef<BasicBlock*> Preds,
+                                 const char *Suffix, const char *Suffix2,
+                                 Pass *P, SmallVectorImpl<BasicBlock*> &NewBBs);
+
 /// FoldReturnIntoUncondBranch - This method duplicates the specified return
 /// instruction into a predecessor which ends in an unconditional branch. If
 /// the return instruction returns a value defined by a PHI, propagate the

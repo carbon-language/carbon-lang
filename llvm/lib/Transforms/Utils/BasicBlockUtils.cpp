@@ -323,16 +323,17 @@ static void UpdateAnalysisInformation(BasicBlock *OldBB, BasicBlock *NewBB,
 
   LoopInfo *LI = P->getAnalysisIfAvailable<LoopInfo>();
   Loop *L = LI ? LI->getLoopFor(OldBB) : 0;
-  bool PreserveLCSSA = P->mustPreserveAnalysisID(LCSSAID);
 
   // If we need to preserve loop analyses, collect some information about how
   // this split will affect loops.
   bool IsLoopEntry = !!L;
   bool SplitMakesNewLoopHeader = false;
   if (LI) {
+    bool PreserveLCSSA = P->mustPreserveAnalysisID(LCSSAID);
     for (ArrayRef<BasicBlock*>::iterator
            i = Preds.begin(), e = Preds.end(); i != e; ++i) {
       BasicBlock *Pred = *i;
+
       // If we need to preserve LCSSA, determine if any of the preds is a loop
       // exit.
       if (PreserveLCSSA)
@@ -491,6 +492,99 @@ BasicBlock *llvm::SplitBlockPredecessors(BasicBlock *BB,
   UpdatePHINodes(BB, NewBB, ArrayRef<BasicBlock*>(Preds, NumPreds), BI,
                  P, HasLoopExit);
   return NewBB;
+}
+
+/// SplitLandingPadPredecessors - This method transforms the landing pad,
+/// OrigBB, by introducing two new basic blocks into the function. One of those
+/// new basic blocks gets the predecessors listed in Preds. The other basic
+/// block gets the remaining predecessors of OrigBB. The landingpad instruction
+/// OrigBB is clone into both of the new basic blocks. The new blocks are given
+/// the suffixes 'Suffix1' and 'Suffix2', and are returned in the NewBBs vector.
+/// 
+/// This currently updates the LLVM IR, AliasAnalysis, DominatorTree,
+/// DominanceFrontier, LoopInfo, and LCCSA but no other analyses. In particular,
+/// it does not preserve LoopSimplify (because it's complicated to handle the
+/// case where one of the edges being split is an exit of a loop with other
+/// exits).
+/// 
+void llvm::SplitLandingPadPredecessors(BasicBlock *OrigBB,
+                                       ArrayRef<BasicBlock*> Preds,
+                                       const char *Suffix1, const char *Suffix2,
+                                       Pass *P,
+                                       SmallVectorImpl<BasicBlock*> &NewBBs) {
+  assert(OrigBB->isLandingPad() && "Trying to split a non-landing pad!");
+
+  // Create a new basic block for OrigBB's predecessors listed in Preds. Insert
+  // it right before the original block.
+  BasicBlock *NewBB1 = BasicBlock::Create(OrigBB->getContext(),
+                                          OrigBB->getName() + Suffix1,
+                                          OrigBB->getParent(), OrigBB);
+  NewBBs.push_back(NewBB1);
+
+  // The new block unconditionally branches to the old block.
+  BranchInst *BI1 = BranchInst::Create(OrigBB, NewBB1);
+
+  // Move the edges from Preds to point to NewBB1 instead of OrigBB.
+  for (unsigned i = 0, e = Preds.size(); i != e; ++i) {
+    // This is slightly more strict than necessary; the minimum requirement
+    // is that there be no more than one indirectbr branching to BB. And
+    // all BlockAddress uses would need to be updated.
+    assert(!isa<IndirectBrInst>(Preds[i]->getTerminator()) &&
+           "Cannot split an edge from an IndirectBrInst");
+    Preds[i]->getTerminator()->replaceUsesOfWith(OrigBB, NewBB1);
+  }
+
+  // Update DominatorTree, LoopInfo, and LCCSA analysis information.
+  bool HasLoopExit = false;
+  UpdateAnalysisInformation(OrigBB, NewBB1, Preds, P, HasLoopExit);
+
+  // Update the PHI nodes in OrigBB with the values coming from NewBB1.
+  UpdatePHINodes(OrigBB, NewBB1, Preds, BI1, P, HasLoopExit);
+
+  // Create another basic block for the rest of OrigBB's predecessors.
+  BasicBlock *NewBB2 = BasicBlock::Create(OrigBB->getContext(),
+                                          OrigBB->getName() + Suffix2,
+                                          OrigBB->getParent(), OrigBB);
+  NewBBs.push_back(NewBB2);
+
+  // The new block unconditionally branches to the old block.
+  BranchInst *BI2 = BranchInst::Create(OrigBB, NewBB2);
+
+  // Move the remaining edges from OrigBB to point to NewBB2.
+  SmallVector<BasicBlock*, 8> NewBB2Preds;
+  for (pred_iterator i = pred_begin(OrigBB), e = pred_end(OrigBB);
+       i != e; ) {
+    BasicBlock *Pred = *i++;
+    if (Pred == NewBB1 || Pred == NewBB2 ) continue;
+    assert(!isa<IndirectBrInst>(Pred->getTerminator()) &&
+           "Cannot split an edge from an IndirectBrInst");
+    Pred->getTerminator()->replaceUsesOfWith(OrigBB, NewBB2);
+    NewBB2Preds.push_back(Pred);
+    e = pred_end(OrigBB);
+  }
+
+  // Update DominatorTree, LoopInfo, and LCCSA analysis information.
+  HasLoopExit = false;
+  UpdateAnalysisInformation(OrigBB, NewBB2, NewBB2Preds, P, HasLoopExit);
+
+  // Update the PHI nodes in OrigBB with the values coming from NewBB2.
+  UpdatePHINodes(OrigBB, NewBB2, NewBB2Preds, BI2, P, HasLoopExit);
+
+  LandingPadInst *LPad = OrigBB->getLandingPadInst();
+  Instruction *Clone1 = LPad->clone();
+  Clone1->setName(Twine("lpad") + Suffix1);
+  NewBB1->getInstList().insert(NewBB1->getFirstInsertionPt(), Clone1);
+
+  Instruction *Clone2 = LPad->clone();
+  Clone2->setName(Twine("lpad") + Suffix2);
+  NewBB2->getInstList().insert(NewBB2->getFirstInsertionPt(), Clone2);
+
+  // Create a PHI node for the two cloned landingpad instructions.
+  PHINode *PN = PHINode::Create(LPad->getType(), 2, "lpad.phi", LPad);
+  PN->addIncoming(Clone1, NewBB1);
+  PN->addIncoming(Clone2, NewBB2);
+  LPad->replaceAllUsesWith(PN);
+  LPad->eraseFromParent();
 }
 
 /// FindFunctionBackedges - Analyze the specified function to find all of the
