@@ -1971,21 +1971,24 @@ void Sema::CheckMemaccessArguments(const CallExpr *Call,
         }
       }
 
-      unsigned DiagID;
-
       // Always complain about dynamic classes.
       if (isDynamicClassType(PointeeTy))
-        DiagID = diag::warn_dyn_class_memaccess;
+        DiagRuntimeBehavior(
+          Dest->getExprLoc(), Dest,
+          PDiag(diag::warn_dyn_class_memaccess)
+            << (CMF == CMF_Memcmp ? ArgIdx + 2 : ArgIdx) << FnName << PointeeTy
+            // "overwritten" if we're warning about the destination for any call
+            // but memcmp; otherwise a verb appropriate to the call.
+            << (ArgIdx == 0 && CMF != CMF_Memcmp ? 0 : (unsigned)CMF)
+            << Call->getCallee()->getSourceRange());
       else if (PointeeTy.hasNonTrivialObjCLifetime() && CMF != CMF_Memset)
-        DiagID = diag::warn_arc_object_memaccess;
+        DiagRuntimeBehavior(
+          Dest->getExprLoc(), Dest,
+          PDiag(diag::warn_arc_object_memaccess)
+            << ArgIdx << FnName << PointeeTy
+            << Call->getCallee()->getSourceRange());
       else
         continue;
-
-      DiagRuntimeBehavior(
-        Dest->getExprLoc(), Dest,
-        PDiag(DiagID)
-          << ArgIdx << FnName << PointeeTy 
-          << Call->getCallee()->getSourceRange());
 
       DiagRuntimeBehavior(
         Dest->getExprLoc(), Dest,

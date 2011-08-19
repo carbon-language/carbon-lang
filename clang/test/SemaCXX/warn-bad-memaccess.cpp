@@ -3,6 +3,7 @@
 extern "C" void *memset(void *, int, unsigned);
 extern "C" void *memmove(void *s1, const void *s2, unsigned n);
 extern "C" void *memcpy(void *s1, const void *s2, unsigned n);
+extern "C" void *memcmp(void *s1, const void *s2, unsigned n);
 
 // Several types that should not warn.
 struct S1 {} s1;
@@ -27,16 +28,22 @@ void test_warn() {
       // expected-note {{explicitly cast the pointer to silence this warning}}
 
   memmove(&x1, 0, sizeof x1); // \
-      // expected-warning{{destination for this 'memmove' call is a pointer to dynamic class}} \
+      // expected-warning{{destination for this 'memmove' call is a pointer to dynamic class 'struct X1'; vtable pointer will be overwritten}} \
       // expected-note {{explicitly cast the pointer to silence this warning}}
   memmove(0, &x1, sizeof x1); // \
-      // expected-warning{{source of this 'memmove' call is a pointer to dynamic class}} \
+      // expected-warning{{source of this 'memmove' call is a pointer to dynamic class 'struct X1'; vtable pointer will be moved}} \
       // expected-note {{explicitly cast the pointer to silence this warning}}
   memcpy(&x1, 0, sizeof x1); // \
-      // expected-warning{{destination for this 'memcpy' call is a pointer to dynamic class}} \
+      // expected-warning{{destination for this 'memcpy' call is a pointer to dynamic class 'struct X1'; vtable pointer will be overwritten}} \
       // expected-note {{explicitly cast the pointer to silence this warning}}
   memcpy(0, &x1, sizeof x1); // \
-      // expected-warning{{source of this 'memcpy' call is a pointer to dynamic class}} \
+      // expected-warning{{source of this 'memcpy' call is a pointer to dynamic class 'struct X1'; vtable pointer will be copied}} \
+      // expected-note {{explicitly cast the pointer to silence this warning}}
+  memcmp(&x1, 0, sizeof x1); // \
+      // expected-warning{{first operand of this 'memcmp' call is a pointer to dynamic class 'struct X1'; vtable pointer will be compared}} \
+      // expected-note {{explicitly cast the pointer to silence this warning}}
+  memcmp(0, &x1, sizeof x1); // \
+      // expected-warning{{second operand of this 'memcmp' call is a pointer to dynamic class 'struct X1'; vtable pointer will be compared}} \
       // expected-note {{explicitly cast the pointer to silence this warning}}
 
   __builtin_memset(&x1, 0, sizeof x1); // \
@@ -108,5 +115,3 @@ namespace N {
     N::memset(&x1, 0, sizeof x1);
   }
 }
-
-
