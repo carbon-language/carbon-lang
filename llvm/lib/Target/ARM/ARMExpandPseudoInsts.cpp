@@ -30,7 +30,7 @@
 #include "llvm/Support/raw_ostream.h" // FIXME: for debug only. remove!
 using namespace llvm;
 
-cl::opt<bool>
+static cl::opt<bool>
 VerifyARMPseudo("verify-arm-pseudo-expand", cl::Hidden,
                 cl::desc("Verify machine code after expanding ARM pseudos"));
 

@@ -115,7 +115,7 @@ static bool LowerAtomicIntrinsic(IntrinsicInst *II) {
   return true;
 }
 
-bool LowerAtomicCmpXchgInst(AtomicCmpXchgInst *CXI) {
+static bool LowerAtomicCmpXchgInst(AtomicCmpXchgInst *CXI) {
   IRBuilder<> Builder(CXI->getParent(), CXI);
   Value *Ptr = CXI->getPointerOperand();
   Value *Cmp = CXI->getCompareOperand();
@@ -131,7 +131,7 @@ bool LowerAtomicCmpXchgInst(AtomicCmpXchgInst *CXI) {
   return true;
 }
 
-bool LowerAtomicRMWInst(AtomicRMWInst *RMWI) {
+static bool LowerAtomicRMWInst(AtomicRMWInst *RMWI) {
   IRBuilder<> Builder(RMWI->getParent(), RMWI);
   Value *Ptr = RMWI->getPointerOperand();
   Value *Val = RMWI->getValOperand();

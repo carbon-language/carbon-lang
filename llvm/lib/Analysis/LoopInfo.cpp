@@ -390,6 +390,7 @@ void Loop::dump() const {
 // UnloopUpdater implementation
 //
 
+namespace {
 /// Find the new parent loop for all blocks within the "unloop" whose last
 /// backedges has just been removed.
 class UnloopUpdater {
@@ -421,6 +422,7 @@ public:
 protected:
   Loop *getNearestLoop(BasicBlock *BB, Loop *BBLoop);
 };
+} // end anonymous namespace
 
 /// updateBlockParents - Update the parent loop for all blocks that are directly
 /// contained within the original "unloop".

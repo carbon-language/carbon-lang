@@ -26,7 +26,7 @@
 using namespace llvm;
 
 #ifndef NDEBUG
-cl::opt<bool> StressSchedOpt(
+static cl::opt<bool> StressSchedOpt(
   "stress-sched", cl::Hidden, cl::init(false),
   cl::desc("Stress test instruction scheduling"));
 #endif
