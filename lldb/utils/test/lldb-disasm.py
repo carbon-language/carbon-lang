@@ -129,7 +129,8 @@ def do_lldb_disassembly(lldb_commands, exe, disassemble_options, num_symbols,
             limited = True if num != -1 else False
             if limited:
                 count = 0
-            pattern = re.compile(re_symbol_pattern)
+            if re_symbol_pattern:
+                pattern = re.compile(re_symbol_pattern)
             stream = lldb.SBStream()
             for m in target.module_iter():
                 print "module:", m
