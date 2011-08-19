@@ -1946,7 +1946,7 @@ ScriptInterpreterPython::RunScriptBasedCommand(const char* impl_function,
                                              debugger_sp,
                                              args,
                                              err_msg,
-                                             cmd_retobj);
+                                             (void*)&cmd_retobj);
         python_interpreter->LeaveSession ();
     }
     else
@@ -1960,7 +1960,7 @@ ScriptInterpreterPython::RunScriptBasedCommand(const char* impl_function,
                                              debugger_sp,
                                              args,
                                              err_msg,
-                                             cmd_retobj);
+                                             (void*)&cmd_retobj);
         python_interpreter->LeaveSession ();
         ReleasePythonLock ();
     }

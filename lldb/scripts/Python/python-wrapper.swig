@@ -590,11 +590,11 @@ LLDBSwigPythonCallCommand
     lldb::DebuggerSP& debugger,
     const char* args,
     std::string& err_msg,
-    lldb_private::CommandReturnObject& cmd_retobj
+    void* cmd_retobj
 )
 {
 
-    not_owning_ap<lldb_private::CommandReturnObject> auto_cmd_retobj(&cmd_retobj);
+    not_owning_ap<lldb_private::CommandReturnObject> auto_cmd_retobj((lldb_private::CommandReturnObject*)cmd_retobj);
 
     bool retval = false;
 

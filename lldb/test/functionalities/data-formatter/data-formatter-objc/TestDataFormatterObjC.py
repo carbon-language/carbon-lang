@@ -178,7 +178,7 @@ class DataFormatterTestCase(TestBase):
                                'inline = ',
                                'explicit = ',
                                'content = ',
-                               '__NSCFString'])
+                               'NSCFString'])
         
         self.expect('frame variable processName -P 1 -Y',
                     substrs = ['mutable =',
@@ -223,7 +223,7 @@ class DataFormatterTestCase(TestBase):
         self.expect('frame variable str10',
                     substrs = ['This is a Unicode string \\xcf\\x83 number 4 right here'])
         self.expect('frame variable str11',
-                    substrs = ['__NSCFString'])
+                    substrs = ['NSCFString'])
         self.expect('frame variable processName',
                     substrs = ['a.out'])        
         self.expect('frame variable str12',

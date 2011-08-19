@@ -526,7 +526,7 @@ StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr,
         const bool check_ptr_vs_member = (options & eExpressionPathOptionCheckPtrVsMember) != 0;
         const bool no_fragile_ivar = (options & eExpressionPathOptionsNoFragileObjcIvar) != 0;
         const bool no_synth_child = (options & eExpressionPathOptionsNoSyntheticChildren) != 0;
-        const bool no_synth_array = (options & eExpressionPathOptionsNoSyntheticArrayRange) != 0;
+        //const bool no_synth_array = (options & eExpressionPathOptionsNoSyntheticArrayRange) != 0;
         error.Clear();
         bool deref = false;
         bool address_of = false;
