@@ -3015,7 +3015,7 @@ validateInstruction(MCInst &Inst,
       if (Reg == Rn)
         doesWriteback = false;
       // Anything other than a low register isn't legal here.
-      if (getARMRegisterNumbering(Reg) > 7)
+      if (!isARMLowRegister(Reg))
         return Error(Operands[4]->getStartLoc(),
                      "registers must be in range r0-r7");
     }
