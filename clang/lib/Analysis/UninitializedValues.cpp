@@ -123,13 +123,7 @@ public:
   bool hasNoDeclarations() const {
     return declToIndex.size() == 0;
   }
-  
-  bool hasEntry(const VarDecl *vd) const {
-    return declToIndex.getValueIndex(vd).hasValue();
-  }
-  
-  bool hasValues(const CFGBlock *block);
-  
+
   void resetScratch();
   ValueVector &getScratch() { return scratch; }
   
@@ -207,11 +201,6 @@ ValueVector &CFGBlockValues::getValueVector(const CFGBlock *block,
 
   assert(vals[idx].second == 0);
   return lazyCreate(vals[idx].first);
-}
-
-bool CFGBlockValues::hasValues(const CFGBlock *block) {
-  unsigned idx = block->getBlockID();
-  return vals[idx].second != 0;  
 }
 
 BVPair &CFGBlockValues::getValueVectors(const clang::CFGBlock *block,
@@ -366,7 +355,6 @@ public:
       flagBlockUses(flagBlockUses), lastDR(0), lastLoad(0),
       skipProcessUses(false) {}
   
-  const CFG &getCFG() { return cfg; }
   void reportUninit(const DeclRefExpr *ex, const VarDecl *vd,
                     bool isAlwaysUninit);
 
