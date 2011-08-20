@@ -1,4 +1,5 @@
 import os
+import sys
 
 class TestingConfig:
     """"
@@ -14,11 +15,15 @@ class TestingConfig:
                 'LD_LIBRARY_PATH' : os.environ.get('LD_LIBRARY_PATH',''),
                 'PATH' : os.pathsep.join(litConfig.path +
                                          [os.environ.get('PATH','')]),
-                'PATHEXT' : os.environ.get('PATHEXT',''),
                 'SYSTEMROOT' : os.environ.get('SYSTEMROOT',''),
-                'LLVM_DISABLE_CRT_DEBUG' : '1',
-                'PYTHONUNBUFFERED' : '1',
                 }
+
+            if sys.platform == 'win32':
+                environment.update({
+                        'LLVM_DISABLE_CRT_DEBUG' : '1',
+                        'PATHEXT' : os.environ.get('PATHEXT',''),
+                        'PYTHONUNBUFFERED' : '1',
+                        })
 
             config = TestingConfig(parent,
                                    name = '<unnamed>',
