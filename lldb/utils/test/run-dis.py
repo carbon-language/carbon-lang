@@ -45,7 +45,7 @@ def walk_and_invoke(sdk_root, path_regexp, suffix, num_symbols):
             # We're not interested in .h file.
             if name.endswith(".h"):
                 continue
-            # Neither a symboliccally link file.
+            # Neither a symbolically linked file.
             if os.path.islink(path):
                 continue
 
