@@ -49,7 +49,6 @@
 #include <iterator>
 #include <cstdio>
 #include <sys/stat.h>
-#include <queue>
 
 using namespace clang;
 using namespace clang::serialization;
@@ -4611,7 +4610,6 @@ namespace {
 }
 
 IdentifierInfo* ASTReader::get(const char *NameStart, const char *NameEnd) {
-  std::string Name(NameStart, NameEnd);
   IdentifierLookupVisitor Visitor(StringRef(NameStart, NameEnd - NameStart));
   ModuleMgr.visit(IdentifierLookupVisitor::visit, &Visitor);
   return Visitor.getIdentifierInfo();
