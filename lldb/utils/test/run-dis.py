@@ -45,14 +45,22 @@ def visit(suffix, dir, names):
     old_dir = os.getcwd()
     for name in names:
         path = os.path.join(dir, name)
+        # No need to look further if path is a directory.
         if os.path.isdir(path):
             continue
+        # Is a symbolic link.
+        if os.path.islink(path):
+            continue
+        # Or a .h file.
         if name.endswith(".h"):
             continue
 
+        # We'll be pattern matching based on the path relative to the SDK root.
         replaced_path = path.replace(root_dir, "", 1)
+        # Check regular expression match for the replaced path.
         if not path_regexp.search(replaced_path):
             continue
+        # If a suffix is specified, check it, too.
         if suffix and not name.endswith(suffix):
             continue
         if not isbinary(path):
