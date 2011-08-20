@@ -52,7 +52,9 @@ Dependences::Dependences() : ScopPass(ID) {
 }
 
 bool Dependences::runOnScop(Scop &S) {
-  isl_dim *dim = isl_dim_alloc(S.getCtx(), S.getNumParams(), 0, 0);
+  isl_dim *dim = isl_dim_alloc(S.getCtx(), 0, 0, 0);
+  isl_dim *Model = isl_set_get_dim(S.getContext());
+  dim = isl_dim_align_params(dim, Model);
 
   if (sink)
     isl_union_map_free(sink);
@@ -153,9 +155,12 @@ bool Dependences::isValidScattering(StatementToIslMapTy *NewScattering) {
   if (LegalityCheckDisabled)
     return true;
 
-  isl_dim *dim = isl_dim_alloc(S.getCtx(), S.getNumParams(), 0, 0);
+  isl_dim *dim = isl_dim_alloc(S.getCtx(), 0, 0, 0);
 
   isl_union_map *schedule = isl_union_map_empty(dim);
+
+  isl_dim *Model = isl_set_get_dim(S.getContext());
+  schedule = isl_union_map_align_params(schedule, Model);
 
   for (Scop::iterator SI = S.begin(), SE = S.end(); SI != SE; ++SI) {
     ScopStmt *Stmt = *SI;
@@ -230,9 +235,11 @@ bool Dependences::isValidScattering(StatementToIslMapTy *NewScattering) {
 }
 
 isl_union_map* getCombinedScheduleForDim(Scop *scop, unsigned dimLevel) {
-  isl_dim *dim = isl_dim_alloc(scop->getCtx(), scop->getNumParams(), 0, 0);
+  isl_dim *dim = isl_dim_alloc(scop->getCtx(), 0, 0, 0);
 
   isl_union_map *schedule = isl_union_map_empty(dim);
+  isl_dim *Model = isl_set_get_dim(scop->getContext());
+  schedule = isl_union_map_align_params(schedule, Model);
 
   for (Scop::iterator SI = scop->begin(), SE = scop->end(); SI != SE; ++SI) {
     ScopStmt *Stmt = *SI;

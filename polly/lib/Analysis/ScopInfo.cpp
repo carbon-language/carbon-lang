@@ -67,48 +67,6 @@ static std::string convertInt(int number)
   return returnvalue;
 }
 
-static isl_set *set_remove_dim_ids(isl_set *set) {
-  isl_ctx *ctx = isl_set_get_ctx(set);
-  int numParams = isl_set_n_param(set);
-  isl_printer *p = isl_printer_to_str(ctx);
-  isl_set *new_set;
-  char *str;
-  const char *name = isl_set_get_tuple_name(set);
-
-  p = isl_printer_set_output_format (p, ISL_FORMAT_EXT_POLYLIB);
-  p = isl_printer_print_set(p, set);
-
-  str = isl_printer_get_str (p);
-  new_set = isl_set_read_from_str (ctx, str, numParams);
-  new_set = isl_set_set_tuple_name(new_set, name);
-  free (str);
-  isl_set_free (set);
-  isl_printer_free (p);
-  return new_set;
-}
-
-static isl_map *map_remove_dim_ids(isl_map *map) {
-  isl_ctx *ctx = isl_map_get_ctx(map);
-  int numParams = isl_map_n_param(map);
-  isl_printer *p = isl_printer_to_str(ctx);
-  char *str;
-  isl_map *new_map;
-  const char *name_in = isl_map_get_tuple_name(map, isl_dim_in);
-  const char *name_out = isl_map_get_tuple_name(map, isl_dim_out);
-
-  p = isl_printer_set_output_format (p, ISL_FORMAT_EXT_POLYLIB);
-  p = isl_printer_print_map(p, map);
-
-  str = isl_printer_get_str (p);
-  new_map = isl_map_read_from_str (ctx, str, numParams);
-  new_map = isl_map_set_tuple_name(new_map, isl_dim_in, name_in);
-  new_map = isl_map_set_tuple_name(new_map, isl_dim_out, name_out);
-  isl_map_free (map);
-  free (str);
-  isl_printer_free (p);
-  return new_map;
-}
-
 /// Translate a SCEVExpression into an isl_pw_aff object.
 struct SCEVAffinator : public SCEVVisitor<SCEVAffinator, isl_pw_aff*> {
 private:
@@ -341,8 +299,7 @@ std::string MemoryAccess::getAccessFunctionStr() const {
 }
 
 isl_basic_map *MemoryAccess::createBasicAccessMap(ScopStmt *Statement) {
-  isl_dim *dim = isl_dim_alloc(Statement->getIslContext(),
-                               Statement->getNumParams(),
+  isl_dim *dim = isl_dim_alloc(Statement->getIslContext(), 0,
                                Statement->getNumIterators(), 1);
   setBaseName();
 
@@ -384,9 +341,6 @@ MemoryAccess::MemoryAccess(const SCEVAffFunc &AffFunc, ScopStmt *Statement) {
 
   isl_dim *Model = isl_set_get_dim(Statement->getParent()->getContext());
   AccessRelation = isl_map_align_params(AccessRelation, Model);
-
-  // FIXME: Temporarily remove dimension ids.
-  AccessRelation = map_remove_dim_ids(AccessRelation);
 }
 
 MemoryAccess::MemoryAccess(const Value *BaseAddress, ScopStmt *Statement) {
@@ -397,6 +351,8 @@ MemoryAccess::MemoryAccess(const Value *BaseAddress, ScopStmt *Statement) {
 
   isl_basic_map *BasicAccessMap = createBasicAccessMap(Statement);
   AccessRelation = isl_map_from_basic_map(BasicAccessMap);
+  isl_dim *Model = isl_set_get_dim(Statement->getParent()->getContext());
+  AccessRelation = isl_map_align_params(AccessRelation, Model);
 }
 
 void MemoryAccess::print(raw_ostream &OS) const {
@@ -542,8 +498,7 @@ void MemoryAccess::setNewAccessFunction(isl_map *newAccess) {
 void ScopStmt::buildScattering(SmallVectorImpl<unsigned> &Scatter) {
   unsigned NumberOfIterators = getNumIterators();
   unsigned ScatDim = Parent.getMaxLoopDepth() * 2 + 1;
-  isl_dim *dim = isl_dim_alloc(Parent.getCtx(), Parent.getNumParams(),
-                               NumberOfIterators, ScatDim);
+  isl_dim *dim = isl_dim_alloc(Parent.getCtx(), 0, NumberOfIterators, ScatDim);
   dim = isl_dim_set_tuple_name(dim, isl_dim_out, "scattering");
   dim = isl_dim_set_tuple_name(dim, isl_dim_in, getBaseName());
   isl_basic_map *bmap = isl_basic_map_universe(isl_dim_copy(dim));
@@ -586,6 +541,8 @@ void ScopStmt::buildScattering(SmallVectorImpl<unsigned> &Scatter) {
   isl_int_clear(v);
   isl_dim_free(dim);
   Scattering = isl_map_from_basic_map(bmap);
+  isl_dim *Model = isl_set_get_dim(getParent()->getContext());
+  Scattering = isl_map_align_params(Scattering, Model);
 }
 
 void ScopStmt::buildAccesses(TempScop &tempScop, const Region &CurRegion) {
@@ -742,10 +699,6 @@ ScopStmt::ScopStmt(Scop &parent, TempScop &tempScop,
   buildAccesses(tempScop, CurRegion);
 
   IsReduction = tempScop.is_Reduction(*BB);
-
-  // FIXME: Temporarily remove dimension ids.
-  Scattering = map_remove_dim_ids(Scattering);
-  Domain = set_remove_dim_ids(Domain);
 }
 
 ScopStmt::ScopStmt(Scop &parent, SmallVectorImpl<unsigned> &Scatter)
@@ -757,13 +710,13 @@ ScopStmt::ScopStmt(Scop &parent, SmallVectorImpl<unsigned> &Scatter)
   std::string IterationDomainString = "{[i0] : i0 = 0}";
   Domain = isl_set_read_from_str(Parent.getCtx(), IterationDomainString.c_str(),
                                  -1);
-  Domain = isl_set_add_dims(Domain, isl_dim_param, Parent.getNumParams());
   Domain = isl_set_set_tuple_name(Domain, getBaseName());
+  isl_dim *Model = isl_set_get_dim(getParent()->getContext());
+  Domain = isl_set_align_params(Domain, isl_dim_copy(Model));
 
   // Build scattering.
   unsigned ScatDim = Parent.getMaxLoopDepth() * 2 + 1;
-  isl_dim *dim = isl_dim_alloc(Parent.getCtx(), Parent.getNumParams(), 1,
-                               ScatDim);
+  isl_dim *dim = isl_dim_alloc(Parent.getCtx(), 0, 1, ScatDim);
   dim = isl_dim_set_tuple_name(dim, isl_dim_out, "scattering");
   dim = isl_dim_set_tuple_name(dim, isl_dim_in, getBaseName());
   isl_basic_map *bmap = isl_basic_map_universe(isl_dim_copy(dim));
@@ -782,6 +735,7 @@ ScopStmt::ScopStmt(Scop &parent, SmallVectorImpl<unsigned> &Scatter)
   bmap = isl_basic_map_add_constraint(bmap, c);
   isl_int_clear(v);
   Scattering = isl_map_from_basic_map(bmap);
+  Scattering = isl_map_align_params(Scattering, Model);
 
   // Build memory accesses, use SetVector to keep the order of memory accesses
   // and prevent the same memory access inserted more than once.
@@ -926,9 +880,6 @@ Scop::Scop(TempScop &tempScop, LoopInfo &LI, ScalarEvolution &ScalarEvolution)
   // traversing the region tree.
   buildScop(tempScop, getRegion(), NestLoops, Scatter, LI);
   Stmts.push_back(new ScopStmt(*this, Scatter));
-
-  // FIXME: Temporarily remove dimension ids
-  Context = set_remove_dim_ids(Context);
 
   assert(NestLoops.empty() && "NestLoops not empty at top level!");
 }
