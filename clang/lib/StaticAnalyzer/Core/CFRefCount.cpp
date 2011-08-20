@@ -3435,25 +3435,25 @@ class RetainReleaseChecker
                     check::RegionChanges,
                     eval::Assume > {
 public:
-    bool wantsRegionUpdate;
-    
-    RetainReleaseChecker() : wantsRegionUpdate(true) {}
-    
-    void checkBind(SVal loc, SVal val, CheckerContext &C) const;
-    void checkPostStmt(const BlockExpr *BE, CheckerContext &C) const;
-    void checkPostStmt(const CastExpr *CE, CheckerContext &C) const;
+  bool wantsRegionUpdate;
+  
+  RetainReleaseChecker() : wantsRegionUpdate(true) {}
+  
+  void checkBind(SVal loc, SVal val, CheckerContext &C) const;
+  void checkPostStmt(const BlockExpr *BE, CheckerContext &C) const;
+  void checkPostStmt(const CastExpr *CE, CheckerContext &C) const;
 
-    const ProgramState *evalAssume(const ProgramState *state, SVal Cond,
-                                   bool Assumption) const;
+  const ProgramState *evalAssume(const ProgramState *state, SVal Cond,
+                                 bool Assumption) const;
 
-    const ProgramState *checkRegionChanges(const ProgramState *state,
-                            const StoreManager::InvalidatedSymbols *invalidated,
-                                      const MemRegion * const *begin,
-                                      const MemRegion * const *end) const;
-                                          
-    bool wantsRegionChangeUpdate(const ProgramState *state) const {
-      return wantsRegionUpdate;
-    }
+  const ProgramState *checkRegionChanges(const ProgramState *state,
+                          const StoreManager::InvalidatedSymbols *invalidated,
+                                         const MemRegion * const *begin,
+                                         const MemRegion * const *end) const;
+                                        
+  bool wantsRegionChangeUpdate(const ProgramState *state) const {
+    return wantsRegionUpdate;
+  }
 };
 } // end anonymous namespace
 
