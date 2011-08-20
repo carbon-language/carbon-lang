@@ -19,8 +19,8 @@
 // mingw-w64 tends to define it as 0x0502 in its headers.
 #undef _WIN32_WINNT
 
-// Require at least Windows 2000 API.
-#define _WIN32_WINNT 0x0500
+// Require at least Windows XP(5.1) API.
+#define _WIN32_WINNT 0x0501
 #define _WIN32_IE    0x0500 // MinGW at it again.
 #define WIN32_LEAN_AND_MEAN
 
