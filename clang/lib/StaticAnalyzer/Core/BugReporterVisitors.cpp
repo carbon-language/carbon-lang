@@ -72,6 +72,54 @@ const Stmt *bugreporter::GetRetValExpr(const ExplodedNode *N) {
 //===----------------------------------------------------------------------===//
 // Definitions for bug reporter visitors.
 //===----------------------------------------------------------------------===//
+
+PathDiagnosticPiece*
+BugReporterVisitor::getEndPath(BugReporterContext &BRC,
+                               const ExplodedNode *EndPathNode,
+                               BugReport &BR) {
+  return 0;
+}
+
+PathDiagnosticPiece*
+BugReporterVisitor::getDefaultEndPath(BugReporterContext &BRC,
+                                      const ExplodedNode *EndPathNode,
+                                      BugReport &BR) {
+  const ProgramPoint &PP = EndPathNode->getLocation();
+  PathDiagnosticLocation L;
+
+  if (const BlockEntrance *BE = dyn_cast<BlockEntrance>(&PP)) {
+    const CFGBlock *block = BE->getBlock();
+    if (block->getBlockID() == 0) {
+      L = PathDiagnosticLocation(
+          EndPathNode->getLocationContext()->getDecl()->getBodyRBrace(),
+          BRC.getSourceManager());
+    }
+  }
+
+  if (!L.isValid()) {
+    const Stmt *S = BR.getStmt();
+
+    if (!S)
+      return NULL;
+
+    L = PathDiagnosticLocation(S, BRC.getSourceManager());
+  }
+
+  BugReport::ranges_iterator Beg, End;
+  llvm::tie(Beg, End) = BR.getRanges();
+
+  // Only add the statement itself as a range if we didn't specify any
+  // special ranges for this report.
+  PathDiagnosticPiece *P = new PathDiagnosticEventPiece(L,
+      BR.getDescription(),
+      Beg == End);
+  for (; Beg != End; ++Beg)
+    P->addRange(*Beg);
+
+  return P;
+}
+
+
 void FindLastStoreBRVisitor ::Profile(llvm::FoldingSetNodeID &ID) const {
   static int tag = 0;
   ID.AddPointer(&tag);

@@ -85,8 +85,6 @@ protected:
   /// for each bug.
   virtual void Profile(llvm::FoldingSetNodeID& hash) const;
 
-  const Stmt *getStmt() const;
-
 public:
   BugReport(BugType& bt, StringRef desc, const ExplodedNode *errornode)
     : BT(bt), Description(desc), ErrorNode(errornode),
@@ -121,16 +119,14 @@ public:
     return std::make_pair((const char**)0,(const char**)0);
   }
 
-  /// Provide custom definition for the last diagnostic piece on the path.
-  virtual PathDiagnosticPiece *getEndPath(BugReporterContext &BRC,
-                                          const ExplodedNode *N);
-
   /// \brief Return the "definitive" location of the reported bug.
   ///
   ///  While a bug can span an entire path, usually there is a specific
   ///  location that can be used to identify where the key issue occurred.
   ///  This location is used by clients rendering diagnostics.
   virtual SourceLocation getLocation() const;
+
+  const Stmt *getStmt() const;
 
   /// \brief Add a range to a bug report.
   ///

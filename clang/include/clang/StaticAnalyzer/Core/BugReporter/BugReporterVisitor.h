@@ -42,7 +42,23 @@ public:
                                          BugReporterContext &BRC,
                                          BugReport &BR) = 0;
 
+  /// \brief Provide custom definition for the final diagnostic piece on the
+  /// path - the piece, which is displayed before the path is expanded.
+  ///
+  /// If returns NULL the default implementation will be used.
+  /// Also note that at most one visitor of a BugReport should generate a
+  /// non-NULL end of path diagnostic piece.
+  virtual PathDiagnosticPiece *getEndPath(BugReporterContext &BRC,
+                                          const ExplodedNode *N,
+                                          BugReport &BR);
+
   virtual void Profile(llvm::FoldingSetNodeID &ID) const = 0;
+
+  /// \brief Generates the default final diagnostic piece.
+  static PathDiagnosticPiece *getDefaultEndPath(BugReporterContext &BRC,
+                                                const ExplodedNode *N,
+                                                BugReport &BR);
+
 };
 
 class FindLastStoreBRVisitor : public BugReporterVisitor {

@@ -1261,45 +1261,6 @@ const Stmt *BugReport::getStmt() const {
   return S;
 }
 
-PathDiagnosticPiece*
-BugReport::getEndPath(BugReporterContext &BRC,
-                      const ExplodedNode *EndPathNode) {
-
-  const ProgramPoint &PP = EndPathNode->getLocation();
-  PathDiagnosticLocation L;
-
-  if (const BlockEntrance *BE = dyn_cast<BlockEntrance>(&PP)) {
-    const CFGBlock *block = BE->getBlock();
-    if (block->getBlockID() == 0) {
-      L = PathDiagnosticLocation(
-          EndPathNode->getLocationContext()->getDecl()->getBodyRBrace(),
-          BRC.getSourceManager());
-    }
-  }
-
-  if (!L.isValid()) {
-    const Stmt *S = getStmt();
-
-    if (!S)
-      return NULL;
-
-    L = PathDiagnosticLocation(S, BRC.getSourceManager());
-  }
-
-  BugReport::ranges_iterator Beg, End;
-  llvm::tie(Beg, End) = getRanges();
-
-  // Only add the statement itself as a range if we didn't specify any
-  // special ranges for this report.
-  PathDiagnosticPiece *P = new PathDiagnosticEventPiece(L, getDescription(),
-                                                        Beg == End);
-
-  for (; Beg != End; ++Beg)
-    P->addRange(*Beg);
-
-  return P;
-}
-
 std::pair<BugReport::ranges_iterator, BugReport::ranges_iterator>
 BugReport::getRanges() {
     // If no custom ranges, add the range of the statement corresponding to
@@ -1657,14 +1618,27 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
   // Start building the path diagnostic...
   PathDiagnosticBuilder PDB(*this, R, BackMap.get(), getPathDiagnosticClient());
 
-  if (PathDiagnosticPiece *Piece = R->getEndPath(PDB, N))
-    PD.push_back(Piece);
-  else
-    return;
-
   // Register additional node visitors.
   R->addVisitor(new NilReceiverBRVisitor());
   R->addVisitor(new ConditionBRVisitor());
+
+  // Generate the very last diagnostic piece - the piece is visible before 
+  // the trace is expanded.
+  PathDiagnosticPiece *LastPiece = 0;
+  for (BugReport::visitor_iterator I = R->visitor_begin(),
+                                   E = R->visitor_end(); I!=E; ++I) {
+    if (PathDiagnosticPiece *Piece = (*I)->getEndPath(PDB, N, *R)) {
+      assert (!LastPiece &&
+              "There can only be one final piece in a diagnostic.");
+      LastPiece = Piece;
+    }
+  }
+  if (!LastPiece)
+    LastPiece = BugReporterVisitor::getDefaultEndPath(PDB, N, *R);
+  if (LastPiece)
+    PD.push_back(LastPiece);
+  else
+    return;
 
   switch (PDB.getGenerationScheme()) {
     case PathDiagnosticClient::Extensive:

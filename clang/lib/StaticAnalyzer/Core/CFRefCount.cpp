@@ -1960,23 +1960,38 @@ namespace {
   //===---------===//
 
   class CFRefReportVisitor : public BugReporterVisitor {
+  protected:
     SymbolRef Sym;
     const CFRefCount &TF;
+    
   public:
-
     CFRefReportVisitor(SymbolRef sym, const CFRefCount &tf)
        : Sym(sym), TF(tf) {}
 
-    void Profile(llvm::FoldingSetNodeID &ID) const {
+    virtual void Profile(llvm::FoldingSetNodeID &ID) const {
       static int x = 0;
       ID.AddPointer(&x);
       ID.AddPointer(Sym);
     }
 
-    PathDiagnosticPiece *VisitNode(const ExplodedNode *N,
-                                   const ExplodedNode *PrevN,
-                                   BugReporterContext &BRC,
-                                   BugReport &BR);
+    virtual PathDiagnosticPiece *VisitNode(const ExplodedNode *N,
+                                           const ExplodedNode *PrevN,
+                                           BugReporterContext &BRC,
+                                           BugReport &BR);
+
+    virtual PathDiagnosticPiece *getEndPath(BugReporterContext &BRC,
+                                            const ExplodedNode *N,
+                                            BugReport &BR);
+  };
+
+  class CFRefLeakReportVisitor : public CFRefReportVisitor {
+  public:
+    CFRefLeakReportVisitor(SymbolRef sym, const CFRefCount &tf)
+       : CFRefReportVisitor(sym, tf) {}
+
+    PathDiagnosticPiece *getEndPath(BugReporterContext &BRC,
+                                    const ExplodedNode *N,
+                                    BugReport &BR);
   };
 
   class CFRefReport : public BugReport {
@@ -1985,9 +2000,10 @@ namespace {
     const CFRefCount &TF;
   public:
     CFRefReport(CFRefBug& D, const CFRefCount &tf,
-                ExplodedNode *n, SymbolRef sym)
+                ExplodedNode *n, SymbolRef sym, bool registerVisitor = true)
       : BugReport(D, D.getDescription(), n), Sym(sym), TF(tf) {
-      addVisitor(new CFRefReportVisitor(sym, tf));
+      if (registerVisitor)
+        addVisitor(new CFRefReportVisitor(sym, tf));
     }
 
     CFRefReport(CFRefBug& D, const CFRefCount &tf,
@@ -2011,22 +2027,17 @@ namespace {
 
     SymbolRef getSymbol() const { return Sym; }
 
-    PathDiagnosticPiece *getEndPath(BugReporterContext &BRC,
-                                    const ExplodedNode *N);
-
     std::pair<const char**,const char**> getExtraDescriptiveText();
   };
 
   class CFRefLeakReport : public CFRefReport {
     SourceLocation AllocSite;
     const MemRegion* AllocBinding;
+
   public:
     CFRefLeakReport(CFRefBug& D, const CFRefCount &tf,
                     ExplodedNode *n, SymbolRef sym,
                     ExprEngine& Eng);
-
-    PathDiagnosticPiece *getEndPath(BugReporterContext &BRC,
-                                    const ExplodedNode *N);
 
     SourceLocation getLocation() const { return AllocSite; }
   };
@@ -2384,17 +2395,19 @@ GetAllocationSite(ProgramStateManager& StateMgr, const ExplodedNode *N,
 }
 
 PathDiagnosticPiece*
-CFRefReport::getEndPath(BugReporterContext &BRC,
-                        const ExplodedNode *EndN) {
+CFRefReportVisitor::getEndPath(BugReporterContext &BRC,
+                               const ExplodedNode *EndN,
+                               BugReport &BR) {
   // Tell the BugReporterContext to report cases when the tracked symbol is
   // assigned to different variables, etc.
   BRC.addNotableSymbol(Sym);
-  return BugReport::getEndPath(BRC, EndN);
+  return BugReporterVisitor::getDefaultEndPath(BRC, EndN, BR);
 }
 
 PathDiagnosticPiece*
-CFRefLeakReport::getEndPath(BugReporterContext &BRC,
-                            const ExplodedNode *EndN){
+CFRefLeakReportVisitor::getEndPath(BugReporterContext &BRC,
+                                   const ExplodedNode *EndN,
+                                   BugReport &BR) {
 
   // Tell the BugReporterContext to report cases when the tracked symbol is
   // assigned to different variables, etc.
@@ -2493,7 +2506,7 @@ CFRefLeakReport::getEndPath(BugReporterContext &BRC,
 CFRefLeakReport::CFRefLeakReport(CFRefBug& D, const CFRefCount &tf,
                                  ExplodedNode *n,
                                  SymbolRef sym, ExprEngine& Eng)
-: CFRefReport(D, tf, n, sym) {
+: CFRefReport(D, tf, n, sym, false) {
 
   // Most bug reports are cached at the location where they occurred.
   // With leaks, we want to unique them by the location where they were
@@ -2527,7 +2540,7 @@ CFRefLeakReport::CFRefLeakReport(CFRefBug& D, const CFRefCount &tf,
   if (AllocBinding)
     os << " and stored into '" << AllocBinding->getString() << '\'';
 
-  addVisitor(new CFRefReportVisitor(sym, tf));
+  addVisitor(new CFRefLeakReportVisitor(sym, tf));
 }
 
 //===----------------------------------------------------------------------===//
