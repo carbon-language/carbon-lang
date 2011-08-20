@@ -20,6 +20,7 @@ extern id NSAllocateObject(Class aClass, NSUInteger extraBytes, NSZone *zone);
 @interface NSAssertionHandler : NSObject {}
 + (NSAssertionHandler *)currentHandler;
 - (void)handleFailureInMethod:(SEL)selector object:(id)object file:(NSString *)fileName lineNumber:(NSInteger)line description:(NSString *)format,...;
+- (void)handleFailureInFunction:(NSString *)functionName file:(NSString *)fileName lineNumber:(NSInteger)line description:(NSString *)format,...;
 @end
 extern NSString * const NSConnectionReplyMode;
 
@@ -63,3 +64,10 @@ extern NSString * const NSConnectionReplyMode;
 }
 
 @end
+
+void pointerFunction (int *x) {
+  // Manual expansion of NSCAssert( x != 0, @"")
+  do { if (!((x != 0))) { [[NSAssertionHandler currentHandler] handleFailureInFunction:[NSString stringWithUTF8String:__PRETTY_FUNCTION__] file:[NSString stringWithUTF8String:__FILE__] lineNumber:__LINE__ description:((@""))]; } } while(0);  
+
+  *x = 1; // no-warning
+}

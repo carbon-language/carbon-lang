@@ -431,15 +431,10 @@ class RetainSummary {
   ///  alias of one of the arguments in the call, and so on.
   RetEffect   Ret;
 
-  /// EndPath - Indicates that execution of this method/function should
-  ///  terminate the simulation of a path.
-  bool EndPath;
-
 public:
   RetainSummary(ArgEffects A, RetEffect R, ArgEffect defaultEff,
-                ArgEffect ReceiverEff, bool endpath = false)
-    : Args(A), DefaultArgEffect(defaultEff), Receiver(ReceiverEff), Ret(R),
-      EndPath(endpath) {}
+                ArgEffect ReceiverEff)
+    : Args(A), DefaultArgEffect(defaultEff), Receiver(ReceiverEff), Ret(R) {}
 
   /// getArg - Return the argument effect on the argument specified by
   ///  idx (starting from 0).
@@ -464,10 +459,6 @@ public:
 
   /// setRetEffect - Set the effect of the return value of the call.
   void setRetEffect(RetEffect E) { Ret = E; }
-
-  /// isEndPath - Returns true if executing the given method/function should
-  ///  terminate the path.
-  bool isEndPath() const { return EndPath; }
 
   
   /// Sets the effect on the receiver of the message.
@@ -692,8 +683,7 @@ public:
 
   RetainSummary* getPersistentSummary(ArgEffects AE, RetEffect RetEff,
                                       ArgEffect ReceiverEff = DoNothing,
-                                      ArgEffect DefaultEff = MayEscape,
-                                      bool isEndPath = false);
+                                      ArgEffect DefaultEff = MayEscape);
 
   RetainSummary* getPersistentSummary(RetEffect RE,
                                       ArgEffect ReceiverEff = DoNothing,
@@ -771,16 +761,6 @@ private:
     va_list argp;
     va_start(argp, Summ);
     addMethodSummary(II, ObjCClassMethodSummaries, Summ, argp);
-    va_end(argp);
-  }
-
-  void addPanicSummary(const char* Cls, ...) {
-    RetainSummary* Summ = getPersistentSummary(AF.getEmptyMap(),
-                                               RetEffect::MakeNoRet(),
-                                               DoNothing,  DoNothing, true);
-    va_list argp;
-    va_start (argp, Cls);
-    addMethodSummary(&Ctx.Idents.get(Cls), ObjCMethodSummaries, Summ, argp);
     va_end(argp);
   }
 
@@ -899,11 +879,10 @@ ArgEffects RetainSummaryManager::getArgEffects() {
 RetainSummary*
 RetainSummaryManager::getPersistentSummary(ArgEffects AE, RetEffect RetEff,
                                            ArgEffect ReceiverEff,
-                                           ArgEffect DefaultEff,
-                                           bool isEndPath) {
+                                           ArgEffect DefaultEff) {
   // Create the summary and return it.
   RetainSummary *Summ = (RetainSummary*) BPAlloc.Allocate<RetainSummary>();
-  new (Summ) RetainSummary(AE, RetEff, DefaultEff, ReceiverEff, isEndPath);
+  new (Summ) RetainSummary(AE, RetEff, DefaultEff, ReceiverEff);
   return Summ;
 }
 
@@ -1568,13 +1547,6 @@ void RetainSummaryManager::InitializeMethodSummaries() {
   // Don't track allocated autorelease pools yet, as it is okay to prematurely
   // exit a method.
   addClassMethSummary("NSAutoreleasePool", "alloc", NoTrackYet);
-
-  // Create NSAssertionHandler summaries.
-  addPanicSummary("NSAssertionHandler", "handleFailureInFunction", "file",
-                  "lineNumber", "description", NULL);
-
-  addPanicSummary("NSAssertionHandler", "handleFailureInMethod", "object",
-                  "file", "lineNumber", "description", NULL);
 
   // Create summaries QCRenderer/QCView -createSnapShotImageOfType:
   addInstMethSummary("QCRenderer", AllocSumm,
@@ -2846,10 +2818,7 @@ void CFRefCount::evalSummary(ExplodedNodeSet &Dst,
     }
   }
 
-  // Generate a sink node if we are at the end of a path.
-  ExplodedNode *NewNode =
-    Summ.isEndPath() ? Builder.MakeSinkNode(Dst, Ex, Pred, state)
-                     : Builder.MakeNode(Dst, Ex, Pred, state);
+  ExplodedNode *NewNode = Builder.MakeNode(Dst, Ex, Pred, state);
 
   // Annotate the edge with summary we used.
   if (NewNode) SummaryLog[NewNode] = &Summ;
