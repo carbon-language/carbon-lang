@@ -279,6 +279,7 @@ static void replace(std::string& str, const std::string& find,
 }
 
 static void makeIslCompatible(std::string& str) {
+  str.erase(0, 1);
   replace(str, ".", "_");
   replace(str, "\"", "_");
 }
@@ -288,8 +289,6 @@ void MemoryAccess::setBaseName() {
   WriteAsOperand(OS, getBaseAddr(), false);
   BaseName = OS.str();
 
-  // Remove the % in the name. This is not supported by isl.
-  BaseName.erase(0,1);
   makeIslCompatible(BaseName);
   BaseName = "MemRef_" + BaseName;
 }
@@ -689,8 +688,6 @@ ScopStmt::ScopStmt(Scop &parent, TempScop &tempScop,
   WriteAsOperand(OS, &bb, false);
   BaseName = OS.str();
 
-  // Remove the % in the name. This is not supported by isl.
-  BaseName.erase(0, 1);
   makeIslCompatible(BaseName);
   BaseName = "Stmt_" + BaseName;
 
