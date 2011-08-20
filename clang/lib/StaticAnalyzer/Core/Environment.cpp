@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/AST/ExprObjC.h"
 #include "clang/Analysis/AnalysisContext.h"
 #include "clang/Analysis/CFG.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
@@ -83,6 +84,9 @@ SVal Environment::getSVal(const Stmt *E, SValBuilder& svalBuilder,
       case Stmt::CXXBindTemporaryExprClass:
         E = cast<CXXBindTemporaryExpr>(E)->getSubExpr();
         continue;
+      case Stmt::ObjCPropertyRefExprClass:
+        return loc::ObjCPropRef(cast<ObjCPropertyRefExpr>(E));
+        
       // Handle all other Stmt* using a lookup.
       default:
         break;

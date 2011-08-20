@@ -237,9 +237,3 @@ void ExprEngine::VisitObjCMessage(const ObjCMessage &msg,
   // the created nodes in 'Dst'.
   getCheckerManager().runCheckersForPostObjCMessage(Dst, dstEval, msg, *this);
 }
-
-void ExprEngine::VisitObjCPropertyRefExpr(const ObjCPropertyRefExpr *Ex,
-                                          ExplodedNode *Pred,
-                                          ExplodedNodeSet &Dst) {
-  MakeNode(Dst, Ex, Pred, Pred->getState()->BindExpr(Ex, loc::ObjCPropRef(Ex)));
-}

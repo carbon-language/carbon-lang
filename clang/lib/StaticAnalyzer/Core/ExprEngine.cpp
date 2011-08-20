@@ -540,7 +540,8 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
       break;
 
     case Stmt::ObjCPropertyRefExprClass:
-      VisitObjCPropertyRefExpr(cast<ObjCPropertyRefExpr>(S), Pred, Dst);
+      // Implicitly handled by Environment::getSVal().
+      Dst.Add(Pred);
       break;
 
     case Stmt::ImplicitValueInitExprClass: {
