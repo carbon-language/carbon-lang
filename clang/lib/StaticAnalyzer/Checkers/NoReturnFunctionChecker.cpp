@@ -17,7 +17,7 @@
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "llvm/ADT/StringSwitch.h"
-#include "llvm/Support/DataTypes.h"
+#include <cstdarg>
 
 using namespace clang;
 using namespace ento;
