@@ -930,7 +930,8 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
         MIB = AddDReg(MIB, DestReg, ARM::dsub_0, RegState::Define, TRI);
         MIB = AddDReg(MIB, DestReg, ARM::dsub_1, RegState::Define, TRI);
         MIB = AddDReg(MIB, DestReg, ARM::dsub_2, RegState::Define, TRI);
-              AddDReg(MIB, DestReg, ARM::dsub_3, RegState::Define, TRI);
+        MIB = AddDReg(MIB, DestReg, ARM::dsub_3, RegState::Define, TRI);
+        MIB.addReg(DestReg, RegState::Define | RegState::Implicit);
       }
     } else
       llvm_unreachable("Unknown reg class!");
@@ -948,7 +949,8 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
       MIB = AddDReg(MIB, DestReg, ARM::dsub_4, RegState::Define, TRI);
       MIB = AddDReg(MIB, DestReg, ARM::dsub_5, RegState::Define, TRI);
       MIB = AddDReg(MIB, DestReg, ARM::dsub_6, RegState::Define, TRI);
-      AddDReg(MIB, DestReg, ARM::dsub_7, RegState::Define, TRI);
+      MIB = AddDReg(MIB, DestReg, ARM::dsub_7, RegState::Define, TRI);
+      MIB.addReg(DestReg, RegState::Define | RegState::Implicit);
     } else
       llvm_unreachable("Unknown reg class!");
     break;
