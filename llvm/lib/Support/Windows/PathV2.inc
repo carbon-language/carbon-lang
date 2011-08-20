@@ -445,13 +445,35 @@ error_code file_size(const Twine &path, uint64_t &result) {
   return success;
 }
 
+static bool isReservedName(StringRef path) {
+  // This list of reserved names comes from MSDN, at:
+  // http://msdn.microsoft.com/en-us/library/aa365247%28v=vs.85%29.aspx
+  static const char *sReservedNames[] = { "nul", "con", "prn", "aux",
+                              "com1", "com2", "com3", "com4", "com5", "com6",
+                              "com7", "com8", "com9", "lpt1", "lpt2", "lpt3",
+                              "lpt4", "lpt5", "lpt6", "lpt7", "lpt8", "lpt9" };
+
+  // First, check to see if this is a device namespace, which always
+  // starts with \\.\, since device namespaces are not legal file paths.
+  if (path.startswith("\\\\.\\"))
+    return true;
+
+  // Then compare against the list of ancient reserved names
+  for (size_t i = 0; i < sizeof(sReservedNames) / sizeof(const char *); ++i) {
+    if (path.equals_lower(sReservedNames[i]))
+      return true;
+  }
+
+  // The path isn't what we consider reserved.
+  return false;
+}
+
 error_code status(const Twine &path, file_status &result) {
   SmallString<128> path_storage;
   SmallVector<wchar_t, 128> path_utf16;
 
   StringRef path8 = path.toStringRef(path_storage);
-  // FIXME: We should detect as many "special file name" as possible.
-  if (path8.compare_lower("nul") == 0) {
+  if (isReservedName(path8)) {
     result = file_status(file_type::character_file);
     return success;
   }
