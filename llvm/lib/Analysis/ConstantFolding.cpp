@@ -46,7 +46,16 @@ using namespace llvm;
 static Constant *FoldBitCast(Constant *C, Type *DestTy,
                              const TargetData &TD) {
   
-  // This only handles casts to vectors currently.
+  ConstantVector *CV = dyn_cast<ConstantVector>(C);
+  IntegerType *IntVTy = dyn_cast<IntegerType>(DestTy);
+  // When casting vectors to scalar integers, catch the
+  // obvious splat cases.
+  if (IntVTy && CV) {
+    if (CV->isNullValue()) return ConstantInt::getNullValue(IntVTy);
+    if (CV->isAllOnesValue()) return ConstantInt::getAllOnesValue(IntVTy);
+  }
+  
+  // The code below only handles casts to vectors currently.
   VectorType *DestVTy = dyn_cast<VectorType>(DestTy);
   if (DestVTy == 0)
     return ConstantExpr::getBitCast(C, DestTy);
@@ -59,7 +68,6 @@ static Constant *FoldBitCast(Constant *C, Type *DestTy,
   }
   
   // If this is a bitcast from constant vector -> vector, fold it.
-  ConstantVector *CV = dyn_cast<ConstantVector>(C);
   if (CV == 0)
     return ConstantExpr::getBitCast(C, DestTy);
   
