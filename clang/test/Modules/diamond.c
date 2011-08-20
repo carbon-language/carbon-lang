@@ -8,6 +8,10 @@ void test_diamond(int i, float f, double d, char c) {
 
   // Names in multiple places in the diamond.
   top_left(&c);
+
+  left_and_right(&i);
+  struct left_and_right lr;
+  lr.left = 17;
 }
 
 // RUN: %clang_cc1 -emit-pch -o %t_top.h.pch %S/Inputs/diamond_top.h

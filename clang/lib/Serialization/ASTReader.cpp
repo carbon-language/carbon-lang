@@ -698,7 +698,8 @@ public:
     assert(II->isExtensionToken() == ExtensionToken &&
            "Incorrect extension token flag");
     (void)ExtensionToken;
-    II->setIsPoisoned(Poisoned);
+    if (Poisoned)
+      II->setIsPoisoned(true);
     assert(II->isCPlusPlusOperatorKeyword() == CPlusPlusOperatorKeyword &&
            "Incorrect C++ operator keyword flag");
     (void)CPlusPlusOperatorKeyword;
@@ -706,6 +707,7 @@ public:
     // If this identifier is a macro, deserialize the macro
     // definition.
     if (hasMacroDefinition) {
+      // FIXME: Check for conflicts?
       uint32_t Offset = ReadUnalignedLE32(d);
       Reader.SetIdentifierIsMacro(II, F, Offset);
       DataLen -= 4;
