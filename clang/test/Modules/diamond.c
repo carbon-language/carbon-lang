@@ -5,6 +5,9 @@ void test_diamond(int i, float f, double d, char c) {
   right(&d);
   bottom(&c);
   bottom(&d); // expected-warning{{incompatible pointer types passing 'double *' to parameter of type 'char *'}}
+
+  // Names in multiple places in the diamond.
+  top_left(&c);
 }
 
 // RUN: %clang_cc1 -emit-pch -o %t_top.h.pch %S/Inputs/diamond_top.h

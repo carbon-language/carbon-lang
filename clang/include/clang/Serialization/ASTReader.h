@@ -515,6 +515,26 @@ public:
   
   /// \brief Add an in-memory buffer the list of known buffers
   void addInMemoryBuffer(StringRef FileName, llvm::MemoryBuffer *Buffer);
+
+  /// \brief Visit each of the modules.
+  ///
+  /// This routine visits each of the modules, starting with the
+  /// "root" modules that no other loaded modules depend on, and
+  /// proceeding to the leaf modules, visiting each module only once
+  /// during the traversal.
+  ///
+  /// This traversal is intended to support various "lookup"
+  /// operations that can find data in any of the loaded modules.
+  ///
+  /// \param Visitor A visitor function that will be invoked with each
+  /// module and the given user data pointer. The return value must be
+  /// convertible to bool; when false, the visitation continues to
+  /// modules that the current module depends on. When true, the
+  /// visitation skips any modules that the current module depends on.
+  ///
+  /// \param UserData User data associated with the visitor object, which
+  /// will be passed along to the visitor.
+  void visit(bool (*Visitor)(Module &M, void *UserData), void *UserData);
 };
 
 } // end namespace serialization
