@@ -4291,8 +4291,6 @@ let neverHasSideEffects = 1 in {
 def  VMOVQQ   : PseudoInst<(outs QQPR:$dst), (ins QQPR:$src),
                 NoItinerary, []>;
 
-def  VMOVQQQQ : PseudoInst<(outs QQQQPR:$dst), (ins QQQQPR:$src),
-                NoItinerary, []>;
 } // neverHasSideEffects
 
 //   VMOV     : Vector Move (Immediate)
