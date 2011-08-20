@@ -584,13 +584,29 @@ LLDBSWIGPython_CastPyObjectToSBValue
     return sb_ptr;
 }
 
-// we use this macro to bail out of LLDBSwigPythonCallCommand in order
-// to make sure that the that the SBCommandReturnObject will not destroy
-// the contained CommandReturnObject when going out of scope
-#define RETURN_RETVAL { \
-    cmd_retobj_sb.Release(); \
-    return retval; \
-}
+// Currently, SBCommandReturnObjectReleaser wraps an std::auto_ptr to an
+// lldb_private::CommandReturnObject. This means that the destructor for the
+// SB object will deallocate its contained CommandReturnObject. Because that
+// object is used as the real return object for Python-based commands, we want
+// it to stay around. Thus, we release the auto_ptr before returning from
+// LLDBSwigPythonCallCommand, and to guarantee that the release will occur no
+// matter how we exit from the function, we have a releaser object whose
+// destructor does the right thing for us
+class SBCommandReturnObjectReleaser
+{
+public:
+    SBCommandReturnObjectReleaser (lldb::SBCommandReturnObject &obj) :
+        m_command_return_object_ref (obj)
+    {
+    }
+
+    ~SBCommandReturnObjectReleaser ()
+    {
+        m_command_return_object_ref.Release();
+    }
+private:
+    lldb::SBCommandReturnObject &m_command_return_object_ref;
+};
 
 SWIGEXPORT bool
 LLDBSwigPythonCallCommand 
@@ -605,6 +621,7 @@ LLDBSwigPythonCallCommand
 {
 
     lldb::SBCommandReturnObject cmd_retobj_sb(&cmd_retobj);
+    SBCommandReturnObjectReleaser cmd_retobj_sb_releaser(cmd_retobj_sb);
     lldb::SBDebugger debugger_sb(debugger);
 
     bool retval = false;
@@ -613,13 +630,13 @@ LLDBSwigPythonCallCommand
     PyObject *CmdRetObj_PyObj = SWIG_NewPointerObj((void *) &cmd_retobj_sb, SWIGTYPE_p_lldb__SBCommandReturnObject, 0);
 
     if (DebuggerObj_PyObj == NULL)
-        RETURN_RETVAL;
+        return retval;
         
     if (CmdRetObj_PyObj == NULL)
-        RETURN_RETVAL;
+        return retval;
 
     if (!python_function_name || !session_dictionary_name)
-        RETURN_RETVAL;
+        return retval;
 
     PyObject *pmodule, *main_dict, *session_dict, *pfunc;
     PyObject *pargs, *pvalue;
@@ -653,7 +670,7 @@ LLDBSwigPythonCallCommand
             }
             
             if (!session_dict || !PyDict_Check (session_dict))
-                RETURN_RETVAL;
+                return retval;
                 
             // Find the function we need to call in the current session's dictionary.
 
@@ -684,7 +701,7 @@ LLDBSwigPythonCallCommand
                 {
                     if (PyErr_Occurred())
                         PyErr_Clear();
-                    RETURN_RETVAL;
+                    return retval;
                 }
                 
                 PyTuple_SetItem (pargs, 0, DebuggerObj_PyObj);  // This "steals" a reference to DebuggerObj_PyObj
@@ -732,7 +749,7 @@ LLDBSwigPythonCallCommand
         PyErr_Print();
         PyErr_Clear ();
     }
-    RETURN_RETVAL;
+return retval;
 }
 
 #undef RETURN_RETVAL
