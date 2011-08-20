@@ -3434,11 +3434,7 @@ class RetainReleaseChecker
                     check::PostStmt<CastExpr>,
                     check::RegionChanges,
                     eval::Assume > {
-public:
-  bool wantsRegionUpdate;
-  
-  RetainReleaseChecker() : wantsRegionUpdate(true) {}
-  
+public:  
   void checkBind(SVal loc, SVal val, CheckerContext &C) const;
   void checkPostStmt(const BlockExpr *BE, CheckerContext &C) const;
   void checkPostStmt(const CastExpr *CE, CheckerContext &C) const;
@@ -3452,7 +3448,7 @@ public:
                                          const MemRegion * const *end) const;
                                         
   bool wantsRegionChangeUpdate(const ProgramState *state) const {
-    return wantsRegionUpdate;
+    return true;
   }
 };
 } // end anonymous namespace
