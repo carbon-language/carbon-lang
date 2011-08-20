@@ -5,12 +5,12 @@
         .abort Unexpected $0 != $1.
   .endif
 .endmacro
-        
+
         .text
 g:
 h:
 j:
-k:      
+k:
         .data
         check_expr !1 + 2, 2
         check_expr !0, 1
@@ -44,7 +44,7 @@ k:
         check_expr 0 || 1, 1
         check_expr 0 || 0, 0
         check_expr 1 + 2 < 3 + 4, 1
-        
+
         .set c, 10
         check_expr c + 1, 11
 
@@ -56,15 +56,15 @@ k:
 
         i = (j + 10) - (k + 2)
         .long i
-        
+
         l = m - n + 4
-        
+
         .text
 m:
 n:
         nop
-        
-        
+
+
         movw	$8, (42)+66(%eax)
 
 // "." support:
