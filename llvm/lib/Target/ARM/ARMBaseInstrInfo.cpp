@@ -628,7 +628,7 @@ void ARMBaseInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
   bool SPRDest = ARM::SPRRegClass.contains(DestReg);
   bool SPRSrc  = ARM::SPRRegClass.contains(SrcReg);
 
-  unsigned Opc;
+  unsigned Opc = 0;
   if (SPRDest && SPRSrc) {
     Opc = ARM::VMOVS;
 
@@ -668,17 +668,38 @@ void ARMBaseInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     Opc = ARM::VORRq;
   else if (ARM::QQPRRegClass.contains(DestReg, SrcReg))
     Opc = ARM::VMOVQQ;
-  else if (ARM::QQQQPRRegClass.contains(DestReg, SrcReg))
-    Opc = ARM::VMOVQQQQ;
-  else
-    llvm_unreachable("Impossible reg-to-reg copy");
 
-  MachineInstrBuilder MIB = BuildMI(MBB, I, DL, get(Opc), DestReg);
-  MIB.addReg(SrcReg, getKillRegState(KillSrc));
-  if (Opc == ARM::VORRq)
+  if (Opc) {
+    MachineInstrBuilder MIB = BuildMI(MBB, I, DL, get(Opc), DestReg);
     MIB.addReg(SrcReg, getKillRegState(KillSrc));
-  if (Opc != ARM::VMOVQQ && Opc != ARM::VMOVQQQQ)
-    AddDefaultPred(MIB);
+    if (Opc == ARM::VORRq)
+      MIB.addReg(SrcReg, getKillRegState(KillSrc));
+    if (Opc != ARM::VMOVQQ)
+      AddDefaultPred(MIB);
+    return;
+  }
+
+  // Expand the MOVQQQQ pseudo instruction in place.
+  if (ARM::QQQQPRRegClass.contains(DestReg, SrcReg)) {
+    const TargetRegisterInfo *TRI = &getRegisterInfo();
+    assert(ARM::qsub_0 + 3 == ARM::qsub_3 && "Expected contiguous enum.");
+    for (unsigned i = ARM::qsub_0, e = ARM::qsub_3 + 1; i != e; ++i) { 
+      unsigned Dst = TRI->getSubReg(DestReg, i);
+      unsigned Src = TRI->getSubReg(SrcReg, i);
+      MachineInstrBuilder Mov =
+        AddDefaultPred(BuildMI(MBB, I, I->getDebugLoc(), get(ARM::VORRq))
+                       .addReg(Dst, RegState::Define)
+                       .addReg(Src, getKillRegState(KillSrc))
+                       .addReg(Src, getKillRegState(KillSrc)));
+      if (i == ARM::qsub_3) {
+        Mov->addRegisterDefined(DestReg, TRI);
+        if (KillSrc)
+          Mov->addRegisterKilled(SrcReg, TRI);
+      }
+    }
+    return;
+  }
+  llvm_unreachable("Impossible reg-to-reg copy");
 }
 
 static const

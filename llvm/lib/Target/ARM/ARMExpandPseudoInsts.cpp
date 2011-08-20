@@ -998,52 +998,6 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
       return true;
     }
 
-    case ARM::VMOVQQQQ: {
-      unsigned DstReg = MI.getOperand(0).getReg();
-      bool DstIsDead = MI.getOperand(0).isDead();
-      unsigned Dst0 = TRI->getSubReg(DstReg, ARM::qsub_0);
-      unsigned Dst1 = TRI->getSubReg(DstReg, ARM::qsub_1);
-      unsigned Dst2 = TRI->getSubReg(DstReg, ARM::qsub_2);
-      unsigned Dst3 = TRI->getSubReg(DstReg, ARM::qsub_3);
-      unsigned SrcReg = MI.getOperand(1).getReg();
-      bool SrcIsKill = MI.getOperand(1).isKill();
-      unsigned Src0 = TRI->getSubReg(SrcReg, ARM::qsub_0);
-      unsigned Src1 = TRI->getSubReg(SrcReg, ARM::qsub_1);
-      unsigned Src2 = TRI->getSubReg(SrcReg, ARM::qsub_2);
-      unsigned Src3 = TRI->getSubReg(SrcReg, ARM::qsub_3);
-      MachineInstrBuilder Mov0 =
-        AddDefaultPred(BuildMI(MBB, MBBI, MI.getDebugLoc(),
-                               TII->get(ARM::VORRq))
-                       .addReg(Dst0,
-                               RegState::Define | getDeadRegState(DstIsDead))
-                       .addReg(Src0, getKillRegState(SrcIsKill))
-                       .addReg(Src0, getKillRegState(SrcIsKill)));
-      MachineInstrBuilder Mov1 =
-        AddDefaultPred(BuildMI(MBB, MBBI, MI.getDebugLoc(),
-                               TII->get(ARM::VORRq))
-                       .addReg(Dst1,
-                               RegState::Define | getDeadRegState(DstIsDead))
-                       .addReg(Src1, getKillRegState(SrcIsKill))
-                       .addReg(Src1, getKillRegState(SrcIsKill)));
-      MachineInstrBuilder Mov2 =
-        AddDefaultPred(BuildMI(MBB, MBBI, MI.getDebugLoc(),
-                               TII->get(ARM::VORRq))
-                       .addReg(Dst2,
-                               RegState::Define | getDeadRegState(DstIsDead))
-                       .addReg(Src2, getKillRegState(SrcIsKill))
-                       .addReg(Src2, getKillRegState(SrcIsKill)));
-      MachineInstrBuilder Mov3 =
-        AddDefaultPred(BuildMI(MBB, MBBI, MI.getDebugLoc(),
-                               TII->get(ARM::VORRq))
-                       .addReg(Dst3,
-                               RegState::Define | getDeadRegState(DstIsDead))
-                       .addReg(Src3, getKillRegState(SrcIsKill))
-                       .addReg(Src3, getKillRegState(SrcIsKill)));
-      TransferImpOps(MI, Mov0, Mov3);
-      MI.eraseFromParent();
-      return true;
-    }
-
     case ARM::VLDMQIA: {
       unsigned NewOpc = ARM::VLDMDIA;
       MachineInstrBuilder MIB =

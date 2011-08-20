@@ -1,7 +1,6 @@
 ; RUN: llc %s -mtriple=thumbv7-apple-darwin -mcpu=cortex-a9 -O0 -o -
-; The following test is supposed to produce a VMOVQQQQ pseudo instruction.
-; Make sure that it gets expanded; otherwise, the compile fails when trying
-; to print the pseudo-instruction.
+; Make sure that the VMOVQQQQ pseudo instruction is handled properly
+; by codegen.
 
 define void @test_vmovqqqq_pseudo() nounwind ssp {
 entry:
