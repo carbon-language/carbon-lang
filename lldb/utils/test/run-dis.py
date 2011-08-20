@@ -25,7 +25,7 @@ path_regexp = None
 num_symbols = -1
 
 # Command template of the invocation of lldb disassembler.
-template = './lldb-disasm.py -C "platform select remote-ios" -o "-n" -q -e %s -n %s'
+template = '%s/lldb-disasm.py -C "platform select remote-ios" -o "-n" -q -e %s -n %s'
 
 # Regular expression for detecting file output for Mach-o binary.
 mach_o = re.compile('\sMach-O.+binary')
@@ -34,44 +34,35 @@ def isbinary(path):
                                    stdout=subprocess.PIPE).stdout.read()
     return (mach_o.search(file_output) is not None)
 
-def visit(suffix, dir, names):
+def walk_and_invoke(sdk_root, path_regexp, suffix, num_symbols):
     """Look for matched file and invoke lldb disassembly on it."""
     global scriptPath
-    global root_dir
-    global path_pattern
-    global path_regexp
-    global num_symbols
 
-    old_dir = os.getcwd()
-    for name in names:
-        path = os.path.join(dir, name)
-        # No need to look further if path is a directory.
-        if os.path.isdir(path):
-            continue
-        # Is a symbolic link.
-        if os.path.islink(path):
-            continue
-        # Or a .h file.
-        if name.endswith(".h"):
-            continue
+    for root, dirs, files in os.walk(sdk_root, topdown=False):
+        for name in files:
+            path = os.path.join(root, name)
 
-        # We'll be pattern matching based on the path relative to the SDK root.
-        replaced_path = path.replace(root_dir, "", 1)
-        # Check regular expression match for the replaced path.
-        if not path_regexp.search(replaced_path):
-            continue
-        # If a suffix is specified, check it, too.
-        if suffix and not name.endswith(suffix):
-            continue
-        if not isbinary(path):
-            continue
+            # We're not interested in .h file.
+            if name.endswith(".h"):
+                continue
+            # Neither a symboliccally link file.
+            if os.path.islink(path):
+                continue
 
-        os.chdir(scriptPath)
-        command = template % (path, num_symbols if num_symbols > 0 else 1000)
-        print "Running %s" % (command)
-        os.system(command)
+            # We'll be pattern matching based on the path relative to the SDK root.
+            replaced_path = path.replace(root_dir, "", 1)
+            # Check regular expression match for the replaced path.
+            if not path_regexp.search(replaced_path):
+                continue
+            # If a suffix is specified, check it, too.
+            if suffix and not name.endswith(suffix):
+                continue
+            if not isbinary(path):
+                continue
 
-    os.chdir(old_dir)
+            command = template % (scriptPath, path, num_symbols if num_symbols > 0 else 1000)
+            print "Running %s" % (command)
+            os.system(command)
 
 def main():
     """Read the root dir and the path spec, invoke lldb-disasm.py on the file."""
@@ -127,7 +118,7 @@ and path pattern.
     print "Suffix of the binaries to look for:", suffix
     print "num of symbols to disassemble:", num_symbols
 
-    os.path.walk(root_dir, visit, suffix)
+    walk_and_invoke(root_dir, path_regexp, suffix, num_symbols)
 
 
 if __name__ == '__main__':
