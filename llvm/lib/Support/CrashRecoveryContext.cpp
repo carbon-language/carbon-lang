@@ -12,6 +12,7 @@
 #include "llvm/Config/config.h"
 #include "llvm/Support/Mutex.h"
 #include "llvm/Support/ThreadLocal.h"
+#include "llvm/Support/ErrorHandling.h"
 #include <setjmp.h>
 #include <cstdio>
 using namespace llvm;
@@ -123,7 +124,56 @@ CrashRecoveryContext::unregisterCleanup(CrashRecoveryContextCleanup *cleanup) {
 
 #ifdef LLVM_ON_WIN32
 
-// FIXME: No real Win32 implementation currently.
+#include "Windows/Windows.h"
+
+// On Windows, we can make use of vectored exception handling to
+// catch most crashing situations.  Note that this does mean
+// we will be alerted of exceptions *before* structured exception
+// handling has the opportunity to catch it.  But that isn't likely
+// to cause problems because nowhere in the project is SEH being
+// used.
+//
+// Vectored exception handling is built on top of SEH, and so it
+// works on a per-thread basis.
+//
+// The vectored exception handler functionality was added in Windows
+// XP, so if support for older versions of Windows is required,
+// it will have to be added.
+//
+// If we want to support as far back as Win2k, we could use the
+// SetUnhandledExceptionFilter API, but there's a risk of that
+// being entirely overwritten (it's not a chain).
+
+static LONG CALLBACK ExceptionHandler(PEXCEPTION_POINTERS ExceptionInfo)
+{
+  // Lookup the current thread local recovery object.
+  const CrashRecoveryContextImpl *CRCI = CurrentContext.get();
+
+  if (!CRCI) {
+    // Something has gone horribly wrong, so let's just tell everyone
+    // to keep searching
+    CrashRecoveryContext::Disable();
+    return EXCEPTION_CONTINUE_SEARCH;
+  }
+
+  // TODO: We can capture the stack backtrace here and store it on the
+  // implementation if we so choose.
+
+  // Handle the crash
+  const_cast<CrashRecoveryContextImpl*>(CRCI)->HandleCrash();
+
+  // Note that we don't actually get here because HandleCrash calls
+  // longjmp, which means the HandleCrash function never returns.
+  llvm_unreachable("Handled the crash, should have longjmp'ed out of here");
+  return EXCEPTION_CONTINUE_SEARCH;
+}
+
+// Because the Enable and Disable calls are static, it means that
+// there may not actually be an Impl available, or even a current
+// CrashRecoveryContext at all.  So we make use of a thread-local
+// exception table.  The handles contained in here will either be
+// non-NULL, valid VEH handles, or NULL.
+static sys::ThreadLocal<const void> sCurrentExceptionHandle;
 
 void CrashRecoveryContext::Enable() {
   sys::ScopedLock L(gCrashRecoveryContexMutex);
@@ -132,6 +182,13 @@ void CrashRecoveryContext::Enable() {
     return;
 
   gCrashRecoveryEnabled = true;
+
+  // We can set up vectored exception handling now.  We will install our
+  // handler as the front of the list, though there's no assurances that
+  // it will remain at the front (another call could install itself before
+  // our handler).  This 1) isn't likely, and 2) shouldn't cause problems.
+  PVOID handle = ::AddVectoredExceptionHandler(1, ExceptionHandler);
+  sCurrentExceptionHandle.set(handle);
 }
 
 void CrashRecoveryContext::Disable() {
@@ -141,6 +198,15 @@ void CrashRecoveryContext::Disable() {
     return;
 
   gCrashRecoveryEnabled = false;
+
+  PVOID currentHandle = const_cast<PVOID>(sCurrentExceptionHandle.get());
+  if (currentHandle) {
+    // Now we can remove the vectored exception handler from the chain
+    ::RemoveVectoredExceptionHandler(currentHandle);
+
+    // Reset the handle in our thread-local set.
+    sCurrentExceptionHandle.set(NULL);
+  }
 }
 
 #else
