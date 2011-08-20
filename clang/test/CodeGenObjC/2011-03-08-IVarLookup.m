@@ -1,6 +1,4 @@
 // RUN: %clang -S -emit-llvm -m64 -fobjc-abi-version=2 %s -o /dev/null
-// XFAIL: *
-// XTARGET: darwin
 
 typedef unsigned int UInt_t;
 
