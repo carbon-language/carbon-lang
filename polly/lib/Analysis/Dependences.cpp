@@ -213,25 +213,32 @@ bool Dependences::isValidScattering(StatementToIslMapTy *NewScattering) {
   temp_must_no_source = isl_union_map_coalesce(temp_must_no_source);
   temp_may_no_source = isl_union_map_coalesce(temp_may_no_source);
 
+  bool isValid = true;
+
   if (!isl_union_map_is_equal(temp_must_dep, must_dep)) {
     DEBUG(dbgs().indent(4) << "\nEqual 1 calculated\n");
-    return false;
+    isValid = false;
   }
 
   DEBUG(dbgs().indent(4) << "\nEqual 1 calculated\n");
 
   if (!isl_union_map_is_equal(temp_may_dep, may_dep))
-    return false;
+    isValid = false;
 
   DEBUG(dbgs().indent(4) << "\nEqual 2 calculated\n");
 
   if (!isl_union_map_is_equal(temp_must_no_source, must_no_source))
-    return false;
+    isValid = false;
 
   if (!isl_union_map_is_equal(temp_may_no_source, may_no_source))
-    return false;
+    isValid = false;
 
-  return true;
+  isl_union_map_free(temp_must_dep);
+  isl_union_map_free(temp_may_dep);
+  isl_union_map_free(temp_must_no_source);
+  isl_union_map_free(temp_may_no_source);
+
+  return isValid;
 }
 
 isl_union_map* getCombinedScheduleForDim(Scop *scop, unsigned dimLevel) {
@@ -278,8 +285,7 @@ bool Dependences::isParallelDimension(isl_set *loopDomain,
 
   scheduleDeps_waw = isl_union_map_apply_range(isl_union_map_copy(waw_dep),
                                                isl_union_map_copy(schedule));
-  scheduleDeps_waw = isl_union_map_apply_domain(scheduleDeps_waw,
-                                                isl_union_map_copy(schedule));
+  scheduleDeps_waw = isl_union_map_apply_domain(scheduleDeps_waw, schedule);
 
   // Dependences need to originate and to terminate in the scheduling space
   // enumerated by this loop.
@@ -300,7 +306,7 @@ bool Dependences::isParallelDimension(isl_set *loopDomain,
   restrictedDeps_waw = isl_union_map_intersect_domain(scheduleDeps_waw,
     isl_union_set_copy(scheduleSubset));
   restrictedDeps_waw = isl_union_map_intersect_range(restrictedDeps_waw,
-    isl_union_set_copy(scheduleSubset));
+    scheduleSubset);
 
   isl_union_set *distance_waw = isl_union_map_deltas(restrictedDeps_waw);
 
@@ -353,10 +359,16 @@ bool Dependences::isParallelDimension(isl_set *loopDomain,
 
   isl_union_set *nonValid_waw = isl_union_set_subtract(distance_waw,
                                                        validDistancesUS);
-
-  return isl_union_set_is_empty(nonValid)
+  bool is_parallel = isl_union_set_is_empty(nonValid)
     && isl_union_set_is_empty(nonValid_war)
     && isl_union_set_is_empty(nonValid_waw);
+
+  isl_dim_free(dim);
+  isl_union_set_free(nonValid);
+  isl_union_set_free(nonValid_war);
+  isl_union_set_free(nonValid_waw);
+
+  return is_parallel;
 }
 
 bool Dependences::isParallelFor(const clast_for *f) {

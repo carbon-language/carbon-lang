@@ -30,6 +30,7 @@
 #include "llvm/Module.h"
 
 #include "cloog/isl/domain.h"
+#include "cloog/isl/cloog.h"
 
 using namespace llvm;
 using namespace polly;
@@ -61,14 +62,14 @@ public:
 };
 
 Cloog::Cloog(Scop *Scop) : S(Scop) {
-  State = cloog_state_malloc();
+  State = cloog_isl_state_malloc(Scop->getCtx());
   buildCloogOptions();
   ClastRoot = cloog_clast_create_from_input(buildCloogInput(), Options);
 }
 
 Cloog::~Cloog() {
-  cloog_options_free(Options);
   cloog_clast_free(ClastRoot);
+  cloog_options_free(Options);
   cloog_state_free(State);
 }
 
@@ -164,10 +165,9 @@ CloogUnionDomain *Cloog::buildCloogUnionDomain() {
       cloog_domain_from_isl_set(Stmt->getDomain());
 
     std::string entryName = Stmt->getBaseName();
-    char *Name = (char*)malloc(sizeof(char) * (entryName.size() + 1));
-    strcpy(Name, entryName.c_str());
 
-    DU = cloog_union_domain_add_domain(DU, Name, Domain, Scattering, Stmt);
+    DU = cloog_union_domain_add_domain(DU, entryName.c_str(), Domain,
+                                       Scattering, Stmt);
   }
 
   return DU;
@@ -263,6 +263,13 @@ void CloogInfo::pprint(llvm::raw_ostream &OS) {
 /// Create the Cloog AST from this program.
 const struct clast_root *CloogInfo::getClast() {
   return C->getClast();
+}
+
+void CloogInfo::releaseMemory() {
+  if (C) {
+    delete C;
+    C = 0;
+  }
 }
 
 bool CloogInfo::runOnScop(Scop &S) {

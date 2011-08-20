@@ -272,17 +272,21 @@ bool JSONImporter::runOnScop(Scop &scop) {
       if (!isl_map_has_equal_dim(currentAccessMap, newAccessMap)) {
         errs() << "JScop file contains access function with incompatible "
                << "dimensions\n";
+        isl_map_free(newAccessMap);
         return false;
       }
       if (isl_map_dim(newAccessMap, isl_dim_out) != 1) {
         errs() << "New access map in JScop file should be single dimensional\n";
+        isl_map_free(newAccessMap);
         return false;
       }
       if (!isl_map_is_equal(newAccessMap, currentAccessMap)) {
         // Statistics.
         ++NewAccessMapFound;
-        newAccessStrings.push_back(accesses.asCString());	
+        newAccessStrings.push_back(accesses.asCString());
         (*MI)->setNewAccessFunction(newAccessMap);
+      } else {
+        isl_map_free(newAccessMap);
       }
       memoryAccessIdx++;
     }

@@ -58,6 +58,7 @@ namespace polly {
     bool runOnScop(Scop &S);
     void printScop(llvm::raw_ostream &OS) const;
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
+    virtual void releaseMemory();
   };
 }
 #endif /* POLLY_CLOOG_H */

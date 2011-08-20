@@ -466,7 +466,12 @@ bool MemoryAccess::isStrideZero(const isl_set *domainSubset) const {
   bset = isl_basic_set_add_constraint(bset, c);
   isl_set *strideZero = isl_set_from_basic_set(bset);
 
-  return isl_set_is_equal(stride, strideZero);
+  bool isStrideZero = isl_set_is_equal(stride, strideZero);
+
+  isl_set_free(strideZero);
+  isl_set_free(stride);
+
+  return isStrideZero;
 }
 
 bool MemoryAccess::isStrideOne(const isl_set *domainSubset) const {
@@ -484,16 +489,27 @@ bool MemoryAccess::isStrideOne(const isl_set *domainSubset) const {
   isl_basic_set *bset = isl_basic_set_universe(isl_set_get_dim(stride));
 
   bset = isl_basic_set_add_constraint(bset, c);
-  isl_set *strideZero = isl_set_from_basic_set(bset);
+  isl_set *strideOne = isl_set_from_basic_set(bset);
 
-  return isl_set_is_equal(stride, strideZero);
+  bool isStrideOne = isl_set_is_equal(stride, strideOne);
+
+  isl_set_free(strideOne);
+  isl_set_free(stride);
+
+  return isStrideOne;
 }
 
 void MemoryAccess::setNewAccessFunction(isl_map *newAccess) {
+  isl_map_free(newAccessRelation);
   newAccessRelation = newAccess;
 }
 
 //===----------------------------------------------------------------------===//
+void ScopStmt::setScattering(isl_map *scattering) {
+  isl_map_free(Scattering);
+  Scattering = scattering;
+}
+
 void ScopStmt::buildScattering(SmallVectorImpl<unsigned> &Scatter) {
   unsigned NumberOfIterators = getNumIterators();
   unsigned ScatDim = Parent.getMaxLoopDepth() * 2 + 1;
@@ -607,12 +623,12 @@ isl_set *ScopStmt::toUpperLoopBound(const SCEVAffFunc &UpperBound, isl_dim *Dim,
   isl_pw_aff *Bound = SCEVAffinator::getPwAff(this, UpperBound.OriginalSCEV, 0);
   isl_set *set = isl_pw_aff_le_set(BoundedDim, Bound);
   set = isl_set_set_tuple_name(set, isl_dim_get_tuple_name(Dim, isl_dim_set));
+  isl_dim_free(Dim);
   return set;
 }
 
 void ScopStmt::buildIterationDomainFromLoops(TempScop &tempScop) {
-  isl_dim *dim = isl_dim_set_alloc(Parent.getCtx(), 0,
-                                   getNumIterators());
+  isl_dim *dim = isl_dim_set_alloc(getIslContext(), 0, getNumIterators());
   dim = isl_dim_set_tuple_name(dim, isl_dim_set, getBaseName());
 
   Domain = isl_set_universe(isl_dim_copy(dim));
@@ -637,6 +653,7 @@ void ScopStmt::buildIterationDomainFromLoops(TempScop &tempScop) {
     Domain = isl_set_intersect(Domain, UpperBoundSet);
   }
 
+  isl_dim_free(dim);
   isl_int_clear(v);
 }
 
@@ -843,11 +860,10 @@ void ScopStmt::dump() const { print(dbgs()); }
 
 //===----------------------------------------------------------------------===//
 /// Scop class implement
-Scop::Scop(TempScop &tempScop, LoopInfo &LI, ScalarEvolution &ScalarEvolution)
+Scop::Scop(TempScop &tempScop, LoopInfo &LI, ScalarEvolution &ScalarEvolution,
+           isl_ctx *ctx)
            : SE(&ScalarEvolution), R(tempScop.getMaxRegion()),
            MaxLoopDepth(tempScop.getMaxLoopDepth()) {
-  isl_ctx *ctx = isl_ctx_alloc();
-
   ParamSetType &Params = tempScop.getParamSet();
   Parameters.insert(Parameters.begin(), Params.begin(), Params.end());
 
@@ -887,9 +903,6 @@ Scop::~Scop() {
   // Free the statements;
   for (iterator I = begin(), E = end(); I != E; ++I)
     delete *I;
-
-  // Do we need a singleton to manage this?
-  //isl_ctx_free(ctx);
 }
 
 std::string Scop::getContextStr() const {
@@ -993,6 +1006,16 @@ void Scop::buildScop(TempScop &tempScop,
 }
 
 //===----------------------------------------------------------------------===//
+ScopInfo::ScopInfo() : RegionPass(ID), scop(0) {
+  ctx = isl_ctx_alloc();
+}
+
+ScopInfo::~ScopInfo() {
+  clear();
+  isl_ctx_free(ctx);
+}
+
+
 
 void ScopInfo::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<LoopInfo>();
@@ -1018,7 +1041,7 @@ bool ScopInfo::runOnRegion(Region *R, RGPassManager &RGM) {
   ++ScopFound;
   if (tempScop->getMaxLoopDepth() > 0) ++RichScopFound;
 
-  scop = new Scop(*tempScop, LI, SE);
+  scop = new Scop(*tempScop, LI, SE, ctx);
 
   return false;
 }

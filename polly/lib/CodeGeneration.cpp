@@ -1134,7 +1134,7 @@ public:
     map = isl_map_intersect(map, identity);
 
     isl_map *lexmax = isl_map_lexmax(isl_map_copy(map));
-    isl_map *lexmin = isl_map_lexmin(isl_map_copy(map));
+    isl_map *lexmin = isl_map_lexmin(map);
     isl_map *sub = isl_map_sum(lexmax, isl_map_neg(lexmin));
 
     isl_set *elements = isl_map_range(sub);
@@ -1149,6 +1149,7 @@ public:
     isl_point_get_coordinate(p, isl_dim_set, isl_set_n_dim(loopDomain) - 1, &v);
     int numberIterations = isl_int_get_si(v);
     isl_int_clear(v);
+    isl_point_free(p);
 
     return (numberIterations) / isl_int_get_si(f->stride) + 1;
   }

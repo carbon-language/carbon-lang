@@ -296,7 +296,7 @@ public:
   ///
   /// @return The scattering function of this ScopStmt.
   isl_map *getScattering() const { return Scattering; }
-  void setScattering(isl_map *scattering) { Scattering = scattering; }
+  void setScattering(isl_map *scattering);
 
   /// @brief Get an isl string representing this scattering.
   std::string getScatteringStr() const;
@@ -408,7 +408,7 @@ class Scop {
 
   /// Create the static control part with a region, max loop depth of this
   /// region and parameters used in this region.
-  Scop(TempScop &TempScop, LoopInfo &LI, ScalarEvolution &SE);
+  Scop(TempScop &TempScop, LoopInfo &LI, ScalarEvolution &SE, isl_ctx *ctx);
 
   /// @brief Check if a basic block is trivial.
   ///
@@ -552,6 +552,7 @@ class ScopInfo : public RegionPass {
 
   // The Scop
   Scop *scop;
+  isl_ctx *ctx;
 
   void clear() {
     if (scop) {
@@ -562,8 +563,8 @@ class ScopInfo : public RegionPass {
 
 public:
   static char ID;
-  explicit ScopInfo() : RegionPass(ID), scop(0) {}
-  ~ScopInfo() { clear(); }
+  explicit ScopInfo();
+  ~ScopInfo();
 
   /// @brief Try to build the Polly IR of static control part on the current
   ///        SESE-Region.
