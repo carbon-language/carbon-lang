@@ -22,147 +22,139 @@ using llvm::APSInt;
 void ExprEngine::VisitBinaryOperator(const BinaryOperator* B,
                                      ExplodedNode *Pred,
                                      ExplodedNodeSet &Dst) {
-  ExplodedNodeSet Tmp1;
+
   Expr *LHS = B->getLHS()->IgnoreParens();
   Expr *RHS = B->getRHS()->IgnoreParens();
   
-  Visit(LHS, Pred, Tmp1);
-  ExplodedNodeSet Tmp3;
-  
-  for (ExplodedNodeSet::iterator I1=Tmp1.begin(), E1=Tmp1.end(); I1!=E1; ++I1) {
-    SVal LeftV = (*I1)->getState()->getSVal(LHS);
-    ExplodedNodeSet Tmp2;
-    Visit(RHS, *I1, Tmp2);
+  // FIXME: Prechecks eventually go in ::Visit().
+  ExplodedNodeSet CheckedSet;
+  ExplodedNodeSet Tmp2;
+  getCheckerManager().runCheckersForPreStmt(CheckedSet, Pred, B, *this);
     
-    ExplodedNodeSet CheckedSet;
-    getCheckerManager().runCheckersForPreStmt(CheckedSet, Tmp2, B, *this);
-    
-    // With both the LHS and RHS evaluated, process the operation itself.
-    
-    for (ExplodedNodeSet::iterator I2=CheckedSet.begin(), E2=CheckedSet.end();
-         I2 != E2; ++I2) {
+  // With both the LHS and RHS evaluated, process the operation itself.    
+  for (ExplodedNodeSet::iterator it=CheckedSet.begin(), ei=CheckedSet.end();
+         it != ei; ++it) {
       
-      const ProgramState *state = (*I2)->getState();
-      SVal RightV = state->getSVal(RHS);
+    const ProgramState *state = (*it)->getState();
+    SVal LeftV = state->getSVal(LHS);
+    SVal RightV = state->getSVal(RHS);
       
-      BinaryOperator::Opcode Op = B->getOpcode();
+    BinaryOperator::Opcode Op = B->getOpcode();
       
-      if (Op == BO_Assign) {
-        // EXPERIMENTAL: "Conjured" symbols.
-        // FIXME: Handle structs.
-        if (RightV.isUnknown() ||!getConstraintManager().canReasonAbout(RightV))
-        {
-          unsigned Count = Builder->getCurrentBlockCount();
-          RightV = svalBuilder.getConjuredSymbolVal(NULL, B->getRHS(), Count);
-        }
-        
-        SVal ExprVal = B->isLValue() ? LeftV : RightV;
-        
-        // Simulate the effects of a "store":  bind the value of the RHS
-        // to the L-Value represented by the LHS.
-        evalStore(Tmp3, B, LHS, *I2, state->BindExpr(B, ExprVal), LeftV,RightV);
+    if (Op == BO_Assign) {
+      // EXPERIMENTAL: "Conjured" symbols.
+      // FIXME: Handle structs.
+      if (RightV.isUnknown() ||
+          !getConstraintManager().canReasonAbout(RightV)) {
+        unsigned Count = Builder->getCurrentBlockCount();
+        RightV = svalBuilder.getConjuredSymbolVal(NULL, B->getRHS(), Count);
+      }
+      // Simulate the effects of a "store":  bind the value of the RHS
+      // to the L-Value represented by the LHS.
+      SVal ExprVal = B->isLValue() ? LeftV : RightV;
+      evalStore(Tmp2, B, LHS, *it, state->BindExpr(B, ExprVal), LeftV, RightV);
+      continue;
+    }
+      
+    if (!B->isAssignmentOp()) {
+      // Process non-assignments except commas or short-circuited
+      // logical expressions (LAnd and LOr).
+      SVal Result = evalBinOp(state, Op, LeftV, RightV, B->getType());      
+      if (Result.isUnknown()) {
+        MakeNode(Tmp2, B, *it, state);
         continue;
-      }
+      }        
+
+      state = state->BindExpr(B, Result);      
+      MakeNode(Tmp2, B, *it, state);
+      continue;
+    }
       
-      if (!B->isAssignmentOp()) {
-        // Process non-assignments except commas or short-circuited
-        // logical expressions (LAnd and LOr).
-        SVal Result = evalBinOp(state, Op, LeftV, RightV, B->getType());
-        
-        if (Result.isUnknown()) {
-          MakeNode(Tmp3, B, *I2, state);
-          continue;
-        }
-        
-        state = state->BindExpr(B, Result);
-        
-        MakeNode(Tmp3, B, *I2, state);
-        continue;
-      }
+    assert (B->isCompoundAssignmentOp());
+    
+    switch (Op) {
+      default:
+        assert(0 && "Invalid opcode for compound assignment.");
+      case BO_MulAssign: Op = BO_Mul; break;
+      case BO_DivAssign: Op = BO_Div; break;
+      case BO_RemAssign: Op = BO_Rem; break;
+      case BO_AddAssign: Op = BO_Add; break;
+      case BO_SubAssign: Op = BO_Sub; break;
+      case BO_ShlAssign: Op = BO_Shl; break;
+      case BO_ShrAssign: Op = BO_Shr; break;
+      case BO_AndAssign: Op = BO_And; break;
+      case BO_XorAssign: Op = BO_Xor; break;
+      case BO_OrAssign:  Op = BO_Or;  break;
+    }
       
-      assert (B->isCompoundAssignmentOp());
+    // Perform a load (the LHS).  This performs the checks for
+    // null dereferences, and so on.
+    ExplodedNodeSet Tmp;
+    SVal location = LeftV;
+    evalLoad(Tmp, LHS, *it, state, location);
+    
+    for (ExplodedNodeSet::iterator I = Tmp.begin(), E = Tmp.end(); I != E;
+         ++I) {
+
+      state = (*I)->getState();
+      SVal V = state->getSVal(LHS);
       
-      switch (Op) {
-        default:
-          assert(0 && "Invalid opcode for compound assignment.");
-        case BO_MulAssign: Op = BO_Mul; break;
-        case BO_DivAssign: Op = BO_Div; break;
-        case BO_RemAssign: Op = BO_Rem; break;
-        case BO_AddAssign: Op = BO_Add; break;
-        case BO_SubAssign: Op = BO_Sub; break;
-        case BO_ShlAssign: Op = BO_Shl; break;
-        case BO_ShrAssign: Op = BO_Shr; break;
-        case BO_AndAssign: Op = BO_And; break;
-        case BO_XorAssign: Op = BO_Xor; break;
-        case BO_OrAssign:  Op = BO_Or;  break;
-      }
-      
-      // Perform a load (the LHS).  This performs the checks for
-      // null dereferences, and so on.
-      ExplodedNodeSet Tmp4;
-      SVal location = state->getSVal(LHS);
-      evalLoad(Tmp4, LHS, *I2, state, location);
-      
-      for (ExplodedNodeSet::iterator I4=Tmp4.begin(), E4=Tmp4.end(); I4!=E4;
-           ++I4) {
-        state = (*I4)->getState();
-        SVal V = state->getSVal(LHS);
-        
-        // Get the computation type.
-        QualType CTy =
+      // Get the computation type.
+      QualType CTy =
         cast<CompoundAssignOperator>(B)->getComputationResultType();
-        CTy = getContext().getCanonicalType(CTy);
-        
-        QualType CLHSTy =
+      CTy = getContext().getCanonicalType(CTy);
+      
+      QualType CLHSTy =
         cast<CompoundAssignOperator>(B)->getComputationLHSType();
-        CLHSTy = getContext().getCanonicalType(CLHSTy);
+      CLHSTy = getContext().getCanonicalType(CLHSTy);
+      
+      QualType LTy = getContext().getCanonicalType(LHS->getType());
+      
+      // Promote LHS.
+      V = svalBuilder.evalCast(V, CLHSTy, LTy);
+      
+      // Compute the result of the operation.
+      SVal Result = svalBuilder.evalCast(evalBinOp(state, Op, V, RightV, CTy),
+                                         B->getType(), CTy);
+      
+      // EXPERIMENTAL: "Conjured" symbols.
+      // FIXME: Handle structs.
+      
+      SVal LHSVal;
+      
+      if (Result.isUnknown() ||
+          !getConstraintManager().canReasonAbout(Result)) {
         
-        QualType LTy = getContext().getCanonicalType(LHS->getType());
+        unsigned Count = Builder->getCurrentBlockCount();
         
-        // Promote LHS.
-        V = svalBuilder.evalCast(V, CLHSTy, LTy);
+        // The symbolic value is actually for the type of the left-hand side
+        // expression, not the computation type, as this is the value the
+        // LValue on the LHS will bind to.
+        LHSVal = svalBuilder.getConjuredSymbolVal(NULL, B->getRHS(), LTy,
+                                                  Count);
         
-        // Compute the result of the operation.
-        SVal Result = svalBuilder.evalCast(evalBinOp(state, Op, V, RightV, CTy),
-                                           B->getType(), CTy);
-        
-        // EXPERIMENTAL: "Conjured" symbols.
-        // FIXME: Handle structs.
-        
-        SVal LHSVal;
-        
-        if (Result.isUnknown() ||
-            !getConstraintManager().canReasonAbout(Result)) {
-          
-          unsigned Count = Builder->getCurrentBlockCount();
-          
-          // The symbolic value is actually for the type of the left-hand side
-          // expression, not the computation type, as this is the value the
-          // LValue on the LHS will bind to.
-          LHSVal = svalBuilder.getConjuredSymbolVal(NULL, B->getRHS(), LTy, Count);
-          
-          // However, we need to convert the symbol to the computation type.
-          Result = svalBuilder.evalCast(LHSVal, CTy, LTy);
-        }
-        else {
-          // The left-hand side may bind to a different value then the
-          // computation type.
-          LHSVal = svalBuilder.evalCast(Result, LTy, CTy);
-        }
-        
-        // In C++, assignment and compound assignment operators return an 
-        // lvalue.
-        if (B->isLValue())
-          state = state->BindExpr(B, location);
-        else
-          state = state->BindExpr(B, Result);
-        
-        evalStore(Tmp3, B, LHS, *I4, state, location, LHSVal);
+        // However, we need to convert the symbol to the computation type.
+        Result = svalBuilder.evalCast(LHSVal, CTy, LTy);
       }
+      else {
+        // The left-hand side may bind to a different value then the
+        // computation type.
+        LHSVal = svalBuilder.evalCast(Result, LTy, CTy);
+      }
+      
+      // In C++, assignment and compound assignment operators return an 
+      // lvalue.
+      if (B->isLValue())
+        state = state->BindExpr(B, location);
+      else
+        state = state->BindExpr(B, Result);
+      
+      evalStore(Tmp2, B, LHS, *I, state, location, LHSVal);
     }
   }
   
-  getCheckerManager().runCheckersForPostStmt(Dst, Tmp3, B, *this);
+  // FIXME: postvisits eventually go in ::Visit()
+  getCheckerManager().runCheckersForPostStmt(Dst, Tmp2, B, *this);
 }
 
 void ExprEngine::VisitBlockExpr(const BlockExpr *BE, ExplodedNode *Pred,
