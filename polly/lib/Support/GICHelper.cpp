@@ -62,7 +62,9 @@ APInt polly::APInt_from_MPZ (const mpz_t mpz) {
 std::string polly::stringFromIslObj(/*__isl_keep*/ isl_map *map) {
   isl_printer *p = isl_printer_to_str(isl_map_get_ctx(map));
   isl_printer_print_map(p, map);
-  std::string string(isl_printer_get_str(p));
+  char *char_str = isl_printer_get_str(p);
+  std::string string(char_str);
+  free(char_str);
   isl_printer_free(p);
   return string;
 }
@@ -70,7 +72,9 @@ std::string polly::stringFromIslObj(/*__isl_keep*/ isl_map *map) {
 std::string polly::stringFromIslObj(/*__isl_keep*/ isl_set *set) {
   isl_printer *p = isl_printer_to_str(isl_set_get_ctx(set));
   isl_printer_print_set(p, set);
-  std::string string(isl_printer_get_str(p));
+  char *char_str = isl_printer_get_str(p);
+  std::string string(char_str);
+  free(char_str);
   isl_printer_free(p);
   return string;
 }
@@ -78,7 +82,9 @@ std::string polly::stringFromIslObj(/*__isl_keep*/ isl_set *set) {
 std::string polly::stringFromIslObj(/*__isl_keep*/ isl_union_map *umap) {
   isl_printer *p = isl_printer_to_str(isl_union_map_get_ctx(umap));
   isl_printer_print_union_map(p, umap);
-  std::string string(isl_printer_get_str(p));
+  char *char_str = isl_printer_get_str(p);
+  std::string string(char_str);
+  free(char_str);
   isl_printer_free(p);
   return string;
 }
@@ -86,7 +92,9 @@ std::string polly::stringFromIslObj(/*__isl_keep*/ isl_union_map *umap) {
 std::string polly::stringFromIslObj(/*__isl_keep*/ isl_union_set *uset) {
   isl_printer *p = isl_printer_to_str(isl_union_set_get_ctx(uset));
   isl_printer_print_union_set(p, uset);
-  std::string string(isl_printer_get_str(p));
+  char *char_str = isl_printer_get_str(p);
+  std::string string(char_str);
+  free(char_str);
   isl_printer_free(p);
   return string;
 }
@@ -95,7 +103,9 @@ std::string polly::stringFromIslObj(/*__isl_keep*/ isl_schedule *schedule) {
   isl_ctx *ctx = isl_union_map_get_ctx(isl_schedule_get_map(schedule));
   isl_printer *p = isl_printer_to_str(ctx);
   isl_printer_print_schedule(p, schedule);
-  std::string string(isl_printer_get_str(p));
+  char *char_str = isl_printer_get_str(p);
+  std::string string(char_str);
+  free(char_str);
   isl_printer_free(p);
   return string;
 }
