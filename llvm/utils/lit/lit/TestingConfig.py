@@ -23,6 +23,8 @@ class TestingConfig:
                         'LLVM_DISABLE_CRT_DEBUG' : '1',
                         'PATHEXT' : os.environ.get('PATHEXT',''),
                         'PYTHONUNBUFFERED' : '1',
+                        'TEMP' : os.environ.get('TEMP',''),
+                        'TMP' : os.environ.get('TMP',''),
                         })
 
             config = TestingConfig(parent,
