@@ -1,4 +1,4 @@
-; RUN: llc %s -mtriple=thumbv7-apple-darwin -mcpu=cortex-a9 -O0 -o -
+; RUN: llc %s -mtriple=thumbv7-apple-darwin -verify-machineinstrs -mcpu=cortex-a9 -O0 -o -
 ; Make sure that the VMOVQQQQ pseudo instruction is handled properly
 ; by codegen.
 
