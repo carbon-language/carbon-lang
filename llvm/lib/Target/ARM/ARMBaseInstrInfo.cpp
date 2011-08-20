@@ -666,24 +666,24 @@ void ARMBaseInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     Opc = ARM::VMOVD;
   else if (ARM::QPRRegClass.contains(DestReg, SrcReg))
     Opc = ARM::VORRq;
-  else if (ARM::QQPRRegClass.contains(DestReg, SrcReg))
-    Opc = ARM::VMOVQQ;
 
   if (Opc) {
     MachineInstrBuilder MIB = BuildMI(MBB, I, DL, get(Opc), DestReg);
     MIB.addReg(SrcReg, getKillRegState(KillSrc));
     if (Opc == ARM::VORRq)
       MIB.addReg(SrcReg, getKillRegState(KillSrc));
-    if (Opc != ARM::VMOVQQ)
-      AddDefaultPred(MIB);
+    AddDefaultPred(MIB);
     return;
   }
 
-  // Expand the MOVQQQQ pseudo instruction in place.
-  if (ARM::QQQQPRRegClass.contains(DestReg, SrcReg)) {
+  // Generate instructions for VMOVQQ and VMOVQQQQ pseudos in place.
+  if (ARM::QQPRRegClass.contains(DestReg, SrcReg) ||
+      ARM::QQQQPRRegClass.contains(DestReg, SrcReg)) {
     const TargetRegisterInfo *TRI = &getRegisterInfo();
     assert(ARM::qsub_0 + 3 == ARM::qsub_3 && "Expected contiguous enum.");
-    for (unsigned i = ARM::qsub_0, e = ARM::qsub_3 + 1; i != e; ++i) { 
+    unsigned EndSubReg = ARM::QQPRRegClass.contains(DestReg, SrcReg) ? 
+      ARM::qsub_1 : ARM::qsub_3;
+    for (unsigned i = ARM::qsub_0, e = EndSubReg + 1; i != e; ++i) { 
       unsigned Dst = TRI->getSubReg(DestReg, i);
       unsigned Src = TRI->getSubReg(SrcReg, i);
       MachineInstrBuilder Mov =
@@ -691,7 +691,7 @@ void ARMBaseInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
                        .addReg(Dst, RegState::Define)
                        .addReg(Src, getKillRegState(KillSrc))
                        .addReg(Src, getKillRegState(KillSrc)));
-      if (i == ARM::qsub_3) {
+      if (i == EndSubReg) {
         Mov->addRegisterDefined(DestReg, TRI);
         if (KillSrc)
           Mov->addRegisterKilled(SrcReg, TRI);

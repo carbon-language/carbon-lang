@@ -970,34 +970,6 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
       ExpandMOV32BitImm(MBB, MBBI);
       return true;
 
-    case ARM::VMOVQQ: {
-      unsigned DstReg = MI.getOperand(0).getReg();
-      bool DstIsDead = MI.getOperand(0).isDead();
-      unsigned EvenDst = TRI->getSubReg(DstReg, ARM::qsub_0);
-      unsigned OddDst  = TRI->getSubReg(DstReg, ARM::qsub_1);
-      unsigned SrcReg = MI.getOperand(1).getReg();
-      bool SrcIsKill = MI.getOperand(1).isKill();
-      unsigned EvenSrc = TRI->getSubReg(SrcReg, ARM::qsub_0);
-      unsigned OddSrc  = TRI->getSubReg(SrcReg, ARM::qsub_1);
-      MachineInstrBuilder Even =
-        AddDefaultPred(BuildMI(MBB, MBBI, MI.getDebugLoc(),
-                               TII->get(ARM::VORRq))
-                       .addReg(EvenDst,
-                               RegState::Define | getDeadRegState(DstIsDead))
-                       .addReg(EvenSrc, getKillRegState(SrcIsKill))
-                       .addReg(EvenSrc, getKillRegState(SrcIsKill)));
-      MachineInstrBuilder Odd =
-        AddDefaultPred(BuildMI(MBB, MBBI, MI.getDebugLoc(),
-                               TII->get(ARM::VORRq))
-                       .addReg(OddDst,
-                               RegState::Define | getDeadRegState(DstIsDead))
-                       .addReg(OddSrc, getKillRegState(SrcIsKill))
-                       .addReg(OddSrc, getKillRegState(SrcIsKill)));
-      TransferImpOps(MI, Even, Odd);
-      MI.eraseFromParent();
-      return true;
-    }
-
     case ARM::VLDMQIA: {
       unsigned NewOpc = ARM::VLDMDIA;
       MachineInstrBuilder MIB =

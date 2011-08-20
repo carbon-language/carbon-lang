@@ -4285,14 +4285,6 @@ def : InstAlias<"vmov${p} $Vd, $Vm",
 def : InstAlias<"vmov${p} $Vd, $Vm",
                 (VORRq QPR:$Vd, QPR:$Vm, QPR:$Vm, pred:$p)>;
 
-let neverHasSideEffects = 1 in {
-// Pseudo vector move instructions for QQ and QQQQ registers. This should
-// be expanded after register allocation is completed.
-def  VMOVQQ   : PseudoInst<(outs QQPR:$dst), (ins QQPR:$src),
-                NoItinerary, []>;
-
-} // neverHasSideEffects
-
 //   VMOV     : Vector Move (Immediate)
 
 let isReMaterializable = 1 in {
