@@ -83,18 +83,40 @@ void ExprEngine::VisitCallExpr(const CallExpr *CE, ExplodedNode *Pred,
           Eng.InlineCall(Dst, CE, Pred)) {
         return;
       }
-      
+
+      // First handle the return value.
       StmtNodeBuilder &Builder = Eng.getBuilder();
       assert(&Builder && "StmtNodeBuilder must be defined.");
-      
-      // Dispatch to the plug-in transfer function.
-      unsigned oldSize = Dst.size();
-      SaveOr OldHasGen(Builder.hasGeneratedNode);
-      
-      // Dispatch to transfer function logic to handle the call itself.
+
+      // Get the callee.
       const Expr *Callee = CE->getCallee()->IgnoreParens();
       const ProgramState *state = Pred->getState();
       SVal L = state->getSVal(Callee);
+
+      // Figure out the result type. We do this dance to handle references.
+      QualType ResultTy;
+      if (const FunctionDecl *FD = L.getAsFunctionDecl())
+        ResultTy = FD->getResultType();
+      else
+        ResultTy = CE->getType();
+
+      if (CE->isLValue())
+        ResultTy = Eng.getContext().getPointerType(ResultTy);
+
+      // Conjure a symbol value to use as the result.
+      SValBuilder &SVB = Eng.getSValBuilder();
+      unsigned Count = Builder.getCurrentBlockCount();
+      SVal RetVal = SVB.getConjuredSymbolVal(0, CE, ResultTy, Count);
+
+      // Generate a new ExplodedNode with the return value set.
+      state = state->BindExpr(CE, RetVal);
+      Pred = Builder.generateNode(CE, state, Pred);
+
+      // Then handle everything else.
+      unsigned oldSize = Dst.size();
+      SaveOr OldHasGen(Builder.hasGeneratedNode);
+      
+      // Dispatch to transfer function logic to handle the rest of the call.
       Eng.getTF().evalCall(Dst, Eng, Builder, CE, L, Pred);
       
       // Handle the case where no nodes where generated.  Auto-generate that

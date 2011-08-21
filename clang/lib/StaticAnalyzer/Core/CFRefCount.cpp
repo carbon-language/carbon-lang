@@ -140,7 +140,6 @@ class RetEffect {
 public:
   enum Kind { NoRet, Alias, OwnedSymbol, OwnedAllocatedSymbol,
               NotOwnedSymbol, GCNotOwnedSymbol, ARCNotOwnedSymbol,
-              ReceiverAlias,
               OwnedWhenTrackedReceiver };
 
   enum ObjKind { CF, ObjC, AnyObj };
@@ -174,9 +173,6 @@ public:
 
   static RetEffect MakeAlias(unsigned Idx) {
     return RetEffect(Alias, Idx);
-  }
-  static RetEffect MakeReceiverAlias() {
-    return RetEffect(ReceiverAlias);
   }
   static RetEffect MakeOwned(ObjKind o, bool isAllocated = false) {
     return RetEffect(isAllocated ? OwnedAllocatedSymbol : OwnedSymbol, o);
@@ -1485,30 +1481,29 @@ void RetainSummaryManager::InitializeMethodSummaries() {
     getPersistentSummary(RetEffect::MakeOwned(RetEffect::CF, true));
 
   // Create the "retain" selector.
-  RetEffect E = RetEffect::MakeReceiverAlias();
-  RetainSummary *Summ = getPersistentSummary(E, IncRefMsg);
+  RetEffect NoRet = RetEffect::MakeNoRet();
+  RetainSummary *Summ = getPersistentSummary(NoRet, IncRefMsg);
   addNSObjectMethSummary(GetNullarySelector("retain", Ctx), Summ);
 
   // Create the "release" selector.
-  Summ = getPersistentSummary(E, DecRefMsg);
+  Summ = getPersistentSummary(NoRet, DecRefMsg);
   addNSObjectMethSummary(GetNullarySelector("release", Ctx), Summ);
 
   // Create the "drain" selector.
-  Summ = getPersistentSummary(E, isGCEnabled() ? DoNothing : DecRef);
+  Summ = getPersistentSummary(NoRet, isGCEnabled() ? DoNothing : DecRef);
   addNSObjectMethSummary(GetNullarySelector("drain", Ctx), Summ);
 
   // Create the -dealloc summary.
-  Summ = getPersistentSummary(RetEffect::MakeNoRet(), Dealloc);
+  Summ = getPersistentSummary(NoRet, Dealloc);
   addNSObjectMethSummary(GetNullarySelector("dealloc", Ctx), Summ);
 
   // Create the "autorelease" selector.
-  Summ = getPersistentSummary(E, Autorelease);
+  Summ = getPersistentSummary(NoRet, Autorelease);
   addNSObjectMethSummary(GetNullarySelector("autorelease", Ctx), Summ);
 
   // Specially handle NSAutoreleasePool.
   addInstMethSummary("NSAutoreleasePool", "init",
-                     getPersistentSummary(RetEffect::MakeReceiverAlias(),
-                                          NewAutoreleasePool));
+                     getPersistentSummary(NoRet, NewAutoreleasePool));
 
   // For NSWindow, allocated objects are (initially) self-owned.
   // FIXME: For now we opt for false negatives with NSWindow, as these objects
@@ -2738,31 +2733,15 @@ void CFRefCount::evalSummary(ExplodedNodeSet &Dst,
 
   switch (RE.getKind()) {
     default:
-      assert (false && "Unhandled RetEffect."); break;
+      llvm_unreachable("Unhandled RetEffect."); break;
 
-    case RetEffect::NoRet: {
-      // Make up a symbol for the return value (not reference counted).
-      // FIXME: Most of this logic is not specific to the retain/release
-      // checker.
-
-      // FIXME: We eventually should handle structs and other compound types
-      // that are returned by value.
-
-      // Use the result type from callOrMsg as it automatically adjusts
-      // for methods/functions that return references.
-      QualType resultTy = callOrMsg.getResultType(Eng.getContext());
-      if (Loc::isLocType(resultTy) || 
-            (resultTy->isIntegerType() && resultTy->isScalarType())) {
-        unsigned Count = Builder.getCurrentBlockCount();
-        SValBuilder &svalBuilder = Eng.getSValBuilder();
-        SVal X = svalBuilder.getConjuredSymbolVal(NULL, Ex, resultTy, Count);
-        state = state->BindExpr(Ex, X, false);
-      }
-
+    case RetEffect::NoRet:
+      // No work necessary.
       break;
-    }
 
     case RetEffect::Alias: {
+      // FIXME: This should be moved to an eval::call check and limited to the
+      // specific functions that return aliases of their arguments.
       unsigned idx = RE.getIndex();
       assert (idx < callOrMsg.getNumArgs());
       SVal V = callOrMsg.getArgSValAsScalarOrLoc(idx);
@@ -2770,28 +2749,18 @@ void CFRefCount::evalSummary(ExplodedNodeSet &Dst,
       break;
     }
 
-    case RetEffect::ReceiverAlias: {
-      assert(Receiver);
-      SVal V = Receiver.getSValAsScalarOrLoc(state);
-      state = state->BindExpr(Ex, V, false);
-      break;
-    }
-
     case RetEffect::OwnedAllocatedSymbol:
-    case RetEffect::OwnedSymbol: {
-      unsigned Count = Builder.getCurrentBlockCount();
-      SValBuilder &svalBuilder = Eng.getSValBuilder();
-      SymbolRef Sym = svalBuilder.getConjuredSymbol(Ex, Count);
-
-      // Use the result type from callOrMsg as it automatically adjusts
-      // for methods/functions that return references.      
-      QualType resultTy = callOrMsg.getResultType(Eng.getContext());
-      state = state->set<RefBindings>(Sym, RefVal::makeOwned(RE.getObjKind(),
-                                                            resultTy));
-      state = state->BindExpr(Ex, svalBuilder.makeLoc(Sym), false);
+    case RetEffect::OwnedSymbol:
+      if (SymbolRef Sym = state->getSVal(Ex).getAsSymbol()) {
+        // Use the result type from callOrMsg as it automatically adjusts
+        // for methods/functions that return references.
+        QualType ResultTy = callOrMsg.getResultType(Eng.getContext());
+        state = state->set<RefBindings>(Sym, RefVal::makeOwned(RE.getObjKind(),
+                                                               ResultTy));
+      }
 
       // FIXME: Add a flag to the checker where allocations are assumed to
-      // *not fail.
+      // *not* fail. (The code below is out-of-date, though.)
 #if 0
       if (RE.getKind() == RetEffect::OwnedAllocatedSymbol) {
         bool isFeasible;
@@ -2801,18 +2770,17 @@ void CFRefCount::evalSummary(ExplodedNodeSet &Dst,
 #endif
 
       break;
-    }
 
     case RetEffect::GCNotOwnedSymbol:
     case RetEffect::ARCNotOwnedSymbol:
     case RetEffect::NotOwnedSymbol: {
-      unsigned Count = Builder.getCurrentBlockCount();
-      SValBuilder &svalBuilder = Eng.getSValBuilder();
-      SymbolRef Sym = svalBuilder.getConjuredSymbol(Ex, Count);
-      QualType RetT = GetReturnType(Ex, svalBuilder.getContext());
-      state = state->set<RefBindings>(Sym, RefVal::makeNotOwned(RE.getObjKind(),
-                                                               RetT));
-      state = state->BindExpr(Ex, svalBuilder.makeLoc(Sym), false);
+      if (SymbolRef Sym = state->getSVal(Ex).getAsSymbol()) {
+        // Use GetReturnType in order to give [NSFoo alloc] the type NSFoo *.
+        QualType ResultTy = GetReturnType(Ex, Eng.getContext());
+        state =
+          state->set<RefBindings>(Sym, RefVal::makeNotOwned(RE.getObjKind(),
+                                                            ResultTy));
+      }
       break;
     }
   }

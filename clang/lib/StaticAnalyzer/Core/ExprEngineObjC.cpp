@@ -237,3 +237,44 @@ void ExprEngine::VisitObjCMessage(const ObjCMessage &msg,
   // the created nodes in 'Dst'.
   getCheckerManager().runCheckersForPostObjCMessage(Dst, dstEval, msg, *this);
 }
+
+void ExprEngine::evalObjCMessage(ExplodedNodeSet &Dst, const ObjCMessage &msg, 
+                                 ExplodedNode *Pred,
+                                 const ProgramState *state) {
+  assert (Builder && "StmtNodeBuilder must be defined.");
+
+  // First handle the return value.
+  SVal ReturnValue = UnknownVal();
+
+  // Some method families have known return values.
+  switch (msg.getMethodFamily()) {
+  default:
+    break;
+  case OMF_autorelease:
+  case OMF_retain:
+  case OMF_self: {
+    // These methods return their receivers.
+    // FIXME: Should OMF_init be included here?
+    const Expr *ReceiverE = msg.getInstanceReceiver();
+    if (ReceiverE)
+      ReturnValue = state->getSVal(ReceiverE);
+    break;
+  }
+  }
+
+  // If we failed to figure out the return value, use a conjured value instead.
+  if (ReturnValue.isUnknown()) {
+    SValBuilder &SVB = getSValBuilder();
+    QualType ResultTy = msg.getResultType(getContext());
+    unsigned Count = Builder->getCurrentBlockCount();
+    const Expr *CurrentE = cast<Expr>(currentStmt);
+    ReturnValue = SVB.getConjuredSymbolVal(NULL, CurrentE, ResultTy, Count);
+  }
+
+  // Bind the return value.
+  state = state->BindExpr(currentStmt, ReturnValue);
+
+  // Now we can handle the other aspects of the message.
+  getTF().evalObjCMessage(Dst, *this, *Builder, msg, Pred, state);
+}
+
