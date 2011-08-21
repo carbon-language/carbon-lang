@@ -438,10 +438,11 @@ public:
     FullSourceLoc L(S->getLocStart(), BR.getSourceManager());
 
     if (Loc::isLocType(VD->getType())) {
-      std::string msg = "'" + std::string(VD->getNameAsString()) +
-      "' now aliases '" + MostRecent->getNameAsString() + "'";
+      llvm::SmallString<64> buf;
+      llvm::raw_svector_ostream os(buf);
+      os << '\'' << VD << "' now aliases '" << MostRecent << '\'';
 
-      PD.push_front(new PathDiagnosticEventPiece(L, msg));
+      PD.push_front(new PathDiagnosticEventPiece(L, os.str()));
     }
 
     return true;

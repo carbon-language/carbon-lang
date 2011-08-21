@@ -202,7 +202,7 @@ void StackAddrEscapeChecker::checkEndPath(EndOfFunctionNodeBuilder &B,
                                 Eng.getContext().getSourceManager());
     os << " is still referred to by the global variable '";
     const VarRegion *VR = cast<VarRegion>(cb.V[i].first->getBaseRegion());
-    os << VR->getDecl()->getNameAsString() 
+    os << VR->getDecl()
        << "' upon returning to the caller.  This will be a dangling reference";
     BugReport *report = new BugReport(*BT_stackleak, os.str(), N);
     if (range.isValid())

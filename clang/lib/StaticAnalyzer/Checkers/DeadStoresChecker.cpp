@@ -103,26 +103,25 @@ public:
     if (!reachableCode->isReachable(currentBlock))
       return;
 
-    const std::string &name = V->getNameAsString();
-
-    const char* BugType = 0;
-    std::string msg;
+    llvm::SmallString<64> buf;
+    llvm::raw_svector_ostream os(buf);
+    const char *BugType = 0;
 
     switch (dsk) {
       default:
-        assert(false && "Impossible dead store type.");
+        llvm_unreachable("Impossible dead store type.");
 
       case DeadInit:
         BugType = "Dead initialization";
-        msg = "Value stored to '" + name +
-          "' during its initialization is never read";
+        os << "Value stored to '" << V
+           << "' during its initialization is never read";
         break;
 
       case DeadIncrement:
         BugType = "Dead increment";
       case Standard:
         if (!BugType) BugType = "Dead assignment";
-        msg = "Value stored to '" + name + "' is never read";
+        os << "Value stored to '" << V << "' is never read";
         break;
 
       case Enclosing:
@@ -132,7 +131,7 @@ public:
         return;
     }
 
-    BR.EmitBasicReport(BugType, "Dead store", msg, L, R);
+    BR.EmitBasicReport(BugType, "Dead store", os.str(), L, R);
   }
 
   void CheckVarDecl(const VarDecl *VD, const Expr *Ex, const Expr *Val,
