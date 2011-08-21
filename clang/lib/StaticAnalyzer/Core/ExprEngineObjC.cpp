@@ -254,7 +254,6 @@ void ExprEngine::evalObjCMessage(ExplodedNodeSet &Dst, const ObjCMessage &msg,
   case OMF_retain:
   case OMF_self: {
     // These methods return their receivers.
-    // FIXME: Should OMF_init be included here?
     const Expr *ReceiverE = msg.getInstanceReceiver();
     if (ReceiverE)
       ReturnValue = state->getSVal(ReceiverE);
