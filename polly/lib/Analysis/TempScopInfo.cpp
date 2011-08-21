@@ -186,12 +186,9 @@ void TempScop::printDetail(llvm::raw_ostream &OS, ScalarEvolution *SE,
             MI->second->print(OS);
             OS << ", ";
           }
-          
+
           OS << '\n';
         }
-
-        if (Reductions.count(BB))
-          OS.indent(ind + 2) << "Reduction\n";
 
         OS.indent(ind) << "}\n";
       }
@@ -232,68 +229,6 @@ void TempScopInfo::buildAffineFunction(const SCEV *S, SCEVAffFunc &FuncToBuild,
       }
     }
   }
-}
-
-bool TempScopInfo::isReduction(BasicBlock &BB) {
-  int loadAccess = 0, storeAccess = 0;
-  const StoreInst *storeInst;
-  const Value *storePointer;
-  const LoadInst *loadInst[2];
-  const Value *loadPointer[2];
-
-  for (BasicBlock::iterator I = BB.begin(), E = --BB.end(); I != E; ++I) {
-    Instruction &Inst = *I;
-    if (isa<LoadInst>(&Inst)) {
-      if (loadAccess >= 2)
-        return false;
-      loadInst[loadAccess] = dyn_cast<LoadInst>(&Inst);
-      loadPointer[loadAccess] = loadInst[loadAccess]->getPointerOperand();
-      loadAccess++;
-    } else if (isa<StoreInst>(&Inst)) {
-      if (storeAccess >= 1)
-        return false;
-      storeInst = dyn_cast<StoreInst>(&Inst);
-      storePointer = storeInst->getPointerOperand();
-      storeAccess++;
-    }
-  }
-
-  if (loadAccess < 2)
-    return false;
-
-  if (loadPointer[0] == loadPointer[1])
-   return false;
-
-  const Value *reductionLoadInst;
-  if (storePointer == loadPointer[0])
-    reductionLoadInst = loadInst[0];
-  else if (storePointer == loadPointer[1])
-    reductionLoadInst = loadInst[1];
-  else
-    return false;
-
-  const Instruction *reductionInst =
-    dyn_cast<Instruction>(storeInst->getValueOperand());
-
-  // Check if the value stored is an instruction
-  if (!reductionInst)
-    return false;
-
-  // Reduction operations must be associative and commutative
-  if (!reductionInst->isAssociative() || !reductionInst->isCommutative())
-    return false;
-
-  // Check if this instruction is using the loaded value
-  for (User::const_op_iterator I = reductionInst->op_begin(),
-       E = reductionInst->op_end(); I != E; I++) {
-    const Value *operand = I->get();
-    if (operand == reductionLoadInst) {
-      // The loaded value's one and only use must be this one.
-      return operand->hasOneUse();
-    }
-  }
-
-  return false;
 }
 
 void TempScopInfo::buildAccessFunctions(Region &R, ParamSetType &Parameter,
@@ -457,8 +392,6 @@ TempScop *TempScopInfo::buildTempScop(Region &R) {
     BasicBlock *BB =  I->getNodeAs<BasicBlock>();
     buildAccessFunctions(R, TScop->getParamSet(), *BB);
     buildCondition(BB, R.getEntry(), *TScop);
-    if (isReduction(*BB))
-      TScop->Reductions.insert(BB);
   }
 
   buildLoopBounds(*TScop);

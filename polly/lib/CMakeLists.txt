@@ -28,7 +28,6 @@ add_polly_library(LLVMPolly
   CodePreparation.cpp
   CodeGeneration.cpp
   IndependentBlocks.cpp
-  Interchange.cpp
   MayAliasSet.cpp
   Pocc.cpp
   RegionSimplify.cpp

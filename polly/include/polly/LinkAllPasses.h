@@ -38,7 +38,6 @@ namespace polly {
   Pass *createDOTPrinterPass();
   Pass *createDOTViewerPass();
   Pass *createIndependentBlocksPass();
-  Pass *createInterchangePass();
   Pass *createJSONExporterPass();
   Pass *createJSONImporterPass();
   Pass *createRegionSimplifyPass();
@@ -83,7 +82,6 @@ namespace {
        createDOTPrinterPass();
        createDOTViewerPass();
        createIndependentBlocksPass();
-       createInterchangePass();
        createJSONExporterPass();
        createJSONImporterPass();
        createRegionSimplifyPass();

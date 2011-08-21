@@ -200,9 +200,6 @@ class TempScop {
   // The alias information about this SCoP.
   MayAliasSetInfo *MayASInfo;
 
-  // Basic blocks detected as reductions
-  std::set<BasicBlock*> Reductions;
-
   friend class TempScopInfo;
 
   explicit TempScop(Region &r, LoopBoundMapType &loopBounds,
@@ -212,8 +209,6 @@ class TempScop {
 
 public:
   ~TempScop();
-
-  bool is_Reduction(BasicBlock &BB) { return Reductions.count(&BB) != 0; }
 
   /// @name Information about this Temporary Scop.
   ///

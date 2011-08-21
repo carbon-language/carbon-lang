@@ -246,9 +246,6 @@ class ScopStmt {
   /// The BasicBlock represented by this statement.
   BasicBlock *BB;
 
-  /// @brief Whether this statement is a reduction.
-  bool IsReduction;
-
   /// @brief The loop induction variables surrounding the statement.
   ///
   /// This information is only needed for final code generation.
@@ -344,8 +341,6 @@ public:
   /// A final read statement is scheduled after all statements to model
   /// that all data used in the Scop is read after the Scop.
   bool isFinalRead() { return getBasicBlock() == NULL; }
-
-  bool isReduction() { return IsReduction; }
 
   /// @brief Print the ScopStmt.
   ///
