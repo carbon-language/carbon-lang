@@ -203,9 +203,9 @@ namespace SrcMgr {
     /// together.
     uintptr_t Data;
 
-    friend class SourceManager;
-    friend class ASTWriter;
-    friend class ASTReader;
+    friend class clang::SourceManager;
+    friend class clang::ASTWriter;
+    friend class clang::ASTReader;
   public:
     /// get - Return a FileInfo object.
     static FileInfo get(SourceLocation IL, const ContentCache *Con,
