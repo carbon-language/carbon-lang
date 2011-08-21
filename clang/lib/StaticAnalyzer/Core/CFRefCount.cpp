@@ -138,7 +138,7 @@ namespace {
 ///  respect to its return value.
 class RetEffect {
 public:
-  enum Kind { NoRet, Alias, OwnedSymbol, OwnedAllocatedSymbol,
+  enum Kind { NoRet, OwnedSymbol, OwnedAllocatedSymbol,
               NotOwnedSymbol, GCNotOwnedSymbol, ARCNotOwnedSymbol,
               OwnedWhenTrackedReceiver };
 
@@ -147,20 +147,13 @@ public:
 private:
   Kind K;
   ObjKind O;
-  unsigned index;
 
-  RetEffect(Kind k, unsigned idx = 0) : K(k), O(AnyObj), index(idx) {}
-  RetEffect(Kind k, ObjKind o) : K(k), O(o), index(0) {}
+  RetEffect(Kind k, ObjKind o = AnyObj) : K(k), O(o) {}
 
 public:
   Kind getKind() const { return K; }
 
   ObjKind getObjKind() const { return O; }
-
-  unsigned getIndex() const {
-    assert(getKind() == Alias);
-    return index;
-  }
 
   bool isOwned() const {
     return K == OwnedSymbol || K == OwnedAllocatedSymbol ||
@@ -171,9 +164,6 @@ public:
     return RetEffect(OwnedWhenTrackedReceiver, ObjC);
   }
 
-  static RetEffect MakeAlias(unsigned Idx) {
-    return RetEffect(Alias, Idx);
-  }
   static RetEffect MakeOwned(ObjKind o, bool isAllocated = false) {
     return RetEffect(isAllocated ? OwnedAllocatedSymbol : OwnedSymbol, o);
   }
@@ -423,8 +413,7 @@ class RetainSummary {
   ArgEffect   Receiver;
 
   /// Ret - The effect on the return value.  Used to indicate if the
-  ///  function/method call returns a new tracked symbol, returns an
-  ///  alias of one of the arguments in the call, and so on.
+  ///  function/method call returns a new tracked symbol.
   RetEffect   Ret;
 
 public:
@@ -894,6 +883,12 @@ static bool isRelease(const FunctionDecl *FD, StringRef FName) {
   return FName.endswith("Release");
 }
 
+static bool isMakeCollectable(const FunctionDecl *FD, StringRef FName) {
+  // FIXME: Remove FunctionDecl parameter.
+  // FIXME: Is it really okay if MakeCollectable isn't a suffix?
+  return FName.find("MakeCollectable") != StringRef::npos;
+}
+
 RetainSummary* RetainSummaryManager::getSummary(const FunctionDecl *FD) {
   // Look up a summary in our cache of FunctionDecls -> Summaries.
   FuncSummariesTy::iterator I = FuncSummaries.find(FD);
@@ -1016,7 +1011,7 @@ RetainSummary* RetainSummaryManager::getSummary(const FunctionDecl *FD) {
       if (cocoa::isRefType(RetTy, "CF", FName)) {
         if (isRetain(FD, FName))
           S = getUnarySummary(FT, cfretain);
-        else if (FName.find("MakeCollectable") != StringRef::npos)
+        else if (isMakeCollectable(FD, FName))
           S = getUnarySummary(FT, cfmakecollectable);
         else
           S = getCFCreateGetRuleSummary(FD, FName);
@@ -1115,28 +1110,16 @@ RetainSummaryManager::getUnarySummary(const FunctionType* FT,
 
   assert (ScratchArgs.isEmpty());
 
+  ArgEffect Effect;
   switch (func) {
-    case cfretain: {
-      ScratchArgs = AF.add(ScratchArgs, 0, IncRef);
-      return getPersistentSummary(RetEffect::MakeAlias(0),
-                                  DoNothing, DoNothing);
-    }
-
-    case cfrelease: {
-      ScratchArgs = AF.add(ScratchArgs, 0, DecRef);
-      return getPersistentSummary(RetEffect::MakeNoRet(),
-                                  DoNothing, DoNothing);
-    }
-
-    case cfmakecollectable: {
-      ScratchArgs = AF.add(ScratchArgs, 0, MakeCollectable);
-      return getPersistentSummary(RetEffect::MakeAlias(0),DoNothing, DoNothing);
-    }
-
-    default:
-      assert (false && "Not a supported unary function.");
-      return getDefaultSummary();
+    case cfretain: Effect = IncRef; break;
+    case cfrelease: Effect = DecRef; break;
+    case cfmakecollectable: Effect = MakeCollectable; break;
+    default: llvm_unreachable("Not a supported unary function.");
   }
+
+  ScratchArgs = AF.add(ScratchArgs, 0, Effect);
+  return getPersistentSummary(RetEffect::MakeNoRet(), DoNothing, DoNothing);
 }
 
 RetainSummary* 
@@ -2739,16 +2722,6 @@ void CFRefCount::evalSummary(ExplodedNodeSet &Dst,
       // No work necessary.
       break;
 
-    case RetEffect::Alias: {
-      // FIXME: This should be moved to an eval::call check and limited to the
-      // specific functions that return aliases of their arguments.
-      unsigned idx = RE.getIndex();
-      assert (idx < callOrMsg.getNumArgs());
-      SVal V = callOrMsg.getArgSValAsScalarOrLoc(idx);
-      state = state->BindExpr(Ex, V, false);
-      break;
-    }
-
     case RetEffect::OwnedAllocatedSymbol:
     case RetEffect::OwnedSymbol:
       if (SymbolRef Sym = state->getSVal(Ex).getAsSymbol()) {
@@ -3400,11 +3373,14 @@ class RetainReleaseChecker
                     check::PostStmt<BlockExpr>,
                     check::PostStmt<CastExpr>,
                     check::RegionChanges,
-                    eval::Assume > {
+                    eval::Assume,
+                    eval::Call > {
 public:  
   void checkBind(SVal loc, SVal val, CheckerContext &C) const;
   void checkPostStmt(const BlockExpr *BE, CheckerContext &C) const;
   void checkPostStmt(const CastExpr *CE, CheckerContext &C) const;
+
+  bool evalCall(const CallExpr *CE, CheckerContext &C) const;
 
   const ProgramState *evalAssume(const ProgramState *state, SVal Cond,
                                  bool Assumption) const;
@@ -3604,6 +3580,78 @@ void RetainReleaseChecker::checkPostStmt(const CastExpr *CE,
   }
 
   C.generateNode(state);
+}
+
+bool RetainReleaseChecker::evalCall(const CallExpr *CE,
+                                    CheckerContext &C) const {
+  // Get the callee. We're only interested in simple C functions.
+  const ProgramState *state = C.getState();
+  const Expr *Callee = CE->getCallee();
+  SVal L = state->getSVal(Callee);
+
+  const FunctionDecl *FD = L.getAsFunctionDecl();
+  if (!FD)
+    return false;
+
+  IdentifierInfo *II = FD->getIdentifier();
+  if (!II)
+    return false;
+
+  // For now, we're only handling the functions that return aliases of their
+  // arguments: CFRetain and CFMakeCollectable (and their families).
+  // Eventually we should add other functions we can model entirely,
+  // such as CFRelease, which don't invalidate their arguments or globals.
+  if (CE->getNumArgs() != 1)
+    return false;
+
+  // Get the name of the function.
+  StringRef FName = II->getName();
+  FName = FName.substr(FName.find_first_not_of('_'));
+
+  // See if it's one of the specific functions we know how to eval.
+  bool canEval = false;
+
+  QualType ResultTy = FD->getResultType();
+  if (ResultTy->isObjCIdType()) {
+    // Handle: id NSMakeCollectable(CFTypeRef)
+    canEval = II->isStr("NSMakeCollectable");
+  } else if (ResultTy->isPointerType()) {
+    // Handle: (CF|CG)Retain
+    //         CFMakeCollectable
+    // It's okay to be a little sloppy here (CGMakeCollectable doesn't exist).
+    if (cocoa::isRefType(ResultTy, "CF", FName) ||
+        cocoa::isRefType(ResultTy, "CG", FName)) {
+      canEval = isRetain(FD, FName) || isMakeCollectable(FD, FName);
+    }
+  }
+        
+  if (!canEval)
+    return false;
+
+  // Bind the return value.
+  SVal RetVal = state->getSVal(CE->getArg(0));
+  if (RetVal.isUnknown()) {
+    // If the receiver is unknown, conjure a return value.
+    SValBuilder &SVB = C.getSValBuilder();
+    unsigned Count = C.getNodeBuilder().getCurrentBlockCount();
+    SVal RetVal = SVB.getConjuredSymbolVal(0, CE, ResultTy, Count);
+  }
+  state = state->BindExpr(CE, RetVal, false);
+
+  // FIXME: This will improve when RetainSummariesManager moves to the checker.
+  // Really we only want to handle ArgEffects and RetEffects; the arguments to
+  // CFRetain and CFMakeCollectable don't need to be invalidated.
+  // All of this can go away once the effects are handled in a post-call check.
+  CFRefCount &TF = static_cast<CFRefCount&>(C.getEngine().getTF());
+  RetainSummary *Summ = TF.Summaries.getSummary(FD);
+  assert(Summ);
+
+  TF.evalSummary(C.getNodeSet(), C.getEngine(), C.getNodeBuilder(), CE,
+                 CallOrObjCMessage(CE, C.getState()),
+                 InstanceReceiver(), *Summ, L.getAsRegion(),
+                 C.getPredecessor(), state);
+
+  return true;
 }
 
 //===----------------------------------------------------------------------===//
