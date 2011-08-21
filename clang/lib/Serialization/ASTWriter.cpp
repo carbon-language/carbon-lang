@@ -1243,6 +1243,7 @@ static unsigned CreateSLocFileAbbrev(llvm::BitstreamWriter &Stream) {
   // FileEntry fields.
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 12)); // Size
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 32)); // Modification time
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8)); // NumCreatedFIDs
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // File name
   return Stream.EmitAbbrev(Abbrev);
 }
@@ -1514,6 +1515,8 @@ void ASTWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
         // Emit size/modification time for this file.
         Record.push_back(Content->OrigEntry->getSize());
         Record.push_back(Content->OrigEntry->getModificationTime());
+
+        Record.push_back(File.NumCreatedFIDs);
 
         // Turn the file name into an absolute path, if it isn't already.
         const char *Filename = Content->OrigEntry->getName();

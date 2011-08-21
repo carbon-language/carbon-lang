@@ -30,6 +30,9 @@ protected:
   /// The SourceManager FileID corresponding to the file being lexed.
   const FileID FID;
 
+  /// \brief Number of SLocEntries before lexing the file.
+  unsigned InitialNumSLocEntries;
+
   //===--------------------------------------------------------------------===//
   // Context-specific lexing flags set by the preprocessor.
   //===--------------------------------------------------------------------===//
@@ -67,12 +70,10 @@ protected:
   void operator=(const PreprocessorLexer&); // DO NOT IMPLEMENT
   friend class Preprocessor;
 
-  PreprocessorLexer(Preprocessor *pp, FileID fid)
-    : PP(pp), FID(fid), ParsingPreprocessorDirective(false),
-      ParsingFilename(false), LexingRawMode(false) {}
+  PreprocessorLexer(Preprocessor *pp, FileID fid);
 
   PreprocessorLexer()
-    : PP(0),
+    : PP(0), InitialNumSLocEntries(0),
       ParsingPreprocessorDirective(false),
       ParsingFilename(false),
       LexingRawMode(false) {}
@@ -149,6 +150,11 @@ public:
     assert(PP &&
       "PreprocessorLexer::getFileID() should only be used with a Preprocessor");
     return FID;
+  }
+
+  /// \brief Number of SLocEntries before lexing the file.
+  unsigned getInitialNumSLocEntries() const {
+    return InitialNumSLocEntries;
   }
 
   /// getFileEntry - Return the FileEntry corresponding to this FileID.  Like

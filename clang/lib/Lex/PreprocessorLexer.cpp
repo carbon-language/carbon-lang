@@ -17,6 +17,14 @@
 #include "clang/Basic/SourceManager.h"
 using namespace clang;
 
+PreprocessorLexer::PreprocessorLexer(Preprocessor *pp, FileID fid)
+  : PP(pp), FID(fid), InitialNumSLocEntries(0),
+    ParsingPreprocessorDirective(false),
+    ParsingFilename(false), LexingRawMode(false) {
+  if (pp)
+    InitialNumSLocEntries = pp->getSourceManager().local_sloc_entry_size();
+}
+
 /// LexIncludeFilename - After the preprocessor has parsed a #include, lex and
 /// (potentially) macro expand the filename.
 void PreprocessorLexer::LexIncludeFilename(Token &FilenameTok) {

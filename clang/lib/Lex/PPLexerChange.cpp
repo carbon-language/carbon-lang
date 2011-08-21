@@ -204,6 +204,16 @@ bool Preprocessor::HandleEndOfFile(Token &Result, bool isEndOfMacro) {
   // If this is a #include'd file, pop it off the include stack and continue
   // lexing the #includer file.
   if (!IncludeMacroStack.empty()) {
+    if (!isEndOfMacro && CurPPLexer &&
+        SourceMgr.getIncludeLoc(CurPPLexer->getFileID()).isValid()) {
+      // Notify SourceManager to record the number of FileIDs that were created
+      // during lexing of the #include'd file.
+      unsigned NumFIDs =
+          SourceMgr.local_sloc_entry_size() -
+          CurPPLexer->getInitialNumSLocEntries() + 1/*#include'd file*/;
+      SourceMgr.setNumCreatedFIDsForFileID(CurPPLexer->getFileID(), NumFIDs);
+    }
+
     // We're done with the #included file.
     RemoveTopOfLexerStack();
 

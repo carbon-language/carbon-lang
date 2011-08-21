@@ -1320,9 +1320,11 @@ ASTReader::ASTReadResult ASTReader::ReadSLocEntryRecord(int ID) {
     FileID FID = SourceMgr.createFileID(File, IncludeLoc,
                                         (SrcMgr::CharacteristicKind)Record[2],
                                         ID, BaseOffset + Record[0]);
+    SrcMgr::FileInfo &FileInfo =
+          const_cast<SrcMgr::FileInfo&>(SourceMgr.getSLocEntry(FID).getFile());
+    FileInfo.NumCreatedFIDs = Record[6];
     if (Record[3])
-      const_cast<SrcMgr::FileInfo&>(SourceMgr.getSLocEntry(FID).getFile())
-        .setHasLineDirectives();
+      FileInfo.setHasLineDirectives();
     
     break;
   }
