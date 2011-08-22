@@ -57,6 +57,18 @@ error: invalid operand for instruction
 @ CHECK-ERRORS:               ^
 
 
+@ Invalid writeback and register lists for PUSH/POP
+        pop {r1, r2, r10}
+        push {r8, r9}
+@ CHECK-ERRORS: error: registers must be in range r0-r7 or pc
+@ CHECK-ERRORS:         pop {r1, r2, r10}
+@ CHECK-ERRORS:             ^
+@ CHECK-ERRORS: error: registers must be in range r0-r7 or lr
+@ CHECK-ERRORS:         push {r8, r9}
+@ CHECK-ERRORS:              ^
+
+
+
 @ Out of range immediates for LSL instruction.
         lsls r4, r5, #-1
         lsls r4, r5, #32

@@ -3109,6 +3109,26 @@ validateInstruction(MCInst &Inst,
 
     break;
   }
+  case ARM::tPOP: {
+    for (unsigned i = 2; i < Inst.getNumOperands(); ++i) {
+      unsigned Reg = Inst.getOperand(i).getReg();
+      // Anything other than a low register isn't legal here.
+      if (!isARMLowRegister(Reg) && Reg != ARM::PC)
+        return Error(Operands[2]->getStartLoc(),
+                     "registers must be in range r0-r7 or pc");
+    }
+    break;
+  }
+  case ARM::tPUSH: {
+    for (unsigned i = 2; i < Inst.getNumOperands(); ++i) {
+      unsigned Reg = Inst.getOperand(i).getReg();
+      // Anything other than a low register isn't legal here.
+      if (!isARMLowRegister(Reg) && Reg != ARM::LR)
+        return Error(Operands[2]->getStartLoc(),
+                     "registers must be in range r0-r7 or lr");
+    }
+    break;
+  }
   }
 
   return false;
