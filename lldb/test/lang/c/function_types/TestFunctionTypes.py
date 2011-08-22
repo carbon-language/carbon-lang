@@ -24,12 +24,12 @@ class FunctionTypesTestCase(TestBase):
     def test_pointers_with_dsym(self):
         """Test that a function pointer to 'printf' works and can be called."""
         self.buildDsym()
-        #self.function_pointers() # ROLLED BACK
+        self.function_pointers()
     
     def test_pointers_with_dwarf(self):
         """Test that a function pointer to 'printf' works and can be called."""
         self.buildDwarf()
-        #self.function_pointers() # ROLLED BACK
+        self.function_pointers()
 
     def setUp(self):
         # Call super's setUp().
