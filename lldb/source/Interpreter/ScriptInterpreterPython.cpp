@@ -2079,6 +2079,7 @@ ScriptInterpreterPython::InitializePrivate ()
 
     PyRun_SimpleString ("import sys");
     PyRun_SimpleString ("sys.path.append ('.')");
+    PyRun_SimpleString ("sys.dont_write_bytecode = 1");
 
     PyRun_SimpleString ("import embedded_interpreter");
     
