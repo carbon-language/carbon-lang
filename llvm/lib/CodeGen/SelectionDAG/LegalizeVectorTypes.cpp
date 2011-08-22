@@ -43,7 +43,6 @@ void DAGTypeLegalizer::ScalarizeVectorResult(SDNode *N, unsigned ResNo) {
     dbgs() << "ScalarizeVectorResult #" << ResNo << ": ";
     N->dump(&DAG);
     dbgs() << "\n";
-    dbgs() << "Do not know how to scalarize the result of this operator!\n";
 #endif
     report_fatal_error("Do not know how to scalarize the result of this "
                        "operator!\n");
