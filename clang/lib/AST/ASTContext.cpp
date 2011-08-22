@@ -4565,7 +4565,9 @@ void ASTContext::getObjCEncodingForStructureImpl(RecordDecl *RDecl,
   std::multimap<uint64_t, NamedDecl *>::iterator
     CurLayObj = FieldOrBaseOffsets.begin();
 
-  if (CurLayObj != FieldOrBaseOffsets.end() && CurLayObj->first != 0) {
+  if ((CurLayObj != FieldOrBaseOffsets.end() && CurLayObj->first != 0) ||
+      (CurLayObj == FieldOrBaseOffsets.end() &&
+         CXXRec && CXXRec->isDynamicClass())) {
     assert(CXXRec && CXXRec->isDynamicClass() &&
            "Offset 0 was empty but no VTable ?");
     if (FD) {

@@ -105,6 +105,27 @@ namespace rdar9624314 {
   const char g2[] = @encode(S2);
 }
 
+namespace test {
+  class Foo {
+  public:
+   virtual void f() {};
+  };
+  
+  class Bar {
+  public:
+   virtual void g() {};
+  };
+  
+  class Zoo : virtual public Foo, virtual public Bar {
+  public:
+   int x;
+   int y;
+  };
+
+  // CHECK: @_ZN4testL3ecdE = internal constant [15 x i8] c"{Zoo=^^?ii^^?}\00"
+  const char ecd[] = @encode(Zoo);
+}
+
 struct Base1 {
   char x;
 };
