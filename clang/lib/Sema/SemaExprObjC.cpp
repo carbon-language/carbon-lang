@@ -975,6 +975,9 @@ ExprResult Sema::ActOnSuperMessage(Scope *S,
   // We are in a method whose class has a superclass, so 'super'
   // is acting as a keyword.
   if (Method->isInstanceMethod()) {
+    if (Sel.getMethodFamily() == OMF_dealloc)
+      ObjCShouldCallSuperDealloc = false;
+
     // Since we are in an instance method, this is an instance
     // message to the superclass instance.
     QualType SuperTy = Context.getObjCInterfaceType(Super);

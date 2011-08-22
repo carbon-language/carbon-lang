@@ -489,6 +489,11 @@ public:
   /// have been declared.
   bool GlobalNewDeleteDeclared;
 
+
+  /// A flag that is set when parsing a -dealloc method and no [super dealloc]
+  /// call was found yet.
+  bool ObjCShouldCallSuperDealloc;
+
   /// \brief The set of declarations that have been referenced within
   /// a potentially evaluated expression.
   typedef SmallVector<std::pair<SourceLocation, Decl *>, 10>

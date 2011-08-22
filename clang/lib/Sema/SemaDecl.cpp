@@ -6690,9 +6690,16 @@ Decl *Sema::ActOnFinishFunctionBody(Decl *dcl, Stmt *Body,
       DiagnoseSizeOfParametersAndReturnValue(MD->param_begin(), MD->param_end(),
                                              MD->getResultType(), MD);
     }
+    if (ObjCShouldCallSuperDealloc) {
+      Diag(MD->getLocEnd(), diag::warn_objc_missing_super_dealloc);
+      ObjCShouldCallSuperDealloc = false;
+    }
   } else {
     return 0;
   }
+
+  assert(!ObjCShouldCallSuperDealloc && "This should only be set for "
+         "ObjC methods, which should have been handled in the block above.");
 
   // Verify and clean out per-function state.
   if (Body) {

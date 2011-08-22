@@ -96,6 +96,7 @@ def OutOfLineDeclaration : DiagGroup<"out-of-line-declaration">;
 def : DiagGroup<"overflow">;
 def OverlengthStrings : DiagGroup<"overlength-strings">;
 def OverloadedVirtual : DiagGroup<"overloaded-virtual">;
+def ObjCMissingSuperCalls : DiagGroup<"objc-missing-super-calls">;
 def Packed : DiagGroup<"packed">;
 def Padded : DiagGroup<"padded">;
 def PointerArith : DiagGroup<"pointer-arith">;
@@ -273,6 +274,7 @@ def Most : DiagGroup<"most", [
     UnknownPragmas,
     Unused,
     VolatileRegisterVar,
+    ObjCMissingSuperCalls,
     OverloadedVirtual
  ]>;
 
