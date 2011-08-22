@@ -199,9 +199,7 @@ Decl *Parser::ParseObjCAtInterfaceDeclaration(SourceLocation atLoc,
     if (Tok.is(tok::l_brace))
       ParseObjCClassInstanceVariables(CategoryType, tok::objc_private, atLoc);
       
-    Actions.ActOnObjCContainerStartDefinition(CategoryType);
-    ParseObjCInterfaceDeclList(tok::objc_not_keyword);
-    Actions.ActOnObjCContainerFinishDefinition(CategoryType);
+    ParseObjCInterfaceDeclList(tok::objc_not_keyword, CategoryType);
     return CategoryType;
   }
   // Parse a class interface.
@@ -243,9 +241,7 @@ Decl *Parser::ParseObjCAtInterfaceDeclaration(SourceLocation atLoc,
   if (Tok.is(tok::l_brace))
     ParseObjCClassInstanceVariables(ClsType, tok::objc_protected, atLoc);
 
-  Actions.ActOnObjCContainerStartDefinition(ClsType);
-  ParseObjCInterfaceDeclList(tok::objc_interface);
-  Actions.ActOnObjCContainerFinishDefinition(ClsType);
+  ParseObjCInterfaceDeclList(tok::objc_interface, ClsType);
   return ClsType;
 }
 
@@ -317,14 +313,16 @@ struct Parser::ObjCPropertyCallback : FieldCallback {
 ///     @required
 ///     @optional
 ///
-void Parser::ParseObjCInterfaceDeclList(tok::ObjCKeywordKind contextKey) {
+void Parser::ParseObjCInterfaceDeclList(tok::ObjCKeywordKind contextKey, 
+                                        Decl *CDecl) {
   SmallVector<Decl *, 32> allMethods;
   SmallVector<Decl *, 16> allProperties;
   SmallVector<DeclGroupPtrTy, 8> allTUVariables;
   tok::ObjCKeywordKind MethodImplKind = tok::objc_not_keyword;
 
   SourceRange AtEnd;
-
+  Actions.ActOnObjCContainerStartDefinition(CDecl);
+    
   while (1) {
     // If this is a method prototype, parse it.
     if (Tok.is(tok::minus) || Tok.is(tok::plus)) {
@@ -461,6 +459,7 @@ void Parser::ParseObjCInterfaceDeclList(tok::ObjCKeywordKind contextKey) {
                      allMethods.data(), allMethods.size(),
                      allProperties.data(), allProperties.size(),
                      allTUVariables.data(), allTUVariables.size());
+  Actions.ActOnObjCContainerFinishDefinition(CDecl);
 }
 
 ///   Parse property attribute declarations.
@@ -1292,10 +1291,7 @@ Decl *Parser::ParseObjCAtProtocolDeclaration(SourceLocation AtLoc,
                                         ProtocolLocs.data(),
                                         EndProtoLoc, attrs.getList());
 
-
-  Actions.ActOnObjCContainerStartDefinition(ProtoType);
-  ParseObjCInterfaceDeclList(tok::objc_protocol);
-  Actions.ActOnObjCContainerFinishDefinition(ProtoType);
+  ParseObjCInterfaceDeclList(tok::objc_protocol, ProtoType);
   return ProtoType;
 }
 
