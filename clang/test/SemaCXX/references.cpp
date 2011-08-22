@@ -134,3 +134,6 @@ namespace PR7149 {
 namespace PR8608 {
   bool& f(unsigned char& c) { return (bool&)c; }
 }
+
+// The following crashed trying to recursively evaluate the LValue.
+const int &do_not_crash = do_not_crash;
