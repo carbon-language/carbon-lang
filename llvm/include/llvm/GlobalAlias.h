@@ -87,7 +87,7 @@ struct OperandTraits<GlobalAlias> :
   public FixedNumOperandTraits<GlobalAlias, 1> {
 };
 
-DEFINE_TRANSPARENT_CASTED_OPERAND_ACCESSORS(GlobalAlias, Constant)
+DEFINE_TRANSPARENT_OPERAND_ACCESSORS(GlobalAlias, Constant)
 
 } // End llvm namespace
 
