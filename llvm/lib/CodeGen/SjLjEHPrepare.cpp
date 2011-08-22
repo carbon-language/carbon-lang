@@ -26,6 +26,7 @@
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include <set>
@@ -52,6 +53,7 @@ namespace {
     Constant *CallSiteFn;
     Constant *DispatchSetupFn;
     Value *CallSite;
+    DenseMap<InvokeInst*, BasicBlock*> LPadSuccMap;
   public:
     static char ID; // Pass identification, replacement for typeid
     explicit SjLjEHPass(const TargetLowering *tli = NULL)
@@ -158,7 +160,12 @@ void SjLjEHPass::markInvokeCallSite(InvokeInst *II, int InvokeNo,
   CallInst::Create(CallSiteFn, CallSiteNoC, "", II);
 
   // Add a switch case to our unwind block.
-  CatchSwitch->addCase(SwitchValC, II->getUnwindDest());
+  if (BasicBlock *SuccBB = LPadSuccMap[II]) {
+    CatchSwitch->addCase(SwitchValC, SuccBB);
+  } else {
+    CatchSwitch->addCase(SwitchValC, II->getUnwindDest());
+  }
+
   // We still want this to look like an invoke so we emit the LSDA properly,
   // so we don't transform the invoke into a call here.
 }
@@ -184,7 +191,17 @@ splitLiveRangesAcrossInvokes(SmallVector<InvokeInst*,16> &Invokes) {
   for (unsigned i = 0, e = Invokes.size(); i != e; ++i) {
     InvokeInst *II = Invokes[i];
     SplitCriticalEdge(II, 0, this);
-    SplitCriticalEdge(II, 1, this);
+
+    // FIXME: New EH - This if-condition will be always true in the new scheme.
+    if (II->getUnwindDest()->isLandingPad()) {
+      SmallVector<BasicBlock*, 2> NewBBs;
+      SplitLandingPadPredecessors(II->getUnwindDest(), II->getParent(),
+                                  ".1", ".2", this, NewBBs);
+      LPadSuccMap[II] = *succ_begin(NewBBs[0]);
+    } else {
+      SplitCriticalEdge(II, 1, this);
+    }
+
     assert(!isa<PHINode>(II->getNormalDest()) &&
            !isa<PHINode>(II->getUnwindDest()) &&
            "Critical edge splitting left single entry phi nodes?");
@@ -296,6 +313,44 @@ splitLiveRangesAcrossInvokes(SmallVector<InvokeInst*,16> &Invokes) {
     }
 }
 
+/// CreateLandingPadLoad - Load the exception handling values and insert them
+/// into a structure.
+static Instruction *CreateLandingPadLoad(Function &F, Value *ExnAddr,
+                                         Value *SelAddr,
+                                         BasicBlock::iterator InsertPt) {
+  Value *Exn = new LoadInst(ExnAddr, "exn", false,
+                            InsertPt);
+  Type *Ty = Type::getInt8PtrTy(F.getContext());
+  Exn = CastInst::Create(Instruction::IntToPtr, Exn, Ty, "", InsertPt);
+  Value *Sel = new LoadInst(SelAddr, "sel", false, InsertPt);
+
+  Ty = StructType::get(Exn->getType(), Sel->getType(), NULL);
+  InsertValueInst *LPadVal = InsertValueInst::Create(llvm::UndefValue::get(Ty),
+                                                     Exn, 0,
+                                                     "lpad.val", InsertPt);
+  return InsertValueInst::Create(LPadVal, Sel, 1, "lpad.val", InsertPt);
+}
+
+/// ReplaceLandingPadVal - Replace the landingpad instruction's value with a
+/// load from the stored values (via CreateLandingPadLoad). This looks through
+/// PHI nodes, and removes them if they are dead.
+static void ReplaceLandingPadVal(Function &F, Instruction *Inst, Value *ExnAddr,
+                                 Value *SelAddr) {
+  if (Inst->use_empty()) return;
+
+  while (!Inst->use_empty()) {
+    Instruction *I = cast<Instruction>(Inst->use_back());
+
+    if (PHINode *PN = dyn_cast<PHINode>(I)) {
+      ReplaceLandingPadVal(F, PN, ExnAddr, SelAddr);
+      if (PN->use_empty()) PN->eraseFromParent();
+      continue;
+    }
+
+    Inst->replaceAllUsesWith(CreateLandingPadLoad(F, ExnAddr, SelAddr, I));
+  }
+}
+
 bool SjLjEHPass::insertSjLjEHSupport(Function &F) {
   SmallVector<ReturnInst*,16> Returns;
   SmallVector<UnwindInst*,16> Unwinds;
@@ -350,6 +405,10 @@ bool SjLjEHPass::insertSjLjEHSupport(Function &F) {
         }
       } else if (AllocaInst *AI = dyn_cast<AllocaInst>(I)) {
         JmpbufUpdatePoints.push_back(AI);
+      } else if (InvokeInst *II = dyn_cast<InvokeInst>(I)) {
+        // FIXME: This will be always non-NULL in the new EH.
+        if (LandingPadInst *LPI = II->getUnwindDest()->getLandingPadInst())
+          if (!PersonalityFn) PersonalityFn = LPI->getPersonalityFn();
       }
     }
   }
@@ -367,6 +426,16 @@ bool SjLjEHPass::insertSjLjEHSupport(Function &F) {
   // the unwind edge.  This process also splits all critical edges coming out of
   // invoke's.
   splitLiveRangesAcrossInvokes(Invokes);
+
+
+  SmallVector<LandingPadInst*, 16> LandingPads;
+  for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
+    if (InvokeInst *II = dyn_cast<InvokeInst>(BB->getTerminator()))
+      // FIXME: This will be always non-NULL in the new EH.
+      if (LandingPadInst *LPI = II->getUnwindDest()->getLandingPadInst())
+        LandingPads.push_back(LPI);
+  }
+
 
   BasicBlock *EntryBB = F.begin();
   // Create an alloca for the incoming jump buffer ptr and the new jump buffer
@@ -424,6 +493,9 @@ bool SjLjEHPass::insertSjLjEHSupport(Function &F) {
     I->replaceAllUsesWith(Val);
     I->eraseFromParent();
   }
+
+  for (unsigned i = 0, e = LandingPads.size(); i != e; ++i)
+    ReplaceLandingPadVal(F, LandingPads[i], ExceptionAddr, SelectorAddr);
 
   // The entry block changes to have the eh.sjlj.setjmp, with a conditional
   // branch to a dispatch block for non-zero returns. If we return normally,
