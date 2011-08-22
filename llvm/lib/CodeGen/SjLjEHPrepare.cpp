@@ -21,13 +21,13 @@
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/Passes.h"
-#include "llvm/Support/Debug.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/Statistic.h"
 #include <set>
 using namespace llvm;
 
@@ -37,9 +37,7 @@ STATISTIC(NumSpilled, "Number of registers live across unwind edges");
 
 namespace {
   class SjLjEHPass : public FunctionPass {
-
     const TargetLowering *TLI;
-
     Type *FunctionContextTy;
     Constant *RegisterFn;
     Constant *UnregisterFn;
@@ -53,7 +51,6 @@ namespace {
     Constant *ExceptionFn;
     Constant *CallSiteFn;
     Constant *DispatchSetupFn;
-
     Value *CallSite;
   public:
     static char ID; // Pass identification, replacement for typeid
@@ -62,7 +59,7 @@ namespace {
     bool doInitialization(Module &M);
     bool runOnFunction(Function &F);
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const { }
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {}
     const char *getPassName() const {
       return "SJLJ Exception Handling preparation";
     }
@@ -190,7 +187,7 @@ splitLiveRangesAcrossInvokes(SmallVector<InvokeInst*,16> &Invokes) {
     SplitCriticalEdge(II, 1, this);
     assert(!isa<PHINode>(II->getNormalDest()) &&
            !isa<PHINode>(II->getUnwindDest()) &&
-           "critical edge splitting left single entry phi nodes?");
+           "Critical edge splitting left single entry phi nodes?");
   }
 
   Function *F = Invokes.back()->getParent()->getParent();
