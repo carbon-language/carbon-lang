@@ -472,14 +472,19 @@ void CodeGenModule::SetLLVMFunctionAttributesForDefinition(const Decl *D,
   if (!Features.Exceptions && !Features.ObjCNonFragileABI)
     F->addFnAttr(llvm::Attribute::NoUnwind);
 
-  if (D->hasAttr<AlwaysInlineAttr>())
-    F->addFnAttr(llvm::Attribute::AlwaysInline);
-
-  if (D->hasAttr<NakedAttr>())
+  if (D->hasAttr<NakedAttr>()) {
+    // Naked implies noinline: we should not be inlining such functions.
     F->addFnAttr(llvm::Attribute::Naked);
+    F->addFnAttr(llvm::Attribute::NoInline);
+  }
 
   if (D->hasAttr<NoInlineAttr>())
     F->addFnAttr(llvm::Attribute::NoInline);
+
+  // (noinline wins over always_inline, and we can't specify both in IR)
+  if (D->hasAttr<AlwaysInlineAttr>() &&
+      !F->hasFnAttr(llvm::Attribute::NoInline))
+    F->addFnAttr(llvm::Attribute::AlwaysInline);
 
   if (isa<CXXConstructorDecl>(D) || isa<CXXDestructorDecl>(D))
     F->setUnnamedAddr(true);
