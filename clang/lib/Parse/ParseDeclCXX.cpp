@@ -52,9 +52,7 @@ Decl *Parser::ParseNamespace(unsigned Context,
                              SourceLocation InlineLoc) {
   assert(Tok.is(tok::kw_namespace) && "Not a namespace!");
   SourceLocation NamespaceLoc = ConsumeToken();  // eat the 'namespace'.
-  Decl *DC = getObjCDeclContext();
-  if (DC)
-    Actions.ActOnObjCContainerFinishDefinition(DC);
+  ObjCDeclContextSwitch ObjCDC(*this);
     
   if (Tok.is(tok::code_completion)) {
     Actions.CodeCompleteNamespaceDecl(getCurScope());
@@ -92,10 +90,7 @@ Decl *Parser::ParseNamespace(unsigned Context,
     if (InlineLoc.isValid())
       Diag(InlineLoc, diag::err_inline_namespace_alias)
           << FixItHint::CreateRemoval(InlineLoc);
-    Decl *Res = ParseNamespaceAlias(NamespaceLoc, IdentLoc, Ident, DeclEnd);
-    if (DC)
-      Actions.ActOnObjCContainerStartDefinition(DC);
-    return Res;
+    return ParseNamespaceAlias(NamespaceLoc, IdentLoc, Ident, DeclEnd);
   }
 
 
@@ -106,8 +101,6 @@ Decl *Parser::ParseNamespace(unsigned Context,
     }
     Diag(Tok, Ident ? diag::err_expected_lbrace :
          diag::err_expected_ident_lbrace);
-    if (DC)
-      Actions.ActOnObjCContainerStartDefinition(DC);
     return 0;
   }
 
@@ -122,8 +115,6 @@ Decl *Parser::ParseNamespace(unsigned Context,
     }
     Diag(LBrace, diag::err_namespace_nonnamespace_scope);
     SkipUntil(tok::r_brace, false);
-    if (DC)
-      Actions.ActOnObjCContainerStartDefinition(DC);
     return 0;
   }
 
@@ -182,8 +173,6 @@ Decl *Parser::ParseNamespace(unsigned Context,
   Actions.ActOnFinishNamespaceDef(NamespcDecl, RBraceLoc);
 
   DeclEnd = RBraceLoc;
-  if (DC)
-    Actions.ActOnObjCContainerStartDefinition(DC);
   return NamespcDecl;
 }
 
@@ -328,9 +317,8 @@ Decl *Parser::ParseUsingDirectiveOrDeclaration(unsigned Context,
                                              ParsedAttributesWithRange &attrs,
                                                Decl **OwnedType) {
   assert(Tok.is(tok::kw_using) && "Not using token");
-  Decl *DC = getObjCDeclContext();
-  if (DC)
-    Actions.ActOnObjCContainerFinishDefinition(DC);
+  ObjCDeclContextSwitch ObjCDC(*this);
+  
   // Eat 'using'.
   SourceLocation UsingLoc = ConsumeToken();
 
@@ -348,10 +336,7 @@ Decl *Parser::ParseUsingDirectiveOrDeclaration(unsigned Context,
         << R << FixItHint::CreateRemoval(R);
     }
 
-    Decl *Res = ParseUsingDirective(Context, UsingLoc, DeclEnd, attrs);
-    if (DC)
-      Actions.ActOnObjCContainerStartDefinition(DC);
-    return Res;
+    return ParseUsingDirective(Context, UsingLoc, DeclEnd, attrs);
   }
 
   // Otherwise, it must be a using-declaration or an alias-declaration.
@@ -359,11 +344,8 @@ Decl *Parser::ParseUsingDirectiveOrDeclaration(unsigned Context,
   // Using declarations can't have attributes.
   ProhibitAttributes(attrs);
 
-  Decl *Res = ParseUsingDeclaration(Context, TemplateInfo, UsingLoc, DeclEnd,
+  return ParseUsingDeclaration(Context, TemplateInfo, UsingLoc, DeclEnd,
                                     AS_none, OwnedType);
-  if (DC)
-    Actions.ActOnObjCContainerStartDefinition(DC);
-  return Res;
 }
 
 /// ParseUsingDirective - Parse C++ using-directive, assumes

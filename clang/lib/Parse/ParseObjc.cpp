@@ -776,9 +776,8 @@ ParsedType Parser::ParseObjCTypeName(ObjCDeclSpec &DS,
 
   SourceLocation LParenLoc = ConsumeParen();
   SourceLocation TypeStartLoc = Tok.getLocation();
-  Decl *DC = getObjCDeclContext();
-  if (DC)
-    Actions.ActOnObjCContainerFinishDefinition(DC);
+  ObjCDeclContextSwitch ObjCDC(*this);
+
   // Parse type qualifiers, in, inout, etc.
   ParseObjCTypeQualifierList(DS, Context);
 
@@ -801,8 +800,6 @@ ParsedType Parser::ParseObjCTypeName(ObjCDeclSpec &DS,
     // place.  Emit an error then return what we have as the type.
     MatchRHSPunctuation(tok::r_paren, LParenLoc);
   }
-  if (DC)
-    Actions.ActOnObjCContainerStartDefinition(DC);
   return Ty;
 }
 

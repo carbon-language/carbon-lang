@@ -503,6 +503,23 @@ private:
     }
   };
 
+  /// ObjCDeclContextSwitch - An object used to switch context from
+  /// an objective-c decl context to its enclosing decl context and
+  /// back.
+  class ObjCDeclContextSwitch {
+    Parser &P;
+    Decl *DC;
+  public:
+    explicit ObjCDeclContextSwitch(Parser &p) : P(p), 
+               DC(p.getObjCDeclContext()) {
+      if (DC)
+        P.Actions.ActOnObjCContainerFinishDefinition(DC);
+    }
+    ~ObjCDeclContextSwitch() {
+      if (DC)
+        P.Actions.ActOnObjCContainerStartDefinition(DC);
+    }
+  };
 
   SourceLocation MatchRHSPunctuation(tok::TokenKind RHSTok,
                                      SourceLocation LHSLoc);
