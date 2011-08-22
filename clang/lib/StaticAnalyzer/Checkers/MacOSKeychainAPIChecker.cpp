@@ -68,9 +68,13 @@ private:
     const char* Name;
     unsigned int Param;
     unsigned int DeallocatorIdx;
+    /// The flag specifies if the call is valid or is a result of a common user
+    /// error (Ex: free instead of SecKeychainItemFreeContent), which we also
+    /// track for better diagnostics.
+    bool isValid;
   };
   static const unsigned InvalidIdx = 100000;
-  static const unsigned FunctionsToTrackSize = 6;
+  static const unsigned FunctionsToTrackSize = 7;
   static const ADFunctionInfo FunctionsToTrack[FunctionsToTrackSize];
   /// The value, which represents no error return value for allocator functions.
   static const unsigned NoErr = 0;
@@ -129,12 +133,13 @@ static bool isEnclosingFunctionParam(const Expr *E) {
 
 const MacOSKeychainAPIChecker::ADFunctionInfo
   MacOSKeychainAPIChecker::FunctionsToTrack[FunctionsToTrackSize] = {
-    {"SecKeychainItemCopyContent", 4, 3},                       // 0
-    {"SecKeychainFindGenericPassword", 6, 3},                   // 1
-    {"SecKeychainFindInternetPassword", 13, 3},                 // 2
-    {"SecKeychainItemFreeContent", 1, InvalidIdx},              // 3
-    {"SecKeychainItemCopyAttributesAndData", 5, 5},             // 4
-    {"SecKeychainItemFreeAttributesAndData", 1, InvalidIdx},    // 5
+    {"SecKeychainItemCopyContent", 4, 3, true},                       // 0
+    {"SecKeychainFindGenericPassword", 6, 3, true},                   // 1
+    {"SecKeychainFindInternetPassword", 13, 3, true},                 // 2
+    {"SecKeychainItemFreeContent", 1, InvalidIdx, true},              // 3
+    {"SecKeychainItemCopyAttributesAndData", 5, 5, true},             // 4
+    {"SecKeychainItemFreeAttributesAndData", 1, InvalidIdx, true},    // 5
+    {"free", 0, InvalidIdx, false},                                   // 6
 };
 
 unsigned MacOSKeychainAPIChecker::getTrackedFunctionIndex(StringRef Name,
@@ -257,6 +262,9 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
   if (idx == InvalidIdx)
     return;
 
+  // We also track invalid deallocators. Ex: free() for enhanced error messages.
+  bool isValidDeallocator = FunctionsToTrack[idx].isValid;
+
   // Check the argument to the deallocator.
   const Expr *ArgExpr = CE->getArg(FunctionsToTrack[idx].Param);
   SVal ArgSVal = State->getSVal(ArgExpr);
@@ -280,7 +288,7 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
   // TODO: We might want a more precise diagnostic for double free
   // (that would involve tracking all the freed symbols in the checker state).
   const AllocationState *AS = State->get<AllocatedData>(ArgSM);
-  if (!AS || RegionArgIsBad) {
+  if ((!AS || RegionArgIsBad) && isValidDeallocator) {
     // It is possible that this is a false positive - the argument might
     // have entered as an enclosing function parameter.
     if (isEnclosingFunctionParam(ArgExpr))
@@ -305,7 +313,7 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
   // tracking the allocated symbol to avoid reporting a missing free after the
   // deallocator mismatch error.
   unsigned int PDeallocIdx = FunctionsToTrack[AS->AllocatorIdx].DeallocatorIdx;
-  if (PDeallocIdx != idx) {
+  if (PDeallocIdx != idx || !isValidDeallocator) {
     ExplodedNode *N = C.generateNode(State);
     if (!N)
       return;
@@ -313,7 +321,7 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
 
     llvm::SmallString<80> sbuf;
     llvm::raw_svector_ostream os(sbuf);
-    os << "Allocator doesn't match the deallocator: '"
+    os << "Deallocator doesn't match the allocator: '"
        << FunctionsToTrack[PDeallocIdx].Name << "' should be used.";
     BugReport *Report = new BugReport(*BT, os.str(), N);
     Report->addRange(ArgExpr->getSourceRange());

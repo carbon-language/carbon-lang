@@ -176,7 +176,7 @@ int apiMismatch(SecKeychainItemRef itemRef,
   st = SecKeychainItemCopyAttributesAndData(itemRef, info, itemClass, 
                                             &attrList, &length, &outData); 
   if (st == noErr)
-    SecKeychainItemFreeContent(attrList, outData); // expected-warning{{Allocator doesn't match the deallocator}}
+    SecKeychainItemFreeContent(attrList, outData); // expected-warning{{Deallocator doesn't match the allocator}}
   return 0;
 }
 
@@ -225,3 +225,15 @@ int foo(CFTypeRef keychainOrArray, SecProtocolType protocol,
   }
   return 0;
 }// no-warning
+
+void free(void *ptr);
+void deallocateWithFree() {
+    unsigned int *ptr = 0;
+    OSStatus st = 0;
+    UInt32 length;
+    void *outData;
+    st = SecKeychainItemCopyContent(2, ptr, ptr, &length, &outData);
+    if (st == noErr)
+      free(outData); // expected-warning{{Deallocator doesn't match the allocator: 'SecKeychainItemFreeContent' should be used}}
+}
+
