@@ -391,3 +391,11 @@ _func:
 @ CHECK: rev	r6, r3                  @ encoding: [0x1e,0xba]
 @ CHECK: rev16	r7, r2                  @ encoding: [0x57,0xba]
 @ CHECK: revsh	r5, r1                  @ encoding: [0xcd,0xba]
+
+
+@------------------------------------------------------------------------------
+@ ROR
+@------------------------------------------------------------------------------
+        rors r2, r7
+
+@ CHECK: rors	r2, r7                  @ encoding: [0xfa,0x41]
