@@ -175,6 +175,10 @@ static DecodeStatus DecodeVST3LN(llvm::MCInst &Inst, unsigned Insn,
                                uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeVST4LN(llvm::MCInst &Inst, unsigned Insn,
                                uint64_t Address, const void *Decoder);
+static DecodeStatus DecodeVMOVSRR(llvm::MCInst &Inst, unsigned Insn,
+                               uint64_t Address, const void *Decoder);
+static DecodeStatus DecodeVMOVRRS(llvm::MCInst &Inst, unsigned Insn,
+                               uint64_t Address, const void *Decoder);
 
 
 static DecodeStatus DecodeThumbAddSpecialReg(llvm::MCInst &Inst, uint16_t Insn,
@@ -3195,3 +3199,44 @@ static DecodeStatus DecodeVST4LN(llvm::MCInst &Inst, unsigned Insn,
   return S;
 }
 
+static DecodeStatus DecodeVMOVSRR(llvm::MCInst &Inst, unsigned Insn,
+                                  uint64_t Address, const void *Decoder) {
+  DecodeStatus S = Success;
+  unsigned Rt  = fieldFromInstruction32(Insn, 12, 4);
+  unsigned Rt2 = fieldFromInstruction32(Insn, 16, 4);
+  unsigned Rm  = fieldFromInstruction32(Insn,  0, 4);
+  unsigned pred = fieldFromInstruction32(Insn, 28, 4);
+  Rm |= fieldFromInstruction32(Insn, 5, 1) << 4;
+
+  if (Rt == 0xF || Rt2 == 0xF || Rm == 0x1F)
+    CHECK(S, Unpredictable);
+
+  CHECK(S, DecodeSPRRegisterClass(Inst, Rm  , Address, Decoder));
+  CHECK(S, DecodeSPRRegisterClass(Inst, Rm+1, Address, Decoder));
+  CHECK(S, DecodeGPRRegisterClass(Inst, Rt  , Address, Decoder));
+  CHECK(S, DecodeGPRRegisterClass(Inst, Rt2 , Address, Decoder));
+  CHECK(S, DecodePredicateOperand(Inst, pred, Address, Decoder));
+
+  return S;
+}
+
+static DecodeStatus DecodeVMOVRRS(llvm::MCInst &Inst, unsigned Insn,
+                                  uint64_t Address, const void *Decoder) {
+  DecodeStatus S = Success;
+  unsigned Rt  = fieldFromInstruction32(Insn, 12, 4);
+  unsigned Rt2 = fieldFromInstruction32(Insn, 16, 4);
+  unsigned Rm  = fieldFromInstruction32(Insn,  0, 4);
+  unsigned pred = fieldFromInstruction32(Insn, 28, 4);
+  Rm |= fieldFromInstruction32(Insn, 5, 1) << 4;
+
+  if (Rt == 0xF || Rt2 == 0xF || Rm == 0x1F)
+    CHECK(S, Unpredictable);
+
+  CHECK(S, DecodeGPRRegisterClass(Inst, Rt  , Address, Decoder));
+  CHECK(S, DecodeGPRRegisterClass(Inst, Rt2 , Address, Decoder));
+  CHECK(S, DecodeSPRRegisterClass(Inst, Rm  , Address, Decoder));
+  CHECK(S, DecodeSPRRegisterClass(Inst, Rm+1, Address, Decoder));
+  CHECK(S, DecodePredicateOperand(Inst, pred, Address, Decoder));
+
+  return S;
+}

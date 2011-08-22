@@ -521,6 +521,7 @@ def VMOVRRS  : AVConv3I<0b11000101, 0b1010,
   // Some single precision VFP instructions may be executed on both NEON and VFP
   // pipelines.
   let D = VFPNeonDomain;
+  let DecoderMethod = "DecodeVMOVRRS";
 }
 } // neverHasSideEffects
 
@@ -559,6 +560,8 @@ def VMOVSRR : AVConv5I<0b11000100, 0b1010,
   // Some single precision VFP instructions may be executed on both NEON and VFP
   // pipelines.
   let D = VFPNeonDomain;
+
+  let DecoderMethod = "DecodeVMOVSRR";
 }
 
 // FMRDH: SPR -> GPR
