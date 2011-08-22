@@ -894,8 +894,15 @@ public:
   }
 
   bool isObjCContainer() const {
-    return (DeclKind >= (int)Decl::ObjCCategory &&
-            DeclKind <= (int)Decl::ObjCProtocol);
+    switch (DeclKind) {
+        case Decl::ObjCCategory:
+        case Decl::ObjCCategoryImpl:
+        case Decl::ObjCImplementation:
+        case Decl::ObjCInterface:
+        case Decl::ObjCProtocol:
+            return true;
+    }
+    return false;
   }
 
   bool isFunctionOrMethod() const {
