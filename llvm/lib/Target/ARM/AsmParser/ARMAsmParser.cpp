@@ -3029,6 +3029,19 @@ bool ARMAsmParser::ParseInstruction(StringRef Name, SMLoc NameLoc,
       delete Op;
     }
   }
+  // Similarly, the Thumb1 "RSB" instruction has a literal "#0" on the
+  // end. Convert it to a token here.
+  if (Mnemonic == "rsb" && isThumb() && Operands.size() == 6 &&
+      static_cast<ARMOperand*>(Operands[5])->isImm()) {
+    ARMOperand *Op = static_cast<ARMOperand*>(Operands[5]);
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Op->getImm());
+    if (CE && CE->getValue() == 0) {
+      Operands.erase(Operands.begin() + 5);
+      Operands.push_back(ARMOperand::CreateToken("#0", Op->getStartLoc()));
+      delete Op;
+    }
+  }
+
   return false;
 }
 
