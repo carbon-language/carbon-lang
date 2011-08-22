@@ -2772,7 +2772,7 @@ protected:
 
 /// CompoundAssignOperator - For compound assignments (e.g. +=), we keep
 /// track of the type the operation is performed in.  Due to the semantics of
-/// these operators, the operands are promoted, the aritmetic performed, an
+/// these operators, the operands are promoted, the arithmetic performed, an
 /// implicit conversion back to the result type done, then the assignment takes
 /// place.  This captures the intermediate type which the computation is done
 /// in.
