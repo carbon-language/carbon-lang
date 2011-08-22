@@ -1992,7 +1992,7 @@ static DecodeStatus DecodeVLD1DupInstruction(llvm::MCInst &Inst, unsigned Insn,
   if (regs == 2) {
     CHECK(S, DecodeDPRRegisterClass(Inst, (Rd+1)%32, Address, Decoder));
   }
-  if (Rm == 0xD) {
+  if (Rm != 0xF) {
     CHECK(S, DecodeGPRRegisterClass(Inst, Rn, Address, Decoder));
   }
 
@@ -2023,7 +2023,7 @@ static DecodeStatus DecodeVLD2DupInstruction(llvm::MCInst &Inst, unsigned Insn,
 
   CHECK(S, DecodeDPRRegisterClass(Inst, Rd, Address, Decoder));
   CHECK(S, DecodeDPRRegisterClass(Inst, (Rd+inc)%32, Address, Decoder));
-  if (Rm == 0xD) {
+  if (Rm != 0xF) {
     CHECK(S, DecodeGPRRegisterClass(Inst, Rn, Address, Decoder));
   }
 
@@ -2052,7 +2052,7 @@ static DecodeStatus DecodeVLD3DupInstruction(llvm::MCInst &Inst, unsigned Insn,
   CHECK(S, DecodeDPRRegisterClass(Inst, Rd, Address, Decoder));
   CHECK(S, DecodeDPRRegisterClass(Inst, (Rd+inc)%32, Address, Decoder));
   CHECK(S, DecodeDPRRegisterClass(Inst, (Rd+2*inc)%32, Address, Decoder));
-  if (Rm == 0xD) {
+  if (Rm != 0xF) {
     CHECK(S, DecodeGPRRegisterClass(Inst, Rn, Address, Decoder));
   }
 
@@ -2097,7 +2097,7 @@ static DecodeStatus DecodeVLD4DupInstruction(llvm::MCInst &Inst, unsigned Insn,
   CHECK(S, DecodeDPRRegisterClass(Inst, (Rd+inc)%32, Address, Decoder));
   CHECK(S, DecodeDPRRegisterClass(Inst, (Rd+2*inc)%32, Address, Decoder));
   CHECK(S, DecodeDPRRegisterClass(Inst, (Rd+3*inc)%32, Address, Decoder));
-  if (Rm == 0xD) {
+  if (Rm != 0xF) {
     CHECK(S, DecodeGPRRegisterClass(Inst, Rn, Address, Decoder));
   }
 
