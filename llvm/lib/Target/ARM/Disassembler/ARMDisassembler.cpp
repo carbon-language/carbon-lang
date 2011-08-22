@@ -2769,8 +2769,11 @@ static DecodeStatus DecodeVLD1LN(llvm::MCInst &Inst, unsigned Insn,
   }
   CHECK(S, DecodeGPRRegisterClass(Inst, Rn, Address, Decoder));
   Inst.addOperand(MCOperand::CreateImm(align));
-  if (Rm != 0xF && Rm != 0xD) {
-    CHECK(S, DecodeGPRRegisterClass(Inst, Rm, Address, Decoder));
+  if (Rm != 0xF) {
+    if (Rm != 0xD)
+      CHECK(S, DecodeGPRRegisterClass(Inst, Rm, Address, Decoder));
+    else
+      Inst.addOperand(MCOperand::CreateReg(0));
   }
 
   CHECK(S, DecodeDPRRegisterClass(Inst, Rd, Address, Decoder));
@@ -2819,8 +2822,11 @@ static DecodeStatus DecodeVST1LN(llvm::MCInst &Inst, unsigned Insn,
   }
   CHECK(S, DecodeGPRRegisterClass(Inst, Rn, Address, Decoder));
   Inst.addOperand(MCOperand::CreateImm(align));
-  if (Rm != 0xF && Rm != 0xD) {
-    CHECK(S, DecodeGPRRegisterClass(Inst, Rm, Address, Decoder));
+  if (Rm != 0xF) {
+    if (Rm != 0xD)
+      CHECK(S, DecodeGPRRegisterClass(Inst, Rm, Address, Decoder));
+    else
+      Inst.addOperand(MCOperand::CreateReg(0));
   }
 
   CHECK(S, DecodeDPRRegisterClass(Inst, Rd, Address, Decoder));
@@ -2876,8 +2882,11 @@ static DecodeStatus DecodeVLD2LN(llvm::MCInst &Inst, unsigned Insn,
   }
   CHECK(S, DecodeGPRRegisterClass(Inst, Rn, Address, Decoder));
   Inst.addOperand(MCOperand::CreateImm(align));
-  if (Rm != 0xF && Rm != 0xD) {
-    CHECK(S, DecodeGPRRegisterClass(Inst, Rm, Address, Decoder));
+  if (Rm != 0xF) {
+    if (Rm != 0xD)
+      CHECK(S, DecodeGPRRegisterClass(Inst, Rm, Address, Decoder));
+    else
+      Inst.addOperand(MCOperand::CreateReg(0));
   }
 
   CHECK(S, DecodeDPRRegisterClass(Inst, Rd, Address, Decoder));
@@ -2931,8 +2940,11 @@ static DecodeStatus DecodeVST2LN(llvm::MCInst &Inst, unsigned Insn,
   }
   CHECK(S, DecodeGPRRegisterClass(Inst, Rn, Address, Decoder));
   Inst.addOperand(MCOperand::CreateImm(align));
-  if (Rm != 0xF && Rm != 0xD) {
-    CHECK(S, DecodeGPRRegisterClass(Inst, Rm, Address, Decoder));
+  if (Rm != 0xF) {
+    if (Rm != 0xD)
+      CHECK(S, DecodeGPRRegisterClass(Inst, Rm, Address, Decoder));
+    else
+      Inst.addOperand(MCOperand::CreateReg(0));
   }
 
   CHECK(S, DecodeDPRRegisterClass(Inst, Rd, Address, Decoder));
@@ -2989,8 +3001,11 @@ static DecodeStatus DecodeVLD3LN(llvm::MCInst &Inst, unsigned Insn,
   }
   CHECK(S, DecodeGPRRegisterClass(Inst, Rn, Address, Decoder));
   Inst.addOperand(MCOperand::CreateImm(align));
-  if (Rm != 0xF && Rm != 0xD) {
-    CHECK(S, DecodeGPRRegisterClass(Inst, Rm, Address, Decoder));
+  if (Rm != 0xF) { 
+    if (Rm != 0xD)
+      CHECK(S, DecodeGPRRegisterClass(Inst, Rm, Address, Decoder));
+    else
+      Inst.addOperand(MCOperand::CreateReg(0));
   }
 
   CHECK(S, DecodeDPRRegisterClass(Inst, Rd, Address, Decoder));
@@ -3043,8 +3058,11 @@ static DecodeStatus DecodeVST3LN(llvm::MCInst &Inst, unsigned Insn,
   }
   CHECK(S, DecodeGPRRegisterClass(Inst, Rn, Address, Decoder));
   Inst.addOperand(MCOperand::CreateImm(align));
-  if (Rm != 0xF && Rm != 0xD) {
-    CHECK(S, DecodeGPRRegisterClass(Inst, Rm, Address, Decoder));
+  if (Rm != 0xF) {
+    if (Rm != 0xD)
+      CHECK(S, DecodeGPRRegisterClass(Inst, Rm, Address, Decoder));
+    else
+      Inst.addOperand(MCOperand::CreateReg(0));
   }
 
   CHECK(S, DecodeDPRRegisterClass(Inst, Rd, Address, Decoder));
@@ -3103,8 +3121,11 @@ static DecodeStatus DecodeVLD4LN(llvm::MCInst &Inst, unsigned Insn,
   }
   CHECK(S, DecodeGPRRegisterClass(Inst, Rn, Address, Decoder));
   Inst.addOperand(MCOperand::CreateImm(align));
-  if (Rm != 0xF && Rm != 0xD) {
-    CHECK(S, DecodeGPRRegisterClass(Inst, Rm, Address, Decoder));
+  if (Rm != 0xF) {
+    if (Rm != 0xD)
+      CHECK(S, DecodeGPRRegisterClass(Inst, Rm, Address, Decoder));
+    else
+      Inst.addOperand(MCOperand::CreateReg(0));
   }
 
   CHECK(S, DecodeDPRRegisterClass(Inst, Rd, Address, Decoder));
@@ -3158,8 +3179,11 @@ static DecodeStatus DecodeVST4LN(llvm::MCInst &Inst, unsigned Insn,
   }
   CHECK(S, DecodeGPRRegisterClass(Inst, Rn, Address, Decoder));
   Inst.addOperand(MCOperand::CreateImm(align));
-  if (Rm != 0xF && Rm != 0xD) {
-    CHECK(S, DecodeGPRRegisterClass(Inst, Rm, Address, Decoder));
+  if (Rm != 0xF) {
+    if (Rm != 0xD)
+      CHECK(S, DecodeGPRRegisterClass(Inst, Rm, Address, Decoder));
+    else
+      Inst.addOperand(MCOperand::CreateReg(0));
   }
 
   CHECK(S, DecodeDPRRegisterClass(Inst, Rd, Address, Decoder));
