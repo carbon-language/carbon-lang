@@ -144,7 +144,7 @@ Sema::HandlePropertyInClassExtension(Scope *S,
                                      bool *isOverridingProperty,
                                      TypeSourceInfo *T,
                                      tok::ObjCKeywordKind MethodImplKind) {
-  ObjCCategoryDecl *CDecl = dyn_cast<ObjCCategoryDecl>(CurContext);
+  ObjCCategoryDecl *CDecl = cast<ObjCCategoryDecl>(CurContext);
   // Diagnose if this property is already in continuation class.
   DeclContext *DC = CurContext;
   IdentifierInfo *PropertyId = FD.D.getIdentifier();

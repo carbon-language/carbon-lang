@@ -2665,8 +2665,8 @@ Decl *Sema::ActOnMethodDeclaration(
 bool Sema::CheckObjCDeclScope(Decl *D) {
   if (isa<TranslationUnitDecl>(CurContext->getRedeclContext()))
     return false;
-  // Following is also an error. But it is caused my a missing @end
-  // and diagnostic is issued elsewere.
+  // Following is also an error. But it is caused by a missing @end
+  // and diagnostic is issued elsewhere.
   if (isa<ObjCContainerDecl>(CurContext->getRedeclContext())) {
     return false;
   }
