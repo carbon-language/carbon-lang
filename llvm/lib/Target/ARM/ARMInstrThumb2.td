@@ -1238,10 +1238,10 @@ def t2LDRSH_PRE : T2Iidxldst<1, 0b01, 1, 1, (outs GPR:$Rt, GPR:$Rn),
                             AddrModeT2_i8, IndexModePre, IIC_iLoad_bh_iu,
                             "ldrsh", "\t$Rt, $addr!", "$addr.base = $Rn",
                             []>;
-def t2LDRSH_POST : T2Iidxldst<1, 0b01, 1, 0, (outs GPR:$dst, GPR:$Rn),
+def t2LDRSH_POST : T2Iidxldst<1, 0b01, 1, 0, (outs GPR:$Rt, GPR:$Rn),
                             (ins GPR:$base, t2am_imm8_offset:$addr),
                             AddrModeT2_i8, IndexModePost, IIC_iLoad_bh_iu,
-                        "ldrsh", "\t$dst, [$Rn], $addr", "$base = $Rn",
+                        "ldrsh", "\t$Rt, [$Rn], $addr", "$base = $Rn",
                             []>;
 } // mayLoad = 1, neverHasSideEffects = 1
 
