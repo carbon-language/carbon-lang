@@ -121,9 +121,10 @@ void f(int* a) {
 </pre>
 
 <p>However, LLVM is not allowed to transform the former to the latter: it could
-   introduce undefined behavior if another thread can access x at the same time.
-   (This example is particularly of interest because before the concurrency model
-   was implemented, LLVM would perform this transformation.)</p>
+   indirectly introduce undefined behavior if another thread can access x at
+   the same time. (This example is particularly of interest because before the
+   concurrency model was implemented, LLVM would perform this
+   transformation.)</p>
 
 <p>Note that speculative loads are allowed; a load which
    is part of a race returns <code>undef</code>, but does not have undefined
@@ -177,7 +178,7 @@ void f(int* a) {
 <p>In order to achieve a balance between performance and necessary guarantees,
    there are six levels of atomicity. They are listed in order of strength;
    each level includes all the guarantees of the previous level except for
-   Acquire/Release.</p>
+   Acquire/Release. (See also <a href="LangRef.html#ordering">LangRef</a>.)</p>
 
 <!-- ======================================================================= -->
 <h3>
@@ -188,15 +189,15 @@ void f(int* a) {
 
 <p>NotAtomic is the obvious, a load or store which is not atomic. (This isn't
    really a level of atomicity, but is listed here for comparison.) This is
-   essentially a regular load or store. If code accesses a memory location
-   from multiple threads at the same time, the resulting loads return
-   'undef'.</p>
+   essentially a regular load or store. If there is a race on a given memory
+   location, loads from that location return undef.</p>
 
 <dl>
   <dt>Relevant standard</dt>
   <dd>This is intended to match shared variables in C/C++, and to be used
       in any other context where memory access is necessary, and
-      a race is impossible.
+      a race is impossible. (The precise definition is in
+      <a href="LangRef.html#memmodel">LangRef</a>.)
   <dt>Notes for frontends</dt>
   <dd>The rule is essentially that all memory accessed with basic loads and
       stores by multiple threads should be protected by a lock or other

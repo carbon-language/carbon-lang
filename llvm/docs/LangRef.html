@@ -1497,6 +1497,9 @@ or to register signal handlers. Nonetheless, there are platform-specific
 ways to create them, and we define LLVM IR's behavior in their presence. This
 model is inspired by the C++0x memory model.</p>
 
+<p>For a more informal introduction to this model, see the
+<a href="Atomics.html">LLVM Atomic Instructions and Concurrency Guide</a>.
+
 <p>We define a <i>happens-before</i> partial order as the least partial order
 that</p>
 <ul>
@@ -1533,7 +1536,12 @@ any write to the same byte, except:</p>
 
 <p>Given that definition, <var>R<sub>byte</sub></var> is defined as follows:
 <ul>
-  <li>If there is no write to the same byte that happens before
+  <li>If <var>R</var> is volatile, the result is target-dependent. (Volatile
+      is supposed to give guarantees which can support
+      <code>sig_atomic_t</code> in C/C++, and may be used for accesses to
+      addresses which do not behave like normal memory.  It does not generally
+      provide cross-thread synchronization.)
+  <li>Otherwise, if there is no write to the same byte that happens before
     <var>R<sub>byte</sub></var>, <var>R<sub>byte</sub></var> returns 
     <tt>undef</tt> for that byte.
   <li>Otherwise, if <var>R<sub>byte</sub></var> may see exactly one write,
@@ -1590,9 +1598,14 @@ as if it writes to the relevant surrounding bytes.
 that determines which other atomic instructions on the same address they
 <i>synchronize with</i>.  These semantics are borrowed from Java and C++0x,
 but are somewhat more colloquial. If these descriptions aren't precise enough,
-check those specs.  <a href="#i_fence"><code>fence</code></a> instructions
+check those specs (see spec references in the
+<a href="Atomic.html#introduction">atomics guide</a>).
+<a href="#i_fence"><code>fence</code></a> instructions
 treat these orderings somewhat differently since they don't take an address.
 See that instruction's documentation for details.</p>
+
+<p>For a simpler introduction to the ordering constraints, see the
+<a href="Atomics.html">LLVM Atomic Instructions and Concurrency Guide</a>.</p>
 
 <dl>
 <dt><code>unordered</code></dt>
@@ -1618,18 +1631,20 @@ address's modification order. This disallows reordering of
 <code>monotonic</code> (or stronger) operations on the same address. If an
 address is written <code>monotonic</code>ally by one thread, and other threads
 <code>monotonic</code>ally read that address repeatedly, the other threads must
-eventually see the write. This is intended to model C++'s relaxed atomic
-variables.</dd>
+eventually see the write. This corresponds to the C++0x/C1x
+<code>memory_order_relaxed</code>.</dd>
 <dt><code>acquire</code></dt>
 <dd>In addition to the guarantees of <code>monotonic</code>, if this operation
 reads a value written by a <code>release</code> atomic operation, it
-<i>synchronizes-with</i> that operation.</dd>
+<i>synchronizes-with</i> that operation.  This corresponds to the C++0x/C1x
+<code>memory_order_acquire</code>.</dd>
 <dt><code>release</code></dt>
 <dd>In addition to the guarantees of <code>monotonic</code>,
-a <i>synchronizes-with</i> edge may be formed by an <code>acquire</code>
-operation.</dd>
+a <i>synchronizes-with</i> edge may be formed with an <code>acquire</code>
+operation. This is intended to model C++'s <code>memory_order_release</code>.</dd>
 <dt><code>acq_rel</code> (acquire+release)</dt><dd>Acts as both an
-<code>acquire</code> and <code>release</code> operation on its address.</dd>
+<code>acquire</code> and <code>release</code> operation on its address.
+This corresponds to the C++0x/C1x <code>memory_order_acq_rel</code>.</dd>
 <dt><code>seq_cst</code> (sequentially consistent)</dt><dd>
 <dd>In addition to the guarantees of <code>acq_rel</code>
 (<code>acquire</code> for an operation which only reads, <code>release</code>
@@ -1637,9 +1652,8 @@ for an operation which only writes), there is a global total order on all
 sequentially-consistent operations on all addresses, which is consistent with
 the <i>happens-before</i> partial order and with the modification orders of
 all the affected addresses. Each sequentially-consistent read sees the last
-preceding write to the same address in this global order. This is intended
-to model C++'s sequentially-consistent atomic variables and Java's volatile
-shared variables.</dd>
+preceding write to the same address in this global order. This corresponds
+to the C++0x/C1x <code>memory_order_seq_cst</code> and Java volatile.</dd>
 </dl>
 
 <p id="singlethread">If an atomic operation is marked <code>singlethread</code>,
