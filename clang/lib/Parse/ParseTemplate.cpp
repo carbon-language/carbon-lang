@@ -27,11 +27,20 @@ Decl *
 Parser::ParseDeclarationStartingWithTemplate(unsigned Context,
                                              SourceLocation &DeclEnd,
                                              AccessSpecifier AS) {
-  if (Tok.is(tok::kw_template) && NextToken().isNot(tok::less))
-    return ParseExplicitInstantiation(SourceLocation(), ConsumeToken(),
-                                      DeclEnd);
-
-  return ParseTemplateDeclarationOrSpecialization(Context, DeclEnd, AS);
+  Decl *DC = getObjCDeclContext();
+  if (DC)
+    Actions.ActOnObjCContainerFinishDefinition(DC);
+  if (Tok.is(tok::kw_template) && NextToken().isNot(tok::less)) {
+    Decl *Res = ParseExplicitInstantiation(SourceLocation(), ConsumeToken(),
+                                           DeclEnd);
+    if (DC)
+      Actions.ActOnObjCContainerStartDefinition(DC);
+    return Res;
+  }
+  Decl *Res = ParseTemplateDeclarationOrSpecialization(Context, DeclEnd, AS);
+  if (DC)
+    Actions.ActOnObjCContainerStartDefinition(DC);
+  return Res;
 }
 
 /// \brief RAII class that manages the template parameter depth.

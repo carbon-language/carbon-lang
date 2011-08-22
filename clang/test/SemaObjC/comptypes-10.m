@@ -32,3 +32,21 @@ void test(id <NSCopying, NSPROTO, NSPROTO2> bar)
 {
   NSObject <NSCopying> *Init = bar; // expected-warning {{initializing 'NSObject<NSCopying> *' with an expression of incompatible type 'id<NSCopying,NSPROTO,NSPROTO2>'}}
 }
+
+// rdar://8843851
+@interface NSObject (CAT)
++ (struct S*)Meth : (struct S*)arg;
+@end
+
+struct S {
+ char *types;
+};
+
+@interface I
+@end
+
+@implementation I
+- (struct S *)Meth : (struct S*)a {
+  return [NSObject Meth : a];
+}
+@end

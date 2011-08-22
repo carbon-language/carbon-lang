@@ -811,7 +811,16 @@ Parser::ParseDeclarationOrFunctionDefinition(ParsedAttributes &attrs,
                                              AccessSpecifier AS) {
   ParsingDeclSpec DS(*this);
   DS.takeAttributesFrom(attrs);
-  return ParseDeclarationOrFunctionDefinition(DS, AS);
+  Decl *DC = getObjCDeclContext();
+  if (DC)
+    // Must temporarily exit the objective-c container scope for
+    // parsing c constructs and re-enter objc container scope
+    // afterwards.
+    Actions.ActOnObjCContainerFinishDefinition(DC);
+  DeclGroupPtrTy resPtrTy =  ParseDeclarationOrFunctionDefinition(DS, AS);
+  if (DC)
+    Actions.ActOnObjCContainerStartDefinition(DC);
+  return resPtrTy;
 }
 
 /// ParseFunctionDefinition - We parsed and verified that the specified

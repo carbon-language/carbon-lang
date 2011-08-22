@@ -737,11 +737,6 @@ DeclContext *Sema::getContainingDC(DeclContext *DC) {
     return DC;
   }
 
-  // ObjCMethodDecls are parsed (for some reason) outside the context
-  // of the class.
-  if (isa<ObjCMethodDecl>(DC))
-    return DC->getLexicalParent()->getLexicalParent();
-
   return DC->getLexicalParent();
 }
 
@@ -7732,6 +7727,15 @@ void Sema::ActOnTagStartDefinition(Scope *S, Decl *TagD) {
   PushDeclContext(S, Tag);
 }
 
+void Sema::ActOnObjCContainerStartDefinition(Decl *IDecl) {
+  assert(isa<ObjCContainerDecl>(IDecl) && 
+         "ActOnObjCContainerStartDefinition - Not ObjCContainerDecl");
+  DeclContext *OCD = cast<DeclContext>(IDecl);
+  assert(getContainingDC(OCD) == CurContext &&
+      "The next DeclContext should be lexically contained in the current one.");
+  CurContext = OCD;
+}
+
 void Sema::ActOnStartCXXMemberDeclarations(Scope *S, Decl *TagD,
                                            SourceLocation FinalLoc,
                                            SourceLocation LBraceLoc) {
@@ -7783,6 +7787,11 @@ void Sema::ActOnTagFinishDefinition(Scope *S, Decl *TagD,
   Consumer.HandleTagDeclDefinition(Tag);
 }
 
+void Sema::ActOnObjCContainerFinishDefinition(Decl *IDecl) {
+  // Exit this scope of this interface definition.
+  PopDeclContext();
+}
+                                          
 void Sema::ActOnTagDefinitionError(Scope *S, Decl *TagD) {
   AdjustDeclIfTemplate(TagD);
   TagDecl *Tag = cast<TagDecl>(TagD);
@@ -8327,7 +8336,6 @@ TranslateIvarVisibility(tok::ObjCKeywordKind ivarVisibility) {
 /// in order to create an IvarDecl object for it.
 Decl *Sema::ActOnIvar(Scope *S,
                                 SourceLocation DeclStart,
-                                Decl *IntfDecl,
                                 Declarator &D, ExprTy *BitfieldWidth,
                                 tok::ObjCKeywordKind Visibility) {
 
@@ -8370,7 +8378,7 @@ Decl *Sema::ActOnIvar(Scope *S,
     Visibility != tok::objc_not_keyword ? TranslateIvarVisibility(Visibility)
                                         : ObjCIvarDecl::None;
   // Must set ivar's DeclContext to its enclosing interface.
-  ObjCContainerDecl *EnclosingDecl = cast<ObjCContainerDecl>(IntfDecl);
+  ObjCContainerDecl *EnclosingDecl = cast<ObjCContainerDecl>(CurContext);
   ObjCContainerDecl *EnclosingContext;
   if (ObjCImplementationDecl *IMPDecl =
       dyn_cast<ObjCImplementationDecl>(EnclosingDecl)) {
@@ -8432,7 +8440,7 @@ Decl *Sema::ActOnIvar(Scope *S,
 /// class and class extensions. For every class @interface and class 
 /// extension @interface, if the last ivar is a bitfield of any type, 
 /// then add an implicit `char :0` ivar to the end of that interface.
-void Sema::ActOnLastBitfield(SourceLocation DeclLoc, Decl *EnclosingDecl,
+void Sema::ActOnLastBitfield(SourceLocation DeclLoc,
                              SmallVectorImpl<Decl *> &AllIvarDecls) {
   if (!LangOpts.ObjCNonFragileABI2 || AllIvarDecls.empty())
     return;
@@ -8446,9 +8454,9 @@ void Sema::ActOnLastBitfield(SourceLocation DeclLoc, Decl *EnclosingDecl,
     Ivar->getBitWidth()->EvaluateAsInt(Context).getZExtValue();
   if (BitFieldSize == 0)
     return;
-  ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(EnclosingDecl);
+  ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(CurContext);
   if (!ID) {
-    if (ObjCCategoryDecl *CD = dyn_cast<ObjCCategoryDecl>(EnclosingDecl)) {
+    if (ObjCCategoryDecl *CD = dyn_cast<ObjCCategoryDecl>(CurContext)) {
       if (!CD->IsClassExtension())
         return;
     }
@@ -8460,7 +8468,7 @@ void Sema::ActOnLastBitfield(SourceLocation DeclLoc, Decl *EnclosingDecl,
   llvm::APInt Zero(Context.getTypeSize(Context.IntTy), 0);
   Expr * BW = IntegerLiteral::Create(Context, Zero, Context.IntTy, DeclLoc);
 
-  Ivar = ObjCIvarDecl::Create(Context, cast<ObjCContainerDecl>(EnclosingDecl),
+  Ivar = ObjCIvarDecl::Create(Context, cast<ObjCContainerDecl>(CurContext),
                               DeclLoc, DeclLoc, 0,
                               Context.CharTy, 
                               Context.getTrivialTypeSourceInfo(Context.CharTy,
@@ -9331,4 +9339,8 @@ void Sema::ActOnPragmaWeakAlias(IdentifierInfo* Name,
     (void)WeakUndeclaredIdentifiers.insert(
       std::pair<IdentifierInfo*,WeakInfo>(AliasName, W));
   }
+}
+
+Decl *Sema::getObjCDeclContext() const {
+  return (dyn_cast_or_null<ObjCContainerDecl>(CurContext));
 }

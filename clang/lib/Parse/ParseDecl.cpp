@@ -2319,6 +2319,7 @@ bool Parser::ParseOptionalTypeSpecifier(DeclSpec &DS, bool& isInvalid,
 ///
 void Parser::
 ParseStructDeclaration(DeclSpec &DS, FieldCallback &Fields) {
+    
   if (Tok.is(tok::kw___extension__)) {
     // __extension__ silences extension warnings in the subexpression.
     ExtensionRAIIObject O(Diags);  // Use RAII to do this.

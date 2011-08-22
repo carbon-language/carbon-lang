@@ -4141,15 +4141,14 @@ static void AddObjCTopLevelResults(ResultBuilder &Results, bool NeedAt) {
   Results.AddResult(Result(Builder.TakeString()));
 }
 
-void Sema::CodeCompleteObjCAtDirective(Scope *S, Decl *ObjCImpDecl,
-                                       bool InInterface) {
+void Sema::CodeCompleteObjCAtDirective(Scope *S) {
   typedef CodeCompletionResult Result;
   ResultBuilder Results(*this, CodeCompleter->getAllocator(),
                         CodeCompletionContext::CCC_Other);
   Results.EnterNewScope();
-  if (ObjCImpDecl)
+  if (isa<ObjCImplDecl>(CurContext))
     AddObjCImplementationResults(getLangOptions(), Results, false);
-  else if (InInterface)
+  else if (CurContext->isObjCContainer())
     AddObjCInterfaceResults(getLangOptions(), Results, false);
   else
     AddObjCTopLevelResults(Results, false);
@@ -4521,14 +4520,14 @@ static void AddObjCMethods(ObjCContainerDecl *Container,
 }
 
 
-void Sema::CodeCompleteObjCPropertyGetter(Scope *S, Decl *ClassDecl) {
+void Sema::CodeCompleteObjCPropertyGetter(Scope *S) {
   typedef CodeCompletionResult Result;
 
   // Try to find the interface where getters might live.
-  ObjCInterfaceDecl *Class = dyn_cast_or_null<ObjCInterfaceDecl>(ClassDecl);
+  ObjCInterfaceDecl *Class = dyn_cast_or_null<ObjCInterfaceDecl>(CurContext);
   if (!Class) {
     if (ObjCCategoryDecl *Category
-          = dyn_cast_or_null<ObjCCategoryDecl>(ClassDecl))
+          = dyn_cast_or_null<ObjCCategoryDecl>(CurContext))
       Class = Category->getClassInterface();
 
     if (!Class)
@@ -4549,15 +4548,15 @@ void Sema::CodeCompleteObjCPropertyGetter(Scope *S, Decl *ClassDecl) {
                             Results.data(),Results.size());
 }
 
-void Sema::CodeCompleteObjCPropertySetter(Scope *S, Decl *ObjCImplDecl) {
+void Sema::CodeCompleteObjCPropertySetter(Scope *S) {
   typedef CodeCompletionResult Result;
 
   // Try to find the interface where setters might live.
   ObjCInterfaceDecl *Class
-    = dyn_cast_or_null<ObjCInterfaceDecl>(ObjCImplDecl);
+    = dyn_cast_or_null<ObjCInterfaceDecl>(CurContext);
   if (!Class) {
     if (ObjCCategoryDecl *Category
-          = dyn_cast_or_null<ObjCCategoryDecl>(ObjCImplDecl))
+          = dyn_cast_or_null<ObjCCategoryDecl>(CurContext))
       Class = Category->getClassInterface();
 
     if (!Class)
@@ -5551,14 +5550,14 @@ void Sema::CodeCompleteObjCImplementationCategory(Scope *S,
                             Results.data(),Results.size());  
 }
 
-void Sema::CodeCompleteObjCPropertyDefinition(Scope *S, Decl *ObjCImpDecl) {
+void Sema::CodeCompleteObjCPropertyDefinition(Scope *S) {
   typedef CodeCompletionResult Result;
   ResultBuilder Results(*this, CodeCompleter->getAllocator(),
                         CodeCompletionContext::CCC_Other);
 
   // Figure out where this @synthesize lives.
   ObjCContainerDecl *Container
-    = dyn_cast_or_null<ObjCContainerDecl>(ObjCImpDecl);
+    = dyn_cast_or_null<ObjCContainerDecl>(CurContext);
   if (!Container || 
       (!isa<ObjCImplementationDecl>(Container) && 
        !isa<ObjCCategoryImplDecl>(Container)))
@@ -5591,15 +5590,14 @@ void Sema::CodeCompleteObjCPropertyDefinition(Scope *S, Decl *ObjCImpDecl) {
 }
 
 void Sema::CodeCompleteObjCPropertySynthesizeIvar(Scope *S, 
-                                                  IdentifierInfo *PropertyName,
-                                                  Decl *ObjCImpDecl) {
+                                                  IdentifierInfo *PropertyName) {
   typedef CodeCompletionResult Result;
   ResultBuilder Results(*this, CodeCompleter->getAllocator(),
                         CodeCompletionContext::CCC_Other);
 
   // Figure out where this @synthesize lives.
   ObjCContainerDecl *Container
-    = dyn_cast_or_null<ObjCContainerDecl>(ObjCImpDecl);
+    = dyn_cast_or_null<ObjCContainerDecl>(CurContext);
   if (!Container || 
       (!isa<ObjCImplementationDecl>(Container) && 
        !isa<ObjCCategoryImplDecl>(Container)))
@@ -6412,12 +6410,15 @@ static void AddObjCKeyValueCompletions(ObjCPropertyDecl *Property,
 
 void Sema::CodeCompleteObjCMethodDecl(Scope *S, 
                                       bool IsInstanceMethod,
-                                      ParsedType ReturnTy,
-                                      Decl *IDecl) {
+                                      ParsedType ReturnTy) {
   // Determine the return type of the method we're declaring, if
   // provided.
   QualType ReturnType = GetTypeFromParser(ReturnTy);
-
+  Decl *IDecl = 0;
+  if (CurContext->isObjCContainer()) {
+      ObjCContainerDecl *OCD = dyn_cast<ObjCContainerDecl>(CurContext);
+      IDecl = cast<Decl>(OCD);
+  }
   // Determine where we should start searching for methods.
   ObjCContainerDecl *SearchDecl = 0;
   bool IsInImplementation = false;
