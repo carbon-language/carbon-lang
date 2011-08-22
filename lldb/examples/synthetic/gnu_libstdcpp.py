@@ -51,7 +51,7 @@ class StdListSynthProvider:
 				offset = offset - 1
 			return current.CreateChildAtOffset('['+str(index)+']',2*current.GetType().GetByteSize(),self.data_type)
 		except:
-			return None:
+			return None
 
 	def extract_type_name(self,name):
 		self.type_name = name[16:]
