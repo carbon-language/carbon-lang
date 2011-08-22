@@ -42,3 +42,14 @@ for.end52:
   ret void
 }
 
+; CHECK: vextractf128  $1
+; CHECK: vextractf128  $1
+; CHECK-NEXT: vpcmpgtd  %xmm
+; CHECK-NEXT: vpcmpgtd  %xmm
+; CHECK-NEXT: vinsertf128 $1
+define <8 x i32> @int256-cmp(<8 x i32> %i, <8 x i32> %j) nounwind readnone {
+  %bincmp = icmp slt <8 x i32> %i, %j
+  %x = sext <8 x i1> %bincmp to <8 x i32>
+  ret <8 x i32> %x
+}
+

@@ -8119,6 +8119,39 @@ SDValue X86TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
                      DAG.getConstant(X86CC, MVT::i8), EFLAGS);
 }
 
+// Lower256IntVETCC - Break a VSETCC 256-bit integer VSETCC into two new 128
+// ones, and then concatenate the result back.
+static SDValue Lower256IntVETCC(SDValue Op, SelectionDAG &DAG) {
+  EVT VT = Op.getValueType();
+
+  assert(VT.getSizeInBits() == 256 && Op.getOpcode() == ISD::VSETCC &&
+         "Unsupported value type for operation");
+
+  int NumElems = VT.getVectorNumElements();
+  DebugLoc dl = Op.getDebugLoc();
+  SDValue CC = Op.getOperand(2);
+  SDValue Idx0 = DAG.getConstant(0, MVT::i32);
+  SDValue Idx1 = DAG.getConstant(NumElems/2, MVT::i32);
+
+  // Extract the LHS vectors
+  SDValue LHS = Op.getOperand(0);
+  SDValue LHS1 = Extract128BitVector(LHS, Idx0, DAG, dl);
+  SDValue LHS2 = Extract128BitVector(LHS, Idx1, DAG, dl);
+
+  // Extract the RHS vectors
+  SDValue RHS = Op.getOperand(1);
+  SDValue RHS1 = Extract128BitVector(RHS, Idx0, DAG, dl);
+  SDValue RHS2 = Extract128BitVector(RHS, Idx1, DAG, dl);
+
+  // Issue the operation on the smaller types and concatenate the result back
+  MVT EltVT = VT.getVectorElementType().getSimpleVT();
+  EVT NewVT = MVT::getVectorVT(EltVT, NumElems/2);
+  return DAG.getNode(ISD::CONCAT_VECTORS, dl, VT,
+                     DAG.getNode(Op.getOpcode(), dl, NewVT, LHS1, RHS1, CC),
+                     DAG.getNode(Op.getOpcode(), dl, NewVT, LHS2, RHS2, CC));
+}
+
+
 SDValue X86TargetLowering::LowerVSETCC(SDValue Op, SelectionDAG &DAG) const {
   SDValue Cond;
   SDValue Op0 = Op.getOperand(0);
@@ -8181,8 +8214,9 @@ SDValue X86TargetLowering::LowerVSETCC(SDValue Op, SelectionDAG &DAG) const {
     return DAG.getNode(Opc, dl, VT, Op0, Op1, DAG.getConstant(SSECC, MVT::i8));
   }
 
+  // Break 256-bit integer vector compare into smaller ones.
   if (!isFP && VT.getSizeInBits() == 256)
-    return SDValue();
+    return Lower256IntVETCC(Op, DAG);
 
   // We are handling one of the integer comparisons here.  Since SSE only has
   // GT and EQ comparisons for integer, swapping operands and multiple
