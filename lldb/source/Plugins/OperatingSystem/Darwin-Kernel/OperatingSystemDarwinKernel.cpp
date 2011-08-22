@@ -1,4 +1,4 @@
-//===-- OperatingSystemMacOSXKernel.cpp --------------------------------*- C++ -*-===//
+//===-- OperatingSystemDarwinKernel.cpp --------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "OperatingSystemMacOSXKernel.h"
+#include "OperatingSystemDarwinKernel.h"
 // C Includes
 // C++ Includes
 // Other libraries and framework includes
@@ -41,7 +41,7 @@ GetThreadGPRMemberName ()
 }
 
 void
-OperatingSystemMacOSXKernel::Initialize()
+OperatingSystemDarwinKernel::Initialize()
 {
     PluginManager::RegisterPlugin (GetPluginNameStatic(),
                                    GetPluginDescriptionStatic(),
@@ -49,13 +49,13 @@ OperatingSystemMacOSXKernel::Initialize()
 }
 
 void
-OperatingSystemMacOSXKernel::Terminate()
+OperatingSystemDarwinKernel::Terminate()
 {
     PluginManager::UnregisterPlugin (CreateInstance);
 }
 
 OperatingSystem *
-OperatingSystemMacOSXKernel::CreateInstance (Process *process, bool force)
+OperatingSystemDarwinKernel::CreateInstance (Process *process, bool force)
 {
 #if 0
     bool create = force;
@@ -89,38 +89,38 @@ OperatingSystemMacOSXKernel::CreateInstance (Process *process, bool force)
     }
     
     if (create)
-        return new OperatingSystemMacOSXKernel (process);
+        return new OperatingSystemDarwinKernel (process);
 #endif
     return NULL;
 }
 
 
 const char *
-OperatingSystemMacOSXKernel::GetPluginNameStatic()
+OperatingSystemDarwinKernel::GetPluginNameStatic()
 {
     return "macosx-kernel";
 }
 
 const char *
-OperatingSystemMacOSXKernel::GetPluginDescriptionStatic()
+OperatingSystemDarwinKernel::GetPluginDescriptionStatic()
 {
     return "Operating system plug-in that gathers OS information from darwin kernels.";
 }
 
 
-OperatingSystemMacOSXKernel::OperatingSystemMacOSXKernel (lldb_private::Process *process) :
+OperatingSystemDarwinKernel::OperatingSystemDarwinKernel (lldb_private::Process *process) :
     OperatingSystem (process),
     m_thread_list_valobj_sp (),
     m_register_info_ap ()
 {
 }
 
-OperatingSystemMacOSXKernel::~OperatingSystemMacOSXKernel ()
+OperatingSystemDarwinKernel::~OperatingSystemDarwinKernel ()
 {
 }
 
 ValueObjectSP
-OperatingSystemMacOSXKernel::GetThreadListValueObject ()
+OperatingSystemDarwinKernel::GetThreadListValueObject ()
 {
     if (m_thread_list_valobj_sp.get() == NULL)
     {
@@ -144,7 +144,7 @@ OperatingSystemMacOSXKernel::GetThreadListValueObject ()
 }
 
 DynamicRegisterInfo *
-OperatingSystemMacOSXKernel::GetDynamicRegisterInfo ()
+OperatingSystemDarwinKernel::GetDynamicRegisterInfo ()
 {
     if (m_register_info_ap.get() == NULL && m_thread_list_valobj_sp)
     {
@@ -209,25 +209,25 @@ OperatingSystemMacOSXKernel::GetDynamicRegisterInfo ()
 // PluginInterface protocol
 //------------------------------------------------------------------
 const char *
-OperatingSystemMacOSXKernel::GetPluginName()
+OperatingSystemDarwinKernel::GetPluginName()
 {
-    return "OperatingSystemMacOSXKernel";
+    return "OperatingSystemDarwinKernel";
 }
 
 const char *
-OperatingSystemMacOSXKernel::GetShortPluginName()
+OperatingSystemDarwinKernel::GetShortPluginName()
 {
     return GetPluginNameStatic();
 }
 
 uint32_t
-OperatingSystemMacOSXKernel::GetPluginVersion()
+OperatingSystemDarwinKernel::GetPluginVersion()
 {
     return 1;
 }
 
 uint32_t
-OperatingSystemMacOSXKernel::UpdateThreadList (ThreadList &old_thread_list, ThreadList &new_thread_list)
+OperatingSystemDarwinKernel::UpdateThreadList (ThreadList &old_thread_list, ThreadList &new_thread_list)
 {
     // Make any constant strings once and cache the uniqued C string values
     // so we don't have to rehash them each time through this function call
@@ -270,12 +270,12 @@ OperatingSystemMacOSXKernel::UpdateThreadList (ThreadList &old_thread_list, Thre
 }
 
 void
-OperatingSystemMacOSXKernel::ThreadWasSelected (Thread *thread)
+OperatingSystemDarwinKernel::ThreadWasSelected (Thread *thread)
 {
 }
 
 RegisterContextSP
-OperatingSystemMacOSXKernel::CreateRegisterContextForThread (Thread *thread)
+OperatingSystemDarwinKernel::CreateRegisterContextForThread (Thread *thread)
 {
     ThreadMemory *generic_thread = (ThreadMemory *)thread;
     RegisterContextSP reg_ctx_sp;
@@ -300,7 +300,7 @@ OperatingSystemMacOSXKernel::CreateRegisterContextForThread (Thread *thread)
 }
 
 StopInfoSP
-OperatingSystemMacOSXKernel::CreateThreadStopReason (lldb_private::Thread *thread)
+OperatingSystemDarwinKernel::CreateThreadStopReason (lldb_private::Thread *thread)
 {
     StopInfoSP stop_info_sp; //(StopInfo::CreateStopReasonWithSignal (*thread, SIGSTOP));
     return stop_info_sp;

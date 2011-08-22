@@ -12,6 +12,8 @@
 		260E07C8136FAB9200CF21D3 /* OptionGroupFile.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260E07C7136FAB9200CF21D3 /* OptionGroupFile.cpp */; };
 		261744781168585B005ADD65 /* SBType.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 261744771168585B005ADD65 /* SBType.cpp */; };
 		2617447A11685869005ADD65 /* SBType.h in Headers */ = {isa = PBXBuildFile; fileRef = 2617447911685869005ADD65 /* SBType.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		26274FA214030EEF006BA130 /* OperatingSystemDarwinKernel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26274FA014030EEF006BA130 /* OperatingSystemDarwinKernel.cpp */; };
+		26274FA714030F79006BA130 /* DynamicLoaderDarwinKernel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26274FA514030F79006BA130 /* DynamicLoaderDarwinKernel.cpp */; };
 		2628A4D513D4977900F5487A /* ThreadKDP.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2628A4D313D4977900F5487A /* ThreadKDP.cpp */; };
 		262CFC7711A4510000946C6C /* debugserver in Resources */ = {isa = PBXBuildFile; fileRef = 26CE05A0115C31E50022F371 /* debugserver */; };
 		262D24E613FB8710002D1960 /* RegisterContextMemory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 262D24E413FB8710002D1960 /* RegisterContextMemory.cpp */; };
@@ -71,7 +73,6 @@
 		26680336116005EF008E1FE4 /* SBBreakpointLocation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9AF16CC7114086A1007A7B3F /* SBBreakpointLocation.cpp */; };
 		26680337116005F1008E1FE4 /* SBBreakpoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9AF16A9C11402D5B007A7B3F /* SBBreakpoint.cpp */; };
 		2668035C11601108008E1FE4 /* LLDB.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 26680207115FD0ED008E1FE4 /* LLDB.framework */; };
-		266DFE9413FD64D200D0C574 /* OperatingSystemMacOSXKernel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266DFE9213FD64D200D0C574 /* OperatingSystemMacOSXKernel.cpp */; };
 		266DFE9713FD656E00D0C574 /* OperatingSystem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266DFE9613FD656E00D0C574 /* OperatingSystem.cpp */; };
 		266E8C6A13528ABC000C2042 /* lldb-platform in Resources */ = {isa = PBXBuildFile; fileRef = 26DC6A101337FE6900FF7998 /* lldb-platform */; };
 		2671A0D013482601003A87BB /* ConnectionMachPort.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2671A0CF13482601003A87BB /* ConnectionMachPort.cpp */; };
@@ -383,7 +384,6 @@
 		26DE20651161904E00A093E2 /* SBSymbol.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26DE20641161904E00A093E2 /* SBSymbol.cpp */; };
 		26ECA04313665FED008D1F18 /* ARM_DWARF_Registers.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26ECA04213665FED008D1F18 /* ARM_DWARF_Registers.cpp */; };
 		26ED3D6D13C563810017D45E /* OptionGroupVariable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26ED3D6C13C563810017D45E /* OptionGroupVariable.cpp */; };
-		26F4214413C6515B00E04E5E /* DynamicLoaderMacOSXKernel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26F4214113C6515B00E04E5E /* DynamicLoaderMacOSXKernel.cpp */; };
 		26F4A21C13FBA31A0064B613 /* ThreadMemory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26F4A21A13FBA31A0064B613 /* ThreadMemory.cpp */; };
 		26F5C27710F3D9E4009D5894 /* Driver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26F5C27310F3D9E4009D5894 /* Driver.cpp */; };
 		26F5C27810F3D9E4009D5894 /* IOChannel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26F5C27510F3D9E4009D5894 /* IOChannel.cpp */; };
@@ -606,6 +606,10 @@
 		26217930133BC8640083B112 /* lldb-private-types.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "lldb-private-types.h"; path = "include/lldb/lldb-private-types.h"; sourceTree = "<group>"; };
 		26217932133BCB850083B112 /* lldb-private-enumerations.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "lldb-private-enumerations.h"; path = "include/lldb/lldb-private-enumerations.h"; sourceTree = "<group>"; };
 		2623096E13D0EFFB006381D9 /* StreamBuffer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = StreamBuffer.h; path = include/lldb/Core/StreamBuffer.h; sourceTree = "<group>"; };
+		26274FA014030EEF006BA130 /* OperatingSystemDarwinKernel.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = OperatingSystemDarwinKernel.cpp; sourceTree = "<group>"; };
+		26274FA114030EEF006BA130 /* OperatingSystemDarwinKernel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OperatingSystemDarwinKernel.h; sourceTree = "<group>"; };
+		26274FA514030F79006BA130 /* DynamicLoaderDarwinKernel.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DynamicLoaderDarwinKernel.cpp; sourceTree = "<group>"; };
+		26274FA614030F79006BA130 /* DynamicLoaderDarwinKernel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DynamicLoaderDarwinKernel.h; sourceTree = "<group>"; };
 		2628A4D313D4977900F5487A /* ThreadKDP.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ThreadKDP.cpp; sourceTree = "<group>"; };
 		2628A4D413D4977900F5487A /* ThreadKDP.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ThreadKDP.h; sourceTree = "<group>"; };
 		262D24E413FB8710002D1960 /* RegisterContextMemory.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RegisterContextMemory.cpp; path = Utility/RegisterContextMemory.cpp; sourceTree = "<group>"; };
@@ -664,8 +668,6 @@
 		266960631199F4230075C61A /* sed-sources */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.perl; path = "sed-sources"; sourceTree = "<group>"; };
 		266A42D5128E3FFB0090CF7C /* ClangNamespaceDecl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ClangNamespaceDecl.cpp; path = source/Symbol/ClangNamespaceDecl.cpp; sourceTree = "<group>"; };
 		266A42D7128E40040090CF7C /* ClangNamespaceDecl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ClangNamespaceDecl.h; path = include/lldb/Symbol/ClangNamespaceDecl.h; sourceTree = "<group>"; };
-		266DFE9213FD64D200D0C574 /* OperatingSystemMacOSXKernel.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = OperatingSystemMacOSXKernel.cpp; sourceTree = "<group>"; };
-		266DFE9313FD64D200D0C574 /* OperatingSystemMacOSXKernel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OperatingSystemMacOSXKernel.h; sourceTree = "<group>"; };
 		266DFE9613FD656E00D0C574 /* OperatingSystem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OperatingSystem.cpp; path = source/Target/OperatingSystem.cpp; sourceTree = "<group>"; };
 		266DFE9813FD658300D0C574 /* OperatingSystem.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = OperatingSystem.h; path = include/lldb/Target/OperatingSystem.h; sourceTree = "<group>"; };
 		266F5CBB12FC846200DFCE33 /* Config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Config.h; path = include/lldb/Host/Config.h; sourceTree = "<group>"; };
@@ -1057,8 +1059,6 @@
 		26ECA04213665FED008D1F18 /* ARM_DWARF_Registers.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ARM_DWARF_Registers.cpp; path = source/Utility/ARM_DWARF_Registers.cpp; sourceTree = "<group>"; };
 		26ED3D6C13C563810017D45E /* OptionGroupVariable.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OptionGroupVariable.cpp; path = source/Interpreter/OptionGroupVariable.cpp; sourceTree = "<group>"; };
 		26ED3D6F13C5638A0017D45E /* OptionGroupVariable.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = OptionGroupVariable.h; path = include/lldb/Interpreter/OptionGroupVariable.h; sourceTree = "<group>"; };
-		26F4214113C6515B00E04E5E /* DynamicLoaderMacOSXKernel.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DynamicLoaderMacOSXKernel.cpp; sourceTree = "<group>"; };
-		26F4214213C6515B00E04E5E /* DynamicLoaderMacOSXKernel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DynamicLoaderMacOSXKernel.h; sourceTree = "<group>"; };
 		26F4A21A13FBA31A0064B613 /* ThreadMemory.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ThreadMemory.cpp; path = Utility/ThreadMemory.cpp; sourceTree = "<group>"; };
 		26F4A21B13FBA31A0064B613 /* ThreadMemory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ThreadMemory.h; path = Utility/ThreadMemory.h; sourceTree = "<group>"; };
 		26F5C26A10F3D9A4009D5894 /* lldb */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = lldb; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -1433,8 +1433,8 @@
 		260C897810F57C5600BB2B04 /* DynamicLoader */ = {
 			isa = PBXGroup;
 			children = (
+				26274FA414030F79006BA130 /* Darwin-Kernel */,
 				260C897910F57C5600BB2B04 /* MacOSX-DYLD */,
-				26F4214013C6515B00E04E5E /* MacOSX-Kernel */,
 				268A683C1321B505000E3FB8 /* Static */,
 			);
 			path = DynamicLoader;
@@ -1593,6 +1593,24 @@
 				260C89E310F57C5600BB2B04 /* SymbolVendorMacOSX.h */,
 			);
 			path = MacOSX;
+			sourceTree = "<group>";
+		};
+		26274F9F14030EEF006BA130 /* Darwin-Kernel */ = {
+			isa = PBXGroup;
+			children = (
+				26274FA014030EEF006BA130 /* OperatingSystemDarwinKernel.cpp */,
+				26274FA114030EEF006BA130 /* OperatingSystemDarwinKernel.h */,
+			);
+			path = "Darwin-Kernel";
+			sourceTree = "<group>";
+		};
+		26274FA414030F79006BA130 /* Darwin-Kernel */ = {
+			isa = PBXGroup;
+			children = (
+				26274FA514030F79006BA130 /* DynamicLoaderDarwinKernel.cpp */,
+				26274FA614030F79006BA130 /* DynamicLoaderDarwinKernel.h */,
+			);
+			path = "Darwin-Kernel";
 			sourceTree = "<group>";
 		};
 		262D3190111B4341004E6F88 /* API */ = {
@@ -1763,18 +1781,9 @@
 		266DFE9013FD64D200D0C574 /* OperatingSystem */ = {
 			isa = PBXGroup;
 			children = (
-				266DFE9113FD64D200D0C574 /* MacOSX-Kernel */,
+				26274F9F14030EEF006BA130 /* Darwin-Kernel */,
 			);
 			path = OperatingSystem;
-			sourceTree = "<group>";
-		};
-		266DFE9113FD64D200D0C574 /* MacOSX-Kernel */ = {
-			isa = PBXGroup;
-			children = (
-				266DFE9213FD64D200D0C574 /* OperatingSystemMacOSXKernel.cpp */,
-				266DFE9313FD64D200D0C574 /* OperatingSystemMacOSXKernel.h */,
-			);
-			path = "MacOSX-Kernel";
 			sourceTree = "<group>";
 		};
 		2682F168115ED9C800CCFF99 /* Utility */ = {
@@ -2505,15 +2514,6 @@
 				26DC6A1C1337FECA00FF7998 /* lldb-platform.cpp */,
 			);
 			name = "lldb-platform";
-			sourceTree = "<group>";
-		};
-		26F4214013C6515B00E04E5E /* MacOSX-Kernel */ = {
-			isa = PBXGroup;
-			children = (
-				26F4214113C6515B00E04E5E /* DynamicLoaderMacOSXKernel.cpp */,
-				26F4214213C6515B00E04E5E /* DynamicLoaderMacOSXKernel.h */,
-			);
-			path = "MacOSX-Kernel";
 			sourceTree = "<group>";
 		};
 		26F5C22410F3D950009D5894 /* Tools */ = {
@@ -3278,7 +3278,6 @@
 				49D8FB3913B5598F00411094 /* ClangASTImporter.cpp in Sources */,
 				9467E65213C3D97600B3B6F3 /* TypeHierarchyNavigator.cpp in Sources */,
 				26ED3D6D13C563810017D45E /* OptionGroupVariable.cpp in Sources */,
-				26F4214413C6515B00E04E5E /* DynamicLoaderMacOSXKernel.cpp in Sources */,
 				94611EB213CCA4A4003A22AF /* RefCounter.cpp in Sources */,
 				94031A9E13CF486700DCFF3C /* InputReaderEZ.cpp in Sources */,
 				2642FBAE13D003B400ED6808 /* CommunicationKDP.cpp in Sources */,
@@ -3296,10 +3295,11 @@
 				94B6E76213D88365005F417F /* ValueObjectSyntheticFilter.cpp in Sources */,
 				262D24E613FB8710002D1960 /* RegisterContextMemory.cpp in Sources */,
 				26F4A21C13FBA31A0064B613 /* ThreadMemory.cpp in Sources */,
-				266DFE9413FD64D200D0C574 /* OperatingSystemMacOSXKernel.cpp in Sources */,
 				266DFE9713FD656E00D0C574 /* OperatingSystem.cpp in Sources */,
 				26954EBE1401EE8B00294D09 /* DynamicRegisterInfo.cpp in Sources */,
 				9470A8F01402DFFB0056FF61 /* DataVisualization.cpp in Sources */,
+				26274FA214030EEF006BA130 /* OperatingSystemDarwinKernel.cpp in Sources */,
+				26274FA714030F79006BA130 /* DynamicLoaderDarwinKernel.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

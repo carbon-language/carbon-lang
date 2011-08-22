@@ -1,4 +1,4 @@
-//===-- DynamicLoaderMacOSXKernel.cpp -----------------------------*- C++ -*-===//
+//===-- DynamicLoaderDarwinKernel.cpp -----------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -23,7 +23,7 @@
 #include "lldb/Target/ThreadPlanRunToAddress.h"
 #include "lldb/Target/StackFrame.h"
 
-#include "DynamicLoaderMacOSXKernel.h"
+#include "DynamicLoaderDarwinKernel.h"
 
 //#define ENABLE_DEBUG_PRINTF // COMMENT THIS LINE OUT PRIOR TO CHECKIN
 #ifdef ENABLE_DEBUG_PRINTF
@@ -47,7 +47,7 @@ using namespace lldb_private;
 // allows the lldb to instantiate an instance of this class.
 //----------------------------------------------------------------------
 DynamicLoader *
-DynamicLoaderMacOSXKernel::CreateInstance (Process* process, bool force)
+DynamicLoaderDarwinKernel::CreateInstance (Process* process, bool force)
 {
     bool create = force;
     if (!create)
@@ -78,14 +78,14 @@ DynamicLoaderMacOSXKernel::CreateInstance (Process* process, bool force)
     }
     
     if (create)
-        return new DynamicLoaderMacOSXKernel (process);
+        return new DynamicLoaderDarwinKernel (process);
     return NULL;
 }
 
 //----------------------------------------------------------------------
 // Constructor
 //----------------------------------------------------------------------
-DynamicLoaderMacOSXKernel::DynamicLoaderMacOSXKernel (Process* process) :
+DynamicLoaderDarwinKernel::DynamicLoaderDarwinKernel (Process* process) :
     DynamicLoader(process),
     m_kernel(),
     m_kext_summary_header_ptr_addr (),
@@ -100,13 +100,13 @@ DynamicLoaderMacOSXKernel::DynamicLoaderMacOSXKernel (Process* process) :
 //----------------------------------------------------------------------
 // Destructor
 //----------------------------------------------------------------------
-DynamicLoaderMacOSXKernel::~DynamicLoaderMacOSXKernel()
+DynamicLoaderDarwinKernel::~DynamicLoaderDarwinKernel()
 {
     Clear(true);
 }
 
 void
-DynamicLoaderMacOSXKernel::UpdateIfNeeded()
+DynamicLoaderDarwinKernel::UpdateIfNeeded()
 {
     LoadKernelModuleIfNeeded();
     SetNotificationBreakpointIfNeeded ();
@@ -118,7 +118,7 @@ DynamicLoaderMacOSXKernel::UpdateIfNeeded()
 /// attaching to a process.
 //------------------------------------------------------------------
 void
-DynamicLoaderMacOSXKernel::DidAttach ()
+DynamicLoaderDarwinKernel::DidAttach ()
 {
     PrivateInitialize(m_process);
     UpdateIfNeeded();
@@ -131,7 +131,7 @@ DynamicLoaderMacOSXKernel::DidAttach ()
 /// attaching to a process.
 //------------------------------------------------------------------
 void
-DynamicLoaderMacOSXKernel::DidLaunch ()
+DynamicLoaderDarwinKernel::DidLaunch ()
 {
     PrivateInitialize(m_process);
     UpdateIfNeeded();
@@ -142,7 +142,7 @@ DynamicLoaderMacOSXKernel::DidLaunch ()
 // Clear out the state of this class.
 //----------------------------------------------------------------------
 void
-DynamicLoaderMacOSXKernel::Clear (bool clear_process)
+DynamicLoaderDarwinKernel::Clear (bool clear_process)
 {
     Mutex::Locker locker(m_mutex);
 
@@ -166,7 +166,7 @@ DynamicLoaderMacOSXKernel::Clear (bool clear_process)
 // already loaded).
 //----------------------------------------------------------------------
 void
-DynamicLoaderMacOSXKernel::LoadKernelModuleIfNeeded()
+DynamicLoaderDarwinKernel::LoadKernelModuleIfNeeded()
 {
     if (!m_kext_summary_header_ptr_addr.IsValid())
     {
@@ -209,7 +209,7 @@ DynamicLoaderMacOSXKernel::LoadKernelModuleIfNeeded()
 }
 
 bool
-DynamicLoaderMacOSXKernel::FindTargetModule (OSKextLoadedKextSummary &image_info, bool can_create, bool *did_create_ptr)
+DynamicLoaderDarwinKernel::FindTargetModule (OSKextLoadedKextSummary &image_info, bool can_create, bool *did_create_ptr)
 {
     if (did_create_ptr)
         *did_create_ptr = false;
@@ -252,7 +252,7 @@ DynamicLoaderMacOSXKernel::FindTargetModule (OSKextLoadedKextSummary &image_info
 }
 
 bool
-DynamicLoaderMacOSXKernel::UpdateCommPageLoadAddress(Module *module)
+DynamicLoaderDarwinKernel::UpdateCommPageLoadAddress(Module *module)
 {
     bool changed = false;
     if (module)
@@ -290,7 +290,7 @@ DynamicLoaderMacOSXKernel::UpdateCommPageLoadAddress(Module *module)
 // updated INFO that is passed in.
 //----------------------------------------------------------------------
 bool
-DynamicLoaderMacOSXKernel::UpdateImageLoadAddress (OSKextLoadedKextSummary& info)
+DynamicLoaderDarwinKernel::UpdateImageLoadAddress (OSKextLoadedKextSummary& info)
 {
     Module *module = info.module_sp.get();
     bool changed = false;
@@ -362,7 +362,7 @@ DynamicLoaderMacOSXKernel::UpdateImageLoadAddress (OSKextLoadedKextSummary& info
 // updated INFO that is passed in.
 //----------------------------------------------------------------------
 bool
-DynamicLoaderMacOSXKernel::UnloadImageLoadAddress (OSKextLoadedKextSummary& info)
+DynamicLoaderDarwinKernel::UnloadImageLoadAddress (OSKextLoadedKextSummary& info)
 {
     Module *module = info.module_sp.get();
     bool changed = false;
@@ -407,22 +407,22 @@ DynamicLoaderMacOSXKernel::UnloadImageLoadAddress (OSKextLoadedKextSummary& info
 // or not (based on global preference).
 //----------------------------------------------------------------------
 bool
-DynamicLoaderMacOSXKernel::BreakpointHitCallback (void *baton, 
+DynamicLoaderDarwinKernel::BreakpointHitCallback (void *baton, 
                                                   StoppointCallbackContext *context, 
                                                   user_id_t break_id, 
                                                   user_id_t break_loc_id)
 {    
-    return static_cast<DynamicLoaderMacOSXKernel*>(baton)->BreakpointHit (context, break_id, break_loc_id);    
+    return static_cast<DynamicLoaderDarwinKernel*>(baton)->BreakpointHit (context, break_id, break_loc_id);    
 }
 
 bool
-DynamicLoaderMacOSXKernel::BreakpointHit (StoppointCallbackContext *context, 
+DynamicLoaderDarwinKernel::BreakpointHit (StoppointCallbackContext *context, 
                                           user_id_t break_id, 
                                           user_id_t break_loc_id)
 {    
     LogSP log(GetLogIfAnyCategoriesSet (LIBLLDB_LOG_DYNAMIC_LOADER));
     if (log)
-        log->Printf ("DynamicLoaderMacOSXKernel::BreakpointHit (...)\n");
+        log->Printf ("DynamicLoaderDarwinKernel::BreakpointHit (...)\n");
 
     ReadAllKextSummaries ();
     
@@ -434,7 +434,7 @@ DynamicLoaderMacOSXKernel::BreakpointHit (StoppointCallbackContext *context,
 
 
 bool
-DynamicLoaderMacOSXKernel::ReadKextSummaryHeader ()
+DynamicLoaderDarwinKernel::ReadKextSummaryHeader ()
 {
     Mutex::Locker locker(m_mutex);
 
@@ -487,7 +487,7 @@ DynamicLoaderMacOSXKernel::ReadKextSummaryHeader ()
 
 
 bool
-DynamicLoaderMacOSXKernel::ParseKextSummaries (const Address &kext_summary_addr, 
+DynamicLoaderDarwinKernel::ParseKextSummaries (const Address &kext_summary_addr, 
                                                uint32_t count)
 {
     OSKextLoadedKextSummary::collection kext_summaries;
@@ -544,7 +544,7 @@ DynamicLoaderMacOSXKernel::ParseKextSummaries (const Address &kext_summary_addr,
 // NB don't call this passing in m_kext_summaries.
 
 bool
-DynamicLoaderMacOSXKernel::AddModulesUsingImageInfos (OSKextLoadedKextSummary::collection &image_infos)
+DynamicLoaderDarwinKernel::AddModulesUsingImageInfos (OSKextLoadedKextSummary::collection &image_infos)
 {
     // Now add these images to the main list.
     ModuleList loaded_module_list;
@@ -588,7 +588,7 @@ DynamicLoaderMacOSXKernel::AddModulesUsingImageInfos (OSKextLoadedKextSummary::c
             }
         }
 //        if (log)
-//            loaded_module_list.LogUUIDAndPaths (log, "DynamicLoaderMacOSXKernel::ModulesDidLoad");
+//            loaded_module_list.LogUUIDAndPaths (log, "DynamicLoaderDarwinKernel::ModulesDidLoad");
         m_process->GetTarget().ModulesDidLoad (loaded_module_list);
     }
     return true;
@@ -596,7 +596,7 @@ DynamicLoaderMacOSXKernel::AddModulesUsingImageInfos (OSKextLoadedKextSummary::c
 
 
 uint32_t
-DynamicLoaderMacOSXKernel::ReadKextSummaries (const Address &kext_summary_addr,
+DynamicLoaderDarwinKernel::ReadKextSummaries (const Address &kext_summary_addr,
                                               uint32_t image_infos_count, 
                                               OSKextLoadedKextSummary::collection &image_infos)
 {
@@ -660,7 +660,7 @@ DynamicLoaderMacOSXKernel::ReadKextSummaries (const Address &kext_summary_addr,
 }
 
 bool
-DynamicLoaderMacOSXKernel::ReadAllKextSummaries ()
+DynamicLoaderDarwinKernel::ReadAllKextSummaries ()
 {
     LogSP log(GetLogIfAnyCategoriesSet (LIBLLDB_LOG_DYNAMIC_LOADER));
     
@@ -689,7 +689,7 @@ DynamicLoaderMacOSXKernel::ReadAllKextSummaries ()
 // Returns true if we succeed, false if we fail for any reason.
 //----------------------------------------------------------------------
 bool
-DynamicLoaderMacOSXKernel::ReadMachHeader (OSKextLoadedKextSummary& kext_summary, DataExtractor *load_command_data)
+DynamicLoaderDarwinKernel::ReadMachHeader (OSKextLoadedKextSummary& kext_summary, DataExtractor *load_command_data)
 {
     DataBufferHeap header_bytes(sizeof(llvm::MachO::mach_header), 0);
     Error error;
@@ -708,7 +708,7 @@ DynamicLoaderMacOSXKernel::ReadMachHeader (OSKextLoadedKextSummary& kext_summary
         DataExtractor data(header_bytes.GetBytes(), header_bytes.GetByteSize(), endian::InlHostByteOrder(), 4);
         kext_summary.header.magic = data.GetU32(&offset);
         Address load_cmd_addr = kext_summary.so_address;
-        data.SetByteOrder(DynamicLoaderMacOSXKernel::GetByteOrderFromMagic(kext_summary.header.magic));
+        data.SetByteOrder(DynamicLoaderDarwinKernel::GetByteOrderFromMagic(kext_summary.header.magic));
         switch (kext_summary.header.magic)
         {
         case llvm::MachO::HeaderMagic32:
@@ -762,7 +762,7 @@ DynamicLoaderMacOSXKernel::ReadMachHeader (OSKextLoadedKextSummary& kext_summary
 // Parse the load commands for an image
 //----------------------------------------------------------------------
 uint32_t
-DynamicLoaderMacOSXKernel::ParseLoadCommands (const DataExtractor& data, OSKextLoadedKextSummary& image_info)
+DynamicLoaderDarwinKernel::ParseLoadCommands (const DataExtractor& data, OSKextLoadedKextSummary& image_info)
 {
     uint32_t offset = 0;
     uint32_t cmd_idx;
@@ -860,7 +860,7 @@ DynamicLoaderMacOSXKernel::ParseLoadCommands (const DataExtractor& data, OSKextL
 // Dump a Segment to the file handle provided.
 //----------------------------------------------------------------------
 void
-DynamicLoaderMacOSXKernel::Segment::PutToLog (Log *log, addr_t slide) const
+DynamicLoaderDarwinKernel::Segment::PutToLog (Log *log, addr_t slide) const
 {
     if (log)
     {
@@ -878,8 +878,8 @@ DynamicLoaderMacOSXKernel::Segment::PutToLog (Log *log, addr_t slide) const
     }
 }
 
-const DynamicLoaderMacOSXKernel::Segment *
-DynamicLoaderMacOSXKernel::OSKextLoadedKextSummary::FindSegment (const ConstString &name) const
+const DynamicLoaderDarwinKernel::Segment *
+DynamicLoaderDarwinKernel::OSKextLoadedKextSummary::FindSegment (const ConstString &name) const
 {
     const size_t num_segments = segments.size();
     for (size_t i=0; i<num_segments; ++i)
@@ -895,7 +895,7 @@ DynamicLoaderMacOSXKernel::OSKextLoadedKextSummary::FindSegment (const ConstStri
 // Dump an image info structure to the file handle provided.
 //----------------------------------------------------------------------
 void
-DynamicLoaderMacOSXKernel::OSKextLoadedKextSummary::PutToLog (Log *log) const
+DynamicLoaderDarwinKernel::OSKextLoadedKextSummary::PutToLog (Log *log) const
 {
     if (log == NULL)
         return;
@@ -941,7 +941,7 @@ DynamicLoaderMacOSXKernel::OSKextLoadedKextSummary::PutToLog (Log *log) const
 // that we have parsed to the file handle provided.
 //----------------------------------------------------------------------
 void
-DynamicLoaderMacOSXKernel::PutToLog(Log *log) const
+DynamicLoaderDarwinKernel::PutToLog(Log *log) const
 {
     if (log == NULL)
         return;
@@ -964,20 +964,20 @@ DynamicLoaderMacOSXKernel::PutToLog(Log *log) const
 }
 
 void
-DynamicLoaderMacOSXKernel::PrivateInitialize(Process *process)
+DynamicLoaderDarwinKernel::PrivateInitialize(Process *process)
 {
-    DEBUG_PRINTF("DynamicLoaderMacOSXKernel::%s() process state = %s\n", __FUNCTION__, StateAsCString(m_process->GetState()));
+    DEBUG_PRINTF("DynamicLoaderDarwinKernel::%s() process state = %s\n", __FUNCTION__, StateAsCString(m_process->GetState()));
     Clear(true);
     m_process = process;
     m_process->GetTarget().GetSectionLoadList().Clear();
 }
 
 void
-DynamicLoaderMacOSXKernel::SetNotificationBreakpointIfNeeded ()
+DynamicLoaderDarwinKernel::SetNotificationBreakpointIfNeeded ()
 {
     if (m_break_id == LLDB_INVALID_BREAK_ID)
     {
-        DEBUG_PRINTF("DynamicLoaderMacOSXKernel::%s() process state = %s\n", __FUNCTION__, StateAsCString(m_process->GetState()));
+        DEBUG_PRINTF("DynamicLoaderDarwinKernel::%s() process state = %s\n", __FUNCTION__, StateAsCString(m_process->GetState()));
 
         
         const bool internal_bp = false;
@@ -988,7 +988,7 @@ DynamicLoaderMacOSXKernel::SetNotificationBreakpointIfNeeded ()
                                                                   internal_bp,
                                                                   skip_prologue).get();
 
-        bp->SetCallback (DynamicLoaderMacOSXKernel::BreakpointHitCallback, this, true);
+        bp->SetCallback (DynamicLoaderDarwinKernel::BreakpointHitCallback, this, true);
         m_break_id = bp->GetID();
     }
 }
@@ -997,9 +997,9 @@ DynamicLoaderMacOSXKernel::SetNotificationBreakpointIfNeeded ()
 // Member function that gets called when the process state changes.
 //----------------------------------------------------------------------
 void
-DynamicLoaderMacOSXKernel::PrivateProcessStateChanged (Process *process, StateType state)
+DynamicLoaderDarwinKernel::PrivateProcessStateChanged (Process *process, StateType state)
 {
-    DEBUG_PRINTF("DynamicLoaderMacOSXKernel::%s(%s)\n", __FUNCTION__, StateAsCString(state));
+    DEBUG_PRINTF("DynamicLoaderDarwinKernel::%s(%s)\n", __FUNCTION__, StateAsCString(state));
     switch (state)
     {
     case eStateConnected:
@@ -1028,7 +1028,7 @@ DynamicLoaderMacOSXKernel::PrivateProcessStateChanged (Process *process, StateTy
 }
 
 ThreadPlanSP
-DynamicLoaderMacOSXKernel::GetStepThroughTrampolinePlan (Thread &thread, bool stop_others)
+DynamicLoaderDarwinKernel::GetStepThroughTrampolinePlan (Thread &thread, bool stop_others)
 {
     ThreadPlanSP thread_plan_sp;
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
@@ -1038,7 +1038,7 @@ DynamicLoaderMacOSXKernel::GetStepThroughTrampolinePlan (Thread &thread, bool st
 }
 
 Error
-DynamicLoaderMacOSXKernel::CanLoadImage ()
+DynamicLoaderDarwinKernel::CanLoadImage ()
 {
     Error error;
     error.SetErrorString("always unsafe to load or unload shared libraries in the darwin kernel");
@@ -1046,7 +1046,7 @@ DynamicLoaderMacOSXKernel::CanLoadImage ()
 }
 
 void
-DynamicLoaderMacOSXKernel::Initialize()
+DynamicLoaderDarwinKernel::Initialize()
 {
     PluginManager::RegisterPlugin (GetPluginNameStatic(),
                                    GetPluginDescriptionStatic(),
@@ -1054,20 +1054,20 @@ DynamicLoaderMacOSXKernel::Initialize()
 }
 
 void
-DynamicLoaderMacOSXKernel::Terminate()
+DynamicLoaderDarwinKernel::Terminate()
 {
     PluginManager::UnregisterPlugin (CreateInstance);
 }
 
 
 const char *
-DynamicLoaderMacOSXKernel::GetPluginNameStatic()
+DynamicLoaderDarwinKernel::GetPluginNameStatic()
 {
     return "dynamic-loader.macosx-kernel";
 }
 
 const char *
-DynamicLoaderMacOSXKernel::GetPluginDescriptionStatic()
+DynamicLoaderDarwinKernel::GetPluginDescriptionStatic()
 {
     return "Dynamic loader plug-in that watches for shared library loads/unloads in the MacOSX kernel.";
 }
@@ -1077,19 +1077,19 @@ DynamicLoaderMacOSXKernel::GetPluginDescriptionStatic()
 // PluginInterface protocol
 //------------------------------------------------------------------
 const char *
-DynamicLoaderMacOSXKernel::GetPluginName()
+DynamicLoaderDarwinKernel::GetPluginName()
 {
-    return "DynamicLoaderMacOSXKernel";
+    return "DynamicLoaderDarwinKernel";
 }
 
 const char *
-DynamicLoaderMacOSXKernel::GetShortPluginName()
+DynamicLoaderDarwinKernel::GetShortPluginName()
 {
     return GetPluginNameStatic();
 }
 
 uint32_t
-DynamicLoaderMacOSXKernel::GetPluginVersion()
+DynamicLoaderDarwinKernel::GetPluginVersion()
 {
     return 1;
 }

@@ -1,4 +1,4 @@
-//===-- DynamicLoaderMacOSXKernel.h -----------------------------*- C++ -*-===//
+//===-- DynamicLoaderDarwinKernel.h -----------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_DynamicLoaderMacOSXKernel_h_
-#define liblldb_DynamicLoaderMacOSXKernel_h_
+#ifndef liblldb_DynamicLoaderDarwinKernel_h_
+#define liblldb_DynamicLoaderDarwinKernel_h_
 
 // C Includes
 // C++ Includes
@@ -26,7 +26,7 @@
 #include "lldb/Host/Mutex.h"
 #include "lldb/Target/Process.h"
 
-class DynamicLoaderMacOSXKernel : public lldb_private::DynamicLoader
+class DynamicLoaderDarwinKernel : public lldb_private::DynamicLoader
 {
 public:
     //------------------------------------------------------------------
@@ -47,10 +47,10 @@ public:
     static lldb_private::DynamicLoader *
     CreateInstance (lldb_private::Process *process, bool force);
 
-    DynamicLoaderMacOSXKernel (lldb_private::Process *process);
+    DynamicLoaderDarwinKernel (lldb_private::Process *process);
 
     virtual
-    ~DynamicLoaderMacOSXKernel ();
+    ~DynamicLoaderDarwinKernel ();
     //------------------------------------------------------------------
     /// Called after attaching a process.
     ///
@@ -437,7 +437,7 @@ protected:
     lldb::user_id_t m_break_id;
 
 private:
-    DISALLOW_COPY_AND_ASSIGN (DynamicLoaderMacOSXKernel);
+    DISALLOW_COPY_AND_ASSIGN (DynamicLoaderDarwinKernel);
 };
 
-#endif  // liblldb_DynamicLoaderMacOSXKernel_h_
+#endif  // liblldb_DynamicLoaderDarwinKernel_h_

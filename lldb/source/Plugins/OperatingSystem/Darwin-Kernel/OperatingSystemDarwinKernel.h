@@ -1,4 +1,4 @@
-//===-- OperatingSystemMacOSXKernel.h ----------------------------------*- C++ -*-===//
+//===-- OperatingSystemDarwinKernel.h ---------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_OperatingSystemMacOSXKernel_h_
-#define liblldb_OperatingSystemMacOSXKernel_h_
+#ifndef liblldb_OperatingSystemDarwinKernel_h_
+#define liblldb_OperatingSystemDarwinKernel_h_
 
 // C Includes
 // C++ Includes
@@ -17,7 +17,7 @@
 
 class DynamicRegisterInfo;
 
-class OperatingSystemMacOSXKernel : public lldb_private::OperatingSystem
+class OperatingSystemDarwinKernel : public lldb_private::OperatingSystem
 {
 public:
     //------------------------------------------------------------------
@@ -41,10 +41,10 @@ public:
     //------------------------------------------------------------------
     // Class Methods
     //------------------------------------------------------------------
-    OperatingSystemMacOSXKernel (lldb_private::Process *process);
+    OperatingSystemDarwinKernel (lldb_private::Process *process);
     
     virtual
-    ~OperatingSystemMacOSXKernel ();
+    ~OperatingSystemDarwinKernel ();
     
     //------------------------------------------------------------------
     // lldb_private::PluginInterface Methods
@@ -87,4 +87,4 @@ protected:
     
 };
 
-#endif // #ifndef liblldb_OperatingSystemMacOSXKernel_h_
+#endif // #ifndef liblldb_OperatingSystemDarwinKernel_h_
