@@ -344,6 +344,10 @@ static InstructionClass GetInstructionClass(const Value *V) {
       break;
     default:
       // For anything else, check all the operands.
+      // Note that this includes both operands of a Store: while the first
+      // operand isn't actually being dereferenced, it is being stored to
+      // memory where we can no longer track who might read it and dereference
+      // it, so we have to consider it potentially used.
       for (User::const_op_iterator OI = I->op_begin(), OE = I->op_end();
            OI != OE; ++OI)
         if (IsPotentialUse(*OI))
