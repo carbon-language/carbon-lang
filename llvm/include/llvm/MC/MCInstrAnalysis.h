@@ -43,6 +43,10 @@ public:
     return Info->get(Inst.getOpcode()).isIndirectBranch();
   }
 
+  virtual bool isCall(const MCInst &Inst) const {
+    return Info->get(Inst.getOpcode()).isCall();
+  }
+
   virtual bool isReturn(const MCInst &Inst) const {
     return Info->get(Inst.getOpcode()).isReturn();
   }
