@@ -72,6 +72,8 @@ static DenseSet<void *> *OpenedHandles = 0;
 
 DynamicLibrary DynamicLibrary::getPermanentLibrary(const char *filename,
                                                    std::string *errMsg) {
+  SmartScopedLock<true> lock(getMutex());
+
   void *handle = dlopen(filename, RTLD_LAZY|RTLD_GLOBAL);
   if (handle == 0) {
     if (errMsg) *errMsg = dlerror();
@@ -85,7 +87,6 @@ DynamicLibrary DynamicLibrary::getPermanentLibrary(const char *filename,
     handle = RTLD_DEFAULT;
 #endif
 
-  SmartScopedLock<true> lock(getMutex());
   if (OpenedHandles == 0)
     OpenedHandles = new DenseSet<void *>();
 

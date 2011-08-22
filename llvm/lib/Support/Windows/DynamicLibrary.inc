@@ -71,9 +71,10 @@ extern "C" {
 
 DynamicLibrary DynamicLibrary::getPermanentLibrary(const char *filename,
                                                    std::string *errMsg) {
+  SmartScopedLock<true> lock(getMutex());
+
   if (!filename) {
     // When no file is specified, enumerate all DLLs and EXEs in the process.
-    SmartScopedLock<true> lock(getMutex());
     if (OpenedHandles == 0)
       OpenedHandles = new DenseSet<HMODULE>();
 
@@ -90,7 +91,6 @@ DynamicLibrary DynamicLibrary::getPermanentLibrary(const char *filename,
     return DynamicLibrary();
   }
 
-  SmartScopedLock<true> lock(getMutex());
   if (OpenedHandles == 0)
     OpenedHandles = new DenseSet<HMODULE>();
 
