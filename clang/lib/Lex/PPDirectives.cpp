@@ -1298,8 +1298,8 @@ bool Preprocessor::ReadMacroDefinitionArgList(MacroInfo *MI) {
       Diag(Tok, diag::err_pp_expected_ident_in_arg_list);
       return true;
     case tok::ellipsis:  // #define X(... -> C99 varargs
-      // Warn if use of C99 feature in non-C99 mode.
-      if (!Features.C99) Diag(Tok, diag::ext_variadic_macro);
+      if (!Features.C99 && !Features.CPlusPlus0x)
+        Diag(Tok, diag::ext_variadic_macro);
 
       // Lex the token after the identifier.
       LexUnexpandedToken(Tok);
