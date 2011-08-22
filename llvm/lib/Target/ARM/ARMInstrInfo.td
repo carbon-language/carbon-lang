@@ -4751,75 +4751,71 @@ def : MnemonicAlias<"stmea", "stm">;
 // PKHBT/PKHTB with default shift amount. PKHTB is equivalent to PKHBT when the
 // shift amount is zero (i.e., unspecified).
 def : InstAlias<"pkhbt${p} $Rd, $Rn, $Rm",
-                (PKHBT GPR:$Rd, GPR:$Rn, GPR:$Rm, 0, pred:$p)>;
+                (PKHBT GPR:$Rd, GPR:$Rn, GPR:$Rm, 0, pred:$p)>,
+        Requires<[IsARM, HasV6]>;
 def : InstAlias<"pkhtb${p} $Rd, $Rn, $Rm",
-                (PKHBT GPR:$Rd, GPR:$Rn, GPR:$Rm, 0, pred:$p)>;
+                (PKHBT GPR:$Rd, GPR:$Rn, GPR:$Rm, 0, pred:$p)>,
+        Requires<[IsARM, HasV6]>;
 
 // PUSH/POP aliases for STM/LDM
-def : InstAlias<"push${p} $regs",
-                (STMDB_UPD SP, pred:$p, reglist:$regs)>;
-def : InstAlias<"pop${p} $regs",
-                (LDMIA_UPD SP, pred:$p, reglist:$regs)>;
+def : ARMInstAlias<"push${p} $regs", (STMDB_UPD SP, pred:$p, reglist:$regs)>;
+def : ARMInstAlias<"pop${p} $regs", (LDMIA_UPD SP, pred:$p, reglist:$regs)>;
 
 // RSB two-operand forms (optional explicit destination operand)
-def : InstAlias<"rsb${s}${p} $Rdn, $imm",
-                (RSBri GPR:$Rdn, GPR:$Rdn, so_imm:$imm, pred:$p, cc_out:$s)>,
-         Requires<[IsARM]>;
-def : InstAlias<"rsb${s}${p} $Rdn, $Rm",
-                (RSBrr GPR:$Rdn, GPR:$Rdn, GPR:$Rm, pred:$p, cc_out:$s)>,
-         Requires<[IsARM]>;
-def : InstAlias<"rsb${s}${p} $Rdn, $shift",
+def : ARMInstAlias<"rsb${s}${p} $Rdn, $imm",
+                (RSBri GPR:$Rdn, GPR:$Rdn, so_imm:$imm, pred:$p, cc_out:$s)>;
+def : ARMInstAlias<"rsb${s}${p} $Rdn, $Rm",
+                (RSBrr GPR:$Rdn, GPR:$Rdn, GPR:$Rm, pred:$p, cc_out:$s)>;
+def : ARMInstAlias<"rsb${s}${p} $Rdn, $shift",
                 (RSBrsi GPR:$Rdn, GPR:$Rdn, so_reg_imm:$shift, pred:$p,
-                        cc_out:$s)>, Requires<[IsARM]>;
-def : InstAlias<"rsb${s}${p} $Rdn, $shift",
+                        cc_out:$s)>;
+def : ARMInstAlias<"rsb${s}${p} $Rdn, $shift",
                 (RSBrsr GPR:$Rdn, GPR:$Rdn, so_reg_reg:$shift, pred:$p,
-                        cc_out:$s)>, Requires<[IsARM]>;
+                        cc_out:$s)>;
 // RSC two-operand forms (optional explicit destination operand)
-def : InstAlias<"rsc${s}${p} $Rdn, $imm",
-                (RSCri GPR:$Rdn, GPR:$Rdn, so_imm:$imm, pred:$p, cc_out:$s)>,
-         Requires<[IsARM]>;
-def : InstAlias<"rsc${s}${p} $Rdn, $Rm",
-                (RSCrr GPR:$Rdn, GPR:$Rdn, GPR:$Rm, pred:$p, cc_out:$s)>,
-         Requires<[IsARM]>;
-def : InstAlias<"rsc${s}${p} $Rdn, $shift",
+def : ARMInstAlias<"rsc${s}${p} $Rdn, $imm",
+                (RSCri GPR:$Rdn, GPR:$Rdn, so_imm:$imm, pred:$p, cc_out:$s)>;
+def : ARMInstAlias<"rsc${s}${p} $Rdn, $Rm",
+                (RSCrr GPR:$Rdn, GPR:$Rdn, GPR:$Rm, pred:$p, cc_out:$s)>;
+def : ARMInstAlias<"rsc${s}${p} $Rdn, $shift",
                 (RSCrsi GPR:$Rdn, GPR:$Rdn, so_reg_imm:$shift, pred:$p,
-                        cc_out:$s)>, Requires<[IsARM]>;
-def : InstAlias<"rsc${s}${p} $Rdn, $shift",
+                        cc_out:$s)>;
+def : ARMInstAlias<"rsc${s}${p} $Rdn, $shift",
                 (RSCrsr GPR:$Rdn, GPR:$Rdn, so_reg_reg:$shift, pred:$p,
-                        cc_out:$s)>, Requires<[IsARM]>;
+                        cc_out:$s)>;
 
 // SSAT/USAT optional shift operand.
-def : InstAlias<"ssat${p} $Rd, $sat_imm, $Rn",
+def : ARMInstAlias<"ssat${p} $Rd, $sat_imm, $Rn",
                 (SSAT GPRnopc:$Rd, imm1_32:$sat_imm, GPRnopc:$Rn, 0, pred:$p)>;
-def : InstAlias<"usat${p} $Rd, $sat_imm, $Rn",
+def : ARMInstAlias<"usat${p} $Rd, $sat_imm, $Rn",
                 (USAT GPRnopc:$Rd, imm0_31:$sat_imm, GPRnopc:$Rn, 0, pred:$p)>;
 
 
 // Extend instruction optional rotate operand.
-def : InstAlias<"sxtab${p} $Rd, $Rn, $Rm",
+def : ARMInstAlias<"sxtab${p} $Rd, $Rn, $Rm",
                 (SXTAB GPRnopc:$Rd, GPR:$Rn, GPRnopc:$Rm, 0, pred:$p)>;
-def : InstAlias<"sxtah${p} $Rd, $Rn, $Rm",
+def : ARMInstAlias<"sxtah${p} $Rd, $Rn, $Rm",
                 (SXTAH GPRnopc:$Rd, GPR:$Rn, GPRnopc:$Rm, 0, pred:$p)>;
-def : InstAlias<"sxtab16${p} $Rd, $Rn, $Rm",
+def : ARMInstAlias<"sxtab16${p} $Rd, $Rn, $Rm",
                 (SXTAB16 GPRnopc:$Rd, GPR:$Rn, GPRnopc:$Rm, 0, pred:$p)>;
-def : InstAlias<"sxtb${p} $Rd, $Rm",
+def : ARMInstAlias<"sxtb${p} $Rd, $Rm",
                 (SXTB GPRnopc:$Rd, GPRnopc:$Rm, 0, pred:$p)>;
-def : InstAlias<"sxtb16${p} $Rd, $Rm",
+def : ARMInstAlias<"sxtb16${p} $Rd, $Rm",
                 (SXTB16 GPRnopc:$Rd, GPRnopc:$Rm, 0, pred:$p)>;
-def : InstAlias<"sxth${p} $Rd, $Rm",
+def : ARMInstAlias<"sxth${p} $Rd, $Rm",
                 (SXTH GPRnopc:$Rd, GPRnopc:$Rm, 0, pred:$p)>;
 
-def : InstAlias<"uxtab${p} $Rd, $Rn, $Rm",
+def : ARMInstAlias<"uxtab${p} $Rd, $Rn, $Rm",
                 (UXTAB GPRnopc:$Rd, GPR:$Rn, GPRnopc:$Rm, 0, pred:$p)>;
-def : InstAlias<"uxtah${p} $Rd, $Rn, $Rm",
+def : ARMInstAlias<"uxtah${p} $Rd, $Rn, $Rm",
                 (UXTAH GPRnopc:$Rd, GPR:$Rn, GPRnopc:$Rm, 0, pred:$p)>;
-def : InstAlias<"uxtab16${p} $Rd, $Rn, $Rm",
+def : ARMInstAlias<"uxtab16${p} $Rd, $Rn, $Rm",
                 (UXTAB16 GPRnopc:$Rd, GPR:$Rn, GPRnopc:$Rm, 0, pred:$p)>;
-def : InstAlias<"uxtb${p} $Rd, $Rm",
+def : ARMInstAlias<"uxtb${p} $Rd, $Rm",
                 (UXTB GPRnopc:$Rd, GPRnopc:$Rm, 0, pred:$p)>;
-def : InstAlias<"uxtb16${p} $Rd, $Rm",
+def : ARMInstAlias<"uxtb16${p} $Rd, $Rm",
                 (UXTB16 GPRnopc:$Rd, GPRnopc:$Rm, 0, pred:$p)>;
-def : InstAlias<"uxth${p} $Rd, $Rm",
+def : ARMInstAlias<"uxth${p} $Rd, $Rm",
                 (UXTH GPRnopc:$Rd, GPRnopc:$Rm, 0, pred:$p)>;
 
 

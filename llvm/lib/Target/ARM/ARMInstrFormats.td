@@ -219,8 +219,19 @@ def shr_imm64 : Operand<i32> {
 }
 
 //===----------------------------------------------------------------------===//
+// ARM Assembler alias templates.
+//
+class ARMInstAlias<string Asm, dag Result, bit Emit = 0b1>
+      : InstAlias<Asm, Result, Emit>, Requires<[IsARM]>;
+class  tInstAlias<string Asm, dag Result, bit Emit = 0b1>
+      : InstAlias<Asm, Result, Emit>, Requires<[IsThumb]>;
+class t2InstAlias<string Asm, dag Result, bit Emit = 0b1>
+      : InstAlias<Asm, Result, Emit>, Requires<[IsThumb2]>;
+
+//===----------------------------------------------------------------------===//
 // ARM Instruction templates.
 //
+
 
 class InstTemplate<AddrMode am, int sz, IndexMode im,
                    Format f, Domain d, string cstr, InstrItinClass itin>

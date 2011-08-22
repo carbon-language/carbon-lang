@@ -504,21 +504,18 @@ multiclass T2I_bin_irs<bits<4> opcod, string opc,
    }
   // Assembly aliases for optional destination operand when it's the same
   // as the source operand.
-  def : InstAlias<!strconcat(opc, "${s}${p} $Rdn, $imm"),
+  def : t2InstAlias<!strconcat(opc, "${s}${p} $Rdn, $imm"),
      (!cast<Instruction>(!strconcat(baseOpc, "ri")) rGPR:$Rdn, rGPR:$Rdn,
                                                     t2_so_imm:$imm, pred:$p,
-                                                    cc_out:$s)>,
-     Requires<[IsThumb2]>;
-  def : InstAlias<!strconcat(opc, "${s}${p}", wide, " $Rdn, $Rm"),
+                                                    cc_out:$s)>;
+  def : t2InstAlias<!strconcat(opc, "${s}${p}", wide, " $Rdn, $Rm"),
      (!cast<Instruction>(!strconcat(baseOpc, "rr")) rGPR:$Rdn, rGPR:$Rdn,
                                                     rGPR:$Rm, pred:$p,
-                                                    cc_out:$s)>,
-     Requires<[IsThumb2]>;
-  def : InstAlias<!strconcat(opc, "${s}${p}", wide, " $Rdn, $shift"),
+                                                    cc_out:$s)>;
+  def : t2InstAlias<!strconcat(opc, "${s}${p}", wide, " $Rdn, $shift"),
      (!cast<Instruction>(!strconcat(baseOpc, "rs")) rGPR:$Rdn, rGPR:$Rdn,
                                                     t2_so_reg:$shift, pred:$p,
-                                                    cc_out:$s)>,
-     Requires<[IsThumb2]>;
+                                                    cc_out:$s)>;
 }
 
 /// T2I_bin_w_irs - Same as T2I_bin_irs except these operations need
@@ -1557,9 +1554,8 @@ def t2MOVi : T2sOneRegImm<(outs rGPR:$Rd), (ins t2_so_imm:$imm), IIC_iMOVi,
   let Inst{15} = 0;
 }
 
-def : InstAlias<"mov${s}${p} $Rd, $imm", (t2MOVi rGPR:$Rd, t2_so_imm:$imm,
-                                                 pred:$p, cc_out:$s)>,
-                Requires<[IsThumb2]>;
+def : t2InstAlias<"mov${s}${p} $Rd, $imm", (t2MOVi rGPR:$Rd, t2_so_imm:$imm,
+                                                   pred:$p, cc_out:$s)>;
 
 let isReMaterializable = 1, isAsCheapAsAMove = 1, isMoveImm = 1 in
 def t2MOVi16 : T2I<(outs rGPR:$Rd), (ins imm0_65535_expr:$imm), IIC_iMOVi,

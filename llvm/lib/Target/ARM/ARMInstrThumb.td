@@ -1017,9 +1017,8 @@ def tMOVi8 : T1sI<(outs tGPR:$Rd), (ins imm0_255:$imm8), IIC_iMOVi,
 }
 // Because we have an explicit tMOVSr below, we need an alias to handle
 // the immediate "movs" form here. Blech.
-def : InstAlias <"movs $Rdn, $imm",
-                 (tMOVi8 tGPR:$Rdn, CPSR, imm0_255:$imm, 14, 0)>,
-        Requires<[IsThumb]>;
+def : tInstAlias <"movs $Rdn, $imm",
+                 (tMOVi8 tGPR:$Rdn, CPSR, imm0_255:$imm, 14, 0)>;
 
 // A7-73: MOV(2) - mov setting flag.
 
@@ -1061,9 +1060,8 @@ def tMUL :                      // A8.6.105 T1
   let AsmMatchConverter = "cvtThumbMultiply";
 }
 
-def : InstAlias<"mul${s}${p} $Rdm, $Rn", (tMUL tGPR:$Rdm, s_cc_out:$s, tGPR:$Rn,
-                                               pred:$p)>,
-          Requires<[IsThumb]>;
+def :tInstAlias<"mul${s}${p} $Rdm, $Rn", (tMUL tGPR:$Rdm, s_cc_out:$s, tGPR:$Rn,
+                                               pred:$p)>;
 
 // Move inverse register
 def tMVN :                      // A8.6.107
@@ -1115,9 +1113,8 @@ def tRSB :                      // A8.6.141
                "rsb", "\t$Rd, $Rn, #0",
                [(set tGPR:$Rd, (ineg tGPR:$Rn))]>;
 
-def : InstAlias<"neg${s}${p} $Rd, $Rm",
-                (tRSB tGPR:$Rd, s_cc_out:$s, tGPR:$Rm, pred:$p)>,
-        Requires<[IsThumb]>;
+def : tInstAlias<"neg${s}${p} $Rd, $Rm",
+                 (tRSB tGPR:$Rd, s_cc_out:$s, tGPR:$Rm, pred:$p)>;
 
 // Subtract with carry register
 let Uses = [CPSR] in
