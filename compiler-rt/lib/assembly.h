@@ -35,15 +35,16 @@
 #define SYMBOL_NAME(name) GLUE(__USER_LABEL_PREFIX__, name)
 
 #ifdef VISIBILITY_HIDDEN
-#define DEFINE_COMPILERRT_FUNCTION(name)                   \
-  .globl SYMBOL_NAME(name) SEPARATOR                       \
-  HIDDEN_DIRECTIVE SYMBOL_NAME(name) SEPARATOR             \
-  SYMBOL_NAME(name):
+#define DECLARE_SYMBOL_VISIBILITY(name)                    \
+  HIDDEN_DIRECTIVE SYMBOL_NAME(name) SEPARATOR
 #else
+#define DECLARE_SYMBOL_VISIBILITY(name)
+#endif
+
 #define DEFINE_COMPILERRT_FUNCTION(name)                   \
   .globl SYMBOL_NAME(name) SEPARATOR                       \
+  DECLARE_SYMBOL_VISIBILITY(name)                          \
   SYMBOL_NAME(name):
-#endif
 
 #define DEFINE_COMPILERRT_PRIVATE_FUNCTION(name)           \
   .globl SYMBOL_NAME(name) SEPARATOR                       \
