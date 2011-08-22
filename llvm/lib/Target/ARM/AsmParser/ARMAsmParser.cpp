@@ -3084,6 +3084,9 @@ validateInstruction(MCInst &Inst,
     // Thumb LDM instructions are writeback iff the base register is not
     // in the register list.
     unsigned Rn = Inst.getOperand(0).getReg();
+    bool hasWritebackToken =
+      (static_cast<ARMOperand*>(Operands[3])->isToken() &&
+       static_cast<ARMOperand*>(Operands[3])->getToken() == "!");
     bool doesWriteback = true;
     for (unsigned i = 3; i < Inst.getNumOperands(); ++i) {
       unsigned Reg = Inst.getOperand(i).getReg();
@@ -3091,15 +3094,18 @@ validateInstruction(MCInst &Inst,
         doesWriteback = false;
       // Anything other than a low register isn't legal here.
       if (!isARMLowRegister(Reg))
-        return Error(Operands[4]->getStartLoc(),
+        return Error(Operands[3 + hasWritebackToken]->getStartLoc(),
                      "registers must be in range r0-r7");
     }
     // If we should have writeback, then there should be a '!' token.
-    if (doesWriteback &&
-        (!static_cast<ARMOperand*>(Operands[3])->isToken() ||
-         static_cast<ARMOperand*>(Operands[3])->getToken() != "!"))
+    if (doesWriteback && !hasWritebackToken)
       return Error(Operands[2]->getStartLoc(),
                    "writeback operator '!' expected");
+    // Likewise, if we should not have writeback, there must not be a '!'
+    if (!doesWriteback && hasWritebackToken)
+      return Error(Operands[3]->getStartLoc(),
+                   "writeback operator '!' not allowed when base register "
+                   "in register list");
 
     break;
   }

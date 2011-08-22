@@ -45,12 +45,16 @@ error: invalid operand for instruction
 @ Invalid writeback and register lists for LDM
         ldm r2!, {r5, r8}
         ldm r2, {r5, r7}
+        ldm r2!, {r2, r3, r4}
 @ CHECK-ERRORS: error: registers must be in range r0-r7
 @ CHECK-ERRORS:         ldm r2!, {r5, r8}
 @ CHECK-ERRORS:                  ^
 @ CHECK-ERRORS: error: writeback operator '!' expected
 @ CHECK-ERRORS:         ldm r2, {r5, r7}
 @ CHECK-ERRORS:             ^
+@ CHECK-ERRORS: error: writeback operator '!' not allowed when base register in register list
+@ CHECK-ERRORS:         ldm r2!, {r2, r3}
+@ CHECK-ERRORS:               ^
 
 
 @ Out of range immediates for LSL instruction.
