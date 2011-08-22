@@ -74,23 +74,25 @@ MachineInstr *TargetInstrInfoImpl::commuteInstruction(MachineInstr *MI,
 
   assert(MI->getOperand(Idx1).isReg() && MI->getOperand(Idx2).isReg() &&
          "This only knows how to commute register operands so far");
+  unsigned Reg0 = HasDef ? MI->getOperand(0).getReg() : 0;
   unsigned Reg1 = MI->getOperand(Idx1).getReg();
   unsigned Reg2 = MI->getOperand(Idx2).getReg();
   bool Reg1IsKill = MI->getOperand(Idx1).isKill();
   bool Reg2IsKill = MI->getOperand(Idx2).isKill();
-  bool ChangeReg0 = false;
-  if (HasDef && MI->getOperand(0).getReg() == Reg1) {
-    // Must be two address instruction!
-    assert(MI->getDesc().getOperandConstraint(0, MCOI::TIED_TO) &&
-           "Expecting a two-address instruction!");
+  // If destination is tied to either of the commuted source register, then
+  // it must be updated.
+  if (HasDef && Reg0 == Reg1 &&
+      MI->getDesc().getOperandConstraint(Idx1, MCOI::TIED_TO) == 0) {
     Reg2IsKill = false;
-    ChangeReg0 = true;
+    Reg0 = Reg2;
+  } else if (HasDef && Reg0 == Reg2 &&
+             MI->getDesc().getOperandConstraint(Idx2, MCOI::TIED_TO) == 0) {
+    Reg1IsKill = false;
+    Reg0 = Reg1;
   }
 
   if (NewMI) {
     // Create a new instruction.
-    unsigned Reg0 = HasDef
-      ? (ChangeReg0 ? Reg2 : MI->getOperand(0).getReg()) : 0;
     bool Reg0IsDead = HasDef ? MI->getOperand(0).isDead() : false;
     MachineFunction &MF = *MI->getParent()->getParent();
     if (HasDef)
@@ -104,8 +106,8 @@ MachineInstr *TargetInstrInfoImpl::commuteInstruction(MachineInstr *MI,
         .addReg(Reg1, getKillRegState(Reg2IsKill));
   }
 
-  if (ChangeReg0)
-    MI->getOperand(0).setReg(Reg2);
+  if (HasDef)
+    MI->getOperand(0).setReg(Reg0);
   MI->getOperand(Idx2).setReg(Reg1);
   MI->getOperand(Idx1).setReg(Reg2);
   MI->getOperand(Idx2).setIsKill(Reg1IsKill);
