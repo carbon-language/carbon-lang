@@ -93,6 +93,11 @@ class HelpCommandTestCase(TestBase):
         self.expect("help image du line",
             substrs = ['Dump the debug symbol file for one or more target modules'])
 
+    def test_help_target_variable_syntax(self):
+        """Command 'help target variable' should display <variable-name> ..."""
+        self.expect("help target variable",
+            substrs = ['<variable-name> [<variable-name> [...]]'])
+
 
 if __name__ == '__main__':
     import atexit

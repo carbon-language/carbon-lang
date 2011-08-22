@@ -538,6 +538,19 @@ public:
         m_option_shared_libraries (LLDB_OPT_SET_1, false, "shlib",'s', 0, eArgTypePath, "A basename or fullpath to a shared library to use in the search for global variables. This option can be specified multiple times."),
         m_varobj_options()
     {
+        CommandArgumentEntry arg;
+        CommandArgumentData var_name_arg;
+        
+        // Define the first (and only) variant of this arg.
+        var_name_arg.arg_type = eArgTypeVarName;
+        var_name_arg.arg_repetition = eArgRepeatPlus;
+        
+        // There is only one variant this argument could be; put it into the argument entry.
+        arg.push_back (var_name_arg);
+        
+        // Push the data for the first argument into the m_arguments vector.
+        m_arguments.push_back (arg);
+        
         m_option_group.Append (&m_varobj_options, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
         m_option_group.Append (&m_option_variable, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
         m_option_group.Append (&m_option_compile_units, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);   
