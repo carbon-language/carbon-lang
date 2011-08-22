@@ -1860,10 +1860,12 @@ void BugReporter::FlushReport(BugReportEquivClass& EQ) {
     return;
   
   // Get the meta data.
-  std::pair<const char**, const char**> Meta =
-    exampleReport->getExtraDescriptiveText();
-  for (const char** s = Meta.first; s != Meta.second; ++s)
-    D->addMeta(*s);
+  const BugReport::ExtraTextList &Meta =
+                                  exampleReport->getExtraText();
+  for (BugReport::ExtraTextList::const_iterator i = Meta.begin(),
+                                                e = Meta.end(); i != e; ++i) {
+    D->addMeta(*i);
+  }
 
   // Emit a summary diagnostic to the regular Diagnostics engine.
   BugReport::ranges_iterator Beg, End;

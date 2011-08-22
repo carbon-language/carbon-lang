@@ -62,6 +62,7 @@ public:
 
   typedef const SourceRange *ranges_iterator;
   typedef llvm::ImmutableList<BugReporterVisitor*>::iterator visitor_iterator;
+  typedef SmallVector<StringRef, 2> ExtraTextList;
 
 protected:
   friend class BugReporter;
@@ -73,6 +74,7 @@ protected:
   FullSourceLoc Location;
   const ExplodedNode *ErrorNode;
   SmallVector<SourceRange, 4> Ranges;
+  ExtraTextList ExtraText;
 
   // Not the most efficient data structure, but we use an ImmutableList for the
   // Callbacks because it is safe to make additions to list during iteration.
@@ -115,8 +117,12 @@ public:
   /// \brief This allows for addition of meta data to the diagnostic.
   ///
   /// Currently, only the HTMLDiagnosticClient knows how to display it. 
-  virtual std::pair<const char**,const char**> getExtraDescriptiveText() {
-    return std::make_pair((const char**)0,(const char**)0);
+  void addExtraText(StringRef S) {
+    ExtraText.push_back(S);
+  }
+
+  virtual const ExtraTextList &getExtraText() {
+    return ExtraText;
   }
 
   /// \brief Return the "definitive" location of the reported bug.

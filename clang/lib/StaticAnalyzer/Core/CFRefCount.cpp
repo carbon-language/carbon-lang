@@ -1797,9 +1797,9 @@ void CFRefCount::BindingsPrinter::Print(raw_ostream &Out,
 //===----------------------------------------------------------------------===//
 // Error reporting.
 //===----------------------------------------------------------------------===//
+static void addExtraTextToCFReport(BugReport &R);
 
 namespace {
-
   //===-------------===//
   // Bug Descriptions. //
   //===-------------===//
@@ -1951,12 +1951,14 @@ namespace {
       : BugReport(D, D.getDescription(), n) {
       if (registerVisitor)
         addVisitor(new CFRefReportVisitor(sym, tf));
+      addExtraTextToCFReport(*this);
     }
 
     CFRefReport(CFRefBug& D, const CFRefCount &tf,
                 ExplodedNode *n, SymbolRef sym, StringRef endText)
       : BugReport(D, D.getDescription(), endText, n) {
       addVisitor(new CFRefReportVisitor(sym, tf));
+      addExtraTextToCFReport(*this);
     }
 
     virtual ~CFRefReport() {}
@@ -1968,8 +1970,6 @@ namespace {
       else
         return std::make_pair(ranges_iterator(), ranges_iterator());
     }
-
-    std::pair<const char**,const char**> getExtraDescriptiveText();
   };
 
   class CFRefLeakReport : public CFRefReport {
@@ -1985,8 +1985,6 @@ namespace {
   };
 } // end anonymous namespace
 
-
-
 static const char* Msgs[] = {
   // GC only
   "Code is compiled to only use garbage collection",
@@ -2000,26 +1998,33 @@ static const char* Msgs[] = {
   " (non-GC).  The bug occurs in non-GC mode"
 };
 
-std::pair<const char**,const char**> CFRefReport::getExtraDescriptiveText() {
-  CFRefCount& TF = static_cast<CFRefBug&>(getBugType()).getTF();
+// Add the metadata text.
+static void addExtraTextToCFReport(BugReport &R) {
+  CFRefCount& TF = static_cast<CFRefBug&>(R.getBugType()).getTF();
 
   switch (TF.getLangOptions().getGCMode()) {
-    default:
-      assert(false);
+  default:
+    assert(false);
 
-    case LangOptions::GCOnly:
-      assert (TF.isGCEnabled());
-      return std::make_pair(&Msgs[0], &Msgs[0]+1);
+  case LangOptions::GCOnly:
+    assert (TF.isGCEnabled());
+    R.addExtraText(Msgs[0]);
+    return;
 
-    case LangOptions::NonGC:
-      assert (!TF.isGCEnabled());
-      return std::make_pair(&Msgs[1], &Msgs[1]+1);
+  case LangOptions::NonGC:
+    assert (!TF.isGCEnabled());
+    R.addExtraText(Msgs[1]);
+    return;
 
-    case LangOptions::HybridGC:
-      if (TF.isGCEnabled())
-        return std::make_pair(&Msgs[2], &Msgs[2]+1);
-      else
-        return std::make_pair(&Msgs[3], &Msgs[3]+1);
+  case LangOptions::HybridGC:
+    if (TF.isGCEnabled()) {
+      R.addExtraText(Msgs[2]);
+      return;
+    }
+    else {
+      R.addExtraText(Msgs[3]);
+      return;
+    }
   }
 }
 
