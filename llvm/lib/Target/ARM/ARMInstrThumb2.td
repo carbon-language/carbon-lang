@@ -2153,9 +2153,9 @@ def t2MLS: T2FourReg<
 let neverHasSideEffects = 1 in {
 let isCommutable = 1 in {
 def t2SMULL : T2MulLong<0b000, 0b0000,
-                  (outs rGPR:$Rd, rGPR:$Ra),
+                  (outs rGPR:$RdLo, rGPR:$RdHi),
                   (ins rGPR:$Rn, rGPR:$Rm), IIC_iMUL64,
-                   "smull", "\t$Rd, $Ra, $Rn, $Rm", []>;
+                   "smull", "\t$RdLo, $RdHi, $Rn, $Rm", []>;
 
 def t2UMULL : T2MulLong<0b010, 0b0000,
                   (outs rGPR:$RdLo, rGPR:$RdHi),
