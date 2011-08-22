@@ -200,6 +200,19 @@ typedef enum InstructionType
 
 }  InstructionType;
     
+    
+//------------------------------------------------------------------
+/// Format category entry types
+//------------------------------------------------------------------    
+typedef enum FormatCategoryItem
+{
+    eFormatCategoryItemSummary =         0x0001,
+    eFormatCategoryItemRegexSummary =    0x1001,
+    eFormatCategoryItemFilter =          0x0002,
+    eFormatCategoryItemRegexFilter =     0x1002,
+    eFormatCategoryItemSynth =           0x0004,
+    eFormatCategoryItemRegexSynth =      0x1004,
+} FormatCategoryItem;
 
 } // namespace lldb
 

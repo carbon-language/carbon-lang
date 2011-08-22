@@ -1190,6 +1190,7 @@
 		9467E65413C3D98900B3B6F3 /* TypeHierarchyNavigator.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = TypeHierarchyNavigator.h; path = include/lldb/Symbol/TypeHierarchyNavigator.h; sourceTree = "<group>"; };
 		9470A8EE1402DF940056FF61 /* DataVisualization.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = DataVisualization.h; path = include/lldb/Core/DataVisualization.h; sourceTree = "<group>"; };
 		9470A8EF1402DFFB0056FF61 /* DataVisualization.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DataVisualization.cpp; path = source/Core/DataVisualization.cpp; sourceTree = "<group>"; };
+		94A8287514031D05006C37A8 /* FormatNavigator.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = FormatNavigator.h; path = include/lldb/Core/FormatNavigator.h; sourceTree = "<group>"; };
 		94A9112B13D5DEF80046D8A6 /* FormatClasses.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = FormatClasses.h; path = include/lldb/Core/FormatClasses.h; sourceTree = "<group>"; };
 		94A9112D13D5DF210046D8A6 /* FormatClasses.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FormatClasses.cpp; path = source/Core/FormatClasses.cpp; sourceTree = "<group>"; };
 		94B6E76013D8833C005F417F /* ValueObjectSyntheticFilter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ValueObjectSyntheticFilter.h; path = include/lldb/Core/ValueObjectSyntheticFilter.h; sourceTree = "<group>"; };
@@ -1950,6 +1951,7 @@
 				94A9112D13D5DF210046D8A6 /* FormatClasses.cpp */,
 				9415F61613B2C0DC00A52B36 /* FormatManager.h */,
 				9415F61713B2C0EF00A52B36 /* FormatManager.cpp */,
+				94A8287514031D05006C37A8 /* FormatNavigator.h */,
 				26F7305F139D8FC900FD51C7 /* History.h */,
 				26F73061139D8FDB00FD51C7 /* History.cpp */,
 				9AA69DBB118A029E00D753A0 /* InputReader.h */,

@@ -1169,7 +1169,7 @@ private:
                         const lldb::FormatCategorySP& cate)
     {
         ConstString *name = (ConstString*)param;
-        cate->Delete(*name, FormatCategory::eSummary | FormatCategory::eRegexSummary);
+        cate->Delete(*name, eFormatCategoryItemSummary | eFormatCategoryItemRegexSummary);
         return true;
     }
 
@@ -1540,7 +1540,7 @@ private:
         const char* cate_name = cate->GetName().c_str();
         
         // if the category is disabled or empty and there is no regex, just skip it
-        if ((cate->IsEnabled() == false || cate->GetCount(FormatCategory::eSummary | FormatCategory::eRegexSummary) == 0) && param->cate_regex == NULL)
+        if ((cate->IsEnabled() == false || cate->GetCount(eFormatCategoryItemSummary | eFormatCategoryItemRegexSummary) == 0) && param->cate_regex == NULL)
             return true;
         
         // if we have a regex and this category does not match it, just skip it
@@ -2046,7 +2046,7 @@ private:
         CommandReturnObject* result = param->result;
         
         // if the category is disabled or empty and there is no regex, just skip it
-        if ((cate->IsEnabled() == false || cate->GetCount(FormatCategory::eFilter | FormatCategory::eRegexFilter) == 0) && param->cate_regex == NULL)
+        if ((cate->IsEnabled() == false || cate->GetCount(eFormatCategoryItemFilter | eFormatCategoryItemRegexFilter) == 0) && param->cate_regex == NULL)
             return true;
         
         // if we have a regex and this category does not match it, just skip it
@@ -2256,7 +2256,7 @@ private:
         const char* cate_name = cate->GetName().c_str();
         
         // if the category is disabled or empty and there is no regex, just skip it
-        if ((cate->IsEnabled() == false || cate->GetCount(FormatCategory::eSynth | FormatCategory::eRegexSynth) == 0) && param->cate_regex == NULL)
+        if ((cate->IsEnabled() == false || cate->GetCount(eFormatCategoryItemSynth | eFormatCategoryItemRegexSynth) == 0) && param->cate_regex == NULL)
             return true;
         
         // if we have a regex and this category does not match it, just skip it
@@ -2397,7 +2397,7 @@ private:
                         const lldb::FormatCategorySP& cate)
     {
         ConstString *name = (ConstString*)param;
-        return cate->Delete(*name, FormatCategory::eFilter | FormatCategory::eRegexFilter);
+        return cate->Delete(*name, eFormatCategoryItemFilter | eFormatCategoryItemRegexFilter);
     }
     
 public:
@@ -2559,7 +2559,7 @@ private:
                         const lldb::FormatCategorySP& cate)
     {
         ConstString* name = (ConstString*)param;
-        return cate->Delete(*name, FormatCategory::eSynth | FormatCategory::eRegexSynth);
+        return cate->Delete(*name, eFormatCategoryItemSynth | eFormatCategoryItemRegexSynth);
     }
     
 public:
@@ -2716,7 +2716,7 @@ private:
     PerCategoryCallback(void* param,
                         const lldb::FormatCategorySP& cate)
     {
-        cate->Clear(FormatCategory::eFilter | FormatCategory::eRegexFilter);
+        cate->Clear(eFormatCategoryItemFilter | eFormatCategoryItemRegexFilter);
         return true;
         
     }
@@ -2842,7 +2842,7 @@ private:
     PerCategoryCallback(void* param,
                         const lldb::FormatCategorySP& cate)
     {
-        cate->Clear(FormatCategory::eSynth | FormatCategory::eRegexSynth);
+        cate->Clear(eFormatCategoryItemSynth | eFormatCategoryItemRegexSynth);
         return true;
         
     }
@@ -3209,7 +3209,7 @@ CommandObjectTypeSynthAdd::AddSynth(const ConstString& type_name,
     DataVisualization::Categories::Get(ConstString(category_name.c_str()), category);
     
     if (category->AnyMatches(type_name,
-                             FormatCategory::eFilter | FormatCategory::eRegexFilter,
+                             eFormatCategoryItemFilter | eFormatCategoryItemRegexFilter,
                              false))
     {
         if (error)
@@ -3386,7 +3386,7 @@ private:
         DataVisualization::Categories::Get(ConstString(category_name.c_str()), category);
         
         if (category->AnyMatches(type_name,
-                                 FormatCategory::eSynth | FormatCategory::eRegexSynth,
+                                 eFormatCategoryItemSynth | eFormatCategoryItemRegexSynth,
                                  false))
         {
             if (error)

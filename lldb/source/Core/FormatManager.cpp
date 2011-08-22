@@ -228,17 +228,17 @@ FormatCategory::Get(ValueObject& valobj,
 void
 FormatCategory::Clear (FormatCategoryItems items)
 {
-    if ( (items & eSummary) == eSummary )
+    if ( (items & eFormatCategoryItemSummary) == eFormatCategoryItemSummary )
         m_summary_nav->Clear();
-    if ( (items & eRegexSummary) == eRegexSummary )
+    if ( (items & eFormatCategoryItemRegexSummary) == eFormatCategoryItemRegexSummary )
         m_regex_summary_nav->Clear();
-    if ( (items & eFilter)  == eFilter )
+    if ( (items & eFormatCategoryItemFilter)  == eFormatCategoryItemFilter )
         m_filter_nav->Clear();
-    if ( (items & eRegexFilter) == eRegexFilter )
+    if ( (items & eFormatCategoryItemRegexFilter) == eFormatCategoryItemRegexFilter )
         m_regex_filter_nav->Clear();
-    if ( (items & eSynth)  == eSynth )
+    if ( (items & eFormatCategoryItemSynth)  == eFormatCategoryItemSynth )
         m_synth_nav->Clear();
-    if ( (items & eRegexSynth) == eRegexSynth )
+    if ( (items & eFormatCategoryItemRegexSynth) == eFormatCategoryItemRegexSynth )
         m_regex_synth_nav->Clear();
 }
 
@@ -247,17 +247,17 @@ FormatCategory::Delete (ConstString name,
                         FormatCategoryItems items)
 {
     bool success = false;
-    if ( (items & eSummary) == eSummary )
+    if ( (items & eFormatCategoryItemSummary) == eFormatCategoryItemSummary )
         success = m_summary_nav->Delete(name) || success;
-    if ( (items & eRegexSummary) == eRegexSummary )
+    if ( (items & eFormatCategoryItemRegexSummary) == eFormatCategoryItemRegexSummary )
         success = m_regex_summary_nav->Delete(name) || success;
-    if ( (items & eFilter)  == eFilter )
+    if ( (items & eFormatCategoryItemFilter)  == eFormatCategoryItemFilter )
         success = m_filter_nav->Delete(name) || success;
-    if ( (items & eRegexFilter) == eRegexFilter )
+    if ( (items & eFormatCategoryItemRegexFilter) == eFormatCategoryItemRegexFilter )
         success = m_regex_filter_nav->Delete(name) || success;
-    if ( (items & eSynth)  == eSynth )
+    if ( (items & eFormatCategoryItemSynth)  == eFormatCategoryItemSynth )
         success = m_synth_nav->Delete(name) || success;
-    if ( (items & eRegexSynth) == eRegexSynth )
+    if ( (items & eFormatCategoryItemRegexSynth) == eFormatCategoryItemRegexSynth )
         success = m_regex_synth_nav->Delete(name) || success;
     return success;
 }
@@ -266,17 +266,17 @@ uint32_t
 FormatCategory::GetCount (FormatCategoryItems items)
 {
     uint32_t count = 0;
-    if ( (items & eSummary) == eSummary )
+    if ( (items & eFormatCategoryItemSummary) == eFormatCategoryItemSummary )
         count += m_summary_nav->GetCount();
-    if ( (items & eRegexSummary) == eRegexSummary )
+    if ( (items & eFormatCategoryItemRegexSummary) == eFormatCategoryItemRegexSummary )
         count += m_regex_summary_nav->GetCount();
-    if ( (items & eFilter)  == eFilter )
+    if ( (items & eFormatCategoryItemFilter)  == eFormatCategoryItemFilter )
         count += m_filter_nav->GetCount();
-    if ( (items & eRegexFilter) == eRegexFilter )
+    if ( (items & eFormatCategoryItemRegexFilter) == eFormatCategoryItemRegexFilter )
         count += m_regex_filter_nav->GetCount();
-    if ( (items & eSynth)  == eSynth )
+    if ( (items & eFormatCategoryItemSynth)  == eFormatCategoryItemSynth )
         count += m_synth_nav->GetCount();
-    if ( (items & eRegexSynth) == eRegexSynth )
+    if ( (items & eFormatCategoryItemRegexSynth) == eFormatCategoryItemRegexSynth )
         count += m_regex_synth_nav->GetCount();
     return count;
 }
@@ -295,69 +295,69 @@ FormatCategory::AnyMatches(ConstString type_name,
     SyntheticFilter::SharedPointer filter;
     SyntheticScriptProvider::SharedPointer synth;
     
-    if ( (items & eSummary) == eSummary )
+    if ( (items & eFormatCategoryItemSummary) == eFormatCategoryItemSummary )
     {
         if (m_summary_nav->Get(type_name, summary))
         {
             if (matching_category)
                 *matching_category = m_name.c_str();
             if (matching_type)
-                *matching_type = eSummary;
+                *matching_type = eFormatCategoryItemSummary;
             return true;
         }
     }
-    if ( (items & eRegexSummary) == eRegexSummary )
+    if ( (items & eFormatCategoryItemRegexSummary) == eFormatCategoryItemRegexSummary )
     {
         if (m_regex_summary_nav->Get(type_name, summary))
         {
             if (matching_category)
                 *matching_category = m_name.c_str();
             if (matching_type)
-                *matching_type = eRegexSummary;
+                *matching_type = eFormatCategoryItemRegexSummary;
             return true;
         }
     }
-    if ( (items & eFilter)  == eFilter )
+    if ( (items & eFormatCategoryItemFilter)  == eFormatCategoryItemFilter )
     {
         if (m_filter_nav->Get(type_name, filter))
         {
             if (matching_category)
                 *matching_category = m_name.c_str();
             if (matching_type)
-                *matching_type = eFilter;
+                *matching_type = eFormatCategoryItemFilter;
             return true;
         }
     }
-    if ( (items & eRegexFilter) == eRegexFilter )
+    if ( (items & eFormatCategoryItemRegexFilter) == eFormatCategoryItemRegexFilter )
     {
         if (m_regex_filter_nav->Get(type_name, filter))
         {
             if (matching_category)
                 *matching_category = m_name.c_str();
             if (matching_type)
-                *matching_type = eRegexFilter;
+                *matching_type = eFormatCategoryItemRegexFilter;
             return true;
         }
     }
-    if ( (items & eSynth)  == eSynth )
+    if ( (items & eFormatCategoryItemSynth)  == eFormatCategoryItemSynth )
     {
         if (m_synth_nav->Get(type_name, synth))
         {
             if (matching_category)
                 *matching_category = m_name.c_str();
             if (matching_type)
-                *matching_type = eSynth;
+                *matching_type = eFormatCategoryItemSynth;
             return true;
         }
     }
-    if ( (items & eRegexSynth) == eRegexSynth )
+    if ( (items & eFormatCategoryItemRegexSynth) == eFormatCategoryItemRegexSynth )
     {
         if (m_regex_synth_nav->Get(type_name, synth))
         {
             if (matching_category)
                 *matching_category = m_name.c_str();
             if (matching_type)
-                *matching_type = eRegexSynth;
+                *matching_type = eFormatCategoryItemRegexSynth;
             return true;
         }
     }
