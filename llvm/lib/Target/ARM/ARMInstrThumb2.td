@@ -1902,9 +1902,9 @@ def t2USAT: T2SatI<
   let Inst{15} = 0;
 }
 
-def t2USAT16: T2SatI<(outs rGPR:$dst), (ins i32imm:$sat_imm, rGPR:$Rn),
+def t2USAT16: T2SatI<(outs rGPR:$Rd), (ins i32imm:$sat_imm, rGPR:$Rn),
                      NoItinerary,
-                     "usat16", "\t$dst, $sat_imm, $Rn",
+                     "usat16", "\t$Rd, $sat_imm, $Rn",
                      [/* For disassembly only; pattern left blank */]>,
           Requires<[IsThumb2, HasThumb2DSP]> {
   let Inst{31-27} = 0b11110;
