@@ -356,6 +356,8 @@ Triple::OSType Triple::ParseOS(StringRef OSName) {
     return Minix;
   else if (OSName.startswith("rtems"))
     return RTEMS;
+  else if (OSName.startswith("nacl"))
+    return NativeClient;
   else
     return UnknownOS;
 }
