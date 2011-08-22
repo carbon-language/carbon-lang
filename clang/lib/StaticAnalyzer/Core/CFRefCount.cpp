@@ -1945,37 +1945,29 @@ namespace {
   };
 
   class CFRefReport : public BugReport {
-  protected:
-    SymbolRef Sym;
-    const CFRefCount &TF;
   public:
     CFRefReport(CFRefBug& D, const CFRefCount &tf,
                 ExplodedNode *n, SymbolRef sym, bool registerVisitor = true)
-      : BugReport(D, D.getDescription(), n), Sym(sym), TF(tf) {
+      : BugReport(D, D.getDescription(), n) {
       if (registerVisitor)
         addVisitor(new CFRefReportVisitor(sym, tf));
     }
 
     CFRefReport(CFRefBug& D, const CFRefCount &tf,
                 ExplodedNode *n, SymbolRef sym, StringRef endText)
-      : BugReport(D, D.getDescription(), endText, n), Sym(sym), TF(tf) {
+      : BugReport(D, D.getDescription(), endText, n) {
       addVisitor(new CFRefReportVisitor(sym, tf));
     }
 
     virtual ~CFRefReport() {}
 
-    CFRefBug& getBugType() const {
-      return (CFRefBug&) BugReport::getBugType();
-    }
-
     virtual std::pair<ranges_iterator, ranges_iterator> getRanges() {
-      if (!getBugType().isLeak())
+      const CFRefBug& BugTy = static_cast<CFRefBug&>(getBugType());
+      if (!BugTy.isLeak())
         return BugReport::getRanges();
       else
         return std::make_pair(ranges_iterator(), ranges_iterator());
     }
-
-    SymbolRef getSymbol() const { return Sym; }
 
     std::pair<const char**,const char**> getExtraDescriptiveText();
   };
@@ -2468,7 +2460,7 @@ CFRefLeakReport::CFRefLeakReport(CFRefBug& D, const CFRefCount &tf,
   const ExplodedNode *AllocNode = 0;
 
   llvm::tie(AllocNode, AllocBinding) =  // Set AllocBinding.
-    GetAllocationSite(Eng.getStateManager(), getErrorNode(), getSymbol());
+    GetAllocationSite(Eng.getStateManager(), getErrorNode(), sym);
 
   // Get the SourceLocation for the allocation site.
   ProgramPoint P = AllocNode->getLocation();
