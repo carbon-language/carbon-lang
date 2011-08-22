@@ -20,8 +20,8 @@ SWIG=$6
 
 swig_output_file=${SRC_ROOT}/source/LLDBWrapPython.cpp
 swig_input_file=${SRC_ROOT}/scripts/lldb.swig
-swig_input_file2=${SRC_ROOT}/scripts/Python/python-extensions.swig
-
+swig_python_extensions=${SRC_ROOT}/scripts/Python/python-extensions.swig
+swig_python_wrapper=${SRC_ROOT}/scripts/Python/python-wrapper.swig
 
 if [ -n "$debug_flag" -a "$debug_flag" == "-debug" ]
 then
@@ -123,12 +123,25 @@ fi
 
 if [ $NeedToUpdate == 0 ]
 then
-    if [ ${swig_input_file2} -nt ${swig_output_file} ]
+    if [ ${swig_python_extensions} -nt ${swig_output_file} ]
     then
         NeedToUpdate=1
         if [ $Debug == 1 ]
         then
-            echo "${swig_input_file2} is newer than ${swig_output_file}"
+            echo "${swig_python_extensions} is newer than ${swig_output_file}"
+            echo "swig file will need to be re-built."
+        fi
+    fi
+fi
+
+if [ $NeedToUpdate == 0 ]
+then
+    if [ ${swig_python_wrapper} -nt ${swig_output_file} ]
+    then
+        NeedToUpdate=1
+        if [ $Debug == 1 ]
+        then
+            echo "${swig_python_wrapper} is newer than ${swig_output_file}"
             echo "swig file will need to be re-built."
         fi
     fi
