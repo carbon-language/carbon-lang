@@ -2322,7 +2322,7 @@ static DecodeStatus DecodeThumbAddrModePC(llvm::MCInst &Inst, unsigned Val,
 static DecodeStatus DecodeThumbAddrModeSP(llvm::MCInst &Inst, unsigned Val,
                                   uint64_t Address, const void *Decoder) {
   Inst.addOperand(MCOperand::CreateReg(ARM::SP));
-  Inst.addOperand(MCOperand::CreateImm(Val << 2));
+  Inst.addOperand(MCOperand::CreateImm(Val));
 
   return Success;
 }
