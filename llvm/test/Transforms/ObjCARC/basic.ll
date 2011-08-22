@@ -1638,6 +1638,39 @@ entry:
   ret void
 }
 
+; Constant pointers to objects don't need reference counting.
+
+@constptr = external constant i8*
+@something = external global i8*
+
+; CHECK: define void @test60(
+; CHECK-NOT: @objc_
+; CHECK: }
+define void @test60() {
+  %t = load i8** @constptr
+  %s = load i8** @something
+  call i8* @objc_retain(i8* %s)
+  call void @callee()
+  call void @use_pointer(i8* %t)
+  call void @objc_release(i8* %s)
+  ret void
+}
+
+; Constant pointers to objects don't need to be considered related to other
+; pointers.
+
+; CHECK: define void @test61(
+; CHECK-NOT: @objc_
+; CHECK: }
+define void @test61() {
+  %t = load i8** @constptr
+  call i8* @objc_retain(i8* %t)
+  call void @callee()
+  call void @use_pointer(i8* %t)
+  call void @objc_release(i8* %t)
+  ret void
+}
+
 declare void @bar(i32 ()*)
 
 ; A few real-world testcases.

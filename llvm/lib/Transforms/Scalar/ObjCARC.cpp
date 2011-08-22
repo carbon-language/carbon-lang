@@ -515,6 +515,10 @@ static bool IsObjCIdentifiedObject(const Value *V) {
     const Value *Pointer =
       StripPointerCastsAndObjCCalls(LI->getPointerOperand());
     if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(Pointer)) {
+      // A constant pointer can't be pointing to an object on the heap. It may
+      // be reference-counted, but it won't be deleted.
+      if (GV->isConstant())
+        return true;
       StringRef Name = GV->getName();
       // These special variables are known to hold values which are not
       // reference-counted pointers.
@@ -2743,6 +2747,15 @@ ObjCARCOpt::PerformCodePlacement(DenseMap<const BasicBlock *, BBState>
     // not being managed by ObjC reference counting, so we can delete pairs
     // regardless of what possible decrements or uses lie between them.
     bool KnownSafe = isa<Constant>(Arg) || isa<AllocaInst>(Arg);
+
+    // A constant pointer can't be pointing to an object on the heap. It may
+    // be reference-counted, but it won't be deleted.
+    if (const LoadInst *LI = dyn_cast<LoadInst>(Arg))
+      if (const GlobalVariable *GV =
+            dyn_cast<GlobalVariable>(
+              StripPointerCastsAndObjCCalls(LI->getPointerOperand())))
+        if (GV->isConstant())
+          KnownSafe = true;
 
     // If a pair happens in a region where it is known that the reference count
     // is already incremented, we can similarly ignore possible decrements.
