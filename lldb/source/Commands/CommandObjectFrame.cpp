@@ -13,8 +13,8 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
+#include "lldb/Core/DataVisualization.h"
 #include "lldb/Core/Debugger.h"
-#include "lldb/Core/FormatManager.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Core/Timer.h"

@@ -409,6 +409,7 @@
 		94611EB213CCA4A4003A22AF /* RefCounter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94611EB113CCA4A4003A22AF /* RefCounter.cpp */; };
 		9463D4CD13B1798800C230D4 /* CommandObjectType.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9463D4CC13B1798800C230D4 /* CommandObjectType.cpp */; };
 		9467E65213C3D97600B3B6F3 /* TypeHierarchyNavigator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9467E65113C3D97600B3B6F3 /* TypeHierarchyNavigator.cpp */; };
+		9470A8F01402DFFB0056FF61 /* DataVisualization.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9470A8EF1402DFFB0056FF61 /* DataVisualization.cpp */; };
 		94B6E76213D88365005F417F /* ValueObjectSyntheticFilter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94B6E76113D88362005F417F /* ValueObjectSyntheticFilter.cpp */; };
 		9A19A6AF1163BBB200E0D453 /* SBValue.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A19A6A51163BB7E00E0D453 /* SBValue.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		9A19A6B01163BBB300E0D453 /* SBValue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A19A6AD1163BB9800E0D453 /* SBValue.cpp */; };
@@ -1187,6 +1188,8 @@
 		9463D4CE13B179A500C230D4 /* CommandObjectType.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = CommandObjectType.h; path = source/Commands/CommandObjectType.h; sourceTree = "<group>"; };
 		9467E65113C3D97600B3B6F3 /* TypeHierarchyNavigator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TypeHierarchyNavigator.cpp; path = source/Symbol/TypeHierarchyNavigator.cpp; sourceTree = "<group>"; };
 		9467E65413C3D98900B3B6F3 /* TypeHierarchyNavigator.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = TypeHierarchyNavigator.h; path = include/lldb/Symbol/TypeHierarchyNavigator.h; sourceTree = "<group>"; };
+		9470A8EE1402DF940056FF61 /* DataVisualization.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = DataVisualization.h; path = include/lldb/Core/DataVisualization.h; sourceTree = "<group>"; };
+		9470A8EF1402DFFB0056FF61 /* DataVisualization.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DataVisualization.cpp; path = source/Core/DataVisualization.cpp; sourceTree = "<group>"; };
 		94A9112B13D5DEF80046D8A6 /* FormatClasses.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = FormatClasses.h; path = include/lldb/Core/FormatClasses.h; sourceTree = "<group>"; };
 		94A9112D13D5DF210046D8A6 /* FormatClasses.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FormatClasses.cpp; path = source/Core/FormatClasses.cpp; sourceTree = "<group>"; };
 		94B6E76013D8833C005F417F /* ValueObjectSyntheticFilter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ValueObjectSyntheticFilter.h; path = include/lldb/Core/ValueObjectSyntheticFilter.h; sourceTree = "<group>"; };
@@ -1916,6 +1919,8 @@
 				26BC7E7310F1B85900F91463 /* DataBufferMemoryMap.cpp */,
 				26BC7D5A10F1B77400F91463 /* DataExtractor.h */,
 				26BC7E7110F1B85900F91463 /* DataExtractor.cpp */,
+				9470A8EE1402DF940056FF61 /* DataVisualization.h */,
+				9470A8EF1402DFFB0056FF61 /* DataVisualization.cpp */,
 				263664941140A4C10075843B /* Debugger.h */,
 				263664921140A4930075843B /* Debugger.cpp */,
 				26BC7D5E10F1B77400F91463 /* Disassembler.h */,
@@ -3294,6 +3299,7 @@
 				266DFE9413FD64D200D0C574 /* OperatingSystemMacOSXKernel.cpp in Sources */,
 				266DFE9713FD656E00D0C574 /* OperatingSystem.cpp in Sources */,
 				26954EBE1401EE8B00294D09 /* DynamicRegisterInfo.cpp in Sources */,
+				9470A8F01402DFFB0056FF61 /* DataVisualization.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

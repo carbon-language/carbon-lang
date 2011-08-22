@@ -65,6 +65,10 @@ using lldb::LogSP;
 
 namespace lldb_private {
     
+// this file (and its. cpp) contain the low-level implementation of LLDB Data Visualization
+// class DataVisualization is the high-level front-end of this feature
+// clients should refer to that class as the entry-point into the data formatters
+// unless they have a good reason to bypass it and prefer to use this file's objects directly
 class IFormatChangeListener
 {
 public:
@@ -137,7 +141,7 @@ public:
     typedef typename MapType::iterator MapIterator;
     typedef bool(*CallbackType)(void*, KeyType, const ValueSP&);
     
-    FormatMap(IFormatChangeListener* lst = NULL) :
+    FormatMap(IFormatChangeListener* lst) :
     m_map(),
     m_map_mutex(Mutex::eMutexTypeRecursive),
     listener(lst)
@@ -258,7 +262,7 @@ public:
     friend class FormatCategory;
 
     FormatNavigator(std::string name,
-                    IFormatChangeListener* lst = NULL) :
+                    IFormatChangeListener* lst) :
     m_format_map(lst),
     m_name(name),
     m_id_cs(ConstString("id"))
@@ -713,15 +717,19 @@ private:
 
 public:
     
-    enum FormatCategoryItem
+    //------------------------------------------------------------------
+    /// Format category entry types
+    //------------------------------------------------------------------    
+    typedef enum FormatCategoryItem
     {
         eSummary =         0x0001,
         eRegexSummary =    0x1001,
         eFilter =          0x0002,
         eRegexFilter =     0x1002,
         eSynth =           0x0004,
-        eRegexSynth =      0x1004
-    };
+        eRegexSynth =      0x1004,
+        eAllItems =        0xFFFF
+    } FormatCategoryItem;
     
     typedef uint16_t FormatCategoryItems;
     static const uint16_t ALL_ITEM_TYPES = 0xFFFF;
@@ -816,60 +824,14 @@ public:
     
     
     void
-    Clear (FormatCategoryItems items = ALL_ITEM_TYPES)
-    {
-        if ( (items & eSummary) == eSummary )
-            m_summary_nav->Clear();
-        if ( (items & eRegexSummary) == eRegexSummary )
-            m_regex_summary_nav->Clear();
-        if ( (items & eFilter)  == eFilter )
-            m_filter_nav->Clear();
-        if ( (items & eRegexFilter) == eRegexFilter )
-            m_regex_filter_nav->Clear();
-        if ( (items & eSynth)  == eSynth )
-            m_synth_nav->Clear();
-        if ( (items & eRegexSynth) == eRegexSynth )
-            m_regex_synth_nav->Clear();
-    }
+    Clear (FormatCategoryItems items = ALL_ITEM_TYPES);
     
     bool
-    Delete(ConstString name,
-           FormatCategoryItems items = ALL_ITEM_TYPES)
-    {
-        bool success = false;
-        if ( (items & eSummary) == eSummary )
-            success = m_summary_nav->Delete(name) || success;
-        if ( (items & eRegexSummary) == eRegexSummary )
-            success = m_regex_summary_nav->Delete(name) || success;
-        if ( (items & eFilter)  == eFilter )
-            success = m_filter_nav->Delete(name) || success;
-        if ( (items & eRegexFilter) == eRegexFilter )
-            success = m_regex_filter_nav->Delete(name) || success;
-        if ( (items & eSynth)  == eSynth )
-            success = m_synth_nav->Delete(name) || success;
-        if ( (items & eRegexSynth) == eRegexSynth )
-            success = m_regex_synth_nav->Delete(name) || success;
-        return success;
-    }
+    Delete (ConstString name,
+            FormatCategoryItems items = ALL_ITEM_TYPES);
     
     uint32_t
-    GetCount (FormatCategoryItems items = ALL_ITEM_TYPES)
-    {
-        uint32_t count = 0;
-        if ( (items & eSummary) == eSummary )
-            count += m_summary_nav->GetCount();
-        if ( (items & eRegexSummary) == eRegexSummary )
-            count += m_regex_summary_nav->GetCount();
-        if ( (items & eFilter)  == eFilter )
-            count += m_filter_nav->GetCount();
-        if ( (items & eRegexFilter) == eRegexFilter )
-            count += m_regex_filter_nav->GetCount();
-        if ( (items & eSynth)  == eSynth )
-            count += m_synth_nav->GetCount();
-        if ( (items & eRegexSynth) == eRegexSynth )
-            count += m_regex_synth_nav->GetCount();
-        return count;
-    }
+    GetCount (FormatCategoryItems items = ALL_ITEM_TYPES);
     
     std::string
     GetName ()
@@ -945,7 +907,7 @@ public:
     typedef MapType::iterator MapIterator;
     typedef bool(*CallbackType)(void*, const ValueSP&);
     
-    CategoryMap(IFormatChangeListener* lst = NULL) :
+    CategoryMap(IFormatChangeListener* lst) :
     m_map_mutex(Mutex::eMutexTypeRecursive),
     listener(lst),
     m_map(),
@@ -971,14 +933,14 @@ public:
         if (iter == m_map.end())
             return false;
         m_map.erase(name);
-        DisableCategory(name);
+        Disable(name);
         if (listener)
             listener->Changed();
         return true;
     }
     
     void
-    EnableCategory (KeyType category_name)
+    Enable (KeyType category_name)
     {
         Mutex::Locker(m_map_mutex);
         ValueSP category;
@@ -1002,7 +964,7 @@ public:
     };
     
     void
-    DisableCategory (KeyType category_name)
+    Disable (KeyType category_name)
     {
         Mutex::Locker(m_map_mutex);
         ValueSP category;
@@ -1136,7 +1098,6 @@ private:
     friend class FormatManager;
 };
 
-
 class FormatManager : public IFormatChangeListener
 {
 private:
@@ -1153,20 +1114,14 @@ public:
     
     FormatManager ();
     
-    CategoryMap&
-    Categories ()
-    {
-        return m_categories_map;
-    }
-    
     ValueNavigator&
-    Value ()
+    GetValueNavigator ()
     {
         return m_value_nav;
     }
     
     NamedSummariesMap&
-    NamedSummary ()
+    GetNamedSummaryNavigator ()
     {
         return m_named_summaries_map;
     }
@@ -1174,13 +1129,13 @@ public:
     void
     EnableCategory (const ConstString& category_name)
     {
-        m_categories_map.EnableCategory(category_name);
+        m_categories_map.Enable(category_name);
     }
     
     void
     DisableCategory (const ConstString& category_name)
     {
-        m_categories_map.DisableCategory(category_name);
+        m_categories_map.Disable(category_name);
     }
     
     void
@@ -1201,20 +1156,9 @@ public:
         m_categories_map.LoopThrough(callback, param);
     }
     
-    FormatCategory::SummaryNavigatorSP
-    Summary(const char* category_name = NULL)
-    {
-        return Category(category_name)->GetSummaryNavigator();
-    }
-    
-    FormatCategory::RegexSummaryNavigatorSP
-    RegexSummary (const char* category_name = NULL)
-    {
-        return Category(category_name)->GetRegexSummaryNavigator();
-    }
-    
     lldb::FormatCategorySP
-    Category (const char* category_name = NULL)
+    Category (const char* category_name = NULL,
+              bool can_create = true)
     {
         if (!category_name)
             return Category(m_default_category_name);
@@ -1222,14 +1166,19 @@ public:
     }
     
     lldb::FormatCategorySP
-    Category (const ConstString& category_name)
+    Category (const ConstString& category_name,
+              bool can_create = true)
     {
         if (!category_name)
             return Category(m_default_category_name);
         lldb::FormatCategorySP category;
         if (m_categories_map.Get(category_name, category))
             return category;
-        Categories().Add(category_name,lldb::FormatCategorySP(new FormatCategory(this, category_name.AsCString())));
+        
+        if (!can_create)
+            return lldb::FormatCategorySP();
+        
+        m_categories_map.Add(category_name,lldb::FormatCategorySP(new FormatCategory(this, category_name.AsCString())));
         return Category(category_name);
     }
     
@@ -1300,6 +1249,12 @@ public:
     ~FormatManager ()
     {
     }
+    
+    CategoryMap&
+    GetCategories ()
+    {
+        return m_categories_map;
+    }
 
 private:    
     ValueNavigator m_value_nav;
@@ -1310,112 +1265,8 @@ private:
     ConstString m_default_category_name;
     ConstString m_system_category_name;
     ConstString m_gnu_cpp_category_name;
+    
 };
-
-class DataVisualization
-{
-public:
-    
-    // use this call to force the FM to consider itself updated even when there is no apparent reason for that
-    static void
-    ForceUpdate();
-    
-    static uint32_t
-    GetCurrentRevision ();
-    
-    class ValueFormats
-    {
-    public:
-        static bool
-        Get (ValueObject& valobj, lldb::DynamicValueType use_dynamic, lldb::ValueFormatSP &entry);
-        
-        static void
-        Add (const ConstString &type, const lldb::ValueFormatSP &entry);
-        
-        static bool
-        Delete (const ConstString &type);
-        
-        static void
-        Clear ();
-        
-        static void
-        LoopThrough (ValueFormat::ValueCallback callback, void* callback_baton);
-        
-        static uint32_t
-        GetCount ();
-    };
-    
-    static bool
-    GetSummaryFormat(ValueObject& valobj,
-                     lldb::DynamicValueType use_dynamic,
-                     lldb::SummaryFormatSP& entry);
-    static bool
-    GetSyntheticChildren(ValueObject& valobj,
-                         lldb::DynamicValueType use_dynamic,
-                         lldb::SyntheticChildrenSP& entry);
-    
-    static bool
-    AnyMatches(ConstString type_name,
-               FormatCategory::FormatCategoryItems items = FormatCategory::ALL_ITEM_TYPES,
-               bool only_enabled = true,
-               const char** matching_category = NULL,
-               FormatCategory::FormatCategoryItems* matching_type = NULL);
-    
-    class NamedSummaryFormats
-    {
-    public:
-        static bool
-        Get (const ConstString &type, lldb::SummaryFormatSP &entry);
-        
-        static void
-        Add (const ConstString &type, const lldb::SummaryFormatSP &entry);
-        
-        static bool
-        Delete (const ConstString &type);
-        
-        static void
-        Clear ();
-        
-        static void
-        LoopThrough (SummaryFormat::SummaryCallback callback, void* callback_baton);
-        
-        static uint32_t
-        GetCount ();
-    };
-    
-    class Categories
-    {
-    public:
-        
-        static bool
-        Get (const ConstString &category, lldb::FormatCategorySP &entry);
-        
-        static void
-        Add (const ConstString &category);
-        
-        static bool
-        Delete (const ConstString &category);
-        
-        static void
-        Clear ();
-        
-        static void
-        Clear (ConstString &category);
-        
-        static void
-        Enable (ConstString& category);
-        
-        static void
-        Disable (ConstString& category);
-        
-        static void
-        LoopThrough (FormatManager::CategoryCallback callback, void* callback_baton);
-        
-        static uint32_t
-        GetCount ();
-    };
-};
-
     
 } // namespace lldb_private
 

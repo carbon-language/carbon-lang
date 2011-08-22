@@ -225,6 +225,62 @@ FormatCategory::Get(ValueObject& valobj,
     }
 }
 
+void
+FormatCategory::Clear (FormatCategoryItems items)
+{
+    if ( (items & eSummary) == eSummary )
+        m_summary_nav->Clear();
+    if ( (items & eRegexSummary) == eRegexSummary )
+        m_regex_summary_nav->Clear();
+    if ( (items & eFilter)  == eFilter )
+        m_filter_nav->Clear();
+    if ( (items & eRegexFilter) == eRegexFilter )
+        m_regex_filter_nav->Clear();
+    if ( (items & eSynth)  == eSynth )
+        m_synth_nav->Clear();
+    if ( (items & eRegexSynth) == eRegexSynth )
+        m_regex_synth_nav->Clear();
+}
+
+bool
+FormatCategory::Delete (ConstString name,
+                        FormatCategoryItems items)
+{
+    bool success = false;
+    if ( (items & eSummary) == eSummary )
+        success = m_summary_nav->Delete(name) || success;
+    if ( (items & eRegexSummary) == eRegexSummary )
+        success = m_regex_summary_nav->Delete(name) || success;
+    if ( (items & eFilter)  == eFilter )
+        success = m_filter_nav->Delete(name) || success;
+    if ( (items & eRegexFilter) == eRegexFilter )
+        success = m_regex_filter_nav->Delete(name) || success;
+    if ( (items & eSynth)  == eSynth )
+        success = m_synth_nav->Delete(name) || success;
+    if ( (items & eRegexSynth) == eRegexSynth )
+        success = m_regex_synth_nav->Delete(name) || success;
+    return success;
+}
+
+uint32_t
+FormatCategory::GetCount (FormatCategoryItems items)
+{
+    uint32_t count = 0;
+    if ( (items & eSummary) == eSummary )
+        count += m_summary_nav->GetCount();
+    if ( (items & eRegexSummary) == eRegexSummary )
+        count += m_regex_summary_nav->GetCount();
+    if ( (items & eFilter)  == eFilter )
+        count += m_filter_nav->GetCount();
+    if ( (items & eRegexFilter) == eRegexFilter )
+        count += m_regex_filter_nav->GetCount();
+    if ( (items & eSynth)  == eSynth )
+        count += m_synth_nav->GetCount();
+    if ( (items & eRegexSynth) == eRegexSynth )
+        count += m_regex_synth_nav->GetCount();
+    return count;
+}
+
 bool
 FormatCategory::AnyMatches(ConstString type_name,
                            FormatCategoryItems items,
@@ -458,187 +514,4 @@ FormatManager::FormatManager() :
     EnableCategory(m_gnu_cpp_category_name);
     EnableCategory(m_default_category_name);
     
-}
-
-static FormatManager&
-GetFormatManager()
-{
-    static FormatManager g_format_manager;
-    return g_format_manager;
-}
-
-void
-DataVisualization::ForceUpdate()
-{
-    GetFormatManager().Changed();
-}
-
-uint32_t
-DataVisualization::GetCurrentRevision ()
-{
-    return GetFormatManager().GetCurrentRevision();
-}
-
-bool
-DataVisualization::ValueFormats::Get(ValueObject& valobj, lldb::DynamicValueType use_dynamic, lldb::ValueFormatSP &entry)
-{
-    return GetFormatManager().Value().Get(valobj,entry, use_dynamic);
-}
-
-void
-DataVisualization::ValueFormats::Add(const ConstString &type, const lldb::ValueFormatSP &entry)
-{
-    GetFormatManager().Value().Add(FormatManager::GetValidTypeName(type),entry);
-}
-
-bool
-DataVisualization::ValueFormats::Delete(const ConstString &type)
-{
-    return GetFormatManager().Value().Delete(type);
-}
-
-void
-DataVisualization::ValueFormats::Clear()
-{
-    GetFormatManager().Value().Clear();
-}
-
-void
-DataVisualization::ValueFormats::LoopThrough(ValueFormat::ValueCallback callback, void* callback_baton)
-{
-    GetFormatManager().Value().LoopThrough(callback, callback_baton);
-}
-
-uint32_t
-DataVisualization::ValueFormats::GetCount()
-{
-    return GetFormatManager().Value().GetCount();
-}
-
-bool
-DataVisualization::GetSummaryFormat(ValueObject& valobj,
-                                       lldb::DynamicValueType use_dynamic,
-                                       lldb::SummaryFormatSP& entry)
-{
-    return GetFormatManager().Get(valobj, entry, use_dynamic);
-}
-bool
-DataVisualization::GetSyntheticChildren(ValueObject& valobj,
-                                           lldb::DynamicValueType use_dynamic,
-                                           lldb::SyntheticChildrenSP& entry)
-{
-    return GetFormatManager().Get(valobj, entry, use_dynamic);
-}
-
-bool
-DataVisualization::AnyMatches(ConstString type_name,
-                                 FormatCategory::FormatCategoryItems items,
-                                 bool only_enabled,
-                                 const char** matching_category,
-                                 FormatCategory::FormatCategoryItems* matching_type)
-{
-    return GetFormatManager().AnyMatches(type_name,
-                                         items,
-                                         only_enabled,
-                                         matching_category,
-                                         matching_type);
-}
-
-bool
-DataVisualization::Categories::Get(const ConstString &category, lldb::FormatCategorySP &entry)
-{
-    entry = GetFormatManager().Category(category);
-    return true;
-}
-
-void
-DataVisualization::Categories::Add(const ConstString &category)
-{
-    GetFormatManager().Category(category);
-}
-
-bool
-DataVisualization::Categories::Delete(const ConstString &category)
-{
-    GetFormatManager().DisableCategory(category);
-    return GetFormatManager().Categories().Delete(category);
-}
-
-void
-DataVisualization::Categories::Clear()
-{
-    GetFormatManager().Categories().Clear();
-}
-
-void
-DataVisualization::Categories::Clear(ConstString &category)
-{
-    GetFormatManager().Category(category)->ClearSummaries();
-}
-
-void
-DataVisualization::Categories::Enable(ConstString& category)
-{
-    if (GetFormatManager().Category(category)->IsEnabled() == false)
-        GetFormatManager().EnableCategory(category);
-    else
-    {
-        GetFormatManager().DisableCategory(category);
-        GetFormatManager().EnableCategory(category);
-    }
-}
-
-void
-DataVisualization::Categories::Disable(ConstString& category)
-{
-    if (GetFormatManager().Category(category)->IsEnabled() == true)
-        GetFormatManager().DisableCategory(category);
-}
-
-void
-DataVisualization::Categories::LoopThrough(FormatManager::CategoryCallback callback, void* callback_baton)
-{
-    GetFormatManager().LoopThroughCategories(callback, callback_baton);
-}
-
-uint32_t
-DataVisualization::Categories::GetCount()
-{
-    return GetFormatManager().Categories().GetCount();
-}
-
-bool
-DataVisualization::NamedSummaryFormats::Get(const ConstString &type, lldb::SummaryFormatSP &entry)
-{
-    return GetFormatManager().NamedSummary().Get(type,entry);
-}
-
-void
-DataVisualization::NamedSummaryFormats::Add(const ConstString &type, const lldb::SummaryFormatSP &entry)
-{
-    GetFormatManager().NamedSummary().Add(FormatManager::GetValidTypeName(type),entry);
-}
-
-bool
-DataVisualization::NamedSummaryFormats::Delete(const ConstString &type)
-{
-    return GetFormatManager().NamedSummary().Delete(type);
-}
-
-void
-DataVisualization::NamedSummaryFormats::Clear()
-{
-    GetFormatManager().NamedSummary().Clear();
-}
-
-void
-DataVisualization::NamedSummaryFormats::LoopThrough(SummaryFormat::SummaryCallback callback, void* callback_baton)
-{
-    GetFormatManager().NamedSummary().LoopThrough(callback, callback_baton);
-}
-
-uint32_t
-DataVisualization::NamedSummaryFormats::GetCount()
-{
-    return GetFormatManager().NamedSummary().GetCount();
 }

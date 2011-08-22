@@ -15,9 +15,9 @@
 
 // C++ Includes
 
+#include "lldb/Core/DataVisualization.h"
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/Debugger.h"
-#include "lldb/Core/FormatManager.h"
 #include "lldb/Core/InputReaderEZ.h"
 #include "lldb/Core/RegularExpression.h"
 #include "lldb/Core/State.h"
