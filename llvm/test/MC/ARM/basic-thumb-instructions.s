@@ -415,3 +415,13 @@ _func:
         sbcs r4, r3
 
 @ CHECK: sbcs	r4, r3                  @ encoding: [0x9c,0x41]
+
+
+@------------------------------------------------------------------------------
+@ SETEND
+@------------------------------------------------------------------------------
+        setend be
+        setend le
+
+@ CHECK: setend	be                      @ encoding: [0x58,0xb6]
+@ CHECK: setend	le                      @ encoding: [0x50,0xb6]
