@@ -105,6 +105,9 @@ public:
         return m_threads_mutex;
     }
     
+    void
+    Update (ThreadList &rhs);
+    
 protected:
 
     typedef std::vector<lldb::ThreadSP> collection;

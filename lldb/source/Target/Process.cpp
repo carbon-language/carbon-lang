@@ -25,6 +25,7 @@
 #include "lldb/Host/Host.h"
 #include "lldb/Target/ABI.h"
 #include "lldb/Target/DynamicLoader.h"
+#include "lldb/Target/OperatingSystem.h"
 #include "lldb/Target/LanguageRuntime.h"
 #include "lldb/Target/CPPLanguageRuntime.h"
 #include "lldb/Target/ObjCLanguageRuntime.h"
@@ -646,8 +647,8 @@ Process::Finalize()
     
     // We need to destroy the loader before the derived Process class gets destroyed
     // since it is very likely that undoing the loader will require access to the real process.
-    if (m_dyld_ap.get() != NULL)
-        m_dyld_ap.reset();
+    m_dyld_ap.reset();
+    m_os_ap.reset();
 }
 
 void
@@ -1028,6 +1029,25 @@ Process::SetProcessExitStatus
     return false;
 }
 
+
+void
+Process::UpdateThreadListIfNeeded ()
+{
+    const uint32_t stop_id = GetStopID();
+    if (m_thread_list.GetSize(false) == 0 || stop_id != m_thread_list.GetStopID())
+    {
+        Mutex::Locker locker (m_thread_list.GetMutex ());
+        ThreadList new_thread_list(this);
+        // Always update the thread list with the protocol specific
+        // thread list
+        UpdateThreadList (m_thread_list, new_thread_list);
+        OperatingSystem *os = GetOperatingSystem ();
+        if (os)
+            os->UpdateThreadList (m_thread_list, new_thread_list);
+        m_thread_list.Update (new_thread_list);
+        m_thread_list.SetStopID (stop_id);
+    }
+}
 
 uint32_t
 Process::GetNextThreadIndexID ()
@@ -2017,6 +2037,7 @@ Process::Launch
     Error error;
     m_abi_sp.reset();
     m_dyld_ap.reset();
+    m_os_ap.reset();
     m_process_input_reader.reset();
 
     Module *exe_module = m_target.GetExecutableModulePointer();
@@ -2101,10 +2122,11 @@ Process::Launch
 
                         DidLaunch ();
 
-                        m_dyld_ap.reset (DynamicLoader::FindPlugin(this, NULL));
+                        m_dyld_ap.reset (DynamicLoader::FindPlugin (this, NULL));
                         if (m_dyld_ap.get())
                             m_dyld_ap->DidLaunch();
 
+                        m_os_ap.reset (OperatingSystem::FindPlugin (this, NULL));
                         // This delays passing the stopped event to listeners till DidLaunch gets
                         // a chance to complete...
                         HandlePrivateEvent (event_sp);
@@ -2198,6 +2220,7 @@ Process::Attach (lldb::pid_t attach_pid)
     }
 
     m_dyld_ap.reset();
+    m_os_ap.reset();
 
     Error error (WillAttachToProcessWithID(attach_pid));
     if (error.Success())
@@ -2277,6 +2300,7 @@ Process::Attach (const char *process_name, bool wait_for_launch)
     if (error.Success())
     {
         m_dyld_ap.reset();
+        m_os_ap.reset();
         
         error = WillAttachToProcessWithName(process_name, wait_for_launch);
         if (error.Success())
@@ -2318,6 +2342,7 @@ Process::CompleteAttach ()
     if (m_dyld_ap.get())
         m_dyld_ap->DidAttach();
 
+    m_os_ap.reset (OperatingSystem::FindPlugin (this, NULL));
     // Figure out which one is the executable, and set that in our target:
     ModuleList &modules = m_target.GetImages();
     

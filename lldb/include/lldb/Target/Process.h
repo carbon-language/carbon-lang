@@ -2515,7 +2515,10 @@ public:
     // Thread Queries
     //------------------------------------------------------------------
     virtual uint32_t
-    UpdateThreadListIfNeeded () = 0;
+    UpdateThreadList (ThreadList &old_thread_list, ThreadList &new_thread_list) = 0;
+
+    void
+    UpdateThreadListIfNeeded ();
 
     ThreadList &
     GetThreadList ()
@@ -2523,11 +2526,6 @@ public:
         return m_thread_list;
     }
 
-    const ThreadList &
-    GetThreadList () const
-    {
-        return m_thread_list;
-    }
 
     uint32_t
     GetNextThreadIndexID ();
@@ -2619,6 +2617,13 @@ public:
     {
         return m_dyld_ap.get();
     }
+
+    OperatingSystem *
+    GetOperatingSystem ()
+    {
+        return m_os_ap.get();
+    }
+    
 
     virtual LanguageRuntime *
     GetLanguageRuntime (lldb::LanguageType language);
@@ -2796,6 +2801,7 @@ protected:
                                                         ///< to insert in the target.
     std::auto_ptr<DynamicLoader> m_dyld_ap;
     std::auto_ptr<DynamicCheckerFunctions>  m_dynamic_checkers_ap; ///< The functions used by the expression parser to validate data that expressions use.
+    std::auto_ptr<OperatingSystem>     m_os_ap;
     UnixSignals                 m_unix_signals;         /// This is the current signal set for this process.
     lldb::ABISP                 m_abi_sp;
     lldb::InputReaderSP         m_process_input_reader;

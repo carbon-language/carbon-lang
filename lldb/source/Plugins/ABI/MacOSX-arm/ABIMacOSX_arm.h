@@ -79,6 +79,9 @@ public:
         // alignment
         return pc <= UINT32_MAX;
     }
+    
+    virtual const lldb_private::RegisterInfo *
+    GetRegisterInfoArray (uint32_t &count);
 
     //------------------------------------------------------------------
     // Static Functions

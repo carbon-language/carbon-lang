@@ -132,7 +132,7 @@ ScriptSummaryFormat::FormatObject(lldb::ValueObjectSP object)
         // by the expression, but in host memory. because Python code might need to read
         // into the object memory in non-obvious ways, we need to hand it the target version
         // of the expression output
-        lldb::addr_t tgt_address = object->GetValueAsUnsigned();
+        lldb::addr_t tgt_address = object->GetValueAsUnsigned(LLDB_INVALID_ADDRESS);
         target_object = ValueObjectConstResult::Create (object->GetExecutionContextScope(),
                                                         object->GetClangAST(),
                                                         object->GetClangType(),
@@ -208,8 +208,8 @@ SyntheticArrayView::GetDescription()
 
 SyntheticScriptProvider::FrontEnd::FrontEnd(std::string pclass,
                                             lldb::ValueObjectSP be) :
-SyntheticChildrenFrontEnd(be),
-m_python_class(pclass)
+    SyntheticChildrenFrontEnd(be),
+    m_python_class(pclass)
 {
     if (be.get() == NULL)
     {
@@ -227,7 +227,7 @@ m_python_class(pclass)
         // by the expression, but in host memory. because Python code might need to read
         // into the object memory in non-obvious ways, we need to hand it the target version
         // of the expression output
-        lldb::addr_t tgt_address = be->GetValueAsUnsigned();
+        lldb::addr_t tgt_address = be->GetValueAsUnsigned(LLDB_INVALID_ADDRESS);
         m_backend = ValueObjectConstResult::Create (be->GetExecutionContextScope(),
                                                     be->GetClangAST(),
                                                     be->GetClangType(),

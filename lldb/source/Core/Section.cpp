@@ -117,7 +117,9 @@ Section::GetLoadBaseAddress (Target *target) const
     addr_t load_base_addr = LLDB_INVALID_ADDRESS;
     if (m_linked_section)
     {
-        load_base_addr = m_linked_section->GetLoadBaseAddress(target) + m_linked_offset;
+        load_base_addr = m_linked_section->GetLoadBaseAddress(target);
+        if (load_base_addr != LLDB_INVALID_ADDRESS)
+            load_base_addr += m_linked_offset;
     }
     else
     if (m_parent)

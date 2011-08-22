@@ -233,7 +233,8 @@ protected:
     Clear ( );
     
     uint32_t
-    UpdateThreadListIfNeeded ();
+    UpdateThreadList (lldb_private::ThreadList &old_thread_list, 
+                      lldb_private::ThreadList &new_thread_list);
     
     enum
     {

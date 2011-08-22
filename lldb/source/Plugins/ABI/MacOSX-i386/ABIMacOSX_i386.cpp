@@ -33,6 +33,199 @@ static const char *pluginName = "ABIMacOSX_i386";
 static const char *pluginDesc = "Mac OS X ABI for i386 targets";
 static const char *pluginShort = "abi.macosx-i386";
 
+enum
+{
+    gcc_eax = 0,
+    gcc_ecx,
+    gcc_edx,
+    gcc_ebx,
+    gcc_ebp,
+    gcc_esp,
+    gcc_esi,
+    gcc_edi,
+    gcc_eip,
+    gcc_eflags
+};
+
+enum
+{
+    dwarf_eax = 0,
+    dwarf_ecx,
+    dwarf_edx,
+    dwarf_ebx,
+    dwarf_esp,
+    dwarf_ebp,
+    dwarf_esi,
+    dwarf_edi,
+    dwarf_eip,
+    dwarf_eflags,
+    dwarf_stmm0 = 11,
+    dwarf_stmm1,
+    dwarf_stmm2,
+    dwarf_stmm3,
+    dwarf_stmm4,
+    dwarf_stmm5,
+    dwarf_stmm6,
+    dwarf_stmm7,
+    dwarf_xmm0 = 21,
+    dwarf_xmm1,
+    dwarf_xmm2,
+    dwarf_xmm3,
+    dwarf_xmm4,
+    dwarf_xmm5,
+    dwarf_xmm6,
+    dwarf_xmm7,
+    dwarf_ymm0 = dwarf_xmm0,
+    dwarf_ymm1 = dwarf_xmm1,
+    dwarf_ymm2 = dwarf_xmm2,
+    dwarf_ymm3 = dwarf_xmm3,
+    dwarf_ymm4 = dwarf_xmm4,
+    dwarf_ymm5 = dwarf_xmm5,
+    dwarf_ymm6 = dwarf_xmm6,
+    dwarf_ymm7 = dwarf_xmm7
+};
+
+enum
+{
+    gdb_eax        =  0,
+    gdb_ecx        =  1,
+    gdb_edx        =  2,
+    gdb_ebx        =  3,
+    gdb_esp        =  4,
+    gdb_ebp        =  5,
+    gdb_esi        =  6,
+    gdb_edi        =  7,
+    gdb_eip        =  8,
+    gdb_eflags     =  9,
+    gdb_cs         = 10,
+    gdb_ss         = 11,
+    gdb_ds         = 12,
+    gdb_es         = 13,
+    gdb_fs         = 14,
+    gdb_gs         = 15,
+    gdb_stmm0      = 16,
+    gdb_stmm1      = 17,
+    gdb_stmm2      = 18,
+    gdb_stmm3      = 19,
+    gdb_stmm4      = 20,
+    gdb_stmm5      = 21,
+    gdb_stmm6      = 22,
+    gdb_stmm7      = 23,
+    gdb_fctrl      = 24,    gdb_fcw     = gdb_fctrl,
+    gdb_fstat      = 25,    gdb_fsw     = gdb_fstat,
+    gdb_ftag       = 26,    gdb_ftw     = gdb_ftag,
+    gdb_fiseg      = 27,    gdb_fpu_cs  = gdb_fiseg,
+    gdb_fioff      = 28,    gdb_ip      = gdb_fioff,
+    gdb_foseg      = 29,    gdb_fpu_ds  = gdb_foseg,
+    gdb_fooff      = 30,    gdb_dp      = gdb_fooff,
+    gdb_fop        = 31,
+    gdb_xmm0       = 32,
+    gdb_xmm1       = 33,
+    gdb_xmm2       = 34,
+    gdb_xmm3       = 35,
+    gdb_xmm4       = 36,
+    gdb_xmm5       = 37,
+    gdb_xmm6       = 38,
+    gdb_xmm7       = 39,
+    gdb_mxcsr      = 40,
+    gdb_mm0        = 41,
+    gdb_mm1        = 42,
+    gdb_mm2        = 43,
+    gdb_mm3        = 44,
+    gdb_mm4        = 45,
+    gdb_mm5        = 46,
+    gdb_mm6        = 47,
+    gdb_mm7        = 48,
+    gdb_ymm0       = gdb_xmm0,
+    gdb_ymm1       = gdb_xmm1,
+    gdb_ymm2       = gdb_xmm2,
+    gdb_ymm3       = gdb_xmm3,
+    gdb_ymm4       = gdb_xmm4,
+    gdb_ymm5       = gdb_xmm5,
+    gdb_ymm6       = gdb_xmm6,
+    gdb_ymm7       = gdb_xmm7
+};
+
+
+static RegisterInfo g_register_infos[] = 
+{
+  //  NAME      ALT      SZ OFF ENCODING         FORMAT                COMPILER              DWARF                 GENERIC                      GDB                   LLDB NATIVE
+  //  ======    =======  == === =============    ============          ===================== ===================== ============================ ====================  ======================
+    { "eax",    NULL,    4,  0, eEncodingUint  , eFormatHex          , { gcc_eax             , dwarf_eax           , LLDB_INVALID_REGNUM       , gdb_eax            , LLDB_INVALID_REGNUM }},
+    { "ebx"   , NULL,    4,  0, eEncodingUint  , eFormatHex          , { gcc_ebx             , dwarf_ebx           , LLDB_INVALID_REGNUM       , gdb_ebx            , LLDB_INVALID_REGNUM }},
+    { "ecx"   , NULL,    4,  0, eEncodingUint  , eFormatHex          , { gcc_ecx             , dwarf_ecx           , LLDB_REGNUM_GENERIC_ARG4  , gdb_ecx            , LLDB_INVALID_REGNUM }},
+    { "edx"   , NULL,    4,  0, eEncodingUint  , eFormatHex          , { gcc_edx             , dwarf_edx           , LLDB_REGNUM_GENERIC_ARG3  , gdb_edx            , LLDB_INVALID_REGNUM }},
+    { "esi"   , NULL,    4,  0, eEncodingUint  , eFormatHex          , { gcc_esi             , dwarf_esi           , LLDB_REGNUM_GENERIC_ARG2  , gdb_esi            , LLDB_INVALID_REGNUM }},
+    { "edi"   , NULL,    4,  0, eEncodingUint  , eFormatHex          , { gcc_edi             , dwarf_edi           , LLDB_REGNUM_GENERIC_ARG1  , gdb_edi            , LLDB_INVALID_REGNUM }},
+    { "ebp"   , "fp",    4,  0, eEncodingUint  , eFormatHex          , { gcc_ebp             , dwarf_ebp           , LLDB_REGNUM_GENERIC_FP    , gdb_ebp            , LLDB_INVALID_REGNUM }},
+    { "esp"   , "sp",    4,  0, eEncodingUint  , eFormatHex          , { gcc_esp             , dwarf_esp           , LLDB_REGNUM_GENERIC_SP    , gdb_esp            , LLDB_INVALID_REGNUM }},
+    { "eip"   , "pc",    4,  0, eEncodingUint  , eFormatHex          , { gcc_eip             , dwarf_eip           , LLDB_REGNUM_GENERIC_PC    , gdb_eip            , LLDB_INVALID_REGNUM }},
+    { "eflags", NULL,    4,  0, eEncodingUint  , eFormatHex          , { LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM , LLDB_REGNUM_GENERIC_FLAGS , gdb_eflags         , LLDB_INVALID_REGNUM }},
+    { "cs"    , NULL,    4,  0, eEncodingUint  , eFormatHex          , { LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM       , gdb_cs             , LLDB_INVALID_REGNUM }},
+    { "ss"    , NULL,    4,  0, eEncodingUint  , eFormatHex          , { LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM       , gdb_ss             , LLDB_INVALID_REGNUM }},
+    { "ds"    , NULL,    4,  0, eEncodingUint  , eFormatHex          , { LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM       , gdb_ds             , LLDB_INVALID_REGNUM }},
+    { "es"    , NULL,    4,  0, eEncodingUint  , eFormatHex          , { LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM       , gdb_es             , LLDB_INVALID_REGNUM }},
+    { "fs"    , NULL,    4,  0, eEncodingUint  , eFormatHex          , { LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM       , gdb_fs             , LLDB_INVALID_REGNUM }},
+    { "gs"    , NULL,    4,  0, eEncodingUint  , eFormatHex          , { LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM       , gdb_gs             , LLDB_INVALID_REGNUM }},
+    { "stmm0" , NULL,   10,  0, eEncodingVector, eFormatVectorOfUInt8, { LLDB_INVALID_REGNUM , dwarf_stmm0         , LLDB_INVALID_REGNUM       , gdb_stmm0          , LLDB_INVALID_REGNUM }},
+    { "stmm1" , NULL,   10,  0, eEncodingVector, eFormatVectorOfUInt8, { LLDB_INVALID_REGNUM , dwarf_stmm1         , LLDB_INVALID_REGNUM       , gdb_stmm1          , LLDB_INVALID_REGNUM }},
+    { "stmm2" , NULL,   10,  0, eEncodingVector, eFormatVectorOfUInt8, { LLDB_INVALID_REGNUM , dwarf_stmm2         , LLDB_INVALID_REGNUM       , gdb_stmm2          , LLDB_INVALID_REGNUM }},
+    { "stmm3" , NULL,   10,  0, eEncodingVector, eFormatVectorOfUInt8, { LLDB_INVALID_REGNUM , dwarf_stmm3         , LLDB_INVALID_REGNUM       , gdb_stmm3          , LLDB_INVALID_REGNUM }},
+    { "stmm4" , NULL,   10,  0, eEncodingVector, eFormatVectorOfUInt8, { LLDB_INVALID_REGNUM , dwarf_stmm4         , LLDB_INVALID_REGNUM       , gdb_stmm4          , LLDB_INVALID_REGNUM }},
+    { "stmm5" , NULL,   10,  0, eEncodingVector, eFormatVectorOfUInt8, { LLDB_INVALID_REGNUM , dwarf_stmm5         , LLDB_INVALID_REGNUM       , gdb_stmm5          , LLDB_INVALID_REGNUM }},
+    { "stmm6" , NULL,   10,  0, eEncodingVector, eFormatVectorOfUInt8, { LLDB_INVALID_REGNUM , dwarf_stmm6         , LLDB_INVALID_REGNUM       , gdb_stmm6          , LLDB_INVALID_REGNUM }},
+    { "stmm7" , NULL,   10,  0, eEncodingVector, eFormatVectorOfUInt8, { LLDB_INVALID_REGNUM , dwarf_stmm7         , LLDB_INVALID_REGNUM       , gdb_stmm7          , LLDB_INVALID_REGNUM }},
+    { "fctrl" , NULL,    4,  0, eEncodingUint  , eFormatHex          , { LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM       , gdb_fctrl          , LLDB_INVALID_REGNUM }},
+    { "fstat" , NULL,    4,  0, eEncodingUint  , eFormatHex          , { LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM       , gdb_fstat          , LLDB_INVALID_REGNUM }},
+    { "ftag"  , NULL,    4,  0, eEncodingUint  , eFormatHex          , { LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM       , gdb_ftag           , LLDB_INVALID_REGNUM }},
+    { "fiseg" , NULL,    4,  0, eEncodingUint  , eFormatHex          , { LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM       , gdb_fiseg          , LLDB_INVALID_REGNUM }},
+    { "fioff" , NULL,    4,  0, eEncodingUint  , eFormatHex          , { LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM       , gdb_fioff          , LLDB_INVALID_REGNUM }},
+    { "foseg" , NULL,    4,  0, eEncodingUint  , eFormatHex          , { LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM       , gdb_foseg          , LLDB_INVALID_REGNUM }},
+    { "fooff" , NULL,    4,  0, eEncodingUint  , eFormatHex          , { LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM       , gdb_fooff          , LLDB_INVALID_REGNUM }},
+    { "fop"   , NULL,    4,  0, eEncodingUint  , eFormatHex          , { LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM       , gdb_fop            , LLDB_INVALID_REGNUM }},
+    { "xmm0"  , NULL,   16,  0, eEncodingVector, eFormatVectorOfUInt8, { LLDB_INVALID_REGNUM , dwarf_xmm0          , LLDB_INVALID_REGNUM       , gdb_xmm0           , LLDB_INVALID_REGNUM }},
+    { "xmm1"  , NULL,   16,  0, eEncodingVector, eFormatVectorOfUInt8, { LLDB_INVALID_REGNUM , dwarf_xmm1          , LLDB_INVALID_REGNUM       , gdb_xmm1           , LLDB_INVALID_REGNUM }},
+    { "xmm2"  , NULL,   16,  0, eEncodingVector, eFormatVectorOfUInt8, { LLDB_INVALID_REGNUM , dwarf_xmm2          , LLDB_INVALID_REGNUM       , gdb_xmm2           , LLDB_INVALID_REGNUM }},
+    { "xmm3"  , NULL,   16,  0, eEncodingVector, eFormatVectorOfUInt8, { LLDB_INVALID_REGNUM , dwarf_xmm3          , LLDB_INVALID_REGNUM       , gdb_xmm3           , LLDB_INVALID_REGNUM }},
+    { "xmm4"  , NULL,   16,  0, eEncodingVector, eFormatVectorOfUInt8, { LLDB_INVALID_REGNUM , dwarf_xmm4          , LLDB_INVALID_REGNUM       , gdb_xmm4           , LLDB_INVALID_REGNUM }},
+    { "xmm5"  , NULL,   16,  0, eEncodingVector, eFormatVectorOfUInt8, { LLDB_INVALID_REGNUM , dwarf_xmm5          , LLDB_INVALID_REGNUM       , gdb_xmm5           , LLDB_INVALID_REGNUM }},
+    { "xmm6"  , NULL,   16,  0, eEncodingVector, eFormatVectorOfUInt8, { LLDB_INVALID_REGNUM , dwarf_xmm6          , LLDB_INVALID_REGNUM       , gdb_xmm6           , LLDB_INVALID_REGNUM }},
+    { "xmm7"  , NULL,   16,  0, eEncodingVector, eFormatVectorOfUInt8, { LLDB_INVALID_REGNUM , dwarf_xmm7          , LLDB_INVALID_REGNUM       , gdb_xmm7           , LLDB_INVALID_REGNUM }},
+    { "mxcsr" , NULL,    4,  0, eEncodingUint  , eFormatHex          , { LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM       , gdb_mxcsr          , LLDB_INVALID_REGNUM }},
+    { "ymm0"  , NULL,   32,  0, eEncodingVector, eFormatVectorOfUInt8, { LLDB_INVALID_REGNUM , dwarf_ymm0          , LLDB_INVALID_REGNUM       , gdb_ymm0           , LLDB_INVALID_REGNUM }},
+    { "ymm1"  , NULL,   32,  0, eEncodingVector, eFormatVectorOfUInt8, { LLDB_INVALID_REGNUM , dwarf_ymm1          , LLDB_INVALID_REGNUM       , gdb_ymm1           , LLDB_INVALID_REGNUM }},
+    { "ymm2"  , NULL,   32,  0, eEncodingVector, eFormatVectorOfUInt8, { LLDB_INVALID_REGNUM , dwarf_ymm2          , LLDB_INVALID_REGNUM       , gdb_ymm2           , LLDB_INVALID_REGNUM }},
+    { "ymm3"  , NULL,   32,  0, eEncodingVector, eFormatVectorOfUInt8, { LLDB_INVALID_REGNUM , dwarf_ymm3          , LLDB_INVALID_REGNUM       , gdb_ymm3           , LLDB_INVALID_REGNUM }},
+    { "ymm4"  , NULL,   32,  0, eEncodingVector, eFormatVectorOfUInt8, { LLDB_INVALID_REGNUM , dwarf_ymm4          , LLDB_INVALID_REGNUM       , gdb_ymm4           , LLDB_INVALID_REGNUM }},
+    { "ymm5"  , NULL,   32,  0, eEncodingVector, eFormatVectorOfUInt8, { LLDB_INVALID_REGNUM , dwarf_ymm5          , LLDB_INVALID_REGNUM       , gdb_ymm5           , LLDB_INVALID_REGNUM }},
+    { "ymm6"  , NULL,   32,  0, eEncodingVector, eFormatVectorOfUInt8, { LLDB_INVALID_REGNUM , dwarf_ymm6          , LLDB_INVALID_REGNUM       , gdb_ymm6           , LLDB_INVALID_REGNUM }},
+    { "ymm7"  , NULL,   32,  0, eEncodingVector, eFormatVectorOfUInt8, { LLDB_INVALID_REGNUM , dwarf_ymm7          , LLDB_INVALID_REGNUM       , gdb_ymm7           , LLDB_INVALID_REGNUM }}
+};
+
+static const uint32_t k_num_register_infos = sizeof(g_register_infos)/sizeof(RegisterInfo);
+static bool g_register_info_names_constified = false;
+
+const lldb_private::RegisterInfo *
+ABIMacOSX_i386::GetRegisterInfoArray (uint32_t &count)
+{
+    // Make the C-string names and alt_names for the register infos into const 
+    // C-string values by having the ConstString unique the names in the global
+    // constant C-string pool.
+    if (!g_register_info_names_constified)
+    {
+        g_register_info_names_constified = true;
+        for (uint32_t i=0; i<k_num_register_infos; ++i)
+        {
+            if (g_register_infos[i].name)
+                g_register_infos[i].name = ConstString(g_register_infos[i].name).GetCString();
+            if (g_register_infos[i].alt_name)
+                g_register_infos[i].alt_name = ConstString(g_register_infos[i].alt_name).GetCString();
+        }
+    }
+    count = k_num_register_infos;
+    return g_register_infos;
+}
+
 size_t
 ABIMacOSX_i386::GetRedZoneSize () const
 {

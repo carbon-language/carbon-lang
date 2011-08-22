@@ -33,9 +33,6 @@ public:
     RefreshStateAfterStop();
 
     virtual const char *
-    GetInfo ();
-
-    virtual const char *
     GetName ();
 
     virtual const char *
@@ -112,9 +109,6 @@ protected:
     //------------------------------------------------------------------
     // Member variables.
     //------------------------------------------------------------------
-
-    virtual lldb_private::Unwind *
-    GetUnwinder ();
 
     void
     SetStopInfoFromPacket (StringExtractor &stop_packet, uint32_t stop_id);

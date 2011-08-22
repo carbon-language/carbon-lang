@@ -26,6 +26,7 @@
 #include "llvm/ADT/Triple.h"
 
 #include "Utility/ARM_DWARF_Registers.h"
+#include "Utility/ARM_GCC_Registers.h"
 #include "Plugins/Process/Utility/ARMDefines.h"
 
 #include <vector>
@@ -36,6 +37,141 @@ using namespace lldb_private;
 static const char *pluginName = "ABIMacOSX_arm";
 static const char *pluginDesc = "Mac OS X ABI for arm targets";
 static const char *pluginShort = "abi.macosx-arm";
+
+
+static RegisterInfo g_register_infos[] = 
+{
+    //  NAME       ALT       SZ OFF ENCODING         FORMAT          COMPILER                DWARF               GENERIC                     GDB                     LLDB NATIVE
+    //  ========== =======   == === =============    ============    ======================= =================== =========================== ======================= ======================
+    {   "r0",      "arg1",    4, 0, eEncodingUint    , eFormatHex,   { gcc_r0,               dwarf_r0,           LLDB_REGNUM_GENERIC_ARG1,   gdb_arm_r0,             LLDB_INVALID_REGNUM }},
+    {   "r1",      "arg2",    4, 0, eEncodingUint    , eFormatHex,   { gcc_r1,               dwarf_r1,           LLDB_REGNUM_GENERIC_ARG2,   gdb_arm_r1,             LLDB_INVALID_REGNUM }},
+    {   "r2",      "arg3",    4, 0, eEncodingUint    , eFormatHex,   { gcc_r2,               dwarf_r2,           LLDB_REGNUM_GENERIC_ARG3,   gdb_arm_r2,             LLDB_INVALID_REGNUM }},
+    {   "r3",      "arg4",    4, 0, eEncodingUint    , eFormatHex,   { gcc_r3,               dwarf_r3,           LLDB_REGNUM_GENERIC_ARG4,   gdb_arm_r3,             LLDB_INVALID_REGNUM }},
+    {   "r4",      NULL,      4, 0, eEncodingUint    , eFormatHex,   { gcc_r4,               dwarf_r4,           LLDB_INVALID_REGNUM,        gdb_arm_r4,             LLDB_INVALID_REGNUM }},
+    {   "r5",      NULL,      4, 0, eEncodingUint    , eFormatHex,   { gcc_r5,               dwarf_r5,           LLDB_INVALID_REGNUM,        gdb_arm_r5,             LLDB_INVALID_REGNUM }},
+    {   "r6",      NULL,      4, 0, eEncodingUint    , eFormatHex,   { gcc_r6,               dwarf_r6,           LLDB_INVALID_REGNUM,        gdb_arm_r6,             LLDB_INVALID_REGNUM }},
+    {   "r7",      NULL,      4, 0, eEncodingUint    , eFormatHex,   { gcc_r7,               dwarf_r7,           LLDB_REGNUM_GENERIC_FP,     gdb_arm_r7,             LLDB_INVALID_REGNUM }},
+    {   "r8",      NULL,      4, 0, eEncodingUint    , eFormatHex,   { gcc_r8,               dwarf_r8,           LLDB_INVALID_REGNUM,        gdb_arm_r8,             LLDB_INVALID_REGNUM }},
+    {   "r9",      NULL,      4, 0, eEncodingUint    , eFormatHex,   { gcc_r9,               dwarf_r9,           LLDB_INVALID_REGNUM,        gdb_arm_r9,             LLDB_INVALID_REGNUM }},
+    {   "r10",     NULL,      4, 0, eEncodingUint    , eFormatHex,   { gcc_r10,              dwarf_r10,          LLDB_INVALID_REGNUM,        gdb_arm_r10,            LLDB_INVALID_REGNUM }},
+    {   "r11",     NULL,      4, 0, eEncodingUint    , eFormatHex,   { gcc_r11,              dwarf_r11,          LLDB_INVALID_REGNUM,        gdb_arm_r11,            LLDB_INVALID_REGNUM }},
+    {   "r12",     NULL,      4, 0, eEncodingUint    , eFormatHex,   { gcc_r12,              dwarf_r12,          LLDB_INVALID_REGNUM,        gdb_arm_r12,            LLDB_INVALID_REGNUM }},
+    {   "sp",      "r13",     4, 0, eEncodingUint    , eFormatHex,   { gcc_sp,               dwarf_sp,           LLDB_REGNUM_GENERIC_SP,     gdb_arm_sp,             LLDB_INVALID_REGNUM }},
+    {   "lr",      "r14",     4, 0, eEncodingUint    , eFormatHex,   { gcc_lr,               dwarf_lr,           LLDB_REGNUM_GENERIC_RA,     gdb_arm_lr,             LLDB_INVALID_REGNUM }},
+    {   "pc",      "r15",     4, 0, eEncodingUint    , eFormatHex,   { gcc_pc,               dwarf_pc,           LLDB_REGNUM_GENERIC_PC,     gdb_arm_pc,             LLDB_INVALID_REGNUM }},
+    {   "cpsr",    "psr",     4, 0, eEncodingUint    , eFormatHex,   { gcc_cpsr,             dwarf_cpsr,         LLDB_REGNUM_GENERIC_FLAGS,  gdb_arm_cpsr,           LLDB_INVALID_REGNUM }},
+    {   "s0",      NULL,      4, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_s0,           LLDB_INVALID_REGNUM,        gdb_arm_s0,             LLDB_INVALID_REGNUM }},
+    {   "s1",      NULL,      4, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_s1,           LLDB_INVALID_REGNUM,        gdb_arm_s1,             LLDB_INVALID_REGNUM }},
+    {   "s2",      NULL,      4, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_s2,           LLDB_INVALID_REGNUM,        gdb_arm_s2,             LLDB_INVALID_REGNUM }},
+    {   "s3",      NULL,      4, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_s3,           LLDB_INVALID_REGNUM,        gdb_arm_s3,             LLDB_INVALID_REGNUM }},
+    {   "s4",      NULL,      4, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_s4,           LLDB_INVALID_REGNUM,        gdb_arm_s4,             LLDB_INVALID_REGNUM }},
+    {   "s5",      NULL,      4, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_s5,           LLDB_INVALID_REGNUM,        gdb_arm_s5,             LLDB_INVALID_REGNUM }},
+    {   "s6",      NULL,      4, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_s6,           LLDB_INVALID_REGNUM,        gdb_arm_s6,             LLDB_INVALID_REGNUM }},
+    {   "s7",      NULL,      4, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_s7,           LLDB_INVALID_REGNUM,        gdb_arm_s7,             LLDB_INVALID_REGNUM }},
+    {   "s8",      NULL,      4, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_s8,           LLDB_INVALID_REGNUM,        gdb_arm_s8,             LLDB_INVALID_REGNUM }},
+    {   "s9",      NULL,      4, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_s9,           LLDB_INVALID_REGNUM,        gdb_arm_s9,             LLDB_INVALID_REGNUM }},
+    {   "s10",     NULL,      4, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_s10,          LLDB_INVALID_REGNUM,        gdb_arm_s10,            LLDB_INVALID_REGNUM }},
+    {   "s11",     NULL,      4, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_s11,          LLDB_INVALID_REGNUM,        gdb_arm_s11,            LLDB_INVALID_REGNUM }},
+    {   "s12",     NULL,      4, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_s12,          LLDB_INVALID_REGNUM,        gdb_arm_s12,            LLDB_INVALID_REGNUM }},
+    {   "s13",     NULL,      4, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_s13,          LLDB_INVALID_REGNUM,        gdb_arm_s13,            LLDB_INVALID_REGNUM }},
+    {   "s14",     NULL,      4, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_s14,          LLDB_INVALID_REGNUM,        gdb_arm_s14,            LLDB_INVALID_REGNUM }},
+    {   "s15",     NULL,      4, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_s15,          LLDB_INVALID_REGNUM,        gdb_arm_s15,            LLDB_INVALID_REGNUM }},
+    {   "s16",     NULL,      4, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_s16,          LLDB_INVALID_REGNUM,        gdb_arm_s16,            LLDB_INVALID_REGNUM }},
+    {   "s17",     NULL,      4, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_s17,          LLDB_INVALID_REGNUM,        gdb_arm_s17,            LLDB_INVALID_REGNUM }},
+    {   "s18",     NULL,      4, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_s18,          LLDB_INVALID_REGNUM,        gdb_arm_s18,            LLDB_INVALID_REGNUM }},
+    {   "s19",     NULL,      4, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_s19,          LLDB_INVALID_REGNUM,        gdb_arm_s19,            LLDB_INVALID_REGNUM }},
+    {   "s20",     NULL,      4, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_s20,          LLDB_INVALID_REGNUM,        gdb_arm_s20,            LLDB_INVALID_REGNUM }},
+    {   "s21",     NULL,      4, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_s21,          LLDB_INVALID_REGNUM,        gdb_arm_s21,            LLDB_INVALID_REGNUM }},
+    {   "s22",     NULL,      4, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_s22,          LLDB_INVALID_REGNUM,        gdb_arm_s22,            LLDB_INVALID_REGNUM }},
+    {   "s23",     NULL,      4, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_s23,          LLDB_INVALID_REGNUM,        gdb_arm_s23,            LLDB_INVALID_REGNUM }},
+    {   "s24",     NULL,      4, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_s24,          LLDB_INVALID_REGNUM,        gdb_arm_s24,            LLDB_INVALID_REGNUM }},
+    {   "s25",     NULL,      4, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_s25,          LLDB_INVALID_REGNUM,        gdb_arm_s25,            LLDB_INVALID_REGNUM }},
+    {   "s26",     NULL,      4, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_s26,          LLDB_INVALID_REGNUM,        gdb_arm_s26,            LLDB_INVALID_REGNUM }},
+    {   "s27",     NULL,      4, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_s27,          LLDB_INVALID_REGNUM,        gdb_arm_s27,            LLDB_INVALID_REGNUM }},
+    {   "s28",     NULL,      4, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_s28,          LLDB_INVALID_REGNUM,        gdb_arm_s28,            LLDB_INVALID_REGNUM }},
+    {   "s29",     NULL,      4, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_s29,          LLDB_INVALID_REGNUM,        gdb_arm_s29,            LLDB_INVALID_REGNUM }},
+    {   "s30",     NULL,      4, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_s30,          LLDB_INVALID_REGNUM,        gdb_arm_s30,            LLDB_INVALID_REGNUM }},
+    {   "s31",     NULL,      4, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_s31,          LLDB_INVALID_REGNUM,        gdb_arm_s31,            LLDB_INVALID_REGNUM }},
+    {   "fpscr",   NULL,      4, 0, eEncodingUint    , eFormatHex  , { LLDB_INVALID_REGNUM,  LLDB_INVALID_REGNUM,LLDB_INVALID_REGNUM,        gdb_arm_fpscr,          LLDB_INVALID_REGNUM }},
+    {   "d0",      NULL,      8, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_d0,           LLDB_INVALID_REGNUM,        gdb_arm_d0,             LLDB_INVALID_REGNUM }},
+    {   "d1",      NULL,      8, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_d1,           LLDB_INVALID_REGNUM,        gdb_arm_d1,             LLDB_INVALID_REGNUM }},
+    {   "d2",      NULL,      8, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_d2,           LLDB_INVALID_REGNUM,        gdb_arm_d2,             LLDB_INVALID_REGNUM }},
+    {   "d3",      NULL,      8, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_d3,           LLDB_INVALID_REGNUM,        gdb_arm_d3,             LLDB_INVALID_REGNUM }},
+    {   "d4",      NULL,      8, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_d4,           LLDB_INVALID_REGNUM,        gdb_arm_d4,             LLDB_INVALID_REGNUM }},
+    {   "d5",      NULL,      8, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_d5,           LLDB_INVALID_REGNUM,        gdb_arm_d5,             LLDB_INVALID_REGNUM }},
+    {   "d6",      NULL,      8, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_d6,           LLDB_INVALID_REGNUM,        gdb_arm_d6,             LLDB_INVALID_REGNUM }},
+    {   "d7",      NULL,      8, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_d7,           LLDB_INVALID_REGNUM,        gdb_arm_d7,             LLDB_INVALID_REGNUM }},
+    {   "d8",      NULL,      8, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_d8,           LLDB_INVALID_REGNUM,        gdb_arm_d8,             LLDB_INVALID_REGNUM }},
+    {   "d9",      NULL,      8, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_d9,           LLDB_INVALID_REGNUM,        gdb_arm_d9,             LLDB_INVALID_REGNUM }},
+    {   "d10",     NULL,      8, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_d10,          LLDB_INVALID_REGNUM,        gdb_arm_d10,            LLDB_INVALID_REGNUM }},
+    {   "d11",     NULL,      8, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_d11,          LLDB_INVALID_REGNUM,        gdb_arm_d11,            LLDB_INVALID_REGNUM }},
+    {   "d12",     NULL,      8, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_d12,          LLDB_INVALID_REGNUM,        gdb_arm_d12,            LLDB_INVALID_REGNUM }},
+    {   "d13",     NULL,      8, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_d13,          LLDB_INVALID_REGNUM,        gdb_arm_d13,            LLDB_INVALID_REGNUM }},
+    {   "d14",     NULL,      8, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_d14,          LLDB_INVALID_REGNUM,        gdb_arm_d14,            LLDB_INVALID_REGNUM }},
+    {   "d15",     NULL,      8, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_d15,          LLDB_INVALID_REGNUM,        gdb_arm_d15,            LLDB_INVALID_REGNUM }},
+    {   "d16",     NULL,      8, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_d16,          LLDB_INVALID_REGNUM,        gdb_arm_d16,            LLDB_INVALID_REGNUM }},
+    {   "d17",     NULL,      8, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_d17,          LLDB_INVALID_REGNUM,        gdb_arm_d17,            LLDB_INVALID_REGNUM }},
+    {   "d18",     NULL,      8, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_d18,          LLDB_INVALID_REGNUM,        gdb_arm_d18,            LLDB_INVALID_REGNUM }},
+    {   "d19",     NULL,      8, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_d19,          LLDB_INVALID_REGNUM,        gdb_arm_d19,            LLDB_INVALID_REGNUM }},
+    {   "d20",     NULL,      8, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_d20,          LLDB_INVALID_REGNUM,        gdb_arm_d20,            LLDB_INVALID_REGNUM }},
+    {   "d21",     NULL,      8, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_d21,          LLDB_INVALID_REGNUM,        gdb_arm_d21,            LLDB_INVALID_REGNUM }},
+    {   "d22",     NULL,      8, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_d22,          LLDB_INVALID_REGNUM,        gdb_arm_d22,            LLDB_INVALID_REGNUM }},
+    {   "d23",     NULL,      8, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_d23,          LLDB_INVALID_REGNUM,        gdb_arm_d23,            LLDB_INVALID_REGNUM }},
+    {   "d24",     NULL,      8, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_d24,          LLDB_INVALID_REGNUM,        gdb_arm_d24,            LLDB_INVALID_REGNUM }},
+    {   "d25",     NULL,      8, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_d25,          LLDB_INVALID_REGNUM,        gdb_arm_d25,            LLDB_INVALID_REGNUM }},
+    {   "d26",     NULL,      8, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_d26,          LLDB_INVALID_REGNUM,        gdb_arm_d26,            LLDB_INVALID_REGNUM }},
+    {   "d27",     NULL,      8, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_d27,          LLDB_INVALID_REGNUM,        gdb_arm_d27,            LLDB_INVALID_REGNUM }},
+    {   "d28",     NULL,      8, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_d28,          LLDB_INVALID_REGNUM,        gdb_arm_d28,            LLDB_INVALID_REGNUM }},
+    {   "d29",     NULL,      8, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_d29,          LLDB_INVALID_REGNUM,        gdb_arm_d29,            LLDB_INVALID_REGNUM }},
+    {   "d30",     NULL,      8, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_d30,          LLDB_INVALID_REGNUM,        gdb_arm_d30,            LLDB_INVALID_REGNUM }},
+    {   "d31",     NULL,      8, 0, eEncodingIEEE754 , eFormatFloat, { LLDB_INVALID_REGNUM,  dwarf_d31,          LLDB_INVALID_REGNUM,        gdb_arm_d31,            LLDB_INVALID_REGNUM }},
+    {   "r8_usr",  NULL,      4, 0, eEncodingUint    , eFormatHex,   { LLDB_INVALID_REGNUM,  dwarf_r8_usr,       LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM }},
+    {   "r9_usr",  NULL,      4, 0, eEncodingUint    , eFormatHex,   { LLDB_INVALID_REGNUM,  dwarf_r9_usr,       LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM }},
+    {   "r10_usr", NULL,      4, 0, eEncodingUint    , eFormatHex,   { LLDB_INVALID_REGNUM,  dwarf_r10_usr,      LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM }},
+    {   "r11_usr", NULL,      4, 0, eEncodingUint    , eFormatHex,   { LLDB_INVALID_REGNUM,  dwarf_r11_usr,      LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM }},
+    {   "r12_usr", NULL,      4, 0, eEncodingUint    , eFormatHex,   { LLDB_INVALID_REGNUM,  dwarf_r12_usr,      LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM }},
+    {   "r13_usr", "sp_usr",  4, 0, eEncodingUint    , eFormatHex,   { LLDB_INVALID_REGNUM,  dwarf_r13_usr,      LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM }},
+    {   "r14_usr", "lr_usr",  4, 0, eEncodingUint    , eFormatHex,   { LLDB_INVALID_REGNUM,  dwarf_r14_usr,      LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM }},
+    {   "r8_fiq",  NULL,      4, 0, eEncodingUint    , eFormatHex,   { LLDB_INVALID_REGNUM,  dwarf_r8_fiq,       LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM }},
+    {   "r9_fiq",  NULL,      4, 0, eEncodingUint    , eFormatHex,   { LLDB_INVALID_REGNUM,  dwarf_r9_fiq,       LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM }},
+    {   "r10_fiq", NULL,      4, 0, eEncodingUint    , eFormatHex,   { LLDB_INVALID_REGNUM,  dwarf_r10_fiq,      LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM }},
+    {   "r11_fiq", NULL,      4, 0, eEncodingUint    , eFormatHex,   { LLDB_INVALID_REGNUM,  dwarf_r11_fiq,      LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM }},
+    {   "r12_fiq", NULL,      4, 0, eEncodingUint    , eFormatHex,   { LLDB_INVALID_REGNUM,  dwarf_r12_fiq,      LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM }},
+    {   "r13_fiq", "sp_fiq",  4, 0, eEncodingUint    , eFormatHex,   { LLDB_INVALID_REGNUM,  dwarf_r13_fiq,      LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM }},
+    {   "r14_fiq", "lr_fiq",  4, 0, eEncodingUint    , eFormatHex,   { LLDB_INVALID_REGNUM,  dwarf_r14_fiq,      LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM }},
+    {   "r13_irq", "sp_irq",  4, 0, eEncodingUint    , eFormatHex,   { LLDB_INVALID_REGNUM,  dwarf_r13_irq,      LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM }},
+    {   "r14_irq", "lr_irq",  4, 0, eEncodingUint    , eFormatHex,   { LLDB_INVALID_REGNUM,  dwarf_r14_irq,      LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM }},
+    {   "r13_abt", "sp_abt",  4, 0, eEncodingUint    , eFormatHex,   { LLDB_INVALID_REGNUM,  dwarf_r13_abt,      LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM }},
+    {   "r14_abt", "lr_abt",  4, 0, eEncodingUint    , eFormatHex,   { LLDB_INVALID_REGNUM,  dwarf_r14_abt,      LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM }},
+    {   "r13_und", "sp_und",  4, 0, eEncodingUint    , eFormatHex,   { LLDB_INVALID_REGNUM,  dwarf_r13_und,      LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM }},
+    {   "r14_und", "lr_und",  4, 0, eEncodingUint    , eFormatHex,   { LLDB_INVALID_REGNUM,  dwarf_r14_und,      LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM }},
+    {   "r13_svc", "sp_svc",  4, 0, eEncodingUint    , eFormatHex,   { LLDB_INVALID_REGNUM,  dwarf_r13_svc,      LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM }},
+    {   "r14_svc", "lr_svc",  4, 0, eEncodingUint    , eFormatHex,   { LLDB_INVALID_REGNUM,  dwarf_r14_svc,      LLDB_INVALID_REGNUM,        LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM }}
+};
+static const uint32_t k_num_register_infos = sizeof(g_register_infos)/sizeof(RegisterInfo);
+static bool g_register_info_names_constified = false;
+
+const lldb_private::RegisterInfo *
+ABIMacOSX_arm::GetRegisterInfoArray (uint32_t &count)
+{
+    // Make the C-string names and alt_names for the register infos into const 
+    // C-string values by having the ConstString unique the names in the global
+    // constant C-string pool.
+    if (!g_register_info_names_constified)
+    {
+        g_register_info_names_constified = true;
+        for (uint32_t i=0; i<k_num_register_infos; ++i)
+        {
+            if (g_register_infos[i].name)
+                g_register_infos[i].name = ConstString(g_register_infos[i].name).GetCString();
+            if (g_register_infos[i].alt_name)
+                g_register_infos[i].alt_name = ConstString(g_register_infos[i].alt_name).GetCString();
+        }
+    }
+    count = k_num_register_infos;
+    return g_register_infos;
+}
+
 
 size_t
 ABIMacOSX_arm::GetRedZoneSize () const

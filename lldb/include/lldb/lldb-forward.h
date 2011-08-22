@@ -98,6 +98,7 @@ class   NameSearchContext;
 class   ObjCLanguageRuntime;
 class   ObjectContainer;
 class   ObjectFile;
+class   OperatingSystem;
 class   Options;
 class   OptionValue;
 class   NamedOption;

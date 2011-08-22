@@ -23,6 +23,7 @@ namespace lldb_private
     typedef ObjectFile* (*ObjectFileCreateInstance) (Module* module, lldb::DataBufferSP& dataSP, const FileSpec* file, lldb::addr_t offset, lldb::addr_t length);
     typedef LogChannel* (*LogChannelCreateInstance) ();
     typedef EmulateInstruction * (*EmulateInstructionCreateInstance) (const ArchSpec &arch, InstructionType inst_type);
+    typedef OperatingSystem* (*OperatingSystemCreateInstance) (Process *process, bool force);
     typedef LanguageRuntime *(*LanguageRuntimeCreateInstance) (Process *process, lldb::LanguageType language);
     typedef Platform* (*PlatformCreateInstance) ();
     typedef Process* (*ProcessCreateInstance) (Target &target, Listener &listener);

@@ -593,7 +593,7 @@ AppleObjCRuntimeV2::GetISA(ValueObject& valobj)
         // by the expression, but in host memory. because this code reads memory without
         // taking the debug-info-provided object layout, we need to hand it the target version
         // of the expression output
-        lldb::addr_t tgt_address = valobj.GetValueAsUnsigned();
+        lldb::addr_t tgt_address = valobj.GetValueAsUnsigned(LLDB_INVALID_ADDRESS);
         ValueObjectSP target_object = ValueObjectConstResult::Create (valobj.GetExecutionContextScope(),
                                                                       valobj.GetClangAST(),
                                                                       valobj.GetClangType(),

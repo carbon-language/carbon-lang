@@ -598,8 +598,8 @@ public:
     virtual const char *
     GetValueAsCString ();
     
-    virtual unsigned long long
-    GetValueAsUnsigned();
+    virtual uint64_t
+    GetValueAsUnsigned (uint64_t fail_value);
 
     virtual bool
     SetValueFromCString (const char *value_str);

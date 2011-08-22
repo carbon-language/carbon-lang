@@ -97,6 +97,23 @@ public:
     GetEmulateInstructionCreateCallbackForPluginName (const char *name);
 
     //------------------------------------------------------------------
+    // OperatingSystem
+    //------------------------------------------------------------------
+    static bool
+    RegisterPlugin (const char *name,
+                    const char *description,
+                    OperatingSystemCreateInstance create_callback);
+    
+    static bool
+    UnregisterPlugin (OperatingSystemCreateInstance create_callback);
+    
+    static OperatingSystemCreateInstance
+    GetOperatingSystemCreateCallbackAtIndex (uint32_t idx);
+    
+    static OperatingSystemCreateInstance
+    GetOperatingSystemCreateCallbackForPluginName (const char *name);
+
+    //------------------------------------------------------------------
     // LanguageRuntime
     //------------------------------------------------------------------
     static bool

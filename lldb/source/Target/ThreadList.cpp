@@ -573,3 +573,20 @@ ThreadList::SetSelectedThreadByIndexID (uint32_t index_id)
     return m_selected_tid != LLDB_INVALID_THREAD_ID;
 }
 
+void
+ThreadList::Update (ThreadList &rhs)
+{
+    if (this != &rhs)
+    {
+        // Lock both mutexes to make sure neither side changes anyone on us
+        // while the assignement occurs
+        Mutex::Locker locker_lhs(m_threads_mutex);
+        Mutex::Locker locker_rhs(rhs.m_threads_mutex);
+        m_process = rhs.m_process;
+        m_stop_id = rhs.m_stop_id;
+        m_threads.swap(rhs.m_threads);
+        m_selected_tid = rhs.m_selected_tid;
+    }
+}
+
+

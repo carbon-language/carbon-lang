@@ -999,6 +999,12 @@ public:
     uint64_t
     GetULEB128 (uint32_t *offset_ptr) const;
 
+    lldb::DataBufferSP &
+    GetSharedDataBuffer ()
+    {
+        return m_data_sp;
+    }
+
     //------------------------------------------------------------------
     /// Peek at a C string at \a offset.
     ///

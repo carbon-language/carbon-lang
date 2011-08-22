@@ -185,7 +185,7 @@ ProcessKDP::DoConnectRemote (const char *remote_url)
                     kernel_arch.SetArchitecture(eArchTypeMachO, cpu, sub);
                     m_target.SetArchitecture(kernel_arch);
                     SetID (1);
-                    UpdateThreadListIfNeeded ();
+                    GetThreadList ();
                     SetPrivateState (eStateStopped);
                     StreamSP async_strm_sp(m_target.GetDebugger().GetAsyncOutputStream());
                     if (async_strm_sp)
@@ -289,34 +289,28 @@ ProcessKDP::DoResume ()
 }
 
 uint32_t
-ProcessKDP::UpdateThreadListIfNeeded ()
+ProcessKDP::UpdateThreadList (ThreadList &old_thread_list, ThreadList &new_thread_list)
 {
     // locker will keep a mutex locked until it goes out of scope
     LogSP log (ProcessKDPLog::GetLogIfAllCategoriesSet (KDP_LOG_THREAD));
     if (log && log->GetMask().Test(KDP_LOG_VERBOSE))
         log->Printf ("ProcessKDP::%s (pid = %i)", __FUNCTION__, GetID());
     
-    Mutex::Locker locker (m_thread_list.GetMutex ());
-    const uint32_t stop_id = GetStopID();
-    if (m_thread_list.GetSize(false) == 0)
+    // We currently are making only one thread per core and we
+    // actually don't know about actual threads. Eventually we
+    // want to get the thread list from memory and note which
+    // threads are on CPU as those are the only ones that we 
+    // will be able to resume.
+    const uint32_t cpu_mask = m_comm.GetCPUMask();
+    for (uint32_t cpu_mask_bit = 1; cpu_mask_bit & cpu_mask; cpu_mask_bit <<= 1)
     {
-        // We currently are making only one thread per core and we
-        // actually don't know about actual threads. Eventually we
-        // want to get the thread list from memory and note which
-        // threads are on CPU as those are the only ones that we 
-        // will be able to resume.
-        ThreadList curr_thread_list (this);
-        curr_thread_list.SetStopID(stop_id);
-        const uint32_t cpu_mask = m_comm.GetCPUMask();
-        for (uint32_t cpu_mask_bit = 1; cpu_mask_bit & cpu_mask; cpu_mask_bit <<= 1)
-        {
-            // The thread ID is currently the CPU mask bit
-            ThreadSP thread_sp (new ThreadKDP (*this, cpu_mask_bit));
-                curr_thread_list.AddThread(thread_sp);
-        }
-        m_thread_list = curr_thread_list;
+        lldb::tid_t tid = cpu_mask_bit;
+        ThreadSP thread_sp (old_thread_list.FindThreadByID (tid, false));
+        if (!thread_sp)
+            thread_sp.reset(new ThreadKDP (*this, tid));
+        new_thread_list.AddThread(thread_sp);
     }
-    return GetThreadList().GetSize(false);
+    return new_thread_list.GetSize(false);
 }
 
 

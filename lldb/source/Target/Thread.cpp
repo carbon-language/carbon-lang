@@ -36,6 +36,9 @@
 #include "lldb/Target/ThreadPlanStepUntil.h"
 #include "lldb/Target/ThreadSpec.h"
 #include "lldb/Target/Unwind.h"
+#include "Plugins/Process/Utility/UnwindLLDB.h"
+#include "UnwindMacOSXFrameBackchain.h"
+
 
 using namespace lldb;
 using namespace lldb_private;
@@ -1195,6 +1198,32 @@ Thread::RestoreSaveFrameZero (const RegisterCheckpoint &checkpoint)
     }
     return false;
 }
+
+Unwind *
+Thread::GetUnwinder ()
+{
+    if (m_unwinder_ap.get() == NULL)
+    {
+        const ArchSpec target_arch (GetProcess().GetTarget().GetArchitecture ());
+        const llvm::Triple::ArchType machine = target_arch.GetMachine();
+        switch (machine)
+        {
+            case llvm::Triple::x86_64:
+            case llvm::Triple::x86:
+            case llvm::Triple::arm:
+            case llvm::Triple::thumb:
+                m_unwinder_ap.reset (new UnwindLLDB (*this));
+                break;
+                
+            default:
+                if (target_arch.GetTriple().getVendor() == llvm::Triple::Apple)
+                    m_unwinder_ap.reset (new UnwindMacOSXFrameBackchain (*this));
+                break;
+        }
+    }
+    return m_unwinder_ap.get();
+}
+
 
 #pragma mark "Thread::SettingsController"
 //--------------------------------------------------------------

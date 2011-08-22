@@ -33,9 +33,6 @@ public:
     RefreshStateAfterStop();
 
     virtual const char *
-    GetInfo ();
-
-    virtual const char *
     GetName ();
 
     virtual const char *
@@ -102,9 +99,6 @@ protected:
     //------------------------------------------------------------------
     // Member variables.
     //------------------------------------------------------------------
-
-    virtual lldb_private::Unwind *
-    GetUnwinder ();
 
     virtual lldb::StopInfoSP
     GetPrivateStopReason ();

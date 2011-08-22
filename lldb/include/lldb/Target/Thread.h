@@ -206,10 +206,16 @@ public:
     virtual ~Thread();
 
     Process &
-    GetProcess() { return m_process; }
+    GetProcess() 
+    {
+        return m_process; 
+    }
 
     const Process &
-    GetProcess() const { return m_process; }
+    GetProcess() const 
+    {
+        return m_process; 
+    }
 
     int
     GetResumeSignal () const
@@ -302,7 +308,10 @@ public:
     StopReasonAsCString (lldb::StopReason reason);
 
     virtual const char *
-    GetInfo () = 0;
+    GetInfo ()
+    {
+        return NULL;
+    }
 
     virtual const char *
     GetName ()
@@ -757,7 +766,7 @@ protected:
     RestoreSaveFrameZero (const RegisterCheckpoint &checkpoint);
 
     virtual lldb_private::Unwind *
-    GetUnwinder () = 0;
+    GetUnwinder ();
 
     StackFrameList &
     GetStackFrameList ();

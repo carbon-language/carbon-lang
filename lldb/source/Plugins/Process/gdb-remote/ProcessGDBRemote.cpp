@@ -390,7 +390,7 @@ ProcessGDBRemote::DoConnectRemote (const char *remote_url)
     {
         // We have a valid process
         SetID (pid);
-        UpdateThreadListIfNeeded ();
+        GetThreadList();
         if (m_gdb_comm.SendPacketAndWaitForResponse("?", 1, m_last_stop_packet, false))
         {
             const StateType state = SetThreadStopInfo (m_last_stop_packet);
@@ -1062,43 +1062,32 @@ ProcessGDBRemote::DoResume ()
 }
 
 uint32_t
-ProcessGDBRemote::UpdateThreadListIfNeeded ()
+ProcessGDBRemote::UpdateThreadList (ThreadList &old_thread_list, ThreadList &new_thread_list)
 {
     // locker will keep a mutex locked until it goes out of scope
     LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_THREAD));
     if (log && log->GetMask().Test(GDBR_LOG_VERBOSE))
         log->Printf ("ProcessGDBRemote::%s (pid = %i)", __FUNCTION__, GetID());
+    // Update the thread list's stop id immediately so we don't recurse into this function.
 
-    Mutex::Locker locker (m_thread_list.GetMutex ());
-    const uint32_t stop_id = GetStopID();
-    if (m_thread_list.GetSize(false) == 0 || stop_id != m_thread_list.GetStopID())
+    std::vector<lldb::tid_t> thread_ids;
+    bool sequence_mutex_unavailable = false;
+    const size_t num_thread_ids = m_gdb_comm.GetCurrentThreadIDs (thread_ids, sequence_mutex_unavailable);
+    if (num_thread_ids > 0)
     {
-        // Update the thread list's stop id immediately so we don't recurse into this function.
-        ThreadList curr_thread_list (this);
-        curr_thread_list.SetStopID(stop_id);
-
-        std::vector<lldb::tid_t> thread_ids;
-        bool sequence_mutex_unavailable = false;
-        const size_t num_thread_ids = m_gdb_comm.GetCurrentThreadIDs (thread_ids, sequence_mutex_unavailable);
-        if (num_thread_ids > 0)
+        for (size_t i=0; i<num_thread_ids; ++i)
         {
-            for (size_t i=0; i<num_thread_ids; ++i)
-            {
-                tid_t tid = thread_ids[i];
-                ThreadSP thread_sp (GetThreadList().FindThreadByID (tid, false));
-                if (!thread_sp)
-                    thread_sp.reset (new ThreadGDBRemote (*this, tid));
-                curr_thread_list.AddThread(thread_sp);
-            }
-        }
-
-        if (sequence_mutex_unavailable == false)
-        {
-            m_thread_list = curr_thread_list;
-            SetThreadStopInfo (m_last_stop_packet);
+            tid_t tid = thread_ids[i];
+            ThreadSP thread_sp (old_thread_list.FindThreadByID (tid, false));
+            if (!thread_sp)
+                thread_sp.reset (new ThreadGDBRemote (*this, tid));
+            new_thread_list.AddThread(thread_sp);
         }
     }
-    return GetThreadList().GetSize(false);
+
+    if (sequence_mutex_unavailable == false)
+        SetThreadStopInfo (m_last_stop_packet);
+    return new_thread_list.GetSize(false);
 }
 
 
@@ -1318,7 +1307,7 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                             }
                         }
                         if (!handled)
-                    gdb_thread->SetStopInfo (StopInfo::CreateStopReasonWithSignal (*thread_sp, signo));
+                            gdb_thread->SetStopInfo (StopInfo::CreateStopReasonWithSignal (*thread_sp, signo));
                 }
                 else
                 {

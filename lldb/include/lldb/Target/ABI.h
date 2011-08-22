@@ -67,6 +67,19 @@ public:
     virtual bool
     CodeAddressIsValid (lldb::addr_t pc) = 0;    
 
+    virtual const RegisterInfo *
+    GetRegisterInfoArray (uint32_t &count) = 0;
+
+    
+    
+    bool
+    GetRegisterInfoByName (const ConstString &name, RegisterInfo &info);
+
+    bool
+    GetRegisterInfoByKind (lldb::RegisterKind reg_kind, 
+                           uint32_t reg_num, 
+                           RegisterInfo &info);
+
     static lldb::ABISP
     FindPlugin (const ArchSpec &arch);
     

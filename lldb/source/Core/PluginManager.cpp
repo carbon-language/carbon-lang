@@ -640,6 +640,110 @@ PluginManager::GetEmulateInstructionCreateCallbackForPluginName (const char *nam
     }
     return NULL;
 }
+#pragma mark OperatingSystem
+
+
+struct OperatingSystemInstance
+{
+    OperatingSystemInstance() :
+        name(),
+        description(),
+        create_callback(NULL)
+    {
+    }
+    
+    std::string name;
+    std::string description;
+    OperatingSystemCreateInstance create_callback;
+};
+
+typedef std::vector<OperatingSystemInstance> OperatingSystemInstances;
+
+static Mutex &
+GetOperatingSystemMutex ()
+{
+    static Mutex g_instances_mutex (Mutex::eMutexTypeRecursive);
+    return g_instances_mutex;
+}
+
+static OperatingSystemInstances &
+GetOperatingSystemInstances ()
+{
+    static OperatingSystemInstances g_instances;
+    return g_instances;
+}
+
+bool
+PluginManager::RegisterPlugin
+(
+ const char *name,
+ const char *description,
+ OperatingSystemCreateInstance create_callback
+ )
+{
+    if (create_callback)
+    {
+        OperatingSystemInstance instance;
+        assert (name && name[0]);
+        instance.name = name;
+        if (description && description[0])
+            instance.description = description;
+        instance.create_callback = create_callback;
+        Mutex::Locker locker (GetOperatingSystemMutex ());
+        GetOperatingSystemInstances ().push_back (instance);
+    }
+    return false;
+}
+
+bool
+PluginManager::UnregisterPlugin (OperatingSystemCreateInstance create_callback)
+{
+    if (create_callback)
+    {
+        Mutex::Locker locker (GetOperatingSystemMutex ());
+        OperatingSystemInstances &instances = GetOperatingSystemInstances ();
+        
+        OperatingSystemInstances::iterator pos, end = instances.end();
+        for (pos = instances.begin(); pos != end; ++ pos)
+        {
+            if (pos->create_callback == create_callback)
+            {
+                instances.erase(pos);
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+OperatingSystemCreateInstance
+PluginManager::GetOperatingSystemCreateCallbackAtIndex (uint32_t idx)
+{
+    Mutex::Locker locker (GetOperatingSystemMutex ());
+    OperatingSystemInstances &instances = GetOperatingSystemInstances ();
+    if (idx < instances.size())
+        return instances[idx].create_callback;
+    return NULL;
+}
+
+OperatingSystemCreateInstance
+PluginManager::GetOperatingSystemCreateCallbackForPluginName (const char *name)
+{
+    if (name && name[0])
+    {
+        llvm::StringRef name_sref(name);
+        Mutex::Locker locker (GetOperatingSystemMutex ());
+        OperatingSystemInstances &instances = GetOperatingSystemInstances ();
+        
+        OperatingSystemInstances::iterator pos, end = instances.end();
+        for (pos = instances.begin(); pos != end; ++ pos)
+        {
+            if (name_sref.equals (pos->name))
+                return pos->create_callback;
+        }
+    }
+    return NULL;
+}
 
 
 #pragma mark LanguageRuntime
