@@ -186,6 +186,12 @@ public:
   bool isCXXCall() const {
     return CallE && isa<CXXMemberCallExpr>(CallE);
   }
+
+  const Expr *getOriginExpr() const {
+    if (isFunctionCall())
+      return CallE;
+    return Msg.getOriginExpr();
+  }
   
   SVal getFunctionCallee() const;
   SVal getCXXCallee() const;
