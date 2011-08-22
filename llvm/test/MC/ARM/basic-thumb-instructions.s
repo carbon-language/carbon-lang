@@ -379,3 +379,15 @@ _func:
         push {r1, r2, r7}
 
 @ CHECK: push	{r1, r2, r7}            @ encoding: [0x86,0xb4]
+
+
+@------------------------------------------------------------------------------
+@ REV/REV16/REVSH
+@------------------------------------------------------------------------------
+        rev r6, r3
+        rev16 r7, r2
+        revsh r5, r1
+
+@ CHECK: rev	r6, r3                  @ encoding: [0x1e,0xba]
+@ CHECK: rev16	r7, r2                  @ encoding: [0x57,0xba]
+@ CHECK: revsh	r5, r1                  @ encoding: [0xcd,0xba]
