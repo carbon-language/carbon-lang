@@ -1047,7 +1047,7 @@ def tMOVSr      : T1I<(outs tGPR:$Rd), (ins tGPR:$Rm), IIC_iMOVr,
 } // neverHasSideEffects
 
 // Multiply register
-let isCommutable = 1 in
+//let isCommutable = 1 in
 def tMUL :                      // A8.6.105 T1
   Thumb1sI<(outs tGPR:$Rd), (ins tGPR:$Rn, tGPR:$Rm), AddrModeNone, 2,
            IIC_iMUL32, "mul", "\t$Rd, $Rn, $Rm", "$Rm = $Rd",
