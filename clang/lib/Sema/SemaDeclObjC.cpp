@@ -292,7 +292,9 @@ void Sema::ActOnStartOfObjCMethodDef(Scope *FnBodyScope, Decl *D) {
     // Finally, in ActOnFinishFunctionBody() (SemaDecl), warn if flag is set.
     // Only do this if the current class actually has a superclass.
     if (IC->getSuperClass())
-      ObjCShouldCallSuperDealloc = MDecl->getMethodFamily() == OMF_dealloc;
+      ObjCShouldCallSuperDealloc = 
+        !Context.getLangOptions().ObjCAutoRefCount &&      
+        MDecl->getMethodFamily() == OMF_dealloc;
   }
 }
 
