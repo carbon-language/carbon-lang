@@ -353,13 +353,14 @@ entry:
 
 ; CHECK: define void @test10(
 ; CHECK: @objc_retain(i8* %x)
+; CHECK: @callee
 ; CHECK: @use_pointer
 ; CHECK: @objc_release
 ; CHECK: }
 define void @test10(i8* %x) nounwind {
 entry:
   %0 = call i8* @objc_retain(i8* %x) nounwind
-  call void @use_pointer(i8* %x)
+  call void @callee()
   call void @use_pointer(i8* %x)
   call void @objc_release(i8* %0) nounwind
   ret void
@@ -768,7 +769,7 @@ entry:
 define void @test23b(i8* %p) {
 entry:
   %0 = call i8* @objc_retainBlock(i8* %p) nounwind
-  call void @use_pointer(i8* %p)
+  call void @callee()
   call void @use_pointer(i8* %p)
   call void @objc_release(i8* %p) nounwind
   ret void
