@@ -934,7 +934,7 @@ private:
 class CategoryMap
 {
 private:
-    typedef const char* KeyType;
+    typedef ConstString KeyType;
     typedef FormatCategory ValueType;
     typedef ValueType::SharedPointer ValueSP;
     typedef std::list<lldb::FormatCategorySP> ActiveCategoriesList;
@@ -943,7 +943,7 @@ private:
 public:
     typedef std::map<KeyType, ValueSP> MapType;
     typedef MapType::iterator MapIterator;
-    typedef bool(*CallbackType)(void*, KeyType, const ValueSP&);
+    typedef bool(*CallbackType)(void*, const ValueSP&);
     
     CategoryMap(IFormatChangeListener* lst = NULL) :
     m_map_mutex(Mutex::eMutexTypeRecursive),
@@ -1149,7 +1149,7 @@ private:
 
 public:
     
-    typedef bool (*CategoryCallback)(void*, const char*, const lldb::FormatCategorySP&);
+    typedef CategoryMap::CallbackType CategoryCallback;
     
     FormatManager ();
     
@@ -1172,15 +1172,27 @@ public:
     }
     
     void
-    EnableCategory (const char* category_name)
+    EnableCategory (const ConstString& category_name)
     {
         m_categories_map.EnableCategory(category_name);
     }
     
     void
-    DisableCategory (const char* category_name)
+    DisableCategory (const ConstString& category_name)
     {
         m_categories_map.DisableCategory(category_name);
+    }
+    
+    void
+    EnableCategory (const char* category_name)
+    {
+        EnableCategory(ConstString(category_name));
+    }
+    
+    void
+    DisableCategory (const char* category_name)
+    {
+        DisableCategory(ConstString(category_name));
     }
     
     void
@@ -1206,10 +1218,18 @@ public:
     {
         if (!category_name)
             return Category(m_default_category_name);
+        return Category(ConstString(category_name));
+    }
+    
+    lldb::FormatCategorySP
+    Category (const ConstString& category_name)
+    {
+        if (!category_name)
+            return Category(m_default_category_name);
         lldb::FormatCategorySP category;
         if (m_categories_map.Get(category_name, category))
             return category;
-        Categories().Add(category_name,lldb::FormatCategorySP(new FormatCategory(this, category_name)));
+        Categories().Add(category_name,lldb::FormatCategorySP(new FormatCategory(this, category_name.AsCString())));
         return Category(category_name);
     }
     
@@ -1287,13 +1307,9 @@ private:
     uint32_t m_last_revision;
     CategoryMap m_categories_map;
     
-    const char* m_default_category_name;
-    const char* m_system_category_name;
-    const char* m_gnu_cpp_category_name;
-    
-    ConstString m_default_cs;
-    ConstString m_system_cs;
-    ConstString m_gnu_stdcpp_cs;
+    ConstString m_default_category_name;
+    ConstString m_system_category_name;
+    ConstString m_gnu_cpp_category_name;
 };
 
 class DataVisualization

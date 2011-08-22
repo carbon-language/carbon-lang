@@ -321,8 +321,8 @@ CategoryMap::LoopThrough(CallbackType callback, void* param)
             for (begin = m_active_categories.begin(); begin != end; begin++)
             {
                 lldb::FormatCategorySP category = *begin;
-                const char* type = category->GetName().c_str();
-                if (!callback(param, type, category))
+                ConstString type = ConstString(category->GetName().c_str());
+                if (!callback(param, category))
                     break;
             }
         }
@@ -335,7 +335,7 @@ CategoryMap::LoopThrough(CallbackType callback, void* param)
                 if (pos->second->IsEnabled())
                     continue;
                 KeyType type = pos->first;
-                if (!callback(param, type, pos->second))
+                if (!callback(param, pos->second))
                     break;
             }
         }
@@ -383,16 +383,10 @@ FormatManager::FormatManager() :
     m_named_summaries_map(this),
     m_last_revision(0),
     m_categories_map(this),
-    m_default_cs(ConstString("default")),
-    m_system_cs(ConstString("system")), 
-    m_gnu_stdcpp_cs(ConstString("gnu-libstdc++"))
+    m_default_category_name(ConstString("default")),
+    m_system_category_name(ConstString("system")), 
+    m_gnu_cpp_category_name(ConstString("gnu-libstdc++"))
 {
-    
-    // build default categories
-    
-    m_default_category_name = m_default_cs.GetCString();
-    m_system_category_name = m_system_cs.GetCString();
-    m_gnu_cpp_category_name = m_gnu_stdcpp_cs.AsCString();
     
     // add some default stuff
     // most formats, summaries, ... actually belong to the users' lldbinit file rather than here
@@ -553,21 +547,21 @@ DataVisualization::AnyMatches(ConstString type_name,
 bool
 DataVisualization::Categories::Get(const ConstString &category, lldb::FormatCategorySP &entry)
 {
-    entry = GetFormatManager().Category(category.GetCString());
+    entry = GetFormatManager().Category(category);
     return true;
 }
 
 void
 DataVisualization::Categories::Add(const ConstString &category)
 {
-    GetFormatManager().Category(category.GetCString());
+    GetFormatManager().Category(category);
 }
 
 bool
 DataVisualization::Categories::Delete(const ConstString &category)
 {
-    GetFormatManager().DisableCategory(category.GetCString());
-    return GetFormatManager().Categories().Delete(category.GetCString());
+    GetFormatManager().DisableCategory(category);
+    return GetFormatManager().Categories().Delete(category);
 }
 
 void
@@ -579,26 +573,26 @@ DataVisualization::Categories::Clear()
 void
 DataVisualization::Categories::Clear(ConstString &category)
 {
-    GetFormatManager().Category(category.GetCString())->ClearSummaries();
+    GetFormatManager().Category(category)->ClearSummaries();
 }
 
 void
 DataVisualization::Categories::Enable(ConstString& category)
 {
-    if (GetFormatManager().Category(category.GetCString())->IsEnabled() == false)
-        GetFormatManager().EnableCategory(category.GetCString());
+    if (GetFormatManager().Category(category)->IsEnabled() == false)
+        GetFormatManager().EnableCategory(category);
     else
     {
-        GetFormatManager().DisableCategory(category.GetCString());
-        GetFormatManager().EnableCategory(category.GetCString());
+        GetFormatManager().DisableCategory(category);
+        GetFormatManager().EnableCategory(category);
     }
 }
 
 void
 DataVisualization::Categories::Disable(ConstString& category)
 {
-    if (GetFormatManager().Category(category.GetCString())->IsEnabled() == true)
-        GetFormatManager().DisableCategory(category.GetCString());
+    if (GetFormatManager().Category(category)->IsEnabled() == true)
+        GetFormatManager().DisableCategory(category);
 }
 
 void

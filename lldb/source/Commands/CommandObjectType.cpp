@@ -1166,7 +1166,6 @@ private:
     
     static bool
     PerCategoryCallback(void* param,
-                        const char* cate_name,
                         const lldb::FormatCategorySP& cate)
     {
         ConstString *name = (ConstString*)param;
@@ -1322,7 +1321,6 @@ private:
     
     static bool
     PerCategoryCallback(void* param,
-                        const char* cate_name,
                         const lldb::FormatCategorySP& cate)
     {
         cate->GetSummaryNavigator()->Clear();
@@ -1532,13 +1530,14 @@ private:
     
     static bool
     PerCategoryCallback(void* param_vp,
-                        const char* cate_name,
                         const lldb::FormatCategorySP& cate)
     {
         
         CommandObjectTypeSummaryList_LoopCallbackParam* param = 
             (CommandObjectTypeSummaryList_LoopCallbackParam*)param_vp;
         CommandReturnObject* result = param->result;
+        
+        const char* cate_name = cate->GetName().c_str();
         
         // if the category is disabled or empty and there is no regex, just skip it
         if ((cate->IsEnabled() == false || cate->GetCount(FormatCategory::eSummary | FormatCategory::eRegexSummary) == 0) && param->cate_regex == NULL)
@@ -1615,7 +1614,7 @@ public:
     CommandObjectTypeCategoryEnable (CommandInterpreter &interpreter) :
     CommandObject (interpreter,
                    "type category enable",
-                   "Enable a category as a source of summaries.",
+                   "Enable a category as a source of formatters.",
                    NULL)
     {
         CommandArgumentEntry type_arg;
@@ -1658,6 +1657,14 @@ public:
                 return false;
             }
             DataVisualization::Categories::Enable(typeCS);
+            lldb::FormatCategorySP cate;
+            if (DataVisualization::Categories::Get(typeCS, cate) && cate.get())
+            {
+                if (cate->GetCount() == 0)
+                {
+                    result.AppendWarning("empty category enabled (typo?)");
+                }
+            }
         }
         
         result.SetStatus(eReturnStatusSuccessFinishResult);
@@ -1676,7 +1683,7 @@ public:
     CommandObjectTypeCategoryDelete (CommandInterpreter &interpreter) :
     CommandObject (interpreter,
                    "type category delete",
-                   "Delete a category and all associated summaries.",
+                   "Delete a category and all associated formatters.",
                    NULL)
     {
         CommandArgumentEntry type_arg;
@@ -1748,7 +1755,7 @@ public:
     CommandObjectTypeCategoryDisable (CommandInterpreter &interpreter) :
     CommandObject (interpreter,
                    "type category disable",
-                   "Disable a category as a source of summaries.",
+                   "Disable a category as a source of formatters.",
                    NULL)
     {
         CommandArgumentEntry type_arg;
@@ -1824,13 +1831,14 @@ private:
     
     static bool
     PerCategoryCallback(void* param_vp,
-                        const char* cate_name,
                         const lldb::FormatCategorySP& cate)
     {
         CommandObjectTypeCategoryList_CallbackParam* param =
             (CommandObjectTypeCategoryList_CallbackParam*)param_vp;
         CommandReturnObject* result = param->result;
         RegularExpression* regex = param->regex;
+        
+        const char* cate_name = cate->GetName().c_str();
         
         if (regex == NULL || regex->Execute(cate_name))
             result->GetOutputStream().Printf("Category %s is%s enabled\n",
@@ -2028,9 +2036,10 @@ private:
     
     static bool
     PerCategoryCallback(void* param_vp,
-                        const char* cate_name,
                         const lldb::FormatCategorySP& cate)
     {
+        
+        const char* cate_name = cate->GetName().c_str();
         
         CommandObjectTypeFilterList_LoopCallbackParam* param = 
         (CommandObjectTypeFilterList_LoopCallbackParam*)param_vp;
@@ -2237,13 +2246,14 @@ private:
     
     static bool
     PerCategoryCallback(void* param_vp,
-                        const char* cate_name,
                         const lldb::FormatCategorySP& cate)
     {
         
         CommandObjectTypeSynthList_LoopCallbackParam* param = 
         (CommandObjectTypeSynthList_LoopCallbackParam*)param_vp;
         CommandReturnObject* result = param->result;
+        
+        const char* cate_name = cate->GetName().c_str();
         
         // if the category is disabled or empty and there is no regex, just skip it
         if ((cate->IsEnabled() == false || cate->GetCount(FormatCategory::eSynth | FormatCategory::eRegexSynth) == 0) && param->cate_regex == NULL)
@@ -2384,7 +2394,6 @@ private:
     
     static bool
     PerCategoryCallback(void* param,
-                        const char* cate_name,
                         const lldb::FormatCategorySP& cate)
     {
         ConstString *name = (ConstString*)param;
@@ -2547,7 +2556,6 @@ private:
     
     static bool
     PerCategoryCallback(void* param,
-                        const char* cate_name,
                         const lldb::FormatCategorySP& cate)
     {
         ConstString* name = (ConstString*)param;
@@ -2706,7 +2714,6 @@ private:
     
     static bool
     PerCategoryCallback(void* param,
-                        const char* cate_name,
                         const lldb::FormatCategorySP& cate)
     {
         cate->Clear(FormatCategory::eFilter | FormatCategory::eRegexFilter);
@@ -2833,7 +2840,6 @@ private:
     
     static bool
     PerCategoryCallback(void* param,
-                        const char* cate_name,
                         const lldb::FormatCategorySP& cate)
     {
         cate->Clear(FormatCategory::eSynth | FormatCategory::eRegexSynth);
