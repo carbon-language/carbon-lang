@@ -447,17 +447,17 @@ FormatManager::FormatManager() :
                                      SyntheticChildrenSP(new SyntheticScriptProvider(true,
                                                                                      false,
                                                                                      false,
-                                                                                     "StdVectorSynthProvider")));
+                                                                                     "gnu_libstdcpp.StdVectorSynthProvider")));
     Category(m_gnu_cpp_category_name)->GetRegexSyntheticNavigator()->Add(RegularExpressionSP(new RegularExpression("std::map<")),
                                      SyntheticChildrenSP(new SyntheticScriptProvider(true,
                                                                                      false,
                                                                                      false,
-                                                                                     "StdMapSynthProvider")));
+                                                                                     "gnu_libstdcpp.StdMapSynthProvider")));
     Category(m_gnu_cpp_category_name)->GetRegexSyntheticNavigator()->Add(RegularExpressionSP(new RegularExpression("std::list<")),
                                      SyntheticChildrenSP(new SyntheticScriptProvider(true,
                                                                                      false,
                                                                                      false,
-                                                                                     "StdListSynthProvider")));
+                                                                                     "gnu_libstdcpp.StdListSynthProvider")));
     
     // DO NOT change the order of these calls, unless you WANT a change in the priority of these categories
     EnableCategory(m_system_category_name);

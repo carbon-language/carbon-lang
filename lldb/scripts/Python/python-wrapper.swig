@@ -1,5 +1,112 @@
 %wrapper %{
 
+class PyErr_Cleaner
+{
+public:
+    PyErr_Cleaner(bool print=false) :
+        m_print(print)
+    {
+    }
+
+    ~PyErr_Cleaner()
+    {
+        if (PyErr_Occurred())
+        {
+            if(m_print)
+                PyErr_Print();
+            PyErr_Clear();
+        }
+    }
+
+private:
+    bool m_print;
+};
+
+// resolve a dotted Python name in the form
+// foo.bar.baz.Foobar to an actual Python object
+// if pmodule is NULL, the __main__ module will be used
+// as the starting point for the search
+
+static PyObject*
+ResolvePythonName(const char* name,
+                  PyObject* pmodule = NULL)
+{
+
+    //printf("Resolving %s\n", name);
+
+    if (!name || !name[0])
+        return pmodule;
+
+    PyErr_Cleaner pyerr_cleanup(true);  // show Python errors
+
+    PyObject* main_dict;
+
+    if (!pmodule)
+    {
+        pmodule = PyImport_AddModule ("__main__");
+        if (!pmodule)
+            return NULL;
+    }
+
+    if (!PyDict_Check(pmodule))
+    {
+        main_dict = PyModule_GetDict (pmodule);
+        if (!main_dict)
+            return NULL;
+    }
+    else
+        main_dict = pmodule;
+
+    const char* dot_pos = ::strchr(name, '.');
+
+    PyObject *dest_object;
+    PyObject *key, *value;
+    Py_ssize_t pos = 0;
+
+    if (!dot_pos)
+    {
+        if (PyDict_Check (main_dict))
+        {
+            dest_object = NULL;   
+            while (PyDict_Next (main_dict, &pos, &key, &value))
+            {
+                // We have stolen references to the key and value objects in the dictionary; we need to increment 
+                // them now so that Python's garbage collector doesn't collect them out from under us.
+                Py_INCREF (key);
+                Py_INCREF (value);
+                //printf("Comparing %s and %s\n", name, PyString_AsString (key));
+                if (strcmp (PyString_AsString (key), name) == 0)
+                {
+                    dest_object = value;
+                    break;
+                }
+            }
+        }
+        
+        if (!dest_object || dest_object == Py_None)
+            return NULL;
+        return dest_object;
+    }
+    // foo.bar.ba
+    // 0123456789
+    // len = 3 - 0 
+    size_t len = dot_pos - name;
+    std::string piece(name,len);
+    dest_object = ResolvePythonName(piece.c_str(), main_dict);
+    //printf("Resolved %s to %p\n", piece.c_str(), dest_object);
+    if (!dest_object)
+        return NULL;
+    //printf("Now moving to resolve %s\n", dot_pos+1);
+    return ResolvePythonName(dot_pos+1,dest_object); // tail recursion.. should be optimized by the compiler
+
+}
+
+static PyObject*
+FindSessionDictionary(const char *session_dictionary_name)
+{
+    return ResolvePythonName(session_dictionary_name, NULL);
+}
+
 // This function is called by lldb_private::ScriptInterpreterPython::BreakpointCallbackFunction(...)
 // and is used when a script command is attached to a breakpoint for execution.
 
@@ -25,63 +132,18 @@ LLDBSwigPythonBreakpointCallbackFunction
     if (!python_function_name || !session_dictionary_name)
         return stop_at_breakpoint;
 
-    PyObject *pmodule, *main_dict, *session_dict, *pfunc;
+    PyObject *session_dict, *pfunc;
     PyObject *pargs, *pvalue;
     
-    pmodule = PyImport_AddModule ("__main__");
-    if (pmodule != NULL)
+    session_dict = FindSessionDictionary (session_dictionary_name);
+    if (session_dict != NULL)
     {
-        main_dict = PyModule_GetDict (pmodule);
-        if (main_dict != NULL)
+        pfunc = ResolvePythonName (python_function_name, session_dict);
+        if (pfunc != NULL)
         {
-            PyObject *key, *value;
-            Py_ssize_t pos = 0;
-             
-            // Find the current session's dictionary in the main module's dictionary.
-
-            if (PyDict_Check (main_dict))
-            {
-                session_dict = NULL;   
-                while (PyDict_Next (main_dict, &pos, &key, &value))
-                {
-                    // We have stolen references to the key and value objects in the dictionary; we need to increment 
-                    // them now so that Python's garbage collector doesn't collect them out from under us.
-                    Py_INCREF (key);
-                    Py_INCREF (value);
-                    if (strcmp (PyString_AsString (key), session_dictionary_name) == 0)
-                    {
-                        session_dict = value;
-                        break;
-                    }
-                }
-            }
-            
-            if (!session_dict || !PyDict_Check (session_dict))
-                return stop_at_breakpoint;
-                
-            // Find the function we need to call in the current session's dictionary.
-
-            pos = 0;
-            pfunc = NULL;
-            while (PyDict_Next (session_dict, &pos, &key, &value))
-            {
-                if (PyString_Check (key))
-                {
-                    // We have stolen references to the key and value objects in the dictionary; we need to increment 
-                    // them now so that Python's garbage collector doesn't collect them out from under us.
-                    Py_INCREF (key);
-                    Py_INCREF (value);
-                    if (strcmp (PyString_AsString (key), python_function_name) == 0)
-                    {
-                        pfunc = value;
-                        break;
-                    }
-                }
-            }
-
             // Set up the arguments and call the function.
                 
-            if (pfunc && PyCallable_Check (pfunc))
+            if (PyCallable_Check (pfunc))
             {
                 pargs = PyTuple_New (3);
                 if (pargs == NULL)
@@ -144,63 +206,18 @@ LLDBSwigPythonCallTypeScript
     if (!python_function_name || !session_dictionary_name)
         return retval;
 
-    PyObject *pmodule, *main_dict, *session_dict, *pfunc;
+    PyObject *session_dict, *pfunc;
     PyObject *pargs, *pvalue;
     
-    pmodule = PyImport_AddModule ("__main__");
-    if (pmodule != NULL)
+    session_dict = FindSessionDictionary (session_dictionary_name);
+    if (session_dict != NULL)
     {
-        main_dict = PyModule_GetDict (pmodule);
-        if (main_dict != NULL)
+        pfunc = ResolvePythonName (python_function_name, session_dict);
+        if (pfunc != NULL)
         {
-            PyObject *key, *value;
-            Py_ssize_t pos = 0;
-             
-            // Find the current session's dictionary in the main module's dictionary.
-
-            if (PyDict_Check (main_dict))
-            {
-                session_dict = NULL;   
-                while (PyDict_Next (main_dict, &pos, &key, &value))
-                {
-                    // We have stolen references to the key and value objects in the dictionary; we need to increment 
-                    // them now so that Python's garbage collector doesn't collect them out from under us.
-                    Py_INCREF (key);
-                    Py_INCREF (value);
-                    if (strcmp (PyString_AsString (key), session_dictionary_name) == 0)
-                    {
-                        session_dict = value;
-                        break;
-                    }
-                }
-            }
-            
-            if (!session_dict || !PyDict_Check (session_dict))
-                return retval;
-                
-            // Find the function we need to call in the current session's dictionary.
-
-            pos = 0;
-            pfunc = NULL;
-            while (PyDict_Next (session_dict, &pos, &key, &value))
-            {
-                if (PyString_Check (key))
-                {
-                    // We have stolen references to the key and value objects in the dictionary; we need to increment 
-                    // them now so that Python's garbage collector doesn't collect them out from under us.
-                    Py_INCREF (key);
-                    Py_INCREF (value);
-                    if (strcmp (PyString_AsString (key), python_function_name) == 0)
-                    {
-                        pfunc = value;
-                        break;
-                    }
-                }
-            }
-
             // Set up the arguments and call the function.
                 
-            if (pfunc && PyCallable_Check (pfunc))
+            if (PyCallable_Check (pfunc))
             {
                 pargs = PyTuple_New (2);
                 if (pargs == NULL)
@@ -274,63 +291,18 @@ LLDBSwigPythonCreateSyntheticProvider
 
     const char* python_function_name = python_class_name.c_str();
 
-    PyObject *pmodule, *main_dict, *session_dict, *pfunc;
+    PyObject *session_dict, *pfunc;
     PyObject *pvalue;
-
-    pmodule = PyImport_AddModule ("__main__");
-    if (pmodule != NULL)
+    
+    session_dict = FindSessionDictionary (session_dictionary_name);
+    if (session_dict != NULL)
     {
-        main_dict = PyModule_GetDict (pmodule);
-        if (main_dict != NULL)
+        pfunc = ResolvePythonName (python_function_name, session_dict);
+        if (pfunc != NULL)
         {
-            PyObject *key, *value;
-            Py_ssize_t pos = 0;
-
-            // Find the current session's dictionary in the main module's dictionary.
-
-            if (PyDict_Check (main_dict))
-            {
-                session_dict = NULL;   
-                while (PyDict_Next (main_dict, &pos, &key, &value))
-                {
-                    // We have stolen references to the key and value objects in the dictionary; we need to increment 
-                    // them now so that Python's garbage collector doesn't collect them out from under us.
-                    Py_INCREF (key);
-                    Py_INCREF (value);
-                    if (strcmp (PyString_AsString (key), session_dictionary_name) == 0)
-                    {
-                        session_dict = value;
-                        break;
-                    }
-                }
-            }
-
-            if (!session_dict || !PyDict_Check (session_dict))
-                return retval;
-
-            // Find the function we need to call in the current session's dictionary.
-
-            pos = 0;
-            pfunc = NULL;
-            while (PyDict_Next (session_dict, &pos, &key, &value))
-            {
-                if (PyString_Check (key))
-                {
-                    // We have stolen references to the key and value objects in the dictionary; we need to increment 
-                    // them now so that Python's garbage collector doesn't collect them out from under us.
-                    Py_INCREF (key);
-                    Py_INCREF (value);
-                    if (strcmp (PyString_AsString (key), python_function_name) == 0)
-                    {
-                        pfunc = value;
-                        break;
-                    }
-                }
-            }
-
             // Set up the arguments and call the function.
-
-            if (pfunc && PyCallable_Check (pfunc))
+                
+            if (PyCallable_Check (pfunc))
             {
                 PyObject *argList = Py_BuildValue("SS", ValObj_PyObj, session_dict);
 
@@ -638,63 +610,18 @@ LLDBSwigPythonCallCommand
     if (!python_function_name || !session_dictionary_name)
         return retval;
 
-    PyObject *pmodule, *main_dict, *session_dict, *pfunc;
+    PyObject *session_dict, *pfunc;
     PyObject *pargs, *pvalue;
     
-    pmodule = PyImport_AddModule ("__main__");
-    if (pmodule != NULL)
+    session_dict = FindSessionDictionary (session_dictionary_name);
+    if (session_dict != NULL)
     {
-        main_dict = PyModule_GetDict (pmodule);
-        if (main_dict != NULL)
+        pfunc = ResolvePythonName (python_function_name, session_dict);
+        if (pfunc != NULL)
         {
-            PyObject *key, *value;
-            Py_ssize_t pos = 0;
-             
-            // Find the current session's dictionary in the main module's dictionary.
-
-            if (PyDict_Check (main_dict))
-            {
-                session_dict = NULL;   
-                while (PyDict_Next (main_dict, &pos, &key, &value))
-                {
-                    // We have stolen references to the key and value objects in the dictionary; we need to increment 
-                    // them now so that Python's garbage collector doesn't collect them out from under us.
-                    Py_INCREF (key);
-                    Py_INCREF (value);
-                    if (strcmp (PyString_AsString (key), session_dictionary_name) == 0)
-                    {
-                        session_dict = value;
-                        break;
-                    }
-                }
-            }
-            
-            if (!session_dict || !PyDict_Check (session_dict))
-                return retval;
-                
-            // Find the function we need to call in the current session's dictionary.
-
-            pos = 0;
-            pfunc = NULL;
-            while (PyDict_Next (session_dict, &pos, &key, &value))
-            {
-                if (PyString_Check (key))
-                {
-                    // We have stolen references to the key and value objects in the dictionary; we need to increment 
-                    // them now so that Python's garbage collector doesn't collect them out from under us.
-                    Py_INCREF (key);
-                    Py_INCREF (value);
-                    if (strcmp (PyString_AsString (key), python_function_name) == 0)
-                    {
-                        pfunc = value;
-                        break;
-                    }
-                }
-            }
-
             // Set up the arguments and call the function.
                 
-            if (pfunc && PyCallable_Check (pfunc))
+            if (PyCallable_Check (pfunc))
             {
                 pargs = PyTuple_New (4);
                 if (pargs == NULL)

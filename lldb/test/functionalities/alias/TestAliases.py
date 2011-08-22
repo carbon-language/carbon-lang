@@ -152,10 +152,10 @@ class AliasTestCase(TestBase):
 
         self.expect('command script list',
             substrs = ['targetname',
-                       'Run Python function target_name_impl'])
+                       'Run Python function welcome.target_name_impl'])
 
         self.expect("help targetname",
-                    substrs = ['Run Python function target_name_imp',
+                    substrs = ['Run Python function welcome.target_name_imp',
                                'This command takes \'raw\' input',
                                'quote stuff'])
 
