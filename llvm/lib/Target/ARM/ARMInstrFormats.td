@@ -134,6 +134,7 @@ def VFPNeonA8Domain : Domain<5>; // Instructions in VFP & Neon under A8
 // ARM imod and iflag operands, used only by the CPS instruction.
 def imod_op : Operand<i32> {
   let PrintMethod = "printCPSIMod";
+  let DecoderMethod = "DecodeCPSIMod";
 }
 
 def ProcIFlagsOperand : AsmOperandClass {

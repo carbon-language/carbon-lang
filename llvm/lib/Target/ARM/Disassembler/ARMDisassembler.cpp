@@ -179,7 +179,8 @@ static DecodeStatus DecodeVMOVSRR(llvm::MCInst &Inst, unsigned Insn,
                                uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeVMOVRRS(llvm::MCInst &Inst, unsigned Insn,
                                uint64_t Address, const void *Decoder);
-
+static DecodeStatus DecodeCPSIMod(llvm::MCInst &Inst, unsigned Insn,
+                               uint64_t Address, const void *Decoder);
 
 static DecodeStatus DecodeThumbAddSpecialReg(llvm::MCInst &Inst, uint16_t Insn,
                                uint64_t Address, const void *Decoder);
@@ -3240,3 +3241,11 @@ static DecodeStatus DecodeVMOVRRS(llvm::MCInst &Inst, unsigned Insn,
 
   return S;
 }
+
+static DecodeStatus DecodeCPSIMod(llvm::MCInst &Inst, unsigned Val,
+                                 uint64_t Address, const void *Decoder) {
+  if (Val == 0x1) return Fail;
+  Inst.addOperand(MCOperand::CreateImm(Val));
+  return Success;
+}
+
