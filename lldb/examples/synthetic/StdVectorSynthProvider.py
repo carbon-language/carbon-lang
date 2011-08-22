@@ -25,12 +25,7 @@ class StdVectorSynthProvider:
 		if finish_val > end_val:
 			return 0
 
-		# We might still get things wrong, so cap things at 256 items for now
-		# TODO: read a target "settings set" variable for this to allow it to
-		# be customized
 		num_children = (finish_val-start_val)/self.data_size
-		if num_children > 256:
-			return 256
 		return num_children
 
 	def get_child_index(self,name):
