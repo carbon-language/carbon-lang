@@ -53,7 +53,7 @@ error: invalid operand for instruction
 @ CHECK-ERRORS:         ldm r2, {r5, r7}
 @ CHECK-ERRORS:             ^
 @ CHECK-ERRORS: error: writeback operator '!' not allowed when base register in register list
-@ CHECK-ERRORS:         ldm r2!, {r2, r3}
+@ CHECK-ERRORS:         ldm r2!, {r2, r3, r4}
 @ CHECK-ERRORS:               ^
 
 
