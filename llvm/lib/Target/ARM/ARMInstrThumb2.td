@@ -2457,7 +2457,7 @@ def t2SMUSDX:T2ThreeReg_mac<
           Requires<[IsThumb2, HasThumb2DSP]> {
   let Inst{15-12} = 0b1111;
 }
-def t2SMLAD   : T2ThreeReg_mac<
+def t2SMLAD   : T2FourReg_mac<
             0, 0b010, 0b0000, (outs rGPR:$Rd),
             (ins rGPR:$Rn, rGPR:$Rm, rGPR:$Ra), IIC_iMAC32, "smlad",
             "\t$Rd, $Rn, $Rm, $Ra", []>,
