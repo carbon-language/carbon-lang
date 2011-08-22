@@ -274,3 +274,6 @@
 
 # CHECK:        ldrsh   r1, [r0, r0]
 0x01 0x5E
+
+# CHECK: and.w	r5, r1, r10, ror #7
+0x1 0xea 0xfa 0x95

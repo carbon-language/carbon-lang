@@ -29,6 +29,7 @@ def t2_so_reg : Operand<i32>,    // reg imm
   let EncoderMethod = "getT2SORegOpValue";
   let PrintMethod = "printT2SOOperand";
   let MIOperandInfo = (ops rGPR, i32imm);
+  let DecoderMethod = "DecodeSORegImmOperand";
 }
 
 // t2_so_imm_not_XFORM - Return the complement of a t2_so_imm value
