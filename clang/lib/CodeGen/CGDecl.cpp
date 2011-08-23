@@ -875,8 +875,15 @@ static bool isCapturedBy(const VarDecl &var, const Expr *e) {
     return false;
   }
 
-  if (const StmtExpr *SE = dyn_cast<StmtExpr>(e))
-    e = cast<Expr>(SE->getSubStmt()->body_back());
+  if (const StmtExpr *SE = dyn_cast<StmtExpr>(e)) {
+    const CompoundStmt *CS = SE->getSubStmt();
+    for (CompoundStmt::const_body_iterator BI = CS->body_begin(), BE = CS->body_end()
+         ;BI != BE; ++BI)
+      if (Expr *E = dyn_cast<Expr>((*BI)))
+        if (isCapturedBy(var, E))
+            return true;
+    return false;
+  }
     
   for (Stmt::const_child_range children = e->children(); children; ++children)
     if (isCapturedBy(var, cast<Expr>(*children)))
