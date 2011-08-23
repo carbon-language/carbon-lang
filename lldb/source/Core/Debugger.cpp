@@ -1186,10 +1186,15 @@ Debugger::FormatPrompt
                                     }
                                     else
                                     {
-                                        // if ${var}
-                                        if (was_plain_var)
+                                        if (was_plain_var) // if ${var}
                                         {
                                             s << target->GetTypeName() << " @ " << target->GetLocationAsCString();
+                                        }
+                                        else if (is_pointer) // if pointer, value is the address stored
+                                        {
+                                            var_success = target->GetPrintableRepresentation(s,
+                                                                                             val_obj_display,
+                                                                                             custom_format);
                                         }
                                         else
                                         {

@@ -39,7 +39,7 @@ g_format_infos[] =
     { eFormatCharPrintable  , 'C'   , "printable character" },
     { eFormatComplexFloat   , 'F'   , "complex float"       },
     { eFormatCString        , 's'   , "c-string"            },
-    { eFormatDecimal        , 'i'   , "signed decimal"      },
+    { eFormatDecimal        , 'i'   , "decimal"             },
     { eFormatEnum           , 'E'   , "enumeration"         },
     { eFormatHex            , 'x'   , "hex"                 },
     { eFormatFloat          , 'f'   , "float"               },

@@ -159,11 +159,11 @@
                 
               <p> <code> <b>(lldb)</b> type format add -f float32[]
                   int<br>
-                  <b>(lldb)</b> fr var pointer *pointer -T<br>
+                  <b>(lldb)</b> frame variable pointer *pointer -T<br>
                   (int *) pointer = {1.46991e-39 1.4013e-45}<br>
                   (int) *pointer = {1.53302e-42}<br>
                   <b>(lldb)</b> type format add -f float32[] int -p<br>
-                  <b>(lldb)</b> fr var pointer *pointer -T<br>
+                  <b>(lldb)</b> frame variable pointer *pointer -T<br>
                   (int *) pointer = 0x0000000100100180<br>
                   (int) *pointer = {1.53302e-42}<br>
                 </code> </p>
@@ -390,7 +390,7 @@
                 information from classes, structures, ... (<i>aggregate types</i>)
                 and arranging it in a user-defined format, as in the following example:</p>
               <p> <i>before adding a summary...</i><br>
-                <code> <b>(lldb)</b> fr var -T one<br>
+                <code> <b>(lldb)</b> frame variable -T one<br>
                   (i_am_cool) one = {<br>
                   &nbsp;&nbsp;&nbsp;&nbsp;(int) integer = 3<br>
                   &nbsp;&nbsp;&nbsp;&nbsp;(float) floating = 3.14159<br>
@@ -398,7 +398,7 @@
                   }<br>
                 </code> <br>
                 <i>after adding a summary...</i><br>
-                <code> <b>(lldb)</b> fr var one<br>
+                <code> <b>(lldb)</b> frame variable one<br>
                   (i_am_cool) one = int = 3, float = 3.14159, char = 69<br>
                 </code> </p>
                 
@@ -409,7 +409,7 @@
               <p>In the example, the command we type was:</p>
                 <table class="stats" width="620" cellspacing="0">
                         <td class="content">
-                            <b>(lldb)</b> type summary add -f "int = ${var.integer}, float = ${var.floating}, char = ${var.character%u}" i_am_cool
+                            <b>(lldb)</b> type summary add --summary-string "int = ${var.integer}, float = ${var.floating}, char = ${var.character%u}" i_am_cool
                         </td>
                 <table>
                 
@@ -546,7 +546,7 @@
                 dereferencing symbol only applies to the result of the
                 whole expression path traversing. <br>
                 e.g. <code> <br>
-                  <b>(lldb)</b> fr var -T c<br>
+                  <b>(lldb)</b> frame variable -T c<br>
                   (Couple) c = {<br>
                   &nbsp;&nbsp;&nbsp;&nbsp;(SimpleWithPointers) sp = {<br>
                   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(int *) x = 0x00000001001000b0<br>
@@ -561,7 +561,7 @@
                   
                 <table class="stats" width="620" cellspacing="0">
                         <td class="content">
-                            <b>(lldb)</b> type summary add -f "int = ${*var.sp.x},
+                            <b>(lldb)</b> type summary add --summary-string "int = ${*var.sp.x},
                   float = ${*var.sp.y}, char = ${*var.sp.z%u}, Simple =
                   ${*var.s}" Couple<br>
                         	<b>(lldb)</b> type summary add -c -p Simple<br>
@@ -570,7 +570,7 @@
 
 				the output becomes: <br><code>
                   
-                  <b>(lldb)</b> fr var c<br>
+                  <b>(lldb)</b> frame variable c<br>
                   (Couple) c = int = 9, float = 9.99, char = 88, Simple
                   = (x=9, y=9.99, z='X')<br>
                 </code> </p>
@@ -584,7 +584,7 @@
                 produce the same output:
                 <table class="stats" width="620" cellspacing="0">
                         <td class="content">
-                            <b>(lldb)</b> type summary add -f "int = ${*var.sp.x},
+                            <b>(lldb)</b> type summary add --summary-string "int = ${*var.sp.x},
                   float = ${*var.sp.y}, char = ${*var.sp.z%u}, Simple =
                   ${var.s}" Couple<br>
                         	<b>(lldb)</b> type summary add -c Simple<br>
@@ -612,18 +612,18 @@
                 similar to that used for arrays, just you can also give
                 a pair of indices separated by a <code>-</code>. <br>
                 e.g. <br>
-                <code> <b>(lldb)</b> fr var float_point<br>
+                <code> <b>(lldb)</b> frame variable float_point<br>
                   (float) float_point = -3.14159<br> </code>
                     <table class="stats" width="620" cellspacing="0">
                         <td class="content">
-                            <b>(lldb)</b> type summary add -f "Sign: ${var[31]%B}
+                            <b>(lldb)</b> type summary add --summary-string "Sign: ${var[31]%B}
                   Exponent: ${var[30-23]%x} Mantissa: ${var[0-22]%u}"
                   float
                         </td>
                 <table><br>
 				
 				<code> 
-                  <b>(lldb)</b> fr var float_point<br>
+                  <b>(lldb)</b> frame variable float_point<br>
                   (float) float_point = -3.14159 Sign: true Exponent:
                   0x00000080 Mantissa: 4788184<br>
                 </code> In this example, LLDB shows the internal
@@ -645,7 +645,7 @@
                 LLDB to format arrays in special ways, possibly
                 independent of the way the array members' datatype is formatted. <br>
                 e.g. <br>
-                <code> <b>(lldb)</b> fr var sarray<br>
+                <code> <b>(lldb)</b> frame variable sarray<br>
                   (Simple [3]) sarray = {<br>
                   &nbsp;&nbsp;&nbsp;&nbsp;[0] = {<br>
                   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;x = 1<br>
@@ -666,13 +666,13 @@
                   
                 <table class="stats" width="620" cellspacing="0">
                         <td class="content">
-                            <b>(lldb)</b> type summary add -f "${var[].x}" "Simple
+                            <b>(lldb)</b> type summary add --summary-string "${var[].x}" "Simple
                   [3]"
                         </td>
                 <table><br>
                   
                   <code>
-                  <b>(lldb)</b> fr var sarray<br>
+                  <b>(lldb)</b> frame variable sarray<br>
                   (Simple [3]) sarray = [1,4,7]<br></code></p>
                   
                 <p>The <code>[]</code> symbol amounts to: <i>if <code>var</code>
@@ -683,7 +683,7 @@
                 If you find some of those integers anomalous, you can
                 then inspect that one item in greater detail, without
                 the array format getting in the way: <br>
-                <code> <b>(lldb)</b> fr var sarray[1]<br>
+                <code> <b>(lldb)</b> frame variable sarray[1]<br>
                   (Simple) sarray[1] = {<br>
                   &nbsp;&nbsp;&nbsp;&nbsp;x = 4<br>
                   &nbsp;&nbsp;&nbsp;&nbsp;y = 5<br>
@@ -695,12 +695,12 @@
                 for bitfields:
                 <table class="stats" width="620" cellspacing="0">
                         <td class="content">
-                            <b>(lldb)</b> type summary add -f "${var[1-2].x}" "Simple
+                            <b>(lldb)</b> type summary add --summary-string "${var[1-2].x}" "Simple
                   [3]"
                         </td>
                 <table><br>
                   <code>
-                  <b>(lldb)</b> fr var sarray<br>
+                  <b>(lldb)</b> frame variable sarray<br>
                   (Simple [3]) sarray = [4,7]<br></code></p>
 
               <p>The same logic works if you are printing a pointer
@@ -716,7 +716,7 @@
 				omitting square brackets, as in:
 				<table class="stats" width="620" cellspacing="0">
                         <td class="content">
-                            <b>(lldb)</b> type summary add -f "${var%s}" "char *"
+                            <b>(lldb)</b> type summary add --summary-string "${var%s}" "char *"
                         </td>
                 <table>
                 
@@ -734,7 +734,7 @@
 				type, even if square brackets are omitted.
 				<table class="stats" width="620" cellspacing="0">
                         <td class="content">
-                            <b>(lldb)</b> type summary add -f "${var%int32_t[]}" "int [10]"
+                            <b>(lldb)</b> type summary add --summary-string "${var%int32_t[]}" "int [10]"
                         </td>
                 <table>
                 
@@ -836,7 +836,7 @@ Python Interactive Interpreter. To exit, type 'quit()', 'exit()' or Ctrl-D.<br/>
             </p>
             
             <p>If you need to delve into several levels of hierarchy, as you can do with summary
-            strings, you must use the method <code>GetValueForExpressionPath()</code>, passing it
+            strings, you can use the method <code>GetValueForExpressionPath()</code>, passing it
             an expression path just like those you could use for summary strings. However, if you need
             to access array slices, you cannot do that (yet) via this method call, and you must
             use <code>GetChildMemberWithName()</code> querying it for the array items one by one.
@@ -845,12 +845,12 @@ Python Interactive Interpreter. To exit, type 'quit()', 'exit()' or Ctrl-D.<br/>
             to input a Python script as a summary:
             
             <ul>
-            <li> using the -s option to <code>type summary add </code> and typing the script
+            <li> using the --python-script option to <code>type summary add </code> and typing the script
             code as an option argument; as in:            </ul>
 
                 <table class="stats" width="620" cellspacing="0">
                         <td class="content">
-                            <b>(lldb)</b> type summary add -s "height = 
+                            <b>(lldb)</b> type summary add --python-script "height = 
                             int(valobj.GetChildMemberWithName('height').GetValue());width = 
                             int(valobj.GetChildMemberWithName('width').GetValue());
                             return 'Area: ' + str(height*width)" Rectangle<br/>
@@ -885,13 +885,13 @@ Python Interactive Interpreter. To exit, type 'quit()', 'exit()' or Ctrl-D.<br/>
                 
                 <table class="stats" width="620" cellspacing="0">
                         <td class="content">
-                            <b>(lldb)</b> type summary add -f "${var[].x}"
+                            <b>(lldb)</b> type summary add --summary-string "${var[].x}"
                   -x "Simple \[[0-9]+\]"
                         </td>
                 <table>
                 
                 <code> 
-                  <b>(lldb)</b> fr var sarray<br>
+                  <b>(lldb)</b> frame variable sarray<br>
                   (Simple [3]) sarray = [1,4,7]<br>
                 </code> The above scenario works for <code>Simple [3]</code>
                 as well as for any other array of <code>Simple</code>
@@ -905,6 +905,9 @@ Python Interactive Interpreter. To exit, type 'quit()', 'exit()' or Ctrl-D.<br/>
                 matching. Thus, if your type has a base class with a
                 cascading summary, this will be preferred over any
                 regular expression match for your type itself.</p>
+
+              <p>The regular expression language used by LLDB is <a href="http://en.wikipedia.org/wiki/Regular_expression#POSIX_Extended_Regular_Expressions">the POSIX extended regular expression language</a>, as defined by <a href="http://pubs.opengroup.org/onlinepubs/7908799/xsh/regex.h.html">the SUS</a>.
+
             </div>
           </div>
           
@@ -924,12 +927,12 @@ Python Interactive Interpreter. To exit, type 'quit()', 'exit()' or Ctrl-D.<br/>
             
                 <table class="stats" width="620" cellspacing="0">
                         <td class="content">
-                            <b>(lldb)</b> type summary add -f "x=${var.integer}" --name NamedSummary
+                            <b>(lldb)</b> type summary add --summary-string "x=${var.integer}" --name NamedSummary
                         </td>
                 <table>
-                <code> <b>(lldb)</b> fr var one<br>
+                <code> <b>(lldb)</b> frame variable one<br>
                   (i_am_cool) one = int = 3, float = 3.14159, char = 69<br>
-                  <b>(lldb)</b> fr var one --summary NamedSummary<br>
+                  <b>(lldb)</b> frame variable one --summary NamedSummary<br>
                   (i_am_cool) one = x=3<br>
                 </code> </p>
 
@@ -959,9 +962,9 @@ Python Interactive Interpreter. To exit, type 'quit()', 'exit()' or Ctrl-D.<br/>
 			<p>For instance, consider an STL vector:</p>
 			<code>
 				<b>(lldb)</b> frame variable numbers -T<br/>
-				(std::vector<int>) numbers = {<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;(std::_Vector_base<int, std::allocator<int> >) std::_Vector_base<int, std::allocator<int> > = {<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(std::_Vector_base<int, std::allocator<int> >::_Vector_impl) _M_impl = {<br/>
+				(std::vector&lt;int&gt;) numbers = {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(std::_Vector_base&lt;int, std::allocator&lt;int&gt; &gt;) std::_Vector_base&lt;int, std::allocator&lt;int&gt; &gt; = {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(std::_Vector_base&lt;int, std::allocator&tl;int&gt; &gt;::_Vector_impl) _M_impl = {<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(int *) _M_start = 0x00000001001008a0<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(int *) _M_finish = 0x00000001001008a8<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(int *) _M_end_of_storage = 0x00000001001008a8<br/>
@@ -974,7 +977,7 @@ Python Interactive Interpreter. To exit, type 'quit()', 'exit()' or Ctrl-D.<br/>
 			<p>What you would like to see is probably something like:</p>
 			<code>
 			<b>(lldb)</b> frame variable numbers -T<br/>
-				(std::vector<int>) numbers = {<br/>
+				(std::vector&lt;int&gt;) numbers = {<br/>
 				  &nbsp;&nbsp;&nbsp;&nbsp;(int) [0] = 1<br/>
 				  &nbsp;&nbsp;&nbsp;&nbsp;(int) [1] = 12<br/>
 				  &nbsp;&nbsp;&nbsp;&nbsp;(int) [2] = 123<br/>
@@ -1004,8 +1007,83 @@ Python Interactive Interpreter. To exit, type 'quit()', 'exit()' or Ctrl-D.<br/>
 			of LLDB.<br/>
 		</code>
 		<p>For examples of how synthetic children are created, you are encouraged to look at <a href="http://llvm.org/svn/llvm-project/lldb/trunk/examples/synthetic/">examples/synthetic</a> in the LLDB trunk.</p>
+		
+		<p>Once a synthetic children provider is written, one must load it into LLDB before it can be used.
+			Currently, one can use the LLDB <code>script</code> command to type Python code interactively,
+			or use the <code>script import <i>module</i></code> command to load Python code from a Python module
+			(ordinary rules apply to importing modules this way). A third option is to type the code for
+			the provider class interactively while adding it.</p>
+		
+		<p>For example, let's pretend we have a class Foo for which a synthetic children provider class Foo_Provider
+			is available, in a Python module named Foo_Tools. The following interaction sets Foo_Provider as a synthetic
+			children provider in LLDB:</p>
+		
+		    <table class="stats" width="620" cellspacing="0">
+                    <td class="content">
+                        <b>(lldb)</b> script import Foo_Tools<br/>
+                        <b>(lldb)</b> type synthetic add Foo --python-class Foo_Tools.Foo_Provider
+                    </td>
+            <table>
+            <code> <b>(lldb)</b> frame variable a_foo<br/>
+              (Foo) a_foo = {<br/>
+			  &nbsp;&nbsp;&nbsp;&nbsp;x = 1<br/>
+			  &nbsp;&nbsp;&nbsp;&nbsp;y = "Hello world"<br/>
+			  }			<br/>
+            </code> </p>
+        
+			<p>Currently, in LLDB <a href="http://llvm.org/svn/llvm-project/lldb/trunk/">top of tree</a>, synthetic children providers are enabled for
+				<code>std::vector&lt;T&gt;</code>, <code>std::list&lt;T&gt;</code> and <code>std::map&lt;K,V&gt;</code>.</p>
+
+			<p>Synthetic children enable a new symbol for summary strings, <code>${svar</code>. This symbol tells LLDB to refer expression paths to the
+				synthetic children instead of the real ones. While in certain cases, you can use <code>${var.<i>synthetic-child-path</i>}</code> and LLDB will
+				access the synthetic child correctly, it is best to always use <code>${svar</code> to refer to synthetic children. For instance,</p>
+
+				    <table class="stats" width="620" cellspacing="0">
+		                    <td class="content">
+		                        <b>(lldb)</b> type summary add --expand -x "std::vector&lt;" --summary-string "${svar%#} items"
+		                    </td>
+		            <table>
+		            <code> <b>(lldb)</b> frame variable numbers<br/>
+						(std::vector&lt;int&gt;) numbers = 4 items {<br/>
+						  &nbsp;&nbsp;&nbsp;&nbsp;(int) [0] = 1<br/>
+						  &nbsp;&nbsp;&nbsp;&nbsp;(int) [1] = 12<br/>
+						  &nbsp;&nbsp;&nbsp;&nbsp;(int) [2] = 123<br/>
+						  &nbsp;&nbsp;&nbsp;&nbsp;(int) [3] = 1234<br/>
+						}<br/>
+		            </code> </p>
+
           </div>
         </div>
+
+        <div class="post">
+          <h1 class="postheader">Filters</h1>
+          <div class="postcontent">
+	
+	          <p>Filters are a solution to the display of complex classes.
+			  At times, classes have many member variables but not all of these are actually
+			necessary for the user to see.</p>
+			 <p>A filter will solve this issue by only letting the user see those member
+				variables he cares about. Of course, the equivalent of a filter can be implemented easily
+				using synthetic children, but a filter lets you get the job done without having to write
+				Python code.</p>
+			<p>For instance, if your class <code>Foobar</code> has member variables named <code>A</code> thru <code>Z</code>, but you only need to see
+				the ones named <code>B</code>, <code>H</code> and <code>Q</code>, you can define a filter:
+			    <table class="stats" width="620" cellspacing="0">
+	                    <td class="content">
+	                        <b>(lldb)</b> type filter add Foo --child B --child H --child Q
+	                    </td>
+	            <table>
+	            <code> <b>(lldb)</b> frame variable a_foobar<br/>
+					(Foobar) a_foobar = {<br/>
+					  &nbsp;&nbsp;&nbsp;&nbsp;(int) B = 1<br/>
+					  &nbsp;&nbsp;&nbsp;&nbsp;(char) H = 'H'<br/>
+					  &nbsp;&nbsp;&nbsp;&nbsp;(std::string) Q = "Hello world"<br/>
+					}<br/>
+	            </code> </p>
+	
+          </div>
+        </div>
+
           
           <div class="post">
             <h1 class="postheader">Finding formatters 101</h1>

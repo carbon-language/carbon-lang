@@ -1021,7 +1021,18 @@ ValueObject::GetPrintableRepresentation(Stream& s,
     if (return_value)
         s.PutCString(return_value);
     else
-        s.PutCString("<no printable representation>");
+    {
+        if (m_error.Fail())
+            s.Printf("<%s>", m_error.AsCString());
+        else if (val_obj_display == eDisplaySummary)
+            s.PutCString("<no summary available>");
+        else if (val_obj_display == eDisplayValue)
+            s.PutCString("<no value available>");
+        else if (val_obj_display == eDisplayLanguageSpecific)
+            s.PutCString("<not a valid Objective-C object>"); // edit this if we have other runtimes that support a description
+        else
+            s.PutCString("<no printable representation>");
+    }
     
     // we should only return false here if we could not do *anything*
     // even if we have an error message as output, that's a success
