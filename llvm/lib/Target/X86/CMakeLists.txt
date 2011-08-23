@@ -32,6 +32,7 @@ set(sources
   X86Subtarget.cpp
   X86TargetMachine.cpp
   X86TargetObjectFile.cpp
+  X86VZeroUpper.cpp
   )
 
 if( CMAKE_CL_64 )

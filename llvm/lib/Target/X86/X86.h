@@ -48,6 +48,11 @@ FunctionPass *createX86FloatingPointStackifierPass();
 /// crossings.
 FunctionPass *createSSEDomainFixPass();
 
+/// createX86IssueVZeroUpperPass - This pass inserts AVX vzeroupper instructions
+/// before each call to avoid transition penalty between functions encoded with
+/// AVX and SSE.
+FunctionPass *createX86IssueVZeroUpperPass();
+
 /// createX86CodeEmitterPass - Return a pass that emits the collected X86 code
 /// to the specified MCE object.
 FunctionPass *createX86JITCodeEmitterPass(X86TargetMachine &TM,
