@@ -489,6 +489,8 @@ static Argument *createArgument(Record &Arg, StringRef Attr,
     Ptr = new SimpleArgument(Arg, Attr, "unsigned");
   else if (ArgName == "VariadicUnsignedArgument")
     Ptr = new VariadicArgument(Arg, Attr, "unsigned");
+  else if (ArgName == "VariadicExprArgument")
+    Ptr = new VariadicArgument(Arg, Attr, "Expr *");
   else if (ArgName == "VersionArgument")
     Ptr = new VersionArgument(Arg, Attr);
 
