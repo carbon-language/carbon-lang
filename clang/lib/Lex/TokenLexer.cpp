@@ -143,11 +143,8 @@ void TokenLexer::ExpandFunctionArguments() {
       int ArgNo = Macro->getArgumentNum(Tokens[i+1].getIdentifierInfo());
       assert(ArgNo != -1 && "Token following # is not an argument?");
 
-      SourceLocation hashInstLoc;
-      if(ExpandLocStart.isValid()) {
-        hashInstLoc = getExpansionLocForMacroDefLoc(CurTok.getLocation());
-        assert(hashInstLoc.isValid() && "Expected '#' to come from definition");
-      }
+      SourceLocation hashInstLoc =
+          getExpansionLocForMacroDefLoc(CurTok.getLocation());
 
       Token Res;
       if (CurTok.is(tok::hash))  // Stringify
@@ -410,8 +407,6 @@ void TokenLexer::Lex(Token &Tok) {
                                       Tok.getLength());
     } else {
       instLoc = getExpansionLocForMacroDefLoc(Tok.getLocation());
-      assert(instLoc.isValid() &&
-             "Location for token not coming from definition was not set!");
     }
 
     Tok.setLocation(instLoc);
@@ -591,18 +586,12 @@ bool TokenLexer::PasteTokens(Token &Tok) {
   // diagnostics for the expanded token should appear as if the token was
   // expanded from the (##) operator. Pull this information together into
   // a new SourceLocation that captures all of this.
-  if (ExpandLocStart.isValid()) {
-    SourceManager &SM = PP.getSourceManager();
-    SourceLocation pasteLocInst =
-        getExpansionLocForMacroDefLoc(PasteOpLoc);
-    assert(pasteLocInst.isValid() &&
-           "Expected '##' to come from definition");
-
-    Tok.setLocation(SM.createExpansionLoc(Tok.getLocation(),
-                                          pasteLocInst,
-                                          pasteLocInst,
-                                          Tok.getLength()));
-  }
+  SourceManager &SM = PP.getSourceManager();
+  SourceLocation pasteLocInst = getExpansionLocForMacroDefLoc(PasteOpLoc);
+  Tok.setLocation(SM.createExpansionLoc(Tok.getLocation(),
+                                        pasteLocInst,
+                                        pasteLocInst,
+                                        Tok.getLength()));
 
   // Now that we got the result token, it will be subject to expansion.  Since
   // token pasting re-lexes the result token in raw mode, identifier information
@@ -656,18 +645,18 @@ SourceLocation
 TokenLexer::getExpansionLocForMacroDefLoc(SourceLocation loc) const {
   assert(ExpandLocStart.isValid() && MacroExpansionStart.isValid() &&
          "Not appropriate for token streams");
-  assert(loc.isValid());
+  assert(loc.isValid() && loc.isFileID());
   
   SourceManager &SM = PP.getSourceManager();
-  unsigned relativeOffset;
-  if (loc.isFileID() &&
-      SM.isInFileID(loc,
+  assert(SM.isInFileID(loc,
                     MacroDefStartInfo.first, MacroDefStartInfo.second,
-                    Macro->getDefinitionLength(SM), &relativeOffset)) {
-    return MacroExpansionStart.getFileLocWithOffset(relativeOffset);
-  }
+                    Macro->getDefinitionLength(SM)));
 
-  return SourceLocation();
+  unsigned relativeOffset;
+  SM.isInFileID(loc,
+                MacroDefStartInfo.first, MacroDefStartInfo.second,
+                Macro->getDefinitionLength(SM), &relativeOffset);
+  return MacroExpansionStart.getFileLocWithOffset(relativeOffset);
 }
 
 /// \brief Finds the tokens that are consecutive (from the same FileID)
@@ -727,8 +716,6 @@ void TokenLexer::updateLocForMacroArgTokens(SourceLocation ArgIdSpellLoc,
 
   SourceLocation curInst =
       getExpansionLocForMacroDefLoc(ArgIdSpellLoc);
-  assert(curInst.isValid() &&
-         "Expected arg identifier to come from definition");
   
   while (begin_tokens < end_tokens)
     updateConsecutiveMacroArgTokens(SM, curInst, begin_tokens, end_tokens);
