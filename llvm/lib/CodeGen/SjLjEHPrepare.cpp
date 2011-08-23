@@ -389,10 +389,23 @@ bool SjLjEHPass::insertSjLjEHSupport(Function &F) {
   SmallVector<CallInst*,16> EH_Exceptions;
   SmallVector<Instruction*,16> JmpbufUpdatePoints;
 
-  // Note: Skip the entry block since there's nothing there that interests
-  // us. eh.selector and eh.exception shouldn't ever be there, and we
-  // want to disregard any allocas that are there.
-  for (Function::iterator BB = F.begin(), E = F.end(); ++BB != E;) {
+  for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
+    // Note: Skip the entry block since there's nothing there that interests
+    // us. eh.selector and eh.exception shouldn't ever be there, and we
+    // want to disregard any allocas that are there.
+    // 
+    // FIXME: This is awkward. The new EH scheme won't need to skip the entry
+    //        block.
+    if (BB == F.begin()) {
+      if (InvokeInst *II = dyn_cast<InvokeInst>(F.begin()->getTerminator())) {
+        // FIXME: This will be always non-NULL in the new EH.
+        if (LandingPadInst *LPI = II->getUnwindDest()->getLandingPadInst())
+          if (!PersonalityFn) PersonalityFn = LPI->getPersonalityFn();
+      }
+
+      continue;
+    }
+
     for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
       if (CallInst *CI = dyn_cast<CallInst>(I)) {
         if (CI->getCalledFunction() == SelectorFn) {
