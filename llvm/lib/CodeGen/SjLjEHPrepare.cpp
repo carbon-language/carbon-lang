@@ -347,7 +347,7 @@ static void ReplaceLandingPadVal(Function &F, Instruction *Inst, Value *ExnAddr,
       continue;
     }
 
-    Inst->replaceAllUsesWith(CreateLandingPadLoad(F, ExnAddr, SelAddr, I));
+    I->replaceUsesOfWith(Inst, CreateLandingPadLoad(F, ExnAddr, SelAddr, I));
   }
 }
 
