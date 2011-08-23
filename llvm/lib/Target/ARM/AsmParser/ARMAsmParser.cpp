@@ -3047,6 +3047,24 @@ bool ARMAsmParser::ParseInstruction(StringRef Name, SMLoc NameLoc,
 }
 
 // Validate context-sensitive operand constraints.
+
+// return 'true' if register list contains non-low GPR registers,
+// 'false' otherwise. If Reg is in the register list or is HiReg, set
+// 'containsReg' to true.
+static bool checkLowRegisterList(MCInst Inst, unsigned OpNo, unsigned Reg,
+                                 unsigned HiReg, bool &containsReg) {
+  containsReg = false;
+  for (unsigned i = OpNo; i < Inst.getNumOperands(); ++i) {
+    unsigned OpReg = Inst.getOperand(i).getReg();
+    if (OpReg == Reg)
+      containsReg = true;
+    // Anything other than a low register isn't legal here.
+    if (!isARMLowRegister(OpReg) && (!HiReg || OpReg != HiReg))
+      return true;
+  }
+  return false;
+}
+
 // FIXME: We would really like to be able to tablegen'erate this.
 bool ARMAsmParser::
 validateInstruction(MCInst &Inst,
@@ -3101,22 +3119,16 @@ validateInstruction(MCInst &Inst,
     bool hasWritebackToken =
       (static_cast<ARMOperand*>(Operands[3])->isToken() &&
        static_cast<ARMOperand*>(Operands[3])->getToken() == "!");
-    bool doesWriteback = true;
-    for (unsigned i = 3; i < Inst.getNumOperands(); ++i) {
-      unsigned Reg = Inst.getOperand(i).getReg();
-      if (Reg == Rn)
-        doesWriteback = false;
-      // Anything other than a low register isn't legal here.
-      if (!isARMLowRegister(Reg))
-        return Error(Operands[3 + hasWritebackToken]->getStartLoc(),
-                     "registers must be in range r0-r7");
-    }
+    bool listContainsBase;
+    if (checkLowRegisterList(Inst, 3, Rn, 0, listContainsBase))
+      return Error(Operands[3 + hasWritebackToken]->getStartLoc(),
+                   "registers must be in range r0-r7");
     // If we should have writeback, then there should be a '!' token.
-    if (doesWriteback && !hasWritebackToken)
+    if (!listContainsBase && !hasWritebackToken)
       return Error(Operands[2]->getStartLoc(),
                    "writeback operator '!' expected");
     // Likewise, if we should not have writeback, there must not be a '!'
-    if (!doesWriteback && hasWritebackToken)
+    if (listContainsBase && hasWritebackToken)
       return Error(Operands[3]->getStartLoc(),
                    "writeback operator '!' not allowed when base register "
                    "in register list");
@@ -3124,23 +3136,17 @@ validateInstruction(MCInst &Inst,
     break;
   }
   case ARM::tPOP: {
-    for (unsigned i = 2; i < Inst.getNumOperands(); ++i) {
-      unsigned Reg = Inst.getOperand(i).getReg();
-      // Anything other than a low register isn't legal here.
-      if (!isARMLowRegister(Reg) && Reg != ARM::PC)
-        return Error(Operands[2]->getStartLoc(),
-                     "registers must be in range r0-r7 or pc");
-    }
+    bool listContainsBase;
+    if (checkLowRegisterList(Inst, 3, 0, ARM::PC, listContainsBase))
+      return Error(Operands[2]->getStartLoc(),
+                   "registers must be in range r0-r7 or pc");
     break;
   }
   case ARM::tPUSH: {
-    for (unsigned i = 2; i < Inst.getNumOperands(); ++i) {
-      unsigned Reg = Inst.getOperand(i).getReg();
-      // Anything other than a low register isn't legal here.
-      if (!isARMLowRegister(Reg) && Reg != ARM::LR)
-        return Error(Operands[2]->getStartLoc(),
-                     "registers must be in range r0-r7 or lr");
-    }
+    bool listContainsBase;
+    if (checkLowRegisterList(Inst, 3, 0, ARM::LR, listContainsBase))
+      return Error(Operands[2]->getStartLoc(),
+                   "registers must be in range r0-r7 or lr");
     break;
   }
   }
