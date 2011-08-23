@@ -68,6 +68,15 @@ error: invalid operand for instruction
 @ CHECK-ERRORS:              ^
 
 
+@ Invalid writeback and register lists for STM
+        stm r1, {r2, r6}
+        stm r1!, {r2, r9}
+@ CHECK-ERRORS: error: instruction requires a CPU feature not currently enabled
+@ CHECK-ERRORS:         stm r1, {r2, r6}
+@ CHECK-ERRORS:         ^
+@ CHECK-ERRORS: error: registers must be in range r0-r7
+@ CHECK-ERRORS:         stm r1!, {r2, r9}
+@ CHECK-ERRORS:                  ^
 
 @ Out of range immediates for LSL instruction.
         lsls r4, r5, #-1
