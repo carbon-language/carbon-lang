@@ -4188,20 +4188,21 @@ static SDValue getLegalSplat(SelectionDAG &DAG, SDValue V, int EltNo) {
   assert((VT.getSizeInBits() == 128 || VT.getSizeInBits() == 256)
          && "Vector size not supported");
 
-  bool Is128 = VT.getSizeInBits() == 128;
-  EVT NVT = Is128 ? MVT::v4f32 : MVT::v8f32;
-  V = DAG.getNode(ISD::BITCAST, dl, NVT, V);
-
-  if (Is128) {
+  if (VT.getSizeInBits() == 128) {
+    V = DAG.getNode(ISD::BITCAST, dl, MVT::v4f32, V);
     int SplatMask[4] = { EltNo, EltNo, EltNo, EltNo };
-    V = DAG.getVectorShuffle(NVT, dl, V, DAG.getUNDEF(NVT), &SplatMask[0]);
+    V = DAG.getVectorShuffle(MVT::v4f32, dl, V, DAG.getUNDEF(MVT::v4f32),
+                             &SplatMask[0]);
   } else {
-    // The second half of indicies refer to the higher part, which is a
-    // duplication of the lower one. This makes this shuffle a perfect match
-    // for the VPERM instruction.
+    // To use VPERMILPS to splat scalars, the second half of indicies must
+    // refer to the higher part, which is a duplication of the lower one,
+    // because VPERMILPS can only handle in-lane permutations.
     int SplatMask[8] = { EltNo, EltNo, EltNo, EltNo,
                          EltNo+4, EltNo+4, EltNo+4, EltNo+4 };
-    V = DAG.getVectorShuffle(NVT, dl, V, DAG.getUNDEF(NVT), &SplatMask[0]);
+
+    V = DAG.getNode(ISD::BITCAST, dl, MVT::v8f32, V);
+    V = DAG.getVectorShuffle(MVT::v8f32, dl, V, DAG.getUNDEF(MVT::v8f32),
+                             &SplatMask[0]);
   }
 
   return DAG.getNode(ISD::BITCAST, dl, VT, V);
@@ -4217,6 +4218,9 @@ static SDValue PromoteSplat(ShuffleVectorSDNode *SV, SelectionDAG &DAG) {
   int NumElems = SrcVT.getVectorNumElements();
   unsigned Size = SrcVT.getSizeInBits();
 
+  assert(((Size == 128 && NumElems > 4) || Size == 256) &&
+          "Unknown how to promote splat for type");
+
   // Extract the 128-bit part containing the splat element and update
   // the splat element index when it refers to the higher register.
   if (Size == 256) {
@@ -4229,16 +4233,14 @@ static SDValue PromoteSplat(ShuffleVectorSDNode *SV, SelectionDAG &DAG) {
   // All i16 and i8 vector types can't be used directly by a generic shuffle
   // instruction because the target has no such instruction. Generate shuffles
   // which repeat i16 and i8 several times until they fit in i32, and then can
-  // be manipulated by target suported shuffles. After the insertion of the
-  // necessary shuffles, the result is bitcasted back to v4f32 or v8f32.
+  // be manipulated by target suported shuffles.
   EVT EltVT = SrcVT.getVectorElementType();
-  if (NumElems > 4 && (EltVT == MVT::i8 || EltVT == MVT::i16))
+  if (EltVT == MVT::i8 || EltVT == MVT::i16)
     V1 = PromoteSplati8i16(V1, DAG, EltNo);
 
   // Recreate the 256-bit vector and place the same 128-bit vector
   // into the low and high part. This is necessary because we want
-  // to use VPERM to shuffle the v8f32 vector, and VPERM only shuffles
-  // inside each separate v4f32 lane.
+  // to use VPERM* to shuffle the vectors
   if (Size == 256) {
     SDValue InsV = Insert128BitVector(DAG.getUNDEF(SrcVT), V1,
                          DAG.getConstant(0, MVT::i32), DAG, dl);
@@ -6211,6 +6213,7 @@ SDValue NormalizeVectorShuffle(SDValue Op, SelectionDAG &DAG,
   // Handle splat operations
   if (SVOp->isSplat()) {
     unsigned NumElem = VT.getVectorNumElements();
+    int Size = VT.getSizeInBits();
     // Special case, this is the only place now where it's allowed to return
     // a vector_shuffle operation without using a target specific node, because
     // *hopefully* it will be optimized away by the dag combiner. FIXME: should
@@ -6223,7 +6226,8 @@ SDValue NormalizeVectorShuffle(SDValue Op, SelectionDAG &DAG,
       return DAG.getNode(X86ISD::VBROADCAST, dl, VT, V1);
 
     // Handle splats by matching through known shuffle masks
-    if (VT.is128BitVector() && NumElem <= 4)
+    if ((Size == 128 && NumElem <= 4) ||
+        (Size == 256 && NumElem < 8))
       return SDValue();
 
     // All remaning splats are promoted to target supported vector shuffles.

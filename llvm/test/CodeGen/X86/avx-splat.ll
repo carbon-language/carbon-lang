@@ -21,8 +21,8 @@ entry:
 }
 
 ; CHECK: vmovd
+; CHECK-NEXT: vmovlhps %xmm
 ; CHECK-NEXT: vinsertf128 $1
-; CHECK-NEXT: vpermilps $0
 define <4 x i64> @funcC(i64 %q) nounwind uwtable readnone ssp {
 entry:
   %vecinit.i = insertelement <4 x i64> undef, i64 %q, i32 0
@@ -32,8 +32,8 @@ entry:
   ret <4 x i64> %vecinit6.i
 }
 
-; CHECK: vinsertf128 $1
-; CHECK-NEXT: vpermilps $0
+; CHECK: vshufpd $0
+; CHECK-NEXT: vinsertf128 $1
 define <4 x double> @funcD(double %q) nounwind uwtable readnone ssp {
 entry:
   %vecinit.i = insertelement <4 x double> undef, double %q, i32 0
