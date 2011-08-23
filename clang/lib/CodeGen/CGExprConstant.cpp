@@ -364,7 +364,7 @@ bool ConstStructBuilder::Build(InitListExpr *ILE) {
       continue;
 
     // Don't emit anonymous bitfields, they just affect layout.
-    if (Field->isBitField() && !Field->getIdentifier()) {
+    if (Field->isUnnamedBitfield()) {
       LastFD = (*Field);
       continue;
     }
