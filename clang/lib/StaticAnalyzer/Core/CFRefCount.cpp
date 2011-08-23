@@ -1643,6 +1643,13 @@ public:
   BugType *leakWithinFunction, *leakAtReturn;
   BugType *overAutorelease;
   BugType *returnNotOwnedForOwned;
+  BugReporter *BR;
+
+  const ProgramState *Update(const ProgramState * state,
+                             SymbolRef sym,
+                             RefVal V,
+                             ArgEffect E,
+                             RefVal::Kind& hasErr);
 
 public:
   CFRefCount(ASTContext &Ctx, bool gcenabled, const LangOptions& lopts)
@@ -1650,7 +1657,7 @@ public:
       LOpts(lopts), useAfterRelease(0), releaseNotOwned(0),
       deallocGC(0), deallocNotOwned(0),
       leakWithinFunction(0), leakAtReturn(0), overAutorelease(0),
-      returnNotOwnedForOwned(0) {}
+      returnNotOwnedForOwned(0), BR(0) {}
 
   void RegisterChecks(ExprEngine &Eng);
 
@@ -3747,6 +3754,9 @@ void CFRefCount::RegisterChecks(ExprEngine& Eng) {
   leakWithinFunction = new LeakWithinFunction(name);
   leakWithinFunction->setSuppressOnSink(true);
   BR.Register(leakWithinFunction);
+
+  // Save the reference to the BugReporter.
+  this->BR = &BR;
 
   // Register the RetainReleaseChecker with the ExprEngine object.
   // Functionality in CFRefCount will be migrated to RetainReleaseChecker
