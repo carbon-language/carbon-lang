@@ -194,6 +194,8 @@ def t_addrmode_is1 : Operand<i32>,
 
 // t_addrmode_sp := sp + imm8 * 4
 //
+// FIXME: This really shouldn't have an explicit SP operand at all. It should
+// be implicit, just like in the instruction encoding itself.
 def t_addrmode_sp_asm_operand : AsmOperandClass { let Name = "MemThumbSPI"; }
 def t_addrmode_sp : Operand<i32>,
                     ComplexPattern<i32, 2, "SelectThumbAddrModeSP", []> {

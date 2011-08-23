@@ -444,11 +444,19 @@ _func:
         str r2, [r7, #0]
         str r5, [r1, #4]
         str r3, [r7, #124]
+        str r2, [sp]
+        str r3, [sp, #0]
+        str r4, [sp, #20]
+        str r5, [sp, #1020]
 
 @ CHECK: str	r2, [r7]                @ encoding: [0x3a,0x60]
 @ CHECK: str	r2, [r7]                @ encoding: [0x3a,0x60]
 @ CHECK: str	r5, [r1, #4]            @ encoding: [0x4d,0x60]
 @ CHECK: str	r3, [r7, #124]          @ encoding: [0xfb,0x67]
+@ CHECK: str	r2, [sp]                @ encoding: [0x00,0x92]
+@ CHECK: str	r3, [sp]                @ encoding: [0x00,0x93]
+@ CHECK: str	r4, [sp, #20]           @ encoding: [0x05,0x94]
+@ CHECK: str	r5, [sp, #1020]         @ encoding: [0xff,0x95]
 
 
 @------------------------------------------------------------------------------
