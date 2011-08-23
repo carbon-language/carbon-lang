@@ -4889,6 +4889,11 @@ let Predicates = [HasAVX] in {
                                                          0>, VEX_4V;
   defm VPMULDQ   : SS41I_binop_rm_int<0x28, "vpmuldq",   int_x86_sse41_pmuldq,
                                                          0>, VEX_4V;
+
+  def : Pat<(v2i64 (X86pcmpeqq VR128:$src1, VR128:$src2)),
+            (VPCMPEQQrr VR128:$src1, VR128:$src2)>;
+  def : Pat<(v2i64 (X86pcmpeqq VR128:$src1, (memop addr:$src2))),
+            (VPCMPEQQrm VR128:$src1, addr:$src2)>;
 }
 
 let Constraints = "$src1 = $dst" in {
@@ -5099,9 +5104,16 @@ multiclass SS42I_binop_rm_int<bits<8> opc, string OpcodeStr,
           (bitconvert (memopv16i8 addr:$src2))))]>, OpSize;
 }
 
-let Predicates = [HasAVX] in
+let Predicates = [HasAVX] in {
   defm VPCMPGTQ : SS42I_binop_rm_int<0x37, "vpcmpgtq", int_x86_sse42_pcmpgtq,
                                      0>, VEX_4V;
+
+  def : Pat<(v2i64 (X86pcmpgtq VR128:$src1, VR128:$src2)),
+            (VPCMPGTQrr VR128:$src1, VR128:$src2)>;
+  def : Pat<(v2i64 (X86pcmpgtq VR128:$src1, (memop addr:$src2))),
+            (VPCMPGTQrm VR128:$src1, addr:$src2)>;
+}
+
 let Constraints = "$src1 = $dst" in
   defm PCMPGTQ : SS42I_binop_rm_int<0x37, "pcmpgtq", int_x86_sse42_pcmpgtq>;
 
@@ -5659,6 +5671,11 @@ def : Pat<(v2i64 (extract_subvector (v4i64 VR256:$src), (i32 0))),
           (v2i64 (EXTRACT_SUBREG (v4i64 VR256:$src), sub_xmm))>;
 def : Pat<(v2f64 (extract_subvector (v4f64 VR256:$src), (i32 0))),
           (v2f64 (EXTRACT_SUBREG (v4f64 VR256:$src), sub_xmm))>;
+
+def : Pat<(v8i16 (extract_subvector (v16i16 VR256:$src), (i32 0))),
+          (v8i16 (EXTRACT_SUBREG (v16i16 VR256:$src), sub_xmm))>;
+def : Pat<(v16i8 (extract_subvector (v32i8 VR256:$src), (i32 0))),
+          (v16i8 (EXTRACT_SUBREG (v32i8 VR256:$src), sub_xmm))>;
 
 
 //===----------------------------------------------------------------------===//

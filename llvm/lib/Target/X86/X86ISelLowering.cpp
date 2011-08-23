@@ -989,6 +989,8 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::SRA,               MVT::v8i32, Custom);
     setOperationAction(ISD::SRA,               MVT::v16i16, Custom);
 
+    setOperationAction(ISD::VSETCC,            MVT::v32i8, Custom);
+    setOperationAction(ISD::VSETCC,            MVT::v16i16, Custom);
     setOperationAction(ISD::VSETCC,            MVT::v8i32, Custom);
     setOperationAction(ISD::VSETCC,            MVT::v4i64, Custom);
 

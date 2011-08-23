@@ -1,10 +1,8 @@
 ; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=corei7-avx -mattr=+avx | FileCheck %s
 
-; FIXME: use avx versions for punpcklbw, punpckhbw and punpckhwd
 
-; CHECK: vextractf128 $0
-; CHECK-NEXT: punpcklbw
-; CHECK-NEXT: punpckhbw
+; CHECK: vpunpcklbw %xmm
+; CHECK-NEXT: vpunpckhbw %xmm
 ; CHECK-NEXT: vinsertf128 $1
 ; CHECK-NEXT: vpermilps $85
 define <32 x i8> @funcA(<32 x i8> %a) nounwind uwtable readnone ssp {
@@ -13,8 +11,7 @@ entry:
   ret <32 x i8> %shuffle
 }
 
-; CHECK: vextractf128 $0
-; CHECK-NEXT: punpckhwd
+; CHECK: vpunpckhwd %xmm
 ; CHECK-NEXT: vinsertf128 $1
 ; CHECK-NEXT: vpermilps $85
 define <16 x i16> @funcB(<16 x i16> %a) nounwind uwtable readnone ssp {
