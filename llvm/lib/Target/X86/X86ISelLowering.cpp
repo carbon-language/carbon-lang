@@ -13293,20 +13293,18 @@ static SDValue PerformSubCombine(SDNode *N, SelectionDAG &DAG) {
   // X86 can't encode an immediate LHS of a sub. See if we can push the
   // negation into a preceding instruction.
   if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op0)) {
-    uint64_t Op0C = C->getSExtValue();
-
     // If the RHS of the sub is a XOR with one use and a constant, invert the
     // immediate. Then add one to the LHS of the sub so we can turn
     // X-Y -> X+~Y+1, saving one register.
     if (Op1->hasOneUse() && Op1.getOpcode() == ISD::XOR &&
         isa<ConstantSDNode>(Op1.getOperand(1))) {
-      uint64_t XorC = cast<ConstantSDNode>(Op1.getOperand(1))->getSExtValue();
+      APInt XorC = cast<ConstantSDNode>(Op1.getOperand(1))->getAPIntValue();
       EVT VT = Op0.getValueType();
       SDValue NewXor = DAG.getNode(ISD::XOR, Op1.getDebugLoc(), VT,
                                    Op1.getOperand(0),
                                    DAG.getConstant(~XorC, VT));
       return DAG.getNode(ISD::ADD, N->getDebugLoc(), VT, NewXor,
-                         DAG.getConstant(Op0C+1, VT));
+                         DAG.getConstant(C->getAPIntValue()+1, VT));
     }
   }
 
