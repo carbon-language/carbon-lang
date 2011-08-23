@@ -504,7 +504,7 @@ void FastISelMap::collectPatterns(CodeGenDAGPatterns &CGP) {
 
     std::vector<std::string>* PhysRegInputs = new std::vector<std::string>();
     if (InstPatNode->getOperator()->getName() == "imm" ||
-        InstPatNode->getOperator()->getName() == "fpimmm")
+        InstPatNode->getOperator()->getName() == "fpimm")
       PhysRegInputs->push_back("");
     else {
       // Compute the PhysRegs used by the given pattern, and check that
