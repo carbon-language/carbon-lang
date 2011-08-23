@@ -164,7 +164,7 @@ ValueVector &CFGBlockValues::lazyCreate(ValueVector *&bv) {
 /// This function pattern matches for a '&&' or '||' that appears at
 /// the beginning of a CFGBlock that also (1) has a terminator and 
 /// (2) has no other elements.  If such an expression is found, it is returned.
-static BinaryOperator *getLogicalOperatorInChain(const CFGBlock *block) {
+static const BinaryOperator *getLogicalOperatorInChain(const CFGBlock *block) {
   if (block->empty())
     return 0;
 
@@ -172,7 +172,7 @@ static BinaryOperator *getLogicalOperatorInChain(const CFGBlock *block) {
   if (!cstmt)
     return 0;
 
-  BinaryOperator *b = dyn_cast_or_null<BinaryOperator>(cstmt->getStmt());
+  const BinaryOperator *b = dyn_cast_or_null<BinaryOperator>(cstmt->getStmt());
   
   if (!b || !b->isLogicalOp())
     return 0;
@@ -653,7 +653,7 @@ static bool runOnBlock(const CFGBlock *block, const CFG &cfg,
   for (CFGBlock::const_iterator I = block->begin(), E = block->end(); 
        I != E; ++I) {
     if (const CFGStmt *cs = dyn_cast<CFGStmt>(&*I)) {
-      tf.Visit(cs->getStmt());
+      tf.Visit(const_cast<Stmt*>(cs->getStmt()));
     }
   }
   tf.ProcessUses();

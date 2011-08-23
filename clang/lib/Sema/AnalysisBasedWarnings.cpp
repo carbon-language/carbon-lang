@@ -170,7 +170,7 @@ static ControlFlowKind CheckFallThrough(AnalysisContext &AC) {
     }
 
     CFGStmt CS = cast<CFGStmt>(*ri);
-    Stmt *S = CS.getStmt();
+    const Stmt *S = CS.getStmt();
     if (isa<ReturnStmt>(S)) {
       HasLiveReturn = true;
       continue;
@@ -196,13 +196,13 @@ static ControlFlowKind CheckFallThrough(AnalysisContext &AC) {
     }
 
     bool NoReturnEdge = false;
-    if (CallExpr *C = dyn_cast<CallExpr>(S)) {
+    if (const CallExpr *C = dyn_cast<CallExpr>(S)) {
       if (std::find(B.succ_begin(), B.succ_end(), &cfg->getExit())
             == B.succ_end()) {
         HasAbnormalEdge = true;
         continue;
       }
-      Expr *CEE = C->getCallee()->IgnoreParenCasts();
+      const Expr *CEE = C->getCallee()->IgnoreParenCasts();
       QualType calleeType = CEE->getType();
       if (calleeType == AC.getASTContext().BoundMemberTy) {
         calleeType = Expr::findBoundMemberType(CEE);
@@ -211,8 +211,8 @@ static ControlFlowKind CheckFallThrough(AnalysisContext &AC) {
       if (getFunctionExtInfo(calleeType).getNoReturn()) {
         NoReturnEdge = true;
         HasFakeEdge = true;
-      } else if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(CEE)) {
-        ValueDecl *VD = DRE->getDecl();
+      } else if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(CEE)) {
+        const ValueDecl *VD = DRE->getDecl();
         if (VD->hasAttr<NoReturnAttr>()) {
           NoReturnEdge = true;
           HasFakeEdge = true;
@@ -1095,7 +1095,7 @@ static void checkThreadSafety(Sema &S, AnalysisContext &AC) {
     for (CFGBlock::const_iterator BI = CurrBlock->begin(),
          BE = CurrBlock->end(); BI != BE; ++BI) {
       if (const CFGStmt *CfgStmt = dyn_cast<CFGStmt>(&*BI)) {
-        LocksetBuilder.Visit(CfgStmt->getStmt());
+        LocksetBuilder.Visit(const_cast<Stmt*>(CfgStmt->getStmt()));
       }
     }
     Exitset = LocksetBuilder.getLockset();

@@ -208,7 +208,7 @@ void ExprEngine::processCFGElement(const CFGElement E,
     case CFGElement::Invalid:
       llvm_unreachable("Unexpected CFGElement kind.");
     case CFGElement::Statement:
-      ProcessStmt(E.getAs<CFGStmt>()->getStmt(), builder);
+      ProcessStmt(const_cast<Stmt*>(E.getAs<CFGStmt>()->getStmt()), builder);
       return;
     case CFGElement::Initializer:
       ProcessInitializer(E.getAs<CFGInitializer>()->getInitializer(), builder);

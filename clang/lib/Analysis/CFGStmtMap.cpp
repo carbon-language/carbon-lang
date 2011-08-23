@@ -19,7 +19,7 @@
 
 using namespace clang;
 
-typedef llvm::DenseMap<Stmt*,CFGBlock*> SMap;
+typedef llvm::DenseMap<const Stmt*, CFGBlock*> SMap;
 static SMap *AsMap(void *m) { return (SMap*) m; }
 
 CFGStmtMap::~CFGStmtMap() { delete AsMap(M); }

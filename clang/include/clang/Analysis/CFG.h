@@ -96,7 +96,9 @@ class CFGStmt : public CFGElement {
 public:
   CFGStmt(Stmt *S) : CFGElement(Statement, S) {}
 
-  Stmt *getStmt() const { return static_cast<Stmt *>(Data1.getPointer()); }
+  const Stmt *getStmt() const { 
+    return static_cast<const Stmt *>(Data1.getPointer());
+  }
 
   static bool classof(const CFGElement *E) {
     return E->getKind() == Statement;
@@ -622,7 +624,7 @@ public:
       for (CFGBlock::const_iterator BI=(*I)->begin(), BE=(*I)->end();
            BI != BE; ++BI) {
         if (const CFGStmt *stmt = BI->getAs<CFGStmt>())
-          O(stmt->getStmt());
+          O(const_cast<Stmt*>(stmt->getStmt()));
       }
   }
 

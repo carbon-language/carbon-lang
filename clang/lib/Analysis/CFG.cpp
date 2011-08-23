@@ -3014,17 +3014,17 @@ namespace {
   typedef llvm::DenseMap<const Stmt*,unsigned> BlkExprMapTy;
 }
 
-static void FindSubExprAssignments(Stmt *S,
-                                   llvm::SmallPtrSet<Expr*,50>& Set) {
+static void FindSubExprAssignments(const Stmt *S,
+                                   llvm::SmallPtrSet<const Expr*,50>& Set) {
   if (!S)
     return;
 
-  for (Stmt::child_range I = S->children(); I; ++I) {
-    Stmt *child = *I;
+  for (Stmt::const_child_range I = S->children(); I; ++I) {
+    const Stmt *child = *I;
     if (!child)
       continue;
 
-    if (BinaryOperator* B = dyn_cast<BinaryOperator>(child))
+    if (const BinaryOperator* B = dyn_cast<BinaryOperator>(child))
       if (B->isAssignmentOp()) Set.insert(B);
 
     FindSubExprAssignments(child, Set);
@@ -3038,7 +3038,7 @@ static BlkExprMapTy* PopulateBlkExprMap(CFG& cfg) {
   // assignments that we want to *possibly* register as a block-level
   // expression.  Basically, if an assignment occurs both in a subexpression and
   // at the block-level, it is a block-level expression.
-  llvm::SmallPtrSet<Expr*,50> SubExprAssignments;
+  llvm::SmallPtrSet<const Expr*,50> SubExprAssignments;
 
   for (CFG::iterator I=cfg.begin(), E=cfg.end(); I != E; ++I)
     for (CFGBlock::iterator BI=(*I)->begin(), EI=(*I)->end(); BI != EI; ++BI)
@@ -3054,10 +3054,10 @@ static BlkExprMapTy* PopulateBlkExprMap(CFG& cfg) {
       const CFGStmt *CS = BI->getAs<CFGStmt>();
       if (!CS)
         continue;
-      if (Expr *Exp = dyn_cast<Expr>(CS->getStmt())) {
+      if (const Expr *Exp = dyn_cast<Expr>(CS->getStmt())) {
         assert((Exp->IgnoreParens() == Exp) && "No parens on block-level exps");
 
-        if (BinaryOperator* B = dyn_cast<BinaryOperator>(Exp)) {
+        if (const BinaryOperator* B = dyn_cast<BinaryOperator>(Exp)) {
           // Assignment expressions that are not nested within another
           // expression are really "statements" whose value is never used by
           // another expression.
@@ -3358,13 +3358,13 @@ public:
 static void print_elem(raw_ostream &OS, StmtPrinterHelper* Helper,
                        const CFGElement &E) {
   if (const CFGStmt *CS = E.getAs<CFGStmt>()) {
-    Stmt *S = CS->getStmt();
+    const Stmt *S = CS->getStmt();
     
     if (Helper) {
 
       // special printing for statement-expressions.
-      if (StmtExpr *SE = dyn_cast<StmtExpr>(S)) {
-        CompoundStmt *Sub = SE->getSubStmt();
+      if (const StmtExpr *SE = dyn_cast<StmtExpr>(S)) {
+        const CompoundStmt *Sub = SE->getSubStmt();
 
         if (Sub->children()) {
           OS << "({ ... ; ";
@@ -3374,7 +3374,7 @@ static void print_elem(raw_ostream &OS, StmtPrinterHelper* Helper,
         }
       }
       // special printing for comma expressions.
-      if (BinaryOperator* B = dyn_cast<BinaryOperator>(S)) {
+      if (const BinaryOperator* B = dyn_cast<BinaryOperator>(S)) {
         if (B->getOpcode() == BO_Comma) {
           OS << "... , ";
           Helper->handledStmt(B->getRHS(),OS);

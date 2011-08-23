@@ -406,7 +406,7 @@ LiveVariables::computeLiveness(AnalysisContext &AC,
       for (CFGBlock::const_iterator bi = block->begin(), be = block->end();
            bi != be; ++bi) {
         if (const CFGStmt *cs = bi->getAs<CFGStmt>()) {
-          if (BinaryOperator *BO = dyn_cast<BinaryOperator>(cs->getStmt())) {
+          if (const BinaryOperator *BO = dyn_cast<BinaryOperator>(cs->getStmt())) {
             if (BO->getOpcode() == BO_Assign) {
               if (const DeclRefExpr *DR =
                     dyn_cast<DeclRefExpr>(BO->getLHS()->IgnoreParens())) {
