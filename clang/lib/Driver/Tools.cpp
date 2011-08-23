@@ -1671,8 +1671,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       StackProtectorLevel = 1;
     else if (A->getOption().matches(options::OPT_fstack_protector_all))
       StackProtectorLevel = 2;
-  } else
-    StackProtectorLevel = getToolChain().GetDefaultStackProtectorLevel();
+  } else {
+    StackProtectorLevel =
+      getToolChain().GetDefaultStackProtectorLevel(KernelOrKext);
+  }
   if (StackProtectorLevel) {
     CmdArgs.push_back("-stack-protector");
     CmdArgs.push_back(Args.MakeArgString(Twine(StackProtectorLevel)));

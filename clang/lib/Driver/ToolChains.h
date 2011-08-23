@@ -237,9 +237,12 @@ public:
     return !(!isTargetIPhoneOS() && isMacosxVersionLT(10, 6));
   }
   virtual bool IsUnwindTablesDefault() const;
-  virtual unsigned GetDefaultStackProtectorLevel() const {
-    // Stack protectors default to on for 10.6 and beyond.
-    return !isTargetIPhoneOS() && !isMacosxVersionLT(10, 6);
+  virtual unsigned GetDefaultStackProtectorLevel(bool KernelOrKext) const {
+    // Stack protectors default to on for user code on 10.5,
+    // and for everything in 10.6 and beyond
+    return !isTargetIPhoneOS() &&
+      (!isMacosxVersionLT(10, 6) ||
+         (!isMacosxVersionLT(10, 5) && !KernelOrKext));
   }
   virtual const char *GetDefaultRelocationModel() const;
   virtual const char *GetForcedPicModel() const;

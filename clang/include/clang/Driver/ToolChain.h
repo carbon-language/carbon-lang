@@ -139,7 +139,9 @@ public:
 
   /// GetDefaultStackProtectorLevel - Get the default stack protector level for
   /// this tool chain (0=off, 1=on, 2=all).
-  virtual unsigned GetDefaultStackProtectorLevel() const { return 0; }
+  virtual unsigned GetDefaultStackProtectorLevel(bool KernelOrKext) const {
+    return 0;
+  }
 
   /// IsUnwindTablesDefault - Does this tool chain use -funwind-tables
   /// by default.
