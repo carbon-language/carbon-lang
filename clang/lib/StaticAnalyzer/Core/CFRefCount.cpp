@@ -1701,17 +1701,6 @@ public:
                                ObjCMessage msg,
                                ExplodedNode *Pred,
                                const ProgramState *state);
-
-  // End-of-path.
-
-  std::pair<ExplodedNode*, const ProgramState *>
-  HandleAutoreleaseCounts(const ProgramState * state,
-                          GenericNodeBuilderRefCount Bd,
-                          ExplodedNode *Pred,
-                          ExprEngine &Eng,
-                          SymbolRef Sym,
-                          RefVal V,
-                          bool &stop);
 };
 
 } // end anonymous namespace
@@ -2781,77 +2770,6 @@ const ProgramState * CFRefCount::Update(const ProgramState * state,
 }
 
 //===----------------------------------------------------------------------===//
-// Handle dead symbols and end-of-path.
-//===----------------------------------------------------------------------===//
-
-std::pair<ExplodedNode*, const ProgramState *>
-CFRefCount::HandleAutoreleaseCounts(const ProgramState *state, 
-                                    GenericNodeBuilderRefCount Bd,
-                                    ExplodedNode *Pred,
-                                    ExprEngine &Eng,
-                                    SymbolRef Sym,
-                                    RefVal V,
-                                    bool &stop) {
-
-  unsigned ACnt = V.getAutoreleaseCount();
-  stop = false;
-
-  // No autorelease counts?  Nothing to be done.
-  if (!ACnt)
-    return std::make_pair(Pred, state);
-
-  assert(!isGCEnabled() && "Autorelease counts in GC mode?");
-  unsigned Cnt = V.getCount();
-
-  // FIXME: Handle sending 'autorelease' to already released object.
-
-  if (V.getKind() == RefVal::ReturnedOwned)
-    ++Cnt;
-
-  if (ACnt <= Cnt) {
-    if (ACnt == Cnt) {
-      V.clearCounts();
-      if (V.getKind() == RefVal::ReturnedOwned)
-        V = V ^ RefVal::ReturnedNotOwned;
-      else
-        V = V ^ RefVal::NotOwned;
-    }
-    else {
-      V.setCount(Cnt - ACnt);
-      V.setAutoreleaseCount(0);
-    }
-    state = state->set<RefBindings>(Sym, V);
-    ExplodedNode *N = Bd.MakeNode(state, Pred);
-    stop = (N == 0);
-    return std::make_pair(N, state);
-  }
-
-  // Woah!  More autorelease counts then retain counts left.
-  // Emit hard error.
-  stop = true;
-  V = V ^ RefVal::ErrorOverAutorelease;
-  state = state->set<RefBindings>(Sym, V);
-
-  if (ExplodedNode *N = Bd.MakeNode(state, Pred)) {
-    N->markAsSink();
-
-    std::string sbuf;
-    llvm::raw_string_ostream os(sbuf);
-    os << "Object over-autoreleased: object was sent -autorelease ";
-    if (V.getAutoreleaseCount() > 1)
-      os << V.getAutoreleaseCount() << " times ";
-    os << "but the object has a +" << V.getCount() << " retain count";
-
-    CFRefReport *report =
-      new CFRefReport(*static_cast<CFRefBug*>(overAutorelease),
-                      *this, N, Sym, os.str());
-    BR->EmitReport(report);
-  }
-
-  return std::make_pair((ExplodedNode*)0, state);
-}
-
-//===----------------------------------------------------------------------===//
 // Pieces of the retain/release checker implemented using a CheckerVisitor.
 // More pieces of the retain/release checker will be migrated to this interface
 // (ideally, all of it some day).
@@ -2922,6 +2840,11 @@ public:
   const ProgramState *handleSymbolDeath(const ProgramState *state,
                                         SymbolRef sid, RefVal V,
                                       SmallVectorImpl<SymbolRef> &Leaked) const;
+
+  std::pair<ExplodedNode *, const ProgramState *>
+  handleAutoreleaseCounts(const ProgramState *state, 
+                          GenericNodeBuilderRefCount Bd, ExplodedNode *Pred,
+                          ExprEngine &Eng, SymbolRef Sym, RefVal V) const;
 
   ExplodedNode *processLeaks(const ProgramState *state,
                              SmallVectorImpl<SymbolRef> &Leaked,
@@ -3480,12 +3403,11 @@ void RetainReleaseChecker::checkPreStmt(const ReturnStmt *S,
   static SimpleProgramPointTag
          AutoreleaseTag("RetainReleaseChecker : Autorelease");
   GenericNodeBuilderRefCount Bd(C.getNodeBuilder(), S, &AutoreleaseTag);
-  bool stop = false;
-  llvm::tie(Pred, state) = TF.HandleAutoreleaseCounts(state, Bd, Pred, Eng, Sym,
-                                                      X, stop);
+  llvm::tie(Pred, state) = handleAutoreleaseCounts(state, Bd, Pred, Eng,
+                                                   Sym, X);
 
   // Did we cache out?
-  if (!Pred || stop)
+  if (!Pred)
     return;
 
   // Get the updated binding.
@@ -3583,7 +3505,75 @@ void RetainReleaseChecker::checkReturnWithRetEffect(const ReturnStmt *S,
   }
 }
 
-// Handle dead symbols (potential leaks).
+//===----------------------------------------------------------------------===//
+// Handle dead symbols and end-of-path.
+//===----------------------------------------------------------------------===//
+
+std::pair<ExplodedNode *, const ProgramState *>
+RetainReleaseChecker::handleAutoreleaseCounts(const ProgramState *state, 
+                                              GenericNodeBuilderRefCount Bd,
+                                              ExplodedNode *Pred,
+                                              ExprEngine &Eng, SymbolRef Sym,
+                                              RefVal V) const {
+  // FIXME: This goes away once the these bug types move to the checker,
+  // and CFRefReport no longer depends on CFRefCount.
+  CFRefCount &TF = static_cast<CFRefCount&>(Eng.getTF());
+
+  unsigned ACnt = V.getAutoreleaseCount();
+
+  // No autorelease counts?  Nothing to be done.
+  if (!ACnt)
+    return std::make_pair(Pred, state);
+
+  assert(!TF.isGCEnabled() && "Autorelease counts in GC mode?");
+  unsigned Cnt = V.getCount();
+
+  // FIXME: Handle sending 'autorelease' to already released object.
+
+  if (V.getKind() == RefVal::ReturnedOwned)
+    ++Cnt;
+
+  if (ACnt <= Cnt) {
+    if (ACnt == Cnt) {
+      V.clearCounts();
+      if (V.getKind() == RefVal::ReturnedOwned)
+        V = V ^ RefVal::ReturnedNotOwned;
+      else
+        V = V ^ RefVal::NotOwned;
+    } else {
+      V.setCount(Cnt - ACnt);
+      V.setAutoreleaseCount(0);
+    }
+    state = state->set<RefBindings>(Sym, V);
+    ExplodedNode *N = Bd.MakeNode(state, Pred);
+    if (N == 0)
+      state = 0;
+    return std::make_pair(N, state);
+  }
+
+  // Woah!  More autorelease counts then retain counts left.
+  // Emit hard error.
+  V = V ^ RefVal::ErrorOverAutorelease;
+  state = state->set<RefBindings>(Sym, V);
+
+  if (ExplodedNode *N = Bd.MakeNode(state, Pred)) {
+    N->markAsSink();
+
+    llvm::SmallString<128> sbuf;
+    llvm::raw_svector_ostream os(sbuf);
+    os << "Object over-autoreleased: object was sent -autorelease ";
+    if (V.getAutoreleaseCount() > 1)
+      os << V.getAutoreleaseCount() << " times ";
+    os << "but the object has a +" << V.getCount() << " retain count";
+
+    CFRefReport *report =
+      new CFRefReport(*static_cast<CFRefBug*>(TF.overAutorelease),
+                      TF, N, Sym, os.str());
+    Eng.getBugReporter().EmitReport(report);
+  }
+
+  return std::make_pair((ExplodedNode *)0, (const ProgramState *)0);
+}
 
 const ProgramState *
 RetainReleaseChecker::handleSymbolDeath(const ProgramState *state,
@@ -3635,21 +3625,15 @@ RetainReleaseChecker::processLeaks(const ProgramState *state,
 
 void RetainReleaseChecker::checkEndPath(EndOfFunctionNodeBuilder &Builder,
                                         ExprEngine &Eng) const {
-  // FIXME: This goes away once HandleAutoreleaseCounts moves to the checker.
-  CFRefCount &TF = static_cast<CFRefCount&>(Eng.getTF());
-
   const ProgramState *state = Builder.getState();
   GenericNodeBuilderRefCount Bd(Builder);
   RefBindings B = state->get<RefBindings>();
   ExplodedNode *Pred = 0;
 
   for (RefBindings::iterator I = B.begin(), E = B.end(); I != E; ++I) {
-    bool stop = false;
-    llvm::tie(Pred, state) = TF.HandleAutoreleaseCounts(state, Bd, Pred, Eng,
-                                                        (*I).first,
-                                                        (*I).second, stop);
-
-    if (stop)
+    llvm::tie(Pred, state) = handleAutoreleaseCounts(state, Bd, Pred, Eng,
+                                                     I->first, I->second);
+    if (!state)
       return;
   }
 
@@ -3657,7 +3641,7 @@ void RetainReleaseChecker::checkEndPath(EndOfFunctionNodeBuilder &Builder,
   SmallVector<SymbolRef, 10> Leaked;
 
   for (RefBindings::iterator I = B.begin(), E = B.end(); I != E; ++I)
-    state = handleSymbolDeath(state, (*I).first, (*I).second, Leaked);
+    state = handleSymbolDeath(state, I->first, I->second, Leaked);
 
   processLeaks(state, Leaked, Bd, Eng, Pred);
 }
@@ -3681,9 +3665,6 @@ void RetainReleaseChecker::checkDeadSymbols(SymbolReaper &SymReaper,
   const Stmt *S = C.getStmt();
   ExplodedNode *Pred = C.getPredecessor();
 
-  // FIXME: This goes away once HandleAutoreleaseCounts moves to the checker.
-  CFRefCount &TF = static_cast<CFRefCount&>(Eng.getTF());
-
   const ProgramState *state = C.getState();
   RefBindings B = state->get<RefBindings>();
 
@@ -3695,10 +3676,9 @@ void RetainReleaseChecker::checkDeadSymbols(SymbolReaper &SymReaper,
       // Use the symbol as the tag.
       // FIXME: This might not be as unique as we would like.
       GenericNodeBuilderRefCount Bd(Builder, S, getDeadSymbolTag(Sym));
-      bool stop = false;
-      llvm::tie(Pred, state) = TF.HandleAutoreleaseCounts(state, Bd, Pred, Eng,
-                                                          Sym, *T, stop);
-      if (stop)
+      llvm::tie(Pred, state) = handleAutoreleaseCounts(state, Bd, Pred, Eng,
+                                                       Sym, *T);
+      if (!state)
         return;
     }
   }
