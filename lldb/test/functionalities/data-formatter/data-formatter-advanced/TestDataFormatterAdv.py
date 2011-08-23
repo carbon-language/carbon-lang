@@ -7,7 +7,7 @@ import unittest2
 import lldb
 from lldbtest import *
 
-class DataFormatterTestCase(TestBase):
+class AdvDataFormatterTestCase(TestBase):
 
     mydir = os.path.join("functionalities", "data-formatter", "data-formatter-advanced")
 

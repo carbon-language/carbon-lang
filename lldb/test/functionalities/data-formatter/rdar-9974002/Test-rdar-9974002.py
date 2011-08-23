@@ -7,7 +7,7 @@ import unittest2
 import lldb
 from lldbtest import *
 
-class DataFormatterTestCase(TestBase):
+class Radar9974002DataFormatterTestCase(TestBase):
 
     # test for rdar://problem/9974002 ()
     mydir = os.path.join("functionalities", "data-formatter", "rdar-9974002")

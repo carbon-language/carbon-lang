@@ -7,7 +7,7 @@ import unittest2
 import lldb
 from lldbtest import *
 
-class DataFormatterTestCase(TestBase):
+class Radar9973865DataFormatterTestCase(TestBase):
 
     # test for rdar://problem/9973865 (If you use "${var}" in the summary string for an aggregate type, the summary doesn't print for a pointer to that type)
     mydir = os.path.join("functionalities", "data-formatter", "rdar-9973865")
