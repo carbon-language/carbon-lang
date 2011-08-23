@@ -1280,6 +1280,49 @@ PresumedLoc SourceManager::getPresumedLoc(SourceLocation Loc) const {
   return PresumedLoc(Filename, LineNo, ColNo, IncludeLoc);
 }
 
+/// \brief The size of the SLocEnty that \arg FID represents.
+unsigned SourceManager::getFileIDSize(FileID FID) const {
+  bool Invalid = false;
+  const SrcMgr::SLocEntry &Entry = getSLocEntry(FID, &Invalid);
+  if (Invalid)
+    return 0;
+
+  int ID = FID.ID;
+  unsigned NextOffset;
+  if ((ID > 0 && unsigned(ID+1) == local_sloc_entry_size()))
+    NextOffset = getNextLocalOffset();
+  else if (ID+1 == -1)
+    NextOffset = MaxLoadedOffset;
+  else
+    NextOffset = getSLocEntry(FileID::get(ID+1)).getOffset();
+
+  return NextOffset - Entry.getOffset() - 1;
+}
+
+bool SourceManager::isInFileID(SourceLocation Loc,
+                               FileID FID, unsigned offset, unsigned length,
+                               unsigned *relativeOffset) const {
+  assert(!FID.isInvalid());
+  if (Loc.isInvalid())
+    return false;
+
+  unsigned FIDOffs = getSLocEntry(FID).getOffset();
+  unsigned start = FIDOffs + offset;
+  unsigned end = start + length;
+
+  // Make sure offset/length describe a chunk inside the given FileID.
+  assert(start <  FIDOffs + getFileIDSize(FID));
+  assert(end   <= FIDOffs + getFileIDSize(FID));
+
+  if (Loc.getOffset() >= start && Loc.getOffset() < end) {
+    if (relativeOffset)
+      *relativeOffset = Loc.getOffset() - start;
+    return true;
+  }
+
+  return false;
+}
+
 //===----------------------------------------------------------------------===//
 // Other miscellaneous methods.
 //===----------------------------------------------------------------------===//

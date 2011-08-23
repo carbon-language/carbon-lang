@@ -967,23 +967,7 @@ public:
   }
 
   /// \brief The size of the SLocEnty that \arg FID represents.
-  unsigned getFileIDSize(FileID FID) const {
-    bool Invalid = false;
-    const SrcMgr::SLocEntry &Entry = getSLocEntry(FID, &Invalid);
-    if (Invalid)
-      return 0;
-
-    int ID = FID.ID;
-    unsigned NextOffset;
-    if ((ID > 0 && unsigned(ID+1) == local_sloc_entry_size()))
-      NextOffset = getNextLocalOffset();
-    else if (ID+1 == -1)
-      NextOffset = MaxLoadedOffset;
-    else
-      NextOffset = getSLocEntry(FileID::get(ID+1)).getOffset();
-
-    return NextOffset - Entry.getOffset() - 1;
-  }
+  unsigned getFileIDSize(FileID FID) const;
 
   /// \brief Given a specific FileID, returns true if \arg Loc is inside that
   /// FileID chunk and sets relative offset (offset of \arg Loc from beginning
@@ -998,27 +982,7 @@ public:
   /// (offset of \arg Loc from beginning of chunk) to \arg relativeOffset.
   bool isInFileID(SourceLocation Loc,
                   FileID FID, unsigned offset, unsigned length,
-                  unsigned *relativeOffset = 0) const {
-    assert(!FID.isInvalid());
-    if (Loc.isInvalid())
-      return false;
-
-    unsigned FIDOffs = getSLocEntry(FID).getOffset();
-    unsigned start = FIDOffs + offset;
-    unsigned end = start + length;
-
-    // Make sure offset/length describe a chunk inside the given FileID.
-    assert(start <  FIDOffs + getFileIDSize(FID));
-    assert(end   <= FIDOffs + getFileIDSize(FID));
-
-    if (Loc.getOffset() >= start && Loc.getOffset() < end) {
-      if (relativeOffset)
-        *relativeOffset = Loc.getOffset() - start;
-      return true;
-    }
-
-    return false;
-  }
+                  unsigned *relativeOffset = 0) const;
 
   //===--------------------------------------------------------------------===//
   // Line Table Manipulation Routines
