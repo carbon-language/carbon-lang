@@ -755,14 +755,12 @@ bool Lexer::isAtEndOfMacroExpansion(SourceLocation loc,
 
   FileID FID = SM.getFileID(loc);
   SourceLocation afterLoc = loc.getFileLocWithOffset(tokLen+1);
-  if (!SM.isBeforeInSourceLocationOffset(afterLoc, SM.getNextLocalOffset()))
-    return true; // We got past the last FileID, this points to the last token.
+  if (SM.isInFileID(afterLoc, FID))
+    return false; // Still in the same FileID, does not point to the last token.
 
   // FIXME: If the token comes from the macro token paste operator ('##')
   // or the stringify operator ('#') this function will always return false;
-  if (FID == SM.getFileID(afterLoc))
-    return false; // Still in the same FileID, does not point to the last token.
-  
+
   SourceLocation expansionLoc =
     SM.getSLocEntry(FID).getExpansion().getExpansionLocEnd();
   if (expansionLoc.isFileID())
