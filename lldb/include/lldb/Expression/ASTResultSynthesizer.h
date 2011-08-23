@@ -44,9 +44,15 @@ public:
     /// @param[in] desired_type
     ///     The type that the result should have.  May be initialized with a
     ///     NULL type, in which case the type is inferred.
+    ///
+    /// @param[in] scratch_ast_context
+    ///     If non-NULL, an AST context to populate with the persistent types
+    ///     found in the expression.
     //----------------------------------------------------------------------
     ASTResultSynthesizer(clang::ASTConsumer *passthrough,
-                         TypeFromUser desired_type);
+                         TypeFromUser desired_type,
+                         clang::ASTContext &scratch_ast_context,
+                         ClangPersistentVariables &persistent_vars);
     
     //----------------------------------------------------------------------
     /// Destructor
@@ -140,18 +146,43 @@ private:
     bool SynthesizeFunctionResult(clang::FunctionDecl *FunDecl);
     
     //----------------------------------------------------------------------
-    /// Process a functionbody and produce the result variable and 
+    /// Process a function body and produce the result variable and 
     /// initialization
     ///
     /// @param[in] Body
     ///     The body of the function.
+    ///
+    /// @param[in] DC
+    ///     The DeclContext of the function, into which the result variable
+    ///     is inserted.
     //----------------------------------------------------------------------
     bool SynthesizeBodyResult(clang::CompoundStmt *Body,
                               clang::DeclContext *DC);
     
+    //----------------------------------------------------------------------
+    /// Given a DeclContext for a function or method, find all types
+    /// declared in the context and record any persistent types found.
+    ///
+    /// @param[in] FunDeclCtx
+    ///     The context for the function to process.
+    //----------------------------------------------------------------------
+    void RecordPersistentTypes(clang::DeclContext *FunDeclCtx);
+    
+    //----------------------------------------------------------------------
+    /// Given a TypeDecl, if it declares a type whose name starts with a
+    /// dollar sign, register it as a pointer type in the target's scratch
+    /// AST context.
+    ///
+    /// @param[in] Body
+    ///     The body of the function.
+    //----------------------------------------------------------------------
+    void MaybeRecordPersistentType(clang::TypeDecl *D);
+    
     clang::ASTContext *m_ast_context;           ///< The AST context to use for identifiers and types.
     clang::ASTConsumer *m_passthrough;          ///< The ASTConsumer down the chain, for passthrough.  NULL if it's a SemaConsumer.
     clang::SemaConsumer *m_passthrough_sema;    ///< The SemaConsumer down the chain, for passthrough.  NULL if it's an ASTConsumer.
+    clang::ASTContext &m_scratch_ast_context;   ///< The AST context to install persistent types into.
+    ClangPersistentVariables &m_persistent_vars;///< The persistent variable manager to register persistent types with.
     clang::Sema *m_sema;                        ///< The Sema to use.
     TypeFromUser m_desired_type;                ///< If non-NULL, the type to coerce the result to.
 };

@@ -53,7 +53,8 @@ ClangUserExpression::ClangUserExpression (const char *expr,
     m_objectivec (false),
     m_needs_object_ptr (false),
     m_const_object (false),
-    m_const_result ()
+    m_const_result (),
+    m_target (NULL)
 {
 }
 
@@ -64,8 +65,15 @@ ClangUserExpression::~ClangUserExpression ()
 clang::ASTConsumer *
 ClangUserExpression::ASTTransformer (clang::ASTConsumer *passthrough)
 {
+    ClangASTContext *clang_ast_context = m_target->GetScratchClangASTContext();
+    
+    if (!clang_ast_context)
+        return NULL;
+    
     return new ASTResultSynthesizer(passthrough,
-                                    m_desired_type);
+                                    m_desired_type,
+                                    *m_target->GetScratchClangASTContext()->getASTContext(),
+                                    m_target->GetPersistentVariables());
 }
 
 void
@@ -88,6 +96,8 @@ ClangUserExpression::ScanContext(ExecutionContext &exe_ctx)
         
     if (!decl_context)
         return;
+    
+    m_target = exe_ctx.target;
         
     if (clang::CXXMethodDecl *method_decl = llvm::dyn_cast<clang::CXXMethodDecl>(decl_context))
     {
@@ -718,7 +728,7 @@ ClangUserExpression::EvaluateWithError (ExecutionContext &exe_ctx,
                     if (log)
                         log->Printf("== [ClangUserExpression::Evaluate] Execution completed normally with no result ==");
                     
-                    error.SetErrorString ("Expression did not return a result");
+                    error.SetError(ClangUserExpression::kNoResult, lldb::eErrorTypeGeneric);
                 }
             }
         }

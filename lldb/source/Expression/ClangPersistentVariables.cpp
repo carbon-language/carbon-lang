@@ -13,6 +13,8 @@
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/Value.h"
 
+#include "llvm/ADT/StringMap.h"
+
 using namespace lldb;
 using namespace lldb_private;
 
@@ -52,4 +54,22 @@ ClangPersistentVariables::GetNextPersistentVariableName ()
     ::snprintf (name_cstr, sizeof(name_cstr), "$%u", m_next_persistent_variable_id++);
     ConstString name(name_cstr);
     return name;
+}
+
+void
+ClangPersistentVariables::RegisterPersistentType (const ConstString &name,
+                                                  clang::TypeDecl *type_decl)
+{
+    m_persistent_types.insert(std::pair<const char*, clang::TypeDecl*>(name.GetCString(), type_decl));
+}
+
+clang::TypeDecl *
+ClangPersistentVariables::GetPersistentType (const ConstString &name)
+{
+    PersistentTypeMap::const_iterator i = m_persistent_types.find(name.GetCString());
+    
+    if (i == m_persistent_types.end())
+        return NULL;
+    else
+        return i->second;
 }

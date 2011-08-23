@@ -1945,6 +1945,42 @@ ClangExpressionDeclMap::GetDecls (NameSearchContext &context, const ConstString 
             return;
         }
 
+        do
+        {
+            if (!m_parser_vars->m_exe_ctx->target)
+                break;
+            
+            ClangASTContext *scratch_clang_ast_context = m_parser_vars->m_exe_ctx->target->GetScratchClangASTContext();
+            
+            if (!scratch_clang_ast_context)
+                break;
+            
+            ASTContext *scratch_ast_context = scratch_clang_ast_context->getASTContext();
+            
+            if (!scratch_ast_context)
+                break;
+            
+            TypeDecl *ptype_type_decl = m_parser_vars->m_persistent_vars->GetPersistentType(name);
+
+            if (!ptype_type_decl)
+                break;
+            
+            Decl *parser_ptype_decl = ClangASTContext::CopyDecl(context.GetASTContext(), scratch_ast_context, ptype_type_decl);
+            
+            if (!parser_ptype_decl)
+                break;
+            
+            TypeDecl *parser_ptype_type_decl = dyn_cast<TypeDecl>(parser_ptype_decl);
+            
+            if (!parser_ptype_type_decl)
+                break;
+            
+            if (log)
+                log->Printf("Found persistent type %s", name.GetCString());
+            
+            context.AddNamedDecl(parser_ptype_type_decl);
+        } while (0);
+        
         ClangExpressionVariableSP pvar_sp(m_parser_vars->m_persistent_vars->GetVariable(name));
     
         if (pvar_sp)

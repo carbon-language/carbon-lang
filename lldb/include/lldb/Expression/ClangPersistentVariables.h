@@ -11,10 +11,11 @@
 #define liblldb_ClangPersistentVariables_h_
 
 #include "lldb/Expression/ClangExpressionVariable.h"
+#include "llvm/ADT/DenseMap.h"
 
 namespace lldb_private
 {
-
+    
 //----------------------------------------------------------------------
 /// @class ClangPersistentVariables ClangPersistentVariables.h "lldb/Expression/ClangPersistentVariables.h"
 /// @brief Manages persistent values that need to be preserved between expression invocations.
@@ -52,8 +53,18 @@ public:
     ConstString
     GetNextPersistentVariableName ();
 
+    void
+    RegisterPersistentType (const ConstString &name,
+                            clang::TypeDecl *tag_decl);
+    
+    clang::TypeDecl *
+    GetPersistentType (const ConstString &name);
+    
 private:
-    uint32_t m_next_persistent_variable_id;   ///< The counter used by GetNextResultName().
+    uint32_t                                                m_next_persistent_variable_id;  ///< The counter used by GetNextResultName().
+    
+    typedef llvm::DenseMap<const char *, clang::TypeDecl *> PersistentTypeMap;
+    PersistentTypeMap                                       m_persistent_types;             ///< The persistent types declared by the user.
 };
 
 }

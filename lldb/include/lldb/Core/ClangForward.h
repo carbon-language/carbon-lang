@@ -110,6 +110,7 @@ namespace clang
     class TextDiagnosticBuffer;
     class TranslationUnitDecl;
     class Type;
+    class TypeDecl;
     class TypedefDecl;
     class TypesCompatibleExpr;
     class UnaryOperator;

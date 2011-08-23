@@ -290,7 +290,8 @@ public:
               const char *expr_prefix,
               lldb::ValueObjectSP &result_valobj_sp,
               Error &error);
-
+    
+    static const Error::ValueType kNoResult = 0x1001; ///< ValueObject::GetError() returns this if there is no result from the expression.
 private:
     //------------------------------------------------------------------
     /// Populate m_cplusplus and m_objetivec based on the environment.
@@ -320,6 +321,7 @@ private:
     bool                                        m_objectivec;           ///< True if the expression is compiled as an Objective-C method (true if it was parsed when exe_ctx was in an Objective-C method).
     bool                                        m_needs_object_ptr;     ///< True if "this" or "self" must be looked up and passed in.  False if the expression doesn't really use them and they can be NULL.
     bool                                        m_const_object;         ///< True if "this" is const.
+    Target                                     *m_target;               ///< The target for storing persistent data like types and variables.
     
     lldb::ClangExpressionVariableSP             m_const_result;         ///< The statically-computed result of the expression.  NULL if it could not be computed statically or the expression has side effects.
 };
