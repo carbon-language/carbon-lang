@@ -130,10 +130,10 @@ define i64 @All11(i64 %in) {
 }
 
 
-define i64 @All111(i32 %in) {
-  %out = and i32 %in, xor (i64 bitcast (<1 x float> bitcast (i32 -1 to <1 x float>) to i32), i32 -1) 
+define i32 @All111(i32 %in) {
+  %out = and i32 %in, xor (i32 bitcast (<1 x float> bitcast (i32 -1 to <1 x float>) to i32), i32 -1) 
   ret i32 %out
-; CHECK: @All11
+; CHECK: @All111
 ; CHECK: ret i32 0
 }
 
