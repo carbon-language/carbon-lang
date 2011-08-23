@@ -97,6 +97,7 @@ static void extendScattering(Scop &S, unsigned scatDimensions) {
     isl_map *changeScatteringMap = isl_map_from_basic_map(changeScattering);
 
     stmt->setScattering(isl_map_apply_range(scattering, changeScatteringMap));
+    isl_dim_free(dim);
   }
 }
 
@@ -386,7 +387,8 @@ bool ScheduleOptimizer::runOnScop(Scop &S) {
 					      isl_union_set_from_set(domain));
     isl_map *stmtSchedule;
     isl_union_map_foreach_map(stmtBand, getSingleMap, &stmtSchedule);
-    stmt->setScattering(stmtSchedule);
+    stmt->setScattering(isl_map_copy(stmtSchedule));
+    isl_union_map_free(stmtBand);
   }
 
   isl_union_map_free(tiledSchedule);
