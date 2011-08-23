@@ -15,6 +15,7 @@
 #include "PPCMCAsmInfo.h"
 #include "InstPrinter/PPCInstPrinter.h"
 #include "llvm/MC/MachineLocation.h"
+#include "llvm/MC/MCCodeGenInfo.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCStreamer.h"

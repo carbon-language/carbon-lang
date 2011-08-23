@@ -14,6 +14,7 @@
 #include "MBlazeMCTargetDesc.h"
 #include "MBlazeMCAsmInfo.h"
 #include "InstPrinter/MBlazeInstPrinter.h"
+#include "llvm/MC/MCCodeGenInfo.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCStreamer.h"

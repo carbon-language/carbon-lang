@@ -16,6 +16,8 @@
 #include "InstPrinter/X86ATTInstPrinter.h"
 #include "InstPrinter/X86IntelInstPrinter.h"
 #include "llvm/MC/MachineLocation.h"
+#include "llvm/MC/MCCodeGenInfo.h"
+#include "llvm/MC/MCInstrAnalysis.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCStreamer.h"
@@ -393,6 +395,10 @@ static MCInstPrinter *createX86MCInstPrinter(const Target &T,
   return 0;
 }
 
+static MCInstrAnalysis *createX86MCInstrAnalysis(const MCInstrInfo *Info) {
+  return new MCInstrAnalysis(Info);
+}
+
 // Force static initialization.
 extern "C" void LLVMInitializeX86TargetMC() {
   // Register the MC asm info.
@@ -416,6 +422,12 @@ extern "C" void LLVMInitializeX86TargetMC() {
                                           X86_MC::createX86MCSubtargetInfo);
   TargetRegistry::RegisterMCSubtargetInfo(TheX86_64Target,
                                           X86_MC::createX86MCSubtargetInfo);
+
+  // Register the MC instruction analyzer.
+  TargetRegistry::RegisterMCInstrAnalysis(TheX86_32Target,
+                                          createX86MCInstrAnalysis);
+  TargetRegistry::RegisterMCInstrAnalysis(TheX86_64Target,
+                                          createX86MCInstrAnalysis);
 
   // Register the code emitter.
   TargetRegistry::RegisterMCCodeEmitter(TheX86_32Target,

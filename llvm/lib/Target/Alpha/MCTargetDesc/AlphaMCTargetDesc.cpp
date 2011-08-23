@@ -13,6 +13,7 @@
 
 #include "AlphaMCTargetDesc.h"
 #include "AlphaMCAsmInfo.h"
+#include "llvm/MC/MCCodeGenInfo.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"

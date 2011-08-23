@@ -19,8 +19,7 @@
 #ifndef LLVM_TARGET_TARGETREGISTRY_H
 #define LLVM_TARGET_TARGETREGISTRY_H
 
-#include "llvm/MC/MCCodeGenInfo.h"
-#include "llvm/MC/MCInstrAnalysis.h"
+#include "llvm/Support/CodeGen.h"
 #include "llvm/ADT/Triple.h"
 #include <string>
 #include <cassert>
@@ -36,6 +35,7 @@ namespace llvm {
   class MCCodeGenInfo;
   class MCContext;
   class MCDisassembler;
+  class MCInstrAnalysis;
   class MCInstPrinter;
   class MCInstrInfo;
   class MCRegisterInfo;
@@ -291,7 +291,7 @@ namespace llvm {
     ///
     MCInstrAnalysis *createMCInstrAnalysis(const MCInstrInfo *Info) const {
       if (!MCInstrAnalysisCtorFn)
-        return new MCInstrAnalysis(Info);
+        return 0;
       return MCInstrAnalysisCtorFn(Info);
     }
 
@@ -887,6 +887,39 @@ namespace llvm {
   struct RegisterMCInstrInfoFn {
     RegisterMCInstrInfoFn(Target &T, Target::MCInstrInfoCtorFnTy Fn) {
       TargetRegistry::RegisterMCInstrInfo(T, Fn);
+    }
+  };
+
+  /// RegisterMCInstrAnalysis - Helper template for registering a target
+  /// instruction analyzer implementation.  This invokes the static "Create"
+  /// method on the class to actually do the construction.  Usage:
+  ///
+  /// extern "C" void LLVMInitializeFooTarget() {
+  ///   extern Target TheFooTarget;
+  ///   RegisterMCInstrAnalysis<FooMCInstrAnalysis> X(TheFooTarget);
+  /// }
+  template<class MCInstrAnalysisImpl>
+  struct RegisterMCInstrAnalysis {
+    RegisterMCInstrAnalysis(Target &T) {
+      TargetRegistry::RegisterMCInstrAnalysis(T, &Allocator);
+    }
+  private:
+    static MCInstrAnalysis *Allocator(const MCInstrInfo *Info) {
+      return new MCInstrAnalysisImpl(Info);
+    }
+  };
+
+  /// RegisterMCInstrAnalysisFn - Helper template for registering a target
+  /// instruction analyzer implementation.  This invokes the specified function
+  /// to do the construction.  Usage:
+  ///
+  /// extern "C" void LLVMInitializeFooTarget() {
+  ///   extern Target TheFooTarget;
+  ///   RegisterMCInstrAnalysisFn X(TheFooTarget, TheFunction);
+  /// }
+  struct RegisterMCInstrAnalysisFn {
+    RegisterMCInstrAnalysisFn(Target &T, Target::MCInstrAnalysisCtorFnTy Fn) {
+      TargetRegistry::RegisterMCInstrAnalysis(T, Fn);
     }
   };
 

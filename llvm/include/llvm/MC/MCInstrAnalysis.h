@@ -23,8 +23,9 @@ protected:
   friend class Target;
   const MCInstrInfo *Info;
 
-  MCInstrAnalysis(const MCInstrInfo *Info) : Info(Info) {}
 public:
+  MCInstrAnalysis(const MCInstrInfo *Info) : Info(Info) {}
+
   virtual ~MCInstrAnalysis() {}
 
   virtual bool isBranch(const MCInst &Inst) const {
