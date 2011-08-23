@@ -60,7 +60,8 @@ USEDLIBS = lldbAPI.a \
 	clangParse.a \
 	clangSema.a \
 	clangSerialization.a \
-	EnhancedDisassembly.a
+	EnhancedDisassembly.a \
+	LLVMMCDisassembler.a
 
 include $(LLDB_LEVEL)/../../Makefile.config
 
