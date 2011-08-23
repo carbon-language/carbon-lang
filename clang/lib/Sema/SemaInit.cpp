@@ -177,8 +177,7 @@ class InitListChecker {
   void CheckImplicitInitList(const InitializedEntity &Entity,
                              InitListExpr *ParentIList, QualType T,
                              unsigned &Index, InitListExpr *StructuredList,
-                             unsigned &StructuredIndex,
-                             bool TopLevelObject = false);
+                             unsigned &StructuredIndex);
   void CheckExplicitInitList(const InitializedEntity &Entity,
                              InitListExpr *IList, QualType &T,
                              unsigned &Index, InitListExpr *StructuredList,
@@ -495,8 +494,7 @@ void InitListChecker::CheckImplicitInitList(const InitializedEntity &Entity,
                                             InitListExpr *ParentIList,
                                             QualType T, unsigned &Index,
                                             InitListExpr *StructuredList,
-                                            unsigned &StructuredIndex,
-                                            bool TopLevelObject) {
+                                            unsigned &StructuredIndex) {
   int maxElements = 0;
 
   if (T->isArrayType())
@@ -529,8 +527,7 @@ void InitListChecker::CheckImplicitInitList(const InitializedEntity &Entity,
   CheckListElementTypes(Entity, ParentIList, T,
                         /*SubobjectIsDesignatorContext=*/false, Index,
                         StructuredSubobjectInitList,
-                        StructuredSubobjectInitIndex,
-                        TopLevelObject);
+                        StructuredSubobjectInitIndex);
   unsigned EndIndex = (Index == StartIndex? StartIndex : Index - 1);
   StructuredSubobjectInitList->setType(T);
 
