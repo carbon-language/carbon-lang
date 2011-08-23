@@ -297,6 +297,7 @@ static isl_union_map *tileBandList(isl_band_list *blist) {
       isl_union_map *suffixSchedule = tileBandList(children);
       partialSchedule = isl_union_map_flat_range_product(partialSchedule,
 							 suffixSchedule);
+      isl_band_list_free(children);
     } else if (Prevector) {
       isl_map *tileMap;
       isl_union_map *tileUnionMap;
