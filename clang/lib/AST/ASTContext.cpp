@@ -6140,7 +6140,11 @@ static QualType DecodeTypeFromStr(const char *&Str, const ASTContext &Context,
     assert(!RequiresICE && "Can't require complex ICE");
     Type = Context.getComplexType(ElementType);
     break;
-  }      
+  }  
+  case 'Y' : {
+    Type = Context.getPointerDiffType();
+    break;
+  }
   case 'P':
     Type = Context.getFILEType();
     if (Type.isNull()) {

@@ -35,6 +35,7 @@
 //  A -> "reference" to __builtin_va_list
 //  V -> Vector, following num elements and a base type.
 //  X -> _Complex, followed by the base type.
+//  Y -> ptrdiff_t
 //  P -> FILE
 //  J -> jmp_buf
 //  SJ -> sigjmp_buf
@@ -690,8 +691,7 @@ LIBBUILTIN(objc_read_weak, "GG*", "f", "/objc/objc-auto.h", OBJC_LANG)
 // id objc_assign_weak(id value, id *location)
 LIBBUILTIN(objc_assign_weak, "GGG*", "f", "/objc/objc-auto.h", OBJC_LANG)
 // id objc_assign_ivar(id value, id dest, ptrdiff_t offset)
-// FIXME. Darwin has ptrdiff_t typedef'ed to int.
-LIBBUILTIN(objc_assign_ivar, "GGGi", "f", "/objc/objc-auto.h", OBJC_LANG)
+LIBBUILTIN(objc_assign_ivar, "GGGY", "f", "/objc/objc-auto.h", OBJC_LANG)
 // id objc_assign_global(id val, id *dest)
 LIBBUILTIN(objc_assign_global, "GGG*", "f", "/objc/objc-auto.h", OBJC_LANG)
 // id objc_assign_strongCast(id val, id *dest
