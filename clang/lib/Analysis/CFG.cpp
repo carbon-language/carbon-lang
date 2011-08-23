@@ -2493,8 +2493,8 @@ CFGBlock *CFGBuilder::VisitCXXTryStmt(CXXTryStmt *Terminator) {
   Succ = TrySuccessor;
 
   // Save the current "try" context.
-  SaveAndRestore<CFGBlock*> save_try(TryTerminatedBlock);
-  TryTerminatedBlock = NewTryTerminatedBlock;
+  SaveAndRestore<CFGBlock*> save_try(TryTerminatedBlock, NewTryTerminatedBlock);
+  cfg->addTryDispatchBlock(TryTerminatedBlock);
 
   assert(Terminator->getTryBlock() && "try must contain a non-NULL body");
   Block = NULL;

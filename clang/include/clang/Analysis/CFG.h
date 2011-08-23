@@ -613,6 +613,18 @@ public:
 
   CFGBlock *       getIndirectGotoBlock() { return IndirectGotoBlock; }
   const CFGBlock * getIndirectGotoBlock() const { return IndirectGotoBlock; }
+  
+  typedef std::vector<const CFGBlock*>::const_iterator try_block_iterator;
+  try_block_iterator try_blocks_begin() const {
+    return TryDispatchBlocks.begin();
+  }
+  try_block_iterator try_blocks_end() const {
+    return TryDispatchBlocks.end();
+  }
+  
+  void addTryDispatchBlock(const CFGBlock *block) {
+    TryDispatchBlocks.push_back(block);
+  }
 
   //===--------------------------------------------------------------------===//
   // Member templates useful for various batch operations over CFGs.
@@ -691,6 +703,10 @@ private:
   BumpVectorContext BlkBVC;
   
   CFGBlockListTy Blocks;
+  
+  /// C++ 'try' statements are modeled with an indirect dispatch block.
+  /// This is the collection of such blocks present in the CFG.
+  std::vector<const CFGBlock *> TryDispatchBlocks;
 
 };
 } // end namespace clang
