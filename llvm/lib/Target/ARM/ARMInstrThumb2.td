@@ -3100,6 +3100,7 @@ class t2CPS<dag iops, string asm_op> : T2XI<(outs), iops, NoItinerary,
   let Inst{8}     = M;
   let Inst{7-5}   = iflags;
   let Inst{4-0}   = mode;
+  let DecoderMethod = "DecodeT2CPSInstruction";
 }
 
 let M = 1 in

@@ -103,6 +103,8 @@ static DecodeStatus DecodeSMLAInstruction(llvm::MCInst &Inst, unsigned Insn,
                                uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeCPSInstruction(llvm::MCInst &Inst, unsigned Insn,
                                uint64_t Address, const void *Decoder);
+static DecodeStatus DecodeT2CPSInstruction(llvm::MCInst &Inst, unsigned Insn,
+                               uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeAddrModeImm12Operand(llvm::MCInst &Inst, unsigned Val,
                                uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeAddrMode5Operand(llvm::MCInst &Inst, unsigned Val,
@@ -178,8 +180,6 @@ static DecodeStatus DecodeVST4LN(llvm::MCInst &Inst, unsigned Insn,
 static DecodeStatus DecodeVMOVSRR(llvm::MCInst &Inst, unsigned Insn,
                                uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeVMOVRRS(llvm::MCInst &Inst, unsigned Insn,
-                               uint64_t Address, const void *Decoder);
-static DecodeStatus DecodeCPSIMod(llvm::MCInst &Inst, unsigned Insn,
                                uint64_t Address, const void *Decoder);
 
 static DecodeStatus DecodeThumbAddSpecialReg(llvm::MCInst &Inst, uint16_t Insn,
@@ -1392,6 +1392,47 @@ static DecodeStatus DecodeCPSInstruction(llvm::MCInst &Inst, unsigned Insn,
 
   return S;
 }
+
+static DecodeStatus DecodeT2CPSInstruction(llvm::MCInst &Inst, unsigned Insn,
+                                 uint64_t Address, const void *Decoder) {
+  unsigned imod = fieldFromInstruction32(Insn, 9, 2);
+  unsigned M = fieldFromInstruction32(Insn, 8, 1);
+  unsigned iflags = fieldFromInstruction32(Insn, 5, 3);
+  unsigned mode = fieldFromInstruction32(Insn, 0, 5);
+
+  DecodeStatus S = Success;
+
+  // imod == '01' --> UNPREDICTABLE
+  // NOTE: Even though this is technically UNPREDICTABLE, we choose to
+  // return failure here.  The '01' imod value is unprintable, so there's
+  // nothing useful we could do even if we returned UNPREDICTABLE.
+
+  if (imod == 1) CHECK(S, Fail);
+
+  if (imod && M) {
+    Inst.setOpcode(ARM::t2CPS3p);
+    Inst.addOperand(MCOperand::CreateImm(imod));
+    Inst.addOperand(MCOperand::CreateImm(iflags));
+    Inst.addOperand(MCOperand::CreateImm(mode));
+  } else if (imod && !M) {
+    Inst.setOpcode(ARM::t2CPS2p);
+    Inst.addOperand(MCOperand::CreateImm(imod));
+    Inst.addOperand(MCOperand::CreateImm(iflags));
+    if (mode) CHECK(S, Unpredictable);
+  } else if (!imod && M) {
+    Inst.setOpcode(ARM::t2CPS1p);
+    Inst.addOperand(MCOperand::CreateImm(mode));
+    if (iflags) CHECK(S, Unpredictable);
+  } else {
+    // imod == '00' && M == '0' --> UNPREDICTABLE
+    Inst.setOpcode(ARM::t2CPS1p);
+    Inst.addOperand(MCOperand::CreateImm(mode));
+    CHECK(S, Unpredictable);
+  }
+
+  return S;
+}
+
 
 static DecodeStatus DecodeSMLAInstruction(llvm::MCInst &Inst, unsigned Insn,
                                  uint64_t Address, const void *Decoder) {
@@ -3240,12 +3281,5 @@ static DecodeStatus DecodeVMOVRRS(llvm::MCInst &Inst, unsigned Insn,
   CHECK(S, DecodePredicateOperand(Inst, pred, Address, Decoder));
 
   return S;
-}
-
-static DecodeStatus DecodeCPSIMod(llvm::MCInst &Inst, unsigned Val,
-                                 uint64_t Address, const void *Decoder) {
-  if (Val == 0x1) return Fail;
-  Inst.addOperand(MCOperand::CreateImm(Val));
-  return Success;
 }
 
