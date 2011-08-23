@@ -1712,21 +1712,6 @@ public:
                           SymbolRef Sym,
                           RefVal V,
                           bool &stop);
-  // Return statements.
-
-  virtual void evalReturn(ExplodedNodeSet &Dst,
-                          ExprEngine& Engine,
-                          StmtNodeBuilder& Builder,
-                          const ReturnStmt *S,
-                          ExplodedNode *Pred);
-  
-  void evalReturnWithRetEffect(ExplodedNodeSet &Dst,
-                               ExprEngine& Engine,
-                               StmtNodeBuilder& Builder,
-                               const ReturnStmt *S,
-                               ExplodedNode *Pred,
-                               RetEffect RE, RefVal X,
-                               SymbolRef Sym, const ProgramState *state);
 };
 
 } // end anonymous namespace
@@ -2023,7 +2008,7 @@ PathDiagnosticPiece *CFRefReportVisitor::VisitNode(const ExplodedNode *N,
                                                    BugReporterContext &BRC,
                                                    BugReport &BR) {
 
-  if (!isa<PostStmt>(N->getLocation()))
+  if (!isa<StmtPoint>(N->getLocation()))
     return NULL;
 
   // Check if the type state has changed.
@@ -2044,7 +2029,7 @@ PathDiagnosticPiece *CFRefReportVisitor::VisitNode(const ExplodedNode *N,
   // This is the allocation site since the previous node had no bindings
   // for this symbol.
   if (!PrevT) {
-    const Stmt *S = cast<PostStmt>(N->getLocation()).getStmt();
+    const Stmt *S = cast<StmtPoint>(N->getLocation()).getStmt();
 
     if (const CallExpr *CE = dyn_cast<CallExpr>(S)) {
       // Get the name of the callee (if it is available).
@@ -2094,7 +2079,7 @@ PathDiagnosticPiece *CFRefReportVisitor::VisitNode(const ExplodedNode *N,
         TF.getSummaryOfNode(BRC.getNodeResolver().getOriginalNode(N))) {
     // We only have summaries attached to nodes after evaluating CallExpr and
     // ObjCMessageExprs.
-    const Stmt *S = cast<PostStmt>(N->getLocation()).getStmt();
+    const Stmt *S = cast<StmtPoint>(N->getLocation()).getStmt();
 
     if (const CallExpr *CE = dyn_cast<CallExpr>(S)) {
       // Iterate through the parameter expressions and see if the symbol
@@ -2142,7 +2127,7 @@ PathDiagnosticPiece *CFRefReportVisitor::VisitNode(const ExplodedNode *N,
     // Specially handle CFMakeCollectable and friends.
     if (contains(AEffects, MakeCollectable)) {
       // Get the name of the function.
-      const Stmt *S = cast<PostStmt>(N->getLocation()).getStmt();
+      const Stmt *S = cast<StmtPoint>(N->getLocation()).getStmt();
       SVal X = CurrSt->getSValAsScalarOrLoc(cast<CallExpr>(S)->getCallee());
       const FunctionDecl *FD = X.getAsFunctionDecl();
 
@@ -2245,7 +2230,7 @@ PathDiagnosticPiece *CFRefReportVisitor::VisitNode(const ExplodedNode *N,
   if (os.str().empty())
     return 0; // We have nothing to say!
 
-  const Stmt *S = cast<PostStmt>(N->getLocation()).getStmt();
+  const Stmt *S = cast<StmtPoint>(N->getLocation()).getStmt();
   PathDiagnosticLocation Pos(S, BRC.getSourceManager());
   PathDiagnosticPiece *P = new PathDiagnosticEventPiece(Pos, os.str());
 
@@ -2360,7 +2345,7 @@ CFRefLeakReportVisitor::getEndPath(BugReporterContext &BRC,
   while (LeakN) {
     ProgramPoint P = LeakN->getLocation();
 
-    if (const PostStmt *PS = dyn_cast<PostStmt>(&P)) {
+    if (const StmtPoint *PS = dyn_cast<StmtPoint>(&P)) {
       L = PathDiagnosticLocation(PS->getStmt()->getLocStart(), SMgr);
       break;
     }
@@ -2657,171 +2642,6 @@ void CFRefCount::evalObjCMessage(ExplodedNodeSet &Dst,
                     /* Callee = */ 0, Pred, state);
 }
 
- // Return statements.
-
-void CFRefCount::evalReturn(ExplodedNodeSet &Dst,
-                            ExprEngine& Eng,
-                            StmtNodeBuilder& Builder,
-                            const ReturnStmt *S,
-                            ExplodedNode *Pred) {
-
-  const Expr *RetE = S->getRetValue();
-  if (!RetE)
-    return;
-
-  const ProgramState *state = Pred->getState();
-  SymbolRef Sym = state->getSValAsScalarOrLoc(RetE).getAsLocSymbol();
-
-  if (!Sym)
-    return;
-
-  // Get the reference count binding (if any).
-  const RefVal* T = state->get<RefBindings>(Sym);
-
-  if (!T)
-    return;
-
-  // Change the reference count.
-  RefVal X = *T;
-
-  switch (X.getKind()) {
-    case RefVal::Owned: {
-      unsigned cnt = X.getCount();
-      assert (cnt > 0);
-      X.setCount(cnt - 1);
-      X = X ^ RefVal::ReturnedOwned;
-      break;
-    }
-
-    case RefVal::NotOwned: {
-      unsigned cnt = X.getCount();
-      if (cnt) {
-        X.setCount(cnt - 1);
-        X = X ^ RefVal::ReturnedOwned;
-      }
-      else {
-        X = X ^ RefVal::ReturnedNotOwned;
-      }
-      break;
-    }
-
-    default:
-      return;
-  }
-
-  // Update the binding.
-  state = state->set<RefBindings>(Sym, X);
-  Pred = Builder.MakeNode(Dst, S, Pred, state);
-
-  // Did we cache out?
-  if (!Pred)
-    return;
-
-  // Update the autorelease counts.
-  static SimpleProgramPointTag autoreleasetag("CFRefCount : Autorelease");
-  GenericNodeBuilderRefCount Bd(Builder, S, &autoreleasetag);
-  bool stop = false;
-  llvm::tie(Pred, state) = HandleAutoreleaseCounts(state , Bd, Pred, Eng, Sym,
-                                                   X, stop);
-
-  // Did we cache out?
-  if (!Pred || stop)
-    return;
-
-  // Get the updated binding.
-  T = state->get<RefBindings>(Sym);
-  assert(T);
-  X = *T;
-
-  // Consult the summary of the enclosing method.
-  Decl const *CD = &Pred->getCodeDecl();
-
-  if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(CD)) {
-    // Unlike regular functions, /all/ ObjC methods are assumed to always
-    // follow Cocoa retain-count conventions, not just those with special
-    // names or attributes.
-    const RetainSummary *Summ = Summaries.getMethodSummary(MD);
-    RetEffect RE = Summ ? Summ->getRetEffect() : RetEffect::MakeNoRet();
-    return evalReturnWithRetEffect(Dst, Eng, Builder, S, 
-                                   Pred, RE, X, Sym, state);
-  }
-
-  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(CD)) {
-    if (!isa<CXXMethodDecl>(FD))
-      if (const RetainSummary *Summ = Summaries.getSummary(FD))
-        return evalReturnWithRetEffect(Dst, Eng, Builder, S, 
-                                       Pred, Summ->getRetEffect(), X,
-                                       Sym, state);
-  }
-}
-
-void CFRefCount::evalReturnWithRetEffect(ExplodedNodeSet &Dst, 
-                                         ExprEngine &Eng,
-                                         StmtNodeBuilder &Builder,
-                                         const ReturnStmt *S,
-                                         ExplodedNode *Pred,
-                                         RetEffect RE, RefVal X,
-                                         SymbolRef Sym,
-                                         const ProgramState *state) {
-  // Any leaks or other errors?
-  if (X.isReturnedOwned() && X.getCount() == 0) {
-    if (RE.getKind() != RetEffect::NoRet) {
-      bool hasError = false;
-      if (isGCEnabled() && RE.getObjKind() == RetEffect::ObjC) {
-        // Things are more complicated with garbage collection.  If the
-        // returned object is suppose to be an Objective-C object, we have
-        // a leak (as the caller expects a GC'ed object) because no
-        // method should return ownership unless it returns a CF object.
-        hasError = true;
-        X = X ^ RefVal::ErrorGCLeakReturned;
-      }
-      else if (!RE.isOwned()) {
-        // Either we are using GC and the returned object is a CF type
-        // or we aren't using GC.  In either case, we expect that the
-        // enclosing method is expected to return ownership.
-        hasError = true;
-        X = X ^ RefVal::ErrorLeakReturned;
-      }
-
-      if (hasError) {
-        // Generate an error node.
-        static SimpleProgramPointTag
-               ReturnOwnLeakTag("CFRefCount : ReturnsOwnLeak");
-        state = state->set<RefBindings>(Sym, X);
-        ExplodedNode *N =
-          Builder.generateNode(PostStmt(S, Pred->getLocationContext(),
-                                        &ReturnOwnLeakTag), state, Pred);
-        if (N) {
-          CFRefReport *report =
-            new CFRefLeakReport(*static_cast<CFRefBug*>(leakAtReturn), *this,
-                                N, Sym, Eng);
-          BR->EmitReport(report);
-        }
-      }
-    }
-    return;
-  }
-
-  if (X.isReturnedNotOwned()) {
-    if (RE.isOwned()) {
-      // Trying to return a not owned object to a caller expecting an
-      // owned object.
-      static SimpleProgramPointTag
-             ReturnNotOwnedForOwnedTag("CFRefCount : ReturnNotOwnedForOwned");
-      state = state->set<RefBindings>(Sym, X ^ RefVal::ErrorReturnedNotOwned);
-      if (ExplodedNode *N =
-          Builder.generateNode(PostStmt(S, Pred->getLocationContext(),
-                                        &ReturnNotOwnedForOwnedTag),
-                               state, Pred)) {
-          CFRefReport *report =
-              new CFRefReport(*static_cast<CFRefBug*>(returnNotOwnedForOwned),
-                              *this, N, Sym);
-          BR->EmitReport(report);
-      }
-    }
-  }
-}
-
 const ProgramState * CFRefCount::Update(const ProgramState * state,
                                         SymbolRef sym,
                                         RefVal V,
@@ -3046,6 +2866,7 @@ class RetainReleaseChecker
                     check::PostStmt<CastExpr>,
                     check::PostStmt<CallExpr>,
                     check::PostObjCMessage,
+                    check::PreStmt<ReturnStmt>,
                     check::RegionChanges,
                     eval::Assume,
                     eval::Call > {
@@ -3084,6 +2905,11 @@ public:
     return true;
   }
 
+  void checkPreStmt(const ReturnStmt *S, CheckerContext &C) const;
+  void checkReturnWithRetEffect(const ReturnStmt *S, CheckerContext &C,
+                                ExplodedNode *Pred, RetEffect RE, RefVal X,
+                                SymbolRef Sym, const ProgramState *state) const;
+                                              
   void checkDeadSymbols(SymbolReaper &SymReaper, CheckerContext &C) const;
   void checkEndPath(EndOfFunctionNodeBuilder &Builder, ExprEngine &Eng) const;
 
@@ -3585,6 +3411,176 @@ bool RetainReleaseChecker::evalCall(const CallExpr *CE,
 
   C.addTransition(state);
   return true;
+}
+
+ // Return statements.
+
+void RetainReleaseChecker::checkPreStmt(const ReturnStmt *S,
+                                        CheckerContext &C) const {
+  const Expr *RetE = S->getRetValue();
+  if (!RetE)
+    return;
+
+  const ProgramState *state = C.getState();
+  SymbolRef Sym = state->getSValAsScalarOrLoc(RetE).getAsLocSymbol();
+  if (!Sym)
+    return;
+
+  // Get the reference count binding (if any).
+  const RefVal *T = state->get<RefBindings>(Sym);
+  if (!T)
+    return;
+
+  // Change the reference count.
+  RefVal X = *T;
+
+  switch (X.getKind()) {
+    case RefVal::Owned: {
+      unsigned cnt = X.getCount();
+      assert(cnt > 0);
+      X.setCount(cnt - 1);
+      X = X ^ RefVal::ReturnedOwned;
+      break;
+    }
+
+    case RefVal::NotOwned: {
+      unsigned cnt = X.getCount();
+      if (cnt) {
+        X.setCount(cnt - 1);
+        X = X ^ RefVal::ReturnedOwned;
+      }
+      else {
+        X = X ^ RefVal::ReturnedNotOwned;
+      }
+      break;
+    }
+
+    default:
+      return;
+  }
+
+  // Update the binding.
+  state = state->set<RefBindings>(Sym, X);
+  ExplodedNode *Pred = C.generateNode(state);
+
+  // At this point we have updated the state properly.
+  // Everything after this is merely checking to see if the return value has
+  // been over- or under-retained.
+
+  // Did we cache out?
+  if (!Pred)
+    return;
+
+  ExprEngine &Eng = C.getEngine();
+  // FIXME: This goes away once HandleAutoreleaseCount() and the
+  // RetainSummariesManager move to RetainReleaseChecker.
+  CFRefCount &TF = static_cast<CFRefCount&>(Eng.getTF());
+
+  // Update the autorelease counts.
+  static SimpleProgramPointTag
+         AutoreleaseTag("RetainReleaseChecker : Autorelease");
+  GenericNodeBuilderRefCount Bd(C.getNodeBuilder(), S, &AutoreleaseTag);
+  bool stop = false;
+  llvm::tie(Pred, state) = TF.HandleAutoreleaseCounts(state, Bd, Pred, Eng, Sym,
+                                                      X, stop);
+
+  // Did we cache out?
+  if (!Pred || stop)
+    return;
+
+  // Get the updated binding.
+  T = state->get<RefBindings>(Sym);
+  assert(T);
+  X = *T;
+
+  // Consult the summary of the enclosing method.
+  const Decl *CD = &Pred->getCodeDecl();
+
+  if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(CD)) {
+    // Unlike regular functions, /all/ ObjC methods are assumed to always
+    // follow Cocoa retain-count conventions, not just those with special
+    // names or attributes.
+    const RetainSummary *Summ = TF.Summaries.getMethodSummary(MD);
+    RetEffect RE = Summ ? Summ->getRetEffect() : RetEffect::MakeNoRet();
+    checkReturnWithRetEffect(S, C, Pred, RE, X, Sym, state);
+  }
+
+  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(CD)) {
+    if (!isa<CXXMethodDecl>(FD))
+      if (const RetainSummary *Summ = TF.Summaries.getSummary(FD))
+        checkReturnWithRetEffect(S, C, Pred, Summ->getRetEffect(), X,
+                                 Sym, state);
+  }
+}
+
+void RetainReleaseChecker::checkReturnWithRetEffect(const ReturnStmt *S,
+                                                    CheckerContext &C,
+                                                    ExplodedNode *Pred,
+                                                    RetEffect RE, RefVal X,
+                                                    SymbolRef Sym,
+                                              const ProgramState *state) const {
+  // FIXME: This goes away once the these bug types move to the checker,
+  // and CFRefReport no longer depends on CFRefCount.
+  CFRefCount &TF = static_cast<CFRefCount&>(C.getEngine().getTF());
+
+  // Any leaks or other errors?
+  if (X.isReturnedOwned() && X.getCount() == 0) {
+    if (RE.getKind() != RetEffect::NoRet) {
+      bool hasError = false;
+      if (TF.isGCEnabled() && RE.getObjKind() == RetEffect::ObjC) {
+        // Things are more complicated with garbage collection.  If the
+        // returned object is suppose to be an Objective-C object, we have
+        // a leak (as the caller expects a GC'ed object) because no
+        // method should return ownership unless it returns a CF object.
+        hasError = true;
+        X = X ^ RefVal::ErrorGCLeakReturned;
+      }
+      else if (!RE.isOwned()) {
+        // Either we are using GC and the returned object is a CF type
+        // or we aren't using GC.  In either case, we expect that the
+        // enclosing method is expected to return ownership.
+        hasError = true;
+        X = X ^ RefVal::ErrorLeakReturned;
+      }
+
+      if (hasError) {
+        // Generate an error node.
+        state = state->set<RefBindings>(Sym, X);
+        StmtNodeBuilder &Builder = C.getNodeBuilder();
+
+        static SimpleProgramPointTag
+               ReturnOwnLeakTag("RetainReleaseChecker : ReturnsOwnLeak");
+        ExplodedNode *N = Builder.generateNode(S, state, Pred,
+                                               &ReturnOwnLeakTag);
+        if (N) {
+          CFRefReport *report =
+            new CFRefLeakReport(*static_cast<CFRefBug*>(TF.leakAtReturn), TF,
+                                N, Sym, C.getEngine());
+          C.EmitReport(report);
+        }
+      }
+    }
+  } else if (X.isReturnedNotOwned()) {
+    if (RE.isOwned()) {
+      // Trying to return a not owned object to a caller expecting an
+      // owned object.
+      state = state->set<RefBindings>(Sym, X ^ RefVal::ErrorReturnedNotOwned);
+      StmtNodeBuilder &Builder = C.getNodeBuilder();
+
+      static SimpleProgramPointTag
+             ReturnNotOwnedTag("RetainReleaseChecker : ReturnNotOwnedForOwned");
+      // FIXME: This PostStmt is a lie. But currently CFRefReport expects all
+      // interesting things to happen in PostStmt nodes.
+      ExplodedNode *N = Builder.generateNode(S, state, Pred, 
+                                             &ReturnNotOwnedTag);
+      if (N) {
+        CFRefReport *report =
+            new CFRefReport(*static_cast<CFRefBug*>(TF.returnNotOwnedForOwned),
+                            TF, N, Sym);
+        C.EmitReport(report);
+      }
+    }
+  }
 }
 
 // Handle dead symbols (potential leaks).
