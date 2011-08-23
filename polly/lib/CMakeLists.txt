@@ -31,6 +31,7 @@ add_polly_library(LLVMPolly
   MayAliasSet.cpp
   Pocc.cpp
   RegionSimplify.cpp
+  RegisterPasses.cpp
   ScheduleOptimizer.cpp
   Exchange/JSONExporter.cpp
   ${POLLY_EXCHANGE_FILES}
