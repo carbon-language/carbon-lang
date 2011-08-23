@@ -5877,9 +5877,11 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
 
       if (OpInfo.ConstraintVT != Input.ConstraintVT) {
 	std::pair<unsigned, const TargetRegisterClass*> MatchRC =
-	  TLI.getRegForInlineAsmConstraint(OpInfo.ConstraintCode, OpInfo.ConstraintVT);
+	  TLI.getRegForInlineAsmConstraint(OpInfo.ConstraintCode,
+                                           OpInfo.ConstraintVT);
 	std::pair<unsigned, const TargetRegisterClass*> InputRC =
-	  TLI.getRegForInlineAsmConstraint(Input.ConstraintCode, Input.ConstraintVT);
+	  TLI.getRegForInlineAsmConstraint(Input.ConstraintCode,
+                                           Input.ConstraintVT);
         if ((OpInfo.ConstraintVT.isInteger() !=
              Input.ConstraintVT.isInteger()) ||
             (MatchRC.second != InputRC.second)) {
