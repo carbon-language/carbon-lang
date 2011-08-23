@@ -62,6 +62,21 @@ bool Constant::isNullValue() const {
   return isa<ConstantAggregateZero>(this) || isa<ConstantPointerNull>(this);
 }
 
+bool Constant::isAllOnesValue() const {
+  // Check for -1 integers
+  if (const ConstantInt *CI = dyn_cast<ConstantInt>(this))
+    return CI->isAllOnesValue();
+
+  // +0.0 is null.
+  if (const ConstantFP *CFP = dyn_cast<ConstantFP>(this))
+    return CFP->getValueAPF().bitcastToAPInt().isAllOnesValue();
+
+  // Check for constant vectors
+  if (const ConstantVector *CV = dyn_cast<ConstantVector>(this))
+    return CV->isAllOnesValue();
+
+  return false;
+}
 // Constructor to create a '0' constant of arbitrary type...
 Constant *Constant::getNullValue(Type *Ty) {
   switch (Ty->getTypeID()) {
@@ -126,7 +141,7 @@ Constant *Constant::getAllOnesValue(Type *Ty) {
   SmallVector<Constant*, 16> Elts;
   VectorType *VTy = cast<VectorType>(Ty);
   Elts.resize(VTy->getNumElements(), getAllOnesValue(VTy->getElementType()));
-  assert(Elts[0] && "Not a vector integer type!");
+  assert(Elts[0] && "Invalid AllOnes value!");
   return cast<ConstantVector>(ConstantVector::get(Elts));
 }
 
@@ -1064,13 +1079,16 @@ bool ConstantVector::isAllOnesValue() const {
   // Check out first element.
   const Constant *Elt = getOperand(0);
   const ConstantInt *CI = dyn_cast<ConstantInt>(Elt);
-  if (!CI || !CI->isAllOnesValue()) return false;
+  const ConstantFP *CF = dyn_cast<ConstantFP>(Elt);
+
   // Then make sure all remaining elements point to the same value.
   for (unsigned I = 1, E = getNumOperands(); I < E; ++I)
     if (getOperand(I) != Elt)
       return false;
   
-  return true;
+  // First value is all-ones.
+  return (CI && CI->isAllOnesValue()) || 
+         (CF && CF->isAllOnesValue());
 }
 
 /// getSplatValue - If this is a splat constant, where all of the

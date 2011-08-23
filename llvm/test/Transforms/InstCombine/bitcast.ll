@@ -113,3 +113,27 @@ define i64 @ISPC0(i64 %in) {
 ; CHECK: @ISPC0
 ; CHECK: ret i64 0
 }
+
+
+define i64 @Vec2(i64 %in) {
+  %out = and i64 %in, xor (i64 bitcast (<4 x i16> <i16 0, i16 0, i16 0, i16 0> to i64), i64 0)
+  ret i64 %out
+; CHECK: @Vec2
+; CHECK: ret i64 0
+}
+
+define i64 @All11(i64 %in) {
+  %out = and i64 %in, xor (i64 bitcast (<2 x float> bitcast (i64 -1 to <2 x float>) to i64), i64 -1) 
+  ret i64 %out
+; CHECK: @All11
+; CHECK: ret i64 0
+}
+
+
+define i64 @All111(i32 %in) {
+  %out = and i32 %in, xor (i64 bitcast (<1 x float> bitcast (i32 -1 to <1 x float>) to i32), i32 -1) 
+  ret i32 %out
+; CHECK: @All11
+; CHECK: ret i32 0
+}
+
