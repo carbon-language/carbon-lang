@@ -1635,11 +1635,7 @@ public:
                        const char* sep);
   };
 
-  typedef llvm::DenseMap<const ExplodedNode*, const RetainSummary*>
-    SummaryLogTy;
-
   RetainSummaryManager Summaries;
-  SummaryLogTy SummaryLog;
   const LangOptions&   LOpts;
 
   BugType *useAfterRelease, *releaseNotOwned;
@@ -1673,11 +1669,6 @@ public:
   bool isARCorGCEnabled() const { return Summaries.isARCorGCEnabled(); }
   
   const LangOptions& getLangOptions() const { return LOpts; }
-
-  const RetainSummary *getSummaryOfNode(const ExplodedNode *N) const {
-    SummaryLogTy::const_iterator I = SummaryLog.find(N);
-    return I == SummaryLog.end() ? 0 : I->second;
-  }
 
   // Calls.
 
@@ -1754,6 +1745,9 @@ void CFRefCount::BindingsPrinter::Print(raw_ostream &Out,
 static void addExtraTextToCFReport(BugReport &R);
 
 namespace {
+  typedef llvm::DenseMap<const ExplodedNode *, const RetainSummary *>
+    SummaryLogTy;
+
   //===-------------===//
   // Bug Descriptions. //
   //===-------------===//
@@ -1867,10 +1861,12 @@ namespace {
   protected:
     SymbolRef Sym;
     const CFRefCount &TF;
+    const SummaryLogTy &SummaryLog;
     
   public:
-    CFRefReportVisitor(SymbolRef sym, const CFRefCount &tf)
-       : Sym(sym), TF(tf) {}
+    CFRefReportVisitor(SymbolRef sym, const CFRefCount &tf,
+                       const SummaryLogTy &log)
+       : Sym(sym), TF(tf), SummaryLog(log) {}
 
     virtual void Profile(llvm::FoldingSetNodeID &ID) const {
       static int x = 0;
@@ -1890,8 +1886,9 @@ namespace {
 
   class CFRefLeakReportVisitor : public CFRefReportVisitor {
   public:
-    CFRefLeakReportVisitor(SymbolRef sym, const CFRefCount &tf)
-       : CFRefReportVisitor(sym, tf) {}
+    CFRefLeakReportVisitor(SymbolRef sym, const CFRefCount &tf,
+                           const SummaryLogTy &log)
+       : CFRefReportVisitor(sym, tf, log) {}
 
     PathDiagnosticPiece *getEndPath(BugReporterContext &BRC,
                                     const ExplodedNode *N,
@@ -1900,18 +1897,18 @@ namespace {
 
   class CFRefReport : public BugReport {
   public:
-    CFRefReport(CFRefBug& D, const CFRefCount &tf,
+    CFRefReport(CFRefBug &D, const CFRefCount &tf, const SummaryLogTy &log,
                 ExplodedNode *n, SymbolRef sym, bool registerVisitor = true)
       : BugReport(D, D.getDescription(), n) {
       if (registerVisitor)
-        addVisitor(new CFRefReportVisitor(sym, tf));
+        addVisitor(new CFRefReportVisitor(sym, tf, log));
       addExtraTextToCFReport(*this);
     }
 
-    CFRefReport(CFRefBug& D, const CFRefCount &tf,
+    CFRefReport(CFRefBug &D, const CFRefCount &tf, const SummaryLogTy &log,
                 ExplodedNode *n, SymbolRef sym, StringRef endText)
       : BugReport(D, D.getDescription(), endText, n) {
-      addVisitor(new CFRefReportVisitor(sym, tf));
+      addVisitor(new CFRefReportVisitor(sym, tf, log));
       addExtraTextToCFReport(*this);
     }
 
@@ -1931,9 +1928,8 @@ namespace {
     const MemRegion* AllocBinding;
 
   public:
-    CFRefLeakReport(CFRefBug& D, const CFRefCount &tf,
-                    ExplodedNode *n, SymbolRef sym,
-                    ExprEngine& Eng);
+    CFRefLeakReport(CFRefBug& D, const CFRefCount &tf, const SummaryLogTy &log,
+                    ExplodedNode *n, SymbolRef sym, ExprEngine& Eng);
 
     SourceLocation getLocation() const { return AllocSite; }
   };
@@ -2063,8 +2059,8 @@ PathDiagnosticPiece *CFRefReportVisitor::VisitNode(const ExplodedNode *N,
   // program point
   SmallVector<ArgEffect, 2> AEffects;
 
-  if (const RetainSummary *Summ =
-        TF.getSummaryOfNode(BRC.getNodeResolver().getOriginalNode(N))) {
+  const ExplodedNode *OrigNode = BRC.getNodeResolver().getOriginalNode(N);
+  if (const RetainSummary *Summ = SummaryLog.lookup(OrigNode)) {
     // We only have summaries attached to nodes after evaluating CallExpr and
     // ObjCMessageExprs.
     const Stmt *S = cast<StmtPoint>(N->getLocation()).getStmt();
@@ -2404,9 +2400,9 @@ CFRefLeakReportVisitor::getEndPath(BugReporterContext &BRC,
 }
 
 CFRefLeakReport::CFRefLeakReport(CFRefBug& D, const CFRefCount &tf,
-                                 ExplodedNode *n,
+                                 const SummaryLogTy &log, ExplodedNode *n,
                                  SymbolRef sym, ExprEngine& Eng)
-: CFRefReport(D, tf, n, sym, false) {
+: CFRefReport(D, tf, log, n, sym, false) {
 
   // Most bug reports are cached at the location where they occurred.
   // With leaks, we want to unique them by the location where they were
@@ -2440,7 +2436,7 @@ CFRefLeakReport::CFRefLeakReport(CFRefBug& D, const CFRefCount &tf,
   if (AllocBinding)
     os << " and stored into '" << AllocBinding->getString() << '\'';
 
-  addVisitor(new CFRefLeakReportVisitor(sym, tf));
+  addVisitor(new CFRefLeakReportVisitor(sym, tf, log));
 }
 
 //===----------------------------------------------------------------------===//
@@ -2655,6 +2651,7 @@ class RetainReleaseChecker
   // This map is only used to ensure proper deletion of any allocated tags.
   mutable SymbolTagMap DeadSymbolTags;
 
+  mutable SummaryLogTy SummaryLog;
   mutable ARCounts::Factory ARCountFactory;
 
 public:  
@@ -3082,8 +3079,8 @@ void RetainReleaseChecker::checkSummary(const RetainSummary &Summ,
   }
 
   // Annotate the edge with summary we used.
-  // FIXME: The summary log should live on RetainReleaseChecker.
-  if (NewNode) TF.SummaryLog[NewNode] = &Summ;
+  if (NewNode)
+    SummaryLog[NewNode] = &Summ;
 }
 
 
@@ -3261,7 +3258,7 @@ void RetainReleaseChecker::processNonLeakError(const ProgramState *St,
       break;
   }
 
-  CFRefReport *report = new CFRefReport(*BT, TF, N, Sym);
+  CFRefReport *report = new CFRefReport(*BT, TF, SummaryLog, N, Sym);
   report->addRange(ErrorRange);
   C.EmitReport(report);
 }
@@ -3485,7 +3482,7 @@ void RetainReleaseChecker::checkReturnWithRetEffect(const ReturnStmt *S,
         if (N) {
           CFRefReport *report =
             new CFRefLeakReport(*static_cast<CFRefBug*>(TF.leakAtReturn), TF,
-                                N, Sym, C.getEngine());
+                                SummaryLog, N, Sym, C.getEngine());
           C.EmitReport(report);
         }
       }
@@ -3506,7 +3503,7 @@ void RetainReleaseChecker::checkReturnWithRetEffect(const ReturnStmt *S,
       if (N) {
         CFRefReport *report =
             new CFRefReport(*static_cast<CFRefBug*>(TF.returnNotOwnedForOwned),
-                            TF, N, Sym);
+                            TF, SummaryLog, N, Sym);
         C.EmitReport(report);
       }
     }
@@ -3576,7 +3573,7 @@ RetainReleaseChecker::handleAutoreleaseCounts(const ProgramState *state,
 
     CFRefReport *report =
       new CFRefReport(*static_cast<CFRefBug*>(TF.overAutorelease),
-                      TF, N, Sym, os.str());
+                      TF, SummaryLog, N, Sym, os.str());
     Eng.getBugReporter().EmitReport(report);
   }
 
@@ -3623,7 +3620,8 @@ RetainReleaseChecker::processLeaks(const ProgramState *state,
       CFRefBug *BT = static_cast<CFRefBug*>(Pred ? TF.leakWithinFunction
                                                  : TF.leakAtReturn);
       assert(BT && "BugType not initialized.");
-      CFRefLeakReport *report = new CFRefLeakReport(*BT, TF, N, *I, Eng);
+      CFRefLeakReport *report = new CFRefLeakReport(*BT, TF, SummaryLog, N,
+                                                    *I, Eng);
       Eng.getBugReporter().EmitReport(report);
     }
   }
