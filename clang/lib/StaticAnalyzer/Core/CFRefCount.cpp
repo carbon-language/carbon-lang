@@ -160,6 +160,10 @@ public:
            K == OwnedWhenTrackedReceiver;
   }
 
+  bool operator==(const RetEffect &Other) const {
+    return K == Other.K && O == Other.O;
+  }
+
   static RetEffect MakeOwnedWhenTrackedReceiver() {
     return RetEffect(OwnedWhenTrackedReceiver, ObjC);
   }
@@ -452,6 +456,14 @@ public:
   /// getReceiverEffect - Returns the effect on the receiver of the call.
   ///  This is only meaningful if the summary applies to an ObjCMessageExpr*.
   ArgEffect getReceiverEffect() const { return Receiver; }
+
+  /// Test if two retain summaries are identical. Note that merely equivalent
+  /// summaries are not necessarily identical (for example, if an explicit 
+  /// argument effect matches the default effect).
+  bool operator==(const RetainSummary &Other) const {
+    return Args == Other.Args && DefaultArgEffect == Other.DefaultArgEffect &&
+           Receiver == Other.Receiver && Ret == Other.Ret;
+  }
 };
 } // end anonymous namespace
 
@@ -654,11 +666,6 @@ class RetainSummaryManager {
 public:
   RetEffect getObjAllocRetEffect() const { return ObjCAllocRetE; }
 
-  RetainSummary *getDefaultSummary() {
-    RetainSummary *Summ = (RetainSummary*) BPAlloc.Allocate<RetainSummary>();
-    return new (Summ) RetainSummary(DefaultSummary);
-  }
-
   RetainSummary* getUnarySummary(const FunctionType* FT, UnaryFuncKind func);
 
   RetainSummary* getCFSummaryCreateRule(const FunctionDecl *FD);
@@ -828,10 +835,10 @@ public:
   RetainSummary* getCommonMethodSummary(const ObjCMethodDecl *MD,
                                         Selector S, QualType RetTy);
 
-  void updateSummaryFromAnnotations(RetainSummary &Summ,
+  void updateSummaryFromAnnotations(RetainSummary *&Summ,
                                     const ObjCMethodDecl *MD);
 
-  void updateSummaryFromAnnotations(RetainSummary &Summ,
+  void updateSummaryFromAnnotations(RetainSummary *&Summ,
                                     const FunctionDecl *FD);
 
   bool isGCEnabled() const { return GCEnabled; }
@@ -1078,12 +1085,8 @@ RetainSummary* RetainSummaryManager::getSummary(const FunctionDecl *FD) {
   }
   while (0);
 
-  if (!S)
-    S = getDefaultSummary();
-
   // Annotations override defaults.
-  assert(S);
-  updateSummaryFromAnnotations(*S, FD);
+  updateSummaryFromAnnotations(S, FD);
 
   FuncSummaries[FD] = S;
   return S;
@@ -1154,14 +1157,18 @@ RetainSummaryManager::getInitMethodSummary(QualType RetTy) {
       coreFoundation::isCFObjectRef(RetTy))
     return getPersistentSummary(ObjCInitRetE, DecRefMsg);
 
-  return getDefaultSummary();
+  return 0;
 }
 
 void
-RetainSummaryManager::updateSummaryFromAnnotations(RetainSummary &Summ,
+RetainSummaryManager::updateSummaryFromAnnotations(RetainSummary *&Summ,
                                                    const FunctionDecl *FD) {
   if (!FD)
     return;
+
+  RetainSummary BasedOnDefault(DefaultSummary);
+  if (!Summ)
+    Summ = &BasedOnDefault;
 
   // Effects on the parameters.
   unsigned parm_idx = 0;
@@ -1169,11 +1176,11 @@ RetainSummaryManager::updateSummaryFromAnnotations(RetainSummary &Summ,
          pe = FD->param_end(); pi != pe; ++pi, ++parm_idx) {
     const ParmVarDecl *pd = *pi;
     if (pd->getAttr<NSConsumedAttr>()) {
-      if (!GCEnabled)
-        Summ.addArg(AF, parm_idx, DecRef);      
-    }
-    else if(pd->getAttr<CFConsumedAttr>()) {
-      Summ.addArg(AF, parm_idx, DecRef);      
+      if (!GCEnabled) {
+        Summ->addArg(AF, parm_idx, DecRef);      
+      }
+    } else if (pd->getAttr<CFConsumedAttr>()) {
+      Summ->addArg(AF, parm_idx, DecRef);      
     }   
   }
   
@@ -1182,40 +1189,50 @@ RetainSummaryManager::updateSummaryFromAnnotations(RetainSummary &Summ,
   // Determine if there is a special return effect for this method.
   if (cocoa::isCocoaObjectRef(RetTy)) {
     if (FD->getAttr<NSReturnsRetainedAttr>()) {
-      Summ.setRetEffect(ObjCAllocRetE);
+      Summ->setRetEffect(ObjCAllocRetE);
     }
     else if (FD->getAttr<CFReturnsRetainedAttr>()) {
-      Summ.setRetEffect(RetEffect::MakeOwned(RetEffect::CF, true));
+      Summ->setRetEffect(RetEffect::MakeOwned(RetEffect::CF, true));
     }
     else if (FD->getAttr<NSReturnsNotRetainedAttr>()) {
-      Summ.setRetEffect(RetEffect::MakeNotOwned(RetEffect::ObjC));
+      Summ->setRetEffect(RetEffect::MakeNotOwned(RetEffect::ObjC));
     }
     else if (FD->getAttr<CFReturnsNotRetainedAttr>()) {
-      Summ.setRetEffect(RetEffect::MakeNotOwned(RetEffect::CF));
+      Summ->setRetEffect(RetEffect::MakeNotOwned(RetEffect::CF));
+    }
+  } else if (RetTy->getAs<PointerType>()) {
+    if (FD->getAttr<CFReturnsRetainedAttr>()) {
+      Summ->setRetEffect(RetEffect::MakeOwned(RetEffect::CF, true));
+    }
+    else if (FD->getAttr<CFReturnsNotRetainedAttr>()) {
+      Summ->setRetEffect(RetEffect::MakeNotOwned(RetEffect::CF));
     }
   }
-  else if (RetTy->getAs<PointerType>()) {
-    if (FD->getAttr<CFReturnsRetainedAttr>()) {
-      Summ.setRetEffect(RetEffect::MakeOwned(RetEffect::CF, true));
-    }
-    else if (FD->getAttr<CFReturnsNotRetainedAttr>()) {
-      Summ.setRetEffect(RetEffect::MakeNotOwned(RetEffect::CF));
-    }
+
+  if (Summ == &BasedOnDefault) {
+    if (!(*Summ == DefaultSummary))
+      Summ = copySummary(Summ);
+    else
+      Summ = 0;
   }
 }
 
 void
-RetainSummaryManager::updateSummaryFromAnnotations(RetainSummary &Summ,
+RetainSummaryManager::updateSummaryFromAnnotations(RetainSummary *&Summ,
                                                   const ObjCMethodDecl *MD) {
   if (!MD)
     return;
+
+  RetainSummary BasedOnDefault = DefaultSummary;
+  if (!Summ)
+    Summ = &BasedOnDefault;
 
   bool isTrackedLoc = false;
 
   // Effects on the receiver.
   if (MD->getAttr<NSConsumesSelfAttr>()) {
     if (!GCEnabled)
-      Summ.setReceiverEffect(DecRefMsg);      
+      Summ->setReceiverEffect(DecRefMsg);      
   }
   
   // Effects on the parameters.
@@ -1225,21 +1242,21 @@ RetainSummaryManager::updateSummaryFromAnnotations(RetainSummary &Summ,
     const ParmVarDecl *pd = *pi;
     if (pd->getAttr<NSConsumedAttr>()) {
       if (!GCEnabled)
-        Summ.addArg(AF, parm_idx, DecRef);      
+        Summ->addArg(AF, parm_idx, DecRef);      
     }
     else if(pd->getAttr<CFConsumedAttr>()) {
-      Summ.addArg(AF, parm_idx, DecRef);      
+      Summ->addArg(AF, parm_idx, DecRef);      
     }   
   }
   
   // Determine if there is a special return effect for this method.
   if (cocoa::isCocoaObjectRef(MD->getResultType())) {
     if (MD->getAttr<NSReturnsRetainedAttr>()) {
-      Summ.setRetEffect(ObjCAllocRetE);
+      Summ->setRetEffect(ObjCAllocRetE);
       return;
     }
     if (MD->getAttr<NSReturnsNotRetainedAttr>()) {
-      Summ.setRetEffect(RetEffect::MakeNotOwned(RetEffect::ObjC));
+      Summ->setRetEffect(RetEffect::MakeNotOwned(RetEffect::ObjC));
       return;
     }
 
@@ -1251,9 +1268,16 @@ RetainSummaryManager::updateSummaryFromAnnotations(RetainSummary &Summ,
 
   if (isTrackedLoc) {
     if (MD->getAttr<CFReturnsRetainedAttr>())
-      Summ.setRetEffect(RetEffect::MakeOwned(RetEffect::CF, true));
+      Summ->setRetEffect(RetEffect::MakeOwned(RetEffect::CF, true));
     else if (MD->getAttr<CFReturnsNotRetainedAttr>())
-      Summ.setRetEffect(RetEffect::MakeNotOwned(RetEffect::CF));
+      Summ->setRetEffect(RetEffect::MakeNotOwned(RetEffect::CF));
+  }
+
+  if (Summ == &BasedOnDefault) {
+    if (!(*Summ == DefaultSummary))
+      Summ = copySummary(Summ);
+    else
+      Summ = 0;
   }
 }
 
@@ -1310,7 +1334,7 @@ RetainSummaryManager::getCommonMethodSummary(const ObjCMethodDecl *MD,
   }
 
   if (ScratchArgs.isEmpty() && ReceiverEff == DoNothing)
-    return getDefaultSummary();
+    return 0;
 
   return getPersistentSummary(RetEffect::MakeNoRet(), ReceiverEff, MayEscape);
 }
@@ -1355,8 +1379,7 @@ RetainSummaryManager::getInstanceMethodSummary(const ObjCMessage &msg,
 
   // FIXME: The receiver could be a reference to a class, meaning that
   //  we should use the class method.
-  RetainSummary *Summ = getInstanceMethodSummary(msg, ID);
-  return Summ ? Summ : getDefaultSummary();
+  return getInstanceMethodSummary(msg, ID);
 }
 
 RetainSummary*
@@ -1379,7 +1402,7 @@ RetainSummaryManager::getInstanceMethodSummary(Selector S,
       Summ = getCommonMethodSummary(MD, S, RetTy);
 
     // Annotations override defaults.
-    updateSummaryFromAnnotations(*Summ, MD);
+    updateSummaryFromAnnotations(Summ, MD);
 
     // Memoize the summary.
     ObjCMethodSummaries[ObjCSummaryKey(ID, ClsName, S)] = Summ;
@@ -1399,8 +1422,10 @@ RetainSummaryManager::getClassMethodSummary(Selector S, IdentifierInfo *ClsName,
 
   if (!Summ) {
     Summ = getCommonMethodSummary(MD, S, RetTy);
+
     // Annotations override defaults.
-    updateSummaryFromAnnotations(*Summ, MD);
+    updateSummaryFromAnnotations(Summ, MD);
+
     // Memoize the summary.
     ObjCClassMethodSummaries[ObjCSummaryKey(ID, ClsName, S)] = Summ;
   }
@@ -2743,10 +2768,13 @@ void CFRefCount::evalReturn(ExplodedNodeSet &Dst,
   Decl const *CD = &Pred->getCodeDecl();
 
   if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(CD)) {
-    const RetainSummary &Summ = *Summaries.getMethodSummary(MD);
+    // Unlike regular functions, /all/ ObjC methods are assumed to always
+    // follow Cocoa retain-count conventions, not just those with special
+    // names or attributes.
+    const RetainSummary *Summ = Summaries.getMethodSummary(MD);
+    RetEffect RE = Summ ? Summ->getRetEffect() : RetEffect::MakeNoRet();
     return evalReturnWithRetEffect(Dst, Eng, Builder, S, 
-                                   Pred, Summ.getRetEffect(), X,
-                                   Sym, state);
+                                   Pred, RE, X, Sym, state);
   }
 
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(CD)) {
