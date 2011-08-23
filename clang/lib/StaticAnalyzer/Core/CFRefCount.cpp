@@ -1641,7 +1641,6 @@ public:
   RetainSummaryManager Summaries;
   SummaryLogTy SummaryLog;
   const LangOptions&   LOpts;
-  ARCounts::Factory    ARCountFactory;
 
   BugType *useAfterRelease, *releaseNotOwned;
   BugType *deallocGC, *deallocNotOwned;
@@ -2631,144 +2630,6 @@ void CFRefCount::evalObjCMessage(ExplodedNodeSet &Dst,
                     /* Callee = */ 0, Pred, state);
 }
 
-const ProgramState * CFRefCount::Update(const ProgramState * state,
-                                        SymbolRef sym,
-                                        RefVal V,
-                                        ArgEffect E,
-                                        RefVal::Kind& hasErr) {
-
-  // In GC mode [... release] and [... retain] do nothing.
-  switch (E) {
-    default: break;
-    case IncRefMsg: E = isARCorGCEnabled() ? DoNothing : IncRef; break;
-    case DecRefMsg: E = isARCorGCEnabled() ? DoNothing : DecRef; break;
-    case MakeCollectable: E = isGCEnabled() ? DecRef : DoNothing; break;
-    case NewAutoreleasePool: E = isGCEnabled() ? DoNothing :
-                                                 NewAutoreleasePool; break;
-  }
-
-  // Handle all use-after-releases.
-  if (!isGCEnabled() && V.getKind() == RefVal::Released) {
-    V = V ^ RefVal::ErrorUseAfterRelease;
-    hasErr = V.getKind();
-    return state->set<RefBindings>(sym, V);
-  }
-
-  switch (E) {
-    case DecRefMsg:
-    case IncRefMsg:
-    case MakeCollectable:
-      assert(false &&
-             "DecRefMsg/IncRefMsg/MakeCollectable already transformed");
-      return state;
-      
-    case Dealloc:
-      // Any use of -dealloc in GC is *bad*.
-      if (isGCEnabled()) {
-        V = V ^ RefVal::ErrorDeallocGC;
-        hasErr = V.getKind();
-        break;
-      }
-
-      switch (V.getKind()) {
-        default:
-          assert(false && "Invalid case.");
-        case RefVal::Owned:
-          // The object immediately transitions to the released state.
-          V = V ^ RefVal::Released;
-          V.clearCounts();
-          return state->set<RefBindings>(sym, V);
-        case RefVal::NotOwned:
-          V = V ^ RefVal::ErrorDeallocNotOwned;
-          hasErr = V.getKind();
-          break;
-      }
-      break;
-
-    case NewAutoreleasePool:
-      assert(!isGCEnabled());
-      return state->add<AutoreleaseStack>(sym);
-
-    case MayEscape:
-      if (V.getKind() == RefVal::Owned) {
-        V = V ^ RefVal::NotOwned;
-        break;
-      }
-
-      // Fall-through.
-
-    case DoNothingByRef:
-    case DoNothing:
-      return state;
-
-    case Autorelease:
-      if (isGCEnabled())
-        return state;
-
-      // Update the autorelease counts.
-      state = SendAutorelease(state, ARCountFactory, sym);
-      V = V.autorelease();
-      break;
-
-    case StopTracking:
-      return state->remove<RefBindings>(sym);
-
-    case IncRef:
-      switch (V.getKind()) {
-        default:
-          assert(false);
-
-        case RefVal::Owned:
-        case RefVal::NotOwned:
-          V = V + 1;
-          break;
-        case RefVal::Released:
-          // Non-GC cases are handled above.
-          assert(isGCEnabled());
-          V = (V ^ RefVal::Owned) + 1;
-          break;
-      }
-      break;
-
-    case SelfOwn:
-      V = V ^ RefVal::NotOwned;
-      // Fall-through.
-    case DecRef:
-    case DecRefBridgedTransfered:
-      switch (V.getKind()) {
-        default:
-          // case 'RefVal::Released' handled above.
-          assert (false);
-
-        case RefVal::Owned:
-          assert(V.getCount() > 0);
-          if (V.getCount() == 1)
-            V = V ^ (E == DecRefBridgedTransfered ? 
-                      RefVal::NotOwned : RefVal::Released);
-          V = V - 1;
-          break;
-
-        case RefVal::NotOwned:
-          if (V.getCount() > 0)
-            V = V - 1;
-          else {
-            V = V ^ RefVal::ErrorReleaseNotOwned;
-            hasErr = V.getKind();
-          }
-          break;
-
-        case RefVal::Released:
-          // Non-GC cases are handled above.
-          assert(isGCEnabled());
-          V = V ^ RefVal::ErrorUseAfterRelease;
-          hasErr = V.getKind();
-          break;
-      }
-      break;
-  }
-  return state->set<RefBindings>(sym, V);
-}
-
 //===----------------------------------------------------------------------===//
 // Pieces of the retain/release checker implemented using a CheckerVisitor.
 // More pieces of the retain/release checker will be migrated to this interface
@@ -2793,6 +2654,8 @@ class RetainReleaseChecker
 
   // This map is only used to ensure proper deletion of any allocated tags.
   mutable SymbolTagMap DeadSymbolTags;
+
+  mutable ARCounts::Factory ARCountFactory;
 
 public:  
 
@@ -2830,6 +2693,10 @@ public:
                                               
   void checkDeadSymbols(SymbolReaper &SymReaper, CheckerContext &C) const;
   void checkEndPath(EndOfFunctionNodeBuilder &Builder, ExprEngine &Eng) const;
+
+  const ProgramState *updateSymbol(const ProgramState *state, SymbolRef sym,
+                                   RefVal V, ArgEffect E,
+                                   RefVal::Kind &hasErr) const;
 
   void processNonLeakError(const ProgramState *St, SourceRange ErrorRange,
                            RefVal::Kind ErrorKind, SymbolRef Sym,
@@ -3026,14 +2893,12 @@ void RetainReleaseChecker::checkPostStmt(const CastExpr *CE,
   if (!T)
     return;
 
-  // This is gross.  Once the checker and CFRefCount are unified,
-  // this will go away.
-  CFRefCount &cf = static_cast<CFRefCount&>(C.getEngine().getTF());
   RefVal::Kind hasErr = (RefVal::Kind) 0;
-  state = cf.Update(state, Sym, *T, AE, hasErr);
+  state = updateSymbol(state, Sym, *T, AE, hasErr);
   
   if (hasErr) {
-    
+    // FIXME: If we get an error during a bridge cast, should we report it?
+    // Should we assert that there is no error?
     return;
   }
 
@@ -3101,7 +2966,7 @@ void RetainReleaseChecker::checkSummary(const RetainSummary &Summ,
                                         const CallOrObjCMessage &CallOrMsg,
                                         InstanceReceiver Receiver,
                                         CheckerContext &C) const {
-  // FIXME: This goes away once the Update() method moves to the checker.
+  // FIXME: This goes away when the RetainSummaryManager moves to the checker.
   CFRefCount &TF = static_cast<CFRefCount&>(C.getEngine().getTF());
 
   const ProgramState *state = C.getState();
@@ -3116,7 +2981,7 @@ void RetainReleaseChecker::checkSummary(const RetainSummary &Summ,
 
     if (SymbolRef Sym = V.getAsLocSymbol()) {
       if (RefBindings::data_type *T = state->get<RefBindings>(Sym)) {
-        state = TF.Update(state, Sym, *T, Summ.getArg(idx), hasErr);
+        state = updateSymbol(state, Sym, *T, Summ.getArg(idx), hasErr);
         if (hasErr) {
           ErrorRange = CallOrMsg.getArgSourceRange(idx);
           ErrorSym = Sym;
@@ -3132,7 +2997,7 @@ void RetainReleaseChecker::checkSummary(const RetainSummary &Summ,
     if (SymbolRef Sym = Receiver.getSValAsScalarOrLoc(state).getAsLocSymbol()) {
       if (const RefVal *T = state->get<RefBindings>(Sym)) {
         ReceiverIsTracked = true;
-        state = TF.Update(state, Sym, *T, Summ.getReceiverEffect(), hasErr);
+        state = updateSymbol(state, Sym, *T, Summ.getReceiverEffect(), hasErr);
         if (hasErr) {
           ErrorRange = Receiver.getSourceRange();
           ErrorSym = Sym;
@@ -3219,6 +3084,149 @@ void RetainReleaseChecker::checkSummary(const RetainSummary &Summ,
   // Annotate the edge with summary we used.
   // FIXME: The summary log should live on RetainReleaseChecker.
   if (NewNode) TF.SummaryLog[NewNode] = &Summ;
+}
+
+
+const ProgramState *
+RetainReleaseChecker::updateSymbol(const ProgramState *state, SymbolRef sym,
+                                   RefVal V, ArgEffect E,
+                                   RefVal::Kind &hasErr) const {
+  // FIXME: This will go away when the ARC/GC state moves to the checker.
+  ExprEngine *Eng = 
+    static_cast<ExprEngine*>(state->getStateManager().getOwningEngine());
+  CFRefCount &TF = static_cast<CFRefCount&>(Eng->getTF());
+
+  // In GC mode [... release] and [... retain] do nothing.
+  switch (E) {
+    default: break;
+    case IncRefMsg: E = TF.isARCorGCEnabled() ? DoNothing : IncRef; break;
+    case DecRefMsg: E = TF.isARCorGCEnabled() ? DoNothing : DecRef; break;
+    case MakeCollectable: E = TF.isGCEnabled() ? DecRef : DoNothing; break;
+    case NewAutoreleasePool: E = TF.isGCEnabled() ? DoNothing :
+                                                    NewAutoreleasePool; break;
+  }
+
+  // Handle all use-after-releases.
+  if (!TF.isGCEnabled() && V.getKind() == RefVal::Released) {
+    V = V ^ RefVal::ErrorUseAfterRelease;
+    hasErr = V.getKind();
+    return state->set<RefBindings>(sym, V);
+  }
+
+  switch (E) {
+    case DecRefMsg:
+    case IncRefMsg:
+    case MakeCollectable:
+      llvm_unreachable("DecRefMsg/IncRefMsg/MakeCollectable already converted");
+      return state;
+
+    case Dealloc:
+      // Any use of -dealloc in GC is *bad*.
+      if (TF.isGCEnabled()) {
+        V = V ^ RefVal::ErrorDeallocGC;
+        hasErr = V.getKind();
+        break;
+      }
+
+      switch (V.getKind()) {
+        default:
+          llvm_unreachable("Invalid RefVal state for an explicit dealloc.");
+          break;
+        case RefVal::Owned:
+          // The object immediately transitions to the released state.
+          V = V ^ RefVal::Released;
+          V.clearCounts();
+          return state->set<RefBindings>(sym, V);
+        case RefVal::NotOwned:
+          V = V ^ RefVal::ErrorDeallocNotOwned;
+          hasErr = V.getKind();
+          break;
+      }
+      break;
+
+    case NewAutoreleasePool:
+      assert(!TF.isGCEnabled());
+      return state->add<AutoreleaseStack>(sym);
+
+    case MayEscape:
+      if (V.getKind() == RefVal::Owned) {
+        V = V ^ RefVal::NotOwned;
+        break;
+      }
+
+      // Fall-through.
+
+    case DoNothingByRef:
+    case DoNothing:
+      return state;
+
+    case Autorelease:
+      if (TF.isGCEnabled())
+        return state;
+
+      // Update the autorelease counts.
+      state = SendAutorelease(state, ARCountFactory, sym);
+      V = V.autorelease();
+      break;
+
+    case StopTracking:
+      return state->remove<RefBindings>(sym);
+
+    case IncRef:
+      switch (V.getKind()) {
+        default:
+          llvm_unreachable("Invalid RefVal state for a retain.");
+          break;
+        case RefVal::Owned:
+        case RefVal::NotOwned:
+          V = V + 1;
+          break;
+        case RefVal::Released:
+          // Non-GC cases are handled above.
+          assert(TF.isGCEnabled());
+          V = (V ^ RefVal::Owned) + 1;
+          break;
+      }
+      break;
+
+    case SelfOwn:
+      V = V ^ RefVal::NotOwned;
+      // Fall-through.
+    case DecRef:
+    case DecRefBridgedTransfered:
+      switch (V.getKind()) {
+        default:
+          // case 'RefVal::Released' handled above.
+          llvm_unreachable("Invalid RefVal state for a release.");
+          break;
+
+        case RefVal::Owned:
+          assert(V.getCount() > 0);
+          if (V.getCount() == 1)
+            V = V ^ (E == DecRefBridgedTransfered ? 
+                      RefVal::NotOwned : RefVal::Released);
+          V = V - 1;
+          break;
+
+        case RefVal::NotOwned:
+          if (V.getCount() > 0)
+            V = V - 1;
+          else {
+            V = V ^ RefVal::ErrorReleaseNotOwned;
+            hasErr = V.getKind();
+          }
+          break;
+
+        case RefVal::Released:
+          // Non-GC cases are handled above.
+          assert(TF.isGCEnabled());
+          V = V ^ RefVal::ErrorUseAfterRelease;
+          hasErr = V.getKind();
+          break;
+      }
+      break;
+  }
+  return state->set<RefBindings>(sym, V);
 }
 
 void RetainReleaseChecker::processNonLeakError(const ProgramState *St,
