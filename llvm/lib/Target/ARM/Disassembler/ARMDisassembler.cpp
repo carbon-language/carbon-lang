@@ -2392,9 +2392,15 @@ static DecodeStatus DecodeT2LoadShift(llvm::MCInst &Inst, unsigned Insn,
                               uint64_t Address, const void *Decoder) {
   DecodeStatus S = Success;
 
-  if (Inst.getOpcode() != ARM::t2PLDs) {
-    unsigned Rt = fieldFromInstruction32(Insn, 12, 4);
-    CHECK(S, DecodeGPRRegisterClass(Inst, Rt, Address, Decoder));
+  switch (Inst.getOpcode()) {
+    case ARM::t2PLDs:
+    case ARM::t2PLDWs:
+    case ARM::t2PLIs:
+      break;
+    default: {
+      unsigned Rt = fieldFromInstruction32(Insn, 12, 4);
+      CHECK(S, DecodeGPRRegisterClass(Inst, Rt, Address, Decoder));
+    }
   }
 
   unsigned Rn = fieldFromInstruction32(Insn, 16, 4);
