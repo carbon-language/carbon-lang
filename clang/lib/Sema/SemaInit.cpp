@@ -249,6 +249,9 @@ class InitListChecker {
                                InitListExpr *ILE, bool &RequiresSecondPass);
   void FillInValueInitializations(const InitializedEntity &Entity,
                                   InitListExpr *ILE, bool &RequiresSecondPass);
+  bool CheckFlexibleArrayInit(const InitializedEntity &Entity,
+                              Expr *InitExpr, FieldDecl *Field,
+                              bool TopLevelObject);
 public:
   InitListChecker(Sema &S, const InitializedEntity &Entity,
                   InitListExpr *IL, QualType &T);
@@ -1113,6 +1116,43 @@ void InitListChecker::CheckArrayType(const InitializedEntity &Entity,
   }
 }
 
+bool InitListChecker::CheckFlexibleArrayInit(const InitializedEntity &Entity,
+                                             Expr *InitExpr,
+                                             FieldDecl *Field,
+                                             bool TopLevelObject) {
+  // Handle GNU flexible array initializers.
+  unsigned FlexArrayDiag;
+  if (isa<InitListExpr>(InitExpr) &&
+      cast<InitListExpr>(InitExpr)->getNumInits() == 0) {
+    // Empty flexible array init always allowed as an extension
+    FlexArrayDiag = diag::ext_flexible_array_init;
+  } else if (SemaRef.getLangOptions().CPlusPlus) {
+    // Disallow flexible array init in C++; it is not required for gcc
+    // compatibility, and it needs work to IRGen correctly in general.
+    FlexArrayDiag = diag::err_flexible_array_init;
+  } else if (!TopLevelObject) {
+    // Disallow flexible array init on non-top-level object
+    FlexArrayDiag = diag::err_flexible_array_init;
+  } else if (Entity.getKind() != InitializedEntity::EK_Variable) {
+    // Disallow flexible array init on anything which is not a variable.
+    FlexArrayDiag = diag::err_flexible_array_init;
+  } else if (cast<VarDecl>(Entity.getDecl())->hasLocalStorage()) {
+    // Disallow flexible array init on local variables.
+    FlexArrayDiag = diag::err_flexible_array_init;
+  } else {
+    // Allow other cases.
+    FlexArrayDiag = diag::ext_flexible_array_init;
+  }
+  
+  SemaRef.Diag(InitExpr->getSourceRange().getBegin(),
+               FlexArrayDiag)
+    << InitExpr->getSourceRange().getBegin();
+  SemaRef.Diag(Field->getLocation(), diag::note_flexible_array_member)
+    << Field;
+
+  return FlexArrayDiag != diag::ext_flexible_array_init;
+}
+
 void InitListChecker::CheckStructUnionTypes(const InitializedEntity &Entity,
                                             InitListExpr *IList,
                                             QualType DeclType,
@@ -1239,24 +1279,11 @@ void InitListChecker::CheckStructUnionTypes(const InitializedEntity &Entity,
       Index >= IList->getNumInits())
     return;
 
-  // Handle GNU flexible array initializers.
-  if (!TopLevelObject &&
-      (!isa<InitListExpr>(IList->getInit(Index)) ||
-       cast<InitListExpr>(IList->getInit(Index))->getNumInits() > 0)) {
-    SemaRef.Diag(IList->getInit(Index)->getSourceRange().getBegin(),
-                  diag::err_flexible_array_init_nonempty)
-      << IList->getInit(Index)->getSourceRange().getBegin();
-    SemaRef.Diag(Field->getLocation(), diag::note_flexible_array_member)
-      << *Field;
+  if (CheckFlexibleArrayInit(Entity, IList->getInit(Index), *Field,
+                             TopLevelObject)) {
     hadError = true;
     ++Index;
     return;
-  } else {
-    SemaRef.Diag(IList->getInit(Index)->getSourceRange().getBegin(),
-                 diag::ext_flexible_array_init)
-      << IList->getInit(Index)->getSourceRange().getBegin();
-    SemaRef.Diag(Field->getLocation(), diag::note_flexible_array_member)
-      << *Field;
   }
 
   InitializedEntity MemberEntity =
@@ -1567,16 +1594,10 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
         Invalid = true;
       }
 
-      // Handle GNU flexible array initializers.
-      if (!Invalid && !TopLevelObject &&
-          cast<InitListExpr>(DIE->getInit())->getNumInits() > 0) {
-        SemaRef.Diag(DIE->getSourceRange().getBegin(),
-                      diag::err_flexible_array_init_nonempty)
-          << DIE->getSourceRange().getBegin();
-        SemaRef.Diag(Field->getLocation(), diag::note_flexible_array_member)
-          << *Field;
+      // Check GNU flexible array initializer.
+      if (!Invalid && CheckFlexibleArrayInit(Entity, DIE->getInit(), *Field,
+                                             TopLevelObject))
         Invalid = true;
-      }
 
       if (Invalid) {
         ++Index;

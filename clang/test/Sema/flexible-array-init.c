@@ -7,9 +7,7 @@ struct one {
 struct one x2 = { 5, 1, 2, 3 }; // expected-warning{{flexible array initialization is a GNU extension}}
 
 void test() {
-  struct one x3 = {5, {1, 2, 3}}; // \
-   // expected-warning{{flexible array initialization is a GNU extension}} \
-   // expected-error {{non-static initialization of a variable with flexible array member}}
+  struct one x3 = {5, {1, 2, 3}}; // expected-error{{initialization of flexible array member is not allowed}}
   struct one x3a = { 5 };
   struct one x3b = { .a = 5 };
   struct one x3c = { 5, {} }; // expected-warning{{use of GNU empty initializer extension}} \
@@ -19,22 +17,23 @@ void test() {
 
 struct foo { 
   int x; 
-  int y[]; // expected-note 6 {{initialized flexible array member 'y' is here}}
+  int y[]; // expected-note 8 {{initialized flexible array member 'y' is here}}
 }; 
 struct bar { struct foo z; }; // expected-warning {{'z' may not be nested in a struct due to flexible array member}}
      
 struct foo a = { 1, { 2, 3, 4 } };        // expected-warning{{flexible array initialization is a GNU extension}}
-struct bar b = { { 1, { 2, 3, 4 } } };    // expected-error{{non-empty initialization of flexible array member inside subobject}}
+struct bar b = { { 1, { 2, 3, 4 } } };    // expected-error{{initialization of flexible array member is not allowed}}
 struct bar c = { { 1, { } } };            // // expected-warning{{flexible array initialization is a GNU extension}} \
               // expected-warning{{use of GNU empty initializer extension}} \
               // expected-warning{{zero size arrays are an extension}}
 struct foo d[1] = { { 1, { 2, 3, 4 } } };  // expected-warning{{'struct foo' may not be used as an array element due to flexible array member}} \
-              // expected-error{{non-empty initialization of flexible array member inside subobject}}
+              // expected-error{{initialization of flexible array member is not allowed}}
 
-struct foo desig_foo = { .y = {2, 3, 4} };
+struct foo desig_foo = { .y = {2, 3, 4} }; // expected-warning{{flexible array initialization is a GNU extension}}
 struct bar desig_bar = { .z.y = { } }; // expected-warning{{use of GNU empty initializer extension}} \
-  // expected-warning{{zero size arrays are an extension}}
-struct bar desig_bar2 = { .z.y = { 2, 3, 4} }; // expected-error{{non-empty initialization of flexible array member inside subobject}}
+  // expected-warning{{zero size arrays are an extension}} \
+  // expected-warning{{flexible array initialization is a GNU extension}}
+struct bar desig_bar2 = { .z.y = { 2, 3, 4} }; // expected-error{{initialization of flexible array member is not allowed}}
 struct foo design_foo2 = { .y = 2 }; // expected-error{{flexible array requires brace-enclosed initializer}}
 
 struct point {
@@ -68,13 +67,25 @@ struct Y {
 // PR8217
 struct PR8217a {
   int  i;
-  char v[];
+  char v[]; // expected-note 2 {{initialized flexible array member 'v' is here}}
 };
 
 void PR8217() {
-  struct PR8217a foo1 = { .i = 0, .v = "foo" }; // expected-error {{non-static initialization of a variable with flexible array member}}
+  struct PR8217a foo1 = { .i = 0, .v = "foo" }; // expected-error {{initialization of flexible array member is not allowed}}
   struct PR8217a foo2 = { .i = 0 };
-  struct PR8217a foo3 = { .i = 0, .v = { 'b', 'a', 'r', '\0' } }; // expected-error {{non-static initialization of a variable with flexible array member}}
+  struct PR8217a foo3 = { .i = 0, .v = { 'b', 'a', 'r', '\0' } }; // expected-error {{initialization of flexible array member is not allowed}}
   struct PR8217a bar;
 }
 
+typedef struct PR10648 {
+ unsigned long n;
+ int v[]; // expected-note {{initialized flexible array member 'v' is here}}
+} PR10648;
+int f10648() { 
+  return (PR10648){2, {3, 4}}.v[1]; // expected-error {{initialization of flexible array member is not allowed}}
+}
+
+struct FlexWithUnnamedBitfield { int : 10; int x; int y[]; }; // expected-note {{initialized flexible array member 'y' is here}}
+void TestFlexWithUnnamedBitfield() {
+  struct FlexWithUnnamedBitfield x = {10, {3}}; // expected-error {{initialization of flexible array member is not allowed}}
+}
