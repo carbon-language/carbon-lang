@@ -88,6 +88,11 @@ private:
       BT.reset(new BugType("Improper use of SecKeychain API", "Mac OS API"));
   }
 
+  void generateDeallocatorMismatchReport(const AllocationState &AS,
+                                         const Expr *ArgExpr,
+                                         CheckerContext &C,
+                                         SymbolRef ArgSM) const;
+
   BugReport *generateAllocatedDataNotReleasedReport(const AllocationState &AS,
                                                     ExplodedNode *N) const;
 
@@ -213,6 +218,31 @@ bool MacOSKeychainAPIChecker::definitelyReturnedError(SymbolRef RetSym,
   return false;
 }
 
+// Report deallocator mismatch. Remove the region from tracking - reporting a
+// missing free error after this one is redundant.
+void MacOSKeychainAPIChecker::
+  generateDeallocatorMismatchReport(const AllocationState &AS,
+                                    const Expr *ArgExpr,
+                                    CheckerContext &C,
+                                    SymbolRef ArgSM) const {
+  const ProgramState *State = C.getState();
+  State = State->remove<AllocatedData>(ArgSM);
+  ExplodedNode *N = C.generateNode(State);
+
+  if (!N)
+    return;
+  initBugType();
+  llvm::SmallString<80> sbuf;
+  llvm::raw_svector_ostream os(sbuf);
+  unsigned int PDeallocIdx = FunctionsToTrack[AS.AllocatorIdx].DeallocatorIdx;
+
+  os << "Deallocator doesn't match the allocator: '"
+     << FunctionsToTrack[PDeallocIdx].Name << "' should be used.";
+  BugReport *Report = new BugReport(*BT, os.str(), N);
+  Report->addRange(ArgExpr->getSourceRange());
+  C.EmitReport(Report);
+}
+
 void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
                                            CheckerContext &C) const {
   const ProgramState *State = C.getState();
@@ -309,23 +339,10 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
   // from the next state.
   State = State->remove<AllocatedData>(ArgSM);
 
-  // Check if the proper deallocator is used. If not, report, but also stop 
-  // tracking the allocated symbol to avoid reporting a missing free after the
-  // deallocator mismatch error.
+  // Check if the proper deallocator is used.
   unsigned int PDeallocIdx = FunctionsToTrack[AS->AllocatorIdx].DeallocatorIdx;
   if (PDeallocIdx != idx || !isValidDeallocator) {
-    ExplodedNode *N = C.generateNode(State);
-    if (!N)
-      return;
-    initBugType();
-
-    llvm::SmallString<80> sbuf;
-    llvm::raw_svector_ostream os(sbuf);
-    os << "Deallocator doesn't match the allocator: '"
-       << FunctionsToTrack[PDeallocIdx].Name << "' should be used.";
-    BugReport *Report = new BugReport(*BT, os.str(), N);
-    Report->addRange(ArgExpr->getSourceRange());
-    C.EmitReport(Report);
+    generateDeallocatorMismatchReport(*AS, ArgExpr, C, ArgSM);
     return;
   }
 
