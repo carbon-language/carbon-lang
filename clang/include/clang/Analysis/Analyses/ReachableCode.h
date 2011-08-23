@@ -45,7 +45,7 @@ public:
 
 /// ScanReachableFromBlock - Mark all blocks reachable from Start.
 /// Returns the total number of blocks that were marked reachable.  
-unsigned ScanReachableFromBlock(const CFGBlock &Start,
+unsigned ScanReachableFromBlock(const CFGBlock *Start,
                                 llvm::BitVector &Reachable);
 
 void FindUnreachableCode(AnalysisContext &AC, Callback &CB);

@@ -93,7 +93,7 @@ static ControlFlowKind CheckFallThrough(AnalysisContext &AC) {
   // The CFG leaves in dead things, and we don't want the dead code paths to
   // confuse us, so we mark all live things first.
   llvm::BitVector live(cfg->getNumBlockIDs());
-  unsigned count = reachable_code::ScanReachableFromBlock(cfg->getEntry(),
+  unsigned count = reachable_code::ScanReachableFromBlock(&cfg->getEntry(),
                                                           live);
 
   bool AddEHEdges = AC.getAddEHEdges();
@@ -108,7 +108,7 @@ static ControlFlowKind CheckFallThrough(AnalysisContext &AC) {
           if (b.getTerminator() && isa<CXXTryStmt>(b.getTerminator()))
             // When not adding EH edges from calls, catch clauses
             // can otherwise seem dead.  Avoid noting them as dead.
-            count += reachable_code::ScanReachableFromBlock(b, live);
+            count += reachable_code::ScanReachableFromBlock(&b, live);
           continue;
         }
       }
@@ -1226,13 +1226,19 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
   // prototyping, but we need a way for analyses to say what expressions they
   // expect to always be CFGElements and then fill in the BuildOptions
   // appropriately.  This is essentially a layering violation.
-  AC.getCFGBuildOptions()
-    .setAlwaysAdd(Stmt::BinaryOperatorClass)
-    .setAlwaysAdd(Stmt::BlockExprClass)
-    .setAlwaysAdd(Stmt::CStyleCastExprClass)
-    .setAlwaysAdd(Stmt::DeclRefExprClass)
-    .setAlwaysAdd(Stmt::ImplicitCastExprClass)
-    .setAlwaysAdd(Stmt::UnaryOperatorClass);
+  if (P.enableCheckUnreachable) {
+    // Unreachable code analysis requires a linearized CFG.
+    AC.getCFGBuildOptions().setAllAlwaysAdd();
+  }
+  else {
+    AC.getCFGBuildOptions()
+      .setAlwaysAdd(Stmt::BinaryOperatorClass)
+      .setAlwaysAdd(Stmt::BlockExprClass)
+      .setAlwaysAdd(Stmt::CStyleCastExprClass)
+      .setAlwaysAdd(Stmt::DeclRefExprClass)
+      .setAlwaysAdd(Stmt::ImplicitCastExprClass)
+      .setAlwaysAdd(Stmt::UnaryOperatorClass);
+  }
 
   // Construct the analysis context with the specified CFG build options.
   

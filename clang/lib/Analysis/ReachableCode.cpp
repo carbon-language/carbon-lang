@@ -25,22 +25,159 @@
 
 using namespace clang;
 
-static SourceLocation GetUnreachableLoc(const CFGBlock &b, SourceRange &R1,
+namespace {
+class DeadCodeScan {
+  llvm::BitVector Visited;
+  llvm::BitVector &Reachable;
+  llvm::SmallVector<const CFGBlock *, 10> WorkList;
+  
+  typedef llvm::SmallVector<std::pair<const CFGBlock *, const Stmt *>, 12>
+      DeferredLocsTy;
+  
+  DeferredLocsTy DeferredLocs;
+  
+public:
+  DeadCodeScan(llvm::BitVector &reachable)
+    : Visited(reachable.size()),
+      Reachable(reachable) {}
+  
+  void enqueue(const CFGBlock *block);  
+  unsigned scanBackwards(const CFGBlock *Start,
+                         clang::reachable_code::Callback &CB);
+  
+  bool isDeadCodeRoot(const CFGBlock *Block);
+  
+  const Stmt *findDeadCode(const CFGBlock *Block);
+  
+  void reportDeadCode(const Stmt *S,
+                      clang::reachable_code::Callback &CB);
+};
+}
+
+void DeadCodeScan::enqueue(const CFGBlock *block) {  
+  unsigned blockID = block->getBlockID();
+  if (Reachable[blockID] || Visited[blockID])
+    return;
+  Visited[blockID] = true;
+  WorkList.push_back(block);
+}
+
+bool DeadCodeScan::isDeadCodeRoot(const clang::CFGBlock *Block) {
+  bool isDeadRoot = true;
+  
+  for (CFGBlock::const_pred_iterator I = Block->pred_begin(),
+        E = Block->pred_end(); I != E; ++I) {
+    if (const CFGBlock *PredBlock = *I) {
+      unsigned blockID = PredBlock->getBlockID();
+      if (Visited[blockID]) {
+        isDeadRoot = false;
+        continue;
+      }
+      if (!Reachable[blockID]) {
+        isDeadRoot = false;
+        Visited[blockID] = true;
+        WorkList.push_back(PredBlock);
+        continue;
+      }
+    }
+  }
+  
+  return isDeadRoot;
+}
+
+static bool isValidDeadStmt(const Stmt *S) {
+  SourceLocation Loc = S->getLocStart();
+  if (!(Loc.isValid() && !Loc.isMacroID()))
+    return false;
+  if (const BinaryOperator *BO = dyn_cast<BinaryOperator>(S)) {
+    return BO->getOpcode() != BO_Comma;
+  }
+  return true;
+}
+
+const Stmt *DeadCodeScan::findDeadCode(const clang::CFGBlock *Block) {
+  for (CFGBlock::const_iterator I = Block->begin(), E = Block->end(); I!=E; ++I)
+    if (const CFGStmt *CS = I->getAs<CFGStmt>()) {
+      const Stmt *S = CS->getStmt();
+      if (isValidDeadStmt(S))
+        return S;
+    }
+  
+  if (CFGTerminator T = Block->getTerminator()) {
+    const Stmt *S = T.getStmt();
+    if (isValidDeadStmt(S))
+      return S;    
+  }
+
+  return 0;
+}
+
+static int SrcCmp(const void *p1, const void *p2) {
+  return
+    ((std::pair<const CFGBlock *, const Stmt *>*) p2)->second->getLocStart() <
+    ((std::pair<const CFGBlock *, const Stmt *>*) p1)->second->getLocStart();
+}
+
+unsigned DeadCodeScan::scanBackwards(const clang::CFGBlock *Start,
+                                     clang::reachable_code::Callback &CB) {
+
+  unsigned count = 0;
+  enqueue(Start);
+  
+  while (!WorkList.empty()) {
+    const CFGBlock *Block = WorkList.pop_back_val();
+
+    // It is possible that this block has been marked reachable after
+    // it was enqueued.
+    if (Reachable[Block->getBlockID()])
+      continue;
+
+    // Look for any dead code within the block.
+    const Stmt *S = findDeadCode(Block);
+    
+    if (!S) {
+      // No dead code.  Possibly an empty block.  Look at dead predecessors.
+      for (CFGBlock::const_pred_iterator I = Block->pred_begin(),
+           E = Block->pred_end(); I != E; ++I) {
+        if (const CFGBlock *predBlock = *I)
+          enqueue(predBlock);
+      }
+      continue;
+    }
+
+    if (isDeadCodeRoot(Block)) {
+      reportDeadCode(S, CB);
+      count += clang::reachable_code::ScanReachableFromBlock(Block, Reachable);
+    }
+    else {
+      // Record this statement as the possibly best location in a
+      // strongly-connected component of dead code for emitting a
+      // warning.
+      DeferredLocs.push_back(std::make_pair(Block, S));
+    }
+  }
+
+  // If we didn't find a dead root, then report the dead code with the
+  // earliest location.
+  if (!DeferredLocs.empty()) {
+    llvm::array_pod_sort(DeferredLocs.begin(), DeferredLocs.end(), SrcCmp);
+    for (DeferredLocsTy::iterator I = DeferredLocs.begin(),
+          E = DeferredLocs.end(); I != E; ++I) {
+      const CFGBlock *block = I->first;
+      if (Reachable[block->getBlockID()])
+        continue;
+      reportDeadCode(I->second, CB);
+      count += clang::reachable_code::ScanReachableFromBlock(block, Reachable);
+    }
+  }
+    
+  return count;
+}
+
+static SourceLocation GetUnreachableLoc(const Stmt *S,
+                                        SourceRange &R1,
                                         SourceRange &R2) {
-  const Stmt *S = 0;
-  unsigned sn = 0;
   R1 = R2 = SourceRange();
-
-  if (sn < b.size()) {
-    const CFGStmt *CS = b[sn].getAs<CFGStmt>();
-    if (!CS)
-      return SourceLocation();
-
-    S = CS->getStmt(); 
-  } else if (b.getTerminator())
-    S = b.getTerminator();
-  else
-    return SourceLocation();
 
   if (const Expr *Ex = dyn_cast<Expr>(S))
     S = Ex->IgnoreParenImpCasts();
@@ -48,24 +185,6 @@ static SourceLocation GetUnreachableLoc(const CFGBlock &b, SourceRange &R1,
   switch (S->getStmtClass()) {
     case Expr::BinaryOperatorClass: {
       const BinaryOperator *BO = cast<BinaryOperator>(S);
-      if (BO->getOpcode() == BO_Comma) {
-        if (sn+1 < b.size())
-          return b[sn+1].getAs<CFGStmt>()->getStmt()->getLocStart();
-        const CFGBlock *n = &b;
-        while (1) {
-          if (n->getTerminator())
-            return n->getTerminator()->getLocStart();
-          if (n->succ_size() != 1)
-            return SourceLocation();
-          n = n[0].succ_begin()[0];
-          if (n->pred_size() != 1)
-            return SourceLocation();
-          if (!n->empty())
-            return n[0][0].getAs<CFGStmt>()->getStmt()->getLocStart();
-        }
-      }
-      R1 = BO->getLHS()->getSourceRange();
-      R2 = BO->getRHS()->getSourceRange();
       return BO->getOperatorLoc();
     }
     case Expr::UnaryOperatorClass: {
@@ -120,177 +239,87 @@ static SourceLocation GetUnreachableLoc(const CFGBlock &b, SourceRange &R1,
   return S->getLocStart();
 }
 
-static SourceLocation MarkLiveTop(const CFGBlock *Start,
-                                  llvm::BitVector &reachable,
-                                  SourceManager &SM) {
-
-  // Prep work worklist.
-  SmallVector<const CFGBlock*, 32> WL;
-  WL.push_back(Start);
-
+void DeadCodeScan::reportDeadCode(const Stmt *S,
+                                  clang::reachable_code::Callback &CB) {
   SourceRange R1, R2;
-  SourceLocation top = GetUnreachableLoc(*Start, R1, R2);
-
-  bool FromMainFile = false;
-  bool FromSystemHeader = false;
-  bool TopValid = false;
-
-  if (top.isValid()) {
-    FromMainFile = SM.isFromMainFile(top);
-    FromSystemHeader = SM.isInSystemHeader(top);
-    TopValid = true;
-  }
-
-  // Solve
-  CFGBlock::FilterOptions FO;
-  FO.IgnoreDefaultsWithCoveredEnums = 1;
-
-  while (!WL.empty()) {
-    const CFGBlock *item = WL.back();
-    WL.pop_back();
-
-    SourceLocation c = GetUnreachableLoc(*item, R1, R2);
-    if (c.isValid()
-        && (!TopValid
-            || (SM.isFromMainFile(c) && !FromMainFile)
-            || (FromSystemHeader && !SM.isInSystemHeader(c))
-            || SM.isBeforeInTranslationUnit(c, top))) {
-          top = c;
-          FromMainFile = SM.isFromMainFile(top);
-          FromSystemHeader = SM.isInSystemHeader(top);
-        }
-
-    reachable.set(item->getBlockID());
-    for (CFGBlock::filtered_succ_iterator I =
-	   item->filtered_succ_start_end(FO); I.hasMore(); ++I)
-      if (const CFGBlock *B = *I) {
-        unsigned blockID = B->getBlockID();
-        if (!reachable[blockID]) {
-          reachable.set(blockID);
-          WL.push_back(B);
-        }
-      }
-  }
-
-  return top;
+  SourceLocation Loc = GetUnreachableLoc(S, R1, R2);
+  CB.HandleUnreachable(Loc, R1, R2);
 }
 
-static int LineCmp(const void *p1, const void *p2) {
-  SourceLocation *Line1 = (SourceLocation *)p1;
-  SourceLocation *Line2 = (SourceLocation *)p2;
-  return !(*Line1 < *Line2);
-}
-
-namespace {
-struct ErrLoc {
-  SourceLocation Loc;
-  SourceRange R1;
-  SourceRange R2;
-  ErrLoc(SourceLocation l, SourceRange r1, SourceRange r2)
-  : Loc(l), R1(r1), R2(r2) { }
-};
-}
 namespace clang { namespace reachable_code {
-
-/// ScanReachableFromBlock - Mark all blocks reachable from Start.
-/// Returns the total number of blocks that were marked reachable.
-unsigned ScanReachableFromBlock(const CFGBlock &Start,
+  
+unsigned ScanReachableFromBlock(const CFGBlock *Start,
                                 llvm::BitVector &Reachable) {
   unsigned count = 0;
-  SmallVector<const CFGBlock*, 32> WL;
-
+  
   // Prep work queue
-  Reachable.set(Start.getBlockID());
-  ++count;
-  WL.push_back(&Start);
-
+  SmallVector<const CFGBlock*, 32> WL;
+  
+  // The entry block may have already been marked reachable
+  // by the caller.
+  if (!Reachable[Start->getBlockID()]) {
+    ++count;
+    Reachable[Start->getBlockID()] = true;
+  }
+  
+  WL.push_back(Start);
+  
   // Find the reachable blocks from 'Start'.
-  CFGBlock::FilterOptions FO;
-  FO.IgnoreDefaultsWithCoveredEnums = 1;
-
   while (!WL.empty()) {
-    const CFGBlock *item = WL.back();
-    WL.pop_back();
-
-      // Look at the successors and mark then reachable.
-    for (CFGBlock::filtered_succ_iterator I= item->filtered_succ_start_end(FO);
-         I.hasMore(); ++I)
+    const CFGBlock *item = WL.pop_back_val();
+    
+    // Look at the successors and mark then reachable.
+    for (CFGBlock::const_succ_iterator I = item->succ_begin(), 
+         E = item->succ_end(); I != E; ++I)
       if (const CFGBlock *B = *I) {
         unsigned blockID = B->getBlockID();
         if (!Reachable[blockID]) {
           Reachable.set(blockID);
-          ++count;
           WL.push_back(B);
+          ++count;
         }
       }
   }
   return count;
 }
-
+  
 void FindUnreachableCode(AnalysisContext &AC, Callback &CB) {
   CFG *cfg = AC.getCFG();
   if (!cfg)
     return;
 
-  // Scan for reachable blocks.
+  // Scan for reachable blocks from the entrance of the CFG.  
+  // If there are no unreachable blocks, we're done.
   llvm::BitVector reachable(cfg->getNumBlockIDs());
-  unsigned numReachable = ScanReachableFromBlock(cfg->getEntry(), reachable);
-
-    // If there are no unreachable blocks, we're done.
+  unsigned numReachable = ScanReachableFromBlock(&cfg->getEntry(), reachable);
   if (numReachable == cfg->getNumBlockIDs())
     return;
+  
+  // If there aren't explicit EH edges, we should include the 'try' dispatch
+  // blocks as roots.
+  if (!AC.getCFGBuildOptions().AddEHEdges) {
+    for (CFG::try_block_iterator I = cfg->try_blocks_begin(),
+         E = cfg->try_blocks_end() ; I != E; ++I) {
+      numReachable += ScanReachableFromBlock(*I, reachable);
+    }
+    if (numReachable == cfg->getNumBlockIDs())
+      return;
+  }
 
-  SourceRange R1, R2;
-
-  SmallVector<ErrLoc, 24> lines;
-  bool AddEHEdges = AC.getAddEHEdges();
-
-  // First, give warnings for blocks with no predecessors, as they
-  // can't be part of a loop.
+  // There are some unreachable blocks.  We need to find the root blocks that
+  // contain code that should be considered unreachable.  
   for (CFG::iterator I = cfg->begin(), E = cfg->end(); I != E; ++I) {
-    CFGBlock &b = **I;
-    if (!reachable[b.getBlockID()]) {
-      if (b.pred_empty()) {
-        if (!AddEHEdges
-        && dyn_cast_or_null<CXXTryStmt>(b.getTerminator().getStmt())) {
-            // When not adding EH edges from calls, catch clauses
-            // can otherwise seem dead.  Avoid noting them as dead.
-          numReachable += ScanReachableFromBlock(b, reachable);
-          continue;
-        }
-        SourceLocation c = GetUnreachableLoc(b, R1, R2);
-        if (!c.isValid()) {
-            // Blocks without a location can't produce a warning, so don't mark
-            // reachable blocks from here as live.
-          reachable.set(b.getBlockID());
-          ++numReachable;
-          continue;
-        }
-        lines.push_back(ErrLoc(c, R1, R2));
-          // Avoid excessive errors by marking everything reachable from here
-        numReachable += ScanReachableFromBlock(b, reachable);
-      }
-    }
+    const CFGBlock *block = *I;
+    // A block may have been marked reachable during this loop.
+    if (reachable[block->getBlockID()])
+      continue;
+    
+    DeadCodeScan DS(reachable);
+    numReachable += DS.scanBackwards(block, CB);
+    
+    if (numReachable == cfg->getNumBlockIDs())
+      return;
   }
-
-  if (numReachable < cfg->getNumBlockIDs()) {
-      // And then give warnings for the tops of loops.
-    for (CFG::iterator I = cfg->begin(), E = cfg->end(); I != E; ++I) {
-      CFGBlock &b = **I;
-      if (!reachable[b.getBlockID()])
-          // Avoid excessive errors by marking everything reachable from here
-        lines.push_back(ErrLoc(MarkLiveTop(&b, reachable,
-                                         AC.getASTContext().getSourceManager()),
-                               SourceRange(), SourceRange()));
-    }
-  }
-
-  llvm::array_pod_sort(lines.begin(), lines.end(), LineCmp);
-
-  for (SmallVectorImpl<ErrLoc>::iterator I=lines.begin(), E=lines.end();
-       I != E; ++I)
-    if (I->Loc.isValid())
-      CB.HandleUnreachable(I->Loc, I->R1, I->R2);
 }
 
 }} // end namespace clang::reachable_code
