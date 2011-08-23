@@ -341,7 +341,7 @@ _mm256_dp_ps(__m256 a, __m256 b, const int c)
         (__builtin_shufflevector((__v8sf)(a), (__v8sf)(b), \
         (mask) & 0x3,                ((mask) & 0xc) >> 2, \
         (((mask) & 0x30) >> 4) + 8,  (((mask) & 0xc0) >> 6) + 8, \
-        (mask) & 0x3 + 4,            (((mask) & 0xc) >> 2) + 4, \
+        ((mask) & 0x3) + 4,          (((mask) & 0xc) >> 2) + 4, \
         (((mask) & 0x30) >> 4) + 12, (((mask) & 0xc0) >> 6) + 12))
 
 #define _mm256_shuffle_pd(a, b, mask) \
