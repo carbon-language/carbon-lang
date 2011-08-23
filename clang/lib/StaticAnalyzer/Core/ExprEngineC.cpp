@@ -503,30 +503,9 @@ VisitUnaryExprOrTypeTraitExpr(const UnaryExprOrTypeTraitExpr *Ex,
     if (!T->isIncompleteType() && !T->isConstantSizeType()) {
       assert(T->isVariableArrayType() && "Unknown non-constant-sized type.");
       
-      // FIXME: Add support for VLA type arguments, not just VLA expressions.
+      // FIXME: Add support for VLA type arguments and VLA expressions.
       // When that happens, we should probably refactor VLASizeChecker's code.
-      if (Ex->isArgumentType()) {
-        Dst.Add(Pred);
-        return;
-      }
-      
-      // Get the size by getting the extent of the sub-expression.
-      // First, visit the sub-expression to find its region.
-      const Expr *Arg = Ex->getArgumentExpr();
-      const ProgramState *state = Pred->getState();
-      const MemRegion *MR = state->getSVal(Arg).getAsRegion();
-      
-      // If the subexpression can't be resolved to a region, we don't know
-      // anything about its size. Just leave the state as is and continue.
-      if (!MR) {
-        Dst.Add(Pred);
-        return;
-      }
-      
-      // The result is the extent of the VLA.
-      SVal Extent = cast<SubRegion>(MR)->getExtent(svalBuilder);
-      MakeNode(Dst, Ex, Pred, state->BindExpr(Ex, Extent));
-      
+      Dst.Add(Pred);
       return;
     }
     else if (T->getAs<ObjCObjectType>()) {

@@ -1,5 +1,8 @@
 // RUN: %clang_cc1 -fsyntax-only -Wuninitialized -Wconditional-uninitialized -fsyntax-only -fblocks %s -verify
 
+typedef __typeof(sizeof(int)) size_t;
+void *malloc(size_t);
+
 int test1() {
   int x; // expected-note{{variable 'x' is declared here}} expected-note{{add initialization to silence this warning}}
   return x; // expected-warning{{variable 'x' is uninitialized when used here}}
@@ -372,3 +375,9 @@ void PR10379_f(int *len) {
     *len += new_len; // expected-warning {{variable 'new_len' may be uninitialized when used here}}
   }
 }
+
+// Test that sizeof(VLA) doesn't trigger a warning.
+void test_vla_sizeof(int x) {
+  double (*memory)[2][x] = malloc(sizeof(*memory)); // no-warning
+}
+
