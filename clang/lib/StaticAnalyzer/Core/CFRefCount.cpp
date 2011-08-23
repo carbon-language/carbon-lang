@@ -1676,15 +1676,11 @@ public:
 
   // Calls.
 
-  void evalSummary(ExplodedNodeSet &Dst,
-                   ExprEngine& Eng,
-                   StmtNodeBuilder& Builder,
-                   const Expr *Ex,
-                   const CallOrObjCMessage &callOrMsg,
-                   InstanceReceiver Receiver,
-                   const RetainSummary& Summ,
-                   const MemRegion *Callee,
-                   ExplodedNode *Pred, const ProgramState *state);
+  void evalCallOrMessage(ExplodedNodeSet &Dst, ExprEngine &Eng,
+                         StmtNodeBuilder &Builder,
+                         const CallOrObjCMessage &callOrMsg,
+                         InstanceReceiver Receiver, const MemRegion *Callee,
+                         ExplodedNode *Pred, const ProgramState *state);
 
   virtual void evalCall(ExplodedNodeSet &Dst,
                         ExprEngine& Eng,
@@ -2527,16 +2523,13 @@ struct ResetWhiteList {
 };
 }
 
-void CFRefCount::evalSummary(ExplodedNodeSet &Dst,
-                             ExprEngine& Eng,
-                             StmtNodeBuilder& Builder,
-                             const Expr *Ex,
-                             const CallOrObjCMessage &callOrMsg,
-                             InstanceReceiver Receiver,
-                             const RetainSummary& Summ,
-                             const MemRegion *Callee,
-                             ExplodedNode *Pred,
-                             const ProgramState *state) {
+void CFRefCount::evalCallOrMessage(ExplodedNodeSet &Dst, ExprEngine &Eng,
+                                   StmtNodeBuilder &Builder,
+                                   const CallOrObjCMessage &callOrMsg,
+                                   InstanceReceiver Receiver,
+                                   const MemRegion *Callee,
+                                   ExplodedNode *Pred,
+                                   const ProgramState *state) {
 
   SmallVector<const MemRegion*, 10> RegionsToInvalidate;
   
@@ -2630,6 +2623,8 @@ void CFRefCount::evalSummary(ExplodedNodeSet &Dst,
   unsigned Count = Builder.getCurrentBlockCount();
   StoreManager::InvalidatedSymbols IS;
 
+  const Expr *Ex = callOrMsg.getOriginExpr();
+
   // NOTE: Even if RegionsToInvalidate is empty, we must still invalidate
   //  global variables.
   // NOTE: RetainReleaseChecker handles the actual invalidation of symbols.
@@ -2651,31 +2646,9 @@ void CFRefCount::evalCall(ExplodedNodeSet &Dst,
                           const CallExpr *CE, SVal L,
                           ExplodedNode *Pred) {
 
-  RetainSummary *Summ = 0;
-
-  // FIXME: Better support for blocks.  For now we stop tracking anything
-  // that is passed to blocks.
-  // FIXME: Need to handle variables that are "captured" by the block.
-  if (dyn_cast_or_null<BlockDataRegion>(L.getAsRegion())) {
-    Summ = Summaries.getPersistentStopSummary();
-  }
-  else if (const FunctionDecl *FD = L.getAsFunctionDecl()) {
-    Summ = Summaries.getSummary(FD);
-  }
-  else if (const CXXMemberCallExpr *me = dyn_cast<CXXMemberCallExpr>(CE)) {
-    if (const CXXMethodDecl *MD = me->getMethodDecl())
-      Summ = Summaries.getSummary(MD);
-    else
-      Summ = Summaries.getDefaultSummary();    
-  }
-  else
-    Summ = Summaries.getDefaultSummary();
-
-  assert(Summ);
-  evalSummary(Dst, Eng, Builder, CE,
-              CallOrObjCMessage(CE, Pred->getState()),
-              InstanceReceiver(), *Summ,L.getAsRegion(),
-              Pred, Pred->getState());
+  evalCallOrMessage(Dst, Eng, Builder, CallOrObjCMessage(CE, Pred->getState()),
+                    InstanceReceiver(), L.getAsRegion(), Pred, 
+                    Pred->getState());
 }
 
 void CFRefCount::evalObjCMessage(ExplodedNodeSet &Dst,
@@ -2684,16 +2657,10 @@ void CFRefCount::evalObjCMessage(ExplodedNodeSet &Dst,
                                  ObjCMessage msg,
                                  ExplodedNode *Pred,
                                  const ProgramState *state) {
-  RetainSummary *Summ =
-    msg.isInstanceMessage()
-      ? Summaries.getInstanceMethodSummary(msg, state,Pred->getLocationContext())
-      : Summaries.getClassMethodSummary(msg);
 
-  assert(Summ && "RetainSummary is null");
-  evalSummary(Dst, Eng, Builder, msg.getOriginExpr(),
-              CallOrObjCMessage(msg, Pred->getState()),
-              InstanceReceiver(msg, Pred->getLocationContext()), *Summ, NULL,
-              Pred, state);
+  evalCallOrMessage(Dst, Eng, Builder, CallOrObjCMessage(msg, Pred->getState()),
+                    InstanceReceiver(msg, Pred->getLocationContext()),
+                    /* Callee = */ 0, Pred, state);
 }
 
  // Return statements.
