@@ -1300,30 +1300,6 @@ unsigned SourceManager::getFileIDSize(FileID FID) const {
   return NextOffset - Entry.getOffset() - 1;
 }
 
-bool SourceManager::isInFileID(SourceLocation Loc,
-                               FileID FID, unsigned offset, unsigned length,
-                               unsigned *relativeOffset) const {
-  assert(!FID.isInvalid());
-  if (Loc.isInvalid())
-    return false;
-
-  unsigned FIDOffs = getSLocEntry(FID).getOffset();
-  unsigned start = FIDOffs + offset;
-  unsigned end = start + length;
-
-  // Make sure offset/length describe a chunk inside the given FileID.
-  assert(start <  FIDOffs + getFileIDSize(FID));
-  assert(end   <= FIDOffs + getFileIDSize(FID));
-
-  if (Loc.getOffset() >= start && Loc.getOffset() < end) {
-    if (relativeOffset)
-      *relativeOffset = Loc.getOffset() - start;
-    return true;
-  }
-
-  return false;
-}
-
 //===----------------------------------------------------------------------===//
 // Other miscellaneous methods.
 //===----------------------------------------------------------------------===//

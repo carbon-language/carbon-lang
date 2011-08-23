@@ -1017,15 +1017,15 @@ public:
   /// of FileID) to \arg relativeOffset.
   bool isInFileID(SourceLocation Loc, FileID FID,
                   unsigned *RelativeOffset = 0) const {
-    return isInFileID(Loc, FID, 0, getFileIDSize(FID), RelativeOffset);
-  }
+    unsigned Offs = Loc.getOffset();
+    if (isOffsetInFileID(FID, Offs)) {
+      if (RelativeOffset)
+        *RelativeOffset = Offs - getSLocEntry(FID).getOffset();
+      return true;
+    }
 
-  /// \brief Given a specific chunk of a FileID (FileID with offset+length),
-  /// returns true if \arg Loc is inside that chunk and sets relative offset
-  /// (offset of \arg Loc from beginning of chunk) to \arg relativeOffset.
-  bool isInFileID(SourceLocation Loc,
-                  FileID FID, unsigned offset, unsigned length,
-                  unsigned *relativeOffset = 0) const;
+    return false;
+  }
 
   //===--------------------------------------------------------------------===//
   // Line Table Manipulation Routines
