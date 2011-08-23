@@ -1930,7 +1930,6 @@ ARMBaseInstrInfo::getNumMicroOps(const InstrItineraryData *ItinData,
   case ARM::STMIB_UPD:
   case ARM::tLDMIA:
   case ARM::tLDMIA_UPD:
-  case ARM::tSTMIA:
   case ARM::tSTMIA_UPD:
   case ARM::tPOP_RET:
   case ARM::tPOP:
@@ -2196,7 +2195,6 @@ ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
   case ARM::STMDA_UPD:
   case ARM::STMDB_UPD:
   case ARM::STMIB_UPD:
-  case ARM::tSTMIA:
   case ARM::tSTMIA_UPD:
   case ARM::tPOP_RET:
   case ARM::tPOP:

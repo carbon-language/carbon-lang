@@ -146,7 +146,7 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O) {
     return;
   }
 
-  if (Opcode == ARM::tLDMIA || Opcode == ARM::tSTMIA) {
+  if (Opcode == ARM::tLDMIA) {
     bool Writeback = true;
     unsigned BaseReg = MI->getOperand(0).getReg();
     for (unsigned i = 3; i < MI->getNumOperands(); ++i) {
@@ -154,12 +154,7 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O) {
         Writeback = false;
     }
 
-    if (Opcode == ARM::tLDMIA)
-      O << "\tldm";
-    else if (Opcode == ARM::tSTMIA)
-      O << "\tstm";
-    else
-      llvm_unreachable("Unknown opcode!");
+    O << "\tldm";
 
     printPredicateOperand(MI, 1, O);
     O << '\t' << getRegisterName(BaseReg);

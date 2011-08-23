@@ -694,51 +694,51 @@ def tSTRspi : T1pIs<(outs), (ins tGPR:$Rt, t_addrmode_sp:$addr), IIC_iStore_i,
 //  Load / store multiple Instructions.
 //
 
-multiclass thumb_ldst_mult<string asm, InstrItinClass itin,
-                           InstrItinClass itin_upd, bits<6> T1Enc,
-                           bit L_bit, string baseOpc> {
-  def IA :
-    T1I<(outs), (ins tGPR:$Rn, pred:$p, reglist:$regs, variable_ops),
-        itin, !strconcat(asm, "${p}\t$Rn, $regs"), []>,
-       T1Encoding<T1Enc> {
-    bits<3> Rn;
-    bits<8> regs;
-    let Inst{10-8} = Rn;
-    let Inst{7-0}  = regs;
-  }
-
-  def IA_UPD :
-    InstTemplate<AddrModeNone, 0, IndexModeNone, Pseudo, GenericDomain, 
-                 "$Rn = $wb", itin_upd>,
-    PseudoInstExpansion<(!cast<Instruction>(!strconcat(baseOpc, "IA"))
-                       tGPR:$Rn, pred:$p, reglist:$regs)> {
-    let Size = 2;
-    let OutOperandList = (outs GPR:$wb);
-    let InOperandList = (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops);
-    let Pattern = [];
-    let isCodeGenOnly = 1;
-    let isPseudo = 1;
-    list<Predicate> Predicates = [IsThumb];
-  }
-}
-
 // These require base address to be written back or one of the loaded regs.
 let neverHasSideEffects = 1 in {
 
 let mayLoad = 1, hasExtraDefRegAllocReq = 1 in
-defm tLDM : thumb_ldst_mult<"ldm", IIC_iLoad_m, IIC_iLoad_mu,
-                            {1,1,0,0,1,?}, 1, "tLDM">;
+def tLDMIA : T1I<(outs), (ins tGPR:$Rn, pred:$p, reglist:$regs, variable_ops),
+        IIC_iLoad_m, "ldm${p}\t$Rn, $regs", []>, T1Encoding<{1,1,0,0,1,?}> {
+  bits<3> Rn;
+  bits<8> regs;
+  let Inst{10-8} = Rn;
+  let Inst{7-0}  = regs;
+}
 
+// Writeback version is just a pseudo, as there's no encoding difference.
+// Writeback happens iff the base register is not in the destination register
+// list.
+def tLDMIA_UPD :
+    InstTemplate<AddrModeNone, 0, IndexModeNone, Pseudo, GenericDomain,
+                 "$Rn = $wb", IIC_iLoad_mu>,
+    PseudoInstExpansion<(tLDMIA tGPR:$Rn, pred:$p, reglist:$regs)> {
+  let Size = 2;
+  let OutOperandList = (outs GPR:$wb);
+  let InOperandList = (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops);
+  let Pattern = [];
+  let isCodeGenOnly = 1;
+  let isPseudo = 1;
+  list<Predicate> Predicates = [IsThumb];
+}
+
+// There is no non-writeback version of STM for Thumb.
 let mayStore = 1, hasExtraSrcRegAllocReq = 1 in
-defm tSTM : thumb_ldst_mult<"stm", IIC_iStore_m, IIC_iStore_mu,
-                            {1,1,0,0,0,?}, 0, "tSTM">;
+def tSTMIA_UPD : T1I<(outs),
+                     (ins tGPR:$Rn, pred:$p, reglist:$regs, variable_ops),
+                     IIC_iStore_mu, "stm${p}\t$Rn!, $regs", []>,
+                     T1Encoding<{1,1,0,0,0,?}> {
+  bits<3> Rn;
+  bits<8> regs;
+  let Inst{10-8} = Rn;
+  let Inst{7-0}  = regs;
+}
 
 } // neverHasSideEffects
 
 def : InstAlias<"ldm${p} $Rn!, $regs",
                 (tLDMIA tGPR:$Rn, pred:$p, reglist:$regs)>,
         Requires<[IsThumb, IsThumb1Only]>;
-
 
 let mayLoad = 1, Uses = [SP], Defs = [SP], hasExtraDefRegAllocReq = 1 in
 def tPOP : T1I<(outs), (ins pred:$p, reglist:$regs, variable_ops),
@@ -1146,8 +1146,6 @@ def tSUBrr :                    // A8.6.212
                 IIC_iALUr,
                 "sub", "\t$Rd, $Rn, $Rm",
                 [(set tGPR:$Rd, (sub tGPR:$Rn, tGPR:$Rm))]>;
-
-// TODO: A7-96: STMIA - store multiple.
 
 // Sign-extend byte
 def tSXTB :                     // A8.6.222
