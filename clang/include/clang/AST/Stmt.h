@@ -524,6 +524,10 @@ public:
   child_range children() {
     return child_range(&Body[0], &Body[0]+CompoundStmtBits.NumStmts);
   }
+  
+  const_child_range children() const {
+    return child_range(&Body[0], &Body[0]+CompoundStmtBits.NumStmts);
+  }
 };
 
 // SwitchCase is the base class for CaseStmt and DefaultStmt,
