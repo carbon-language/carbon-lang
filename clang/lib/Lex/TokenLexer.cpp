@@ -397,8 +397,7 @@ void TokenLexer::Lex(Token &Tok) {
   // that captures all of this.
   if (ExpandLocStart.isValid() &&   // Don't do this for token streams.
       // Check that the token's location was not already set properly.
-      SM.isBeforeInSourceLocationOffset(Tok.getLocation(),
-                                        MacroStartSLocOffset)) {
+      SM.isBeforeInSLocAddrSpace(Tok.getLocation(), MacroStartSLocOffset)) {
     SourceLocation instLoc;
     if (Tok.is(tok::comment)) {
       instLoc = SM.createExpansionLoc(Tok.getLocation(),

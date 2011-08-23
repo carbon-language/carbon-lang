@@ -1075,21 +1075,20 @@ public:
 
   /// \brief Determines the order of 2 source locations in the "source location
   /// address space".
-  bool isBeforeInSourceLocationOffset(SourceLocation LHS, 
-                                      SourceLocation RHS) const {
-    return isBeforeInSourceLocationOffset(LHS, RHS.getOffset());
+  bool isBeforeInSLocAddrSpace(SourceLocation LHS, SourceLocation RHS) const {
+    return isBeforeInSLocAddrSpace(LHS, RHS.getOffset());
   }
 
   /// \brief Determines the order of a source location and a source location
   /// offset in the "source location address space".
   ///
   /// Note that we always consider source locations loaded from 
-  bool isBeforeInSourceLocationOffset(SourceLocation LHS, unsigned RHS) const {
+  bool isBeforeInSLocAddrSpace(SourceLocation LHS, unsigned RHS) const {
     unsigned LHSOffset = LHS.getOffset();
     bool LHSLoaded = LHSOffset >= CurrentLoadedOffset;
     bool RHSLoaded = RHS >= CurrentLoadedOffset;
     if (LHSLoaded == RHSLoaded)
-      return LHS.getOffset() < RHS;
+      return LHSOffset < RHS;
     
     return LHSLoaded;
   }
