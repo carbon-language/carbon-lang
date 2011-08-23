@@ -7701,7 +7701,7 @@ LLVM</a>.</p>
 <pre class="doc_code">
   %tramp = alloca [10 x i8], align 4 ; size and alignment only correct for X86
   %tramp1 = getelementptr [10 x i8]* %tramp, i32 0, i32 0
-  %p = call i8* @llvm.init.trampoline(i8* %tramp1, i8* bitcast (i32 (i8* nest , i32, i32)* @f to i8*), i8* %nval)
+  %p = call i8* @llvm.init.trampoline(i8* %tramp1, i8* bitcast (i32 (i8*, i32, i32)* @f to i8*), i8* %nval)
   %fp = bitcast i8* %p to i32 (i32, i32)*
 </pre>
 
