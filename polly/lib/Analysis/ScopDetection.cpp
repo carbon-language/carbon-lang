@@ -653,3 +653,6 @@ char ScopDetection::ID = 0;
 static RegisterPass<ScopDetection>
 X("polly-detect", "Polly - Detect Scops in functions");
 
+Pass *polly::createScopDetectionPass() {
+  return new ScopDetection();
+}

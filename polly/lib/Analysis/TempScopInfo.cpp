@@ -460,3 +460,6 @@ char TempScopInfo::ID = 0;
 static RegisterPass<TempScopInfo>
 X("polly-analyze-ir", "Polly - Analyse the LLVM-IR in the detected regions");
 
+Pass *polly::createTempScopInfoPass() {
+  return new TempScopInfo();
+}
