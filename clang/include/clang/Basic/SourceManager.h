@@ -882,6 +882,30 @@ public:
   /// expanded.
   bool isMacroArgExpansion(SourceLocation Loc) const;
 
+  /// \brief Returns true if \arg Loc is inside the [\arg Start, +\arg Length)
+  /// chunk of the source location address space.
+  /// If it's true and \arg RelativeOffset is non-null, it will be set to the
+  /// relative offset of \arg Loc inside the chunk.
+  bool isInSLocAddrSpace(SourceLocation Loc,
+                         SourceLocation Start, unsigned Length,
+                         unsigned *RelativeOffset = 0) const {
+    assert(((Start.getOffset() < NextLocalOffset &&
+               Start.getOffset()+Length <= NextLocalOffset) ||
+            (Start.getOffset() >= CurrentLoadedOffset &&
+                Start.getOffset()+Length < MaxLoadedOffset)) &&
+           "Chunk is not valid SLoc address space");
+    unsigned LocOffs = Loc.getOffset();
+    unsigned BeginOffs = Start.getOffset();
+    unsigned EndOffs = BeginOffs + Length;
+    if (LocOffs >= BeginOffs && LocOffs < EndOffs) {
+      if (RelativeOffset)
+        *RelativeOffset = LocOffs - BeginOffs;
+      return true;
+    }
+
+    return false;
+  }
+
   //===--------------------------------------------------------------------===//
   // Queries about the code at a SourceLocation.
   //===--------------------------------------------------------------------===//

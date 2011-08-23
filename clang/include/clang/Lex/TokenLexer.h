@@ -71,8 +71,10 @@ class TokenLexer {
   /// "source location address space".
   unsigned MacroStartSLocOffset;
 
-  /// \brief FileID/offset of the start of the macro definition.
-  std::pair<FileID, unsigned> MacroDefStartInfo;
+  /// \brief Location of the macro definition.
+  SourceLocation MacroDefStart;
+  /// \brief Length of the macro definition.
+  unsigned MacroDefLength;
 
   /// Lexical information about the expansion point of the macro: the identifier
   /// that the macro expanded from had these properties.

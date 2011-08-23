@@ -55,12 +55,12 @@ void TokenLexer::Init(Token &Tok, SourceLocation ELEnd, MacroArgs *Actuals) {
     // definition. Tokens that get lexed directly from the definition will
     // have their locations pointing inside this chunk. This is to avoid
     // creating separate source location entries for each token.
-    SourceLocation macroStart = SM.getExpansionLoc(Tokens[0].getLocation());
-    MacroDefStartInfo = SM.getDecomposedLoc(macroStart);
-    MacroExpansionStart = SM.createExpansionLoc(macroStart,
+    MacroDefStart = SM.getExpansionLoc(Tokens[0].getLocation());
+    MacroDefLength = Macro->getDefinitionLength(SM);
+    MacroExpansionStart = SM.createExpansionLoc(MacroDefStart,
                                                 ExpandLocStart,
                                                 ExpandLocEnd,
-                                                Macro->getDefinitionLength(SM));
+                                                MacroDefLength);
   }
 
   // If this is a function-like macro, expand the arguments and change
@@ -647,14 +647,11 @@ TokenLexer::getExpansionLocForMacroDefLoc(SourceLocation loc) const {
   assert(loc.isValid() && loc.isFileID());
   
   SourceManager &SM = PP.getSourceManager();
-  assert(SM.isInFileID(loc,
-                    MacroDefStartInfo.first, MacroDefStartInfo.second,
-                    Macro->getDefinitionLength(SM)));
+  assert(SM.isInSLocAddrSpace(loc, MacroDefStart, MacroDefLength) &&
+         "Expected loc to come from the macro definition");
 
-  unsigned relativeOffset;
-  SM.isInFileID(loc,
-                MacroDefStartInfo.first, MacroDefStartInfo.second,
-                Macro->getDefinitionLength(SM), &relativeOffset);
+  unsigned relativeOffset = 0;
+  SM.isInSLocAddrSpace(loc, MacroDefStart, MacroDefLength, &relativeOffset);
   return MacroExpansionStart.getFileLocWithOffset(relativeOffset);
 }
 
