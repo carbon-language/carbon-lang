@@ -115,39 +115,14 @@ public:
     Get (ValueObject& valobj,
          lldb::SummaryFormatSP& entry,
          lldb::DynamicValueType use_dynamic,
-         uint32_t* reason = NULL)
-    {
-        if (!IsEnabled())
-            return false;
-        if (GetSummaryNavigator()->Get(valobj, entry, use_dynamic, reason))
-            return true;
-        bool regex = GetRegexSummaryNavigator()->Get(valobj, entry, use_dynamic, reason);
-        if (regex && reason)
-            *reason |= lldb::eFormatterChoiceCriterionRegularExpressionSummary;
-        return regex;
-    }
+         uint32_t* reason = NULL);
     
     bool
     Get (ValueObject& valobj,
          lldb::SyntheticChildrenSP& entry,
          lldb::DynamicValueType use_dynamic,
          uint32_t* reason = NULL);
-    
-    // just a shortcut for GetSummaryNavigator()->Clear; GetRegexSummaryNavigator()->Clear()
-    void
-    ClearSummaries ()
-    {
-        Clear(eFormatCategoryItemSummary | eFormatCategoryItemRegexSummary);
-    }
-    
-    // just a shortcut for (GetSummaryNavigator()->Delete(name) || GetRegexSummaryNavigator()->Delete(name))
-    bool
-    DeleteSummaries (ConstString name)
-    {
-        return Delete(name, (eFormatCategoryItemSummary | eFormatCategoryItemRegexSummary));
-    }
-    
-    
+        
     void
     Clear (FormatCategoryItems items = ALL_ITEM_TYPES);
     
@@ -275,19 +250,6 @@ public:
         m_active_categories.push_front(category);
     }
     
-    class delete_matching_categories
-    {
-        lldb::FormatCategorySP ptr;
-    public:
-        delete_matching_categories(lldb::FormatCategorySP p) : ptr(p)
-        {}
-        
-        bool operator()(const lldb::FormatCategorySP& other)
-        {
-            return ptr.get() == other.get();
-        }
-    };
-    
     void
     Disable (KeyType category_name)
     {
@@ -329,22 +291,7 @@ public:
                 FormatCategory::FormatCategoryItems items = FormatCategory::ALL_ITEM_TYPES,
                 bool only_enabled = true,
                 const char** matching_category = NULL,
-                FormatCategory::FormatCategoryItems* matching_type = NULL)
-    {
-        Mutex::Locker(m_map_mutex);
-        
-        MapIterator pos, end = m_map.end();
-        for (pos = m_map.begin(); pos != end; pos++)
-        {
-            if (pos->second->AnyMatches(type_name,
-                                        items,
-                                        only_enabled,
-                                        matching_category,
-                                        matching_type))
-                return true;
-        }
-        return false;
-    }
+                FormatCategory::FormatCategoryItems* matching_type = NULL);
     
     uint32_t
     GetCount ()
@@ -355,49 +302,28 @@ public:
     bool
     Get (ValueObject& valobj,
          lldb::SummaryFormatSP& entry,
-         lldb::DynamicValueType use_dynamic)
-    {
-        Mutex::Locker(m_map_mutex);
-        
-        uint32_t reason_why;        
-        ActiveCategoriesIterator begin, end = m_active_categories.end();
-        
-        for (begin = m_active_categories.begin(); begin != end; begin++)
-        {
-            lldb::FormatCategorySP category = *begin;
-            lldb::SummaryFormatSP current_format;
-            if (!category->Get(valobj, current_format, use_dynamic, &reason_why))
-                continue;
-            entry = current_format;
-            return true;
-        }
-        return false;
-    }
+         lldb::DynamicValueType use_dynamic);
     
     bool
     Get (ValueObject& valobj,
          lldb::SyntheticChildrenSP& entry,
-         lldb::DynamicValueType use_dynamic)
-    {
-        Mutex::Locker(m_map_mutex);
-        
-        uint32_t reason_why;
-        
-        ActiveCategoriesIterator begin, end = m_active_categories.end();
-        
-        for (begin = m_active_categories.begin(); begin != end; begin++)
-        {
-            lldb::FormatCategorySP category = *begin;
-            lldb::SyntheticChildrenSP current_format;
-            if (!category->Get(valobj, current_format, use_dynamic, &reason_why))
-                continue;
-            entry = current_format;
-            return true;
-        }
-        return false;
-    }
+         lldb::DynamicValueType use_dynamic);
     
 private:
+    
+    class delete_matching_categories
+    {
+        lldb::FormatCategorySP ptr;
+    public:
+        delete_matching_categories(lldb::FormatCategorySP p) : ptr(p)
+        {}
+        
+        bool operator()(const lldb::FormatCategorySP& other)
+        {
+            return ptr.get() == other.get();
+        }
+    };
+    
     Mutex m_map_mutex;
     IFormatChangeListener* listener;
     
@@ -425,14 +351,10 @@ private:
 
 class FormatManager : public IFormatChangeListener
 {
-private:
-    
     typedef FormatNavigator<ConstString, ValueFormat> ValueNavigator;
-
     typedef ValueNavigator::MapType ValueMap;
     typedef FormatMap<ConstString, SummaryFormat> NamedSummariesMap;
     typedef CategoryMap::MapType::iterator CategoryMapIterator;
-
 public:
     
     typedef CategoryMap::CallbackType CategoryCallback;
@@ -498,20 +420,7 @@ public:
     
     lldb::FormatCategorySP
     Category (const ConstString& category_name,
-              bool can_create = true)
-    {
-        if (!category_name)
-            return Category(m_default_category_name);
-        lldb::FormatCategorySP category;
-        if (m_categories_map.Get(category_name, category))
-            return category;
-        
-        if (!can_create)
-            return lldb::FormatCategorySP();
-        
-        m_categories_map.Add(category_name,lldb::FormatCategorySP(new FormatCategory(this, category_name.AsCString())));
-        return Category(category_name);
-    }
+              bool can_create = true);
     
     bool
     Get (ValueObject& valobj,
@@ -520,6 +429,7 @@ public:
     {
         return m_categories_map.Get(valobj, entry, use_dynamic);
     }
+    
     bool
     Get (ValueObject& valobj,
          lldb::SyntheticChildrenSP& entry,

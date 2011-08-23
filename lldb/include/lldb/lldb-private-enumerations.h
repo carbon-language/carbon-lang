@@ -207,11 +207,11 @@ typedef enum InstructionType
 typedef enum FormatCategoryItem
 {
     eFormatCategoryItemSummary =         0x0001,
-    eFormatCategoryItemRegexSummary =    0x1001,
-    eFormatCategoryItemFilter =          0x0002,
-    eFormatCategoryItemRegexFilter =     0x1002,
-    eFormatCategoryItemSynth =           0x0004,
-    eFormatCategoryItemRegexSynth =      0x1004,
+    eFormatCategoryItemRegexSummary =    0x0002,
+    eFormatCategoryItemFilter =          0x0004,
+    eFormatCategoryItemRegexFilter =     0x0008,
+    eFormatCategoryItemSynth =           0x0010,
+    eFormatCategoryItemRegexSynth =      0x0020,
 } FormatCategoryItem;
 
 } // namespace lldb

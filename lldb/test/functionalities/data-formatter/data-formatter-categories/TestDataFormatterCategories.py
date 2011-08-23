@@ -102,7 +102,7 @@ class DataFormatterTestCase(TestBase):
 
         # Add summaries to two different categories and check that we can switch
         self.runCmd("type summary add -f \"Width = ${var.w}, Height = ${var.h}\" Rectangle -w Category1")
-        self.runCmd("type summary add -s \"return 'Area = ' + str( int(valobj.GetChildMemberWithName('w').GetValue()) * int(valobj.GetChildMemberWithName('h').GetValue()) );\" Rectangle -w Category2")
+        self.runCmd("type summary add --python-script \"return 'Area = ' + str( int(valobj.GetChildMemberWithName('w').GetValue()) * int(valobj.GetChildMemberWithName('h').GetValue()) );\" Rectangle -w Category2")
 
         # check that enable A B is the same as enable B enable A
         self.runCmd("type category enable Category1 Category2")

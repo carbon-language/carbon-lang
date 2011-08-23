@@ -132,7 +132,7 @@ DataVisualization::Categories::Clear ()
 void
 DataVisualization::Categories::Clear (ConstString &category)
 {
-    GetFormatManager().Category(category)->ClearSummaries();
+    GetFormatManager().Category(category)->Clear(eFormatCategoryItemSummary | eFormatCategoryItemRegexSummary);
 }
 
 void

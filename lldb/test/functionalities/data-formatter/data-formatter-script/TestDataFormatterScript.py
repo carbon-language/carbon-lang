@@ -56,7 +56,7 @@ class DataFormatterTestCase(TestBase):
         # Set the script here to ease the formatting
         script = 'a = valobj.GetChildMemberWithName(\'integer\'); a_val = a.GetValue(); str = \'Hello from Python, \' + a_val + \' time\'; return str + (\'!\' if a_val == \'1\' else \'s!\');'
 
-        self.runCmd("type summary add i_am_cool -s \"%s\"" % script)
+        self.runCmd("type summary add i_am_cool --python-script \"%s\"" % script)
 
         self.expect("frame variable one",
             substrs = ['Hello from Python',
@@ -81,7 +81,7 @@ class DataFormatterTestCase(TestBase):
         script = 'a = valobj.GetChildMemberWithName(\'integer\'); a_val = a.GetValue(); str = \'int says \' + a_val; return str;'
 
         # Check that changes in the script are immediately reflected
-        self.runCmd("type summary add i_am_cool -s \"%s\"" % script)
+        self.runCmd("type summary add i_am_cool --python-script \"%s\"" % script)
 
         self.expect("frame variable two",
                     substrs = ['int says 1'])
@@ -101,14 +101,14 @@ class DataFormatterTestCase(TestBase):
                                'and float says 2.71'])
 
         # Force a failure for pointers
-        self.runCmd("type summary add i_am_cool -p -s \"%s\"" % script)
+        self.runCmd("type summary add i_am_cool -p --python-script \"%s\"" % script)
 
         self.expect("frame variable twoptr", matching=False,
                     substrs = ['and float says 2.71'])
 
         script = 'return \'Python summary\'';
 
-        self.runCmd("type summary add --name test_summary -s \"%s\"" % script)
+        self.runCmd("type summary add --name test_summary --python-script \"%s\"" % script)
 
         # attach the Python named summary to someone
         self.runCmd("frame variable one --summary test_summary")
@@ -140,7 +140,7 @@ class DataFormatterTestCase(TestBase):
 
         # disable type summary for pointers, and make a Python regex summary
         self.runCmd("type summary add i_am_cool -p -f \"Text summary\"")
-        self.runCmd("type summary add -x cool -s \"%s\"" % script)
+        self.runCmd("type summary add -x cool --python-script \"%s\"" % script)
 
         # variables should stick to the type summary
         self.expect("frame variable one",

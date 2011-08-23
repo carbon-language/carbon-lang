@@ -30,6 +30,17 @@
 using namespace lldb;
 using namespace lldb_private;
 
+ValueFormat::ValueFormat (lldb::Format f,
+                          bool casc,
+                          bool skipptr,
+                          bool skipref) : 
+    m_cascades(casc),
+    m_skip_pointers(skipptr),
+    m_skip_references(skipref),
+    m_format (f)
+{
+}
+
 std::string
 ValueFormat::FormatObject(lldb::ValueObjectSP object)
 {
@@ -53,6 +64,39 @@ ValueFormat::FormatObject(lldb::ValueObjectSP object)
         return ("unsufficient data for value");
     }
 }
+
+SummaryFormat::SummaryFormat(bool casc,
+                             bool skipptr,
+                             bool skipref,
+                             bool nochildren,
+                             bool novalue,
+                             bool oneliner) :
+    m_cascades(casc),
+    m_skip_pointers(skipptr),
+    m_skip_references(skipref),
+    m_dont_show_children(nochildren),
+    m_dont_show_value(novalue),
+    m_show_members_oneliner(oneliner)
+{
+}
+
+StringSummaryFormat::StringSummaryFormat(bool casc,
+                                         bool skipptr,
+                                         bool skipref,
+                                         bool nochildren,
+                                         bool novalue,
+                                         bool oneliner,
+                                         std::string f) :
+    SummaryFormat(casc,
+                  skipptr,
+                  skipref,
+                  nochildren,
+                  novalue,
+                  oneliner),
+    m_format(f)
+{
+}
+
 
 std::string
 StringSummaryFormat::FormatObject(lldb::ValueObjectSP object)
@@ -118,6 +162,26 @@ StringSummaryFormat::GetDescription()
                  m_skip_references ? " (skip references)" : "");
     return sstr.GetString();
 }
+
+ScriptSummaryFormat::ScriptSummaryFormat(bool casc,
+                                         bool skipptr,
+                                         bool skipref,
+                                         bool nochildren,
+                                         bool novalue,
+                                         bool oneliner,
+                                         std::string fname,
+                                         std::string pscri) :
+    SummaryFormat(casc,
+                  skipptr,
+                  skipref,
+                  nochildren,
+                  novalue,
+                  oneliner),
+    m_function_name(fname),
+    m_python_script(pscri)
+{
+}
+
 
 std::string
 ScriptSummaryFormat::FormatObject(lldb::ValueObjectSP object)
@@ -245,6 +309,27 @@ SyntheticScriptProvider::FrontEnd::FrontEnd(std::string pclass,
         m_wrapper = (PyObject*)m_interpreter->CreateSyntheticScriptedProvider(m_python_class, m_backend);
 }
 
+lldb::ValueObjectSP
+SyntheticScriptProvider::FrontEnd::GetChildAtIndex (uint32_t idx, bool can_create)
+{
+    if (m_wrapper == NULL || m_interpreter == NULL)
+        return lldb::ValueObjectSP();
+    
+    PyObject* py_return = (PyObject*)m_interpreter->GetChildAtIndex(m_wrapper, idx);
+    if (py_return == NULL || py_return == Py_None)
+    {
+        Py_XDECREF(py_return);
+        return lldb::ValueObjectSP();
+    }
+    
+    lldb::SBValue *sb_ptr = m_interpreter->CastPyObjectToSBValue(py_return);
+    
+    if (py_return == NULL || sb_ptr == NULL)
+        return lldb::ValueObjectSP();
+    
+    return sb_ptr->m_opaque_sp;
+}
+
 std::string
 SyntheticScriptProvider::GetDescription()
 {
@@ -256,4 +341,44 @@ SyntheticScriptProvider::GetDescription()
                 m_python_class.c_str());
     
     return sstr.GetString();
+}
+
+const int
+SyntheticArrayView::GetRealIndexForIndex(int i)
+{
+    if (i >= GetCount())
+        return -1;
+    
+    SyntheticArrayRange* ptr = &m_head;
+    
+    int residual = i;
+    
+    while(ptr && ptr != m_tail)
+    {
+        if (residual >= ptr->GetSelfCount())
+        {
+            residual -= ptr->GetSelfCount();
+            ptr = ptr->GetNext();
+        }
+        
+        return ptr->GetLow() + residual;
+    }
+    
+    return -1;
+}
+
+uint32_t
+SyntheticArrayView::FrontEnd::GetIndexOfChildWithName (const ConstString &name_cs)
+{
+    const char* name_cstr = name_cs.GetCString();
+    if (*name_cstr != '[')
+        return UINT32_MAX;
+    std::string name(name_cstr+1);
+    if (name[name.size()-1] != ']')
+        return UINT32_MAX;
+    name = name.erase(name.size()-1,1);
+    int index = Args::StringToSInt32 (name.c_str(), -1);
+    if (index < 0)
+        return UINT32_MAX;
+    return index;
 }

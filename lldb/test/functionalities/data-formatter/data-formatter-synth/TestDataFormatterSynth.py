@@ -90,7 +90,7 @@ class DataFormatterTestCase(TestBase):
                                'z = 8'])
         
         # Same output, but using Python
-        self.runCmd("type summary add BagOfInts -s \"return 'y='+valobj.GetChildMemberWithName('y').GetValue()\" -e")
+        self.runCmd("type summary add BagOfInts --python-script \"return 'y='+valobj.GetChildMemberWithName('y').GetValue()\" -e")
         self.expect('frame variable int_bag',
                     substrs = ['y=7',
                                'x = 6',

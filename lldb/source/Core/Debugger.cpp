@@ -694,20 +694,13 @@ TestPromptFormats (StackFrame *frame)
     }
 }
 
-#define IFERROR_PRINT_IT if (error.Fail()) \
-{ \
-    if (log) \
-        log->Printf("ERROR: %s\n", error.AsCString("unknown")); \
-    break; \
-}
-
 static bool
-ScanFormatDescriptor(const char* var_name_begin,
-                     const char* var_name_end,
-                     const char** var_name_final,
-                     const char** percent_position,
-                     lldb::Format* custom_format,
-                     ValueObject::ValueObjectRepresentationStyle* val_obj_display)
+ScanFormatDescriptor (const char* var_name_begin,
+                      const char* var_name_end,
+                      const char** var_name_final,
+                      const char** percent_position,
+                      lldb::Format* custom_format,
+                      ValueObject::ValueObjectRepresentationStyle* val_obj_display)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
     *percent_position = ::strchr(var_name_begin,'%');
@@ -766,15 +759,15 @@ ScanFormatDescriptor(const char* var_name_begin,
 }
 
 static bool
-ScanBracketedRange(const char* var_name_begin,
-                   const char* var_name_end,
-                   const char* var_name_final,
-                   const char** open_bracket_position,
-                   const char** separator_position,
-                   const char** close_bracket_position,
-                   const char** var_name_final_if_array_range,
-                   int64_t* index_lower,
-                   int64_t* index_higher)
+ScanBracketedRange (const char* var_name_begin,
+                    const char* var_name_end,
+                    const char* var_name_final,
+                    const char** open_bracket_position,
+                    const char** separator_position,
+                    const char** close_bracket_position,
+                    const char** var_name_final_if_array_range,
+                    int64_t* index_lower,
+                    int64_t* index_higher)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
     *open_bracket_position = ::strchr(var_name_begin,'[');
@@ -829,12 +822,12 @@ ScanBracketedRange(const char* var_name_begin,
 
 
 static ValueObjectSP
-ExpandExpressionPath(ValueObject* valobj,
-                     StackFrame* frame,
-                     bool* do_deref_pointer,
-                     const char* var_name_begin,
-                     const char* var_name_final,
-                     Error& error)
+ExpandExpressionPath (ValueObject* valobj,
+                      StackFrame* frame,
+                      bool* do_deref_pointer,
+                      const char* var_name_begin,
+                      const char* var_name_final,
+                      Error& error)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
     StreamString sstring;
@@ -870,10 +863,10 @@ ExpandExpressionPath(ValueObject* valobj,
 }
 
 static ValueObjectSP
-ExpandIndexedExpression(ValueObject* valobj,
-                        uint32_t index,
-                        StackFrame* frame,
-                        bool deref_pointer)
+ExpandIndexedExpression (ValueObject* valobj,
+                         uint32_t index,
+                         StackFrame* frame,
+                         bool deref_pointer)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
     const char* ptr_deref_format = "[%d]";
@@ -1153,7 +1146,12 @@ Debugger::FormatPrompt
                                     // to get to the target ValueObject
                                     Error error;
                                     target = target->Dereference(error).get();
-                                    IFERROR_PRINT_IT
+                                    if (error.Fail())
+                                    {
+                                        if (log)
+                                            log->Printf("ERROR: %s\n", error.AsCString("unknown")); \
+                                        break;
+                                    }
                                     do_deref_pointer = false;
                                 }
                                 

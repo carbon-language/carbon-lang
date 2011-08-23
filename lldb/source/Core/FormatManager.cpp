@@ -169,6 +169,22 @@ FormatCategory::FormatCategory(IFormatChangeListener* clist,
 {}
 
 bool
+FormatCategory::Get (ValueObject& valobj,
+                     lldb::SummaryFormatSP& entry,
+                     lldb::DynamicValueType use_dynamic,
+                     uint32_t* reason)
+{
+    if (!IsEnabled())
+        return false;
+    if (GetSummaryNavigator()->Get(valobj, entry, use_dynamic, reason))
+        return true;
+    bool regex = GetRegexSummaryNavigator()->Get(valobj, entry, use_dynamic, reason);
+    if (regex && reason)
+        *reason |= lldb::eFormatterChoiceCriterionRegularExpressionSummary;
+    return regex;
+}
+
+bool
 FormatCategory::Get(ValueObject& valobj,
                     lldb::SyntheticChildrenSP& entry,
                     lldb::DynamicValueType use_dynamic,
@@ -364,6 +380,73 @@ FormatCategory::AnyMatches(ConstString type_name,
     return false;
 }
 
+bool
+CategoryMap::AnyMatches (ConstString type_name,
+                                    FormatCategory::FormatCategoryItems items,
+                                    bool only_enabled,
+                                    const char** matching_category,
+                                    FormatCategory::FormatCategoryItems* matching_type)
+{
+    Mutex::Locker(m_map_mutex);
+    
+    MapIterator pos, end = m_map.end();
+    for (pos = m_map.begin(); pos != end; pos++)
+    {
+        if (pos->second->AnyMatches(type_name,
+                                    items,
+                                    only_enabled,
+                                    matching_category,
+                                    matching_type))
+            return true;
+    }
+    return false;
+}
+
+bool
+CategoryMap::Get (ValueObject& valobj,
+                  lldb::SummaryFormatSP& entry,
+                  lldb::DynamicValueType use_dynamic)
+{
+    Mutex::Locker(m_map_mutex);
+    
+    uint32_t reason_why;        
+    ActiveCategoriesIterator begin, end = m_active_categories.end();
+    
+    for (begin = m_active_categories.begin(); begin != end; begin++)
+    {
+        lldb::FormatCategorySP category = *begin;
+        lldb::SummaryFormatSP current_format;
+        if (!category->Get(valobj, current_format, use_dynamic, &reason_why))
+            continue;
+        entry = current_format;
+        return true;
+    }
+    return false;
+}
+
+bool
+CategoryMap::Get (ValueObject& valobj,
+                  lldb::SyntheticChildrenSP& entry,
+                  lldb::DynamicValueType use_dynamic)
+{
+    Mutex::Locker(m_map_mutex);
+    
+    uint32_t reason_why;
+    
+    ActiveCategoriesIterator begin, end = m_active_categories.end();
+    
+    for (begin = m_active_categories.begin(); begin != end; begin++)
+    {
+        lldb::FormatCategorySP category = *begin;
+        lldb::SyntheticChildrenSP current_format;
+        if (!category->Get(valobj, current_format, use_dynamic, &reason_why))
+            continue;
+        entry = current_format;
+        return true;
+    }
+    return false;
+}
+
 void
 CategoryMap::LoopThrough(CallbackType callback, void* param)
 {
@@ -396,6 +479,23 @@ CategoryMap::LoopThrough(CallbackType callback, void* param)
             }
         }
     }
+}
+
+lldb::FormatCategorySP
+FormatManager::Category (const ConstString& category_name,
+                         bool can_create)
+{
+    if (!category_name)
+        return Category(m_default_category_name);
+    lldb::FormatCategorySP category;
+    if (m_categories_map.Get(category_name, category))
+        return category;
+    
+    if (!can_create)
+        return lldb::FormatCategorySP();
+    
+    m_categories_map.Add(category_name,lldb::FormatCategorySP(new FormatCategory(this, category_name.AsCString())));
+    return Category(category_name);
 }
 
 lldb::Format

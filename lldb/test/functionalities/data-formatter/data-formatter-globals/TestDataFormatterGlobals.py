@@ -67,7 +67,7 @@ class DataFormatterTestCase(TestBase):
                     substrs = ['(Point *) g_point_pointer ='])
 
         # Test Python code on resulting SBValue
-        self.runCmd("type summary add -s \"return 'x=' + str(valobj.GetChildMemberWithName('x').GetValue());\" Point")
+        self.runCmd("type summary add --python-script \"return 'x=' + str(valobj.GetChildMemberWithName('x').GetValue());\" Point")
 
         self.expect("target variable g_point",
                     substrs = ['x='])

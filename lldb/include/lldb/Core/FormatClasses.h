@@ -31,10 +31,8 @@
 #include "lldb/lldb-public.h"
 #include "lldb/lldb-enumerations.h"
 
-#include "lldb/API/SBValue.h"
 #include "lldb/Core/ValueObject.h"
 #include "lldb/Interpreter/ScriptInterpreterPython.h"
-#include "lldb/Symbol/SymbolContext.h"
 
 namespace lldb_private {
 
@@ -48,13 +46,7 @@ struct ValueFormat
     ValueFormat (lldb::Format f = lldb::eFormatInvalid,
                  bool casc = false,
                  bool skipptr = false,
-                 bool skipref = false) : 
-    m_cascades(casc),
-    m_skip_pointers(skipptr),
-    m_skip_references(skipref),
-    m_format (f)
-    {
-    }
+                 bool skipref = false);
     
     typedef lldb::SharedPtr<ValueFormat>::Type SharedPointer;
     typedef bool(*ValueCallback)(void*, ConstString, const lldb::ValueFormatSP&);
@@ -335,25 +327,7 @@ public:
         }
         
         virtual lldb::ValueObjectSP
-        GetChildAtIndex (uint32_t idx, bool can_create)
-        {
-            if (m_wrapper == NULL || m_interpreter == NULL)
-                return lldb::ValueObjectSP();
-            
-            PyObject* py_return = (PyObject*)m_interpreter->GetChildAtIndex(m_wrapper, idx);
-            if (py_return == NULL || py_return == Py_None)
-            {
-                Py_XDECREF(py_return);
-                return lldb::ValueObjectSP();
-            }
-            
-            lldb::SBValue *sb_ptr = m_interpreter->CastPyObjectToSBValue(py_return);
-            
-            if (py_return == NULL || sb_ptr == NULL)
-                return lldb::ValueObjectSP();
-            
-            return sb_ptr->m_opaque_sp;
-        }
+        GetChildAtIndex (uint32_t idx, bool can_create);
         
         virtual void
         Update()
@@ -383,122 +357,121 @@ public:
     }
     
 };
-
-struct SyntheticArrayRange
-{
-private:
-    int m_low;
-    int m_high;
-    SyntheticArrayRange* m_next;
-    
-public:
-    
-    SyntheticArrayRange () : 
-        m_low(-1),
-        m_high(-2),
-        m_next(NULL)
-    {}
-
-    SyntheticArrayRange (int L) : 
-        m_low(L),
-        m_high(L),
-        m_next(NULL)
-    {}
-    
-    SyntheticArrayRange (int L, int H) : 
-        m_low(L),
-        m_high(H),
-        m_next(NULL)
-    {}
-    
-    SyntheticArrayRange (int L, int H, SyntheticArrayRange* N) : 
-        m_low(L),
-        m_high(H),
-        m_next(N)
-    {}
-    
-    inline int
-    GetLow ()
-    {
-        return m_low;
-    }
-    
-    inline int
-    GetHigh ()
-    {
-        return m_high;
-    }
-    
-    inline void
-    SetLow (int L)
-    {
-        m_low = L;
-    }
-    
-    inline void
-    SetHigh (int H)
-    {
-        m_high = H;
-    }
-    
-    inline  int
-    GetSelfCount()
-    {
-        return GetHigh() - GetLow() + 1;
-    }
-    
-    int
-    GetCount()
-    {
-        int count = GetSelfCount();
-        if (m_next)
-            count += m_next->GetCount();
-        return count;
-    }
-    
-    inline SyntheticArrayRange*
-    GetNext()
-    {
-        return m_next;
-    }
-    
-    void
-    SetNext(SyntheticArrayRange* N)
-    {
-        if (m_next)
-            delete m_next;
-        m_next = N;
-    }
-    
-    void
-    SetNext(int L, int H)
-    {
-        if (m_next)
-            delete m_next;
-        m_next = new SyntheticArrayRange(L, H);
-    }
-    
-    void
-    SetNext(int L)
-    {
-        if (m_next)
-            delete m_next;
-        m_next = new SyntheticArrayRange(L);
-    }
-    
-    ~SyntheticArrayRange()
-    {
-        delete m_next;
-        m_next = NULL;
-    }
-    
-};
     
 class SyntheticArrayView : public SyntheticChildren
 {
-    SyntheticArrayRange m_head;
-    SyntheticArrayRange *m_tail;
 public:
+    
+    struct SyntheticArrayRange
+    {
+    private:
+        int m_low;
+        int m_high;
+        SyntheticArrayRange* m_next;
+        
+    public:
+        
+        SyntheticArrayRange () : 
+        m_low(-1),
+        m_high(-2),
+        m_next(NULL)
+        {}
+        
+        SyntheticArrayRange (int L) : 
+        m_low(L),
+        m_high(L),
+        m_next(NULL)
+        {}
+        
+        SyntheticArrayRange (int L, int H) : 
+        m_low(L),
+        m_high(H),
+        m_next(NULL)
+        {}
+        
+        SyntheticArrayRange (int L, int H, SyntheticArrayRange* N) : 
+        m_low(L),
+        m_high(H),
+        m_next(N)
+        {}
+        
+        inline int
+        GetLow ()
+        {
+            return m_low;
+        }
+        
+        inline int
+        GetHigh ()
+        {
+            return m_high;
+        }
+        
+        inline void
+        SetLow (int L)
+        {
+            m_low = L;
+        }
+        
+        inline void
+        SetHigh (int H)
+        {
+            m_high = H;
+        }
+        
+        inline  int
+        GetSelfCount()
+        {
+            return GetHigh() - GetLow() + 1;
+        }
+        
+        int
+        GetCount()
+        {
+            int count = GetSelfCount();
+            if (m_next)
+                count += m_next->GetCount();
+            return count;
+        }
+        
+        inline SyntheticArrayRange*
+        GetNext()
+        {
+            return m_next;
+        }
+        
+        void
+        SetNext(SyntheticArrayRange* N)
+        {
+            if (m_next)
+                delete m_next;
+            m_next = N;
+        }
+        
+        void
+        SetNext(int L, int H)
+        {
+            if (m_next)
+                delete m_next;
+            m_next = new SyntheticArrayRange(L, H);
+        }
+        
+        void
+        SetNext(int L)
+        {
+            if (m_next)
+                delete m_next;
+            m_next = new SyntheticArrayRange(L);
+        }
+        
+        ~SyntheticArrayRange()
+        {
+            delete m_next;
+            m_next = NULL;
+        }
+        
+    };
+    
     SyntheticArrayView(bool casc = false,
                        bool skipptr = false,
                        bool skipref = false) :
@@ -524,29 +497,7 @@ public:
     }
     
     const int
-    GetRealIndexForIndex(int i)
-    {
-        if (i >= GetCount())
-            return -1;
-        
-        SyntheticArrayRange* ptr = &m_head;
-        
-        int residual = i;
-        
-        while(ptr && ptr != m_tail)
-        {
-            if (residual >= ptr->GetSelfCount())
-            {
-                residual -= ptr->GetSelfCount();
-                ptr = ptr->GetNext();
-            }
-            
-            return ptr->GetLow() + residual;
-        }
-        
-        return -1;
-        
-    }
+    GetRealIndexForIndex(int i);
     
     bool
     IsScripted()
@@ -592,20 +543,7 @@ public:
         Update() {}
         
         virtual uint32_t
-        GetIndexOfChildWithName (const ConstString &name_cs)
-        {
-            const char* name_cstr = name_cs.GetCString();
-            if (*name_cstr != '[')
-                return UINT32_MAX;
-            std::string name(name_cstr+1);
-            if (name[name.size()-1] != ']')
-                return UINT32_MAX;
-            name = name.erase(name.size()-1,1);
-            int index = Args::StringToSInt32 (name.c_str(), -1);
-            if (index < 0)
-                return UINT32_MAX;
-            return index;
-        }
+        GetIndexOfChildWithName (const ConstString &name_cs);
         
         typedef lldb::SharedPtr<SyntheticChildrenFrontEnd>::Type SharedPointer;
         
@@ -616,6 +554,9 @@ public:
     {
         return SyntheticChildrenFrontEnd::SharedPointer(new FrontEnd(this, backend));
     }
+private:
+    SyntheticArrayRange m_head;
+    SyntheticArrayRange *m_tail;
     
 };
 
@@ -635,15 +576,7 @@ struct SummaryFormat
                   bool skipref = false,
                   bool nochildren = true,
                   bool novalue = true,
-                  bool oneliner = false) :
-    m_cascades(casc),
-    m_skip_pointers(skipptr),
-    m_skip_references(skipref),
-    m_dont_show_children(nochildren),
-    m_dont_show_value(novalue),
-    m_show_members_oneliner(oneliner)
-    {
-    }
+                  bool oneliner = false);
     
     bool
     Cascades() const
@@ -707,11 +640,7 @@ struct StringSummaryFormat : public SummaryFormat
                         bool nochildren = true,
                         bool novalue = true,
                         bool oneliner = false,
-                        std::string f = "") :
-    SummaryFormat(casc,skipptr,skipref,nochildren,novalue,oneliner),
-    m_format(f)
-    {
-    }
+                        std::string f = "");
     
     std::string
     GetFormat() const
@@ -745,12 +674,7 @@ struct ScriptSummaryFormat : public SummaryFormat
                         bool novalue = true,
                         bool oneliner = false,
                         std::string fname = "",
-                        std::string pscri = "") :
-    SummaryFormat(casc,skipptr,skipref,nochildren,novalue,oneliner),
-    m_function_name(fname),
-    m_python_script(pscri)
-    {
-    }
+                        std::string pscri = "");
     
     std::string
     GetFunctionName() const

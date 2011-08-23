@@ -627,7 +627,7 @@ CommandObjectTypeSummaryAdd::CommandOptions::SetOptionValue (uint32_t option_idx
         case 'n':
             m_name = new ConstString(option_arg);
             break;
-        case 's':
+        case 'o':
             m_python_script = std::string(option_arg);
             m_is_add_script = true;
             break;
@@ -1082,7 +1082,7 @@ CommandObjectTypeSummaryAdd::CommandOptions::g_option_table[] =
     { LLDB_OPT_SET_ALL, false,  "regex", 'x', no_argument, NULL, 0, eArgTypeNone,    "Type names are actually regular expressions."},
     { LLDB_OPT_SET_1  , true, "inline-children", 'c', no_argument, NULL, 0, eArgTypeNone,    "If true, inline all child values into summary string."},
     { LLDB_OPT_SET_2  , true, "summary-string", 'f', required_argument, NULL, 0, eArgTypeSummaryString,    "Summary string used to display text and object contents."},
-    { LLDB_OPT_SET_3, false, "python-script", 's', required_argument, NULL, 0, eArgTypeName, "Give a one-liner Python script as part of the command."},
+    { LLDB_OPT_SET_3, false, "python-script", 'o', required_argument, NULL, 0, eArgTypeName, "Give a one-liner Python script as part of the command."},
     { LLDB_OPT_SET_3, false, "python-function", 'F', required_argument, NULL, 0, eArgTypeName, "Give the name of a Python function to use for this type."},
     { LLDB_OPT_SET_3, false, "input-python", 'P', no_argument, NULL, 0, eArgTypeNone, "Input Python code to use for this type manually."},
     { LLDB_OPT_SET_2 | LLDB_OPT_SET_3,   false, "expand", 'e', no_argument, NULL, 0, eArgTypeNone,    "Expand aggregate data types to show children on separate lines."},
@@ -1228,7 +1228,8 @@ public:
         lldb::FormatCategorySP category;
         DataVisualization::Categories::Get(ConstString(m_options.m_category.c_str()), category);
         
-        bool delete_category = category->DeleteSummaries(typeCS);
+        bool delete_category = category->Delete(typeCS,
+                                                eFormatCategoryItemSummary | eFormatCategoryItemRegexSummary);
         bool delete_named = DataVisualization::NamedSummaryFormats::Delete(typeCS);
         
         if (delete_category || delete_named)
@@ -1360,7 +1361,7 @@ public:
             }
             else
                 DataVisualization::Categories::Get(ConstString(NULL), category);
-            category->ClearSummaries();
+            category->Clear(eFormatCategoryItemSummary | eFormatCategoryItemRegexSummary);
         }
         
         DataVisualization::NamedSummaryFormats::Clear();
@@ -3436,6 +3437,32 @@ public:
         
         m_arguments.push_back (type_arg);
         
+        SetHelpLong(
+                    "Some examples of using this command.\n"
+                    "We use as reference the following snippet of code:\n"
+                    "\n"
+                    "class Foo {;\n"
+                    "    int a;\n"
+                    "    int b;\n"
+                    "    int c;\n"
+                    "    int d;\n"
+                    "    int e;\n"
+                    "    int f;\n"
+                    "    int g;\n"
+                    "    int h;\n"
+                    "    int i;\n"
+                    "} \n"
+                    "Typing:\n"
+                    "type filter add --child a -- child g Foo\n"
+                    "frame variable a_foo\n"
+                    "will produce an output where only a and b are displayed\n"
+                    "Other children of a_foo (b,c,d,e,f,h and i) are available by asking for them, as in:\n"
+                    "frame variable a_foo.b a_foo.c ... a_foo.i\n"
+                    "\n"
+                    "Use option --raw to frame variable prevails on the filter\n"
+                    "frame variable a_foo --raw\n"
+                    "shows all the children of a_foo (a thru i) as if no filter was defined\n"
+                    );        
     }
     
     ~CommandObjectTypeFilterAdd ()

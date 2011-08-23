@@ -679,6 +679,4 @@ LLDBSwigPythonCallCommand
 return retval;
 }
 
-#undef RETURN_RETVAL
-
 %}
