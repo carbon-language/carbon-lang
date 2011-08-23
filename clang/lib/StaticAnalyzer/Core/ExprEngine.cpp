@@ -283,6 +283,9 @@ void ExprEngine::ProcessStmt(const CFGStmt S, StmtNodeBuilder& builder) {
     ExplodedNodeSet Tmp2;
     getTF().evalDeadSymbols(Tmp2, *this, *Builder, EntryNode,
                             EntryState, SymReaper);
+    if (Tmp2.empty()) {
+      Builder->MakeNode(Tmp2, currentStmt, EntryNode, EntryState);
+    }
 
     ExplodedNodeSet Tmp3;
     getCheckerManager().runCheckersForDeadSymbols(Tmp3, Tmp2,

@@ -1649,25 +1649,12 @@ public:
   BugType *overAutorelease;
   BugType *returnNotOwnedForOwned;
   BugReporter *BR;
-  
-  llvm::DenseMap<SymbolRef, const SimpleProgramPointTag*> DeadSymbolTags;
 
   const ProgramState *Update(const ProgramState * state,
                              SymbolRef sym,
                              RefVal V,
                              ArgEffect E,
                              RefVal::Kind& hasErr);
-
-  const ProgramState *HandleSymbolDeath(const ProgramState * state,
-                                        SymbolRef sid,
-                                        RefVal V,
-                                        SmallVectorImpl<SymbolRef> &Leaked);
-
-  ExplodedNode *ProcessLeaks(const ProgramState * state,
-                             SmallVectorImpl<SymbolRef> &Leaked,
-                             GenericNodeBuilderRefCount &Builder,
-                             ExprEngine &Eng,
-                             ExplodedNode *Pred = 0);
 
 public:
   CFRefCount(ASTContext &Ctx, bool gcenabled, const LangOptions& lopts)
@@ -1676,12 +1663,6 @@ public:
       deallocGC(0), deallocNotOwned(0),
       leakWithinFunction(0), leakAtReturn(0), overAutorelease(0),
       returnNotOwnedForOwned(0), BR(0) {}
-
-  virtual ~CFRefCount() {
-    for (llvm::DenseMap<SymbolRef, const SimpleProgramPointTag *>::iterator
-         it = DeadSymbolTags.begin(), ei = DeadSymbolTags.end(); it != ei; ++it)
-      delete it->second;
-  }
 
   void RegisterChecks(ExprEngine &Eng);
 
@@ -1723,18 +1704,6 @@ public:
 
   // End-of-path.
 
-  virtual void evalEndPath(ExprEngine& Engine,
-                           EndOfFunctionNodeBuilder& Builder);
-
-  virtual void evalDeadSymbols(ExplodedNodeSet &Dst,
-                               ExprEngine& Engine,
-                               StmtNodeBuilder& Builder,
-                               ExplodedNode *Pred,
-                               const ProgramState *state,
-                               SymbolReaper& SymReaper);
-
-  const ProgramPointTag *getDeadSymbolTag(SymbolRef sym);
-  
   std::pair<ExplodedNode*, const ProgramState *>
   HandleAutoreleaseCounts(const ProgramState * state,
                           GenericNodeBuilderRefCount Bd,
@@ -3062,142 +3031,6 @@ CFRefCount::HandleAutoreleaseCounts(const ProgramState *state,
   return std::make_pair((ExplodedNode*)0, state);
 }
 
-const ProgramState *
-CFRefCount::HandleSymbolDeath(const ProgramState *state,
-                              SymbolRef sid,
-                              RefVal V,
-                              SmallVectorImpl<SymbolRef> &Leaked) {
-
-  bool hasLeak = V.isOwned() ||
-  ((V.isNotOwned() || V.isReturnedOwned()) && V.getCount() > 0);
-
-  if (!hasLeak)
-    return state->remove<RefBindings>(sid);
-
-  Leaked.push_back(sid);
-  return state->set<RefBindings>(sid, V ^ RefVal::ErrorLeak);
-}
-
-ExplodedNode*
-CFRefCount::ProcessLeaks(const ProgramState * state,
-                         SmallVectorImpl<SymbolRef> &Leaked,
-                         GenericNodeBuilderRefCount &Builder,
-                         ExprEngine& Eng,
-                         ExplodedNode *Pred) {
-
-  if (Leaked.empty())
-    return Pred;
-
-  // Generate an intermediate node representing the leak point.
-  ExplodedNode *N = Builder.MakeNode(state, Pred);
-
-  if (N) {
-    for (SmallVectorImpl<SymbolRef>::iterator
-         I = Leaked.begin(), E = Leaked.end(); I != E; ++I) {
-
-      CFRefBug *BT = static_cast<CFRefBug*>(Pred ? leakWithinFunction
-                                                 : leakAtReturn);
-      assert(BT && "BugType not initialized.");
-      CFRefLeakReport* report = new CFRefLeakReport(*BT, *this, N, *I, Eng);
-      BR->EmitReport(report);
-    }
-  }
-
-  return N;
-}
-
-void CFRefCount::evalEndPath(ExprEngine& Eng,
-                             EndOfFunctionNodeBuilder& Builder) {
-
-  const ProgramState *state = Builder.getState();
-  GenericNodeBuilderRefCount Bd(Builder);
-  RefBindings B = state->get<RefBindings>();
-  ExplodedNode *Pred = 0;
-
-  for (RefBindings::iterator I = B.begin(), E = B.end(); I != E; ++I) {
-    bool stop = false;
-    llvm::tie(Pred, state) = HandleAutoreleaseCounts(state, Bd, Pred, Eng,
-                                                     (*I).first,
-                                                     (*I).second, stop);
-
-    if (stop)
-      return;
-  }
-
-  B = state->get<RefBindings>();
-  SmallVector<SymbolRef, 10> Leaked;
-
-  for (RefBindings::iterator I = B.begin(), E = B.end(); I != E; ++I)
-    state = HandleSymbolDeath(state, (*I).first, (*I).second, Leaked);
-
-  ProcessLeaks(state, Leaked, Bd, Eng, Pred);
-}
-
-const ProgramPointTag *CFRefCount::getDeadSymbolTag(SymbolRef sym) {
-  const SimpleProgramPointTag *&tag = DeadSymbolTags[sym];
-  if (!tag) {
-    llvm::SmallString<128> buf;
-    llvm::raw_svector_ostream out(buf);
-    out << "CFRefCount : Dead Symbol : " << sym->getSymbolID();
-    tag = new SimpleProgramPointTag(out.str());
-  }
-  return tag;  
-}
-
-void CFRefCount::evalDeadSymbols(ExplodedNodeSet &Dst,
-                                 ExprEngine& Eng,
-                                 StmtNodeBuilder& Builder,
-                                 ExplodedNode *Pred,
-                                 const ProgramState *state,
-                                 SymbolReaper& SymReaper) {
-  const Stmt *S = Builder.getStmt();
-  RefBindings B = state->get<RefBindings>();
-
-  // Update counts from autorelease pools
-  for (SymbolReaper::dead_iterator I = SymReaper.dead_begin(),
-       E = SymReaper.dead_end(); I != E; ++I) {
-    SymbolRef Sym = *I;
-    if (const RefVal* T = B.lookup(Sym)){
-      // Use the symbol as the tag.
-      // FIXME: This might not be as unique as we would like.
-      GenericNodeBuilderRefCount Bd(Builder, S, getDeadSymbolTag(Sym));
-      bool stop = false;
-      llvm::tie(Pred, state) = HandleAutoreleaseCounts(state, Bd, Pred, Eng,
-                                                       Sym, *T, stop);
-      if (stop)
-        return;
-    }
-  }
-
-  B = state->get<RefBindings>();
-  SmallVector<SymbolRef, 10> Leaked;
-
-  for (SymbolReaper::dead_iterator I = SymReaper.dead_begin(),
-       E = SymReaper.dead_end(); I != E; ++I) {
-      if (const RefVal* T = B.lookup(*I))
-        state = HandleSymbolDeath(state, *I, *T, Leaked);
-  }
-
-  static SimpleProgramPointTag LeakPPTag("CFRefCount : Leak");
-  {
-    GenericNodeBuilderRefCount Bd(Builder, S, &LeakPPTag);
-    Pred = ProcessLeaks(state, Leaked, Bd, Eng, Pred);
-  }
-
-  // Did we cache out?
-  if (!Pred)
-    return;
-
-  // Now generate a new node that nukes the old bindings.
-  RefBindings::Factory& F = state->get_context<RefBindings>();
-
-  for (SymbolReaper::dead_iterator I = SymReaper.dead_begin(),
-       E = SymReaper.dead_end(); I!=E; ++I) B = F.remove(B, *I);
-
-  state = state->set<RefBindings>(B);
-  Builder.MakeNode(Dst, S, Pred, state);
-}
-
 //===----------------------------------------------------------------------===//
 // Pieces of the retain/release checker implemented using a CheckerVisitor.
 // More pieces of the retain/release checker will be migrated to this interface
@@ -3207,6 +3040,8 @@ void CFRefCount::evalDeadSymbols(ExplodedNodeSet &Dst,
 namespace {
 class RetainReleaseChecker
   : public Checker< check::Bind,
+                    check::DeadSymbols,
+                    check::EndPath,
                     check::PostStmt<BlockExpr>,
                     check::PostStmt<CastExpr>,
                     check::PostStmt<CallExpr>,
@@ -3214,7 +3049,18 @@ class RetainReleaseChecker
                     check::RegionChanges,
                     eval::Assume,
                     eval::Call > {
+
+  typedef llvm::DenseMap<SymbolRef, const SimpleProgramPointTag *> SymbolTagMap;
+
+  // This map is only used to ensure proper deletion of any allocated tags.
+  mutable SymbolTagMap DeadSymbolTags;
+
 public:  
+
+  virtual ~RetainReleaseChecker() {
+    DeleteContainerSeconds(DeadSymbolTags);
+  }
+
   void checkBind(SVal loc, SVal val, CheckerContext &C) const;
   void checkPostStmt(const BlockExpr *BE, CheckerContext &C) const;
   void checkPostStmt(const CastExpr *CE, CheckerContext &C) const;
@@ -3238,10 +3084,24 @@ public:
     return true;
   }
 
+  void checkDeadSymbols(SymbolReaper &SymReaper, CheckerContext &C) const;
+  void checkEndPath(EndOfFunctionNodeBuilder &Builder, ExprEngine &Eng) const;
+
   void processNonLeakError(const ProgramState *St, SourceRange ErrorRange,
                            RefVal::Kind ErrorKind, SymbolRef Sym,
                            CheckerContext &C) const;
 
+  const ProgramPointTag *getDeadSymbolTag(SymbolRef sym) const;
+
+  const ProgramState *handleSymbolDeath(const ProgramState *state,
+                                        SymbolRef sid, RefVal V,
+                                      SmallVectorImpl<SymbolRef> &Leaked) const;
+
+  ExplodedNode *processLeaks(const ProgramState *state,
+                             SmallVectorImpl<SymbolRef> &Leaked,
+                             GenericNodeBuilderRefCount &Builder,
+                             ExprEngine &Eng,
+                             ExplodedNode *Pred = 0) const;
 };
 } // end anonymous namespace
 
@@ -3725,6 +3585,155 @@ bool RetainReleaseChecker::evalCall(const CallExpr *CE,
 
   C.addTransition(state);
   return true;
+}
+
+// Handle dead symbols (potential leaks).
+
+const ProgramState *
+RetainReleaseChecker::handleSymbolDeath(const ProgramState *state,
+                                        SymbolRef sid, RefVal V,
+                                    SmallVectorImpl<SymbolRef> &Leaked) const {
+  bool hasLeak;
+  if (V.isOwned())
+    hasLeak = true;
+  else if (V.isNotOwned() || V.isReturnedOwned())
+    hasLeak = (V.getCount() > 0);
+
+  if (!hasLeak)
+    return state->remove<RefBindings>(sid);
+
+  Leaked.push_back(sid);
+  return state->set<RefBindings>(sid, V ^ RefVal::ErrorLeak);
+}
+
+ExplodedNode *
+RetainReleaseChecker::processLeaks(const ProgramState *state,
+                                   SmallVectorImpl<SymbolRef> &Leaked,
+                                   GenericNodeBuilderRefCount &Builder,
+                                   ExprEngine &Eng,
+                                   ExplodedNode *Pred) const {
+
+  if (Leaked.empty())
+    return Pred;
+
+  // Generate an intermediate node representing the leak point.
+  ExplodedNode *N = Builder.MakeNode(state, Pred);
+
+  if (N) {
+    for (SmallVectorImpl<SymbolRef>::iterator
+         I = Leaked.begin(), E = Leaked.end(); I != E; ++I) {
+
+      // FIXME: This goes away once the these bug types move to the checker,
+      // and CFRefReport no longer depends on CFRefCount.
+      CFRefCount &TF = static_cast<CFRefCount&>(Eng.getTF());
+      CFRefBug *BT = static_cast<CFRefBug*>(Pred ? TF.leakWithinFunction
+                                                 : TF.leakAtReturn);
+      assert(BT && "BugType not initialized.");
+      CFRefLeakReport *report = new CFRefLeakReport(*BT, TF, N, *I, Eng);
+      Eng.getBugReporter().EmitReport(report);
+    }
+  }
+
+  return N;
+}
+
+void RetainReleaseChecker::checkEndPath(EndOfFunctionNodeBuilder &Builder,
+                                        ExprEngine &Eng) const {
+  // FIXME: This goes away once HandleAutoreleaseCounts moves to the checker.
+  CFRefCount &TF = static_cast<CFRefCount&>(Eng.getTF());
+
+  const ProgramState *state = Builder.getState();
+  GenericNodeBuilderRefCount Bd(Builder);
+  RefBindings B = state->get<RefBindings>();
+  ExplodedNode *Pred = 0;
+
+  for (RefBindings::iterator I = B.begin(), E = B.end(); I != E; ++I) {
+    bool stop = false;
+    llvm::tie(Pred, state) = TF.HandleAutoreleaseCounts(state, Bd, Pred, Eng,
+                                                        (*I).first,
+                                                        (*I).second, stop);
+
+    if (stop)
+      return;
+  }
+
+  B = state->get<RefBindings>();
+  SmallVector<SymbolRef, 10> Leaked;
+
+  for (RefBindings::iterator I = B.begin(), E = B.end(); I != E; ++I)
+    state = handleSymbolDeath(state, (*I).first, (*I).second, Leaked);
+
+  processLeaks(state, Leaked, Bd, Eng, Pred);
+}
+
+const ProgramPointTag *
+RetainReleaseChecker::getDeadSymbolTag(SymbolRef sym) const {
+  const SimpleProgramPointTag *&tag = DeadSymbolTags[sym];
+  if (!tag) {
+    llvm::SmallString<64> buf;
+    llvm::raw_svector_ostream out(buf);
+    out << "RetainReleaseChecker : Dead Symbol : " << sym->getSymbolID();
+    tag = new SimpleProgramPointTag(out.str());
+  }
+  return tag;  
+}
+
+void RetainReleaseChecker::checkDeadSymbols(SymbolReaper &SymReaper,
+                                            CheckerContext &C) const {
+  StmtNodeBuilder &Builder = C.getNodeBuilder();
+  ExprEngine &Eng = C.getEngine();
+  const Stmt *S = C.getStmt();
+  ExplodedNode *Pred = C.getPredecessor();
+
+  // FIXME: This goes away once HandleAutoreleaseCounts moves to the checker.
+  CFRefCount &TF = static_cast<CFRefCount&>(Eng.getTF());
+
+  const ProgramState *state = C.getState();
+  RefBindings B = state->get<RefBindings>();
+
+  // Update counts from autorelease pools
+  for (SymbolReaper::dead_iterator I = SymReaper.dead_begin(),
+       E = SymReaper.dead_end(); I != E; ++I) {
+    SymbolRef Sym = *I;
+    if (const RefVal *T = B.lookup(Sym)){
+      // Use the symbol as the tag.
+      // FIXME: This might not be as unique as we would like.
+      GenericNodeBuilderRefCount Bd(Builder, S, getDeadSymbolTag(Sym));
+      bool stop = false;
+      llvm::tie(Pred, state) = TF.HandleAutoreleaseCounts(state, Bd, Pred, Eng,
+                                                          Sym, *T, stop);
+      if (stop)
+        return;
+    }
+  }
+
+  B = state->get<RefBindings>();
+  SmallVector<SymbolRef, 10> Leaked;
+
+  for (SymbolReaper::dead_iterator I = SymReaper.dead_begin(),
+       E = SymReaper.dead_end(); I != E; ++I) {
+    if (const RefVal *T = B.lookup(*I))
+      state = handleSymbolDeath(state, *I, *T, Leaked);
+  }
+
+  {
+    GenericNodeBuilderRefCount Bd(Builder, S, this);
+    Pred = processLeaks(state, Leaked, Bd, Eng, Pred);
+  }
+
+  // Did we cache out?
+  if (!Pred)
+    return;
+
+  // Now generate a new node that nukes the old bindings.
+  RefBindings::Factory &F = state->get_context<RefBindings>();
+
+  for (SymbolReaper::dead_iterator I = SymReaper.dead_begin(),
+       E = SymReaper.dead_end(); I != E; ++I)
+    B = F.remove(B, *I);
+
+  state = state->set<RefBindings>(B);
+  C.generateNode(state, Pred);
 }
 
 //===----------------------------------------------------------------------===//
