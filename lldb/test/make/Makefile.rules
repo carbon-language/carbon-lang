@@ -23,14 +23,14 @@ ifeq "$(OS)" ""
 endif
 
 #----------------------------------------------------------------------
-# CC defaults to gcc.
+# CC defaults to clang.
 # See also these functions:
 #   o cxx_compiler
 #   o cxx_linker
 #----------------------------------------------------------------------
-CC ?= gcc
+CC ?= clang
 ifeq "$(CC)" "cc"
-	CC = gcc
+	CC = clang
 endif
 
 #----------------------------------------------------------------------
