@@ -693,6 +693,8 @@ def u : JoinedOrSeparate<"-u">, Group<u_Group>;
 def use_gold_plugin : Flag<"-use-gold-plugin">;
 def v : Flag<"-v">,
   HelpText<"Show commands to run and use verbose output">;
+def verify : Flag<"-verify">, Flags<[DriverOption]>,
+  HelpText<"Verify output using a verifier.">;
 def weak_l : Joined<"-weak-l">, Flags<[LinkerInput]>;
 def weak__framework : Separate<"-weak_framework">, Flags<[LinkerInput]>;
 def weak__library : Separate<"-weak_library">, Flags<[LinkerInput]>;

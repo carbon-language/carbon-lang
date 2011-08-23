@@ -829,6 +829,19 @@ void Driver::BuildUniversalActions(const ToolChain &TC,
         Actions.pop_back();
 
         Actions.push_back(new DsymutilJobAction(Inputs, types::TY_dSYM));
+
+	// Verify the debug output if we're in assert mode.
+	// TODO: The verifier is noisy by default so put this under an
+	// option for now.
+	#ifndef NDEBUG
+	if (Args.hasArg(options::OPT_verify)) {
+	  ActionList VerifyInputs;
+	  VerifyInputs.push_back(Actions.back());
+	  Actions.pop_back();
+	  Actions.push_back(new VerifyJobAction(VerifyInputs,
+						types::TY_Nothing));
+	}
+        #endif
       }
     }
   }
@@ -1297,6 +1310,11 @@ void Driver::BuildJobsForAction(Compilation &C,
     if (AtTopLevel && isa<DsymutilJobAction>(A))
       SubJobAtTopLevel = true;
 
+    // Also treat verify sub-jobs as being at the top-level. They don't
+    // produce any output and so don't need temporary output names.
+    if (AtTopLevel && isa<VerifyJobAction>(A))
+      SubJobAtTopLevel = true;
+
     InputInfo II;
     BuildJobsForAction(C, *it, TC, BoundArch,
                        SubJobAtTopLevel, LinkingOutput, II);
@@ -1340,7 +1358,8 @@ const char *Driver::GetNamedOutputPath(Compilation &C,
                                        bool AtTopLevel) const {
   llvm::PrettyStackTraceString CrashInfo("Computing output path");
   // Output to a user requested destination?
-  if (AtTopLevel && !isa<DsymutilJobAction>(JA)) {
+  if (AtTopLevel && !isa<DsymutilJobAction>(JA) &&
+      !isa<VerifyJobAction>(JA)) {
     if (Arg *FinalOutput = C.getArgs().getLastArg(options::OPT_o))
       return C.addResultFile(FinalOutput->getValue(C.getArgs()));
   }
@@ -1361,7 +1380,7 @@ const char *Driver::GetNamedOutputPath(Compilation &C,
   StringRef BaseName;
 
   // Dsymutil actions should use the full path.
-  if (isa<DsymutilJobAction>(JA))
+  if (isa<DsymutilJobAction>(JA) || isa<VerifyJobAction>(JA))
     BaseName = BasePath;
   else
     BaseName = llvm::sys::path::filename(BasePath);

@@ -277,6 +277,21 @@ namespace darwin {
                               const ArgList &TCArgs,
                               const char *LinkingOutput) const;
   };
+
+  class LLVM_LIBRARY_VISIBILITY VerifyDebug : public DarwinTool  {
+  public:
+    VerifyDebug(const ToolChain &TC) : DarwinTool("darwin::VerifyDebug",
+						  "dwarfdump", TC) {}
+
+    virtual bool hasIntegratedCPP() const { return false; }
+
+    virtual void ConstructJob(Compilation &C, const JobAction &JA,
+			      const InputInfo &Output,
+			      const InputInfoList &Inputs,
+			      const ArgList &TCArgs,
+			      const char *LinkingOutput) const;
+  };
+
 }
 
   /// openbsd -- Directly call GNU Binutils assembler and linker
