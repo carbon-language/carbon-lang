@@ -906,6 +906,25 @@ public:
     return false;
   }
 
+  /// \brief Return true if both \arg LHS and \arg RHS are in the local source
+  /// location address space or the loaded one. If it's true and
+  /// \arg RelativeOffset is non-null, it will be set to the offset of \arg RHS
+  /// relative to \arg LHS.
+  bool isInSameSLocAddrSpace(SourceLocation LHS, SourceLocation RHS,
+                             int *RelativeOffset) const {
+    unsigned LHSOffs = LHS.getOffset(), RHSOffs = RHS.getOffset();
+    bool LHSLoaded = LHSOffs >= CurrentLoadedOffset;
+    bool RHSLoaded = RHSOffs >= CurrentLoadedOffset;
+
+    if (LHSLoaded == RHSLoaded) {
+      if (RelativeOffset)
+        *RelativeOffset = RHSOffs - LHSOffs;
+      return true;
+    }
+
+    return false;
+  }
+
   //===--------------------------------------------------------------------===//
   // Queries about the code at a SourceLocation.
   //===--------------------------------------------------------------------===//

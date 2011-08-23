@@ -834,10 +834,11 @@ SourceManager::getDecomposedSpellingLocSlowCase(const SrcMgr::SLocEntry *E,
   SourceLocation Loc;
   do {
     Loc = E->getExpansion().getSpellingLoc();
+    Loc = Loc.getFileLocWithOffset(Offset);
 
     FID = getFileID(Loc);
     E = &getSLocEntry(FID);
-    Offset += Loc.getOffset()-E->getOffset();
+    Offset = Loc.getOffset()-E->getOffset();
   } while (!Loc.isFileID());
 
   return std::make_pair(FID, Offset);

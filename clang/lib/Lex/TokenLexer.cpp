@@ -669,33 +669,51 @@ static void updateConsecutiveMacroArgTokens(SourceManager &SM,
                                             Token *&begin_tokens,
                                             Token * end_tokens) {
   assert(begin_tokens < end_tokens);
-  Token &FirstTok = *begin_tokens;
-  FileID SpellFID = SM.getFileID(FirstTok.getLocation());
 
-  // Look for the first token that is not from the same FileID.
-  Token *NextFIDTok = begin_tokens + 1;
-  for (; NextFIDTok < end_tokens; ++NextFIDTok)
-    if (!SM.isInFileID(NextFIDTok->getLocation(), SpellFID))
+  SourceLocation FirstLoc = begin_tokens->getLocation();
+  SourceLocation CurLoc = FirstLoc;
+
+  // Compare the source location offset of tokens and group together tokens that
+  // are close, even if their locations point to different FileIDs. e.g.
+  //
+  //  |bar    |  foo | cake   |  (3 tokens from 3 consecutive FileIDs)
+  //  ^                    ^
+  //  |bar       foo   cake|     (one SLocEntry chunk for all tokens)
+  //
+  // we can perform this "merge" since the token's spelling location depends
+  // on the relative offset.
+
+  Token *NextTok = begin_tokens + 1;
+  for (; NextTok < end_tokens; ++NextTok) {
+    int RelOffs;
+    if (!SM.isInSameSLocAddrSpace(CurLoc, NextTok->getLocation(), &RelOffs))
+      break; // Token from different local/loaded location.
+    // Check that token is not before the previous token or more than 50
+    // "characters" away.
+    if (RelOffs < 0 || RelOffs > 50)
       break;
+    CurLoc = NextTok->getLocation();
+  }
 
   // For the consecutive tokens, find the length of the SLocEntry to contain
   // all of them.
-  unsigned FirstOffs, LastOffs;
-  SM.isInFileID(FirstTok.getLocation(), SpellFID, &FirstOffs);
-  SM.isInFileID((NextFIDTok-1)->getLocation(), SpellFID, &LastOffs);
-  unsigned FullLength = (LastOffs - FirstOffs) + (NextFIDTok-1)->getLength();
+  Token &LastConsecutiveTok = *(NextTok-1);
+  int LastRelOffs;
+  SM.isInSameSLocAddrSpace(FirstLoc, LastConsecutiveTok.getLocation(),
+                           &LastRelOffs);
+  unsigned FullLength = LastRelOffs + LastConsecutiveTok.getLength();
 
   // Create a macro expansion SLocEntry that will "contain" all of the tokens.
   SourceLocation Expansion =
-      SM.createMacroArgExpansionLoc(FirstTok.getLocation(), InstLoc,FullLength);
+      SM.createMacroArgExpansionLoc(FirstLoc, InstLoc,FullLength);
 
   // Change the location of the tokens from the spelling location to the new
   // expanded location.
-  for (; begin_tokens < NextFIDTok; ++begin_tokens) {
+  for (; begin_tokens < NextTok; ++begin_tokens) {
     Token &Tok = *begin_tokens;
-    unsigned Offs;
-    SM.isInFileID(Tok.getLocation(), SpellFID, &Offs);
-    Tok.setLocation(Expansion.getFileLocWithOffset(Offs - FirstOffs));
+    int RelOffs;
+    SM.isInSameSLocAddrSpace(FirstLoc, Tok.getLocation(), &RelOffs);
+    Tok.setLocation(Expansion.getFileLocWithOffset(RelOffs));
   }
 }
 
@@ -710,9 +728,19 @@ void TokenLexer::updateLocForMacroArgTokens(SourceLocation ArgIdSpellLoc,
                                             Token *end_tokens) {
   SourceManager &SM = PP.getSourceManager();
 
-  SourceLocation curInst =
+  SourceLocation InstLoc =
       getExpansionLocForMacroDefLoc(ArgIdSpellLoc);
   
-  while (begin_tokens < end_tokens)
-    updateConsecutiveMacroArgTokens(SM, curInst, begin_tokens, end_tokens);
+  while (begin_tokens < end_tokens) {
+    // If there's only one token just create a SLocEntry for it.
+    if (end_tokens - begin_tokens == 1) {
+      Token &Tok = *begin_tokens;
+      Tok.setLocation(SM.createMacroArgExpansionLoc(Tok.getLocation(),
+                                                    InstLoc,
+                                                    Tok.getLength()));
+      return;
+    }
+
+    updateConsecutiveMacroArgTokens(SM, InstLoc, begin_tokens, end_tokens);
+  }
 }
