@@ -1383,7 +1383,24 @@ def err_attribute_argument_not_lockable : Error<
 def err_attribute_decl_not_lockable : Error<
   "%0 attribute can only be applied in a context annotated "
   "with 'lockable' attribute">;
-
+def warn_unlock_but_no_acquire : Warning<
+  "unlocking '%0' that was not acquired">,
+  InGroup<DiagGroup<"thread-safety">>, DefaultIgnore;
+def warn_double_lock : Warning<
+  "locking '%0' that is already acquired">,
+  InGroup<DiagGroup<"thread-safety">>, DefaultIgnore;
+def warn_function_requires_lock : Warning<
+  "calling function '%0' requires lock '%0'">,
+  InGroup<DiagGroup<"thread-safety">>, DefaultIgnore;
+def warn_locks_not_released : Warning<
+  "lock '%0' is not released at the end of function '%1'">,
+  InGroup<DiagGroup<"thread-safety">>, DefaultIgnore;
+def warn_lock_not_released_in_scope : Warning<
+  "lock '%0' is not released at the end of its scope">,
+  InGroup<DiagGroup<"thread-safety">>, DefaultIgnore;
+def warn_expecting_lock_held_on_loop : Warning<
+  "expecting lock '%0' to be held at start of each loop">,
+  InGroup<DiagGroup<"thread-safety">>, DefaultIgnore;
 
 def warn_impcast_vector_scalar : Warning<
   "implicit conversion turns vector to scalar: %0 to %1">,

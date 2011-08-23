@@ -55,6 +55,7 @@ class FunctionArgument<string name> : Argument<name>;
 class TypeArgument<string name> : Argument<name>;
 class UnsignedArgument<string name> : Argument<name>;
 class VariadicUnsignedArgument<string name> : Argument<name>;
+class VariadicExprArgument<string name> : Argument<name>;
 
 // A version of the form major.minor[.subminor].
 class VersionArgument<string name> : Argument<name>;
@@ -564,52 +565,65 @@ def NoThreadSafetyAnalysis : InheritableAttr {
 
 def GuardedBy : InheritableAttr {
   let Spellings = ["guarded_by"];
+  let Args = [ExprArgument<"Arg">];
 }
 
 def PtGuardedBy : InheritableAttr {
   let Spellings = ["pt_guarded_by"];
+  let Args = [ExprArgument<"Arg">];
 }
 
 def AcquiredAfter : InheritableAttr {
   let Spellings = ["acquired_after"];
+  let Args = [VariadicExprArgument<"Args">];
 }
 
 def AcquiredBefore : InheritableAttr {
   let Spellings = ["acquired_before"];
+  let Args = [VariadicExprArgument<"Args">];
 }
 
 def ExclusiveLockFunction : InheritableAttr {
   let Spellings = ["exclusive_lock_function"];
+  let Args = [VariadicExprArgument<"Args">];
 }
 
 def SharedLockFunction : InheritableAttr {
   let Spellings = ["shared_lock_function"];
+  let Args = [VariadicExprArgument<"Args">];
 }
 
 def ExclusiveTrylockFunction : InheritableAttr {
   let Spellings = ["exclusive_trylock_function"];
+  let Args = [VariadicExprArgument<"Args">];
 }
 
 def SharedTrylockFunction : InheritableAttr {
   let Spellings = ["shared_trylock_function"];
+  let Args = [VariadicExprArgument<"Args">];
 }
 
 def UnlockFunction : InheritableAttr {
   let Spellings = ["unlock_function"];
+  let Args = [VariadicExprArgument<"Args">];
 }
 
 def LockReturned : InheritableAttr {
   let Spellings = ["lock_returned"];
+  let Args = [ExprArgument<"Arg">];
 }
 
 def LocksExcluded : InheritableAttr {
   let Spellings = ["locks_excluded"];
+  let Args = [VariadicExprArgument<"Args">];
 }
 
 def ExclusiveLocksRequired : InheritableAttr {
   let Spellings = ["exclusive_locks_required"];
+  let Args = [VariadicExprArgument<"Args">];
 }
 
 def SharedLocksRequired : InheritableAttr {
   let Spellings = ["shared_locks_required"];
+  let Args = [VariadicExprArgument<"Args">];
 }

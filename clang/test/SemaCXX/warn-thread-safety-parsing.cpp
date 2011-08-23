@@ -51,9 +51,9 @@ Mu& muRef = mu1;
 #error "Should support no_thread_safety_analysis attribute"
 #endif
 
-void noanal_function() __attribute__((no_thread_safety_analysis));
+void noanal_fun() __attribute__((no_thread_safety_analysis));
 
-void noanal_function() __attribute__((no_thread_safety_analysis(1))); // \
+void noanal_fun_args() __attribute__((no_thread_safety_analysis(1))); // \
   expected-error {{attribute takes no arguments}}
 
 int noanal_testfn(int y) __attribute__((no_thread_safety_analysis));
