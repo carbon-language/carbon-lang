@@ -744,6 +744,7 @@ LLVMValueRef LLVMBasicBlockAsValue(LLVMBasicBlockRef BB);
 LLVMBool LLVMValueIsBasicBlock(LLVMValueRef Val);
 LLVMBasicBlockRef LLVMValueAsBasicBlock(LLVMValueRef Val);
 LLVMValueRef LLVMGetBasicBlockParent(LLVMBasicBlockRef BB);
+LLVMValueRef LLVMGetBasicBlockTerminator(LLVMBasicBlockRef BB);
 unsigned LLVMCountBasicBlocks(LLVMValueRef Fn);
 void LLVMGetBasicBlocks(LLVMValueRef Fn, LLVMBasicBlockRef *BasicBlocks);
 LLVMBasicBlockRef LLVMGetFirstBasicBlock(LLVMValueRef Fn);
@@ -763,14 +764,16 @@ LLVMBasicBlockRef LLVMAppendBasicBlock(LLVMValueRef Fn, const char *Name);
 LLVMBasicBlockRef LLVMInsertBasicBlock(LLVMBasicBlockRef InsertBeforeBB,
                                        const char *Name);
 void LLVMDeleteBasicBlock(LLVMBasicBlockRef BB);
+void LLVMRemoveBasicBlockFromParent(LLVMBasicBlockRef BB);
 
 void LLVMMoveBasicBlockBefore(LLVMBasicBlockRef BB, LLVMBasicBlockRef MovePos);
 void LLVMMoveBasicBlockAfter(LLVMBasicBlockRef BB, LLVMBasicBlockRef MovePos);
 
-/* Operations on instructions */
-LLVMBasicBlockRef LLVMGetInstructionParent(LLVMValueRef Inst);
 LLVMValueRef LLVMGetFirstInstruction(LLVMBasicBlockRef BB);
 LLVMValueRef LLVMGetLastInstruction(LLVMBasicBlockRef BB);
+
+/* Operations on instructions */
+LLVMBasicBlockRef LLVMGetInstructionParent(LLVMValueRef Inst);
 LLVMValueRef LLVMGetNextInstruction(LLVMValueRef Inst);
 LLVMValueRef LLVMGetPreviousInstruction(LLVMValueRef Inst);
 
@@ -786,6 +789,9 @@ void LLVMSetInstrParamAlignment(LLVMValueRef Instr, unsigned index,
 /* Operations on call instructions (only) */
 LLVMBool LLVMIsTailCall(LLVMValueRef CallInst);
 void LLVMSetTailCall(LLVMValueRef CallInst, LLVMBool IsTailCall);
+
+/* Operations on switch instructions (only) */
+LLVMBasicBlockRef LLVMGetSwitchDefaultDest(LLVMValueRef SwitchInstr);
 
 /* Operations on phi nodes */
 void LLVMAddIncoming(LLVMValueRef PhiNode, LLVMValueRef *IncomingValues,

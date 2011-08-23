@@ -1382,6 +1382,10 @@ LLVMValueRef LLVMGetBasicBlockParent(LLVMBasicBlockRef BB) {
   return wrap(unwrap(BB)->getParent());
 }
 
+LLVMValueRef LLVMGetBasicBlockTerminator(LLVMBasicBlockRef BB) {
+  return wrap(unwrap(BB)->getTerminator());
+}
+
 unsigned LLVMCountBasicBlocks(LLVMValueRef FnRef) {
   return unwrap<Function>(FnRef)->size();
 }
@@ -1452,6 +1456,10 @@ LLVMBasicBlockRef LLVMInsertBasicBlock(LLVMBasicBlockRef BBRef,
 
 void LLVMDeleteBasicBlock(LLVMBasicBlockRef BBRef) {
   unwrap(BBRef)->eraseFromParent();
+}
+
+void LLVMRemoveBasicBlockFromParent(LLVMBasicBlockRef BBRef) {
+  unwrap(BBRef)->removeFromParent();
 }
 
 void LLVMMoveBasicBlockBefore(LLVMBasicBlockRef BB, LLVMBasicBlockRef MovePos) {
@@ -1551,6 +1559,12 @@ LLVMBool LLVMIsTailCall(LLVMValueRef Call) {
 
 void LLVMSetTailCall(LLVMValueRef Call, LLVMBool isTailCall) {
   unwrap<CallInst>(Call)->setTailCall(isTailCall);
+}
+
+/*--.. Operations on switch instructions (only) ............................--*/
+
+LLVMBasicBlockRef LLVMGetSwitchDefaultDest(LLVMValueRef Switch) {
+  return wrap(unwrap<SwitchInst>(Switch)->getDefaultDest());
 }
 
 /*--.. Operations on phi nodes .............................................--*/
