@@ -875,6 +875,9 @@ static bool isCapturedBy(const VarDecl &var, const Expr *e) {
     return false;
   }
 
+  if (const StmtExpr *SE = dyn_cast<StmtExpr>(e))
+    e = cast<Expr>(SE->getSubStmt()->body_back());
+    
   for (Stmt::const_child_range children = e->children(); children; ++children)
     if (isCapturedBy(var, cast<Expr>(*children)))
       return true;
