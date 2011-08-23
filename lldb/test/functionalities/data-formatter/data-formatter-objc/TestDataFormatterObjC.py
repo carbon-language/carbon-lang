@@ -54,7 +54,7 @@ class DataFormatterTestCase(TestBase):
         # Execute the cleanup function during test case tear down.
         self.addTearDownHook(cleanup)
 
-        self.runCmd("type summary add -f \"${var%@}\" MyClass")
+        self.runCmd("type summary add --summary-string \"${var%@}\" MyClass")
 
         self.expect("frame variable object2",
             substrs = ['MyOtherClass']);
@@ -69,7 +69,7 @@ class DataFormatterTestCase(TestBase):
         self.expect("type summary list", matching=False,
             substrs = ['MyClass'])
 
-        self.runCmd("type summary add -f \"a test\" MyClass")
+        self.runCmd("type summary add --summary-string \"a test\" MyClass")
         
         self.expect("frame variable object2",
                     substrs = ['a test']);
@@ -83,7 +83,7 @@ class DataFormatterTestCase(TestBase):
         self.expect("frame variable *object",
                     substrs = ['a test']);
 
-        self.runCmd("type summary add -f \"a test\" MyClass -C no")
+        self.runCmd("type summary add --summary-string \"a test\" MyClass -C no")
         
         self.expect("frame variable *object2",
                     substrs = ['*object2 = {',

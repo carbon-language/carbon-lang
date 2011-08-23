@@ -53,10 +53,10 @@ class DataFormatterTestCase(TestBase):
         # Execute the cleanup function during test case tear down.
         self.addTearDownHook(cleanup)
 
-        self.runCmd("type summary add -f \"AllUseIt: x=${var.x} {y=${var.y}} {z=${var.z}}\" --name AllUseIt")
-        self.runCmd("type summary add -f \"First: x=${var.x} y=${var.y} dummy=${var.dummy}\" First")
-        self.runCmd("type summary add -f \"Second: x=${var.x} y=${var.y%hex}\" Second")
-        self.runCmd("type summary add -f \"Third: x=${var.x} z=${var.z}\" Third")
+        self.runCmd("type summary add --summary-string \"AllUseIt: x=${var.x} {y=${var.y}} {z=${var.z}}\" --name AllUseIt")
+        self.runCmd("type summary add --summary-string \"First: x=${var.x} y=${var.y} dummy=${var.dummy}\" First")
+        self.runCmd("type summary add --summary-string \"Second: x=${var.x} y=${var.y%hex}\" Second")
+        self.runCmd("type summary add --summary-string \"Third: x=${var.x} z=${var.z}\" Third")
                     
         self.expect("frame variable first",
             substrs = ['First: x=12'])
@@ -99,7 +99,7 @@ class DataFormatterTestCase(TestBase):
                     
         self.runCmd("thread step-over")
                     
-        self.runCmd("type summary add -f \"FirstAndFriends: x=${var.x} {y=${var.y}} {z=${var.z}}\" First --name FirstAndFriends")
+        self.runCmd("type summary add --summary-string \"FirstAndFriends: x=${var.x} {y=${var.y}} {z=${var.z}}\" First --name FirstAndFriends")
                     
         self.expect("frame variable first",
             substrs = ['FirstAndFriends: x=12',

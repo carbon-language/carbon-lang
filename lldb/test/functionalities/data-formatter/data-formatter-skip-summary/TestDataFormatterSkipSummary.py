@@ -54,12 +54,12 @@ class DataFormatterTestCase(TestBase):
         self.addTearDownHook(cleanup)
 
         # Setup the summaries for this scenario
-        #self.runCmd("type summary add -f \"${var._M_dataplus._M_p}\" std::string")
-        self.runCmd("type summary add -f \"Level 1\" \"DeepData_1\"")
-        self.runCmd("type summary add -f \"Level 2\" \"DeepData_2\" -e")
-        self.runCmd("type summary add -f \"Level 3\" \"DeepData_3\"")
-        self.runCmd("type summary add -f \"Level 4\" \"DeepData_4\"")
-        self.runCmd("type summary add -f \"Level 5\" \"DeepData_5\"")
+        #self.runCmd("type summary add --summary-string \"${var._M_dataplus._M_p}\" std::string")
+        self.runCmd("type summary add --summary-string \"Level 1\" \"DeepData_1\"")
+        self.runCmd("type summary add --summary-string \"Level 2\" \"DeepData_2\" -e")
+        self.runCmd("type summary add --summary-string \"Level 3\" \"DeepData_3\"")
+        self.runCmd("type summary add --summary-string \"Level 4\" \"DeepData_4\"")
+        self.runCmd("type summary add --summary-string \"Level 5\" \"DeepData_5\"")
             
         # Default case, just print out summaries
         self.expect('frame variable',
@@ -167,7 +167,7 @@ class DataFormatterTestCase(TestBase):
                                '}'])
 
         # Change summary and expand, first without -Y then with -Y
-        self.runCmd("type summary add -f \"${var.m_some_text}\" DeepData_5")
+        self.runCmd("type summary add --summary-string \"${var.m_some_text}\" DeepData_5")
         
         self.expect('fr var data2.m_child4.m_child2.m_child2',
             substrs = ['(DeepData_5) data2.m_child4.m_child2.m_child2 = "Just a test"'])

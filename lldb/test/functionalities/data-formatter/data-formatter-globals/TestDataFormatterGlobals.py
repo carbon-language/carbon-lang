@@ -46,7 +46,7 @@ class DataFormatterTestCase(TestBase):
         # Execute the cleanup function during test case tear down.
         self.addTearDownHook(cleanup)
 
-        self.runCmd("type summary add -f \"JustATest\" Point")
+        self.runCmd("type summary add --summary-string \"JustATest\" Point")
 
         # Simply check we can get at global variables
         self.expect("target variable g_point",
@@ -57,7 +57,7 @@ class DataFormatterTestCase(TestBase):
 
         # Print some information about the variables
         # (we ignore the actual values)
-        self.runCmd("type summary add -f \"(x=${var.x},y=${var.y})\" Point")
+        self.runCmd("type summary add --summary-string \"(x=${var.x},y=${var.y})\" Point")
 
         self.expect("target variable g_point",
                     substrs = ['x=',

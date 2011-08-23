@@ -90,7 +90,7 @@ class DataFormatterTestCase(TestBase):
                     substrs = ['int says 1'])
 
         # Change the summary
-        self.runCmd("type summary add -f \"int says ${var.integer}, and float says ${var.floating}\" i_am_cool")
+        self.runCmd("type summary add --summary-string \"int says ${var.integer}, and float says ${var.floating}\" i_am_cool")
 
         self.expect("frame variable two",
                     substrs = ['int says 1',
@@ -120,7 +120,7 @@ class DataFormatterTestCase(TestBase):
         self.expect("frame variable two", matching=False,
                     substrs = ['Python summary'])
 
-        self.runCmd("type summary add i_am_cool -f \"Text summary\"")
+        self.runCmd("type summary add i_am_cool --summary-string \"Text summary\"")
 
         self.expect("frame variable one",
                     substrs = ['Python summary'])
@@ -139,7 +139,7 @@ class DataFormatterTestCase(TestBase):
                     substrs = ['Text summary'])
 
         # disable type summary for pointers, and make a Python regex summary
-        self.runCmd("type summary add i_am_cool -p -f \"Text summary\"")
+        self.runCmd("type summary add i_am_cool -p --summary-string \"Text summary\"")
         self.runCmd("type summary add -x cool --python-script \"%s\"" % script)
 
         # variables should stick to the type summary
@@ -157,7 +157,7 @@ class DataFormatterTestCase(TestBase):
                     substrs = ['Python summary'])
 
         # return pointers to the type summary
-        self.runCmd("type summary add i_am_cool -f \"Text summary\"")
+        self.runCmd("type summary add i_am_cool --summary-string \"Text summary\"")
 
         self.expect("frame variable one",
                     substrs = ['Text summary'])

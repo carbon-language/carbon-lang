@@ -54,12 +54,12 @@ class DataFormatterTestCase(TestBase):
         self.addTearDownHook(cleanup)
 
 # check that we are not looping here
-        self.runCmd("type summary add -f \"${var%V}\" SomeData")
+        self.runCmd("type summary add --summary-string \"${var%V}\" SomeData")
 
         self.expect("frame variable data",
             substrs = ['invalid use of aggregate type'])
 # ${var%s}
-        self.runCmd("type summary add -f \"ptr = ${var%s}\" \"char *\"")
+        self.runCmd("type summary add --summary-string \"ptr = ${var%s}\" \"char *\"")
 
         self.expect("frame variable strptr",
             substrs = ['ptr = \"',
@@ -69,7 +69,7 @@ class DataFormatterTestCase(TestBase):
             substrs = ['ptr = \"',
                         'Nested Hello world!'])
         
-        self.runCmd("type summary add -f \"arr = ${var%s}\" -x \"char \\[[0-9]+\\]\"")
+        self.runCmd("type summary add --summary-string \"arr = ${var%s}\" -x \"char \\[[0-9]+\\]\"")
         
         self.expect("frame variable strarr",
                     substrs = ['arr = \"',
@@ -80,7 +80,7 @@ class DataFormatterTestCase(TestBase):
                                'Nested Hello world!'])
 
 # ${var%c}
-        self.runCmd("type summary add -f \"ptr = ${var%c}\" \"char *\"")
+        self.runCmd("type summary add --summary-string \"ptr = ${var%c}\" \"char *\"")
     
         self.expect("frame variable strptr",
                 substrs = ['ptr = \"',
@@ -90,7 +90,7 @@ class DataFormatterTestCase(TestBase):
                 substrs = ['ptr = \"',
                            'Nested Hello world!'])
 
-        self.runCmd("type summary add -f \"arr = ${var%c}\" -x \"char \\[[0-9]+\\]\"")
+        self.runCmd("type summary add --summary-string \"arr = ${var%c}\" -x \"char \\[[0-9]+\\]\"")
 
         self.expect("frame variable strarr",
                     substrs = ['arr = \"',
@@ -101,7 +101,7 @@ class DataFormatterTestCase(TestBase):
                                'Nested Hello world!'])
         
 # ${var%char[]}
-        self.runCmd("type summary add -f \"arr = ${var%char[]}\" -x \"char \\[[0-9]+\\]\"")
+        self.runCmd("type summary add --summary-string \"arr = ${var%char[]}\" -x \"char \\[[0-9]+\\]\"")
 
         self.expect("frame variable strarr",
                     substrs = ['arr = \"',
@@ -111,7 +111,7 @@ class DataFormatterTestCase(TestBase):
                     substrs = ['arr = ',
                                'Nested Hello world!'])
 
-        self.runCmd("type summary add -f \"ptr = ${var%char[]}\" \"char *\"")
+        self.runCmd("type summary add --summary-string \"ptr = ${var%char[]}\" \"char *\"")
 
         self.expect("frame variable strptr",
             substrs = ['ptr = \"',
@@ -122,7 +122,7 @@ class DataFormatterTestCase(TestBase):
             'Nested Hello world!'])
 
 # ${var%a}
-        self.runCmd("type summary add -f \"arr = ${var%a}\" -x \"char \\[[0-9]+\\]\"")
+        self.runCmd("type summary add --summary-string \"arr = ${var%a}\" -x \"char \\[[0-9]+\\]\"")
 
         self.expect("frame variable strarr",
                     substrs = ['arr = \"',
@@ -132,7 +132,7 @@ class DataFormatterTestCase(TestBase):
                     substrs = ['arr = ',
                                'Nested Hello world!'])
 
-        self.runCmd("type summary add -f \"ptr = ${var%a}\" \"char *\"")
+        self.runCmd("type summary add --summary-string \"ptr = ${var%a}\" \"char *\"")
 
         self.expect("frame variable strptr",
                     substrs = ['ptr = \"',
@@ -142,7 +142,7 @@ class DataFormatterTestCase(TestBase):
                     substrs = ['ptr = \"',
                                'Nested Hello world!'])
 
-        self.runCmd("type summary add -f \"ptr = ${var[]%char[]}\" \"char *\"")
+        self.runCmd("type summary add --summary-string \"ptr = ${var[]%char[]}\" \"char *\"")
         
 # I do not know the size of the data, but you are asking for a full array slice..
 # use the ${var%char[]} to obtain a string as result
@@ -155,7 +155,7 @@ class DataFormatterTestCase(TestBase):
                                'Nested Hello world!'])
 
 # You asked an array-style printout...
-        self.runCmd("type summary add -f \"ptr = ${var[0-1]%char[]}\" \"char *\"")
+        self.runCmd("type summary add --summary-string \"ptr = ${var[0-1]%char[]}\" \"char *\"")
         
         self.expect("frame variable strptr",
                     substrs = ['ptr = ',
@@ -166,7 +166,7 @@ class DataFormatterTestCase(TestBase):
                                '[{N},{e}]'])
 
 # using [] is required here
-        self.runCmd("type summary add -f \"arr = ${var%x}\" \"int [5]\"")
+        self.runCmd("type summary add --summary-string \"arr = ${var%x}\" \"int [5]\"")
         
         self.expect("frame variable intarr",
                     substrs = ['<invalid usage of pointer value as object>'])
@@ -174,7 +174,7 @@ class DataFormatterTestCase(TestBase):
         self.expect("frame variable other.intarr",
                     substrs = ['<invalid usage of pointer value as object>'])
 
-        self.runCmd("type summary add -f \"arr = ${var[]%x}\" \"int [5]\"")
+        self.runCmd("type summary add --summary-string \"arr = ${var[]%x}\" \"int [5]\"")
         
         self.expect("frame variable intarr",
                     substrs = ['intarr = arr =',
@@ -185,7 +185,7 @@ class DataFormatterTestCase(TestBase):
                                '0x00000009,0x00000008,0x00000007,0x00000006,0x00000005'])
 
 # printing each array item as an array
-        self.runCmd("type summary add -f \"arr = ${var[]%uint32_t[]}\" \"int [5]\"")
+        self.runCmd("type summary add --summary-string \"arr = ${var[]%uint32_t[]}\" \"int [5]\"")
         
         self.expect("frame variable intarr",
                     substrs = ['intarr = arr =',
@@ -196,19 +196,18 @@ class DataFormatterTestCase(TestBase):
                                '{0x00000009},{0x00000008},{0x00000007},{0x00000006},{0x00000005}'])
 
 # printing full array as an array
-        self.runCmd("log enable lldb types -f dummy.log")
-        self.runCmd("type summary add -f \"arr = ${var%uint32_t[]}\" \"int [5]\"")
+        self.runCmd("type summary add --summary-string \"arr = ${var%uint32_t[]}\" \"int [5]\"")
         
         self.expect("frame variable intarr",
                     substrs = ['intarr = arr =',
                                '0x00000001,0x00000001,0x00000002,0x00000003,0x00000005'])
-        self.runCmd("log disable lldb types")
+
         self.expect("frame variable other.intarr",
                     substrs = ['intarr = arr =',
                                '0x00000009,0x00000008,0x00000007,0x00000006,0x00000005'])
 
 # printing each array item as an array
-        self.runCmd("type summary add -f \"arr = ${var[]%float32[]}\" \"float [7]\"")
+        self.runCmd("type summary add --summary-string \"arr = ${var[]%float32[]}\" \"float [7]\"")
         
         self.expect("frame variable flarr",
                     substrs = ['flarr = arr =',
@@ -219,7 +218,7 @@ class DataFormatterTestCase(TestBase):
                                '{25.5},{25.7},{25.9},{26.4},{27.1},{27.3},{26.9}'])
         
 # printing full array as an array
-        self.runCmd("type summary add -f \"arr = ${var%float32[]}\" \"float [7]\"")
+        self.runCmd("type summary add --summary-string \"arr = ${var%float32[]}\" \"float [7]\"")
         
         self.expect("frame variable flarr",
                     substrs = ['flarr = arr =',
@@ -230,8 +229,8 @@ class DataFormatterTestCase(TestBase):
                                '25.5,25.7,25.9,26.4,27.1,27.3,26.9'])
 
 # using array smart summary strings for pointers should make no sense
-        self.runCmd("type summary add -f \"arr = ${var%float32[]}\" \"float *\"")
-        self.runCmd("type summary add -f \"arr = ${var%int32_t[]}\" \"int *\"")
+        self.runCmd("type summary add --summary-string \"arr = ${var%float32[]}\" \"float *\"")
+        self.runCmd("type summary add --summary-string \"arr = ${var%int32_t[]}\" \"int *\"")
 
         self.expect("frame variable flptr", matching=False,
                     substrs = ['78.5,77.4,78,76.1,76.7,76.8,77'])
@@ -240,8 +239,8 @@ class DataFormatterTestCase(TestBase):
                     substrs = ['1,1,2,3,5'])
 
 # use y and Y
-        self.runCmd("type summary add -f \"arr = ${var%y}\" \"float [7]\"")
-        self.runCmd("type summary add -f \"arr = ${var%y}\" \"int [5]\"")
+        self.runCmd("type summary add --summary-string \"arr = ${var%y}\" \"float [7]\"")
+        self.runCmd("type summary add --summary-string \"arr = ${var%y}\" \"int [5]\"")
 
         self.expect("frame variable flarr",
                     substrs = ['flarr = arr =',
@@ -259,8 +258,8 @@ class DataFormatterTestCase(TestBase):
                     substrs = ['intarr = arr = ',
                                '09 00 00 00,08 00 00 00,07 00 00 00,06 00 00 00,05 00 00 00'])
                     
-        self.runCmd("type summary add -f \"arr = ${var%Y}\" \"float [7]\"")
-        self.runCmd("type summary add -f \"arr = ${var%Y}\" \"int [5]\"")
+        self.runCmd("type summary add --summary-string \"arr = ${var%Y}\" \"float [7]\"")
+        self.runCmd("type summary add --summary-string \"arr = ${var%Y}\" \"int [5]\"")
             
         self.expect("frame variable flarr",
                     substrs = ['flarr = arr =',

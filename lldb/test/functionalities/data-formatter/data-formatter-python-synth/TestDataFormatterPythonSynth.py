@@ -85,16 +85,16 @@ class DataFormatterTestCase(TestBase):
                     substrs = ['16777216'])
         
         # put synthetic children in summary in several combinations
-        self.runCmd("type summary add -f \"fake_a=${svar.fake_a}\" foo")
+        self.runCmd("type summary add --summary-string \"fake_a=${svar.fake_a}\" foo")
         self.expect('frame variable f00_1',
                     substrs = ['fake_a=16777216'])
-        self.runCmd("type summary add -f \"fake_a=${var.fake_a}\" foo")
+        self.runCmd("type summary add --summary-string \"fake_a=${var.fake_a}\" foo")
         self.expect('frame variable f00_1',
                     substrs = ['fake_a=16777216'])
-        self.runCmd("type summary add -f \"fake_a=${var[1]}\" foo")
+        self.runCmd("type summary add --summary-string \"fake_a=${var[1]}\" foo")
         self.expect('frame variable f00_1',
                     substrs = ['fake_a=16777216'])
-        self.runCmd("type summary add -f \"fake_a=${svar[1]}\" foo")
+        self.runCmd("type summary add --summary-string \"fake_a=${svar[1]}\" foo")
         self.expect('frame variable f00_1',
             substrs = ['fake_a=16777216'])
         
@@ -252,11 +252,11 @@ class DataFormatterTestCase(TestBase):
                                '}'])
         
         # check access to synthetic children
-        self.runCmd("type summary add -f \"item 0 is ${var[0]}\" std::int_vect int_vect")
+        self.runCmd("type summary add --summary-string \"item 0 is ${var[0]}\" std::int_vect int_vect")
         self.expect('frame variable numbers',
                     substrs = ['item 0 is 1']);
         
-        self.runCmd("type summary add -f \"item 0 is ${svar[0]}\" std::int_vect int_vect")
+        self.runCmd("type summary add --summary-string \"item 0 is ${svar[0]}\" std::int_vect int_vect")
         #import time
         #time.sleep(19)
         self.expect('frame variable numbers',
@@ -321,7 +321,7 @@ class DataFormatterTestCase(TestBase):
                        'smart'])
 
         # test summaries based on synthetic children
-        self.runCmd("type summary add std::string_vect string_vect -f \"vector has ${svar%#} items\" -e")
+        self.runCmd("type summary add std::string_vect string_vect --summary-string \"vector has ${svar%#} items\" -e")
         self.expect("frame variable strings",
                     substrs = ['vector has 3 items',
                                'goofy',
@@ -357,7 +357,7 @@ class DataFormatterTestCase(TestBase):
 
         self.runCmd("frame variable numbers_list -T")
         #self.runCmd("type synth add std::int_list std::string_list int_list string_list -l StdListSynthProvider")
-        self.runCmd("type summary add std::int_list std::string_list int_list string_list -f \"list has ${svar%#} items\" -e")
+        self.runCmd("type summary add std::int_list std::string_list int_list string_list --summary-string \"list has ${svar%#} items\" -e")
         self.runCmd("type format add -f hex int")
 
         self.expect("frame variable numbers_list",
@@ -442,7 +442,7 @@ class DataFormatterTestCase(TestBase):
                        '[3]', '!!!'])
 
         # let's prettify string display
-        self.runCmd("type summary add -f \"${var._M_dataplus._M_p}\" std::string std::basic_string<char> \"std::basic_string<char,std::char_traits<char>,std::allocator<char> >\"")
+        self.runCmd("type summary add --summary-string \"${var._M_dataplus._M_p}\" std::string std::basic_string<char> \"std::basic_string<char,std::char_traits<char>,std::allocator<char> >\"")
 
         self.expect("frame variable text_list",
                     substrs = ['list has 4 items',
@@ -468,7 +468,7 @@ class DataFormatterTestCase(TestBase):
         self.runCmd("frame variable ii -T")
         
         #self.runCmd("script from StdMapSynthProvider import *")
-        self.runCmd("type summary add -x \"std::map<\" -f \"map has ${svar%#} items\" -e") 
+        self.runCmd("type summary add -x \"std::map<\" --summary-string \"map has ${svar%#} items\" -e") 
         
         #import time
         #time.sleep(30)
@@ -535,7 +535,7 @@ class DataFormatterTestCase(TestBase):
         self.runCmd("n")
         self.runCmd("frame variable si -T")
 
-        #self.runCmd("type summary add std::strint_map strint_map -f \"map has ${svar%#} items\" -e")
+        #self.runCmd("type summary add std::strint_map strint_map --summary-string \"map has ${svar%#} items\" -e")
         #self.runCmd("type synth add std::strint_map strint_map -l StdMapSynthProvider")
         
         self.expect('frame variable si',
@@ -588,7 +588,7 @@ class DataFormatterTestCase(TestBase):
         self.runCmd("n")
         self.runCmd("frame variable is -T")
         
-        #self.runCmd("type summary add std::intstr_map intstr_map -f \"map has ${svar%#} items\" -e")
+        #self.runCmd("type summary add std::intstr_map intstr_map --summary-string \"map has ${svar%#} items\" -e")
         #self.runCmd("type synth add std::intstr_map intstr_map -l StdMapSynthProvider")
 
         self.expect('frame variable is',
@@ -630,7 +630,7 @@ class DataFormatterTestCase(TestBase):
         self.runCmd("n")
         self.runCmd("frame variable ss -T")
         
-        #self.runCmd("type summary add std::strstr_map strstr_map -f \"map has ${svar%#} items\" -e")
+        #self.runCmd("type summary add std::strstr_map strstr_map --summary-string \"map has ${svar%#} items\" -e")
         #self.runCmd("type synth add std::strstr_map strstr_map -l StdMapSynthProvider")
 
         self.expect('frame variable ss',

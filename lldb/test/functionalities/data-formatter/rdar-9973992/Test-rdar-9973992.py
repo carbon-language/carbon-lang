@@ -53,7 +53,7 @@ class DataFormatterTestCase(TestBase):
         # Execute the cleanup function during test case tear down.
         self.addTearDownHook(cleanup)
 
-        self.runCmd("type summary add -f \"SUMMARY SUCCESS ${var}\" Summarize")
+        self.runCmd("type summary add --summary-string \"SUMMARY SUCCESS ${var}\" Summarize")
         
         self.expect('frame variable mine_ptr',
                 substrs = ['SUMMARY SUCCESS summarize_ptr_t @ '])
@@ -61,7 +61,7 @@ class DataFormatterTestCase(TestBase):
         self.expect('frame variable *mine_ptr',
                 substrs = ['SUMMARY SUCCESS summarize_t @'])
 
-        self.runCmd("type summary add -f \"SUMMARY SUCCESS ${var.first}\" Summarize")
+        self.runCmd("type summary add --summary-string \"SUMMARY SUCCESS ${var.first}\" Summarize")
 
         self.expect('frame variable mine_ptr',
                     substrs = ['SUMMARY SUCCESS 10'])
@@ -69,15 +69,15 @@ class DataFormatterTestCase(TestBase):
         self.expect('frame variable *mine_ptr',
                     substrs = ['SUMMARY SUCCESS 10'])
             
-        self.runCmd("type summary add -f \"${var}\" Summarize")
-        self.runCmd("type summary add -f \"${var}\" -e TwoSummarizes")
+        self.runCmd("type summary add --summary-string \"${var}\" Summarize")
+        self.runCmd("type summary add --summary-string \"${var}\" -e TwoSummarizes")
             
         self.expect('frame variable',
             substrs = ['(TwoSummarizes) twos = TwoSummarizes @ ',
                        'first = summarize_t @ ',
                        'second = summarize_t @ '])
                     
-        self.runCmd("type summary add -f \"SUMMARY SUCCESS ${var.first}\" Summarize")
+        self.runCmd("type summary add --summary-string \"SUMMARY SUCCESS ${var.first}\" Summarize")
         self.expect('frame variable',
                     substrs = ['(TwoSummarizes) twos = TwoSummarizes @ ',
                                'first = SUMMARY SUCCESS 1',

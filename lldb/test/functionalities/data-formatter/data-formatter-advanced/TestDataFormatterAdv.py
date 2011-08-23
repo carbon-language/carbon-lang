@@ -55,9 +55,9 @@ class DataFormatterTestCase(TestBase):
         # Execute the cleanup function during test case tear down.
         self.addTearDownHook(cleanup)
 
-        self.runCmd("type summary add -f \"pippo\" \"i_am_cool\"")
+        self.runCmd("type summary add --summary-string \"pippo\" \"i_am_cool\"")
 
-        self.runCmd("type summary add -f \"pluto\" -x \"i_am_cool[a-z]*\"")
+        self.runCmd("type summary add --summary-string \"pluto\" -x \"i_am_cool[a-z]*\"")
 
         self.expect("frame variable cool_boy",
             substrs = ['pippo'])
@@ -72,32 +72,32 @@ class DataFormatterTestCase(TestBase):
 
         self.runCmd("type summary clear")
         
-        self.runCmd("type summary add -f \"${var[]}\" -x \"int \\[[0-9]\\]")
+        self.runCmd("type summary add --summary-string \"${var[]}\" -x \"int \\[[0-9]\\]")
 
         self.expect("frame variable int_array",
             substrs = ['1,2,3,4,5'])
 
-        self.runCmd("type summary add -f \"${var[].integer}\" -x \"i_am_cool \\[[0-9]\\]")
+        self.runCmd("type summary add --summary-string \"${var[].integer}\" -x \"i_am_cool \\[[0-9]\\]")
         
         self.expect("frame variable cool_array",
             substrs = ['1,1,1,1,6'])
 
         self.runCmd("type summary clear")
             
-        self.runCmd("type summary add -f \"${var[1-0]%x}\" \"int\"")
+        self.runCmd("type summary add --summary-string \"${var[1-0]%x}\" \"int\"")
         
         self.expect("frame variable iAmInt",
             substrs = ['01'])
                 
-        self.runCmd("type summary add -f \"${var[0-1]%x}\" \"int\"")
+        self.runCmd("type summary add --summary-string \"${var[0-1]%x}\" \"int\"")
         
         self.expect("frame variable iAmInt",
             substrs = ['01'])
 
         self.runCmd("type summary clear")
 
-        self.runCmd("type summary add -f \"${var[0-1]%x}\" int")
-        self.runCmd("type summary add -f \"${var[0-31]%x}\" float")
+        self.runCmd("type summary add --summary-string \"${var[0-1]%x}\" int")
+        self.runCmd("type summary add --summary-string \"${var[0-31]%x}\" float")
                     
         self.expect("frame variable *pointer",
             substrs = ['0x',
@@ -106,20 +106,20 @@ class DataFormatterTestCase(TestBase):
         self.expect("frame variable cool_array[3].floating",
             substrs = ['0x'])
                     
-        self.runCmd("type summary add -f \"low bits are ${*var[0-1]} tgt is ${*var}\" \"int *\"")
+        self.runCmd("type summary add --summary-string \"low bits are ${*var[0-1]} tgt is ${*var}\" \"int *\"")
 
         self.expect("frame variable pointer",
             substrs = ['low bits are',
                        'tgt is 6'])
 
-        self.runCmd("type summary add -f \"${*var[0-1]}\" -x \"int \[[0-9]\]\"")
+        self.runCmd("type summary add --summary-string \"${*var[0-1]}\" -x \"int \[[0-9]\]\"")
 
         self.expect("frame variable int_array",
             substrs = ['3'])
 
         self.runCmd("type summary clear")
             
-        self.runCmd("type summary add -f \"${var[0-1]}\" -x \"int \[[0-9]\]\"")
+        self.runCmd("type summary add --summary-string \"${var[0-1]}\" -x \"int \[[0-9]\]\"")
 
         self.expect("frame variable int_array",
             substrs = ['1,2'])
@@ -139,13 +139,13 @@ class DataFormatterTestCase(TestBase):
                        'character',
                        'floating'])
 
-        self.runCmd("type summary add -f \"int = ${*var.int_pointer}, float = ${*var.float_pointer}\" IWrapPointers")
+        self.runCmd("type summary add --summary-string \"int = ${*var.int_pointer}, float = ${*var.float_pointer}\" IWrapPointers")
 
         self.expect("frame variable wrapper",
             substrs = ['int = 4',
                        'float = 1.1'])
 
-        self.runCmd("type summary add -f \"low bits = ${*var.int_pointer[2]}\" IWrapPointers -p")
+        self.runCmd("type summary add --summary-string \"low bits = ${*var.int_pointer[2]}\" IWrapPointers -p")
         
         self.expect("frame variable wrapper",
             substrs = ['low bits = 1'])
@@ -155,7 +155,7 @@ class DataFormatterTestCase(TestBase):
 
         self.runCmd("type summary clear")
 
-        self.runCmd("type summary add -f \"${var[0][0-2]%hex}\" -x \"int \[[0-9]\]\"")
+        self.runCmd("type summary add --summary-string \"${var[0][0-2]%hex}\" -x \"int \[[0-9]\]\"")
 
         self.expect("frame variable int_array",
             substrs = ['0x',
@@ -163,8 +163,8 @@ class DataFormatterTestCase(TestBase):
 
         self.runCmd("type summary clear")
 
-        self.runCmd("type summary add -f \"${*var[].x[0-3]%hex} is a bitfield on a set of integers\" -x \"SimpleWithPointers \[[0-9]\]\"")
-        self.runCmd("type summary add -f \"${*var.sp.x[0-2]} are low bits of integer ${*var.sp.x}. If I pretend it is an array I get ${var.sp.x[0-5]}\" Couple")
+        self.runCmd("type summary add --summary-string \"${*var[].x[0-3]%hex} is a bitfield on a set of integers\" -x \"SimpleWithPointers \[[0-9]\]\"")
+        self.runCmd("type summary add --summary-string \"${*var.sp.x[0-2]} are low bits of integer ${*var.sp.x}. If I pretend it is an array I get ${var.sp.x[0-5]}\" Couple")
 
         self.expect("frame variable couple",
             substrs = ['1 are low bits of integer 9.',
@@ -175,7 +175,7 @@ class DataFormatterTestCase(TestBase):
         
         # check that we can format a variable in a summary even if a format is defined for its datatype
         self.runCmd("type format add -f hex int")
-        self.runCmd("type summary add -f \"x=${var.x%i}\" Simple")
+        self.runCmd("type summary add --summary-string \"x=${var.x%i}\" Simple")
 
         self.expect("frame variable a_simple_object",
             substrs = ['x=3'])
@@ -184,7 +184,7 @@ class DataFormatterTestCase(TestBase):
                     substrs = ['0x0'])
 
         # now check that the default is applied if we do not hand out a format
-        self.runCmd("type summary add -f \"x=${var.x}\" Simple")
+        self.runCmd("type summary add --summary-string \"x=${var.x}\" Simple")
 
         self.expect("frame variable a_simple_object", matching=False,
                     substrs = ['x=3'])

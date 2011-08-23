@@ -62,7 +62,7 @@ class DataFormatterTestCase(TestBase):
         self.addTearDownHook(cleanup)
 
         # Add a summary to a new category and check that it works
-        self.runCmd("type summary add Rectangle -f \"ARectangle\" -w NewCategory")
+        self.runCmd("type summary add Rectangle --summary-string \"ARectangle\" -w NewCategory")
 
         self.expect("frame variable r1 r2 r3", matching=False,
             substrs = ['r1 = ARectangle',
@@ -101,7 +101,7 @@ class DataFormatterTestCase(TestBase):
                                'r3 = {'])
 
         # Add summaries to two different categories and check that we can switch
-        self.runCmd("type summary add -f \"Width = ${var.w}, Height = ${var.h}\" Rectangle -w Category1")
+        self.runCmd("type summary add --summary-string \"Width = ${var.w}, Height = ${var.h}\" Rectangle -w Category1")
         self.runCmd("type summary add --python-script \"return 'Area = ' + str( int(valobj.GetChildMemberWithName('w').GetValue()) * int(valobj.GetChildMemberWithName('h').GetValue()) );\" Rectangle -w Category2")
 
         # check that enable A B is the same as enable B enable A
@@ -156,8 +156,8 @@ class DataFormatterTestCase(TestBase):
         # Now add another summary to another category and switch back and forth
         self.runCmd("type category delete Category1 Category2")
 
-        self.runCmd("type summary add Rectangle -f \"Category1\" -w Category1")
-        self.runCmd("type summary add Rectangle -f \"Category2\" -w Category2")
+        self.runCmd("type summary add Rectangle --summary-string \"Category1\" -w Category1")
+        self.runCmd("type summary add Rectangle --summary-string \"Category2\" -w Category2")
 
         self.runCmd("type category enable Category2")
         self.runCmd("type category enable Category1")
@@ -191,8 +191,8 @@ class DataFormatterTestCase(TestBase):
                                'r3 = {'])
 
         # Check that multiple summaries can go into one category 
-        self.runCmd("type summary add -f \"Width = ${var.w}, Height = ${var.h}\" Rectangle -w Category1")
-        self.runCmd("type summary add -f \"Radius = ${var.r}\" Circle -w Category1")
+        self.runCmd("type summary add --summary-string \"Width = ${var.w}, Height = ${var.h}\" Rectangle -w Category1")
+        self.runCmd("type summary add --summary-string \"Radius = ${var.r}\" Circle -w Category1")
         
         self.runCmd("type category enable Category1")
 
@@ -214,7 +214,7 @@ class DataFormatterTestCase(TestBase):
                                'c3 = {'])
 
         # Add a regex based summary to a category
-        self.runCmd("type summary add -f \"Radius = ${var.r}\" -x Circle -w Category1")
+        self.runCmd("type summary add --summary-string \"Radius = ${var.r}\" -x Circle -w Category1")
 
         self.expect("frame variable r1 r2 r3",
                     substrs = ['r1 = Width = ',
@@ -235,14 +235,14 @@ class DataFormatterTestCase(TestBase):
                                'c3 = {'])
         
         # Change a summary inside a category and check that the change is reflected
-        self.runCmd("type summary add Circle -w Category1 -f \"summary1\"")
+        self.runCmd("type summary add Circle -w Category1 --summary-string \"summary1\"")
 
         self.expect("frame variable c1 c2 c3",
                     substrs = ['c1 = summary1',
                                'c2 = summary1',
                                'c3 = summary1'])
 
-        self.runCmd("type summary add Circle -w Category1 -f \"summary2\"")
+        self.runCmd("type summary add Circle -w Category1 --summary-string \"summary2\"")
         
         self.expect("frame variable c1 c2 c3",
                     substrs = ['c1 = summary2',
@@ -252,7 +252,7 @@ class DataFormatterTestCase(TestBase):
         # Check that our order of priority works. Start by clearing categories
         self.runCmd("type category delete Category1")
 
-        self.runCmd("type summary add Shape -w BaseCategory -f \"AShape\"")
+        self.runCmd("type summary add Shape -w BaseCategory --summary-string \"AShape\"")
         self.runCmd("type category enable BaseCategory")
 
         self.expect("frame variable c1 r1 c_ptr r_ptr",
@@ -261,8 +261,8 @@ class DataFormatterTestCase(TestBase):
                        'AShape',
                        'AShape'])
     
-        self.runCmd("type summary add Circle -w CircleCategory -f \"ACircle\"")
-        self.runCmd("type summary add Rectangle -w RectangleCategory -f \"ARectangle\"")
+        self.runCmd("type summary add Circle -w CircleCategory --summary-string \"ACircle\"")
+        self.runCmd("type summary add Rectangle -w RectangleCategory --summary-string \"ARectangle\"")
         self.runCmd("type category enable CircleCategory")
 
         self.expect("frame variable c1 r1 c_ptr r_ptr",
@@ -271,7 +271,7 @@ class DataFormatterTestCase(TestBase):
                                'ACircle',
                                'AShape'])
 
-        self.runCmd("type summary add \"Rectangle *\" -w RectangleStarCategory -f \"ARectangleStar\"")
+        self.runCmd("type summary add \"Rectangle *\" -w RectangleStarCategory --summary-string \"ARectangleStar\"")
         self.runCmd("type category enable RectangleStarCategory")
 
         self.expect("frame variable c1 r1 c_ptr r_ptr",
@@ -322,10 +322,10 @@ class DataFormatterTestCase(TestBase):
         # check that filters work into categories
         self.runCmd("type filter add Rectangle --child w --category RectangleCategory")
         self.runCmd("type category enable RectangleCategory")
-        self.runCmd("type summary add Rectangle -f \" \" -e --category RectangleCategory")
+        self.runCmd("type summary add Rectangle --summary-string \" \" -e --category RectangleCategory")
         self.expect('frame variable r2',
             substrs = ['w = 9'])
-        self.runCmd("type summary add Rectangle -f \" \" -e")
+        self.runCmd("type summary add Rectangle --summary-string \" \" -e")
         self.expect('frame variable r2', matching=False,
                     substrs = ['h = 16'])
 

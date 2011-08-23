@@ -612,7 +612,7 @@ CommandObjectTypeSummaryAdd::CommandOptions::SetOptionValue (uint32_t option_idx
         case 'c':
             m_one_liner = true;
             break;
-        case 'f':
+        case 's':
             m_format_string = std::string(option_arg);
             break;
         case 'p':
@@ -1013,7 +1013,7 @@ CommandObject (interpreter,
                 "You can also add Python summaries, in which case you will use lldb public API to gather information from your variables"
                 "and elaborate them to a meaningful summary inside a script written in Python. The variable object will be passed to your"
                 "script as an SBValue object. The following example might help you when starting to use the Python summaries feature:\n"
-                "type summary add JustADemo -s \"value = valobj.GetChildMemberWithName('value'); return 'My value is ' + value.GetValue();\"\n"
+                "type summary add JustADemo -o \"value = valobj.GetChildMemberWithName('value'); return 'My value is ' + value.GetValue();\"\n"
                 "If you prefer to type your scripts on multiple lines, you will use the -P option and then type your script, ending it with "
                 "the word DONE on a line by itself to mark you're finished editing your code:\n"
                 "(lldb)type summary add JustADemo -P\n"
@@ -1081,7 +1081,7 @@ CommandObjectTypeSummaryAdd::CommandOptions::g_option_table[] =
     { LLDB_OPT_SET_ALL, false, "skip-references", 'r', no_argument, NULL, 0, eArgTypeNone,         "Don't use this format for references-to-type objects."},
     { LLDB_OPT_SET_ALL, false,  "regex", 'x', no_argument, NULL, 0, eArgTypeNone,    "Type names are actually regular expressions."},
     { LLDB_OPT_SET_1  , true, "inline-children", 'c', no_argument, NULL, 0, eArgTypeNone,    "If true, inline all child values into summary string."},
-    { LLDB_OPT_SET_2  , true, "summary-string", 'f', required_argument, NULL, 0, eArgTypeSummaryString,    "Summary string used to display text and object contents."},
+    { LLDB_OPT_SET_2  , true, "summary-string", 's', required_argument, NULL, 0, eArgTypeSummaryString,    "Summary string used to display text and object contents."},
     { LLDB_OPT_SET_3, false, "python-script", 'o', required_argument, NULL, 0, eArgTypeName, "Give a one-liner Python script as part of the command."},
     { LLDB_OPT_SET_3, false, "python-function", 'F', required_argument, NULL, 0, eArgTypeName, "Give the name of a Python function to use for this type."},
     { LLDB_OPT_SET_3, false, "input-python", 'P', no_argument, NULL, 0, eArgTypeNone, "Input Python code to use for this type manually."},
