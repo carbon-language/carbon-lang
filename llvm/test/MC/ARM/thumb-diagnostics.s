@@ -108,3 +108,13 @@ error: invalid operand for instruction
 @ CHECK-ERRORS: error: instruction requires a CPU feature not currently enabled
 @ CHECK-ERRORS:         str r3, [r7, #128]
 @ CHECK-ERRORS:         ^
+
+@ Out of range immediate for SVC instruction.
+        svc #-1
+        svc #256
+@ CHECK-ERRORS: error: invalid operand for instruction
+@ CHECK-ERRORS:         svc #-1
+@ CHECK-ERRORS:             ^
+@ CHECK-ERRORS: error: instruction requires a CPU feature not currently enabled
+@ CHECK-ERRORS:         svc #256
+@ CHECK-ERRORS:         ^

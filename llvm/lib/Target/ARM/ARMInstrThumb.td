@@ -534,7 +534,7 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
 }
 
 
-// A8.6.218 Supervisor Call (Software Interrupt) -- for disassembly only
+// A8.6.218 Supervisor Call (Software Interrupt)
 // A8.6.16 B: Encoding T1
 // If Inst{11-8} == 0b1111 then SEE SVC
 let isCall = 1, Uses = [SP] in
