@@ -2924,7 +2924,7 @@ static bool isNearlyMatchingFunction(ASTContext &Context,
     QualType DefParamTy = Definition->getParamDecl(Idx)->getType();
 
     // The parameter types are identical
-    if (DefParamTy == DeclParamTy)
+    if (Context.hasSameType(DefParamTy, DeclParamTy))
       continue;
 
     QualType DeclParamBaseTy = getCoreType(DeclParamTy);

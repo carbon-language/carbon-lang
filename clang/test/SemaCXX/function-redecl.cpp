@@ -54,3 +54,19 @@ void B::Notypocorrection(int) { // expected-error {{out-of-line definition of 'N
 struct X { int f(); };
 struct Y : public X {};
 int Y::f() { return 3; } // expected-error {{out-of-line definition of 'f' does not match any declaration in 'Y'}}
+
+namespace test1 {
+struct Foo {
+  class Inner { };
+};
+}
+
+class Bar {
+  void f(test1::Foo::Inner foo) const; // expected-note {{member declaration nearly matches}}
+};
+
+using test1::Foo;
+
+void Bar::f(Foo::Inner foo) { // expected-error {{out-of-line definition of 'f' does not match any declaration in 'Bar'}}
+  (void)foo;
+}
