@@ -2002,12 +2002,14 @@ bool ARMFastISel::SelectIntCast(const Instruction *I) {
   switch (SrcVT.getSimpleVT().SimpleTy) {
   default: return false;
   case MVT::i16:
+    if (!Subtarget->hasV6Ops()) return false;
     if (isZext)
       Opc = isThumb ? ARM::t2UXTH : ARM::UXTH;
     else
       Opc = isThumb ? ARM::t2SXTH : ARM::SXTH;
     break;
   case MVT::i8:
+    if (!Subtarget->hasV6Ops()) return false;
     if (isZext)
       Opc = isThumb ? ARM::t2UXTB : ARM::UXTB;
     else
