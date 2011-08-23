@@ -23,12 +23,16 @@ class StaticVariableTestCase(TestBase):
         self.static_variable_commands()
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    #rdar://problem/9980907
+    @expectedFailureClang
     @python_api_test
     def test_with_dsym_and_python_api(self):
         """Test Python APIs on file and class static variables."""
         self.buildDsym()
         self.static_variable_python()
 
+    #rdar://problem/9980907
+    @expectedFailureClang
     @python_api_test
     def test_with_dwarf_and_python_api(self):
         """Test Python APIs on file and class static variables."""
