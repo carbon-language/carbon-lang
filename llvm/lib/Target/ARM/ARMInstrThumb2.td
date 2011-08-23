@@ -809,9 +809,9 @@ multiclass T2I_cmp_irs<bits<4> opcod, string opc,
    }
    // register
    def rr : T2TwoRegCmp<
-                (outs), (ins GPR:$lhs, rGPR:$rhs), iir,
-                opc, ".w\t$lhs, $rhs",
-                [(opnode GPR:$lhs, rGPR:$rhs)]> {
+                (outs), (ins GPR:$Rn, rGPR:$Rm), iir,
+                opc, ".w\t$Rn, $Rm",
+                [(opnode GPR:$Rn, rGPR:$Rm)]> {
      let Inst{31-27} = 0b11101;
      let Inst{26-25} = 0b01;
      let Inst{24-21} = opcod;
@@ -1001,9 +1001,9 @@ class T2I_ext_rrot<bits<3> opcod, string opc, PatFrag opnode>
 
 // UXTB16 - Requres T2ExtractPack, does not need the .w qualifier.
 class T2I_ext_rrot_uxtb16<bits<3> opcod, string opc, PatFrag opnode>
-  : T2TwoReg<(outs rGPR:$dst), (ins rGPR:$Rm, rot_imm:$rot),
-             IIC_iEXTr, opc, "\t$dst, $Rm$rot",
-            [(set rGPR:$dst, (opnode (rotr rGPR:$Rm, rot_imm:$rot)))]>,
+  : T2TwoReg<(outs rGPR:$Rd), (ins rGPR:$Rm, rot_imm:$rot),
+             IIC_iEXTr, opc, "\t$Rd, $Rm$rot",
+            [(set rGPR:$Rd, (opnode (rotr rGPR:$Rm, rot_imm:$rot)))]>,
           Requires<[HasT2ExtractPack, IsThumb2]> {
   bits<2> rot;
   let Inst{31-27} = 0b11111;
