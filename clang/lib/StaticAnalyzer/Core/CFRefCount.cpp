@@ -1742,8 +1742,6 @@ void CFRefCount::BindingsPrinter::Print(raw_ostream &Out,
 //===----------------------------------------------------------------------===//
 // Error reporting.
 //===----------------------------------------------------------------------===//
-static void addExtraTextToCFReport(BugReport &R);
-
 namespace {
   typedef llvm::DenseMap<const ExplodedNode *, const RetainSummary *>
     SummaryLogTy;
@@ -1754,35 +1752,30 @@ namespace {
 
   class CFRefBug : public BugType {
   protected:
-    CFRefCount& TF;
-
-    CFRefBug(CFRefCount* tf, StringRef name)
-    : BugType(name, "Memory (Core Foundation/Objective-C)"), TF(*tf) {}
+    CFRefBug(StringRef name)
+    : BugType(name, "Memory (Core Foundation/Objective-C)") {}
   public:
 
-    CFRefCount& getTF() { return TF; }
-
     // FIXME: Eventually remove.
-    virtual const char* getDescription() const = 0;
+    virtual const char *getDescription() const = 0;
 
     virtual bool isLeak() const { return false; }
   };
 
   class UseAfterRelease : public CFRefBug {
   public:
-    UseAfterRelease(CFRefCount* tf)
-    : CFRefBug(tf, "Use-after-release") {}
+    UseAfterRelease() : CFRefBug("Use-after-release") {}
 
-    const char* getDescription() const {
+    const char *getDescription() const {
       return "Reference-counted object is used after it is released";
     }
   };
 
   class BadRelease : public CFRefBug {
   public:
-    BadRelease(CFRefCount* tf) : CFRefBug(tf, "Bad release") {}
+    BadRelease() : CFRefBug("Bad release") {}
 
-    const char* getDescription() const {
+    const char *getDescription() const {
       return "Incorrect decrement of the reference count of an object that is "
              "not owned at this point by the caller";
     }
@@ -1790,8 +1783,8 @@ namespace {
 
   class DeallocGC : public CFRefBug {
   public:
-    DeallocGC(CFRefCount *tf)
-      : CFRefBug(tf, "-dealloc called while using garbage collection") {}
+    DeallocGC()
+    : CFRefBug("-dealloc called while using garbage collection") {}
 
     const char *getDescription() const {
       return "-dealloc called while using garbage collection";
@@ -1800,8 +1793,8 @@ namespace {
 
   class DeallocNotOwned : public CFRefBug {
   public:
-    DeallocNotOwned(CFRefCount *tf)
-      : CFRefBug(tf, "-dealloc sent to non-exclusively owned object") {}
+    DeallocNotOwned()
+    : CFRefBug("-dealloc sent to non-exclusively owned object") {}
 
     const char *getDescription() const {
       return "-dealloc sent to object that may be referenced elsewhere";
@@ -1810,8 +1803,8 @@ namespace {
 
   class OverAutorelease : public CFRefBug {
   public:
-    OverAutorelease(CFRefCount *tf) :
-      CFRefBug(tf, "Object sent -autorelease too many times") {}
+    OverAutorelease()
+    : CFRefBug("Object sent -autorelease too many times") {}
 
     const char *getDescription() const {
       return "Object sent -autorelease too many times";
@@ -1820,8 +1813,8 @@ namespace {
 
   class ReturnedNotOwnedForOwned : public CFRefBug {
   public:
-    ReturnedNotOwnedForOwned(CFRefCount *tf) :
-      CFRefBug(tf, "Method should return an owned object") {}
+    ReturnedNotOwnedForOwned()
+    : CFRefBug("Method should return an owned object") {}
 
     const char *getDescription() const {
       return "Object with a +0 retain count returned to caller where a +1 "
@@ -1832,25 +1825,25 @@ namespace {
   class Leak : public CFRefBug {
     const bool isReturn;
   protected:
-    Leak(CFRefCount* tf, StringRef name, bool isRet)
-    : CFRefBug(tf, name), isReturn(isRet) {}
+    Leak(StringRef name, bool isRet)
+    : CFRefBug(name), isReturn(isRet) {}
   public:
 
-    const char* getDescription() const { return ""; }
+    const char *getDescription() const { return ""; }
 
     bool isLeak() const { return true; }
   };
 
   class LeakAtReturn : public Leak {
   public:
-    LeakAtReturn(CFRefCount* tf, StringRef name)
-    : Leak(tf, name, true) {}
+    LeakAtReturn(StringRef name)
+    : Leak(name, true) {}
   };
 
   class LeakWithinFunction : public Leak {
   public:
-    LeakWithinFunction(CFRefCount* tf, StringRef name)
-    : Leak(tf, name, false) {}
+    LeakWithinFunction(StringRef name)
+    : Leak(name, false) {}
   };
 
   //===---------===//
@@ -1860,13 +1853,12 @@ namespace {
   class CFRefReportVisitor : public BugReporterVisitor {
   protected:
     SymbolRef Sym;
-    const CFRefCount &TF;
     const SummaryLogTy &SummaryLog;
+    bool GCEnabled;
     
   public:
-    CFRefReportVisitor(SymbolRef sym, const CFRefCount &tf,
-                       const SummaryLogTy &log)
-       : Sym(sym), TF(tf), SummaryLog(log) {}
+    CFRefReportVisitor(SymbolRef sym, bool gcEnabled, const SummaryLogTy &log)
+       : Sym(sym), SummaryLog(log), GCEnabled(gcEnabled) {}
 
     virtual void Profile(llvm::FoldingSetNodeID &ID) const {
       static int x = 0;
@@ -1886,9 +1878,9 @@ namespace {
 
   class CFRefLeakReportVisitor : public CFRefReportVisitor {
   public:
-    CFRefLeakReportVisitor(SymbolRef sym, const CFRefCount &tf,
+    CFRefLeakReportVisitor(SymbolRef sym, bool GCEnabled,
                            const SummaryLogTy &log)
-       : CFRefReportVisitor(sym, tf, log) {}
+       : CFRefReportVisitor(sym, GCEnabled, log) {}
 
     PathDiagnosticPiece *getEndPath(BugReporterContext &BRC,
                                     const ExplodedNode *N,
@@ -1896,23 +1888,23 @@ namespace {
   };
 
   class CFRefReport : public BugReport {
+    void addGCModeDescription(const CFRefCount &TF);
+
   public:
     CFRefReport(CFRefBug &D, const CFRefCount &tf, const SummaryLogTy &log,
                 ExplodedNode *n, SymbolRef sym, bool registerVisitor = true)
       : BugReport(D, D.getDescription(), n) {
       if (registerVisitor)
-        addVisitor(new CFRefReportVisitor(sym, tf, log));
-      addExtraTextToCFReport(*this);
+        addVisitor(new CFRefReportVisitor(sym, tf.isGCEnabled(), log));
+      addGCModeDescription(tf);
     }
 
     CFRefReport(CFRefBug &D, const CFRefCount &tf, const SummaryLogTy &log,
                 ExplodedNode *n, SymbolRef sym, StringRef endText)
       : BugReport(D, D.getDescription(), endText, n) {
-      addVisitor(new CFRefReportVisitor(sym, tf, log));
-      addExtraTextToCFReport(*this);
+      addVisitor(new CFRefReportVisitor(sym, tf.isGCEnabled(), log));
+      addGCModeDescription(tf);
     }
-
-    virtual ~CFRefReport() {}
 
     virtual std::pair<ranges_iterator, ranges_iterator> getRanges() {
       const CFRefBug& BugTy = static_cast<CFRefBug&>(getBugType());
@@ -1928,54 +1920,42 @@ namespace {
     const MemRegion* AllocBinding;
 
   public:
-    CFRefLeakReport(CFRefBug& D, const CFRefCount &tf, const SummaryLogTy &log,
+    CFRefLeakReport(CFRefBug &D, const CFRefCount &tf, const SummaryLogTy &log,
                     ExplodedNode *n, SymbolRef sym, ExprEngine& Eng);
 
     SourceLocation getLocation() const { return AllocSite; }
   };
 } // end anonymous namespace
 
-static const char* Msgs[] = {
-  // GC only
-  "Code is compiled to only use garbage collection",
-  // No GC.
-  "Code is compiled to use reference counts",
-  // Hybrid, with GC.
-  "Code is compiled to use either garbage collection (GC) or reference counts"
-  " (non-GC).  The bug occurs with GC enabled",
-  // Hybrid, without GC
-  "Code is compiled to use either garbage collection (GC) or reference counts"
-  " (non-GC).  The bug occurs in non-GC mode"
-};
-
-// Add the metadata text.
-static void addExtraTextToCFReport(BugReport &R) {
-  CFRefCount& TF = static_cast<CFRefBug&>(R.getBugType()).getTF();
+void CFRefReport::addGCModeDescription(const CFRefCount &TF) {
+  const char *GCModeDescription;
 
   switch (TF.getLangOptions().getGCMode()) {
-  default:
-    assert(false);
-
   case LangOptions::GCOnly:
-    assert (TF.isGCEnabled());
-    R.addExtraText(Msgs[0]);
-    return;
+    assert(TF.isGCEnabled());
+    GCModeDescription = "Code is compiled to only use garbage collection";
+    break;
 
   case LangOptions::NonGC:
-    assert (!TF.isGCEnabled());
-    R.addExtraText(Msgs[1]);
-    return;
+    assert(!TF.isGCEnabled());
+    GCModeDescription = "Code is compiled to use reference counts";
+    break;
 
   case LangOptions::HybridGC:
     if (TF.isGCEnabled()) {
-      R.addExtraText(Msgs[2]);
-      return;
-    }
-    else {
-      R.addExtraText(Msgs[3]);
-      return;
+      GCModeDescription = "Code is compiled to use either garbage collection "
+                          "(GC) or reference counts (non-GC).  The bug occurs "
+                          "with GC enabled";
+      break;
+    } else {
+      GCModeDescription = "Code is compiled to use either garbage collection "
+                          "(GC) or reference counts (non-GC).  The bug occurs "
+                          "in non-GC mode";
+      break;
     }
   }
+
+  addExtraText(GCModeDescription);
 }
 
 static inline bool contains(const SmallVectorImpl<ArgEffect>& V,
@@ -2040,7 +2020,7 @@ PathDiagnosticPiece *CFRefReportVisitor::VisitNode(const ExplodedNode *N,
     if (CurrV.isOwned()) {
       os << "+1 retain count";
 
-      if (TF.isGCEnabled()) {
+      if (GCEnabled) {
         assert(CurrV.getObjKind() == RetEffect::CF);
         os << ".  "
         "Core Foundation objects are not automatically garbage collected.";
@@ -2096,7 +2076,7 @@ PathDiagnosticPiece *CFRefReportVisitor::VisitNode(const ExplodedNode *N,
     RefVal PrevV = *PrevT;
 
     // Specially handle -dealloc.
-    if (!TF.isGCEnabled() && contains(AEffects, Dealloc)) {
+    if (!GCEnabled && contains(AEffects, Dealloc)) {
       // Determine if the object's reference count was pushed to zero.
       assert(!(PrevV == CurrV) && "The typestate *must* have changed.");
       // We may not have transitioned to 'release' if we hit an error.
@@ -2115,7 +2095,7 @@ PathDiagnosticPiece *CFRefReportVisitor::VisitNode(const ExplodedNode *N,
       SVal X = CurrSt->getSValAsScalarOrLoc(cast<CallExpr>(S)->getCallee());
       const FunctionDecl *FD = X.getAsFunctionDecl();
 
-      if (TF.isGCEnabled()) {
+      if (GCEnabled) {
         // Determine if the object's reference count was pushed to zero.
         assert(!(PrevV == CurrV) && "The typestate *must* have changed.");
 
@@ -2166,7 +2146,7 @@ PathDiagnosticPiece *CFRefReportVisitor::VisitNode(const ExplodedNode *N,
             os << " The object now has a +" << Count << " retain count.";
 
           if (PrevV.getKind() == RefVal::Released) {
-            assert(TF.isGCEnabled() && CurrV.getCount() > 0);
+            assert(GCEnabled && CurrV.getCount() > 0);
             os << " The object is not eligible for garbage collection until the "
             "retain count reaches 0 again.";
           }
@@ -2195,7 +2175,7 @@ PathDiagnosticPiece *CFRefReportVisitor::VisitNode(const ExplodedNode *N,
          E=AEffects.end(); I != E; ++I) {
 
       // A bunch of things have alternate behavior under GC.
-      if (TF.isGCEnabled())
+      if (GCEnabled)
         switch (*I) {
           default: break;
           case Autorelease:
@@ -2399,7 +2379,7 @@ CFRefLeakReportVisitor::getEndPath(BugReporterContext &BRC,
   return new PathDiagnosticEventPiece(L, os.str());
 }
 
-CFRefLeakReport::CFRefLeakReport(CFRefBug& D, const CFRefCount &tf,
+CFRefLeakReport::CFRefLeakReport(CFRefBug &D, const CFRefCount &tf,
                                  const SummaryLogTy &log, ExplodedNode *n,
                                  SymbolRef sym, ExprEngine& Eng)
 : CFRefReport(D, tf, log, n, sym, false) {
@@ -2436,7 +2416,7 @@ CFRefLeakReport::CFRefLeakReport(CFRefBug& D, const CFRefCount &tf,
   if (AllocBinding)
     os << " and stored into '" << AllocBinding->getString() << '\'';
 
-  addVisitor(new CFRefLeakReportVisitor(sym, tf, log));
+  addVisitor(new CFRefLeakReportVisitor(sym, tf.isGCEnabled(), log));
 }
 
 //===----------------------------------------------------------------------===//
@@ -3723,26 +3703,26 @@ void RetainReleaseChecker::checkDeadSymbols(SymbolReaper &SymReaper,
 void CFRefCount::RegisterChecks(ExprEngine& Eng) {
   BugReporter &BR = Eng.getBugReporter();
 
-  useAfterRelease = new UseAfterRelease(this);
+  useAfterRelease = new UseAfterRelease();
   BR.Register(useAfterRelease);
 
-  releaseNotOwned = new BadRelease(this);
+  releaseNotOwned = new BadRelease();
   BR.Register(releaseNotOwned);
 
-  deallocGC = new DeallocGC(this);
+  deallocGC = new DeallocGC();
   BR.Register(deallocGC);
 
-  deallocNotOwned = new DeallocNotOwned(this);
+  deallocNotOwned = new DeallocNotOwned();
   BR.Register(deallocNotOwned);
 
-  overAutorelease = new OverAutorelease(this);
+  overAutorelease = new OverAutorelease();
   BR.Register(overAutorelease);
 
-  returnNotOwnedForOwned = new ReturnedNotOwnedForOwned(this);
+  returnNotOwnedForOwned = new ReturnedNotOwnedForOwned();
   BR.Register(returnNotOwnedForOwned);
 
   // First register "return" leaks.
-  const char* name = 0;
+  const char *name = 0;
 
   if (isGCEnabled())
     name = "Leak of returned object when using garbage collection";
@@ -3755,7 +3735,7 @@ void CFRefCount::RegisterChecks(ExprEngine& Eng) {
   }
 
   // Leaks should not be reported if they are post-dominated by a sink.
-  leakAtReturn = new LeakAtReturn(this, name);
+  leakAtReturn = new LeakAtReturn(name);
   leakAtReturn->setSuppressOnSink(true);
   BR.Register(leakAtReturn);
 
@@ -3771,7 +3751,7 @@ void CFRefCount::RegisterChecks(ExprEngine& Eng) {
   }
 
   // Leaks should not be reported if they are post-dominated by sinks.
-  leakWithinFunction = new LeakWithinFunction(this, name);
+  leakWithinFunction = new LeakWithinFunction(name);
   leakWithinFunction->setSuppressOnSink(true);
   BR.Register(leakWithinFunction);
 
