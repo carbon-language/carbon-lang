@@ -93,3 +93,18 @@ error: invalid operand for instruction
 @ CHECK-ERRORS: error: destination register must match source register
 @ CHECK-ERRORS:         muls r1, r2, r3
 @ CHECK-ERRORS:              ^
+
+
+@ Out of range immediates for STR instruction.
+        str r2, [r7, #-1]
+        str r5, [r1, #3]
+        str r3, [r7, #128]
+@ CHECK-ERRORS: error: instruction requires a CPU feature not currently enabled
+@ CHECK-ERRORS:         str r2, [r7, #-1]
+@ CHECK-ERRORS:         ^
+@ CHECK-ERRORS: error: instruction requires a CPU feature not currently enabled
+@ CHECK-ERRORS:         str r5, [r1, #3]
+@ CHECK-ERRORS:         ^
+@ CHECK-ERRORS: error: instruction requires a CPU feature not currently enabled
+@ CHECK-ERRORS:         str r3, [r7, #128]
+@ CHECK-ERRORS:         ^
