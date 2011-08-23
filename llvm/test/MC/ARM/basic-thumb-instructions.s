@@ -543,3 +543,13 @@ _func:
 
 @ CHECK: svc	#0                      @ encoding: [0x00,0xdf]
 @ CHECK: svc	#255                    @ encoding: [0xff,0xdf]
+
+
+@------------------------------------------------------------------------------
+@ SXTB/SXTH
+@------------------------------------------------------------------------------
+        sxtb r3, r5
+        sxth r3, r5
+
+@ CHECK: sxtb	r3, r5                  @ encoding: [0x6b,0xb2]
+@ CHECK: sxth	r3, r5                  @ encoding: [0x2b,0xb2]
