@@ -15,7 +15,7 @@
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCTargetAsmLexer.h"
 
-#include "llvm/Target/TargetRegistry.h"
+#include "llvm/Support/TargetRegistry.h"
 
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallVector.h"

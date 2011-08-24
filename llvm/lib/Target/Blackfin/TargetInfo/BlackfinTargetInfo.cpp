@@ -9,7 +9,7 @@
 
 #include "Blackfin.h"
 #include "llvm/Module.h"
-#include "llvm/Target/TargetRegistry.h"
+#include "llvm/Support/TargetRegistry.h"
 
 using namespace llvm;
 

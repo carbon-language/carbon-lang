@@ -21,9 +21,9 @@
 #include "llvm/MC/MCDisassembler.h"
 #include "llvm/MC/MCDisassembler.h"
 #include "llvm/MC/MCInst.h"
-#include "llvm/Target/TargetRegistry.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MemoryObject.h"
+#include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
 
 #define GET_REGINFO_ENUM

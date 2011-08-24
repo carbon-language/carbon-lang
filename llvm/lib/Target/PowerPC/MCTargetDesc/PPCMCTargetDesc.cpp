@@ -20,7 +20,7 @@
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
-#include "llvm/Target/TargetRegistry.h"
+#include "llvm/Support/TargetRegistry.h"
 
 #define GET_INSTRINFO_MC_DESC
 #include "PPCGenInstrInfo.inc"

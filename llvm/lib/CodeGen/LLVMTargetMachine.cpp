@@ -32,13 +32,13 @@
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetRegisterInfo.h"
-#include "llvm/Target/TargetRegistry.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/FormattedStream.h"
+#include "llvm/Support/TargetRegistry.h"
 using namespace llvm;
 
 namespace llvm {

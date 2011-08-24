@@ -16,8 +16,8 @@
 #include "llvm/PassManager.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/Target/TargetOptions.h"
-#include "llvm/Target/TargetRegistry.h"
 #include "llvm/Support/FormattedStream.h"
+#include "llvm/Support/TargetRegistry.h"
 using namespace llvm;
 
 extern "C" void LLVMInitializePowerPCTarget() {

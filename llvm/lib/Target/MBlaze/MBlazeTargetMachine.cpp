@@ -16,8 +16,8 @@
 #include "llvm/PassManager.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Support/FormattedStream.h"
+#include "llvm/Support/TargetRegistry.h"
 #include "llvm/Target/TargetOptions.h"
-#include "llvm/Target/TargetRegistry.h"
 using namespace llvm;
 
 extern "C" void LLVMInitializeMBlazeTarget() {

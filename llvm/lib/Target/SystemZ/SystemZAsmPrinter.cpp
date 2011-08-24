@@ -28,10 +28,8 @@
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Target/Mangler.h"
-#include "llvm/Target/TargetData.h"
-#include "llvm/Target/TargetLoweringObjectFile.h"
-#include "llvm/Target/TargetRegistry.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 

@@ -13,7 +13,7 @@
 #include "Sparc.h"
 #include "SparcTargetMachine.h"
 #include "llvm/PassManager.h"
-#include "llvm/Target/TargetRegistry.h"
+#include "llvm/Support/TargetRegistry.h"
 using namespace llvm;
 
 extern "C" void LLVMInitializeSparcTarget() {

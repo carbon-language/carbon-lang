@@ -18,10 +18,10 @@
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCContext.h"
-#include "llvm/Target/TargetRegistry.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MemoryObject.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
 
 // Pull DecodeStatus and its enum values into the global namespace.

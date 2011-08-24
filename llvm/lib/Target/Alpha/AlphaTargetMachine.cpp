@@ -14,7 +14,7 @@
 #include "AlphaTargetMachine.h"
 #include "llvm/PassManager.h"
 #include "llvm/Support/FormattedStream.h"
-#include "llvm/Target/TargetRegistry.h"
+#include "llvm/Support/TargetRegistry.h"
 using namespace llvm;
 
 extern "C" void LLVMInitializeAlphaTarget() { 

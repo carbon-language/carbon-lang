@@ -16,7 +16,7 @@
 #include "llvm/CodeGen/MachineCodeInfo.h"
 #include "llvm/ExecutionEngine/JIT.h"
 #include "llvm/Support/TypeBuilder.h"
-#include "llvm/Target/TargetSelect.h"
+#include "llvm/Support/TargetSelect.h"
 #include "gtest/gtest.h"
 #include <vector>
 

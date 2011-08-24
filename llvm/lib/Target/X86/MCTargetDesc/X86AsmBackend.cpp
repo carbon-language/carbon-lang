@@ -24,8 +24,8 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Target/TargetRegistry.h"
 using namespace llvm;
 
 // Option to allow disabling arithmetic relaxation to workaround PR9807, which

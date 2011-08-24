@@ -33,7 +33,7 @@
 #include "llvm/ExecutionEngine/Interpreter.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Target/TargetSelect.h"
+#include "llvm/Support/TargetSelect.h"
 using namespace llvm;
 
 static Function *CreateFibFunction(Module *M, LLVMContext &Context) {

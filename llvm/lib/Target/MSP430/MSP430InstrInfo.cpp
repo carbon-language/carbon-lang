@@ -20,8 +20,8 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
-#include "llvm/Target/TargetRegistry.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/TargetRegistry.h"
 
 #define GET_INSTRINFO_CTOR
 #include "MSP430GenInstrInfo.inc"

@@ -17,11 +17,11 @@
 #include "llvm/Module.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/MC/SubtargetFeature.h"
-#include "llvm/Support/CommandLine.h"
-#include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/Host.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetRegistry.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Host.h"
+#include "llvm/Support/TargetRegistry.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 /// selectTarget - Pick a target either via -march or by guessing the native

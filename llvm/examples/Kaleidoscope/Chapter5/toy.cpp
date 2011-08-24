@@ -7,9 +7,9 @@
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Target/TargetData.h"
-#include "llvm/Target/TargetSelect.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Support/IRBuilder.h"
+#include "llvm/Support/TargetSelect.h"
 #include <cstdio>
 #include <string>
 #include <map>

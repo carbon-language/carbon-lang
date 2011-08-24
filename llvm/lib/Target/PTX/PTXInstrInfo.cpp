@@ -18,8 +18,8 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
-#include "llvm/Target/TargetRegistry.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
 
 #define GET_INSTRINFO_CTOR

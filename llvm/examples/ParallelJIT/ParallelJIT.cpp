@@ -26,7 +26,7 @@
 #include "llvm/ExecutionEngine/JIT.h"
 #include "llvm/ExecutionEngine/Interpreter.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
-#include "llvm/Target/TargetSelect.h"
+#include "llvm/Support/TargetSelect.h"
 #include <iostream>
 using namespace llvm;
 

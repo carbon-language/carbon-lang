@@ -42,7 +42,6 @@
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Target/TargetData.h"
-#include "llvm/Target/TargetRegistry.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -50,6 +49,7 @@
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Config/config.h"
 #include <algorithm>

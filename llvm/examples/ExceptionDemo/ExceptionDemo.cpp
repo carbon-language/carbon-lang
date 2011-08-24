@@ -56,11 +56,11 @@
 #include "llvm/Intrinsics.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Target/TargetData.h"
-#include "llvm/Target/TargetSelect.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Support/IRBuilder.h"
 #include "llvm/Support/Dwarf.h"
+#include "llvm/Support/TargetSelect.h"
 
 // FIXME: Although all systems tested with (Linux, OS X), do not need this 
 //        header file included. A user on ubuntu reported, undefined symbols 

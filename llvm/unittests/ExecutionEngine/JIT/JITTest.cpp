@@ -27,7 +27,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/TypeBuilder.h"
-#include "llvm/Target/TargetSelect.h"
+#include "llvm/Support/TargetSelect.h"
 #include "llvm/Type.h"
 
 #include <vector>

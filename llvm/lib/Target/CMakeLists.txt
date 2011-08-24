@@ -10,7 +10,6 @@ add_llvm_library(LLVMTarget
   TargetLoweringObjectFile.cpp
   TargetMachine.cpp
   TargetRegisterInfo.cpp
-  TargetRegistry.cpp
   TargetSubtargetInfo.cpp
   )
 

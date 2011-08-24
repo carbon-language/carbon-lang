@@ -13,8 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TARGET_TARGETSELECT_H
-#define LLVM_TARGET_TARGETSELECT_H
+#ifndef LLVM_SUPPORT_TARGETSELECT_H
+#define LLVM_SUPPORT_TARGETSELECT_H
 
 #include "llvm/Config/llvm-config.h"
 

@@ -1,4 +1,4 @@
-//===-- Target/TargetRegistry.h - Target Registration -----------*- C++ -*-===//
+//===-- Support/TargetRegistry.h - Target Registration ----------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -16,8 +16,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TARGET_TARGETREGISTRY_H
-#define LLVM_TARGET_TARGETREGISTRY_H
+#ifndef LLVM_SUPPORT_TARGETREGISTRY_H
+#define LLVM_SUPPORT_TARGETREGISTRY_H
 
 #include "llvm/Support/CodeGen.h"
 #include "llvm/ADT/Triple.h"

@@ -14,7 +14,7 @@
 #include "PTX.h"
 #include "PTXTargetMachine.h"
 #include "llvm/PassManager.h"
-#include "llvm/Target/TargetRegistry.h"
+#include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;

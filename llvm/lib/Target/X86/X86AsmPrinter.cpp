@@ -35,12 +35,12 @@
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/MachineModuleInfoImpls.h"
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
+#include "llvm/Target/Mangler.h"
+#include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/COFF.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Target/Mangler.h"
-#include "llvm/Target/TargetOptions.h"
-#include "llvm/Target/TargetRegistry.h"
+#include "llvm/Support/TargetRegistry.h"
 #include "llvm/ADT/SmallString.h"
 using namespace llvm;
 

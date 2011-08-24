@@ -31,9 +31,9 @@
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
 #include "llvm/ExecutionEngine/JIT.h"
-#include "llvm/Target/TargetSelect.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
+#include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/raw_ostream.h"
 #include <iostream>
 #include <fstream>

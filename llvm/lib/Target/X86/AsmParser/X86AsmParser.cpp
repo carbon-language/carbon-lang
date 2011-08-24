@@ -9,7 +9,6 @@
 
 #include "MCTargetDesc/X86BaseInfo.h"
 #include "llvm/MC/MCTargetAsmParser.h"
-#include "llvm/Target/TargetRegistry.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
@@ -25,6 +24,7 @@
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/SourceMgr.h"
+#include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;

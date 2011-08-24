@@ -26,8 +26,6 @@
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCTargetAsmParser.h"
 #include "llvm/MC/SubtargetFeature.h"
-#include "llvm/Target/TargetRegistry.h"
-#include "llvm/Target/TargetSelect.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileUtilities.h"
@@ -39,6 +37,8 @@
 #include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/Signals.h"
+#include "llvm/Support/TargetRegistry.h"
+#include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/system_error.h"
 #include "Disassembler.h"
 using namespace llvm;

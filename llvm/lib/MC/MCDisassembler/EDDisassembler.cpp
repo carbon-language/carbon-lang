@@ -33,8 +33,8 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/MemoryObject.h"
 #include "llvm/Support/SourceMgr.h"
-#include "llvm/Target/TargetRegistry.h"
-#include "llvm/Target/TargetSelect.h"
+#include "llvm/Support/TargetRegistry.h"
+#include "llvm/Support/TargetSelect.h"
 using namespace llvm;
 
 bool EDDisassembler::sInitialized = false;

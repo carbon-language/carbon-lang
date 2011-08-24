@@ -33,7 +33,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Process.h"
 #include "llvm/Support/Signals.h"
-#include "llvm/Target/TargetSelect.h"
+#include "llvm/Support/TargetSelect.h"
 #include <cerrno>
 
 #ifdef __CYGWIN__

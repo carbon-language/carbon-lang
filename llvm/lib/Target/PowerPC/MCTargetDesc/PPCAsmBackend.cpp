@@ -18,7 +18,7 @@
 #include "llvm/Object/MachOFormat.h"
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Target/TargetRegistry.h"
+#include "llvm/Support/TargetRegistry.h"
 using namespace llvm;
 
 static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {

@@ -21,14 +21,14 @@
 #include "llvm/MC/MCDisassembler.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstPrinter.h"
-#include "llvm/Target/TargetRegistry.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/MemoryObject.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/SourceMgr.h"
+#include "llvm/Support/TargetRegistry.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 typedef std::vector<std::pair<unsigned char, const char*> > ByteArrayTy;

@@ -17,10 +17,10 @@
 #include "llvm/MC/MCContext.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
-#include "llvm/Target/TargetRegistry.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/TargetRegistry.h"
 
 #define GET_INSTRINFO_CTOR
 #include "XCoreGenInstrInfo.inc"

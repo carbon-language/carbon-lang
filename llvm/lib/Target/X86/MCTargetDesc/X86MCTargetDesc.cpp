@@ -22,9 +22,9 @@
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
-#include "llvm/Target/TargetRegistry.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Support/Host.h"
+#include "llvm/Support/TargetRegistry.h"
 
 #define GET_REGINFO_MC_DESC
 #include "X86GenRegisterInfo.inc"

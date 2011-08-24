@@ -14,7 +14,7 @@
 #include "SPUSubtarget.h"
 #include "SPU.h"
 #include "SPURegisterInfo.h"
-#include "llvm/Target/TargetRegistry.h"
+#include "llvm/Support/TargetRegistry.h"
 #include "llvm/ADT/SmallVector.h"
 
 #define GET_SUBTARGETINFO_TARGET_DESC

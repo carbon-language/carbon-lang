@@ -15,7 +15,7 @@
 #include "PPC.h"
 #include "llvm/GlobalValue.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetRegistry.h"
+#include "llvm/Support/TargetRegistry.h"
 #include <cstdlib>
 
 #define GET_SUBTARGETINFO_TARGET_DESC
