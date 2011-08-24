@@ -237,3 +237,70 @@ void deallocateWithFree() {
       free(outData); // expected-warning{{Deallocator doesn't match the allocator: 'SecKeychainItemFreeContent' should be used}}
 }
 
+// Typesdefs for CFStringCreateWithBytesNoCopy.
+typedef char uint8_t;
+typedef signed long CFIndex;
+typedef UInt32 CFStringEncoding;
+typedef unsigned Boolean;
+typedef const struct __CFString * CFStringRef;
+typedef const struct __CFAllocator * CFAllocatorRef;
+extern const CFAllocatorRef kCFAllocatorDefault;
+extern const CFAllocatorRef kCFAllocatorSystemDefault;
+extern const CFAllocatorRef kCFAllocatorMalloc;
+extern const CFAllocatorRef kCFAllocatorMallocZone;
+extern const CFAllocatorRef kCFAllocatorNull;
+extern const CFAllocatorRef kCFAllocatorUseContext;
+CFStringRef CFStringCreateWithBytesNoCopy(CFAllocatorRef alloc, const uint8_t *bytes, CFIndex numBytes, CFStringEncoding encoding, Boolean externalFormat, CFAllocatorRef contentsDeallocator);
+extern void CFRelease(CFStringRef cf);
+
+void DellocWithCFStringCreate1(CFAllocatorRef alloc) {
+  unsigned int *ptr = 0;
+  OSStatus st = 0;
+  UInt32 length;
+  void *bytes;
+  char * x;
+  st = SecKeychainItemCopyContent(2, ptr, ptr, &length, &bytes);
+  if (st == noErr) {
+    CFStringRef userStr = CFStringCreateWithBytesNoCopy(alloc, bytes, length, 5, 0, kCFAllocatorDefault); // expected-warning{{Deallocator doesn't match the allocator:}} 
+    CFRelease(userStr);
+  }
+}
+
+void DellocWithCFStringCreate2(CFAllocatorRef alloc) {
+  unsigned int *ptr = 0;
+  OSStatus st = 0;
+  UInt32 length;
+  void *bytes;
+  char * x;
+  st = SecKeychainItemCopyContent(2, ptr, ptr, &length, &bytes);
+  if (st == noErr) {
+    CFStringRef userStr = CFStringCreateWithBytesNoCopy(alloc, bytes, length, 5, 0, kCFAllocatorNull); // expected-warning{{Allocated data is not released}}
+    CFRelease(userStr);
+  }
+}
+
+void DellocWithCFStringCreate3(CFAllocatorRef alloc) {
+  unsigned int *ptr = 0;
+  OSStatus st = 0;
+  UInt32 length;
+  void *bytes;
+  char * x;
+  st = SecKeychainItemCopyContent(2, ptr, ptr, &length, &bytes);
+  if (st == noErr) {
+    CFStringRef userStr = CFStringCreateWithBytesNoCopy(alloc, bytes, length, 5, 0, kCFAllocatorUseContext);
+    CFRelease(userStr);
+  }
+}
+
+void DellocWithCFStringCreate4(CFAllocatorRef alloc) {
+  unsigned int *ptr = 0;
+  OSStatus st = 0;
+  UInt32 length;
+  void *bytes;
+  char * x;
+  st = SecKeychainItemCopyContent(2, ptr, ptr, &length, &bytes);
+  if (st == noErr) {
+    CFStringRef userStr = CFStringCreateWithBytesNoCopy(alloc, bytes, length, 5, 0, 0); // expected-warning{{Deallocator doesn't match the allocator:}} 
+    CFRelease(userStr);
+  }
+}
