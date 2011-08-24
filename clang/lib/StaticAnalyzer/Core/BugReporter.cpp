@@ -1273,6 +1273,10 @@ BugReport::getRanges() {
         return std::make_pair(ranges_iterator(), ranges_iterator());
     }
 
+    // User-specified absence of range info.
+    if (Ranges.size() == 1 && !Ranges.begin()->isValid())
+      return std::make_pair(ranges_iterator(), ranges_iterator());
+
     return std::make_pair(Ranges.begin(), Ranges.end());
 }
 

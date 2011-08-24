@@ -138,8 +138,12 @@ public:
   ///
   /// Ranges are used to highlight regions of interest in the source code.
   /// They should be at the same source code line as the BugReport location.
+  /// By default, the source range of the statement corresponding to the error
+  /// node will be used; add a single invalid range to specify absence of
+  /// ranges.
   void addRange(SourceRange R) {
-    assert(R.isValid());
+    assert((R.isValid() || Ranges.empty()) && "Invalid range can only be used "
+                           "to specify that the report does not have a range.");
     Ranges.push_back(R);
   }
 
