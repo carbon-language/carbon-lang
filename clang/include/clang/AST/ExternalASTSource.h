@@ -124,16 +124,6 @@ public:
   virtual DeclContextLookupResult
   FindExternalVisibleDeclsByName(const DeclContext *DC, DeclarationName Name);
 
-  /// \brief Deserialize all the visible declarations from external storage.
-  ///
-  /// Name lookup deserializes visible declarations lazily, thus a DeclContext
-  /// may not have a complete name lookup table. This function deserializes
-  /// the rest of visible declarations from the external storage and completes
-  /// the name lookup table of the DeclContext.
-  ///
-  /// The default implementation of this method is a no-op.
-  virtual void MaterializeVisibleDecls(const DeclContext *DC);
-
   /// \brief Finds all declarations lexically contained within the given
   /// DeclContext, after applying an optional filter predicate.
   ///
@@ -231,10 +221,6 @@ protected:
   static DeclContextLookupResult
   SetNoExternalVisibleDeclsForName(const DeclContext *DC,
                                    DeclarationName Name);
-
-  void MaterializeVisibleDeclsForName(const DeclContext *DC,
-                                      DeclarationName Name,
-                                 SmallVectorImpl<NamedDecl*> &Decls);
 };
 
 /// \brief A lazy pointer to an AST node (of base type T) that resides

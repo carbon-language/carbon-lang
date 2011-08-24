@@ -190,9 +190,6 @@ ChainedIncludesSource::FindExternalVisibleDeclsByName(const DeclContext *DC,
                                                       DeclarationName Name) {
   return getFinalReader().FindExternalVisibleDeclsByName(DC, Name);
 }
-void ChainedIncludesSource::MaterializeVisibleDecls(const DeclContext *DC) {
-  return getFinalReader().MaterializeVisibleDecls(DC);
-}
 ExternalLoadResult 
 ChainedIncludesSource::FindExternalLexicalDecls(const DeclContext *DC,
                                       bool (*isKindWeWant)(Decl::Kind),

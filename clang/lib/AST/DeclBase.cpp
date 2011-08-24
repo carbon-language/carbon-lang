@@ -910,25 +910,6 @@ ExternalASTSource::SetExternalVisibleDeclsForName(const DeclContext *DC,
   return List.getLookupResult();
 }
 
-void ExternalASTSource::MaterializeVisibleDeclsForName(const DeclContext *DC,
-                                                       DeclarationName Name,
-                                     SmallVectorImpl<NamedDecl*> &Decls) {
-  assert(DC->LookupPtr);
-  StoredDeclsMap &Map = *DC->LookupPtr;
-
-  // If there's an entry in the table the visible decls for this name have
-  // already been deserialized.
-  if (Map.find(Name) == Map.end()) {
-    StoredDeclsList &List = Map[Name];
-    for (unsigned I = 0, N = Decls.size(); I != N; ++I) {
-      if (List.isNull())
-        List.setOnlyValue(Decls[I]);
-      else
-        List.AddSubsequentDecl(Decls[I]);
-    }
-  }
-}
-
 DeclContext::decl_iterator DeclContext::noload_decls_begin() const {
   return decl_iterator(FirstDecl);
 }
@@ -1205,15 +1186,6 @@ void DeclContext::makeDeclVisibleInContextImpl(NamedDecl *D) {
 
   // Put this declaration into the appropriate slot.
   DeclNameEntries.AddSubsequentDecl(D);
-}
-
-void DeclContext::MaterializeVisibleDeclsFromExternalStorage() {
-  ExternalASTSource *Source = getParentASTContext().getExternalSource();
-  assert(hasExternalVisibleStorage() && Source && "No external storage?");
-
-  if (!LookupPtr)
-    CreateStoredDeclsMap(getParentASTContext());
-  Source->MaterializeVisibleDecls(this);
 }
 
 /// Returns iterator range [First, Last) of UsingDirectiveDecls stored within

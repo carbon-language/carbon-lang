@@ -1276,14 +1276,6 @@ public:
   /// the declaration chains.
   void makeDeclVisibleInContext(NamedDecl *D, bool Recoverable = true);
 
-  /// \brief Deserialize all the visible declarations from external storage.
-  ///
-  /// Name lookup deserializes visible declarations lazily, thus a DeclContext
-  /// may not have a complete name lookup table. This function deserializes
-  /// the rest of visible declarations from the external storage and completes
-  /// the name lookup table.
-  void MaterializeVisibleDeclsFromExternalStorage();
-
   /// udir_iterator - Iterates through the using-directives stored
   /// within this context.
   typedef UsingDirectiveDecl * const * udir_iterator;

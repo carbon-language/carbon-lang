@@ -4405,46 +4405,6 @@ ASTReader::FindExternalVisibleDeclsByName(const DeclContext *DC,
   return const_cast<DeclContext*>(DC)->lookup(Name);
 }
 
-void ASTReader::MaterializeVisibleDecls(const DeclContext *DC) {
-  assert(DC->hasExternalVisibleStorage() &&
-         "DeclContext has no visible decls in storage");
-
-  SmallVector<NamedDecl *, 64> Decls;
-  // There might be visible decls in multiple parts of the chain, for the TU
-  // and namespaces.
-  // There might be lexical decls in multiple modules, for the TU at
-  // least.
-  // FIXME: We might want a faster way to zero
-  // FIXME: Going backwards through the chain does the right thing for
-  // chained PCH; for modules, it isn't clear what the right thing is.
-  for (ModuleReverseIterator M = ModuleMgr.rbegin(), MEnd = ModuleMgr.rend();
-       M != MEnd; ++M) {
-    Module::DeclContextInfosMap::iterator Info
-      = (*M)->DeclContextInfos.find(DC);
-    if (Info == (*M)->DeclContextInfos.end() || !Info->second.LexicalDecls)
-      continue;
-
-    if (!Info->second.NameLookupTableData)
-      continue;
-
-    ASTDeclContextNameLookupTable *LookupTable =
-        (ASTDeclContextNameLookupTable*)Info->second.NameLookupTableData;
-    for (ASTDeclContextNameLookupTable::item_iterator
-           ItemI = LookupTable->item_begin(),
-           ItemEnd = LookupTable->item_end() ; ItemI != ItemEnd; ++ItemI) {
-      ASTDeclContextNameLookupTable::item_iterator::value_type Val
-          = *ItemI;
-      ASTDeclContextNameLookupTrait::data_type Data = Val.second;
-      Decls.clear();
-      for (; Data.first != Data.second; ++Data.first) {
-        if (NamedDecl *ND = GetLocalDeclAs<NamedDecl>(**M, *Data.first))
-          Decls.push_back(ND);
-      }
-      MaterializeVisibleDeclsForName(DC, Val.first, Decls);
-    }
-  }
-}
-
 void ASTReader::PassInterestingDeclsToConsumer() {
   assert(Consumer);
   while (!InterestingDecls.empty()) {

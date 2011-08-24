@@ -46,7 +46,6 @@ protected:
   virtual CXXBaseSpecifier *GetExternalCXXBaseSpecifiers(uint64_t Offset);
   virtual DeclContextLookupResult
   FindExternalVisibleDeclsByName(const DeclContext *DC, DeclarationName Name);
-  virtual void MaterializeVisibleDecls(const DeclContext *DC);
   virtual ExternalLoadResult FindExternalLexicalDecls(const DeclContext *DC,
                                         bool (*isKindWeWant)(Decl::Kind),
                                         SmallVectorImpl<Decl*> &Result);
