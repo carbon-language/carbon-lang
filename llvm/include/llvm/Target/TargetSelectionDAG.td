@@ -214,6 +214,12 @@ def SDTAtomic3 : SDTypeProfile<1, 3, [
 def SDTAtomic2 : SDTypeProfile<1, 2, [
   SDTCisSameAs<0,2>, SDTCisInt<0>, SDTCisPtrTy<1>
 ]>;
+def SDTAtomicStore : SDTypeProfile<0, 2, [
+  SDTCisPtrTy<0>, SDTCisInt<1>
+]>;
+def SDTAtomicLoad : SDTypeProfile<1, 1, [
+  SDTCisInt<0>, SDTCisPtrTy<1>
+]>;
 
 def SDTConvertOp : SDTypeProfile<1, 5, [ //cvtss, su, us, uu, ff, fs, fu, sf, su
   SDTCisVT<2, OtherVT>, SDTCisVT<3, OtherVT>, SDTCisPtrTy<4>, SDTCisPtrTy<5>
@@ -426,6 +432,10 @@ def atomic_load_max : SDNode<"ISD::ATOMIC_LOAD_MAX", SDTAtomic2,
 def atomic_load_umin : SDNode<"ISD::ATOMIC_LOAD_UMIN", SDTAtomic2,
                     [SDNPHasChain, SDNPMayStore, SDNPMayLoad, SDNPMemOperand]>;
 def atomic_load_umax : SDNode<"ISD::ATOMIC_LOAD_UMAX", SDTAtomic2,
+                    [SDNPHasChain, SDNPMayStore, SDNPMayLoad, SDNPMemOperand]>;
+def atomic_load      : SDNode<"ISD::ATOMIC_LOAD", SDTAtomicLoad,
+                    [SDNPHasChain, SDNPMayStore, SDNPMayLoad, SDNPMemOperand]>;
+def atomic_store     : SDNode<"ISD::ATOMIC_STORE", SDTAtomicStore,
                     [SDNPHasChain, SDNPMayStore, SDNPMayLoad, SDNPMemOperand]>;
 
 // Do not use ld, st directly. Use load, extload, sextload, zextload, store,
@@ -844,6 +854,28 @@ defm atomic_load_min  : binary_atomic_op<atomic_load_min>;
 defm atomic_load_max  : binary_atomic_op<atomic_load_max>;
 defm atomic_load_umin : binary_atomic_op<atomic_load_umin>;
 defm atomic_load_umax : binary_atomic_op<atomic_load_umax>;
+defm atomic_store     : binary_atomic_op<atomic_store>;
+
+def atomic_load_8 :
+  PatFrag<(ops node:$ptr),
+          (atomic_load node:$ptr), [{
+  return cast<AtomicSDNode>(N)->getMemoryVT() == MVT::i8;
+}]>;
+def atomic_load_16 :
+  PatFrag<(ops node:$ptr),
+          (atomic_load node:$ptr), [{
+  return cast<AtomicSDNode>(N)->getMemoryVT() == MVT::i16;
+}]>;
+def atomic_load_32 :
+  PatFrag<(ops node:$ptr),
+          (atomic_load node:$ptr), [{
+  return cast<AtomicSDNode>(N)->getMemoryVT() == MVT::i32;
+}]>;
+def atomic_load_64 :
+  PatFrag<(ops node:$ptr),
+          (atomic_load node:$ptr), [{
+  return cast<AtomicSDNode>(N)->getMemoryVT() == MVT::i64;
+}]>;
 
 //===----------------------------------------------------------------------===//
 // Selection DAG CONVERT_RNDSAT patterns

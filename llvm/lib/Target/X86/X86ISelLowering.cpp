@@ -464,6 +464,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     MVT VT = IntVTs[i];
     setOperationAction(ISD::ATOMIC_CMP_SWAP, VT, Custom);
     setOperationAction(ISD::ATOMIC_LOAD_SUB, VT, Custom);
+    setOperationAction(ISD::ATOMIC_STORE, VT, Custom);
   }
 
   if (!Subtarget->is64Bit()) {
@@ -9999,6 +10000,26 @@ SDValue X86TargetLowering::LowerLOAD_SUB(SDValue Op, SelectionDAG &DAG) const {
                        cast<AtomicSDNode>(Node)->getSynchScope());
 }
 
+static SDValue LowerATOMIC_STORE(SDValue Op, SelectionDAG &DAG) {
+  SDNode *Node = Op.getNode();
+  DebugLoc dl = Node->getDebugLoc();
+
+  // Convert seq_cst store -> xchg
+  if (cast<AtomicSDNode>(Node)->getOrdering() == SequentiallyConsistent) {
+    SDValue Swap =  DAG.getAtomic(ISD::ATOMIC_SWAP, dl,
+                                  cast<AtomicSDNode>(Node)->getMemoryVT(),
+                                   Node->getOperand(0),
+                                   Node->getOperand(1), Node->getOperand(2),
+                                   cast<AtomicSDNode>(Node)->getSrcValue(),
+                                   cast<AtomicSDNode>(Node)->getAlignment(),
+                                   cast<AtomicSDNode>(Node)->getOrdering(),
+                                   cast<AtomicSDNode>(Node)->getSynchScope());
+    return Swap.getValue(1);
+  }
+  // Other atomic stores have a simple pattern.
+  return Op;
+}
+
 static SDValue LowerADDC_ADDE_SUBC_SUBE(SDValue Op, SelectionDAG &DAG) {
   EVT VT = Op.getNode()->getValueType(0);
 
@@ -10035,6 +10056,7 @@ SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::ATOMIC_FENCE:       return LowerATOMIC_FENCE(Op,DAG);
   case ISD::ATOMIC_CMP_SWAP:    return LowerCMP_SWAP(Op,DAG);
   case ISD::ATOMIC_LOAD_SUB:    return LowerLOAD_SUB(Op,DAG);
+  case ISD::ATOMIC_STORE:       return LowerATOMIC_STORE(Op,DAG);
   case ISD::BUILD_VECTOR:       return LowerBUILD_VECTOR(Op, DAG);
   case ISD::CONCAT_VECTORS:     return LowerCONCAT_VECTORS(Op, DAG);
   case ISD::VECTOR_SHUFFLE:     return LowerVECTOR_SHUFFLE(Op, DAG);

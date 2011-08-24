@@ -976,6 +976,8 @@ public:
            N->getOpcode() == ISD::ATOMIC_LOAD_MAX     ||
            N->getOpcode() == ISD::ATOMIC_LOAD_UMIN    ||
            N->getOpcode() == ISD::ATOMIC_LOAD_UMAX    ||
+           N->getOpcode() == ISD::ATOMIC_LOAD         ||
+           N->getOpcode() == ISD::ATOMIC_STORE        ||
            N->isTargetMemoryOpcode();
   }
 };
@@ -1025,6 +1027,14 @@ public:
     InitAtomic(Ordering, SynchScope);
     InitOperands(Ops, Chain, Ptr, Val);
   }
+  AtomicSDNode(unsigned Opc, DebugLoc dl, SDVTList VTL, EVT MemVT,
+               SDValue Chain, SDValue Ptr,
+               MachineMemOperand *MMO,
+               AtomicOrdering Ordering, SynchronizationScope SynchScope)
+    : MemSDNode(Opc, dl, VTL, MemVT, MMO) {
+    InitAtomic(Ordering, SynchScope);
+    InitOperands(Ops, Chain, Ptr);
+  }
 
   const SDValue &getBasePtr() const { return getOperand(1); }
   const SDValue &getVal() const { return getOperand(2); }
@@ -1048,7 +1058,9 @@ public:
            N->getOpcode() == ISD::ATOMIC_LOAD_MIN     ||
            N->getOpcode() == ISD::ATOMIC_LOAD_MAX     ||
            N->getOpcode() == ISD::ATOMIC_LOAD_UMIN    ||
-           N->getOpcode() == ISD::ATOMIC_LOAD_UMAX;
+           N->getOpcode() == ISD::ATOMIC_LOAD_UMAX    ||
+           N->getOpcode() == ISD::ATOMIC_LOAD         ||
+           N->getOpcode() == ISD::ATOMIC_STORE;
   }
 };
 

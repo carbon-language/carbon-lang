@@ -819,6 +819,11 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     Action = TLI.getOperationAction(Node->getOpcode(), InnerType);
     break;
   }
+  case ISD::ATOMIC_STORE: {
+    Action = TLI.getOperationAction(Node->getOpcode(),
+                                    Node->getOperand(2).getValueType());
+    break;
+  }
   case ISD::SELECT_CC:
   case ISD::SETCC:
   case ISD::BR_CC: {

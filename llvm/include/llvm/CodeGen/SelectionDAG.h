@@ -598,16 +598,26 @@ public:
                     AtomicOrdering Ordering,
                     SynchronizationScope SynchScope);
 
-  /// getAtomic - Gets a node for an atomic op, produces result and chain and
-  /// takes 2 operands.
+  /// getAtomic - Gets a node for an atomic op, produces result (if relevant)
+  /// and chain and takes 2 operands.
   SDValue getAtomic(unsigned Opcode, DebugLoc dl, EVT MemVT, SDValue Chain,
                     SDValue Ptr, SDValue Val, const Value* PtrVal,
+                    unsigned Alignment, AtomicOrdering Ordering,
+                    SynchronizationScope SynchScope);
+  SDValue getAtomic(unsigned Opcode, DebugLoc dl, EVT MemVT, SDValue Chain,
+                    SDValue Ptr, SDValue Val, MachineMemOperand *MMO,
+                    AtomicOrdering Ordering,
+                    SynchronizationScope SynchScope);
+
+  /// getAtomic - Gets a node for an atomic op, produces result and chain and
+  /// takes 1 operand.
+  SDValue getAtomic(unsigned Opcode, DebugLoc dl, EVT MemVT, EVT VT,
+                    SDValue Chain, SDValue Ptr, const Value* PtrVal,
                     unsigned Alignment,
                     AtomicOrdering Ordering,
                     SynchronizationScope SynchScope);
-  SDValue getAtomic(unsigned Opcode, DebugLoc dl, EVT MemVT, SDValue Chain,
-                    SDValue Ptr, SDValue Val,
-                    MachineMemOperand *MMO,
+  SDValue getAtomic(unsigned Opcode, DebugLoc dl, EVT MemVT, EVT VT,
+                    SDValue Chain, SDValue Ptr, MachineMemOperand *MMO,
                     AtomicOrdering Ordering,
                     SynchronizationScope SynchScope);
 

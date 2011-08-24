@@ -1691,3 +1691,17 @@ def : Pat<(and GR64:$src1, i64immSExt8:$src2),
           (AND64ri8 GR64:$src1, i64immSExt8:$src2)>;
 def : Pat<(and GR64:$src1, i64immSExt32:$src2),
           (AND64ri32 GR64:$src1, i64immSExt32:$src2)>;
+
+def : Pat<(atomic_load_8 addr:$src), (MOV8rm addr:$src)>;
+def : Pat<(atomic_load_16 addr:$src), (MOV16rm addr:$src)>;
+def : Pat<(atomic_load_32 addr:$src), (MOV32rm addr:$src)>;
+def : Pat<(atomic_load_64 addr:$src), (MOV64rm addr:$src)>;
+
+def : Pat<(atomic_store_8 addr:$ptr, GR8:$val),
+          (MOV8mr addr:$ptr, GR8:$val)>;
+def : Pat<(atomic_store_16 addr:$ptr, GR16:$val),
+          (MOV16mr addr:$ptr, GR16:$val)>;
+def : Pat<(atomic_store_32 addr:$ptr, GR32:$val),
+          (MOV32mr addr:$ptr, GR32:$val)>;
+def : Pat<(atomic_store_64 addr:$ptr, GR64:$val),
+          (MOV64mr addr:$ptr, GR64:$val)>;
