@@ -504,8 +504,7 @@ void MacOSKeychainAPIChecker::checkPreStmt(const ReturnStmt *S,
 BugReport *MacOSKeychainAPIChecker::
   generateAllocatedDataNotReleasedReport(const AllocationPair &AP,
                                          ExplodedNode *N) const {
-  const AllocationState &AS = AP.second;
-  const ADFunctionInfo &FI = FunctionsToTrack[AS.AllocatorIdx];
+  const ADFunctionInfo &FI = FunctionsToTrack[AP.second.AllocatorIdx];
   initBugType();
   llvm::SmallString<70> sbuf;
   llvm::raw_svector_ostream os(sbuf);
