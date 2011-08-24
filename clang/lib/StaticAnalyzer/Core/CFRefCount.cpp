@@ -1923,7 +1923,7 @@ namespace {
 } // end anonymous namespace
 
 void CFRefReport::addGCModeDescription(const CFRefCount &TF) {
-  const char *GCModeDescription;
+  const char *GCModeDescription = 0;
 
   switch (TF.getLangOptions().getGCMode()) {
   case LangOptions::GCOnly:
@@ -1950,6 +1950,7 @@ void CFRefReport::addGCModeDescription(const CFRefCount &TF) {
     }
   }
 
+  assert(GCModeDescription && "invalid/unknown GC mode");
   addExtraText(GCModeDescription);
 }
 
