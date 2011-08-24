@@ -3179,9 +3179,14 @@ static bool isPALIGNRMask(const SmallVectorImpl<int> &Mask, EVT VT,
 }
 
 /// isSHUFPMask - Return true if the specified VECTOR_SHUFFLE operand
-/// specifies a shuffle of elements that is suitable for input to SHUFP*.
+/// specifies a shuffle of elements that is suitable for input to 128-bit
+/// SHUFPS and SHUFPD.
 static bool isSHUFPMask(const SmallVectorImpl<int> &Mask, EVT VT) {
   int NumElems = VT.getVectorNumElements();
+
+  if (VT.getSizeInBits() != 128)
+    return false;
+
   if (NumElems != 2 && NumElems != 4)
     return false;
 
