@@ -895,7 +895,7 @@ MCSymbol *FrameEmitterImpl::EmitFDE(MCStreamer &streamer,
   const MCObjectFileInfo *MOFI = context.getObjectFileInfo();
   bool verboseAsm = streamer.isVerboseAsm();
 
-  if (!MOFI->isFunctionEHFrameSymbolPrivate() && IsEH) {
+  if (IsEH && frame.Function && !MOFI->isFunctionEHFrameSymbolPrivate()) {
     MCSymbol *EHSym =
       context.GetOrCreateSymbol(frame.Function->getName() + Twine(".eh"));
     streamer.EmitEHSymAttributes(frame.Function, EHSym);
