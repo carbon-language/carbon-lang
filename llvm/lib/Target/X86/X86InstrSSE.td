@@ -5876,9 +5876,13 @@ def : Pat<(v16i16 (X86VPerm2f128 VR256:$src1, VR256:$src2, (i8 imm:$imm))),
 //===----------------------------------------------------------------------===//
 // VZERO - Zero YMM registers
 //
-// Zero All YMM registers
-def VZEROALL : I<0x77, RawFrm, (outs), (ins), "vzeroall",
-                 [(int_x86_avx_vzeroall)]>, VEX, VEX_L, Requires<[HasAVX]>;
+let Defs = [YMM0, YMM1, YMM2, YMM3, YMM4, YMM5, YMM6, YMM7,
+            YMM8, YMM9, YMM10, YMM11, YMM12, YMM13, YMM14, YMM15] in {
+  // Zero All YMM registers
+  def VZEROALL : I<0x77, RawFrm, (outs), (ins), "vzeroall",
+                   [(int_x86_avx_vzeroall)]>, VEX, VEX_L, Requires<[HasAVX]>;
+
+}
 
 // Zero Upper bits of YMM registers
 def VZEROUPPER : I<0x77, RawFrm, (outs), (ins), "vzeroupper",
