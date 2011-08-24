@@ -1006,7 +1006,9 @@ Python Interactive Interpreter. To exit, type 'quit()', 'exit()' or Ctrl-D.<br/>
 			Currently this method is optional, because the internal state of synthetic children providers will not be preserved. However, this is meant to change in future versions
 			of LLDB.<br/>
 		</code>
-		<p>For examples of how synthetic children are created, you are encouraged to look at <a href="http://llvm.org/svn/llvm-project/lldb/trunk/examples/synthetic/">examples/synthetic</a> in the LLDB trunk.</p>
+		<p>For examples of how synthetic children are created, you are encouraged to look at <a href="http://llvm.org/svn/llvm-project/lldb/trunk/examples/synthetic/">examples/synthetic</a> in the LLDB trunk.
+			You may especially want to begin looking at <a href="http://llvm.org/svn/llvm-project/lldb/trunk/examples/synthetic/StdVectorSynthProvider.py">StdVector</a> to get
+			a feel for this feature.</p>
 		
 		<p>Once a synthetic children provider is written, one must load it into LLDB before it can be used.
 			Currently, one can use the LLDB <code>script</code> command to type Python code interactively,
@@ -1084,14 +1086,41 @@ Python Interactive Interpreter. To exit, type 'quit()', 'exit()' or Ctrl-D.<br/>
           </div>
         </div>
 
-          
+        <div class="post">
+          <h1 class="postheader">Categories</h1>
+          <div class="postcontent">          
+	          <p>Categories are a way to group related formatters. For instance, LLDB itself groups
+		      the formatters for the C++ STL objects in a category named <code>gnu-libstdc++</code>.
+				Basically, categories act like containers in which to store formatters for a same library
+			  or OS release.</p>
+			  <p>By default, three categories are created in LLDB: <code>system</code>, <code>gnu-libstdc++</code> and <code>default</code>.
+				Every formatter that is not created inside a category, is by default a part of the <code>default</code> category.
+				If you want to use a custom category for your formatters, all the <code>type ... add</code> (except for <code>type format add</code>),
+				provide a <code>--category</code> (<code>-w</code>) option, that names the category to add the formatter to.
+				To delete the formatter, you then have to specify the correct category.</p>
+				<p>Categories can be in one of two states: enabled and disabled. A category is initially disabled,
+					and can be enabled using the <code>type category enable</code> command. To disable an enabled category,
+					the command to use is <code>type category disable</code>. The order in which categories are enabled or disabled
+					is significant, in that LLDB uses that order when looking for formatters. Therefore, when you enable a category, it becomes
+					the first one to be searched. The default categories are enabled in the order: <code>default</code> as first, then
+					<code>gnu-libstdc++</code>, and finally <code>system</code>. As said, <code>gnu-libstdc++</code> contains formatters for C++ STL
+					data types. <code>system</code> contains formatters for <code>char*</code> and <code>char[]</code>, which are expected to be
+					consistent throughout libraries and systems, and replace </p>
+				<p>Categories are a way to group related formatters. For instance, LLDB itself groups
+			      the formatters for the C++ STL objects in a category named <code>gnu-libstdc++</code></p>
+          </div>
+        </div>
+
           <div class="post">
             <h1 class="postheader">Finding formatters 101</h1>
             <div class="postcontent">
               <p>While the rules for finding an appropriate format for a
                 type are relatively simple (just go through typedef
                 hierarchies), searching formatters for a type goes through
-				a rather intricate set of rules. Namely, what happens is:</p>
+				a rather intricate set of rules. Namely, what happens is that LLDB
+				starts looking in each enabled category, according to the order in which
+				they were enabled (latest enabled first). In each category, LLDB does
+				the following:</p>
               <ul>
                 <li>If there is a formatter for the type of the variable,
                   use it</li>
@@ -1125,6 +1154,11 @@ Python Interactive Interpreter. To exit, type 'quit()', 'exit()' or Ctrl-D.<br/>
                   looking for regular expressions instead of exact
                   matches</li>
               </ul>
+              <p>If any of those attempts returned a valid formatter to be used,
+				  that one is used, and the search is terminated (without going to look
+				in other categories). If nothing was found in the current category, the next
+				enabled category is scanned according to the same algorithm. If there are no
+				more enabled categories, the search has failed.</p>
             </div>
           </div>
           <div class="post">
