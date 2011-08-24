@@ -2877,7 +2877,12 @@ public:
                                  unsigned &NumRecords) const {
   }
   virtual const char *getVAListDeclaration() const {
-    return "typedef void* __builtin_va_list;";
+    return "typedef struct __va_list_tag {"
+           "  void* ptr;"
+           "  void* padding1;"
+           "  void* padding2;"
+           "  void* padding3;"
+           "} __builtin_va_list[1];";
   }
   virtual void getGCCRegNames(const char * const *&Names,
                               unsigned &NumNames) const;

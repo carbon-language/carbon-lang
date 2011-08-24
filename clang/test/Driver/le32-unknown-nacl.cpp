@@ -1,9 +1,7 @@
-// RUN: %clang -ccc-host-triple le32-unknown-nacl -ccc-echo %s -emit-llvm -c -o /tmp/OUTPUTNAME 2> %t.log
+// RUN: %clang -ccc-host-triple le32-unknown-nacl -ccc-echo %s -emit-llvm -c 2>&1 | FileCheck %s -check-prefix=ECHO
+// RUN: %clang -ccc-host-triple le32-unknown-nacl %s -emit-llvm -S -c -o - | FileCheck %s
 
-// Make sure we used clang.
-// RUN: grep 'clang\(-[0-9.]\+\)\?\(\.[Ee][Xx][Ee]\)\?" -cc1 .*le32-unknown-nacl.c' %t.log
-
-// RUN: llvm-dis < /tmp/OUTPUTNAME | FileCheck %s
+// ECHO: clang{{.*}} -cc1 {{.*}}le32-unknown-nacl.c
 
 // Check platform defines
 #include <stddef.h>
@@ -69,13 +67,17 @@ float check_float() { return 0; }
 // CHECK: double @check_double()
 double check_double() { return 0; }
 
+// CHECK: double @check_longdouble()
+long double check_longdouble() { return 0; }
+
 }
 
-// Check that pointers are 32-bit.
+#include <stdarg.h>
 
 template<int> void Switch();
 template<> void Switch<4>();
 template<> void Switch<8>();
+template<> void Switch<16>();
 
 void check_pointer_size() {
   // CHECK: SwitchILi4
@@ -83,4 +85,7 @@ void check_pointer_size() {
 
   // CHECK: SwitchILi8
   Switch<sizeof(long long)>();
+
+  // CHECK: SwitchILi16
+  Switch<sizeof(va_list)>();
 }
