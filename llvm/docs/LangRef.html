@@ -1634,14 +1634,15 @@ address is written <code>monotonic</code>ally by one thread, and other threads
 eventually see the write. This corresponds to the C++0x/C1x
 <code>memory_order_relaxed</code>.</dd>
 <dt><code>acquire</code></dt>
-<dd>In addition to the guarantees of <code>monotonic</code>, if this operation
-reads a value written by a <code>release</code> atomic operation, it
-<i>synchronizes-with</i> that operation.  This corresponds to the C++0x/C1x
-<code>memory_order_acquire</code>.</dd>
-<dt><code>release</code></dt>
 <dd>In addition to the guarantees of <code>monotonic</code>,
-a <i>synchronizes-with</i> edge may be formed with an <code>acquire</code>
-operation. This is intended to model C++'s <code>memory_order_release</code>.</dd>
+a <i>synchronizes-with</i> edge may be formed with a <code>release</code>
+operation. This is intended to model C++'s <code>memory_order_acquire</code>.</dd>
+<dt><code>release</code></dt>
+<dd>In addition to the guarantees of <code>monotonic</code>, if this operation
+writes a value which is subsequently read by an <code>acquire</code> operation,
+it <i>synchronizes-with</i> that operation.  (This isn't a complete
+description; see the C++0x definition of a release sequence.) This corresponds
+to the C++0x/C1x <code>memory_order_release</code>.</dd>
 <dt><code>acq_rel</code> (acquire+release)</dt><dd>Acts as both an
 <code>acquire</code> and <code>release</code> operation on its address.
 This corresponds to the C++0x/C1x <code>memory_order_acq_rel</code>.</dd>
