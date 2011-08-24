@@ -1883,22 +1883,24 @@ namespace {
   };
 
   class CFRefReport : public BugReport {
-    void addGCModeDescription(const CFRefCount &TF);
+    void addGCModeDescription(const LangOptions &LOpts, bool GCEnabled);
 
   public:
-    CFRefReport(CFRefBug &D, const CFRefCount &tf, const SummaryLogTy &log,
-                ExplodedNode *n, SymbolRef sym, bool registerVisitor = true)
+    CFRefReport(CFRefBug &D, const LangOptions &LOpts, bool GCEnabled,
+                const SummaryLogTy &Log, ExplodedNode *n, SymbolRef sym,
+                bool registerVisitor = true)
       : BugReport(D, D.getDescription(), n) {
       if (registerVisitor)
-        addVisitor(new CFRefReportVisitor(sym, tf.isGCEnabled(), log));
-      addGCModeDescription(tf);
+        addVisitor(new CFRefReportVisitor(sym, GCEnabled, Log));
+      addGCModeDescription(LOpts, GCEnabled);
     }
 
-    CFRefReport(CFRefBug &D, const CFRefCount &tf, const SummaryLogTy &log,
-                ExplodedNode *n, SymbolRef sym, StringRef endText)
+    CFRefReport(CFRefBug &D, const LangOptions &LOpts, bool GCEnabled,
+                const SummaryLogTy &Log, ExplodedNode *n, SymbolRef sym,
+                StringRef endText)
       : BugReport(D, D.getDescription(), endText, n) {
-      addVisitor(new CFRefReportVisitor(sym, tf.isGCEnabled(), log));
-      addGCModeDescription(tf);
+      addVisitor(new CFRefReportVisitor(sym, GCEnabled, Log));
+      addGCModeDescription(LOpts, GCEnabled);
     }
 
     virtual std::pair<ranges_iterator, ranges_iterator> getRanges() {
@@ -1915,29 +1917,31 @@ namespace {
     const MemRegion* AllocBinding;
 
   public:
-    CFRefLeakReport(CFRefBug &D, const CFRefCount &tf, const SummaryLogTy &log,
-                    ExplodedNode *n, SymbolRef sym, ExprEngine& Eng);
+    CFRefLeakReport(CFRefBug &D, const LangOptions &LOpts, bool GCEnabled,
+                    const SummaryLogTy &Log, ExplodedNode *n, SymbolRef sym,
+                    ExprEngine &Eng);
 
     SourceLocation getLocation() const { return AllocSite; }
   };
 } // end anonymous namespace
 
-void CFRefReport::addGCModeDescription(const CFRefCount &TF) {
+void CFRefReport::addGCModeDescription(const LangOptions &LOpts,
+                                       bool GCEnabled) {
   const char *GCModeDescription = 0;
 
-  switch (TF.getLangOptions().getGCMode()) {
+  switch (LOpts.getGCMode()) {
   case LangOptions::GCOnly:
-    assert(TF.isGCEnabled());
+    assert(GCEnabled);
     GCModeDescription = "Code is compiled to only use garbage collection";
     break;
 
   case LangOptions::NonGC:
-    assert(!TF.isGCEnabled());
+    assert(!GCEnabled);
     GCModeDescription = "Code is compiled to use reference counts";
     break;
 
   case LangOptions::HybridGC:
-    if (TF.isGCEnabled()) {
+    if (GCEnabled) {
       GCModeDescription = "Code is compiled to use either garbage collection "
                           "(GC) or reference counts (non-GC).  The bug occurs "
                           "with GC enabled";
@@ -2375,10 +2379,11 @@ CFRefLeakReportVisitor::getEndPath(BugReporterContext &BRC,
   return new PathDiagnosticEventPiece(L, os.str());
 }
 
-CFRefLeakReport::CFRefLeakReport(CFRefBug &D, const CFRefCount &tf,
-                                 const SummaryLogTy &log, ExplodedNode *n,
-                                 SymbolRef sym, ExprEngine& Eng)
-: CFRefReport(D, tf, log, n, sym, false) {
+CFRefLeakReport::CFRefLeakReport(CFRefBug &D, const LangOptions &LOpts,
+                                 bool GCEnabled, const SummaryLogTy &Log, 
+                                 ExplodedNode *n, SymbolRef sym,
+                                 ExprEngine &Eng)
+: CFRefReport(D, LOpts, GCEnabled, Log, n, sym, false) {
 
   // Most bug reports are cached at the location where they occurred.
   // With leaks, we want to unique them by the location where they were
@@ -2403,16 +2408,15 @@ CFRefLeakReport::CFRefLeakReport(CFRefBug &D, const CFRefCount &tf,
   SourceManager& SMgr = Eng.getContext().getSourceManager();
   unsigned AllocLine = SMgr.getExpansionLineNumber(AllocSite);
   os << "Potential leak ";
-  if (tf.isGCEnabled()) {
+  if (GCEnabled)
     os << "(when using garbage collection) ";
-  }
   os << "of an object allocated on line " << AllocLine;
 
   // FIXME: AllocBinding doesn't get populated for RegionStore yet.
   if (AllocBinding)
     os << " and stored into '" << AllocBinding->getString() << '\'';
 
-  addVisitor(new CFRefLeakReportVisitor(sym, tf.isGCEnabled(), log));
+  addVisitor(new CFRefLeakReportVisitor(sym, GCEnabled, Log));
 }
 
 //===----------------------------------------------------------------------===//
@@ -3279,8 +3283,7 @@ void RetainReleaseChecker::processNonLeakError(const ProgramState *St,
   if (!N)
     return;
 
-  // FIXME: This goes away once the these bug types move to the checker,
-  // and CFRefReport no longer depends on CFRefCount.
+  // FIXME: This goes away once these bug types move to the checker.
   CFRefCount &TF = static_cast<CFRefCount&>(C.getEngine().getTF());
 
   CFRefBug *BT;
@@ -3302,7 +3305,8 @@ void RetainReleaseChecker::processNonLeakError(const ProgramState *St,
       break;
   }
 
-  CFRefReport *report = new CFRefReport(*BT, TF, SummaryLog, N, Sym);
+  CFRefReport *report = new CFRefReport(*BT, C.getASTContext().getLangOptions(),
+                                        isGCEnabled(), SummaryLog, N, Sym);
   report->addRange(ErrorRange);
   C.EmitReport(report);
 }
@@ -3488,8 +3492,7 @@ void RetainReleaseChecker::checkReturnWithRetEffect(const ReturnStmt *S,
                                                     RetEffect RE, RefVal X,
                                                     SymbolRef Sym,
                                               const ProgramState *state) const {
-  // FIXME: This goes away once the these bug types move to the checker,
-  // and CFRefReport no longer depends on CFRefCount.
+  // FIXME: This goes away once these bug types move to the checker.
   CFRefCount &TF = static_cast<CFRefCount&>(C.getEngine().getTF());
 
   // Any leaks or other errors?
@@ -3523,8 +3526,10 @@ void RetainReleaseChecker::checkReturnWithRetEffect(const ReturnStmt *S,
                                                &ReturnOwnLeakTag);
         if (N) {
           CFRefReport *report =
-            new CFRefLeakReport(*static_cast<CFRefBug*>(TF.leakAtReturn), TF,
-                                SummaryLog, N, Sym, C.getEngine());
+            new CFRefLeakReport(*static_cast<CFRefBug*>(TF.leakAtReturn),
+                                C.getASTContext().getLangOptions(),
+                                isGCEnabled(), SummaryLog, N, Sym, 
+                                C.getEngine());
           C.EmitReport(report);
         }
       }
@@ -3545,7 +3550,8 @@ void RetainReleaseChecker::checkReturnWithRetEffect(const ReturnStmt *S,
       if (N) {
         CFRefReport *report =
             new CFRefReport(*static_cast<CFRefBug*>(TF.returnNotOwnedForOwned),
-                            TF, SummaryLog, N, Sym);
+                            C.getASTContext().getLangOptions(), isGCEnabled(),
+                            SummaryLog, N, Sym);
         C.EmitReport(report);
       }
     }
@@ -3562,8 +3568,7 @@ RetainReleaseChecker::handleAutoreleaseCounts(const ProgramState *state,
                                               ExplodedNode *Pred,
                                               ExprEngine &Eng, SymbolRef Sym,
                                               RefVal V) const {
-  // FIXME: This goes away once the these bug types move to the checker,
-  // and CFRefReport no longer depends on CFRefCount.
+  // FIXME: This goes away once these bug types move to the checker.
   CFRefCount &TF = static_cast<CFRefCount&>(Eng.getTF());
 
   unsigned ACnt = V.getAutoreleaseCount();
@@ -3613,9 +3618,10 @@ RetainReleaseChecker::handleAutoreleaseCounts(const ProgramState *state,
       os << V.getAutoreleaseCount() << " times ";
     os << "but the object has a +" << V.getCount() << " retain count";
 
+    const LangOptions &LOpts = Eng.getContext().getLangOptions();
     CFRefReport *report =
-      new CFRefReport(*static_cast<CFRefBug*>(TF.overAutorelease),
-                      TF, SummaryLog, N, Sym, os.str());
+      new CFRefReport(*static_cast<CFRefBug*>(TF.overAutorelease), LOpts,
+                      /* GCEnabled = */ false, SummaryLog, N, Sym, os.str());
     Eng.getBugReporter().EmitReport(report);
   }
 
@@ -3656,14 +3662,15 @@ RetainReleaseChecker::processLeaks(const ProgramState *state,
     for (SmallVectorImpl<SymbolRef>::iterator
          I = Leaked.begin(), E = Leaked.end(); I != E; ++I) {
 
-      // FIXME: This goes away once the these bug types move to the checker,
-      // and CFRefReport no longer depends on CFRefCount.
+      // FIXME: This goes away once these bug types move to the checker.
       CFRefCount &TF = static_cast<CFRefCount&>(Eng.getTF());
       CFRefBug *BT = static_cast<CFRefBug*>(Pred ? TF.leakWithinFunction
                                                  : TF.leakAtReturn);
       assert(BT && "BugType not initialized.");
-      CFRefLeakReport *report = new CFRefLeakReport(*BT, TF, SummaryLog, N,
-                                                    *I, Eng);
+
+      const LangOptions &LOpts = Eng.getContext().getLangOptions();
+      CFRefLeakReport *report = new CFRefLeakReport(*BT, LOpts, isGCEnabled(), 
+                                                    SummaryLog, N, *I, Eng);
       Eng.getBugReporter().EmitReport(report);
     }
   }
