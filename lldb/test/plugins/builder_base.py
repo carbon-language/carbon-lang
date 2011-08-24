@@ -21,7 +21,7 @@ def getArchitecture():
 
 def getCompiler():
     """Returns the compiler in effect the test suite is running with."""
-    return os.environ["CC"] if "CC" in os.environ else ""
+    return os.environ["CC"] if "CC" in os.environ else "clang"
 
 def getArchSpec(architecture):
     """
