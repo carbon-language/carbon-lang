@@ -2619,9 +2619,9 @@ void CFRefCount::evalObjCMessage(ExplodedNodeSet &Dst,
 
 namespace {
 class RetainReleaseChecker
-  : public Checker< check::ASTCodeBody,
-                    check::Bind,
+  : public Checker< check::Bind,
                     check::DeadSymbols,
+                    check::EndAnalysis,
                     check::EndPath,
                     check::PostStmt<BlockExpr>,
                     check::PostStmt<CastExpr>,
@@ -2637,37 +2637,52 @@ class RetainReleaseChecker
   // This map is only used to ensure proper deletion of any allocated tags.
   mutable SymbolTagMap DeadSymbolTags;
 
-  mutable SummaryLogTy SummaryLog;
   mutable ARCounts::Factory ARCountFactory;
 
+  mutable SummaryLogTy SummaryLog;
+  mutable bool ShouldResetSummaryLog;
+
 public:  
+  RetainReleaseChecker() : ShouldResetSummaryLog(false) {}
 
   virtual ~RetainReleaseChecker() {
     DeleteContainerSeconds(DeadSymbolTags);
   }
 
-  void checkASTCodeBody(const Decl *D, AnalysisManager &mgr,
-                        BugReporter &BR) const {
-    // FIXME: This is a horrible hack which makes the checker stateful --
-    // exactly what being const was supposed to prevent, or at least discourage.
-    // Why? Because a checker's lifetime is tied to a translation unit, but an
-    // ExplodedGraph's lifetime is just a code body. Once in a blue moon, a new
-    // ExplodedNode will have the same address as an old one with an associated
-    // summary, and the bug report visitor will get very confused.
-    // (To make things worse, the summary lifetime is currently also tied to a
-    // code body, so we get a crash instead of incorrect results.)
-    // This fix wipes the summary log at the start of a code body.
+  void checkEndAnalysis(ExplodedGraph &G, BugReporter &BR,
+                        ExprEngine &Eng) const {
+    // FIXME: This is a hack to make sure the summary log gets cleared between
+    // analyses of different code bodies.
+    //
+    // Why is this necessary? Because a checker's lifetime is tied to a
+    // translation unit, but an ExplodedGraph's lifetime is just a code body.
+    // Once in a blue moon, a new ExplodedNode will have the same address as an
+    // old one with an associated summary, and the bug report visitor gets very
+    // confused. (To make things worse, the summary lifetime is currently also
+    // tied to a code body, so we get a crash instead of incorrect results.)
     //
     // Why is this a bad solution? Because if the lifetime of the ExplodedGraph
     // changes, things will start going wrong again. Really the lifetime of this
     // log needs to be tied to either the specific nodes in it or the entire
     // ExplodedGraph, not to a specific part of the code being analyzed.
     //
-    // Oh, and it has to happen at the BEGINNING of the code body instead of the
-    // end because the summary log has to be live when emitting bug reports.
+    // (Also, having stateful local data means that the same checker can't be
+    // used from multiple threads, but a lot of checkers have incorrect
+    // assumptions about that anyway. So that wasn't a priority at the time of
+    // this fix.)
     //
-    // This took forever to track down. A better fix is (hopefully) forthcoming.
-    SummaryLog.clear();
+    // This happens at the end of analysis, but bug reports are emitted /after/
+    // this point. So we can't just clear the summary log now. Instead, we mark
+    // that the next time we access the summary log, it should be cleared.
+
+    // If we never reset the summary log during /this/ code body analysis,
+    // there were no new summaries. There might still have been summaries from
+    // the /last/ analysis, so clear them out to make sure the bug report
+    // visitors don't get confused.
+    if (ShouldResetSummaryLog)
+      SummaryLog.clear();
+
+    ShouldResetSummaryLog = !SummaryLog.empty();
   }
 
   void checkBind(SVal loc, SVal val, CheckerContext &C) const;
@@ -3088,9 +3103,15 @@ void RetainReleaseChecker::checkSummary(const RetainSummary &Summ,
     NewNode = C.generateNode(state);
   }
 
-  // Annotate the edge with summary we used.
-  if (NewNode)
+  // Annotate the node with summary we used.
+  if (NewNode) {
+    // FIXME: This is ugly. See checkEndAnalysis for why it's necessary.
+    if (ShouldResetSummaryLog) {
+      SummaryLog.clear();
+      ShouldResetSummaryLog = false;
+    }
     SummaryLog[NewNode] = &Summ;
+  }
 }
 
 
