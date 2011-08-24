@@ -103,7 +103,8 @@ Value *SCEVExpander::InsertNoopCastOfTo(Value *V, Type *Ty) {
     while ((isa<BitCastInst>(IP) &&
             isa<Argument>(cast<BitCastInst>(IP)->getOperand(0)) &&
             cast<BitCastInst>(IP)->getOperand(0) != A) ||
-           isa<DbgInfoIntrinsic>(IP))
+           isa<DbgInfoIntrinsic>(IP) ||
+           isa<LandingPadInst>(IP))
       ++IP;
     return ReuseOrCreateCast(A, Ty, Op, IP);
   }
@@ -113,7 +114,9 @@ Value *SCEVExpander::InsertNoopCastOfTo(Value *V, Type *Ty) {
   BasicBlock::iterator IP = I; ++IP;
   if (InvokeInst *II = dyn_cast<InvokeInst>(I))
     IP = II->getNormalDest()->begin();
-  while (isa<PHINode>(IP) || isa<DbgInfoIntrinsic>(IP)) ++IP;
+  while (isa<PHINode>(IP) || isa<DbgInfoIntrinsic>(IP) ||
+         isa<LandingPadInst>(IP))
+    ++IP;
   return ReuseOrCreateCast(I, Ty, Op, IP);
 }
 
@@ -1109,7 +1112,8 @@ Value *SCEVExpander::visitAddRecExpr(const SCEVAddRecExpr *S) {
     BasicBlock::iterator SaveInsertPt = Builder.GetInsertPoint();
     BasicBlock::iterator NewInsertPt =
       llvm::next(BasicBlock::iterator(cast<Instruction>(V)));
-    while (isa<PHINode>(NewInsertPt) || isa<DbgInfoIntrinsic>(NewInsertPt))
+    while (isa<PHINode>(NewInsertPt) || isa<DbgInfoIntrinsic>(NewInsertPt) ||
+           isa<LandingPadInst>(NewInsertPt))
       ++NewInsertPt;
     V = expandCodeFor(SE.getTruncateExpr(SE.getUnknown(V), Ty), 0,
                       NewInsertPt);

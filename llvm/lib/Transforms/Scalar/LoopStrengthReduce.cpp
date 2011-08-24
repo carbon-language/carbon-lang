@@ -3423,6 +3423,9 @@ LSRInstance::AdjustInsertPositionForExpand(BasicBlock::iterator IP,
   // Don't insert instructions before PHI nodes.
   while (isa<PHINode>(IP)) ++IP;
 
+  // Ignore landingpad instructions.
+  while (isa<LandingPadInst>(IP)) ++IP;
+
   // Ignore debug intrinsics.
   while (isa<DbgInfoIntrinsic>(IP)) ++IP;
 
