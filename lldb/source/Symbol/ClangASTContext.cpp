@@ -1068,7 +1068,7 @@ ClangASTContext::CreateRecordType (const char *name, int kind, DeclContext *decl
         decl_ctx = ast->getTranslationUnitDecl();
 
 
-    if (language == eLanguageTypeObjC)
+    if (language == eLanguageTypeObjC || language == eLanguageTypeObjC_plus_plus)
     {
         bool isForwardDecl = true;
         bool isInternal = false;
