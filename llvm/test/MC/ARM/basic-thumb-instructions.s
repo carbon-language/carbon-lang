@@ -45,11 +45,29 @@ _func:
 
 
 @------------------------------------------------------------------------------
-@ FIXME: ADD (SP plus immediate)
+@ ADD (SP plus immediate)
 @------------------------------------------------------------------------------
+        add sp, #4
+        add sp, #508
+        add sp, sp, #4
+        add r2, sp, #8
+        add r2, sp, #1020
+
+@ CHECK: add	sp, #4                  @ encoding: [0x01,0xb0]
+@ CHECK: add	sp, #508                @ encoding: [0x7f,0xb0]
+@ CHECK: add	sp, #4                  @ encoding: [0x01,0xb0]
+@ CHECK: add	r2, sp, #8              @ encoding: [0x02,0xaa]
+@ CHECK: add	r2, sp, #1020           @ encoding: [0xff,0xaa]
+
+
 @------------------------------------------------------------------------------
-@ FIXME: ADD (SP plus register)
+@ ADD (SP plus register)
 @------------------------------------------------------------------------------
+        add sp, r3
+        add r2, sp, r2
+
+@ CHECK: add	sp, r3                  @ encoding: [0x9d,0x44]
+@ CHECK: add	r2, sp, r2              @ encoding: [0x6a,0x44]
 
 
 @------------------------------------------------------------------------------

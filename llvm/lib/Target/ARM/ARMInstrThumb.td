@@ -78,8 +78,17 @@ def t_adrlabel : Operand<i32> {
 }
 
 // Scaled 4 immediate.
-def t_imm_s4 : Operand<i32> {
+def t_imm0_1020s4_asmoperand: AsmOperandClass { let Name = "Imm0_1020s4"; }
+def t_imm0_1020s4 : Operand<i32> {
   let PrintMethod = "printThumbS4ImmOperand";
+  let ParserMatchClass = t_imm0_1020s4_asmoperand;
+  let OperandType = "OPERAND_IMMEDIATE";
+}
+
+def t_imm0_508s4_asmoperand: AsmOperandClass { let Name = "Imm0_508s4"; }
+def t_imm0_508s4 : Operand<i32> {
+  let PrintMethod = "printThumbS4ImmOperand";
+  let ParserMatchClass = t_imm0_508s4_asmoperand;
   let OperandType = "OPERAND_IMMEDIATE";
 }
 
@@ -305,35 +314,39 @@ def tPICADD : TIt<(outs GPR:$dst), (ins GPR:$lhs, pclabel:$cp), IIC_iALUr, "",
 // This is rematerializable, which is particularly useful for taking the
 // address of locals.
 let isReMaterializable = 1 in
-def tADDrSPi : T1pI<(outs tGPR:$dst), (ins GPRsp:$sp, t_imm_s4:$rhs), IIC_iALUi,
-                   "add", "\t$dst, $sp, $rhs", []>,
+def tADDrSPi : T1pI<(outs tGPR:$dst), (ins GPRsp:$sp, t_imm0_1020s4:$imm),
+                    IIC_iALUi, "add", "\t$dst, $sp, $imm", []>,
                T1Encoding<{1,0,1,0,1,?}> {
   // A6.2 & A8.6.8
   bits<3> dst;
-  bits<8> rhs;
+  bits<8> imm;
   let Inst{10-8} = dst;
-  let Inst{7-0}  = rhs;
+  let Inst{7-0}  = imm;
   let DecoderMethod = "DecodeThumbAddSpecialReg";
 }
 
 // ADD sp, sp, #<imm7>
-def tADDspi : T1pIt<(outs GPRsp:$Rdn), (ins GPRsp:$Rn, t_imm_s4:$rhs),
-                     IIC_iALUi, "add", "\t$Rdn, $rhs", []>,
+def tADDspi : T1pIt<(outs GPRsp:$Rdn), (ins GPRsp:$Rn, t_imm0_508s4:$imm),
+                     IIC_iALUi, "add", "\t$Rdn, $imm", []>,
               T1Misc<{0,0,0,0,0,?,?}> {
   // A6.2.5 & A8.6.8
-  bits<7> rhs;
-  let Inst{6-0} = rhs;
+  bits<7> imm;
+  let Inst{6-0} = imm;
   let DecoderMethod = "DecodeThumbAddSPImm";
 }
 
+// Can optionally specify SP as a three operand instruction.
+def : tInstAlias<"add${p} sp, sp, $imm",
+                 (tADDspi SP, t_imm0_508s4:$imm, pred:$p)>;
+
 // SUB sp, sp, #<imm7>
 // FIXME: The encoding and the ASM string don't match up.
-def tSUBspi : T1pIt<(outs GPRsp:$Rdn), (ins GPRsp:$Rn, t_imm_s4:$rhs),
-                    IIC_iALUi, "sub", "\t$Rdn, $rhs", []>,
+def tSUBspi : T1pIt<(outs GPRsp:$Rdn), (ins GPRsp:$Rn, t_imm0_508s4:$imm),
+                    IIC_iALUi, "sub", "\t$Rdn, $imm", []>,
               T1Misc<{0,0,0,0,1,?,?}> {
   // A6.2.5 & A8.6.214
-  bits<7> rhs;
-  let Inst{6-0} = rhs;
+  bits<7> imm;
+  let Inst{6-0} = imm;
   let DecoderMethod = "DecodeThumbAddSPImm";
 }
 
@@ -350,13 +363,13 @@ def tADDrSP : T1pIt<(outs GPR:$Rdn), (ins GPR:$Rn, GPRsp:$sp), IIC_iALUr,
 }
 
 // ADD sp, <Rm>
-def tADDspr : T1pIt<(outs GPRsp:$Rdn), (ins GPRsp:$Rn, GPR:$rhs), IIC_iALUr,
-                  "add", "\t$Rdn, $rhs", []>,
+def tADDspr : T1pIt<(outs GPRsp:$Rdn), (ins GPRsp:$Rn, GPR:$Rm), IIC_iALUr,
+                  "add", "\t$Rdn, $Rm", []>,
               T1Special<{0,0,?,?}> {
   // A8.6.9 Encoding T2
-  bits<4> Rdn;
+  bits<4> Rm;
   let Inst{7} = 1;
-  let Inst{6-3} = Rdn;
+  let Inst{6-3} = Rm;
   let Inst{2-0} = 0b101;
   let DecoderMethod = "DecodeThumbAddSPReg";
 }

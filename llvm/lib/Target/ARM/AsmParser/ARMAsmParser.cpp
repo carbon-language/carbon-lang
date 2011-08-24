@@ -412,6 +412,22 @@ public:
   bool isCondCode() const { return Kind == CondCode; }
   bool isCCOut() const { return Kind == CCOut; }
   bool isImm() const { return Kind == Immediate; }
+  bool isImm0_1020s4() const {
+    if (Kind != Immediate)
+      return false;
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    if (!CE) return false;
+    int64_t Value = CE->getValue();
+    return ((Value & 3) == 0) && Value >= 0 && Value <= 1020;
+  }
+  bool isImm0_508s4() const {
+    if (Kind != Immediate)
+      return false;
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    if (!CE) return false;
+    int64_t Value = CE->getValue();
+    return ((Value & 3) == 0) && Value >= 0 && Value <= 508;
+  }
   bool isImm0_255() const {
     if (Kind != Immediate)
       return false;
@@ -789,6 +805,22 @@ public:
   void addImmOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     addExpr(Inst, getImm());
+  }
+
+  void addImm0_1020s4Operands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    // The immediate is scaled by four in the encoding and is stored
+    // in the MCInst as such. Lop off the low two bits here.
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    Inst.addOperand(MCOperand::CreateImm(CE->getValue() / 4));
+  }
+
+  void addImm0_508s4Operands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    // The immediate is scaled by four in the encoding and is stored
+    // in the MCInst as such. Lop off the low two bits here.
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    Inst.addOperand(MCOperand::CreateImm(CE->getValue() / 4));
   }
 
   void addImm0_255Operands(MCInst &Inst, unsigned N) const {
@@ -2881,6 +2913,21 @@ bool ARMAsmParser::shouldOmitCCOutOperand(StringRef Mnemonic,
   if (isThumb() && Mnemonic == "add" && Operands.size() == 5 &&
       static_cast<ARMOperand*>(Operands[3])->isReg() &&
       static_cast<ARMOperand*>(Operands[4])->isReg() &&
+      static_cast<ARMOperand*>(Operands[1])->getReg() == 0)
+    return true;
+  // Register-register 'add' for thumb does not have a cc_out operand
+  // when it's an ADD Rdm, SP, {Rdm|#imm} instruction.
+  if (isThumb() && Mnemonic == "add" && Operands.size() == 6 &&
+      static_cast<ARMOperand*>(Operands[3])->isReg() &&
+      static_cast<ARMOperand*>(Operands[4])->isReg() &&
+      static_cast<ARMOperand*>(Operands[4])->getReg() == ARM::SP &&
+      static_cast<ARMOperand*>(Operands[1])->getReg() == 0)
+    return true;
+  // Register-register 'add' for thumb does not have a cc_out operand
+  // when it's an ADD SP, #imm.
+  if (isThumb() && Mnemonic == "add" && Operands.size() == 5 &&
+      static_cast<ARMOperand*>(Operands[3])->isReg() &&
+      static_cast<ARMOperand*>(Operands[3])->getReg() == ARM::SP &&
       static_cast<ARMOperand*>(Operands[1])->getReg() == 0)
     return true;
 

@@ -118,3 +118,22 @@ error: invalid operand for instruction
 @ CHECK-ERRORS: error: instruction requires a CPU feature not currently enabled
 @ CHECK-ERRORS:         svc #256
 @ CHECK-ERRORS:         ^
+
+
+@ Out of range immediate for ADD SP instructions
+        add sp, #-1
+        add sp, #3
+        add sp, sp, #512
+        add r2, sp, #1024
+@ CHECK-ERRORS: error: invalid operand for instruction
+@ CHECK-ERRORS:         add sp, #-1
+@ CHECK-ERRORS:                 ^
+@ CHECK-ERRORS: error: invalid operand for instruction
+@ CHECK-ERRORS:         add sp, #3
+@ CHECK-ERRORS:                 ^
+@ CHECK-ERRORS: error: invalid operand for instruction
+@ CHECK-ERRORS:         add sp, sp, #512
+@ CHECK-ERRORS:                     ^
+@ CHECK-ERRORS: error: invalid operand for instruction
+@ CHECK-ERRORS:         add r2, sp, #1024
+@ CHECK-ERRORS:                     ^
