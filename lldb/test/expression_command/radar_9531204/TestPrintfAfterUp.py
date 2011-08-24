@@ -12,7 +12,6 @@ class Radar9531204TestCase(TestBase):
     mydir = os.path.join("expression_command", "radar_9531204")
 
     # rdar://problem/9531204
-    @unittest2.expectedFailure
     def test_expr_commands(self):
         """The evaluating printf(...) after break stop and then up a stack frame."""
         self.buildDefault()
