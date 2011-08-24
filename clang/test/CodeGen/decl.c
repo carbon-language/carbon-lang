@@ -1,11 +1,11 @@
 // RUN: %clang_cc1 -w -emit-llvm < %s | FileCheck %s
 
 // CHECK: @test1.x = internal constant [12 x i32] [i32 1
-// CHECK: @test2.x = internal unnamed_addr constant [13 x i32] [i32 1,
+// CHECK: @test2.x = private unnamed_addr constant [13 x i32] [i32 1,
 // CHECK: @test5w = global { i32, [4 x i8] } { i32 2, [4 x i8] undef }
 // CHECK: @test5y = global { double } { double 7.300000e+0{{[0]*}}1 }
 
-// CHECK: @test6.x = internal unnamed_addr constant %struct.SelectDest { i8 1, i8 2, i32 3, i32 0 }
+// CHECK: @test6.x = private unnamed_addr constant %struct.SelectDest { i8 1, i8 2, i32 3, i32 0 }
 
 // CHECK: @test7 = global [2 x %struct.test7s] [%struct.test7s { i32 1, i32 2 }, %struct.test7s { i32 4, i32 0 }]
 
@@ -24,7 +24,7 @@ void test2() {
   // This should codegen as a "@test2.x" global + memcpy.
   int x[] = { 1, 2, 3, 4, 6, 8, 9, 10, 123, 231, 123,23, 24 };
   foo(x);
-  
+
   // CHECK: @test2()
   // CHECK: %x = alloca [13 x i32]
   // CHECK: call void @llvm.memcpy
@@ -36,7 +36,7 @@ void test3() {
   // This should codegen as a memset.
   int x[100] = { 0 };
   foo(x);
-  
+
   // CHECK: @test3()
   // CHECK: %x = alloca [100 x i32]
   // CHECK: call void @llvm.memset

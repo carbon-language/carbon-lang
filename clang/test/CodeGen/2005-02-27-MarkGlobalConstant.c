@@ -1,5 +1,4 @@
 // RUN: %clang_cc1  %s -emit-llvm -o - | FileCheck %s
-// XFAIL: *
 // PR10414
 
 // The synthetic global made by the CFE for big initializer should be marked

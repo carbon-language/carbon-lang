@@ -982,7 +982,7 @@ void CodeGenFunction::EmitAutoVarInit(const AutoVarEmission &emission) {
     std::string Name = GetStaticDeclName(*this, D, ".");
     llvm::GlobalVariable *GV =
       new llvm::GlobalVariable(CGM.getModule(), constant->getType(), true,
-                               llvm::GlobalValue::InternalLinkage,
+                               llvm::GlobalValue::PrivateLinkage,
                                constant, Name, 0, false, 0);
     GV->setAlignment(alignment.getQuantity());
     GV->setUnnamedAddr(true);

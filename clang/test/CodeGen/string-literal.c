@@ -5,13 +5,13 @@
 #include <stddef.h>
 
 int main() {
-  // CHECK-C: internal unnamed_addr constant [10 x i8] c"abc\00\00\00\00\00\00\00", align 1
-  // CHECK-CPP0X: internal unnamed_addr constant [10 x i8] c"abc\00\00\00\00\00\00\00", align 1
+  // CHECK-C: private unnamed_addr constant [10 x i8] c"abc\00\00\00\00\00\00\00", align 1
+  // CHECK-CPP0X: private unnamed_addr constant [10 x i8] c"abc\00\00\00\00\00\00\00", align 1
   char a[10] = "abc";
 
   // This should convert to utf8.
-  // CHECK-C: internal unnamed_addr constant [10 x i8] c"\E1\84\A0\C8\A0\F4\82\80\B0\00", align 1
-  // CHECK-CPP0X: internal unnamed_addr constant [10 x i8] c"\E1\84\A0\C8\A0\F4\82\80\B0\00", align 1
+  // CHECK-C: private unnamed_addr constant [10 x i8] c"\E1\84\A0\C8\A0\F4\82\80\B0\00", align 1
+  // CHECK-CPP0X: private unnamed_addr constant [10 x i8] c"\E1\84\A0\C8\A0\F4\82\80\B0\00", align 1
   char b[10] = "\u1120\u0220\U00102030";
 
   // CHECK-C: private unnamed_addr constant [12 x i8] c"A\00\00\00B\00\00\00\00\00\00\00", align 4
