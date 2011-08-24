@@ -507,6 +507,7 @@ Thumb2SizeReduce::ReduceSpecial(MachineBasicBlock &MBB, MachineInstr *MI,
       .addOperand(MI->getOperand(0))
       .addOperand(MI->getOperand(1))
       .addImm(Imm / 4); // The tADDrSPi has an implied scale by four.
+    AddDefaultPred(MIB);
 
     // Transfer MI flags.
     MIB.setMIFlags(MI->getFlags());

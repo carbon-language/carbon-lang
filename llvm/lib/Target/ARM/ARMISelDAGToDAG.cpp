@@ -2338,8 +2338,9 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
     int FI = cast<FrameIndexSDNode>(N)->getIndex();
     SDValue TFI = CurDAG->getTargetFrameIndex(FI, TLI.getPointerTy());
     if (Subtarget->isThumb1Only()) {
-      return CurDAG->SelectNodeTo(N, ARM::tADDrSPi, MVT::i32, TFI,
-                                  CurDAG->getTargetConstant(0, MVT::i32));
+      SDValue Ops[] = { TFI, CurDAG->getTargetConstant(0, MVT::i32),
+                        getAL(CurDAG), CurDAG->getRegister(0, MVT::i32) };
+      return CurDAG->SelectNodeTo(N, ARM::tADDrSPi, MVT::i32, Ops, 4);
     } else {
       unsigned Opc = ((Subtarget->isThumb() && Subtarget->hasThumb2()) ?
                       ARM::t2ADDri : ARM::ADDri);

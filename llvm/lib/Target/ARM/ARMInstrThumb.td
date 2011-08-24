@@ -305,8 +305,8 @@ def tPICADD : TIt<(outs GPR:$dst), (ins GPR:$lhs, pclabel:$cp), IIC_iALUr, "",
 // This is rematerializable, which is particularly useful for taking the
 // address of locals.
 let isReMaterializable = 1 in
-def tADDrSPi : T1I<(outs tGPR:$dst), (ins GPR:$sp, t_imm_s4:$rhs), IIC_iALUi,
-                   "add\t$dst, $sp, $rhs", []>,
+def tADDrSPi : T1pI<(outs tGPR:$dst), (ins GPRsp:$sp, t_imm_s4:$rhs), IIC_iALUi,
+                   "add", "\t$dst, $sp, $rhs", []>,
                T1Encoding<{1,0,1,0,1,?}> {
   // A6.2 & A8.6.8
   bits<3> dst;
@@ -317,8 +317,8 @@ def tADDrSPi : T1I<(outs tGPR:$dst), (ins GPR:$sp, t_imm_s4:$rhs), IIC_iALUi,
 }
 
 // ADD sp, sp, #<imm7>
-def tADDspi : TIt<(outs GPR:$dst), (ins GPR:$lhs, t_imm_s4:$rhs), IIC_iALUi,
-                  "add\t$dst, $rhs", []>,
+def tADDspi : T1pIt<(outs GPRsp:$Rdn), (ins GPRsp:$Rn, t_imm_s4:$rhs),
+                     IIC_iALUi, "add", "\t$Rdn, $rhs", []>,
               T1Misc<{0,0,0,0,0,?,?}> {
   // A6.2.5 & A8.6.8
   bits<7> rhs;
@@ -328,8 +328,8 @@ def tADDspi : TIt<(outs GPR:$dst), (ins GPR:$lhs, t_imm_s4:$rhs), IIC_iALUi,
 
 // SUB sp, sp, #<imm7>
 // FIXME: The encoding and the ASM string don't match up.
-def tSUBspi : TIt<(outs GPR:$dst), (ins GPR:$lhs, t_imm_s4:$rhs), IIC_iALUi,
-                  "sub\t$dst, $rhs", []>,
+def tSUBspi : T1pIt<(outs GPRsp:$Rdn), (ins GPRsp:$Rn, t_imm_s4:$rhs),
+                    IIC_iALUi, "sub", "\t$Rdn, $rhs", []>,
               T1Misc<{0,0,0,0,1,?,?}> {
   // A6.2.5 & A8.6.214
   bits<7> rhs;
@@ -338,25 +338,25 @@ def tSUBspi : TIt<(outs GPR:$dst), (ins GPR:$lhs, t_imm_s4:$rhs), IIC_iALUi,
 }
 
 // ADD <Rm>, sp
-def tADDrSP : TIt<(outs GPR:$dst), (ins GPR:$lhs, GPR:$rhs), IIC_iALUr,
-                  "add\t$dst, $rhs", []>,
+def tADDrSP : T1pIt<(outs GPR:$Rdn), (ins GPR:$Rn, GPRsp:$rhs), IIC_iALUr,
+                  "add", "\t$Rdn, $rhs", []>,
               T1Special<{0,0,?,?}> {
   // A8.6.9 Encoding T1
-  bits<4> dst;
-  let Inst{7}   = dst{3};
+  bits<4> Rdn;
+  let Inst{7}   = Rdn{3};
   let Inst{6-3} = 0b1101;
-  let Inst{2-0} = dst{2-0};
+  let Inst{2-0} = Rdn{2-0};
   let DecoderMethod = "DecodeThumbAddSPReg";
 }
 
 // ADD sp, <Rm>
-def tADDspr : TIt<(outs GPR:$dst), (ins GPR:$lhs, GPR:$rhs), IIC_iALUr,
-                  "add\t$dst, $rhs", []>,
+def tADDspr : T1pIt<(outs GPRsp:$Rdn), (ins GPRsp:$Rn, GPR:$rhs), IIC_iALUr,
+                  "add", "\t$Rdn, $rhs", []>,
               T1Special<{0,0,?,?}> {
   // A8.6.9 Encoding T2
-  bits<4> dst;
+  bits<4> Rdn;
   let Inst{7} = 1;
-  let Inst{6-3} = dst;
+  let Inst{6-3} = Rdn;
   let Inst{2-0} = 0b101;
   let DecoderMethod = "DecodeThumbAddSPReg";
 }

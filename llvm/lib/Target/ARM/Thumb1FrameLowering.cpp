@@ -133,9 +133,9 @@ void Thumb1FrameLowering::emitPrologue(MachineFunction &MF) const {
 
   // Adjust FP so it point to the stack slot that contains the previous FP.
   if (hasFP(MF)) {
-    BuildMI(MBB, MBBI, dl, TII.get(ARM::tADDrSPi), FramePtr)
+    AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(ARM::tADDrSPi), FramePtr)
       .addFrameIndex(FramePtrSpillFI).addImm(0)
-      .setMIFlags(MachineInstr::FrameSetup);
+      .setMIFlags(MachineInstr::FrameSetup));
     if (NumBytes > 508)
       // If offset is > 508 then sp cannot be adjusted in a single instruction,
       // try restoring from fp instead.

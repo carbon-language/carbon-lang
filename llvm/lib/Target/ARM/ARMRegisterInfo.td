@@ -225,6 +225,13 @@ def GPRnopc : RegisterClass<"ARM", [i32], 32, (sub GPR, PC)> {
   }];
 }
 
+// GPRsp - Only the SP is legal. Used by Thumb1 instructions that want the
+// implied SP argument list.
+// FIXME: It would be better to not use this at all and refactor the
+// instructions to not have SP an an explicit argument. That makes
+// frame index resolution a bit trickier, though.
+def GPRsp : RegisterClass<"ARM", [i32], 32, (add SP)>;
+
 // restricted GPR register class. Many Thumb2 instructions allow the full
 // register range for operands, but have undefined behaviours when PC
 // or SP (R13 or R15) are used. The ARM ISA refers to these operands
