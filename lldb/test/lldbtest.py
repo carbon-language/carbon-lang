@@ -777,11 +777,13 @@ class Base(unittest2.TestCase):
         self.dumpSessionInfo()."""
         arch = self.getArchitecture()
         comp = self.getCompiler()
-        if not arch and not comp:
-            return ""
+        if arch:
+            option_str = "-A " + arch
         else:
-            return "%s %s" % ("-A "+arch if arch else "",
-                              "-C "+comp if comp else "")
+            option_str = ""
+        if comp:
+            option_str += "-C " + comp
+        return option_str
 
     # ==================================================
     # Build methods supported through a plugin interface
