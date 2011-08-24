@@ -3584,7 +3584,7 @@ const ProgramState *
 RetainReleaseChecker::handleSymbolDeath(const ProgramState *state,
                                         SymbolRef sid, RefVal V,
                                     SmallVectorImpl<SymbolRef> &Leaked) const {
-  bool hasLeak;
+  bool hasLeak = false;
   if (V.isOwned())
     hasLeak = true;
   else if (V.isNotOwned() || V.isReturnedOwned())
