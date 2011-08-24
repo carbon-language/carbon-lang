@@ -338,8 +338,8 @@ def tSUBspi : T1pIt<(outs GPRsp:$Rdn), (ins GPRsp:$Rn, t_imm_s4:$rhs),
 }
 
 // ADD <Rm>, sp
-def tADDrSP : T1pIt<(outs GPR:$Rdn), (ins GPR:$Rn, GPRsp:$rhs), IIC_iALUr,
-                  "add", "\t$Rdn, $rhs", []>,
+def tADDrSP : T1pIt<(outs GPR:$Rdn), (ins GPR:$Rn, GPRsp:$sp), IIC_iALUr,
+                  "add", "\t$Rdn, $sp, $Rn", []>,
               T1Special<{0,0,?,?}> {
   // A8.6.9 Encoding T1
   bits<4> Rdn;
