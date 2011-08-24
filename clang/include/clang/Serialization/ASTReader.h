@@ -171,6 +171,16 @@ enum ModuleKind {
   MK_MainFile  ///< File is a PCH file treated as the actual main file.
 };
 
+/// \brief Information about the contents of a DeclContext.
+struct DeclContextInfo {
+  DeclContextInfo() 
+    : NameLookupTableData(), LexicalDecls(), NumLexicalDecls() {}
+
+  void *NameLookupTableData; // an ASTDeclContextNameLookupTable.
+  const KindDeclIDPair *LexicalDecls;
+  unsigned NumLexicalDecls;
+};
+
 /// \brief Information about a module that has been loaded by the ASTReader.
 ///
 /// Each instance of the Module class corresponds to a single AST file, which 
@@ -386,6 +396,13 @@ public:
   /// \brief Offset of each C++ base specifier set within the bitstream,
   /// indexed by the C++ base specifier set ID (-1).
   const uint32_t *CXXBaseSpecifiersOffsets;
+
+  typedef llvm::DenseMap<const DeclContext *, DeclContextInfo>
+      DeclContextInfosMap;
+
+  /// \brief Information about the lexical and visible declarations
+  /// for each DeclContext.
+  DeclContextInfosMap DeclContextInfos;
 
   // === Types ===
   
@@ -659,20 +676,6 @@ private:
   /// \brief Declarations that have been replaced in a later file in the chain.
   DeclReplacementMap ReplacedDecls;
 
-  /// \brief Information about the contents of a DeclContext.
-  struct DeclContextInfo {
-    Module *F;
-    void *NameLookupTableData; // a ASTDeclContextNameLookupTable.
-    const serialization::KindDeclIDPair *LexicalDecls;
-    unsigned NumLexicalDecls;
-  };
-  // In a full chain, there could be multiple updates to every decl context,
-  // so this is a vector. However, typically a chain is only two elements long,
-  // with only one file containing updates, so there will be only one update
-  // per decl context.
-  typedef SmallVector<DeclContextInfo, 1> DeclContextInfos;
-  typedef llvm::DenseMap<const DeclContext *, DeclContextInfos>
-      DeclContextOffsetsMap;
   // Updates for visible decls can occur for other contexts than just the
   // TU, and when we read those update records, the actual context will not
   // be available yet (unless it's the TU), so have this pending map using the
@@ -680,10 +683,6 @@ private:
   typedef SmallVector<std::pair<void *, Module*>, 1> DeclContextVisibleUpdates;
   typedef llvm::DenseMap<serialization::DeclID, DeclContextVisibleUpdates>
       DeclContextVisibleUpdatesPending;
-
-  /// \brief Offsets of the lexical and visible declarations for each
-  /// DeclContext.
-  DeclContextOffsetsMap DeclContextOffsets;
 
   /// \brief Updates to the visible declarations of declaration contexts that
   /// haven't been loaded yet.
@@ -704,9 +703,10 @@ private:
   FirstLatestDeclIDMap FirstLatestDeclIDs;
 
   /// \brief Read the records that describe the contents of declcontexts.
-  bool ReadDeclContextStorage(llvm::BitstreamCursor &Cursor,
+  bool ReadDeclContextStorage(Module &M, 
+                              llvm::BitstreamCursor &Cursor,
                               const std::pair<uint64_t, uint64_t> &Offsets,
-                              DeclContextInfo &Info);
+                              serialization::DeclContextInfo &Info);
 
   /// \brief A vector containing identifiers that have already been
   /// loaded.

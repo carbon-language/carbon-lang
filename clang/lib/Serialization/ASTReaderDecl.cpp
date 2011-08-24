@@ -1698,17 +1698,13 @@ Decl *ASTReader::ReadDeclRecord(DeclID ID) {
   if (DeclContext *DC = dyn_cast<DeclContext>(D)) {
     std::pair<uint64_t, uint64_t> Offsets = Reader.VisitDeclContext(DC);
     if (Offsets.first || Offsets.second) {
-      DC->setHasExternalLexicalStorage(Offsets.first != 0);
-      DC->setHasExternalVisibleStorage(Offsets.second != 0);
-      DeclContextInfo Info;
-      Info.F = Loc.F;
-      if (ReadDeclContextStorage(DeclsCursor, Offsets, Info))
+      if (Offsets.first != 0)
+        DC->setHasExternalLexicalStorage(true);
+      if (Offsets.second != 0)
+        DC->setHasExternalVisibleStorage(true);
+      if (ReadDeclContextStorage(*Loc.F, DeclsCursor, Offsets, 
+                                 Loc.F->DeclContextInfos[DC]))
         return 0;
-      DeclContextInfos &Infos = DeclContextOffsets[DC];
-      // Reading the TU will happen after reading its lexical update blocks,
-      // so we need to make sure we insert in front. For all other contexts,
-      // the vector is empty here anyway, so there's no loss in efficiency.
-      Infos.insert(Infos.begin(), Info);
     }
 
     // Now add the pending visible updates for this decl context, if it has any.
@@ -1719,15 +1715,9 @@ Decl *ASTReader::ReadDeclRecord(DeclID ID) {
       // storage, even if the original stored version didn't.
       DC->setHasExternalVisibleStorage(true);
       DeclContextVisibleUpdates &U = I->second;
-      DeclContextInfos &Infos = DeclContextOffsets[DC];
-      DeclContextInfo Info;
-      Info.LexicalDecls = 0;
-      Info.NumLexicalDecls = 0;
       for (DeclContextVisibleUpdates::iterator UI = U.begin(), UE = U.end();
            UI != UE; ++UI) {
-        Info.NameLookupTableData = UI->first;
-        Info.F = UI->second;
-        Infos.push_back(Info);
+        UI->second->DeclContextInfos[DC].NameLookupTableData = UI->first;
       }
       PendingVisibleUpdates.erase(I);
     }

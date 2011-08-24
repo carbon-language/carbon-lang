@@ -918,7 +918,8 @@ public:
 typedef OnDiskChainedHashTable<ASTDeclContextNameLookupTrait>
   ASTDeclContextNameLookupTable;
 
-bool ASTReader::ReadDeclContextStorage(llvm::BitstreamCursor &Cursor,
+bool ASTReader::ReadDeclContextStorage(Module &M,
+                                       llvm::BitstreamCursor &Cursor,
                                    const std::pair<uint64_t, uint64_t> &Offsets,
                                        DeclContextInfo &Info) {
   SavedStreamPosition SavedPosition(Cursor);
@@ -938,9 +939,6 @@ bool ASTReader::ReadDeclContextStorage(llvm::BitstreamCursor &Cursor,
 
     Info.LexicalDecls = reinterpret_cast<const KindDeclIDPair*>(Blob);
     Info.NumLexicalDecls = BlobLen / sizeof(KindDeclIDPair);
-  } else {
-    Info.LexicalDecls = 0;
-    Info.NumLexicalDecls = 0;
   }
 
   // Now the lookup table.
@@ -960,9 +958,7 @@ bool ASTReader::ReadDeclContextStorage(llvm::BitstreamCursor &Cursor,
       = ASTDeclContextNameLookupTable::Create(
                     (const unsigned char *)Blob + Record[0],
                     (const unsigned char *)Blob,
-                    ASTDeclContextNameLookupTrait(*this, *Info.F));
-  } else {
-    Info.NameLookupTableData = 0;
+                    ASTDeclContextNameLookupTrait(*this, M));
   }
 
   return false;
@@ -2108,15 +2104,11 @@ ASTReader::ReadASTBlock(Module &F) {
     }
         
     case TU_UPDATE_LEXICAL: {
-      DeclContextInfo Info = {
-        &F,
-        /* No visible information */ 0,
-        reinterpret_cast<const KindDeclIDPair *>(BlobStart),
-        static_cast<unsigned int>(BlobLen / sizeof(KindDeclIDPair))
-      };
-
       DeclContext *TU = Context ? Context->getTranslationUnitDecl() : 0;
-      DeclContextOffsets[TU].push_back(Info);
+      DeclContextInfo &Info = F.DeclContextInfos[TU];
+      Info.LexicalDecls = reinterpret_cast<const KindDeclIDPair *>(BlobStart);
+      Info.NumLexicalDecls 
+        = static_cast<unsigned int>(BlobLen / sizeof(KindDeclIDPair));
       if (TU)
         TU->setHasExternalLexicalStorage(true);
 
@@ -2130,14 +2122,9 @@ ASTReader::ReadASTBlock(Module &F) {
                         (const unsigned char *)BlobStart + Record[Idx++],
                         (const unsigned char *)BlobStart,
                         ASTDeclContextNameLookupTrait(*this, F));
-      // FIXME: Complete hack to check for the TU
       if (ID == PREDEF_DECL_TRANSLATION_UNIT_ID && Context) { // Is it the TU?
-        DeclContextInfo Info = {
-          &F, Table, /* No lexical information */ 0, 0
-        };
-
         DeclContext *TU = Context->getTranslationUnitDecl();
-        DeclContextOffsets[TU].push_back(Info);
+        F.DeclContextInfos[TU].NameLookupTableData = Table;
         TU->setHasExternalVisibleStorage(true);
       } else
         PendingVisibleUpdates[ID].push_back(std::make_pair(Table, &F));
@@ -2954,16 +2941,19 @@ void ASTReader::InitializeContext(ASTContext &Ctx) {
   PP->getIdentifierTable().setExternalIdentifierLookup(this);
   PP->setExternalSource(this);
   
-  // If we have an update block for the TU waiting, we have to add it before
-  // deserializing the decl.
+  // If we have any update blocks for the TU waiting, we have to add
+  // them before we deserialize anything.
   TranslationUnitDecl *TU = Ctx.getTranslationUnitDecl();
-  DeclContextOffsetsMap::iterator DCU = DeclContextOffsets.find(0);
-  if (DCU != DeclContextOffsets.end()) {
-    // Insertion could invalidate map, so grab vector.
-    DeclContextInfos T;
-    T.swap(DCU->second);
-    DeclContextOffsets.erase(DCU);
-    DeclContextOffsets[TU].swap(T);
+  for (ModuleIterator M = ModuleMgr.begin(), MEnd = ModuleMgr.end(); 
+       M != MEnd; ++M) {
+    Module::DeclContextInfosMap::iterator DCU
+      = (*M)->DeclContextInfos.find(0);
+    if (DCU != (*M)->DeclContextInfos.end()) {
+      // Insertion could invalidate map, so grab value first.
+      DeclContextInfo Info = DCU->second;
+      (*M)->DeclContextInfos.erase(DCU);
+      (*M)->DeclContextInfos[TU] = Info;
+    }
   }
   
   // If there's a listener, notify them that we "read" the translation unit.
@@ -4277,24 +4267,26 @@ Stmt *ASTReader::GetExternalDeclStmt(uint64_t Offset) {
 ExternalLoadResult ASTReader::FindExternalLexicalDecls(const DeclContext *DC,
                                          bool (*isKindWeWant)(Decl::Kind),
                                          SmallVectorImpl<Decl*> &Decls) {
-  // There might be lexical decls in multiple parts of the chain, for the TU
-  // at least.
-  // DeclContextOffsets might reallocate as we load additional decls below,
-  // so make a copy of the vector.
-  DeclContextInfos Infos = DeclContextOffsets[DC];
-  for (DeclContextInfos::iterator I = Infos.begin(), E = Infos.end();
-       I != E; ++I) {
-    // IDs can be 0 if this context doesn't contain declarations.
-    if (!I->LexicalDecls)
+  // There might be lexical decls in multiple modules, for the TU at
+  // least.
+  // FIXME: We might want a faster way to zero
+  // FIXME: Going backwards through the chain does the right thing for
+  // chained PCH; for modules, it isn't clear what the right thing is.
+  for (ModuleReverseIterator M = ModuleMgr.rbegin(), MEnd = ModuleMgr.rend();
+       M != MEnd; ++M) {
+    Module::DeclContextInfosMap::iterator Info
+      = (*M)->DeclContextInfos.find(DC);
+    if (Info == (*M)->DeclContextInfos.end() || !Info->second.LexicalDecls)
       continue;
 
     // Load all of the declaration IDs
-    for (const KindDeclIDPair *ID = I->LexicalDecls,
-                              *IDE = ID + I->NumLexicalDecls; ID != IDE; ++ID) {
+    for (const KindDeclIDPair *ID = Info->second.LexicalDecls,
+                              *IDE = ID + Info->second.NumLexicalDecls; 
+         ID != IDE; ++ID) {
       if (isKindWeWant && !isKindWeWant((Decl::Kind)ID->first))
         continue;
       
-      Decl *D = GetLocalDecl(*I->F, ID->second);
+      Decl *D = GetLocalDecl(**M, ID->second);
       assert(D && "Null decl in lexical decls");
       Decls.push_back(D);
     }
@@ -4302,6 +4294,63 @@ ExternalLoadResult ASTReader::FindExternalLexicalDecls(const DeclContext *DC,
 
   ++NumLexicalDeclContextsRead;
   return ELR_Success;
+}
+
+namespace {
+  /// \brief Module visitor used to perform name lookup into a
+  /// declaration context.
+  class DeclContextNameLookupVisitor {
+    ASTReader &Reader;
+    const DeclContext *DC;
+    DeclarationName Name;
+    SmallVectorImpl<NamedDecl *> &Decls;
+
+  public:
+    DeclContextNameLookupVisitor(ASTReader &Reader, 
+                                 const DeclContext *DC, DeclarationName Name,
+                                 SmallVectorImpl<NamedDecl *> &Decls)
+      : Reader(Reader), DC(DC), Name(Name), Decls(Decls) { }
+
+    static bool visit(Module &M, void *UserData) {
+      DeclContextNameLookupVisitor *This
+        = static_cast<DeclContextNameLookupVisitor *>(UserData);
+
+      // Check whether we have any visible declaration information for
+      // this context in this module.
+      Module::DeclContextInfosMap::iterator Info
+        = M.DeclContextInfos.find(This->DC);
+      if (Info == M.DeclContextInfos.end() || !Info->second.NameLookupTableData)
+        return false;
+
+      // Look for this name within this module.
+      ASTDeclContextNameLookupTable *LookupTable =
+        (ASTDeclContextNameLookupTable*)Info->second.NameLookupTableData;
+      ASTDeclContextNameLookupTable::iterator Pos
+        = LookupTable->find(This->Name);
+      if (Pos == LookupTable->end())
+        return false;
+
+      bool FoundAnything = false;
+      ASTDeclContextNameLookupTrait::data_type Data = *Pos;
+      for (; Data.first != Data.second; ++Data.first) {
+        NamedDecl *ND = This->Reader.GetLocalDeclAs<NamedDecl>(M, *Data.first);
+        if (!ND)
+          continue;
+
+        if (ND->getDeclName() != This->Name) {
+          assert(!This->Name.getCXXNameType().isNull() && 
+                 "Name mismatch without a type");
+          continue;
+        }
+      
+        // Record this declaration.
+        FoundAnything = true;
+        This->Decls.push_back(ND);
+      }
+
+      return FoundAnything;
+    }
+  };
 }
 
 DeclContext::lookup_result
@@ -4314,49 +4363,9 @@ ASTReader::FindExternalVisibleDeclsByName(const DeclContext *DC,
                                       DeclContext::lookup_iterator(0));
 
   SmallVector<NamedDecl *, 64> Decls;
-  // There might be visible decls in multiple parts of the chain, for the TU
-  // and namespaces. For any given name, the last available results replace
-  // all earlier ones. For this reason, we walk in reverse.
-  // Copy the DeclContextInfos vector instead of using a reference to the
-  // vector stored in the map, because DeclContextOffsets can change while
-  // we load declarations with GetLocalDeclAs.
-  DeclContextInfos Infos = DeclContextOffsets[DC];
-  for (DeclContextInfos::reverse_iterator I = Infos.rbegin(), E = Infos.rend();
-       I != E; ++I) {
-    if (!I->NameLookupTableData)
-      continue;
-
-    ASTDeclContextNameLookupTable *LookupTable =
-        (ASTDeclContextNameLookupTable*)I->NameLookupTableData;
-    ASTDeclContextNameLookupTable::iterator Pos = LookupTable->find(Name);
-    if (Pos == LookupTable->end())
-      continue;
-
-    ASTDeclContextNameLookupTrait::data_type Data = *Pos;
-    for (; Data.first != Data.second; ++Data.first) {
-      NamedDecl *ND = GetLocalDeclAs<NamedDecl>(*I->F, *Data.first);
-      if (!ND)
-        continue;
-      
-      if (ND->getDeclName() != Name) {
-        assert(!Name.getCXXNameType().isNull() && 
-               "Name mismatch without a type");
-        continue;
-      }
-      
-      Decls.push_back(ND);
-    }
-    
-    // If we rejected all of the declarations we found, e.g., because the
-    // name didn't actually match, continue looking through DeclContexts.
-    if (Decls.empty())
-      continue;
-    
-    break;
-  }
-
+  DeclContextNameLookupVisitor Visitor(*this, DC, Name, Decls);
+  ModuleMgr.visit(&DeclContextNameLookupVisitor::visit, &Visitor);
   ++NumVisibleDeclContextsRead;
-
   SetExternalVisibleDeclsForName(DC, Name, Decls);
   return const_cast<DeclContext*>(DC)->lookup(Name);
 }
@@ -4368,14 +4377,23 @@ void ASTReader::MaterializeVisibleDecls(const DeclContext *DC) {
   SmallVector<NamedDecl *, 64> Decls;
   // There might be visible decls in multiple parts of the chain, for the TU
   // and namespaces.
-  DeclContextInfos &Infos = DeclContextOffsets[DC];
-  for (DeclContextInfos::iterator I = Infos.begin(), E = Infos.end();
-       I != E; ++I) {
-    if (!I->NameLookupTableData)
+  // There might be lexical decls in multiple modules, for the TU at
+  // least.
+  // FIXME: We might want a faster way to zero
+  // FIXME: Going backwards through the chain does the right thing for
+  // chained PCH; for modules, it isn't clear what the right thing is.
+  for (ModuleReverseIterator M = ModuleMgr.rbegin(), MEnd = ModuleMgr.rend();
+       M != MEnd; ++M) {
+    Module::DeclContextInfosMap::iterator Info
+      = (*M)->DeclContextInfos.find(DC);
+    if (Info == (*M)->DeclContextInfos.end() || !Info->second.LexicalDecls)
+      continue;
+
+    if (!Info->second.NameLookupTableData)
       continue;
 
     ASTDeclContextNameLookupTable *LookupTable =
-        (ASTDeclContextNameLookupTable*)I->NameLookupTableData;
+        (ASTDeclContextNameLookupTable*)Info->second.NameLookupTableData;
     for (ASTDeclContextNameLookupTable::item_iterator
            ItemI = LookupTable->item_begin(),
            ItemEnd = LookupTable->item_end() ; ItemI != ItemEnd; ++ItemI) {
@@ -4383,8 +4401,10 @@ void ASTReader::MaterializeVisibleDecls(const DeclContext *DC) {
           = *ItemI;
       ASTDeclContextNameLookupTrait::data_type Data = Val.second;
       Decls.clear();
-      for (; Data.first != Data.second; ++Data.first)
-        Decls.push_back(GetLocalDeclAs<NamedDecl>(*I->F, *Data.first));
+      for (; Data.first != Data.second; ++Data.first) {
+        if (NamedDecl *ND = GetLocalDeclAs<NamedDecl>(**M, *Data.first))
+          Decls.push_back(ND);
+      }
       MaterializeVisibleDeclsForName(DC, Val.first, Decls);
     }
   }
@@ -5608,17 +5628,6 @@ ASTReader::ASTReader(SourceManager &SourceMgr, FileManager &FileMgr,
 }
 
 ASTReader::~ASTReader() {
-  // Delete all visible decl lookup tables
-  for (DeclContextOffsetsMap::iterator I = DeclContextOffsets.begin(),
-                                       E = DeclContextOffsets.end();
-       I != E; ++I) {
-    for (DeclContextInfos::iterator J = I->second.begin(), F = I->second.end();
-         J != F; ++J) {
-      if (J->NameLookupTableData)
-        delete static_cast<ASTDeclContextNameLookupTable*>(
-            J->NameLookupTableData);
-    }
-  }
   for (DeclContextVisibleUpdatesPending::iterator
            I = PendingVisibleUpdates.begin(),
            E = PendingVisibleUpdates.end();
@@ -5653,6 +5662,14 @@ Module::Module(ModuleKind Kind)
 {}
 
 Module::~Module() {
+  for (DeclContextInfosMap::iterator I = DeclContextInfos.begin(),
+                                     E = DeclContextInfos.end();
+       I != E; ++I) {
+    if (I->second.NameLookupTableData)
+      delete static_cast<ASTDeclContextNameLookupTable*>(
+               I->second.NameLookupTableData);
+  }
+
   delete static_cast<ASTIdentifierLookupTable *>(IdentifierLookupTable);
   delete static_cast<HeaderFileInfoLookupTable *>(HeaderFileInfoTable);
   delete static_cast<ASTSelectorLookupTable *>(SelectorLookupTable);
