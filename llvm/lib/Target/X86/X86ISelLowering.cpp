@@ -10006,14 +10006,14 @@ static SDValue LowerATOMIC_STORE(SDValue Op, SelectionDAG &DAG) {
 
   // Convert seq_cst store -> xchg
   if (cast<AtomicSDNode>(Node)->getOrdering() == SequentiallyConsistent) {
-    SDValue Swap =  DAG.getAtomic(ISD::ATOMIC_SWAP, dl,
-                                  cast<AtomicSDNode>(Node)->getMemoryVT(),
-                                   Node->getOperand(0),
-                                   Node->getOperand(1), Node->getOperand(2),
-                                   cast<AtomicSDNode>(Node)->getSrcValue(),
-                                   cast<AtomicSDNode>(Node)->getAlignment(),
-                                   cast<AtomicSDNode>(Node)->getOrdering(),
-                                   cast<AtomicSDNode>(Node)->getSynchScope());
+    SDValue Swap = DAG.getAtomic(ISD::ATOMIC_SWAP, dl,
+                                 cast<AtomicSDNode>(Node)->getMemoryVT(),
+                                 Node->getOperand(0),
+                                 Node->getOperand(1), Node->getOperand(2),
+                                 cast<AtomicSDNode>(Node)->getSrcValue(),
+                                 cast<AtomicSDNode>(Node)->getAlignment(),
+                                 cast<AtomicSDNode>(Node)->getOrdering(),
+                                 cast<AtomicSDNode>(Node)->getSynchScope());
     return Swap.getValue(1);
   }
   // Other atomic stores have a simple pattern.
