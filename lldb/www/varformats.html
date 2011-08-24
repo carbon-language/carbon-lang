@@ -4,7 +4,7 @@
     <meta http-equiv="Content-Type" content="text/html;
       charset=ISO-8859-1">
     <link href="style.css" rel="stylesheet" type="text/css">
-    <title>LLDB Homepage</title>
+    <title>LLDB Data Formatters</title>
   </head>
   <body>
     <div class="www_title"> The <strong>LLDB</strong> Debugger </div>
@@ -30,7 +30,7 @@
                   &nbsp;&nbsp;&nbsp;&nbsp;(float *) y =
                   0x0000000100100130<br>
                   &nbsp;&nbsp;&nbsp;&nbsp;(char *) z =
-                  0x0000000100100140 "6"<br>
+                  0x0000000100100140 "3"<br>
                   }<br>
                 </code> </p>
             
@@ -231,22 +231,22 @@
                   <tr valign="top">
                     <td><b>bytes with ASCII</b></td>
                     <td>Y</td>
-                    <td>show the bytes, but try to print them as ASCII
-                      characters<br>
+                    <td>show the bytes, but try to display them as ASCII
+                      characters as well<br>
                       e.g. <code>(int *) c.sp.x = 50 f8 bf 5f ff 7f 00
                         00 P.._....</code></td>
                   </tr>
                   <tr valign="top">
                     <td><b>character</b></td>
                     <td>c</td>
-                    <td>show the bytes printed as ASCII characters<br>
+                    <td>show the bytes as ASCII characters<br>
                       e.g. <code>(int *) c.sp.x =
                         P\xf8\xbf_\xff\x7f\0\0</code></td>
                   </tr>
                   <tr valign="top">
                     <td><b>printable character</b></td>
                     <td>C</td>
-                    <td>show the bytes printed as printable ASCII
+                    <td>show the bytes as printable ASCII
                       characters<br>
                       e.g. <code>(int *) c.sp.x = P.._....</code></td>
                   </tr>
@@ -264,11 +264,11 @@
                     <td>show this as a 0-terminated C string</td>
                   </tr>
                   <tr valign="top">
-                    <td><b>signed decimal</b></td>
+                    <td><b>decimal</b></td>
                     <td>i</td>
                     <td>show this as a signed integer number (this does
                       not perform a cast, it simply shows the bytes as
-                      signed integer)</td>
+                      an integer with sign)</td>
                   </tr>
                   <tr valign="top">
                     <td><b>enumeration</b></td>
@@ -301,20 +301,20 @@
                     <td><b>OSType</b></td>
                     <td>O</td>
                     <td>show this as a MacOS OSType<br>
-                      e.g. <code>(float) *c.sp.y = '\n\x1f\xd7\n'</code></td>
+                      e.g. <code>(float) x = '\n\x1f\xd7\n'</code></td>
                   </tr>
                   <tr valign="top">
                     <td><b>unicode16</b></td>
                     <td>U</td>
                     <td>show this as UTF-16 characters<br>
-                      e.g. <code>(float) *c.sp.y = 0xd70a 0x411f</code></td>
+                      e.g. <code>(float) x = 0xd70a 0x411f</code></td>
                   </tr>
                   <tr valign="top">
                     <td><b>unicode32</b></td>
                     <td><br>
                     </td>
                     <td>show this as UTF-32 characters<br>
-                      e.g. <code>(float) *c.sp.y = 0x411fd70a</code></td>
+                      e.g. <code>(float) x = 0x411fd70a</code></td>
                   </tr>
                   <tr valign="top">
                     <td><b>unsigned decimal</b></td>
@@ -348,8 +348,8 @@
                     <td>show this as an array of the corresponding
                       integer type<br>
                       e.g.<br>
-                      <code>(int) sarray[0].x = {1 0 0 0}</code><br>
-                      <code>(int) sarray[0].x = {0x00000001}</code></td>
+                      <code>(int) x = {1 0 0 0}</code> (with uint8_t[])<br>
+                      <code>(int) y = {0x00000001}</code> (with uint32_t[])</td>
                   </tr>
                   <tr valign="top">
                     <td><b>float32[], float64[]</b></td>
@@ -406,7 +406,7 @@
             summary string</i> to the datatype; the second is to bind a Python script to the
             datatype. Both options are enabled by the <code>type summary add</code>
                 command.</p>
-              <p>In the example, the command we type was:</p>
+              <p>The command to obtain the output shown in the example is:</p>
                 <table class="stats" width="620" cellspacing="0">
                         <td class="content">
                             <b>(lldb)</b> type summary add --summary-string "int = ${var.integer}, float = ${var.floating}, char = ${var.character%u}" i_am_cool
@@ -432,22 +432,25 @@
                 <code><b>'}'</b></code>, <code><b>'$'</b></code>, or <code><b>'\'</b></code>
                 character.</p>
               <p>Variable names are found in between a <code><b>"${"</b></code>
-                prefix, and end with a <code><b>"}"</b></code> suffix.
-                In other words, a variable looks like <code>"<b>${frame.pc}</b>"</code>.</p>
+                prefix, and end with a <code><b>"}"</b></code> suffix. Variables can be a simple name
+                or they can refer to complex objects that have subitems themselves.
+                In other words, a variable looks like <code>"<b>${object}</b>"</code> or 
+				<code>"<b>${object.child.otherchild}</b>"</code>. A variable can also be prefixed or
+				suffixed with other symbols meant to change the way its value is handled. An example is
+				<code>"<b>${*var.int_pointer[0-3]}</b>".</code></p>
               <p>Basically, all the variables described in <a
                   href="formats.html">Frame and Thread Formatting</a>
                 are accepted. Also acceptable are the control characters
                 and scoping features described in that page.
                 Additionally, <code>${var</code> and <code>${*var</code>
-                become acceptable symbols in this scenario.</p>
+                become acceptable symbols in this scenario. These special symbols
+				are used to refer to the variable that a summary is being created for.</p>
               <p>The simplest thing you can do is grab a member variable
                 of a class or structure by typing its <i>expression
                   path</i>. In the previous example, the expression path
                 for the floating member is simply <code>.floating</code>.
                 Thus, to ask the summary string to display <code>floating</code>
-                you would type <code>${var.floating}</code> (<code>${var</code>
-                is a placeholder token replaced with whatever variable
-                is being displayed).</p>
+                you would type <code>${var.floating}</code>.</p>
               <p>If you have code like the following: <br>
                 <code> struct A {<br>
                   &nbsp;&nbsp;&nbsp;&nbsp;int x;<br>
@@ -456,17 +459,16 @@
                   struct B {<br>
                   &nbsp;&nbsp;&nbsp;&nbsp;A x;<br>
                   &nbsp;&nbsp;&nbsp;&nbsp;A y;<br>
-                  &nbsp;&nbsp;&nbsp;&nbsp;int z;<br>
+                  &nbsp;&nbsp;&nbsp;&nbsp;int *z;<br>
                   };<br>
                 </code> the expression path for the <code>y</code>
                 member of the <code>x</code> member of an object of
                 type <code>B</code> would be <code>.x.y</code> and you
                 would type <code>${var.x.y}</code> to display it in a
                 summary string for type <code>B</code>. </p>
-              <p>As you could be using a summary string for both
-                displaying objects of type <code>T</code> or <code>T*</code>
-                (unless <code>-p</code> is used to prevent this), the
-                expression paths do not differentiate between <code>.</code>
+              <p>By default, summary strings work for both type <code>T</code> and
+				type <code>T*</code> (there is an option to prevent this if you need to).
+				For this reason, expression paths do not differentiate between <code>.</code>
                 and <code>-&gt;</code>, and the above expression path <code>.x.y</code>
                 would be just as good if you were displaying a <code>B*</code>,
                 or even if the actual definition of <code>B</code>
@@ -474,28 +476,40 @@
                   struct B {<br>
                   &nbsp;&nbsp;&nbsp;&nbsp;A *x;<br>
                   &nbsp;&nbsp;&nbsp;&nbsp;A y;<br>
-                  &nbsp;&nbsp;&nbsp;&nbsp;int z;<br>
+                  &nbsp;&nbsp;&nbsp;&nbsp;int *z;<br>
                   };<br>
                 </code> </p>
-              <p>This is unlike the behaviour of <code>frame variable</code>
+              <p>This is unlike the behavior of <code>frame variable</code>
                 which, on the contrary, will enforce the distinction. As
                 hinted above, the rationale for this choice is that
-                waiving this distinction enables one to write a summary
+                waiving this distinction enables you to write a summary
                 string once for type <code>T</code> and use it for both
                 <code>T</code> and <code>T*</code> instances. As a
                 summary string is mostly about extracting nested
                 members' information, a pointer to an object is just as
                 good as the object itself for the purpose.</p>
-              <p>Of course, you can have multiple entries in one summary
-                string, as shown in the previous example.</p>
-              <p>As you can see, the last expression path also contains
-                a <code>%u</code> symbol which is nowhere to be found
-                in the actual member variable name. The symbol is
-                reminding of a <code>printf()</code> format symbol, and
-                in fact it has a similar effect. If you add a % sign
-                followed by any one format name or abbreviation from the
-                above table after an expression path, the resulting
-                object will be displyed using the chosen format.</p>
+			  <p>If you need to access the value of the integer pointed to by <code>B::z</code>, you
+				cannot simply say <code>${var.z}</code> because that symbol refers to the pointer <code>z</code>.
+				In order to dereference it and get the pointed value, you should say <code>${*var.z}</code>. The <code>${*var</code>
+					 tells LLDB to get the object that the expression paths leads to, and then dereference it. In this example is it
+					equivalent to <code>*(bObject.z)</code> in C/C++ syntax. Because <code>.</code> and <code>-></code> operators can both be
+					used, there is no need to have dereferences in the middle of an expression path (e.g. you do not need to type
+					<code>${*(var.x).x})</code> to read <code>A::x</code> as contained in <code>*(B::x)</code>. To achieve that effect
+					you can simply write <code>${var.x->x}</code>, or even <code>${var.x.x}</code>. The <code>*</code> operator only binds
+					to the result of the whole expression path, rather than piecewise, and there is no way to use parentheses to change
+					that behavior.</p>
+              <p>Of course, a summary string can contain more than one <code>${var</code> specifier,
+				and can use <code>${var</code> and <code>${*var</code> specifiers together.</p>
+            </div>
+          </div>
+          <div class="post">
+            <h1 class="postheader">Formatting summary elements</h1>
+            <div class="postcontent">
+              <p>An expression path can include formatting codes.
+				 Much like the type formats discussed previously, you can also customize
+				the way variables are displayed in summary strings, regardless of the format they have
+				applied to their types. To do that, you can use <code>%<i>format</i></code> inside an expression path,
+				as in <code>${var.x->x%u}</code>, which would display the value of <code>x</code> as an unsigned integer.
                 
             <p>You can also use some other special format markers, not available
             for type formatters, but which carry a special meaning when used in this
@@ -535,53 +549,23 @@
 				</tbody>
 			</table>
                 
-              <p>As previously said, pointers and values are treated the
-                same way when getting to their members in an expression
-                path. However, if your expression path leads to a
-                pointer, LLDB will not automatically dereference it. In
-                order to obtain The deferenced value for a pointer, your
-                expression path must start with <code>${*var</code>
-                instead of <code>${var</code>. Because there is no need
-                to dereference pointers along your way, the
-                dereferencing symbol only applies to the result of the
-                whole expression path traversing. <br>
-                e.g. <code> <br>
-                  <b>(lldb)</b> frame variable -T c<br>
-                  (Couple) c = {<br>
-                  &nbsp;&nbsp;&nbsp;&nbsp;(SimpleWithPointers) sp = {<br>
-                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(int *) x = 0x00000001001000b0<br>
-                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(float *) y = 0x00000001001000c0<br>
-                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(char *) z = 0x00000001001000d0 "X"<br>
-                  &nbsp;&nbsp;&nbsp;&nbsp;}<br>
-                  &nbsp;&nbsp;&nbsp;&nbsp;(Simple *) s = 0x00000001001000e0<br>
-                  }<br>
-                  </code><br>
-                  
-                  If one types the following commands:
-                  
-                <table class="stats" width="620" cellspacing="0">
-                        <td class="content">
-                            <b>(lldb)</b> type summary add --summary-string "int = ${*var.sp.x},
-                  float = ${*var.sp.y}, char = ${*var.sp.z%u}, Simple =
-                  ${*var.s}" Couple<br>
-                        	<b>(lldb)</b> type summary add -c -p Simple<br>
-                        </td>
-                <table><br>
-
-				the output becomes: <br><code>
-                  
-                  <b>(lldb)</b> frame variable c<br>
-                  (Couple) c = int = 9, float = 9.99, char = 88, Simple
-                  = (x=9, y=9.99, z='X')<br>
-                </code> </p>
-              <p>Option <code>-c</code> to <code>type summary add</code>
+              <p>Option <code>--inline-children</code> (<code>-c</code>) to <code>type summary add</code>
                 tells LLDB not to look for a summary string, but instead
                 to just print a listing of all the object's children on
-                one line, as shown in the summary for object Simple.</p>
-                <p> We are using the <code>-p</code> flag here to show that
-                aggregate types can be dereferenced as well as basic types.
-                The following command sequence would work just as well and
-                produce the same output:
+                one line.</p>
+                <p> As an example, given a type <code>Couple</code>:
+					<code> <br>
+	                  <b>(lldb)</b> frame variable --show-types a_couple<br>
+	                  (Couple) a_couple = {<br>
+	                  &nbsp;&nbsp;&nbsp;&nbsp;(SimpleWithPointers) sp = {<br>
+	                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(int *) x = 0x00000001001000b0<br>
+	                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(float *) y = 0x00000001001000c0<br>
+	                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(char *) z = 0x00000001001000d0 "X"<br>
+	                  &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+	                  &nbsp;&nbsp;&nbsp;&nbsp;(Simple *) s = 0x00000001001000e0<br>
+	                  }<br>
+	                  </code><br>
+	                  If one types the following commands:
                 <table class="stats" width="620" cellspacing="0">
                         <td class="content">
                             <b>(lldb)</b> type summary add --summary-string "int = ${*var.sp.x},
@@ -589,7 +573,25 @@
                   ${var.s}" Couple<br>
                         	<b>(lldb)</b> type summary add -c Simple<br>
                         </td>
-                <table><br>
+                <table>
+					the output becomes: <br><code>
+
+	                  <b>(lldb)</b> frame variable a_couple<br>
+	                  (Couple) a_couple = int = 9, float = 9.99, char = 88, Simple
+	                  = (x=9, y=9.99, z='X')<br>
+	                </code> </p>
+				<p>Using the above summary for type <code>Couple</code>, without providing a summary for type <code>Simple</code>
+					would lead LLDB to display the address of the Simple object, as in:
+					<br><code>
+
+	                  <b>(lldb)</b> frame variable a_couple<br>
+	                  (Couple) a_couple = int = 9, float = 9.99, char = 88, Simple
+	                  = Simple @ 0x00007fff5fbff940<br>
+	                </code> <br/>
+				This happens because <code>Simple</code> is an aggregate type, so it has no value of its own to display,
+				but it has no summary defined. Thus, LLDB picks a reasonable default summary and displays it. If you want to reproduce
+				that summary, the summary string to use is <code>${var%T} @ ${var%L}</code>.
+					</p>
             </div>
           </div>
           <div class="post">
@@ -845,9 +847,12 @@ Python Interactive Interpreter. To exit, type 'quit()', 'exit()' or Ctrl-D.<br/>
             
             <p>If you need to delve into several levels of hierarchy, as you can do with summary
             strings, you can use the method <code>GetValueForExpressionPath()</code>, passing it
-            an expression path just like those you could use for summary strings. However, if you need
-            to access array slices, you cannot do that (yet) via this method call, and you must
+            an expression path just like those you could use for summary strings (one of the differences
+			is that dereferencing a pointer does not occur by prefixing the path with a <code>*</code>,
+			but by calling the <code>Dereference()</code> method on the returned SBValue).
+			If you need to access array slices, you cannot do that (yet) via this method call, and you must
             use <code>GetChildMemberWithName()</code> querying it for the array items one by one.
+			Also, handling custom formats is something you have to deal with on your own.
             
             <p>Other than interactively typing a Python script there are two other ways for you
             to input a Python script as a summary:
@@ -865,7 +870,7 @@ Python Interactive Interpreter. To exit, type 'quit()', 'exit()' or Ctrl-D.<br/>
                         </td>
                 </table>
             <ul>
-            <li> using the -F option to <code>type summary add </code> and giving the name of a 
+            <li> using the <code>--python-function</code> (<code>-F</code>) option to <code>type summary add </code> and giving the name of a 
             Python function with the correct prototype. Most probably, you will define (or have
             already defined) the function in the interactive interpreter, or somehow
             loaded it from a file.
@@ -913,8 +918,13 @@ Python Interactive Interpreter. To exit, type 'quit()', 'exit()' or Ctrl-D.<br/>
                 matching. Thus, if your type has a base class with a
                 cascading summary, this will be preferred over any
                 regular expression match for your type itself.</p>
+				<p>One of the ways LLDB uses this feature internally, is to match
+					the names of STL container classes, regardless of the template
+					arguments provided (e.g. <code>std::vector&lt;T&gt;</code> for any
+						type argument <code>T</code>).</p>
 
-              <p>The regular expression language used by LLDB is <a href="http://en.wikipedia.org/wiki/Regular_expression#POSIX_Extended_Regular_Expressions">the POSIX extended regular expression language</a>, as defined by <a href="http://pubs.opengroup.org/onlinepubs/7908799/xsh/regex.h.html">the SUS</a>.
+              <p>The regular expression language used by LLDB is the <a href="http://en.wikipedia.org/wiki/Regular_expression#POSIX_Extended_Regular_Expressions">POSIX extended language</a>, as defined by the <a href="http://pubs.opengroup.org/onlinepubs/7908799/xsh/regex.h.html">Single UNIX Specification</a>, of which Mac OS X is a
+	compliant implementation.
 
             </div>
           </div>
@@ -1017,6 +1027,10 @@ Python Interactive Interpreter. To exit, type 'quit()', 'exit()' or Ctrl-D.<br/>
 		<p>For examples of how synthetic children are created, you are encouraged to look at <a href="http://llvm.org/svn/llvm-project/lldb/trunk/examples/synthetic/">examples/synthetic</a> in the LLDB trunk.
 			You may especially want to begin looking at <a href="http://llvm.org/svn/llvm-project/lldb/trunk/examples/synthetic/StdVectorSynthProvider.py">StdVector</a> to get
 			a feel for this feature.</p>
+			<p>While the <code>update</code> method is optional, the design pattern consistently used in synthetic providers shipping with LLDB
+				is to use the <code>__init__</code> to store the SBValue instance as a part of <code>self</code>, and then call <code>update</code>
+				to perform the actual initialization. This pattern should make transition to a future version of LLDB that persists synthetic children
+				providers transparent.</p>
 		
 		<p>Once a synthetic children provider is written, one must load it into LLDB before it can be used.
 			Currently, one can use the LLDB <code>script</code> command to type Python code interactively,
@@ -1024,9 +1038,9 @@ Python Interactive Interpreter. To exit, type 'quit()', 'exit()' or Ctrl-D.<br/>
 			(ordinary rules apply to importing modules this way). A third option is to type the code for
 			the provider class interactively while adding it.</p>
 		
-		<p>For example, let's pretend we have a class Foo for which a synthetic children provider class Foo_Provider
-			is available, in a Python module named Foo_Tools. The following interaction sets Foo_Provider as a synthetic
-			children provider in LLDB:</p>
+		<p>For example, let's pretend we have a class <code>Foo</code> for which a synthetic children provider class
+			<code>Foo_Provider</code> is available, in a Python module named <code>Foo_Tools</code>. The following interaction
+			sets <code>Foo_Provider</code> as a synthetic children provider in LLDB:</p>
 		
 		    <table class="stats" width="620" cellspacing="0">
                     <td class="content">
@@ -1079,7 +1093,7 @@ Python Interactive Interpreter. To exit, type 'quit()', 'exit()' or Ctrl-D.<br/>
 				the ones named <code>B</code>, <code>H</code> and <code>Q</code>, you can define a filter:
 			    <table class="stats" width="620" cellspacing="0">
 	                    <td class="content">
-	                        <b>(lldb)</b> type filter add Foo --child B --child H --child Q
+	                        <b>(lldb)</b> type filter add Foobar --child B --child H --child Q
 	                    </td>
 	            </table>
 	            <code> <b>(lldb)</b> frame variable a_foobar<br/>
@@ -1158,8 +1172,24 @@ Python Interactive Interpreter. To exit, type 'quit()', 'exit()' or Ctrl-D.<br/>
 					<code>gnu-libstdc++</code>, and finally <code>system</code>. As said, <code>gnu-libstdc++</code> contains formatters for C++ STL
 					data types. <code>system</code> contains formatters for <code>char*</code> and <code>char[]</code>, which are expected to be
 					consistent throughout libraries and systems, and replace </p>
-				<p>Categories are a way to group related formatters. For instance, LLDB itself groups
-			      the formatters for the C++ STL objects in a category named <code>gnu-libstdc++</code></p>
+				<p>There is no special command to create a category. When you place a formatter in a category, if that category does not
+					exist, it is automatically created. For instance,</p>
+					<p><table class="stats" width="620" cellspacing="0">
+		                    <td class="content">
+		                        <b>(lldb)</b> type summary add Foobar --summary-string "a foobar" --category newcategory
+		                    </td>
+		            </table>
+				automatically creates a (disabled) category named newcategory.</p>
+				<p>Another way to create a new (empty) category, is to enable it, as in:</p>
+				<p><table class="stats" width="620" cellspacing="0">
+	                    <td class="content">
+	                        <b>(lldb)</b> type category enable newcategory
+	                    </td>
+	            </table>
+				<p>However, in this case LLDB warns you that enabling an empty category has no effect. If you add formatters to the
+					category after enabling it, they will be honored. But an empty category <i>per se</i> does not change the way any
+					type is displayed. The reason the debugger warns you is that enabling an empty category might be a typo, and you
+					effectively wanted to enable a similarly-named but not-empty category.</p>
           </div>
         </div>
 
@@ -1168,7 +1198,7 @@ Python Interactive Interpreter. To exit, type 'quit()', 'exit()' or Ctrl-D.<br/>
             <div class="postcontent">
               <p>While the rules for finding an appropriate format for a
                 type are relatively simple (just go through typedef
-                hierarchies), searching formatters for a type goes through
+                hierarchies), searching other formatters goes through
 				a rather intricate set of rules. Namely, what happens is that LLDB
 				starts looking in each enabled category, according to the order in which
 				they were enabled (latest enabled first). In each category, LLDB does
@@ -1180,7 +1210,7 @@ Python Interactive Interpreter. To exit, type 'quit()', 'exit()' or Ctrl-D.<br/>
                   for the pointee type that does not skip pointers, use
                   it</li>
                 <li>If this object is a reference, and there is a
-                  summary for the pointee type that does not skip
+                  summary for the referred type that does not skip
                   references, use it</li>
                 <li>If this object is an Objective-C class with a parent
                   class, look at the parent class (and parent of parent,
@@ -1221,10 +1251,9 @@ Python Interactive Interpreter. To exit, type 'quit()', 'exit()' or Ctrl-D.<br/>
                   need to be careful what the dereferencing operation is
                   binding to in complicated scenarios</li>
                 <li>Synthetic children providers cannot have a permanent state</li>
+                <li>Smarter algorithm to detect possible typos in category names</li>
                 <li><code>type format add</code> does not support the <code>-x</code>
                   option</li>
-                <strike><li>Object location cannot be printed in the summary
-                  string</li></strike>
               </ul>
             </div>
           </div>
