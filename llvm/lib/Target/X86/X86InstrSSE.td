@@ -3675,12 +3675,8 @@ def : Pat<(v4f64 (sint_to_fp (memopv4i32 addr:$src))),
           (VCVTDQ2PDYrm addr:$src)>;
 
 //===---------------------------------------------------------------------===//
-// SSE3 - Move Instructions
+// SSE3 - Replicate Single FP - MOVSHDUP and MOVSLDUP
 //===---------------------------------------------------------------------===//
-
-//===---------------------------------------------------------------------===//
-// Replicate Single FP - MOVSHDUP and MOVSLDUP
-//
 multiclass sse3_replicate_sfp<bits<8> op, SDNode OpNode, string OpcodeStr,
                               ValueType vt, RegisterClass RC, PatFrag mem_frag,
                               X86MemOperand x86memop> {
@@ -3738,8 +3734,9 @@ let Predicates = [HasAVX] in {
 }
 
 //===---------------------------------------------------------------------===//
-// Replicate Double FP - MOVDDUP
-//
+// SSE3 - Replicate Double FP - MOVDDUP
+//===---------------------------------------------------------------------===//
+
 multiclass sse3_replicate_dfp<string OpcodeStr> {
 def rr  : S3DI<0x12, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                     !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
@@ -3751,23 +3748,40 @@ def rm  : S3DI<0x12, MRMSrcMem, (outs VR128:$dst), (ins f64mem:$src),
                                       (undef))))]>;
 }
 
+// FIXME: Merge with above classe when there're patterns for the ymm version
 multiclass sse3_replicate_dfp_y<string OpcodeStr> {
-def rr  : S3DI<0x12, MRMSrcReg, (outs VR256:$dst), (ins VR256:$src),
-                    !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
-                    []>;
-def rm  : S3DI<0x12, MRMSrcMem, (outs VR256:$dst), (ins f256mem:$src),
-                    !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
-                    []>;
-}
-
 let Predicates = [HasAVX] in {
-  // FIXME: Merge above classes when we have patterns for the ymm version
-  defm VMOVDDUP  : sse3_replicate_dfp<"vmovddup">, VEX;
-  defm VMOVDDUPY : sse3_replicate_dfp_y<"vmovddup">, VEX;
+  def rr  : S3DI<0x12, MRMSrcReg, (outs VR256:$dst), (ins VR256:$src),
+                      !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
+                      []>;
+  def rm  : S3DI<0x12, MRMSrcMem, (outs VR256:$dst), (ins f256mem:$src),
+                      !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
+                      []>;
+  }
 }
-defm MOVDDUP : sse3_replicate_dfp<"movddup">;
 
-// Move Unaligned Integer
+defm MOVDDUP : sse3_replicate_dfp<"movddup">;
+defm VMOVDDUP  : sse3_replicate_dfp<"vmovddup">, VEX;
+defm VMOVDDUPY : sse3_replicate_dfp_y<"vmovddup">, VEX;
+
+let Predicates = [HasSSE3] in {
+  def : Pat<(movddup (bc_v2f64 (v2i64 (scalar_to_vector (loadi64 addr:$src)))),
+                   (undef)),
+            (MOVDDUPrm addr:$src)>;
+  let AddedComplexity = 5 in {
+  def : Pat<(movddup (memopv2f64 addr:$src), (undef)), (MOVDDUPrm addr:$src)>;
+  def : Pat<(movddup (bc_v4f32 (memopv2f64 addr:$src)), (undef)),
+            (MOVDDUPrm addr:$src)>;
+  def : Pat<(movddup (memopv2i64 addr:$src), (undef)), (MOVDDUPrm addr:$src)>;
+  def : Pat<(movddup (bc_v4i32 (memopv2i64 addr:$src)), (undef)),
+            (MOVDDUPrm addr:$src)>;
+  }
+}
+
+//===---------------------------------------------------------------------===//
+// SSE3 - Move Unaligned Integer
+//===---------------------------------------------------------------------===//
+
 let Predicates = [HasAVX] in {
   def VLDDQUrm : S3DI<0xF0, MRMSrcMem, (outs VR128:$dst), (ins i128mem:$src),
                    "vlddqu\t{$src, $dst|$dst, $src}",
@@ -3779,22 +3793,6 @@ let Predicates = [HasAVX] in {
 def LDDQUrm : S3DI<0xF0, MRMSrcMem, (outs VR128:$dst), (ins i128mem:$src),
                    "lddqu\t{$src, $dst|$dst, $src}",
                    [(set VR128:$dst, (int_x86_sse3_ldu_dq addr:$src))]>;
-
-def : Pat<(movddup (bc_v2f64 (v2i64 (scalar_to_vector (loadi64 addr:$src)))),
-                   (undef)),
-          (MOVDDUPrm addr:$src)>, Requires<[HasSSE3]>;
-
-// Several Move patterns
-let AddedComplexity = 5 in {
-def : Pat<(movddup (memopv2f64 addr:$src), (undef)),
-          (MOVDDUPrm addr:$src)>, Requires<[HasSSE3]>;
-def : Pat<(movddup (bc_v4f32 (memopv2f64 addr:$src)), (undef)),
-          (MOVDDUPrm addr:$src)>, Requires<[HasSSE3]>;
-def : Pat<(movddup (memopv2i64 addr:$src), (undef)),
-          (MOVDDUPrm addr:$src)>, Requires<[HasSSE3]>;
-def : Pat<(movddup (bc_v4i32 (memopv2i64 addr:$src)), (undef)),
-          (MOVDDUPrm addr:$src)>, Requires<[HasSSE3]>;
-}
 
 //===---------------------------------------------------------------------===//
 // SSE3 - Arithmetic
