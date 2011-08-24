@@ -116,6 +116,71 @@ multiclass sse12_fp_packed_int<bits<8> opc, string OpcodeStr, RegisterClass RC,
 }
 
 //===----------------------------------------------------------------------===//
+// Special COPY patterns
+//===----------------------------------------------------------------------===//
+
+def : Pat<(f32 (vector_extract (v4f32 VR128:$src), (iPTR 0))),
+          (f32 (EXTRACT_SUBREG (v4f32 VR128:$src), sub_ss))>;
+
+//===----------------------------------------------------------------------===//
+// AVX & SSE - Zero/One Vectors
+//===----------------------------------------------------------------------===//
+
+// Alias instructions that map zero vector to pxor / xorp* for sse.
+// We set canFoldAsLoad because this can be converted to a constant-pool
+// load of an all-zeros value if folding it would be beneficial.
+// FIXME: Change encoding to pseudo! This is blocked right now by the x86
+// JIT implementation, it does not expand the instructions below like
+// X86MCInstLower does.
+let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
+    isCodeGenOnly = 1 in {
+def V_SET0PS : PSI<0x57, MRMInitReg, (outs VR128:$dst), (ins), "",
+                 [(set VR128:$dst, (v4f32 immAllZerosV))]>;
+def V_SET0PD : PDI<0x57, MRMInitReg, (outs VR128:$dst), (ins), "",
+                 [(set VR128:$dst, (v2f64 immAllZerosV))]>;
+let ExeDomain = SSEPackedInt in
+def V_SET0PI : PDI<0xEF, MRMInitReg, (outs VR128:$dst), (ins), "",
+                 [(set VR128:$dst, (v4i32 immAllZerosV))]>;
+}
+
+// The same as done above but for AVX. The 128-bit versions are the
+// same, but re-encoded. The 256-bit does not support PI version, and
+// doesn't need it because on sandy bridge the register is set to zero
+// at the rename stage without using any execution unit, so SET0PSY
+// and SET0PDY can be used for vector int instructions without penalty
+// FIXME: Change encoding to pseudo! This is blocked right now by the x86
+// JIT implementatioan, it does not expand the instructions below like
+// X86MCInstLower does.
+let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
+    isCodeGenOnly = 1, Predicates = [HasAVX] in {
+def AVX_SET0PS  : PSI<0x57, MRMInitReg, (outs VR128:$dst), (ins), "",
+                   [(set VR128:$dst, (v4f32 immAllZerosV))]>, VEX_4V;
+def AVX_SET0PD  : PDI<0x57, MRMInitReg, (outs VR128:$dst), (ins), "",
+                   [(set VR128:$dst, (v2f64 immAllZerosV))]>, VEX_4V;
+def AVX_SET0PSY : PSI<0x57, MRMInitReg, (outs VR256:$dst), (ins), "",
+                   [(set VR256:$dst, (v8f32 immAllZerosV))]>, VEX_4V;
+def AVX_SET0PDY : PDI<0x57, MRMInitReg, (outs VR256:$dst), (ins), "",
+                   [(set VR256:$dst, (v4f64 immAllZerosV))]>, VEX_4V;
+let ExeDomain = SSEPackedInt in
+def AVX_SET0PI  : PDI<0xEF, MRMInitReg, (outs VR128:$dst), (ins), "",
+                   [(set VR128:$dst, (v4i32 immAllZerosV))]>;
+}
+
+def : Pat<(v2i64 immAllZerosV), (V_SET0PI)>;
+def : Pat<(v8i16 immAllZerosV), (V_SET0PI)>;
+def : Pat<(v16i8 immAllZerosV), (V_SET0PI)>;
+
+// AVX has no support for 256-bit integer instructions, but since the 128-bit
+// VPXOR instruction writes zero to its upper part, it's safe build zeros.
+def : Pat<(v8i32 immAllZerosV), (SUBREG_TO_REG (i32 0), (AVX_SET0PI), sub_xmm)>;
+def : Pat<(bc_v8i32 (v8f32 immAllZerosV)),
+          (SUBREG_TO_REG (i32 0), (AVX_SET0PI), sub_xmm)>;
+
+def : Pat<(v4i64 immAllZerosV), (SUBREG_TO_REG (i64 0), (AVX_SET0PI), sub_xmm)>;
+def : Pat<(bc_v4i64 (v8f32 immAllZerosV)),
+          (SUBREG_TO_REG (i64 0), (AVX_SET0PI), sub_xmm)>;
+
+//===----------------------------------------------------------------------===//
 // SSE 1 & 2 - Move Instructions
 //===----------------------------------------------------------------------===//
 
@@ -2455,7 +2520,7 @@ def MOVNTI_64mr : RI<0xC3, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src),
 }
 
 //===----------------------------------------------------------------------===//
-// SSE 1 & 2 - Misc Instructions (No AVX form)
+// SSE 1 & 2 - Prefetch and memory fence
 //===----------------------------------------------------------------------===//
 
 // Prefetch intrinsic.
@@ -2472,63 +2537,6 @@ def PREFETCHNTA  : PSI<0x18, MRM0m, (outs), (ins i8mem:$src),
 def SFENCE : I<0xAE, MRM_F8, (outs), (ins), "sfence", [(int_x86_sse_sfence)]>,
              TB, Requires<[HasSSE1]>;
 def : Pat<(X86SFence), (SFENCE)>;
-
-// Alias instructions that map zero vector to pxor / xorp* for sse.
-// We set canFoldAsLoad because this can be converted to a constant-pool
-// load of an all-zeros value if folding it would be beneficial.
-// FIXME: Change encoding to pseudo! This is blocked right now by the x86
-// JIT implementation, it does not expand the instructions below like
-// X86MCInstLower does.
-let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
-    isCodeGenOnly = 1 in {
-def V_SET0PS : PSI<0x57, MRMInitReg, (outs VR128:$dst), (ins), "",
-                 [(set VR128:$dst, (v4f32 immAllZerosV))]>;
-def V_SET0PD : PDI<0x57, MRMInitReg, (outs VR128:$dst), (ins), "",
-                 [(set VR128:$dst, (v2f64 immAllZerosV))]>;
-let ExeDomain = SSEPackedInt in
-def V_SET0PI : PDI<0xEF, MRMInitReg, (outs VR128:$dst), (ins), "",
-                 [(set VR128:$dst, (v4i32 immAllZerosV))]>;
-}
-
-// The same as done above but for AVX. The 128-bit versions are the
-// same, but re-encoded. The 256-bit does not support PI version, and
-// doesn't need it because on sandy bridge the register is set to zero
-// at the rename stage without using any execution unit, so SET0PSY
-// and SET0PDY can be used for vector int instructions without penalty
-// FIXME: Change encoding to pseudo! This is blocked right now by the x86
-// JIT implementatioan, it does not expand the instructions below like
-// X86MCInstLower does.
-let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
-    isCodeGenOnly = 1, Predicates = [HasAVX] in {
-def AVX_SET0PS  : PSI<0x57, MRMInitReg, (outs VR128:$dst), (ins), "",
-                   [(set VR128:$dst, (v4f32 immAllZerosV))]>, VEX_4V;
-def AVX_SET0PD  : PDI<0x57, MRMInitReg, (outs VR128:$dst), (ins), "",
-                   [(set VR128:$dst, (v2f64 immAllZerosV))]>, VEX_4V;
-def AVX_SET0PSY : PSI<0x57, MRMInitReg, (outs VR256:$dst), (ins), "",
-                   [(set VR256:$dst, (v8f32 immAllZerosV))]>, VEX_4V;
-def AVX_SET0PDY : PDI<0x57, MRMInitReg, (outs VR256:$dst), (ins), "",
-                   [(set VR256:$dst, (v4f64 immAllZerosV))]>, VEX_4V;
-let ExeDomain = SSEPackedInt in
-def AVX_SET0PI  : PDI<0xEF, MRMInitReg, (outs VR128:$dst), (ins), "",
-                   [(set VR128:$dst, (v4i32 immAllZerosV))]>;
-}
-
-def : Pat<(v2i64 immAllZerosV), (V_SET0PI)>;
-def : Pat<(v8i16 immAllZerosV), (V_SET0PI)>;
-def : Pat<(v16i8 immAllZerosV), (V_SET0PI)>;
-
-def : Pat<(f32 (vector_extract (v4f32 VR128:$src), (iPTR 0))),
-          (f32 (EXTRACT_SUBREG (v4f32 VR128:$src), sub_ss))>;
-
-// AVX has no support for 256-bit integer instructions, but since the 128-bit
-// VPXOR instruction writes zero to its upper part, it's safe build zeros.
-def : Pat<(v8i32 immAllZerosV), (SUBREG_TO_REG (i32 0), (AVX_SET0PI), sub_xmm)>;
-def : Pat<(bc_v8i32 (v8f32 immAllZerosV)),
-          (SUBREG_TO_REG (i32 0), (AVX_SET0PI), sub_xmm)>;
-
-def : Pat<(v4i64 immAllZerosV), (SUBREG_TO_REG (i64 0), (AVX_SET0PI), sub_xmm)>;
-def : Pat<(bc_v4i64 (v8f32 immAllZerosV)),
-          (SUBREG_TO_REG (i64 0), (AVX_SET0PI), sub_xmm)>;
 
 //===----------------------------------------------------------------------===//
 // SSE 1 & 2 - Load/Store XCSR register
