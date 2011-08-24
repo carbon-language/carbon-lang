@@ -4264,34 +4264,69 @@ Stmt *ASTReader::GetExternalDeclStmt(uint64_t Offset) {
   return ReadStmtFromStream(*Loc.F);
 }
 
+namespace {
+  class FindExternalLexicalDeclsVisitor {
+    ASTReader &Reader;
+    const DeclContext *DC;
+    bool (*isKindWeWant)(Decl::Kind);
+    SmallVectorImpl<Decl*> &Decls;
+    bool PredefsVisited[NUM_PREDEF_DECL_IDS];
+
+  public:
+    FindExternalLexicalDeclsVisitor(ASTReader &Reader, const DeclContext *DC,
+                                    bool (*isKindWeWant)(Decl::Kind),
+                                    SmallVectorImpl<Decl*> &Decls)
+      : Reader(Reader), DC(DC), isKindWeWant(isKindWeWant), Decls(Decls) 
+    {
+      for (unsigned I = 0; I != NUM_PREDEF_DECL_IDS; ++I)
+        PredefsVisited[I] = false;
+    }
+
+    static bool visit(Module &M, bool Preorder, void *UserData) {
+      if (Preorder)
+        return false;
+
+      FindExternalLexicalDeclsVisitor *This
+        = static_cast<FindExternalLexicalDeclsVisitor *>(UserData);
+
+      Module::DeclContextInfosMap::iterator Info
+        = M.DeclContextInfos.find(This->DC);
+      if (Info == M.DeclContextInfos.end() || !Info->second.LexicalDecls)
+        return false;
+
+      // Load all of the declaration IDs
+      for (const KindDeclIDPair *ID = Info->second.LexicalDecls,
+                               *IDE = ID + Info->second.NumLexicalDecls; 
+           ID != IDE; ++ID) {
+        if (This->isKindWeWant && !This->isKindWeWant((Decl::Kind)ID->first))
+          continue;
+
+        // Don't add predefined declarations to the lexical context more
+        // than once.
+        if (ID->second < NUM_PREDEF_DECL_IDS) {
+          if (This->PredefsVisited[ID->second])
+            continue;
+
+          This->PredefsVisited[ID->second] = true;
+        }
+
+        Decl *D = This->Reader.GetLocalDecl(M, ID->second);
+        assert(D && "Null decl in lexical decls");
+        This->Decls.push_back(D);
+      }
+
+      return false;
+    }
+  };
+}
+
 ExternalLoadResult ASTReader::FindExternalLexicalDecls(const DeclContext *DC,
                                          bool (*isKindWeWant)(Decl::Kind),
                                          SmallVectorImpl<Decl*> &Decls) {
   // There might be lexical decls in multiple modules, for the TU at
-  // least.
-  // FIXME: We might want a faster way to zero
-  // FIXME: Going backwards through the chain does the right thing for
-  // chained PCH; for modules, it isn't clear what the right thing is.
-  for (ModuleReverseIterator M = ModuleMgr.rbegin(), MEnd = ModuleMgr.rend();
-       M != MEnd; ++M) {
-    Module::DeclContextInfosMap::iterator Info
-      = (*M)->DeclContextInfos.find(DC);
-    if (Info == (*M)->DeclContextInfos.end() || !Info->second.LexicalDecls)
-      continue;
-
-    // Load all of the declaration IDs
-    for (const KindDeclIDPair *ID = Info->second.LexicalDecls,
-                              *IDE = ID + Info->second.NumLexicalDecls; 
-         ID != IDE; ++ID) {
-      if (isKindWeWant && !isKindWeWant((Decl::Kind)ID->first))
-        continue;
-      
-      Decl *D = GetLocalDecl(**M, ID->second);
-      assert(D && "Null decl in lexical decls");
-      Decls.push_back(D);
-    }
-  }
-
+  // least. Walk all of the modules in the order they were loaded.
+  FindExternalLexicalDeclsVisitor Visitor(*this, DC, isKindWeWant, Decls);
+  ModuleMgr.visitDepthFirst(&FindExternalLexicalDeclsVisitor::visit, &Visitor);
   ++NumLexicalDeclContextsRead;
   return ELR_Success;
 }
@@ -5886,5 +5921,43 @@ void ModuleManager::visit(bool (*Visitor)(Module &M, void *UserData),
       if (NumUnusedEdges && (--NumUnusedEdges == 0))
         Queue.push_back(*M);
     }
+  }
+}
+
+/// \brief Perform a depth-first visit of the current module.
+static bool visitDepthFirst(Module &M, 
+                            bool (*Visitor)(Module &M, bool Preorder, 
+                                            void *UserData), 
+                            void *UserData,
+                            llvm::SmallPtrSet<Module *, 4> &Visited) {
+  // Preorder visitation
+  if (Visitor(M, /*Preorder=*/true, UserData))
+    return true;
+
+  // Visit children
+  for (llvm::SetVector<Module *>::iterator IM = M.Imports.begin(),
+                                        IMEnd = M.Imports.end();
+       IM != IMEnd; ++IM) {
+    if (!Visited.insert(*IM))
+      continue;
+
+    if (visitDepthFirst(**IM, Visitor, UserData, Visited))
+      return true;
+  }  
+
+  // Postorder visitation
+  return Visitor(M, /*Preorder=*/false, UserData);
+}
+
+void ModuleManager::visitDepthFirst(bool (*Visitor)(Module &M, bool Preorder, 
+                                                    void *UserData), 
+                                    void *UserData) {
+  llvm::SmallPtrSet<Module *, 4> Visited;
+  for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
+    if (!Visited.insert(Chain[I]))
+      continue;
+
+    if (::visitDepthFirst(*Chain[I], Visitor, UserData, Visited))
+      return;
   }
 }

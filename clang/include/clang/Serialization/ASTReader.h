@@ -552,6 +552,26 @@ public:
   /// \param UserData User data associated with the visitor object, which
   /// will be passed along to the visitor.
   void visit(bool (*Visitor)(Module &M, void *UserData), void *UserData);
+
+  /// \brief Visit each of the modules with a depth-first traversal.
+  ///
+  /// This routine visits each of the modules known to the module
+  /// manager using a depth-first search, starting with the first
+  /// loaded module. The traversal invokes the callback both before
+  /// traversing the children (preorder traversal) and after
+  /// traversing the children (postorder traversal).
+  ///
+  /// \param Visitor A visitor function that will be invoked with each
+  /// module and given a \c Preorder flag that indicates whether we're
+  /// visiting the module before or after visiting its children.  The
+  /// visitor may return true at any time to abort the depth-first
+  /// visitation.
+  ///
+  /// \param UserData User data ssociated with the visitor object,
+  /// which will be passed along to the user.
+  void visitDepthFirst(bool (*Visitor)(Module &M, bool Preorder, 
+                                       void *UserData), 
+                       void *UserData);
 };
 
 } // end namespace serialization
