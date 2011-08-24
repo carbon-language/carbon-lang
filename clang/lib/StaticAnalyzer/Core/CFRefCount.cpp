@@ -2700,6 +2700,9 @@ public:
       return false;
     case LangOptions::GCOnly:
       return true;
+    default:
+      llvm_unreachable("Invalid/unknown GC mode.");
+      return false;
     }
   }
 
