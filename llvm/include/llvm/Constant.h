@@ -52,6 +52,10 @@ public:
   /// getNullValue.
   bool isNullValue() const;
 
+  /// isAllOnesValue - Return true if this is the value that would be returned by
+  /// getAllOnesValue.
+  bool isAllOnesValue() const;
+
   /// isNegativeZeroValue - Return true if the value is what would be returned 
   /// by getZeroValueForNegation.
   bool isNegativeZeroValue() const;

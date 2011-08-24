@@ -170,7 +170,7 @@ public:
   /// to true.
   /// @returns true iff this constant's bits are all set to true.
   /// @brief Determine if the value is all ones.
-  bool isAllOnesValue() const { 
+  bool isMinusOne() const { 
     return Val.isAllOnesValue();
   }
 

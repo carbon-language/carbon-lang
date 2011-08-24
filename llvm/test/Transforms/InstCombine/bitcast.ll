@@ -11,7 +11,7 @@ define i32 @test1(i64 %a) {
         %t3 = xor <2 x i32> %t1, %t2
         %t4 = extractelement <2 x i32> %t3, i32 0
         ret i32 %t4
-
+        
 ; CHECK: @test1
 ; CHECK: ret i32 0
 }
@@ -30,7 +30,7 @@ define float @test2(<2 x float> %A, <2 x i32> %B) {
 
   %add = fadd float %tmp24, %tmp4
   ret float %add
-
+  
 ; CHECK: @test2
 ; CHECK-NEXT:  %tmp24 = extractelement <2 x float> %A, i32 0
 ; CHECK-NEXT:  bitcast <2 x i32> %B to <2 x float>
@@ -55,7 +55,7 @@ define float @test3(<2 x float> %A, <2 x i64> %B) {
 
   %add = fadd float %tmp24, %tmp4
   ret float %add
-
+  
 ; CHECK: @test3
 ; CHECK-NEXT:  %tmp24 = extractelement <2 x float> %A, i32 1
 ; CHECK-NEXT:  bitcast <2 x i64> %B to <4 x float>
@@ -75,7 +75,7 @@ define <2 x i32> @test4(i32 %A, i32 %B){
   ; CHECK: @test4
   ; CHECK-NEXT: insertelement <2 x i32> undef, i32 %A, i32 0
   ; CHECK-NEXT: insertelement <2 x i32> {{.*}}, i32 %B, i32 1
-  ; CHECK-NEXT: ret <2 x i32>
+  ; CHECK-NEXT: ret <2 x i32> 
 
 }
 
@@ -92,7 +92,7 @@ define <2 x float> @test5(float %A, float %B) {
   ; CHECK: @test5
   ; CHECK-NEXT: insertelement <2 x float> undef, float %A, i32 0
   ; CHECK-NEXT: insertelement <2 x float> {{.*}}, float %B, i32 1
-  ; CHECK-NEXT: ret <2 x float>
+  ; CHECK-NEXT: ret <2 x float> 
 }
 
 define <2 x float> @test6(float %A){
@@ -113,3 +113,27 @@ define i64 @ISPC0(i64 %in) {
 ; CHECK: @ISPC0
 ; CHECK: ret i64 0
 }
+
+
+define i64 @Vec2(i64 %in) {
+  %out = and i64 %in, xor (i64 bitcast (<4 x i16> <i16 0, i16 0, i16 0, i16 0> to i64), i64 0)
+  ret i64 %out
+; CHECK: @Vec2
+; CHECK: ret i64 0
+}
+
+define i64 @All11(i64 %in) {
+  %out = and i64 %in, xor (i64 bitcast (<2 x float> bitcast (i64 -1 to <2 x float>) to i64), i64 -1) 
+  ret i64 %out
+; CHECK: @All11
+; CHECK: ret i64 0
+}
+
+
+define i32 @All111(i32 %in) {
+  %out = and i32 %in, xor (i32 bitcast (<1 x float> bitcast (i32 -1 to <1 x float>) to i32), i32 -1) 
+  ret i32 %out
+; CHECK: @All111
+; CHECK: ret i32 0
+}
+
