@@ -726,9 +726,10 @@ def tLDMIA_UPD :
 
 // There is no non-writeback version of STM for Thumb.
 let mayStore = 1, hasExtraSrcRegAllocReq = 1 in
-def tSTMIA_UPD : T1I<(outs),
-                     (ins tGPR:$Rn, pred:$p, reglist:$regs, variable_ops),
-                     IIC_iStore_mu, "stm${p}\t$Rn!, $regs", []>,
+def tSTMIA_UPD : Thumb1I<(outs GPR:$wb),
+                         (ins tGPR:$Rn, pred:$p, reglist:$regs, variable_ops),
+                         AddrModeNone, 2, IIC_iStore_mu,
+                         "stm${p}\t$Rn!, $regs", "$Rn = $wb", []>,
                      T1Encoding<{1,1,0,0,0,?}> {
   bits<3> Rn;
   bits<8> regs;

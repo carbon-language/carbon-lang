@@ -3152,7 +3152,7 @@ validateInstruction(MCInst &Inst,
   }
   case ARM::tSTMIA_UPD: {
     bool listContainsBase;
-    if (checkLowRegisterList(Inst, 3, 0, 0, listContainsBase))
+    if (checkLowRegisterList(Inst, 4, 0, 0, listContainsBase))
       return Error(Operands[4]->getStartLoc(),
                    "registers must be in range r0-r7");
     break;
