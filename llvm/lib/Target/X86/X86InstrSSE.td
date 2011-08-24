@@ -1649,6 +1649,103 @@ let AddedComplexity = 10 in {
   } // Constraints = "$src1 = $dst"
 } // AddedComplexity
 
+let Predicates = [HasSSE1] in {
+  def : Pat<(v4f32 (X86Unpcklps VR128:$src1, (memopv4f32 addr:$src2))),
+            (UNPCKLPSrm VR128:$src1, addr:$src2)>;
+  def : Pat<(v4f32 (X86Unpcklps VR128:$src1, VR128:$src2)),
+            (UNPCKLPSrr VR128:$src1, VR128:$src2)>;
+  def : Pat<(v4f32 (X86Unpckhps VR128:$src1, (memopv4f32 addr:$src2))),
+            (UNPCKHPSrm VR128:$src1, addr:$src2)>;
+  def : Pat<(v4f32 (X86Unpckhps VR128:$src1, VR128:$src2)),
+            (UNPCKHPSrr VR128:$src1, VR128:$src2)>;
+}
+
+let Predicates = [HasSSE2] in {
+  def : Pat<(v2f64 (X86Unpcklpd VR128:$src1, (memopv2f64 addr:$src2))),
+            (UNPCKLPDrm VR128:$src1, addr:$src2)>;
+  def : Pat<(v2f64 (X86Unpcklpd VR128:$src1, VR128:$src2)),
+            (UNPCKLPDrr VR128:$src1, VR128:$src2)>;
+  def : Pat<(v2f64 (X86Unpckhpd VR128:$src1, (memopv2f64 addr:$src2))),
+            (UNPCKHPDrm VR128:$src1, addr:$src2)>;
+  def : Pat<(v2f64 (X86Unpckhpd VR128:$src1, VR128:$src2)),
+            (UNPCKHPDrr VR128:$src1, VR128:$src2)>;
+
+  // FIXME: Instead of X86Movddup, there should be a X86Unpcklpd here, the
+  // problem is during lowering, where it's not possible to recognize the load
+  // fold cause it has two uses through a bitcast. One use disappears at isel
+  // time and the fold opportunity reappears.
+  def : Pat<(v2f64 (X86Movddup VR128:$src)),
+            (UNPCKLPDrr VR128:$src, VR128:$src)>;
+
+  let AddedComplexity = 10 in
+  def : Pat<(splat_lo (v2f64 VR128:$src), (undef)),
+            (UNPCKLPDrr VR128:$src, VR128:$src)>;
+}
+
+let Predicates = [HasAVX] in {
+  def : Pat<(v4f32 (X86Unpcklps VR128:$src1, (memopv4f32 addr:$src2))),
+            (VUNPCKLPSrm VR128:$src1, addr:$src2)>;
+  def : Pat<(v4f32 (X86Unpcklps VR128:$src1, VR128:$src2)),
+            (VUNPCKLPSrr VR128:$src1, VR128:$src2)>;
+  def : Pat<(v4f32 (X86Unpckhps VR128:$src1, (memopv4f32 addr:$src2))),
+            (VUNPCKHPSrm VR128:$src1, addr:$src2)>;
+  def : Pat<(v4f32 (X86Unpckhps VR128:$src1, VR128:$src2)),
+            (VUNPCKHPSrr VR128:$src1, VR128:$src2)>;
+
+  def : Pat<(v8f32 (X86Unpcklpsy VR256:$src1, (memopv8f32 addr:$src2))),
+            (VUNPCKLPSYrm VR256:$src1, addr:$src2)>;
+  def : Pat<(v8f32 (X86Unpcklpsy VR256:$src1, VR256:$src2)),
+            (VUNPCKLPSYrr VR256:$src1, VR256:$src2)>;
+  def : Pat<(v8i32 (X86Unpcklpsy VR256:$src1, VR256:$src2)),
+            (VUNPCKLPSYrr VR256:$src1, VR256:$src2)>;
+  def : Pat<(v8i32 (X86Unpcklpsy VR256:$src1, (memopv8i32 addr:$src2))),
+            (VUNPCKLPSYrm VR256:$src1, addr:$src2)>;
+  def : Pat<(v8f32 (X86Unpckhpsy VR256:$src1, (memopv8f32 addr:$src2))),
+            (VUNPCKHPSYrm VR256:$src1, addr:$src2)>;
+  def : Pat<(v8f32 (X86Unpckhpsy VR256:$src1, VR256:$src2)),
+            (VUNPCKHPSYrr VR256:$src1, VR256:$src2)>;
+  def : Pat<(v8i32 (X86Unpckhpsy VR256:$src1, (memopv8i32 addr:$src2))),
+            (VUNPCKHPSYrm VR256:$src1, addr:$src2)>;
+  def : Pat<(v8i32 (X86Unpckhpsy VR256:$src1, VR256:$src2)),
+            (VUNPCKHPSYrr VR256:$src1, VR256:$src2)>;
+
+  def : Pat<(v2f64 (X86Unpcklpd VR128:$src1, (memopv2f64 addr:$src2))),
+            (VUNPCKLPDrm VR128:$src1, addr:$src2)>;
+  def : Pat<(v2f64 (X86Unpcklpd VR128:$src1, VR128:$src2)),
+            (VUNPCKLPDrr VR128:$src1, VR128:$src2)>;
+  def : Pat<(v2f64 (X86Unpckhpd VR128:$src1, (memopv2f64 addr:$src2))),
+            (VUNPCKHPDrm VR128:$src1, addr:$src2)>;
+  def : Pat<(v2f64 (X86Unpckhpd VR128:$src1, VR128:$src2)),
+            (VUNPCKHPDrr VR128:$src1, VR128:$src2)>;
+
+  def : Pat<(v4f64 (X86Unpcklpdy VR256:$src1, (memopv4f64 addr:$src2))),
+            (VUNPCKLPDYrm VR256:$src1, addr:$src2)>;
+  def : Pat<(v4f64 (X86Unpcklpdy VR256:$src1, VR256:$src2)),
+            (VUNPCKLPDYrr VR256:$src1, VR256:$src2)>;
+  def : Pat<(v4i64 (X86Unpcklpdy VR256:$src1, (memopv4i64 addr:$src2))),
+            (VUNPCKLPDYrm VR256:$src1, addr:$src2)>;
+  def : Pat<(v4i64 (X86Unpcklpdy VR256:$src1, VR256:$src2)),
+            (VUNPCKLPDYrr VR256:$src1, VR256:$src2)>;
+  def : Pat<(v4f64 (X86Unpckhpdy VR256:$src1, (memopv4f64 addr:$src2))),
+            (VUNPCKHPDYrm VR256:$src1, addr:$src2)>;
+  def : Pat<(v4f64 (X86Unpckhpdy VR256:$src1, VR256:$src2)),
+            (VUNPCKHPDYrr VR256:$src1, VR256:$src2)>;
+  def : Pat<(v4i64 (X86Unpckhpdy VR256:$src1, (memopv4i64 addr:$src2))),
+            (VUNPCKHPDYrm VR256:$src1, addr:$src2)>;
+  def : Pat<(v4i64 (X86Unpckhpdy VR256:$src1, VR256:$src2)),
+            (VUNPCKHPDYrr VR256:$src1, VR256:$src2)>;
+
+  // FIXME: Instead of X86Movddup, there should be a X86Unpcklpd here, the
+  // problem is during lowering, where it's not possible to recognize the load
+  // fold cause it has two uses through a bitcast. One use disappears at isel
+  // time and the fold opportunity reappears.
+  def : Pat<(v2f64 (X86Movddup VR128:$src)),
+            (VUNPCKLPDrr VR128:$src, VR128:$src)>;
+  let AddedComplexity = 10 in
+  def : Pat<(splat_lo (v2f64 VR128:$src), (undef)),
+            (VUNPCKLPDrr VR128:$src, VR128:$src)>;
+}
+
 //===----------------------------------------------------------------------===//
 // SSE 1 & 2 - Extract Floating-Point Sign mask
 //===----------------------------------------------------------------------===//
@@ -4244,8 +4341,6 @@ def : Pat<(v4i32 (X86vzmovl (v4i32 VR128:$src))),
 
 // Splat v2f64 / v2i64
 let AddedComplexity = 10 in {
-def : Pat<(splat_lo (v2f64 VR128:$src), (undef)),
-          (UNPCKLPDrr VR128:$src, VR128:$src)>,   Requires<[HasSSE2]>;
 def : Pat<(splat_lo (v2i64 VR128:$src), (undef)),
           (PUNPCKLQDQrr VR128:$src, VR128:$src)>, Requires<[HasSSE2]>;
 }
@@ -6054,101 +6149,6 @@ def VZEROUPPER : I<0x77, RawFrm, (outs), (ins), "vzeroupper",
 // directly matched by the patterns below (which can be changed along the way)
 // The AVX version of some but not all of them are described here, and more
 // should come in a near future.
-
-
-
-// Shuffle with UNPCKLPS
-def : Pat<(v4f32 (X86Unpcklps VR128:$src1, (memopv4f32 addr:$src2))),
-          (VUNPCKLPSrm VR128:$src1, addr:$src2)>, Requires<[HasAVX]>;
-def : Pat<(v4f32 (X86Unpcklps VR128:$src1, (memopv4f32 addr:$src2))),
-          (UNPCKLPSrm VR128:$src1, addr:$src2)>;
-
-def : Pat<(v4f32 (X86Unpcklps VR128:$src1, VR128:$src2)),
-          (VUNPCKLPSrr VR128:$src1, VR128:$src2)>, Requires<[HasAVX]>;
-def : Pat<(v4f32 (X86Unpcklps VR128:$src1, VR128:$src2)),
-          (UNPCKLPSrr VR128:$src1, VR128:$src2)>;
-
-// Shuffle with VUNPCKHPSY
-def : Pat<(v8f32 (X86Unpcklpsy VR256:$src1, (memopv8f32 addr:$src2))),
-          (VUNPCKLPSYrm VR256:$src1, addr:$src2)>, Requires<[HasAVX]>;
-def : Pat<(v8f32 (X86Unpcklpsy VR256:$src1, VR256:$src2)),
-          (VUNPCKLPSYrr VR256:$src1, VR256:$src2)>, Requires<[HasAVX]>;
-def : Pat<(v8i32 (X86Unpcklpsy VR256:$src1, VR256:$src2)),
-          (VUNPCKLPSYrr VR256:$src1, VR256:$src2)>, Requires<[HasAVX]>;
-def : Pat<(v8i32 (X86Unpcklpsy VR256:$src1, (memopv8i32 addr:$src2))),
-          (VUNPCKLPSYrm VR256:$src1, addr:$src2)>, Requires<[HasAVX]>;
-
-// Shuffle with UNPCKHPS
-def : Pat<(v4f32 (X86Unpckhps VR128:$src1, (memopv4f32 addr:$src2))),
-          (VUNPCKHPSrm VR128:$src1, addr:$src2)>, Requires<[HasAVX]>;
-def : Pat<(v4f32 (X86Unpckhps VR128:$src1, (memopv4f32 addr:$src2))),
-          (UNPCKHPSrm VR128:$src1, addr:$src2)>;
-
-def : Pat<(v4f32 (X86Unpckhps VR128:$src1, VR128:$src2)),
-          (VUNPCKHPSrr VR128:$src1, VR128:$src2)>, Requires<[HasAVX]>;
-def : Pat<(v4f32 (X86Unpckhps VR128:$src1, VR128:$src2)),
-          (UNPCKHPSrr VR128:$src1, VR128:$src2)>;
-
-// Shuffle with VUNPCKHPSY
-def : Pat<(v8f32 (X86Unpckhpsy VR256:$src1, (memopv8f32 addr:$src2))),
-          (VUNPCKHPSYrm VR256:$src1, addr:$src2)>, Requires<[HasAVX]>;
-def : Pat<(v8f32 (X86Unpckhpsy VR256:$src1, VR256:$src2)),
-          (VUNPCKHPSYrr VR256:$src1, VR256:$src2)>, Requires<[HasAVX]>;
-
-def : Pat<(v8i32 (X86Unpckhpsy VR256:$src1, (memopv8i32 addr:$src2))),
-          (VUNPCKHPSYrm VR256:$src1, addr:$src2)>, Requires<[HasAVX]>;
-def : Pat<(v8i32 (X86Unpckhpsy VR256:$src1, VR256:$src2)),
-          (VUNPCKHPSYrr VR256:$src1, VR256:$src2)>, Requires<[HasAVX]>;
-
-// Shuffle with UNPCKLPD
-def : Pat<(v2f64 (X86Unpcklpd VR128:$src1, (memopv2f64 addr:$src2))),
-          (VUNPCKLPDrm VR128:$src1, addr:$src2)>, Requires<[HasAVX]>;
-def : Pat<(v2f64 (X86Unpcklpd VR128:$src1, (memopv2f64 addr:$src2))),
-          (UNPCKLPDrm VR128:$src1, addr:$src2)>;
-
-def : Pat<(v2f64 (X86Unpcklpd VR128:$src1, VR128:$src2)),
-          (VUNPCKLPDrr VR128:$src1, VR128:$src2)>, Requires<[HasAVX]>;
-def : Pat<(v2f64 (X86Unpcklpd VR128:$src1, VR128:$src2)),
-          (UNPCKLPDrr VR128:$src1, VR128:$src2)>;
-
-// Shuffle with VUNPCKLPDY
-def : Pat<(v4f64 (X86Unpcklpdy VR256:$src1, (memopv4f64 addr:$src2))),
-          (VUNPCKLPDYrm VR256:$src1, addr:$src2)>, Requires<[HasAVX]>;
-def : Pat<(v4f64 (X86Unpcklpdy VR256:$src1, VR256:$src2)),
-          (VUNPCKLPDYrr VR256:$src1, VR256:$src2)>, Requires<[HasAVX]>;
-
-def : Pat<(v4i64 (X86Unpcklpdy VR256:$src1, (memopv4i64 addr:$src2))),
-          (VUNPCKLPDYrm VR256:$src1, addr:$src2)>, Requires<[HasAVX]>;
-def : Pat<(v4i64 (X86Unpcklpdy VR256:$src1, VR256:$src2)),
-          (VUNPCKLPDYrr VR256:$src1, VR256:$src2)>, Requires<[HasAVX]>;
-
-// Shuffle with UNPCKHPD
-def : Pat<(v2f64 (X86Unpckhpd VR128:$src1, (memopv2f64 addr:$src2))),
-          (VUNPCKHPDrm VR128:$src1, addr:$src2)>, Requires<[HasAVX]>;
-def : Pat<(v2f64 (X86Unpckhpd VR128:$src1, (memopv2f64 addr:$src2))),
-          (UNPCKHPDrm VR128:$src1, addr:$src2)>;
-
-def : Pat<(v2f64 (X86Unpckhpd VR128:$src1, VR128:$src2)),
-          (VUNPCKHPDrr VR128:$src1, VR128:$src2)>, Requires<[HasAVX]>;
-def : Pat<(v2f64 (X86Unpckhpd VR128:$src1, VR128:$src2)),
-          (UNPCKHPDrr VR128:$src1, VR128:$src2)>;
-
-// Shuffle with VUNPCKHPDY
-def : Pat<(v4f64 (X86Unpckhpdy VR256:$src1, (memopv4f64 addr:$src2))),
-          (VUNPCKHPDYrm VR256:$src1, addr:$src2)>, Requires<[HasAVX]>;
-def : Pat<(v4f64 (X86Unpckhpdy VR256:$src1, VR256:$src2)),
-          (VUNPCKHPDYrr VR256:$src1, VR256:$src2)>, Requires<[HasAVX]>;
-def : Pat<(v4i64 (X86Unpckhpdy VR256:$src1, (memopv4i64 addr:$src2))),
-          (VUNPCKHPDYrm VR256:$src1, addr:$src2)>, Requires<[HasAVX]>;
-def : Pat<(v4i64 (X86Unpckhpdy VR256:$src1, VR256:$src2)),
-          (VUNPCKHPDYrr VR256:$src1, VR256:$src2)>, Requires<[HasAVX]>;
-
-// FIXME: Instead of X86Movddup, there should be a X86Unpcklpd here, the problem
-// is during lowering, where it's not possible to recognize the load fold cause
-// it has two uses through a bitcast. One use disappears at isel time and the
-// fold opportunity reappears.
-def : Pat<(v2f64 (X86Movddup VR128:$src)),
-          (UNPCKLPDrr VR128:$src, VR128:$src)>;
 
 // Shuffle with MOVLHPD
 def : Pat<(v2f64 (X86Movlhpd VR128:$src1,
