@@ -468,6 +468,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   }
 
   if (!Subtarget->is64Bit()) {
+    setOperationAction(ISD::ATOMIC_LOAD, MVT::i64, Custom);
     setOperationAction(ISD::ATOMIC_LOAD_ADD, MVT::i64, Custom);
     setOperationAction(ISD::ATOMIC_LOAD_SUB, MVT::i64, Custom);
     setOperationAction(ISD::ATOMIC_LOAD_AND, MVT::i64, Custom);
@@ -10003,15 +10004,20 @@ SDValue X86TargetLowering::LowerLOAD_SUB(SDValue Op, SelectionDAG &DAG) const {
 static SDValue LowerATOMIC_STORE(SDValue Op, SelectionDAG &DAG) {
   SDNode *Node = Op.getNode();
   DebugLoc dl = Node->getDebugLoc();
+  EVT VT = cast<AtomicSDNode>(Node)->getMemoryVT();
 
   // Convert seq_cst store -> xchg
-  if (cast<AtomicSDNode>(Node)->getOrdering() == SequentiallyConsistent) {
+  // Convert wide store -> swap (-> cmpxchg8b/cmpxchg16b)
+  // FIXME: On 32-bit, store -> fist or movq would be more efficient
+  //        (The only way to get a 16-byte store is cmpxchg16b)
+  // FIXME: 16-byte ATOMIC_SWAP isn't actually hooked up at the moment.
+  if (cast<AtomicSDNode>(Node)->getOrdering() == SequentiallyConsistent ||
+      !DAG.getTargetLoweringInfo().isTypeLegal(VT)) {
     SDValue Swap = DAG.getAtomic(ISD::ATOMIC_SWAP, dl,
                                  cast<AtomicSDNode>(Node)->getMemoryVT(),
                                  Node->getOperand(0),
                                  Node->getOperand(1), Node->getOperand(2),
-                                 cast<AtomicSDNode>(Node)->getSrcValue(),
-                                 cast<AtomicSDNode>(Node)->getAlignment(),
+                                 cast<AtomicSDNode>(Node)->getMemOperand(),
                                  cast<AtomicSDNode>(Node)->getOrdering(),
                                  cast<AtomicSDNode>(Node)->getSynchScope());
     return Swap.getValue(1);
@@ -10119,6 +10125,28 @@ SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::ADD:                return LowerADD(Op, DAG);
   case ISD::SUB:                return LowerSUB(Op, DAG);
   }
+}
+
+static void ReplaceATOMIC_LOAD(SDNode *Node,
+                                  SmallVectorImpl<SDValue> &Results,
+                                  SelectionDAG &DAG) {
+  DebugLoc dl = Node->getDebugLoc();
+  EVT VT = cast<AtomicSDNode>(Node)->getMemoryVT();
+
+  // Convert wide load -> cmpxchg8b/cmpxchg16b
+  // FIXME: On 32-bit, load -> fild or movq would be more efficient
+  //        (The only way to get a 16-byte load is cmpxchg16b)
+  // FIXME: 16-byte ATOMIC_CMP_SWAP isn't actually hooked up at the moment.
+  SDValue Zero = DAG.getConstant(0, cast<AtomicSDNode>(Node)->getMemoryVT());
+  SDValue Swap = DAG.getAtomic(ISD::ATOMIC_CMP_SWAP, dl,
+                               cast<AtomicSDNode>(Node)->getMemoryVT(),
+                               Node->getOperand(0),
+                               Node->getOperand(1), Zero, Zero,
+                               cast<AtomicSDNode>(Node)->getMemOperand(),
+                               cast<AtomicSDNode>(Node)->getOrdering(),
+                               cast<AtomicSDNode>(Node)->getSynchScope());
+  Results.push_back(Swap.getValue(0));
+  Results.push_back(Swap.getValue(1));
 }
 
 void X86TargetLowering::
@@ -10244,6 +10272,8 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
   case ISD::ATOMIC_SWAP:
     ReplaceATOMIC_BINARY_64(N, Results, DAG, X86ISD::ATOMSWAP64_DAG);
     return;
+  case ISD::ATOMIC_LOAD:
+    ReplaceATOMIC_LOAD(N, Results, DAG);
   }
 }
 
