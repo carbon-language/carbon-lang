@@ -493,8 +493,10 @@ void VerifyDiagnosticsClient::CheckDiagnostics() {
     if (!FirstErrorFID.isInvalid() && FirstErrorFID != SM.getMainFileID()
         && (!SM.getFileEntryForID(FirstErrorFID)
             || (SM.getFileEntryForID(FirstErrorFID) !=
-                SM.getFileEntryForID(SM.getMainFileID()))))
+                SM.getFileEntryForID(SM.getMainFileID())))) {
       FindExpectedDiags(*CurrentPreprocessor, ED, FirstErrorFID);
+      FirstErrorFID = FileID();
+    }
 
     // Check that the expected diagnostics occurred.
     NumErrors += CheckResults(Diags, SM, *Buffer, ED);
