@@ -62,7 +62,7 @@ public:
   void checkEndPath(EndOfFunctionNodeBuilder &B, ExprEngine &Eng) const;
 
 private:
-  typedef std::pair<SymbolRef, const AllocationState&> AllocationPair;
+  typedef std::pair<SymbolRef, const AllocationState*> AllocationPair;
   typedef llvm::SmallVector<AllocationPair, 2> AllocationPairVec;
 
   enum APIKind {
@@ -504,7 +504,7 @@ void MacOSKeychainAPIChecker::checkPreStmt(const ReturnStmt *S,
 BugReport *MacOSKeychainAPIChecker::
   generateAllocatedDataNotReleasedReport(const AllocationPair &AP,
                                          ExplodedNode *N) const {
-  const ADFunctionInfo &FI = FunctionsToTrack[AP.second.AllocatorIdx];
+  const ADFunctionInfo &FI = FunctionsToTrack[AP.second->AllocatorIdx];
   initBugType();
   llvm::SmallString<70> sbuf;
   llvm::raw_svector_ostream os(sbuf);
@@ -537,7 +537,7 @@ void MacOSKeychainAPIChecker::checkDeadSymbols(SymbolReaper &SR,
     if (State->getSymVal(I->first) ||
         definitelyReturnedError(I->second.RetValue, State, C.getSValBuilder()))
       continue;
-    Errors.push_back(std::make_pair(I->first, I->second));
+    Errors.push_back(std::make_pair(I->first, &I->second));
   }
   if (!Changed)
     return;
@@ -576,7 +576,7 @@ void MacOSKeychainAPIChecker::checkEndPath(EndOfFunctionNodeBuilder &B,
                                 Eng.getSValBuilder())) {
       continue;
     }
-    Errors.push_back(std::make_pair(I->first, I->second));
+    Errors.push_back(std::make_pair(I->first, &I->second));
   }
 
   // If no change, do not generate a new state.
