@@ -2632,8 +2632,11 @@ class RetainReleaseChecker
   mutable SummaryLogTy SummaryLog;
   mutable bool ShouldResetSummaryLog;
 
+  LangOptions::GCMode GCMode;
+
 public:  
-  RetainReleaseChecker() : ShouldResetSummaryLog(false) {}
+  RetainReleaseChecker()
+  : ShouldResetSummaryLog(false), GCMode(LangOptions::HybridGC) {}
 
   virtual ~RetainReleaseChecker() {
     DeleteContainerSeconds(DeadSymbolTags);
@@ -2673,6 +2676,30 @@ public:
       SummaryLog.clear();
 
     ShouldResetSummaryLog = !SummaryLog.empty();
+  }
+
+  void setGCMode(LangOptions::GCMode newGC) {
+    // FIXME: This is definitely not const behavior; its intended use is to
+    // set the GC mode for the entire coming code body. This setting will
+    // most likely live somewhere else in the future.
+    assert(newGC != LangOptions::HybridGC && "Analysis requires GC on or off.");
+    GCMode = newGC;
+  }
+
+  bool isGCEnabled() const {
+    switch (GCMode) {
+    case LangOptions::HybridGC:
+      llvm_unreachable("GC mode not set yet!");
+      return true;
+    case LangOptions::NonGC:
+      return false;
+    case LangOptions::GCOnly:
+      return true;
+    }
+  }
+
+  bool isARCorGCEnabled(ASTContext &Ctx) const {
+    return isGCEnabled() || Ctx.getLangOptions().ObjCAutoRefCount;
   }
 
   void checkBind(SVal loc, SVal val, CheckerContext &C) const;
@@ -3109,23 +3136,19 @@ const ProgramState *
 RetainReleaseChecker::updateSymbol(const ProgramState *state, SymbolRef sym,
                                    RefVal V, ArgEffect E,
                                    RefVal::Kind &hasErr) const {
-  // FIXME: This will go away when the ARC/GC state moves to the checker.
-  ExprEngine *Eng = 
-    static_cast<ExprEngine*>(state->getStateManager().getOwningEngine());
-  CFRefCount &TF = static_cast<CFRefCount&>(Eng->getTF());
-
   // In GC mode [... release] and [... retain] do nothing.
+  ASTContext &Ctx = state->getStateManager().getContext();
   switch (E) {
     default: break;
-    case IncRefMsg: E = TF.isARCorGCEnabled() ? DoNothing : IncRef; break;
-    case DecRefMsg: E = TF.isARCorGCEnabled() ? DoNothing : DecRef; break;
-    case MakeCollectable: E = TF.isGCEnabled() ? DecRef : DoNothing; break;
-    case NewAutoreleasePool: E = TF.isGCEnabled() ? DoNothing :
-                                                    NewAutoreleasePool; break;
+    case IncRefMsg: E = isARCorGCEnabled(Ctx) ? DoNothing : IncRef; break;
+    case DecRefMsg: E = isARCorGCEnabled(Ctx) ? DoNothing : DecRef; break;
+    case MakeCollectable: E = isGCEnabled() ? DecRef : DoNothing; break;
+    case NewAutoreleasePool: E = isGCEnabled() ? DoNothing :
+                                                 NewAutoreleasePool; break;
   }
 
   // Handle all use-after-releases.
-  if (!TF.isGCEnabled() && V.getKind() == RefVal::Released) {
+  if (!isGCEnabled() && V.getKind() == RefVal::Released) {
     V = V ^ RefVal::ErrorUseAfterRelease;
     hasErr = V.getKind();
     return state->set<RefBindings>(sym, V);
@@ -3140,7 +3163,7 @@ RetainReleaseChecker::updateSymbol(const ProgramState *state, SymbolRef sym,
 
     case Dealloc:
       // Any use of -dealloc in GC is *bad*.
-      if (TF.isGCEnabled()) {
+      if (isGCEnabled()) {
         V = V ^ RefVal::ErrorDeallocGC;
         hasErr = V.getKind();
         break;
@@ -3163,7 +3186,7 @@ RetainReleaseChecker::updateSymbol(const ProgramState *state, SymbolRef sym,
       break;
 
     case NewAutoreleasePool:
-      assert(!TF.isGCEnabled());
+      assert(!isGCEnabled());
       return state->add<AutoreleaseStack>(sym);
 
     case MayEscape:
@@ -3178,7 +3201,7 @@ RetainReleaseChecker::updateSymbol(const ProgramState *state, SymbolRef sym,
       return state;
 
     case Autorelease:
-      if (TF.isGCEnabled())
+      if (isGCEnabled())
         return state;
 
       // Update the autorelease counts.
@@ -3200,7 +3223,7 @@ RetainReleaseChecker::updateSymbol(const ProgramState *state, SymbolRef sym,
           break;
         case RefVal::Released:
           // Non-GC cases are handled above.
-          assert(TF.isGCEnabled());
+          assert(isGCEnabled());
           V = (V ^ RefVal::Owned) + 1;
           break;
       }
@@ -3236,7 +3259,7 @@ RetainReleaseChecker::updateSymbol(const ProgramState *state, SymbolRef sym,
 
         case RefVal::Released:
           // Non-GC cases are handled above.
-          assert(TF.isGCEnabled());
+          assert(isGCEnabled());
           V = V ^ RefVal::ErrorUseAfterRelease;
           hasErr = V.getKind();
           break;
@@ -3472,7 +3495,7 @@ void RetainReleaseChecker::checkReturnWithRetEffect(const ReturnStmt *S,
   if (X.isReturnedOwned() && X.getCount() == 0) {
     if (RE.getKind() != RetEffect::NoRet) {
       bool hasError = false;
-      if (TF.isGCEnabled() && RE.getObjKind() == RetEffect::ObjC) {
+      if (isGCEnabled() && RE.getObjKind() == RetEffect::ObjC) {
         // Things are more complicated with garbage collection.  If the
         // returned object is suppose to be an Objective-C object, we have
         // a leak (as the caller expects a GC'ed object) because no
@@ -3548,7 +3571,7 @@ RetainReleaseChecker::handleAutoreleaseCounts(const ProgramState *state,
   if (!ACnt)
     return std::make_pair(Pred, state);
 
-  assert(!TF.isGCEnabled() && "Autorelease counts in GC mode?");
+  assert(!isGCEnabled() && "Autorelease counts in GC mode?");
   unsigned Cnt = V.getCount();
 
   // FIXME: Handle sending 'autorelease' to already released object.
@@ -3800,7 +3823,10 @@ void CFRefCount::RegisterChecks(ExprEngine& Eng) {
   // over time.
   // FIXME: HACK! Remove TransferFuncs and turn all of CFRefCount into fully
   // using the checker mechanism.
-  Eng.getCheckerManager().registerChecker<RetainReleaseChecker>();
+  RetainReleaseChecker *checker = 
+    Eng.getCheckerManager().registerChecker<RetainReleaseChecker>();
+  assert(checker);
+  checker->setGCMode(isGCEnabled() ? LangOptions::GCOnly : LangOptions::NonGC);
 }
 
 TransferFuncs* ento::MakeCFRefCountTF(ASTContext &Ctx, bool GCEnabled,
