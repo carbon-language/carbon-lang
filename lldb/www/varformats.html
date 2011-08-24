@@ -719,15 +719,23 @@
                             <b>(lldb)</b> type summary add --summary-string "${var%s}" "char *"
                         </td>
                 <table>
-                
-                This works for <code>char*</code> and <code>char[]</code> objects, and uses the
-                <code>\0</code> terminator
-                when possible to terminate the string, instead of relying on array length.
-                
-				</li>            </ul>
+                <p>
+				This syntax works for <code>char*</code> as well as for <code>char[]</code> 
+				because LLDB can rely on the final <code>\0</code> terminator to know when the string
+				has ended.</p>
+                LLDB has default summary strings for <code>char*</code> and <code>char[]</code> that use
+				this special case. On debugger startup, the following are defined automatically:
+				<table class="stats" width="620" cellspacing="0">
+                        <td class="content">
+                            <b>(lldb)</b> type summary add --summary-string "${var%s}" "char *"<br/>
+                            <b>(lldb)</b> type summary add --summary-string "${var%s}" -x "char \[[0-9]+]"<br/>
+                        </td>
+                <table>
+				</li>
+			</ul>
             <ul>
 
-				<li>anyone of the array formats (<code>int8_t[]</code>,
+				<li>any of the array formats (<code>int8_t[]</code>,
 				<code>float32{}</code>, ...), and the <code>y</code>, <code>Y</code>
 				and <code>a</code> formats
 				work to print an array of a non-aggregate
