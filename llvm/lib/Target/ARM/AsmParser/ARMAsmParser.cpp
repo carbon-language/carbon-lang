@@ -2923,9 +2923,13 @@ bool ARMAsmParser::shouldOmitCCOutOperand(StringRef Mnemonic,
       static_cast<ARMOperand*>(Operands[4])->getReg() == ARM::SP &&
       static_cast<ARMOperand*>(Operands[1])->getReg() == 0)
     return true;
-  // Register-register 'add' for thumb does not have a cc_out operand
-  // when it's an ADD SP, #imm.
-  if (isThumb() && Mnemonic == "add" && Operands.size() == 5 &&
+  // Register-register 'add/sub' for thumb does not have a cc_out operand
+  // when it's an ADD/SUB SP, #imm. Be lenient on count since there's also
+  // the "add/sub SP, SP, #imm" version. If the follow-up operands aren't
+  // right, this will result in better diagnostics (which operand is off)
+  // anyway.
+  if (isThumb() && (Mnemonic == "add" || Mnemonic == "sub") &&
+      (Operands.size() == 5 || Operands.size() == 6) &&
       static_cast<ARMOperand*>(Operands[3])->isReg() &&
       static_cast<ARMOperand*>(Operands[3])->getReg() == ARM::SP &&
       static_cast<ARMOperand*>(Operands[1])->getReg() == 0)

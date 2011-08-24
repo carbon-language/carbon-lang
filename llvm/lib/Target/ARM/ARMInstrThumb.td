@@ -335,10 +335,6 @@ def tADDspi : T1pIt<(outs GPRsp:$Rdn), (ins GPRsp:$Rn, t_imm0_508s4:$imm),
   let DecoderMethod = "DecodeThumbAddSPImm";
 }
 
-// Can optionally specify SP as a three operand instruction.
-def : tInstAlias<"add${p} sp, sp, $imm",
-                 (tADDspi SP, t_imm0_508s4:$imm, pred:$p)>;
-
 // SUB sp, sp, #<imm7>
 // FIXME: The encoding and the ASM string don't match up.
 def tSUBspi : T1pIt<(outs GPRsp:$Rdn), (ins GPRsp:$Rn, t_imm0_508s4:$imm),
@@ -349,6 +345,12 @@ def tSUBspi : T1pIt<(outs GPRsp:$Rdn), (ins GPRsp:$Rn, t_imm0_508s4:$imm),
   let Inst{6-0} = imm;
   let DecoderMethod = "DecodeThumbAddSPImm";
 }
+
+// Can optionally specify SP as a three operand instruction.
+def : tInstAlias<"add${p} sp, sp, $imm",
+                 (tADDspi SP, t_imm0_508s4:$imm, pred:$p)>;
+def : tInstAlias<"sub${p} sp, sp, $imm",
+                 (tSUBspi SP, t_imm0_508s4:$imm, pred:$p)>;
 
 // ADD <Rm>, sp
 def tADDrSP : T1pIt<(outs GPR:$Rdn), (ins GPR:$Rn, GPRsp:$sp), IIC_iALUr,
