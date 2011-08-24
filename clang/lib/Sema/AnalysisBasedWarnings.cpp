@@ -662,8 +662,8 @@ public:
   }
 };
 
-/// \brief A Lock object uniquely identifies a particular lock acquired, and is
-/// built from an Expr* (i.e. calling a lock function).
+/// \brief A LockID object uniquely identifies a particular lock acquired, and
+/// is built from an Expr* (i.e. calling a lock function).
 ///
 /// Thread-safety analysis works by comparing lock expressions.  Within the
 /// body of a function, an expression such as "x->foo->bar.mu" will resolve to
@@ -742,14 +742,14 @@ public:
 
   // SmallVector overloads Operator< to do lexicographic ordering. Note that
   // we use pointer equality (and <) to compare NamedDecls. This means the order
-  // of locks in a lockset is nondeterministic. In order to output
+  // of LockIDs in a lockset is nondeterministic. In order to output
   // diagnostics in a deterministic ordering, we must order all diagnostics to
   // output by SourceLocation when iterating through this lockset.
   bool operator<(const LockID &other) const {
     return DeclSeq < other.DeclSeq;
   }
 
-  /// \brief Returns the name of the first Decl in the list for a given LockId;
+  /// \brief Returns the name of the first Decl in the list for a given LockID;
   /// e.g. the lock expression foo.bar() has name "bar".
   /// The caret will point unambiguously to the lock expression, so using this
   /// name in diagnostics is a way to get simple, and consistent, lock names.
@@ -769,7 +769,7 @@ public:
 /// \brief This is a helper class that stores info about the most recent
 /// accquire of a Lock.
 ///
-/// The main body of the analysis maps Locks to LockDatas.
+/// The main body of the analysis maps LockIDs to LockDatas.
 struct LockData {
   SourceLocation AcquireLoc;
 
@@ -788,7 +788,7 @@ struct LockData {
   }
 };
 
- /// A Lockset maps each lock (defined above) to information about how it has
+/// A Lockset maps each LockID (defined above) to information about how it has
 /// been locked.
 typedef llvm::ImmutableMap<LockID, LockData> Lockset;
 
@@ -803,8 +803,8 @@ class BuildLockset : public StmtVisitor<BuildLockset> {
   Lockset::Factory &LocksetFactory;
 
   // Helper functions
-  void RemoveLock(SourceLocation UnlockLoc, Expr *LockExp);
-  void AddLock(SourceLocation LockLoc, Expr *LockExp);
+  void removeLock(SourceLocation UnlockLoc, Expr *LockExp);
+  void addLock(SourceLocation LockLoc, Expr *LockExp);
 
 public:
   BuildLockset(Sema &S, Lockset LS, Lockset::Factory &F)
@@ -822,7 +822,7 @@ public:
 /// \brief Add a new lock to the lockset, warning if the lock is already there.
 /// \param LockExp The lock expression corresponding to the lock to be added
 /// \param LockLoc The source location of the acquire
-void BuildLockset::AddLock(SourceLocation LockLoc, Expr *LockExp) {
+void BuildLockset::addLock(SourceLocation LockLoc, Expr *LockExp) {
   LockID Lock(LockExp);
   LockData NewLockData(LockLoc);
 
@@ -835,7 +835,7 @@ void BuildLockset::AddLock(SourceLocation LockLoc, Expr *LockExp) {
 /// \brief Remove a lock from the lockset, warning if the lock is not there.
 /// \param LockExp The lock expression corresponding to the lock to be removed
 /// \param UnlockLoc The source location of the unlock (only used in error msg)
-void BuildLockset::RemoveLock(SourceLocation UnlockLoc, Expr *LockExp) {
+void BuildLockset::removeLock(SourceLocation UnlockLoc, Expr *LockExp) {
   LockID Lock(LockExp);
 
   Lockset NewLSet = LocksetFactory.remove(LSet, Lock);
@@ -871,13 +871,13 @@ void BuildLockset::VisitCXXMemberCallExpr(CXXMemberCallExpr *Exp) {
           cast<ExclusiveLockFunctionAttr>(Attr);
 
         if (ELFAttr->args_size() == 0) {// The lock held is the "this" object.
-          AddLock(ExpLocation, Parent);
+          addLock(ExpLocation, Parent);
           break;
         }
 
         for (ExclusiveLockFunctionAttr::args_iterator I = ELFAttr->args_begin(),
              E = ELFAttr->args_end(); I != E; ++I)
-          AddLock(ExpLocation, *I);
+          addLock(ExpLocation, *I);
         // FIXME: acquired_after/acquired_before annotations
         break;
       }
@@ -888,13 +888,13 @@ void BuildLockset::VisitCXXMemberCallExpr(CXXMemberCallExpr *Exp) {
         UnlockFunctionAttr *UFAttr = cast<UnlockFunctionAttr>(Attr);
 
         if (UFAttr->args_size() == 0) { // The lock held is the "this" object.
-          RemoveLock(ExpLocation, Parent);
+          removeLock(ExpLocation, Parent);
           break;
         }
 
         for (UnlockFunctionAttr::args_iterator I = UFAttr->args_begin(),
             E = UFAttr->args_end(); I != E; ++I)
-          RemoveLock(ExpLocation, *I);
+          removeLock(ExpLocation, *I);
         break;
       }
 
