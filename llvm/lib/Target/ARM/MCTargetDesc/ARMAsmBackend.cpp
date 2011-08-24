@@ -42,7 +42,7 @@ class ARMAsmBackend : public MCAsmBackend {
 public:
   ARMAsmBackend(const Target &T, const StringRef TT)
     : MCAsmBackend(), STI(ARM_MC::createARMMCSubtargetInfo(TT, "", "")),
-      isThumbMode(false) {}
+      isThumbMode(TT.startswith("thumb")) {}
 
   ~ARMAsmBackend() {
     delete STI;
