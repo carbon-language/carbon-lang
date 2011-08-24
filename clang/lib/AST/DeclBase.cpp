@@ -922,8 +922,6 @@ DeclContext::decl_iterator DeclContext::decls_begin() const {
   if (hasExternalLexicalStorage())
     LoadLexicalDeclsFromExternalStorage();
 
-  // FIXME: Check whether we need to load some declarations from
-  // external storage.
   return decl_iterator(FirstDecl);
 }
 
