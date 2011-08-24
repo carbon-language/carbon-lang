@@ -3543,8 +3543,6 @@ void RetainReleaseChecker::checkReturnWithRetEffect(const ReturnStmt *S,
 
       static SimpleProgramPointTag
              ReturnNotOwnedTag("RetainReleaseChecker : ReturnNotOwnedForOwned");
-      // FIXME: This PostStmt is a lie. But currently CFRefReport expects all
-      // interesting things to happen in PostStmt nodes.
       ExplodedNode *N = Builder.generateNode(S, state, Pred, 
                                              &ReturnNotOwnedTag);
       if (N) {
