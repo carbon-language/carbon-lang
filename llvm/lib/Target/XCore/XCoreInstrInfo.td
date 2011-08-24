@@ -739,7 +739,7 @@ def LDAP_lu10_ba : _FLU10<(outs),
 
 let isCall=1,
 // All calls clobber the link register and the non-callee-saved registers:
-Defs = [R0, R1, R2, R3, R11, LR] in {
+Defs = [R0, R1, R2, R3, R11, LR], Uses = [SP] in {
 def BL_u10 : _FU10<
                   (outs),
                   (ins calltarget:$target, variable_ops),
@@ -981,7 +981,7 @@ def ECALLF_1r : _F1R<(outs), (ins GRRegs:$src),
 
 let isCall=1, 
 // All calls clobber the link register and the non-callee-saved registers:
-Defs = [R0, R1, R2, R3, R11, LR] in {
+Defs = [R0, R1, R2, R3, R11, LR], Uses = [SP] in {
 def BLA_1r : _F1R<(outs), (ins GRRegs:$addr, variable_ops),
                  "bla $addr",
                  [(XCoreBranchLink GRRegs:$addr)]>;
