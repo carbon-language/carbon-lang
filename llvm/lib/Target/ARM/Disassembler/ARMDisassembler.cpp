@@ -228,6 +228,8 @@ static DecodeStatus DecodeThumbBCCTargetOperand(llvm::MCInst &Inst,unsigned Val,
                                 uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeThumbBLTargetOperand(llvm::MCInst &Inst, unsigned Val,
                                 uint64_t Address, const void *Decoder);
+static DecodeStatus DecodeITCond(llvm::MCInst &Inst, unsigned Val,
+                                uint64_t Address, const void *Decoder);
 
 #include "ARMGenDisassemblerTables.inc"
 #include "ARMGenInstrInfo.inc"
@@ -3286,6 +3288,18 @@ static DecodeStatus DecodeVMOVRRS(llvm::MCInst &Inst, unsigned Insn,
   CHECK(S, DecodeSPRRegisterClass(Inst, Rm+1, Address, Decoder));
   CHECK(S, DecodePredicateOperand(Inst, pred, Address, Decoder));
 
+  return S;
+}
+
+static DecodeStatus DecodeITCond(llvm::MCInst &Inst, unsigned Cond,
+                                 uint64_t Address, const void *Decoder) {
+  DecodeStatus S = Success;
+  if (Cond == 0xF) {
+    Cond = 0xE;
+    CHECK(S, Unpredictable);
+  }
+
+  Inst.addOperand(MCOperand::CreateImm(Cond));
   return S;
 }
 
