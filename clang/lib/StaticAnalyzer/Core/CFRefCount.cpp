@@ -2963,6 +2963,9 @@ void RetainReleaseChecker::checkSummary(const RetainSummary &Summ,
                                         const CallOrObjCMessage &CallOrMsg,
                                         InstanceReceiver Receiver,
                                         CheckerContext &C) const {
+  // FIXME: This goes away when the RetainSummaryManager moves to the checker.
+  CFRefCount &TF = static_cast<CFRefCount&>(C.getEngine().getTF());
+
   const ProgramState *state = C.getState();
 
   // Evaluate the effect of the arguments.
@@ -3010,13 +3013,10 @@ void RetainReleaseChecker::checkSummary(const RetainSummary &Summ,
   RetEffect RE = Summ.getRetEffect();
 
   if (RE.getKind() == RetEffect::OwnedWhenTrackedReceiver) {
-    if (ReceiverIsTracked) {
-      // FIXME: This goes away if the RetainSummaryManager moves to the checker.
-      CFRefCount &TF = static_cast<CFRefCount&>(C.getEngine().getTF());
-      RE = TF.Summaries.getObjAllocRetEffect();      
-    } else {
+    if (ReceiverIsTracked)
+      RE = TF.Summaries.getObjAllocRetEffect();
+    else
       RE = RetEffect::MakeNoRet();
-    }
   }
 
   switch (RE.getKind()) {
@@ -3399,12 +3399,17 @@ void RetainReleaseChecker::checkPreStmt(const ReturnStmt *S,
   if (!Pred)
     return;
 
+  ExprEngine &Eng = C.getEngine();
+  // FIXME: This goes away once HandleAutoreleaseCount() and the
+  // RetainSummariesManager move to RetainReleaseChecker.
+  CFRefCount &TF = static_cast<CFRefCount&>(Eng.getTF());
+
   // Update the autorelease counts.
   static SimpleProgramPointTag
          AutoreleaseTag("RetainReleaseChecker : Autorelease");
   GenericNodeBuilderRefCount Bd(C.getNodeBuilder(), S, &AutoreleaseTag);
-  llvm::tie(Pred, state) = handleAutoreleaseCounts(state, Bd, Pred,
-                                                   C.getEngine(), Sym, X);
+  llvm::tie(Pred, state) = handleAutoreleaseCounts(state, Bd, Pred, Eng,
+                                                   Sym, X);
 
   // Did we cache out?
   if (!Pred)
@@ -3417,9 +3422,6 @@ void RetainReleaseChecker::checkPreStmt(const ReturnStmt *S,
 
   // Consult the summary of the enclosing method.
   const Decl *CD = &Pred->getCodeDecl();
-
-  // FIXME: This goes away once the RetainSummariesManager moves to the checker.
-  CFRefCount &TF = static_cast<CFRefCount&>(C.getEngine().getTF());
 
   if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(CD)) {
     // Unlike regular functions, /all/ ObjC methods are assumed to always
