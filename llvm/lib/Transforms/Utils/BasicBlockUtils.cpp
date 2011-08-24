@@ -299,16 +299,17 @@ BasicBlock *llvm::SplitBlock(BasicBlock *Old, Instruction *SplitPt, Pass *P) {
 
   if (DominatorTree *DT = P->getAnalysisIfAvailable<DominatorTree>()) {
     // Old dominates New. New node dominates all other nodes dominated by Old.
-    DomTreeNode *OldNode = DT->getNode(Old);
-    std::vector<DomTreeNode *> Children;
-    for (DomTreeNode::iterator I = OldNode->begin(), E = OldNode->end();
-         I != E; ++I) 
-      Children.push_back(*I);
+    if (DomTreeNode *OldNode = DT->getNode(Old)) {
+      std::vector<DomTreeNode *> Children;
+      for (DomTreeNode::iterator I = OldNode->begin(), E = OldNode->end();
+           I != E; ++I) 
+        Children.push_back(*I);
 
       DomTreeNode *NewNode = DT->addNewBlock(New,Old);
       for (std::vector<DomTreeNode *>::iterator I = Children.begin(),
              E = Children.end(); I != E; ++I) 
         DT->changeImmediateDominator(*I, NewNode);
+    }
   }
 
   return New;
