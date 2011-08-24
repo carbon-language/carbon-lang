@@ -39,8 +39,9 @@ static void registerPollyPasses(const llvm::PassManagerBuilder &Builder,
   initializeAliasAnalysisAnalysisGroup(Registry);
 
   // A standard set of optimization passes partially taken/copied from the
-  // set of default optimization passes. This set of passes is most probably
-  // not yet optimal. TODO: Investigate optimal set of passes.
+  // set of default optimization passes. It is used to bring the code into
+  // a canonical form that can than be analyzed by Polly. This set of passes is
+  // most probably not yet optimal. TODO: Investigate optimal set of passes.
   PM.add(llvm::createPromoteMemoryToRegisterPass());
   PM.add(llvm::createInstructionCombiningPass());  // Clean up after IPCP & DAE
   PM.add(llvm::createCFGSimplificationPass());     // Clean up after IPCP & DAE
@@ -55,13 +56,14 @@ static void registerPollyPasses(const llvm::PassManagerBuilder &Builder,
   PM.add(polly::createCodePreperationPass());
   PM.add(polly::createRegionSimplifyPass());
 
-  // FIXME: Needed as RegionSimplifyPass does destroy canonical induction
-  //        variables. (It changes the order of the operands in the PHI nodes)
+  // FIXME: Needed as RegionSimplifyPass destroys the canonical form of
+  //        induction variables (It changes the order of the operands in the
+  //        PHI nodes).
   PM.add(llvm::createIndVarSimplifyPass());
   PM.add(polly::createScopDetectionPass());
   PM.add(polly::createIndependentBlocksPass());
 
-  // FIXME: We should not need to schedule this passes (and some more)
+  // FIXME: We should not need to schedule passes like the TempScopInfoPass
   //        explicitally, as it is alread required by the ScopInfo pass.
   //        However, without this clang crashes because of unitialized passes.
   PM.add(polly::createTempScopInfoPass());
@@ -72,10 +74,11 @@ static void registerPollyPasses(const llvm::PassManagerBuilder &Builder,
   PM.add(polly::createCodeGenerationPass());
 }
 
-// Execute Polly together with a set of preparing passes before all other
-// optimizations. This is basically to be executed before any loop optimizer
-// passes like LICM or LoopIdomPass. Those would complicate the code such that
-// Polly would recognize less scops.
+// Execute Polly together with a set of preparing passes.
+//
+// We run Polly that early to run before loop optimizer passes like LICM or
+// the LoopIdomPass. Both transform the code in a way that Polly will recognize
+// less scops.
 static llvm::RegisterStandardPasses
 PassRegister(llvm::PassManagerBuilder::EP_EarlyAsPossible,
              registerPollyPasses);
