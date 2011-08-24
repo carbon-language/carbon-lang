@@ -20,6 +20,7 @@ def it_pred : Operand<i32> {
 // IT block condition mask
 def it_mask : Operand<i32> {
   let PrintMethod = "printThumbITMask";
+  let DecoderMethod = "DecodeITMask";
 }
 
 // Shifted operands. No register controlled shifts for Thumb2.

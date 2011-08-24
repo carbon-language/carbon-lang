@@ -230,6 +230,8 @@ static DecodeStatus DecodeThumbBLTargetOperand(llvm::MCInst &Inst, unsigned Val,
                                 uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeITCond(llvm::MCInst &Inst, unsigned Val,
                                 uint64_t Address, const void *Decoder);
+static DecodeStatus DecodeITMask(llvm::MCInst &Inst, unsigned Val,
+                                uint64_t Address, const void *Decoder);
 
 #include "ARMGenDisassemblerTables.inc"
 #include "ARMGenInstrInfo.inc"
@@ -3301,6 +3303,17 @@ static DecodeStatus DecodeITCond(llvm::MCInst &Inst, unsigned Cond,
   }
 
   Inst.addOperand(MCOperand::CreateImm(Cond));
+  return S;
+}
+
+static DecodeStatus DecodeITMask(llvm::MCInst &Inst, unsigned Mask,
+                                 uint64_t Address, const void *Decoder) {
+  DecodeStatus S = Success;
+  if (Mask == 0) {
+    Mask = 0x8;
+    CHECK(S, Unpredictable);
+  }
+  Inst.addOperand(MCOperand::CreateImm(Mask));
   return S;
 }
 
