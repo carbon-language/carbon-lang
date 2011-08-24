@@ -64,7 +64,7 @@ ClangUserExpression::~ClangUserExpression ()
 
 clang::ASTConsumer *
 ClangUserExpression::ASTTransformer (clang::ASTConsumer *passthrough)
-{
+{    
     ClangASTContext *clang_ast_context = m_target->GetScratchClangASTContext();
     
     if (!clang_ast_context)
@@ -87,6 +87,8 @@ ClangUserExpression::ScanContext(ExecutionContext &exe_ctx)
     if (!sym_ctx.function)
         return;
     
+    m_target = &exe_ctx.GetProcess()->GetTarget();
+    
     clang::DeclContext *decl_context;
     
     if (sym_ctx.block && sym_ctx.block->GetInlinedFunctionInfo())
@@ -96,9 +98,7 @@ ClangUserExpression::ScanContext(ExecutionContext &exe_ctx)
         
     if (!decl_context)
         return;
-    
-    m_target = exe_ctx.target;
-        
+            
     if (clang::CXXMethodDecl *method_decl = llvm::dyn_cast<clang::CXXMethodDecl>(decl_context))
     {
         if (method_decl->isInstance())
