@@ -854,6 +854,37 @@ public:
   }
 };
 
+// Used to avoid allocating long-term (BPAlloc'd) memory for default retain
+// summaries. If a function or method looks like it has a default summary, but
+// it has annotations, the annotations are added to the stack-based template
+// and then copied into managed memory.
+class RetainSummaryTemplate {
+  RetainSummaryManager &Manager;
+  RetainSummary *&RealSummary;
+  RetainSummary ScratchSummary;
+  bool Accessed;
+public:
+  RetainSummaryTemplate(RetainSummary *&real, const RetainSummary &base,
+                        RetainSummaryManager &manager)
+  : Manager(manager), RealSummary(real), ScratchSummary(base), Accessed(false)
+  {}
+
+  ~RetainSummaryTemplate() {
+    if (!RealSummary && Accessed)
+      RealSummary = Manager.copySummary(&ScratchSummary);
+  }
+
+  RetainSummary &operator*() {
+    Accessed = true;
+    return RealSummary ? *RealSummary : ScratchSummary;
+  }
+
+  RetainSummary *operator->() {
+    Accessed = true;
+    return RealSummary ? RealSummary : &ScratchSummary;
+  }
+};
+
 } // end anonymous namespace
 
 //===----------------------------------------------------------------------===//
@@ -1166,9 +1197,7 @@ RetainSummaryManager::updateSummaryFromAnnotations(RetainSummary *&Summ,
   if (!FD)
     return;
 
-  RetainSummary BasedOnDefault(DefaultSummary);
-  if (!Summ)
-    Summ = &BasedOnDefault;
+  RetainSummaryTemplate Template(Summ, DefaultSummary, *this);
 
   // Effects on the parameters.
   unsigned parm_idx = 0;
@@ -1177,10 +1206,10 @@ RetainSummaryManager::updateSummaryFromAnnotations(RetainSummary *&Summ,
     const ParmVarDecl *pd = *pi;
     if (pd->getAttr<NSConsumedAttr>()) {
       if (!GCEnabled) {
-        Summ->addArg(AF, parm_idx, DecRef);      
+        Template->addArg(AF, parm_idx, DecRef);      
       }
     } else if (pd->getAttr<CFConsumedAttr>()) {
-      Summ->addArg(AF, parm_idx, DecRef);      
+      Template->addArg(AF, parm_idx, DecRef);      
     }   
   }
   
@@ -1189,31 +1218,24 @@ RetainSummaryManager::updateSummaryFromAnnotations(RetainSummary *&Summ,
   // Determine if there is a special return effect for this method.
   if (cocoa::isCocoaObjectRef(RetTy)) {
     if (FD->getAttr<NSReturnsRetainedAttr>()) {
-      Summ->setRetEffect(ObjCAllocRetE);
+      Template->setRetEffect(ObjCAllocRetE);
     }
     else if (FD->getAttr<CFReturnsRetainedAttr>()) {
-      Summ->setRetEffect(RetEffect::MakeOwned(RetEffect::CF, true));
+      Template->setRetEffect(RetEffect::MakeOwned(RetEffect::CF, true));
     }
     else if (FD->getAttr<NSReturnsNotRetainedAttr>()) {
-      Summ->setRetEffect(RetEffect::MakeNotOwned(RetEffect::ObjC));
+      Template->setRetEffect(RetEffect::MakeNotOwned(RetEffect::ObjC));
     }
     else if (FD->getAttr<CFReturnsNotRetainedAttr>()) {
-      Summ->setRetEffect(RetEffect::MakeNotOwned(RetEffect::CF));
+      Template->setRetEffect(RetEffect::MakeNotOwned(RetEffect::CF));
     }
   } else if (RetTy->getAs<PointerType>()) {
     if (FD->getAttr<CFReturnsRetainedAttr>()) {
-      Summ->setRetEffect(RetEffect::MakeOwned(RetEffect::CF, true));
+      Template->setRetEffect(RetEffect::MakeOwned(RetEffect::CF, true));
     }
     else if (FD->getAttr<CFReturnsNotRetainedAttr>()) {
-      Summ->setRetEffect(RetEffect::MakeNotOwned(RetEffect::CF));
+      Template->setRetEffect(RetEffect::MakeNotOwned(RetEffect::CF));
     }
-  }
-
-  if (Summ == &BasedOnDefault) {
-    if (!(*Summ == DefaultSummary))
-      Summ = copySummary(Summ);
-    else
-      Summ = 0;
   }
 }
 
@@ -1223,16 +1245,14 @@ RetainSummaryManager::updateSummaryFromAnnotations(RetainSummary *&Summ,
   if (!MD)
     return;
 
-  RetainSummary BasedOnDefault = DefaultSummary;
-  if (!Summ)
-    Summ = &BasedOnDefault;
+  RetainSummaryTemplate Template(Summ, DefaultSummary, *this);
 
   bool isTrackedLoc = false;
 
   // Effects on the receiver.
   if (MD->getAttr<NSConsumesSelfAttr>()) {
     if (!GCEnabled)
-      Summ->setReceiverEffect(DecRefMsg);      
+      Template->setReceiverEffect(DecRefMsg);      
   }
   
   // Effects on the parameters.
@@ -1242,42 +1262,34 @@ RetainSummaryManager::updateSummaryFromAnnotations(RetainSummary *&Summ,
     const ParmVarDecl *pd = *pi;
     if (pd->getAttr<NSConsumedAttr>()) {
       if (!GCEnabled)
-        Summ->addArg(AF, parm_idx, DecRef);      
+        Template->addArg(AF, parm_idx, DecRef);      
     }
     else if(pd->getAttr<CFConsumedAttr>()) {
-      Summ->addArg(AF, parm_idx, DecRef);      
+      Template->addArg(AF, parm_idx, DecRef);      
     }   
   }
   
   // Determine if there is a special return effect for this method.
   if (cocoa::isCocoaObjectRef(MD->getResultType())) {
     if (MD->getAttr<NSReturnsRetainedAttr>()) {
-      Summ->setRetEffect(ObjCAllocRetE);
+      Template->setRetEffect(ObjCAllocRetE);
       return;
     }
     if (MD->getAttr<NSReturnsNotRetainedAttr>()) {
-      Summ->setRetEffect(RetEffect::MakeNotOwned(RetEffect::ObjC));
+      Template->setRetEffect(RetEffect::MakeNotOwned(RetEffect::ObjC));
       return;
     }
 
     isTrackedLoc = true;
-  }
-
-  if (!isTrackedLoc)
+  } else {
     isTrackedLoc = MD->getResultType()->getAs<PointerType>() != NULL;
+  }
 
   if (isTrackedLoc) {
     if (MD->getAttr<CFReturnsRetainedAttr>())
-      Summ->setRetEffect(RetEffect::MakeOwned(RetEffect::CF, true));
+      Template->setRetEffect(RetEffect::MakeOwned(RetEffect::CF, true));
     else if (MD->getAttr<CFReturnsNotRetainedAttr>())
-      Summ->setRetEffect(RetEffect::MakeNotOwned(RetEffect::CF));
-  }
-
-  if (Summ == &BasedOnDefault) {
-    if (!(*Summ == DefaultSummary))
-      Summ = copySummary(Summ);
-    else
-      Summ = 0;
+      Template->setRetEffect(RetEffect::MakeNotOwned(RetEffect::CF));
   }
 }
 
