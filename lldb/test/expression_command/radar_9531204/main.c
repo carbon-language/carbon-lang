@@ -14,6 +14,7 @@
 int foo (int value)
 {
   printf ("I got the value: %d.\n", value);
+  return 0;
 }
 
 int main (int argc, char **argv)
