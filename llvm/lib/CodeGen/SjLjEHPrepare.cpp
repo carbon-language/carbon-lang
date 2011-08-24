@@ -631,6 +631,8 @@ bool SjLjEHPass::insertSjLjEHSupport(Function &F) {
         if (Callee != SelectorFn && Callee != ExceptionFn
             && !CI->doesNotThrow())
           insertCallSiteStore(CI, -1, CallSite);
+      } else if (ResumeInst *RI = dyn_cast<ResumeInst>(I)) {
+        insertCallSiteStore(RI, -1, CallSite);
       }
   }
 
