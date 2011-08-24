@@ -27,6 +27,10 @@ class CmdPythonTestCase(TestBase):
 
         self.runCmd("command source py_import")
 
+        # We don't want to display the stdout if not in TraceOn() mode.
+        if not self.TraceOn():
+            self.HideStdout()
+
         self.expect('welcome Enrico',
             substrs = ['Hello Enrico, welcome to LLDB']);
                 
