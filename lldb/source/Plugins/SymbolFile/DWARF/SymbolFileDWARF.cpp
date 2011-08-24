@@ -565,7 +565,7 @@ SymbolFileDWARF::ParseCompileUnit (DWARFCompileUnit* curr_cu, CompUnitSP& compil
         {
             const char * cu_die_name = cu_die->GetName(this, curr_cu);
             const char * cu_comp_dir = cu_die->GetAttributeValueAsString(this, curr_cu, DW_AT_comp_dir, NULL);
-            LanguageType class_language = (LanguageType)cu_die->GetAttributeValueAsUnsigned(this, curr_cu, DW_AT_language, 0);
+            LanguageType cu_language = (LanguageType)cu_die->GetAttributeValueAsUnsigned(this, curr_cu, DW_AT_language, 0);
             if (cu_die_name)
             {
                 FileSpec cu_file_spec;
@@ -585,7 +585,7 @@ SymbolFileDWARF::ParseCompileUnit (DWARFCompileUnit* curr_cu, CompUnitSP& compil
                     cu_file_spec.SetFile (fullpath.c_str(), false);
                 }
 
-                compile_unit_sp.reset(new CompileUnit(m_obj_file->GetModule(), curr_cu, cu_file_spec, curr_cu->GetOffset(), class_language));
+                compile_unit_sp.reset(new CompileUnit(m_obj_file->GetModule(), curr_cu, cu_file_spec, curr_cu->GetOffset(), cu_language));
                 if (compile_unit_sp.get())
                 {
                     curr_cu->SetUserData(compile_unit_sp.get());
