@@ -1068,7 +1068,6 @@ Python Interactive Interpreter. To exit, type 'quit()', 'exit()' or Ctrl-D.<br/>
         <div class="post">
           <h1 class="postheader">Filters</h1>
           <div class="postcontent">
-	
 	          <p>Filters are a solution to the display of complex classes.
 			  At times, classes have many member variables but not all of these are actually
 			necessary for the user to see.</p>
@@ -1082,7 +1081,7 @@ Python Interactive Interpreter. To exit, type 'quit()', 'exit()' or Ctrl-D.<br/>
 	                    <td class="content">
 	                        <b>(lldb)</b> type filter add Foo --child B --child H --child Q
 	                    </td>
-	            <table>
+	            </table>
 	            <code> <b>(lldb)</b> frame variable a_foobar<br/>
 					(Foobar) a_foobar = {<br/>
 					  &nbsp;&nbsp;&nbsp;&nbsp;(int) B = 1<br/>
@@ -1090,7 +1089,52 @@ Python Interactive Interpreter. To exit, type 'quit()', 'exit()' or Ctrl-D.<br/>
 					  &nbsp;&nbsp;&nbsp;&nbsp;(std::string) Q = "Hello world"<br/>
 					}<br/>
 	            </code> </p>
-	
+          </div>
+        </div>
+        
+		<div class="post">
+          <h1 class="postheader">Objective-C dynamic type discovery</h1>
+          <div class="postcontent">
+          <p>When doing Objective-C development, you may notice that some of your variables
+          come out as of type <code>id</code>. While this does not influence the ability
+          of the runtime to send messages to them, it can make it impossible for LLDB
+          to determine the actual formatters for that object.</p>
+          <p>The debugger, however, can dynamically discover the type of an Objective-C
+          variable, much like the runtime itself does when invoking a selector. In order
+          to let LLDB do that, however, a special option to <code>frame variable</code> is
+          required: <code>--dynamic-type</code>.</p>
+          <p><code>--dynamic-type</code> can have one of three values:
+          <ul>
+          <li><code>no-dynamic-values</code>: the default, prevents dynamic type discovery</li>
+          <li><code>no-run-target</code>: enables dynamic type discovery as long as running
+          code on the target is not required</li>
+          <li><code>run-target</code>: enables code execution on the target in order to perform
+          dynamic type discovery</li>
+          </ul>
+          </p>
+          <p>
+          If you specify a value of either <code>no-run-target</code> or <code>run-target</code>,
+          LLDB will detect the dynamic type of your variables and show the appropriate formatters
+          for them. As an example:
+          </p>
+          		<p><table class="stats" width="620" cellspacing="0">
+	                    <td class="content">
+	                        <b>(lldb)</b> frame variable ns_string --dynamic-type no-run-target --show-types
+	                    </td>
+	            </table>
+	            <code>(id, dynamic type: __NSCFString) ns_string = 0x00000001001183d0 @&quot;An NSString saying hello world&quot;<br/>
+	            </code>
+          <p>
+          	Because LLDB uses a detection algorithm that does not need to invoke any functions
+          	on the target process, <code>no-run-target</code> is enough for this to work.
+          	As a final sidenote on this, LLDB is currently able to provide a summary string for <code>NSString</code>
+          	that shows the content of the string, without requiring you to run code on the target
+          	process. <a href="http://llvm.org/svn/llvm-project/lldb/trunk/examples/synthetic/CFString.py">
+          	CFString.py</a> contains the code for such a Python summary provider (the code is well commented,
+          	but you may find it hard to follow if it is your first time dealing with LLDB formatting features)
+          	and <a href="http://llvm.org/svn/llvm-project/lldb/trunk/test/functionalities/data-formatter/data-formatter-objc/">
+          	this test case</a> contains an usage example.
+			</p>
           </div>
         </div>
 
