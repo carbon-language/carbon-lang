@@ -3776,6 +3776,42 @@ let Predicates = [HasSSE3] in {
   def : Pat<(movddup (bc_v4i32 (memopv2i64 addr:$src)), (undef)),
             (MOVDDUPrm addr:$src)>;
   }
+  def : Pat<(X86Movddup (memopv2f64 addr:$src)),
+            (MOVDDUPrm addr:$src)>;
+  def : Pat<(X86Movddup (bc_v2f64 (memopv4f32 addr:$src))),
+            (MOVDDUPrm addr:$src)>;
+  def : Pat<(X86Movddup (bc_v2f64 (memopv2i64 addr:$src))),
+            (MOVDDUPrm addr:$src)>;
+  def : Pat<(X86Movddup (v2f64 (scalar_to_vector (loadf64 addr:$src)))),
+            (MOVDDUPrm addr:$src)>;
+  def : Pat<(X86Movddup (bc_v2f64
+                             (v2i64 (scalar_to_vector (loadi64 addr:$src))))),
+            (MOVDDUPrm addr:$src)>;
+}
+
+let Predicates = [HasAVX] in {
+  def : Pat<(movddup (bc_v2f64 (v2i64 (scalar_to_vector (loadi64 addr:$src)))),
+                   (undef)),
+            (VMOVDDUPrm addr:$src)>;
+  let AddedComplexity = 5 in {
+  def : Pat<(movddup (memopv2f64 addr:$src), (undef)), (VMOVDDUPrm addr:$src)>;
+  def : Pat<(movddup (bc_v4f32 (memopv2f64 addr:$src)), (undef)),
+            (VMOVDDUPrm addr:$src)>;
+  def : Pat<(movddup (memopv2i64 addr:$src), (undef)), (VMOVDDUPrm addr:$src)>;
+  def : Pat<(movddup (bc_v4i32 (memopv2i64 addr:$src)), (undef)),
+            (VMOVDDUPrm addr:$src)>;
+  }
+  def : Pat<(X86Movddup (memopv2f64 addr:$src)),
+            (VMOVDDUPrm addr:$src)>, Requires<[HasAVX]>;
+  def : Pat<(X86Movddup (bc_v2f64 (memopv4f32 addr:$src))),
+            (VMOVDDUPrm addr:$src)>, Requires<[HasAVX]>;
+  def : Pat<(X86Movddup (bc_v2f64 (memopv2i64 addr:$src))),
+            (VMOVDDUPrm addr:$src)>, Requires<[HasAVX]>;
+  def : Pat<(X86Movddup (v2f64 (scalar_to_vector (loadf64 addr:$src)))),
+            (VMOVDDUPrm addr:$src)>, Requires<[HasAVX]>;
+  def : Pat<(X86Movddup (bc_v2f64
+                             (v2i64 (scalar_to_vector (loadi64 addr:$src))))),
+            (VMOVDDUPrm addr:$src)>, Requires<[HasAVX]>;
 }
 
 //===---------------------------------------------------------------------===//
@@ -6019,33 +6055,6 @@ def VZEROUPPER : I<0x77, RawFrm, (outs), (ins), "vzeroupper",
 // The AVX version of some but not all of them are described here, and more
 // should come in a near future.
 
-// Shuffle with MOVDDUP instruction
-def : Pat<(X86Movddup (memopv2f64 addr:$src)),
-          (VMOVDDUPrm addr:$src)>, Requires<[HasAVX]>;
-def : Pat<(X86Movddup (memopv2f64 addr:$src)),
-          (MOVDDUPrm addr:$src)>;
-
-def : Pat<(X86Movddup (bc_v2f64 (memopv4f32 addr:$src))),
-          (VMOVDDUPrm addr:$src)>, Requires<[HasAVX]>;
-def : Pat<(X86Movddup (bc_v2f64 (memopv4f32 addr:$src))),
-          (MOVDDUPrm addr:$src)>;
-
-def : Pat<(X86Movddup (bc_v2f64 (memopv2i64 addr:$src))),
-          (VMOVDDUPrm addr:$src)>, Requires<[HasAVX]>;
-def : Pat<(X86Movddup (bc_v2f64 (memopv2i64 addr:$src))),
-          (MOVDDUPrm addr:$src)>;
-
-def : Pat<(X86Movddup (v2f64 (scalar_to_vector (loadf64 addr:$src)))),
-          (VMOVDDUPrm addr:$src)>, Requires<[HasAVX]>;
-def : Pat<(X86Movddup (v2f64 (scalar_to_vector (loadf64 addr:$src)))),
-          (MOVDDUPrm addr:$src)>;
-
-def : Pat<(X86Movddup (bc_v2f64
-                           (v2i64 (scalar_to_vector (loadi64 addr:$src))))),
-          (VMOVDDUPrm addr:$src)>, Requires<[HasAVX]>;
-def : Pat<(X86Movddup (bc_v2f64
-                           (v2i64 (scalar_to_vector (loadi64 addr:$src))))),
-          (MOVDDUPrm addr:$src)>;
 
 
 // Shuffle with UNPCKLPS
