@@ -115,9 +115,9 @@ public:
 
 /// ArgEffect is used to summarize a function/method call's effect on a
 /// particular argument.
-enum ArgEffect { Autorelease, Dealloc, DecRef, DecRefMsg, DoNothing,
+enum ArgEffect { DoNothing, Autorelease, Dealloc, DecRef, DecRefMsg,
                  DecRefBridgedTransfered,
-                 DoNothingByRef, IncRefMsg, IncRef, MakeCollectable, MayEscape,
+                 IncRefMsg, IncRef, MakeCollectable, MayEscape,
                  NewAutoreleasePool, SelfOwn, StopTracking };
 
 namespace llvm {
@@ -612,10 +612,6 @@ class RetainSummaryManager {
   /// Ctx - The ASTContext object for the analyzed ASTs.
   ASTContext &Ctx;
 
-  /// CFDictionaryCreateII - An IdentifierInfo* representing the indentifier
-  ///  "CFDictionaryCreate".
-  IdentifierInfo* CFDictionaryCreateII;
-
   /// GCEnabled - Records whether or not the analyzed code runs in GC mode.
   const bool GCEnabled;
 
@@ -760,7 +756,6 @@ public:
 
   RetainSummaryManager(ASTContext &ctx, bool gcenabled, bool usesARC)
    : Ctx(ctx),
-     CFDictionaryCreateII(&ctx.Idents.get("CFDictionaryCreate")),
      GCEnabled(gcenabled),
      ARCEnabled(usesARC),
      AF(BPAlloc), ScratchArgs(AF.getEmptyMap()),
@@ -1159,11 +1154,6 @@ RetainSummaryManager::getUnarySummary(const FunctionType* FT,
 RetainSummary* 
 RetainSummaryManager::getCFSummaryCreateRule(const FunctionDecl *FD) {
   assert (ScratchArgs.isEmpty());
-
-  if (FD->getIdentifier() == CFDictionaryCreateII) {
-    ScratchArgs = AF.add(ScratchArgs, 1, DoNothingByRef);
-    ScratchArgs = AF.add(ScratchArgs, 2, DoNothingByRef);
-  }
 
   return getPersistentSummary(RetEffect::MakeOwned(RetEffect::CF, true));
 }
@@ -3184,7 +3174,6 @@ RetainReleaseChecker::updateSymbol(const ProgramState *state, SymbolRef sym,
 
       // Fall-through.
 
-    case DoNothingByRef:
     case DoNothing:
       return state;
 
