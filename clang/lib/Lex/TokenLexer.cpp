@@ -698,7 +698,7 @@ static void updateConsecutiveMacroArgTokens(SourceManager &SM,
   // For the consecutive tokens, find the length of the SLocEntry to contain
   // all of them.
   Token &LastConsecutiveTok = *(NextTok-1);
-  int LastRelOffs;
+  int LastRelOffs = 0;
   SM.isInSameSLocAddrSpace(FirstLoc, LastConsecutiveTok.getLocation(),
                            &LastRelOffs);
   unsigned FullLength = LastRelOffs + LastConsecutiveTok.getLength();
@@ -711,7 +711,7 @@ static void updateConsecutiveMacroArgTokens(SourceManager &SM,
   // expanded location.
   for (; begin_tokens < NextTok; ++begin_tokens) {
     Token &Tok = *begin_tokens;
-    int RelOffs;
+    int RelOffs = 0;
     SM.isInSameSLocAddrSpace(FirstLoc, Tok.getLocation(), &RelOffs);
     Tok.setLocation(Expansion.getFileLocWithOffset(RelOffs));
   }
