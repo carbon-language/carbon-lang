@@ -2843,6 +2843,70 @@ void MipselTargetInfo::getTargetDefines(const LangOptions &Opts,
 }
 } // end anonymous namespace.
 
+namespace {
+class PNaClTargetInfo : public TargetInfo {
+public:
+  PNaClTargetInfo(const std::string& triple) : TargetInfo(triple) {
+    this->UserLabelPrefix = "";
+    this->LongAlign = 32;
+    this->LongWidth = 32;
+    this->PointerAlign = 32;
+    this->PointerWidth = 32;
+    this->IntMaxType = TargetInfo::SignedLongLong;
+    this->UIntMaxType = TargetInfo::UnsignedLongLong;
+    this->Int64Type = TargetInfo::SignedLongLong;
+    this->SizeType = TargetInfo::UnsignedInt;
+    DescriptionString = "e-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-"
+                        "f32:32:32-f64:64:64-p:32:32:32-v128:32:32";
+  }
+
+  void getDefaultFeatures(const std::string &CPU,
+                          llvm::StringMap<bool> &Features) const {
+  }
+  virtual void getArchDefines(const LangOptions &Opts,
+                              MacroBuilder &Builder) const {
+    Builder.defineMacro("__le32__");
+    Builder.defineMacro("__pnacl__");
+  }
+  virtual void getTargetDefines(const LangOptions &Opts,
+                                MacroBuilder &Builder) const {
+    Builder.defineMacro("__native_client__");
+    getArchDefines(Opts, Builder);
+  }
+  virtual void getTargetBuiltins(const Builtin::Info *&Records,
+                                 unsigned &NumRecords) const {
+  }
+  virtual const char *getVAListDeclaration() const {
+    return "typedef void* __builtin_va_list;";
+  }
+  virtual void getGCCRegNames(const char * const *&Names,
+                              unsigned &NumNames) const;
+  virtual void getGCCRegAliases(const GCCRegAlias *&Aliases,
+                                unsigned &NumAliases) const;
+  virtual bool validateAsmConstraint(const char *&Name,
+                                     TargetInfo::ConstraintInfo &Info) const {
+    return false;
+  }
+
+  virtual const char *getClobbers() const {
+    return "";
+  }
+};
+
+void PNaClTargetInfo::getGCCRegNames(const char * const *&Names,
+                                     unsigned &NumNames) const {
+  Names = NULL;
+  NumNames = 0;
+}
+
+void PNaClTargetInfo::getGCCRegAliases(const GCCRegAlias *&Aliases,
+                                       unsigned &NumAliases) const {
+  Aliases = NULL;
+  NumAliases = 0;
+}
+} // end anonymous namespace.
+
+
 //===----------------------------------------------------------------------===//
 // Driver code
 //===----------------------------------------------------------------------===//
@@ -2911,6 +2975,14 @@ static TargetInfo *AllocateTarget(const std::string &T) {
       return new NetBSDTargetInfo<MipselTargetInfo>(T);
     default:
       return new MipsTargetInfo(T);
+    }
+
+  case llvm::Triple::le32:
+    switch (os) {
+      case llvm::Triple::NativeClient:
+        return new PNaClTargetInfo(T);
+      default:
+        return NULL;
     }
 
   case llvm::Triple::ppc:
