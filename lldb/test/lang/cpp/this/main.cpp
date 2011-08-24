@@ -16,7 +16,7 @@ public:
   int accessMemberConst() const;
   static int accessStaticMember();
 
-  int accessMemberInline(int a) __attribute__ ((always_inline))
+  void accessMemberInline(int a) __attribute__ ((always_inline))
   {
     m_a = a; // breakpoint 4
   }

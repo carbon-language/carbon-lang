@@ -8,7 +8,6 @@ class CPPThisTestCase(TestBase):
     
     mydir = os.path.join("lang", "cpp", "this")
     
-    @unittest2.skip("segmentation fault -- skipping")
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     #rdar://problem/9962849
     @expectedFailureClang
@@ -17,7 +16,6 @@ class CPPThisTestCase(TestBase):
         self.buildDsym()
         self.static_method_commands()
 
-    @unittest2.skip("segmentation fault -- skipping")
     #rdar://problem/9962849
     @expectedFailureClang
     def test_with_dwarf_and_run_command(self):
