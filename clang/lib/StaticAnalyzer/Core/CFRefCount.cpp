@@ -2619,7 +2619,8 @@ void CFRefCount::evalObjCMessage(ExplodedNodeSet &Dst,
 
 namespace {
 class RetainReleaseChecker
-  : public Checker< check::Bind,
+  : public Checker< check::ASTCodeBody,
+                    check::Bind,
                     check::DeadSymbols,
                     check::EndPath,
                     check::PostStmt<BlockExpr>,
@@ -2643,6 +2644,30 @@ public:
 
   virtual ~RetainReleaseChecker() {
     DeleteContainerSeconds(DeadSymbolTags);
+  }
+
+  void checkASTCodeBody(const Decl *D, AnalysisManager &mgr,
+                        BugReporter &BR) const {
+    // FIXME: This is a horrible hack which makes the checker stateful --
+    // exactly what being const was supposed to prevent, or at least discourage.
+    // Why? Because a checker's lifetime is tied to a translation unit, but an
+    // ExplodedGraph's lifetime is just a code body. Once in a blue moon, a new
+    // ExplodedNode will have the same address as an old one with an associated
+    // summary, and the bug report visitor will get very confused.
+    // (To make things worse, the summary lifetime is currently also tied to a
+    // code body, so we get a crash instead of incorrect results.)
+    // This fix wipes the summary log at the start of a code body.
+    //
+    // Why is this a bad solution? Because if the lifetime of the ExplodedGraph
+    // changes, things will start going wrong again. Really the lifetime of this
+    // log needs to be tied to either the specific nodes in it or the entire
+    // ExplodedGraph, not to a specific part of the code being analyzed.
+    //
+    // Oh, and it has to happen at the BEGINNING of the code body instead of the
+    // end because the summary log has to be live when emitting bug reports.
+    //
+    // This took forever to track down. A better fix is (hopefully) forthcoming.
+    SummaryLog.clear();
   }
 
   void checkBind(SVal loc, SVal val, CheckerContext &C) const;
