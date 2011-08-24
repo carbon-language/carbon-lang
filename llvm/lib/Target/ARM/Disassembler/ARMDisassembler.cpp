@@ -417,7 +417,8 @@ void ThumbDisassembler::UpdateThumbVFPPredicate(MCInst &MI) const {
 
   const MCOperandInfo *OpInfo = ARMInsts[MI.getOpcode()].OpInfo;
   MCInst::iterator I = MI.begin();
-  for (unsigned i = 0, e = MI.size(); i < e; ++i, ++I) {
+  unsigned short NumOps = ARMInsts[MI.getOpcode()].NumOperands;
+  for (unsigned i = 0; i < NumOps; ++i, ++I) {
     if (OpInfo[i].isPredicate() ) {
       I->setImm(CC);
       ++I;
