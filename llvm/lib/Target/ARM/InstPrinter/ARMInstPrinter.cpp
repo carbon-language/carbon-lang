@@ -168,6 +168,7 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O) {
   if (Opcode == ARM::tMOVr && MI->getOperand(0).getReg() == ARM::R8 &&
       MI->getOperand(1).getReg() == ARM::R8) {
     O << "\tnop";
+    printPredicateOperand(MI, 2, O);
     return;
   }
 
