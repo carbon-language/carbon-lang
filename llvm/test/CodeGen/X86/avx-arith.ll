@@ -131,3 +131,131 @@ entry:
 }
 
 declare float @sqrtf(float) readnone
+
+
+; CHECK: vextractf128 $1
+; CHECK-NEXT: vextractf128 $1
+; CHECK-NEXT: vpaddq %xmm
+; CHECK-NEXT: vpaddq %xmm
+; CHECK-NEXT: vinsertf128 $1
+define <4 x i64> @vpaddq(<4 x i64> %i, <4 x i64> %j) nounwind readnone {
+  %x = add <4 x i64> %i, %j
+  ret <4 x i64> %x
+}
+
+; CHECK: vextractf128 $1
+; CHECK-NEXT: vextractf128 $1
+; CHECK-NEXT: vpaddd %xmm
+; CHECK-NEXT: vpaddd %xmm
+; CHECK-NEXT: vinsertf128 $1
+define <8 x i32> @vpaddd(<8 x i32> %i, <8 x i32> %j) nounwind readnone {
+  %x = add <8 x i32> %i, %j
+  ret <8 x i32> %x
+}
+
+; CHECK: vextractf128 $1
+; CHECK-NEXT: vextractf128 $1
+; CHECK-NEXT: vpaddw %xmm
+; CHECK-NEXT: vpaddw %xmm
+; CHECK-NEXT: vinsertf128 $1
+define <16 x i16> @vpaddw(<16 x i16> %i, <16 x i16> %j) nounwind readnone {
+  %x = add <16 x i16> %i, %j
+  ret <16 x i16> %x
+}
+
+; CHECK: vextractf128 $1
+; CHECK-NEXT: vextractf128 $1
+; CHECK-NEXT: vpaddb %xmm
+; CHECK-NEXT: vpaddb %xmm
+; CHECK-NEXT: vinsertf128 $1
+define <32 x i8> @vpaddb(<32 x i8> %i, <32 x i8> %j) nounwind readnone {
+  %x = add <32 x i8> %i, %j
+  ret <32 x i8> %x
+}
+
+; CHECK: vextractf128 $1
+; CHECK-NEXT: vextractf128 $1
+; CHECK-NEXT: vpsubq %xmm
+; CHECK-NEXT: vpsubq %xmm
+; CHECK-NEXT: vinsertf128 $1
+define <4 x i64> @vpsubq(<4 x i64> %i, <4 x i64> %j) nounwind readnone {
+  %x = sub <4 x i64> %i, %j
+  ret <4 x i64> %x
+}
+
+; CHECK: vextractf128 $1
+; CHECK-NEXT: vextractf128 $1
+; CHECK-NEXT: vpsubd %xmm
+; CHECK-NEXT: vpsubd %xmm
+; CHECK-NEXT: vinsertf128 $1
+define <8 x i32> @vpsubd(<8 x i32> %i, <8 x i32> %j) nounwind readnone {
+  %x = sub <8 x i32> %i, %j
+  ret <8 x i32> %x
+}
+
+; CHECK: vextractf128 $1
+; CHECK-NEXT: vextractf128 $1
+; CHECK-NEXT: vpsubw %xmm
+; CHECK-NEXT: vpsubw %xmm
+; CHECK-NEXT: vinsertf128 $1
+define <16 x i16> @vpsubw(<16 x i16> %i, <16 x i16> %j) nounwind readnone {
+  %x = sub <16 x i16> %i, %j
+  ret <16 x i16> %x
+}
+
+; CHECK: vextractf128 $1
+; CHECK-NEXT: vextractf128 $1
+; CHECK-NEXT: vpsubb %xmm
+; CHECK-NEXT: vpsubb %xmm
+; CHECK-NEXT: vinsertf128 $1
+define <32 x i8> @vpsubb(<32 x i8> %i, <32 x i8> %j) nounwind readnone {
+  %x = sub <32 x i8> %i, %j
+  ret <32 x i8> %x
+}
+
+; CHECK: vextractf128 $1
+; CHECK-NEXT: vextractf128 $1
+; CHECK-NEXT: vpmulld %xmm
+; CHECK-NEXT: vpmulld %xmm
+; CHECK-NEXT: vinsertf128 $1
+define <8 x i32> @vpmulld(<8 x i32> %i, <8 x i32> %j) nounwind readnone {
+  %x = mul <8 x i32> %i, %j
+  ret <8 x i32> %x
+}
+
+; CHECK: vextractf128 $1
+; CHECK-NEXT: vextractf128 $1
+; CHECK-NEXT: vpmullw %xmm
+; CHECK-NEXT: vpmullw %xmm
+; CHECK-NEXT: vinsertf128 $1
+define <16 x i16> @vpmullw(<16 x i16> %i, <16 x i16> %j) nounwind readnone {
+  %x = mul <16 x i16> %i, %j
+  ret <16 x i16> %x
+}
+
+; CHECK: vextractf128 $1
+; CHECK-NEXT: vextractf128 $1
+; CHECK-NEXT: vpmuludq %xmm
+; CHECK-NEXT: vpsrlq $32, %xmm
+; CHECK-NEXT: vpmuludq %xmm
+; CHECK-NEXT: vpsllq $32, %xmm
+; CHECK-NEXT: vpaddq %xmm
+; CHECK-NEXT: vpmuludq %xmm
+; CHECK-NEXT: vpsrlq $32, %xmm
+; CHECK-NEXT: vpmuludq %xmm
+; CHECK-NEXT: vpsllq $32, %xmm
+; CHECK-NEXT: vpsrlq $32, %xmm
+; CHECK-NEXT: vpmuludq %xmm
+; CHECK-NEXT: vpsllq $32, %xmm
+; CHECK-NEXT: vpaddq %xmm
+; CHECK-NEXT: vpaddq %xmm
+; CHECK-NEXT: vpsrlq $32, %xmm
+; CHECK-NEXT: vpmuludq %xmm
+; CHECK-NEXT: vpsllq $32, %xmm
+; CHECK-NEXT: vpaddq %xmm
+; CHECK-NEXT: vinsertf128 $1
+define <4 x i64> @mul-v4i64(<4 x i64> %i, <4 x i64> %j) nounwind readnone {
+  %x = mul <4 x i64> %i, %j
+  ret <4 x i64> %x
+}
+
