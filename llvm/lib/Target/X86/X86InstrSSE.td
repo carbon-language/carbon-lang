@@ -514,6 +514,11 @@ let Predicates = [HasAVX] in {
     def : Pat<(v4i32 (movhlps_undef VR128:$src1, (undef))),
               (VMOVHLPSrr VR128:$src1, VR128:$src1)>;
   }
+
+  def : Pat<(v4f32 (X86Movhlps VR128:$src1, VR128:$src2)),
+            (VMOVHLPSrr VR128:$src1, VR128:$src2)>;
+  def : Pat<(v4i32 (X86Movhlps VR128:$src1, VR128:$src2)),
+            (VMOVHLPSrr VR128:$src1, VR128:$src2)>;
 }
 
 let Predicates = [HasSSE1] in {
@@ -557,6 +562,11 @@ let Predicates = [HasSSE1] in {
     def : Pat<(v4i32 (movhlps_undef VR128:$src1, (undef))),
               (MOVHLPSrr VR128:$src1, VR128:$src1)>;
   }
+
+  def : Pat<(v4f32 (X86Movhlps VR128:$src1, VR128:$src2)),
+            (MOVHLPSrr VR128:$src1, VR128:$src2)>;
+  def : Pat<(v4i32 (X86Movhlps VR128:$src1, VR128:$src2)),
+            (MOVHLPSrr VR128:$src1, VR128:$src2)>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -6010,12 +6020,6 @@ def VZEROUPPER : I<0x77, RawFrm, (outs), (ins), "vzeroupper",
 // directly matched by the patterns below (which can be changed along the way)
 // The AVX version of some but not all of them are described here, and more
 // should come in a near future.
-
-// Shuffle with MOVHLPS instruction
-def : Pat<(v4f32 (X86Movhlps VR128:$src1, VR128:$src2)),
-          (MOVHLPSrr VR128:$src1, VR128:$src2)>;
-def : Pat<(v4i32 (X86Movhlps VR128:$src1, VR128:$src2)),
-          (MOVHLPSrr VR128:$src1, VR128:$src2)>;
 
 // Shuffle with MOVDDUP instruction
 def : Pat<(X86Movddup (memopv2f64 addr:$src)),
