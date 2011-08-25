@@ -136,9 +136,11 @@ void llvm::EmitAnyX86InstComments(const MCInst *MI, raw_ostream &OS,
     break;
 
   case X86::SHUFPDrri:
+    Src2Name = getRegName(MI->getOperand(2).getReg());
+    // FALL THROUGH.
+  case X86::SHUFPDrmi:
     DecodeSHUFPSMask(2, MI->getOperand(3).getImm(), ShuffleMask);
     Src1Name = getRegName(MI->getOperand(0).getReg());
-    Src2Name = getRegName(MI->getOperand(2).getReg());
     break;
 
   case X86::SHUFPSrri:
