@@ -78,23 +78,19 @@ ASTConsumer *GeneratePCHAction::CreateASTConsumer(CompilerInstance &CI,
   std::string Sysroot;
   std::string OutputFile;
   raw_ostream *OS = 0;
-  bool Chaining;
-  if (ComputeASTConsumerArguments(CI, InFile, Sysroot, OutputFile, OS, 
-                                  Chaining))
+  if (ComputeASTConsumerArguments(CI, InFile, Sysroot, OutputFile, OS))
     return 0;
 
   if (!CI.getFrontendOpts().RelocatablePCH)
     Sysroot.clear();
-  return new PCHGenerator(CI.getPreprocessor(), OutputFile, Chaining, Sysroot, 
-                          OS);
+  return new PCHGenerator(CI.getPreprocessor(), OutputFile, Sysroot, OS);
 }
 
 bool GeneratePCHAction::ComputeASTConsumerArguments(CompilerInstance &CI,
                                                     StringRef InFile,
                                                     std::string &Sysroot,
                                                     std::string &OutputFile,
-                                                    raw_ostream *&OS,
-                                                    bool &Chaining) {
+                                                    raw_ostream *&OS) {
   Sysroot = CI.getHeaderSearchOpts().Sysroot;
   if (CI.getFrontendOpts().RelocatablePCH && Sysroot.empty()) {
     CI.getDiagnostics().Report(diag::err_relocatable_without_isysroot);
@@ -111,8 +107,6 @@ bool GeneratePCHAction::ComputeASTConsumerArguments(CompilerInstance &CI,
     return true;
 
   OutputFile = CI.getFrontendOpts().OutputFile;
-  Chaining = CI.getInvocation().getFrontendOpts().ChainedPCH &&
-             !CI.getPreprocessorOpts().ImplicitPCHInclude.empty();
   return false;
 }
 

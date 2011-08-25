@@ -634,7 +634,6 @@ class PCHGenerator : public SemaConsumer {
   std::vector<unsigned char> Buffer;
   llvm::BitstreamWriter Stream;
   ASTWriter Writer;
-  bool Chaining;
 
 protected:
   ASTWriter &getWriter() { return Writer; }
@@ -642,7 +641,7 @@ protected:
 
 public:
   PCHGenerator(const Preprocessor &PP, StringRef OutputFile, 
-               bool Chaining, StringRef isysroot, raw_ostream *Out);
+               StringRef isysroot, raw_ostream *Out);
   ~PCHGenerator();
   virtual void InitializeSema(Sema &S) { SemaPtr = &S; }
   virtual void HandleTranslationUnit(ASTContext &Ctx);

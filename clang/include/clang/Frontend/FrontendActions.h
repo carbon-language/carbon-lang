@@ -91,8 +91,7 @@ public:
                                           StringRef InFile,
                                           std::string &Sysroot,
                                           std::string &OutputFile,
-                                          raw_ostream *&OS,
-                                          bool &Chaining);
+                                          raw_ostream *&OS);
 };
 
 class SyntaxOnlyAction : public ASTFrontendAction {

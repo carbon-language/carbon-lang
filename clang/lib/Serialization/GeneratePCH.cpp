@@ -28,18 +28,14 @@ using namespace clang;
 
 PCHGenerator::PCHGenerator(const Preprocessor &PP,
                            StringRef OutputFile,
-                           bool Chaining,
                            StringRef isysroot,
                            raw_ostream *OS)
   : PP(PP), OutputFile(OutputFile), isysroot(isysroot.str()), Out(OS), 
-    SemaPtr(0), StatCalls(0), Stream(Buffer), Writer(Stream), Chaining(Chaining) {
+    SemaPtr(0), StatCalls(0), Stream(Buffer), Writer(Stream) {
   // Install a stat() listener to keep track of all of the stat()
   // calls.
   StatCalls = new MemorizeStatCalls();
-  // If we have a chain, we want new stat calls only, so install the memorizer
-  // *after* the already installed ASTReader's stat cache.
-  PP.getFileManager().addStatCache(StatCalls,
-    /*AtBeginning=*/!Chaining);
+  PP.getFileManager().addStatCache(StatCalls, /*AtBeginning=*/false);
 }
 
 PCHGenerator::~PCHGenerator() {
@@ -67,9 +63,7 @@ void PCHGenerator::HandleTranslationUnit(ASTContext &Ctx) {
 }
 
 ASTMutationListener *PCHGenerator::GetASTMutationListener() {
-  if (Chaining)
-    return &Writer;
-  return 0;
+  return &Writer;
 }
 
 ASTSerializationListener *PCHGenerator::GetASTSerializationListener() {

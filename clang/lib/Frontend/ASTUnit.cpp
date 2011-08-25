@@ -771,10 +771,9 @@ class PrecompilePreambleConsumer : public PCHGenerator,
   std::vector<Decl *> TopLevelDecls;
                                      
 public:
-  PrecompilePreambleConsumer(ASTUnit &Unit,
-                             const Preprocessor &PP, bool Chaining,
+  PrecompilePreambleConsumer(ASTUnit &Unit, const Preprocessor &PP, 
                              StringRef isysroot, raw_ostream *Out)
-    : PCHGenerator(PP, "", Chaining, isysroot, Out), Unit(Unit),
+    : PCHGenerator(PP, "", isysroot, Out), Unit(Unit),
       Hash(Unit.getCurrentTopLevelHashValue()) {
     Hash = 0;
   }
@@ -827,10 +826,9 @@ public:
     std::string Sysroot;
     std::string OutputFile;
     raw_ostream *OS = 0;
-    bool Chaining;
     if (GeneratePCHAction::ComputeASTConsumerArguments(CI, InFile, Sysroot,
                                                        OutputFile,
-                                                       OS, Chaining))
+                                                       OS))
       return 0;
     
     if (!CI.getFrontendOpts().RelocatablePCH)
@@ -838,8 +836,8 @@ public:
 
     CI.getPreprocessor().addPPCallbacks(
      new MacroDefinitionTrackerPPCallbacks(Unit.getCurrentTopLevelHashValue()));
-    return new PrecompilePreambleConsumer(Unit, CI.getPreprocessor(), Chaining,
-                                          Sysroot, OS);
+    return new PrecompilePreambleConsumer(Unit, CI.getPreprocessor(), Sysroot, 
+                                          OS);
   }
 
   virtual bool hasCodeCompletionSupport() const { return false; }
