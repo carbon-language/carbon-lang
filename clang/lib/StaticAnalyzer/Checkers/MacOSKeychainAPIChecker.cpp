@@ -35,29 +35,28 @@ public:
   /// AllocationState is a part of the checker specific state together with the
   /// MemRegion corresponding to the allocated data.
   struct AllocationState {
-    const Expr *Address;
     /// The index of the allocator function.
     unsigned int AllocatorIdx;
-    SymbolRef RetValue;
+    SymbolRef Region;
 
     AllocationState(const Expr *E, unsigned int Idx, SymbolRef R) :
-      Address(E),
       AllocatorIdx(Idx),
-      RetValue(R) {}
+      Region(R) {}
 
     bool operator==(const AllocationState &X) const {
-      return Address == X.Address;
+      return (AllocatorIdx == X.AllocatorIdx &&
+              Region == X.Region);
     }
+
     void Profile(llvm::FoldingSetNodeID &ID) const {
-      ID.AddPointer(Address);
       ID.AddInteger(AllocatorIdx);
+      ID.AddPointer(Region);
     }
   };
 
   void checkPreStmt(const CallExpr *S, CheckerContext &C) const;
   void checkPreStmt(const ReturnStmt *S, CheckerContext &C) const;
   void checkPostStmt(const CallExpr *S, CheckerContext &C) const;
-
   void checkDeadSymbols(SymbolReaper &SR, CheckerContext &C) const;
   void checkEndPath(EndOfFunctionNodeBuilder &B, ExprEngine &Eng) const;
 
@@ -303,7 +302,7 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
     const Expr *ArgExpr = CE->getArg(FunctionsToTrack[idx].Param);
     if (SymbolRef V = getAsPointeeSymbol(ArgExpr, C))
       if (const AllocationState *AS = State->get<AllocatedData>(V)) {
-        if (!definitelyReturnedError(AS->RetValue, State, C.getSValBuilder())) {
+        if (!definitelyReturnedError(AS->Region, State, C.getSValBuilder())) {
           // Remove the value from the state. The new symbol will be added for
           // tracking when the second allocator is processed in checkPostStmt().
           State = State->remove<AllocatedData>(V);
@@ -424,7 +423,7 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
   }
 
   // If the return status is undefined or is error, report a bad call to free.
-  if (!definitelyDidnotReturnError(AS->RetValue, State, C.getSValBuilder())) {
+  if (!definitelyDidnotReturnError(AS->Region, State, C.getSValBuilder())) {
     ExplodedNode *N = C.generateNode(State);
     if (!N)
       return;
@@ -540,7 +539,7 @@ void MacOSKeychainAPIChecker::checkDeadSymbols(SymbolReaper &SR,
     // If the allocated symbol is null or if the allocation call might have
     // returned an error, do not report.
     if (State->getSymVal(I->first) ||
-        definitelyReturnedError(I->second.RetValue, State, C.getSValBuilder()))
+        definitelyReturnedError(I->second.Region, State, C.getSValBuilder()))
       continue;
     Errors.push_back(std::make_pair(I->first, &I->second));
   }
@@ -577,7 +576,7 @@ void MacOSKeychainAPIChecker::checkEndPath(EndOfFunctionNodeBuilder &B,
     // If the allocated symbol is null or if error code was returned at
     // allocation, do not report.
     if (state->getSymVal(I.getKey()) ||
-        definitelyReturnedError(I->second.RetValue, state,
+        definitelyReturnedError(I->second.Region, state,
                                 Eng.getSValBuilder())) {
       continue;
     }
