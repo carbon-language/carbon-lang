@@ -203,7 +203,7 @@ public:
   /// value.
   /// @returns true iff this constant is greater or equal to the given number.
   /// @brief Determine if the value is greater or equal to the given number.
-  bool uge(uint64_t Num) {
+  bool uge(uint64_t Num) const {
     return Val.getActiveBits() > 64 || Val.getZExtValue() >= Num;
   }
 
