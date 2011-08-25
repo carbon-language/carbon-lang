@@ -420,14 +420,20 @@ public:
                             return true;
                         }
                     }
-                    else
+                    if (error.AsCString())
                     {
                         result.AppendErrorWithFormat ("Failed to write register '%s' with value '%s': %s\n",
                                                      reg_name,
                                                      value_str,
                                                      error.AsCString());
-                        result.SetStatus (eReturnStatusFailed);
                     }
+                    else
+                    {
+                        result.AppendErrorWithFormat ("Failed to write register '%s' with value '%s'",
+                                                     reg_name,
+                                                     value_str);
+                    }
+                    result.SetStatus (eReturnStatusFailed);
                 }
                 else
                 {
