@@ -1488,7 +1488,7 @@ void Sema::MatchAllMethodDeclarations(const llvm::DenseSet<Selector> &InsMap,
         if (!WarnExactMatch)
           WarnConflictingTypedMethods(ImpMethodDecl, MethodDecl,
                                       isa<ObjCProtocolDecl>(CDecl));
-        else
+        else if (!MethodDecl->isSynthesized())
           WarnExactTypedMethods(ImpMethodDecl, MethodDecl,
                                isa<ObjCProtocolDecl>(CDecl));
       }

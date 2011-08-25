@@ -26,3 +26,16 @@
 - (void) : (double) arg{}; // expected-warning {{category is implementing a method which will also be implemented by its primary class}}
 - (void) CEMeth {}; // expected-warning {{category is implementing a method which will also be implemented by its primary class}}
 @end
+
+// rdar://10014946
+typedef char BOOL;
+@interface I
+{
+  BOOL allowsDeleting;
+}
+@property (nonatomic, assign, readwrite) BOOL allowsDeleting;
+@end
+
+@implementation I(CAT)
+- (BOOL) allowsDeleting { return 1; }
+@end
