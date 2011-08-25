@@ -21,6 +21,11 @@
 #include "llvm/Target/TargetOptions.h"
 using namespace llvm;
 
+static cl::opt<bool>
+EnableGlobalMerge("global-merge",
+                  cl::desc("Enable global merge pass"),
+                  cl::init(true));
+
 extern "C" void LLVMInitializeARMTarget() {
   // Register the target.
   RegisterTargetMachine<ARMTargetMachine> X(TheARMTarget);
@@ -83,7 +88,7 @@ ThumbTargetMachine::ThumbTargetMachine(const Target &T, StringRef TT,
 
 bool ARMBaseTargetMachine::addPreISel(PassManagerBase &PM,
                                       CodeGenOpt::Level OptLevel) {
-  if (OptLevel != CodeGenOpt::None)
+  if (OptLevel != CodeGenOpt::None && EnableGlobalMerge)
     PM.add(createARMGlobalMergePass(getTargetLowering()));
 
   return false;
