@@ -46,19 +46,19 @@ class LogTestCase(TestBase):
             "com.apple.main-thread HandleCommand, revised_command_line: 'command alias bp breakpoint'\n",
             "com.apple.main-thread HandleCommand, wants_raw_input:'True'\n",
             "com.apple.main-thread HandleCommand, command line after removing command name(s): 'bp breakpoint'\n",
-            "\n",
+            "com.apple.main-thread HandleCommand, command succeeded\n",
             "com.apple.main-thread Processing command: bp set -n main\n",
             "com.apple.main-thread HandleCommand, cmd_obj : 'breakpoint set'\n",
             "com.apple.main-thread HandleCommand, revised_command_line: 'breakpoint set -n main'\n",
             "com.apple.main-thread HandleCommand, wants_raw_input:'False'\n",
             "com.apple.main-thread HandleCommand, command line after removing command name(s): '-n main'\n",
-            "\n",
+            "com.apple.main-thread HandleCommand, command succeeded\n",
             "com.apple.main-thread Processing command: bp l\n",
             "com.apple.main-thread HandleCommand, cmd_obj : 'breakpoint list'\n",
             "com.apple.main-thread HandleCommand, revised_command_line: 'breakpoint l'\n",
             "com.apple.main-thread HandleCommand, wants_raw_input:'False'\n",
             "com.apple.main-thread HandleCommand, command line after removing command name(s): ''\n",
-            "\n"
+            "com.apple.main-thread HandleCommand, command succeeded\n",
             ]
 
         self.assertTrue (os.path.isfile (log_file))
