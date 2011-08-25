@@ -26,25 +26,30 @@ define coldcc void @bar2() {
 }
 
 define cc42 void @bar3() {
-        invoke fastcc void @foo( )
-                        to label %Ok unwind label %U
+  invoke fastcc void @foo( )
+    to label %Ok unwind label %U
 
-Ok:             ; preds = %0
-        ret void
+Ok:
+  ret void
 
-U:              ; preds = %0
-        unwind
+U:
+  %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+            cleanup
+  resume { i8*, i32 } %exn
 }
 
 define void @bar4() {
-        call cc42 void @bar( )
-        invoke cc42 void @bar3( )
-                        to label %Ok unwind label %U
+  call cc42 void @bar( )
+  invoke cc42 void @bar3( )
+    to label %Ok unwind label %U
 
-Ok:             ; preds = %0
-        ret void
+Ok:
+  ret void
 
-U:              ; preds = %0
-        unwind
+U:
+  %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+            cleanup
+  resume { i8*, i32 } %exn
 }
 
+declare i32 @__gxx_personality_v0(...)
