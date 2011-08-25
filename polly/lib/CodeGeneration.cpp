@@ -1139,8 +1139,10 @@ public:
 
     isl_set *elements = isl_map_range(sub);
 
-    if (!isl_set_is_singleton(elements))
+    if (!isl_set_is_singleton(elements)) {
+      isl_set_free(elements);
       return -1;
+    }
 
     isl_point *p = isl_set_sample_point(elements);
 

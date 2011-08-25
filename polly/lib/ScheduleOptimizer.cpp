@@ -76,8 +76,7 @@ static void extendScattering(Scop &S, unsigned scatDimensions) {
 
     isl_map *scattering = stmt->getScattering();
     isl_dim *dim = isl_dim_alloc(isl_map_get_ctx(scattering),
-                                 isl_map_n_param(scattering),
-                                 isl_map_n_out(scattering),
+                                 0, isl_map_n_out(scattering),
                                  scatDimensions);
     isl_basic_map *changeScattering = isl_basic_map_universe(isl_dim_copy(dim));
 
@@ -96,6 +95,8 @@ static void extendScattering(Scop &S, unsigned scatDimensions) {
 
     isl_map *changeScatteringMap = isl_map_from_basic_map(changeScattering);
 
+    isl_dim *dimModel = isl_map_get_dim(scattering);
+    changeScatteringMap = isl_map_align_params(changeScatteringMap, dimModel);
     stmt->setScattering(isl_map_apply_range(scattering, changeScatteringMap));
     isl_dim_free(dim);
   }
@@ -128,7 +129,7 @@ static void extendScattering(Scop &S, unsigned scatDimensions) {
 //	    S(i,j)
 //
 static isl_basic_map *getTileMap(isl_ctx *ctx, int scheduleDimensions,
-				 int parameterDimensions, int tileSize = 32) {
+				 isl_dim *dimModel, int tileSize = 32) {
   // We construct
   //
   // tileMap := [p0] -> {[s0, s1] -> [t0, t1, p0, p1, a0, a1]:
@@ -136,8 +137,8 @@ static isl_basic_map *getTileMap(isl_ctx *ctx, int scheduleDimensions,
   //	                  s1 = a1 * 32 and s1 = p1 and t1 <= p1 < t1 + 32}
   //
   // and project out the auxilary dimensions a0 and a1.
-  isl_dim *dim = isl_dim_alloc(ctx, parameterDimensions, scheduleDimensions,
-			       scheduleDimensions * 3);
+  isl_dim *dim = isl_dim_alloc(ctx, 0, scheduleDimensions,
+                               scheduleDimensions * 3);
   isl_basic_map *tileMap = isl_basic_map_universe(isl_dim_copy(dim));
 
   for (int x = 0; x < scheduleDimensions; x++) {
@@ -188,7 +189,7 @@ static isl_basic_map *getTileMap(isl_ctx *ctx, int scheduleDimensions,
 
 isl_union_map *getTiledPartialSchedule(isl_band *band) {
   isl_union_map *partialSchedule;
-  int scheduleDimensions, parameterDimensions;
+  int scheduleDimensions;
   isl_ctx *ctx;
   isl_dim *dim;
   isl_basic_map *tileMap;
@@ -198,14 +199,11 @@ isl_union_map *getTiledPartialSchedule(isl_band *band) {
   ctx = isl_union_map_get_ctx(partialSchedule);
   dim = isl_union_map_get_dim(partialSchedule);
   scheduleDimensions = isl_band_n_member(band);
-  parameterDimensions = isl_dim_size(dim, isl_dim_param);
 
-  tileMap = getTileMap(ctx, scheduleDimensions, parameterDimensions);
+  tileMap = getTileMap(ctx, scheduleDimensions, dim);
   tileUnionMap = isl_union_map_from_map(isl_map_from_basic_map(tileMap));
-
+  tileUnionMap = isl_union_map_align_params(tileUnionMap, dim);
   partialSchedule = isl_union_map_apply_range(partialSchedule, tileUnionMap);
-
-  isl_dim_free(dim);
 
   return partialSchedule;
 }
@@ -288,8 +286,6 @@ static isl_union_map *tileBandList(isl_band_list *blist) {
     partialSchedule = getTiledPartialSchedule(band);
     int scheduleDimensions = isl_band_n_member(band);
     isl_dim *dim = isl_union_map_get_dim(partialSchedule);
-    int parameterDimensions = isl_dim_size(dim, isl_dim_param);
-    isl_dim_free(dim);
 
 
     if (isl_band_has_children(band)) {
@@ -307,9 +303,10 @@ static isl_union_map *tileBandList(isl_band_list *blist) {
       for (int i = scheduleDimensions - 1 ;  i >= 0 ; i--) {
 	if (isl_band_member_is_zero_distance(band, i)) {
 	  tileMap = getPrevectorMap(ctx, scheduleDimensions + i,
-				    scheduleDimensions * 2,
-				    parameterDimensions);
+				    scheduleDimensions * 2, 0);
 	  tileUnionMap = isl_union_map_from_map(tileMap);
+          tileUnionMap = isl_union_map_align_params(tileUnionMap,
+                                                    isl_dim_copy(dim));
 	  partialSchedule = isl_union_map_apply_range(partialSchedule,
 						      tileUnionMap);
 	  break;
@@ -323,6 +320,7 @@ static isl_union_map *tileBandList(isl_band_list *blist) {
       finalSchedule = partialSchedule;
 
     isl_band_free(band);
+    isl_dim_free(dim);
   }
 
   return finalSchedule;

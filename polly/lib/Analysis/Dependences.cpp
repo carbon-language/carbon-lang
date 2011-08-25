@@ -264,6 +264,7 @@ bool Dependences::isParallelDimension(isl_set *loopDomain,
                                       unsigned parallelDimension) {
   Scop *S = &getCurScop();
   isl_union_map *schedule = getCombinedScheduleForDim(S, parallelDimension);
+  isl_dim *dimModel = isl_union_map_get_dim(schedule);
 
   // Calculate distance vector.
   isl_union_set *scheduleSubset;
@@ -310,8 +311,7 @@ bool Dependences::isParallelDimension(isl_set *loopDomain,
 
   isl_union_set *distance_waw = isl_union_map_deltas(restrictedDeps_waw);
 
-  isl_dim *dim = isl_dim_set_alloc(S->getCtx(), S->getNumParams(),
-                                   parallelDimension);
+  isl_dim *dim = isl_dim_set_alloc(S->getCtx(), 0, parallelDimension);
 
   // [0, 0, 0, 0] - All zero
   isl_basic_set *allZeroBS = isl_basic_set_universe(isl_dim_copy(dim));
@@ -328,6 +328,7 @@ bool Dependences::isParallelDimension(isl_set *loopDomain,
   }
 
   isl_set *allZero = isl_set_from_basic_set(allZeroBS);
+  allZero = isl_set_align_params(allZero, isl_dim_copy(dimModel));
 
   // All zero, last unknown.
   // [0, 0, 0, ?]
@@ -345,6 +346,7 @@ bool Dependences::isParallelDimension(isl_set *loopDomain,
   }
 
   isl_set *lastUnknown = isl_set_from_basic_set(lastUnknownBS);
+  lastUnknown = isl_set_align_params(lastUnknown, dimModel);
 
   // Valid distance vectors
   isl_set *validDistances = isl_set_subtract(lastUnknown, allZero);

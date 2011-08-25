@@ -1,6 +1,7 @@
 set(POLLY_TEST_DIRECTORIES
-  "ScopInfo"
   "AffineIterator"
+  "ScopInfo"
+  "ScheduleOptimizer"
   "CodeGen"
   "OpenMP"
   "polybench"
