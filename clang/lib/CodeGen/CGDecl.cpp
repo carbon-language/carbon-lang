@@ -879,9 +879,25 @@ static bool isCapturedBy(const VarDecl &var, const Expr *e) {
     const CompoundStmt *CS = SE->getSubStmt();
     for (CompoundStmt::const_body_iterator BI = CS->body_begin(),
 	   BE = CS->body_end(); BI != BE; ++BI)
-      if (Expr *E = dyn_cast<Expr>((*BI)))
+      if (Expr *E = dyn_cast<Expr>((*BI))) {
         if (isCapturedBy(var, E))
             return true;
+      }
+      else if (DeclStmt *DS = dyn_cast<DeclStmt>((*BI))) {
+          // special case declarations
+          for (DeclStmt::decl_iterator I = DS->decl_begin(), E = DS->decl_end();
+               I != E; ++I) {
+              if (VarDecl *VD = dyn_cast<VarDecl>((*I))) {
+                Expr *Init = VD->getInit();
+                if (Init && isCapturedBy(var, Init))
+                  return true;
+              }
+          }
+      }
+      else
+        // FIXME. Make safe assumption assuming arbitrary statements cause capturing.
+        // Later, provide code to poke into statements for capture analysis.
+        return true;
     return false;
   }
 
