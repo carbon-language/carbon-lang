@@ -136,7 +136,9 @@ void CodeGenFunction::EmitAnyExprToMem(const Expr *E,
   if (E->getType()->isAnyComplexType())
     EmitComplexExprIntoAddr(E, Location, Quals.hasVolatile());
   else if (hasAggregateLLVMType(E->getType()))
-    EmitAggExpr(E, AggValueSlot::forAddr(Location, Quals, IsInit));
+    EmitAggExpr(E, AggValueSlot::forAddr(Location, Quals,
+                                         AggValueSlot::IsDestructed_t(IsInit),
+                                         AggValueSlot::DoesNotNeedGCBarriers));
   else {
     RValue RV = RValue::get(EmitScalarExpr(E, /*Ignore*/ false));
     LValue LV = MakeAddrLValue(Location, E->getType());
@@ -354,8 +356,11 @@ EmitExprForReferenceBinding(CodeGenFunction &CGF, const Expr *E,
         !E->getType()->isAnyComplexType()) {
       ReferenceTemporary = CreateReferenceTemporary(CGF, E->getType(), 
                                                     InitializedDecl);
+      AggValueSlot::IsDestructed_t isDestructed
+        = AggValueSlot::IsDestructed_t(InitializedDecl != 0);
       AggSlot = AggValueSlot::forAddr(ReferenceTemporary, Qualifiers(),
-                                      InitializedDecl != 0);
+                                      isDestructed,
+                                      AggValueSlot::DoesNotNeedGCBarriers);
     }
     
     if (InitializedDecl) {

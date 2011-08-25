@@ -1044,7 +1044,9 @@ void CodeGenFunction::EmitExprAsInit(const Expr *init,
     StoreComplexToAddr(complex, lvalue.getAddress(), lvalue.isVolatile());
   } else {
     // TODO: how can we delay here if D is captured by its initializer?
-    EmitAggExpr(init, AggValueSlot::forLValue(lvalue, true, false));
+    EmitAggExpr(init, AggValueSlot::forLValue(lvalue,
+                                              AggValueSlot::IsDestructed,
+                                         AggValueSlot::DoesNotNeedGCBarriers));
   }
 }
 

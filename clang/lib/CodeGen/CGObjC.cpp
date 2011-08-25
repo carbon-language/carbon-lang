@@ -818,7 +818,9 @@ void CodeGenFunction::GenerateObjCCtorDtorMethod(ObjCImplementationDecl *IMP,
       ObjCIvarDecl  *Ivar = cast<ObjCIvarDecl>(Field);
       LValue LV = EmitLValueForIvar(TypeOfSelfObject(), 
                                     LoadObjCSelf(), Ivar, 0);
-      EmitAggExpr(IvarInit->getInit(), AggValueSlot::forLValue(LV, true));
+      EmitAggExpr(IvarInit->getInit(),
+                  AggValueSlot::forLValue(LV, AggValueSlot::IsDestructed,
+                                          AggValueSlot::DoesNotNeedGCBarriers));
     }
     // constructor returns 'self'.
     CodeGenTypes &Types = CGM.getTypes();

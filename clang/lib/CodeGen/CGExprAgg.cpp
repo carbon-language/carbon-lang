@@ -71,6 +71,12 @@ public:
 
   void EmitGCMove(const Expr *E, RValue Src);
 
+  AggValueSlot::NeedsGCBarriers_t needsGC(QualType T) {
+    if (CGF.getLangOptions().getGCMode() && TypeRequiresGCollection(T))
+      return AggValueSlot::NeedsGCBarriers;
+    return AggValueSlot::DoesNotNeedGCBarriers;
+  }
+
   bool TypeRequiresGCollection(QualType T);
 
   //===--------------------------------------------------------------------===//
@@ -426,10 +432,8 @@ void AggExprEmitter::VisitBinAssign(const BinaryOperator *E) {
         // as it may change the 'forwarding' field via call to Block_copy.
         LValue RHS = CGF.EmitLValue(E->getRHS());
         LValue LHS = CGF.EmitLValue(E->getLHS());
-        bool GCollection = false;
-        if (CGF.getContext().getLangOptions().getGCMode())
-          GCollection = TypeRequiresGCollection(E->getLHS()->getType());
-        Dest = AggValueSlot::forLValue(LHS, true, GCollection);
+        Dest = AggValueSlot::forLValue(LHS, AggValueSlot::IsDestructed,
+                                       needsGC(E->getLHS()->getType()));
         EmitFinalDestCopy(E, RHS, true);
         return;
       }
@@ -451,13 +455,10 @@ void AggExprEmitter::VisitBinAssign(const BinaryOperator *E) {
     }
     CGF.EmitStoreThroughPropertyRefLValue(Src, LHS);
   } else {
-    bool GCollection = false;
-    if (CGF.getContext().getLangOptions().getGCMode())
-      GCollection = TypeRequiresGCollection(E->getLHS()->getType());
-
     // Codegen the RHS so that it stores directly into the LHS.
-    AggValueSlot LHSSlot = AggValueSlot::forLValue(LHS, true, 
-                                                   GCollection);
+    AggValueSlot LHSSlot =
+      AggValueSlot::forLValue(LHS, AggValueSlot::IsDestructed, 
+                              needsGC(E->getLHS()->getType()));
     CGF.EmitAggExpr(E->getRHS(), LHSSlot, false);
     EmitFinalDestCopy(E, LHS, true);
   }
@@ -596,7 +597,9 @@ AggExprEmitter::EmitInitializationToLValue(Expr* E, LValue LV) {
   } else if (type->isAnyComplexType()) {
     CGF.EmitComplexExprIntoAddr(E, LV.getAddress(), false);
   } else if (CGF.hasAggregateLLVMType(type)) {
-    CGF.EmitAggExpr(E, AggValueSlot::forLValue(LV, true, false,
+    CGF.EmitAggExpr(E, AggValueSlot::forLValue(LV,
+                                               AggValueSlot::IsDestructed,
+                                      AggValueSlot::DoesNotNeedGCBarriers,
                                                Dest.isZeroed()));
   } else if (LV.isSimple()) {
     CGF.EmitScalarInit(E, /*D=*/0, LV, /*Captured=*/false);
@@ -1036,7 +1039,8 @@ LValue CodeGenFunction::EmitAggExprToLValue(const Expr *E) {
   assert(hasAggregateLLVMType(E->getType()) && "Invalid argument!");
   llvm::Value *Temp = CreateMemTemp(E->getType());
   LValue LV = MakeAddrLValue(Temp, E->getType());
-  EmitAggExpr(E, AggValueSlot::forLValue(LV, false));
+  EmitAggExpr(E, AggValueSlot::forLValue(LV, AggValueSlot::IsNotDestructed,
+                                         AggValueSlot::DoesNotNeedGCBarriers));
   return LV;
 }
 

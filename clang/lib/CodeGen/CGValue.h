@@ -337,62 +337,63 @@ class AggValueSlot {
 
   // Qualifiers
   Qualifiers Quals;
-  
+
   // Associated flags.
   bool LifetimeFlag : 1;
   bool RequiresGCollection : 1;
   
-  /// IsZeroed - This is set to true if the destination is known to be zero
+  /// ZeroedFlag - This is set to true if the destination is known to be zero
   /// before the assignment into it.  This means that zero fields don't need to
   /// be set.
-  bool IsZeroed : 1;
+  bool ZeroedFlag : 1;
 
 public:
+  enum IsZeroed_t { IsNotZeroed, IsZeroed };
+  enum IsDestructed_t { IsNotDestructed, IsDestructed };
+  enum NeedsGCBarriers_t { DoesNotNeedGCBarriers, NeedsGCBarriers };
+
   /// ignored - Returns an aggregate value slot indicating that the
   /// aggregate value is being ignored.
   static AggValueSlot ignored() {
     AggValueSlot AV;
     AV.Addr = 0;
     AV.Quals = Qualifiers();
-    AV.LifetimeFlag = AV.RequiresGCollection = AV.IsZeroed =0;
+    AV.LifetimeFlag = AV.RequiresGCollection = AV.ZeroedFlag = 0;
     return AV;
   }
 
   /// forAddr - Make a slot for an aggregate value.
   ///
-  /// \param Volatile - true if the slot should be volatile-initialized
+  /// \param quals - The qualifiers that dictate how the slot should
+  /// be initialied. Only 'volatile' and the Objective-C lifetime
+  /// qualifiers matter.
   ///
-  /// \param Qualifiers - The qualifiers that dictate how the slot
-  /// should be initialied. Only 'volatile' and the Objective-C
-  /// lifetime qualifiers matter.
-  ///
-  /// \param LifetimeExternallyManaged - true if the slot's lifetime
-  ///   is being externally managed; false if a destructor should be
-  ///   registered for any temporaries evaluated into the slot
-  /// \param RequiresGCollection - true if the slot is located
+  /// \param isDestructed - true if something else is responsible
+  ///   for calling destructors on this object
+  /// \param needsGC - true if the slot is potentially located
   ///   somewhere that ObjC GC calls should be emitted for
-  static AggValueSlot forAddr(llvm::Value *Addr, Qualifiers Quals,
-                              bool LifetimeExternallyManaged,
-                              bool RequiresGCollection = false,
-                              bool IsZeroed = false) {
+  static AggValueSlot forAddr(llvm::Value *addr, Qualifiers quals,
+                              IsDestructed_t isDestructed,
+                              NeedsGCBarriers_t needsGC,
+                              IsZeroed_t isZeroed = IsNotZeroed) {
     AggValueSlot AV;
-    AV.Addr = Addr;
-    AV.Quals = Quals;
-    AV.LifetimeFlag = LifetimeExternallyManaged;
-    AV.RequiresGCollection = RequiresGCollection;
-    AV.IsZeroed = IsZeroed;
+    AV.Addr = addr;
+    AV.Quals = quals;
+    AV.LifetimeFlag = isDestructed;
+    AV.RequiresGCollection = needsGC;
+    AV.ZeroedFlag = isZeroed;
     return AV;
   }
 
-  static AggValueSlot forLValue(LValue LV, bool LifetimeExternallyManaged,
-                                bool RequiresGCollection = false,
-                                bool IsZeroed = false) {
+  static AggValueSlot forLValue(LValue LV, IsDestructed_t isDestructed,
+                                NeedsGCBarriers_t needsGC,
+                                IsZeroed_t isZeroed = IsNotZeroed) {
     return forAddr(LV.getAddress(), LV.getQuals(),
-                   LifetimeExternallyManaged, RequiresGCollection, IsZeroed);
+                   isDestructed, needsGC, isZeroed);
   }
 
-  bool isLifetimeExternallyManaged() const {
-    return LifetimeFlag;
+  IsDestructed_t isLifetimeExternallyManaged() const {
+    return IsDestructed_t(LifetimeFlag);
   }
   void setLifetimeExternallyManaged(bool Managed = true) {
     LifetimeFlag = Managed;
@@ -408,8 +409,8 @@ public:
     return Quals.getObjCLifetime();
   }
 
-  bool requiresGCollection() const {
-    return RequiresGCollection;
+  NeedsGCBarriers_t requiresGCollection() const {
+    return NeedsGCBarriers_t(RequiresGCollection);
   }
   
   llvm::Value *getAddr() const {
@@ -424,9 +425,9 @@ public:
     return RValue::getAggregate(getAddr(), isVolatile());
   }
   
-  void setZeroed(bool V = true) { IsZeroed = V; }
-  bool isZeroed() const {
-    return IsZeroed;
+  void setZeroed(bool V = true) { ZeroedFlag = V; }
+  IsZeroed_t isZeroed() const {
+    return IsZeroed_t(ZeroedFlag);
   }
 };
 

@@ -703,7 +703,9 @@ static void StoreAnyExprIntoOneUnit(CodeGenFunction &CGF, const CXXNewExpr *E,
                                 AllocType.isVolatileQualified());
   else {
     AggValueSlot Slot
-      = AggValueSlot::forAddr(NewPtr, AllocType.getQualifiers(), true);
+      = AggValueSlot::forAddr(NewPtr, AllocType.getQualifiers(),
+                              AggValueSlot::IsDestructed,
+                              AggValueSlot::DoesNotNeedGCBarriers);
     CGF.EmitAggExpr(Init, Slot);
   }
 }
