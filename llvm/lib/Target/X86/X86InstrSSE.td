@@ -1709,7 +1709,7 @@ let Predicates = [HasAVX] in {
   def : Pat<(v2i64 (shufp:$src3 VR128:$src1, VR128:$src2)),
             (VSHUFPDrri VR128:$src1, VR128:$src2,
                         (SHUFFLE_get_shuf_imm VR128:$src3))>;
-  // Generic VSHUFPD patterns
+
   def : Pat<(v2f64 (X86Shufps VR128:$src1,
                        (memopv2f64 addr:$src2), (i8 imm:$imm))),
             (VSHUFPDrmi VR128:$src1, addr:$src2, imm:$imm)>;
@@ -1717,6 +1717,31 @@ let Predicates = [HasAVX] in {
             (VSHUFPDrri VR128:$src1, VR128:$src2, imm:$imm)>;
   def : Pat<(v2f64 (X86Shufpd VR128:$src1, VR128:$src2, (i8 imm:$imm))),
             (VSHUFPDrri VR128:$src1, VR128:$src2, imm:$imm)>;
+
+  // 256-bit patterns
+  def : Pat<(v8i32 (X86Shufps VR256:$src1, VR256:$src2, (i8 imm:$imm))),
+            (VSHUFPSYrri VR256:$src1, VR256:$src2, imm:$imm)>;
+  def : Pat<(v8i32 (X86Shufps VR256:$src1,
+                      (bc_v8i32 (memopv4i64 addr:$src2)), (i8 imm:$imm))),
+            (VSHUFPSYrmi VR256:$src1, addr:$src2, imm:$imm)>;
+
+  def : Pat<(v8f32 (X86Shufps VR256:$src1, VR256:$src2, (i8 imm:$imm))),
+            (VSHUFPSYrri VR256:$src1, VR256:$src2, imm:$imm)>;
+  def : Pat<(v8f32 (X86Shufps VR256:$src1,
+                              (memopv8f32 addr:$src2), (i8 imm:$imm))),
+            (VSHUFPSYrmi VR256:$src1, addr:$src2, imm:$imm)>;
+
+  def : Pat<(v4i64 (X86Shufpd VR256:$src1, VR256:$src2, (i8 imm:$imm))),
+            (VSHUFPDYrri VR256:$src1, VR256:$src2, imm:$imm)>;
+  def : Pat<(v4i64 (X86Shufpd VR256:$src1,
+                              (memopv4i64 addr:$src2), (i8 imm:$imm))),
+            (VSHUFPDYrmi VR256:$src1, addr:$src2, imm:$imm)>;
+
+  def : Pat<(v4f64 (X86Shufpd VR256:$src1, VR256:$src2, (i8 imm:$imm))),
+            (VSHUFPDYrri VR256:$src1, VR256:$src2, imm:$imm)>;
+  def : Pat<(v4f64 (X86Shufpd VR256:$src1,
+                              (memopv4f64 addr:$src2), (i8 imm:$imm))),
+            (VSHUFPDYrmi VR256:$src1, addr:$src2, imm:$imm)>;
 }
 
 //===----------------------------------------------------------------------===//

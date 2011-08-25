@@ -3178,6 +3178,152 @@ static bool isPALIGNRMask(const SmallVectorImpl<int> &Mask, EVT VT,
   return true;
 }
 
+/// isVSHUFPSYMask - Return true if the specified VECTOR_SHUFFLE operand
+/// specifies a shuffle of elements that is suitable for input to 256-bit
+/// VSHUFPSY.
+static bool isVSHUFPSYMask(const SmallVectorImpl<int> &Mask, EVT VT,
+                          const X86Subtarget *Subtarget) {
+  int NumElems = VT.getVectorNumElements();
+
+  if (!Subtarget->hasAVX() || VT.getSizeInBits() != 256)
+    return false;
+
+  if (NumElems != 8)
+    return false;
+
+  // VSHUFPSY divides the resulting vector into 4 chunks.
+  // The sources are also splitted into 4 chunks, and each destination
+  // chunk must come from a different source chunk.
+  //
+  //  SRC1 =>   X7    X6    X5    X4    X3    X2    X1    X0
+  //  SRC2 =>   Y7    Y6    Y5    Y4    Y3    Y2    Y1    Y9
+  //
+  //  DST  =>  Y7..Y4,   Y7..Y4,   X7..X4,   X7..X4,
+  //           Y3..Y0,   Y3..Y0,   X3..X0,   X3..X0
+  //
+  int QuarterSize = NumElems/4;
+  int HalfSize = QuarterSize*2;
+  for (int i = 0; i < QuarterSize; ++i)
+    if (!isUndefOrInRange(Mask[i], 0, HalfSize))
+      return false;
+  for (int i = QuarterSize; i < QuarterSize*2; ++i)
+    if (!isUndefOrInRange(Mask[i], NumElems, NumElems+HalfSize))
+      return false;
+
+  // The mask of the second half must be the same as the first but with
+  // the appropriate offsets. This works in the same way as VPERMILPS
+  // works with masks.
+  for (int i = QuarterSize*2; i < QuarterSize*3; ++i) {
+    if (!isUndefOrInRange(Mask[i], HalfSize, NumElems))
+      return false;
+    int FstHalfIdx = i-HalfSize;
+    if (Mask[FstHalfIdx] < 0)
+      continue;
+    if (!isUndefOrEqual(Mask[i], Mask[FstHalfIdx]+HalfSize))
+      return false;
+  }
+  for (int i = QuarterSize*3; i < NumElems; ++i) {
+    if (!isUndefOrInRange(Mask[i], NumElems+HalfSize, NumElems*2))
+      return false;
+    int FstHalfIdx = i-HalfSize;
+    if (Mask[FstHalfIdx] < 0)
+      continue;
+    if (!isUndefOrEqual(Mask[i], Mask[FstHalfIdx]+HalfSize))
+      return false;
+
+  }
+
+  return true;
+}
+
+/// getShuffleVSHUFPSYImmediate - Return the appropriate immediate to shuffle
+/// the specified VECTOR_MASK mask with VSHUFPSY instruction.
+static unsigned getShuffleVSHUFPSYImmediate(SDNode *N) {
+  ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(N);
+  EVT VT = SVOp->getValueType(0);
+  int NumElems = VT.getVectorNumElements();
+
+  assert(NumElems == 8 && VT.getSizeInBits() == 256 &&
+         "Only supports v8i32 and v8f32 types");
+
+  int HalfSize = NumElems/2;
+  unsigned Mask = 0;
+  for (int i = 0; i != NumElems ; ++i) {
+    if (SVOp->getMaskElt(i) < 0)
+      continue;
+    // The mask of the first half must be equal to the second one.
+    unsigned Shamt = (i%HalfSize)*2;
+    unsigned Elt = SVOp->getMaskElt(i) % HalfSize;
+    Mask |= Elt << Shamt;
+  }
+
+  return Mask;
+}
+
+/// isVSHUFPDYMask - Return true if the specified VECTOR_SHUFFLE operand
+/// specifies a shuffle of elements that is suitable for input to 256-bit
+/// VSHUFPDY. This shuffle doesn't have the same restriction as the PS
+/// version and the mask of the second half isn't binded with the first
+/// one.
+static bool isVSHUFPDYMask(const SmallVectorImpl<int> &Mask, EVT VT,
+                           const X86Subtarget *Subtarget) {
+  int NumElems = VT.getVectorNumElements();
+
+  if (!Subtarget->hasAVX() || VT.getSizeInBits() != 256)
+    return false;
+
+  if (NumElems != 4)
+    return false;
+
+  // VSHUFPSY divides the resulting vector into 4 chunks.
+  // The sources are also splitted into 4 chunks, and each destination
+  // chunk must come from a different source chunk.
+  //
+  //  SRC1 =>      X3       X2       X1       X0
+  //  SRC2 =>      Y3       Y2       Y1       Y0
+  //
+  //  DST  =>  Y2..Y3,  X2..X3,  Y1..Y0,  X1..X0
+  //
+  int QuarterSize = NumElems/4;
+  int HalfSize = QuarterSize*2;
+  for (int i = 0; i < QuarterSize; ++i)
+    if (!isUndefOrInRange(Mask[i], 0, HalfSize))
+      return false;
+  for (int i = QuarterSize; i < QuarterSize*2; ++i)
+    if (!isUndefOrInRange(Mask[i], NumElems, NumElems+HalfSize))
+      return false;
+  for (int i = QuarterSize*2; i < QuarterSize*3; ++i)
+    if (!isUndefOrInRange(Mask[i], HalfSize, NumElems))
+      return false;
+  for (int i = QuarterSize*3; i < NumElems; ++i)
+    if (!isUndefOrInRange(Mask[i], NumElems+HalfSize, NumElems*2))
+      return false;
+
+  return true;
+}
+
+/// getShuffleVSHUFPDYImmediate - Return the appropriate immediate to shuffle
+/// the specified VECTOR_MASK mask with VSHUFPDY instruction.
+static unsigned getShuffleVSHUFPDYImmediate(SDNode *N) {
+  ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(N);
+  EVT VT = SVOp->getValueType(0);
+  int NumElems = VT.getVectorNumElements();
+
+  assert(NumElems == 4 && VT.getSizeInBits() == 256 &&
+         "Only supports v4i64 and v4f64 types");
+
+  int HalfSize = NumElems/2;
+  unsigned Mask = 0;
+  for (int i = 0; i != NumElems ; ++i) {
+    if (SVOp->getMaskElt(i) < 0)
+      continue;
+    int Elt = SVOp->getMaskElt(i) % HalfSize;
+    Mask |= Elt << i;
+  }
+
+  return Mask;
+}
+
 /// isSHUFPMask - Return true if the specified VECTOR_SHUFFLE operand
 /// specifies a shuffle of elements that is suitable for input to 128-bit
 /// SHUFPS and SHUFPD.
@@ -6068,6 +6214,22 @@ SDValue getMOVHighToLow(SDValue &Op, DebugLoc &dl, SelectionDAG &DAG) {
   return getTargetShuffleNode(X86ISD::MOVHLPS, dl, VT, V1, V2, DAG);
 }
 
+static inline unsigned getSHUFPOpcode(EVT VT) {
+  switch(VT.getSimpleVT().SimpleTy) {
+  case MVT::v8i32: // Use fp unit for int unpack.
+  case MVT::v8f32:
+  case MVT::v4i32: // Use fp unit for int unpack.
+  case MVT::v4f32: return X86ISD::SHUFPS;
+  case MVT::v4i64: // Use fp unit for int unpack.
+  case MVT::v4f64:
+  case MVT::v2i64: // Use fp unit for int unpack.
+  case MVT::v2f64: return X86ISD::SHUFPD;
+  default:
+    llvm_unreachable("Unknown type for shufp*");
+  }
+  return 0;
+}
+
 static
 SDValue getMOVLP(SDValue &Op, DebugLoc &dl, SelectionDAG &DAG, bool HasSSE2) {
   SDValue V1 = Op.getOperand(0);
@@ -6121,7 +6283,7 @@ SDValue getMOVLP(SDValue &Op, DebugLoc &dl, SelectionDAG &DAG, bool HasSSE2) {
   assert(VT != MVT::v4i32 && "unsupported shuffle type");
 
   // Invert the operand order and use SHUFPS to match it.
-  return getTargetShuffleNode(X86ISD::SHUFPS, dl, VT, V2, V1,
+  return getTargetShuffleNode(getSHUFPOpcode(VT), dl, VT, V2, V1,
                               X86::getShuffleSHUFImmediate(SVOp), DAG);
 }
 
@@ -6357,13 +6519,8 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
     if (HasSSE2 && (VT == MVT::v4f32 || VT == MVT::v4i32))
       return getTargetShuffleNode(X86ISD::PSHUFD, dl, VT, V1, TargetMask, DAG);
 
-    if (HasSSE2 && (VT == MVT::v2i64 || VT == MVT::v2f64))
-      return getTargetShuffleNode(X86ISD::SHUFPD, dl, VT, V1, V1,
-                                  TargetMask, DAG);
-
-    if (VT == MVT::v4f32)
-      return getTargetShuffleNode(X86ISD::SHUFPS, dl, VT, V1, V1,
-                                  TargetMask, DAG);
+    return getTargetShuffleNode(getSHUFPOpcode(VT), dl, VT, V1, V1,
+                                TargetMask, DAG);
   }
 
   // Check if this can be converted into a logical shift.
@@ -6515,15 +6672,9 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
                                 X86::getShufflePSHUFLWImmediate(SVOp),
                                 DAG);
 
-  if (isSHUFPMask(M, VT)) {
-    unsigned TargetMask = X86::getShuffleSHUFImmediate(SVOp);
-    if (VT == MVT::v4f32 || VT == MVT::v4i32)
-      return getTargetShuffleNode(X86ISD::SHUFPS, dl, VT, V1, V2,
-                                  TargetMask, DAG);
-    if (VT == MVT::v2f64 || VT == MVT::v2i64)
-      return getTargetShuffleNode(X86ISD::SHUFPD, dl, VT, V1, V2,
-                                  TargetMask, DAG);
-  }
+  if (isSHUFPMask(M, VT))
+    return getTargetShuffleNode(getSHUFPOpcode(VT), dl, VT, V1, V2,
+                                X86::getShuffleSHUFImmediate(SVOp), DAG);
 
   if (X86::isUNPCKL_v_undef_Mask(SVOp))
     return getTargetShuffleNode(getUNPCKLOpcode(VT), dl, VT, V1, V1, DAG);
@@ -6549,6 +6700,16 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   if (isVPERM2F128Mask(M, VT, Subtarget))
     return getTargetShuffleNode(X86ISD::VPERM2F128, dl, VT, V1, V2,
                                 getShuffleVPERM2F128Immediate(SVOp), DAG);
+
+  // Handle VSHUFPSY permutations
+  if (isVSHUFPSYMask(M, VT, Subtarget))
+    return getTargetShuffleNode(getSHUFPOpcode(VT), dl, VT, V1, V2,
+                                getShuffleVSHUFPSYImmediate(SVOp), DAG);
+
+  // Handle VSHUFPDY permutations
+  if (isVSHUFPDYMask(M, VT, Subtarget))
+    return getTargetShuffleNode(getSHUFPOpcode(VT), dl, VT, V1, V2,
+                                getShuffleVSHUFPDYImmediate(SVOp), DAG);
 
   //===--------------------------------------------------------------------===//
   // Since no target specific shuffle was selected for this generic one,

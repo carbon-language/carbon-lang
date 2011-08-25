@@ -64,10 +64,8 @@ entry:
   ret <4 x i64> %shuffle
 }
 
-; CHECK: vpunpckhqdq
-; CHECK-NEXT: vextractf128  $1
-; CHECK-NEXT: movlhps
-; CHECK-NEXT: vinsertf128 $1
+; CHECK: _B
+; CHECK: vshufpd $1, %ymm
 define <4 x i64> @B(<4 x i64> %a, <4 x i64> %b) nounwind uwtable readnone ssp {
 entry:
   %shuffle = shufflevector <4 x i64> %a, <4 x i64> %b, <4 x i32> <i32 1, i32 undef, i32 undef, i32 6>
