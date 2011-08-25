@@ -646,8 +646,10 @@ void ARMFrameLowering::emitPopInst(MachineBasicBlock &MBB,
                        .addReg(ARM::SP));
       for (unsigned i = 0, e = Regs.size(); i < e; ++i)
         MIB.addReg(Regs[i], getDefRegState(true));
-      if (DeleteRet)
+      if (DeleteRet) {
+        MIB->copyImplicitOps(&*MI);
         MI->eraseFromParent();
+      }
       MI = MIB;
     } else if (Regs.size() == 1) {
       // If we adjusted the reg to PC from LR above, switch it back here. We
