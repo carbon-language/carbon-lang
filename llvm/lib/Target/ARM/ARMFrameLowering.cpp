@@ -503,7 +503,7 @@ ARMFrameLowering::ResolveFrameIndexReference(const MachineFunction &MF,
         }
       }
     } else if (AFI->isThumb2Function()) {
-      // Use  add <rd>, sp, #<imm8> 
+      // Use  add <rd>, sp, #<imm8>
       //      ldr <rd>, [sp, #<imm8>]
       // if at all possible to save space.
       if (Offset >= 0 && (Offset & 3) == 0 && Offset <= 1020)
