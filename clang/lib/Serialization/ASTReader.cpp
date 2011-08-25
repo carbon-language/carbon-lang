@@ -2540,6 +2540,43 @@ ASTReader::ASTReadResult ASTReader::validateFileEntries(Module &M) {
   return Success;
 }
 
+namespace {
+  /// \brief Visitor class used to look up identifirs in an AST file.
+  class IdentifierLookupVisitor {
+    StringRef Name;
+    IdentifierInfo *Found;
+  public:
+    explicit IdentifierLookupVisitor(StringRef Name) : Name(Name), Found() { }
+    
+    static bool visit(Module &M, void *UserData) {
+      IdentifierLookupVisitor *This
+      = static_cast<IdentifierLookupVisitor *>(UserData);
+      
+      ASTIdentifierLookupTable *IdTable
+      = (ASTIdentifierLookupTable *)M.IdentifierLookupTable;
+      if (!IdTable)
+        return false;
+      
+      std::pair<const char*, unsigned> Key(This->Name.begin(), 
+                                           This->Name.size());
+      ASTIdentifierLookupTable::iterator Pos = IdTable->find(Key);
+      if (Pos == IdTable->end())
+        return false;
+      
+      // Dereferencing the iterator has the effect of building the
+      // IdentifierInfo node and populating it with the various
+      // declarations it needs.
+      This->Found = *Pos;
+      return true;
+    }
+    
+    // \brief Retrieve the identifier info found within the module
+    // files.
+    IdentifierInfo *getIdentifierInfo() const { return Found; }
+  };
+}
+
+
 ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
                                             ModuleKind Type) {
   switch(ReadASTCore(FileName, Type, /*ImportedBy=*/0)) {
@@ -2577,28 +2614,10 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
                                 IdEnd = PP->getIdentifierTable().end();
          Id != IdEnd; ++Id)
       Identifiers.push_back(Id->second);
-    // We need to search the tables in all files.
-    for (ModuleIterator J = ModuleMgr.begin(),
-        M = ModuleMgr.end(); J != M; ++J) {
-      ASTIdentifierLookupTable *IdTable
-        = (ASTIdentifierLookupTable *)(*J)->IdentifierLookupTable;
-      // Not all AST files necessarily have identifier tables, only the useful
-      // ones.
-      if (!IdTable)
-        continue;
-      for (unsigned I = 0, N = Identifiers.size(); I != N; ++I) {
-        IdentifierInfo *II = Identifiers[I];
-        // Look in the on-disk hash tables for an entry for this identifier
-        ASTIdentifierLookupTrait Info(*this, *(*J), II);
-        std::pair<const char*,unsigned> Key(II->getNameStart(),II->getLength());
-        ASTIdentifierLookupTable::iterator Pos = IdTable->find(Key, &Info);
-        if (Pos == IdTable->end())
-          continue;
-
-        // Dereferencing the iterator has the effect of populating the
-        // IdentifierInfo node with the various declarations it needs.
-        (void)*Pos;
-      }
+    
+    for (unsigned I = 0, N = Identifiers.size(); I != N; ++I) {
+      IdentifierLookupVisitor Visitor(Identifiers[I]->getName());
+      ModuleMgr.visit(IdentifierLookupVisitor::visit, &Visitor);
     }
   }
 
@@ -4465,42 +4484,6 @@ void ASTReader::InitializeSema(Sema &S) {
 
     assert(OpenCLExtensions.size() == I && "Wrong number of OPENCL_EXTENSIONS");
   }
-}
-
-namespace {
-  /// \brief Visitor class used to look up identifirs in 
-  class IdentifierLookupVisitor {
-    StringRef Name;
-    IdentifierInfo *Found;
-  public:
-    explicit IdentifierLookupVisitor(StringRef Name) : Name(Name), Found() { }
-
-    static bool visit(Module &M, void *UserData) {
-      IdentifierLookupVisitor *This
-        = static_cast<IdentifierLookupVisitor *>(UserData);
-      
-      ASTIdentifierLookupTable *IdTable
-        = (ASTIdentifierLookupTable *)M.IdentifierLookupTable;
-      if (!IdTable)
-        return false;
-
-      std::pair<const char*, unsigned> Key(This->Name.begin(), 
-                                           This->Name.size());
-      ASTIdentifierLookupTable::iterator Pos = IdTable->find(Key);
-      if (Pos == IdTable->end())
-        return false;
-
-      // Dereferencing the iterator has the effect of building the
-      // IdentifierInfo node and populating it with the various
-      // declarations it needs.
-      This->Found = *Pos;
-      return true;
-    }
-
-    // \brief Retrieve the identifier info found within the module
-    // files.
-    IdentifierInfo *getIdentifierInfo() const { return Found; }
-  };
 }
 
 IdentifierInfo* ASTReader::get(const char *NameStart, const char *NameEnd) {
