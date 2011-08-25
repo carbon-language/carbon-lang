@@ -1122,7 +1122,9 @@ ASTUnit::ComputePreamble(CompilerInvocation &Invocation,
     CreatedBuffer = true;
   }
   
-  return std::make_pair(Buffer, Lexer::ComputePreamble(Buffer, MaxLines));
+  return std::make_pair(Buffer, Lexer::ComputePreamble(Buffer,
+                                                       Invocation.getLangOpts(),
+                                                       MaxLines));
 }
 
 static llvm::MemoryBuffer *CreatePaddedMainFileBuffer(llvm::MemoryBuffer *Old,

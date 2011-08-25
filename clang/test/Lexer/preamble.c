@@ -1,5 +1,5 @@
 // Preamble detection test: see below for comments and test commands.
-//
+//* A BCPL comment that includes '/*'
 #include <blah>
 #ifndef FOO
 #else
@@ -24,7 +24,7 @@ int foo();
 // RUN: FileCheck < %t %s
 
 // CHECK: // Preamble detection test: see below for comments and test commands.
-// CHECK-NEXT: //
+// CHECK-NEXT: //* A BCPL comment that includes '/*'
 // CHECK-NEXT: #include <blah>
 // CHECK-NEXT: #ifndef FOO
 // CHECK-NEXT: #else
