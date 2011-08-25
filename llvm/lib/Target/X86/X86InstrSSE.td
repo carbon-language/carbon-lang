@@ -4010,6 +4010,20 @@ let Predicates = [HasAVX] in {
   def : Pat<(X86Movddup (bc_v2f64
                              (v2i64 (scalar_to_vector (loadi64 addr:$src))))),
             (VMOVDDUPrm addr:$src)>, Requires<[HasAVX]>;
+
+  // 256-bit version
+  def : Pat<(X86Movddup (memopv4f64 addr:$src)),
+            (VMOVDDUPYrm addr:$src)>;
+  def : Pat<(X86Movddup (memopv4i64 addr:$src)),
+            (VMOVDDUPYrm addr:$src)>;
+  def : Pat<(X86Movddup (v4f64 (scalar_to_vector (loadf64 addr:$src)))),
+            (VMOVDDUPYrm addr:$src)>;
+  def : Pat<(X86Movddup (v4i64 (scalar_to_vector (loadi64 addr:$src)))),
+            (VMOVDDUPYrm addr:$src)>;
+  def : Pat<(X86Movddup (v4f64 VR256:$src)),
+            (VMOVDDUPYrr VR256:$src)>;
+  def : Pat<(X86Movddup (v4i64 VR256:$src)),
+            (VMOVDDUPYrr VR256:$src)>;
 }
 
 //===---------------------------------------------------------------------===//

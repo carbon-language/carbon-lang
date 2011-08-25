@@ -3560,6 +3560,13 @@ static bool isUNPCKL_v_undef_Mask(const SmallVectorImpl<int> &Mask, EVT VT) {
   if (NumElems != 2 && NumElems != 4 && NumElems != 8 && NumElems != 16)
     return false;
 
+  // For 256-bit i64/f64, use MOVDDUPY instead, so reject the matching pattern
+  // FIXME: Need a better way to get rid of this, there's no latency difference
+  // between UNPCKLPD and MOVDDUP, the later should always be checked first and
+  // the former later. We should also remove the "_undef" special mask.
+  if (NumElems == 4 && VT.getSizeInBits() == 256)
+    return false;
+
   // Handle 128 and 256-bit vector lengths. AVX defines UNPCK* to operate
   // independently on 128-bit lanes.
   unsigned NumLanes = VT.getSizeInBits() / 128;
@@ -3910,6 +3917,28 @@ bool X86::isMOVSLDUPMask(ShuffleVectorSDNode *N,
         !isUndefOrEqual(N->getMaskElt(i+1), i))
       return false;
 
+  return true;
+}
+
+/// isMOVDDUPYMask - Return true if the specified VECTOR_SHUFFLE operand
+/// specifies a shuffle of elements that is suitable for input to 256-bit
+/// version of MOVDDUP.
+static bool isMOVDDUPYMask(ShuffleVectorSDNode *N,
+                           const X86Subtarget *Subtarget) {
+  EVT VT = N->getValueType(0);
+  int NumElts = VT.getVectorNumElements();
+  bool V2IsUndef = N->getOperand(1).getOpcode() == ISD::UNDEF;
+
+  if (!Subtarget->hasAVX() || VT.getSizeInBits() != 256 ||
+      !V2IsUndef || NumElts != 4)
+    return false;
+
+  for (int i = 0; i != NumElts/2; ++i)
+    if (!isUndefOrEqual(N->getMaskElt(i), 0))
+      return false;
+  for (int i = NumElts/2; i != NumElts; ++i)
+    if (!isUndefOrEqual(N->getMaskElt(i), NumElts/2))
+      return false;
   return true;
 }
 
@@ -6690,6 +6719,10 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   // Generate target specific nodes for 128 or 256-bit shuffles only
   // supported in the AVX instruction set.
   //
+
+  // Handle VMOVDDUPY permutations
+  if (isMOVDDUPYMask(SVOp, Subtarget))
+    return getTargetShuffleNode(X86ISD::MOVDDUP, dl, VT, V1, DAG);
 
   // Handle VPERMILPS* permutations
   if (isVPERMILPSMask(M, VT, Subtarget))
