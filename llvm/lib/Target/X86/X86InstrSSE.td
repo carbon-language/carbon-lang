@@ -1220,13 +1220,13 @@ def VCVTTPD2DQYrm : VPDI<0xE6, MRMSrcMem, (outs VR128:$dst), (ins f256mem:$src),
 let Predicates = [HasAVX] in {
                   // SSE2 instructions without OpSize prefix
 def VCVTPS2PDrr : I<0x5A, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
-                     "vcvtps2pd\t{$src, $dst|$dst, $src}", []>, VEX;
+                     "vcvtps2pd\t{$src, $dst|$dst, $src}", []>, TB, VEX;
 def VCVTPS2PDrm : I<0x5A, MRMSrcMem, (outs VR128:$dst), (ins f64mem:$src),
-                     "vcvtps2pd\t{$src, $dst|$dst, $src}", []>, VEX;
+                     "vcvtps2pd\t{$src, $dst|$dst, $src}", []>, TB, VEX;
 def VCVTPS2PDYrr : I<0x5A, MRMSrcReg, (outs VR256:$dst), (ins VR128:$src),
-                     "vcvtps2pd\t{$src, $dst|$dst, $src}", []>, VEX;
+                     "vcvtps2pd\t{$src, $dst|$dst, $src}", []>, TB, VEX;
 def VCVTPS2PDYrm : I<0x5A, MRMSrcMem, (outs VR256:$dst), (ins f128mem:$src),
-                     "vcvtps2pd\t{$src, $dst|$dst, $src}", []>, VEX;
+                     "vcvtps2pd\t{$src, $dst|$dst, $src}", []>, TB, VEX;
 }
 def CVTPS2PDrr : I<0x5A, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                        "cvtps2pd\t{$src, $dst|$dst, $src}", []>, TB;
@@ -1236,12 +1236,12 @@ def CVTPS2PDrm : I<0x5A, MRMSrcMem, (outs VR128:$dst), (ins f64mem:$src),
 def Int_VCVTPS2PDrr : I<0x5A, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                        "vcvtps2pd\t{$src, $dst|$dst, $src}",
                        [(set VR128:$dst, (int_x86_sse2_cvtps2pd VR128:$src))]>,
-                     VEX, Requires<[HasAVX]>;
+                     TB, VEX, Requires<[HasAVX]>;
 def Int_VCVTPS2PDrm : I<0x5A, MRMSrcMem, (outs VR128:$dst), (ins f64mem:$src),
                        "vcvtps2pd\t{$src, $dst|$dst, $src}",
                        [(set VR128:$dst, (int_x86_sse2_cvtps2pd
                                           (load addr:$src)))]>,
-                     VEX, Requires<[HasAVX]>;
+                     TB, VEX, Requires<[HasAVX]>;
 def Int_CVTPS2PDrr : I<0x5A, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                        "cvtps2pd\t{$src, $dst|$dst, $src}",
                        [(set VR128:$dst, (int_x86_sse2_cvtps2pd VR128:$src))]>,
@@ -6159,13 +6159,13 @@ let Defs = [YMM0, YMM1, YMM2, YMM3, YMM4, YMM5, YMM6, YMM7,
             YMM8, YMM9, YMM10, YMM11, YMM12, YMM13, YMM14, YMM15] in {
   // Zero All YMM registers
   def VZEROALL : I<0x77, RawFrm, (outs), (ins), "vzeroall",
-                   [(int_x86_avx_vzeroall)]>, VEX, VEX_L, Requires<[HasAVX]>;
+                   [(int_x86_avx_vzeroall)]>, TB, VEX, VEX_L, Requires<[HasAVX]>;
 
 }
 
 // Zero Upper bits of YMM registers
 def VZEROUPPER : I<0x77, RawFrm, (outs), (ins), "vzeroupper",
-                   [(int_x86_avx_vzeroupper)]>, VEX, Requires<[HasAVX]>;
+                   [(int_x86_avx_vzeroupper)]>, TB, VEX, Requires<[HasAVX]>;
 
 //===----------------------------------------------------------------------===//
 // SSE Shuffle pattern fragments
