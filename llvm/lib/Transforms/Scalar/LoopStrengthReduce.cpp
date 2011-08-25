@@ -3625,7 +3625,14 @@ void LSRInstance::RewriteForPHI(PHINode *PN,
         Loop *PNLoop = LI.getLoopFor(Parent);
         if (!PNLoop || Parent != PNLoop->getHeader()) {
           // Split the critical edge.
-          BasicBlock *NewBB = SplitCriticalEdge(BB, Parent, P);
+          BasicBlock *NewBB = 0;
+          if (!Parent->isLandingPad()) {
+            NewBB = SplitCriticalEdge(BB, Parent, P);
+          } else {
+            SmallVector<BasicBlock*, 2> NewBBs;
+            SplitLandingPadPredecessors(Parent, BB, "", "", P, NewBBs);
+            NewBB = NewBBs[0];
+          }
 
           // If PN is outside of the loop and BB is in the loop, we want to
           // move the block to be immediately before the PHI block, not
