@@ -1640,12 +1640,9 @@ public:
   const LangOptions&   LOpts;
   const bool GCEnabled;
 
-  BugType *leakWithinFunction, *leakAtReturn;
-
 public:
   CFRefCount(ASTContext &Ctx, bool gcenabled, const LangOptions& lopts)
-    : LOpts(lopts), GCEnabled(gcenabled),
-      leakWithinFunction(0), leakAtReturn(0) {}
+    : LOpts(lopts), GCEnabled(gcenabled) {}
 
   void RegisterChecks(ExprEngine &Eng);
 
@@ -1811,7 +1808,10 @@ namespace {
     const bool isReturn;
   protected:
     Leak(StringRef name, bool isRet)
-    : CFRefBug(name), isReturn(isRet) {}
+    : CFRefBug(name), isReturn(isRet) {
+      // Leaks should not be reported if they are post-dominated by a sink.
+      setSuppressOnSink(true);
+    }
   public:
 
     const char *getDescription() const { return ""; }
@@ -2619,6 +2619,8 @@ class RetainReleaseChecker
   mutable llvm::OwningPtr<CFRefBug> useAfterRelease, releaseNotOwned;
   mutable llvm::OwningPtr<CFRefBug> deallocGC, deallocNotOwned;
   mutable llvm::OwningPtr<CFRefBug> overAutorelease, returnNotOwnedForOwned;
+  mutable llvm::OwningPtr<CFRefBug> leakWithinFunction, leakAtReturn;
+  mutable llvm::OwningPtr<CFRefBug> leakWithinFunctionGC, leakAtReturnGC;
 
   typedef llvm::DenseMap<SymbolRef, const SimpleProgramPointTag *> SymbolTagMap;
 
@@ -2704,6 +2706,49 @@ public:
 
   bool isARCorGCEnabled(ASTContext &Ctx) const {
     return isGCEnabled() || Ctx.getLangOptions().ObjCAutoRefCount;
+  }
+
+  CFRefBug *getLeakWithinFunctionBug(ASTContext &Ctx) const {
+    if (isGCEnabled()) {
+      if (!leakWithinFunctionGC)
+        leakWithinFunctionGC.reset(new LeakWithinFunction("Leak of object when "
+                                                          "using garbage "
+                                                          "collection"));
+      return &*leakWithinFunctionGC;
+    } else {
+      if (!leakWithinFunction) {
+        if (Ctx.getLangOptions().getGCMode() == LangOptions::HybridGC) {
+          leakWithinFunction.reset(new LeakWithinFunction("Leak of object when "
+                                                          "not using garbage "
+                                                          "collection (GC) in "
+                                                          "dual GC/non-GC "
+                                                          "code"));
+        } else {
+          leakWithinFunction.reset(new LeakWithinFunction("Leak"));
+        }
+      }
+      return &*leakWithinFunction;
+    }
+  }
+
+  CFRefBug *getLeakAtReturnBug(ASTContext &Ctx) const {
+    if (isGCEnabled()) {
+      if (!leakAtReturnGC)
+        leakAtReturnGC.reset(new LeakAtReturn("Leak of returned object when "
+                                              "using garbage collection"));
+      return &*leakAtReturnGC;
+    } else {
+      if (!leakAtReturn) {
+        if (Ctx.getLangOptions().getGCMode() == LangOptions::HybridGC) {
+          leakAtReturn.reset(new LeakAtReturn("Leak of returned object when "
+                                              "not using garbage collection "
+                                              "(GC) in dual GC/non-GC code"));
+        } else {
+          leakAtReturn.reset(new LeakAtReturn("Leak of returned object"));
+        }
+      }
+      return &*leakAtReturn;
+    }
   }
 
   RetainSummaryManager &getSummaryManager(ASTContext &Ctx) const {
@@ -3533,11 +3578,9 @@ void RetainReleaseChecker::checkReturnWithRetEffect(const ReturnStmt *S,
         ExplodedNode *N = Builder.generateNode(S, state, Pred,
                                                &ReturnOwnLeakTag);
         if (N) {
-          // FIXME: This goes away once this bug type moves to the checker.
-          CFRefCount &TF = static_cast<CFRefCount&>(C.getEngine().getTF());
+          ASTContext &Ctx = C.getASTContext();
           CFRefReport *report =
-            new CFRefLeakReport(*static_cast<CFRefBug*>(TF.leakAtReturn),
-                                C.getASTContext().getLangOptions(),
+            new CFRefLeakReport(*getLeakAtReturnBug(Ctx), Ctx.getLangOptions(),
                                 isGCEnabled(), SummaryLog, N, Sym, 
                                 C.getEngine());
           C.EmitReport(report);
@@ -3673,13 +3716,12 @@ RetainReleaseChecker::processLeaks(const ProgramState *state,
     for (SmallVectorImpl<SymbolRef>::iterator
          I = Leaked.begin(), E = Leaked.end(); I != E; ++I) {
 
-      // FIXME: This goes away once these bug types move to the checker.
-      CFRefCount &TF = static_cast<CFRefCount&>(Eng.getTF());
-      CFRefBug *BT = static_cast<CFRefBug*>(Pred ? TF.leakWithinFunction
-                                                 : TF.leakAtReturn);
+      ASTContext &Ctx = Eng.getContext();
+      CFRefBug *BT = Pred ? getLeakWithinFunctionBug(Ctx)
+                          : getLeakAtReturnBug(Ctx);
       assert(BT && "BugType not initialized.");
 
-      const LangOptions &LOpts = Eng.getContext().getLangOptions();
+      const LangOptions &LOpts = Ctx.getLangOptions();
       CFRefLeakReport *report = new CFRefLeakReport(*BT, LOpts, isGCEnabled(), 
                                                     SummaryLog, N, *I, Eng);
       Eng.getBugReporter().EmitReport(report);
@@ -3783,42 +3825,6 @@ void RetainReleaseChecker::checkDeadSymbols(SymbolReaper &SymReaper,
 //===----------------------------------------------------------------------===//
 
 void CFRefCount::RegisterChecks(ExprEngine& Eng) {
-  BugReporter &BR = Eng.getBugReporter();
-
-  // First register "return" leaks.
-  const char *name = 0;
-
-  if (GCEnabled)
-    name = "Leak of returned object when using garbage collection";
-  else if (getLangOptions().getGCMode() == LangOptions::HybridGC)
-    name = "Leak of returned object when not using garbage collection (GC) in "
-    "dual GC/non-GC code";
-  else {
-    assert(getLangOptions().getGCMode() == LangOptions::NonGC);
-    name = "Leak of returned object";
-  }
-
-  // Leaks should not be reported if they are post-dominated by a sink.
-  leakAtReturn = new LeakAtReturn(name);
-  leakAtReturn->setSuppressOnSink(true);
-  BR.Register(leakAtReturn);
-
-  // Second, register leaks within a function/method.
-  if (GCEnabled)
-    name = "Leak of object when using garbage collection";
-  else if (getLangOptions().getGCMode() == LangOptions::HybridGC)
-    name = "Leak of object when not using garbage collection (GC) in "
-    "dual GC/non-GC code";
-  else {
-    assert(getLangOptions().getGCMode() == LangOptions::NonGC);
-    name = "Leak";
-  }
-
-  // Leaks should not be reported if they are post-dominated by sinks.
-  leakWithinFunction = new LeakWithinFunction(name);
-  leakWithinFunction->setSuppressOnSink(true);
-  BR.Register(leakWithinFunction);
-
   // Register the RetainReleaseChecker with the ExprEngine object.
   // Functionality in CFRefCount will be migrated to RetainReleaseChecker
   // over time.
