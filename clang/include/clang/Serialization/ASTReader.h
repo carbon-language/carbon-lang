@@ -1194,6 +1194,12 @@ public:
   /// \brief Retrieve the module manager.
   ModuleManager &getModuleManager() { return ModuleMgr; }
 
+  /// \brief Retrieve the preprocessor.
+  Preprocessor &getPreprocessor() const {
+    assert(PP && "ASTReader does not have a preprocessor");
+    return *PP;
+  }
+  
   /// \brief Retrieve the name of the original source file name
   const std::string &getOriginalSourceFile() { return OriginalFileName; }
 

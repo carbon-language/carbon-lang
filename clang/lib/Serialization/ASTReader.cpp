@@ -3273,30 +3273,53 @@ PreprocessedEntity *ASTReader::ReadPreprocessedEntityAtOffset(uint64_t Offset) {
   return LoadPreprocessedEntity(*Loc.F);
 }
 
+namespace {
+  /// \brief Visitor used to search for information about a header file.
+  class HeaderFileInfoVisitor {
+    ASTReader &Reader;
+    const FileEntry *FE;
+    
+    llvm::Optional<HeaderFileInfo> HFI;
+    
+  public:
+    HeaderFileInfoVisitor(ASTReader &Reader, const FileEntry *FE)
+      : Reader(Reader), FE(FE) { }
+    
+    static bool visit(Module &M, void *UserData) {
+      HeaderFileInfoVisitor *This
+        = static_cast<HeaderFileInfoVisitor *>(UserData);
+      
+      HeaderFileInfoTrait Trait(This->Reader, M, 
+                                &This->Reader.getPreprocessor().getHeaderSearchInfo(),
+                                M.HeaderFileFrameworkStrings,
+                                This->FE->getName());
+      
+      HeaderFileInfoLookupTable *Table
+        = static_cast<HeaderFileInfoLookupTable *>(M.HeaderFileInfoTable);
+      if (!Table)
+        return false;
+
+      // Look in the on-disk hash table for an entry for this file name.
+      HeaderFileInfoLookupTable::iterator Pos = Table->find(This->FE->getName(),
+                                                            &Trait);
+      if (Pos == Table->end())
+        return false;
+
+      This->HFI = *Pos;
+      return true;
+    }
+    
+    llvm::Optional<HeaderFileInfo> getHeaderFileInfo() const { return HFI; }
+  };
+}
+
 HeaderFileInfo ASTReader::GetHeaderFileInfo(const FileEntry *FE) {
-  for (ModuleIterator I = ModuleMgr.begin(), E = ModuleMgr.end(); I != E; ++I) {
-    Module &F = *(*I);
-
-    HeaderFileInfoTrait Trait(*this, F, &PP->getHeaderSearchInfo(),
-                              F.HeaderFileFrameworkStrings,
-                              FE->getName());
-    
-    HeaderFileInfoLookupTable *Table
-      = static_cast<HeaderFileInfoLookupTable *>(F.HeaderFileInfoTable);
-    if (!Table)
-      continue;
-    
-    // Look in the on-disk hash table for an entry for this file name.
-    HeaderFileInfoLookupTable::iterator Pos = Table->find(FE->getName(), 
-                                                          &Trait);
-    if (Pos == Table->end())
-      continue;
-
-    HeaderFileInfo HFI = *Pos;
+  HeaderFileInfoVisitor Visitor(*this, FE);
+  ModuleMgr.visit(&HeaderFileInfoVisitor::visit, &Visitor);
+  if (llvm::Optional<HeaderFileInfo> HFI = Visitor.getHeaderFileInfo()) {
     if (Listener)
-      Listener->ReadHeaderFileInfo(HFI, FE->getUID());
-
-    return HFI;
+      Listener->ReadHeaderFileInfo(*HFI, FE->getUID());
+    return *HFI;
   }
   
   return HeaderFileInfo();
