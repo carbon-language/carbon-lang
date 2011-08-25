@@ -6175,11 +6175,10 @@ let Defs = [YMM0, YMM1, YMM2, YMM3, YMM4, YMM5, YMM6, YMM7,
   def VZEROALL : I<0x77, RawFrm, (outs), (ins), "vzeroall",
                    [(int_x86_avx_vzeroall)]>, TB, VEX, VEX_L, Requires<[HasAVX]>;
 
+  // Zero Upper bits of YMM registers
+  def VZEROUPPER : I<0x77, RawFrm, (outs), (ins), "vzeroupper",
+                     [(int_x86_avx_vzeroupper)]>, TB, VEX, Requires<[HasAVX]>;
 }
-
-// Zero Upper bits of YMM registers
-def VZEROUPPER : I<0x77, RawFrm, (outs), (ins), "vzeroupper",
-                   [(int_x86_avx_vzeroupper)]>, TB, VEX, Requires<[HasAVX]>;
 
 //===----------------------------------------------------------------------===//
 // SSE Shuffle pattern fragments
