@@ -1640,18 +1640,12 @@ public:
   const LangOptions&   LOpts;
   const bool GCEnabled;
 
-  BugType *useAfterRelease, *releaseNotOwned;
-  BugType *deallocGC, *deallocNotOwned;
   BugType *leakWithinFunction, *leakAtReturn;
-  BugType *overAutorelease;
-  BugType *returnNotOwnedForOwned;
 
 public:
   CFRefCount(ASTContext &Ctx, bool gcenabled, const LangOptions& lopts)
     : LOpts(lopts), GCEnabled(gcenabled),
-      useAfterRelease(0), releaseNotOwned(0), deallocGC(0), deallocNotOwned(0),
-      leakWithinFunction(0), leakAtReturn(0), overAutorelease(0),
-      returnNotOwnedForOwned(0) {}
+      leakWithinFunction(0), leakAtReturn(0) {}
 
   void RegisterChecks(ExprEngine &Eng);
 
@@ -2622,6 +2616,9 @@ class RetainReleaseChecker
                     check::RegionChanges,
                     eval::Assume,
                     eval::Call > {
+  mutable llvm::OwningPtr<CFRefBug> useAfterRelease, releaseNotOwned;
+  mutable llvm::OwningPtr<CFRefBug> deallocGC, deallocNotOwned;
+  mutable llvm::OwningPtr<CFRefBug> overAutorelease, returnNotOwnedForOwned;
 
   typedef llvm::DenseMap<SymbolRef, const SimpleProgramPointTag *> SymbolTagMap;
 
@@ -3293,28 +3290,34 @@ void RetainReleaseChecker::processNonLeakError(const ProgramState *St,
   if (!N)
     return;
 
-  // FIXME: This goes away once these bug types move to the checker.
-  CFRefCount &TF = static_cast<CFRefCount&>(C.getEngine().getTF());
-
   CFRefBug *BT;
   switch (ErrorKind) {
     default:
       llvm_unreachable("Unhandled error.");
       return;
     case RefVal::ErrorUseAfterRelease:
-      BT = static_cast<CFRefBug*>(TF.useAfterRelease);
+      if (!useAfterRelease)
+        useAfterRelease.reset(new UseAfterRelease());
+      BT = &*useAfterRelease;
       break;
     case RefVal::ErrorReleaseNotOwned:
-      BT = static_cast<CFRefBug*>(TF.releaseNotOwned);
+      if (!releaseNotOwned)
+        releaseNotOwned.reset(new BadRelease());
+      BT = &*releaseNotOwned;
       break;
     case RefVal::ErrorDeallocGC:
-      BT = static_cast<CFRefBug*>(TF.deallocGC);
+      if (!deallocGC)
+        deallocGC.reset(new DeallocGC());
+      BT = &*deallocGC;
       break;
     case RefVal::ErrorDeallocNotOwned:
-      BT = static_cast<CFRefBug*>(TF.deallocNotOwned);
+      if (!deallocNotOwned)
+        deallocNotOwned.reset(new DeallocNotOwned());
+      BT = &*deallocNotOwned;
       break;
   }
 
+  assert(BT);
   CFRefReport *report = new CFRefReport(*BT, C.getASTContext().getLangOptions(),
                                         isGCEnabled(), SummaryLog, N, Sym);
   report->addRange(ErrorRange);
@@ -3500,9 +3503,6 @@ void RetainReleaseChecker::checkReturnWithRetEffect(const ReturnStmt *S,
                                                     RetEffect RE, RefVal X,
                                                     SymbolRef Sym,
                                               const ProgramState *state) const {
-  // FIXME: This goes away once these bug types move to the checker.
-  CFRefCount &TF = static_cast<CFRefCount&>(C.getEngine().getTF());
-
   // Any leaks or other errors?
   if (X.isReturnedOwned() && X.getCount() == 0) {
     if (RE.getKind() != RetEffect::NoRet) {
@@ -3533,6 +3533,8 @@ void RetainReleaseChecker::checkReturnWithRetEffect(const ReturnStmt *S,
         ExplodedNode *N = Builder.generateNode(S, state, Pred,
                                                &ReturnOwnLeakTag);
         if (N) {
+          // FIXME: This goes away once this bug type moves to the checker.
+          CFRefCount &TF = static_cast<CFRefCount&>(C.getEngine().getTF());
           CFRefReport *report =
             new CFRefLeakReport(*static_cast<CFRefBug*>(TF.leakAtReturn),
                                 C.getASTContext().getLangOptions(),
@@ -3554,8 +3556,11 @@ void RetainReleaseChecker::checkReturnWithRetEffect(const ReturnStmt *S,
       ExplodedNode *N = Builder.generateNode(S, state, Pred, 
                                              &ReturnNotOwnedTag);
       if (N) {
+        if (!returnNotOwnedForOwned)
+          returnNotOwnedForOwned.reset(new ReturnedNotOwnedForOwned());
+
         CFRefReport *report =
-            new CFRefReport(*static_cast<CFRefBug*>(TF.returnNotOwnedForOwned),
+            new CFRefReport(*returnNotOwnedForOwned,
                             C.getASTContext().getLangOptions(), isGCEnabled(),
                             SummaryLog, N, Sym);
         C.EmitReport(report);
@@ -3574,9 +3579,6 @@ RetainReleaseChecker::handleAutoreleaseCounts(const ProgramState *state,
                                               ExplodedNode *Pred,
                                               ExprEngine &Eng, SymbolRef Sym,
                                               RefVal V) const {
-  // FIXME: This goes away once these bug types move to the checker.
-  CFRefCount &TF = static_cast<CFRefCount&>(Eng.getTF());
-
   unsigned ACnt = V.getAutoreleaseCount();
 
   // No autorelease counts?  Nothing to be done.
@@ -3624,10 +3626,13 @@ RetainReleaseChecker::handleAutoreleaseCounts(const ProgramState *state,
       os << V.getAutoreleaseCount() << " times ";
     os << "but the object has a +" << V.getCount() << " retain count";
 
+    if (!overAutorelease)
+      overAutorelease.reset(new OverAutorelease());
+
     const LangOptions &LOpts = Eng.getContext().getLangOptions();
     CFRefReport *report =
-      new CFRefReport(*static_cast<CFRefBug*>(TF.overAutorelease), LOpts,
-                      /* GCEnabled = */ false, SummaryLog, N, Sym, os.str());
+      new CFRefReport(*overAutorelease, LOpts, /* GCEnabled = */ false,
+                      SummaryLog, N, Sym, os.str());
     Eng.getBugReporter().EmitReport(report);
   }
 
@@ -3779,24 +3784,6 @@ void RetainReleaseChecker::checkDeadSymbols(SymbolReaper &SymReaper,
 
 void CFRefCount::RegisterChecks(ExprEngine& Eng) {
   BugReporter &BR = Eng.getBugReporter();
-
-  useAfterRelease = new UseAfterRelease();
-  BR.Register(useAfterRelease);
-
-  releaseNotOwned = new BadRelease();
-  BR.Register(releaseNotOwned);
-
-  deallocGC = new DeallocGC();
-  BR.Register(deallocGC);
-
-  deallocNotOwned = new DeallocNotOwned();
-  BR.Register(deallocNotOwned);
-
-  overAutorelease = new OverAutorelease();
-  BR.Register(overAutorelease);
-
-  returnNotOwnedForOwned = new ReturnedNotOwnedForOwned();
-  BR.Register(returnNotOwnedForOwned);
 
   // First register "return" leaks.
   const char *name = 0;
