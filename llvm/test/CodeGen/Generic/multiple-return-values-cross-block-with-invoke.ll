@@ -13,6 +13,9 @@ normal:
 	ret void
   
 handler:
+        %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+                 catch i8* null
 	ret void
 }
 
+declare i32 @__gxx_personality_v0(...)

@@ -14,11 +14,14 @@ bb14:		; preds = %lpad
 	unreachable
 
 lpad:		; preds = %entry
+        %lpad1 = landingpad { i8*, i32 } personality i32 (...)* @__gxx_personality_v0
+                  catch i8* null
 	invoke void @__cxa_end_catch( )
 			to label %bb14 unwind label %lpad17
 
 lpad17:		; preds = %lpad
-	%eh_select20 = tail call i32 (i8*, i8*, ...)* @llvm.eh.selector.i32( i8* null, i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*), i8* null )		; <i32> [#uses=0]
+        %lpad2 = landingpad { i8*, i32 } personality i32 (...)* @__gxx_personality_v0
+                  catch i8* null
 	unreachable
 
 UnifiedUnreachableBlock:		; preds = %entry

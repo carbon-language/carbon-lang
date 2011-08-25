@@ -8,5 +8,9 @@ define i32 @test2() {
 invcont:
         ret i32 %A
 blat:
-        ret i32 0
+  %lpad = landingpad { i8*, i32 } personality i32 (...)* @__gxx_personality_v0
+            cleanup
+  ret i32 0
 }
+
+declare i32 @__gxx_personality_v0(...)

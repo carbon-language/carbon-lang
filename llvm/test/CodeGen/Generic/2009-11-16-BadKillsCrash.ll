@@ -64,10 +64,16 @@ invcont38:                                        ; preds = %invcont25, %bb1.i, 
 
 lpad:                                             ; preds = %bb.i93, %invcont24, %bb1.i, %invcont8
   %__extracted.1 = phi i32 [ 0, %invcont8 ], [ %2, %bb1.i ], [ undef, %bb.i93 ], [ undef, %invcont24 ] ; <i32> [#uses=0]
-  %eh_ptr = call i8* @llvm.eh.exception() ; <i8*> [#uses=1]
+  %lpad1 = landingpad { i8*, i32 } personality i32 (...)* @__gxx_personality_v0
+            catch i8* null
+  %eh_ptr = extractvalue { i8*, i32 } %lpad1, 0
   %6 = call i8* @__cxa_begin_catch(i8* %eh_ptr) nounwind ; <i8*> [#uses=0]
   unreachable
 
 lpad74:                                           ; preds = %entry
+  %lpad2 = landingpad { i8*, i32 } personality i32 (...)* @__gxx_personality_v0
+            cleanup
   unreachable
 }
+
+declare i32 @__gxx_personality_v0(...)

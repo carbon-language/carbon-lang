@@ -45,7 +45,9 @@ cond_next1328:		; preds = %cond_true235, %cond_true
 	ret void
 
 cond_true1402:		; preds = %invcont282, %cond_false280, %cond_true235, %cond_true
-	ret void
+  %lpad = landingpad { i8*, i32 } personality i32 (...)* @__gxx_personality_v0
+            cleanup
+  ret void
 }
 
 declare void @_ZNSs14_M_replace_auxEjjjc()
@@ -57,3 +59,5 @@ declare void @_ZNSs6assignEPKcj()
 declare void @_ZNSs7reserveEj()
 
 declare void @_ZNSs6appendEPKcj()
+
+declare i32 @__gxx_personality_v0(...)
