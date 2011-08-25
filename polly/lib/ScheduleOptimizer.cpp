@@ -255,7 +255,7 @@ static isl_map *getPrevectorMap(isl_ctx *ctx, int vectorDimension,
   isl_constraint_set_coefficient_si(c, isl_dim_out, stepDimension, 1);
   tilingMap = isl_basic_map_add_constraint(tilingMap, c);
 
-  c = isl_inequality_alloc(isl_dim_copy(dim));
+  c = isl_inequality_alloc(dim);
   isl_constraint_set_coefficient_si(c, isl_dim_out, vectorDimension, 1);
   isl_constraint_set_coefficient_si(c, isl_dim_out, stepDimension, -1);
   isl_constraint_set_constant_si(c, vectorWidth- 1);
