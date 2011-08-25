@@ -22,7 +22,7 @@
 using namespace llvm;
 
 static cl::opt<bool>
-EnableGlobalMerge("global-merge",
+EnableGlobalMerge("global-merge", cl::Hidden,
                   cl::desc("Enable global merge pass"),
                   cl::init(true));
 
