@@ -114,3 +114,15 @@ int test_enum_cases(enum Cases C) {
   }  
 }
 
+// Handle unreachable code triggered by macro expansions.
+void __myassert_rtn(const char *, const char *, int, const char *) __attribute__((__noreturn__));
+
+#define myassert(e) \
+    (__builtin_expect(!(e), 0) ? __myassert_rtn(__func__, __FILE__, __LINE__, #e) : (void)0)
+
+void test_assert() {
+  myassert(0 && "unreachable");
+  return; // no-warning
+}
+
+

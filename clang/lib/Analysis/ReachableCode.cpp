@@ -86,12 +86,10 @@ bool DeadCodeScan::isDeadCodeRoot(const clang::CFGBlock *Block) {
 }
 
 static bool isValidDeadStmt(const Stmt *S) {
-  SourceLocation Loc = S->getLocStart();
-  if (!(Loc.isValid() && !Loc.isMacroID()))
+  if (S->getLocStart().isInvalid())
     return false;
-  if (const BinaryOperator *BO = dyn_cast<BinaryOperator>(S)) {
+  if (const BinaryOperator *BO = dyn_cast<BinaryOperator>(S))
     return BO->getOpcode() != BO_Comma;
-  }
   return true;
 }
 
@@ -142,6 +140,12 @@ unsigned DeadCodeScan::scanBackwards(const clang::CFGBlock *Start,
         if (const CFGBlock *predBlock = *I)
           enqueue(predBlock);
       }
+      continue;
+    }
+    
+    // Specially handle macro-expanded code.
+    if (S->getLocStart().isMacroID()) {
+      count += clang::reachable_code::ScanReachableFromBlock(Block, Reachable);
       continue;
     }
 
