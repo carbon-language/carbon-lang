@@ -26,6 +26,25 @@ void __pnacl__defined() {
 }
 #endif
 
+#ifdef unix
+void unixdefined() {
+  // CHECK: unixdefined
+}
+#endif
+
+#ifdef __ELF__
+void __ELF__defined() {
+  // CHECK: __ELF__defined
+}
+#endif
+
+#ifdef _GNU_SOURCE
+void _GNU_SOURCEdefined() {
+  // CHECK: _GNU_SOURCEdefined
+}
+#endif
+
+
 // Check types
 
 // CHECK: signext i8 @check_char()

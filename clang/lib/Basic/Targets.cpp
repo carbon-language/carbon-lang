@@ -2870,6 +2870,13 @@ public:
   }
   virtual void getTargetDefines(const LangOptions &Opts,
                                 MacroBuilder &Builder) const {
+    DefineStd(Builder, "unix", Opts);
+    Builder.defineMacro("__ELF__");
+    if (Opts.POSIXThreads)
+      Builder.defineMacro("_REENTRANT");
+    if (Opts.CPlusPlus)
+      Builder.defineMacro("_GNU_SOURCE");
+
     Builder.defineMacro("__native_client__");
     getArchDefines(Opts, Builder);
   }
