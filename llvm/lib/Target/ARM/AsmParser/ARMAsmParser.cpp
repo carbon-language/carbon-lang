@@ -2952,6 +2952,12 @@ bool ARMAsmParser::ParseInstruction(StringRef Name, SMLoc NameLoc,
   Mnemonic = splitMnemonic(Mnemonic, PredicationCode, CarrySetting,
                            ProcessorIMod);
 
+  // In Thumb1, only the branch (B) instruction can be predicated.
+  if (isThumbOne() && PredicationCode != ARMCC::AL && Mnemonic != "b") {
+    Parser.EatToEndOfStatement();
+    return Error(NameLoc, "conditional execution not supported in Thumb1");
+  }
+
   Operands.push_back(ARMOperand::CreateToken(Mnemonic, NameLoc));
 
   // FIXME: This is all a pretty gross hack. We should automatically handle
