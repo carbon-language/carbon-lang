@@ -2539,8 +2539,8 @@ static DecodeStatus DecodeThumbAddSPReg(llvm::MCInst &Inst, uint16_t Insn,
     Rdm |= fieldFromInstruction16(Insn, 7, 1) << 3;
 
     CHECK(S, DecodeGPRRegisterClass(Inst, Rdm, Address, Decoder));
-    Inst.addOperand(MCOperand::CreateReg(ARM::SP));
     CHECK(S, DecodeGPRRegisterClass(Inst, Rdm, Address, Decoder));
+    Inst.addOperand(MCOperand::CreateReg(ARM::SP));
   } else if (Inst.getOpcode() == ARM::tADDspr) {
     unsigned Rm = fieldFromInstruction16(Insn, 3, 4);
 
