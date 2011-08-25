@@ -3,7 +3,7 @@
 
 // Test with pch.
 // RUN: %clang_cc1 -emit-pch -o %t1 %S/Inputs/chain-decls1.h
-// RUN: %clang_cc1 -emit-pch -o %t2 %S/Inputs/chain-decls2.h -include-pch %t1 -chained-pch
+// RUN: %clang_cc1 -emit-pch -o %t2 %S/Inputs/chain-decls2.h -include-pch %t1
 // RUN: %clang_cc1 -include-pch %t2 -fsyntax-only -verify %s
 // RUN: %clang_cc1 -ast-print -include-pch %t2 %s | FileCheck %s
 

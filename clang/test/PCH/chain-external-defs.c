@@ -1,6 +1,6 @@
 // Test with pch.
 // RUN: %clang_cc1 -triple x86_64-apple-darwin9 -emit-pch -o %t1.pch %S/Inputs/chain-external-defs1.h
-// RUN: %clang_cc1 -triple x86_64-apple-darwin9 -emit-pch -o %t2.pch %S/Inputs/chain-external-defs2.h -include-pch %t1.pch -chained-pch
+// RUN: %clang_cc1 -triple x86_64-apple-darwin9 -emit-pch -o %t2.pch %S/Inputs/chain-external-defs2.h -include-pch %t1.pch
 // RUN: %clang_cc1 -triple x86_64-apple-darwin9 -include-pch %t2.pch -emit-llvm -o %t %s
 // RUN: echo FINI >> %t
 // RUN: FileCheck -input-file=%t -check-prefix=Z %s

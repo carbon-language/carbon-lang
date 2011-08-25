@@ -1354,7 +1354,6 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
   
   // Tell the compiler invocation to generate a temporary precompiled header.
   FrontendOpts.ProgramAction = frontend::GeneratePCH;
-  FrontendOpts.ChainedPCH = true;
   // FIXME: Generate the precompiled header into memory?
   FrontendOpts.OutputFile = PreamblePCHPath;
   PreprocessorOpts.PrecompiledPreambleBytes.first = 0;
@@ -1761,8 +1760,6 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
                                       bool PrecompilePreamble,
                                       TranslationUnitKind TUKind,
                                       bool CacheCodeCompletionResults,
-                                      bool CXXPrecompilePreamble,
-                                      bool CXXChainedPCH,
                                       bool NestedMacroExpansions) {
   if (!Diags.getPtr()) {
     // No diagnostics engine was provided, so create our own diagnostics object
@@ -1805,16 +1802,6 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
   // Override the resources path.
   CI->getHeaderSearchOpts().ResourceDir = ResourceFilesPath;
 
-  // Check whether we should precompile the preamble and/or use chained PCH.
-  // FIXME: This is a temporary hack while we debug C++ chained PCH.
-  if (CI->getLangOpts().CPlusPlus) {
-    PrecompilePreamble = PrecompilePreamble && CXXPrecompilePreamble;
-    
-    if (PrecompilePreamble && !CXXChainedPCH &&
-        !CI->getPreprocessorOpts().ImplicitPCHInclude.empty())
-      PrecompilePreamble = false;
-  }
-  
   // Create the AST unit.
   llvm::OwningPtr<ASTUnit> AST;
   AST.reset(new ASTUnit(false));

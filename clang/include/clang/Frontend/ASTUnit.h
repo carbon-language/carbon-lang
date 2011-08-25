@@ -651,8 +651,6 @@ public:
                                       bool PrecompilePreamble = false,
                                       TranslationUnitKind TUKind = TU_Complete,
                                       bool CacheCodeCompletionResults = false,
-                                      bool CXXPrecompilePreamble = false,
-                                      bool CXXChainedPCH = false,
                                       bool NestedMacroExpansions = true);
   
   /// \brief Reparse the source files using the same command-line options that

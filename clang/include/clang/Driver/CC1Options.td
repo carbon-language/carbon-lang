@@ -412,8 +412,6 @@ def working_directory_EQ : Joined<"-working-directory=">,
 
 def relocatable_pch : Flag<"-relocatable-pch">,
   HelpText<"Whether to build a relocatable precompiled header">;
-def chained_pch : Flag<"-chained-pch">,
-  HelpText<"Whether to chain the new precompiled header to the old one.">;
 def print_stats : Flag<"-print-stats">,
   HelpText<"Print performance metrics and statistics">;
 def ftime_report : Flag<"-ftime-report">,

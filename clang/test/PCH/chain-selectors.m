@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s -Wselector -include %S/Inputs/chain-selectors1.h -include %S/Inputs/chain-selectors2.h
 
 // RUN: %clang_cc1 -x objective-c -emit-pch -o %t1 %S/Inputs/chain-selectors1.h
-// RUN: %clang_cc1 -x objective-c -emit-pch -o %t2 %S/Inputs/chain-selectors2.h -include-pch %t1 -chained-pch
+// RUN: %clang_cc1 -x objective-c -emit-pch -o %t2 %S/Inputs/chain-selectors2.h -include-pch %t1
 // RUN: %clang_cc1 -fsyntax-only -verify %s -Wselector -include-pch %t2
 
 @implementation X

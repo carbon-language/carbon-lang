@@ -405,8 +405,6 @@ static void FrontendOptsToArgs(const FrontendOptions &Opts,
     Res.push_back("-disable-free");
   if (Opts.RelocatablePCH)
     Res.push_back("-relocatable-pch");
-  if (Opts.ChainedPCH)
-    Res.push_back("-chained-pch");
   if (Opts.ShowHelp)
     Res.push_back("-help");
   if (Opts.ShowMacrosInCodeCompletion)
@@ -1271,7 +1269,6 @@ static InputKind ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
   Opts.OutputFile = Args.getLastArgValue(OPT_o);
   Opts.Plugins = Args.getAllArgValues(OPT_load);
   Opts.RelocatablePCH = Args.hasArg(OPT_relocatable_pch);
-  Opts.ChainedPCH = Args.hasArg(OPT_chained_pch);
   Opts.ShowHelp = Args.hasArg(OPT_help);
   Opts.ShowMacrosInCodeCompletion = Args.hasArg(OPT_code_completion_macros);
   Opts.ShowCodePatternsInCodeCompletion

@@ -2414,9 +2414,7 @@ CXTranslationUnit clang_createTranslationUnit(CXIndex CIdx,
 
 unsigned clang_defaultEditingTranslationUnitOptions() {
   return CXTranslationUnit_PrecompiledPreamble | 
-         CXTranslationUnit_CacheCompletionResults |
-         CXTranslationUnit_CXXPrecompiledPreamble |
-         CXTranslationUnit_CXXChainedPCH;
+         CXTranslationUnit_CacheCompletionResults;
 }
   
 CXTranslationUnit
@@ -2467,10 +2465,6 @@ static void clang_parseTranslationUnit_Impl(void *UserData) {
     = (options & CXTranslationUnit_Incomplete)? TU_Prefix : TU_Complete;
   bool CacheCodeCompetionResults
     = options & CXTranslationUnit_CacheCompletionResults;
-  bool CXXPrecompilePreamble
-    = options & CXTranslationUnit_CXXPrecompiledPreamble;
-  bool CXXChainedPCH
-    = options & CXTranslationUnit_CXXChainedPCH;
   
   // Configure the diagnostics.
   DiagnosticOptions DiagOpts;
@@ -2556,8 +2550,6 @@ static void clang_parseTranslationUnit_Impl(void *UserData) {
                                  PrecompilePreamble,
                                  TUKind,
                                  CacheCodeCompetionResults,
-                                 CXXPrecompilePreamble,
-                                 CXXChainedPCH,
                                  NestedMacroExpansions));
 
   if (NumErrors != Diags->getClient()->getNumErrors()) {
