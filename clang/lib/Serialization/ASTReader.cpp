@@ -3230,16 +3230,37 @@ bool ASTReader::ParseLanguageOptions(
   return false;
 }
 
-void ASTReader::ReadPreprocessedEntities() {
-  for (ModuleIterator I = ModuleMgr.begin(), E = ModuleMgr.end(); I != E; ++I) {
-    Module &F = *(*I);
-    if (!F.PreprocessorDetailCursor.getBitStreamReader())
-      continue;
+namespace {
+  /// \brief Visitor used by ASTReader::ReadPreprocessedEntities() to load
+  /// all of the preprocessed entities within a module.
+  class ReadPreprocessedEntitiesVisitor {
+    ASTReader &Reader;
+    
+  public:
+    explicit ReadPreprocessedEntitiesVisitor(ASTReader &Reader)
+      : Reader(Reader) { }
+    
+    static bool visit(Module &M, bool Preorder, void *UserData) {
+      if (Preorder)
+        return false;
+      
+      ReadPreprocessedEntitiesVisitor *This
+        = static_cast<ReadPreprocessedEntitiesVisitor *>(UserData);
+      
+      if (!M.PreprocessorDetailCursor.getBitStreamReader())
+        return false;
+      
+      SavedStreamPosition SavedPosition(M.PreprocessorDetailCursor);
+      M.PreprocessorDetailCursor.JumpToBit(M.PreprocessorDetailStartOffset);
+      while (This->Reader.LoadPreprocessedEntity(M)) { }
+      return false;
+    }
+  };
+}
 
-    SavedStreamPosition SavedPosition(F.PreprocessorDetailCursor);
-    F.PreprocessorDetailCursor.JumpToBit(F.PreprocessorDetailStartOffset);
-    while (LoadPreprocessedEntity(F)) { }
-  }
+void ASTReader::ReadPreprocessedEntities() {
+  ReadPreprocessedEntitiesVisitor Visitor(*this);
+  ModuleMgr.visitDepthFirst(&ReadPreprocessedEntitiesVisitor::visit, &Visitor);
 }
 
 PreprocessedEntity *ASTReader::ReadPreprocessedEntityAtOffset(uint64_t Offset) {
