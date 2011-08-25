@@ -1715,7 +1715,7 @@ Sema::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
     DeclsInGroup.push_back(CDecl);
   }
   
-  return BuildDeclaratorGroup(DeclsInGroup.data(), 1, false);
+  return BuildDeclaratorGroup(DeclsInGroup.data(), DeclsInGroup.size(), false);
 }
 
 static bool tryMatchRecordTypes(ASTContext &Context,
