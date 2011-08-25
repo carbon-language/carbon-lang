@@ -1637,8 +1637,8 @@ public:
                        const char* sep);
   };
 
-  RetainSummaryManager Summaries;
   const LangOptions&   LOpts;
+  const bool GCEnabled;
 
   BugType *useAfterRelease, *releaseNotOwned;
   BugType *deallocGC, *deallocNotOwned;
@@ -1648,9 +1648,8 @@ public:
 
 public:
   CFRefCount(ASTContext &Ctx, bool gcenabled, const LangOptions& lopts)
-    : Summaries(Ctx, gcenabled, (bool)lopts.ObjCAutoRefCount),
-      LOpts(lopts), useAfterRelease(0), releaseNotOwned(0),
-      deallocGC(0), deallocNotOwned(0),
+    : LOpts(lopts), GCEnabled(gcenabled),
+      useAfterRelease(0), releaseNotOwned(0), deallocGC(0), deallocNotOwned(0),
       leakWithinFunction(0), leakAtReturn(0), overAutorelease(0),
       returnNotOwnedForOwned(0) {}
 
@@ -1659,9 +1658,6 @@ public:
   virtual void RegisterPrinters(std::vector<ProgramState::Printer*>& Printers) {
     Printers.push_back(new BindingsPrinter());
   }
-
-  bool isGCEnabled() const { return Summaries.isGCEnabled(); }
-  bool isARCorGCEnabled() const { return Summaries.isARCorGCEnabled(); }
   
   const LangOptions& getLangOptions() const { return LOpts; }
 
@@ -2632,6 +2628,9 @@ class RetainReleaseChecker
   // This map is only used to ensure proper deletion of any allocated tags.
   mutable SymbolTagMap DeadSymbolTags;
 
+  mutable llvm::OwningPtr<RetainSummaryManager> Summaries;
+  mutable llvm::OwningPtr<RetainSummaryManager> SummariesGC;
+
   mutable ARCounts::Factory ARCountFactory;
 
   mutable SummaryLogTy SummaryLog;
@@ -2708,6 +2707,22 @@ public:
 
   bool isARCorGCEnabled(ASTContext &Ctx) const {
     return isGCEnabled() || Ctx.getLangOptions().ObjCAutoRefCount;
+  }
+
+  RetainSummaryManager &getSummaryManager(ASTContext &Ctx) const {
+    if (isGCEnabled()) {
+      if (!SummariesGC) {
+        bool ARCEnabled = (bool)Ctx.getLangOptions().ObjCAutoRefCount;
+        SummariesGC.reset(new RetainSummaryManager(Ctx, true, ARCEnabled));
+      }
+      return *SummariesGC;
+    } else {
+      if (!Summaries) {
+        bool ARCEnabled = (bool)Ctx.getLangOptions().ObjCAutoRefCount;
+        Summaries.reset(new RetainSummaryManager(Ctx, false, ARCEnabled));
+      }
+      return *Summaries;
+    }
   }
 
   void checkBind(SVal loc, SVal val, CheckerContext &C) const;
@@ -2954,15 +2969,12 @@ void RetainReleaseChecker::checkPostStmt(const CastExpr *CE,
 
 void RetainReleaseChecker::checkPostStmt(const CallExpr *CE,
                                          CheckerContext &C) const {
-  // FIXME: This goes away once the RetainSummaryManager moves to the checker.
-  CFRefCount &TF = static_cast<CFRefCount&>(C.getEngine().getTF());
-  RetainSummaryManager &Summaries = TF.Summaries;
-
   // Get the callee.
   const ProgramState *state = C.getState();
   const Expr *Callee = CE->getCallee();
   SVal L = state->getSVal(Callee);
 
+  RetainSummaryManager &Summaries = getSummaryManager(C.getASTContext());
   RetainSummary *Summ = 0;
 
   // FIXME: Better support for blocks.  For now we stop tracking anything
@@ -2986,12 +2998,10 @@ void RetainReleaseChecker::checkPostStmt(const CallExpr *CE,
 
 void RetainReleaseChecker::checkPostObjCMessage(const ObjCMessage &Msg, 
                                                 CheckerContext &C) const {
-  // FIXME: This goes away once the RetainSummaryManager moves to the checker.
-  CFRefCount &TF = static_cast<CFRefCount&>(C.getEngine().getTF());
-  RetainSummaryManager &Summaries = TF.Summaries;
-
   const ProgramState *state = C.getState();
   ExplodedNode *Pred = C.getPredecessor();
+
+  RetainSummaryManager &Summaries = getSummaryManager(C.getASTContext());
 
   RetainSummary *Summ;
   if (Msg.isInstanceMessage()) {
@@ -3060,13 +3070,10 @@ void RetainReleaseChecker::checkSummary(const RetainSummary &Summ,
   RetEffect RE = Summ.getRetEffect();
 
   if (RE.getKind() == RetEffect::OwnedWhenTrackedReceiver) {
-    if (ReceiverIsTracked) {
-      // FIXME: This goes away if the RetainSummaryManager moves to the checker.
-      CFRefCount &TF = static_cast<CFRefCount&>(C.getEngine().getTF());
-      RE = TF.Summaries.getObjAllocRetEffect();      
-    } else {
+    if (ReceiverIsTracked)
+      RE = getSummaryManager(C.getASTContext()).getObjAllocRetEffect();      
+    else
       RE = RetEffect::MakeNoRet();
-    }
   }
 
   switch (RE.getKind()) {
@@ -3467,23 +3474,21 @@ void RetainReleaseChecker::checkPreStmt(const ReturnStmt *S,
   X = *T;
 
   // Consult the summary of the enclosing method.
+  RetainSummaryManager &Summaries = getSummaryManager(C.getASTContext());
   const Decl *CD = &Pred->getCodeDecl();
-
-  // FIXME: This goes away once the RetainSummariesManager moves to the checker.
-  CFRefCount &TF = static_cast<CFRefCount&>(C.getEngine().getTF());
 
   if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(CD)) {
     // Unlike regular functions, /all/ ObjC methods are assumed to always
     // follow Cocoa retain-count conventions, not just those with special
     // names or attributes.
-    const RetainSummary *Summ = TF.Summaries.getMethodSummary(MD);
+    const RetainSummary *Summ = Summaries.getMethodSummary(MD);
     RetEffect RE = Summ ? Summ->getRetEffect() : RetEffect::MakeNoRet();
     checkReturnWithRetEffect(S, C, Pred, RE, X, Sym, state);
   }
 
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(CD)) {
     if (!isa<CXXMethodDecl>(FD))
-      if (const RetainSummary *Summ = TF.Summaries.getSummary(FD))
+      if (const RetainSummary *Summ = Summaries.getSummary(FD))
         checkReturnWithRetEffect(S, C, Pred, Summ->getRetEffect(), X,
                                  Sym, state);
   }
@@ -3796,7 +3801,7 @@ void CFRefCount::RegisterChecks(ExprEngine& Eng) {
   // First register "return" leaks.
   const char *name = 0;
 
-  if (isGCEnabled())
+  if (GCEnabled)
     name = "Leak of returned object when using garbage collection";
   else if (getLangOptions().getGCMode() == LangOptions::HybridGC)
     name = "Leak of returned object when not using garbage collection (GC) in "
@@ -3812,7 +3817,7 @@ void CFRefCount::RegisterChecks(ExprEngine& Eng) {
   BR.Register(leakAtReturn);
 
   // Second, register leaks within a function/method.
-  if (isGCEnabled())
+  if (GCEnabled)
     name = "Leak of object when using garbage collection";
   else if (getLangOptions().getGCMode() == LangOptions::HybridGC)
     name = "Leak of object when not using garbage collection (GC) in "
@@ -3835,7 +3840,7 @@ void CFRefCount::RegisterChecks(ExprEngine& Eng) {
   RetainReleaseChecker *checker = 
     Eng.getCheckerManager().registerChecker<RetainReleaseChecker>();
   assert(checker);
-  checker->setGCMode(isGCEnabled() ? LangOptions::GCOnly : LangOptions::NonGC);
+  checker->setGCMode(GCEnabled ? LangOptions::GCOnly : LangOptions::NonGC);
 }
 
 TransferFuncs* ento::MakeCFRefCountTF(ASTContext &Ctx, bool GCEnabled,
