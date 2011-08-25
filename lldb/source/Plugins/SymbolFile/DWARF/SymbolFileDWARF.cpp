@@ -3072,6 +3072,25 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
     AccessType accessibility = eAccessNone;
     if (die != NULL)
     {
+        Log *log = LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_INFO);
+        if (log && dwarf_cu)
+        {
+            const DWARFDebugInfoEntry *cu_die = dwarf_cu->GetCompileUnitDIEOnly();
+            const char *cu_name = NULL;
+            if (cu_die != NULL)
+                cu_name = cu_die->GetName (this, dwarf_cu);
+            const char *obj_file_name = NULL;
+            if (m_obj_file)
+                obj_file_name = m_obj_file->GetFileSpec().GetFilename().AsCString();
+            const char *die_name = die->GetName (this, dwarf_cu);
+            log->Printf ("SymbolFileDWARF::%s: CU: %s OBJFILE: %s DIE: %s (0x%llx).", 
+                        __FUNCTION__, 
+                        cu_name ? cu_name : "<UNKNOWN>",
+                        obj_file_name ? obj_file_name : "<UNKNOWN>",
+                        die_name ? die_name : "<NO NAME>", 
+                        die->GetOffset());
+        }
+        
         Type *type_ptr = m_die_to_type.lookup (die);
         TypeList* type_list = GetTypeList();
         if (type_ptr == NULL)
