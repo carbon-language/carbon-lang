@@ -1060,8 +1060,8 @@ private:
   ExprResult ParseAsmStringLiteral();
 
   // Objective-C External Declarations
-  Parser::DeclGroupPtrTy ParseObjCAtDirectives();
-  Parser::DeclGroupPtrTy ParseObjCAtClassDeclaration(SourceLocation atLoc);
+  Decl *ParseObjCAtDirectives();
+  Decl *ParseObjCAtClassDeclaration(SourceLocation atLoc);
   Decl *ParseObjCAtInterfaceDeclaration(SourceLocation atLoc,
                                         ParsedAttributes &prefixAttrs);
   void ParseObjCClassInstanceVariables(Decl *interfaceDecl,

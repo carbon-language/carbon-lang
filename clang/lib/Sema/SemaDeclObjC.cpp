@@ -1654,14 +1654,14 @@ void Sema::ImplMethodsVsClassMethods(Scope *S, ObjCImplDecl* IMPDecl,
 }
 
 /// ActOnForwardClassDeclaration -
-Sema::DeclGroupPtrTy
+Decl *
 Sema::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
                                    IdentifierInfo **IdentList,
                                    SourceLocation *IdentLocs,
                                    unsigned NumElts) {
-  SmallVector<Decl *, 8> DeclsInGroup;
+  SmallVector<ObjCInterfaceDecl*, 32> Interfaces;
+
   for (unsigned i = 0; i != NumElts; ++i) {
-    SmallVector<ObjCInterfaceDecl*, 1> Interfaces;
     // Check for another declaration kind with the same name.
     NamedDecl *PrevDecl
       = LookupSingleName(TUScope, IdentList[i], IdentLocs[i], 
@@ -1707,15 +1707,15 @@ Sema::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
     }
 
     Interfaces.push_back(IDecl);
-    ObjCClassDecl *CDecl = ObjCClassDecl::Create(Context, CurContext, AtClassLoc,
-                                                 Interfaces.data(), IdentLocs,
-                                                 1);
-    CurContext->addDecl(CDecl);
-    CheckObjCDeclScope(CDecl);
-    DeclsInGroup.push_back(CDecl);
   }
-  
-  return BuildDeclaratorGroup(DeclsInGroup.data(), DeclsInGroup.size(), false);
+
+  assert(Interfaces.size() == NumElts);
+  ObjCClassDecl *CDecl = ObjCClassDecl::Create(Context, CurContext, AtClassLoc,
+                                               Interfaces.data(), IdentLocs,
+                                               Interfaces.size());
+  CurContext->addDecl(CDecl);
+  CheckObjCDeclScope(CDecl);
+  return CDecl;
 }
 
 static bool tryMatchRecordTypes(ASTContext &Context,

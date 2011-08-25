@@ -29,59 +29,47 @@ using namespace clang;
 /// [OBJC]  objc-protocol-definition
 /// [OBJC]  objc-method-definition
 /// [OBJC]  '@' 'end'
-Parser::DeclGroupPtrTy Parser::ParseObjCAtDirectives() {
+Decl *Parser::ParseObjCAtDirectives() {
   SourceLocation AtLoc = ConsumeToken(); // the "@"
 
   if (Tok.is(tok::code_completion)) {
     Actions.CodeCompleteObjCAtDirective(getCurScope());
     ConsumeCodeCompletionToken();
   }
-    
-  Decl *SingleDecl = 0;
+
   switch (Tok.getObjCKeywordID()) {
   case tok::objc_class:
     return ParseObjCAtClassDeclaration(AtLoc);
-    break;
   case tok::objc_interface: {
     ParsedAttributes attrs(AttrFactory);
-    SingleDecl = ParseObjCAtInterfaceDeclaration(AtLoc, attrs);
-    break;
+    return ParseObjCAtInterfaceDeclaration(AtLoc, attrs);
   }
   case tok::objc_protocol: {
     ParsedAttributes attrs(AttrFactory);
-    SingleDecl = ParseObjCAtProtocolDeclaration(AtLoc, attrs);
-    break;
+    return ParseObjCAtProtocolDeclaration(AtLoc, attrs);
   }
   case tok::objc_implementation:
-    SingleDecl = ParseObjCAtImplementationDeclaration(AtLoc);
-    break;
+    return ParseObjCAtImplementationDeclaration(AtLoc);
   case tok::objc_end:
-    SingleDecl = ParseObjCAtEndDeclaration(AtLoc);
-    break;
+    return ParseObjCAtEndDeclaration(AtLoc);
   case tok::objc_compatibility_alias:
-    SingleDecl = ParseObjCAtAliasDeclaration(AtLoc);
-    break;
+    return ParseObjCAtAliasDeclaration(AtLoc);
   case tok::objc_synthesize:
-    SingleDecl = ParseObjCPropertySynthesize(AtLoc);
-    break;
+    return ParseObjCPropertySynthesize(AtLoc);
   case tok::objc_dynamic:
-    SingleDecl = ParseObjCPropertyDynamic(AtLoc);
-    break;
+    return ParseObjCPropertyDynamic(AtLoc);
   default:
     Diag(AtLoc, diag::err_unexpected_at);
     SkipUntil(tok::semi);
-    SingleDecl = 0;
-    break;
+    return 0;
   }
-  return Actions.ConvertDeclToDeclGroup(SingleDecl);
 }
 
 ///
 /// objc-class-declaration:
 ///    '@' 'class' identifier-list ';'
 ///
-Parser::DeclGroupPtrTy
-Parser::ParseObjCAtClassDeclaration(SourceLocation atLoc) {
+Decl *Parser::ParseObjCAtClassDeclaration(SourceLocation atLoc) {
   ConsumeToken(); // the identifier "class"
   SmallVector<IdentifierInfo *, 8> ClassNames;
   SmallVector<SourceLocation, 8> ClassLocs;
@@ -91,7 +79,7 @@ Parser::ParseObjCAtClassDeclaration(SourceLocation atLoc) {
     if (Tok.isNot(tok::identifier)) {
       Diag(Tok, diag::err_expected_ident);
       SkipUntil(tok::semi);
-      return Actions.ConvertDeclToDeclGroup(0);
+      return 0;
     }
     ClassNames.push_back(Tok.getIdentifierInfo());
     ClassLocs.push_back(Tok.getLocation());
@@ -105,7 +93,7 @@ Parser::ParseObjCAtClassDeclaration(SourceLocation atLoc) {
 
   // Consume the ';'.
   if (ExpectAndConsume(tok::semi, diag::err_expected_semi_after, "@class"))
-    return Actions.ConvertDeclToDeclGroup(0);
+    return 0;
 
   return Actions.ActOnForwardClassDeclaration(atLoc, ClassNames.data(),
                                               ClassLocs.data(),

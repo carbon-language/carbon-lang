@@ -5001,7 +5001,7 @@ public:
                                          IdentifierInfo *CatName,
                                          SourceLocation CatLoc);
 
-  DeclGroupPtrTy ActOnForwardClassDeclaration(SourceLocation Loc,
+  Decl *ActOnForwardClassDeclaration(SourceLocation Loc,
                                      IdentifierInfo **IdentList,
                                      SourceLocation *IdentLocs,
                                      unsigned NumElts);
