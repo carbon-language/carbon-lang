@@ -2216,9 +2216,12 @@ ASTReader::ReadASTBlock(Module &F) {
     case SOURCE_LOCATION_PRELOADS: {
       // Need to transform from the local view (1-based IDs) to the global view,
       // which is based off F.SLocEntryBaseID.
-      PreloadSLocEntries.reserve(PreloadSLocEntries.size() + Record.size());
-      for (unsigned I = 0, N = Record.size(); I != N; ++I)
-        PreloadSLocEntries.push_back(int(Record[I] - 1) + F.SLocEntryBaseID);
+      if (!F.PreloadSLocEntries.empty()) {
+        Error("Multiple SOURCE_LOCATION_PRELOADS records in AST file");
+        return Failure;
+      }
+      
+      F.PreloadSLocEntries.swap(Record);
       break;
     }
 
@@ -2546,14 +2549,6 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
   }
 
   // Here comes stuff that we only do once the entire chain is loaded.
-
-  // Preload SLocEntries.
-  for (unsigned I = 0, N = PreloadSLocEntries.size(); I != N; ++I) {
-    ASTReadResult Result = ReadSLocEntryRecord(PreloadSLocEntries[I]);
-    if (Result != Success)
-      return Failure;
-  }
-  PreloadSLocEntries.clear();
   
   // Check the predefines buffers.
   if (!DisableValidation && Type != MK_Module && CheckPredefinesBuffers())
@@ -2742,6 +2737,15 @@ ASTReader::ASTReadResult ASTReader::ReadASTCore(StringRef FileName,
     case Success: break;
     }
   }
+  
+  // Preload SLocEntries.
+  for (unsigned I = 0, N = M->PreloadSLocEntries.size(); I != N; ++I) {
+    int Index = int(M->PreloadSLocEntries[I] - 1) + F.SLocEntryBaseID;
+    ASTReadResult Result = ReadSLocEntryRecord(Index);
+    if (Result != Success)
+      return Failure;
+  }
+
 
   return Success;
 }

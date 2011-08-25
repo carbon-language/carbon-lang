@@ -111,6 +111,9 @@ public:
   /// AST file.
   const uint32_t *SLocEntryOffsets;
   
+  /// \brief SLocEntries that we're going to preload.
+  SmallVector<uint64_t, 4> PreloadSLocEntries;
+
   /// \brief The number of source location file entries in this AST file.
   unsigned LocalNumSLocFileEntries;
   

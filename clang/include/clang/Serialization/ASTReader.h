@@ -244,9 +244,6 @@ private:
   /// at those bit offsets.
   ContinuousRangeMap<uint64_t, Module*, 4> GlobalBitOffsetsMap;
 
-  /// \brief SLocEntries that we're going to preload.
-  SmallVector<int, 64> PreloadSLocEntries;
-
   /// \brief A map of negated SLocEntryIDs to the modules containing them.
   ContinuousRangeMap<unsigned, Module*, 64> GlobalSLocEntryMap;
 
