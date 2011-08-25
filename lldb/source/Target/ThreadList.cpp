@@ -545,6 +545,8 @@ ThreadSP
 ThreadList::GetSelectedThread ()
 {
     Mutex::Locker locker(m_threads_mutex);
+    if (m_selected_tid == LLDB_INVALID_THREAD_ID)
+        SetSelectedThreadByID(m_threads[0]->GetID());
     return FindThreadByID(m_selected_tid);
 }
 

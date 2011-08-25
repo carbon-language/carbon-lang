@@ -2230,13 +2230,6 @@ CommandInterpreter::UpdateExecutionContext (ExecutionContext *override_context)
             if (m_exe_ctx.process && m_exe_ctx.process->IsAlive() && !m_exe_ctx.process->IsRunning())
             {
                 m_exe_ctx.thread = m_exe_ctx.process->GetThreadList().GetSelectedThread().get();
-                if (m_exe_ctx.thread == NULL)
-                {
-                    m_exe_ctx.thread = m_exe_ctx.process->GetThreadList().GetThreadAtIndex(0).get();
-                    // If we didn't have a selected thread, select one here.
-                    if (m_exe_ctx.thread != NULL)
-                        m_exe_ctx.process->GetThreadList().SetSelectedThreadByID(m_exe_ctx.thread->GetID());
-                }
                 if (m_exe_ctx.thread)
                 {
                     m_exe_ctx.frame = m_exe_ctx.thread->GetSelectedFrame().get();

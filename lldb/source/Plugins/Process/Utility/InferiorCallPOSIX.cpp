@@ -26,8 +26,6 @@ bool lldb_private::InferiorCallMmap(Process *process, addr_t &allocated_addr,
                                     unsigned flags, addr_t fd, addr_t offset) {
     Thread *thread = process->GetThreadList().GetSelectedThread().get();
     if (thread == NULL)
-        thread = process->GetThreadList().GetThreadAtIndex(0).get();
-    if (thread == NULL)
         return false;
 
     const bool append = true;
@@ -129,7 +127,7 @@ bool lldb_private::InferiorCallMunmap(Process *process, addr_t addr,
                                       addr_t length) {
    Thread *thread = process->GetThreadList().GetSelectedThread().get();
    if (thread == NULL)
-       thread = process->GetThreadList().GetThreadAtIndex(0).get();
+       return false;
    
    const bool append = true;
    const bool include_symbols = true;

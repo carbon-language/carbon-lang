@@ -1138,8 +1138,6 @@ Process::LoadImage (const FileSpec &image_spec, Error &error)
     if (error.Success())
     {
         ThreadSP thread_sp(GetThreadList ().GetSelectedThread());
-        if (thread_sp == NULL)
-            thread_sp = GetThreadList ().GetThreadAtIndex(0, true);
         
         if (thread_sp)
         {
@@ -1205,8 +1203,6 @@ Process::UnloadImage (uint32_t image_token)
             if (error.Success())
             {
                 ThreadSP thread_sp(GetThreadList ().GetSelectedThread());
-                if (thread_sp == NULL)
-                    thread_sp = GetThreadList ().GetThreadAtIndex(0, true);
                 
                 if (thread_sp)
                 {

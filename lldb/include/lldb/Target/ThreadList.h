@@ -45,6 +45,8 @@ public:
     void
     AddThread (lldb::ThreadSP &thread_sp);
 
+    // Return the selected thread if there is one.  Otherwise, return the thread
+    // selected at index 0.
     lldb::ThreadSP
     GetSelectedThread ();
 

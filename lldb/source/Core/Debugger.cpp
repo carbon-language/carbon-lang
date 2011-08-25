@@ -346,8 +346,6 @@ Debugger::GetSelectedExecutionContext ()
         if (exe_ctx.process && exe_ctx.process->IsRunning() == false)
         {
             exe_ctx.thread = exe_ctx.process->GetThreadList().GetSelectedThread().get();
-            if (exe_ctx.thread == NULL)
-                exe_ctx.thread = exe_ctx.process->GetThreadList().GetThreadAtIndex(0).get();
             if (exe_ctx.thread)
             {
                 exe_ctx.frame = exe_ctx.thread->GetSelectedFrame().get();
