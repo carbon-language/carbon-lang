@@ -35,11 +35,18 @@ class AggExprEmitter : public StmtVisitor<AggExprEmitter> {
   AggValueSlot Dest;
   bool IgnoreResult;
 
+  /// We want to use 'dest' as the return slot except under two
+  /// conditions:
+  ///   - The destination slot requires garbage collection, so we
+  ///     need to use the GC API.
+  ///   - The destination slot is potentially aliased.
+  bool shouldUseDestForReturnSlot() const {
+    return !(Dest.requiresGCollection() || Dest.isPotentiallyAliased());
+  }
+
   ReturnValueSlot getReturnValueSlot() const {
-    // If the destination slot requires garbage collection, we can't
-    // use the real return value slot, because we have to use the GC
-    // API.
-    if (Dest.requiresGCollection()) return ReturnValueSlot();
+    if (!shouldUseDestForReturnSlot())
+      return ReturnValueSlot();
 
     return ReturnValueSlot(Dest.getAddr(), Dest.isVolatile());
   }
@@ -69,7 +76,7 @@ public:
   void EmitFinalDestCopy(const Expr *E, LValue Src, bool Ignore = false);
   void EmitFinalDestCopy(const Expr *E, RValue Src, bool Ignore = false);
 
-  void EmitGCMove(const Expr *E, RValue Src);
+  void EmitMoveFromReturnSlot(const Expr *E, RValue Src);
 
   AggValueSlot::NeedsGCBarriers_t needsGC(QualType T) {
     if (CGF.getLangOptions().getGCMode() && TypeRequiresGCollection(T))
@@ -179,23 +186,27 @@ bool AggExprEmitter::TypeRequiresGCollection(QualType T) {
   return Record->hasObjectMember();
 }
 
-/// \brief Perform the final move to DestPtr if RequiresGCollection is set.
+/// \brief Perform the final move to DestPtr if for some reason
+/// getReturnValueSlot() didn't use it directly.
 ///
 /// The idea is that you do something like this:
 ///   RValue Result = EmitSomething(..., getReturnValueSlot());
-///   EmitGCMove(E, Result);
-/// If GC doesn't interfere, this will cause the result to be emitted
-/// directly into the return value slot.  If GC does interfere, a final
-/// move will be performed.
-void AggExprEmitter::EmitGCMove(const Expr *E, RValue Src) {
-  if (Dest.requiresGCollection()) {
-    CharUnits size = CGF.getContext().getTypeSizeInChars(E->getType());
-    llvm::Type *SizeTy = CGF.ConvertType(CGF.getContext().getSizeType());
-    llvm::Value *SizeVal = llvm::ConstantInt::get(SizeTy, size.getQuantity());
-    CGF.CGM.getObjCRuntime().EmitGCMemmoveCollectable(CGF, Dest.getAddr(),
-                                                    Src.getAggregateAddr(),
-                                                    SizeVal);
+///   EmitMoveFromReturnSlot(E, Result);
+///
+/// If nothing interferes, this will cause the result to be emitted
+/// directly into the return value slot.  Otherwise, a final move
+/// will be performed.
+void AggExprEmitter::EmitMoveFromReturnSlot(const Expr *E, RValue Src) {
+  if (shouldUseDestForReturnSlot()) {
+    // Logically, Dest.getAddr() should equal Src.getAggregateAddr().
+    // The possibility of undef rvalues complicates that a lot,
+    // though, so we can't really assert.
+    return;
   }
+
+  // Otherwise, do a final copy, 
+  assert(Dest.getAddr() != Src.getAggregateAddr());
+  EmitFinalDestCopy(E, Src, /*Ignore*/ true);
 }
 
 /// EmitFinalDestCopy - Perform the final copy to DestPtr, if desired.
@@ -316,7 +327,7 @@ void AggExprEmitter::VisitCastExpr(CastExpr *E) {
     LValue LV = CGF.EmitLValue(E->getSubExpr());
     assert(LV.isPropertyRef());
     RValue RV = CGF.EmitLoadOfPropertyRefLValue(LV, getReturnValueSlot());
-    EmitGCMove(E, RV);
+    EmitMoveFromReturnSlot(E, RV);
     break;
   }
 
@@ -381,12 +392,12 @@ void AggExprEmitter::VisitCallExpr(const CallExpr *E) {
   }
 
   RValue RV = CGF.EmitCallExpr(E, getReturnValueSlot());
-  EmitGCMove(E, RV);
+  EmitMoveFromReturnSlot(E, RV);
 }
 
 void AggExprEmitter::VisitObjCMessageExpr(ObjCMessageExpr *E) {
   RValue RV = CGF.EmitObjCMessageExpr(E, getReturnValueSlot());
-  EmitGCMove(E, RV);
+  EmitMoveFromReturnSlot(E, RV);
 }
 
 void AggExprEmitter::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *E) {
@@ -600,6 +611,7 @@ AggExprEmitter::EmitInitializationToLValue(Expr* E, LValue LV) {
     CGF.EmitAggExpr(E, AggValueSlot::forLValue(LV,
                                                AggValueSlot::IsDestructed,
                                       AggValueSlot::DoesNotNeedGCBarriers,
+                                               AggValueSlot::IsNotAliased,
                                                Dest.isZeroed()));
   } else if (LV.isSimple()) {
     CGF.EmitScalarInit(E, /*D=*/0, LV, /*Captured=*/false);

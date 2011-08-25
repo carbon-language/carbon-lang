@@ -360,7 +360,8 @@ EmitExprForReferenceBinding(CodeGenFunction &CGF, const Expr *E,
         = AggValueSlot::IsDestructed_t(InitializedDecl != 0);
       AggSlot = AggValueSlot::forAddr(ReferenceTemporary, Qualifiers(),
                                       isDestructed,
-                                      AggValueSlot::DoesNotNeedGCBarriers);
+                                      AggValueSlot::DoesNotNeedGCBarriers,
+                                      AggValueSlot::IsNotAliased);
     }
     
     if (InitializedDecl) {

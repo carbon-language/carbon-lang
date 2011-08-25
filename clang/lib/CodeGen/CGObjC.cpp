@@ -820,7 +820,8 @@ void CodeGenFunction::GenerateObjCCtorDtorMethod(ObjCImplementationDecl *IMP,
                                     LoadObjCSelf(), Ivar, 0);
       EmitAggExpr(IvarInit->getInit(),
                   AggValueSlot::forLValue(LV, AggValueSlot::IsDestructed,
-                                          AggValueSlot::DoesNotNeedGCBarriers));
+                                          AggValueSlot::DoesNotNeedGCBarriers,
+                                          AggValueSlot::IsNotAliased));
     }
     // constructor returns 'self'.
     CodeGenTypes &Types = CGM.getTypes();

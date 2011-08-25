@@ -395,7 +395,7 @@ namespace Elision {
     // CHECK-NEXT: call void @_ZN7Elision1AD1Ev([[A]]* [[I]])
   }
 
-  // CHECK: define void @_ZN7Elision5test2Ev([[A]]* sret
+  // CHECK: define void @_ZN7Elision5test2Ev([[A]]* noalias sret
   A test2() {
     // CHECK:      call void @_ZN7Elision3fooEv()
     // CHECK-NEXT: call void @_ZN7Elision1AC1Ev([[A]]* [[RET:%.*]])
@@ -403,7 +403,7 @@ namespace Elision {
     return (foo(), A());
   }
 
-  // CHECK: define void @_ZN7Elision5test3EiNS_1AE([[A]]* sret
+  // CHECK: define void @_ZN7Elision5test3EiNS_1AE([[A]]* noalias sret
   A test3(int v, A x) {
     if (v < 5)
     // CHECK:      call void @_ZN7Elision1AC1Ev([[A]]* [[RET:%.*]])
@@ -444,7 +444,7 @@ namespace Elision {
   }
 
   // rdar://problem/8433352
-  // CHECK: define void @_ZN7Elision5test5Ev([[A]]* sret
+  // CHECK: define void @_ZN7Elision5test5Ev([[A]]* noalias sret
   struct B { A a; B(); };
   A test5() {
     // CHECK:      [[AT0:%.*]] = alloca [[A]], align 8

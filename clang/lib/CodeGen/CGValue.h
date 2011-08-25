@@ -347,9 +347,14 @@ class AggValueSlot {
   /// be set.
   bool ZeroedFlag : 1;
 
+  /// AliasedFlag - This generally defaults to false, but can be true
+  /// if the memory is known not to be aliased.
+  bool AliasedFlag : 1;
+
 public:
-  enum IsZeroed_t { IsNotZeroed, IsZeroed };
+  enum IsAliased_t { IsNotAliased, IsAliased };
   enum IsDestructed_t { IsNotDestructed, IsDestructed };
+  enum IsZeroed_t { IsNotZeroed, IsZeroed };
   enum NeedsGCBarriers_t { DoesNotNeedGCBarriers, NeedsGCBarriers };
 
   /// ignored - Returns an aggregate value slot indicating that the
@@ -358,7 +363,10 @@ public:
     AggValueSlot AV;
     AV.Addr = 0;
     AV.Quals = Qualifiers();
-    AV.LifetimeFlag = AV.RequiresGCollection = AV.ZeroedFlag = 0;
+    AV.LifetimeFlag = AV.RequiresGCollection = AV.ZeroedFlag = false;
+
+    // If there's ever an address here, it will be a temporary.
+    AV.AliasedFlag = false;
     return AV;
   }
 
@@ -375,6 +383,7 @@ public:
   static AggValueSlot forAddr(llvm::Value *addr, Qualifiers quals,
                               IsDestructed_t isDestructed,
                               NeedsGCBarriers_t needsGC,
+                              IsAliased_t isAliased = IsAliased,
                               IsZeroed_t isZeroed = IsNotZeroed) {
     AggValueSlot AV;
     AV.Addr = addr;
@@ -382,14 +391,16 @@ public:
     AV.LifetimeFlag = isDestructed;
     AV.RequiresGCollection = needsGC;
     AV.ZeroedFlag = isZeroed;
+    AV.AliasedFlag = isAliased;
     return AV;
   }
 
   static AggValueSlot forLValue(LValue LV, IsDestructed_t isDestructed,
                                 NeedsGCBarriers_t needsGC,
+                                IsAliased_t isAliased = IsAliased,
                                 IsZeroed_t isZeroed = IsNotZeroed) {
     return forAddr(LV.getAddress(), LV.getQuals(),
-                   isDestructed, needsGC, isZeroed);
+                   isDestructed, needsGC, isAliased, isZeroed);
   }
 
   IsDestructed_t isLifetimeExternallyManaged() const {
@@ -419,6 +430,10 @@ public:
 
   bool isIgnored() const {
     return Addr == 0;
+  }
+
+  IsAliased_t isPotentiallyAliased() const {
+    return IsAliased_t(AliasedFlag);
   }
 
   RValue asRValue() const {

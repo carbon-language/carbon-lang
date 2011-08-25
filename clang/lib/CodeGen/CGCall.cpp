@@ -907,6 +907,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
   // Name the struct return argument.
   if (CGM.ReturnTypeUsesSRet(FI)) {
     AI->setName("agg.result");
+    AI->addAttr(llvm::Attribute::NoAlias);
     ++AI;
   }
 

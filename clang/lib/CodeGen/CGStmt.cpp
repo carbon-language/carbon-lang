@@ -786,7 +786,8 @@ void CodeGenFunction::EmitReturnStmt(const ReturnStmt &S) {
   } else {
     EmitAggExpr(RV, AggValueSlot::forAddr(ReturnValue, Qualifiers(),
                                           AggValueSlot::IsDestructed,
-                                          AggValueSlot::DoesNotNeedGCBarriers));
+                                          AggValueSlot::DoesNotNeedGCBarriers,
+                                          AggValueSlot::IsNotAliased));
   }
 
   EmitBranchThroughCleanup(ReturnBlock);
