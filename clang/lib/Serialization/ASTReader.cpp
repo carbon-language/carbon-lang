@@ -487,7 +487,8 @@ class ASTSelectorLookupTrait {
 public:
   struct data_type {
     SelectorID ID;
-    ObjCMethodList Instance, Factory;
+    llvm::SmallVector<ObjCMethodDecl *, 2> Instance;
+    llvm::SmallVector<ObjCMethodDecl *, 2> Factory;
   };
 
   typedef Selector external_key_type;
@@ -548,37 +549,17 @@ public:
     // Load instance methods
     ObjCMethodList *Prev = 0;
     for (unsigned I = 0; I != NumInstanceMethods; ++I) {
-      ObjCMethodDecl *Method
-        = Reader.GetLocalDeclAs<ObjCMethodDecl>(F, ReadUnalignedLE32(d));
-      if (!Result.Instance.Method) {
-        // This is the first method, which is the easy case.
-        Result.Instance.Method = Method;
-        Prev = &Result.Instance;
-        continue;
-      }
-
-      ObjCMethodList *Mem =
-        Reader.getSema()->BumpAlloc.Allocate<ObjCMethodList>();
-      Prev->Next = new (Mem) ObjCMethodList(Method, 0);
-      Prev = Prev->Next;
+      if (ObjCMethodDecl *Method
+            = Reader.GetLocalDeclAs<ObjCMethodDecl>(F, ReadUnalignedLE32(d)))
+        Result.Instance.push_back(Method);
     }
 
     // Load factory methods
     Prev = 0;
     for (unsigned I = 0; I != NumFactoryMethods; ++I) {
-      ObjCMethodDecl *Method
-        = Reader.GetLocalDeclAs<ObjCMethodDecl>(F, ReadUnalignedLE32(d));
-      if (!Result.Factory.Method) {
-        // This is the first method, which is the easy case.
-        Result.Factory.Method = Method;
-        Prev = &Result.Factory;
-        continue;
-      }
-
-      ObjCMethodList *Mem =
-        Reader.getSema()->BumpAlloc.Allocate<ObjCMethodList>();
-      Prev->Next = new (Mem) ObjCMethodList(Method, 0);
-      Prev = Prev->Next;
+      if (ObjCMethodDecl *Method
+            = Reader.GetLocalDeclAs<ObjCMethodDecl>(F, ReadUnalignedLE32(d)))
+        Result.Factory.push_back(Method);
     }
 
     return Result;
@@ -4693,32 +4674,92 @@ IdentifierIterator *ASTReader::getIdentifiers() const {
   return new ASTIdentifierIterator(*this);
 }
 
-std::pair<ObjCMethodList, ObjCMethodList>
-ASTReader::ReadMethodPool(Selector Sel) {
-  // Find this selector in a hash table. We want to find the most recent entry.
-  for (ModuleIterator I = ModuleMgr.begin(), E = ModuleMgr.end(); I != E; ++I) {
-    Module &F = *(*I);
-    if (!F.SelectorLookupTable)
-      continue;
+namespace clang { namespace serialization {
+  class ReadMethodPoolVisitor {
+    ASTReader &Reader;
+    Selector Sel;    
+    llvm::SmallVector<ObjCMethodDecl *, 4> InstanceMethods;
+    llvm::SmallVector<ObjCMethodDecl *, 4> FactoryMethods;
 
-    ASTSelectorLookupTable *PoolTable
-      = (ASTSelectorLookupTable*)F.SelectorLookupTable;
-    ASTSelectorLookupTable::iterator Pos = PoolTable->find(Sel);
-    if (Pos != PoolTable->end()) {
-      ++NumSelectorsRead;
+    /// \brief Build an ObjCMethodList from a vector of Objective-C method
+    /// declarations.
+    ObjCMethodList 
+    buildObjCMethodList(const SmallVectorImpl<ObjCMethodDecl *> &Vec) const
+    {
+      ObjCMethodList List;
+      ObjCMethodList *Prev = 0;
+      for (unsigned I = 0, N = Vec.size(); I != N; ++I) {
+        if (!List.Method) {
+          // This is the first method, which is the easy case.
+          List.Method = Vec[I];
+          Prev = &List;
+          continue;
+        }
+        
+        ObjCMethodList *Mem =
+          Reader.getSema()->BumpAlloc.Allocate<ObjCMethodList>();
+        Prev->Next = new (Mem) ObjCMethodList(Vec[I], 0);
+        Prev = Prev->Next;
+      }
+      
+      return List;
+    }
+    
+  public:
+    ReadMethodPoolVisitor(ASTReader &Reader, Selector Sel)
+      : Reader(Reader), Sel(Sel) { }
+    
+    static bool visit(Module &M, void *UserData) {
+      ReadMethodPoolVisitor *This
+        = static_cast<ReadMethodPoolVisitor *>(UserData);
+      
+      if (!M.SelectorLookupTable)
+        return false;
+      
+      ASTSelectorLookupTable *PoolTable
+        = (ASTSelectorLookupTable*)M.SelectorLookupTable;
+      ASTSelectorLookupTable::iterator Pos = PoolTable->find(This->Sel);
+      if (Pos == PoolTable->end())
+        return false;
+      
+      ++This->Reader.NumSelectorsRead;
       // FIXME: Not quite happy with the statistics here. We probably should
       // disable this tracking when called via LoadSelector.
       // Also, should entries without methods count as misses?
-      ++NumMethodPoolEntriesRead;
+      ++This->Reader.NumMethodPoolEntriesRead;
       ASTSelectorLookupTrait::data_type Data = *Pos;
-      if (DeserializationListener)
-        DeserializationListener->SelectorRead(Data.ID, Sel);
-      return std::make_pair(Data.Instance, Data.Factory);
+      if (This->Reader.DeserializationListener)
+        This->Reader.DeserializationListener->SelectorRead(Data.ID, 
+                                                           This->Sel);
+      
+      This->InstanceMethods.append(Data.Instance.begin(), Data.Instance.end());
+      This->FactoryMethods.append(Data.Factory.begin(), Data.Factory.end());
+      return true;
     }
-  }
+    
+    /// \brief Retrieve the instance methods found by this visitor.
+    ObjCMethodList getInstanceMethods() const { 
+      return buildObjCMethodList(InstanceMethods); 
+    }
 
-  ++NumMethodPoolMisses;
-  return std::pair<ObjCMethodList, ObjCMethodList>();
+    /// \brief Retrieve the instance methods found by this visitor.
+    ObjCMethodList getFactoryMethods() const { 
+      return buildObjCMethodList(FactoryMethods); 
+    }
+  };
+} } // end namespace clang::serialization
+
+std::pair<ObjCMethodList, ObjCMethodList>
+ASTReader::ReadMethodPool(Selector Sel) {
+  ReadMethodPoolVisitor Visitor(*this, Sel);
+  ModuleMgr.visit(&ReadMethodPoolVisitor::visit, &Visitor);
+  std::pair<ObjCMethodList, ObjCMethodList> Result;
+  Result.first = Visitor.getInstanceMethods();
+  Result.second = Visitor.getFactoryMethods();
+  
+  if (!Result.first.Method && !Result.second.Method)
+    ++NumMethodPoolMisses;
+  return Result;
 }
 
 void ASTReader::ReadKnownNamespaces(

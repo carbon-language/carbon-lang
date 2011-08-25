@@ -574,6 +574,8 @@ public:
                        void *UserData);
 };
 
+class ReadMethodPoolVisitor;
+  
 } // end namespace serialization
   
 /// \brief Reads an AST files chain containing the contents of a translation
@@ -608,6 +610,7 @@ public:
   friend class TypeLocReader;
   friend class ASTWriter;
   friend class ASTUnit; // ASTUnit needs to remap source locations.
+  friend class serialization::ReadMethodPoolVisitor;
   
   typedef serialization::Module Module;
   typedef serialization::ModuleKind ModuleKind;
