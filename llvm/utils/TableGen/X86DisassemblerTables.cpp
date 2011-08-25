@@ -515,6 +515,8 @@ void DisassemblerTables::emitContextTable(raw_ostream &o, uint32_t &i) const {
       o << "IC_VEX_XD";
     else if ((index & ATTR_VEX) && (index & ATTR_XS))
       o << "IC_VEX_XS";
+    else if (index & ATTR_VEX)
+      o << "IC_VEX";
     else if ((index & ATTR_64BIT) && (index & ATTR_REXW) && (index & ATTR_XS))
       o << "IC_64BIT_REXW_XS";
     else if ((index & ATTR_64BIT) && (index & ATTR_REXW) && (index & ATTR_XD))
@@ -538,8 +540,6 @@ void DisassemblerTables::emitContextTable(raw_ostream &o, uint32_t &i) const {
       o << "IC_XD";
     else if (index & ATTR_OPSIZE)
       o << "IC_OPSIZE";
-    else if (index & ATTR_VEX)
-      o << "IC_VEX";
     else
       o << "IC";
 
