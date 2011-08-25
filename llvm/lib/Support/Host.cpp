@@ -213,13 +213,13 @@ std::string sys::getHostCPUName() {
       case 30: // Intel(R) Core(TM) i7 CPU         870  @ 2.93GHz.
                // As found in a Summer 2010 model iMac.
       case 37: // Intel Core i7, laptop version.
+      case 44: // Intel Core i7 processor and Intel Xeon processor. All
+               // processors are manufactured using the 32 nm process.
         return "corei7";
 
       // SandyBridge:
       case 42: // Intel Core i7 processor. All processors are manufactured
                // using the 32 nm process.
-      case 44: // Intel Core i7 processor and Intel Xeon processor. All
-               // processors are manufactured using the 32 nm process.
       case 45:
         return "corei7-avx";
 
