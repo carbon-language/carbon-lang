@@ -1187,7 +1187,7 @@ CommandInterpreter::HandleCommand (const char *command_line,
             remainder.erase(0, pos);
 
         if (log)
-            log->Printf ("HandleCommand, command line after removing command name(s): '%s'\n", remainder.c_str());
+            log->Printf ("HandleCommand, command line after removing command name(s): '%s'", remainder.c_str());
     
 
         if (wants_raw_input)
@@ -1237,6 +1237,9 @@ CommandInterpreter::HandleCommand (const char *command_line,
         result.SetStatus (eReturnStatusFailed);
     }
     
+    if (log)
+      log->Printf ("HandleCommand, command %s", (result.Succeeded() ? "succeeded" : "did not succeed"));
+
     return result.Succeeded();
 }
 

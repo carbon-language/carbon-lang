@@ -227,6 +227,7 @@ lldb_private::ListLogCategories (Stream *strm)
     strm->Printf("Logging categories for 'lldb':\n"
         "\tall - turn on all available logging categories\n"
         "\tapi - enable logging of API calls and return values\n"
+        "\tcommand - log command argument parsing\n"
         "\tdefault - enable the default set of logging categories for liblldb\n"
         "\tbreak - log breakpoints\n"
         "\tevents - log broadcaster, listener and event queue activities\n"
