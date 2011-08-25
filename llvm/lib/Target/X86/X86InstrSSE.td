@@ -416,22 +416,22 @@ let canFoldAsLoad = 1, isReMaterializable = IsReMaterializable in
 }
 
 defm VMOVAPS : sse12_mov_packed<0x28, VR128, f128mem, alignedloadv4f32,
-                              "movaps", SSEPackedSingle>, VEX;
+                              "movaps", SSEPackedSingle>, TB, VEX;
 defm VMOVAPD : sse12_mov_packed<0x28, VR128, f128mem, alignedloadv2f64,
-                              "movapd", SSEPackedDouble>, OpSize, VEX;
+                              "movapd", SSEPackedDouble>, TB, OpSize, VEX;
 defm VMOVUPS : sse12_mov_packed<0x10, VR128, f128mem, loadv4f32,
-                              "movups", SSEPackedSingle>, VEX;
+                              "movups", SSEPackedSingle>, TB, VEX;
 defm VMOVUPD : sse12_mov_packed<0x10, VR128, f128mem, loadv2f64,
-                              "movupd", SSEPackedDouble, 0>, OpSize, VEX;
+                              "movupd", SSEPackedDouble, 0>, TB, OpSize, VEX;
 
 defm VMOVAPSY : sse12_mov_packed<0x28, VR256, f256mem, alignedloadv8f32,
-                              "movaps", SSEPackedSingle>, VEX;
+                              "movaps", SSEPackedSingle>, TB, VEX;
 defm VMOVAPDY : sse12_mov_packed<0x28, VR256, f256mem, alignedloadv4f64,
-                              "movapd", SSEPackedDouble>, OpSize, VEX;
+                              "movapd", SSEPackedDouble>, TB, OpSize, VEX;
 defm VMOVUPSY : sse12_mov_packed<0x10, VR256, f256mem, loadv8f32,
-                              "movups", SSEPackedSingle>, VEX;
+                              "movups", SSEPackedSingle>, TB, VEX;
 defm VMOVUPDY : sse12_mov_packed<0x10, VR256, f256mem, loadv4f64,
-                              "movupd", SSEPackedDouble, 0>, OpSize, VEX;
+                              "movupd", SSEPackedDouble, 0>, TB, OpSize, VEX;
 defm MOVAPS : sse12_mov_packed<0x28, VR128, f128mem, alignedloadv4f32,
                               "movaps", SSEPackedSingle>, TB;
 defm MOVAPD : sse12_mov_packed<0x28, VR128, f128mem, alignedloadv2f64,
@@ -1451,25 +1451,25 @@ multiclass sse12_ord_cmp<bits<8> opc, RegisterClass RC, SDNode OpNode,
 
 let Defs = [EFLAGS] in {
   defm VUCOMISS : sse12_ord_cmp<0x2E, FR32, X86cmp, f32, f32mem, loadf32,
-                                  "ucomiss", SSEPackedSingle>, VEX;
+                                  "ucomiss", SSEPackedSingle>, TB, VEX;
   defm VUCOMISD : sse12_ord_cmp<0x2E, FR64, X86cmp, f64, f64mem, loadf64,
-                                  "ucomisd", SSEPackedDouble>, OpSize, VEX;
+                                  "ucomisd", SSEPackedDouble>, TB, OpSize, VEX;
   let Pattern = []<dag> in {
     defm VCOMISS  : sse12_ord_cmp<0x2F, VR128, undef, v4f32, f128mem, load,
-                                    "comiss", SSEPackedSingle>, VEX;
+                                    "comiss", SSEPackedSingle>, TB, VEX;
     defm VCOMISD  : sse12_ord_cmp<0x2F, VR128, undef, v2f64, f128mem, load,
-                                    "comisd", SSEPackedDouble>, OpSize, VEX;
+                                    "comisd", SSEPackedDouble>, TB, OpSize, VEX;
   }
 
   defm Int_VUCOMISS  : sse12_ord_cmp<0x2E, VR128, X86ucomi, v4f32, f128mem,
-                            load, "ucomiss", SSEPackedSingle>, VEX;
+                            load, "ucomiss", SSEPackedSingle>, TB, VEX;
   defm Int_VUCOMISD  : sse12_ord_cmp<0x2E, VR128, X86ucomi, v2f64, f128mem,
-                            load, "ucomisd", SSEPackedDouble>, OpSize, VEX;
+                            load, "ucomisd", SSEPackedDouble>, TB, OpSize, VEX;
 
   defm Int_VCOMISS  : sse12_ord_cmp<0x2F, VR128, X86comi, v4f32, f128mem,
-                            load, "comiss", SSEPackedSingle>, VEX;
+                            load, "comiss", SSEPackedSingle>, TB, VEX;
   defm Int_VCOMISD  : sse12_ord_cmp<0x2F, VR128, X86comi, v2f64, f128mem,
-                            load, "comisd", SSEPackedDouble>, OpSize, VEX;
+                            load, "comisd", SSEPackedDouble>, TB, OpSize, VEX;
   defm UCOMISS  : sse12_ord_cmp<0x2E, FR32, X86cmp, f32, f32mem, loadf32,
                                   "ucomiss", SSEPackedSingle>, TB;
   defm UCOMISD  : sse12_ord_cmp<0x2E, FR64, X86cmp, f64, f64mem, loadf64,
@@ -1518,19 +1518,19 @@ multiclass sse12_cmp_packed<RegisterClass RC, X86MemOperand x86memop,
 defm VCMPPS : sse12_cmp_packed<VR128, f128mem, int_x86_sse_cmp_ps,
                "cmp${cc}ps\t{$src, $src1, $dst|$dst, $src1, $src}",
                "cmpps\t{$src2, $src, $src1, $dst|$dst, $src1, $src, $src2}",
-               SSEPackedSingle>, VEX_4V;
+               SSEPackedSingle>, TB, VEX_4V;
 defm VCMPPD : sse12_cmp_packed<VR128, f128mem, int_x86_sse2_cmp_pd,
                "cmp${cc}pd\t{$src, $src1, $dst|$dst, $src1, $src}",
                "cmppd\t{$src2, $src, $src1, $dst|$dst, $src1, $src, $src2}",
-               SSEPackedDouble>, OpSize, VEX_4V;
+               SSEPackedDouble>, TB, OpSize, VEX_4V;
 defm VCMPPSY : sse12_cmp_packed<VR256, f256mem, int_x86_avx_cmp_ps_256,
                "cmp${cc}ps\t{$src, $src1, $dst|$dst, $src1, $src}",
                "cmpps\t{$src2, $src, $src1, $dst|$dst, $src1, $src, $src2}",
-               SSEPackedSingle>, VEX_4V;
+               SSEPackedSingle>, TB, VEX_4V;
 defm VCMPPDY : sse12_cmp_packed<VR256, f256mem, int_x86_avx_cmp_pd_256,
                "cmp${cc}pd\t{$src, $src1, $dst|$dst, $src1, $src}",
                "cmppd\t{$src2, $src, $src1, $dst|$dst, $src1, $src, $src2}",
-               SSEPackedDouble>, OpSize, VEX_4V;
+               SSEPackedDouble>, TB, OpSize, VEX_4V;
 let Constraints = "$src1 = $dst" in {
   defm CMPPS : sse12_cmp_packed<VR128, f128mem, int_x86_sse_cmp_ps,
                  "cmp${cc}ps\t{$src, $dst|$dst, $src}",
@@ -1767,29 +1767,29 @@ multiclass sse12_unpack_interleave<bits<8> opc, PatFrag OpNode, ValueType vt,
 let AddedComplexity = 10 in {
   defm VUNPCKHPS: sse12_unpack_interleave<0x15, unpckh, v4f32, memopv4f32,
         VR128, f128mem, "unpckhps\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                       SSEPackedSingle>, VEX_4V;
+                       SSEPackedSingle>, TB, VEX_4V;
   defm VUNPCKHPD: sse12_unpack_interleave<0x15, unpckh, v2f64, memopv2f64,
         VR128, f128mem, "unpckhpd\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                       SSEPackedDouble>, OpSize, VEX_4V;
+                       SSEPackedDouble>, TB, OpSize, VEX_4V;
   defm VUNPCKLPS: sse12_unpack_interleave<0x14, unpckl, v4f32, memopv4f32,
         VR128, f128mem, "unpcklps\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                       SSEPackedSingle>, VEX_4V;
+                       SSEPackedSingle>, TB, VEX_4V;
   defm VUNPCKLPD: sse12_unpack_interleave<0x14, unpckl, v2f64, memopv2f64,
         VR128, f128mem, "unpcklpd\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                       SSEPackedDouble>, OpSize, VEX_4V;
+                       SSEPackedDouble>, TB, OpSize, VEX_4V;
 
   defm VUNPCKHPSY: sse12_unpack_interleave<0x15, unpckh, v8f32, memopv8f32,
         VR256, f256mem, "unpckhps\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                       SSEPackedSingle>, VEX_4V;
+                       SSEPackedSingle>, TB, VEX_4V;
   defm VUNPCKHPDY: sse12_unpack_interleave<0x15, unpckh, v4f64, memopv4f64,
         VR256, f256mem, "unpckhpd\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                       SSEPackedDouble>, OpSize, VEX_4V;
+                       SSEPackedDouble>, TB, OpSize, VEX_4V;
   defm VUNPCKLPSY: sse12_unpack_interleave<0x14, unpckl, v8f32, memopv8f32,
         VR256, f256mem, "unpcklps\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                       SSEPackedSingle>, VEX_4V;
+                       SSEPackedSingle>, TB, VEX_4V;
   defm VUNPCKLPDY: sse12_unpack_interleave<0x14, unpckl, v4f64, memopv4f64,
         VR256, f256mem, "unpcklpd\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                       SSEPackedDouble>, OpSize, VEX_4V;
+                       SSEPackedDouble>, TB, OpSize, VEX_4V;
 
   let Constraints = "$src1 = $dst" in {
     defm UNPCKHPS: sse12_unpack_interleave<0x15, unpckh, v4f32, memopv4f32,
@@ -1963,14 +1963,14 @@ let Predicates = [HasAVX] in {
 
   // Assembler Only
   def VMOVMSKPSr64r : PI<0x50, MRMSrcReg, (outs GR64:$dst), (ins VR128:$src),
-             "movmskps\t{$src, $dst|$dst, $src}", [], SSEPackedSingle>, VEX;
+             "movmskps\t{$src, $dst|$dst, $src}", [], SSEPackedSingle>, TB, VEX;
   def VMOVMSKPDr64r : PI<0x50, MRMSrcReg, (outs GR64:$dst), (ins VR128:$src),
-             "movmskpd\t{$src, $dst|$dst, $src}", [], SSEPackedDouble>, OpSize,
+             "movmskpd\t{$src, $dst|$dst, $src}", [], SSEPackedDouble>, TB, OpSize,
              VEX;
   def VMOVMSKPSYr64r : PI<0x50, MRMSrcReg, (outs GR64:$dst), (ins VR256:$src),
-             "movmskps\t{$src, $dst|$dst, $src}", [], SSEPackedSingle>, VEX;
+             "movmskps\t{$src, $dst|$dst, $src}", [], SSEPackedSingle>, TB, VEX;
   def VMOVMSKPDYr64r : PI<0x50, MRMSrcReg, (outs GR64:$dst), (ins VR256:$src),
-             "movmskpd\t{$src, $dst|$dst, $src}", [], SSEPackedDouble>, OpSize,
+             "movmskpd\t{$src, $dst|$dst, $src}", [], SSEPackedDouble>, TB, OpSize,
              VEX;
 }
 
@@ -3184,7 +3184,7 @@ def mi : Ii8<0x70, MRMSrcMem,
 
 let Predicates = [HasAVX] in {
   let AddedComplexity = 5 in
-  defm VPSHUFD : sse2_pshuffle<"vpshufd", v4i32, pshufd, bc_v4i32>, OpSize,
+  defm VPSHUFD : sse2_pshuffle<"vpshufd", v4i32, pshufd, bc_v4i32>, TB, OpSize,
                                VEX;
 
   // SSE2 with ImmT == Imm8 and XS prefix.
@@ -3399,7 +3399,7 @@ def VPEXTRWri : Ii8<0xC5, MRMSrcReg,
                     (outs GR32:$dst), (ins VR128:$src1, i32i8imm:$src2),
                     "vpextrw\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                     [(set GR32:$dst, (X86pextrw (v8i16 VR128:$src1),
-                                                imm:$src2))]>, OpSize, VEX;
+                                                imm:$src2))]>, TB, OpSize, VEX;
 def PEXTRWri : PDIi8<0xC5, MRMSrcReg,
                     (outs GR32:$dst), (ins VR128:$src1, i32i8imm:$src2),
                     "pextrw\t{$src2, $src1, $dst|$dst, $src1, $src2}",
@@ -3408,11 +3408,11 @@ def PEXTRWri : PDIi8<0xC5, MRMSrcReg,
 
 // Insert
 let Predicates = [HasAVX] in {
-  defm VPINSRW : sse2_pinsrw<0>, OpSize, VEX_4V;
+  defm VPINSRW : sse2_pinsrw<0>, TB, OpSize, VEX_4V;
   def  VPINSRWrr64i : Ii8<0xC4, MRMSrcReg, (outs VR128:$dst),
        (ins VR128:$src1, GR64:$src2, i32i8imm:$src3),
        "vpinsrw\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
-       []>, OpSize, VEX_4V;
+       []>, TB, OpSize, VEX_4V;
 }
 
 let Constraints = "$src1 = $dst" in
