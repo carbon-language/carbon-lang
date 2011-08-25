@@ -1087,14 +1087,8 @@ void ASTDeclReader::VisitRedeclarableTemplateDecl(RedeclarableTemplateDecl *D) {
     ASTReader::FirstLatestDeclIDMap::iterator I
         = Reader.FirstLatestDeclIDs.find(ThisDeclID);
     if (I != Reader.FirstLatestDeclIDs.end()) {
-      Decl *NewLatest = Reader.GetDecl(I->second);
-      assert((LatestDecl->getLocation().isInvalid() ||
-              NewLatest->getLocation().isInvalid()  ||
-              !Reader.SourceMgr.isBeforeInTranslationUnit(
-                                                  NewLatest->getLocation(),
-                                                  LatestDecl->getLocation())) &&
-             "The new latest is supposed to come after the previous latest");
-      LatestDecl = cast<RedeclarableTemplateDecl>(NewLatest);
+      if (Decl *NewLatest = Reader.GetDecl(I->second))
+        LatestDecl = cast<RedeclarableTemplateDecl>(NewLatest);
     }
 
     assert(LatestDecl->getKind() == D->getKind() && "Latest kind mismatch");
