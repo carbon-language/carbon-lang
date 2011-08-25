@@ -74,7 +74,7 @@ ReadUIntMax64 (ExecutionContextScope *exe_scope, const Address &address, uint32_
         success = false;
         return 0;
     }
-    uint64_t buf;
+    uint64_t buf = 0;
 
     success = ReadBytes (exe_scope, address, &buf, byte_size) == byte_size;
     if (success)
