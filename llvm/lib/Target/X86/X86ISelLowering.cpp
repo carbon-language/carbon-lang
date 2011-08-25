@@ -3914,10 +3914,15 @@ bool X86::isMOVSLDUPMask(ShuffleVectorSDNode *N,
 }
 
 /// isMOVDDUPMask - Return true if the specified VECTOR_SHUFFLE operand
-/// specifies a shuffle of elements that is suitable for input to MOVDDUP.
+/// specifies a shuffle of elements that is suitable for input to 128-bit
+/// version of MOVDDUP.
 bool X86::isMOVDDUPMask(ShuffleVectorSDNode *N) {
-  int e = N->getValueType(0).getVectorNumElements() / 2;
+  EVT VT = N->getValueType(0);
 
+  if (VT.getSizeInBits() != 128)
+    return false;
+
+  int e = VT.getVectorNumElements() / 2;
   for (int i = 0; i < e; ++i)
     if (!isUndefOrEqual(N->getMaskElt(i), i))
       return false;
