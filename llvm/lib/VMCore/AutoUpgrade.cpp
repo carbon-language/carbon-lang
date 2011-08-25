@@ -14,11 +14,15 @@
 #include "llvm/AutoUpgrade.h"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
+#include "llvm/Instruction.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/IntrinsicInst.h"
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/CallSite.h"
+#include "llvm/Support/CFG.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/IRBuilder.h"
 #include <cstring>
@@ -276,6 +280,203 @@ void llvm::CheckDebugInfoIntrinsics(Module *M) {
         }
         Declare->eraseFromParent();
       }
+    }
+  }
+}
+
+/// FindExnAndSelIntrinsics - Find the eh_exception and eh_selector intrinsic
+/// calls reachable from the unwind basic block.
+static void FindExnAndSelIntrinsics(BasicBlock *BB, CallInst *&Exn,
+                                    CallInst *&Sel,
+                                    SmallPtrSet<BasicBlock*, 8> &Visited) {
+  if (!Visited.insert(BB)) return;
+
+  for (BasicBlock::iterator
+         I = BB->begin(), E = BB->end(); I != E; ++I) {
+    if (CallInst *CI = dyn_cast<CallInst>(I)) {
+      switch (CI->getCalledFunction()->getIntrinsicID()) {
+      default: break;
+      case Intrinsic::eh_exception:
+        assert(!Exn && "Found more than one eh.exception call!");
+        Exn = CI;
+        break;
+      case Intrinsic::eh_selector:
+        assert(!Sel && "Found more than one eh.selector call!");
+        Sel = CI;
+        break;
+      }
+
+      if (Exn && Sel) return;
+    }
+  }
+
+  if (Exn && Sel) return;
+
+  for (succ_iterator I = succ_begin(BB), E = succ_end(BB); I != E; ++I) {
+    FindExnAndSelIntrinsics(*I, Exn, Sel, Visited);
+    if (Exn && Sel) return;
+  }
+}
+
+/// TransferClausesToLandingPadInst - Transfer the exception handling clauses
+/// from the eh_selector call to the new landingpad instruction.
+static void TransferClausesToLandingPadInst(LandingPadInst *LPI,
+                                            CallInst *EHSel) {
+  LLVMContext &Context = LPI->getContext();
+  unsigned N = EHSel->getNumArgOperands();
+
+  for (unsigned i = N - 1; i > 1; --i) {
+    if (const ConstantInt *CI = dyn_cast<ConstantInt>(EHSel->getArgOperand(i))){
+      unsigned FilterLength = CI->getZExtValue();
+      unsigned FirstCatch = i + FilterLength + !FilterLength;
+      assert(FirstCatch <= N && "Invalid filter length");
+
+      if (FirstCatch < N)
+        for (unsigned j = FirstCatch; j < N; ++j) {
+          Value *Val = EHSel->getArgOperand(j);
+          if (!Val->hasName() || Val->getName() != "llvm.eh.catch.all.value") {
+            LPI->addClause(EHSel->getArgOperand(j));
+          } else {
+            GlobalVariable *GV = cast<GlobalVariable>(Val);
+            LPI->addClause(GV->getInitializer());
+          }
+        }
+
+      if (!FilterLength) {
+        // Cleanup.
+        LPI->setCleanup(true);
+      } else {
+        // Filter.
+        SmallVector<Constant *, 4> TyInfo;
+        TyInfo.reserve(FilterLength - 1);
+        for (unsigned j = i + 1; j < FirstCatch; ++j)
+          TyInfo.push_back(cast<Constant>(EHSel->getArgOperand(j)));
+        ArrayType *AType =
+          ArrayType::get(!TyInfo.empty() ? TyInfo[0]->getType() :
+                         PointerType::getUnqual(Type::getInt8Ty(Context)),
+                         TyInfo.size());
+        LPI->addClause(ConstantArray::get(AType, TyInfo));
+      }
+
+      N = i;
+    }
+  }
+
+  if (N > 2)
+    for (unsigned j = 2; j < N; ++j) {
+      Value *Val = EHSel->getArgOperand(j);
+      if (!Val->hasName() || Val->getName() != "llvm.eh.catch.all.value") {
+        LPI->addClause(EHSel->getArgOperand(j));
+      } else {
+        GlobalVariable *GV = cast<GlobalVariable>(Val);
+        LPI->addClause(GV->getInitializer());
+      }
+    }
+}
+
+/// This function upgrades the old pre-3.0 exception handling system to the new
+/// one. N.B. This will be removed in 3.1.
+void llvm::UpgradeExceptionHandling(Module *M) {
+  Function *EHException = M->getFunction("llvm.eh.exception");
+  Function *EHSelector = M->getFunction("llvm.eh.selector");
+  if (!EHException || !EHSelector)
+    return;
+
+  LLVMContext &Context = M->getContext();
+  Type *ExnTy = PointerType::getUnqual(Type::getInt8Ty(Context));
+  Type *SelTy = Type::getInt32Ty(Context);
+  Type *LPadSlotTy = StructType::get(ExnTy, SelTy, NULL);
+
+  // This map stores the slots where the exception object and selector value are
+  // stored within a function.
+  SmallVector<Instruction*, 32> DeadInsts;
+  DenseMap<Function*, std::pair<Value*, Value*> > FnToLPadSlotMap;
+  for (Module::iterator
+         I = M->begin(), E = M->end(); I != E; ++I) {
+    Function &F = *I;
+
+    for (Function::iterator
+           II = F.begin(), IE = F.end(); II != IE; ++II) {
+      BasicBlock *BB = &*II;
+      InvokeInst *Inst = dyn_cast<InvokeInst>(BB->getTerminator());
+      if (!Inst) continue;
+      BasicBlock *UnwindDest = Inst->getUnwindDest();
+      if (UnwindDest->isLandingPad()) continue; // All ready converted.
+
+      // Store the exception object and selector value in the entry block.
+      Value *ExnSlot = 0;
+      Value *SelSlot = 0;
+      if (!FnToLPadSlotMap[&F].first) {
+        BasicBlock *Entry = &F.front();
+        ExnSlot = new AllocaInst(ExnTy, "exn", Entry->getTerminator());
+        SelSlot = new AllocaInst(SelTy, "sel", Entry->getTerminator());
+        FnToLPadSlotMap[&F] = std::make_pair(ExnSlot, SelSlot);
+      } else {
+        ExnSlot = FnToLPadSlotMap[&F].first;
+        SelSlot = FnToLPadSlotMap[&F].second;
+      }
+
+      // We're in an unwind block. Try to find the eh.exception and eh.selector
+      // calls.
+      IRBuilder<> Builder(Context);
+      Builder.SetInsertPoint(UnwindDest, UnwindDest->getFirstNonPHI());
+
+      SmallPtrSet<BasicBlock*, 8> Visited;
+      CallInst *Exn = 0;
+      CallInst *Sel = 0;
+      FindExnAndSelIntrinsics(UnwindDest, Exn, Sel, Visited);
+      assert(Exn && Sel && "Cannot find eh.exception and eh.selector calls!");
+
+      Value *PersFn = Sel->getArgOperand(1);
+      LandingPadInst *LPI = Builder.CreateLandingPad(LPadSlotTy, PersFn, 0);
+      Value *LPExn = Builder.CreateExtractValue(LPI, 0);
+      Value *LPSel = Builder.CreateExtractValue(LPI, 1);
+      Builder.CreateStore(LPExn, ExnSlot);
+      Builder.CreateStore(LPSel, SelSlot);
+
+      TransferClausesToLandingPadInst(LPI, Sel);
+
+      Exn->replaceAllUsesWith(LPExn);
+      Sel->replaceAllUsesWith(LPSel);
+
+      DeadInsts.push_back(Exn);
+      DeadInsts.push_back(Sel);
+    }
+  }
+
+  // Remove the dead instructions.
+  while (!DeadInsts.empty()) {
+    Instruction *Inst = DeadInsts.pop_back_val();
+    Inst->eraseFromParent();
+  }
+
+  // Replace calls to "llvm.eh.resume" with the 'resume' instruction. Load the
+  // exception and selector values from the stored place.
+  Function *EHResume = M->getFunction("llvm.eh.resume");
+  if (!EHResume) return;
+
+  while (!EHResume->use_empty()) {
+    CallInst *Resume = cast<CallInst>(EHResume->use_back());
+    BasicBlock *BB = Resume->getParent();
+    Function *Fn = BB->getParent();
+    std::pair<Value*, Value*> &ExnSel = FnToLPadSlotMap[Fn];
+    IRBuilder<> Builder(Context);
+    Builder.SetInsertPoint(BB, Resume);
+
+    Value *Exn = Builder.CreateLoad(ExnSel.first, "exn");
+    Value *Sel = Builder.CreateLoad(ExnSel.second, "sel");
+
+    Value *LPadVal =
+      Builder.CreateInsertValue(UndefValue::get(LPadSlotTy),
+                                Exn, 0, "lpad.val");
+    LPadVal = Builder.CreateInsertValue(LPadVal, Sel, 1, "lpad.val");
+    Builder.CreateResume(LPadVal);
+
+    // Remove all instructions after the 'resume.'
+    BasicBlock::iterator I = Resume;
+    while (I != BB->end()) {
+      Instruction *Inst = &*I++;
+      Inst->eraseFromParent();
     }
   }
 }
