@@ -3621,10 +3621,11 @@ void LSRInstance::RewriteForPHI(PHINode *PN,
       // users.
       if (e != 1 && BB->getTerminator()->getNumSuccessors() > 1 &&
           !isa<IndirectBrInst>(BB->getTerminator())) {
-        Loop *PNLoop = LI.getLoopFor(PN->getParent());
-        if (!PNLoop || PN->getParent() != PNLoop->getHeader()) {
+        BasicBlock *Parent = PN->getParent();
+        Loop *PNLoop = LI.getLoopFor(Parent);
+        if (!PNLoop || Parent != PNLoop->getHeader()) {
           // Split the critical edge.
-          BasicBlock *NewBB = SplitCriticalEdge(BB, PN->getParent(), P);
+          BasicBlock *NewBB = SplitCriticalEdge(BB, Parent, P);
 
           // If PN is outside of the loop and BB is in the loop, we want to
           // move the block to be immediately before the PHI block, not

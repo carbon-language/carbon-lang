@@ -2687,8 +2687,8 @@ void ObjCARCOpt::MoveCalls(Value *Arg,
       // The invoke's return value isn't available in the unwind block,
       // but our releases will never depend on it, because they must be
       // paired with retains from before the invoke.
-      InsertPts[0] = II->getNormalDest()->getFirstNonPHI();
-      InsertPts[1] = II->getUnwindDest()->getFirstNonPHI();
+      InsertPts[0] = II->getNormalDest()->getFirstInsertionPt();
+      InsertPts[1] = II->getUnwindDest()->getFirstInsertionPt();
     } else {
       // Insert code immediately after the last use.
       InsertPts[0] = llvm::next(BasicBlock::iterator(LastUse));

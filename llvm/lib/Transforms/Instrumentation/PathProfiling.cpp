@@ -909,7 +909,7 @@ BasicBlock::iterator PathProfiler::getInsertionPoint(BasicBlock* block, Value*
                                                      pathNumber) {
   if(pathNumber == NULL || isa<ConstantInt>(pathNumber)
      || (((Instruction*)(pathNumber))->getParent()) != block) {
-    return(block->getFirstNonPHI());
+    return(block->getFirstInsertionPt());
   } else {
     Instruction* pathNumberInst = (Instruction*) (pathNumber);
     BasicBlock::iterator insertPoint;
@@ -930,7 +930,7 @@ BasicBlock::iterator PathProfiler::getInsertionPoint(BasicBlock* block, Value*
 // A PHINode is created in the node, and its values initialized to -1U.
 void PathProfiler::preparePHI(BLInstrumentationNode* node) {
   BasicBlock* block = node->getBlock();
-  BasicBlock::iterator insertPoint = block->getFirstNonPHI();
+  BasicBlock::iterator insertPoint = block->getFirstInsertionPt();
   pred_iterator PB = pred_begin(node->getBlock()),
           PE = pred_end(node->getBlock());
   PHINode* phi = PHINode::Create(Type::getInt32Ty(*Context),
@@ -999,7 +999,7 @@ void PathProfiler::insertNumberIncrement(BLInstrumentationNode* node,
   BasicBlock::iterator insertPoint;
 
   if( atBeginning )
-    insertPoint = block->getFirstNonPHI();
+    insertPoint = block->getFirstInsertionPt();
   else
     insertPoint = block->getTerminator();
 
@@ -1139,7 +1139,7 @@ void PathProfiler::insertInstrumentationStartingAt(BLInstrumentationEdge* edge,
     }
 
     BasicBlock::iterator insertPoint = atBeginning ?
-      instrumentNode->getBlock()->getFirstNonPHI() :
+      instrumentNode->getBlock()->getFirstInsertionPt() :
       instrumentNode->getBlock()->getTerminator();
 
     // add information from the bottom edge, if it exists
@@ -1171,7 +1171,7 @@ void PathProfiler::insertInstrumentationStartingAt(BLInstrumentationEdge* edge,
   // Insert instrumentation if this is a normal edge
   else {
     BasicBlock::iterator insertPoint = atBeginning ?
-      instrumentNode->getBlock()->getFirstNonPHI() :
+      instrumentNode->getBlock()->getFirstInsertionPt() :
       instrumentNode->getBlock()->getTerminator();
 
     if( edge->isInitialization() ) { // initialize path number
@@ -1232,7 +1232,7 @@ void PathProfiler::insertInstrumentation(
          end = callEdges.end(); edge != end; edge++ ) {
     BLInstrumentationNode* node =
       (BLInstrumentationNode*)(*edge)->getSource();
-    BasicBlock::iterator insertPoint = node->getBlock()->getFirstNonPHI();
+    BasicBlock::iterator insertPoint = node->getBlock()->getFirstInsertionPt();
 
     // Find the first function call
     while( ((Instruction&)(*insertPoint)).getOpcode() != Instruction::Call )

@@ -107,7 +107,7 @@ void llvm::InsertProfilingInitCall(Function *MainFn, const char *FnName,
 void llvm::IncrementCounterInBlock(BasicBlock *BB, unsigned CounterNum,
                                    GlobalValue *CounterArray, bool beginning) {
   // Insert the increment after any alloca or PHI instructions...
-  BasicBlock::iterator InsertPos = beginning ? BB->getFirstNonPHI() :
+  BasicBlock::iterator InsertPos = beginning ? BB->getFirstInsertionPt() :
                                    BB->getTerminator();
   while (isa<AllocaInst>(InsertPos))
     ++InsertPos;

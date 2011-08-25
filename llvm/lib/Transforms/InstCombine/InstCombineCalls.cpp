@@ -1145,7 +1145,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
       // If this is an invoke instruction, we should insert it after the first
       // non-phi, instruction in the normal successor block.
       if (InvokeInst *II = dyn_cast<InvokeInst>(Caller)) {
-        BasicBlock::iterator I = II->getNormalDest()->getFirstNonPHI();
+        BasicBlock::iterator I = II->getNormalDest()->getFirstInsertionPt();
         InsertNewInstBefore(NC, *I);
       } else {
         // Otherwise, it's a call, just insert cast right after the call.
