@@ -81,7 +81,6 @@ ThumbTargetMachine::ThumbTargetMachine(const Target &T, StringRef TT,
               : (ARMFrameLowering*)new Thumb1FrameLowering(Subtarget)) {
 }
 
-// Pass Pipeline Configuration
 bool ARMBaseTargetMachine::addPreISel(PassManagerBase &PM,
                                       CodeGenOpt::Level OptLevel) {
   if (OptLevel != CodeGenOpt::None)
