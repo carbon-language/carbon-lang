@@ -565,6 +565,12 @@ class TagTypeLoc : public InheritingConcreteTypeLoc<TypeSpecTypeLoc,
                                                     TagType> {
 public:
   TagDecl *getDecl() const { return getTypePtr()->getDecl(); }
+
+  /// \brief True if the tag was defined in this type specifier. 
+  bool isDefinition() const {
+    return getDecl()->isDefinition() &&
+         (getNameLoc().isInvalid() || getNameLoc() == getDecl()->getLocation());
+  }
 };
 
 /// \brief Wrapper for source info for record types.

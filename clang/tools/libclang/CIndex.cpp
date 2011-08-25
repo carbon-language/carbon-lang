@@ -1445,6 +1445,9 @@ bool CursorVisitor::VisitUnresolvedUsingTypeLoc(UnresolvedUsingTypeLoc TL) {
 }
 
 bool CursorVisitor::VisitTagTypeLoc(TagTypeLoc TL) {
+  if (TL.isDefinition())
+    return Visit(MakeCXCursor(TL.getDecl(), TU));
+
   return Visit(MakeCursorTypeRef(TL.getDecl(), TL.getNameLoc(), TU));
 }
 
