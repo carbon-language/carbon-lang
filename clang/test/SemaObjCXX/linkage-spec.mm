@@ -10,3 +10,12 @@ extern "C" {
 
 @interface I
 @end
+
+// rdar://10015110
+@protocol VKAnnotation;
+extern "C" {
+
+@protocol VKAnnotation
+  @property (nonatomic, assign) id coordinate;
+@end
+}
