@@ -2131,7 +2131,7 @@ TypeResult Sema::ActOnTagTemplateIdType(TagUseKind TUK,
   
   QualType Result = CheckTemplateIdType(Template, TemplateLoc, TemplateArgs);
   if (Result.isNull())
-    return TypeResult();
+    return TypeResult(true);
   
   // Check the tag kind
   if (const RecordType *RT = Result->getAs<RecordType>()) {
