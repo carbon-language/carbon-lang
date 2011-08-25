@@ -372,6 +372,7 @@ static const char *getActionName(frontend::ActionKind Kind) {
   case frontend::EmitCodeGenOnly:        return "-emit-codegen-only";
   case frontend::EmitObj:                return "-emit-obj";
   case frontend::FixIt:                  return "-fixit";
+  case frontend::GenerateModule:         return "-emit-module";
   case frontend::GeneratePCH:            return "-emit-pch";
   case frontend::GeneratePTH:            return "-emit-pth";
   case frontend::InitOnly:               return "-init-only";
@@ -1205,6 +1206,8 @@ static InputKind ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
       // fall-through!
     case OPT_fixit:
       Opts.ProgramAction = frontend::FixIt; break;
+    case OPT_emit_module:
+      Opts.ProgramAction = frontend::GenerateModule; break;
     case OPT_emit_pch:
       Opts.ProgramAction = frontend::GeneratePCH; break;
     case OPT_emit_pth:

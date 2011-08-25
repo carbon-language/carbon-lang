@@ -360,6 +360,8 @@ def ast_view : Flag<"-ast-view">,
   HelpText<"Build ASTs and view them with GraphViz">;
 def print_decl_contexts : Flag<"-print-decl-contexts">,
   HelpText<"Print DeclContexts and their Decls">;
+def emit_module : Flag<"-emit-module">,
+  HelpText<"Generate pre-compiled module file">;
 def emit_pth : Flag<"-emit-pth">,
   HelpText<"Generate pre-tokenized header file">;
 def emit_pch : Flag<"-emit-pch">,

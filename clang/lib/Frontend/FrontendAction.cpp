@@ -398,7 +398,7 @@ void ASTFrontendAction::ExecuteAction() {
     CompletionConsumer = &CI.getCodeCompletionConsumer();
 
   if (!CI.hasSema())
-    CI.createSema(usesCompleteTranslationUnit(), CompletionConsumer);
+    CI.createSema(getTranslationUnitKind(), CompletionConsumer);
 
   ParseAST(CI.getSema(), CI.getFrontendOpts().ShowStats);
 }
@@ -432,8 +432,8 @@ void WrapperFrontendAction::EndSourceFileAction() {
 bool WrapperFrontendAction::usesPreprocessorOnly() const {
   return WrappedAction->usesPreprocessorOnly();
 }
-bool WrapperFrontendAction::usesCompleteTranslationUnit() {
-  return WrappedAction->usesCompleteTranslationUnit();
+TranslationUnitKind WrapperFrontendAction::getTranslationUnitKind() {
+  return WrappedAction->getTranslationUnitKind();
 }
 bool WrapperFrontendAction::hasPCHSupport() const {
   return WrappedAction->hasPCHSupport();

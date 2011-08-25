@@ -97,7 +97,7 @@ static llvm::sys::cas_flag ActiveASTUnitObjects;
 ASTUnit::ASTUnit(bool _MainFileIsAST)
   : OnlyLocalDecls(false), CaptureDiagnostics(false),
     MainFileIsAST(_MainFileIsAST), 
-    CompleteTranslationUnit(true), WantTiming(getenv("LIBCLANG_TIMING")),
+    TUKind(TU_Complete), WantTiming(getenv("LIBCLANG_TIMING")),
     OwnsRemappedFileBuffers(true),
     NumStoredDiagnosticsFromDriver(0),
     ConcurrencyCheckValue(CheckUnlocked), 
@@ -759,8 +759,8 @@ public:
   TopLevelDeclTrackerAction(ASTUnit &_Unit) : Unit(_Unit) {}
 
   virtual bool hasCodeCompletionSupport() const { return false; }
-  virtual bool usesCompleteTranslationUnit()  { 
-    return Unit.isCompleteTranslationUnit(); 
+  virtual TranslationUnitKind getTranslationUnitKind()  { 
+    return Unit.getTranslationUnitKind(); 
   }
 };
 
@@ -844,7 +844,7 @@ public:
 
   virtual bool hasCodeCompletionSupport() const { return false; }
   virtual bool hasASTFileSupport() const { return false; }
-  virtual bool usesCompleteTranslationUnit() { return false; }
+  virtual TranslationUnitKind getTranslationUnitKind() { return TU_Prefix; }
 };
 
 }
@@ -1592,8 +1592,7 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocationAction(CompilerInvocation *CI,
   AST->Diagnostics = Diags;
   AST->OnlyLocalDecls = false;
   AST->CaptureDiagnostics = false;
-  AST->CompleteTranslationUnit = Action ? Action->usesCompleteTranslationUnit()
-                                        : true;
+  AST->TUKind = Action ? Action->getTranslationUnitKind() : TU_Complete;
   AST->ShouldCacheCodeCompletionResults = false;
   AST->Invocation = CI;
 
@@ -1727,7 +1726,7 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
                                              bool OnlyLocalDecls,
                                              bool CaptureDiagnostics,
                                              bool PrecompilePreamble,
-                                             bool CompleteTranslationUnit,
+                                             TranslationUnitKind TUKind,
                                              bool CacheCodeCompletionResults,
                                              bool NestedMacroExpansions) {  
   // Create the AST unit.
@@ -1737,7 +1736,7 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
   AST->Diagnostics = Diags;
   AST->OnlyLocalDecls = OnlyLocalDecls;
   AST->CaptureDiagnostics = CaptureDiagnostics;
-  AST->CompleteTranslationUnit = CompleteTranslationUnit;
+  AST->TUKind = TUKind;
   AST->ShouldCacheCodeCompletionResults = CacheCodeCompletionResults;
   AST->Invocation = CI;
   AST->NestedMacroExpansions = NestedMacroExpansions;
@@ -1762,7 +1761,7 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
                                       unsigned NumRemappedFiles,
                                       bool RemappedFilesKeepOriginalName,
                                       bool PrecompilePreamble,
-                                      bool CompleteTranslationUnit,
+                                      TranslationUnitKind TUKind,
                                       bool CacheCodeCompletionResults,
                                       bool CXXPrecompilePreamble,
                                       bool CXXChainedPCH,
@@ -1828,7 +1827,7 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
   AST->FileMgr = new FileManager(AST->FileSystemOpts);
   AST->OnlyLocalDecls = OnlyLocalDecls;
   AST->CaptureDiagnostics = CaptureDiagnostics;
-  AST->CompleteTranslationUnit = CompleteTranslationUnit;
+  AST->TUKind = TUKind;
   AST->ShouldCacheCodeCompletionResults = CacheCodeCompletionResults;
   AST->NumStoredDiagnosticsFromDriver = StoredDiagnostics.size();
   AST->StoredDiagnostics.swap(StoredDiagnostics);

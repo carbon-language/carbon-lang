@@ -79,12 +79,13 @@ ASTConsumer *GeneratePCHAction::CreateASTConsumer(CompilerInstance &CI,
   std::string OutputFile;
   raw_ostream *OS = 0;
   bool Chaining;
-  if (ComputeASTConsumerArguments(CI, InFile, Sysroot, OutputFile, OS, Chaining))
+  if (ComputeASTConsumerArguments(CI, InFile, Sysroot, OutputFile, OS, 
+                                  Chaining))
     return 0;
 
   if (!CI.getFrontendOpts().RelocatablePCH)
     Sysroot.clear();
-  return new PCHGenerator(CI.getPreprocessor(), OutputFile, Chaining, Sysroot,
+  return new PCHGenerator(CI.getPreprocessor(), OutputFile, Chaining, Sysroot, 
                           OS);
 }
 

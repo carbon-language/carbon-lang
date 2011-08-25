@@ -11,6 +11,7 @@
 #define LLVM_CLANG_FRONTEND_FRONTENDACTION_H
 
 #include "clang/Basic/LLVM.h"
+#include "clang/Basic/LangOptions.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/OwningPtr.h"
 #include <string>
@@ -160,9 +161,8 @@ public:
   /// file inputs.
   virtual bool usesPreprocessorOnly() const = 0;
 
-  /// usesCompleteTranslationUnit - For AST based actions, should the
-  /// translation unit be completed?
-  virtual bool usesCompleteTranslationUnit() { return true; }
+  /// \brief For AST-based actions, the kind of translation unit we're handling.
+  virtual TranslationUnitKind getTranslationUnitKind() { return TU_Complete; }
 
   /// hasPCHSupport - Does this action support use with PCH?
   virtual bool hasPCHSupport() const { return !usesPreprocessorOnly(); }
@@ -282,7 +282,7 @@ public:
   WrapperFrontendAction(FrontendAction *WrappedAction);
 
   virtual bool usesPreprocessorOnly() const;
-  virtual bool usesCompleteTranslationUnit();
+  virtual TranslationUnitKind getTranslationUnitKind();
   virtual bool hasPCHSupport() const;
   virtual bool hasASTFileSupport() const;
   virtual bool hasIRSupport() const;

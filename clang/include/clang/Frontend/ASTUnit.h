@@ -112,8 +112,8 @@ private:
   /// \brief Track whether the main file was loaded from an AST or not.
   bool MainFileIsAST;
 
-  /// \brief Whether this AST represents a complete translation unit.
-  bool CompleteTranslationUnit;
+  /// \brief What kind of translation unit this AST represents.
+  TranslationUnitKind TUKind;
 
   /// \brief Whether we should time each operation.
   bool WantTiming;
@@ -548,11 +548,8 @@ public:
   llvm::MemoryBuffer *getBufferForFile(StringRef Filename,
                                        std::string *ErrorStr = 0);
 
-  /// \brief Whether this AST represents a complete translation unit.
-  ///
-  /// If false, this AST is only a partial translation unit, e.g., one
-  /// that might still be used as a precompiled header or preamble.
-  bool isCompleteTranslationUnit() const { return CompleteTranslationUnit; }
+  /// \brief Determine what kind of translation unit this AST represents.
+  TranslationUnitKind getTranslationUnitKind() const { return TUKind; }
 
   typedef llvm::PointerUnion<const char *, const llvm::MemoryBuffer *>
       FilenameOrMemBuf;
@@ -624,7 +621,7 @@ public:
                                              bool OnlyLocalDecls = false,
                                              bool CaptureDiagnostics = false,
                                              bool PrecompilePreamble = false,
-                                          bool CompleteTranslationUnit = true,
+                                      TranslationUnitKind TUKind = TU_Complete,
                                        bool CacheCodeCompletionResults = false,
                                        bool NestedMacroExpansions = true);
 
@@ -652,7 +649,7 @@ public:
                                       unsigned NumRemappedFiles = 0,
                                       bool RemappedFilesKeepOriginalName = true,
                                       bool PrecompilePreamble = false,
-                                      bool CompleteTranslationUnit = true,
+                                      TranslationUnitKind TUKind = TU_Complete,
                                       bool CacheCodeCompletionResults = false,
                                       bool CXXPrecompilePreamble = false,
                                       bool CXXChainedPCH = false,

@@ -2462,8 +2462,9 @@ static void clang_parseTranslationUnit_Impl(void *UserData) {
   CIndexer *CXXIdx = static_cast<CIndexer *>(CIdx);
 
   bool PrecompilePreamble = options & CXTranslationUnit_PrecompiledPreamble;
-  bool CompleteTranslationUnit
-    = ((options & CXTranslationUnit_Incomplete) == 0);
+  // FIXME: Add a flag for modules.
+  TranslationUnitKind TUKind
+    = (options & CXTranslationUnit_Incomplete)? TU_Prefix : TU_Complete;
   bool CacheCodeCompetionResults
     = options & CXTranslationUnit_CacheCompletionResults;
   bool CXXPrecompilePreamble
@@ -2553,7 +2554,7 @@ static void clang_parseTranslationUnit_Impl(void *UserData) {
                                  RemappedFiles->size(),
                                  /*RemappedFilesKeepOriginalName=*/true,
                                  PrecompilePreamble,
-                                 CompleteTranslationUnit,
+                                 TUKind,
                                  CacheCodeCompetionResults,
                                  CXXPrecompilePreamble,
                                  CXXChainedPCH,

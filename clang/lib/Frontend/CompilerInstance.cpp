@@ -382,10 +382,10 @@ CompilerInstance::createCodeCompletionConsumer(Preprocessor &PP,
                                           ShowGlobals, OS);
 }
 
-void CompilerInstance::createSema(bool CompleteTranslationUnit,
+void CompilerInstance::createSema(TranslationUnitKind TUKind,
                                   CodeCompleteConsumer *CompletionConsumer) {
   TheSema.reset(new Sema(getPreprocessor(), getASTContext(), getASTConsumer(),
-                         CompleteTranslationUnit, CompletionConsumer));
+                         TUKind, CompletionConsumer));
 }
 
 // Output Files

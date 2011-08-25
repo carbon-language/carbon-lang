@@ -111,7 +111,7 @@ ChainedIncludesSource *ChainedIncludesSource::create(CompilerInstance &CI) {
     Clang->getASTContext().setASTMutationListener(
                                             consumer->GetASTMutationListener());
     Clang->setASTConsumer(consumer.take());
-    Clang->createSema(/*CompleteTranslationUnit=*/false, 0);
+    Clang->createSema(TU_Prefix, 0);
 
     if (firstInclude) {
       Preprocessor &PP = Clang->getPreprocessor();

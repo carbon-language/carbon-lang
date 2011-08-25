@@ -641,7 +641,7 @@ protected:
   const ASTWriter &getWriter() const { return Writer; }
 
 public:
-  PCHGenerator(const Preprocessor &PP, const std::string &OutputFile, 
+  PCHGenerator(const Preprocessor &PP, StringRef OutputFile, 
                bool Chaining, StringRef isysroot, raw_ostream *Out);
   ~PCHGenerator();
   virtual void InitializeSema(Sema &S) { SemaPtr = &S; }

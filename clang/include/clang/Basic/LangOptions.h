@@ -296,6 +296,18 @@ public:
   }
 };
 
+/// \brief Describes the kind of translation unit being processed.
+enum TranslationUnitKind {
+  /// \brief The translation unit is a complete translation unit.
+  TU_Complete,
+  /// \brief The translation unit is a prefix to a translation unit, and is
+  /// not complete.
+  TU_Prefix,
+  /// \brief The translation unit is a module.
+  TU_Module
+};
+  
+  /// \brief 
 }  // end namespace clang
 
 #endif

@@ -37,11 +37,11 @@ using namespace clang;
 ///
 void clang::ParseAST(Preprocessor &PP, ASTConsumer *Consumer,
                      ASTContext &Ctx, bool PrintStats,
-                     bool CompleteTranslationUnit,
+                     TranslationUnitKind TUKind,
                      CodeCompleteConsumer *CompletionConsumer) {
 
   llvm::OwningPtr<Sema> S(new Sema(PP, Ctx, *Consumer,
-                                   CompleteTranslationUnit,
+                                   TUKind,
                                    CompletionConsumer));
 
   // Recover resources if we crash before exiting this method.

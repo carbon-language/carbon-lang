@@ -27,7 +27,7 @@
 using namespace clang;
 
 PCHGenerator::PCHGenerator(const Preprocessor &PP,
-                           const std::string &OutputFile,
+                           StringRef OutputFile,
                            bool Chaining,
                            StringRef isysroot,
                            raw_ostream *OS)

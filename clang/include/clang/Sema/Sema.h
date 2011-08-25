@@ -630,16 +630,14 @@ public:
   /// for C++ records.
   llvm::FoldingSet<SpecialMemberOverloadResult> SpecialMemberCache;
 
-  /// \brief Whether the code handled by Sema should be considered a
-  /// complete translation unit or not.
+  /// \brief The kind of translation unit we are processing.
   ///
-  /// When true (which is generally the case), Sema will perform
+  /// When we're processing a complete translation unit, Sema will perform
   /// end-of-translation-unit semantic tasks (such as creating
   /// initializers for tentative definitions in C) once parsing has
-  /// completed. This flag will be false when building PCH files,
-  /// since a PCH file is by definition not a complete translation
-  /// unit.
-  bool CompleteTranslationUnit;
+  /// completed. Modules and precompiled headers perform different kinds of
+  /// checks.
+  TranslationUnitKind TUKind;
 
   llvm::BumpPtrAllocator BumpAlloc;
 
@@ -685,7 +683,7 @@ public:
   bool isSelfExpr(Expr *RExpr);
 public:
   Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
-       bool CompleteTranslationUnit = true,
+       TranslationUnitKind TUKind = TU_Complete,
        CodeCompleteConsumer *CompletionConsumer = 0);
   ~Sema();
   

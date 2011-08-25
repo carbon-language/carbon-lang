@@ -93,8 +93,8 @@ bool ASTMergeAction::usesPreprocessorOnly() const {
   return AdaptedAction->usesPreprocessorOnly();
 }
 
-bool ASTMergeAction::usesCompleteTranslationUnit() {
-  return AdaptedAction->usesCompleteTranslationUnit();
+TranslationUnitKind ASTMergeAction::getTranslationUnitKind() {
+  return AdaptedAction->getTranslationUnitKind();
 }
 
 bool ASTMergeAction::hasPCHSupport() const {

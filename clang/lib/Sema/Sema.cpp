@@ -74,7 +74,7 @@ void Sema::ActOnTranslationUnitScope(Scope *S) {
 }
 
 Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
-           bool CompleteTranslationUnit,
+           TranslationUnitKind TUKind,
            CodeCompleteConsumer *CodeCompleter)
   : TheTargetAttributesSema(0), FPFeatures(pp.getLangOptions()),
     LangOpts(pp.getLangOptions()), PP(pp), Context(ctxt), Consumer(consumer),
@@ -85,7 +85,7 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
     IdResolver(pp.getLangOptions()), CXXTypeInfoDecl(0), MSVCGuidDecl(0),
     GlobalNewDeleteDeclared(false), 
     ObjCShouldCallSuperDealloc(false),
-    CompleteTranslationUnit(CompleteTranslationUnit),
+    TUKind(TUKind),
     NumSFINAEErrors(0), SuppressAccessChecking(false), 
     AccessCheckingSFINAE(false), InNonInstantiationSFINAEContext(false),
     NonInstantiationEntries(0), ArgumentPackSubstitutionIndex(-1),
@@ -391,9 +391,9 @@ void Sema::LoadExternalWeakUndeclaredIdentifiers() {
 /// translation unit when EOF is reached and all but the top-level scope is
 /// popped.
 void Sema::ActOnEndOfTranslationUnit() {
-  // At PCH writing, implicit instantiations and VTable handling info are
-  // stored and performed when the PCH is included.
-  if (CompleteTranslationUnit) {
+  // Only complete translation units define vtables and perform implicit
+  // instantiations.
+  if (TUKind == TU_Complete) {
     // If any dynamic classes have their key function defined within
     // this translation unit, then those vtables are considered "used" and must
     // be emitted.
@@ -435,7 +435,8 @@ void Sema::ActOnEndOfTranslationUnit() {
                                            this)),
                               UnusedFileScopedDecls.end());
 
-  if (!CompleteTranslationUnit) {
+  if (TUKind == TU_Prefix) {
+    // Translation unit prefixes don't need any of the checking below.
     TUScope = 0;
     return;
   }
@@ -453,6 +454,12 @@ void Sema::ActOnEndOfTranslationUnit() {
       << I->first;
   }
 
+  if (TUKind == TU_Module) {
+    // Modules don't need any of the checking below.
+    TUScope = 0;
+    return;
+  }
+  
   // C99 6.9.2p2:
   //   A declaration of an identifier for an object that has file
   //   scope without an initializer, and without a storage-class
