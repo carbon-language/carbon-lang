@@ -904,6 +904,7 @@ Parser::TPResult Parser::isCXXDeclarationSpecifier() {
   case tok::kw___thiscall:
   case tok::kw___w64:
   case tok::kw___ptr64:
+  case tok::kw___ptr32:
   case tok::kw___forceinline:
   case tok::kw___unaligned:
     return TPResult::True();
