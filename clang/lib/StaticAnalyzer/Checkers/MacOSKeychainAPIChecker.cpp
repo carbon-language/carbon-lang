@@ -97,10 +97,9 @@ private:
       BT.reset(new BugType("Improper use of SecKeychain API", "Mac OS API"));
   }
 
-  void generateDeallocatorMismatchReport(const AllocationState &AS,
+  void generateDeallocatorMismatchReport(const AllocationPair &AP,
                                          const Expr *ArgExpr,
-                                         CheckerContext &C,
-                                         SymbolRef ArgSM) const;
+                                         CheckerContext &C) const;
 
   BugReport *generateAllocatedDataNotReleasedReport(const AllocationPair &AP,
                                                     ExplodedNode *N) const;
@@ -260,12 +259,11 @@ bool MacOSKeychainAPIChecker::definitelyReturnedError(SymbolRef RetSym,
 // Report deallocator mismatch. Remove the region from tracking - reporting a
 // missing free error after this one is redundant.
 void MacOSKeychainAPIChecker::
-  generateDeallocatorMismatchReport(const AllocationState &AS,
+  generateDeallocatorMismatchReport(const AllocationPair &AP,
                                     const Expr *ArgExpr,
-                                    CheckerContext &C,
-                                    SymbolRef ArgSM) const {
+                                    CheckerContext &C) const {
   const ProgramState *State = C.getState();
-  State = State->remove<AllocatedData>(ArgSM);
+  State = State->remove<AllocatedData>(AP.first);
   ExplodedNode *N = C.generateNode(State);
 
   if (!N)
@@ -273,11 +271,13 @@ void MacOSKeychainAPIChecker::
   initBugType();
   llvm::SmallString<80> sbuf;
   llvm::raw_svector_ostream os(sbuf);
-  unsigned int PDeallocIdx = FunctionsToTrack[AS.AllocatorIdx].DeallocatorIdx;
+  unsigned int PDeallocIdx =
+               FunctionsToTrack[AP.second->AllocatorIdx].DeallocatorIdx;
 
   os << "Deallocator doesn't match the allocator: '"
      << FunctionsToTrack[PDeallocIdx].Name << "' should be used.";
   BugReport *Report = new BugReport(*BT, os.str(), N);
+  Report->addVisitor(new SecKeychainBugVisitor(AP.first));
   Report->addRange(ArgExpr->getSourceRange());
   C.EmitReport(Report);
 }
@@ -319,6 +319,7 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
               << FunctionsToTrack[DIdx].Name
               << "'.";
           BugReport *Report = new BugReport(*BT, os.str(), N);
+          Report->addVisitor(new SecKeychainBugVisitor(V));
           Report->addRange(ArgExpr->getSourceRange());
           C.EmitReport(Report);
         }
@@ -383,7 +384,8 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
       // NULL ~ default deallocator, so warn.
       if (DeallocatorExpr->isNullPointerConstant(C.getASTContext(),
           Expr::NPC_ValueDependentIsNotNull)) {
-        generateDeallocatorMismatchReport(*AS, ArgExpr, C, ArgSM);
+        const AllocationPair AP = std::make_pair(ArgSM, AS);
+        generateDeallocatorMismatchReport(AP, ArgExpr, C);
         return;
       }
       // One of the default allocators, so warn.
@@ -392,7 +394,8 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
         if (DeallocatorName == "kCFAllocatorDefault" ||
             DeallocatorName == "kCFAllocatorSystemDefault" ||
             DeallocatorName == "kCFAllocatorMalloc") {
-          generateDeallocatorMismatchReport(*AS, ArgExpr, C, ArgSM);
+          const AllocationPair AP = std::make_pair(ArgSM, AS);
+          generateDeallocatorMismatchReport(AP, ArgExpr, C);
           return;
         }
         // If kCFAllocatorNull, which does not deallocate, we still have to
@@ -415,7 +418,8 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
   // Check if the proper deallocator is used.
   unsigned int PDeallocIdx = FunctionsToTrack[AS->AllocatorIdx].DeallocatorIdx;
   if (PDeallocIdx != idx || (FunctionsToTrack[idx].Kind == ErrorAPI)) {
-    generateDeallocatorMismatchReport(*AS, ArgExpr, C, ArgSM);
+    const AllocationPair AP = std::make_pair(ArgSM, AS);
+    generateDeallocatorMismatchReport(AP, ArgExpr, C);
     return;
   }
 
@@ -427,6 +431,7 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
     initBugType();
     BugReport *Report = new BugReport(*BT,
         "Call to free data when error was returned during allocation.", N);
+    Report->addVisitor(new SecKeychainBugVisitor(ArgSM));
     Report->addRange(ArgExpr->getSourceRange());
     C.EmitReport(Report);
     return;
