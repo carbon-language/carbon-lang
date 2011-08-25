@@ -13,7 +13,9 @@
 
 #include "clang/Serialization/ASTReader.h"
 #include "clang/Serialization/ASTDeserializationListener.h"
+#include "clang/Serialization/ModuleManager.h"
 #include "ASTCommon.h"
+#include "ASTReaderInternals.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/Utils.h"
 #include "clang/Sema/Sema.h"
@@ -52,6 +54,7 @@
 
 using namespace clang;
 using namespace clang::serialization;
+using namespace clang::serialization::reader;
 
 //===----------------------------------------------------------------------===//
 // PCH validator implementation
@@ -479,425 +482,321 @@ ASTReader::setDeserializationListener(ASTDeserializationListener *Listener) {
 }
 
 
-namespace {
-class ASTSelectorLookupTrait {
-  ASTReader &Reader;
-  Module &F;
-  
-public:
-  struct data_type {
-    SelectorID ID;
-    llvm::SmallVector<ObjCMethodDecl *, 2> Instance;
-    llvm::SmallVector<ObjCMethodDecl *, 2> Factory;
-  };
 
-  typedef Selector external_key_type;
-  typedef external_key_type internal_key_type;
+unsigned ASTSelectorLookupTrait::ComputeHash(Selector Sel) {
+  return serialization::ComputeHash(Sel);
+}
 
-  ASTSelectorLookupTrait(ASTReader &Reader, Module &F) 
-    : Reader(Reader), F(F) { }
 
-  static bool EqualKey(const internal_key_type& a,
-                       const internal_key_type& b) {
-    return a == b;
+std::pair<unsigned, unsigned>
+ASTSelectorLookupTrait::ReadKeyDataLength(const unsigned char*& d) {
+  using namespace clang::io;
+  unsigned KeyLen = ReadUnalignedLE16(d);
+  unsigned DataLen = ReadUnalignedLE16(d);
+  return std::make_pair(KeyLen, DataLen);
+}
+
+ASTSelectorLookupTrait::internal_key_type 
+ASTSelectorLookupTrait::ReadKey(const unsigned char* d, unsigned) {
+  using namespace clang::io;
+  SelectorTable &SelTable = Reader.getContext()->Selectors;
+  unsigned N = ReadUnalignedLE16(d);
+  IdentifierInfo *FirstII
+    = Reader.getLocalIdentifier(F, ReadUnalignedLE32(d));
+  if (N == 0)
+    return SelTable.getNullarySelector(FirstII);
+  else if (N == 1)
+    return SelTable.getUnarySelector(FirstII);
+
+  SmallVector<IdentifierInfo *, 16> Args;
+  Args.push_back(FirstII);
+  for (unsigned I = 1; I != N; ++I)
+    Args.push_back(Reader.getLocalIdentifier(F, ReadUnalignedLE32(d)));
+
+  return SelTable.getSelector(N, Args.data());
+}
+
+ASTSelectorLookupTrait::data_type 
+ASTSelectorLookupTrait::ReadData(Selector, const unsigned char* d, 
+                                 unsigned DataLen) {
+  using namespace clang::io;
+
+  data_type Result;
+
+  Result.ID = Reader.getGlobalSelectorID(F, ReadUnalignedLE32(d));
+  unsigned NumInstanceMethods = ReadUnalignedLE16(d);
+  unsigned NumFactoryMethods = ReadUnalignedLE16(d);
+
+  // Load instance methods
+  ObjCMethodList *Prev = 0;
+  for (unsigned I = 0; I != NumInstanceMethods; ++I) {
+    if (ObjCMethodDecl *Method
+          = Reader.GetLocalDeclAs<ObjCMethodDecl>(F, ReadUnalignedLE32(d)))
+      Result.Instance.push_back(Method);
   }
 
-  static unsigned ComputeHash(Selector Sel) {
-    return serialization::ComputeHash(Sel);
+  // Load factory methods
+  Prev = 0;
+  for (unsigned I = 0; I != NumFactoryMethods; ++I) {
+    if (ObjCMethodDecl *Method
+          = Reader.GetLocalDeclAs<ObjCMethodDecl>(F, ReadUnalignedLE32(d)))
+      Result.Factory.push_back(Method);
   }
 
-  // This hopefully will just get inlined and removed by the optimizer.
-  static const internal_key_type&
-  GetInternalKey(const external_key_type& x) { return x; }
+  return Result;
+}
 
-  static std::pair<unsigned, unsigned>
-  ReadKeyDataLength(const unsigned char*& d) {
-    using namespace clang::io;
-    unsigned KeyLen = ReadUnalignedLE16(d);
-    unsigned DataLen = ReadUnalignedLE16(d);
-    return std::make_pair(KeyLen, DataLen);
-  }
+unsigned ASTIdentifierLookupTrait::ComputeHash(const internal_key_type& a) {
+  return llvm::HashString(StringRef(a.first, a.second));
+}
 
-  internal_key_type ReadKey(const unsigned char* d, unsigned) {
-    using namespace clang::io;
-    SelectorTable &SelTable = Reader.getContext()->Selectors;
-    unsigned N = ReadUnalignedLE16(d);
-    IdentifierInfo *FirstII
-      = Reader.getLocalIdentifier(F, ReadUnalignedLE32(d));
-    if (N == 0)
-      return SelTable.getNullarySelector(FirstII);
-    else if (N == 1)
-      return SelTable.getUnarySelector(FirstII);
+std::pair<unsigned, unsigned>
+ASTIdentifierLookupTrait::ReadKeyDataLength(const unsigned char*& d) {
+  using namespace clang::io;
+  unsigned DataLen = ReadUnalignedLE16(d);
+  unsigned KeyLen = ReadUnalignedLE16(d);
+  return std::make_pair(KeyLen, DataLen);
+}
 
-    SmallVector<IdentifierInfo *, 16> Args;
-    Args.push_back(FirstII);
-    for (unsigned I = 1; I != N; ++I)
-      Args.push_back(Reader.getLocalIdentifier(F, ReadUnalignedLE32(d)));
+std::pair<const char*, unsigned>
+ASTIdentifierLookupTrait::ReadKey(const unsigned char* d, unsigned n) {
+  assert(n >= 2 && d[n-1] == '\0');
+  return std::make_pair((const char*) d, n-1);
+}
 
-    return SelTable.getSelector(N, Args.data());
-  }
+IdentifierInfo *ASTIdentifierLookupTrait::ReadData(const internal_key_type& k,
+                                                   const unsigned char* d,
+                                                   unsigned DataLen) {
+  using namespace clang::io;
+  unsigned RawID = ReadUnalignedLE32(d);
+  bool IsInteresting = RawID & 0x01;
 
-  data_type ReadData(Selector, const unsigned char* d, unsigned DataLen) {
-    using namespace clang::io;
+  // Wipe out the "is interesting" bit.
+  RawID = RawID >> 1;
 
-    data_type Result;
-
-    Result.ID = Reader.getGlobalSelectorID(F, ReadUnalignedLE32(d));
-    unsigned NumInstanceMethods = ReadUnalignedLE16(d);
-    unsigned NumFactoryMethods = ReadUnalignedLE16(d);
-
-    // Load instance methods
-    ObjCMethodList *Prev = 0;
-    for (unsigned I = 0; I != NumInstanceMethods; ++I) {
-      if (ObjCMethodDecl *Method
-            = Reader.GetLocalDeclAs<ObjCMethodDecl>(F, ReadUnalignedLE32(d)))
-        Result.Instance.push_back(Method);
-    }
-
-    // Load factory methods
-    Prev = 0;
-    for (unsigned I = 0; I != NumFactoryMethods; ++I) {
-      if (ObjCMethodDecl *Method
-            = Reader.GetLocalDeclAs<ObjCMethodDecl>(F, ReadUnalignedLE32(d)))
-        Result.Factory.push_back(Method);
-    }
-
-    return Result;
-  }
-};
-
-} // end anonymous namespace
-
-/// \brief The on-disk hash table used for the global method pool.
-typedef OnDiskChainedHashTable<ASTSelectorLookupTrait>
-  ASTSelectorLookupTable;
-
-namespace clang {
-class ASTIdentifierLookupTrait {
-  ASTReader &Reader;
-  Module &F;
-
-  // If we know the IdentifierInfo in advance, it is here and we will
-  // not build a new one. Used when deserializing information about an
-  // identifier that was constructed before the AST file was read.
-  IdentifierInfo *KnownII;
-
-public:
-  typedef IdentifierInfo * data_type;
-
-  typedef const std::pair<const char*, unsigned> external_key_type;
-
-  typedef external_key_type internal_key_type;
-
-  ASTIdentifierLookupTrait(ASTReader &Reader, Module &F,
-                           IdentifierInfo *II = 0)
-    : Reader(Reader), F(F), KnownII(II) { }
-
-  static bool EqualKey(const internal_key_type& a,
-                       const internal_key_type& b) {
-    return (a.second == b.second) ? memcmp(a.first, b.first, a.second) == 0
-                                  : false;
-  }
-
-  static unsigned ComputeHash(const internal_key_type& a) {
-    return llvm::HashString(StringRef(a.first, a.second));
-  }
-
-  // This hopefully will just get inlined and removed by the optimizer.
-  static const internal_key_type&
-  GetInternalKey(const external_key_type& x) { return x; }
-
-  // This hopefully will just get inlined and removed by the optimizer.
-  static const external_key_type&
-  GetExternalKey(const internal_key_type& x) { return x; }
-
-  static std::pair<unsigned, unsigned>
-  ReadKeyDataLength(const unsigned char*& d) {
-    using namespace clang::io;
-    unsigned DataLen = ReadUnalignedLE16(d);
-    unsigned KeyLen = ReadUnalignedLE16(d);
-    return std::make_pair(KeyLen, DataLen);
-  }
-
-  static std::pair<const char*, unsigned>
-  ReadKey(const unsigned char* d, unsigned n) {
-    assert(n >= 2 && d[n-1] == '\0');
-    return std::make_pair((const char*) d, n-1);
-  }
-
-  IdentifierInfo *ReadData(const internal_key_type& k,
-                           const unsigned char* d,
-                           unsigned DataLen) {
-    using namespace clang::io;
-    unsigned RawID = ReadUnalignedLE32(d);
-    bool IsInteresting = RawID & 0x01;
-
-    // Wipe out the "is interesting" bit.
-    RawID = RawID >> 1;
-
-    IdentID ID = Reader.getGlobalIdentifierID(F, RawID);
-    if (!IsInteresting) {
-      // For uninteresting identifiers, just build the IdentifierInfo
-      // and associate it with the persistent ID.
-      IdentifierInfo *II = KnownII;
-      if (!II)
-        II = &Reader.getIdentifierTable().getOwn(StringRef(k.first, k.second));
-      Reader.SetIdentifierInfo(ID, II);
-      II->setIsFromAST();
-      return II;
-    }
-
-    unsigned Bits = ReadUnalignedLE16(d);
-    bool CPlusPlusOperatorKeyword = Bits & 0x01;
-    Bits >>= 1;
-    bool HasRevertedTokenIDToIdentifier = Bits & 0x01;
-    Bits >>= 1;
-    bool Poisoned = Bits & 0x01;
-    Bits >>= 1;
-    bool ExtensionToken = Bits & 0x01;
-    Bits >>= 1;
-    bool hasMacroDefinition = Bits & 0x01;
-    Bits >>= 1;
-    unsigned ObjCOrBuiltinID = Bits & 0x3FF;
-    Bits >>= 10;
-
-    assert(Bits == 0 && "Extra bits in the identifier?");
-    DataLen -= 6;
-
-    // Build the IdentifierInfo itself and link the identifier ID with
-    // the new IdentifierInfo.
+  IdentID ID = Reader.getGlobalIdentifierID(F, RawID);
+  if (!IsInteresting) {
+    // For uninteresting identifiers, just build the IdentifierInfo
+    // and associate it with the persistent ID.
     IdentifierInfo *II = KnownII;
     if (!II)
       II = &Reader.getIdentifierTable().getOwn(StringRef(k.first, k.second));
     Reader.SetIdentifierInfo(ID, II);
-
-    // Set or check the various bits in the IdentifierInfo structure.
-    // Token IDs are read-only.
-    if (HasRevertedTokenIDToIdentifier)
-      II->RevertTokenIDToIdentifier();
-    II->setObjCOrBuiltinID(ObjCOrBuiltinID);
-    assert(II->isExtensionToken() == ExtensionToken &&
-           "Incorrect extension token flag");
-    (void)ExtensionToken;
-    if (Poisoned)
-      II->setIsPoisoned(true);
-    assert(II->isCPlusPlusOperatorKeyword() == CPlusPlusOperatorKeyword &&
-           "Incorrect C++ operator keyword flag");
-    (void)CPlusPlusOperatorKeyword;
-
-    // If this identifier is a macro, deserialize the macro
-    // definition.
-    if (hasMacroDefinition) {
-      // FIXME: Check for conflicts?
-      uint32_t Offset = ReadUnalignedLE32(d);
-      Reader.SetIdentifierIsMacro(II, F, Offset);
-      DataLen -= 4;
-    }
-
-    // Read all of the declarations visible at global scope with this
-    // name.
-    if (Reader.getContext() == 0) return II;
-    if (DataLen > 0) {
-      SmallVector<uint32_t, 4> DeclIDs;
-      for (; DataLen > 0; DataLen -= 4)
-        DeclIDs.push_back(Reader.getGlobalDeclID(F, ReadUnalignedLE32(d)));
-      Reader.SetGloballyVisibleDecls(II, DeclIDs);
-    }
-
     II->setIsFromAST();
     return II;
   }
-};
 
-} // end anonymous namespace
+  unsigned Bits = ReadUnalignedLE16(d);
+  bool CPlusPlusOperatorKeyword = Bits & 0x01;
+  Bits >>= 1;
+  bool HasRevertedTokenIDToIdentifier = Bits & 0x01;
+  Bits >>= 1;
+  bool Poisoned = Bits & 0x01;
+  Bits >>= 1;
+  bool ExtensionToken = Bits & 0x01;
+  Bits >>= 1;
+  bool hasMacroDefinition = Bits & 0x01;
+  Bits >>= 1;
+  unsigned ObjCOrBuiltinID = Bits & 0x3FF;
+  Bits >>= 10;
 
-/// \brief The on-disk hash table used to contain information about
-/// all of the identifiers in the program.
-typedef OnDiskChainedHashTable<ASTIdentifierLookupTrait>
-  ASTIdentifierLookupTable;
+  assert(Bits == 0 && "Extra bits in the identifier?");
+  DataLen -= 6;
 
-namespace {
-class ASTDeclContextNameLookupTrait {
-  ASTReader &Reader;
-  Module &F;
-  
-public:
-  /// \brief Pair of begin/end iterators for DeclIDs.
-  ///
-  /// Note that these declaration IDs are local to the module that contains this
-  /// particular lookup t
-  typedef std::pair<DeclID *, DeclID *> data_type;
+  // Build the IdentifierInfo itself and link the identifier ID with
+  // the new IdentifierInfo.
+  IdentifierInfo *II = KnownII;
+  if (!II)
+    II = &Reader.getIdentifierTable().getOwn(StringRef(k.first, k.second));
+  Reader.SetIdentifierInfo(ID, II);
 
-  /// \brief Special internal key for declaration names.
-  /// The hash table creates keys for comparison; we do not create
-  /// a DeclarationName for the internal key to avoid deserializing types.
-  struct DeclNameKey {
-    DeclarationName::NameKind Kind;
-    uint64_t Data;
-    DeclNameKey() : Kind((DeclarationName::NameKind)0), Data(0) { }
-  };
+  // Set or check the various bits in the IdentifierInfo structure.
+  // Token IDs are read-only.
+  if (HasRevertedTokenIDToIdentifier)
+    II->RevertTokenIDToIdentifier();
+  II->setObjCOrBuiltinID(ObjCOrBuiltinID);
+  assert(II->isExtensionToken() == ExtensionToken &&
+         "Incorrect extension token flag");
+  (void)ExtensionToken;
+  if (Poisoned)
+    II->setIsPoisoned(true);
+  assert(II->isCPlusPlusOperatorKeyword() == CPlusPlusOperatorKeyword &&
+         "Incorrect C++ operator keyword flag");
+  (void)CPlusPlusOperatorKeyword;
 
-  typedef DeclarationName external_key_type;
-  typedef DeclNameKey internal_key_type;
-
-  explicit ASTDeclContextNameLookupTrait(ASTReader &Reader, 
-                                         Module &F) 
-    : Reader(Reader), F(F) { }
-
-  static bool EqualKey(const internal_key_type& a,
-                       const internal_key_type& b) {
-    return a.Kind == b.Kind && a.Data == b.Data;
+  // If this identifier is a macro, deserialize the macro
+  // definition.
+  if (hasMacroDefinition) {
+    // FIXME: Check for conflicts?
+    uint32_t Offset = ReadUnalignedLE32(d);
+    Reader.SetIdentifierIsMacro(II, F, Offset);
+    DataLen -= 4;
   }
 
-  unsigned ComputeHash(const DeclNameKey &Key) const {
-    llvm::FoldingSetNodeID ID;
-    ID.AddInteger(Key.Kind);
-
-    switch (Key.Kind) {
-    case DeclarationName::Identifier:
-    case DeclarationName::CXXLiteralOperatorName:
-      ID.AddString(((IdentifierInfo*)Key.Data)->getName());
-      break;
-    case DeclarationName::ObjCZeroArgSelector:
-    case DeclarationName::ObjCOneArgSelector:
-    case DeclarationName::ObjCMultiArgSelector:
-      ID.AddInteger(serialization::ComputeHash(Selector(Key.Data)));
-      break;
-    case DeclarationName::CXXOperatorName:
-      ID.AddInteger((OverloadedOperatorKind)Key.Data);
-      break;
-    case DeclarationName::CXXConstructorName:
-    case DeclarationName::CXXDestructorName:
-    case DeclarationName::CXXConversionFunctionName:
-    case DeclarationName::CXXUsingDirective:
-      break;
-    }
-
-    return ID.ComputeHash();
+  // Read all of the declarations visible at global scope with this
+  // name.
+  if (Reader.getContext() == 0) return II;
+  if (DataLen > 0) {
+    SmallVector<uint32_t, 4> DeclIDs;
+    for (; DataLen > 0; DataLen -= 4)
+      DeclIDs.push_back(Reader.getGlobalDeclID(F, ReadUnalignedLE32(d)));
+    Reader.SetGloballyVisibleDecls(II, DeclIDs);
   }
 
-  internal_key_type GetInternalKey(const external_key_type& Name) const {
-    DeclNameKey Key;
-    Key.Kind = Name.getNameKind();
-    switch (Name.getNameKind()) {
-    case DeclarationName::Identifier:
-      Key.Data = (uint64_t)Name.getAsIdentifierInfo();
-      break;
-    case DeclarationName::ObjCZeroArgSelector:
-    case DeclarationName::ObjCOneArgSelector:
-    case DeclarationName::ObjCMultiArgSelector:
-      Key.Data = (uint64_t)Name.getObjCSelector().getAsOpaquePtr();
-      break;
-    case DeclarationName::CXXOperatorName:
-      Key.Data = Name.getCXXOverloadedOperator();
-      break;
-    case DeclarationName::CXXLiteralOperatorName:
-      Key.Data = (uint64_t)Name.getCXXLiteralIdentifier();
-      break;
-    case DeclarationName::CXXConstructorName:
-    case DeclarationName::CXXDestructorName:
-    case DeclarationName::CXXConversionFunctionName:
-    case DeclarationName::CXXUsingDirective:
-      Key.Data = 0;
-      break;
-    }
+  II->setIsFromAST();
+  return II;
+}
 
-    return Key;
+unsigned 
+ASTDeclContextNameLookupTrait::ComputeHash(const DeclNameKey &Key) const {
+  llvm::FoldingSetNodeID ID;
+  ID.AddInteger(Key.Kind);
+
+  switch (Key.Kind) {
+  case DeclarationName::Identifier:
+  case DeclarationName::CXXLiteralOperatorName:
+    ID.AddString(((IdentifierInfo*)Key.Data)->getName());
+    break;
+  case DeclarationName::ObjCZeroArgSelector:
+  case DeclarationName::ObjCOneArgSelector:
+  case DeclarationName::ObjCMultiArgSelector:
+    ID.AddInteger(serialization::ComputeHash(Selector(Key.Data)));
+    break;
+  case DeclarationName::CXXOperatorName:
+    ID.AddInteger((OverloadedOperatorKind)Key.Data);
+    break;
+  case DeclarationName::CXXConstructorName:
+  case DeclarationName::CXXDestructorName:
+  case DeclarationName::CXXConversionFunctionName:
+  case DeclarationName::CXXUsingDirective:
+    break;
   }
 
-  external_key_type GetExternalKey(const internal_key_type& Key) const {
-    ASTContext *Context = Reader.getContext();
-    switch (Key.Kind) {
-    case DeclarationName::Identifier:
-      return DeclarationName((IdentifierInfo*)Key.Data);
+  return ID.ComputeHash();
+}
 
-    case DeclarationName::ObjCZeroArgSelector:
-    case DeclarationName::ObjCOneArgSelector:
-    case DeclarationName::ObjCMultiArgSelector:
-      return DeclarationName(Selector(Key.Data));
-
-    case DeclarationName::CXXConstructorName:
-      return Context->DeclarationNames.getCXXConstructorName(
-               Context->getCanonicalType(Reader.getLocalType(F, Key.Data)));
-
-    case DeclarationName::CXXDestructorName:
-      return Context->DeclarationNames.getCXXDestructorName(
-               Context->getCanonicalType(Reader.getLocalType(F, Key.Data)));
-
-    case DeclarationName::CXXConversionFunctionName:
-      return Context->DeclarationNames.getCXXConversionFunctionName(
-               Context->getCanonicalType(Reader.getLocalType(F, Key.Data)));
-
-    case DeclarationName::CXXOperatorName:
-      return Context->DeclarationNames.getCXXOperatorName(
-                                         (OverloadedOperatorKind)Key.Data);
-
-    case DeclarationName::CXXLiteralOperatorName:
-      return Context->DeclarationNames.getCXXLiteralOperatorName(
-                                                     (IdentifierInfo*)Key.Data);
-
-    case DeclarationName::CXXUsingDirective:
-      return DeclarationName::getUsingDirectiveName();
-    }
-
-    llvm_unreachable("Invalid Name Kind ?");
+ASTDeclContextNameLookupTrait::internal_key_type 
+ASTDeclContextNameLookupTrait::GetInternalKey(
+                                          const external_key_type& Name) const {
+  DeclNameKey Key;
+  Key.Kind = Name.getNameKind();
+  switch (Name.getNameKind()) {
+  case DeclarationName::Identifier:
+    Key.Data = (uint64_t)Name.getAsIdentifierInfo();
+    break;
+  case DeclarationName::ObjCZeroArgSelector:
+  case DeclarationName::ObjCOneArgSelector:
+  case DeclarationName::ObjCMultiArgSelector:
+    Key.Data = (uint64_t)Name.getObjCSelector().getAsOpaquePtr();
+    break;
+  case DeclarationName::CXXOperatorName:
+    Key.Data = Name.getCXXOverloadedOperator();
+    break;
+  case DeclarationName::CXXLiteralOperatorName:
+    Key.Data = (uint64_t)Name.getCXXLiteralIdentifier();
+    break;
+  case DeclarationName::CXXConstructorName:
+  case DeclarationName::CXXDestructorName:
+  case DeclarationName::CXXConversionFunctionName:
+  case DeclarationName::CXXUsingDirective:
+    Key.Data = 0;
+    break;
   }
 
-  static std::pair<unsigned, unsigned>
-  ReadKeyDataLength(const unsigned char*& d) {
-    using namespace clang::io;
-    unsigned KeyLen = ReadUnalignedLE16(d);
-    unsigned DataLen = ReadUnalignedLE16(d);
-    return std::make_pair(KeyLen, DataLen);
+  return Key;
+}
+
+ASTDeclContextNameLookupTrait::external_key_type 
+ASTDeclContextNameLookupTrait::GetExternalKey(
+                                          const internal_key_type& Key) const {
+  ASTContext *Context = Reader.getContext();
+  switch (Key.Kind) {
+  case DeclarationName::Identifier:
+    return DeclarationName((IdentifierInfo*)Key.Data);
+
+  case DeclarationName::ObjCZeroArgSelector:
+  case DeclarationName::ObjCOneArgSelector:
+  case DeclarationName::ObjCMultiArgSelector:
+    return DeclarationName(Selector(Key.Data));
+
+  case DeclarationName::CXXConstructorName:
+    return Context->DeclarationNames.getCXXConstructorName(
+             Context->getCanonicalType(Reader.getLocalType(F, Key.Data)));
+
+  case DeclarationName::CXXDestructorName:
+    return Context->DeclarationNames.getCXXDestructorName(
+             Context->getCanonicalType(Reader.getLocalType(F, Key.Data)));
+
+  case DeclarationName::CXXConversionFunctionName:
+    return Context->DeclarationNames.getCXXConversionFunctionName(
+             Context->getCanonicalType(Reader.getLocalType(F, Key.Data)));
+
+  case DeclarationName::CXXOperatorName:
+    return Context->DeclarationNames.getCXXOperatorName(
+                                       (OverloadedOperatorKind)Key.Data);
+
+  case DeclarationName::CXXLiteralOperatorName:
+    return Context->DeclarationNames.getCXXLiteralOperatorName(
+                                                   (IdentifierInfo*)Key.Data);
+
+  case DeclarationName::CXXUsingDirective:
+    return DeclarationName::getUsingDirectiveName();
   }
 
-  internal_key_type ReadKey(const unsigned char* d, unsigned) {
-    using namespace clang::io;
+  llvm_unreachable("Invalid Name Kind ?");
+}
 
-    DeclNameKey Key;
-    Key.Kind = (DeclarationName::NameKind)*d++;
-    switch (Key.Kind) {
-    case DeclarationName::Identifier:
-      Key.Data = (uint64_t)Reader.getLocalIdentifier(F, ReadUnalignedLE32(d));
-      break;
-    case DeclarationName::ObjCZeroArgSelector:
-    case DeclarationName::ObjCOneArgSelector:
-    case DeclarationName::ObjCMultiArgSelector:
-      Key.Data =
-         (uint64_t)Reader.getLocalSelector(F, ReadUnalignedLE32(d))
-                     .getAsOpaquePtr();
-      break;
-    case DeclarationName::CXXOperatorName:
-      Key.Data = *d++; // OverloadedOperatorKind
-      break;
-    case DeclarationName::CXXLiteralOperatorName:
-      Key.Data = (uint64_t)Reader.getLocalIdentifier(F, ReadUnalignedLE32(d));
-      break;
-    case DeclarationName::CXXConstructorName:
-    case DeclarationName::CXXDestructorName:
-    case DeclarationName::CXXConversionFunctionName:
-    case DeclarationName::CXXUsingDirective:
-      Key.Data = 0;
-      break;
-    }
+std::pair<unsigned, unsigned>
+ASTDeclContextNameLookupTrait::ReadKeyDataLength(const unsigned char*& d) {
+  using namespace clang::io;
+  unsigned KeyLen = ReadUnalignedLE16(d);
+  unsigned DataLen = ReadUnalignedLE16(d);
+  return std::make_pair(KeyLen, DataLen);
+}
 
-    return Key;
+ASTDeclContextNameLookupTrait::internal_key_type 
+ASTDeclContextNameLookupTrait::ReadKey(const unsigned char* d, unsigned) {
+  using namespace clang::io;
+
+  DeclNameKey Key;
+  Key.Kind = (DeclarationName::NameKind)*d++;
+  switch (Key.Kind) {
+  case DeclarationName::Identifier:
+    Key.Data = (uint64_t)Reader.getLocalIdentifier(F, ReadUnalignedLE32(d));
+    break;
+  case DeclarationName::ObjCZeroArgSelector:
+  case DeclarationName::ObjCOneArgSelector:
+  case DeclarationName::ObjCMultiArgSelector:
+    Key.Data =
+       (uint64_t)Reader.getLocalSelector(F, ReadUnalignedLE32(d))
+                   .getAsOpaquePtr();
+    break;
+  case DeclarationName::CXXOperatorName:
+    Key.Data = *d++; // OverloadedOperatorKind
+    break;
+  case DeclarationName::CXXLiteralOperatorName:
+    Key.Data = (uint64_t)Reader.getLocalIdentifier(F, ReadUnalignedLE32(d));
+    break;
+  case DeclarationName::CXXConstructorName:
+  case DeclarationName::CXXDestructorName:
+  case DeclarationName::CXXConversionFunctionName:
+  case DeclarationName::CXXUsingDirective:
+    Key.Data = 0;
+    break;
   }
 
-  data_type ReadData(internal_key_type, const unsigned char* d,
-                     unsigned DataLen) {
-    using namespace clang::io;
-    unsigned NumDecls = ReadUnalignedLE16(d);
-    DeclID *Start = (DeclID *)d;
-    return std::make_pair(Start, Start + NumDecls);
-  }
-};
+  return Key;
+}
 
-} // end anonymous namespace
-
-/// \brief The on-disk hash table used for the DeclContext's Name lookup table.
-typedef OnDiskChainedHashTable<ASTDeclContextNameLookupTrait>
-  ASTDeclContextNameLookupTable;
+ASTDeclContextNameLookupTrait::data_type 
+ASTDeclContextNameLookupTrait::ReadData(internal_key_type, 
+                                        const unsigned char* d,
+                                      unsigned DataLen) {
+  using namespace clang::io;
+  unsigned NumDecls = ReadUnalignedLE16(d);
+  DeclID *Start = (DeclID *)d;
+  return std::make_pair(Start, Start + NumDecls);
+}
 
 bool ASTReader::ReadDeclContextStorage(Module &M,
                                        llvm::BitstreamCursor &Cursor,
@@ -1631,115 +1530,64 @@ ASTReader::getGlobalPreprocessedEntityID(Module &M, unsigned LocalID) {
   return LocalID + I->second;
 }
 
-namespace {
-  /// \brief Trait class used to search the on-disk hash table containing all of
-  /// the header search information.
-  ///
-  /// The on-disk hash table contains a mapping from each header path to 
-  /// information about that header (how many times it has been included, its
-  /// controlling macro, etc.). Note that we actually hash based on the 
-  /// filename, and support "deep" comparisons of file names based on current
-  /// inode numbers, so that the search can cope with non-normalized path names
-  /// and symlinks.
-  class HeaderFileInfoTrait {
-    ASTReader &Reader;
-    Module &M;
-    HeaderSearch *HS;
-    const char *FrameworkStrings;
-    const char *SearchPath;
-    struct stat SearchPathStatBuf;
-    llvm::Optional<int> SearchPathStatResult;
-    
-    int StatSimpleCache(const char *Path, struct stat *StatBuf) {
-      if (Path == SearchPath) {
-        if (!SearchPathStatResult)
-          SearchPathStatResult = stat(Path, &SearchPathStatBuf);
-        
-        *StatBuf = SearchPathStatBuf;
-        return *SearchPathStatResult;
-      }
-      
-      return stat(Path, StatBuf);
-    }
-    
-  public:
-    typedef const char *external_key_type;
-    typedef const char *internal_key_type;
-    
-    typedef HeaderFileInfo data_type;
-    
-    HeaderFileInfoTrait(ASTReader &Reader, Module &M, HeaderSearch *HS,
-                        const char *FrameworkStrings,
-                        const char *SearchPath = 0) 
-      : Reader(Reader), M(M), HS(HS), FrameworkStrings(FrameworkStrings), 
-        SearchPath(SearchPath) { }
-    
-    static unsigned ComputeHash(const char *path) {
-      return llvm::HashString(llvm::sys::path::filename(path));
-    }
-    
-    static internal_key_type GetInternalKey(const char *path) { return path; }
-    
-    bool EqualKey(internal_key_type a, internal_key_type b) {
-      if (strcmp(a, b) == 0)
-        return true;
-      
-      if (llvm::sys::path::filename(a) != llvm::sys::path::filename(b))
-        return false;
-      
-      // The file names match, but the path names don't. stat() the files to
-      // see if they are the same.      
-      struct stat StatBufA, StatBufB;
-      if (StatSimpleCache(a, &StatBufA) || StatSimpleCache(b, &StatBufB))
-        return false;
-      
-      return StatBufA.st_ino == StatBufB.st_ino;
-    }
-    
-    static std::pair<unsigned, unsigned>
-    ReadKeyDataLength(const unsigned char*& d) {
-      unsigned KeyLen = (unsigned) clang::io::ReadUnalignedLE16(d);
-      unsigned DataLen = (unsigned) *d++;
-      return std::make_pair(KeyLen + 1, DataLen);
-    }
-    
-    static internal_key_type ReadKey(const unsigned char *d, unsigned) {
-      return (const char *)d;
-    }
-    
-    data_type ReadData(const internal_key_type, const unsigned char *d,
-                       unsigned DataLen) {
-      const unsigned char *End = d + DataLen;
-      using namespace clang::io;
-      HeaderFileInfo HFI;
-      unsigned Flags = *d++;
-      HFI.isImport = (Flags >> 5) & 0x01;
-      HFI.isPragmaOnce = (Flags >> 4) & 0x01;
-      HFI.DirInfo = (Flags >> 2) & 0x03;
-      HFI.Resolved = (Flags >> 1) & 0x01;
-      HFI.IndexHeaderMapHeader = Flags & 0x01;
-      HFI.NumIncludes = ReadUnalignedLE16(d);
-      HFI.ControllingMacroID = Reader.getGlobalDeclID(M, ReadUnalignedLE32(d));
-      if (unsigned FrameworkOffset = ReadUnalignedLE32(d)) {
-        // The framework offset is 1 greater than the actual offset, 
-        // since 0 is used as an indicator for "no framework name".
-        StringRef FrameworkName(FrameworkStrings + FrameworkOffset - 1);
-        HFI.Framework = HS->getUniqueFrameworkName(FrameworkName);
-      }
-      
-      assert(End == d && "Wrong data length in HeaderFileInfo deserialization");
-      (void)End;
-            
-      // This HeaderFileInfo was externally loaded.
-      HFI.External = true;
-      return HFI;
-    }
-  };
+unsigned HeaderFileInfoTrait::ComputeHash(const char *path) {
+  return llvm::HashString(llvm::sys::path::filename(path));
 }
-
-/// \brief The on-disk hash table used for the global method pool.
-typedef OnDiskChainedHashTable<HeaderFileInfoTrait>
-  HeaderFileInfoLookupTable;
+    
+HeaderFileInfoTrait::internal_key_type 
+HeaderFileInfoTrait::GetInternalKey(const char *path) { return path; }
+    
+bool HeaderFileInfoTrait::EqualKey(internal_key_type a, internal_key_type b) {
+  if (strcmp(a, b) == 0)
+    return true;
+  
+  if (llvm::sys::path::filename(a) != llvm::sys::path::filename(b))
+    return false;
+  
+  // The file names match, but the path names don't. stat() the files to
+  // see if they are the same.      
+  struct stat StatBufA, StatBufB;
+  if (StatSimpleCache(a, &StatBufA) || StatSimpleCache(b, &StatBufB))
+    return false;
+  
+  return StatBufA.st_ino == StatBufB.st_ino;
+}
+    
+std::pair<unsigned, unsigned>
+HeaderFileInfoTrait::ReadKeyDataLength(const unsigned char*& d) {
+  unsigned KeyLen = (unsigned) clang::io::ReadUnalignedLE16(d);
+  unsigned DataLen = (unsigned) *d++;
+  return std::make_pair(KeyLen + 1, DataLen);
+}
+    
+HeaderFileInfoTrait::data_type 
+HeaderFileInfoTrait::ReadData(const internal_key_type, const unsigned char *d,
+                              unsigned DataLen) {
+  const unsigned char *End = d + DataLen;
+  using namespace clang::io;
+  HeaderFileInfo HFI;
+  unsigned Flags = *d++;
+  HFI.isImport = (Flags >> 5) & 0x01;
+  HFI.isPragmaOnce = (Flags >> 4) & 0x01;
+  HFI.DirInfo = (Flags >> 2) & 0x03;
+  HFI.Resolved = (Flags >> 1) & 0x01;
+  HFI.IndexHeaderMapHeader = Flags & 0x01;
+  HFI.NumIncludes = ReadUnalignedLE16(d);
+  HFI.ControllingMacroID = Reader.getGlobalDeclID(M, ReadUnalignedLE32(d));
+  if (unsigned FrameworkOffset = ReadUnalignedLE32(d)) {
+    // The framework offset is 1 greater than the actual offset, 
+    // since 0 is used as an indicator for "no framework name".
+    StringRef FrameworkName(FrameworkStrings + FrameworkOffset - 1);
+    HFI.Framework = HS->getUniqueFrameworkName(FrameworkName);
+  }
+  
+  assert(End == d && "Wrong data length in HeaderFileInfo deserialization");
+  (void)End;
+        
+  // This HeaderFileInfo was externally loaded.
+  HFI.External = true;
+  return HFI;
+}
 
 void ASTReader::SetIdentifierIsMacro(IdentifierInfo *II, Module &F,
                                      uint64_t LocalOffset) {
@@ -5716,293 +5564,5 @@ ASTReader::~ASTReader() {
                                              F = I->second.end();
          J != F; ++J)
       delete static_cast<ASTDeclContextNameLookupTable*>(J->first);
-  }
-}
-
-//===----------------------------------------------------------------------===//
-// Module implementation
-//===----------------------------------------------------------------------===//
-Module::Module(ModuleKind Kind)
-  : Kind(Kind), DirectlyImported(false), SizeInBits(0), 
-    LocalNumSLocEntries(0), SLocEntryBaseID(0),
-    SLocEntryBaseOffset(0), SLocEntryOffsets(0),
-    SLocFileOffsets(0), LocalNumIdentifiers(0), 
-    IdentifierOffsets(0), BaseIdentifierID(0), IdentifierTableData(0),
-    IdentifierLookupTable(0), BasePreprocessedEntityID(0),
-    LocalNumMacroDefinitions(0), MacroDefinitionOffsets(0), 
-    BaseMacroDefinitionID(0), LocalNumHeaderFileInfos(0), 
-    HeaderFileInfoTableData(0), HeaderFileInfoTable(0),
-    HeaderFileFrameworkStrings(0),
-    LocalNumSelectors(0), SelectorOffsets(0), BaseSelectorID(0),
-    SelectorLookupTableData(0), SelectorLookupTable(0), LocalNumDecls(0),
-    DeclOffsets(0), BaseDeclID(0),
-    LocalNumCXXBaseSpecifiers(0), CXXBaseSpecifiersOffsets(0),
-    LocalNumTypes(0), TypeOffsets(0), BaseTypeIndex(0), StatCache(0),
-    NumPreallocatedPreprocessingEntities(0)
-{}
-
-Module::~Module() {
-  for (DeclContextInfosMap::iterator I = DeclContextInfos.begin(),
-                                     E = DeclContextInfos.end();
-       I != E; ++I) {
-    if (I->second.NameLookupTableData)
-      delete static_cast<ASTDeclContextNameLookupTable*>(
-               I->second.NameLookupTableData);
-  }
-
-  delete static_cast<ASTIdentifierLookupTable *>(IdentifierLookupTable);
-  delete static_cast<HeaderFileInfoLookupTable *>(HeaderFileInfoTable);
-  delete static_cast<ASTSelectorLookupTable *>(SelectorLookupTable);
-}
-
-template<typename Key, typename Offset, unsigned InitialCapacity>
-static void 
-dumpLocalRemap(StringRef Name,
-               const ContinuousRangeMap<Key, Offset, InitialCapacity> &Map) {
-  if (Map.begin() == Map.end())
-    return;
-  
-  typedef ContinuousRangeMap<Key, Offset, InitialCapacity> MapType;
-  llvm::errs() << "  " << Name << ":\n";
-  for (typename MapType::const_iterator I = Map.begin(), IEnd = Map.end(); 
-       I != IEnd; ++I) {
-    llvm::errs() << "    " << I->first << " -> " << I->second
-    << "\n";
-  }
-}
-
-void Module::dump() {
-  llvm::errs() << "\nModule: " << FileName << "\n";
-  if (!Imports.empty()) {
-    llvm::errs() << "  Imports: ";
-    for (unsigned I = 0, N = Imports.size(); I != N; ++I) {
-      if (I)
-        llvm::errs() << ", ";
-      llvm::errs() << Imports[I]->FileName;
-    }
-    llvm::errs() << "\n";
-  }
-  
-  // Remapping tables.
-  llvm::errs() << "  Base source location offset: " << SLocEntryBaseOffset 
-               << '\n';
-  dumpLocalRemap("Source location offset local -> global map", SLocRemap);
-  
-  llvm::errs() << "  Base identifier ID: " << BaseIdentifierID << '\n'
-               << "  Number of identifiers: " << LocalNumIdentifiers << '\n';
-  dumpLocalRemap("Identifier ID local -> global map", IdentifierRemap);
-  
-  llvm::errs() << "  Base selector ID: " << BaseSelectorID << '\n'
-               << "  Number of selectors: " << LocalNumSelectors << '\n';
-  dumpLocalRemap("Selector ID local -> global map", SelectorRemap);
-  
-  llvm::errs() << "  Base preprocessed entity ID: " << BasePreprocessedEntityID
-               << '\n'  
-               << "  Number of preprocessed entities: " 
-               << NumPreallocatedPreprocessingEntities << '\n';
-  dumpLocalRemap("Preprocessed entity ID local -> global map", 
-                 PreprocessedEntityRemap);
-  
-  llvm::errs() << "  Base macro definition ID: " << BaseMacroDefinitionID 
-               << '\n'
-               << "  Number of macro definitions: " << LocalNumMacroDefinitions
-               << '\n';
-  dumpLocalRemap("Macro definition ID local -> global map", 
-                 MacroDefinitionRemap);
-
-  llvm::errs() << "  Base type index: " << BaseTypeIndex << '\n'
-               << "  Number of types: " << LocalNumTypes << '\n';
-  dumpLocalRemap("Type index local -> global map", TypeRemap);
-    
-  llvm::errs() << "  Base decl ID: " << BaseDeclID << '\n'
-               << "  Number of decls: " << LocalNumDecls << '\n';
-  dumpLocalRemap("Decl ID local -> global map", DeclRemap);
-}
-
-//===----------------------------------------------------------------------===//
-// Module manager implementation
-//===----------------------------------------------------------------------===//
-
-Module *ModuleManager::lookup(StringRef Name) {
-  const FileEntry *Entry = FileMgr.getFile(Name);
-  return Modules[Entry];
-}
-
-llvm::MemoryBuffer *ModuleManager::lookupBuffer(StringRef Name) {
-  const FileEntry *Entry = FileMgr.getFile(Name);
-  return InMemoryBuffers[Entry];
-}
-
-std::pair<Module *, bool>
-ModuleManager::addModule(StringRef FileName, ModuleKind Type, 
-                         Module *ImportedBy, std::string &ErrorStr) {
-  const FileEntry *Entry = FileMgr.getFile(FileName);
-  if (!Entry && FileName != "-") {
-    ErrorStr = "file not found";
-    return std::make_pair(static_cast<Module*>(0), false);
-  }
-
-  // Check whether we already loaded this module, before 
-  Module *&ModuleEntry = Modules[Entry];
-  bool NewModule = false;
-  if (!ModuleEntry) {
-    // Allocate a new module.
-    Module *New = new Module(Type);
-    New->FileName = FileName.str();
-    Chain.push_back(New);
-    NewModule = true;
-    ModuleEntry = New;
-
-    // Load the contents of the module
-    if (llvm::MemoryBuffer *Buffer = lookupBuffer(FileName)) {
-      // The buffer was already provided for us.
-      assert(Buffer && "Passed null buffer");
-      New->Buffer.reset(Buffer);
-    } else {
-      // Open the AST file.
-      llvm::error_code ec;
-      if (FileName == "-") {
-        ec = llvm::MemoryBuffer::getSTDIN(New->Buffer);
-        if (ec)
-          ErrorStr = ec.message();
-      } else
-        New->Buffer.reset(FileMgr.getBufferForFile(FileName, &ErrorStr));
-
-      if (!New->Buffer)
-        return std::make_pair(static_cast<Module*>(0), false);
-    }
-
-    // Initialize the stream
-    New->StreamFile.init((const unsigned char *)New->Buffer->getBufferStart(),
-                         (const unsigned char *)New->Buffer->getBufferEnd());     }
-
-  if (ImportedBy) {
-    ModuleEntry->ImportedBy.insert(ImportedBy);
-    ImportedBy->Imports.insert(ModuleEntry);
-  } else {
-    ModuleEntry->DirectlyImported = true;
-  }
-  
-  return std::make_pair(ModuleEntry, NewModule);
-}
-
-void ModuleManager::addInMemoryBuffer(StringRef FileName, 
-  llvm::MemoryBuffer *Buffer) {
-  
-  const FileEntry *Entry = FileMgr.getVirtualFile(FileName, 
-    Buffer->getBufferSize(), 0);
-  InMemoryBuffers[Entry] = Buffer;
-}
-
-ModuleManager::ModuleManager(const FileSystemOptions &FSO) : FileMgr(FSO) { }
-
-ModuleManager::~ModuleManager() {
-  for (unsigned i = 0, e = Chain.size(); i != e; ++i)
-    delete Chain[e - i - 1];
-}
-
-void ModuleManager::visit(bool (*Visitor)(Module &M, void *UserData), 
-                          void *UserData) {
-  unsigned N = size();
-
-  // Record the number of incoming edges for each module. When we
-  // encounter a module with no incoming edges, push it into the queue
-  // to seed the queue.
-  SmallVector<Module *, 4> Queue;
-  Queue.reserve(N);
-  llvm::DenseMap<Module *, unsigned> UnusedIncomingEdges; 
-  for (ModuleIterator M = begin(), MEnd = end(); M != MEnd; ++M) {
-    if (unsigned Size = (*M)->ImportedBy.size())
-      UnusedIncomingEdges[*M] = Size;
-    else
-      Queue.push_back(*M);
-  }
-
-  llvm::SmallPtrSet<Module *, 4> Skipped;
-  unsigned QueueStart = 0;
-  while (QueueStart < Queue.size()) {
-    Module *CurrentModule = Queue[QueueStart++];
-
-    // Check whether this module should be skipped.
-    if (Skipped.count(CurrentModule))
-      continue;
-
-    if (Visitor(*CurrentModule, UserData)) {
-      // The visitor has requested that cut off visitation of any
-      // module that the current module depends on. To indicate this
-      // behavior, we mark all of the reachable modules as having N
-      // incoming edges (which is impossible otherwise).
-      SmallVector<Module *, 4> Stack;
-      Stack.push_back(CurrentModule);
-      Skipped.insert(CurrentModule);
-      while (!Stack.empty()) {
-        Module *NextModule = Stack.back();
-        Stack.pop_back();
-
-        // For any module that this module depends on, push it on the
-        // stack (if it hasn't already been marked as visited).
-        for (llvm::SetVector<Module *>::iterator 
-                  M = NextModule->Imports.begin(),
-               MEnd = NextModule->Imports.end();
-             M != MEnd; ++M) {
-          if (Skipped.insert(*M))
-            Stack.push_back(*M);
-        }
-      }
-      continue;
-    }
-
-    // For any module that this module depends on, push it on the
-    // stack (if it hasn't already been marked as visited).
-    for (llvm::SetVector<Module *>::iterator M = CurrentModule->Imports.begin(),
-                                          MEnd = CurrentModule->Imports.end();
-         M != MEnd; ++M) {
-
-      // Remove our current module as an impediment to visiting the
-      // module we depend on. If we were the last unvisited module
-      // that depends on this particular module, push it into the
-      // queue to be visited.
-      unsigned &NumUnusedEdges = UnusedIncomingEdges[*M];
-      if (NumUnusedEdges && (--NumUnusedEdges == 0))
-        Queue.push_back(*M);
-    }
-  }
-}
-
-/// \brief Perform a depth-first visit of the current module.
-static bool visitDepthFirst(Module &M, 
-                            bool (*Visitor)(Module &M, bool Preorder, 
-                                            void *UserData), 
-                            void *UserData,
-                            llvm::SmallPtrSet<Module *, 4> &Visited) {
-  // Preorder visitation
-  if (Visitor(M, /*Preorder=*/true, UserData))
-    return true;
-
-  // Visit children
-  for (llvm::SetVector<Module *>::iterator IM = M.Imports.begin(),
-                                        IMEnd = M.Imports.end();
-       IM != IMEnd; ++IM) {
-    if (!Visited.insert(*IM))
-      continue;
-
-    if (visitDepthFirst(**IM, Visitor, UserData, Visited))
-      return true;
-  }  
-
-  // Postorder visitation
-  return Visitor(M, /*Preorder=*/false, UserData);
-}
-
-void ModuleManager::visitDepthFirst(bool (*Visitor)(Module &M, bool Preorder, 
-                                                    void *UserData), 
-                                    void *UserData) {
-  llvm::SmallPtrSet<Module *, 4> Visited;
-  for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
-    if (!Visited.insert(Chain[I]))
-      continue;
-
-    if (::visitDepthFirst(*Chain[I], Visitor, UserData, Visited))
-      return;
   }
 }
