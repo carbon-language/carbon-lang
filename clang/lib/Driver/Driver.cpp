@@ -234,23 +234,6 @@ DerivedArgList *Driver::TranslateInputArgs(const InputArgList &Args) const {
   }
 #endif
 
-  // If -fapple-kext has been specified, add -kext to linker command if not
-  // already done so.  Also check to make sure we're actually linking.
-  if (Args.hasArg(options::OPT_fapple_kext) && getFinalPhase(*DAL) ==
-      phases::Link) {
-    bool add_kext = true;
-    std::vector<std::string> LinkerArgs =
-      Args.getAllArgValues(options::OPT_Xlinker);
-    for (std::vector<std::string>::iterator it = LinkerArgs.begin(),
-           ie = LinkerArgs.end(); it != ie; it++)
-      if (*it == "-kext") {
-        add_kext = false;
-        break;
-      }
-    if (add_kext)
-      DAL->AddSeparateArg(0, Opts->getOption(options::OPT_Xlinker), "-kext");
-  }
-
   return DAL;
 }
 
