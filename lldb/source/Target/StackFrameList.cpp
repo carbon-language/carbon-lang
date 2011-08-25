@@ -63,7 +63,7 @@ StackFrameList::GetNumFrames (bool can_create)
         if (m_show_inlined_frames)
         {
 #if defined (DEBUG_STACK_FRAMES)
-            StreamFile s(stdout);
+            StreamFile s(stdout, false);
 #endif
             Unwind *unwinder = m_thread.GetUnwinder ();
             addr_t pc = LLDB_INVALID_ADDRESS;
@@ -456,7 +456,7 @@ StackFrameList::Merge (std::auto_ptr<StackFrameList>& curr_ap, lldb::StackFrameL
     Mutex::Locker prev_locker (prev_sp.get() ? prev_sp->m_mutex.GetMutex() : NULL);
 
 #if defined (DEBUG_STACK_FRAMES)
-    StreamFile s(stdout);
+    StreamFile s(stdout, false);
     s.PutCString("\n\nStackFrameList::Merge():\nPrev:\n");
     if (prev_sp.get())
         prev_sp->Dump (&s);
@@ -514,9 +514,8 @@ StackFrameList::Merge (std::auto_ptr<StackFrameList>& curr_ap, lldb::StackFrameL
     StackID curr_stack_id (curr_frame_zero_sp->GetStackID());
     StackID prev_stack_id (prev_frame_zero_sp->GetStackID());
 
-    //const uint32_t num_prev_frames = prev_sp->GetNumFrames (false);
-
 #if defined (DEBUG_STACK_FRAMES)
+    const uint32_t num_prev_frames = prev_sp->GetNumFrames (false);
     s.Printf("\n%u previous frames with one current frame\n", num_prev_frames);
 #endif
 
