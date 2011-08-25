@@ -2471,70 +2471,66 @@ ASTReader::ReadASTBlock(Module &F) {
   return Failure;
 }
 
-ASTReader::ASTReadResult ASTReader::validateFileEntries() {
-  for (ModuleIterator I = ModuleMgr.begin(),
-      E = ModuleMgr.end(); I != E; ++I) {
-    Module *F = *I;
-    llvm::BitstreamCursor &SLocEntryCursor = F->SLocEntryCursor;
+ASTReader::ASTReadResult ASTReader::validateFileEntries(Module &M) {
+  llvm::BitstreamCursor &SLocEntryCursor = M.SLocEntryCursor;
 
-    for (unsigned i = 0, e = F->LocalNumSLocFileEntries; i != e; ++i) {
-      SLocEntryCursor.JumpToBit(F->SLocFileOffsets[i]);
-      unsigned Code = SLocEntryCursor.ReadCode();
-      if (Code == llvm::bitc::END_BLOCK ||
-          Code == llvm::bitc::ENTER_SUBBLOCK ||
-          Code == llvm::bitc::DEFINE_ABBREV) {
-        Error("incorrectly-formatted source location entry in AST file");
+  for (unsigned i = 0, e = M.LocalNumSLocFileEntries; i != e; ++i) {
+    SLocEntryCursor.JumpToBit(M.SLocFileOffsets[i]);
+    unsigned Code = SLocEntryCursor.ReadCode();
+    if (Code == llvm::bitc::END_BLOCK ||
+        Code == llvm::bitc::ENTER_SUBBLOCK ||
+        Code == llvm::bitc::DEFINE_ABBREV) {
+      Error("incorrectly-formatted source location entry in AST file");
+      return Failure;
+    }
+
+    RecordData Record;
+    const char *BlobStart;
+    unsigned BlobLen;
+    switch (SLocEntryCursor.ReadRecord(Code, Record, &BlobStart, &BlobLen)) {
+    default:
+      Error("incorrectly-formatted source location entry in AST file");
+      return Failure;
+
+    case SM_SLOC_FILE_ENTRY: {
+      StringRef Filename(BlobStart, BlobLen);
+      const FileEntry *File = getFileEntry(Filename);
+
+      if (File == 0) {
+        std::string ErrorStr = "could not find file '";
+        ErrorStr += Filename;
+        ErrorStr += "' referenced by AST file";
+        Error(ErrorStr.c_str());
+        return IgnorePCH;
+      }
+
+      if (Record.size() < 6) {
+        Error("source location entry is incorrect");
         return Failure;
       }
-  
-      RecordData Record;
-      const char *BlobStart;
-      unsigned BlobLen;
-      switch (SLocEntryCursor.ReadRecord(Code, Record, &BlobStart, &BlobLen)) {
-      default:
-        Error("incorrectly-formatted source location entry in AST file");
-        return Failure;
-  
-      case SM_SLOC_FILE_ENTRY: {
-        StringRef Filename(BlobStart, BlobLen);
-        const FileEntry *File = getFileEntry(Filename);
 
-        if (File == 0) {
-          std::string ErrorStr = "could not find file '";
-          ErrorStr += Filename;
-          ErrorStr += "' referenced by AST file";
-          Error(ErrorStr.c_str());
-          return IgnorePCH;
-        }
-  
-        if (Record.size() < 6) {
-          Error("source location entry is incorrect");
-          return Failure;
-        }
+      // The stat info from the FileEntry came from the cached stat
+      // info of the PCH, so we cannot trust it.
+      struct stat StatBuf;
+      if (::stat(File->getName(), &StatBuf) != 0) {
+        StatBuf.st_size = File->getSize();
+        StatBuf.st_mtime = File->getModificationTime();
+      }
 
-        // The stat info from the FileEntry came from the cached stat
-        // info of the PCH, so we cannot trust it.
-        struct stat StatBuf;
-        if (::stat(File->getName(), &StatBuf) != 0) {
-          StatBuf.st_size = File->getSize();
-          StatBuf.st_mtime = File->getModificationTime();
-        }
-
-        if (((off_t)Record[4] != StatBuf.st_size
+      if (((off_t)Record[4] != StatBuf.st_size
 #if !defined(LLVM_ON_WIN32)
-            // In our regression testing, the Windows file system seems to
-            // have inconsistent modification times that sometimes
-            // erroneously trigger this error-handling path.
-             || (time_t)Record[5] != StatBuf.st_mtime
+          // In our regression testing, the Windows file system seems to
+          // have inconsistent modification times that sometimes
+          // erroneously trigger this error-handling path.
+           || (time_t)Record[5] != StatBuf.st_mtime
 #endif
-            )) {
-          Error(diag::err_fe_pch_file_modified, Filename);
-          return IgnorePCH;
-        }
+          )) {
+        Error(diag::err_fe_pch_file_modified, Filename);
+        return IgnorePCH;
+      }
 
-        break;
-      }
-      }
+      break;
+    }
     }
   }
 
@@ -2550,14 +2546,6 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
   }
 
   // Here comes stuff that we only do once the entire chain is loaded.
-
-  if (!DisableValidation) {
-    switch(validateFileEntries()) {
-    case Failure: return Failure;
-    case IgnorePCH: return IgnorePCH;
-    case Success: break;
-    }
-  }
 
   // Preload SLocEntries.
   for (unsigned I = 0, N = PreloadSLocEntries.size(); I != N; ++I) {
@@ -2745,6 +2733,16 @@ ASTReader::ASTReadResult ASTReader::ReadASTCore(StringRef FileName,
   F.GlobalBitOffset = TotalModulesSizeInBits;
   TotalModulesSizeInBits += F.SizeInBits;
   GlobalBitOffsetsMap.insert(std::make_pair(F.GlobalBitOffset, &F));
+
+  // Make sure that the files this module was built against are still available.
+  if (!DisableValidation) {
+    switch(validateFileEntries(*M)) {
+    case Failure: return Failure;
+    case IgnorePCH: return IgnorePCH;
+    case Success: break;
+    }
+  }
+
   return Success;
 }
 

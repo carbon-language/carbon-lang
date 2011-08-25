@@ -763,7 +763,7 @@ public:
 
   /// \brief Checks that no file that is stored in PCH is out-of-sync with
   /// the actual file in the file system.
-  ASTReadResult validateFileEntries();
+  ASTReadResult validateFileEntries(Module &M);
 
   /// \brief Set the AST callbacks listener.
   void setListener(ASTReaderListener *listener) {
