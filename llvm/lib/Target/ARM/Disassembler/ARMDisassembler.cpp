@@ -376,6 +376,8 @@ void ThumbDisassembler::AddThumbPredicate(MCInst &MI) const {
   unsigned CC;
   if (!ITBlock.empty()) {
     CC = ITBlock.back();
+    if (CC == 0xF)
+      CC = ARMCC::AL;
     ITBlock.pop_back();
   } else
     CC = ARMCC::AL;
