@@ -59,21 +59,22 @@ bool FileRemapper::initFromDisk(StringRef outputDir, Diagnostic &Diag,
     return false;
 
   std::vector<std::pair<const FileEntry *, const FileEntry *> > pairs;
-
-  std::ifstream fin(infoFile.c_str());
-  if (!fin.good())
+  
+  llvm::OwningPtr<llvm::MemoryBuffer> fileBuf;
+  if (llvm::error_code ec = llvm::MemoryBuffer::getFile(infoFile.c_str(),
+                                                        fileBuf))
     return report(std::string("Error opening file: ") + infoFile, Diag);
+  
+  SmallVector<StringRef, 64> lines;
+  fileBuf->getBuffer().split(lines, "\n");
 
-  while (true) {
-    std::string fromFilename, toFilename;
+  unsigned idx = 0;
+  while (idx+3 <= lines.size()) {
+    std::string fromFilename = lines[idx];
     uint64_t timeModified;
-
-    fin >> fromFilename >> timeModified >> toFilename;
-    if (fin.eof())
-      break;
-    if (!fin.good())
-      return report(std::string("Error in format of file: ") + infoFile, Diag);
-
+    lines[idx+1].getAsInteger(10, timeModified);
+    std::string toFilename = lines[idx+2];
+    
     const FileEntry *origFE = FileMgr->getFile(fromFilename);
     if (!origFE) {
       if (ignoreIfFilesChanged)
@@ -94,6 +95,8 @@ bool FileRemapper::initFromDisk(StringRef outputDir, Diagnostic &Diag,
     }
 
     pairs.push_back(std::make_pair(origFE, newFE));
+
+    idx += 3;
   }
 
   for (unsigned i = 0, e = pairs.size(); i != e; ++i)
