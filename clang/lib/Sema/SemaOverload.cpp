@@ -8525,8 +8525,7 @@ Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc, unsigned OpcIn,
         << UnaryOperator::getOpcodeStr(Opc)
         << Input->getType()
         << Input->getSourceRange();
-    CandidateSet.NoteCandidates(*this, OCD_ViableCandidates,
-                                Args, NumArgs,
+    CandidateSet.NoteCandidates(*this, OCD_ViableCandidates, Args, NumArgs,
                                 UnaryOperator::getOpcodeStr(Opc), OpLoc);
     return ExprError();
 
@@ -8536,7 +8535,8 @@ Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc, unsigned OpcIn,
       << UnaryOperator::getOpcodeStr(Opc)
       << getDeletedOrUnavailableSuffix(Best->Function)
       << Input->getSourceRange();
-    CandidateSet.NoteCandidates(*this, OCD_AllCandidates, Args, NumArgs);
+    CandidateSet.NoteCandidates(*this, OCD_AllCandidates, Args, NumArgs,
+                                UnaryOperator::getOpcodeStr(Opc), OpLoc);
     return ExprError();
   }
 
@@ -8831,7 +8831,8 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
         << BinaryOperator::getOpcodeStr(Opc)
         << getDeletedOrUnavailableSuffix(Best->Function)
         << Args[0]->getSourceRange() << Args[1]->getSourceRange();
-      CandidateSet.NoteCandidates(*this, OCD_AllCandidates, Args, 2);
+      CandidateSet.NoteCandidates(*this, OCD_AllCandidates, Args, 2,
+                                  BinaryOperator::getOpcodeStr(Opc), OpLoc);
       return ExprError();
   }
 
