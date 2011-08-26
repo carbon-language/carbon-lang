@@ -69,8 +69,6 @@ static DecodeStatus DecodeCCOutOperand(llvm::MCInst &Inst, unsigned Val,
                                uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeSOImmOperand(llvm::MCInst &Inst, unsigned Val,
                                uint64_t Address, const void *Decoder);
-static DecodeStatus DecodeBLTargetOperand(llvm::MCInst &Inst, unsigned Val,
-                               uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeRegListOperand(llvm::MCInst &Inst, unsigned Val,
                                uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeSPRRegListOperand(llvm::MCInst &Inst, unsigned Val,
@@ -763,13 +761,6 @@ static DecodeStatus DecodeSOImmOperand(llvm::MCInst &Inst, unsigned Val,
   uint32_t rot = (Val & 0xF00) >> 7;
   uint32_t rot_imm = (imm >> rot) | (imm << (32-rot));
   Inst.addOperand(MCOperand::CreateImm(rot_imm));
-  return Success;
-}
-
-static DecodeStatus DecodeBLTargetOperand(llvm::MCInst &Inst, unsigned Val,
-                               uint64_t Address, const void *Decoder) {
-  Val <<= 2;
-  Inst.addOperand(MCOperand::CreateImm(SignExtend32<26>(Val)));
   return Success;
 }
 

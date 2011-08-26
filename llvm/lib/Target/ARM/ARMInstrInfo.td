@@ -344,9 +344,13 @@ def bl_target : Operand<i32> {
   // Encoded the same as branch targets.
   let EncoderMethod = "getARMBranchTargetOpValue";
   let OperandType = "OPERAND_PCREL";
-  let DecoderMethod = "DecodeBLTargetOperand";
 }
 
+def blx_target : Operand<i32> {
+  // Encoded the same as branch targets.
+  let EncoderMethod = "getARMBLXTargetOpValue";
+  let OperandType = "OPERAND_PCREL";
+}
 
 // A list of registers separated by comma. Used by load/store multiple.
 def RegListAsmOperand : AsmOperandClass { let Name = "RegList"; }
@@ -1657,6 +1661,7 @@ let isCall = 1,
     let Inst{31-28} = 0b1110;
     bits<24> func;
     let Inst{23-0} = func;
+    let DecoderMethod = "DecodeBranchImmInstruction";
   }
 
   def BL_pred : ABI<0b1011, (outs), (ins bl_target:$func, variable_ops),
@@ -1665,6 +1670,7 @@ let isCall = 1,
                 Requires<[IsARM, IsNotDarwin]> {
     bits<24> func;
     let Inst{23-0} = func;
+    let DecoderMethod = "DecodeBranchImmInstruction";
   }
 
   // ARMv5T and above
@@ -1784,7 +1790,7 @@ let isBranch = 1, isTerminator = 1 in {
 }
 
 // BLX (immediate)
-def BLXi : AXI<(outs), (ins br_target:$target), BrMiscFrm, NoItinerary,
+def BLXi : AXI<(outs), (ins blx_target:$target), BrMiscFrm, NoItinerary,
                "blx\t$target", []>,
            Requires<[IsARM, HasV5T]> {
   let Inst{31-25} = 0b1111101;

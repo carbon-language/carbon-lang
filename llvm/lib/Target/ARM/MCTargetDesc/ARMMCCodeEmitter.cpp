@@ -118,6 +118,8 @@ public:
   /// branch target.
   uint32_t getARMBranchTargetOpValue(const MCInst &MI, unsigned OpIdx,
                                      SmallVectorImpl<MCFixup> &Fixups) const;
+  uint32_t getARMBLXTargetOpValue(const MCInst &MI, unsigned OpIdx,
+                                     SmallVectorImpl<MCFixup> &Fixups) const;
 
   /// getAdrLabelOpValue - Return encoding info for 12-bit immediate
   /// ADR label target.
@@ -544,8 +546,20 @@ getARMBranchTargetOpValue(const MCInst &MI, unsigned OpIdx,
   return MO.getImm() >> 2;
 }
 
+uint32_t ARMMCCodeEmitter::
+getARMBLXTargetOpValue(const MCInst &MI, unsigned OpIdx,
+                          SmallVectorImpl<MCFixup> &Fixups) const {
+  const MCOperand MO = MI.getOperand(OpIdx);
+  if (MO.isExpr()) {
+    if (HasConditionalBranch(MI)) 
+      return ::getBranchTargetOpValue(MI, OpIdx,
+                                      ARM::fixup_arm_condbranch, Fixups);
+    return ::getBranchTargetOpValue(MI, OpIdx, 
+                                    ARM::fixup_arm_uncondbranch, Fixups);
+  }
 
-
+  return MO.getImm() >> 1;
+}
 
 /// getUnconditionalBranchTargetOpValue - Return encoding info for 24-bit
 /// immediate branch target.

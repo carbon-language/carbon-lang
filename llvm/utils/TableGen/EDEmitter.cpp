@@ -630,6 +630,7 @@ static int ARMFlagFromOpName(LiteralConstantEmitter *type,
 
   MISC("br_target", "kOperandTypeARMBranchTarget");                // ?
   MISC("bl_target", "kOperandTypeARMBranchTarget");                // ?
+  MISC("blx_target", "kOperandTypeARMBranchTarget");                // ?
 
   MISC("t_bltarget", "kOperandTypeARMBranchTarget");              // ?
   MISC("t_blxtarget", "kOperandTypeARMBranchTarget");             // ?
