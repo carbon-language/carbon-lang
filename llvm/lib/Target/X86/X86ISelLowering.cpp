@@ -478,6 +478,10 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::ATOMIC_SWAP, MVT::i64, Custom);
   }
 
+  if (Subtarget->hasCmpxchg16b()) {
+    setOperationAction(ISD::ATOMIC_CMP_SWAP, MVT::i128, Custom);
+  }
+
   // FIXME - use subtarget debug flags
   if (!Subtarget->isTargetDarwin() &&
       !Subtarget->isTargetELF() &&
@@ -10421,37 +10425,48 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
   }
   case ISD::ATOMIC_CMP_SWAP: {
     EVT T = N->getValueType(0);
-    assert (T == MVT::i64 && "Only know how to expand i64 Cmp and Swap");
+    assert (T == MVT::i64 || T == MVT::i128 && "can only expand cmpxchg pair");
+    bool Regs64bit = T == MVT::i128;
+    EVT HalfT = Regs64bit ? MVT::i64 : MVT::i32;
     SDValue cpInL, cpInH;
-    cpInL = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, MVT::i32, N->getOperand(2),
-                        DAG.getConstant(0, MVT::i32));
-    cpInH = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, MVT::i32, N->getOperand(2),
-                        DAG.getConstant(1, MVT::i32));
-    cpInL = DAG.getCopyToReg(N->getOperand(0), dl, X86::EAX, cpInL, SDValue());
-    cpInH = DAG.getCopyToReg(cpInL.getValue(0), dl, X86::EDX, cpInH,
-                             cpInL.getValue(1));
+    cpInL = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, HalfT, N->getOperand(2),
+                        DAG.getConstant(0, HalfT));
+    cpInH = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, HalfT, N->getOperand(2),
+                        DAG.getConstant(1, HalfT));
+    cpInL = DAG.getCopyToReg(N->getOperand(0), dl,
+                             Regs64bit ? X86::RAX : X86::EAX,
+                             cpInL, SDValue());
+    cpInH = DAG.getCopyToReg(cpInL.getValue(0), dl,
+                             Regs64bit ? X86::RDX : X86::EDX,
+                             cpInH, cpInL.getValue(1));
     SDValue swapInL, swapInH;
-    swapInL = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, MVT::i32, N->getOperand(3),
-                          DAG.getConstant(0, MVT::i32));
-    swapInH = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, MVT::i32, N->getOperand(3),
-                          DAG.getConstant(1, MVT::i32));
-    swapInL = DAG.getCopyToReg(cpInH.getValue(0), dl, X86::EBX, swapInL,
-                               cpInH.getValue(1));
-    swapInH = DAG.getCopyToReg(swapInL.getValue(0), dl, X86::ECX, swapInH,
-                               swapInL.getValue(1));
+    swapInL = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, HalfT, N->getOperand(3),
+                          DAG.getConstant(0, HalfT));
+    swapInH = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, HalfT, N->getOperand(3),
+                          DAG.getConstant(1, HalfT));
+    swapInL = DAG.getCopyToReg(cpInH.getValue(0), dl,
+                               Regs64bit ? X86::RBX : X86::EBX,
+                               swapInL, cpInH.getValue(1));
+    swapInH = DAG.getCopyToReg(swapInL.getValue(0), dl,
+                               Regs64bit ? X86::RCX : X86::ECX, 
+                               swapInH, swapInL.getValue(1));
     SDValue Ops[] = { swapInH.getValue(0),
                       N->getOperand(1),
                       swapInH.getValue(1) };
     SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Glue);
     MachineMemOperand *MMO = cast<AtomicSDNode>(N)->getMemOperand();
-    SDValue Result = DAG.getMemIntrinsicNode(X86ISD::LCMPXCHG8_DAG, dl, Tys,
+    unsigned Opcode = Regs64bit ? X86ISD::LCMPXCHG16_DAG :
+                                  X86ISD::LCMPXCHG8_DAG;
+    SDValue Result = DAG.getMemIntrinsicNode(Opcode, dl, Tys,
                                              Ops, 3, T, MMO);
-    SDValue cpOutL = DAG.getCopyFromReg(Result.getValue(0), dl, X86::EAX,
-                                        MVT::i32, Result.getValue(1));
-    SDValue cpOutH = DAG.getCopyFromReg(cpOutL.getValue(1), dl, X86::EDX,
-                                        MVT::i32, cpOutL.getValue(2));
+    SDValue cpOutL = DAG.getCopyFromReg(Result.getValue(0), dl,
+                                        Regs64bit ? X86::RAX : X86::EAX,
+                                        HalfT, Result.getValue(1));
+    SDValue cpOutH = DAG.getCopyFromReg(cpOutL.getValue(1), dl,
+                                        Regs64bit ? X86::RDX : X86::EDX,
+                                        HalfT, cpOutL.getValue(2));
     SDValue OpsF[] = { cpOutL.getValue(0), cpOutH.getValue(0)};
-    Results.push_back(DAG.getNode(ISD::BUILD_PAIR, dl, MVT::i64, OpsF, 2));
+    Results.push_back(DAG.getNode(ISD::BUILD_PAIR, dl, T, OpsF, 2));
     Results.push_back(cpOutH.getValue(1));
     return;
   }

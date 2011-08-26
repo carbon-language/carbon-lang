@@ -303,9 +303,10 @@ namespace llvm {
       ATOMNAND64_DAG,
       ATOMSWAP64_DAG,
 
-      // LCMPXCHG_DAG, LCMPXCHG8_DAG - Compare and swap.
+      // LCMPXCHG_DAG, LCMPXCHG8_DAG, LCMPXCHG16_DAG - Compare and swap.
       LCMPXCHG_DAG,
       LCMPXCHG8_DAG,
+      LCMPXCHG16_DAG,
 
       // VZEXT_LOAD - Load, scalar_to_vector, and zero extend.
       VZEXT_LOAD,

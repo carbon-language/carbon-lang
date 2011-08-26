@@ -100,6 +100,10 @@ protected:
   /// operands. This may require setting a feature bit in the processor.
   bool HasVectorUAMem;
 
+  /// HasCmpxchg16b - True if this processor has the CMPXCHG16B instruction;
+  /// this is true for most x86-64 chips, but not the first AMD chips.
+  bool HasCmpxchg16b;
+
   /// stackAlignment - The minimum alignment known to hold of the stack frame on
   /// entry to the function and which must be maintained by every function.
   unsigned stackAlignment;
@@ -168,6 +172,7 @@ public:
   bool isBTMemSlow() const { return IsBTMemSlow; }
   bool isUnalignedMemAccessFast() const { return IsUAMemFast; }
   bool hasVectorUAMem() const { return HasVectorUAMem; }
+  bool hasCmpxchg16b() const { return HasCmpxchg16b; }
 
   const Triple &getTargetTriple() const { return TargetTriple; }
 

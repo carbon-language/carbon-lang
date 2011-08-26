@@ -665,12 +665,20 @@ def LOCK_DEC64m : RI<0xFF, MRM1m, (outs), (ins i64mem:$dst),
 
 // Atomic compare and swap.
 let Defs = [EAX, EDX, EFLAGS], Uses = [EAX, EBX, ECX, EDX],
-    isCodeGenOnly = 1 in {
+    isCodeGenOnly = 1 in
 def LCMPXCHG8B : I<0xC7, MRM1m, (outs), (ins i64mem:$ptr),
                "lock\n\t"
                "cmpxchg8b\t$ptr",
                [(X86cas8 addr:$ptr)]>, TB, LOCK;
-}
+
+let Defs = [RAX, RDX, EFLAGS], Uses = [RAX, RBX, RCX, RDX],
+    isCodeGenOnly = 1 in
+def LCMPXCHG16B : RI<0xC7, MRM1m, (outs), (ins i128mem:$ptr),
+                    "lock\n\t"
+                    "cmpxchg16b\t$ptr",
+                    [(X86cas16 addr:$ptr)]>, TB, LOCK,
+                    Requires<[HasCmpxchg16b]>;
+
 let Defs = [AL, EFLAGS], Uses = [AL], isCodeGenOnly = 1 in {
 def LCMPXCHG8 : I<0xB0, MRMDestMem, (outs), (ins i8mem:$ptr, GR8:$swap),
                "lock\n\t"

@@ -65,7 +65,7 @@ def SDTX86SetCC_C : SDTypeProfile<1, 2,
 
 def SDTX86cas : SDTypeProfile<0, 3, [SDTCisPtrTy<0>, SDTCisInt<1>,
                                      SDTCisVT<2, i8>]>;
-def SDTX86cas8 : SDTypeProfile<0, 1, [SDTCisPtrTy<0>]>;
+def SDTX86caspair : SDTypeProfile<0, 1, [SDTCisPtrTy<0>]>;
 
 def SDTX86atomicBinary : SDTypeProfile<2, 3, [SDTCisInt<0>, SDTCisInt<1>,
                                 SDTCisPtrTy<2>, SDTCisInt<3>,SDTCisInt<4>]>;
@@ -133,9 +133,13 @@ def X86setcc_c : SDNode<"X86ISD::SETCC_CARRY", SDTX86SetCC_C>;
 def X86cas : SDNode<"X86ISD::LCMPXCHG_DAG", SDTX86cas,
                         [SDNPHasChain, SDNPInGlue, SDNPOutGlue, SDNPMayStore,
                          SDNPMayLoad, SDNPMemOperand]>;
-def X86cas8 : SDNode<"X86ISD::LCMPXCHG8_DAG", SDTX86cas8,
+def X86cas8 : SDNode<"X86ISD::LCMPXCHG8_DAG", SDTX86caspair,
                         [SDNPHasChain, SDNPInGlue, SDNPOutGlue, SDNPMayStore,
                          SDNPMayLoad, SDNPMemOperand]>;
+def X86cas16 : SDNode<"X86ISD::LCMPXCHG16_DAG", SDTX86caspair,
+                        [SDNPHasChain, SDNPInGlue, SDNPOutGlue, SDNPMayStore,
+                         SDNPMayLoad, SDNPMemOperand]>;
+
 def X86AtomAdd64 : SDNode<"X86ISD::ATOMADD64_DAG", SDTX86atomicBinary,
                         [SDNPHasChain, SDNPMayStore,
                          SDNPMayLoad, SDNPMemOperand]>;
@@ -466,6 +470,7 @@ def HasFMA3      : Predicate<"Subtarget->hasFMA3()">;
 def HasFMA4      : Predicate<"Subtarget->hasFMA4()">;
 def FPStackf32   : Predicate<"!Subtarget->hasXMM()">;
 def FPStackf64   : Predicate<"!Subtarget->hasXMMInt()">;
+def HasCmpxchg16b: Predicate<"Subtarget->hasCmpxchg16b()">;
 def In32BitMode  : Predicate<"!Subtarget->is64Bit()">,
                              AssemblerPredicate<"!Mode64Bit">;
 def In64BitMode  : Predicate<"Subtarget->is64Bit()">,
@@ -1190,7 +1195,7 @@ def CMPXCHG8B : I<0xC7, MRM1m, (outs), (ins i64mem:$dst),
 
 let Defs = [RAX, RDX, EFLAGS], Uses = [RAX, RBX, RCX, RDX] in
 def CMPXCHG16B : RI<0xC7, MRM1m, (outs), (ins i128mem:$dst),
-                    "cmpxchg16b\t$dst", []>, TB;
+                    "cmpxchg16b\t$dst", []>, TB, Requires<[HasCmpxchg16b]>;
 
 
 
