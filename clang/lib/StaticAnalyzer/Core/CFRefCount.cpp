@@ -2693,7 +2693,6 @@ public:
     switch (GCMode) {
     case LangOptions::HybridGC:
       llvm_unreachable("GC mode not set yet!");
-      return true;
     case LangOptions::NonGC:
       return false;
     case LangOptions::GCOnly:
@@ -2701,7 +2700,6 @@ public:
     }
 
     llvm_unreachable("Invalid/unknown GC mode.");
-    return false;
   }
 
   bool isARCorGCEnabled(ASTContext &Ctx) const {
