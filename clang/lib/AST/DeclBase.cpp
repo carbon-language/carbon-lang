@@ -969,6 +969,9 @@ void DeclContext::removeDecl(Decl *D) {
   if (isa<NamedDecl>(D)) {
     NamedDecl *ND = cast<NamedDecl>(D);
 
+    // Remove only decls that have a name
+    if (!ND->getDeclName()) return;
+
     StoredDeclsMap *Map = getPrimaryContext()->LookupPtr;
     if (!Map) return;
 
