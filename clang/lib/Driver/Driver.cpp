@@ -1336,12 +1336,12 @@ void Driver::BuildJobsForAction(Compilation &C,
 }
 
 // Strip the directory and suffix from BaseInput.
-static const char *getBaseName (const char *BaseInput) {
+static std::string getBaseName (const char *BaseInput) {
   std::pair<StringRef, StringRef> Split = StringRef(BaseInput).rsplit('/');
   if (Split.second != "")
-    return Split.second.split('.').first.str().c_str();
+    return Split.second.split('.').first.str();
   else
-    return Split.first.split('.').first.str().c_str();
+    return Split.first.split('.').first.str();
 }
 
 const char *Driver::GetNamedOutputPath(Compilation &C,
@@ -1364,7 +1364,7 @@ const char *Driver::GetNamedOutputPath(Compilation &C,
   if ((!AtTopLevel && !C.getArgs().hasArg(options::OPT_save_temps)) ||
       CCGenDiagnostics) {
     std::string TmpName =
-      GetTemporaryPath(getBaseName(BaseInput), 
+      GetTemporaryPath(getBaseName(BaseInput).c_str(), 
                        types::getTypeTempSuffix(JA.getType()));
     return C.addTempFile(C.getArgs().MakeArgString(TmpName.c_str()));
   }
@@ -1400,7 +1400,7 @@ const char *Driver::GetNamedOutputPath(Compilation &C,
   if (!AtTopLevel && C.getArgs().hasArg(options::OPT_save_temps) &&
       NamedOutput == BaseName) {
     std::string TmpName =
-      GetTemporaryPath(getBaseName(BaseInput),
+      GetTemporaryPath(getBaseName(BaseInput).c_str(),
                        types::getTypeTempSuffix(JA.getType()));
     return C.addTempFile(C.getArgs().MakeArgString(TmpName.c_str()));
   }
