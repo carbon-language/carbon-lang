@@ -1,5 +1,4 @@
 // RUN: tblgen < %s
-// XFAIL: vg_leak
 
 /* foo
 

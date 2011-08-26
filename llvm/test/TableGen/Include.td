@@ -1,5 +1,4 @@
 // RUN: tblgen -I %p %s
-// XFAIL: vg_leak
 def BeforeInclude;
 
 include "Include.inc"
