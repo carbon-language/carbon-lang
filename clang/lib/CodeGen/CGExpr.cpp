@@ -2326,7 +2326,7 @@ CodeGenFunction::EmitCXXTypeidLValue(const CXXTypeidExpr *E) {
 LValue
 CodeGenFunction::EmitCXXBindTemporaryLValue(const CXXBindTemporaryExpr *E) {
   AggValueSlot Slot = CreateAggTemp(E->getType(), "temp.lvalue");
-  Slot.setLifetimeExternallyManaged();
+  Slot.setExternallyDestructed();
   EmitAggExpr(E->getSubExpr(), Slot);
   EmitCXXTemporary(E->getTemporary(), Slot.getAddr());
   return MakeAddrLValue(Slot.getAddr(), E->getType());

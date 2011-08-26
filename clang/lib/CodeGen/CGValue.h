@@ -338,17 +338,33 @@ class AggValueSlot {
   // Qualifiers
   Qualifiers Quals;
 
-  // Associated flags.
-  bool LifetimeFlag : 1;
-  bool RequiresGCollection : 1;
+  /// DestructedFlag - This is set to true if some external code is
+  /// responsible for setting up a destructor for the slot.  Otherwise
+  /// the code which constructs it should push the appropriate cleanup.
+  bool DestructedFlag : 1;
+
+  /// ObjCGCFlag - This is set to true if writing to the memory in the
+  /// slot might require calling an appropriate Objective-C GC
+  /// barrier.  The exact interaction here is unnecessarily mysterious.
+  bool ObjCGCFlag : 1;
   
-  /// ZeroedFlag - This is set to true if the destination is known to be zero
-  /// before the assignment into it.  This means that zero fields don't need to
-  /// be set.
+  /// ZeroedFlag - This is set to true if the memory in the slot is
+  /// known to be zero before the assignment into it.  This means that
+  /// zero fields don't need to be set.
   bool ZeroedFlag : 1;
 
-  /// AliasedFlag - This generally defaults to false, but can be true
-  /// if the memory is known not to be aliased.
+  /// AliasedFlag - This is set to true if the slot might be aliased
+  /// and it's not undefined behavior to access it through such an
+  /// alias.  Note that it's always undefined behavior to access a C++
+  /// object that's under construction through an alias derived from
+  /// outside the construction process.
+  ///
+  /// This flag controls whether calls that produce the aggregate
+  /// value may be evaluated directly into the slot, or whether they
+  /// must be evaluated into an unaliased temporary and then memcpy'ed
+  /// over.  Since it's invalid in general to memcpy a non-POD C++
+  /// object, it's important that this flag never be set when
+  /// evaluating an expression which constructs such an object.
   bool AliasedFlag : 1;
 
 public:
@@ -363,10 +379,7 @@ public:
     AggValueSlot AV;
     AV.Addr = 0;
     AV.Quals = Qualifiers();
-    AV.LifetimeFlag = AV.RequiresGCollection = AV.ZeroedFlag = false;
-
-    // If there's ever an address here, it will be a temporary.
-    AV.AliasedFlag = false;
+    AV.DestructedFlag = AV.ObjCGCFlag = AV.ZeroedFlag = AV.AliasedFlag = false;
     return AV;
   }
 
@@ -388,8 +401,8 @@ public:
     AggValueSlot AV;
     AV.Addr = addr;
     AV.Quals = quals;
-    AV.LifetimeFlag = isDestructed;
-    AV.RequiresGCollection = needsGC;
+    AV.DestructedFlag = isDestructed;
+    AV.ObjCGCFlag = needsGC;
     AV.ZeroedFlag = isZeroed;
     AV.AliasedFlag = isAliased;
     return AV;
@@ -403,11 +416,11 @@ public:
                    isDestructed, needsGC, isAliased, isZeroed);
   }
 
-  IsDestructed_t isLifetimeExternallyManaged() const {
-    return IsDestructed_t(LifetimeFlag);
+  IsDestructed_t isExternallyDestructed() const {
+    return IsDestructed_t(DestructedFlag);
   }
-  void setLifetimeExternallyManaged(bool Managed = true) {
-    LifetimeFlag = Managed;
+  void setExternallyDestructed(bool destructed = true) {
+    DestructedFlag = destructed;
   }
 
   Qualifiers getQualifiers() const { return Quals; }
@@ -421,7 +434,7 @@ public:
   }
 
   NeedsGCBarriers_t requiresGCollection() const {
-    return NeedsGCBarriers_t(RequiresGCollection);
+    return NeedsGCBarriers_t(ObjCGCFlag);
   }
   
   llvm::Value *getAddr() const {

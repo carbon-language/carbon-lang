@@ -490,7 +490,7 @@ VisitAbstractConditionalOperator(const AbstractConditionalOperator *E) {
   CGF.EmitBranchOnBoolExpr(E->getCond(), LHSBlock, RHSBlock);
 
   // Save whether the destination's lifetime is externally managed.
-  bool DestLifetimeManaged = Dest.isLifetimeExternallyManaged();
+  bool isExternallyDestructed = Dest.isExternallyDestructed();
 
   eval.begin(CGF);
   CGF.EmitBlock(LHSBlock);
@@ -503,8 +503,8 @@ VisitAbstractConditionalOperator(const AbstractConditionalOperator *E) {
   // If the result of an agg expression is unused, then the emission
   // of the LHS might need to create a destination slot.  That's fine
   // with us, and we can safely emit the RHS into the same slot, but
-  // we shouldn't claim that its lifetime is externally managed.
-  Dest.setLifetimeExternallyManaged(DestLifetimeManaged);
+  // we shouldn't claim that it's already being destructed.
+  Dest.setExternallyDestructed(isExternallyDestructed);
 
   eval.begin(CGF);
   CGF.EmitBlock(RHSBlock);
@@ -532,16 +532,17 @@ void AggExprEmitter::VisitVAArgExpr(VAArgExpr *VE) {
 
 void AggExprEmitter::VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E) {
   // Ensure that we have a slot, but if we already do, remember
-  // whether its lifetime was externally managed.
-  bool WasManaged = Dest.isLifetimeExternallyManaged();
+  // whether it was externally destructed.
+  bool wasExternallyDestructed = Dest.isExternallyDestructed();
   Dest = EnsureSlot(E->getType());
-  Dest.setLifetimeExternallyManaged();
+
+  // We're going to push a destructor if there isn't already one.
+  Dest.setExternallyDestructed();
 
   Visit(E->getSubExpr());
 
-  // Set up the temporary's destructor if its lifetime wasn't already
-  // being managed.
-  if (!WasManaged)
+  // Push that destructor we promised.
+  if (!wasExternallyDestructed)
     CGF.EmitCXXTemporary(E->getTemporary(), Dest.getAddr());
 }
 
