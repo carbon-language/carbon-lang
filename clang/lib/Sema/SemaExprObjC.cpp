@@ -1820,6 +1820,10 @@ ExprResult Sema::BuildObjCBridgedCast(SourceLocation LParenLoc,
                                       SourceLocation BridgeKeywordLoc,
                                       TypeSourceInfo *TSInfo,
                                       Expr *SubExpr) {
+  ExprResult SubResult = UsualUnaryConversions(SubExpr);
+  if (SubResult.isInvalid()) return ExprError();
+  SubExpr = SubResult.take();
+
   QualType T = TSInfo->getType();
   QualType FromType = SubExpr->getType();
 
