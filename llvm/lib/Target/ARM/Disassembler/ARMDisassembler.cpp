@@ -2319,13 +2319,13 @@ static DecodeStatus DecodeThumbAddSpecialReg(llvm::MCInst &Inst, uint16_t Insn,
   CHECK(S, DecodetGPRRegisterClass(Inst, dst, Address, Decoder));
 
   switch(Inst.getOpcode()) {
+    default:
+      return Fail;
     case ARM::tADR:
-      break;
+      break; // tADR does not explicitly represent the PC as an oeprand.
     case ARM::tADDrSPi:
       Inst.addOperand(MCOperand::CreateReg(ARM::SP));
       break;
-    default:
-      return Fail;
   }
 
   Inst.addOperand(MCOperand::CreateImm(imm));
