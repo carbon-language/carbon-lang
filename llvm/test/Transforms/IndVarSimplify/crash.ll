@@ -53,3 +53,35 @@ bb30:                                             ; preds = %bb29
   %2 = add nsw i32 %r.0, 1                        ; <i32> [#uses=1]
   br label %bb24
 }
+
+; PR10770
+
+declare void @__go_panic() noreturn
+
+declare void @__go_undefer()
+
+declare i32 @__gccgo_personality_v0(i32, i64, i8*, i8*)
+
+define void @main.main() uwtable {
+entry:
+  invoke void @__go_panic() noreturn
+          to label %0 unwind label %"5.i"
+
+; <label>:0                                       ; preds = %entry
+  unreachable
+
+"3.i":                                            ; preds = %"7.i", %"5.i"
+  invoke void @__go_undefer()
+          to label %main.f.exit unwind label %"7.i"
+
+"5.i":                                            ; preds = %entry
+  %1 = landingpad { i8*, i32 } personality i32 (i32, i64, i8*, i8*)* @__gccgo_personality_v0
+          catch i8* null
+  br label %"3.i"
+
+"7.i":                                            ; preds = %"3.i"
+  br label %"3.i"
+
+main.f.exit:                                      ; preds = %"3.i"
+  unreachable
+}

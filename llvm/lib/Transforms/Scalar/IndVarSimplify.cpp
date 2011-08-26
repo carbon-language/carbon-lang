@@ -1724,6 +1724,10 @@ void IndVarSimplify::SinkUnusedInvariants(Loop *L) {
     if (isa<DbgInfoIntrinsic>(I))
       continue;
 
+    // Skip landingpad instructions.
+    if (isa<LandingPadInst>(I))
+      continue;
+
     // Don't sink static AllocaInsts out of the entry block, which would
     // turn them into dynamic allocas!
     if (AllocaInst *AI = dyn_cast<AllocaInst>(I))
