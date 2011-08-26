@@ -58,8 +58,10 @@ class HelpCommandTestCase(TestBase):
         self.expect("help version",
             substrs = ['Show version of LLDB debugger.'])
         version_str = self.version_number_string()
+        import re
+        match = re.match('[0-9]+', version_str)
         self.expect("version",
-            patterns = ['LLDB-' + (version_str if version_str else '[0-9]+')])
+            patterns = ['LLDB-' + (version_str if match else '[0-9]+')])
 
     def test_help_should_not_crash_lldb(self):
         """Command 'help disasm' should not crash lldb."""
