@@ -715,14 +715,6 @@ multiclass sse12_cvt_s<bits<8> opc, RegisterClass SrcRC, RegisterClass DstRC,
                         [(set DstRC:$dst, (OpNode (ld_frag addr:$src)))]>;
 }
 
-multiclass sse12_cvt_s_np<bits<8> opc, RegisterClass SrcRC, RegisterClass DstRC,
-                          X86MemOperand x86memop, string asm> {
-  def rr : SI<opc, MRMSrcReg, (outs DstRC:$dst), (ins SrcRC:$src), asm,
-                        []>;
-  def rm : SI<opc, MRMSrcMem, (outs DstRC:$dst), (ins x86memop:$src), asm,
-                        []>;
-}
-
 multiclass sse12_cvt_p<bits<8> opc, RegisterClass SrcRC, RegisterClass DstRC,
                          SDNode OpNode, X86MemOperand x86memop, PatFrag ld_frag,
                          string asm, Domain d> {
@@ -844,10 +836,12 @@ defm Int_VCVTSD2SI64 : sse12_cvt_sint<0x2D, VR128, GR64,
 // Get rid of this hack or rename the intrinsics, there are several
 // intructions that only match with the intrinsic form, why create duplicates
 // to let them be recognized by the assembler?
-defm VCVTSD2SI_alt : sse12_cvt_s_np<0x2D, FR64, GR32, f64mem,
+let Pattern = []<dag> in {
+defm VCVTSD2SI     : sse12_cvt_s<0x2D, FR64, GR32, undef, f64mem, load,
                       "cvtsd2si\t{$src, $dst|$dst, $src}">, XD, VEX;
-defm VCVTSD2SI64   : sse12_cvt_s_np<0x2D, FR64, GR64, f64mem,
+defm VCVTSD2SI64   : sse12_cvt_s<0x2D, FR64, GR64, undef, f64mem, load,
                       "cvtsd2si\t{$src, $dst|$dst, $src}">, XD, VEX, VEX_W;
+}
 defm CVTSD2SI : sse12_cvt_sint<0x2D, VR128, GR32, int_x86_sse2_cvtsd2si,
                 f128mem, load, "cvtsd2si{l}">, XD;
 defm CVTSD2SI64 : sse12_cvt_sint<0x2D, VR128, GR64, int_x86_sse2_cvtsd2si64,
