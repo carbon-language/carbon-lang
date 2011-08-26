@@ -4705,6 +4705,29 @@ def : ARMV6Pat<(add GPR:$Rn, (sext_inreg GPRnopc:$Rm, i8)),
 def : ARMV6Pat<(add GPR:$Rn, (sext_inreg GPRnopc:$Rm, i16)),
                (SXTAH GPR:$Rn, GPRnopc:$Rm, 0)>;
 
+// Atomic load/store patterns
+def : ARMPat<(atomic_load_8 ldst_so_reg:$src),
+             (LDRBrs ldst_so_reg:$src)>;
+def : ARMPat<(atomic_load_8 addrmode_imm12:$src),
+             (LDRBi12 addrmode_imm12:$src)>;
+def : ARMPat<(atomic_load_16 addrmode3:$src),
+             (LDRH addrmode3:$src)>;
+def : ARMPat<(atomic_load_32 ldst_so_reg:$src),
+             (LDRrs ldst_so_reg:$src)>;
+def : ARMPat<(atomic_load_32 addrmode_imm12:$src),
+             (LDRi12 addrmode_imm12:$src)>;
+def : ARMPat<(atomic_store_8 ldst_so_reg:$ptr, GPR:$val),
+             (STRBrs GPR:$val, ldst_so_reg:$ptr)>;
+def : ARMPat<(atomic_store_8 addrmode_imm12:$ptr, GPR:$val),
+             (STRBi12 GPR:$val, addrmode_imm12:$ptr)>;
+def : ARMPat<(atomic_store_16 addrmode3:$ptr, GPR:$val),
+             (STRH GPR:$val, addrmode3:$ptr)>;
+def : ARMPat<(atomic_store_32 ldst_so_reg:$ptr, GPR:$val),
+             (STRrs GPR:$val, ldst_so_reg:$ptr)>;
+def : ARMPat<(atomic_store_32 addrmode_imm12:$ptr, GPR:$val),
+             (STRi12 GPR:$val, addrmode_imm12:$ptr)>;
+
+
 //===----------------------------------------------------------------------===//
 // Thumb Support
 //

@@ -3289,7 +3289,7 @@ static SDValue InsertFenceForAtomic(SDValue Chain, AtomicOrdering Order,
                                     const TargetLowering &TLI) {
   // Fence, if necessary
   if (Before) {
-    if (Order == AcquireRelease)
+    if (Order == AcquireRelease || Order == SequentiallyConsistent)
       Order = Release;
     else if (Order == Acquire || Order == Monotonic)
       return Chain;
@@ -3399,10 +3399,6 @@ void SelectionDAGBuilder::visitAtomicLoad(const LoadInst &I) {
   SynchronizationScope Scope = I.getSynchScope();
 
   SDValue InChain = getRoot();
-
-  if (TLI.getInsertFencesForAtomic())
-    InChain = InsertFenceForAtomic(InChain, Order, Scope, true, dl,
-                                   DAG, TLI);
 
   EVT VT = EVT::getEVT(I.getType());
 

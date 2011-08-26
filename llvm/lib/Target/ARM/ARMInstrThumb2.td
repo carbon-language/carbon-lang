@@ -3474,3 +3474,41 @@ def : T2Pat<(add rGPR:$Rn, (sext_inreg rGPR:$Rm, i8)),
 def : T2Pat<(add rGPR:$Rn, (sext_inreg rGPR:$Rm, i16)),
             (t2SXTAH rGPR:$Rn, rGPR:$Rm, 0)>,
            Requires<[HasT2ExtractPack, IsThumb2]>;
+
+// Atomic load/store patterns
+def : T2Pat<(atomic_load_8   t2addrmode_imm12:$addr),
+            (t2LDRBi12  t2addrmode_imm12:$addr)>;
+def : T2Pat<(atomic_load_8   t2addrmode_imm8:$addr),
+            (t2LDRBi8   t2addrmode_imm8:$addr)>;
+def : T2Pat<(atomic_load_8   t2addrmode_so_reg:$addr),
+            (t2LDRBs    t2addrmode_so_reg:$addr)>;
+def : T2Pat<(atomic_load_16  t2addrmode_imm12:$addr),
+            (t2LDRHi12  t2addrmode_imm12:$addr)>;
+def : T2Pat<(atomic_load_16  t2addrmode_imm8:$addr),
+            (t2LDRHi8   t2addrmode_imm8:$addr)>;
+def : T2Pat<(atomic_load_16  t2addrmode_so_reg:$addr),
+            (t2LDRHs    t2addrmode_so_reg:$addr)>;
+def : T2Pat<(atomic_load_32  t2addrmode_imm12:$addr),
+            (t2LDRi12   t2addrmode_imm12:$addr)>;
+def : T2Pat<(atomic_load_32  t2addrmode_imm8:$addr),
+            (t2LDRi8    t2addrmode_imm8:$addr)>;
+def : T2Pat<(atomic_load_32  t2addrmode_so_reg:$addr),
+            (t2LDRs     t2addrmode_so_reg:$addr)>;
+def : T2Pat<(atomic_store_8  t2addrmode_imm12:$addr, GPR:$val),
+            (t2STRBi12  GPR:$val, t2addrmode_imm12:$addr)>;
+def : T2Pat<(atomic_store_8  t2addrmode_imm8:$addr, GPR:$val),
+            (t2STRBi8   GPR:$val, t2addrmode_imm8:$addr)>;
+def : T2Pat<(atomic_store_8  t2addrmode_so_reg:$addr, GPR:$val),
+            (t2STRBs    GPR:$val, t2addrmode_so_reg:$addr)>;
+def : T2Pat<(atomic_store_16 t2addrmode_imm12:$addr, GPR:$val),
+            (t2STRHi12  GPR:$val, t2addrmode_imm12:$addr)>;
+def : T2Pat<(atomic_store_16 t2addrmode_imm8:$addr, GPR:$val),
+            (t2STRHi8   GPR:$val, t2addrmode_imm8:$addr)>;
+def : T2Pat<(atomic_store_16 t2addrmode_so_reg:$addr, GPR:$val),
+            (t2STRHs    GPR:$val, t2addrmode_so_reg:$addr)>;
+def : T2Pat<(atomic_store_32 t2addrmode_imm12:$addr, GPR:$val),
+            (t2STRi12   GPR:$val, t2addrmode_imm12:$addr)>;
+def : T2Pat<(atomic_store_32 t2addrmode_imm8:$addr, GPR:$val),
+            (t2STRi8    GPR:$val, t2addrmode_imm8:$addr)>;
+def : T2Pat<(atomic_store_32 t2addrmode_so_reg:$addr, GPR:$val),
+            (t2STRs     GPR:$val, t2addrmode_so_reg:$addr)>;

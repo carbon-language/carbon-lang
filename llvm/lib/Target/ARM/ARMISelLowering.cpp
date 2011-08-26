@@ -620,6 +620,8 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     setOperationAction(ISD::ATOMIC_LOAD_MAX, MVT::i32, Expand);
     setOperationAction(ISD::ATOMIC_LOAD_UMIN, MVT::i32, Expand);
     setOperationAction(ISD::ATOMIC_LOAD_UMAX, MVT::i32, Expand);
+    setOperationAction(ISD::ATOMIC_LOAD, MVT::i32, Expand);
+    setOperationAction(ISD::ATOMIC_STORE, MVT::i32, Expand);
     // Since the libcalls include locking, fold in the fences
     setShouldFoldAtomicFences(true);
   }
