@@ -68,8 +68,7 @@ bool FileRemapper::initFromDisk(StringRef outputDir, Diagnostic &Diag,
   SmallVector<StringRef, 64> lines;
   fileBuf->getBuffer().split(lines, "\n");
 
-  unsigned idx = 0;
-  while (idx+3 <= lines.size()) {
+  for (unsigned idx = 0; idx+3 <= lines.size(); idx += 3) {
     std::string fromFilename = lines[idx];
     uint64_t timeModified;
     lines[idx+1].getAsInteger(10, timeModified);
@@ -95,8 +94,6 @@ bool FileRemapper::initFromDisk(StringRef outputDir, Diagnostic &Diag,
     }
 
     pairs.push_back(std::make_pair(origFE, newFE));
-
-    idx += 3;
   }
 
   for (unsigned i = 0, e = pairs.size(); i != e; ++i)
