@@ -320,3 +320,6 @@ namespace PR10579 {
   }
 
 }
+
+template <int& I> struct PR10766 { static int *ip; };
+template <int& I> int* PR10766<I>::ip = &I;

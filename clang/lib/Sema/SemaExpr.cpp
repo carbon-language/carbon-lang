@@ -7417,7 +7417,7 @@ static QualType CheckAddressOfOperand(Sema &S, Expr *OrigOp,
                 S.Context.getTypeDeclType(cast<RecordDecl>(Ctx)).getTypePtr());
         }
       }
-    } else if (!isa<FunctionDecl>(dcl))
+    } else if (!isa<FunctionDecl>(dcl) && !isa<NonTypeTemplateParmDecl>(dcl))
       assert(0 && "Unknown/unexpected decl type");
   }
 
