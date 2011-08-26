@@ -74,17 +74,6 @@ namespace llvm {
     static int FItoStackOffset(int frame_index) {
       return frame_index * stackSlotSize();
     }
-    //! Number of instructions required to overcome hint-for-branch latency
-    /*!
-      HBR (hint-for-branch) instructions can be inserted when, for example,
-      we know that a given function is going to be called, such as printf(),
-      in the control flow graph. HBRs are only inserted if a sufficient number
-      of instructions occurs between the HBR and the target. Currently, HBRs
-      take 6 cycles, ergo, the magic number 6.
-     */
-    static int branchHintPenalty() {
-      return 6;
-    }
   };
 }
 
