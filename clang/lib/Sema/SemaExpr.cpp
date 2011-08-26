@@ -517,9 +517,18 @@ ExprResult Sema::DefaultVariadicArgumentPromotion(Expr *E, VariadicCallType CT,
       ExprResult Comma = ActOnBinOp(TUScope, E->getLocStart(), tok::comma,
                                     Call.get(), E);
       if (Comma.isInvalid())
-        return ExprError();
-      
+        return ExprError();      
       E = Comma.get();
+
+      // Use that to initialize a temporary, or else we might get an
+      // l-value in a varargs position.
+      ExprResult Temp = PerformCopyInitialization(
+                       InitializedEntity::InitializeTemporary(E->getType()),
+                                                  E->getLocStart(),
+                                                  Owned(E));
+      if (Temp.isInvalid())
+        return ExprError();
+      E = Temp.get();
     }
   }
   
