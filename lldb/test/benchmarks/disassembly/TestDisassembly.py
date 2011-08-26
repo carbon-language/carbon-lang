@@ -12,7 +12,7 @@ class DisassembleDriverMainLoop(BenchBase):
 
     def setUp(self):
         BenchBase.setUp(self)
-        self.exe = self.lldbExec
+        self.exe = self.lldbHere
         self.function = 'Driver::MainLoop()'
         self.lldb_avg = None
         self.gdb_avg = None

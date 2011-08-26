@@ -39,7 +39,7 @@ class StopHookMechanismTestCase(TestBase):
         add_prompt1 = "\r\n> "
 
         # So that the child gets torn down after the test.
-        self.child = pexpect.spawn('%s %s' % (self.lldbExec, exe))
+        self.child = pexpect.spawn('%s %s' % (self.lldbHere, exe))
         child = self.child
         # Turn on logging for what the child sends back.
         if self.TraceOn():

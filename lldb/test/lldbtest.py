@@ -475,6 +475,12 @@ class Base(unittest2.TestCase):
 
         if "LLDB_EXEC" in os.environ:
             self.lldbExec = os.environ["LLDB_EXEC"]
+        else:
+            self.lldbExec = None
+        if "LLDB_HERE" in os.environ:
+            self.lldbHere = os.environ["LLDB_HERE"]
+        else:
+            self.lldbHere = None
 
         # Assign the test method name to self.testMethodName.
         #

@@ -567,6 +567,13 @@ def setupSysPath():
     # Some of the tests can invoke the 'lldb' command directly.
     # We'll try to locate the appropriate executable right here.
 
+    # First, you can define an environment variable LLDB_EXEC specifying the
+    # full pathname of the lldb executable.
+    if "LLDB_EXEC" in os.environ and is_exe(os.environ["LLDB_EXEC"]):
+        lldbExec = os.environ["LLDB_EXEC"]
+    else:
+        lldbExec = None
+
     executable = ['lldb']
     dbgExec  = os.path.join(base, *(xcode3_build_dir + dbg + executable))
     dbgExec2 = os.path.join(base, *(xcode4_build_dir + dbg + executable))
@@ -575,26 +582,34 @@ def setupSysPath():
     baiExec  = os.path.join(base, *(xcode3_build_dir + bai + executable))
     baiExec2 = os.path.join(base, *(xcode4_build_dir + bai + executable))
 
-    lldbExec = None
+    # The 'lldb' executable built here in the source tree.
+    lldbHere = None
     if is_exe(dbgExec):
-        lldbExec = dbgExec
+        lldbHere = dbgExec
     elif is_exe(dbgExec2):
-        lldbExec = dbgExec2
+        lldbHere = dbgExec2
     elif is_exe(relExec):
-        lldbExec = relExec
+        lldbHere = relExec
     elif is_exe(relExec2):
-        lldbExec = relExec2
+        lldbHere = relExec2
     elif is_exe(baiExec):
-        lldbExec = baiExec
+        lldbHere = baiExec
     elif is_exe(baiExec2):
-        lldbExec = baiExec2
+        lldbHere = baiExec2
 
-    if lldbExec:
+    if lldbHere:
+        os.environ["LLDB_HERE"] = lldbHere
+        if not lldbExec:
+            lldbExec = lldbHere
         os.environ["LLDB_BUILD_DIR"] = os.path.split(lldbExec)[0]
         print os.environ["LLDB_BUILD_DIR"]
 
+    # One last chance to locate the 'lldb' executable.
     if not lldbExec:
-        lldbExec = which('lldb')
+        if lldbHere:
+            lldbExec = lldbHere
+        else:
+            lldbExec = which('lldb')
 
     if not lldbExec:
         print "The 'lldb' executable cannot be located.  Some of the tests may not be run as a result."
