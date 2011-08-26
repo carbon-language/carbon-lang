@@ -2977,9 +2977,10 @@ getMnemonicAcceptInfo(StringRef Mnemonic, bool &CanAcceptCarrySet,
       Mnemonic == "dsb" || Mnemonic == "isb" || Mnemonic == "clrex" ||
       Mnemonic == "setend" ||
       (Mnemonic == "nop" && isThumbOne()) ||
-      ((Mnemonic == "pld" || Mnemonic == "pli") && !isThumb()) ||
-      ((Mnemonic.startswith("rfe") || Mnemonic.startswith("srs"))
-        && !isThumb()) ||
+      ((Mnemonic == "pld" || Mnemonic == "pli" || Mnemonic == "pldw") &&
+       !isThumb()) ||
+      ((Mnemonic.startswith("rfe") || Mnemonic.startswith("srs")) &&
+       !isThumb()) ||
       Mnemonic.startswith("cps") || (Mnemonic == "movs" && isThumb())) {
     CanAcceptPredicationCode = false;
   } else {
