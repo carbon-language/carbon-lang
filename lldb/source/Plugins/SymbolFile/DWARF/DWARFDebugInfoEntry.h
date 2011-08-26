@@ -256,7 +256,12 @@ public:
                     lldb_private::Stream *s,
                     dw_attr_t attr,
                     dw_form_t form);
-
+    // This one dumps the comp unit name, objfile name and die offset for this die so the stream S.
+    void          DumpLocation(
+                    SymbolFileDWARF* dwarf2Data,
+                    DWARFCompileUnit* cu,
+                    lldb_private::Stream *s) const;
+                    
     bool        GetDIENamesAndRanges(
                     SymbolFileDWARF* dwarf2Data,
                     const DWARFCompileUnit* cu,

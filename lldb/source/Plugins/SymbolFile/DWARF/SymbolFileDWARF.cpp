@@ -30,6 +30,7 @@
 #include "lldb/Core/Scalar.h"
 #include "lldb/Core/Section.h"
 #include "lldb/Core/StreamFile.h"
+#include "lldb/Core/StreamString.h"
 #include "lldb/Core/Timer.h"
 #include "lldb/Core/Value.h"
 
@@ -2288,6 +2289,7 @@ SymbolFileDWARF::FindFunctions(const RegularExpression& regex, bool append, Symb
     // Return the number of variable that were appended to the list
     return sc_list.GetSize() - original_size;
 }
+
 void
 SymbolFileDWARF::ReportError (const char *format, ...)
 {
@@ -3075,20 +3077,10 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
         Log *log = LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_INFO);
         if (log && dwarf_cu)
         {
-            const DWARFDebugInfoEntry *cu_die = dwarf_cu->GetCompileUnitDIEOnly();
-            const char *cu_name = NULL;
-            if (cu_die != NULL)
-                cu_name = cu_die->GetName (this, dwarf_cu);
-            const char *obj_file_name = NULL;
-            if (m_obj_file)
-                obj_file_name = m_obj_file->GetFileSpec().GetFilename().AsCString();
-            const char *die_name = die->GetName (this, dwarf_cu);
-            log->Printf ("SymbolFileDWARF::%s: CU: %s OBJFILE: %s DIE: %s (0x%llx).", 
-                        __FUNCTION__, 
-                        cu_name ? cu_name : "<UNKNOWN>",
-                        obj_file_name ? obj_file_name : "<UNKNOWN>",
-                        die_name ? die_name : "<NO NAME>", 
-                        die->GetOffset());
+            StreamString s;
+            die->DumpLocation (this, dwarf_cu, &s);
+            log->Printf ("SymbolFileDwarf::%s %s", __FUNCTION__, s.GetData());
+            
         }
         
         Type *type_ptr = m_die_to_type.lookup (die);
