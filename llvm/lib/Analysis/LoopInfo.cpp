@@ -509,6 +509,8 @@ void UnloopUpdater::updateSubloopParents() {
     assert(SubloopParents.count(Subloop) && "DFS failed to visit subloop");
     if (SubloopParents[Subloop])
       SubloopParents[Subloop]->addChildLoop(Subloop);
+    else
+      LI->addTopLevelLoop(Subloop);
   }
 }
 
@@ -663,12 +665,21 @@ void LoopInfo::verifyAnalysis() const {
 
   if (!VerifyLoopInfo) return;
 
+  DenseSet<const Loop*> Loops;
   for (iterator I = begin(), E = end(); I != E; ++I) {
     assert(!(*I)->getParentLoop() && "Top-level loop has a parent!");
-    (*I)->verifyLoopNest();
+    (*I)->verifyLoopNest(&Loops);
   }
 
-  // TODO: check BBMap consistency.
+  // Verify that blocks are mapped to valid loops.
+  //
+  // FIXME: With an up-to-date DFS (see LoopIterator.h) and DominatorTree, we
+  // could also verify that the blocks are still in the correct loops.
+  for (DenseMap<BasicBlock*, Loop*>::const_iterator I = LI.BBMap.begin(),
+         E = LI.BBMap.end(); I != E; ++I) {
+    assert(Loops.count(I->second) && "orphaned loop");
+    assert(I->second->contains(I->first) && "orphaned block");
+  }
 }
 
 void LoopInfo::getAnalysisUsage(AnalysisUsage &AU) const {

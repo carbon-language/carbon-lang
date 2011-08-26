@@ -33,6 +33,7 @@
 
 #include "llvm/Pass.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/SmallVector.h"
@@ -484,12 +485,13 @@ public:
   }
 
   /// verifyLoop - Verify loop structure of this loop and all nested loops.
-  void verifyLoopNest() const {
+  void verifyLoopNest(DenseSet<const LoopT*> *Loops) const {
+    Loops->insert(static_cast<const LoopT *>(this));
     // Verify this loop.
     verifyLoop();
     // Verify the subloops.
     for (iterator I = begin(), E = end(); I != E; ++I)
-      (*I)->verifyLoopNest();
+      (*I)->verifyLoopNest(Loops);
   }
 
   void print(raw_ostream &OS, unsigned Depth = 0) const {
@@ -640,6 +642,7 @@ class LoopInfoBase {
   DenseMap<BlockT *, LoopT *> BBMap;
   std::vector<LoopT *> TopLevelLoops;
   friend class LoopBase<BlockT, LoopT>;
+  friend class LoopInfo;
 
   void operator=(const LoopInfoBase &); // do not implement
   LoopInfoBase(const LoopInfo &);       // do not implement
