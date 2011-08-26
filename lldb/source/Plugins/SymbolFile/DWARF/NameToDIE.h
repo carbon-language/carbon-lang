@@ -51,6 +51,9 @@ public:
     FindAllEntriesForCompileUnitWithIndex (const uint32_t cu_idx, 
                                            std::vector<Info> &info_array) const;
 
+    void
+    Hash (lldb_private::Stream *s);
+
 protected:
     typedef std::multimap<const char *, Info> collection;
 
