@@ -129,6 +129,8 @@ Lback:
   adr r2, Lback
   adr r3, Lforward
 Lforward:
+  adr	r2, #3
+  adr	r2, #-3
 
 @ CHECK: Lback:
 @ CHECK: adr	r2, Lback    @ encoding: [0bAAAAAAA0,0x20'A',0x0f'A',0b1110001A]
@@ -136,6 +138,8 @@ Lforward:
 @ CHECK: adr	r3, Lforward @ encoding: [0bAAAAAAA0,0x30'A',0x0f'A',0b1110001A]
 @ CHECK:  @   fixup A - offset: 0, value: Lforward, kind: fixup_arm_adr_pcrel_12
 @ CHECK: Lforward:
+@ CHECK: adr	r2, #3                  @ encoding: [0x03,0x20,0x8f,0xe2]
+@ CHECK: adr	r2, #-3                 @ encoding: [0x03,0x20,0x4f,0xe2]
 
 
 @------------------------------------------------------------------------------

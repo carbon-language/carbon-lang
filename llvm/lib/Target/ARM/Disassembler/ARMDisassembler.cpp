@@ -2310,12 +2310,15 @@ static DecodeStatus DecodeThumbAddSpecialReg(llvm::MCInst &Inst, uint16_t Insn,
 
   CHECK(S, DecodetGPRRegisterClass(Inst, dst, Address, Decoder));
 
-  if (Inst.getOpcode() == ARM::tADR)
-    Inst.addOperand(MCOperand::CreateReg(ARM::PC));
-  else if (Inst.getOpcode() == ARM::tADDrSPi)
-    Inst.addOperand(MCOperand::CreateReg(ARM::SP));
-  else
-    return Fail;
+  switch(Inst.getOpcode()) {
+    case ARM::tADR:
+      break;
+    case ARM::tADDrSPi:
+      Inst.addOperand(MCOperand::CreateReg(ARM::SP));
+      break;
+    default:
+      return Fail;
+  }
 
   Inst.addOperand(MCOperand::CreateImm(imm));
   return S;

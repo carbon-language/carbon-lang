@@ -1583,12 +1583,15 @@ let neverHasSideEffects = 1, isReMaterializable = 1 in
 def ADR : AI1<{0,?,?,0}, (outs GPR:$Rd), (ins adrlabel:$label),
                  MiscFrm, IIC_iALUi, "adr", "\t$Rd, $label", []> {
   bits<4> Rd;
-  bits<12> label;
+  bits<14> label;
   let Inst{27-25} = 0b001;
+  let Inst{24} = 0;
+  let Inst{23-22} = label{13-12};
+  let Inst{21} = 0;
   let Inst{20} = 0;
   let Inst{19-16} = 0b1111;
   let Inst{15-12} = Rd;
-  let Inst{11-0} = label;
+  let Inst{11-0} = label{11-0};
 }
 def LEApcrel : ARMPseudoInst<(outs GPR:$Rd), (ins i32imm:$label, pred:$p),
                     4, IIC_iALUi, []>;

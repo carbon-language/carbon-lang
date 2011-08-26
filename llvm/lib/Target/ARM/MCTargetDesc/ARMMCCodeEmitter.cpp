@@ -570,9 +570,18 @@ getUnconditionalBranchTargetOpValue(const MCInst &MI, unsigned OpIdx,
 uint32_t ARMMCCodeEmitter::
 getAdrLabelOpValue(const MCInst &MI, unsigned OpIdx,
                    SmallVectorImpl<MCFixup> &Fixups) const {
-  assert(MI.getOperand(OpIdx).isExpr() && "Unexpected adr target type!");
-  return ::getBranchTargetOpValue(MI, OpIdx, ARM::fixup_arm_adr_pcrel_12,
-                                  Fixups);
+  const MCOperand MO = MI.getOperand(OpIdx);
+  if (MO.isExpr())
+    return ::getBranchTargetOpValue(MI, OpIdx, ARM::fixup_arm_adr_pcrel_12,
+                                    Fixups);
+  int32_t offset = MO.getImm();
+  uint32_t Val = 0x2000;
+  if (offset < 0) {
+    Val = 0x1000;
+    offset *= -1;
+  }
+  Val |= offset;
+  return Val;
 }
 
 /// getAdrLabelOpValue - Return encoding info for 12-bit immediate ADR label
@@ -580,9 +589,11 @@ getAdrLabelOpValue(const MCInst &MI, unsigned OpIdx,
 uint32_t ARMMCCodeEmitter::
 getT2AdrLabelOpValue(const MCInst &MI, unsigned OpIdx,
                    SmallVectorImpl<MCFixup> &Fixups) const {
-  assert(MI.getOperand(OpIdx).isExpr() && "Unexpected adr target type!");
-  return ::getBranchTargetOpValue(MI, OpIdx, ARM::fixup_t2_adr_pcrel_12,
-                                  Fixups);
+  const MCOperand MO = MI.getOperand(OpIdx);
+  if (MO.isExpr())
+    return ::getBranchTargetOpValue(MI, OpIdx, ARM::fixup_t2_adr_pcrel_12,
+                                    Fixups);
+  return MO.getImm();
 }
 
 /// getAdrLabelOpValue - Return encoding info for 8-bit immediate ADR label
@@ -590,9 +601,11 @@ getT2AdrLabelOpValue(const MCInst &MI, unsigned OpIdx,
 uint32_t ARMMCCodeEmitter::
 getThumbAdrLabelOpValue(const MCInst &MI, unsigned OpIdx,
                    SmallVectorImpl<MCFixup> &Fixups) const {
-  assert(MI.getOperand(OpIdx).isExpr() && "Unexpected adr target type!");
-  return ::getBranchTargetOpValue(MI, OpIdx, ARM::fixup_thumb_adr_pcrel_10,
-                                  Fixups);
+  const MCOperand MO = MI.getOperand(OpIdx);
+  if (MO.isExpr())
+    return ::getBranchTargetOpValue(MI, OpIdx, ARM::fixup_thumb_adr_pcrel_10,
+                                    Fixups);
+  return MO.getImm();
 }
 
 /// getThumbAddrModeRegRegOpValue - Return encoding info for 'reg + reg'

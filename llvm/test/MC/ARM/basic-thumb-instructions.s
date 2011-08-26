@@ -74,10 +74,11 @@ _func:
 @ ADR
 @------------------------------------------------------------------------------
         adr r2, _baz
+        adr	r2, #3
 
 @ CHECK: adr	r2, _baz                @ encoding: [A,0xa2]
             @   fixup A - offset: 0, value: _baz, kind: fixup_thumb_adr_pcrel_10
-
+@ CHECK: adr	r2, #3                  @ encoding: [0x03,0xa2]
 
 @------------------------------------------------------------------------------
 @ ASR (immediate)
