@@ -1,3 +1,5 @@
+__import__ diamond_top;
+
 double right(double *);
 
 struct left_and_right {

@@ -1073,6 +1073,17 @@ public:
                               SourceLocation AsmLoc,
                               SourceLocation RParenLoc);
 
+  /// \brief The parser has processed a module import declaration.
+  ///
+  /// \param ImportLoc The location of the '__import__' keyword.
+  ///
+  /// \param ModuleName The name of the module.
+  ///
+  /// \param ModuleNameLoc The location of the module name.
+  DeclResult ActOnModuleImport(SourceLocation ImportLoc,
+                               IdentifierInfo &ModuleName,
+                               SourceLocation ModuleNameLoc);
+  
   /// Scope actions.
   void ActOnPopScope(SourceLocation Loc, Scope *S);
   void ActOnTranslationUnitScope(Scope *S);

@@ -35,6 +35,7 @@
 #include "clang/Lex/ScratchBuffer.h"
 #include "clang/Lex/LexDiagnostic.h"
 #include "clang/Lex/CodeCompletionHandler.h"
+#include "clang/Lex/ModuleLoader.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/TargetInfo.h"
@@ -50,12 +51,12 @@ ExternalPreprocessorSource::~ExternalPreprocessorSource() { }
 
 Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
                            const TargetInfo &target, SourceManager &SM,
-                           HeaderSearch &Headers,
+                           HeaderSearch &Headers, ModuleLoader &TheModuleLoader,
                            IdentifierInfoLookup* IILookup,
                            bool OwnsHeaders)
   : Diags(&diags), Features(opts), Target(target),FileMgr(Headers.getFileMgr()),
-    SourceMgr(SM),
-    HeaderInfo(Headers), ExternalSource(0),
+    SourceMgr(SM), HeaderInfo(Headers), TheModuleLoader(TheModuleLoader),
+    ExternalSource(0), 
     Identifiers(opts, IILookup), BuiltinInfo(Target), CodeComplete(0),
     CodeCompletionFile(0), SkipMainFilePreamble(0, true), CurPPLexer(0), 
     CurDirLookup(0), Callbacks(0), MacroArgCache(0), Record(0), MIChainHead(0),
@@ -483,7 +484,7 @@ void Preprocessor::HandleIdentifier(Token &Identifier) {
     if (!DisableMacroExpansion && !Identifier.isExpandDisabled()) {
       if (MI->isEnabled()) {
         if (!HandleMacroExpandedIdentifier(Identifier, MI))
-          return;
+          goto finish;
       } else {
         // C99 6.10.3.4p2 says that a disabled macro may never again be
         // expanded, even if it's in a context where it could be expanded in the
@@ -505,6 +506,33 @@ void Preprocessor::HandleIdentifier(Token &Identifier) {
   // like "#define TY typeof", "TY(1) x".
   if (II.isExtensionToken() && !DisableMacroExpansion)
     Diag(Identifier, diag::ext_token_used);
+  
+finish:
+  // If we have the start of a module import, handle it now.
+  if (Identifier.is(tok::kw___import__) &&
+      !InMacroArgs && !DisableMacroExpansion)
+    HandleModuleImport(Identifier);
+}
+
+void Preprocessor::HandleModuleImport(Token &Import) {
+  // The token sequence 
+  //
+  //   __import__ identifier
+  //
+  // indicates a module import directive. We load the module and then 
+  // leave the token sequence for the parser.
+  Token ModuleNameTok = LookAhead(0);
+  if (ModuleNameTok.getKind() != tok::identifier)
+    return;
+  
+  (void)TheModuleLoader.loadModule(Import.getLocation(),
+                                   *ModuleNameTok.getIdentifierInfo(), 
+                                   ModuleNameTok.getLocation());
+  
+  // FIXME: Transmogrify __import__ into some kind of AST-only __import__ that
+  // is not recognized by the preprocessor but is recognized by the parser.
+  // It would also be useful to stash the ModuleKey somewhere, so we don't try
+  // to load the module twice.
 }
 
 void Preprocessor::AddCommentHandler(CommentHandler *Handler) {
@@ -534,6 +562,8 @@ bool Preprocessor::HandleComment(Token &result, SourceRange Comment) {
   Lex(result);
   return true;
 }
+
+ModuleLoader::~ModuleLoader() { }
 
 CommentHandler::~CommentHandler() { }
 

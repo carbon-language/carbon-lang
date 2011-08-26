@@ -17,7 +17,7 @@ This test serves two purposes:
 
 The list of warnings below should NEVER grow.  It should gradually shrink to 0.
 
-CHECK: Warnings without flags (312):
+CHECK: Warnings without flags (313):
 CHECK-NEXT:   auto_storage_class
 CHECK-NEXT:   backslash_newline_space
 CHECK-NEXT:   charize_microsoft_ext
@@ -230,6 +230,7 @@ CHECK-NEXT:   warn_missing_case_for_condition
 CHECK-NEXT:   warn_missing_dependent_template_keyword
 CHECK-NEXT:   warn_missing_exception_specification
 CHECK-NEXT:   warn_missing_whitespace_after_macro_name
+CHECK-NEXT:   warn_module_not_found
 CHECK-NEXT:   warn_multiple_method_decl
 CHECK-NEXT:   warn_no_constructor_for_refconst
 CHECK-NEXT:   warn_nonnull_pointers_only

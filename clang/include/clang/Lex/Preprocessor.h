@@ -49,6 +49,7 @@ class PPCallbacks;
 class CodeCompletionHandler;
 class DirectoryLookup;
 class PreprocessingRecord;
+class ModuleLoader;
   
 /// Preprocessor - This object engages in a tight little dance with the lexer to
 /// efficiently preprocess tokens.  Lexers know only about tokens within a
@@ -63,10 +64,12 @@ class Preprocessor : public llvm::RefCountedBase<Preprocessor> {
   SourceManager     &SourceMgr;
   ScratchBuffer     *ScratchBuf;
   HeaderSearch      &HeaderInfo;
+  ModuleLoader      &TheModuleLoader;
 
   /// \brief External source of macros.
   ExternalPreprocessorSource *ExternalSource;
 
+  
   /// PTH - An optional PTHManager object used for getting tokens from
   ///  a token cache rather than lexing the original source file.
   llvm::OwningPtr<PTHManager> PTH;
@@ -294,6 +297,7 @@ public:
   Preprocessor(Diagnostic &diags, const LangOptions &opts,
                const TargetInfo &target,
                SourceManager &SM, HeaderSearch &Headers,
+               ModuleLoader &TheModuleLoader,
                IdentifierInfoLookup *IILookup = 0,
                bool OwnsHeaderSearch = false);
 
@@ -325,6 +329,9 @@ public:
     return ExternalSource;
   }
 
+  /// \brief Retrieve the module loader associated with this preprocessor.
+  ModuleLoader &getModuleLoader() const { return TheModuleLoader; }
+  
   /// SetCommentRetentionState - Control whether or not the preprocessor retains
   /// comments in output.
   void SetCommentRetentionState(bool KeepComments, bool KeepMacroComments) {
@@ -1008,6 +1015,9 @@ private:
   /// the macro should not be expanded return true, otherwise return false.
   bool HandleMacroExpandedIdentifier(Token &Tok, MacroInfo *MI);
 
+  /// \brief Handle a module import directive.
+  void HandleModuleImport(Token &Import);
+  
   /// \brief Cache macro expanded tokens for TokenLexers.
   //
   /// Works like a stack; a TokenLexer adds the macro expanded tokens that is

@@ -1,4 +1,10 @@
+
+
+
 // in diamond-bottom.h: expected-note{{passing argument to parameter 'x' here}}
+
+__import__ diamond_bottom;
+
 void test_diamond(int i, float f, double d, char c) {
   top(&i);
   left(&f);
@@ -14,8 +20,8 @@ void test_diamond(int i, float f, double d, char c) {
   lr.left = 17;
 }
 
-// RUN: %clang_cc1 -emit-pch -o %t_top.h.pch %S/Inputs/diamond_top.h
-// RUN: %clang_cc1 -import-module %t_top.h.pch -emit-pch -o %t_left.h.pch %S/Inputs/diamond_left.h
-// RUN: %clang_cc1 -import-module %t_top.h.pch -emit-pch -o %t_right.h.pch %S/Inputs/diamond_right.h
-// RUN: %clang_cc1 -import-module %t_left.h.pch -import-module %t_right.h.pch -emit-pch -o %t_bottom.h.pch %S/Inputs/diamond_bottom.h
-// RUN: %clang_cc1 -import-module %t_bottom.h.pch -verify %s 
+// RUN: %clang_cc1 -emit-module -o %T/diamond_top.pcm %S/Inputs/diamond_top.h
+// RUN: %clang_cc1 -I %T -emit-module -o %T/diamond_left.pcm %S/Inputs/diamond_left.h
+// RUN: %clang_cc1 -I %T -emit-module -o %T/diamond_right.pcm %S/Inputs/diamond_right.h
+// RUN: %clang_cc1 -I %T -emit-module -o %T/diamond_bottom.pcm %S/Inputs/diamond_bottom.h
+// RUN: %clang_cc1 -I %T %s -verify

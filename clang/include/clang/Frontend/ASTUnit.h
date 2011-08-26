@@ -18,6 +18,7 @@
 #include "clang/Serialization/ASTBitCodes.h"
 #include "clang/Sema/Sema.h"
 #include "clang/Sema/CodeCompleteConsumer.h"
+#include "clang/Lex/ModuleLoader.h"
 #include "clang/Lex/PreprocessingRecord.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/FileManager.h"
@@ -66,7 +67,7 @@ class GlobalCodeCompletionAllocator
   
 /// \brief Utility class for loading a ASTContext from an AST file.
 ///
-class ASTUnit {
+class ASTUnit : public ModuleLoader {
 public:
   typedef std::map<FileID, std::vector<PreprocessedEntity *> > 
     PreprocessedEntitiesByFileMap;
@@ -696,6 +697,13 @@ public:
   ///
   /// \returns True if an error occurred, false otherwise.
   bool serialize(raw_ostream &OS);
+  
+  virtual ModuleKey loadModule(SourceLocation ImportLoc, 
+                               IdentifierInfo &ModuleName,
+                               SourceLocation ModuleNameLoc) {
+    // ASTUnit doesn't know how to load modules (not that this matters).
+    return 0;
+  }
 };
 
 } // namespace clang

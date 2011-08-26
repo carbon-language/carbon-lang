@@ -1,3 +1,5 @@
+__import__ diamond_top;
+
 float left(float *);
 
 int top_left(char *c);

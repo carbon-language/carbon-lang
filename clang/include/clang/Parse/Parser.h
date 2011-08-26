@@ -1916,6 +1916,10 @@ bool ParseAsmOperandsOpt(SmallVectorImpl<IdentifierInfo *> &Names,
                                         SourceLocation &DeclEnd);
 
   //===--------------------------------------------------------------------===//
+  // Modules
+  DeclGroupPtrTy ParseModuleImport();
+  
+  //===--------------------------------------------------------------------===//
   // GNU G++: Type Traits [Type-Traits.html in the GCC manual]
   ExprResult ParseUnaryTypeTrait();
   ExprResult ParseBinaryTypeTrait();

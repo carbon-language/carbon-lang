@@ -1277,6 +1277,7 @@ FinishIdentifier:
     // preprocessor, which may macro expand it or something.
     if (II->isHandleIdentifierCase())
       PP->HandleIdentifier(Result);
+    
     return;
   }
 

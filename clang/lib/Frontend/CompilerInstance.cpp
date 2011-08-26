@@ -191,52 +191,38 @@ void CompilerInstance::createSourceManager(FileManager &FileMgr) {
 // Preprocessor
 
 void CompilerInstance::createPreprocessor() {
-  PP = createPreprocessor(getDiagnostics(), getLangOpts(),
-                          getPreprocessorOpts(), getHeaderSearchOpts(),
-                          getDependencyOutputOpts(), getTarget(),
-                          getFrontendOpts(), getSourceManager(),
-                          getFileManager());
-}
-
-Preprocessor *
-CompilerInstance::createPreprocessor(Diagnostic &Diags,
-                                     const LangOptions &LangInfo,
-                                     const PreprocessorOptions &PPOpts,
-                                     const HeaderSearchOptions &HSOpts,
-                                     const DependencyOutputOptions &DepOpts,
-                                     const TargetInfo &Target,
-                                     const FrontendOptions &FEOpts,
-                                     SourceManager &SourceMgr,
-                                     FileManager &FileMgr) {
+  const PreprocessorOptions &PPOpts = getPreprocessorOpts();
+  
   // Create a PTH manager if we are using some form of a token cache.
   PTHManager *PTHMgr = 0;
   if (!PPOpts.TokenCache.empty())
-    PTHMgr = PTHManager::Create(PPOpts.TokenCache, Diags);
-
+    PTHMgr = PTHManager::Create(PPOpts.TokenCache, getDiagnostics());
+  
   // Create the Preprocessor.
-  HeaderSearch *HeaderInfo = new HeaderSearch(FileMgr);
-  Preprocessor *PP = new Preprocessor(Diags, LangInfo, Target,
-                                      SourceMgr, *HeaderInfo, PTHMgr,
-                                      /*OwnsHeaderSearch=*/true);
-
+  HeaderSearch *HeaderInfo = new HeaderSearch(getFileManager());
+  PP = new Preprocessor(getDiagnostics(), getLangOpts(), getTarget(),
+                        getSourceManager(), *HeaderInfo, *this, PTHMgr,
+                        /*OwnsHeaderSearch=*/true);
+  
   // Note that this is different then passing PTHMgr to Preprocessor's ctor.
   // That argument is used as the IdentifierInfoLookup argument to
   // IdentifierTable's ctor.
   if (PTHMgr) {
-    PTHMgr->setPreprocessor(PP);
+    PTHMgr->setPreprocessor(&*PP);
     PP->setPTHManager(PTHMgr);
   }
-
+  
   if (PPOpts.DetailedRecord)
     PP->createPreprocessingRecord(
-                       PPOpts.DetailedRecordIncludesNestedMacroExpansions);
+                                  PPOpts.DetailedRecordIncludesNestedMacroExpansions);
   
-  InitializePreprocessor(*PP, PPOpts, HSOpts, FEOpts);
-
+  InitializePreprocessor(*PP, PPOpts, getHeaderSearchOpts(), getFrontendOpts());
+  
   // Handle generating dependencies, if requested.
+  const DependencyOutputOptions &DepOpts = getDependencyOutputOpts();
   if (!DepOpts.OutputFile.empty())
     AttachDependencyFileGen(*PP, DepOpts);
-
+  
   // Handle generating header include information, if requested.
   if (DepOpts.ShowHeaderIncludes)
     AttachHeaderIncludeGen(*PP);
@@ -247,8 +233,6 @@ CompilerInstance::createPreprocessor(Diagnostic &Diags,
     AttachHeaderIncludeGen(*PP, /*ShowAllHeaders=*/true, OutputPath,
                            /*ShowDepth=*/false);
   }
-
-  return PP;
 }
 
 // ASTContext
@@ -640,4 +624,68 @@ bool CompilerInstance::ExecuteAction(FrontendAction &Act) {
   return !getDiagnostics().getClient()->getNumErrors();
 }
 
+ModuleKey CompilerInstance::loadModule(SourceLocation ImportLoc, 
+                                       IdentifierInfo &ModuleName,
+                                       SourceLocation ModuleNameLoc) {  
+  // Determine what file we're searching from.
+  SourceManager &SourceMgr = getSourceManager();
+  SourceLocation ExpandedImportLoc = SourceMgr.getExpansionLoc(ImportLoc);
+  const FileEntry *CurFile
+    = SourceMgr.getFileEntryForID(SourceMgr.getFileID(ExpandedImportLoc));
+  if (!CurFile)
+    CurFile = SourceMgr.getFileEntryForID(SourceMgr.getMainFileID());
+
+  // Search for a module with the given name.
+  std::string Filename = ModuleName.getName().str();
+  Filename += ".pcm";
+  const DirectoryLookup *CurDir = 0;  
+  const FileEntry *ModuleFile
+    = PP->getHeaderSearchInfo().LookupFile(Filename, /*isAngled=*/false,
+                                           /*FromDir=*/0, CurDir, CurFile, 
+                                           /*SearchPath=*/0, 
+                                           /*RelativePath=*/0);
+  if (!ModuleFile) {
+    getDiagnostics().Report(ModuleNameLoc, diag::warn_module_not_found)
+      << ModuleName.getName()
+      << SourceRange(ImportLoc, ModuleNameLoc);
+    return 0;
+  }
+  
+  // If we don't already have an ASTReader, create one now.
+  if (!ModuleManager) {
+    std::string Sysroot = getHeaderSearchOpts().Sysroot;
+    const PreprocessorOptions &PPOpts = getPreprocessorOpts();
+    ModuleManager = new ASTReader(getPreprocessor(), &*Context,
+                                  Sysroot.empty() ? "" : Sysroot.c_str(),
+                                  PPOpts.DisablePCHValidation, 
+                                  PPOpts.DisableStatCache);
+    ModuleManager->setDeserializationListener(
+      getASTConsumer().GetASTDeserializationListener());
+    getASTContext().setASTMutationListener(
+      getASTConsumer().GetASTMutationListener());
+    llvm::OwningPtr<ExternalASTSource> Source;
+    Source.reset(ModuleManager);
+    getASTContext().setExternalSource(Source);
+    ModuleManager->InitializeSema(getSema());
+  }
+  
+  // Try to load the module we found.
+  switch (ModuleManager->ReadAST(ModuleFile->getName(),
+                                 serialization::MK_Module)) {
+  case ASTReader::Success:
+    break;
+
+  case ASTReader::IgnorePCH:
+    // FIXME: The ASTReader will already have complained, but can we showhorn
+    // that diagnostic information into a more useful form?
+    return 0;
+      
+  case ASTReader::Failure:
+    // Already complained.
+    return 0;
+  }
+  
+  // FIXME: The module file's FileEntry makes a poor key indeed!
+  return (ModuleKey)ModuleFile;
+}
 

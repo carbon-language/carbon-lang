@@ -616,7 +616,7 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
   AST->Target = TargetInfo::CreateTargetInfo(AST->getDiagnostics(),
                                              TargetOpts);
   AST->PP = new Preprocessor(AST->getDiagnostics(), LangInfo, *AST->Target,
-                             AST->getSourceManager(), HeaderInfo);
+                             AST->getSourceManager(), HeaderInfo, *AST);
   Preprocessor &PP = *AST->PP;
 
   PP.setPredefines(Reader->getSuggestedPredefines());

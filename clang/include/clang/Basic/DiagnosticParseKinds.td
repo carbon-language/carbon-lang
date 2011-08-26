@@ -569,5 +569,11 @@ def err_seh___except_filter : Error<
 def err_seh___finally_block : Error<
   "%0 only allowed in __finally block">;
 
+// Modules
+def err_module_expected_ident : Error<
+  "expected a module name after '__import__'">;
+def err_module_expected_semi : Error<
+  "expected a semicolon name after module name">;
+  
 } // end of Parse Issue category.
 } // end of Parser diagnostics

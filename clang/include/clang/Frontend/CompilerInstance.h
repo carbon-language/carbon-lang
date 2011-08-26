@@ -11,6 +11,7 @@
 #define LLVM_CLANG_FRONTEND_COMPILERINSTANCE_H_
 
 #include "clang/Frontend/CompilerInvocation.h"
+#include "clang/Lex/ModuleLoader.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/OwningPtr.h"
@@ -56,7 +57,7 @@ class TargetInfo;
 /// in to the compiler instance for everything. When possible, utility functions
 /// come in two forms; a short form that reuses the CompilerInstance objects,
 /// and a long form that takes explicit instances of any required objects.
-class CompilerInstance {
+class CompilerInstance : public ModuleLoader {
   /// The options used in this compiler instance.
   llvm::IntrusiveRefCntPtr<CompilerInvocation> Invocation;
 
@@ -498,20 +499,6 @@ public:
   /// and replace any existing one with it.
   void createPreprocessor();
 
-  /// Create a Preprocessor object.
-  ///
-  /// Note that this also creates a new HeaderSearch object which will be owned
-  /// by the resulting Preprocessor.
-  ///
-  /// \return The new object on success, or null on failure.
-  static Preprocessor *createPreprocessor(Diagnostic &, const LangOptions &,
-                                          const PreprocessorOptions &,
-                                          const HeaderSearchOptions &,
-                                          const DependencyOutputOptions &,
-                                          const TargetInfo &,
-                                          const FrontendOptions &,
-                                          SourceManager &, FileManager &);
-
   /// Create the AST context.
   void createASTContext();
 
@@ -626,6 +613,10 @@ public:
                                       const FrontendOptions &Opts);
 
   /// }
+  
+  virtual ModuleKey loadModule(SourceLocation ImportLoc, 
+                               IdentifierInfo &ModuleName,
+                               SourceLocation ModuleNameLoc);
 };
 
 } // end namespace clang

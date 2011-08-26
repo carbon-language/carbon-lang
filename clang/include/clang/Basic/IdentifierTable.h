@@ -252,7 +252,7 @@ private:
   void RecomputeNeedsHandleIdentifier() {
     NeedsHandleIdentifier =
       (isPoisoned() | hasMacroDefinition() | isCPlusPlusOperatorKeyword() |
-       isExtensionToken());
+       isExtensionToken() | getTokenID() == tok::kw___import__);
   }
 };
 
