@@ -686,7 +686,18 @@ public:
                 }
             }
             if (m_section_infos[n_sect].vm_range.Contains(file_addr))
+            {
+                // Symbol is in section.
                 return m_section_infos[n_sect].section;
+            }
+            else if (m_section_infos[n_sect].vm_range.GetByteSize () == 0 &&
+                     m_section_infos[n_sect].vm_range.GetBaseAddress() == file_addr)
+            {
+                // Symbol is in section with zero size, but has the same start
+                // address as the section. This can happen with linker symbols
+                // (symbols that start with the letter 'l' or 'L'.
+                return m_section_infos[n_sect].section;
+            }
         }
         return m_section_list->FindSectionContainingFileAddress(file_addr).get();
     }
@@ -1162,7 +1173,13 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                             case NListTypeSection:          // N_SECT
                                 symbol_section = section_info.GetSection (nlist.n_sect, nlist.n_value);
 
-                                assert(symbol_section != NULL);
+                                if (symbol_section == NULL)
+                                {
+                                    // TODO: warn about this?
+                                    add_nlist = false;
+                                    break;
+                                }
+
                                 if (TEXT_eh_frame_sectID == nlist.n_sect)
                                 {
                                     type = eSymbolTypeException;
