@@ -1232,9 +1232,9 @@ DataExtractor::GetULEB128 (uint32_t *offset_ptr) const
             bytecount++;
             byte = *src++;
             result |= (byte & 0x7f) << shift;
-            shift += 7;
             if ((byte & 0x80) == 0)
                 break;
+            shift += 7;
         }
 
         *offset_ptr += bytecount;
