@@ -5,3 +5,16 @@ void f(bool flag) {
   
   (flag ? a : b) = 3;
 }
+
+// PR10756
+namespace test0 {
+  struct A {
+    A(const A &);
+    A &operator=(const A &);
+    A sub() const;
+    void foo() const;
+  };
+  void foo(bool cond, const A &a) {
+    (cond ? a : a.sub()).foo();
+  }
+}

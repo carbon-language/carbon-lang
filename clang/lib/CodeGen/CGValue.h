@@ -383,7 +383,7 @@ public:
   static AggValueSlot forAddr(llvm::Value *addr, Qualifiers quals,
                               IsDestructed_t isDestructed,
                               NeedsGCBarriers_t needsGC,
-                              IsAliased_t isAliased = IsAliased,
+                              IsAliased_t isAliased,
                               IsZeroed_t isZeroed = IsNotZeroed) {
     AggValueSlot AV;
     AV.Addr = addr;
@@ -397,7 +397,7 @@ public:
 
   static AggValueSlot forLValue(LValue LV, IsDestructed_t isDestructed,
                                 NeedsGCBarriers_t needsGC,
-                                IsAliased_t isAliased = IsAliased,
+                                IsAliased_t isAliased,
                                 IsZeroed_t isZeroed = IsNotZeroed) {
     return forAddr(LV.getAddress(), LV.getQuals(),
                    isDestructed, needsGC, isAliased, isZeroed);

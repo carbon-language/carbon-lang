@@ -444,7 +444,8 @@ void AggExprEmitter::VisitBinAssign(const BinaryOperator *E) {
         LValue RHS = CGF.EmitLValue(E->getRHS());
         LValue LHS = CGF.EmitLValue(E->getLHS());
         Dest = AggValueSlot::forLValue(LHS, AggValueSlot::IsDestructed,
-                                       needsGC(E->getLHS()->getType()));
+                                       needsGC(E->getLHS()->getType()),
+                                       AggValueSlot::IsAliased);
         EmitFinalDestCopy(E, RHS, true);
         return;
       }
@@ -469,7 +470,8 @@ void AggExprEmitter::VisitBinAssign(const BinaryOperator *E) {
     // Codegen the RHS so that it stores directly into the LHS.
     AggValueSlot LHSSlot =
       AggValueSlot::forLValue(LHS, AggValueSlot::IsDestructed, 
-                              needsGC(E->getLHS()->getType()));
+                              needsGC(E->getLHS()->getType()),
+                              AggValueSlot::IsAliased);
     CGF.EmitAggExpr(E->getRHS(), LHSSlot, false);
     EmitFinalDestCopy(E, LHS, true);
   }
@@ -1052,7 +1054,8 @@ LValue CodeGenFunction::EmitAggExprToLValue(const Expr *E) {
   llvm::Value *Temp = CreateMemTemp(E->getType());
   LValue LV = MakeAddrLValue(Temp, E->getType());
   EmitAggExpr(E, AggValueSlot::forLValue(LV, AggValueSlot::IsNotDestructed,
-                                         AggValueSlot::DoesNotNeedGCBarriers));
+                                         AggValueSlot::DoesNotNeedGCBarriers,
+                                         AggValueSlot::IsNotAliased));
   return LV;
 }
 

@@ -705,7 +705,8 @@ static void StoreAnyExprIntoOneUnit(CodeGenFunction &CGF, const CXXNewExpr *E,
     AggValueSlot Slot
       = AggValueSlot::forAddr(NewPtr, AllocType.getQualifiers(),
                               AggValueSlot::IsDestructed,
-                              AggValueSlot::DoesNotNeedGCBarriers);
+                              AggValueSlot::DoesNotNeedGCBarriers,
+                              AggValueSlot::IsNotAliased);
     CGF.EmitAggExpr(Init, Slot);
   }
 }
