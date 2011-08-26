@@ -1568,7 +1568,8 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
     else if (!llvm::sys::fs::exists("/usr/lib/x86_64-linux-gnu/gcc",
              Exists) && Exists)
       GccTriple = "x86_64-linux-gnu";
-    else if (!llvm::sys::fs::exists("/usr/lib64/gcc/x86_64-slackware-linux", Exists)
+    else if (!llvm::sys::fs::exists("/usr/lib64/gcc/x86_64-slackware-linux",
+                                    Exists)
             && Exists)
       GccTriple = "x86_64-slackware-linux";
   } else if (Arch == llvm::Triple::x86) {
