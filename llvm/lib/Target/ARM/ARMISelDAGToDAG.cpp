@@ -1352,12 +1352,21 @@ SDNode *ARMDAGToDAGISel::SelectARMIndexedLoad(SDNode *N) {
   }
 
   if (Match) {
-    SDValue Chain = LD->getChain();
-    SDValue Base = LD->getBasePtr();
-    SDValue Ops[]= { Base, Offset, AMOpc, getAL(CurDAG),
-                     CurDAG->getRegister(0, MVT::i32), Chain };
-    return CurDAG->getMachineNode(Opcode, N->getDebugLoc(), MVT::i32, MVT::i32,
-                                  MVT::Other, Ops, 6);
+    if (Opcode == ARM::LDR_PRE_IMM || Opcode == ARM::LDRB_PRE_IMM) {
+      SDValue Chain = LD->getChain();
+      SDValue Base = LD->getBasePtr();
+      SDValue Ops[]= { Base, AMOpc, getAL(CurDAG),
+                       CurDAG->getRegister(0, MVT::i32), Chain };
+      return CurDAG->getMachineNode(Opcode, N->getDebugLoc(), MVT::i32, MVT::i32,
+                                    MVT::Other, Ops, 5);
+    } else {
+      SDValue Chain = LD->getChain();
+      SDValue Base = LD->getBasePtr();
+      SDValue Ops[]= { Base, Offset, AMOpc, getAL(CurDAG),
+                       CurDAG->getRegister(0, MVT::i32), Chain };
+      return CurDAG->getMachineNode(Opcode, N->getDebugLoc(), MVT::i32, MVT::i32,
+                                    MVT::Other, Ops, 6);
+    }
   }
 
   return NULL;
