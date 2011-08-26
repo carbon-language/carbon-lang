@@ -841,6 +841,22 @@ DeclContext::LoadLexicalDeclsFromExternalStorage() const {
   // Notify that we have a DeclContext that is initializing.
   ExternalASTSource::Deserializing ADeclContext(Source);
 
+  // We may have already loaded just the fields of this record, in which case
+  // we remove all of the fields from the list. The fields will be reloaded
+  // from the external source as part of re-establishing the context.
+  if (const RecordDecl *RD = dyn_cast<RecordDecl>(this)) {
+    if (RD->LoadedFieldsFromExternalStorage) {
+      while (FirstDecl && isa<FieldDecl>(FirstDecl)) {
+        Decl *Next = FirstDecl->NextDeclInContext;
+        FirstDecl->NextDeclInContext = 0;
+        FirstDecl = Next;
+      }
+      
+      if (!FirstDecl)
+        LastDecl = 0;
+    }
+  }
+  
   // Load the external declarations, if any.
   SmallVector<Decl*, 64> Decls;
   ExternalLexicalStorage = false;
@@ -855,14 +871,6 @@ DeclContext::LoadLexicalDeclsFromExternalStorage() const {
 
   if (Decls.empty())
     return;
-
-  // We may have already loaded just the fields of this record, in which case
-  // don't add the decls, just replace the FirstDecl/LastDecl chain.
-  if (const RecordDecl *RD = dyn_cast<RecordDecl>(this))
-    if (RD->LoadedFieldsFromExternalStorage) {
-      llvm::tie(FirstDecl, LastDecl) = BuildDeclChain(Decls);
-      return;
-    }
 
   // Splice the newly-read declarations into the beginning of the list
   // of declarations.
