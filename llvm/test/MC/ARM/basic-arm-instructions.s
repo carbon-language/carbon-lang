@@ -363,11 +363,13 @@ Lforward:
 
   bl _bar
   blx _bar
+  blls #28634268
 
 @ CHECK: bl  _bar @ encoding: [A,A,A,0xeb]
 @ CHECK:   @   fixup A - offset: 0, value: _bar, kind: fixup_arm_uncondbranch
 @ CHECK: blx	_bar @ encoding: [A,A,A,0xfa]
            @   fixup A - offset: 0, value: _bar, kind: fixup_arm_uncondbranch
+@ CHECK: blls	#28634268               @ encoding: [0x27,0x3b,0x6d,0x9b]
 
 @------------------------------------------------------------------------------
 @ BLX (register)

@@ -532,11 +532,16 @@ getBranchTargetOpValue(const MCInst &MI, unsigned OpIdx,
 uint32_t ARMMCCodeEmitter::
 getARMBranchTargetOpValue(const MCInst &MI, unsigned OpIdx,
                           SmallVectorImpl<MCFixup> &Fixups) const {
-  if (HasConditionalBranch(MI)) 
-    return ::getBranchTargetOpValue(MI, OpIdx,
-                                    ARM::fixup_arm_condbranch, Fixups);
-  return ::getBranchTargetOpValue(MI, OpIdx, 
-                                  ARM::fixup_arm_uncondbranch, Fixups);
+  const MCOperand MO = MI.getOperand(OpIdx);
+  if (MO.isExpr()) {
+    if (HasConditionalBranch(MI)) 
+      return ::getBranchTargetOpValue(MI, OpIdx,
+                                      ARM::fixup_arm_condbranch, Fixups);
+    return ::getBranchTargetOpValue(MI, OpIdx, 
+                                    ARM::fixup_arm_uncondbranch, Fixups);
+  }
+
+  return MO.getImm() >> 2;
 }
 
 
