@@ -373,11 +373,11 @@ public:
                                  const char *BaseInput,
                                  bool AtTopLevel) const;
 
-  /// GetTemporaryPath - Return the pathname of a temporary file to
-  /// use as part of compilation; the file will have the given suffix.
+  /// GetTemporaryPath - Return the pathname of a temporary file to use 
+  /// as part of compilation; the file will have the given prefix and suffix.
   ///
   /// GCC goes to extra lengths here to be a bit more robust.
-  std::string GetTemporaryPath(const char *Suffix) const;
+  std::string GetTemporaryPath(const char *Prefix, const char *Suffix) const;
 
   /// GetHostInfo - Construct a new host info object for the given
   /// host triple.

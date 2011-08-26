@@ -1335,6 +1335,15 @@ void Driver::BuildJobsForAction(Compilation &C,
   }
 }
 
+// Strip the directory and suffix from BaseInput.
+static const char *getBaseName (const char *BaseInput) {
+  std::pair<StringRef, StringRef> Split = StringRef(BaseInput).rsplit('/');
+  if (Split.second != "")
+    return Split.second.split('.').first.str().c_str();
+  else
+    return Split.first.split('.').first.str().c_str();
+}
+
 const char *Driver::GetNamedOutputPath(Compilation &C,
                                        const JobAction &JA,
                                        const char *BaseInput,
@@ -1355,7 +1364,8 @@ const char *Driver::GetNamedOutputPath(Compilation &C,
   if ((!AtTopLevel && !C.getArgs().hasArg(options::OPT_save_temps)) ||
       CCGenDiagnostics) {
     std::string TmpName =
-      GetTemporaryPath(types::getTypeTempSuffix(JA.getType()));
+      GetTemporaryPath(getBaseName(BaseInput), 
+                       types::getTypeTempSuffix(JA.getType()));
     return C.addTempFile(C.getArgs().MakeArgString(TmpName.c_str()));
   }
 
@@ -1388,9 +1398,10 @@ const char *Driver::GetNamedOutputPath(Compilation &C,
   // If we're saving temps and the temp filename conflicts with the input
   // filename, then avoid overwriting input file.
   if (!AtTopLevel && C.getArgs().hasArg(options::OPT_save_temps) &&
-    NamedOutput == BaseName) {
+      NamedOutput == BaseName) {
     std::string TmpName =
-      GetTemporaryPath(types::getTypeTempSuffix(JA.getType()));
+      GetTemporaryPath(getBaseName(BaseInput),
+                       types::getTypeTempSuffix(JA.getType()));
     return C.addTempFile(C.getArgs().MakeArgString(TmpName.c_str()));
   }
 
@@ -1475,7 +1486,8 @@ std::string Driver::GetProgramPath(const char *Name, const ToolChain &TC,
   return Name;
 }
 
-std::string Driver::GetTemporaryPath(const char *Suffix) const {
+std::string Driver::GetTemporaryPath(const char *Prefix, const char *Suffix) 
+  const {
   // FIXME: This is lame; sys::Path should provide this function (in particular,
   // it should know how to find the temporary files dir).
   std::string Error;
@@ -1487,7 +1499,7 @@ std::string Driver::GetTemporaryPath(const char *Suffix) const {
   if (!TmpDir)
     TmpDir = "/tmp";
   llvm::sys::Path P(TmpDir);
-  P.appendComponent("cc");
+  P.appendComponent(Prefix);
   if (P.makeUnique(false, &Error)) {
     Diag(clang::diag::err_drv_unable_to_make_temp) << Error;
     return "";

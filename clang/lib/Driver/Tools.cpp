@@ -2983,7 +2983,7 @@ void darwin::Compile::ConstructJob(Compilation &C, const JobAction &JA,
     // NOTE: gcc uses a temp .s file for this, but there doesn't seem
     // to be a good reason.
     const char *TmpPath = C.getArgs().MakeArgString(
-      D.GetTemporaryPath("s"));
+      D.GetTemporaryPath("cc", "s"));
     C.addTempFile(TmpPath);
     CmdArgs.push_back(TmpPath);
 
@@ -3125,7 +3125,7 @@ void darwin::Link::AddLinkArgs(Compilation &C,
   // dsymutil step.
   if (Version[0] >= 116 && D.IsUsingLTO(Args)) {
     const char *TmpPath = C.getArgs().MakeArgString(
-      D.GetTemporaryPath(types::getTypeTempSuffix(types::TY_Object)));
+      D.GetTemporaryPath("cc", types::getTypeTempSuffix(types::TY_Object)));
     C.addTempFile(TmpPath);
     CmdArgs.push_back("-object_path_lto");
     CmdArgs.push_back(TmpPath);
