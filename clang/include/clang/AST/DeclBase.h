@@ -1322,6 +1322,12 @@ public:
     ExternalVisibleStorage = ES;
   }
 
+  /// \brief Determine whether the given declaration is stored in the list of
+  /// declarations lexically within this context.
+  bool isDeclInLexicalTraversal(const Decl *D) const {
+    return D && (D->NextDeclInContext || D == FirstDecl || D == LastDecl);
+  }
+  
   static bool classof(const Decl *D);
   static bool classof(const DeclContext *D) { return true; }
 #define DECL(NAME, BASE)

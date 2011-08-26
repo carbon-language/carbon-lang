@@ -2553,7 +2553,7 @@ namespace {
       = static_cast<IdentifierLookupVisitor *>(UserData);
       
       ASTIdentifierLookupTable *IdTable
-      = (ASTIdentifierLookupTable *)M.IdentifierLookupTable;
+        = (ASTIdentifierLookupTable *)M.IdentifierLookupTable;
       if (!IdTable)
         return false;
       
@@ -2786,7 +2786,7 @@ void ASTReader::setPreprocessor(Preprocessor &pp) {
 void ASTReader::InitializeContext(ASTContext &Ctx) {
   Context = &Ctx;
   assert(Context && "Passed null context!");
-
+  
   assert(PP && "Forgot to set Preprocessor ?");
   PP->getIdentifierTable().setExternalIdentifierLookup(this);
   PP->setExternalSource(this);
@@ -4163,6 +4163,7 @@ namespace {
     ASTReader &Reader;
     const DeclContext *DC;
     bool (*isKindWeWant)(Decl::Kind);
+    
     SmallVectorImpl<Decl*> &Decls;
     bool PredefsVisited[NUM_PREDEF_DECL_IDS];
 
@@ -4204,9 +4205,10 @@ namespace {
           This->PredefsVisited[ID->second] = true;
         }
 
-        Decl *D = This->Reader.GetLocalDecl(M, ID->second);
-        assert(D && "Null decl in lexical decls");
-        This->Decls.push_back(D);
+        if (Decl *D = This->Reader.GetLocalDecl(M, ID->second)) {
+          if (!This->DC->isDeclInLexicalTraversal(D))
+            This->Decls.push_back(D);
+        }
       }
 
       return false;
