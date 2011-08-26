@@ -262,8 +262,10 @@ DecodeStatus ARMDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
   uint8_t bytes[4];
 
   // We want to read exactly 4 bytes of data.
-  if (Region.readBytes(Address, 4, (uint8_t*)bytes, NULL) == -1)
+  if (Region.readBytes(Address, 4, (uint8_t*)bytes, NULL) == -1) {
+    Size = 0;
     return Fail;
+  }
 
   // Encoded as a small-endian 32-bit word in the stream.
   uint32_t insn = (bytes[3] << 24) |
@@ -329,6 +331,7 @@ DecodeStatus ARMDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
 
   MI.clear();
 
+  Size = 0;
   return Fail;
 }
 
@@ -442,8 +445,10 @@ DecodeStatus ThumbDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
   uint8_t bytes[4];
 
   // We want to read exactly 2 bytes of data.
-  if (Region.readBytes(Address, 2, (uint8_t*)bytes, NULL) == -1)
+  if (Region.readBytes(Address, 2, (uint8_t*)bytes, NULL) == -1) {
+    Size = 0;
     return Fail;
+  }
 
   uint16_t insn16 = (bytes[1] << 8) | bytes[0];
   DecodeStatus result = decodeThumbInstruction16(MI, insn16, Address, this);
@@ -492,8 +497,10 @@ DecodeStatus ThumbDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
   }
 
   // We want to read exactly 4 bytes of data.
-  if (Region.readBytes(Address, 4, (uint8_t*)bytes, NULL) == -1)
+  if (Region.readBytes(Address, 4, (uint8_t*)bytes, NULL) == -1) {
+    Size = 0;
     return Fail;
+  }
 
   uint32_t insn32 = (bytes[3] <<  8) |
                     (bytes[2] <<  0) |
@@ -568,6 +575,7 @@ DecodeStatus ThumbDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
     }
   }
 
+  Size = 0;
   return Fail;
 }
 
