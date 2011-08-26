@@ -1777,8 +1777,18 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // -fno-delayed-template-parsing is default.
   if (Args.hasFlag(options::OPT_fdelayed_template_parsing,
                    options::OPT_fno_delayed_template_parsing,
-                   false))
-    CmdArgs.push_back("-fdelayed-template-parsing");
+                   false)) {
+    if (Args.hasArg(options::OPT_fdelayed_template_parsing)) {
+      StringRef Force = Args.getLastArgValue(options::OPT_fdelayed_template_parsing, "");
+      if (Force == "-force")
+        CmdArgs.push_back("-fdelayed-template-parsing-force");
+      else
+        CmdArgs.push_back("-fdelayed-template-parsing");
+    }
+    else
+      CmdArgs.push_back("-fdelayed-template-parsing");
+  }
+
 
   // -fgnu-keywords default varies depending on language; only pass if
   // specified.
