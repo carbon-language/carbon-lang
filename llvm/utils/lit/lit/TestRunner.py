@@ -397,7 +397,8 @@ def parseIntegratedTestScript(test, normalize_slashes=False):
     sourcedir = os.path.dirname(sourcepath)
     execpath = test.getExecPath()
     execdir,execbase = os.path.split(execpath)
-    tmpBase = os.path.join(execdir, 'Output', execbase)
+    tmpDir = os.path.join(execdir, 'Output')
+    tmpBase = os.path.join(tmpDir, execbase)
     if test.index is not None:
         tmpBase += '_%d' % test.index
 
@@ -414,6 +415,7 @@ def parseIntegratedTestScript(test, normalize_slashes=False):
                           ('%S', sourcedir),
                           ('%p', sourcedir),
                           ('%t', tmpBase + '.tmp'),
+                          ('%T', tmpDir),
                           # FIXME: Remove this once we kill DejaGNU.
                           ('%abs_tmp', tmpBase + '.tmp'),
                           ('#_MARKER_#', '%')])
