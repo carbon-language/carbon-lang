@@ -1,6 +1,7 @@
 ; This testcase should return with an exit code of 1.
 ;
 ; RUN: not lli %s
+; XFAIL: arm
 
 @test = global i64 0		; <i64*> [#uses=1]
 

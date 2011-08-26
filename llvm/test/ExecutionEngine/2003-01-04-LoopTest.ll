@@ -1,4 +1,5 @@
 ; RUN: lli %s > /dev/null
+; XFAIL: arm
 
 define i32 @main() {
 	call i32 @mylog( i32 4 )		; <i32>:1 [#uses=0]

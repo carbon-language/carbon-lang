@@ -1,4 +1,5 @@
 ; RUN: lli %s > /dev/null
+; XFAIL: arm
 
 ;
 ; Regression Test: EnvironmentTest.ll

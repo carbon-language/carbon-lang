@@ -1,4 +1,5 @@
 ; RUN: lli %s > /dev/null
+; XFAIL: arm
 
 ; This testcase failed to work because two variable sized allocas confused the
 ; local register allocator.

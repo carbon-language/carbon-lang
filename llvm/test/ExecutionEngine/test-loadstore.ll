@@ -1,4 +1,5 @@
 ; RUN: lli %s > /dev/null
+; XFAIL: arm
 
 define void @test(i8* %P, i16* %P.upgrd.1, i32* %P.upgrd.2, i64* %P.upgrd.3) {
 	%V = load i8* %P		; <i8> [#uses=1]
