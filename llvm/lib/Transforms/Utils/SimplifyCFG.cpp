@@ -2729,7 +2729,7 @@ static bool passingValueIsAlwaysUndefined(Value *V, Instruction *I) {
   if (!C)
     return false;
 
-  if (!I->hasOneUse()) // FIXME: There is no reason to limit this to one use.
+  if (!I->hasOneUse()) // Only look at single-use instructions, for compile time
     return false;
 
   if (C->isNullValue()) {
@@ -2738,8 +2738,7 @@ static bool passingValueIsAlwaysUndefined(Value *V, Instruction *I) {
     // Now make sure that there are no instructions in between that can alter
     // control flow (eg. calls)
     for (BasicBlock::iterator i = ++BasicBlock::iterator(I); &*i != Use; ++i)
-      if (i == I->getParent()->end() ||
-          !i->isSafeToSpeculativelyExecute())
+      if (i == I->getParent()->end() || i->mayHaveSideEffects())
         return false;
 
     // Look through GEPs. A load from a GEP derived from NULL is still undefined
@@ -2751,13 +2750,13 @@ static bool passingValueIsAlwaysUndefined(Value *V, Instruction *I) {
     if (BitCastInst *BC = dyn_cast<BitCastInst>(Use))
       return passingValueIsAlwaysUndefined(V, BC);
 
-    // load from null is undefined
-    if (isa<LoadInst>(Use))
-      return true;
+    // Load from null is undefined.
+    if (LoadInst *LI = dyn_cast<LoadInst>(Use))
+      return LI->getPointerAddressSpace() == 0;
 
-    // store to null is undef
-    if (isa<StoreInst>(Use) && Use->getOperand(1) == I)
-      return true;
+    // Store to null is undefined.
+    if (StoreInst *SI = dyn_cast<StoreInst>(Use))
+      return SI->getPointerAddressSpace() == 0 && SI->getPointerOperand() == I;
   }
   return false;
 }
