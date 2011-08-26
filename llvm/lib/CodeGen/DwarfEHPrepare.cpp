@@ -693,6 +693,7 @@ bool DwarfEHPrepare::InsertUnwindResumeCalls() {
 
   // Extract the exception object from the ResumeInst and add it to the PHI node
   // that feeds the _Unwind_Resume call.
+  BasicBlock *UnwindBBDom = Resumes[0]->getParent();
   for (SmallVectorImpl<ResumeInst*>::iterator
          I = Resumes.begin(), E = Resumes.end(); I != E; ++I) {
     ResumeInst *RI = *I;
@@ -700,6 +701,7 @@ bool DwarfEHPrepare::InsertUnwindResumeCalls() {
     ExtractValueInst *ExnObj = ExtractValueInst::Create(RI->getOperand(0),
                                                         0, "exn.obj", RI);
     PN->addIncoming(ExnObj, RI->getParent());
+    UnwindBBDom = DT->findNearestCommonDominator(RI->getParent(), UnwindBBDom);
     RI->eraseFromParent();
   }
 
@@ -709,6 +711,9 @@ bool DwarfEHPrepare::InsertUnwindResumeCalls() {
 
   // We never expect _Unwind_Resume to return.
   new UnreachableInst(Ctx, UnwindBB);
+
+  // Now update DominatorTree analysis information.
+  DT->addNewBlock(UnwindBB, UnwindBBDom);
   return true;
 }
 
