@@ -79,7 +79,7 @@
 
 @implementation Gorf
 @synthesize x;
-@synthesize y; // expected-error {{existing ivar 'y' for unsafe_unretained property 'y' must be __unsafe_unretained}}
+@synthesize y; // expected-error {{existing ivar 'y' for property 'y' with  assign attribute must be __unsafe_unretained}}
 @synthesize z;
 @end
 
@@ -94,7 +94,7 @@
 
 @implementation Gorf2
 @synthesize x;
-@synthesize y; // expected-error {{existing ivar 'y' for unsafe_unretained property 'y' must be __unsafe_unretained}}
+@synthesize y; // expected-error {{existing ivar 'y' for property 'y' with unsafe_unretained attribute must be __unsafe_unretained}}
 @synthesize z;
 @end
 

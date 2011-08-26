@@ -2851,7 +2851,8 @@ def err_arc_strong_property_ownership : Error<
   "existing ivar %1 for strong property %0 may not be "
   "%select{|__unsafe_unretained||__weak}2">;
 def err_arc_assign_property_ownership : Error<
-  "existing ivar %1 for unsafe_unretained property %0 must be __unsafe_unretained">;
+  "existing ivar %1 for property %0 with %select{unsafe_unretained| assign}2 "
+  "attribute must be __unsafe_unretained">;
 def err_arc_inconsistent_property_ownership : Error<
   "%select{strong|weak|unsafe_unretained}1 property %0 may not also be "
   "declared %select{|__unsafe_unretained|__strong|__weak|__autoreleasing}2">;

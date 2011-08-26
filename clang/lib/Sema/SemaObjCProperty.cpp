@@ -487,7 +487,9 @@ static void checkARCPropertyImpl(Sema &S, SourceLocation propertyImplLoc,
     case Qualifiers::OCL_Strong:
       S.Diag(propertyImplLoc, diag::err_arc_assign_property_ownership)
         << property->getDeclName()
-        << ivar->getDeclName();
+        << ivar->getDeclName()
+        << ((property->getPropertyAttributesAsWritten() 
+            & ObjCPropertyDecl::OBJC_PR_assign) != 0);
       break;
     }
 
