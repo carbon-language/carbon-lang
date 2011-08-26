@@ -424,7 +424,8 @@ void CompoundLiteralRegion::dumpToStream(raw_ostream &os) const {
 }
 
 void CXXTempObjectRegion::dumpToStream(raw_ostream &os) const {
-  os << "temp_object";
+  os << "temp_object{" << getValueType().getAsString() << ','
+     << (void*) Ex << '}';
 }
 
 void CXXBaseObjectRegion::dumpToStream(raw_ostream &os) const {

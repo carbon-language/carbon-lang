@@ -76,6 +76,11 @@ SourceRange StackAddrEscapeChecker::GenName(raw_ostream &os,
        << VR->getString() << '\'';
     range = VR->getDecl()->getSourceRange();
   }
+  else if (const CXXTempObjectRegion *TOR = dyn_cast<CXXTempObjectRegion>(R)) {
+    os << "stack memory associated with temporary object of type '"
+       << TOR->getValueType().getAsString() << '\'';
+    range = TOR->getExpr()->getSourceRange();
+  }
   else {
     assert(false && "Invalid region in ReturnStackAddressChecker.");
   } 

@@ -856,6 +856,8 @@ class CXXTempObjectRegion : public TypedValueRegion {
                             Expr const *E, const MemRegion *sReg);
   
 public:
+  const Expr *getExpr() const { return Ex; }
+
   QualType getValueType() const {
     return Ex->getType();
   }
