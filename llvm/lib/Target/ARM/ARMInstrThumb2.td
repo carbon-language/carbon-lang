@@ -12,14 +12,21 @@
 //===----------------------------------------------------------------------===//
 
 // IT block predicate field
+def it_pred_asmoperand : AsmOperandClass {
+  let Name = "ITCondCode";
+  let ParserMethod = "parseITCondCode";
+}
 def it_pred : Operand<i32> {
   let PrintMethod = "printMandatoryPredicateOperand";
+  let ParserMatchClass = it_pred_asmoperand;
   let DecoderMethod = "DecodeITCond";
 }
 
 // IT block condition mask
+def it_mask_asmoperand : AsmOperandClass { let Name = "ITMask"; }
 def it_mask : Operand<i32> {
   let PrintMethod = "printThumbITMask";
+  let ParserMatchClass = it_mask_asmoperand;
   let DecoderMethod = "DecodeITMask";
 }
 

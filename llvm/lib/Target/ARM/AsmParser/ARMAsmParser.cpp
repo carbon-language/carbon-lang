@@ -22,6 +22,7 @@
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCTargetAsmParser.h"
+#include "llvm/Support/MathExtras.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
@@ -69,7 +70,8 @@ class ARMAsmParser : public MCTargetAsmParser {
   bool parseDirectiveSyntax(SMLoc L);
 
   StringRef splitMnemonic(StringRef Mnemonic, unsigned &PredicationCode,
-                          bool &CarrySetting, unsigned &ProcessorIMod);
+                          bool &CarrySetting, unsigned &ProcessorIMod,
+                          StringRef &ITMask);
   void getMnemonicAcceptInfo(StringRef Mnemonic, bool &CanAcceptCarrySet,
                              bool &CanAcceptPredicationCode);
 
@@ -99,6 +101,7 @@ class ARMAsmParser : public MCTargetAsmParser {
 
   /// }
 
+  OperandMatchResultTy parseITCondCode(SmallVectorImpl<MCParsedAsmOperand*>&);
   OperandMatchResultTy parseCoprocNumOperand(
     SmallVectorImpl<MCParsedAsmOperand*>&);
   OperandMatchResultTy parseCoprocRegOperand(
@@ -196,6 +199,7 @@ class ARMOperand : public MCParsedAsmOperand {
   enum KindTy {
     CondCode,
     CCOut,
+    ITCondMask,
     CoprocNum,
     CoprocReg,
     Immediate,
@@ -225,12 +229,16 @@ class ARMOperand : public MCParsedAsmOperand {
     } CC;
 
     struct {
-      ARM_MB::MemBOpt Val;
-    } MBOpt;
-
-    struct {
       unsigned Val;
     } Cop;
+
+    struct {
+      unsigned Mask:4;
+    } ITMask;
+
+    struct {
+      ARM_MB::MemBOpt Val;
+    } MBOpt;
 
     struct {
       ARM_PROC::IFlags Val;
@@ -305,6 +313,9 @@ public:
     switch (Kind) {
     case CondCode:
       CC = o.CC;
+      break;
+    case ITCondMask:
+      ITMask = o.ITMask;
       break;
     case Token:
       Tok = o.Tok;
@@ -413,6 +424,8 @@ public:
   bool isCoprocReg() const { return Kind == CoprocReg; }
   bool isCondCode() const { return Kind == CondCode; }
   bool isCCOut() const { return Kind == CCOut; }
+  bool isITMask() const { return Kind == ITCondMask; }
+  bool isITCondCode() const { return Kind == CondCode; }
   bool isImm() const { return Kind == Immediate; }
   bool isImm0_1020s4() const {
     if (Kind != Immediate)
@@ -730,6 +743,16 @@ public:
   void addCoprocNumOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     Inst.addOperand(MCOperand::CreateImm(getCoproc()));
+  }
+
+  void addITMaskOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    Inst.addOperand(MCOperand::CreateImm(ITMask.Mask));
+  }
+
+  void addITCondCodeOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    Inst.addOperand(MCOperand::CreateImm(unsigned(getCondCode())));
   }
 
   void addCoprocRegOperands(MCInst &Inst, unsigned N) const {
@@ -1116,6 +1139,14 @@ public:
 
   virtual void print(raw_ostream &OS) const;
 
+  static ARMOperand *CreateITMask(unsigned Mask, SMLoc S) {
+    ARMOperand *Op = new ARMOperand(ITCondMask);
+    Op->ITMask.Mask = Mask;
+    Op->StartLoc = S;
+    Op->EndLoc = S;
+    return Op;
+  }
+
   static ARMOperand *CreateCondCode(ARMCC::CondCodes CC, SMLoc S) {
     ARMOperand *Op = new ARMOperand(CondCode);
     Op->CC.Val = CC;
@@ -1319,6 +1350,14 @@ void ARMOperand::print(raw_ostream &OS) const {
   case CCOut:
     OS << "<ccout " << getReg() << ">";
     break;
+  case ITCondMask: {
+    static char MaskStr[][6] = { "()", "(t)", "(e)", "(tt)", "(et)", "(te)",
+      "(ee)", "(ttt)", "(ett)", "(tet)", "(eet)", "(tte)", "(ete)",
+      "(tee)", "(eee)" };
+    assert((ITMask.Mask & 0xf) == ITMask.Mask);
+    OS << "<it-mask " << MaskStr[ITMask.Mask] << ">";
+    break;
+  }
   case CoprocNum:
     OS << "<coprocessor number: " << getCoproc() << ">";
     break;
@@ -1605,6 +1644,41 @@ static int MatchCoprocessorOperandName(StringRef Name, char CoprocOp) {
   }
 
   return -1;
+}
+
+/// parseITCondCode - Try to parse a condition code for an IT instruction.
+ARMAsmParser::OperandMatchResultTy ARMAsmParser::
+parseITCondCode(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+  SMLoc S = Parser.getTok().getLoc();
+  const AsmToken &Tok = Parser.getTok();
+  if (!Tok.is(AsmToken::Identifier))
+    return MatchOperand_NoMatch;
+  unsigned CC = StringSwitch<unsigned>(Tok.getString())
+    .Case("eq", ARMCC::EQ)
+    .Case("ne", ARMCC::NE)
+    .Case("hs", ARMCC::HS)
+    .Case("cs", ARMCC::HS)
+    .Case("lo", ARMCC::LO)
+    .Case("cc", ARMCC::LO)
+    .Case("mi", ARMCC::MI)
+    .Case("pl", ARMCC::PL)
+    .Case("vs", ARMCC::VS)
+    .Case("vc", ARMCC::VC)
+    .Case("hi", ARMCC::HI)
+    .Case("ls", ARMCC::LS)
+    .Case("ge", ARMCC::GE)
+    .Case("lt", ARMCC::LT)
+    .Case("gt", ARMCC::GT)
+    .Case("le", ARMCC::LE)
+    .Case("al", ARMCC::AL)
+    .Default(~0U);
+  if (CC == ~0U)
+    return MatchOperand_NoMatch;
+  Parser.Lex(); // Eat the token.
+
+  Operands.push_back(ARMOperand::CreateCondCode(ARMCC::CondCodes(CC), S));
+
+  return MatchOperand_Success;
 }
 
 /// parseCoprocNumOperand - Try to parse an coprocessor number operand. The
@@ -2782,10 +2856,12 @@ ARMAsmParser::applyPrefixToExpr(const MCExpr *E,
 /// setting letters to form a canonical mnemonic and flags.
 //
 // FIXME: Would be nice to autogen this.
+// FIXME: This is a bit of a maze of special cases.
 StringRef ARMAsmParser::splitMnemonic(StringRef Mnemonic,
                                       unsigned &PredicationCode,
                                       bool &CarrySetting,
-                                      unsigned &ProcessorIMod) {
+                                      unsigned &ProcessorIMod,
+                                      StringRef &ITMask) {
   PredicationCode = ARMCC::AL;
   CarrySetting = false;
   ProcessorIMod = 0;
@@ -2860,6 +2936,12 @@ StringRef ARMAsmParser::splitMnemonic(StringRef Mnemonic,
       Mnemonic = Mnemonic.slice(0, Mnemonic.size()-2);
       ProcessorIMod = IMod;
     }
+  }
+
+  // The "it" instruction has the condition mask on the end of the mnemonic.
+  if (Mnemonic.startswith("it")) {
+    ITMask = Mnemonic.slice(2, Mnemonic.size());
+    Mnemonic = Mnemonic.slice(0, 2);
   }
 
   return Mnemonic;
@@ -2968,8 +3050,9 @@ bool ARMAsmParser::ParseInstruction(StringRef Name, SMLoc NameLoc,
   unsigned PredicationCode;
   unsigned ProcessorIMod;
   bool CarrySetting;
+  StringRef ITMask;
   Mnemonic = splitMnemonic(Mnemonic, PredicationCode, CarrySetting,
-                           ProcessorIMod);
+                           ProcessorIMod, ITMask);
 
   // In Thumb1, only the branch (B) instruction can be predicated.
   if (isThumbOne() && PredicationCode != ARMCC::AL && Mnemonic != "b") {
@@ -2978,6 +3061,26 @@ bool ARMAsmParser::ParseInstruction(StringRef Name, SMLoc NameLoc,
   }
 
   Operands.push_back(ARMOperand::CreateToken(Mnemonic, NameLoc));
+
+  // Handle the IT instruction ITMask. Convert it to a bitmask. This
+  // is the mask as it will be for the IT encoding if the conditional
+  // encoding has a '1' as it's bit0 (i.e. 't' ==> '1'). In the case
+  // where the conditional bit0 is zero, the instruction post-processing
+  // will adjust the mask accordingly.
+  if (Mnemonic == "it") {
+    unsigned Mask = 8;
+    for (unsigned i = ITMask.size(); i != 0; --i) {
+      char pos = ITMask[i - 1];
+      if (pos != 't' && pos != 'e') {
+        Parser.EatToEndOfStatement();
+        return Error(NameLoc, "illegal IT instruction mask '" + ITMask + "'");
+      }
+      Mask >>= 1;
+      if (ITMask[i - 1] == 't')
+        Mask |= 8;
+    }
+    Operands.push_back(ARMOperand::CreateITMask(Mask, NameLoc));
+  }
 
   // FIXME: This is all a pretty gross hack. We should automatically handle
   // optional operands like this via tblgen.
@@ -3027,11 +3130,6 @@ bool ARMAsmParser::ParseInstruction(StringRef Name, SMLoc NameLoc,
     Operands.push_back(ARMOperand::CreateImm(
           MCConstantExpr::Create(ProcessorIMod, getContext()),
                                  NameLoc, NameLoc));
-  } else {
-    // This mnemonic can't ever accept a imod, but the user wrote
-    // one (or misspelled another mnemonic).
-
-    // FIXME: Issue a nice error.
   }
 
   // Add the remaining tokens in the mnemonic.
@@ -3289,6 +3387,25 @@ processInstruction(MCInst &Inst,
     if (Inst.getOperand(1).getImm() == ARMCC::AL)
       Inst.setOpcode(ARM::tB);
     break;
+  case ARM::t2IT: {
+    // The mask bits for all but the first condition are represented as
+    // the low bit of the condition code value implies 't'. We currently
+    // always have 1 implies 't', so XOR toggle the bits if the low bit
+    // of the condition code is zero. The encoding also expects the low
+    // bit of the condition to be encoded as bit 4 of the mask operand,
+    // so mask that in if needed
+    MCOperand &MO = Inst.getOperand(1);
+    unsigned Mask = MO.getImm();
+    if ((Inst.getOperand(0).getImm() & 1) == 0) {
+      unsigned TZ = CountTrailingZeros_32(Mask);
+      assert(Mask && TZ <= 3 && "illegal IT mask value!");
+      for (unsigned i = 3; i != TZ; --i)
+        Mask ^= 1 << i;
+    } else
+      Mask |= 0x10;
+    MO.setImm(Mask);
+    break;
+  }
   }
 }
 
