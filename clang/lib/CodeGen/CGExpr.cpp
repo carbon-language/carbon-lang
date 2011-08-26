@@ -138,7 +138,8 @@ void CodeGenFunction::EmitAnyExprToMem(const Expr *E,
   else if (hasAggregateLLVMType(E->getType()))
     EmitAggExpr(E, AggValueSlot::forAddr(Location, Quals,
                                          AggValueSlot::IsDestructed_t(IsInit),
-                                         AggValueSlot::DoesNotNeedGCBarriers));
+                                         AggValueSlot::DoesNotNeedGCBarriers,
+                                         AggValueSlot::IsAliased_t(!IsInit)));
   else {
     RValue RV = RValue::get(EmitScalarExpr(E, /*Ignore*/ false));
     LValue LV = MakeAddrLValue(Location, E->getType());

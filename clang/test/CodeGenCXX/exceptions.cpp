@@ -394,7 +394,11 @@ namespace test7 {
 // Just don't crash.
 namespace test8 {
   struct A {
+    // Having both of these is required to trigger the assert we're
+    // trying to avoid.
     A(const A&);
+    A&operator=(const A&);
+
     ~A();
   };
 
