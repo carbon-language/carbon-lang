@@ -390,3 +390,16 @@ namespace test7 {
     return new B(A(), new B(A(), 0));
   }
 }
+
+// Just don't crash.
+namespace test8 {
+  struct A {
+    A(const A&);
+    ~A();
+  };
+
+  A makeA();
+  void test() {
+    throw makeA();
+  }
+}

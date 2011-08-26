@@ -1034,7 +1034,8 @@ static void InitCatchParam(CodeGenFunction &CGF,
   // Perform the copy construction.
   CGF.EmitAggExpr(copyExpr, AggValueSlot::forAddr(ParamAddr, Qualifiers(),
                                                   AggValueSlot::IsNotDestructed,
-                                          AggValueSlot::DoesNotNeedGCBarriers));
+                                          AggValueSlot::DoesNotNeedGCBarriers,
+                                                  AggValueSlot::IsNotAliased));
 
   // Leave the terminate scope.
   CGF.EHStack.popTerminate();
