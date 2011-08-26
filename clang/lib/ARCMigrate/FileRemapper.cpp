@@ -70,7 +70,7 @@ bool FileRemapper::initFromDisk(StringRef outputDir, Diagnostic &Diag,
 
   for (unsigned idx = 0; idx+3 <= lines.size(); idx += 3) {
     std::string fromFilename = lines[idx];
-    uint64_t timeModified;
+    unsigned long long timeModified;
     lines[idx+1].getAsInteger(10, timeModified);
     std::string toFilename = lines[idx+2];
     
