@@ -157,6 +157,10 @@ static DecodeStatus DecodeDoubleRegLoad(llvm::MCInst &Inst, unsigned Insn,
                                uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeDoubleRegStore(llvm::MCInst &Inst, unsigned Insn,
                                uint64_t Address, const void *Decoder);
+static DecodeStatus DecodeLDRPreImm(llvm::MCInst &Inst, unsigned Insn,
+                               uint64_t Address, const void *Decoder);
+static DecodeStatus DecodeLDRPreReg(llvm::MCInst &Inst, unsigned Insn,
+                               uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeSTRPreImm(llvm::MCInst &Inst, unsigned Insn,
                                uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeSTRPreReg(llvm::MCInst &Inst, unsigned Insn,
@@ -1055,8 +1059,6 @@ DecodeAddrMode2IdxInstruction(llvm::MCInst &Inst, unsigned Insn,
     case ARM::LDR_POST_REG:
     case ARM::LDRB_POST_IMM:
     case ARM::LDRB_POST_REG:
-    case ARM::LDR_PRE:
-    case ARM::LDRB_PRE:
     case ARM::LDRBT_POST_REG:
     case ARM::LDRBT_POST_IMM:
     case ARM::LDRT_POST_REG:
@@ -2755,6 +2757,51 @@ static DecodeStatus DecodeDoubleRegStore(llvm::MCInst &Inst, unsigned Insn,
 
   return S;
 }
+
+static DecodeStatus DecodeLDRPreImm(llvm::MCInst &Inst, unsigned Insn,
+                            uint64_t Address, const void *Decoder) {
+  DecodeStatus S = Success;
+
+  unsigned Rn = fieldFromInstruction32(Insn, 16, 4);
+  unsigned Rt = fieldFromInstruction32(Insn, 12, 4);
+  unsigned imm = fieldFromInstruction32(Insn, 0, 12);
+  imm |= fieldFromInstruction32(Insn, 16, 4) << 13;
+  imm |= fieldFromInstruction32(Insn, 23, 1) << 12;
+  unsigned pred = fieldFromInstruction32(Insn, 28, 4);
+
+  if (Rn == 0xF || Rn == Rt) CHECK(S, Unpredictable);
+
+  CHECK(S, DecodeGPRRegisterClass(Inst, Rt, Address, Decoder));
+  CHECK(S, DecodeGPRRegisterClass(Inst, Rn, Address, Decoder));
+  CHECK(S, DecodeAddrModeImm12Operand(Inst, imm, Address, Decoder));
+  CHECK(S, DecodePredicateOperand(Inst, pred, Address, Decoder));
+
+  return S;
+}
+
+static DecodeStatus DecodeLDRPreReg(llvm::MCInst &Inst, unsigned Insn,
+                            uint64_t Address, const void *Decoder) {
+  DecodeStatus S = Success;
+
+  unsigned Rn = fieldFromInstruction32(Insn, 16, 4);
+  unsigned Rt = fieldFromInstruction32(Insn, 12, 4);
+  unsigned imm = fieldFromInstruction32(Insn, 0, 12);
+  imm |= fieldFromInstruction32(Insn, 16, 4) << 13;
+  imm |= fieldFromInstruction32(Insn, 23, 1) << 12;
+  unsigned pred = fieldFromInstruction32(Insn, 28, 4);
+  unsigned Rm = fieldFromInstruction32(Insn, 0, 4);
+
+  if (Rn == 0xF || Rn == Rt) CHECK(S, Unpredictable);
+  if (Rm == 0xF) CHECK(S, Unpredictable);
+
+  CHECK(S, DecodeGPRRegisterClass(Inst, Rt, Address, Decoder));
+  CHECK(S, DecodeGPRRegisterClass(Inst, Rn, Address, Decoder));
+  CHECK(S, DecodeSORegMemOperand(Inst, imm, Address, Decoder));
+  CHECK(S, DecodePredicateOperand(Inst, pred, Address, Decoder));
+
+  return S;
+}
+
 
 static DecodeStatus DecodeSTRPreImm(llvm::MCInst &Inst, unsigned Insn,
                             uint64_t Address, const void *Decoder) {

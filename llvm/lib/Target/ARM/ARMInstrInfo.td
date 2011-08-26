@@ -1997,19 +1997,28 @@ def LDRD : AI3ld<0b1101, 0, (outs GPR:$Rd, GPR:$dst2),
 
 // Indexed loads
 multiclass AI2_ldridx<bit isByte, string opc, InstrItinClass itin> {
-  def _PRE  : AI2ldstidx<1, isByte, 1, (outs GPR:$Rt, GPR:$Rn_wb),
-                      (ins addrmode2:$addr), IndexModePre, LdFrm, itin,
+  def _PRE_IMM  : AI2ldstidx<1, isByte, 1, (outs GPR:$Rt, GPR:$Rn_wb),
+                      (ins addrmode_imm12:$addr), IndexModePre, LdFrm, itin,
                       opc, "\t$Rt, $addr!", "$addr.base = $Rn_wb", []> {
-    // {17-14}  Rn
-    // {13}     reg vs. imm
-    // {12}     isAdd
-    // {11-0}   imm12/Rm
-    bits<18> addr;
-    let Inst{25} = addr{13};
+    bits<17> addr;
+    let Inst{25} = 0;
     let Inst{23} = addr{12};
-    let Inst{19-16} = addr{17-14};
+    let Inst{19-16} = addr{16-13};
     let Inst{11-0} = addr{11-0};
-    let DecoderMethod = "DecodeAddrMode2IdxInstruction";
+    let DecoderMethod = "DecodeLDRPreImm";
+    let AsmMatchConverter = "cvtLdWriteBackRegAddrModeImm12";
+  }
+
+  def _PRE_REG  : AI2ldstidx<1, isByte, 1, (outs GPR:$Rt, GPR:$Rn_wb),
+                      (ins ldst_so_reg:$addr), IndexModePre, LdFrm, itin,
+                      opc, "\t$Rt, $addr!", "$addr.base = $Rn_wb", []> {
+    bits<17> addr;
+    let Inst{25} = 1;
+    let Inst{23} = addr{12};
+    let Inst{19-16} = addr{16-13};
+    let Inst{11-0} = addr{11-0};
+    let Inst{4} = 0;
+    let DecoderMethod = "DecodeLDRPreReg";
     let AsmMatchConverter = "cvtLdWriteBackRegAddrMode2";
   }
 

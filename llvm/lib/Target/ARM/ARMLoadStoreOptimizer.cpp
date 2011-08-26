@@ -764,7 +764,7 @@ static unsigned getPreIndexedLoadStoreOpcode(unsigned Opc,
                                              ARM_AM::AddrOpc Mode) {
   switch (Opc) {
   case ARM::LDRi12:
-    return ARM::LDR_PRE;
+    return ARM::LDR_PRE_IMM;
   case ARM::STRi12:
     return ARM::STR_PRE_IMM;
   case ARM::VLDRS:

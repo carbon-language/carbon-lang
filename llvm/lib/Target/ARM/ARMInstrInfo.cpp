@@ -30,14 +30,16 @@ ARMInstrInfo::ARMInstrInfo(const ARMSubtarget &STI)
 unsigned ARMInstrInfo::getUnindexedOpcode(unsigned Opc) const {
   switch (Opc) {
   default: break;
-  case ARM::LDR_PRE:
+  case ARM::LDR_PRE_IMM:
+  case ARM::LDR_PRE_REG:
   case ARM::LDR_POST_IMM:
   case ARM::LDR_POST_REG:
     return ARM::LDRi12;
   case ARM::LDRH_PRE:
   case ARM::LDRH_POST:
     return ARM::LDRH;
-  case ARM::LDRB_PRE:
+  case ARM::LDRB_PRE_IMM:
+  case ARM::LDRB_PRE_REG:
   case ARM::LDRB_POST_IMM:
   case ARM::LDRB_POST_REG:
     return ARM::LDRBi12;

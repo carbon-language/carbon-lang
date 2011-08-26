@@ -1321,11 +1321,11 @@ SDNode *ARMDAGToDAGISel::SelectARMIndexedLoad(SDNode *N) {
   bool Match = false;
   if (LoadedVT == MVT::i32 &&
       SelectAddrMode2OffsetImm(N, LD->getOffset(), Offset, AMOpc)) {
-    Opcode = isPre ? ARM::LDR_PRE : ARM::LDR_POST_IMM;
+    Opcode = isPre ? ARM::LDR_PRE_IMM : ARM::LDR_POST_IMM;
     Match = true;
   } else if (LoadedVT == MVT::i32 &&
       SelectAddrMode2OffsetReg(N, LD->getOffset(), Offset, AMOpc)) {
-    Opcode = isPre ? ARM::LDR_PRE : ARM::LDR_POST_REG;
+    Opcode = isPre ? ARM::LDR_PRE_REG : ARM::LDR_POST_REG;
     Match = true;
 
   } else if (LoadedVT == MVT::i16 &&
@@ -1343,10 +1343,10 @@ SDNode *ARMDAGToDAGISel::SelectARMIndexedLoad(SDNode *N) {
     } else {
       if (SelectAddrMode2OffsetImm(N, LD->getOffset(), Offset, AMOpc)) {
         Match = true;
-        Opcode = isPre ? ARM::LDRB_PRE : ARM::LDRB_POST_IMM;
+        Opcode = isPre ? ARM::LDRB_PRE_IMM : ARM::LDRB_POST_IMM;
       } else if (SelectAddrMode2OffsetReg(N, LD->getOffset(), Offset, AMOpc)) {
         Match = true;
-        Opcode = isPre ? ARM::LDRB_PRE : ARM::LDRB_POST_REG;
+        Opcode = isPre ? ARM::LDRB_PRE_REG : ARM::LDRB_POST_REG;
       }
     }
   }
