@@ -2324,7 +2324,7 @@ static DecodeStatus DecodeThumbAddSpecialReg(llvm::MCInst &Inst, uint16_t Insn,
     default:
       return Fail;
     case ARM::tADR:
-      break; // tADR does not explicitly represent the PC as an oeprand.
+      break; // tADR does not explicitly represent the PC as an operand.
     case ARM::tADDrSPi:
       Inst.addOperand(MCOperand::CreateReg(ARM::SP));
       break;
