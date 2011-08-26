@@ -1434,9 +1434,11 @@ void CodeGenFunction::EmitCallArg(CallArgList &args, const Expr *E,
   assert(type->isReferenceType() == E->isGLValue() &&
          "reference binding to unmaterialized r-value!");
 
-  if (type->isReferenceType())
+  if (E->isGLValue()) {
+    assert(E->getObjectKind() == OK_Ordinary);
     return args.add(EmitReferenceBindingToExpr(E, /*InitializedDecl=*/0),
                     type);
+  }
 
   if (hasAggregateLLVMType(type) && !E->getType()->isAnyComplexType() &&
       isa<ImplicitCastExpr>(E) &&

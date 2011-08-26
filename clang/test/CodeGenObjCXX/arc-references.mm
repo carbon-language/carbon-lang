@@ -61,8 +61,9 @@ void sink(__strong A* &&);
 
 // CHECK: define void @_Z5test5RU8__strongP11objc_object
 void test5(__strong id &x) {
-  // CHECK: [[OBJ_ID:%[a-zA-Z0-9]+]] = call i8* @objc_retain
-  // CHECK-NEXT: [[OBJ_A:%[a-zA-Z0-9]+]] = bitcast i8* [[OBJ_ID]] to [[A:%[a-zA-Z0-9]+]]*
+  // CHECK:      [[REFTMP:%.*]] = alloca {{%.*}}*, align 8
+  // CHECK:      [[OBJ_ID:%.*]] = call i8* @objc_retain(
+  // CHECK-NEXT: [[OBJ_A:%.*]] = bitcast i8* [[OBJ_ID]] to [[A:%[a-zA-Z0-9]+]]*
   // CHECK-NEXT: store [[A]]* [[OBJ_A]], [[A]]** [[REFTMP:%[a-zA-Z0-9]+]]
   // CHECK-NEXT: call void @_Z4sinkOU8__strongP1A
   sink(x);  

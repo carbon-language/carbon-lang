@@ -2150,8 +2150,7 @@ LValue CodeGenFunction::EmitOpaqueValueLValue(const OpaqueValueExpr *e) {
 
 LValue CodeGenFunction::EmitMaterializeTemporaryExpr(
                                            const MaterializeTemporaryExpr *E) {
-  RValue RV = EmitReferenceBindingToExpr(E->GetTemporaryExpr(),
-                                         /*InitializedDecl=*/0);
+  RValue RV = EmitReferenceBindingToExpr(E, /*InitializedDecl=*/0);
   return MakeAddrLValue(RV.getScalarVal(), E->getType());
 }
 
