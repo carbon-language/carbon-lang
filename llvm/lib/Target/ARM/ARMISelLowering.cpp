@@ -5216,7 +5216,7 @@ struct AddSubFlagsOpcodePair {
   unsigned MachineOpc;
 };
 
-static AddSubFlagsOpcodePair AddSubFlagsOpcodeMap[] = {
+static const AddSubFlagsOpcodePair AddSubFlagsOpcodeMap[] = {
   {ARM::ADCSri, ARM::ADCri},
   {ARM::ADCSrr, ARM::ADCrr},
   {ARM::ADCSrsi, ARM::ADCrsi},
@@ -5256,7 +5256,7 @@ bool ARMTargetLowering::RemapAddSubWithFlags(MachineInstr *MI,
   // the tiny opcode table is not costly.
   static const int NPairs =
     sizeof(AddSubFlagsOpcodeMap) / sizeof(AddSubFlagsOpcodePair);
-  for (AddSubFlagsOpcodePair *Pair = &AddSubFlagsOpcodeMap[0],
+  for (const AddSubFlagsOpcodePair *Pair = &AddSubFlagsOpcodeMap[0],
          *End = &AddSubFlagsOpcodeMap[NPairs]; Pair != End; ++Pair) {
     if (OldOpc == Pair->PseudoOpc) {
       NewOpc = Pair->MachineOpc;
@@ -5303,7 +5303,7 @@ ARMTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
       Offset = -Offset;
 
     MachineMemOperand *MMO = *MI->memoperands_begin();
-    MachineInstrBuilder MIB = BuildMI(*BB, MI, dl, TII->get(NewOpc))
+    BuildMI(*BB, MI, dl, TII->get(NewOpc))
       .addOperand(MI->getOperand(0))  // Rn_wb
       .addOperand(MI->getOperand(1))  // Rt
       .addOperand(MI->getOperand(2))  // Rn

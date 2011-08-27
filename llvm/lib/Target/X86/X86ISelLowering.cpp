@@ -10345,9 +10345,8 @@ static void ReplaceATOMIC_LOAD(SDNode *Node,
   // FIXME: On 32-bit, load -> fild or movq would be more efficient
   //        (The only way to get a 16-byte load is cmpxchg16b)
   // FIXME: 16-byte ATOMIC_CMP_SWAP isn't actually hooked up at the moment.
-  SDValue Zero = DAG.getConstant(0, cast<AtomicSDNode>(Node)->getMemoryVT());
-  SDValue Swap = DAG.getAtomic(ISD::ATOMIC_CMP_SWAP, dl,
-                               cast<AtomicSDNode>(Node)->getMemoryVT(),
+  SDValue Zero = DAG.getConstant(0, VT);
+  SDValue Swap = DAG.getAtomic(ISD::ATOMIC_CMP_SWAP, dl, VT,
                                Node->getOperand(0),
                                Node->getOperand(1), Zero, Zero,
                                cast<AtomicSDNode>(Node)->getMemOperand(),
@@ -10425,7 +10424,7 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
   }
   case ISD::ATOMIC_CMP_SWAP: {
     EVT T = N->getValueType(0);
-    assert (T == MVT::i64 || T == MVT::i128 && "can only expand cmpxchg pair");
+    assert((T == MVT::i64 || T == MVT::i128) && "can only expand cmpxchg pair");
     bool Regs64bit = T == MVT::i128;
     EVT HalfT = Regs64bit ? MVT::i64 : MVT::i32;
     SDValue cpInL, cpInH;
