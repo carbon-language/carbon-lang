@@ -147,3 +147,9 @@ void test_objc_unretainedObject() {
   (void) x;
 }
 
+// Previously this resulted in a "return of stack address" warning.
+id test_return() {
+  id x = (__bridge_transfer id) CFCreateString();
+  return x; // no-warning
+}
+
