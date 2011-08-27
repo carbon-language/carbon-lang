@@ -90,7 +90,7 @@ ExprResult Parser::ParseInitializerWithPotentialDesignator() {
     assert(Tok.is(tok::colon) && "MayBeDesignationStart not working properly!");
     SourceLocation ColonLoc = ConsumeToken();
 
-    Diag(Tok, diag::ext_gnu_old_style_field_designator)
+    Diag(NameLoc, diag::ext_gnu_old_style_field_designator)
       << FixItHint::CreateReplacement(SourceRange(NameLoc, ColonLoc),
                                       NewSyntax.str());
 
