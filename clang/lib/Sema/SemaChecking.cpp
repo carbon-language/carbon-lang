@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/Sema/Initialization.h"
 #include "clang/Sema/Sema.h"
 #include "clang/Sema/SemaInternal.h"
 #include "clang/Sema/ScopeInfo.h"
@@ -396,6 +397,30 @@ bool Sema::CheckBlockCall(NamedDecl *NDecl, CallExpr *TheCall) {
   return false;
 }
 
+/// checkBuiltinArgument - Given a call to a builtin function, perform
+/// normal type-checking on the given argument, updating the call in
+/// place.  This is useful when a builtin function requires custom
+/// type-checking for some of its arguments but not necessarily all of
+/// them.
+///
+/// Returns true on error.
+static bool checkBuiltinArgument(Sema &S, CallExpr *E, unsigned ArgIndex) {
+  FunctionDecl *Fn = E->getDirectCallee();
+  assert(Fn && "builtin call without direct callee!");
+
+  ParmVarDecl *Param = Fn->getParamDecl(ArgIndex);
+  InitializedEntity Entity =
+    InitializedEntity::InitializeParameter(S.Context, Param);
+
+  ExprResult Arg = E->getArg(0);
+  Arg = S.PerformCopyInitialization(Entity, SourceLocation(), Arg);
+  if (Arg.isInvalid())
+    return true;
+
+  E->setArg(ArgIndex, Arg.take());
+  return false;
+}
+
 /// SemaBuiltinAtomicOverloaded - We have a call to a function like
 /// __sync_fetch_and_add, which is an overloaded function based on the pointer
 /// type of its first argument.  The main ActOnCallExpr routines have already
@@ -660,6 +685,10 @@ bool Sema::SemaBuiltinVAStart(CallExpr *TheCall) {
       diag::err_typecheck_call_too_few_args_at_least)
       << 0 /*function call*/ << 2 << TheCall->getNumArgs();
   }
+
+  // Type-check the first argument normally.
+  if (checkBuiltinArgument(*this, TheCall, 0))
+    return true;
 
   // Determine whether the current function is variadic or not.
   BlockScopeInfo *CurBlock = getCurBlock();
