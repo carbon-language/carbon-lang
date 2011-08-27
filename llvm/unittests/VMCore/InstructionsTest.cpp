@@ -29,13 +29,13 @@ TEST(InstructionsTest, ReturnInst) {
   IntegerType* Int1 = IntegerType::get(C, 1);
   Constant* One = ConstantInt::get(Int1, 1, true);
   const ReturnInst* r1 = ReturnInst::Create(C, One);
-  EXPECT_EQ(r1->getNumOperands(), 1U);
+  EXPECT_EQ(1U, r1->getNumOperands());
   User::const_op_iterator b(r1->op_begin());
-  EXPECT_NE(b, r1->op_end());
-  EXPECT_EQ(*b, One);
-  EXPECT_EQ(r1->getOperand(0), One);
+  EXPECT_NE(r1->op_end(), b);
+  EXPECT_EQ(One, *b);
+  EXPECT_EQ(One, r1->getOperand(0));
   ++b;
-  EXPECT_EQ(b, r1->op_end());
+  EXPECT_EQ(r1->op_end(), b);
 
   // clean up
   delete r0;
@@ -54,15 +54,15 @@ TEST(InstructionsTest, BranchInst) {
 
   EXPECT_TRUE(b0->isUnconditional());
   EXPECT_FALSE(b0->isConditional());
-  EXPECT_EQ(b0->getNumSuccessors(), 1U);
+  EXPECT_EQ(1U, b0->getNumSuccessors());
 
   // check num operands
-  EXPECT_EQ(b0->getNumOperands(), 1U);
+  EXPECT_EQ(1U, b0->getNumOperands());
 
   EXPECT_NE(b0->op_begin(), b0->op_end());
-  EXPECT_EQ(llvm::next(b0->op_begin()), b0->op_end());
+  EXPECT_EQ(b0->op_end(), llvm::next(b0->op_begin()));
 
-  EXPECT_EQ(llvm::next(b0->op_begin()), b0->op_end());
+  EXPECT_EQ(b0->op_end(), llvm::next(b0->op_begin()));
 
   IntegerType* Int1 = IntegerType::get(C, 1);
   Constant* One = ConstantInt::get(Int1, 1, true);
@@ -72,33 +72,33 @@ TEST(InstructionsTest, BranchInst) {
 
   EXPECT_FALSE(b1->isUnconditional());
   EXPECT_TRUE(b1->isConditional());
-  EXPECT_EQ(b1->getNumSuccessors(), 2U);
+  EXPECT_EQ(2U, b1->getNumSuccessors());
 
   // check num operands
-  EXPECT_EQ(b1->getNumOperands(), 3U);
+  EXPECT_EQ(3U, b1->getNumOperands());
 
   User::const_op_iterator b(b1->op_begin());
 
   // check COND
   EXPECT_NE(b, b1->op_end());
-  EXPECT_EQ(*b, One);
-  EXPECT_EQ(b1->getOperand(0), One);
-  EXPECT_EQ(b1->getCondition(), One);
+  EXPECT_EQ(One, *b);
+  EXPECT_EQ(One, b1->getOperand(0));
+  EXPECT_EQ(One, b1->getCondition());
   ++b;
 
   // check ELSE
-  EXPECT_EQ(*b, bb1);
-  EXPECT_EQ(b1->getOperand(1), bb1);
-  EXPECT_EQ(b1->getSuccessor(1), bb1);
+  EXPECT_EQ(bb1, *b);
+  EXPECT_EQ(bb1, b1->getOperand(1));
+  EXPECT_EQ(bb1, b1->getSuccessor(1));
   ++b;
 
   // check THEN
-  EXPECT_EQ(*b, bb0);
-  EXPECT_EQ(b1->getOperand(2), bb0);
-  EXPECT_EQ(b1->getSuccessor(0), bb0);
+  EXPECT_EQ(bb0, *b);
+  EXPECT_EQ(bb0, b1->getOperand(2));
+  EXPECT_EQ(bb0, b1->getSuccessor(0));
   ++b;
 
-  EXPECT_EQ(b, b1->op_end());
+  EXPECT_EQ(b1->op_end(), b);
 
   // clean up
   delete b0;
@@ -125,8 +125,8 @@ TEST(InstructionsTest, CastInst) {
   EXPECT_FALSE(CastInst::isCastable(Int64Ty, X86MMXTy));
   EXPECT_TRUE(CastInst::isCastable(V8x64Ty, V8x8Ty));
   EXPECT_TRUE(CastInst::isCastable(V8x8Ty, V8x64Ty));
-  EXPECT_EQ(CastInst::getCastOpcode(c64, true, V8x8Ty, true), CastInst::Trunc);
-  EXPECT_EQ(CastInst::getCastOpcode(c8, true, V8x64Ty, true), CastInst::SExt);
+  EXPECT_EQ(CastInst::Trunc, CastInst::getCastOpcode(c64, true, V8x8Ty, true));
+  EXPECT_EQ(CastInst::SExt, CastInst::getCastOpcode(c8, true, V8x64Ty, true));
 }
 
 }  // end anonymous namespace
