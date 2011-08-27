@@ -162,6 +162,7 @@ public:
 
   virtual void HandleTranslationUnit(ASTContext &C);
   void HandleDeclContext(ASTContext &C, DeclContext *dc);
+  void HandleDeclContextDecl(ASTContext &C, Decl *D);
 
   void HandleCode(Decl *D);
 };
@@ -172,61 +173,67 @@ public:
 //===----------------------------------------------------------------------===//
 
 void AnalysisConsumer::HandleDeclContext(ASTContext &C, DeclContext *dc) {
-  BugReporter BR(*Mgr);
   for (DeclContext::decl_iterator I = dc->decls_begin(), E = dc->decls_end();
        I != E; ++I) {
-    Decl *D = *I;
+    HandleDeclContextDecl(C, *I);
+  }
+}
+
+void AnalysisConsumer::HandleDeclContextDecl(ASTContext &C, Decl *D) {
+  { // Handle callbacks for arbitrary decls.
+    BugReporter BR(*Mgr);
     checkerMgr->runCheckersOnASTDecl(D, *Mgr, BR);
+  }
 
-    switch (D->getKind()) {
-      case Decl::Namespace: {
-        HandleDeclContext(C, cast<NamespaceDecl>(D));
-        break;
-      }
-      case Decl::CXXConstructor:
-      case Decl::CXXDestructor:
-      case Decl::CXXConversion:
-      case Decl::CXXMethod:
-      case Decl::Function: {
-        FunctionDecl *FD = cast<FunctionDecl>(D);
-        // We skip function template definitions, as their semantics is
-        // only determined when they are instantiated.
-        if (FD->isThisDeclarationADefinition() &&
-            !FD->isDependentContext()) {
-          if (!Opts.AnalyzeSpecificFunction.empty() &&
-              FD->getDeclName().getAsString() != Opts.AnalyzeSpecificFunction)
-            break;
-          DisplayFunction(FD);
-          HandleCode(FD);
-        }
-        break;
-      }
-       
-      case Decl::ObjCCategoryImpl:
-      case Decl::ObjCImplementation: {
-        ObjCImplDecl *ID = cast<ObjCImplDecl>(*I);
-        HandleCode(ID);
-        
-        for (ObjCContainerDecl::method_iterator MI = ID->meth_begin(), 
-             ME = ID->meth_end(); MI != ME; ++MI) {
-          checkerMgr->runCheckersOnASTDecl(*MI, *Mgr, BR);
-
-          if ((*MI)->isThisDeclarationADefinition()) {
-            if (!Opts.AnalyzeSpecificFunction.empty() &&
-                Opts.AnalyzeSpecificFunction != 
-                  (*MI)->getSelector().getAsString())
-              break;
-            DisplayFunction(*MI);
-            HandleCode(*MI);
-          }
-        }
-        break;
-      }
-        
-      default:
-        break;
+  switch (D->getKind()) {
+    case Decl::Namespace: {
+      HandleDeclContext(C, cast<NamespaceDecl>(D));
+      break;
     }
-  }  
+    case Decl::CXXConstructor:
+    case Decl::CXXDestructor:
+    case Decl::CXXConversion:
+    case Decl::CXXMethod:
+    case Decl::Function: {
+      FunctionDecl *FD = cast<FunctionDecl>(D);
+      // We skip function template definitions, as their semantics is
+      // only determined when they are instantiated.
+      if (FD->isThisDeclarationADefinition() &&
+          !FD->isDependentContext()) {
+        if (!Opts.AnalyzeSpecificFunction.empty() &&
+            FD->getDeclName().getAsString() != Opts.AnalyzeSpecificFunction)
+          break;
+        DisplayFunction(FD);
+        HandleCode(FD);
+      }
+      break;
+    }
+     
+    case Decl::ObjCCategoryImpl:
+    case Decl::ObjCImplementation: {
+      ObjCImplDecl *ID = cast<ObjCImplDecl>(D);
+      HandleCode(ID);
+      
+      for (ObjCContainerDecl::method_iterator MI = ID->meth_begin(), 
+           ME = ID->meth_end(); MI != ME; ++MI) {
+        BugReporter BR(*Mgr);
+        checkerMgr->runCheckersOnASTDecl(*MI, *Mgr, BR);
+
+        if ((*MI)->isThisDeclarationADefinition()) {
+          if (!Opts.AnalyzeSpecificFunction.empty() &&
+              Opts.AnalyzeSpecificFunction != 
+                (*MI)->getSelector().getAsString())
+            break;
+          DisplayFunction(*MI);
+          HandleCode(*MI);
+        }
+      }
+      break;
+    }
+      
+    default:
+      break;
+  }
 }
 
 void AnalysisConsumer::HandleTranslationUnit(ASTContext &C) {
