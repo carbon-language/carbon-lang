@@ -389,7 +389,7 @@ void llvm::UpgradeExceptionHandling(Module *M) {
 
   // This map stores the slots where the exception object and selector value are
   // stored within a function.
-  SmallVector<Instruction*, 32> DeadInsts;
+  SmallPtrSet<Instruction*, 32> DeadInsts;
   DenseMap<Function*, std::pair<Value*, Value*> > FnToLPadSlotMap;
   for (Module::iterator
          I = M->begin(), E = M->end(); I != E; ++I) {
@@ -439,14 +439,15 @@ void llvm::UpgradeExceptionHandling(Module *M) {
       Exn->replaceAllUsesWith(LPExn);
       Sel->replaceAllUsesWith(LPSel);
 
-      DeadInsts.push_back(Exn);
-      DeadInsts.push_back(Sel);
+      DeadInsts.insert(Exn);
+      DeadInsts.insert(Sel);
     }
   }
 
   // Remove the dead instructions.
-  while (!DeadInsts.empty()) {
-    Instruction *Inst = DeadInsts.pop_back_val();
+  for (SmallPtrSet<Instruction*, 32>::iterator
+         I = DeadInsts.begin(), E = DeadInsts.end(); I != E; ++I) {
+    Instruction *Inst = *I;
     Inst->eraseFromParent();
   }
 
