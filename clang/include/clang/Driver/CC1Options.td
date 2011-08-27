@@ -404,9 +404,6 @@ def arcmt_migrate_report_output : Separate<"-arcmt-migrate-report-output">,
 def arcmt_migrate_emit_arc_errors : Flag<"-arcmt-migrate-emit-errors">,
   HelpText<"Emit ARC errors even if the migrator can fix them">;
 
-def import_module : Separate<"-import-module">,
-  HelpText<"Import a module definition file">;
-
 def working_directory : JoinedOrSeparate<"-working-directory">,
   HelpText<"Resolve file paths relative to the specified directory">;
 def working_directory_EQ : Joined<"-working-directory=">,
