@@ -118,6 +118,9 @@ class Preprocessor : public llvm::RefCountedBase<Preprocessor> {
   /// \brief Whether we have already loaded macros from the external source.
   mutable bool ReadMacrosFromExternalSource : 1;
 
+  /// \brief Tracks the depth of Lex() Calls.
+  unsigned LexDepth;
+  
   /// Identifiers - This is mapping/lookup information for all identifiers in
   /// the program, including program keywords.
   mutable IdentifierTable Identifiers;
@@ -531,6 +534,7 @@ public:
   /// Lex - To lex a token from the preprocessor, just pull a token from the
   /// current lexer or macro object.
   void Lex(Token &Result) {
+    ++LexDepth;
     if (CurLexer)
       CurLexer->Lex(Result);
     else if (CurPTHLexer)
@@ -539,6 +543,11 @@ public:
       CurTokenLexer->Lex(Result);
     else
       CachingLex(Result);
+    --LexDepth;
+    
+    // If we have the __import__ keyword, handle the module import now.
+    if (Result.getKind() == tok::kw___import__ && LexDepth == 0)
+      HandleModuleImport(Result);
   }
 
   /// LexNonComment - Lex a token.  If it's a comment, keep lexing until we get

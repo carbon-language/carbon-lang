@@ -88,6 +88,8 @@ Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
   // We haven't read anything from the external source.
   ReadMacrosFromExternalSource = false;
 
+  LexDepth = 0;
+      
   // "Poison" __VA_ARGS__, which can only appear in the expansion of a macro.
   // This gets unpoisoned where it is allowed.
   (Ident__VA_ARGS__ = getIdentifierInfo("__VA_ARGS__"))->setIsPoisoned();
@@ -484,7 +486,7 @@ void Preprocessor::HandleIdentifier(Token &Identifier) {
     if (!DisableMacroExpansion && !Identifier.isExpandDisabled()) {
       if (MI->isEnabled()) {
         if (!HandleMacroExpandedIdentifier(Identifier, MI))
-          goto finish;
+          return;
       } else {
         // C99 6.10.3.4p2 says that a disabled macro may never again be
         // expanded, even if it's in a context where it could be expanded in the
@@ -506,12 +508,6 @@ void Preprocessor::HandleIdentifier(Token &Identifier) {
   // like "#define TY typeof", "TY(1) x".
   if (II.isExtensionToken() && !DisableMacroExpansion)
     Diag(Identifier, diag::ext_token_used);
-  
-finish:
-  // If we have the start of a module import, handle it now.
-  if (Identifier.is(tok::kw___import__) &&
-      !InMacroArgs && !DisableMacroExpansion)
-    HandleModuleImport(Identifier);
 }
 
 void Preprocessor::HandleModuleImport(Token &Import) {
