@@ -18,6 +18,7 @@ void test(int i, float f) {
 // RUN: %clang_cc1 -emit-module -x c++ -o %T/lookup_right_cxx.pcm %S/Inputs/lookup_right.hpp
 // RUN: %clang_cc1 -x c++ -I %T %s -verify
 // RUN: %clang_cc1 -ast-print -x c++ -I %T %s | FileCheck -check-prefix=CHECK-PRINT %s
+// XFAIL: win32
 
 // CHECK-PRINT: int *f0(int *);
 // CHECK-PRINT: float *f0(float *);
