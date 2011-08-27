@@ -4232,7 +4232,7 @@ def warn_printf_insufficient_data_args : Warning<
 def warn_printf_data_arg_not_used : Warning<
   "data argument not used by format string">, InGroup<FormatExtraArgs>;
 def warn_format_invalid_conversion : Warning<
-  "invalid conversion specifier '%0'">, InGroup<Format>;
+  "invalid conversion specifier '%0'">, InGroup<FormatInvalidSpecifier>;
 def warn_printf_incomplete_specifier : Warning<
   "incomplete format specifier">, InGroup<Format>;
 def warn_missing_format_string : Warning<

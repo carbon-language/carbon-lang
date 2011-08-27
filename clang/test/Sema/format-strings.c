@@ -372,3 +372,13 @@ void check_char(unsigned char x, signed char y) {
   printf("%c", x); // no-warning
   printf("%hhu", y); // no-warning
 }
+
+// Test suppression of individual warnings.
+
+void test_suppress_invalid_specifier() {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wformat-invalid-specifier"
+  printf("%@", 12); // no-warning
+#pragma clang diagnostic pop
+}
+
