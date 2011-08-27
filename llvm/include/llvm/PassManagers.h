@@ -263,7 +263,7 @@ private:
 class PMDataManager {
 public:
 
-  explicit PMDataManager() : TPM(NULL), Depth(0) {
+  explicit PMDataManager(int Depth) : TPM(NULL), Depth(Depth) {
     initializeAnalysisInfo();
   }
 
@@ -333,7 +333,6 @@ public:
   void setTopLevelManager(PMTopLevelManager *T) { TPM = T; }
 
   unsigned getDepth() const { return Depth; }
-  void setDepth(unsigned newDepth) { Depth = newDepth; }
 
   // Print routines used by debug-pass
   void dumpLastUses(Pass *P, unsigned Offset) const;
@@ -409,8 +408,8 @@ private:
 class FPPassManager : public ModulePass, public PMDataManager {
 public:
   static char ID;
-  explicit FPPassManager() 
-  : ModulePass(ID), PMDataManager() { }
+  explicit FPPassManager(int Depth) 
+  : ModulePass(ID), PMDataManager(Depth) { }
   
   /// run - Execute all of the passes scheduled for execution.  Keep track of
   /// whether any of the passes modifies the module, and if so, return true.

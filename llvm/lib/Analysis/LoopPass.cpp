@@ -73,8 +73,8 @@ static void createDebugInfoProbe() {
 
 char LPPassManager::ID = 0;
 
-LPPassManager::LPPassManager()
-  : FunctionPass(ID), PMDataManager() {
+LPPassManager::LPPassManager(int Depth)
+  : FunctionPass(ID), PMDataManager(Depth) {
   skipThisLoop = false;
   redoThisLoop = false;
   LI = NULL;
@@ -357,8 +357,8 @@ void LoopPass::assignPassManager(PMStack &PMS,
     assert (!PMS.empty() && "Unable to create Loop Pass Manager");
     PMDataManager *PMD = PMS.top();
 
-    // [1] Create new Loop Pass Manager
-    LPPM = new LPPassManager();
+    // [1] Create new Call Graph Pass Manager
+    LPPM = new LPPassManager(PMD->getDepth() + 1);
     LPPM->populateInheritedAnalysis(PMS);
 
     // [2] Set up new manager's top level manager

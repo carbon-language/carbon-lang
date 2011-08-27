@@ -88,7 +88,7 @@ class RGPassManager : public FunctionPass, public PMDataManager {
 
 public:
   static char ID;
-  explicit RGPassManager();
+  explicit RGPassManager(int Depth);
 
   /// @brief Execute all of the passes scheduled for execution.
   ///

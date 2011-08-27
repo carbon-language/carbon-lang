@@ -84,7 +84,7 @@ public:
 class LPPassManager : public FunctionPass, public PMDataManager {
 public:
   static char ID;
-  explicit LPPassManager();
+  explicit LPPassManager(int Depth);
 
   /// run - Execute all of the passes scheduled for execution.  Keep track of
   /// whether any of the passes modifies the module, and if so, return true.
