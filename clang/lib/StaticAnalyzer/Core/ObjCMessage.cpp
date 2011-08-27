@@ -112,18 +112,22 @@ QualType CallOrObjCMessage::getResultType(ASTContext &ctx) const {
   QualType resultTy;
   bool isLVal = false;
 
-  if (CallE) {
-    isLVal = CallE->isLValue();
-    const Expr *Callee = CallE->getCallee();
-    if (const FunctionDecl *FD = State->getSVal(Callee).getAsFunctionDecl())
-      resultTy = FD->getResultType();
-    else
-      resultTy = CallE->getType();
-  }
-  else {
+  if (isObjCMessage()) {
     isLVal = isa<ObjCMessageExpr>(Msg.getOriginExpr()) &&
              Msg.getOriginExpr()->isLValue();
     resultTy = Msg.getResultType(ctx);
+  } else if (const CXXConstructExpr *Ctor =
+              CallE.dyn_cast<const CXXConstructExpr *>()) {
+    resultTy = Ctor->getType();
+  } else {
+    const CallExpr *FunctionCall = CallE.get<const CallExpr *>();
+
+    isLVal = FunctionCall->isLValue();
+    const Expr *Callee = FunctionCall->getCallee();
+    if (const FunctionDecl *FD = State->getSVal(Callee).getAsFunctionDecl())
+      resultTy = FD->getResultType();
+    else
+      resultTy = FunctionCall->getType();
   }
 
   if (isLVal)
@@ -132,25 +136,17 @@ QualType CallOrObjCMessage::getResultType(ASTContext &ctx) const {
   return resultTy;
 }
 
-SVal CallOrObjCMessage::getArgSValAsScalarOrLoc(unsigned i) const {
-  assert(i < getNumArgs());
-  if (CallE) return State->getSValAsScalarOrLoc(CallE->getArg(i));
-  QualType argT = Msg.getArgType(i);
-  if (Loc::isLocType(argT) || argT->isIntegerType())
-    return Msg.getArgSVal(i, State);
-  return UnknownVal();
-}
-
 SVal CallOrObjCMessage::getFunctionCallee() const {
   assert(isFunctionCall());
   assert(!isCXXCall());
-  const Expr *callee = CallE->getCallee()->IgnoreParens();
-  return State->getSVal(callee);
+  const Expr *Fun = CallE.get<const CallExpr *>()->getCallee()->IgnoreParens();
+  return State->getSVal(Fun);
 }
 
 SVal CallOrObjCMessage::getCXXCallee() const {
   assert(isCXXCall());
+  const CallExpr *ActualCall = CallE.get<const CallExpr *>();
   const Expr *callee =
-    cast<CXXMemberCallExpr>(CallE)->getImplicitObjectArgument();
+    cast<CXXMemberCallExpr>(ActualCall)->getImplicitObjectArgument();
   return State->getSVal(callee);  
 }

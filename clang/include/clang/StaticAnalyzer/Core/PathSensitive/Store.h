@@ -187,12 +187,11 @@ public:
   ///   even if they do not currently have bindings. Pass \c NULL if this
   ///   information will not be used.
   virtual StoreRef invalidateRegions(Store store,
-                                     const MemRegion * const *Begin,
-                                     const MemRegion * const *End,
+                                     ArrayRef<const MemRegion *> Regions,
                                      const Expr *E, unsigned Count,
                                      InvalidatedSymbols &IS,
                                      bool invalidateGlobals,
-                                     InvalidatedRegions *Regions) = 0;
+                                     InvalidatedRegions *Invalidated) = 0;
 
   /// enterStackFrame - Let the StoreManager to do something when execution
   /// engine is about to execute into a callee.

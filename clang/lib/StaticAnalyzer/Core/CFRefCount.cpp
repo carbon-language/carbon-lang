@@ -2439,23 +2439,6 @@ static QualType GetReturnType(const Expr *RetE, ASTContext &Ctx) {
   return RetTy;
 }
 
-
-// HACK: Symbols that have ref-count state that are referenced directly
-//  (not as structure or array elements, or via bindings) by an argument
-//  should not have their ref-count state stripped after we have
-//  done an invalidation pass.
-//
-// FIXME: This is a global to currently share between CFRefCount and
-// RetainReleaseChecker.  Eventually all functionality in CFRefCount should
-// be migrated to RetainReleaseChecker, and we can make this a non-global.
-llvm::DenseSet<SymbolRef> WhitelistedSymbols;
-namespace {
-struct ResetWhiteList {
-  ResetWhiteList() {}
-  ~ResetWhiteList() { WhitelistedSymbols.clear(); } 
-};
-}
-
 void CFRefCount::evalCallOrMessage(ExplodedNodeSet &Dst, ExprEngine &Eng,
                                    StmtNodeBuilder &Builder,
                                    const CallOrObjCMessage &callOrMsg,
@@ -2465,18 +2448,11 @@ void CFRefCount::evalCallOrMessage(ExplodedNodeSet &Dst, ExprEngine &Eng,
                                    const ProgramState *state) {
 
   SmallVector<const MemRegion*, 10> RegionsToInvalidate;
-  
-  // Use RAII to make sure the whitelist is properly cleared.
-  ResetWhiteList resetWhiteList;
 
   // Invalidate all instance variables of the receiver of a message.
   // FIXME: We should be able to do better with inter-procedural analysis.
   if (Receiver) {
     SVal V = Receiver.getSValAsScalarOrLoc(state);
-    if (SymbolRef Sym = V.getAsLocSymbol()) {
-      if (state->get<RefBindings>(Sym))
-        WhitelistedSymbols.insert(Sym);
-    }
     if (const MemRegion *region = V.getAsRegion())
       RegionsToInvalidate.push_back(region);
   }
@@ -2490,7 +2466,7 @@ void CFRefCount::evalCallOrMessage(ExplodedNodeSet &Dst, ExprEngine &Eng,
   }
   
   for (unsigned idx = 0, e = callOrMsg.getNumArgs(); idx != e; ++idx) {
-    SVal V = callOrMsg.getArgSValAsScalarOrLoc(idx);
+    SVal V = callOrMsg.getArgSVal(idx);
 
     // If we are passing a location wrapped as an integer, unwrap it and
     // invalidate the values referred by the location.
@@ -2498,10 +2474,6 @@ void CFRefCount::evalCallOrMessage(ExplodedNodeSet &Dst, ExprEngine &Eng,
       V = Wrapped->getLoc();
     else if (!isa<Loc>(V))
       continue;
-
-    if (SymbolRef Sym = V.getAsLocSymbol())
-      if (state->get<RefBindings>(Sym))
-        WhitelistedSymbols.insert(Sym);
 
     if (const MemRegion *R = V.getAsRegion()) {
       // Invalidate the value of the variable passed by reference.
@@ -2562,9 +2534,7 @@ void CFRefCount::evalCallOrMessage(ExplodedNodeSet &Dst, ExprEngine &Eng,
   //  global variables.
   // NOTE: RetainReleaseChecker handles the actual invalidation of symbols.
   state =
-    state->invalidateRegions(RegionsToInvalidate.data(),
-                             RegionsToInvalidate.data() +
-                             RegionsToInvalidate.size(),
+    state->invalidateRegions(RegionsToInvalidate,
                              Ex, Count, &IS,
                              /* invalidateGlobals = */
                              Eng.doesInvalidateGlobals(callOrMsg));
@@ -2611,6 +2581,7 @@ class RetainReleaseChecker
                     check::PostStmt<BlockExpr>,
                     check::PostStmt<CastExpr>,
                     check::PostStmt<CallExpr>,
+                    check::PostStmt<CXXConstructExpr>,
                     check::PostObjCMessage,
                     check::PreStmt<ReturnStmt>,
                     check::RegionChanges,
@@ -2770,6 +2741,7 @@ public:
   void checkPostStmt(const CastExpr *CE, CheckerContext &C) const;
 
   void checkPostStmt(const CallExpr *CE, CheckerContext &C) const;
+  void checkPostStmt(const CXXConstructExpr *CE, CheckerContext &C) const;
   void checkPostObjCMessage(const ObjCMessage &Msg, CheckerContext &C) const;
   void checkSummary(const RetainSummary &Summ, const CallOrObjCMessage &Call,
                     InstanceReceiver Receiver, CheckerContext &C) const;
@@ -2779,10 +2751,11 @@ public:
   const ProgramState *evalAssume(const ProgramState *state, SVal Cond,
                                  bool Assumption) const;
 
-  const ProgramState *checkRegionChanges(const ProgramState *state,
-                          const StoreManager::InvalidatedSymbols *invalidated,
-                                         const MemRegion * const *begin,
-                                         const MemRegion * const *end) const;
+  const ProgramState *
+  checkRegionChanges(const ProgramState *state,
+                     const StoreManager::InvalidatedSymbols *invalidated,
+                     ArrayRef<const MemRegion *> ExplicitRegions,
+                     ArrayRef<const MemRegion *> Regions) const;
                                         
   bool wantsRegionChangeUpdate(const ProgramState *state) const {
     return true;
@@ -2912,10 +2885,17 @@ const ProgramState *RetainReleaseChecker::evalAssume(const ProgramState *state,
 const ProgramState *
 RetainReleaseChecker::checkRegionChanges(const ProgramState *state,
                             const StoreManager::InvalidatedSymbols *invalidated,
-                                         const MemRegion * const *begin,
-                                         const MemRegion * const *end) const {
+                                    ArrayRef<const MemRegion *> ExplicitRegions,
+                                    ArrayRef<const MemRegion *> Regions) const {
   if (!invalidated)
     return state;
+
+  llvm::SmallPtrSet<SymbolRef, 8> WhitelistedSymbols;
+  for (ArrayRef<const MemRegion *>::iterator I = ExplicitRegions.begin(),
+       E = ExplicitRegions.end(); I != E; ++I) {
+    if (const SymbolicRegion *SR = (*I)->StripCasts()->getAs<SymbolicRegion>())
+      WhitelistedSymbols.insert(SR->getSymbol());
+  }
 
   for (StoreManager::InvalidatedSymbols::const_iterator I=invalidated->begin(),
        E = invalidated->end(); I!=E; ++I) {
@@ -3036,6 +3016,23 @@ void RetainReleaseChecker::checkPostStmt(const CallExpr *CE,
   checkSummary(*Summ, CallOrObjCMessage(CE, state), InstanceReceiver(), C);
 }
 
+void RetainReleaseChecker::checkPostStmt(const CXXConstructExpr *CE,
+                                         CheckerContext &C) const {
+  const CXXConstructorDecl *Ctor = CE->getConstructor();
+  if (!Ctor)
+    return;
+
+  RetainSummaryManager &Summaries = getSummaryManager(C.getASTContext());
+  RetainSummary *Summ = Summaries.getSummary(Ctor);
+
+  // If we didn't get a summary, this constructor doesn't affect retain counts.
+  if (!Summ)
+    return;
+
+  const ProgramState *state = C.getState();
+  checkSummary(*Summ, CallOrObjCMessage(CE, state), InstanceReceiver(), C);
+}
+
 void RetainReleaseChecker::checkPostObjCMessage(const ObjCMessage &Msg, 
                                                 CheckerContext &C) const {
   const ProgramState *state = C.getState();
@@ -3071,7 +3068,7 @@ void RetainReleaseChecker::checkSummary(const RetainSummary &Summ,
   SymbolRef ErrorSym = 0;
 
   for (unsigned idx = 0, e = CallOrMsg.getNumArgs(); idx != e; ++idx) {
-    SVal V = CallOrMsg.getArgSValAsScalarOrLoc(idx);
+    SVal V = CallOrMsg.getArgSVal(idx);
 
     if (SymbolRef Sym = V.getAsLocSymbol()) {
       if (RefBindings::data_type *T = state->get<RefBindings>(Sym)) {
@@ -3434,7 +3431,7 @@ bool RetainReleaseChecker::evalCall(const CallExpr *CE,
 
     // Invalidate the argument region.
     unsigned Count = C.getNodeBuilder().getCurrentBlockCount();
-    state = state->invalidateRegion(ArgRegion, CE, Count);
+    state = state->invalidateRegions(ArgRegion, CE, Count);
 
     // Restore the refcount status of the argument.
     if (Binding)

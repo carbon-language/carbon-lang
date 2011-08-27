@@ -346,14 +346,15 @@ bool CheckerManager::wantsRegionChangeUpdate(const ProgramState *state) {
 const ProgramState *
 CheckerManager::runCheckersForRegionChanges(const ProgramState *state,
                             const StoreManager::InvalidatedSymbols *invalidated,
-                                            const MemRegion * const *Begin,
-                                            const MemRegion * const *End) {
+                                    ArrayRef<const MemRegion *> ExplicitRegions,
+                                          ArrayRef<const MemRegion *> Regions) {
   for (unsigned i = 0, e = RegionChangesCheckers.size(); i != e; ++i) {
     // If any checker declares the state infeasible (or if it starts that way),
     // bail out.
     if (!state)
       return NULL;
-    state = RegionChangesCheckers[i].CheckFn(state, invalidated, Begin, End);
+    state = RegionChangesCheckers[i].CheckFn(state, invalidated, 
+                                             ExplicitRegions, Regions);
   }
   return state;
 }

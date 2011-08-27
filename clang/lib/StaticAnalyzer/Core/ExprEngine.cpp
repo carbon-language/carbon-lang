@@ -192,10 +192,10 @@ bool ExprEngine::wantsRegionChangeUpdate(const ProgramState *state) {
 const ProgramState *
 ExprEngine::processRegionChanges(const ProgramState *state,
                             const StoreManager::InvalidatedSymbols *invalidated,
-                                 const MemRegion * const *Begin,
-                                 const MemRegion * const *End) {
+                                 ArrayRef<const MemRegion *> Explicits,
+                                 ArrayRef<const MemRegion *> Regions) {
   return getCheckerManager().runCheckersForRegionChanges(state, invalidated,
-                                                         Begin, End);
+                                                         Explicits, Regions);
 }
 
 void ExprEngine::processEndWorklist(bool hasWorkRemaining) {

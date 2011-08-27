@@ -47,8 +47,8 @@ public:
   const ProgramState *
     checkRegionChanges(const ProgramState *state,
                        const StoreManager::InvalidatedSymbols *,
-                       const MemRegion * const *Begin,
-                       const MemRegion * const *End) const;
+                       ArrayRef<const MemRegion *> ExplicitRegions,
+                       ArrayRef<const MemRegion *> Regions) const;
 
   typedef void (CStringChecker::*FnCheck)(CheckerContext &,
                                           const CallExpr *) const;
@@ -786,7 +786,7 @@ const ProgramState *CStringChecker::InvalidateBuffer(CheckerContext &C,
 
     // Invalidate this region.
     unsigned Count = C.getNodeBuilder().getCurrentBlockCount();
-    return state->invalidateRegion(R, E, Count, NULL);
+    return state->invalidateRegions(R, E, Count);
   }
 
   // If we have a non-region value by chance, just remove the binding.
@@ -1757,8 +1757,8 @@ bool CStringChecker::wantsRegionChangeUpdate(const ProgramState *state) const {
 const ProgramState *
 CStringChecker::checkRegionChanges(const ProgramState *state,
                                    const StoreManager::InvalidatedSymbols *,
-                                   const MemRegion * const *Begin,
-                                   const MemRegion * const *End) const {
+                                   ArrayRef<const MemRegion *> ExplicitRegions,
+                                   ArrayRef<const MemRegion *> Regions) const {
   CStringLength::EntryMap Entries = state->get<CStringLength>();
   if (Entries.isEmpty())
     return state;
@@ -1767,8 +1767,9 @@ CStringChecker::checkRegionChanges(const ProgramState *state,
   llvm::SmallPtrSet<const MemRegion *, 32> SuperRegions;
 
   // First build sets for the changed regions and their super-regions.
-  for ( ; Begin != End; ++Begin) {
-    const MemRegion *MR = *Begin;
+  for (ArrayRef<const MemRegion *>::iterator
+       I = Regions.begin(), E = Regions.end(); I != E; ++I) {
+    const MemRegion *MR = *I;
     Invalidated.insert(MR);
 
     SuperRegions.insert(MR);

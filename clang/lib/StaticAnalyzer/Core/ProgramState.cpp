@@ -136,41 +136,38 @@ const ProgramState *ProgramState::bindDefault(SVal loc, SVal V) const {
            new_state;
 }
 
-const ProgramState *ProgramState::invalidateRegions(const MemRegion * const *Begin,
-                                          const MemRegion * const *End,
-                                          const Expr *E, unsigned Count,
-                                          StoreManager::InvalidatedSymbols *IS,
-                                          bool invalidateGlobals) const {
+const ProgramState *
+ProgramState::invalidateRegions(ArrayRef<const MemRegion *> Regions,
+                                const Expr *E, unsigned Count,
+                                StoreManager::InvalidatedSymbols *IS,
+                                bool invalidateGlobals) const {
   if (!IS) {
     StoreManager::InvalidatedSymbols invalidated;
-    return invalidateRegionsImpl(Begin, End, E, Count,
-                             invalidated, invalidateGlobals);
+    return invalidateRegionsImpl(Regions, E, Count,
+                                 invalidated, invalidateGlobals);
   }
-  return invalidateRegionsImpl(Begin, End, E, Count, *IS, invalidateGlobals);
+  return invalidateRegionsImpl(Regions, E, Count, *IS, invalidateGlobals);
 }
 
 const ProgramState *
-ProgramState::invalidateRegionsImpl(const MemRegion * const *Begin,
-                               const MemRegion * const *End,
-                               const Expr *E, unsigned Count,
-                               StoreManager::InvalidatedSymbols &IS,
-                               bool invalidateGlobals) const {
+ProgramState::invalidateRegionsImpl(ArrayRef<const MemRegion *> Regions,
+                                    const Expr *E, unsigned Count,
+                                    StoreManager::InvalidatedSymbols &IS,
+                                    bool invalidateGlobals) const {
   ProgramStateManager &Mgr = getStateManager();
   SubEngine* Eng = Mgr.getOwningEngine();
  
   if (Eng && Eng->wantsRegionChangeUpdate(this)) {
-    StoreManager::InvalidatedRegions Regions;
+    StoreManager::InvalidatedRegions Invalidated;
     const StoreRef &newStore
-      = Mgr.StoreMgr->invalidateRegions(getStore(), Begin, End, E, Count, IS,
-                                        invalidateGlobals, &Regions);
+      = Mgr.StoreMgr->invalidateRegions(getStore(), Regions, E, Count, IS,
+                                        invalidateGlobals, &Invalidated);
     const ProgramState *newState = makeWithStore(newStore);
-    return Eng->processRegionChanges(newState, &IS,
-                                     &Regions.front(),
-                                     &Regions.back()+1);
+    return Eng->processRegionChanges(newState, &IS, Regions, Invalidated);
   }
 
   const StoreRef &newStore =
-    Mgr.StoreMgr->invalidateRegions(getStore(), Begin, End, E, Count, IS,
+    Mgr.StoreMgr->invalidateRegions(getStore(), Regions, E, Count, IS,
                                     invalidateGlobals, NULL);
   return makeWithStore(newStore);
 }

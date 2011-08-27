@@ -238,11 +238,19 @@ public:
   bool wantsRegionChangeUpdate(const ProgramState *state);
 
   /// \brief Run checkers for region changes.
+  ///
+  /// This corresponds to the check::RegionChanges callback.
+  /// \param state The current program state.
+  /// \param invalidated A set of all symbols potentially touched by the change.
+  /// \param ExplicitRegions The regions explicitly requested for invalidation.
+  ///   For example, in the case of a function call, these would be arguments.
+  /// \param Regions The transitive closure of accessible regions,
+  ///   i.e. all regions that may have been touched by this change.
   const ProgramState *
   runCheckersForRegionChanges(const ProgramState *state,
                             const StoreManager::InvalidatedSymbols *invalidated,
-                              const MemRegion * const *Begin,
-                              const MemRegion * const *End);
+                              ArrayRef<const MemRegion *> ExplicitRegions,
+                              ArrayRef<const MemRegion *> Regions);
 
   /// \brief Run checkers for handling assumptions on symbolic values.
   const ProgramState *runCheckersForEvalAssume(const ProgramState *state,
@@ -305,8 +313,8 @@ public:
   
   typedef CheckerFn<const ProgramState * (const ProgramState *,
                                 const StoreManager::InvalidatedSymbols *symbols,
-                                     const MemRegion * const *begin,
-                                     const MemRegion * const *end)>
+                                    ArrayRef<const MemRegion *> ExplicitRegions,
+                                          ArrayRef<const MemRegion *> Regions)>
       CheckRegionChangesFunc;
   
   typedef CheckerFn<bool (const ProgramState *)> WantsRegionChangeUpdateFunc;

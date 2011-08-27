@@ -216,23 +216,13 @@ public:
 
   const ProgramState *unbindLoc(Loc LV) const;
 
-  /// invalidateRegion - Returns the state with bindings for the given region
-  ///  cleared from the store. See invalidateRegions.
-  const ProgramState *invalidateRegion(const MemRegion *R,
-                                  const Expr *E, unsigned BlockCount,
-                                  StoreManager::InvalidatedSymbols *IS = NULL)
-                                  const {
-    return invalidateRegions(&R, &R+1, E, BlockCount, IS, false);
-  }
-
   /// invalidateRegions - Returns the state with bindings for the given regions
   ///  cleared from the store. The regions are provided as a continuous array
   ///  from Begin to End. Optionally invalidates global regions as well.
-  const ProgramState *invalidateRegions(const MemRegion * const *Begin,
-                                   const MemRegion * const *End,
+  const ProgramState *invalidateRegions(ArrayRef<const MemRegion *> Regions,
                                    const Expr *E, unsigned BlockCount,
-                                   StoreManager::InvalidatedSymbols *IS,
-                                   bool invalidateGlobals) const;
+                                   StoreManager::InvalidatedSymbols *IS = 0,
+                                   bool invalidateGlobals = false) const;
 
   /// enterStackFrame - Returns the state for entry to the given stack frame,
   ///  preserving the current state.
@@ -368,11 +358,11 @@ private:
     --refCount;
   }
   
-  const ProgramState *invalidateRegionsImpl(const MemRegion * const *Begin,
-                                       const MemRegion * const *End,
-                                       const Expr *E, unsigned BlockCount,
-                                       StoreManager::InvalidatedSymbols &IS,
-                                       bool invalidateGlobals) const;
+  const ProgramState *
+  invalidateRegionsImpl(ArrayRef<const MemRegion *> Regions,
+                        const Expr *E, unsigned BlockCount,
+                        StoreManager::InvalidatedSymbols &IS,
+                        bool invalidateGlobals) const;
 };
 
 class ProgramStateSet {

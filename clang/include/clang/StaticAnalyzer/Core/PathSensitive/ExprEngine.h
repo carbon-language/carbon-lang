@@ -192,8 +192,8 @@ public:
   const ProgramState *
   processRegionChanges(const ProgramState *state,
                        const StoreManager::InvalidatedSymbols *invalidated,
-                       const MemRegion * const *Begin,
-                       const MemRegion * const *End);
+                       ArrayRef<const MemRegion *> ExplicitRegions,
+                       ArrayRef<const MemRegion *> Regions);
 
   virtual ProgramStateManager& getStateManager() { return StateMgr; }
 

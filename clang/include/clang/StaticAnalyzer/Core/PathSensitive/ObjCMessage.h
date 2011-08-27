@@ -18,6 +18,8 @@
 #include "clang/StaticAnalyzer/Core/PathSensitive/SVals.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
 #include "clang/AST/ExprObjC.h"
+#include "clang/AST/ExprCXX.h"
+#include "llvm/ADT/PointerUnion.h"
 
 namespace clang {
 namespace ento {
@@ -165,62 +167,81 @@ public:
   }
 };
 
-/// \brief Common wrapper for a call expression or an ObjC message, mainly to
-/// provide a common interface for handling their arguments.
+/// \brief Common wrapper for a call expression, ObjC message, or C++ 
+/// constructor, mainly to provide a common interface for their arguments.
 class CallOrObjCMessage {
-  const CallExpr *CallE;
+  llvm::PointerUnion<const CallExpr *, const CXXConstructExpr *> CallE;
   ObjCMessage Msg;
   const ProgramState *State;
 public:
   CallOrObjCMessage(const CallExpr *callE, const ProgramState *state)
     : CallE(callE), State(state) {}
+  CallOrObjCMessage(const CXXConstructExpr *consE, const ProgramState *state)
+    : CallE(consE), State(state) {}
   CallOrObjCMessage(const ObjCMessage &msg, const ProgramState *state)
-    : CallE(0), Msg(msg), State(state) {}
+    : CallE((CallExpr *)0), Msg(msg), State(state) {}
 
   QualType getResultType(ASTContext &ctx) const;
   
   bool isFunctionCall() const {
-    return (bool) CallE;
+    return CallE && CallE.is<const CallExpr *>();
   }
-  
+
+  bool isCXXConstructExpr() const {
+    return CallE && CallE.is<const CXXConstructExpr *>();
+  }
+
+  bool isObjCMessage() const {
+    return !CallE;
+  }
+
   bool isCXXCall() const {
-    return CallE && isa<CXXMemberCallExpr>(CallE);
+    const CallExpr *ActualCallE = CallE.dyn_cast<const CallExpr *>();
+    return ActualCallE && isa<CXXMemberCallExpr>(ActualCallE);
   }
 
   const Expr *getOriginExpr() const {
-    if (isFunctionCall())
-      return CallE;
-    return Msg.getOriginExpr();
+    if (!CallE)
+      return Msg.getOriginExpr();
+    if (const CXXConstructExpr *Ctor =
+          CallE.dyn_cast<const CXXConstructExpr *>())
+      return Ctor;
+    return CallE.get<const CallExpr *>();
   }
   
   SVal getFunctionCallee() const;
   SVal getCXXCallee() const;
 
   unsigned getNumArgs() const {
-    if (CallE) return CallE->getNumArgs();
-    return Msg.getNumArgs();
+    if (!CallE)
+      return Msg.getNumArgs();
+    if (const CXXConstructExpr *Ctor =
+          CallE.dyn_cast<const CXXConstructExpr *>())
+      return Ctor->getNumArgs();
+    return CallE.get<const CallExpr *>()->getNumArgs();
   }
 
   SVal getArgSVal(unsigned i) const {
     assert(i < getNumArgs());
-    if (CallE) 
-      return State->getSVal(CallE->getArg(i));
-    return Msg.getArgSVal(i, State);
+    if (!CallE)
+      return Msg.getArgSVal(i, State);
+    return State->getSVal(getArg(i));
   }
-
-  SVal getArgSValAsScalarOrLoc(unsigned i) const;
 
   const Expr *getArg(unsigned i) const {
     assert(i < getNumArgs());
-    if (CallE)
-      return CallE->getArg(i);
-    return Msg.getArgExpr(i);
+    if (!CallE)
+      return Msg.getArgExpr(i);
+    if (const CXXConstructExpr *Ctor =
+          CallE.dyn_cast<const CXXConstructExpr *>())
+      return Ctor->getArg(i);
+    return CallE.get<const CallExpr *>()->getArg(i);
   }
 
   SourceRange getArgSourceRange(unsigned i) const {
     assert(i < getNumArgs());
     if (CallE)
-      return CallE->getArg(i)->getSourceRange();
+      return getArg(i)->getSourceRange();
     return Msg.getArgSourceRange(i);
   }
 };

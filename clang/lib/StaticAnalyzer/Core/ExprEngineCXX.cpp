@@ -229,9 +229,7 @@ void ExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *E,
     }
     
     // Invalidate the regions.    
-    state = state->invalidateRegions(regionsToInvalidate.data(),
-                                     regionsToInvalidate.data() +
-                                     regionsToInvalidate.size(),
+    state = state->invalidateRegions(regionsToInvalidate,
                                      E, blockCount, 0,
                                      /* invalidateGlobals = */ true);
     
@@ -317,17 +315,13 @@ void ExprEngine::VisitCXXNewExpr(const CXXNewExpr *CNE, ExplodedNode *Pred,
     if (ObjTy->isRecordType()) {
       regionsToInvalidate.push_back(EleReg);
       // Invalidate the regions.
-      state = state->invalidateRegions(regionsToInvalidate.data(),
-                                       regionsToInvalidate.data() +
-                                       regionsToInvalidate.size(),
+      state = state->invalidateRegions(regionsToInvalidate,
                                        CNE, blockCount, 0,
                                        /* invalidateGlobals = */ true);
       
     } else {
       // Invalidate the regions.
-      state = state->invalidateRegions(regionsToInvalidate.data(),
-                                       regionsToInvalidate.data() +
-                                       regionsToInvalidate.size(),
+      state = state->invalidateRegions(regionsToInvalidate,
                                        CNE, blockCount, 0,
                                        /* invalidateGlobals = */ true);
 
