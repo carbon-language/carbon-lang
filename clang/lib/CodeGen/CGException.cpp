@@ -477,7 +477,6 @@ static void emitFilterDispatchBlock(CodeGenFunction &CGF,
     return;
   }
 
-  CGBuilderTy::InsertPoint savedIP = CGF.Builder.saveIP();
   CGF.EmitBlockAfterUses(dispatchBlock);
 
   // If this isn't a catch-all filter, we need to check whether we got

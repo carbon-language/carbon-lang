@@ -528,7 +528,6 @@ ASTSelectorLookupTrait::ReadData(Selector, const unsigned char* d,
   unsigned NumFactoryMethods = ReadUnalignedLE16(d);
 
   // Load instance methods
-  ObjCMethodList *Prev = 0;
   for (unsigned I = 0; I != NumInstanceMethods; ++I) {
     if (ObjCMethodDecl *Method
           = Reader.GetLocalDeclAs<ObjCMethodDecl>(F, ReadUnalignedLE32(d)))
@@ -536,7 +535,6 @@ ASTSelectorLookupTrait::ReadData(Selector, const unsigned char* d,
   }
 
   // Load factory methods
-  Prev = 0;
   for (unsigned I = 0; I != NumFactoryMethods; ++I) {
     if (ObjCMethodDecl *Method
           = Reader.GetLocalDeclAs<ObjCMethodDecl>(F, ReadUnalignedLE32(d)))
@@ -1753,7 +1751,6 @@ ASTReader::ReadASTBlock(Module &F) {
 
   // Read all of the records and blocks for the ASt file.
   RecordData Record;
-  bool First = true;
   while (!Stream.AtEndOfStream()) {
     unsigned Code = Stream.ReadCode();
     if (Code == llvm::bitc::END_BLOCK) {
@@ -1827,7 +1824,6 @@ ASTReader::ReadASTBlock(Module &F) {
         }
         break;
       }
-      First = false;
       continue;
     }
 
@@ -2468,7 +2464,6 @@ ASTReader::ReadASTBlock(Module &F) {
         KnownNamespaces.push_back(getGlobalDeclID(F, Record[I]));
       break;
     }
-    First = false;
   }
   Error("premature end of bitstream in AST file");
   return Failure;
