@@ -432,7 +432,13 @@ public:
             Stream &s = result.GetOutputStream();
 
             bool get_file_globals = true;
-            VariableList *variable_list = exe_ctx.frame->GetVariableList (get_file_globals);
+            
+            // Be careful about the stack frame, if any summary formatter runs code, it might clear the StackFrameList
+            // for the thread.  So hold onto a shared pointer to the frame so it stays alive.
+            
+            StackFrameSP frame_sp = exe_ctx.frame->GetSP();
+            
+            VariableList *variable_list = frame_sp->GetVariableList (get_file_globals);
 
             VariableSP var_sp;
             ValueObjectSP valobj_sp;
@@ -489,7 +495,7 @@ public:
                                         var_sp = regex_var_list.GetVariableAtIndex (regex_idx);
                                         if (var_sp)
                                         {
-                                            valobj_sp = exe_ctx.frame->GetValueObjectForFrameVariable (var_sp, m_varobj_options.use_dynamic);
+                                            valobj_sp = frame_sp->GetValueObjectForFrameVariable (var_sp, m_varobj_options.use_dynamic);
                                             if (valobj_sp)
                                             {                                        
                                                 if (m_option_variable.format != eFormatDefault)
@@ -530,7 +536,7 @@ public:
                             Error error;
                             uint32_t expr_path_options = StackFrame::eExpressionPathOptionCheckPtrVsMember;
                             lldb::VariableSP var_sp;
-                            valobj_sp = exe_ctx.frame->GetValueForVariableExpressionPath (name_cstr, 
+                            valobj_sp = frame_sp->GetValueForVariableExpressionPath (name_cstr, 
                                                                                           m_varobj_options.use_dynamic, 
                                                                                           expr_path_options,
                                                                                           var_sp,
@@ -610,7 +616,7 @@ public:
                                 // Use the variable object code to make sure we are
                                 // using the same APIs as the the public API will be
                                 // using...
-                                valobj_sp = exe_ctx.frame->GetValueObjectForFrameVariable (var_sp, 
+                                valobj_sp = frame_sp->GetValueObjectForFrameVariable (var_sp, 
                                                                                            m_varobj_options.use_dynamic);
                                 if (valobj_sp)
                                 {
