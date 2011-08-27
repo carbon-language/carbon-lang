@@ -41,12 +41,6 @@
 }
 
 {
-   We don't care if tblgen leaks
-   Memcheck:Leak
-   obj:*/tblgen
-}
-
-{
    We don't care about anything ld.so does.
    Memcheck:Cond
    obj:/lib/ld*.so
