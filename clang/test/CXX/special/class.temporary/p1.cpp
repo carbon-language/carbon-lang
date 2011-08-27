@@ -35,3 +35,24 @@ namespace test1 {
     foo(a); // expected-error {{calling a private constructor of class 'test1::A'}} expected-error {{cannot pass object of non-trivial type 'test1::A' through variadic function}}
   }
 }
+
+// Don't enforce this in an unevaluated context.
+namespace test2 {
+  struct A {
+    A(const A&) = delete; // expected-note {{marked deleted here}}
+  };
+
+  typedef char one[1];
+  typedef char two[2];
+
+  one &meta(bool);
+  two &meta(...);
+
+  void a(A &a) {
+    char check[sizeof(meta(a)) == 2 ? 1 : -1];
+  }
+
+  void b(A &a) {
+    meta(a); // expected-error {{call to deleted constructor}}
+  }
+}

@@ -443,9 +443,15 @@ ExprResult Sema::DefaultArgumentPromotion(Expr *E) {
   if (Ty->isSpecificBuiltinType(BuiltinType::Float))
     E = ImpCastExprToType(E, Context.DoubleTy, CK_FloatingCast).take();
 
-  // C++ includes lvalue-to-rvalue conversion as a default argument
-  // promotion.  If we have a gl-value, initialize a temporary.
-  if (getLangOptions().CPlusPlus && E->isGLValue()) {
+  // C++ performs lvalue-to-rvalue conversion as a default argument
+  // promotion.  If we still have a gl-value after usual unary
+  // conversion, we must have an l-value of class type, so we need to
+  // initialize a temporary.  For compatibility reasons, however, we
+  // don't want to do this in unevaluated contexts; otherwise we
+  // reject metaprograms which work by passing uncopyable l-values to
+  // variadic functions.
+  if (getLangOptions().CPlusPlus && E->isGLValue() && 
+      ExprEvalContexts.back().Context != Unevaluated) {
     ExprResult Temp = PerformCopyInitialization(
                        InitializedEntity::InitializeTemporary(E->getType()),
                                                 E->getExprLoc(),
