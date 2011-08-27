@@ -22,11 +22,13 @@ bb18.i5.i:                                        ; preds = %.noexc6.i.i, %bb51.
           to label %.noexc6.i.i unwind label %lpad.i.i ; <float> [#uses=0]
 
 lpad.i.i:                                         ; preds = %bb18.i5.i, %.noexc6.i.i
-  %eh_ptr.i.i = call i8* @llvm.eh.exception()     ; <i8*> [#uses=1]
+  %lpadval.i.i = landingpad { i8*, i32 } personality i32 (...)* @__gxx_personality_v0
+          catch i8* null
   unreachable
 
 lpad59.i:                                         ; preds = %bb15
-  %eh_ptr60.i = call i8* @llvm.eh.exception()     ; <i8*> [#uses=1]
+  %lpadval60.i.i = landingpad { i8*, i32 } personality i32 (...)* @__gxx_personality_v0
+          catch i8* null
   unreachable
 
 bb15:                                             ; preds = %.noexc3, %invcont5
@@ -34,9 +36,7 @@ bb15:                                             ; preds = %.noexc3, %invcont5
           to label %.noexc3 unwind label %lpad59.i
 }
 
-declare i8* @llvm.eh.exception() nounwind readonly
-
-declare i32 @llvm.eh.selector(i8*, i8*, ...) nounwind
+declare i32 @__gxx_personality_v0(...)
 
 declare float @sinf(float) readonly
 
