@@ -65,7 +65,7 @@ private:
   const FileEntry *getOriginalFile(StringRef filePath);
   void resetTarget(Target &targ);
 
-  bool report(const std::string &err, Diagnostic &Diag);
+  bool report(const Twine &err, Diagnostic &Diag);
 
   std::string getRemapInfoFile(StringRef outputDir);
 };

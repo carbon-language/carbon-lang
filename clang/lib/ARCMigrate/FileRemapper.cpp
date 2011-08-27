@@ -63,34 +63,34 @@ bool FileRemapper::initFromDisk(StringRef outputDir, Diagnostic &Diag,
   llvm::OwningPtr<llvm::MemoryBuffer> fileBuf;
   if (llvm::error_code ec = llvm::MemoryBuffer::getFile(infoFile.c_str(),
                                                         fileBuf))
-    return report(std::string("Error opening file: ") + infoFile, Diag);
+    return report("Error opening file: " + infoFile, Diag);
   
   SmallVector<StringRef, 64> lines;
   fileBuf->getBuffer().split(lines, "\n");
 
   for (unsigned idx = 0; idx+3 <= lines.size(); idx += 3) {
-    std::string fromFilename = lines[idx];
+    StringRef fromFilename = lines[idx];
     unsigned long long timeModified;
     lines[idx+1].getAsInteger(10, timeModified);
-    std::string toFilename = lines[idx+2];
+    StringRef toFilename = lines[idx+2];
     
     const FileEntry *origFE = FileMgr->getFile(fromFilename);
     if (!origFE) {
       if (ignoreIfFilesChanged)
         continue;
-      return report(std::string("File does not exist: ") + fromFilename, Diag);
+      return report("File does not exist: " + fromFilename, Diag);
     }
     const FileEntry *newFE = FileMgr->getFile(toFilename);
     if (!newFE) {
       if (ignoreIfFilesChanged)
         continue;
-      return report(std::string("File does not exist: ") + toFilename, Diag);
+      return report("File does not exist: " + toFilename, Diag);
     }
 
     if ((uint64_t)origFE->getModificationTime() != timeModified) {
       if (ignoreIfFilesChanged)
         continue;
-      return report(std::string("File was modified: ") + fromFilename, Diag);
+      return report("File was modified: " + fromFilename, Diag);
     }
 
     pairs.push_back(std::make_pair(origFE, newFE));
@@ -107,8 +107,7 @@ bool FileRemapper::flushToDisk(StringRef outputDir, Diagnostic &Diag) {
 
   bool existed;
   if (fs::create_directory(outputDir, existed) != llvm::errc::success)
-    return report(std::string("Could not create directory: ") + outputDir.str(),
-                  Diag);
+    return report("Could not create directory: " + outputDir, Diag);
 
   std::string errMsg;
   std::string infoFile = getRemapInfoFile(outputDir);
@@ -138,8 +137,7 @@ bool FileRemapper::flushToDisk(StringRef outputDir, Diagnostic &Diag) {
       tempPath += path::extension(origFE->getName());
       int fd;
       if (fs::unique_file(tempPath.str(), fd, tempPath) != llvm::errc::success)
-        return report(std::string("Could not create file: ") + tempPath.c_str(),
-                      Diag);
+        return report("Could not create file: " + tempPath.str(), Diag);
 
       llvm::raw_fd_ostream newOut(fd, /*shouldClose=*/true);
       llvm::MemoryBuffer *mem = I->second.get<llvm::MemoryBuffer *>();
@@ -165,20 +163,15 @@ bool FileRemapper::overwriteOriginal(Diagnostic &Diag,
     const FileEntry *origFE = I->first;
     if (const FileEntry *newFE = I->second.dyn_cast<const FileEntry *>()) {
       if (fs::copy_file(newFE->getName(), origFE->getName(),
-                 fs::copy_option::overwrite_if_exists) != llvm::errc::success) {
-        std::string err = "Could not copy file '";
-        llvm::raw_string_ostream os(err);
-        os << "Could not copy file '" << newFE->getName() << "' to file '"
-           << origFE->getName() << "'";
-        os.flush();
-        return report(err, Diag);
-      }
+                 fs::copy_option::overwrite_if_exists) != llvm::errc::success)
+        return report(StringRef("Could not copy file '") + newFE->getName() +
+                      "' to file '" + origFE->getName() + "'", Diag);
     } else {
 
       bool fileExists = false;
       fs::exists(origFE->getName(), fileExists);
       if (!fileExists)
-        return report(std::string("File does not exist: ") + origFE->getName(),
+        return report(StringRef("File does not exist: ") + origFE->getName(),
                       Diag);
 
       std::string errMsg;
@@ -283,9 +276,10 @@ void FileRemapper::resetTarget(Target &targ) {
   }
 }
 
-bool FileRemapper::report(const std::string &err, Diagnostic &Diag) {
+bool FileRemapper::report(const Twine &err, Diagnostic &Diag) {
+  llvm::SmallString<128> buf;
   unsigned ID = Diag.getDiagnosticIDs()->getCustomDiagID(DiagnosticIDs::Error,
-                                                         err);
+                                                         err.toStringRef(buf));
   Diag.Report(ID);
   return true;
 }
