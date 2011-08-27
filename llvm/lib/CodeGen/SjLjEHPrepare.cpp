@@ -145,14 +145,10 @@ void SjLjEHPass::markInvokeCallSite(InvokeInst *II, int InvokeNo,
   if (isa<PHINode>(II->getUnwindDest()->begin())) {
     // FIXME: New EH - This if-condition will be always true in the new scheme.
     if (II->getUnwindDest()->isLandingPad()) {
-      if (isCriticalEdge(II, 1)) {
-        SmallVector<BasicBlock*, 2> NewBBs;
-        SplitLandingPadPredecessors(II->getUnwindDest(), II->getParent(),
-                                    ".1", ".2", this, NewBBs);
-        LPadSuccMap[II] = *succ_begin(NewBBs[0]);
-      } else {
-        LPadSuccMap[II] = II->getUnwindDest();
-      }
+      SmallVector<BasicBlock*, 2> NewBBs;
+      SplitLandingPadPredecessors(II->getUnwindDest(), II->getParent(),
+                                  ".1", ".2", this, NewBBs);
+      LPadSuccMap[II] = *succ_begin(NewBBs[0]);
     } else {
       SplitCriticalEdge(II, 1, this);
     }
@@ -206,14 +202,10 @@ splitLiveRangesAcrossInvokes(SmallVector<InvokeInst*,16> &Invokes) {
 
     // FIXME: New EH - This if-condition will be always true in the new scheme.
     if (II->getUnwindDest()->isLandingPad()) {
-      if (isCriticalEdge(II, 1)) {
-        SmallVector<BasicBlock*, 2> NewBBs;
-        SplitLandingPadPredecessors(II->getUnwindDest(), II->getParent(),
-                                    ".1", ".2", this, NewBBs);
-        LPadSuccMap[II] = *succ_begin(NewBBs[0]);
-      } else {
-        LPadSuccMap[II] = II->getUnwindDest();
-      }
+      SmallVector<BasicBlock*, 2> NewBBs;
+      SplitLandingPadPredecessors(II->getUnwindDest(), II->getParent(),
+                                  ".1", ".2", this, NewBBs);
+      LPadSuccMap[II] = *succ_begin(NewBBs[0]);
     } else {
       SplitCriticalEdge(II, 1, this);
     }
