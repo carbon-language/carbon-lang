@@ -707,9 +707,7 @@ void AddTopLevelDeclarationToHash(Decl *D, unsigned &Hash) {
   }
   
   if (ObjCClassDecl *Class = dyn_cast<ObjCClassDecl>(D)) {
-    for (ObjCClassDecl::iterator I = Class->begin(), IEnd = Class->end();
-         I != IEnd; ++I)
-      AddTopLevelDeclarationToHash(I->getInterface(), Hash);
+    AddTopLevelDeclarationToHash(Class->getForwardInterfaceDecl(), Hash);
     return;
   }
 }

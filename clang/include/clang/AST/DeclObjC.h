@@ -918,28 +918,22 @@ public:
     ObjCInterfaceDecl *getInterface() const { return ID; }
   };
 private:
-  ObjCClassRef *ForwardDecls;
-  unsigned NumDecls;
+  ObjCClassRef *ForwardDecl;
 
   ObjCClassDecl(DeclContext *DC, SourceLocation L,
-                ObjCInterfaceDecl *const *Elts, const SourceLocation *Locs,                
-                unsigned nElts, ASTContext &C);
+                ObjCInterfaceDecl *const Elt, const SourceLocation Loc,                
+                ASTContext &C);
 public:
   static ObjCClassDecl *Create(ASTContext &C, DeclContext *DC, SourceLocation L,
-                               ObjCInterfaceDecl *const *Elts = 0,
-                               const SourceLocation *Locs = 0,
-                               unsigned nElts = 0);
+                               ObjCInterfaceDecl *const Elt = 0,
+                               const SourceLocation Locs = SourceLocation());
+    
+  ObjCInterfaceDecl *getForwardInterfaceDecl() { return ForwardDecl->getInterface(); }
+  ObjCClassRef *getForwardDecl() { return ForwardDecl; }
+  void setClass(ASTContext &C, ObjCInterfaceDecl*const Cls,
+                const SourceLocation Locs);
   
   virtual SourceRange getSourceRange() const;
-
-  typedef const ObjCClassRef* iterator;
-  iterator begin() const { return ForwardDecls; }
-  iterator end() const { return ForwardDecls + NumDecls; }
-  unsigned size() const { return NumDecls; }
-
-  /// setClassList - Set the list of forward classes.
-  void setClassList(ASTContext &C, ObjCInterfaceDecl*const*List,
-                    const SourceLocation *Locs, unsigned Num);
 
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const ObjCClassDecl *D) { return true; }

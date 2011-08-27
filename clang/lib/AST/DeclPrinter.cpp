@@ -812,11 +812,7 @@ void DeclPrinter::VisitClassTemplateDecl(ClassTemplateDecl *D) {
 
 void DeclPrinter::VisitObjCClassDecl(ObjCClassDecl *D) {
   Out << "@class ";
-  for (ObjCClassDecl::iterator I = D->begin(), E = D->end();
-       I != E; ++I) {
-    if (I != D->begin()) Out << ", ";
-    Out << I->getInterface();
-  }
+  Out << D->getForwardInterfaceDecl();
 }
 
 void DeclPrinter::VisitObjCMethodDecl(ObjCMethodDecl *OMD) {

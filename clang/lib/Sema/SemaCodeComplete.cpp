@@ -5405,12 +5405,11 @@ static void AddInterfaceResults(DeclContext *Ctx, DeclContext *CurContext,
 
     // Record any forward-declared interfaces we find.
     if (ObjCClassDecl *Forward = dyn_cast<ObjCClassDecl>(*D)) {
-      for (ObjCClassDecl::iterator C = Forward->begin(), CEnd = Forward->end();
-           C != CEnd; ++C)
-        if ((!OnlyForwardDeclarations || C->getInterface()->isForwardDecl()) &&
-            (!OnlyUnimplemented || !C->getInterface()->getImplementation()))
-          Results.AddResult(Result(C->getInterface(), 0), CurContext,
-                            0, false);
+      ObjCInterfaceDecl *IDecl = Forward->getForwardInterfaceDecl();
+      if ((!OnlyForwardDeclarations || IDecl->isForwardDecl()) &&
+          (!OnlyUnimplemented || !IDecl->getImplementation()))
+        Results.AddResult(Result(IDecl, 0), CurContext,
+                          0, false);
     }
   }
 }

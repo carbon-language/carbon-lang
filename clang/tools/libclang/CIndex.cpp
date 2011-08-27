@@ -1100,10 +1100,9 @@ bool CursorVisitor::VisitObjCForwardProtocolDecl(ObjCForwardProtocolDecl *D) {
 }
 
 bool CursorVisitor::VisitObjCClassDecl(ObjCClassDecl *D) {
-  for (ObjCClassDecl::iterator C = D->begin(), CEnd = D->end(); C != CEnd; ++C)
-    if (Visit(MakeCursorObjCClassRef(C->getInterface(), C->getLocation(), TU)))
+  if (Visit(MakeCursorObjCClassRef(D->getForwardInterfaceDecl(), 
+                                   D->getForwardDecl()->getLocation(), TU)))
       return true;
-
   return false;
 }
 
@@ -4219,8 +4218,8 @@ unsigned clang_getNumOverloadedDecls(CXCursor C) {
   Decl *D = Storage.get<Decl*>();
   if (UsingDecl *Using = dyn_cast<UsingDecl>(D))
     return Using->shadow_size();
-  if (ObjCClassDecl *Classes = dyn_cast<ObjCClassDecl>(D))
-    return Classes->size();
+  if (isa<ObjCClassDecl>(D))
+    return 1;
   if (ObjCForwardProtocolDecl *Protocols =dyn_cast<ObjCForwardProtocolDecl>(D))
     return Protocols->protocol_size();
   
@@ -4250,10 +4249,8 @@ CXCursor clang_getOverloadedDecl(CXCursor cursor, unsigned index) {
     std::advance(Pos, index);
     return MakeCXCursor(cast<UsingShadowDecl>(*Pos)->getTargetDecl(), TU);
   }
-  
   if (ObjCClassDecl *Classes = dyn_cast<ObjCClassDecl>(D))
-    return MakeCXCursor(Classes->begin()[index].getInterface(), TU);
-  
+    return MakeCXCursor(Classes->getForwardInterfaceDecl(), TU);
   if (ObjCForwardProtocolDecl *Protocols = dyn_cast<ObjCForwardProtocolDecl>(D))
     return MakeCXCursor(Protocols->protocol_begin()[index], TU);
   

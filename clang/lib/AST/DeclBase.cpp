@@ -1030,12 +1030,10 @@ void DeclContext::buildLookup(DeclContext *DCtx) {
         if (D->getDeclContext() == DCtx)
           makeDeclVisibleInContextImpl(ND);
 
-      // Insert any forward-declared Objective-C interfaces into the lookup
+      // Insert any forward-declared Objective-C interface into the lookup
       // data structure.
       if (ObjCClassDecl *Class = dyn_cast<ObjCClassDecl>(*D))
-        for (ObjCClassDecl::iterator I = Class->begin(), IEnd = Class->end();
-             I != IEnd; ++I)
-          makeDeclVisibleInContextImpl(I->getInterface());
+        makeDeclVisibleInContextImpl(Class->getForwardInterfaceDecl());
       
       // If this declaration is itself a transparent declaration context or
       // inline namespace, add its members (recursively).

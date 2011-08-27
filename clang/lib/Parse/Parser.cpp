@@ -593,10 +593,7 @@ Parser::ParseExternalDeclaration(ParsedAttributesWithRange &attrs,
     break;
   }
   case tok::at:
-    // @ is not a legal token unless objc is enabled, no need to check for ObjC.
-    /// FIXME: ParseObjCAtDirectives should return a DeclGroup for things like
-    /// @class foo, bar;
-    SingleDecl = ParseObjCAtDirectives();
+    return ParseObjCAtDirectives();
     break;
   case tok::minus:
   case tok::plus:

@@ -742,8 +742,7 @@ struct XMLDumper : public XMLDeclVisitor<XMLDumper>,
 
   // ObjCClassDecl
   void visitObjCClassDeclChildren(ObjCClassDecl *D) {
-    for (ObjCClassDecl::iterator I = D->begin(), E = D->end(); I != E; ++I)
-      visitDeclRef(I->getInterface());
+    visitDeclRef(D->getForwardInterfaceDecl());
   }
 
   // ObjCInterfaceDecl

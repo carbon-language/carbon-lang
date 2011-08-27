@@ -2670,14 +2670,11 @@ static void LookupVisibleDecls(DeclContext *Ctx, LookupResult &Result,
           }
         }
       } else if (ObjCClassDecl *Class = dyn_cast<ObjCClassDecl>(*D)) {
-        for (ObjCClassDecl::iterator I = Class->begin(), IEnd = Class->end();
-             I != IEnd; ++I) {
-          ObjCInterfaceDecl *IFace = I->getInterface();
+          ObjCInterfaceDecl *IFace = Class->getForwardInterfaceDecl();
           if (Result.isAcceptableDecl(IFace)) {
             Consumer.FoundDecl(IFace, Visited.checkHidden(IFace), InBaseClass);
             Visited.add(IFace);
           }
-        }
       }
       
       // Visit transparent contexts and inline namespaces inside this context.

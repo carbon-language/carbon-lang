@@ -573,17 +573,9 @@ void ASTDeclReader::VisitObjCAtDefsFieldDecl(ObjCAtDefsFieldDecl *FD) {
 
 void ASTDeclReader::VisitObjCClassDecl(ObjCClassDecl *CD) {
   VisitDecl(CD);
-  unsigned NumClassRefs = Record[Idx++];
-  SmallVector<ObjCInterfaceDecl *, 16> ClassRefs;
-  ClassRefs.reserve(NumClassRefs);
-  for (unsigned I = 0; I != NumClassRefs; ++I)
-    ClassRefs.push_back(ReadDeclAs<ObjCInterfaceDecl>(Record, Idx));
-  SmallVector<SourceLocation, 16> SLocs;
-  SLocs.reserve(NumClassRefs);
-  for (unsigned I = 0; I != NumClassRefs; ++I)
-    SLocs.push_back(ReadSourceLocation(Record, Idx));
-  CD->setClassList(*Reader.getContext(), ClassRefs.data(), SLocs.data(),
-                   NumClassRefs);
+  ObjCInterfaceDecl *ClassRef = ReadDeclAs<ObjCInterfaceDecl>(Record, Idx);
+  SourceLocation SLoc = ReadSourceLocation(Record, Idx);
+  CD->setClass(*Reader.getContext(), ClassRef, SLoc);
 }
 
 void ASTDeclReader::VisitObjCForwardProtocolDecl(ObjCForwardProtocolDecl *FPD) {

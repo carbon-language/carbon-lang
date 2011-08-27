@@ -851,36 +851,31 @@ ObjCMethodDecl *ObjCProtocolDecl::lookupMethod(Selector Sel,
 //===----------------------------------------------------------------------===//
 
 ObjCClassDecl::ObjCClassDecl(DeclContext *DC, SourceLocation L,
-                             ObjCInterfaceDecl *const *Elts,
-                             const SourceLocation *Locs,
-                             unsigned nElts,
+                             ObjCInterfaceDecl *const Elt,
+                             const SourceLocation Loc,
                              ASTContext &C)
   : Decl(ObjCClass, DC, L) {
-  setClassList(C, Elts, Locs, nElts);
-}
-
-void ObjCClassDecl::setClassList(ASTContext &C, ObjCInterfaceDecl*const*List,
-                                 const SourceLocation *Locs, unsigned Num) {
-  ForwardDecls = (ObjCClassRef*) C.Allocate(sizeof(ObjCClassRef)*Num,
-                                            llvm::alignOf<ObjCClassRef>());
-  for (unsigned i = 0; i < Num; ++i)
-    new (&ForwardDecls[i]) ObjCClassRef(List[i], Locs[i]);
-  
-  NumDecls = Num;
+  setClass(C, Elt, Loc);
 }
 
 ObjCClassDecl *ObjCClassDecl::Create(ASTContext &C, DeclContext *DC,
                                      SourceLocation L,
-                                     ObjCInterfaceDecl *const *Elts,
-                                     const SourceLocation *Locs,
-                                     unsigned nElts) {
-  return new (C) ObjCClassDecl(DC, L, Elts, Locs, nElts, C);
+                                     ObjCInterfaceDecl *const Elt,
+                                     const SourceLocation Loc) {
+  return new (C) ObjCClassDecl(DC, L, Elt, Loc, C);
 }
 
+void ObjCClassDecl::setClass(ASTContext &C, ObjCInterfaceDecl*const Cls,
+                             const SourceLocation Loc) {
+    
+  ForwardDecl = (ObjCClassRef*) C.Allocate(sizeof(ObjCClassRef),
+                                           llvm::alignOf<ObjCClassRef>());
+  new (ForwardDecl) ObjCClassRef(Cls, Loc);
+}
+    
 SourceRange ObjCClassDecl::getSourceRange() const {
   // FIXME: We should include the semicolon
-  assert(NumDecls);
-  return SourceRange(getLocation(), ForwardDecls[NumDecls-1].getLocation());
+  return SourceRange(getLocation(), ForwardDecl->getLocation());
 }
 
 //===----------------------------------------------------------------------===//
