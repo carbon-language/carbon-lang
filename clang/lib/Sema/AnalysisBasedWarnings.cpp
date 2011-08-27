@@ -508,8 +508,10 @@ static void SuggestInitializationFixit(Sema &S, const VarDecl *VD) {
   else if (VariableTy->isEnumeralType())
     return;
   else if (VariableTy->isPointerType() || VariableTy->isMemberPointerType()) {
+    if (S.Context.getLangOptions().CPlusPlus0x)
+      initialization = " = nullptr";
     // Check if 'NULL' is defined.
-    if (S.PP.getMacroInfo(&S.getASTContext().Idents.get("NULL")))
+    else if (S.PP.getMacroInfo(&S.getASTContext().Idents.get("NULL")))
       initialization = " = NULL";
     else
       initialization = " = 0";
