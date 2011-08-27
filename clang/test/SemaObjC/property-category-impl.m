@@ -24,8 +24,8 @@
 @end
 
 @interface MyClass (public)
-@property(readwrite)    int        foo;	// expected-warning {{property 'foo' requires method 'setFoo:' to be defined }}
+@property(readwrite)    int        foo;	// expected-note {{property declared here}}
 @end
 
-@implementation MyClass (public)// expected-note {{implementation is here}}
+@implementation MyClass (public)// expected-warning {{property 'foo' requires method 'setFoo:' to be defined }}
 @end 

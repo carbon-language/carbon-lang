@@ -4,7 +4,7 @@
 @interface NSObject @end
 
 @protocol TopProtocol
-  @property (readonly) id myString; // expected-warning {{property 'myString' requires method 'myString' to be defined}}
+  @property (readonly) id myString; // expected-note {{property}}
 @end
 
 @protocol SubProtocol <TopProtocol>
@@ -21,7 +21,7 @@
 
 @implementation SubClass1 @end // Test1 - No Warning
 
-@implementation TopClass  // expected-note {{implementation is here}}
+@implementation TopClass  // expected-warning {{property 'myString' requires method 'myString' to be defined}}
 @end
 
 @implementation SubClass // Test3 - No Warning 
@@ -39,11 +39,11 @@
 @implementation SubClass4 @end	// Test 5 - No Warning
 
 @protocol NewProtocol
-  @property (readonly) id myNewString; // expected-warning {{property 'myNewString' requires method 'myNewString' to be defined}}
+  @property (readonly) id myNewString;  // expected-note {{property}}
 @end
 
 @interface SubClass5 : SubClass4 <NewProtocol> @end
-@implementation SubClass5 @end   // expected-note {{implementation is here}}
+@implementation SubClass5 @end   // expected-warning {{property 'myNewString' requires method 'myNewString' to be defined}}
 
 
 // Radar 8035776
@@ -54,10 +54,10 @@
 @end
 
 @protocol ProtocolWithProperty <SuperProtocol>
-@property (readonly, assign) id invalidationBacktrace; // expected-warning {{property 'invalidationBacktrace' requires method 'invalidationBacktrace' to be defined}}
+@property (readonly, assign) id invalidationBacktrace; // expected-note {{property}}
 @end
 
 @interface INTF : Super <ProtocolWithProperty> 
 @end
 
-@implementation INTF @end // expected-note {{implementation is here}}
+@implementation INTF @end // expected-warning{{property 'invalidationBacktrace' requires method 'invalidationBacktrace' to be defined}}

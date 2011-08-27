@@ -1316,23 +1316,23 @@ void Sema::DiagnoseUnimplementedProperties(Scope *S, ObjCImplDecl* IMPDecl,
         PropImplMap.count(Prop) || Prop->hasAttr<UnavailableAttr>())
       continue;
     if (!InsMap.count(Prop->getGetterName())) {
-      Diag(Prop->getLocation(),
+      Diag(IMPDecl->getLocation(),
            isa<ObjCCategoryDecl>(CDecl) ?
             diag::warn_setter_getter_impl_required_in_category :
             diag::warn_setter_getter_impl_required)
       << Prop->getDeclName() << Prop->getGetterName();
-      Diag(IMPDecl->getLocation(),
-           diag::note_property_impl_required);
+      Diag(Prop->getLocation(),
+           diag::note_property_declare);
     }
 
     if (!Prop->isReadOnly() && !InsMap.count(Prop->getSetterName())) {
-      Diag(Prop->getLocation(),
+      Diag(IMPDecl->getLocation(),
            isa<ObjCCategoryDecl>(CDecl) ?
            diag::warn_setter_getter_impl_required_in_category :
            diag::warn_setter_getter_impl_required)
       << Prop->getDeclName() << Prop->getSetterName();
-      Diag(IMPDecl->getLocation(),
-           diag::note_property_impl_required);
+      Diag(Prop->getLocation(),
+           diag::note_property_declare);
     }
   }
 }

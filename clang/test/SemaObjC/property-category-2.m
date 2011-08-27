@@ -4,8 +4,7 @@
 
 @protocol MyProtocol
 @property float  myFloat;
-@property float  anotherFloat; // expected-warning {{property 'anotherFloat' requires method 'anotherFloat' to be defined - use @dynamic}} \
-                               // expected-warning {{property 'anotherFloat' requires method 'setAnotherFloat:' to be defined }}
+@property float  anotherFloat; // expected-note 2 {{property declared}}
 @end
 
 @interface MyObject { float anotherFloat; }
@@ -14,7 +13,8 @@
 @interface MyObject (CAT) <MyProtocol>
 @end
 
-@implementation MyObject (CAT)	// expected-note 2 {{implementation is here}}
+@implementation MyObject (CAT)	// expected-warning  {{property 'anotherFloat' requires method}} \
+                                // expected-warning {{property 'anotherFloat' requires method 'setAnotherFloat:'}}
 @dynamic myFloat;	// OK
 @synthesize anotherFloat; // expected-error {{@synthesize not allowed in a category's implementation}}
 @end

@@ -97,10 +97,10 @@
 // rdar://7920807
 @interface C @end
 @interface C (Category)
-@property int p; // expected-warning {{property 'p' requires method 'p' to be defined }} \
-                 // expected-warning {{property 'p' requires method 'setP:' to be defined}}
+@property int p; // expected-note 2 {{property declared here}}
 @end
-@implementation C (Category) // expected-note 2 {{implementation is here}}
+@implementation C (Category) // expected-warning {{property 'p' requires method 'p' to be defined}} \
+                             // expected-warning {{property 'p' requires method 'setP:' to be defined}}
 @end
 
 // Don't complain if a property is already @synthesized by usr.
