@@ -52,7 +52,7 @@ public:
     dw_form_t           Form()  const { return m_form; }
     void                SetForm(dw_form_t form) { m_form = form; }
     const ValueType&    Value() const { return m_value; }
-    void                Dump(lldb_private::Stream *s, const lldb_private::DataExtractor* debug_str_data, const DWARFCompileUnit* cu) const;
+    void                Dump(lldb_private::Stream &s, const lldb_private::DataExtractor* debug_str_data, const DWARFCompileUnit* cu) const;
     bool                ExtractValue(const lldb_private::DataExtractor& data, uint32_t* offset_ptr, const DWARFCompileUnit* cu);
     bool                IsInlinedCStr() const { return (m_value.data != NULL) && m_value.data == (uint8_t*)m_value.value.cstr; }
     const uint8_t*      BlockData() const;

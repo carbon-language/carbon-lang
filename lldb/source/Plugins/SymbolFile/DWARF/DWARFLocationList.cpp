@@ -18,11 +18,11 @@
 using namespace lldb_private;
 
 dw_offset_t
-DWARFLocationList::Dump(Stream *s, const DWARFCompileUnit* cu, const DataExtractor& debug_loc_data, dw_offset_t offset)
+DWARFLocationList::Dump(Stream &s, const DWARFCompileUnit* cu, const DataExtractor& debug_loc_data, dw_offset_t offset)
 {
     uint64_t start_addr, end_addr;
     uint32_t addr_size = DWARFCompileUnit::GetAddressByteSize(cu);
-    s->SetAddressByteSize(DWARFCompileUnit::GetAddressByteSize(cu));
+    s.SetAddressByteSize(DWARFCompileUnit::GetAddressByteSize(cu));
     dw_addr_t base_addr = cu ? cu->GetBaseAddress() : 0;
     while (debug_loc_data.ValidOffset(offset))
     {
@@ -32,9 +32,9 @@ DWARFLocationList::Dump(Stream *s, const DWARFCompileUnit* cu, const DataExtract
         if (start_addr == 0 && end_addr == 0)
             break;
 
-        s->PutCString("\n            ");
-        s->Indent();
-        s->AddressRange(start_addr + base_addr, end_addr + base_addr, NULL, ": ");
+        s.PutCString("\n            ");
+        s.Indent();
+        s.AddressRange(start_addr + base_addr, end_addr + base_addr, NULL, ": ");
         uint32_t loc_length = debug_loc_data.GetU16(&offset);
 
         DataExtractor locationData(debug_loc_data, offset, loc_length);

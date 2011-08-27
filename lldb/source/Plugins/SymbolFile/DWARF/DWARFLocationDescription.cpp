@@ -15,10 +15,10 @@
 
 using namespace lldb_private;
 
-static int print_dwarf_exp_op (Stream *s, const DataExtractor& data, uint32_t* offset_ptr, int address_size, int dwarf_ref_size);
+static int print_dwarf_exp_op (Stream &s, const DataExtractor& data, uint32_t* offset_ptr, int address_size, int dwarf_ref_size);
 
 int
-print_dwarf_expression (Stream *s,
+print_dwarf_expression (Stream &s,
                         const DataExtractor& data,
                         int address_size,
                         int dwarf_ref_size,
@@ -35,7 +35,7 @@ print_dwarf_expression (Stream *s,
         }
         if (op_count > 0)
         {
-            s->PutCString(", ");
+            s.PutCString(", ");
         }
         if (print_dwarf_exp_op (s, data, &offset, address_size, dwarf_ref_size) == 1)
             return 1;
@@ -46,7 +46,7 @@ print_dwarf_expression (Stream *s,
 }
 
 static int
-print_dwarf_exp_op (Stream *s,
+print_dwarf_exp_op (Stream &s,
                     const DataExtractor& data,
                     uint32_t* offset_ptr,
                     int address_size,
@@ -61,7 +61,7 @@ print_dwarf_exp_op (Stream *s,
 
     opcode_class = DW_OP_value_to_class (opcode) & (~DRC_DWARFv3);
 
-    s->Printf("%s ", DW_OP_value_to_name (opcode));
+    s.Printf("%s ", DW_OP_value_to_name (opcode));
 
     /* Does this take zero parameters?  If so we can shortcut this function.  */
     if (opcode_class == DRC_ZEROOPERANDS)
@@ -71,12 +71,12 @@ print_dwarf_exp_op (Stream *s,
     {
         uint = data.GetULEB128(offset_ptr);
         sint = data.GetSLEB128(offset_ptr);
-        s->Printf("%llu %lli", uint, sint);
+        s.Printf("%llu %lli", uint, sint);
         return 0;
     }
     if (opcode_class != DRC_ONEOPERAND)
     {
-        s->Printf("UNKNOWN OP %u", opcode);
+        s.Printf("UNKNOWN OP %u", opcode);
         return 1;
     }
 
@@ -150,22 +150,22 @@ print_dwarf_exp_op (Stream *s,
         case DW_OP_regx:
             size = 128; break;
         default:
-            s->Printf("UNKNOWN ONE-OPERAND OPCODE, #%u", opcode);
+            s.Printf("UNKNOWN ONE-OPERAND OPCODE, #%u", opcode);
             return 1;
     }
 
     switch (size)
     {
-    case -1:    sint = (int8_t)     data.GetU8(offset_ptr);     s->Printf("%+lli", sint); break;
-    case -2:    sint = (int16_t)    data.GetU16(offset_ptr);    s->Printf("%+lli", sint); break;
-    case -4:    sint = (int32_t)    data.GetU32(offset_ptr);    s->Printf("%+lli", sint); break;
-    case -8:    sint = (int64_t)    data.GetU64(offset_ptr);    s->Printf("%+lli", sint); break;
-    case -128:  sint = data.GetSLEB128(offset_ptr);         s->Printf("%+lli", sint); break;
-    case 1:     uint = data.GetU8(offset_ptr);                  s->Printf("0x%2.2llx", uint); break;
-    case 2:     uint = data.GetU16(offset_ptr);                 s->Printf("0x%4.4llx", uint); break;
-    case 4:     uint = data.GetU32(offset_ptr);                 s->Printf("0x%8.8llx", uint); break;
-    case 8:     uint = data.GetU64(offset_ptr);                 s->Printf("0x%16.16llx", uint); break;
-    case 128:   uint = data.GetULEB128(offset_ptr);         s->Printf("0x%llx", uint); break;
+    case -1:    sint = (int8_t)     data.GetU8(offset_ptr);     s.Printf("%+lli", sint); break;
+    case -2:    sint = (int16_t)    data.GetU16(offset_ptr);    s.Printf("%+lli", sint); break;
+    case -4:    sint = (int32_t)    data.GetU32(offset_ptr);    s.Printf("%+lli", sint); break;
+    case -8:    sint = (int64_t)    data.GetU64(offset_ptr);    s.Printf("%+lli", sint); break;
+    case -128:  sint = data.GetSLEB128(offset_ptr);             s.Printf("%+lli", sint); break;
+    case 1:     uint = data.GetU8(offset_ptr);                  s.Printf("0x%2.2llx", uint); break;
+    case 2:     uint = data.GetU16(offset_ptr);                 s.Printf("0x%4.4llx", uint); break;
+    case 4:     uint = data.GetU32(offset_ptr);                 s.Printf("0x%8.8llx", uint); break;
+    case 8:     uint = data.GetU64(offset_ptr);                 s.Printf("0x%16.16llx", uint); break;
+    case 128:   uint = data.GetULEB128(offset_ptr);             s.Printf("0x%llx", uint); break;
     }
 
     return 0;

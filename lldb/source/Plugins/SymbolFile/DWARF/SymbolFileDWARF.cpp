@@ -3078,7 +3078,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
         if (log && dwarf_cu)
         {
             StreamString s;
-            die->DumpLocation (this, dwarf_cu, &s);
+            die->DumpLocation (this, dwarf_cu, s);
             log->Printf ("SymbolFileDwarf::%s %s", __FUNCTION__, s.GetData());
             
         }

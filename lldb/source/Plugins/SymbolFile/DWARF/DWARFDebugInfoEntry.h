@@ -201,13 +201,13 @@ public:
                     SymbolFileDWARF* dwarf2Data,
                     const DWARFCompileUnit* cu,
                     const dw_offset_t die_offset,
-                    lldb_private::Stream *s);
+                    lldb_private::Stream &s);
 
     static bool AppendTypeName(
                     SymbolFileDWARF* dwarf2Data,
                     const DWARFCompileUnit* cu,
                     const dw_offset_t die_offset,
-                    lldb_private::Stream *s);
+                    lldb_private::Stream &s);
 
 //    static int  Compare(
 //                    SymbolFileDWARF* dwarf2Data,
@@ -238,14 +238,14 @@ public:
     void        Dump(
                     SymbolFileDWARF* dwarf2Data,
                     const DWARFCompileUnit* cu,
-                    lldb_private::Stream *s,
+                    lldb_private::Stream &s,
                     uint32_t recurse_depth) const;
 
     void        DumpAncestry(
                     SymbolFileDWARF* dwarf2Data,
                     const DWARFCompileUnit* cu,
                     const DWARFDebugInfoEntry* oldest,
-                    lldb_private::Stream *s,
+                    lldb_private::Stream &s,
                     uint32_t recurse_depth) const;
 
     static void DumpAttribute(
@@ -253,14 +253,14 @@ public:
                     const DWARFCompileUnit* cu,
                     const lldb_private::DataExtractor& debug_info_data,
                     uint32_t* offset_ptr,
-                    lldb_private::Stream *s,
+                    lldb_private::Stream &s,
                     dw_attr_t attr,
                     dw_form_t form);
     // This one dumps the comp unit name, objfile name and die offset for this die so the stream S.
     void          DumpLocation(
                     SymbolFileDWARF* dwarf2Data,
                     DWARFCompileUnit* cu,
-                    lldb_private::Stream *s) const;
+                    lldb_private::Stream &s) const;
                     
     bool        GetDIENamesAndRanges(
                     SymbolFileDWARF* dwarf2Data,

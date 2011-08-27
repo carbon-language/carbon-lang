@@ -215,10 +215,10 @@ DWARFDebugRanges::RangeList::HighestAddress(const dw_addr_t cu_base_addr) const
 
 
 void
-DWARFDebugRanges::Dump(Stream *s, const DataExtractor& debug_ranges_data, uint32_t* offset_ptr, dw_addr_t cu_base_addr)
+DWARFDebugRanges::Dump(Stream &s, const DataExtractor& debug_ranges_data, uint32_t* offset_ptr, dw_addr_t cu_base_addr)
 {
-    uint32_t addr_size = s->GetAddressByteSize();
-    bool verbose = s->GetVerbose();
+    uint32_t addr_size = s.GetAddressByteSize();
+    bool verbose = s.GetVerbose();
 
     dw_addr_t base_addr = cu_base_addr;
     while (debug_ranges_data.ValidOffsetForDataOfSize(*offset_ptr, 2 * addr_size))
@@ -230,23 +230,23 @@ DWARFDebugRanges::Dump(Stream *s, const DataExtractor& debug_ranges_data, uint32
         if (begin == 0xFFFFFFFFull && addr_size == 4)
             begin = DW_INVALID_ADDRESS;
 
-        s->Indent();
+        s.Indent();
         if (verbose)
         {
-            s->AddressRange(begin, end, sizeof (dw_addr_t), " offsets = ");
+            s.AddressRange(begin, end, sizeof (dw_addr_t), " offsets = ");
         }
 
 
         if (begin == 0 && end == 0)
         {
-            s->PutCString(" End");
+            s.PutCString(" End");
             break;
         }
         else if (begin == DW_INVALID_ADDRESS)
         {
             // A base address selection entry
             base_addr = end;
-            s->Address(base_addr, sizeof (dw_addr_t), " Base address = ");
+            s.Address(base_addr, sizeof (dw_addr_t), " Base address = ");
         }
         else
         {
@@ -254,7 +254,7 @@ DWARFDebugRanges::Dump(Stream *s, const DataExtractor& debug_ranges_data, uint32
             dw_addr_t begin_addr = begin + base_addr;
             dw_addr_t end_addr = end + base_addr;
 
-            s->AddressRange(begin_addr, end_addr, sizeof (dw_addr_t), verbose ? " ==> addrs = " : NULL);
+            s.AddressRange(begin_addr, end_addr, sizeof (dw_addr_t), verbose ? " ==> addrs = " : NULL);
         }
     }
 }

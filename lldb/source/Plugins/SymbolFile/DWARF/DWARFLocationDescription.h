@@ -13,7 +13,7 @@
 #include "SymbolFileDWARF.h"
 
 int
-print_dwarf_expression (lldb_private::Stream *s,
+print_dwarf_expression (lldb_private::Stream &s,
                         const lldb_private::DataExtractor& data,
                         int address_size,
                         int dwarf_ref_size,

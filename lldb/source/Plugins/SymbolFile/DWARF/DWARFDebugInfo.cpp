@@ -940,7 +940,7 @@ static dw_offset_t DumpCallback
         {
             // Yes we are dumping everything. Obey our recurse level though
             if (curr_depth < dumpInfo->recurse_depth)
-                die->Dump(dwarf2Data, cu, s, 0);
+                die->Dump(dwarf2Data, cu, *s, 0);
         }
         else
         {
@@ -956,7 +956,7 @@ static dw_offset_t DumpCallback
                     {
                         for (uint32_t i=0; i<num_ancestors-1; ++i)
                         {
-                            dumpInfo->ancestors[i].Dump(dwarf2Data, cu, s, 0);
+                            dumpInfo->ancestors[i].Dump(dwarf2Data, cu, *s, 0);
                             s->IndentMore();
                         }
                     }
@@ -964,7 +964,7 @@ static dw_offset_t DumpCallback
 
                 dumpInfo->found_depth = curr_depth;
 
-                die->Dump(dwarf2Data, cu, s, 0);
+                die->Dump(dwarf2Data, cu, *s, 0);
 
                 // Note that we found the DIE we were looking for
                 dumpInfo->found_die = true;
@@ -983,7 +983,7 @@ static dw_offset_t DumpCallback
                 // our recurse depth and return an invalid offset if we get done
                 // dumping all the the children
                 if (dumpInfo->recurse_depth == UINT32_MAX || curr_depth <= dumpInfo->found_depth + dumpInfo->recurse_depth)
-                    die->Dump(dwarf2Data, cu, s, 0);
+                    die->Dump(dwarf2Data, cu, *s, 0);
             }
             else if (dumpInfo->die_offset > die->GetOffset())
             {
@@ -1133,7 +1133,7 @@ DWARFDebugInfo::Dump (Stream *s, const uint32_t die_offset, const uint32_t recur
     {
         const DWARFCompileUnitSP& cu_sp = *pos;
         DumpCallback(m_dwarf2Data, (DWARFCompileUnitSP&)cu_sp, NULL, 0, curr_depth, &dumpInfo);
-        cu_sp->DIE()->Dump(m_dwarf2Data, cu_sp.get(), s, recurse_depth);
+        cu_sp->DIE()->Dump(m_dwarf2Data, cu_sp.get(), *s, recurse_depth);
     }
 }
 
