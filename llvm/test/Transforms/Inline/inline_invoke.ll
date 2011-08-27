@@ -99,18 +99,31 @@ eh.resume:
 ; CHECK:      invoke void @_ZN1AC1Ev(%struct.A* [[B]])
 ; CHECK:      invoke void @_ZN1AD1Ev(%struct.A* [[B]])
 ; CHECK:      invoke void @_ZN1AD1Ev(%struct.A* [[A]])
-; CHECK:      call i32 (i8*, i8*, ...)* @llvm.eh.selector(i8* {{%.*}}, i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*), i32 0, i8* bitcast (i8** @_ZTIi to i8*))
+; CHECK:      landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+; CHECK-NEXT:    cleanup
+; CHECK-NEXT:    catch i8* bitcast (i8** @_ZTIi to i8*)
+; CHECK-NEXT: extractvalue { i8*, i32 }
+; CHECK-NEXT: extractvalue { i8*, i32 }
+; CHECK-NEXT: store i8*
+; CHECK-NEXT: store i32
 ; CHECK-NEXT: invoke void @_ZN1AD1Ev(%struct.A* [[A]])
 ; CHECK-NEXT:   to label %[[LBL:[^\s]+]] unwind
 ; CHECK: [[LBL]]:
+; CHECK-NEXT: load i8**
+; CHECK-NEXT: load i32*
+; CHECK-NEXT: insertvalue { i8*, i32 }
+; CHECK-NEXT: insertvalue { i8*, i32 }
 ; CHECK-NEXT: br label %[[LPAD:[^\s]+]]
 ; CHECK:      ret void
-; CHECK:      call i8* @llvm.eh.exception()
-; CHECK-NEXT: call i32 (i8*, i8*, ...)* @llvm.eh.selector(i8* {{%.*}}, i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*), i8* bitcast (i8** @_ZTIi to i8*))
+; CHECK:      landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+; CHECK-NEXT:    catch i8* bitcast (i8** @_ZTIi to i8*)
 ; CHECK-NEXT: br label %[[LPAD]]
 ; CHECK: [[LPAD]]:
-; CHECK-NEXT: phi i8* [
-; CHECK-NEXT: phi i32 [
+; CHECK-NEXT: phi { i8*, i32 } [
+; CHECK-NEXT: extractvalue { i8*, i32 }
+; CHECK-NEXT: extractvalue { i8*, i32 }
+; CHECK-NEXT: store i8*
+; CHECK-NEXT: store i32
 ; CHECK-NEXT: call i32 @llvm.eh.typeid.for(
 
 
@@ -165,11 +178,20 @@ eh.resume:
 
 ; Inner landing pad from first inlining.
 ; CHECK:    [[LPAD1]]:
-; CHECK-NEXT: [[EXN1:%.*]] = call i8* @llvm.eh.exception()
-; CHECK-NEXT: [[SEL1:%.*]] = call i32 (i8*, i8*, ...)* @llvm.eh.selector(i8* [[EXN1]], i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*), i32 0, i8* bitcast (i8** @_ZTIi to i8*))
+; CHECK-NEXT: landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+; CHECK-NEXT:    cleanup
+; CHECK-NEXT:    catch i8* bitcast (i8** @_ZTIi to i8*)
+; CHECK-NEXT: extractvalue { i8*, i32 }
+; CHECK-NEXT: extractvalue { i8*, i32 }
+; CHECK-NEXT: store i8*
+; CHECK-NEXT: store i32
 ; CHECK-NEXT: invoke void @_ZN1AD1Ev(%struct.A* [[A1]])
 ; CHECK-NEXT:   to label %[[RESUME1:[^\s]+]] unwind
 ; CHECK: [[RESUME1]]:
+; CHECK-NEXT: load i8**
+; CHECK-NEXT: load i32*
+; CHECK-NEXT: insertvalue { i8*, i32 }
+; CHECK-NEXT: [[LPADVAL1:%.*]] = insertvalue { i8*, i32 }
 ; CHECK-NEXT: br label %[[LPAD_JOIN1:[^\s]+]]
 
 ; CHECK:      invoke void @_ZN1AC1Ev(%struct.A* [[A2]])
@@ -183,11 +205,20 @@ eh.resume:
 
 ; Inner landing pad from second inlining.
 ; CHECK:    [[LPAD2]]:
-; CHECK-NEXT: [[EXN2:%.*]] = call i8* @llvm.eh.exception()
-; CHECK-NEXT: [[SEL2:%.*]] = call i32 (i8*, i8*, ...)* @llvm.eh.selector(i8* [[EXN2]], i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*), i32 0, i8* bitcast (i8** @_ZTIi to i8*))
+; CHECK-NEXT: [[LPADVAL2:%.*]] = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+; CHECK-NEXT:   cleanup
+; CHECK-NEXT:   catch i8* bitcast (i8** @_ZTIi to i8*)
+; CHECK-NEXT: extractvalue { i8*, i32 } [[LPADVAL2]], 0
+; CHECK-NEXT: extractvalue { i8*, i32 } [[LPADVAL2]], 1
+; CHECK-NEXT: store i8*
+; CHECK-NEXT: store i32
 ; CHECK-NEXT: invoke void @_ZN1AD1Ev(%struct.A* [[A2]])
 ; CHECK-NEXT:   to label %[[RESUME2:[^\s]+]] unwind
 ; CHECK: [[RESUME2]]:
+; CHECK-NEXT: load i8**
+; CHECK-NEXT: load i32*
+; CHECK-NEXT: insertvalue { i8*, i32 }
+; CHECK-NEXT: [[LPADVAL2:%.*]] = insertvalue { i8*, i32 }
 ; CHECK-NEXT: br label %[[LPAD_JOIN2:[^\s]+]]
 
 ; CHECK:      ret void
@@ -195,29 +226,31 @@ eh.resume:
 ; CHECK:    [[LPAD]]:
 ; CHECK-NEXT: [[X:%.*]] = phi i32 [ 0, %entry ], [ 0, {{%.*}} ], [ 1, %cont ], [ 1, {{%.*}} ]
 ; CHECK-NEXT: [[Y:%.*]] = phi i32 [ 1, %entry ], [ 1, {{%.*}} ], [ 4, %cont ], [ 4, {{%.*}} ]
-; CHECK-NEXT: [[EXN:%.*]] = call i8* @llvm.eh.exception()
-; CHECK-NEXT: [[SEL:%.*]] = call i32 (i8*, i8*, ...)* @llvm.eh.selector(i8* [[EXN]], i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*), i8* bitcast (i8** @_ZTIi to i8*))
+; CHECK-NEXT: [[LPADVAL:%.*]] = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+; CHECK-NEXT:   catch i8* bitcast (i8** @_ZTIi to i8*)
 ; CHECK-NEXT: br label %[[LPAD_JOIN2]]
 
 ; CHECK: [[LPAD_JOIN2]]:
 ; CHECK-NEXT: [[XJ2:%.*]] = phi i32 [ [[X]], %[[LPAD]] ], [ 1, %[[RESUME2]] ]
 ; CHECK-NEXT: [[YJ2:%.*]] = phi i32 [ [[Y]], %[[LPAD]] ], [ 4, %[[RESUME2]] ]
-; CHECK-NEXT: [[EXNJ2:%.*]] = phi i8* [ [[EXN]], %[[LPAD]] ], [ [[EXN2]], %[[RESUME2]] ]
-; CHECK-NEXT: [[SELJ2:%.*]] = phi i32 [ [[SEL]], %[[LPAD]] ], [ [[SEL2]], %[[RESUME2]] ]
+; CHECK-NEXT: [[EXNJ2:%.*]] = phi { i8*, i32 } [ [[LPADVAL]], %[[LPAD]] ], [ [[LPADVAL2]], %[[RESUME2]] ]
 ; CHECK-NEXT: br label %[[LPAD_JOIN1]]
 
 ; CHECK: [[LPAD_JOIN1]]:
 ; CHECK-NEXT: [[XJ1:%.*]] = phi i32 [ [[XJ2]], %[[LPAD_JOIN2]] ], [ 0, %[[RESUME1]] ]
 ; CHECK-NEXT: [[YJ1:%.*]] = phi i32 [ [[YJ2]], %[[LPAD_JOIN2]] ], [ 1, %[[RESUME1]] ]
-; CHECK-NEXT: [[EXNJ1:%.*]] = phi i8* [ [[EXNJ2]], %[[LPAD_JOIN2]] ], [ [[EXN1]], %[[RESUME1]] ]
-; CHECK-NEXT: [[SELJ1:%.*]] = phi i32 [ [[SELJ2]], %[[LPAD_JOIN2]] ], [ [[SEL1]], %[[RESUME1]] ]
+; CHECK-NEXT: [[EXNJ1:%.*]] = phi { i8*, i32 } [ [[EXNJ2]], %[[LPAD_JOIN2]] ], [ [[LPADVAL1]], %[[RESUME1]] ]
+; CHECK-NEXT: extractvalue { i8*, i32 } [[EXNJ1]], 0
+; CHECK-NEXT: [[SELJ1:%.*]] = extractvalue { i8*, i32 } [[EXNJ1]], 1
+; CHECK-NEXT: store i8*
+; CHECK-NEXT: store i32
 ; CHECK-NEXT: [[T:%.*]] = call i32 @llvm.eh.typeid.for(
 ; CHECK-NEXT: icmp eq i32 [[SELJ1]], [[T]]
 
 ; CHECK:      call void @use(i32 [[XJ1]])
 ; CHECK:      call void @use(i32 [[YJ1]])
 
-; CHECK:      call void @llvm.eh.resume(i8* [[EXNJ1]], i32 [[SELJ1]])
+; CHECK:      resume { i8*, i32 }
 
 
 ;; Test 2 - Don't make invalid IR for inlines into landing pads without eh.exception calls
@@ -230,6 +263,8 @@ ret:
   ret void
 
 lpad:
+  %exn = call i8* @llvm.eh.exception() nounwind
+  %eh.selector = call i32 (i8*, i8*, ...)* @llvm.eh.selector(i8* %exn, i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*), i32 0) nounwind
   call void @_ZSt9terminatev()
   unreachable
 }
@@ -267,14 +302,27 @@ lpad.cont:
 }
 
 ; CHECK: define void @test3_out()
-; CHECK:      call i32 (i8*, i8*, ...)* @llvm.eh.selector(i8* {{%.*}}, i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*), i32 0, i8* bitcast (i8** @_ZTIi to i8*))
+; CHECK:      landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+; CHECK-NEXT:    cleanup
+; CHECK-NEXT:    catch i8* bitcast (i8** @_ZTIi to i8*)
+; CHECK-NEXT: extractvalue { i8*, i32 }
+; CHECK-NEXT: extractvalue { i8*, i32 }
+; CHECK-NEXT: store i8*
+; CHECK-NEXT: store i32
 ; CHECK-NEXT: invoke void @_ZN1AD1Ev(
 ; CHECK-NEXT:   to label %[[L:[^\s]+]] unwind
 ; CHECK:    [[L]]:
+; CHECK-NEXT: load i8**
+; CHECK-NEXT: load i32*
+; CHECK-NEXT: insertvalue { i8*, i32 }
+; CHECK-NEXT: insertvalue { i8*, i32 }
 ; CHECK-NEXT: br label %[[JOIN:[^\s]+]]
 ; CHECK:    [[JOIN]]:
-; CHECK-NEXT: phi
-; CHECK-NEXT: phi
+; CHECK-NEXT: phi { i8*, i32 }
+; CHECK-NEXT: extractvalue { i8*, i32 }
+; CHECK-NEXT: extractvalue { i8*, i32 }
+; CHECK-NEXT: store i8*
+; CHECK-NEXT: store i32
 ; CHECK-NEXT: br label %lpad.cont
 ; CHECK:    lpad.cont:
 ; CHECK-NEXT: call void @_ZSt9terminatev()
@@ -294,43 +342,62 @@ ret:
   ret void
 
 lpad.crit:
-  call void @opaque() nounwind
-  br label %lpad
-
-lpad:
-  %phi = phi i32 [ 0, %lpad.crit ], [ 1, %cont ]
   %exn = call i8* @llvm.eh.exception() nounwind
   %eh.selector = call i32 (i8*, i8*, ...)* @llvm.eh.selector(i8* %exn, i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*), i8* bitcast (i8** @_ZTIi to i8*)) nounwind
+  call void @opaque() nounwind
+  br label %terminate
+
+lpad:
+  %exn2 = call i8* @llvm.eh.exception() nounwind
+  %eh.selector2 = call i32 (i8*, i8*, ...)* @llvm.eh.selector(i8* %exn2, i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*), i8* bitcast (i8** @_ZTIi to i8*)) nounwind
+  br label %terminate
+
+terminate:
+  %phi = phi i32 [ 0, %lpad.crit ], [ 1, %lpad ]
   call void @use(i32 %phi)
   call void @_ZSt9terminatev()
   unreachable
 }
 
 ; CHECK: define void @test4_out()
-; CHECK:      call i32 (i8*, i8*, ...)* @llvm.eh.selector(i8* {{%.*}}, i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*), i32 0, i8* bitcast (i8** @_ZTIi to i8*))
+; CHECK:      landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+; CHECK-NEXT:    cleanup
+; CHECK-NEXT:    catch i8* bitcast (i8** @_ZTIi to i8*)
+; CHECK-NEXT: extractvalue { i8*, i32 }
+; CHECK-NEXT: extractvalue { i8*, i32 }
+; CHECK-NEXT: store i8*
+; CHECK-NEXT: store i32
 ; CHECK-NEXT: invoke void @_ZN1AD1Ev(
 ; CHECK-NEXT:   to label %[[L:[^\s]+]] unwind
 ; CHECK:    [[L]]:
+; CHECK-NEXT: load i8**
+; CHECK-NEXT: load i32*
+; CHECK-NEXT: insertvalue { i8*, i32 }
+; CHECK-NEXT: insertvalue { i8*, i32 }
 ; CHECK-NEXT: br label %[[JOIN:[^\s]+]]
 ; CHECK:      invoke void @opaque()
 ; CHECK-NEXT:                  unwind label %lpad
 ; CHECK:    lpad.crit:
-; CHECK-NEXT: call i8* @llvm.eh.exception()
-; CHECK-NEXT: call i32 (i8*, i8*, ...)* @llvm.eh.selector(i8* %4, i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*), i8* bitcast (i8** @_ZTIi to i8*))
+; CHECK-NEXT: landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+; CHECK-NEXT:   catch i8* bitcast (i8** @_ZTIi to i8*)
 ; CHECK-NEXT: br label %[[JOIN]]
 ; CHECK:    [[JOIN]]:
-; CHECK-NEXT: phi i8*
-; CHECK-NEXT: phi i32
+; CHECK-NEXT: phi { i8*, i32 }
+; CHECK-NEXT: extractvalue { i8*, i32 } %{{.*}}, 0
+; CHECK-NEXT: extractvalue { i8*, i32 } %{{.*}}, 1
+; CHECK-NEXT: store i8*
+; CHECK-NEXT: store i32
 ; CHECK-NEXT: call void @opaque() nounwind
 ; CHECK-NEXT: br label %[[FIX:[^\s]+]]
 ; CHECK:    lpad:
-; CHECK-NEXT: [[T0:%.*]] = phi i32 [ 1, %cont ]
-; CHECK-NEXT: call i8* @llvm.eh.exception() nounwind
-; CHECK-NEXT: call i32 (i8*, i8*, ...)* @llvm.eh.selector(i8* %exn, i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*), i8* bitcast (i8** @_ZTIi to i8*))
+; CHECK-NEXT: landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+; CHECK-NEXT:   catch i8* bitcast (i8** @_ZTIi to i8*)
+; CHECK-NEXT: extractvalue { i8*, i32 } %{{.*}}, 0
+; CHECK-NEXT: extractvalue { i8*, i32 } %{{.*}}, 1
+; CHECK-NEXT: store i8*
+; CHECK-NEXT: store i32
 ; CHECK-NEXT: br label %[[FIX]]
 ; CHECK:    [[FIX]]:
-; CHECK-NEXT: [[T1:%.*]] = phi i32 [ [[T0]], %lpad ], [ 0, %[[JOIN]] ]
-; CHECK-NEXT: phi i8*
-; CHECK-NEXT: phi i32
+; CHECK-NEXT: [[T1:%.*]] = phi i32 [ 0, %[[JOIN]] ], [ 1, %lpad ]
 ; CHECK-NEXT: call void @use(i32 [[T1]])
 ; CHECK-NEXT: call void @_ZSt9terminatev()

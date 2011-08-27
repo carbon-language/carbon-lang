@@ -120,6 +120,9 @@ bool LLParser::ValidateEndOfModule() {
   for (Module::iterator FI = M->begin(), FE = M->end(); FI != FE; )
     UpgradeCallsToIntrinsic(FI++); // must be post-increment, as we remove
 
+  // Upgrade to new EH scheme. N.B. This will go away in 3.1.
+  UpgradeExceptionHandling(M);
+
   // Check debug info intrinsics.
   CheckDebugInfoIntrinsics(M);
   return false;

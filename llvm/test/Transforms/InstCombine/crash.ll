@@ -135,6 +135,8 @@ define void @test5() {
        store i1 true, i1* undef
        %1 = invoke i32 @test5a() to label %exit unwind label %exit
 exit:
+       %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+                cleanup
        ret void
 }
 
@@ -219,6 +221,8 @@ invoke.cont:                                      ; preds = %entry
   unreachable
 
 try.handler:                                      ; preds = %entry
+  %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+           catch i8* null
   ret i8* %self
 }
 
