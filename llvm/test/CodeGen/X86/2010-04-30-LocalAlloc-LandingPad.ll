@@ -84,8 +84,6 @@ cleanup.switch:                                   ; preds = %invoke.cont5
   ]
 
 cleanup.end:                                      ; preds = %cleanup.switch
-  %exc6 = call i8* @llvm.eh.exception()           ; <i8*> [#uses=1]
-  store i8* %exc6, i8** %_rethrow
   store i32 2, i32* %cleanup.dst7
   br label %finally
 
