@@ -52,13 +52,19 @@ public:
   
   virtual void HandleDiagnostic(Diagnostic::Level DiagLevel,
                                 const DiagnosticInfo &Info);
-  virtual void HandlePathDiagnostic(const PathDiagnostic* D) = 0;
+  void HandlePathDiagnostic(const PathDiagnostic* D);
 
   enum PathGenerationScheme { Minimal, Extensive };
   virtual PathGenerationScheme getGenerationScheme() const { return Minimal; }
   virtual bool supportsLogicalOpControlFlow() const { return false; }
   virtual bool supportsAllBlockEdges() const { return false; }
   virtual bool useVerboseDescription() const { return true; }
+
+protected:
+  /// The actual logic for handling path diagnostics, as implemented
+  /// by subclasses of PathDiagnosticClient.
+  virtual void HandlePathDiagnosticImpl(const PathDiagnostic* D) = 0;
+
 };
 
 //===----------------------------------------------------------------------===//

@@ -31,7 +31,7 @@ public:
   TextPathDiagnostics(const std::string& output, Diagnostic &diag)
     : OutputFile(output), Diag(diag) {}
 
-  void HandlePathDiagnostic(const PathDiagnostic* D);
+  void HandlePathDiagnosticImpl(const PathDiagnostic* D);
 
   void FlushDiagnostics(SmallVectorImpl<std::string> *FilesMade) { }
   
@@ -53,7 +53,7 @@ ento::createTextPathDiagnosticClient(const std::string& out,
   return new TextPathDiagnostics(out, PP.getDiagnostics());
 }
 
-void TextPathDiagnostics::HandlePathDiagnostic(const PathDiagnostic* D) {
+void TextPathDiagnostics::HandlePathDiagnosticImpl(const PathDiagnostic* D) {
   if (!D)
     return;
 

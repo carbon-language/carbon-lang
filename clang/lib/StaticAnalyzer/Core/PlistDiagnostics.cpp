@@ -74,7 +74,7 @@ namespace {
 
     void FlushDiagnostics(SmallVectorImpl<std::string> *FilesMade);
     
-    void HandlePathDiagnostic(const PathDiagnostic* D);
+    void HandlePathDiagnosticImpl(const PathDiagnostic* D);
     
     virtual StringRef getName() const {
       return "PlistDiagnostics";
@@ -321,7 +321,7 @@ static void ReportDiag(raw_ostream &o, const PathDiagnosticPiece& P,
   }
 }
 
-void PlistDiagnostics::HandlePathDiagnostic(const PathDiagnostic* D) {
+void PlistDiagnostics::HandlePathDiagnosticImpl(const PathDiagnostic* D) {
   if (!D)
     return;
 

@@ -47,7 +47,7 @@ public:
 
   virtual void FlushDiagnostics(SmallVectorImpl<std::string> *FilesMade);
 
-  virtual void HandlePathDiagnostic(const PathDiagnostic* D);
+  virtual void HandlePathDiagnosticImpl(const PathDiagnostic* D);
 
   virtual StringRef getName() const {
     return "HTMLDiagnostics";
@@ -88,7 +88,7 @@ ento::createHTMLDiagnosticClient(const std::string& prefix,
 // Report processing.
 //===----------------------------------------------------------------------===//
 
-void HTMLDiagnostics::HandlePathDiagnostic(const PathDiagnostic* D) {
+void HTMLDiagnostics::HandlePathDiagnosticImpl(const PathDiagnostic* D) {
   if (!D)
     return;
 

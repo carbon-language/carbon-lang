@@ -117,6 +117,13 @@ void PathDiagnosticClient::HandleDiagnostic(Diagnostic::Level DiagLevel,
   HandlePathDiagnostic(D);
 }
 
+void PathDiagnosticClient::HandlePathDiagnostic(const PathDiagnostic *D) {
+  // For now this simply forwards to HandlePathDiagnosticImpl.  In the future
+  // we can use this indirection to control for multi-threaded access to
+  // the PathDiagnosticClient from multiple bug reporters.
+  HandlePathDiagnosticImpl(D);
+}
+
 //===----------------------------------------------------------------------===//
 // PathDiagnosticLocation methods.
 //===----------------------------------------------------------------------===//
