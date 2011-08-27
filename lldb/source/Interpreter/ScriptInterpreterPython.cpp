@@ -2033,41 +2033,6 @@ ScriptInterpreterPython::InitializePrivate ()
     TerminalState stdin_tty_state;
     stdin_tty_state.Save(STDIN_FILENO, false);
 
-    // Find the module that owns this code and use that path we get to
-    // set the PYTHONPATH appropriately.
-
-    FileSpec file_spec;
-    char python_dir_path[PATH_MAX];
-    if (Host::GetLLDBPath (ePathTypePythonDir, file_spec))
-    {
-        std::string python_path;
-        const char *curr_python_path = ::getenv ("PYTHONPATH");
-        if (curr_python_path)
-        {
-            // We have a current value for PYTHONPATH, so lets append to it
-            python_path.append (curr_python_path);
-        }
-
-        if (file_spec.GetPath(python_dir_path, sizeof (python_dir_path)))
-        {
-            if (!python_path.empty())
-                python_path.append (1, ':');
-            python_path.append (python_dir_path);
-        }
-        
-        if (Host::GetLLDBPath (ePathTypeLLDBShlibDir, file_spec))
-        {
-            if (file_spec.GetPath(python_dir_path, sizeof (python_dir_path)))
-            {
-                if (!python_path.empty())
-                    python_path.append (1, ':');
-                python_path.append (python_dir_path);
-            }
-        }
-        const char *pathon_path_env_cstr = python_path.c_str();
-        ::setenv ("PYTHONPATH", pathon_path_env_cstr, 1);
-    }
-
     PyEval_InitThreads ();
     Py_InitializeEx (0);
 
@@ -2079,13 +2044,42 @@ ScriptInterpreterPython::InitializePrivate ()
 
     PyRun_SimpleString ("import sys");
     PyRun_SimpleString ("sys.path.append ('.')");
+
+    // Find the module that owns this code and use that path we get to
+    // set the sys.path appropriately.
+
+    FileSpec file_spec;
+    char python_dir_path[PATH_MAX];
+    if (Host::GetLLDBPath (ePathTypePythonDir, file_spec))
+    {
+        std::string python_path("sys.path.insert(0,\"");
+        size_t orig_len = python_path.length();
+        if (file_spec.GetPath(python_dir_path, sizeof (python_dir_path)))
+        {
+            python_path.append (python_dir_path);
+            python_path.append ("\")");
+            PyRun_SimpleString (python_path.c_str());
+            python_path.resize (orig_len);
+        }
+        
+        if (Host::GetLLDBPath (ePathTypeLLDBShlibDir, file_spec))
+        {
+            if (file_spec.GetPath(python_dir_path, sizeof (python_dir_path)))
+            {
+                python_path.append (python_dir_path);
+                python_path.append ("\")");
+                PyRun_SimpleString (python_path.c_str());
+                python_path.resize (orig_len);
+            }
+        }
+    }
+
     PyRun_SimpleString ("sys.dont_write_bytecode = 1");
 
     PyRun_SimpleString ("import embedded_interpreter");
     
     PyRun_SimpleString ("from embedded_interpreter import run_python_interpreter");
     PyRun_SimpleString ("from embedded_interpreter import run_one_line");
-    PyRun_SimpleString ("import sys");
     PyRun_SimpleString ("from termios import *");
 
     stdin_tty_state.Restore();
