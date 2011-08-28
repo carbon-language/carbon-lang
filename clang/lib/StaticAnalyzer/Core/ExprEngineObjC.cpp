@@ -142,7 +142,6 @@ void ExprEngine::VisitObjCMessage(const ObjCMessage &msg,
     
     ExplodedNode *Pred = *DI;
     bool RaisesException = false;
-    unsigned oldSize = dstEval.size();
     SaveAndRestore<bool> OldSink(Builder->BuildSinks);
     SaveOr OldHasGen(Builder->hasGeneratedNode);
     
@@ -225,12 +224,8 @@ void ExprEngine::VisitObjCMessage(const ObjCMessage &msg,
       // Dispatch to plug-in transfer function.
       evalObjCMessage(dstEval, msg, Pred, Pred->getState());
     }
-    
-    // Handle the case where no nodes where generated.  Auto-generate that
-    // contains the updated state if we aren't generating sinks.
-    if (!Builder->BuildSinks && dstEval.size() == oldSize &&
-        !Builder->hasGeneratedNode)
-      MakeNode(dstEval, msg.getOriginExpr(), Pred, Pred->getState());
+
+    assert(Builder->BuildSinks || Builder->hasGeneratedNode);
   }
   
   // Finally, perform the post-condition check of the ObjCMessageExpr and store
@@ -276,9 +271,8 @@ void ExprEngine::evalObjCMessage(ExplodedNodeSet &Dst, const ObjCMessage &msg,
   // Invalidate the arguments (and the receiver)
   const LocationContext *LC = Pred->getLocationContext();
   state = invalidateArguments(state, CallOrObjCMessage(msg, state), LC);
-  Builder->MakeNode(Dst, msg.getOriginExpr(), Pred, state);
 
-  // Now we can handle the other aspects of the message.
-  //getTF().evalObjCMessage(Dst, *this, *Builder, msg, Pred, state);
+  // And create the new node.
+  MakeNode(Dst, msg.getOriginExpr(), Pred, state);
 }
 

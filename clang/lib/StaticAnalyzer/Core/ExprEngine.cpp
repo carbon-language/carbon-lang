@@ -172,17 +172,8 @@ ExprEngine::doesInvalidateGlobals(const CallOrObjCMessage &callOrMessage) const
 /// evalAssume - Called by ConstraintManager. Used to call checker-specific
 ///  logic for handling assumptions on symbolic values.
 const ProgramState *ExprEngine::processAssume(const ProgramState *state,
-                                              SVal cond,
-                                              bool assumption) {
-
-  state = getCheckerManager().runCheckersForEvalAssume(state, cond,
-                                                       assumption);
-
-  // If the state is infeasible at this point, bail out.
-  if (!state)
-    return NULL;
-
-  return TF->evalAssume(state, cond, assumption);
+                                              SVal cond, bool assumption) {
+  return getCheckerManager().runCheckersForEvalAssume(state, cond, assumption);
 }
 
 bool ExprEngine::wantsRegionChangeUpdate(const ProgramState *state) {
@@ -279,23 +270,15 @@ void ExprEngine::ProcessStmt(const CFGStmt S, StmtNodeBuilder& builder) {
 
     // Call checkers with the non-cleaned state so that they could query the
     // values of the soon to be dead symbols.
-    // FIXME: This should soon be removed.
-    ExplodedNodeSet Tmp2;
-    getTF().evalDeadSymbols(Tmp2, *this, *Builder, EntryNode,
-                            EntryState, SymReaper);
-    if (Tmp2.empty()) {
-      Builder->MakeNode(Tmp2, currentStmt, EntryNode, EntryState);
-    }
-
-    ExplodedNodeSet Tmp3;
-    getCheckerManager().runCheckersForDeadSymbols(Tmp3, Tmp2,
+    ExplodedNodeSet CheckedSet;
+    getCheckerManager().runCheckersForDeadSymbols(CheckedSet, EntryNode,
                                                  SymReaper, currentStmt, *this);
 
-    // For each node in Tmp3, generate CleanedNodes that have the environment,
-    // the store, and the constraints cleaned up but have the user supplied
-    // states as the predecessors.
-    for (ExplodedNodeSet::const_iterator I = Tmp3.begin(), E = Tmp3.end();
-                                         I != E; ++I) {
+    // For each node in CheckedSet, generate CleanedNodes that have the
+    // environment, the store, and the constraints cleaned up but have the
+    // user-supplied states as the predecessors.
+    for (ExplodedNodeSet::const_iterator
+          I = CheckedSet.begin(), E = CheckedSet.end(); I != E; ++I) {
       const ProgramState *CheckerState = (*I)->getState();
 
       // The constraint manager has not been cleaned up yet, so clean up now.
@@ -1067,7 +1050,6 @@ void ExprEngine::processIndirectGoto(IndirectGotoNodeBuilder &builder) {
 /// ProcessEndPath - Called by CoreEngine.  Used to generate end-of-path
 ///  nodes when the control reaches the end of a function.
 void ExprEngine::processEndOfFunction(EndOfFunctionNodeBuilder& builder) {
-  getTF().evalEndPath(*this, builder);
   StateMgr.EndPath(builder.getState());
   getCheckerManager().runCheckersForEndPath(builder, *this);
 }
@@ -1297,52 +1279,30 @@ void ExprEngine::evalBind(ExplodedNodeSet &Dst, const Stmt *StoreE,
                             ExplodedNode *Pred, const ProgramState *state,
                             SVal location, SVal Val, bool atDeclInit) {
 
+  // FIXME: We probably shouldn't be passing a state and then dropping it on the
+  // floor, but while we are, we can at least assert that we're doing it right.
+  assert(state == Pred->getState());
 
   // Do a previsit of the bind.
-  ExplodedNodeSet CheckedSet, Src;
-  Src.Add(Pred);
-  getCheckerManager().runCheckersForBind(CheckedSet, Src, location, Val, StoreE,
-                                         *this);
+  ExplodedNodeSet CheckedSet;
+  getCheckerManager().runCheckersForBind(CheckedSet, Pred, location, Val,
+                                         StoreE, *this);
 
   for (ExplodedNodeSet::iterator I = CheckedSet.begin(), E = CheckedSet.end();
        I!=E; ++I) {
 
-    if (Pred != *I)
-      state = (*I)->getState();
-
-    const ProgramState *newState = 0;
+    state = (*I)->getState();
 
     if (atDeclInit) {
       const VarRegion *VR =
         cast<VarRegion>(cast<loc::MemRegionVal>(location).getRegion());
 
-      newState = state->bindDecl(VR, Val);
-    }
-    else {
-      if (location.isUnknown()) {
-        // We know that the new state will be the same as the old state since
-        // the location of the binding is "unknown".  Consequently, there
-        // is no reason to just create a new node.
-        newState = state;
-      }
-      else {
-        // We are binding to a value other than 'unknown'.  Perform the binding
-        // using the StoreManager.
-        newState = state->bindLoc(cast<Loc>(location), Val);
-      }
+      state = state->bindDecl(VR, Val);
+    } else {
+      state = state->bindLoc(location, Val);
     }
 
-    // The next thing to do is check if the TransferFuncs object wants to
-    // update the state based on the new binding.  If the GRTransferFunc object
-    // doesn't do anything, just auto-propagate the current state.
-    
-    // NOTE: We use 'AssignE' for the location of the PostStore if 'AssignE'
-    // is non-NULL.  Checkers typically care about 
-    
-    StmtNodeBuilderRef BuilderRef(Dst, *Builder, *this, *I, newState, StoreE,
-                                    true);
-
-    getTF().evalBind(BuilderRef, location, Val);
+    MakeNode(Dst, StoreE, *I, state);
   }
 }
 

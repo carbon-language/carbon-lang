@@ -210,18 +210,8 @@ void ExprEngine::VisitCallExpr(const CallExpr *CE, ExplodedNode *Pred,
       const LocationContext *LC = Pred->getLocationContext();
       state = Eng.invalidateArguments(state, CallOrObjCMessage(CE, state), LC);
 
-      // Then handle everything else.
-      unsigned oldSize = Dst.size();
-      SaveOr OldHasGen(Builder.hasGeneratedNode);
-      
-      // Dispatch to transfer function logic to handle the rest of the call.
-      //Eng.getTF().evalCall(Dst, Eng, Builder, CE, L, Pred);
-      
-      // Handle the case where no nodes where generated.  Auto-generate that
-      // contains the updated state if we aren't generating sinks.
-      if (!Builder.BuildSinks && Dst.size() == oldSize &&
-          !Builder.hasGeneratedNode)
-        Eng.MakeNode(Dst, CE, Pred, state);
+      // And make the result node.
+      Eng.MakeNode(Dst, CE, Pred, state);
     }
   };
   
@@ -259,25 +249,5 @@ void ExprEngine::VisitReturnStmt(const ReturnStmt *RS, ExplodedNode *Pred,
     Src.Add(Pred);
   }
   
-  ExplodedNodeSet CheckedSet;
-  getCheckerManager().runCheckersForPreStmt(CheckedSet, Src, RS, *this);
-  
-  for (ExplodedNodeSet::iterator I = CheckedSet.begin(), E = CheckedSet.end();
-       I != E; ++I) {
-    
-    assert(Builder && "StmtNodeBuilder must be defined.");
-    
-    Pred = *I;
-    unsigned size = Dst.size();
-    
-    SaveAndRestore<bool> OldSink(Builder->BuildSinks);
-    SaveOr OldHasGen(Builder->hasGeneratedNode);
-    
-    getTF().evalReturn(Dst, *this, *Builder, RS, Pred);
-    
-    // Handle the case where no nodes where generated.
-    if (!Builder->BuildSinks && Dst.size() == size &&
-        !Builder->hasGeneratedNode)
-      MakeNode(Dst, RS, Pred, Pred->getState());
-  }
+  getCheckerManager().runCheckersForPreStmt(Dst, Src, RS, *this);
 }
