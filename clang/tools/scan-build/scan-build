@@ -61,7 +61,7 @@ sub DiagCrashes {
   Diag ("The analyzer encountered problems on some source files.\n");
   Diag ("Preprocessed versions of these sources were deposited in '$Dir/failures'.\n");
   Diag ("Please consider submitting a bug report using these files:\n");
-  Diag ("  http://clang.llvm.org/StaticAnalysisUsage.html#filingbugs\n")
+  Diag ("  http://clang-analyzer.llvm.org/filing_bugs.html\n")
 }
 
 sub DieDiag {
@@ -802,7 +802,7 @@ ENDTEXT
       }
       print OUT "</table>\n";
     }    
-    print OUT "<p>Please consider submitting preprocessed files as <a href=\"http://clang.llvm.org/StaticAnalysisUsage.html#filingbugs\">bug reports</a>. <!-- REPORTCRASHES --> </p>\n";
+    print OUT "<p>Please consider submitting preprocessed files as <a href=\"http://clang-analyzer.llvm.org/filing_bugs.html\">bug reports</a>. <!-- REPORTCRASHES --> </p>\n";
   }
   
   print OUT "</body></html>\n";  
