@@ -618,14 +618,32 @@ void Emitter<CodeEmitter>::emitInstruction(MachineInstr &MI,
 
   // Emit segment override opcode prefix as needed.
   switch (Desc->TSFlags & X86II::SegOvrMask) {
-  case X86II::FS:
-    MCE.emitByte(0x64);
+    case 0: {
+      // Determine where the memory operand starts, if present.
+      int MemOperand = X86II::getMemoryOperandNo(Desc->TSFlags);
+      // No segment override, check for explicit one on memory operand.
+      if (MemOperand != -1) {   // If the instruction has a memory operand.
+        switch (MI.getOperand(MemOperand+X86::AddrSegmentReg).getReg()) {
+        default: assert(0 && "Unknown segment register!");
+        case 0: break;
+        case X86::CS: MCE.emitByte(0x2E); break;
+        case X86::SS: MCE.emitByte(0x36); break;
+        case X86::DS: MCE.emitByte(0x3E); break;
+        case X86::ES: MCE.emitByte(0x26); break;
+        case X86::FS: MCE.emitByte(0x64); break;
+        case X86::GS: MCE.emitByte(0x65); break;
+        }
+      }
+    }
     break;
-  case X86II::GS:
-    MCE.emitByte(0x65);
-    break;
-  default: llvm_unreachable("Invalid segment!");
-  case 0: break;  // No segment override!
+
+    case X86II::FS:
+      MCE.emitByte(0x64);
+      break;
+    case X86II::GS:
+      MCE.emitByte(0x65);
+      break;
+    default: llvm_unreachable("Invalid segment!");
   }
 
   // Emit the repeat opcode prefix as needed.
