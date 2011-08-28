@@ -162,6 +162,7 @@ static bool CheckARCMethodDecl(Sema &S, ObjCMethodDecl *method) {
   switch (family) {
   case OMF_None:
   case OMF_dealloc:
+  case OMF_finalize:
   case OMF_retain:
   case OMF_release:
   case OMF_autorelease:
@@ -267,6 +268,7 @@ void Sema::ActOnStartOfObjCMethodDef(Scope *FnBodyScope, Decl *D) {
 
     case OMF_None:
     case OMF_dealloc:
+    case OMF_finalize:
     case OMF_alloc:
     case OMF_init:
     case OMF_mutableCopy:
@@ -287,14 +289,16 @@ void Sema::ActOnStartOfObjCMethodDef(Scope *FnBodyScope, Decl *D) {
                                           dyn_cast<NamedDecl>(IMD), 
                                           MDecl->getLocation(), 0);
 
-    // If this is "dealloc", set some bit here.
+    // If this is "dealloc" or "finalize", set some bit here.
     // Then in ActOnSuperMessage() (SemaExprObjC), set it back to false.
     // Finally, in ActOnFinishFunctionBody() (SemaDecl), warn if flag is set.
     // Only do this if the current class actually has a superclass.
-    if (IC->getSuperClass())
+    if (IC->getSuperClass()) {
       ObjCShouldCallSuperDealloc = 
         !Context.getLangOptions().ObjCAutoRefCount &&      
         MDecl->getMethodFamily() == OMF_dealloc;
+      ObjCShouldCallSuperFinalize = MDecl->getMethodFamily() == OMF_finalize;
+    }
   }
 }
 
@@ -1256,6 +1260,7 @@ static bool checkMethodFamilyMismatch(Sema &S, ObjCMethodDecl *impl,
   case OMF_release:
   case OMF_autorelease:
   case OMF_dealloc:
+  case OMF_finalize:
   case OMF_retainCount:
   case OMF_self:
   case OMF_performSelector:
@@ -2637,6 +2642,7 @@ Decl *Sema::ActOnMethodDeclaration(
     case OMF_None:
     case OMF_copy:
     case OMF_dealloc:
+    case OMF_finalize:
     case OMF_mutableCopy:
     case OMF_release:
     case OMF_retainCount:

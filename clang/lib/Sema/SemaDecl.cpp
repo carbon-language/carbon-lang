@@ -6674,11 +6674,17 @@ Decl *Sema::ActOnFinishFunctionBody(Decl *dcl, Stmt *Body,
       Diag(MD->getLocEnd(), diag::warn_objc_missing_super_dealloc);
       ObjCShouldCallSuperDealloc = false;
     }
+    if (ObjCShouldCallSuperFinalize) {
+      Diag(MD->getLocEnd(), diag::warn_objc_missing_super_finalize);
+      ObjCShouldCallSuperFinalize = false;
+    }
   } else {
     return 0;
   }
 
   assert(!ObjCShouldCallSuperDealloc && "This should only be set for "
+         "ObjC methods, which should have been handled in the block above.");
+  assert(!ObjCShouldCallSuperFinalize && "This should only be set for "
          "ObjC methods, which should have been handled in the block above.");
 
   // Verify and clean out per-function state.

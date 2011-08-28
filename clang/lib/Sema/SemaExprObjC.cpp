@@ -203,6 +203,7 @@ ExprResult Sema::ParseObjCSelectorExpression(Selector Sel,
     case OMF_None:
     case OMF_alloc:
     case OMF_copy:
+    case OMF_finalize:
     case OMF_init:
     case OMF_mutableCopy:
     case OMF_new:
@@ -977,6 +978,8 @@ ExprResult Sema::ActOnSuperMessage(Scope *S,
   if (Method->isInstanceMethod()) {
     if (Sel.getMethodFamily() == OMF_dealloc)
       ObjCShouldCallSuperDealloc = false;
+    if (Sel.getMethodFamily() == OMF_finalize)
+      ObjCShouldCallSuperFinalize = false;
 
     // Since we are in an instance method, this is an instance
     // message to the superclass instance.
@@ -1418,6 +1421,7 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
     case OMF_None:
     case OMF_alloc:
     case OMF_copy:
+    case OMF_finalize:
     case OMF_mutableCopy:
     case OMF_new:
     case OMF_self:

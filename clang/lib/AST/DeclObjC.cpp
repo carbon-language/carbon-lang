@@ -446,6 +446,7 @@ ObjCMethodFamily ObjCMethodDecl::getMethodFamily() const {
 
   // These selectors have a conventional meaning only for instance methods.
   case OMF_dealloc:
+  case OMF_finalize:
   case OMF_retain:
   case OMF_release:
   case OMF_autorelease:

@@ -487,6 +487,7 @@ enum ObjCMethodFamily {
   // selector with the given name.
   OMF_autorelease,
   OMF_dealloc,
+  OMF_finalize,
   OMF_release,
   OMF_retain,
   OMF_retainCount,

@@ -493,6 +493,9 @@ public:
   /// A flag that is set when parsing a -dealloc method and no [super dealloc]
   /// call was found yet.
   bool ObjCShouldCallSuperDealloc;
+  /// A flag that is set when parsing a -finalize method and no [super finalize]
+  /// call was found yet.
+  bool ObjCShouldCallSuperFinalize;
 
   /// \brief The set of declarations that have been referenced within
   /// a potentially evaluated expression.
