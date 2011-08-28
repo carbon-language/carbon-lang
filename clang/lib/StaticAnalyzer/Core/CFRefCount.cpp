@@ -255,7 +255,7 @@ public:
 
 void RefVal::print(raw_ostream &Out) const {
   if (!T.isNull())
-    Out << "Tracked Type:" << T.getAsString() << '\n';
+    Out << "Tracked " << T.getAsString() << '/';
 
   switch (getKind()) {
     default: assert(false);
@@ -1585,14 +1585,6 @@ namespace {
 
 class CFRefCount : public TransferFuncs {
 public:
-  class BindingsPrinter : public ProgramState::Printer {
-  public:
-    virtual void Print(raw_ostream &Out,
-                       const ProgramState *state,
-                       const char* nl,
-                       const char* sep);
-  };
-
   const LangOptions&   LOpts;
   const bool GCEnabled;
 
@@ -1601,59 +1593,11 @@ public:
     : LOpts(lopts), GCEnabled(gcenabled) {}
 
   void RegisterChecks(ExprEngine &Eng);
-
-  virtual void RegisterPrinters(std::vector<ProgramState::Printer*>& Printers) {
-    Printers.push_back(new BindingsPrinter());
-  }
   
   const LangOptions& getLangOptions() const { return LOpts; }
 };
 
 } // end anonymous namespace
-
-static void PrintPool(raw_ostream &Out,
-                      SymbolRef Sym,
-                      const ProgramState *state) {
-  Out << ' ';
-  if (Sym)
-    Out << Sym->getSymbolID();
-  else
-    Out << "<pool>";
-  Out << ":{";
-
-  // Get the contents of the pool.
-  if (const ARCounts *cnts = state->get<AutoreleasePoolContents>(Sym))
-    for (ARCounts::iterator J=cnts->begin(), EJ=cnts->end(); J != EJ; ++J)
-      Out << '(' << J.getKey() << ',' << J.getData() << ')';
-
-  Out << '}';
-}
-
-void CFRefCount::BindingsPrinter::Print(raw_ostream &Out,
-                                        const ProgramState *state,
-                                        const char* nl, const char* sep) {
-
-  RefBindings B = state->get<RefBindings>();
-
-  if (!B.isEmpty())
-    Out << sep << nl;
-
-  for (RefBindings::iterator I=B.begin(), E=B.end(); I!=E; ++I) {
-    Out << (*I).first << " : ";
-    (*I).second.print(Out);
-    Out << nl;
-  }
-
-  // Print the autorelease stack.
-  Out << sep << nl << "AR pool stack:";
-  ARStack stack = state->get<AutoreleaseStack>();
-
-  PrintPool(Out, SymbolRef(), state);  // Print the caller's pool.
-  for (ARStack::iterator I=stack.begin(), E=stack.end(); I!=E; ++I)
-    PrintPool(Out, *I, state);
-
-  Out << nl;
-}
 
 //===----------------------------------------------------------------------===//
 // Error reporting.
@@ -2542,6 +2486,9 @@ public:
       return *Summaries;
     }
   }
+
+  void printState(raw_ostream &Out, const ProgramState *State,
+                  const char *NL, const char *Sep) const;
 
   void checkBind(SVal loc, SVal val, CheckerContext &C) const;
   void checkPostStmt(const BlockExpr *BE, CheckerContext &C) const;
@@ -3620,6 +3567,62 @@ void RetainReleaseChecker::checkDeadSymbols(SymbolReaper &SymReaper,
 
   state = state->set<RefBindings>(B);
   C.generateNode(state, Pred);
+}
+
+//===----------------------------------------------------------------------===//
+// Debug printing of refcount bindings and autorelease pools.
+//===----------------------------------------------------------------------===//
+
+static void PrintPool(raw_ostream &Out, SymbolRef Sym,
+                      const ProgramState *State) {
+  Out << ' ';
+  if (Sym)
+    Out << Sym->getSymbolID();
+  else
+    Out << "<pool>";
+  Out << ":{";
+
+  // Get the contents of the pool.
+  if (const ARCounts *Cnts = State->get<AutoreleasePoolContents>(Sym))
+    for (ARCounts::iterator I = Cnts->begin(), E = Cnts->end(); I != E; ++I)
+      Out << '(' << I.getKey() << ',' << I.getData() << ')';
+
+  Out << '}';
+}
+
+bool UsesAutorelease(const ProgramState *state) {
+  // A state uses autorelease if it allocated an autorelease pool or if it has
+  // objects in the caller's autorelease pool.
+  return !state->get<AutoreleaseStack>().isEmpty() ||
+          state->get<AutoreleasePoolContents>(SymbolRef());
+}
+
+void RetainReleaseChecker::printState(raw_ostream &Out,
+                                      const ProgramState *State,
+                                      const char *NL, const char *Sep) const {
+
+  RefBindings B = State->get<RefBindings>();
+
+  if (!B.isEmpty())
+    Out << Sep << NL;
+
+  for (RefBindings::iterator I = B.begin(), E = B.end(); I != E; ++I) {
+    Out << I->first << " : ";
+    I->second.print(Out);
+    Out << NL;
+  }
+
+  // Print the autorelease stack.
+  if (UsesAutorelease(State)) {
+    Out << Sep << NL << "AR pool stack:";
+    ARStack Stack = State->get<AutoreleaseStack>();
+
+    PrintPool(Out, SymbolRef(), State);  // Print the caller's pool.
+    for (ARStack::iterator I = Stack.begin(), E = Stack.end(); I != E; ++I)
+      PrintPool(Out, *I, State);
+
+    Out << NL;
+  }
 }
 
 //===----------------------------------------------------------------------===//

@@ -338,6 +338,10 @@ public:
 class CheckerBase : public ProgramPointTag {
 public:
   StringRef getTagDescription() const;
+
+  /// See CheckerManager::runCheckersForPrintState.
+  virtual void printState(raw_ostream &Out, const ProgramState *State,
+                          const char *NL, const char *Sep) const { }
 };
   
 template <typename CHECK1, typename CHECK2=check::_VoidCheck,

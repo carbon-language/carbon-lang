@@ -36,7 +36,6 @@ public:
   TransferFuncs() {}
   virtual ~TransferFuncs() {}
 
-  virtual void RegisterPrinters(std::vector<ProgramState::Printer*>& Printers) {}
   virtual void RegisterChecks(ExprEngine& Eng) {}
 
 

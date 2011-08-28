@@ -67,7 +67,6 @@ ExprEngine::ExprEngine(AnalysisManager &mgr, TransferFuncs *tf)
 
   // FIXME: Eventually remove the TF object entirely.
   TF->RegisterChecks(*this);
-  TF->RegisterPrinters(getStateManager().Printers);
   
   if (mgr.shouldEagerlyTrimExplodedGraph()) {
     // Enable eager node reclaimation when constructing the ExplodedGraph.  
@@ -187,6 +186,11 @@ ExprEngine::processRegionChanges(const ProgramState *state,
                                  ArrayRef<const MemRegion *> Regions) {
   return getCheckerManager().runCheckersForRegionChanges(state, invalidated,
                                                          Explicits, Regions);
+}
+
+void ExprEngine::printState(raw_ostream &Out, const ProgramState *State,
+                            const char *NL, const char *Sep) {
+  getCheckerManager().runCheckersForPrintState(Out, State, NL, Sep);
 }
 
 void ExprEngine::processEndWorklist(bool hasWorkRemaining) {

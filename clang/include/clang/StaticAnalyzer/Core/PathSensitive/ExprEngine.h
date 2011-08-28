@@ -195,6 +195,10 @@ public:
                        ArrayRef<const MemRegion *> ExplicitRegions,
                        ArrayRef<const MemRegion *> Regions);
 
+  /// printState - Called by ProgramStateManager to print checker-specific data.
+  void printState(raw_ostream &Out, const ProgramState *State,
+                  const char *NL, const char *Sep);
+
   virtual ProgramStateManager& getStateManager() { return StateMgr; }
 
   StoreManager& getStoreManager() { return StateMgr.getStoreManager(); }

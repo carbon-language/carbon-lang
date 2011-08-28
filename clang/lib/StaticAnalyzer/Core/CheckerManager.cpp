@@ -426,6 +426,14 @@ void CheckerManager::runCheckersOnEndOfTranslationUnit(
     EndOfTranslationUnitCheckers[i](TU, mgr, BR);
 }
 
+void CheckerManager::runCheckersForPrintState(raw_ostream &Out,
+                                              const ProgramState *State,
+                                              const char *NL, const char *Sep) {
+  for (llvm::DenseMap<CheckerTag, CheckerRef>::iterator
+        I = CheckerTags.begin(), E = CheckerTags.end(); I != E; ++I)
+    I->second->printState(Out, State, NL, Sep);
+}
+
 //===----------------------------------------------------------------------===//
 // Internal registration functions for AST traversing.
 //===----------------------------------------------------------------------===//

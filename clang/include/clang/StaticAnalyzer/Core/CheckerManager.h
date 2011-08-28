@@ -267,6 +267,17 @@ public:
                                          AnalysisManager &mgr,
                                          BugReporter &BR);
 
+  /// \brief Run checkers for debug-printing a ProgramState.
+  ///
+  /// Unlike most other callbacks, any checker can simply implement the virtual
+  /// method CheckerBase::printState if it has custom data to print.
+  /// \param Out The output stream
+  /// \param State The state being printed
+  /// \param NL The preferred representation of a newline.
+  /// \param Sep The preferred separator between different kinds of data.
+  void runCheckersForPrintState(raw_ostream &Out, const ProgramState *State,
+                                const char *NL, const char *Sep);
+
 //===----------------------------------------------------------------------===//
 // Internal registration functions for AST traversing.
 //===----------------------------------------------------------------------===//
