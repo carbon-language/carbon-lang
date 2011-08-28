@@ -14,8 +14,8 @@
 #ifndef LLVM_CLANG_GR_CONSTRAINT_MANAGER_H
 #define LLVM_CLANG_GR_CONSTRAINT_MANAGER_H
 
-// FIXME: Typedef LiveSymbolsTy/DeadSymbolsTy at a more appropriate place.
-#include "clang/StaticAnalyzer/Core/PathSensitive/Store.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/SymbolManager.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/SVals.h"
 
 namespace llvm {
 class APSInt;
@@ -28,7 +28,6 @@ namespace ento {
 class ProgramState;
 class ProgramStateManager;
 class SubEngine;
-class SVal;
 
 class ConstraintManager {
 public:

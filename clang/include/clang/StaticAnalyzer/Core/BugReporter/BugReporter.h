@@ -42,7 +42,6 @@ class BugReport;
 class BugReporter;
 class BugReporterContext;
 class ExprEngine;
-class ProgramState;
 class BugType;
 
 //===----------------------------------------------------------------------===//

@@ -14,7 +14,6 @@
 #ifndef LLVM_CLANG_ANALYSIS_BUGTYPE
 #define LLVM_CLANG_ANALYSIS_BUGTYPE
 
-#include "clang/StaticAnalyzer/Core/BugReporter/BugReporter.h"
 #include "llvm/ADT/FoldingSet.h"
 #include <string>
 
@@ -22,6 +21,7 @@ namespace clang {
 
 namespace ento {
 
+class BugReporter;
 class ExplodedNode;
 class ExprEngine;
 
