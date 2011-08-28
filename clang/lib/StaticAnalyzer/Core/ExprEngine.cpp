@@ -1276,12 +1276,8 @@ void ExprEngine::VisitMemberExpr(const MemberExpr *M, ExplodedNode *Pred,
 /// evalBind - Handle the semantics of binding a value to a specific location.
 ///  This method is used by evalStore and (soon) VisitDeclStmt, and others.
 void ExprEngine::evalBind(ExplodedNodeSet &Dst, const Stmt *StoreE,
-                            ExplodedNode *Pred, const ProgramState *state,
-                            SVal location, SVal Val, bool atDeclInit) {
-
-  // FIXME: We probably shouldn't be passing a state and then dropping it on the
-  // floor, but while we are, we can at least assert that we're doing it right.
-  assert(state == Pred->getState());
+                          ExplodedNode *Pred,
+                          SVal location, SVal Val, bool atDeclInit) {
 
   // Do a previsit of the bind.
   ExplodedNodeSet CheckedSet;
@@ -1291,7 +1287,7 @@ void ExprEngine::evalBind(ExplodedNodeSet &Dst, const Stmt *StoreE,
   for (ExplodedNodeSet::iterator I = CheckedSet.begin(), E = CheckedSet.end();
        I!=E; ++I) {
 
-    state = (*I)->getState();
+    const ProgramState *state = (*I)->getState();
 
     if (atDeclInit) {
       const VarRegion *VR =
@@ -1346,7 +1342,7 @@ void ExprEngine::evalStore(ExplodedNodeSet &Dst, const Expr *AssignE,
                                                    ProgramPoint::PostStoreKind);
 
   for (ExplodedNodeSet::iterator NI=Tmp.begin(), NE=Tmp.end(); NI!=NE; ++NI)
-    evalBind(Dst, StoreE, *NI, (*NI)->getState(), location, Val);
+    evalBind(Dst, StoreE, *NI, location, Val);
 }
 
 void ExprEngine::evalLoad(ExplodedNodeSet &Dst, const Expr *Ex,

@@ -361,8 +361,7 @@ void ExprEngine::VisitDeclStmt(const DeclStmt *DS, ExplodedNode *Pred,
                                                    Builder->getCurrentBlockCount());
       }
       
-      evalBind(Dst, DS, N, state,
-               loc::MemRegionVal(state->getRegion(VD, LC)), InitVal, true);
+      evalBind(Dst, DS, N, state->getLValue(VD, LC), InitVal, true);
     }
     else {
       MakeNode(Dst, DS, N, state->bindDeclWithNoInit(state->getRegion(VD, LC)));
