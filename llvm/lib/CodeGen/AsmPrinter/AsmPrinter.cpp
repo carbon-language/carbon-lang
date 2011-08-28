@@ -1228,22 +1228,45 @@ void AsmPrinter::EmitLLVMUsedList(const Constant *List) {
   }
 }
 
-/// EmitXXStructorList - Emit the ctor or dtor list.  This just prints out the
-/// function pointers, ignoring the init priority.
+typedef std::pair<int, Constant*> Structor;
+
+static bool priority_order(const Structor& lhs, const Structor& rhs)
+{
+  return lhs.first < rhs.first;
+}
+
+/// EmitXXStructorList - Emit the ctor or dtor list taking into account the init
+/// priority.
 void AsmPrinter::EmitXXStructorList(const Constant *List) {
   // Should be an array of '{ int, void ()* }' structs.  The first value is the
-  // init priority, which we ignore.
+  // init priority.
   if (!isa<ConstantArray>(List)) return;
-  const ConstantArray *InitList = cast<ConstantArray>(List);
-  for (unsigned i = 0, e = InitList->getNumOperands(); i != e; ++i)
-    if (ConstantStruct *CS = dyn_cast<ConstantStruct>(InitList->getOperand(i))){
-      if (CS->getNumOperands() != 2) return;  // Not array of 2-element structs.
 
-      if (CS->getOperand(1)->isNullValue())
-        return;  // Found a null terminator, exit printing.
-      // Emit the function pointer.
-      EmitGlobalConstant(CS->getOperand(1));
-    }
+  // Sanity check the structors list.
+  const ConstantArray *InitList = dyn_cast<ConstantArray>(List);
+  if (!InitList) return; // Not an array!
+  StructType *ETy = dyn_cast<StructType>(InitList->getType()->getElementType());
+  if (!ETy || ETy->getNumElements() != 2) return; // Not an array of pairs!
+  if (!isa<IntegerType>(ETy->getTypeAtIndex(0U)) ||
+      !isa<PointerType>(ETy->getTypeAtIndex(1U))) return; // Not (int, ptr).
+
+  // Gather the structors in a form that's convenient for sorting by priority.
+  SmallVector<Structor, 8> Structors;
+  for (unsigned i = 0, e = InitList->getNumOperands(); i != e; ++i) {
+    ConstantStruct *CS = dyn_cast<ConstantStruct>(InitList->getOperand(i));
+    if (!CS) continue; // Malformed.
+    if (CS->getOperand(1)->isNullValue())
+      break;  // Found a null terminator, skip the rest.
+    ConstantInt *Priority = dyn_cast<ConstantInt>(CS->getOperand(0));
+    if (!Priority) continue; // Malformed.
+    Structors.push_back(std::make_pair(Priority->getLimitedValue(65535),
+                                       CS->getOperand(1)));
+  }
+
+  // Emit the function pointers in reverse priority order.
+  std::sort(Structors.rbegin(), Structors.rend(), priority_order);
+  for (unsigned i = 0, e = Structors.size(); i != e; ++i)
+    EmitGlobalConstant(Structors[i].second);
 }
 
 //===--------------------------------------------------------------------===//
