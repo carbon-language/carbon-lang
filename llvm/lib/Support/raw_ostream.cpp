@@ -84,7 +84,7 @@ void raw_ostream::SetBuffered() {
 }
 
 void raw_ostream::SetBufferAndMode(char *BufferStart, size_t Size,
-                                    BufferKind Mode) {
+                                   BufferKind Mode) {
   assert(((Mode == Unbuffered && BufferStart == 0 && Size == 0) ||
           (Mode != Unbuffered && BufferStart && Size)) &&
          "stream must be unbuffered or have at least one byte");
@@ -284,7 +284,7 @@ raw_ostream &raw_ostream::write(unsigned char C) {
 
 raw_ostream &raw_ostream::write(const char *Ptr, size_t Size) {
   // Group exceptional cases into a single branch.
-  if (BUILTIN_EXPECT(OutBufCur+Size > OutBufEnd, false)) {
+  if (BUILTIN_EXPECT(size_t(OutBufEnd - OutBufCur) < Size, false)) {
     if (BUILTIN_EXPECT(!OutBufStart, false)) {
       if (BufferMode == Unbuffered) {
         write_impl(Ptr, Size);
