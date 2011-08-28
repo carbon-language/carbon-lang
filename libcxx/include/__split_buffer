@@ -208,7 +208,7 @@ __split_buffer<_Tp, _Allocator>::__construct_at_end(size_type __n)
     __alloc_rr& __a = this->__alloc();
     do
     {
-        __alloc_traits::construct(__a, _VSTD::__to_raw_pointer(this->__end_), value_type());
+        __alloc_traits::construct(__a, _VSTD::__to_raw_pointer(this->__end_));
         ++this->__end_;
         --__n;
     } while (__n > 0);
