@@ -88,6 +88,21 @@ public:
     return 0;
   }
 
+  SVal getInstanceReceiverSVal(const ProgramState *State,
+                               const LocationContext *LC) const {
+    assert(isValid() && "This ObjCMessage is uninitialized!");
+    if (!isInstanceMessage())
+      return UndefinedVal();
+    if (const Expr *Ex = getInstanceReceiver())
+      return State->getSValAsScalarOrLoc(Ex);
+
+    // An instance message with no expression means we are sending to super.
+    // In this case the object reference is the same as 'self'.
+    const ImplicitParamDecl *SelfDecl = LC->getSelfDecl();
+    assert(SelfDecl && "No message receiver Expr, but not in an ObjC method");
+    return State->getSVal(State->getRegion(SelfDecl, LC));
+  }
+
   bool isInstanceMessage() const {
     assert(isValid() && "This ObjCMessage is uninitialized!");
     if (const ObjCMessageExpr *msgE = dyn_cast<ObjCMessageExpr>(MsgOrPropE))
@@ -98,7 +113,7 @@ public:
   }
 
   const ObjCMethodDecl *getMethodDecl() const;
-  
+
   const ObjCInterfaceDecl *getReceiverInterface() const;
 
   SourceLocation getSuperLoc() const {
@@ -108,45 +123,58 @@ public:
     return cast<ObjCPropertyRefExpr>(MsgOrPropE)->getReceiverLocation();
   }
 
-   SourceRange getSourceRange() const {
-     assert(isValid() && "This ObjCMessage is uninitialized!");
+  SourceRange getSourceRange() const {
+    assert(isValid() && "This ObjCMessage is uninitialized!");
     return MsgOrPropE->getSourceRange();
   }
 
-   unsigned getNumArgs() const {
-     assert(isValid() && "This ObjCMessage is uninitialized!");
-     if (const ObjCMessageExpr *msgE = dyn_cast<ObjCMessageExpr>(MsgOrPropE))
-       return msgE->getNumArgs();
-     return isPropertySetter() ? 1 : 0;
-   }
+  unsigned getNumArgs() const {
+    assert(isValid() && "This ObjCMessage is uninitialized!");
+    if (const ObjCMessageExpr *msgE = dyn_cast<ObjCMessageExpr>(MsgOrPropE))
+      return msgE->getNumArgs();
+    return isPropertySetter() ? 1 : 0;
+  }
 
-   SVal getArgSVal(unsigned i, const ProgramState *state) const {
-     assert(isValid() && "This ObjCMessage is uninitialized!");
-     assert(i < getNumArgs() && "Invalid index for argument");
-     if (const ObjCMessageExpr *msgE = dyn_cast<ObjCMessageExpr>(MsgOrPropE))
-       return state->getSVal(msgE->getArg(i));
-     assert(isPropertySetter());
-     return SetterArgV;
-   }
+  SVal getArgSVal(unsigned i, const ProgramState *state) const {
+    assert(isValid() && "This ObjCMessage is uninitialized!");
+    assert(i < getNumArgs() && "Invalid index for argument");
+    if (const ObjCMessageExpr *msgE = dyn_cast<ObjCMessageExpr>(MsgOrPropE))
+      return state->getSVal(msgE->getArg(i));
+    assert(isPropertySetter());
+    return SetterArgV;
+  }
 
-   QualType getArgType(unsigned i) const {
-     assert(isValid() && "This ObjCMessage is uninitialized!");
-     assert(i < getNumArgs() && "Invalid index for argument");
-     if (const ObjCMessageExpr *msgE = dyn_cast<ObjCMessageExpr>(MsgOrPropE))
-       return msgE->getArg(i)->getType();
-     assert(isPropertySetter());
-     return cast<ObjCPropertyRefExpr>(MsgOrPropE)->getType();
-   }
-   
-   const Expr *getArgExpr(unsigned i) const;
+  QualType getArgType(unsigned i) const {
+    assert(isValid() && "This ObjCMessage is uninitialized!");
+    assert(i < getNumArgs() && "Invalid index for argument");
+    if (const ObjCMessageExpr *msgE = dyn_cast<ObjCMessageExpr>(MsgOrPropE))
+      return msgE->getArg(i)->getType();
+    assert(isPropertySetter());
+    return cast<ObjCPropertyRefExpr>(MsgOrPropE)->getType();
+  }
 
-   SourceRange getArgSourceRange(unsigned i) const {
-     assert(isValid() && "This ObjCMessage is uninitialized!");
-     assert(i < getNumArgs() && "Invalid index for argument");
-     if (const Expr *argE = getArgExpr(i))
-       return argE->getSourceRange();
-     return OriginE->getSourceRange();
-   }
+  const Expr *getArgExpr(unsigned i) const;
+
+  SourceRange getArgSourceRange(unsigned i) const {
+    assert(isValid() && "This ObjCMessage is uninitialized!");
+    assert(i < getNumArgs() && "Invalid index for argument");
+    if (const Expr *argE = getArgExpr(i))
+      return argE->getSourceRange();
+    return OriginE->getSourceRange();
+  }
+
+  SourceRange getReceiverSourceRange() const {
+    assert(isValid() && "This ObjCMessage is uninitialized!");
+    if (const ObjCMessageExpr *msgE = dyn_cast<ObjCMessageExpr>(MsgOrPropE))
+      return msgE->getReceiverRange();
+
+    const ObjCPropertyRefExpr *propE = cast<ObjCPropertyRefExpr>(MsgOrPropE);
+    if (propE->isObjectReceiver())
+      return propE->getBase()->getSourceRange();
+
+    // FIXME: This isn't a range.
+    return propE->getReceiverLocation();
+  }
 };
 
 class ObjCPropertyGetter : public ObjCMessage {
@@ -211,6 +239,7 @@ public:
   
   SVal getFunctionCallee() const;
   SVal getCXXCallee() const;
+  SVal getInstanceMessageReceiver(const LocationContext *LC) const;
 
   unsigned getNumArgs() const {
     if (!CallE)
@@ -243,6 +272,11 @@ public:
     if (CallE)
       return getArg(i)->getSourceRange();
     return Msg.getArgSourceRange(i);
+  }
+
+  SourceRange getReceiverSourceRange() const {
+    assert(isObjCMessage());
+    return Msg.getReceiverSourceRange();
   }
 };
 

@@ -13,6 +13,7 @@
 
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/ObjCMessage.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/Analysis/Support/SaveAndRestore.h"
 
@@ -63,6 +64,100 @@ void ExprEngine::processCallExit(CallExitNodeBuilder &B) {
   B.generateNode(state);
 }
 
+const ProgramState *
+ExprEngine::invalidateArguments(const ProgramState *State,
+                                const CallOrObjCMessage &Call,
+                                const LocationContext *LC) {
+  SmallVector<const MemRegion *, 8> RegionsToInvalidate;
+
+  if (Call.isObjCMessage()) {
+    // Invalidate all instance variables of the receiver of an ObjC message.
+    // FIXME: We should be able to do better with inter-procedural analysis.
+    if (const MemRegion *MR = Call.getInstanceMessageReceiver(LC).getAsRegion())
+      RegionsToInvalidate.push_back(MR);
+
+  } else if (Call.isCXXCall()) {
+    // Invalidate all instance variables for the callee of a C++ method call.
+    // FIXME: We should be able to do better with inter-procedural analysis.
+    // FIXME: We can probably do better for const versus non-const methods.
+    if (const MemRegion *Callee = Call.getCXXCallee().getAsRegion())
+      RegionsToInvalidate.push_back(Callee);
+
+  } else if (Call.isFunctionCall()) {
+    // Block calls invalidate all captured-by-reference values.
+    if (const MemRegion *Callee = Call.getFunctionCallee().getAsRegion()) {
+      if (isa<BlockDataRegion>(Callee))
+        RegionsToInvalidate.push_back(Callee);
+    }
+  }
+
+  for (unsigned idx = 0, e = Call.getNumArgs(); idx != e; ++idx) {
+    SVal V = Call.getArgSVal(idx);
+
+    // If we are passing a location wrapped as an integer, unwrap it and
+    // invalidate the values referred by the location.
+    if (nonloc::LocAsInteger *Wrapped = dyn_cast<nonloc::LocAsInteger>(&V))
+      V = Wrapped->getLoc();
+    else if (!isa<Loc>(V))
+      continue;
+
+    if (const MemRegion *R = V.getAsRegion()) {
+      // Invalidate the value of the variable passed by reference.
+
+      // Are we dealing with an ElementRegion?  If the element type is
+      // a basic integer type (e.g., char, int) and the underying region
+      // is a variable region then strip off the ElementRegion.
+      // FIXME: We really need to think about this for the general case
+      //   as sometimes we are reasoning about arrays and other times
+      //   about (char*), etc., is just a form of passing raw bytes.
+      //   e.g., void *p = alloca(); foo((char*)p);
+      if (const ElementRegion *ER = dyn_cast<ElementRegion>(R)) {
+        // Checking for 'integral type' is probably too promiscuous, but
+        // we'll leave it in for now until we have a systematic way of
+        // handling all of these cases.  Eventually we need to come up
+        // with an interface to StoreManager so that this logic can be
+        // approriately delegated to the respective StoreManagers while
+        // still allowing us to do checker-specific logic (e.g.,
+        // invalidating reference counts), probably via callbacks.
+        if (ER->getElementType()->isIntegralOrEnumerationType()) {
+          const MemRegion *superReg = ER->getSuperRegion();
+          if (isa<VarRegion>(superReg) || isa<FieldRegion>(superReg) ||
+              isa<ObjCIvarRegion>(superReg))
+            R = cast<TypedRegion>(superReg);
+        }
+        // FIXME: What about layers of ElementRegions?
+      }
+
+      // Mark this region for invalidation.  We batch invalidate regions
+      // below for efficiency.
+      RegionsToInvalidate.push_back(R);
+    } else {
+      // Nuke all other arguments passed by reference.
+      // FIXME: is this necessary or correct? This handles the non-Region
+      //  cases.  Is it ever valid to store to these?
+      State = State->unbindLoc(cast<Loc>(V));
+    }
+  }
+
+  // Invalidate designated regions using the batch invalidation API.
+
+  // FIXME: We can have collisions on the conjured symbol if the
+  //  expression *I also creates conjured symbols.  We probably want
+  //  to identify conjured symbols by an expression pair: the enclosing
+  //  expression (the context) and the expression itself.  This should
+  //  disambiguate conjured symbols.
+  assert(Builder && "Invalidating arguments outside of a statement context");
+  unsigned Count = Builder->getCurrentBlockCount();
+  StoreManager::InvalidatedSymbols IS;
+
+  // NOTE: Even if RegionsToInvalidate is empty, we may still invalidate
+  //  global variables.
+  return State->invalidateRegions(RegionsToInvalidate,
+                                  Call.getOriginExpr(), Count,
+                                  &IS, doesInvalidateGlobals(Call));
+
+}
+
 void ExprEngine::VisitCallExpr(const CallExpr *CE, ExplodedNode *Pred,
                                ExplodedNodeSet &dst) {
   // Perform the previsit of the CallExpr.
@@ -108,16 +203,19 @@ void ExprEngine::VisitCallExpr(const CallExpr *CE, ExplodedNode *Pred,
       unsigned Count = Builder.getCurrentBlockCount();
       SVal RetVal = SVB.getConjuredSymbolVal(0, CE, ResultTy, Count);
 
-      // Generate a new ExplodedNode with the return value set.
+      // Generate a new state with the return value set.
       state = state->BindExpr(CE, RetVal);
-      Pred = Builder.generateNode(CE, state, Pred);
+
+      // Invalidate the arguments.
+      const LocationContext *LC = Pred->getLocationContext();
+      state = Eng.invalidateArguments(state, CallOrObjCMessage(CE, state), LC);
 
       // Then handle everything else.
       unsigned oldSize = Dst.size();
       SaveOr OldHasGen(Builder.hasGeneratedNode);
       
       // Dispatch to transfer function logic to handle the rest of the call.
-      Eng.getTF().evalCall(Dst, Eng, Builder, CE, L, Pred);
+      //Eng.getTF().evalCall(Dst, Eng, Builder, CE, L, Pred);
       
       // Handle the case where no nodes where generated.  Auto-generate that
       // contains the updated state if we aren't generating sinks.

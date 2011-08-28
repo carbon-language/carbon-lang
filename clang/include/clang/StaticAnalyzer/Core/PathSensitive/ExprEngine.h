@@ -410,6 +410,10 @@ protected:
   void evalObjCMessage(ExplodedNodeSet &Dst, const ObjCMessage &msg, 
                        ExplodedNode *Pred, const ProgramState *state);
 
+  const ProgramState *invalidateArguments(const ProgramState *State,
+                                          const CallOrObjCMessage &Call,
+                                          const LocationContext *LC);
+
   const ProgramState *MarkBranch(const ProgramState *St, const Stmt *Terminator,
                             bool branchTaken);
 

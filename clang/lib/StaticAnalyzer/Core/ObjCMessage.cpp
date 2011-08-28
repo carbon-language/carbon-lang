@@ -150,3 +150,9 @@ SVal CallOrObjCMessage::getCXXCallee() const {
     cast<CXXMemberCallExpr>(ActualCall)->getImplicitObjectArgument();
   return State->getSVal(callee);  
 }
+
+SVal
+CallOrObjCMessage::getInstanceMessageReceiver(const LocationContext *LC) const {
+  assert(isObjCMessage());
+  return Msg.getInstanceReceiverSVal(State, LC);
+}

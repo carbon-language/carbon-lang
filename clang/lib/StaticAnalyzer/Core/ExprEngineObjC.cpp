@@ -273,7 +273,12 @@ void ExprEngine::evalObjCMessage(ExplodedNodeSet &Dst, const ObjCMessage &msg,
   // Bind the return value.
   state = state->BindExpr(currentStmt, ReturnValue);
 
+  // Invalidate the arguments (and the receiver)
+  const LocationContext *LC = Pred->getLocationContext();
+  state = invalidateArguments(state, CallOrObjCMessage(msg, state), LC);
+  Builder->MakeNode(Dst, msg.getOriginExpr(), Pred, state);
+
   // Now we can handle the other aspects of the message.
-  getTF().evalObjCMessage(Dst, *this, *Builder, msg, Pred, state);
+  //getTF().evalObjCMessage(Dst, *this, *Builder, msg, Pred, state);
 }
 

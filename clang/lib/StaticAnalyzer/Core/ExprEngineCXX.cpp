@@ -198,17 +198,6 @@ void ExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *E,
 #endif
   
   // Default semantics: invalidate all regions passed as arguments.
-  SmallVector<const MemRegion*, 10> regionsToInvalidate;
-
-  // FIXME: We can have collisions on the conjured symbol if the
-  //  expression *I also creates conjured symbols.  We probably want
-  //  to identify conjured symbols by an expression pair: the enclosing
-  //  expression (the context) and the expression itself.  This should
-  //  disambiguate conjured symbols.
-  unsigned blockCount = Builder->getCurrentBlockCount();
-  
-  // NOTE: Even if RegionsToInvalidate is empty, we must still invalidate
-  //  global variables.
   ExplodedNodeSet destCall;
 
   for (ExplodedNodeSet::iterator
@@ -216,23 +205,10 @@ void ExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *E,
        i != e; ++i)
   {
     ExplodedNode *Pred = *i;
+    const LocationContext *LC = Pred->getLocationContext();
     const ProgramState *state = Pred->getState();
 
-    // Accumulate list of regions that are invalidated.
-    for (CXXConstructExpr::const_arg_iterator
-          ai = E->arg_begin(), ae = E->arg_end();
-          ai != ae; ++ai)
-    {
-      SVal val = state->getSVal(*ai);
-      if (const MemRegion *region = val.getAsRegion())
-        regionsToInvalidate.push_back(region);
-    }
-    
-    // Invalidate the regions.    
-    state = state->invalidateRegions(regionsToInvalidate,
-                                     E, blockCount, 0,
-                                     /* invalidateGlobals = */ true);
-    
+    state = invalidateArguments(state, CallOrObjCMessage(E, state), LC);
     Builder->MakeNode(destCall, E, Pred, state);
   }
   

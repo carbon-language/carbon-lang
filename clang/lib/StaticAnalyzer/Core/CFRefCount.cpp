@@ -41,50 +41,6 @@ using namespace ento;
 using llvm::StrInStrNoCase;
 
 namespace {
-class InstanceReceiver {
-  ObjCMessage Msg;
-  const LocationContext *LC;
-public:
-  InstanceReceiver() : LC(0) { }
-  InstanceReceiver(const ObjCMessage &msg,
-                   const LocationContext *lc = 0) : Msg(msg), LC(lc) {}
-
-  bool isValid() const {
-    return Msg.isValid() && Msg.isInstanceMessage();
-  }
-  operator bool() const {
-    return isValid();
-  }
-
-  SVal getSValAsScalarOrLoc(const ProgramState *state) {
-    assert(isValid());
-    // We have an expression for the receiver?  Fetch the value
-    // of that expression.
-    if (const Expr *Ex = Msg.getInstanceReceiver())
-      return state->getSValAsScalarOrLoc(Ex);
-
-    // Otherwise we are sending a message to super.  In this case the
-    // object reference is the same as 'self'.
-    if (const ImplicitParamDecl *SelfDecl = LC->getSelfDecl())
-      return state->getSVal(state->getRegion(SelfDecl, LC));
-
-    return UnknownVal();
-  }
-
-  SourceRange getSourceRange() const {
-    assert(isValid());
-    if (const Expr *Ex = Msg.getInstanceReceiver())
-      return Ex->getSourceRange();
-
-    // Otherwise we are sending a message to super.
-    SourceLocation L = Msg.getSuperLoc();
-    assert(L.isValid());
-    return SourceRange(L, L);
-  }
-};
-}
-
-namespace {
 class GenericNodeBuilderRefCount {
   StmtNodeBuilder *SNB;
   const Stmt *S;
@@ -1651,28 +1607,6 @@ public:
   }
   
   const LangOptions& getLangOptions() const { return LOpts; }
-
-  // Calls.
-
-  void evalCallOrMessage(ExplodedNodeSet &Dst, ExprEngine &Eng,
-                         StmtNodeBuilder &Builder,
-                         const CallOrObjCMessage &callOrMsg,
-                         InstanceReceiver Receiver, const MemRegion *Callee,
-                         ExplodedNode *Pred, const ProgramState *state);
-
-  virtual void evalCall(ExplodedNodeSet &Dst,
-                        ExprEngine& Eng,
-                        StmtNodeBuilder& Builder,
-                        const CallExpr *CE, SVal L,
-                        ExplodedNode *Pred);
-
-
-  virtual void evalObjCMessage(ExplodedNodeSet &Dst,
-                               ExprEngine& Engine,
-                               StmtNodeBuilder& Builder,
-                               ObjCMessage msg,
-                               ExplodedNode *Pred,
-                               const ProgramState *state);
 };
 
 } // end anonymous namespace
@@ -2439,133 +2373,6 @@ static QualType GetReturnType(const Expr *RetE, ASTContext &Ctx) {
   return RetTy;
 }
 
-void CFRefCount::evalCallOrMessage(ExplodedNodeSet &Dst, ExprEngine &Eng,
-                                   StmtNodeBuilder &Builder,
-                                   const CallOrObjCMessage &callOrMsg,
-                                   InstanceReceiver Receiver,
-                                   const MemRegion *Callee,
-                                   ExplodedNode *Pred,
-                                   const ProgramState *state) {
-
-  SmallVector<const MemRegion*, 10> RegionsToInvalidate;
-
-  // Invalidate all instance variables of the receiver of a message.
-  // FIXME: We should be able to do better with inter-procedural analysis.
-  if (Receiver) {
-    SVal V = Receiver.getSValAsScalarOrLoc(state);
-    if (const MemRegion *region = V.getAsRegion())
-      RegionsToInvalidate.push_back(region);
-  }
-  
-  // Invalidate all instance variables for the callee of a C++ method call.
-  // FIXME: We should be able to do better with inter-procedural analysis.
-  // FIXME: we can probably do better for const versus non-const methods.
-  if (callOrMsg.isCXXCall()) {
-    if (const MemRegion *callee = callOrMsg.getCXXCallee().getAsRegion())
-      RegionsToInvalidate.push_back(callee);
-  }
-  
-  for (unsigned idx = 0, e = callOrMsg.getNumArgs(); idx != e; ++idx) {
-    SVal V = callOrMsg.getArgSVal(idx);
-
-    // If we are passing a location wrapped as an integer, unwrap it and
-    // invalidate the values referred by the location.
-    if (nonloc::LocAsInteger *Wrapped = dyn_cast<nonloc::LocAsInteger>(&V))
-      V = Wrapped->getLoc();
-    else if (!isa<Loc>(V))
-      continue;
-
-    if (const MemRegion *R = V.getAsRegion()) {
-      // Invalidate the value of the variable passed by reference.
-
-      // Are we dealing with an ElementRegion?  If the element type is
-      // a basic integer type (e.g., char, int) and the underying region
-      // is a variable region then strip off the ElementRegion.
-      // FIXME: We really need to think about this for the general case
-      //   as sometimes we are reasoning about arrays and other times
-      //   about (char*), etc., is just a form of passing raw bytes.
-      //   e.g., void *p = alloca(); foo((char*)p);
-      if (const ElementRegion *ER = dyn_cast<ElementRegion>(R)) {
-        // Checking for 'integral type' is probably too promiscuous, but
-        // we'll leave it in for now until we have a systematic way of
-        // handling all of these cases.  Eventually we need to come up
-        // with an interface to StoreManager so that this logic can be
-        // approriately delegated to the respective StoreManagers while
-        // still allowing us to do checker-specific logic (e.g.,
-        // invalidating reference counts), probably via callbacks.
-        if (ER->getElementType()->isIntegralOrEnumerationType()) {
-          const MemRegion *superReg = ER->getSuperRegion();
-          if (isa<VarRegion>(superReg) || isa<FieldRegion>(superReg) ||
-              isa<ObjCIvarRegion>(superReg))
-            R = cast<TypedRegion>(superReg);
-        }
-        // FIXME: What about layers of ElementRegions?
-      }
-
-      // Mark this region for invalidation.  We batch invalidate regions
-      // below for efficiency.
-      RegionsToInvalidate.push_back(R);
-    } else {
-      // Nuke all other arguments passed by reference.
-      // FIXME: is this necessary or correct? This handles the non-Region
-      //  cases.  Is it ever valid to store to these?
-      state = state->unbindLoc(cast<Loc>(V));
-    }
-  }
-
-  // Block calls result in all captured values passed-via-reference to be
-  // invalidated.
-  if (const BlockDataRegion *BR = dyn_cast_or_null<BlockDataRegion>(Callee))
-    RegionsToInvalidate.push_back(BR);
-
-  // Invalidate designated regions using the batch invalidation API.
-
-  // FIXME: We can have collisions on the conjured symbol if the
-  //  expression *I also creates conjured symbols.  We probably want
-  //  to identify conjured symbols by an expression pair: the enclosing
-  //  expression (the context) and the expression itself.  This should
-  //  disambiguate conjured symbols.
-  unsigned Count = Builder.getCurrentBlockCount();
-  StoreManager::InvalidatedSymbols IS;
-
-  const Expr *Ex = callOrMsg.getOriginExpr();
-
-  // NOTE: Even if RegionsToInvalidate is empty, we must still invalidate
-  //  global variables.
-  // NOTE: RetainReleaseChecker handles the actual invalidation of symbols.
-  state =
-    state->invalidateRegions(RegionsToInvalidate,
-                             Ex, Count, &IS,
-                             /* invalidateGlobals = */
-                             Eng.doesInvalidateGlobals(callOrMsg));
-
-  Builder.MakeNode(Dst, Ex, Pred, state);
-}
-
-
-void CFRefCount::evalCall(ExplodedNodeSet &Dst,
-                          ExprEngine& Eng,
-                          StmtNodeBuilder& Builder,
-                          const CallExpr *CE, SVal L,
-                          ExplodedNode *Pred) {
-
-  evalCallOrMessage(Dst, Eng, Builder, CallOrObjCMessage(CE, Pred->getState()),
-                    InstanceReceiver(), L.getAsRegion(), Pred, 
-                    Pred->getState());
-}
-
-void CFRefCount::evalObjCMessage(ExplodedNodeSet &Dst,
-                                 ExprEngine& Eng,
-                                 StmtNodeBuilder& Builder,
-                                 ObjCMessage msg,
-                                 ExplodedNode *Pred,
-                                 const ProgramState *state) {
-
-  evalCallOrMessage(Dst, Eng, Builder, CallOrObjCMessage(msg, Pred->getState()),
-                    InstanceReceiver(msg, Pred->getLocationContext()),
-                    /* Callee = */ 0, Pred, state);
-}
-
 //===----------------------------------------------------------------------===//
 // Pieces of the retain/release checker implemented using a CheckerVisitor.
 // More pieces of the retain/release checker will be migrated to this interface
@@ -2744,7 +2551,7 @@ public:
   void checkPostStmt(const CXXConstructExpr *CE, CheckerContext &C) const;
   void checkPostObjCMessage(const ObjCMessage &Msg, CheckerContext &C) const;
   void checkSummary(const RetainSummary &Summ, const CallOrObjCMessage &Call,
-                    InstanceReceiver Receiver, CheckerContext &C) const;
+                    CheckerContext &C) const;
 
   bool evalCall(const CallExpr *CE, CheckerContext &C) const;
 
@@ -3013,7 +2820,7 @@ void RetainReleaseChecker::checkPostStmt(const CallExpr *CE,
   if (!Summ)
     return;
 
-  checkSummary(*Summ, CallOrObjCMessage(CE, state), InstanceReceiver(), C);
+  checkSummary(*Summ, CallOrObjCMessage(CE, state), C);
 }
 
 void RetainReleaseChecker::checkPostStmt(const CXXConstructExpr *CE,
@@ -3030,7 +2837,7 @@ void RetainReleaseChecker::checkPostStmt(const CXXConstructExpr *CE,
     return;
 
   const ProgramState *state = C.getState();
-  checkSummary(*Summ, CallOrObjCMessage(CE, state), InstanceReceiver(), C);
+  checkSummary(*Summ, CallOrObjCMessage(CE, state), C);
 }
 
 void RetainReleaseChecker::checkPostObjCMessage(const ObjCMessage &Msg, 
@@ -3052,13 +2859,11 @@ void RetainReleaseChecker::checkPostObjCMessage(const ObjCMessage &Msg,
   if (!Summ)
     return;
 
-  checkSummary(*Summ, CallOrObjCMessage(Msg, state),
-               InstanceReceiver(Msg, Pred->getLocationContext()), C);
+  checkSummary(*Summ, CallOrObjCMessage(Msg, state), C);
 }
 
 void RetainReleaseChecker::checkSummary(const RetainSummary &Summ,
                                         const CallOrObjCMessage &CallOrMsg,
-                                        InstanceReceiver Receiver,
                                         CheckerContext &C) const {
   const ProgramState *state = C.getState();
 
@@ -3084,13 +2889,15 @@ void RetainReleaseChecker::checkSummary(const RetainSummary &Summ,
 
   // Evaluate the effect on the message receiver.
   bool ReceiverIsTracked = false;
-  if (!hasErr && Receiver) {
-    if (SymbolRef Sym = Receiver.getSValAsScalarOrLoc(state).getAsLocSymbol()) {
+  if (!hasErr && CallOrMsg.isObjCMessage()) {
+    const LocationContext *LC = C.getPredecessor()->getLocationContext();
+    SVal Receiver = CallOrMsg.getInstanceMessageReceiver(LC);
+    if (SymbolRef Sym = Receiver.getAsLocSymbol()) {
       if (const RefVal *T = state->get<RefBindings>(Sym)) {
         ReceiverIsTracked = true;
         state = updateSymbol(state, Sym, *T, Summ.getReceiverEffect(), hasErr);
         if (hasErr) {
-          ErrorRange = Receiver.getSourceRange();
+          ErrorRange = CallOrMsg.getReceiverSourceRange();
           ErrorSym = Sym;
         }
       }
