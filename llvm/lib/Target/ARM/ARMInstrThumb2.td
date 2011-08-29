@@ -3519,3 +3519,23 @@ def : T2Pat<(atomic_store_32 t2addrmode_imm8:$addr, GPR:$val),
             (t2STRi8    GPR:$val, t2addrmode_imm8:$addr)>;
 def : T2Pat<(atomic_store_32 t2addrmode_so_reg:$addr, GPR:$val),
             (t2STRs     GPR:$val, t2addrmode_so_reg:$addr)>;
+
+
+//===----------------------------------------------------------------------===//
+// Assembler aliases
+//
+
+// Aliases for ADC without the ".w" optional width specifier.
+def : t2InstAlias<"adc${s}${p} $Rd, $Rn, $Rm",
+                  (t2ADCrr rGPR:$Rd, rGPR:$Rn, rGPR:$Rm, pred:$p, cc_out:$s)>;
+def : t2InstAlias<"adc${s}${p} $Rd, $Rn, $ShiftedRm",
+                  (t2ADCrs rGPR:$Rd, rGPR:$Rn, t2_so_reg:$ShiftedRm,
+                           pred:$p, cc_out:$s)>;
+
+// Aliases for SBC without the ".w" optional width specifier.
+def : t2InstAlias<"sbc${s}${p} $Rd, $Rn, $Rm",
+                  (t2SBCrr rGPR:$Rd, rGPR:$Rn, rGPR:$Rm, pred:$p, cc_out:$s)>;
+def : t2InstAlias<"sbc${s}${p} $Rd, $Rn, $ShiftedRm",
+                  (t2SBCrs rGPR:$Rd, rGPR:$Rn, t2_so_reg:$ShiftedRm,
+                           pred:$p, cc_out:$s)>;
+
