@@ -840,6 +840,17 @@ AddDefaultCPlusPlusIncludePaths(const llvm::Triple &triple, const HeaderSearchOp
     AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.6.0",
                                 "x86_64-unknown-linux-gnu", "", "", triple);
 
+    // Slackware gcc 4.5.2 (13.37)
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.5.2",
+                                "i486-slackware-linux", "", "", triple);
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.5.2",
+                                "x86_64-slackware-linux", "", "", triple);
+    // Slackware gcc 4.5.3 (-current)
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.5.3",
+                                "i486-slackware-linux", "", "", triple);
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.5.3",
+                                "x86_64-slackware-linux", "", "", triple);
+
     // Gentoo x86 gcc 4.5.2
     AddGnuCPlusPlusIncludePaths(
       "/usr/lib/gcc/i686-pc-linux-gnu/4.5.2/include/g++-v4",
