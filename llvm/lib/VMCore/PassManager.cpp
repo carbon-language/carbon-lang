@@ -28,7 +28,6 @@
 #include "llvm/Support/Mutex.h"
 #include "llvm/ADT/StringMap.h"
 #include <algorithm>
-#include <cstdio>
 #include <map>
 using namespace llvm;
 
@@ -193,7 +192,7 @@ public:
 
   // Print passes managed by this manager
   void dumpPassStructure(unsigned Offset) {
-    llvm::dbgs() << std::string(Offset*2, ' ') << "BasicBlockPass Manager\n";
+    llvm::dbgs().indent(Offset*2) << "BasicBlockPass Manager\n";
     for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
       BasicBlockPass *BP = getContainedPass(Index);
       BP->dumpPassStructure(Offset + 1);
@@ -349,7 +348,7 @@ public:
 
   // Print passes managed by this manager
   void dumpPassStructure(unsigned Offset) {
-    llvm::dbgs() << std::string(Offset*2, ' ') << "ModulePass Manager\n";
+    llvm::dbgs().indent(Offset*2) << "ModulePass Manager\n";
     for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
       ModulePass *MP = getContainedPass(Index);
       MP->dumpPassStructure(Offset + 1);
@@ -1787,10 +1786,10 @@ void PMStack::push(PMDataManager *PM) {
 void PMStack::dump() const {
   for (std::vector<PMDataManager *>::const_iterator I = S.begin(),
          E = S.end(); I != E; ++I)
-    printf("%s ", (*I)->getAsPass()->getPassName());
+    dbgs() << (*I)->getAsPass()->getPassName() << ' ';
 
   if (!S.empty())
-    printf("\n");
+    dbgs() << '\n';
 }
 
 /// Find appropriate Module Pass Manager in the PM Stack and
