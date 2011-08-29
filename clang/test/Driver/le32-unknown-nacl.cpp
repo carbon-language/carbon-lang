@@ -1,49 +1,82 @@
 // RUN: %clang -ccc-host-triple le32-unknown-nacl -ccc-echo %s -emit-llvm -c 2>&1 | FileCheck %s -check-prefix=ECHO
 // RUN: %clang -ccc-host-triple le32-unknown-nacl %s -emit-llvm -S -c -o - | FileCheck %s
+// RUN: %clang -ccc-host-triple le32-unknown-nacl %s -emit-llvm -S -c -pthread -o - | FileCheck %s -check-prefix=THREADS
 
 // ECHO: clang{{.*}} -cc1 {{.*}}le32-unknown-nacl.c
 
 // Check platform defines
+#include <stdarg.h>
 #include <stddef.h>
 
 extern "C" {
 
+// CHECK: @align_c = global i32 1
+int align_c = __alignof(char);
+
+// CHECK: @align_s = global i32 2
+int align_s = __alignof(short);
+
+// CHECK: @align_i = global i32 4
+int align_i = __alignof(int);
+
+// CHECK: @align_l = global i32 4
+int align_l = __alignof(long);
+
+// CHECK: @align_ll = global i32 8
+int align_ll = __alignof(long long);
+
+// CHECK: @align_p = global i32 4
+int align_p = __alignof(void*);
+
+// CHECK: @align_f = global i32 4
+int align_f = __alignof(float);
+
+// CHECK: @align_d = global i32 8
+int align_d = __alignof(double);
+
+// CHECK: @align_ld = global i32 8
+int align_ld = __alignof(long double);
+
+// CHECK: @align_vl = global i32 4
+int align_vl = __alignof(va_list);
+
+// CHECK: __native_client__defined
 #ifdef __native_client__
-void __native_client__defined() {
-  // CHECK: __native_client__defined
-}
+void __native_client__defined() {}
 #endif
 
+// CHECK: __le32__defined
 #ifdef __le32__
-void __le32__defined() {
-  // CHECK: __le32__defined
-}
+void __le32__defined() {}
 #endif
 
+// CHECK: __pnacl__defined
 #ifdef __pnacl__
-void __pnacl__defined() {
-  // CHECK: __pnacl__defined
-}
+void __pnacl__defined() {}
 #endif
 
+// CHECK: unixdefined
 #ifdef unix
-void unixdefined() {
-  // CHECK: unixdefined
-}
+void unixdefined() {}
 #endif
 
+// CHECK: __ELF__defined
 #ifdef __ELF__
-void __ELF__defined() {
-  // CHECK: __ELF__defined
-}
+void __ELF__defined() {}
 #endif
 
+// CHECK: _GNU_SOURCEdefined
 #ifdef _GNU_SOURCE
-void _GNU_SOURCEdefined() {
-  // CHECK: _GNU_SOURCEdefined
-}
+void _GNU_SOURCEdefined() {}
 #endif
 
+// THREADS: _REENTRANTdefined
+// CHECK: _REENTRANTundefined
+#ifdef _REENTRANT
+void _REENTRANTdefined() {}
+#else
+void _REENTRANTundefined() {}
+#endif
 
 // Check types
 
@@ -90,8 +123,6 @@ double check_double() { return 0; }
 long double check_longdouble() { return 0; }
 
 }
-
-#include <stdarg.h>
 
 template<int> void Switch();
 template<> void Switch<4>();
