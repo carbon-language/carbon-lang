@@ -505,7 +505,8 @@ void MCObjectFileInfo::InitMCObjectFileInfo(StringRef TT, Reloc::Model relocm,
   PersonalityEncoding = LSDAEncoding = FDEEncoding = FDECFIEncoding =
     TTypeEncoding = dwarf::DW_EH_PE_absptr;
 
-  EHFrameSection = 0; // Created on demand.
+  EHFrameSection = 0;           // Created on demand.
+  CompactUnwindSection = 0;     // Used only be select targets.
 
   Triple T(TT);
   Triple::ArchType Arch = T.getArch();
