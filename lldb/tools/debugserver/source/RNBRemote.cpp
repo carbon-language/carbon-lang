@@ -2681,8 +2681,6 @@ RNBRemote::HandlePacket_v (const char *p)
                     thread_action.state = eStateStepping;
                     break;
 
-                    break;
-
                 default:
                     rnb_err = HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Unsupported action in vCont packet");
                     break;
