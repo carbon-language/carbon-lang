@@ -1404,6 +1404,19 @@ def warn_lock_not_released_in_scope : Warning<
 def warn_expecting_lock_held_on_loop : Warning<
   "expecting lock '%0' to be held at start of each loop">,
   InGroup<DiagGroup<"thread-safety">>, DefaultIgnore;
+def warn_variable_requires_lock : Warning<
+  "accessing variable '%0' requires lock '%1'">,
+  InGroup<DiagGroup<"thread-safety">>, DefaultIgnore;
+def warn_variable_requires_any_lock : Warning<
+  "accessing variable '%0' requires some lock">,
+  InGroup<DiagGroup<"thread-safety">>, DefaultIgnore;
+def warn_var_deref_requires_lock : Warning<
+  "accessing the value pointed to by '%0' requires lock '%1'">,
+  InGroup<DiagGroup<"thread-safety">>, DefaultIgnore;
+def warn_var_deref_requires_any_lock : Warning<
+  "accessing the value pointed to by '%0' requires some lock">,
+  InGroup<DiagGroup<"thread-safety">>, DefaultIgnore;
+
 
 def warn_impcast_vector_scalar : Warning<
   "implicit conversion turns vector to scalar: %0 to %1">,

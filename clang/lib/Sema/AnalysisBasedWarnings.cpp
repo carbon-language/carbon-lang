@@ -814,6 +814,9 @@ class BuildLockset : public StmtVisitor<BuildLockset> {
   // Helper functions
   void removeLock(SourceLocation UnlockLoc, Expr *LockExp);
   void addLock(SourceLocation LockLoc, Expr *LockExp);
+  const ValueDecl *getValueDecl(Expr *Exp);
+  void checkAccess(Expr *Exp);
+  void checkDereference(Expr *Exp);
 
 public:
   BuildLockset(Sema &S, Lockset LS, Lockset::Factory &F)
@@ -824,13 +827,15 @@ public:
     return LSet;
   }
 
-  void VisitDeclRefExpr(DeclRefExpr *Exp);
+  void VisitUnaryOperator(UnaryOperator *UO);
+  void VisitBinaryOperator(BinaryOperator *BO);
+  void VisitCastExpr(CastExpr *CE);
   void VisitCXXMemberCallExpr(CXXMemberCallExpr *Exp);
 };
 
 /// \brief Add a new lock to the lockset, warning if the lock is already there.
-/// \param LockExp The lock expression corresponding to the lock to be added
 /// \param LockLoc The source location of the acquire
+/// \param LockExp The lock expression corresponding to the lock to be added
 void BuildLockset::addLock(SourceLocation LockLoc, Expr *LockExp) {
   LockID Lock(LockExp);
   LockData NewLockData(LockLoc);
@@ -854,13 +859,124 @@ void BuildLockset::removeLock(SourceLocation UnlockLoc, Expr *LockExp) {
   LSet = NewLSet;
 }
 
-void BuildLockset::VisitDeclRefExpr(DeclRefExpr *Exp) {
-  // FIXME: checking for guarded_by/var and pt_guarded_by/var
+/// \brief Gets the value decl pointer from DeclRefExprs or MemberExprs
+const ValueDecl *BuildLockset::getValueDecl(Expr *Exp) {
+  if (const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(Exp))
+    return DR->getDecl();
+
+  if (const MemberExpr *ME = dyn_cast<MemberExpr>(Exp))
+    return ME->getMemberDecl();
+
+  return 0;
 }
+
+/// \brief This method identifies variable dereferences and checks pt_guarded_by
+/// and pt_guarded_var annotations. Note that we only check these annotations
+/// at the time a pointer is dereferenced.
+/// FIXME: We need to check for other types of pointer dereferences
+/// (e.g. [], ->) and deal with them here.
+/// \param Exp An expression that has been read or written.
+void BuildLockset::checkDereference(Expr *Exp) {
+  UnaryOperator *UO = dyn_cast<UnaryOperator>(Exp);
+  if (!UO || UO->getOpcode() != clang::UO_Deref)
+    return;
+  Exp = UO->getSubExpr()->IgnoreParenCasts();
+
+  const ValueDecl *D = getValueDecl(Exp);
+  if(!D || !D->hasAttrs())
+    return;
+
+  if (D->getAttr<PtGuardedVarAttr>() && LSet.isEmpty())
+    S.Diag(Exp->getExprLoc(), diag::warn_var_deref_requires_any_lock)
+      << D->getName();
+
+  const AttrVec &ArgAttrs = D->getAttrs();
+  for(unsigned i = 0, Size = ArgAttrs.size(); i < Size; ++i) {
+    if (ArgAttrs[i]->getKind() != attr::PtGuardedBy)
+      continue;
+    PtGuardedByAttr *PGBAttr = cast<PtGuardedByAttr>(ArgAttrs[i]);
+    LockID Lock(PGBAttr->getArg());
+    if (!LSet.contains(Lock))
+      S.Diag(Exp->getExprLoc(), diag::warn_var_deref_requires_lock)
+        << D->getName() << Lock.getName();
+  }
+}
+
+/// \brief Checks guarded_by and guarded_var attributes.
+/// Whenever we identify an access (read or write) of a DeclRefExpr or
+/// MemberExpr, we need to check whether there are any guarded_by or
+/// guarded_var attributes, and make sure we hold the appropriate locks.
+void BuildLockset::checkAccess(Expr *Exp) {
+  const ValueDecl *D = getValueDecl(Exp);
+  if(!D || !D->hasAttrs())
+    return;
+
+  if (D->getAttr<GuardedVarAttr>() && LSet.isEmpty())
+    S.Diag(Exp->getExprLoc(), diag::warn_variable_requires_any_lock)
+      << D->getName();
+
+  const AttrVec &ArgAttrs = D->getAttrs();
+  for(unsigned i = 0, Size = ArgAttrs.size(); i < Size; ++i) {
+    if (ArgAttrs[i]->getKind() != attr::GuardedBy)
+      continue;
+    GuardedByAttr *GBAttr = cast<GuardedByAttr>(ArgAttrs[i]);
+    LockID Lock(GBAttr->getArg());
+    if (!LSet.contains(Lock))
+      S.Diag(Exp->getExprLoc(), diag::warn_variable_requires_lock)
+        << D->getName() << Lock.getName();
+  }
+}
+
+/// \brief For unary operations which read and write a variable, we need to
+/// check whether we hold any required locks. Reads are checked in
+/// VisitCastExpr.
+void BuildLockset::VisitUnaryOperator(UnaryOperator *UO) {
+  switch (UO->getOpcode()) {
+    case clang::UO_PostDec:
+    case clang::UO_PostInc:
+    case clang::UO_PreDec:
+    case clang::UO_PreInc: {
+      Expr *SubExp = UO->getSubExpr()->IgnoreParenCasts();
+      checkAccess(SubExp);
+      checkDereference(SubExp);
+      break;
+    }
+    default:
+      break;
+  }
+}
+
+/// For binary operations which assign to a variable (writes), we need to check
+/// whether we hold any required locks.
+/// FIXME: Deal with non-primitive types.
+void BuildLockset::VisitBinaryOperator(BinaryOperator *BO) {
+  if (!BO->isAssignmentOp())
+    return;
+  Expr *LHSExp = BO->getLHS()->IgnoreParenCasts();
+  checkAccess(LHSExp);
+  checkDereference(LHSExp);
+}
+
+/// Whenever we do an LValue to Rvalue cast, we are reading a variable and
+/// need to ensure we hold any required locks. 
+/// FIXME: Deal with non-primitive types.
+void BuildLockset::VisitCastExpr(CastExpr *CE) {
+  if (CE->getCastKind() != CK_LValueToRValue)
+    return;
+  Expr *SubExp = CE->getSubExpr()->IgnoreParenCasts();
+  checkAccess(SubExp);
+  checkDereference(SubExp);
+}
+
 
 /// \brief When visiting CXXMemberCallExprs we need to examine the attributes on
 /// the method that is being called and add, remove or check locks in the
 /// lockset accordingly.
+/// 
+/// FIXME: For classes annotated with one of the guarded annotations, we need
+/// to treat const method calls as reads and non-const method calls as writes,
+/// and check that the appropriate locks are held. Non-const method calls with 
+/// the same signature as const method calls can be also treated as reads.
 void BuildLockset::VisitCXXMemberCallExpr(CXXMemberCallExpr *Exp) {
   NamedDecl *D = dyn_cast_or_null<NamedDecl>(Exp->getCalleeDecl());
 

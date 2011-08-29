@@ -266,7 +266,6 @@ void aa_fun_bad_3() {
     expected-warning {{lock 'aa_mu' is not released at the end of function 'aa_fun_bad_3'}}
 }
 
-
 //--------------------------------------------------//
 // Regression tests for unusual method names
 //--------------------------------------------------//
@@ -294,4 +293,117 @@ class WeirdMethods {
   }
 };
 
+//-----------------------------------------------//
+// Errors for guarded by or guarded var variables
+// ----------------------------------------------//
+
+int *pgb_gvar __attribute__((pt_guarded_var));
+int *pgb_var __attribute__((pt_guarded_by(sls_mu)));
+
+class PGBFoo {
+ public:
+  int x;
+  int *pgb_field __attribute__((guarded_by(sls_mu2)))
+                 __attribute__((pt_guarded_by(sls_mu)));
+  void testFoo() {
+    pgb_field = &x; // \
+      expected-warning {{accessing variable 'pgb_field' requires lock 'sls_mu2'}}
+    *pgb_field = x; // expected-warning {{accessing variable 'pgb_field' requires lock 'sls_mu2'}} \
+      expected-warning {{accessing the value pointed to by 'pgb_field' requires lock 'sls_mu'}}
+    x = *pgb_field; // expected-warning {{accessing variable 'pgb_field' requires lock 'sls_mu2'}} \
+      expected-warning {{accessing the value pointed to by 'pgb_field' requires lock 'sls_mu'}}
+    (*pgb_field)++; // expected-warning {{accessing variable 'pgb_field' requires lock 'sls_mu2'}} \
+      expected-warning {{accessing the value pointed to by 'pgb_field' requires lock 'sls_mu'}}
+  }
+};
+
+class GBFoo {
+ public:
+  int gb_field __attribute__((guarded_by(sls_mu)));
+
+  void testFoo() {
+    gb_field = 0; // \
+      expected-warning {{accessing variable 'gb_field' requires lock 'sls_mu'}}
+  }
+};
+
+GBFoo GlobalGBFoo __attribute__((guarded_by(sls_mu)));
+
+void gb_fun_0() {
+  sls_mu.Lock();
+  int x = *pgb_var;
+  sls_mu.Unlock();
+}
+
+void gb_fun_1() {
+  sls_mu.Lock();
+  *pgb_var = 2;
+  sls_mu.Unlock();
+}
+
+void gb_fun_2() {
+  int x;
+  pgb_var = &x;
+}
+
+void gb_fun_3() {
+  int *x = pgb_var;
+}
+
+void gb_bad_0() {
+  sls_guard_var = 1; // \
+    expected-warning {{accessing variable 'sls_guard_var' requires some lock}}
+}
+
+void gb_bad_1() {
+  int x = sls_guard_var; // \
+    expected-warning {{accessing variable 'sls_guard_var' requires some lock}}
+}
+
+void gb_bad_2() {
+  sls_guardby_var = 1; // \
+    expected-warning {{accessing variable 'sls_guardby_var' requires lock 'sls_mu'}}
+}
+
+void gb_bad_3() {
+  int x = sls_guardby_var; // \
+    expected-warning {{accessing variable 'sls_guardby_var' requires lock 'sls_mu'}}
+}
+
+void gb_bad_4() {
+  *pgb_gvar = 1; // \
+    expected-warning {{accessing the value pointed to by 'pgb_gvar' requires some lock}}
+}
+
+void gb_bad_5() {
+  int x = *pgb_gvar; // \
+    expected-warning {{accessing the value pointed to by 'pgb_gvar' requires some lock}}
+}
+
+void gb_bad_6() {
+  *pgb_var = 1; // \
+    expected-warning {{accessing the value pointed to by 'pgb_var' requires lock 'sls_mu'}}
+}
+
+void gb_bad_7() {
+  int x = *pgb_var; // \
+    expected-warning {{accessing the value pointed to by 'pgb_var' requires lock 'sls_mu'}}
+}
+
+void gb_bad_8() {
+  GBFoo G;
+  G.gb_field = 0; // \
+    expected-warning {{accessing variable 'gb_field' requires lock 'sls_mu'}}
+}
+
+void gb_bad_9() {
+  sls_guard_var++; // \
+    expected-warning {{accessing variable 'sls_guard_var' requires some lock}}
+  sls_guard_var--; // \
+    expected-warning {{accessing variable 'sls_guard_var' requires some lock}}
+  ++sls_guard_var; // \
+    expected-warning {{accessing variable 'sls_guard_var' requires some lock}}
+  --sls_guard_var; // \
+    expected-warning {{accessing variable 'sls_guard_var' requires some lock}}    
+}
 
