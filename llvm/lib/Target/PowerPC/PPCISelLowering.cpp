@@ -365,6 +365,9 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
     setOperationAction(ISD::BUILD_VECTOR, MVT::v4f32, Custom);
   }
 
+  setOperationAction(ISD::ATOMIC_LOAD,  MVT::i32, Expand);
+  setOperationAction(ISD::ATOMIC_STORE, MVT::i32, Expand);
+
   setBooleanContents(ZeroOrOneBooleanContent);
 
   if (TM.getSubtarget<PPCSubtarget>().isPPC64()) {

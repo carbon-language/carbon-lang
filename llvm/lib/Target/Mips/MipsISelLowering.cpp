@@ -178,6 +178,9 @@ MipsTargetLowering(MipsTargetMachine &TM)
   setOperationAction(ISD::MEMBARRIER,        MVT::Other, Custom);
   setOperationAction(ISD::ATOMIC_FENCE,      MVT::Other, Custom);  
 
+  setOperationAction(ISD::ATOMIC_LOAD,       MVT::i32,    Expand);  
+  setOperationAction(ISD::ATOMIC_STORE,      MVT::i32,    Expand);  
+
   setInsertFencesForAtomic(true);
 
   if (Subtarget->isSingleFloat())
