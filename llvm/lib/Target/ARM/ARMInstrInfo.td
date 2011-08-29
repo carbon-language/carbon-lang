@@ -1507,6 +1507,7 @@ multiclass APreLoad<bits<1> read, bits<1> data, string opc> {
     let Inst{19-16} = shift{16-13}; // Rn
     let Inst{15-12} = 0b1111;
     let Inst{11-0}  = shift{11-0};
+    let Inst{4} = 0;
   }
 }
 
