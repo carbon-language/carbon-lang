@@ -73,7 +73,7 @@ public:
 
   /// isLookupPtrRegClass - Set if this operand is a pointer value and it
   /// requires a callback to look up its register class.
-  bool isLookupPtrRegClass() const { return Flags&(1 <<MCOI::LookupPtrRegClass);}
+  bool isLookupPtrRegClass() const {return Flags&(1 <<MCOI::LookupPtrRegClass);}
 
   /// isPredicate - Set if this is one of the operands that made up of
   /// the predicate operand that controls an isPredicable() instruction.
