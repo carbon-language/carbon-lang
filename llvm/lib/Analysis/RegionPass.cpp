@@ -27,8 +27,8 @@ using namespace llvm;
 
 char RGPassManager::ID = 0;
 
-RGPassManager::RGPassManager(int Depth)
-  : FunctionPass(ID), PMDataManager(Depth) {
+RGPassManager::RGPassManager()
+  : FunctionPass(ID), PMDataManager() {
   skipThisRegion = false;
   redoThisRegion = false;
   RI = NULL;
@@ -250,7 +250,7 @@ void RegionPass::assignPassManager(PMStack &PMS,
     PMDataManager *PMD = PMS.top();
 
     // [1] Create new Region Pass Manager
-    RGPM = new RGPassManager(PMD->getDepth() + 1);
+    RGPM = new RGPassManager();
     RGPM->populateInheritedAnalysis(PMS);
 
     // [2] Set up new manager's top level manager
