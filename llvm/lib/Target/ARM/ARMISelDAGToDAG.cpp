@@ -133,6 +133,8 @@ public:
                              SDValue &Offset, SDValue &Opc);
   bool SelectAddrMode2OffsetImm(SDNode *Op, SDValue N,
                              SDValue &Offset, SDValue &Opc);
+  bool SelectAddrMode2OffsetImmPre(SDNode *Op, SDValue N,
+                             SDValue &Offset, SDValue &Opc);
   bool SelectAddrOffsetNone(SDValue N, SDValue &Base);
   bool SelectAddrMode3(SDValue N, SDValue &Base,
                        SDValue &Offset, SDValue &Opc);
@@ -753,6 +755,19 @@ bool ARMDAGToDAGISel::SelectAddrMode2OffsetReg(SDNode *Op, SDValue N,
   return true;
 }
 
+bool ARMDAGToDAGISel::SelectAddrMode2OffsetImmPre(SDNode *Op, SDValue N,
+                                            SDValue &Offset, SDValue &Opc) {
+  int Val;
+  if (isScaledConstantInRange(N, /*Scale=*/1, 0, 0x1000, Val)) { // 12 bits.
+    Offset = CurDAG->getRegister(0, MVT::i32);
+    Opc = CurDAG->getTargetConstant(Val, MVT::i32);
+    return true;
+  }
+
+  return false;
+}
+
+
 bool ARMDAGToDAGISel::SelectAddrMode2OffsetImm(SDNode *Op, SDValue N,
                                             SDValue &Offset, SDValue &Opc) {
   unsigned Opcode = Op->getOpcode();
@@ -1319,9 +1334,13 @@ SDNode *ARMDAGToDAGISel::SelectARMIndexedLoad(SDNode *N) {
   bool isPre = (AM == ISD::PRE_INC) || (AM == ISD::PRE_DEC);
   unsigned Opcode = 0;
   bool Match = false;
-  if (LoadedVT == MVT::i32 &&
+  if (LoadedVT == MVT::i32 && isPre &&
+      SelectAddrMode2OffsetImmPre(N, LD->getOffset(), Offset, AMOpc)) {
+    Opcode = ARM::LDR_PRE_IMM;
+    Match = true;
+  } else if (LoadedVT == MVT::i32 && !isPre &&
       SelectAddrMode2OffsetImm(N, LD->getOffset(), Offset, AMOpc)) {
-    Opcode = isPre ? ARM::LDR_PRE_IMM : ARM::LDR_POST_IMM;
+    Opcode = ARM::LDR_POST_IMM;
     Match = true;
   } else if (LoadedVT == MVT::i32 &&
       SelectAddrMode2OffsetReg(N, LD->getOffset(), Offset, AMOpc)) {
@@ -1341,9 +1360,14 @@ SDNode *ARMDAGToDAGISel::SelectARMIndexedLoad(SDNode *N) {
         Opcode = isPre ? ARM::LDRSB_PRE : ARM::LDRSB_POST;
       }
     } else {
-      if (SelectAddrMode2OffsetImm(N, LD->getOffset(), Offset, AMOpc)) {
+      if (isPre &&
+          SelectAddrMode2OffsetImmPre(N, LD->getOffset(), Offset, AMOpc)) {
         Match = true;
-        Opcode = isPre ? ARM::LDRB_PRE_IMM : ARM::LDRB_POST_IMM;
+        Opcode = ARM::LDRB_PRE_IMM;
+      } else if (!isPre &&
+                  SelectAddrMode2OffsetImm(N, LD->getOffset(), Offset, AMOpc)) {
+        Match = true;
+        Opcode = ARM::LDRB_POST_IMM;
       } else if (SelectAddrMode2OffsetReg(N, LD->getOffset(), Offset, AMOpc)) {
         Match = true;
         Opcode = isPre ? ARM::LDRB_PRE_REG : ARM::LDRB_POST_REG;
