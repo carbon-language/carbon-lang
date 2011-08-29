@@ -297,7 +297,9 @@ void Sema::ActOnStartOfObjCMethodDef(Scope *FnBodyScope, Decl *D) {
       ObjCShouldCallSuperDealloc = 
         !Context.getLangOptions().ObjCAutoRefCount &&      
         MDecl->getMethodFamily() == OMF_dealloc;
-      ObjCShouldCallSuperFinalize = MDecl->getMethodFamily() == OMF_finalize;
+      ObjCShouldCallSuperFinalize =
+        !Context.getLangOptions().ObjCAutoRefCount &&      
+        MDecl->getMethodFamily() == OMF_finalize;
     }
   }
 }

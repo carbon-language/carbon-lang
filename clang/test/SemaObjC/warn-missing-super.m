@@ -45,6 +45,5 @@
 // CHECK: 2 warnings generated.
 
 // RUN: %clang_cc1 -fsyntax-only -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -fobjc-arc %s 2>&1 | FileCheck --check-prefix=CHECK-ARC %s
-// CHECK-ARC: warn-missing-super.m:25:1: warning: method possibly missing a [super finalize] call
 // CHECK-ARC: warn-missing-super.m:35:4: error: ARC forbids explicit message send of 'dealloc'
-// CHECK-ARC: 1 warning and 1 error generated.
+// CHECK-ARC: 1 error generated.
