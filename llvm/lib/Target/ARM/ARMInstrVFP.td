@@ -513,9 +513,19 @@ def VMOVRRD  : AVConv3I<0b11000101, 0b1011,
 }
 
 def VMOVRRS  : AVConv3I<0b11000101, 0b1010,
-                      (outs GPR:$wb, GPR:$dst2), (ins SPR:$src1, SPR:$src2),
-                 IIC_fpMOVDI, "vmov", "\t$wb, $dst2, $src1, $src2",
+                      (outs GPR:$Rt, GPR:$Rt2), (ins SPR:$src1, SPR:$src2),
+                 IIC_fpMOVDI, "vmov", "\t$Rt, $Rt2, $src1, $src2",
                  [/* For disassembly only; pattern left blank */]> {
+  bits<5> src1;
+  bits<4> Rt;
+  bits<4> Rt2;
+
+  // Encode instruction operands.
+  let Inst{3-0}   = src1{3-0};
+  let Inst{5}     = src1{4};
+  let Inst{15-12} = Rt;
+  let Inst{19-16} = Rt2;
+
   let Inst{7-6} = 0b00;
 
   // Some single precision VFP instructions may be executed on both NEON and VFP
@@ -555,6 +565,17 @@ def VMOVSRR : AVConv5I<0b11000100, 0b1010,
                      (outs SPR:$dst1, SPR:$dst2), (ins GPR:$src1, GPR:$src2),
                 IIC_fpMOVID, "vmov", "\t$dst1, $dst2, $src1, $src2",
                 [/* For disassembly only; pattern left blank */]> {
+  // Instruction operands.
+  bits<5> dst1;
+  bits<4> src1;
+  bits<4> src2;
+
+  // Encode instruction operands.
+  let Inst{3-0}   = dst1{3-0};
+  let Inst{5}     = dst1{4};
+  let Inst{15-12} = src1;
+  let Inst{19-16} = src2;
+
   let Inst{7-6} = 0b00;
 
   // Some single precision VFP instructions may be executed on both NEON and VFP

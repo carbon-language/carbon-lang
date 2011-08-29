@@ -234,3 +234,6 @@
         vcvtr.s32.f32  s0, s1
         vcvtr.u32.f64  s0, d0
         vcvtr.u32.f32  s0, s1
+
+@ CHECK: vmovne	s25, s26, r2, r5
+        vmovne	s25, s26, r2, r5        @ encoding: [0x39,0x2a,0x45,0x1c]
