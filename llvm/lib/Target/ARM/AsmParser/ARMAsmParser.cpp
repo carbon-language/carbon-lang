@@ -717,7 +717,7 @@ public:
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
     int64_t Val = CE->getValue();
-    return Val > -256 && Val < 256;
+    return (Val > -256 && Val < 256) || (Val == INT32_MIN);
   }
 
   bool isMSRMask() const { return Kind == MSRMask; }
@@ -1106,6 +1106,7 @@ public:
     assert(CE && "non-constant post-idx-imm8 operand!");
     int Imm = CE->getValue();
     bool isAdd = Imm >= 0;
+    if (Imm == INT32_MIN) Imm = 0;
     Imm = (Imm < 0 ? -Imm : Imm) | (int)isAdd << 8;
     Inst.addOperand(MCOperand::CreateImm(Imm));
   }
@@ -2746,17 +2747,27 @@ bool ARMAsmParser::parseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
     return parseMemory(Operands);
   case AsmToken::LCurly:
     return parseRegisterList(Operands);
-  case AsmToken::Hash:
+  case AsmToken::Hash: {
     // #42 -> immediate.
     // TODO: ":lower16:" and ":upper16:" modifiers after # before immediate
     S = Parser.getTok().getLoc();
     Parser.Lex();
+    bool isNegative = Parser.getTok().is(AsmToken::Minus);
     const MCExpr *ImmVal;
     if (getParser().ParseExpression(ImmVal))
       return true;
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(ImmVal);
+    if (!CE) {
+      Error(S, "constant expression expected");
+      return MatchOperand_ParseFail;
+    }
+    int32_t Val = CE->getValue();
+    if (isNegative && Val == 0)
+      ImmVal = MCConstantExpr::Create(INT32_MIN, getContext());
     E = SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer() - 1);
     Operands.push_back(ARMOperand::CreateImm(ImmVal, S, E));
     return false;
+  }
   case AsmToken::Colon: {
     // ":lower16:" and ":upper16:" expression prefixes
     // FIXME: Check it's an expression prefix,
