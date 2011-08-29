@@ -68,7 +68,7 @@ namespace X86Local {
     DC = 7, DD = 8, DE = 9, DF = 10,
     XD = 11,  XS = 12,
     T8 = 13,  P_TA = 14,
-    A6 = 15,  A7 = 16
+    A6 = 15,  A7 = 16, TF = 17
   };
 }
 
@@ -257,7 +257,7 @@ RecognizableInstr::RecognizableInstr(DisassemblerTables &tables,
 }
   
 void RecognizableInstr::processInstr(DisassemblerTables &tables,
-                                   const CodeGenInstruction &insn,
+	const CodeGenInstruction &insn,
                                    InstrUID uid)
 {
   // Ignore "asm parser only" instructions.
@@ -805,6 +805,7 @@ void RecognizableInstr::emitDecodePath(DisassemblerTables &tables) const {
     opcodeToSet = Opcode;
     break;
   case X86Local::T8:
+  case X86Local::TF:
     opcodeType = THREEBYTE_38;
     if (needsModRMForDecode(Form))
       filter = new ModFilter(isRegFormat(Form));
