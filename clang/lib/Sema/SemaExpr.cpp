@@ -444,12 +444,16 @@ ExprResult Sema::DefaultArgumentPromotion(Expr *E) {
     E = ImpCastExprToType(E, Context.DoubleTy, CK_FloatingCast).take();
 
   // C++ performs lvalue-to-rvalue conversion as a default argument
-  // promotion.  If we still have a gl-value after usual unary
-  // conversion, we must have an l-value of class type, so we need to
-  // initialize a temporary.  For compatibility reasons, however, we
-  // don't want to do this in unevaluated contexts; otherwise we
-  // reject metaprograms which work by passing uncopyable l-values to
-  // variadic functions.
+  // promotion, even on class types, but note:
+  //   C++11 [conv.lval]p2:
+  //     When an lvalue-to-rvalue conversion occurs in an unevaluated
+  //     operand or a subexpression thereof the value contained in the
+  //     referenced object is not accessed. Otherwise, if the glvalue
+  //     has a class type, the conversion copy-initializes a temporary
+  //     of type T from the glvalue and the result of the conversion
+  //     is a prvalue for the temporary.
+  // FIXME: add some way to gate this entire thing for correctness in
+  // potentially potentially evaluated contexts.
   if (getLangOptions().CPlusPlus && E->isGLValue() && 
       ExprEvalContexts.back().Context != Unevaluated) {
     ExprResult Temp = PerformCopyInitialization(
