@@ -310,3 +310,14 @@ __inline__ static
 const char *__WBASLLevelString(int level) {
   return "foo";
 }
+
+static int *bug10798(int *p, int columns, int prevRow) {
+  int *row = 0;
+  row = p + prevRow * columns;
+  prevRow += 2;
+  do {
+    ++prevRow;
+    row+=columns;
+  } while(10 >= row[1]);
+  return row;
+}

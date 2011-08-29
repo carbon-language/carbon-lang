@@ -203,7 +203,7 @@ static SymbolRef getSymbolForRegion(CheckerContext &C,
     // region, if that is the case, get the underlining region.
     if (const ElementRegion *ER = dyn_cast<ElementRegion>(R)) {
       R = ER->getAsArrayOffset().getRegion();
-      if (!isa<SymbolicRegion>(R))
+      if (!R || !isa<SymbolicRegion>(R))
         return 0;
     } else
       return 0;
