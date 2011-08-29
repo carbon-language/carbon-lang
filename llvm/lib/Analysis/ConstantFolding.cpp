@@ -51,12 +51,6 @@ static Constant *FoldBitCast(Constant *C, Type *DestTy,
   if (C->isAllOnesValue() && !DestTy->isX86_MMXTy())
     return Constant::getAllOnesValue(DestTy);
 
-  // Bitcast of Bitcast can be done using a single cast.
-  ConstantExpr *CE = dyn_cast<ConstantExpr>(C);
-  if (CE && CE->getOpcode() == Instruction::BitCast) {
-    return ConstantExpr::getBitCast(CE->getOperand(0), DestTy);
-  }
-
   // The code below only handles casts to vectors currently.
   VectorType *DestVTy = dyn_cast<VectorType>(DestTy);
   if (DestVTy == 0)

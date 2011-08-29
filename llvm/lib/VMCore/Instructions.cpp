@@ -2059,8 +2059,7 @@ bool CastInst::isNoopCast(Type *IntPtrTy) const {
 /// If no such cast is permited, the function returns 0.
 unsigned CastInst::isEliminableCastPair(
   Instruction::CastOps firstOp, Instruction::CastOps secondOp,
-  Type *SrcTy, Type *MidTy, Type *DstTy, Type *IntPtrTy)
-{
+  Type *SrcTy, Type *MidTy, Type *DstTy, Type *IntPtrTy) {
   // Define the 144 possibilities for these two cast instructions. The values
   // in this matrix determine what to do in a given situation and select the
   // case in the switch below.  The rows correspond to firstOp, the columns 
@@ -2113,12 +2112,16 @@ unsigned CastInst::isEliminableCastPair(
   };
   
   // If either of the casts are a bitcast from scalar to vector, disallow the
-  // merging.
-  if ((firstOp == Instruction::BitCast &&
-       isa<VectorType>(SrcTy) != isa<VectorType>(MidTy)) ||
-      (secondOp == Instruction::BitCast &&
-       isa<VectorType>(MidTy) != isa<VectorType>(DstTy)))
-    return 0; // Disallowed
+  // merging. However, bitcast of A->B->A are allowed.
+  bool isFirstBitcast  = (firstOp == Instruction::BitCast);
+  bool isSecondBitcast = (secondOp == Instruction::BitCast);
+  bool chainedBitcast  = (SrcTy == DstTy && isFirstBitcast && isSecondBitcast);
+
+  // Check if any of the bitcasts convert scalars<->vectors.
+  if ((isFirstBitcast  && isa<VectorType>(SrcTy) != isa<VectorType>(MidTy)) ||
+      (isSecondBitcast && isa<VectorType>(MidTy) != isa<VectorType>(DstTy)))
+    // Unless we are bitcasing to the original type, disallow optimizations.
+    if (!chainedBitcast) return 0;
 
   int ElimCase = CastResults[firstOp-Instruction::CastOpsBegin]
                             [secondOp-Instruction::CastOpsBegin];

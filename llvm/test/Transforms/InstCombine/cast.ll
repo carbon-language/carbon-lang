@@ -632,15 +632,48 @@ entry:
 
 define <4 x float> @test64(<4 x float> %c) nounwind {
   %t0 = bitcast <4 x float> %c to <4 x i32>
-  %t1 = bitcast <4 x i32> %t0 to <2 x double>
-  %t2 = bitcast <2 x double> %t1 to <4 x float>
-  ret <4 x float> %t2
+  %t1 = bitcast <4 x i32> %t0 to <4 x float>
+  ret <4 x float> %t1
 ; CHECK: @test64
 ; CHECK-NEXT: ret <4 x float> %c
+}
+
+define <4 x float> @test65(<4 x float> %c) nounwind {
+  %t0 = bitcast <4 x float> %c to <2 x double>
+  %t1 = bitcast <2 x double> %t0 to <4 x float>
+  ret <4 x float> %t1
+; CHECK: @test65
+; CHECK-NEXT: ret <4 x float> %c
+}
+
+define <2 x float> @test66(<2 x float> %c) nounwind {
+  %t0 = bitcast <2 x float> %c to double
+  %t1 = bitcast double %t0 to <2 x float>
+  ret <2 x float> %t1
+; CHECK: @test66
+; CHECK-NEXT: ret <2 x float> %c
 }
 
 define float @test2c() {
   ret float extractelement (<2 x float> bitcast (double bitcast (<2 x float> <float -1.000000e+00, float -1.000000e+00> to double) to <2 x float>), i32 0)
 ; CHECK: @test2c
 ; CHECK-NOT: extractelement
+}
+
+define i64 @test_mmx(<2 x i32> %c) nounwind {
+  %A = bitcast <2 x i32> %c to x86_mmx
+  %B = bitcast x86_mmx %A to <2 x i32>
+  %C = bitcast <2 x i32> %B to i64
+  ret i64 %C
+; CHECK: @test_mmx
+; CHECK-NOT: x86_mmx
+}
+
+define i64 @test_mmx_const(<2 x i32> %c) nounwind {
+  %A = bitcast <2 x i32> zeroinitializer to x86_mmx
+  %B = bitcast x86_mmx %A to <2 x i32>
+  %C = bitcast <2 x i32> %B to i64
+  ret i64 %C
+; CHECK: @test_mmx_const
+; CHECK-NOT: x86_mmx
 }

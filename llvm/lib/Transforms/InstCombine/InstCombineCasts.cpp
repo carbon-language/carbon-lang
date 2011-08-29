@@ -1659,11 +1659,6 @@ Instruction *InstCombiner::visitBitCast(BitCastInst &CI) {
   if (DestTy == Src->getType())
     return ReplaceInstUsesWith(CI, Src);
 
-  // Bitcasts are transitive.
-  if (BitCastInst* BSrc = dyn_cast<BitCastInst>(Src)) {
-    return CastInst::Create(Instruction::BitCast, BSrc->getOperand(0), DestTy);
-  }
-
   if (PointerType *DstPTy = dyn_cast<PointerType>(DestTy)) {
     PointerType *SrcPTy = cast<PointerType>(SrcTy);
     Type *DstElTy = DstPTy->getElementType();
