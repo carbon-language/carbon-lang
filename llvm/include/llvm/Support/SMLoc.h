@@ -18,19 +18,19 @@
 namespace llvm {
 
 // SMLoc - Represents a location in source code.
-class SMLoc {    
+class SMLoc {
   const char *Ptr;
 public:
   SMLoc() : Ptr(0) {}
   SMLoc(const SMLoc &RHS) : Ptr(RHS.Ptr) {}
-    
+
   bool isValid() const { return Ptr != 0; }
-    
+
   bool operator==(const SMLoc &RHS) const { return RHS.Ptr == Ptr; }
   bool operator!=(const SMLoc &RHS) const { return RHS.Ptr != Ptr; }
-    
+
   const char *getPointer() const { return Ptr; }
-    
+
   static SMLoc getFromPointer(const char *Ptr) {
     SMLoc L;
     L.Ptr = Ptr;
