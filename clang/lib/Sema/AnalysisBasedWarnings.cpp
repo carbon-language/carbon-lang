@@ -622,6 +622,12 @@ public:
   /// \brief Set the bit associated with a particular CFGBlock.
   /// This is the important method for the SetType template parameter.
   bool insert(const CFGBlock *Block) {
+    // Note that insert() is called by po_iterator, which doesn't check to make
+    // sure that Block is non-null.  Moreover, the CFGBlock iterator will
+    // occasionally hand out null pointers for pruned edges, so we catch those
+    // here.
+    if (Block == 0)
+      return false;  // if an edge is trivially false.
     if (VisitedBlockIDs.test(Block->getBlockID()))
       return false;
     VisitedBlockIDs.set(Block->getBlockID());
@@ -629,7 +635,8 @@ public:
   }
 
   /// \brief Check if the bit for a CFGBlock has been already set.
-  /// This mehtod is for tracking visited blocks in the main threadsafety loop.
+  /// This method is for tracking visited blocks in the main threadsafety loop.
+  /// Block must not be null.
   bool alreadySet(const CFGBlock *Block) {
     return VisitedBlockIDs.test(Block->getBlockID());
   }
@@ -855,7 +862,8 @@ void BuildLockset::VisitDeclRefExpr(DeclRefExpr *Exp) {
 /// the method that is being called and add, remove or check locks in the
 /// lockset accordingly.
 void BuildLockset::VisitCXXMemberCallExpr(CXXMemberCallExpr *Exp) {
-  NamedDecl *D = dyn_cast<NamedDecl>(Exp->getCalleeDecl());
+  NamedDecl *D = dyn_cast_or_null<NamedDecl>(Exp->getCalleeDecl());
+
   SourceLocation ExpLocation = Exp->getExprLoc();
   Expr *Parent = Exp->getImplicitObjectArgument();
 
@@ -975,12 +983,19 @@ static Lockset intersectAndWarn(Sema &S, Lockset LSet1, Lockset LSet2,
 
 /// \brief Returns the location of the first Stmt in a Block.
 static SourceLocation getFirstStmtLocation(CFGBlock *Block) {
+  SourceLocation Loc;
   for (CFGBlock::const_iterator BI = Block->begin(), BE = Block->end();
        BI != BE; ++BI) {
-    if (const CFGStmt *CfgStmt = dyn_cast<CFGStmt>(&(*BI)))
-      return CfgStmt->getStmt()->getLocStart();
+    if (const CFGStmt *CfgStmt = dyn_cast<CFGStmt>(&(*BI))) {
+      Loc = CfgStmt->getStmt()->getLocStart();
+      if (Loc.isValid()) return Loc;
+    }
   }
-  return SourceLocation();
+  if (Stmt *S = Block->getTerminator().getStmt()) {
+    Loc = S->getLocStart();
+    if (Loc.isValid()) return Loc;
+  }
+  return Loc;
 }
 
 /// \brief Warn about different locksets along backedges of loops.
@@ -1033,10 +1048,6 @@ static void checkThreadSafety(Sema &S, AnalysisContext &AC) {
   CFG *CFGraph = AC.getCFG();
   if (!CFGraph) return;
 
-  StringRef FunName;
-  if (const NamedDecl *ContextDecl = dyn_cast<NamedDecl>(AC.getDecl()))
-    FunName = ContextDecl->getName();
-
   Lockset::Factory LocksetFactory;
 
   // FIXME: Swith to SmallVector? Otherwise improve performance impact?
@@ -1080,7 +1091,7 @@ static void checkThreadSafety(Sema &S, AnalysisContext &AC) {
          PE  = CurrBlock->pred_end(); PI != PE; ++PI) {
 
       // if *PI -> CurrBlock is a back edge
-      if (!VisitedBlocks.alreadySet(*PI))
+      if (*PI == 0 || !VisitedBlocks.alreadySet(*PI))
         continue;
 
       int PrevBlockID = (*PI)->getBlockID();
@@ -1096,9 +1107,8 @@ static void checkThreadSafety(Sema &S, AnalysisContext &AC) {
     BuildLockset LocksetBuilder(S, Entryset, LocksetFactory);
     for (CFGBlock::const_iterator BI = CurrBlock->begin(),
          BE = CurrBlock->end(); BI != BE; ++BI) {
-      if (const CFGStmt *CfgStmt = dyn_cast<CFGStmt>(&*BI)) {
+      if (const CFGStmt *CfgStmt = dyn_cast<CFGStmt>(&*BI))
         LocksetBuilder.Visit(const_cast<Stmt*>(CfgStmt->getStmt()));
-      }
     }
     Exitset = LocksetBuilder.getLockset();
 
@@ -1110,11 +1120,16 @@ static void checkThreadSafety(Sema &S, AnalysisContext &AC) {
          SE  = CurrBlock->succ_end(); SI != SE; ++SI) {
 
       // if CurrBlock -> *SI is *not* a back edge
-      if (!VisitedBlocks.alreadySet(*SI))
+      if (*SI == 0 || !VisitedBlocks.alreadySet(*SI))
         continue;
 
       CFGBlock *FirstLoopBlock = *SI;
       SourceLocation FirstLoopLocation = getFirstStmtLocation(FirstLoopBlock);
+
+      assert(FirstLoopLocation.isValid());
+      // Fail gracefully in release code.
+      if (!FirstLoopLocation.isValid())
+        continue;
 
       Lockset PreLoop = EntryLocksets[FirstLoopBlock->getBlockID()];
       Lockset LoopEnd = ExitLocksets[CurrBlockID];
@@ -1129,6 +1144,12 @@ static void checkThreadSafety(Sema &S, AnalysisContext &AC) {
          I != E; ++I) {
       const LockID &MissingLock = I.getKey();
       const LockData &MissingLockData = I.getData();
+
+      std::string FunName = "<unknown>";
+      if (const NamedDecl *ContextDecl = dyn_cast<NamedDecl>(AC.getDecl())) {
+        FunName = ContextDecl->getDeclName().getAsString();
+      }
+
       PartialDiagnostic Warning =
         S.PDiag(diag::warn_locks_not_released)
           << MissingLock.getName() << FunName;

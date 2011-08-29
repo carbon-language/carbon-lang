@@ -265,3 +265,33 @@ void aa_fun_bad_3() {
   glock.globalLock(); // \
     expected-warning {{lock 'aa_mu' is not released at the end of function 'aa_fun_bad_3'}}
 }
+
+
+//--------------------------------------------------//
+// Regression tests for unusual method names
+//--------------------------------------------------//
+
+Mutex wmu;
+
+// Test diagnostics for other method names.
+class WeirdMethods {
+  WeirdMethods() {
+    wmu.Lock(); // \
+      expected-warning {{lock 'wmu' is not released at the end of function 'WeirdMethods'}}
+  }
+  ~WeirdMethods() {
+    wmu.Lock(); // \
+      expected-warning {{lock 'wmu' is not released at the end of function '~WeirdMethods'}}
+  }
+  void operator++() {
+    wmu.Lock(); // \
+      expected-warning {{lock 'wmu' is not released at the end of function 'operator++'}}
+  }
+  operator int*() {
+    wmu.Lock(); // \
+      expected-warning {{lock 'wmu' is not released at the end of function 'operator int *'}}
+    return 0;
+  }
+};
+
+

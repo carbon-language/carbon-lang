@@ -1139,3 +1139,61 @@ int slr_function_bad_3() __attribute__((shared_locks_required(muDoublePointer)))
 int slr_function_bad_4() __attribute__((shared_locks_required(umu))); // \
   expected-error {{'shared_locks_required' attribute requires arguments whose type is annotated with 'lockable' attribute}}
 
+
+//-----------------------------------------//
+//  Regression tests for unusual cases.
+//-----------------------------------------//
+
+int trivially_false_edges(bool b) {
+  // Create NULL (never taken) edges in CFG
+  if (false) return 1;
+  else       return 2;
+}
+
+// Possible Clang bug -- method pointer in template parameter
+class UnFoo {
+public:
+  void foo();
+};
+
+template<void (UnFoo::*methptr)()>
+class MCaller {
+public:
+  static void call_method_ptr(UnFoo *f) {
+    // FIXME: Possible Clang bug:
+    // getCalleeDecl() returns NULL in the following case:
+    (f->*methptr)();
+  }
+};
+
+void call_method_ptr_inst(UnFoo* f) {
+  MCaller<&UnFoo::foo>::call_method_ptr(f);
+}
+
+int temp;
+void empty_back_edge() {
+  // Create a back edge to a block with with no statements
+  for (;;) {
+    ++temp;
+    if (temp > 10) break;
+  }
+}
+
+struct Foomger {
+  void operator++();
+};
+
+struct Foomgoper {
+  Foomger f;
+
+  bool done();
+  void invalid_back_edge() {
+    do {
+      // FIXME: Possible Clang bug:
+      // The first statement in this basic block has no source location
+      ++f;
+    } while (!done());
+  }
+};
+
+
