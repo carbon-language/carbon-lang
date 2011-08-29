@@ -160,3 +160,13 @@ void test_template() {
   maybe_shrink_int<15>((int)3);  // expected-note {{in instantiation}}
   maybe_shrink_int<70000>((char)3);  // expected-note {{in instantiation}}
 }
+
+
+// We don't want qualifiers on the types in the diagnostic.
+
+void test_qualifiers(int i) {
+  const int j = i;
+  struct {const unsigned char c;} c1 = {j};  // expected-error {{from type 'int' to 'unsigned char' in}} expected-note {{override}}
+  // Template arguments make it harder to avoid printing qualifiers:
+  Agg<const unsigned char> c2 = {j};  // expected-error {{from type 'int' to 'const unsigned char' in}} expected-note {{override}}
+}

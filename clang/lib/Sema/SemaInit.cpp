@@ -5168,15 +5168,15 @@ static void DiagnoseNarrowingInInitList(
            : diag::warn_init_list_constant_narrowing)
       << InitE->getSourceRange()
       << ConstantValue
-      << EntityType;
+      << EntityType.getLocalUnqualifiedType();
   } else
     S.Diag(InitE->getLocStart(),
            S.getLangOptions().CPlusPlus0x && !S.getLangOptions().Microsoft
            ? diag::err_init_list_variable_narrowing
            : diag::warn_init_list_variable_narrowing)
       << InitE->getSourceRange()
-      << InitE->getType()
-      << EntityType;
+      << InitE->getType().getLocalUnqualifiedType()
+      << EntityType.getLocalUnqualifiedType();
 
   llvm::SmallString<128> StaticCast;
   llvm::raw_svector_ostream OS(StaticCast);
