@@ -1774,8 +1774,8 @@ void PMStack::push(PMDataManager *PM) {
     PM->setDepth(this->top()->getDepth()+1);
   }
   else {
-    assert(PM->getPassManagerType() == PMT_ModulePassManager
-           || PM->getPassManagerType() == PMT_FunctionPassManager
+    assert((PM->getPassManagerType() == PMT_ModulePassManager
+           || PM->getPassManagerType() == PMT_FunctionPassManager)
            && "pushing bad pass manager to PMStack");
     PM->setDepth(1);
   }
