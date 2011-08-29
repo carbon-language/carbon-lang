@@ -942,6 +942,10 @@ MachineInstr::findRegisterDefOperandIdx(unsigned Reg, bool isDead, bool Overlap,
 /// operand list that is used to represent the predicate. It returns -1 if
 /// none is found.
 int MachineInstr::findFirstPredOperandIdx() const {
+  // Don't call MCID.findFirstPredOperandIdx() because this variant
+  // is sometimes called on an instruction that's not yet complete, and
+  // so the number of operands is less than the MCID indicates. In
+  // particular, the PTX target does this.
   const MCInstrDesc &MCID = getDesc();
   if (MCID.isPredicable()) {
     for (unsigned i = 0, e = getNumOperands(); i != e; ++i)

@@ -289,6 +289,18 @@ public:
     return Flags & (1 << MCID::Barrier);
   }
 
+  /// findFirstPredOperandIdx() - Find the index of the first operand in the
+  /// operand list that is used to represent the predicate. It returns -1 if
+  /// none is found.
+  int findFirstPredOperandIdx() const {
+    if (isPredicable()) {
+      for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
+        if (OpInfo[i].isPredicate())
+          return i;
+    }
+    return -1;
+  }
+
   /// isTerminator - Returns true if this instruction part of the terminator for
   /// a basic block.  Typically this is things like return and branch
   /// instructions.

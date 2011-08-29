@@ -44,6 +44,28 @@ class ARMAsmParser : public MCTargetAsmParser {
   MCSubtargetInfo &STI;
   MCAsmParser &Parser;
 
+  struct {
+    ARMCC::CondCodes Cond;    // Condition for IT block.
+    unsigned Mask:4;          // Condition mask for instructions.
+                              // Starting at first 1 (from lsb).
+                              //   '1'  condition as indicated in IT.
+                              //   '0'  inverse of condition (else).
+                              // Count of instructions in IT block is
+                              // 4 - trailingzeroes(mask)
+
+    bool FirstCond;           // Explicit flag for when we're parsing the
+                              // First instruction in the IT block. It's
+                              // implied in the mask, so needs special
+                              // handling.
+
+    unsigned CurPosition;     // Current position in parsing of IT
+                              // block. In range [0,3]. Initialized
+                              // according to count of instructions in block.
+                              // ~0U if no active IT block.
+  } ITState;
+  bool inITBlock() { return ITState.CurPosition != ~0U;}
+
+
   MCAsmParser &getParser() const { return Parser; }
   MCAsmLexer &getLexer() const { return Parser.getLexer(); }
 
@@ -165,6 +187,7 @@ class ARMAsmParser : public MCTargetAsmParser {
 public:
   enum ARMMatchResultTy {
     Match_RequiresITBlock = FIRST_TARGET_MATCH_RESULT_TY,
+    Match_RequiresNotITBlock,
     Match_RequiresV6,
     Match_RequiresThumb2
   };
@@ -175,6 +198,9 @@ public:
 
     // Initialize the set of available features.
     setAvailableFeatures(ComputeAvailableFeatures(STI.getFeatureBits()));
+
+    // Not in an ITBlock to start with.
+    ITState.CurPosition = ~0U;
   }
 
   // Implementation of the MCTargetAsmParser interface:
@@ -3085,18 +3111,23 @@ bool ARMAsmParser::ParseInstruction(StringRef Name, SMLoc NameLoc,
   // where the conditional bit0 is zero, the instruction post-processing
   // will adjust the mask accordingly.
   if (Mnemonic == "it") {
+    SMLoc Loc = SMLoc::getFromPointer(NameLoc.getPointer() + 2);
+    if (ITMask.size() > 3) {
+      Parser.EatToEndOfStatement();
+      return Error(Loc, "too many conditions on IT instruction");
+    }
     unsigned Mask = 8;
     for (unsigned i = ITMask.size(); i != 0; --i) {
       char pos = ITMask[i - 1];
       if (pos != 't' && pos != 'e') {
         Parser.EatToEndOfStatement();
-        return Error(NameLoc, "illegal IT instruction mask '" + ITMask + "'");
+        return Error(Loc, "illegal IT block condition mask '" + ITMask + "'");
       }
       Mask >>= 1;
       if (ITMask[i - 1] == 't')
         Mask |= 8;
     }
-    Operands.push_back(ARMOperand::CreateITMask(Mask, NameLoc));
+    Operands.push_back(ARMOperand::CreateITMask(Mask, Loc));
   }
 
   // FIXME: This is all a pretty gross hack. We should automatically handle
@@ -3128,18 +3159,18 @@ bool ARMAsmParser::ParseInstruction(StringRef Name, SMLoc NameLoc,
   }
 
   // Add the carry setting operand, if necessary.
-  //
-  // FIXME: It would be awesome if we could somehow invent a location such that
-  // match errors on this operand would print a nice diagnostic about how the
-  // 's' character in the mnemonic resulted in a CCOut operand.
-  if (CanAcceptCarrySet)
+  if (CanAcceptCarrySet) {
+    SMLoc Loc = SMLoc::getFromPointer(NameLoc.getPointer() + Mnemonic.size());
     Operands.push_back(ARMOperand::CreateCCOut(CarrySetting ? ARM::CPSR : 0,
-                                               NameLoc));
+                                               Loc));
+  }
 
   // Add the predication code operand, if necessary.
   if (CanAcceptPredicationCode) {
+    SMLoc Loc = SMLoc::getFromPointer(NameLoc.getPointer() + Mnemonic.size() +
+                                      CarrySetting);
     Operands.push_back(ARMOperand::CreateCondCode(
-                         ARMCC::CondCodes(PredicationCode), NameLoc));
+                         ARMCC::CondCodes(PredicationCode), Loc));
   }
 
   // Add the processor imod operand, if necessary.
@@ -3261,10 +3292,57 @@ static bool checkLowRegisterList(MCInst Inst, unsigned OpNo, unsigned Reg,
   return false;
 }
 
+// FIXME: We would really prefer to have MCInstrInfo (the wrapper around
+// the ARMInsts array) instead. Getting that here requires awkward
+// API changes, though. Better way?
+namespace llvm {
+extern MCInstrDesc ARMInsts[];
+}
+static MCInstrDesc &getInstDesc(unsigned Opcode) {
+  return ARMInsts[Opcode];
+}
+
 // FIXME: We would really like to be able to tablegen'erate this.
 bool ARMAsmParser::
 validateInstruction(MCInst &Inst,
                     const SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+  MCInstrDesc &MCID = getInstDesc(Inst.getOpcode());
+  SMLoc Loc = Operands[0]->getStartLoc();
+  // Check the IT block state first.
+  if (inITBlock()) {
+    unsigned bit = 1;
+    if (ITState.FirstCond)
+      ITState.FirstCond = false;
+    else
+      bit = (ITState.Mask >> (4 - ITState.CurPosition)) & 1;
+    // Increment our position in the IT block first thing, as we want to
+    // move forward even if we find an error in the IT block.
+    unsigned TZ = CountTrailingZeros_32(ITState.Mask);
+    if (++ITState.CurPosition == 4 - TZ)
+      ITState.CurPosition = ~0U; // Done with the IT block after this.
+    // The instruction must be predicable.
+    if (!MCID.isPredicable())
+      return Error(Loc, "instructions in IT block must be predicable");
+    unsigned Cond = Inst.getOperand(MCID.findFirstPredOperandIdx()).getImm();
+    unsigned ITCond = bit ? ITState.Cond :
+      ARMCC::getOppositeCondition(ITState.Cond);
+    if (Cond != ITCond) {
+      // Find the condition code Operand to get its SMLoc information.
+      SMLoc CondLoc;
+      for (unsigned i = 1; i < Operands.size(); ++i)
+        if (static_cast<ARMOperand*>(Operands[i])->isCondCode())
+          CondLoc = Operands[i]->getStartLoc();
+      return Error(CondLoc, "incorrect condition in IT block; got '" +
+                   StringRef(ARMCondCodeToString(ARMCC::CondCodes(Cond))) +
+                   "', but expected '" +
+                   ARMCondCodeToString(ARMCC::CondCodes(ITCond)) + "'");
+    }
+    // Check for non-'al' condition codes outside of the IT block.
+  } else if (isThumbTwo() && MCID.isPredicable() &&
+             Inst.getOperand(MCID.findFirstPredOperandIdx()).getImm() !=
+             ARMCC::AL)
+    return Error(Loc, "predicated instructions must be in IT block");
+
   switch (Inst.getOpcode()) {
   case ARM::LDRD:
   case ARM::LDRD_PRE:
@@ -3413,27 +3491,26 @@ processInstruction(MCInst &Inst,
     // so mask that in if needed
     MCOperand &MO = Inst.getOperand(1);
     unsigned Mask = MO.getImm();
+    unsigned OrigMask = Mask;
+    unsigned TZ = CountTrailingZeros_32(Mask);
     if ((Inst.getOperand(0).getImm() & 1) == 0) {
-      unsigned TZ = CountTrailingZeros_32(Mask);
       assert(Mask && TZ <= 3 && "illegal IT mask value!");
       for (unsigned i = 3; i != TZ; --i)
         Mask ^= 1 << i;
     } else
       Mask |= 0x10;
     MO.setImm(Mask);
+
+    // Set up the IT block state according to the IT instruction we just
+    // matched.
+    assert(!inITBlock() && "nested IT blocks?!");
+    ITState.Cond = ARMCC::CondCodes(Inst.getOperand(0).getImm());
+    ITState.Mask = OrigMask; // Use the original mask, not the updated one.
+    ITState.CurPosition = 0;
+    ITState.FirstCond = true;
     break;
   }
   }
-}
-
-// FIXME: We would really prefer to have MCInstrInfo (the wrapper around
-// the ARMInsts array) instead. Getting that here requires awkward
-// API changes, though. Better way?
-namespace llvm {
-extern MCInstrDesc ARMInsts[];
-}
-static MCInstrDesc &getInstDesc(unsigned Opcode) {
-  return ARMInsts[Opcode];
 }
 
 unsigned ARMAsmParser::checkTargetMatchPredicate(MCInst &Inst) {
@@ -3457,10 +3534,12 @@ unsigned ARMAsmParser::checkTargetMatchPredicate(MCInst &Inst) {
       return Match_MnemonicFail;
     // If we're parsing Thumb2, which form is legal depends on whether we're
     // in an IT block.
-    // FIXME: We don't yet do IT blocks, so just always consider it to be
-    // that we aren't in one until we do.
-    if (isThumbTwo() && Inst.getOperand(OpNo).getReg() != ARM::CPSR)
+    if (isThumbTwo() && Inst.getOperand(OpNo).getReg() != ARM::CPSR &&
+        !inITBlock())
       return Match_RequiresITBlock;
+    if (isThumbTwo() && Inst.getOperand(OpNo).getReg() == ARM::CPSR &&
+        inITBlock())
+      return Match_RequiresNotITBlock;
   }
   // Some high-register supporting Thumb1 encodings only allow both registers
   // to be from r0-r7 when in Thumb2.
@@ -3518,6 +3597,8 @@ MatchAndEmitInstruction(SMLoc IDLoc,
   case Match_ConversionFail:
     // The converter function will have already emited a diagnostic.
     return true;
+  case Match_RequiresNotITBlock:
+    return Error(IDLoc, "flag setting instruction only valid outside IT block");
   case Match_RequiresITBlock:
     return Error(IDLoc, "instruction only valid inside IT block");
   case Match_RequiresV6:
