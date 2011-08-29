@@ -280,7 +280,7 @@ def Most : DiagGroup<"most", [
  ]>;
 
 // Thread Safety warnings 
-def : DiagGroup<"thread-safety">;
+def ThreadSafety : DiagGroup<"thread-safety">;
 
 // -Wall is -Wmost -Wparentheses -Wtop-level-comparison
 def : DiagGroup<"all", [Most, Parentheses]>;

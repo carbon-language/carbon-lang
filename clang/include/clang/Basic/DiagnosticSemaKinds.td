@@ -1388,34 +1388,34 @@ def err_attribute_decl_not_lockable : Error<
   "with 'lockable' attribute">;
 def warn_unlock_but_no_acquire : Warning<
   "unlocking '%0' that was not acquired">,
-  InGroup<DiagGroup<"thread-safety">>, DefaultIgnore;
+  InGroup<ThreadSafety>, DefaultIgnore;
 def warn_double_lock : Warning<
   "locking '%0' that is already acquired">,
-  InGroup<DiagGroup<"thread-safety">>, DefaultIgnore;
+  InGroup<ThreadSafety>, DefaultIgnore;
 def warn_function_requires_lock : Warning<
   "calling function '%0' requires lock '%0'">,
-  InGroup<DiagGroup<"thread-safety">>, DefaultIgnore;
+  InGroup<ThreadSafety>, DefaultIgnore;
 def warn_locks_not_released : Warning<
   "lock '%0' is not released at the end of function '%1'">,
-  InGroup<DiagGroup<"thread-safety">>, DefaultIgnore;
+  InGroup<ThreadSafety>, DefaultIgnore;
 def warn_lock_not_released_in_scope : Warning<
   "lock '%0' is not released at the end of its scope">,
-  InGroup<DiagGroup<"thread-safety">>, DefaultIgnore;
+  InGroup<ThreadSafety>, DefaultIgnore;
 def warn_expecting_lock_held_on_loop : Warning<
   "expecting lock '%0' to be held at start of each loop">,
-  InGroup<DiagGroup<"thread-safety">>, DefaultIgnore;
+  InGroup<ThreadSafety>, DefaultIgnore;
 def warn_variable_requires_lock : Warning<
   "accessing variable '%0' requires lock '%1'">,
-  InGroup<DiagGroup<"thread-safety">>, DefaultIgnore;
+  InGroup<ThreadSafety>, DefaultIgnore;
 def warn_variable_requires_any_lock : Warning<
   "accessing variable '%0' requires some lock">,
-  InGroup<DiagGroup<"thread-safety">>, DefaultIgnore;
+  InGroup<ThreadSafety>, DefaultIgnore;
 def warn_var_deref_requires_lock : Warning<
   "accessing the value pointed to by '%0' requires lock '%1'">,
-  InGroup<DiagGroup<"thread-safety">>, DefaultIgnore;
+  InGroup<ThreadSafety>, DefaultIgnore;
 def warn_var_deref_requires_any_lock : Warning<
   "accessing the value pointed to by '%0' requires some lock">,
-  InGroup<DiagGroup<"thread-safety">>, DefaultIgnore;
+  InGroup<ThreadSafety>, DefaultIgnore;
 
 
 def warn_impcast_vector_scalar : Warning<
