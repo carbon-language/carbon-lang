@@ -351,6 +351,12 @@ _mm_ucomigt_sd(__m128d a, __m128d b)
 }
 
 static __inline__ int __attribute__((__always_inline__, __nodebug__))
+_mm_ucomige_sd(__m128d a, __m128d b)
+{
+  return __builtin_ia32_ucomisdge(a, b);
+}
+
+static __inline__ int __attribute__((__always_inline__, __nodebug__))
 _mm_ucomineq_sd(__m128d a, __m128d b)
 {
   return __builtin_ia32_ucomisdneq(a, b);
