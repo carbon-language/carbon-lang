@@ -432,8 +432,10 @@ EncodeAddrModeOpValues(const MCInst &MI, unsigned OpIdx, unsigned &Reg,
   bool isAdd = true;
 
   // Special value for #-0
-  if (SImm == INT32_MIN)
+  if (SImm == INT32_MIN) {
     SImm = 0;
+    isAdd = false;
+  }
 
   // Immediate is always encoded as positive. The 'U' bit controls add vs sub.
   if (SImm < 0) {

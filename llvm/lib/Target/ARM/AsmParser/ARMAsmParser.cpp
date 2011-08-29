@@ -638,7 +638,8 @@ public:
     // Immediate offset in range [-1020, 1020] and a multiple of 4.
     if (!Mem.OffsetImm) return true;
     int64_t Val = Mem.OffsetImm->getValue();
-    return Val >= -1020 && Val <= 1020 && ((Val & 3) == 0);
+    return (Val >= -1020 && Val <= 1020 && ((Val & 3) == 0)) ||
+           Val == INT32_MIN;
   }
   bool isMemRegOffset() const {
     if (Kind != Memory || !Mem.OffsetRegNum)
@@ -709,7 +710,7 @@ public:
     // Immediate offset in range [-4095, 4095].
     if (!Mem.OffsetImm) return true;
     int64_t Val = Mem.OffsetImm->getValue();
-    return Val > -4096 && Val < 4096;
+    return (Val > -4096 && Val < 4096) || (Val == INT32_MIN);
   }
   bool isPostIdxImm8() const {
     if (Kind != Immediate)
@@ -2565,8 +2566,7 @@ parseMemory(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
     Parser.Lex(); // Eat the '#'.
     E = Parser.getTok().getLoc();
 
-    // FIXME: Special case #-0 so we can correctly set the U bit.
-
+    bool isNegative = getParser().getTok().is(AsmToken::Minus);
     const MCExpr *Offset;
     if (getParser().ParseExpression(Offset))
      return true;
@@ -2577,6 +2577,11 @@ parseMemory(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Offset);
     if (!CE)
       return Error (E, "constant expression expected");
+
+    // If the constant was #-0, represent it as INT32_MIN.
+    int32_t Val = CE->getValue();
+    if (isNegative && Val == 0)
+      CE = MCConstantExpr::Create(INT32_MIN, getContext());
 
     // Now we should have the closing ']'
     E = Parser.getTok().getLoc();

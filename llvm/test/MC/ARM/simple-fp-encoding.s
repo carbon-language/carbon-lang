@@ -2,7 +2,7 @@
 
 @ CHECK: vadd.f64 d16, d17, d16      @ encoding: [0xa0,0x0b,0x71,0xee]
         vadd.f64        d16, d17, d16
-        
+
 @ CHECK: vadd.f32 s0, s1, s0         @ encoding: [0x80,0x0a,0x30,0xee]
         vadd.f32        s0, s1, s0
 
@@ -47,7 +47,7 @@
 
 @ CHECK: vabs.f32 s0, s0             @ encoding: [0xc0,0x0a,0xb0,0xee]
         vabs.f32        s0, s0
-        
+
 @ CHECK: vcvt.f32.f64 s0, d16        @ encoding: [0xe0,0x0b,0xb7,0xee]
         vcvt.f32.f64    s0, d16
 
@@ -116,7 +116,7 @@
 
 @ FIXME: vmrs apsr_nzcv, fpscr       @ encoding: [0x10,0xfa,0xf1,0xee]
 @        vmrs    apsr_nzcv, fpscr
-        
+
 @ CHECK: vnegne.f64 d16, d16         @ encoding: [0x60,0x0b,0xf1,0x1e]
         vnegne.f64      d16, d16
 
@@ -173,13 +173,13 @@
 @ CHECK: vldr.64 d1, [r2, #-32]      @ encoding: [0x08,0x1b,0x12,0xed]
         vldr.64	d1, [r2, #32]
         vldr.64	d1, [r2, #-32]
-        
+
 @ CHECK: vldr.64 d2, [r3]            @ encoding: [0x00,0x2b,0x93,0xed]
         vldr.64 d2, [r3]
 
 @ CHECK: vldr.64 d3, [pc]            @ encoding: [0x00,0x3b,0x9f,0xed]
 @ CHECK: vldr.64 d3, [pc]            @ encoding: [0x00,0x3b,0x9f,0xed]
-@ CHECK: vldr.64 d3, [pc]            @ encoding: [0x00,0x3b,0x9f,0xed]
+@ CHECK: vldr.64 d3, [pc, #-0]            @ encoding: [0x00,0x3b,0x1f,0xed]
         vldr.64 d3, [pc]
         vldr.64 d3, [pc,#0]
         vldr.64 d3, [pc,#-0]
@@ -191,13 +191,13 @@
 @ CHECK: vldr.32 s1, [r2, #-32]      @ encoding: [0x08,0x0a,0x52,0xed]
         vldr.32	s1, [r2, #32]
         vldr.32	s1, [r2, #-32]
-        
+
 @ CHECK: vldr.32 s2, [r3]            @ encoding: [0x00,0x1a,0x93,0xed]
         vldr.32 s2, [r3]
 
 @ CHECK: vldr.32 s5, [pc]            @ encoding: [0x00,0x2a,0xdf,0xed]
 @ CHECK: vldr.32 s5, [pc]            @ encoding: [0x00,0x2a,0xdf,0xed]
-@ CHECK: vldr.32 s5, [pc]            @ encoding: [0x00,0x2a,0xdf,0xed]
+@ CHECK: vldr.32 s5, [pc, #-0]            @ encoding: [0x00,0x2a,0x5f,0xed]
         vldr.32 s5, [pc]
         vldr.32 s5, [pc,#0]
         vldr.32 s5, [pc,#-0]
