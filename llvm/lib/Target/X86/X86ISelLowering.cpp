@@ -7713,6 +7713,9 @@ SDValue X86TargetLowering::LowerUINT_TO_FP_i32(SDValue Op,
   SDValue Load = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, MVT::v4i32,
                              Op.getOperand(0));
 
+  // Zero out the upper parts of the register.
+  Load = getShuffleVectorZeroOrUndef(Load, 0, true, Subtarget->hasSSE2(), DAG);
+
   Load = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::f64,
                      DAG.getNode(ISD::BITCAST, dl, MVT::v2f64, Load),
                      DAG.getIntPtrConstant(0));
