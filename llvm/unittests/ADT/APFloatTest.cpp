@@ -34,11 +34,13 @@ static std::string convertToString(double d, unsigned Prec, unsigned Pad) {
 namespace {
 
 TEST(APFloatTest, Zero) {
-  EXPECT_EQ(0.0f,  APFloat(APFloat::IEEEsingle,  0.0f).convertToFloat());
-  EXPECT_EQ(-0.0f, APFloat(APFloat::IEEEsingle, -0.0f).convertToFloat());
+  EXPECT_EQ(0.0f,  APFloat(0.0f).convertToFloat());
+  EXPECT_EQ(-0.0f, APFloat(-0.0f).convertToFloat());
+  EXPECT_TRUE(APFloat(-0.0f).isNegative());
 
-  EXPECT_EQ(0.0,  APFloat(APFloat::IEEEdouble,  0.0).convertToDouble());
-  EXPECT_EQ(-0.0, APFloat(APFloat::IEEEdouble, -0.0).convertToDouble());
+  EXPECT_EQ(0.0,  APFloat(0.0).convertToDouble());
+  EXPECT_EQ(-0.0, APFloat(-0.0).convertToDouble());
+  EXPECT_TRUE(APFloat(-0.0).isNegative());
 }
 
 TEST(APFloatTest, fromZeroDecimalString) {
