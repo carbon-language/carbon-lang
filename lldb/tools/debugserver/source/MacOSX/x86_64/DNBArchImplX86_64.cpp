@@ -447,6 +447,24 @@ DNBArchImplX86_64::SetEXCState()
     return m_state.GetError(e_regSetEXC, Write);
 }
 
+kern_return_t
+DNBArchImplX86_64::GetDBGState(bool force)
+{
+    if (force || m_state.GetError(e_regSetDBG, Read))
+    {
+        mach_msg_type_number_t count = e_regSetWordSizeDBG;
+        m_state.SetError(e_regSetDBG, Read, ::thread_get_state(m_thread->ThreadID(), __x86_64_DEBUG_STATE, (thread_state_t)&m_state.context.dbg, &count));
+    }
+    return m_state.GetError(e_regSetDBG, Read);
+}
+
+kern_return_t
+DNBArchImplX86_64::SetDBGState()
+{
+    m_state.SetError(e_regSetDBG, Write, ::thread_set_state(m_thread->ThreadID(), __x86_64_DEBUG_STATE, (thread_state_t)&m_state.context.dbg, e_regSetWordSizeDBG));
+    return m_state.GetError(e_regSetDBG, Write);
+}
+
 void
 DNBArchImplX86_64::ThreadWillResume()
 {

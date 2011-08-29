@@ -19,6 +19,7 @@
 #define __i386_THREAD_STATE         1
 #define __i386_FLOAT_STATE          2
 #define __i386_EXCEPTION_STATE      3
+#define __i386_DEBUG_STATE          10
 #define __i386_AVX_STATE            16
 
 typedef struct {
@@ -164,5 +165,16 @@ typedef struct {
     uint32_t    __err;
     uint32_t    __faultvaddr;
 } __i386_exception_state_t;
+
+typedef struct {
+	uint32_t	__dr0;
+	uint32_t	__dr1;
+	uint32_t	__dr2;
+	uint32_t	__dr3;
+	uint32_t	__dr4;
+	uint32_t	__dr5;
+	uint32_t	__dr6;
+	uint32_t	__dr7;
+} __i386_debug_state_t;
 
 #endif

@@ -19,6 +19,7 @@
 #define __x86_64_THREAD_STATE       4
 #define __x86_64_FLOAT_STATE        5
 #define __x86_64_EXCEPTION_STATE    6
+#define __x86_64_DEBUG_STATE        11
 #define __x86_64_AVX_STATE          17
 
 typedef struct {
@@ -193,5 +194,17 @@ typedef struct {
     uint32_t    __err;
     uint64_t    __faultvaddr;
 } __x86_64_exception_state_t;
+
+
+typedef struct {
+	uint64_t	__dr0;
+	uint64_t	__dr1;
+	uint64_t	__dr2;
+	uint64_t	__dr3;
+	uint64_t	__dr4;
+	uint64_t	__dr5;
+	uint64_t	__dr6;
+	uint64_t	__dr7;
+} __x86_64_debug_state_t;
 
 #endif
