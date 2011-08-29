@@ -119,8 +119,41 @@ multiclass sse12_fp_packed_int<bits<8> opc, string OpcodeStr, RegisterClass RC,
 //  Non-instruction patterns
 //===----------------------------------------------------------------------===//
 
+// A vector extract of the first f32 position is a subregister copy
 def : Pat<(f32 (vector_extract (v4f32 VR128:$src), (iPTR 0))),
           (f32 (EXTRACT_SUBREG (v4f32 VR128:$src), sub_ss))>;
+
+// A 128-bit subvector extract from the first 256-bit vector position
+// is a subregister copy that needs no instruction.
+def : Pat<(v4i32 (extract_subvector (v8i32 VR256:$src), (i32 0))),
+          (v4i32 (EXTRACT_SUBREG (v8i32 VR256:$src), sub_xmm))>;
+def : Pat<(v4f32 (extract_subvector (v8f32 VR256:$src), (i32 0))),
+          (v4f32 (EXTRACT_SUBREG (v8f32 VR256:$src), sub_xmm))>;
+
+def : Pat<(v2i64 (extract_subvector (v4i64 VR256:$src), (i32 0))),
+          (v2i64 (EXTRACT_SUBREG (v4i64 VR256:$src), sub_xmm))>;
+def : Pat<(v2f64 (extract_subvector (v4f64 VR256:$src), (i32 0))),
+          (v2f64 (EXTRACT_SUBREG (v4f64 VR256:$src), sub_xmm))>;
+
+def : Pat<(v8i16 (extract_subvector (v16i16 VR256:$src), (i32 0))),
+          (v8i16 (EXTRACT_SUBREG (v16i16 VR256:$src), sub_xmm))>;
+def : Pat<(v16i8 (extract_subvector (v32i8 VR256:$src), (i32 0))),
+          (v16i8 (EXTRACT_SUBREG (v32i8 VR256:$src), sub_xmm))>;
+
+// A 128-bit subvector insert to the first 256-bit vector position
+// is a subregister copy that needs no instruction.
+def : Pat<(insert_subvector undef, (v2i64 VR128:$src), (i32 0)),
+          (INSERT_SUBREG (v4i64 (IMPLICIT_DEF)), VR128:$src, sub_xmm)>;
+def : Pat<(insert_subvector undef, (v2f64 VR128:$src), (i32 0)),
+          (INSERT_SUBREG (v4f64 (IMPLICIT_DEF)), VR128:$src, sub_xmm)>;
+def : Pat<(insert_subvector undef, (v4i32 VR128:$src), (i32 0)),
+          (INSERT_SUBREG (v8i32 (IMPLICIT_DEF)), VR128:$src, sub_xmm)>;
+def : Pat<(insert_subvector undef, (v4f32 VR128:$src), (i32 0)),
+          (INSERT_SUBREG (v8f32 (IMPLICIT_DEF)), VR128:$src, sub_xmm)>;
+def : Pat<(insert_subvector undef, (v8i16 VR128:$src), (i32 0)),
+          (INSERT_SUBREG (v16i16 (IMPLICIT_DEF)), VR128:$src, sub_xmm)>;
+def : Pat<(insert_subvector undef, (v16i8 VR128:$src), (i32 0)),
+          (INSERT_SUBREG (v32i8 (IMPLICIT_DEF)), VR128:$src, sub_xmm)>;
 
 // Implicitly promote a 32-bit scalar to a vector.
 def : Pat<(v4f32 (scalar_to_vector FR32:$src)),
@@ -5951,20 +5984,6 @@ def : Pat<(vinsertf128_insert:$ins (v16i16 VR256:$src1), (v8i16 VR128:$src2),
           (VINSERTF128rr VR256:$src1, VR128:$src2,
                          (INSERT_get_vinsertf128_imm VR256:$ins))>;
 
-// Special COPY patterns
-def : Pat<(insert_subvector undef, (v2i64 VR128:$src), (i32 0)),
-          (INSERT_SUBREG (v4i64 (IMPLICIT_DEF)), VR128:$src, sub_xmm)>;
-def : Pat<(insert_subvector undef, (v2f64 VR128:$src), (i32 0)),
-          (INSERT_SUBREG (v4f64 (IMPLICIT_DEF)), VR128:$src, sub_xmm)>;
-def : Pat<(insert_subvector undef, (v4i32 VR128:$src), (i32 0)),
-          (INSERT_SUBREG (v8i32 (IMPLICIT_DEF)), VR128:$src, sub_xmm)>;
-def : Pat<(insert_subvector undef, (v4f32 VR128:$src), (i32 0)),
-          (INSERT_SUBREG (v8f32 (IMPLICIT_DEF)), VR128:$src, sub_xmm)>;
-def : Pat<(insert_subvector undef, (v8i16 VR128:$src), (i32 0)),
-          (INSERT_SUBREG (v16i16 (IMPLICIT_DEF)), VR128:$src, sub_xmm)>;
-def : Pat<(insert_subvector undef, (v16i8 VR128:$src), (i32 0)),
-          (INSERT_SUBREG (v32i8 (IMPLICIT_DEF)), VR128:$src, sub_xmm)>;
-
 //===----------------------------------------------------------------------===//
 // VEXTRACTF128 - Extract packed floating-point values
 //
@@ -6008,23 +6027,6 @@ def : Pat<(vextractf128_extract:$ext VR256:$src1, (i32 imm)),
           (v16i8 (VEXTRACTF128rr
                     (v32i8 VR256:$src1),
                     (EXTRACT_get_vextractf128_imm VR128:$ext)))>;
-
-// Special COPY patterns
-def : Pat<(v4i32 (extract_subvector (v8i32 VR256:$src), (i32 0))),
-          (v4i32 (EXTRACT_SUBREG (v8i32 VR256:$src), sub_xmm))>;
-def : Pat<(v4f32 (extract_subvector (v8f32 VR256:$src), (i32 0))),
-          (v4f32 (EXTRACT_SUBREG (v8f32 VR256:$src), sub_xmm))>;
-
-def : Pat<(v2i64 (extract_subvector (v4i64 VR256:$src), (i32 0))),
-          (v2i64 (EXTRACT_SUBREG (v4i64 VR256:$src), sub_xmm))>;
-def : Pat<(v2f64 (extract_subvector (v4f64 VR256:$src), (i32 0))),
-          (v2f64 (EXTRACT_SUBREG (v4f64 VR256:$src), sub_xmm))>;
-
-def : Pat<(v8i16 (extract_subvector (v16i16 VR256:$src), (i32 0))),
-          (v8i16 (EXTRACT_SUBREG (v16i16 VR256:$src), sub_xmm))>;
-def : Pat<(v16i8 (extract_subvector (v32i8 VR256:$src), (i32 0))),
-          (v16i8 (EXTRACT_SUBREG (v32i8 VR256:$src), sub_xmm))>;
-
 
 //===----------------------------------------------------------------------===//
 // VMASKMOV - Conditional SIMD Packed Loads and Stores
