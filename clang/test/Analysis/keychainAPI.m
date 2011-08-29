@@ -304,3 +304,9 @@ void DellocWithCFStringCreate4(CFAllocatorRef alloc) {
     CFRelease(userStr);
   }
 }
+
+//Example from bug 10797.
+__inline__ static
+const char *__WBASLLevelString(int level) {
+  return "foo";
+}
