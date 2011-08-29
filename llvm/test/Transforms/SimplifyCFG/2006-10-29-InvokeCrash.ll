@@ -275,12 +275,16 @@ invcont153:		; preds = %invcont151
 	invoke void @_ZN12QFontMetricsD1Ev( %struct.QFontMetrics* %tmp.upgrd.2 )
 			to label %cleanup171 unwind label %cleanup173
 cleanup168:		; preds = %invcont151, %invcont148, %invcont146
+        %val168 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+                    cleanup
 	invoke void @_ZN12QFontMetricsD1Ev( %struct.QFontMetrics* %tmp.upgrd.2 )
 			to label %cleanup173 unwind label %cleanup173
 cleanup171:		; preds = %invcont153
 	invoke void @_ZN5QFontD1Ev( %struct.QFont* %tmp.upgrd.3 )
 			to label %finally170 unwind label %cleanup192
 cleanup173:		; preds = %cleanup168, %cleanup168, %invcont153, %invcont144
+        %val173 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+                    cleanup
 	invoke void @_ZN5QFontD1Ev( %struct.QFont* %tmp.upgrd.3 )
 			to label %cleanup192 unwind label %cleanup192
 finally170:		; preds = %cleanup171
@@ -300,12 +304,16 @@ cleanup185:		; preds = %invcont181
 	invoke void @_ZN5QFontD1Ev( %struct.QFont* %font )
 			to label %cleanup190 unwind label %cleanup192
 cleanup187:		; preds = %invcont181, %invcont179, %invcont177
+        %val187 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+                    cleanup
 	invoke void @_ZN5QFontD1Ev( %struct.QFont* %font )
 			to label %cleanup192 unwind label %cleanup192
 cleanup190:		; preds = %cleanup185
 	invoke void @_ZN16QTextFrameFormatD1Ev( %struct.QTextBlockFormat* %fmt )
 			to label %cond_next194 unwind label %cleanup329
 cleanup192:		; preds = %cleanup187, %cleanup187, %cleanup185, %finally170, %cleanup173, %cleanup173, %cleanup171, %invcont141, %invcont124, %invcont122, %invcont120, %invcont118, %invcont117, %invcont114, %invcont111
+        %val192 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+                    cleanup
 	invoke void @_ZN16QTextFrameFormatD1Ev( %struct.QTextBlockFormat* %fmt )
 			to label %cleanup329 unwind label %cleanup329
 cond_next194:		; preds = %cleanup190, %invcont83
@@ -450,6 +458,8 @@ cleanup328:		; preds = %invcont
 	call void @_ZN8QPainterD1Ev( %struct.QPainter* %p )
 	ret void
 cleanup329:		; preds = %cond_true319, %cond_true302, %cond_next293, %cond_true277, %cond_true266, %cond_next258, %cond_next244, %cond_next225, %cond_true220, %invcont210, %cond_next208, %cond_false204, %cond_true200, %cond_next194, %cleanup192, %cleanup192, %cleanup190, %invcont106, %invcont104, %invcont103, %invcont100, %invcont98, %invcont94, %cond_false, %invcont83, %invcont79, %invcont57, %invcont51, %invcont45, %cond_next42, %invcont37, %cond_true35, %invcont29, %invcont25, %cond_true24, %cond_next, %entry
+        %val = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+                 cleanup
 	call void @_ZN8QPainterD1Ev( %struct.QPainter* %p )
 	unwind
 }
@@ -553,3 +563,5 @@ declare i32 @_ZNK8QPrinter12printerStateEv(%struct.QPrinter*)
 declare i1 @_ZN8QPrinter7newPageEv(%struct.QPrinter*)
 
 declare void @_ZN8QPainterD1Ev(%struct.QPainter*)
+
+declare i32 @__gxx_personality_v0(...)
