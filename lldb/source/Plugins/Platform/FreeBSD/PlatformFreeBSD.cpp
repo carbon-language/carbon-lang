@@ -32,19 +32,34 @@ using namespace lldb_private;
 Platform *
 PlatformFreeBSD::CreateInstance ()
 {
-    return new PlatformFreeBSD();
+    // The only time we create an instance is when we are creating a remote
+    // freebsd platform
+    const bool is_host = false;
+    return new PlatformFreeBSD (is_host);
 }
 
 const char *
 PlatformFreeBSD::GetPluginNameStatic()
 {
-    return "plugin.platform.FreeBSD";
+    return "PlatformFreeBSD";
 }
 
 const char *
-PlatformFreeBSD::GetPluginDescriptionStatic()
+PlatformFreeBSD::GetShortPluginNameStatic (bool is_host)
 {
-    return "Default platform plugin for FreeBSD";
+    if (is_host)
+        return Platform::GetHostPlatformName ();
+    else
+        return "remote-freebsd";
+}
+
+const char *
+PlatformFreeBSD::GetDescriptionStatic (bool is_host)
+{
+    if (is_host)
+        return "Local FreeBSD user platform plug-in.";
+    else
+        return "Remote FreeBSD user platform plug-in.";
 }
 
 void
@@ -54,11 +69,14 @@ PlatformFreeBSD::Initialize ()
 
     if (!g_initialized)
     {
+#if defined (__FreeBSD__)
         PlatformSP default_platform_sp (CreateInstance());
+        //default_platform_sp->SetSystemArchitecture (Host::GetArchitecture());
         Platform::SetDefaultPlatform (default_platform_sp);
-        PluginManager::RegisterPlugin(GetPluginNameStatic(),
-                                      GetPluginDescriptionStatic(),
-                                      CreateInstance);
+#endif
+        PluginManager::RegisterPlugin(PlatformFreeBSD::GetShortPluginNameStatic(false),
+                                      PlatformFreeBSD::GetDescriptionStatic(false),
+                                      PlatformFreeBSD::CreateInstance);
         g_initialized = true;
     }
 }
@@ -177,8 +195,8 @@ PlatformFreeBSD::GetFile (const FileSpec &platform_file,
 //------------------------------------------------------------------
 /// Default Constructor
 //------------------------------------------------------------------
-PlatformFreeBSD::PlatformFreeBSD () :
-    Platform(true)
+PlatformFreeBSD::PlatformFreeBSD (bool is_host) :
+    Platform(is_host)
 {
 }
 
@@ -219,7 +237,8 @@ PlatformFreeBSD::GetStatus (Stream &strm)
         return;
     }
 
-    strm << un.sysname << ' ' << un.release << ' ' << un.version << '\n';
+    strm << "Host: " << un.sysname << ' ' << un.release << ' ' << un.version << '\n';
+    Platform::GetStatus(strm);
 }
 
 size_t

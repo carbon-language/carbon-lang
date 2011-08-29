@@ -28,7 +28,7 @@ namespace lldb_private {
         static void
         Terminate ();
         
-        PlatformFreeBSD ();
+        PlatformFreeBSD (bool is_host);
 
         virtual
         ~PlatformFreeBSD();
@@ -43,7 +43,10 @@ namespace lldb_private {
         GetPluginNameStatic();
 
         static const char *
-        GetPluginDescriptionStatic();
+        GetShortPluginNameStatic(bool is_host);
+
+        static const char *
+        GetDescriptionStatic(bool is_host);
 
         virtual const char *
         GetPluginName()
@@ -54,9 +57,9 @@ namespace lldb_private {
         virtual const char *
         GetShortPluginName()
         {
-            return "PlatformFreeBSD";
+            return GetShortPluginNameStatic (IsHost());
         }
-        
+
         virtual uint32_t
         GetPluginVersion()
         {
@@ -74,7 +77,7 @@ namespace lldb_private {
         virtual const char *
         GetDescription ()
         {
-            return GetPluginDescriptionStatic();
+            return GetDescriptionStatic(IsHost());
         }
 
         virtual void
