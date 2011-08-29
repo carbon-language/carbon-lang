@@ -2242,6 +2242,7 @@ void Sema::ActOnAtEnd(Scope *S, SourceRange AtEnd,
         }
     }
   }
+  ActOnObjCContainerFinishDefinition();
 }
 
 

@@ -471,7 +471,6 @@ void Parser::ParseObjCInterfaceDeclList(tok::ObjCKeywordKind contextKey,
                      allMethods.data(), allMethods.size(),
                      allProperties.data(), allProperties.size(),
                      allTUVariables.data(), allTUVariables.size());
-  Actions.ActOnObjCContainerFinishDefinition(CDecl);
 }
 
 ///   Parse property attribute declarations.
@@ -1184,7 +1183,7 @@ void Parser::ParseObjCClassInstanceVariables(Decl *interfaceDecl,
           = P.Actions.ActOnIvar(P.getCurScope(),
                                 FD.D.getDeclSpec().getSourceRange().getBegin(),
                                 FD.D, FD.BitfieldSize, visibility);
-        P.Actions.ActOnObjCContainerFinishDefinition(IDecl);
+        P.Actions.ActOnObjCContainerFinishDefinition();
         if (Field)
           AllIvarDecls.push_back(Field);
         return Field;
@@ -1206,7 +1205,7 @@ void Parser::ParseObjCClassInstanceVariables(Decl *interfaceDecl,
   SourceLocation RBraceLoc = MatchRHSPunctuation(tok::r_brace, LBraceLoc);
   Actions.ActOnObjCContainerStartDefinition(interfaceDecl);
   Actions.ActOnLastBitfield(RBraceLoc, AllIvarDecls);
-  Actions.ActOnObjCContainerFinishDefinition(interfaceDecl);
+  Actions.ActOnObjCContainerFinishDefinition();
   // Call ActOnFields() even if we don't have any decls. This is useful
   // for code rewriting tools that need to be aware of the empty list.
   Actions.ActOnFields(getCurScope(), atLoc, interfaceDecl,
@@ -1403,7 +1402,6 @@ Decl *Parser::ParseObjCAtEndDeclaration(SourceRange atEnd) {
   ConsumeToken(); // the "end" identifier
   if (ObjCImpDecl) {
     Actions.ActOnAtEnd(getCurScope(), atEnd);
-    Actions.ActOnObjCContainerFinishDefinition(ObjCImpDecl);
     ObjCImpDecl = 0;
     PendingObjCImpDecl.pop_back();
   }
@@ -1420,7 +1418,6 @@ Parser::DeclGroupPtrTy Parser::FinishPendingObjCActions() {
     return Actions.ConvertDeclToDeclGroup(0);
   Decl *ImpDecl = PendingObjCImpDecl.pop_back_val();
   Actions.ActOnAtEnd(getCurScope(), SourceRange());
-  Actions.ActOnObjCContainerFinishDefinition(ImpDecl);
   return Actions.ConvertDeclToDeclGroup(ImpDecl);
 }
 

@@ -1202,7 +1202,7 @@ public:
   void ActOnTagFinishDefinition(Scope *S, Decl *TagDecl,
                                 SourceLocation RBraceLoc);
 
-  void ActOnObjCContainerFinishDefinition(Decl *IDecl);
+  void ActOnObjCContainerFinishDefinition();
 
   /// ActOnTagDefinitionError - Invoked when there was an unrecoverable
   /// error parsing the definition of a tag.

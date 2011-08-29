@@ -513,7 +513,7 @@ private:
     explicit ObjCDeclContextSwitch(Parser &p) : P(p), 
                DC(p.getObjCDeclContext()) {
       if (DC)
-        P.Actions.ActOnObjCContainerFinishDefinition(DC);
+        P.Actions.ActOnObjCContainerFinishDefinition();
     }
     ~ObjCDeclContextSwitch() {
       if (DC)

@@ -7780,7 +7780,7 @@ void Sema::ActOnTagFinishDefinition(Scope *S, Decl *TagD,
   Consumer.HandleTagDeclDefinition(Tag);
 }
 
-void Sema::ActOnObjCContainerFinishDefinition(Decl *IDecl) {
+void Sema::ActOnObjCContainerFinishDefinition() {
   // Exit this scope of this interface definition.
   PopDeclContext();
 }
