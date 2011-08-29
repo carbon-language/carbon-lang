@@ -419,7 +419,7 @@ void PrintDiagnostics(CXTranslationUnit TU) {
 }
 
 void PrintMemoryUsage(CXTranslationUnit TU) {
-  unsigned long total = 0.0;
+  unsigned long total = 0;
   unsigned i = 0;
   CXTUResourceUsage usage = clang_getCXTUResourceUsage(TU);
   fprintf(stderr, "Memory usage:\n");
