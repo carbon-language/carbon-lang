@@ -347,5 +347,6 @@ def QQQQPR : RegisterClass<"ARM", [v8i64], 256, (sequence "QQQQ%u", 0, 3)> {
 
 // Condition code registers.
 def CCR : RegisterClass<"ARM", [i32], 32, (add CPSR)> {
+  let CopyCost = -1;  // Don't allow copying of status registers.
   let isAllocatable = 0;
 }

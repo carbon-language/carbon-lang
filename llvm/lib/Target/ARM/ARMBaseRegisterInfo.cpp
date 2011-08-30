@@ -374,6 +374,13 @@ ARMBaseRegisterInfo::getPointerRegClass(unsigned Kind) const {
   return ARM::GPRRegisterClass;
 }
 
+const TargetRegisterClass *
+ARMBaseRegisterInfo::getCrossCopyRegClass(const TargetRegisterClass *RC) const {
+  if (RC == &ARM::CCRRegClass)
+    return 0;  // Can't copy CCR registers.
+  return RC;
+}
+
 unsigned
 ARMBaseRegisterInfo::getRegPressureLimit(const TargetRegisterClass *RC,
                                          MachineFunction &MF) const {

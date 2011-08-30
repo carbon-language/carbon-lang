@@ -582,7 +582,7 @@ multiclass T2I_bin_s_irs<bits<4> opcod, string opc,
    def ri : T2TwoRegImm<
                 (outs rGPR:$Rd), (ins GPR:$Rn, t2_so_imm:$imm), iii,
                 !strconcat(opc, "s"), ".w\t$Rd, $Rn, $imm",
-                [(set rGPR:$Rd, (opnode GPR:$Rn, t2_so_imm:$imm))]> {
+                [(set rGPR:$Rd, CPSR, (opnode GPR:$Rn, t2_so_imm:$imm))]> {
      let Inst{31-27} = 0b11110;
      let Inst{25} = 0;
      let Inst{24-21} = opcod;
@@ -593,7 +593,7 @@ multiclass T2I_bin_s_irs<bits<4> opcod, string opc,
    def rr : T2ThreeReg<
                 (outs rGPR:$Rd), (ins GPR:$Rn, rGPR:$Rm), iir,
                 !strconcat(opc, "s"), ".w\t$Rd, $Rn, $Rm",
-                [(set rGPR:$Rd, (opnode GPR:$Rn, rGPR:$Rm))]> {
+                [(set rGPR:$Rd, CPSR, (opnode GPR:$Rn, rGPR:$Rm))]> {
      let isCommutable = Commutable;
      let Inst{31-27} = 0b11101;
      let Inst{26-25} = 0b01;
@@ -607,7 +607,7 @@ multiclass T2I_bin_s_irs<bits<4> opcod, string opc,
    def rs : T2TwoRegShiftedReg<
                 (outs rGPR:$Rd), (ins GPR:$Rn, t2_so_reg:$ShiftedRm), iis,
                 !strconcat(opc, "s"), ".w\t$Rd, $Rn, $ShiftedRm",
-                [(set rGPR:$Rd, (opnode GPR:$Rn, t2_so_reg:$ShiftedRm))]> {
+               [(set rGPR:$Rd, CPSR, (opnode GPR:$Rn, t2_so_reg:$ShiftedRm))]> {
      let Inst{31-27} = 0b11101;
      let Inst{26-25} = 0b01;
      let Inst{24-21} = opcod;
@@ -682,13 +682,13 @@ multiclass T2I_bin_ii12rs<bits<3> op23_21, string opc, PatFrag opnode,
 /// T2I_adde_sube_irs - Defines a set of (op reg, {so_imm|r|so_reg}) patterns
 /// for a binary operation that produces a value and use the carry
 /// bit. It's not predicable.
-let Uses = [CPSR] in {
+let Defs = [CPSR], Uses = [CPSR] in {
 multiclass T2I_adde_sube_irs<bits<4> opcod, string opc, PatFrag opnode,
                              bit Commutable = 0> {
    // shifted imm
    def ri : T2sTwoRegImm<(outs rGPR:$Rd), (ins rGPR:$Rn, t2_so_imm:$imm),
                  IIC_iALUi, opc, "\t$Rd, $Rn, $imm",
-                 [(set rGPR:$Rd, (opnode rGPR:$Rn, t2_so_imm:$imm))]>,
+               [(set rGPR:$Rd, CPSR, (opnode rGPR:$Rn, t2_so_imm:$imm, CPSR))]>,
                  Requires<[IsThumb2]> {
      let Inst{31-27} = 0b11110;
      let Inst{25} = 0;
@@ -698,7 +698,7 @@ multiclass T2I_adde_sube_irs<bits<4> opcod, string opc, PatFrag opnode,
    // register
    def rr : T2sThreeReg<(outs rGPR:$Rd), (ins rGPR:$Rn, rGPR:$Rm), IIC_iALUr,
                  opc, ".w\t$Rd, $Rn, $Rm",
-                 [(set rGPR:$Rd, (opnode rGPR:$Rn, rGPR:$Rm))]>,
+                 [(set rGPR:$Rd, CPSR, (opnode rGPR:$Rn, rGPR:$Rm, CPSR))]>,
                  Requires<[IsThumb2]> {
      let isCommutable = Commutable;
      let Inst{31-27} = 0b11101;
@@ -712,34 +712,12 @@ multiclass T2I_adde_sube_irs<bits<4> opcod, string opc, PatFrag opnode,
    def rs : T2sTwoRegShiftedReg<
                  (outs rGPR:$Rd), (ins rGPR:$Rn, t2_so_reg:$ShiftedRm),
                  IIC_iALUsi, opc, ".w\t$Rd, $Rn, $ShiftedRm",
-                 [(set rGPR:$Rd, (opnode rGPR:$Rn, t2_so_reg:$ShiftedRm))]>,
+         [(set rGPR:$Rd, CPSR, (opnode rGPR:$Rn, t2_so_reg:$ShiftedRm, CPSR))]>,
                  Requires<[IsThumb2]> {
      let Inst{31-27} = 0b11101;
      let Inst{26-25} = 0b01;
      let Inst{24-21} = opcod;
    }
-}
-}
-
-// Carry setting variants
-// NOTE: CPSR def omitted because it will be handled by the custom inserter.
-let usesCustomInserter = 1 in {
-multiclass T2I_adde_sube_s_irs<PatFrag opnode, bit Commutable = 0> {
-   // shifted imm
-   def ri : t2PseudoInst<(outs rGPR:$Rd), (ins rGPR:$Rn, t2_so_imm:$imm),
-                4, IIC_iALUi,
-                [(set rGPR:$Rd, (opnode rGPR:$Rn, t2_so_imm:$imm))]>;
-   // register
-   def rr : t2PseudoInst<(outs rGPR:$Rd), (ins rGPR:$Rn, rGPR:$Rm),
-                4, IIC_iALUr,
-                [(set rGPR:$Rd, (opnode rGPR:$Rn, rGPR:$Rm))]> {
-     let isCommutable = Commutable;
-   }
-   // shifted register
-   def rs : t2PseudoInst<
-                (outs rGPR:$Rd), (ins rGPR:$Rn, t2_so_reg:$ShiftedRm),
-                4, IIC_iALUsi,
-                [(set rGPR:$Rd, (opnode rGPR:$Rn, t2_so_reg:$ShiftedRm))]>;
 }
 }
 
@@ -751,7 +729,7 @@ multiclass T2I_rbin_s_is<bits<4> opcod, string opc, PatFrag opnode> {
    def ri : T2TwoRegImm<
                 (outs rGPR:$Rd), (ins rGPR:$Rn, t2_so_imm:$imm), IIC_iALUi,
                 !strconcat(opc, "s"), ".w\t$Rd, $Rn, $imm",
-                [(set rGPR:$Rd, (opnode t2_so_imm:$imm, rGPR:$Rn))]> {
+                [(set rGPR:$Rd, CPSR, (opnode t2_so_imm:$imm, rGPR:$Rn))]> {
      let Inst{31-27} = 0b11110;
      let Inst{25} = 0;
      let Inst{24-21} = opcod;
@@ -762,7 +740,7 @@ multiclass T2I_rbin_s_is<bits<4> opcod, string opc, PatFrag opnode> {
    def rs : T2TwoRegShiftedReg<
                 (outs rGPR:$Rd), (ins rGPR:$Rn, t2_so_reg:$ShiftedRm),
                 IIC_iALUsi, !strconcat(opc, "s"), "\t$Rd, $Rn, $ShiftedRm",
-                [(set rGPR:$Rd, (opnode t2_so_reg:$ShiftedRm, rGPR:$Rn))]> {
+              [(set rGPR:$Rd, CPSR, (opnode t2_so_reg:$ShiftedRm, rGPR:$Rn))]> {
      let Inst{31-27} = 0b11101;
      let Inst{26-25} = 0b01;
      let Inst{24-21} = opcod;
@@ -1678,25 +1656,21 @@ defm t2SUB  : T2I_bin_ii12rs<0b101, "sub",
 // ADD and SUB with 's' bit set. No 12-bit immediate (T4) variants.
 defm t2ADDS : T2I_bin_s_irs <0b1000, "add",
                              IIC_iALUi, IIC_iALUr, IIC_iALUsi,
-                             BinOpFrag<(addc node:$LHS, node:$RHS)>, 1>;
+                             BinOpFrag<(ARMaddc node:$LHS, node:$RHS)>, 1>;
 defm t2SUBS : T2I_bin_s_irs <0b1101, "sub",
                              IIC_iALUi, IIC_iALUr, IIC_iALUsi,
-                             BinOpFrag<(subc node:$LHS, node:$RHS)>>;
+                             BinOpFrag<(ARMsubc node:$LHS, node:$RHS)>>;
 
 defm t2ADC  : T2I_adde_sube_irs<0b1010, "adc",
-                          BinOpFrag<(adde_dead_carry node:$LHS, node:$RHS)>, 1>;
+              BinOpWithFlagFrag<(ARMadde node:$LHS, node:$RHS, node:$FLAG)>, 1>;
 defm t2SBC  : T2I_adde_sube_irs<0b1011, "sbc",
-                          BinOpFrag<(sube_dead_carry node:$LHS, node:$RHS)>>;
-defm t2ADCS : T2I_adde_sube_s_irs<BinOpFrag<(adde_live_carry node:$LHS,
-                                                             node:$RHS)>, 1>;
-defm t2SBCS : T2I_adde_sube_s_irs<BinOpFrag<(sube_live_carry node:$LHS,
-                                                             node:$RHS)>>;
+              BinOpWithFlagFrag<(ARMsube node:$LHS, node:$RHS, node:$FLAG)>>;
 
 // RSB
 defm t2RSB  : T2I_rbin_irs  <0b1110, "rsb",
                              BinOpFrag<(sub  node:$LHS, node:$RHS)>>;
 defm t2RSBS : T2I_rbin_s_is <0b1110, "rsb",
-                             BinOpFrag<(subc node:$LHS, node:$RHS)>>;
+                             BinOpFrag<(ARMsubc node:$LHS, node:$RHS)>>;
 
 // (sub X, imm) gets canonicalized to (add X, -imm).  Match this form.
 // The assume-no-carry-in form uses the negation of the input since add/sub
@@ -1713,23 +1687,18 @@ def : T2Pat<(add        GPR:$src, t2_so_imm_neg:$imm),
 def : T2Pat<(add        GPR:$src, imm0_4095_neg:$imm),
             (t2SUBri12  GPR:$src, imm0_4095_neg:$imm)>;
 let AddedComplexity = 1 in
-def : T2Pat<(addc       rGPR:$src, imm0_255_neg:$imm),
+def : T2Pat<(ARMaddc    rGPR:$src, imm0_255_neg:$imm),
             (t2SUBSri   rGPR:$src, imm0_255_neg:$imm)>;
-def : T2Pat<(addc       rGPR:$src, t2_so_imm_neg:$imm),
+def : T2Pat<(ARMaddc    rGPR:$src, t2_so_imm_neg:$imm),
             (t2SUBSri   rGPR:$src, t2_so_imm_neg:$imm)>;
 // The with-carry-in form matches bitwise not instead of the negation.
 // Effectively, the inverse interpretation of the carry flag already accounts
 // for part of the negation.
 let AddedComplexity = 1 in
-def : T2Pat<(adde_dead_carry       rGPR:$src, imm0_255_not:$imm),
+def : T2Pat<(ARMadde    rGPR:$src, imm0_255_not:$imm, CPSR),
             (t2SBCri    rGPR:$src, imm0_255_not:$imm)>;
-def : T2Pat<(adde_dead_carry       rGPR:$src, t2_so_imm_not:$imm),
+def : T2Pat<(ARMadde    rGPR:$src, t2_so_imm_not:$imm, CPSR),
             (t2SBCri    rGPR:$src, t2_so_imm_not:$imm)>;
-let AddedComplexity = 1 in
-def : T2Pat<(adde_live_carry       rGPR:$src, imm0_255_not:$imm),
-            (t2SBCSri   rGPR:$src, imm0_255_not:$imm)>;
-def : T2Pat<(adde_live_carry       rGPR:$src, t2_so_imm_not:$imm),
-            (t2SBCSri   rGPR:$src, t2_so_imm_not:$imm)>;
 
 // Select Bytes -- for disassembly only
 

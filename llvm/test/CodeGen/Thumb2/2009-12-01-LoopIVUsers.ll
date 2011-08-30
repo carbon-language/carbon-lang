@@ -6,8 +6,8 @@ entry:
 ; -- The loop following the load should only use a single add-literation
 ;    instruction.
 ; CHECK: ldr.64
-; CHECK: adds r{{[0-9]+}}, #1
-; CHECK-NOT: adds r{{[0-9]+}}, #1
+; CHECK: adds r{{[0-9]+}}, r{{[0-9]+}}, #1
+; CHECK-NOT: adds r{{[0-9]+}}, r{{[0-9]+}}, #1
 ; CHECK: subsections_via_symbols
 
 

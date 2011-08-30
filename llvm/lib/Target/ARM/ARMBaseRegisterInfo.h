@@ -116,6 +116,8 @@ public:
                                        unsigned &NewSubIdx) const;
 
   const TargetRegisterClass *getPointerRegClass(unsigned Kind = 0) const;
+  const TargetRegisterClass*
+  getCrossCopyRegClass(const TargetRegisterClass *RC) const;
 
   const TargetRegisterClass*
   getLargestLegalSuperClass(const TargetRegisterClass *RC) const;

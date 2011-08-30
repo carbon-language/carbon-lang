@@ -551,6 +551,14 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::SRL,       MVT::i64, Custom);
   setOperationAction(ISD::SRA,       MVT::i64, Custom);
 
+  if (!Subtarget->isThumb1Only()) {
+    // FIXME: We should do this for Thumb1 as well.
+    setOperationAction(ISD::ADDC,    MVT::i32, Custom);
+    setOperationAction(ISD::ADDE,    MVT::i32, Custom);
+    setOperationAction(ISD::SUBC,    MVT::i32, Custom);
+    setOperationAction(ISD::SUBE,    MVT::i32, Custom);
+  }
+
   // ARM does not have ROTL.
   setOperationAction(ISD::ROTL,  MVT::i32, Expand);
   setOperationAction(ISD::CTTZ,  MVT::i32, Custom);
@@ -812,6 +820,11 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::SRL_FLAG:      return "ARMISD::SRL_FLAG";
   case ARMISD::SRA_FLAG:      return "ARMISD::SRA_FLAG";
   case ARMISD::RRX:           return "ARMISD::RRX";
+
+  case ARMISD::ADDC:          return "ARMISD::ADDC";
+  case ARMISD::ADDE:          return "ARMISD::ADDE";
+  case ARMISD::SUBC:          return "ARMISD::SUBC";
+  case ARMISD::SUBE:          return "ARMISD::SUBE";
 
   case ARMISD::VMOVRRD:       return "ARMISD::VMOVRRD";
   case ARMISD::VMOVDRR:       return "ARMISD::VMOVDRR";
@@ -4812,6 +4825,27 @@ static SDValue LowerUDIV(SDValue Op, SelectionDAG &DAG) {
   return N0;
 }
 
+static SDValue LowerADDC_ADDE_SUBC_SUBE(SDValue Op, SelectionDAG &DAG) {
+  EVT VT = Op.getNode()->getValueType(0);
+  SDVTList VTs = DAG.getVTList(VT, MVT::i32);
+
+  unsigned Opc;
+  bool ExtraOp = false;
+  switch (Op.getOpcode()) {
+  default: assert(0 && "Invalid code");
+  case ISD::ADDC: Opc = ARMISD::ADDC; break;
+  case ISD::ADDE: Opc = ARMISD::ADDE; ExtraOp = true; break;
+  case ISD::SUBC: Opc = ARMISD::SUBC; break;
+  case ISD::SUBE: Opc = ARMISD::SUBE; ExtraOp = true; break;
+  }
+
+  if (!ExtraOp)
+    return DAG.getNode(Opc, Op->getDebugLoc(), VTs, Op.getOperand(0),
+                       Op.getOperand(1));
+  return DAG.getNode(Opc, Op->getDebugLoc(), VTs, Op.getOperand(0),
+                     Op.getOperand(1), Op.getOperand(2));
+}
+
 SDValue ARMTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   switch (Op.getOpcode()) {
   default: llvm_unreachable("Don't know how to custom lower this!");
@@ -4859,6 +4893,10 @@ SDValue ARMTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::MUL:           return LowerMUL(Op, DAG);
   case ISD::SDIV:          return LowerSDIV(Op, DAG);
   case ISD::UDIV:          return LowerUDIV(Op, DAG);
+  case ISD::ADDC:
+  case ISD::ADDE:
+  case ISD::SUBC:
+  case ISD::SUBE:          return LowerADDC_ADDE_SUBC_SUBE(Op, DAG);
   }
   return SDValue();
 }
@@ -5208,76 +5246,6 @@ MachineBasicBlock *OtherSucc(MachineBasicBlock *MBB, MachineBasicBlock *Succ) {
   llvm_unreachable("Expecting a BB with two successors!");
 }
 
-// FIXME: This opcode table should obviously be expressed in the target
-// description. We probably just need a "machine opcode" value in the pseudo
-// instruction. But the ideal solution maybe to simply remove the "S" version
-// of the opcode altogether.
-struct AddSubFlagsOpcodePair {
-  unsigned PseudoOpc;
-  unsigned MachineOpc;
-};
-
-static const AddSubFlagsOpcodePair AddSubFlagsOpcodeMap[] = {
-  {ARM::ADCSri, ARM::ADCri},
-  {ARM::ADCSrr, ARM::ADCrr},
-  {ARM::ADCSrsi, ARM::ADCrsi},
-  {ARM::ADCSrsr, ARM::ADCrsr},
-  {ARM::SBCSri, ARM::SBCri},
-  {ARM::SBCSrr, ARM::SBCrr},
-  {ARM::SBCSrsi, ARM::SBCrsi},
-  {ARM::SBCSrsr, ARM::SBCrsr},
-  {ARM::RSBSri, ARM::RSBri},
-  {ARM::RSBSrr, ARM::RSBrr},
-  {ARM::RSBSrsi, ARM::RSBrsi},
-  {ARM::RSBSrsr, ARM::RSBrsr},
-  {ARM::RSCSri, ARM::RSCri},
-  {ARM::RSCSrsi, ARM::RSCrsi},
-  {ARM::RSCSrsr, ARM::RSCrsr},
-  {ARM::t2ADCSri, ARM::t2ADCri},
-  {ARM::t2ADCSrr, ARM::t2ADCrr},
-  {ARM::t2ADCSrs, ARM::t2ADCrs},
-  {ARM::t2SBCSri, ARM::t2SBCri},
-  {ARM::t2SBCSrr, ARM::t2SBCrr},
-  {ARM::t2SBCSrs, ARM::t2SBCrs},
-  {ARM::t2RSBSri, ARM::t2RSBri},
-  {ARM::t2RSBSrs, ARM::t2RSBrs},
-};
-
-// Convert and Add or Subtract with Carry and Flags to a generic opcode with
-// CPSR<def> operand. e.g. ADCS (...) -> ADC (... CPSR<def>).
-//
-// FIXME: Somewhere we should assert that CPSR<def> is in the correct
-// position to be recognized by the target descrition as the 'S' bit.
-bool ARMTargetLowering::RemapAddSubWithFlags(MachineInstr *MI,
-                                             MachineBasicBlock *BB) const {
-  unsigned OldOpc = MI->getOpcode();
-  unsigned NewOpc = 0;
-
-  // This is only called for instructions that need remapping, so iterating over
-  // the tiny opcode table is not costly.
-  static const int NPairs =
-    sizeof(AddSubFlagsOpcodeMap) / sizeof(AddSubFlagsOpcodePair);
-  for (const AddSubFlagsOpcodePair *Pair = &AddSubFlagsOpcodeMap[0],
-         *End = &AddSubFlagsOpcodeMap[NPairs]; Pair != End; ++Pair) {
-    if (OldOpc == Pair->PseudoOpc) {
-      NewOpc = Pair->MachineOpc;
-      break;
-    }
-  }
-  if (!NewOpc)
-    return false;
-
-  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
-  DebugLoc dl = MI->getDebugLoc();
-  MachineInstrBuilder MIB = BuildMI(*BB, MI, dl, TII->get(NewOpc));
-  for (unsigned i = 0; i < MI->getNumOperands(); ++i)
-    MIB.addOperand(MI->getOperand(i));
-  AddDefaultPred(MIB);
-  MIB.addReg(ARM::CPSR, RegState::Define); // S bit
-  MI->eraseFromParent();
-  return true;
-}
-
 MachineBasicBlock *
 ARMTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
                                                MachineBasicBlock *BB) const {
@@ -5286,9 +5254,6 @@ ARMTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   bool isThumb2 = Subtarget->isThumb2();
   switch (MI->getOpcode()) {
   default: {
-    if (RemapAddSubWithFlags(MI, BB))
-      return BB;
-
     MI->dump();
     llvm_unreachable("Unexpected instr type to insert");
   }
