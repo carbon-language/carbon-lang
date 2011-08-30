@@ -328,6 +328,7 @@ def load_test_suite(inputs):
                                     valgrindArgs = [],
                                     useTclAsSh = False,
                                     noExecute = False,
+                                    ignoreStdErr = False,
                                     debug = False,
                                     isWindows = (platform.system()=='Windows'),
                                     params = {})
@@ -485,6 +486,7 @@ def main(builtinParameters = {}):    # Bump the GIL check interval, its more imp
                                     valgrindArgs = opts.valgrindArgs,
                                     useTclAsSh = opts.useTclAsSh,
                                     noExecute = opts.noExecute,
+                                    ignoreStdErr = False,
                                     debug = opts.debug,
                                     isWindows = (platform.system()=='Windows'),
                                     params = userParams)

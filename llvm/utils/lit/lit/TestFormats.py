@@ -125,7 +125,11 @@ class ShTest(FileBasedTest):
                                         self.execute_external)
 
 class TclTest(FileBasedTest):
+    def __init__(self, ignoreStdErr=False):
+        self.ignoreStdErr = ignoreStdErr
+        
     def execute(self, test, litConfig):
+        litConfig.ignoreStdErr = self.ignoreStdErr
         return TestRunner.executeTclTest(test, litConfig)
 
 ###

@@ -535,13 +535,13 @@ def executeTclTest(test, litConfig):
     # considered to fail if there is any standard error output.
     out,err,exitCode = res
     if isXFail:
-        ok = exitCode != 0 or err
+        ok = exitCode != 0 or err and not litConfig.ignoreStdErr
         if ok:
             status = Test.XFAIL
         else:
             status = Test.XPASS
     else:
-        ok = exitCode == 0 and not err
+        ok = exitCode == 0 and (not err or litConfig.ignoreStdErr)
         if ok:
             status = Test.PASS
         else:
@@ -552,7 +552,7 @@ def executeTclTest(test, litConfig):
 
     # Set a flag for formatTestOutput so it can explain why the test was
     # considered to have failed, despite having an exit code of 0.
-    failDueToStderr = exitCode == 0 and err
+    failDueToStderr = exitCode == 0 and err and not litConfig.ignoreStdErr
 
     return formatTestOutput(status, out, err, exitCode, failDueToStderr, script)
 
