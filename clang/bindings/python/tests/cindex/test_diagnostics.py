@@ -36,7 +36,7 @@ def test_diagnostic_fixit():
     assert len(tu.diagnostics) == 1
     assert tu.diagnostics[0].severity == Diagnostic.Warning
     assert tu.diagnostics[0].location.line == 1
-    assert tu.diagnostics[0].location.column == 31
+    assert tu.diagnostics[0].location.column == 26
     assert tu.diagnostics[0].spelling.startswith('use of GNU old-style')
     assert len(tu.diagnostics[0].fixits) == 1
     assert tu.diagnostics[0].fixits[0].range.start.line == 1
