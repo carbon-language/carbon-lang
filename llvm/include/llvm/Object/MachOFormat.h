@@ -137,7 +137,10 @@ namespace macho {
     LCT_Symtab = 0x2,
     LCT_Dysymtab = 0xb,
     LCT_Segment64 = 0x19,
-    LCT_UUID = 0x1b
+    LCT_UUID = 0x1b,
+    LCT_CodeSignature = 0x1d,
+    LCT_SegmentSplitInfo = 0x1e,
+    LCT_FunctionStarts = 0x26
   };
 
   /// \brief Load command structure.
@@ -216,6 +219,13 @@ namespace macho {
 
     uint32_t LocalRelocationTableOffset;
     uint32_t NumLocalRelocationTableEntries;
+  };
+
+  struct LinkeditDataLoadCommand {
+    uint32_t Type;
+    uint32_t Size;
+    uint32_t DataOffset;
+    uint32_t DataSize;
   };
 
   /// @}

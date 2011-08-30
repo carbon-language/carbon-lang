@@ -310,6 +310,20 @@ static int DumpDysymtabCommand(MachOObject &Obj,
   return Res;
 }
 
+static int DumpLinkeditDataCommand(MachOObject &Obj,
+                                   const MachOObject::LoadCommandInfo &LCI) {
+  InMemoryStruct<macho::LinkeditDataLoadCommand> LLC;
+  Obj.ReadLinkeditDataLoadCommand(LCI, LLC);
+  if (!LLC)
+    return Error("unable to read segment load command");
+
+  outs() << "  ('dataoff', " << LLC->DataOffset << ")\n"
+         << "  ('datasize', " << LLC->DataSize << ")\n";
+
+  return 0;
+}
+
+
 static int DumpLoadCommand(MachOObject &Obj, unsigned Index) {
   const MachOObject::LoadCommandInfo &LCI = Obj.getLoadCommandInfo(Index);
   int Res = 0;
@@ -329,6 +343,11 @@ static int DumpLoadCommand(MachOObject &Obj, unsigned Index) {
     break;
   case macho::LCT_Dysymtab:
     Res = DumpDysymtabCommand(Obj, LCI);
+    break;
+  case macho::LCT_CodeSignature:
+  case macho::LCT_SegmentSplitInfo:
+  case macho::LCT_FunctionStarts:
+    Res = DumpLinkeditDataCommand(Obj, LCI);
     break;
   default:
     Warning("unknown load command: " + Twine(LCI.Command.Type));

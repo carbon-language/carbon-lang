@@ -244,6 +244,18 @@ void MachOObject::ReadDysymtabLoadCommand(const LoadCommandInfo &LCI,
 }
 
 template<>
+void SwapStruct(macho::LinkeditDataLoadCommand &Value) {
+  SwapValue(Value.Type);
+  SwapValue(Value.Size);
+  SwapValue(Value.DataOffset);
+  SwapValue(Value.DataSize);
+}
+void MachOObject::ReadLinkeditDataLoadCommand(const LoadCommandInfo &LCI,
+                    InMemoryStruct<macho::LinkeditDataLoadCommand> &Res) const {
+  ReadInMemoryStruct(*this, Buffer->getBuffer(), LCI.Offset, Res);
+}
+
+template<>
 void SwapStruct(macho::IndirectSymbolTableEntry &Value) {
   SwapValue(Value.Index);
 }
