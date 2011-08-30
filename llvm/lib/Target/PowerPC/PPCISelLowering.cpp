@@ -2946,6 +2946,7 @@ PPCTargetLowering::LowerCall_SVR4(SDValue Chain, SDValue Callee,
   SmallVector<TailCallArgumentInfo, 8> TailCallArguments;
   SmallVector<SDValue, 8> MemOpChains;
 
+  bool seenFloatArg = false;
   // Walk the register/memloc assignments, inserting copies/loads.
   for (unsigned i = 0, j = 0, e = ArgLocs.size();
        i != e;
@@ -2990,6 +2991,7 @@ PPCTargetLowering::LowerCall_SVR4(SDValue Chain, SDValue Callee,
     }
 
     if (VA.isRegLoc()) {
+      seenFloatArg |= VA.getLocVT().isFloatingPoint();
       // Put argument in a physical register.
       RegsToPass.push_back(std::make_pair(VA.getLocReg(), Arg));
     } else {
@@ -3016,9 +3018,11 @@ PPCTargetLowering::LowerCall_SVR4(SDValue Chain, SDValue Callee,
     Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
                         &MemOpChains[0], MemOpChains.size());
 
-  // Set CR6 to true if this is a vararg call.
+  // Set CR6 to true if this is a vararg call with floating args passed in
+  // registers.
   if (isVarArg) {
-    SDValue SetCR(DAG.getMachineNode(PPC::CRSET, dl, MVT::i32), 0);
+    SDValue SetCR(DAG.getMachineNode(seenFloatArg ? PPC::CRSET : PPC::CRUNSET,
+                                     dl, MVT::i32), 0);
     RegsToPass.push_back(std::make_pair(unsigned(PPC::CR1EQ), SetCR));
   }
 

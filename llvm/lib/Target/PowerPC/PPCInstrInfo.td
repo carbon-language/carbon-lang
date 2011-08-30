@@ -1053,6 +1053,10 @@ def CRSET  : XLForm_1_ext<19, 289, (outs CRBITRC:$dst), (ins),
               "creqv $dst, $dst, $dst", BrCR,
               []>;
 
+def CRUNSET: XLForm_1_ext<19, 193, (outs CRBITRC:$dst), (ins),
+              "crxor $dst, $dst, $dst", BrCR,
+              []>;
+
 // XFX-Form instructions.  Instructions that deal with SPRs.
 //
 let Uses = [CTR] in {
