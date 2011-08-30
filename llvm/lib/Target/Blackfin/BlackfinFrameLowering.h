@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef ALPHA_FRAMEINFO_H
-#define ALPHA_FRAMEINFO_H
+#ifndef BLACKFIN_FRAMEINFO_H
+#define BLACKFIN_FRAMEINFO_H
 
 #include "Blackfin.h"
 #include "BlackfinSubtarget.h"
