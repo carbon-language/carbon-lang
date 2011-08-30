@@ -501,7 +501,10 @@ getThumbBCCTargetOpValue(const MCInst &MI, unsigned OpIdx,
 uint32_t ARMMCCodeEmitter::
 getThumbCBTargetOpValue(const MCInst &MI, unsigned OpIdx,
                         SmallVectorImpl<MCFixup> &Fixups) const {
-  return ::getBranchTargetOpValue(MI, OpIdx, ARM::fixup_arm_thumb_cb, Fixups);
+  const MCOperand MO = MI.getOperand(OpIdx);
+  if (MO.isExpr())
+    return ::getBranchTargetOpValue(MI, OpIdx, ARM::fixup_arm_thumb_cb, Fixups);
+  return (MO.getImm() >> 1);
 }
 
 /// Return true if this branch has a non-always predication
