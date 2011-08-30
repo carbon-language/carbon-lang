@@ -1,4 +1,4 @@
-//===-- AlphaMCTargetDesc.h - Alpha Target Descriptions ---------*- C++ -*-===//
+//===-- MipsMCTargetDesc.h - Mips Target Descriptions -----------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,12 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file provides Alpha specific target descriptions.
+// This file provides Mips specific target descriptions.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef ALPHAMCTARGETDESC_H
-#define ALPHAMCTARGETDESC_H
+#ifndef MIPSMCTARGETDESC_H
+#define MIPSMCTARGETDESC_H
 
 namespace llvm {
 class MCSubtargetInfo;
