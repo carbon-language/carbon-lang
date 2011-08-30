@@ -54,8 +54,10 @@ def test_get_children():
 
     assert tu_nodes[1].kind == CursorKind.STRUCT_DECL
     assert tu_nodes[1].spelling == 's1'
+    assert tu_nodes[1].displayname == 's1'
     assert tu_nodes[1].is_definition() == False
 
     assert tu_nodes[2].kind == CursorKind.FUNCTION_DECL
     assert tu_nodes[2].spelling == 'f0'
+    assert tu_nodes[2].displayname == 'f0(int, int)'
     assert tu_nodes[2].is_definition() == True

@@ -619,6 +619,17 @@ class Cursor(Structure):
         return Cursor_spelling(self)
 
     @property
+    def displayname(self):
+        """
+        Return the display name for the entity referenced by this cursor.
+
+        The display name contains extra information that helps identify the cursor,
+        such as the parameters of a function or template or the arguments of a
+        class template specialization.
+        """
+        return Cursor_displayname(self)
+
+    @property
     def location(self):
         """
         Return the source location (the starting character) of the entity
