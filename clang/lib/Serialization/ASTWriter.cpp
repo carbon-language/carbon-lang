@@ -2624,14 +2624,37 @@ uint64_t ASTWriter::WriteDeclContextVisibleBlock(ASTContext &Context,
   ASTDeclContextNameLookupTrait Trait(*this);
 
   // Create the on-disk hash table representation.
+  DeclarationName ConversionName;
+  llvm::SmallVector<NamedDecl *, 4> ConversionDecls;
   for (StoredDeclsMap::iterator D = Map->begin(), DEnd = Map->end();
        D != DEnd; ++D) {
     DeclarationName Name = D->first;
     DeclContext::lookup_result Result = D->second.getLookupResult();
-    if (Result.first != Result.second)
+    if (Result.first != Result.second) {
+      if (Name.getNameKind() == DeclarationName::CXXConversionFunctionName) {
+        // Hash all conversion function names to the same name. The actual
+        // type information in conversion function name is not used in the
+        // key (since such type information is not stable across different
+        // modules), so the intended effect is to coalesce all of the conversion
+        // functions under a single key.
+        if (!ConversionName)
+          ConversionName = Name;
+        ConversionDecls.append(Result.first, Result.second);
+        continue;
+      }
+      
       Generator.insert(Name, Result, Trait);
+    }
   }
 
+  // Add the conversion functions
+  if (!ConversionDecls.empty()) {
+    Generator.insert(ConversionName, 
+                     DeclContext::lookup_result(ConversionDecls.begin(),
+                                                ConversionDecls.end()),
+                     Trait);
+  }
+  
   // Create the on-disk hash table in a buffer.
   llvm::SmallString<4096> LookupTable;
   uint32_t BucketOffset;
