@@ -9048,6 +9048,30 @@ FinishedParams:
     return true;
   }
 
+  StringRef LiteralName 
+    = FnDecl->getDeclName().getCXXLiteralIdentifier()->getName();
+  if (LiteralName[0] != '_') {
+    // C++0x [usrlit.suffix]p1:
+    //   Literal suffix identifiers that do not start with an underscore are 
+    //   reserved for future standardization.
+    bool IsHexFloat = true;
+    if (LiteralName.size() > 1 && 
+        (LiteralName[0] == 'P' || LiteralName[0] == 'p')) {
+      for (unsigned I = 1, N = LiteralName.size(); I < N; ++I) {
+        if (!isdigit(LiteralName[I])) {
+          IsHexFloat = false;
+          break;
+        }
+      }
+    }
+    
+    if (IsHexFloat)
+      Diag(FnDecl->getLocation(), diag::warn_user_literal_hexfloat)
+        << LiteralName;
+    else
+      Diag(FnDecl->getLocation(), diag::warn_user_literal_reserved);
+  }
+  
   return false;
 }
 
