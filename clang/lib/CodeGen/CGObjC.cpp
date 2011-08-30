@@ -1879,6 +1879,24 @@ static TryEmitResult tryEmitARCRetainLoadOfScalar(CodeGenFunction &CGF,
   e = e->IgnoreParens();
   QualType type = e->getType();
 
+  // If we're loading retained from a __strong xvalue, we can avoid 
+  // an extra retain/release pair by zeroing out the source of this
+  // "move" operation.
+  if (e->isXValue() &&
+      !type.isConstQualified() &&
+      type.getObjCLifetime() == Qualifiers::OCL_Strong) {
+    // Emit the lvalue.
+    LValue lv = CGF.EmitLValue(e);
+    
+    // Load the object pointer.
+    llvm::Value *result = CGF.EmitLoadOfLValue(lv).getScalarVal();
+    
+    // Set the source pointer to NULL.
+    CGF.EmitStoreOfScalar(getNullForVariable(lv.getAddress()), lv);
+    
+    return TryEmitResult(result, true);
+  }
+
   // As a very special optimization, in ARC++, if the l-value is the
   // result of a non-volatile assignment, do a simple retain of the
   // result of the call to objc_storeWeak instead of reloading.
@@ -1952,30 +1970,6 @@ tryEmitARCRetainScalarExpr(CodeGenFunction &CGF, const Expr *e) {
   // The desired result type, if it differs from the type of the
   // ultimate opaque expression.
   llvm::Type *resultType = 0;
-
-  // If we're loading retained from a __strong xvalue, we can avoid 
-  // an extra retain/release pair by zeroing out the source of this
-  // "move" operation.
-  if (e->isXValue() && !e->getType().isConstQualified() &&
-      e->getType().getObjCLifetime() == Qualifiers::OCL_Strong) {
-    // Emit the lvalue
-    LValue lv = CGF.EmitLValue(e);
-    
-    // Load the object pointer and cast it to the appropriate type.
-    QualType exprType = e->getType();
-    llvm::Value *result = CGF.EmitLoadOfLValue(lv).getScalarVal();
-    
-    if (resultType)
-      result = CGF.Builder.CreateBitCast(result, resultType);
-    
-    // Set the source pointer to NULL.
-    llvm::Value *null 
-      = llvm::ConstantPointerNull::get(
-                            cast<llvm::PointerType>(CGF.ConvertType(exprType)));
-    CGF.EmitStoreOfScalar(null, lv);
-    
-    return TryEmitResult(result, true);
-  }
 
   while (true) {
     e = e->IgnoreParens();
