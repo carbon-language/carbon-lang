@@ -4538,16 +4538,16 @@ class AnnotateTokensWorker {
   SourceLocation GetTokenLoc(unsigned tokI) {
     return SourceLocation::getFromRawEncoding(Tokens[tokI].int_data[1]);
   }
-  bool isMacroArgToken(unsigned tokI) const {
+  bool isFunctionMacroToken(unsigned tokI) const {
     return Tokens[tokI].int_data[3] != 0;
   }
-  SourceLocation getMacroArgLoc(unsigned tokI) const {
+  SourceLocation getFunctionMacroTokenLoc(unsigned tokI) const {
     return SourceLocation::getFromRawEncoding(Tokens[tokI].int_data[3]);
   }
 
   void annotateAndAdvanceTokens(CXCursor, RangeComparisonResult, SourceRange);
-  void annotateAndAdvanceMacroArgTokens(CXCursor, RangeComparisonResult,
-                                        SourceRange);
+  void annotateAndAdvanceFunctionMacroTokens(CXCursor, RangeComparisonResult,
+                                             SourceRange);
 
 public:
   AnnotateTokensWorker(AnnotateTokensData &annotated,
@@ -4611,8 +4611,8 @@ void AnnotateTokensWorker::annotateAndAdvanceTokens(CXCursor updateC,
                                                SourceRange range) {
   while (MoreTokens()) {
     const unsigned I = NextToken();
-    if (isMacroArgToken(I))
-      return annotateAndAdvanceMacroArgTokens(updateC, compResult, range);
+    if (isFunctionMacroToken(I))
+      return annotateAndAdvanceFunctionMacroTokens(updateC, compResult, range);
 
     SourceLocation TokLoc = GetTokenLoc(I);
     if (LocationCompare(SrcMgr, TokLoc, range) == compResult) {
@@ -4625,10 +4625,12 @@ void AnnotateTokensWorker::annotateAndAdvanceTokens(CXCursor updateC,
 }
 
 /// \brief Special annotation handling for macro argument tokens.
-void AnnotateTokensWorker::annotateAndAdvanceMacroArgTokens(CXCursor updateC,
+void AnnotateTokensWorker::annotateAndAdvanceFunctionMacroTokens(
+                                               CXCursor updateC,
                                                RangeComparisonResult compResult,
                                                SourceRange range) {
-  assert(isMacroArgToken(NextToken()) &&
+  assert(MoreTokens());
+  assert(isFunctionMacroToken(NextToken()) &&
          "Should be called only for macro arg tokens");
 
   // This works differently than annotateAndAdvanceTokens; because expanded
@@ -4642,8 +4644,8 @@ void AnnotateTokensWorker::annotateAndAdvanceMacroArgTokens(CXCursor updateC,
   bool atLeastOneCompFail = false;
   
   unsigned I = NextToken();
-  for (; isMacroArgToken(I); ++I) {
-    SourceLocation TokLoc = getMacroArgLoc(I);
+  for (; I < NumTokens && isFunctionMacroToken(I); ++I) {
+    SourceLocation TokLoc = getFunctionMacroTokenLoc(I);
     if (TokLoc.isFileID())
       continue; // not macro arg token, it's parens or comma.
     if (LocationCompare(SrcMgr, TokLoc, range) == compResult) {
@@ -4893,7 +4895,7 @@ public:
       if (!SM.isBeforeInTranslationUnit(tokLoc, macroRange.getEnd()))
         break;
 
-      setMacroArgExpandedLoc(CurIdx, SM.getMacroArgExpandedLocation(tokLoc));
+      setFunctionMacroTokenLoc(CurIdx, SM.getMacroArgExpandedLocation(tokLoc));
     }
 
     if (CurIdx == NumTokens)
@@ -4907,7 +4909,7 @@ private:
     return SourceLocation::getFromRawEncoding(Tokens[tokI].int_data[1]);
   }
 
-  void setMacroArgExpandedLoc(unsigned tokI, SourceLocation loc) {
+  void setFunctionMacroTokenLoc(unsigned tokI, SourceLocation loc) {
     // The third field is reserved and currently not used. Use it here
     // to mark macro arg expanded tokens with their expanded locations.
     Tokens[tokI].int_data[3] = loc.getRawEncoding();
