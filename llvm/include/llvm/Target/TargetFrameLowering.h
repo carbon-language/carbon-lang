@@ -114,6 +114,10 @@ public:
   virtual void emitEpilogue(MachineFunction &MF,
                             MachineBasicBlock &MBB) const = 0;
 
+  /// Adjust the prologue to have the function use segmented stacks. This works
+  /// by adding a check even before the "normal" function prologue.
+  virtual void adjustForSegmentedStacks(MachineFunction &MF) const { }
+
   /// spillCalleeSavedRegisters - Issues instruction(s) to spill all callee
   /// saved registers and returns true if it isn't possible / profitable to do
   /// so by issuing a series of store instructions via

@@ -65,6 +65,9 @@ class X86MachineFunctionInfo : public MachineFunctionInfo {
   unsigned VarArgsGPOffset;
   /// VarArgsFPOffset - X86-64 vararg func fp reg offset.
   unsigned VarArgsFPOffset;
+  /// ArgumentStackSize - The number of bytes on stack consumed by the arguments
+  /// being passed on the stack.
+  unsigned ArgumentStackSize;
 
 public:
   X86MachineFunctionInfo() : ForceFramePointer(false),
@@ -77,7 +80,8 @@ public:
                              VarArgsFrameIndex(0),
                              RegSaveFrameIndex(0),
                              VarArgsGPOffset(0),
-                             VarArgsFPOffset(0) {}
+                             VarArgsFPOffset(0),
+                             ArgumentStackSize(0) {}
   
   explicit X86MachineFunctionInfo(MachineFunction &MF)
     : ForceFramePointer(false),
@@ -91,7 +95,8 @@ public:
       VarArgsFrameIndex(0),
       RegSaveFrameIndex(0),
       VarArgsGPOffset(0),
-      VarArgsFPOffset(0) {}
+      VarArgsFPOffset(0),
+      ArgumentStackSize(0) {}
   
   bool getForceFramePointer() const { return ForceFramePointer;} 
   void setForceFramePointer(bool forceFP) { ForceFramePointer = forceFP; }
@@ -128,6 +133,9 @@ public:
 
   unsigned getVarArgsFPOffset() const { return VarArgsFPOffset; }
   void setVarArgsFPOffset(unsigned Offset) { VarArgsFPOffset = Offset; }
+
+  unsigned getArgumentStackSize() const { return ArgumentStackSize; }
+  void setArgumentStackSize(unsigned size) { ArgumentStackSize = size; }
 };
 
 } // End llvm namespace

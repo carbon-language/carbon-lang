@@ -29,6 +29,7 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/RegisterScavenging.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetInstrInfo.h"
@@ -699,6 +700,13 @@ void PEI::insertPrologEpilogCode(MachineFunction &Fn) {
     if (!I->empty() && I->back().getDesc().isReturn())
       TFI.emitEpilogue(Fn, *I);
   }
+
+  // Emit additional code that is required support segmented stacks, if we've
+  // been asked for it.  This, when linked with a runtime with support for
+  // segmented stacks (libgcc is one), will result allocating stack space in
+  // small chunks instead of one large contiguous block.
+  if (EnableSegmentedStacks)
+    TFI.adjustForSegmentedStacks(Fn);
 }
 
 /// replaceFrameIndices - Replace all MO_FrameIndex operands with physical
