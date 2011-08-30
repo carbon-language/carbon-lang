@@ -554,6 +554,117 @@ DNBArchImplX86_64::NotifyException(MachException::Data& exc)
     return false;
 }
 
+#ifndef DR_FIRSTADDR
+#define DR_FIRSTADDR 0
+#endif
+
+#ifndef DR_LASTADDR
+#define DR_LASTADDR 3
+#endif
+
+#ifndef DR_STATUS
+#define DR_STATUS 6
+#endif
+
+#ifndef DR_CONTROL
+#define DR_CONTROL 7
+#endif
+
+uint32_t
+DNBArchImplX86_64::NumSupportedHardwareWatchpoints()
+{
+    return DR_LASTADDR - DR_FIRSTADDR + 1;
+}
+
+uint32_t
+DNBArchImplX86_64::EnableHardwareWatchpoint (nub_addr_t addr, nub_size_t size, bool read, bool write)
+{
+    DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchImplX86_64::EnableHardwareWatchpoint(addr = %8.8p, size = %u, read = %u, write = %u)", addr, size, read, write);
+
+    const uint32_t num_hw_watchpoints = NumSupportedHardwareWatchpoints();
+
+    // Can't watch zero bytes
+    if (size == 0)
+        return INVALID_NUB_HW_INDEX;
+
+    // We must watch for either read or write
+    if (read == false && write == false)
+        return INVALID_NUB_HW_INDEX;
+
+    //
+    // FIXME: Add implmentation.
+    //
+
+    // Read the debug state
+    kern_return_t kret = GetDBGState(false);
+
+    if (kret == KERN_SUCCESS)
+    {
+        // Check to make sure we have the needed hardware support
+        uint32_t i = 0;
+
+        DBG debug_state = m_state.context.dbg;
+        for (i=0; i<num_hw_watchpoints; ++i)
+        {
+            uint64_t dr_val = 0;
+            switch (i) {
+            case 0:
+                dr_val = debug_state.__dr0; break;
+            case 1:
+                dr_val = debug_state.__dr1; break;
+            case 2:
+                dr_val = debug_state.__dr2; break;
+            case 3:
+                dr_val = debug_state.__dr3; break;
+            default:
+                break;
+            }
+            if (dr_val != 0)
+                break; // We found an available hw breakpoint slot (in i)
+        }
+
+        // See if we found an available hw breakpoint slot above
+        if (i < num_hw_watchpoints)
+        {
+            kret = SetDBGState();
+            DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchImplX86_64::EnableHardwareWatchpoint() SetDBGState() => 0x%8.8x.", kret);
+
+            if (kret == KERN_SUCCESS)
+                return i;
+        }
+        else
+        {
+            DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchImplX86_64::EnableHardwareWatchpoint(): All hardware resources (%u) are in use.", num_hw_watchpoints);
+        }
+    }
+    return INVALID_NUB_HW_INDEX;
+}
+
+bool
+DNBArchImplX86_64::DisableHardwareWatchpoint (uint32_t hw_index)
+{
+    kern_return_t kret = GetDBGState(false);
+
+    const uint32_t num_hw_points = NumSupportedHardwareWatchpoints();
+    if (kret == KERN_SUCCESS)
+    {
+        if (hw_index < num_hw_points)
+        {
+            //
+            // FIXEME: Add implementation.
+            //
+
+            DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchImplX86_64::DisableHardwareWatchpoint( %u )",
+                             hw_index);
+
+            kret = SetDBGState();
+
+            if (kret == KERN_SUCCESS)
+                return true;
+        }
+    }
+    return false;
+}
 
 // Set the single step bit in the processor status register.
 kern_return_t

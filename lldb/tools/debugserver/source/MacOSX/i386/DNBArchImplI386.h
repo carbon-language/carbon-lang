@@ -51,6 +51,10 @@ public:
     virtual bool            ThreadDidStop();
     virtual bool            NotifyException(MachException::Data& exc);
 
+    virtual uint32_t        NumSupportedHardwareWatchpoints();
+    virtual uint32_t        EnableHardwareWatchpoint (nub_addr_t addr, nub_size_t size, bool read, bool write);
+    virtual bool            DisableHardwareWatchpoint (uint32_t hw_break_index);
+
 protected:
     kern_return_t           EnableHardwareSingleStep (bool enable);
 

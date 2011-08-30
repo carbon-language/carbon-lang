@@ -147,12 +147,12 @@ RNBRemote::CreatePacketTable  ()
 //  t.push_back (Packet (write_data_to_memory,          &RNBRemote::HandlePacket_X,             NULL, "X", "Write data to memory"));
 //  t.push_back (Packet (insert_hardware_bp,            &RNBRemote::HandlePacket_UNIMPLEMENTED, NULL, "Z1", "Insert hardware breakpoint"));
 //  t.push_back (Packet (remove_hardware_bp,            &RNBRemote::HandlePacket_UNIMPLEMENTED, NULL, "z1", "Remove hardware breakpoint"));
-//  t.push_back (Packet (insert_write_watch_bp,         &RNBRemote::HandlePacket_UNIMPLEMENTED, NULL, "Z2", "Insert write watchpoint"));
-//  t.push_back (Packet (remove_write_watch_bp,         &RNBRemote::HandlePacket_UNIMPLEMENTED, NULL, "z2", "Remove write watchpoint"));
-//  t.push_back (Packet (insert_read_watch_bp,          &RNBRemote::HandlePacket_UNIMPLEMENTED, NULL, "Z3", "Insert read watchpoint"));
-//  t.push_back (Packet (remove_read_watch_bp,          &RNBRemote::HandlePacket_UNIMPLEMENTED, NULL, "z3", "Remove read watchpoint"));
-//  t.push_back (Packet (insert_access_watch_bp,        &RNBRemote::HandlePacket_UNIMPLEMENTED, NULL, "Z4", "Insert access watchpoint"));
-//  t.push_back (Packet (remove_access_watch_bp,        &RNBRemote::HandlePacket_UNIMPLEMENTED, NULL, "z4", "Remove access watchpoint"));
+    t.push_back (Packet (insert_write_watch_bp,         &RNBRemote::HandlePacket_z,             NULL, "Z2", "Insert write watchpoint"));
+    t.push_back (Packet (remove_write_watch_bp,         &RNBRemote::HandlePacket_z,             NULL, "z2", "Remove write watchpoint"));
+    t.push_back (Packet (insert_read_watch_bp,          &RNBRemote::HandlePacket_z,             NULL, "Z3", "Insert read watchpoint"));
+    t.push_back (Packet (remove_read_watch_bp,          &RNBRemote::HandlePacket_z,             NULL, "z3", "Remove read watchpoint"));
+    t.push_back (Packet (insert_access_watch_bp,        &RNBRemote::HandlePacket_z,             NULL, "Z4", "Insert access watchpoint"));
+    t.push_back (Packet (remove_access_watch_bp,        &RNBRemote::HandlePacket_z,             NULL, "z4", "Remove access watchpoint"));
     t.push_back (Packet (query_current_thread_id,       &RNBRemote::HandlePacket_qC,            NULL, "qC", "Query current thread ID"));
     t.push_back (Packet (query_get_pid,                 &RNBRemote::HandlePacket_qGetPid,       NULL, "qGetPid", "Query process id"));
 //  t.push_back (Packet (query_memory_crc,              &RNBRemote::HandlePacket_UNIMPLEMENTED, NULL, "qCRC:", "Compute CRC of memory region"));
