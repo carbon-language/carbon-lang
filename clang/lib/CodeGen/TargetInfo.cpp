@@ -87,6 +87,17 @@ void ABIArgInfo::dump() const {
 
 TargetCodeGenInfo::~TargetCodeGenInfo() { delete Info; }
 
+// If someone can figure out a general rule for this, that would be great.
+// It's probably just doomed to be platform-dependent, though.
+unsigned TargetCodeGenInfo::getSizeOfUnwindException() const {
+  // Verified for:
+  //   x86-64     FreeBSD, Linux, Darwin
+  //   x86-32     FreeBSD, Linux, Darwin
+  //   PowerPC    Linux, Darwin
+  //   ARM        Darwin (*not* EABI)
+  return 32;
+}
+
 static bool isEmptyRecord(ASTContext &Context, QualType T, bool AllowArrays);
 
 /// isEmptyField - Return true iff a the field is "empty", that is it
@@ -2300,6 +2311,11 @@ private:
 public:
   ARMABIInfo(CodeGenTypes &CGT, ABIKind _Kind) : ABIInfo(CGT), Kind(_Kind) {}
 
+  bool isEABI() const {
+    StringRef Env = getContext().Target.getTriple().getEnvironmentName();
+    return (Env == "gnueabi" || Env == "eabi");
+  }
+
 private:
   ABIKind getABIKind() const { return Kind; }
 
@@ -2316,6 +2332,10 @@ class ARMTargetCodeGenInfo : public TargetCodeGenInfo {
 public:
   ARMTargetCodeGenInfo(CodeGenTypes &CGT, ARMABIInfo::ABIKind K)
     :TargetCodeGenInfo(new ARMABIInfo(CGT, K)) {}
+
+  const ARMABIInfo &getABIInfo() const {
+    return static_cast<const ARMABIInfo&>(TargetCodeGenInfo::getABIInfo());
+  }
 
   int getDwarfEHStackPointer(CodeGen::CodeGenModule &M) const {
     return 13;
@@ -2338,6 +2358,11 @@ public:
 
     return false;
   }
+
+  unsigned getSizeOfUnwindException() const {
+    if (getABIInfo().isEABI()) return 88;
+    return TargetCodeGenInfo::getSizeOfUnwindException();
+  }
 };
 
 }
@@ -2354,8 +2379,7 @@ void ARMABIInfo::computeInfo(CGFunctionInfo &FI) const {
 
   // Calling convention as default by an ABI.
   llvm::CallingConv::ID DefaultCC;
-  StringRef Env = getContext().Target.getTriple().getEnvironmentName();
-  if (Env == "gnueabi" || Env == "eabi")
+  if (isEABI())
     DefaultCC = llvm::CallingConv::ARM_AAPCS;
   else
     DefaultCC = llvm::CallingConv::ARM_APCS;
@@ -3007,6 +3031,10 @@ public:
 
   bool initDwarfEHRegSizeTable(CodeGen::CodeGenFunction &CGF,
                                llvm::Value *Address) const;
+
+  unsigned getSizeOfUnwindException() const {
+    return 24;
+  }
 };
 }
 

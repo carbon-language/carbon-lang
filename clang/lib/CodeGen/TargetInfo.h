@@ -59,7 +59,7 @@ namespace clang {
     ///     uint64 private_1;
     ///     uint64 private_2;
     ///   };
-    unsigned getSizeOfUnwindException() const { return 32; }
+    virtual unsigned getSizeOfUnwindException() const;
 
     /// Controls whether __builtin_extend_pointer should sign-extend
     /// pointers to uint64_t or zero-extend them (the default).  Has
