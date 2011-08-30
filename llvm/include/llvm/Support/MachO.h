@@ -110,6 +110,10 @@ namespace llvm {
       LoadCommandDynamicLinkerInfo        = 0x00000022u, // LC_DYLD_INFO
       LoadCommandDynamicLinkerInfoOnly    = 0x80000022u, // LC_DYLD_INFO_ONLY
       LoadCommandDylibLoadUpward          = 0x80000023u, // LC_LOAD_UPWARD_DYLIB
+      LoadCommandVersionMinMacOSX         = 0x00000024u, // LC_VERSION_MIN_MACOSX
+      LoadCommandVersionMinIPhoneOS       = 0x00000025u, // LC_VERSION_MIN_IPHONEOS
+      LoadCommandFunctionStarts           = 0x00000026u, // LC_FUNCTION_STARTS
+      LoadCommandDyldEnvironment          = 0x00000027u, // LC_DYLD_ENVIRONMENT
 
       // Constant bits for the "flags" field in llvm::MachO::segment_command
       SegmentCommandFlagBitHighVM             = 0x1u, // SG_HIGHVM
@@ -567,6 +571,13 @@ namespace llvm {
       uint32_t cryptoff;
       uint32_t cryptsize;
       uint32_t cryptid;
+    };
+
+    struct version_min_command {
+      uint32_t cmd;
+      uint32_t cmdsize;
+      uint32_t version;
+      uint32_t reserved;
     };
 
     struct dyld_info_command {
