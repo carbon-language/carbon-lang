@@ -617,9 +617,8 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
         DeleteDeadInstruction(Dead, *MD, &DeadStackObjects);
         ++NumFastStores;
         MadeChange = true;
+        continue;
       }
-
-      continue;
     }
     
     // Remove any dead non-memory-mutating instructions.
