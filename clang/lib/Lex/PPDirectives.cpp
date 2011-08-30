@@ -1187,7 +1187,8 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
                                   End, SearchPath, RelativePath);
 
   if (File == 0) {
-    Diag(FilenameTok, diag::warn_pp_file_not_found) << Filename;
+    if (!SuppressIncludeNotFoundError)
+      Diag(FilenameTok, diag::err_pp_file_not_found) << Filename;
     return;
   }
 

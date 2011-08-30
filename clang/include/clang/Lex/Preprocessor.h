@@ -105,6 +105,7 @@ class Preprocessor : public llvm::RefCountedBase<Preprocessor> {
   // State that is set before the preprocessor begins.
   bool KeepComments : 1;
   bool KeepMacroComments : 1;
+  bool SuppressIncludeNotFoundError : 1;
 
   // State that changes while the preprocessor runs:
   bool InMacroArgs : 1;            // True if parsing fn macro invocation args.
@@ -343,6 +344,14 @@ public:
   }
 
   bool getCommentRetentionState() const { return KeepComments; }
+
+  void SetSuppressIncludeNotFoundError(bool Suppress) {
+    SuppressIncludeNotFoundError = Suppress;
+  }
+
+  bool GetSuppressIncludeNotFoundError() {
+    return SuppressIncludeNotFoundError;
+  }
 
   /// isCurrentLexer - Return true if we are lexing directly from the specified
   /// lexer.

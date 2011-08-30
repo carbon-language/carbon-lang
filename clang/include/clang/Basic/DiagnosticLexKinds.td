@@ -186,7 +186,7 @@ def ext_empty_fnmacro_arg : Extension<
 
 def err_pp_invalid_directive : Error<"invalid preprocessing directive">;
 def err_pp_hash_error : Error<"#error%0">;
-def warn_pp_file_not_found : Warning<"'%0' file not found">, DefaultFatal;
+def err_pp_file_not_found : Error<"'%0' file not found">, DefaultFatal;
 def err_pp_error_opening_file : Error<
   "error opening file '%0': %1">, DefaultFatal;
 def err_pp_empty_filename : Error<"empty filename">;

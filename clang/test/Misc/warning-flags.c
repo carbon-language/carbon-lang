@@ -17,7 +17,7 @@ This test serves two purposes:
 
 The list of warnings below should NEVER grow.  It should gradually shrink to 0.
 
-CHECK: Warnings without flags (313):
+CHECK: Warnings without flags (312):
 CHECK-NEXT:   auto_storage_class
 CHECK-NEXT:   backslash_newline_space
 CHECK-NEXT:   charize_microsoft_ext
@@ -253,7 +253,6 @@ CHECK-NEXT:   warn_pointer_attribute_wrong_type
 CHECK-NEXT:   warn_pp_convert_lhs_to_positive
 CHECK-NEXT:   warn_pp_convert_rhs_to_positive
 CHECK-NEXT:   warn_pp_expr_overflow
-CHECK-NEXT:   warn_pp_file_not_found
 CHECK-NEXT:   warn_pp_line_decimal
 CHECK-NEXT:   warn_pragma_align_expected_equal
 CHECK-NEXT:   warn_pragma_align_invalid_option

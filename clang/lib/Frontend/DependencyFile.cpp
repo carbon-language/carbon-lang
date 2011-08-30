@@ -86,14 +86,8 @@ void clang::AttachDependencyFileGen(Preprocessor &PP,
   }
 
   // Disable the "file not found" diagnostic if the -MG option was given.
-  // FIXME: Ideally this would live in the driver, but we don't have the ability
-  // to remap individual diagnostics there without creating a DiagGroup, in
-  // which case we would need to prevent the group name from showing up in
-  // diagnostics.
-  if (Opts.AddMissingHeaderDeps) {
-    PP.getDiagnostics().setDiagnosticMapping(diag::warn_pp_file_not_found,
-                                            diag::MAP_IGNORE, SourceLocation());
-  }
+  if (Opts.AddMissingHeaderDeps)
+    PP.SetSuppressIncludeNotFoundError(true);
 
   PP.addPPCallbacks(new DependencyFileCallback(&PP, OS, Opts));
 }
