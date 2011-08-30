@@ -1070,18 +1070,28 @@ Clang assumes directories as below;</p>
 
 <h5>MinGW-w64</h5>
 
-<p>For x32(i686-w64-mingw32), it is not supported yet.</p>
-
-<p>For x64(x86_64-w64-mingw32), <a href="http://lists.cs.uiuc.edu/pipermail/llvm-commits/Week-of-Mon-20110321/118499.html">an essential patch(LLVM's r128206)</a> would be needed. It is incompatible to <a href="http://tdm-gcc.tdragon.net/development">TDM-GCC</a> due to the definition of symbol &quot;<code>___chkstk</code>&quot;. Clang assumes as below;<p>
+<p>For 32-bit (i686-w64-mingw32), and 64-bit (x86_64-w64-mingw32), Clang assumes as below;<p>
 
 <ul>
-<li><tt>C:/mingw/x86_64-w64-mingw32/include</tt></li>
-<li><tt>C:/mingw/x86_64-w64-mingw32/include/c++/4.5.[23]</tt></li>
-<li>GCC driver &quot;gcc.exe&quot; to build x86_64-w64-mingw32 binary.</li>
+<li><tt>GCC versions 4.5.0 to 4.5.3, 4.6.0 to 4.6.2, or 4.7.0 (for the C++ header search path)</tt></li>
+<li><tt>some_directory/bin/gcc.exe</tt></li>
+<li><tt>some_directory/bin/clang.exe</tt></li>
+<li><tt>some_directory/bin/clang++.exe</tt></li>
+<li><tt>some_directory/bin/../include/c++/GCC_version</tt></li>
+<li><tt>some_directory/bin/../include/c++/GCC_version/x86_64-w64-mingw32</tt></li>
+<li><tt>some_directory/bin/../include/c++/GCC_version/i686-w64-mingw32</tt></li>
+<li><tt>some_directory/bin/../include/c++/GCC_version/backward</tt></li>
+<li><tt>some_directory/bin/../x86_64-w64-mingw32/include</tt></li>
+<li><tt>some_directory/bin/../i686-w64-mingw32/include</tt></li>
+<li><tt>some_directory/bin/../include</tt></li>
 </ul>
 
-<p><a href="http://llvm.org/bugs/show_bug.cgi?id=8833">Some tests might fail</a>
-on x64.</p>
+<p>This directory layout is standard for any toolchain you will find on the official <a href="mingw-w64.sourceforge.net">MinGW-w64 website</a>.
+
+<p>Clang expects the GCC executable &quot;gcc.exe&quot; compiled for i686-w64-mingw32 (or x86_64-w64-mingw32) to be present on PATH.</p>
+
+<p><a href="http://llvm.org/bugs/show_bug.cgi?id=9072">Some tests might fail</a>
+on x86_64-w64-mingw32.</p>
 
 </div>
 </body>
