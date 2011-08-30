@@ -1860,6 +1860,19 @@ Sema::BuildBaseInitializer(QualType BaseType, TypeSourceInfo *BaseTInfo,
                                                   EllipsisLoc);
 }
 
+// Create a static_cast\<T&&>(expr).
+static Expr *CastForMoving(Sema &SemaRef, Expr *E) {
+  QualType ExprType = E->getType();
+  QualType TargetType = SemaRef.Context.getRValueReferenceType(ExprType);
+  SourceLocation ExprLoc = E->getLocStart();
+  TypeSourceInfo *TargetLoc = SemaRef.Context.getTrivialTypeSourceInfo(
+      TargetType, ExprLoc);
+
+  return SemaRef.BuildCXXNamedCast(ExprLoc, tok::kw_static_cast, TargetLoc, E,
+                                   SourceRange(ExprLoc, ExprLoc),
+                                   E->getSourceRange()).take();
+}
+
 /// ImplicitInitializerKind - How an implicit base or member initializer should
 /// initialize its base or member.
 enum ImplicitInitializerKind {
@@ -1890,7 +1903,9 @@ BuildImplicitBaseInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
     break;
   }
 
+  case IIK_Move:
   case IIK_Copy: {
+    bool Moving = ImplicitInitKind == IIK_Move;
     ParmVarDecl *Param = Constructor->getParamDecl(0);
     QualType ParamType = Param->getType().getNonReferenceType();
     
@@ -1898,17 +1913,22 @@ BuildImplicitBaseInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
       DeclRefExpr::Create(SemaRef.Context, NestedNameSpecifierLoc(), Param, 
                           Constructor->getLocation(), ParamType,
                           VK_LValue, 0);
-    
+
     // Cast to the base class to avoid ambiguities.
     QualType ArgTy = 
       SemaRef.Context.getQualifiedType(BaseSpec->getType().getUnqualifiedType(), 
                                        ParamType.getQualifiers());
 
+    if (Moving) {
+      CopyCtorArg = CastForMoving(SemaRef, CopyCtorArg);
+    }
+
     CXXCastPath BasePath;
     BasePath.push_back(BaseSpec);
     CopyCtorArg = SemaRef.ImpCastExprToType(CopyCtorArg, ArgTy,
                                             CK_UncheckedDerivedToBase,
-                                            VK_LValue, &BasePath).take();
+                                            Moving ? VK_RValue : VK_LValue,
+                                            &BasePath).take();
 
     InitializationKind InitKind
       = InitializationKind::CreateDirect(Constructor->getLocation(),
@@ -1919,9 +1939,6 @@ BuildImplicitBaseInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
                                MultiExprArg(&CopyCtorArg, 1));
     break;
   }
-
-  case IIK_Move:
-    assert(false && "Unhandled initializer kind!");
   }
 
   BaseInit = SemaRef.MaybeCreateExprWithCleanups(BaseInit);
@@ -1941,6 +1958,11 @@ BuildImplicitBaseInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
   return false;
 }
 
+static bool RefersToRValueRef(Expr *MemRef) {
+  ValueDecl *Referenced = cast<MemberExpr>(MemRef)->getMemberDecl();
+  return Referenced->getType()->isRValueReferenceType();
+}
+
 static bool
 BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
                                ImplicitInitializerKind ImplicitInitKind,
@@ -1951,7 +1973,8 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
 
   SourceLocation Loc = Constructor->getLocation();
 
-  if (ImplicitInitKind == IIK_Copy) {
+  if (ImplicitInitKind == IIK_Copy || ImplicitInitKind == IIK_Move) {
+    bool Moving = ImplicitInitKind == IIK_Move;
     ParmVarDecl *Param = Constructor->getParamDecl(0);
     QualType ParamType = Param->getType().getNonReferenceType();
 
@@ -1964,11 +1987,16 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
       DeclRefExpr::Create(SemaRef.Context, NestedNameSpecifierLoc(), Param, 
                           Loc, ParamType, VK_LValue, 0);
 
+    if (Moving) {
+      MemberExprBase = CastForMoving(SemaRef, MemberExprBase);
+    }
+
     // Build a reference to this field within the parameter.
     CXXScopeSpec SS;
     LookupResult MemberLookup(SemaRef, Field->getDeclName(), Loc,
                               Sema::LookupMemberName);
-    MemberLookup.addDecl(Indirect? cast<ValueDecl>(Indirect) : cast<ValueDecl>(Field), AS_public);
+    MemberLookup.addDecl(Indirect ? cast<ValueDecl>(Indirect)
+                                  : cast<ValueDecl>(Field), AS_public);
     MemberLookup.resolveKind();
     ExprResult CopyCtorArg 
       = SemaRef.BuildMemberReferenceExpr(MemberExprBase,
@@ -1980,7 +2008,14 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
                                          /*TemplateArgs=*/0);    
     if (CopyCtorArg.isInvalid())
       return true;
-    
+
+    // C++11 [class.copy]p15:
+    //   - if a member m has rvalue reference type T&&, it is direct-initialized
+    //     with static_cast<T&&>(x.m);
+    if (RefersToRValueRef(CopyCtorArg.get())) {
+      CopyCtorArg = CastForMoving(SemaRef, CopyCtorArg.take());
+    }
+
     // When the field we are copying is an array, create index variables for 
     // each dimension of the array. We use these index variables to subscript
     // the source array, and other clients (e.g., CodeGen) will perform the
@@ -1988,8 +2023,10 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
     SmallVector<VarDecl *, 4> IndexVariables;
     QualType BaseType = Field->getType();
     QualType SizeType = SemaRef.Context.getSizeType();
+    bool InitializingArray = false;
     while (const ConstantArrayType *Array
                           = SemaRef.Context.getAsConstantArrayType(BaseType)) {
+      InitializingArray = true;
       // Create the iteration variable for this array index.
       IdentifierInfo *IterationVarName = 0;
       {
@@ -2018,10 +2055,14 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
                                                             Loc);
       if (CopyCtorArg.isInvalid())
         return true;
-      
+
       BaseType = Array->getElementType();
     }
-    
+
+    // The array subscript expression is an lvalue, which is wrong for moving.
+    if (Moving && InitializingArray)
+      CopyCtorArg = CastForMoving(SemaRef, CopyCtorArg.take());
+
     // Construct the entity that we will be initializing. For an array, this
     // will be first element in the array, which may require several levels
     // of array-subscript entities. 
@@ -2154,10 +2195,11 @@ struct BaseAndFieldInfo {
 
   BaseAndFieldInfo(Sema &S, CXXConstructorDecl *Ctor, bool ErrorsInInits)
     : S(S), Ctor(Ctor), AnyErrorsInInits(ErrorsInInits) {
-    // FIXME: Handle implicit move constructors.
-    if ((Ctor->isImplicit() || Ctor->isDefaulted()) && 
-        Ctor->isCopyConstructor())
+    bool Generated = Ctor->isImplicit() || Ctor->isDefaulted();
+    if (Generated && Ctor->isCopyConstructor())
       IIK = IIK_Copy;
+    else if (Generated && Ctor->isMoveConstructor())
+      IIK = IIK_Move;
     else
       IIK = IIK_Default;
   }
@@ -2344,7 +2386,7 @@ bool Sema::SetCtorInitializers(CXXConstructorDecl *Constructor,
         continue;
       }
       
-      // If we're not generating the implicit copy constructor, then we'll
+      // If we're not generating the implicit copy/move constructor, then we'll
       // handle anonymous struct/union fields based on their individual
       // indirect fields.
       if (F->isAnonymousStructOrUnion() && Info.IIK == IIK_Default)
@@ -3158,12 +3200,14 @@ void Sema::CheckExplicitlyDefaultedMethods(CXXRecordDecl *Record) {
         break;
 
       case CXXMoveConstructor:
-      case CXXMoveAssignment:
-        Diag(MI->getLocation(), diag::err_defaulted_move_unsupported);
+        CheckExplicitlyDefaultedMoveConstructor(cast<CXXConstructorDecl>(*MI));
         break;
 
-      default:
-        // FIXME: Do moves once they exist
+      case CXXMoveAssignment:
+        CheckExplicitlyDefaultedMoveAssignment(*MI);
+        break;
+
+      case CXXInvalid:
         llvm_unreachable("non-special member explicitly defaulted!");
       }
     }
@@ -3332,7 +3376,7 @@ void Sema::CheckExplicitlyDefaultedCopyAssignment(CXXMethodDecl *MD) {
                          Context.VoidTy, 0, 0, EPI)->getAs<FunctionProtoType>();
 
   QualType ArgType = OperType->getArgType(0);
-  if (!ArgType->isReferenceType()) {
+  if (!ArgType->isLValueReferenceType()) {
     Diag(MD->getLocation(), diag::err_defaulted_copy_assign_not_ref);
     HadError = true;
   } else {
@@ -3379,6 +3423,155 @@ void Sema::CheckExplicitlyDefaultedCopyAssignment(CXXMethodDecl *MD) {
     } else {
       Diag(MD->getLocation(), diag::err_out_of_line_default_deletes)
         << CXXCopyAssignment;
+      MD->setInvalidDecl();
+    }
+  }
+}
+
+void Sema::CheckExplicitlyDefaultedMoveConstructor(CXXConstructorDecl *CD) {
+  assert(CD->isExplicitlyDefaulted() && CD->isMoveConstructor());
+
+  // Whether this was the first-declared instance of the constructor.
+  bool First = CD == CD->getCanonicalDecl();
+
+  bool HadError = false;
+  if (CD->getNumParams() != 1) {
+    Diag(CD->getLocation(), diag::err_defaulted_move_ctor_params)
+      << CD->getSourceRange();
+    HadError = true;
+  }
+
+  ImplicitExceptionSpecification Spec(
+      ComputeDefaultedMoveCtorExceptionSpec(CD->getParent()));
+
+  FunctionProtoType::ExtProtoInfo EPI = Spec.getEPI();
+  const FunctionProtoType *CtorType = CD->getType()->getAs<FunctionProtoType>(),
+                          *ExceptionType = Context.getFunctionType(
+                         Context.VoidTy, 0, 0, EPI)->getAs<FunctionProtoType>();
+
+  // Check for parameter type matching.
+  // This is a move ctor so we know it's a cv-qualified rvalue reference to T.
+  QualType ArgType = CtorType->getArgType(0);
+  if (ArgType->getPointeeType().isVolatileQualified()) {
+    Diag(CD->getLocation(), diag::err_defaulted_move_ctor_volatile_param);
+    HadError = true;
+  }
+  if (ArgType->getPointeeType().isConstQualified()) {
+    Diag(CD->getLocation(), diag::err_defaulted_move_ctor_const_param);
+    HadError = true;
+  }
+
+  if (CtorType->hasExceptionSpec()) {
+    if (CheckEquivalentExceptionSpec(
+          PDiag(diag::err_incorrect_defaulted_exception_spec)
+            << CXXMoveConstructor,
+          PDiag(),
+          ExceptionType, SourceLocation(),
+          CtorType, CD->getLocation())) {
+      HadError = true;
+    }
+  } else if (First) {
+    // We set the declaration to have the computed exception spec here.
+    // We duplicate the one parameter type.
+    EPI.ExtInfo = CtorType->getExtInfo();
+    CD->setType(Context.getFunctionType(Context.VoidTy, &ArgType, 1, EPI));
+  }
+
+  if (HadError) {
+    CD->setInvalidDecl();
+    return;
+  }
+
+  if (ShouldDeleteMoveConstructor(CD)) {
+    if (First) {
+      CD->setDeletedAsWritten();
+    } else {
+      Diag(CD->getLocation(), diag::err_out_of_line_default_deletes)
+        << CXXMoveConstructor;
+      CD->setInvalidDecl();
+    }
+  }
+}
+
+void Sema::CheckExplicitlyDefaultedMoveAssignment(CXXMethodDecl *MD) {
+  assert(MD->isExplicitlyDefaulted());
+
+  // Whether this was the first-declared instance of the operator
+  bool First = MD == MD->getCanonicalDecl();
+
+  bool HadError = false;
+  if (MD->getNumParams() != 1) {
+    Diag(MD->getLocation(), diag::err_defaulted_move_assign_params)
+      << MD->getSourceRange();
+    HadError = true;
+  }
+
+  QualType ReturnType =
+    MD->getType()->getAs<FunctionType>()->getResultType();
+  if (!ReturnType->isLValueReferenceType() ||
+      !Context.hasSameType(
+        Context.getCanonicalType(ReturnType->getPointeeType()),
+        Context.getCanonicalType(Context.getTypeDeclType(MD->getParent())))) {
+    Diag(MD->getLocation(), diag::err_defaulted_move_assign_return_type);
+    HadError = true;
+  }
+
+  ImplicitExceptionSpecification Spec(
+      ComputeDefaultedMoveCtorExceptionSpec(MD->getParent()));
+  
+  FunctionProtoType::ExtProtoInfo EPI = Spec.getEPI();
+  const FunctionProtoType *OperType = MD->getType()->getAs<FunctionProtoType>(),
+                          *ExceptionType = Context.getFunctionType(
+                         Context.VoidTy, 0, 0, EPI)->getAs<FunctionProtoType>();
+
+  QualType ArgType = OperType->getArgType(0);
+  if (!ArgType->isRValueReferenceType()) {
+    Diag(MD->getLocation(), diag::err_defaulted_move_assign_not_ref);
+    HadError = true;
+  } else {
+    if (ArgType->getPointeeType().isVolatileQualified()) {
+      Diag(MD->getLocation(), diag::err_defaulted_move_assign_volatile_param);
+      HadError = true;
+    }
+    if (ArgType->getPointeeType().isConstQualified()) {
+      Diag(MD->getLocation(), diag::err_defaulted_move_assign_const_param);
+      HadError = true;
+    }
+  }
+
+  if (OperType->getTypeQuals()) {
+    Diag(MD->getLocation(), diag::err_defaulted_move_assign_quals);
+    HadError = true;
+  }
+
+  if (OperType->hasExceptionSpec()) {
+    if (CheckEquivalentExceptionSpec(
+          PDiag(diag::err_incorrect_defaulted_exception_spec)
+            << CXXMoveAssignment,
+          PDiag(),
+          ExceptionType, SourceLocation(),
+          OperType, MD->getLocation())) {
+      HadError = true;
+    }
+  } else if (First) {
+    // We set the declaration to have the computed exception spec here.
+    // We duplicate the one parameter type.
+    EPI.RefQualifier = OperType->getRefQualifier();
+    EPI.ExtInfo = OperType->getExtInfo();
+    MD->setType(Context.getFunctionType(ReturnType, &ArgType, 1, EPI));
+  }
+
+  if (HadError) {
+    MD->setInvalidDecl();
+    return;
+  }
+
+  if (ShouldDeleteMoveAssignmentOperator(MD)) {
+    if (First) {
+      MD->setDeletedAsWritten();
+    } else {
+      Diag(MD->getLocation(), diag::err_out_of_line_default_deletes)
+        << CXXMoveAssignment;
       MD->setInvalidDecl();
     }
   }
@@ -3786,7 +3979,7 @@ bool Sema::ShouldDeleteCopyAssignmentOperator(CXXMethodDecl *MD) {
 
   // FIXME: We should put some diagnostic logic right into this function.
 
-  // C++0x [class.copy]/11
+  // C++0x [class.copy]/20
   //    A defaulted [copy] assignment operator for class X is defined as deleted
   //    if X has:
 
@@ -3878,9 +4071,291 @@ bool Sema::ShouldDeleteCopyAssignmentOperator(CXXMethodDecl *MD) {
       CXXMethodDecl *CopyOper = LookupCopyingAssignment(FieldRecord, ArgQuals,
                                                         false, 0);
       if (!CopyOper || CopyOper->isDeleted())
-        return false;
+        return true;
       if (CheckDirectMemberAccess(Loc, CopyOper, PDiag()) != AR_accessible)
-        return false;
+        return true;
+    }
+  }
+
+  return false;
+}
+
+bool Sema::ShouldDeleteMoveConstructor(CXXConstructorDecl *CD) {
+  CXXRecordDecl *RD = CD->getParent();
+  assert(!RD->isDependentType() && "do deletion after instantiation");
+  if (!LangOpts.CPlusPlus0x || RD->isInvalidDecl())
+    return false;
+
+  SourceLocation Loc = CD->getLocation();
+
+  // Do access control from the constructor
+  ContextRAII CtorContext(*this, CD);
+
+  bool Union = RD->isUnion();
+
+  assert(!CD->getParamDecl(0)->getType()->getPointeeType().isNull() &&
+         "copy assignment arg has no pointee type");
+
+  // We do this because we should never actually use an anonymous
+  // union's constructor.
+  if (Union && RD->isAnonymousStructOrUnion())
+    return false;
+
+  // C++0x [class.copy]/11
+  //    A defaulted [move] constructor for class X is defined as deleted
+  //    if X has:
+
+  for (CXXRecordDecl::base_class_iterator BI = RD->bases_begin(),
+                                          BE = RD->bases_end();
+       BI != BE; ++BI) {
+    // We'll handle this one later
+    if (BI->isVirtual())
+      continue;
+
+    QualType BaseType = BI->getType();
+    CXXRecordDecl *BaseDecl = BaseType->getAsCXXRecordDecl();
+    assert(BaseDecl && "base isn't a CXXRecordDecl");
+
+    // -- any [direct base class] of a type with a destructor that is deleted or
+    //    inaccessible from the defaulted constructor
+    CXXDestructorDecl *BaseDtor = LookupDestructor(BaseDecl);
+    if (BaseDtor->isDeleted())
+      return true;
+    if (CheckDestructorAccess(Loc, BaseDtor, PDiag()) !=
+        AR_accessible)
+      return true;
+
+    // -- a [direct base class] B that cannot be [moved] because overload
+    //    resolution, as applied to B's [move] constructor, results in an
+    //    ambiguity or a function that is deleted or inaccessible from the
+    //    defaulted constructor
+    CXXConstructorDecl *BaseCtor = LookupMovingConstructor(BaseDecl);
+    if (!BaseCtor || BaseCtor->isDeleted())
+      return true;
+    if (CheckConstructorAccess(Loc, BaseCtor, BaseCtor->getAccess(), PDiag()) !=
+        AR_accessible)
+      return true;
+
+    // -- for a move constructor, a [direct base class] with a type that
+    //    does not have a move constructor and is not trivially copyable.
+    // If the field isn't a record, it's always trivially copyable.
+    // A moving constructor could be a copy constructor instead.
+    if (!BaseCtor->isMoveConstructor() &&
+        !BaseDecl->isTriviallyCopyable())
+      return true;
+  }
+
+  for (CXXRecordDecl::base_class_iterator BI = RD->vbases_begin(),
+                                          BE = RD->vbases_end();
+       BI != BE; ++BI) {
+    QualType BaseType = BI->getType();
+    CXXRecordDecl *BaseDecl = BaseType->getAsCXXRecordDecl();
+    assert(BaseDecl && "base isn't a CXXRecordDecl");
+
+    // -- any [virtual base class] of a type with a destructor that is deleted
+    //    or inaccessible from the defaulted constructor
+    CXXDestructorDecl *BaseDtor = LookupDestructor(BaseDecl);
+    if (BaseDtor->isDeleted())
+      return true;
+    if (CheckDestructorAccess(Loc, BaseDtor, PDiag()) !=
+        AR_accessible)
+      return true;
+
+    // -- a [virtual base class] B that cannot be [moved] because overload
+    //    resolution, as applied to B's [move] constructor, results in an
+    //    ambiguity or a function that is deleted or inaccessible from the
+    //    defaulted constructor
+    CXXConstructorDecl *BaseCtor = LookupMovingConstructor(BaseDecl);
+    if (!BaseCtor || BaseCtor->isDeleted())
+      return true;
+    if (CheckConstructorAccess(Loc, BaseCtor, BaseCtor->getAccess(), PDiag()) !=
+        AR_accessible)
+      return true;
+
+    // -- for a move constructor, a [virtual base class] with a type that
+    //    does not have a move constructor and is not trivially copyable.
+    // If the field isn't a record, it's always trivially copyable.
+    // A moving constructor could be a copy constructor instead.
+    if (!BaseCtor->isMoveConstructor() &&
+        !BaseDecl->isTriviallyCopyable())
+      return true;
+  }
+
+  for (CXXRecordDecl::field_iterator FI = RD->field_begin(),
+                                     FE = RD->field_end();
+       FI != FE; ++FI) {
+    QualType FieldType = Context.getBaseElementType(FI->getType());
+
+    if (CXXRecordDecl *FieldRecord = FieldType->getAsCXXRecordDecl()) {
+      // This is an anonymous union
+      if (FieldRecord->isUnion() && FieldRecord->isAnonymousStructOrUnion()) {
+        // Anonymous unions inside unions do not variant members create
+        if (!Union) {
+          for (CXXRecordDecl::field_iterator UI = FieldRecord->field_begin(),
+                                             UE = FieldRecord->field_end();
+               UI != UE; ++UI) {
+            QualType UnionFieldType = Context.getBaseElementType(UI->getType());
+            CXXRecordDecl *UnionFieldRecord =
+              UnionFieldType->getAsCXXRecordDecl();
+
+            // -- a variant member with a non-trivial [move] constructor and X
+            //    is a union-like class
+            if (UnionFieldRecord &&
+                !UnionFieldRecord->hasTrivialMoveConstructor())
+              return true;
+          }
+        }
+
+        // Don't try to initalize an anonymous union
+        continue;
+      } else {
+         // -- a variant member with a non-trivial [move] constructor and X is a
+         //    union-like class
+        if (Union && !FieldRecord->hasTrivialMoveConstructor())
+          return true;
+
+        // -- any [non-static data member] of a type with a destructor that is
+        //    deleted or inaccessible from the defaulted constructor
+        CXXDestructorDecl *FieldDtor = LookupDestructor(FieldRecord);
+        if (FieldDtor->isDeleted())
+          return true;
+        if (CheckDestructorAccess(Loc, FieldDtor, PDiag()) !=
+            AR_accessible)
+          return true;
+      }
+
+      // -- a [non-static data member of class type (or array thereof)] B that
+      //    cannot be [moved] because overload resolution, as applied to B's
+      //    [move] constructor, results in an ambiguity or a function that is
+      //    deleted or inaccessible from the defaulted constructor
+      CXXConstructorDecl *FieldCtor = LookupMovingConstructor(FieldRecord);
+      if (!FieldCtor || FieldCtor->isDeleted())
+        return true;
+      if (CheckConstructorAccess(Loc, FieldCtor, FieldCtor->getAccess(),
+                                 PDiag()) != AR_accessible)
+        return true;
+
+      // -- for a move constructor, a [non-static data member] with a type that
+      //    does not have a move constructor and is not trivially copyable.
+      // If the field isn't a record, it's always trivially copyable.
+      // A moving constructor could be a copy constructor instead.
+      if (!FieldCtor->isMoveConstructor() &&
+          !FieldRecord->isTriviallyCopyable())
+        return true;
+    }
+  }
+
+  return false;
+}
+
+bool Sema::ShouldDeleteMoveAssignmentOperator(CXXMethodDecl *MD) {
+  CXXRecordDecl *RD = MD->getParent();
+  assert(!RD->isDependentType() && "do deletion after instantiation");
+  if (!LangOpts.CPlusPlus0x || RD->isInvalidDecl())
+    return false;
+
+  SourceLocation Loc = MD->getLocation();
+
+  // Do access control from the constructor
+  ContextRAII MethodContext(*this, MD);
+
+  bool Union = RD->isUnion();
+
+  // We do this because we should never actually use an anonymous
+  // union's constructor.
+  if (Union && RD->isAnonymousStructOrUnion())
+    return false;
+
+  // C++0x [class.copy]/20
+  //    A defaulted [move] assignment operator for class X is defined as deleted
+  //    if X has:
+
+  //    -- for the move constructor, [...] any direct or indirect virtual base
+  //       class.
+  if (RD->getNumVBases() != 0)
+    return true;
+
+  for (CXXRecordDecl::base_class_iterator BI = RD->bases_begin(),
+                                          BE = RD->bases_end();
+       BI != BE; ++BI) {
+
+    QualType BaseType = BI->getType();
+    CXXRecordDecl *BaseDecl = BaseType->getAsCXXRecordDecl();
+    assert(BaseDecl && "base isn't a CXXRecordDecl");
+
+    // -- a [direct base class] B that cannot be [moved] because overload
+    //    resolution, as applied to B's [move] assignment operator, results in
+    //    an ambiguity or a function that is deleted or inaccessible from the
+    //    assignment operator
+    CXXMethodDecl *MoveOper = LookupMovingAssignment(BaseDecl, false, 0);
+    if (!MoveOper || MoveOper->isDeleted())
+      return true;
+    if (CheckDirectMemberAccess(Loc, MoveOper, PDiag()) != AR_accessible)
+      return true;
+
+    // -- for the move assignment operator, a [direct base class] with a type
+    //    that does not have a move assignment operator and is not trivially
+    //    copyable.
+    if (!MoveOper->isMoveAssignmentOperator() &&
+        !BaseDecl->isTriviallyCopyable())
+      return true;
+  }
+
+  for (CXXRecordDecl::field_iterator FI = RD->field_begin(),
+                                     FE = RD->field_end();
+       FI != FE; ++FI) {
+    QualType FieldType = Context.getBaseElementType(FI->getType());
+    
+    // -- a non-static data member of reference type
+    if (FieldType->isReferenceType())
+      return true;
+
+    // -- a non-static data member of const non-class type (or array thereof)
+    if (FieldType.isConstQualified() && !FieldType->isRecordType())
+      return true;
+
+    CXXRecordDecl *FieldRecord = FieldType->getAsCXXRecordDecl();
+
+    if (FieldRecord) {
+      // This is an anonymous union
+      if (FieldRecord->isUnion() && FieldRecord->isAnonymousStructOrUnion()) {
+        // Anonymous unions inside unions do not variant members create
+        if (!Union) {
+          for (CXXRecordDecl::field_iterator UI = FieldRecord->field_begin(),
+                                             UE = FieldRecord->field_end();
+               UI != UE; ++UI) {
+            QualType UnionFieldType = Context.getBaseElementType(UI->getType());
+            CXXRecordDecl *UnionFieldRecord =
+              UnionFieldType->getAsCXXRecordDecl();
+
+            // -- a variant member with a non-trivial [move] assignment operator
+            //    and X is a union-like class
+            if (UnionFieldRecord &&
+                !UnionFieldRecord->hasTrivialMoveAssignment())
+              return true;
+          }
+        }
+
+        // Don't try to initalize an anonymous union
+        continue;
+      // -- a variant member with a non-trivial [move] assignment operator
+      //    and X is a union-like class
+      } else if (Union && !FieldRecord->hasTrivialMoveAssignment()) {
+          return true;
+      }
+
+      CXXMethodDecl *MoveOper = LookupMovingAssignment(FieldRecord, false, 0);
+      if (!MoveOper || MoveOper->isDeleted())
+        return true;
+      if (CheckDirectMemberAccess(Loc, MoveOper, PDiag()) != AR_accessible)
+        return true;
+
+      // -- for the move assignment operator, a [non-static data member] with a
+      //    type that does not have a move assignment operator and is not
+      //    trivially copyable.
+      if (!MoveOper->isMoveAssignmentOperator() &&
+          !FieldRecord->isTriviallyCopyable())
+        return true;
     }
   }
 
@@ -6452,26 +6927,28 @@ void Sema::AdjustDestructorExceptionSpec(CXXRecordDecl *classDecl,
   // However, we don't have a body yet, so it needs to be done somewhere else.
 }
 
-/// \brief Builds a statement that copies the given entity from \p From to
+/// \brief Builds a statement that copies/moves the given entity from \p From to
 /// \c To.
 ///
-/// This routine is used to copy the members of a class with an
-/// implicitly-declared copy assignment operator. When the entities being
+/// This routine is used to copy/move the members of a class with an
+/// implicitly-declared copy/move assignment operator. When the entities being
 /// copied are arrays, this routine builds for loops to copy them.
 ///
 /// \param S The Sema object used for type-checking.
 ///
-/// \param Loc The location where the implicit copy is being generated.
+/// \param Loc The location where the implicit copy/move is being generated.
 ///
-/// \param T The type of the expressions being copied. Both expressions must
-/// have this type.
+/// \param T The type of the expressions being copied/moved. Both expressions
+/// must have this type.
 ///
-/// \param To The expression we are copying to.
+/// \param To The expression we are copying/moving to.
 ///
-/// \param From The expression we are copying from.
+/// \param From The expression we are copying/moving from.
 ///
-/// \param CopyingBaseSubobject Whether we're copying a base subobject.
+/// \param CopyingBaseSubobject Whether we're copying/moving a base subobject.
 /// Otherwise, it's a non-static member subobject.
+///
+/// \param Copying Whether we're copying or moving.
 ///
 /// \param Depth Internal parameter recording the depth of the recursion.
 ///
@@ -6479,14 +6956,16 @@ void Sema::AdjustDestructorExceptionSpec(CXXRecordDecl *classDecl,
 static StmtResult
 BuildSingleCopyAssign(Sema &S, SourceLocation Loc, QualType T, 
                       Expr *To, Expr *From,
-                      bool CopyingBaseSubobject, unsigned Depth = 0) {
-  // C++0x [class.copy]p30:
+                      bool CopyingBaseSubobject, bool Copying,
+                      unsigned Depth = 0) {
+  // C++0x [class.copy]p28:
   //   Each subobject is assigned in the manner appropriate to its type:
   //
-  //     - if the subobject is of class type, the copy assignment operator
-  //       for the class is used (as if by explicit qualification; that is, 
-  //       ignoring any possible virtual overriding functions in more derived 
-  //       classes);
+  //     - if the subobject is of class type, as if by a call to operator= with
+  //       the subobject as the object expression and the corresponding
+  //       subobject of x as a single function argument (as if by explicit
+  //       qualification; that is, ignoring any possible virtual overriding
+  //       functions in more derived classes);
   if (const RecordType *RecordTy = T->getAs<RecordType>()) {
     CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(RecordTy->getDecl());
     
@@ -6496,14 +6975,15 @@ BuildSingleCopyAssign(Sema &S, SourceLocation Loc, QualType T,
     LookupResult OpLookup(S, Name, Loc, Sema::LookupOrdinaryName);
     S.LookupQualifiedName(OpLookup, ClassDecl, false);
     
-    // Filter out any result that isn't a copy-assignment operator.
+    // Filter out any result that isn't a copy/move-assignment operator.
     LookupResult::Filter F = OpLookup.makeFilter();
     while (F.hasNext()) {
       NamedDecl *D = F.next();
       if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(D))
-        if (Method->isCopyAssignmentOperator())
+        if (Copying ? Method->isCopyAssignmentOperator() :
+                      Method->isMoveAssignmentOperator())
           continue;
-      
+
       F.erase();
     }
     F.done();
@@ -6622,11 +7102,13 @@ BuildSingleCopyAssign(Sema &S, SourceLocation Loc, QualType T,
                                                          IterationVarRef, Loc));
   To = AssertSuccess(S.CreateBuiltinArraySubscriptExpr(To, Loc,
                                                        IterationVarRef, Loc));
-  
-  // Build the copy for an individual element of the array.
+  if (!Copying) // Cast to rvalue
+    From = CastForMoving(S, From);
+
+  // Build the copy/move for an individual element of the array.
   StmtResult Copy = BuildSingleCopyAssign(S, Loc, ArrayTy->getElementType(),
                                           To, From, CopyingBaseSubobject,
-                                          Depth + 1);
+                                          Copying, Depth + 1);
   if (Copy.isInvalid())
     return StmtError();
   
@@ -6906,7 +7388,8 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
     // Build the copy.
     StmtResult Copy = BuildSingleCopyAssign(*this, Loc, BaseType,
                                             To.get(), From,
-                                            /*CopyingBaseSubobject=*/true);
+                                            /*CopyingBaseSubobject=*/true,
+                                            /*Copying=*/true);
     if (Copy.isInvalid()) {
       Diag(CurrentLocation, diag::note_member_synthesized_at) 
         << CXXCopyAssignment << Context.getTagDeclType(ClassDecl);
@@ -6982,7 +7465,7 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
     // of scalars and arrays of class type with trivial copy-assignment 
     // operators.
     if (FieldType->isArrayType() && !FieldType.isVolatileQualified()
-        && BaseType.hasTrivialCopyAssignment(Context)) {
+        && BaseType.hasTrivialAssignment(Context, /*Copying=*/true)) {
       // Compute the size of the memory buffer to be copied.
       QualType SizeType = Context.getSizeType();
       llvm::APInt Size(Context.getTypeSize(SizeType), 
@@ -7069,8 +7552,9 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
     
     // Build the copy of this field.
     StmtResult Copy = BuildSingleCopyAssign(*this, Loc, FieldType, 
-                                                  To.get(), From.get(),
-                                              /*CopyingBaseSubobject=*/false);
+                                            To.get(), From.get(),
+                                            /*CopyingBaseSubobject=*/false,
+                                            /*Copying=*/true);
     if (Copy.isInvalid()) {
       Diag(CurrentLocation, diag::note_member_synthesized_at) 
         << CXXCopyAssignment << Context.getTagDeclType(ClassDecl);
@@ -7112,6 +7596,428 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
 
   if (ASTMutationListener *L = getASTMutationListener()) {
     L->CompletedImplicitDefinition(CopyAssignOperator);
+  }
+}
+
+Sema::ImplicitExceptionSpecification
+Sema::ComputeDefaultedMoveAssignmentExceptionSpec(CXXRecordDecl *ClassDecl) {
+  ImplicitExceptionSpecification ExceptSpec(Context);
+
+  if (ClassDecl->isInvalidDecl())
+    return ExceptSpec;
+
+  // C++0x [except.spec]p14:
+  //   An implicitly declared special member function (Clause 12) shall have an 
+  //   exception-specification. [...]
+
+  // It is unspecified whether or not an implicit move assignment operator
+  // attempts to deduplicate calls to assignment operators of virtual bases are
+  // made. As such, this exception specification is effectively unspecified.
+  // Based on a similar decision made for constness in C++0x, we're erring on
+  // the side of assuming such calls to be made regardless of whether they
+  // actually happen.
+  // Note that a move constructor is not implicitly declared when there are
+  // virtual bases, but it can still be user-declared and explicitly defaulted.
+  for (CXXRecordDecl::base_class_iterator Base = ClassDecl->bases_begin(),
+                                       BaseEnd = ClassDecl->bases_end();
+       Base != BaseEnd; ++Base) {
+    if (Base->isVirtual())
+      continue;
+
+    CXXRecordDecl *BaseClassDecl
+      = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
+    if (CXXMethodDecl *MoveAssign = LookupMovingAssignment(BaseClassDecl,
+                                                           false, 0))
+      ExceptSpec.CalledDecl(MoveAssign);
+  }
+
+  for (CXXRecordDecl::base_class_iterator Base = ClassDecl->vbases_begin(),
+                                       BaseEnd = ClassDecl->vbases_end();
+       Base != BaseEnd; ++Base) {
+    CXXRecordDecl *BaseClassDecl
+      = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
+    if (CXXMethodDecl *MoveAssign = LookupMovingAssignment(BaseClassDecl,
+                                                           false, 0))
+      ExceptSpec.CalledDecl(MoveAssign);
+  }
+
+  for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
+                                  FieldEnd = ClassDecl->field_end();
+       Field != FieldEnd;
+       ++Field) {
+    QualType FieldType = Context.getBaseElementType((*Field)->getType());
+    if (CXXRecordDecl *FieldClassDecl = FieldType->getAsCXXRecordDecl()) {
+      if (CXXMethodDecl *MoveAssign = LookupMovingAssignment(FieldClassDecl,
+                                                             false, 0))
+        ExceptSpec.CalledDecl(MoveAssign);
+    }
+  }
+
+  return ExceptSpec;
+}
+
+CXXMethodDecl *Sema::DeclareImplicitMoveAssignment(CXXRecordDecl *ClassDecl) {
+  // Note: The following rules are largely analoguous to the move
+  // constructor rules.
+
+  ImplicitExceptionSpecification Spec(
+      ComputeDefaultedMoveAssignmentExceptionSpec(ClassDecl));
+
+  QualType ArgType = Context.getTypeDeclType(ClassDecl);
+  QualType RetType = Context.getLValueReferenceType(ArgType);
+  ArgType = Context.getRValueReferenceType(ArgType);
+
+  //   An implicitly-declared move assignment operator is an inline public
+  //   member of its class.
+  FunctionProtoType::ExtProtoInfo EPI = Spec.getEPI();
+  DeclarationName Name = Context.DeclarationNames.getCXXOperatorName(OO_Equal);
+  SourceLocation ClassLoc = ClassDecl->getLocation();
+  DeclarationNameInfo NameInfo(Name, ClassLoc);
+  CXXMethodDecl *MoveAssignment
+    = CXXMethodDecl::Create(Context, ClassDecl, ClassLoc, NameInfo,
+                            Context.getFunctionType(RetType, &ArgType, 1, EPI),
+                            /*TInfo=*/0, /*isStatic=*/false,
+                            /*StorageClassAsWritten=*/SC_None,
+                            /*isInline=*/true,
+                            /*isConstexpr=*/false,
+                            SourceLocation());
+  MoveAssignment->setAccess(AS_public);
+  MoveAssignment->setDefaulted();
+  MoveAssignment->setImplicit();
+  MoveAssignment->setTrivial(ClassDecl->hasTrivialMoveAssignment());
+
+  // Add the parameter to the operator.
+  ParmVarDecl *FromParam = ParmVarDecl::Create(Context, MoveAssignment,
+                                               ClassLoc, ClassLoc, /*Id=*/0,
+                                               ArgType, /*TInfo=*/0,
+                                               SC_None,
+                                               SC_None, 0);
+  MoveAssignment->setParams(&FromParam, 1);
+
+  // Note that we have added this copy-assignment operator.
+  ++ASTContext::NumImplicitMoveAssignmentOperatorsDeclared;
+
+  // C++0x [class.copy]p9:
+  //   If the definition of a class X does not explicitly declare a move
+  //   assignment operator, one will be implicitly declared as defaulted if and
+  //   only if:
+  //   [...]
+  //   - the move assignment operator would not be implicitly defined as
+  //     deleted.
+  if (ShouldDeleteMoveAssignmentOperator(MoveAssignment)) {
+    // Cache this result so that we don't try to generate this over and over
+    // on every lookup, leaking memory and wasting time.
+    ClassDecl->setFailedImplicitMoveAssignment();
+    return 0;
+  }
+
+  if (Scope *S = getScopeForContext(ClassDecl))
+    PushOnScopeChains(MoveAssignment, S, false);
+  ClassDecl->addDecl(MoveAssignment);
+
+  AddOverriddenMethods(ClassDecl, MoveAssignment);
+  return MoveAssignment;
+}
+
+void Sema::DefineImplicitMoveAssignment(SourceLocation CurrentLocation,
+                                        CXXMethodDecl *MoveAssignOperator) {
+  assert((MoveAssignOperator->isDefaulted() && 
+          MoveAssignOperator->isOverloadedOperator() &&
+          MoveAssignOperator->getOverloadedOperator() == OO_Equal &&
+          !MoveAssignOperator->doesThisDeclarationHaveABody()) &&
+         "DefineImplicitMoveAssignment called for wrong function");
+
+  CXXRecordDecl *ClassDecl = MoveAssignOperator->getParent();
+
+  if (ClassDecl->isInvalidDecl() || MoveAssignOperator->isInvalidDecl()) {
+    MoveAssignOperator->setInvalidDecl();
+    return;
+  }
+  
+  MoveAssignOperator->setUsed();
+
+  ImplicitlyDefinedFunctionScope Scope(*this, MoveAssignOperator);
+  DiagnosticErrorTrap Trap(Diags);
+
+  // C++0x [class.copy]p28:
+  //   The implicitly-defined or move assignment operator for a non-union class
+  //   X performs memberwise move assignment of its subobjects. The direct base
+  //   classes of X are assigned first, in the order of their declaration in the
+  //   base-specifier-list, and then the immediate non-static data members of X
+  //   are assigned, in the order in which they were declared in the class
+  //   definition.
+
+  // The statements that form the synthesized function body.
+  ASTOwningVector<Stmt*> Statements(*this);
+
+  // The parameter for the "other" object, which we are move from.
+  ParmVarDecl *Other = MoveAssignOperator->getParamDecl(0);
+  QualType OtherRefType = Other->getType()->
+      getAs<RValueReferenceType>()->getPointeeType();
+  assert(OtherRefType.getQualifiers() == 0 &&
+         "Bad argument type of defaulted move assignment");
+
+  // Our location for everything implicitly-generated.
+  SourceLocation Loc = MoveAssignOperator->getLocation();
+
+  // Construct a reference to the "other" object. We'll be using this 
+  // throughout the generated ASTs.
+  Expr *OtherRef = BuildDeclRefExpr(Other, OtherRefType, VK_LValue, Loc).take();
+  assert(OtherRef && "Reference to parameter cannot fail!");
+  // Cast to rvalue.
+  OtherRef = CastForMoving(*this, OtherRef);
+
+  // Construct the "this" pointer. We'll be using this throughout the generated
+  // ASTs.
+  Expr *This = ActOnCXXThis(Loc).takeAs<Expr>();
+  assert(This && "Reference to this cannot fail!");
+  
+  // Assign base classes.
+  bool Invalid = false;
+  for (CXXRecordDecl::base_class_iterator Base = ClassDecl->bases_begin(),
+       E = ClassDecl->bases_end(); Base != E; ++Base) {
+    // Form the assignment:
+    //   static_cast<Base*>(this)->Base::operator=(static_cast<Base&&>(other));
+    QualType BaseType = Base->getType().getUnqualifiedType();
+    if (!BaseType->isRecordType()) {
+      Invalid = true;
+      continue;
+    }
+
+    CXXCastPath BasePath;
+    BasePath.push_back(Base);
+
+    // Construct the "from" expression, which is an implicit cast to the
+    // appropriately-qualified base type.
+    Expr *From = OtherRef;
+    From = ImpCastExprToType(From, BaseType, CK_UncheckedDerivedToBase,
+                             VK_RValue, &BasePath).take();
+
+    // Dereference "this".
+    ExprResult To = CreateBuiltinUnaryOp(Loc, UO_Deref, This);
+
+    // Implicitly cast "this" to the appropriately-qualified base type.
+    To = ImpCastExprToType(To.take(), 
+                           Context.getCVRQualifiedType(BaseType,
+                                     MoveAssignOperator->getTypeQualifiers()),
+                           CK_UncheckedDerivedToBase, 
+                           VK_LValue, &BasePath);
+
+    // Build the move.
+    StmtResult Move = BuildSingleCopyAssign(*this, Loc, BaseType,
+                                            To.get(), From,
+                                            /*CopyingBaseSubobject=*/true,
+                                            /*Copying=*/false);
+    if (Move.isInvalid()) {
+      Diag(CurrentLocation, diag::note_member_synthesized_at) 
+        << CXXMoveAssignment << Context.getTagDeclType(ClassDecl);
+      MoveAssignOperator->setInvalidDecl();
+      return;
+    }
+
+    // Success! Record the move.
+    Statements.push_back(Move.takeAs<Expr>());
+  }
+
+  // \brief Reference to the __builtin_memcpy function.
+  Expr *BuiltinMemCpyRef = 0;
+  // \brief Reference to the __builtin_objc_memmove_collectable function.
+  Expr *CollectableMemCpyRef = 0;
+
+  // Assign non-static members.
+  for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
+                                  FieldEnd = ClassDecl->field_end(); 
+       Field != FieldEnd; ++Field) {
+    // Check for members of reference type; we can't move those.
+    if (Field->getType()->isReferenceType()) {
+      Diag(ClassDecl->getLocation(), diag::err_uninitialized_member_for_assign)
+        << Context.getTagDeclType(ClassDecl) << 0 << Field->getDeclName();
+      Diag(Field->getLocation(), diag::note_declared_at);
+      Diag(CurrentLocation, diag::note_member_synthesized_at) 
+        << CXXMoveAssignment << Context.getTagDeclType(ClassDecl);
+      Invalid = true;
+      continue;
+    }
+
+    // Check for members of const-qualified, non-class type.
+    QualType BaseType = Context.getBaseElementType(Field->getType());
+    if (!BaseType->getAs<RecordType>() && BaseType.isConstQualified()) {
+      Diag(ClassDecl->getLocation(), diag::err_uninitialized_member_for_assign)
+        << Context.getTagDeclType(ClassDecl) << 1 << Field->getDeclName();
+      Diag(Field->getLocation(), diag::note_declared_at);
+      Diag(CurrentLocation, diag::note_member_synthesized_at) 
+        << CXXMoveAssignment << Context.getTagDeclType(ClassDecl);
+      Invalid = true;      
+      continue;
+    }
+
+    // Suppress assigning zero-width bitfields.
+    if (const Expr *Width = Field->getBitWidth())
+      if (Width->EvaluateAsInt(Context) == 0)
+        continue;
+    
+    QualType FieldType = Field->getType().getNonReferenceType();
+    if (FieldType->isIncompleteArrayType()) {
+      assert(ClassDecl->hasFlexibleArrayMember() && 
+             "Incomplete array type is not valid");
+      continue;
+    }
+    
+    // Build references to the field in the object we're copying from and to.
+    CXXScopeSpec SS; // Intentionally empty
+    LookupResult MemberLookup(*this, Field->getDeclName(), Loc,
+                              LookupMemberName);
+    MemberLookup.addDecl(*Field);
+    MemberLookup.resolveKind();
+    ExprResult From = BuildMemberReferenceExpr(OtherRef, OtherRefType,
+                                               Loc, /*IsArrow=*/false,
+                                               SS, 0, MemberLookup, 0);
+    ExprResult To = BuildMemberReferenceExpr(This, This->getType(),
+                                             Loc, /*IsArrow=*/true,
+                                             SS, 0, MemberLookup, 0);
+    assert(!From.isInvalid() && "Implicit field reference cannot fail");
+    assert(!To.isInvalid() && "Implicit field reference cannot fail");
+
+    assert(!From.get()->isLValue() && // could be xvalue or prvalue
+        "Member reference with rvalue base must be rvalue except for reference "
+        "members, which aren't allowed for move assignment.");
+
+    // If the field should be copied with __builtin_memcpy rather than via
+    // explicit assignments, do so. This optimization only applies for arrays 
+    // of scalars and arrays of class type with trivial move-assignment 
+    // operators.
+    if (FieldType->isArrayType() && !FieldType.isVolatileQualified()
+        && BaseType.hasTrivialAssignment(Context, /*Copying=*/false)) {
+      // Compute the size of the memory buffer to be copied.
+      QualType SizeType = Context.getSizeType();
+      llvm::APInt Size(Context.getTypeSize(SizeType), 
+                       Context.getTypeSizeInChars(BaseType).getQuantity());
+      for (const ConstantArrayType *Array
+              = Context.getAsConstantArrayType(FieldType);
+           Array; 
+           Array = Context.getAsConstantArrayType(Array->getElementType())) {
+        llvm::APInt ArraySize
+          = Array->getSize().zextOrTrunc(Size.getBitWidth());
+        Size *= ArraySize;
+      }
+
+      // Take the address of the field references for "from" and "to".
+      From = CreateBuiltinUnaryOp(Loc, UO_AddrOf, From.get());
+      To = CreateBuiltinUnaryOp(Loc, UO_AddrOf, To.get());
+          
+      bool NeedsCollectableMemCpy = 
+          (BaseType->isRecordType() && 
+           BaseType->getAs<RecordType>()->getDecl()->hasObjectMember());
+          
+      if (NeedsCollectableMemCpy) {
+        if (!CollectableMemCpyRef) {
+          // Create a reference to the __builtin_objc_memmove_collectable function.
+          LookupResult R(*this, 
+                         &Context.Idents.get("__builtin_objc_memmove_collectable"), 
+                         Loc, LookupOrdinaryName);
+          LookupName(R, TUScope, true);
+        
+          FunctionDecl *CollectableMemCpy = R.getAsSingle<FunctionDecl>();
+          if (!CollectableMemCpy) {
+            // Something went horribly wrong earlier, and we will have 
+            // complained about it.
+            Invalid = true;
+            continue;
+          }
+        
+          CollectableMemCpyRef = BuildDeclRefExpr(CollectableMemCpy, 
+                                                  CollectableMemCpy->getType(),
+                                                  VK_LValue, Loc, 0).take();
+          assert(CollectableMemCpyRef && "Builtin reference cannot fail");
+        }
+      }
+      // Create a reference to the __builtin_memcpy builtin function.
+      else if (!BuiltinMemCpyRef) {
+        LookupResult R(*this, &Context.Idents.get("__builtin_memcpy"), Loc,
+                       LookupOrdinaryName);
+        LookupName(R, TUScope, true);
+        
+        FunctionDecl *BuiltinMemCpy = R.getAsSingle<FunctionDecl>();
+        if (!BuiltinMemCpy) {
+          // Something went horribly wrong earlier, and we will have complained
+          // about it.
+          Invalid = true;
+          continue;
+        }
+
+        BuiltinMemCpyRef = BuildDeclRefExpr(BuiltinMemCpy, 
+                                            BuiltinMemCpy->getType(),
+                                            VK_LValue, Loc, 0).take();
+        assert(BuiltinMemCpyRef && "Builtin reference cannot fail");
+      }
+          
+      ASTOwningVector<Expr*> CallArgs(*this);
+      CallArgs.push_back(To.takeAs<Expr>());
+      CallArgs.push_back(From.takeAs<Expr>());
+      CallArgs.push_back(IntegerLiteral::Create(Context, Size, SizeType, Loc));
+      ExprResult Call = ExprError();
+      if (NeedsCollectableMemCpy)
+        Call = ActOnCallExpr(/*Scope=*/0,
+                             CollectableMemCpyRef,
+                             Loc, move_arg(CallArgs), 
+                             Loc);
+      else
+        Call = ActOnCallExpr(/*Scope=*/0,
+                             BuiltinMemCpyRef,
+                             Loc, move_arg(CallArgs), 
+                             Loc);
+          
+      assert(!Call.isInvalid() && "Call to __builtin_memcpy cannot fail!");
+      Statements.push_back(Call.takeAs<Expr>());
+      continue;
+    }
+    
+    // Build the move of this field.
+    StmtResult Move = BuildSingleCopyAssign(*this, Loc, FieldType, 
+                                            To.get(), From.get(),
+                                            /*CopyingBaseSubobject=*/false,
+                                            /*Copying=*/false);
+    if (Move.isInvalid()) {
+      Diag(CurrentLocation, diag::note_member_synthesized_at) 
+        << CXXMoveAssignment << Context.getTagDeclType(ClassDecl);
+      MoveAssignOperator->setInvalidDecl();
+      return;
+    }
+    
+    // Success! Record the copy.
+    Statements.push_back(Move.takeAs<Stmt>());
+  }
+
+  if (!Invalid) {
+    // Add a "return *this;"
+    ExprResult ThisObj = CreateBuiltinUnaryOp(Loc, UO_Deref, This);
+    
+    StmtResult Return = ActOnReturnStmt(Loc, ThisObj.get());
+    if (Return.isInvalid())
+      Invalid = true;
+    else {
+      Statements.push_back(Return.takeAs<Stmt>());
+
+      if (Trap.hasErrorOccurred()) {
+        Diag(CurrentLocation, diag::note_member_synthesized_at) 
+          << CXXMoveAssignment << Context.getTagDeclType(ClassDecl);
+        Invalid = true;
+      }
+    }
+  }
+
+  if (Invalid) {
+    MoveAssignOperator->setInvalidDecl();
+    return;
+  }
+  
+  StmtResult Body = ActOnCompoundStmt(Loc, Loc, move_arg(Statements),
+                                            /*isStmtExpr=*/false);
+  assert(!Body.isInvalid() && "Compound statement creation cannot fail");
+  MoveAssignOperator->setBody(Body.takeAs<Stmt>());
+
+  if (ASTMutationListener *L = getASTMutationListener()) {
+    L->CompletedImplicitDefinition(MoveAssignOperator);
   }
 }
 
@@ -7319,6 +8225,169 @@ void Sema::DefineImplicitCopyConstructor(SourceLocation CurrentLocation,
 
   if (ASTMutationListener *L = getASTMutationListener()) {
     L->CompletedImplicitDefinition(CopyConstructor);
+  }
+}
+
+Sema::ImplicitExceptionSpecification
+Sema::ComputeDefaultedMoveCtorExceptionSpec(CXXRecordDecl *ClassDecl) {
+  // C++ [except.spec]p14:
+  //   An implicitly declared special member function (Clause 12) shall have an 
+  //   exception-specification. [...]
+  ImplicitExceptionSpecification ExceptSpec(Context);
+  if (ClassDecl->isInvalidDecl())
+    return ExceptSpec;
+
+  // Direct base-class constructors.
+  for (CXXRecordDecl::base_class_iterator B = ClassDecl->bases_begin(),
+                                       BEnd = ClassDecl->bases_end();
+       B != BEnd; ++B) {
+    if (B->isVirtual()) // Handled below.
+      continue;
+    
+    if (const RecordType *BaseType = B->getType()->getAs<RecordType>()) {
+      CXXRecordDecl *BaseClassDecl = cast<CXXRecordDecl>(BaseType->getDecl());
+      CXXConstructorDecl *Constructor = LookupMovingConstructor(BaseClassDecl);
+      // If this is a deleted function, add it anyway. This might be conformant
+      // with the standard. This might not. I'm not sure. It might not matter.
+      if (Constructor)
+        ExceptSpec.CalledDecl(Constructor);
+    }
+  }
+
+  // Virtual base-class constructors.
+  for (CXXRecordDecl::base_class_iterator B = ClassDecl->vbases_begin(),
+                                       BEnd = ClassDecl->vbases_end();
+       B != BEnd; ++B) {
+    if (const RecordType *BaseType = B->getType()->getAs<RecordType>()) {
+      CXXRecordDecl *BaseClassDecl = cast<CXXRecordDecl>(BaseType->getDecl());
+      CXXConstructorDecl *Constructor = LookupMovingConstructor(BaseClassDecl);
+      // If this is a deleted function, add it anyway. This might be conformant
+      // with the standard. This might not. I'm not sure. It might not matter.
+      if (Constructor)
+        ExceptSpec.CalledDecl(Constructor);
+    }
+  }
+
+  // Field constructors.
+  for (RecordDecl::field_iterator F = ClassDecl->field_begin(),
+                               FEnd = ClassDecl->field_end();
+       F != FEnd; ++F) {
+    if (F->hasInClassInitializer()) {
+      if (Expr *E = F->getInClassInitializer())
+        ExceptSpec.CalledExpr(E);
+      else if (!F->isInvalidDecl())
+        ExceptSpec.SetDelayed();
+    } else if (const RecordType *RecordTy
+              = Context.getBaseElementType(F->getType())->getAs<RecordType>()) {
+      CXXRecordDecl *FieldRecDecl = cast<CXXRecordDecl>(RecordTy->getDecl());
+      CXXConstructorDecl *Constructor = LookupMovingConstructor(FieldRecDecl);
+      // If this is a deleted function, add it anyway. This might be conformant
+      // with the standard. This might not. I'm not sure. It might not matter.
+      // In particular, the problem is that this function never gets called. It
+      // might just be ill-formed because this function attempts to refer to
+      // a deleted function here.
+      if (Constructor)
+        ExceptSpec.CalledDecl(Constructor);
+    }
+  }
+
+  return ExceptSpec;
+}
+
+CXXConstructorDecl *Sema::DeclareImplicitMoveConstructor(
+                                                    CXXRecordDecl *ClassDecl) {
+  ImplicitExceptionSpecification Spec(
+      ComputeDefaultedMoveCtorExceptionSpec(ClassDecl));
+
+  QualType ClassType = Context.getTypeDeclType(ClassDecl);
+  QualType ArgType = Context.getRValueReferenceType(ClassType);
+ 
+  FunctionProtoType::ExtProtoInfo EPI = Spec.getEPI();
+
+  DeclarationName Name
+    = Context.DeclarationNames.getCXXConstructorName(
+                                           Context.getCanonicalType(ClassType));
+  SourceLocation ClassLoc = ClassDecl->getLocation();
+  DeclarationNameInfo NameInfo(Name, ClassLoc);
+
+  // C++0x [class.copy]p11:
+  //   An implicitly-declared copy/move constructor is an inline public
+  //   member of its class. 
+  CXXConstructorDecl *MoveConstructor
+    = CXXConstructorDecl::Create(Context, ClassDecl, ClassLoc, NameInfo,
+                                 Context.getFunctionType(Context.VoidTy,
+                                                         &ArgType, 1, EPI),
+                                 /*TInfo=*/0,
+                                 /*isExplicit=*/false,
+                                 /*isInline=*/true,
+                                 /*isImplicitlyDeclared=*/true,
+                                 // FIXME: apply the rules for definitions here
+                                 /*isConstexpr=*/false);
+  MoveConstructor->setAccess(AS_public);
+  MoveConstructor->setDefaulted();
+  MoveConstructor->setTrivial(ClassDecl->hasTrivialMoveConstructor());
+  
+  // Add the parameter to the constructor.
+  ParmVarDecl *FromParam = ParmVarDecl::Create(Context, MoveConstructor,
+                                               ClassLoc, ClassLoc,
+                                               /*IdentifierInfo=*/0,
+                                               ArgType, /*TInfo=*/0,
+                                               SC_None,
+                                               SC_None, 0);
+  MoveConstructor->setParams(&FromParam, 1);
+
+  // C++0x [class.copy]p9:
+  //   If the definition of a class X does not explicitly declare a move
+  //   constructor, one will be implicitly declared as defaulted if and only if:
+  //   [...]
+  //   - the move constructor would not be implicitly defined as deleted.
+  if (ShouldDeleteMoveConstructor(MoveConstructor)) {
+    // Cache this result so that we don't try to generate this over and over
+    // on every lookup, leaking memory and wasting time.
+    ClassDecl->setFailedImplicitMoveConstructor();
+    return 0;
+  }
+
+  // Note that we have declared this constructor.
+  ++ASTContext::NumImplicitMoveConstructorsDeclared;
+
+  if (Scope *S = getScopeForContext(ClassDecl))
+    PushOnScopeChains(MoveConstructor, S, false);
+  ClassDecl->addDecl(MoveConstructor);
+
+  return MoveConstructor;
+}
+
+void Sema::DefineImplicitMoveConstructor(SourceLocation CurrentLocation,
+                                   CXXConstructorDecl *MoveConstructor) {
+  assert((MoveConstructor->isDefaulted() &&
+          MoveConstructor->isMoveConstructor() &&
+          !MoveConstructor->doesThisDeclarationHaveABody()) &&
+         "DefineImplicitMoveConstructor - call it for implicit move ctor");
+
+  CXXRecordDecl *ClassDecl = MoveConstructor->getParent();
+  assert(ClassDecl && "DefineImplicitMoveConstructor - invalid constructor");
+
+  ImplicitlyDefinedFunctionScope Scope(*this, MoveConstructor);
+  DiagnosticErrorTrap Trap(Diags);
+
+  if (SetCtorInitializers(MoveConstructor, 0, 0, /*AnyErrors=*/false) ||
+      Trap.hasErrorOccurred()) {
+    Diag(CurrentLocation, diag::note_member_synthesized_at) 
+      << CXXMoveConstructor << Context.getTagDeclType(ClassDecl);
+    MoveConstructor->setInvalidDecl();
+  }  else {
+    MoveConstructor->setBody(ActOnCompoundStmt(MoveConstructor->getLocation(),
+                                               MoveConstructor->getLocation(),
+                                               MultiStmtArg(*this, 0, 0), 
+                                               /*isStmtExpr=*/false)
+                                                              .takeAs<Stmt>());
+  }
+
+  MoveConstructor->setUsed();
+
+  if (ASTMutationListener *L = getASTMutationListener()) {
+    L->CompletedImplicitDefinition(MoveConstructor);
   }
 }
 
@@ -8784,13 +9853,23 @@ void Sema::SetDeclDefaulted(Decl *Dcl, SourceLocation DefaultLoc) {
       break;
     }
 
-    case CXXMoveConstructor:
-    case CXXMoveAssignment:
-      Diag(Dcl->getLocation(), diag::err_defaulted_move_unsupported);
+    case CXXMoveConstructor: {
+      CXXConstructorDecl *CD = cast<CXXConstructorDecl>(MD);
+      CheckExplicitlyDefaultedMoveConstructor(CD);
+      if (!CD->isInvalidDecl())
+        DefineImplicitMoveConstructor(DefaultLoc, CD);
       break;
+    }
 
-    default:
-      // FIXME: Do the rest once we have move functions
+    case CXXMoveAssignment: {
+      CheckExplicitlyDefaultedMoveAssignment(MD);
+      if (!MD->isInvalidDecl())
+        DefineImplicitMoveAssignment(DefaultLoc, MD);
+      break;
+    }
+
+    case CXXInvalid:
+      assert(false && "Invalid special member.");
       break;
     }
   } else {

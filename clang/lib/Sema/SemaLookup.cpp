@@ -550,6 +550,16 @@ void Sema::ForceDeclarationOfImplicitMembers(CXXRecordDecl *Class) {
   if (!Class->hasDeclaredCopyAssignment())
     DeclareImplicitCopyAssignment(Class);
 
+  if (getLangOptions().CPlusPlus0x) {
+    // If the move constructor has not yet been declared, do so now.
+    if (Class->needsImplicitMoveConstructor())
+      DeclareImplicitMoveConstructor(Class); // might not actually do it
+
+    // If the move assignment operator has not yet been declared, do so now.
+    if (Class->needsImplicitMoveAssignment())
+      DeclareImplicitMoveAssignment(Class); // might not actually do it
+  }
+
   // If the destructor has not yet been declared, do so now.
   if (!Class->hasDeclaredDestructor())
     DeclareImplicitDestructor(Class);
@@ -586,11 +596,14 @@ static void DeclareImplicitMemberFunctionsWithName(Sema &S,
     if (const CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(DC))
       if (Record->getDefinition() &&
           CanDeclareSpecialMemberFunction(S.Context, Record)) {
+        CXXRecordDecl *Class = const_cast<CXXRecordDecl *>(Record);
         if (Record->needsImplicitDefaultConstructor())
-          S.DeclareImplicitDefaultConstructor(
-                                           const_cast<CXXRecordDecl *>(Record));
+          S.DeclareImplicitDefaultConstructor(Class);
         if (!Record->hasDeclaredCopyConstructor())
-          S.DeclareImplicitCopyConstructor(const_cast<CXXRecordDecl *>(Record));
+          S.DeclareImplicitCopyConstructor(Class);
+        if (S.getLangOptions().CPlusPlus0x &&
+            Record->needsImplicitMoveConstructor())
+          S.DeclareImplicitMoveConstructor(Class);
       }
     break;
 
@@ -605,10 +618,17 @@ static void DeclareImplicitMemberFunctionsWithName(Sema &S,
     if (Name.getCXXOverloadedOperator() != OO_Equal)
       break;
 
-    if (const CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(DC))
-      if (Record->getDefinition() && !Record->hasDeclaredCopyAssignment() &&
-          CanDeclareSpecialMemberFunction(S.Context, Record))
-        S.DeclareImplicitCopyAssignment(const_cast<CXXRecordDecl *>(Record));
+    if (const CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(DC)) {
+      if (Record->getDefinition() &&
+          CanDeclareSpecialMemberFunction(S.Context, Record)) {
+        CXXRecordDecl *Class = const_cast<CXXRecordDecl *>(Record);
+        if (!Record->hasDeclaredCopyAssignment())
+          S.DeclareImplicitCopyAssignment(Class);
+        if (S.getLangOptions().CPlusPlus0x &&
+            Record->needsImplicitMoveAssignment())
+          S.DeclareImplicitMoveAssignment(Class);
+      }
+    }
     break;
 
   default:
@@ -2211,12 +2231,14 @@ Sema::SpecialMemberOverloadResult *Sema::LookupSpecialMember(CXXRecordDecl *RD,
       Name = Context.DeclarationNames.getCXXConstructorName(CanTy);
       if (!RD->hasDeclaredCopyConstructor())
         DeclareImplicitCopyConstructor(RD);
-      // TODO: Move constructors
+      if (getLangOptions().CPlusPlus0x && RD->needsImplicitMoveConstructor())
+        DeclareImplicitMoveConstructor(RD);
     } else {
       Name = Context.DeclarationNames.getCXXOperatorName(OO_Equal);
       if (!RD->hasDeclaredCopyAssignment())
         DeclareImplicitCopyAssignment(RD);
-      // TODO: Move assignment
+      if (getLangOptions().CPlusPlus0x && RD->needsImplicitMoveAssignment())
+        DeclareImplicitMoveAssignment(RD);
     }
 
     QualType ArgType = CanTy;
@@ -2359,6 +2381,15 @@ CXXConstructorDecl *Sema::LookupCopyingConstructor(CXXRecordDecl *Class,
   return cast_or_null<CXXConstructorDecl>(Result->getMethod());
 }
 
+/// \brief Look up the moving constructor for the given class.
+CXXConstructorDecl *Sema::LookupMovingConstructor(CXXRecordDecl *Class) {
+  SpecialMemberOverloadResult *Result =
+    LookupSpecialMember(Class, CXXMoveConstructor, false,
+                        false, false, false, false);
+
+  return cast_or_null<CXXConstructorDecl>(Result->getMethod());
+}
+
 /// \brief Look up the constructors for the given class.
 DeclContext::lookup_result Sema::LookupConstructors(CXXRecordDecl *Class) {
   // If the implicit constructors have not yet been declared, do so now.
@@ -2367,6 +2398,8 @@ DeclContext::lookup_result Sema::LookupConstructors(CXXRecordDecl *Class) {
       DeclareImplicitDefaultConstructor(Class);
     if (!Class->hasDeclaredCopyConstructor())
       DeclareImplicitCopyConstructor(Class);
+    if (getLangOptions().CPlusPlus0x && Class->needsImplicitMoveConstructor())
+      DeclareImplicitMoveConstructor(Class);
   }
 
   CanQualType T = Context.getCanonicalType(Context.getTypeDeclType(Class));
@@ -2391,6 +2424,20 @@ CXXMethodDecl *Sema::LookupCopyingAssignment(CXXRecordDecl *Class,
 
   if (ConstParamMatch)
     *ConstParamMatch = Result->hasConstParamMatch();
+
+  return Result->getMethod();
+}
+
+/// \brief Look up the moving assignment operator for the given class.
+CXXMethodDecl *Sema::LookupMovingAssignment(CXXRecordDecl *Class,
+                                            bool RValueThis,
+                                            unsigned ThisQuals) {
+  assert(!(ThisQuals & ~(Qualifiers::Const | Qualifiers::Volatile)) &&
+         "non-const, non-volatile qualifiers for copy assignment this");
+  SpecialMemberOverloadResult *Result =
+    LookupSpecialMember(Class, CXXMoveAssignment, false, false, RValueThis,
+                        ThisQuals & Qualifiers::Const,
+                        ThisQuals & Qualifiers::Volatile);
 
   return Result->getMethod();
 }

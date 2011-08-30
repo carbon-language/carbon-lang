@@ -41,12 +41,17 @@ namespace Conversion {
   {
     // Taken from 12.3.2p2
     class Y { }; // expected-note {{candidate constructor (the implicit copy constructor) not viable: no known conversion from 'Conversion::Z' to 'const Conversion::Y &' for 1st argument}} \
+					          expected-note {{candidate constructor (the implicit move constructor) not viable: no known conversion from 'Conversion::Z' to 'Conversion::Y &&' for 1st argument}} \
                     expected-note {{candidate constructor (the implicit copy constructor) not viable: no known conversion from 'Conversion::Z' to 'const Conversion::Y &' for 1st argument}} \
+                    expected-note {{candidate constructor (the implicit move constructor) not viable: no known conversion from 'Conversion::Z' to 'Conversion::Y' for 1st argument}} \
 					expected-note {{candidate constructor (the implicit copy constructor) not viable: no known conversion from 'Conversion::Z' to 'const Conversion::Y' for 1st argument}} \
-					expected-note {{andidate constructor (the implicit default constructor) not viable: requires 0 arguments, but 1 was provided}} \
-					expected-note {{candidate constructor (the implicit copy constructor) not viable: no known conversion from 'Conversion::Z' to 'const Conversion::Y' for 1st argument}} \
+					expected-note {{candidate constructor (the implicit move constructor) not viable: no known conversion from 'Conversion::Z' to 'Conversion::Y' for 1st argument}} \
 					expected-note {{candidate constructor (the implicit default constructor) not viable: requires 0 arguments, but 1 was provided}} \
 					expected-note {{candidate constructor (the implicit copy constructor) not viable: no known conversion from 'Conversion::Z' to 'const Conversion::Y' for 1st argument}} \
+					expected-note {{candidate constructor (the implicit move constructor) not viable: no known conversion from 'Conversion::Z' to 'Conversion::Y' for 1st argument}} \
+					expected-note {{candidate constructor (the implicit default constructor) not viable: requires 0 arguments, but 1 was provided}} \
+					expected-note {{candidate constructor (the implicit copy constructor) not viable: no known conversion from 'Conversion::Z' to 'const Conversion::Y' for 1st argument}} \
+          expected-note {{candidate constructor (the implicit move constructor) not viable: no known conversion from 'Conversion::Z' to 'Conversion::Y &&' for 1st argument}} \
 					expected-note {{candidate constructor (the implicit default constructor) not viable: requires 0 arguments, but 1 was provided}}
     struct Z {
       explicit operator Y() const;

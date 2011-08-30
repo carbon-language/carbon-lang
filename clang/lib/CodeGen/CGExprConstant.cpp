@@ -789,8 +789,8 @@ public:
 
     if (E->getNumArgs()) {
       assert(E->getNumArgs() == 1 && "trivial ctor with > 1 argument");
-      assert(E->getConstructor()->isCopyConstructor() &&
-             "trivial ctor has argument but isn't a copy ctor");
+      assert(E->getConstructor()->isCopyOrMoveConstructor() &&
+             "trivial ctor has argument but isn't a copy/move ctor");
 
       Expr *Arg = E->getArg(0);
       assert(CGM.getContext().hasSameUnqualifiedType(Ty, Arg->getType()) &&

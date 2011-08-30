@@ -21,7 +21,7 @@ namespace std {
   using namespace inner;
 }
 
-struct A { // expected-note {{candidate constructor}}
+struct A { // expected-note 2 {{candidate constructor}}
   A();
   int *begin(); // expected-note 3{{selected 'begin' function with iterator type 'int *'}} expected-note {{'begin' declared here}}
   int *end();

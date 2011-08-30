@@ -42,8 +42,9 @@ CXXRecordDecl::DefinitionData::DefinitionData(CXXRecordDecl *D)
     UserProvidedDefaultConstructor(false), DeclaredDefaultConstructor(false),
     DeclaredCopyConstructor(false), DeclaredMoveConstructor(false),
     DeclaredCopyAssignment(false), DeclaredMoveAssignment(false),
-    DeclaredDestructor(false), NumBases(0), NumVBases(0), Bases(), VBases(),
-    Definition(D), FirstFriend(0) {
+    DeclaredDestructor(false), FailedImplicitMoveConstructor(false),
+    FailedImplicitMoveAssignment(false), NumBases(0), NumVBases(0), Bases(),
+    VBases(), Definition(D), FirstFriend(0) {
 }
 
 CXXRecordDecl::CXXRecordDecl(Kind K, TagKind TK, DeclContext *DC,

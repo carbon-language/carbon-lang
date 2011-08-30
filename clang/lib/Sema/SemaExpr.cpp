@@ -9154,15 +9154,19 @@ void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
 
   // Note that this declaration has been used.
   if (CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(D)) {
-    if (Constructor->isDefaulted() && Constructor->isDefaultConstructor()) {
-      if (Constructor->isTrivial())
-        return;
-      if (!Constructor->isUsed(false))
-        DefineImplicitDefaultConstructor(Loc, Constructor);
-    } else if (Constructor->isDefaulted() &&
-               Constructor->isCopyConstructor()) {
-      if (!Constructor->isUsed(false))
-        DefineImplicitCopyConstructor(Loc, Constructor);
+    if (Constructor->isDefaulted()) {
+      if (Constructor->isDefaultConstructor()) {
+        if (Constructor->isTrivial())
+          return;
+        if (!Constructor->isUsed(false))
+          DefineImplicitDefaultConstructor(Loc, Constructor);
+      } else if (Constructor->isCopyConstructor()) {
+        if (!Constructor->isUsed(false))
+          DefineImplicitCopyConstructor(Loc, Constructor);
+      } else if (Constructor->isMoveConstructor()) {
+        if (!Constructor->isUsed(false))
+          DefineImplicitMoveConstructor(Loc, Constructor);
+      }
     }
 
     MarkVTableUsed(Loc, Constructor->getParent());
@@ -9174,8 +9178,12 @@ void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
   } else if (CXXMethodDecl *MethodDecl = dyn_cast<CXXMethodDecl>(D)) {
     if (MethodDecl->isDefaulted() && MethodDecl->isOverloadedOperator() &&
         MethodDecl->getOverloadedOperator() == OO_Equal) {
-      if (!MethodDecl->isUsed(false))
-        DefineImplicitCopyAssignment(Loc, MethodDecl);
+      if (!MethodDecl->isUsed(false)) {
+        if (MethodDecl->isCopyAssignmentOperator())
+          DefineImplicitCopyAssignment(Loc, MethodDecl);
+        else
+          DefineImplicitMoveAssignment(Loc, MethodDecl);
+      }
     } else if (MethodDecl->isVirtual())
       MarkVTableUsed(Loc, MethodDecl->getParent());
   }

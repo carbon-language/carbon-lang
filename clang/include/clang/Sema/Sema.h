@@ -1708,6 +1708,9 @@ public:
   CXXMethodDecl *LookupCopyingAssignment(CXXRecordDecl *Class, unsigned Quals,
                                          bool RValueThis, unsigned ThisQuals,
                                          bool *ConstParam = 0);
+  CXXConstructorDecl *LookupMovingConstructor(CXXRecordDecl *Class);
+  CXXMethodDecl *LookupMovingAssignment(CXXRecordDecl *Class, bool RValueThis,
+                                        unsigned ThisQuals);
   CXXDestructorDecl *LookupDestructor(CXXRecordDecl *Class);
 
   void ArgumentDependentLookup(DeclarationName Name, bool Operator,
@@ -2759,6 +2762,16 @@ public:
   std::pair<ImplicitExceptionSpecification, bool>
   ComputeDefaultedCopyAssignmentExceptionSpecAndConst(CXXRecordDecl *ClassDecl);
 
+  /// \brief Determine what sort of exception specification a defaulted move
+  /// constructor of a class will have.
+  ImplicitExceptionSpecification
+  ComputeDefaultedMoveCtorExceptionSpec(CXXRecordDecl *ClassDecl);
+
+  /// \brief Determine what sort of exception specification a defaulted move
+  /// assignment operator of a class will have.
+  ImplicitExceptionSpecification
+  ComputeDefaultedMoveAssignmentExceptionSpec(CXXRecordDecl *ClassDecl);
+
   /// \brief Determine what sort of exception specification a defaulted
   /// destructor of a class will have.
   ImplicitExceptionSpecification
@@ -2775,6 +2788,13 @@ public:
   /// \brief Determine if a defaulted copy assignment operator ought to be
   /// deleted.
   bool ShouldDeleteCopyAssignmentOperator(CXXMethodDecl *MD);
+
+  /// \brief Determine if a defaulted move constructor ought to be deleted.
+  bool ShouldDeleteMoveConstructor(CXXConstructorDecl *CD);
+
+  /// \brief Determine if a defaulted move assignment operator ought to be
+  /// deleted.
+  bool ShouldDeleteMoveAssignmentOperator(CXXMethodDecl *MD);
 
   /// \brief Determine if a defaulted destructor ought to be deleted.
   bool ShouldDeleteDestructor(CXXDestructorDecl *DD);
@@ -2821,9 +2841,6 @@ public:
 
   /// \brief Declare the implicit copy constructor for the given class.
   ///
-  /// \param S The scope of the class, which may be NULL if this is a 
-  /// template instantiation.
-  ///
   /// \param ClassDecl The class declaration into which the implicit 
   /// copy constructor will be added.
   ///
@@ -2835,19 +2852,43 @@ public:
   void DefineImplicitCopyConstructor(SourceLocation CurrentLocation,
                                      CXXConstructorDecl *Constructor);
 
+  /// \brief Declare the implicit move constructor for the given class.
+  ///
+  /// \param ClassDecl The Class declaration into which the implicit
+  /// move constructor will be added.
+  ///
+  /// \returns The implicitly-declared move constructor, or NULL if it wasn't
+  /// declared.
+  CXXConstructorDecl *DeclareImplicitMoveConstructor(CXXRecordDecl *ClassDecl);
+                                                     
+  /// DefineImplicitMoveConstructor - Checks for feasibility of
+  /// defining this constructor as the move constructor.
+  void DefineImplicitMoveConstructor(SourceLocation CurrentLocation,
+                                     CXXConstructorDecl *Constructor);
+
   /// \brief Declare the implicit copy assignment operator for the given class.
   ///
-  /// \param S The scope of the class, which may be NULL if this is a 
-  /// template instantiation.
-  ///
   /// \param ClassDecl The class declaration into which the implicit 
-  /// copy-assignment operator will be added.
+  /// copy assignment operator will be added.
   ///
   /// \returns The implicitly-declared copy assignment operator.
   CXXMethodDecl *DeclareImplicitCopyAssignment(CXXRecordDecl *ClassDecl);
   
-  /// \brief Defined an implicitly-declared copy assignment operator.
+  /// \brief Defines an implicitly-declared copy assignment operator.
   void DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
+                                    CXXMethodDecl *MethodDecl);
+
+  /// \brief Declare the implicit move assignment operator for the given class.
+  ///
+  /// \param ClassDecl The Class declaration into which the implicit
+  /// move assignment operator will be added.
+  ///
+  /// \returns The implicitly-declared move assignment operator, or NULL if it
+  /// wasn't declared.
+  CXXMethodDecl *DeclareImplicitMoveAssignment(CXXRecordDecl *ClassDecl);
+  
+  /// \brief Defines an implicitly-declared move assignment operator.
+  void DefineImplicitMoveAssignment(SourceLocation CurrentLocation,
                                     CXXMethodDecl *MethodDecl);
 
   /// \brief Force the declaration of any implicitly-declared members of this
@@ -3475,6 +3516,8 @@ public:
   void CheckExplicitlyDefaultedDefaultConstructor(CXXConstructorDecl *Ctor);
   void CheckExplicitlyDefaultedCopyConstructor(CXXConstructorDecl *Ctor);
   void CheckExplicitlyDefaultedCopyAssignment(CXXMethodDecl *Method);
+  void CheckExplicitlyDefaultedMoveConstructor(CXXConstructorDecl *Ctor);
+  void CheckExplicitlyDefaultedMoveAssignment(CXXMethodDecl *Method);
   void CheckExplicitlyDefaultedDestructor(CXXDestructorDecl *Dtor);
 
   //===--------------------------------------------------------------------===//

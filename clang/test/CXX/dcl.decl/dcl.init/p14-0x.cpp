@@ -4,7 +4,7 @@ struct NoDefault {
   NoDefault() = delete; // expected-note {{here}}
   NoDefault(int);
 };
-struct Explicit { // expected-note {{candidate}} expected-note {{here}}
+struct Explicit { // expected-note 2 {{candidate}} expected-note {{here}}
   explicit Explicit(int);
 };
 struct NoCopy {

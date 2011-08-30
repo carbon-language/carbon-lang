@@ -14,7 +14,7 @@ D1 fd1() { return 1; }
 struct B2 {
   explicit B2(int, int = 0, int = 0);
 };
-struct D2 : B2 { // expected-note {{candidate constructor}}
+struct D2 : B2 { // expected-note 2 {{candidate constructor}}
   using B2::B2;
 };
 D2 d2a(1), d2b(1, 1), d2c(1, 1, 1);
@@ -24,7 +24,7 @@ D2 fd2() { return 1; } // expected-error {{no viable conversion}}
 struct B3 {
   B3(void*); // expected-note {{inherited from here}}
 };
-struct D3 : B3 { // expected-note {{candidate constructor}}
+struct D3 : B3 { // expected-note 2 {{candidate constructor}}
   using B3::B3; // expected-note {{candidate constructor (inherited)}}
 };
 D3 fd3() { return 1; } // expected-error {{no viable conversion}}

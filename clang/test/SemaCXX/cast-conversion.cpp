@@ -8,7 +8,8 @@ struct A {
   A(R);
 };
 
-struct B { // expected-note 3 {{candidate constructor (the implicit copy constructor) not viable}}
+struct B { // expected-note 3 {{candidate constructor (the implicit copy constructor) not viable}} \
+              expected-note 3 {{candidate constructor (the implicit move constructor) not viable}}
   B(A); // expected-note 3 {{candidate constructor not viable}}
 };
 

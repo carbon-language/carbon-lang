@@ -527,6 +527,12 @@ namespace {
     }
   };
 }
+
+static bool hasTrivialCopyOrMoveConstructor(const CXXRecordDecl *Record,
+                                            bool Moving) {
+  return Moving ? Record->hasTrivialMoveConstructor() :
+                  Record->hasTrivialCopyConstructor();
+}
   
 static void EmitMemberInitializer(CodeGenFunction &CGF,
                                   const CXXRecordDecl *ClassDecl,
@@ -572,7 +578,7 @@ static void EmitMemberInitializer(CodeGenFunction &CGF,
     const ConstantArrayType *Array
       = CGF.getContext().getAsConstantArrayType(FieldType);
     if (Array && Constructor->isImplicit() && 
-        Constructor->isCopyConstructor()) {
+        Constructor->isCopyOrMoveConstructor()) {
       llvm::Type *SizeTy
         = CGF.ConvertType(CGF.getContext().getSizeType());
       
@@ -595,7 +601,8 @@ static void EmitMemberInitializer(CodeGenFunction &CGF,
       // constructors, perform a single aggregate copy.
       const CXXRecordDecl *Record = BaseElementTy->getAsCXXRecordDecl();
       if (BaseElementTy.isPODType(CGF.getContext()) ||
-          (Record && Record->hasTrivialCopyConstructor())) {
+          (Record && hasTrivialCopyOrMoveConstructor(Record,
+                         Constructor->isMoveConstructor()))) {
         // Find the source pointer. We knows it's the last argument because
         // we know we're in a copy constructor.
         unsigned SrcArgIndex = Args.size() - 1;
@@ -1201,7 +1208,8 @@ CodeGenFunction::EmitCXXConstructorCall(const CXXConstructorDecl *D,
     }
 
     assert(ArgBeg + 1 == ArgEnd && "unexpected argcount for trivial ctor");
-    assert(D->isCopyConstructor() && "trivial 1-arg ctor not a copy ctor");
+    assert(D->isCopyOrMoveConstructor() &&
+           "trivial 1-arg ctor not a copy/move ctor");
 
     const Expr *E = (*ArgBeg);
     QualType Ty = E->getType();
@@ -1223,7 +1231,8 @@ CodeGenFunction::EmitSynthesizedCXXCopyCtorCall(const CXXConstructorDecl *D,
                                         CallExpr::const_arg_iterator ArgEnd) {
   if (D->isTrivial()) {
     assert(ArgBeg + 1 == ArgEnd && "unexpected argcount for trivial ctor");
-    assert(D->isCopyConstructor() && "trivial 1-arg ctor not a copy ctor");
+    assert(D->isCopyOrMoveConstructor() &&
+           "trivial 1-arg ctor not a copy/move ctor");
     EmitAggregateCopy(This, Src, (*ArgBeg)->getType());
     return;
   }
