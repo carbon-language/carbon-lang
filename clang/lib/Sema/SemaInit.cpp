@@ -2340,6 +2340,11 @@ bool InitializationSequence::endsWithNarrowing(ASTContext &Ctx,
   //   conversion will fit into the target type and will produce the original
   //   value when converted back to the original type.
   case ICK_Boolean_Conversion:  // Bools are integers too.
+    if (!FromType->isIntegralOrUnscopedEnumerationType()) {
+      // Boolean conversions can be from pointers and pointers to members
+      // [conv.bool], and those aren't considered narrowing conversions.
+      return false;
+    }  // Otherwise, fall through to the integral case.
   case ICK_Integral_Conversion: {
     assert(FromType->isIntegralOrUnscopedEnumerationType());
     assert(ToType->isIntegralOrUnscopedEnumerationType());

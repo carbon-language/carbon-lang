@@ -144,6 +144,9 @@ void shrink_int() {
   Agg<bool> b1 = {0};  // OK
   Agg<bool> b2 = {1};  // OK
   Agg<bool> b3 = {-1};  // expected-error {{ cannot be narrowed }} expected-note {{override}}
+
+  // Conversions from pointers to booleans aren't narrowing conversions.
+  Agg<bool> b = {&b1};  // OK
 }
 
 // Be sure that type- and value-dependent expressions in templates get the error
