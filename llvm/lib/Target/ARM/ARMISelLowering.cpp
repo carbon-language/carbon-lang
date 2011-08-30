@@ -5474,6 +5474,29 @@ ARMTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   }
 }
 
+void ARMTargetLowering::AdjustInstrPostInstrSelection(MachineInstr *MI,
+                                                      SDNode *Node) const {
+  // Adjust potentially 's' setting instructions after isel, i.e. ADC, SBC,
+  // RSB, RSC. Coming out of isel, they have an implicit CPSR def, but the
+  // optional operand is not filled in. If the carry bit is used, then change
+  // the optional operand to CPSR. Otherwise, remove the CPSR implicit def.
+  const MCInstrDesc &MCID = MI->getDesc();
+  if (Node->hasAnyUseOfValue(1)) {
+    MachineOperand &MO = MI->getOperand(MCID.getNumOperands() - 2);
+    MO.setReg(ARM::CPSR);
+    MO.setIsDef(true);
+  } else {
+    for (unsigned i = MCID.getNumOperands(), e = MI->getNumOperands();
+         i != e; ++i) {
+      const MachineOperand &MO = MI->getOperand(i);
+      if (MO.isReg() && MO.isDef() && MO.getReg() == ARM::CPSR) {
+        MI->RemoveOperand(i);
+        break;
+      }
+    }
+  }
+}
+
 //===----------------------------------------------------------------------===//
 //                           ARM Optimization Hooks
 //===----------------------------------------------------------------------===//

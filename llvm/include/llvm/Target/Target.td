@@ -328,6 +328,7 @@ class Instruction {
   bit isPredicable = 0;     // Is this instruction predicable?
   bit hasDelaySlot = 0;     // Does this instruction have an delay slot?
   bit usesCustomInserter = 0; // Pseudo instr needing special help.
+  bit hasPostISelHook = 0;  // To be *adjusted* after isel by target hook.
   bit hasCtrlDep   = 0;     // Does this instruction r/w ctrl-flow chains?
   bit isNotDuplicable = 0;  // Is it unsafe to duplicate this instruction?
   bit isAsCheapAsAMove = 0; // As cheap (or cheaper) than a move instruction.

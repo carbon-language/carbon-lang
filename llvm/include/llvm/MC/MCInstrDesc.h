@@ -116,6 +116,7 @@ namespace MCID {
     Commutable,
     ConvertibleTo3Addr,
     UsesCustomInserter,
+    HasPostISelHook,
     Rematerializable,
     CheapAsAMove,
     ExtraSrcRegAllocReq,
@@ -474,6 +475,14 @@ public:
   /// is used to insert this into the MachineBasicBlock.
   bool usesCustomInsertionHook() const {
     return Flags & (1 << MCID::UsesCustomInserter);
+  }
+
+  /// hasPostISelHook - Return true if this instruction requires *adjustment*
+  /// after instruction selection by calling a target hook. For example, this
+  /// can be used to fill in ARM 's' optional operand depending on whether
+  /// the conditional flag register is used.
+  bool hasPostISelHook() const {
+    return Flags & (1 << MCID::HasPostISelHook);
   }
 
   /// isRematerializable - Returns true if this instruction is a candidate for

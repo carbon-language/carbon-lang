@@ -1471,6 +1471,13 @@ public:
   virtual MachineBasicBlock *
     EmitInstrWithCustomInserter(MachineInstr *MI, MachineBasicBlock *MBB) const;
 
+  /// AdjustInstrPostInstrSelection - This method should be implemented by
+  /// targets that mark instructions with the 'hasPostISelHook' flag. These
+  /// instructions must be adjusted after instruction selection by target hooks.
+  /// e.g. To fill in optional defs for ARM 's' setting instructions.
+  virtual void
+  AdjustInstrPostInstrSelection(MachineInstr *MI, SDNode *Node) const;
+
   //===--------------------------------------------------------------------===//
   // Addressing mode description hooks (used by LSR etc).
   //

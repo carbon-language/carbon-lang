@@ -1290,7 +1290,7 @@ class AI_exta_rrot_np<bits<8> opcod, string opc>
 /// AI1_adde_sube_irs - Define instructions and patterns for adde and sube.
 multiclass AI1_adde_sube_irs<bits<4> opcod, string opc, PatFrag opnode,
                              string baseOpc, bit Commutable = 0> {
-  let Defs = [CPSR], Uses = [CPSR] in {
+  let hasPostISelHook = 1, Defs = [CPSR], Uses = [CPSR] in {
   def ri : AsI1<opcod, (outs GPR:$Rd), (ins GPR:$Rn, so_imm:$imm),
                 DPFrm, IIC_iALUi, opc, "\t$Rd, $Rn, $imm",
                [(set GPR:$Rd, CPSR, (opnode GPR:$Rn, so_imm:$imm, CPSR))]>,
@@ -1378,7 +1378,7 @@ multiclass AI1_adde_sube_irs<bits<4> opcod, string opc, PatFrag opnode,
 /// AI1_rsc_irs - Define instructions and patterns for rsc
 multiclass AI1_rsc_irs<bits<4> opcod, string opc, PatFrag opnode,
                        string baseOpc> {
-  let Defs = [CPSR], Uses = [CPSR] in {
+  let hasPostISelHook = 1, Defs = [CPSR], Uses = [CPSR] in {
   def ri : AsI1<opcod, (outs GPR:$Rd), (ins GPR:$Rn, so_imm:$imm),
                 DPFrm, IIC_iALUi, opc, "\t$Rd, $Rn, $imm",
                [(set GPR:$Rd, CPSR, (opnode so_imm:$imm, GPR:$Rn, CPSR))]>,

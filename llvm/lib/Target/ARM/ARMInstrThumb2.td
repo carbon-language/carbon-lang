@@ -1661,10 +1661,12 @@ defm t2SUBS : T2I_bin_s_irs <0b1101, "sub",
                              IIC_iALUi, IIC_iALUr, IIC_iALUsi,
                              BinOpFrag<(ARMsubc node:$LHS, node:$RHS)>>;
 
+let hasPostISelHook = 1 in {
 defm t2ADC  : T2I_adde_sube_irs<0b1010, "adc",
               BinOpWithFlagFrag<(ARMadde node:$LHS, node:$RHS, node:$FLAG)>, 1>;
 defm t2SBC  : T2I_adde_sube_irs<0b1011, "sbc",
               BinOpWithFlagFrag<(ARMsube node:$LHS, node:$RHS, node:$FLAG)>>;
+}
 
 // RSB
 defm t2RSB  : T2I_rbin_irs  <0b1110, "rsb",

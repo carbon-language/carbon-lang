@@ -288,6 +288,7 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
   if (Inst.isNotDuplicable)    OS << "|(1<<MCID::NotDuplicable)";
   if (Inst.Operands.hasOptionalDef) OS << "|(1<<MCID::HasOptionalDef)";
   if (Inst.usesCustomInserter) OS << "|(1<<MCID::UsesCustomInserter)";
+  if (Inst.hasPostISelHook)    OS << "|(1<<MCID::HasPostISelHook)";
   if (Inst.Operands.isVariadic)OS << "|(1<<MCID::Variadic)";
   if (Inst.hasSideEffects)     OS << "|(1<<MCID::UnmodeledSideEffects)";
   if (Inst.isAsCheapAsAMove)   OS << "|(1<<MCID::CheapAsAMove)";
