@@ -901,7 +901,7 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
   }
 
   // Darwin 10.7 and greater has support for compact unwind encoding.
-  if (STI.isTargetDarwin() && !STI.getTargetTriple().isMacOSXVersionLT(10, 6))
+  if (STI.isTargetDarwin() && !STI.getTargetTriple().isMacOSXVersionLT(10, 7))
     MMI.setCompactUnwindEncoding(getCompactUnwindEncoding(MF));
 }
 
