@@ -583,6 +583,8 @@ it run faster:</p>
 <ul>
   <li>The <code>LowerSetJmp</code> pass wasn't used effectively by any
       target and has been removed.</li>
+  <li>The old <code>TailDup</code> pass was not used in the standard pipeline
+      and was unable to update ssa form, so it has been removed.
   <li>The syntax of volatile loads and stores in IR has been changed to
       "<code>load volatile</code>"/"<code>store volatile</code>".  The old
       syntax ("<code>volatile load</code>"/"<code>volatile store</code>")

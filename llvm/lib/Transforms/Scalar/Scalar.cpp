@@ -63,7 +63,6 @@ void llvm::initializeScalarOpts(PassRegistry &Registry) {
   initializeCFGSimplifyPassPass(Registry);
   initializeSimplifyLibCallsPass(Registry);
   initializeSinkingPass(Registry);
-  initializeTailDupPass(Registry);
   initializeTailCallElimPass(Registry);
 }
 

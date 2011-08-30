@@ -176,13 +176,6 @@ FunctionPass *createReassociatePass();
 
 //===----------------------------------------------------------------------===//
 //
-// TailDuplication - Eliminate unconditional branches through controlled code
-// duplication, creating simpler CFG structures.
-//
-FunctionPass *createTailDuplicationPass();
-
-//===----------------------------------------------------------------------===//
-//
 // JumpThreading - Thread control through mult-pred/multi-succ blocks where some
 // preds always go to some succ.
 //

@@ -29,7 +29,6 @@ add_llvm_library(LLVMScalarOpts
   SimplifyCFGPass.cpp
   SimplifyLibCalls.cpp
   Sink.cpp
-  TailDuplication.cpp
   TailRecursionElimination.cpp
   )
 

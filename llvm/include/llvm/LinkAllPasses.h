@@ -127,7 +127,6 @@ namespace {
       (void) llvm::createStripDeadDebugInfoPass();
       (void) llvm::createStripDeadPrototypesPass();
       (void) llvm::createTailCallEliminationPass();
-      (void) llvm::createTailDuplicationPass();
       (void) llvm::createJumpThreadingPass();
       (void) llvm::createUnifyFunctionExitNodesPass();
       (void) llvm::createInstCountPass();
