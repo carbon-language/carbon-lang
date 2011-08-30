@@ -759,6 +759,9 @@ Parser::DeclGroupPtrTy Parser::ParseDeclaration(StmtVector &Stmts,
                                                 SourceLocation &DeclEnd,
                                           ParsedAttributesWithRange &attrs) {
   ParenBraceBracketBalancer BalancerRAIIObj(*this);
+  // Must temporarily exit the objective-c container scope for
+  // parsing c none objective-c decls.
+  ObjCDeclContextSwitch ObjCDC(*this);
   
   Decl *SingleDecl = 0;
   Decl *OwnedType = 0;
