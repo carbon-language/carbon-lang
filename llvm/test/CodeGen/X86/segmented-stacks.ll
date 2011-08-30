@@ -1,5 +1,5 @@
-; RUN: llc < %s -march=x86 -segmented-stacks | FileCheck %s -check-prefix=X32
-; RUN: llc < %s -march=x86-64 -segmented-stacks | FileCheck %s -check-prefix=X64
+; RUN: llc < %s -mtriple=i686-linux -segmented-stacks | FileCheck %s -check-prefix=X32
+; RUN: llc < %s -mtriple=x86_64-linux  -segmented-stacks | FileCheck %s -check-prefix=X64
 
 ; Just to prevent the alloca from being optimized away
 declare void @dummy_use(i32*, i32)
