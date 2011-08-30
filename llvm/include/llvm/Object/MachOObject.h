@@ -174,6 +174,7 @@ public:
   void ReadSymbol64TableEntry(
     uint64_t SymbolTableOffset, unsigned Index,
     InMemoryStruct<macho::Symbol64TableEntry> &Res) const;
+  void ReadULEB128s(uint64_t Index, SmallVectorImpl<uint64_t> &Out) const;
 
   /// @}
   

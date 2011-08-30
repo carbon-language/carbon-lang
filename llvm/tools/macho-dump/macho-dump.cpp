@@ -318,7 +318,16 @@ static int DumpLinkeditDataCommand(MachOObject &Obj,
     return Error("unable to read segment load command");
 
   outs() << "  ('dataoff', " << LLC->DataOffset << ")\n"
-         << "  ('datasize', " << LLC->DataSize << ")\n";
+         << "  ('datasize', " << LLC->DataSize << ")\n"
+         << "  ('_addresses', [\n";
+
+  SmallVector<uint64_t, 8> Addresses;
+  Obj.ReadULEB128s(LLC->DataOffset, Addresses);
+  for (unsigned i = 0, e = Addresses.size(); i != e; ++i)
+    outs() << "    # Address " << i << '\n'
+           << "    ('address', " << format("0x%x", Addresses[i]) << "),\n";
+
+  outs() << "  ])\n";
 
   return 0;
 }
