@@ -113,7 +113,7 @@ public:
   /// immediate Thumb2 direct branch target.
   uint32_t getUnconditionalBranchTargetOpValue(const MCInst &MI, unsigned OpIdx,
                                   SmallVectorImpl<MCFixup> &Fixups) const;
-  
+
   /// getARMBranchTargetOpValue - Return encoding info for 24-bit immediate
   /// branch target.
   uint32_t getARMBranchTargetOpValue(const MCInst &MI, unsigned OpIdx,
@@ -508,9 +508,9 @@ static bool HasConditionalBranch(const MCInst &MI) {
     for (int i = 0; i < NumOp-1; ++i) {
       const MCOperand &MCOp1 = MI.getOperand(i);
       const MCOperand &MCOp2 = MI.getOperand(i + 1);
-      if (MCOp1.isImm() && MCOp2.isReg() && 
+      if (MCOp1.isImm() && MCOp2.isReg() &&
           (MCOp2.getReg() == 0 || MCOp2.getReg() == ARM::CPSR)) {
-        if (ARMCC::CondCodes(MCOp1.getImm()) != ARMCC::AL) 
+        if (ARMCC::CondCodes(MCOp1.getImm()) != ARMCC::AL)
           return true;
       }
     }
@@ -538,10 +538,10 @@ getARMBranchTargetOpValue(const MCInst &MI, unsigned OpIdx,
                           SmallVectorImpl<MCFixup> &Fixups) const {
   const MCOperand MO = MI.getOperand(OpIdx);
   if (MO.isExpr()) {
-    if (HasConditionalBranch(MI)) 
+    if (HasConditionalBranch(MI))
       return ::getBranchTargetOpValue(MI, OpIdx,
                                       ARM::fixup_arm_condbranch, Fixups);
-    return ::getBranchTargetOpValue(MI, OpIdx, 
+    return ::getBranchTargetOpValue(MI, OpIdx,
                                     ARM::fixup_arm_uncondbranch, Fixups);
   }
 
@@ -553,10 +553,10 @@ getARMBLXTargetOpValue(const MCInst &MI, unsigned OpIdx,
                           SmallVectorImpl<MCFixup> &Fixups) const {
   const MCOperand MO = MI.getOperand(OpIdx);
   if (MO.isExpr()) {
-    if (HasConditionalBranch(MI)) 
+    if (HasConditionalBranch(MI))
       return ::getBranchTargetOpValue(MI, OpIdx,
                                       ARM::fixup_arm_condbranch, Fixups);
-    return ::getBranchTargetOpValue(MI, OpIdx, 
+    return ::getBranchTargetOpValue(MI, OpIdx,
                                     ARM::fixup_arm_uncondbranch, Fixups);
   }
 
@@ -1350,7 +1350,7 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     Size = Desc.getSize();
   else
     llvm_unreachable("Unexpected instruction size!");
-  
+
   uint32_t Binary = getBinaryCodeForInstr(MI, Fixups);
   // Thumb 32-bit wide instructions need to emit the high order halfword
   // first.
