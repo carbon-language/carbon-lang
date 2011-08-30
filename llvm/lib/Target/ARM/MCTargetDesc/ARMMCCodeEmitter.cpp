@@ -930,7 +930,10 @@ getAddrModeISOpValue(const MCInst &MI, unsigned OpIdx,
 uint32_t ARMMCCodeEmitter::
 getAddrModePCOpValue(const MCInst &MI, unsigned OpIdx,
                      SmallVectorImpl<MCFixup> &Fixups) const {
-  return ::getBranchTargetOpValue(MI, OpIdx, ARM::fixup_arm_thumb_cp, Fixups);
+  const MCOperand MO = MI.getOperand(OpIdx);
+  if (MO.isExpr())
+    return ::getBranchTargetOpValue(MI, OpIdx, ARM::fixup_arm_thumb_cp, Fixups);
+  return (MO.getImm() >> 2);
 }
 
 /// getAddrMode5OpValue - Return encoding info for 'reg +/- imm10' operand.
