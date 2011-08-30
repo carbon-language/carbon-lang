@@ -1485,11 +1485,10 @@ void Sema::MatchAllMethodDeclarations(const llvm::DenseSet<Selector> &InsMap,
       continue;
     } else {
       ObjCMethodDecl *ImpMethodDecl =
-      IMPDecl->getInstanceMethod((*I)->getSelector());
-      ObjCMethodDecl *MethodDecl =
-      CDecl->getInstanceMethod((*I)->getSelector());
-      assert(MethodDecl &&
-             "MethodDecl is null in ImplMethodsVsClassMethods");
+        IMPDecl->getInstanceMethod((*I)->getSelector());
+      assert(CDecl->getInstanceMethod((*I)->getSelector()) &&
+             "Expected to find the method through lookup as well");
+      ObjCMethodDecl *MethodDecl = *I;
       // ImpMethodDecl may be null as in a @dynamic property.
       if (ImpMethodDecl) {
         if (!WarnExactMatch)
@@ -1516,8 +1515,9 @@ void Sema::MatchAllMethodDeclarations(const llvm::DenseSet<Selector> &InsMap,
     } else {
       ObjCMethodDecl *ImpMethodDecl =
         IMPDecl->getClassMethod((*I)->getSelector());
-      ObjCMethodDecl *MethodDecl =
-        CDecl->getClassMethod((*I)->getSelector());
+      assert(CDecl->getClassMethod((*I)->getSelector()) &&
+             "Expected to find the method through lookup as well");
+      ObjCMethodDecl *MethodDecl = *I;
       if (!WarnExactMatch)
         WarnConflictingTypedMethods(ImpMethodDecl, MethodDecl, 
                                     isa<ObjCProtocolDecl>(CDecl));
