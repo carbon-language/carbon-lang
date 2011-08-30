@@ -47,6 +47,7 @@ namespace llvm {
   bool StrongPHIElim;
   bool HasDivModLibcall;
   bool AsmVerbosityDefault(false);
+  bool EnableSegmentedStacks;
 }
 
 static cl::opt<bool, true>
@@ -178,6 +179,12 @@ static cl::opt<bool>
 FunctionSections("ffunction-sections",
   cl::desc("Emit functions into separate sections"),
   cl::init(false));
+static cl::opt<bool, true>
+SegmentedStacks("segmented-stacks",
+  cl::desc("Use segmented stacks if possible."),
+  cl::location(EnableSegmentedStacks),
+  cl::init(false));
+                         
 //---------------------------------------------------------------------------
 // TargetMachine Class
 //

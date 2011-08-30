@@ -158,6 +158,8 @@ namespace llvm {
   /// instead of an ISD::TRAP node.
   extern StringRef getTrapFunctionName();
 
+  extern bool EnableSegmentedStacks;
+
 } // End llvm namespace
 
 #endif
