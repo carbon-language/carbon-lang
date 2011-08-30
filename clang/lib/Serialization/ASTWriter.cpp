@@ -2628,7 +2628,8 @@ uint64_t ASTWriter::WriteDeclContextVisibleBlock(ASTContext &Context,
        D != DEnd; ++D) {
     DeclarationName Name = D->first;
     DeclContext::lookup_result Result = D->second.getLookupResult();
-    Generator.insert(Name, Result, Trait);
+    if (Result.first != Result.second)
+      Generator.insert(Name, Result, Trait);
   }
 
   // Create the on-disk hash table in a buffer.
@@ -2673,7 +2674,8 @@ void ASTWriter::WriteDeclContextVisibleUpdate(const DeclContext *DC) {
     DeclContext::lookup_result Result = D->second.getLookupResult();
     // For any name that appears in this table, the results are complete, i.e.
     // they overwrite results from previous PCHs. Merging is always a mess.
-    Generator.insert(Name, Result, Trait);
+    if (Result.first != Result.second)
+      Generator.insert(Name, Result, Trait);
   }
 
   // Create the on-disk hash table in a buffer.
