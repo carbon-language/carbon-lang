@@ -230,9 +230,7 @@ static DecodeStatus DecodeThumbBCCTargetOperand(llvm::MCInst &Inst,unsigned Val,
                                 uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeThumbBLTargetOperand(llvm::MCInst &Inst, unsigned Val,
                                 uint64_t Address, const void *Decoder);
-static DecodeStatus DecodeITCond(llvm::MCInst &Inst, unsigned Val,
-                                uint64_t Address, const void *Decoder);
-static DecodeStatus DecodeITMask(llvm::MCInst &Inst, unsigned Val,
+static DecodeStatus DecodeIT(llvm::MCInst &Inst, unsigned Val,
                                 uint64_t Address, const void *Decoder);
 
 #include "ARMGenDisassemblerTables.inc"
@@ -480,18 +478,20 @@ DecodeStatus ThumbDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
     // code and mask operands so that we can apply them correctly
     // to the subsequent instructions.
     if (MI.getOpcode() == ARM::t2IT) {
+      // (3 - the number of trailing zeros) is the number of then / else.
       unsigned firstcond = MI.getOperand(0).getImm();
-      uint32_t mask = MI.getOperand(1).getImm();
-      unsigned zeros = CountTrailingZeros_32(mask);
-      mask >>= zeros+1;
-
-      for (unsigned i = 0; i < 4 - (zeros+1); ++i) {
-        if (firstcond ^ (mask & 1))
-          ITBlock.push_back(firstcond ^ 1);
+      unsigned Mask = MI.getOperand(1).getImm();
+      unsigned CondBit0 = Mask >> 4 & 1;
+      unsigned NumTZ = CountTrailingZeros_32(Mask);
+      assert(NumTZ <= 3 && "Invalid IT mask!");
+      for (unsigned Pos = 3, e = NumTZ; Pos > e; --Pos) {
+        bool T = ((Mask >> Pos) & 1) == CondBit0;
+        if (T)
+          ITBlock.insert(ITBlock.begin(), firstcond);
         else
-          ITBlock.push_back(firstcond);
-        mask >>= 1;
+          ITBlock.insert(ITBlock.begin(), firstcond ^ 1);
       }
+
       ITBlock.push_back(firstcond);
     }
 
@@ -3109,7 +3109,7 @@ static DecodeStatus DecodeVLD3LN(llvm::MCInst &Inst, unsigned Insn,
   }
   CHECK(S, DecodeGPRRegisterClass(Inst, Rn, Address, Decoder));
   Inst.addOperand(MCOperand::CreateImm(align));
-  if (Rm != 0xF) { 
+  if (Rm != 0xF) {
     if (Rm != 0xD)
       CHECK(S, DecodeGPRRegisterClass(Inst, Rm, Address, Decoder));
     else
@@ -3345,26 +3345,28 @@ static DecodeStatus DecodeVMOVRRS(llvm::MCInst &Inst, unsigned Insn,
   return S;
 }
 
-static DecodeStatus DecodeITCond(llvm::MCInst &Inst, unsigned Cond,
-                                 uint64_t Address, const void *Decoder) {
+static DecodeStatus DecodeIT(llvm::MCInst &Inst, unsigned Insn,
+                             uint64_t Address, const void *Decoder) {
   DecodeStatus S = Success;
-  if (Cond == 0xF) {
-    Cond = 0xE;
+  unsigned pred = fieldFromInstruction16(Insn, 4, 4);
+  // The InstPrinter needs to have the low bit of the predicate in
+  // the mask operand to be able to print it properly.
+  unsigned mask = fieldFromInstruction16(Insn, 0, 5);
+
+  if (pred == 0xF) {
+    pred = 0xE;
     CHECK(S, Unpredictable);
   }
 
-  Inst.addOperand(MCOperand::CreateImm(Cond));
-  return S;
-}
-
-static DecodeStatus DecodeITMask(llvm::MCInst &Inst, unsigned Mask,
-                                 uint64_t Address, const void *Decoder) {
-  DecodeStatus S = Success;
-  if (Mask == 0) {
-    Mask = 0x8;
+  if ((mask & 0xF) == 0) {
+    // Preserve the high bit of the mask, which is the low bit of
+    // the predicate.
+    mask &= 0x10;
+    mask |= 0x8;
     CHECK(S, Unpredictable);
   }
-  Inst.addOperand(MCOperand::CreateImm(Mask));
+
+  Inst.addOperand(MCOperand::CreateImm(pred));
+  Inst.addOperand(MCOperand::CreateImm(mask));
   return S;
 }
-

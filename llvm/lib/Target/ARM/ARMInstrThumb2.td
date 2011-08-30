@@ -19,7 +19,6 @@ def it_pred_asmoperand : AsmOperandClass {
 def it_pred : Operand<i32> {
   let PrintMethod = "printMandatoryPredicateOperand";
   let ParserMatchClass = it_pred_asmoperand;
-  let DecoderMethod = "DecodeITCond";
 }
 
 // IT block condition mask
@@ -27,7 +26,6 @@ def it_mask_asmoperand : AsmOperandClass { let Name = "ITMask"; }
 def it_mask : Operand<i32> {
   let PrintMethod = "printThumbITMask";
   let ParserMatchClass = it_mask_asmoperand;
-  let DecoderMethod = "DecodeITMask";
 }
 
 // Shifted operands. No register controlled shifts for Thumb2.
@@ -3013,6 +3011,8 @@ def t2IT : Thumb2XI<(outs), (ins it_pred:$cc, it_mask:$mask),
   bits<4> mask;
   let Inst{7-4} = cc;
   let Inst{3-0} = mask;
+
+  let DecoderMethod = "DecodeIT";
 }
 
 // Branch and Exchange Jazelle -- for disassembly only
