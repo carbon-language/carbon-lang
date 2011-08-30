@@ -125,7 +125,7 @@ struct EDToken {
   //                      assembly syntax
   static int tokenize(std::vector<EDToken*> &tokens,
                       std::string &str,
-                      const char *operandOrder,
+                      const signed char *operandOrder,
                       EDDisassembler &disassembler);
   
   /// getString - Directs a character pointer to the string, returning 0 on

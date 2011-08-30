@@ -504,8 +504,8 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
         //   .indirect_symbol _foo
         OutStreamer.EmitSymbolAttribute(Stubs[i].second.getPointer(),
                                         MCSA_IndirectSymbol);
-        // hlt; hlt; hlt; hlt; hlt     hlt = 0xf4 = -12.
-        const char HltInsts[] = { -12, -12, -12, -12, -12 };
+        // hlt; hlt; hlt; hlt; hlt     hlt = 0xf4.
+        const char HltInsts[] = "\xf4\xf4\xf4\xf4\xf4";
         OutStreamer.EmitBytes(StringRef(HltInsts, 5), 0/*addrspace*/);
       }
 

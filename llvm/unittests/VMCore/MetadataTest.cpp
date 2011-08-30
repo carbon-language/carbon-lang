@@ -63,7 +63,7 @@ TEST_F(MDStringTest, PrintingSimple) {
 
 // Test printing of MDString with non-printable characters.
 TEST_F(MDStringTest, PrintingComplex) {
-  char str[5] = {0, '\n', '"', '\\', -1};
+  char str[5] = {0, '\n', '"', '\\', (char)-1};
   MDString *s = MDString::get(Context, StringRef(str+0, 5));
   std::string Str;
   raw_string_ostream oss(Str);
