@@ -1134,7 +1134,6 @@ void ASTWriter::WriteLanguageOptions(const LangOptions &LangOpts) {
   Record.push_back(LangOpts.SpellChecking);
   Record.push_back(LangOpts.MRTD);
   Record.push_back(LangOpts.ObjCAutoRefCount);
-  Record.push_back(LangOpts.ObjCInferRelatedReturnType);
   Stream.EmitRecord(LANGUAGE_OPTIONS, Record);
 }
 
