@@ -3237,7 +3237,7 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
   // both P and A are pointers or member pointers. In this case, we
   // just ignore cv-qualifiers completely).
   if ((P->isPointerType() && A->isPointerType()) ||
-      (P->isMemberPointerType() && P->isMemberPointerType()))
+      (P->isMemberPointerType() && A->isMemberPointerType()))
     TDF |= TDF_IgnoreQualifiers;
   if (TemplateDeductionResult Result
         = ::DeduceTemplateArguments(*this, TemplateParams,
