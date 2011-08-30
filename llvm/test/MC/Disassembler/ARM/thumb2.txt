@@ -1,0 +1,41 @@
+# RUN: llvm-mc -triple=thumbv7-apple-darwin -disassemble < %s | FileCheck %s
+
+#------------------------------------------------------------------------------
+# ADC (immediate)
+#------------------------------------------------------------------------------
+# CHECK: adc r0, r1, #4
+# CHECK: adcs r0, r1, #0
+# CHECK: adc r1, r2, #255
+# CHECK: adc r3, r7, #5570645
+# CHECK: adc r8, r12, #2852170240
+# CHECK: adc r9, r7, #2779096485
+# CHECK: adc r5, r3, #2264924160
+# CHECK: adc r4, r2, #2139095040
+# CHECK: adc r4, r2, #1664
+
+0x41 0xf1 0x04 0x00
+0x51 0xf1 0x00 0x00
+0x42 0xf1 0xff 0x01
+0x47 0xf1 0x55 0x13
+0x4c 0xf1 0xaa 0x28
+0x47 0xf1 0xa5 0x39
+0x43 0xf1 0x07 0x45
+0x42 0xf1 0xff 0x44
+0x42 0xf5 0xd0 0x64
+
+#------------------------------------------------------------------------------
+# IT
+#------------------------------------------------------------------------------
+# Test encodings of a few full IT blocks, not just the IT instruction
+
+# CHECK: iteet eq
+# CHECK: addeq r0, r1, r2
+# CHECK: nopne
+# CHECK: subne r5, r6, r7
+# CHECK: addeq r1, r2, #4
+
+0x0d 0xbf
+0x88 0x18
+0x00 0xbf
+0xf5 0x1b
+0x11 0x1d
