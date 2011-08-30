@@ -51,6 +51,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Target/TargetOptions.h"
 using namespace llvm;
 using namespace dwarf;
 
@@ -522,8 +523,9 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setOperationAction(ISD::STACKRESTORE,       MVT::Other, Expand);
   setOperationAction(ISD::DYNAMIC_STACKALLOC,
                      (Subtarget->is64Bit() ? MVT::i64 : MVT::i32),
-                     (Subtarget->isTargetCOFF()
-                      && !Subtarget->isTargetEnvMacho()
+                     ((Subtarget->isTargetCOFF()
+                       && !Subtarget->isTargetEnvMacho()) ||
+                      EnableSegmentedStacks
                       ? Custom : Expand));
 
   if (!UseSoftFloat && X86ScalarSSEf64) {
@@ -8844,8 +8846,10 @@ SDValue X86TargetLowering::LowerBRCOND(SDValue Op, SelectionDAG &DAG) const {
 SDValue
 X86TargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
                                            SelectionDAG &DAG) const {
-  assert((Subtarget->isTargetCygMing() || Subtarget->isTargetWindows()) &&
-         "This should be used only on Windows targets");
+  assert((Subtarget->isTargetCygMing() || Subtarget->isTargetWindows() ||
+          EnableSegmentedStacks) &&
+         "This should be used only on Windows targets or when segmented stacks "
+         "are being used.");
   assert(!Subtarget->isTargetEnvMacho());
   DebugLoc dl = Op.getDebugLoc();
 
@@ -8854,23 +8858,49 @@ X86TargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
   SDValue Size  = Op.getOperand(1);
   // FIXME: Ensure alignment here
 
-  SDValue Flag;
+  bool Is64Bit = Subtarget->is64Bit();
+  EVT SPTy = Is64Bit ? MVT::i64 : MVT::i32;
 
-  EVT SPTy = Subtarget->is64Bit() ? MVT::i64 : MVT::i32;
-  unsigned Reg = (Subtarget->is64Bit() ? X86::RAX : X86::EAX);
+  if (EnableSegmentedStacks) {
+    MachineFunction &MF = DAG.getMachineFunction();
+    MachineRegisterInfo &MRI = MF.getRegInfo();
 
-  Chain = DAG.getCopyToReg(Chain, dl, Reg, Size, Flag);
-  Flag = Chain.getValue(1);
+    if (Is64Bit) {
+      // The 64 bit implementation of segmented stacks needs to clobber both r10
+      // r11. This makes it impossible to use it along with nested paramenters.
+      const Function *F = MF.getFunction();
 
-  SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Glue);
+      for (Function::const_arg_iterator I = F->arg_begin(), E = F->arg_end();
+           I != E; I++)
+        if (I->hasNestAttr())
+          report_fatal_error("Cannot use segmented stacks with functions that "
+                             "have nested arguments.");
+    }
 
-  Chain = DAG.getNode(X86ISD::WIN_ALLOCA, dl, NodeTys, Chain, Flag);
-  Flag = Chain.getValue(1);
+    const TargetRegisterClass *AddrRegClass =
+      getRegClassFor(Subtarget->is64Bit() ? MVT::i64:MVT::i32);
+    unsigned Vreg = MRI.createVirtualRegister(AddrRegClass);
+    Chain = DAG.getCopyToReg(Chain, dl, Vreg, Size);
+    SDValue Value = DAG.getNode(X86ISD::SEG_ALLOCA, dl, SPTy, Chain,
+                                DAG.getRegister(Vreg, SPTy));
+    SDValue Ops1[2] = { Value, Chain };
+    return DAG.getMergeValues(Ops1, 2, dl);
+  } else {
+    SDValue Flag;
+    unsigned Reg = (Subtarget->is64Bit() ? X86::RAX : X86::EAX);
 
-  Chain = DAG.getCopyFromReg(Chain, dl, X86StackPtr, SPTy).getValue(1);
+    Chain = DAG.getCopyToReg(Chain, dl, Reg, Size, Flag);
+    Flag = Chain.getValue(1);
+    SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Glue);
 
-  SDValue Ops1[2] = { Chain.getValue(0), Chain };
-  return DAG.getMergeValues(Ops1, 2, dl);
+    Chain = DAG.getNode(X86ISD::WIN_ALLOCA, dl, NodeTys, Chain, Flag);
+    Flag = Chain.getValue(1);
+
+    Chain = DAG.getCopyFromReg(Chain, dl, X86StackPtr, SPTy).getValue(1);
+
+    SDValue Ops1[2] = { Chain.getValue(0), Chain };
+    return DAG.getMergeValues(Ops1, 2, dl);
+  }
 }
 
 SDValue X86TargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) const {
@@ -11635,6 +11665,119 @@ X86TargetLowering::EmitLoweredSelect(MachineInstr *MI,
 }
 
 MachineBasicBlock *
+X86TargetLowering::EmitLoweredSegAlloca(MachineInstr *MI, MachineBasicBlock *BB,
+                                        bool Is64Bit) const {
+  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
+  DebugLoc DL = MI->getDebugLoc();
+  MachineFunction *MF = BB->getParent();
+  const BasicBlock *LLVM_BB = BB->getBasicBlock();
+
+  assert(EnableSegmentedStacks);
+
+  unsigned TlsReg = Is64Bit ? X86::FS : X86::GS;
+  unsigned TlsOffset = Is64Bit ? 0x70 : 0x30;
+
+  // BB:
+  //  ... [Till the alloca]
+  // If stacklet is not large enough, jump to mallocMBB
+  //
+  // bumpMBB:
+  //  Allocate by subtracting from RSP
+  //  Jump to continueMBB
+  //
+  // mallocMBB:
+  //  Allocate by call to runtime
+  //
+  // continueMBB:
+  //  ...
+  //  [rest of original BB]
+  //
+
+  MachineBasicBlock *mallocMBB = MF->CreateMachineBasicBlock(LLVM_BB);
+  MachineBasicBlock *bumpMBB = MF->CreateMachineBasicBlock(LLVM_BB);
+  MachineBasicBlock *continueMBB = MF->CreateMachineBasicBlock(LLVM_BB);
+
+  MachineRegisterInfo &MRI = MF->getRegInfo();
+  const TargetRegisterClass *AddrRegClass =
+    getRegClassFor(Is64Bit ? MVT::i64:MVT::i32);
+
+  unsigned mallocPtrVReg = MRI.createVirtualRegister(AddrRegClass),
+    bumpSPPtrVReg = MRI.createVirtualRegister(AddrRegClass),
+    tmpSPVReg = MRI.createVirtualRegister(AddrRegClass),
+    sizeVReg = MI->getOperand(1).getReg(),
+    physSPReg = Is64Bit ? X86::RSP : X86::ESP;
+
+  MachineFunction::iterator MBBIter = BB;
+  ++MBBIter;
+
+  MF->insert(MBBIter, bumpMBB);
+  MF->insert(MBBIter, mallocMBB);
+  MF->insert(MBBIter, continueMBB);
+
+  continueMBB->splice(continueMBB->begin(), BB, llvm::next
+                      (MachineBasicBlock::iterator(MI)), BB->end());
+  continueMBB->transferSuccessorsAndUpdatePHIs(BB);
+
+  // Add code to the main basic block to check if the stack limit has been hit,
+  // and if so, jump to mallocMBB otherwise to bumpMBB.
+  BuildMI(BB, DL, TII->get(TargetOpcode::COPY), tmpSPVReg).addReg(physSPReg);
+  BuildMI(BB, DL, TII->get(Is64Bit ? X86::SUB64rr:X86::SUB32rr), tmpSPVReg)
+    .addReg(tmpSPVReg).addReg(sizeVReg);
+  BuildMI(BB, DL, TII->get(Is64Bit ? X86::CMP64mr:X86::CMP32mr))
+    .addReg(0).addImm(0).addReg(0).addImm(TlsOffset).addReg(TlsReg)
+    .addReg(tmpSPVReg);
+  BuildMI(BB, DL, TII->get(X86::JG_4)).addMBB(mallocMBB);
+
+  // bumpMBB simply decreases the stack pointer, since we know the current
+  // stacklet has enough space.
+  BuildMI(bumpMBB, DL, TII->get(TargetOpcode::COPY), physSPReg)
+    .addReg(tmpSPVReg);
+  BuildMI(bumpMBB, DL, TII->get(TargetOpcode::COPY), bumpSPPtrVReg)
+    .addReg(tmpSPVReg);
+  BuildMI(bumpMBB, DL, TII->get(X86::JMP_4)).addMBB(continueMBB);
+
+  // Calls into a routine in libgcc to allocate more space from the heap.
+  if (Is64Bit) {
+    BuildMI(mallocMBB, DL, TII->get(X86::MOV64rr), X86::RDI)
+      .addReg(sizeVReg);
+    BuildMI(mallocMBB, DL, TII->get(X86::CALL64pcrel32))
+    .addExternalSymbol("__morestack_allocate_stack_space").addReg(X86::RDI);
+  } else {
+    BuildMI(mallocMBB, DL, TII->get(X86::SUB32ri), physSPReg).addReg(physSPReg)
+      .addImm(12);
+    BuildMI(mallocMBB, DL, TII->get(X86::PUSH32r)).addReg(sizeVReg);
+    BuildMI(mallocMBB, DL, TII->get(X86::CALLpcrel32))
+      .addExternalSymbol("__morestack_allocate_stack_space");
+  }
+
+  if (!Is64Bit)
+    BuildMI(mallocMBB, DL, TII->get(X86::ADD32ri), physSPReg).addReg(physSPReg)
+      .addImm(16);
+
+  BuildMI(mallocMBB, DL, TII->get(TargetOpcode::COPY), mallocPtrVReg)
+    .addReg(Is64Bit ? X86::RAX : X86::EAX);
+  BuildMI(mallocMBB, DL, TII->get(X86::JMP_4)).addMBB(continueMBB);
+
+  // Set up the CFG correctly.
+  BB->addSuccessor(bumpMBB);
+  BB->addSuccessor(mallocMBB);
+  mallocMBB->addSuccessor(continueMBB);
+  bumpMBB->addSuccessor(continueMBB);
+
+  // Take care of the PHI nodes.
+  BuildMI(*continueMBB, continueMBB->begin(), DL, TII->get(X86::PHI),
+          MI->getOperand(0).getReg())
+    .addReg(mallocPtrVReg).addMBB(mallocMBB)
+    .addReg(bumpSPPtrVReg).addMBB(bumpMBB);
+
+  // Delete the original pseudo instruction.
+  MI->eraseFromParent();
+
+  // And we're done.
+  return continueMBB;
+}
+
+MachineBasicBlock *
 X86TargetLowering::EmitLoweredWinAlloca(MachineInstr *MI,
                                           MachineBasicBlock *BB) const {
   const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
@@ -11769,6 +11912,10 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     return BB;
   case X86::WIN_ALLOCA:
     return EmitLoweredWinAlloca(MI, BB);
+  case X86::SEG_ALLOCA_32:
+    return EmitLoweredSegAlloca(MI, BB, false);
+  case X86::SEG_ALLOCA_64:
+    return EmitLoweredSegAlloca(MI, BB, true);
   case X86::TLSCall_32:
   case X86::TLSCall_64:
     return EmitLoweredTLSCall(MI, BB);
