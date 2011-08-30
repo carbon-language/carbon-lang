@@ -909,8 +909,24 @@ ObjCCategoryDecl *ObjCCategoryDecl::Create(ASTContext &C, DeclContext *DC,
                                            SourceLocation AtLoc, 
                                            SourceLocation ClassNameLoc,
                                            SourceLocation CategoryNameLoc,
-                                           IdentifierInfo *Id) {
-  return new (C) ObjCCategoryDecl(DC, AtLoc, ClassNameLoc, CategoryNameLoc, Id);
+                                           IdentifierInfo *Id,
+                                           ObjCInterfaceDecl *IDecl) {
+  ObjCCategoryDecl *CatDecl = new (C) ObjCCategoryDecl(DC, AtLoc, ClassNameLoc,
+                                                       CategoryNameLoc, Id,
+                                                       IDecl);
+  if (IDecl) {
+    // Link this category into its class's category list.
+    CatDecl->NextClassCategory = IDecl->getCategoryList();
+    IDecl->setCategoryList(CatDecl);
+    IDecl->setChangedSinceDeserialization(true);
+  }
+
+  return CatDecl;
+}
+
+ObjCCategoryDecl *ObjCCategoryDecl::Create(ASTContext &C, EmptyShell Empty) {
+  return new (C) ObjCCategoryDecl(0, SourceLocation(), SourceLocation(),
+                                  SourceLocation(), 0, 0);
 }
 
 ObjCCategoryImplDecl *ObjCCategoryDecl::getImplementation() const {

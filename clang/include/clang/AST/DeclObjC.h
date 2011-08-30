@@ -1026,9 +1026,9 @@ class ObjCCategoryDecl : public ObjCContainerDecl {
 
   ObjCCategoryDecl(DeclContext *DC, SourceLocation AtLoc, 
                    SourceLocation ClassNameLoc, SourceLocation CategoryNameLoc,
-                   IdentifierInfo *Id)
+                   IdentifierInfo *Id, ObjCInterfaceDecl *IDecl)
     : ObjCContainerDecl(ObjCCategory, DC, ClassNameLoc, Id),
-      ClassInterface(0), NextClassCategory(0), HasSynthBitfield(false),
+      ClassInterface(IDecl), NextClassCategory(0), HasSynthBitfield(false),
       AtLoc(AtLoc), CategoryNameLoc(CategoryNameLoc) {
   }
 public:
@@ -1037,11 +1037,12 @@ public:
                                   SourceLocation AtLoc, 
                                   SourceLocation ClassNameLoc,
                                   SourceLocation CategoryNameLoc,
-                                  IdentifierInfo *Id);
+                                  IdentifierInfo *Id,
+                                  ObjCInterfaceDecl *IDecl);
+  static ObjCCategoryDecl *Create(ASTContext &C, EmptyShell Empty);
 
   ObjCInterfaceDecl *getClassInterface() { return ClassInterface; }
   const ObjCInterfaceDecl *getClassInterface() const { return ClassInterface; }
-  void setClassInterface(ObjCInterfaceDecl *IDecl) { ClassInterface = IDecl; }
 
   ObjCCategoryImplDecl *getImplementation() const;
   void setImplementation(ObjCCategoryImplDecl *ImplD);
@@ -1070,14 +1071,6 @@ public:
   }
 
   ObjCCategoryDecl *getNextClassCategory() const { return NextClassCategory; }
-  void setNextClassCategory(ObjCCategoryDecl *Cat) {
-    NextClassCategory = Cat;
-  }
-  void insertNextClassCategory() {
-    NextClassCategory = ClassInterface->getCategoryList();
-    ClassInterface->setCategoryList(this);
-    ClassInterface->setChangedSinceDeserialization(true);
-  }
 
   bool IsClassExtension() const { return getIdentifier() == 0; }
   const ObjCCategoryDecl *getNextClassExtension() const;
@@ -1112,6 +1105,9 @@ public:
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const ObjCCategoryDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == ObjCCategory; }
+
+  friend class ASTDeclReader;
+  friend class ASTDeclWriter;
 };
 
 class ObjCImplDecl : public ObjCContainerDecl {

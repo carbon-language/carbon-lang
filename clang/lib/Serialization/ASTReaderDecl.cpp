@@ -595,7 +595,7 @@ void ASTDeclReader::VisitObjCForwardProtocolDecl(ObjCForwardProtocolDecl *FPD) {
 
 void ASTDeclReader::VisitObjCCategoryDecl(ObjCCategoryDecl *CD) {
   VisitObjCContainerDecl(CD);
-  CD->setClassInterface(ReadDeclAs<ObjCInterfaceDecl>(Record, Idx));
+  CD->ClassInterface = ReadDeclAs<ObjCInterfaceDecl>(Record, Idx);
   unsigned NumProtoRefs = Record[Idx++];
   SmallVector<ObjCProtocolDecl *, 16> ProtoRefs;
   ProtoRefs.reserve(NumProtoRefs);
@@ -607,7 +607,7 @@ void ASTDeclReader::VisitObjCCategoryDecl(ObjCCategoryDecl *CD) {
     ProtoLocs.push_back(ReadSourceLocation(Record, Idx));
   CD->setProtocolList(ProtoRefs.data(), NumProtoRefs, ProtoLocs.data(),
                       *Reader.getContext());
-  CD->setNextClassCategory(ReadDeclAs<ObjCCategoryDecl>(Record, Idx));
+  CD->NextClassCategory = ReadDeclAs<ObjCCategoryDecl>(Record, Idx);
   CD->setHasSynthBitfield(Record[Idx++]);
   CD->setAtLoc(ReadSourceLocation(Record, Idx));
   CD->setCategoryNameLoc(ReadSourceLocation(Record, Idx));
@@ -1620,8 +1620,7 @@ Decl *ASTReader::ReadDeclRecord(DeclID ID) {
     D = ObjCForwardProtocolDecl::Create(*Context, 0, SourceLocation());
     break;
   case DECL_OBJC_CATEGORY:
-    D = ObjCCategoryDecl::Create(*Context, 0, SourceLocation(), 
-                                 SourceLocation(), SourceLocation(), 0);
+    D = ObjCCategoryDecl::Create(*Context, Decl::EmptyShell());
     break;
   case DECL_OBJC_CATEGORY_IMPL:
     D = ObjCCategoryImplDecl::Create(*Context, 0, SourceLocation(), 0, 0);

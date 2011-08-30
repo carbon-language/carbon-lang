@@ -695,7 +695,7 @@ ActOnStartCategoryInterface(SourceLocation AtInterfaceLoc,
     // the enclosing method declarations.  We mark the decl invalid
     // to make it clear that this isn't a valid AST.
     CDecl = ObjCCategoryDecl::Create(Context, CurContext, AtInterfaceLoc,
-                                     ClassLoc, CategoryLoc, CategoryName);
+                                     ClassLoc, CategoryLoc, CategoryName,IDecl);
     CDecl->setInvalidDecl();
     Diag(ClassLoc, diag::err_undef_interface) << ClassName;
     return CDecl;
@@ -706,19 +706,6 @@ ActOnStartCategoryInterface(SourceLocation AtInterfaceLoc,
     Diag(IDecl->getImplementation()->getLocation(), 
           diag::note_implementation_declared);
   }
-
-  CDecl = ObjCCategoryDecl::Create(Context, CurContext, AtInterfaceLoc,
-                                   ClassLoc, CategoryLoc, CategoryName);
-  // FIXME: PushOnScopeChains?
-  CurContext->addDecl(CDecl);
-
-  CDecl->setClassInterface(IDecl);
-  // Insert class extension to the list of class's categories.
-  if (!CategoryName)
-    CDecl->insertNextClassCategory();
-
-  // If the interface is deprecated, warn about it.
-  (void)DiagnoseUseOfDecl(IDecl, ClassLoc);
 
   if (CategoryName) {
     /// Check for duplicate interface declaration for this category
@@ -733,9 +720,15 @@ ActOnStartCategoryInterface(SourceLocation AtInterfaceLoc,
         break;
       }
     }
-    if (!CDeclChain)
-      CDecl->insertNextClassCategory();
   }
+
+  CDecl = ObjCCategoryDecl::Create(Context, CurContext, AtInterfaceLoc,
+                                   ClassLoc, CategoryLoc, CategoryName, IDecl);
+  // FIXME: PushOnScopeChains?
+  CurContext->addDecl(CDecl);
+
+  // If the interface is deprecated, warn about it.
+  (void)DiagnoseUseOfDecl(IDecl, ClassLoc);
 
   if (NumProtoRefs) {
     CDecl->setProtocolList((ObjCProtocolDecl**)ProtoRefs, NumProtoRefs, 
@@ -766,9 +759,7 @@ Decl *Sema::ActOnStartCategoryImplementation(
       // Create and install one.
       CatIDecl = ObjCCategoryDecl::Create(Context, CurContext, SourceLocation(),
                                           SourceLocation(), SourceLocation(),
-                                          CatName);
-      CatIDecl->setClassInterface(IDecl);
-      CatIDecl->insertNextClassCategory();
+                                          CatName, IDecl);
     }
   }
 
