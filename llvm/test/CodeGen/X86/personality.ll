@@ -37,11 +37,7 @@ return:                                           ; preds = %eh_then, %entry
 
 declare void @_Z1gv()
 
-declare void @__gxx_personality_v0()
-
 declare void @__cxa_end_catch()
-
-declare i32 @llvm.eh.selector(i8*, i8*, ...) nounwind
 
 declare i32 @__gxx_personality_v0(...)
 
