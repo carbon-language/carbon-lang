@@ -1057,6 +1057,7 @@ void DAGTypeLegalizer::ExpandIntegerResult(SDNode *N, unsigned ResNo) {
   case ISD::UDIV:        ExpandIntRes_UDIV(N, Lo, Hi); break;
   case ISD::UREM:        ExpandIntRes_UREM(N, Lo, Hi); break;
   case ISD::ZERO_EXTEND: ExpandIntRes_ZERO_EXTEND(N, Lo, Hi); break;
+  case ISD::ATOMIC_LOAD: ExpandIntRes_ATOMIC_LOAD(N, Lo, Hi); break;
 
   case ISD::ATOMIC_LOAD_ADD:
   case ISD::ATOMIC_LOAD_SUB:
@@ -2323,6 +2324,20 @@ void DAGTypeLegalizer::ExpandIntRes_ZERO_EXTEND(SDNode *N,
   }
 }
 
+void DAGTypeLegalizer::ExpandIntRes_ATOMIC_LOAD(SDNode *N,
+                                                SDValue &Lo, SDValue &Hi) {
+  DebugLoc dl = N->getDebugLoc();
+  EVT VT = cast<AtomicSDNode>(N)->getMemoryVT();
+  SDValue Zero = DAG.getConstant(0, VT);
+  SDValue Swap = DAG.getAtomic(ISD::ATOMIC_CMP_SWAP, dl, VT,
+                               N->getOperand(0),
+                               N->getOperand(1), Zero, Zero,
+                               cast<AtomicSDNode>(N)->getMemOperand(),
+                               cast<AtomicSDNode>(N)->getOrdering(),
+                               cast<AtomicSDNode>(N)->getSynchScope());
+  ReplaceValueWith(SDValue(N, 0), Swap.getValue(0));
+  ReplaceValueWith(SDValue(N, 1), Swap.getValue(1));
+}
 
 //===----------------------------------------------------------------------===//
 //  Integer Operand Expansion
@@ -2367,6 +2382,8 @@ bool DAGTypeLegalizer::ExpandIntegerOperand(SDNode *N, unsigned OpNo) {
   case ISD::ROTR:              Res = ExpandIntOp_Shift(N); break;
   case ISD::RETURNADDR:
   case ISD::FRAMEADDR:         Res = ExpandIntOp_RETURNADDR(N); break;
+
+  case ISD::ATOMIC_STORE:      Res = ExpandIntOp_ATOMIC_STORE(N); break;
   }
 
   // If the result is null, the sub-method took care of registering results etc.
@@ -2743,6 +2760,19 @@ SDValue DAGTypeLegalizer::ExpandIntOp_UINT_TO_FP(SDNode *N) {
          "Don't know how to expand this UINT_TO_FP!");
   return MakeLibCall(LC, DstVT, &Op, 1, true, dl);
 }
+
+SDValue DAGTypeLegalizer::ExpandIntOp_ATOMIC_STORE(SDNode *N) {
+  DebugLoc dl = N->getDebugLoc();
+  SDValue Swap = DAG.getAtomic(ISD::ATOMIC_SWAP, dl,
+                               cast<AtomicSDNode>(N)->getMemoryVT(),
+                               N->getOperand(0),
+                               N->getOperand(1), N->getOperand(2),
+                               cast<AtomicSDNode>(N)->getMemOperand(),
+                               cast<AtomicSDNode>(N)->getOrdering(),
+                               cast<AtomicSDNode>(N)->getSynchScope());
+  return Swap.getValue(1);
+}
+
 
 SDValue DAGTypeLegalizer::PromoteIntRes_EXTRACT_SUBVECTOR(SDNode *N) {
   SDValue InOp0 = N->getOperand(0);
