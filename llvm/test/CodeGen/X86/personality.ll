@@ -18,7 +18,7 @@ eh_then:                                          ; preds = %unwind
 
 unwind10:                                         ; preds = %eh_then
   %exn10 = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
-            filter
+            cleanup
   %upgraded.eh_select13 = extractvalue { i8*, i32 } %exn10, 1
   %upgraded.eh_select131 = sext i32 %upgraded.eh_select13 to i64
   %tmp18 = icmp slt i64 %upgraded.eh_select131, 0
