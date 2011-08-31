@@ -465,11 +465,34 @@ static uint32_t getBranchTargetOpValue(const MCInst &MI, unsigned OpIdx,
   return 0;
 }
 
+// Thumb BL and BLX use a strange offset encoding where bits 22 and 21 are
+// determined by negating them and XOR'ing them with bit 23.
+static int32_t encodeThumbBLOffset(int32_t offset) {
+  offset >>= 1;
+  uint32_t S  = (offset & 0x800000) >> 23;
+  uint32_t J1 = (offset & 0x400000) >> 22;
+  uint32_t J2 = (offset & 0x200000) >> 21;
+  J1 = (~J1 & 0x1);
+  J2 = (~J2 & 0x1);
+  J1 ^= S;
+  J2 ^= S;
+
+  offset &= ~0x600000;
+  offset |= J1 << 22;
+  offset |= J2 << 21;
+
+  return offset;
+}
+
 /// getThumbBLTargetOpValue - Return encoding info for immediate branch target.
 uint32_t ARMMCCodeEmitter::
 getThumbBLTargetOpValue(const MCInst &MI, unsigned OpIdx,
                         SmallVectorImpl<MCFixup> &Fixups) const {
-  return ::getBranchTargetOpValue(MI, OpIdx, ARM::fixup_arm_thumb_bl, Fixups);
+  const MCOperand MO = MI.getOperand(OpIdx);
+  if (MO.isExpr())
+    return ::getBranchTargetOpValue(MI, OpIdx, ARM::fixup_arm_thumb_bl,
+                                    Fixups);
+  return encodeThumbBLOffset(MO.getImm());
 }
 
 /// getThumbBLXTargetOpValue - Return encoding info for Thumb immediate
@@ -477,7 +500,11 @@ getThumbBLTargetOpValue(const MCInst &MI, unsigned OpIdx,
 uint32_t ARMMCCodeEmitter::
 getThumbBLXTargetOpValue(const MCInst &MI, unsigned OpIdx,
                          SmallVectorImpl<MCFixup> &Fixups) const {
-  return ::getBranchTargetOpValue(MI, OpIdx, ARM::fixup_arm_thumb_blx, Fixups);
+  const MCOperand MO = MI.getOperand(OpIdx);
+  if (MO.isExpr())
+    return ::getBranchTargetOpValue(MI, OpIdx, ARM::fixup_arm_thumb_blx,
+                                    Fixups);
+  return encodeThumbBLOffset(MO.getImm());
 }
 
 /// getThumbBRTargetOpValue - Return encoding info for Thumb branch target.
@@ -486,7 +513,8 @@ getThumbBRTargetOpValue(const MCInst &MI, unsigned OpIdx,
                         SmallVectorImpl<MCFixup> &Fixups) const {
   const MCOperand MO = MI.getOperand(OpIdx);
   if (MO.isExpr())
-    return ::getBranchTargetOpValue(MI, OpIdx, ARM::fixup_arm_thumb_br, Fixups);
+    return ::getBranchTargetOpValue(MI, OpIdx, ARM::fixup_arm_thumb_br,
+                                    Fixups);
   return (MO.getImm() >> 1);
 }
 
