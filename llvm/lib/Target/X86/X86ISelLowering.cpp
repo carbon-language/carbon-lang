@@ -521,12 +521,16 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
 
   setOperationAction(ISD::STACKSAVE,          MVT::Other, Expand);
   setOperationAction(ISD::STACKRESTORE,       MVT::Other, Expand);
-  setOperationAction(ISD::DYNAMIC_STACKALLOC,
-                     (Subtarget->is64Bit() ? MVT::i64 : MVT::i32),
-                     ((Subtarget->isTargetCOFF()
-                       && !Subtarget->isTargetEnvMacho()) ||
-                      EnableSegmentedStacks
-                      ? Custom : Expand));
+
+  if (Subtarget->isTargetCOFF() && !Subtarget->isTargetEnvMacho())
+    setOperationAction(ISD::DYNAMIC_STACKALLOC, Subtarget->is64Bit() ?
+                       MVT::i64 : MVT::i32, Custom);
+  else if (EnableSegmentedStacks)
+    setOperationAction(ISD::DYNAMIC_STACKALLOC, Subtarget->is64Bit() ?
+                       MVT::i64 : MVT::i32, Custom);
+  else
+    setOperationAction(ISD::DYNAMIC_STACKALLOC, Subtarget->is64Bit() ?
+                       MVT::i64 : MVT::i32, Expand);
 
   if (!UseSoftFloat && X86ScalarSSEf64) {
     // f32 and f64 use SSE.
