@@ -24,3 +24,22 @@ define <2 x i64> @hdi(<2 x i64> %p) nounwind optsize ssp {
   ret <2 x i64> %shuffle
 }
 
+; rdar://10050549
+%struct.Float2 = type { float, float }
+
+define <4 x float> @loadhpi(%struct.Float2* %vPtr, <4 x float> %vecin1) nounwind readonly ssp {
+entry:
+; CHECK: loadhpi
+; CHECK-NOT: movq
+; CHECK: movhps (
+  %tmp1 = bitcast %struct.Float2* %vPtr to <1 x i64>*
+  %addptr7 = getelementptr inbounds <1 x i64>* %tmp1, i64 0
+  %tmp2 = bitcast <1 x i64>* %addptr7 to float*
+  %tmp3 = load float* %tmp2, align 4
+  %vec = insertelement <4 x float> undef, float %tmp3, i32 0
+  %addptr.i12 = getelementptr inbounds float* %tmp2, i64 1
+  %tmp4 = load float* %addptr.i12, align 4
+  %vecin2 = insertelement <4 x float> %vec, float %tmp4, i32 1
+  %shuffle = shufflevector <4 x float> %vecin1, <4 x float> %vecin2, <4 x i32> <i32 0, i32 1, i32 4, i32 5>
+  ret <4 x float> %shuffle
+}

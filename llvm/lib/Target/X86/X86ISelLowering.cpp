@@ -6236,8 +6236,11 @@ SDValue getMOVLowToHigh(SDValue &Op, DebugLoc &dl, SelectionDAG &DAG,
   if (HasSSE2 && VT == MVT::v2f64)
     return getTargetShuffleNode(X86ISD::MOVLHPD, dl, VT, V1, V2, DAG);
 
-  // v4f32 or v4i32
-  return getTargetShuffleNode(X86ISD::MOVLHPS, dl, VT, V1, V2, DAG);
+  // v4f32 or v4i32: canonizalized to v4f32 (which is legal for SSE1)
+  return DAG.getNode(ISD::BITCAST, dl, VT,
+                     getTargetShuffleNode(X86ISD::MOVLHPS, dl, MVT::v4f32,
+                           DAG.getNode(ISD::BITCAST, dl, MVT::v4f32, V1),
+                           DAG.getNode(ISD::BITCAST, dl, MVT::v4f32, V2), DAG));
 }
 
 static

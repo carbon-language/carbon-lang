@@ -691,11 +691,12 @@ let Predicates = [HasSSE1] in {
   // MOVHPS patterns
   def : Pat<(movlhps VR128:$src1, (bc_v4i32 (v2i64 (X86vzload addr:$src2)))),
             (MOVHPSrm (v4i32 VR128:$src1), addr:$src2)>;
+
   def : Pat<(X86Movlhps VR128:$src1,
                  (bc_v4f32 (v2f64 (scalar_to_vector (loadf64 addr:$src2))))),
             (MOVHPSrm VR128:$src1, addr:$src2)>;
   def : Pat<(X86Movlhps VR128:$src1,
-                 (bc_v4i32 (v2i64 (X86vzload addr:$src2)))),
+                 (bc_v4f32 (v2i64 (X86vzload addr:$src2)))),
             (MOVHPSrm VR128:$src1, addr:$src2)>;
 
   // MOVLHPS patterns
