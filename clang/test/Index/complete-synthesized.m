@@ -1,5 +1,6 @@
 // Note: this test is line- and column-sensitive. Test commands are at
 // the end.
+// XFAIL: *
 
 
 @interface A

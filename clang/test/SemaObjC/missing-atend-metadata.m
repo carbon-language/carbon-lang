@@ -10,7 +10,7 @@
 @end
 
 @implementation I1 // expected-error {{'@end' is missing in implementation context}}
--(void) im0 { self = [super init]; } // expected-warning {{nstance method '-init' not found }}
+-(void) im0 { self = [super init]; }
 
 @interface I2 : I0
 - I2meth;

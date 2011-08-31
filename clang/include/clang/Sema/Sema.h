@@ -1958,6 +1958,10 @@ public:
     AddMethodToGlobalPool(Method, impl, /*instance*/false);
   }
 
+  /// AddAnyMethodToGlobalPool - Add any method, instance or factory to global
+  /// pool.
+  void AddAnyMethodToGlobalPool(Decl *D);
+
   /// LookupInstanceMethodInGlobalPool - Returns the method and warns if
   /// there are multiple signatures.
   ObjCMethodDecl *LookupInstanceMethodInGlobalPool(Selector Sel, SourceRange R,

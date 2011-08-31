@@ -56,7 +56,7 @@ Parser::DeclGroupPtrTy Parser::ParseObjCAtDirectives() {
     SingleDecl = ParseObjCAtImplementationDeclaration(AtLoc);
     break;
   case tok::objc_end:
-    SingleDecl = ParseObjCAtEndDeclaration(AtLoc);
+    return ParseObjCAtEndDeclaration(AtLoc);
     break;
   case tok::objc_compatibility_alias:
     SingleDecl = ParseObjCAtAliasDeclaration(AtLoc);
@@ -1395,11 +1395,19 @@ Decl *Parser::ParseObjCAtImplementationDeclaration(
   return 0;
 }
 
-Decl *Parser::ParseObjCAtEndDeclaration(SourceRange atEnd) {
+Parser::DeclGroupPtrTy
+Parser::ParseObjCAtEndDeclaration(SourceRange atEnd) {
   assert(Tok.isObjCAtKeyword(tok::objc_end) &&
          "ParseObjCAtEndDeclaration(): Expected @end");
-  Decl *Result = ObjCImpDecl;
   ConsumeToken(); // the "end" identifier
+  SmallVector<Decl *, 8> DeclsInGroup;
+    
+  for (size_t i = 0; i < LateParsedObjCMethods.size(); ++i) {
+    Decl *D = ParseLexedObjCMethodDefs(*LateParsedObjCMethods[i]);
+    DeclsInGroup.push_back(D);
+  }
+  LateParsedObjCMethods.clear();
+  DeclsInGroup.push_back(ObjCImpDecl);
   if (ObjCImpDecl) {
     Actions.ActOnAtEnd(getCurScope(), atEnd);
     ObjCImpDecl = 0;
@@ -1409,7 +1417,8 @@ Decl *Parser::ParseObjCAtEndDeclaration(SourceRange atEnd) {
     // missing @implementation
     Diag(atEnd.getBegin(), diag::err_expected_implementation);
   }
-  return Result;
+  return Actions.BuildDeclaratorGroup(
+           DeclsInGroup.data(), DeclsInGroup.size(), false);
 }
 
 Parser::DeclGroupPtrTy Parser::FinishPendingObjCActions() {
@@ -1772,35 +1781,19 @@ Decl *Parser::ParseObjCMethodDefinition() {
     if (Tok.isNot(tok::l_brace))
       return 0;
   }
-  SourceLocation BraceLoc = Tok.getLocation();
-
-  // Enter a scope for the method body.
-  ParseScope BodyScope(this,
-                       Scope::ObjCMethodScope|Scope::FnScope|Scope::DeclScope);
-
-  // Tell the actions module that we have entered a method definition with the
-  // specified Declarator for the method.
-  Actions.ActOnStartOfObjCMethodDef(getCurScope(), MDecl);
-
-  if (PP.isCodeCompletionEnabled()) {
-    if (trySkippingFunctionBodyForCodeCompletion()) {
-      BodyScope.Exit();
-      return Actions.ActOnFinishFunctionBody(MDecl, 0);
-    }
-  }
-
-  StmtResult FnBody(ParseCompoundStatementBody());
-
-  // If the function body could not be parsed, make a bogus compoundstmt.
-  if (FnBody.isInvalid())
-    FnBody = Actions.ActOnCompoundStmt(BraceLoc, BraceLoc,
-                                       MultiStmtArg(Actions), false);
-
-  // Leave the function body scope.
-  BodyScope.Exit();
-  
-  // TODO: Pass argument information.
-  Actions.ActOnFinishFunctionBody(MDecl, FnBody.take());
+  // Allow the rest of sema to find private method decl implementations.
+  if (MDecl)
+    Actions.AddAnyMethodToGlobalPool(MDecl);
+    
+  // Consume the tokens and store them for later parsing.
+  LexedMethod* LM = new LexedMethod(this, MDecl);
+  LateParsedObjCMethods.push_back(LM);
+  CachedTokens &Toks = LM->Toks;
+  // Begin by storing the '{' token.
+  Toks.push_back(Tok);
+  ConsumeBrace();
+  // Consume everything up to (and including) the matching right brace.
+  ConsumeAndStoreUntil(tok::r_brace, Toks, /*StopAtSemi=*/false);
   return MDecl;
 }
 
@@ -2432,3 +2425,46 @@ ExprResult Parser::ParseObjCSelectorExpression(SourceLocation AtLoc) {
   return Owned(Actions.ParseObjCSelectorExpression(Sel, AtLoc, SelectorLoc,
                                                    LParenLoc, RParenLoc));
  }
+
+Decl *Parser::ParseLexedObjCMethodDefs(LexedMethod &LM) {
+    
+  assert(!LM.Toks.empty() && "ParseLexedObjCMethodDef - Empty body!");
+  // Append the current token at the end of the new token stream so that it
+  // doesn't get lost.
+  LM.Toks.push_back(Tok);
+  PP.EnterTokenStream(LM.Toks.data(), LM.Toks.size(), true, false);
+  
+  // MDecl might be null due to error in method prototype, etc.
+  Decl *MDecl = LM.D;
+  // Consume the previously pushed token.
+  ConsumeAnyToken();
+    
+  assert(Tok.is(tok::l_brace) && "Inline objective-c method not starting with '{'");
+  SourceLocation BraceLoc = Tok.getLocation();
+  // Enter a scope for the method body.
+  ParseScope BodyScope(this,
+                       Scope::ObjCMethodScope|Scope::FnScope|Scope::DeclScope);
+    
+  // Tell the actions module that we have entered a method definition with the
+  // specified Declarator for the method.
+  Actions.ActOnStartOfObjCMethodDef(getCurScope(), MDecl);
+    
+  if (PP.isCodeCompletionEnabled()) {
+      if (trySkippingFunctionBodyForCodeCompletion()) {
+          BodyScope.Exit();
+          return Actions.ActOnFinishFunctionBody(MDecl, 0);
+      }
+  }
+    
+  StmtResult FnBody(ParseCompoundStatementBody());
+    
+  // If the function body could not be parsed, make a bogus compoundstmt.
+  if (FnBody.isInvalid())
+    FnBody = Actions.ActOnCompoundStmt(BraceLoc, BraceLoc,
+                                       MultiStmtArg(Actions), false);
+    
+  // Leave the function body scope.
+  BodyScope.Exit();
+    
+  return Actions.ActOnFinishFunctionBody(MDecl, FnBody.take());
+}

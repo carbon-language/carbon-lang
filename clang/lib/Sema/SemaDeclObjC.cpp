@@ -214,6 +214,20 @@ static void DiagnoseObjCImplementedDeprecations(Sema &S,
   }
 }
 
+/// AddAnyMethodToGlobalPool - Add any method, instance or factory to global
+/// pool.
+void Sema::AddAnyMethodToGlobalPool(Decl *D) {
+  ObjCMethodDecl *MDecl = dyn_cast_or_null<ObjCMethodDecl>(D);
+    
+  // If we don't have a valid method decl, simply return.
+  if (!MDecl)
+    return;
+  if (MDecl->isInstanceMethod())
+    AddInstanceMethodToGlobalPool(MDecl, true);
+  else
+    AddFactoryMethodToGlobalPool(MDecl, true);
+}
+
 /// ActOnStartOfObjCMethodDef - This routine sets up parameters; invisible
 /// and user declared, in the method definition's AST.
 void Sema::ActOnStartOfObjCMethodDef(Scope *FnBodyScope, Decl *D) {
@@ -224,12 +238,6 @@ void Sema::ActOnStartOfObjCMethodDef(Scope *FnBodyScope, Decl *D) {
   if (!MDecl)
     return;
 
-  // Allow the rest of sema to find private method decl implementations.
-  if (MDecl->isInstanceMethod())
-    AddInstanceMethodToGlobalPool(MDecl, true);
-  else
-    AddFactoryMethodToGlobalPool(MDecl, true);
-  
   // Allow all of Sema to see that we are entering a method definition.
   PushDeclContext(FnBodyScope, MDecl);
   PushFunctionScope();

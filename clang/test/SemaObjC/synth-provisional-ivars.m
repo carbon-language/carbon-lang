@@ -18,7 +18,7 @@ int bar;
 @end
 
 @implementation I
-- (int) Meth { return PROP; } // expected-note 2{{'PROP' declared here}}
+- (int) Meth { return PROP; }
 
 @dynamic PROP1;
 - (int) Meth1 { return PROP1; }  // expected-error {{use of undeclared identifier 'PROP1'}}
@@ -32,7 +32,7 @@ int bar;
 - (int) Meth4 { return PROP4; }
 @synthesize PROP4=PROP4;
 
-- (int) Meth5 { return bar; }  // expected-error {{use of undeclared identifier 'bar'}}
+- (int) Meth5 { return bar; }
 @synthesize bar = _bar;
 
 - (int) Meth6 { return bar1; }
@@ -45,6 +45,6 @@ int bar;
 
 @implementation I(r8251648)
 - (int) Meth1: (int) bar {
-  return bar; // expected-warning {{local declaration of 'bar' hides instance variable}}
+  return bar;
 }
 @end

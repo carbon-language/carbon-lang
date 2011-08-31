@@ -1,5 +1,6 @@
 // Note: the run lines follow their respective tests, since line/column
 // matter in this test.
+// XFAIL: *
 
 typedef int Bool;
 

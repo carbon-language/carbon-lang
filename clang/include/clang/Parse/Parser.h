@@ -1022,6 +1022,7 @@ private:
   void ParseLexedMethodDef(LexedMethod &LM);
   void ParseLexedMemberInitializers(ParsingClass &Class);
   void ParseLexedMemberInitializer(LateParsedMemberInitializer &MI);
+  Decl *ParseLexedObjCMethodDefs(LexedMethod &LM);
   bool ConsumeAndStoreUntil(tok::TokenKind T1,
                             CachedTokens &Toks,
                             bool StopAtSemi = true,
@@ -1080,9 +1081,11 @@ private:
 
   Decl *ObjCImpDecl;
   SmallVector<Decl *, 4> PendingObjCImpDecl;
+  typedef SmallVector<LexedMethod*, 2> LateParsedObjCMethodContainer;
+  LateParsedObjCMethodContainer LateParsedObjCMethods;
 
   Decl *ParseObjCAtImplementationDeclaration(SourceLocation atLoc);
-  Decl *ParseObjCAtEndDeclaration(SourceRange atEnd);
+  DeclGroupPtrTy ParseObjCAtEndDeclaration(SourceRange atEnd);
   Decl *ParseObjCAtAliasDeclaration(SourceLocation atLoc);
   Decl *ParseObjCPropertySynthesize(SourceLocation atLoc);
   Decl *ParseObjCPropertyDynamic(SourceLocation atLoc);

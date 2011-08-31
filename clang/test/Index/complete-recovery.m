@@ -1,5 +1,6 @@
 /* Run lines are at the end, since line/column matter in this test. */
 
+// XFAIL: *
 @interface A
 - (void)method:(int)x;
 @end

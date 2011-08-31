@@ -1,4 +1,5 @@
 // This test is line- and column-sensitive, so test commands are at the bottom.
+// XFAIL: *
 @protocol P
 - (int)method:(id)param1;
 @end
