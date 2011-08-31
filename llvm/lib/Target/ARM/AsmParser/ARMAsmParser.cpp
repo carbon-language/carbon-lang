@@ -3337,10 +3337,10 @@ validateInstruction(MCInst &Inst,
                    "', but expected '" +
                    ARMCondCodeToString(ARMCC::CondCodes(ITCond)) + "'");
     }
-    // Check for non-'al' condition codes outside of the IT block.
+  // Check for non-'al' condition codes outside of the IT block.
   } else if (isThumbTwo() && MCID.isPredicable() &&
              Inst.getOperand(MCID.findFirstPredOperandIdx()).getImm() !=
-             ARMCC::AL)
+             ARMCC::AL && Inst.getOpcode() != ARM::tBcc)
     return Error(Loc, "predicated instructions must be in IT block");
 
   switch (Inst.getOpcode()) {
