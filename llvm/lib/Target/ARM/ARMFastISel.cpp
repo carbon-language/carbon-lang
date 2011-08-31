@@ -1328,7 +1328,7 @@ bool ARMFastISel::SelectSIToFP(const Instruction *I) {
   unsigned Opc;
   if (Ty->isFloatTy()) Opc = ARM::VSITOS;
   else if (Ty->isDoubleTy()) Opc = ARM::VSITOD;
-  else return 0;
+  else return false;
 
   unsigned ResultReg = createResultReg(TLI.getRegClassFor(DstVT));
   AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(Opc),
@@ -1354,7 +1354,7 @@ bool ARMFastISel::SelectFPToSI(const Instruction *I) {
   Type *OpTy = I->getOperand(0)->getType();
   if (OpTy->isFloatTy()) Opc = ARM::VTOSIZS;
   else if (OpTy->isDoubleTy()) Opc = ARM::VTOSIZD;
-  else return 0;
+  else return false;
 
   // f64->s32 or f32->s32 both need an intermediate f32 reg.
   unsigned ResultReg = createResultReg(TLI.getRegClassFor(MVT::f32));
