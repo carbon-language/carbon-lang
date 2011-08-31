@@ -47,6 +47,7 @@ void DAGTypeLegalizer::ScalarizeVectorResult(SDNode *N, unsigned ResNo) {
     report_fatal_error("Do not know how to scalarize the result of this "
                        "operator!\n");
 
+  case ISD::MERGE_VALUES:      R = ScalarizeVecRes_MERGE_VALUES(N); break;
   case ISD::BITCAST:           R = ScalarizeVecRes_BITCAST(N); break;
   case ISD::BUILD_VECTOR:      R = N->getOperand(0); break;
   case ISD::CONVERT_RNDSAT:    R = ScalarizeVecRes_CONVERT_RNDSAT(N); break;
@@ -128,6 +129,11 @@ SDValue DAGTypeLegalizer::ScalarizeVecRes_BinOp(SDNode *N) {
   SDValue RHS = GetScalarizedVector(N->getOperand(1));
   return DAG.getNode(N->getOpcode(), N->getDebugLoc(),
                      LHS.getValueType(), LHS, RHS);
+}
+
+SDValue DAGTypeLegalizer::ScalarizeVecRes_MERGE_VALUES(SDNode *N) {
+  SDValue Op = DecomposeMERGE_VALUES(N);
+  return GetScalarizedVector(Op);
 }
 
 SDValue DAGTypeLegalizer::ScalarizeVecRes_BITCAST(SDNode *N) {
@@ -1205,6 +1211,7 @@ void DAGTypeLegalizer::WidenVectorResult(SDNode *N, unsigned ResNo) {
 #endif
     llvm_unreachable("Do not know how to widen the result of this operator!");
 
+  case ISD::MERGE_VALUES:      Res = WidenVecRes_MERGE_VALUES(N); break;
   case ISD::BITCAST:           Res = WidenVecRes_BITCAST(N); break;
   case ISD::BUILD_VECTOR:      Res = WidenVecRes_BUILD_VECTOR(N); break;
   case ISD::CONCAT_VECTORS:    Res = WidenVecRes_CONCAT_VECTORS(N); break;
@@ -1555,6 +1562,12 @@ SDValue DAGTypeLegalizer::WidenVecRes_InregOp(SDNode *N) {
   SDValue WidenLHS = GetWidenedVector(N->getOperand(0));
   return DAG.getNode(N->getOpcode(), N->getDebugLoc(),
                      WidenVT, WidenLHS, DAG.getValueType(ExtVT));
+}
+
+SDValue DAGTypeLegalizer::WidenVecRes_MERGE_VALUES(SDNode *N)
+{
+  SDValue WidenVec = DecomposeMERGE_VALUES(N);
+  return GetWidenedVector(WidenVec);
 }
 
 SDValue DAGTypeLegalizer::WidenVecRes_BITCAST(SDNode *N) {

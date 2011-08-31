@@ -48,6 +48,7 @@ void DAGTypeLegalizer::PromoteIntegerResult(SDNode *N, unsigned ResNo) {
     N->dump(&DAG); dbgs() << "\n";
 #endif
     llvm_unreachable("Do not know how to promote this operator!");
+  case ISD::MERGE_VALUES:Res = PromoteIntRes_MERGE_VALUES(N); break;
   case ISD::AssertSext:  Res = PromoteIntRes_AssertSext(N); break;
   case ISD::AssertZext:  Res = PromoteIntRes_AssertZext(N); break;
   case ISD::BITCAST:     Res = PromoteIntRes_BITCAST(N); break;
@@ -134,6 +135,13 @@ void DAGTypeLegalizer::PromoteIntegerResult(SDNode *N, unsigned ResNo) {
   // If the result is null then the sub-method took care of registering it.
   if (Res.getNode())
     SetPromotedInteger(SDValue(N, ResNo), Res);
+}
+
+SDValue DAGTypeLegalizer::PromoteIntRes_MERGE_VALUES(SDNode *N) {
+  SDValue Op = DecomposeMERGE_VALUES(N);
+  assert(Op.getValueType().isInteger()
+      && "Must decompose to an integer type!");
+  return GetPromotedInteger(Op);
 }
 
 SDValue DAGTypeLegalizer::PromoteIntRes_AssertSext(SDNode *N) {
@@ -1547,6 +1555,13 @@ void DAGTypeLegalizer::ExpandIntRes_ADDSUBE(SDNode *N,
   // Legalized the flag result - switch anything that used the old flag to
   // use the new one.
   ReplaceValueWith(SDValue(N, 1), Hi.getValue(1));
+}
+void DAGTypeLegalizer::ExpandIntRes_MERGE_VALUES(SDNode *N, 
+                                          SDValue &Lo, SDValue &Hi) {
+  SDValue Res = DecomposeMERGE_VALUES(N);
+  assert(Res.getValueType().isInteger()
+      && "Cannot split a non-integer value.");
+  SplitInteger(Res, Lo, Hi);
 }
 
 void DAGTypeLegalizer::ExpandIntRes_ANY_EXTEND(SDNode *N,

@@ -31,6 +31,11 @@ using namespace llvm;
 // These routines assume that the Lo/Hi part is stored first in memory on
 // little/big-endian machines, followed by the Hi/Lo part.  This means that
 // they cannot be used as is on vectors, for which Lo is always stored first.
+void DAGTypeLegalizer::ExpandRes_MERGE_VALUES(SDNode *N, 
+                                              SDValue &Lo, SDValue &Hi) {
+  SDValue Op = DecomposeMERGE_VALUES(N);
+  GetExpandedOp(Op, Lo, Hi);
+}
 
 void DAGTypeLegalizer::ExpandRes_BITCAST(SDNode *N, SDValue &Lo, SDValue &Hi) {
   EVT OutVT = N->getValueType(0);
@@ -428,23 +433,8 @@ SDValue DAGTypeLegalizer::ExpandOp_NormalStore(SDNode *N, unsigned OpNo) {
 
 void DAGTypeLegalizer::SplitRes_MERGE_VALUES(SDNode *N,
                                              SDValue &Lo, SDValue &Hi) {
-  // A MERGE_VALUES node can produce any number of values.  We know that the
-  // first illegal one needs to be expanded into Lo/Hi.
-  unsigned i;
-
-  // The string of legal results gets turned into input operands, which have
-  // the same type.
-  for (i = 0; isTypeLegal(N->getValueType(i)); ++i)
-    ReplaceValueWith(SDValue(N, i), SDValue(N->getOperand(i)));
-
-  // The first illegal result must be the one that needs to be expanded.
-  GetSplitOp(N->getOperand(i), Lo, Hi);
-
-  // Legalize the rest of the results into the input operands whether they are
-  // legal or not.
-  unsigned e = N->getNumValues();
-  for (++i; i != e; ++i)
-    ReplaceValueWith(SDValue(N, i), SDValue(N->getOperand(i)));
+  SDValue Op = DecomposeMERGE_VALUES(N);
+  GetSplitOp(Op, Lo, Hi);
 }
 
 void DAGTypeLegalizer::SplitRes_SELECT(SDNode *N, SDValue &Lo,
