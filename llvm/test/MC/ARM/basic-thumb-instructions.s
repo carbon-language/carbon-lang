@@ -26,11 +26,13 @@ _func:
 @ ADD (immediate)
 @------------------------------------------------------------------------------
         adds r1, r2, #3
+@ When Rd is not explicitly specified, encoding T2 is preferred even though
+@ the literal is in the range [0,7] which would allow encoding T1.
         adds r2, #3
         adds r2, #8
 
 @ CHECK: adds	r1, r2, #3              @ encoding: [0xd1,0x1c]
-@ CHECK: adds	r2, r2, #3              @ encoding: [0xd2,0x1c]
+@ CHECK: adds	r2, #3                  @ encoding: [0x03,0x32]
 @ CHECK: adds	r2, #8                  @ encoding: [0x08,0x32]
 
 

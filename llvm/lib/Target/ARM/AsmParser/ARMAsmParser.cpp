@@ -3473,8 +3473,11 @@ processInstruction(MCInst &Inst,
     }
     break;
   case ARM::tADDi8:
-    // If the immediate is in the range 0-7, we really wanted tADDi3.
-    if (Inst.getOperand(3).getImm() < 8)
+    // If the immediate is in the range 0-7, we want tADDi3 iff Rd was
+    // explicitly specified. From the ARM ARM: "Encoding T1 is preferred
+    // to encoding T2 if <Rd> is specified and encoding T2 is preferred
+    // to encoding T1 if <Rd> is omitted."
+    if (Inst.getOperand(3).getImm() < 8 && Operands.size() == 6)
       Inst.setOpcode(ARM::tADDi3);
     break;
   case ARM::tBcc:
