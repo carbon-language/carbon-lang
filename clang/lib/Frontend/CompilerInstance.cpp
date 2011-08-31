@@ -645,7 +645,7 @@ ModuleKey CompilerInstance::loadModule(SourceLocation ImportLoc,
                                            /*SearchPath=*/0, 
                                            /*RelativePath=*/0);
   if (!ModuleFile) {
-    getDiagnostics().Report(ModuleNameLoc, diag::warn_module_not_found)
+    getDiagnostics().Report(ModuleNameLoc, diag::err_module_not_found)
       << ModuleName.getName()
       << SourceRange(ImportLoc, ModuleNameLoc);
     return 0;
