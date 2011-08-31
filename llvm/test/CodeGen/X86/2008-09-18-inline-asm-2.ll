@@ -18,7 +18,7 @@
 ; CHECK-NOT: [[A3]]
 ; CHECK: 5th=[[A5:%...]]
 ; CHECK-NOT: [[A1]]
-; CHECK-NOT; [[A5]]
+; CHECK-NOT: [[A5]]
 ; CHECK: =4th
 
 ; The 6th operand is an 8-bit register, and it mustn't alias the 1st and 5th.
