@@ -611,7 +611,8 @@ DNBArchImplX86_64::SetWatchpoint(DBG &debug_state, uint32_t hw_index, nub_addr_t
     //      dr1 -> bits{23-20}
     //      dr2 -> bits{27-24}
     //      dr3 -> bits{31-28}
-    debug_state.__dr7 |= (1 << (2*hw_index) | size_and_rw_bits(size, read, write) << 16);
+    debug_state.__dr7 |= (1 << (2*hw_index) |
+                          size_and_rw_bits(size, read, write) << (16+4*hw_index));
     switch (hw_index) {
     case 0:
         debug_state.__dr0 == addr; break;
