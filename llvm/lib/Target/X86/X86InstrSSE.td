@@ -682,22 +682,19 @@ def MOVUPDmr : PDI<0x11, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
                    "movupd\t{$src, $dst|$dst, $src}",
                    [(store (v2f64 VR128:$src), addr:$dst)]>;
 
-// Intrinsic forms of MOVUPS/D load and store
-def VMOVUPSmr_Int : VPSI<0x11, MRMDestMem, (outs),
-           (ins f128mem:$dst, VR128:$src),
-           "movups\t{$src, $dst|$dst, $src}",
-           [(int_x86_sse_storeu_ps addr:$dst, VR128:$src)]>, VEX;
-def VMOVUPDmr_Int : VPDI<0x11, MRMDestMem, (outs),
-           (ins f128mem:$dst, VR128:$src),
-           "movupd\t{$src, $dst|$dst, $src}",
-           [(int_x86_sse2_storeu_pd addr:$dst, VR128:$src)]>, VEX;
+let Predicates = [HasAVX] in {
+  def : Pat<(int_x86_sse_storeu_ps addr:$dst, VR128:$src),
+            (VMOVUPSmr addr:$dst, VR128:$src)>;
+  def : Pat<(int_x86_sse2_storeu_pd addr:$dst, VR128:$src),
+            (VMOVUPDmr addr:$dst, VR128:$src)>;
+}
 
-def MOVUPSmr_Int : PSI<0x11, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
-                       "movups\t{$src, $dst|$dst, $src}",
-                       [(int_x86_sse_storeu_ps addr:$dst, VR128:$src)]>;
-def MOVUPDmr_Int : PDI<0x11, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
-                       "movupd\t{$src, $dst|$dst, $src}",
-                       [(int_x86_sse2_storeu_pd addr:$dst, VR128:$src)]>;
+let Predicates = [HasSSE1] in
+  def : Pat<(int_x86_sse_storeu_ps addr:$dst, VR128:$src),
+            (MOVUPSmr addr:$dst, VR128:$src)>;
+let Predicates = [HasSSE2] in
+  def : Pat<(int_x86_sse2_storeu_pd addr:$dst, VR128:$src),
+            (MOVUPDmr addr:$dst, VR128:$src)>;
 
 // Move Low/High packed floating point values
 multiclass sse12_mov_hilo_packed<bits<8>opc, RegisterClass RC,
