@@ -923,6 +923,11 @@ void ARMAsmPrinter::EmitJumpTable(const MachineInstr *MI) {
       Expr = MCBinaryExpr::CreateSub(Expr, MCSymbolRefExpr::Create(JTISymbol,
                                                                    OutContext),
                                      OutContext);
+    // If we're generating a table of Thumb addresses in static relocation
+    // model, we need to add one to keep interworking correctly.
+    else if (AFI->isThumbFunction())
+      Expr = MCBinaryExpr::CreateAdd(Expr, MCConstantExpr::Create(1,OutContext),
+                                     OutContext);
     OutStreamer.EmitValue(Expr, 4);
   }
 }
