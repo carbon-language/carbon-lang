@@ -1575,7 +1575,7 @@ static void EmitGlobalConstantArray(const ConstantArray *CA, unsigned AddrSpace,
     int Value = isRepeatedByteSequence(CA, AP.TM);
 
     if (Value != -1) {
-      unsigned Bytes = AP.TM.getTargetData()->getTypeAllocSize(CA->getType());
+      uint64_t Bytes = AP.TM.getTargetData()->getTypeAllocSize(CA->getType());
       AP.OutStreamer.EmitFill(Bytes, Value, AddrSpace);
     }
     else {
