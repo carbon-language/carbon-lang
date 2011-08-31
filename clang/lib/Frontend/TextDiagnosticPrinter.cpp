@@ -53,25 +53,52 @@ TextDiagnosticPrinter::~TextDiagnosticPrinter() {
     delete &OS;
 }
 
-void TextDiagnosticPrinter::PrintIncludeStack(Diagnostic::Level Level,
-                                              SourceLocation Loc,
-                                              const SourceManager &SM) {
-  if (!DiagOpts->ShowNoteIncludeStack && Level == Diagnostic::Note) return;
-
-  if (Loc.isInvalid()) return;
+/// \brief Helper to recursivly walk up the include stack and print each layer
+/// on the way back down.
+static void PrintIncludeStackRecursively(raw_ostream &OS,
+                                         const SourceManager &SM,
+                                         SourceLocation Loc,
+                                         bool ShowLocation) {
+  if (Loc.isInvalid())
+    return;
 
   PresumedLoc PLoc = SM.getPresumedLoc(Loc);
   if (PLoc.isInvalid())
     return;
-  
-  // Print out the other include frames first.
-  PrintIncludeStack(Level, PLoc.getIncludeLoc(), SM);
 
-  if (DiagOpts->ShowLocation)
+  // Print out the other include frames first.
+  PrintIncludeStackRecursively(OS, SM, PLoc.getIncludeLoc(), ShowLocation);
+
+  if (ShowLocation)
     OS << "In file included from " << PLoc.getFilename()
        << ':' << PLoc.getLine() << ":\n";
   else
     OS << "In included file:\n";
+}
+
+/// \brief Prints an include stack when appropriate for a particular diagnostic
+/// level and location.
+///
+/// This routine handles all the logic of suppressing particular include stacks
+/// (such as those for notes) and duplicate include stacks when repeated
+/// warnings occur within the same file. It also handles the logic of
+/// customizing the formatting and display of the include stack.
+///
+/// \param Level The diagnostic level of the message this stack pertains to.
+/// \param Loc   The include location of the current file (not the diagnostic
+///              location).
+void TextDiagnosticPrinter::PrintIncludeStack(Diagnostic::Level Level,
+                                              SourceLocation Loc,
+                                              const SourceManager &SM) {
+  // Skip redundant include stacks altogether.
+  if (LastWarningLoc == Loc)
+    return;
+  LastWarningLoc = Loc;
+
+  if (!DiagOpts->ShowNoteIncludeStack && Level == Diagnostic::Note)
+    return;
+
+  PrintIncludeStackRecursively(OS, SM, Loc, DiagOpts->ShowLocation);
 }
 
 /// HighlightRange - Given a SourceRange and a line number, highlight (with ~'s)
@@ -398,10 +425,7 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
 
       // If this diagnostic is not in the main file, print out the
       // "included from" lines.
-      if (LastWarningLoc != PLoc.getIncludeLoc()) {
-        LastWarningLoc = PLoc.getIncludeLoc();
-        PrintIncludeStack(Diagnostic::Note, LastWarningLoc, SM);
-      }
+      PrintIncludeStack(Diagnostic::Note, PLoc.getIncludeLoc(), SM);
 
       if (DiagOpts->ShowLocation) {
         // Emit the file/line/column that this expansion came from.
@@ -879,11 +903,8 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
 
       // First, if this diagnostic is not in the main file, print out the
       // "included from" lines.
-      if (LastWarningLoc != PLoc.getIncludeLoc()) {
-        LastWarningLoc = PLoc.getIncludeLoc();
-        PrintIncludeStack(Level, LastWarningLoc, SM);
-        StartOfLocationInfo = OS.tell();
-      }
+      PrintIncludeStack(Level, PLoc.getIncludeLoc(), SM);
+      StartOfLocationInfo = OS.tell();
 
       // Compute the column number.
       if (DiagOpts->ShowLocation) {
