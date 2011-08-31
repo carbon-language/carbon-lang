@@ -663,7 +663,7 @@ DNBArchImplX86_64::IsVacantWatchpoint(const DBG &debug_state, uint32_t hw_index)
 
 // Resets local copy of debug status register to wait for the next debug excpetion.
 void
-DNBArchImplX86_64::ClearWatchpointHit(DBG &debug_state)
+DNBArchImplX86_64::ClearWatchpointHits(DBG &debug_state)
 {
     // See also IsWatchpointHit().
     debug_state.__dr6 = 0;
