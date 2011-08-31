@@ -105,9 +105,8 @@ protected:
 
     struct Context
     {
-        GPR     gpr;
-        union 
-        {
+        GPR gpr;
+        union {
             FPU no_avx;
             AVX avx;
         } fpu;
