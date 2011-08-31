@@ -1,14 +1,14 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s -Wmissing-noreturn -Wreturn-type
 void f() __attribute__((noreturn));
 
-template<typename T> void g(T) { // expected-warning {{function could be attribute 'noreturn'}}
+template<typename T> void g(T) { // expected-warning {{function 'g<int>' could be declared with attribute 'noreturn'}}
   f();
 }
 
 template void g<int>(int); // expected-note {{in instantiation of function template specialization 'g<int>' requested here}}
 
 template<typename T> struct A {
-  void g() { // expected-warning {{function could be attribute 'noreturn'}}
+  void g() { // expected-warning {{function 'g' could be declared with attribute 'noreturn'}}
     f();
   }
 };
@@ -16,7 +16,7 @@ template<typename T> struct A {
 template struct A<int>; // expected-note {{in instantiation of member function 'A<int>::g' requested here}}
 
 struct B {
-  template<typename T> void g(T) { // expected-warning {{function could be attribute 'noreturn'}}
+  template<typename T> void g(T) { // expected-warning {{function 'g<int>' could be declared with attribute 'noreturn'}}
     f();
   }
 };
@@ -61,7 +61,7 @@ namespace test2 {
     void *f;
 
     A() : f(0) { }
-    A(int) : f(h()) { } // expected-warning {{function could be attribute 'noreturn'}}
+    A(int) : f(h()) { } // expected-warning {{function 'A' could be declared with attribute 'noreturn'}}
     A(char) : f(j()) { }
     A(bool b) : f(b ? h() : j()) { }
   };

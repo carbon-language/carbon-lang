@@ -14,7 +14,7 @@ void test2(int a) {
 }
 
 // PR5286
-void test3(int a) {  // expected-warning {{function could be attribute 'noreturn'}}
+void test3(int a) {  // expected-warning {{function 'test3' could be declared with attribute 'noreturn'}}
   while (1) {
     if (a)
       @throw (id)0;

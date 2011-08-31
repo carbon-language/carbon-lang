@@ -3030,7 +3030,7 @@ public:
 /// Insertion operator for diagnostics.  This allows sending NamedDecl's
 /// into a diagnostic with <<.
 inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
-                                           NamedDecl* ND) {
+                                           const NamedDecl* ND) {
   DB.AddTaggedVal(reinterpret_cast<intptr_t>(ND), Diagnostic::ak_nameddecl);
   return DB;
 }

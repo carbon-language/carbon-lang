@@ -269,8 +269,8 @@ void clang::FormatASTNodeDiagnosticArgument(
                "Invalid modifier for NamedDecl* argument");
         Qualified = false;
       }
-      reinterpret_cast<NamedDecl*>(Val)->
-      getNameForDiagnostic(S, Context.PrintingPolicy, Qualified);
+      const NamedDecl *ND = reinterpret_cast<const NamedDecl*>(Val);
+      ND->getNameForDiagnostic(S, Context.PrintingPolicy, Qualified);
       break;
     }
     case Diagnostic::ak_nestednamespec: {

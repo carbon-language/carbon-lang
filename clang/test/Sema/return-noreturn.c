@@ -1,8 +1,8 @@
 // RUN: %clang_cc1 %s -fsyntax-only -verify -fblocks -Wmissing-noreturn -Wno-unreachable-code
 
 int j;
-void test1() { // expected-warning {{function could be attribute 'noreturn'}}
-  ^ (void) { while (1) { } }(); // expected-warning {{block could be attribute 'noreturn'}}
+void test1() { // expected-warning {{function 'test1' could be declared with attribute 'noreturn'}}
+  ^ (void) { while (1) { } }(); // expected-warning {{block could be declared with attribute 'noreturn'}}
   ^ (void) { if (j) while (1) { } }();
   while (1) { }
 }
