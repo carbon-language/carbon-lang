@@ -254,6 +254,8 @@ private:
 
   SDNode *SelectConcatVector(SDNode *N);
 
+  SDNode *SelectAtomic64(SDNode *Node, unsigned Opc);
+
   /// SelectInlineAsmMemoryOperand - Implement addressing mode selection for
   /// inline asm expressions.
   virtual bool SelectInlineAsmMemoryOperand(const SDValue &Op,
@@ -2309,6 +2311,21 @@ SDNode *ARMDAGToDAGISel::SelectConcatVector(SDNode *N) {
   return PairDRegs(VT, N->getOperand(0), N->getOperand(1));
 }
 
+SDNode *ARMDAGToDAGISel::SelectAtomic64(SDNode *Node, unsigned Opc) {
+  SDValue Chain = Node->getOperand(0);
+  SDValue In1 = Node->getOperand(1);
+  SDValue In2L = Node->getOperand(2);
+  SDValue In2H = Node->getOperand(3);
+  MachineSDNode::mmo_iterator MemOp = MF->allocateMemRefsArray(1);
+  MemOp[0] = cast<MemSDNode>(Node)->getMemOperand();
+  const SDValue Ops[] = { In1, In2L, In2H, Chain};
+  SDNode *ResNode = CurDAG->getMachineNode(Opc, Node->getDebugLoc(),
+                                           MVT::i32, MVT::i32, MVT::Other, Ops,
+                                           array_lengthof(Ops));
+  cast<MachineSDNode>(ResNode)->setMemRefs(MemOp, MemOp + 1);
+  return ResNode;
+}
+
 SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
   DebugLoc dl = N->getDebugLoc();
 
@@ -3089,6 +3106,21 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
 
   case ISD::CONCAT_VECTORS:
     return SelectConcatVector(N);
+
+  case ARMISD::ATOMOR64_DAG:
+    return SelectAtomic64(N, ARM::ATOMOR6432);
+  case ARMISD::ATOMXOR64_DAG:
+    return SelectAtomic64(N, ARM::ATOMXOR6432);
+  case ARMISD::ATOMADD64_DAG:
+    return SelectAtomic64(N, ARM::ATOMADD6432);
+  case ARMISD::ATOMSUB64_DAG:
+    return SelectAtomic64(N, ARM::ATOMSUB6432);
+  case ARMISD::ATOMNAND64_DAG:
+    return SelectAtomic64(N, ARM::ATOMNAND6432);
+  case ARMISD::ATOMAND64_DAG:
+    return SelectAtomic64(N, ARM::ATOMAND6432);
+  case ARMISD::ATOMSWAP64_DAG:
+    return SelectAtomic64(N, ARM::ATOMSWAP6432);
   }
 
   return SelectCode(N);

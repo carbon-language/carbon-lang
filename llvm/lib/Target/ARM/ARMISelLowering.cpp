@@ -611,6 +611,13 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     // normally.
     setOperationAction(ISD::MEMBARRIER, MVT::Other, Custom);
     setOperationAction(ISD::ATOMIC_FENCE, MVT::Other, Custom);
+    // Custom lowering for 64-bit ops
+    setOperationAction(ISD::ATOMIC_LOAD_ADD,  MVT::i64, Custom);
+    setOperationAction(ISD::ATOMIC_LOAD_SUB,  MVT::i64, Custom);
+    setOperationAction(ISD::ATOMIC_LOAD_AND,  MVT::i64, Custom);
+    setOperationAction(ISD::ATOMIC_LOAD_OR,   MVT::i64, Custom);
+    setOperationAction(ISD::ATOMIC_LOAD_XOR,  MVT::i64, Custom);
+    setOperationAction(ISD::ATOMIC_SWAP,  MVT::i64, Custom);
     // Automatically insert fences (dmb ist) around ATOMIC_SWAP etc.
     setInsertFencesForAtomic(true);
   } else {
@@ -4846,6 +4853,29 @@ static SDValue LowerADDC_ADDE_SUBC_SUBE(SDValue Op, SelectionDAG &DAG) {
                      Op.getOperand(1), Op.getOperand(2));
 }
 
+static void
+ReplaceATOMIC_BINARY_64(SDNode *Node, SmallVectorImpl<SDValue>& Results,
+                        SelectionDAG &DAG, unsigned NewOp) {
+  EVT T = Node->getValueType(0);
+  DebugLoc dl = Node->getDebugLoc();
+  assert (T == MVT::i64 && "Only know how to expand i64 atomics");
+
+  SDValue Chain = Node->getOperand(0);
+  SDValue In1 = Node->getOperand(1);
+  SDValue In2L = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, MVT::i32,
+                             Node->getOperand(2), DAG.getIntPtrConstant(0));
+  SDValue In2H = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, MVT::i32,
+                             Node->getOperand(2), DAG.getIntPtrConstant(1));
+  SDValue Ops[] = { Chain, In1, In2L, In2H };
+  SDVTList Tys = DAG.getVTList(MVT::i32, MVT::i32, MVT::Other);
+  SDValue Result =
+    DAG.getMemIntrinsicNode(NewOp, dl, Tys, Ops, 4, MVT::i64,
+                            cast<MemSDNode>(Node)->getMemOperand());
+  SDValue OpsF[] = { Result.getValue(0), Result.getValue(1)};
+  Results.push_back(DAG.getNode(ISD::BUILD_PAIR, dl, MVT::i64, OpsF, 2));
+  Results.push_back(Result.getValue(2));
+}
+
 SDValue ARMTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   switch (Op.getOpcode()) {
   default: llvm_unreachable("Don't know how to custom lower this!");
@@ -4918,6 +4948,29 @@ void ARMTargetLowering::ReplaceNodeResults(SDNode *N,
   case ISD::SRA:
     Res = Expand64BitShift(N, DAG, Subtarget);
     break;
+  case ISD::ATOMIC_LOAD_ADD:
+    ReplaceATOMIC_BINARY_64(N, Results, DAG, ARMISD::ATOMADD64_DAG);
+    return;
+  case ISD::ATOMIC_LOAD_AND:
+    ReplaceATOMIC_BINARY_64(N, Results, DAG, ARMISD::ATOMAND64_DAG);
+    return;
+  case ISD::ATOMIC_LOAD_NAND:
+    ReplaceATOMIC_BINARY_64(N, Results, DAG, ARMISD::ATOMNAND64_DAG);
+    return;
+  case ISD::ATOMIC_LOAD_OR:
+    ReplaceATOMIC_BINARY_64(N, Results, DAG, ARMISD::ATOMOR64_DAG);
+    return;
+  case ISD::ATOMIC_LOAD_SUB:
+    ReplaceATOMIC_BINARY_64(N, Results, DAG, ARMISD::ATOMSUB64_DAG);
+    return;
+  case ISD::ATOMIC_LOAD_XOR:
+    ReplaceATOMIC_BINARY_64(N, Results, DAG, ARMISD::ATOMXOR64_DAG);
+    return;
+  case ISD::ATOMIC_SWAP:
+    ReplaceATOMIC_BINARY_64(N, Results, DAG, ARMISD::ATOMSWAP64_DAG);
+    return;
+  //case ISD::ATOMIC_CMP_SWAP:
+  //  ReplaceATOMIC_CMPXCHG_64(N, Results, DAG);
   }
   if (Res.getNode())
     Results.push_back(Res);
@@ -5237,6 +5290,113 @@ ARMTargetLowering::EmitAtomicBinaryMinMax(MachineInstr *MI,
   return BB;
 }
 
+MachineBasicBlock *
+ARMTargetLowering::EmitAtomicBinary64(MachineInstr *MI, MachineBasicBlock *BB,
+                                      unsigned Op1, unsigned Op2,
+                                      bool NeedsCarry) const {
+  // This also handles ATOMIC_SWAP, indicated by Op1==0.
+  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
+
+  const BasicBlock *LLVM_BB = BB->getBasicBlock();
+  MachineFunction *MF = BB->getParent();
+  MachineFunction::iterator It = BB;
+  ++It;
+
+  unsigned destlo = MI->getOperand(0).getReg();
+  unsigned desthi = MI->getOperand(1).getReg();
+  unsigned ptr = MI->getOperand(2).getReg();
+  unsigned vallo = MI->getOperand(3).getReg();
+  unsigned valhi = MI->getOperand(4).getReg();
+  DebugLoc dl = MI->getDebugLoc();
+  bool isThumb2 = Subtarget->isThumb2();
+
+  MachineRegisterInfo &MRI = BB->getParent()->getRegInfo();
+  if (isThumb2) {
+    MRI.constrainRegClass(destlo, ARM::rGPRRegisterClass);
+    MRI.constrainRegClass(desthi, ARM::rGPRRegisterClass);
+    MRI.constrainRegClass(ptr, ARM::rGPRRegisterClass);
+  }
+
+  unsigned ldrOpc = isThumb2 ? ARM::t2LDREXD : ARM::LDREXD;
+  unsigned strOpc = isThumb2 ? ARM::t2STREXD : ARM::STREXD;
+
+  MachineBasicBlock *loopMBB = MF->CreateMachineBasicBlock(LLVM_BB);
+  MachineBasicBlock *exitMBB = MF->CreateMachineBasicBlock(LLVM_BB);
+  MF->insert(It, loopMBB);
+  MF->insert(It, exitMBB);
+
+  // Transfer the remainder of BB and its successor edges to exitMBB.
+  exitMBB->splice(exitMBB->begin(), BB,
+                  llvm::next(MachineBasicBlock::iterator(MI)),
+                  BB->end());
+  exitMBB->transferSuccessorsAndUpdatePHIs(BB);
+
+  TargetRegisterClass *TRC =
+    isThumb2 ? ARM::tGPRRegisterClass : ARM::GPRRegisterClass;
+  unsigned storesuccess = MRI.createVirtualRegister(TRC);
+
+  //  thisMBB:
+  //   ...
+  //   fallthrough --> loopMBB
+  BB->addSuccessor(loopMBB);
+
+  //  loopMBB:
+  //   ldrexd r2, r3, ptr
+  //   <binopa> r0, r2, incr
+  //   <binopb> r1, r3, incr
+  //   strexd storesuccess, r0, r1, ptr
+  //   cmp storesuccess, #0
+  //   bne- loopMBB
+  //   fallthrough --> exitMBB
+  //
+  // Note that the registers are explicitly specified because there is not any
+  // way to force the register allocator to allocate a register pair.
+  //
+  // FIXME: The hardcoded registers are not necessary for Thumb2, but we 
+  // need to properly enforce the restriction that the two output registers
+  // for ldrexd must be different.
+  BB = loopMBB;
+  // Load
+  AddDefaultPred(BuildMI(BB, dl, TII->get(ldrOpc))
+                 .addReg(ARM::R2, RegState::Define)
+                 .addReg(ARM::R3, RegState::Define).addReg(ptr));
+  // Copy r2/r3 into dest.  (This copy will normally be coalesced.)
+  BuildMI(BB, dl, TII->get(TargetOpcode::COPY), destlo).addReg(ARM::R2);
+  BuildMI(BB, dl, TII->get(TargetOpcode::COPY), desthi).addReg(ARM::R3);
+  if (Op1) {
+    // Perform binary operation
+    AddDefaultPred(BuildMI(BB, dl, TII->get(Op1), ARM::R0)
+                   .addReg(destlo).addReg(vallo))
+        .addReg(NeedsCarry ? ARM::CPSR : 0, getDefRegState(NeedsCarry));
+    AddDefaultPred(BuildMI(BB, dl, TII->get(Op2), ARM::R1)
+                   .addReg(desthi).addReg(valhi)).addReg(0);
+  } else {
+    // Copy to physregs for strexd
+    BuildMI(BB, dl, TII->get(TargetOpcode::COPY), ARM::R0).addReg(vallo);
+    BuildMI(BB, dl, TII->get(TargetOpcode::COPY), ARM::R1).addReg(valhi);
+  }
+
+  // Store
+  AddDefaultPred(BuildMI(BB, dl, TII->get(strOpc), storesuccess)
+                 .addReg(ARM::R0).addReg(ARM::R1).addReg(ptr));
+  // Cmp+jump
+  AddDefaultPred(BuildMI(BB, dl, TII->get(isThumb2 ? ARM::t2CMPri : ARM::CMPri))
+                 .addReg(storesuccess).addImm(0));
+  BuildMI(BB, dl, TII->get(isThumb2 ? ARM::t2Bcc : ARM::Bcc))
+    .addMBB(loopMBB).addImm(ARMCC::NE).addReg(ARM::CPSR);
+
+  BB->addSuccessor(loopMBB);
+  BB->addSuccessor(exitMBB);
+
+  //  exitMBB:
+  //   ...
+  BB = exitMBB;
+
+  MI->eraseFromParent();   // The instruction is gone now.
+
+  return BB;
+}
+
 static
 MachineBasicBlock *OtherSucc(MachineBasicBlock *MBB, MachineBasicBlock *Succ) {
   for (MachineBasicBlock::succ_iterator I = MBB->succ_begin(),
@@ -5373,6 +5533,25 @@ ARMTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   case ARM::ATOMIC_CMP_SWAP_I8:  return EmitAtomicCmpSwap(MI, BB, 1);
   case ARM::ATOMIC_CMP_SWAP_I16: return EmitAtomicCmpSwap(MI, BB, 2);
   case ARM::ATOMIC_CMP_SWAP_I32: return EmitAtomicCmpSwap(MI, BB, 4);
+
+
+  case ARM::ATOMADD6432:
+    return EmitAtomicBinary64(MI, BB, isThumb2 ? ARM::t2ADDrr : ARM::ADDrr,
+                              isThumb2 ? ARM::t2ADCrr : ARM::ADCrr, true);
+  case ARM::ATOMSUB6432:
+    return EmitAtomicBinary64(MI, BB, isThumb2 ? ARM::t2SUBrr : ARM::SUBrr,
+                              isThumb2 ? ARM::t2SBCrr : ARM::SBCrr, true);
+  case ARM::ATOMOR6432:
+    return EmitAtomicBinary64(MI, BB, isThumb2 ? ARM::t2ORRrr : ARM::ORRrr,
+                              isThumb2 ? ARM::t2ORRrr : ARM::ORRrr, false);
+  case ARM::ATOMXOR6432:
+    return EmitAtomicBinary64(MI, BB, isThumb2 ? ARM::t2EORrr : ARM::EORrr,
+                              isThumb2 ? ARM::t2EORrr : ARM::EORrr, false);
+  case ARM::ATOMAND6432:
+    return EmitAtomicBinary64(MI, BB, isThumb2 ? ARM::t2ANDrr : ARM::ANDrr,
+                              isThumb2 ? ARM::t2ANDrr : ARM::ANDrr, false);
+  case ARM::ATOMSWAP6432:
+    return EmitAtomicBinary64(MI, BB, 0, 0, false);
 
   case ARM::tMOVCCr_pseudo: {
     // To "insert" a SELECT_CC instruction, we actually have to insert the

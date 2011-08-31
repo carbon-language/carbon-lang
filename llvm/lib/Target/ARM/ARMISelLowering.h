@@ -211,7 +211,17 @@ namespace llvm {
       VST4_UPD,
       VST2LN_UPD,
       VST3LN_UPD,
-      VST4LN_UPD
+      VST4LN_UPD,
+
+      // 64-bit atomic ops (value split into two registers)
+      ATOMADD64_DAG,
+      ATOMSUB64_DAG,
+      ATOMOR64_DAG,
+      ATOMXOR64_DAG,
+      ATOMAND64_DAG,
+      ATOMNAND64_DAG,
+      ATOMSWAP64_DAG,
+      ATOMCMPXCHG64_DAG
     };
   }
 
@@ -493,6 +503,11 @@ namespace llvm {
                                         MachineBasicBlock *BB,
                                         unsigned Size,
                                         unsigned BinOpcode) const;
+    MachineBasicBlock *EmitAtomicBinary64(MachineInstr *MI,
+                                          MachineBasicBlock *BB,
+                                          unsigned Op1,
+                                          unsigned Op2,
+                                          bool NeedsCarry) const;
     MachineBasicBlock * EmitAtomicBinaryMinMax(MachineInstr *MI,
                                                MachineBasicBlock *BB,
                                                unsigned Size,

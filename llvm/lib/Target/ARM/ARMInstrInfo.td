@@ -69,6 +69,8 @@ def SDT_ARMTCRET : SDTypeProfile<0, 1, [SDTCisPtrTy<0>]>;
 
 def SDT_ARMBFI : SDTypeProfile<1, 3, [SDTCisVT<0, i32>, SDTCisVT<1, i32>,
                                       SDTCisVT<2, i32>, SDTCisVT<3, i32>]>;
+def SDTARMatomicBinary : SDTypeProfile<2, 3, [SDTCisInt<0>, SDTCisInt<1>,
+                               SDTCisPtrTy<2>, SDTCisInt<3>,SDTCisInt<4>]>;
 
 def SDTBinaryArithWithFlags : SDTypeProfile<2, 2,
                                             [SDTCisSameAs<0, 2>,
@@ -161,6 +163,28 @@ def ARMtcret         : SDNode<"ARMISD::TC_RETURN", SDT_ARMTCRET,
 
 
 def ARMbfi           : SDNode<"ARMISD::BFI", SDT_ARMBFI>;
+
+def ARMAtomAdd64 : SDNode<"X86ISD::ATOMADD64_DAG", SDTARMatomicBinary,
+                        [SDNPHasChain, SDNPMayStore,
+                         SDNPMayLoad, SDNPMemOperand]>;
+def ARMAtomSub64 : SDNode<"X86ISD::ATOMSUB64_DAG", SDTARMatomicBinary,
+                        [SDNPHasChain, SDNPMayStore,
+                         SDNPMayLoad, SDNPMemOperand]>;
+def ARMAtomOr64 : SDNode<"X86ISD::ATOMOR64_DAG", SDTARMatomicBinary,
+                        [SDNPHasChain, SDNPMayStore,
+                         SDNPMayLoad, SDNPMemOperand]>;
+def ARMAtomXor64 : SDNode<"X86ISD::ATOMXOR64_DAG", SDTARMatomicBinary,
+                        [SDNPHasChain, SDNPMayStore,
+                         SDNPMayLoad, SDNPMemOperand]>;
+def ARMAtomAnd64 : SDNode<"X86ISD::ATOMAND64_DAG", SDTARMatomicBinary,
+                        [SDNPHasChain, SDNPMayStore,
+                         SDNPMayLoad, SDNPMemOperand]>;
+def ARMAtomNand64 : SDNode<"X86ISD::ATOMNAND64_DAG", SDTARMatomicBinary,
+                        [SDNPHasChain, SDNPMayStore,
+                         SDNPMayLoad, SDNPMemOperand]>;
+def ARMAtomSwap64 : SDNode<"X86ISD::ATOMSWAP64_DAG", SDTARMatomicBinary,
+                        [SDNPHasChain, SDNPMayStore,
+                         SDNPMayLoad, SDNPMemOperand]>;
 
 //===----------------------------------------------------------------------===//
 // ARM Instruction Predicate Definitions.
@@ -1607,6 +1631,32 @@ PseudoInst<(outs), (ins i32imm:$amt1, i32imm:$amt2, pred:$p), NoItinerary,
 def ADJCALLSTACKDOWN :
 PseudoInst<(outs), (ins i32imm:$amt, pred:$p), NoItinerary,
            [(ARMcallseq_start timm:$amt)]>;
+}
+
+// Atomic pseudo-insts which will be lowered to ldrexd/strexd loops.
+// (These psuedos use a hand-written selection code).
+let usesCustomInserter = 1, Uses = [CPSR] in {
+def ATOMOR6432   : PseudoInst<(outs GPR:$dst1, GPR:$dst2),
+                              (ins GPR:$addr, GPR:$src1, GPR:$src2),
+                              NoItinerary, []>;
+def ATOMXOR6432  : PseudoInst<(outs GPR:$dst1, GPR:$dst2),
+                              (ins GPR:$addr, GPR:$src1, GPR:$src2),
+                              NoItinerary, []>;
+def ATOMADD6432  : PseudoInst<(outs GPR:$dst1, GPR:$dst2),
+                              (ins GPR:$addr, GPR:$src1, GPR:$src2),
+                              NoItinerary, []>;
+def ATOMSUB6432  : PseudoInst<(outs GPR:$dst1, GPR:$dst2),
+                              (ins GPR:$addr, GPR:$src1, GPR:$src2),
+                              NoItinerary, []>;
+def ATOMNAND6432 : PseudoInst<(outs GPR:$dst1, GPR:$dst2),
+                              (ins GPR:$addr, GPR:$src1, GPR:$src2),
+                              NoItinerary, []>;
+def ATOMAND6432  : PseudoInst<(outs GPR:$dst1, GPR:$dst2),
+                              (ins GPR:$addr, GPR:$src1, GPR:$src2),
+                              NoItinerary, []>;
+def ATOMSWAP6432 : PseudoInst<(outs GPR:$dst1, GPR:$dst2),
+                              (ins GPR:$addr, GPR:$src1, GPR:$src2),
+                              NoItinerary, []>;
 }
 
 def NOP : AI<(outs), (ins), MiscFrm, NoItinerary, "nop", "", []>,
