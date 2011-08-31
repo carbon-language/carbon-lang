@@ -606,8 +606,6 @@ Unwind20.fragment:		; preds = %bb_main
 	br label %UnifiedUnreachableBlock
 
 meshBB:		; preds = %nofilter.fragment, %bb_main
-        %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
-                 cleanup
 	br label %bb_main
 
 meshBB.unwinddest:		; No predecessors!
@@ -782,8 +780,6 @@ meshBB324:		; preds = %bb_main
 	br label %bb_main
 
 meshBB325:		; preds = %entry.fragment.fragment, %bb_main
-        %exn325 = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
-                    cleanup
 	br label %bb_main
 
 meshBB325.unwinddest:		; No predecessors!
@@ -895,5 +891,3 @@ UnifiedUnreachableBlock:		; preds = %Unwind20.fragment, %filter87, %filter75, %f
 UnifiedReturnBlock:		; preds = %invcont70.normaldest, %invcont15.normaldest
 	ret void
 }
-
-declare i32 @__gxx_personality_v0(...)
