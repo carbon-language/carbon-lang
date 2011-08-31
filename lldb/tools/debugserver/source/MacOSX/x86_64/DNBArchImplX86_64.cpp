@@ -554,26 +554,110 @@ DNBArchImplX86_64::NotifyException(MachException::Data& exc)
     return false;
 }
 
-#ifndef DR_FIRSTADDR
-#define DR_FIRSTADDR 0
-#endif
-
-#ifndef DR_LASTADDR
-#define DR_LASTADDR 3
-#endif
-
-#ifndef DR_STATUS
-#define DR_STATUS 6
-#endif
-
-#ifndef DR_CONTROL
-#define DR_CONTROL 7
-#endif
-
 uint32_t
 DNBArchImplX86_64::NumSupportedHardwareWatchpoints()
 {
-    return DR_LASTADDR - DR_FIRSTADDR + 1;
+    // Available debug address registers: dr0, dr1, dr2, dr3.
+    return 4;
+}
+
+static uint32_t
+size_and_rw_bits(nub_size_t size, bool read, bool write)
+{
+    uint32_t rw;
+    if (read) {
+        rw = 0x3; // READ or READ/WRITE
+    } else if (write) {
+        rw = 0x1; // WRITE
+    } else {
+        assert(0 && "read and write cannot both be false");
+    }
+
+    switch (size) {
+    case 1:
+        return rw;
+    case 2:
+        return (0x1 << 2) | rw;
+    case 4:
+        return (0x3 << 2) | rw;
+    case 8:
+        return (0x2 << 2) | rw;
+    default:
+        assert(0 && "invalid size, must be one of 1, 2, 4, or 8");
+    }    
+}
+void
+DNBArchImplX86_64::SetWatchpoint(DBG &debug_state, uint32_t hw_index, nub_addr_t addr, nub_size_t size, bool read, bool write)
+{
+    // Set both dr7 (debug control register) and dri (debug address register).
+    
+    // dr7{7-0} encodes the local/gloabl enable bits:
+    //  global enable --. .-- local enable
+    //                  | |
+    //                  v v
+    //      dr0 -> bits{1-0}
+    //      dr1 -> bits{3-2}
+    //      dr2 -> bits{5-4}
+    //      dr3 -> bits{7-6}
+    //
+    // dr7{31-16} encodes the rw/len bits:
+    //  b_x+3, b_x+2, b_x+1, b_x
+    //      where bits{x+1, x} => rw
+    //            0b00: execute, 0b01: write, 0b11: read-or-write, 0b10: io read-or-write (unused)
+    //      and bits{x+3, x+2} => len
+    //            0b00: 1-byte, 0b01: 2-byte, 0b11: 4-byte, 0b10: 8-byte
+    //
+    //      dr0 -> bits{19-16}
+    //      dr1 -> bits{23-20}
+    //      dr2 -> bits{27-24}
+    //      dr3 -> bits{31-28}
+    debug_state.__dr7 |= (1 << (2*hw_index) | size_and_rw_bits(size, read, write) << 16);
+    switch (hw_index) {
+    case 0:
+        debug_state.__dr0 == addr; break;
+    case 1:
+        debug_state.__dr1 == addr; break;
+    case 2:
+        debug_state.__dr2 == addr; break;
+    case 3:
+        debug_state.__dr3 == addr; break;
+    default:
+        assert(0 && "invalid hardware register index, must be one of 0, 1, 2, or 3");
+    }
+    return;
+}
+
+void
+DNBArchImplX86_64::ClearWatchpoint(DBG &debug_state, uint32_t hw_index)
+{
+    debug_state.__dr7 &= ~(3 << (2*hw_index));
+    switch (hw_index) {
+    case 0:
+        debug_state.__dr0 == 0; break;
+    case 1:
+        debug_state.__dr1 == 0; break;
+    case 2:
+        debug_state.__dr2 == 0; break;
+    case 3:
+        debug_state.__dr3 == 0; break;
+    default:
+        assert(0 && "invalid hardware register index, must be one of 0, 1, 2, or 3");
+    }
+    return;
+}
+
+bool
+DNBArchImplX86_64::IsVacantWatchpoint(const DBG &debug_state, uint32_t hw_index)
+{
+    // Check dr7 (debug control register) for local/global enable bits:
+    //  global enable --. .-- local enable
+    //                  | |
+    //                  v v
+    //      dr0 -> bits{1-0}
+    //      dr1 -> bits{3-2}
+    //      dr2 -> bits{5-4}
+    //      dr3 -> bits{7-6}
+    return (debug_state.__dr7 & (3 << (2*hw_index))) == 0;
 }
 
 uint32_t
@@ -583,17 +667,13 @@ DNBArchImplX86_64::EnableHardwareWatchpoint (nub_addr_t addr, nub_size_t size, b
 
     const uint32_t num_hw_watchpoints = NumSupportedHardwareWatchpoints();
 
-    // Can't watch zero bytes
-    if (size == 0)
+    // Can only watch 1, 2, 4, or 8 bytes.
+    if (!(size == 1 || size == 2 || size == 4 || size == 8))
         return INVALID_NUB_HW_INDEX;
 
     // We must watch for either read or write
     if (read == false && write == false)
         return INVALID_NUB_HW_INDEX;
-
-    //
-    // FIXME: Add implmentation.
-    //
 
     // Read the debug state
     kern_return_t kret = GetDBGState(false);
@@ -604,28 +684,18 @@ DNBArchImplX86_64::EnableHardwareWatchpoint (nub_addr_t addr, nub_size_t size, b
         uint32_t i = 0;
 
         DBG debug_state = m_state.context.dbg;
-        for (i=0; i<num_hw_watchpoints; ++i)
+        for (i = 0; i < num_hw_watchpoints; ++i)
         {
-            uint64_t dr_val = 0;
-            switch (i) {
-            case 0:
-                dr_val = debug_state.__dr0; break;
-            case 1:
-                dr_val = debug_state.__dr1; break;
-            case 2:
-                dr_val = debug_state.__dr2; break;
-            case 3:
-                dr_val = debug_state.__dr3; break;
-            default:
+            if (IsVacantWatchpoint(debug_state, i))
                 break;
-            }
-            if (dr_val != 0)
-                break; // We found an available hw breakpoint slot (in i)
         }
 
         // See if we found an available hw breakpoint slot above
         if (i < num_hw_watchpoints)
         {
+            // Modify our local copy of the debug state, first.
+            SetWatchpoint(debug_state, i, addr, size, read, write);
+            // Ready to set the watch point in the inferior.
             kret = SetDBGState();
             DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchImplX86_64::EnableHardwareWatchpoint() SetDBGState() => 0x%8.8x.", kret);
 
@@ -648,16 +718,15 @@ DNBArchImplX86_64::DisableHardwareWatchpoint (uint32_t hw_index)
     const uint32_t num_hw_points = NumSupportedHardwareWatchpoints();
     if (kret == KERN_SUCCESS)
     {
-        if (hw_index < num_hw_points)
+        DBG debug_state = m_state.context.dbg;
+        if (hw_index < num_hw_points && !IsVacantWatchpoint(debug_state, hw_index))
         {
-            //
-            // FIXEME: Add implementation.
-            //
-
+            // Modify our local copy of the debug state, first.
+            ClearWatchpoint(debug_state, hw_index);
+            // Ready to disable the watch point in the inferior.
+            kret = SetDBGState();
             DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchImplX86_64::DisableHardwareWatchpoint( %u )",
                              hw_index);
-
-            kret = SetDBGState();
 
             if (kret == KERN_SUCCESS)
                 return true;

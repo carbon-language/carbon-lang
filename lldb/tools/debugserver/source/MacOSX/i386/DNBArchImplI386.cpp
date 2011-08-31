@@ -690,7 +690,7 @@ DNBArchImplI386::EnableHardwareWatchpoint (nub_addr_t addr, nub_size_t size, boo
             default:
                 break;
             }
-            if (dr_val != 0)
+            if (dr_val == 0)
                 break; // We found an available hw breakpoint slot (in i)
         }
 
