@@ -11215,7 +11215,9 @@ X86TargetLowering::EmitPCMP(MachineInstr *MI, MachineBasicBlock *BB,
     if (!(Op.isReg() && Op.isImplicit()))
       MIB.addOperand(Op);
   }
-  BuildMI(*BB, MI, dl, TII->get(X86::MOVAPSrr), MI->getOperand(0).getReg())
+  BuildMI(*BB, MI, dl,
+    TII->get(Subtarget->hasAVX() ? X86::VMOVAPSrr : X86::MOVAPSrr),
+             MI->getOperand(0).getReg())
     .addReg(X86::XMM0);
 
   MI->eraseFromParent();
@@ -11570,6 +11572,7 @@ X86TargetLowering::EmitVAStartSaveXMMRegsWithCustomInserter(
     MBB->addSuccessor(EndMBB);
   }
 
+  unsigned MOVOpc = Subtarget->hasAVX() ? X86::VMOVAPSmr : X86::MOVAPSmr;
   // In the XMM save block, save all the XMM argument registers.
   for (int i = 3, e = MI->getNumOperands(); i != e; ++i) {
     int64_t Offset = (i - 3) * 16 + VarArgsFPOffset;
@@ -11578,7 +11581,7 @@ X86TargetLowering::EmitVAStartSaveXMMRegsWithCustomInserter(
           MachinePointerInfo::getFixedStack(RegSaveFrameIndex, Offset),
         MachineMemOperand::MOStore,
         /*Size=*/16, /*Align=*/16);
-    BuildMI(XMMSaveMBB, DL, TII->get(X86::MOVAPSmr))
+    BuildMI(XMMSaveMBB, DL, TII->get(MOVOpc))
       .addFrameIndex(RegSaveFrameIndex)
       .addImm(/*Scale=*/1)
       .addReg(/*IndexReg=*/0)

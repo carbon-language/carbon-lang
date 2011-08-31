@@ -1959,7 +1959,8 @@ void X86InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     else
       Opc = X86::MOV8rr;
   } else if (X86::VR128RegClass.contains(DestReg, SrcReg))
-    Opc = X86::MOVAPSrr;
+    Opc = TM.getSubtarget<X86Subtarget>().hasAVX() ?
+          X86::VMOVAPSrr : X86::MOVAPSrr;
   else if (X86::VR256RegClass.contains(DestReg, SrcReg))
     Opc = X86::VMOVAPSYrr;
   else if (X86::VR64RegClass.contains(DestReg, SrcReg))
@@ -2044,13 +2045,19 @@ static unsigned getLoadStoreRegOpcode(unsigned Reg,
   case 10:
     assert(X86::RFP80RegClass.hasSubClassEq(RC) && "Unknown 10-byte regclass");
     return load ? X86::LD_Fp80m : X86::ST_FpP80m;
-  case 16:
+  case 16: {
     assert(X86::VR128RegClass.hasSubClassEq(RC) && "Unknown 16-byte regclass");
+    bool HasAVX = TM.getSubtarget<X86Subtarget>().hasAVX();
     // If stack is realigned we can use aligned stores.
     if (isStackAligned)
-      return load ? X86::MOVAPSrm : X86::MOVAPSmr;
+      return load ?
+        (HasAVX ? X86::VMOVAPSrm : X86::MOVAPSrm) :
+        (HasAVX ? X86::VMOVAPSmr : X86::MOVAPSmr);
     else
-      return load ? X86::MOVUPSrm : X86::MOVUPSmr;
+      return load ?
+        (HasAVX ? X86::VMOVUPSrm : X86::MOVUPSrm) :
+        (HasAVX ? X86::VMOVUPSmr : X86::MOVUPSmr);
+  }
   case 32:
     assert(X86::VR256RegClass.hasSubClassEq(RC) && "Unknown 32-byte regclass");
     // If stack is realigned we can use aligned stores.
