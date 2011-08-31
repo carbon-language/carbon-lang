@@ -3004,9 +3004,7 @@ getMnemonicAcceptInfo(StringRef Mnemonic, bool &CanAcceptCarrySet,
       Mnemonic == "rsb" || Mnemonic == "rsc" || Mnemonic == "orn" ||
       Mnemonic == "sbc" || Mnemonic == "mla" || Mnemonic == "umull" ||
       Mnemonic == "eor" || Mnemonic == "smlal" || Mnemonic == "neg" ||
-      // FIXME: We need a better way. This really confused Thumb2
-      // parsing for 'mov'.
-      (Mnemonic == "mov" && !isThumbOne())) {
+      (Mnemonic == "mov" && !isThumb())) {
     CanAcceptCarrySet = true;
   } else {
     CanAcceptCarrySet = false;
