@@ -3478,6 +3478,11 @@ processInstruction(MCInst &Inst,
     if (Inst.getOperand(3).getImm() < 8 && Operands.size() == 6)
       Inst.setOpcode(ARM::tADDi3);
     break;
+  case ARM::t2Bcc:
+    // If the conditional is AL, we really want t2B.
+    if (Inst.getOperand(1).getImm() == ARMCC::AL)
+      Inst.setOpcode(ARM::t2B);
+    break;
   case ARM::tBcc:
     // If the conditional is AL, we really want tB.
     if (Inst.getOperand(1).getImm() == ARMCC::AL)
