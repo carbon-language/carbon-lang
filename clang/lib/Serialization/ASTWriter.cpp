@@ -3865,6 +3865,8 @@ void ASTWriter::AddCXXDefinitionData(const CXXRecordDecl *D, RecordDataImpl &Rec
   Record.push_back(Data.DeclaredCopyConstructor);
   Record.push_back(Data.DeclaredCopyAssignment);
   Record.push_back(Data.DeclaredDestructor);
+  Record.push_back(Data.FailedImplicitMoveConstructor);
+  Record.push_back(Data.FailedImplicitMoveAssignment);
 
   Record.push_back(Data.NumBases);
   if (Data.NumBases > 0)

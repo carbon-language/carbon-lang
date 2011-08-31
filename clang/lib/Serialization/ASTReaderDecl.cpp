@@ -880,6 +880,8 @@ void ASTDeclReader::ReadCXXDefinitionData(
   Data.DeclaredCopyConstructor = Record[Idx++];
   Data.DeclaredCopyAssignment = Record[Idx++];
   Data.DeclaredDestructor = Record[Idx++];
+  Data.FailedImplicitMoveConstructor = Record[Idx++];
+  Data.FailedImplicitMoveAssignment = Record[Idx++];
 
   Data.NumBases = Record[Idx++];
   if (Data.NumBases)
