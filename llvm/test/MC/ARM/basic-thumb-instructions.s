@@ -114,6 +114,8 @@ _func:
         beq _bar
         b       #1838
         b       #-420
+        beq     #336
+        beq     #160
 
 @ CHECK: b	_baz                    @ encoding: [A,0xe0'A']
              @   fixup A - offset: 0, value: _baz, kind: fixup_arm_thumb_br
@@ -121,6 +123,8 @@ _func:
              @   fixup A - offset: 0, value: _bar, kind: fixup_arm_thumb_bcc
 @ CHECK: b       #1838                   @ encoding: [0x97,0xe3]
 @ CHECK: b       #-420                   @ encoding: [0x2e,0xe7]
+@ CHECK: beq     #336                    @ encoding: [0xa8,0xd0]
+@ CHECK: beq     #160                    @ encoding: [0x50,0xd0]
 
 @------------------------------------------------------------------------------
 @ BL/BLX
