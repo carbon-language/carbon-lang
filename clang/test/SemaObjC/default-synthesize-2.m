@@ -1,0 +1,118 @@
+// RUN: %clang_cc1 -x objective-c -fsyntax-only -fobjc-nonfragile-abi -fobjc-default-synthesize-properties -verify %s
+// RUN: %clang_cc1 -x objective-c++ -fsyntax-only -fobjc-nonfragile-abi -fobjc-default-synthesize-properties -verify %s
+// rdar://8843851
+
+@interface StopAccessingIvarsDirectlyExample
+@property(strong) id name, rank, serialNumber;
+@end
+
+@implementation StopAccessingIvarsDirectlyExample
+
+- (void)identifyYourSelf {
+    if (self.name && self.rank && self.serialNumber)
+      self.name = 0;
+}
+
+// @synthesize name, rank, serialNumber;
+// default synthesis allows direct access to property ivars.
+- (id)init {
+        name = rank = serialNumber = 0;
+	return self;
+}
+
+- (void)dealloc {	
+}
+@end
+
+
+// Test2
+@interface Test2 
+@property(strong, nonatomic) id object;
+@end
+
+// object has user declared setter/getter so it won't be
+// default synthesized; thus causing user error.
+@implementation Test2
+- (id) bar { return object; } // expected-error {{use of undeclared identifier 'object'}}
+- (void)setObject:(id)newObject {}
+- (id)object { return 0; }
+@end
+
+// Test3
+@interface Test3 
+{ 
+  id _uid; 
+} 
+@property (readwrite, assign) id uid; 
+@end
+
+@implementation Test3
+// Oops, forgot to write @synthesize! will be default synthesized
+- (void) myMethod { 
+   self.uid = 0; // Use of the “setter” 
+   _uid = 0; // Use of the wrong instance variable
+   uid = 0; // Use of the property instance variable
+} 
+@end
+
+@interface Test4 { 
+  id _var;
+} 
+@property (readwrite, assign) id var; 
+@end
+
+
+// default synthesize property named 'var'
+@implementation Test4 
+- (id) myMethod {
+  return self->var;  //  compiles because 'var' is synthesized by default
+}
+@end
+
+@interface Test5 
+{ 
+  id _var;
+} 
+@property (readwrite, assign) id var; 
+@end
+
+// default synthesis of property 'var'
+@implementation Test5 
+- (id) myMethod {
+  Test5 *foo = 0; 
+  return foo->var; // OK
+} 
+@end
+
+@interface Test6 
+{ 
+  id _var; // expected-note {{'_var' declared here}}
+} 
+@property (readwrite, assign) id var; 
+@end
+
+// no default synthesis. So error is expected.
+@implementation Test6 
+- (id) myMethod 
+{
+  return var; // expected-error {{use of undeclared identifier 'var'}}
+} 
+@synthesize var = _var; 
+@end
+
+int* object;
+
+@interface Test7 {
+id _object;
+} 
+@property (readwrite, assign) id object; 
+@end
+
+// With default synthesis, 'object' is be the synthesized ivar not the global
+// 'int*' object. So no error.
+@implementation Test7 
+- (id) myMethod {
+  return object;
+} 
+@end
+
