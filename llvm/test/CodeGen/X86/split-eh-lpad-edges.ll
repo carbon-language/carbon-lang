@@ -28,7 +28,11 @@ invcont27:		; preds = %invcont26
 
 lpad:		; preds = %invcont26, %invcont, %entry
 	%pool.1 = phi %struct.NSAutoreleasePool* [ null, %entry ], [ null, %invcont ], [ null, %invcont26 ]		; <%struct.NSAutoreleasePool*> [#uses=0]
+        %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+                 cleanup
 	unreachable
 }
 
 declare %struct.NSObject* @objc_msgSend(%struct.NSObject*, %struct.objc_selector*, ...)
+
+declare i32 @__gxx_personality_v0(...)

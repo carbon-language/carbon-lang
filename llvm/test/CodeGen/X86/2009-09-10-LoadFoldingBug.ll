@@ -34,6 +34,8 @@ invcont2:                                         ; preds = %invcont1
   ret i32 0
 
 lpad:                                             ; preds = %invcont1, %invcont, %entry
+  %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+            cleanup
   %8 = call i32 @vm_deallocate(i32 undef, i64 0, i64 %0) ; <i32> [#uses=0]
   unreachable
 }
@@ -45,3 +47,5 @@ declare i8* @pluginInstance(i8*, i32)
 declare zeroext i8 @invoke(i8*, i32, i8*, i64, i32, i64*, i32*)
 
 declare void @booleanAndDataReply(i32, i32, i32, i32, i64, i32)
+
+declare i32 @__gxx_personality_v0(...)

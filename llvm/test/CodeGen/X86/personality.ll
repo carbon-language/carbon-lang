@@ -8,6 +8,8 @@ entry:
           to label %return unwind label %unwind
 
 unwind:                                           ; preds = %entry
+  %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+            cleanup
   br i1 false, label %eh_then, label %cleanup20
 
 eh_then:                                          ; preds = %unwind
@@ -15,7 +17,9 @@ eh_then:                                          ; preds = %unwind
           to label %return unwind label %unwind10
 
 unwind10:                                         ; preds = %eh_then
-  %upgraded.eh_select13 = tail call i32 (i8*, i8*, ...)* @llvm.eh.selector(i8* null, i8* bitcast (void ()* @__gxx_personality_v0 to i8*), i32 1)
+  %exn10 = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+            filter
+  %upgraded.eh_select13 = extractvalue { i8*, i32 } %exn10, 1
   %upgraded.eh_select131 = sext i32 %upgraded.eh_select13 to i64
   %tmp18 = icmp slt i64 %upgraded.eh_select131, 0
   br i1 %tmp18, label %filter, label %cleanup20
@@ -38,6 +42,8 @@ declare void @__gxx_personality_v0()
 declare void @__cxa_end_catch()
 
 declare i32 @llvm.eh.selector(i8*, i8*, ...) nounwind
+
+declare i32 @__gxx_personality_v0(...)
 
 ; X64:      zPLR
 ; X64:      .byte 155

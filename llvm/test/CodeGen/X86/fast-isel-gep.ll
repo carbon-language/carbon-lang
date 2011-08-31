@@ -104,6 +104,8 @@ invoke.cont16:                                    ; preds = %if.then14
   unreachable
 
 lpad:                                             ; preds = %if.end19, %if.then14, %if.end, %entry
+  %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+            cleanup
   unreachable
 }
 declare i8* @_ZNK18G__FastAllocString4dataEv() nounwind
@@ -134,3 +136,4 @@ F:
   ret i32 4
 }
 
+declare i32 @__gxx_personality_v0(...)

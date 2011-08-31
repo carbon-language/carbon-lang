@@ -18,10 +18,13 @@ bb15:
   ret i32 %B
 
 lpad86:
+  %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+           cleanup
   br label %bb15
   
 }
 
+declare i32 @__gxx_personality_v0(...)
 
 
 define i32 @test2() {

@@ -151,8 +151,12 @@ bb7819:		; preds = %bb3314
 bb7834:		; preds = %bb7806, %invcont5831
 	br label %bb3261
 lpad:		; preds = %bb7806, %bb5968, %invcont5814, %bb440.i8663, %bb155.i8541, %bb5657, %bb3306
+        %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+                 cleanup
 	ret void
 lpad8185:		; preds = %invcont5831
+        %exn8185 = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+                 cleanup
 	ret void
 }
 
@@ -169,3 +173,5 @@ declare %struct.wxStringBase* @_ZN12wxStringBase6appendEmw(%struct.wxStringBase*
 declare %struct.wxStringBase* @_ZN12wxStringBaseaSEPKw(%struct.wxStringBase*, i32*)
 
 declare void @_ZN8wxString6FormatEPKwz(%struct.wxString* noalias sret , i32*, ...)
+
+declare i32 @__gxx_personality_v0(...)

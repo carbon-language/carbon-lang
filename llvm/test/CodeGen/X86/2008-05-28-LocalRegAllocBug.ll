@@ -23,8 +23,12 @@ tmp12.i.i.i.i.i.noexc65:		; preds = %bb37
 	unreachable
 
 lpad243:		; preds = %bb37
-	%eh_ptr244 = call i8* @llvm.eh.exception( )		; <i8*> [#uses=1]
+        %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+                 cleanup
+	%eh_ptr244 = extractvalue { i8*, i32 } %exn, 0
 	store i32 (...)** getelementptr ([5 x i32 (...)*]* @_ZTVN10Evaluation10GridOutputILi3EEE, i32 0, i32 2), i32 (...)*** null, align 8
 	%tmp133 = call i8* @__cxa_begin_catch( i8* %eh_ptr244 ) nounwind 		; <i8*> [#uses=0]
 	unreachable
 }
+
+declare i32 @__gxx_personality_v0(...)
