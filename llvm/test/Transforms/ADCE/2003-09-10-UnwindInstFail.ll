@@ -8,7 +8,9 @@ then:           ; preds = %0
                         to label %invoke_cont unwind label %invoke_catch
 
 invoke_catch:           ; preds = %then
-        unwind
+        %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+                 cleanup
+        resume { i8*, i32 } %exn
 
 invoke_cont:            ; preds = %then
         ret void
@@ -17,3 +19,4 @@ endif:          ; preds = %0
         ret void
 }
 
+declare i32 @__gxx_personality_v0(...)
