@@ -696,7 +696,98 @@ let Predicates = [HasSSE2] in
   def : Pat<(int_x86_sse2_storeu_pd addr:$dst, VR128:$src),
             (MOVUPDmr addr:$dst, VR128:$src)>;
 
-// Move Low/High packed floating point values
+// Use movaps / movups for SSE integer load / store (one byte shorter).
+// The instructions selected below are then converted to MOVDQA/MOVDQU
+// during the SSE domain pass.
+let Predicates = [HasSSE1] in {
+  def : Pat<(alignedloadv4i32 addr:$src),
+            (MOVAPSrm addr:$src)>;
+  def : Pat<(loadv4i32 addr:$src),
+            (MOVUPSrm addr:$src)>;
+  def : Pat<(alignedloadv2i64 addr:$src),
+            (MOVAPSrm addr:$src)>;
+  def : Pat<(loadv2i64 addr:$src),
+            (MOVUPSrm addr:$src)>;
+
+  def : Pat<(alignedstore (v2i64 VR128:$src), addr:$dst),
+            (MOVAPSmr addr:$dst, VR128:$src)>;
+  def : Pat<(alignedstore (v4i32 VR128:$src), addr:$dst),
+            (MOVAPSmr addr:$dst, VR128:$src)>;
+  def : Pat<(alignedstore (v8i16 VR128:$src), addr:$dst),
+            (MOVAPSmr addr:$dst, VR128:$src)>;
+  def : Pat<(alignedstore (v16i8 VR128:$src), addr:$dst),
+            (MOVAPSmr addr:$dst, VR128:$src)>;
+  def : Pat<(store (v2i64 VR128:$src), addr:$dst),
+            (MOVUPSmr addr:$dst, VR128:$src)>;
+  def : Pat<(store (v4i32 VR128:$src), addr:$dst),
+            (MOVUPSmr addr:$dst, VR128:$src)>;
+  def : Pat<(store (v8i16 VR128:$src), addr:$dst),
+            (MOVUPSmr addr:$dst, VR128:$src)>;
+  def : Pat<(store (v16i8 VR128:$src), addr:$dst),
+            (MOVUPSmr addr:$dst, VR128:$src)>;
+}
+
+// Use vmovaps/vmovups for AVX integer load/store.
+let Predicates = [HasAVX] in {
+  // 128-bit load/store
+  def : Pat<(alignedloadv4i32 addr:$src),
+            (VMOVAPSrm addr:$src)>;
+  def : Pat<(loadv4i32 addr:$src),
+            (VMOVUPSrm addr:$src)>;
+  def : Pat<(alignedloadv2i64 addr:$src),
+            (VMOVAPSrm addr:$src)>;
+  def : Pat<(loadv2i64 addr:$src),
+            (VMOVUPSrm addr:$src)>;
+
+  def : Pat<(alignedstore (v2i64 VR128:$src), addr:$dst),
+            (VMOVAPSmr addr:$dst, VR128:$src)>;
+  def : Pat<(alignedstore (v4i32 VR128:$src), addr:$dst),
+            (VMOVAPSmr addr:$dst, VR128:$src)>;
+  def : Pat<(alignedstore (v8i16 VR128:$src), addr:$dst),
+            (VMOVAPSmr addr:$dst, VR128:$src)>;
+  def : Pat<(alignedstore (v16i8 VR128:$src), addr:$dst),
+            (VMOVAPSmr addr:$dst, VR128:$src)>;
+  def : Pat<(store (v2i64 VR128:$src), addr:$dst),
+            (VMOVUPSmr addr:$dst, VR128:$src)>;
+  def : Pat<(store (v4i32 VR128:$src), addr:$dst),
+            (VMOVUPSmr addr:$dst, VR128:$src)>;
+  def : Pat<(store (v8i16 VR128:$src), addr:$dst),
+            (VMOVUPSmr addr:$dst, VR128:$src)>;
+  def : Pat<(store (v16i8 VR128:$src), addr:$dst),
+            (VMOVUPSmr addr:$dst, VR128:$src)>;
+
+  // 256-bit load/store
+  def : Pat<(alignedloadv4i64 addr:$src),
+            (VMOVAPSYrm addr:$src)>;
+  def : Pat<(loadv4i64 addr:$src),
+            (VMOVUPSYrm addr:$src)>;
+  def : Pat<(alignedloadv8i32 addr:$src),
+            (VMOVAPSYrm addr:$src)>;
+  def : Pat<(loadv8i32 addr:$src),
+            (VMOVUPSYrm addr:$src)>;
+  def : Pat<(alignedstore (v4i64 VR256:$src), addr:$dst),
+            (VMOVAPSYmr addr:$dst, VR256:$src)>;
+  def : Pat<(alignedstore (v8i32 VR256:$src), addr:$dst),
+            (VMOVAPSYmr addr:$dst, VR256:$src)>;
+  def : Pat<(alignedstore (v16i16 VR256:$src), addr:$dst),
+            (VMOVAPSYmr addr:$dst, VR256:$src)>;
+  def : Pat<(alignedstore (v32i8 VR256:$src), addr:$dst),
+            (VMOVAPSYmr addr:$dst, VR256:$src)>;
+  def : Pat<(store (v4i64 VR256:$src), addr:$dst),
+            (VMOVUPSYmr addr:$dst, VR256:$src)>;
+  def : Pat<(store (v8i32 VR256:$src), addr:$dst),
+            (VMOVUPSYmr addr:$dst, VR256:$src)>;
+  def : Pat<(store (v16i16 VR256:$src), addr:$dst),
+            (VMOVUPSYmr addr:$dst, VR256:$src)>;
+  def : Pat<(store (v32i8 VR256:$src), addr:$dst),
+            (VMOVUPSYmr addr:$dst, VR256:$src)>;
+}
+
+
+//===----------------------------------------------------------------------===//
+// SSE 1 & 2 - Move Low/High packed FP Instructions
+//===----------------------------------------------------------------------===//
+
 multiclass sse12_mov_hilo_packed<bits<8>opc, RegisterClass RC,
                                  PatFrag mov_frag, string base_opc,
                                  string asm_opr> {
@@ -4583,93 +4674,6 @@ def : Pat<(store (v2i64 (movlp (load addr:$src1), VR128:$src2)), addr:$src1),
 // Set lowest element and zero upper elements.
 def : Pat<(v2f64 (X86vzmovl (v2f64 VR128:$src))),
           (MOVZPQILo2PQIrr VR128:$src)>, Requires<[HasSSE2]>;
-
-// Use movaps / movups for SSE integer load / store (one byte shorter).
-// The instructions selected below are then converted to MOVDQA/MOVDQU
-// during the SSE domain pass.
-let Predicates = [HasSSE1] in {
-  def : Pat<(alignedloadv4i32 addr:$src),
-            (MOVAPSrm addr:$src)>;
-  def : Pat<(loadv4i32 addr:$src),
-            (MOVUPSrm addr:$src)>;
-  def : Pat<(alignedloadv2i64 addr:$src),
-            (MOVAPSrm addr:$src)>;
-  def : Pat<(loadv2i64 addr:$src),
-            (MOVUPSrm addr:$src)>;
-
-  def : Pat<(alignedstore (v2i64 VR128:$src), addr:$dst),
-            (MOVAPSmr addr:$dst, VR128:$src)>;
-  def : Pat<(alignedstore (v4i32 VR128:$src), addr:$dst),
-            (MOVAPSmr addr:$dst, VR128:$src)>;
-  def : Pat<(alignedstore (v8i16 VR128:$src), addr:$dst),
-            (MOVAPSmr addr:$dst, VR128:$src)>;
-  def : Pat<(alignedstore (v16i8 VR128:$src), addr:$dst),
-            (MOVAPSmr addr:$dst, VR128:$src)>;
-  def : Pat<(store (v2i64 VR128:$src), addr:$dst),
-            (MOVUPSmr addr:$dst, VR128:$src)>;
-  def : Pat<(store (v4i32 VR128:$src), addr:$dst),
-            (MOVUPSmr addr:$dst, VR128:$src)>;
-  def : Pat<(store (v8i16 VR128:$src), addr:$dst),
-            (MOVUPSmr addr:$dst, VR128:$src)>;
-  def : Pat<(store (v16i8 VR128:$src), addr:$dst),
-            (MOVUPSmr addr:$dst, VR128:$src)>;
-}
-
-// Use vmovaps/vmovups for AVX integer load/store.
-let Predicates = [HasAVX] in {
-  // 128-bit load/store
-  def : Pat<(alignedloadv4i32 addr:$src),
-            (VMOVAPSrm addr:$src)>;
-  def : Pat<(loadv4i32 addr:$src),
-            (VMOVUPSrm addr:$src)>;
-  def : Pat<(alignedloadv2i64 addr:$src),
-            (VMOVAPSrm addr:$src)>;
-  def : Pat<(loadv2i64 addr:$src),
-            (VMOVUPSrm addr:$src)>;
-
-  def : Pat<(alignedstore (v2i64 VR128:$src), addr:$dst),
-            (VMOVAPSmr addr:$dst, VR128:$src)>;
-  def : Pat<(alignedstore (v4i32 VR128:$src), addr:$dst),
-            (VMOVAPSmr addr:$dst, VR128:$src)>;
-  def : Pat<(alignedstore (v8i16 VR128:$src), addr:$dst),
-            (VMOVAPSmr addr:$dst, VR128:$src)>;
-  def : Pat<(alignedstore (v16i8 VR128:$src), addr:$dst),
-            (VMOVAPSmr addr:$dst, VR128:$src)>;
-  def : Pat<(store (v2i64 VR128:$src), addr:$dst),
-            (VMOVUPSmr addr:$dst, VR128:$src)>;
-  def : Pat<(store (v4i32 VR128:$src), addr:$dst),
-            (VMOVUPSmr addr:$dst, VR128:$src)>;
-  def : Pat<(store (v8i16 VR128:$src), addr:$dst),
-            (VMOVUPSmr addr:$dst, VR128:$src)>;
-  def : Pat<(store (v16i8 VR128:$src), addr:$dst),
-            (VMOVUPSmr addr:$dst, VR128:$src)>;
-
-  // 256-bit load/store
-  def : Pat<(alignedloadv4i64 addr:$src),
-            (VMOVAPSYrm addr:$src)>;
-  def : Pat<(loadv4i64 addr:$src),
-            (VMOVUPSYrm addr:$src)>;
-  def : Pat<(alignedloadv8i32 addr:$src),
-            (VMOVAPSYrm addr:$src)>;
-  def : Pat<(loadv8i32 addr:$src),
-            (VMOVUPSYrm addr:$src)>;
-  def : Pat<(alignedstore (v4i64 VR256:$src), addr:$dst),
-            (VMOVAPSYmr addr:$dst, VR256:$src)>;
-  def : Pat<(alignedstore (v8i32 VR256:$src), addr:$dst),
-            (VMOVAPSYmr addr:$dst, VR256:$src)>;
-  def : Pat<(alignedstore (v16i16 VR256:$src), addr:$dst),
-            (VMOVAPSYmr addr:$dst, VR256:$src)>;
-  def : Pat<(alignedstore (v32i8 VR256:$src), addr:$dst),
-            (VMOVAPSYmr addr:$dst, VR256:$src)>;
-  def : Pat<(store (v4i64 VR256:$src), addr:$dst),
-            (VMOVUPSYmr addr:$dst, VR256:$src)>;
-  def : Pat<(store (v8i32 VR256:$src), addr:$dst),
-            (VMOVUPSYmr addr:$dst, VR256:$src)>;
-  def : Pat<(store (v16i16 VR256:$src), addr:$dst),
-            (VMOVUPSYmr addr:$dst, VR256:$src)>;
-  def : Pat<(store (v32i8 VR256:$src), addr:$dst),
-            (VMOVUPSYmr addr:$dst, VR256:$src)>;
-}
 
 //===----------------------------------------------------------------------===//
 // SSE4.1 - Packed Move with Sign/Zero Extend
