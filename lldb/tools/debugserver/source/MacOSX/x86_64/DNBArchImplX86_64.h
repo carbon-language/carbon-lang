@@ -236,7 +236,7 @@ protected:
     // Helper functions for watchpoint manipulations.
     static void SetWatchpoint(DBG &debug_state, uint32_t hw_index, nub_addr_t addr, nub_size_t size, bool read, bool write);
     static void ClearWatchpoint(DBG &debug_state, uint32_t hw_index);
-    static bool IsVacantWatchpoint(const DBG &debug_state, uint32_t hw_index);
+    static bool IsWatchpointVacant(const DBG &debug_state, uint32_t hw_index);
     static void ClearWatchpointHits(DBG &debug_state);
     static bool IsWatchpointHit(const DBG &debug_state, uint32_t hw_index);
 

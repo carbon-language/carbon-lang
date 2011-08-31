@@ -720,7 +720,7 @@ DNBArchImplI386::ClearWatchpoint(DBG &debug_state, uint32_t hw_index)
 }
 
 bool
-DNBArchImplI386::IsVacantWatchpoint(const DBG &debug_state, uint32_t hw_index)
+DNBArchImplI386::IsWatchpointVacant(const DBG &debug_state, uint32_t hw_index)
 {
     // Check dr7 (debug control register) for local/global enable bits:
     //  global enable --. .-- local enable
@@ -782,7 +782,7 @@ DNBArchImplI386::EnableHardwareWatchpoint (nub_addr_t addr, nub_size_t size, boo
         DBG debug_state = m_state.context.dbg;
         for (i = 0; i < num_hw_watchpoints; ++i)
         {
-            if (IsVacantWatchpoint(debug_state, i))
+            if (IsWatchpointVacant(debug_state, i))
                 break;
         }
 
@@ -815,7 +815,7 @@ DNBArchImplI386::DisableHardwareWatchpoint (uint32_t hw_index)
     if (kret == KERN_SUCCESS)
     {
         DBG debug_state = m_state.context.dbg;
-        if (hw_index < num_hw_points && !IsVacantWatchpoint(debug_state, hw_index))
+        if (hw_index < num_hw_points && !IsWatchpointVacant(debug_state, hw_index))
         {
             // Modify our local copy of the debug state, first.
             ClearWatchpoint(debug_state, hw_index);
