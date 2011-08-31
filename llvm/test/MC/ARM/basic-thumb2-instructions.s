@@ -38,6 +38,28 @@ _func:
 @ CHECK: adc	r4, r2, #1664           @ encoding: [0x42,0xf5,0xd0,0x64]
 
 @------------------------------------------------------------------------------
+@ ADC (register)
+@------------------------------------------------------------------------------
+        adc r4, r5, r6
+        adcs r4, r5, r6
+        adc.w r9, r1, r3
+        adcs.w r9, r1, r3
+        adc	r0, r1, r3, ror #4
+        adcs	r0, r1, r3, lsl #7
+        adc.w	r0, r1, r3, lsr #31
+        adcs.w	r0, r1, r3, asr #32
+
+@ CHECK: adc.w	r4, r5, r6              @ encoding: [0x45,0xeb,0x06,0x04]
+@ CHECK: adcs.w	r4, r5, r6              @ encoding: [0x55,0xeb,0x06,0x04]
+@ CHECK: adc.w	r9, r1, r3              @ encoding: [0x41,0xeb,0x03,0x09]
+@ CHECK: adcs.w	r9, r1, r3              @ encoding: [0x51,0xeb,0x03,0x09]
+@ CHECK: adc.w	r0, r1, r3, ror #4      @ encoding: [0x41,0xeb,0x33,0x10]
+@ CHECK: adcs.w	r0, r1, r3, lsl #7      @ encoding: [0x51,0xeb,0xc3,0x10]
+@ CHECK: adc.w	r0, r1, r3, lsr #31     @ encoding: [0x41,0xeb,0xd3,0x70]
+@ CHECK: adcs.w	r0, r1, r3, asr #32     @ encoding: [0x51,0xeb,0x23,0x00]
+
+
+@------------------------------------------------------------------------------
 @ CBZ/CBNZ
 @------------------------------------------------------------------------------
         cbnz    r7, #6
