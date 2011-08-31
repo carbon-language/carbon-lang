@@ -369,312 +369,380 @@ static SourceLocation getImmediateMacroCalleeLoc(const SourceManager &SM,
   return SM.getImmediateSpellingLoc(Loc);
 }
 
+namespace {
+
+/// \brief Class to encapsulate the logic for printing a caret diagnostic
+/// message.
+///
+/// This class provides an interface for building and emitting a caret
+/// diagnostic, including all of the macro backtrace caret diagnostics, FixIt
+/// Hints, and code snippets. In the presence of macros this turns into
+/// a recursive process and so the class provides common state across the
+/// emission of a particular diagnostic, while each invocation of \see Emit()
+/// walks down the macro stack.
+///
+/// This logic assumes that the core diagnostic location and text has already
+/// been emitted and focuses on emitting the pretty caret display and macro
+/// backtrace following that.
+///
+/// FIXME: Hoist helper routines specific to caret diagnostics into class
+/// methods to reduce paramater passing churn.
+class CaretDiagnostic {
+  TextDiagnosticPrinter &Printer;
+  raw_ostream &OS;
+  const SourceManager &SM;
+  const LangOptions &LangOpts;
+  const DiagnosticOptions &DiagOpts;
+  const unsigned Columns, MacroSkipStart, MacroSkipEnd;
+
+public:
+  CaretDiagnostic(TextDiagnosticPrinter &Printer,
+                  raw_ostream &OS,
+                  const SourceManager &SM,
+                  const LangOptions &LangOpts,
+                  const DiagnosticOptions &DiagOpts,
+                  unsigned Columns,
+                  unsigned MacroSkipStart,
+                  unsigned MacroSkipEnd)
+    : Printer(Printer), OS(OS), SM(SM), LangOpts(LangOpts), DiagOpts(DiagOpts),
+      Columns(Columns), MacroSkipStart(MacroSkipStart),
+      MacroSkipEnd(MacroSkipEnd) {
+  }
+
+  /// \brief Emit the caret diagnostic text.
+  ///
+  /// Walks up the macro expansion stack printing the code snippet, caret,
+  /// underlines and FixItHint display as appropriate at each level. Walk is
+  /// accomplished by calling itself recursively.
+  ///
+  /// FIXME: Switch parameters to ArrayRefs.
+  /// FIXME: Break up massive function into logical units.
+  ///
+  /// \param Loc The location for this caret.
+  /// \param Ranges The underlined ranges for this code snippet.
+  /// \param NumRanges The number of unlined ranges.
+  /// \param Hints The FixIt hints active for this diagnostic.
+  /// \param NumHints The number of hints active for this diagnostic.
+  /// \param OnMacroInst The current depth of the macro expansion stack.
+  void Emit(SourceLocation Loc,
+            CharSourceRange *Ranges,
+            unsigned NumRanges,
+            const FixItHint *Hints,
+            unsigned NumHints,
+            unsigned OnMacroInst = 0) {
+    assert(!Loc.isInvalid() && "must have a valid source location here");
+
+    // If this is a macro ID, first emit information about where this was
+    // expanded (recursively) then emit information about where the token was
+    // spelled from.
+    if (!Loc.isFileID()) {
+      // Whether to suppress printing this macro expansion.
+      bool Suppressed 
+        = OnMacroInst >= MacroSkipStart && OnMacroInst < MacroSkipEnd;
+
+      // When processing macros, skip over the expansions leading up to
+      // a macro argument, and trace the argument's expansion stack instead.
+      Loc = skipToMacroArgExpansion(SM, Loc);
+
+      SourceLocation OneLevelUp = getImmediateMacroCallerLoc(SM, Loc);
+
+      // FIXME: Map ranges?
+      Emit(OneLevelUp, Ranges, NumRanges, Hints, NumHints, OnMacroInst + 1);
+
+      // Map the location.
+      Loc = getImmediateMacroCalleeLoc(SM, Loc);
+
+      // Map the ranges.
+      for (unsigned i = 0; i != NumRanges; ++i) {
+        CharSourceRange &R = Ranges[i];
+        SourceLocation S = R.getBegin(), E = R.getEnd();
+        if (S.isMacroID())
+          R.setBegin(getImmediateMacroCalleeLoc(SM, S));
+        if (E.isMacroID())
+          R.setEnd(getImmediateMacroCalleeLoc(SM, E));
+      }
+
+      if (!Suppressed) {
+        // Don't print recursive expansion notes from an expansion note.
+        Loc = SM.getSpellingLoc(Loc);
+
+        // Get the pretty name, according to #line directives etc.
+        PresumedLoc PLoc = SM.getPresumedLoc(Loc);
+        if (PLoc.isInvalid())
+          return;
+
+        // If this diagnostic is not in the main file, print out the
+        // "included from" lines.
+        Printer.PrintIncludeStack(Diagnostic::Note, PLoc.getIncludeLoc(), SM);
+
+        if (DiagOpts.ShowLocation) {
+          // Emit the file/line/column that this expansion came from.
+          OS << PLoc.getFilename() << ':' << PLoc.getLine() << ':';
+          if (DiagOpts.ShowColumn)
+            OS << PLoc.getColumn() << ':';
+          OS << ' ';
+        }
+        OS << "note: expanded from:\n";
+
+        Emit(Loc, Ranges, NumRanges, 0, 0, OnMacroInst + 1);
+        return;
+      }
+
+      if (OnMacroInst == MacroSkipStart) {
+        // Tell the user that we've skipped contexts.
+        OS << "note: (skipping " << (MacroSkipEnd - MacroSkipStart) 
+        << " expansions in backtrace; use -fmacro-backtrace-limit=0 to see "
+        "all)\n";
+      }
+
+      return;
+    }
+
+    // Decompose the location into a FID/Offset pair.
+    std::pair<FileID, unsigned> LocInfo = SM.getDecomposedLoc(Loc);
+    FileID FID = LocInfo.first;
+    unsigned FileOffset = LocInfo.second;
+
+    // Get information about the buffer it points into.
+    bool Invalid = false;
+    const char *BufStart = SM.getBufferData(FID, &Invalid).data();
+    if (Invalid)
+      return;
+
+    unsigned ColNo = SM.getColumnNumber(FID, FileOffset);
+    unsigned CaretEndColNo
+      = ColNo + Lexer::MeasureTokenLength(Loc, SM, LangOpts);
+
+    // Rewind from the current position to the start of the line.
+    const char *TokPtr = BufStart+FileOffset;
+    const char *LineStart = TokPtr-ColNo+1; // Column # is 1-based.
+
+
+    // Compute the line end.  Scan forward from the error position to the end of
+    // the line.
+    const char *LineEnd = TokPtr;
+    while (*LineEnd != '\n' && *LineEnd != '\r' && *LineEnd != '\0')
+      ++LineEnd;
+
+    // FIXME: This shouldn't be necessary, but the CaretEndColNo can extend past
+    // the source line length as currently being computed. See
+    // test/Misc/message-length.c.
+    CaretEndColNo = std::min(CaretEndColNo, unsigned(LineEnd - LineStart));
+
+    // Copy the line of code into an std::string for ease of manipulation.
+    std::string SourceLine(LineStart, LineEnd);
+
+    // Create a line for the caret that is filled with spaces that is the same
+    // length as the line of source code.
+    std::string CaretLine(LineEnd-LineStart, ' ');
+
+    // Highlight all of the characters covered by Ranges with ~ characters.
+    if (NumRanges) {
+      unsigned LineNo = SM.getLineNumber(FID, FileOffset);
+
+      for (unsigned i = 0, e = NumRanges; i != e; ++i)
+        Printer.HighlightRange(Ranges[i], SM, LineNo, FID, CaretLine,
+                               SourceLine);
+    }
+
+    // Next, insert the caret itself.
+    if (ColNo-1 < CaretLine.size())
+      CaretLine[ColNo-1] = '^';
+    else
+      CaretLine.push_back('^');
+
+    // Scan the source line, looking for tabs.  If we find any, manually expand
+    // them to spaces and update the CaretLine to match.
+    for (unsigned i = 0; i != SourceLine.size(); ++i) {
+      if (SourceLine[i] != '\t') continue;
+
+      // Replace this tab with at least one space.
+      SourceLine[i] = ' ';
+
+      // Compute the number of spaces we need to insert.
+      unsigned TabStop = DiagOpts.TabStop;
+      assert(0 < TabStop && TabStop <= DiagnosticOptions::MaxTabStop &&
+             "Invalid -ftabstop value");
+      unsigned NumSpaces = ((i+TabStop)/TabStop * TabStop) - (i+1);
+      assert(NumSpaces < TabStop && "Invalid computation of space amt");
+
+      // Insert spaces into the SourceLine.
+      SourceLine.insert(i+1, NumSpaces, ' ');
+
+      // Insert spaces or ~'s into CaretLine.
+      CaretLine.insert(i+1, NumSpaces, CaretLine[i] == '~' ? '~' : ' ');
+    }
+
+    // If we are in -fdiagnostics-print-source-range-info mode, we are trying
+    // to produce easily machine parsable output.  Add a space before the
+    // source line and the caret to make it trivial to tell the main diagnostic
+    // line from what the user is intended to see.
+    if (DiagOpts.ShowSourceRanges) {
+      SourceLine = ' ' + SourceLine;
+      CaretLine = ' ' + CaretLine;
+    }
+
+    std::string FixItInsertionLine;
+    if (NumHints && DiagOpts.ShowFixits) {
+      for (const FixItHint *Hint = Hints, *LastHint = Hints + NumHints;
+           Hint != LastHint; ++Hint) {
+        if (!Hint->CodeToInsert.empty()) {
+          // We have an insertion hint. Determine whether the inserted
+          // code is on the same line as the caret.
+          std::pair<FileID, unsigned> HintLocInfo
+            = SM.getDecomposedExpansionLoc(Hint->RemoveRange.getBegin());
+          if (SM.getLineNumber(HintLocInfo.first, HintLocInfo.second) ==
+                SM.getLineNumber(FID, FileOffset)) {
+            // Insert the new code into the line just below the code
+            // that the user wrote.
+            unsigned HintColNo
+              = SM.getColumnNumber(HintLocInfo.first, HintLocInfo.second);
+            unsigned LastColumnModified
+              = HintColNo - 1 + Hint->CodeToInsert.size();
+            if (LastColumnModified > FixItInsertionLine.size())
+              FixItInsertionLine.resize(LastColumnModified, ' ');
+            std::copy(Hint->CodeToInsert.begin(), Hint->CodeToInsert.end(),
+                      FixItInsertionLine.begin() + HintColNo - 1);
+          } else {
+            FixItInsertionLine.clear();
+            break;
+          }
+        }
+      }
+      // Now that we have the entire fixit line, expand the tabs in it.
+      // Since we don't want to insert spaces in the middle of a word,
+      // find each word and the column it should line up with and insert
+      // spaces until they match.
+      if (!FixItInsertionLine.empty()) {
+        unsigned FixItPos = 0;
+        unsigned LinePos = 0;
+        unsigned TabExpandedCol = 0;
+        unsigned LineLength = LineEnd - LineStart;
+
+        while (FixItPos < FixItInsertionLine.size() && LinePos < LineLength) {
+          // Find the next word in the FixIt line.
+          while (FixItPos < FixItInsertionLine.size() &&
+                 FixItInsertionLine[FixItPos] == ' ')
+            ++FixItPos;
+          unsigned CharDistance = FixItPos - TabExpandedCol;
+
+          // Walk forward in the source line, keeping track of
+          // the tab-expanded column.
+          for (unsigned I = 0; I < CharDistance; ++I, ++LinePos)
+            if (LinePos >= LineLength || LineStart[LinePos] != '\t')
+              ++TabExpandedCol;
+            else
+              TabExpandedCol =
+                (TabExpandedCol/DiagOpts.TabStop + 1) * DiagOpts.TabStop;
+
+          // Adjust the fixit line to match this column.
+          FixItInsertionLine.insert(FixItPos, TabExpandedCol-FixItPos, ' ');
+          FixItPos = TabExpandedCol;
+
+          // Walk to the end of the word.
+          while (FixItPos < FixItInsertionLine.size() &&
+                 FixItInsertionLine[FixItPos] != ' ')
+            ++FixItPos;
+        }
+      }
+    }
+
+    // If the source line is too long for our terminal, select only the
+    // "interesting" source region within that line.
+    if (Columns && SourceLine.size() > Columns)
+      SelectInterestingSourceRegion(SourceLine, CaretLine, FixItInsertionLine,
+                                    CaretEndColNo, Columns);
+
+    // Finally, remove any blank spaces from the end of CaretLine.
+    while (CaretLine[CaretLine.size()-1] == ' ')
+      CaretLine.erase(CaretLine.end()-1);
+
+    // Emit what we have computed.
+    OS << SourceLine << '\n';
+
+    if (DiagOpts.ShowColors)
+      OS.changeColor(caretColor, true);
+    OS << CaretLine << '\n';
+    if (DiagOpts.ShowColors)
+      OS.resetColor();
+
+    if (!FixItInsertionLine.empty()) {
+      if (DiagOpts.ShowColors)
+        // Print fixit line in color
+        OS.changeColor(fixitColor, false);
+      if (DiagOpts.ShowSourceRanges)
+        OS << ' ';
+      OS << FixItInsertionLine << '\n';
+      if (DiagOpts.ShowColors)
+        OS.resetColor();
+    }
+
+    if (DiagOpts.ShowParseableFixits) {
+
+      // We follow FixItRewriter's example in not (yet) handling
+      // fix-its in macros.
+      bool BadApples = false;
+      for (const FixItHint *Hint = Hints; Hint != Hints + NumHints; ++Hint) {
+        if (Hint->RemoveRange.isInvalid() ||
+            Hint->RemoveRange.getBegin().isMacroID() ||
+            Hint->RemoveRange.getEnd().isMacroID()) {
+          BadApples = true;
+          break;
+        }
+      }
+
+      if (!BadApples) {
+        for (const FixItHint *Hint = Hints; Hint != Hints + NumHints; ++Hint) {
+
+          SourceLocation B = Hint->RemoveRange.getBegin();
+          SourceLocation E = Hint->RemoveRange.getEnd();
+
+          std::pair<FileID, unsigned> BInfo = SM.getDecomposedLoc(B);
+          std::pair<FileID, unsigned> EInfo = SM.getDecomposedLoc(E);
+
+          // Adjust for token ranges.
+          if (Hint->RemoveRange.isTokenRange())
+            EInfo.second += Lexer::MeasureTokenLength(E, SM, LangOpts);
+
+          // We specifically do not do word-wrapping or tab-expansion here,
+          // because this is supposed to be easy to parse.
+          PresumedLoc PLoc = SM.getPresumedLoc(B);
+          if (PLoc.isInvalid())
+            break;
+
+          OS << "fix-it:\"";
+          OS.write_escaped(SM.getPresumedLoc(B).getFilename());
+          OS << "\":{" << SM.getLineNumber(BInfo.first, BInfo.second)
+            << ':' << SM.getColumnNumber(BInfo.first, BInfo.second)
+            << '-' << SM.getLineNumber(EInfo.first, EInfo.second)
+            << ':' << SM.getColumnNumber(EInfo.first, EInfo.second)
+            << "}:\"";
+          OS.write_escaped(Hint->CodeToInsert);
+          OS << "\"\n";
+        }
+      }
+    }
+  }
+};
+
+} // end namespace
+
 void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
                                                 CharSourceRange *Ranges,
                                                 unsigned NumRanges,
                                                 const SourceManager &SM,
                                                 const FixItHint *Hints,
                                                 unsigned NumHints,
-                                                unsigned Columns,  
-                                                unsigned OnMacroInst,
+                                                unsigned Columns,
                                                 unsigned MacroSkipStart,
                                                 unsigned MacroSkipEnd) {
   assert(LangOpts && "Unexpected diagnostic outside source file processing");
-  assert(!Loc.isInvalid() && "must have a valid source location here");
-
-  // If this is a macro ID, first emit information about where this was
-  // expanded (recursively) then emit information about where the token was
-  // spelled from.
-  if (!Loc.isFileID()) {
-    // Whether to suppress printing this macro expansion.
-    bool Suppressed 
-      = OnMacroInst >= MacroSkipStart && OnMacroInst < MacroSkipEnd;
-
-    // When processing macros, skip over the expansions leading up to
-    // a macro argument, and trace the argument's expansion stack instead.
-    Loc = skipToMacroArgExpansion(SM, Loc);
-
-    SourceLocation OneLevelUp = getImmediateMacroCallerLoc(SM, Loc);
-
-    // FIXME: Map ranges?
-    EmitCaretDiagnostic(OneLevelUp, Ranges, NumRanges, SM,
-                        Hints, NumHints, Columns,
-                        OnMacroInst + 1, MacroSkipStart, MacroSkipEnd);
-
-    // Map the location.
-    Loc = getImmediateMacroCalleeLoc(SM, Loc);
-
-    // Map the ranges.
-    for (unsigned i = 0; i != NumRanges; ++i) {
-      CharSourceRange &R = Ranges[i];
-      SourceLocation S = R.getBegin(), E = R.getEnd();
-      if (S.isMacroID())
-        R.setBegin(getImmediateMacroCalleeLoc(SM, S));
-      if (E.isMacroID())
-        R.setEnd(getImmediateMacroCalleeLoc(SM, E));
-    }
-
-    if (!Suppressed) {
-      // Don't print recursive expansion notes from an expansion note.
-      Loc = SM.getSpellingLoc(Loc);
-
-      // Get the pretty name, according to #line directives etc.
-      PresumedLoc PLoc = SM.getPresumedLoc(Loc);
-      if (PLoc.isInvalid())
-        return;
-
-      // If this diagnostic is not in the main file, print out the
-      // "included from" lines.
-      PrintIncludeStack(Diagnostic::Note, PLoc.getIncludeLoc(), SM);
-
-      if (DiagOpts->ShowLocation) {
-        // Emit the file/line/column that this expansion came from.
-        OS << PLoc.getFilename() << ':' << PLoc.getLine() << ':';
-        if (DiagOpts->ShowColumn)
-          OS << PLoc.getColumn() << ':';
-        OS << ' ';
-      }
-      OS << "note: expanded from:\n";
-
-      EmitCaretDiagnostic(Loc, Ranges, NumRanges, SM, 0, 0,
-                          Columns, OnMacroInst + 1, MacroSkipStart,
-                          MacroSkipEnd);
-      return;
-    }
-    
-    if (OnMacroInst == MacroSkipStart) {
-      // Tell the user that we've skipped contexts.
-      OS << "note: (skipping " << (MacroSkipEnd - MacroSkipStart) 
-      << " expansions in backtrace; use -fmacro-backtrace-limit=0 to see "
-      "all)\n";
-    }
-    
-    return;
-  }
-  
-  // Decompose the location into a FID/Offset pair.
-  std::pair<FileID, unsigned> LocInfo = SM.getDecomposedLoc(Loc);
-  FileID FID = LocInfo.first;
-  unsigned FileOffset = LocInfo.second;
-
-  // Get information about the buffer it points into.
-  bool Invalid = false;
-  const char *BufStart = SM.getBufferData(FID, &Invalid).data();
-  if (Invalid)
-    return;
-
-  unsigned ColNo = SM.getColumnNumber(FID, FileOffset);
-  unsigned CaretEndColNo
-    = ColNo + Lexer::MeasureTokenLength(Loc, SM, *LangOpts);
-
-  // Rewind from the current position to the start of the line.
-  const char *TokPtr = BufStart+FileOffset;
-  const char *LineStart = TokPtr-ColNo+1; // Column # is 1-based.
-
-
-  // Compute the line end.  Scan forward from the error position to the end of
-  // the line.
-  const char *LineEnd = TokPtr;
-  while (*LineEnd != '\n' && *LineEnd != '\r' && *LineEnd != '\0')
-    ++LineEnd;
-
-  // FIXME: This shouldn't be necessary, but the CaretEndColNo can extend past
-  // the source line length as currently being computed. See
-  // test/Misc/message-length.c.
-  CaretEndColNo = std::min(CaretEndColNo, unsigned(LineEnd - LineStart));
-
-  // Copy the line of code into an std::string for ease of manipulation.
-  std::string SourceLine(LineStart, LineEnd);
-
-  // Create a line for the caret that is filled with spaces that is the same
-  // length as the line of source code.
-  std::string CaretLine(LineEnd-LineStart, ' ');
-
-  // Highlight all of the characters covered by Ranges with ~ characters.
-  if (NumRanges) {
-    unsigned LineNo = SM.getLineNumber(FID, FileOffset);
-
-    for (unsigned i = 0, e = NumRanges; i != e; ++i)
-      HighlightRange(Ranges[i], SM, LineNo, FID, CaretLine, SourceLine);
-  }
-
-  // Next, insert the caret itself.
-  if (ColNo-1 < CaretLine.size())
-    CaretLine[ColNo-1] = '^';
-  else
-    CaretLine.push_back('^');
-
-  // Scan the source line, looking for tabs.  If we find any, manually expand
-  // them to spaces and update the CaretLine to match.
-  for (unsigned i = 0; i != SourceLine.size(); ++i) {
-    if (SourceLine[i] != '\t') continue;
-
-    // Replace this tab with at least one space.
-    SourceLine[i] = ' ';
-
-    // Compute the number of spaces we need to insert.
-    unsigned TabStop = DiagOpts->TabStop;
-    assert(0 < TabStop && TabStop <= DiagnosticOptions::MaxTabStop &&
-           "Invalid -ftabstop value");
-    unsigned NumSpaces = ((i+TabStop)/TabStop * TabStop) - (i+1);
-    assert(NumSpaces < TabStop && "Invalid computation of space amt");
-
-    // Insert spaces into the SourceLine.
-    SourceLine.insert(i+1, NumSpaces, ' ');
-
-    // Insert spaces or ~'s into CaretLine.
-    CaretLine.insert(i+1, NumSpaces, CaretLine[i] == '~' ? '~' : ' ');
-  }
-
-  // If we are in -fdiagnostics-print-source-range-info mode, we are trying to
-  // produce easily machine parsable output.  Add a space before the source line
-  // and the caret to make it trivial to tell the main diagnostic line from what
-  // the user is intended to see.
-  if (DiagOpts->ShowSourceRanges) {
-    SourceLine = ' ' + SourceLine;
-    CaretLine = ' ' + CaretLine;
-  }
-
-  std::string FixItInsertionLine;
-  if (NumHints && DiagOpts->ShowFixits) {
-    for (const FixItHint *Hint = Hints, *LastHint = Hints + NumHints;
-         Hint != LastHint; ++Hint) {
-      if (!Hint->CodeToInsert.empty()) {
-        // We have an insertion hint. Determine whether the inserted
-        // code is on the same line as the caret.
-        std::pair<FileID, unsigned> HintLocInfo
-          = SM.getDecomposedExpansionLoc(Hint->RemoveRange.getBegin());
-        if (SM.getLineNumber(HintLocInfo.first, HintLocInfo.second) ==
-              SM.getLineNumber(FID, FileOffset)) {
-          // Insert the new code into the line just below the code
-          // that the user wrote.
-          unsigned HintColNo
-            = SM.getColumnNumber(HintLocInfo.first, HintLocInfo.second);
-          unsigned LastColumnModified
-            = HintColNo - 1 + Hint->CodeToInsert.size();
-          if (LastColumnModified > FixItInsertionLine.size())
-            FixItInsertionLine.resize(LastColumnModified, ' ');
-          std::copy(Hint->CodeToInsert.begin(), Hint->CodeToInsert.end(),
-                    FixItInsertionLine.begin() + HintColNo - 1);
-        } else {
-          FixItInsertionLine.clear();
-          break;
-        }
-      }
-    }
-    // Now that we have the entire fixit line, expand the tabs in it.
-    // Since we don't want to insert spaces in the middle of a word,
-    // find each word and the column it should line up with and insert
-    // spaces until they match.
-    if (!FixItInsertionLine.empty()) {
-      unsigned FixItPos = 0;
-      unsigned LinePos = 0;
-      unsigned TabExpandedCol = 0;
-      unsigned LineLength = LineEnd - LineStart;
-
-      while (FixItPos < FixItInsertionLine.size() && LinePos < LineLength) {
-        // Find the next word in the FixIt line.
-        while (FixItPos < FixItInsertionLine.size() &&
-               FixItInsertionLine[FixItPos] == ' ')
-          ++FixItPos;
-        unsigned CharDistance = FixItPos - TabExpandedCol;
-
-        // Walk forward in the source line, keeping track of
-        // the tab-expanded column.
-        for (unsigned I = 0; I < CharDistance; ++I, ++LinePos)
-          if (LinePos >= LineLength || LineStart[LinePos] != '\t')
-            ++TabExpandedCol;
-          else
-            TabExpandedCol =
-              (TabExpandedCol/DiagOpts->TabStop + 1) * DiagOpts->TabStop;
-
-        // Adjust the fixit line to match this column.
-        FixItInsertionLine.insert(FixItPos, TabExpandedCol-FixItPos, ' ');
-        FixItPos = TabExpandedCol;
-
-        // Walk to the end of the word.
-        while (FixItPos < FixItInsertionLine.size() &&
-               FixItInsertionLine[FixItPos] != ' ')
-          ++FixItPos;
-      }
-    }
-  }
-
-  // If the source line is too long for our terminal, select only the
-  // "interesting" source region within that line.
-  if (Columns && SourceLine.size() > Columns)
-    SelectInterestingSourceRegion(SourceLine, CaretLine, FixItInsertionLine,
-                                  CaretEndColNo, Columns);
-
-  // Finally, remove any blank spaces from the end of CaretLine.
-  while (CaretLine[CaretLine.size()-1] == ' ')
-    CaretLine.erase(CaretLine.end()-1);
-
-  // Emit what we have computed.
-  OS << SourceLine << '\n';
-
-  if (DiagOpts->ShowColors)
-    OS.changeColor(caretColor, true);
-  OS << CaretLine << '\n';
-  if (DiagOpts->ShowColors)
-    OS.resetColor();
-
-  if (!FixItInsertionLine.empty()) {
-    if (DiagOpts->ShowColors)
-      // Print fixit line in color
-      OS.changeColor(fixitColor, false);
-    if (DiagOpts->ShowSourceRanges)
-      OS << ' ';
-    OS << FixItInsertionLine << '\n';
-    if (DiagOpts->ShowColors)
-      OS.resetColor();
-  }
-
-  if (DiagOpts->ShowParseableFixits) {
-
-    // We follow FixItRewriter's example in not (yet) handling
-    // fix-its in macros.
-    bool BadApples = false;
-    for (const FixItHint *Hint = Hints; Hint != Hints + NumHints; ++Hint) {
-      if (Hint->RemoveRange.isInvalid() ||
-          Hint->RemoveRange.getBegin().isMacroID() ||
-          Hint->RemoveRange.getEnd().isMacroID()) {
-        BadApples = true;
-        break;
-      }
-    }
-
-    if (!BadApples) {
-      for (const FixItHint *Hint = Hints; Hint != Hints + NumHints; ++Hint) {
-
-        SourceLocation B = Hint->RemoveRange.getBegin();
-        SourceLocation E = Hint->RemoveRange.getEnd();
-
-        std::pair<FileID, unsigned> BInfo = SM.getDecomposedLoc(B);
-        std::pair<FileID, unsigned> EInfo = SM.getDecomposedLoc(E);
-
-        // Adjust for token ranges.
-        if (Hint->RemoveRange.isTokenRange())
-          EInfo.second += Lexer::MeasureTokenLength(E, SM, *LangOpts);
-
-        // We specifically do not do word-wrapping or tab-expansion here,
-        // because this is supposed to be easy to parse.
-        PresumedLoc PLoc = SM.getPresumedLoc(B);
-        if (PLoc.isInvalid())
-          break;
-        
-        OS << "fix-it:\"";
-        OS.write_escaped(SM.getPresumedLoc(B).getFilename());
-        OS << "\":{" << SM.getLineNumber(BInfo.first, BInfo.second)
-          << ':' << SM.getColumnNumber(BInfo.first, BInfo.second)
-          << '-' << SM.getLineNumber(EInfo.first, EInfo.second)
-          << ':' << SM.getColumnNumber(EInfo.first, EInfo.second)
-          << "}:\"";
-        OS.write_escaped(Hint->CodeToInsert);
-        OS << "\"\n";
-      }
-    }
-  }
+  assert(DiagOpts && "Unexpected diagnostic without options set");
+  // FIXME: Remove this method and have clients directly build and call Emit on
+  // the CaretDiagnostic object.
+  CaretDiagnostic CaretDiag(*this, OS, SM, *LangOpts, *DiagOpts,
+                            Columns, MacroSkipStart, MacroSkipEnd);
+  CaretDiag.Emit(Loc, Ranges, NumRanges, Hints, NumHints);
 }
 
 /// \brief Skip over whitespace in the string, starting at the given
@@ -1155,8 +1223,8 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
     EmitCaretDiagnostic(LastLoc, Ranges, NumRanges, LastLoc.getManager(),
                         Info.getFixItHints(),
                         Info.getNumFixItHints(),
-                        DiagOpts->MessageLength, 
-                        0, MacroInstSkipStart, MacroInstSkipEnd);
+                        DiagOpts->MessageLength,
+                        MacroInstSkipStart, MacroInstSkipEnd);
   }
 
   OS.flush();
