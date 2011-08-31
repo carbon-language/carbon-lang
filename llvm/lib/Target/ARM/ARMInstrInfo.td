@@ -164,28 +164,6 @@ def ARMtcret         : SDNode<"ARMISD::TC_RETURN", SDT_ARMTCRET,
 
 def ARMbfi           : SDNode<"ARMISD::BFI", SDT_ARMBFI>;
 
-def ARMAtomAdd64 : SDNode<"X86ISD::ATOMADD64_DAG", SDTARMatomicBinary,
-                        [SDNPHasChain, SDNPMayStore,
-                         SDNPMayLoad, SDNPMemOperand]>;
-def ARMAtomSub64 : SDNode<"X86ISD::ATOMSUB64_DAG", SDTARMatomicBinary,
-                        [SDNPHasChain, SDNPMayStore,
-                         SDNPMayLoad, SDNPMemOperand]>;
-def ARMAtomOr64 : SDNode<"X86ISD::ATOMOR64_DAG", SDTARMatomicBinary,
-                        [SDNPHasChain, SDNPMayStore,
-                         SDNPMayLoad, SDNPMemOperand]>;
-def ARMAtomXor64 : SDNode<"X86ISD::ATOMXOR64_DAG", SDTARMatomicBinary,
-                        [SDNPHasChain, SDNPMayStore,
-                         SDNPMayLoad, SDNPMemOperand]>;
-def ARMAtomAnd64 : SDNode<"X86ISD::ATOMAND64_DAG", SDTARMatomicBinary,
-                        [SDNPHasChain, SDNPMayStore,
-                         SDNPMayLoad, SDNPMemOperand]>;
-def ARMAtomNand64 : SDNode<"X86ISD::ATOMNAND64_DAG", SDTARMatomicBinary,
-                        [SDNPHasChain, SDNPMayStore,
-                         SDNPMayLoad, SDNPMemOperand]>;
-def ARMAtomSwap64 : SDNode<"X86ISD::ATOMSWAP64_DAG", SDTARMatomicBinary,
-                        [SDNPHasChain, SDNPMayStore,
-                         SDNPMayLoad, SDNPMemOperand]>;
-
 //===----------------------------------------------------------------------===//
 // ARM Instruction Predicate Definitions.
 //
