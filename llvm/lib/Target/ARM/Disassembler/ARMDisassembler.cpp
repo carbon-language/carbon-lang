@@ -2603,17 +2603,17 @@ DecodeThumb2BCCInstruction(llvm::MCInst &Inst, unsigned Insn,
 
   unsigned pred = fieldFromInstruction32(Insn, 22, 4);
   if (pred == 0xE || pred == 0xF) {
-    unsigned opc = fieldFromInstruction32(Insn, 4, 2);
+    unsigned opc = fieldFromInstruction32(Insn, 4, 28);
     switch (opc) {
       default:
         return Fail;
-      case 0:
+      case 0xf3bf8f4:
         Inst.setOpcode(ARM::t2DSB);
         break;
-      case 1:
+      case 0xf3bf8f5:
         Inst.setOpcode(ARM::t2DMB);
         break;
-      case 2:
+      case 0xf3bf8f6:
         Inst.setOpcode(ARM::t2ISB);
         return Success;
     }

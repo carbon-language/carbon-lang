@@ -3243,7 +3243,9 @@ class T2SpecialReg<bits<12> op31_20, bits<2> op15_14, bits<1> op12,
   : T2I<oops, iops, itin, opc, asm, pattern> {
   let Inst{31-20} = op31_20{11-0};
   let Inst{15-14} = op15_14{1-0};
+  let Inst{13}    = 0b0;
   let Inst{12} = op12{0};
+  let Inst{7-0}   = 0;
 }
 
 class T2MRS<bits<12> op31_20, bits<2> op15_14, bits<1> op12,
@@ -3276,7 +3278,6 @@ def t2MSR : T2SpecialReg<0b111100111000 /* op31-20 */, 0b10 /* op15-14 */,
   bits<4> Rn;
   let Inst{19-16} = Rn;
   let Inst{20}    = mask{4}; // R Bit
-  let Inst{13}    = 0b0;
   let Inst{11-8}  = mask{3-0};
 }
 
