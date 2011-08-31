@@ -2885,24 +2885,7 @@ static void LookupVisibleDecls(Scope *S, LookupResult &Result,
                                   Result.getNameLoc(), Sema::LookupMemberName);
           if (ObjCInterfaceDecl *IFace = Method->getClassInterface()) {
             LookupVisibleDecls(IFace, IvarResult, /*QualifiedNameLookup=*/false,
-                               /*InBaseClass=*/false, Consumer, Visited);
-
-            // Look for properties from which we can synthesize ivars, if
-            // permitted.
-            if (Result.getSema().getLangOptions().ObjCNonFragileABI2 &&
-                IFace->getImplementation() &&
-                Result.getLookupKind() == Sema::LookupOrdinaryName) {
-              for (ObjCInterfaceDecl::prop_iterator
-                        P = IFace->prop_begin(),
-                     PEnd = IFace->prop_end();
-                   P != PEnd; ++P) {
-                if (Result.getSema().canSynthesizeProvisionalIvar(*P) &&
-                    !IFace->lookupInstanceVariable((*P)->getIdentifier())) {
-                  Consumer.FoundDecl(*P, Visited.checkHidden(*P), false);
-                  Visited.add(*P);
-                }
-              }
-            }
+                               /*InBaseClass=*/false, Consumer, Visited);              
           }
         }
 

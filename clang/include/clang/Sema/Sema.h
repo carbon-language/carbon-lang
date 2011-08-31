@@ -1829,14 +1829,6 @@ public:
                                 ObjCIvarDecl **Fields, unsigned nIvars,
                                 SourceLocation Loc);
 
-  /// \brief Determine whether we can synthesize a provisional ivar for the
-  /// given name.
-  ObjCPropertyDecl *canSynthesizeProvisionalIvar(IdentifierInfo *II);
-
-  /// \brief Determine whether we can synthesize a provisional ivar for the
-  /// given property.
-  bool canSynthesizeProvisionalIvar(ObjCPropertyDecl *Property);
-
   /// ImplMethodsVsClassMethods - This is main routine to warn if any method
   /// remains unimplemented in the class or category @implementation.
   void ImplMethodsVsClassMethods(Scope *S, ObjCImplDecl* IMPDecl,
@@ -1853,6 +1845,7 @@ public:
   /// properties which must be synthesized in class's @implementation.
   void DefaultSynthesizeProperties (Scope *S, ObjCImplDecl* IMPDecl,
                                     ObjCInterfaceDecl *IDecl);
+  void DefaultSynthesizeProperties(Scope *S, Decl *D);
   
   /// CollectImmediateProperties - This routine collects all properties in
   /// the class and its conforming protocols; but not those it its super class.
@@ -2245,10 +2238,6 @@ public:
 
   // Primary Expressions.
   SourceRange getExprRange(Expr *E) const;
-
-  ObjCIvarDecl *SynthesizeProvisionalIvar(LookupResult &Lookup,
-                                          IdentifierInfo *II,
-                                          SourceLocation NameLoc);
   
   ExprResult ActOnIdExpression(Scope *S, CXXScopeSpec &SS, UnqualifiedId &Name,
                                bool HasTrailingLParen, bool IsAddressOfOperand);

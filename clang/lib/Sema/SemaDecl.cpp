@@ -420,24 +420,6 @@ Sema::NameClassification Sema::ClassifyName(Scope *S,
     ExprResult E = LookupInObjCMethod(Result, S, Name, true);
     if (E.get() || E.isInvalid())
       return E;
-    
-    // Synthesize ivars lazily.
-    if (getLangOptions().ObjCDefaultSynthProperties &&
-        getLangOptions().ObjCNonFragileABI2) {
-      if (SynthesizeProvisionalIvar(Result, Name, NameLoc)) {
-        if (const ObjCPropertyDecl *Property = 
-                                          canSynthesizeProvisionalIvar(Name)) {
-          Diag(NameLoc, diag::warn_synthesized_ivar_access) << Name;
-          Diag(Property->getLocation(), diag::note_property_declare);
-        }
-
-        // FIXME: This is strange. Shouldn't we just take the ivar returned
-        // from SynthesizeProvisionalIvar and continue with that?
-        E = LookupInObjCMethod(Result, S, Name, true);   
-        if (E.get() || E.isInvalid())
-          return E;
-      }
-    }
   }
   
   bool SecondTry = false;

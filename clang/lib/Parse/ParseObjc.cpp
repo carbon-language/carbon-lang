@@ -1401,22 +1401,23 @@ Parser::ParseObjCAtEndDeclaration(SourceRange atEnd) {
          "ParseObjCAtEndDeclaration(): Expected @end");
   ConsumeToken(); // the "end" identifier
   SmallVector<Decl *, 8> DeclsInGroup;
-    
+  Actions.DefaultSynthesizeProperties(getCurScope(), ObjCImpDecl);
   for (size_t i = 0; i < LateParsedObjCMethods.size(); ++i) {
     Decl *D = ParseLexedObjCMethodDefs(*LateParsedObjCMethods[i]);
     DeclsInGroup.push_back(D);
   }
-  LateParsedObjCMethods.clear();
   DeclsInGroup.push_back(ObjCImpDecl);
+  
   if (ObjCImpDecl) {
     Actions.ActOnAtEnd(getCurScope(), atEnd);
-    ObjCImpDecl = 0;
     PendingObjCImpDecl.pop_back();
   }
-  else {
+  else
     // missing @implementation
     Diag(atEnd.getBegin(), diag::err_expected_implementation);
-  }
+    
+  LateParsedObjCMethods.clear();
+  ObjCImpDecl = 0;
   return Actions.BuildDeclaratorGroup(
            DeclsInGroup.data(), DeclsInGroup.size(), false);
 }

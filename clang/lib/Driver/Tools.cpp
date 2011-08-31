@@ -1880,18 +1880,12 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       }
     }
 
-    // FIXME: Don't expose -fobjc-default-synthesize-properties as a top-level
-    // driver flag yet.  This feature is still under active development
-    // and shouldn't be exposed as a user visible feature (which may change).
-    // Clang still supports this as a -cc1 option for development and testing.
-#if 0
     // -fobjc-default-synthesize-properties=0 is default.
     if (Args.hasFlag(options::OPT_fobjc_default_synthesize_properties,
                      options::OPT_fno_objc_default_synthesize_properties,
                      getToolChain().IsObjCDefaultSynthPropertiesDefault())) {
       CmdArgs.push_back("-fobjc-default-synthesize-properties");
     }
-#endif
   }
 
   // Allow -fno-objc-arr to trump -fobjc-arr/-fobjc-arc.

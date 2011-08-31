@@ -990,9 +990,6 @@ bool ResultBuilder::IsOrdinaryName(NamedDecl *ND) const {
   else if (SemaRef.getLangOptions().ObjC1) {
     if (isa<ObjCIvarDecl>(ND))
       return true;
-    if (isa<ObjCPropertyDecl>(ND) &&
-        SemaRef.canSynthesizeProvisionalIvar(cast<ObjCPropertyDecl>(ND)))
-      return true;
   }
   
   return ND->getIdentifierNamespace() & IDNS;
@@ -1010,9 +1007,6 @@ bool ResultBuilder::IsOrdinaryNonTypeName(NamedDecl *ND) const {
     IDNS |= Decl::IDNS_Tag | Decl::IDNS_Namespace | Decl::IDNS_Member;
   else if (SemaRef.getLangOptions().ObjC1) {
     if (isa<ObjCIvarDecl>(ND))
-      return true;
-    if (isa<ObjCPropertyDecl>(ND) &&
-        SemaRef.canSynthesizeProvisionalIvar(cast<ObjCPropertyDecl>(ND)))
       return true;
   }
  

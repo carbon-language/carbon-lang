@@ -1553,90 +1553,6 @@ bool Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS, LookupResult &R,
   return true;
 }
 
-ObjCPropertyDecl *Sema::canSynthesizeProvisionalIvar(IdentifierInfo *II) {
-  ObjCMethodDecl *CurMeth = getCurMethodDecl();
-  ObjCInterfaceDecl *IDecl = CurMeth->getClassInterface();
-  if (!IDecl)
-    return 0;
-  ObjCImplementationDecl *ClassImpDecl = IDecl->getImplementation();
-  if (!ClassImpDecl)
-    return 0;
-  ObjCPropertyDecl *property = LookupPropertyDecl(IDecl, II);
-  if (!property)
-    return 0;
-  if (ObjCPropertyImplDecl *PIDecl = ClassImpDecl->FindPropertyImplDecl(II))
-    if (PIDecl->getPropertyImplementation() == ObjCPropertyImplDecl::Dynamic ||
-        PIDecl->getPropertyIvarDecl())
-      return 0;
-  return property;
-}
-
-bool Sema::canSynthesizeProvisionalIvar(ObjCPropertyDecl *Property) {
-  ObjCMethodDecl *CurMeth = getCurMethodDecl();
-  ObjCInterfaceDecl *IDecl = CurMeth->getClassInterface();
-  if (!IDecl)
-    return false;
-  ObjCImplementationDecl *ClassImpDecl = IDecl->getImplementation();
-  if (!ClassImpDecl)
-    return false;
-  if (ObjCPropertyImplDecl *PIDecl
-                = ClassImpDecl->FindPropertyImplDecl(Property->getIdentifier()))
-    if (PIDecl->getPropertyImplementation() == ObjCPropertyImplDecl::Dynamic ||
-        PIDecl->getPropertyIvarDecl())
-      return false;
-  
-  return true;
-}
-
-ObjCIvarDecl *Sema::SynthesizeProvisionalIvar(LookupResult &Lookup,
-                                              IdentifierInfo *II,
-                                              SourceLocation NameLoc) {
-  ObjCMethodDecl *CurMeth = getCurMethodDecl();
-  bool LookForIvars;
-  if (Lookup.empty())
-    LookForIvars = true;
-  else if (CurMeth->isClassMethod())
-    LookForIvars = false;
-  else
-    LookForIvars = (Lookup.isSingleResult() &&
-                    Lookup.getFoundDecl()->isDefinedOutsideFunctionOrMethod() &&
-                    (Lookup.getAsSingle<VarDecl>() != 0));
-  if (!LookForIvars)
-    return 0;
-  
-  ObjCInterfaceDecl *IDecl = CurMeth->getClassInterface();
-  if (!IDecl)
-    return 0;
-  ObjCImplementationDecl *ClassImpDecl = IDecl->getImplementation();
-  if (!ClassImpDecl)
-    return 0;
-  bool DynamicImplSeen = false;
-  ObjCPropertyDecl *property = LookupPropertyDecl(IDecl, II);
-  if (!property)
-    return 0;
-  if (ObjCPropertyImplDecl *PIDecl = ClassImpDecl->FindPropertyImplDecl(II)) {
-    DynamicImplSeen = 
-      (PIDecl->getPropertyImplementation() == ObjCPropertyImplDecl::Dynamic);
-    // property implementation has a designated ivar. No need to assume a new
-    // one.
-    if (!DynamicImplSeen && PIDecl->getPropertyIvarDecl())
-      return 0;
-  }
-  if (!DynamicImplSeen) {
-    QualType PropType = Context.getCanonicalType(property->getType());
-    ObjCIvarDecl *Ivar = ObjCIvarDecl::Create(Context, ClassImpDecl, 
-                                              NameLoc, NameLoc,
-                                              II, PropType, /*Dinfo=*/0,
-                                              ObjCIvarDecl::Private,
-                                              (Expr *)0, true);
-    ClassImpDecl->addDecl(Ivar);
-    IDecl->makeDeclVisibleInContext(Ivar, false);
-    property->setPropertyIvarDecl(Ivar);
-    return Ivar;
-  }
-  return 0;
-}
-
 ExprResult Sema::ActOnIdExpression(Scope *S,
                                    CXXScopeSpec &SS,
                                    UnqualifiedId &Id,
@@ -1726,19 +1642,6 @@ ExprResult Sema::ActOnIdExpression(Scope *S,
       if (Expr *Ex = E.takeAs<Expr>())
         return Owned(Ex);
       
-      // Synthesize ivars lazily.
-      if (getLangOptions().ObjCDefaultSynthProperties &&
-          getLangOptions().ObjCNonFragileABI2) {
-        if (SynthesizeProvisionalIvar(R, II, NameLoc)) {
-          if (const ObjCPropertyDecl *Property = 
-                canSynthesizeProvisionalIvar(II)) {
-            Diag(NameLoc, diag::warn_synthesized_ivar_access) << II;
-            Diag(Property->getLocation(), diag::note_property_declare);
-          }
-          return ActOnIdExpression(S, SS, Id, HasTrailingLParen,
-                                   isAddressOfOperand);
-        }
-      }
       // for further use, this must be set to false if in class method.
       IvarLookupFollowUp = getCurMethodDecl()->isInstanceMethod();
     }

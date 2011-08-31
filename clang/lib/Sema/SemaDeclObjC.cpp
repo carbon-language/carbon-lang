@@ -2201,10 +2201,6 @@ void Sema::ActOnAtEnd(Scope *S, SourceRange AtEnd,
           }        
         }
       }
-      
-      if (LangOpts.ObjCDefaultSynthProperties &&
-          LangOpts.ObjCNonFragileABI2)
-        DefaultSynthesizeProperties(S, IC, IDecl);
       ImplMethodsVsClassMethods(S, IC, IDecl);
       AtomicPropertySetterGetterRules(IC, IDecl);
       DiagnoseOwningPropertyGetterSynthesis(IC);

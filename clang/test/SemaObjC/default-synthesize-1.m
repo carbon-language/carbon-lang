@@ -68,19 +68,19 @@
 //@synthesize howMany, what;  // REM: Redundant anyway
 
 - (int) howMany {
-    return howMany;
+    return howMany; // expected-error {{use of undeclared identifier 'howMany'}}
 }
 - (void) setHowMany: (int) value {
-    howMany = value;
+    howMany = value; // expected-error {{use of undeclared identifier 'howMany'}}
 }
 
 - (NSString*) what {
-    return what;
+    return what; // expected-error {{use of undeclared identifier 'what'}}
 }
 - (void) setWhat: (NSString*) value {
-    if (what != value) {
-        [what release];
-        what = [value retain];
+    if (what != value) { // expected-error {{use of undeclared identifier 'what'}}
+        [what release]; // expected-error {{use of undeclared identifier 'what'}}
+        what = [value retain]; // expected-error {{use of undeclared identifier 'what'}}
     }
 }
 @end

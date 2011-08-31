@@ -1289,6 +1289,16 @@ void Sema::DefaultSynthesizeProperties (Scope *S, ObjCImplDecl* IMPDecl,
   }
 }
 
+void Sema::DefaultSynthesizeProperties(Scope *S, Decl *D) {
+  if (!LangOpts.ObjCDefaultSynthProperties || !LangOpts.ObjCNonFragileABI2)
+    return;
+  ObjCImplementationDecl *IC=dyn_cast_or_null<ObjCImplementationDecl>(D);
+  if (!IC)
+    return;
+  if (ObjCInterfaceDecl* IDecl = IC->getClassInterface())
+    DefaultSynthesizeProperties(S, IC, IDecl);
+}
+
 void Sema::DiagnoseUnimplementedProperties(Scope *S, ObjCImplDecl* IMPDecl,
                                       ObjCContainerDecl *CDecl,
                                       const llvm::DenseSet<Selector>& InsMap) {
