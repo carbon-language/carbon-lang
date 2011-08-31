@@ -367,6 +367,7 @@ bool DIType::Verify() const {
       Tag != dwarf::DW_TAG_reference_type && Tag != dwarf::DW_TAG_restrict_type 
       && Tag != dwarf::DW_TAG_vector_type && Tag != dwarf::DW_TAG_array_type
       && Tag != dwarf::DW_TAG_enumeration_type 
+      && Tag != dwarf::DW_TAG_subroutine_type
       && getFilename().empty())
     return false;
   return true;
