@@ -733,6 +733,29 @@ DNBArchImplI386::IsVacantWatchpoint(const DBG &debug_state, uint32_t hw_index)
     return (debug_state.__dr7 & (3 << (2*hw_index))) == 0;
 }
 
+// Resets local copy of debug status register to wait for the next debug excpetion.
+void
+DNBArchImplI386::ClearWatchpointHit(DBG &debug_state)
+{
+    // See also IsWatchpointHit().
+    debug_state.__dr6 = 0;
+    return;
+}
+
+bool
+DNBArchImplI386::IsWatchpointHit(const DBG &debug_state, uint32_t hw_index)
+{
+    // Check dr6 (debug status register) whether a watchpoint hits:
+    //          is watchpoint hit?
+    //                  |
+    //                  v
+    //      dr0 -> bits{0}
+    //      dr1 -> bits{1}
+    //      dr2 -> bits{2}
+    //      dr3 -> bits{3}
+    return (debug_state.__dr6 & (1 << hw_index));
+}
+
 uint32_t
 DNBArchImplI386::EnableHardwareWatchpoint (nub_addr_t addr, nub_size_t size, bool read, bool write)
 {
