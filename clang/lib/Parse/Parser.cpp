@@ -676,7 +676,7 @@ Parser::ParseExternalDeclaration(ParsedAttributesWithRange &attrs,
     ParseMicrosoftIfExistsExternalDeclaration();
     return DeclGroupPtrTy();
 
-  case tok::kw___import__:
+  case tok::kw___import_module__:
     return ParseModuleImport();
       
   default:
@@ -1543,7 +1543,8 @@ void Parser::ParseMicrosoftIfExistsExternalDeclaration() {
 }
 
 Parser::DeclGroupPtrTy Parser::ParseModuleImport() {
-  assert(Tok.is(tok::kw___import__) && "Improper start to module import");
+  assert(Tok.is(tok::kw___import_module__) && 
+         "Improper start to module import");
   SourceLocation ImportLoc = ConsumeToken();
   
   // Parse the module name.

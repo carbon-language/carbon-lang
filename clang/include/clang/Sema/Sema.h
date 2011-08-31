@@ -1078,7 +1078,7 @@ public:
 
   /// \brief The parser has processed a module import declaration.
   ///
-  /// \param ImportLoc The location of the '__import__' keyword.
+  /// \param ImportLoc The location of the '__import_module__' keyword.
   ///
   /// \param ModuleName The name of the module.
   ///

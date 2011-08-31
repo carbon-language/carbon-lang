@@ -513,7 +513,7 @@ void Preprocessor::HandleIdentifier(Token &Identifier) {
 void Preprocessor::HandleModuleImport(Token &Import) {
   // The token sequence 
   //
-  //   __import__ identifier
+  //   __import_module__ identifier
   //
   // indicates a module import directive. We load the module and then 
   // leave the token sequence for the parser.
@@ -525,10 +525,10 @@ void Preprocessor::HandleModuleImport(Token &Import) {
                                    *ModuleNameTok.getIdentifierInfo(), 
                                    ModuleNameTok.getLocation());
   
-  // FIXME: Transmogrify __import__ into some kind of AST-only __import__ that
-  // is not recognized by the preprocessor but is recognized by the parser.
-  // It would also be useful to stash the ModuleKey somewhere, so we don't try
-  // to load the module twice.
+  // FIXME: Transmogrify __import_module__ into some kind of AST-only 
+  // __import_module__ that is not recognized by the preprocessor but is 
+  // recognized by the parser. It would also be useful to stash the ModuleKey
+  // somewhere, so we don't try to load the module twice.
 }
 
 void Preprocessor::AddCommentHandler(CommentHandler *Handler) {

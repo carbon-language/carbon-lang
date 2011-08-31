@@ -571,7 +571,7 @@ def err_seh___finally_block : Error<
 
 // Modules
 def err_module_expected_ident : Error<
-  "expected a module name after '__import__'">;
+  "expected a module name after '__import_module__'">;
 def err_module_expected_semi : Error<
   "expected a semicolon name after module name">;
   

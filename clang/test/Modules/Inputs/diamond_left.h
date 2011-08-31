@@ -1,4 +1,4 @@
-__import__ diamond_top;
+__import_module__ diamond_top;
 
 float left(float *);
 

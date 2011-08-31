@@ -554,8 +554,8 @@ public:
       CachingLex(Result);
     --LexDepth;
     
-    // If we have the __import__ keyword, handle the module import now.
-    if (Result.getKind() == tok::kw___import__ && LexDepth == 0)
+    // If we have the __import_module__ keyword, handle the module import now.
+    if (Result.getKind() == tok::kw___import_module__ && LexDepth == 0)
       HandleModuleImport(Result);
   }
 

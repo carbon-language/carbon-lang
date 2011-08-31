@@ -1,7 +1,7 @@
 
-#define import __import__
+#define import __import_module__
 import lookup_left_cxx;
-#define IMPORT(X) __import__ X
+#define IMPORT(X) __import_module__ X
 IMPORT(lookup_right_cxx);
 
 void test(int i, float f) {
