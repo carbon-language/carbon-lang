@@ -6319,11 +6319,11 @@ SDValue getMOVLP(SDValue &Op, DebugLoc &dl, SelectionDAG &DAG, bool HasSSE2) {
   // this is horrible, but will stay like this until we move all shuffle
   // matching to x86 specific nodes. Note that for the 1st condition all
   // types are matched with movsd.
-  if ((HasSSE2 && NumElems == 2) || !X86::isMOVLMask(SVOp))
-    return getTargetShuffleNode(X86ISD::MOVSD, dl, VT, V1, V2, DAG);
-  else if (HasSSE2)
+  if (HasSSE2) {
+    if (NumElems == 2)
+      return getTargetShuffleNode(X86ISD::MOVSD, dl, VT, V1, V2, DAG);
     return getTargetShuffleNode(X86ISD::MOVSS, dl, VT, V1, V2, DAG);
-
+  }
 
   assert(VT != MVT::v4i32 && "unsupported shuffle type");
 

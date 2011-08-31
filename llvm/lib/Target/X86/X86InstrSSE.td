@@ -295,7 +295,13 @@ def : Pat<(bc_v4i64 (v8f32 immAllZerosV)),
           (SUBREG_TO_REG (i64 0), (AVX_SET0PI), sub_xmm)>;
 
 //===----------------------------------------------------------------------===//
-// SSE 1 & 2 - Move Instructions
+// SSE 1 & 2 - Move FP Scalar Instructions
+//
+// Move Instructions. Register-to-register movss/movsd is not used for FR32/64
+// register copies because it's a partial register update; FsMOVAPSrr/FsMOVAPDrr
+// is used instead. Register-to-register movss/movsd is not modeled as an
+// INSERT_SUBREG because INSERT_SUBREG requires that the insert be implementable
+// in terms of a copy, and just mentioned, we don't use movss/movsd for copies.
 //===----------------------------------------------------------------------===//
 
 class sse12_move_rr<RegisterClass RC, ValueType vt, string asm> :
@@ -309,11 +315,7 @@ class sse12_move_rm<RegisterClass RC, X86MemOperand x86memop,
          !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
                         [(set RC:$dst, (mem_pat addr:$src))]>;
 
-// Move Instructions. Register-to-register movss/movsd is not used for FR32/64
-// register copies because it's a partial register update; FsMOVAPSrr/FsMOVAPDrr
-// is used instead. Register-to-register movss/movsd is not modeled as an
-// INSERT_SUBREG because INSERT_SUBREG requires that the insert be implementable
-// in terms of a copy, and just mentioned, we don't use movss/movsd for copies.
+// AVX
 def VMOVSSrr : sse12_move_rr<FR32, v4f32,
                 "movss\t{$src2, $src1, $dst|$dst, $src1, $src2}">, XS, VEX_4V;
 def VMOVSDrr : sse12_move_rr<FR64, v2f64,
@@ -321,11 +323,18 @@ def VMOVSDrr : sse12_move_rr<FR64, v2f64,
 
 let canFoldAsLoad = 1, isReMaterializable = 1 in {
   def VMOVSSrm : sse12_move_rm<FR32, f32mem, loadf32, "movss">, XS, VEX;
-
   let AddedComplexity = 20 in
     def VMOVSDrm : sse12_move_rm<FR64, f64mem, loadf64, "movsd">, XD, VEX;
 }
 
+def VMOVSSmr : SI<0x11, MRMDestMem, (outs), (ins f32mem:$dst, FR32:$src),
+                  "movss\t{$src, $dst|$dst, $src}",
+                  [(store FR32:$src, addr:$dst)]>, XS, VEX;
+def VMOVSDmr : SI<0x11, MRMDestMem, (outs), (ins f64mem:$dst, FR64:$src),
+                  "movsd\t{$src, $dst|$dst, $src}",
+                  [(store FR64:$src, addr:$dst)]>, XD, VEX;
+
+// SSE1 & 2
 let Constraints = "$src1 = $dst" in {
   def MOVSSrr : sse12_move_rr<FR32, v4f32,
                           "movss\t{$src2, $dst|$dst, $src2}">, XS;
@@ -340,19 +349,37 @@ let canFoldAsLoad = 1, isReMaterializable = 1 in {
     def MOVSDrm : sse12_move_rm<FR64, f64mem, loadf64, "movsd">, XD;
 }
 
-let AddedComplexity = 15 in {
-// Extract the low 32-bit value from one vector and insert it into another.
-def : Pat<(v4f32 (movl VR128:$src1, VR128:$src2)),
-          (MOVSSrr (v4f32 VR128:$src1),
-                   (EXTRACT_SUBREG (v4f32 VR128:$src2), sub_ss))>;
-// Extract the low 64-bit value from one vector and insert it into another.
-def : Pat<(v2f64 (movl VR128:$src1, VR128:$src2)),
-          (MOVSDrr (v2f64 VR128:$src1),
-                   (EXTRACT_SUBREG (v2f64 VR128:$src2), sub_sd))>;
-}
+def MOVSSmr : SSI<0x11, MRMDestMem, (outs), (ins f32mem:$dst, FR32:$src),
+                  "movss\t{$src, $dst|$dst, $src}",
+                  [(store FR32:$src, addr:$dst)]>;
+def MOVSDmr : SDI<0x11, MRMDestMem, (outs), (ins f64mem:$dst, FR64:$src),
+                  "movsd\t{$src, $dst|$dst, $src}",
+                  [(store FR64:$src, addr:$dst)]>;
 
-let AddedComplexity = 20 in {
+// Patterns
 let Predicates = [HasSSE1] in {
+  let AddedComplexity = 15 in {
+  // Extract the low 32-bit value from one vector and insert it into another.
+  def : Pat<(v4f32 (movl VR128:$src1, VR128:$src2)),
+            (MOVSSrr (v4f32 VR128:$src1),
+                     (EXTRACT_SUBREG (v4f32 VR128:$src2), sub_ss))>;
+  def : Pat<(v4i32 (movl VR128:$src1, VR128:$src2)),
+            (MOVSSrr (v4i32 VR128:$src1),
+                     (EXTRACT_SUBREG (v4i32 VR128:$src2), sub_ss))>;
+
+  // Move scalar to XMM zero-extended, zeroing a VR128 then do a
+  // MOVSS to the lower bits.
+  def : Pat<(v4f32 (X86vzmovl (v4f32 (scalar_to_vector FR32:$src)))),
+            (MOVSSrr (v4f32 (V_SET0PS)), FR32:$src)>;
+  def : Pat<(v4f32 (X86vzmovl (v4f32 VR128:$src))),
+            (MOVSSrr (v4f32 (V_SET0PS)),
+                     (f32 (EXTRACT_SUBREG (v4f32 VR128:$src), sub_ss)))>;
+  def : Pat<(v4i32 (X86vzmovl (v4i32 VR128:$src))),
+            (MOVSSrr (v4i32 (V_SET0PI)),
+                     (EXTRACT_SUBREG (v4i32 VR128:$src), sub_ss))>;
+  }
+
+  let AddedComplexity = 20 in {
   // MOVSSrm zeros the high parts of the register; represent this
   // with SUBREG_TO_REG.
   def : Pat<(v4f32 (X86vzmovl (v4f32 (scalar_to_vector (loadf32 addr:$src))))),
@@ -361,8 +388,48 @@ let Predicates = [HasSSE1] in {
             (SUBREG_TO_REG (i32 0), (MOVSSrm addr:$src), sub_ss)>;
   def : Pat<(v4f32 (X86vzmovl (loadv4f32 addr:$src))),
             (SUBREG_TO_REG (i32 0), (MOVSSrm addr:$src), sub_ss)>;
+  }
+
+  // Extract and store.
+  def : Pat<(store (f32 (vector_extract (v4f32 VR128:$src), (iPTR 0))),
+                   addr:$dst),
+            (MOVSSmr addr:$dst,
+                     (EXTRACT_SUBREG (v4f32 VR128:$src), sub_ss))>;
+
+  // Shuffle with MOVSS
+  def : Pat<(v4f32 (X86Movss VR128:$src1, (scalar_to_vector FR32:$src2))),
+            (MOVSSrr VR128:$src1, FR32:$src2)>;
+  def : Pat<(v4i32 (X86Movss VR128:$src1, VR128:$src2)),
+            (MOVSSrr (v4i32 VR128:$src1),
+                     (EXTRACT_SUBREG (v4i32 VR128:$src2), sub_ss))>;
+  def : Pat<(v4f32 (X86Movss VR128:$src1, VR128:$src2)),
+            (MOVSSrr (v4f32 VR128:$src1),
+                     (EXTRACT_SUBREG (v4f32 VR128:$src2), sub_ss))>;
 }
+
 let Predicates = [HasSSE2] in {
+  let AddedComplexity = 15 in {
+  // Extract the low 64-bit value from one vector and insert it into another.
+  def : Pat<(v2f64 (movl VR128:$src1, VR128:$src2)),
+            (MOVSDrr (v2f64 VR128:$src1),
+                     (EXTRACT_SUBREG (v2f64 VR128:$src2), sub_sd))>;
+  def : Pat<(v2i64 (movl VR128:$src1, VR128:$src2)),
+            (MOVSDrr (v2i64 VR128:$src1),
+                     (EXTRACT_SUBREG (v2i64 VR128:$src2), sub_sd))>;
+
+  // vector_shuffle v1, v2 <4, 5, 2, 3> using movsd
+  def : Pat<(v4f32 (movlp VR128:$src1, VR128:$src2)),
+            (MOVSDrr VR128:$src1, (EXTRACT_SUBREG VR128:$src2, sub_sd))>;
+  def : Pat<(v4i32 (movlp VR128:$src1, VR128:$src2)),
+            (MOVSDrr VR128:$src1, (EXTRACT_SUBREG VR128:$src2, sub_sd))>;
+
+  // Move scalar to XMM zero-extended, zeroing a VR128 then do a
+  // MOVSD to the lower bits.
+  def : Pat<(v2f64 (X86vzmovl (v2f64 (scalar_to_vector FR64:$src)))),
+            (MOVSDrr (v2f64 (V_SET0PS)), FR64:$src)>;
+  }
+
+  let AddedComplexity = 20 in {
   // MOVSDrm zeros the high parts of the register; represent this
   // with SUBREG_TO_REG.
   def : Pat<(v2f64 (X86vzmovl (v2f64 (scalar_to_vector (loadf64 addr:$src))))),
@@ -375,66 +442,161 @@ let Predicates = [HasSSE2] in {
             (SUBREG_TO_REG (i64 0), (MOVSDrm addr:$src), sub_sd)>;
   def : Pat<(v2f64 (X86vzload addr:$src)),
             (SUBREG_TO_REG (i64 0), (MOVSDrm addr:$src), sub_sd)>;
-}
-}
+  }
 
-let AddedComplexity = 20, Predicates = [HasAVX] in {
-// MOVSSrm zeros the high parts of the register; represent this
-// with SUBREG_TO_REG. The AVX versions also write: DST[255:128] <- 0
-def : Pat<(v4f32 (X86vzmovl (v4f32 (scalar_to_vector (loadf32 addr:$src))))),
-          (SUBREG_TO_REG (i32 0), (VMOVSSrm addr:$src), sub_ss)>;
-def : Pat<(v4f32 (scalar_to_vector (loadf32 addr:$src))),
-          (SUBREG_TO_REG (i32 0), (VMOVSSrm addr:$src), sub_ss)>;
-def : Pat<(v4f32 (X86vzmovl (loadv4f32 addr:$src))),
-          (SUBREG_TO_REG (i32 0), (VMOVSSrm addr:$src), sub_ss)>;
-// MOVSDrm zeros the high parts of the register; represent this
-// with SUBREG_TO_REG. The AVX versions also write: DST[255:128] <- 0
-def : Pat<(v2f64 (X86vzmovl (v2f64 (scalar_to_vector (loadf64 addr:$src))))),
-          (SUBREG_TO_REG (i64 0), (VMOVSDrm addr:$src), sub_sd)>;
-def : Pat<(v2f64 (scalar_to_vector (loadf64 addr:$src))),
-          (SUBREG_TO_REG (i64 0), (VMOVSDrm addr:$src), sub_sd)>;
-def : Pat<(v2f64 (X86vzmovl (loadv2f64 addr:$src))),
-          (SUBREG_TO_REG (i64 0), (VMOVSDrm addr:$src), sub_sd)>;
-def : Pat<(v2f64 (X86vzmovl (bc_v2f64 (loadv4f32 addr:$src)))),
-          (SUBREG_TO_REG (i64 0), (VMOVSDrm addr:$src), sub_sd)>;
-def : Pat<(v2f64 (X86vzload addr:$src)),
-          (SUBREG_TO_REG (i64 0), (VMOVSDrm addr:$src), sub_sd)>;
-// Represent the same patterns above but in the form they appear for
-// 256-bit types
-def : Pat<(v8f32 (X86vzmovl (insert_subvector undef,
-                 (v4f32 (scalar_to_vector (loadf32 addr:$src))), (i32 0)))),
-          (SUBREG_TO_REG (i32 0), (VMOVSSrm addr:$src), sub_ss)>;
-def : Pat<(v4f64 (X86vzmovl (insert_subvector undef,
-                 (v2f64 (scalar_to_vector (loadf64 addr:$src))), (i32 0)))),
-          (SUBREG_TO_REG (i32 0), (VMOVSDrm addr:$src), sub_sd)>;
+  // Extract and store.
+  def : Pat<(store (f64 (vector_extract (v2f64 VR128:$src), (iPTR 0))),
+                   addr:$dst),
+            (MOVSDmr addr:$dst,
+                     (EXTRACT_SUBREG (v2f64 VR128:$src), sub_sd))>;
+
+  // Shuffle with MOVSD
+  def : Pat<(v2f64 (X86Movsd VR128:$src1, (scalar_to_vector FR64:$src2))),
+            (MOVSDrr VR128:$src1, FR64:$src2)>;
+  def : Pat<(v2i64 (X86Movsd VR128:$src1, VR128:$src2)),
+            (MOVSDrr (v2i64 VR128:$src1),
+                     (EXTRACT_SUBREG (v2i64 VR128:$src2), sub_sd))>;
+  def : Pat<(v2f64 (X86Movsd VR128:$src1, VR128:$src2)),
+            (MOVSDrr (v2f64 VR128:$src1),
+                     (EXTRACT_SUBREG (v2f64 VR128:$src2), sub_sd))>;
+  def : Pat<(v4f32 (X86Movsd VR128:$src1, VR128:$src2)),
+            (MOVSDrr VR128:$src1, (EXTRACT_SUBREG (v4f32 VR128:$src2),sub_sd))>;
+  def : Pat<(v4i32 (X86Movsd VR128:$src1, VR128:$src2)),
+            (MOVSDrr VR128:$src1, (EXTRACT_SUBREG (v4i32 VR128:$src2),sub_sd))>;
+
+  // FIXME: Instead of a X86Movlps there should be a X86Movsd here, the problem
+  // is during lowering, where it's not possible to recognize the fold cause
+  // it has two uses through a bitcast. One use disappears at isel time and the
+  // fold opportunity reappears.
+  def : Pat<(v4f32 (X86Movlps VR128:$src1, VR128:$src2)),
+            (MOVSDrr VR128:$src1, (EXTRACT_SUBREG (v4f32 VR128:$src2),sub_sd))>;
+  def : Pat<(v4i32 (X86Movlps VR128:$src1, VR128:$src2)),
+            (MOVSDrr VR128:$src1, (EXTRACT_SUBREG (v4i32 VR128:$src2),sub_sd))>;
 }
 
-// Store scalar value to memory.
-def MOVSSmr : SSI<0x11, MRMDestMem, (outs), (ins f32mem:$dst, FR32:$src),
-                  "movss\t{$src, $dst|$dst, $src}",
-                  [(store FR32:$src, addr:$dst)]>;
-def MOVSDmr : SDI<0x11, MRMDestMem, (outs), (ins f64mem:$dst, FR64:$src),
-                  "movsd\t{$src, $dst|$dst, $src}",
-                  [(store FR64:$src, addr:$dst)]>;
+let Predicates = [HasAVX] in {
+  let AddedComplexity = 15 in {
+  // Extract the low 32-bit value from one vector and insert it into another.
+  def : Pat<(v4f32 (movl VR128:$src1, VR128:$src2)),
+            (VMOVSSrr (v4f32 VR128:$src1),
+                      (EXTRACT_SUBREG (v4f32 VR128:$src2), sub_ss))>;
+  def : Pat<(v4i32 (movl VR128:$src1, VR128:$src2)),
+            (VMOVSSrr (v4i32 VR128:$src1),
+                      (EXTRACT_SUBREG (v4i32 VR128:$src2), sub_ss))>;
 
-def VMOVSSmr : SI<0x11, MRMDestMem, (outs), (ins f32mem:$dst, FR32:$src),
-                  "movss\t{$src, $dst|$dst, $src}",
-                  [(store FR32:$src, addr:$dst)]>, XS, VEX;
-def VMOVSDmr : SI<0x11, MRMDestMem, (outs), (ins f64mem:$dst, FR64:$src),
-                  "movsd\t{$src, $dst|$dst, $src}",
-                  [(store FR64:$src, addr:$dst)]>, XD, VEX;
+  // Extract the low 64-bit value from one vector and insert it into another.
+  def : Pat<(v2f64 (movl VR128:$src1, VR128:$src2)),
+            (VMOVSDrr (v2f64 VR128:$src1),
+                      (EXTRACT_SUBREG (v2f64 VR128:$src2), sub_sd))>;
+  def : Pat<(v2i64 (movl VR128:$src1, VR128:$src2)),
+            (VMOVSDrr (v2i64 VR128:$src1),
+                      (EXTRACT_SUBREG (v2i64 VR128:$src2), sub_sd))>;
 
-// Extract and store.
-def : Pat<(store (f32 (vector_extract (v4f32 VR128:$src), (iPTR 0))),
-                 addr:$dst),
-          (MOVSSmr addr:$dst,
-                   (EXTRACT_SUBREG (v4f32 VR128:$src), sub_ss))>;
-def : Pat<(store (f64 (vector_extract (v2f64 VR128:$src), (iPTR 0))),
-                 addr:$dst),
-          (MOVSDmr addr:$dst,
-                   (EXTRACT_SUBREG (v2f64 VR128:$src), sub_sd))>;
+  // vector_shuffle v1, v2 <4, 5, 2, 3> using movsd
+  def : Pat<(v4f32 (movlp VR128:$src1, VR128:$src2)),
+            (VMOVSDrr VR128:$src1, (EXTRACT_SUBREG VR128:$src2, sub_sd))>;
+  def : Pat<(v4i32 (movlp VR128:$src1, VR128:$src2)),
+            (VMOVSDrr VR128:$src1, (EXTRACT_SUBREG VR128:$src2, sub_sd))>;
 
-// Move Aligned/Unaligned floating point values
+  // Move scalar to XMM zero-extended, zeroing a VR128 then do a
+  // MOVS{S,D} to the lower bits.
+  def : Pat<(v4f32 (X86vzmovl (v4f32 (scalar_to_vector FR32:$src)))),
+            (VMOVSSrr (v4f32 (V_SET0PS)), FR32:$src)>;
+  def : Pat<(v4f32 (X86vzmovl (v4f32 VR128:$src))),
+            (VMOVSSrr (v4f32 (V_SET0PS)),
+                      (f32 (EXTRACT_SUBREG (v4f32 VR128:$src), sub_ss)))>;
+  def : Pat<(v4i32 (X86vzmovl (v4i32 VR128:$src))),
+            (VMOVSSrr (v4i32 (V_SET0PI)),
+                      (EXTRACT_SUBREG (v4i32 VR128:$src), sub_ss))>;
+  def : Pat<(v2f64 (X86vzmovl (v2f64 (scalar_to_vector FR64:$src)))),
+            (VMOVSDrr (v2f64 (V_SET0PS)), FR64:$src)>;
+  }
+
+  let AddedComplexity = 20 in {
+  // MOVSSrm zeros the high parts of the register; represent this
+  // with SUBREG_TO_REG. The AVX versions also write: DST[255:128] <- 0
+  def : Pat<(v4f32 (X86vzmovl (v4f32 (scalar_to_vector (loadf32 addr:$src))))),
+            (SUBREG_TO_REG (i32 0), (VMOVSSrm addr:$src), sub_ss)>;
+  def : Pat<(v4f32 (scalar_to_vector (loadf32 addr:$src))),
+            (SUBREG_TO_REG (i32 0), (VMOVSSrm addr:$src), sub_ss)>;
+  def : Pat<(v4f32 (X86vzmovl (loadv4f32 addr:$src))),
+            (SUBREG_TO_REG (i32 0), (VMOVSSrm addr:$src), sub_ss)>;
+
+  // MOVSDrm zeros the high parts of the register; represent this
+  // with SUBREG_TO_REG. The AVX versions also write: DST[255:128] <- 0
+  def : Pat<(v2f64 (X86vzmovl (v2f64 (scalar_to_vector (loadf64 addr:$src))))),
+            (SUBREG_TO_REG (i64 0), (VMOVSDrm addr:$src), sub_sd)>;
+  def : Pat<(v2f64 (scalar_to_vector (loadf64 addr:$src))),
+            (SUBREG_TO_REG (i64 0), (VMOVSDrm addr:$src), sub_sd)>;
+  def : Pat<(v2f64 (X86vzmovl (loadv2f64 addr:$src))),
+            (SUBREG_TO_REG (i64 0), (VMOVSDrm addr:$src), sub_sd)>;
+  def : Pat<(v2f64 (X86vzmovl (bc_v2f64 (loadv4f32 addr:$src)))),
+            (SUBREG_TO_REG (i64 0), (VMOVSDrm addr:$src), sub_sd)>;
+  def : Pat<(v2f64 (X86vzload addr:$src)),
+            (SUBREG_TO_REG (i64 0), (VMOVSDrm addr:$src), sub_sd)>;
+
+  // Represent the same patterns above but in the form they appear for
+  // 256-bit types
+  def : Pat<(v8f32 (X86vzmovl (insert_subvector undef,
+                   (v4f32 (scalar_to_vector (loadf32 addr:$src))), (i32 0)))),
+            (SUBREG_TO_REG (i32 0), (VMOVSSrm addr:$src), sub_ss)>;
+  def : Pat<(v4f64 (X86vzmovl (insert_subvector undef,
+                   (v2f64 (scalar_to_vector (loadf64 addr:$src))), (i32 0)))),
+            (SUBREG_TO_REG (i32 0), (VMOVSDrm addr:$src), sub_sd)>;
+  }
+
+  // Extract and store.
+  def : Pat<(store (f32 (vector_extract (v4f32 VR128:$src), (iPTR 0))),
+                   addr:$dst),
+            (VMOVSSmr addr:$dst,
+                     (EXTRACT_SUBREG (v4f32 VR128:$src), sub_ss))>;
+  def : Pat<(store (f64 (vector_extract (v2f64 VR128:$src), (iPTR 0))),
+                   addr:$dst),
+            (VMOVSDmr addr:$dst,
+                     (EXTRACT_SUBREG (v2f64 VR128:$src), sub_sd))>;
+
+  // Shuffle with VMOVSS
+  def : Pat<(v4f32 (X86Movss VR128:$src1, (scalar_to_vector FR32:$src2))),
+            (VMOVSSrr VR128:$src1, FR32:$src2)>;
+  def : Pat<(v4i32 (X86Movss VR128:$src1, VR128:$src2)),
+            (VMOVSSrr (v4i32 VR128:$src1),
+                      (EXTRACT_SUBREG (v4i32 VR128:$src2), sub_ss))>;
+  def : Pat<(v4f32 (X86Movss VR128:$src1, VR128:$src2)),
+            (VMOVSSrr (v4f32 VR128:$src1),
+                      (EXTRACT_SUBREG (v4f32 VR128:$src2), sub_ss))>;
+
+  // Shuffle with VMOVSD
+  def : Pat<(v2f64 (X86Movsd VR128:$src1, (scalar_to_vector FR64:$src2))),
+            (VMOVSDrr VR128:$src1, FR64:$src2)>;
+  def : Pat<(v2i64 (X86Movsd VR128:$src1, VR128:$src2)),
+            (VMOVSDrr (v2i64 VR128:$src1),
+                     (EXTRACT_SUBREG (v2i64 VR128:$src2), sub_sd))>;
+  def : Pat<(v2f64 (X86Movsd VR128:$src1, VR128:$src2)),
+            (VMOVSDrr (v2f64 VR128:$src1),
+                     (EXTRACT_SUBREG (v2f64 VR128:$src2), sub_sd))>;
+  def : Pat<(v4f32 (X86Movsd VR128:$src1, VR128:$src2)),
+            (VMOVSDrr VR128:$src1, (EXTRACT_SUBREG (v4f32 VR128:$src2),
+                                                   sub_sd))>;
+  def : Pat<(v4i32 (X86Movsd VR128:$src1, VR128:$src2)),
+            (VMOVSDrr VR128:$src1, (EXTRACT_SUBREG (v4i32 VR128:$src2),
+                                                   sub_sd))>;
+
+  // FIXME: Instead of a X86Movlps there should be a X86Movsd here, the problem
+  // is during lowering, where it's not possible to recognize the fold cause
+  // it has two uses through a bitcast. One use disappears at isel time and the
+  // fold opportunity reappears.
+  def : Pat<(v4f32 (X86Movlps VR128:$src1, VR128:$src2)),
+            (VMOVSDrr VR128:$src1, (EXTRACT_SUBREG (v4f32 VR128:$src2),
+                                                   sub_sd))>;
+  def : Pat<(v4i32 (X86Movlps VR128:$src1, VR128:$src2)),
+            (VMOVSDrr VR128:$src1, (EXTRACT_SUBREG (v4i32 VR128:$src2),
+                                                   sub_sd))>;
+}
+
+//===----------------------------------------------------------------------===//
+// SSE 1 & 2 - Move Aligned/Unaligned FP Instructions
+//===----------------------------------------------------------------------===//
+
 multiclass sse12_mov_packed<bits<8> opc, RegisterClass RC,
                             X86MemOperand x86memop, PatFrag ld_frag,
                             string asm, Domain d,
@@ -4392,22 +4554,6 @@ let Predicates = [HasSSE2] in
  def : Pat<(fextend (loadf32 addr:$src)),
            (CVTSS2SDrm addr:$src)>;
 
-// Move scalar to XMM zero-extended
-// movd to XMM register zero-extends
-let AddedComplexity = 15 in {
-// Zeroing a VR128 then do a MOVS{S|D} to the lower bits.
-def : Pat<(v2f64 (X86vzmovl (v2f64 (scalar_to_vector FR64:$src)))),
-          (MOVSDrr (v2f64 (V_SET0PS)), FR64:$src)>;
-def : Pat<(v4f32 (X86vzmovl (v4f32 (scalar_to_vector FR32:$src)))),
-          (MOVSSrr (v4f32 (V_SET0PS)), FR32:$src)>;
-def : Pat<(v4f32 (X86vzmovl (v4f32 VR128:$src))),
-          (MOVSSrr (v4f32 (V_SET0PS)),
-                   (f32 (EXTRACT_SUBREG (v4f32 VR128:$src), sub_ss)))>;
-def : Pat<(v4i32 (X86vzmovl (v4i32 VR128:$src))),
-          (MOVSSrr (v4i32 (V_SET0PI)),
-                   (EXTRACT_SUBREG (v4i32 VR128:$src), sub_ss))>;
-}
-
 // Splat v2f64 / v2i64
 let AddedComplexity = 10 in {
 def : Pat<(splat_lo (v2i64 VR128:$src), (undef)),
@@ -4436,24 +4582,6 @@ def : Pat<(store (v4i32 (movlp (bc_v4i32 (loadv2i64 addr:$src1)), VR128:$src2)),
           (MOVLPSmr addr:$src1, VR128:$src2)>;
 def : Pat<(store (v2i64 (movlp (load addr:$src1), VR128:$src2)), addr:$src1),
           (MOVLPDmr addr:$src1, VR128:$src2)>;
-
-let AddedComplexity = 15 in {
-// Setting the lowest element in the vector.
-def : Pat<(v4i32 (movl VR128:$src1, VR128:$src2)),
-          (MOVSSrr (v4i32 VR128:$src1),
-                   (EXTRACT_SUBREG (v4i32 VR128:$src2), sub_ss))>;
-def : Pat<(v2i64 (movl VR128:$src1, VR128:$src2)),
-          (MOVSDrr (v2i64 VR128:$src1),
-                   (EXTRACT_SUBREG (v2i64 VR128:$src2), sub_sd))>;
-
-// vector_shuffle v1, v2 <4, 5, 2, 3> using movsd
-def : Pat<(v4f32 (movlp VR128:$src1, VR128:$src2)),
-          (MOVSDrr VR128:$src1, (EXTRACT_SUBREG VR128:$src2, sub_sd))>,
-      Requires<[HasSSE2]>;
-def : Pat<(v4i32 (movlp VR128:$src1, VR128:$src2)),
-          (MOVSDrr VR128:$src1, (EXTRACT_SUBREG VR128:$src2, sub_sd))>,
-      Requires<[HasSSE2]>;
-}
 
 // Set lowest element and zero upper elements.
 def : Pat<(v2f64 (X86vzmovl (v2f64 VR128:$src))),
@@ -6200,30 +6328,6 @@ def : Pat<(v2f64 (X86Unpcklpd VR128:$src1,
                     (scalar_to_vector (loadf64 addr:$src2)))),
           (MOVHPDrm VR128:$src1, addr:$src2)>;
 
-// Shuffle with MOVSS
-def : Pat<(v4f32 (X86Movss VR128:$src1, (scalar_to_vector FR32:$src2))),
-          (MOVSSrr VR128:$src1, FR32:$src2)>;
-def : Pat<(v4i32 (X86Movss VR128:$src1, VR128:$src2)),
-          (MOVSSrr (v4i32 VR128:$src1),
-                   (EXTRACT_SUBREG (v4i32 VR128:$src2), sub_ss))>;
-def : Pat<(v4f32 (X86Movss VR128:$src1, VR128:$src2)),
-          (MOVSSrr (v4f32 VR128:$src1),
-                   (EXTRACT_SUBREG (v4f32 VR128:$src2), sub_ss))>;
-
-// Shuffle with MOVSD
-def : Pat<(v2f64 (X86Movsd VR128:$src1, (scalar_to_vector FR64:$src2))),
-          (MOVSDrr VR128:$src1, FR64:$src2)>;
-def : Pat<(v2i64 (X86Movsd VR128:$src1, VR128:$src2)),
-          (MOVSDrr (v2i64 VR128:$src1),
-                   (EXTRACT_SUBREG (v2i64 VR128:$src2), sub_sd))>;
-def : Pat<(v2f64 (X86Movsd VR128:$src1, VR128:$src2)),
-          (MOVSDrr (v2f64 VR128:$src1),
-                   (EXTRACT_SUBREG (v2f64 VR128:$src2), sub_sd))>;
-def : Pat<(v4f32 (X86Movsd VR128:$src1, VR128:$src2)),
-          (MOVSDrr VR128:$src1, (EXTRACT_SUBREG (v4f32 VR128:$src2), sub_sd))>;
-def : Pat<(v4i32 (X86Movsd VR128:$src1, VR128:$src2)),
-          (MOVSDrr VR128:$src1, (EXTRACT_SUBREG (v4i32 VR128:$src2), sub_sd))>;
-
 // Shuffle with MOVLPS
 def : Pat<(v4f32 (X86Movlps VR128:$src1, (load addr:$src2))),
           (MOVLPSrm VR128:$src1, addr:$src2)>;
@@ -6232,15 +6336,6 @@ def : Pat<(v4i32 (X86Movlps VR128:$src1, (load addr:$src2))),
 def : Pat<(X86Movlps VR128:$src1,
                     (bc_v4f32 (v2f64 (scalar_to_vector (loadf64 addr:$src2))))),
           (MOVLPSrm VR128:$src1, addr:$src2)>;
-// FIXME: Instead of a X86Movlps there should be a X86Movsd here, the problem
-// is during lowering, where it's not possible to recognize the load fold cause
-// it has two uses through a bitcast. One use disappears at isel time and the
-// fold opportunity reappears.
-def : Pat<(v4f32 (X86Movlps VR128:$src1, VR128:$src2)),
-          (MOVSDrr VR128:$src1, (EXTRACT_SUBREG (v4f32 VR128:$src2), sub_sd))>;
-
-def : Pat<(v4i32 (X86Movlps VR128:$src1, VR128:$src2)),
-          (MOVSDrr VR128:$src1, (EXTRACT_SUBREG (v4i32 VR128:$src2), sub_sd))>;
 
 // Shuffle with MOVLPD
 def : Pat<(v2f64 (X86Movlpd VR128:$src1, (load addr:$src2))),
