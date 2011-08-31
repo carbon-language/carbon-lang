@@ -79,14 +79,14 @@ void NoReturnFunctionChecker::checkPostStmt(const CallExpr *CE,
     C.generateSink(CE);
 }
 
-static bool END_WITH_NULL isMultiArgSelector(Selector Sel, ...) {
+static bool END_WITH_NULL isMultiArgSelector(const Selector *Sel, ...) {
   va_list argp;
   va_start(argp, Sel);
 
   unsigned Slot = 0;
   const char *Arg;
   while ((Arg = va_arg(argp, const char *))) {
-    if (!Sel.getNameForSlot(Slot).equals(Arg))
+    if (!Sel->getNameForSlot(Slot).equals(Arg))
       break; // still need to va_end!
     ++Slot;
   }
@@ -124,12 +124,12 @@ void NoReturnFunctionChecker::checkPostObjCMessage(const ObjCMessage &Msg,
   default:
     return;
   case 4:
-    if (!isMultiArgSelector(Sel, "handleFailureInFunction", "file",
+    if (!isMultiArgSelector(&Sel, "handleFailureInFunction", "file",
                             "lineNumber", "description", NULL))
       return;
     break;
   case 5:
-    if (!isMultiArgSelector(Sel, "handleFailureInMethod", "object", "file",
+    if (!isMultiArgSelector(&Sel, "handleFailureInMethod", "object", "file",
                             "lineNumber", "description", NULL))
       return;
     break;
