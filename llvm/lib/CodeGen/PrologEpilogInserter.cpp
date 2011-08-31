@@ -701,10 +701,10 @@ void PEI::insertPrologEpilogCode(MachineFunction &Fn) {
       TFI.emitEpilogue(Fn, *I);
   }
 
-  // Emit additional code that is required support segmented stacks, if we've
-  // been asked for it.  This, when linked with a runtime with support for
-  // segmented stacks (libgcc is one), will result allocating stack space in
-  // small chunks instead of one large contiguous block.
+  // Emit additional code that is required to support segmented stacks, if
+  // we've been asked for it.  This, when linked with a runtime with support
+  // for segmented stacks (libgcc is one), will result in allocating stack
+  // space in small chunks instead of one large contiguous block.
   if (EnableSegmentedStacks)
     TFI.adjustForSegmentedStacks(Fn);
 }

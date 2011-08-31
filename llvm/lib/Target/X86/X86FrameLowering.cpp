@@ -1292,8 +1292,8 @@ GetScratchRegister(bool Is64Bit, const MachineFunction &MF) {
 
     if (CallingConvention == CallingConv::X86_FastCall) {
       if (IsNested) {
-        report_fatal_error("Segmented stacks does not supprot fastcall with "
-                           "nested fucntion.");
+        report_fatal_error("Segmented stacks does not support fastcall with "
+                           "nested function.");
         return -1;
       } else {
         return X86::EAX;
