@@ -44,6 +44,7 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"
+#include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Timer.h"
 using namespace llvm;
 
@@ -1520,12 +1521,67 @@ static const MCExpr *LowerConstant(const Constant *CV, AsmPrinter &AP) {
 static void EmitGlobalConstantImpl(const Constant *C, unsigned AddrSpace,
                                    AsmPrinter &AP);
 
+/// isRepeatedByteSequence - Determine whether the given value is
+/// composed of a repeated sequence of identical bytes and return the
+/// byte value.  If it is not a repeated sequence, return -1.
+static int isRepeatedByteSequence(const Value *V, TargetMachine &TM) {
+
+  if (const ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
+    if (CI->getBitWidth() > 64) return -1;
+
+    uint64_t Size = TM.getTargetData()->getTypeAllocSize(V->getType());
+    uint64_t Value = CI->getZExtValue();
+
+    // Make sure the constant is at least 8 bits long and has a power
+    // of 2 bit width.  This guarantees the constant bit width is
+    // always a multiple of 8 bits, avoiding issues with padding out
+    // to Size and other such corner cases.
+    if (CI->getBitWidth() < 8 || !isPowerOf2_64(CI->getBitWidth())) return -1;
+
+    uint8_t Byte = static_cast<uint8_t>(Value);
+
+    for (unsigned i = 1; i < Size; ++i) {
+      Value >>= 8;
+      if (static_cast<uint8_t>(Value) != Byte) return -1;
+    }
+    return Byte;
+  }
+  if (const ConstantArray *CA = dyn_cast<ConstantArray>(V)) {
+    // Make sure all array elements are sequences of the same repeated
+    // byte.
+    if (CA->getNumOperands() == 0) return -1;
+
+    int Byte = isRepeatedByteSequence(CA->getOperand(0), TM);
+    if (Byte == -1) return -1;
+
+    for (unsigned i = 1, e = CA->getNumOperands(); i != e; ++i) {
+      int ThisByte = isRepeatedByteSequence(CA->getOperand(i), TM);
+      if (ThisByte == -1) return -1;
+      if (Byte != ThisByte) return -1;
+    }
+    return Byte;
+  }
+
+  return -1;
+}
+
 static void EmitGlobalConstantArray(const ConstantArray *CA, unsigned AddrSpace,
                                     AsmPrinter &AP) {
   if (AddrSpace != 0 || !CA->isString()) {
-    // Not a string.  Print the values in successive locations
-    for (unsigned i = 0, e = CA->getNumOperands(); i != e; ++i)
-      EmitGlobalConstantImpl(CA->getOperand(i), AddrSpace, AP);
+    // Not a string.  Print the values in successive locations.
+
+    // See if we can aggregate some values.  Make sure it can be
+    // represented as a series of bytes of the constant value.
+    int Value = isRepeatedByteSequence(CA, AP.TM);
+
+    if (Value != -1) {
+      unsigned Bytes = AP.TM.getTargetData()->getTypeAllocSize(CA->getType());
+      AP.OutStreamer.EmitFill(Bytes, Value, AddrSpace);
+    }
+    else {
+      for (unsigned i = 0, e = CA->getNumOperands(); i != e; ++i)
+        EmitGlobalConstantImpl(CA->getOperand(i), AddrSpace, AP);
+    }
     return;
   }
 
