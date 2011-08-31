@@ -110,9 +110,7 @@ SDValue DAGTypeLegalizer::SoftenFloatRes_BITCAST(SDNode *N) {
 
 SDValue DAGTypeLegalizer::SoftenFloatRes_MERGE_VALUES(SDNode *N) {
   SDValue Op = DecomposeMERGE_VALUES(N);
-  return Op.getValueType().isVector() ?
-      BitConvertVectorToIntegerVector(Op) :
-      BitConvertToInteger(Op);
+  return BitConvertToInteger(Op);
 }
 
 SDValue DAGTypeLegalizer::SoftenFloatRes_BUILD_PAIR(SDNode *N) {

@@ -139,8 +139,6 @@ void DAGTypeLegalizer::PromoteIntegerResult(SDNode *N, unsigned ResNo) {
 
 SDValue DAGTypeLegalizer::PromoteIntRes_MERGE_VALUES(SDNode *N) {
   SDValue Op = DecomposeMERGE_VALUES(N);
-  assert(Op.getValueType().isInteger()
-      && "Must decompose to an integer type!");
   return GetPromotedInteger(Op);
 }
 
@@ -1556,11 +1554,10 @@ void DAGTypeLegalizer::ExpandIntRes_ADDSUBE(SDNode *N,
   // use the new one.
   ReplaceValueWith(SDValue(N, 1), Hi.getValue(1));
 }
+
 void DAGTypeLegalizer::ExpandIntRes_MERGE_VALUES(SDNode *N, 
-                                          SDValue &Lo, SDValue &Hi) {
+                                                 SDValue &Lo, SDValue &Hi) {
   SDValue Res = DecomposeMERGE_VALUES(N);
-  assert(Res.getValueType().isInteger()
-      && "Cannot split a non-integer value.");
   SplitInteger(Res, Lo, Hi);
 }
 

@@ -948,21 +948,22 @@ bool DAGTypeLegalizer::CustomWidenLowerNode(SDNode *N, EVT VT) {
 
 SDValue DAGTypeLegalizer::DecomposeMERGE_VALUES(SDNode *N) {
   unsigned i;
-   // A MERGE_VALUES node can produce any number of values.
-   // We know that the first illegal type needs to be handled.
+  // A MERGE_VALUES node can produce any number of values.
+  // Replace the results other than the first illegal one with the
+  // corresponding input operands.
   for (i = 0; isTypeLegal(N->getValueType(i)); ++i)
     ReplaceValueWith(SDValue(N, i), SDValue(N->getOperand(i)));
 
-  // The first illegal result must be the one that needs to be handled.
-  SDValue BadValue = N->getOperand(i);
+  // The first illegal result is the one which needs to be handled;
+  // type legalization legalizes values in order.
+  SDValue IllegalValue = N->getOperand(i);
 
-  // Legalize the rest of the results into the input operands whether they
-  // are legal or not.
+  // Continue replacing results.
   unsigned e = N->getNumValues();
   for (++i; i != e; ++i) 
     ReplaceValueWith(SDValue(N, i), SDValue(N->getOperand(i)));
 
-  return BadValue;
+  return IllegalValue;
 }
 
 /// GetSplitDestVTs - Compute the VTs needed for the low/hi parts of a type

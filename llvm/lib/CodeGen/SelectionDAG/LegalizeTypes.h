@@ -149,10 +149,9 @@ private:
   bool CustomLowerNode(SDNode *N, EVT VT, bool LegalizeResult);
   bool CustomWidenLowerNode(SDNode *N, EVT VT);
 
-  // DecomposeMERGE_VALUES  takes a SDNode and returns the first
-  // illegal operand that needs to be modified. 
-  // All other nodes are legalized, whether they are legal or not.
-  // The resulting SDValue needs to be modified to make it legal.
+  // DecomposeMERGE_VALUES takes a SDNode and returns the first
+  // illegal value. All other results are replaced with the
+  // corresponding input operand.
   SDValue DecomposeMERGE_VALUES(SDNode *N);
 
   SDValue GetVectorElementPointer(SDValue VecPtr, EVT EltVT, SDValue Index);
@@ -162,9 +161,9 @@ private:
                       const SDValue *Ops, unsigned NumOps, bool isSigned,
                       DebugLoc dl);
   
-	std::pair<SDValue, SDValue> ExpandChainLibCall(RTLIB::Libcall LC,
-									                               SDNode *Node, bool isSigned);
-	std::pair<SDValue, SDValue> ExpandAtomic(SDNode *Node);
+  std::pair<SDValue, SDValue> ExpandChainLibCall(RTLIB::Libcall LC,
+                                                 SDNode *Node, bool isSigned);
+  std::pair<SDValue, SDValue> ExpandAtomic(SDNode *Node);
 
   SDValue PromoteTargetBoolean(SDValue Bool, EVT VT);
   void ReplaceValueWith(SDValue From, SDValue To);
