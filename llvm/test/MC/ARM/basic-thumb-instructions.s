@@ -1,4 +1,9 @@
+@---
+@ Run these test in both Thumb1 and Thumb2 modes, as all of the encodings
+@ should be valid, and parse the same, in both.
+@---
 @ RUN: llvm-mc -triple=thumbv6-apple-darwin -show-encoding < %s | FileCheck %s
+@ RUN: llvm-mc -triple=thumbv7-apple-darwin -show-encoding < %s | FileCheck %s
   .syntax unified
   .globl _func
 
@@ -383,15 +388,6 @@ _func:
         negs r3, r4
 
 @ CHECK: rsbs	r3, r4, #0              @ encoding: [0x63,0x42]
-
-
-@------------------------------------------------------------------------------
-@ NOP
-@------------------------------------------------------------------------------
-        nop
-
-@ CHECK: nop                            @ encoding: [0xc0,0x46]
-
 
 @------------------------------------------------------------------------------
 @ ORR
