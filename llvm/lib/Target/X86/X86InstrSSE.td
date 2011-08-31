@@ -3232,14 +3232,14 @@ let Predicates = [HasAVX] in {
 
   def : Pat<(v4i32 (X86PShufd (bc_v4i32 (memopv2i64 addr:$src1)),
                                    (i8 imm:$imm))),
-            (VPSHUFDmi addr:$src1, imm:$imm)>, Requires<[HasAVX]>;
+            (VPSHUFDmi addr:$src1, imm:$imm)>;
   def : Pat<(v4i32 (X86PShufd (bc_v4i32 (memopv4f32 addr:$src1)),
                                    (i8 imm:$imm))),
             (VPSHUFDmi addr:$src1, imm:$imm)>;
   def : Pat<(v4f32 (X86PShufd VR128:$src1, (i8 imm:$imm))),
-            (VPSHUFDri VR128:$src1, imm:$imm)>, Requires<[HasAVX]>;
+            (VPSHUFDri VR128:$src1, imm:$imm)>;
   def : Pat<(v4i32 (X86PShufd VR128:$src1, (i8 imm:$imm))),
-            (VPSHUFDri VR128:$src1, imm:$imm)>, Requires<[HasAVX]>;
+            (VPSHUFDri VR128:$src1, imm:$imm)>;
   def : Pat<(v8i16 (X86PShufhw VR128:$src, (i8 imm:$imm))),
             (VPSHUFHWri VR128:$src, imm:$imm)>;
   def : Pat<(v8i16 (X86PShufhw (bc_v8i16 (memopv2i64 addr:$src)),
