@@ -46,6 +46,10 @@ static cl::opt<bool>
 EnableARM3Addr("enable-arm-3-addr-conv", cl::Hidden,
                cl::desc("Enable ARM 2-addr to 3-addr conv"));
 
+static cl::opt<bool>
+WidenVMOVS("widen-vmovs", cl::Hidden,
+           cl::desc("Widen ARM vmovs to vmovd when possible"));
+
 /// ARM_MLxEntry - Record information about MLA / MLS instructions.
 struct ARM_MLxEntry {
   unsigned MLxOpc;     // MLA / MLS opcode
@@ -637,7 +641,8 @@ void ARMBaseInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     // a VMOVD since that can be converted to a NEON-domain move by
     // NEONMoveFix.cpp.  Check that MI is the original COPY instruction, and
     // that it really defines the whole D-register.
-    if ((DestReg - ARM::S0) % 2 == 0 && (SrcReg - ARM::S0) % 2 == 0 &&
+    if (WidenVMOVS &&
+        (DestReg - ARM::S0) % 2 == 0 && (SrcReg - ARM::S0) % 2 == 0 &&
         I != MBB.end() && I->isCopy() &&
         I->getOperand(0).getReg() == DestReg &&
         I->getOperand(1).getReg() == SrcReg) {
