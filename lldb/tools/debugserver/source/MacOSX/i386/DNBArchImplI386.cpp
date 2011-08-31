@@ -767,7 +767,7 @@ DNBArchImplI386::EnableHardwareWatchpoint (nub_addr_t addr, nub_size_t size, boo
         {
             // Modify our local copy of the debug state, first.
             SetWatchpoint(debug_state, i, addr, size, read, write);
-            // Ready to set the watch point in the inferior.
+            // Now set the watch point in the inferior.
             kret = SetDBGState();
             DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchImplI386::EnableHardwareWatchpoint() SetDBGState() => 0x%8.8x.", kret);
 
@@ -795,7 +795,7 @@ DNBArchImplI386::DisableHardwareWatchpoint (uint32_t hw_index)
         {
             // Modify our local copy of the debug state, first.
             ClearWatchpoint(debug_state, hw_index);
-            // Ready to disable the watch point in the inferior.
+            // Now disable the watch point in the inferior.
             kret = SetDBGState();
             DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchImplI386::DisableHardwareWatchpoint( %u )",
                              hw_index);
