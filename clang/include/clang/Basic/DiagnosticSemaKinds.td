@@ -4639,9 +4639,12 @@ def err_sizeof_pack_no_pack_name_suggest : Error<
 def note_parameter_pack_here : Note<"parameter pack %0 declared here">;
 
 def err_uncasted_use_of_unknown_any : Error<
-  "%0 has unknown type;  cast it to its declared type to use it">;
+  "%0 has unknown type; cast it to its declared type to use it">;
 def err_uncasted_call_of_unknown_any : Error<
-  "%0 has unknown return type;  cast the call to its declared return type">;
+  "%0 has unknown return type; cast the call to its declared return type">;
+def err_uncasted_send_to_unknown_any_method : Error<
+  "no known method %select{%objcinstance1|%objcclass1}0; cast the "
+  "message send to the method's return type">;
 def err_unsupported_unknown_any_decl : Error<
   "%0 has unknown type, which is unsupported for this kind of declaration">;
 def err_unsupported_unknown_any_expr : Error<

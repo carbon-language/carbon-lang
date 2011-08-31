@@ -9942,7 +9942,12 @@ static ExprResult diagnoseUnknownAnyExpr(Sema &S, Expr *e) {
     diagID = diag::err_uncasted_call_of_unknown_any;
     loc = msg->getSelectorLoc();
     d = msg->getMethodDecl();
-    assert(d && "unknown method returning __unknown_any?");
+    if (!d) {
+      S.Diag(loc, diag::err_uncasted_send_to_unknown_any_method)
+        << static_cast<unsigned>(msg->isClassMessage()) << msg->getSelector()
+        << orig->getSourceRange();
+      return ExprError();
+    }
   } else {
     S.Diag(e->getExprLoc(), diag::err_unsupported_unknown_any_expr)
       << e->getSourceRange();

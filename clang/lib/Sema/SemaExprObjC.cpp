@@ -357,8 +357,9 @@ bool Sema::CheckMessageArgumentTypes(QualType ReceiverType,
     else
       DiagID = isClassMessage ? diag::warn_class_method_not_found
                               : diag::warn_inst_method_not_found;
-    Diag(lbrac, DiagID)
-      << Sel << isClassMessage << SourceRange(lbrac, rbrac);
+    if (!getLangOptions().DebuggerSupport)
+      Diag(lbrac, DiagID)
+        << Sel << isClassMessage << SourceRange(lbrac, rbrac);
 
     // In debuggers, we want to use __unknown_anytype for these
     // results so that clients can cast them.
