@@ -1681,15 +1681,31 @@ FunctionPass *llvm::createSCCPPass() {
 static void DeleteInstructionInBlock(BasicBlock *BB) {
   DEBUG(dbgs() << "  BasicBlock Dead:" << *BB);
   ++NumDeadBlocks;
-  
+
+  // Check to see if there are non-terminating instructions to delete.
+  if (isa<TerminatorInst>(BB->begin()))
+    return;
+
   // Delete the instructions backwards, as it has a reduced likelihood of
   // having to update as many def-use and use-def chains.
-  while (!isa<TerminatorInst>(BB->begin())) {
-    Instruction *I = --BasicBlock::iterator(BB->getTerminator());
-    
+  std::vector<Instruction*> WorkList;
+  WorkList.reserve(BB->size());
+  BasicBlock::iterator I = --BasicBlock::iterator(BB->getTerminator());
+
+  while (true) {
     if (!I->use_empty())
       I->replaceAllUsesWith(UndefValue::get(I->getType()));
-    BB->getInstList().erase(I);
+    WorkList.push_back(I);
+    if (I == BB->begin())
+      break;
+    --I;
+  }
+
+  for (std::vector<Instruction*>::iterator
+         II = WorkList.begin(), IE = WorkList.end(); II != IE; ++II) {
+    if (isa<LandingPadInst>(*II))
+      continue;
+    BB->getInstList().erase(*II);
     ++NumInstRemoved;
   }
 }
