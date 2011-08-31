@@ -263,7 +263,7 @@ CINDEX_LINKAGE CXFile clang_getFile(CXTranslationUnit tu,
  * \brief Identifies a specific source location within a translation
  * unit.
  *
- * Use clang_getInstantiationLocation() or clang_getSpellingLocation()
+ * Use clang_getExpansionLocation() or clang_getSpellingLocation()
  * to map a source location to a particular file, line, and column.
  */
 typedef struct {
@@ -339,8 +339,8 @@ CINDEX_LINKAGE unsigned clang_equalRanges(CXSourceRange range1,
  * \brief Retrieve the file, line, column, and offset represented by
  * the given source location.
  *
- * If the location refers into a macro instantiation, retrieves the
- * location of the macro instantiation.
+ * If the location refers into a macro expansion, retrieves the
+ * location of the macro expansion.
  *
  * \param location the location within a source file that will be decomposed
  * into its parts.
@@ -356,6 +356,20 @@ CINDEX_LINKAGE unsigned clang_equalRanges(CXSourceRange range1,
  *
  * \param offset [out] if non-NULL, will be set to the offset into the
  * buffer to which the given source location points.
+ */
+CINDEX_LINKAGE void clang_getExpansionLocation(CXSourceLocation location,
+                                               CXFile *file,
+                                               unsigned *line,
+                                               unsigned *column,
+                                               unsigned *offset);
+
+/**
+ * \brief Legacy API to retrieve the file, line, column, and offset represented
+ * by the given source location.
+ *
+ * This interface has been replaced by the newer interface
+ * \see clang_getExpansionLocation(). See that interface's documentation for
+ * details.
  */
 CINDEX_LINKAGE void clang_getInstantiationLocation(CXSourceLocation location,
                                                    CXFile *file,

@@ -2826,11 +2826,11 @@ static void createNullLocation(CXFile *file, unsigned *line,
 }
 
 extern "C" {
-void clang_getInstantiationLocation(CXSourceLocation location,
-                                    CXFile *file,
-                                    unsigned *line,
-                                    unsigned *column,
-                                    unsigned *offset) {
+void clang_getExpansionLocation(CXSourceLocation location,
+                                CXFile *file,
+                                unsigned *line,
+                                unsigned *column,
+                                unsigned *offset) {
   SourceLocation Loc = SourceLocation::getFromRawEncoding(location.int_data);
 
   if (!location.ptr_data[0] || Loc.isInvalid()) {
@@ -2840,11 +2840,11 @@ void clang_getInstantiationLocation(CXSourceLocation location,
 
   const SourceManager &SM =
     *static_cast<const SourceManager*>(location.ptr_data[0]);
-  SourceLocation InstLoc = SM.getExpansionLoc(Loc);
+  SourceLocation ExpansionLoc = SM.getExpansionLoc(Loc);
 
   // Check that the FileID is invalid on the expansion location.
   // This can manifest in invalid code.
-  FileID fileID = SM.getFileID(InstLoc);
+  FileID fileID = SM.getFileID(ExpansionLoc);
   bool Invalid = false;
   const SrcMgr::SLocEntry &sloc = SM.getSLocEntry(fileID, &Invalid);
   if (!sloc.isFile() || Invalid) {
@@ -2855,11 +2855,20 @@ void clang_getInstantiationLocation(CXSourceLocation location,
   if (file)
     *file = (void *)SM.getFileEntryForSLocEntry(sloc);
   if (line)
-    *line = SM.getExpansionLineNumber(InstLoc);
+    *line = SM.getExpansionLineNumber(ExpansionLoc);
   if (column)
-    *column = SM.getExpansionColumnNumber(InstLoc);
+    *column = SM.getExpansionColumnNumber(ExpansionLoc);
   if (offset)
-    *offset = SM.getDecomposedLoc(InstLoc).second;
+    *offset = SM.getDecomposedLoc(ExpansionLoc).second;
+}
+
+void clang_getInstantiationLocation(CXSourceLocation location,
+                                    CXFile *file,
+                                    unsigned *line,
+                                    unsigned *column,
+                                    unsigned *offset) {
+  // Redirect to new API.
+  clang_getExpansionLocation(location, file, line, column, offset);
 }
 
 void clang_getSpellingLocation(CXSourceLocation location,
@@ -3531,10 +3540,9 @@ CXCursor clang_getCursor(CXTranslationUnit TU, CXSourceLocation Loc) {
     const char *IsDef = clang_isCursorDefinition(Result)? " (Definition)" : "";
     CXSourceLocation ResultLoc = clang_getCursorLocation(Result);
     
-    clang_getInstantiationLocation(Loc, &SearchFile, &SearchLine, &SearchColumn,
-                                   0);
-    clang_getInstantiationLocation(ResultLoc, &ResultFile, &ResultLine, 
-                                   &ResultColumn, 0);
+    clang_getExpansionLocation(Loc, &SearchFile, &SearchLine, &SearchColumn, 0);
+    clang_getExpansionLocation(ResultLoc, &ResultFile, &ResultLine,
+                               &ResultColumn, 0);
     SearchFileName = clang_getFileName(SearchFile);
     ResultFileName = clang_getFileName(ResultFile);
     KindSpelling = clang_getCursorKindSpelling(Result.kind);
@@ -3556,8 +3564,8 @@ CXCursor clang_getCursor(CXTranslationUnit TU, CXSourceLocation Loc) {
                                 = clang_getCursorKindSpelling(Definition.kind);
       CXFile DefinitionFile;
       unsigned DefinitionLine, DefinitionColumn;
-      clang_getInstantiationLocation(DefinitionLoc, &DefinitionFile, 
-                                     &DefinitionLine, &DefinitionColumn, 0);
+      clang_getExpansionLocation(DefinitionLoc, &DefinitionFile,
+                                 &DefinitionLine, &DefinitionColumn, 0);
       CXString DefinitionFileName = clang_getFileName(DefinitionFile);
       fprintf(stderr, "  -> %s(%s:%d:%d)\n",
               clang_getCString(DefinitionKindSpelling),
