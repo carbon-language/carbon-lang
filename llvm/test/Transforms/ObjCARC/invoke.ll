@@ -27,6 +27,8 @@ invoke.cont:                                      ; preds = %entry
   ret void
 
 lpad:                                             ; preds = %entry
+  %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+           cleanup
   call void @objc_release(i8* %zipFile) nounwind, !clang.imprecise_release !0
   ret void
 }
@@ -56,6 +58,8 @@ invoke.cont:                                      ; preds = %entry
   br label %done
 
 lpad:                                             ; preds = %entry
+  %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+           cleanup
   call void @callee()
   br label %done
 
@@ -63,5 +67,7 @@ done:
   call void @objc_release(i8* %zipFile) nounwind, !clang.imprecise_release !0
   ret void
 }
+
+declare i32 @__gxx_personality_v0(...)
 
 !0 = metadata !{}

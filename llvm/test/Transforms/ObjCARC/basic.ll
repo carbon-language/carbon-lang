@@ -698,6 +698,8 @@ invoke.cont23:                                    ; preds = %if.then12
 
 lpad20:                                           ; preds = %invoke.cont23, %if.then12
   %tmp502 = phi double* [ undef, %invoke.cont23 ], [ %self, %if.then12 ]
+  %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+           cleanup
   unreachable
 
 if.end:                                           ; preds = %invoke.cont23
@@ -1998,3 +2000,5 @@ end:                                              ; preds = %if.end125, %if.end1
 }
 
 !0 = metadata !{}
+
+declare i32 @__gxx_personality_v0(...)

@@ -18,11 +18,10 @@ bb30.preheader:		; preds = %entry
 	br label %bb30
 
 unwind:		; preds = %cond_true, %entry
-	%eh_ptr = call i8* @llvm.eh.exception()		; <i8*> [#uses=2]
-	%eh_select = call i64 (i8*, i8*, ...)* @llvm.eh.selector.i64(i8* %eh_ptr, i8* bitcast (void ()* @__gxx_personality_v0 to i8*), i8* null)		; <i64> [#uses=0]
+        %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+                 catch i8* null
 	call void @llvm.stackrestore(i8* %tmp4)
-	call void @_Unwind_Resume(i8* %eh_ptr)
-	unreachable
+        resume { i8*, i32 } %exn
 
 invcont23:		; preds = %cond_true
 	%tmp27 = load i64* %tmp26, align 8		; <i64> [#uses=1]
@@ -46,14 +45,8 @@ declare i8* @llvm.stacksave() nounwind
 
 declare void @Foo(i8**)
 
-declare i8* @llvm.eh.exception() nounwind
-
-declare i64 @llvm.eh.selector.i64(i8*, i8*, ...) nounwind
-
-declare void @__gxx_personality_v0()
-
-declare void @_Unwind_Resume(i8*)
-
 declare void @Bar(i64, %struct.Range*)
 
 declare void @llvm.stackrestore(i8*) nounwind
+
+declare i32 @__gxx_personality_v0(...)

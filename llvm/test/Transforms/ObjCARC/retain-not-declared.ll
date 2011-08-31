@@ -51,11 +51,17 @@ invoke.cont102:                                   ; preds = %invoke.cont93
   unreachable
 
 lpad91:                                           ; preds = %entry
+  %exn91 = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+              cleanup
   unreachable
 
 lpad100:                                          ; preds = %invoke.cont93
+  %exn100 = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+              cleanup
   call void @objc_release(i8* %tmp2) nounwind, !clang.imprecise_release !0
   unreachable
 }
+
+declare i32 @__gxx_personality_v0(...)
 
 !0 = metadata !{}
