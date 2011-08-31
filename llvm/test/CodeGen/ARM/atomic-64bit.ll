@@ -81,3 +81,18 @@ define i64 @test6(i64* %ptr, i64 %val) {
   %r = atomicrmw xchg i64* %ptr, i64 %val seq_cst
   ret i64 %r
 }
+
+define i64 @test7(i64* %ptr, i64 %val1, i64 %val2) {
+; CHECK: test7
+; CHECK: dmb ish
+; CHECK: ldrexd r2, r3
+; CHECK: cmp r2
+; CHECK: cmpeq r3
+; CHECK: bne
+; CHECK: strexd {{r[0-9]+}}, r0, r1
+; CHECK: cmp
+; CHECK: bne
+; CHECK: dmb ish
+  %r = cmpxchg i64* %ptr, i64 %val1, i64 %val2 seq_cst
+  ret i64 %r
+}

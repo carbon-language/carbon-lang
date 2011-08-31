@@ -507,7 +507,8 @@ namespace llvm {
                                           MachineBasicBlock *BB,
                                           unsigned Op1,
                                           unsigned Op2,
-                                          bool NeedsCarry) const;
+                                          bool NeedsCarry = false,
+                                          bool IsCmpxchg = false) const;
     MachineBasicBlock * EmitAtomicBinaryMinMax(MachineInstr *MI,
                                                MachineBasicBlock *BB,
                                                unsigned Size,

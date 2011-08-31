@@ -69,8 +69,6 @@ def SDT_ARMTCRET : SDTypeProfile<0, 1, [SDTCisPtrTy<0>]>;
 
 def SDT_ARMBFI : SDTypeProfile<1, 3, [SDTCisVT<0, i32>, SDTCisVT<1, i32>,
                                       SDTCisVT<2, i32>, SDTCisVT<3, i32>]>;
-def SDTARMatomicBinary : SDTypeProfile<2, 3, [SDTCisInt<0>, SDTCisInt<1>,
-                               SDTCisPtrTy<2>, SDTCisInt<3>,SDTCisInt<4>]>;
 
 def SDTBinaryArithWithFlags : SDTypeProfile<2, 2,
                                             [SDTCisSameAs<0, 2>,
@@ -1635,6 +1633,10 @@ def ATOMAND6432  : PseudoInst<(outs GPR:$dst1, GPR:$dst2),
 def ATOMSWAP6432 : PseudoInst<(outs GPR:$dst1, GPR:$dst2),
                               (ins GPR:$addr, GPR:$src1, GPR:$src2),
                               NoItinerary, []>;
+def ATOMCMPXCHG6432 : PseudoInst<(outs GPR:$dst1, GPR:$dst2),
+                                 (ins GPR:$addr, GPR:$cmp1, GPR:$cmp2,
+                                      GPR:$set1, GPR:$set2),
+                                 NoItinerary, []>;
 }
 
 def NOP : AI<(outs), (ins), MiscFrm, NoItinerary, "nop", "", []>,

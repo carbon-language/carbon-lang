@@ -2312,16 +2312,20 @@ SDNode *ARMDAGToDAGISel::SelectConcatVector(SDNode *N) {
 }
 
 SDNode *ARMDAGToDAGISel::SelectAtomic64(SDNode *Node, unsigned Opc) {
-  SDValue Chain = Node->getOperand(0);
-  SDValue In1 = Node->getOperand(1);
-  SDValue In2L = Node->getOperand(2);
-  SDValue In2H = Node->getOperand(3);
+  SmallVector<SDValue, 6> Ops;
+  Ops.push_back(Node->getOperand(1)); // Ptr
+  Ops.push_back(Node->getOperand(2)); // Low part of Val1
+  Ops.push_back(Node->getOperand(3)); // High part of Val1
+  if (Opc == ARM::ATOMCMPXCHG6432) { 
+    Ops.push_back(Node->getOperand(4)); // Low part of Val2
+    Ops.push_back(Node->getOperand(5)); // High part of Val2
+  }
+  Ops.push_back(Node->getOperand(0)); // Chain
   MachineSDNode::mmo_iterator MemOp = MF->allocateMemRefsArray(1);
   MemOp[0] = cast<MemSDNode>(Node)->getMemOperand();
-  const SDValue Ops[] = { In1, In2L, In2H, Chain};
   SDNode *ResNode = CurDAG->getMachineNode(Opc, Node->getDebugLoc(),
-                                           MVT::i32, MVT::i32, MVT::Other, Ops,
-                                           array_lengthof(Ops));
+                                           MVT::i32, MVT::i32, MVT::Other,
+                                           Ops.data() ,Ops.size());
   cast<MachineSDNode>(ResNode)->setMemRefs(MemOp, MemOp + 1);
   return ResNode;
 }
@@ -3121,6 +3125,8 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
     return SelectAtomic64(N, ARM::ATOMAND6432);
   case ARMISD::ATOMSWAP64_DAG:
     return SelectAtomic64(N, ARM::ATOMSWAP6432);
+  case ARMISD::ATOMCMPXCHG64_DAG:
+    return SelectAtomic64(N, ARM::ATOMCMPXCHG6432);
   }
 
   return SelectCode(N);
