@@ -759,8 +759,15 @@ bool ARMDAGToDAGISel::SelectAddrMode2OffsetReg(SDNode *Op, SDValue N,
 
 bool ARMDAGToDAGISel::SelectAddrMode2OffsetImmPre(SDNode *Op, SDValue N,
                                             SDValue &Offset, SDValue &Opc) {
+  unsigned Opcode = Op->getOpcode();
+  ISD::MemIndexedMode AM = (Opcode == ISD::LOAD)
+    ? cast<LoadSDNode>(Op)->getAddressingMode()
+    : cast<StoreSDNode>(Op)->getAddressingMode();
+  ARM_AM::AddrOpc AddSub = (AM == ISD::PRE_INC || AM == ISD::POST_INC)
+    ? ARM_AM::add : ARM_AM::sub;
   int Val;
   if (isScaledConstantInRange(N, /*Scale=*/1, 0, 0x1000, Val)) { // 12 bits.
+    if (AddSub == ARM_AM::sub) Val *= -1;
     Offset = CurDAG->getRegister(0, MVT::i32);
     Opc = CurDAG->getTargetConstant(Val, MVT::i32);
     return true;
@@ -2316,7 +2323,7 @@ SDNode *ARMDAGToDAGISel::SelectAtomic64(SDNode *Node, unsigned Opc) {
   Ops.push_back(Node->getOperand(1)); // Ptr
   Ops.push_back(Node->getOperand(2)); // Low part of Val1
   Ops.push_back(Node->getOperand(3)); // High part of Val1
-  if (Opc == ARM::ATOMCMPXCHG6432) { 
+  if (Opc == ARM::ATOMCMPXCHG6432) {
     Ops.push_back(Node->getOperand(4)); // Low part of Val2
     Ops.push_back(Node->getOperand(5)); // High part of Val2
   }
