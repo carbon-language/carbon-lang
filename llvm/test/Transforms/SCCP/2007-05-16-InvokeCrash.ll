@@ -31,7 +31,9 @@ bb149:		; preds = %bb114
 bb177:		; preds = %bb149
 	unreachable
 cleanup:		; preds = %bb149, %bb114, %bb67
-	unwind
+        %val = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+                 cleanup
+	resume { i8*, i32 } %val
 }
 
 declare double @sin(double)
@@ -39,3 +41,5 @@ declare double @sin(double)
 declare double @log(double)
 
 declare double @sqrt(double)
+
+declare i32 @__gxx_personality_v0(...)
