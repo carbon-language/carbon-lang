@@ -77,6 +77,7 @@ Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
   // Default to discarding comments.
   KeepComments = false;
   KeepMacroComments = false;
+  SuppressIncludeNotFoundError = false;
 
   // Macro expansion is enabled.
   DisableMacroExpansion = false;
