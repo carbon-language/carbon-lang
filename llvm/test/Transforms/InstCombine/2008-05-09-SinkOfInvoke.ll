@@ -29,5 +29,9 @@ invcont37:		; preds = %invcont31
 	ret void
 
 lpad:		; preds = %invcont31, %invcont, %entry
+        %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+                 cleanup
 	unreachable
 }
+
+declare i32 @__gxx_personality_v0(...)

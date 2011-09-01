@@ -107,8 +107,12 @@ invoke.cont:                                      ; preds = %entry
   unreachable
 
 try.handler:                                      ; preds = %entry
+  %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+            cleanup
   ret i8* null
 }
+
+declare i32 @__gxx_personality_v0(...)
 
 ; Don't turn this into "unreachable": the callee and caller don't agree in
 ; calling conv, but the implementation of test8a may actually end up using the
