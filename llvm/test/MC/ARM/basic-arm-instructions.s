@@ -1300,6 +1300,7 @@ Lforward:
         rsc r6, r7, r8, lsr r9
         rsc r6, r7, r8, asr r9
         rscle r6, r7, r8, ror r9
+        rscs r1, r8, #4064
 
         @ destination register is optional
         rsc r5, #0xf000
@@ -1325,6 +1326,7 @@ Lforward:
 @ CHECK: rsc	r6, r7, r8, lsr r9      @ encoding: [0x38,0x69,0xe7,0xe0]
 @ CHECK: rsc	r6, r7, r8, asr r9      @ encoding: [0x58,0x69,0xe7,0xe0]
 @ CHECK: rscle	r6, r7, r8, ror r9      @ encoding: [0x78,0x69,0xe7,0xd0]
+@ CHECK: rscs	r1, r8, #4064           @ encoding: [0xfe,0x1e,0xf8,0xe2]
 
 @ CHECK: rsc	r5, r5, #61440          @ encoding: [0x0f,0x5a,0xe5,0xe2]
 @ CHECK: rsc	r4, r4, r5              @ encoding: [0x05,0x40,0xe4,0xe0]
