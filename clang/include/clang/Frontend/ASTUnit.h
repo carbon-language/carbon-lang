@@ -249,7 +249,10 @@ private:
   /// \brief Whether we want to include nested macro expansions in the
   /// detailed preprocessing record.
   bool NestedMacroExpansions;
-  
+ 
+  /// \brief The language options used when we load an AST file.
+  LangOptions ASTFileLangOpts;
+
   static void ConfigureDiags(llvm::IntrusiveRefCntPtr<Diagnostic> &Diags,
                              const char **ArgBegin, const char **ArgEnd,
                              ASTUnit &AST, bool CaptureDiagnostics);

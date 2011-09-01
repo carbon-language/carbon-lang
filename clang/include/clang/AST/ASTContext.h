@@ -316,7 +316,7 @@ class ASTContext : public llvm::RefCountedBase<ASTContext> {
 
   /// LangOpts - The language options used to create the AST associated with
   ///  this ASTContext object.
-  LangOptions LangOpts;
+  LangOptions &LangOpts;
 
   /// \brief The allocator used to create AST objects.
   ///
@@ -478,7 +478,7 @@ public:
   mutable QualType AutoDeductTy;     // Deduction against 'auto'.
   mutable QualType AutoRRefDeductTy; // Deduction against 'auto &&'.
 
-  ASTContext(const LangOptions& LOpts, SourceManager &SM, const TargetInfo &t,
+  ASTContext(LangOptions& LOpts, SourceManager &SM, const TargetInfo &t,
              IdentifierTable &idents, SelectorTable &sels,
              Builtin::Context &builtins,
              unsigned size_reserve);

@@ -58,7 +58,7 @@ class ModuleLoader;
 ///
 class Preprocessor : public llvm::RefCountedBase<Preprocessor> {
   Diagnostic        *Diags;
-  LangOptions        Features;
+  LangOptions       &Features;
   const TargetInfo  &Target;
   FileManager       &FileMgr;
   SourceManager     &SourceMgr;
@@ -298,7 +298,7 @@ private:  // Cached tokens state.
   MacroInfo *getInfoForMacro(IdentifierInfo *II) const;
   
 public:
-  Preprocessor(Diagnostic &diags, const LangOptions &opts,
+  Preprocessor(Diagnostic &diags, LangOptions &opts,
                const TargetInfo &target,
                SourceManager &SM, HeaderSearch &Headers,
                ModuleLoader &TheModuleLoader,

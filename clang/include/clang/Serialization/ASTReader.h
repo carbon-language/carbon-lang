@@ -224,7 +224,7 @@ private:
   SourceManager &SourceMgr;
   FileManager &FileMgr;
   Diagnostic &Diags;
-
+  
   /// \brief The semantic analysis object that will be processing the
   /// AST files and the translation unit that uses it.
   Sema *SemaObj;

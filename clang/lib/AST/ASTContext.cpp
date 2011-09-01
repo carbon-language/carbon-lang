@@ -212,7 +212,7 @@ static const LangAS::Map &getAddressSpaceMap(const TargetInfo &T,
   }
 }
 
-ASTContext::ASTContext(const LangOptions& LOpts, SourceManager &SM,
+ASTContext::ASTContext(LangOptions& LOpts, SourceManager &SM,
                        const TargetInfo &t,
                        IdentifierTable &idents, SelectorTable &sels,
                        Builtin::Context &builtins,

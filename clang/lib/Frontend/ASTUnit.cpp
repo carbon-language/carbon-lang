@@ -572,7 +572,6 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
   
   // Gather Info for preprocessor construction later on.
 
-  LangOptions LangInfo;
   HeaderSearch &HeaderInfo = *AST->HeaderInfo.get();
   std::string TargetTriple;
   std::string Predefines;
@@ -587,8 +586,8 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
   llvm::CrashRecoveryContextCleanupRegistrar<ASTReader>
     ReaderCleanup(Reader.get());
 
-  Reader->setListener(new ASTInfoCollector(LangInfo, HeaderInfo, TargetTriple,
-                                           Predefines, Counter));
+  Reader->setListener(new ASTInfoCollector(AST->ASTFileLangOpts, HeaderInfo, 
+                                           TargetTriple, Predefines, Counter));
 
   switch (Reader->ReadAST(Filename, serialization::MK_MainFile)) {
   case ASTReader::Success:
@@ -615,8 +614,9 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
   TargetOpts.Triple = TargetTriple;
   AST->Target = TargetInfo::CreateTargetInfo(AST->getDiagnostics(),
                                              TargetOpts);
-  AST->PP = new Preprocessor(AST->getDiagnostics(), LangInfo, *AST->Target,
-                             AST->getSourceManager(), HeaderInfo, *AST);
+  AST->PP = new Preprocessor(AST->getDiagnostics(), AST->ASTFileLangOpts, 
+                             *AST->Target, AST->getSourceManager(), HeaderInfo, 
+                             *AST);
   Preprocessor &PP = *AST->PP;
 
   PP.setPredefines(Reader->getSuggestedPredefines());
@@ -625,7 +625,7 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
 
   // Create and initialize the ASTContext.
 
-  AST->Ctx = new ASTContext(LangInfo,
+  AST->Ctx = new ASTContext(AST->ASTFileLangOpts,
                             AST->getSourceManager(),
                             *AST->Target,
                             PP.getIdentifierTable(),

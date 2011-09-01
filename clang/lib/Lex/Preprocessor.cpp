@@ -49,7 +49,7 @@ using namespace clang;
 //===----------------------------------------------------------------------===//
 ExternalPreprocessorSource::~ExternalPreprocessorSource() { }
 
-Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
+Preprocessor::Preprocessor(Diagnostic &diags, LangOptions &opts,
                            const TargetInfo &target, SourceManager &SM,
                            HeaderSearch &Headers, ModuleLoader &TheModuleLoader,
                            IdentifierInfoLookup* IILookup,
