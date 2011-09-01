@@ -330,6 +330,7 @@
 		2689FFFB13353DB600698AC0 /* BreakpointLocationList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E1010F1B83100F91463 /* BreakpointLocationList.cpp */; };
 		2689FFFD13353DB600698AC0 /* BreakpointOptions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E1110F1B83100F91463 /* BreakpointOptions.cpp */; };
 		2689FFFF13353DB600698AC0 /* BreakpointResolver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E1210F1B83100F91463 /* BreakpointResolver.cpp */; };
+		268ED0A5140FF54200DE830F /* DataEncoder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 268ED0A4140FF54200DE830F /* DataEncoder.cpp */; };
 		268F9D53123AA15200B91E9B /* SBSymbolContextList.h in Headers */ = {isa = PBXBuildFile; fileRef = 268F9D52123AA15200B91E9B /* SBSymbolContextList.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		268F9D55123AA16600B91E9B /* SBSymbolContextList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 268F9D54123AA16600B91E9B /* SBSymbolContextList.cpp */; };
 		2690B3711381D5C300ECFBAE /* Memory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2690B3701381D5C300ECFBAE /* Memory.cpp */; };
@@ -703,6 +704,8 @@
 		268A813F115B19D000F645B0 /* UniqueCStringMap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UniqueCStringMap.h; path = include/lldb/Core/UniqueCStringMap.h; sourceTree = "<group>"; };
 		268DA871130095D000C9483A /* Terminal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Terminal.h; path = include/lldb/Host/Terminal.h; sourceTree = "<group>"; };
 		268DA873130095ED00C9483A /* Terminal.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Terminal.cpp; sourceTree = "<group>"; };
+		268ED0A2140FF52F00DE830F /* DataEncoder.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = DataEncoder.h; path = include/lldb/Core/DataEncoder.h; sourceTree = "<group>"; };
+		268ED0A4140FF54200DE830F /* DataEncoder.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DataEncoder.cpp; path = source/Core/DataEncoder.cpp; sourceTree = "<group>"; };
 		268F9D52123AA15200B91E9B /* SBSymbolContextList.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SBSymbolContextList.h; path = include/lldb/API/SBSymbolContextList.h; sourceTree = "<group>"; };
 		268F9D54123AA16600B91E9B /* SBSymbolContextList.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBSymbolContextList.cpp; path = source/API/SBSymbolContextList.cpp; sourceTree = "<group>"; };
 		2690B36F1381D5B600ECFBAE /* Memory.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Memory.h; path = include/lldb/Target/Memory.h; sourceTree = "<group>"; };
@@ -1927,6 +1930,8 @@
 				26BC7E7210F1B85900F91463 /* DataBufferHeap.cpp */,
 				26BC7D5C10F1B77400F91463 /* DataBufferMemoryMap.h */,
 				26BC7E7310F1B85900F91463 /* DataBufferMemoryMap.cpp */,
+				268ED0A2140FF52F00DE830F /* DataEncoder.h */,
+				268ED0A4140FF54200DE830F /* DataEncoder.cpp */,
 				26BC7D5A10F1B77400F91463 /* DataExtractor.h */,
 				26BC7E7110F1B85900F91463 /* DataExtractor.cpp */,
 				9470A8EE1402DF940056FF61 /* DataVisualization.h */,
@@ -3302,6 +3307,7 @@
 				9470A8F01402DFFB0056FF61 /* DataVisualization.cpp in Sources */,
 				26274FA214030EEF006BA130 /* OperatingSystemDarwinKernel.cpp in Sources */,
 				26274FA714030F79006BA130 /* DynamicLoaderDarwinKernel.cpp in Sources */,
+				268ED0A5140FF54200DE830F /* DataEncoder.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
