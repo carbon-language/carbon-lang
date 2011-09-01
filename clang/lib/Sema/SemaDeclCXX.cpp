@@ -7901,9 +7901,15 @@ void Sema::DefineImplicitMoveAssignment(SourceLocation CurrentLocation,
         Size *= ArraySize;
       }
 
-      // Take the address of the field references for "from" and "to".
-      From = CreateBuiltinUnaryOp(Loc, UO_AddrOf, From.get());
-      To = CreateBuiltinUnaryOp(Loc, UO_AddrOf, To.get());
+      // Take the address of the field references for "from" and "to". We
+      // directly construct UnaryOperators here because semantic analysis
+      // does not permit us to take the address of an xvalue.
+      From = new (Context) UnaryOperator(From.get(), UO_AddrOf,
+                             Context.getPointerType(From.get()->getType()),
+                             VK_RValue, OK_Ordinary, Loc);
+      To = new (Context) UnaryOperator(To.get(), UO_AddrOf,
+                           Context.getPointerType(To.get()->getType()),
+                           VK_RValue, OK_Ordinary, Loc);
           
       bool NeedsCollectableMemCpy = 
           (BaseType->isRecordType() && 
