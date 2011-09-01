@@ -1,4 +1,12 @@
-; RUN: llc < %s -march=x86 | not grep pushf
+; RUN: llc < %s -march=x86 | FileCheck %s
+;
+; Test scheduling a multi-use compare. We should neither spill flags
+; nor clone the compare.
+; CHECK: cmp
+; CHECK-NOT: pushf
+; CHECK: cmov
+; CHECK-NOT: cmp
+; CHECK: cmov
 
 	%struct.indexentry = type { i32, i8*, i8*, i8*, i8*, i8* }
 

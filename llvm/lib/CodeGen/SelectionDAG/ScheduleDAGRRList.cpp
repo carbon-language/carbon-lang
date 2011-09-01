@@ -2621,6 +2621,39 @@ bool RegReductionPQBase::canClobber(const SUnit *SU, const SUnit *Op) {
   return false;
 }
 
+/// canClobberReachingPhysRegUse - True if SU would clobber one of it's
+/// successor's explicit physregs whose definition can reach DepSU.
+/// i.e. DepSU should not be scheduled above SU.
+static bool canClobberReachingPhysRegUse(const SUnit *DepSU, const SUnit *SU,
+                                         ScheduleDAGRRList *scheduleDAG,
+                                         const TargetInstrInfo *TII,
+                                         const TargetRegisterInfo *TRI) {
+  const unsigned *ImpDefs
+    = TII->get(SU->getNode()->getMachineOpcode()).getImplicitDefs();
+  if(!ImpDefs)
+    return false;
+
+  for (SUnit::const_succ_iterator SI = SU->Succs.begin(), SE = SU->Succs.end();
+       SI != SE; ++SI) {
+    SUnit *SuccSU = SI->getSUnit();
+    for (SUnit::const_pred_iterator PI = SuccSU->Preds.begin(),
+           PE = SuccSU->Preds.end(); PI != PE; ++PI) {
+      if (!PI->isAssignedRegDep())
+        continue;
+
+      for (const unsigned *ImpDef = ImpDefs; *ImpDef; ++ImpDef) {
+        // Return true if SU clobbers this physical register use and the
+        // definition of the register reaches from DepSU. IsReachable queries a
+        // topological forward sort of the DAG (following the successors).
+        if (TRI->regsOverlap(*ImpDef, PI->getReg()) &&
+            scheduleDAG->IsReachable(DepSU, PI->getSUnit()))
+          return true;
+      }
+    }
+  }
+  return false;
+}
+
 /// canClobberPhysRegDefs - True if SU would clobber one of SuccSU's
 /// physical register defs.
 static bool canClobberPhysRegDefs(const SUnit *SuccSU, const SUnit *SU,
@@ -2837,7 +2870,8 @@ void RegReductionPQBase::AddPseudoTwoAddrDeps() {
             SuccOpc == TargetOpcode::INSERT_SUBREG ||
             SuccOpc == TargetOpcode::SUBREG_TO_REG)
           continue;
-        if ((!canClobber(SuccSU, DUSU) ||
+        if (!canClobberReachingPhysRegUse(SuccSU, SU, scheduleDAG, TII, TRI) &&
+            (!canClobber(SuccSU, DUSU) ||
              (isLiveOut && !hasOnlyLiveOutUses(SuccSU)) ||
              (!SU->isCommutable && SuccSU->isCommutable)) &&
             !scheduleDAG->IsReachable(SuccSU, SU)) {
