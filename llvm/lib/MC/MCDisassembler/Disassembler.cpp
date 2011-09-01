@@ -1,4 +1,4 @@
-//===-- lib/MC/Disassembler.cpp - Disassembler Public C Interface -*- C -*-===//
+//===-- lib/MC/Disassembler.cpp - Disassembler Public C Interface ---------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -135,25 +135,21 @@ size_t LLVMDisasmInstruction(LLVMDisasmContextRef DCR, uint8_t *Bytes,
   MCInst Inst;
   const MCDisassembler *DisAsm = DC->getDisAsm();
   MCInstPrinter *IP = DC->getIP();
-  MCDisassembler::DecodeStatus S;
-  S = DisAsm->getInstruction(Inst, Size, MemoryObject, PC, /*REMOVE*/ nulls());
-  switch (S) {
-  case MCDisassembler::Fail:
-  case MCDisassembler::SoftFail:
+  if (DisAsm->getInstruction(Inst, Size, MemoryObject, PC,
+                             /*REMOVE*/ nulls()) != MCDisassembler::Success) {
     // FIXME: Do something different for soft failure modes?
     return 0;
-  case MCDisassembler::Success: {
-    SmallVector<char, 64> InsnStr;
-    raw_svector_ostream OS(InsnStr);
-    IP->printInst(&Inst, OS);
-    OS.flush();
-
-    assert(OutStringSize != 0 && "Output buffer cannot be zero size");
-    size_t OutputSize = std::min(OutStringSize-1, InsnStr.size());
-    std::memcpy(OutString, InsnStr.data(), OutputSize);
-    OutString[OutputSize] = '\0'; // Terminate string.
-
-    return Size;
   }
-  }
+
+  SmallVector<char, 64> InsnStr;
+  raw_svector_ostream OS(InsnStr);
+  IP->printInst(&Inst, OS);
+  OS.flush();
+
+  assert(OutStringSize != 0 && "Output buffer cannot be zero size");
+  size_t OutputSize = std::min(OutStringSize-1, InsnStr.size());
+  std::memcpy(OutString, InsnStr.data(), OutputSize);
+  OutString[OutputSize] = '\0'; // Terminate string.
+
+  return Size;
 }

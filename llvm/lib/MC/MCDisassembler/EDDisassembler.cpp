@@ -239,29 +239,20 @@ EDInst *EDDisassembler::createInst(EDByteReaderCallback byteReader,
   MCInst* inst = new MCInst;
   uint64_t byteSize;
   
-  MCDisassembler::DecodeStatus S;
-  S = Disassembler->getInstruction(*inst,
-                                   byteSize,
-                                   memoryObject,
-                                   address,
-                                   ErrorStream);
-  switch (S) {
-  case MCDisassembler::Fail:
-  case MCDisassembler::SoftFail:
+  if (Disassembler->getInstruction(*inst, byteSize, memoryObject, address,
+                                   ErrorStream) != MCDisassembler::Success) {
     // FIXME: Do something different on soft failure mode?
     delete inst;
     return NULL;
-  case MCDisassembler::Success: {
-    const llvm::EDInstInfo *thisInstInfo = NULL;
+  }
+  const llvm::EDInstInfo *thisInstInfo = NULL;
 
-    if (InstInfos) {
-      thisInstInfo = &InstInfos[inst->getOpcode()];
-    }
+  if (InstInfos) {
+    thisInstInfo = &InstInfos[inst->getOpcode()];
+  }
     
-    EDInst* sdInst = new EDInst(inst, byteSize, *this, thisInstInfo);
-    return sdInst;
-  }
-  }
+  EDInst* sdInst = new EDInst(inst, byteSize, *this, thisInstInfo);
+  return sdInst;
 }
 
 void EDDisassembler::initMaps(const MCRegisterInfo &registerInfo) {
