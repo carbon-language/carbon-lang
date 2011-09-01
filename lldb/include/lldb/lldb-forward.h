@@ -62,6 +62,7 @@ class   ConstString;
 class   DWARFCallFrameInfo;
 class   DWARFExpression;
 class   DataBuffer;
+class   DataEncoder;
 class   DataExtractor;
 class   Debugger;
 class   Declaration;

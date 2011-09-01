@@ -356,6 +356,6 @@ uint32_t
 DataEncoder::PutCString (uint32_t offset, const char *cstr)
 {
     if (cstr)
-        return PutData (offset, cstr, strlen(cstr));
+        return PutData (offset, cstr, strlen(cstr) + 1);
     return UINT32_MAX;
 }
