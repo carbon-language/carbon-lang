@@ -1840,19 +1840,19 @@ namespace {
       // warnings for them when the module was created. We only want to warn for
       // duplicates between non-dependent modules:
       //
-      //   MT
-      //  /  \
-      // ML  MR
+      //   MT     //
+      //  /  \    //
+      // ML  MR   //
       //
       // We want to warn for duplicates between ML and MR,not between ML and MT.
       //
       // FIXME: We should not warn for duplicates in diamond:
       //
-      //   MT
-      //  /  \
-      // ML  MR
-      //  \  /
-      //   MB
+      //   MT     //
+      //  /  \    //
+      // ML  MR   //
+      //  \  /    //
+      //   MB     //
       //
       // If there are duplicates in ML/MR, there will be warning when creating
       // MB *and* when importing MB. We should not warn when importing.
