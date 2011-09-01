@@ -189,20 +189,6 @@ static unsigned isFullCopyOf(const MachineInstr *MI, unsigned Reg) {
   return 0;
 }
 
-/// isFullDefOf - Return true if MI defines the full contents of a register.
-/// Since this is in the context of spilling, it does not do anything special
-/// for physical registers.
-static bool isFullDefOf(const MachineInstr *MI, unsigned Reg) {
-  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-    const MachineOperand &MO = MI->getOperand(i);
-    if (!MO.isReg() || !MO.isDef() || MO.getSubReg())
-      continue;
-    if (MO.getReg() == Reg)
-      return true;
-  }
-  return false;
-}
-
 /// isSnippet - Identify if a live interval is a snippet that should be spilled.
 /// It is assumed that SnipLI is a virtual register with the same original as
 /// Edit->getReg().
@@ -320,7 +306,6 @@ MachineInstr *InlineSpiller::traceSiblingValue(unsigned UseReg, VNInfo *UseVNI,
   MachineBasicBlock *SpillMBB = UseMBB;
   unsigned SpillDepth = Loops.getLoopDepth(SpillMBB);
   bool SeenOrigPHI = false; // Original PHI met.
-  bool SeenNonReloadDef = false;
 
   do {
     unsigned Reg;
@@ -422,18 +407,12 @@ MachineInstr *InlineSpiller::traceSiblingValue(unsigned UseReg, VNInfo *UseVNI,
     }
 
     // Potential remat candidate.
-    SeenNonReloadDef = true;
-    if (!isFullDefOf(MI, Reg)) {
-      DEBUG(dbgs() << "  partial def " << PrintReg(Reg) << ':'
-                   << VNI->id << '@' << VNI->def << '\t' << *MI);
-      continue;
-    }
     DEBUG(dbgs() << "  def " << PrintReg(Reg) << ':'
                  << VNI->id << '@' << VNI->def << '\t' << *MI);
     SVI.DefMI = MI;
   } while (!WorkList.empty());
 
-  if (SeenOrigPHI || SeenNonReloadDef)
+  if (SeenOrigPHI || SVI.DefMI)
     SVI.AllDefsAreReloads = false;
 
   DEBUG({
