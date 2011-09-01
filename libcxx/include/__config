@@ -13,7 +13,7 @@
 
 #pragma GCC system_header
 
-#define _LIBCPP_VERSION 1000
+#define _LIBCPP_VERSION 1001
 
 #define _LIBCPP_ABI_VERSION 1
 
