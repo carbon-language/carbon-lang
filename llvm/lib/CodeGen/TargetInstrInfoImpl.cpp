@@ -362,6 +362,15 @@ isReallyTriviallyReMaterializableGeneric(const MachineInstr *MI,
   const TargetInstrInfo &TII = *TM.getInstrInfo();
   const TargetRegisterInfo &TRI = *TM.getRegisterInfo();
 
+  // A sub-register definition can only be rematerialized if the instruction
+  // doesn't read the other parts of the register.  Otherwise it is really a
+  // read-modify-write operation on the full virtual register which cannot be
+  // moved safely.
+  unsigned Reg = MI->getOperand(0).getReg();
+  if (TargetRegisterInfo::isVirtualRegister(Reg) &&
+      MI->getOperand(0).getSubReg() && MI->readsVirtualRegister(Reg))
+    return false;
+
   // A load from a fixed stack slot can be rematerialized. This may be
   // redundant with subsequent checks, but it's target-independent,
   // simple, and a common case.
