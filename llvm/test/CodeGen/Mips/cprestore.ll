@@ -1,5 +1,8 @@
 ; RUN: llc -march=mipsel < %s | FileCheck %s
 
+; byval is currently unsupported.
+; XFAIL: *
+
 ; CHECK: .set macro
 ; CHECK-NEXT: .cprestore
 ; CHECK-NEXT: .set nomacro

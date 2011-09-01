@@ -1,5 +1,8 @@
 ; RUN: llc -march=mipsel -mcpu=4ke < %s | FileCheck %s
 
+; byval is currently unsupported.
+; XFAIL: *
+
 %struct.S1 = type { [65536 x i8] }
 
 @s1 = external global %struct.S1
