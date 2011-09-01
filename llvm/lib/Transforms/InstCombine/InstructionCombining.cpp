@@ -1577,11 +1577,6 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
         while (Term != BB->begin()) {   // Remove instrs bottom-up
           BasicBlock::iterator I = Term; --I;
 
-          // Don't remove the landingpad instruction. This should be removed
-          // only if its invokes are also removed.
-          if (isa<LandingPadInst>(I))
-            continue;
-
           DEBUG(errs() << "IC: DCE: " << *I << '\n');
           // A debug intrinsic shouldn't force another iteration if we weren't
           // going to do one without it.
