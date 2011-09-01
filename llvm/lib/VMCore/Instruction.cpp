@@ -436,6 +436,10 @@ bool Instruction::isSafeToSpeculativelyExecute() const {
   case Unwind:
   case Unreachable:
   case Fence:
+  case LandingPad:
+  case AtomicRMW:
+  case AtomicCmpXchg:
+  case Resume:
     return false; // Misc instructions which have effects
   }
 }
