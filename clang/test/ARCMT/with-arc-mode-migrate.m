@@ -1,3 +1,4 @@
+// RUN: rm -rf %t
 // RUN: %clang_cc1 -fobjc-nonfragile-abi -fsyntax-only -fobjc-arc -x objective-c %s.result
 // RUN: %clang_cc1 -arcmt-migrate -arcmt-migrate-directory %t -fobjc-nonfragile-abi -fsyntax-only -fobjc-arc %s
 // RUN: c-arcmt-test -arcmt-migrate-directory %t | arcmt-test -verify-transformed-files %s.result
