@@ -1571,25 +1571,26 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
     // Do a quick scan over the function.  If we find any blocks that are
     // unreachable, remove any instructions inside of them.  This prevents
     // the instcombine code from having to deal with some bad special cases.
-    for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
-      if (!Visited.count(BB)) {
-        // Delete the instructions backwards, as it has a reduced likelihood of
-        // having to update as many def-use and use-def chains.
-        for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ) {
-          Instruction *Inst = &*I++;
-          if (isa<TerminatorInst>(Inst))
-            break;
-          if (!Inst->use_empty())
-            Inst->replaceAllUsesWith(UndefValue::get(Inst->getType()));
-          if (isa<LandingPadInst>(Inst))
-            continue;
-          if (!isa<DbgInfoIntrinsic>(Inst)) {
-            ++NumDeadInst;
-            MadeIRChange = true;
-          }
-          Inst->eraseFromParent();
+    for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
+      if (Visited.count(BB)) continue;
+
+      // Delete the instructions backwards, as it has a reduced likelihood of
+      // having to update as many def-use and use-def chains.
+      for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ) {
+        Instruction *Inst = &*I++;
+        if (isa<TerminatorInst>(Inst))
+          break;
+        if (!Inst->use_empty())
+          Inst->replaceAllUsesWith(UndefValue::get(Inst->getType()));
+        if (isa<LandingPadInst>(Inst))
+          continue;
+        if (!isa<DbgInfoIntrinsic>(Inst)) {
+          ++NumDeadInst;
+          MadeIRChange = true;
         }
+        Inst->eraseFromParent();
       }
+    }
   }
 
   while (!Worklist.isEmpty()) {
