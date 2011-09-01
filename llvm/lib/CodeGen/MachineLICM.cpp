@@ -202,6 +202,13 @@ namespace {
     ///
     void HoistRegion(MachineDomTreeNode *N, bool IsHeader = false);
 
+    /// getRegisterClassIDAndCost - For a given MI, register, and the operand
+    /// index, return the ID and cost of its representative register class by
+    /// reference.
+    void getRegisterClassIDAndCost(const MachineInstr *MI,
+                                   unsigned Reg, unsigned OpIdx,
+                                   unsigned &RCId, unsigned &RCCost) const;
+
     /// InitRegPressure - Find all virtual register references that are liveout
     /// of the preheader to initialize the starting "register pressure". Note
     /// this does not count live through (livein but not used) registers.
@@ -596,6 +603,23 @@ static bool isOperandKill(const MachineOperand &MO, MachineRegisterInfo *MRI) {
   return MO.isKill() || MRI->hasOneNonDBGUse(MO.getReg());
 }
 
+/// getRegisterClassIDAndCost - For a given MI, register, and the operand
+/// index, return the ID and cost of its representative register class.
+void
+MachineLICM::getRegisterClassIDAndCost(const MachineInstr *MI,
+                                       unsigned Reg, unsigned OpIdx,
+                                       unsigned &RCId, unsigned &RCCost) const {
+  const TargetRegisterClass *RC = MRI->getRegClass(Reg);
+  EVT VT = *RC->vt_begin();
+  if (VT == MVT::untyped) {
+    RCId = RC->getID();
+    RCCost = 1;
+  } else {
+    RCId = TLI->getRepRegClassFor(VT)->getID();
+    RCCost = TLI->getRepRegClassCostFor(VT);
+  }
+}
+                                      
 /// InitRegPressure - Find all virtual register references that are liveout of
 /// the preheader to initialize the starting "register pressure". Note this
 /// does not count live through (livein but not used) registers.
@@ -625,18 +649,17 @@ void MachineLICM::InitRegPressure(MachineBasicBlock *BB) {
         continue;
 
       bool isNew = RegSeen.insert(Reg);
-      const TargetRegisterClass *RC = MRI->getRegClass(Reg);
-      EVT VT = *RC->vt_begin();
-      unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
+      unsigned RCId, RCCost;
+      getRegisterClassIDAndCost(MI, Reg, i, RCId, RCCost);
       if (MO.isDef())
-        RegPressure[RCId] += TLI->getRepRegClassCostFor(VT);
+        RegPressure[RCId] += RCCost;
       else {
         bool isKill = isOperandKill(MO, MRI);
         if (isNew && !isKill)
           // Haven't seen this, it must be a livein.
-          RegPressure[RCId] += TLI->getRepRegClassCostFor(VT);
+          RegPressure[RCId] += RCCost;
         else if (!isNew && isKill)
-          RegPressure[RCId] -= TLI->getRepRegClassCostFor(VT);
+          RegPressure[RCId] -= RCCost;
       }
     }
   }
@@ -661,11 +684,8 @@ void MachineLICM::UpdateRegPressure(const MachineInstr *MI) {
     if (MO.isDef())
       Defs.push_back(Reg);
     else if (!isNew && isOperandKill(MO, MRI)) {
-      const TargetRegisterClass *RC = MRI->getRegClass(Reg);
-      EVT VT = *RC->vt_begin();
-      unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
-      unsigned RCCost = TLI->getRepRegClassCostFor(VT);
-
+      unsigned RCId, RCCost;
+      getRegisterClassIDAndCost(MI, Reg, i, RCId, RCCost);
       if (RCCost > RegPressure[RCId])
         RegPressure[RCId] = 0;
       else
@@ -673,13 +693,13 @@ void MachineLICM::UpdateRegPressure(const MachineInstr *MI) {
     }
   }
 
+  unsigned Idx = 0;
   while (!Defs.empty()) {
     unsigned Reg = Defs.pop_back_val();
-    const TargetRegisterClass *RC = MRI->getRegClass(Reg);
-    EVT VT = *RC->vt_begin();
-    unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
-    unsigned RCCost = TLI->getRepRegClassCostFor(VT);
+    unsigned RCId, RCCost;
+    getRegisterClassIDAndCost(MI, Reg, Idx, RCId, RCCost);
     RegPressure[RCId] += RCCost;
+    ++Idx;
   }
 }
 
@@ -879,10 +899,8 @@ void MachineLICM::UpdateBackTraceRegPressure(const MachineInstr *MI) {
     if (!TargetRegisterInfo::isVirtualRegister(Reg))
       continue;
 
-    const TargetRegisterClass *RC = MRI->getRegClass(Reg);
-    EVT VT = *RC->vt_begin();
-    unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
-    unsigned RCCost = TLI->getRepRegClassCostFor(VT);
+    unsigned RCId, RCCost;
+    getRegisterClassIDAndCost(MI, Reg, i, RCId, RCCost);
     if (MO.isDef()) {
       DenseMap<unsigned, int>::iterator CI = Cost.find(RCId);
       if (CI != Cost.end())
@@ -941,16 +959,15 @@ bool MachineLICM::IsProfitableToHoist(MachineInstr &MI) {
       unsigned Reg = MO.getReg();
       if (!TargetRegisterInfo::isVirtualRegister(Reg))
         continue;
+
+      unsigned RCId, RCCost;
+      getRegisterClassIDAndCost(&MI, Reg, i, RCId, RCCost);
       if (MO.isDef()) {
         if (HasHighOperandLatency(MI, i, Reg)) {
           ++NumHighLatency;
           return true;
         }
 
-        const TargetRegisterClass *RC = MRI->getRegClass(Reg);
-        EVT VT = *RC->vt_begin();
-        unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
-        unsigned RCCost = TLI->getRepRegClassCostFor(VT);
         DenseMap<unsigned, int>::iterator CI = Cost.find(RCId);
         if (CI != Cost.end())
           CI->second += RCCost;
@@ -960,10 +977,6 @@ bool MachineLICM::IsProfitableToHoist(MachineInstr &MI) {
         // Is a virtual register use is a kill, hoisting it out of the loop
         // may actually reduce register pressure or be register pressure
         // neutral.
-        const TargetRegisterClass *RC = MRI->getRegClass(Reg);
-        EVT VT = *RC->vt_begin();
-        unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
-        unsigned RCCost = TLI->getRepRegClassCostFor(VT);
         DenseMap<unsigned, int>::iterator CI = Cost.find(RCId);
         if (CI != Cost.end())
           CI->second -= RCCost;
