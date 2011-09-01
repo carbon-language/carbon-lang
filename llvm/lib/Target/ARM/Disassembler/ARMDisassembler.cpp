@@ -9,7 +9,6 @@
 
 #define DEBUG_TYPE "arm-disassembler"
 
-#include "ARMDisassembler.h"
 #include "ARM.h"
 #include "ARMRegisterInfo.h"
 #include "MCTargetDesc/ARMAddressingModes.h"
@@ -18,6 +17,7 @@
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCDisassembler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MemoryObject.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -27,6 +27,59 @@
 using namespace llvm;
 
 typedef MCDisassembler::DecodeStatus DecodeStatus;
+
+namespace {
+/// ARMDisassembler - ARM disassembler for all ARM platforms.
+class ARMDisassembler : public MCDisassembler {
+public:
+  /// Constructor     - Initializes the disassembler.
+  ///
+  ARMDisassembler() :
+    MCDisassembler() {
+  }
+
+  ~ARMDisassembler() {
+  }
+
+  /// getInstruction - See MCDisassembler.
+  DecodeStatus getInstruction(MCInst &instr,
+                              uint64_t &size,
+                              const MemoryObject &region,
+                              uint64_t address,
+                              raw_ostream &vStream) const;
+
+  /// getEDInfo - See MCDisassembler.
+  EDInstInfo *getEDInfo() const;
+private:
+};
+
+/// ThumbDisassembler - Thumb disassembler for all Thumb platforms.
+class ThumbDisassembler : public MCDisassembler {
+public:
+  /// Constructor     - Initializes the disassembler.
+  ///
+  ThumbDisassembler() :
+    MCDisassembler() {
+  }
+
+  ~ThumbDisassembler() {
+  }
+
+  /// getInstruction - See MCDisassembler.
+  DecodeStatus getInstruction(MCInst &instr,
+                              uint64_t &size,
+                              const MemoryObject &region,
+                              uint64_t address,
+                              raw_ostream &vStream) const;
+
+  /// getEDInfo - See MCDisassembler.
+  EDInstInfo *getEDInfo() const;
+private:
+  mutable std::vector<unsigned> ITBlock;
+  void AddThumbPredicate(MCInst&) const;
+  void UpdateThumbVFPPredicate(MCInst&) const;
+};
+}
 
 static bool Check(DecodeStatus &Out, DecodeStatus In) {
   switch (In) {
