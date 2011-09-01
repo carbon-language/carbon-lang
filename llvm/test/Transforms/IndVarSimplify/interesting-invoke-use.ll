@@ -47,8 +47,12 @@ bb178:          ; preds = %invcont127
   br label %bb123
 
 lpad266:                ; preds = %invcont129, %bb128, %bb123
+  %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+            cleanup
   unreachable
 }
+
+declare i32 @__gxx_personality_v0(...)
 
 declare void @system__img_int__image_integer(%struct.string___XUP* noalias sret, i32)
 

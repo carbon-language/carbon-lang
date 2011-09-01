@@ -80,6 +80,8 @@ entry:
   br label %"3.i"
 
 "7.i":                                            ; preds = %"3.i"
+  %2 = landingpad { i8*, i32 } personality i32 (i32, i64, i8*, i8*)* @__gccgo_personality_v0
+          catch i8* null
   br label %"3.i"
 
 main.f.exit:                                      ; preds = %"3.i"

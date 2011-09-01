@@ -10,6 +10,8 @@ entry:
 			to label %endif.1 unwind label %then.i.i551
 
 then.i.i551:		; preds = %entry
+        %exn551 = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+                 cleanup
 	ret void
 
 endif.1:		; preds = %entry
@@ -20,6 +22,8 @@ then.2:		; preds = %endif.1
 			to label %loopentry.0 unwind label %invoke_catch.6
 
 invoke_catch.6:		; preds = %then.2
+        %exn6 = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+                 cleanup
 	ret void
 
 loopentry.0:		; preds = %then.2
@@ -59,3 +63,5 @@ loopexit.1:		; preds = %no_exit.0, %endif.4
 then.i.i:		; preds = %endif.1
 	ret void
 }
+
+declare i32 @__gxx_personality_v0(...)
