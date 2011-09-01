@@ -5822,6 +5822,30 @@ static bool checkArithmeticBinOpPointerOperands(Sema &S, SourceLocation Loc,
   return true;
 }
 
+/// \brief Check bad cases where we step over interface counts.
+static bool checkArithmethicPointerOnNonFragileABI(Sema &S,
+                                                   SourceLocation OpLoc,
+                                                   Expr *Op) {
+  assert(Op->getType()->isAnyPointerType());
+  QualType PointeeTy = Op->getType()->getPointeeType();
+  if (!PointeeTy->isObjCObjectType() || !S.LangOpts.ObjCNonFragileABI)
+    return true;
+
+  S.Diag(OpLoc, diag::err_arithmetic_nonfragile_interface)
+    << PointeeTy << Op->getSourceRange();
+  return false;
+}
+
+/// \brief Warn when two pointers are incompatible.
+static void diagnosePointerIncompatibility(Sema &S, SourceLocation Loc,
+                                           Expr *LHS, Expr *RHS) {
+  assert(LHS->getType()->isAnyPointerType());
+  assert(RHS->getType()->isAnyPointerType());
+  S.Diag(Loc, diag::err_typecheck_sub_ptr_compatible)
+    << LHS->getType() << RHS->getType() << LHS->getSourceRange()
+    << RHS->getSourceRange();
+}
+
 QualType Sema::CheckAdditionOperands( // C99 6.5.6
   ExprResult &lex, ExprResult &rex, SourceLocation Loc, QualType* CompLHSTy) {
   if (lex.get()->getType()->isVectorType() ||
@@ -5855,11 +5879,8 @@ QualType Sema::CheckAdditionOperands( // C99 6.5.6
       QualType PointeeTy = PExp->getType()->getPointeeType();
 
       // Diagnose bad cases where we step over interface counts.
-      if (PointeeTy->isObjCObjectType() && LangOpts.ObjCNonFragileABI) {
-        Diag(Loc, diag::err_arithmetic_nonfragile_interface)
-          << PointeeTy << PExp->getSourceRange();
+      if (!checkArithmethicPointerOnNonFragileABI(*this, Loc, PExp))
         return QualType();
-      }
 
       // Check array bounds for pointer arithemtic
       CheckArrayAccess(PExp, IExp);
@@ -5909,11 +5930,8 @@ QualType Sema::CheckSubtractionOperands(ExprResult &lex, ExprResult &rex,
     QualType lpointee = lex.get()->getType()->getPointeeType();
 
     // Diagnose bad cases where we step over interface counts.
-    if (lpointee->isObjCObjectType() && LangOpts.ObjCNonFragileABI) {
-      Diag(Loc, diag::err_arithmetic_nonfragile_interface)
-        << lpointee << lex.get()->getSourceRange();
+    if (!checkArithmethicPointerOnNonFragileABI(*this, Loc, lex.get()))
       return QualType();
-    }
 
     // The result type of a pointer-int computation is the pointer type.
     if (rex.get()->getType()->isIntegerType()) {
@@ -5938,19 +5956,14 @@ QualType Sema::CheckSubtractionOperands(ExprResult &lex, ExprResult &rex,
       if (getLangOptions().CPlusPlus) {
         // Pointee types must be the same: C++ [expr.add]
         if (!Context.hasSameUnqualifiedType(lpointee, rpointee)) {
-          Diag(Loc, diag::err_typecheck_sub_ptr_compatible)
-            << lex.get()->getType() << rex.get()->getType()
-            << lex.get()->getSourceRange() << rex.get()->getSourceRange();
-          return QualType();
+          diagnosePointerIncompatibility(*this, Loc, lex.get(), rex.get());
         }
       } else {
         // Pointee types must be compatible C99 6.5.6p3
         if (!Context.typesAreCompatible(
                 Context.getCanonicalType(lpointee).getUnqualifiedType(),
                 Context.getCanonicalType(rpointee).getUnqualifiedType())) {
-          Diag(Loc, diag::err_typecheck_sub_ptr_compatible)
-            << lex.get()->getType() << rex.get()->getType()
-            << lex.get()->getSourceRange() << rex.get()->getSourceRange();
+          diagnosePointerIncompatibility(*this, Loc, lex.get(), rex.get());
           return QualType();
         }
       }
@@ -7001,18 +7014,13 @@ static QualType CheckIncrementDecrementOperand(Sema &S, Expr *Op,
   } else if (ResType->isRealType()) {
     // OK!
   } else if (ResType->isAnyPointerType()) {
-    QualType PointeeTy = ResType->getPointeeType();
-
     // C99 6.5.2.4p2, 6.5.6p2
     if (!checkArithmeticOpPointerOperand(S, OpLoc, Op))
       return QualType();
 
     // Diagnose bad cases where we step over interface counts.
-    else if (PointeeTy->isObjCObjectType() && S.LangOpts.ObjCNonFragileABI) {
-      S.Diag(OpLoc, diag::err_arithmetic_nonfragile_interface)
-        << PointeeTy << Op->getSourceRange();
+    else if (!checkArithmethicPointerOnNonFragileABI(S, OpLoc, Op))
       return QualType();
-    }
   } else if (ResType->isAnyComplexType()) {
     // C99 does not support ++/-- on complex types, we allow as an extension.
     S.Diag(OpLoc, diag::ext_integer_increment_complex)
