@@ -41,7 +41,7 @@ void f2_realloc_0() {
 
 void f2_realloc_1() {
   int *p = malloc(12);
-  int *q = realloc(p,0); // expected-warning{{Assigned value is garbage or undefined}}
+  int *q = realloc(p,0); // no-warning
 }
 
 // ownership attributes tests
