@@ -2514,6 +2514,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       if (getValueTypePair(Record, Idx, NextValueNo, Val))
         return Error("Invalid RESUME record");
       I = ResumeInst::Create(Val);
+      InstructionList.push_back(I);
       break;
     }
     case bitc::FUNC_CODE_INST_UNWIND: // UNWIND
@@ -2578,6 +2579,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       }
 
       I = LP;
+      InstructionList.push_back(I);
       break;
     }
 
