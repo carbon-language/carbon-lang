@@ -217,7 +217,7 @@ public:
   }
   
   virtual bool IsObjCDefaultSynthPropertiesDefault() const {
-    return false;
+    return true;
   }
 
   virtual bool IsObjCNonFragileABIDefault() const {
