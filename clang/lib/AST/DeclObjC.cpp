@@ -14,6 +14,7 @@
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Stmt.h"
+#include "clang/AST/ASTMutationListener.h"
 #include "llvm/ADT/STLExtras.h"
 using namespace clang;
 
@@ -918,7 +919,8 @@ ObjCCategoryDecl *ObjCCategoryDecl::Create(ASTContext &C, DeclContext *DC,
     // Link this category into its class's category list.
     CatDecl->NextClassCategory = IDecl->getCategoryList();
     IDecl->setCategoryList(CatDecl);
-    IDecl->setChangedSinceDeserialization(true);
+    if (ASTMutationListener *L = C.getASTMutationListener())
+      L->AddedObjCCategoryToInterface(CatDecl, IDecl);
   }
 
   return CatDecl;

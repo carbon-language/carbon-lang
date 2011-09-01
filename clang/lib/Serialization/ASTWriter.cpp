@@ -3188,6 +3188,7 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
 
   WriteDeclUpdatesBlocks();
   WriteDeclReplacementsBlock();
+  WriteChainedObjCCategories();
 
   // Some simple statistics
   Record.clear();
@@ -3234,6 +3235,26 @@ void ASTWriter::WriteDeclReplacementsBlock() {
     Record.push_back(I->second);
   }
   Stream.EmitRecord(DECL_REPLACEMENTS, Record);
+}
+
+void ASTWriter::WriteChainedObjCCategories() {
+  if (LocalChainedObjCCategories.empty())
+    return;
+
+  RecordData Record;
+  for (SmallVector<ChainedObjCCategoriesData, 16>::iterator
+         I = LocalChainedObjCCategories.begin(),
+         E = LocalChainedObjCCategories.end(); I != E; ++I) {
+    ChainedObjCCategoriesData &Data = *I;
+    serialization::DeclID
+        HeadCatID = getDeclID(Data.Interface->getCategoryList());
+    assert(HeadCatID != 0 && "Category not written ?");
+
+    Record.push_back(Data.InterfaceID);
+    Record.push_back(HeadCatID);
+    Record.push_back(Data.TailCatID);
+  }
+  Stream.EmitRecord(OBJC_CHAINED_CATEGORIES, Record);
 }
 
 void ASTWriter::AddSourceLocation(SourceLocation Loc, RecordDataImpl &Record) {
@@ -4035,6 +4056,19 @@ void ASTWriter::StaticDataMemberInstantiated(const VarDecl *D) {
   Record.push_back(UPD_CXX_INSTANTIATED_STATIC_DATA_MEMBER);
   AddSourceLocation(
       D->getMemberSpecializationInfo()->getPointOfInstantiation(), Record);
+}
+
+void ASTWriter::AddedObjCCategoryToInterface(const ObjCCategoryDecl *CatD,
+                                             const ObjCInterfaceDecl *IFD) {
+  if (IFD->getPCHLevel() == 0)
+    return; // Declaration not imported from PCH.
+  if (CatD->getNextClassCategory() &&
+      CatD->getNextClassCategory()->getPCHLevel() == 0)
+    return; // We already recorded that the tail of a category chain should be
+            // attached to an interface.
+
+  ChainedObjCCategoriesData Data =  { IFD, GetDeclRef(IFD), GetDeclRef(CatD) };
+  LocalChainedObjCCategories.push_back(Data);
 }
 
 ASTSerializationListener::~ASTSerializationListener() { }

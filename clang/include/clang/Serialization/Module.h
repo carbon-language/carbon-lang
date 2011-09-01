@@ -273,6 +273,15 @@ public:
   /// \brief Information about the lexical and visible declarations
   /// for each DeclContext.
   DeclContextInfosMap DeclContextInfos;
+
+  typedef llvm::DenseMap<serialization::GlobalDeclID,
+             std::pair<serialization::LocalDeclID, serialization::LocalDeclID> >
+    ChainedObjCCategoriesMap;
+  /// \brief ObjC categories that got chained to an interface from another
+  /// module.
+  /// Key is the ID of the interface.
+  /// Value is a pair of linked category DeclIDs (head category, tail category).
+  ChainedObjCCategoriesMap ChainedObjCCategories;
   
   // === Types ===
   

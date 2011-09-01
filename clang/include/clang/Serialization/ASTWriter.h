@@ -258,6 +258,19 @@ private:
   /// \brief Decls that will be replaced in the current dependent AST file.
   DeclsToRewriteTy DeclsToRewrite;
 
+  struct ChainedObjCCategoriesData {
+    /// \brief The interface in the imported module.
+    const ObjCInterfaceDecl *Interface;
+    /// \brief ID of the interface.
+    serialization::DeclID InterfaceID;
+    /// \brief ID of the locally tail category ID that got chained to the
+    /// imported interface.
+    serialization::DeclID TailCatID;
+  };
+  /// \brief ObjC categories that got chained to an interface imported from
+  /// another module.
+  SmallVector<ChainedObjCCategoriesData, 16> LocalChainedObjCCategories;
+
   /// \brief Decls that have been replaced in the current dependent AST file.
   ///
   /// When a decl changes fundamentally after being deserialized (this shouldn't
@@ -350,6 +363,7 @@ private:
   void WriteAttributes(const AttrVec &Attrs, RecordDataImpl &Record);
   void WriteDeclUpdatesBlocks();
   void WriteDeclReplacementsBlock();
+  void WriteChainedObjCCategories();
   void WriteDeclContextVisibleUpdate(const DeclContext *DC);
   void WriteFPPragmaOptions(const FPOptions &Opts);
   void WriteOpenCLExtensions(Sema &SemaRef);
@@ -620,6 +634,8 @@ public:
                                               const FunctionDecl *D);
   virtual void CompletedImplicitDefinition(const FunctionDecl *D);
   virtual void StaticDataMemberInstantiated(const VarDecl *D);
+  virtual void AddedObjCCategoryToInterface(const ObjCCategoryDecl *CatD,
+                                            const ObjCInterfaceDecl *IFD);
 };
 
 /// \brief AST and semantic-analysis consumer that generates a

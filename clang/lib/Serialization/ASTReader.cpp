@@ -2391,6 +2391,20 @@ ASTReader::ReadASTBlock(Module &F) {
           = std::make_pair(&F, Record[I+1]);
       break;
     }
+
+    case OBJC_CHAINED_CATEGORIES: {
+      if (Record.size() % 3 != 0) {
+        Error("invalid OBJC_CHAINED_CATEGORIES block in AST file");
+        return Failure;
+      }
+      for (unsigned I = 0, N = Record.size(); I != N; I += 3) {
+        serialization::GlobalDeclID GlobID = getGlobalDeclID(F, Record[I]);
+        F.ChainedObjCCategories[GlobID] = std::make_pair(Record[I+1],
+                                                         Record[I+2]);
+        ObjCChainedCategoriesInterfaces.insert(GlobID);
+      }
+      break;
+    }
         
     case CXX_BASE_SPECIFIER_OFFSETS: {
       if (F.LocalNumCXXBaseSpecifiers != 0) {
@@ -4073,6 +4087,13 @@ ASTReader::getGlobalDeclID(Module &F, unsigned LocalID) const {
   assert(I != F.DeclRemap.end() && "Invalid index into decl index remap");
   
   return LocalID + I->second;
+}
+
+bool ASTReader::isDeclIDFromModule(serialization::GlobalDeclID ID,
+                                   Module &M) const {
+  GlobalDeclMapType::const_iterator I = GlobalDeclMap.find(ID);
+  assert(I != GlobalDeclMap.end() && "Corrupted global declaration map");
+  return &M == I->second;
 }
 
 Decl *ASTReader::GetDecl(DeclID ID) {

@@ -36,6 +36,7 @@
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/DenseSet.h"
 #include "llvm/Bitcode/BitstreamReader.h"
 #include "llvm/Support/DataTypes.h"
 #include <deque>
@@ -314,6 +315,10 @@ private:
   /// \brief Map of first declarations from a chained PCH that point to the
   /// most recent declarations in another AST file.
   FirstLatestDeclIDMap FirstLatestDeclIDs;
+
+  /// \brief Set of ObjC interfaces that have categories chained to them in
+  /// other modules.
+  llvm::DenseSet<serialization::GlobalDeclID> ObjCChainedCategoriesInterfaces;
 
   /// \brief Read the records that describe the contents of declcontexts.
   bool ReadDeclContextStorage(Module &M, 
@@ -681,6 +686,8 @@ private:
   Decl *ReadDeclRecord(serialization::DeclID ID);
   RecordLocation DeclCursorForID(serialization::DeclID ID);
   void loadDeclUpdateRecords(serialization::DeclID ID, Decl *D);
+  void loadObjCChainedCategories(serialization::GlobalDeclID ID,
+                                 ObjCInterfaceDecl *D);
   
   RecordLocation getLocalBitOffset(uint64_t GlobalOffset);
   uint64_t getGlobalBitOffset(Module &M, uint32_t LocalOffset);
@@ -899,6 +906,10 @@ public:
   /// \brief Map from a local declaration ID within a given module to a 
   /// global declaration ID.
   serialization::DeclID getGlobalDeclID(Module &F, unsigned LocalID) const;
+
+  /// \brief Returns true if global DeclID \arg ID originated from module
+  /// \arg M.
+  bool isDeclIDFromModule(serialization::GlobalDeclID ID, Module &M) const;
   
   /// \brief Resolve a declaration ID into a declaration, potentially
   /// building a new declaration.

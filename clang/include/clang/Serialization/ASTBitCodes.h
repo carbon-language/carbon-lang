@@ -64,6 +64,11 @@ namespace clang {
     /// \brief a Decl::Kind/DeclID pair.
     typedef std::pair<uint32_t, DeclID> KindDeclIDPair;
 
+    // FIXME: Turn these into classes so we can have some type safety when
+    // we go from local ID to global and vice-versa.
+    typedef DeclID LocalDeclID;
+    typedef DeclID GlobalDeclID;
+
     /// \brief An ID number that refers to a type in an AST file.
     ///
     /// The ID of a type is partitioned into two parts: the lower
@@ -402,7 +407,11 @@ namespace clang {
 
       /// \brief Record code for the source manager line table information,
       /// which stores information about #line directives.
-      SOURCE_MANAGER_LINE_TABLE = 48
+      SOURCE_MANAGER_LINE_TABLE = 48,
+
+      /// \brief Record code for ObjC categories in a module that are chained to
+      /// an interface.
+      OBJC_CHAINED_CATEGORIES
     };
 
     /// \brief Record types used within a source manager block.
