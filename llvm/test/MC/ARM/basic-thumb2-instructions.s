@@ -60,6 +60,34 @@ _func:
 
 
 @------------------------------------------------------------------------------
+@ ADD (immediate)
+@------------------------------------------------------------------------------
+        itet eq
+        addeq r1, r2, #4
+        addwne r5, r3, #1023
+        addeq r4, r5, #293
+        add r2, sp, #1024
+        add r2, r8, #0xff00
+        add r2, r3, #257
+        addw r2, r3, #257
+        add r12, r6, #0x100
+        addw r12, r6, #0x100
+        adds r1, r2, #0x1f0
+
+@ CHECK: itet	eq                      @ encoding: [0x0a,0xbf]
+@ CHECK: addeq	r1, r2, #4              @ encoding: [0x11,0x1d]
+@ CHECK: addwne	r5, r3, #1023           @ encoding: [0x03,0xf2,0xff,0x35]
+@ CHECK: addweq	r4, r5, #293            @ encoding: [0x05,0xf2,0x25,0x14]
+@ CHECK: add.w	r2, sp, #1024           @ encoding: [0x0d,0xf5,0x80,0x62]
+@ CHECK: add.w	r2, r8, #65280          @ encoding: [0x08,0xf5,0x7f,0x42]
+@ CHECK: addw	r2, r3, #257            @ encoding: [0x03,0xf2,0x01,0x12]
+@ CHECK: addw	r2, r3, #257            @ encoding: [0x03,0xf2,0x01,0x12]
+@ CHECK: add.w	r12, r6, #256           @ encoding: [0x06,0xf5,0x80,0x7c]
+@ CHECK: addw	r12, r6, #256           @ encoding: [0x06,0xf2,0x00,0x1c]
+@ CHECK: adds.w	r1, r2, #496            @ encoding: [0x12,0xf5,0xf8,0x71]
+
+
+@------------------------------------------------------------------------------
 @ CBZ/CBNZ
 @------------------------------------------------------------------------------
         cbnz    r7, #6

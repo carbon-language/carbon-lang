@@ -3035,6 +3035,8 @@ getMnemonicAcceptInfo(StringRef Mnemonic, bool &CanAcceptCarrySet,
 
 bool ARMAsmParser::shouldOmitCCOutOperand(StringRef Mnemonic,
                                SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+  // FIXME: This is all horribly hacky. We really need a better way to deal
+  // with optional operands like this in the matcher table.
 
   // The 'mov' mnemonic is special. One variant has a cc_out operand, while
   // another does not. Specifically, the MOVW instruction does not. So we
@@ -3058,13 +3060,49 @@ bool ARMAsmParser::shouldOmitCCOutOperand(StringRef Mnemonic,
       static_cast<ARMOperand*>(Operands[1])->getReg() == 0)
     return true;
   // Register-register 'add' for thumb does not have a cc_out operand
-  // when it's an ADD Rdm, SP, {Rdm|#imm} instruction.
+  // when it's an ADD Rdm, SP, {Rdm|#imm0_255} instruction. We do
+  // have to check the immediate range here since Thumb2 has a variant
+  // that can handle a different range and has a cc_out operand.
   if (isThumb() && Mnemonic == "add" && Operands.size() == 6 &&
       static_cast<ARMOperand*>(Operands[3])->isReg() &&
       static_cast<ARMOperand*>(Operands[4])->isReg() &&
       static_cast<ARMOperand*>(Operands[4])->getReg() == ARM::SP &&
-      static_cast<ARMOperand*>(Operands[1])->getReg() == 0)
+      static_cast<ARMOperand*>(Operands[1])->getReg() == 0 &&
+      (static_cast<ARMOperand*>(Operands[5])->isReg() ||
+       static_cast<ARMOperand*>(Operands[5])->isImm0_1020s4()))
     return true;
+  // For Thumb2, add immediate does not have a cc_out operand for the
+  // imm0_4096 variant. That's the least-preferred variant when
+  // selecting via the generic "add" mnemonic, so to know that we
+  // should remove the cc_out operand, we have to explicitly check that
+  // it's not one of the other variants. Ugh.
+  if (isThumbTwo() && Mnemonic == "add" && Operands.size() == 6 &&
+      static_cast<ARMOperand*>(Operands[3])->isReg() &&
+      static_cast<ARMOperand*>(Operands[4])->isReg() &&
+      static_cast<ARMOperand*>(Operands[5])->isImm()) {
+    // Nest conditions rather than one big 'if' statement for readability.
+    //
+    // If either register is a high reg, it's either one of the SP
+    // variants (handled above) or a 32-bit encoding, so we just
+    // check against T3.
+    if ((!isARMLowRegister(static_cast<ARMOperand*>(Operands[3])->getReg()) ||
+         !isARMLowRegister(static_cast<ARMOperand*>(Operands[4])->getReg())) &&
+        static_cast<ARMOperand*>(Operands[5])->isT2SOImm())
+      return false;
+    // If both registers are low, we're in an IT block, and the immediate is
+    // in range, we should use encoding T1 instead, which has a cc_out.
+    if (inITBlock() &&
+        isARMLowRegister(static_cast<ARMOperand*>(Operands[4])->getReg()) &&
+        isARMLowRegister(static_cast<ARMOperand*>(Operands[4])->getReg()) &&
+        static_cast<ARMOperand*>(Operands[5])->isImm0_7())
+      return false;
+
+    // Otherwise, we use encoding T4, which does not have a cc_out
+    // operand.
+    return true;
+  }
+
+
   // Register-register 'add/sub' for thumb does not have a cc_out operand
   // when it's an ADD/SUB SP, #imm. Be lenient on count since there's also
   // the "add/sub SP, SP, #imm" version. If the follow-up operands aren't
@@ -3220,10 +3258,11 @@ bool ARMAsmParser::ParseInstruction(StringRef Name, SMLoc NameLoc,
   // Some instructions, mostly Thumb, have forms for the same mnemonic that
   // do and don't have a cc_out optional-def operand. With some spot-checks
   // of the operand list, we can figure out which variant we're trying to
-  // parse and adjust accordingly before actually matching. Reason number
-  // #317 the table driven matcher doesn't fit well with the ARM instruction
-  // set.
-  if (shouldOmitCCOutOperand(Mnemonic, Operands)) {
+  // parse and adjust accordingly before actually matching. We shouldn't ever
+  // try to remove a cc_out operand that was explicitly set on the the
+  // mnemonic, of course (CarrySetting == true). Reason number #317 the
+  // table driven matcher doesn't fit well with the ARM instruction set.
+  if (!CarrySetting && shouldOmitCCOutOperand(Mnemonic, Operands)) {
     ARMOperand *Op = static_cast<ARMOperand*>(Operands[1]);
     Operands.erase(Operands.begin() + 1);
     delete Op;
