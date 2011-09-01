@@ -37,12 +37,14 @@ CommandObjectDisassemble::CommandOptions::CommandOptions (CommandInterpreter &in
     num_lines_context(0),
     num_instructions (0),
     func_name(),
+    cur_function (false),
     start_addr(),
     end_addr (),
     at_pc (false),
     frame_line (false),
     plugin_name (),
-    arch() 
+    arch(),
+    some_location_specified (false) 
 {
     OptionParsingStarting();
 }
@@ -89,6 +91,7 @@ CommandObjectDisassemble::CommandOptions::SetOptionValue (uint32_t option_idx, c
 
         if (start_addr == LLDB_INVALID_ADDRESS)
             error.SetErrorStringWithFormat ("Invalid start address string '%s'.\n", option_arg);
+        some_location_specified = true;
         break;
     case 'e':
         end_addr = Args::StringToUInt64(option_arg, LLDB_INVALID_ADDRESS, 0);
@@ -98,13 +101,15 @@ CommandObjectDisassemble::CommandOptions::SetOptionValue (uint32_t option_idx, c
         if (end_addr == LLDB_INVALID_ADDRESS)
             error.SetErrorStringWithFormat ("Invalid end address string '%s'.\n", option_arg);
         break;
-
+        some_location_specified = true;
     case 'n':
         func_name.assign (option_arg);
+        some_location_specified = true;
         break;
 
     case 'p':
         at_pc = true;
+        some_location_specified = true;
         break;
 
     case 'l':
@@ -112,6 +117,7 @@ CommandObjectDisassemble::CommandOptions::SetOptionValue (uint32_t option_idx, c
         // Disassemble the current source line kind of implies showing mixed
         // source code context. 
         show_mixed = true;
+        some_location_specified = true;
         break;
 
     case 'P':
@@ -123,8 +129,8 @@ CommandObjectDisassemble::CommandOptions::SetOptionValue (uint32_t option_idx, c
         break;
 
     case 'f':
-        // The default action is to disassemble the function for the current frame.
-        // There's no need to set any flag.
+        cur_function = true;
+        some_location_specified = true;
         break;
 
     case 'a':
@@ -147,6 +153,7 @@ CommandObjectDisassemble::CommandOptions::OptionParsingStarting ()
     num_lines_context = 0;
     num_instructions = 0;
     func_name.clear();
+    cur_function = false;
     at_pc = false;
     frame_line = false;
     start_addr = LLDB_INVALID_ADDRESS;
@@ -154,6 +161,16 @@ CommandObjectDisassemble::CommandOptions::OptionParsingStarting ()
     raw = false;
     plugin_name.clear();
     arch.Clear();
+    some_location_specified = false;
+}
+
+Error
+CommandObjectDisassemble::CommandOptions::OptionParsingFinished ()
+{
+    if (!some_location_specified)
+        at_pc = true;
+    return Error();
+    
 }
 
 const OptionDefinition*
@@ -178,10 +195,10 @@ CommandObjectDisassemble::CommandOptions::g_option_table[] =
   LLDB_OPT_SET_3 |
   LLDB_OPT_SET_4 |
   LLDB_OPT_SET_5    , false , "count",          'c', required_argument  , NULL, 0, eArgTypeNumLines,    "Number of instructions to display."},
-{ LLDB_OPT_SET_3    , true  , "name",           'n', required_argument  , NULL, CommandCompletions::eSymbolCompletion, eArgTypeFunctionName,             "Disassemble entire contents of the given function name."},
-{ LLDB_OPT_SET_4    , true  , "frame",          'f', no_argument        , NULL, 0, eArgTypeNone,        "Disassemble from the start of the current frame's function."},
-{ LLDB_OPT_SET_5    , true  , "pc",             'p', no_argument        , NULL, 0, eArgTypeNone,        "Disassemble around the current pc."},
-{ LLDB_OPT_SET_6    , true  , "line",           'l', no_argument        , NULL, 0, eArgTypeNone,        "Disassemble the current frame's current source line instructions if there debug line table information, else disasemble around the pc."},
+{ LLDB_OPT_SET_3    , false  , "name",           'n', required_argument  , NULL, CommandCompletions::eSymbolCompletion, eArgTypeFunctionName,             "Disassemble entire contents of the given function name."},
+{ LLDB_OPT_SET_4    , false  , "frame",          'f', no_argument        , NULL, 0, eArgTypeNone,        "Disassemble from the start of the current frame's function."},
+{ LLDB_OPT_SET_5    , false  , "pc",             'p', no_argument        , NULL, 0, eArgTypeNone,        "Disassemble around the current pc."},
+{ LLDB_OPT_SET_6    , false  , "line",           'l', no_argument        , NULL, 0, eArgTypeNone,        "Disassemble the current frame's current source line instructions if there debug line table information, else disasemble around the pc."},
 { 0                 , false , NULL,             0,   0                  , NULL, 0, eArgTypeNone,        NULL }
 };
 
@@ -299,6 +316,12 @@ CommandObjectDisassemble::Execute
         AddressRange range;
         if (m_options.frame_line)
         {
+            if (exe_ctx.frame == NULL)
+            {
+                result.AppendError ("Cannot disassemble around the current line without a selected frame.\n");
+                result.SetStatus (eReturnStatusFailed);
+                return false;
+            }
             LineEntry pc_line_entry (exe_ctx.frame->GetSymbolContext(eSymbolContextLineEntry).line_entry);
             if (pc_line_entry.IsValid())
             {
@@ -309,6 +332,18 @@ CommandObjectDisassemble::Execute
                 m_options.at_pc = true; // No line entry, so just disassemble around the current pc
                 m_options.show_mixed = false;
             }
+        }
+        else if (m_options.cur_function)
+        {
+            if (exe_ctx.frame == NULL)
+            {
+                result.AppendError ("Cannot disassemble around the current function without a selected frame.\n");
+                result.SetStatus (eReturnStatusFailed);
+                return false;
+            }
+            Symbol *symbol = exe_ctx.frame->GetSymbolContext(eSymbolContextSymbol).symbol;
+            if (symbol)
+                range = symbol->GetAddressRangeRef();
         }
 
         // Did the "m_options.frame_line" find a valid range already? If so
