@@ -74,7 +74,8 @@ public:
      SD.setSize(Value);
   }
 
-  virtual void EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size);
+  virtual void EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size,
+                                     unsigned ByteAlignment);
 
   virtual void EmitZerofill(const MCSection *Section, MCSymbol *Symbol = 0,
                             unsigned Size = 0, unsigned ByteAlignment = 0) {

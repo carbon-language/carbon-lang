@@ -290,10 +290,10 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
   // Handle common and BSS local symbols (.lcomm).
   if (GVKind.isCommon() || GVKind.isBSSLocal()) {
     if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
+    unsigned Align = 1 << AlignLog;
 
     // Handle common symbols.
     if (GVKind.isCommon()) {
-      unsigned Align = 1 << AlignLog;
       if (!getObjFileLowering().getCommDirectiveSupportsAlignment())
         Align = 0;
 
@@ -307,17 +307,17 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
       const MCSection *TheSection =
         getObjFileLowering().SectionForGlobal(GV, GVKind, Mang, TM);
       // .zerofill __DATA, __bss, _foo, 400, 5
-      OutStreamer.EmitZerofill(TheSection, GVSym, Size, 1 << AlignLog);
+      OutStreamer.EmitZerofill(TheSection, GVSym, Size, Align);
       return;
     }
 
-    if (MAI->hasLCOMMDirective()) {
+    if (MAI->getLCOMMDirectiveType() != LCOMM::None &&
+        (MAI->getLCOMMDirectiveType() != LCOMM::NoAlignment || Align == 1)) {
       // .lcomm _foo, 42
-      OutStreamer.EmitLocalCommonSymbol(GVSym, Size);
+      OutStreamer.EmitLocalCommonSymbol(GVSym, Size, Align);
       return;
     }
 
-    unsigned Align = 1 << AlignLog;
     if (!getObjFileLowering().getCommDirectiveSupportsAlignment())
       Align = 0;
 

@@ -133,9 +133,10 @@ public:
     return Child->EmitCommonSymbol(Symbol, Size, ByteAlignment);
   }
 
-  virtual void EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size) {
+  virtual void EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size,
+                                     unsigned ByteAlignment) {
     LogCall("EmitLocalCommonSymbol");
-    return Child->EmitLocalCommonSymbol(Symbol, Size);
+    return Child->EmitLocalCommonSymbol(Symbol, Size, ByteAlignment);
   }
   
   virtual void EmitZerofill(const MCSection *Section, MCSymbol *Symbol = 0,

@@ -86,7 +86,8 @@ public:
   virtual void EmitELFSize(MCSymbol *Symbol, const MCExpr *Value) {
     report_fatal_error("unsupported directive in pure streamer");
   }
-  virtual void EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size) {
+  virtual void EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size,
+                                     unsigned ByteAlignment) {
     report_fatal_error("unsupported directive in pure streamer");
   }
   virtual void EmitFileDirective(StringRef Filename) {

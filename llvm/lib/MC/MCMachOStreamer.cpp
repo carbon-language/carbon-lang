@@ -67,7 +67,8 @@ public:
   virtual void EmitELFSize(MCSymbol *Symbol, const MCExpr *Value) {
     assert(0 && "macho doesn't support this directive");
   }
-  virtual void EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size) {
+  virtual void EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size,
+                                     unsigned ByteAlignment) {
     assert(0 && "macho doesn't support this directive");
   }
   virtual void EmitZerofill(const MCSection *Section, MCSymbol *Symbol = 0,

@@ -59,8 +59,8 @@ namespace {
     virtual void EmitELFSize(MCSymbol *Symbol, const MCExpr *Value) {}
     virtual void EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                                   unsigned ByteAlignment) {}
-    virtual void EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size) {}
-
+    virtual void EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size,
+                                       unsigned ByteAlignment) {}
     virtual void EmitZerofill(const MCSection *Section, MCSymbol *Symbol = 0,
                               unsigned Size = 0, unsigned ByteAlignment = 0) {}
     virtual void EmitTBSSSymbol(const MCSection *Section, MCSymbol *Symbol,

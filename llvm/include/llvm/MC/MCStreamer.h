@@ -304,7 +304,9 @@ namespace llvm {
     ///
     /// @param Symbol - The common symbol to emit.
     /// @param Size - The size of the common symbol.
-    virtual void EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size) = 0;
+    /// @param ByteAlignment - The alignment of the common symbol in bytes.
+    virtual void EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size,
+                                       unsigned ByteAlignment) = 0;
 
     /// EmitZerofill - Emit the zerofill section and an optional symbol.
     ///

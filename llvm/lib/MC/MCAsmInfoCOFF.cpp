@@ -19,7 +19,7 @@ using namespace llvm;
 MCAsmInfoCOFF::MCAsmInfoCOFF() {
   GlobalPrefix = "_";
   COMMDirectiveAlignmentIsInBytes = false;
-  HasLCOMMDirective = true;
+  LCOMMDirectiveType = LCOMM::ByteAlignment;
   HasDotTypeDotSizeDirective = false;
   HasSingleParameterDotFile = false;
   PrivateGlobalPrefix = "L";  // Prefix for private global symbols
