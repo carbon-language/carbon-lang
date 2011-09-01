@@ -774,7 +774,7 @@ CGDebugInfo::CreateCXXMemberFunction(const CXXMethodDecl *Method,
     Flags |= llvm::DIDescriptor::FlagPrototyped;
     
   llvm::DISubprogram SP =
-    DBuilder.createMethod(RecordTy , MethodName, MethodLinkageName, 
+    DBuilder.createMethod(RecordTy, MethodName, MethodLinkageName, 
                           MethodDefUnit, MethodLine,
                           MethodTy, /*isLocalToUnit=*/false, 
                           /* isDefinition=*/ false,
@@ -811,9 +811,10 @@ void CGDebugInfo::
 CollectCXXFriends(const CXXRecordDecl *RD, llvm::DIFile Unit,
                 SmallVectorImpl<llvm::Value *> &EltTys,
                 llvm::DIType RecordTy) {
-
   for (CXXRecordDecl::friend_iterator BI =  RD->friend_begin(),
          BE = RD->friend_end(); BI != BE; ++BI) {
+    if ((*BI)->isUnsupportedFriend())
+      continue;
     if (TypeSourceInfo *TInfo = (*BI)->getFriendType())
       EltTys.push_back(DBuilder.createFriend(RecordTy, 
                                              getOrCreateType(TInfo->getType(), 

@@ -55,3 +55,15 @@ void foo() {
   const wchar_t c = L'x';
   wchar_t d = c;
 }
+
+namespace b5249287 {
+template <typename T> class A {
+  struct B;
+};
+
+class Cls {
+  template <typename T> friend class A<T>::B;
+};
+
+Cls obj;
+}
