@@ -106,7 +106,7 @@ ChainedIncludesSource *ChainedIncludesSource::create(CompilerInstance &CI) {
     llvm::raw_svector_ostream OS(serialAST);
     llvm::OwningPtr<ASTConsumer> consumer;
     consumer.reset(new PCHGenerator(Clang->getPreprocessor(), "-",
-                                    /*isysroot=*/"", &OS));
+                                    /*IsModule=*/false, /*isysroot=*/"", &OS));
     Clang->getASTContext().setASTMutationListener(
                                             consumer->GetASTMutationListener());
     Clang->setASTConsumer(consumer.take());

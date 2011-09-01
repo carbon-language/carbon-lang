@@ -348,7 +348,7 @@ private:
   void WriteSourceManagerBlock(SourceManager &SourceMgr,
                                const Preprocessor &PP,
                                StringRef isysroot);
-  void WritePreprocessor(const Preprocessor &PP);
+  void WritePreprocessor(const Preprocessor &PP, bool IsModule);
   void WriteHeaderSearch(HeaderSearch &HS, StringRef isysroot);
   void WritePreprocessorDetail(PreprocessingRecord &PPRec);
   void WritePragmaDiagnosticMappings(const Diagnostic &Diag);
@@ -359,7 +359,7 @@ private:
   void WriteTypeDeclOffsets();
   void WriteSelectors(Sema &SemaRef);
   void WriteReferencedSelectorsPool(Sema &SemaRef);
-  void WriteIdentifierTable(Preprocessor &PP);
+  void WriteIdentifierTable(Preprocessor &PP, bool IsModule);
   void WriteAttributes(const AttrVec &Attrs, RecordDataImpl &Record);
   void WriteDeclUpdatesBlocks();
   void WriteDeclReplacementsBlock();
@@ -386,7 +386,8 @@ private:
   void WriteDecl(ASTContext &Context, Decl *D);
 
   void WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
-                    StringRef isysroot, const std::string &OutputFile);
+                    StringRef isysroot, const std::string &OutputFile,
+                    bool IsModule);
   
 public:
   /// \brief Create a new precompiled header writer that outputs to
@@ -407,11 +408,14 @@ public:
   /// \param StatCalls the object that cached all of the stat() calls made while
   /// searching for source files and headers.
   ///
-  /// \param isysroot if non-empty, write a relocatable PCH file whose headers
+  /// \param IsModule Whether we're writing a module (otherwise, we're writing a
+  /// precompiled header).
+  ///
+  /// \param isysroot if non-empty, write a relocatable file whose headers
   /// are relative to the given system root.
   void WriteAST(Sema &SemaRef, MemorizeStatCalls *StatCalls,
                 const std::string &OutputFile,
-                StringRef isysroot);
+                bool IsModule, StringRef isysroot);
 
   /// \brief Emit a source location.
   void AddSourceLocation(SourceLocation Loc, RecordDataImpl &Record);
@@ -643,6 +647,7 @@ public:
 class PCHGenerator : public SemaConsumer {
   const Preprocessor &PP;
   std::string OutputFile;
+  bool IsModule;
   std::string isysroot;
   raw_ostream *Out;
   Sema *SemaPtr;
@@ -657,6 +662,7 @@ protected:
 
 public:
   PCHGenerator(const Preprocessor &PP, StringRef OutputFile, 
+               bool IsModule,
                StringRef isysroot, raw_ostream *Out);
   ~PCHGenerator();
   virtual void InitializeSema(Sema &S) { SemaPtr = &S; }

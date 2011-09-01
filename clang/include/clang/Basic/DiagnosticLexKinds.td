@@ -324,4 +324,6 @@ def err_pp_linemarker_invalid_pop : Error<
 def ext_pp_line_too_big : Extension<
   "C requires #line number to be less than %0, allowed as extension">;
 
+def err_pp_export_non_macro : Error<"no macro named %0 to export">;
+
 }

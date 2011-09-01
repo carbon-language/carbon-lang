@@ -89,6 +89,9 @@ PPKEYWORD(sccs)
 PPKEYWORD(assert)
 PPKEYWORD(unassert)
 
+// Clang extensions
+PPKEYWORD(__export_macro__)
+
 //===----------------------------------------------------------------------===//
 // Language keywords.
 //===----------------------------------------------------------------------===//

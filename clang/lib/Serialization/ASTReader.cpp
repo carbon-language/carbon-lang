@@ -1352,15 +1352,16 @@ void ASTReader::ReadMacroRecord(Module &F, uint64_t Offset) {
       MI->setIsFromAST();
 
       unsigned NextIndex = 3;
+      MI->setExportLocation(ReadSourceLocation(F, Record, NextIndex));
+      
       if (RecType == PP_MACRO_FUNCTION_LIKE) {
         // Decode function-like macro info.
-        bool isC99VarArgs = Record[3];
-        bool isGNUVarArgs = Record[4];
+        bool isC99VarArgs = Record[NextIndex++];
+        bool isGNUVarArgs = Record[NextIndex++];
         MacroArgs.clear();
-        unsigned NumArgs = Record[5];
-        NextIndex = 6 + NumArgs;
+        unsigned NumArgs = Record[NextIndex++];
         for (unsigned i = 0; i != NumArgs; ++i)
-          MacroArgs.push_back(getLocalIdentifier(F, Record[6+i]));
+          MacroArgs.push_back(getLocalIdentifier(F, Record[NextIndex++]));
 
         // Install function-like macro info.
         MI->setIsFunctionLike();

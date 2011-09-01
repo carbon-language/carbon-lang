@@ -39,6 +39,11 @@ class MacroInfo {
   IdentifierInfo **ArgumentList;
   unsigned NumArguments;
 
+  /// \brief The location at which this macro was exported from its module.
+  ///
+  /// If invalid, this macro has not been explicitly exported.
+  SourceLocation ExportLocation;
+  
   /// ReplacementTokens - This is the list of tokens that the macro is defined
   /// to.
   SmallVector<Token, 8> ReplacementTokens;
@@ -68,6 +73,9 @@ class MacroInfo {
   /// IsFromAST - True if this macro was loaded from an AST file.
   bool IsFromAST : 1;
 
+  /// \brief Whether this macro changed after it was loaded from an AST file.
+  bool ChangedAfterLoad : 1;
+  
 private:
   //===--------------------------------------------------------------------===//
   // State that changes as the macro is used.
@@ -209,6 +217,14 @@ public:
   /// setIsFromAST - Set whether this macro was loaded from an AST file.
   void setIsFromAST(bool FromAST = true) { IsFromAST = FromAST; }
 
+  /// \brief Determine whether this macro has changed since it was loaded from
+  /// an AST file.
+  bool hasChangedAfterLoad() const { return ChangedAfterLoad; }
+  
+  /// \brief Note whether this macro has changed after it was loaded from an
+  /// AST file.
+  void setChangedAfterLoad(bool CAL = true) { ChangedAfterLoad = CAL; }
+  
   /// isUsed - Return false if this macro is defined in the main file and has
   /// not yet been used.
   bool isUsed() const { return IsUsed; }
@@ -262,6 +278,19 @@ public:
     IsDisabled = true;
   }
 
+  /// \brief Set the export location for this macro.
+  void setExportLocation(SourceLocation ExportLoc) {
+    ExportLocation = ExportLoc;
+  }
+
+  /// \brief Determine whether this macro was explicitly exported from its
+  /// module.
+  bool isExported() const { return ExportLocation.isValid(); }
+  
+  /// \brief Determine the location where this macro was explicitly exported
+  /// from its module.
+  SourceLocation getExportLocation() { return ExportLocation; }
+  
 private:
   unsigned getDefinitionLengthSlow(SourceManager &SM) const;
 };
