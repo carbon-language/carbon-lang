@@ -153,19 +153,18 @@ bool Sinking::ProcessBlock(BasicBlock &BB) {
 
 static bool isSafeToMove(Instruction *Inst, AliasAnalysis *AA,
                          SmallPtrSet<Instruction *, 8> &Stores) {
-  if (LoadInst *L = dyn_cast<LoadInst>(Inst)) {
-    if (L->isVolatile()) return false;
 
+  if (Inst->mayWriteToMemory()) {
+    Stores.insert(Inst);
+    return false;
+  }
+
+  if (LoadInst *L = dyn_cast<LoadInst>(Inst)) {
     AliasAnalysis::Location Loc = AA->getLocation(L);
     for (SmallPtrSet<Instruction *, 8>::iterator I = Stores.begin(),
          E = Stores.end(); I != E; ++I)
       if (AA->getModRefInfo(*I, Loc) & AliasAnalysis::Mod)
         return false;
-  }
-
-  if (Inst->mayWriteToMemory()) {
-    Stores.insert(Inst);
-    return false;
   }
 
   if (isa<TerminatorInst>(Inst) || isa<PHINode>(Inst))
