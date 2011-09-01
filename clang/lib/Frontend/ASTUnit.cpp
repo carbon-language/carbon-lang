@@ -376,28 +376,51 @@ namespace {
 /// \brief Gathers information from ASTReader that will be used to initialize
 /// a Preprocessor.
 class ASTInfoCollector : public ASTReaderListener {
+  Preprocessor &PP;
   LangOptions &LangOpt;
   HeaderSearch &HSI;
-  std::string &TargetTriple;
+  llvm::IntrusiveRefCntPtr<TargetInfo> &Target;
   std::string &Predefines;
   unsigned &Counter;
 
   unsigned NumHeaderInfos;
 
+  bool InitializedPreprocessor;
 public:
-  ASTInfoCollector(LangOptions &LangOpt, HeaderSearch &HSI,
-                   std::string &TargetTriple, std::string &Predefines,
+  ASTInfoCollector(Preprocessor &PP,
+                   LangOptions &LangOpt, HeaderSearch &HSI,
+                   llvm::IntrusiveRefCntPtr<TargetInfo> &Target,
+                   std::string &Predefines,
                    unsigned &Counter)
-    : LangOpt(LangOpt), HSI(HSI), TargetTriple(TargetTriple),
-      Predefines(Predefines), Counter(Counter), NumHeaderInfos(0) {}
+    : PP(PP), LangOpt(LangOpt), HSI(HSI), Target(Target),
+      Predefines(Predefines), Counter(Counter), NumHeaderInfos(0),
+      InitializedPreprocessor(false) {}
 
   virtual bool ReadLanguageOptions(const LangOptions &LangOpts) {
+    if (InitializedPreprocessor)
+      return false;
+    
     LangOpt = LangOpts;
+    
+    // Initialize the preprocessor.
+    PP.Initialize(*Target);
+    InitializedPreprocessor = true;
     return false;
   }
 
   virtual bool ReadTargetTriple(StringRef Triple) {
-    TargetTriple = Triple;
+    // If we've already initialized the target, don't do it again.
+    if (Target)
+      return false;
+    
+    // FIXME: This is broken, we should store the TargetOptions in the AST file.
+    TargetOptions TargetOpts;
+    TargetOpts.ABI = "";
+    TargetOpts.CXXABI = "";
+    TargetOpts.CPU = "";
+    TargetOpts.Features.clear();
+    TargetOpts.Triple = Triple;
+    Target = TargetInfo::CreateTargetInfo(PP.getDiagnostics(), TargetOpts);
     return false;
   }
 
@@ -573,11 +596,17 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
   // Gather Info for preprocessor construction later on.
 
   HeaderSearch &HeaderInfo = *AST->HeaderInfo.get();
-  std::string TargetTriple;
   std::string Predefines;
   unsigned Counter;
 
   llvm::OwningPtr<ASTReader> Reader;
+
+  AST->PP = new Preprocessor(AST->getDiagnostics(), AST->ASTFileLangOpts, 
+                             /*Target=*/0, AST->getSourceManager(), HeaderInfo, 
+                             *AST, 
+                             /*IILookup=*/0,
+                             /*OwnsHeaderSearch=*/false,
+                             /*DelayInitialization=*/true);
 
   Reader.reset(new ASTReader(AST->getSourceManager(), AST->getFileManager(),
                              AST->getDiagnostics()));
@@ -586,8 +615,9 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
   llvm::CrashRecoveryContextCleanupRegistrar<ASTReader>
     ReaderCleanup(Reader.get());
 
-  Reader->setListener(new ASTInfoCollector(AST->ASTFileLangOpts, HeaderInfo, 
-                                           TargetTriple, Predefines, Counter));
+  Reader->setListener(new ASTInfoCollector(*AST->PP,
+                                           AST->ASTFileLangOpts, HeaderInfo, 
+                                           AST->Target, Predefines, Counter));
 
   switch (Reader->ReadAST(Filename, serialization::MK_MainFile)) {
   case ASTReader::Success:
@@ -602,21 +632,6 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
   AST->OriginalSourceFile = Reader->getOriginalSourceFile();
 
   // AST file loaded successfully. Now create the preprocessor.
-
-  // Get information about the target being compiled for.
-  //
-  // FIXME: This is broken, we should store the TargetOptions in the AST file.
-  TargetOptions TargetOpts;
-  TargetOpts.ABI = "";
-  TargetOpts.CXXABI = "";
-  TargetOpts.CPU = "";
-  TargetOpts.Features.clear();
-  TargetOpts.Triple = TargetTriple;
-  AST->Target = TargetInfo::CreateTargetInfo(AST->getDiagnostics(),
-                                             TargetOpts);
-  AST->PP = new Preprocessor(AST->getDiagnostics(), AST->ASTFileLangOpts, 
-                             *AST->Target, AST->getSourceManager(), HeaderInfo, 
-                             *AST);
   Preprocessor &PP = *AST->PP;
 
   PP.setPredefines(Reader->getSuggestedPredefines());

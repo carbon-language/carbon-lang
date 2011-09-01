@@ -62,8 +62,11 @@ class Context {
   const Info *TSRecords;
   unsigned NumTSRecords;
 public:
-  Context(const TargetInfo &Target);
+  Context();
 
+  /// \brief Perform target-specific initialization
+  void InitializeTarget(const TargetInfo &Target);
+  
   /// InitializeBuiltins - Mark the identifiers for all the builtins with their
   /// appropriate builtin ID # and mark any non-portable builtin identifiers as
   /// such.

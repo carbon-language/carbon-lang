@@ -32,11 +32,15 @@ const Builtin::Info &Builtin::Context::GetRecord(unsigned ID) const {
   return TSRecords[ID - Builtin::FirstTSBuiltin];
 }
 
-Builtin::Context::Context(const TargetInfo &Target) {
+Builtin::Context::Context() {
   // Get the target specific builtins from the target.
   TSRecords = 0;
   NumTSRecords = 0;
-  Target.getTargetBuiltins(TSRecords, NumTSRecords);
+}
+
+void Builtin::Context::InitializeTarget(const TargetInfo &Target) {
+  assert(NumTSRecords == 0 && "Already initialized target?");
+  Target.getTargetBuiltins(TSRecords, NumTSRecords);  
 }
 
 /// InitializeBuiltins - Mark the identifiers for all the builtins with their

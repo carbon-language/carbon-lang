@@ -200,7 +200,7 @@ void CompilerInstance::createPreprocessor() {
   
   // Create the Preprocessor.
   HeaderSearch *HeaderInfo = new HeaderSearch(getFileManager());
-  PP = new Preprocessor(getDiagnostics(), getLangOpts(), getTarget(),
+  PP = new Preprocessor(getDiagnostics(), getLangOpts(), &getTarget(),
                         getSourceManager(), *HeaderInfo, *this, PTHMgr,
                         /*OwnsHeaderSearch=*/true);
   
