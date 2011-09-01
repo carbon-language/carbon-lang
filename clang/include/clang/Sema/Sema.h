@@ -2022,7 +2022,7 @@ public:
   StmtResult ActOnExprStmt(FullExprArg Expr);
 
   StmtResult ActOnNullStmt(SourceLocation SemiLoc,
-                        SourceLocation LeadingEmptyMacroLoc = SourceLocation());
+                           bool HasLeadingEmptyMacro = false);
   StmtResult ActOnCompoundStmt(SourceLocation L, SourceLocation R,
                                        MultiStmtArg Elts,
                                        bool isStmtExpr);

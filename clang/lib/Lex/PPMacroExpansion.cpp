@@ -257,7 +257,6 @@ bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
       if (HadLeadingSpace) Identifier.setFlag(Token::LeadingSpace);
     }
     Identifier.setFlag(Token::LeadingEmptyMacro);
-    LastEmptyMacroExpansionLoc = ExpandLoc;
     ++NumFastMacroExpanded;
     return false;
 
