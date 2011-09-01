@@ -24,11 +24,11 @@ false:
 ; But don't sink volatile loads...
 
 ;      CHECK: @foo2
-;      CHECK: volatile load
+;      CHECK: load volatile
 ; CHECK-NEXT: store i32
 
 define i32 @foo2(i1 %z) {
-  %l = volatile load i32* @A
+  %l = load volatile i32* @A
   store i32 0, i32* @B
   br i1 %z, label %true, label %false
 true:
