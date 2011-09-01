@@ -6409,12 +6409,16 @@ static bool isVectorBroadcast(SDValue &Op) {
 
   if (Is256)
     V = V.getOperand(1);
-  if (V.hasOneUse() && V.getOpcode() != ISD::SCALAR_TO_VECTOR)
+
+  if (!V.hasOneUse())
     return false;
 
   // Check the source scalar_to_vector type. 256-bit broadcasts are
   // supported for 32/64-bit sizes, while 128-bit ones are only supported
   // for 32-bit scalars.
+  if (V.getOpcode() != ISD::SCALAR_TO_VECTOR)
+    return false;
+
   unsigned ScalarSize = V.getOperand(0).getValueType().getSizeInBits();
   if (ScalarSize != 32 && ScalarSize != 64)
     return false;

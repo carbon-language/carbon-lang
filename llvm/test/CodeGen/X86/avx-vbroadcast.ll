@@ -75,6 +75,7 @@ entry:
 
 ; CHECK: _G
 ; CHECK-NOT: vbroadcastsd (%
+; CHECK: ret
 define <2 x i64> @G(i64* %ptr) nounwind uwtable readnone ssp {
 entry:
   %q = load i64* %ptr, align 8
@@ -82,3 +83,12 @@ entry:
   %vecinit2.i = insertelement <2 x i64> %vecinit.i, i64 %q, i32 1
   ret <2 x i64> %vecinit2.i
 }
+
+; CHECK: _H
+; CHECK-NOT: vbroadcastss
+; CHECK: ret
+define <4 x i32> @H(<4 x i32> %a) {
+  %x = shufflevector <4 x i32> %a, <4 x i32> undef, <4 x i32> <i32 1, i32 undef, i32 undef, i32 undef>
+  ret <4 x i32> %x
+}
+
