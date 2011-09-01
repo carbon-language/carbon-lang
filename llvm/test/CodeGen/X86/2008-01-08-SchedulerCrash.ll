@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 | FileCheck %s
+; RUN: llc < %s -march=x86 -mattr=+cmov | FileCheck %s
 ;
 ; Test scheduling a multi-use compare. We should neither spill flags
 ; nor clone the compare.
