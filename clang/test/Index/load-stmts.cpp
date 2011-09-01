@@ -117,7 +117,7 @@ void casts(int *ip) {
   (void)reinterpret_cast<float *>(ip);
 }
 
-// RUN: c-index-test -test-load-source all %s | FileCheck %s
+// RUN: c-index-test -test-load-source all -fno-delayed-template-parsing %s | FileCheck %s
 // CHECK: load-stmts.cpp:1:13: TypedefDecl=T:1:13 (Definition) Extent=[1:1 - 1:14]
 // CHECK: load-stmts.cpp:2:8: StructDecl=X:2:8 (Definition) Extent=[2:1 - 2:23]
 // CHECK: load-stmts.cpp:2:16: FieldDecl=a:2:16 (Definition) Extent=[2:12 - 2:17]

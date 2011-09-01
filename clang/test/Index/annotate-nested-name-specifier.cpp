@@ -137,7 +137,7 @@ struct X9 : X8 {
   }
 };
 
-// RUN: c-index-test -test-annotate-tokens=%s:13:1:137:1 %s | FileCheck %s
+// RUN: c-index-test -test-annotate-tokens=%s:13:1:137:1 -fno-delayed-template-parsing %s | FileCheck %s
 
 // CHECK: Keyword: "using" [14:1 - 14:6] UsingDeclaration=vector[4:12]
 // CHECK: Identifier: "outer_alias" [14:7 - 14:18] NamespaceRef=outer_alias:10:11
