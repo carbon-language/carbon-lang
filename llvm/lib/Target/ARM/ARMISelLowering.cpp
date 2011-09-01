@@ -5333,7 +5333,7 @@ ARMTargetLowering::EmitAtomicBinary64(MachineInstr *MI, MachineBasicBlock *BB,
   unsigned strOpc = isThumb2 ? ARM::t2STREXD : ARM::STREXD;
 
   MachineBasicBlock *loopMBB = MF->CreateMachineBasicBlock(LLVM_BB);
-  MachineBasicBlock *contBB, *cont2BB;
+  MachineBasicBlock *contBB = 0, *cont2BB = 0;
   if (IsCmpxchg) {
     contBB = MF->CreateMachineBasicBlock(LLVM_BB);
     cont2BB = MF->CreateMachineBasicBlock(LLVM_BB);
