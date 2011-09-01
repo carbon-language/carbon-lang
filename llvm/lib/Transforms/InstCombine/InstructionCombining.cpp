@@ -1574,22 +1574,41 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
     for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
       if (!Visited.count(BB)) {
         Instruction *Term = BB->getTerminator();
-        while (Term != BB->begin()) {   // Remove instrs bottom-up
-          BasicBlock::iterator I = Term; --I;
 
-          DEBUG(errs() << "IC: DCE: " << *I << '\n');
+        if (isa<TerminatorInst>(BB->begin()))
+          continue;
+
+        // Delete the instructions backwards, as it has a reduced likelihood of
+        // having to update as many def-use and use-def chains.
+        std::vector<Instruction*> WorkList;
+        WorkList.reserve(BB->size());
+        BasicBlock::iterator I = Term; --I;
+
+        while (true) {
+          if (!I->getType()->isVoidTy())
+            I->replaceAllUsesWith(UndefValue::get(I->getType()));
+          WorkList.push_back(I);
+          if (I == BB->begin())
+            break;
+          --I;
+        }
+
+        for (std::vector<Instruction*>::iterator
+               II = WorkList.begin(), IE = WorkList.end(); II != IE; ++II) {
+          Instruction *Inst = *II;
+          // Don't remove the landing pad. It should be removed only when its
+          // invokes are removed.
+          if (isa<LandingPadInst>(Inst))
+            continue;
+
           // A debug intrinsic shouldn't force another iteration if we weren't
           // going to do one without it.
-          if (!isa<DbgInfoIntrinsic>(I)) {
+          if (!isa<DbgInfoIntrinsic>(Inst)) {
             ++NumDeadInst;
             MadeIRChange = true;
           }
 
-          // If I is not void type then replaceAllUsesWith undef.
-          // This allows ValueHandlers and custom metadata to adjust itself.
-          if (!I->getType()->isVoidTy())
-            I->replaceAllUsesWith(UndefValue::get(I->getType()));
-          I->eraseFromParent();
+          Inst->eraseFromParent();
         }
       }
   }
