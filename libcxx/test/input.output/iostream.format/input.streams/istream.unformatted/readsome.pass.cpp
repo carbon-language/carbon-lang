@@ -55,7 +55,7 @@ int main()
         assert(std::string(s, 5) == "56789");
         assert(is.gcount() == 5);
         is.readsome(s, 5);
-        assert( is.eof());
+        assert(!is.eof());
         assert(!is.fail());
         assert(is.gcount() == 1);
         assert(std::string(s, 1) == "0");
@@ -75,7 +75,7 @@ int main()
         assert(std::wstring(s, 5) == L"56789");
         assert(is.gcount() == 5);
         is.readsome(s, 5);
-        assert( is.eof());
+        assert(!is.eof());
         assert(!is.fail());
         assert(is.gcount() == 1);
         assert(std::wstring(s, 1) == L"0");

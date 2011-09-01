@@ -70,7 +70,7 @@ int main()
         assert(c == 'b');
         assert(is.gcount() == 1);
         is.get(c);
-        assert( is.eof());
+        assert(!is.eof());
         assert(!is.fail());
         assert(c == 'c');
         assert(is.gcount() == 1);
@@ -95,7 +95,7 @@ int main()
         assert(c == L'b');
         assert(is.gcount() == 1);
         is.get(c);
-        assert( is.eof());
+        assert(!is.eof());
         assert(!is.fail());
         assert(c == L'c');
         assert(is.gcount() == 1);
