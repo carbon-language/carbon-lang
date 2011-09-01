@@ -1573,41 +1573,20 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
     // the instcombine code from having to deal with some bad special cases.
     for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
       if (!Visited.count(BB)) {
-        Instruction *Term = BB->getTerminator();
-
-        if (isa<TerminatorInst>(BB->begin()))
-          continue;
-
         // Delete the instructions backwards, as it has a reduced likelihood of
         // having to update as many def-use and use-def chains.
-        std::vector<Instruction*> WorkList;
-        WorkList.reserve(BB->size());
-        BasicBlock::iterator I = Term; --I;
-
-        while (true) {
-          if (!I->getType()->isVoidTy())
-            I->replaceAllUsesWith(UndefValue::get(I->getType()));
-          WorkList.push_back(I);
-          if (I == BB->begin())
+        for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ) {
+          Instruction *Inst = &*I++;
+          if (isa<TerminatorInst>(Inst))
             break;
-          --I;
-        }
-
-        for (std::vector<Instruction*>::iterator
-               II = WorkList.begin(), IE = WorkList.end(); II != IE; ++II) {
-          Instruction *Inst = *II;
-          // Don't remove the landing pad. It should be removed only when its
-          // invokes are removed.
+          if (!Inst->use_empty())
+            Inst->replaceAllUsesWith(UndefValue::get(Inst->getType()));
           if (isa<LandingPadInst>(Inst))
             continue;
-
-          // A debug intrinsic shouldn't force another iteration if we weren't
-          // going to do one without it.
           if (!isa<DbgInfoIntrinsic>(Inst)) {
             ++NumDeadInst;
             MadeIRChange = true;
           }
-
           Inst->eraseFromParent();
         }
       }

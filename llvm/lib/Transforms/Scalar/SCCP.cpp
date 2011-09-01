@@ -1688,24 +1688,15 @@ static void DeleteInstructionInBlock(BasicBlock *BB) {
 
   // Delete the instructions backwards, as it has a reduced likelihood of
   // having to update as many def-use and use-def chains.
-  std::vector<Instruction*> WorkList;
-  WorkList.reserve(BB->size());
-  BasicBlock::iterator I = --BasicBlock::iterator(BB->getTerminator());
-
-  while (true) {
-    if (!I->use_empty())
-      I->replaceAllUsesWith(UndefValue::get(I->getType()));
-    WorkList.push_back(I);
-    if (I == BB->begin())
+  for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ) {
+    Instruction *Inst = &*I++;
+    if (isa<TerminatorInst>(Inst))
       break;
-    --I;
-  }
-
-  for (std::vector<Instruction*>::iterator
-         II = WorkList.begin(), IE = WorkList.end(); II != IE; ++II) {
-    if (isa<LandingPadInst>(*II))
+    if (!Inst->use_empty())
+      Inst->replaceAllUsesWith(UndefValue::get(Inst->getType()));
+    if (isa<LandingPadInst>(Inst))
       continue;
-    BB->getInstList().erase(*II);
+    BB->getInstList().erase(Inst);
     ++NumInstRemoved;
   }
 }
