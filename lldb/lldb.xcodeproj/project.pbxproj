@@ -340,6 +340,7 @@
 		26957D9A13D381C900670048 /* RegisterContextDarwin_i386.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26957D9413D381C900670048 /* RegisterContextDarwin_i386.cpp */; };
 		26957D9C13D381C900670048 /* RegisterContextDarwin_x86_64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26957D9613D381C900670048 /* RegisterContextDarwin_x86_64.cpp */; };
 		2697A54D133A6305004E4240 /* PlatformDarwin.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2697A54B133A6305004E4240 /* PlatformDarwin.cpp */; };
+		26A0DA4E140F7226006DA411 /* HashedNameToDIE.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26A0DA4C140F721D006DA411 /* HashedNameToDIE.cpp */; };
 		26A69C5F137A17A500262477 /* RegisterValue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26C6886E137880C400407EDF /* RegisterValue.cpp */; };
 		26A7A035135E6E4200FB369E /* NamedOptionValue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26A7A034135E6E4200FB369E /* NamedOptionValue.cpp */; };
 		26B1FA1413380E61002886E2 /* LLDBWrapPython.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26A4EEB511682AAC007A372A /* LLDBWrapPython.cpp */; };
@@ -729,6 +730,8 @@
 		269FF08112494FC200225026 /* UnwindTable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UnwindTable.h; path = include/lldb/Symbol/UnwindTable.h; sourceTree = "<group>"; };
 		26A0604711A5BC7A00F75969 /* Baton.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Baton.h; path = include/lldb/Core/Baton.h; sourceTree = "<group>"; };
 		26A0604811A5D03C00F75969 /* Baton.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Baton.cpp; path = source/Core/Baton.cpp; sourceTree = "<group>"; };
+		26A0DA4C140F721D006DA411 /* HashedNameToDIE.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HashedNameToDIE.cpp; sourceTree = "<group>"; };
+		26A0DA4D140F721D006DA411 /* HashedNameToDIE.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HashedNameToDIE.h; sourceTree = "<group>"; };
 		26A3B4AC1181454800381BC2 /* ObjectContainerBSDArchive.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ObjectContainerBSDArchive.cpp; sourceTree = "<group>"; };
 		26A3B4AD1181454800381BC2 /* ObjectContainerBSDArchive.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ObjectContainerBSDArchive.h; sourceTree = "<group>"; };
 		26A4EEB511682AAC007A372A /* LLDBWrapPython.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; lineEnding = 0; name = LLDBWrapPython.cpp; path = source/LLDBWrapPython.cpp; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.cpp; };
@@ -1559,6 +1562,8 @@
 				260C89D610F57C5600BB2B04 /* DWARFLocationDescription.h */,
 				260C89D710F57C5600BB2B04 /* DWARFLocationList.cpp */,
 				260C89D810F57C5600BB2B04 /* DWARFLocationList.h */,
+				26A0DA4C140F721D006DA411 /* HashedNameToDIE.cpp */,
+				26A0DA4D140F721D006DA411 /* HashedNameToDIE.h */,
 				2618D9EA12406FE600F2B8FE /* NameToDIE.cpp */,
 				2618D957124056C700F2B8FE /* NameToDIE.h */,
 				260C89D910F57C5600BB2B04 /* SymbolFileDWARF.cpp */,
@@ -3307,7 +3312,7 @@
 				9470A8F01402DFFB0056FF61 /* DataVisualization.cpp in Sources */,
 				26274FA214030EEF006BA130 /* OperatingSystemDarwinKernel.cpp in Sources */,
 				26274FA714030F79006BA130 /* DynamicLoaderDarwinKernel.cpp in Sources */,
-				268ED0A5140FF54200DE830F /* DataEncoder.cpp in Sources */,
+				26A0DA4E140F7226006DA411 /* HashedNameToDIE.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

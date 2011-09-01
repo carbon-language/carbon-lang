@@ -162,6 +162,8 @@ public:
     const lldb_private::DataExtractor&      get_debug_loc_data();
     const lldb_private::DataExtractor&      get_debug_ranges_data();
     const lldb_private::DataExtractor&      get_debug_str_data();
+    const lldb_private::DataExtractor&      get_debug_names_data();
+    const lldb_private::DataExtractor&      get_debug_types_data();
 
     DWARFDebugAbbrev*       DebugAbbrev();
     const DWARFDebugAbbrev* DebugAbbrev() const;
@@ -229,7 +231,9 @@ protected:
         flagsGotDebugPubNamesData   = (1 << 7),
         flagsGotDebugPubTypesData   = (1 << 8),
         flagsGotDebugRangesData     = (1 << 9),
-        flagsGotDebugStrData        = (1 << 10)
+        flagsGotDebugStrData        = (1 << 10),
+        flagsGotDebugNamesData      = (1 << 11),
+        flagsGotDebugTypesData      = (1 << 12),
     };
 
     DISALLOW_COPY_AND_ASSIGN (SymbolFileDWARF);
@@ -371,6 +375,8 @@ protected:
     lldb_private::DataExtractor     m_data_debug_loc;
     lldb_private::DataExtractor     m_data_debug_ranges;
     lldb_private::DataExtractor     m_data_debug_str;
+    lldb_private::DataExtractor     m_data_debug_names;
+    lldb_private::DataExtractor     m_data_debug_types;
 
     // The auto_ptr items below are generated on demand if and when someone accesses
     // them through a non const version of this class.

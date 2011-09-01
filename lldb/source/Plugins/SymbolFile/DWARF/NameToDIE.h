@@ -14,6 +14,8 @@
 #include <vector>
 #include "lldb/lldb-defines.h"
 
+class SymbolFileDWARF;
+
 class NameToDIE
 {
 public:
@@ -52,7 +54,7 @@ public:
                                            std::vector<Info> &info_array) const;
 
     void
-    Hash (lldb_private::Stream *s);
+    Hash (lldb_private::Stream *s, SymbolFileDWARF *dwarf);
 
 protected:
     typedef std::multimap<const char *, Info> collection;

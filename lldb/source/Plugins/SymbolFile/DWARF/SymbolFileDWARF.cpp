@@ -168,6 +168,8 @@ SymbolFileDWARF::SymbolFileDWARF(ObjectFile* objfile) :
     m_data_debug_loc(),
     m_data_debug_ranges(),
     m_data_debug_str(),
+    m_data_debug_names (),
+    m_data_debug_types (),
     m_abbr(),
     m_aranges(),
     m_info(),
@@ -439,6 +441,18 @@ const DataExtractor&
 SymbolFileDWARF::get_debug_str_data()
 {
     return GetCachedSectionData (flagsGotDebugStrData, eSectionTypeDWARFDebugStr, m_data_debug_str);
+}
+
+const DataExtractor&
+SymbolFileDWARF::get_debug_names_data()
+{
+    return GetCachedSectionData (flagsGotDebugNamesData, eSectionTypeDWARFDebugNames, m_data_debug_names);
+}
+
+const DataExtractor&
+SymbolFileDWARF::get_debug_types_data()
+{
+    return GetCachedSectionData (flagsGotDebugTypesData, eSectionTypeDWARFDebugTypes, m_data_debug_types);
 }
 
 
@@ -1945,8 +1959,7 @@ SymbolFileDWARF::Index ()
 
 #if defined (ENABLE_DEBUG_PRINTF)
         StreamFile s(stdout, false);
-        s.Printf ("DWARF index for (%s) '%s/%s':", 
-                  GetObjectFile()->GetModule()->GetArchitecture().AsCString(),
+        s.Printf ("DWARF index for '%s/%s':", 
                   GetObjectFile()->GetFileSpec().GetDirectory().AsCString(), 
                   GetObjectFile()->GetFileSpec().GetFilename().AsCString());
         s.Printf("\nFunction basenames:\n");    m_function_basename_index.Dump (&s);

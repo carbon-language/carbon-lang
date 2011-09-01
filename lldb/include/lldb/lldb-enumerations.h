@@ -468,6 +468,8 @@ namespace lldb {
         eSectionTypeDWARFDebugPubTypes,
         eSectionTypeDWARFDebugRanges,
         eSectionTypeDWARFDebugStr,
+        eSectionTypeDWARFDebugNames,
+        eSectionTypeDWARFDebugTypes,
         eSectionTypeEHFrame,
         eSectionTypeOther
         

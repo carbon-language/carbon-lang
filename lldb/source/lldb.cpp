@@ -258,6 +258,8 @@ lldb_private::GetSectionTypeAsCString (SectionType sect_type)
     case eSectionTypeDWARFDebugPubTypes: return "dwarf-pubtypes";
     case eSectionTypeDWARFDebugRanges: return "dwarf-ranges";
     case eSectionTypeDWARFDebugStr: return "dwarf-str";
+    case eSectionTypeDWARFDebugNames: return "dwarf-names";
+    case eSectionTypeDWARFDebugTypes: return "dwarf-types";
     case eSectionTypeEHFrame: return "eh-frame";
     case eSectionTypeOther: return "regular";
     }
