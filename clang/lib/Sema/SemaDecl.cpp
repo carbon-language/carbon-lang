@@ -5407,39 +5407,86 @@ namespace {
       : public EvaluatedExprVisitor<SelfReferenceChecker> {
     Sema &S;
     Decl *OrigDecl;
+    bool isRecordType;
+    bool isPODType;
 
   public:
     typedef EvaluatedExprVisitor<SelfReferenceChecker> Inherited;
 
     SelfReferenceChecker(Sema &S, Decl *OrigDecl) : Inherited(S.Context),
-                                                    S(S), OrigDecl(OrigDecl) { }
+                                                    S(S), OrigDecl(OrigDecl) {
+      isPODType = false;
+      isRecordType = false;
+      if (ValueDecl *VD = dyn_cast<ValueDecl>(OrigDecl)) {
+        isPODType = VD->getType().isPODType(S.Context);
+        isRecordType = VD->getType()->isRecordType();
+      }
+    }
 
     void VisitExpr(Expr *E) {
       if (isa<ObjCMessageExpr>(*E)) return;
+      if (isRecordType) {
+        Expr *expr = E;
+        if (MemberExpr *ME = dyn_cast<MemberExpr>(E)) {
+          ValueDecl *VD = ME->getMemberDecl();
+          if (isa<EnumConstantDecl>(VD) || isa<VarDecl>(VD)) return;
+          expr = ME->getBase();
+        }
+        if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(expr)) {
+          HandleDeclRefExpr(DRE);
+          return;
+        }
+      }
       Inherited::VisitExpr(E);
     }
 
+    void VisitMemberExpr(MemberExpr *E) {
+      if (isa<FieldDecl>(E->getMemberDecl()))
+        if (DeclRefExpr *DRE
+              = dyn_cast<DeclRefExpr>(E->getBase()->IgnoreParenImpCasts())) {
+          HandleDeclRefExpr(DRE);
+          return;
+        }
+      Inherited::VisitMemberExpr(E);
+    }
+
     void VisitImplicitCastExpr(ImplicitCastExpr *E) {
-      CheckForSelfReference(E);
+      if ((!isRecordType &&E->getCastKind() == CK_LValueToRValue) ||
+          (isRecordType && E->getCastKind() == CK_NoOp)) {
+        Expr* SubExpr = E->getSubExpr()->IgnoreParenImpCasts();
+        if (MemberExpr *ME = dyn_cast<MemberExpr>(SubExpr))
+          SubExpr = ME->getBase()->IgnoreParenImpCasts();
+        if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(SubExpr)) {
+          HandleDeclRefExpr(DRE);
+          return;
+        }
+      }
       Inherited::VisitImplicitCastExpr(E);
     }
 
-    void CheckForSelfReference(ImplicitCastExpr *E) {
-      if (E->getCastKind() != CK_LValueToRValue) return;
-      Expr* SubExpr = E->getSubExpr()->IgnoreParenImpCasts();
-      DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(SubExpr);
-      if (!DRE) return;
-      Decl* ReferenceDecl = DRE->getDecl();
+    void VisitUnaryOperator(UnaryOperator *E) {
+      // For POD record types, addresses of its own members are well-defined.
+      if (isRecordType && isPODType) return;
+      Inherited::VisitUnaryOperator(E);
+    } 
+    
+    void HandleDeclRefExpr(DeclRefExpr *DRE) {
+      Decl* ReferenceDecl = DRE->getDecl(); 
       if (OrigDecl != ReferenceDecl) return;
       LookupResult Result(S, DRE->getNameInfo(), Sema::LookupOrdinaryName,
                           Sema::NotForRedeclaration);
-      S.DiagRuntimeBehavior(SubExpr->getLocStart(), SubExpr,
+      S.DiagRuntimeBehavior(DRE->getLocStart(), DRE,
                             S.PDiag(diag::warn_uninit_self_reference_in_init)
-                              << Result.getLookupName() 
+                              << Result.getLookupName()
                               << OrigDecl->getLocation()
-                              << SubExpr->getSourceRange());
+                              << DRE->getSourceRange());
     }
   };
+}
+
+/// CheckSelfReference - Warns if OrigDecl is used in expression E.
+void Sema::CheckSelfReference(Decl* OrigDecl, Expr *E) {
+  SelfReferenceChecker(*this, OrigDecl).VisitExpr(E);
 }
 
 /// AddInitializerToDecl - Adds the initializer Init to the
@@ -5457,10 +5504,10 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
     // Variables declared within a function/method body are handled
     // by a dataflow analysis.
     if (!vd->hasLocalStorage() && !vd->isStaticLocal())
-      SelfReferenceChecker(*this, RealDecl).VisitExpr(Init);    
+      CheckSelfReference(RealDecl, Init);    
   }
   else {
-    SelfReferenceChecker(*this, RealDecl).VisitExpr(Init);
+    CheckSelfReference(RealDecl, Init);
   }
 
   if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(RealDecl)) {

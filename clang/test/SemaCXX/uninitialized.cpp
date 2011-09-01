@@ -24,6 +24,78 @@ int i = boo(i);
 int j = far(j);
 int k = __alignof__(k);
 
+
+// Test self-references with record types.
+class A {
+  // Non-POD class.
+  public:
+    enum count { ONE, TWO, THREE };
+    int num;
+    static int count;
+    int get() const { return num; }
+    void set(int x) { num = x; }
+    static int zero() { return 0; }
+
+    A() {}
+    A(A const &a) {}
+    A(int x) {}
+    A(int *x) {}
+    A(A *a) {}
+};
+
+A getA() { return A(); }
+A getA(int x) { return A(); }
+A getA(A* a) { return A(); }
+
+void setupA() {
+  A a1;
+  a1.set(a1.get());
+  A a2(a1.get());
+  A a3(a1);
+  A a4(&a4);
+  A a5(a5.zero());
+  A a6(a6.ONE);
+  A a7 = getA();
+  A a8 = getA(a8.TWO);
+  A a9 = getA(&a9);
+  A a10(a10.count);
+
+  A a11(a11);  // expected-warning {{variable 'a11' is uninitialized when used within its own initialization}}
+  A a12(a12.get());  // expected-warning {{variable 'a12' is uninitialized when used within its own initialization}}
+  A a13(a13.num);  // expected-warning {{variable 'a13' is uninitialized when used within its own initialization}}
+  A a14 = A(a14);  // expected-warning {{variable 'a14' is uninitialized when used within its own initialization}}
+  A a15 = getA(a15.num);  // expected-warning {{variable 'a15' is uninitialized when used within its own initialization}}
+  A a16(&a16.num);  // expected-warning {{variable 'a16' is uninitialized when used within its own initialization}}
+}
+
+struct B {
+  // POD struct.
+  int x;
+  int *y;
+};
+
+B getB() { return B(); };
+B getB(int x) { return B(); };
+B getB(int *x) { return B(); };
+B getB(B *b) { return B(); };
+
+void setupB() {
+  B b1;
+  B b2(b1);
+  B b3 = { 5, &b3.x };
+  B b4 = getB();
+  B b5 = getB(&b5);
+  B b6 = getB(&b6.x);
+
+  // Silence unused warning
+  (void) b2;
+  (void) b4;
+
+  B b7(b7);  // expected-warning {{variable 'b7' is uninitialized when used within its own initialization}}
+  B b8 = getB(b8.x);  // expected-warning {{variable 'b8' is uninitialized when used within its own initialization}}
+  B b9 = getB(b9.y);  // expected-warning {{variable 'b9' is uninitialized when used within its own initialization}}
+}
+
 // Also test similar constructs in a field's initializer.
 struct S {
   int x;
