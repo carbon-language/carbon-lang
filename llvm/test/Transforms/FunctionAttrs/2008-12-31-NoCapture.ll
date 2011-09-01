@@ -46,8 +46,12 @@ define i1 @c6(i8* %q, i8 %bit) {
 ret0:
 	ret i1 0
 ret1:
+        %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+                 cleanup
 	ret i1 1
 }
+
+declare i32 @__gxx_personality_v0(...)
 
 define i1* @lookup_bit(i32* %q, i32 %bitno) readnone nounwind {
 	%tmp = ptrtoint i32* %q to i32

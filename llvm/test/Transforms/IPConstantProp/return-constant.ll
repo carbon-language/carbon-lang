@@ -22,5 +22,9 @@ OK:
         %Y = icmp ne i32 %X, 0          ; <i1> [#uses=1]
         ret i1 %Y 
 FAIL:
+        %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+                 cleanup
         ret i1 false
 }
+
+declare i32 @__gxx_personality_v0(...)

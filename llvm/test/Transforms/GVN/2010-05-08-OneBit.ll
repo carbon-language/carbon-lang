@@ -45,6 +45,8 @@ k151.i.i:                                         ; preds = %k133.i.i
   ret i32 0
 
 landing_pad:                                      ; preds = %l147.i.i, %l129.i.i, %l117.i.i
+  %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+            cleanup
   switch i32 undef, label %fin [
     i32 1, label %catch1
     i32 2, label %catch
@@ -61,3 +63,5 @@ catch1:                                           ; preds = %landing_pad
 }
 
 declare fastcc void @foo()
+
+declare i32 @__gxx_personality_v0(...)

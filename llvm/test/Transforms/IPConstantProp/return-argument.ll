@@ -36,14 +36,22 @@ define void @caller(i1 %C) {
         ;; propagated per-caller).
         %S1 = call { i32, i32 } @foo(i32 1, i32 2)
         %X1 = extractvalue { i32, i32 } %S1, 0
-        %S2 = invoke { i32, i32 } @foo(i32 3, i32 4) to label %OK unwind label %RET
+        %S2 = invoke { i32, i32 } @foo(i32 3, i32 4) to label %OK unwind label %LPAD
+
 OK:
         %X2 = extractvalue { i32, i32 } %S2, 0
         ;; Do some stuff with the returned values which we can grep for
         %Z  = add i32 %X1, %X2
         store i32 %Z, i32* %W
         br label %RET
+
+LPAD:
+        %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+                 cleanup
+        br label %RET
+
 RET:
         ret void
 }
 
+declare i32 @__gxx_personality_v0(...)
