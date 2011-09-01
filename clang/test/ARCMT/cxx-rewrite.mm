@@ -14,6 +14,8 @@ struct foo {
         NSAutoreleasePool *pool = [NSAutoreleasePool new];
         [[[NSString string] retain] release];
         [pool drain];
+        if (s)
+          [s release];
     }
     ~foo(){ [s release]; }
 private:

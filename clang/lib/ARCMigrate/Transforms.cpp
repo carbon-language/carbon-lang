@@ -91,6 +91,18 @@ bool trans::canApplyWeak(ASTContext &Ctx, QualType type) {
 /// source location will be invalid.
 SourceLocation trans::findLocationAfterSemi(SourceLocation loc,
                                             ASTContext &Ctx) {
+  SourceLocation SemiLoc = findSemiAfterLocation(loc, Ctx);
+  if (SemiLoc.isInvalid())
+    return SourceLocation();
+  return SemiLoc.getFileLocWithOffset(1);
+}
+
+/// \brief \arg Loc is the end of a statement range. This returns the location
+/// of the semicolon following the statement.
+/// If no semicolon is found or the location is inside a macro, the returned
+/// source location will be invalid.
+SourceLocation trans::findSemiAfterLocation(SourceLocation loc,
+                                            ASTContext &Ctx) {
   SourceManager &SM = Ctx.getSourceManager();
   if (loc.isMacroID()) {
     if (!Lexer::isAtEndOfMacroExpansion(loc, SM, Ctx.getLangOptions()))
@@ -119,7 +131,7 @@ SourceLocation trans::findLocationAfterSemi(SourceLocation loc,
   if (tok.isNot(tok::semi))
     return SourceLocation();
 
-  return tok.getLocation().getFileLocWithOffset(1);
+  return tok.getLocation();
 }
 
 bool trans::hasSideEffects(Expr *E, ASTContext &Ctx) {
