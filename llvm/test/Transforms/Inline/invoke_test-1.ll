@@ -20,5 +20,9 @@ cont:           ; preds = %0
         ret i32 0
 
 exc:            ; preds = %0
+        %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+                 cleanup
         ret i32 1
 }
+
+declare i32 @__gxx_personality_v0(...)

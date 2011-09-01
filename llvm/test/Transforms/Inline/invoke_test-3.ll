@@ -14,7 +14,9 @@ cont:           ; preds = %0
 
 exc:            ; preds = %0a
        ; This just rethrows the exception!
-        unwind
+        %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+                 cleanup
+        resume { i8*, i32 } %exn
 }
 
 ; caller returns true if might_throw throws an exception... which gets
@@ -28,5 +30,9 @@ cont:           ; preds = %0
 
 Handler:                ; preds = %0
 ; This consumes an exception thrown by might_throw
+        %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+                 cleanup
         ret i32 1
 }
+
+declare i32 @__gxx_personality_v0(...)

@@ -69,8 +69,12 @@ invcont98:
   unreachable
 
 lpad156:                            
+  %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+            cleanup
   unreachable
 }
+
+declare i32 @__gxx_personality_v0(...)
 
 declare fastcc void @YYY()
 
@@ -84,7 +88,9 @@ bb260:
   ret void
 
 lpad:                               
-  unwind
+  %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+            cleanup
+  resume { i8*, i32 } %exn
 }
 
 
@@ -105,6 +111,8 @@ invcont3:                                         ; preds = %bb1
   ret void
 
 lpad18:                                           ; preds = %invcont3, %bb1
+  %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+            cleanup
   unreachable
 }
 

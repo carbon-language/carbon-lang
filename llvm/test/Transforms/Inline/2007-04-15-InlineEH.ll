@@ -33,8 +33,12 @@ invcont67:		; preds = %invcont65
 	ret void
 
 cleanup144:		; preds = %invcont65, %invcont64, %invcont, %entry
-	unwind
+        %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+                 cleanup
+	resume { i8*, i32 } %exn
 }
+
+declare i32 @__gxx_personality_v0(...)
 
 declare void @gnat__os_lib__getenv(%struct.gnat__strings__string_access*)
 

@@ -15,6 +15,9 @@ BB1:
 
 Cont:           ; preds = %BB1, %BB1
         %A = phi i32 [ 0, %BB1 ], [ 0, %BB1 ]           ; <i32> [#uses=1]
+        %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+                 cleanup
         ret i32 %A
 }
 
+declare i32 @__gxx_personality_v0(...)
