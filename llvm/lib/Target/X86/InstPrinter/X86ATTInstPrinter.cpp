@@ -90,7 +90,8 @@ void X86ATTInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
   if (Op.isReg()) {
     O << '%' << getRegisterName(Op.getReg());
   } else if (Op.isImm()) {
-    O << '$' << Op.getImm();
+    // Print X86 immediates as signed values.
+    O << '$' << (int64_t)Op.getImm();
     
     if (CommentStream && (Op.getImm() > 255 || Op.getImm() < -256))
       *CommentStream << format("imm = 0x%llX\n", (long long)Op.getImm());
