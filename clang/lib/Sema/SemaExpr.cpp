@@ -4331,7 +4331,8 @@ ExprResult Sema::ActOnParenOrParenListExpr(SourceLocation L,
 }
 
 /// \brief Emit a specialized diagnostic when one expression is a null pointer
-/// constant and the other is not a pointer.
+/// constant and the other is not a pointer.  Returns true if a diagnostic is
+/// emitted.
 bool Sema::DiagnoseConditionalForNull(Expr *LHS, Expr *RHS,
                                       SourceLocation QuestionLoc) {
   Expr *NullExpr = LHS;
@@ -4364,6 +4365,213 @@ bool Sema::DiagnoseConditionalForNull(Expr *LHS, Expr *RHS,
   Diag(QuestionLoc, diag::err_typecheck_cond_incompatible_operands_null)
       << NonPointerExpr->getType() << DiagType
       << NonPointerExpr->getSourceRange();
+  return true;
+}
+
+/// \brief Return false if the condition expression is valid, true otherwise.
+static bool checkCondition(Sema &S, Expr *Cond) {
+  QualType CondTy = Cond->getType();
+
+  // C99 6.5.15p2
+  if (CondTy->isScalarType()) return false;
+
+  // OpenCL: Sec 6.3.i says the condition is allowed to be a vector or scalar.
+  if (S.getLangOptions().OpenCL && CondTy->isVectorType())
+    return false;
+
+  // Emit the proper error message.
+  S.Diag(Cond->getLocStart(), S.getLangOptions().OpenCL ?
+                              diag::err_typecheck_cond_expect_scalar :
+                              diag::err_typecheck_cond_expect_scalar_or_vector)
+    << CondTy;
+  return true;
+}
+
+/// \brief Return false if the two expressions can be converted to a vector,
+/// true otherwise
+static bool checkConditionalConvertScalarsToVectors(Sema &S, ExprResult &LHS,
+                                                    ExprResult &RHS,
+                                                    QualType CondTy) {
+  // Both operands should be of scalar type.
+  if (!LHS.get()->getType()->isScalarType()) {
+    S.Diag(LHS.get()->getLocStart(), diag::err_typecheck_cond_expect_scalar)
+      << CondTy;
+    return true;
+  }
+  if (!RHS.get()->getType()->isScalarType()) {
+    S.Diag(RHS.get()->getLocStart(), diag::err_typecheck_cond_expect_scalar)
+      << CondTy;
+    return true;
+  }
+
+  // Implicity convert these scalars to the type of the condition.
+  LHS = S.ImpCastExprToType(LHS.take(), CondTy, CK_IntegralCast);
+  RHS = S.ImpCastExprToType(RHS.take(), CondTy, CK_IntegralCast);
+  return false;
+}
+
+/// \brief Handle when one or both operands are void type.
+static QualType checkConditionalVoidType(Sema &S, ExprResult &LHS,
+                                         ExprResult &RHS) {
+    Expr *LHSExpr = LHS.get();
+    Expr *RHSExpr = RHS.get();
+
+    if (!LHSExpr->getType()->isVoidType())
+      S.Diag(RHSExpr->getLocStart(), diag::ext_typecheck_cond_one_void)
+        << RHSExpr->getSourceRange();
+    if (!RHSExpr->getType()->isVoidType())
+      S.Diag(LHSExpr->getLocStart(), diag::ext_typecheck_cond_one_void)
+        << LHSExpr->getSourceRange();
+    LHS = S.ImpCastExprToType(LHS.take(), S.Context.VoidTy, CK_ToVoid);
+    RHS = S.ImpCastExprToType(RHS.take(), S.Context.VoidTy, CK_ToVoid);
+    return S.Context.VoidTy;
+}
+
+/// \brief Return false if the NullExpr can be promoted to PointerTy,
+/// true otherwise.
+static bool checkConditionalNullPointer(Sema &S, ExprResult &NullExpr,
+                                        QualType PointerTy) {
+  if ((!PointerTy->isAnyPointerType() && !PointerTy->isBlockPointerType()) ||
+      !NullExpr.get()->isNullPointerConstant(S.Context,
+                                            Expr::NPC_ValueDependentIsNull))
+    return true;
+
+  NullExpr = S.ImpCastExprToType(NullExpr.take(), PointerTy, CK_NullToPointer);
+  return false;
+}
+
+/// \brief Checks compatibility between two pointers and return the resulting
+/// type.
+static QualType checkConditionalPointerCompatibility(Sema &S, ExprResult &LHS,
+                                                     ExprResult &RHS,
+                                                     SourceLocation Loc) {
+  QualType LHSTy = LHS.get()->getType();
+  QualType RHSTy = RHS.get()->getType();
+
+  if (S.Context.hasSameType(LHSTy, RHSTy)) {
+    // Two identical pointers types are always compatible.
+    return LHSTy;
+  }
+
+  QualType lhptee, rhptee;
+
+  // Get the pointee types.
+  if (LHSTy->isBlockPointerType()) {
+    lhptee = LHSTy->getAs<BlockPointerType>()->getPointeeType();
+    rhptee = RHSTy->getAs<BlockPointerType>()->getPointeeType();
+  } else {
+    lhptee = LHSTy->getAs<PointerType>()->getPointeeType();
+    rhptee = RHSTy->getAs<PointerType>()->getPointeeType();
+  }
+
+  if (!S.Context.typesAreCompatible(lhptee.getUnqualifiedType(),
+                                    rhptee.getUnqualifiedType())) {
+    S.Diag(Loc, diag::warn_typecheck_cond_incompatible_pointers)
+      << LHSTy << RHSTy << LHS.get()->getSourceRange()
+      << RHS.get()->getSourceRange();
+    // In this situation, we assume void* type. No especially good
+    // reason, but this is what gcc does, and we do have to pick
+    // to get a consistent AST.
+    QualType incompatTy = S.Context.getPointerType(S.Context.VoidTy);
+    LHS = S.ImpCastExprToType(LHS.take(), incompatTy, CK_BitCast);
+    RHS = S.ImpCastExprToType(RHS.take(), incompatTy, CK_BitCast);
+    return incompatTy;
+  }
+
+  // The pointer types are compatible.
+  // C99 6.5.15p6: If both operands are pointers to compatible types *or* to
+  // differently qualified versions of compatible types, the result type is
+  // a pointer to an appropriately qualified version of the *composite*
+  // type.
+  // FIXME: Need to calculate the composite type.
+  // FIXME: Need to add qualifiers
+
+  LHS = S.ImpCastExprToType(LHS.take(), LHSTy, CK_BitCast);
+  RHS = S.ImpCastExprToType(RHS.take(), LHSTy, CK_BitCast);
+  return LHSTy;
+}
+
+/// \brief Return the resulting type when the operands are both block pointers.
+static QualType checkConditionalBlockPointerCompatibility(Sema &S,
+                                                          ExprResult &LHS,
+                                                          ExprResult &RHS,
+                                                          SourceLocation Loc) {
+  QualType LHSTy = LHS.get()->getType();
+  QualType RHSTy = RHS.get()->getType();
+
+  if (!LHSTy->isBlockPointerType() || !RHSTy->isBlockPointerType()) {
+    if (LHSTy->isVoidPointerType() || RHSTy->isVoidPointerType()) {
+      QualType destType = S.Context.getPointerType(S.Context.VoidTy);
+      LHS = S.ImpCastExprToType(LHS.take(), destType, CK_BitCast);
+      RHS = S.ImpCastExprToType(RHS.take(), destType, CK_BitCast);
+      return destType;
+    }
+    S.Diag(Loc, diag::err_typecheck_cond_incompatible_operands)
+      << LHSTy << RHSTy << LHS.get()->getSourceRange()
+      << RHS.get()->getSourceRange();
+    return QualType();
+  }
+
+  // We have 2 block pointer types.
+  return checkConditionalPointerCompatibility(S, LHS, RHS, Loc);
+}
+
+/// \brief Return the resulting type when the operands are both pointers.
+static QualType
+checkConditionalObjectPointersCompatibility(Sema &S, ExprResult &LHS,
+                                            ExprResult &RHS,
+                                            SourceLocation Loc) {
+  // get the pointer types
+  QualType LHSTy = LHS.get()->getType();
+  QualType RHSTy = RHS.get()->getType();
+
+  // get the "pointed to" types
+  QualType lhptee = LHSTy->getAs<PointerType>()->getPointeeType();
+  QualType rhptee = RHSTy->getAs<PointerType>()->getPointeeType();
+
+  // ignore qualifiers on void (C99 6.5.15p3, clause 6)
+  if (lhptee->isVoidType() && rhptee->isIncompleteOrObjectType()) {
+    // Figure out necessary qualifiers (C99 6.5.15p6)
+    QualType destPointee
+      = S.Context.getQualifiedType(lhptee, rhptee.getQualifiers());
+    QualType destType = S.Context.getPointerType(destPointee);
+    // Add qualifiers if necessary.
+    LHS = S.ImpCastExprToType(LHS.take(), destType, CK_NoOp);
+    // Promote to void*.
+    RHS = S.ImpCastExprToType(RHS.take(), destType, CK_BitCast);
+    return destType;
+  }
+  if (rhptee->isVoidType() && lhptee->isIncompleteOrObjectType()) {
+    QualType destPointee
+      = S.Context.getQualifiedType(rhptee, lhptee.getQualifiers());
+    QualType destType = S.Context.getPointerType(destPointee);
+    // Add qualifiers if necessary.
+    RHS = S.ImpCastExprToType(RHS.take(), destType, CK_NoOp);
+    // Promote to void*.
+    LHS = S.ImpCastExprToType(LHS.take(), destType, CK_BitCast);
+    return destType;
+  }
+
+  return checkConditionalPointerCompatibility(S, LHS, RHS, Loc);
+}
+
+/// \brief Return false if the first expression is not an integer and the second
+/// expression is not a pointer, true otherwise.
+static bool checkPointerIntegerMismatch(Sema &S, ExprResult &Int,
+                                        Expr* PointerExpr, SourceLocation Loc,
+                                        bool isIntFirstExpr) {
+  if (!PointerExpr->getType()->isPointerType() ||
+      !Int.get()->getType()->isIntegerType())
+    return false;
+
+  Expr *Expr1 = isIntFirstExpr ? Int.get() : PointerExpr;
+  Expr *Expr2 = isIntFirstExpr ? PointerExpr : Int.get();
+
+  S.Diag(Loc, diag::warn_typecheck_cond_pointer_integer_mismatch)
+    << Expr1->getType() << Expr2->getType()
+    << Expr1->getSourceRange() << Expr2->getSourceRange();
+  Int = S.ImpCastExprToType(Int.take(), PointerExpr->getType(),
+                            CK_IntegralToPointer);
   return true;
 }
 
@@ -4405,23 +4613,8 @@ QualType Sema::CheckConditionalOperands(ExprResult &Cond, ExprResult &LHS,
   QualType RHSTy = RHS.get()->getType();
 
   // first, check the condition.
-  if (!CondTy->isScalarType()) { // C99 6.5.15p2
-    // OpenCL: Sec 6.3.i says the condition is allowed to be a vector or scalar.
-    // Throw an error if its not either.
-    if (getLangOptions().OpenCL) {
-      if (!CondTy->isVectorType()) {
-        Diag(Cond.get()->getLocStart(), 
-             diag::err_typecheck_cond_expect_scalar_or_vector)
-          << CondTy;
-        return QualType();
-      }
-    }
-    else {
-      Diag(Cond.get()->getLocStart(), diag::err_typecheck_cond_expect_scalar)
-        << CondTy;
-      return QualType();
-    }
-  }
+  if (checkCondition(*this, Cond.get()))
+    return QualType();
 
   // Now check the two expressions.
   if (LHSTy->isVectorType() || RHSTy->isVectorType())
@@ -4430,22 +4623,9 @@ QualType Sema::CheckConditionalOperands(ExprResult &Cond, ExprResult &LHS,
   // OpenCL: If the condition is a vector, and both operands are scalar,
   // attempt to implicity convert them to the vector type to act like the
   // built in select.
-  if (getLangOptions().OpenCL && CondTy->isVectorType()) {
-    // Both operands should be of scalar type.
-    if (!LHSTy->isScalarType()) {
-      Diag(LHS.get()->getLocStart(), diag::err_typecheck_cond_expect_scalar)
-        << CondTy;
+  if (getLangOptions().OpenCL && CondTy->isVectorType())
+    if (checkConditionalConvertScalarsToVectors(*this, LHS, RHS, CondTy))
       return QualType();
-    }
-    if (!RHSTy->isScalarType()) {
-      Diag(RHS.get()->getLocStart(), diag::err_typecheck_cond_expect_scalar)
-        << CondTy;
-      return QualType();
-    }
-    // Implicity convert these scalars to the type of the condition.
-    LHS = ImpCastExprToType(LHS.take(), CondTy, CK_IntegralCast);
-    RHS = ImpCastExprToType(RHS.take(), CondTy, CK_IntegralCast);
-  }
   
   // If both operands have arithmetic type, do the usual arithmetic conversions
   // to find a common type: C99 6.5.15p3,5.
@@ -4470,31 +4650,13 @@ QualType Sema::CheckConditionalOperands(ExprResult &Cond, ExprResult &LHS,
   // C99 6.5.15p5: "If both operands have void type, the result has void type."
   // The following || allows only one side to be void (a GCC-ism).
   if (LHSTy->isVoidType() || RHSTy->isVoidType()) {
-    if (!LHSTy->isVoidType())
-      Diag(RHS.get()->getLocStart(), diag::ext_typecheck_cond_one_void)
-        << RHS.get()->getSourceRange();
-    if (!RHSTy->isVoidType())
-      Diag(LHS.get()->getLocStart(), diag::ext_typecheck_cond_one_void)
-        << LHS.get()->getSourceRange();
-    LHS = ImpCastExprToType(LHS.take(), Context.VoidTy, CK_ToVoid);
-    RHS = ImpCastExprToType(RHS.take(), Context.VoidTy, CK_ToVoid);
-    return Context.VoidTy;
+    return checkConditionalVoidType(*this, LHS, RHS);
   }
+
   // C99 6.5.15p6 - "if one operand is a null pointer constant, the result has
   // the type of the other operand."
-  if ((LHSTy->isAnyPointerType() || LHSTy->isBlockPointerType()) &&
-      RHS.get()->isNullPointerConstant(Context,
-                                       Expr::NPC_ValueDependentIsNull)) {
-    // promote the null to a pointer.
-    RHS = ImpCastExprToType(RHS.take(), LHSTy, CK_NullToPointer);
-    return LHSTy;
-  }
-  if ((RHSTy->isAnyPointerType() || RHSTy->isBlockPointerType()) &&
-      LHS.get()->isNullPointerConstant(Context,
-                                       Expr::NPC_ValueDependentIsNull)) {
-    LHS = ImpCastExprToType(LHS.take(), RHSTy, CK_NullToPointer);
-    return RHSTy;
-  }
+  if (!checkConditionalNullPointer(*this, RHS, LHSTy)) return LHSTy;
+  if (!checkConditionalNullPointer(*this, LHS, RHSTy)) return RHSTy;
 
   // All objective-c pointer type analysis is done here.
   QualType compositeType = FindCompositeObjCPointerType(LHS, RHS,
@@ -4506,121 +4668,23 @@ QualType Sema::CheckConditionalOperands(ExprResult &Cond, ExprResult &LHS,
 
 
   // Handle block pointer types.
-  if (LHSTy->isBlockPointerType() || RHSTy->isBlockPointerType()) {
-    if (!LHSTy->isBlockPointerType() || !RHSTy->isBlockPointerType()) {
-      if (LHSTy->isVoidPointerType() || RHSTy->isVoidPointerType()) {
-        QualType destType = Context.getPointerType(Context.VoidTy);
-        LHS = ImpCastExprToType(LHS.take(), destType, CK_BitCast);
-        RHS = ImpCastExprToType(RHS.take(), destType, CK_BitCast);
-        return destType;
-      }
-      Diag(QuestionLoc, diag::err_typecheck_cond_incompatible_operands)
-        << LHSTy << RHSTy << LHS.get()->getSourceRange()
-        << RHS.get()->getSourceRange();
-      return QualType();
-    }
-    // We have 2 block pointer types.
-    if (Context.getCanonicalType(LHSTy) == Context.getCanonicalType(RHSTy)) {
-      // Two identical block pointer types are always compatible.
-      return LHSTy;
-    }
-    // The block pointer types aren't identical, continue checking.
-    QualType lhptee = LHSTy->getAs<BlockPointerType>()->getPointeeType();
-    QualType rhptee = RHSTy->getAs<BlockPointerType>()->getPointeeType();
-
-    if (!Context.typesAreCompatible(lhptee.getUnqualifiedType(),
-                                    rhptee.getUnqualifiedType())) {
-      Diag(QuestionLoc, diag::warn_typecheck_cond_incompatible_pointers)
-        << LHSTy << RHSTy << LHS.get()->getSourceRange()
-        << RHS.get()->getSourceRange();
-      // In this situation, we assume void* type. No especially good
-      // reason, but this is what gcc does, and we do have to pick
-      // to get a consistent AST.
-      QualType incompatTy = Context.getPointerType(Context.VoidTy);
-      LHS = ImpCastExprToType(LHS.take(), incompatTy, CK_BitCast);
-      RHS = ImpCastExprToType(RHS.take(), incompatTy, CK_BitCast);
-      return incompatTy;
-    }
-    // The block pointer types are compatible.
-    LHS = ImpCastExprToType(LHS.take(), LHSTy, CK_BitCast);
-    RHS = ImpCastExprToType(RHS.take(), LHSTy, CK_BitCast);
-    return LHSTy;
-  }
+  if (LHSTy->isBlockPointerType() || RHSTy->isBlockPointerType())
+    return checkConditionalBlockPointerCompatibility(*this, LHS, RHS,
+                                                     QuestionLoc);
 
   // Check constraints for C object pointers types (C99 6.5.15p3,6).
-  if (LHSTy->isPointerType() && RHSTy->isPointerType()) {
-    // get the "pointed to" types
-    QualType lhptee = LHSTy->getAs<PointerType>()->getPointeeType();
-    QualType rhptee = RHSTy->getAs<PointerType>()->getPointeeType();
-
-    // ignore qualifiers on void (C99 6.5.15p3, clause 6)
-    if (lhptee->isVoidType() && rhptee->isIncompleteOrObjectType()) {
-      // Figure out necessary qualifiers (C99 6.5.15p6)
-      QualType destPointee
-        = Context.getQualifiedType(lhptee, rhptee.getQualifiers());
-      QualType destType = Context.getPointerType(destPointee);
-      // Add qualifiers if necessary.
-      LHS = ImpCastExprToType(LHS.take(), destType, CK_NoOp);
-      // Promote to void*.
-      RHS = ImpCastExprToType(RHS.take(), destType, CK_BitCast);
-      return destType;
-    }
-    if (rhptee->isVoidType() && lhptee->isIncompleteOrObjectType()) {
-      QualType destPointee
-        = Context.getQualifiedType(rhptee, lhptee.getQualifiers());
-      QualType destType = Context.getPointerType(destPointee);
-      // Add qualifiers if necessary.
-      RHS = ImpCastExprToType(RHS.take(), destType, CK_NoOp);
-      // Promote to void*.
-      LHS = ImpCastExprToType(LHS.take(), destType, CK_BitCast);
-      return destType;
-    }
-
-    if (Context.getCanonicalType(LHSTy) == Context.getCanonicalType(RHSTy)) {
-      // Two identical pointer types are always compatible.
-      return LHSTy;
-    }
-    if (!Context.typesAreCompatible(lhptee.getUnqualifiedType(),
-                                    rhptee.getUnqualifiedType())) {
-      Diag(QuestionLoc, diag::warn_typecheck_cond_incompatible_pointers)
-        << LHSTy << RHSTy << LHS.get()->getSourceRange()
-        << RHS.get()->getSourceRange();
-      // In this situation, we assume void* type. No especially good
-      // reason, but this is what gcc does, and we do have to pick
-      // to get a consistent AST.
-      QualType incompatTy = Context.getPointerType(Context.VoidTy);
-      LHS = ImpCastExprToType(LHS.take(), incompatTy, CK_BitCast);
-      RHS = ImpCastExprToType(RHS.take(), incompatTy, CK_BitCast);
-      return incompatTy;
-    }
-    // The pointer types are compatible.
-    // C99 6.5.15p6: If both operands are pointers to compatible types *or* to
-    // differently qualified versions of compatible types, the result type is
-    // a pointer to an appropriately qualified version of the *composite*
-    // type.
-    // FIXME: Need to calculate the composite type.
-    // FIXME: Need to add qualifiers
-    LHS = ImpCastExprToType(LHS.take(), LHSTy, CK_BitCast);
-    RHS = ImpCastExprToType(RHS.take(), LHSTy, CK_BitCast);
-    return LHSTy;
-  }
+  if (LHSTy->isPointerType() && RHSTy->isPointerType())
+    return checkConditionalObjectPointersCompatibility(*this, LHS, RHS,
+                                                       QuestionLoc);
 
   // GCC compatibility: soften pointer/integer mismatch.  Note that
   // null pointers have been filtered out by this point.
-  if (RHSTy->isPointerType() && LHSTy->isIntegerType()) {
-    Diag(QuestionLoc, diag::warn_typecheck_cond_pointer_integer_mismatch)
-      << LHSTy << RHSTy << LHS.get()->getSourceRange()
-      << RHS.get()->getSourceRange();
-    LHS = ImpCastExprToType(LHS.take(), RHSTy, CK_IntegralToPointer);
+  if (checkPointerIntegerMismatch(*this, LHS, RHS.get(), QuestionLoc,
+      /*isIntFirstExpr=*/true))
     return RHSTy;
-  }
-  if (LHSTy->isPointerType() && RHSTy->isIntegerType()) {
-    Diag(QuestionLoc, diag::warn_typecheck_cond_pointer_integer_mismatch)
-      << LHSTy << RHSTy << LHS.get()->getSourceRange()
-      << RHS.get()->getSourceRange();
-    RHS = ImpCastExprToType(RHS.take(), LHSTy, CK_IntegralToPointer);
+  if (checkPointerIntegerMismatch(*this, RHS, LHS.get(), QuestionLoc,
+      /*isIntFirstExpr=*/false))
     return LHSTy;
-  }
 
   // Emit a better diagnostic if one of the expressions is a null pointer
   // constant and the other is not a pointer type. In this case, the user most
