@@ -7201,6 +7201,15 @@ static ValueDecl *getPrimaryDecl(Expr *E) {
   }
 }
 
+/// \brief Diagnose invalid operand for address of operations.
+///
+/// \param Type The type of operand which cannot have its address taken.
+/// 0:bit-field 1:vector element 2:property expression 3:register variable
+static void diagnoseAddressOfInvalidType(Sema &S, SourceLocation Loc,
+                                         Expr *E, unsigned Type) {
+  S.Diag(Loc, diag::err_typecheck_address_of) << Type << E->getSourceRange();
+}
+
 /// CheckAddressOfOperand - The operand of & must be either a function
 /// designator or an lvalue designating an object. If it is an lvalue, the
 /// object cannot be declared with storage class register or be a bit field.
@@ -7287,18 +7296,15 @@ static QualType CheckAddressOfOperand(Sema &S, Expr *OrigOp,
     }
   } else if (op->getObjectKind() == OK_BitField) { // C99 6.5.3.2p1
     // The operand cannot be a bit-field
-    S.Diag(OpLoc, diag::err_typecheck_address_of)
-      << "bit-field" << op->getSourceRange();
-        return QualType();
+    diagnoseAddressOfInvalidType(S, OpLoc, op, /*bit-field*/ 0);
+    return QualType();
   } else if (op->getObjectKind() == OK_VectorComponent) {
     // The operand cannot be an element of a vector
-    S.Diag(OpLoc, diag::err_typecheck_address_of)
-      << "vector element" << op->getSourceRange();
+    diagnoseAddressOfInvalidType(S, OpLoc, op, /*vector element*/ 1);
     return QualType();
   } else if (op->getObjectKind() == OK_ObjCProperty) {
     // cannot take address of a property expression.
-    S.Diag(OpLoc, diag::err_typecheck_address_of)
-      << "property expression" << op->getSourceRange();
+    diagnoseAddressOfInvalidType(S, OpLoc, op, /*property expression*/ 2);
     return QualType();
   } else if (dcl) { // C99 6.5.3.2p1
     // We have an lvalue with a decl. Make sure the decl is not declared
@@ -7308,8 +7314,7 @@ static QualType CheckAddressOfOperand(Sema &S, Expr *OrigOp,
       // variable (c++03 7.1.1P3)
       if (vd->getStorageClass() == SC_Register &&
           !S.getLangOptions().CPlusPlus) {
-        S.Diag(OpLoc, diag::err_typecheck_address_of)
-          << "register variable" << op->getSourceRange();
+        diagnoseAddressOfInvalidType(S, OpLoc, op, /*register variable*/ 3);
         return QualType();
       }
     } else if (isa<FunctionTemplateDecl>(dcl)) {
