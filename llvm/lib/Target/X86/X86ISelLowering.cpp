@@ -11633,10 +11633,6 @@ X86TargetLowering::EmitLoweredSelect(MachineInstr *MI,
 
   // If the EFLAGS register isn't dead in the terminator, then claim that it's
   // live into the sink and copy blocks.
-  const MachineFunction *MF = BB->getParent();
-  const TargetRegisterInfo *TRI = MF->getTarget().getRegisterInfo();
-  BitVector ReservedRegs = TRI->getReservedRegs(*MF);
-
   for (unsigned I = 0, E = MI->getNumOperands(); I != E; ++I) {
     const MachineOperand &MO = MI->getOperand(I);
     if (!MO.isReg() || !MO.isUse() || MO.isKill()) continue;
