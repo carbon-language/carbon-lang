@@ -1686,8 +1686,7 @@ static void DeleteInstructionInBlock(BasicBlock *BB) {
   if (isa<TerminatorInst>(BB->begin()))
     return;
 
-  // Delete the instructions backwards, as it has a reduced likelihood of
-  // having to update as many def-use and use-def chains.
+  // Delete the instructions.
   for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ) {
     Instruction *Inst = &*I++;
     if (isa<TerminatorInst>(Inst))
