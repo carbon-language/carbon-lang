@@ -225,7 +225,8 @@ RecognizableInstr::RecognizableInstr(DisassemblerTables &tables,
   
   Operands = &insn.Operands.OperandList;
   
-  IsSSE            = HasOpSizePrefix && (Name.find("16") == Name.npos);
+  IsSSE            = (HasOpSizePrefix && (Name.find("16") == Name.npos)) ||
+                     (Name.find("CRC32") != Name.npos);
   HasFROperands    = hasFROperands();
   HasVEX_LPrefix   = has256BitOperands() || Rec->getValueAsBit("hasVEX_L");
   
@@ -318,7 +319,9 @@ InstructionContext RecognizableInstr::insnContext() const {
     else
       insnContext = IC_64BIT;
   } else {
-    if (HasOpSizePrefix)
+    if (HasOpSizePrefix && Prefix == X86Local::TF)
+      insnContext = IC_XD;
+    else if (HasOpSizePrefix)
       insnContext = IC_OPSIZE;
     else if (Prefix == X86Local::XD)
       insnContext = IC_XD;
