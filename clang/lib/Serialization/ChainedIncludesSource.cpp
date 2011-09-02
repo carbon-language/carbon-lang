@@ -32,7 +32,7 @@ static ASTReader *createASTReader(CompilerInstance &CI,
                              ASTDeserializationListener *deserialListener = 0) {
   Preprocessor &PP = CI.getPreprocessor();
   llvm::OwningPtr<ASTReader> Reader;
-  Reader.reset(new ASTReader(PP, &CI.getASTContext(), /*isysroot=*/"",
+  Reader.reset(new ASTReader(PP, CI.getASTContext(), /*isysroot=*/"",
                              /*DisableValidation=*/true));
   for (unsigned ti = 0; ti < bufNames.size(); ++ti) {
     StringRef sr(bufNames[ti]);

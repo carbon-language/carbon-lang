@@ -729,37 +729,9 @@ public:
   /// help when an AST file is being used in cases where the
   /// underlying files in the file system may have changed, but
   /// parsing should still continue.
-  ASTReader(Preprocessor &PP, ASTContext *Context, StringRef isysroot = "",
+  ASTReader(Preprocessor &PP, ASTContext &Context, StringRef isysroot = "",
             bool DisableValidation = false, bool DisableStatCache = false);
 
-  /// \brief Load the AST file without using any pre-initialized Preprocessor.
-  ///
-  /// The necessary information to initialize a Preprocessor later can be
-  /// obtained by setting a ASTReaderListener.
-  ///
-  /// \param SourceMgr the source manager into which the AST file will be loaded
-  ///
-  /// \param FileMgr the file manager into which the AST file will be loaded.
-  ///
-  /// \param Diags the diagnostics system to use for reporting errors and
-  /// warnings relevant to loading the AST file.
-  ///
-  /// \param isysroot If non-NULL, the system include path specified by the
-  /// user. This is only used with relocatable PCH files. If non-NULL,
-  /// a relocatable PCH file will use the default path "/".
-  ///
-  /// \param DisableValidation If true, the AST reader will suppress most
-  /// of its regular consistency checking, allowing the use of precompiled
-  /// headers that cannot be determined to be compatible.
-  ///
-  /// \param DisableStatCache If true, the AST reader will ignore the
-  /// stat cache in the AST files. This performance pessimization can
-  /// help when an AST file is being used in cases where the
-  /// underlying files in the file system may have changed, but
-  /// parsing should still continue.
-  ASTReader(SourceManager &SourceMgr, FileManager &FileMgr,
-            Diagnostic &Diags, StringRef isysroot = "",
-            bool DisableValidation = false, bool DisableStatCache = false);
   ~ASTReader();
 
   /// \brief Load the AST file designated by the given file name.

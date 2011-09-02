@@ -624,8 +624,7 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
                             /*DelayInitialization=*/true);
   ASTContext &Context = *AST->Ctx;
 
-  Reader.reset(new ASTReader(AST->getSourceManager(), AST->getFileManager(),
-                             AST->getDiagnostics()));
+  Reader.reset(new ASTReader(PP, Context));
   
   // Recover resources if we crash before exiting this method.
   llvm::CrashRecoveryContextCleanupRegistrar<ASTReader>
@@ -649,11 +648,7 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
 
   PP.setPredefines(Reader->getSuggestedPredefines());
   PP.setCounterValue(Counter);
-  Reader->setPreprocessor(PP);
 
-  // Create and initialize the ASTContext.
-  Reader->InitializeContext(Context);
-  
   // Attach the AST reader to the AST context as an external AST
   // source, so that declarations will be deserialized from the
   // AST file as needed.

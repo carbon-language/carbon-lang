@@ -273,7 +273,7 @@ CompilerInstance::createPCHExternalASTSource(StringRef Path,
                                              void *DeserializationListener,
                                              bool Preamble) {
   llvm::OwningPtr<ASTReader> Reader;
-  Reader.reset(new ASTReader(PP, &Context,
+  Reader.reset(new ASTReader(PP, Context,
                              Sysroot.empty() ? "" : Sysroot.c_str(),
                              DisablePCHValidation, DisableStatCache));
 
@@ -655,7 +655,7 @@ ModuleKey CompilerInstance::loadModule(SourceLocation ImportLoc,
   if (!ModuleManager) {
     std::string Sysroot = getHeaderSearchOpts().Sysroot;
     const PreprocessorOptions &PPOpts = getPreprocessorOpts();
-    ModuleManager = new ASTReader(getPreprocessor(), &*Context,
+    ModuleManager = new ASTReader(getPreprocessor(), *Context,
                                   Sysroot.empty() ? "" : Sysroot.c_str(),
                                   PPOpts.DisablePCHValidation, 
                                   PPOpts.DisableStatCache);
