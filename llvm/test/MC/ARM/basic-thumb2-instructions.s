@@ -271,9 +271,15 @@ _func:
 @------------------------------------------------------------------------------
         cbnz    r7, #6
         cbnz    r7, #12
+        cbz   r6, _bar
+        cbnz   r6, _bar
 
 @ CHECK: cbnz    r7, #6                  @ encoding: [0x1f,0xb9]
 @ CHECK: cbnz    r7, #12                 @ encoding: [0x37,0xb9]
+@ CHECK: cbz	r6, _bar                @ encoding: [0x06'A',0xb1'A']
+           @   fixup A - offset: 0, value: _bar, kind: fixup_arm_thumb_cb
+@ CHECK: cbnz	r6, _bar                @ encoding: [0x06'A',0xb9'A']
+           @   fixup A - offset: 0, value: _bar, kind: fixup_arm_thumb_cb
 
 
 @------------------------------------------------------------------------------
