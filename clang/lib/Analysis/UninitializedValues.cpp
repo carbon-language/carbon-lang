@@ -330,7 +330,6 @@ class TransferFunctions : public StmtVisitor<TransferFunctions> {
   const CFG &cfg;
   AnalysisContext &ac;
   UninitVariablesHandler *handler;
-  const bool flagBlockUses;
   
   /// The last DeclRefExpr seen when analyzing a block.  Used to
   /// cheat when detecting cases when the address of a variable is taken.
@@ -349,10 +348,9 @@ class TransferFunctions : public StmtVisitor<TransferFunctions> {
 public:
   TransferFunctions(CFGBlockValues &vals, const CFG &cfg,
                     AnalysisContext &ac,
-                    UninitVariablesHandler *handler,
-                    bool flagBlockUses)
+                    UninitVariablesHandler *handler)
     : vals(vals), cfg(cfg), ac(ac), handler(handler),
-      flagBlockUses(flagBlockUses), lastDR(0), lastLoad(0),
+      lastDR(0), lastLoad(0),
       skipProcessUses(false) {}
   
   void reportUninit(const DeclRefExpr *ex, const VarDecl *vd,
@@ -424,14 +422,10 @@ void TransferFunctions::VisitObjCForCollectionStmt(ObjCForCollectionStmt *fs) {
 }
 
 void TransferFunctions::VisitBlockExpr(BlockExpr *be) {
-  if (!flagBlockUses || !handler)
-    return;
   const BlockDecl *bd = be->getBlockDecl();
   for (BlockDecl::capture_const_iterator i = bd->capture_begin(),
         e = bd->capture_end() ; i != e; ++i) {
     const VarDecl *vd = i->getVariable();
-    if (!vd->hasLocalStorage())
-      continue;
     if (!isTrackedVar(vd))
       continue;
     if (i->isByRef()) {
@@ -439,7 +433,7 @@ void TransferFunctions::VisitBlockExpr(BlockExpr *be) {
       continue;
     }
     Value v = vals[vd];
-    if (isUninitialized(v))
+    if (handler && isUninitialized(v))
       handler->handleUseOfUninitVariable(be, vd, isAlwaysUninit(v));
   }
 }
@@ -610,8 +604,7 @@ void TransferFunctions::ProcessUses(Stmt *s) {
 static bool runOnBlock(const CFGBlock *block, const CFG &cfg,
                        AnalysisContext &ac, CFGBlockValues &vals,
                        llvm::BitVector &wasAnalyzed,
-                       UninitVariablesHandler *handler = 0,
-                       bool flagBlockUses = false) {
+                       UninitVariablesHandler *handler = 0) {
   
   wasAnalyzed[block->getBlockID()] = true;
   
@@ -645,11 +638,14 @@ static bool runOnBlock(const CFGBlock *block, const CFG &cfg,
   bool isFirst = true;
   for (CFGBlock::const_pred_iterator I = block->pred_begin(),
        E = block->pred_end(); I != E; ++I) {
-    vals.mergeIntoScratch(vals.getValueVector(*I, block), isFirst);
-    isFirst = false;
+    const CFGBlock *pred = *I;
+    if (wasAnalyzed[pred->getBlockID()]) {
+      vals.mergeIntoScratch(vals.getValueVector(pred, block), isFirst);
+      isFirst = false;
+    }
   }
   // Apply the transfer function.
-  TransferFunctions tf(vals, cfg, ac, handler, flagBlockUses);
+  TransferFunctions tf(vals, cfg, ac, handler);
   for (CFGBlock::const_iterator I = block->begin(), E = block->end(); 
        I != E; ++I) {
     if (const CFGStmt *cs = dyn_cast<CFGStmt>(&*I)) {
@@ -691,6 +687,7 @@ void clang::runUninitializedVariablesAnalysis(
   llvm::BitVector previouslyVisited(cfg.getNumBlockIDs());
   worklist.enqueueSuccessors(&cfg.getEntry());
   llvm::BitVector wasAnalyzed(cfg.getNumBlockIDs(), false);
+  wasAnalyzed[cfg.getEntry().getBlockID()] = true;
 
   while (const CFGBlock *block = worklist.dequeue()) {
     // Did the block change?
@@ -703,9 +700,9 @@ void clang::runUninitializedVariablesAnalysis(
   
   // Run through the blocks one more time, and report uninitialized variabes.
   for (CFG::const_iterator BI = cfg.begin(), BE = cfg.end(); BI != BE; ++BI) {
-    if (wasAnalyzed[(*BI)->getBlockID()]) {
-      runOnBlock(*BI, cfg, ac, vals, wasAnalyzed, &handler,
-                 /* flagBlockUses */ true);
+    const CFGBlock *block = *BI;
+    if (wasAnalyzed[block->getBlockID()]) {
+      runOnBlock(block, cfg, ac, vals, wasAnalyzed, &handler);
       ++stats.NumBlockVisits;
     }
   }

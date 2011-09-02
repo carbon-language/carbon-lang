@@ -381,3 +381,13 @@ void test_vla_sizeof(int x) {
   double (*memory)[2][x] = malloc(sizeof(*memory)); // no-warning
 }
 
+// Test absurd case of deadcode + use of blocks.  This previously was a false positive
+// due to an analysis bug.
+int test_block_and_dead_code() {
+  __block int x;
+  ^{ x = 1; }();
+  if (0)
+    return x;
+  return x; // no-warning
+}
+
