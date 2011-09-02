@@ -39,9 +39,9 @@ UnrollAllowPartial("unroll-allow-partial", cl::init(false), cl::Hidden,
   cl::desc("Allows loops to be partially unrolled until "
            "-unroll-threshold loop size is reached."));
 
-// Temporary flag to be made default shortly.
+// Temporary flag to be removed in 3.0
 static cl::opt<bool>
-UnrollWithSCEV("unroll-scev", cl::init(false), cl::Hidden,
+NoSCEVUnroll("disable-unroll-scev", cl::init(false), cl::Hidden,
   cl::desc("Use ScalarEvolution to analyze loop trip counts for unrolling"));
 
 namespace {
@@ -145,7 +145,7 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
   // Find trip count and trip multiple if count is not available
   unsigned TripCount = 0;
   unsigned TripMultiple = 1;
-  if (UnrollWithSCEV) {
+  if (!NoSCEVUnroll) {
     // Find "latch trip count". UnrollLoop assumes that control cannot exit
     // via the loop latch on any iteration prior to TripCount. The loop may exit
     // early via an earlier branch.
