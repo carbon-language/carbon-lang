@@ -624,9 +624,9 @@ multiclass T2I_bin_ii12rs<bits<3> op23_21, string opc, PatFrag opnode,
    // in particular for taking the address of a local.
    let isReMaterializable = 1 in {
    def ri : T2sTwoRegImm<
-                 (outs rGPR:$Rd), (ins GPR:$Rn, t2_so_imm:$imm), IIC_iALUi,
+                 (outs rGPR:$Rd), (ins GPRnopc:$Rn, t2_so_imm:$imm), IIC_iALUi,
                  opc, ".w\t$Rd, $Rn, $imm",
-                 [(set rGPR:$Rd, (opnode GPR:$Rn, t2_so_imm:$imm))]> {
+                 [(set rGPR:$Rd, (opnode GPRnopc:$Rn, t2_so_imm:$imm))]> {
      let Inst{31-27} = 0b11110;
      let Inst{25} = 0;
      let Inst{24} = 1;
@@ -654,9 +654,9 @@ multiclass T2I_bin_ii12rs<bits<3> op23_21, string opc, PatFrag opnode,
      let Inst{7-0} = imm{7-0};
    }
    // register
-   def rr : T2sThreeReg<(outs rGPR:$Rd), (ins GPR:$Rn, rGPR:$Rm), IIC_iALUr,
+   def rr : T2sThreeReg<(outs rGPR:$Rd), (ins GPRnopc:$Rn, rGPR:$Rm), IIC_iALUr,
                  opc, ".w\t$Rd, $Rn, $Rm",
-                 [(set rGPR:$Rd, (opnode GPR:$Rn, rGPR:$Rm))]> {
+                 [(set rGPR:$Rd, (opnode GPRnopc:$Rn, rGPR:$Rm))]> {
      let isCommutable = Commutable;
      let Inst{31-27} = 0b11101;
      let Inst{26-25} = 0b01;
@@ -668,9 +668,9 @@ multiclass T2I_bin_ii12rs<bits<3> op23_21, string opc, PatFrag opnode,
    }
    // shifted register
    def rs : T2sTwoRegShiftedReg<
-                 (outs rGPR:$Rd), (ins GPR:$Rn, t2_so_reg:$ShiftedRm),
+                 (outs rGPR:$Rd), (ins GPRnopc:$Rn, t2_so_reg:$ShiftedRm),
                  IIC_iALUsi, opc, ".w\t$Rd, $Rn, $ShiftedRm",
-                 [(set rGPR:$Rd, (opnode GPR:$Rn, t2_so_reg:$ShiftedRm))]> {
+                 [(set rGPR:$Rd, (opnode GPRnopc:$Rn, t2_so_reg:$ShiftedRm))]> {
      let Inst{31-27} = 0b11101;
      let Inst{26-25} = 0b01;
      let Inst{24} = 1;
@@ -3512,8 +3512,13 @@ def : t2InstAlias<"sbc${s}${p} $Rd, $Rn, $ShiftedRm",
                   (t2SBCrs rGPR:$Rd, rGPR:$Rn, t2_so_reg:$ShiftedRm,
                            pred:$p, cc_out:$s)>;
 
-// Aliases for ADD immediate without the ".w" optional width specifier.
+// Aliases for ADD without the ".w" optional width specifier.
 def : t2InstAlias<"add${s}${p} $Rd, $Rn, $imm",
-              (t2ADDri rGPR:$Rd, GPR:$Rn, t2_so_imm:$imm, pred:$p, cc_out:$s)>;
+           (t2ADDri rGPR:$Rd, GPRnopc:$Rn, t2_so_imm:$imm, pred:$p, cc_out:$s)>;
 def : t2InstAlias<"add${p} $Rd, $Rn, $imm",
-              (t2ADDri12 rGPR:$Rd, GPR:$Rn, imm0_4095:$imm, pred:$p)>;
+           (t2ADDri12 rGPR:$Rd, GPR:$Rn, imm0_4095:$imm, pred:$p)>;
+def : t2InstAlias<"add${s}${p} $Rd, $Rn, $Rm",
+                 (t2ADDrr rGPR:$Rd, GPRnopc:$Rn, rGPR:$Rm, pred:$p, cc_out:$s)>;
+def : t2InstAlias<"add${s}${p} $Rd, $Rn, $ShiftedRm",
+                  (t2ADDrs rGPR:$Rd, GPRnopc:$Rn, t2_so_reg:$ShiftedRm,
+                           pred:$p, cc_out:$s)>;
