@@ -136,6 +136,43 @@ _func:
 @ CHECK: ands.w	r4, r5, r2, lsr #20     @ encoding: [0x15,0xea,0x12,0x54]
 @ CHECK: and.w	r9, r12, r1, ror #17    @ encoding: [0x0c,0xea,0x71,0x49]
 
+@------------------------------------------------------------------------------
+@ ASR (immediate)
+@------------------------------------------------------------------------------
+        asr r2, r3, #12
+        asrs r8, r3, #32
+        asrs.w r2, r3, #1
+        asr r2, r3, #4
+        asrs r2, r12, #15
+
+        asr r3, #19
+        asrs r8, #2
+        asrs.w r7, #5
+        asr.w r12, #21
+
+@ CHECK: asr.w	r2, r3, #12             @ encoding: [0x4f,0xea,0x23,0x32]
+@ CHECK: asrs.w	r8, r3, #32             @ encoding: [0x5f,0xea,0x23,0x08]
+@ CHECK: asrs.w	r2, r3, #1              @ encoding: [0x5f,0xea,0x63,0x02]
+@ CHECK: asr.w	r2, r3, #4              @ encoding: [0x4f,0xea,0x23,0x12]
+@ CHECK: asrs.w	r2, r12, #15            @ encoding: [0x5f,0xea,0xec,0x32]
+
+@ CHECK: asr.w	r3, r3, #19             @ encoding: [0x4f,0xea,0xe3,0x43]
+@ CHECK: asrs.w	r8, r8, #2              @ encoding: [0x5f,0xea,0xa8,0x08]
+@ CHECK: asrs.w	r7, r7, #5              @ encoding: [0x5f,0xea,0x67,0x17]
+@ CHECK: asr.w	r12, r12, #21           @ encoding: [0x4f,0xea,0x6c,0x5c]
+
+
+@------------------------------------------------------------------------------
+@ ASR (register)
+@------------------------------------------------------------------------------
+        asr r3, r4, r2
+        asr.w r1, r2
+        asrs r3, r4, r8
+
+@ CHECK: asr.w	r3, r4, r2              @ encoding: [0x44,0xfa,0x02,0xf3]
+@ CHECK: asr.w	r1, r1, r2              @ encoding: [0x41,0xfa,0x02,0xf1]
+@ CHECK: asrs.w	r3, r4, r8              @ encoding: [0x54,0xfa,0x08,0xf3]
+
 
 @------------------------------------------------------------------------------
 @ B

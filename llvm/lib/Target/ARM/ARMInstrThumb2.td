@@ -75,11 +75,6 @@ def t2_so_imm_neg : Operand<i32>,
   return ARM_AM::getT2SOImmVal(-((uint32_t)N->getZExtValue())) != -1;
 }], t2_so_imm_neg_XFORM>;
 
-/// imm1_31 predicate - True if the 32-bit immediate is in the range [1,31].
-def imm1_31 : Operand<i32>, ImmLeaf<i32, [{
-  return (int32_t)Imm >= 1 && (int32_t)Imm < 32;
-}]>;
-
 /// imm0_4095 predicate - True if the 32-bit immediate is in the range [0.4095].
 def imm0_4095 : Operand<i32>,
                 ImmLeaf<i32, [{
@@ -770,7 +765,8 @@ multiclass T2I_rbin_s_is<bits<4> opcod, string opc, PatFrag opnode> {
 
 /// T2I_sh_ir - Defines a set of (op reg, {so_imm|r}) patterns for a shift /
 //  rotate operation that produces a value.
-multiclass T2I_sh_ir<bits<2> opcod, string opc, Operand ty, PatFrag opnode> {
+multiclass T2I_sh_ir<bits<2> opcod, string opc, Operand ty, PatFrag opnode,
+                     string baseOpc> {
    // 5-bit imm
    def ri : T2sTwoRegShiftImm<
                  (outs rGPR:$Rd), (ins rGPR:$Rm, ty:$imm), IIC_iMOVsi,
@@ -792,6 +788,36 @@ multiclass T2I_sh_ir<bits<2> opcod, string opc, Operand ty, PatFrag opnode> {
      let Inst{15-12} = 0b1111;
      let Inst{7-4} = 0b0000;
    }
+
+  // Optional destination register
+  def : t2InstAlias<!strconcat(opc, "${s}${p}", ".w $Rdn, $imm"),
+     (!cast<Instruction>(!strconcat(baseOpc, "ri")) rGPR:$Rdn, rGPR:$Rdn,
+                                                    ty:$imm, pred:$p,
+                                                    cc_out:$s)>;
+  def : t2InstAlias<!strconcat(opc, "${s}${p}", ".w $Rdn, $Rm"),
+     (!cast<Instruction>(!strconcat(baseOpc, "rr")) rGPR:$Rdn, rGPR:$Rdn,
+                                                    rGPR:$Rm, pred:$p,
+                                                    cc_out:$s)>;
+
+  // Assembler aliases w/o the ".w" suffix.
+  def : t2InstAlias<!strconcat(opc, "${s}${p}", " $Rd, $Rn, $imm"),
+     (!cast<Instruction>(!strconcat(baseOpc, "ri")) rGPR:$Rd, rGPR:$Rn,
+                                                    ty:$imm, pred:$p,
+                                                    cc_out:$s)>;
+  def : t2InstAlias<!strconcat(opc, "${s}${p}", " $Rd, $Rn, $Rm"),
+     (!cast<Instruction>(!strconcat(baseOpc, "rr")) rGPR:$Rd, rGPR:$Rn,
+                                                    rGPR:$Rm, pred:$p,
+                                                    cc_out:$s)>;
+
+  // and with the optional destination operand, too.
+  def : t2InstAlias<!strconcat(opc, "${s}${p}", " $Rdn, $imm"),
+     (!cast<Instruction>(!strconcat(baseOpc, "ri")) rGPR:$Rdn, rGPR:$Rdn,
+                                                    ty:$imm, pred:$p,
+                                                    cc_out:$s)>;
+  def : t2InstAlias<!strconcat(opc, "${s}${p}", " $Rdn, $Rm"),
+     (!cast<Instruction>(!strconcat(baseOpc, "rr")) rGPR:$Rdn, rGPR:$Rdn,
+                                                    rGPR:$Rm, pred:$p,
+                                                    cc_out:$s)>;
 }
 
 /// T2I_cmp_irs - Defines a set of (op r, {so_imm|r|so_reg}) cmp / test
@@ -1922,14 +1948,14 @@ def : T2Pat<(int_arm_usat GPR:$a, imm:$pos), (t2USAT imm:$pos, GPR:$a, 0)>;
 //  Shift and rotate Instructions.
 //
 
-defm t2LSL  : T2I_sh_ir<0b00, "lsl", imm1_31,
-                        BinOpFrag<(shl  node:$LHS, node:$RHS)>>;
+defm t2LSL  : T2I_sh_ir<0b00, "lsl", imm0_31,
+                        BinOpFrag<(shl  node:$LHS, node:$RHS)>, "t2LSL">;
 defm t2LSR  : T2I_sh_ir<0b01, "lsr", imm_sr,
-                        BinOpFrag<(srl  node:$LHS, node:$RHS)>>;
+                        BinOpFrag<(srl  node:$LHS, node:$RHS)>, "t2LSR">;
 defm t2ASR  : T2I_sh_ir<0b10, "asr", imm_sr,
-                        BinOpFrag<(sra  node:$LHS, node:$RHS)>>;
-defm t2ROR  : T2I_sh_ir<0b11, "ror", imm1_31,
-                        BinOpFrag<(rotr node:$LHS, node:$RHS)>>;
+                        BinOpFrag<(sra  node:$LHS, node:$RHS)>, "t2ASR">;
+defm t2ROR  : T2I_sh_ir<0b11, "ror", imm0_31,
+                        BinOpFrag<(rotr node:$LHS, node:$RHS)>, "t2ROR">;
 
 // (rotr x, (and y, 0x...1f)) ==> (ROR x, y)
 def : Pat<(rotr rGPR:$lhs, (and rGPR:$rhs, lo5AllOne)),
