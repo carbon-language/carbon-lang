@@ -541,6 +541,295 @@ ExprResult Sema::DefaultVariadicArgumentPromotion(Expr *E, VariadicCallType CT,
   return Owned(E);
 }
 
+/// \brief Converts an integer to complex float type.  Helper function of
+/// UsualArithmeticConversions()
+///
+/// \return false if the integer expression is an integer type and is
+/// successfully converted to the complex type.
+static bool handleIntegerToComplexFloatConversion(Sema &S, ExprResult &intExpr,
+                                                  ExprResult &complexExpr,
+                                                  QualType intTy,
+                                                  QualType complexTy,
+                                                  bool skipCast) {
+  if (intTy->isComplexType() || intTy->isRealFloatingType()) return true;
+  if (skipCast) return false;
+  if (intTy->isIntegerType()) {
+    QualType fpTy = cast<ComplexType>(complexTy)->getElementType();
+    intExpr = S.ImpCastExprToType(intExpr.take(), fpTy, CK_IntegralToFloating);
+    intExpr = S.ImpCastExprToType(intExpr.take(), complexTy,
+                                  CK_FloatingRealToComplex);
+  } else {
+    assert(intTy->isComplexIntegerType());
+    intExpr = S.ImpCastExprToType(intExpr.take(), complexTy,
+                                  CK_IntegralComplexToFloatingComplex);
+  }
+  return false;
+}
+
+/// \brief Takes two complex float types and converts them to the same type.
+/// Helper function of UsualArithmeticConversions()
+static QualType
+handleComplexFloatToComplexFloatConverstion(Sema &S, ExprResult &lhsExpr,
+                                            ExprResult &rhsExpr, QualType lhs,
+                                            QualType rhs, bool isCompAssign) {
+  int order = S.Context.getFloatingTypeOrder(lhs, rhs);
+
+  if (order < 0) {
+    // _Complex float -> _Complex double
+    if (!isCompAssign)
+      lhsExpr = S.ImpCastExprToType(lhsExpr.take(), rhs,
+                                    CK_FloatingComplexCast);
+    return rhs;
+  }
+  if (order > 0)
+    // _Complex float -> _Complex double
+    rhsExpr = S.ImpCastExprToType(rhsExpr.take(), lhs,
+                                  CK_FloatingComplexCast);
+  return lhs;
+}
+
+/// \brief Converts otherExpr to complex float and promotes complexExpr if
+/// necessary.  Helper function of UsualArithmeticConversions()
+static QualType handleOtherComplexFloatConversion(Sema &S,
+                                                  ExprResult &complexExpr,
+                                                  ExprResult &otherExpr,
+                                                  QualType complexTy,
+                                                  QualType otherTy,
+                                                  bool convertComplexExpr,
+                                                  bool convertOtherExpr) {
+  int order = S.Context.getFloatingTypeOrder(complexTy, otherTy);
+
+  // If just the complexExpr is complex, the otherExpr needs to be converted,
+  // and the complexExpr might need to be promoted.
+  if (order > 0) { // complexExpr is wider
+    // float -> _Complex double
+    if (convertOtherExpr) {
+      QualType fp = cast<ComplexType>(complexTy)->getElementType();
+      otherExpr = S.ImpCastExprToType(otherExpr.take(), fp, CK_FloatingCast);
+      otherExpr = S.ImpCastExprToType(otherExpr.take(), complexTy,
+                                      CK_FloatingRealToComplex);
+    }
+    return complexTy;
+  }
+
+  // otherTy is at least as wide.  Find its corresponding complex type.
+  QualType result = (order == 0 ? complexTy :
+                                  S.Context.getComplexType(otherTy));
+
+  // double -> _Complex double
+  if (convertOtherExpr)
+    otherExpr = S.ImpCastExprToType(otherExpr.take(), result,
+                                    CK_FloatingRealToComplex);
+
+  // _Complex float -> _Complex double
+  if (convertComplexExpr && order < 0)
+    complexExpr = S.ImpCastExprToType(complexExpr.take(), result,
+                                      CK_FloatingComplexCast);
+
+  return result;
+}
+
+/// \brief Handle arithmetic conversion with complex types.  Helper function of
+/// UsualArithmeticConversions()
+static QualType handleComplexFloatConversion(Sema &S, ExprResult &lhsExpr,
+                                             ExprResult &rhsExpr, QualType lhs,
+                                             QualType rhs, bool isCompAssign) {
+  // if we have an integer operand, the result is the complex type.
+  if (!handleIntegerToComplexFloatConversion(S, rhsExpr, lhsExpr, rhs, lhs,
+                                             /*skipCast*/false))
+    return lhs;
+  if (!handleIntegerToComplexFloatConversion(S, lhsExpr, rhsExpr, lhs, rhs,
+                                             /*skipCast*/isCompAssign))
+    return rhs;
+
+  // This handles complex/complex, complex/float, or float/complex.
+  // When both operands are complex, the shorter operand is converted to the
+  // type of the longer, and that is the type of the result. This corresponds
+  // to what is done when combining two real floating-point operands.
+  // The fun begins when size promotion occur across type domains.
+  // From H&S 6.3.4: When one operand is complex and the other is a real
+  // floating-point type, the less precise type is converted, within it's
+  // real or complex domain, to the precision of the other type. For example,
+  // when combining a "long double" with a "double _Complex", the
+  // "double _Complex" is promoted to "long double _Complex".
+
+  bool LHSComplexFloat = lhs->isComplexType();
+  bool RHSComplexFloat = rhs->isComplexType();
+
+  // If both are complex, just cast to the more precise type.
+  if (LHSComplexFloat && RHSComplexFloat)
+    return handleComplexFloatToComplexFloatConverstion(S, lhsExpr, rhsExpr,
+                                                       lhs, rhs, isCompAssign);
+
+  // If only one operand is complex, promote it if necessary and convert the
+  // other operand to complex.
+  if (LHSComplexFloat)
+    return handleOtherComplexFloatConversion(
+        S, lhsExpr, rhsExpr, lhs, rhs, /*convertComplexExpr*/!isCompAssign,
+        /*convertOtherExpr*/ true);
+
+  assert(RHSComplexFloat);
+  return handleOtherComplexFloatConversion(
+      S, rhsExpr, lhsExpr, rhs, lhs, /*convertComplexExpr*/true,
+      /*convertOtherExpr*/ !isCompAssign);
+}
+
+/// \brief Hande arithmetic conversion from integer to float.  Helper function
+/// of UsualArithmeticConversions()
+static QualType handleIntToFloatConversion(Sema &S, ExprResult &floatExpr,
+                                           ExprResult &intExpr,
+                                           QualType floatTy, QualType intTy,
+                                           bool convertFloat, bool convertInt) {
+  if (intTy->isIntegerType()) {
+    if (convertInt)
+      // Convert intExpr to the lhs floating point type.
+      intExpr = S.ImpCastExprToType(intExpr.take(), floatTy,
+                                    CK_IntegralToFloating);
+    return floatTy;
+  }
+     
+  // Convert both sides to the appropriate complex float.
+  assert(intTy->isComplexIntegerType());
+  QualType result = S.Context.getComplexType(floatTy);
+
+  // _Complex int -> _Complex float
+  if (convertInt)
+    intExpr = S.ImpCastExprToType(intExpr.take(), result,
+                                  CK_IntegralComplexToFloatingComplex);
+
+  // float -> _Complex float
+  if (convertFloat)
+    floatExpr = S.ImpCastExprToType(floatExpr.take(), result,
+                                    CK_FloatingRealToComplex);
+
+  return result;
+}
+
+/// \brief Handle arithmethic conversion with floating point types.  Helper
+/// function of UsualArithmeticConversions()
+static QualType handleFloatConversion(Sema &S, ExprResult &lhsExpr,
+                                      ExprResult &rhsExpr, QualType lhs,
+                                      QualType rhs, bool isCompAssign) {
+  bool LHSFloat = lhs->isRealFloatingType();
+  bool RHSFloat = rhs->isRealFloatingType();
+
+  // If we have two real floating types, convert the smaller operand
+  // to the bigger result.
+  if (LHSFloat && RHSFloat) {
+    int order = S.Context.getFloatingTypeOrder(lhs, rhs);
+    if (order > 0) {
+      rhsExpr = S.ImpCastExprToType(rhsExpr.take(), lhs, CK_FloatingCast);
+      return lhs;
+    }
+
+    assert(order < 0 && "illegal float comparison");
+    if (!isCompAssign)
+      lhsExpr = S.ImpCastExprToType(lhsExpr.take(), rhs, CK_FloatingCast);
+    return rhs;
+  }
+
+  if (LHSFloat)
+    return handleIntToFloatConversion(S, lhsExpr, rhsExpr, lhs, rhs,
+                                      /*convertFloat=*/!isCompAssign,
+                                      /*convertInt=*/ true);
+  assert(RHSFloat);
+  return handleIntToFloatConversion(S, rhsExpr, lhsExpr, rhs, lhs,
+                                    /*convertInt=*/ true,
+                                    /*convertFloat=*/!isCompAssign);
+}
+
+/// \brief Handle conversions with GCC complex int extension.  Helper function
+/// of UsualArithmeticConverions()
+// FIXME: if the operands are (int, _Complex long), we currently
+// don't promote the complex.  Also, signedness?
+static QualType handleComplexIntConvsersion(Sema &S, ExprResult &lhsExpr,
+                                            ExprResult &rhsExpr, QualType lhs,
+                                            QualType rhs, bool isCompAssign) {
+  const ComplexType *lhsComplexInt = lhs->getAsComplexIntegerType();
+  const ComplexType *rhsComplexInt = rhs->getAsComplexIntegerType();
+
+  if (lhsComplexInt && rhsComplexInt) {
+    int order = S.Context.getIntegerTypeOrder(lhsComplexInt->getElementType(),
+                                              rhsComplexInt->getElementType());
+    assert(order && "inequal types with equal element ordering");
+    if (order > 0) {
+      // _Complex int -> _Complex long
+      rhsExpr = S.ImpCastExprToType(rhsExpr.take(), lhs,
+                                    CK_IntegralComplexCast);
+      return lhs;
+    }
+
+    if (!isCompAssign)
+      lhsExpr = S.ImpCastExprToType(lhsExpr.take(), rhs,
+                                    CK_IntegralComplexCast);
+    return rhs;
+  }
+
+  if (lhsComplexInt) {
+    // int -> _Complex int
+    rhsExpr = S.ImpCastExprToType(rhsExpr.take(), lhs,
+                                  CK_IntegralRealToComplex);
+    return lhs;
+  }
+
+  assert(rhsComplexInt);
+  // int -> _Complex int
+  if (!isCompAssign)
+    lhsExpr = S.ImpCastExprToType(lhsExpr.take(), rhs,
+                                  CK_IntegralRealToComplex);
+  return rhs;
+}
+
+/// \brief Handle integer arithmetic conversions.  Helper function of
+/// UsualArithmeticConversions()
+static QualType handleIntegerConversion(Sema &S, ExprResult &lhsExpr,
+                                        ExprResult &rhsExpr, QualType lhs,
+                                        QualType rhs, bool isCompAssign) {
+  // The rules for this case are in C99 6.3.1.8
+  int order = S.Context.getIntegerTypeOrder(lhs, rhs);
+  bool lhsSigned = lhs->hasSignedIntegerRepresentation();
+  bool rhsSigned = rhs->hasSignedIntegerRepresentation();
+  if (lhsSigned == rhsSigned) {
+    // Same signedness; use the higher-ranked type
+    if (order >= 0) {
+      rhsExpr = S.ImpCastExprToType(rhsExpr.take(), lhs, CK_IntegralCast);
+      return lhs;
+    } else if (!isCompAssign)
+      lhsExpr = S.ImpCastExprToType(lhsExpr.take(), rhs, CK_IntegralCast);
+    return rhs;
+  } else if (order != (lhsSigned ? 1 : -1)) {
+    // The unsigned type has greater than or equal rank to the
+    // signed type, so use the unsigned type
+    if (rhsSigned) {
+      rhsExpr = S.ImpCastExprToType(rhsExpr.take(), lhs, CK_IntegralCast);
+      return lhs;
+    } else if (!isCompAssign)
+      lhsExpr = S.ImpCastExprToType(lhsExpr.take(), rhs, CK_IntegralCast);
+    return rhs;
+  } else if (S.Context.getIntWidth(lhs) != S.Context.getIntWidth(rhs)) {
+    // The two types are different widths; if we are here, that
+    // means the signed type is larger than the unsigned type, so
+    // use the signed type.
+    if (lhsSigned) {
+      rhsExpr = S.ImpCastExprToType(rhsExpr.take(), lhs, CK_IntegralCast);
+      return lhs;
+    } else if (!isCompAssign)
+      lhsExpr = S.ImpCastExprToType(lhsExpr.take(), rhs, CK_IntegralCast);
+    return rhs;
+  } else {
+    // The signed type is higher-ranked than the unsigned type,
+    // but isn't actually any bigger (like unsigned int and long
+    // on most 32-bit systems).  Use the unsigned type corresponding
+    // to the signed type.
+    QualType result =
+      S.Context.getCorrespondingUnsignedType(lhsSigned ? lhs : rhs);
+    rhsExpr = S.ImpCastExprToType(rhsExpr.take(), result, CK_IntegralCast);
+    if (!isCompAssign)
+      lhsExpr = S.ImpCastExprToType(lhsExpr.take(), result, CK_IntegralCast);
+    return result;
+  }
+}
+
 /// UsualArithmeticConversions - Performs various conversions that are common to
 /// binary operators (C99 6.3.1.8). If both operands aren't arithmetic, this
 /// routine returns the first non-arithmetic type found. The client is
@@ -593,272 +882,23 @@ QualType Sema::UsualArithmeticConversions(ExprResult &lhsExpr,
   // At this point, we have two different arithmetic types.
 
   // Handle complex types first (C99 6.3.1.8p1).
-  bool LHSComplexFloat = lhs->isComplexType();
-  bool RHSComplexFloat = rhs->isComplexType();
-  if (LHSComplexFloat || RHSComplexFloat) {
-    // if we have an integer operand, the result is the complex type.
-
-    if (!RHSComplexFloat && !rhs->isRealFloatingType()) {
-      if (rhs->isIntegerType()) {
-        QualType fp = cast<ComplexType>(lhs)->getElementType();
-        rhsExpr = ImpCastExprToType(rhsExpr.take(), fp, CK_IntegralToFloating);
-        rhsExpr = ImpCastExprToType(rhsExpr.take(), lhs,
-                                    CK_FloatingRealToComplex);
-      } else {
-        assert(rhs->isComplexIntegerType());
-        rhsExpr = ImpCastExprToType(rhsExpr.take(), lhs,
-                                    CK_IntegralComplexToFloatingComplex);
-      }
-      return lhs;
-    }
-
-    if (!LHSComplexFloat && !lhs->isRealFloatingType()) {
-      if (!isCompAssign) {
-        // int -> float -> _Complex float
-        if (lhs->isIntegerType()) {
-          QualType fp = cast<ComplexType>(rhs)->getElementType();
-          lhsExpr = ImpCastExprToType(lhsExpr.take(), fp,
-                                      CK_IntegralToFloating);
-          lhsExpr = ImpCastExprToType(lhsExpr.take(), rhs,
-                                      CK_FloatingRealToComplex);
-        } else {
-          assert(lhs->isComplexIntegerType());
-          lhsExpr = ImpCastExprToType(lhsExpr.take(), rhs,
-                                      CK_IntegralComplexToFloatingComplex);
-        }
-      }
-      return rhs;
-    }
-
-    // This handles complex/complex, complex/float, or float/complex.
-    // When both operands are complex, the shorter operand is converted to the
-    // type of the longer, and that is the type of the result. This corresponds
-    // to what is done when combining two real floating-point operands.
-    // The fun begins when size promotion occur across type domains.
-    // From H&S 6.3.4: When one operand is complex and the other is a real
-    // floating-point type, the less precise type is converted, within it's
-    // real or complex domain, to the precision of the other type. For example,
-    // when combining a "long double" with a "double _Complex", the
-    // "double _Complex" is promoted to "long double _Complex".
-    int order = Context.getFloatingTypeOrder(lhs, rhs);
-
-    // If both are complex, just cast to the more precise type.
-    if (LHSComplexFloat && RHSComplexFloat) {
-      if (order > 0) {
-        // _Complex float -> _Complex double
-        rhsExpr = ImpCastExprToType(rhsExpr.take(), lhs,
-                                    CK_FloatingComplexCast);
-        return lhs;
-
-      } else if (order < 0) {
-        // _Complex float -> _Complex double
-        if (!isCompAssign)
-          lhsExpr = ImpCastExprToType(lhsExpr.take(), rhs,
-                                      CK_FloatingComplexCast);
-        return rhs;
-      }
-      return lhs;
-    }
-
-    // If just the LHS is complex, the RHS needs to be converted,
-    // and the LHS might need to be promoted.
-    if (LHSComplexFloat) {
-      if (order > 0) { // LHS is wider
-        // float -> _Complex double
-        QualType fp = cast<ComplexType>(lhs)->getElementType();
-        rhsExpr = ImpCastExprToType(rhsExpr.take(), fp, CK_FloatingCast);
-        rhsExpr = ImpCastExprToType(rhsExpr.take(), lhs,
-                                    CK_FloatingRealToComplex);
-        return lhs;        
-      }
-
-      // RHS is at least as wide.  Find its corresponding complex type.
-      QualType result = (order == 0 ? lhs : Context.getComplexType(rhs));
-
-      // double -> _Complex double
-      rhsExpr = ImpCastExprToType(rhsExpr.take(), result,
-                                  CK_FloatingRealToComplex);
-
-      // _Complex float -> _Complex double
-      if (!isCompAssign && order < 0)
-        lhsExpr = ImpCastExprToType(lhsExpr.take(), result,
-                                    CK_FloatingComplexCast);
-
-      return result;
-    }
-
-    // Just the RHS is complex, so the LHS needs to be converted
-    // and the RHS might need to be promoted.
-    assert(RHSComplexFloat);
-
-    if (order < 0) { // RHS is wider
-      // float -> _Complex double
-      if (!isCompAssign) {
-        QualType fp = cast<ComplexType>(rhs)->getElementType();
-        lhsExpr = ImpCastExprToType(lhsExpr.take(), fp, CK_FloatingCast);
-        lhsExpr = ImpCastExprToType(lhsExpr.take(), rhs,
-                                    CK_FloatingRealToComplex);
-      }
-      return rhs;
-    }
-
-    // LHS is at least as wide.  Find its corresponding complex type.
-    QualType result = (order == 0 ? rhs : Context.getComplexType(lhs));
-
-    // double -> _Complex double
-    if (!isCompAssign)
-      lhsExpr = ImpCastExprToType(lhsExpr.take(), result,
-                                  CK_FloatingRealToComplex);
-
-    // _Complex float -> _Complex double
-    if (order > 0)
-      rhsExpr = ImpCastExprToType(rhsExpr.take(), result,
-                                  CK_FloatingComplexCast);
-
-    return result;
-  }
+  if (lhs->isComplexType() || rhs->isComplexType())
+    return handleComplexFloatConversion(*this, lhsExpr, rhsExpr, lhs, rhs,
+                                        isCompAssign);
 
   // Now handle "real" floating types (i.e. float, double, long double).
-  bool LHSFloat = lhs->isRealFloatingType();
-  bool RHSFloat = rhs->isRealFloatingType();
-  if (LHSFloat || RHSFloat) {
-    // If we have two real floating types, convert the smaller operand
-    // to the bigger result.
-    if (LHSFloat && RHSFloat) {
-      int order = Context.getFloatingTypeOrder(lhs, rhs);
-      if (order > 0) {
-        rhsExpr = ImpCastExprToType(rhsExpr.take(), lhs, CK_FloatingCast);
-        return lhs;
-      }
-
-      assert(order < 0 && "illegal float comparison");
-      if (!isCompAssign)
-        lhsExpr = ImpCastExprToType(lhsExpr.take(), rhs, CK_FloatingCast);
-      return rhs;
-    }
-
-    // If we have an integer operand, the result is the real floating type.
-    if (LHSFloat) {
-      if (rhs->isIntegerType()) {
-        // Convert rhs to the lhs floating point type.
-        rhsExpr = ImpCastExprToType(rhsExpr.take(), lhs, CK_IntegralToFloating);
-        return lhs;
-      }
-
-      // Convert both sides to the appropriate complex float.
-      assert(rhs->isComplexIntegerType());
-      QualType result = Context.getComplexType(lhs);
-
-      // _Complex int -> _Complex float
-      rhsExpr = ImpCastExprToType(rhsExpr.take(), result,
-                                  CK_IntegralComplexToFloatingComplex);
-
-      // float -> _Complex float
-      if (!isCompAssign)
-        lhsExpr = ImpCastExprToType(lhsExpr.take(), result,
-                                    CK_FloatingRealToComplex);
-
-      return result;
-    }
-
-    assert(RHSFloat);
-    if (lhs->isIntegerType()) {
-      // Convert lhs to the rhs floating point type.
-      if (!isCompAssign)
-        lhsExpr = ImpCastExprToType(lhsExpr.take(), rhs, CK_IntegralToFloating);
-      return rhs;
-    }
-
-    // Convert both sides to the appropriate complex float.
-    assert(lhs->isComplexIntegerType());
-    QualType result = Context.getComplexType(rhs);
-
-    // _Complex int -> _Complex float
-    if (!isCompAssign)
-      lhsExpr = ImpCastExprToType(lhsExpr.take(), result,
-                                  CK_IntegralComplexToFloatingComplex);
-
-    // float -> _Complex float
-    rhsExpr = ImpCastExprToType(rhsExpr.take(), result,
-                                CK_FloatingRealToComplex);
-
-    return result;
-  }
+  if (lhs->isRealFloatingType() || rhs->isRealFloatingType())
+    return handleFloatConversion(*this, lhsExpr, rhsExpr, lhs, rhs,
+                                 isCompAssign);
 
   // Handle GCC complex int extension.
-  // FIXME: if the operands are (int, _Complex long), we currently
-  // don't promote the complex.  Also, signedness?
-  const ComplexType *lhsComplexInt = lhs->getAsComplexIntegerType();
-  const ComplexType *rhsComplexInt = rhs->getAsComplexIntegerType();
-  if (lhsComplexInt && rhsComplexInt) {
-    int order = Context.getIntegerTypeOrder(lhsComplexInt->getElementType(),
-                                            rhsComplexInt->getElementType());
-    assert(order && "inequal types with equal element ordering");
-    if (order > 0) {
-      // _Complex int -> _Complex long
-      rhsExpr = ImpCastExprToType(rhsExpr.take(), lhs, CK_IntegralComplexCast);
-      return lhs;
-    }
-
-    if (!isCompAssign)
-      lhsExpr = ImpCastExprToType(lhsExpr.take(), rhs, CK_IntegralComplexCast);
-    return rhs;
-  } else if (lhsComplexInt) {
-    // int -> _Complex int
-    rhsExpr = ImpCastExprToType(rhsExpr.take(), lhs, CK_IntegralRealToComplex);
-    return lhs;
-  } else if (rhsComplexInt) {
-    // int -> _Complex int
-    if (!isCompAssign)
-      lhsExpr = ImpCastExprToType(lhsExpr.take(), rhs,
-                                  CK_IntegralRealToComplex);
-    return rhs;
-  }
+  if (lhs->isComplexIntegerType() || rhs->isComplexIntegerType())
+    return handleComplexIntConvsersion(*this, lhsExpr, rhsExpr, lhs, rhs,
+                                       isCompAssign);
 
   // Finally, we have two differing integer types.
-  // The rules for this case are in C99 6.3.1.8
-  int compare = Context.getIntegerTypeOrder(lhs, rhs);
-  bool lhsSigned = lhs->hasSignedIntegerRepresentation(),
-       rhsSigned = rhs->hasSignedIntegerRepresentation();
-  if (lhsSigned == rhsSigned) {
-    // Same signedness; use the higher-ranked type
-    if (compare >= 0) {
-      rhsExpr = ImpCastExprToType(rhsExpr.take(), lhs, CK_IntegralCast);
-      return lhs;
-    } else if (!isCompAssign) 
-      lhsExpr = ImpCastExprToType(lhsExpr.take(), rhs, CK_IntegralCast);
-    return rhs;
-  } else if (compare != (lhsSigned ? 1 : -1)) {
-    // The unsigned type has greater than or equal rank to the
-    // signed type, so use the unsigned type
-    if (rhsSigned) {
-      rhsExpr = ImpCastExprToType(rhsExpr.take(), lhs, CK_IntegralCast);
-      return lhs;
-    } else if (!isCompAssign)
-      lhsExpr = ImpCastExprToType(lhsExpr.take(), rhs, CK_IntegralCast);
-    return rhs;
-  } else if (Context.getIntWidth(lhs) != Context.getIntWidth(rhs)) {
-    // The two types are different widths; if we are here, that
-    // means the signed type is larger than the unsigned type, so
-    // use the signed type.
-    if (lhsSigned) {
-      rhsExpr = ImpCastExprToType(rhsExpr.take(), lhs, CK_IntegralCast);
-      return lhs;
-    } else if (!isCompAssign)
-      lhsExpr = ImpCastExprToType(lhsExpr.take(), rhs, CK_IntegralCast);
-    return rhs;
-  } else {
-    // The signed type is higher-ranked than the unsigned type,
-    // but isn't actually any bigger (like unsigned int and long
-    // on most 32-bit systems).  Use the unsigned type corresponding
-    // to the signed type.
-    QualType result =
-      Context.getCorrespondingUnsignedType(lhsSigned ? lhs : rhs);
-    rhsExpr = ImpCastExprToType(rhsExpr.take(), result, CK_IntegralCast);
-    if (!isCompAssign)
-      lhsExpr = ImpCastExprToType(lhsExpr.take(), result, CK_IntegralCast);
-    return result;
-  }
+  return handleIntegerConversion(*this, lhsExpr, rhsExpr, lhs, rhs,
+                                 isCompAssign);
 }
 
 //===----------------------------------------------------------------------===//
