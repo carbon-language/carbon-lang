@@ -47,10 +47,10 @@ return:                                           ; preds = %bb
 }
 
 ; CHECK: test1:
-; CHECK: 	movl	%{{.*}},   (%rdi,%rcx,4)
-; CHECK:	movl	%{{.*}},  8(%rdi,%rcx,4)
-; CHECK:	movl	%{{.*}},  4(%rdi,%rcx,4)
-; CHECK:	movl	%{{.*}}, 12(%rdi,%rcx,4)
+; CHECK: 	movl	%{{.*}},   (%[[RDI:...]],%[[RCX:...]],4)
+; CHECK:	movl	%{{.*}},  8(%[[RDI]],%[[RCX]],4)
+; CHECK:	movl	%{{.*}},  4(%[[RDI]],%[[RCX]],4)
+; CHECK:	movl	%{{.*}}, 12(%[[RDI]],%[[RCX]],4)
 
 define void @test1(i32* nocapture %array, i32 %r0, i8 signext %k, i8 signext %i0) nounwind {
 bb.nph:

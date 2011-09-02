@@ -349,18 +349,11 @@ def TLSCall_64 : I<0, Pseudo, (outs), (ins i64mem:$sym),
 //===----------------------------------------------------------------------===//
 // Conditional Move Pseudo Instructions
 
-let Constraints = "$src1 = $dst" in {
-
-// Conditional moves
-let Uses = [EFLAGS] in {
-
 // X86 doesn't have 8-bit conditional moves. Use a customInserter to
 // emit control flow. An alternative to this is to mark i8 SELECT as Promote,
 // however that requires promoting the operands, and can induce additional
-// i8 register pressure. Note that CMOV_GR8 is conservatively considered to
-// clobber EFLAGS, because if one of the operands is zero, the expansion
-// could involve an xor.
-let usesCustomInserter = 1, Constraints = "", Defs = [EFLAGS] in {
+// i8 register pressure.
+let usesCustomInserter = 1, Uses = [EFLAGS] in {
 def CMOV_GR8 : I<0, Pseudo,
                  (outs GR8:$dst), (ins GR8:$src1, GR8:$src2, i8imm:$cond),
                  "#CMOV_GR8 PSEUDO!",
@@ -400,10 +393,7 @@ def CMOV_RFP80 : I<0, Pseudo,
                       (X86cmov RFP80:$src1, RFP80:$src2, imm:$cond,
                                                   EFLAGS))]>;
 } // Predicates = [NoCMov]
-} // UsesCustomInserter = 1, Constraints = "", Defs = [EFLAGS]
-} // Uses = [EFLAGS]
-
-} // Constraints = "$src1 = $dst" in
+} // UsesCustomInserter = 1, Uses = [EFLAGS]
 
 
 //===----------------------------------------------------------------------===//

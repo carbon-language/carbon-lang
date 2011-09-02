@@ -90,8 +90,8 @@ bb.i.i.i:                                         ; preds = %entry
 ; CHECK: test4:
 ; CHECK: g_100
 ; CHECK: testb
-; CHECK: testb %al, %al
-; CHECK-NEXT: setne %al
+; CHECK-NOT: xor
+; CHECK: setne
 ; CHECK-NEXT: testb
 
 func_4.exit.i:                                    ; preds = %bb.i.i.i, %entry
