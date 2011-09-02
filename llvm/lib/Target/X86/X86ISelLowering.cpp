@@ -11633,13 +11633,9 @@ X86TargetLowering::EmitLoweredSelect(MachineInstr *MI,
 
   // If the EFLAGS register isn't dead in the terminator, then claim that it's
   // live into the sink and copy blocks.
-  for (unsigned I = 0, E = MI->getNumOperands(); I != E; ++I) {
-    const MachineOperand &MO = MI->getOperand(I);
-    if (!MO.isReg() || !MO.isUse() || MO.isKill()) continue;
-    unsigned Reg = MO.getReg();
-    if (Reg != X86::EFLAGS) continue;
-    copy0MBB->addLiveIn(Reg);
-    sinkMBB->addLiveIn(Reg);
+  if (!MI->killsRegister(X86::EFLAGS)) {
+    copy0MBB->addLiveIn(X86::EFLAGS);
+    sinkMBB->addLiveIn(X86::EFLAGS);
   }
 
   // Transfer the remainder of BB and its successor edges to sinkMBB.
