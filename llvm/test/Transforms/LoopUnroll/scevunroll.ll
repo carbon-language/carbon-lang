@@ -1,4 +1,4 @@
-; RUN: opt < %s -S -indvars -loop-unroll -verify-loop-info -unroll-scev | FileCheck %s
+; RUN: opt < %s -S -indvars -loop-unroll -verify-loop-info | FileCheck %s
 ;
 ; Unit tests for loop unrolling using ScalarEvolution to compute trip counts.
 ;

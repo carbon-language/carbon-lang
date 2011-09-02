@@ -1,4 +1,4 @@
-; RUN: opt < %s -S -loop-unroll -verify-loop-info -unroll-scev | FileCheck %s
+; RUN: opt < %s -S -loop-unroll -verify-loop-info | FileCheck %s
 ;
 ; Unit tests for LoopInfo::updateUnloop.
 

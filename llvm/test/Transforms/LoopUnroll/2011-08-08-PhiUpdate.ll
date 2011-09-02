@@ -1,4 +1,4 @@
-; RUN: opt < %s -loop-unroll -S -unroll-count=4 | FileCheck %s
+; RUN: opt < %s -loop-unroll -S -unroll-count=4 -disable-unroll-scev | FileCheck %s
 ; Test phi update after partial unroll.
 
 declare i1 @check() nounwind
