@@ -689,8 +689,8 @@ static Value *CoerceAvailableValueToLoadType(Value *StoredVal,
   // If this is already the right type, just return it.
   Type *StoredValTy = StoredVal->getType();
   
-  uint64_t StoreSize = TD.getTypeStoreSizeInBits(StoredValTy);
-  uint64_t LoadSize = TD.getTypeStoreSizeInBits(LoadedTy);
+  uint64_t StoreSize = TD.getTypeSizeInBits(StoredValTy);
+  uint64_t LoadSize = TD.getTypeSizeInBits(LoadedTy);
   
   // If the store and reload are the same size, we can always reuse it.
   if (StoreSize == LoadSize) {
