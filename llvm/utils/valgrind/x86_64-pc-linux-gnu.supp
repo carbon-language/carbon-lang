@@ -51,3 +51,8 @@
    obj:/lib/ld*.so
 }
 
+{
+  suppress optimized strcasecmp, to be fixed in valgrind 3.6.1
+  Memcheck:Value8
+  fun: *strcasecmp*
+}
