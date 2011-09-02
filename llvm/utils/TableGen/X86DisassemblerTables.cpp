@@ -38,20 +38,21 @@ static inline bool inheritsFrom(InstructionContext child,
   
   switch (parent) {
   case IC:
-    return true;
+    return(inheritsFrom(child, IC_64BIT) ||
+           inheritsFrom(child, IC_OPSIZE) ||
+           inheritsFrom(child, IC_XD) ||
+           inheritsFrom(child, IC_XS));
   case IC_64BIT:
     return(inheritsFrom(child, IC_64BIT_REXW)   ||
            inheritsFrom(child, IC_64BIT_OPSIZE) ||
            inheritsFrom(child, IC_64BIT_XD)     ||
            inheritsFrom(child, IC_64BIT_XS));
   case IC_OPSIZE:
-    return(inheritsFrom(child, IC_64BIT_OPSIZE));
+    return inheritsFrom(child, IC_64BIT_OPSIZE);
   case IC_XD:
-    return(inheritsFrom(child, IC_64BIT_XD) ||
-           inheritsFrom(child, IC_VEX_XD));
+    return inheritsFrom(child, IC_64BIT_XD);
   case IC_XS:
-    return(inheritsFrom(child, IC_64BIT_XS) ||
-           inheritsFrom(child, IC_VEX_XS));
+    return inheritsFrom(child, IC_64BIT_XS);
   case IC_64BIT_REXW:
     return(inheritsFrom(child, IC_64BIT_REXW_XS) ||
            inheritsFrom(child, IC_64BIT_REXW_XD) ||
@@ -69,35 +70,31 @@ static inline bool inheritsFrom(InstructionContext child,
   case IC_64BIT_REXW_OPSIZE:
     return false;
   case IC_VEX:
-    return(inheritsFrom(child, IC_VEX_XS) ||
-           inheritsFrom(child, IC_VEX_XD) ||
-           inheritsFrom(child, IC_VEX_L) ||
-           inheritsFrom(child, IC_VEX_W) ||
-           inheritsFrom(child, IC_VEX_OPSIZE));
+    return inheritsFrom(child, IC_VEX_W);
   case IC_VEX_XS:
-    return(inheritsFrom(child, IC_VEX_L_XS) ||
-           inheritsFrom(child, IC_VEX_W_XS));
+    return inheritsFrom(child, IC_VEX_W_XS);
   case IC_VEX_XD:
-    return(inheritsFrom(child, IC_VEX_L_XD) ||
-           inheritsFrom(child, IC_VEX_W_XD));
-  case IC_VEX_L:
-    return(inheritsFrom(child, IC_VEX_L_XS) ||
-           inheritsFrom(child, IC_VEX_L_XD));
-  case IC_VEX_L_XS:
-    return false;
-  case IC_VEX_L_XD:
-    return false;
+    return inheritsFrom(child, IC_VEX_W_XD);
+  case IC_VEX_OPSIZE:
+    return inheritsFrom(child, IC_VEX_W_OPSIZE);
   case IC_VEX_W:
-    return(inheritsFrom(child, IC_VEX_W_XS) ||
-           inheritsFrom(child, IC_VEX_W_XD) ||
-           inheritsFrom(child, IC_VEX_W_OPSIZE));
+    return false;
   case IC_VEX_W_XS:
     return false;
   case IC_VEX_W_XD:
     return false;
-  case IC_VEX_OPSIZE:
-    return inheritsFrom(child, IC_VEX_W_OPSIZE);
+  case IC_VEX_W_OPSIZE:
+    return false;
+  case IC_VEX_L:
+    return false;
+  case IC_VEX_L_XS:
+    return false;
+  case IC_VEX_L_XD:
+    return false;
+  case IC_VEX_L_OPSIZE:
+    return false;
   default:
+    llvm_unreachable("Unknown instruction class");
     return false;
   }
 }
