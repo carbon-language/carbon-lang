@@ -5793,6 +5793,24 @@ static void diagnoseArithmeticOnFunctionPointer(Sema &S, SourceLocation Loc,
     << Pointer->getSourceRange();
 }
 
+/// \brief Warn if Operand is incomplete pointer type
+///
+/// \returns True if pointer has incomplete type
+static bool checkArithmeticIncompletePointerType(Sema &S, SourceLocation Loc,
+                                                 Expr *Operand) {
+  if ((Operand->getType()->isPointerType() &&
+       !Operand->getType()->isDependentType()) ||
+      Operand->getType()->isObjCObjectPointerType()) {
+    QualType PointeeTy = Operand->getType()->getPointeeType();
+    if (S.RequireCompleteType(
+          Loc, PointeeTy,
+          S.PDiag(diag::err_typecheck_arithmetic_incomplete_type)
+            << PointeeTy << Operand->getSourceRange()))
+      return true;
+  }
+  return false;
+}
+
 /// \brief Check the validity of an arithmetic pointer operand.
 ///
 /// If the operand has pointer type, this code will check for pointer types
@@ -5815,16 +5833,7 @@ static bool checkArithmeticOpPointerOperand(Sema &S, SourceLocation Loc,
     return !S.getLangOptions().CPlusPlus;
   }
 
-  if ((Operand->getType()->isPointerType() &&
-       !Operand->getType()->isDependentType()) ||
-      Operand->getType()->isObjCObjectPointerType()) {
-    QualType PointeeTy = Operand->getType()->getPointeeType();
-    if (S.RequireCompleteType(
-          Loc, PointeeTy,
-          S.PDiag(diag::err_typecheck_arithmetic_incomplete_type)
-            << PointeeTy << Operand->getSourceRange()))
-      return false;
-  }
+  if (checkArithmeticIncompletePointerType(S, Loc, Operand)) return false;
 
   return true;
 }
@@ -5869,20 +5878,9 @@ static bool checkArithmeticBinOpPointerOperands(Sema &S, SourceLocation Loc,
     return !S.getLangOptions().CPlusPlus;
   }
 
-  Expr *Operands[] = { LHS, RHS };
-  for (unsigned i = 0; i < 2; ++i) {
-    Expr *Operand = Operands[i];
-    if ((Operand->getType()->isPointerType() &&
-         !Operand->getType()->isDependentType()) ||
-        Operand->getType()->isObjCObjectPointerType()) {
-      QualType PointeeTy = Operand->getType()->getPointeeType();
-      if (S.RequireCompleteType(
-            Loc, PointeeTy,
-            S.PDiag(diag::err_typecheck_arithmetic_incomplete_type)
-              << PointeeTy << Operand->getSourceRange()))
-        return false;
-    }
-  }
+  if (checkArithmeticIncompletePointerType(S, Loc, LHS)) return false;
+  if (checkArithmeticIncompletePointerType(S, Loc, RHS)) return false;
+
   return true;
 }
 
