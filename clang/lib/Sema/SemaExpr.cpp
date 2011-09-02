@@ -6167,6 +6167,74 @@ static bool IsWithinTemplateSpecialization(Decl *D) {
   return false;
 }
 
+/// \brief Diagnose bad pointer comparisons.
+static void diagnoseDistinctPointerComparison(Sema &S, SourceLocation Loc,
+                                              ExprResult &lex, ExprResult &rex,
+                                              bool isError) {
+  S.Diag(Loc, isError ? diag::err_typecheck_comparison_of_distinct_pointers
+                      : diag::ext_typecheck_comparison_of_distinct_pointers)
+    << lex.get()->getType() << rex.get()->getType()
+    << lex.get()->getSourceRange() << rex.get()->getSourceRange();
+}
+
+/// \brief Returns false if the pointers are converted to a composite type,
+/// true otherwise.
+static bool convertPointersToCompositeType(Sema &S, SourceLocation Loc,
+                                               ExprResult &lex,
+                                               ExprResult &rex) {
+  // C++ [expr.rel]p2:
+  //   [...] Pointer conversions (4.10) and qualification
+  //   conversions (4.4) are performed on pointer operands (or on
+  //   a pointer operand and a null pointer constant) to bring
+  //   them to their composite pointer type. [...]
+  //
+  // C++ [expr.eq]p1 uses the same notion for (in)equality
+  // comparisons of pointers.
+
+  // C++ [expr.eq]p2:
+  //   In addition, pointers to members can be compared, or a pointer to
+  //   member and a null pointer constant. Pointer to member conversions
+  //   (4.11) and qualification conversions (4.4) are performed to bring
+  //   them to a common type. If one operand is a null pointer constant,
+  //   the common type is the type of the other operand. Otherwise, the
+  //   common type is a pointer to member type similar (4.4) to the type
+  //   of one of the operands, with a cv-qualification signature (4.4)
+  //   that is the union of the cv-qualification signatures of the operand
+  //   types.
+
+  QualType lType = lex.get()->getType();
+  QualType rType = rex.get()->getType();
+  assert((lType->isPointerType() && rType->isPointerType()) ||
+         (lType->isMemberPointerType() && rType->isMemberPointerType()));
+
+  bool NonStandardCompositeType = false;
+  QualType T = S.FindCompositePointerType(Loc, lex, rex,
+                           S.isSFINAEContext() ? 0 : &NonStandardCompositeType);
+  if (T.isNull()) {
+    diagnoseDistinctPointerComparison(S, Loc, lex, rex, /*isError*/true);
+    return true;
+  }
+
+  if (NonStandardCompositeType)
+    S.Diag(Loc, diag::ext_typecheck_comparison_of_distinct_pointers_nonstandard)
+      << lType << rType << T << lex.get()->getSourceRange()
+      << rex.get()->getSourceRange();
+
+  lex = S.ImpCastExprToType(lex.take(), T, CK_BitCast);
+  rex = S.ImpCastExprToType(rex.take(), T, CK_BitCast);
+  return false;
+}
+
+static void diagnoseFunctionPointerToVoidComparison(Sema &S, SourceLocation Loc,
+                                                    ExprResult &lex,
+                                                    ExprResult &rex,
+                                                    bool isError) {
+  S.Diag(Loc,isError ? diag::err_typecheck_comparison_of_fptr_to_void
+                     : diag::ext_typecheck_comparison_of_fptr_to_void)
+    << lex.get()->getType() << rex.get()->getType()
+    << lex.get()->getSourceRange() << rex.get()->getSourceRange();
+}
+
 // C99 6.5.8, C++ [expr.rel]
 QualType Sema::CheckCompareOperands(ExprResult &lex, ExprResult &rex,
                                     SourceLocation Loc, unsigned OpaqueOpc,
@@ -6348,12 +6416,8 @@ QualType Sema::CheckCompareOperands(ExprResult &lex, ExprResult &rex,
         // conformance with the C++ standard.
         if ((LCanPointeeTy->isFunctionType() || RCanPointeeTy->isFunctionType())
             && !LHSIsNull && !RHSIsNull) {
-          Diag(Loc, 
-               isSFINAEContext()? 
-                   diag::err_typecheck_comparison_of_fptr_to_void
-                 : diag::ext_typecheck_comparison_of_fptr_to_void)
-            << lType << rType << lex.get()->getSourceRange()
-            << rex.get()->getSourceRange();
+          diagnoseFunctionPointerToVoidComparison(
+              *this, Loc, lex, rex, /*isError*/ isSFINAEContext());
           
           if (isSFINAEContext())
             return QualType();
@@ -6363,32 +6427,10 @@ QualType Sema::CheckCompareOperands(ExprResult &lex, ExprResult &rex,
         }
       }
 
-      // C++ [expr.rel]p2:
-      //   [...] Pointer conversions (4.10) and qualification
-      //   conversions (4.4) are performed on pointer operands (or on
-      //   a pointer operand and a null pointer constant) to bring
-      //   them to their composite pointer type. [...]
-      //
-      // C++ [expr.eq]p1 uses the same notion for (in)equality
-      // comparisons of pointers.
-      bool NonStandardCompositeType = false;
-      QualType T = FindCompositePointerType(Loc, lex, rex,
-                              isSFINAEContext()? 0 : &NonStandardCompositeType);
-      if (T.isNull()) {
-        Diag(Loc, diag::err_typecheck_comparison_of_distinct_pointers)
-          << lType << rType << lex.get()->getSourceRange()
-          << rex.get()->getSourceRange();
+      if (convertPointersToCompositeType(*this, Loc, lex, rex))
         return QualType();
-      } else if (NonStandardCompositeType) {
-        Diag(Loc,
-             diag::ext_typecheck_comparison_of_distinct_pointers_nonstandard)
-          << lType << rType << T
-          << lex.get()->getSourceRange() << rex.get()->getSourceRange();
-      }
-
-      lex = ImpCastExprToType(lex.take(), T, CK_BitCast);
-      rex = ImpCastExprToType(rex.take(), T, CK_BitCast);
-      return ResultTy;
+      else
+        return ResultTy;
     }
     // C99 6.5.9p2 and C99 6.5.8p2
     if (Context.typesAreCompatible(LCanPointeeTy.getUnqualifiedType(),
@@ -6403,16 +6445,12 @@ QualType Sema::CheckCompareOperands(ExprResult &lex, ExprResult &rex,
                (LCanPointeeTy->isVoidType() || RCanPointeeTy->isVoidType())) {
       // Valid unless comparison between non-null pointer and function pointer
       if ((LCanPointeeTy->isFunctionType() || RCanPointeeTy->isFunctionType())
-          && !LHSIsNull && !RHSIsNull) {
-        Diag(Loc, diag::ext_typecheck_comparison_of_fptr_to_void)
-          << lType << rType << lex.get()->getSourceRange()
-          << rex.get()->getSourceRange();
-      }
+          && !LHSIsNull && !RHSIsNull)
+        diagnoseFunctionPointerToVoidComparison(*this, Loc, lex, rex,
+                                                /*isError*/false);
     } else {
       // Invalid
-      Diag(Loc, diag::ext_typecheck_comparison_of_distinct_pointers)
-        << lType << rType << lex.get()->getSourceRange()
-        << rex.get()->getSourceRange();
+      diagnoseDistinctPointerComparison(*this, Loc, lex, rex, /*isError*/false);
     }
     if (LCanPointeeTy != RCanPointeeTy) {
       if (LHSIsNull && !RHSIsNull)
@@ -6454,34 +6492,10 @@ QualType Sema::CheckCompareOperands(ExprResult &lex, ExprResult &rex,
     // Comparison of member pointers.
     if (!isRelational &&
         lType->isMemberPointerType() && rType->isMemberPointerType()) {
-      // C++ [expr.eq]p2:
-      //   In addition, pointers to members can be compared, or a pointer to
-      //   member and a null pointer constant. Pointer to member conversions
-      //   (4.11) and qualification conversions (4.4) are performed to bring
-      //   them to a common type. If one operand is a null pointer constant,
-      //   the common type is the type of the other operand. Otherwise, the
-      //   common type is a pointer to member type similar (4.4) to the type
-      //   of one of the operands, with a cv-qualification signature (4.4)
-      //   that is the union of the cv-qualification signatures of the operand
-      //   types.
-      bool NonStandardCompositeType = false;
-      QualType T = FindCompositePointerType(Loc, lex, rex,
-                              isSFINAEContext()? 0 : &NonStandardCompositeType);
-      if (T.isNull()) {
-        Diag(Loc, diag::err_typecheck_comparison_of_distinct_pointers)
-          << lType << rType << lex.get()->getSourceRange()
-          << rex.get()->getSourceRange();
+      if (convertPointersToCompositeType(*this, Loc, lex, rex))
         return QualType();
-      } else if (NonStandardCompositeType) {
-        Diag(Loc,
-             diag::ext_typecheck_comparison_of_distinct_pointers_nonstandard)
-          << lType << rType << T
-          << lex.get()->getSourceRange() << rex.get()->getSourceRange();
-      }
-
-      lex = ImpCastExprToType(lex.take(), T, CK_BitCast);
-      rex = ImpCastExprToType(rex.take(), T, CK_BitCast);
-      return ResultTy;
+      else
+        return ResultTy;
     }
 
     // Handle scoped enumeration types specifically, since they don't promote
@@ -6537,9 +6551,8 @@ QualType Sema::CheckCompareOperands(ExprResult &lex, ExprResult &rex,
 
       if (!LPtrToVoid && !RPtrToVoid &&
           !Context.typesAreCompatible(lType, rType)) {
-        Diag(Loc, diag::ext_typecheck_comparison_of_distinct_pointers)
-          << lType << rType << lex.get()->getSourceRange()
-          << rex.get()->getSourceRange();
+        diagnoseDistinctPointerComparison(*this, Loc, lex, rex,
+                                          /*isError*/false);
       }
       if (LHSIsNull && !RHSIsNull)
         lex = ImpCastExprToType(lex.take(), rType, CK_BitCast);
@@ -6549,9 +6562,8 @@ QualType Sema::CheckCompareOperands(ExprResult &lex, ExprResult &rex,
     }
     if (lType->isObjCObjectPointerType() && rType->isObjCObjectPointerType()) {
       if (!Context.areComparableObjCPointerTypes(lType, rType))
-        Diag(Loc, diag::ext_typecheck_comparison_of_distinct_pointers)
-          << lType << rType << lex.get()->getSourceRange()
-          << rex.get()->getSourceRange();
+        diagnoseDistinctPointerComparison(*this, Loc, lex, rex,
+                                          /*isError*/false);
       if (LHSIsNull && !RHSIsNull)
         lex = ImpCastExprToType(lex.take(), rType, CK_BitCast);
       else
