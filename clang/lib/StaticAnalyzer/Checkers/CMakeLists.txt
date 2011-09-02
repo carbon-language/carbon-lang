@@ -45,6 +45,7 @@ add_clang_library(clangStaticAnalyzerCheckers
   PointerArithChecker.cpp
   PointerSubChecker.cpp
   PthreadLockChecker.cpp
+  RetainCountChecker.cpp
   ReturnPointerRangeChecker.cpp
   ReturnUndefChecker.cpp
   StackAddrEscapeChecker.cpp
