@@ -22,14 +22,6 @@
 using namespace clang;
 using namespace ento;
 
-// This should be removed in the future.
-namespace clang {
-namespace ento {
-TransferFuncs* MakeCFRefCountTF(ASTContext &Ctx, bool GCEnabled,
-                                  const LangOptions& lopts);
-}
-}
-
 //===----------------------------------------------------------------------===//
 // Worklist classes for exploration of reachable states.
 //===----------------------------------------------------------------------===//
@@ -813,11 +805,10 @@ void CallEnterNodeBuilder::generateNode(const ProgramState *state) {
                      OldMgr.getAnalysisContextManager().
                          getCFGBuildOptions().AddInitializers,
                      OldMgr.shouldEagerlyTrimExplodedGraph());
-    llvm::OwningPtr<TransferFuncs> TF(MakeCFRefCountTF(AMgr.getASTContext(),
-                                                         /* GCEnabled */ false,
-                                                        AMgr.getLangOptions()));
     // Create the new engine.
-    ExprEngine NewEng(AMgr, TF.take());
+    // FIXME: This cast isn't really safe.
+    bool GCEnabled = static_cast<ExprEngine&>(Eng.SubEng).isObjCGCEnabled();
+    ExprEngine NewEng(AMgr, GCEnabled);
 
     // Create the new LocationContext.
     AnalysisContext *NewAnaCtx = AMgr.getAnalysisContext(CalleeCtx->getDecl(), 
