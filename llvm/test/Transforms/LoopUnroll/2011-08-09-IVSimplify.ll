@@ -1,18 +1,20 @@
-; RUN: opt -S < %s -loop-unroll -unroll-count=4 -disable-iv-rewrite -disable-unroll-scev | FileCheck %s
+; RUN: opt -S < %s -loop-unroll -unroll-count=4 -disable-iv-rewrite | FileCheck %s
 ;
 ; Test induction variable simplify after loop unrolling. It should
 ; expose nice opportunities for GVN.
+;
+; CHECK-NOT: while.body also ensures that loop unrolling (with SCEV)
+; removes unrolled loop exits given that 128 is a multiple of 4.
 
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-f80:128:128-v64:64:64-v128:128:128-a0:0:64-f80:32:32-n8:16:32"
 
 ; PR10534: LoopUnroll not keeping canonical induction variable...
-; CHECK: while.body.1:
+; CHECK: while.body:
+; CHECK-NOT: while.body.1:
 ; CHECK: %shr.1 = lshr i32 %bit_addr.addr.01, 5
 ; CHECK: %arrayidx.1 = getelementptr inbounds i32* %bitmap, i32 %shr.1
-; CHECK: while.body.2:
 ; CHECK: %shr.2 = lshr i32 %bit_addr.addr.01, 5
 ; CHECK: %arrayidx.2 = getelementptr inbounds i32* %bitmap, i32 %shr.2
-; CHECK: while.body.3:
 ; CHECK: %shr.3 = lshr i32 %bit_addr.addr.01, 5
 ; CHECK: %arrayidx.3 = getelementptr inbounds i32* %bitmap, i32 %shr.3
 define void @FlipBit(i32* nocapture %bitmap, i32 %bit_addr, i32 %nbits) nounwind {

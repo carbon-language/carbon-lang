@@ -1,4 +1,4 @@
-; RUN: opt < %s -loop-unroll -S -unroll-count=4 -disable-unroll-scev | FileCheck %s
+; RUN: opt < %s -loop-unroll -S -unroll-count=4 | FileCheck %s
 ; Test phi update after partial unroll.
 
 declare i1 @check() nounwind
@@ -73,13 +73,15 @@ bb2:                                              ; preds = %bb1.bb2_crit_edge, 
 ; CHECK: exit.3:
 define i32 @test3() nounwind uwtable ssp align 2 {
 entry:
-  br i1 undef, label %return, label %if.end
+  %cond1 = call zeroext i1 @check()
+  br i1 %cond1, label %return, label %if.end
 
 if.end:                                           ; preds = %entry
   br label %do.body
 
 do.body:                                          ; preds = %do.cond, %if.end
-  br i1 undef, label %exit, label %do.cond
+  %cond2 = call zeroext i1 @check()
+  br i1 %cond2, label %exit, label %do.cond
 
 exit:                  ; preds = %do.body
   %tmp7.i = load i32* undef, align 8
@@ -89,7 +91,8 @@ land.lhs.true:                                    ; preds = %exit
   br i1 undef, label %return, label %do.cond
 
 do.cond:                                          ; preds = %land.lhs.true, %exit, %do.body
-  br i1 undef, label %do.end, label %do.body
+  %cond3 = call zeroext i1 @check()
+  br i1 %cond3, label %do.end, label %do.body
 
 do.end:                                           ; preds = %do.cond
   br label %return
