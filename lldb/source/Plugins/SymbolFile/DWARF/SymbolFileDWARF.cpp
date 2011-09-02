@@ -174,6 +174,7 @@ SymbolFileDWARF::SymbolFileDWARF(ObjectFile* objfile) :
     m_aranges(),
     m_info(),
     m_line(),
+    m_debug_names (this, m_data_debug_names),
     m_function_basename_index(),
     m_function_fullname_index(),
     m_function_method_index(),
@@ -187,6 +188,8 @@ SymbolFileDWARF::SymbolFileDWARF(ObjectFile* objfile) :
     m_ranges(),
     m_unique_ast_type_map ()
 {
+    get_debug_names_data();
+    m_debug_names.Initialize();
 }
 
 SymbolFileDWARF::~SymbolFileDWARF()
@@ -2075,6 +2078,76 @@ SymbolFileDWARF::FindGlobalVariables(const RegularExpression& regex, bool append
 }
 
 
+uint32_t
+SymbolFileDWARF::ResolveFunctions (const DIEArray &die_offsets,
+                                   SymbolContextList& sc_list)
+{
+    DWARFDebugInfo* info = DebugInfo();
+    if (info == NULL)
+        return 0;
+    
+    const uint32_t sc_list_initial_size = sc_list.GetSize();
+    SymbolContext sc;
+    sc.module_sp = m_obj_file->GetModule()->GetSP();
+    assert (sc.module_sp);
+    
+    DWARFCompileUnit* dwarf_cu = NULL;
+    const size_t num_matches = die_offsets.size();
+    for (size_t i=0; i<num_matches; ++i)
+    {
+        const dw_offset_t die_offset = die_offsets[i];
+        const DWARFDebugInfoEntry* die = info->GetDIEPtrWithCompileUnitHint (die_offset, &dwarf_cu);
+        
+        const DWARFDebugInfoEntry* inlined_die = NULL;
+        if (die->Tag() == DW_TAG_inlined_subroutine)
+        {
+            inlined_die = die;
+            
+            while ((die = die->GetParent()) != NULL)
+            {
+                if (die->Tag() == DW_TAG_subprogram)
+                    break;
+            }
+        }
+        assert (die->Tag() == DW_TAG_subprogram);
+        if (GetFunction (dwarf_cu, die, sc))
+        {
+            Address addr;
+            // Parse all blocks if needed
+            if (inlined_die)
+            {
+                sc.block = sc.function->GetBlock (true).FindBlockByID (inlined_die->GetOffset());
+                assert (sc.block != NULL);
+                if (sc.block->GetStartAddress (addr) == false)
+                    addr.Clear();
+            }
+            else 
+            {
+                sc.block = NULL;
+                addr = sc.function->GetAddressRange().GetBaseAddress();
+            }
+            
+            if (addr.IsValid())
+            {
+                
+                // We found the function, so we should find the line table
+                // and line table entry as well
+                LineTable *line_table = sc.comp_unit->GetLineTable();
+                if (line_table == NULL)
+                {
+                    if (ParseCompileUnitLineTable(sc))
+                        line_table = sc.comp_unit->GetLineTable();
+                }
+                if (line_table != NULL)
+                    line_table->FindLineEntryByAddress (addr, sc.line_entry);
+                
+                sc_list.Append(sc);
+            }
+        }
+    }
+    return sc_list.GetSize() - sc_list_initial_size;
+}
+
 void
 SymbolFileDWARF::FindFunctions
 (
@@ -2253,7 +2326,19 @@ SymbolFileDWARF::FindFunctions
 
     // Remember how many sc_list are in the list before we search in case
     // we are appending the results to a variable list.
-    uint32_t original_size = sc_list.GetSize();
+
+    if (m_debug_names.IsValid())
+    {
+        DIEArray die_offsets;
+        const uint32_t num_matches = m_debug_names.Find(name, die_offsets);
+        if (num_matches > 0)
+        {
+            return ResolveFunctions (die_offsets, sc_list);
+        }
+        return 0;
+    }
+
+    const uint32_t original_size = sc_list.GetSize();
 
     // Index the DWARF if we haven't already
     if (!m_indexed)

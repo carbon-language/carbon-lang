@@ -167,13 +167,15 @@ BreakpointResolverName::SearchCallback
         case Breakpoint::Exact:
             if (context.module_sp)
             {
-                if (m_func_name_type_mask & (eFunctionNameTypeBase | eFunctionNameTypeFull))
-                    context.module_sp->FindSymbolsWithNameAndType (m_func_name, eSymbolTypeCode, sym_list);
-                context.module_sp->FindFunctions (m_func_name, 
-                                                  m_func_name_type_mask, 
-                                                  include_symbols, 
-                                                  append, 
-                                                  func_list);
+                if (context.module_sp->FindFunctions (m_func_name, 
+                                                      m_func_name_type_mask, 
+                                                      include_symbols, 
+                                                      append, 
+                                                      func_list) == 0)
+                {
+                    if (m_func_name_type_mask & (eFunctionNameTypeBase | eFunctionNameTypeFull))
+                        context.module_sp->FindSymbolsWithNameAndType (m_func_name, eSymbolTypeCode, sym_list);
+                }
             }
             break;
         case Breakpoint::Regexp:

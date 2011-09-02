@@ -31,7 +31,7 @@ public:
 		uint32_t die_offset_base;
 
 		Header() :
-            version(1),
+            version(0),
             hash_type (0),
             hash_index_bitsize (0),
             num_buckets(0),
@@ -49,6 +49,12 @@ public:
     {
     }
     
+    bool
+    IsValid () const
+    {
+        return m_header.version > 0;
+    }
+
     uint32_t
     GetHashIndexMask () const
     {
@@ -56,7 +62,7 @@ public:
     }
     
     uint32_t
-    GetOffsetForBucket (uint32_t idx) const
+    GetOffsetOfBucketEntry (uint32_t idx) const
     {
         if (idx < m_header.num_buckets)
             return sizeof(Header) + 4 * idx;
@@ -64,18 +70,25 @@ public:
     }
 
     uint32_t
-    GetOffsetForHash (uint32_t idx) const
+    GetOffsetOfHashValue (uint32_t idx) const
     {
         if (idx < m_header.num_hashes)
-            return sizeof(Header) + 4 * m_header.num_buckets + 4 * idx;
+            return  sizeof(Header) + 
+                    4 * m_header.num_buckets + 
+                    4 * idx;
         return UINT32_MAX;
     }
 
     uint32_t
-    GetOffsetForOffset (uint32_t idx) const
+    GetOffsetOfHashDataOffset (uint32_t idx) const
     {
         if (idx < m_header.num_hashes)
-            return sizeof(Header) + 4 * m_header.num_buckets + 4 * m_header.num_hashes + 4 * idx;
+        {
+            return  sizeof(Header) +
+                    4 * m_header.num_buckets +
+                    4 * m_header.num_hashes +
+                    4 * idx;
+        }
         return UINT32_MAX;
     }
 
@@ -90,6 +103,9 @@ public:
     Find (const lldb_private::RegularExpression& regex,  
           DIEArray &die_ofsets) const;
 
+    void
+    Initialize();
+    
 protected:
     SymbolFileDWARF *m_dwarf;
     const lldb_private::DataExtractor &m_data;

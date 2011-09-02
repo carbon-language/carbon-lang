@@ -38,15 +38,22 @@ HashedNameToDIE::HashedNameToDIE (SymbolFileDWARF *dwarf, const DataExtractor &d
     m_data (data),
     m_header  ()
 {
-    uint32_t offset = 0;
-    m_header.version = m_data.GetU16(&offset);
-    m_header.hash_type = m_data.GetU8(&offset);
-    m_header.hash_index_bitsize = m_data.GetU8(&offset);
-    m_header.num_buckets = m_data.GetU32(&offset);
-    m_header.num_hashes = m_data.GetU32(&offset);
-    m_header.die_offset_base = m_data.GetU32(&offset);
 }
 
+void
+HashedNameToDIE::Initialize()
+{
+    uint32_t offset = 0;
+    m_header.version = m_data.GetU16(&offset);
+    if (m_header.version)
+    {
+        m_header.hash_type = m_data.GetU8(&offset);
+        m_header.hash_index_bitsize = m_data.GetU8(&offset);
+        m_header.num_buckets = m_data.GetU32(&offset);
+        m_header.num_hashes = m_data.GetU32(&offset);
+        m_header.die_offset_base = m_data.GetU32(&offset);
+    }
+}
 
 size_t
 HashedNameToDIE::Find (const ConstString &name, DIEArray &die_ofsets) const
@@ -62,7 +69,7 @@ HashedNameToDIE::Find (const ConstString &name, DIEArray &die_ofsets) const
         const uint32_t bucket_idx = name_hash % m_header.num_buckets;
         
         // Calculate the offset for the bucket entry for the bucket index
-        uint32_t offset = GetOffsetForBucket (bucket_idx);
+        uint32_t offset = GetOffsetOfBucketEntry (bucket_idx);
 
         // Extract the bucket entry.
         const uint32_t bucket_entry = m_data.GetU32 (&offset);
@@ -77,7 +84,7 @@ HashedNameToDIE::Find (const ConstString &name, DIEArray &die_ofsets) const
             const uint32_t hash_count = bucket_entry >> m_header.hash_index_bitsize;
             const uint32_t hash_end_idx = hash_idx + hash_count;
             // Figure out the offset to the hash value by index
-            uint32_t hash_offset = GetOffsetForHash (hash_idx);
+            uint32_t hash_offset = GetOffsetOfHashValue (hash_idx);
             for (uint32_t idx = hash_idx; idx < hash_end_idx; ++idx)
             {
                 // Extract the hash value and see if it matches our string
@@ -87,20 +94,24 @@ HashedNameToDIE::Find (const ConstString &name, DIEArray &die_ofsets) const
                     // The hash matches, but we still need to verify that the
                     // C string matches in case we have a hash collision. Figure
                     // out the offset for the data associated with this hash entry
-                    offset = GetOffsetForOffset (hash_idx);
+                    offset = GetOffsetOfHashDataOffset (idx);
                     // Extract the first 32 bit value which is the .debug_str offset
                     // of the string we need
-                    const uint32_t str_offset = m_data.GetU32 (&offset);
+                    uint32_t hash_data_offset = m_data.GetU32 (&offset);
+                    const uint32_t str_offset = m_data.GetU32 (&hash_data_offset);
                     // Extract the C string and comapare it
                     const char *cstr_name = m_dwarf->get_debug_str_data().PeekCStr(str_offset);
-                    if (strcmp(name_cstr, cstr_name) == 0)
+                    if (cstr_name)
                     {
-                        // We have a match, now extract the DIE count
-                        const uint32_t die_count = m_data.GetU32 (&offset);
-                        // Now extract "die_count" DIE offsets and put them into the
-                        // results
-                        for (uint32_t die_idx = 0; die_idx < die_count; ++die_idx)
-                            die_ofsets.push_back(m_data.GetU32 (&offset));
+                        if (strcmp(name_cstr, cstr_name) == 0)
+                        {
+                            // We have a match, now extract the DIE count
+                            const uint32_t die_count = m_data.GetU32 (&hash_data_offset);
+                            // Now extract "die_count" DIE offsets and put them into the
+                            // results
+                            for (uint32_t die_idx = 0; die_idx < die_count; ++die_idx)
+                                die_ofsets.push_back(m_data.GetU32 (&hash_data_offset));
+                        }
                     }
                 }
             }

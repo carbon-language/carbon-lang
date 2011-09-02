@@ -32,6 +32,7 @@
 
 // Project includes
 #include "DWARFDefines.h"
+#include "HashedNameToDIE.h"
 #include "NameToDIE.h"
 #include "UniqueDWARFASTType.h"
 
@@ -308,6 +309,10 @@ protected:
                                 uint32_t& byte_stride,
                                 uint32_t& bit_stride);
 
+    uint32_t                ResolveFunctions (
+                                const DIEArray &die_offsets,
+                                lldb_private::SymbolContextList& sc_list);
+
     void                    FindFunctions(
                                 const lldb_private::ConstString &name, 
                                 const NameToDIE &name_to_die,
@@ -384,6 +389,7 @@ protected:
     std::auto_ptr<DWARFDebugAranges>    m_aranges;
     std::auto_ptr<DWARFDebugInfo>       m_info;
     std::auto_ptr<DWARFDebugLine>       m_line;
+    HashedNameToDIE                     m_debug_names;
     NameToDIE                           m_function_basename_index;  // All concrete functions
     NameToDIE                           m_function_fullname_index;  // All concrete functions
     NameToDIE                           m_function_method_index;    // All inlined functions
