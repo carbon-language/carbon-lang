@@ -30,7 +30,7 @@ entry:
 lpad:                                             ; preds = %entry
 ; CHECK-EL:  # %lpad
 ; CHECK-EL:  lw  $gp
-; CHECK-EL:  beq $5
+; CHECK-EL:  beq $3
 
   %exn = tail call i8* @llvm.eh.exception() nounwind
   %eh.selector = tail call i32 (i8*, i8*, ...)* @llvm.eh.selector(i8* %exn, i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*), i8* bitcast (i8** @_ZTId to i8*)) nounwind
