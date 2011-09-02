@@ -63,7 +63,7 @@ ExprEngine::ExprEngine(AnalysisManager &mgr, bool gcEnabled)
     EntryNode(NULL), currentStmt(NULL),
     NSExceptionII(NULL), NSExceptionInstanceRaiseSelectors(NULL),
     RaiseSel(GetNullarySelector("raise", getContext())),
-    BR(mgr, *this), ObjCGCEnabled(gcEnabled) {
+    ObjCGCEnabled(gcEnabled), BR(mgr, *this) {
   
   if (mgr.shouldEagerlyTrimExplodedGraph()) {
     // Enable eager node reclaimation when constructing the ExplodedGraph.  
