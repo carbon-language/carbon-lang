@@ -677,50 +677,50 @@ public:
         OS.resetColor();
     }
 
-    if (DiagOpts.ShowParseableFixits) {
+    // Print out any parseable fixit information requested by the options.
+    EmitParseableFixits(Hints, NumHints);
+  }
 
-      // We follow FixItRewriter's example in not (yet) handling
-      // fix-its in macros.
-      bool BadApples = false;
-      for (const FixItHint *Hint = Hints; Hint != Hints + NumHints; ++Hint) {
-        if (Hint->RemoveRange.isInvalid() ||
-            Hint->RemoveRange.getBegin().isMacroID() ||
-            Hint->RemoveRange.getEnd().isMacroID()) {
-          BadApples = true;
-          break;
-        }
-      }
+private:
+  void EmitParseableFixits(const FixItHint *Hints, unsigned NumHints) {
+    if (!DiagOpts.ShowParseableFixits)
+      return;
 
-      if (!BadApples) {
-        for (const FixItHint *Hint = Hints; Hint != Hints + NumHints; ++Hint) {
+    // We follow FixItRewriter's example in not (yet) handling
+    // fix-its in macros.
+    for (const FixItHint *Hint = Hints; Hint != Hints + NumHints; ++Hint) {
+      if (Hint->RemoveRange.isInvalid() ||
+          Hint->RemoveRange.getBegin().isMacroID() ||
+          Hint->RemoveRange.getEnd().isMacroID())
+        return;
+    }
 
-          SourceLocation B = Hint->RemoveRange.getBegin();
-          SourceLocation E = Hint->RemoveRange.getEnd();
+    for (const FixItHint *Hint = Hints; Hint != Hints + NumHints; ++Hint) {
+      SourceLocation B = Hint->RemoveRange.getBegin();
+      SourceLocation E = Hint->RemoveRange.getEnd();
 
-          std::pair<FileID, unsigned> BInfo = SM.getDecomposedLoc(B);
-          std::pair<FileID, unsigned> EInfo = SM.getDecomposedLoc(E);
+      std::pair<FileID, unsigned> BInfo = SM.getDecomposedLoc(B);
+      std::pair<FileID, unsigned> EInfo = SM.getDecomposedLoc(E);
 
-          // Adjust for token ranges.
-          if (Hint->RemoveRange.isTokenRange())
-            EInfo.second += Lexer::MeasureTokenLength(E, SM, LangOpts);
+      // Adjust for token ranges.
+      if (Hint->RemoveRange.isTokenRange())
+        EInfo.second += Lexer::MeasureTokenLength(E, SM, LangOpts);
 
-          // We specifically do not do word-wrapping or tab-expansion here,
-          // because this is supposed to be easy to parse.
-          PresumedLoc PLoc = SM.getPresumedLoc(B);
-          if (PLoc.isInvalid())
-            break;
+      // We specifically do not do word-wrapping or tab-expansion here,
+      // because this is supposed to be easy to parse.
+      PresumedLoc PLoc = SM.getPresumedLoc(B);
+      if (PLoc.isInvalid())
+        break;
 
-          OS << "fix-it:\"";
-          OS.write_escaped(SM.getPresumedLoc(B).getFilename());
-          OS << "\":{" << SM.getLineNumber(BInfo.first, BInfo.second)
-            << ':' << SM.getColumnNumber(BInfo.first, BInfo.second)
-            << '-' << SM.getLineNumber(EInfo.first, EInfo.second)
-            << ':' << SM.getColumnNumber(EInfo.first, EInfo.second)
-            << "}:\"";
-          OS.write_escaped(Hint->CodeToInsert);
-          OS << "\"\n";
-        }
-      }
+      OS << "fix-it:\"";
+      OS.write_escaped(SM.getPresumedLoc(B).getFilename());
+      OS << "\":{" << SM.getLineNumber(BInfo.first, BInfo.second)
+        << ':' << SM.getColumnNumber(BInfo.first, BInfo.second)
+        << '-' << SM.getLineNumber(EInfo.first, EInfo.second)
+        << ':' << SM.getColumnNumber(EInfo.first, EInfo.second)
+        << "}:\"";
+      OS.write_escaped(Hint->CodeToInsert);
+      OS << "\"\n";
     }
   }
 };
