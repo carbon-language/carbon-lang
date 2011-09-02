@@ -6167,6 +6167,35 @@ static bool IsWithinTemplateSpecialization(Decl *D) {
   return false;
 }
 
+/// If two different enums are compared, raise a warning.
+static void checkEnumComparison(Sema &S, SourceLocation Loc, ExprResult &lex,
+                                ExprResult &rex) {
+  QualType lType = lex.get()->getType();
+  QualType rType = rex.get()->getType();
+  QualType LHSStrippedType = lex.get()->IgnoreParenImpCasts()->getType();
+  QualType RHSStrippedType = rex.get()->IgnoreParenImpCasts()->getType();
+
+  const EnumType *LHSEnumType = LHSStrippedType->getAs<EnumType>();
+  if (!LHSEnumType)
+    return;
+  const EnumType *RHSEnumType = RHSStrippedType->getAs<EnumType>();
+  if (!RHSEnumType)
+    return;
+
+  // Ignore anonymous enums.
+  if (!LHSEnumType->getDecl()->getIdentifier())
+    return;
+  if (!RHSEnumType->getDecl()->getIdentifier())
+    return;
+
+  if (S.Context.hasSameUnqualifiedType(LHSStrippedType, RHSStrippedType))
+    return;
+
+  S.Diag(Loc, diag::warn_comparison_of_mixed_enum_types)
+      << LHSStrippedType << RHSStrippedType
+      << lex.get()->getSourceRange() << rex.get()->getSourceRange();
+}
+
 /// \brief Diagnose bad pointer comparisons.
 static void diagnoseDistinctPointerComparison(Sema &S, SourceLocation Loc,
                                               ExprResult &lex, ExprResult &rex,
@@ -6254,20 +6283,7 @@ QualType Sema::CheckCompareOperands(ExprResult &lex, ExprResult &rex,
   QualType LHSStrippedType = LHSStripped->getType();
   QualType RHSStrippedType = RHSStripped->getType();
 
-  
-
-  // Two different enums will raise a warning when compared.
-  if (const EnumType *LHSEnumType = LHSStrippedType->getAs<EnumType>()) {
-    if (const EnumType *RHSEnumType = RHSStrippedType->getAs<EnumType>()) {
-      if (LHSEnumType->getDecl()->getIdentifier() &&
-          RHSEnumType->getDecl()->getIdentifier() &&
-          !Context.hasSameUnqualifiedType(LHSStrippedType, RHSStrippedType)) {
-        Diag(Loc, diag::warn_comparison_of_mixed_enum_types)
-          << LHSStrippedType << RHSStrippedType
-          << lex.get()->getSourceRange() << rex.get()->getSourceRange();
-      }
-    }
-  }
+  checkEnumComparison(*this, Loc, lex, rex);
 
   if (!lType->hasFloatingRepresentation() &&
       !(lType->isBlockPointerType() && isRelational) &&
@@ -7576,6 +7592,54 @@ static void DiagnoseSelfAssignment(Sema &S, Expr *lhs, Expr *rhs,
       << lhs->getSourceRange() << rhs->getSourceRange();
 }
 
+// checkArithmeticNull - Detect when a NULL constant is used improperly in an
+// expression.  These are mainly cases where the null pointer is used as an
+// integer instead of a pointer.
+static void checkArithmeticNull(Sema &S, ExprResult &lex, ExprResult &rex,
+                                SourceLocation Loc, bool isCompare) {
+  // The canonical way to check for a GNU null is with isNullPointerConstant,
+  // but we use a bit of a hack here for speed; this is a relatively
+  // hot path, and isNullPointerConstant is slow.
+  bool LeftNull = isa<GNUNullExpr>(lex.get()->IgnoreParenImpCasts());
+  bool RightNull = isa<GNUNullExpr>(rex.get()->IgnoreParenImpCasts());
+
+  // Detect when a NULL constant is used improperly in an expression.  These
+  // are mainly cases where the null pointer is used as an integer instead
+  // of a pointer.
+  if (!LeftNull && !RightNull)
+    return;
+
+  QualType LeftType = lex.get()->getType();
+  QualType RightType = rex.get()->getType();
+
+  // Avoid analyzing cases where the result will either be invalid (and
+  // diagnosed as such) or entirely valid and not something to warn about.
+  if (LeftType->isBlockPointerType() || LeftType->isMemberPointerType() ||
+      LeftType->isFunctionType() || RightType->isBlockPointerType() ||
+      RightType->isMemberPointerType() || RightType->isFunctionType())
+    return;
+
+  // Comparison operations would not make sense with a null pointer no matter
+  // what the other expression is.
+  if (!isCompare) {
+    S.Diag(Loc, diag::warn_null_in_arithmetic_operation)
+        << (LeftNull ? lex.get()->getSourceRange() : SourceRange())
+        << (RightNull ? rex.get()->getSourceRange() : SourceRange());
+    return;
+  }
+
+  // The rest of the operations only make sense with a null pointer
+  // if the other expression is a pointer.
+  if (LeftNull == RightNull || LeftType->isAnyPointerType() ||
+      LeftType->canDecayToPointerType() || RightType->isAnyPointerType() ||
+      RightType->canDecayToPointerType())
+    return;
+
+  S.Diag(Loc, diag::warn_null_in_comparison_operation)
+      << LeftNull /* LHS is NULL */
+      << (LeftNull ? rex.get()->getType() : lex.get()->getType())
+      << lex.get()->getSourceRange() << rex.get()->getSourceRange();
+}
 /// CreateBuiltinBinOp - Creates a new built-in binary operation with
 /// operator @p Opc at location @c TokLoc. This routine only supports
 /// built-in operations; ActOnBinOp handles overloaded operators.
@@ -7607,53 +7671,16 @@ ExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
     rhs = move(resolvedRHS);
   }
 
-  // The canonical way to check for a GNU null is with isNullPointerConstant,
-  // but we use a bit of a hack here for speed; this is a relatively
-  // hot path, and isNullPointerConstant is slow.
-  bool LeftNull = isa<GNUNullExpr>(lhs.get()->IgnoreParenImpCasts());
-  bool RightNull = isa<GNUNullExpr>(rhs.get()->IgnoreParenImpCasts());
-
-  // Detect when a NULL constant is used improperly in an expression.  These
-  // are mainly cases where the null pointer is used as an integer instead
-  // of a pointer.
-  if (LeftNull || RightNull) {
-    // Avoid analyzing cases where the result will either be invalid (and
-    // diagnosed as such) or entirely valid and not something to warn about.
-    QualType LeftType = lhs.get()->getType();
-    QualType RightType = rhs.get()->getType();
-    if (!LeftType->isBlockPointerType() && !LeftType->isMemberPointerType() &&
-        !LeftType->isFunctionType() &&
-        !RightType->isBlockPointerType() &&
-        !RightType->isMemberPointerType() &&
-        !RightType->isFunctionType()) {
-      if (Opc == BO_Mul || Opc == BO_Div || Opc == BO_Rem || Opc == BO_Add ||
-          Opc == BO_Sub || Opc == BO_Shl || Opc == BO_Shr || Opc == BO_And ||
-          Opc == BO_Xor || Opc == BO_Or || Opc == BO_MulAssign ||
-          Opc == BO_DivAssign || Opc == BO_AddAssign || Opc == BO_SubAssign ||
-          Opc == BO_RemAssign || Opc == BO_ShlAssign || Opc == BO_ShrAssign ||
-          Opc == BO_AndAssign || Opc == BO_OrAssign || Opc == BO_XorAssign) {
-        // These are the operations that would not make sense with a null pointer
-        // pointer no matter what the other expression is.
-        Diag(OpLoc, diag::warn_null_in_arithmetic_operation)
-          << (LeftNull ? lhs.get()->getSourceRange() : SourceRange())
-          << (RightNull ? rhs.get()->getSourceRange() : SourceRange());
-      } else if (Opc == BO_LE || Opc == BO_LT || Opc == BO_GE || Opc == BO_GT ||
-                 Opc == BO_EQ || Opc == BO_NE) {
-        // These are the operations that would not make sense with a null pointer
-        // if the other expression the other expression is not a pointer.
-        if (LeftNull != RightNull &&
-            !LeftType->isAnyPointerType() &&
-            !LeftType->canDecayToPointerType() &&
-            !RightType->isAnyPointerType() &&
-            !RightType->canDecayToPointerType()) {
-          Diag(OpLoc, diag::warn_null_in_comparison_operation)
-            << LeftNull /* LHS is NULL */
-            << (LeftNull ? rhs.get()->getType() : lhs.get()->getType())
-            << lhs.get()->getSourceRange() << rhs.get()->getSourceRange();
-        }
-      }
-    }
-  }
+  if (Opc == BO_Mul || Opc == BO_Div || Opc == BO_Rem || Opc == BO_Add ||
+      Opc == BO_Sub || Opc == BO_Shl || Opc == BO_Shr || Opc == BO_And ||
+      Opc == BO_Xor || Opc == BO_Or || Opc == BO_MulAssign ||
+      Opc == BO_DivAssign || Opc == BO_AddAssign || Opc == BO_SubAssign ||
+      Opc == BO_RemAssign || Opc == BO_ShlAssign || Opc == BO_ShrAssign ||
+      Opc == BO_AndAssign || Opc == BO_OrAssign || Opc == BO_XorAssign)
+    checkArithmeticNull(*this, lhs, rhs, OpLoc, /*isCompare=*/false);
+  else if (Opc == BO_LE || Opc == BO_LT || Opc == BO_GE || Opc == BO_GT ||
+           Opc == BO_EQ || Opc == BO_NE)
+    checkArithmeticNull(*this, lhs, rhs, OpLoc, /*isCompare=*/true);
 
   switch (Opc) {
   case BO_Assign:
