@@ -1265,7 +1265,16 @@ void AsmPrinter::EmitXXStructorList(const Constant *List) {
   }
 
   // Emit the function pointers in reverse priority order.
-  std::sort(Structors.rbegin(), Structors.rend(), priority_order);
+  switch (MAI->getStructorOutputOrder()) {
+  case Structors::None:
+    break;
+  case Structors::PriorityOrder:
+    std::sort(Structors.begin(), Structors.end(), priority_order);
+    break;
+  case Structors::ReversePriorityOrder:
+    std::sort(Structors.rbegin(), Structors.rend(), priority_order);
+    break;
+  }
   for (unsigned i = 0, e = Structors.size(); i != e; ++i)
     EmitGlobalConstant(Structors[i].second);
 }

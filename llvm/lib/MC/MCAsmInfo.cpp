@@ -29,6 +29,7 @@ MCAsmInfo::MCAsmInfo() {
   HasSubsectionsViaSymbols = false;
   HasMachoZeroFillDirective = false;
   HasMachoTBSSDirective = false;
+  StructorOutputOrder = Structors::ReversePriorityOrder;
   HasStaticCtorDtorReferenceInStaticMode = false;
   LinkerRequiresNonEmptyDwarfLines = false;
   MaxInstLength = 4;

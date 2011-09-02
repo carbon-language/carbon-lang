@@ -39,6 +39,7 @@ MCAsmInfoDarwin::MCAsmInfoDarwin() {
   ZeroDirective = "\t.space\t";  // ".space N" emits N zeros.
   HasMachoZeroFillDirective = true;  // Uses .zerofill
   HasMachoTBSSDirective = true; // Uses .tbss
+  StructorOutputOrder = Structors::PriorityOrder;
   HasStaticCtorDtorReferenceInStaticMode = true;
 
   // FIXME: Darwin 10 and newer don't need this.
