@@ -4090,6 +4090,7 @@ ScalarEvolution::BackedgeTakenInfo::getExact(ScalarEvolution *SE) const {
     else
       BECount = SE->getUMinFromMismatchedTypes(BECount, ENT->ExactNotTaken);
   }
+  assert(BECount && "Invalid not taken count for loop exit");
   return BECount;
 }
 

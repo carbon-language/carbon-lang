@@ -319,8 +319,9 @@ namespace llvm {
       const SCEV *getExact(ScalarEvolution *SE) const;
 
       /// getExact - Return the number of times this loop exit may fall through
-      /// to the back edge. The loop is guaranteed not to exit via this block
-      /// before this number of iterations, but may exit via another block.
+      /// to the back edge, or SCEVCouldNotCompute. The loop is guaranteed not
+      /// to exit via this block before this number of iterations, but may exit
+      /// via another block.
       const SCEV *getExact(BasicBlock *ExitingBlock, ScalarEvolution *SE) const;
 
       /// getMax - Get the max backedge taken count for the loop.
