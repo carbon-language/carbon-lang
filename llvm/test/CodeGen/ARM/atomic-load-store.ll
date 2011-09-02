@@ -1,4 +1,5 @@
 ; RUN: llc < %s -mtriple=armv7-apple-ios | FileCheck %s -check-prefix=ARM
+; RUN: llc < %s -mtriple=armv7-apple-ios -O0 | FileCheck %s -check-prefix=ARM
 ; RUN: llc < %s -mtriple=thumbv7-apple-ios | FileCheck %s -check-prefix=THUMBTWO
 ; RUN: llc < %s -mtriple=thumbv6-apple-ios | FileCheck %s -check-prefix=THUMBONE
 

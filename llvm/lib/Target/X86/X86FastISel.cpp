@@ -658,6 +658,10 @@ bool X86FastISel::X86SelectCallAddress(const Value *V, X86AddressMode &AM) {
 
 /// X86SelectStore - Select and emit code to implement store instructions.
 bool X86FastISel::X86SelectStore(const Instruction *I) {
+  // Atomic stores need special handling.
+  if (cast<StoreInst>(I)->isAtomic())
+    return false;
+
   MVT VT;
   if (!isTypeLegal(I->getOperand(0)->getType(), VT, /*AllowI1=*/true))
     return false;
@@ -780,6 +784,10 @@ bool X86FastISel::X86SelectRet(const Instruction *I) {
 /// X86SelectLoad - Select and emit code to implement load instructions.
 ///
 bool X86FastISel::X86SelectLoad(const Instruction *I)  {
+  // Atomic loads need special handling.
+  if (cast<LoadInst>(I)->isAtomic())
+    return false;
+
   MVT VT;
   if (!isTypeLegal(I->getType(), VT, /*AllowI1=*/true))
     return false;

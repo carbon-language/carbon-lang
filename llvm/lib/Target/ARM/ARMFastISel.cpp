@@ -946,6 +946,10 @@ bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg, Address &Addr) {
 }
 
 bool ARMFastISel::SelectLoad(const Instruction *I) {
+  // Atomic loads need special handling.
+  if (cast<LoadInst>(I)->isAtomic())
+    return false;
+
   // Verify we have a legal type before going any further.
   MVT VT;
   if (!isLoadTypeLegal(I->getType(), VT))
@@ -1007,6 +1011,10 @@ bool ARMFastISel::ARMEmitStore(EVT VT, unsigned SrcReg, Address &Addr) {
 bool ARMFastISel::SelectStore(const Instruction *I) {
   Value *Op0 = I->getOperand(0);
   unsigned SrcReg = 0;
+
+  // Atomic stores need special handling.
+  if (cast<StoreInst>(I)->isAtomic())
+    return false;
 
   // Verify we have a legal type before going any further.
   MVT VT;

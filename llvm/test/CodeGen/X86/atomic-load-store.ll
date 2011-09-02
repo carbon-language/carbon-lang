@@ -1,4 +1,5 @@
 ; RUN: llc < %s -mtriple=x86_64-apple-macosx10.7.0 | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-apple-macosx10.7.0 -O0 | FileCheck %s
 
 define void @test1(i32* %ptr, i32 %val1) {
 ; CHECK: test1
