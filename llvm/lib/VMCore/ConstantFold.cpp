@@ -761,6 +761,10 @@ Constant *llvm::ConstantFoldExtractElementInstruction(Constant *Val,
 
   if (ConstantVector *CVal = dyn_cast<ConstantVector>(Val)) {
     if (ConstantInt *CIdx = dyn_cast<ConstantInt>(Idx)) {
+      uint64_t Index = CIdx->getZExtValue();
+      if (Index >= CVal->getNumOperands())
+        // ee({w,x,y,z}, wrong_value) -> w (an arbitrary value).
+        return CVal->getOperand(0);
       return CVal->getOperand(CIdx->getZExtValue());
     } else if (isa<UndefValue>(Idx)) {
       // ee({w,x,y,z}, undef) -> w (an arbitrary value).
