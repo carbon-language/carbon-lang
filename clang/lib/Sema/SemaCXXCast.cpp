@@ -815,10 +815,11 @@ static TryCastResult TryStaticCast(Sema &Self, ExprResult &SrcExpr,
   // The same goes for reverse floating point promotion/conversion and
   // floating-integral conversions. Again, only floating->enum is relevant.
   if (DestType->isEnumeralType()) {
-    if (SrcType->isComplexType() || SrcType->isVectorType()) {
-      // Fall through - these cannot be converted.
-    } else if (SrcType->isArithmeticType() || SrcType->isEnumeralType()) {
+    if (SrcType->isIntegralOrEnumerationType()) {
       Kind = CK_IntegralCast;
+      return TC_Success;
+    } else if (SrcType->isRealFloatingType())   {
+      Kind = CK_FloatingToIntegral;
       return TC_Success;
     }
   }
