@@ -120,6 +120,23 @@ _func:
 @ CHECK: and	r1, r1, #255            @ encoding: [0x01,0xf0,0xff,0x01]
 @ CHECK: and	r1, r1, #255            @ encoding: [0x01,0xf0,0xff,0x01]
 
+
+@------------------------------------------------------------------------------
+@ AND (register)
+@------------------------------------------------------------------------------
+        and r4, r9, r8
+        and r1, r4, r8, asr #3
+        ands r2, r1, r7, lsl #1
+        ands.w r4, r5, r2, lsr #20
+        and.w r9, r12, r1, ror #17
+
+@ CHECK: and.w	r4, r9, r8              @ encoding: [0x09,0xea,0x08,0x04]
+@ CHECK: and.w	r1, r4, r8, asr #3      @ encoding: [0x04,0xea,0xe8,0x01]
+@ CHECK: ands.w	r2, r1, r7, lsl #1      @ encoding: [0x11,0xea,0x47,0x02]
+@ CHECK: ands.w	r4, r5, r2, lsr #20     @ encoding: [0x15,0xea,0x12,0x54]
+@ CHECK: and.w	r9, r12, r1, ror #17    @ encoding: [0x0c,0xea,0x71,0x49]
+
+
 @------------------------------------------------------------------------------
 @ B
 @------------------------------------------------------------------------------
