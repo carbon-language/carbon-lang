@@ -14,7 +14,7 @@ int main ()
 
 // CHECK: define internal void @__main_block_invoke_0
 // CHECK:  [[C1:%.*]] = alloca { double, double }, align 8
-// CHECK:  [[C1]].realp = getelementptr inbounds { double, double }* [[C1]], i32 0, i32 0
-// CHECK-NEXT:  [[C1]].real = load double* [[C1]].realp
-// CHECK-NEXT:  [[C1]].imagp = getelementptr inbounds { double, double }* [[C1]], i32 0, i32 1
-// CHECK-NEXT:  [[C1]].imag = load double* [[C1]].imagp
+// CHECK:  [[RP:%.*]] = getelementptr inbounds { double, double }* [[C1]], i32 0, i32 0
+// CHECK-NEXT:  [[R:%.*]] = load double* [[RP]]
+// CHECK-NEXT:  [[IP:%.*]] = getelementptr inbounds { double, double }* [[C1]], i32 0, i32 1
+// CHECK-NEXT:  [[I:%.*]] = load double* [[IP]]
