@@ -474,6 +474,17 @@ DNBArchImplX86_64::ThreadWillResume()
         // This is the primary thread, let the arch do anything it needs
         EnableHardwareSingleStep(true);
     }
+
+    // Reset the debug status register before we resume.
+    kern_return_t kret = GetDBGState(false);
+    DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchImplX86_64::ThreadWillResume() GetDBGState() => 0x%8.8x.", kret);
+    if (kret == KERN_SUCCESS)
+    {
+        DBG debug_state = m_state.context.dbg;
+        ClearWatchpointHits(debug_state);
+        kret = SetDBGState();
+        DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchImplX86_64::ThreadWillResume() SetDBGState() => 0x%8.8x.", kret);
+    }
 }
 
 bool
@@ -757,6 +768,29 @@ DNBArchImplX86_64::DisableHardwareWatchpoint (uint32_t hw_index)
         }
     }
     return false;
+}
+
+// Iterate through the debug status register; return the index of the first hit.
+uint32_t
+DNBArchImplX86_64::GetHardwareWatchpointHit()
+{
+    // Read the debug state
+    kern_return_t kret = GetDBGState(false);
+    DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchImplX86_64::GetHardwareWatchpointHit() GetDBGState() => 0x%8.8x.", kret);
+    if (kret == KERN_SUCCESS)
+    {
+        DBG debug_state = m_state.context.dbg;
+        uint32_t i, num = NumSupportedHardwareWatchpoints();
+        for (i = 0; i < num; ++i)
+        {
+            if (IsWatchpointHit(debug_state, i))
+            {
+                DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchImplX86_64::GetHardwareWatchpointHit() found => %u.", i);
+                return i;
+            }
+        }
+    }
+    return INVALID_NUB_HW_INDEX;
 }
 
 // Set the single step bit in the processor status register.

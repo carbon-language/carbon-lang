@@ -54,6 +54,7 @@ public:
     virtual uint32_t        NumSupportedHardwareWatchpoints();
     virtual uint32_t        EnableHardwareWatchpoint (nub_addr_t addr, nub_size_t size, bool read, bool write);
     virtual bool            DisableHardwareWatchpoint (uint32_t hw_break_index);
+    virtual uint32_t        GetHardwareWatchpointHit();
 
 protected:
     kern_return_t           EnableHardwareSingleStep (bool enable);

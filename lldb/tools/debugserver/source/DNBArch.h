@@ -79,6 +79,7 @@ public:
     virtual uint32_t        EnableHardwareWatchpoint (nub_addr_t addr, nub_size_t size, bool read, bool write) { return INVALID_NUB_HW_INDEX; }
     virtual bool            DisableHardwareBreakpoint (uint32_t hw_index) { return false; }
     virtual bool            DisableHardwareWatchpoint (uint32_t hw_index) { return false; }
+    virtual uint32_t        GetHardwareWatchpointHit() { return INVALID_NUB_HW_INDEX; }
     virtual bool            StepNotComplete () { return false; }
 };
 
