@@ -6249,8 +6249,7 @@ static void diagnoseDistinctPointerComparison(Sema &S, SourceLocation Loc,
 /// \brief Returns false if the pointers are converted to a composite type,
 /// true otherwise.
 static bool convertPointersToCompositeType(Sema &S, SourceLocation Loc,
-                                               ExprResult &lex,
-                                               ExprResult &rex) {
+                                           ExprResult &lex, ExprResult &rex) {
   // C++ [expr.rel]p2:
   //   [...] Pointer conversions (4.10) and qualification
   //   conversions (4.4) are performed on pointer operands (or on
@@ -6277,8 +6276,8 @@ static bool convertPointersToCompositeType(Sema &S, SourceLocation Loc,
          (lType->isMemberPointerType() && rType->isMemberPointerType()));
 
   bool NonStandardCompositeType = false;
-  QualType T = S.FindCompositePointerType(Loc, lex, rex,
-                           S.isSFINAEContext() ? 0 : &NonStandardCompositeType);
+  bool *BoolPtr = S.isSFINAEContext() ? 0 : &NonStandardCompositeType;
+  QualType T = S.FindCompositePointerType(Loc, lex, rex, BoolPtr);
   if (T.isNull()) {
     diagnoseDistinctPointerComparison(S, Loc, lex, rex, /*isError*/true);
     return true;
