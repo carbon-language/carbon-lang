@@ -11,6 +11,6 @@ invoke_catch.0:         ; No predecessors!
         br i1 false, label %UnifiedUnwindBlock, label %UnifiedReturnBlock
 
 UnifiedUnwindBlock:             ; preds = %invoke_catch.0
-        unwind
+        unreachable
 }
 

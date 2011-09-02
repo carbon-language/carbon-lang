@@ -21,7 +21,7 @@ invoke_catch.0:         ; preds = %entry
                         to label %tmp.1.i.i183.noexc unwind label %terminate
 
 tmp.1.i.i183.noexc:             ; preds = %invoke_catch.0
-        unwind
+        ret void
 
 then.0:         ; preds = %tmp.3.i.noexc
         invoke void @_ZN10QByteArray6resizeEi( )

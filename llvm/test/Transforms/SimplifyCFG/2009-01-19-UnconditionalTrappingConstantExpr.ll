@@ -15,7 +15,7 @@ bb2:
 	ret i32 42
 
 bb6:
-	unwind
+	ret i32 927
 }
 
 define i32 @test2(i32 %tmp21, i32 %tmp24, i1 %tmp34) {
@@ -26,6 +26,6 @@ bb5:		; preds = %bb4
 bb6:
 	ret i32 42
 bb7:
-	unwind
+	ret i32 927
 }
 

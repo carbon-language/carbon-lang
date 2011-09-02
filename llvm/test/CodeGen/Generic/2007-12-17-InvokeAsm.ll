@@ -11,7 +11,7 @@ entry:
 cleanup144:		; preds = %entry
   %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
             cleanup
-  unwind
+  resume { i8*, i32 } %exn
 }
 
 declare i32 @__gxx_personality_v0(...)

@@ -10,7 +10,7 @@ entry:
 r:
 	ret i32 0
 u:
-	unwind
+	unreachable
 }
 
 define i32 @caller() {

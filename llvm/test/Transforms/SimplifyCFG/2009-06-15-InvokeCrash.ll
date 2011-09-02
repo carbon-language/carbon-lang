@@ -463,7 +463,7 @@ cleanup329:		; preds = %cond_true319, %cond_true302, %cond_next293, %cond_true27
         %val329 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
                     cleanup
 	call void @_ZN8QPainterD1Ev( %struct.QPainter* %p )
-	unwind
+	resume { i8*, i32 } %val329
 }
 
 declare void @_ZN6QSizeFC1Edd(%struct.QPointF*, double, double)

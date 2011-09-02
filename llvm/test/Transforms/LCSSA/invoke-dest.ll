@@ -110,12 +110,18 @@ bb106:		; preds = %invcont105, %bb61
 			to label %.noexc unwind label %lpad119		; <i8*> [#uses=1]
 
 lpad:		; preds = %_ZN7cObjectnwEj.exit
+        %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+                 cleanup
 	br label %Unwind
 
 lpad119:		; preds = %bb106, %invcont104, %invcont103, %bb102, %bb49, %bb34, %bb12, %invcont10, %invcont9, %bb8
+        %exn119 = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+                 cleanup
 	unreachable
 
 lpad123:		; preds = %.noexc
+        %exn123 = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+                 cleanup
 	%tmp5 = icmp eq i8* %tmp4, null		; <i1> [#uses=1]
 	br i1 %tmp5, label %Unwind, label %bb.i2
 
@@ -125,6 +131,8 @@ bb.i2:		; preds = %lpad123
 Unwind:		; preds = %bb.i2, %lpad123, %lpad
 	unreachable
 }
+
+declare i32 @__gxx_personality_v0(...)
 
 declare void @_ZN8EtherBus8tokenizeEPKcRSt6vectorIdSaIdEE(i8* nocapture, i8*, i8*)
 

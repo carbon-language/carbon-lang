@@ -14,5 +14,9 @@ r:                                                ; preds = %entry
  ret void
 
 u:                                                ; preds = %entry
- unwind
+ %val = landingpad { i8*, i32 } personality i32 (...)* @__gxx_personality_v0
+          cleanup
+ resume { i8*, i32 } %val
 }
+
+declare i32 @__gxx_personality_v0(...)

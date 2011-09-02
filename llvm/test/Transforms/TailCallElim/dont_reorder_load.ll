@@ -16,7 +16,7 @@ entry:
 	br i1 %tmp2, label %if, label %else
 
 if:		; preds = %entry
-	unwind
+	ret i32 37
 
 else:		; preds = %entry
 	%tmp7 = add i32 %start_arg, 1		; <i32> [#uses=1]

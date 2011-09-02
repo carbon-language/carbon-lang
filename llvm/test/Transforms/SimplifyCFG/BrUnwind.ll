@@ -10,6 +10,6 @@ B:              ; preds = %0
         call void @test( i1 %C )
         br label %X
 X:              ; preds = %B, %A
-        unwind
+        ret void
 }
 
