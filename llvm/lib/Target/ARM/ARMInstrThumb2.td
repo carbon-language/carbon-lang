@@ -1922,10 +1922,14 @@ def : T2Pat<(int_arm_usat GPR:$a, imm:$pos), (t2USAT imm:$pos, GPR:$a, 0)>;
 //  Shift and rotate Instructions.
 //
 
-defm t2LSL  : T2I_sh_ir<0b00, "lsl", imm1_31, BinOpFrag<(shl  node:$LHS, node:$RHS)>>;
-defm t2LSR  : T2I_sh_ir<0b01, "lsr", imm_sr, BinOpFrag<(srl  node:$LHS, node:$RHS)>>;
-defm t2ASR  : T2I_sh_ir<0b10, "asr", imm_sr, BinOpFrag<(sra  node:$LHS, node:$RHS)>>;
-defm t2ROR  : T2I_sh_ir<0b11, "ror", imm1_31, BinOpFrag<(rotr node:$LHS, node:$RHS)>>;
+defm t2LSL  : T2I_sh_ir<0b00, "lsl", imm1_31,
+                        BinOpFrag<(shl  node:$LHS, node:$RHS)>>;
+defm t2LSR  : T2I_sh_ir<0b01, "lsr", imm_sr,
+                        BinOpFrag<(srl  node:$LHS, node:$RHS)>>;
+defm t2ASR  : T2I_sh_ir<0b10, "asr", imm_sr,
+                        BinOpFrag<(sra  node:$LHS, node:$RHS)>>;
+defm t2ROR  : T2I_sh_ir<0b11, "ror", imm1_31,
+                        BinOpFrag<(rotr node:$LHS, node:$RHS)>>;
 
 // (rotr x, (and y, 0x...1f)) ==> (ROR x, y)
 def : Pat<(rotr rGPR:$lhs, (and rGPR:$rhs, lo5AllOne)),
