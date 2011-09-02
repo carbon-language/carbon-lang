@@ -218,6 +218,43 @@ _func:
 
 
 @------------------------------------------------------------------------------
+@ BIC
+@------------------------------------------------------------------------------
+        bic r10, r1, #0xf
+        bic r12, r3, r6
+        bic r11, r2, r6, lsl #12
+        bic r8, r4, r1, lsr #11
+        bic r7, r5, r7, lsr #15
+        bic r6, r7, r9, asr #32
+        bic r5, r6, r8, ror #1
+
+        @ destination register is optional
+        bic r1, #0xf
+        bic r1, r1
+        bic r4, r2, lsl #31
+        bic r6, r3, lsr #12
+        bic r7, r4, lsr #7
+        bic r8, r5, asr #15
+        bic r12, r6, ror #29
+
+@ CHECK: bic	r10, r1, #15            @ encoding: [0x21,0xf0,0x0f,0x0a]
+@ CHECK: bic.w	r12, r3, r6             @ encoding: [0x23,0xea,0x06,0x0c]
+@ CHECK: bic.w	r11, r2, r6, lsl #12    @ encoding: [0x22,0xea,0x06,0x3b]
+@ CHECK: bic.w	r8, r4, r1, lsr #11     @ encoding: [0x24,0xea,0xd1,0x28]
+@ CHECK: bic.w	r7, r5, r7, lsr #15     @ encoding: [0x25,0xea,0xd7,0x37]
+@ CHECK: bic.w	r6, r7, r9, asr #32     @ encoding: [0x27,0xea,0x29,0x06]
+@ CHECK: bic.w	r5, r6, r8, ror #1      @ encoding: [0x26,0xea,0x78,0x05]
+
+@ CHECK: bic	r1, r1, #15             @ encoding: [0x21,0xf0,0x0f,0x01]
+@ CHECK: bic.w	r1, r1, r1              @ encoding: [0x21,0xea,0x01,0x01]
+@ CHECK: bic.w	r4, r4, r2, lsl #31     @ encoding: [0x24,0xea,0xc2,0x74]
+@ CHECK: bic.w	r6, r6, r3, lsr #12     @ encoding: [0x26,0xea,0x13,0x36]
+@ CHECK: bic.w	r7, r7, r4, lsr #7      @ encoding: [0x27,0xea,0xd4,0x17]
+@ CHECK: bic.w	r8, r8, r5, asr #15     @ encoding: [0x28,0xea,0xe5,0x38]
+@ CHECK: bic.w	r12, r12, r6, ror #29   @ encoding: [0x2c,0xea,0x76,0x7c]
+
+
+@------------------------------------------------------------------------------
 @ CBZ/CBNZ
 @------------------------------------------------------------------------------
         cbnz    r7, #6
