@@ -1337,14 +1337,15 @@ public:
 //===----------------------------------------------------------------------===//
 
 class RecordVal {
-  std::string Name;
+  Init *Name;
   RecTy *Ty;
   unsigned Prefix;
   Init *Value;
 public:
+  RecordVal(Init *N, RecTy *T, unsigned P);
   RecordVal(const std::string &N, RecTy *T, unsigned P);
 
-  const std::string &getName() const { return Name; }
+  const std::string &getName() const;
 
   unsigned getPrefix() const { return Prefix; }
   RecTy *getType() const { return Ty; }

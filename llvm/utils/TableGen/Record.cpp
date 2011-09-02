@@ -1619,10 +1619,22 @@ std::string DagInit::getAsString() const {
 //    Other implementations
 //===----------------------------------------------------------------------===//
 
-RecordVal::RecordVal(const std::string &N, RecTy *T, unsigned P)
+RecordVal::RecordVal(Init *N, RecTy *T, unsigned P)
   : Name(N), Ty(T), Prefix(P) {
   Value = Ty->convertValue(UnsetInit::get());
   assert(Value && "Cannot create unset value for current type!");
+}
+
+RecordVal::RecordVal(const std::string &N, RecTy *T, unsigned P)
+  : Name(StringInit::get(N)), Ty(T), Prefix(P) {
+  Value = Ty->convertValue(UnsetInit::get());
+  assert(Value && "Cannot create unset value for current type!");
+}
+
+const std::string &RecordVal::getName() const {
+  StringInit *NameString = dynamic_cast<StringInit *>(Name);
+  assert(NameString && "RecordVal name is not a string!");
+  return NameString->getValue();
 }
 
 void RecordVal::dump() const { errs() << *this; }
