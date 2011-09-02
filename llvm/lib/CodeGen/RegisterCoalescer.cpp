@@ -948,9 +948,7 @@ RegisterCoalescer::UpdateRegDefsUses(const CoalescerPair &CP) {
     // A PhysReg copy that won't be coalesced can perhaps be rematerialized
     // instead.
     if (DstIsPhys) {
-      if (UseMI->isCopy() &&
-          !UseMI->getOperand(1).getSubReg() &&
-          !UseMI->getOperand(0).getSubReg() &&
+      if (UseMI->isFullCopy() &&
           UseMI->getOperand(1).getReg() == SrcReg &&
           UseMI->getOperand(0).getReg() != SrcReg &&
           UseMI->getOperand(0).getReg() != DstReg &&
