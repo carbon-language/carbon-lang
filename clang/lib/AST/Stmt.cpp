@@ -326,7 +326,7 @@ unsigned AsmStmt::AnalyzeAsmString(SmallVectorImpl<AsmStringPiece>&Pieces,
   // asm string.
   std::string CurStringPiece;
 
-  bool HasVariants = !C.Target.hasNoAsmVariants();
+  bool HasVariants = !C.getTargetInfo().hasNoAsmVariants();
   
   while (1) {
     // Done with the string?

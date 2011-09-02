@@ -3772,7 +3772,7 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
   if (D.getDeclSpec().isThreadSpecified()) {
     if (NewVD->hasLocalStorage())
       Diag(D.getDeclSpec().getThreadSpecLoc(), diag::err_thread_non_global);
-    else if (!Context.Target.isTLSSupported())
+    else if (!Context.getTargetInfo().isTLSSupported())
       Diag(D.getDeclSpec().getThreadSpecLoc(), diag::err_thread_unsupported);
     else
       NewVD->setThreadSpecified(true);
@@ -3802,7 +3802,7 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
         Diag(E->getExprLoc(), diag::warn_asm_label_on_auto_decl) << Label;
         break;
       case SC_Register:
-        if (!Context.Target.isValidGCCRegisterName(Label))
+        if (!Context.getTargetInfo().isValidGCCRegisterName(Label))
           Diag(E->getExprLoc(), diag::err_asm_unknown_register_name) << Label;
         break;
       case SC_Static:
@@ -5328,7 +5328,7 @@ void Sema::CheckMain(FunctionDecl* FD) {
   // Darwin passes an undocumented fourth argument of type char**.  If
   // other platforms start sprouting these, the logic below will start
   // getting shifty.
-  if (nparams == 4 && Context.Target.getTriple().isOSDarwin())
+  if (nparams == 4 && Context.getTargetInfo().getTriple().isOSDarwin())
     HasExtraParameters = false;
 
   if (HasExtraParameters) {
@@ -8886,7 +8886,7 @@ EnumConstantDecl *Sema::CheckEnumConstant(EnumDecl *Enum,
                                           SourceLocation IdLoc,
                                           IdentifierInfo *Id,
                                           Expr *Val) {
-  unsigned IntWidth = Context.Target.getIntWidth();
+  unsigned IntWidth = Context.getTargetInfo().getIntWidth();
   llvm::APSInt EnumVal(IntWidth);
   QualType EltTy;
 
@@ -9130,9 +9130,9 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
   // TODO: If the result value doesn't fit in an int, it must be a long or long
   // long value.  ISO C does not support this, but GCC does as an extension,
   // emit a warning.
-  unsigned IntWidth = Context.Target.getIntWidth();
-  unsigned CharWidth = Context.Target.getCharWidth();
-  unsigned ShortWidth = Context.Target.getShortWidth();
+  unsigned IntWidth = Context.getTargetInfo().getIntWidth();
+  unsigned CharWidth = Context.getTargetInfo().getCharWidth();
+  unsigned ShortWidth = Context.getTargetInfo().getShortWidth();
 
   // Verify that all the values are okay, compute the size of the values, and
   // reverse the list.
@@ -9205,12 +9205,12 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
       BestType = Context.IntTy;
       BestWidth = IntWidth;
     } else {
-      BestWidth = Context.Target.getLongWidth();
+      BestWidth = Context.getTargetInfo().getLongWidth();
 
       if (NumNegativeBits <= BestWidth && NumPositiveBits < BestWidth) {
         BestType = Context.LongTy;
       } else {
-        BestWidth = Context.Target.getLongLongWidth();
+        BestWidth = Context.getTargetInfo().getLongLongWidth();
 
         if (NumNegativeBits > BestWidth || NumPositiveBits >= BestWidth)
           Diag(Enum->getLocation(), diag::warn_enum_too_large);
@@ -9237,13 +9237,13 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
         = (NumPositiveBits == BestWidth || !getLangOptions().CPlusPlus)
                            ? Context.UnsignedIntTy : Context.IntTy;
     } else if (NumPositiveBits <=
-               (BestWidth = Context.Target.getLongWidth())) {
+               (BestWidth = Context.getTargetInfo().getLongWidth())) {
       BestType = Context.UnsignedLongTy;
       BestPromotionType
         = (NumPositiveBits == BestWidth || !getLangOptions().CPlusPlus)
                            ? Context.UnsignedLongTy : Context.LongTy;
     } else {
-      BestWidth = Context.Target.getLongLongWidth();
+      BestWidth = Context.getTargetInfo().getLongLongWidth();
       assert(NumPositiveBits <= BestWidth &&
              "How could an initializer get larger than ULL?");
       BestType = Context.UnsignedLongLongTy;

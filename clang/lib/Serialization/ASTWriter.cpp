@@ -950,7 +950,7 @@ void ASTWriter::WriteMetadata(ASTContext &Context, StringRef isysroot,
   using namespace llvm;
 
   // Metadata
-  const TargetInfo &Target = Context.Target;
+  const TargetInfo &Target = Context.getTargetInfo();
   BitCodeAbbrev *MetaAbbrev = new BitCodeAbbrev();
   MetaAbbrev->Add(BitCodeAbbrevOp(METADATA));
   MetaAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 16)); // AST major

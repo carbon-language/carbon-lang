@@ -176,7 +176,7 @@ CreateGlobalInitOrDestructFunction(CodeGenModule &CGM,
   if (!CGM.getContext().getLangOptions().AppleKext) {
     // Set the section if needed.
     if (const char *Section = 
-          CGM.getContext().Target.getStaticInitSectionSpecifier())
+          CGM.getContext().getTargetInfo().getStaticInitSectionSpecifier())
       Fn->setSection(Section);
   }
 

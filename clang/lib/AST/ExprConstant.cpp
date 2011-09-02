@@ -1292,7 +1292,7 @@ bool IntExprEvaluator::VisitCallExpr(const CallExpr *E) {
       
   case Builtin::BI__builtin_eh_return_data_regno: {
     int Operand = E->getArg(0)->EvaluateAsInt(Info.Ctx).getZExtValue();
-    Operand = Info.Ctx.Target.getEHDataRegisterNumber(Operand);
+    Operand = Info.Ctx.getTargetInfo().getEHDataRegisterNumber(Operand);
     return Success(Operand, E);
   }
 

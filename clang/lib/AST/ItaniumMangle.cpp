@@ -398,7 +398,7 @@ void CXXNameMangler::mangle(const NamedDecl *D, StringRef Prefix) {
     // marker.  We also avoid adding the marker if this is an alias for an
     // LLVM intrinsic.
     StringRef UserLabelPrefix =
-      getASTContext().Target.getUserLabelPrefix();
+      getASTContext().getTargetInfo().getUserLabelPrefix();
     if (!UserLabelPrefix.empty() && !ALA->getLabel().startswith("llvm."))
       Out << '\01';  // LLVM IR Marker for __asm("foo")
 

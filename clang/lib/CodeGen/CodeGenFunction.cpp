@@ -30,7 +30,7 @@ using namespace CodeGen;
 
 CodeGenFunction::CodeGenFunction(CodeGenModule &cgm)
   : CodeGenTypeCache(cgm), CGM(cgm),
-    Target(CGM.getContext().Target), Builder(cgm.getModule().getContext()),
+    Target(CGM.getContext().getTargetInfo()), Builder(cgm.getModule().getContext()),
     AutoreleaseResult(false), BlockInfo(0), BlockPointer(0),
     NormalCleanupDest(0), NextCleanupDestIndex(1),
     EHResumeBlock(0), ExceptionSlot(0), EHSelectorSlot(0),

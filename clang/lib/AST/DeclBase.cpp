@@ -265,13 +265,13 @@ bool Decl::isReferenced() const {
 static AvailabilityResult CheckAvailability(ASTContext &Context,
                                             const AvailabilityAttr *A,
                                             std::string *Message) {
-  StringRef TargetPlatform = Context.Target.getPlatformName();
+  StringRef TargetPlatform = Context.getTargetInfo().getPlatformName();
   StringRef PrettyPlatformName
     = AvailabilityAttr::getPrettyPlatformName(TargetPlatform);
   if (PrettyPlatformName.empty())
     PrettyPlatformName = TargetPlatform;
 
-  VersionTuple TargetMinVersion = Context.Target.getPlatformMinVersion();
+  VersionTuple TargetMinVersion = Context.getTargetInfo().getPlatformMinVersion();
   if (TargetMinVersion.empty())
     return AR_Available;
 

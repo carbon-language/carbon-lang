@@ -1251,7 +1251,7 @@ bool Sema::FindAllocationFunctions(SourceLocation StartLoc, SourceRange Range,
   // FIXME: Should the Sema create the expression and embed it in the syntax
   // tree? Or should the consumer just recalculate the value?
   IntegerLiteral Size(Context, llvm::APInt::getNullValue(
-                      Context.Target.getPointerWidth(0)),
+                      Context.getTargetInfo().getPointerWidth(0)),
                       Context.getSizeType(),
                       SourceLocation());
   AllocArgs[0] = &Size;

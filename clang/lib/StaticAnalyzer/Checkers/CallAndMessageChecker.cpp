@@ -323,7 +323,7 @@ void CallAndMessageChecker::HandleNilReceiver(CheckerContext &C,
     const uint64_t returnTypeSize = Ctx.getTypeSize(CanRetTy);
 
     if (voidPtrSize < returnTypeSize &&
-        !(supportsNilWithFloatRet(Ctx.Target.getTriple()) &&
+        !(supportsNilWithFloatRet(Ctx.getTargetInfo().getTriple()) &&
           (Ctx.FloatTy == CanRetTy ||
            Ctx.DoubleTy == CanRetTy ||
            Ctx.LongDoubleTy == CanRetTy ||

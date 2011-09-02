@@ -371,7 +371,7 @@ void CGRecordLayoutBuilder::LayoutBitField(const FieldDecl *D,
 
   uint64_t nextFieldOffsetInBits = Types.getContext().toBits(NextFieldOffset);
   CharUnits numBytesToAppend;
-  unsigned charAlign = Types.getContext().Target.getCharAlign();
+  unsigned charAlign = Types.getContext().getTargetInfo().getCharAlign();
 
   if (fieldOffset < nextFieldOffsetInBits && !BitsAvailableInLastField) {
     assert(fieldOffset % charAlign == 0 && 
@@ -502,7 +502,7 @@ CGRecordLayoutBuilder::LayoutUnionField(const FieldDecl *Field,
     llvm::Type *FieldTy = llvm::Type::getInt8Ty(Types.getLLVMContext());
     CharUnits NumBytesToAppend = Types.getContext().toCharUnitsFromBits(
       llvm::RoundUpToAlignment(FieldSize, 
-                               Types.getContext().Target.getCharAlign()));
+                               Types.getContext().getTargetInfo().getCharAlign()));
 
     if (NumBytesToAppend > CharUnits::One())
       FieldTy = llvm::ArrayType::get(FieldTy, NumBytesToAppend.getQuantity());

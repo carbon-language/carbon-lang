@@ -62,7 +62,8 @@ void UnixAPIChecker::CheckOpen(CheckerContext &C, const CallExpr *CE) const {
   // The definition of O_CREAT is platform specific.  We need a better way
   // of querying this information from the checking environment.
   if (!Val_O_CREAT.hasValue()) {
-    if (C.getASTContext().Target.getTriple().getVendor() == llvm::Triple::Apple)
+    if (C.getASTContext().getTargetInfo().getTriple().getVendor() 
+                                                      == llvm::Triple::Apple)
       Val_O_CREAT = 0x0200;
     else {
       // FIXME: We need a more general way of getting the O_CREAT value.

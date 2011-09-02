@@ -332,14 +332,14 @@ class ASTContext : public llvm::RefCountedBase<ASTContext> {
   CXXABI *createCXXABI(const TargetInfo &T);
 
   /// \brief The logical -> physical address space map.
-  const LangAS::Map &AddrSpaceMap;
+  const LangAS::Map *AddrSpaceMap;
 
   friend class ASTDeclReader;
   friend class ASTReader;
   friend class ASTWriter;
   
+  const TargetInfo *Target;
 public:
-  const TargetInfo &Target;
   IdentifierTable &Idents;
   SelectorTable &Selectors;
   Builtin::Context &BuiltinInfo;
@@ -367,6 +367,8 @@ public:
     return DiagAllocator;
   }
 
+  const TargetInfo &getTargetInfo() const { return *Target; }
+  
   const LangOptions& getLangOptions() const { return LangOpts; }
 
   Diagnostic &getDiagnostics() const;
@@ -478,10 +480,11 @@ public:
   mutable QualType AutoDeductTy;     // Deduction against 'auto'.
   mutable QualType AutoRRefDeductTy; // Deduction against 'auto &&'.
 
-  ASTContext(LangOptions& LOpts, SourceManager &SM, const TargetInfo &t,
+  ASTContext(LangOptions& LOpts, SourceManager &SM, const TargetInfo *t,
              IdentifierTable &idents, SelectorTable &sels,
              Builtin::Context &builtins,
-             unsigned size_reserve);
+             unsigned size_reserve,
+             bool DelayInitialization = false);
 
   ~ASTContext();
 
@@ -1425,7 +1428,7 @@ public:
     if (AS < LangAS::Offset || AS >= LangAS::Offset + LangAS::Count)
       return AS;
     else
-      return AddrSpaceMap[AS - LangAS::Offset];
+      return (*AddrSpaceMap)[AS - LangAS::Offset];
   }
 
 private:
@@ -1645,7 +1648,18 @@ private:
   ASTContext(const ASTContext&); // DO NOT IMPLEMENT
   void operator=(const ASTContext&); // DO NOT IMPLEMENT
 
-  void InitBuiltinTypes();
+public:
+  /// \brief Initialize built-in types.
+  ///
+  /// This routine may only be invoked once for a given ASTContext object.
+  /// It is normally invoked by the ASTContext constructor. However, the
+  /// constructor can be asked to delay initialization, which places the burden
+  /// of calling this function on the user of that object.
+  ///
+  /// \param Target The target 
+  void InitBuiltinTypes(const TargetInfo &Target);
+  
+private:
   void InitBuiltinType(CanQualType &R, BuiltinType::Kind K);
 
   // Return the ObjC type encoding for a given type.

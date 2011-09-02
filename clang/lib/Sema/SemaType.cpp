@@ -1492,7 +1492,7 @@ QualType Sema::BuildMemberPointerType(QualType T, QualType Class,
   // type. In such cases, the compiler makes a worst-case assumption.
   // We make no such assumption right now, so emit an error if the
   // class isn't a complete type.
-  if (Context.Target.getCXXABI() == CXXABI_Microsoft &&
+  if (Context.getTargetInfo().getCXXABI() == CXXABI_Microsoft &&
       RequireCompleteType(Loc, Class, diag::err_incomplete_type))
     return QualType();
 

@@ -513,7 +513,7 @@ llvm::Constant *ItaniumCXXABI::EmitMemberPointer(const CXXMethodDecl *MD) {
 
     const ASTContext &Context = getContext();
     CharUnits PointerWidth =
-      Context.toCharUnitsFromBits(Context.Target.getPointerWidth(0));
+      Context.toCharUnitsFromBits(Context.getTargetInfo().getPointerWidth(0));
     uint64_t VTableOffset = (Index * PointerWidth.getQuantity());
 
     if (IsARM) {

@@ -442,7 +442,7 @@ void CodeGenFunction::GenerateObjCGetter(ObjCImplementationDecl *IMP,
     // objc_getProperty does an autorelease, so we should suppress ours.
     AutoreleaseResult = false;
   } else {
-    const llvm::Triple &Triple = getContext().Target.getTriple();
+    const llvm::Triple &Triple = getContext().getTargetInfo().getTriple();
     QualType IVART = Ivar->getType();
     if (IsAtomic &&
         IVART->isScalarType() &&
@@ -603,7 +603,7 @@ void CodeGenFunction::GenerateObjCSetter(ObjCImplementationDecl *IMP,
   ObjCMethodDecl *OMD = PD->getSetterMethodDecl();
   assert(OMD && "Invalid call to generate setter (empty method)");
   StartObjCMethod(OMD, IMP->getClassInterface(), PID->getLocStart());
-  const llvm::Triple &Triple = getContext().Target.getTriple();
+  const llvm::Triple &Triple = getContext().getTargetInfo().getTriple();
   QualType IVART = Ivar->getType();
   bool IsCopy = PD->getSetterKind() == ObjCPropertyDecl::Copy;
   bool IsAtomic =

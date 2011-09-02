@@ -45,7 +45,7 @@ using namespace clang;
 using namespace CodeGen;
 
 static CGCXXABI &createCXXABI(CodeGenModule &CGM) {
-  switch (CGM.getContext().Target.getCXXABI()) {
+  switch (CGM.getContext().getTargetInfo().getCXXABI()) {
   case CXXABI_ARM: return *CreateARMCXXABI(CGM);
   case CXXABI_Itanium: return *CreateItaniumCXXABI(CGM);
   case CXXABI_Microsoft: return *CreateMicrosoftCXXABI(CGM);
@@ -99,10 +99,10 @@ CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
   Int8Ty = llvm::Type::getInt8Ty(LLVMContext);
   Int32Ty = llvm::Type::getInt32Ty(LLVMContext);
   Int64Ty = llvm::Type::getInt64Ty(LLVMContext);
-  PointerWidthInBits = C.Target.getPointerWidth(0);
+  PointerWidthInBits = C.getTargetInfo().getPointerWidth(0);
   PointerAlignInBytes =
-    C.toCharUnitsFromBits(C.Target.getPointerAlign(0)).getQuantity();
-  IntTy = llvm::IntegerType::get(LLVMContext, C.Target.getIntWidth());
+    C.toCharUnitsFromBits(C.getTargetInfo().getPointerAlign(0)).getQuantity();
+  IntTy = llvm::IntegerType::get(LLVMContext, C.getTargetInfo().getIntWidth());
   IntPtrTy = llvm::IntegerType::get(LLVMContext, PointerWidthInBits);
   Int8PtrTy = Int8Ty->getPointerTo(0);
   Int8PtrPtrTy = Int8PtrTy->getPointerTo(0);
@@ -167,7 +167,7 @@ void CodeGenModule::DecorateInstruction(llvm::Instruction *Inst,
 }
 
 bool CodeGenModule::isTargetDarwin() const {
-  return getContext().Target.getTriple().isOSDarwin();
+  return getContext().getTargetInfo().getTriple().isOSDarwin();
 }
 
 void CodeGenModule::Error(SourceLocation loc, StringRef error) {
@@ -1802,7 +1802,7 @@ CodeGenModule::GetAddrOfConstantCFString(const StringLiteral *Literal) {
   GV = new llvm::GlobalVariable(getModule(), C->getType(), true,
                                 llvm::GlobalVariable::PrivateLinkage, C,
                                 "_unnamed_cfstring_");
-  if (const char *Sect = getContext().Target.getCFStringSection())
+  if (const char *Sect = getContext().getTargetInfo().getCFStringSection())
     GV->setSection(Sect);
   Entry.setValue(GV);
 
@@ -1925,8 +1925,8 @@ CodeGenModule::GetAddrOfConstantString(const StringLiteral *Literal) {
   // FIXME. Fix section.
   if (const char *Sect = 
         Features.ObjCNonFragileABI 
-          ? getContext().Target.getNSStringNonFragileABISection() 
-          : getContext().Target.getNSStringSection())
+          ? getContext().getTargetInfo().getNSStringNonFragileABISection() 
+          : getContext().getTargetInfo().getNSStringSection())
     GV->setSection(Sect);
   Entry.setValue(GV);
   
@@ -1984,13 +1984,13 @@ std::string CodeGenModule::GetStringForStringLiteral(const StringLiteral *E) {
   case StringLiteral::UTF8:
     break;
   case StringLiteral::Wide:
-    RealLen *= Context.Target.getWCharWidth() / Context.getCharWidth();
+    RealLen *= Context.getTargetInfo().getWCharWidth() / Context.getCharWidth();
     break;
   case StringLiteral::UTF16:
-    RealLen *= Context.Target.getChar16Width() / Context.getCharWidth();
+    RealLen *= Context.getTargetInfo().getChar16Width() / Context.getCharWidth();
     break;
   case StringLiteral::UTF32:
-    RealLen *= Context.Target.getChar32Width() / Context.getCharWidth();
+    RealLen *= Context.getTargetInfo().getChar32Width() / Context.getCharWidth();
     break;
   }
 

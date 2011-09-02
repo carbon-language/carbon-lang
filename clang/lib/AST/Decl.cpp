@@ -51,7 +51,7 @@ static llvm::Optional<Visibility> getVisibilityOf(const Decl *D) {
 
   // If we're on Mac OS X, an 'availability' for Mac OS X attribute
   // implies visibility(default).
-  if (D->getASTContext().Target.getTriple().isOSDarwin()) {
+  if (D->getASTContext().getTargetInfo().getTriple().isOSDarwin()) {
     for (specific_attr_iterator<AvailabilityAttr> 
               A = D->specific_attr_begin<AvailabilityAttr>(),
            AEnd = D->specific_attr_end<AvailabilityAttr>();

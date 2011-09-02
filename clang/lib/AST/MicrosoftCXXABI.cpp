@@ -30,7 +30,7 @@ public:
   unsigned getMemberPointerSize(const MemberPointerType *MPT) const;
 
   CallingConv getDefaultMethodCallConv() const {
-    if (Context.Target.getTriple().getArch() == llvm::Triple::x86)
+    if (Context.getTargetInfo().getTriple().getArch() == llvm::Triple::x86)
       return CC_X86ThisCall;
     else
       return CC_C;
@@ -45,7 +45,7 @@ public:
     
     // In the Microsoft ABI, classes can have one or two vtable pointers.
     CharUnits PointerSize = 
-      Context.toCharUnitsFromBits(Context.Target.getPointerWidth(0));
+      Context.toCharUnitsFromBits(Context.getTargetInfo().getPointerWidth(0));
     return Layout.getNonVirtualSize() == PointerSize ||
       Layout.getNonVirtualSize() == PointerSize * 2;
   }    

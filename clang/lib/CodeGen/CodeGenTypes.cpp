@@ -29,7 +29,7 @@ using namespace CodeGen;
 CodeGenTypes::CodeGenTypes(ASTContext &Ctx, llvm::Module& M,
                            const llvm::TargetData &TD, const ABIInfo &Info,
                            CGCXXABI &CXXABI, const CodeGenOptions &CGO)
-  : Context(Ctx), Target(Ctx.Target), TheModule(M), TheTargetData(TD),
+  : Context(Ctx), Target(Ctx.getTargetInfo()), TheModule(M), TheTargetData(TD),
     TheABIInfo(Info), TheCXXABI(CXXABI), CodeGenOpts(CGO) {
   SkippedLayout = false;
 }

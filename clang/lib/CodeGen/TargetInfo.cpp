@@ -903,7 +903,7 @@ class X86_64ABIInfo : public ABIInfo {
   /// required strict binary compatibility with older versions of GCC
   /// may need to exempt themselves.
   bool honorsRevision0_98() const {
-    return !getContext().Target.getTriple().isOSDarwin();
+    return !getContext().getTargetInfo().getTriple().isOSDarwin();
   }
 
 public:
@@ -2177,7 +2177,7 @@ ABIArgInfo WinX86_64ABIInfo::classify(QualType Ty) const {
 
     // FIXME: mingw-w64-gcc emits 128-bit struct as i128
     if (Size == 128 &&
-        getContext().Target.getTriple().getOS() == llvm::Triple::MinGW32)
+        getContext().getTargetInfo().getTriple().getOS() == llvm::Triple::MinGW32)
       return ABIArgInfo::getDirect(llvm::IntegerType::get(getVMContext(),
                                                           Size));
 
@@ -2312,7 +2312,7 @@ public:
   ARMABIInfo(CodeGenTypes &CGT, ABIKind _Kind) : ABIInfo(CGT), Kind(_Kind) {}
 
   bool isEABI() const {
-    StringRef Env = getContext().Target.getTriple().getEnvironmentName();
+    StringRef Env = getContext().getTargetInfo().getTriple().getEnvironmentName();
     return (Env == "gnueabi" || Env == "eabi");
   }
 
@@ -2755,7 +2755,7 @@ void PTXABIInfo::computeInfo(CGFunctionInfo &FI) const {
 
   // Calling convention as default by an ABI.
   llvm::CallingConv::ID DefaultCC;
-  StringRef Env = getContext().Target.getTriple().getEnvironmentName();
+  StringRef Env = getContext().getTargetInfo().getTriple().getEnvironmentName();
   if (Env == "device")
     DefaultCC = llvm::CallingConv::PTX_Device;
   else
@@ -3162,7 +3162,7 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
   // For now we just cache the TargetCodeGenInfo in CodeGenModule and don't
   // free it.
 
-  const llvm::Triple &Triple = getContext().Target.getTriple();
+  const llvm::Triple &Triple = getContext().getTargetInfo().getTriple();
   switch (Triple.getArch()) {
   default:
     return *(TheTargetCodeGenInfo = new DefaultTargetCodeGenInfo(Types));
@@ -3176,7 +3176,7 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
     {
       ARMABIInfo::ABIKind Kind = ARMABIInfo::AAPCS;
 
-      if (strcmp(getContext().Target.getABI(), "apcs-gnu") == 0)
+      if (strcmp(getContext().getTargetInfo().getABI(), "apcs-gnu") == 0)
         Kind = ARMABIInfo::APCS;
       else if (CodeGenOpts.FloatABI == "hard")
         Kind = ARMABIInfo::AAPCS_VFP;
@@ -3201,7 +3201,7 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
     return *(TheTargetCodeGenInfo = new MSP430TargetCodeGenInfo(Types));
 
   case llvm::Triple::x86: {
-    bool DisableMMX = strcmp(getContext().Target.getABI(), "no-mmx") == 0;
+    bool DisableMMX = strcmp(getContext().getTargetInfo().getABI(), "no-mmx") == 0;
 
     if (Triple.isOSDarwin())
       return *(TheTargetCodeGenInfo =

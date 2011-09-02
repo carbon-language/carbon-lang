@@ -240,7 +240,7 @@ void CompilerInstance::createPreprocessor() {
 void CompilerInstance::createASTContext() {
   Preprocessor &PP = getPreprocessor();
   Context = new ASTContext(getLangOpts(), PP.getSourceManager(),
-                           getTarget(), PP.getIdentifierTable(),
+                           &getTarget(), PP.getIdentifierTable(),
                            PP.getSelectorTable(), PP.getBuiltinInfo(),
                            /*size_reserve=*/ 0);
 }

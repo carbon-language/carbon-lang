@@ -189,7 +189,7 @@ Sema::CheckBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
   // Since the target specific builtins for each arch overlap, only check those
   // of the arch we are compiling for.
   if (BuiltinID >= Builtin::FirstTSBuiltin) {
-    switch (Context.Target.getTriple().getArch()) {
+    switch (Context.getTargetInfo().getTriple().getArch()) {
       case llvm::Triple::arm:
       case llvm::Triple::thumb:
         if (CheckARMBuiltinFunctionCall(BuiltinID, TheCall))

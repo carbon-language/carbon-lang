@@ -377,6 +377,7 @@ namespace {
 /// a Preprocessor.
 class ASTInfoCollector : public ASTReaderListener {
   Preprocessor &PP;
+  ASTContext &Context;
   LangOptions &LangOpt;
   HeaderSearch &HSI;
   llvm::IntrusiveRefCntPtr<TargetInfo> &Target;
@@ -385,26 +386,30 @@ class ASTInfoCollector : public ASTReaderListener {
 
   unsigned NumHeaderInfos;
 
-  bool InitializedPreprocessor;
+  bool InitializedLanguage;
 public:
-  ASTInfoCollector(Preprocessor &PP,
-                   LangOptions &LangOpt, HeaderSearch &HSI,
+  ASTInfoCollector(Preprocessor &PP, ASTContext &Context, LangOptions &LangOpt, 
+                   HeaderSearch &HSI,
                    llvm::IntrusiveRefCntPtr<TargetInfo> &Target,
                    std::string &Predefines,
                    unsigned &Counter)
-    : PP(PP), LangOpt(LangOpt), HSI(HSI), Target(Target),
+    : PP(PP), Context(Context), LangOpt(LangOpt), HSI(HSI), Target(Target),
       Predefines(Predefines), Counter(Counter), NumHeaderInfos(0),
-      InitializedPreprocessor(false) {}
+      InitializedLanguage(false) {}
 
   virtual bool ReadLanguageOptions(const LangOptions &LangOpts) {
-    if (InitializedPreprocessor)
+    if (InitializedLanguage)
       return false;
     
     LangOpt = LangOpts;
     
     // Initialize the preprocessor.
     PP.Initialize(*Target);
-    InitializedPreprocessor = true;
+    
+    // Initialize the ASTContext
+    Context.InitBuiltinTypes(*Target);
+    
+    InitializedLanguage = true;
     return false;
   }
 
@@ -607,6 +612,17 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
                              /*IILookup=*/0,
                              /*OwnsHeaderSearch=*/false,
                              /*DelayInitialization=*/true);
+  Preprocessor &PP = *AST->PP;
+
+  AST->Ctx = new ASTContext(AST->ASTFileLangOpts,
+                            AST->getSourceManager(),
+                            /*Target=*/0,
+                            PP.getIdentifierTable(),
+                            PP.getSelectorTable(),
+                            PP.getBuiltinInfo(),
+                            /* size_reserve = */0,
+                            /*DelayInitialization=*/true);
+  ASTContext &Context = *AST->Ctx;
 
   Reader.reset(new ASTReader(AST->getSourceManager(), AST->getFileManager(),
                              AST->getDiagnostics()));
@@ -615,7 +631,7 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
   llvm::CrashRecoveryContextCleanupRegistrar<ASTReader>
     ReaderCleanup(Reader.get());
 
-  Reader->setListener(new ASTInfoCollector(*AST->PP,
+  Reader->setListener(new ASTInfoCollector(*AST->PP, Context,
                                            AST->ASTFileLangOpts, HeaderInfo, 
                                            AST->Target, Predefines, Counter));
 
@@ -631,26 +647,13 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
 
   AST->OriginalSourceFile = Reader->getOriginalSourceFile();
 
-  // AST file loaded successfully. Now create the preprocessor.
-  Preprocessor &PP = *AST->PP;
-
   PP.setPredefines(Reader->getSuggestedPredefines());
   PP.setCounterValue(Counter);
   Reader->setPreprocessor(PP);
 
   // Create and initialize the ASTContext.
-
-  AST->Ctx = new ASTContext(AST->ASTFileLangOpts,
-                            AST->getSourceManager(),
-                            *AST->Target,
-                            PP.getIdentifierTable(),
-                            PP.getSelectorTable(),
-                            PP.getBuiltinInfo(),
-                            /* size_reserve = */0);
-  ASTContext &Context = *AST->Ctx;
-
   Reader->InitializeContext(Context);
-
+  
   // Attach the AST reader to the AST context as an external AST
   // source, so that declarations will be deserialized from the
   // AST file as needed.

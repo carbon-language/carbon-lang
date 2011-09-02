@@ -2438,7 +2438,7 @@ ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
   // cannot have a trigraph, escaped newline, radix prefix, or type suffix.
   if (Tok.getLength() == 1) {
     const char Val = PP.getSpellingOfSingleCharacterNumericConstant(Tok);
-    unsigned IntSize = Context.Target.getIntWidth();
+    unsigned IntSize = Context.getTargetInfo().getIntWidth();
     return Owned(IntegerLiteral::Create(Context, llvm::APInt(IntSize, Val-'0'),
                     Context.IntTy, Tok.getLocation()));
   }
@@ -2518,7 +2518,7 @@ ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
       Diag(Tok.getLocation(), diag::ext_longlong);
 
     // Get the value in the widest-possible width.
-    llvm::APInt ResultVal(Context.Target.getIntMaxTWidth(), 0);
+    llvm::APInt ResultVal(Context.getTargetInfo().getIntMaxTWidth(), 0);
 
     if (Literal.GetIntegerValue(ResultVal)) {
       // If this value didn't fit into uintmax_t, warn and force to ull.
@@ -2538,7 +2538,7 @@ ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
       unsigned Width = 0;
       if (!Literal.isLong && !Literal.isLongLong) {
         // Are int/unsigned possibilities?
-        unsigned IntSize = Context.Target.getIntWidth();
+        unsigned IntSize = Context.getTargetInfo().getIntWidth();
 
         // Does it fit in a unsigned int?
         if (ResultVal.isIntN(IntSize)) {
@@ -2553,7 +2553,7 @@ ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
 
       // Are long/unsigned long possibilities?
       if (Ty.isNull() && !Literal.isLongLong) {
-        unsigned LongSize = Context.Target.getLongWidth();
+        unsigned LongSize = Context.getTargetInfo().getLongWidth();
 
         // Does it fit in a unsigned long?
         if (ResultVal.isIntN(LongSize)) {
@@ -2568,7 +2568,7 @@ ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
 
       // Finally, check long long if needed.
       if (Ty.isNull()) {
-        unsigned LongLongSize = Context.Target.getLongLongWidth();
+        unsigned LongLongSize = Context.getTargetInfo().getLongLongWidth();
 
         // Does it fit in a unsigned long long?
         if (ResultVal.isIntN(LongLongSize)) {
@@ -2589,7 +2589,7 @@ ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
       if (Ty.isNull()) {
         Diag(Tok.getLocation(), diag::warn_integer_too_large_for_signed);
         Ty = Context.UnsignedLongLongTy;
-        Width = Context.Target.getLongLongWidth();
+        Width = Context.getTargetInfo().getLongLongWidth();
       }
 
       if (ResultVal.getBitWidth() != Width)
@@ -8713,12 +8713,12 @@ ExprResult Sema::ActOnGNUNullExpr(SourceLocation TokenLoc) {
   // The type of __null will be int or long, depending on the size of
   // pointers on the target.
   QualType Ty;
-  unsigned pw = Context.Target.getPointerWidth(0);
-  if (pw == Context.Target.getIntWidth())
+  unsigned pw = Context.getTargetInfo().getPointerWidth(0);
+  if (pw == Context.getTargetInfo().getIntWidth())
     Ty = Context.IntTy;
-  else if (pw == Context.Target.getLongWidth())
+  else if (pw == Context.getTargetInfo().getLongWidth())
     Ty = Context.LongTy;
-  else if (pw == Context.Target.getLongLongWidth())
+  else if (pw == Context.getTargetInfo().getLongLongWidth())
     Ty = Context.LongLongTy;
   else {
     assert(!"I don't know size of pointer!");

@@ -839,7 +839,7 @@ CharUnits VCallAndVBaseOffsetBuilder::getCurrentOffsetOffset() const {
   int64_t OffsetIndex = -(int64_t)(3 + Components.size());
     
   CharUnits PointerWidth = 
-    Context.toCharUnitsFromBits(Context.Target.getPointerWidth(0));
+    Context.toCharUnitsFromBits(Context.getTargetInfo().getPointerWidth(0));
   CharUnits OffsetOffset = PointerWidth * OffsetIndex;
   return OffsetOffset;
 }

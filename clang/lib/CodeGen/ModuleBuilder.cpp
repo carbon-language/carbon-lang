@@ -52,9 +52,9 @@ namespace {
     virtual void Initialize(ASTContext &Context) {
       Ctx = &Context;
 
-      M->setTargetTriple(Ctx->Target.getTriple().getTriple());
-      M->setDataLayout(Ctx->Target.getTargetDescription());
-      TD.reset(new llvm::TargetData(Ctx->Target.getTargetDescription()));
+      M->setTargetTriple(Ctx->getTargetInfo().getTriple().getTriple());
+      M->setDataLayout(Ctx->getTargetInfo().getTargetDescription());
+      TD.reset(new llvm::TargetData(Ctx->getTargetInfo().getTargetDescription()));
       Builder.reset(new CodeGen::CodeGenModule(Context, CodeGenOpts,
                                                *M, *TD, Diags));
     }

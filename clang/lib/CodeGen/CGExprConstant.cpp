@@ -138,7 +138,7 @@ void ConstStructBuilder::AppendBitField(const FieldDecl *Field,
     // We need to add padding.
     CharUnits PadSize = Context.toCharUnitsFromBits(
       llvm::RoundUpToAlignment(FieldOffset - NextFieldOffsetInBits, 
-                               Context.Target.getCharAlign()));
+                               Context.getTargetInfo().getCharAlign()));
 
     AppendPadding(PadSize);
   }

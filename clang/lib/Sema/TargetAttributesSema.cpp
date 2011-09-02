@@ -236,7 +236,7 @@ namespace {
     X86AttributesSema() { }
     bool ProcessDeclAttribute(Scope *scope, Decl *D,
                               const AttributeList &Attr, Sema &S) const {
-      const llvm::Triple &Triple(S.Context.Target.getTriple());
+      const llvm::Triple &Triple(S.Context.getTargetInfo().getTriple());
       if (Triple.getOS() == llvm::Triple::Win32 ||
           Triple.getOS() == llvm::Triple::MinGW32) {
         switch (Attr.getKind()) {
@@ -261,7 +261,7 @@ const TargetAttributesSema &Sema::getTargetAttributesSema() const {
   if (TheTargetAttributesSema)
     return *TheTargetAttributesSema;
 
-  const llvm::Triple &Triple(Context.Target.getTriple());
+  const llvm::Triple &Triple(Context.getTargetInfo().getTriple());
   switch (Triple.getArch()) {
   default:
     return *(TheTargetAttributesSema = new TargetAttributesSema);

@@ -1612,8 +1612,8 @@ llvm::Constant *CGObjCCommonMac::BuildGCBlockLayout(CodeGenModule &CGM,
   bool hasUnion = false;
   SkipIvars.clear();
   IvarsInfo.clear();
-  unsigned WordSizeInBits = CGM.getContext().Target.getPointerWidth(0);
-  unsigned ByteSizeInBits = CGM.getContext().Target.getCharWidth();
+  unsigned WordSizeInBits = CGM.getContext().getTargetInfo().getPointerWidth(0);
+  unsigned ByteSizeInBits = CGM.getContext().getTargetInfo().getCharWidth();
   
   // __isa is the first field in block descriptor and must assume by runtime's
   // convention that it is GC'able.
@@ -3600,8 +3600,8 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCImplementationDecl *OI,
 
   if (RecFields.empty())
     return;
-  unsigned WordSizeInBits = CGM.getContext().Target.getPointerWidth(0);
-  unsigned ByteSizeInBits = CGM.getContext().Target.getCharWidth();
+  unsigned WordSizeInBits = CGM.getContext().getTargetInfo().getPointerWidth(0);
+  unsigned ByteSizeInBits = CGM.getContext().getTargetInfo().getCharWidth();
   if (!RD && CGM.getLangOptions().ObjCAutoRefCount) {
     const FieldDecl *FirstField = RecFields[0];
     FirstFieldDelta = 

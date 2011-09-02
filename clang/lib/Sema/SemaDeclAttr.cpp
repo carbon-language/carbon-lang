@@ -1194,7 +1194,7 @@ static void handleAliasAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     return;
   }
 
-  if (S.Context.Target.getTriple().isOSDarwin()) {
+  if (S.Context.getTargetInfo().getTriple().isOSDarwin()) {
     S.Diag(Attr.getLoc(), diag::err_alias_not_supported_on_darwin);
     return;
   }
@@ -1917,7 +1917,7 @@ static void handleWeakImportAttr(Sema &S, Decl *D, const AttributeList &Attr) {
              diag::warn_attribute_weak_import_invalid_on_definition)
         << "weak_import" << 2 /*variable and function*/;
     else if (isa<ObjCPropertyDecl>(D) || isa<ObjCMethodDecl>(D) ||
-             (S.Context.Target.getTriple().isOSDarwin() &&
+             (S.Context.getTargetInfo().getTriple().isOSDarwin() &&
               isa<ObjCInterfaceDecl>(D))) {
       // Nothing to warn about here.
     } else
@@ -1968,7 +1968,7 @@ static void handleSectionAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   }
 
   // If the target wants to validate the section specifier, make it happen.
-  std::string Error = S.Context.Target.isValidSectionSpecifier(SE->getString());
+  std::string Error = S.Context.getTargetInfo().isValidSectionSpecifier(SE->getString());
   if (!Error.empty()) {
     S.Diag(SE->getLocStart(), diag::err_attribute_section_invalid_for_target)
     << Error;
@@ -2587,13 +2587,13 @@ static void handleModeAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     // FIXME: glibc uses 'word' to define register_t; this is narrower than a
     // pointer on PIC16 and other embedded platforms.
     if (Str == "word")
-      DestWidth = S.Context.Target.getPointerWidth(0);
+      DestWidth = S.Context.getTargetInfo().getPointerWidth(0);
     else if (Str == "byte")
-      DestWidth = S.Context.Target.getCharWidth();
+      DestWidth = S.Context.getTargetInfo().getCharWidth();
     break;
   case 7:
     if (Str == "pointer")
-      DestWidth = S.Context.Target.getPointerWidth(0);
+      DestWidth = S.Context.getTargetInfo().getPointerWidth(0);
     break;
   }
 
@@ -2667,12 +2667,12 @@ static void handleModeAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     if (!IntegerMode)
       NewTy = S.Context.DoubleTy;
     else if (OldTy->isSignedIntegerType())
-      if (S.Context.Target.getLongWidth() == 64)
+      if (S.Context.getTargetInfo().getLongWidth() == 64)
         NewTy = S.Context.LongTy;
       else
         NewTy = S.Context.LongLongTy;
     else
-      if (S.Context.Target.getLongWidth() == 64)
+      if (S.Context.getTargetInfo().getLongWidth() == 64)
         NewTy = S.Context.UnsignedLongTy;
       else
         NewTy = S.Context.UnsignedLongLongTy;
@@ -3031,7 +3031,7 @@ bool Sema::CheckRegparmAttr(const AttributeList &Attr, unsigned &numParams) {
     return true;
   }
 
-  if (Context.Target.getRegParmMax() == 0) {
+  if (Context.getTargetInfo().getRegParmMax() == 0) {
     Diag(Attr.getLoc(), diag::err_attribute_regparm_wrong_platform)
       << NumParamsExpr->getSourceRange();
     Attr.setInvalid();
@@ -3039,9 +3039,9 @@ bool Sema::CheckRegparmAttr(const AttributeList &Attr, unsigned &numParams) {
   }
 
   numParams = NumParams.getZExtValue();
-  if (numParams > Context.Target.getRegParmMax()) {
+  if (numParams > Context.getTargetInfo().getRegParmMax()) {
     Diag(Attr.getLoc(), diag::err_attribute_regparm_invalid_number)
-      << Context.Target.getRegParmMax() << NumParamsExpr->getSourceRange();
+      << Context.getTargetInfo().getRegParmMax() << NumParamsExpr->getSourceRange();
     Attr.setInvalid();
     return true;
   }

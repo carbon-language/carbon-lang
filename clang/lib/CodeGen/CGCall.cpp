@@ -599,11 +599,11 @@ bool CodeGenModule::ReturnTypeUsesFPRet(QualType ResultType) {
     default:
       return false;
     case BuiltinType::Float:
-      return getContext().Target.useObjCFPRetForRealType(TargetInfo::Float);
+      return getContext().getTargetInfo().useObjCFPRetForRealType(TargetInfo::Float);
     case BuiltinType::Double:
-      return getContext().Target.useObjCFPRetForRealType(TargetInfo::Double);
+      return getContext().getTargetInfo().useObjCFPRetForRealType(TargetInfo::Double);
     case BuiltinType::LongDouble:
-      return getContext().Target.useObjCFPRetForRealType(
+      return getContext().getTargetInfo().useObjCFPRetForRealType(
         TargetInfo::LongDouble);
     }
   }
@@ -796,7 +796,7 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
   else
     RegParm = CodeGenOpts.NumRegisterParameters;
 
-  unsigned PointerWidth = getContext().Target.getPointerWidth(0);
+  unsigned PointerWidth = getContext().getTargetInfo().getPointerWidth(0);
   for (CGFunctionInfo::const_arg_iterator it = FI.arg_begin(),
          ie = FI.arg_end(); it != ie; ++it) {
     QualType ParamType = it->type;
