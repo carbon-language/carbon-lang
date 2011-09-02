@@ -360,7 +360,7 @@ public:
 
 public:
 
-    UnwindPlan (uint32_t reg_kind) : 
+    UnwindPlan (lldb::RegisterKind reg_kind) : 
         m_row_list (), 
         m_plan_valid_address_range (), 
         m_register_kind (reg_kind), 
@@ -385,14 +385,14 @@ public:
     const Row*
     GetRowForFunctionOffset (int offset) const;
 
-    uint32_t
+    lldb::RegisterKind
     GetRegisterKind () const
     {
         return m_register_kind;
     }
 
     void
-    SetRegisterKind (uint32_t kind)
+    SetRegisterKind (lldb::RegisterKind kind)
     {
         m_register_kind = kind;
     }
@@ -456,7 +456,7 @@ private:
     typedef std::vector<Row> collection;
     collection m_row_list;
     AddressRange m_plan_valid_address_range;
-    uint32_t m_register_kind;   // The RegisterKind these register numbers are in terms of - will need to be
+    lldb::RegisterKind m_register_kind;   // The RegisterKind these register numbers are in terms of - will need to be
                                 // translated to lldb native reg nums at unwind time
     lldb_private::ConstString m_source_name;  // for logging, where this UnwindPlan originated from
 }; // class UnwindPlan

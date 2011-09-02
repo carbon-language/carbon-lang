@@ -53,7 +53,7 @@ using namespace lldb;
 using namespace lldb_private;
 using namespace lldb_utility;
 
-static lldb::user_id_t g_value_obj_uid = 0;
+static user_id_t g_value_obj_uid = 0;
 
 //----------------------------------------------------------------------
 // ValueObject constructor
@@ -125,7 +125,7 @@ ValueObject::ValueObject (ExecutionContextScope *exe_scope) :
     m_deref_valobj(NULL),
     m_format (eFormatDefault),
     m_last_format_mgr_revision(0),
-    m_last_format_mgr_dynamic(lldb::eNoDynamicValues),
+    m_last_format_mgr_dynamic(eNoDynamicValues),
     m_last_summary_format(),
     m_forced_summary_format(),
     m_last_value_format(),
@@ -162,7 +162,7 @@ ValueObject::UpdateValueIfNeeded (bool update_format)
 }
 
 bool
-ValueObject::UpdateValueIfNeeded (lldb::DynamicValueType use_dynamic, bool update_format)
+ValueObject::UpdateValueIfNeeded (DynamicValueType use_dynamic, bool update_format)
 {
     
     if (update_format)
@@ -217,7 +217,7 @@ ValueObject::UpdateValueIfNeeded (lldb::DynamicValueType use_dynamic, bool updat
 }
 
 void
-ValueObject::UpdateFormatsIfNeeded(lldb::DynamicValueType use_dynamic)
+ValueObject::UpdateFormatsIfNeeded(DynamicValueType use_dynamic)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
     if (log)
@@ -242,7 +242,7 @@ ValueObject::UpdateFormatsIfNeeded(lldb::DynamicValueType use_dynamic)
 
         m_synthetic_value = NULL;
         
-        DataVisualization::ValueFormats::Get(*this, lldb::eNoDynamicValues, m_last_value_format);
+        DataVisualization::ValueFormats::Get(*this, eNoDynamicValues, m_last_value_format);
         DataVisualization::GetSummaryFormat(*this, use_dynamic, m_last_summary_format);
         DataVisualization::GetSyntheticChildren(*this, use_dynamic, m_last_synthetic_filter);
 
@@ -578,7 +578,7 @@ ValueObject::GetSummaryAsCString ()
                         if (ClangASTContext::IsFunctionPointerType (clang_type))
                         {
                             AddressType func_ptr_address_type = eAddressTypeInvalid;
-                            lldb::addr_t func_ptr_address = GetPointerValue (func_ptr_address_type, true);
+                            addr_t func_ptr_address = GetPointerValue (func_ptr_address_type, true);
 
                             if (func_ptr_address != 0 && func_ptr_address != LLDB_INVALID_ADDRESS)
                             {
@@ -641,7 +641,7 @@ ValueObject::IsCStringContainer(bool check_pointer)
         return true;
     if (type_flags.Test(ClangASTContext::eTypeIsArray))
         return true;
-    lldb::addr_t cstr_address = LLDB_INVALID_ADDRESS;
+    addr_t cstr_address = LLDB_INVALID_ADDRESS;
     AddressType cstr_address_type = eAddressTypeInvalid;
     cstr_address = GetAddressOf (cstr_address_type, true);
     return (cstr_address != LLDB_INVALID_ADDRESS);
@@ -652,7 +652,7 @@ ValueObject::ReadPointedString(Stream& s,
                                Error& error,
                                uint32_t max_length,
                                bool honor_array,
-                               lldb::Format item_format)
+                               Format item_format)
 {
     
     if (max_length == 0)
@@ -676,7 +676,7 @@ ValueObject::ReadPointedString(Stream& s,
                 }
                 else
                 {
-                    lldb::addr_t cstr_address = LLDB_INVALID_ADDRESS;
+                    addr_t cstr_address = LLDB_INVALID_ADDRESS;
                     AddressType cstr_address_type = eAddressTypeInvalid;
                     
                     size_t cstr_len = 0;
@@ -711,7 +711,7 @@ ValueObject::ReadPointedString(Stream& s,
                         if (cstr_len > 0 && honor_array)
                         {
                             data_buffer.resize(cstr_len);
-                            data.SetData (&data_buffer.front(), data_buffer.size(), lldb::endian::InlHostByteOrder());
+                            data.SetData (&data_buffer.front(), data_buffer.size(), endian::InlHostByteOrder());
                             bytes_read = target->ReadMemory (cstr_so_addr, 
                                                              prefer_file_cache, 
                                                              &data_buffer.front(), 
@@ -821,7 +821,7 @@ ValueObject::GetObjectDescription ()
         
     StreamString s;
     
-    lldb::LanguageType language = GetObjectRuntimeLanguage();
+    LanguageType language = GetObjectRuntimeLanguage();
     LanguageRuntime *runtime = process->GetLanguageRuntime(language);
     
     if (runtime == NULL)
@@ -834,7 +834,7 @@ ValueObject::GetObjectDescription ()
             if (ClangASTContext::IsIntegerType (opaque_qual_type, is_signed) 
                 || ClangASTContext::IsPointerType (opaque_qual_type))
             {
-                runtime = process->GetLanguageRuntime(lldb::eLanguageTypeObjC);
+                runtime = process->GetLanguageRuntime(eLanguageTypeObjC);
             }
         }
     }
@@ -953,12 +953,12 @@ ValueObject::GetValueAsUnsigned (uint64_t fail_value)
 bool
 ValueObject::GetPrintableRepresentation(Stream& s,
                                         ValueObjectRepresentationStyle val_obj_display,
-                                        lldb::Format custom_format)
+                                        Format custom_format)
 {
 
     RefCounter ref(&m_dump_printable_counter);
     
-    if (custom_format != lldb::eFormatInvalid)
+    if (custom_format != eFormatInvalid)
         SetFormat(custom_format);
     
     const char * return_value;
@@ -1046,7 +1046,7 @@ ValueObject::GetPrintableRepresentation(Stream& s,
 // to checking this call result before trying to display special cases
 bool
 ValueObject::HasSpecialCasesForPrintableRepresentation(ValueObjectRepresentationStyle val_obj_display,
-                                                       lldb::Format custom_format)
+                                                       Format custom_format)
 {
     clang_type_t elem_or_pointee_type;
     Flags flags(ClangASTContext::GetTypeInfo(GetClangType(), GetClangAST(), &elem_or_pointee_type));
@@ -1055,30 +1055,30 @@ ValueObject::HasSpecialCasesForPrintableRepresentation(ValueObjectRepresentation
         && val_obj_display == ValueObject::eDisplayValue)
     {        
         if (IsCStringContainer(true) && 
-            (custom_format == lldb::eFormatCString ||
-             custom_format == lldb::eFormatCharArray ||
-             custom_format == lldb::eFormatChar ||
-             custom_format == lldb::eFormatVectorOfChar))
+            (custom_format == eFormatCString ||
+             custom_format == eFormatCharArray ||
+             custom_format == eFormatChar ||
+             custom_format == eFormatVectorOfChar))
             return true;
 
         if (flags.Test(ClangASTContext::eTypeIsArray))
         {
-            if ((custom_format == lldb::eFormatBytes) ||
-                (custom_format == lldb::eFormatBytesWithASCII))
+            if ((custom_format == eFormatBytes) ||
+                (custom_format == eFormatBytesWithASCII))
                 return true;
             
-            if ((custom_format == lldb::eFormatVectorOfChar) ||
-                (custom_format == lldb::eFormatVectorOfFloat32) ||
-                (custom_format == lldb::eFormatVectorOfFloat64) ||
-                (custom_format == lldb::eFormatVectorOfSInt16) ||
-                (custom_format == lldb::eFormatVectorOfSInt32) ||
-                (custom_format == lldb::eFormatVectorOfSInt64) ||
-                (custom_format == lldb::eFormatVectorOfSInt8) ||
-                (custom_format == lldb::eFormatVectorOfUInt128) ||
-                (custom_format == lldb::eFormatVectorOfUInt16) ||
-                (custom_format == lldb::eFormatVectorOfUInt32) ||
-                (custom_format == lldb::eFormatVectorOfUInt64) ||
-                (custom_format == lldb::eFormatVectorOfUInt8))
+            if ((custom_format == eFormatVectorOfChar) ||
+                (custom_format == eFormatVectorOfFloat32) ||
+                (custom_format == eFormatVectorOfFloat64) ||
+                (custom_format == eFormatVectorOfSInt16) ||
+                (custom_format == eFormatVectorOfSInt32) ||
+                (custom_format == eFormatVectorOfSInt64) ||
+                (custom_format == eFormatVectorOfSInt8) ||
+                (custom_format == eFormatVectorOfUInt128) ||
+                (custom_format == eFormatVectorOfUInt16) ||
+                (custom_format == eFormatVectorOfUInt32) ||
+                (custom_format == eFormatVectorOfUInt64) ||
+                (custom_format == eFormatVectorOfUInt8))
                 return true;
         }
     }
@@ -1088,7 +1088,7 @@ ValueObject::HasSpecialCasesForPrintableRepresentation(ValueObjectRepresentation
 bool
 ValueObject::DumpPrintableRepresentation(Stream& s,
                                          ValueObjectRepresentationStyle val_obj_display,
-                                         lldb::Format custom_format,
+                                         Format custom_format,
                                          bool only_special)
 {
 
@@ -1102,29 +1102,29 @@ ValueObject::DumpPrintableRepresentation(Stream& s,
         // try to "do the right thing"
         
         if (IsCStringContainer(true) && 
-            (custom_format == lldb::eFormatCString ||
-             custom_format == lldb::eFormatCharArray ||
-             custom_format == lldb::eFormatChar ||
-             custom_format == lldb::eFormatVectorOfChar)) // print char[] & char* directly
+            (custom_format == eFormatCString ||
+             custom_format == eFormatCharArray ||
+             custom_format == eFormatChar ||
+             custom_format == eFormatVectorOfChar)) // print char[] & char* directly
         {
             Error error;
             ReadPointedString(s,
                               error,
                               0,
-                              (custom_format == lldb::eFormatVectorOfChar) ||
-                              (custom_format == lldb::eFormatCharArray));
+                              (custom_format == eFormatVectorOfChar) ||
+                              (custom_format == eFormatCharArray));
             return !error.Fail();
         }
         
-        if (custom_format == lldb::eFormatEnum)
+        if (custom_format == eFormatEnum)
             return false;
         
         // this only works for arrays, because I have no way to know when
         // the pointed memory ends, and no special \0 end of data marker
         if (flags.Test(ClangASTContext::eTypeIsArray))
         {
-            if ((custom_format == lldb::eFormatBytes) ||
-                (custom_format == lldb::eFormatBytesWithASCII))
+            if ((custom_format == eFormatBytes) ||
+                (custom_format == eFormatBytesWithASCII))
             {
                 uint32_t count = GetNumChildren();
                                 
@@ -1149,22 +1149,22 @@ ValueObject::DumpPrintableRepresentation(Stream& s,
                 return true;
             }
             
-            if ((custom_format == lldb::eFormatVectorOfChar) ||
-                (custom_format == lldb::eFormatVectorOfFloat32) ||
-                (custom_format == lldb::eFormatVectorOfFloat64) ||
-                (custom_format == lldb::eFormatVectorOfSInt16) ||
-                (custom_format == lldb::eFormatVectorOfSInt32) ||
-                (custom_format == lldb::eFormatVectorOfSInt64) ||
-                (custom_format == lldb::eFormatVectorOfSInt8) ||
-                (custom_format == lldb::eFormatVectorOfUInt128) ||
-                (custom_format == lldb::eFormatVectorOfUInt16) ||
-                (custom_format == lldb::eFormatVectorOfUInt32) ||
-                (custom_format == lldb::eFormatVectorOfUInt64) ||
-                (custom_format == lldb::eFormatVectorOfUInt8)) // arrays of bytes, bytes with ASCII or any vector format should be printed directly
+            if ((custom_format == eFormatVectorOfChar) ||
+                (custom_format == eFormatVectorOfFloat32) ||
+                (custom_format == eFormatVectorOfFloat64) ||
+                (custom_format == eFormatVectorOfSInt16) ||
+                (custom_format == eFormatVectorOfSInt32) ||
+                (custom_format == eFormatVectorOfSInt64) ||
+                (custom_format == eFormatVectorOfSInt8) ||
+                (custom_format == eFormatVectorOfUInt128) ||
+                (custom_format == eFormatVectorOfUInt16) ||
+                (custom_format == eFormatVectorOfUInt32) ||
+                (custom_format == eFormatVectorOfUInt64) ||
+                (custom_format == eFormatVectorOfUInt8)) // arrays of bytes, bytes with ASCII or any vector format should be printed directly
             {
                 uint32_t count = GetNumChildren();
 
-                lldb::Format format = FormatManager::GetSingleItemFormat(custom_format);
+                Format format = FormatManager::GetSingleItemFormat(custom_format);
                 
                 s << '[';
                 for (uint32_t low = 0; low < count; low++)
@@ -1188,23 +1188,23 @@ ValueObject::DumpPrintableRepresentation(Stream& s,
             }
         }
         
-        if ((custom_format == lldb::eFormatBoolean) ||
-            (custom_format == lldb::eFormatBinary) ||
-            (custom_format == lldb::eFormatChar) ||
-            (custom_format == lldb::eFormatCharPrintable) ||
-            (custom_format == lldb::eFormatComplexFloat) ||
-            (custom_format == lldb::eFormatDecimal) ||
-            (custom_format == lldb::eFormatHex) ||
-            (custom_format == lldb::eFormatFloat) ||
-            (custom_format == lldb::eFormatOctal) ||
-            (custom_format == lldb::eFormatOSType) ||
-            (custom_format == lldb::eFormatUnicode16) ||
-            (custom_format == lldb::eFormatUnicode32) ||
-            (custom_format == lldb::eFormatUnsigned) ||
-            (custom_format == lldb::eFormatPointer) ||
-            (custom_format == lldb::eFormatComplexInteger) ||
-            (custom_format == lldb::eFormatComplex) ||
-            (custom_format == lldb::eFormatDefault)) // use the [] operator
+        if ((custom_format == eFormatBoolean) ||
+            (custom_format == eFormatBinary) ||
+            (custom_format == eFormatChar) ||
+            (custom_format == eFormatCharPrintable) ||
+            (custom_format == eFormatComplexFloat) ||
+            (custom_format == eFormatDecimal) ||
+            (custom_format == eFormatHex) ||
+            (custom_format == eFormatFloat) ||
+            (custom_format == eFormatOctal) ||
+            (custom_format == eFormatOSType) ||
+            (custom_format == eFormatUnicode16) ||
+            (custom_format == eFormatUnicode32) ||
+            (custom_format == eFormatUnsigned) ||
+            (custom_format == eFormatPointer) ||
+            (custom_format == eFormatComplexInteger) ||
+            (custom_format == eFormatComplex) ||
+            (custom_format == eFormatDefault)) // use the [] operator
             return false;
     }
     
@@ -1249,7 +1249,7 @@ ValueObject::GetAddressOf (AddressType &address_type, bool scalar_is_load_addres
 addr_t
 ValueObject::GetPointerValue (AddressType &address_type, bool scalar_is_load_address)
 {
-    lldb::addr_t address = LLDB_INVALID_ADDRESS;
+    addr_t address = LLDB_INVALID_ADDRESS;
     address_type = eAddressTypeInvalid;
     
     if (!UpdateValueIfNeeded(false))
@@ -1293,7 +1293,7 @@ ValueObject::SetValueFromCString (const char *value_str)
         return false;
 
     uint32_t count = 0;
-    lldb::Encoding encoding = ClangASTType::GetEncoding (GetClangType(), count);
+    Encoding encoding = ClangASTType::GetEncoding (GetClangType(), count);
 
     const size_t byte_size = GetByteSize();
 
@@ -1322,7 +1322,7 @@ ValueObject::SetValueFromCString (const char *value_str)
                     ProcessSP process_sp = GetUpdatePoint().GetProcessSP();
                     if (process_sp)
                     {
-                        lldb::addr_t target_addr = m_value.GetScalar().GetRawBits64(LLDB_INVALID_ADDRESS);
+                        addr_t target_addr = m_value.GetScalar().GetRawBits64(LLDB_INVALID_ADDRESS);
                         size_t bytes_written = process_sp->WriteScalarToMemory (target_addr, 
                                                                             new_scalar, 
                                                                             byte_size, 
@@ -1374,7 +1374,7 @@ ValueObject::SetValueFromCString (const char *value_str)
     return true;
 }
 
-lldb::LanguageType
+LanguageType
 ValueObject::GetObjectRuntimeLanguage ()
 {
     return ClangASTType::GetMinimumLanguage (GetClangAST(),
@@ -1439,7 +1439,7 @@ ValueObject::IsPossibleDynamicType ()
     return ClangASTContext::IsPossibleDynamicType (GetClangAST (), GetClangType());
 }
 
-lldb::ValueObjectSP
+ValueObjectSP
 ValueObject::GetSyntheticArrayMember (int32_t index, bool can_create)
 {
     if (IsArrayType())
@@ -1568,7 +1568,7 @@ ValueObject::GetSyntheticBitFieldChild (uint32_t from, uint32_t to, bool can_cre
     return synthetic_child_sp;
 }
 
-lldb::ValueObjectSP
+ValueObjectSP
 ValueObject::GetSyntheticArrayRangeChild (uint32_t from, uint32_t to, bool can_create)
 {
     ValueObjectSP synthetic_child_sp;
@@ -1604,7 +1604,7 @@ ValueObject::GetSyntheticArrayRangeChild (uint32_t from, uint32_t to, bool can_c
     return synthetic_child_sp;
 }
 
-lldb::ValueObjectSP
+ValueObjectSP
 ValueObject::GetSyntheticChildAtOffset(uint32_t offset, const ClangASTType& type, bool can_create)
 {
     
@@ -1622,7 +1622,7 @@ ValueObject::GetSyntheticChildAtOffset(uint32_t offset, const ClangASTType& type
         return synthetic_child_sp;
     
     if (!can_create)
-        return lldb::ValueObjectSP();
+        return ValueObjectSP();
     
     ValueObjectChild *synthetic_child = new ValueObjectChild(*this,
                                                              type.GetASTContext(),
@@ -1661,7 +1661,7 @@ SkipLeadingExpressionPathSeparators(const char* expression)
     return expression;
 }
 
-lldb::ValueObjectSP
+ValueObjectSP
 ValueObject::GetSyntheticExpressionPathChild(const char* expression, bool can_create)
 {
     ValueObjectSP synthetic_child_sp;
@@ -1687,9 +1687,9 @@ ValueObject::GetSyntheticExpressionPathChild(const char* expression, bool can_cr
 }
 
 void
-ValueObject::CalculateSyntheticValue (lldb::SyntheticValueType use_synthetic)
+ValueObject::CalculateSyntheticValue (SyntheticValueType use_synthetic)
 {
-    if (use_synthetic == lldb::eNoSyntheticFilter)
+    if (use_synthetic == eNoSyntheticFilter)
         return;
     
     UpdateFormatsIfNeeded(m_last_format_mgr_dynamic);
@@ -1703,9 +1703,9 @@ ValueObject::CalculateSyntheticValue (lldb::SyntheticValueType use_synthetic)
 }
 
 void
-ValueObject::CalculateDynamicValue (lldb::DynamicValueType use_dynamic)
+ValueObject::CalculateDynamicValue (DynamicValueType use_dynamic)
 {
-    if (use_dynamic == lldb::eNoDynamicValues)
+    if (use_dynamic == eNoDynamicValues)
         return;
         
     if (!m_dynamic_value && !IsDynamic())
@@ -1716,8 +1716,8 @@ ValueObject::CalculateDynamicValue (lldb::DynamicValueType use_dynamic)
         
         // FIXME: Process should have some kind of "map over Runtimes" so we don't have to
         // hard code this everywhere.
-        lldb::LanguageType known_type = GetObjectRuntimeLanguage();
-        if (known_type != lldb::eLanguageTypeUnknown && known_type != lldb::eLanguageTypeC)
+        LanguageType known_type = GetObjectRuntimeLanguage();
+        if (known_type != eLanguageTypeUnknown && known_type != eLanguageTypeC)
         {
             LanguageRuntime *runtime = process->GetLanguageRuntime (known_type);
             if (runtime)
@@ -1725,13 +1725,13 @@ ValueObject::CalculateDynamicValue (lldb::DynamicValueType use_dynamic)
         }
         else
         {
-            LanguageRuntime *cpp_runtime = process->GetLanguageRuntime (lldb::eLanguageTypeC_plus_plus);
+            LanguageRuntime *cpp_runtime = process->GetLanguageRuntime (eLanguageTypeC_plus_plus);
             if (cpp_runtime)
                 worth_having_dynamic_value = cpp_runtime->CouldHaveDynamicValue(*this);
             
             if (!worth_having_dynamic_value)
             {
-                LanguageRuntime *objc_runtime = process->GetLanguageRuntime (lldb::eLanguageTypeObjC);
+                LanguageRuntime *objc_runtime = process->GetLanguageRuntime (eLanguageTypeObjC);
                 if (objc_runtime)
                     worth_having_dynamic_value = objc_runtime->CouldHaveDynamicValue(*this);
             }
@@ -1749,7 +1749,7 @@ ValueObject::CalculateDynamicValue (lldb::DynamicValueType use_dynamic)
 ValueObjectSP
 ValueObject::GetDynamicValue (DynamicValueType use_dynamic)
 {
-    if (use_dynamic == lldb::eNoDynamicValues)
+    if (use_dynamic == eNoDynamicValues)
         return ValueObjectSP();
         
     if (!IsDynamic() && m_dynamic_value == NULL)
@@ -1769,7 +1769,7 @@ ValueObject::GetDynamicValue (DynamicValueType use_dynamic)
 ValueObjectSP
 ValueObject::GetSyntheticValue (SyntheticValueType use_synthetic)
 {
-    if (use_synthetic == lldb::eNoSyntheticFilter)
+    if (use_synthetic == eNoSyntheticFilter)
         return GetSP();
     
     UpdateFormatsIfNeeded(m_last_format_mgr_dynamic);
@@ -1793,7 +1793,7 @@ ValueObject::HasSyntheticValue()
     if (m_last_synthetic_filter.get() == NULL)
         return false;
     
-    CalculateSyntheticValue(lldb::eUseSyntheticFilter);
+    CalculateSyntheticValue(eUseSyntheticFilter);
     
     if (m_synthetic_value)
         return true;
@@ -1909,7 +1909,7 @@ ValueObject::GetExpressionPath (Stream &s, bool qualify_cxx_base_classes, GetExp
     }
 }
 
-lldb::ValueObjectSP
+ValueObjectSP
 ValueObject::GetValueForExpressionPath(const char* expression,
                                        const char** first_unparsed,
                                        ExpressionPathScanEndReason* reason_to_stop,
@@ -1974,7 +1974,7 @@ ValueObject::GetValueForExpressionPath(const char* expression,
 
 int
 ValueObject::GetValuesForExpressionPath(const char* expression,
-                                        lldb::ValueObjectListSP& list,
+                                        ValueObjectListSP& list,
                                         const char** first_unparsed,
                                         ExpressionPathScanEndReason* reason_to_stop,
                                         ExpressionPathEndResultType* final_value_type,
@@ -2058,7 +2058,7 @@ ValueObject::GetValuesForExpressionPath(const char* expression,
     return 1;
 }
 
-lldb::ValueObjectSP
+ValueObjectSP
 ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                                             const char** first_unparsed,
                                             ExpressionPathScanEndReason* reason_to_stop,
@@ -2078,8 +2078,8 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
         
         const char* expression_cstr = *first_unparsed; // hide the top level expression_cstr
         
-        lldb::clang_type_t root_clang_type = root->GetClangType();
-        lldb::clang_type_t pointee_clang_type;
+        clang_type_t root_clang_type = root->GetClangType();
+        clang_type_t pointee_clang_type;
         Flags root_clang_type_info,pointee_clang_type_info;
         
         root_clang_type_info = Flags(ClangASTContext::GetTypeInfo(root_clang_type, GetClangAST(), &pointee_clang_type));
@@ -2149,7 +2149,7 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                     }
                     else if (options.m_no_synthetic_children == false) // let's try with synthetic children
                     {
-                        child_valobj_sp = root->GetSyntheticValue(lldb::eUseSyntheticFilter)->GetChildMemberWithName(child_name, true);
+                        child_valobj_sp = root->GetSyntheticValue(eUseSyntheticFilter)->GetChildMemberWithName(child_name, true);
                     }
                     
                     // if we are here and options.m_no_synthetic_children is true, child_valobj_sp is going to be a NULL SP,
@@ -2182,7 +2182,7 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                     }
                     else if (options.m_no_synthetic_children == false) // let's try with synthetic children
                     {
-                        child_valobj_sp = root->GetSyntheticValue(lldb::eUseSyntheticFilter)->GetChildMemberWithName(child_name, true);
+                        child_valobj_sp = root->GetSyntheticValue(eUseSyntheticFilter)->GetChildMemberWithName(child_name, true);
                     }
                     
                     // if we are here and options.m_no_synthetic_children is true, child_valobj_sp is going to be a NULL SP,
@@ -2287,8 +2287,8 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                         if (!child_valobj_sp)
                             child_valobj_sp = root->GetSyntheticArrayMemberFromArray(index, true);
                         if (!child_valobj_sp)
-                            if (root->HasSyntheticValue() && root->GetSyntheticValue(lldb::eUseSyntheticFilter)->GetNumChildren() > index)
-                                child_valobj_sp = root->GetSyntheticValue(lldb::eUseSyntheticFilter)->GetChildAtIndex(index, true);
+                            if (root->HasSyntheticValue() && root->GetSyntheticValue(eUseSyntheticFilter)->GetNumChildren() > index)
+                                child_valobj_sp = root->GetSyntheticValue(eUseSyntheticFilter)->GetChildAtIndex(index, true);
                         if (child_valobj_sp)
                         {
                             root = child_valobj_sp;
@@ -2327,7 +2327,7 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                         else
                         {
                             if (ClangASTType::GetMinimumLanguage(root->GetClangAST(),
-                                                                    root->GetClangType()) == lldb::eLanguageTypeObjC
+                                                                    root->GetClangType()) == eLanguageTypeObjC
                                 &&
                                 ClangASTContext::IsPointerType(ClangASTType::GetPointeeType(root->GetClangType())) == false
                                 &&
@@ -2335,7 +2335,7 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                                 &&
                                 options.m_no_synthetic_children == false)
                             {
-                                root = root->GetSyntheticValue(lldb::eUseSyntheticFilter)->GetChildAtIndex(index, true);
+                                root = root->GetSyntheticValue(eUseSyntheticFilter)->GetChildAtIndex(index, true);
                             }
                             else
                                 root = root->GetSyntheticArrayMemberFromPointer(index, true);
@@ -2374,7 +2374,7 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                     }
                     else if (root->HasSyntheticValue() && options.m_no_synthetic_children == false)
                     {
-                        root = root->GetSyntheticValue(lldb::eUseSyntheticFilter)->GetChildAtIndex(index, true);
+                        root = root->GetSyntheticValue(eUseSyntheticFilter)->GetChildAtIndex(index, true);
                         if (!root.get())
                         {
                             *first_unparsed = expression_cstr;
@@ -2484,8 +2484,8 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
 int
 ValueObject::ExpandArraySliceExpression(const char* expression_cstr,
                                         const char** first_unparsed,
-                                        lldb::ValueObjectSP root,
-                                        lldb::ValueObjectListSP& list,
+                                        ValueObjectSP root,
+                                        ValueObjectListSP& list,
                                         ExpressionPathScanEndReason* reason_to_stop,
                                         ExpressionPathEndResultType* final_result,
                                         const GetValueForExpressionPathOptions& options,
@@ -2501,8 +2501,8 @@ ValueObject::ExpandArraySliceExpression(const char* expression_cstr,
         
         const char* expression_cstr = *first_unparsed; // hide the top level expression_cstr
         
-        lldb::clang_type_t root_clang_type = root->GetClangType();
-        lldb::clang_type_t pointee_clang_type;
+        clang_type_t root_clang_type = root->GetClangType();
+        clang_type_t pointee_clang_type;
         Flags root_clang_type_info,pointee_clang_type_info;
         
         root_clang_type_info = Flags(ClangASTContext::GetTypeInfo(root_clang_type, GetClangAST(), &pointee_clang_type));
@@ -2789,7 +2789,7 @@ ValueObject::DumpValueObject
     bool show_types,
     bool show_location,
     bool use_objc,
-    lldb::DynamicValueType use_dynamic,
+    DynamicValueType use_dynamic,
     bool use_synth,
     bool scope_already_checked,
     bool flat_output,
@@ -2801,7 +2801,7 @@ ValueObject::DumpValueObject
     {
         bool update_success = valobj->UpdateValueIfNeeded (use_dynamic, true);
 
-        if (update_success && use_dynamic != lldb::eNoDynamicValues)
+        if (update_success && use_dynamic != eNoDynamicValues)
         {
             ValueObject *dynamic_value = valobj->GetDynamicValue(use_dynamic).get();
             if (dynamic_value)
@@ -2832,9 +2832,9 @@ ValueObject::DumpValueObject
                 const char* typeName = valobj->GetTypeName().AsCString("<invalid type>");
                 s.Printf("(%s", typeName);
                 // only show dynamic types if the user really wants to see types
-                if (show_types && use_dynamic != lldb::eNoDynamicValues &&
+                if (show_types && use_dynamic != eNoDynamicValues &&
                     (/*strstr(typeName, "id") == typeName ||*/
-                     ClangASTType::GetMinimumLanguage(valobj->GetClangAST(), valobj->GetClangType()) == lldb::eLanguageTypeObjC))
+                     ClangASTType::GetMinimumLanguage(valobj->GetClangAST(), valobj->GetClangType()) == eLanguageTypeObjC))
                 {
                     Process* process = valobj->GetUpdatePoint().GetProcessSP().get();
                     if (process == NULL)
@@ -2969,8 +2969,8 @@ ValueObject::DumpValueObject
                 if (print_children && (!entry || entry->DoesPrintChildren() || !sum_cstr))
                 {
                     ValueObjectSP synth_valobj = valobj->GetSyntheticValue(use_synth ?
-                                                                         lldb::eUseSyntheticFilter : 
-                                                                         lldb::eNoSyntheticFilter);
+                                                                         eUseSyntheticFilter : 
+                                                                         eNoSyntheticFilter);
                     uint32_t num_children = synth_valobj->GetNumChildren();
                     bool print_dotdotdot = false;
                     if (num_children)
@@ -3095,7 +3095,7 @@ ValueObject::CreateConstantValue (const ConstString &name)
     return valobj_sp;
 }
 
-lldb::ValueObjectSP
+ValueObjectSP
 ValueObject::Dereference (Error &error)
 {
     if (m_deref_valobj)
@@ -3174,7 +3174,7 @@ ValueObject::Dereference (Error &error)
     }
 }
 
-lldb::ValueObjectSP
+ValueObjectSP
 ValueObject::AddressOf (Error &error)
 {
     if (m_addr_of_valobj_sp)
@@ -3182,7 +3182,7 @@ ValueObject::AddressOf (Error &error)
         
     AddressType address_type = eAddressTypeInvalid;
     const bool scalar_is_load_address = false;
-    lldb::addr_t addr = GetAddressOf (address_type, scalar_is_load_address);
+    addr_t addr = GetAddressOf (address_type, scalar_is_load_address);
     error.Clear();
     if (addr != LLDB_INVALID_ADDRESS)
     {
@@ -3223,13 +3223,13 @@ ValueObject::AddressOf (Error &error)
 }
 
 
-lldb::ValueObjectSP
+ValueObjectSP
 ValueObject::CastPointerType (const char *name, ClangASTType &clang_ast_type)
 {
-    lldb::ValueObjectSP valobj_sp;
+    ValueObjectSP valobj_sp;
     AddressType address_type;
     const bool scalar_is_load_address = true;
-    lldb::addr_t ptr_value = GetPointerValue (address_type, scalar_is_load_address);
+    addr_t ptr_value = GetPointerValue (address_type, scalar_is_load_address);
     
     if (ptr_value != LLDB_INVALID_ADDRESS)
     {
@@ -3243,13 +3243,13 @@ ValueObject::CastPointerType (const char *name, ClangASTType &clang_ast_type)
     return valobj_sp;    
 }
 
-lldb::ValueObjectSP
+ValueObjectSP
 ValueObject::CastPointerType (const char *name, TypeSP &type_sp)
 {
-    lldb::ValueObjectSP valobj_sp;
+    ValueObjectSP valobj_sp;
     AddressType address_type;
     const bool scalar_is_load_address = true;
-    lldb::addr_t ptr_value = GetPointerValue (address_type, scalar_is_load_address);
+    addr_t ptr_value = GetPointerValue (address_type, scalar_is_load_address);
     
     if (ptr_value != LLDB_INVALID_ADDRESS)
     {
@@ -3465,7 +3465,7 @@ ValueObject::EvaluationPoint::SetContext (ExecutionContextScope *exe_scope)
             Thread *thread = exe_scope->CalculateThread();
             if (thread != NULL)
             {
-                lldb::user_id_t new_thread_index = thread->GetIndexID();
+                user_id_t new_thread_index = thread->GetIndexID();
                 if (new_thread_index != m_thread_id)
                 {
                     needs_update = true;

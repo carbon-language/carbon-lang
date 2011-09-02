@@ -18,6 +18,7 @@
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Symbol/Type.h"
 #include "lldb/Symbol/VariableList.h"
+#include "lldb/Target/ABI.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/StackFrame.h"
@@ -130,7 +131,13 @@ Variable::Dump(Stream *s, bool show_context) const
             if (variable_sc.function)
                 loclist_base_addr = variable_sc.function->GetAddressRange().GetBaseAddress().GetFileAddress();
         }
-        m_location.GetDescription(s, lldb::eDescriptionLevelBrief, loclist_base_addr);
+        ABI *abi = NULL;
+        if (m_owner_scope)
+        {
+            Module *module = m_owner_scope->CalculateSymbolContextModule();
+            abi = ABI::FindPlugin (module->GetArchitecture()).get();
+        }
+        m_location.GetDescription(s, lldb::eDescriptionLevelBrief, loclist_base_addr, abi);
     }
 
     if (m_external)
@@ -463,6 +470,13 @@ Variable::DumpLocationForAddress (Stream *s, const Address &address)
         CalculateSymbolContext(&sc);
         if (sc.module_sp.get() == address.GetModule())
         {
+            ABI *abi = NULL;
+            if (m_owner_scope)
+            {
+                Module *module = m_owner_scope->CalculateSymbolContextModule();
+                abi = ABI::FindPlugin (module->GetArchitecture()).get();
+            }
+
             const addr_t file_addr = address.GetFileAddress();
             if (sc.function)
             {
@@ -474,14 +488,15 @@ Variable::DumpLocationForAddress (Stream *s, const Address &address)
                     return m_location.DumpLocationForAddress (s, 
                                                               eDescriptionLevelBrief, 
                                                               loclist_base_file_addr, 
-                                                              file_addr);
+                                                              file_addr,
+                                                              abi);
                 }
             }
             return m_location.DumpLocationForAddress (s, 
                                                       eDescriptionLevelBrief, 
                                                       LLDB_INVALID_ADDRESS, 
-                                                      file_addr);
-            
+                                                      file_addr,
+                                                      abi);
         }
     }
     return false;

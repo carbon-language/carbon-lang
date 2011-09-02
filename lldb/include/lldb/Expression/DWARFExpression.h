@@ -88,11 +88,16 @@ public:
     ///     different from the DWARF version of the location list base
     ///     address which is compile unit relative. This base address
     ///     is the address of the object that owns the location list.
+    ///
+    /// @param[in] abi
+    ///     An optional ABI plug-in that can be used to resolve register
+    ///     names.
     //------------------------------------------------------------------
     void
     GetDescription (Stream *s, 
                     lldb::DescriptionLevel level, 
-                    lldb::addr_t location_list_base_addr) const;
+                    lldb::addr_t location_list_base_addr,
+                    ABI *abi) const;
 
     //------------------------------------------------------------------
     /// Return true if the location expression contains data
@@ -179,7 +184,7 @@ public:
     ///     The register kind.
     //------------------------------------------------------------------
     void
-    SetRegisterKind (int reg_kind);
+    SetRegisterKind (lldb::RegisterKind reg_kind);
 
     //------------------------------------------------------------------
     /// Wrapper for the static evaluate function that accepts an
@@ -315,7 +320,8 @@ public:
     DumpLocationForAddress (Stream *s, 
                             lldb::DescriptionLevel level,
                             lldb::addr_t loclist_base_load_addr,
-                            lldb::addr_t address);
+                            lldb::addr_t address,
+                            ABI *abi);
 
 protected:
     //------------------------------------------------------------------
@@ -332,12 +338,17 @@ protected:
     ///
     /// @param[in] level
     ///     The level of detail to use in pretty-printing.
+    ///
+    /// @param[in] abi
+    ///     An optional ABI plug-in that can be used to resolve register
+    ///     names.
     //------------------------------------------------------------------
     void
     DumpLocation(Stream *s, 
                  uint32_t offset, 
                  uint32_t length, 
-                 lldb::DescriptionLevel level) const;
+                 lldb::DescriptionLevel level,
+                 ABI *abi) const;
     
     bool
     GetLocation (lldb::addr_t base_addr, 
@@ -350,7 +361,7 @@ protected:
     //------------------------------------------------------------------
     
     DataExtractor m_data;                       ///< A data extractor capable of reading opcode bytes
-    int m_reg_kind;                             ///< One of the defines that starts with LLDB_REGKIND_
+    lldb::RegisterKind m_reg_kind;              ///< One of the defines that starts with LLDB_REGKIND_
     lldb::addr_t m_loclist_slide;               ///< A value used to slide the location list offsets so that 
                                                 ///< they are relative to the object that owns the location list
                                                 ///< (the function for frame base and variable location lists)

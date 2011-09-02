@@ -815,7 +815,7 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, RegisterLoc
 
     UnwindPlan::Row::RegisterLocation unwindplan_regloc;
     bool have_unwindplan_regloc = false;
-    int unwindplan_registerkind = -1;
+    RegisterKind unwindplan_registerkind = (RegisterKind)-1;
 
     if (m_fast_unwind_plan_sp)
     {

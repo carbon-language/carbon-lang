@@ -30,6 +30,7 @@
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/Type.h"
 
+#include "lldb/Target/ABI.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
@@ -264,7 +265,7 @@ DWARFExpression::SetOpcodeData (const DataExtractor& data, uint32_t data_offset,
 }
 
 void
-DWARFExpression::DumpLocation (Stream *s, uint32_t offset, uint32_t length, lldb::DescriptionLevel level) const
+DWARFExpression::DumpLocation (Stream *s, uint32_t offset, uint32_t length, lldb::DescriptionLevel level, ABI *abi) const
 {
     if (!m_data.ValidOffsetForDataOfSize(offset, length))
         return;
@@ -409,7 +410,29 @@ DWARFExpression::DumpLocation (Stream *s, uint32_t offset, uint32_t length, lldb
         case DW_OP_reg28:   // 0x6C
         case DW_OP_reg29:   // 0x6D
         case DW_OP_reg30:   // 0x6E
-        case DW_OP_reg31:   s->Printf("DW_OP_reg%i", op - DW_OP_reg0); break; // 0x6f
+        case DW_OP_reg31:   // 0x6F
+            {
+                uint32_t reg_num = op - DW_OP_reg0;
+                if (abi)
+                {
+                    RegisterInfo reg_info;
+                    if (abi->GetRegisterInfoByKind(m_reg_kind, reg_num, reg_info))
+                    {
+                        if (reg_info.name)
+                        {
+                            s->PutCString (reg_info.name);
+                            break;
+                        }
+                        else if (reg_info.alt_name)
+                        {
+                            s->PutCString (reg_info.alt_name);
+                            break;
+                        }
+                    }
+                }
+                s->Printf("DW_OP_reg%u", reg_num); break; 
+            }
+            break;
 
         case DW_OP_breg0:
         case DW_OP_breg1:
@@ -442,16 +465,80 @@ DWARFExpression::DumpLocation (Stream *s, uint32_t offset, uint32_t length, lldb
         case DW_OP_breg28:
         case DW_OP_breg29:
         case DW_OP_breg30:
-        case DW_OP_breg31:  s->Printf("DW_OP_breg%i(0x%x)", op - DW_OP_breg0, m_data.GetULEB128(&offset)); break;
+        case DW_OP_breg31:  
+            {
+                uint32_t reg_num = op - DW_OP_breg0;
+                int64_t reg_offset = m_data.GetSLEB128(&offset);
+                if (abi)
+                {
+                    RegisterInfo reg_info;
+                    if (abi->GetRegisterInfoByKind(m_reg_kind, reg_num, reg_info))
+                    {
+                        if (reg_info.name)
+                        {
+                            s->Printf("[%s%+lli]", reg_info.name, reg_offset); 
+                            break;
+                        }
+                        else if (reg_info.alt_name)
+                        {
+                            s->Printf("[%s%+lli]", reg_info.alt_name, reg_offset); 
+                            break;
+                        }
+                    }
+                }
+                s->Printf("DW_OP_breg%i(0x%llx)", reg_num, reg_offset); 
+            }
+            break;
 
         case DW_OP_regx:                                                    // 0x90 1 ULEB128 register
-            s->Printf("DW_OP_regx(0x%x)", m_data.GetULEB128(&offset));
+            {
+                uint64_t reg_num = m_data.GetULEB128(&offset);
+                if (abi)
+                {
+                    RegisterInfo reg_info;
+                    if (abi->GetRegisterInfoByKind(m_reg_kind, reg_num, reg_info))
+                    {
+                        if (reg_info.name)
+                        {
+                            s->PutCString (reg_info.name);
+                            break;
+                        }
+                        else if (reg_info.alt_name)
+                        {
+                            s->PutCString (reg_info.alt_name);
+                            break;
+                        }
+                    }
+                }
+                s->Printf("DW_OP_regx(%llu)", reg_num); break; 
+            }
             break;
         case DW_OP_fbreg:                                                   // 0x91 1 SLEB128 offset
-            s->Printf("DW_OP_fbreg(0x%x)",m_data.GetSLEB128(&offset));
+            s->Printf("DW_OP_fbreg(%lli)",m_data.GetSLEB128(&offset));
             break;
         case DW_OP_bregx:                                                   // 0x92 2 ULEB128 register followed by SLEB128 offset
-            s->Printf("DW_OP_bregx(0x%x, 0x%x)", m_data.GetULEB128(&offset), m_data.GetSLEB128(&offset));
+            {
+                uint32_t reg_num = m_data.GetULEB128(&offset);
+                int64_t reg_offset = m_data.GetSLEB128(&offset);
+                if (abi)
+                {
+                    RegisterInfo reg_info;
+                    if (abi->GetRegisterInfoByKind(m_reg_kind, reg_num, reg_info))
+                    {
+                        if (reg_info.name)
+                        {
+                            s->Printf("[%s%+lli]", reg_info.name, reg_offset); 
+                            break;
+                        }
+                        else if (reg_info.alt_name)
+                        {
+                            s->Printf("[%s%+lli]", reg_info.alt_name, reg_offset); 
+                            break;
+                        }
+                    }
+                }
+                s->Printf("DW_OP_bregx(reg=%u,offset=%lli)", reg_num, reg_offset); 
+            }
             break;
         case DW_OP_piece:                                                   // 0x93 1 ULEB128 size of piece addressed
             s->Printf("DW_OP_piece(0x%x)", m_data.GetULEB128(&offset));
@@ -546,7 +633,7 @@ DWARFExpression::GetRegisterKind ()
 }
 
 void
-DWARFExpression::SetRegisterKind (int reg_kind)
+DWARFExpression::SetRegisterKind (RegisterKind reg_kind)
 {
     m_reg_kind = reg_kind;
 }
@@ -558,7 +645,7 @@ DWARFExpression::IsLocationList() const
 }
 
 void
-DWARFExpression::GetDescription (Stream *s, lldb::DescriptionLevel level, addr_t location_list_base_addr) const
+DWARFExpression::GetDescription (Stream *s, lldb::DescriptionLevel level, addr_t location_list_base_addr, ABI *abi) const
 {
     if (IsLocationList())
     {
@@ -578,7 +665,7 @@ DWARFExpression::GetDescription (Stream *s, lldb::DescriptionLevel level, addr_t
                 addr_range.Dump(s, 0, 8);
                 s->PutChar('{');
                 uint32_t location_length = m_data.GetU16(&offset);
-                DumpLocation (s, offset, location_length, level);
+                DumpLocation (s, offset, location_length, level, abi);
                 s->PutChar('}');
                 offset += location_length;
             }
@@ -606,7 +693,7 @@ DWARFExpression::GetDescription (Stream *s, lldb::DescriptionLevel level, addr_t
     else
     {
         // We have a normal location that contains DW_OP location opcodes
-        DumpLocation (s, 0, m_data.GetByteSize(), level);
+        DumpLocation (s, 0, m_data.GetByteSize(), level, abi);
     }
 }
 
@@ -791,7 +878,8 @@ bool
 DWARFExpression::DumpLocationForAddress (Stream *s,
                                          lldb::DescriptionLevel level,
                                          addr_t base_addr,
-                                         addr_t address)
+                                         addr_t address,
+                                         ABI *abi)
 {
     uint32_t offset = 0;
     uint32_t length = 0;
@@ -800,7 +888,7 @@ DWARFExpression::DumpLocationForAddress (Stream *s,
     {
         if (length > 0)
         {
-            DumpLocation(s, offset, length, level);
+            DumpLocation(s, offset, length, level, abi);
             return true;
         }
     }

@@ -26,7 +26,7 @@
 using namespace lldb;
 using namespace lldb_private;
 
-DWARFCallFrameInfo::DWARFCallFrameInfo(ObjectFile& objfile, SectionSP& section, uint32_t reg_kind, bool is_eh_frame) :
+DWARFCallFrameInfo::DWARFCallFrameInfo(ObjectFile& objfile, SectionSP& section, lldb::RegisterKind reg_kind, bool is_eh_frame) :
     m_objfile (objfile),
     m_section (section),
     m_reg_kind (reg_kind),  // The flavor of registers that the CFI data uses (enum RegisterKind)

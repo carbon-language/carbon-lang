@@ -34,7 +34,10 @@ class DWARFCallFrameInfo
 {
 public:
 
-    DWARFCallFrameInfo (ObjectFile& objfile, lldb::SectionSP& section, uint32_t reg_kind, bool is_eh_frame);
+    DWARFCallFrameInfo (ObjectFile& objfile, 
+                        lldb::SectionSP& section, 
+                        lldb::RegisterKind reg_kind, 
+                        bool is_eh_frame);
 
     ~DWARFCallFrameInfo();
 
@@ -113,7 +116,7 @@ private:
 
     ObjectFile&                 m_objfile;
     lldb::SectionSP             m_section;
-    uint32_t                    m_reg_kind;
+    lldb::RegisterKind          m_reg_kind;
     Flags                       m_flags;
     cie_map_t                   m_cie_map;
 
