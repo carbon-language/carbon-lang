@@ -975,15 +975,11 @@ static bool isSafeToClobberEFLAGS(MachineBasicBlock &MBB,
                                   MachineBasicBlock::iterator I) {
   MachineBasicBlock::iterator E = MBB.end();
 
-  // It's always safe to clobber EFLAGS at the end of a block.
-  if (I == E)
-    return true;
-
   // For compile time consideration, if we are not able to determine the
   // safety after visiting 4 instructions in each direction, we will assume
   // it's not safe.
   MachineBasicBlock::iterator Iter = I;
-  for (unsigned i = 0; i < 4; ++i) {
+  for (unsigned i = 0; Iter != E && i < 4; ++i) {
     bool SeenDef = false;
     for (unsigned j = 0, e = Iter->getNumOperands(); j != e; ++j) {
       MachineOperand &MO = Iter->getOperand(j);
@@ -1003,10 +999,16 @@ static bool isSafeToClobberEFLAGS(MachineBasicBlock &MBB,
     // Skip over DBG_VALUE.
     while (Iter != E && Iter->isDebugValue())
       ++Iter;
+  }
 
-    // If we make it to the end of the block, it's safe to clobber EFLAGS.
-    if (Iter == E)
-      return true;
+  // It is safe to clobber EFLAGS at the end of a block of no successor has it
+  // live in.
+  if (Iter == E) {
+    for (MachineBasicBlock::succ_iterator SI = MBB.succ_begin(),
+           SE = MBB.succ_end(); SI != SE; ++SI)
+      if ((*SI)->isLiveIn(X86::EFLAGS))
+        return false;
+    return true;
   }
 
   MachineBasicBlock::iterator B = MBB.begin();
