@@ -3068,16 +3068,13 @@ def t2IT : Thumb2XI<(outs), (ins it_pred:$cc, it_mask:$mask),
 
 // Branch and Exchange Jazelle -- for disassembly only
 // Rm = Inst{19-16}
-def t2BXJ : T2I<(outs), (ins rGPR:$func), NoItinerary, "bxj", "\t$func",
-              [/* For disassembly only; pattern left blank */]> {
+def t2BXJ : T2I<(outs), (ins rGPR:$func), NoItinerary, "bxj", "\t$func", []> {
+  bits<4> func;
   let Inst{31-27} = 0b11110;
   let Inst{26} = 0;
   let Inst{25-20} = 0b111100;
-  let Inst{15-14} = 0b10;
-  let Inst{12} = 0;
-
-  bits<4> func;
   let Inst{19-16} = func;
+  let Inst{15-0} = 0b1000111100000000;
 }
 
 // Compare and branch on zero / non-zero
