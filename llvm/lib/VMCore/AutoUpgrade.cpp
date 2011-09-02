@@ -414,12 +414,6 @@ void llvm::UpgradeExceptionHandling(Module *M) {
   // This map stores the slots where the exception object and selector value are
   // stored within a function.
   DenseMap<Function*, std::pair<Value*, Value*> > FnToLPadSlotMap;
-
-  // This maps the old intrinsic calls (eh.exception & eh.selector) to the new
-  // landingpad instruction(s).
-  DenseMap<std::pair<CallInst*, CallInst*>,
-    SmallVector<std::pair<Value*, Value*>, 8> > OldExnToNewExnMap;
-
   SmallPtrSet<Instruction*, 32> DeadInsts;
   for (DenseMap<InvokeInst*, std::pair<Value*, Value*> >::iterator
          I = InvokeToIntrinsicsMap.begin(), E = InvokeToIntrinsicsMap.end();
@@ -476,48 +470,26 @@ void llvm::UpgradeExceptionHandling(Module *M) {
 
     TransferClausesToLandingPadInst(LPI, Sel);
 
-    OldExnToNewExnMap[std::make_pair(Exn, Sel)].
-      push_back(std::make_pair(LPExn, LPSel));
-
     DeadInsts.insert(Exn);
     DeadInsts.insert(Sel);
   }
 
-  // Replace the old intrinsic calls with the new (possibly PHI'ed) values.
-  for (DenseMap<std::pair<CallInst*, CallInst*>,
-         SmallVector<std::pair<Value*, Value*>, 8> >::iterator
-         I = OldExnToNewExnMap.begin(), E = OldExnToNewExnMap.end();
+  // Replace the old intrinsic calls with the values from the landingpad
+  // instruction(s). These values were stored in allocas for us to use here.
+  for (DenseMap<InvokeInst*, std::pair<Value*, Value*> >::iterator
+         I = InvokeToIntrinsicsMap.begin(), E = InvokeToIntrinsicsMap.end();
        I != E; ++I) {
-    std::pair<CallInst*, CallInst*> OldExnSel = I->first;
-    CallInst *Exn = OldExnSel.first;
-    CallInst *Sel = OldExnSel.second;
-    SmallVector<std::pair<Value*, Value*>, 8> &LPExnSel = I->second;
-    unsigned Size = LPExnSel.size();
-    Value *LPExn = LPExnSel[0].first;
-    Value *LPSel = LPExnSel[0].second;
+    std::pair<Value*, Value*> EHIntrinsics = I->second;
+    CallInst *Exn = cast<CallInst>(EHIntrinsics.first);
+    CallInst *Sel = cast<CallInst>(EHIntrinsics.second);
+    BasicBlock *Parent = Exn->getParent();
 
-    if (Size != 1) {
-      BasicBlock *Parent = Exn->getParent();
-      IRBuilder<> Builder(Context);
-      Builder.SetInsertPoint(Parent, Parent->getFirstInsertionPt());
+    std::pair<Value*,Value*> ExnSelSlots = FnToLPadSlotMap[Parent->getParent()];
 
-      PHINode *PN = Builder.CreatePHI(Exn->getType(), Size, "exn.phi");
-      for (SmallVector<std::pair<Value*, Value*>, 8>::iterator
-             II = LPExnSel.begin(), IE = LPExnSel.end(); II != IE; ++II)
-        PN->addIncoming(II->first, cast<Instruction>(II->first)->getParent());
-
-      LPExn = PN;
-
-      Parent = Sel->getParent();
-      Builder.SetInsertPoint(Parent, Parent->getFirstInsertionPt());
-
-      PN = Builder.CreatePHI(Sel->getType(), Size, "sel.phi");
-      for (SmallVector<std::pair<Value*, Value*>, 8>::iterator
-             II = LPExnSel.begin(), IE = LPExnSel.end(); II != IE; ++II)
-        PN->addIncoming(II->second, cast<Instruction>(II->second)->getParent());
-
-      LPSel = PN;
-    }
+    IRBuilder<> Builder(Context);
+    Builder.SetInsertPoint(Parent, Parent->getFirstInsertionPt());
+    LoadInst *LPExn = Builder.CreateLoad(ExnSelSlots.first, "exn.load");
+    LoadInst *LPSel = Builder.CreateLoad(ExnSelSlots.second, "sel.load");
 
     Exn->replaceAllUsesWith(LPExn);
     Sel->replaceAllUsesWith(LPSel);
