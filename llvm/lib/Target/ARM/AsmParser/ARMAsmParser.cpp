@@ -64,6 +64,14 @@ class ARMAsmParser : public MCTargetAsmParser {
                               // ~0U if no active IT block.
   } ITState;
   bool inITBlock() { return ITState.CurPosition != ~0U;}
+  void forwardITPosition() {
+    if (!inITBlock()) return;
+    // Move to the next instruction in the IT block, if there is one. If not,
+    // mark the block as done.
+    unsigned TZ = CountTrailingZeros_32(ITState.Mask);
+    if (++ITState.CurPosition == 5 - TZ)
+      ITState.CurPosition = ~0U; // Done with the IT block after this.
+  }
 
 
   MCAsmParser &getParser() const { return Parser; }
@@ -3351,12 +3359,7 @@ validateInstruction(MCInst &Inst,
     if (ITState.FirstCond)
       ITState.FirstCond = false;
     else
-      bit = (ITState.Mask >> (4 - ITState.CurPosition)) & 1;
-    // Increment our position in the IT block first thing, as we want to
-    // move forward even if we find an error in the IT block.
-    unsigned TZ = CountTrailingZeros_32(ITState.Mask);
-    if (++ITState.CurPosition == 4 - TZ)
-      ITState.CurPosition = ~0U; // Done with the IT block after this.
+      bit = (ITState.Mask >> (5 - ITState.CurPosition)) & 1;
     // The instruction must be predicable.
     if (!MCID.isPredicable())
       return Error(Loc, "instructions in IT block must be predicable");
@@ -3519,8 +3522,8 @@ processInstruction(MCInst &Inst,
       Inst.setOpcode(ARM::tADDi3);
     break;
   case ARM::t2Bcc:
-    // If the conditional is AL, we really want t2B.
-    if (Inst.getOperand(1).getImm() == ARMCC::AL)
+    // If the conditional is AL or we're in an IT block, we really want t2B.
+    if (Inst.getOperand(1).getImm() == ARMCC::AL || inITBlock())
       Inst.setOpcode(ARM::t2B);
     break;
   case ARM::tBcc:
@@ -3614,12 +3617,21 @@ MatchAndEmitInstruction(SMLoc IDLoc,
   case Match_Success:
     // Context sensitive operand constraints aren't handled by the matcher,
     // so check them here.
-    if (validateInstruction(Inst, Operands))
+    if (validateInstruction(Inst, Operands)) {
+      // Still progress the IT block, otherwise one wrong condition causes
+      // nasty cascading errors.
+      forwardITPosition();
       return true;
+    }
 
     // Some instructions need post-processing to, for example, tweak which
     // encoding is selected.
     processInstruction(Inst, Operands);
+
+    // Only move forward at the very end so that everything in validate
+    // and process gets a consistent answer about whether we're in an IT
+    // block.
+    forwardITPosition();
 
     Out.EmitInstruction(Inst);
     return false;
