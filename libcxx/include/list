@@ -444,14 +444,14 @@ private:
         {}
 
     _LIBCPP_INLINE_VISIBILITY
-    void __move_assign_alloc(const __list_imp& __c, true_type)
+    void __move_assign_alloc(__list_imp& __c, true_type)
         _NOEXCEPT_(is_nothrow_move_assignable<__node_allocator>::value)
         {
             __node_alloc() = _VSTD::move(__c.__node_alloc());
         }
 
     _LIBCPP_INLINE_VISIBILITY
-    void __move_assign_alloc(const __list_imp& __c, false_type)
+    void __move_assign_alloc(__list_imp& __c, false_type)
         _NOEXCEPT
         {}
 };

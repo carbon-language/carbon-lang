@@ -160,7 +160,7 @@ public:
 
     vector()
         noexcept(is_nothrow_default_constructible<allocator_type>::value);
-    explicit vector(const allocator_type& = allocator_type());
+    explicit vector(const allocator_type&);
     explicit vector(size_type n, const value_type& value = value_type(), const allocator_type& = allocator_type());
     template <class InputIterator>
         vector(InputIterator first, InputIterator last, const allocator_type& = allocator_type());
@@ -402,14 +402,14 @@ private:
         {}
 
     _LIBCPP_INLINE_VISIBILITY
-    void __move_assign_alloc(const __vector_base& __c, true_type)
+    void __move_assign_alloc(__vector_base& __c, true_type)
         _NOEXCEPT_(is_nothrow_move_assignable<allocator_type>::value)
         {
             __alloc() = _VSTD::move(__c.__alloc());
         }
 
     _LIBCPP_INLINE_VISIBILITY
-    void __move_assign_alloc(const __vector_base& __c, false_type)
+    void __move_assign_alloc(__vector_base& __c, false_type)
         _NOEXCEPT
         {}
 
@@ -2087,14 +2087,14 @@ private:
         {__move_assign_alloc(__c, integral_constant<bool,
                       __storage_traits::propagate_on_container_move_assignment::value>());}
     _LIBCPP_INLINE_VISIBILITY
-    void __move_assign_alloc(const vector& __c, true_type)
+    void __move_assign_alloc(vector& __c, true_type)
         _NOEXCEPT_(is_nothrow_move_assignable<allocator_type>::value)
         {
             __alloc() = _VSTD::move(__c.__alloc());
         }
 
     _LIBCPP_INLINE_VISIBILITY
-    void __move_assign_alloc(const vector& __c, false_type)
+    void __move_assign_alloc(vector& __c, false_type)
         _NOEXCEPT
         {}
 

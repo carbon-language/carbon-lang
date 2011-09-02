@@ -977,14 +977,14 @@ protected:
 
 private:
     _LIBCPP_INLINE_VISIBILITY
-    void __move_assign_alloc(const __deque_base& __c, true_type)
+    void __move_assign_alloc(__deque_base& __c, true_type)
         _NOEXCEPT_(is_nothrow_move_assignable<allocator_type>::value)
         {
             __alloc() = _VSTD::move(__c.__alloc());
         }
 
     _LIBCPP_INLINE_VISIBILITY
-    void __move_assign_alloc(const __deque_base& __c, false_type) _NOEXCEPT
+    void __move_assign_alloc(__deque_base& __c, false_type) _NOEXCEPT
         {}
 
     _LIBCPP_INLINE_VISIBILITY
