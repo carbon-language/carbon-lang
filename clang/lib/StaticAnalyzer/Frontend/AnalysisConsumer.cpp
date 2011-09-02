@@ -25,7 +25,6 @@
 #include "clang/StaticAnalyzer/Core/PathSensitive/AnalysisManager.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugReporter.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/TransferFuncs.h"
 #include "clang/StaticAnalyzer/Core/PathDiagnosticClients.h"
 
 #include "clang/Basic/FileManager.h"

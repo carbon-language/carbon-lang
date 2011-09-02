@@ -13,6 +13,7 @@
 
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/ObjCMessage.h"
 #include "clang/Analysis/Support/SaveAndRestore.h"
 
 using namespace clang;

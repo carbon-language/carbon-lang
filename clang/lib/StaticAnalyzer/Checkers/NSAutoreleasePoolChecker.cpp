@@ -9,7 +9,7 @@
 //
 //  This file defines a NSAutoreleasePoolChecker, a small checker that warns
 //  about subpar uses of NSAutoreleasePool.  Note that while the check itself
-//  (in it's current form) could be written as a flow-insensitive check, in
+//  (in its current form) could be written as a flow-insensitive check, in
 //  can be potentially enhanced in the future with flow-sensitive information.
 //  It is also a good example of the CheckerVisitor interface. 
 //
@@ -18,9 +18,10 @@
 #include "ClangSACheckers.h"
 #include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugReporter.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/ObjCMessage.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/Decl.h"
 
