@@ -1594,8 +1594,8 @@ multiclass BitwiseOrImm
 {
   def v4i32: ORIVecInst<v4i32, v4i32Uns10Imm>;
 
-  def r32: ORIInst<(outs R32C:$rT), (ins R32C:$rA, u10imm_i32:$val),
-                   [(set R32C:$rT, (or R32C:$rA, i32ImmUns10:$val))]>;
+  def r32: ORIInst<(outs R32C:$rT), (ins R32C:$rA, s10imm_i32:$val),
+                   [(set R32C:$rT, (or R32C:$rA, i32ImmSExt10:$val))]>;
 
   // i16i32: hacked version of the ori instruction to extend 16-bit quantities
   // to 32-bit quantities. used exclusively to match "anyext" conversions (vide

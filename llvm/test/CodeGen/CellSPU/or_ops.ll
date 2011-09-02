@@ -1,9 +1,11 @@
 ; RUN: llc < %s -march=cellspu > %t1.s
 ; RUN: grep and    %t1.s | count 2
 ; RUN: grep orc    %t1.s | count 85
-; RUN: grep ori    %t1.s | count 30
+; RUN: grep ori    %t1.s | count 34
 ; RUN: grep orhi   %t1.s | count 30
 ; RUN: grep orbi   %t1.s | count 15
+; RUN: FileCheck %s < %t1.s
+
 target datalayout = "E-p:32:32:128-f64:64:128-f32:32:128-i64:32:128-i32:32:128-i16:16:128-i8:8:128-i1:8:128-a0:0:128-v128:128:128-s0:128:128"
 target triple = "spu"
 
@@ -208,6 +210,15 @@ define zeroext i32 @ori_u32(i32 zeroext  %in)   {
 define signext i32 @ori_i32(i32 signext  %in)   {
         %tmp38 = or i32 %in, 37         ; <i32> [#uses=1]
         ret i32 %tmp38
+}
+
+define i32 @ori_i32_600(i32 %in) {
+	;600 does not fit into 'ori' immediate field
+	;CHECK: ori_i32_600
+	;CHECK: il
+	;CHECK: ori
+	%tmp = or i32 %in, 600
+	ret i32 %tmp
 }
 
 ; ORHI instruction generation (i16 data type):
