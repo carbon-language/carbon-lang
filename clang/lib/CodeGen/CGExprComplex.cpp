@@ -119,6 +119,7 @@ public:
 
   // l-values.
   ComplexPairTy VisitDeclRefExpr(const Expr *E) { return EmitLoadOfLValue(E); }
+  ComplexPairTy VisitBlockDeclRefExpr(const Expr *E) { return EmitLoadOfLValue(E); }
   ComplexPairTy VisitObjCIvarRefExpr(ObjCIvarRefExpr *E) {
     return EmitLoadOfLValue(E);
   }
