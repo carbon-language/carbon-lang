@@ -161,11 +161,11 @@ namespace {
     //  are already handled elsewhere. They are placeholders to allow this
     //  encoder to continue to function until the MC encoder is sufficiently
     //  far along that this one can be eliminated entirely.
-    unsigned NEONThumb2DataIPostEncoder(const MachineInstr &MI, unsigned Val) 
+    unsigned NEONThumb2DataIPostEncoder(const MachineInstr &MI, unsigned Val)
       const { return 0; }
-    unsigned NEONThumb2LoadStorePostEncoder(const MachineInstr &MI,unsigned Val) 
+    unsigned NEONThumb2LoadStorePostEncoder(const MachineInstr &MI,unsigned Val)
       const { return 0; }
-    unsigned NEONThumb2DupPostEncoder(const MachineInstr &MI,unsigned Val) 
+    unsigned NEONThumb2DupPostEncoder(const MachineInstr &MI,unsigned Val)
       const { return 0; }
     unsigned VFPThumb2PostEncoder(const MachineInstr&MI, unsigned Val)
       const { return 0; }
@@ -985,7 +985,7 @@ unsigned ARMCodeEmitter::getMachineSoImmOpValue(unsigned SoImm) {
 
 unsigned ARMCodeEmitter::getAddrModeSBit(const MachineInstr &MI,
                                          const MCInstrDesc &MCID) const {
-  for (unsigned i = MI.getNumOperands(), e = MCID.getNumOperands(); i >= e; --i){
+  for (unsigned i = MI.getNumOperands(), e = MCID.getNumOperands(); i >= e;--i){
     const MachineOperand &MO = MI.getOperand(i-1);
     if (MO.isReg() && MO.isDef() && MO.getReg() == ARM::CPSR)
       return 1 << ARMII::S_BitShift;

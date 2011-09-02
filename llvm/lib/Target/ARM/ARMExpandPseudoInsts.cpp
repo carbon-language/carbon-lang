@@ -869,7 +869,7 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
     case ARM::RRX: {
       // This encodes as "MOVs Rd, Rm, rrx
       MachineInstrBuilder MIB =
-        AddDefaultPred(BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(ARM::MOVsi),
+        AddDefaultPred(BuildMI(MBB, MBBI, MI.getDebugLoc(),TII->get(ARM::MOVsi),
                                MI.getOperand(0).getReg())
                        .addOperand(MI.getOperand(1))
                        .addImm(ARM_AM::getSORegOpc(ARM_AM::rrx, 0)))

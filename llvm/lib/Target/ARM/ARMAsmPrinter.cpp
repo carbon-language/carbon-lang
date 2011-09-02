@@ -92,7 +92,7 @@ namespace {
       case ARMBuildAttrs::Advanced_SIMD_arch:
       case ARMBuildAttrs::VFP_arch:
         Streamer.EmitRawText(StringRef("\t.fpu ") + LowercaseString(String));
-        break;    
+        break;
       default: assert(0 && "Unsupported Text attribute in ASM Mode"); break;
       }
     }
@@ -240,7 +240,7 @@ void ARMAsmPrinter::EmitDwarfRegOp(const MachineLocation &MLoc) const {
       // S registers are described as bit-pieces of a register
       // S[2x] = DW_OP_regx(256 + (x>>1)) DW_OP_bit_piece(32, 0)
       // S[2x+1] = DW_OP_regx(256 + (x>>1)) DW_OP_bit_piece(32, 32)
-      
+
       unsigned SReg = Reg - ARM::S0;
       bool odd = SReg & 0x1;
       unsigned Rx = 256 + (SReg >> 1);
@@ -265,12 +265,13 @@ void ARMAsmPrinter::EmitDwarfRegOp(const MachineLocation &MLoc) const {
     } else if (Reg >= ARM::Q0 && Reg <= ARM::Q15) {
       assert(ARM::Q0 + 15 == ARM::Q15 && "Unexpected ARM Q register numbering");
       // Q registers Q0-Q15 are described by composing two D registers together.
-      // Qx = DW_OP_regx(256+2x) DW_OP_piece(8) DW_OP_regx(256+2x+1) DW_OP_piece(8)
+      // Qx = DW_OP_regx(256+2x) DW_OP_piece(8) DW_OP_regx(256+2x+1)
+      // DW_OP_piece(8)
 
       unsigned QReg = Reg - ARM::Q0;
       unsigned D1 = 256 + 2 * QReg;
       unsigned D2 = D1 + 1;
-      
+
       OutStreamer.AddComment("DW_OP_regx for Q register: D1");
       EmitInt8(dwarf::DW_OP_regx);
       EmitULEB128(D1);
@@ -451,16 +452,16 @@ bool ARMAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
       // This takes advantage of the 2 operand-ness of ldm/stm and that we've
       // already got the operands in registers that are operands to the
       // inline asm statement.
-      
+
       O << "{" << ARMInstPrinter::getRegisterName(RegBegin);
-      
+
       // FIXME: The register allocator not only may not have given us the
       // registers in sequence, but may not be in ascending registers. This
       // will require changes in the register allocator that'll need to be
       // propagated down here if the operands change.
       unsigned RegOps = OpNum + 1;
       while (MI->getOperand(RegOps).isReg()) {
-        O << ", " 
+        O << ", "
           << ARMInstPrinter::getRegisterName(MI->getOperand(RegOps).getReg());
         RegOps++;
       }
@@ -513,7 +514,7 @@ bool ARMAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
   // Does this asm operand have a single letter operand modifier?
   if (ExtraCode && ExtraCode[0]) {
     if (ExtraCode[1] != 0) return true; // Unknown modifier.
-    
+
     switch (ExtraCode[0]) {
       case 'A': // A memory operand for a VLD1/VST1 instruction.
       default: return true;  // Unknown modifier.
@@ -524,7 +525,7 @@ bool ARMAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
         return false;
     }
   }
-  
+
   const MachineOperand &MO = MI->getOperand(OpNum);
   assert(MO.isReg() && "unexpected inline asm memory operand");
   O << "[" << ARMInstPrinter::getRegisterName(MO.getReg()) << "]";
