@@ -311,6 +311,10 @@ def NSErrorChecker : Checker<"NSError">,
   HelpText<"Check usage of NSError** parameters">,
   DescFile<"NSErrorChecker.cpp">;
 
+def RetainCountChecker : Checker<"RetainCount">,
+  HelpText<"Check for leaks and improper reference count management">,
+  DescFile<"RetainCountChecker.cpp">;
+
 } // end "cocoa"
 
 let ParentPackage = CocoaExperimental in {

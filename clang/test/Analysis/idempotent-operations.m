@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-store=region -analyzer-constraints=range -fblocks -analyzer-opt-analyze-nested-blocks -analyzer-checker=deadcode.IdempotentOperations -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-store=region -analyzer-constraints=range -fblocks -analyzer-opt-analyze-nested-blocks -analyzer-checker=deadcode.IdempotentOperations,osx.cocoa.RetainCount -verify %s
 
 typedef signed char BOOL;
 typedef unsigned long NSUInteger;

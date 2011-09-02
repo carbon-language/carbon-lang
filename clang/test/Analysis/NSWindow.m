@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,experimental.core -analyzer-checker=deadcode.DeadStores -analyzer-store=region -analyzer-constraints=basic -verify %s
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,experimental.core -analyzer-checker=deadcode.DeadStores -analyzer-store=region -analyzer-constraints=range -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,osx.cocoa.RetainCount,experimental.core,deadcode.DeadStores -analyzer-store=region -analyzer-constraints=basic -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,osx.cocoa.RetainCount,experimental.core,deadcode.DeadStores -analyzer-store=region -analyzer-constraints=range -verify %s
 
 // These declarations were reduced using Delta-Debugging from Foundation.h
 // on Mac OS X.  The test cases are below.

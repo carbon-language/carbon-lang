@@ -103,6 +103,10 @@ public:
     return getSValBuilder().getSymbolManager();
   }
 
+  bool isObjCGCEnabled() {
+    return Eng.isObjCGCEnabled();
+  }
+
   ExplodedNode *generateNode(bool autoTransition = true) {
     assert(statement && "Only transitions with statements currently supported");
     ExplodedNode *N = generateNodeImpl(statement, getState(), false,

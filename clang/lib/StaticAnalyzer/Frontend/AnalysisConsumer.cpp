@@ -262,8 +262,8 @@ static void FindBlocks(DeclContext *D, SmallVectorImpl<Decl*> &WL) {
       FindBlocks(DC, WL);
 }
 
-static void ActionObjCMemChecker(AnalysisConsumer &C, AnalysisManager& mgr,
-                                 Decl *D);
+static void RunPathSensitiveChecks(AnalysisConsumer &C, AnalysisManager &mgr,
+                                   Decl *D);
 
 void AnalysisConsumer::HandleCode(Decl *D) {
 
@@ -295,7 +295,7 @@ void AnalysisConsumer::HandleCode(Decl *D) {
     if ((*WI)->hasBody()) {
       checkerMgr->runCheckersOnASTBody(*WI, *Mgr, BR);
       if (checkerMgr->hasPathSensitiveCheckers())
-        ActionObjCMemChecker(*this, *Mgr, *WI);
+        RunPathSensitiveChecks(*this, *Mgr, *WI);
     }
 }
 
@@ -303,18 +303,14 @@ void AnalysisConsumer::HandleCode(Decl *D) {
 // Path-sensitive checking.
 //===----------------------------------------------------------------------===//
 
-static void ActionExprEngine(AnalysisConsumer &C, AnalysisManager& mgr,
-                               Decl *D,
-                               TransferFuncs* tf) {
-
-  llvm::OwningPtr<TransferFuncs> TF(tf);
-
+static void ActionExprEngine(AnalysisConsumer &C, AnalysisManager &mgr,
+                             Decl *D, bool ObjCGCEnabled) {
   // Construct the analysis engine.  We first query for the LiveVariables
   // information to see if the CFG is valid.
   // FIXME: Inter-procedural analysis will need to handle invalid CFGs.
   if (!mgr.getLiveVariables(D))
     return;
-  ExprEngine Eng(mgr, TF.take());
+  ExprEngine Eng(mgr, ObjCGCEnabled);
 
   // Set the graph auditor.
   llvm::OwningPtr<ExplodedNode::Auditor> Auditor;
@@ -338,35 +334,25 @@ static void ActionExprEngine(AnalysisConsumer &C, AnalysisManager& mgr,
   Eng.getBugReporter().FlushReports();
 }
 
-static void ActionObjCMemCheckerAux(AnalysisConsumer &C, AnalysisManager& mgr,
-                                  Decl *D, bool GCEnabled) {
+static void RunPathSensitiveChecks(AnalysisConsumer &C, AnalysisManager &mgr,
+                                   Decl *D) {
 
-  TransferFuncs* TF = MakeCFRefCountTF(mgr.getASTContext(),
-                                         GCEnabled,
-                                         mgr.getLangOptions());
-
-  ActionExprEngine(C, mgr, D, TF);
-}
-
-static void ActionObjCMemChecker(AnalysisConsumer &C, AnalysisManager& mgr,
-                               Decl *D) {
-
- switch (mgr.getLangOptions().getGCMode()) {
- default:
-   assert (false && "Invalid GC mode.");
- case LangOptions::NonGC:
-   ActionObjCMemCheckerAux(C, mgr, D, false);
-   break;
-
- case LangOptions::GCOnly:
-   ActionObjCMemCheckerAux(C, mgr, D, true);
-   break;
-
- case LangOptions::HybridGC:
-   ActionObjCMemCheckerAux(C, mgr, D, false);
-   ActionObjCMemCheckerAux(C, mgr, D, true);
-   break;
- }
+  switch (mgr.getLangOptions().getGCMode()) {
+  default:
+    llvm_unreachable("Invalid GC mode.");
+  case LangOptions::NonGC:
+    ActionExprEngine(C, mgr, D, false);
+    break;
+  
+  case LangOptions::GCOnly:
+    ActionExprEngine(C, mgr, D, true);
+    break;
+  
+  case LangOptions::HybridGC:
+    ActionExprEngine(C, mgr, D, false);
+    ActionExprEngine(C, mgr, D, true);
+    break;
+  }
 }
 
 //===----------------------------------------------------------------------===//
