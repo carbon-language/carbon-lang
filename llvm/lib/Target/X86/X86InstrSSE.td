@@ -4294,12 +4294,18 @@ def MOVZPQILo2PQIrm : I<0x7E, MRMSrcMem, (outs VR128:$dst), (ins i128mem:$src),
 }
 
 let AddedComplexity = 20 in {
-  let Predicates = [HasSSE2] in
+  let Predicates = [HasSSE2] in {
     def : Pat<(v2i64 (X86vzmovl (bc_v2i64 (loadv4i32 addr:$src)))),
               (MOVZPQILo2PQIrm addr:$src)>;
-  let Predicates = [HasAVX] in
+    def : Pat<(v2f64 (X86vzmovl (v2f64 VR128:$src))),
+              (MOVZPQILo2PQIrr VR128:$src)>;
+  }
+  let Predicates = [HasAVX] in {
     def : Pat<(v2i64 (X86vzmovl (bc_v2i64 (loadv4i32 addr:$src)))),
               (SUBREG_TO_REG (i64 0), (VMOVZPQILo2PQIrm addr:$src), sub_xmm)>;
+    def : Pat<(v2f64 (X86vzmovl (v2f64 VR128:$src))),
+              (SUBREG_TO_REG (i64 0), (MOVZPQILo2PQIrr VR128:$src), sub_xmm)>;
+  }
 }
 
 // Instructions to match in the assembler
@@ -4888,10 +4894,6 @@ def : InstAlias<"monitor %eax, %ecx, %edx", (MONITORrrr)>,
       Requires<[In32BitMode]>;
 def : InstAlias<"monitor %rax, %rcx, %rdx", (MONITORrrr)>,
       Requires<[In64BitMode]>;
-
-// Set lowest element and zero upper elements.
-def : Pat<(v2f64 (X86vzmovl (v2f64 VR128:$src))),
-          (MOVZPQILo2PQIrr VR128:$src)>, Requires<[HasSSE2]>;
 
 //===----------------------------------------------------------------------===//
 // SSE4.1 - Packed Move with Sign/Zero Extend
