@@ -2415,13 +2415,13 @@ let Predicates = [HasAVX] in {
   defm VMOVMSKPS : sse12_extr_sign_mask<VR128, int_x86_sse_movmsk_ps,
                                         "movmskps", SSEPackedSingle>, TB, VEX;
   defm VMOVMSKPD : sse12_extr_sign_mask<VR128, int_x86_sse2_movmsk_pd,
-                                        "movmskpd", SSEPackedDouble>, TB, OpSize,
-                                        VEX;
+                                        "movmskpd", SSEPackedDouble>, TB,
+                                        OpSize, VEX;
   defm VMOVMSKPSY : sse12_extr_sign_mask<VR256, int_x86_avx_movmsk_ps_256,
                                         "movmskps", SSEPackedSingle>, TB, VEX;
   defm VMOVMSKPDY : sse12_extr_sign_mask<VR256, int_x86_avx_movmsk_pd_256,
-                                        "movmskpd", SSEPackedDouble>, TB, OpSize,
-                                        VEX;
+                                        "movmskpd", SSEPackedDouble>, TB,
+                                        OpSize, VEX;
 
   def : Pat<(i32 (X86fgetsign FR32:$src)),
             (VMOVMSKPSrr32 (INSERT_SUBREG (v4f32 (IMPLICIT_DEF)), FR32:$src,
@@ -2440,13 +2440,13 @@ let Predicates = [HasAVX] in {
   def VMOVMSKPSr64r : PI<0x50, MRMSrcReg, (outs GR64:$dst), (ins VR128:$src),
              "movmskps\t{$src, $dst|$dst, $src}", [], SSEPackedSingle>, TB, VEX;
   def VMOVMSKPDr64r : PI<0x50, MRMSrcReg, (outs GR64:$dst), (ins VR128:$src),
-             "movmskpd\t{$src, $dst|$dst, $src}", [], SSEPackedDouble>, TB, OpSize,
-             VEX;
+             "movmskpd\t{$src, $dst|$dst, $src}", [], SSEPackedDouble>, TB,
+             OpSize, VEX;
   def VMOVMSKPSYr64r : PI<0x50, MRMSrcReg, (outs GR64:$dst), (ins VR256:$src),
              "movmskps\t{$src, $dst|$dst, $src}", [], SSEPackedSingle>, TB, VEX;
   def VMOVMSKPDYr64r : PI<0x50, MRMSrcReg, (outs GR64:$dst), (ins VR256:$src),
-             "movmskpd\t{$src, $dst|$dst, $src}", [], SSEPackedDouble>, TB, OpSize,
-             VEX;
+             "movmskpd\t{$src, $dst|$dst, $src}", [], SSEPackedDouble>, TB,
+             OpSize, VEX;
 }
 
 //===----------------------------------------------------------------------===//
@@ -2460,18 +2460,18 @@ let Predicates = [HasAVX] in {
 let isReMaterializable = 1, isAsCheapAsAMove = 1, isCodeGenOnly = 1,
     canFoldAsLoad = 1 in {
   // FIXME: Set encoding to pseudo!
-def FsFLD0SS : I<0xEF, MRMInitReg, (outs FR32:$dst), (ins), "",
-                 [(set FR32:$dst, fp32imm0)]>,
-                 Requires<[HasSSE1]>, TB, OpSize;
-def FsFLD0SD : I<0xEF, MRMInitReg, (outs FR64:$dst), (ins), "",
-                 [(set FR64:$dst, fpimm0)]>,
-               Requires<[HasSSE2]>, TB, OpSize;
-def VFsFLD0SS : I<0xEF, MRMInitReg, (outs FR32:$dst), (ins), "",
-                  [(set FR32:$dst, fp32imm0)]>,
-                  Requires<[HasAVX]>, TB, OpSize, VEX_4V;
-def VFsFLD0SD : I<0xEF, MRMInitReg, (outs FR64:$dst), (ins), "",
-                  [(set FR64:$dst, fpimm0)]>,
-                  Requires<[HasAVX]>, TB, OpSize, VEX_4V;
+  def FsFLD0SS : I<0xEF, MRMInitReg, (outs FR32:$dst), (ins), "",
+                   [(set FR32:$dst, fp32imm0)]>,
+                   Requires<[HasSSE1]>, TB, OpSize;
+  def FsFLD0SD : I<0xEF, MRMInitReg, (outs FR64:$dst), (ins), "",
+                   [(set FR64:$dst, fpimm0)]>,
+                 Requires<[HasSSE2]>, TB, OpSize;
+  def VFsFLD0SS : I<0xEF, MRMInitReg, (outs FR32:$dst), (ins), "",
+                    [(set FR32:$dst, fp32imm0)]>,
+                    Requires<[HasAVX]>, TB, OpSize, VEX_4V;
+  def VFsFLD0SD : I<0xEF, MRMInitReg, (outs FR64:$dst), (ins), "",
+                    [(set FR64:$dst, fpimm0)]>,
+                    Requires<[HasAVX]>, TB, OpSize, VEX_4V;
 }
 
 // Alias instruction to do FR32 or FR64 reg-to-reg copy using movaps. Upper
@@ -2943,37 +2943,37 @@ def : Pat<(f32 (X86frcp (load addr:$src))),
           Requires<[HasAVX, OptForSize]>;
 
 let Predicates = [HasAVX] in {
-def : Pat<(int_x86_sse_sqrt_ss VR128:$src),
-          (INSERT_SUBREG (v4f32 (IMPLICIT_DEF)),
-              (VSQRTSSr (f32 (IMPLICIT_DEF)),
-                        (EXTRACT_SUBREG (v4f32 VR128:$src), sub_ss)),
-              sub_ss)>;
-def : Pat<(int_x86_sse_sqrt_ss sse_load_f32:$src),
-          (VSQRTSSm_Int (v4f32 (IMPLICIT_DEF)), sse_load_f32:$src)>;
+  def : Pat<(int_x86_sse_sqrt_ss VR128:$src),
+            (INSERT_SUBREG (v4f32 (IMPLICIT_DEF)),
+                (VSQRTSSr (f32 (IMPLICIT_DEF)),
+                          (EXTRACT_SUBREG (v4f32 VR128:$src), sub_ss)),
+                sub_ss)>;
+  def : Pat<(int_x86_sse_sqrt_ss sse_load_f32:$src),
+            (VSQRTSSm_Int (v4f32 (IMPLICIT_DEF)), sse_load_f32:$src)>;
 
-def : Pat<(int_x86_sse2_sqrt_sd VR128:$src),
-          (INSERT_SUBREG (v2f64 (IMPLICIT_DEF)),
-              (VSQRTSDr (f64 (IMPLICIT_DEF)),
-                        (EXTRACT_SUBREG (v2f64 VR128:$src), sub_sd)),
-              sub_sd)>;
-def : Pat<(int_x86_sse2_sqrt_sd sse_load_f64:$src),
-          (VSQRTSDm_Int (v2f64 (IMPLICIT_DEF)), sse_load_f64:$src)>;
+  def : Pat<(int_x86_sse2_sqrt_sd VR128:$src),
+            (INSERT_SUBREG (v2f64 (IMPLICIT_DEF)),
+                (VSQRTSDr (f64 (IMPLICIT_DEF)),
+                          (EXTRACT_SUBREG (v2f64 VR128:$src), sub_sd)),
+                sub_sd)>;
+  def : Pat<(int_x86_sse2_sqrt_sd sse_load_f64:$src),
+            (VSQRTSDm_Int (v2f64 (IMPLICIT_DEF)), sse_load_f64:$src)>;
 
-def : Pat<(int_x86_sse_rsqrt_ss VR128:$src),
-          (INSERT_SUBREG (v4f32 (IMPLICIT_DEF)),
-              (VRSQRTSSr (f32 (IMPLICIT_DEF)),
-                        (EXTRACT_SUBREG (v4f32 VR128:$src), sub_ss)),
-              sub_ss)>;
-def : Pat<(int_x86_sse_rsqrt_ss sse_load_f32:$src),
-          (VRSQRTSSm_Int (v4f32 (IMPLICIT_DEF)), sse_load_f32:$src)>;
+  def : Pat<(int_x86_sse_rsqrt_ss VR128:$src),
+            (INSERT_SUBREG (v4f32 (IMPLICIT_DEF)),
+                (VRSQRTSSr (f32 (IMPLICIT_DEF)),
+                          (EXTRACT_SUBREG (v4f32 VR128:$src), sub_ss)),
+                sub_ss)>;
+  def : Pat<(int_x86_sse_rsqrt_ss sse_load_f32:$src),
+            (VRSQRTSSm_Int (v4f32 (IMPLICIT_DEF)), sse_load_f32:$src)>;
 
-def : Pat<(int_x86_sse_rcp_ss VR128:$src),
-          (INSERT_SUBREG (v4f32 (IMPLICIT_DEF)),
-              (VRCPSSr (f32 (IMPLICIT_DEF)),
-                       (EXTRACT_SUBREG (v4f32 VR128:$src), sub_ss)),
-              sub_ss)>;
-def : Pat<(int_x86_sse_rcp_ss sse_load_f32:$src),
-          (VRCPSSm_Int (v4f32 (IMPLICIT_DEF)), sse_load_f32:$src)>;
+  def : Pat<(int_x86_sse_rcp_ss VR128:$src),
+            (INSERT_SUBREG (v4f32 (IMPLICIT_DEF)),
+                (VRCPSSr (f32 (IMPLICIT_DEF)),
+                         (EXTRACT_SUBREG (v4f32 VR128:$src), sub_ss)),
+                sub_ss)>;
+  def : Pat<(int_x86_sse_rcp_ss sse_load_f32:$src),
+            (VRCPSSm_Int (v4f32 (IMPLICIT_DEF)), sse_load_f32:$src)>;
 }
 
 // Square root.
