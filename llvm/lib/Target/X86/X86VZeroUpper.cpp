@@ -62,7 +62,7 @@ bool VZeroUpperInserter::runOnMachineFunction(MachineFunction &MF) {
   return Changed;
 }
 
-bool isCallToModuleFn(const MachineInstr *MI) {
+static bool isCallToModuleFn(const MachineInstr *MI) {
   assert(MI->getDesc().isCall() && "Isn't a call instruction");
 
   for (int i = 0, e = MI->getNumOperands(); i != e; ++i) {

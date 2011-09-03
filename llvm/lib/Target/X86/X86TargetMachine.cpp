@@ -95,12 +95,10 @@ X86TargetMachine::X86TargetMachine(const Target &T, StringRef TT,
 //===----------------------------------------------------------------------===//
 // Command line options for x86
 //===----------------------------------------------------------------------===//
-bool UseVZeroUpper;
-
-static cl::opt<bool, true>
-VZeroUpper("x86-use-vzeroupper",
+static cl::opt<bool>
+UseVZeroUpper("x86-use-vzeroupper",
   cl::desc("Minimize AVX to SSE transition penalty"),
-  cl::location(UseVZeroUpper), cl::init(false));
+  cl::init(false));
 
 //===----------------------------------------------------------------------===//
 // Pass Pipeline Configuration
