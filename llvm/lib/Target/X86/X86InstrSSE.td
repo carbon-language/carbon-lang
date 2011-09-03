@@ -5843,6 +5843,10 @@ defm VBLENDVPDY : SS41I_quaternary_int_avx<0x4B, "vblendvpd", VR256, i256mem,
 defm VBLENDVPSY : SS41I_quaternary_int_avx<0x4A, "vblendvps", VR256, i256mem,
                                          memopv32i8, int_x86_avx_blendv_ps_256>;
 
+def : Pat<(X86pblendv VR128:$src1, VR128:$src2, VR128:$src3),
+          (VPBLENDVBrr VR128:$src1, VR128:$src2, VR128:$src3)>,
+          Requires<[HasAVX]>;
+
 /// SS41I_ternary_int - SSE 4.1 ternary operator
 let Uses = [XMM0], Constraints = "$src1 = $dst" in {
   multiclass SS41I_ternary_int<bits<8> opc, string OpcodeStr, Intrinsic IntId> {
@@ -5868,7 +5872,7 @@ defm BLENDVPS     : SS41I_ternary_int<0x14, "blendvps", int_x86_sse41_blendvps>;
 defm PBLENDVB     : SS41I_ternary_int<0x10, "pblendvb", int_x86_sse41_pblendvb>;
 
 def : Pat<(X86pblendv VR128:$src1, VR128:$src2, XMM0),
-          (PBLENDVBrr0 VR128:$src1, VR128:$src2)>;
+          (PBLENDVBrr0 VR128:$src1, VR128:$src2)>, Requires<[HasSSE41]>;
 
 let Predicates = [HasAVX] in
 def VMOVNTDQArm : SS48I<0x2A, MRMSrcMem, (outs VR128:$dst), (ins i128mem:$src),
