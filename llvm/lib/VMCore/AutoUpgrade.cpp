@@ -510,18 +510,15 @@ void llvm::UpgradeExceptionHandling(Module *M) {
   while (!EHResume->use_empty()) {
     CallInst *Resume = cast<CallInst>(EHResume->use_back());
     BasicBlock *BB = Resume->getParent();
-    Function *Fn = BB->getParent();
-    std::pair<Value*, Value*> &ExnSel = FnToLPadSlotMap[Fn];
+
     IRBuilder<> Builder(Context);
     Builder.SetInsertPoint(BB, Resume);
 
-    Value *Exn = Builder.CreateLoad(ExnSel.first, "exn");
-    Value *Sel = Builder.CreateLoad(ExnSel.second, "sel");
-
     Value *LPadVal =
       Builder.CreateInsertValue(UndefValue::get(LPadSlotTy),
-                                Exn, 0, "lpad.val");
-    LPadVal = Builder.CreateInsertValue(LPadVal, Sel, 1, "lpad.val");
+                                Resume->getArgOperand(0), 0, "lpad.val");
+    LPadVal = Builder.CreateInsertValue(LPadVal, Resume->getArgOperand(1),
+                                        1, "lpad.val");
     Builder.CreateResume(LPadVal);
 
     // Remove all instructions after the 'resume.'
