@@ -1765,17 +1765,16 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
     break;
   }
   case ISD::AssertZext: {
-    // Demand all the bits of the input that are demanded in the output.
-    // The low bits are obvious; the high bits are demanded because we're
-    // asserting that they're zero here.
-    if (SimplifyDemandedBits(Op.getOperand(0), NewMask,
+    // AssertZext demands all of the high bits, plus any of the low bits
+    // demanded by its users.
+    EVT VT = cast<VTSDNode>(Op.getOperand(1))->getVT();
+    APInt InMask = APInt::getLowBitsSet(BitWidth,
+                                        VT.getSizeInBits());
+    if (SimplifyDemandedBits(Op.getOperand(0), ~InMask | NewMask,
                              KnownZero, KnownOne, TLO, Depth+1))
       return true;
     assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?");
 
-    EVT VT = cast<VTSDNode>(Op.getOperand(1))->getVT();
-    APInt InMask = APInt::getLowBitsSet(BitWidth,
-                                        VT.getSizeInBits());
     KnownZero |= ~InMask & NewMask;
     break;
   }
