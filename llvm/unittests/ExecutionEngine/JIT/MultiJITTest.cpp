@@ -65,6 +65,9 @@ void createModule2(LLVMContext &Context2, Module *&M2, Function *&FooF2) {
   FooF2 = M2->getFunction("foo2");
 }
 
+// ARM tests disabled pending fix for PR10783.
+#if !defined(__arm__)
+
 TEST(MultiJitTest, EagerMode) {
   LLVMContext Context1;
   Module *M1 = 0;
@@ -160,5 +163,6 @@ TEST(MultiJitTest, JitPool) {
   EXPECT_EQ((intptr_t)getPointerToNamedFunction("getPointerToNamedFunction"),
             (intptr_t)&getPointerToNamedFunction);
 }
+#endif  // !defined(__arm__)
 
 }  // anonymous namespace

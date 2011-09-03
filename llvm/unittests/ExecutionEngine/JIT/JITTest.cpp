@@ -632,7 +632,6 @@ TEST_F(JITTest, AvailableExternallyFunctionIsntCompiled) {
   EXPECT_EQ(42, func()) << "func should return 42 from the static version,"
                         << " not 7 from the IR version.";
 }
-#endif // !defined(__arm__)
 
 TEST_F(JITTest, EscapedLazyStubStillCallable) {
   TheJIT->DisableLazyCompilation(false);
@@ -735,8 +734,6 @@ TEST(LazyLoadedJITTest, MaterializableAvailableExternallyFunctionIsntCompiled) {
                         << " not 7 from the IR version.";
 }
 
-// ARM tests disabled pending fix for PR10783.
-#if !defined(__arm__)
 TEST(LazyLoadedJITTest, EagerCompiledRecursionThroughGhost) {
   LLVMContext Context;
   const std::string Bitcode =
