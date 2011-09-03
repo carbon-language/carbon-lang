@@ -3889,8 +3889,15 @@ let Constraints = "$src1 = $dst" in {
                           (v2i64 (X86Punpckhqdq VR128:$src1,
                                          (memopv2i64 addr:$src2))))]>;
 }
-
 } // ExeDomain = SSEPackedInt
+
+// Splat v2f64 / v2i64
+let AddedComplexity = 10 in {
+  def : Pat<(splat_lo (v2i64 VR128:$src), (undef)),
+            (PUNPCKLQDQrr VR128:$src, VR128:$src)>, Requires<[HasSSE2]>;
+  def : Pat<(splat_lo (v2i64 VR128:$src), (undef)),
+            (VPUNPCKLQDQrr VR128:$src, VR128:$src)>, Requires<[HasAVX]>;
+}
 
 //===---------------------------------------------------------------------===//
 // SSE2 - Packed Integer Extract and Insert
@@ -4881,12 +4888,6 @@ def : InstAlias<"monitor %eax, %ecx, %edx", (MONITORrrr)>,
       Requires<[In32BitMode]>;
 def : InstAlias<"monitor %rax, %rcx, %rdx", (MONITORrrr)>,
       Requires<[In64BitMode]>;
-
-// Splat v2f64 / v2i64
-let AddedComplexity = 10 in {
-def : Pat<(splat_lo (v2i64 VR128:$src), (undef)),
-          (PUNPCKLQDQrr VR128:$src, VR128:$src)>, Requires<[HasSSE2]>;
-}
 
 // Set lowest element and zero upper elements.
 def : Pat<(v2f64 (X86vzmovl (v2f64 VR128:$src))),
