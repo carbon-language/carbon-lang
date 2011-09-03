@@ -3103,7 +3103,7 @@ def MOVNTDQmr : PDI<0xE7, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
                     [(alignednontemporalstore (v4f32 VR128:$src), addr:$dst)]>;
 
 def : Pat<(alignednontemporalstore (v2i64 VR128:$src), addr:$dst),
-          (MOVNTDQmr addr:$dst, VR128:$src)>;
+          (MOVNTDQmr addr:$dst, VR128:$src)>, Requires<[HasSSE2]>;
 
 // There is no AVX form for instructions below this point
 def MOVNTImr : I<0xC3, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$src),
@@ -3251,9 +3251,11 @@ def MOVDQUmr_Int :   I<0x7F, MRMDestMem, (outs), (ins i128mem:$dst, VR128:$src),
 
 } // ExeDomain = SSEPackedInt
 
-def : Pat<(int_x86_avx_loadu_dq_256 addr:$src), (VMOVDQUYrm addr:$src)>;
-def : Pat<(int_x86_avx_storeu_dq_256 addr:$dst, VR256:$src),
-          (VMOVDQUYmr addr:$dst, VR256:$src)>;
+let Predicates = [HasAVX] in {
+  def : Pat<(int_x86_avx_loadu_dq_256 addr:$src), (VMOVDQUYrm addr:$src)>;
+  def : Pat<(int_x86_avx_storeu_dq_256 addr:$dst, VR256:$src),
+            (VMOVDQUYmr addr:$dst, VR256:$src)>;
+}
 
 //===---------------------------------------------------------------------===//
 // SSE2 - Packed Integer Arithmetic Instructions
@@ -3634,31 +3636,33 @@ let Constraints = "$src1 = $dst" in {
   defm PCMPGTD  : PDI_binop_rm_int<0x66, "pcmpgtd", int_x86_sse2_pcmpgt_d>;
 } // Constraints = "$src1 = $dst"
 
-def : Pat<(v16i8 (X86pcmpeqb VR128:$src1, VR128:$src2)),
-          (PCMPEQBrr VR128:$src1, VR128:$src2)>;
-def : Pat<(v16i8 (X86pcmpeqb VR128:$src1, (memop addr:$src2))),
-          (PCMPEQBrm VR128:$src1, addr:$src2)>;
-def : Pat<(v8i16 (X86pcmpeqw VR128:$src1, VR128:$src2)),
-          (PCMPEQWrr VR128:$src1, VR128:$src2)>;
-def : Pat<(v8i16 (X86pcmpeqw VR128:$src1, (memop addr:$src2))),
-          (PCMPEQWrm VR128:$src1, addr:$src2)>;
-def : Pat<(v4i32 (X86pcmpeqd VR128:$src1, VR128:$src2)),
-          (PCMPEQDrr VR128:$src1, VR128:$src2)>;
-def : Pat<(v4i32 (X86pcmpeqd VR128:$src1, (memop addr:$src2))),
-          (PCMPEQDrm VR128:$src1, addr:$src2)>;
+let Predicates = [HasSSE2] in {
+  def : Pat<(v16i8 (X86pcmpeqb VR128:$src1, VR128:$src2)),
+            (PCMPEQBrr VR128:$src1, VR128:$src2)>;
+  def : Pat<(v16i8 (X86pcmpeqb VR128:$src1, (memop addr:$src2))),
+            (PCMPEQBrm VR128:$src1, addr:$src2)>;
+  def : Pat<(v8i16 (X86pcmpeqw VR128:$src1, VR128:$src2)),
+            (PCMPEQWrr VR128:$src1, VR128:$src2)>;
+  def : Pat<(v8i16 (X86pcmpeqw VR128:$src1, (memop addr:$src2))),
+            (PCMPEQWrm VR128:$src1, addr:$src2)>;
+  def : Pat<(v4i32 (X86pcmpeqd VR128:$src1, VR128:$src2)),
+            (PCMPEQDrr VR128:$src1, VR128:$src2)>;
+  def : Pat<(v4i32 (X86pcmpeqd VR128:$src1, (memop addr:$src2))),
+            (PCMPEQDrm VR128:$src1, addr:$src2)>;
 
-def : Pat<(v16i8 (X86pcmpgtb VR128:$src1, VR128:$src2)),
-          (PCMPGTBrr VR128:$src1, VR128:$src2)>;
-def : Pat<(v16i8 (X86pcmpgtb VR128:$src1, (memop addr:$src2))),
-          (PCMPGTBrm VR128:$src1, addr:$src2)>;
-def : Pat<(v8i16 (X86pcmpgtw VR128:$src1, VR128:$src2)),
-          (PCMPGTWrr VR128:$src1, VR128:$src2)>;
-def : Pat<(v8i16 (X86pcmpgtw VR128:$src1, (memop addr:$src2))),
-          (PCMPGTWrm VR128:$src1, addr:$src2)>;
-def : Pat<(v4i32 (X86pcmpgtd VR128:$src1, VR128:$src2)),
-          (PCMPGTDrr VR128:$src1, VR128:$src2)>;
-def : Pat<(v4i32 (X86pcmpgtd VR128:$src1, (memop addr:$src2))),
-          (PCMPGTDrm VR128:$src1, addr:$src2)>;
+  def : Pat<(v16i8 (X86pcmpgtb VR128:$src1, VR128:$src2)),
+            (PCMPGTBrr VR128:$src1, VR128:$src2)>;
+  def : Pat<(v16i8 (X86pcmpgtb VR128:$src1, (memop addr:$src2))),
+            (PCMPGTBrm VR128:$src1, addr:$src2)>;
+  def : Pat<(v8i16 (X86pcmpgtw VR128:$src1, VR128:$src2)),
+            (PCMPGTWrr VR128:$src1, VR128:$src2)>;
+  def : Pat<(v8i16 (X86pcmpgtw VR128:$src1, (memop addr:$src2))),
+            (PCMPGTWrm VR128:$src1, addr:$src2)>;
+  def : Pat<(v4i32 (X86pcmpgtd VR128:$src1, VR128:$src2)),
+            (PCMPGTDrr VR128:$src1, VR128:$src2)>;
+  def : Pat<(v4i32 (X86pcmpgtd VR128:$src1, (memop addr:$src2))),
+            (PCMPGTDrm VR128:$src1, addr:$src2)>;
+}
 
 //===---------------------------------------------------------------------===//
 // SSE2 - Packed Integer Pack Instructions
