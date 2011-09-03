@@ -6312,11 +6312,9 @@ QualType Sema::CheckCompareOperands(ExprResult &lex, ExprResult &rex,
 
   QualType lType = lex.get()->getType();
   QualType rType = rex.get()->getType();
- 
+
   Expr *LHSStripped = lex.get()->IgnoreParenImpCasts();
   Expr *RHSStripped = rex.get()->IgnoreParenImpCasts();
-  QualType LHSStrippedType = LHSStripped->getType();
-  QualType RHSStrippedType = RHSStripped->getType();
 
   checkEnumComparison(*this, Loc, lex, rex);
 
