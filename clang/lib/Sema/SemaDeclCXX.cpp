@@ -1500,7 +1500,6 @@ Sema::ActOnMemInitializer(Decl *ConstructorD,
 
 /// Checks a member initializer expression for cases where reference (or
 /// pointer) members are bound to by-value parameters (or their addresses).
-/// FIXME: We should also flag temporaries here.
 static void CheckForDanglingReferenceOrPointer(Sema &S, ValueDecl *Member,
                                                Expr *Init,
                                                SourceLocation IdLoc) {
@@ -1527,22 +1526,31 @@ static void CheckForDanglingReferenceOrPointer(Sema &S, ValueDecl *Member,
     }
   }
 
-  // We only warn when referring to a non-reference declaration.
-  const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(Init->IgnoreParenCasts());
-  if (!DRE)
-    return;
+  if (isa<MaterializeTemporaryExpr>(Init->IgnoreParens())) {
+    // Taking the address of a temporary will be diagnosed as a hard error.
+    if (IsPointer)
+      return;
 
-  if (const ParmVarDecl *Parameter = dyn_cast<ParmVarDecl>(DRE->getDecl())) {
-    if (Parameter->getType()->isReferenceType())
+    S.Diag(Init->getExprLoc(), diag::warn_bind_ref_member_to_temporary)
+      << Member << Init->getSourceRange();
+  } else if (const DeclRefExpr *DRE
+               = dyn_cast<DeclRefExpr>(Init->IgnoreParens())) {
+    // We only warn when referring to a non-reference parameter declaration.
+    const ParmVarDecl *Parameter = dyn_cast<ParmVarDecl>(DRE->getDecl());
+    if (!Parameter || Parameter->getType()->isReferenceType())
       return;
 
     S.Diag(Init->getExprLoc(),
            IsPointer ? diag::warn_init_ptr_member_to_parameter_addr
                      : diag::warn_bind_ref_member_to_parameter)
       << Member << Parameter << Init->getSourceRange();
-    S.Diag(Member->getLocation(), diag::note_ref_or_ptr_member_declared_here)
-      << (unsigned)IsPointer;
+  } else {
+    // Other initializers are fine.
+    return;
   }
+
+  S.Diag(Member->getLocation(), diag::note_ref_or_ptr_member_declared_here)
+    << (unsigned)IsPointer;
 }
 
 /// Checks an initializer expression for use of uninitialized fields, such as
