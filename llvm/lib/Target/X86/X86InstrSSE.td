@@ -4138,23 +4138,35 @@ def MOVZDI2PDIrm : PDI<0x6E, MRMSrcMem, (outs VR128:$dst), (ins i32mem:$src),
                        [(set VR128:$dst,
                          (v4i32 (X86vzmovl (v4i32 (scalar_to_vector
                                                    (loadi32 addr:$src))))))]>;
+}
 
-def : Pat<(v4i32 (X86vzmovl (loadv4i32 addr:$src))),
+let Predicates = [HasSSE2], AddedComplexity = 20 in {
+  def : Pat<(v4i32 (X86vzmovl (loadv4i32 addr:$src))),
             (MOVZDI2PDIrm addr:$src)>;
-def : Pat<(v4i32 (X86vzmovl (bc_v4i32 (loadv4f32 addr:$src)))),
+  def : Pat<(v4i32 (X86vzmovl (bc_v4i32 (loadv4f32 addr:$src)))),
             (MOVZDI2PDIrm addr:$src)>;
-def : Pat<(v4i32 (X86vzmovl (bc_v4i32 (loadv2i64 addr:$src)))),
+  def : Pat<(v4i32 (X86vzmovl (bc_v4i32 (loadv2i64 addr:$src)))),
             (MOVZDI2PDIrm addr:$src)>;
 }
 
-// AVX 128-bit movd/movq instruction write zeros in the high 128-bit part.
-// Use regular 128-bit instructions to match 256-bit scalar_to_vec+zext.
-def : Pat<(v8i32 (X86vzmovl (insert_subvector undef,
-                              (v4i32 (scalar_to_vector GR32:$src)), (i32 0)))),
-          (SUBREG_TO_REG (i32 0), (VMOVZDI2PDIrr GR32:$src), sub_xmm)>;
-def : Pat<(v4i64 (X86vzmovl (insert_subvector undef,
-                              (v2i64 (scalar_to_vector GR64:$src)), (i32 0)))),
-          (SUBREG_TO_REG (i64 0), (VMOVZQI2PQIrr GR64:$src), sub_xmm)>;
+let Predicates = [HasAVX] in {
+  // AVX 128-bit movd/movq instruction write zeros in the high 128-bit part.
+  let AddedComplexity = 20 in {
+    def : Pat<(v4i32 (X86vzmovl (loadv4i32 addr:$src))),
+              (SUBREG_TO_REG (i32 0), (VMOVZDI2PDIrm addr:$src), sub_xmm)>;
+    def : Pat<(v4i32 (X86vzmovl (bc_v4i32 (loadv4f32 addr:$src)))),
+              (SUBREG_TO_REG (i32 0), (VMOVZDI2PDIrm addr:$src), sub_xmm)>;
+    def : Pat<(v4i32 (X86vzmovl (bc_v4i32 (loadv2i64 addr:$src)))),
+              (SUBREG_TO_REG (i32 0), (VMOVZDI2PDIrm addr:$src), sub_xmm)>;
+  }
+  // Use regular 128-bit instructions to match 256-bit scalar_to_vec+zext.
+  def : Pat<(v8i32 (X86vzmovl (insert_subvector undef,
+                                (v4i32 (scalar_to_vector GR32:$src)),(i32 0)))),
+            (SUBREG_TO_REG (i32 0), (VMOVZDI2PDIrr GR32:$src), sub_xmm)>;
+  def : Pat<(v4i64 (X86vzmovl (insert_subvector undef,
+                                (v2i64 (scalar_to_vector GR64:$src)),(i32 0)))),
+            (SUBREG_TO_REG (i64 0), (VMOVZQI2PQIrr GR64:$src), sub_xmm)>;
+}
 
 // These are the correct encodings of the instructions so that we know how to
 // read correct assembly, even though we continue to emit the wrong ones for
@@ -4220,7 +4232,7 @@ def VMOVZQI2PQIrm : I<0x7E, MRMSrcMem, (outs VR128:$dst), (ins i64mem:$src),
                                                  (loadi64 addr:$src))))))]>,
                      XS, VEX, Requires<[HasAVX]>;
 
-let AddedComplexity = 20 in {
+let AddedComplexity = 20 in
 def MOVZQI2PQIrm : I<0x7E, MRMSrcMem, (outs VR128:$dst), (ins i64mem:$src),
                      "movq\t{$src, $dst|$dst, $src}",
                      [(set VR128:$dst,
@@ -4228,11 +4240,21 @@ def MOVZQI2PQIrm : I<0x7E, MRMSrcMem, (outs VR128:$dst), (ins i64mem:$src),
                                                  (loadi64 addr:$src))))))]>,
                      XS, Requires<[HasSSE2]>;
 
-def : Pat<(v2i64 (X86vzmovl (loadv2i64 addr:$src))),
+let Predicates = [HasSSE2], AddedComplexity = 20 in {
+  def : Pat<(v2i64 (X86vzmovl (loadv2i64 addr:$src))),
             (MOVZQI2PQIrm addr:$src)>;
-def : Pat<(v2i64 (X86vzmovl (bc_v2i64 (loadv4f32 addr:$src)))),
+  def : Pat<(v2i64 (X86vzmovl (bc_v2i64 (loadv4f32 addr:$src)))),
             (MOVZQI2PQIrm addr:$src)>;
-def : Pat<(v2i64 (X86vzload addr:$src)), (MOVZQI2PQIrm addr:$src)>;
+  def : Pat<(v2i64 (X86vzload addr:$src)), (MOVZQI2PQIrm addr:$src)>;
+}
+
+let Predicates = [HasAVX], AddedComplexity = 20 in {
+  def : Pat<(v2i64 (X86vzmovl (loadv2i64 addr:$src))),
+            (SUBREG_TO_REG (i64 0), (VMOVZQI2PQIrm addr:$src), sub_xmm)>;
+  def : Pat<(v2i64 (X86vzmovl (bc_v2i64 (loadv4f32 addr:$src)))),
+            (SUBREG_TO_REG (i64 0), (VMOVZQI2PQIrm addr:$src), sub_xmm)>;
+  def : Pat<(v2i64 (X86vzload addr:$src)),
+            (SUBREG_TO_REG (i64 0), (VMOVZQI2PQIrm addr:$src), sub_xmm)>;
 }
 
 //===---------------------------------------------------------------------===//
@@ -4262,9 +4284,15 @@ def MOVZPQILo2PQIrm : I<0x7E, MRMSrcMem, (outs VR128:$dst), (ins i128mem:$src),
                     [(set VR128:$dst, (v2i64 (X86vzmovl
                                              (loadv2i64 addr:$src))))]>,
                       XS, Requires<[HasSSE2]>;
+}
 
-def : Pat<(v2i64 (X86vzmovl (bc_v2i64 (loadv4i32 addr:$src)))),
-            (MOVZPQILo2PQIrm addr:$src)>;
+let AddedComplexity = 20 in {
+  let Predicates = [HasSSE2] in
+    def : Pat<(v2i64 (X86vzmovl (bc_v2i64 (loadv4i32 addr:$src)))),
+              (MOVZPQILo2PQIrm addr:$src)>;
+  let Predicates = [HasAVX] in
+    def : Pat<(v2i64 (X86vzmovl (bc_v2i64 (loadv4i32 addr:$src)))),
+              (SUBREG_TO_REG (i64 0), (VMOVZPQILo2PQIrm addr:$src), sub_xmm)>;
 }
 
 // Instructions to match in the assembler
