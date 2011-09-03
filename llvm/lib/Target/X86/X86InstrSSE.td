@@ -4933,36 +4933,71 @@ defm PMOVZXBW   : SS41I_binop_rm_int8<0x30, "pmovzxbw", int_x86_sse41_pmovzxbw>;
 defm PMOVZXWD   : SS41I_binop_rm_int8<0x33, "pmovzxwd", int_x86_sse41_pmovzxwd>;
 defm PMOVZXDQ   : SS41I_binop_rm_int8<0x35, "pmovzxdq", int_x86_sse41_pmovzxdq>;
 
-// Common patterns involving scalar load.
-def : Pat<(int_x86_sse41_pmovsxbw (vzmovl_v2i64 addr:$src)),
-          (PMOVSXBWrm addr:$src)>, Requires<[HasSSE41]>;
-def : Pat<(int_x86_sse41_pmovsxbw (vzload_v2i64 addr:$src)),
-          (PMOVSXBWrm addr:$src)>, Requires<[HasSSE41]>;
+let Predicates = [HasSSE41] in {
+  // Common patterns involving scalar load.
+  def : Pat<(int_x86_sse41_pmovsxbw (vzmovl_v2i64 addr:$src)),
+            (PMOVSXBWrm addr:$src)>;
+  def : Pat<(int_x86_sse41_pmovsxbw (vzload_v2i64 addr:$src)),
+            (PMOVSXBWrm addr:$src)>;
 
-def : Pat<(int_x86_sse41_pmovsxwd (vzmovl_v2i64 addr:$src)),
-          (PMOVSXWDrm addr:$src)>, Requires<[HasSSE41]>;
-def : Pat<(int_x86_sse41_pmovsxwd (vzload_v2i64 addr:$src)),
-          (PMOVSXWDrm addr:$src)>, Requires<[HasSSE41]>;
+  def : Pat<(int_x86_sse41_pmovsxwd (vzmovl_v2i64 addr:$src)),
+            (PMOVSXWDrm addr:$src)>;
+  def : Pat<(int_x86_sse41_pmovsxwd (vzload_v2i64 addr:$src)),
+            (PMOVSXWDrm addr:$src)>;
 
-def : Pat<(int_x86_sse41_pmovsxdq (vzmovl_v2i64 addr:$src)),
-          (PMOVSXDQrm addr:$src)>, Requires<[HasSSE41]>;
-def : Pat<(int_x86_sse41_pmovsxdq (vzload_v2i64 addr:$src)),
-          (PMOVSXDQrm addr:$src)>, Requires<[HasSSE41]>;
+  def : Pat<(int_x86_sse41_pmovsxdq (vzmovl_v2i64 addr:$src)),
+            (PMOVSXDQrm addr:$src)>;
+  def : Pat<(int_x86_sse41_pmovsxdq (vzload_v2i64 addr:$src)),
+            (PMOVSXDQrm addr:$src)>;
 
-def : Pat<(int_x86_sse41_pmovzxbw (vzmovl_v2i64 addr:$src)),
-          (PMOVZXBWrm addr:$src)>, Requires<[HasSSE41]>;
-def : Pat<(int_x86_sse41_pmovzxbw (vzload_v2i64 addr:$src)),
-          (PMOVZXBWrm addr:$src)>, Requires<[HasSSE41]>;
+  def : Pat<(int_x86_sse41_pmovzxbw (vzmovl_v2i64 addr:$src)),
+            (PMOVZXBWrm addr:$src)>;
+  def : Pat<(int_x86_sse41_pmovzxbw (vzload_v2i64 addr:$src)),
+            (PMOVZXBWrm addr:$src)>;
 
-def : Pat<(int_x86_sse41_pmovzxwd (vzmovl_v2i64 addr:$src)),
-          (PMOVZXWDrm addr:$src)>, Requires<[HasSSE41]>;
-def : Pat<(int_x86_sse41_pmovzxwd (vzload_v2i64 addr:$src)),
-          (PMOVZXWDrm addr:$src)>, Requires<[HasSSE41]>;
+  def : Pat<(int_x86_sse41_pmovzxwd (vzmovl_v2i64 addr:$src)),
+            (PMOVZXWDrm addr:$src)>;
+  def : Pat<(int_x86_sse41_pmovzxwd (vzload_v2i64 addr:$src)),
+            (PMOVZXWDrm addr:$src)>;
 
-def : Pat<(int_x86_sse41_pmovzxdq (vzmovl_v2i64 addr:$src)),
-          (PMOVZXDQrm addr:$src)>, Requires<[HasSSE41]>;
-def : Pat<(int_x86_sse41_pmovzxdq (vzload_v2i64 addr:$src)),
-          (PMOVZXDQrm addr:$src)>, Requires<[HasSSE41]>;
+  def : Pat<(int_x86_sse41_pmovzxdq (vzmovl_v2i64 addr:$src)),
+            (PMOVZXDQrm addr:$src)>;
+  def : Pat<(int_x86_sse41_pmovzxdq (vzload_v2i64 addr:$src)),
+            (PMOVZXDQrm addr:$src)>;
+}
+
+let Predicates = [HasAVX] in {
+  // Common patterns involving scalar load.
+  def : Pat<(int_x86_sse41_pmovsxbw (vzmovl_v2i64 addr:$src)),
+            (VPMOVSXBWrm addr:$src)>;
+  def : Pat<(int_x86_sse41_pmovsxbw (vzload_v2i64 addr:$src)),
+            (VPMOVSXBWrm addr:$src)>;
+
+  def : Pat<(int_x86_sse41_pmovsxwd (vzmovl_v2i64 addr:$src)),
+            (VPMOVSXWDrm addr:$src)>;
+  def : Pat<(int_x86_sse41_pmovsxwd (vzload_v2i64 addr:$src)),
+            (VPMOVSXWDrm addr:$src)>;
+
+  def : Pat<(int_x86_sse41_pmovsxdq (vzmovl_v2i64 addr:$src)),
+            (VPMOVSXDQrm addr:$src)>;
+  def : Pat<(int_x86_sse41_pmovsxdq (vzload_v2i64 addr:$src)),
+            (VPMOVSXDQrm addr:$src)>;
+
+  def : Pat<(int_x86_sse41_pmovzxbw (vzmovl_v2i64 addr:$src)),
+            (VPMOVZXBWrm addr:$src)>;
+  def : Pat<(int_x86_sse41_pmovzxbw (vzload_v2i64 addr:$src)),
+            (VPMOVZXBWrm addr:$src)>;
+
+  def : Pat<(int_x86_sse41_pmovzxwd (vzmovl_v2i64 addr:$src)),
+            (VPMOVZXWDrm addr:$src)>;
+  def : Pat<(int_x86_sse41_pmovzxwd (vzload_v2i64 addr:$src)),
+            (VPMOVZXWDrm addr:$src)>;
+
+  def : Pat<(int_x86_sse41_pmovzxdq (vzmovl_v2i64 addr:$src)),
+            (VPMOVZXDQrm addr:$src)>;
+  def : Pat<(int_x86_sse41_pmovzxdq (vzload_v2i64 addr:$src)),
+            (VPMOVZXDQrm addr:$src)>;
+}
 
 
 multiclass SS41I_binop_rm_int4<bits<8> opc, string OpcodeStr, Intrinsic IntId> {
@@ -4993,17 +5028,31 @@ defm PMOVSXWQ   : SS41I_binop_rm_int4<0x24, "pmovsxwq", int_x86_sse41_pmovsxwq>;
 defm PMOVZXBD   : SS41I_binop_rm_int4<0x31, "pmovzxbd", int_x86_sse41_pmovzxbd>;
 defm PMOVZXWQ   : SS41I_binop_rm_int4<0x34, "pmovzxwq", int_x86_sse41_pmovzxwq>;
 
-// Common patterns involving scalar load
-def : Pat<(int_x86_sse41_pmovsxbd (vzmovl_v4i32 addr:$src)),
-          (PMOVSXBDrm addr:$src)>, Requires<[HasSSE41]>;
-def : Pat<(int_x86_sse41_pmovsxwq (vzmovl_v4i32 addr:$src)),
-          (PMOVSXWQrm addr:$src)>, Requires<[HasSSE41]>;
+let Predicates = [HasSSE41] in {
+  // Common patterns involving scalar load
+  def : Pat<(int_x86_sse41_pmovsxbd (vzmovl_v4i32 addr:$src)),
+            (PMOVSXBDrm addr:$src)>;
+  def : Pat<(int_x86_sse41_pmovsxwq (vzmovl_v4i32 addr:$src)),
+            (PMOVSXWQrm addr:$src)>;
 
-def : Pat<(int_x86_sse41_pmovzxbd (vzmovl_v4i32 addr:$src)),
-          (PMOVZXBDrm addr:$src)>, Requires<[HasSSE41]>;
-def : Pat<(int_x86_sse41_pmovzxwq (vzmovl_v4i32 addr:$src)),
-          (PMOVZXWQrm addr:$src)>, Requires<[HasSSE41]>;
+  def : Pat<(int_x86_sse41_pmovzxbd (vzmovl_v4i32 addr:$src)),
+            (PMOVZXBDrm addr:$src)>;
+  def : Pat<(int_x86_sse41_pmovzxwq (vzmovl_v4i32 addr:$src)),
+            (PMOVZXWQrm addr:$src)>;
+}
 
+let Predicates = [HasAVX] in {
+  // Common patterns involving scalar load
+  def : Pat<(int_x86_sse41_pmovsxbd (vzmovl_v4i32 addr:$src)),
+            (VPMOVSXBDrm addr:$src)>;
+  def : Pat<(int_x86_sse41_pmovsxwq (vzmovl_v4i32 addr:$src)),
+            (VPMOVSXWQrm addr:$src)>;
+
+  def : Pat<(int_x86_sse41_pmovzxbd (vzmovl_v4i32 addr:$src)),
+            (VPMOVZXBDrm addr:$src)>;
+  def : Pat<(int_x86_sse41_pmovzxwq (vzmovl_v4i32 addr:$src)),
+            (VPMOVZXWQrm addr:$src)>;
+}
 
 multiclass SS41I_binop_rm_int2<bits<8> opc, string OpcodeStr, Intrinsic IntId> {
   def rr : SS48I<opc, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
@@ -5027,16 +5076,31 @@ defm VPMOVZXBQ : SS41I_binop_rm_int2<0x32, "vpmovzxbq", int_x86_sse41_pmovzxbq>,
 defm PMOVSXBQ   : SS41I_binop_rm_int2<0x22, "pmovsxbq", int_x86_sse41_pmovsxbq>;
 defm PMOVZXBQ   : SS41I_binop_rm_int2<0x32, "pmovzxbq", int_x86_sse41_pmovzxbq>;
 
-// Common patterns involving scalar load
-def : Pat<(int_x86_sse41_pmovsxbq
-            (bitconvert (v4i32 (X86vzmovl
-                             (v4i32 (scalar_to_vector (loadi32 addr:$src))))))),
-          (PMOVSXBQrm addr:$src)>, Requires<[HasSSE41]>;
+let Predicates = [HasSSE41] in {
+  // Common patterns involving scalar load
+  def : Pat<(int_x86_sse41_pmovsxbq
+              (bitconvert (v4i32 (X86vzmovl
+                            (v4i32 (scalar_to_vector (loadi32 addr:$src))))))),
+            (PMOVSXBQrm addr:$src)>;
 
-def : Pat<(int_x86_sse41_pmovzxbq
-            (bitconvert (v4i32 (X86vzmovl
-                             (v4i32 (scalar_to_vector (loadi32 addr:$src))))))),
-          (PMOVZXBQrm addr:$src)>, Requires<[HasSSE41]>;
+  def : Pat<(int_x86_sse41_pmovzxbq
+              (bitconvert (v4i32 (X86vzmovl
+                            (v4i32 (scalar_to_vector (loadi32 addr:$src))))))),
+            (PMOVZXBQrm addr:$src)>;
+}
+
+let Predicates = [HasAVX] in {
+  // Common patterns involving scalar load
+  def : Pat<(int_x86_sse41_pmovsxbq
+              (bitconvert (v4i32 (X86vzmovl
+                            (v4i32 (scalar_to_vector (loadi32 addr:$src))))))),
+            (VPMOVSXBQrm addr:$src)>;
+
+  def : Pat<(int_x86_sse41_pmovzxbq
+              (bitconvert (v4i32 (X86vzmovl
+                            (v4i32 (scalar_to_vector (loadi32 addr:$src))))))),
+            (VPMOVZXBQrm addr:$src)>;
+}
 
 //===----------------------------------------------------------------------===//
 // SSE4.1 - Extract Instructions
