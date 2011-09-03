@@ -54,5 +54,11 @@
 {
   suppress optimized strcasecmp, to be fixed in valgrind 3.6.1
   Memcheck:Value8
-  fun: *strcasecmp*
+  fun:__GI___strcasecmp_l
+}
+
+{
+  suppress optimized strcasecmp, to be fixed in valgrind 3.6.1
+  Memcheck:Addr8
+  fun:__GI___strcasecmp_l
 }
