@@ -119,9 +119,11 @@ multiclass sse12_fp_packed_int<bits<8> opc, string OpcodeStr, RegisterClass RC,
 //  Non-instruction patterns
 //===----------------------------------------------------------------------===//
 
-// A vector extract of the first f32 position is a subregister copy
+// A vector extract of the first f32/f64 position is a subregister copy
 def : Pat<(f32 (vector_extract (v4f32 VR128:$src), (iPTR 0))),
           (f32 (EXTRACT_SUBREG (v4f32 VR128:$src), sub_ss))>;
+def : Pat<(f64 (vector_extract (v2f64 VR128:$src), (iPTR 0))),
+          (f64 (EXTRACT_SUBREG (v2f64 VR128:$src), sub_sd))>;
 
 // A 128-bit subvector extract from the first 256-bit vector position
 // is a subregister copy that needs no instruction.
@@ -236,6 +238,24 @@ let Predicates = [HasAVX] in {
   def : Pat<(v16i16 (bitconvert (v32i8 VR256:$src))),  (v16i16 VR256:$src)>;
 }
 
+// Alias instructions that map fld0 to pxor for sse.
+// FIXME: Set encoding to pseudo!
+let isReMaterializable = 1, isAsCheapAsAMove = 1, isCodeGenOnly = 1,
+    canFoldAsLoad = 1 in {
+  def FsFLD0SS : I<0xEF, MRMInitReg, (outs FR32:$dst), (ins), "",
+                   [(set FR32:$dst, fp32imm0)]>,
+                   Requires<[HasSSE1]>, TB, OpSize;
+  def FsFLD0SD : I<0xEF, MRMInitReg, (outs FR64:$dst), (ins), "",
+                   [(set FR64:$dst, fpimm0)]>,
+                 Requires<[HasSSE2]>, TB, OpSize;
+  def VFsFLD0SS : I<0xEF, MRMInitReg, (outs FR32:$dst), (ins), "",
+                    [(set FR32:$dst, fp32imm0)]>,
+                    Requires<[HasAVX]>, TB, OpSize, VEX_4V;
+  def VFsFLD0SD : I<0xEF, MRMInitReg, (outs FR64:$dst), (ins), "",
+                    [(set FR64:$dst, fpimm0)]>,
+                    Requires<[HasAVX]>, TB, OpSize, VEX_4V;
+}
+
 //===----------------------------------------------------------------------===//
 // AVX & SSE - Zero/One Vectors
 //===----------------------------------------------------------------------===//
@@ -293,6 +313,21 @@ def : Pat<(bc_v8i32 (v8f32 immAllZerosV)),
 def : Pat<(v4i64 immAllZerosV), (SUBREG_TO_REG (i64 0), (AVX_SET0PI), sub_xmm)>;
 def : Pat<(bc_v4i64 (v8f32 immAllZerosV)),
           (SUBREG_TO_REG (i64 0), (AVX_SET0PI), sub_xmm)>;
+
+// We set canFoldAsLoad because this can be converted to a constant-pool
+// load of an all-ones value if folding it would be beneficial.
+// FIXME: Change encoding to pseudo! This is blocked right now by the x86
+// JIT implementation, it does not expand the instructions below like
+// X86MCInstLower does.
+let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
+    isCodeGenOnly = 1, ExeDomain = SSEPackedInt in
+  def V_SETALLONES : PDI<0x76, MRMInitReg, (outs VR128:$dst), (ins), "",
+                         [(set VR128:$dst, (v4i32 immAllOnesV))]>;
+let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
+    isCodeGenOnly = 1, ExeDomain = SSEPackedInt, Predicates = [HasAVX] in
+  def AVX_SETALLONES : PDI<0x76, MRMInitReg, (outs VR128:$dst), (ins), "",
+                         [(set VR128:$dst, (v4i32 immAllOnesV))]>, VEX_4V;
+
 
 //===----------------------------------------------------------------------===//
 // SSE 1 & 2 - Move FP Scalar Instructions
@@ -781,6 +816,38 @@ let Predicates = [HasAVX] in {
             (VMOVUPSYmr addr:$dst, VR256:$src)>;
   def : Pat<(store (v32i8 VR256:$src), addr:$dst),
             (VMOVUPSYmr addr:$dst, VR256:$src)>;
+}
+
+// Alias instruction to do FR32 or FR64 reg-to-reg copy using movaps. Upper
+// bits are disregarded. FIXME: Set encoding to pseudo!
+let neverHasSideEffects = 1 in {
+def FsMOVAPSrr : PSI<0x28, MRMSrcReg, (outs FR32:$dst), (ins FR32:$src),
+                     "movaps\t{$src, $dst|$dst, $src}", []>;
+def FsMOVAPDrr : PDI<0x28, MRMSrcReg, (outs FR64:$dst), (ins FR64:$src),
+                     "movapd\t{$src, $dst|$dst, $src}", []>;
+def FsVMOVAPSrr : VPSI<0x28, MRMSrcReg, (outs FR32:$dst), (ins FR32:$src),
+                       "movaps\t{$src, $dst|$dst, $src}", []>, VEX;
+def FsVMOVAPDrr : VPDI<0x28, MRMSrcReg, (outs FR64:$dst), (ins FR64:$src),
+                       "movapd\t{$src, $dst|$dst, $src}", []>, VEX;
+}
+
+// Alias instruction to load FR32 or FR64 from f128mem using movaps. Upper
+// bits are disregarded. FIXME: Set encoding to pseudo!
+let canFoldAsLoad = 1, isReMaterializable = 1 in {
+def FsMOVAPSrm : PSI<0x28, MRMSrcMem, (outs FR32:$dst), (ins f128mem:$src),
+                     "movaps\t{$src, $dst|$dst, $src}",
+                     [(set FR32:$dst, (alignedloadfsf32 addr:$src))]>;
+def FsMOVAPDrm : PDI<0x28, MRMSrcMem, (outs FR64:$dst), (ins f128mem:$src),
+                     "movapd\t{$src, $dst|$dst, $src}",
+                     [(set FR64:$dst, (alignedloadfsf64 addr:$src))]>;
+let isCodeGenOnly = 1 in {
+  def FsVMOVAPSrm : VPSI<0x28, MRMSrcMem, (outs FR32:$dst), (ins f128mem:$src),
+                         "movaps\t{$src, $dst|$dst, $src}",
+                         [(set FR32:$dst, (alignedloadfsf32 addr:$src))]>, VEX;
+  def FsVMOVAPDrm : VPDI<0x28, MRMSrcMem, (outs FR64:$dst), (ins f128mem:$src),
+                         "movapd\t{$src, $dst|$dst, $src}",
+                         [(set FR64:$dst, (alignedloadfsf64 addr:$src))]>, VEX;
+}
 }
 
 //===----------------------------------------------------------------------===//
@@ -1480,6 +1547,13 @@ def CVTSS2SDrm : I<0x5A, MRMSrcMem, (outs FR64:$dst), (ins f32mem:$src),
                    [(set FR64:$dst, (extloadf32 addr:$src))]>, XS,
                  Requires<[HasSSE2, OptForSize]>;
 
+// extload f32 -> f64.  This matches load+fextend because we have a hack in
+// the isel (PreprocessForFPConvert) that can introduce loads after dag
+// combine.
+// Since these loads aren't folded into the fextend, we have to match it
+// explicitly here.
+def : Pat<(fextend (loadf32 addr:$src)),
+          (CVTSS2SDrm addr:$src)>, Requires<[HasSSE2]>;
 def : Pat<(extloadf32 addr:$src),
           (CVTSS2SDrr (MOVSSrm addr:$src))>, Requires<[HasSSE2, OptForSpeed]>;
 
@@ -2450,63 +2524,6 @@ let Predicates = [HasAVX] in {
 }
 
 //===----------------------------------------------------------------------===//
-// SSE 1 & 2 - Misc aliasing of packed SSE 1 & 2 instructions
-//===----------------------------------------------------------------------===//
-
-// Aliases of packed SSE1 & SSE2 instructions for scalar use. These all have
-// names that start with 'Fs'.
-
-// Alias instructions that map fld0 to pxor for sse.
-// FIXME: Set encoding to pseudo!
-let isReMaterializable = 1, isAsCheapAsAMove = 1, isCodeGenOnly = 1,
-    canFoldAsLoad = 1 in {
-  def FsFLD0SS : I<0xEF, MRMInitReg, (outs FR32:$dst), (ins), "",
-                   [(set FR32:$dst, fp32imm0)]>,
-                   Requires<[HasSSE1]>, TB, OpSize;
-  def FsFLD0SD : I<0xEF, MRMInitReg, (outs FR64:$dst), (ins), "",
-                   [(set FR64:$dst, fpimm0)]>,
-                 Requires<[HasSSE2]>, TB, OpSize;
-  def VFsFLD0SS : I<0xEF, MRMInitReg, (outs FR32:$dst), (ins), "",
-                    [(set FR32:$dst, fp32imm0)]>,
-                    Requires<[HasAVX]>, TB, OpSize, VEX_4V;
-  def VFsFLD0SD : I<0xEF, MRMInitReg, (outs FR64:$dst), (ins), "",
-                    [(set FR64:$dst, fpimm0)]>,
-                    Requires<[HasAVX]>, TB, OpSize, VEX_4V;
-}
-
-// Alias instruction to do FR32 or FR64 reg-to-reg copy using movaps. Upper
-// bits are disregarded. FIXME: Set encoding to pseudo!
-let neverHasSideEffects = 1 in {
-def FsMOVAPSrr : PSI<0x28, MRMSrcReg, (outs FR32:$dst), (ins FR32:$src),
-                     "movaps\t{$src, $dst|$dst, $src}", []>;
-def FsMOVAPDrr : PDI<0x28, MRMSrcReg, (outs FR64:$dst), (ins FR64:$src),
-                     "movapd\t{$src, $dst|$dst, $src}", []>;
-def FsVMOVAPSrr : VPSI<0x28, MRMSrcReg, (outs FR32:$dst), (ins FR32:$src),
-                       "movaps\t{$src, $dst|$dst, $src}", []>, VEX;
-def FsVMOVAPDrr : VPDI<0x28, MRMSrcReg, (outs FR64:$dst), (ins FR64:$src),
-                       "movapd\t{$src, $dst|$dst, $src}", []>, VEX;
-}
-
-// Alias instruction to load FR32 or FR64 from f128mem using movaps. Upper
-// bits are disregarded. FIXME: Set encoding to pseudo!
-let canFoldAsLoad = 1, isReMaterializable = 1 in {
-def FsMOVAPSrm : PSI<0x28, MRMSrcMem, (outs FR32:$dst), (ins f128mem:$src),
-                     "movaps\t{$src, $dst|$dst, $src}",
-                     [(set FR32:$dst, (alignedloadfsf32 addr:$src))]>;
-def FsMOVAPDrm : PDI<0x28, MRMSrcMem, (outs FR64:$dst), (ins f128mem:$src),
-                     "movapd\t{$src, $dst|$dst, $src}",
-                     [(set FR64:$dst, (alignedloadfsf64 addr:$src))]>;
-let isCodeGenOnly = 1 in {
-  def FsVMOVAPSrm : VPSI<0x28, MRMSrcMem, (outs FR32:$dst), (ins f128mem:$src),
-                         "movaps\t{$src, $dst|$dst, $src}",
-                         [(set FR32:$dst, (alignedloadfsf32 addr:$src))]>, VEX;
-  def FsVMOVAPDrm : VPDI<0x28, MRMSrcMem, (outs FR64:$dst), (ins f128mem:$src),
-                         "movapd\t{$src, $dst|$dst, $src}",
-                         [(set FR64:$dst, (alignedloadfsf64 addr:$src))]>, VEX;
-}
-}
-
-//===----------------------------------------------------------------------===//
 // SSE 1 & 2 - Logical Instructions
 //===----------------------------------------------------------------------===//
 
@@ -3113,10 +3130,26 @@ def PREFETCHT2   : PSI<0x18, MRM3m, (outs), (ins i8mem:$src),
 def PREFETCHNTA  : PSI<0x18, MRM0m, (outs), (ins i8mem:$src),
     "prefetchnta\t$src", [(prefetch addr:$src, imm, (i32 0), (i32 1))]>;
 
+// Flush cache
+def CLFLUSH : I<0xAE, MRM7m, (outs), (ins i8mem:$src),
+               "clflush\t$src", [(int_x86_sse2_clflush addr:$src)]>,
+              TB, Requires<[HasSSE2]>;
+
+// Pause. This "instruction" is encoded as "rep; nop", so even though it
+// was introduced with SSE2, it's backward compatible.
+def PAUSE : I<0x90, RawFrm, (outs), (ins), "pause", []>, REP;
+
 // Load, store, and memory fence
-def SFENCE : I<0xAE, MRM_F8, (outs), (ins), "sfence", [(int_x86_sse_sfence)]>,
-             TB, Requires<[HasSSE1]>;
+def SFENCE : I<0xAE, MRM_F8, (outs), (ins),
+               "sfence", [(int_x86_sse_sfence)]>, TB, Requires<[HasSSE1]>;
+def LFENCE : I<0xAE, MRM_E8, (outs), (ins),
+               "lfence", [(int_x86_sse2_lfence)]>, TB, Requires<[HasSSE2]>;
+def MFENCE : I<0xAE, MRM_F0, (outs), (ins),
+               "mfence", [(int_x86_sse2_mfence)]>, TB, Requires<[HasSSE2]>;
+
 def : Pat<(X86SFence), (SFENCE)>;
+def : Pat<(X86LFence), (LFENCE)>;
+def : Pat<(X86MFence), (MFENCE)>;
 
 //===----------------------------------------------------------------------===//
 // SSE 1 & 2 - Load/Store XCSR register
@@ -4165,9 +4198,6 @@ def MOVPQI2QImr : PDI<0xD6, MRMDestMem, (outs), (ins i64mem:$dst, VR128:$src),
                       [(store (i64 (vector_extract (v2i64 VR128:$src),
                                     (iPTR 0))), addr:$dst)]>;
 
-def : Pat<(f64 (vector_extract (v2f64 VR128:$src), (iPTR 0))),
-          (f64 (EXTRACT_SUBREG (v2f64 VR128:$src), sub_sd))>;
-
 //===---------------------------------------------------------------------===//
 // Store / copy lower 64-bits of a XMM register.
 //
@@ -4251,43 +4281,6 @@ def VMOVQxrxr: I<0x7E, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                  "vmovq\t{$src, $dst|$dst, $src}", []>, VEX, XS;
 def MOVQxrxr : I<0x7E, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                  "movq\t{$src, $dst|$dst, $src}", []>, XS;
-
-//===---------------------------------------------------------------------===//
-// SSE2 - Misc Instructions
-//===---------------------------------------------------------------------===//
-
-// Flush cache
-def CLFLUSH : I<0xAE, MRM7m, (outs), (ins i8mem:$src),
-               "clflush\t$src", [(int_x86_sse2_clflush addr:$src)]>,
-              TB, Requires<[HasSSE2]>;
-
-// Load, store, and memory fence
-def LFENCE : I<0xAE, MRM_E8, (outs), (ins),
-               "lfence", [(int_x86_sse2_lfence)]>, TB, Requires<[HasSSE2]>;
-def MFENCE : I<0xAE, MRM_F0, (outs), (ins),
-               "mfence", [(int_x86_sse2_mfence)]>, TB, Requires<[HasSSE2]>;
-def : Pat<(X86LFence), (LFENCE)>;
-def : Pat<(X86MFence), (MFENCE)>;
-
-
-// Pause. This "instruction" is encoded as "rep; nop", so even though it
-// was introduced with SSE2, it's backward compatible.
-def PAUSE : I<0x90, RawFrm, (outs), (ins), "pause", []>, REP;
-
-// Alias instructions that map zero vector to pxor / xorp* for sse.
-// We set canFoldAsLoad because this can be converted to a constant-pool
-// load of an all-ones value if folding it would be beneficial.
-// FIXME: Change encoding to pseudo! This is blocked right now by the x86
-// JIT implementation, it does not expand the instructions below like
-// X86MCInstLower does.
-let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
-    isCodeGenOnly = 1, ExeDomain = SSEPackedInt in
-  def V_SETALLONES : PDI<0x76, MRMInitReg, (outs VR128:$dst), (ins), "",
-                         [(set VR128:$dst, (v4i32 immAllOnesV))]>;
-let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
-    isCodeGenOnly = 1, ExeDomain = SSEPackedInt, Predicates = [HasAVX] in
-  def AVX_SETALLONES : PDI<0x76, MRMInitReg, (outs VR128:$dst), (ins), "",
-                         [(set VR128:$dst, (v4i32 immAllOnesV))]>, VEX_4V;
 
 //===---------------------------------------------------------------------===//
 // SSE3 - Conversion Instructions
@@ -4816,10 +4809,9 @@ def : Pat<(v16i8 (X86PAlign VR128:$src1, VR128:$src2, (i8 imm:$imm))),
 }
 
 //===---------------------------------------------------------------------===//
-// SSSE3 Misc Instructions
+// SSSE3 - Thread synchronization
 //===---------------------------------------------------------------------===//
 
-// Thread synchronization
 let usesCustomInserter = 1 in {
 def MONITOR : PseudoI<(outs), (ins i32mem:$src1, GR32:$src2, GR32:$src3),
                 [(int_x86_sse3_monitor addr:$src1, GR32:$src2, GR32:$src3)]>;
@@ -4841,15 +4833,6 @@ def : InstAlias<"monitor %eax, %ecx, %edx", (MONITORrrr)>,
       Requires<[In32BitMode]>;
 def : InstAlias<"monitor %rax, %rcx, %rdx", (MONITORrrr)>,
       Requires<[In64BitMode]>;
-
-// extload f32 -> f64.  This matches load+fextend because we have a hack in
-// the isel (PreprocessForFPConvert) that can introduce loads after dag
-// combine.
-// Since these loads aren't folded into the fextend, we have to match it
-// explicitly here.
-let Predicates = [HasSSE2] in
- def : Pat<(fextend (loadf32 addr:$src)),
-           (CVTSS2SDrm addr:$src)>;
 
 // Splat v2f64 / v2i64
 let AddedComplexity = 10 in {
