@@ -278,6 +278,8 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     { X86::EXTRACTPSrr, X86::EXTRACTPSmr, 0, 16 },
     { X86::FsMOVAPDrr,  X86::MOVSDmr | TB_NOT_REVERSABLE , 0, 0 },
     { X86::FsMOVAPSrr,  X86::MOVSSmr | TB_NOT_REVERSABLE , 0, 0 },
+    { X86::FsVMOVAPDrr, X86::VMOVSDmr | TB_NOT_REVERSABLE , 0, 0 },
+    { X86::FsVMOVAPSrr, X86::VMOVSSmr | TB_NOT_REVERSABLE , 0, 0 },
     { X86::IDIV16r,     X86::IDIV16m, 1, 0 },
     { X86::IDIV32r,     X86::IDIV32m, 1, 0 },
     { X86::IDIV64r,     X86::IDIV64m, 1, 0 },
@@ -375,6 +377,8 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     { X86::CVTTSS2SIrr,     X86::CVTTSS2SIrm, 0 },
     { X86::FsMOVAPDrr,      X86::MOVSDrm | TB_NOT_REVERSABLE , 0 },
     { X86::FsMOVAPSrr,      X86::MOVSSrm | TB_NOT_REVERSABLE , 0 },
+    { X86::FsVMOVAPDrr,     X86::VMOVSDrm | TB_NOT_REVERSABLE , 0 },
+    { X86::FsVMOVAPSrr,     X86::VMOVSSrm | TB_NOT_REVERSABLE , 0 },
     { X86::IMUL16rri,       X86::IMUL16rmi, 0 },
     { X86::IMUL16rri8,      X86::IMUL16rmi8, 0 },
     { X86::IMUL32rri,       X86::IMUL32rmi, 0 },
@@ -913,6 +917,8 @@ X86InstrInfo::isReallyTriviallyReMaterializable(const MachineInstr *MI,
     case X86::VMOVDQAYrm:
     case X86::MMX_MOVD64rm:
     case X86::MMX_MOVQ64rm:
+    case X86::FsVMOVAPSrm:
+    case X86::FsVMOVAPDrm:
     case X86::FsMOVAPSrm:
     case X86::FsMOVAPDrm: {
       // Loads from constant pools are trivially rematerializable.
@@ -2856,6 +2862,8 @@ X86InstrInfo::areLoadsFromSameBasePtr(SDNode *Load1, SDNode *Load2,
   case X86::MMX_MOVQ64rm:
   case X86::FsMOVAPSrm:
   case X86::FsMOVAPDrm:
+  case X86::FsVMOVAPSrm:
+  case X86::FsVMOVAPDrm:
   case X86::MOVAPSrm:
   case X86::MOVUPSrm:
   case X86::MOVAPDrm:
@@ -2883,6 +2891,8 @@ X86InstrInfo::areLoadsFromSameBasePtr(SDNode *Load1, SDNode *Load2,
   case X86::MMX_MOVQ64rm:
   case X86::FsMOVAPSrm:
   case X86::FsMOVAPDrm:
+  case X86::FsVMOVAPSrm:
+  case X86::FsVMOVAPDrm:
   case X86::MOVAPSrm:
   case X86::MOVUPSrm:
   case X86::MOVAPDrm:

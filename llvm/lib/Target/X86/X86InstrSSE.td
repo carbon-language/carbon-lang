@@ -2457,9 +2457,9 @@ let Predicates = [HasAVX] in {
 // names that start with 'Fs'.
 
 // Alias instructions that map fld0 to pxor for sse.
+// FIXME: Set encoding to pseudo!
 let isReMaterializable = 1, isAsCheapAsAMove = 1, isCodeGenOnly = 1,
     canFoldAsLoad = 1 in {
-  // FIXME: Set encoding to pseudo!
   def FsFLD0SS : I<0xEF, MRMInitReg, (outs FR32:$dst), (ins), "",
                    [(set FR32:$dst, fp32imm0)]>,
                    Requires<[HasSSE1]>, TB, OpSize;
@@ -2475,16 +2475,20 @@ let isReMaterializable = 1, isAsCheapAsAMove = 1, isCodeGenOnly = 1,
 }
 
 // Alias instruction to do FR32 or FR64 reg-to-reg copy using movaps. Upper
-// bits are disregarded.
+// bits are disregarded. FIXME: Set encoding to pseudo!
 let neverHasSideEffects = 1 in {
 def FsMOVAPSrr : PSI<0x28, MRMSrcReg, (outs FR32:$dst), (ins FR32:$src),
                      "movaps\t{$src, $dst|$dst, $src}", []>;
 def FsMOVAPDrr : PDI<0x28, MRMSrcReg, (outs FR64:$dst), (ins FR64:$src),
                      "movapd\t{$src, $dst|$dst, $src}", []>;
+def FsVMOVAPSrr : VPSI<0x28, MRMSrcReg, (outs FR32:$dst), (ins FR32:$src),
+                       "movaps\t{$src, $dst|$dst, $src}", []>, VEX;
+def FsVMOVAPDrr : VPDI<0x28, MRMSrcReg, (outs FR64:$dst), (ins FR64:$src),
+                       "movapd\t{$src, $dst|$dst, $src}", []>, VEX;
 }
 
 // Alias instruction to load FR32 or FR64 from f128mem using movaps. Upper
-// bits are disregarded.
+// bits are disregarded. FIXME: Set encoding to pseudo!
 let canFoldAsLoad = 1, isReMaterializable = 1 in {
 def FsMOVAPSrm : PSI<0x28, MRMSrcMem, (outs FR32:$dst), (ins f128mem:$src),
                      "movaps\t{$src, $dst|$dst, $src}",
@@ -2492,6 +2496,14 @@ def FsMOVAPSrm : PSI<0x28, MRMSrcMem, (outs FR32:$dst), (ins f128mem:$src),
 def FsMOVAPDrm : PDI<0x28, MRMSrcMem, (outs FR64:$dst), (ins f128mem:$src),
                      "movapd\t{$src, $dst|$dst, $src}",
                      [(set FR64:$dst, (alignedloadfsf64 addr:$src))]>;
+let isCodeGenOnly = 1 in {
+  def FsVMOVAPSrm : VPSI<0x28, MRMSrcMem, (outs FR32:$dst), (ins f128mem:$src),
+                         "movaps\t{$src, $dst|$dst, $src}",
+                         [(set FR32:$dst, (alignedloadfsf32 addr:$src))]>, VEX;
+  def FsVMOVAPDrm : VPDI<0x28, MRMSrcMem, (outs FR64:$dst), (ins f128mem:$src),
+                         "movapd\t{$src, $dst|$dst, $src}",
+                         [(set FR64:$dst, (alignedloadfsf64 addr:$src))]>, VEX;
+}
 }
 
 //===----------------------------------------------------------------------===//
