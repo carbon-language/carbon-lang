@@ -1498,6 +1498,53 @@ Sema::ActOnMemInitializer(Decl *ConstructorD,
                               LParenLoc, RParenLoc, ClassDecl, EllipsisLoc);
 }
 
+/// Checks a member initializer expression for cases where reference (or
+/// pointer) members are bound to by-value parameters (or their addresses).
+/// FIXME: We should also flag temporaries here.
+static void CheckForDanglingReferenceOrPointer(Sema &S, ValueDecl *Member,
+                                               Expr *Init,
+                                               SourceLocation IdLoc) {
+  QualType MemberTy = Member->getType();
+
+  // We only handle pointers and references currently.
+  // FIXME: Would this be relevant for ObjC object pointers? Or block pointers?
+  if (!MemberTy->isReferenceType() && !MemberTy->isPointerType())
+    return;
+
+  const bool IsPointer = MemberTy->isPointerType();
+  if (IsPointer) {
+    if (const UnaryOperator *Op
+          = dyn_cast<UnaryOperator>(Init->IgnoreParenImpCasts())) {
+      // The only case we're worried about with pointers requires taking the
+      // address.
+      if (Op->getOpcode() != UO_AddrOf)
+        return;
+
+      Init = Op->getSubExpr();
+    } else {
+      // We only handle address-of expression initializers for pointers.
+      return;
+    }
+  }
+
+  // We only warn when referring to a non-reference declaration.
+  const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(Init->IgnoreParenCasts());
+  if (!DRE)
+    return;
+
+  if (const ParmVarDecl *Parameter = dyn_cast<ParmVarDecl>(DRE->getDecl())) {
+    if (Parameter->getType()->isReferenceType())
+      return;
+
+    S.Diag(Init->getExprLoc(),
+           IsPointer ? diag::warn_init_ptr_member_to_parameter_addr
+                     : diag::warn_bind_ref_member_to_parameter)
+      << Member << Parameter << Init->getSourceRange();
+    S.Diag(Member->getLocation(), diag::note_ref_or_ptr_member_declared_here)
+      << (unsigned)IsPointer;
+  }
+}
+
 /// Checks an initializer expression for use of uninitialized fields, such as
 /// containing the field that is being initialized. Returns true if there is an
 /// uninitialized field was used an updates the SourceLocation parameter; false
@@ -1641,12 +1688,14 @@ Sema::BuildMemberInitializer(ValueDecl *Member, Expr **Args,
     // of the information that we have about the member
     // initializer. However, deconstructing the ASTs is a dicey process,
     // and this approach is far more likely to get the corner cases right.
-    if (CurContext->isDependentContext())
+    if (CurContext->isDependentContext()) {
       Init = new (Context) ParenListExpr(
           Context, LParenLoc, Args, NumArgs, RParenLoc,
           Member->getType().getNonReferenceType());
-    else
+    } else {
       Init = MemberInit.get();
+      CheckForDanglingReferenceOrPointer(*this, Member, Init, IdLoc);
+    }
   }
 
   if (DirectMember) {
