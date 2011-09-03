@@ -5226,7 +5226,12 @@ def : Pat<(store (f32 (bitconvert (extractelt (bc_v4i32 (v4f32 VR128:$src1)),
                                               imm:$src2))),
                  addr:$dst),
           (EXTRACTPSmr addr:$dst, VR128:$src1, imm:$src2)>,
-         Requires<[HasSSE41]>;
+          Requires<[HasSSE41]>;
+def : Pat<(store (f32 (bitconvert (extractelt (bc_v4i32 (v4f32 VR128:$src1)),
+                                              imm:$src2))),
+                 addr:$dst),
+          (VEXTRACTPSmr addr:$dst, VR128:$src1, imm:$src2)>,
+          Requires<[HasAVX]>;
 
 //===----------------------------------------------------------------------===//
 // SSE4.1 - Insert Instructions
