@@ -4780,17 +4780,33 @@ defm PMULHRSW    : SS3I_binop_rm_int<0x0B, "pmulhrsw", memopv8i16,
                                      int_x86_ssse3_pmul_hr_sw_128>;
 }
 
-def : Pat<(X86pshufb VR128:$src, VR128:$mask),
-          (PSHUFBrr128 VR128:$src, VR128:$mask)>, Requires<[HasSSSE3]>;
-def : Pat<(X86pshufb VR128:$src, (bc_v16i8 (memopv2i64 addr:$mask))),
-          (PSHUFBrm128 VR128:$src, addr:$mask)>, Requires<[HasSSSE3]>;
+let Predicates = [HasSSSE3] in {
+  def : Pat<(X86pshufb VR128:$src, VR128:$mask),
+            (PSHUFBrr128 VR128:$src, VR128:$mask)>;
+  def : Pat<(X86pshufb VR128:$src, (bc_v16i8 (memopv2i64 addr:$mask))),
+            (PSHUFBrm128 VR128:$src, addr:$mask)>;
 
-def : Pat<(X86psignb VR128:$src1, VR128:$src2),
-          (PSIGNBrr128 VR128:$src1, VR128:$src2)>, Requires<[HasSSSE3]>;
-def : Pat<(X86psignw VR128:$src1, VR128:$src2),
-          (PSIGNWrr128 VR128:$src1, VR128:$src2)>, Requires<[HasSSSE3]>;
-def : Pat<(X86psignd VR128:$src1, VR128:$src2),
-          (PSIGNDrr128 VR128:$src1, VR128:$src2)>, Requires<[HasSSSE3]>;
+  def : Pat<(X86psignb VR128:$src1, VR128:$src2),
+            (PSIGNBrr128 VR128:$src1, VR128:$src2)>;
+  def : Pat<(X86psignw VR128:$src1, VR128:$src2),
+            (PSIGNWrr128 VR128:$src1, VR128:$src2)>;
+  def : Pat<(X86psignd VR128:$src1, VR128:$src2),
+            (PSIGNDrr128 VR128:$src1, VR128:$src2)>;
+}
+
+let Predicates = [HasAVX] in {
+  def : Pat<(X86pshufb VR128:$src, VR128:$mask),
+            (VPSHUFBrr128 VR128:$src, VR128:$mask)>;
+  def : Pat<(X86pshufb VR128:$src, (bc_v16i8 (memopv2i64 addr:$mask))),
+            (VPSHUFBrm128 VR128:$src, addr:$mask)>;
+
+  def : Pat<(X86psignb VR128:$src1, VR128:$src2),
+            (VPSIGNBrr128 VR128:$src1, VR128:$src2)>;
+  def : Pat<(X86psignw VR128:$src1, VR128:$src2),
+            (VPSIGNWrr128 VR128:$src1, VR128:$src2)>;
+  def : Pat<(X86psignd VR128:$src1, VR128:$src2),
+            (VPSIGNDrr128 VR128:$src1, VR128:$src2)>;
+}
 
 //===---------------------------------------------------------------------===//
 // SSSE3 - Packed Align Instruction Patterns
