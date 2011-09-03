@@ -3557,7 +3557,7 @@ static void PrintPool(raw_ostream &Out, SymbolRef Sym,
   Out << '}';
 }
 
-bool UsesAutorelease(const ProgramState *state) {
+static bool UsesAutorelease(const ProgramState *state) {
   // A state uses autorelease if it allocated an autorelease pool or if it has
   // objects in the caller's autorelease pool.
   return !state->get<AutoreleaseStack>().isEmpty() ||

@@ -5978,8 +5978,6 @@ QualType Sema::CheckAdditionOperands( // C99 6.5.6
       if (!checkArithmeticOpPointerOperand(*this, Loc, PExp))
         return QualType();
 
-      QualType PointeeTy = PExp->getType()->getPointeeType();
-
       // Diagnose bad cases where we step over interface counts.
       if (!checkArithmethicPointerOnNonFragileABI(*this, Loc, PExp))
         return QualType();
@@ -6210,8 +6208,6 @@ static bool IsWithinTemplateSpecialization(Decl *D) {
 /// If two different enums are compared, raise a warning.
 static void checkEnumComparison(Sema &S, SourceLocation Loc, ExprResult &lex,
                                 ExprResult &rex) {
-  QualType lType = lex.get()->getType();
-  QualType rType = rex.get()->getType();
   QualType LHSStrippedType = lex.get()->IgnoreParenImpCasts()->getType();
   QualType RHSStrippedType = rex.get()->IgnoreParenImpCasts()->getType();
 

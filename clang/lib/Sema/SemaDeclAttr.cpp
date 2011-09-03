@@ -274,16 +274,16 @@ static const RecordType *getRecordType(QualType QT) {
 
 /// \brief Thread Safety Analysis: Checks that the passed in RecordType
 /// resolves to a lockable object. May flag an error.
-bool checkForLockableRecord(Sema &S, Decl *D, const AttributeList &Attr,
-                            const RecordType *RT) {
+static bool checkForLockableRecord(Sema &S, Decl *D, const AttributeList &Attr,
+                                   const RecordType *RT) {
   // Flag error if could not get record type for this argument.
-  if(!RT) {
+  if (!RT) {
     S.Diag(Attr.getLoc(), diag::err_attribute_argument_not_class)
       << Attr.getName();
     return false;
   }
   // Flag error if the type is not lockable.
-  if(!RT->getDecl()->getAttr<LockableAttr>()) {
+  if (!RT->getDecl()->getAttr<LockableAttr>()) {
     S.Diag(Attr.getLoc(), diag::err_attribute_argument_not_lockable)
       << Attr.getName();
     return false;
