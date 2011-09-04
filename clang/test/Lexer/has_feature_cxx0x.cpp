@@ -164,3 +164,12 @@ int no_alias_templates();
 
 // CHECK-0X: has_alias_templates
 // CHECK-NO-0X: no_alias_templates
+
+#if __has_feature(cxx_implicit_moves)
+int has_implicit_moves();
+#else
+int no_implicit_moves();
+#endif
+
+// CHECK-0X: has_implicit_moves
+// CHECK-NO-0X: no_implicit_moves

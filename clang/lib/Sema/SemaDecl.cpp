@@ -1529,6 +1529,8 @@ Sema::CXXSpecialMember Sema::getSpecialMember(const CXXMethodDecl *MD) {
     return Sema::CXXDestructor;
   } else if (MD->isCopyAssignmentOperator()) {
     return Sema::CXXCopyAssignment;
+  } else if (MD->isMoveAssignmentOperator()) {
+    return Sema::CXXMoveAssignment;
   }
 
   return Sema::CXXInvalid;

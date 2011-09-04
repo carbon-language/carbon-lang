@@ -1984,7 +1984,7 @@ BuildImplicitBaseInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
     BasePath.push_back(BaseSpec);
     CopyCtorArg = SemaRef.ImpCastExprToType(CopyCtorArg, ArgTy,
                                             CK_UncheckedDerivedToBase,
-                                            Moving ? VK_RValue : VK_LValue,
+                                            Moving ? VK_XValue : VK_LValue,
                                             &BasePath).take();
 
     InitializationKind InitKind
@@ -2055,7 +2055,7 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
     MemberLookup.addDecl(Indirect ? cast<ValueDecl>(Indirect)
                                   : cast<ValueDecl>(Field), AS_public);
     MemberLookup.resolveKind();
-    ExprResult CopyCtorArg 
+    ExprResult CtorArg 
       = SemaRef.BuildMemberReferenceExpr(MemberExprBase,
                                          ParamType, Loc,
                                          /*IsArrow=*/false,
@@ -2063,14 +2063,14 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
                                          /*FirstQualifierInScope=*/0,
                                          MemberLookup,
                                          /*TemplateArgs=*/0);    
-    if (CopyCtorArg.isInvalid())
+    if (CtorArg.isInvalid())
       return true;
 
     // C++11 [class.copy]p15:
     //   - if a member m has rvalue reference type T&&, it is direct-initialized
     //     with static_cast<T&&>(x.m);
-    if (RefersToRValueRef(CopyCtorArg.get())) {
-      CopyCtorArg = CastForMoving(SemaRef, CopyCtorArg.take());
+    if (RefersToRValueRef(CtorArg.get())) {
+      CtorArg = CastForMoving(SemaRef, CtorArg.take());
     }
 
     // When the field we are copying is an array, create index variables for 
@@ -2104,13 +2104,12 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
         = SemaRef.BuildDeclRefExpr(IterationVar, SizeType, VK_RValue, Loc);
       assert(!IterationVarRef.isInvalid() &&
              "Reference to invented variable cannot fail!");
-      
+
       // Subscript the array with this iteration variable.
-      CopyCtorArg = SemaRef.CreateBuiltinArraySubscriptExpr(CopyCtorArg.take(),
-                                                            Loc,
+      CtorArg = SemaRef.CreateBuiltinArraySubscriptExpr(CtorArg.take(), Loc,
                                                         IterationVarRef.take(),
-                                                            Loc);
-      if (CopyCtorArg.isInvalid())
+                                                        Loc);
+      if (CtorArg.isInvalid())
         return true;
 
       BaseType = Array->getElementType();
@@ -2118,7 +2117,7 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
 
     // The array subscript expression is an lvalue, which is wrong for moving.
     if (Moving && InitializingArray)
-      CopyCtorArg = CastForMoving(SemaRef, CopyCtorArg.take());
+      CtorArg = CastForMoving(SemaRef, CtorArg.take());
 
     // Construct the entity that we will be initializing. For an array, this
     // will be first element in the array, which may require several levels
@@ -2138,13 +2137,13 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
     InitializationKind InitKind =
       InitializationKind::CreateDirect(Loc, SourceLocation(), SourceLocation());
     
-    Expr *CopyCtorArgE = CopyCtorArg.takeAs<Expr>();
+    Expr *CtorArgE = CtorArg.takeAs<Expr>();
     InitializationSequence InitSeq(SemaRef, Entities.back(), InitKind,
-                                   &CopyCtorArgE, 1);
+                                   &CtorArgE, 1);
     
     ExprResult MemberInit
       = InitSeq.Perform(SemaRef, Entities.back(), InitKind, 
-                        MultiExprArg(&CopyCtorArgE, 1));
+                        MultiExprArg(&CtorArgE, 1));
     MemberInit = SemaRef.MaybeCreateExprWithCleanups(MemberInit);
     if (MemberInit.isInvalid())
       return true;

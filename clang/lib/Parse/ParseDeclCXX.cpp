@@ -1979,7 +1979,6 @@ ExprResult Parser::ParseCXXMemberInitializer(bool IsFunction,
         return ExprResult();
       }
     } else if (Tok.is(tok::kw_default)) {
-      Diag(ConsumeToken(), diag::err_default_special_members);
       if (IsFunction)
         Diag(Tok, diag::err_default_delete_in_multiple_declaration)
           << 0 /* default */;
