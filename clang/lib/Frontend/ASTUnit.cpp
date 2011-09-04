@@ -2254,7 +2254,8 @@ void ASTUnit::CodeComplete(StringRef File, unsigned Line, unsigned Column,
     llvm::sys::PathWithStatus MainPath(OriginalSourceFile);
     if (const FileStatus *CompleteFileStatus = CompleteFilePath.getFileStatus())
       if (const FileStatus *MainStatus = MainPath.getFileStatus())
-        if (CompleteFileStatus->getUniqueID() == MainStatus->getUniqueID())
+        if (CompleteFileStatus->getUniqueID() == MainStatus->getUniqueID() &&
+            Line > 1)
           OverrideMainBuffer
             = getMainBufferWithPrecompiledPreamble(*CCInvocation, false, 
                                                    Line - 1);

@@ -519,7 +519,22 @@ Lexer::ComputePreamble(const llvm::MemoryBuffer *Buffer,
   Token TheTok;
   Token IfStartTok;
   unsigned IfCount = 0;
-  unsigned Line = 0;
+
+  unsigned MaxLineOffset = 0;
+  if (MaxLines) {
+    const char *CurPtr = Buffer->getBufferStart();
+    unsigned CurLine = 0;
+    while (CurPtr != Buffer->getBufferEnd()) {
+      char ch = *CurPtr++;
+      if (ch == '\n') {
+        ++CurLine;
+        if (CurLine == MaxLines)
+          break;
+      }
+    }
+    if (CurPtr != Buffer->getBufferEnd())
+      MaxLineOffset = CurPtr - Buffer->getBufferStart();
+  }
 
   do {
     TheLexer.LexFromRawLexer(TheTok);
@@ -543,11 +558,11 @@ Lexer::ComputePreamble(const llvm::MemoryBuffer *Buffer,
     
     // Keep track of the # of lines in the preamble.
     if (TheTok.isAtStartOfLine()) {
-      ++Line;
+      unsigned TokOffset = TheTok.getLocation().getRawEncoding() - StartOffset;
 
       // If we were asked to limit the number of lines in the preamble,
       // and we're about to exceed that limit, we're done.
-      if (MaxLines && Line >= MaxLines)
+      if (MaxLineOffset && TokOffset >= MaxLineOffset)
         break;
     }
 
