@@ -409,6 +409,21 @@ public:
     vectorMap[load] = newLoad;
   }
 
+  void copyUnaryInst(const UnaryInstruction *Inst, ValueMapT &BBMap,
+                     ValueMapT &VectorMap, int VectorDimension,
+                     int VectorWidth) {
+    Value *NewOperand = getOperand(Inst->getOperand(0), BBMap, &VectorMap);
+    NewOperand = makeVectorOperand(NewOperand, VectorWidth);
+
+    if (const CastInst *Cast = dyn_cast<CastInst>(Inst)) {
+      VectorType *DestType = VectorType::get(Inst->getType(), VectorWidth);
+      VectorMap[Inst] = Builder.CreateCast(Cast->getOpcode(), NewOperand,
+                                           DestType);
+    } else
+      llvm_unreachable("Can not generate vector code for instruction");
+    return;
+  }
+
   void copyBinInst(const BinaryOperator *Inst, ValueMapT &BBMap,
                    ValueMapT &vectorMap, int vectorDimension, int vectorWidth) {
     Value *opZero = Inst->getOperand(0);
@@ -529,7 +544,11 @@ public:
     }
 
     if (isVectorBlock() && hasVectorOperands(Inst, vectorMap)) {
-      if (const BinaryOperator *binaryInst = dyn_cast<BinaryOperator>(Inst))
+      if (const UnaryInstruction *UnaryInst = dyn_cast<UnaryInstruction>(Inst))
+        copyUnaryInst(UnaryInst, BBMap, vectorMap, vectorDimension,
+                      vectorWidth);
+      else if
+        (const BinaryOperator *binaryInst = dyn_cast<BinaryOperator>(Inst))
         copyBinInst(binaryInst, BBMap, vectorMap, vectorDimension, vectorWidth);
       else if (const StoreInst *store = dyn_cast<StoreInst>(Inst))
         copyVectorStore(store, BBMap, vectorMap, scalarMaps, vectorDimension,
