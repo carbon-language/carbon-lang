@@ -221,6 +221,8 @@ Token MacroArgs::StringifyArgument(const Token *ArgToks,
         std::string Str = Lexer::Stringify(TokStr);
         Result.append(Str.begin(), Str.end());
       }
+    } else if (Tok.is(tok::code_completion)) {
+      PP.CodeCompleteNaturalLanguage();
     } else {
       // Otherwise, just append the token.  Do some gymnastics to get the token
       // in place and avoid copies where possible.
