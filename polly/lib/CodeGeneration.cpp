@@ -410,14 +410,9 @@ public:
   }
 
   void copyBinInst(const BinaryOperator *Inst, ValueMapT &BBMap,
-                   ValueMapT &vectorMap, VectorValueMapT &scalarMaps,
-                   int vectorDimension, int vectorWidth) {
+                   ValueMapT &vectorMap, int vectorDimension, int vectorWidth) {
     Value *opZero = Inst->getOperand(0);
     Value *opOne = Inst->getOperand(1);
-
-    // This is an old instruction that can be ignored.
-    if (!opZero && !opOne)
-      return;
 
     Value *newOpZero, *newOpOne;
     newOpZero = getOperand(opZero, BBMap, &vectorMap);
@@ -535,8 +530,7 @@ public:
 
     if (isVectorBlock() && hasVectorOperands(Inst, vectorMap)) {
       if (const BinaryOperator *binaryInst = dyn_cast<BinaryOperator>(Inst))
-        copyBinInst(binaryInst, BBMap, vectorMap, scalarMaps, vectorDimension,
-                    vectorWidth);
+        copyBinInst(binaryInst, BBMap, vectorMap, vectorDimension, vectorWidth);
       else if (const StoreInst *store = dyn_cast<StoreInst>(Inst))
         copyVectorStore(store, BBMap, vectorMap, scalarMaps, vectorDimension,
                           vectorWidth);
