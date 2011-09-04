@@ -487,7 +487,7 @@ void llvm::UpgradeExceptionHandling(Module *M) {
     std::pair<Value*,Value*> ExnSelSlots = FnToLPadSlotMap[Parent->getParent()];
 
     IRBuilder<> Builder(Context);
-    Builder.SetInsertPoint(Parent, Parent->getFirstInsertionPt());
+    Builder.SetInsertPoint(Parent, Exn);
     LoadInst *LPExn = Builder.CreateLoad(ExnSelSlots.first, "exn.load");
     LoadInst *LPSel = Builder.CreateLoad(ExnSelSlots.second, "sel.load");
 
