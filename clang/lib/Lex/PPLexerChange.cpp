@@ -89,7 +89,14 @@ void Preprocessor::EnterSourceFile(FileID FID, const DirectoryLookup *CurDir,
       << std::string(SourceMgr.getBufferName(FileStart)) << "";
     return;
   }
-  
+
+  if (isCodeCompletionEnabled() &&
+      SourceMgr.getFileEntryForID(FID) == CodeCompletionFile) {
+    CodeCompletionFileLoc = SourceMgr.getLocForStartOfFile(FID);
+    CodeCompletionLoc =
+        CodeCompletionFileLoc.getFileLocWithOffset(CodeCompletionOffset);
+  }
+
   EnterSourceFileWithLexer(new Lexer(FID, InputFile, *this), CurDir);
   return;
 }
@@ -204,6 +211,25 @@ bool Preprocessor::HandleEndOfFile(Token &Result, bool isEndOfMacro) {
   // If this is a #include'd file, pop it off the include stack and continue
   // lexing the #includer file.
   if (!IncludeMacroStack.empty()) {
+
+    // If we lexed the code-completion file, act as if we reached EOF.
+    if (isCodeCompletionEnabled() && CurPPLexer &&
+        SourceMgr.getLocForStartOfFile(CurPPLexer->getFileID()) ==
+            CodeCompletionFileLoc) {
+      if (CurLexer) {
+        Result.startToken();
+        CurLexer->FormTokenWithChars(Result, CurLexer->BufferEnd, tok::eof);
+        CurLexer.reset();
+      } else {
+        assert(CurPTHLexer && "Got EOF but no current lexer set!");
+        CurPTHLexer->getEOF(Result);
+        CurPTHLexer.reset();
+      }
+
+      CurPPLexer = 0;
+      return true;
+    }
+
     if (!isEndOfMacro && CurPPLexer &&
         SourceMgr.getIncludeLoc(CurPPLexer->getFileID()).isValid()) {
       // Notify SourceManager to record the number of FileIDs that were created

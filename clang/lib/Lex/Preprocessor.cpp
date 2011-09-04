@@ -59,7 +59,8 @@ Preprocessor::Preprocessor(Diagnostic &diags, LangOptions &opts,
     SourceMgr(SM), HeaderInfo(Headers), TheModuleLoader(TheModuleLoader),
     ExternalSource(0), 
     Identifiers(opts, IILookup), CodeComplete(0),
-    CodeCompletionFile(0), SkipMainFilePreamble(0, true), CurPPLexer(0), 
+    CodeCompletionFile(0), CodeCompletionOffset(0), CodeCompletionReached(0),
+    SkipMainFilePreamble(0, true), CurPPLexer(0), 
     CurDirLookup(0), Callbacks(0), MacroArgCache(0), Record(0), MIChainHead(0),
     MICache(0) 
 {
@@ -73,7 +74,8 @@ Preprocessor::Preprocessor(Diagnostic &diags, LangOptions &opts,
 
 Preprocessor::~Preprocessor() {
   assert(BacktrackPositions.empty() && "EnableBacktrack/Backtrack imbalance!");
-  assert(MacroExpandingLexersStack.empty() && MacroExpandedTokens.empty() &&
+  assert(((MacroExpandingLexersStack.empty() && MacroExpandedTokens.empty()) ||
+          isCodeCompletionReached()) &&
          "Preprocessor::HandleEndOfTokenLexer should have cleared those");
 
   while (!IncludeMacroStack.empty()) {
@@ -270,15 +272,13 @@ Preprocessor::macro_end(bool IncludeExternalMacros) const {
 }
 
 bool Preprocessor::SetCodeCompletionPoint(const FileEntry *File,
-                                          unsigned TruncateAtLine,
-                                          unsigned TruncateAtColumn) {
+                                          unsigned CompleteLine,
+                                          unsigned CompleteColumn) {
+  assert(File);
+  assert(CompleteLine && CompleteColumn && "Starts from 1:1");
+  assert(!CodeCompletionFile && "Already set");
+
   using llvm::MemoryBuffer;
-
-  CodeCompletionFile = File;
-
-  // Okay to clear out the code-completion point by passing NULL.
-  if (!CodeCompletionFile)
-    return false;
 
   // Load the actual file's contents.
   bool Invalid = false;
@@ -288,7 +288,7 @@ bool Preprocessor::SetCodeCompletionPoint(const FileEntry *File,
 
   // Find the byte position of the truncation point.
   const char *Position = Buffer->getBufferStart();
-  for (unsigned Line = 1; Line < TruncateAtLine; ++Line) {
+  for (unsigned Line = 1; Line < CompleteLine; ++Line) {
     for (; *Position; ++Position) {
       if (*Position != '\r' && *Position != '\n')
         continue;
@@ -302,31 +302,30 @@ bool Preprocessor::SetCodeCompletionPoint(const FileEntry *File,
     }
   }
 
-  Position += TruncateAtColumn - 1;
+  Position += CompleteColumn - 1;
 
-  // Truncate the buffer.
+  // Insert '\0' at the code-completion point.
   if (Position < Buffer->getBufferEnd()) {
-    StringRef Data(Buffer->getBufferStart(),
-                         Position-Buffer->getBufferStart());
-    MemoryBuffer *TruncatedBuffer
-      = MemoryBuffer::getMemBufferCopy(Data, Buffer->getBufferIdentifier());
-    SourceMgr.overrideFileContents(File, TruncatedBuffer);
+    CodeCompletionFile = File;
+    CodeCompletionOffset = Position - Buffer->getBufferStart();
+
+    MemoryBuffer *NewBuffer =
+        MemoryBuffer::getNewUninitMemBuffer(Buffer->getBufferSize() + 1,
+                                            Buffer->getBufferIdentifier());
+    char *NewBuf = (char*)NewBuffer->getBufferStart();
+    char *NewPos = std::copy(Buffer->getBufferStart(), Position, NewBuf);
+    *NewPos = '\0';
+    std::copy(Position, Buffer->getBufferEnd(), NewPos+1);
+    SourceMgr.overrideFileContents(File, NewBuffer);
   }
 
   return false;
 }
 
-bool Preprocessor::isCodeCompletionFile(SourceLocation FileLoc) const {
-  return CodeCompletionFile && FileLoc.isFileID() &&
-    SourceMgr.getFileEntryForID(SourceMgr.getFileID(FileLoc))
-      == CodeCompletionFile;
-}
-
 void Preprocessor::CodeCompleteNaturalLanguage() {
-  SetCodeCompletionPoint(0, 0, 0);
-  getDiagnostics().setSuppressAllDiagnostics(true);
   if (CodeComplete)
     CodeComplete->CodeCompleteNaturalLanguage();
+  setCodeCompletionReached();
 }
 
 /// getSpelling - This method is used to get the spelling of a token into a

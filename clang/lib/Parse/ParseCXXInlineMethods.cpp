@@ -551,6 +551,11 @@ bool Parser::ConsumeAndStoreUntil(tok::TokenKind T1, tok::TokenKind T2,
       ConsumeBrace();
       break;
 
+    case tok::code_completion:
+      Toks.push_back(Tok);
+      ConsumeCodeCompletionToken();
+      break;
+
     case tok::string_literal:
     case tok::wide_string_literal:
     case tok::utf8_string_literal:

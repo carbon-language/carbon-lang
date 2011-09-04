@@ -100,8 +100,8 @@ Retry:
 
   case tok::code_completion:
     Actions.CodeCompleteOrdinaryName(getCurScope(), Sema::PCC_Statement);
-    ConsumeCodeCompletionToken();
-    return ParseStatementOrDeclaration(Stmts, OnlyStatement);
+    cutOffParsing();
+    return StmtError();
       
   case tok::identifier: {
     Token Next = NextToken();
@@ -507,7 +507,8 @@ StmtResult Parser::ParseCaseStatement(ParsedAttributes &attrs, bool MissingCase,
 
     if (Tok.is(tok::code_completion)) {
       Actions.CodeCompleteCase(getCurScope());
-      ConsumeCodeCompletionToken();
+      cutOffParsing();
+      return StmtError();
     }
     
     /// We don't want to treat 'case x : y' as a potential typo for 'case x::y'.
@@ -953,7 +954,8 @@ StmtResult Parser::ParseIfStatement(ParsedAttributes &attrs) {
     InnerScope.Exit();
   } else if (Tok.is(tok::code_completion)) {
     Actions.CodeCompleteAfterIf(getCurScope());
-    ConsumeCodeCompletionToken();
+    cutOffParsing();
+    return StmtError();
   }
 
   IfScope.Exit();
@@ -1282,7 +1284,8 @@ StmtResult Parser::ParseForStatement(ParsedAttributes &attrs) {
     Actions.CodeCompleteOrdinaryName(getCurScope(), 
                                      C99orCXXorObjC? Sema::PCC_ForInit
                                                    : Sema::PCC_Expression);
-    ConsumeCodeCompletionToken();
+    cutOffParsing();
+    return StmtError();
   }
   
   // Parse the first part of the for specifier.
@@ -1320,7 +1323,8 @@ StmtResult Parser::ParseForStatement(ParsedAttributes &attrs) {
       
       if (Tok.is(tok::code_completion)) {
         Actions.CodeCompleteObjCForCollection(getCurScope(), DG);
-        ConsumeCodeCompletionToken();
+        cutOffParsing();
+        return StmtError();
       }
       Collection = ParseExpression();
     } else {
@@ -1346,7 +1350,8 @@ StmtResult Parser::ParseForStatement(ParsedAttributes &attrs) {
       
       if (Tok.is(tok::code_completion)) {
         Actions.CodeCompleteObjCForCollection(getCurScope(), DeclGroupPtrTy());
-        ConsumeCodeCompletionToken();
+        cutOffParsing();
+        return StmtError();
       }
       Collection = ParseExpression();
     } else {
@@ -1537,8 +1542,7 @@ StmtResult Parser::ParseReturnStatement(ParsedAttributes &attrs) {
   if (Tok.isNot(tok::semi)) {
     if (Tok.is(tok::code_completion)) {
       Actions.CodeCompleteReturn(getCurScope());
-      ConsumeCodeCompletionToken();
-      SkipUntil(tok::semi, false, true);
+      cutOffParsing();
       return StmtError();
     }
         

@@ -1084,9 +1084,8 @@ Decl *Parser::ParseDeclarationAfterDeclaratorAndAttributes(Declarator &D,
 
       if (Tok.is(tok::code_completion)) {
         Actions.CodeCompleteInitializer(getCurScope(), ThisDecl);
-        ConsumeCodeCompletionToken();
-        SkipUntil(tok::comma, true, true);
-        return ThisDecl;
+        cutOffParsing();
+        return 0;
       }
       
       ExprResult Init(ParseInitializer());
@@ -1423,8 +1422,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
         Actions.CodeCompleteDeclSpec(getCurScope(), DS,
                                      AllowNonIdentifiers, 
                                      AllowNestedNameSpecifiers);
-        ConsumeCodeCompletionToken();
-        return;
+        return cutOffParsing();
       } 
       
       if (getCurScope()->getFnParent() || getCurScope()->getBlockParent())
@@ -1438,8 +1436,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
         CCC = Sema::PCC_ObjCImplementation;
       
       Actions.CodeCompleteOrdinaryName(getCurScope(), CCC);
-      ConsumeCodeCompletionToken();
-      return;
+      return cutOffParsing();
     }
 
     case tok::coloncolon: // ::foo::bar
@@ -2539,7 +2536,7 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
   if (Tok.is(tok::code_completion)) {
     // Code completion for an enum name.
     Actions.CodeCompleteTag(getCurScope(), DeclSpec::TST_enum);
-    ConsumeCodeCompletionToken();
+    return cutOffParsing();
   }
 
   bool IsScopedEnum = false;
@@ -3243,8 +3240,7 @@ void Parser::ParseTypeQualifierListOpt(DeclSpec &DS,
     switch (Tok.getKind()) {
     case tok::code_completion:
       Actions.CodeCompleteTypeQualifiers(DS);
-      ConsumeCodeCompletionToken();
-      break;
+      return cutOffParsing();
         
     case tok::kw_const:
       isInvalid = DS.SetTypeQual(DeclSpec::TQ_const   , Loc, PrevSpec, DiagID,

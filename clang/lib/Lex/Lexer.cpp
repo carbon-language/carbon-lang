@@ -1384,16 +1384,21 @@ void Lexer::LexStringLiteral(Token &Result, const char *CurPtr,
     
     if (C == '\n' || C == '\r' ||             // Newline.
         (C == 0 && CurPtr-1 == BufferEnd)) {  // End of file.
-      if (C == 0 && PP && PP->isCodeCompletionFile(FileLoc))
-        PP->CodeCompleteNaturalLanguage();
-      else if (!isLexingRawMode() && !Features.AsmPreprocessor)
+      if (!isLexingRawMode() && !Features.AsmPreprocessor)
         Diag(BufferPtr, diag::warn_unterminated_string);
       FormTokenWithChars(Result, CurPtr-1, tok::unknown);
       return;
     }
     
-    if (C == 0)
+    if (C == 0) {
+      if (isCodeCompletionPoint(CurPtr-1)) {
+        PP->CodeCompleteNaturalLanguage();
+        FormTokenWithChars(Result, CurPtr-1, tok::unknown);
+        return cutOffLexing();
+      }
+
       NulCharacter = CurPtr-1;
+    }
     C = getAndAdvanceChar(CurPtr, Result);
   }
 
@@ -1491,7 +1496,8 @@ void Lexer::LexAngledStringLiteral(Token &Result, const char *CurPtr) {
       // Skip the escaped character.
       C = getAndAdvanceChar(CurPtr, Result);
     } else if (C == '\n' || C == '\r' ||             // Newline.
-               (C == 0 && CurPtr-1 == BufferEnd)) {  // End of file.
+               (C == 0 && (CurPtr-1 == BufferEnd ||  // End of file.
+                           isCodeCompletionPoint(CurPtr-1)))) {
       // If the filename is unterminated, then it must just be a lone <
       // character.  Return this as such.
       FormTokenWithChars(Result, AfterLessPos, tok::less);
@@ -1535,13 +1541,17 @@ void Lexer::LexCharConstant(Token &Result, const char *CurPtr,
       C = getAndAdvanceChar(CurPtr, Result);
     } else if (C == '\n' || C == '\r' ||             // Newline.
                (C == 0 && CurPtr-1 == BufferEnd)) {  // End of file.
-      if (C == 0 && PP && PP->isCodeCompletionFile(FileLoc))
-        PP->CodeCompleteNaturalLanguage();
-      else if (!isLexingRawMode() && !Features.AsmPreprocessor)
+      if (!isLexingRawMode() && !Features.AsmPreprocessor)
         Diag(BufferPtr, diag::warn_unterminated_char);
       FormTokenWithChars(Result, CurPtr-1, tok::unknown);
       return;
     } else if (C == 0) {
+      if (isCodeCompletionPoint(CurPtr-1)) {
+        PP->CodeCompleteNaturalLanguage();
+        FormTokenWithChars(Result, CurPtr-1, tok::unknown);
+        return cutOffLexing();
+      }
+
       NulCharacter = CurPtr-1;
     }
     C = getAndAdvanceChar(CurPtr, Result);
@@ -1682,12 +1692,16 @@ bool Lexer::SkipBCPLComment(Token &Result, const char *CurPtr) {
     }
 
     if (CurPtr == BufferEnd+1) { 
-      if (PP && PP->isCodeCompletionFile(FileLoc))
-        PP->CodeCompleteNaturalLanguage();
-
       --CurPtr; 
       break; 
     }
+
+    if (C == '\0' && isCodeCompletionPoint(CurPtr-1)) {
+      PP->CodeCompleteNaturalLanguage();
+      cutOffLexing();
+      return false;
+    }
+
   } while (C != '\n' && C != '\r');
 
   // Found but did not consume the newline.  Notify comment handlers about the
@@ -1842,8 +1856,7 @@ bool Lexer::SkipBlockComment(Token &Result, const char *CurPtr) {
   unsigned char C = getCharAndSize(CurPtr, CharSize);
   CurPtr += CharSize;
   if (C == 0 && CurPtr == BufferEnd+1) {
-    if (!isLexingRawMode() &&
-        !PP->isCodeCompletionFile(FileLoc))
+    if (!isLexingRawMode())
       Diag(BufferPtr, diag::err_unterminated_block_comment);
     --CurPtr;
 
@@ -1866,7 +1879,10 @@ bool Lexer::SkipBlockComment(Token &Result, const char *CurPtr) {
   while (1) {
     // Skip over all non-interesting characters until we find end of buffer or a
     // (probably ending) '/' character.
-    if (CurPtr + 24 < BufferEnd) {
+    if (CurPtr + 24 < BufferEnd &&
+        // If there is a code-completion point avoid the fast scan because it
+        // doesn't check for '\0'.
+        !(PP && PP->getCodeCompletionFileLoc() == FileLoc)) {
       // While not aligned to a 16-byte boundary.
       while (C != '/' && ((intptr_t)CurPtr & 0x0F) != 0)
         C = *CurPtr++;
@@ -1926,9 +1942,7 @@ bool Lexer::SkipBlockComment(Token &Result, const char *CurPtr) {
           Diag(CurPtr-1, diag::warn_nested_block_comment);
       }
     } else if (C == 0 && CurPtr == BufferEnd+1) {
-      if (PP && PP->isCodeCompletionFile(FileLoc))
-        PP->CodeCompleteNaturalLanguage();
-      else if (!isLexingRawMode())
+      if (!isLexingRawMode())
         Diag(BufferPtr, diag::err_unterminated_block_comment);
       // Note: the user probably forgot a */.  We could continue immediately
       // after the /*, but this would involve lexing a lot of what really is the
@@ -1944,7 +1958,12 @@ bool Lexer::SkipBlockComment(Token &Result, const char *CurPtr) {
 
       BufferPtr = CurPtr;
       return false;
+    } else if (C == '\0' && isCodeCompletionPoint(CurPtr-1)) {
+      PP->CodeCompleteNaturalLanguage();
+      cutOffLexing();
+      return false;
     }
+
     C = *CurPtr++;
   }
 
@@ -2001,6 +2020,12 @@ std::string Lexer::ReadToEndOfLine() {
     case 0:  // Null.
       // Found end of file?
       if (CurPtr-1 != BufferEnd) {
+        if (isCodeCompletionPoint(CurPtr-1)) {
+          PP->CodeCompleteNaturalLanguage();
+          cutOffLexing();
+          return Result;
+        }
+
         // Nope, normal character, continue.
         Result += Char;
         break;
@@ -2015,8 +2040,8 @@ std::string Lexer::ReadToEndOfLine() {
       // Next, lex the character, which should handle the EOD transition.
       Lex(Tmp);
       if (Tmp.is(tok::code_completion)) {
-        if (PP && PP->getCodeCompletionHandler())
-          PP->getCodeCompletionHandler()->CodeCompleteNaturalLanguage();
+        if (PP)
+          PP->CodeCompleteNaturalLanguage();
         Lex(Tmp);
       }
       assert(Tmp.is(tok::eod) && "Unexpected token!");
@@ -2032,22 +2057,6 @@ std::string Lexer::ReadToEndOfLine() {
 /// This returns true if Result contains a token, false if PP.Lex should be
 /// called again.
 bool Lexer::LexEndOfFile(Token &Result, const char *CurPtr) {
-  // Check if we are performing code completion.
-  if (PP && PP->isCodeCompletionFile(FileLoc)) {
-    // We're at the end of the file, but we've been asked to consider the
-    // end of the file to be a code-completion token. Return the
-    // code-completion token.
-    Result.startToken();
-    FormTokenWithChars(Result, CurPtr, tok::code_completion);
-    
-    // Only do the eof -> code_completion translation once.
-    PP->SetCodeCompletionPoint(0, 0, 0);
-    
-    // Silence any diagnostics that occur once we hit the code-completion point.
-    PP->getDiagnostics().setSuppressAllDiagnostics(true);
-    return true;
-  }
-
   // If we hit the end of the file while parsing a preprocessor directive,
   // end the preprocessor directive first.  The next token returned will
   // then be the end of file.
@@ -2075,7 +2084,7 @@ bool Lexer::LexEndOfFile(Token &Result, const char *CurPtr) {
 
   // If we are in a #if directive, emit an error.
   while (!ConditionalStack.empty()) {
-    if (!PP->isCodeCompletionFile(FileLoc))
+    if (PP->getCodeCompletionFileLoc() != FileLoc)
       PP->Diag(ConditionalStack.back().IfLoc,
                diag::err_pp_unterminated_conditional);
     ConditionalStack.pop_back();
@@ -2225,6 +2234,15 @@ bool Lexer::HandleEndOfConflictMarker(const char *CurPtr) {
   return false;
 }
 
+bool Lexer::isCodeCompletionPoint(const char *CurPtr) const {
+  if (PP && PP->isCodeCompletionEnabled()) {
+    SourceLocation Loc = FileLoc.getFileLocWithOffset(CurPtr-BufferStart);
+    return Loc == PP->getCodeCompletionLoc();
+  }
+
+  return false;
+}
+
 
 /// LexTokenInternal - This implements a simple C family lexer.  It is an
 /// extremely performance critical piece of code.  This assumes that the buffer
@@ -2275,6 +2293,14 @@ LexNextToken:
         return;   // Got a token to return.
       assert(PPCache && "Raw buffer::LexEndOfFile should return a token");
       return PPCache->Lex(Result);
+    }
+
+    // Check if we are performing code completion.
+    if (isCodeCompletionPoint(CurPtr-1)) {
+      // Return the code-completion token.
+      Result.startToken();
+      FormTokenWithChars(Result, CurPtr, tok::code_completion);
+      return;
     }
 
     if (!isLexingRawMode())

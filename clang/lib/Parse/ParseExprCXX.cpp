@@ -162,12 +162,13 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
         // Code completion for a nested-name-specifier, where the code
         // code completion token follows the '::'.
         Actions.CodeCompleteQualifiedId(getCurScope(), SS, EnteringContext);
-        SourceLocation ccLoc = ConsumeCodeCompletionToken();
         // Include code completion token into the range of the scope otherwise
         // when we try to annotate the scope tokens the dangling code completion
         // token will cause assertion in
         // Preprocessor::AnnotatePreviousCachedTokens.
-        SS.setEndLoc(ccLoc);
+        SS.setEndLoc(Tok.getLocation());
+        cutOffParsing();
+        return true;
       }
     }
 
@@ -1150,7 +1151,8 @@ bool Parser::ParseCXXCondition(ExprResult &ExprOut,
                                bool ConvertToBoolean) {
   if (Tok.is(tok::code_completion)) {
     Actions.CodeCompleteOrdinaryName(getCurScope(), Sema::PCC_Condition);
-    ConsumeCodeCompletionToken();
+    cutOffParsing();
+    return true;
   }
 
   if (!isCXXConditionDeclaration()) {
@@ -1713,10 +1715,7 @@ bool Parser::ParseUnqualifiedIdOperator(CXXScopeSpec &SS, bool EnteringContext,
     case tok::code_completion: {
       // Code completion for the operator name.
       Actions.CodeCompleteOperatorName(getCurScope());
-      
-      // Consume the operator token.
-      ConsumeCodeCompletionToken();
-      
+      cutOffParsing();      
       // Don't try to parse any further.
       return true;
     }

@@ -152,6 +152,21 @@ class Preprocessor : public llvm::RefCountedBase<Preprocessor> {
   /// \brief The file that we're performing code-completion for, if any.
   const FileEntry *CodeCompletionFile;
 
+  /// \brief The offset in file for the code-completion point.
+  unsigned CodeCompletionOffset;
+
+  /// \brief The location for the code-completion point. This gets instantiated
+  /// when the CodeCompletionFile gets #include'ed for preprocessing.
+  SourceLocation CodeCompletionLoc;
+
+  /// \brief The start location for the file of the code-completion point.
+  /// This gets instantiated when the CodeCompletionFile gets #include'ed
+  /// for preprocessing.
+  SourceLocation CodeCompletionFileLoc;
+
+  /// \brief True if we hit the code-completion point.
+  bool CodeCompletionReached;
+
   /// \brief The number of bytes that we will initially skip when entering the
   /// main file, which is used when loading a precompiled preamble, along
   /// with a flag that indicates whether skipping this number of bytes will
@@ -665,12 +680,32 @@ public:
   bool SetCodeCompletionPoint(const FileEntry *File,
                               unsigned Line, unsigned Column);
 
-  /// \brief Determine if this source location refers into the file
-  /// for which we are performing code completion.
-  bool isCodeCompletionFile(SourceLocation FileLoc) const;
-
   /// \brief Determine if we are performing code completion.
   bool isCodeCompletionEnabled() const { return CodeCompletionFile != 0; }
+
+  /// \brief Returns the location of the code-completion point.
+  /// Returns an invalid location if code-completion is not enabled or the file
+  /// containing the code-completion point has not been lexed yet.
+  SourceLocation getCodeCompletionLoc() const { return CodeCompletionLoc; }
+
+  /// \brief Returns the start location of the file of code-completion point.
+  /// Returns an invalid location if code-completion is not enabled or the file
+  /// containing the code-completion point has not been lexed yet.
+  SourceLocation getCodeCompletionFileLoc() const {
+    return CodeCompletionFileLoc;
+  }
+
+  /// \brief Returns true if code-completion is enabled and we have hit the
+  /// code-completion point.
+  bool isCodeCompletionReached() const { return CodeCompletionReached; }
+
+  /// \brief Note that we hit the code-completion point.
+  void setCodeCompletionReached() {
+    assert(isCodeCompletionEnabled() && "Code-completion not enabled!");
+    CodeCompletionReached = true;
+    // Silence any diagnostics that occur after we hit the code-completion.
+    getDiagnostics().setSuppressAllDiagnostics(true);
+  }
 
   /// \brief Instruct the preprocessor to skip part of the main
   /// the main source file.

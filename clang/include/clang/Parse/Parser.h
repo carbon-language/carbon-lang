@@ -286,11 +286,10 @@ private:
     assert(!isTokenStringLiteral() && !isTokenParen() && !isTokenBracket() &&
            !isTokenBrace() &&
            "Should consume special tokens with Consume*Token");
-    if (Tok.is(tok::code_completion)) {
-      CodeCompletionRecovery();
-      return ConsumeCodeCompletionToken();
-    }
-    
+
+    if (Tok.is(tok::code_completion))
+      return handleUnexpectedCodeCompletionToken();
+
     PrevTokLocation = Tok.getLocation();
     PP.Lex(Tok);
     return PrevTokLocation;
@@ -376,10 +375,20 @@ private:
     return PrevTokLocation;    
   }
   
-  ///\ brief When we are consuming a code-completion token within having 
+  ///\ brief When we are consuming a code-completion token without having
   /// matched specific position in the grammar, provide code-completion results
   /// based on context.
-  void CodeCompletionRecovery();
+  ///
+  /// \returns the source location of the code-completion token.
+  SourceLocation handleUnexpectedCodeCompletionToken();
+
+  /// \brief Abruptly cut off parsing; mainly used when we have reached the
+  /// code-completion point.
+  void cutOffParsing() {
+    PP.setCodeCompletionReached();
+    // Cut off parsing by acting as if we reached the end-of-file.
+    Tok.setKind(tok::eof);
+  }
 
   /// \brief Handle the annotation token produced for #pragma unused(...)
   void HandlePragmaUnused();

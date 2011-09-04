@@ -102,8 +102,8 @@ void Preprocessor::ReadMacroName(Token &MacroNameTok, char isDefineUndef) {
   if (MacroNameTok.is(tok::code_completion)) {
     if (CodeComplete)
       CodeComplete->CodeCompleteMacroName(isDefineUndef == 1);
+    setCodeCompletionReached();
     LexUnexpandedToken(MacroNameTok);
-    return;
   }
   
   // Missing macro name?
@@ -214,6 +214,7 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
     if (Tok.is(tok::code_completion)) {
       if (CodeComplete)
         CodeComplete->CodeCompleteInConditionalExclusion();
+      setCodeCompletionReached();
       continue;
     }
     
@@ -222,7 +223,7 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
       // Emit errors for each unterminated conditional on the stack, including
       // the current one.
       while (!CurPPLexer->ConditionalStack.empty()) {
-        if (!isCodeCompletionFile(Tok.getLocation()))
+        if (CurLexer->getFileLoc() != CodeCompletionFileLoc)
           Diag(CurPPLexer->ConditionalStack.back().IfLoc,
                diag::err_pp_unterminated_conditional);
         CurPPLexer->ConditionalStack.pop_back();
@@ -581,6 +582,7 @@ TryAgain:
     if (CodeComplete)
       CodeComplete->CodeCompleteDirective(
                                     CurPPLexer->getConditionalStackDepth() > 0);
+    setCodeCompletionReached();
     return;
   case tok::numeric_constant:  // # 7  GNU line marker directive.
     if (getLangOptions().AsmPreprocessor)
@@ -1104,6 +1106,7 @@ bool Preprocessor::ConcatenateIncludeName(
     
     // FIXME: Provide code completion for #includes.
     if (CurTok.is(tok::code_completion)) {
+      setCodeCompletionReached();
       Lex(CurTok);
       continue;
     }

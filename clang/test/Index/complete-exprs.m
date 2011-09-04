@@ -1,4 +1,3 @@
-// XFAIL: *
 typedef signed char BOOL;
 #define YES ((BOOL)1)
 #define NO ((BOOL)0)

@@ -553,7 +553,12 @@ Parser::ParseExternalDeclaration(ParsedAttributesWithRange &attrs,
                                  ParsingDeclSpec *DS) {
   DelayedCleanupPoint CleanupRAII(TopLevelDeclCleanupPool);
   ParenBraceBracketBalancer BalancerRAIIObj(*this);
-  
+
+  if (PP.isCodeCompletionReached()) {
+    cutOffParsing();
+    return DeclGroupPtrTy();
+  }
+
   Decl *SingleDecl = 0;
   switch (Tok.getKind()) {
   case tok::semi:
@@ -608,8 +613,8 @@ Parser::ParseExternalDeclaration(ParsedAttributesWithRange &attrs,
       Actions.CodeCompleteOrdinaryName(getCurScope(), 
                                    ObjCImpDecl? Sema::PCC_ObjCImplementation
                                               : Sema::PCC_Namespace);
-    ConsumeCodeCompletionToken();
-    return ParseExternalDeclaration(attrs);
+    cutOffParsing();
+    return DeclGroupPtrTy();
   case tok::kw_using:
   case tok::kw_namespace:
   case tok::kw_typedef:
@@ -1413,20 +1418,27 @@ bool Parser::isTokenEqualOrMistypedEqualEqual(unsigned DiagID) {
   return Tok.is(tok::equal);
 }
 
-void Parser::CodeCompletionRecovery() {
+SourceLocation Parser::handleUnexpectedCodeCompletionToken() {
+  assert(Tok.is(tok::code_completion));
+  PrevTokLocation = Tok.getLocation();
+
   for (Scope *S = getCurScope(); S; S = S->getParent()) {
     if (S->getFlags() & Scope::FnScope) {
       Actions.CodeCompleteOrdinaryName(getCurScope(), Sema::PCC_RecoveryInFunction);
-      return;
+      cutOffParsing();
+      return PrevTokLocation;
     }
     
     if (S->getFlags() & Scope::ClassScope) {
       Actions.CodeCompleteOrdinaryName(getCurScope(), Sema::PCC_Class);
-      return;
+      cutOffParsing();
+      return PrevTokLocation;
     }
   }
   
   Actions.CodeCompleteOrdinaryName(getCurScope(), Sema::PCC_Namespace);
+  cutOffParsing();
+  return PrevTokLocation;
 }
 
 // Anchor the Parser::FieldCallback vtable to this translation unit.

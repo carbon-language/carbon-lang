@@ -56,7 +56,8 @@ Decl *Parser::ParseNamespace(unsigned Context,
     
   if (Tok.is(tok::code_completion)) {
     Actions.CodeCompleteNamespaceDecl(getCurScope());
-    ConsumeCodeCompletionToken();
+    cutOffParsing();
+    return 0;
   }
 
   SourceLocation IdentLoc;
@@ -224,7 +225,8 @@ Decl *Parser::ParseNamespaceAlias(SourceLocation NamespaceLoc,
 
   if (Tok.is(tok::code_completion)) {
     Actions.CodeCompleteNamespaceAliasDecl(getCurScope());
-    ConsumeCodeCompletionToken();
+    cutOffParsing();
+    return 0;
   }
 
   CXXScopeSpec SS;
@@ -324,7 +326,8 @@ Decl *Parser::ParseUsingDirectiveOrDeclaration(unsigned Context,
 
   if (Tok.is(tok::code_completion)) {
     Actions.CodeCompleteUsing(getCurScope());
-    ConsumeCodeCompletionToken();
+    cutOffParsing();
+    return 0;
   }
 
   // 'using namespace' means this is a using-directive.
@@ -369,7 +372,8 @@ Decl *Parser::ParseUsingDirective(unsigned Context,
 
   if (Tok.is(tok::code_completion)) {
     Actions.CodeCompleteUsingDirective(getCurScope());
-    ConsumeCodeCompletionToken();
+    cutOffParsing();
+    return 0;
   }
 
   CXXScopeSpec SS;
@@ -852,7 +856,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   if (Tok.is(tok::code_completion)) {
     // Code completion for a struct, class, or union name.
     Actions.CodeCompleteTag(getCurScope(), TagType);
-    ConsumeCodeCompletionToken();
+    return cutOffParsing();
   }
 
   // C++03 [temp.explicit] 14.7.2/8:
@@ -2202,7 +2206,7 @@ void Parser::ParseConstructorInitializer(Decl *ConstructorDecl) {
       Actions.CodeCompleteConstructorInitializer(ConstructorDecl, 
                                                  MemInitializers.data(), 
                                                  MemInitializers.size());
-      ConsumeCodeCompletionToken();
+      return cutOffParsing();
     } else {
       MemInitResult MemInit = ParseMemInitializer(ConstructorDecl);
       if (!MemInit.isInvalid())

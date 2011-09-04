@@ -96,6 +96,7 @@ static bool EvaluateDefined(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
   if (PeekTok.is(tok::code_completion)) {
     if (PP.getCodeCompletionHandler())
       PP.getCodeCompletionHandler()->CodeCompleteMacroName(false);
+    PP.setCodeCompletionReached();
     PP.LexUnexpandedNonComment(PeekTok);
   }
   
@@ -156,6 +157,7 @@ static bool EvaluateValue(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
   if (PeekTok.is(tok::code_completion)) {
     if (PP.getCodeCompletionHandler())
       PP.getCodeCompletionHandler()->CodeCompletePreprocessorExpression();
+    PP.setCodeCompletionReached();
     PP.LexNonComment(PeekTok);
   }
       

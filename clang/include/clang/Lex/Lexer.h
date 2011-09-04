@@ -500,6 +500,9 @@ private:
   
   bool IsStartOfConflictMarker(const char *CurPtr);
   bool HandleEndOfConflictMarker(const char *CurPtr);
+
+  bool isCodeCompletionPoint(const char *CurPtr) const;
+  void cutOffLexing() { BufferPtr = BufferEnd; }
 };
 
 

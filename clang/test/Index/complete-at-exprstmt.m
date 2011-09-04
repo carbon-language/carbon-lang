@@ -1,6 +1,5 @@
 /* The run lines are below, because this test is line- and
    column-number sensitive. */
-// XFAIL: *
 @interface MyClass { int ivar; }
 - (int)myMethod:(int)arg;
 @end

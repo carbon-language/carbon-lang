@@ -214,7 +214,8 @@ Parser::ParseExpressionWithLeadingExtension(SourceLocation ExtLoc) {
 ExprResult Parser::ParseAssignmentExpression() {
   if (Tok.is(tok::code_completion)) {
     Actions.CodeCompleteOrdinaryName(getCurScope(), Sema::PCC_Expression);
-    ConsumeCodeCompletionToken();
+    cutOffParsing();
+    return ExprError();
   }
 
   if (Tok.is(tok::kw_throw))
@@ -336,7 +337,7 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, prec::Level MinPrec) {
     // goes through a special hook that takes the left-hand side into account.
     if (Tok.is(tok::code_completion) && NextTokPrec == prec::Assignment) {
       Actions.CodeCompleteAssignmentRHS(getCurScope(), LHS.get());
-      ConsumeCodeCompletionToken();
+      cutOffParsing();
       return ExprError();
     }
     
@@ -1110,9 +1111,8 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     break;
   case tok::code_completion: {
     Actions.CodeCompleteOrdinaryName(getCurScope(), Sema::PCC_Expression);
-    ConsumeCodeCompletionToken();
-    return ParseCastExpression(isUnaryExpression, isAddressOfOperand, 
-                               NotCastExpr, isTypeCast);
+    cutOffParsing();
+    return ExprError();
   }
   case tok::l_square:
     if (getLang().CPlusPlus0x) {
@@ -1170,9 +1170,8 @@ Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
         return move(LHS);
         
       Actions.CodeCompletePostfixExpression(getCurScope(), LHS);
-      ConsumeCodeCompletionToken();
-      LHS = ExprError();
-      break;
+      cutOffParsing();
+      return ExprError();
         
     case tok::identifier:
       // If we see identifier: after an expression, and we're not already in a
@@ -1272,7 +1271,8 @@ Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
       
       if (Tok.is(tok::code_completion)) {
         Actions.CodeCompleteCall(getCurScope(), LHS.get(), 0, 0);
-        ConsumeCodeCompletionToken();
+        cutOffParsing();
+        return ExprError();
       }
 
       if (OpKind == tok::l_paren || !LHS.isInvalid()) {
@@ -1330,7 +1330,8 @@ Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
         Actions.CodeCompleteMemberReferenceExpr(getCurScope(), LHS.get(),
                                                 OpLoc, OpKind == tok::arrow);
         
-        ConsumeCodeCompletionToken();
+        cutOffParsing();
+        return ExprError();
       }
       
       if (MayBePseudoDestructor && !LHS.isInvalid()) {
@@ -1778,7 +1779,7 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
     Actions.CodeCompleteOrdinaryName(getCurScope(), 
                  ExprType >= CompoundLiteral? Sema::PCC_ParenthesizedExpression
                                             : Sema::PCC_Expression);
-    ConsumeCodeCompletionToken();
+    cutOffParsing();
     return ExprError();
   }
 
@@ -2133,7 +2134,8 @@ bool Parser::ParseExpressionList(SmallVectorImpl<Expr*> &Exprs,
         (Actions.*Completer)(getCurScope(), Data, Exprs.data(), Exprs.size());
       else
         Actions.CodeCompleteOrdinaryName(getCurScope(), Sema::PCC_Expression);
-      ConsumeCodeCompletionToken();
+      cutOffParsing();
+      return true;
     }
 
     ExprResult Expr;
@@ -2164,7 +2166,7 @@ bool Parser::ParseExpressionList(SmallVectorImpl<Expr*> &Exprs,
 void Parser::ParseBlockId() {
   if (Tok.is(tok::code_completion)) {
     Actions.CodeCompleteOrdinaryName(getCurScope(), Sema::PCC_Type);
-    ConsumeCodeCompletionToken();
+    return cutOffParsing();
   }
   
   // Parse the specifier-qualifier-list piece.

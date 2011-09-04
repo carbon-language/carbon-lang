@@ -1,6 +1,5 @@
 // Note: this test is line- and column-sensitive. Test commands are at
 // the end.
-// XFAIL: *
 
 
 @interface A
@@ -36,22 +35,12 @@
 }
 @end
 
-// RUN: c-index-test -code-completion-at=%s:24:1 -Xclang -fobjc-nonfragile-abi %s | FileCheck -check-prefix=CHECK-CC1 %s
-// CHECK-CC1: NotImplemented:{TypedText _Bool} (50)
-// CHECK-CC1: ObjCIvarDecl:{ResultType float}{TypedText _prop2} (35)
-// CHECK-CC1-NOT: prop2
-// CHECK-CC1: ObjCPropertyDecl:{ResultType short}{TypedText prop3} (35)
-// CHECK-CC1: ObjCPropertyDecl:{ResultType double}{TypedText prop4} (35)
+// RUN: c-index-test -code-completion-at=%s:24:1 -Xclang -fobjc-nonfragile-abi -fobjc-default-synthesize-properties %s | FileCheck %s
+// RUN: c-index-test -code-completion-at=%s:30:2 -Xclang -fobjc-nonfragile-abi -fobjc-default-synthesize-properties %s | FileCheck %s
+// RUN: c-index-test -code-completion-at=%s:34:2 -Xclang -fobjc-nonfragile-abi -fobjc-default-synthesize-properties %s | FileCheck %s
 
-// RUN: c-index-test -code-completion-at=%s:30:2 -Xclang -fobjc-nonfragile-abi %s | FileCheck -check-prefix=CHECK-CC2 %s
-// CHECK-CC2: NotImplemented:{TypedText _Bool} (50)
-// CHECK-CC2: ObjCIvarDecl:{ResultType float}{TypedText _prop2} (35)
-// CHECK-CC2-NOT: prop3
-// CHECK-CC2: ObjCPropertyDecl:{ResultType double}{TypedText prop4} (35)
-
-// RUN: c-index-test -code-completion-at=%s:34:2 -Xclang -fobjc-nonfragile-abi %s | FileCheck -check-prefix=CHECK-CC3 %s
-// CHECK-CC3: NotImplemented:{TypedText _Bool} (50)
-// CHECK-CC3: ObjCIvarDecl:{ResultType float}{TypedText _prop2} (35)
-// CHECK-CC3: ObjCPropertyDecl:{ResultType double}{TypedText prop4}
-// CHECK-CC3-NOT: ObjCPropertyDecl:{ResultType double}{TypedText prop4} (35)
-// CHECK-CC1: restrict
+// CHECK: NotImplemented:{TypedText _Bool} (50)
+// CHECK: ObjCIvarDecl:{ResultType float}{TypedText _prop2} (35)
+// CHECK-NOT: prop2
+// CHECK-NOT: prop3
+// CHECK: ObjCIvarDecl:{ResultType double}{TypedText prop4} (37)
