@@ -289,37 +289,42 @@ bool BranchProbabilityAnalysis::calcZeroHeuristics(BasicBlock *BB) {
 
   Value *RHS = CI->getOperand(1);
   ConstantInt *CV = dyn_cast<ConstantInt>(RHS);
-  if (!CV || !CV->isZero())
+  if (!CV)
     return false;
 
   bool isProb;
-  switch (CI->getPredicate()) {
-  case CmpInst::ICMP_EQ:
-    // Equal to zero is not expected to be taken.
+  if (CV->isZero()) {
+    switch (CI->getPredicate()) {
+    case CmpInst::ICMP_EQ:
+      // X == 0   ->  Unlikely
+      isProb = false;
+      break;
+    case CmpInst::ICMP_NE:
+      // X != 0   ->  Likely
+      isProb = true;
+      break;
+    case CmpInst::ICMP_SLT:
+      // X < 0   ->  Unlikely
+      isProb = false;
+      break;
+    case CmpInst::ICMP_SGT:
+      // X > 0   ->  Likely
+      isProb = true;
+      break;
+    default:
+      return false;
+    }
+  } else if (CV->isOne() && CI->getPredicate() == CmpInst::ICMP_SLT) {
+    // InstCombine canonicalizes X <= 0 into X < 1.
+    // X <= 0   ->  Unlikely
     isProb = false;
-    break;
-
-  case CmpInst::ICMP_NE:
-    // Not equal to zero is expected.
+  } else if (CV->isAllOnesValue() && CI->getPredicate() == CmpInst::ICMP_SGT) {
+    // InstCombine canonicalizes X >= 0 into X > -1.
+    // X >= 0   ->  Likely
     isProb = true;
-    break;
-
-  case CmpInst::ICMP_SLT:
-    // Less or equal to zero is not expected.
-    // X < 0   ->  Unlikely
-    isProb = false;
-    break;
-
-  case CmpInst::ICMP_UGT:
-  case CmpInst::ICMP_SGT:
-    // Greater or equal to zero is expected.
-    // X > 0   ->  Likely
-    isProb = true;
-    break;
-
-  default:
+  } else {
     return false;
-  };
+  }
 
   BasicBlock *Taken = BI->getSuccessor(0);
   BasicBlock *NonTaken = BI->getSuccessor(1);
