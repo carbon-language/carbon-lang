@@ -2265,7 +2265,11 @@ bool Parser::ParseOptionalTypeSpecifier(DeclSpec &DS, bool& isInvalid,
 
   // C++0x auto support.
   case tok::kw_auto:
-    if (!getLang().CPlusPlus0x)
+    // This is only called in situations where a storage-class specifier is
+    // illegal, so we can assume an auto type specifier was intended even in
+    // C++98. In C++98 mode, DeclSpec::Finish will produce an appropriate
+    // extension diagnostic.
+    if (!getLang().CPlusPlus)
       return false;
 
     isInvalid = DS.SetTypeSpecType(DeclSpec::TST_auto, Loc, PrevSpec, DiagID);

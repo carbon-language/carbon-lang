@@ -20,10 +20,7 @@ void f() {
   for (; auto a = false; ) {
   }
 
-  // FIXME: support 'auto' error recovery here in pre-C++0x mode.
-#if __has_feature(cxx_auto_type)
   new const auto (0);
-#endif
   new (auto) (0.0);
 
   int arr[] = {1, 2, 3};
