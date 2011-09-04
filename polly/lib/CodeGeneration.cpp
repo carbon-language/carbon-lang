@@ -483,26 +483,23 @@ public:
   }
 
   void copyInstScalar(const Instruction *Inst, ValueMapT &BBMap,
-                      ValueMapT &vectorMap, VectorValueMapT &scalarMaps) {
+                      ValueMapT &VectorMap) {
     Instruction *NewInst = Inst->clone();
 
-    // Copy the operands in temporary vector, as an in place update
-    // fails if an instruction is referencing the same operand twice.
-    std::vector<Value*> Operands(NewInst->op_begin(), NewInst->op_end());
-
     // Replace old operands with the new ones.
-    for (std::vector<Value*>::iterator UI = Operands.begin(),
-         UE = Operands.end(); UI != UE; ++UI) {
-      Value *newOperand = getOperand(*UI, BBMap);
+    for (Instruction::const_op_iterator OI = Inst->op_begin(),
+         OE = Inst->op_end(); OI != OE; ++OI) {
+      Value *OldOperand = *OI;
+      Value *NewOperand = getOperand(OldOperand, BBMap);
 
-      if (!newOperand) {
+      if (!NewOperand) {
         assert(!isa<StoreInst>(NewInst)
                && "Store instructions are always needed!");
         delete NewInst;
         return;
       }
 
-      NewInst->replaceUsesOfWith(*UI, newOperand);
+      NewInst->replaceUsesOfWith(OldOperand, NewOperand);
     }
 
     Builder.Insert(NewInst);
@@ -544,7 +541,7 @@ public:
         return;
       }
 
-    copyInstScalar(Inst, BBMap, vectorMap, scalarMaps);
+    copyInstScalar(Inst, BBMap, vectorMap);
   }
 
   int getVectorSize() {
