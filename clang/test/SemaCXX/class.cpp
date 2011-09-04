@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s 
 class C {
 public:
-  auto int errx; // expected-error {{error: storage class specified for a member declaration}}
+  auto int errx; // expected-error {{error: storage class specified for a member declaration}} expected-warning {{'auto' storage class specifier is redundant}}
   register int erry; // expected-error {{error: storage class specified for a member declaration}}
   extern int errz; // expected-error {{error: storage class specified for a member declaration}}
 

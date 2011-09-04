@@ -28,10 +28,6 @@ def ext_extra_struct_semi : Extension<
 def ext_extra_ivar_semi : Extension<
   "extra ';' inside instance variable list">;
 
-def auto_storage_class : ExtWarn<
-  "'auto' storage class specifier is redundant and will be "
-  "removed in future releases">;
-
 def ext_duplicate_declspec : Extension<"duplicate '%0' declaration specifier">;
 def ext_plain_complex : ExtWarn<
   "plain '_Complex' requires a type specifier; assuming '_Complex double'">;
@@ -198,6 +194,16 @@ def err_generalized_initializer_lists : Error<
 def ext_generalized_initializer_lists : ExtWarn<
   "generalized initializer lists are a C++0x extension unsupported in Clang">,
   InGroup<CXX0x>;
+def ext_auto_type_specifier : ExtWarn<
+  "'auto' type specifier is a C++0x extension">, InGroup<CXX0x>;
+def warn_auto_storage_class : Warning<
+  "'auto' storage class specifier is redundant and incompatible with C++0x">,
+  InGroup<CXX0xCompat>;
+def ext_auto_storage_class : ExtWarn<
+  "'auto' storage class specifier is not permitted in C++0x, and will not "
+  "be supported in future releases">;
+def ext_for_range : ExtWarn<
+  "range-based for loop is a C++0x extension">, InGroup<CXX0x>;
 def err_argument_required_after_attribute : Error<
   "argument required after attribute">;
 def err_missing_param : Error<"expected parameter declarator">;

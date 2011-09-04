@@ -425,10 +425,23 @@ bool DeclSpec::SetStorageClassSpec(SCS S, SourceLocation Loc,
   }
 
   if (StorageClassSpec != SCS_unspecified) {
+    // Maybe this is an attempt to use C++0x 'auto' outside of C++0x mode.
+    bool isInvalid = true;
+    if (TypeSpecType == TST_unspecified && Lang.CPlusPlus) {
+      if (S == SCS_auto)
+        return SetTypeSpecType(TST_auto, Loc, PrevSpec, DiagID);
+      if (StorageClassSpec == SCS_auto) {
+        isInvalid = SetTypeSpecType(TST_auto, StorageClassSpecLoc,
+                                    PrevSpec, DiagID);
+        assert(!isInvalid && "auto SCS -> TST recovery failed");
+      }
+    }
+
     // Changing storage class is allowed only if the previous one
     // was the 'extern' that is part of a linkage specification and
     // the new storage class is 'typedef'.
-    if (!(SCS_extern_in_linkage_spec &&
+    if (isInvalid &&
+        !(SCS_extern_in_linkage_spec &&
           StorageClassSpec == SCS_extern &&
           S == SCS_typedef))
       return BadSpecifier(S, (SCS)StorageClassSpec, PrevSpec, DiagID);
@@ -835,6 +848,27 @@ void DeclSpec::Finish(Diagnostic &D, Preprocessor &PP) {
       TypeSpecComplex = TSC_unspecified;
     }
   }
+
+  // If no type specifier was provided and we're parsing a language where
+  // the type specifier is not optional, but we got 'auto' as a storage
+  // class specifier, then assume this is an attempt to use C++0x's 'auto'
+  // type specifier.
+  // FIXME: Does Microsoft really support implicit int in C++?
+  if (PP.getLangOptions().CPlusPlus && !PP.getLangOptions().Microsoft &&
+      TypeSpecType == TST_unspecified && StorageClassSpec == SCS_auto) {
+    TypeSpecType = TST_auto;
+    StorageClassSpec = StorageClassSpecAsWritten = SCS_unspecified;
+    TSTLoc = TSTNameLoc = StorageClassSpecLoc;
+    StorageClassSpecLoc = SourceLocation();
+  }
+  // Diagnose if we've recovered from an ill-formed 'auto' storage class
+  // specifier in a pre-C++0x dialect of C++.
+  if (!PP.getLangOptions().CPlusPlus0x && TypeSpecType == TST_auto)
+    Diag(D, TSTLoc, diag::ext_auto_type_specifier);
+  if (PP.getLangOptions().CPlusPlus && !PP.getLangOptions().CPlusPlus0x &&
+      StorageClassSpec == SCS_auto)
+    Diag(D, StorageClassSpecLoc, diag::warn_auto_storage_class)
+      << FixItHint::CreateRemoval(StorageClassSpecLoc);
 
   // C++ [class.friend]p6:
   //   No storage-class-specifier shall appear in the decl-specifier-seq

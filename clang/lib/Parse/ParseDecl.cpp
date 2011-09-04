@@ -1769,16 +1769,14 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       if (getLang().CPlusPlus0x) {
         if (isKnownToBeTypeSpecifier(GetLookAheadToken(1))) {
           isInvalid = DS.SetStorageClassSpec(DeclSpec::SCS_auto, Loc, PrevSpec,
-                                           DiagID, getLang());
+                                             DiagID, getLang());
           if (!isInvalid)
-            Diag(Tok, diag::auto_storage_class)
+            Diag(Tok, diag::ext_auto_storage_class)
               << FixItHint::CreateRemoval(DS.getStorageClassSpecLoc());
-        }
-        else
+        } else
           isInvalid = DS.SetTypeSpecType(DeclSpec::TST_auto, Loc, PrevSpec,
                                          DiagID);
-      }
-      else
+      } else
         isInvalid = DS.SetStorageClassSpec(DeclSpec::SCS_auto, Loc, PrevSpec,
                                            DiagID, getLang());
       break;

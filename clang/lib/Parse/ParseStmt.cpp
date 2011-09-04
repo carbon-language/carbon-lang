@@ -1313,6 +1313,9 @@ StmtResult Parser::ParseForStatement(ParsedAttributes &attrs) {
     FirstPart = Actions.ActOnDeclStmt(DG, DeclStart, Tok.getLocation());
 
     if (ForRangeInit.ParsedForRangeDecl()) {
+      if (!getLang().CPlusPlus0x)
+        Diag(ForRangeInit.ColonLoc, diag::ext_for_range);
+
       ForRange = true;
     } else if (Tok.is(tok::semi)) {  // for (int x = 4;
       ConsumeToken();

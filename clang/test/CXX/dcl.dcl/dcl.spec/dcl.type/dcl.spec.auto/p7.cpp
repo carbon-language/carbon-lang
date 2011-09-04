@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s -std=c++0x
+// RUN: %clang_cc1 -fsyntax-only -verify %s -std=c++98 -Wno-c++0x-extensions
 void f() {
   auto a = 0, b = 0, c = 0;
   auto d = 0, e = 0.0; // expected-error {{'int' in declaration of 'd' and deduced as 'double' in declaration of 'e'}}
@@ -18,6 +19,14 @@ void f() {
 }
 
 void g() {
-  auto a = 0, (*b)() -> void, c = 0;
-  auto d = 0, (*e)() -> void, f = 0.0; // expected-error {{'auto' deduced as 'int' in declaration of 'd' and deduced as 'double' in declaration of 'f'}}
+  auto a = 0,
+#if __has_feature(cxx_trailing_return)
+       (*b)() -> void,
+#endif
+       c = 0;
+  auto d = 0, // expected-error {{'auto' deduced as 'int' in declaration of 'd' and deduced as 'double' in declaration of 'f'}}
+#if __has_feature(cxx_trailing_return)
+       (*e)() -> void,
+#endif
+       f = 0.0;
 }

@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s -std=c++0x
+// RUN: %clang_cc1 -fsyntax-only -verify %s -std=c++98 -Wno-c++0x-extensions
 
 template<typename T>
 struct only {
@@ -19,7 +20,10 @@ void f() {
   for (; auto a = false; ) {
   }
 
+  // FIXME: support 'auto' error recovery here in pre-C++0x mode.
+#if __has_feature(cxx_auto_type)
   new const auto (0);
+#endif
   new (auto) (0.0);
 
   int arr[] = {1, 2, 3};

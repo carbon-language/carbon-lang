@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s -std=c++0x
+// RUN: %clang_cc1 -fsyntax-only -verify %s -std=c++98 -Wno-c++0x-extensions
 void f() {
   auto a = a; // expected-error{{variable 'a' declared with 'auto' type cannot appear in its own initializer}}
   auto *b = b; // expected-error{{variable 'b' declared with 'auto' type cannot appear in its own initializer}}
@@ -39,10 +40,12 @@ void p3example() {
   auto x = 5;
   const auto *v = &x, u = 6;
   static auto y = 0.0;
-  auto int r; // expected-warning {{'auto' storage class specifier is redundant and will be removed in future releases}}
+  // In C++98: 'auto' storage class specifier is redundant and incompatible with C++0x
+  // In C++0x: 'auto' storage class specifier is not permitted in C++0x, and will not be supported in future releases
+  auto int r; // expected-warning {{'auto' storage class specifier}}
 
-  same<decltype(x), int> xHasTypeInt;
-  same<decltype(v), const int*> vHasTypeConstIntPtr;
-  same<decltype(u), const int> uHasTypeConstInt;
-  same<decltype(y), double> yHasTypeDouble;
+  same<__typeof(x), int> xHasTypeInt;
+  same<__typeof(v), const int*> vHasTypeConstIntPtr;
+  same<__typeof(u), const int> uHasTypeConstInt;
+  same<__typeof(y), double> yHasTypeDouble;
 }
