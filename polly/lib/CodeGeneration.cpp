@@ -388,7 +388,6 @@ public:
   /// @brief Load a value (or several values as a vector) from memory.
   void generateLoad(const LoadInst *load, ValueMapT &vectorMap,
                     VectorValueMapT &scalarMaps, int vectorWidth) {
-
     if (scalarMaps.size() == 1) {
       scalarMaps[0][load] = generateScalarLoad(load, scalarMaps[0]);
       return;
@@ -410,98 +409,81 @@ public:
     vectorMap[load] = newLoad;
   }
 
-  void copyInstruction(const Instruction *Inst, ValueMapT &BBMap,
+  void copyBinInst(const BinaryOperator *Inst, ValueMapT &BBMap,
+                   ValueMapT &vectorMap, VectorValueMapT &scalarMaps,
+                   int vectorDimension, int vectorWidth) {
+    Value *opZero = Inst->getOperand(0);
+    Value *opOne = Inst->getOperand(1);
+
+    // This is an old instruction that can be ignored.
+    if (!opZero && !opOne)
+      return;
+
+    bool isVectorOp = vectorMap.count(opZero) || vectorMap.count(opOne);
+
+    if (isVectorOp && vectorDimension > 0)
+      return;
+
+    Value *newOpZero, *newOpOne;
+    newOpZero = getOperand(opZero, BBMap, &vectorMap);
+    newOpOne = getOperand(opOne, BBMap, &vectorMap);
+
+    std::string name;
+    if (isVectorOp) {
+      newOpZero = makeVectorOperand(newOpZero, vectorWidth);
+      newOpOne = makeVectorOperand(newOpOne, vectorWidth);
+      name =  Inst->getNameStr() + "p_vec";
+    } else
+      name = Inst->getNameStr() + "p_sca";
+
+    Value *newInst = Builder.CreateBinOp(Inst->getOpcode(), newOpZero,
+                                         newOpOne, name);
+    if (isVectorOp)
+      vectorMap[Inst] = newInst;
+    else
+      BBMap[Inst] = newInst;
+
+    return;
+  }
+
+  void copyVectorStore(const StoreInst *store, ValueMapT &BBMap,
                        ValueMapT &vectorMap, VectorValueMapT &scalarMaps,
                        int vectorDimension, int vectorWidth) {
-    // If this instruction is already in the vectorMap, a vector instruction
-    // was already issued, that calculates the values of all dimensions. No
-    // need to create any more instructions.
-    if (vectorMap.count(Inst))
+    // In vector mode we only generate a store for the first dimension.
+    if (vectorDimension > 0)
       return;
 
-    // Terminator instructions control the control flow. They are explicitally
-    // expressed in the clast and do not need to be copied.
-    if (Inst->isTerminator())
-      return;
+    MemoryAccess &Access = statement.getAccessFor(store);
 
-    if (const LoadInst *load = dyn_cast<LoadInst>(Inst)) {
-      generateLoad(load, vectorMap, scalarMaps, vectorWidth);
-      return;
-    }
+    assert(scatteringDomain && "No scattering domain available");
 
-    if (const BinaryOperator *binaryInst = dyn_cast<BinaryOperator>(Inst)) {
-      Value *opZero = Inst->getOperand(0);
-      Value *opOne = Inst->getOperand(1);
+    const Value *pointer = store->getPointerOperand();
+    Value *vector = getOperand(store->getValueOperand(), BBMap, &vectorMap);
 
-      // This is an old instruction that can be ignored.
-      if (!opZero && !opOne)
-        return;
+    if (Access.isStrideOne(scatteringDomain)) {
+      Type *vectorPtrType = getVectorPtrTy(pointer, vectorWidth);
+      Value *newPointer = getOperand(pointer, BBMap, &vectorMap);
 
-      bool isVectorOp = vectorMap.count(opZero) || vectorMap.count(opOne);
+      Value *VectorPtr = Builder.CreateBitCast(newPointer, vectorPtrType,
+                                               "vector_ptr");
+      StoreInst *Store = Builder.CreateStore(vector, VectorPtr);
 
-      if (isVectorOp && vectorDimension > 0)
-        return;
-
-      Value *newOpZero, *newOpOne;
-      newOpZero = getOperand(opZero, BBMap, &vectorMap);
-      newOpOne = getOperand(opOne, BBMap, &vectorMap);
-
-
-      std::string name;
-      if (isVectorOp) {
-        newOpZero = makeVectorOperand(newOpZero, vectorWidth);
-        newOpOne = makeVectorOperand(newOpOne, vectorWidth);
-        name =  Inst->getNameStr() + "p_vec";
-      } else
-        name = Inst->getNameStr() + "p_sca";
-
-      Value *newInst = Builder.CreateBinOp(binaryInst->getOpcode(), newOpZero,
-                                           newOpOne, name);
-      if (isVectorOp)
-        vectorMap[Inst] = newInst;
-      else
-        BBMap[Inst] = newInst;
-
-      return;
-    }
-
-    if (const StoreInst *store = dyn_cast<StoreInst>(Inst)) {
-      if (vectorMap.count(store->getValueOperand()) > 0) {
-
-        // We only need to generate one store if we are in vector mode.
-        if (vectorDimension > 0)
-          return;
-
-        MemoryAccess &Access = statement.getAccessFor(store);
-
-        assert(scatteringDomain && "No scattering domain available");
-
-        const Value *pointer = store->getPointerOperand();
-        Value *vector = getOperand(store->getValueOperand(), BBMap, &vectorMap);
-
-        if (Access.isStrideOne(scatteringDomain)) {
-          Type *vectorPtrType = getVectorPtrTy(pointer, vectorWidth);
-          Value *newPointer = getOperand(pointer, BBMap, &vectorMap);
-
-          Value *VectorPtr = Builder.CreateBitCast(newPointer, vectorPtrType,
-                                                   "vector_ptr");
-          StoreInst *Store = Builder.CreateStore(vector, VectorPtr);
-
-          if (!Aligned)
-            Store->setAlignment(8);
-        } else {
-          for (unsigned i = 0; i < scalarMaps.size(); i++) {
-            Value *scalar = Builder.CreateExtractElement(vector,
-                                                         Builder.getInt32(i));
-            Value *newPointer = getOperand(pointer, scalarMaps[i]);
-            Builder.CreateStore(scalar, newPointer);
-          }
-        }
-
-        return;
+      if (!Aligned)
+        Store->setAlignment(8);
+    } else {
+      for (unsigned i = 0; i < scalarMaps.size(); i++) {
+        Value *scalar = Builder.CreateExtractElement(vector,
+                                                     Builder.getInt32(i));
+        Value *newPointer = getOperand(pointer, scalarMaps[i]);
+        Builder.CreateStore(scalar, newPointer);
       }
     }
 
+    return;
+  }
+
+  void copyInstScalar(const Instruction *Inst, ValueMapT &BBMap,
+                      ValueMapT &vectorMap, VectorValueMapT &scalarMaps) {
     Instruction *NewInst = Inst->clone();
 
     // Copy the operands in temporary vector, as an in place update
@@ -528,6 +510,41 @@ public:
 
     if (!NewInst->getType()->isVoidTy())
       NewInst->setName("p_" + Inst->getName());
+  }
+
+  void copyInstruction(const Instruction *Inst, ValueMapT &BBMap,
+                       ValueMapT &vectorMap, VectorValueMapT &scalarMaps,
+                       int vectorDimension, int vectorWidth) {
+    // If this instruction is already in the vectorMap, a vector instruction
+    // was already issued, that calculates the values of all dimensions. No
+    // need to create any more instructions.
+    if (vectorMap.count(Inst))
+      return;
+
+    // Terminator instructions control the control flow. They are explicitally
+    // expressed in the clast and do not need to be copied.
+    if (Inst->isTerminator())
+      return;
+
+    if (const LoadInst *load = dyn_cast<LoadInst>(Inst)) {
+      generateLoad(load, vectorMap, scalarMaps, vectorWidth);
+      return;
+    }
+
+    if (const BinaryOperator *binaryInst = dyn_cast<BinaryOperator>(Inst)) {
+      copyBinInst(binaryInst, BBMap, vectorMap, scalarMaps, vectorDimension,
+                  vectorWidth);
+      return;
+    }
+
+    if (const StoreInst *store = dyn_cast<StoreInst>(Inst))
+      if (vectorMap.count(store->getValueOperand()) > 0) {
+        copyVectorStore(store, BBMap, vectorMap, scalarMaps, vectorDimension,
+                        vectorWidth);
+        return;
+      }
+
+    copyInstScalar(Inst, BBMap, vectorMap, scalarMaps);
   }
 
   int getVectorSize() {
