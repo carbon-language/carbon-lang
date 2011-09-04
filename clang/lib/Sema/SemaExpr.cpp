@@ -1474,7 +1474,8 @@ bool Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS, LookupResult &R,
                 CXXDependentScopeMemberExpr::Create(
                     Context, DepThis, DepThisType, true, SourceLocation(),
                     SS.getWithLocInContext(Context), NULL,
-                    R.getLookupNameInfo(), &TList);
+                    R.getLookupNameInfo(),
+                    ULE->hasExplicitTemplateArgs() ? &TList : 0);
             CallsUndergoingInstantiation.back()->setCallee(DepExpr);
           } else {
             // FIXME: we should be able to handle this case too. It is correct
