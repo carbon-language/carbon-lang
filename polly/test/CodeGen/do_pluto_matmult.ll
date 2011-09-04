@@ -215,7 +215,7 @@ entry:
 ; IMPORT: }
 
 
-; CODEGEN: polly.stmt_do.body2
+; CODEGEN: polly.do.body2.stmt
 
 ; REVERSE: for (c2=-35;c2<=0;c2++) {
 ; REVERSE:     for (c4=-35;c4<=0;c4++) {

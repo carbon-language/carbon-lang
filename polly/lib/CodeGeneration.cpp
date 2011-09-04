@@ -551,7 +551,8 @@ public:
     Function *F = Builder.GetInsertBlock()->getParent();
     LLVMContext &Context = F->getContext();
     BasicBlock *CopyBB = BasicBlock::Create(Context,
-                                            "polly.stmt_" + BB->getNameStr(),
+                                            "polly." + BB->getNameStr()
+                                            + ".stmt",
                                             F);
     Builder.CreateBr(CopyBB);
     DT->addNewBlock(CopyBB, Builder.GetInsertBlock());
