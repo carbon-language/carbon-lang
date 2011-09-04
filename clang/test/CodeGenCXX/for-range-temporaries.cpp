@@ -1,5 +1,6 @@
 // RUN: %clang_cc1 -triple x86_64-apple-darwin10 -std=c++0x -emit-llvm -o - -UDESUGAR %s | opt -instnamer -S | FileCheck %s
 // RUN: %clang_cc1 -triple x86_64-apple-darwin10 -std=c++0x -emit-llvm -o - -DDESUGAR %s | opt -instnamer -S | FileCheck %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -std=c++0x -emit-llvm -o - -DDESUGAR -DTEMPLATE %s | opt -instnamer -S | FileCheck %s
 
 struct A {
   A();
@@ -65,6 +66,9 @@ struct I {
 
 void body(const I &);
 
+#ifdef TEMPLATE
+template<typename D>
+#endif
 void for_temps() {
   A a;
 #ifdef DESUGAR
@@ -83,7 +87,11 @@ void for_temps() {
 #endif
 }
 
-// CHECK: define void @_Z9for_tempsv()
+#ifdef TEMPLATE
+template void for_temps<D>();
+#endif
+
+// CHECK: define {{.*}}for_temps
 // CHECK: call void @_ZN1AC1Ev(
 // CHECK: call void @_ZN1BC1Ev(
 // CHECK: call void @_ZN1CC1ERK1B(
