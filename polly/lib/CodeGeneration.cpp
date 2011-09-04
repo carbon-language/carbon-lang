@@ -419,29 +419,17 @@ public:
     if (!opZero && !opOne)
       return;
 
-    bool isVectorOp = vectorMap.count(opZero) || vectorMap.count(opOne);
-
-    if (isVectorOp && vectorDimension > 0)
-      return;
-
     Value *newOpZero, *newOpOne;
     newOpZero = getOperand(opZero, BBMap, &vectorMap);
     newOpOne = getOperand(opOne, BBMap, &vectorMap);
 
-    std::string name;
-    if (isVectorOp) {
-      newOpZero = makeVectorOperand(newOpZero, vectorWidth);
-      newOpOne = makeVectorOperand(newOpOne, vectorWidth);
-      name =  Inst->getNameStr() + "p_vec";
-    } else
-      name = Inst->getNameStr() + "p_sca";
+    newOpZero = makeVectorOperand(newOpZero, vectorWidth);
+    newOpOne = makeVectorOperand(newOpOne, vectorWidth);
 
     Value *newInst = Builder.CreateBinOp(Inst->getOpcode(), newOpZero,
-                                         newOpOne, name);
-    if (isVectorOp)
-      vectorMap[Inst] = newInst;
-    else
-      BBMap[Inst] = newInst;
+                                         newOpOne,
+                                         Inst->getNameStr() + "p_vec");
+    vectorMap[Inst] = newInst;
 
     return;
   }
@@ -482,8 +470,7 @@ public:
     return;
   }
 
-  void copyInstScalar(const Instruction *Inst, ValueMapT &BBMap,
-                      ValueMapT &VectorMap) {
+  void copyInstScalar(const Instruction *Inst, ValueMapT &BBMap) {
     Instruction *NewInst = Inst->clone();
 
     // Replace old operands with the new ones.
@@ -509,39 +496,12 @@ public:
       NewInst->setName("p_" + Inst->getName());
   }
 
-  void copyInstruction(const Instruction *Inst, ValueMapT &BBMap,
-                       ValueMapT &vectorMap, VectorValueMapT &scalarMaps,
-                       int vectorDimension, int vectorWidth) {
-    // If this instruction is already in the vectorMap, a vector instruction
-    // was already issued, that calculates the values of all dimensions. No
-    // need to create any more instructions.
-    if (vectorMap.count(Inst))
-      return;
-
-    // Terminator instructions control the control flow. They are explicitally
-    // expressed in the clast and do not need to be copied.
-    if (Inst->isTerminator())
-      return;
-
-    if (const LoadInst *load = dyn_cast<LoadInst>(Inst)) {
-      generateLoad(load, vectorMap, scalarMaps, vectorWidth);
-      return;
-    }
-
-    if (const BinaryOperator *binaryInst = dyn_cast<BinaryOperator>(Inst)) {
-      copyBinInst(binaryInst, BBMap, vectorMap, scalarMaps, vectorDimension,
-                  vectorWidth);
-      return;
-    }
-
-    if (const StoreInst *store = dyn_cast<StoreInst>(Inst))
-      if (vectorMap.count(store->getValueOperand()) > 0) {
-        copyVectorStore(store, BBMap, vectorMap, scalarMaps, vectorDimension,
-                        vectorWidth);
-        return;
-      }
-
-    copyInstScalar(Inst, BBMap, vectorMap);
+  bool hasVectorOperands(const Instruction *Inst, ValueMapT &VectorMap) {
+    for (Instruction::const_op_iterator OI = Inst->op_begin(),
+         OE = Inst->op_end(); OI != OE; ++OI)
+      if (VectorMap.count(*OI))
+        return true;
+    return false;
   }
 
   int getVectorSize() {
@@ -552,6 +512,42 @@ public:
     return getVectorSize() > 1;
   }
 
+  void copyInstruction(const Instruction *Inst, ValueMapT &BBMap,
+                       ValueMapT &vectorMap, VectorValueMapT &scalarMaps,
+                       int vectorDimension, int vectorWidth) {
+    // Terminator instructions control the control flow. They are explicitally
+    // expressed in the clast and do not need to be copied.
+    if (Inst->isTerminator())
+      return;
+
+    if (isVectorBlock()) {
+      // If this instruction is already in the vectorMap, a vector instruction
+      // was already issued, that calculates the values of all dimensions. No
+      // need to create any more instructions.
+      if (vectorMap.count(Inst))
+        return;
+    }
+
+    if (const LoadInst *load = dyn_cast<LoadInst>(Inst)) {
+      generateLoad(load, vectorMap, scalarMaps, vectorWidth);
+      return;
+    }
+
+    if (isVectorBlock() && hasVectorOperands(Inst, vectorMap)) {
+      if (const BinaryOperator *binaryInst = dyn_cast<BinaryOperator>(Inst))
+        copyBinInst(binaryInst, BBMap, vectorMap, scalarMaps, vectorDimension,
+                    vectorWidth);
+      else if (const StoreInst *store = dyn_cast<StoreInst>(Inst))
+        copyVectorStore(store, BBMap, vectorMap, scalarMaps, vectorDimension,
+                          vectorWidth);
+      else
+        llvm_unreachable("Cannot issue vector code for this instruction");
+
+      return;
+    }
+
+    copyInstScalar(Inst, BBMap);
+  }
   // Insert a copy of a basic block in the newly generated code.
   //
   // @param Builder The builder used to insert the code. It also specifies

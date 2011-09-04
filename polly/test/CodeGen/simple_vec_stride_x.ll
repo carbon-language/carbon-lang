@@ -41,19 +41,19 @@ bb:
 
 ; CHECK: load float* %p_scevgep1.moved.to.bb3
 ; CHECK: insertelement <4 x float> undef, float %tmp4_p_scalar_, i32 0
-; CHECK: load float* %p_scevgep1.moved.to.bb31
-; CHECK: insertelement <4 x float> %tmp4_p_vec_, float %tmp4_p_scalar_7, i32 1
-; CHECK: load float* %p_scevgep1.moved.to.bb32
-; CHECK: insertelement <4 x float> %tmp4_p_vec_8, float %tmp4_p_scalar_9, i32 2
-; CHECK: load float* %p_scevgep1.moved.to.bb33
-; CHECK: insertelement <4 x float> %tmp4_p_vec_10, float %tmp4_p_scalar_11, i32 3
-; CHECK: extractelement <4 x float> %tmp4_p_vec_12, i32 0
+; CHECK: load float* %p_scevgep1.moved.to.bb34
+; CHECK: insertelement <4 x float> %tmp4_p_vec_, float %tmp4_p_scalar_10, i32 1
+; CHECK: load float* %p_scevgep1.moved.to.bb35
+; CHECK: insertelement <4 x float> %tmp4_p_vec_11, float %tmp4_p_scalar_12, i32 2
+; CHECK: load float* %p_scevgep1.moved.to.bb36
+; CHECK: insertelement <4 x float> %tmp4_p_vec_13, float %tmp4_p_scalar_14, i32 3
+; CHECK: extractelement <4 x float> %tmp4_p_vec_15, i32 0
 ; CHECK: store float %0, float* %p_scevgep.moved.to.bb3
-; CHECK: extractelement <4 x float> %tmp4_p_vec_12, i32 1
-; CHECK: store float %1, float* %p_scevgep.moved.to.bb34
-; CHECK: extractelement <4 x float> %tmp4_p_vec_12, i32 2
-; CHECK: store float %2, float* %p_scevgep.moved.to.bb35
-; CHECK: extractelement <4 x float> %tmp4_p_vec_12, i32 3
-; CHECK: store float %3, float* %p_scevgep.moved.to.bb36
+; CHECK: extractelement <4 x float> %tmp4_p_vec_15, i32 1
+; CHECK: store float %1, float* %p_scevgep.moved.to.bb37
+; CHECK: extractelement <4 x float> %tmp4_p_vec_15, i32 2
+; CHECK: store float %2, float* %p_scevgep.moved.to.bb38
+; CHECK: extractelement <4 x float> %tmp4_p_vec_15, i32 3
+; CHECK: store float %3, float* %p_scevgep.moved.to.bb39
 
 
