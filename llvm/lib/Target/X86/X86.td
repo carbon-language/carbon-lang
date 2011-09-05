@@ -23,6 +23,9 @@ include "llvm/Target/Target.td"
 def Mode64Bit : SubtargetFeature<"64bit-mode", "In64BitMode", "true",
                                   "64-bit mode (x86_64)">;
 
+def ModeNaCl  : SubtargetFeature<"nacl-mode", "InNaClMode", "true",
+                                 "Native Client mode">;
+
 //===----------------------------------------------------------------------===//
 // X86 Subtarget features.
 //===----------------------------------------------------------------------===//

@@ -40,9 +40,16 @@ using namespace llvm;
 
 std::string X86_MC::ParseX86Triple(StringRef TT) {
   Triple TheTriple(TT);
+  std::string FS;
   if (TheTriple.getArch() == Triple::x86_64)
-    return "+64bit-mode";
-  return "-64bit-mode";
+    FS = "+64bit-mode";
+  else
+    FS = "-64bit-mode";
+  if (TheTriple.getOS() == Triple::NativeClient)
+    FS += ",+nacl-mode";
+  else
+    FS += ",-nacl-mode";
+  return FS;
 }
 
 /// GetCpuIDAndInfo - Execute the specified cpuid and return the 4 values in the

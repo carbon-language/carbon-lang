@@ -119,6 +119,9 @@ private:
   /// In64BitMode - True if compiling for 64-bit, false for 32-bit.
   bool In64BitMode;
 
+  /// InNaClMode - True if compiling for Native Client target.
+  bool InNaClMode;
+
 public:
 
   /// This constructor initializes the data members to match that
@@ -190,6 +193,11 @@ public:
     return !isTargetDarwin() && !isTargetWindows() && !isTargetCygMing();
   }
   bool isTargetLinux() const { return TargetTriple.getOS() == Triple::Linux; }
+  bool isTargetNaCl() const {
+    return TargetTriple.getOS() == Triple::NativeClient;
+  }
+  bool isTargetNaCl32() const { return isTargetNaCl() && !is64Bit(); }
+  bool isTargetNaCl64() const { return isTargetNaCl() && is64Bit(); }
 
   bool isTargetWindows() const { return TargetTriple.getOS() == Triple::Win32; }
   bool isTargetMingw() const { return TargetTriple.getOS() == Triple::MinGW32; }

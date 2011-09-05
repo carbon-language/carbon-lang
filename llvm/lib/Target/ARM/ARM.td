@@ -23,6 +23,9 @@ include "llvm/Target/Target.td"
 def ModeThumb  : SubtargetFeature<"thumb-mode", "InThumbMode", "true",
                                   "Thumb mode">;
 
+def ModeNaCl   : SubtargetFeature<"nacl-mode", "InNaClMode", "true",
+                                  "Native client mode">;
+
 //===----------------------------------------------------------------------===//
 // ARM Subtarget features.
 //

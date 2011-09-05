@@ -70,6 +70,9 @@ protected:
   /// InThumbMode - True if compiling for Thumb, false for ARM.
   bool InThumbMode;
 
+  /// InNaClMode - True if targeting Native Client
+  bool InNaClMode;
+
   /// HasThumb2 - True if Thumb2 instructions are supported.
   bool HasThumb2;
 
@@ -209,6 +212,9 @@ protected:
   const Triple &getTargetTriple() const { return TargetTriple; }
 
   bool isTargetDarwin() const { return TargetTriple.isOSDarwin(); }
+  bool isTargetNaCl() const {
+    return TargetTriple.getOS() == Triple::NativeClient;
+  }
   bool isTargetELF() const { return !isTargetDarwin(); }
 
   bool isAPCS_ABI() const { return TargetABI == ARM_ABI_APCS; }
