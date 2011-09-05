@@ -61,6 +61,12 @@ Constant *ConstantFoldCompareInstOperands(unsigned Predicate,
                                           Constant *LHS, Constant *RHS,
                                           const TargetData *TD = 0);
 
+/// ConstantFoldInsertValueInstruction - Attempt to constant fold an insertvalue
+/// instruction with the specified operands and indices.  The constant result is
+/// returned if successful; if not, null is returned.
+Constant *ConstantFoldInsertValueInstruction(Constant *Agg, Constant *Val,
+                                             ArrayRef<unsigned> Idxs);
+
 /// ConstantFoldLoadFromConstPtr - Return the value that a load from C would
 /// produce if it is constant and determinable.  If this is not determinable,
 /// return null.

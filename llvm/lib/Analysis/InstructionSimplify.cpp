@@ -2270,6 +2270,35 @@ Value *llvm::SimplifyGEPInst(ArrayRef<Value *> Ops,
   return ConstantExpr::getGetElementPtr(cast<Constant>(Ops[0]), Ops.slice(1));
 }
 
+/// SimplifyInsertValueInst - Given operands for an InsertValueInst, see if we
+/// can fold the result.  If not, this returns null.
+Value *llvm::SimplifyInsertValueInst(Value *Agg, Value *Val,
+                                     ArrayRef<unsigned> Idxs,
+                                     const TargetData *,
+                                     const DominatorTree *) {
+  if (Constant *CAgg = dyn_cast<Constant>(Agg))
+    if (Constant *CVal = dyn_cast<Constant>(Val))
+      return ConstantFoldInsertValueInstruction(CAgg, CVal, Idxs);
+
+  // insertvalue x, undef, n -> x
+  if (match(Val, m_Undef()))
+    return Agg;
+
+  // insertvalue x, (extractvalue y, n), n
+  if (ExtractValueInst *EV = dyn_cast<ExtractValueInst>(Val))
+    if (EV->getIndices() == Idxs) {
+      // insertvalue undef, (extractvalue y, n), n -> y
+      if (match(Agg, m_Undef()))
+        return EV->getAggregateOperand();
+
+      // insertvalue y, (extractvalue y, n), n -> y
+      if (Agg == EV->getAggregateOperand())
+        return Agg;
+    }
+
+  return 0;
+}
+
 /// SimplifyPHINode - See if we can fold the given phi.  If not, returns null.
 static Value *SimplifyPHINode(PHINode *PN, const DominatorTree *DT) {
   // If all of the PHI's incoming values are the same then replace the PHI node
@@ -2469,6 +2498,13 @@ Value *llvm::SimplifyInstruction(Instruction *I, const TargetData *TD,
   case Instruction::GetElementPtr: {
     SmallVector<Value*, 8> Ops(I->op_begin(), I->op_end());
     Result = SimplifyGEPInst(Ops, TD, DT);
+    break;
+  }
+  case Instruction::InsertValue: {
+    InsertValueInst *IV = cast<InsertValueInst>(I);
+    Result = SimplifyInsertValueInst(IV->getAggregateOperand(),
+                                     IV->getInsertedValueOperand(),
+                                     IV->getIndices(), TD, DT);
     break;
   }
   case Instruction::PHI:
