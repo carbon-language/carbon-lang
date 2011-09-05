@@ -32,7 +32,6 @@
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include <cctype>
 #include <cstring>
 using namespace clang;
 
@@ -1677,9 +1676,9 @@ bool Lexer::SkipBCPLComment(Token &Result, const char *CurPtr) {
         if (OldPtr[0] == '\n' || OldPtr[0] == '\r') {
           // Okay, we found a // comment that ends in a newline, if the next
           // line is also a // comment, but has spaces, don't emit a diagnostic.
-          if (isspace(C)) {
+          if (isWhitespace(C)) {
             const char *ForwardPtr = CurPtr;
-            while (isspace(*ForwardPtr))  // Skip whitespace.
+            while (isWhitespace(*ForwardPtr))  // Skip whitespace.
               ++ForwardPtr;
             if (ForwardPtr[0] == '/' && ForwardPtr[1] == '/')
               break;
