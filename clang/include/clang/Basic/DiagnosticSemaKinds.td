@@ -4358,13 +4358,13 @@ def note_ref_var_local_bind : Note<
 // a constructor parameter.
 def warn_bind_ref_member_to_parameter : Warning<
   "binding reference member %0 to stack allocated parameter %1">,
-  InGroup<DiagGroup<"dangling-field">>, DefaultIgnore;
+  InGroup<DiagGroup<"dangling-field">>;
 def warn_init_ptr_member_to_parameter_addr : Warning<
   "initializing pointer member %0 with the stack address of parameter %1">,
-  InGroup<DiagGroup<"dangling-field">>, DefaultIgnore;
+  InGroup<DiagGroup<"dangling-field">>;
 def warn_bind_ref_member_to_temporary : Warning<
   "binding reference member %0 to a temporary value">,
-  InGroup<DiagGroup<"dangling-field">>, DefaultIgnore;
+  InGroup<DiagGroup<"dangling-field">>;
 def note_ref_or_ptr_member_declared_here : Note<
   "%select{reference|pointer}0 member declared here">;
 
