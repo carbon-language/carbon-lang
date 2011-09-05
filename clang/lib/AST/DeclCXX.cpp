@@ -503,18 +503,18 @@ NotASpecialMember:;
     // Note that we have a user-declared constructor.
     data().UserDeclaredConstructor = true;
 
-    // FIXME: Under C++0x, /only/ special member functions may be user-provided.
-    //        This is probably a defect.
-    bool UserProvided = false;
+    // Technically, "user-provided" is only defined for special member
+    // functions, but the intent of the standard is clearly that it should apply
+    // to all functions.
+    bool UserProvided = Constructor->isUserProvided();
 
     // C++0x [class.ctor]p5:
     //   A default constructor is trivial if it is not user-provided [...]
     if (Constructor->isDefaultConstructor()) {
       data().DeclaredDefaultConstructor = true;
-      if (Constructor->isUserProvided()) {
+      if (UserProvided) {
         data().HasTrivialDefaultConstructor = false;
         data().UserProvidedDefaultConstructor = true;
-        UserProvided = true;
       }
     }
 
@@ -528,10 +528,8 @@ NotASpecialMember:;
         // C++0x [class.copy]p13:
         //   A copy/move constructor for class X is trivial if it is not
         //   user-provided [...]
-        if (Constructor->isUserProvided()) {
+        if (UserProvided)
           data().HasTrivialCopyConstructor = false;
-          UserProvided = true;
-        }
       } else if (Constructor->isMoveConstructor()) {
         data().UserDeclaredMoveConstructor = true;
         data().DeclaredMoveConstructor = true;
@@ -539,10 +537,8 @@ NotASpecialMember:;
         // C++0x [class.copy]p13:
         //   A copy/move constructor for class X is trivial if it is not
         //   user-provided [...]
-        if (Constructor->isUserProvided()) {
+        if (UserProvided)
           data().HasTrivialMoveConstructor = false;
-          UserProvided = true;
-        }
       }
     }
     if (Constructor->isConstexpr() && !Constructor->isCopyOrMoveConstructor()) {
