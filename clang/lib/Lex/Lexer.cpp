@@ -1635,20 +1635,28 @@ bool Lexer::SkipBCPLComment(Token &Result, const char *CurPtr) {
   char C;
   do {
     C = *CurPtr;
-    // FIXME: Speedup BCPL comment lexing.  Just scan for a \n or \r character.
-    // If we find a \n character, scan backwards, checking to see if it's an
-    // escaped newline, like we do for block comments.
-
     // Skip over characters in the fast loop.
     while (C != 0 &&                // Potentially EOF.
-           C != '\\' &&             // Potentially escaped newline.
-           C != '?' &&              // Potentially trigraph.
            C != '\n' && C != '\r')  // Newline or DOS-style newline.
       C = *++CurPtr;
 
-    // If this is a newline, we're done.
-    if (C == '\n' || C == '\r')
-      break;  // Found the newline? Break out!
+    const char *NextLine = CurPtr;
+    if (C != 0) {
+      // We found a newline, see if it's escaped.
+      const char *EscapePtr = CurPtr-1;
+      while (isHorizontalWhitespace(*EscapePtr)) // Skip whitespace.
+        --EscapePtr;
+
+      if (*EscapePtr == '\\') // Escaped newline.
+        CurPtr = EscapePtr;
+      else if (EscapePtr[0] == '/' && EscapePtr[-1] == '?' &&
+               EscapePtr[-2] == '?') // Trigraph-escaped newline.
+        CurPtr = EscapePtr-2;
+      else
+        break; // This is a newline, we're done.
+
+      C = *CurPtr;
+    }
 
     // Otherwise, this is a hard case.  Fall back on getAndAdvanceChar to
     // properly decode the character.  Read it in raw mode to avoid emitting
@@ -1659,6 +1667,13 @@ bool Lexer::SkipBCPLComment(Token &Result, const char *CurPtr) {
     LexingRawMode = true;
     C = getAndAdvanceChar(CurPtr, Result);
     LexingRawMode = OldRawMode;
+
+    // If we only read only one character, then no special handling is needed.
+    // We're done and can skip forward to the newline.
+    if (C != 0 && CurPtr == OldPtr+1) {
+      CurPtr = NextLine;
+      break;
+    }
 
     // If the char that we finally got was a \n, then we must have had something
     // like \<newline><newline>.  We don't want to have consumed the second
