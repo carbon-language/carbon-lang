@@ -2286,7 +2286,8 @@ Value *llvm::SimplifyInsertValueInst(Value *Agg, Value *Val,
 
   // insertvalue x, (extractvalue y, n), n
   if (ExtractValueInst *EV = dyn_cast<ExtractValueInst>(Val))
-    if (EV->getIndices() == Idxs) {
+    if (EV->getAggregateOperand()->getType() == Agg->getType() &&
+        EV->getIndices() == Idxs) {
       // insertvalue undef, (extractvalue y, n), n -> y
       if (match(Agg, m_Undef()))
         return EV->getAggregateOperand();
