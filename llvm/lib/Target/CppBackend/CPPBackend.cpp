@@ -1086,8 +1086,7 @@ void CppWriter::printInstruction(const Instruction *I,
         << getOpName(inv->getCalledFunction()) << ", "
         << getOpName(inv->getNormalDest()) << ", "
         << getOpName(inv->getUnwindDest()) << ", "
-        << iName << "_params.begin(), "
-        << iName << "_params.end(), \"";
+        << iName << "_params, \"";
     printEscapedString(inv->getName());
     Out << "\", " << bbname << ");";
     nl(Out) << iName << "->setCallingConv(";
@@ -1409,7 +1408,7 @@ void CppWriter::printInstruction(const Instruction *I,
     Out << "ExtractValueInst* " << getCppName(evi)
         << " = ExtractValueInst::Create(" << opNames[0]
         << ", "
-        << iName << "_indices.begin(), " << iName << "_indices.end(), \"";
+        << iName << "_indices, \"";
     printEscapedString(evi->getName());
     Out << "\", " << bbname << ");";
     break;
@@ -1426,7 +1425,7 @@ void CppWriter::printInstruction(const Instruction *I,
     Out << "InsertValueInst* " << getCppName(ivi)
         << " = InsertValueInst::Create(" << opNames[0]
         << ", " << opNames[1] << ", "
-        << iName << "_indices.begin(), " << iName << "_indices.end(), \"";
+        << iName << "_indices, \"";
     printEscapedString(ivi->getName());
     Out << "\", " << bbname << ");";
     break;
