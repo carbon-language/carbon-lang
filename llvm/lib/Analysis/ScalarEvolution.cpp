@@ -5184,8 +5184,12 @@ ScalarEvolution::HowFarToZero(const SCEV *V, const Loop *L) {
   // Handle unitary steps, which cannot wraparound.
   // 1*N = -Start; -1*N = Start (mod 2^BW), so:
   //   N = Distance (as unsigned)
-  if (StepC->getValue()->equalsInt(1) || StepC->getValue()->isAllOnesValue())
-    return Distance;
+  if (StepC->getValue()->equalsInt(1) || StepC->getValue()->isAllOnesValue()) {
+    ConstantRange CR = getUnsignedRange(Start);
+    const SCEV *MaxBECount = getConstant(CountDown ? CR.getUnsignedMax()
+                                                   : ~CR.getUnsignedMin());
+    return ExitLimit(Distance, MaxBECount);
+  }
 
   // If the recurrence is known not to wraparound, unsigned divide computes the
   // back edge count. We know that the value will either become zero (and thus

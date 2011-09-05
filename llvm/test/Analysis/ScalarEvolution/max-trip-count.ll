@@ -70,3 +70,34 @@ for.end:                                          ; preds = %for.body, %for.cond
 }
 
 declare i32 @printf(i8*, ...)
+
+; Before -indvars ran on this loop, SCEV solved a max loop trip count of
+; 2^31-2.  Afterwards, we can only solve 2^32-1.
+
+define void @test(i8* %a, i32 %n) nounwind {
+entry:
+  %cmp1 = icmp sgt i32 %n, 0
+  br i1 %cmp1, label %for.body.lr.ph, label %for.end
+
+for.body.lr.ph:                                   ; preds = %entry
+  %tmp = zext i32 %n to i64
+  br label %for.body
+
+for.body:                                         ; preds = %for.body, %for.body.lr.ph
+  %indvar = phi i64 [ %indvar.next, %for.body ], [ 0, %for.body.lr.ph ]
+  %arrayidx = getelementptr i8* %a, i64 %indvar
+  store i8 0, i8* %arrayidx, align 1
+  %indvar.next = add i64 %indvar, 1
+  %exitcond = icmp ne i64 %indvar.next, %tmp
+  br i1 %exitcond, label %for.body, label %for.cond.for.end_crit_edge
+
+for.cond.for.end_crit_edge:                       ; preds = %for.body
+  br label %for.end
+
+for.end:                                          ; preds = %for.cond.for.end_crit_edge, %entry
+  ret void
+}
+
+; CHECK: Determining loop execution counts for: @test
+; CHECK-NEXT: backedge-taken count is
+; CHECK-NEXT: max backedge-taken count is -1
