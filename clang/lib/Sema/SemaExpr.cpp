@@ -8755,6 +8755,8 @@ ExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
       getCurFunction()->setHasBranchProtectedScope();
   }
 
+  computeNRVO(Body, getCurBlock());
+  
   BlockExpr *Result = new (Context) BlockExpr(BSI->TheDecl, BlockTy);
   const AnalysisBasedWarnings::Policy &WP = AnalysisWarnings.getDefaultPolicy();
   PopFunctionOrBlockScope(&WP, Result->getBlockDecl(), Result);
