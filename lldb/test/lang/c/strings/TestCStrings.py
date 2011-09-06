@@ -50,6 +50,15 @@ class CStringsTestCase(TestBase):
         self.expect("expression -- \"\"[0]",
                     startstr = "(const char) $4 = '\\0'")
 
+        self.expect("p \"hello\"",
+            substrs = ['(const char [6]) $', 'hello',
+                       '(const char) [0] = \'h\'',
+                       '(const char) [5] = \'\\0\''])
+
+        self.expect("p (char*)\"hello\"",
+                    substrs = ['(char *) $', ' = 0x',
+                               'hello'])
+
 if __name__ == '__main__':
     import atexit
     lldb.SBDebugger.Initialize()

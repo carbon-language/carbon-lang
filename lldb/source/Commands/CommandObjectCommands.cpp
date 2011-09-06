@@ -1514,7 +1514,7 @@ public:
 OptionDefinition
 CommandObjectCommandsScriptAdd::CommandOptions::g_option_table[] =
 {
-    { LLDB_OPT_SET_1, false, "function", 'f', required_argument, NULL, 0, eArgTypeName,        "Name of a Python function to use."},
+    { LLDB_OPT_SET_1, false, "function", 'f', required_argument, NULL, 0, eArgTypePythonFunction,        "Name of the Python function to bind to this command name."},
     { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 

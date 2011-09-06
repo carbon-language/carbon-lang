@@ -697,8 +697,8 @@ SummaryStringHelpTextCallback()
         "A variable is expanded by giving it a value other than its textual representation, and the way this is done depends on what comes after the ${ marker.\n"
         "The most common sequence if ${var followed by an expression path, which is the text one would type to access a member of an aggregate types, given a variable of that type"
         " (e.g. if type T has a member named x, which has a member named y, and if t is of type T, the expression path would be .x.y and the way to fit that into a summary string would be"
-        " ${var.x.y}). In expression paths you can use either . or -> without any difference in meaning. You can also use ${*var followed by an expression path and in that case"
-        " the object referred by the path will be dereferenced before being displayed. If the object is not a pointer, doing so will cause an error.\n"
+        " ${var.x.y}). You can also use ${*var followed by an expression path and in that case the object referred by the path will be dereferenced before being displayed."
+        " If the object is not a pointer, doing so will cause an error. For additional details on expression paths, you can type 'help expr-path'. \n"
         "By default, summary strings attempt to display the summary for any variable they reference, and if that fails the value. If neither can be shown, nothing is displayed."
         "In a summary string, you can also use an array index [n], or a slice-like range [n-m]. This can have two different meanings depending on what kind of object the expression"
         " path refers to:\n"
@@ -706,7 +706,41 @@ SummaryStringHelpTextCallback()
         " and displayed as an individual variable\n"
         "  - if it is an array or pointer the array items indicated by the indexing operator are shown as the result of the variable. if the expression is an array, real array items are"
         " printed; if it is a pointer, the pointer-as-array syntax is used to obtain the values (this means, the latter case can have no range checking)\n"
-        "If you are trying to display an array for which the size is known, you can also use [] instead of giving an exact range. This has the effect of showing items 0 thru size - 1.";    
+        "If you are trying to display an array for which the size is known, you can also use [] instead of giving an exact range. This has the effect of showing items 0 thru size - 1.\n"
+        "Additionally, a variable can contain an (optional) format code, as in ${var.x.y%code}, where code can be any of the valid formats described in 'help format', or one of the"
+        " special symbols only allowed as part of a variable:\n"
+        "    %V: show the value of the object by default\n"
+        "    %S: show the summary of the object by default\n"
+        "    %@: show the runtime-provided object description (for Objective-C, it calls NSPrintForDebugger; for C/C++ it does nothing)\n"
+        "    %L: show the location of the object (memory address or a register name)\n"
+        "    %#: show the number of children of the object\n"
+        "    %T: show the type of the object\n"
+        "Another variable that you can use in summary strings is ${svar . This sequence works exactly like ${var, including the fact that ${*svar is an allowed sequence, but uses"
+        " the object's synthetic children provider instead of the actual objects. For instance, if you are using STL synthetic children providers, the following summary string would"
+        " count the number of actual elements stored in an std::list:\n"
+        "type summary add -s \"${svar%#}\" -x \"std::list<\"";
+}
+
+static const char *
+ExprPathHelpTextCallback()
+{
+    return
+    "An expression path is the sequence of symbols that is used in C/C++ to access a member variable of an aggregate object (class).\n"
+    "For instance, given a class:\n"
+    "  class foo {\n"
+    "      int a;\n"
+    "      int b; .\n"
+    "      foo* next;\n"
+    "  };\n"
+    "the expression to read item b in the item pointed to by next for foo aFoo would be aFoo.next->b.\n"
+    "Given that aFoo could just be any object of type foo, the string '.next->b' is the expression path, because it can be attached to any foo instance to achieve the effect.\n"
+    "Expression paths in LLDB include dot (.) and arrow (->) operators, and most commands using expression paths have ways to also accept the star (*) operator.\n"
+    "The meaning of these operators is the same as the usual one given to them by the C/C++ standards.\n"
+    "LLDB also has support for indexing ([ ]) in expression paths, and extends the traditional meaning of the square brackets operator to allow bitfield extraction:\n"
+    "for objects of native types (int, float, char, ...) saying '[n-m]' as an expression path (where n and m are any positive integers, e.g. [3-5]) causes LLDB to extract"
+    " bits n thru m from the value of the variable. If n == m, [n] is also allowed as a shortcut syntax. For arrays and pointers, expression paths can only contain one index"
+    " and the meaning of the operation is the same as the one defined by C/C++ (item extraction). Some commands extend bitfield-like syntax for arrays and pointers with the"
+    " meaning of array slicing (taking elements n thru m inside the array or pointed-to memory).";
 }
 
 const char * 
@@ -742,6 +776,7 @@ CommandObject::g_arguments_data[] =
     { eArgTypeCount, "count", CommandCompletions::eNoCompletion, { NULL, false }, "An unsigned integer." },
     { eArgTypeEndAddress, "end-address", CommandCompletions::eNoCompletion, { NULL, false }, "Help text goes here." },
     { eArgTypeExpression, "expr", CommandCompletions::eNoCompletion, { NULL, false }, "Help text goes here." },
+    { eArgTypeExpressionPath, "expr-path", CommandCompletions::eNoCompletion, { ExprPathHelpTextCallback, true }, NULL },
     { eArgTypeExprFormat, "expression-format", CommandCompletions::eNoCompletion, { NULL, false }, "[ [bool|b] | [bin] | [char|c] | [oct|o] | [dec|i|d|u] | [hex|x] | [float|f] | [cstr|s] ]" },
     { eArgTypeFilename, "filename", CommandCompletions::eDiskFileCompletion, { NULL, false }, "The name of a file (can include path)." },
     { eArgTypeFormat, "format", CommandCompletions::eNoCompletion, { FormatHelpTextCallback, true }, NULL },
@@ -764,6 +799,9 @@ CommandObject::g_arguments_data[] =
     { eArgTypePid, "pid", CommandCompletions::eNoCompletion, { NULL, false }, "The process ID number." },
     { eArgTypePlugin, "plugin", CommandCompletions::eNoCompletion, { NULL, false }, "Help text goes here." },
     { eArgTypeProcessName, "process-name", CommandCompletions::eNoCompletion, { NULL, false }, "The name of the process." },
+    { eArgTypePythonClass, "python-class", CommandCompletions::eNoCompletion, { NULL, false }, "The name of a Python class." },
+    { eArgTypePythonFunction, "python-function", CommandCompletions::eNoCompletion, { NULL, false }, "The name of a Python function." },
+    { eArgTypePythonScript, "python-script", CommandCompletions::eNoCompletion, { NULL, false }, "Source code written in Python." },
     { eArgTypeQueueName, "queue-name", CommandCompletions::eNoCompletion, { NULL, false }, "The name of the thread queue." },
     { eArgTypeRegisterName, "register-name", CommandCompletions::eNoCompletion, { NULL, false }, "A register name." },
     { eArgTypeRegularExpression, "regular-expression", CommandCompletions::eNoCompletion, { NULL, false }, "A regular expression." },

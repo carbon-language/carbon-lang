@@ -35,7 +35,8 @@ ValueObjectChild::ValueObjectChild
     uint32_t bitfield_bit_size,
     uint32_t bitfield_bit_offset,
     bool is_base_class,
-    bool is_deref_of_parent
+    bool is_deref_of_parent,
+    AddressType child_ptr_or_ref_addr_type
 ) :
     ValueObject (parent),
     m_clang_ast (clang_ast),
@@ -48,6 +49,7 @@ ValueObjectChild::ValueObjectChild
     m_is_deref_of_parent (is_deref_of_parent)
 {
     m_name = name;
+    SetAddressTypeOfChildren(child_ptr_or_ref_addr_type);
 }
 
 ValueObjectChild::~ValueObjectChild()
@@ -108,10 +110,7 @@ ValueObjectChild::UpdateValue ()
 
             if (ClangASTContext::IsPointerOrReferenceType (parent->GetClangType()))
             {
-                const bool scalar_is_load_address = true;
-                AddressType address_type;
-
-                lldb::addr_t addr = parent->GetPointerValue (address_type, scalar_is_load_address);
+                lldb::addr_t addr = parent->GetPointerValue ();
                 m_value.GetScalar() = addr;
 
                 if (addr == LLDB_INVALID_ADDRESS)
@@ -125,10 +124,28 @@ ValueObjectChild::UpdateValue ()
                 else
                 {
                     m_value.GetScalar() += m_byte_offset;
-                    if (m_pointers_point_to_load_addrs ||
-                        value_type == Value::eValueTypeScalar ||
-                        value_type == Value::eValueTypeFileAddress)
-                        m_value.SetValueType (Value::eValueTypeLoadAddress);
+                    AddressType addr_type = parent->GetAddressTypeOfChildren();
+                    
+                    switch (addr_type)
+                    {
+                        case eAddressTypeFile:
+                            if (m_update_point.GetProcessSP().get() != NULL && m_update_point.GetProcessSP()->IsAlive() == true)
+                                m_value.SetValueType (Value::eValueTypeLoadAddress);
+                            else
+                                m_value.SetValueType(Value::eValueTypeFileAddress);
+                            break;
+                        case eAddressTypeLoad:
+                            m_value.SetValueType (Value::eValueTypeLoadAddress);
+                            break;
+                        case eAddressTypeHost:
+                            m_value.SetValueType(Value::eValueTypeHostAddress);
+                            break;
+                        case eAddressTypeInvalid:
+                        default:
+                            // TODO: does this make sense?
+                            m_value.SetValueType(Value::eValueTypeScalar);
+                            break;
+                    }
                 }
             }
             else

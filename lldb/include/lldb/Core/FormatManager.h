@@ -410,17 +410,17 @@ public:
     }
     
     lldb::FormatCategorySP
-    Category (const char* category_name = NULL,
-              bool can_create = true)
+    GetCategory (const char* category_name = NULL,
+                 bool can_create = true)
     {
         if (!category_name)
-            return Category(m_default_category_name);
-        return Category(ConstString(category_name));
+            return GetCategory(m_default_category_name);
+        return GetCategory(ConstString(category_name));
     }
     
     lldb::FormatCategorySP
-    Category (const ConstString& category_name,
-              bool can_create = true);
+    GetCategory (const ConstString& category_name,
+                 bool can_create = true);
     
     bool
     Get (ValueObject& valobj,

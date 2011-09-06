@@ -76,10 +76,7 @@ struct ValueFormat
     {
         return m_format;
     }
-    
-    std::string
-    FormatObject(lldb::ValueObjectSP object);
-    
+        
 };
     
 class SyntheticChildrenFrontEnd

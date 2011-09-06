@@ -156,9 +156,9 @@ OperatingSystemDarwinKernel::GetDynamicRegisterInfo ()
         ValueObjectSP gpr_valobj_sp (m_thread_list_valobj_sp->GetChildMemberWithName(GetThreadGPRMemberName (), can_create));
         
         if (gpr_valobj_sp->IsPointerType ())
-            base_addr = gpr_valobj_sp->GetPointerValue (addr_type, true);
+            base_addr = gpr_valobj_sp->GetPointerValue (&addr_type);
         else
-            base_addr = gpr_valobj_sp->GetAddressOf (addr_type, true);
+            base_addr = gpr_valobj_sp->GetAddressOf (true, &addr_type);
 
         ValueObjectSP child_valobj_sp;
         if (gpr_valobj_sp)
@@ -188,7 +188,7 @@ OperatingSystemDarwinKernel::GetDynamicRegisterInfo ()
                 {
                     // Adjust the byte size and the offset to match the layout of registers in our struct
                     reg_info.byte_size = child_valobj_sp->GetByteSize();
-                    reg_info.byte_offset = child_valobj_sp->GetAddressOf(addr_type, true) - base_addr;
+                    reg_info.byte_offset = child_valobj_sp->GetAddressOf(true, &addr_type) - base_addr;
                     reg_info.kinds[eRegisterKindLLDB] = reg_num++;
                     m_register_info_ap->AddRegister (reg_info, reg_name, empty_name, gpr_name);
                 }
@@ -290,9 +290,9 @@ OperatingSystemDarwinKernel::CreateRegisterContextForThread (Thread *thread)
         if (gpr_valobj_sp)
         {
             if (gpr_valobj_sp->IsPointerType ())
-                base_addr = gpr_valobj_sp->GetPointerValue (addr_type, true);
+                base_addr = gpr_valobj_sp->GetPointerValue (&addr_type);
             else
-                base_addr = gpr_valobj_sp->GetAddressOf (addr_type, true);
+                base_addr = gpr_valobj_sp->GetAddressOf (true, &addr_type);
             reg_ctx_sp.reset (new RegisterContextMemory (*thread, 0, *GetDynamicRegisterInfo (), base_addr));
         }
     }

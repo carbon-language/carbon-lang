@@ -196,6 +196,11 @@ public:
     lldb::SBValue
     CreateValueFromAddress(const char* name, lldb::addr_t address, const SBType& type);
     
+	lldb::SBValue
+	CreateValueFromData (const char* name,
+	                     const SBData& data,
+	                     const SBType& type);
+
     lldb::SBType
     GetType();
     
@@ -278,9 +283,57 @@ public:
 
     bool
     GetExpressionPath (lldb::SBStream &description);
+
+	%feature("docstring", "
+	//------------------------------------------------------------------
+    /// Get an SBData wrapping what this SBValue points to.
+    ///
+    /// This method will dereference the current SBValue, if its
+    /// data type is a T* or T[], and extract item_count elements
+    /// of type T from it, copying their contents in an SBData. 
+    ///
+    /// @param[in] item_idx
+    ///     The index of the first item to retrieve. For an array
+    ///     this is equivalent to array[item_idx], for a pointer
+    ///     to *(pointer + item_idx). In either case, the measurement
+    ///     unit for item_idx is the sizeof(T) rather than the byte
+    ///
+    /// @param[in] item_count
+    ///     How many items should be copied into the output. By default
+    ///     only one item is copied, but more can be asked for.
+    ///
+    /// @return
+    ///     An SBData with the contents of the copied items, on success.
+    ///     An empty SBData otherwise.
+    //------------------------------------------------------------------
+	") GetPointeeData;
+	lldb::SBData
+	GetPointeeData (uint32_t item_idx = 0,
+					uint32_t item_count = 1);
+
+    %feature("docstring", "
+	//------------------------------------------------------------------
+    /// Get an SBData wrapping the contents of this SBValue.
+    ///
+    /// This method will read the contents of this object in memory
+    /// and copy them into an SBData for future use. 
+    ///
+    /// @return
+    ///     An SBData with the contents of this SBValue, on success.
+    ///     An empty SBData otherwise.
+    //------------------------------------------------------------------
+	") GetData;
+    lldb::SBData
+    GetData ();
+
+	lldb::addr_t
+	GetLoadAddress();
+
+	lldb::SBAddress
+	GetAddress();
     
     %feature("docstring", "Returns an expression path for this value."
-    ) GetValueForExpressionPath;
+    ) GetExpressionPath;
     bool
     GetExpressionPath (lldb::SBStream &description, bool qualify_cxx_base_classes);
 };

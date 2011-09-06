@@ -9,6 +9,8 @@
 
 #include "lldb/Core/ValueObjectConstResult.h"
 
+#include "lldb/Core/ValueObjectChild.h"
+#include "lldb/Core/ValueObjectConstResultChild.h"
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/ValueObjectList.h"
@@ -31,30 +33,34 @@ ValueObjectConstResult::Create
 (
     ExecutionContextScope *exe_scope,
     ByteOrder byte_order, 
-    uint32_t addr_byte_size
+     uint32_t addr_byte_size,
+     lldb::addr_t address
 )
 {
     return (new ValueObjectConstResult (exe_scope,
                                         byte_order,
-                                        addr_byte_size))->GetSP();
+                                        addr_byte_size,
+                                        address))->GetSP();
 }
 
 ValueObjectConstResult::ValueObjectConstResult
 (
     ExecutionContextScope *exe_scope,
     ByteOrder byte_order, 
-    uint32_t addr_byte_size
+    uint32_t addr_byte_size,
+    lldb::addr_t address
 ) :
     ValueObject (exe_scope),
     m_clang_ast (NULL),
     m_type_name (),
-    m_byte_size (0)
+    m_byte_size (0),
+    m_impl(this, address)
 {
     SetIsConstant ();
     SetValueIsValid(true);
     m_data.SetByteOrder(byte_order);
     m_data.SetAddressByteSize(addr_byte_size);
-    m_pointers_point_to_load_addrs = true;
+    SetAddressTypeOfChildren(eAddressTypeLoad);
 }
 
 ValueObjectSP
@@ -64,14 +70,16 @@ ValueObjectConstResult::Create
     clang::ASTContext *clang_ast,
     void *clang_type,
     const ConstString &name,
-    const DataExtractor &data
+    const DataExtractor &data,
+    lldb::addr_t address
 )
 {
     return (new ValueObjectConstResult (exe_scope,
                                         clang_ast,
                                         clang_type,
                                         name,
-                                        data))->GetSP();
+                                        data,
+                                        address))->GetSP();
 }
 
 ValueObjectConstResult::ValueObjectConstResult
@@ -80,12 +88,14 @@ ValueObjectConstResult::ValueObjectConstResult
     clang::ASTContext *clang_ast,
     void *clang_type,
     const ConstString &name,
-    const DataExtractor &data
+    const DataExtractor &data,
+    lldb::addr_t address
 ) :
     ValueObject (exe_scope),
     m_clang_ast (clang_ast),
     m_type_name (),
-    m_byte_size (0)
+    m_byte_size (0),
+    m_impl(this, address)
 {
     m_data = data;
     m_value.GetScalar() = (uintptr_t)m_data.GetDataStart();
@@ -94,7 +104,7 @@ ValueObjectConstResult::ValueObjectConstResult
     m_name = name;
     SetIsConstant ();
     SetValueIsValid(true);
-    m_pointers_point_to_load_addrs = true;
+    SetAddressTypeOfChildren(eAddressTypeLoad);
 }
 
 ValueObjectSP
@@ -106,7 +116,8 @@ ValueObjectConstResult::Create
     const ConstString &name,
     const lldb::DataBufferSP &data_sp,
     lldb::ByteOrder data_byte_order, 
-    uint8_t data_addr_size
+    uint8_t data_addr_size,
+    lldb::addr_t address
 )
 {
     return (new ValueObjectConstResult (exe_scope,
@@ -115,7 +126,8 @@ ValueObjectConstResult::Create
                                         name,
                                         data_sp,
                                         data_byte_order,
-                                        data_addr_size))->GetSP();
+                                        data_addr_size,
+                                        address))->GetSP();
 }
 
 ValueObjectConstResult::ValueObjectConstResult
@@ -126,12 +138,14 @@ ValueObjectConstResult::ValueObjectConstResult
     const ConstString &name,
     const lldb::DataBufferSP &data_sp,
     lldb::ByteOrder data_byte_order, 
-    uint8_t data_addr_size
+    uint8_t data_addr_size,
+    lldb::addr_t address
 ) :
     ValueObject (exe_scope),
     m_clang_ast (clang_ast),
     m_type_name (),
-    m_byte_size (0)
+    m_byte_size (0),
+    m_impl(this, address)
 {
     m_data.SetByteOrder(data_byte_order);
     m_data.SetAddressByteSize(data_addr_size);
@@ -142,7 +156,7 @@ ValueObjectConstResult::ValueObjectConstResult
     m_name = name;
     SetIsConstant ();
     SetValueIsValid(true);
-    m_pointers_point_to_load_addrs = true;
+    SetAddressTypeOfChildren(eAddressTypeLoad);
 }
 
 ValueObjectSP
@@ -179,7 +193,8 @@ ValueObjectConstResult::ValueObjectConstResult
     ValueObject (exe_scope),
     m_clang_ast (clang_ast),
     m_type_name (),
-    m_byte_size (0)
+    m_byte_size (0),
+    m_impl(this, address)
 {
     m_value.GetScalar() = address;
     m_data.SetAddressByteSize(addr_byte_size);
@@ -197,7 +212,7 @@ ValueObjectConstResult::ValueObjectConstResult
     m_name = name;
     SetIsConstant ();
     SetValueIsValid(true);
-    m_pointers_point_to_load_addrs = true;
+    SetAddressTypeOfChildren(eAddressTypeLoad);
 }
 
 ValueObjectSP
@@ -217,11 +232,11 @@ ValueObjectConstResult::ValueObjectConstResult (
     ValueObject (exe_scope),
     m_clang_ast (NULL),
     m_type_name (),
-    m_byte_size (0)
+    m_byte_size (0),
+    m_impl(this)
 {
     m_error = error;
     SetIsConstant ();
-    m_pointers_point_to_load_addrs = true;
 }
 
 ValueObjectConstResult::~ValueObjectConstResult()
@@ -244,10 +259,7 @@ size_t
 ValueObjectConstResult::GetByteSize()
 {
     if (m_byte_size == 0)
-    {
-        uint64_t bit_width = ClangASTType::GetClangTypeBitWidth (GetClangAST(), GetClangType());
-        m_byte_size = (bit_width + 7 ) / 8;
-    }
+        m_byte_size = ClangASTType::GetTypeByteSize(GetClangAST(), GetClangType());
     return m_byte_size;
 }
 
@@ -292,4 +304,36 @@ ValueObjectConstResult::IsInScope ()
     // A const result value is always in scope since it serializes all 
     // information needed to contain the constant value.
     return true;
+}
+
+lldb::ValueObjectSP
+ValueObjectConstResult::Dereference (Error &error)
+{
+    return m_impl.Dereference(error);
+}
+
+lldb::ValueObjectSP
+ValueObjectConstResult::GetSyntheticChildAtOffset(uint32_t offset, const ClangASTType& type, bool can_create)
+{
+    return m_impl.GetSyntheticChildAtOffset(offset, type, can_create);
+}
+
+lldb::ValueObjectSP
+ValueObjectConstResult::AddressOf (Error &error)
+{
+    return m_impl.AddressOf(error);
+}
+
+ValueObject *
+ValueObjectConstResult::CreateChildAtIndex (uint32_t idx, bool synthetic_array_member, int32_t synthetic_index)
+{
+    return m_impl.CreateChildAtIndex(idx, synthetic_array_member, synthetic_index);
+}
+
+size_t
+ValueObjectConstResult::GetPointeeData (DataExtractor& data,
+                                        uint32_t item_idx,
+                                        uint32_t item_count)
+{
+    return m_impl.GetPointeeData(data, item_idx, item_count);
 }

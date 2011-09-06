@@ -79,6 +79,14 @@ class SmartArrayDataFormatterTestCase(TestBase):
                     substrs = ['arr = \"',
                                'Nested Hello world!'])
 
+        self.expect("p strarr",
+                    substrs = ['arr = \"',
+                               'Hello world!'])
+
+        self.expect("p other.strarr",
+                    substrs = ['arr = \"',
+                               'Nested Hello world!'])
+
 # ${var%c}
         self.runCmd("type summary add --summary-string \"ptr = ${var%c}\" \"char *\"")
     
@@ -90,6 +98,14 @@ class SmartArrayDataFormatterTestCase(TestBase):
                 substrs = ['ptr = \"',
                            'Nested Hello world!'])
 
+        self.expect("p strptr",
+                    substrs = ['ptr = \"',
+                               'Hello world!'])
+
+        self.expect("p other.strptr",
+                    substrs = ['ptr = \"',
+                               'Nested Hello world!'])
+
         self.runCmd("type summary add --summary-string \"arr = ${var%c}\" -x \"char \\[[0-9]+\\]\"")
 
         self.expect("frame variable strarr",
@@ -100,6 +116,14 @@ class SmartArrayDataFormatterTestCase(TestBase):
                     substrs = ['arr = \"',
                                'Nested Hello world!'])
         
+        self.expect("p strarr",
+                    substrs = ['arr = \"',
+                               'Hello world!'])
+
+        self.expect("p other.strarr",
+                    substrs = ['arr = \"',
+                               'Nested Hello world!'])
+
 # ${var%char[]}
         self.runCmd("type summary add --summary-string \"arr = ${var%char[]}\" -x \"char \\[[0-9]+\\]\"")
 
@@ -108,6 +132,14 @@ class SmartArrayDataFormatterTestCase(TestBase):
                                'Hello world!'])
 
         self.expect("frame variable other.strarr",
+                    substrs = ['arr = ',
+                               'Nested Hello world!'])
+
+        self.expect("p strarr",
+                    substrs = ['arr = \"',
+                               'Hello world!'])
+
+        self.expect("p other.strarr",
                     substrs = ['arr = ',
                                'Nested Hello world!'])
 
@@ -121,6 +153,14 @@ class SmartArrayDataFormatterTestCase(TestBase):
             substrs = ['ptr = \"',
             'Nested Hello world!'])
 
+        self.expect("p strptr",
+                    substrs = ['ptr = \"',
+                               'Hello world!'])
+
+        self.expect("p other.strptr",
+                    substrs = ['ptr = \"',
+                               'Nested Hello world!'])
+
 # ${var%a}
         self.runCmd("type summary add --summary-string \"arr = ${var%a}\" -x \"char \\[[0-9]+\\]\"")
 
@@ -132,6 +172,14 @@ class SmartArrayDataFormatterTestCase(TestBase):
                     substrs = ['arr = ',
                                'Nested Hello world!'])
 
+        self.expect("p strarr",
+                    substrs = ['arr = \"',
+                               'Hello world!'])
+
+        self.expect("p other.strarr",
+                    substrs = ['arr = ',
+                               'Nested Hello world!'])
+
         self.runCmd("type summary add --summary-string \"ptr = ${var%a}\" \"char *\"")
 
         self.expect("frame variable strptr",
@@ -139,6 +187,14 @@ class SmartArrayDataFormatterTestCase(TestBase):
                                'Hello world!'])
 
         self.expect("frame variable other.strptr",
+                    substrs = ['ptr = \"',
+                               'Nested Hello world!'])
+
+        self.expect("p strptr",
+                    substrs = ['ptr = \"',
+                               'Hello world!'])
+
+        self.expect("p other.strptr",
                     substrs = ['ptr = \"',
                                'Nested Hello world!'])
 
@@ -154,6 +210,14 @@ class SmartArrayDataFormatterTestCase(TestBase):
                     substrs = ['ptr = \"',
                                'Nested Hello world!'])
 
+        self.expect("p strptr", matching=False,
+                    substrs = ['ptr = \"',
+                               'Hello world!'])
+
+        self.expect("p other.strptr", matching=False,
+                    substrs = ['ptr = \"',
+                               'Nested Hello world!'])
+
 # You asked an array-style printout...
         self.runCmd("type summary add --summary-string \"ptr = ${var[0-1]%char[]}\" \"char *\"")
         
@@ -162,6 +226,14 @@ class SmartArrayDataFormatterTestCase(TestBase):
                                '[{H},{e}]'])
         
         self.expect("frame variable other.strptr",
+                    substrs = ['ptr = ',
+                               '[{N},{e}]'])
+
+        self.expect("p strptr",
+                    substrs = ['ptr = ',
+                               '[{H},{e}]'])
+
+        self.expect("p other.strptr",
                     substrs = ['ptr = ',
                                '[{N},{e}]'])
 

@@ -62,7 +62,7 @@ ItaniumABILanguageRuntime::GetDynamicTypeAndAddress (ValueObject &in_value,
         
         // First job, pull out the address at 0 offset from the object.
         AddressType address_type;
-        lldb::addr_t original_ptr = in_value.GetPointerValue(address_type, true);
+        lldb::addr_t original_ptr = in_value.GetPointerValue(&address_type);
         if (original_ptr == LLDB_INVALID_ADDRESS)
             return false;
             

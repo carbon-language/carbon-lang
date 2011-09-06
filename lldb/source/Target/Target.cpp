@@ -623,9 +623,19 @@ Target::ReadMemoryFromFileCache (const Address& addr, void *dst, size_t dst_len,
 }
 
 size_t
-Target::ReadMemory (const Address& addr, bool prefer_file_cache, void *dst, size_t dst_len, Error &error)
+Target::ReadMemory (const Address& addr,
+                    bool prefer_file_cache,
+                    void *dst,
+                    size_t dst_len,
+                    Error &error,
+                    lldb::addr_t *load_addr_ptr)
 {
     error.Clear();
+    
+    // if we end up reading this from process memory, we will fill this
+    // with the actual load address
+    if (load_addr_ptr)
+        *load_addr_ptr = LLDB_INVALID_ADDRESS;
     
     bool process_is_valid = m_process_sp && m_process_sp->IsAlive();
 
@@ -692,7 +702,11 @@ Target::ReadMemory (const Address& addr, bool prefer_file_cache, void *dst, size
                 }
             }
             if (bytes_read)
+            {
+                if (load_addr_ptr)
+                    *load_addr_ptr = load_addr;
                 return bytes_read;
+            }
             // If the address is not section offset we have an address that
             // doesn't resolve to any address in any currently loaded shared
             // libaries and we failed to read memory so there isn't anything
@@ -1579,6 +1593,7 @@ Target::SettingsController::CreateInstanceSettings (const char *instance_name)
 #define TSC_SKIP_PROLOGUE     "skip-prologue"
 #define TSC_SOURCE_MAP        "source-map"
 #define TSC_MAX_CHILDREN      "max-children-count"
+#define TSC_MAX_STRLENSUMMARY "max-string-summary-length"
 
 
 static const ConstString &
@@ -1623,6 +1638,12 @@ GetSettingNameForMaxChildren ()
     return g_const_string;
 }
 
+static const ConstString &
+GetSettingNameForMaxStringSummaryLength ()
+{
+    static ConstString g_const_string (TSC_MAX_STRLENSUMMARY);
+    return g_const_string;
+}
 
 bool
 Target::SettingsController::SetGlobalVariable (const ConstString &var_name,
@@ -1676,7 +1697,8 @@ TargetInstanceSettings::TargetInstanceSettings
     m_prefer_dynamic_value (2),
     m_skip_prologue (true, true),
     m_source_map (NULL, NULL),
-    m_max_children_display(256)
+    m_max_children_display(256),
+    m_max_strlen_length(1024)
 {
     // CopyInstanceSettings is a pure virtual function in InstanceSettings; it therefore cannot be called
     // until the vtables for TargetInstanceSettings are properly set up, i.e. AFTER all the initializers.
@@ -1703,7 +1725,8 @@ TargetInstanceSettings::TargetInstanceSettings (const TargetInstanceSettings &rh
     m_prefer_dynamic_value (rhs.m_prefer_dynamic_value),
     m_skip_prologue (rhs.m_skip_prologue),
     m_source_map (rhs.m_source_map),
-    m_max_children_display(rhs.m_max_children_display)
+    m_max_children_display(rhs.m_max_children_display),
+    m_max_strlen_length(rhs.m_max_strlen_length)
 {
     if (m_instance_name != InstanceSettings::GetDefaultName())
     {
@@ -1787,6 +1810,13 @@ TargetInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var_n
         if (ok)
             m_max_children_display = new_value;
     }
+    else if (var_name == GetSettingNameForMaxStringSummaryLength())
+    {
+        bool ok;
+        uint32_t new_value = Args::StringToUInt32(value, 0, 10, &ok);
+        if (ok)
+            m_max_strlen_length = new_value;
+    }
     else if (var_name == GetSettingNameForSourcePathMap ())
     {
         switch (op)
@@ -1858,6 +1888,7 @@ TargetInstanceSettings::CopyInstanceSettings (const lldb::InstanceSettingsSP &ne
     m_prefer_dynamic_value      = new_settings_ptr->m_prefer_dynamic_value;
     m_skip_prologue             = new_settings_ptr->m_skip_prologue;
     m_max_children_display      = new_settings_ptr->m_max_children_display;
+    m_max_strlen_length         = new_settings_ptr->m_max_strlen_length;
 }
 
 bool
@@ -1891,6 +1922,12 @@ TargetInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
     {
         StreamString count_str;
         count_str.Printf ("%d", m_max_children_display);
+        value.AppendString (count_str.GetData());
+    }
+    else if (var_name == GetSettingNameForMaxStringSummaryLength())
+    {
+        StreamString count_str;
+        count_str.Printf ("%d", m_max_strlen_length);
         value.AppendString (count_str.GetData());
     }
     else 
@@ -1940,12 +1977,13 @@ Target::SettingsController::global_settings_table[] =
 SettingEntry
 Target::SettingsController::instance_settings_table[] =
 {
-    // var-name           var-type           default         enum                    init'd hidden help-text
-    // =================  ================== =============== ======================= ====== ====== =========================================================================
-    { TSC_EXPR_PREFIX   , eSetVarTypeString , NULL          , NULL,                  false, false, "Path to a file containing expressions to be prepended to all expressions." },
-    { TSC_PREFER_DYNAMIC, eSetVarTypeEnum   , NULL          , g_dynamic_value_types, false, false, "Should printed values be shown as their dynamic value." },
-    { TSC_SKIP_PROLOGUE , eSetVarTypeBoolean, "true"        , NULL,                  false, false, "Skip function prologues when setting breakpoints by name." },
-    { TSC_SOURCE_MAP    , eSetVarTypeArray  , NULL          , NULL,                  false, false, "Source path remappings to use when locating source files from debug information." },
-    { TSC_MAX_CHILDREN  , eSetVarTypeInt    , "256"         , NULL,                  true,  false, "Maximum number of children to expand in any level of depth." },
-    { NULL              , eSetVarTypeNone   , NULL          , NULL,                  false, false, NULL }
+    // var-name             var-type            default         enum                    init'd hidden help-text
+    // =================    ==================  =============== ======================= ====== ====== =========================================================================
+    { TSC_EXPR_PREFIX       , eSetVarTypeString , NULL          , NULL,                  false, false, "Path to a file containing expressions to be prepended to all expressions." },
+    { TSC_PREFER_DYNAMIC    , eSetVarTypeEnum   , NULL          , g_dynamic_value_types, false, false, "Should printed values be shown as their dynamic value." },
+    { TSC_SKIP_PROLOGUE     , eSetVarTypeBoolean, "true"        , NULL,                  false, false, "Skip function prologues when setting breakpoints by name." },
+    { TSC_SOURCE_MAP        , eSetVarTypeArray  , NULL          , NULL,                  false, false, "Source path remappings to use when locating source files from debug information." },
+    { TSC_MAX_CHILDREN      , eSetVarTypeInt    , "256"         , NULL,                  true,  false, "Maximum number of children to expand in any level of depth." },
+    { TSC_MAX_STRLENSUMMARY , eSetVarTypeInt    , "1024"        , NULL,                  true,  false, "Maximum number of characters to show when using %s in summary strings." },
+    { NULL                  , eSetVarTypeNone   , NULL          , NULL,                  false, false, NULL }
 };

@@ -51,6 +51,7 @@ o SBLineEntry: Specifies an association with a contiguous range of instructions
 #include "lldb/API/SBCommandReturnObject.h"
 #include "lldb/API/SBCommunication.h"
 #include "lldb/API/SBCompileUnit.h"
+#include "lldb/API/SBData.h"
 #include "lldb/API/SBDebugger.h"
 #include "lldb/API/SBError.h"
 #include "lldb/API/SBEvent.h"
@@ -78,25 +79,6 @@ o SBLineEntry: Specifies an association with a contiguous range of instructions
 #include "lldb/API/SBValueList.h"
 %}
 
-%{
-template<class T>
-class not_owning_ap
-{
-private:
-    std::auto_ptr<T> m_auto_ptr;
-public:
-    explicit not_owning_ap (T* p=0) : m_auto_ptr(p) {}
-    not_owning_ap (not_owning_ap& a) : m_auto_ptr(a.m_auto_ptr) {}
-    template<class Y>
-    not_owning_ap (not_owning_ap<Y>& a) : m_auto_ptr(a.m_auto_ptr) {}
-    not_owning_ap (const not_owning_ap<T>& r) : m_auto_ptr(r.m_auto_ptr) {}
-    ~not_owning_ap() { m_auto_ptr.release(); }
-    T* get() const { return m_auto_ptr.get(); }
-    T& operator*() const { return *m_auto_ptr; }
-    void reset (T* p=0) { m_auto_ptr.release(); m_auto_ptr.reset(p); }
-};
-%}
-
 /* Various liblldb typedefs that SWIG needs to know about.  */
 #define __extension__ /* Undefine GCC keyword to make Swig happy when processing glibc's stdint.h. */
 %include <stdint.h>
@@ -119,6 +101,7 @@ public:
 %include "./Python/interface/SBCommandReturnObject.i"
 %include "./Python/interface/SBCommunication.i"
 %include "./Python/interface/SBCompileUnit.i"
+%include "./Python/interface/SBData.i"
 %include "./Python/interface/SBDebugger.i"
 %include "./Python/interface/SBError.i"
 %include "./Python/interface/SBEvent.i"

@@ -334,7 +334,7 @@ LLDBSwigPythonCreateSyntheticProvider
 extern "C" uint32_t       LLDBSwigPython_CalculateNumChildren        (void *implementor);
 extern "C" void*          LLDBSwigPython_GetChildAtIndex             (void *implementor, uint32_t idx);
 extern "C" int            LLDBSwigPython_GetIndexOfChildWithName     (void *implementor, const char* child_name);
-extern "C" lldb::SBValue* LLDBSWIGPython_CastPyObjectToSBValue       (void* data);
+extern "C" void*          LLDBSWIGPython_CastPyObjectToSBValue       (void* data);
 extern "C" void           LLDBSwigPython_UpdateSynthProviderInstance (void* implementor);
 
 extern "C" bool           LLDBSwigPythonCallCommand 

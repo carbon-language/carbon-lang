@@ -106,14 +106,14 @@ DataVisualization::AnyMatches (ConstString type_name,
 bool
 DataVisualization::Categories::Get (const ConstString &category, lldb::FormatCategorySP &entry)
 {
-    entry = GetFormatManager().Category(category);
+    entry = GetFormatManager().GetCategory(category);
     return true;
 }
 
 void
 DataVisualization::Categories::Add (const ConstString &category)
 {
-    GetFormatManager().Category(category);
+    GetFormatManager().GetCategory(category);
 }
 
 bool
@@ -132,13 +132,13 @@ DataVisualization::Categories::Clear ()
 void
 DataVisualization::Categories::Clear (ConstString &category)
 {
-    GetFormatManager().Category(category)->Clear(eFormatCategoryItemSummary | eFormatCategoryItemRegexSummary);
+    GetFormatManager().GetCategory(category)->Clear(eFormatCategoryItemSummary | eFormatCategoryItemRegexSummary);
 }
 
 void
 DataVisualization::Categories::Enable (ConstString& category)
 {
-    if (GetFormatManager().Category(category)->IsEnabled() == false)
+    if (GetFormatManager().GetCategory(category)->IsEnabled() == false)
         GetFormatManager().EnableCategory(category);
     else
     {
@@ -150,7 +150,7 @@ DataVisualization::Categories::Enable (ConstString& category)
 void
 DataVisualization::Categories::Disable (ConstString& category)
 {
-    if (GetFormatManager().Category(category)->IsEnabled() == true)
+    if (GetFormatManager().GetCategory(category)->IsEnabled() == true)
         GetFormatManager().DisableCategory(category);
 }
 

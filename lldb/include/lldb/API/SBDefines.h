@@ -34,6 +34,7 @@ class SBCommandInterpreter;
 class SBCommandReturnObject;
 class SBCommunication;
 class SBCompileUnit;
+class SBData;
 class SBDebugger;
 class SBError;
 class SBEvent;

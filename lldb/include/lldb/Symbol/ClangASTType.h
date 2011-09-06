@@ -285,6 +285,21 @@ public:
 
     static lldb::clang_type_t
     GetPointeeType (lldb::clang_type_t opaque_clang_qual_type);
+    
+    lldb::clang_type_t
+    GetArrayElementType (uint32_t& stride);
+    
+    static lldb::clang_type_t
+    GetArrayElementType (clang::ASTContext* ast,
+                         lldb::clang_type_t opaque_clang_qual_type,
+						 uint32_t& stride);
+    
+    lldb::clang_type_t
+    GetPointerType ();
+    
+    static lldb::clang_type_t
+    GetPointerType (clang::ASTContext *ast_context,
+                    lldb::clang_type_t opaque_clang_qual_type);
 
     static lldb::clang_type_t
     RemoveFastQualifiers (lldb::clang_type_t);

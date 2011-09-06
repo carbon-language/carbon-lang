@@ -482,11 +482,11 @@ CategoryMap::LoopThrough(CallbackType callback, void* param)
 }
 
 lldb::FormatCategorySP
-FormatManager::Category (const ConstString& category_name,
+FormatManager::GetCategory (const ConstString& category_name,
                          bool can_create)
 {
     if (!category_name)
-        return Category(m_default_category_name);
+        return GetCategory(m_default_category_name);
     lldb::FormatCategorySP category;
     if (m_categories_map.Get(category_name, category))
         return category;
@@ -495,7 +495,7 @@ FormatManager::Category (const ConstString& category_name,
         return lldb::FormatCategorySP();
     
     m_categories_map.Add(category_name,lldb::FormatCategorySP(new FormatCategory(this, category_name.AsCString())));
-    return Category(category_name);
+    return GetCategory(category_name);
 }
 
 lldb::Format
@@ -566,11 +566,13 @@ FormatManager::FormatManager() :
     lldb::RegularExpressionSP any_size_char_arr(new RegularExpression("char \\[[0-9]+\\]"));
     
     
-    Category(m_system_category_name)->GetSummaryNavigator()->Add(ConstString("char *"), string_format);
-    Category(m_system_category_name)->GetSummaryNavigator()->Add(ConstString("const char *"), string_format);
-    Category(m_system_category_name)->GetRegexSummaryNavigator()->Add(any_size_char_arr, string_array_format);
+    FormatCategory::SharedPointer sys_category_sp = GetCategory(m_system_category_name);
     
-    Category(m_default_category_name); // this call is there to force LLDB into creating an empty "default" category
+    sys_category_sp->GetSummaryNavigator()->Add(ConstString("char *"), string_format);
+    sys_category_sp->GetSummaryNavigator()->Add(ConstString("const char *"), string_format);
+    sys_category_sp->GetRegexSummaryNavigator()->Add(any_size_char_arr, string_array_format);
+    
+    GetCategory(m_default_category_name); // this call is there to force LLDB into creating an empty "default" category
     
     // WARNING: temporary code!!
     // The platform should be responsible for initializing its own formatters
@@ -586,24 +588,27 @@ FormatManager::FormatManager() :
                                                                         true,
                                                                         false,
                                                                         "${var._M_dataplus._M_p}"));
-    Category(m_gnu_cpp_category_name)->GetSummaryNavigator()->Add(ConstString("std::string"),
-                                                      std_string_summary_sp);
-    Category(m_gnu_cpp_category_name)->GetSummaryNavigator()->Add(ConstString("std::basic_string<char>"),
-                                                      std_string_summary_sp);
-    Category(m_gnu_cpp_category_name)->GetSummaryNavigator()->Add(ConstString("std::basic_string<char,std::char_traits<char>,std::allocator<char> >"),
-                                                      std_string_summary_sp);
     
-    Category(m_gnu_cpp_category_name)->GetRegexSyntheticNavigator()->Add(RegularExpressionSP(new RegularExpression("std::vector<")),
+    FormatCategory::SharedPointer gnu_category_sp = GetCategory(m_gnu_cpp_category_name);
+    
+    gnu_category_sp->GetSummaryNavigator()->Add(ConstString("std::string"),
+                                                std_string_summary_sp);
+    gnu_category_sp->GetSummaryNavigator()->Add(ConstString("std::basic_string<char>"),
+                                                std_string_summary_sp);
+    gnu_category_sp->GetSummaryNavigator()->Add(ConstString("std::basic_string<char,std::char_traits<char>,std::allocator<char> >"),
+                                                std_string_summary_sp);
+    
+    gnu_category_sp->GetRegexSyntheticNavigator()->Add(RegularExpressionSP(new RegularExpression("^(std::)?vector<.+>$")),
                                      SyntheticChildrenSP(new SyntheticScriptProvider(true,
                                                                                      false,
                                                                                      false,
                                                                                      "gnu_libstdcpp.StdVectorSynthProvider")));
-    Category(m_gnu_cpp_category_name)->GetRegexSyntheticNavigator()->Add(RegularExpressionSP(new RegularExpression("std::map<")),
+    gnu_category_sp->GetRegexSyntheticNavigator()->Add(RegularExpressionSP(new RegularExpression("^(std::)?map<.+> >$")),
                                      SyntheticChildrenSP(new SyntheticScriptProvider(true,
                                                                                      false,
                                                                                      false,
                                                                                      "gnu_libstdcpp.StdMapSynthProvider")));
-    Category(m_gnu_cpp_category_name)->GetRegexSyntheticNavigator()->Add(RegularExpressionSP(new RegularExpression("std::list<")),
+    gnu_category_sp->GetRegexSyntheticNavigator()->Add(RegularExpressionSP(new RegularExpression("^(std::)?list<.+>$")),
                                      SyntheticChildrenSP(new SyntheticScriptProvider(true,
                                                                                      false,
                                                                                      false,

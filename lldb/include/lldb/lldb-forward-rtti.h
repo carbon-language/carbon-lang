@@ -34,6 +34,7 @@ namespace lldb {
     typedef SharedPtr<lldb_private::Connection>::Type ConnectionSP;
     typedef SharedPtr<lldb_private::CompileUnit>::Type CompUnitSP;
     typedef SharedPtr<lldb_private::DataBuffer>::Type DataBufferSP;
+    typedef SharedPtr<lldb_private::DataExtractor>::Type DataExtractorSP;
     typedef SharedPtr<lldb_private::Debugger>::Type DebuggerSP;
     typedef SharedPtr<lldb_private::Disassembler>::Type DisassemblerSP;
     typedef SharedPtr<lldb_private::DynamicLoader>::Type DynamicLoaderSP;

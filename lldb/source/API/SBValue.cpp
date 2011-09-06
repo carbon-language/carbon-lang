@@ -479,6 +479,38 @@ SBValue::CreateValueFromAddress(const char* name, lldb::addr_t address, const SB
     return result;
 }
 
+lldb::SBValue
+SBValue::CreateValueFromData (const char* name,
+                              const SBData& data,
+                              const SBType& type)
+{
+    SBValue result;
+    
+    AddressType addr_of_children_priv = eAddressTypeLoad;
+    
+    if (m_opaque_sp)
+    {
+        ValueObjectSP valobj_sp;
+        valobj_sp = ValueObjectConstResult::Create (m_opaque_sp->GetExecutionContextScope(), 
+                                                    type.m_opaque_sp->GetASTContext() ,
+                                                    type.m_opaque_sp->GetOpaqueQualType(),
+                                                    ConstString(name),
+                                                    *data.m_opaque_sp,
+                                                    LLDB_INVALID_ADDRESS);
+        valobj_sp->SetAddressTypeOfChildren(addr_of_children_priv);
+        result = SBValue(valobj_sp);
+    }
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    if (log)
+    {
+        if (result.IsValid())
+            log->Printf ("SBValue(%p)::GetChildFromExpression => \"%s\"", m_opaque_sp.get(), result.m_opaque_sp.get());
+        else
+            log->Printf ("SBValue(%p)::GetChildFromExpression => NULL", m_opaque_sp.get());
+    }
+    return result;
+}
+
 SBValue
 SBValue::GetChildAtIndex (uint32_t idx)
 {
@@ -812,9 +844,10 @@ SBValue::GetProcess()
     SBProcess result;
     if (m_opaque_sp)
     {
-        if (m_opaque_sp->GetUpdatePoint().GetTargetSP())
+        Target* target = m_opaque_sp->GetUpdatePoint().GetTargetSP().get();
+        if (target)
         {
-            result = SBProcess(lldb::ProcessSP(m_opaque_sp->GetUpdatePoint().GetTargetSP()->GetProcessSP()));
+            result = SBProcess(lldb::ProcessSP(target->GetProcessSP()));
         }
     }
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
@@ -967,10 +1000,10 @@ SBValue::AddressOf()
     SBValue sb_value;
     if (m_opaque_sp)
     {
-        if (m_opaque_sp->GetUpdatePoint().GetTargetSP())
+        Target* target = m_opaque_sp->GetUpdatePoint().GetTargetSP().get();
+        if (target)
         {
-            Mutex::Locker api_locker (m_opaque_sp->GetUpdatePoint().GetTargetSP()->GetAPIMutex());
-            
+            Mutex::Locker api_locker (target->GetAPIMutex());
             Error error;
             sb_value = m_opaque_sp->AddressOf (error);
         }
@@ -980,4 +1013,128 @@ SBValue::AddressOf()
         log->Printf ("SBValue(%p)::GetPointerToObject () => SBValue(%p)", m_opaque_sp.get(), sb_value.get());
     
     return sb_value;
+}
+
+lldb::addr_t
+SBValue::GetLoadAddress()
+{
+    lldb::addr_t value = LLDB_INVALID_ADDRESS;
+    if (m_opaque_sp)
+    {
+        Target* target = m_opaque_sp->GetUpdatePoint().GetTargetSP().get();
+        if (target)
+        {
+            Mutex::Locker api_locker (target->GetAPIMutex());
+            const bool scalar_is_load_address = true;
+            AddressType addr_type;
+            value = m_opaque_sp->GetAddressOf(scalar_is_load_address, &addr_type);
+            if (addr_type == eAddressTypeFile)
+            {
+                Module* module = m_opaque_sp->GetModule();
+                if (!module)
+                    value = LLDB_INVALID_ADDRESS;
+                else
+                {
+                    Address addr;
+                    module->ResolveFileAddress(value, addr);
+                    value = addr.GetLoadAddress(m_opaque_sp->GetUpdatePoint().GetTargetSP().get());
+                }
+            }
+            else if (addr_type == eAddressTypeHost || addr_type == eAddressTypeInvalid)
+                value = LLDB_INVALID_ADDRESS;
+        }
+    }
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    if (log)
+        log->Printf ("SBValue(%p)::GetLoadAddress () => (%llu)", m_opaque_sp.get(), value);
+    
+    return value;
+}
+
+lldb::SBAddress
+SBValue::GetAddress()
+{
+    Address addr;
+    if (m_opaque_sp)
+    {
+        Target* target = m_opaque_sp->GetUpdatePoint().GetTargetSP().get();
+        if (target)
+        {
+            lldb::addr_t value = LLDB_INVALID_ADDRESS;
+            Mutex::Locker api_locker (target->GetAPIMutex());
+            const bool scalar_is_load_address = true;
+            AddressType addr_type;
+            value = m_opaque_sp->GetAddressOf(scalar_is_load_address, &addr_type);
+            if (addr_type == eAddressTypeFile)
+            {
+                Module* module = m_opaque_sp->GetModule();
+                if (module)
+                    module->ResolveFileAddress(value, addr);
+            }
+            else if (addr_type == eAddressTypeLoad)
+            {
+                // no need to check the return value on this.. if it can actually do the resolve
+                // addr will be in the form (section,offset), otherwise it will simply be returned
+                // as (NULL, value)
+                addr.SetLoadAddress(value, target);
+            }
+        }
+    }
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    if (log)
+        log->Printf ("SBValue(%p)::GetAddress () => (%s,%llu)", m_opaque_sp.get(), (addr.GetSection() ? addr.GetSection()->GetName().GetCString() : "NULL"), addr.GetOffset());
+    return SBAddress(new Address(addr));
+}
+
+lldb::SBData
+SBValue::GetPointeeData (uint32_t item_idx,
+                         uint32_t item_count)
+{
+    lldb::SBData sb_data;
+    if (m_opaque_sp)
+    {
+        Target* target = m_opaque_sp->GetUpdatePoint().GetTargetSP().get();
+        if (target)
+        {
+			DataExtractorSP data_sp(new DataExtractor());
+            Mutex::Locker api_locker (target->GetAPIMutex());
+            m_opaque_sp->GetPointeeData(*data_sp, item_idx, item_count);
+            if (data_sp->GetByteSize() > 0)
+                *sb_data = data_sp;
+        }
+    }
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    if (log)
+        log->Printf ("SBValue(%p)::GetPointeeData (%d, %d) => SBData(%p)",
+                     m_opaque_sp.get(),
+                     item_idx,
+                     item_count,
+                     sb_data.get());
+    
+    return sb_data;
+}
+
+lldb::SBData
+SBValue::GetData ()
+{
+    lldb::SBData sb_data;
+    if (m_opaque_sp)
+    {
+        Target* target = m_opaque_sp->GetUpdatePoint().GetTargetSP().get();
+        if (target)
+        {
+			DataExtractorSP data_sp(new DataExtractor());
+            Mutex::Locker api_locker (target->GetAPIMutex());
+            m_opaque_sp->GetData(*data_sp);
+            if (data_sp->GetByteSize() > 0)
+                *sb_data = data_sp;
+        }
+    }
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    if (log)
+        log->Printf ("SBValue(%p)::GetData () => SBData(%p)",
+                     m_opaque_sp.get(),
+                     sb_data.get());
+    
+    return sb_data;
 }

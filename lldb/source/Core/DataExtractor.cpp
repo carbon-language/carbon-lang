@@ -17,6 +17,7 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Support/MathExtras.h"
 
+#include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/DataBuffer.h"
 #include "lldb/Core/Log.h"
@@ -178,15 +179,6 @@ DataExtractor::Clear ()
 }
 
 //------------------------------------------------------------------
-// Returns the total number of bytes that this object refers to
-//------------------------------------------------------------------
-size_t
-DataExtractor::GetByteSize () const
-{
-    return m_end - m_start;
-}
-
-//------------------------------------------------------------------
 // If this object contains shared data, this function returns the
 // offset into that shared data. Else zero is returned.
 //------------------------------------------------------------------
@@ -207,16 +199,6 @@ DataExtractor::GetSharedDataOffset () const
         }
     }
     return 0;
-}
-
-//------------------------------------------------------------------
-// Returns true if OFFSET is a valid offset into the data in this
-// object.
-//------------------------------------------------------------------
-bool
-DataExtractor::ValidOffset (uint32_t offset) const
-{
-    return offset < GetByteSize();
 }
 
 //------------------------------------------------------------------
@@ -243,65 +225,6 @@ DataExtractor::ValidOffsetForDataOfSize (uint32_t offset, uint32_t length) const
     // length must be greater than zero for this to be a
     // valid expression, and we have already checked for this.
     return ((offset + length) <= size);
-}
-
-//------------------------------------------------------------------
-// Returns a pointer to the first byte contained in this object's
-// data, or NULL of there is no data in this object.
-//------------------------------------------------------------------
-const uint8_t *
-DataExtractor::GetDataStart () const
-{
-    return m_start;
-}
-//------------------------------------------------------------------
-// Returns a pointer to the byte past the last byte contained in
-// this object's data, or NULL of there is no data in this object.
-//------------------------------------------------------------------
-const uint8_t *
-DataExtractor::GetDataEnd () const
-{
-    return m_end;
-}
-
-//------------------------------------------------------------------
-// Returns true if this object will endian swap values as it
-// extracts data.
-//------------------------------------------------------------------
-ByteOrder
-DataExtractor::GetByteOrder () const
-{
-    return m_byte_order;
-}
-//------------------------------------------------------------------
-// Set whether this object will endian swap values as it extracts
-// data.
-//------------------------------------------------------------------
-void
-DataExtractor::SetByteOrder (ByteOrder endian)
-{
-    m_byte_order = endian;
-}
-
-
-//------------------------------------------------------------------
-// Return the size in bytes of any address values this object will
-// extract
-//------------------------------------------------------------------
-uint8_t
-DataExtractor::GetAddressByteSize () const
-{
-    return m_addr_size;
-}
-
-//------------------------------------------------------------------
-// Set the size in bytes that will be used when extracting any
-// address values from data contained in this object.
-//------------------------------------------------------------------
-void
-DataExtractor::SetAddressByteSize (uint8_t addr_size)
-{
-    m_addr_size = addr_size;
 }
 
 //----------------------------------------------------------------------
@@ -1900,4 +1823,80 @@ DataExtractor::DumpHexBytes (Stream *s,
                bytes_per_line,  // Num bytes per line
                base_addr,       // Base address
                0, 0);           // Bitfield info
+}
+
+size_t
+DataExtractor::Copy (DataExtractor &dest_data) const
+{
+    if (m_data_sp.get())
+    {
+        // we can pass along the SP to the data
+        dest_data.SetData(m_data_sp);
+    }
+    else
+    {
+        const uint8_t *base_ptr = m_start;
+        size_t data_size = GetByteSize();
+        dest_data.SetData(DataBufferSP(new DataBufferHeap(base_ptr, data_size)));
+    }
+    return GetByteSize();
+}
+
+bool
+DataExtractor::Append(DataExtractor& rhs)
+{
+    if (rhs.GetByteOrder() != GetByteOrder())
+        return false;
+    
+    if (rhs.GetByteSize() == 0)
+        return true;
+    
+    if (GetByteSize() == 0)
+        return (rhs.Copy(*this) > 0);
+    
+    size_t bytes = GetByteSize() + rhs.GetByteSize();
+
+    DataBufferHeap *buffer_heap_ptr = NULL;
+    DataBufferSP buffer_sp(buffer_heap_ptr = new DataBufferHeap(bytes, 0));
+    
+    if (buffer_sp.get() == NULL || buffer_heap_ptr == NULL)
+        return false;
+    
+    uint8_t* bytes_ptr = buffer_heap_ptr->GetBytes();
+    
+    memcpy(bytes_ptr, GetDataStart(), GetByteSize());
+    memcpy(bytes_ptr + GetByteSize(), rhs.GetDataStart(), rhs.GetByteSize());
+    
+    SetData(buffer_sp);
+    
+    return true;
+}
+
+bool
+DataExtractor::Append(void* buf, uint32_t length)
+{
+    if (buf == NULL)
+        return false;
+    
+    if (length == 0)
+        return true;
+    
+    size_t bytes = GetByteSize() + length;
+    
+    DataBufferHeap *buffer_heap_ptr = NULL;
+    DataBufferSP buffer_sp(buffer_heap_ptr = new DataBufferHeap(bytes, 0));
+    
+    if (buffer_sp.get() == NULL || buffer_heap_ptr == NULL)
+        return false;
+    
+    uint8_t* bytes_ptr = buffer_heap_ptr->GetBytes();
+    
+    if (GetByteSize() > 0)
+        memcpy(bytes_ptr, GetDataStart(), GetByteSize());
+
+    memcpy(bytes_ptr + GetByteSize(), buf, length);
+    
+    SetData(buffer_sp);
+    
+    return true;
 }

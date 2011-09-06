@@ -10,14 +10,10 @@
 #ifndef LLDB_SBValue_h_
 #define LLDB_SBValue_h_
 
+#include "lldb/API/SBData.h"
 #include "lldb/API/SBDefines.h"
 #include "lldb/API/SBType.h"
 
-#include <stdio.h>
-
-#ifndef SWIG
-class lldb_private::SyntheticScriptProvider;
-#endif
 
 namespace lldb {
 
@@ -130,6 +126,13 @@ public:
     
     lldb::SBValue
     CreateValueFromAddress(const char* name, lldb::addr_t address, const SBType& type);
+    
+    // this has no address! GetAddress() and GetLoadAddress() as well as AddressOf()
+    // on the return of this call all return invalid
+    lldb::SBValue
+    CreateValueFromData (const char* name,
+                         const SBData& data,
+                         const SBType& type);
 
     //------------------------------------------------------------------
     /// Get a child value by index from a value.
@@ -207,7 +210,51 @@ public:
     
     lldb::SBValue
     AddressOf();
+    
+    lldb::addr_t
+    GetLoadAddress();
+    
+    lldb::SBAddress
+    GetAddress();
 
+    //------------------------------------------------------------------
+    /// Get an SBData wrapping what this SBValue points to.
+    ///
+    /// This method will dereference the current SBValue, if its
+    /// data type is a T* or T[], and extract item_count elements
+    /// of type T from it, copying their contents in an SBData. 
+    ///
+    /// @param[in] item_idx
+    ///     The index of the first item to retrieve. For an array
+    ///     this is equivalent to array[item_idx], for a pointer
+    ///     to *(pointer + item_idx). In either case, the measurement
+    ///     unit for item_idx is the sizeof(T) rather than the byte
+    ///
+    /// @param[in] item_count
+    ///     How many items should be copied into the output. By default
+    ///     only one item is copied, but more can be asked for.
+    ///
+    /// @return
+    ///     An SBData with the contents of the copied items, on success.
+    ///     An empty SBData otherwise.
+    //------------------------------------------------------------------
+    lldb::SBData
+    GetPointeeData (uint32_t item_idx = 0,
+					uint32_t item_count = 1);
+    
+    //------------------------------------------------------------------
+    /// Get an SBData wrapping the contents of this SBValue.
+    ///
+    /// This method will read the contents of this object in memory
+    /// and copy them into an SBData for future use. 
+    ///
+    /// @return
+    ///     An SBData with the contents of this SBValue, on success.
+    ///     An empty SBData otherwise.
+    //------------------------------------------------------------------
+    lldb::SBData
+    GetData ();
+    
     uint32_t
     GetNumChildren ();
 
@@ -245,15 +292,24 @@ public:
     GetExpressionPath (lldb::SBStream &description, bool qualify_cxx_base_classes);
 
     SBValue (const lldb::ValueObjectSP &value_sp);
-    
+
+#ifndef SWIG
+    // this must be defined in the .h file because synthetic children as implemented in the core
+    // currently rely on being able to extract the SharedPointer out of an SBValue. if the implementation
+    // is deferred to the .cpp file instead of being inlined here, the platform will fail to link
+    // correctly. however, this is temporary till a better general solution is found. FIXME
+    const lldb::ValueObjectSP&
+    get_sp() const
+    {
+        return m_opaque_sp;
+    }
+#endif
+
 protected:
     friend class SBValueList;
     friend class SBFrame;
 
 #ifndef SWIG
-    // need this to decapsulate the SP from here
-    friend class lldb_private::SyntheticScriptProvider;
-    
     // Mimic shared pointer...
     lldb_private::ValueObject *
     get() const;

@@ -154,6 +154,53 @@ ClangASTType::GetPointeeType (clang_type_t clang_type)
     return NULL;
 }
 
+lldb::clang_type_t
+ClangASTType::GetArrayElementType (uint32_t& stride)
+{
+    return GetArrayElementType(m_ast, m_type, stride);
+}
+
+lldb::clang_type_t
+ClangASTType::GetArrayElementType (clang::ASTContext* ast,
+                                   lldb::clang_type_t opaque_clang_qual_type,
+                                   uint32_t& stride)
+{
+    if (opaque_clang_qual_type)
+    {
+        clang::QualType qual_type(clang::QualType::getFromOpaquePtr(opaque_clang_qual_type));
+        
+        lldb::clang_type_t ret_type = qual_type.getTypePtr()->getArrayElementTypeNoTypeQual()->getCanonicalTypeUnqualified().getAsOpaquePtr();
+        
+        // TODO: the real stride will be >= this value.. find the real one!
+        stride = GetTypeByteSize(ast, ret_type);
+        
+        return ret_type;
+        
+    }
+    return NULL;
+
+}
+
+lldb::clang_type_t
+ClangASTType::GetPointerType ()
+{
+    return GetPointerType (m_ast,
+                           m_type);
+}
+
+lldb::clang_type_t
+ClangASTType::GetPointerType (clang::ASTContext *ast_context,
+                              lldb::clang_type_t opaque_clang_qual_type)
+{
+    if (opaque_clang_qual_type)
+    {
+        clang::QualType qual_type(clang::QualType::getFromOpaquePtr(opaque_clang_qual_type));
+        
+        return ast_context->getPointerType(qual_type).getAsOpaquePtr();
+    }
+    return NULL;
+}
+
 lldb::Encoding
 ClangASTType::GetEncoding (uint32_t &count)
 {

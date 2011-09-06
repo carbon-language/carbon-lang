@@ -10,8 +10,6 @@
 #ifndef liblldb_ScriptInterpreter_h_
 #define liblldb_ScriptInterpreter_h_
 
-#include "lldb/API/SBValue.h"
-
 #include "lldb/lldb-private.h"
 #include "lldb/Core/Broadcaster.h"
 #include "lldb/Utility/PseudoTerminal.h"
@@ -41,7 +39,7 @@ public:
     typedef uint32_t       (*SWIGPythonCalculateNumChildren)        (void *implementor);
     typedef void*          (*SWIGPythonGetChildAtIndex)             (void *implementor, uint32_t idx);
     typedef int            (*SWIGPythonGetIndexOfChildWithName)     (void *implementor, const char* child_name);
-    typedef lldb::SBValue* (*SWIGPythonCastPyObjectToSBValue)       (void* data);
+    typedef void*          (*SWIGPythonCastPyObjectToSBValue)       (void* data);
     typedef void           (*SWIGPythonUpdateSynthProviderInstance) (void* data);    
     
     typedef bool           (*SWIGPythonCallCommand)                 (const char *python_function_name,
@@ -160,10 +158,10 @@ public:
         return 0;
     }
     
-    virtual void*
+    virtual lldb::ValueObjectSP
     GetChildAtIndex (void *implementor, uint32_t idx)
     {
-        return NULL;
+        return lldb::ValueObjectSP();
     }
     
     virtual int
@@ -177,12 +175,6 @@ public:
     {
     }
         
-    virtual lldb::SBValue*
-    CastPyObjectToSBValue (void* data)
-    {
-        return NULL;
-    }
-    
     virtual bool
     RunScriptBasedCommand(const char* impl_function,
                           const char* args,

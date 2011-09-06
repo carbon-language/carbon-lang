@@ -23,7 +23,7 @@
 #include "lldb/Host/Terminal.h"
 
 namespace lldb_private {
-
+    
 class ScriptInterpreterPython : public ScriptInterpreter
 {
 public:
@@ -69,7 +69,7 @@ public:
     virtual uint32_t
     CalculateNumChildren (void *implementor);
     
-    virtual void*
+    virtual lldb::ValueObjectSP
     GetChildAtIndex (void *implementor, uint32_t idx);
     
     virtual int
@@ -77,9 +77,6 @@ public:
     
     virtual void
     UpdateSynthProviderInstance (void* implementor);
-    
-    virtual lldb::SBValue*
-    CastPyObjectToSBValue (void* data);
     
     virtual bool
     RunScriptBasedCommand(const char* impl_function,
@@ -161,6 +158,28 @@ protected:
     RestoreTerminalState ();
     
 private:
+    
+	class Locker
+	{
+	public:
+    	Locker (ScriptInterpreterPython *py_interpreter,
+        	    FILE* wait_msg_handle = NULL,
+            	bool need_session = true);
+    
+    	bool
+    	HasAcquiredLock ()
+    	{
+        	return m_release_lock;
+	    }
+    
+    	~Locker ();
+    
+	private:
+    	bool                     m_need_session;
+    	bool                     m_release_lock;
+    	ScriptInterpreterPython *m_python_interpreter;
+    	FILE*                    m_tmp_fh;
+	};
 
     static size_t
     InputReaderCallback (void *baton, 
@@ -181,7 +200,6 @@ private:
     bool m_valid_session;
                          
 };
-
 } // namespace lldb_private
 
 

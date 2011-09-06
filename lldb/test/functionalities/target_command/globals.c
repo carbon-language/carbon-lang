@@ -10,6 +10,7 @@
 
 char my_global_char = 'X';
 const char* my_global_str = "abc";
+const char **my_global_str_ptr = &my_global_str;
 static int my_static_int = 228;
 
 int main (int argc, char const *argv[])

@@ -49,17 +49,11 @@ AppleObjCRuntime::GetObjectDescription (Stream &str, ValueObject &object)
         return NULL;
     
     // Make the argument list: we pass one arg, the address of our pointer, to the print function.
-    Scalar scalar;
+    Value val;
     
-    if (!ClangASTType::GetValueAsScalar (object.GetClangAST(),
-                                        object.GetClangType(),
-                                        object.GetDataExtractor(),
-                                        0,
-                                        object.GetByteSize(),
-                                        scalar))
+    if (!object.ResolveValue(val.GetScalar()))
         return NULL;
                         
-    Value val(scalar);                   
     return GetObjectDescription(str, val, object.GetExecutionContextScope());
                    
 }

@@ -54,6 +54,9 @@ public:
 
     virtual Module*
     GetModule();
+    
+    virtual SymbolContextScope *
+    GetSymbolContextScope();
 
 protected:
     virtual bool

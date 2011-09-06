@@ -18,9 +18,7 @@
 
 #include <string>
 
-#include "lldb/API/SBFrame.h"
-#include "lldb/API/SBBreakpointLocation.h"
-#include "lldb/API/SBCommandReturnObject.h"
+#include "lldb/API/SBValue.h"
 #include "lldb/Breakpoint/StoppointCallbackContext.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/Timer.h"
@@ -88,6 +86,36 @@ static void
 ReleasePythonLock ()
 {
     PythonMutexPredicate().SetValue (LLDB_INVALID_THREAD_ID, eBroadcastAlways);
+}
+
+ScriptInterpreterPython::Locker::Locker (ScriptInterpreterPython *pi,
+                                        FILE* tmp_fh,
+                                        bool ns) :
+    m_need_session(ns),
+    m_release_lock(false),
+    m_python_interpreter(pi),
+    m_tmp_fh(tmp_fh)
+{
+    // if Enter/LeaveSession() must be called, then m_python_interpreter must be != NULL
+    assert(m_need_session && m_python_interpreter);
+    if (!CurrentThreadHasPythonLock())
+    {
+        while (!GetPythonLock (1))
+            if (tmp_fh)
+                fprintf (tmp_fh, 
+                         "Python interpreter locked on another thread; waiting to acquire lock...\n");
+        m_release_lock = true;
+    }
+    if (m_need_session)
+        m_python_interpreter->EnterSession ();
+}
+
+ScriptInterpreterPython::Locker::~Locker()
+{
+    if (m_need_session)
+        m_python_interpreter->LeaveSession ();
+    if (m_release_lock)
+        ReleasePythonLock ();
 }
 
 ScriptInterpreterPython::ScriptInterpreterPython (CommandInterpreter &interpreter) :
@@ -226,21 +254,10 @@ ScriptInterpreterPython::ResetOutputFileHandle (FILE *fh)
     m_dbg_stdout = fh;
 
     FILE *tmp_fh = (m_dbg_stdout ? m_dbg_stdout : stdout);
-    if (!CurrentThreadHasPythonLock ())
-    {
-        while (!GetPythonLock (1))
-            fprintf (tmp_fh, "Python interpreter locked on another thread; waiting to acquire lock...\n");
-        EnterSession ();
-        m_new_sysout = PyFile_FromFile (m_dbg_stdout, (char *) "", (char *) "w", _check_and_flush);
-        LeaveSession ();
-        ReleasePythonLock ();
-    }
-    else
-    {
-        EnterSession ();
-        m_new_sysout = PyFile_FromFile (m_dbg_stdout, (char *) "", (char *) "w", _check_and_flush);
-        LeaveSession ();
-    }
+    
+    Locker py_lock(this, tmp_fh);
+    
+    m_new_sysout = PyFile_FromFile (m_dbg_stdout, (char *) "", (char *) "w", _check_and_flush);
 }
 
 void
@@ -1400,25 +1417,12 @@ ScriptInterpreterPython::CreateSyntheticScriptedProvider (std::string class_name
     void* ret_val;
     
     FILE *tmp_fh = (python_interpreter->m_dbg_stdout ? python_interpreter->m_dbg_stdout : stdout);
-    if (CurrentThreadHasPythonLock())
+    
     {
-        python_interpreter->EnterSession ();
+        Locker py_lock(this, tmp_fh);
         ret_val = g_swig_synthetic_script    (class_name, 
                                               python_interpreter->m_dictionary_name.c_str(),
                                               valobj);
-        python_interpreter->LeaveSession ();
-    }
-    else
-    {
-        while (!GetPythonLock (1))
-            fprintf (tmp_fh, 
-                     "Python interpreter locked on another thread; waiting to acquire lock...\n");
-        python_interpreter->EnterSession ();
-        ret_val = g_swig_synthetic_script (class_name, 
-                                           python_interpreter->m_dictionary_name.c_str(), 
-                                           valobj);
-        python_interpreter->LeaveSession ();
-        ReleasePythonLock ();
     }
     
     return ret_val;
@@ -1526,25 +1530,12 @@ ScriptInterpreterPython::CallPythonScriptFunction (const char *python_function_n
         && *python_function_name)
     {
         FILE *tmp_fh = (python_interpreter->m_dbg_stdout ? python_interpreter->m_dbg_stdout : stdout);
-        if (CurrentThreadHasPythonLock())
+        
         {
-            python_interpreter->EnterSession ();
+            Locker py_lock(python_interpreter, tmp_fh);
             ret_val = g_swig_typescript_callback (python_function_name, 
                                                   python_interpreter->m_dictionary_name.c_str(),
                                                   valobj);
-            python_interpreter->LeaveSession ();
-        }
-        else
-        {
-            while (!GetPythonLock (1))
-                fprintf (tmp_fh, 
-                         "Python interpreter locked on another thread; waiting to acquire lock...\n");
-            python_interpreter->EnterSession ();
-            ret_val = g_swig_typescript_callback (python_function_name, 
-                                                  python_interpreter->m_dictionary_name.c_str(), 
-                                                  valobj);
-            python_interpreter->LeaveSession ();
-            ReleasePythonLock ();
         }
     }
     else
@@ -1595,27 +1586,13 @@ ScriptInterpreterPython::BreakpointCallbackFunction
             {
                 bool ret_val = true;
                 FILE *tmp_fh = (python_interpreter->m_dbg_stdout ? python_interpreter->m_dbg_stdout : stdout);
-                if (CurrentThreadHasPythonLock())
+                
                 {
-                    python_interpreter->EnterSession ();
+                    Locker py_lock(python_interpreter, tmp_fh);
                     ret_val = g_swig_breakpoint_callback (python_function_name, 
                                                           python_interpreter->m_dictionary_name.c_str(),
                                                           stop_frame_sp, 
                                                           bp_loc_sp);
-                    python_interpreter->LeaveSession ();
-                }
-                else
-                {
-                    while (!GetPythonLock (1))
-                        fprintf (tmp_fh, 
-                                 "Python interpreter locked on another thread; waiting to acquire lock...\n");
-                    python_interpreter->EnterSession ();
-                    ret_val = g_swig_breakpoint_callback (python_function_name, 
-                                                          python_interpreter->m_dictionary_name.c_str(),
-                                                          stop_frame_sp, 
-                                                          bp_loc_sp);
-                    python_interpreter->LeaveSession ();
-                    ReleasePythonLock ();
                 }
                 return ret_val;
             }
@@ -1758,55 +1735,47 @@ ScriptInterpreterPython::CalculateNumChildren (void *implementor)
     uint32_t ret_val = 0;
     
     FILE *tmp_fh = (python_interpreter->m_dbg_stdout ? python_interpreter->m_dbg_stdout : stdout);
-    if (CurrentThreadHasPythonLock())
+
     {
-        python_interpreter->EnterSession ();
+        Locker py_lock(python_interpreter, tmp_fh);
         ret_val = g_swig_calc_children       (implementor);
-        python_interpreter->LeaveSession ();
-    }
-    else
-    {
-        while (!GetPythonLock (1))
-            fprintf (tmp_fh, 
-                     "Python interpreter locked on another thread; waiting to acquire lock...\n");
-        python_interpreter->EnterSession ();
-        ret_val = g_swig_calc_children       (implementor);
-        python_interpreter->LeaveSession ();
-        ReleasePythonLock ();
     }
     
     return ret_val;
 }
 
-void*
+lldb::ValueObjectSP
 ScriptInterpreterPython::GetChildAtIndex (void *implementor, uint32_t idx)
 {
     if (!implementor)
-        return 0;
+        return lldb::ValueObjectSP();
     
-    if (!g_swig_get_child_index)
-        return 0;
+    if (!g_swig_get_child_index || !g_swig_cast_to_sbvalue)
+        return lldb::ValueObjectSP();
     
     ScriptInterpreterPython *python_interpreter = this;
     
-    void* ret_val = NULL;
+    void* child_ptr = NULL;
+    lldb::SBValue* value_sb = NULL;
+    lldb::ValueObjectSP ret_val;
     
     FILE *tmp_fh = (python_interpreter->m_dbg_stdout ? python_interpreter->m_dbg_stdout : stdout);
-    if (CurrentThreadHasPythonLock())
+    
     {
-        python_interpreter->EnterSession ();
-        ret_val = g_swig_get_child_index       (implementor,idx);
-        python_interpreter->LeaveSession ();
-    }
-    else
-    {
-        while (!GetPythonLock (1))
-            fprintf (tmp_fh, 
-                     "Python interpreter locked on another thread; waiting to acquire lock...\n");
-        python_interpreter->EnterSession ();
-        ret_val = g_swig_get_child_index       (implementor,idx);
-        python_interpreter->LeaveSession ();
-        ReleasePythonLock ();
+        Locker py_lock(python_interpreter, tmp_fh);
+        child_ptr = g_swig_get_child_index       (implementor,idx);
+        if (child_ptr != NULL && child_ptr != Py_None)
+        {
+            value_sb = (lldb::SBValue*)g_swig_cast_to_sbvalue(child_ptr);
+            if (value_sb == NULL)
+                Py_XDECREF(child_ptr);
+            else
+                ret_val = value_sb->get_sp();
+        }
+        else
+        {
+            Py_XDECREF(child_ptr);
+        }
     }
     
     return ret_val;
@@ -1826,21 +1795,10 @@ ScriptInterpreterPython::GetIndexOfChildWithName (void *implementor, const char*
     int ret_val = UINT32_MAX;
     
     FILE *tmp_fh = (python_interpreter->m_dbg_stdout ? python_interpreter->m_dbg_stdout : stdout);
-    if (CurrentThreadHasPythonLock())
+    
     {
-        python_interpreter->EnterSession ();
+        Locker py_lock(python_interpreter, tmp_fh);
         ret_val = g_swig_get_index_child       (implementor, child_name);
-        python_interpreter->LeaveSession ();
-    }
-    else
-    {
-        while (!GetPythonLock (1))
-            fprintf (tmp_fh, 
-                     "Python interpreter locked on another thread; waiting to acquire lock...\n");
-        python_interpreter->EnterSession ();
-        ret_val = g_swig_get_index_child       (implementor, child_name);
-        python_interpreter->LeaveSession ();
-        ReleasePythonLock ();
     }
     
     return ret_val;
@@ -1858,58 +1816,13 @@ ScriptInterpreterPython::UpdateSynthProviderInstance (void* implementor)
     ScriptInterpreterPython *python_interpreter = this;
         
     FILE *tmp_fh = (python_interpreter->m_dbg_stdout ? python_interpreter->m_dbg_stdout : stdout);
-    if (CurrentThreadHasPythonLock())
+    
     {
-        python_interpreter->EnterSession ();
+        Locker py_lock(python_interpreter, tmp_fh);
         g_swig_update_provider       (implementor);
-        python_interpreter->LeaveSession ();
-    }
-    else
-    {
-        while (!GetPythonLock (1))
-            fprintf (tmp_fh, 
-                     "Python interpreter locked on another thread; waiting to acquire lock...\n");
-        python_interpreter->EnterSession ();
-        g_swig_update_provider       (implementor);
-        python_interpreter->LeaveSession ();
-        ReleasePythonLock ();
     }
     
     return;
-}
-
-lldb::SBValue*
-ScriptInterpreterPython::CastPyObjectToSBValue (void* data)
-{
-    if (!data)
-        return NULL;
-    
-    if (!g_swig_cast_to_sbvalue)
-        return NULL;
-    
-    ScriptInterpreterPython *python_interpreter = this;
-    
-    lldb::SBValue* ret_val = NULL;
-    
-    FILE *tmp_fh = (python_interpreter->m_dbg_stdout ? python_interpreter->m_dbg_stdout : stdout);
-    if (CurrentThreadHasPythonLock())
-    {
-        python_interpreter->EnterSession ();
-        ret_val = g_swig_cast_to_sbvalue       (data);
-        python_interpreter->LeaveSession ();
-    }
-    else
-    {
-        while (!GetPythonLock (1))
-            fprintf (tmp_fh, 
-                     "Python interpreter locked on another thread; waiting to acquire lock...\n");
-        python_interpreter->EnterSession ();
-        ret_val = g_swig_cast_to_sbvalue       (data);
-        python_interpreter->LeaveSession ();
-        ReleasePythonLock ();
-    }
-    
-    return ret_val;
 }
 
 bool
@@ -1939,31 +1852,15 @@ ScriptInterpreterPython::RunScriptBasedCommand(const char* impl_function,
     std::string err_msg;
     
     FILE *tmp_fh = (python_interpreter->m_dbg_stdout ? python_interpreter->m_dbg_stdout : stdout);
-    if (CurrentThreadHasPythonLock())
+    
     {
-        python_interpreter->EnterSession ();
+        Locker py_lock(python_interpreter, tmp_fh);
         ret_val = g_swig_call_command       (impl_function,
                                              python_interpreter->m_dictionary_name.c_str(),
                                              debugger_sp,
                                              args,
                                              err_msg,
                                              cmd_retobj);
-        python_interpreter->LeaveSession ();
-    }
-    else
-    {
-        while (!GetPythonLock (1))
-            fprintf (tmp_fh, 
-                     "Python interpreter locked on another thread; waiting to acquire lock...\n");
-        python_interpreter->EnterSession ();
-        ret_val = g_swig_call_command       (impl_function,
-                                             python_interpreter->m_dictionary_name.c_str(),
-                                             debugger_sp,
-                                             args,
-                                             err_msg,
-                                             cmd_retobj);
-        python_interpreter->LeaveSession ();
-        ReleasePythonLock ();
     }
     
     if (!ret_val)

@@ -145,6 +145,23 @@ ValueObjectVariable::UpdateValue ()
             m_value.SetContext(Value::eContextTypeVariable, variable);
 
             Value::ValueType value_type = m_value.GetValueType();
+            
+            switch (value_type)
+            {
+                case Value::eValueTypeFileAddress:
+                    SetAddressTypeOfChildren(eAddressTypeFile);
+                    break;
+                case Value::eValueTypeHostAddress:
+                    SetAddressTypeOfChildren(eAddressTypeHost);
+                    break;
+                case Value::eValueTypeLoadAddress:
+                    SetAddressTypeOfChildren(eAddressTypeLoad);
+                    break;
+                case Value::eValueTypeScalar:
+                    // TODO: is this the right thing to do?
+                    SetAddressTypeOfChildren(eAddressTypeInvalid);
+                    break;
+            }
 
             switch (value_type)
             {
@@ -250,4 +267,10 @@ ValueObjectVariable::GetModule()
     return NULL;
 }
 
-
+SymbolContextScope *
+ValueObjectVariable::GetSymbolContextScope()
+{
+    if (m_variable_sp)
+        return m_variable_sp->GetSymbolContextScope();
+    return NULL;
+}

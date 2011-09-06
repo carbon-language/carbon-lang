@@ -679,11 +679,8 @@ public:
     bool
     UpdateValueIfNeeded (lldb::DynamicValueType use_dynamic, bool update_format = true);
     
-    void
+    bool
     UpdateFormatsIfNeeded(lldb::DynamicValueType use_dynamic = lldb::eNoDynamicValues);
-
-    DataExtractor &
-    GetDataExtractor ();
 
     lldb::ValueObjectSP
     GetSP ()
@@ -691,11 +688,16 @@ public:
         return m_manager->GetSharedPointer(this);
     }
     
-protected:
     void
-    AddSyntheticChild (const ConstString &key,
-                       ValueObject *valobj);
-public:
+    SetName (const ConstString &name);
+    
+    lldb::addr_t
+    GetAddressOf (bool scalar_is_load_address = true,
+                  AddressType *address_type = NULL);
+    
+    lldb::addr_t
+    GetPointerValue (AddressType *address_type = NULL);
+    
     lldb::ValueObjectSP
     GetSyntheticChild (const ConstString &key) const;
     
@@ -761,6 +763,9 @@ public:
     {
         return false;
     }
+    
+    virtual SymbolContextScope *
+    GetSymbolContextScope();
     
     static void
     DumpValueObject (Stream &s,
@@ -864,14 +869,22 @@ public:
     // if it is a char* and check_pointer is true,
     // it also checks that the pointer is valid
     bool
-    IsCStringContainer(bool check_pointer = false);
+    IsCStringContainer (bool check_pointer = false);
     
     void
-    ReadPointedString(Stream& s,
-                      Error& error,
-                      uint32_t max_length = 0,
-                      bool honor_array = true,
-                      lldb::Format item_format = lldb::eFormatCharArray);
+    ReadPointedString (Stream& s,
+                       Error& error,
+                       uint32_t max_length = 0,
+                       bool honor_array = true,
+                       lldb::Format item_format = lldb::eFormatCharArray);
+    
+    virtual size_t
+    GetPointeeData (DataExtractor& data,
+                    uint32_t item_idx = 0,
+					uint32_t item_count = 1);
+    
+    virtual size_t
+    GetData (DataExtractor& data);
 
     bool
     GetIsConstant () const
@@ -891,18 +904,6 @@ public:
         if (m_parent && m_format == lldb::eFormatDefault)
             return m_parent->GetFormat();
         return m_format;
-    }
-    
-    void
-    SetIsExpressionResult(bool expr)
-    {
-        m_is_expression_result = expr;
-    }
-    
-    bool
-    GetIsExpressionResult()
-    {
-        return m_is_expression_result;
     }
     
     void
@@ -968,11 +969,22 @@ public:
     GetNonBaseClassParent();
 
     void
-    SetPointersPointToLoadAddrs (bool b)
+    SetAddressTypeOfChildren(AddressType at)
     {
-        m_pointers_point_to_load_addrs = b;
+        m_address_type_of_ptr_or_ref_children = at;
     }
-
+    
+    AddressType
+    GetAddressTypeOfChildren()
+    {
+        if (m_address_type_of_ptr_or_ref_children == eAddressTypeInvalid)
+        {
+            if (m_parent)
+                return m_parent->GetAddressTypeOfChildren();
+        }
+        return m_address_type_of_ptr_or_ref_children;
+    }
+    
 protected:
     typedef ClusterManager<ValueObject> ValueObjectManager;
 
@@ -1021,19 +1033,21 @@ protected:
                         m_value_did_change:1,
                         m_children_count_valid:1,
                         m_old_value_valid:1,
-                        m_pointers_point_to_load_addrs:1,
                         m_is_deref_of_parent:1,
                         m_is_array_item_for_pointer:1,
                         m_is_bitfield_for_scalar:1,
                         m_is_expression_path_child:1,
-                        m_is_child_at_offset:1,
-                        m_is_expression_result:1;
+                        m_is_child_at_offset:1;
     
-    // used to prevent endless looping into GetpPrintableRepresentation()
+    // used to prevent endless looping into GetPrintableRepresentation()
     uint32_t            m_dump_printable_counter;
+    
+    AddressType         m_address_type_of_ptr_or_ref_children;
+    
     friend class ClangExpressionDeclMap;  // For GetValue
     friend class ClangExpressionVariable; // For SetName
     friend class Target;                  // For SetName
+    friend class ValueObjectConstResultImpl;
 
     //------------------------------------------------------------------
     // Constructors and Destructors
@@ -1046,7 +1060,8 @@ protected:
     // Use this constructor to create a "root variable object".  The ValueObject will be locked to this context
     // through-out its lifespan.
     
-    ValueObject (ExecutionContextScope *exe_scope);
+    ValueObject (ExecutionContextScope *exe_scope,
+                 AddressType child_ptr_or_ref_addr_type = eAddressTypeLoad);
     
     // Use this constructor to create a ValueObject owned by another ValueObject.  It will inherit the ExecutionContext
     // of its parent.
@@ -1088,19 +1103,14 @@ protected:
     
     void
     ClearUserVisibleData();
-
-public:
     
     void
-    SetName (const ConstString &name);
+    AddSyntheticChild (const ConstString &key,
+                       ValueObject *valobj);
     
-    lldb::addr_t
-    GetPointerValue (AddressType &address_type, 
-                     bool scalar_is_load_address);
-
-    lldb::addr_t
-    GetAddressOf (AddressType &address_type, 
-                  bool scalar_is_load_address);
+    DataExtractor &
+    GetDataExtractor ();
+    
 private:
     //------------------------------------------------------------------
     // For ValueObject only

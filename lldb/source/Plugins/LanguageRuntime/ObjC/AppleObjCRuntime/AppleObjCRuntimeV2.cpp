@@ -245,7 +245,7 @@ AppleObjCRuntimeV2::GetDynamicTypeAndAddress (ValueObject &in_value,
     {
         // First job, pull out the address at 0 offset from the object  That will be the ISA pointer.
         AddressType address_type;
-        lldb::addr_t original_ptr = in_value.GetPointerValue(address_type, true);
+        lldb::addr_t original_ptr = in_value.GetPointerValue(&address_type);
         
         // ObjC only has single inheritance, so the objects all start at the same pointer value.
         address.SetSection (NULL);
@@ -584,26 +584,6 @@ AppleObjCRuntimeV2::IsTaggedPointer(lldb::addr_t ptr)
 lldb_private::ObjCLanguageRuntime::ObjCISA
 AppleObjCRuntimeV2::GetISA(ValueObject& valobj)
 {
-    
-    if (valobj.GetIsExpressionResult() &&
-        valobj.GetValue().GetValueType() == Value::eValueTypeHostAddress)
-    {
-        // when using the expression parser, an additional layer of "frozen data"
-        // can be created, which is basically a byte-exact copy of the data returned
-        // by the expression, but in host memory. because this code reads memory without
-        // taking the debug-info-provided object layout, we need to hand it the target version
-        // of the expression output
-        lldb::addr_t tgt_address = valobj.GetValueAsUnsigned(LLDB_INVALID_ADDRESS);
-        ValueObjectSP target_object = ValueObjectConstResult::Create (valobj.GetExecutionContextScope(),
-                                                                      valobj.GetClangAST(),
-                                                                      valobj.GetClangType(),
-                                                                      valobj.GetName(),
-                                                                      tgt_address,
-                                                                      eAddressTypeLoad,
-                                                                      valobj.GetUpdatePoint().GetProcessSP()->GetAddressByteSize());
-        return GetISA(*target_object);
-    }
-    
     if (ClangASTType::GetMinimumLanguage(valobj.GetClangAST(),valobj.GetClangType()) != lldb::eLanguageTypeObjC)
         return 0;
     
@@ -613,8 +593,7 @@ AppleObjCRuntimeV2::GetISA(ValueObject& valobj)
     if (valobj.GetValue().GetContextType() == Value::eContextTypeInvalid)
         return 0;
     
-    uint32_t offset = 0;
-    uint64_t isa_pointer = valobj.GetDataExtractor().GetPointer(&offset);
+    lldb::addr_t isa_pointer = valobj.GetPointerValue();
     
     // tagged pointer
     if (IsTaggedPointer(isa_pointer))

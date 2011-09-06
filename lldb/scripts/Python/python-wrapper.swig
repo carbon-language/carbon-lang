@@ -540,7 +540,7 @@ LLDBSwigPython_UpdateSynthProviderInstance
 
 }
 
-SWIGEXPORT lldb::SBValue*
+SWIGEXPORT void*
 LLDBSWIGPython_CastPyObjectToSBValue
 (
     PyObject* data

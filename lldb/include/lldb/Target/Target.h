@@ -91,7 +91,12 @@ public:
     {
         return m_max_children_display;
     }
-    
+    uint32_t
+    GetMaximumSizeOfStringSummary()
+    {
+        return m_max_strlen_length;
+    }
+
 protected:
 
     void
@@ -107,6 +112,7 @@ protected:
     OptionValueBoolean m_skip_prologue;
     PathMappingList m_source_map;
     uint32_t m_max_children_display;
+    uint32_t m_max_strlen_length;
     
 
 };
@@ -478,7 +484,8 @@ public:
                 bool prefer_file_cache,
                 void *dst,
                 size_t dst_len,
-                Error &error);
+                Error &error,
+                lldb::addr_t *load_addr_ptr = NULL);
 
     size_t
     ReadScalarIntegerFromMemory (const Address& addr, 

@@ -41,30 +41,6 @@ ValueFormat::ValueFormat (lldb::Format f,
 {
 }
 
-std::string
-ValueFormat::FormatObject(lldb::ValueObjectSP object)
-{
-    if (!object.get())
-        return "NULL";
-    
-    StreamString sstr;
-    
-    if (ClangASTType::DumpTypeValue (object->GetClangAST(),            // The clang AST
-                                     object->GetClangType(),           // The clang type to display
-                                     &sstr,
-                                     m_format,                          // Format to display this type with
-                                     object->GetDataExtractor(),       // Data to extract from
-                                     0,                                // Byte offset into "data"
-                                     object->GetByteSize(),            // Byte size of item in "data"
-                                     object->GetBitfieldBitSize(),     // Bitfield bit size
-                                     object->GetBitfieldBitOffset()))  // Bitfield bit offset
-        return (sstr.GetString());
-    else
-    {
-        return ("unsufficient data for value");
-    }
-}
-
 SummaryFormat::SummaryFormat(bool casc,
                              bool skipptr,
                              bool skipref,
@@ -186,29 +162,8 @@ ScriptSummaryFormat::ScriptSummaryFormat(bool casc,
 std::string
 ScriptSummaryFormat::FormatObject(lldb::ValueObjectSP object)
 {
-    lldb::ValueObjectSP target_object;
-    if (object->GetIsExpressionResult() &&
-        ClangASTContext::IsPointerType(object->GetClangType()) &&
-        object->GetValue().GetValueType() == Value::eValueTypeHostAddress)
-    {
-        // when using the expression parser, an additional layer of "frozen data"
-        // can be created, which is basically a byte-exact copy of the data returned
-        // by the expression, but in host memory. because Python code might need to read
-        // into the object memory in non-obvious ways, we need to hand it the target version
-        // of the expression output
-        lldb::addr_t tgt_address = object->GetValueAsUnsigned(LLDB_INVALID_ADDRESS);
-        target_object = ValueObjectConstResult::Create (object->GetExecutionContextScope(),
-                                                        object->GetClangAST(),
-                                                        object->GetClangType(),
-                                                        object->GetName(),
-                                                        tgt_address,
-                                                        eAddressTypeLoad,
-                                                        object->GetUpdatePoint().GetProcessSP()->GetAddressByteSize());
-    }
-    else
-        target_object = object;
     return std::string(ScriptInterpreterPython::CallPythonScriptFunction(m_function_name.c_str(),
-                                                                         target_object).c_str());
+                                                                         object).c_str());
 }
 
 std::string
@@ -282,25 +237,6 @@ SyntheticScriptProvider::FrontEnd::FrontEnd(std::string pclass,
         return;
     }
     
-    if (be->GetIsExpressionResult() &&
-        ClangASTContext::IsPointerType(be->GetClangType()) &&
-        be->GetValue().GetValueType() == Value::eValueTypeHostAddress)
-    {
-        // when using the expression parser, an additional layer of "frozen data"
-        // can be created, which is basically a byte-exact copy of the data returned
-        // by the expression, but in host memory. because Python code might need to read
-        // into the object memory in non-obvious ways, we need to hand it the target version
-        // of the expression output
-        lldb::addr_t tgt_address = be->GetValueAsUnsigned(LLDB_INVALID_ADDRESS);
-        m_backend = ValueObjectConstResult::Create (be->GetExecutionContextScope(),
-                                                    be->GetClangAST(),
-                                                    be->GetClangType(),
-                                                    be->GetName(),
-                                                    tgt_address,
-                                                    eAddressTypeLoad,
-                                                    be->GetUpdatePoint().GetProcessSP()->GetAddressByteSize());
-    }
-
     m_interpreter = m_backend->GetUpdatePoint().GetTargetSP()->GetDebugger().GetCommandInterpreter().GetScriptInterpreter();
     
     if (m_interpreter == NULL)
@@ -315,19 +251,7 @@ SyntheticScriptProvider::FrontEnd::GetChildAtIndex (uint32_t idx, bool can_creat
     if (m_wrapper == NULL || m_interpreter == NULL)
         return lldb::ValueObjectSP();
     
-    PyObject* py_return = (PyObject*)m_interpreter->GetChildAtIndex(m_wrapper, idx);
-    if (py_return == NULL || py_return == Py_None)
-    {
-        Py_XDECREF(py_return);
-        return lldb::ValueObjectSP();
-    }
-    
-    lldb::SBValue *sb_ptr = m_interpreter->CastPyObjectToSBValue(py_return);
-    
-    if (py_return == NULL || sb_ptr == NULL)
-        return lldb::ValueObjectSP();
-    
-    return sb_ptr->m_opaque_sp;
+    return m_interpreter->GetChildAtIndex(m_wrapper, idx);
 }
 
 std::string

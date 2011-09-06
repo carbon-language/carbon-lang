@@ -16,10 +16,12 @@
 // Project includes
 #include "lldb/Core/ValueObject.h"
 
+#include "lldb/Core/ValueObjectConstResultImpl.h"
+
 namespace lldb_private {
 
 //----------------------------------------------------------------------
-// A child of another ValueObject.
+// A frozen ValueObject copied into host memory
 //----------------------------------------------------------------------
 class ValueObjectConstResult : public ValueObject
 {
@@ -27,14 +29,16 @@ public:
     static lldb::ValueObjectSP
     Create (ExecutionContextScope *exe_scope,
             lldb::ByteOrder byte_order, 
-            uint32_t addr_byte_size);
+            uint32_t addr_byte_size,
+            lldb::addr_t address = LLDB_INVALID_ADDRESS);
 
     static lldb::ValueObjectSP
     Create (ExecutionContextScope *exe_scope,
             clang::ASTContext *clang_ast,
             void *clang_type,
             const ConstString &name,
-            const DataExtractor &data);
+            const DataExtractor &data,
+            lldb::addr_t address = LLDB_INVALID_ADDRESS);
 
     static lldb::ValueObjectSP
     Create (ExecutionContextScope *exe_scope,
@@ -43,7 +47,8 @@ public:
             const ConstString &name,
             const lldb::DataBufferSP &result_data_sp,
             lldb::ByteOrder byte_order, 
-            uint8_t addr_size);
+            uint8_t addr_size,
+            lldb::addr_t address = LLDB_INVALID_ADDRESS);
 
     static lldb::ValueObjectSP
     Create (ExecutionContextScope *exe_scope,
@@ -91,7 +96,24 @@ public:
 
     void
     SetByteSize (size_t size);
-
+    
+    virtual lldb::ValueObjectSP
+    Dereference (Error &error);
+    
+    virtual ValueObject *
+    CreateChildAtIndex (uint32_t idx, bool synthetic_array_member, int32_t synthetic_index);
+    
+    virtual lldb::ValueObjectSP
+    GetSyntheticChildAtOffset(uint32_t offset, const ClangASTType& type, bool can_create);
+    
+    virtual lldb::ValueObjectSP
+    AddressOf (Error &error);
+    
+    virtual size_t
+    GetPointeeData (DataExtractor& data,
+                    uint32_t item_idx = 0,
+					uint32_t item_count = 1);
+    
 protected:
     virtual bool
     UpdateValue ();
@@ -106,17 +128,22 @@ protected:
     clang::ASTContext *m_clang_ast; // The clang AST that the clang type comes from
     ConstString m_type_name;
     uint32_t m_byte_size;
+    
+    ValueObjectConstResultImpl m_impl;
 
 private:
+    friend class ValueObjectConstResultImpl;
     ValueObjectConstResult (ExecutionContextScope *exe_scope,
                             lldb::ByteOrder byte_order, 
-                            uint32_t addr_byte_size);
+                            uint32_t addr_byte_size,
+                            lldb::addr_t address);
 
     ValueObjectConstResult (ExecutionContextScope *exe_scope,
                             clang::ASTContext *clang_ast,
                             void *clang_type,
                             const ConstString &name,
-                            const DataExtractor &data);
+                            const DataExtractor &data,
+                            lldb::addr_t address);
 
     ValueObjectConstResult (ExecutionContextScope *exe_scope,
                             clang::ASTContext *clang_ast,
@@ -124,7 +151,8 @@ private:
                             const ConstString &name,
                             const lldb::DataBufferSP &result_data_sp,
                             lldb::ByteOrder byte_order, 
-                            uint8_t addr_size);
+                            uint8_t addr_size,
+                            lldb::addr_t address);
 
     ValueObjectConstResult (ExecutionContextScope *exe_scope,
                             clang::ASTContext *clang_ast,

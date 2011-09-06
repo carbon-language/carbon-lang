@@ -46,6 +46,7 @@ HEADER_FILES="${SRC_ROOT}/include/lldb/lldb.h"\
 " ${SRC_ROOT}/include/lldb/API/SBCommandReturnObject.h"\
 " ${SRC_ROOT}/include/lldb/API/SBCommunication.h"\
 " ${SRC_ROOT}/include/lldb/API/SBCompileUnit.h"\
+" ${SRC_ROOT}/include/lldb/API/SBData.h"\
 " ${SRC_ROOT}/include/lldb/API/SBDebugger.h"\
 " ${SRC_ROOT}/include/lldb/API/SBError.h"\
 " ${SRC_ROOT}/include/lldb/API/SBEvent.h"\
@@ -72,11 +73,51 @@ HEADER_FILES="${SRC_ROOT}/include/lldb/lldb.h"\
 " ${SRC_ROOT}/include/lldb/API/SBValue.h"\
 " ${SRC_ROOT}/include/lldb/API/SBValueList.h"
 
+INTERFACE_FILES = "${SRC_ROOT}/scripts/Python/interface/SBAddress.i"\
+" ${SRC_ROOT}/scripts/Python/interface/SBBlock.i" \
+" ${SRC_ROOT}/scripts/Python/interface/SBBreakpoint.i" \
+" ${SRC_ROOT}/scripts/Python/interface/SBBreakpointLocation.i" \
+" ${SRC_ROOT}/scripts/Python/interface/SBBroadcaster.i" \
+" ${SRC_ROOT}/scripts/Python/interface/SBCommandInterpreter.i" \
+" ${SRC_ROOT}/scripts/Python/interface/SBCommandReturnObject.i" \
+" ${SRC_ROOT}/scripts/Python/interface/SBCommunication.i" \
+" ${SRC_ROOT}/scripts/Python/interface/SBCompileUnit.i" \
+" ${SRC_ROOT}/scripts/Python/interface/SBData.i" \
+" ${SRC_ROOT}/scripts/Python/interface/SBDebugger.i" \
+" ${SRC_ROOT}/scripts/Python/interface/SBError.i" \
+" ${SRC_ROOT}/scripts/Python/interface/SBEvent.i" \
+" ${SRC_ROOT}/scripts/Python/interface/SBFileSpec.i" \
+" ${SRC_ROOT}/scripts/Python/interface/SBFrame.i" \
+" ${SRC_ROOT}/scripts/Python/interface/SBFunction.i" \
+" ${SRC_ROOT}/scripts/Python/interface/SBHostOS.i" \
+" ${SRC_ROOT}/scripts/Python/interface/SBInputReader.i" \
+" ${SRC_ROOT}/scripts/Python/interface/SBInstruction.i" \
+" ${SRC_ROOT}/scripts/Python/interface/SBInstructionList.i" \
+" ${SRC_ROOT}/scripts/Python/interface/SBLineEntry.i" \
+" ${SRC_ROOT}/scripts/Python/interface/SBListener.i" \
+" ${SRC_ROOT}/scripts/Python/interface/SBModule.i" \
+" ${SRC_ROOT}/scripts/Python/interface/SBProcess.i" \
+" ${SRC_ROOT}/scripts/Python/interface/SBSourceManager.i" \
+" ${SRC_ROOT}/scripts/Python/interface/SBStream.i" \
+" ${SRC_ROOT}/scripts/Python/interface/SBStringList.i" \
+" ${SRC_ROOT}/scripts/Python/interface/SBSymbol.i" \
+" ${SRC_ROOT}/scripts/Python/interface/SBSymbolContext.i" \
+" ${SRC_ROOT}/scripts/Python/interface/SBTarget.i" \
+" ${SRC_ROOT}/scripts/Python/interface/SBThread.i" \
+" ${SRC_ROOT}/scripts/Python/interface/SBType.i" \
+" ${SRC_ROOT}/scripts/Python/interface/SBValue.i" \
+" ${SRC_ROOT}/scripts/Python/interface/SBValueList.i"
 
 if [ $Debug == 1 ]
 then
     echo "Header files are:"
     echo ${HEADER_FILES}
+fi
+
+if [ $Debug == 1 ]
+then
+    echo "SWIG interface files are:"
+    echo ${INTERFACE_FILES}
 fi
 
 NeedToUpdate=0
@@ -101,6 +142,23 @@ then
             if [ $Debug == 1 ]
             then
                 echo "${hdrfile} is newer than ${swig_output_file}"
+                echo "swig file will need to be re-built."
+            fi
+            break
+        fi
+    done
+fi
+
+if [ $NeedToUpdate == 0 ]
+then
+    for intffile in ${INTERFACE_FILES}
+    do
+        if [ $intffile -nt ${swig_output_file} ]
+        then
+            NeedToUpdate=1
+            if [ $Debug == 1 ]
+            then
+                echo "${intffile} is newer than ${swig_output_file}"
                 echo "swig file will need to be re-built."
             fi
             break

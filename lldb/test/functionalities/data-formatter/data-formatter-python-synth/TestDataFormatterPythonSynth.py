@@ -250,6 +250,15 @@ class PythonSynthDataFormatterTestCase(TestBase):
                                '[2] = 123',
                                '[3] = 1234',
                                '}'])
+
+        self.expect("p numbers",
+                    substrs = ['$', '= {',
+                               '[0] = 1',
+                               '[1] = 12',
+                               '[2] = 123',
+                               '[3] = 1234',
+                               '}'])
+
         
         # check access to synthetic children
         self.runCmd("type summary add --summary-string \"item 0 is ${var[0]}\" std::int_vect int_vect")
@@ -278,7 +287,18 @@ class PythonSynthDataFormatterTestCase(TestBase):
                                '[5] = 123456',
                                '[6] = 1234567',
                                '}'])
-        
+            
+        self.expect("p numbers",
+                    substrs = ['$', ' = {',
+                               '[0] = 1',
+                               '[1] = 12',
+                               '[2] = 123',
+                               '[3] = 1234',
+                               '[4] = 12345',
+                               '[5] = 123456',
+                               '[6] = 1234567',
+                               '}'])
+
         # check access-by-index
         self.expect("frame variable numbers[0]",
                     substrs = ['1']);
@@ -320,9 +340,20 @@ class PythonSynthDataFormatterTestCase(TestBase):
                        'is',
                        'smart'])
 
+        self.expect("p strings",
+                    substrs = ['goofy',
+                               'is',
+                               'smart'])
+
         # test summaries based on synthetic children
         self.runCmd("type summary add std::string_vect string_vect --summary-string \"vector has ${svar%#} items\" -e")
         self.expect("frame variable strings",
+                    substrs = ['vector has 3 items',
+                               'goofy',
+                               'is',
+                               'smart'])
+
+        self.expect("p strings",
                     substrs = ['vector has 3 items',
                                'goofy',
                                'is',
@@ -360,12 +391,20 @@ class PythonSynthDataFormatterTestCase(TestBase):
         self.runCmd("type summary add std::int_list std::string_list int_list string_list --summary-string \"list has ${svar%#} items\" -e")
         self.runCmd("type format add -f hex int")
 
+        self.expect("frame variable numbers_list --raw", matching=False,
+                    substrs = ['list has 0 items',
+                               '{}'])
+
         self.expect("frame variable numbers_list",
                     substrs = ['list has 0 items',
                                '{}'])
 
+        self.expect("p numbers_list",
+                    substrs = ['list has 0 items',
+                               '{}'])
+
         self.runCmd("n")
-            
+
         self.expect("frame variable numbers_list",
                     substrs = ['list has 1 items',
                                '[0] = ',
@@ -397,7 +436,19 @@ class PythonSynthDataFormatterTestCase(TestBase):
                                '0x0abcdef0',
                                '[5] =',
                                '0x0cab0cab'])
-        
+
+        self.expect("p numbers_list",
+                    substrs = ['list has 6 items',
+                               '[0] = ',
+                               '0x12345678',
+                               '0x11223344',
+                               '0xbeeffeed',
+                               '0x00abba00',
+                               '[4] =',
+                               '0x0abcdef0',
+                               '[5] =',
+                               '0x0cab0cab'])
+
         # check access-by-index
         self.expect("frame variable numbers_list[0]",
                     substrs = ['0x12345678']);
@@ -413,7 +464,6 @@ class PythonSynthDataFormatterTestCase(TestBase):
         self.expect("frame variable numbers_list",
                     substrs = ['list has 0 items',
                                '{}'])
-
 
         self.runCmd("n");self.runCmd("n");self.runCmd("n");self.runCmd("n");
             
@@ -435,16 +485,13 @@ class PythonSynthDataFormatterTestCase(TestBase):
         self.runCmd("n");self.runCmd("n");self.runCmd("n");self.runCmd("n");
 
         self.expect("frame variable text_list",
-            substrs = ['list has 4 items',
-                        '[0]', 'goofy',
-                       '[1]', 'is',
-                       '[2]', 'smart',
-                       '[3]', '!!!'])
+                    substrs = ['list has 4 items',
+                               '[0]', 'goofy',
+                               '[1]', 'is',
+                               '[2]', 'smart',
+                               '[3]', '!!!'])
 
-        # let's prettify string display
-        self.runCmd("type summary add --summary-string \"${var._M_dataplus._M_p}\" std::string std::basic_string<char> \"std::basic_string<char,std::char_traits<char>,std::allocator<char> >\"")
-
-        self.expect("frame variable text_list",
+        self.expect("p text_list",
                     substrs = ['list has 4 items',
                                '[0] = \"goofy\"',
                                '[1] = \"is\"',
@@ -505,7 +552,7 @@ class PythonSynthDataFormatterTestCase(TestBase):
         self.runCmd("n");self.runCmd("n");
         self.runCmd("n");self.runCmd("n");self.runCmd("n");
 
-        self.expect('frame variable ii',
+        self.expect("frame variable ii",
                     substrs = ['map has 9 items',
                                '[5] = {',
                                'first = 5',
@@ -514,6 +561,15 @@ class PythonSynthDataFormatterTestCase(TestBase):
                                'first = 7',
                                'second = 1'])
         
+        self.expect("p ii",
+                    substrs = ['map has 9 items',
+                               '[5] = {',
+                               'first = 5',
+                               'second = 0',
+                               '[7] = {',
+                               'first = 7',
+                               'second = 1'])
+
         # check access-by-index
         self.expect("frame variable ii[0]",
                     substrs = ['first = 0',
@@ -552,7 +608,7 @@ class PythonSynthDataFormatterTestCase(TestBase):
 
         self.runCmd("n");self.runCmd("n");self.runCmd("n");self.runCmd("n");
 
-        self.expect('frame variable si',
+        self.expect("frame variable si",
                     substrs = ['map has 5 items',
                                '[0] = ',
                                'first = \"zero\"',
@@ -569,7 +625,25 @@ class PythonSynthDataFormatterTestCase(TestBase):
                                 '[4] = ',
                                 'first = \"four\"',
                                 'second = 4'])
-        
+
+        self.expect("p si",
+                    substrs = ['map has 5 items',
+                               '[0] = ',
+                               'first = \"zero\"',
+                               'second = 0',
+                               '[1] = ',
+                               'first = \"one\"',
+                               'second = 1',
+                               '[2] = ',
+                               'first = \"two\"',
+                               'second = 2',
+                               '[3] = ',
+                               'first = \"three\"',
+                               'second = 3',
+                               '[4] = ',
+                               'first = \"four\"',
+                               'second = 4'])
+
         # check access-by-index
         self.expect("frame variable si[0]",
                     substrs = ['first = ', 'four',
@@ -597,7 +671,7 @@ class PythonSynthDataFormatterTestCase(TestBase):
 
         self.runCmd("n");self.runCmd("n");self.runCmd("n");self.runCmd("n");
 
-        self.expect('frame variable is',
+        self.expect("frame variable is",
                     substrs = ['map has 4 items',
                                '[0] = ',
                                'second = \"goofy\"',
@@ -612,6 +686,21 @@ class PythonSynthDataFormatterTestCase(TestBase):
                                'second = \"!!!\"',
                                'first = 3'])
         
+        self.expect("p is",
+                    substrs = ['map has 4 items',
+                               '[0] = ',
+                               'second = \"goofy\"',
+                               'first = 0',
+                               '[1] = ',
+                               'second = \"is\"',
+                               'first = 1',
+                               '[2] = ',
+                               'second = \"smart\"',
+                               'first = 2',
+                               '[3] = ',
+                               'second = \"!!!\"',
+                               'first = 3'])
+
         # check access-by-index
         self.expect("frame variable is[0]",
                     substrs = ['first = ', '0',
@@ -639,7 +728,7 @@ class PythonSynthDataFormatterTestCase(TestBase):
 
         self.runCmd("n");self.runCmd("n");self.runCmd("n");self.runCmd("n");
 
-        self.expect('frame variable ss',
+        self.expect("frame variable ss",
                     substrs = ['map has 4 items',
                                '[0] = ',
                                'second = \"hello\"',
@@ -654,6 +743,21 @@ class PythonSynthDataFormatterTestCase(TestBase):
                                'second = \"..is always a Mac!\"',
                                'first = \"a Mac..\"'])
         
+        self.expect("p ss",
+                    substrs = ['map has 4 items',
+                               '[0] = ',
+                               'second = \"hello\"',
+                               'first = \"ciao\"',
+                               '[1] = ',
+                               'second = \"house\"',
+                               'first = \"casa\"',
+                               '[2] = ',
+                               'second = \"cat\"',
+                               'first = \"gatto\"',
+                               '[3] = ',
+                               'second = \"..is always a Mac!\"',
+                               'first = \"a Mac..\"'])
+
         # check access-by-index
         self.expect("frame variable ss[3]",
                     substrs = ['gatto', 'cat']);

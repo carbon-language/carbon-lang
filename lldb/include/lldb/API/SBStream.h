@@ -62,6 +62,7 @@ protected:
     friend class SBBreakpoint;
     friend class SBBreakpointLocation;
     friend class SBCompileUnit;
+    friend class SBData;
     friend class SBEvent;
     friend class SBFrame;
     friend class SBFunction;
