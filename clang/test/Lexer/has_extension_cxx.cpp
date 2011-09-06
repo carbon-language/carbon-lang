@@ -25,6 +25,11 @@ int has_inline_namespaces();
 int has_override_control();
 #endif
 
+// CHECK: has_range_for
+#if __has_extension(cxx_range_for)
+int has_range_for();
+#endif
+
 // CHECK: has_reference_qualified_functions
 #if __has_extension(cxx_reference_qualified_functions)
 int has_reference_qualified_functions();
