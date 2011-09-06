@@ -1974,7 +1974,8 @@ const SCEV *ScalarEvolution::getMulExpr(SmallVectorImpl<const SCEV *> &Ops,
     // multiplied together.  If so, we can fold them.
     for (unsigned OtherIdx = Idx+1;
          OtherIdx < Ops.size() && isa<SCEVAddRecExpr>(Ops[OtherIdx]);
-         ++OtherIdx)
+         ++OtherIdx) {
+      bool Retry = false;
       if (AddRecLoop == cast<SCEVAddRecExpr>(Ops[OtherIdx])->getLoop()) {
         // {A,+,B}<L> * {C,+,D}<L>  -->  {A*C,+,A*D + B*C + B*D,+,2*B*D}<L>
         //
@@ -1985,7 +1986,7 @@ const SCEV *ScalarEvolution::getMulExpr(SmallVectorImpl<const SCEV *> &Ops,
         // Rearranging, X = x, Y = y+z, Z = 2z.
         //
         // x = A*C, y = (A*D + B*C), z = B*D.
-        // Therefore X = A*C, Y = (A*D + B*C) + B*D and Z = 2*B*D.
+        // Therefore X = A*C, Y = A*D + B*C + B*D and Z = 2*B*D.
         for (; OtherIdx != Ops.size() && isa<SCEVAddRecExpr>(Ops[OtherIdx]);
              ++OtherIdx)
           if (const SCEVAddRecExpr *OtherAddRec =
@@ -2002,19 +2003,28 @@ const SCEV *ScalarEvolution::getMulExpr(SmallVectorImpl<const SCEV *> &Ops,
               const SCEV *NewSecondOrderStep =
                   getMulExpr(BD, getConstant(BD->getType(), 2));
 
-              SmallVector<const SCEV *, 3> AddRecOps;
-              AddRecOps.push_back(NewStart);
-              AddRecOps.push_back(NewStep);
-              AddRecOps.push_back(NewSecondOrderStep);
-              const SCEV *NewAddRec = getAddRecExpr(AddRecOps,
-                                                    AddRec->getLoop(),
-                                                    SCEV::FlagAnyWrap);
-              if (Ops.size() == 2) return NewAddRec;
-              Ops[Idx] = AddRec = cast<SCEVAddRecExpr>(NewAddRec);
-              Ops.erase(Ops.begin() + OtherIdx); --OtherIdx;
+              // This can happen when AddRec or OtherAddRec have >3 operands.
+              // TODO: support these add-recs.
+              if (isLoopInvariant(NewStart, AddRecLoop) &&
+                  isLoopInvariant(NewStep, AddRecLoop) &&
+                  isLoopInvariant(NewSecondOrderStep, AddRecLoop)) {
+                SmallVector<const SCEV *, 3> AddRecOps;
+                AddRecOps.push_back(NewStart);
+                AddRecOps.push_back(NewStep);
+                AddRecOps.push_back(NewSecondOrderStep);
+                const SCEV *NewAddRec = getAddRecExpr(AddRecOps,
+                                                      AddRec->getLoop(),
+                                                      SCEV::FlagAnyWrap);
+                if (Ops.size() == 2) return NewAddRec;
+                Ops[Idx] = AddRec = cast<SCEVAddRecExpr>(NewAddRec);
+                Ops.erase(Ops.begin() + OtherIdx); --OtherIdx;
+                Retry = true;
+              }
             }
-        return getMulExpr(Ops);
+        if (Retry)
+          return getMulExpr(Ops);
       }
+    }
 
     // Otherwise couldn't fold anything into this recurrence.  Move onto the
     // next one.

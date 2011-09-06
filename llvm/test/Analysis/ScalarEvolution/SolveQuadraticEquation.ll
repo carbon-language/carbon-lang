@@ -35,7 +35,7 @@ return:         ; preds = %bb5
 
 
 ; PR10383
-; This used to crash.
+; These next two used to crash.
 
 define void @test2(i1 %cmp, i64 %n) {
 entry:
@@ -61,3 +61,22 @@ end:
   ret void
 }
 ; CHECK: Determining loop execution counts for: @test2
+
+define i32 @test3() {
+if.then466:
+  br i1 undef, label %for.cond539.preheader, label %for.inc479
+
+for.inc479:
+  %a2.07 = phi i32 [ %add495, %for.inc479 ], [ 0, %if.then466 ]
+  %j.36 = phi i32 [ %inc497, %for.inc479 ], [ undef, %if.then466 ]
+  %mul484 = mul nsw i32 %j.36, %j.36
+  %mul491 = mul i32 %j.36, %j.36
+  %mul493 = mul i32 %mul491, %mul484
+  %add495 = add nsw i32 %mul493, %a2.07
+  %inc497 = add nsw i32 %j.36, 1
+  br i1 undef, label %for.cond539.preheader, label %for.inc479
+
+for.cond539.preheader:
+  unreachable
+}
+; CHECK: Determining loop execution counts for: @test3
