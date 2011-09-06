@@ -6205,10 +6205,10 @@ static bool IsWithinTemplateSpecialization(Decl *D) {
 }
 
 /// If two different enums are compared, raise a warning.
-static void checkEnumComparison(Sema &S, SourceLocation Loc, ExprResult &lex,
-                                ExprResult &rex) {
-  QualType LHSStrippedType = lex.get()->IgnoreParenImpCasts()->getType();
-  QualType RHSStrippedType = rex.get()->IgnoreParenImpCasts()->getType();
+static void checkEnumComparison(Sema &S, SourceLocation Loc, ExprResult &LHS,
+                                ExprResult &RHS) {
+  QualType LHSStrippedType = LHS.get()->IgnoreParenImpCasts()->getType();
+  QualType RHSStrippedType = RHS.get()->IgnoreParenImpCasts()->getType();
 
   const EnumType *LHSEnumType = LHSStrippedType->getAs<EnumType>();
   if (!LHSEnumType)
@@ -6228,23 +6228,23 @@ static void checkEnumComparison(Sema &S, SourceLocation Loc, ExprResult &lex,
 
   S.Diag(Loc, diag::warn_comparison_of_mixed_enum_types)
       << LHSStrippedType << RHSStrippedType
-      << lex.get()->getSourceRange() << rex.get()->getSourceRange();
+      << LHS.get()->getSourceRange() << RHS.get()->getSourceRange();
 }
 
 /// \brief Diagnose bad pointer comparisons.
 static void diagnoseDistinctPointerComparison(Sema &S, SourceLocation Loc,
-                                              ExprResult &lex, ExprResult &rex,
+                                              ExprResult &LHS, ExprResult &RHS,
                                               bool isError) {
   S.Diag(Loc, isError ? diag::err_typecheck_comparison_of_distinct_pointers
                       : diag::ext_typecheck_comparison_of_distinct_pointers)
-    << lex.get()->getType() << rex.get()->getType()
-    << lex.get()->getSourceRange() << rex.get()->getSourceRange();
+    << LHS.get()->getType() << RHS.get()->getType()
+    << LHS.get()->getSourceRange() << RHS.get()->getSourceRange();
 }
 
 /// \brief Returns false if the pointers are converted to a composite type,
 /// true otherwise.
 static bool convertPointersToCompositeType(Sema &S, SourceLocation Loc,
-                                           ExprResult &lex, ExprResult &rex) {
+                                           ExprResult &LHS, ExprResult &RHS) {
   // C++ [expr.rel]p2:
   //   [...] Pointer conversions (4.10) and qualification
   //   conversions (4.4) are performed on pointer operands (or on
@@ -6265,37 +6265,37 @@ static bool convertPointersToCompositeType(Sema &S, SourceLocation Loc,
   //   that is the union of the cv-qualification signatures of the operand
   //   types.
 
-  QualType lType = lex.get()->getType();
-  QualType rType = rex.get()->getType();
-  assert((lType->isPointerType() && rType->isPointerType()) ||
-         (lType->isMemberPointerType() && rType->isMemberPointerType()));
+  QualType LHSType = LHS.get()->getType();
+  QualType RHSType = RHS.get()->getType();
+  assert((LHSType->isPointerType() && RHSType->isPointerType()) ||
+         (LHSType->isMemberPointerType() && RHSType->isMemberPointerType()));
 
   bool NonStandardCompositeType = false;
   bool *BoolPtr = S.isSFINAEContext() ? 0 : &NonStandardCompositeType;
-  QualType T = S.FindCompositePointerType(Loc, lex, rex, BoolPtr);
+  QualType T = S.FindCompositePointerType(Loc, LHS, RHS, BoolPtr);
   if (T.isNull()) {
-    diagnoseDistinctPointerComparison(S, Loc, lex, rex, /*isError*/true);
+    diagnoseDistinctPointerComparison(S, Loc, LHS, RHS, /*isError*/true);
     return true;
   }
 
   if (NonStandardCompositeType)
     S.Diag(Loc, diag::ext_typecheck_comparison_of_distinct_pointers_nonstandard)
-      << lType << rType << T << lex.get()->getSourceRange()
-      << rex.get()->getSourceRange();
+      << LHSType << RHSType << T << LHS.get()->getSourceRange()
+      << RHS.get()->getSourceRange();
 
-  lex = S.ImpCastExprToType(lex.take(), T, CK_BitCast);
-  rex = S.ImpCastExprToType(rex.take(), T, CK_BitCast);
+  LHS = S.ImpCastExprToType(LHS.take(), T, CK_BitCast);
+  RHS = S.ImpCastExprToType(RHS.take(), T, CK_BitCast);
   return false;
 }
 
 static void diagnoseFunctionPointerToVoidComparison(Sema &S, SourceLocation Loc,
-                                                    ExprResult &lex,
-                                                    ExprResult &rex,
+                                                    ExprResult &LHS,
+                                                    ExprResult &RHS,
                                                     bool isError) {
   S.Diag(Loc,isError ? diag::err_typecheck_comparison_of_fptr_to_void
                      : diag::ext_typecheck_comparison_of_fptr_to_void)
-    << lex.get()->getType() << rex.get()->getType()
-    << lex.get()->getSourceRange() << rex.get()->getSourceRange();
+    << LHS.get()->getType() << RHS.get()->getType()
+    << LHS.get()->getSourceRange() << RHS.get()->getSourceRange();
 }
 
 // C99 6.5.8, C++ [expr.rel]
