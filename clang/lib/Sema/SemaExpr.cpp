@@ -4371,17 +4371,17 @@ ExprResult Sema::ActOnParenOrParenListExpr(SourceLocation L,
 /// \brief Emit a specialized diagnostic when one expression is a null pointer
 /// constant and the other is not a pointer.  Returns true if a diagnostic is
 /// emitted.
-bool Sema::DiagnoseConditionalForNull(Expr *LHS, Expr *RHS,
+bool Sema::DiagnoseConditionalForNull(Expr *LHSExpr, Expr *RHSExpr,
                                       SourceLocation QuestionLoc) {
-  Expr *NullExpr = LHS;
-  Expr *NonPointerExpr = RHS;
+  Expr *NullExpr = LHSExpr;
+  Expr *NonPointerExpr = RHSExpr;
   Expr::NullPointerConstantKind NullKind =
       NullExpr->isNullPointerConstant(Context,
                                       Expr::NPC_ValueDependentIsNotNull);
 
   if (NullKind == Expr::NPCK_NotNull) {
-    NullExpr = RHS;
-    NonPointerExpr = LHS;
+    NullExpr = RHSExpr;
+    NonPointerExpr = LHSExpr;
     NullKind =
         NullExpr->isNullPointerConstant(Context,
                                         Expr::NPC_ValueDependentIsNotNull);
@@ -4613,21 +4613,21 @@ static bool checkPointerIntegerMismatch(Sema &S, ExprResult &Int,
   return true;
 }
 
-/// Note that lhs is not null here, even if this is the gnu "x ?: y" extension.
-/// In that case, lhs = cond.
+/// Note that LHS is not null here, even if this is the gnu "x ?: y" extension.
+/// In that case, LHS = cond.
 /// C99 6.5.15
 QualType Sema::CheckConditionalOperands(ExprResult &Cond, ExprResult &LHS,
                                         ExprResult &RHS, ExprValueKind &VK,
                                         ExprObjectKind &OK,
                                         SourceLocation QuestionLoc) {
 
-  ExprResult lhsResult = CheckPlaceholderExpr(LHS.get());
-  if (!lhsResult.isUsable()) return QualType();
-  LHS = move(lhsResult);
+  ExprResult LHSResult = CheckPlaceholderExpr(LHS.get());
+  if (!LHSResult.isUsable()) return QualType();
+  LHS = move(LHSResult);
 
-  ExprResult rhsResult = CheckPlaceholderExpr(RHS.get());
-  if (!rhsResult.isUsable()) return QualType();
-  RHS = move(rhsResult);
+  ExprResult RHSResult = CheckPlaceholderExpr(RHS.get());
+  if (!RHSResult.isUsable()) return QualType();
+  RHS = move(RHSResult);
 
   // C++ is sufficiently different to merit its own checker.
   if (getLangOptions().CPlusPlus)
@@ -4885,9 +4885,10 @@ static bool IsArithmeticOp(BinaryOperatorKind Opc) {
 
 /// IsArithmeticBinaryExpr - Returns true if E is an arithmetic binary
 /// expression, either using a built-in or overloaded operator,
-/// and sets *OpCode to the opcode and *RHS to the right-hand side expression.
+/// and sets *OpCode to the opcode and *RHSExprs to the right-hand side
+/// expression.
 static bool IsArithmeticBinaryExpr(Expr *E, BinaryOperatorKind *Opcode,
-                                   Expr **RHS) {
+                                   Expr **RHSExprs) {
   E = E->IgnoreParenImpCasts();
   E = E->IgnoreConversionOperator();
   E = E->IgnoreParenImpCasts();
@@ -4896,7 +4897,7 @@ static bool IsArithmeticBinaryExpr(Expr *E, BinaryOperatorKind *Opcode,
   if (BinaryOperator *OP = dyn_cast<BinaryOperator>(E)) {
     if (IsArithmeticOp(OP->getOpcode())) {
       *Opcode = OP->getOpcode();
-      *RHS = OP->getRHS();
+      *RHSExprs = OP->getRHS();
       return true;
     }
   }
@@ -4915,7 +4916,7 @@ static bool IsArithmeticBinaryExpr(Expr *E, BinaryOperatorKind *Opcode,
     BinaryOperatorKind OpKind = BinaryOperator::getOverloadedOpcode(OO);
     if (IsArithmeticOp(OpKind)) {
       *Opcode = OpKind;
-      *RHS = Call->getArg(1);
+      *RHSExprs = Call->getArg(1);
       return true;
     }
   }
@@ -4950,8 +4951,8 @@ static bool ExprLooksBoolean(Expr *E) {
 static void DiagnoseConditionalPrecedence(Sema &Self,
                                           SourceLocation OpLoc,
                                           Expr *Condition,
-                                          Expr *LHS,
-                                          Expr *RHS) {
+                                          Expr *LHSExpr,
+                                          Expr *RHSExpr) {
   BinaryOperatorKind CondOpcode;
   Expr *CondRHS;
 
@@ -4974,7 +4975,7 @@ static void DiagnoseConditionalPrecedence(Sema &Self,
 
   SuggestParentheses(Self, OpLoc,
     Self.PDiag(diag::note_precedence_conditional_first),
-    SourceRange(CondRHS->getLocStart(), RHS->getLocEnd()));
+    SourceRange(CondRHS->getLocStart(), RHSExpr->getLocEnd()));
 }
 
 /// ActOnConditionalOp - Parse a ?: operation.  Note that 'LHS' may be null
