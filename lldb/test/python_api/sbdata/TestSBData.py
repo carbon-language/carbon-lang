@@ -56,11 +56,13 @@ class SBDataAPICase(TestBase):
 
         foobar = frame.FindVariable('foobar')
 
-        print foobar
+        if self.TraceOn():
+            print foobar
 
         data = foobar.GetPointeeData(0, 2)
 
-        print data
+        if self.TraceOn():
+            print data
 
         offset = 0
         error = lldb.SBError()
@@ -99,7 +101,8 @@ class SBDataAPICase(TestBase):
         
         data = star_foobar.GetData()
 
-        print data
+        if self.TraceOn():
+            print data
         
         offset = 0
         self.assertTrue(data.GetUnsignedInt32(error, offset) == 1, 'foo[0].a == 1')
@@ -111,11 +114,13 @@ class SBDataAPICase(TestBase):
 
         new_foobar = foobar.CreateValueFromAddress("f00", foobar_addr, star_foobar.GetType())
 
-        print new_foobar
+        if self.TraceOn():
+            print new_foobar
         
         data = new_foobar.GetData()
 
-        print data
+        if self.TraceOn():
+            print data
 
         offset = 0
         self.assertTrue(data.GetUnsignedInt32(error, offset) == 8, 'then foo[1].a == 8')
@@ -135,7 +140,8 @@ class SBDataAPICase(TestBase):
 
         data = new_foobar.GetData()
 
-        print data
+        if self.TraceOn():
+            print data
 
         offset = 0
         self.assertTrue(data.GetUnsignedInt32(error, offset) == 8, 'finally foo[1].a == 8')
@@ -150,9 +156,11 @@ class SBDataAPICase(TestBase):
 
         data = barfoo.GetData()
 
-        print barfoo
+        if self.TraceOn():
+            print barfoo
 
-        print data
+        if self.TraceOn():
+            print data
 
         offset = 0
         self.assertTrue(data.GetUnsignedInt32(error, offset) == 1, 'barfoo[0].a = 1')
@@ -169,7 +177,8 @@ class SBDataAPICase(TestBase):
 
         new_object = barfoo.CreateValueFromData("new_object",data,barfoo.GetType().GetBasicType(lldb.eBasicTypeInt))
 
-        print new_object
+        if self.TraceOn():
+            print new_object
         
         self.assertTrue(new_object.GetLoadAddress() == 0xFFFFFFFFFFFFFFFF, 'GetLoadAddress() == invalid')
         self.assertTrue(new_object.AddressOf().IsValid() == False, 'AddressOf() == invalid')
@@ -184,7 +193,8 @@ class SBDataAPICase(TestBase):
 
         data.Append(data2)
         
-        print data
+        if self.TraceOn():
+            print data
 
         # this breaks on EBCDIC
         offset = 0
