@@ -288,7 +288,7 @@ namespace llvm {
 
       // SEG_ALLOCA - For allocating variable amounts of stack space when using
       // segmented stacks. Check if the current stacklet has enough space, and
-      // defects to heap allocation if not.
+      // falls back to heap allocation if not.
       SEG_ALLOCA,
 
       // Memory barrier
