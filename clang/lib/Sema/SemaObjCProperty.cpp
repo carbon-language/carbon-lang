@@ -594,6 +594,12 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
     ObjCPropertyDecl::PropertyAttributeKind kind 
       = property->getPropertyAttributes();
     QualType PropType = Context.getCanonicalType(property->getType());
+    bool PropertyIsGCWeak = (kind & ObjCPropertyDecl::OBJC_PR_weak &&
+                             !getLangOptions().ObjCAutoRefCount &&
+                             getLangOptions().getGCMode() != 
+                             LangOptions::NonGC);
+    if (PropertyIsGCWeak)
+      PropType = Context.getObjCGCQualType(PropType, Qualifiers::Weak);
     QualType PropertyIvarType = PropType;
     if (PropType->isReferenceType())
       PropertyIvarType = cast<ReferenceType>(PropType)->getPointeeType();
