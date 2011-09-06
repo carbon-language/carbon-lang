@@ -1985,7 +1985,7 @@ const SCEV *ScalarEvolution::getMulExpr(SmallVectorImpl<const SCEV *> &Ops,
         // Rearranging, X = x, Y = y+z, Z = 2z.
         //
         // x = A*C, y = (A*D + B*C), z = B*D.
-        // Therefore X = A*C, Y = (A*D + B*C) - B*D and Z = 2*B*D.
+        // Therefore X = A*C, Y = (A*D + B*C) + B*D and Z = 2*B*D.
         for (; OtherIdx != Ops.size() && isa<SCEVAddRecExpr>(Ops[OtherIdx]);
              ++OtherIdx)
           if (const SCEVAddRecExpr *OtherAddRec =
