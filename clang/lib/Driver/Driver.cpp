@@ -396,6 +396,23 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
     }
   }
 
+  // Don't attempt to generate preprocessed files if multiple -arch options are
+  // used.
+  int Archs = 0;
+  for (ArgList::const_iterator it = C.getArgs().begin(), ie = C.getArgs().end();
+       it != ie; ++it) {
+    Arg *A = *it;
+    if (A->getOption().matches(options::OPT_arch)) {
+      Archs++;
+      if (Archs > 1) {
+        Diag(clang::diag::note_drv_command_failed_diag_msg)
+          << "Error generating preprocessed source(s) - cannot generate "
+          "preprocessed source with multiple -arch options.";
+        return;
+      }
+    }
+  }
+
   if (Inputs.empty()) {
     Diag(clang::diag::note_drv_command_failed_diag_msg)
       << "Error generating preprocessed source(s) - no preprocessable inputs.";
