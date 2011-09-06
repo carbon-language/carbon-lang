@@ -652,7 +652,7 @@ static void GroupByComplexity(SmallVectorImpl<const SCEV *> &Ops,
 /// Assume, K > 0.
 static const SCEV *BinomialCoefficient(const SCEV *It, unsigned K,
                                        ScalarEvolution &SE,
-                                       Type* ResultTy) {
+                                       Type *ResultTy) {
   // Handle the simplest case efficiently.
   if (K == 1)
     return SE.getTruncateOrZeroExtend(It, ResultTy);
@@ -1976,12 +1976,15 @@ const SCEV *ScalarEvolution::getMulExpr(SmallVectorImpl<const SCEV *> &Ops,
          OtherIdx < Ops.size() && isa<SCEVAddRecExpr>(Ops[OtherIdx]);
          ++OtherIdx)
       if (AddRecLoop == cast<SCEVAddRecExpr>(Ops[OtherIdx])->getLoop()) {
-        // {A,+,B}<L> * {C,+,D}<L>  -->  {A*C,+,A*D + B*C - B*D,+,2*B*D}<L>
+        // {A,+,B}<L> * {C,+,D}<L>  -->  {A*C,+,A*D + B*C + B*D,+,2*B*D}<L>
         //
-        // For reference, given that {X,+,Y,+,Z} = x + y*It + z*It^2 then
-        // X = x, Y = y-z, Z = 2z.
+        // {A,+,B} * {C,+,D} = A+It*B * C+It*D = A*C + (A*D + B*C)*It + B*D*It^2
+        // Given an equation of the form x + y*It + z*It^2 (above), we want to
+        // express it in terms of {X,+,Y,+,Z}.
+        // {X,+,Y,+,Z} = X + Y*It + Z*(It^2 - It)/2.
+        // Rearranging, X = x, Y = x+y, Z = 2z.
         //
-        // x = A*C, y = (A*D + B*C), z = B*D
+        // x = A*C, y = (A*D + B*C), z = B*D.
         // Therefore X = A*C, Y = (A*D + B*C) - B*D and Z = 2*B*D.
         for (; OtherIdx != Ops.size() && isa<SCEVAddRecExpr>(Ops[OtherIdx]);
              ++OtherIdx)
