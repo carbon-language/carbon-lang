@@ -1735,7 +1735,7 @@ const SCEV *ScalarEvolution::getAddExpr(SmallVectorImpl<const SCEV *> &Ops,
       // If all of the other operands were loop invariant, we are done.
       if (Ops.size() == 1) return NewRec;
 
-      // Otherwise, add the folded AddRec by the non-liv parts.
+      // Otherwise, add the folded AddRec by the non-live parts.
       for (unsigned i = 0;; ++i)
         if (Ops[i] == AddRec) {
           Ops[i] = NewRec;
@@ -1960,7 +1960,7 @@ const SCEV *ScalarEvolution::getMulExpr(SmallVectorImpl<const SCEV *> &Ops,
       // If all of the other operands were loop invariant, we are done.
       if (Ops.size() == 1) return NewRec;
 
-      // Otherwise, multiply the folded AddRec by the non-liv parts.
+      // Otherwise, multiply the folded AddRec by the non-live parts.
       for (unsigned i = 0;; ++i)
         if (Ops[i] == AddRec) {
           Ops[i] = NewRec;
@@ -1976,22 +1976,29 @@ const SCEV *ScalarEvolution::getMulExpr(SmallVectorImpl<const SCEV *> &Ops,
          OtherIdx < Ops.size() && isa<SCEVAddRecExpr>(Ops[OtherIdx]);
          ++OtherIdx)
       if (AddRecLoop == cast<SCEVAddRecExpr>(Ops[OtherIdx])->getLoop()) {
-        // F * G, where F = {A,+,B}<L> and G = {C,+,D}<L>  -->
-        // {A*C,+,F*D + G*B + B*D}<L>
+        // {A,+,B}<L> * {C,+,D}<L>  -->  {A*C,+,A*D + B*C + B*D,+,2*B*D}<L>
         for (; OtherIdx != Ops.size() && isa<SCEVAddRecExpr>(Ops[OtherIdx]);
              ++OtherIdx)
           if (const SCEVAddRecExpr *OtherAddRec =
                 dyn_cast<SCEVAddRecExpr>(Ops[OtherIdx]))
             if (OtherAddRec->getLoop() == AddRecLoop) {
-              const SCEVAddRecExpr *F = AddRec, *G = OtherAddRec;
-              const SCEV *NewStart = getMulExpr(F->getStart(), G->getStart());
-              const SCEV *B = F->getStepRecurrence(*this);
-              const SCEV *D = G->getStepRecurrence(*this);
-              const SCEV *NewStep = getAddExpr(getMulExpr(F, D),
-                                               getMulExpr(G, B),
-                                               getMulExpr(B, D));
-              const SCEV *NewAddRec = getAddRecExpr(NewStart, NewStep,
-                                                    F->getLoop(),
+              const SCEV *A = AddRec->getStart();
+              const SCEV *B = AddRec->getStepRecurrence(*this);
+              const SCEV *C = OtherAddRec->getStart();
+              const SCEV *D = OtherAddRec->getStepRecurrence(*this);
+              const SCEV *NewStart = getMulExpr(A, C);
+              const SCEV *BD = getMulExpr(B, D);
+              const SCEV *NewStep = getAddExpr(getMulExpr(A, D),
+                                               getMulExpr(B, C), BD);
+              const SCEV *NewSecondOrderStep =
+                  getMulExpr(BD, getConstant(BD->getType(), 2));
+
+              SmallVector<const SCEV *, 3> AddRecOps;
+              AddRecOps.push_back(NewStart);
+              AddRecOps.push_back(NewStep);
+              AddRecOps.push_back(NewSecondOrderStep);
+              const SCEV *NewAddRec = getAddRecExpr(AddRecOps,
+                                                    AddRec->getLoop(),
                                                     SCEV::FlagAnyWrap);
               if (Ops.size() == 2) return NewAddRec;
               Ops[Idx] = AddRec = cast<SCEVAddRecExpr>(NewAddRec);

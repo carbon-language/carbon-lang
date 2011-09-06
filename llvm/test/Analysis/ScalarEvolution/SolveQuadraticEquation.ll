@@ -1,11 +1,11 @@
 ; RUN: opt < %s -analyze -scalar-evolution \
-; RUN:   -scalar-evolution-max-iterations=0 | grep {backedge-taken count is 100}
+; RUN:   -scalar-evolution-max-iterations=0 | FileCheck %s
+
 ; PR1101
 
 @A = weak global [1000 x i32] zeroinitializer, align 32         
 
-
-define void @test(i32 %N) {
+define void @test1(i32 %N) {
 entry:
         %"alloca point" = bitcast i32 0 to i32           ; <i32> [#uses=0]
         br label %bb3
@@ -30,3 +30,34 @@ bb5:            ; preds = %bb3
 return:         ; preds = %bb5
         ret void
 }
+; CHECK: Determining loop execution counts for: @test1
+; CHECK-NEXT: backedge-taken count is 100
+
+
+; PR10383
+; This used to crash.
+
+define void @test2(i1 %cmp, i64 %n) {
+entry:
+  br label %for.body1
+
+for.body1:
+  %a0.08 = phi i64 [ 0, %entry ], [ %inc512, %for.body1 ]
+  %inc512 = add i64 %a0.08, 1
+  br i1 %cmp, label %preheader, label %for.body1
+
+preheader:
+  br label %for.body2
+
+for.body2:
+  %indvar = phi i64 [ 0, %preheader ], [ %indvar.next, %for.body2 ]
+  %tmp111 = add i64 %n, %indvar
+  %tmp114 = mul i64 %a0.08, %indvar
+  %mul542 = mul i64 %tmp114, %tmp111
+  %indvar.next = add i64 %indvar, 1
+  br i1 undef, label %end, label %for.body2
+
+end:
+  ret void
+}
+; CHECK: Determining loop execution counts for: @test2
