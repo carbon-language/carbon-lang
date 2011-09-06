@@ -5256,18 +5256,18 @@ Sema::CheckAssignmentConstraints(SourceLocation Loc,
 ///
 /// Sets 'Kind' for any result kind except Incompatible.
 Sema::AssignConvertType
-Sema::CheckAssignmentConstraints(QualType lhsType, ExprResult &rhs,
+Sema::CheckAssignmentConstraints(QualType LHSType, ExprResult &RHS,
                                  CastKind &Kind) {
-  QualType rhsType = rhs.get()->getType();
-  QualType origLhsType = lhsType;
+  QualType RHSType = RHS.get()->getType();
+  QualType OrigLHSType = LHSType;
 
   // Get canonical types.  We're not formatting these types, just comparing
   // them.
-  lhsType = Context.getCanonicalType(lhsType).getUnqualifiedType();
-  rhsType = Context.getCanonicalType(rhsType).getUnqualifiedType();
+  LHSType = Context.getCanonicalType(LHSType).getUnqualifiedType();
+  RHSType = Context.getCanonicalType(RHSType).getUnqualifiedType();
 
   // Common case: no conversion required.
-  if (lhsType == rhsType) {
+  if (LHSType == RHSType) {
     Kind = CK_NoOp;
     return Compatible;
   }
@@ -5277,10 +5277,10 @@ Sema::CheckAssignmentConstraints(QualType lhsType, ExprResult &rhs,
   // e.g., as a parameter type in a built-in function. In this case,
   // just make sure that the type referenced is compatible with the
   // right-hand side type. The caller is responsible for adjusting
-  // lhsType so that the resulting expression does not have reference
+  // LHSType so that the resulting expression does not have reference
   // type.
-  if (const ReferenceType *lhsTypeRef = lhsType->getAs<ReferenceType>()) {
-    if (Context.typesAreCompatible(lhsTypeRef->getPointeeType(), rhsType)) {
+  if (const ReferenceType *LHSTypeRef = LHSType->getAs<ReferenceType>()) {
+    if (Context.typesAreCompatible(LHSTypeRef->getPointeeType(), RHSType)) {
       Kind = CK_LValueBitCast;
       return Compatible;
     }
@@ -5289,16 +5289,16 @@ Sema::CheckAssignmentConstraints(QualType lhsType, ExprResult &rhs,
 
   // Allow scalar to ExtVector assignments, and assignments of an ExtVector type
   // to the same ExtVector type.
-  if (lhsType->isExtVectorType()) {
-    if (rhsType->isExtVectorType())
+  if (LHSType->isExtVectorType()) {
+    if (RHSType->isExtVectorType())
       return Incompatible;
-    if (rhsType->isArithmeticType()) {
+    if (RHSType->isArithmeticType()) {
       // CK_VectorSplat does T -> vector T, so first cast to the
       // element type.
-      QualType elType = cast<ExtVectorType>(lhsType)->getElementType();
-      if (elType != rhsType) {
-        Kind = PrepareScalarCast(*this, rhs, elType);
-        rhs = ImpCastExprToType(rhs.take(), elType, Kind);
+      QualType elType = cast<ExtVectorType>(LHSType)->getElementType();
+      if (elType != RHSType) {
+        Kind = PrepareScalarCast(*this, RHS, elType);
+        RHS = ImpCastExprToType(RHS.take(), elType, Kind);
       }
       Kind = CK_VectorSplat;
       return Compatible;
@@ -5306,11 +5306,11 @@ Sema::CheckAssignmentConstraints(QualType lhsType, ExprResult &rhs,
   }
 
   // Conversions to or from vector type.
-  if (lhsType->isVectorType() || rhsType->isVectorType()) {
-    if (lhsType->isVectorType() && rhsType->isVectorType()) {
+  if (LHSType->isVectorType() || RHSType->isVectorType()) {
+    if (LHSType->isVectorType() && RHSType->isVectorType()) {
       // Allow assignments of an AltiVec vector type to an equivalent GCC
       // vector type and vice versa
-      if (Context.areCompatibleVectorTypes(lhsType, rhsType)) {
+      if (Context.areCompatibleVectorTypes(LHSType, RHSType)) {
         Kind = CK_BitCast;
         return Compatible;
       }
@@ -5319,7 +5319,7 @@ Sema::CheckAssignmentConstraints(QualType lhsType, ExprResult &rhs,
       // vectors, the total size only needs to be the same. This is a bitcast;
       // no bits are changed but the result type is different.
       if (getLangOptions().LaxVectorConversions &&
-          (Context.getTypeSize(lhsType) == Context.getTypeSize(rhsType))) {
+          (Context.getTypeSize(LHSType) == Context.getTypeSize(RHSType))) {
         Kind = CK_BitCast;
         return IncompatibleVectors;
       }
@@ -5328,38 +5328,38 @@ Sema::CheckAssignmentConstraints(QualType lhsType, ExprResult &rhs,
   }
 
   // Arithmetic conversions.
-  if (lhsType->isArithmeticType() && rhsType->isArithmeticType() &&
-      !(getLangOptions().CPlusPlus && lhsType->isEnumeralType())) {
-    Kind = PrepareScalarCast(*this, rhs, lhsType);
+  if (LHSType->isArithmeticType() && RHSType->isArithmeticType() &&
+      !(getLangOptions().CPlusPlus && LHSType->isEnumeralType())) {
+    Kind = PrepareScalarCast(*this, RHS, LHSType);
     return Compatible;
   }
 
   // Conversions to normal pointers.
-  if (const PointerType *lhsPointer = dyn_cast<PointerType>(lhsType)) {
+  if (const PointerType *LHSPointer = dyn_cast<PointerType>(LHSType)) {
     // U* -> T*
-    if (isa<PointerType>(rhsType)) {
+    if (isa<PointerType>(RHSType)) {
       Kind = CK_BitCast;
-      return checkPointerTypesForAssignment(*this, lhsType, rhsType);
+      return checkPointerTypesForAssignment(*this, LHSType, RHSType);
     }
 
     // int -> T*
-    if (rhsType->isIntegerType()) {
+    if (RHSType->isIntegerType()) {
       Kind = CK_IntegralToPointer; // FIXME: null?
       return IntToPointer;
     }
 
     // C pointers are not compatible with ObjC object pointers,
     // with two exceptions:
-    if (isa<ObjCObjectPointerType>(rhsType)) {
+    if (isa<ObjCObjectPointerType>(RHSType)) {
       //  - conversions to void*
-      if (lhsPointer->getPointeeType()->isVoidType()) {
+      if (LHSPointer->getPointeeType()->isVoidType()) {
         Kind = CK_AnyPointerToObjCPointerCast;
         return Compatible;
       }
 
       //  - conversions from 'Class' to the redefinition type
-      if (rhsType->isObjCClassType() &&
-          Context.hasSameType(lhsType, 
+      if (RHSType->isObjCClassType() &&
+          Context.hasSameType(LHSType, 
                               Context.getObjCClassRedefinitionType())) {
         Kind = CK_BitCast;
         return Compatible;
@@ -5370,8 +5370,8 @@ Sema::CheckAssignmentConstraints(QualType lhsType, ExprResult &rhs,
     }
 
     // U^ -> void*
-    if (rhsType->getAs<BlockPointerType>()) {
-      if (lhsPointer->getPointeeType()->isVoidType()) {
+    if (RHSType->getAs<BlockPointerType>()) {
+      if (LHSPointer->getPointeeType()->isVoidType()) {
         Kind = CK_BitCast;
         return Compatible;
       }
@@ -5381,27 +5381,27 @@ Sema::CheckAssignmentConstraints(QualType lhsType, ExprResult &rhs,
   }
 
   // Conversions to block pointers.
-  if (isa<BlockPointerType>(lhsType)) {
+  if (isa<BlockPointerType>(LHSType)) {
     // U^ -> T^
-    if (rhsType->isBlockPointerType()) {
+    if (RHSType->isBlockPointerType()) {
       Kind = CK_AnyPointerToBlockPointerCast;
-      return checkBlockPointerTypesForAssignment(*this, lhsType, rhsType);
+      return checkBlockPointerTypesForAssignment(*this, LHSType, RHSType);
     }
 
     // int or null -> T^
-    if (rhsType->isIntegerType()) {
+    if (RHSType->isIntegerType()) {
       Kind = CK_IntegralToPointer; // FIXME: null
       return IntToBlockPointer;
     }
 
     // id -> T^
-    if (getLangOptions().ObjC1 && rhsType->isObjCIdType()) {
+    if (getLangOptions().ObjC1 && RHSType->isObjCIdType()) {
       Kind = CK_AnyPointerToBlockPointerCast;
       return Compatible;
     }
 
     // void* -> T^
-    if (const PointerType *RHSPT = rhsType->getAs<PointerType>())
+    if (const PointerType *RHSPT = RHSType->getAs<PointerType>())
       if (RHSPT->getPointeeType()->isVoidType()) {
         Kind = CK_AnyPointerToBlockPointerCast;
         return Compatible;
@@ -5411,37 +5411,37 @@ Sema::CheckAssignmentConstraints(QualType lhsType, ExprResult &rhs,
   }
 
   // Conversions to Objective-C pointers.
-  if (isa<ObjCObjectPointerType>(lhsType)) {
+  if (isa<ObjCObjectPointerType>(LHSType)) {
     // A* -> B*
-    if (rhsType->isObjCObjectPointerType()) {
+    if (RHSType->isObjCObjectPointerType()) {
       Kind = CK_BitCast;
       Sema::AssignConvertType result = 
-        checkObjCPointerTypesForAssignment(*this, lhsType, rhsType);
+        checkObjCPointerTypesForAssignment(*this, LHSType, RHSType);
       if (getLangOptions().ObjCAutoRefCount &&
           result == Compatible && 
-          !CheckObjCARCUnavailableWeakConversion(origLhsType, rhsType))
+          !CheckObjCARCUnavailableWeakConversion(OrigLHSType, RHSType))
         result = IncompatibleObjCWeakRef;
       return result;
     }
 
     // int or null -> A*
-    if (rhsType->isIntegerType()) {
+    if (RHSType->isIntegerType()) {
       Kind = CK_IntegralToPointer; // FIXME: null
       return IntToPointer;
     }
 
     // In general, C pointers are not compatible with ObjC object pointers,
     // with two exceptions:
-    if (isa<PointerType>(rhsType)) {
+    if (isa<PointerType>(RHSType)) {
       //  - conversions from 'void*'
-      if (rhsType->isVoidPointerType()) {
+      if (RHSType->isVoidPointerType()) {
         Kind = CK_AnyPointerToObjCPointerCast;
         return Compatible;
       }
 
       //  - conversions to 'Class' from its redefinition type
-      if (lhsType->isObjCClassType() &&
-          Context.hasSameType(rhsType, 
+      if (LHSType->isObjCClassType() &&
+          Context.hasSameType(RHSType, 
                               Context.getObjCClassRedefinitionType())) {
         Kind = CK_BitCast;
         return Compatible;
@@ -5452,7 +5452,7 @@ Sema::CheckAssignmentConstraints(QualType lhsType, ExprResult &rhs,
     }
 
     // T^ -> A*
-    if (rhsType->isBlockPointerType()) {
+    if (RHSType->isBlockPointerType()) {
       Kind = CK_AnyPointerToObjCPointerCast;
       return Compatible;
     }
@@ -5461,15 +5461,15 @@ Sema::CheckAssignmentConstraints(QualType lhsType, ExprResult &rhs,
   }
 
   // Conversions from pointers that are not covered by the above.
-  if (isa<PointerType>(rhsType)) {
+  if (isa<PointerType>(RHSType)) {
     // T* -> _Bool
-    if (lhsType == Context.BoolTy) {
+    if (LHSType == Context.BoolTy) {
       Kind = CK_PointerToBoolean;
       return Compatible;
     }
 
     // T* -> int
-    if (lhsType->isIntegerType()) {
+    if (LHSType->isIntegerType()) {
       Kind = CK_PointerToIntegral;
       return PointerToInt;
     }
@@ -5478,15 +5478,15 @@ Sema::CheckAssignmentConstraints(QualType lhsType, ExprResult &rhs,
   }
 
   // Conversions from Objective-C pointers that are not covered by the above.
-  if (isa<ObjCObjectPointerType>(rhsType)) {
+  if (isa<ObjCObjectPointerType>(RHSType)) {
     // T* -> _Bool
-    if (lhsType == Context.BoolTy) {
+    if (LHSType == Context.BoolTy) {
       Kind = CK_PointerToBoolean;
       return Compatible;
     }
 
     // T* -> int
-    if (lhsType->isIntegerType()) {
+    if (LHSType->isIntegerType()) {
       Kind = CK_PointerToIntegral;
       return PointerToInt;
     }
@@ -5495,8 +5495,8 @@ Sema::CheckAssignmentConstraints(QualType lhsType, ExprResult &rhs,
   }
 
   // struct A -> struct B
-  if (isa<TagType>(lhsType) && isa<TagType>(rhsType)) {
-    if (Context.typesAreCompatible(lhsType, rhsType)) {
+  if (isa<TagType>(LHSType) && isa<TagType>(RHSType)) {
+    if (Context.typesAreCompatible(LHSType, RHSType)) {
       Kind = CK_NoOp;
       return Compatible;
     }
