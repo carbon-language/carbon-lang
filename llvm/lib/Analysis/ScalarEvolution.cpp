@@ -1976,7 +1976,13 @@ const SCEV *ScalarEvolution::getMulExpr(SmallVectorImpl<const SCEV *> &Ops,
          OtherIdx < Ops.size() && isa<SCEVAddRecExpr>(Ops[OtherIdx]);
          ++OtherIdx)
       if (AddRecLoop == cast<SCEVAddRecExpr>(Ops[OtherIdx])->getLoop()) {
-        // {A,+,B}<L> * {C,+,D}<L>  -->  {A*C,+,A*D + B*C + B*D,+,2*B*D}<L>
+        // {A,+,B}<L> * {C,+,D}<L>  -->  {A*C,+,A*D + B*C - B*D,+,2*B*D}<L>
+        //
+        // For reference, given that {X,+,Y,+,Z} = x + y*It + z*It^2 then
+        // X = x, Y = y-z, Z = 2z.
+        //
+        // x = A*C, y = (A*D + B*C), z = B*D
+        // Therefore X = A*C, Y = (A*D + B*C) - B*D and Z = 2*B*D.
         for (; OtherIdx != Ops.size() && isa<SCEVAddRecExpr>(Ops[OtherIdx]);
              ++OtherIdx)
           if (const SCEVAddRecExpr *OtherAddRec =
@@ -1989,7 +1995,8 @@ const SCEV *ScalarEvolution::getMulExpr(SmallVectorImpl<const SCEV *> &Ops,
               const SCEV *NewStart = getMulExpr(A, C);
               const SCEV *BD = getMulExpr(B, D);
               const SCEV *NewStep = getAddExpr(getMulExpr(A, D),
-                                               getMulExpr(B, C), BD);
+                                               getMulExpr(B, C),
+                                               getNegativeSCEV(BD));
               const SCEV *NewSecondOrderStep =
                   getMulExpr(BD, getConstant(BD->getType(), 2));
 
