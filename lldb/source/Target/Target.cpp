@@ -53,6 +53,7 @@ Target::Target(Debugger &debugger, const ArchSpec &target_arch, const lldb::Plat
     m_section_load_list (),
     m_breakpoint_list (false),
     m_internal_breakpoint_list (true),
+    m_watchpoint_location_list (),
     m_process_sp (),
     m_search_filter_sp (),
     m_image_search_paths (ImageSearchPathsChanged, this),

@@ -94,6 +94,7 @@ namespace lldb
     typedef int32_t     pid_t;
     typedef uint32_t    tid_t;
     typedef int32_t     break_id_t;
+    typedef int32_t     watch_id_t;
     typedef void *      clang_type_t;
 }
 
