@@ -569,23 +569,22 @@ static bool handleIntegerToComplexFloatConversion(Sema &S, ExprResult &intExpr,
 /// \brief Takes two complex float types and converts them to the same type.
 /// Helper function of UsualArithmeticConversions()
 static QualType
-handleComplexFloatToComplexFloatConverstion(Sema &S, ExprResult &lhsExpr,
-                                            ExprResult &rhsExpr, QualType lhs,
-                                            QualType rhs, bool isCompAssign) {
-  int order = S.Context.getFloatingTypeOrder(lhs, rhs);
+handleComplexFloatToComplexFloatConverstion(Sema &S, ExprResult &LHS,
+                                            ExprResult &RHS, QualType LHSType,
+                                            QualType RHSType,
+                                            bool isCompAssign) {
+  int order = S.Context.getFloatingTypeOrder(LHSType, RHSType);
 
   if (order < 0) {
     // _Complex float -> _Complex double
     if (!isCompAssign)
-      lhsExpr = S.ImpCastExprToType(lhsExpr.take(), rhs,
-                                    CK_FloatingComplexCast);
-    return rhs;
+      LHS = S.ImpCastExprToType(LHS.take(), RHSType, CK_FloatingComplexCast);
+    return RHSType;
   }
   if (order > 0)
     // _Complex float -> _Complex double
-    rhsExpr = S.ImpCastExprToType(rhsExpr.take(), lhs,
-                                  CK_FloatingComplexCast);
-  return lhs;
+    RHS = S.ImpCastExprToType(RHS.take(), LHSType, CK_FloatingComplexCast);
+  return LHSType;
 }
 
 /// \brief Converts otherExpr to complex float and promotes complexExpr if
@@ -631,16 +630,17 @@ static QualType handleOtherComplexFloatConversion(Sema &S,
 
 /// \brief Handle arithmetic conversion with complex types.  Helper function of
 /// UsualArithmeticConversions()
-static QualType handleComplexFloatConversion(Sema &S, ExprResult &lhsExpr,
-                                             ExprResult &rhsExpr, QualType lhs,
-                                             QualType rhs, bool isCompAssign) {
+static QualType handleComplexFloatConversion(Sema &S, ExprResult &LHS,
+                                             ExprResult &RHS, QualType LHSType,
+                                             QualType RHSType,
+                                             bool isCompAssign) {
   // if we have an integer operand, the result is the complex type.
-  if (!handleIntegerToComplexFloatConversion(S, rhsExpr, lhsExpr, rhs, lhs,
+  if (!handleIntegerToComplexFloatConversion(S, RHS, LHS, RHSType, LHSType,
                                              /*skipCast*/false))
-    return lhs;
-  if (!handleIntegerToComplexFloatConversion(S, lhsExpr, rhsExpr, lhs, rhs,
+    return LHSType;
+  if (!handleIntegerToComplexFloatConversion(S, LHS, RHS, LHSType, RHSType,
                                              /*skipCast*/isCompAssign))
-    return rhs;
+    return RHSType;
 
   // This handles complex/complex, complex/float, or float/complex.
   // When both operands are complex, the shorter operand is converted to the
@@ -653,24 +653,25 @@ static QualType handleComplexFloatConversion(Sema &S, ExprResult &lhsExpr,
   // when combining a "long double" with a "double _Complex", the
   // "double _Complex" is promoted to "long double _Complex".
 
-  bool LHSComplexFloat = lhs->isComplexType();
-  bool RHSComplexFloat = rhs->isComplexType();
+  bool LHSComplexFloat = LHSType->isComplexType();
+  bool RHSComplexFloat = RHSType->isComplexType();
 
   // If both are complex, just cast to the more precise type.
   if (LHSComplexFloat && RHSComplexFloat)
-    return handleComplexFloatToComplexFloatConverstion(S, lhsExpr, rhsExpr,
-                                                       lhs, rhs, isCompAssign);
+    return handleComplexFloatToComplexFloatConverstion(S, LHS, RHS,
+                                                       LHSType, RHSType,
+                                                       isCompAssign);
 
   // If only one operand is complex, promote it if necessary and convert the
   // other operand to complex.
   if (LHSComplexFloat)
     return handleOtherComplexFloatConversion(
-        S, lhsExpr, rhsExpr, lhs, rhs, /*convertComplexExpr*/!isCompAssign,
+        S, LHS, RHS, LHSType, RHSType, /*convertComplexExpr*/!isCompAssign,
         /*convertOtherExpr*/ true);
 
   assert(RHSComplexFloat);
   return handleOtherComplexFloatConversion(
-      S, rhsExpr, lhsExpr, rhs, lhs, /*convertComplexExpr*/true,
+      S, RHS, LHS, RHSType, LHSType, /*convertComplexExpr*/true,
       /*convertOtherExpr*/ !isCompAssign);
 }
 
