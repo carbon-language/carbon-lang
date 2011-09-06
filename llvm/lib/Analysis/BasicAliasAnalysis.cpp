@@ -30,6 +30,7 @@
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -468,6 +469,7 @@ namespace {
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<AliasAnalysis>();
+      AU.addRequired<TargetLibraryInfo>();
     }
 
     virtual AliasResult alias(const Location &LocA,
@@ -550,9 +552,14 @@ namespace {
 
 // Register this pass...
 char BasicAliasAnalysis::ID = 0;
-INITIALIZE_AG_PASS(BasicAliasAnalysis, AliasAnalysis, "basicaa",
+INITIALIZE_AG_PASS_BEGIN(BasicAliasAnalysis, AliasAnalysis, "basicaa",
                    "Basic Alias Analysis (stateless AA impl)",
                    false, true, false)
+INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfo)
+INITIALIZE_AG_PASS_END(BasicAliasAnalysis, AliasAnalysis, "basicaa",
+                   "Basic Alias Analysis (stateless AA impl)",
+                   false, true, false)
+
 
 ImmutablePass *llvm::createBasicAliasAnalysisPass() {
   return new BasicAliasAnalysis();
@@ -717,6 +724,7 @@ BasicAliasAnalysis::getModRefInfo(ImmutableCallSite CS,
       return NoModRef;
   }
 
+  const TargetLibraryInfo &TLI = getAnalysis<TargetLibraryInfo>();
   ModRefResult Min = ModRef;
 
   // Finally, handle specific knowledge of intrinsics.
@@ -818,6 +826,37 @@ BasicAliasAnalysis::getModRefInfo(ImmutableCallSite CS,
       break;
     }
     }
+
+  // We can bound the aliasing properties of memset_pattern16 just as we can
+  // for memcpy/memset.  This is particularly important because the 
+  // LoopIdiomRecognizer likes to turn loops into calls to memset_pattern16
+  // whenever possible.
+  else if (TLI.has(LibFunc::memset_pattern16) &&
+           CS.getCalledFunction() &&
+           CS.getCalledFunction()->getName() == "memset_pattern16") {
+    const Function *MS = CS.getCalledFunction();
+    FunctionType *MemsetType = MS->getFunctionType();
+    if (!MemsetType->isVarArg() && MemsetType->getNumParams() == 3 &&
+        isa<PointerType>(MemsetType->getParamType(0)) &&
+        isa<PointerType>(MemsetType->getParamType(1)) &&
+        isa<IntegerType>(MemsetType->getParamType(2))) {
+      uint64_t Len = UnknownSize;
+      if (const ConstantInt *LenCI = dyn_cast<ConstantInt>(CS.getArgument(2)))
+        Len = LenCI->getZExtValue();
+      const Value *Dest = CS.getArgument(0);
+      const Value *Src = CS.getArgument(1);
+      // If it can't overlap the source dest, then it doesn't modref the loc.
+      if (isNoAlias(Location(Dest, Len), Loc)) {
+        if (isNoAlias(Location(Src, 2), Loc))
+          return NoModRef;
+        // If it can't overlap the dest, then worst case it reads the loc.
+        Min = Ref;
+      } else if (isNoAlias(Location(Src, 2), Loc)) {
+        // If it can't overlap the source, then worst case it mutates the loc.
+        Min = Mod;
+      }
+    }
+  }
 
   // The AliasAnalysis base class has some smarts, lets use them.
   return ModRefResult(AliasAnalysis::getModRefInfo(CS, Loc) & Min);
