@@ -8861,8 +8861,8 @@ X86TargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
   assert((Subtarget->isTargetCygMing() || Subtarget->isTargetWindows() ||
           EnableSegmentedStacks) &&
          "This should be used only on Windows targets or when segmented stacks "
-         "are being used.");
-  assert(!Subtarget->isTargetEnvMacho());
+         "are being used");
+  assert(!Subtarget->isTargetEnvMacho() && "Not implemented");
   DebugLoc dl = Op.getDebugLoc();
 
   // Get the inputs.
@@ -8879,7 +8879,7 @@ X86TargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
 
     if (Is64Bit) {
       // The 64 bit implementation of segmented stacks needs to clobber both r10
-      // r11. This makes it impossible to use it along with nested paramenters.
+      // r11. This makes it impossible to use it along with nested parameters.
       const Function *F = MF.getFunction();
 
       for (Function::const_arg_iterator I = F->arg_begin(), E = F->arg_end();
