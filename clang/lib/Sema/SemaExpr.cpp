@@ -780,50 +780,50 @@ static QualType handleComplexIntConvsersion(Sema &S, ExprResult &LHS,
 
 /// \brief Handle integer arithmetic conversions.  Helper function of
 /// UsualArithmeticConversions()
-static QualType handleIntegerConversion(Sema &S, ExprResult &lhsExpr,
-                                        ExprResult &rhsExpr, QualType lhs,
-                                        QualType rhs, bool isCompAssign) {
+static QualType handleIntegerConversion(Sema &S, ExprResult &LHS,
+                                        ExprResult &RHS, QualType LHSType,
+                                        QualType RHSType, bool isCompAssign) {
   // The rules for this case are in C99 6.3.1.8
-  int order = S.Context.getIntegerTypeOrder(lhs, rhs);
-  bool lhsSigned = lhs->hasSignedIntegerRepresentation();
-  bool rhsSigned = rhs->hasSignedIntegerRepresentation();
-  if (lhsSigned == rhsSigned) {
+  int order = S.Context.getIntegerTypeOrder(LHSType, RHSType);
+  bool LHSSigned = LHSType->hasSignedIntegerRepresentation();
+  bool RHSSigned = RHSType->hasSignedIntegerRepresentation();
+  if (LHSSigned == RHSSigned) {
     // Same signedness; use the higher-ranked type
     if (order >= 0) {
-      rhsExpr = S.ImpCastExprToType(rhsExpr.take(), lhs, CK_IntegralCast);
-      return lhs;
+      RHS = S.ImpCastExprToType(RHS.take(), LHSType, CK_IntegralCast);
+      return LHSType;
     } else if (!isCompAssign)
-      lhsExpr = S.ImpCastExprToType(lhsExpr.take(), rhs, CK_IntegralCast);
-    return rhs;
-  } else if (order != (lhsSigned ? 1 : -1)) {
+      LHS = S.ImpCastExprToType(LHS.take(), RHSType, CK_IntegralCast);
+    return RHSType;
+  } else if (order != (LHSSigned ? 1 : -1)) {
     // The unsigned type has greater than or equal rank to the
     // signed type, so use the unsigned type
-    if (rhsSigned) {
-      rhsExpr = S.ImpCastExprToType(rhsExpr.take(), lhs, CK_IntegralCast);
-      return lhs;
+    if (RHSSigned) {
+      RHS = S.ImpCastExprToType(RHS.take(), LHSType, CK_IntegralCast);
+      return LHSType;
     } else if (!isCompAssign)
-      lhsExpr = S.ImpCastExprToType(lhsExpr.take(), rhs, CK_IntegralCast);
-    return rhs;
-  } else if (S.Context.getIntWidth(lhs) != S.Context.getIntWidth(rhs)) {
+      LHS = S.ImpCastExprToType(LHS.take(), RHSType, CK_IntegralCast);
+    return RHSType;
+  } else if (S.Context.getIntWidth(LHSType) != S.Context.getIntWidth(RHSType)) {
     // The two types are different widths; if we are here, that
     // means the signed type is larger than the unsigned type, so
     // use the signed type.
-    if (lhsSigned) {
-      rhsExpr = S.ImpCastExprToType(rhsExpr.take(), lhs, CK_IntegralCast);
-      return lhs;
+    if (LHSSigned) {
+      RHS = S.ImpCastExprToType(RHS.take(), LHSType, CK_IntegralCast);
+      return LHSType;
     } else if (!isCompAssign)
-      lhsExpr = S.ImpCastExprToType(lhsExpr.take(), rhs, CK_IntegralCast);
-    return rhs;
+      LHS = S.ImpCastExprToType(LHS.take(), RHSType, CK_IntegralCast);
+    return RHSType;
   } else {
     // The signed type is higher-ranked than the unsigned type,
     // but isn't actually any bigger (like unsigned int and long
     // on most 32-bit systems).  Use the unsigned type corresponding
     // to the signed type.
     QualType result =
-      S.Context.getCorrespondingUnsignedType(lhsSigned ? lhs : rhs);
-    rhsExpr = S.ImpCastExprToType(rhsExpr.take(), result, CK_IntegralCast);
+      S.Context.getCorrespondingUnsignedType(LHSSigned ? LHSType : RHSType);
+    RHS = S.ImpCastExprToType(RHS.take(), result, CK_IntegralCast);
     if (!isCompAssign)
-      lhsExpr = S.ImpCastExprToType(lhsExpr.take(), result, CK_IntegralCast);
+      LHS = S.ImpCastExprToType(LHS.take(), result, CK_IntegralCast);
     return result;
   }
 }
@@ -834,68 +834,67 @@ static QualType handleIntegerConversion(Sema &S, ExprResult &lhsExpr,
 /// responsible for emitting appropriate error diagnostics.
 /// FIXME: verify the conversion rules for "complex int" are consistent with
 /// GCC.
-QualType Sema::UsualArithmeticConversions(ExprResult &lhsExpr,
-                                          ExprResult &rhsExpr,
+QualType Sema::UsualArithmeticConversions(ExprResult &LHS, ExprResult &RHS,
                                           bool isCompAssign) {
   if (!isCompAssign) {
-    lhsExpr = UsualUnaryConversions(lhsExpr.take());
-    if (lhsExpr.isInvalid())
+    LHS = UsualUnaryConversions(LHS.take());
+    if (LHS.isInvalid())
       return QualType();
   }
 
-  rhsExpr = UsualUnaryConversions(rhsExpr.take());
-  if (rhsExpr.isInvalid())
+  RHS = UsualUnaryConversions(RHS.take());
+  if (RHS.isInvalid())
     return QualType();
 
   // For conversion purposes, we ignore any qualifiers.
   // For example, "const float" and "float" are equivalent.
-  QualType lhs =
-    Context.getCanonicalType(lhsExpr.get()->getType()).getUnqualifiedType();
-  QualType rhs =
-    Context.getCanonicalType(rhsExpr.get()->getType()).getUnqualifiedType();
+  QualType LHSType =
+    Context.getCanonicalType(LHS.get()->getType()).getUnqualifiedType();
+  QualType RHSType =
+    Context.getCanonicalType(RHS.get()->getType()).getUnqualifiedType();
 
   // If both types are identical, no conversion is needed.
-  if (lhs == rhs)
-    return lhs;
+  if (LHSType == RHSType)
+    return LHSType;
 
   // If either side is a non-arithmetic type (e.g. a pointer), we are done.
   // The caller can deal with this (e.g. pointer + int).
-  if (!lhs->isArithmeticType() || !rhs->isArithmeticType())
-    return lhs;
+  if (!LHSType->isArithmeticType() || !RHSType->isArithmeticType())
+    return LHSType;
 
   // Apply unary and bitfield promotions to the LHS's type.
-  QualType lhs_unpromoted = lhs;
-  if (lhs->isPromotableIntegerType())
-    lhs = Context.getPromotedIntegerType(lhs);
-  QualType LHSBitfieldPromoteTy = Context.isPromotableBitField(lhsExpr.get());
+  QualType LHSUnpromotedType = LHSType;
+  if (LHSType->isPromotableIntegerType())
+    LHSType = Context.getPromotedIntegerType(LHSType);
+  QualType LHSBitfieldPromoteTy = Context.isPromotableBitField(LHS.get());
   if (!LHSBitfieldPromoteTy.isNull())
-    lhs = LHSBitfieldPromoteTy;
-  if (lhs != lhs_unpromoted && !isCompAssign)
-    lhsExpr = ImpCastExprToType(lhsExpr.take(), lhs, CK_IntegralCast);
+    LHSType = LHSBitfieldPromoteTy;
+  if (LHSType != LHSUnpromotedType && !isCompAssign)
+    LHS = ImpCastExprToType(LHS.take(), LHSType, CK_IntegralCast);
 
   // If both types are identical, no conversion is needed.
-  if (lhs == rhs)
-    return lhs;
+  if (LHSType == RHSType)
+    return LHSType;
 
   // At this point, we have two different arithmetic types.
 
   // Handle complex types first (C99 6.3.1.8p1).
-  if (lhs->isComplexType() || rhs->isComplexType())
-    return handleComplexFloatConversion(*this, lhsExpr, rhsExpr, lhs, rhs,
+  if (LHSType->isComplexType() || RHSType->isComplexType())
+    return handleComplexFloatConversion(*this, LHS, RHS, LHSType, RHSType,
                                         isCompAssign);
 
   // Now handle "real" floating types (i.e. float, double, long double).
-  if (lhs->isRealFloatingType() || rhs->isRealFloatingType())
-    return handleFloatConversion(*this, lhsExpr, rhsExpr, lhs, rhs,
+  if (LHSType->isRealFloatingType() || RHSType->isRealFloatingType())
+    return handleFloatConversion(*this, LHS, RHS, LHSType, RHSType,
                                  isCompAssign);
 
   // Handle GCC complex int extension.
-  if (lhs->isComplexIntegerType() || rhs->isComplexIntegerType())
-    return handleComplexIntConvsersion(*this, lhsExpr, rhsExpr, lhs, rhs,
+  if (LHSType->isComplexIntegerType() || RHSType->isComplexIntegerType())
+    return handleComplexIntConvsersion(*this, LHS, RHS, LHSType, RHSType,
                                        isCompAssign);
 
   // Finally, we have two differing integer types.
-  return handleIntegerConversion(*this, lhsExpr, rhsExpr, lhs, rhs,
+  return handleIntegerConversion(*this, LHS, RHS, LHSType, RHSType,
                                  isCompAssign);
 }
 
