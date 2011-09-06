@@ -1751,6 +1751,11 @@ void RecordLayoutBuilder::CheckFieldPadding(uint64_t Offset,
   if (isa<ObjCIvarDecl>(D))
     return;
 
+  // Don't warn about structs created without a SourceLocation.  This can
+  // be done by clients of the AST, such as codegen.
+  if (D->getLocation().isInvalid())
+    return;
+  
   unsigned CharBitNum = Context.getTargetInfo().getCharWidth();
 
   // Warn if padding was introduced to the struct/class.
