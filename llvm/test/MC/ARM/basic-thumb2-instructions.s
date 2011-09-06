@@ -317,6 +317,46 @@ _func:
 
 
 @------------------------------------------------------------------------------
+@ CMN
+@------------------------------------------------------------------------------
+        cmn r1, #0xf
+        cmn r8, r6
+        cmn r1, r6, lsl #10
+        cmn r1, r6, lsr #10
+        cmn sp, r6, lsr #10
+        cmn r1, r6, asr #10
+        cmn r1, r6, ror #10
+
+@ CHECK: cmn.w	r1, #15                 @ encoding: [0x11,0xf1,0x0f,0x0f]
+@ CHECK: cmn.w	r8, r6                  @ encoding: [0x18,0xeb,0x06,0x0f]
+@ CHECK: cmn.w	r1, r6, lsl #10         @ encoding: [0x11,0xeb,0x86,0x2f]
+@ CHECK: cmn.w	r1, r6, lsr #10         @ encoding: [0x11,0xeb,0x96,0x2f]
+@ CHECK: cmn.w	sp, r6, lsr #10         @ encoding: [0x1d,0xeb,0x96,0x2f]
+@ CHECK: cmn.w	r1, r6, asr #10         @ encoding: [0x11,0xeb,0xa6,0x2f]
+@ CHECK: cmn.w	r1, r6, ror #10         @ encoding: [0x11,0xeb,0xb6,0x2f]
+
+
+@------------------------------------------------------------------------------
+@ CMP
+@------------------------------------------------------------------------------
+        cmp r5, #0xff00
+        cmp.w r4, r12
+        cmp r9, r6, lsl #12
+        cmp r3, r7, lsr #31
+        cmp sp, r6, lsr #1
+        cmp r2, r5, asr #24
+        cmp r1, r4, ror #15
+
+@ CHECK: cmp.w	r5, #65280              @ encoding: [0xb5,0xf5,0x7f,0x4f]
+@ CHECK: cmp.w	r4, r12                 @ encoding: [0xb4,0xeb,0x0c,0x0f]
+@ CHECK: cmp.w	r9, r6, lsl #12         @ encoding: [0xb9,0xeb,0x06,0x3f]
+@ CHECK: cmp.w	r3, r7, lsr #31         @ encoding: [0xb3,0xeb,0xd7,0x7f]
+@ CHECK: cmp.w	sp, r6, lsr #1          @ encoding: [0xbd,0xeb,0x56,0x0f]
+@ CHECK: cmp.w	r2, r5, asr #24         @ encoding: [0xb2,0xeb,0x25,0x6f]
+@ CHECK: cmp.w	r1, r4, ror #15         @ encoding: [0xb1,0xeb,0xf4,0x3f]
+
+
+@------------------------------------------------------------------------------
 @ IT
 @------------------------------------------------------------------------------
 @ Test encodings of a few full IT blocks, not just the IT instruction

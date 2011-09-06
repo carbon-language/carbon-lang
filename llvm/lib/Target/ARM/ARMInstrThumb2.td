@@ -798,7 +798,7 @@ multiclass T2I_sh_ir<bits<2> opcod, string opc, Operand ty, PatFrag opnode,
   def : t2InstAlias<!strconcat(opc, "${s}${p}", " $Rd, $Rn, $imm"),
      (!cast<Instruction>(!strconcat(baseOpc, "ri")) rGPR:$Rd, rGPR:$Rn,
                                                     ty:$imm, pred:$p,
-                                                    cc_out:$s)>;
+                                                   cc_out:$s)>;
   def : t2InstAlias<!strconcat(opc, "${s}${p}", " $Rd, $Rn, $Rm"),
      (!cast<Instruction>(!strconcat(baseOpc, "rr")) rGPR:$Rd, rGPR:$Rn,
                                                     rGPR:$Rm, pred:$p,
@@ -818,15 +818,15 @@ multiclass T2I_sh_ir<bits<2> opcod, string opc, Operand ty, PatFrag opnode,
 /// T2I_cmp_irs - Defines a set of (op r, {so_imm|r|so_reg}) cmp / test
 /// patterns. Similar to T2I_bin_irs except the instruction does not produce
 /// a explicit result, only implicitly set CPSR.
-let isCompare = 1, Defs = [CPSR] in {
 multiclass T2I_cmp_irs<bits<4> opcod, string opc,
                      InstrItinClass iii, InstrItinClass iir, InstrItinClass iis,
-                       PatFrag opnode> {
+                       PatFrag opnode, string baseOpc> {
+let isCompare = 1, Defs = [CPSR] in {
    // shifted imm
    def ri : T2OneRegCmpImm<
-                (outs), (ins GPR:$Rn, t2_so_imm:$imm), iii,
+                (outs), (ins GPRnopc:$Rn, t2_so_imm:$imm), iii,
                 opc, ".w\t$Rn, $imm",
-                [(opnode GPR:$Rn, t2_so_imm:$imm)]> {
+                [(opnode GPRnopc:$Rn, t2_so_imm:$imm)]> {
      let Inst{31-27} = 0b11110;
      let Inst{25} = 0;
      let Inst{24-21} = opcod;
@@ -836,9 +836,9 @@ multiclass T2I_cmp_irs<bits<4> opcod, string opc,
    }
    // register
    def rr : T2TwoRegCmp<
-                (outs), (ins GPR:$Rn, rGPR:$Rm), iir,
+                (outs), (ins GPRnopc:$Rn, rGPR:$Rm), iir,
                 opc, ".w\t$Rn, $Rm",
-                [(opnode GPR:$Rn, rGPR:$Rm)]> {
+                [(opnode GPRnopc:$Rn, rGPR:$Rm)]> {
      let Inst{31-27} = 0b11101;
      let Inst{26-25} = 0b01;
      let Inst{24-21} = opcod;
@@ -850,9 +850,9 @@ multiclass T2I_cmp_irs<bits<4> opcod, string opc,
    }
    // shifted register
    def rs : T2OneRegCmpShiftedReg<
-                (outs), (ins GPR:$Rn, t2_so_reg:$ShiftedRm), iis,
+                (outs), (ins GPRnopc:$Rn, t2_so_reg:$ShiftedRm), iis,
                 opc, ".w\t$Rn, $ShiftedRm",
-                [(opnode GPR:$Rn, t2_so_reg:$ShiftedRm)]> {
+                [(opnode GPRnopc:$Rn, t2_so_reg:$ShiftedRm)]> {
      let Inst{31-27} = 0b11101;
      let Inst{26-25} = 0b01;
      let Inst{24-21} = opcod;
@@ -860,6 +860,17 @@ multiclass T2I_cmp_irs<bits<4> opcod, string opc,
      let Inst{11-8} = 0b1111; // Rd
    }
 }
+
+  // Assembler aliases w/o the ".w" suffix.
+  // No alias here for 'rr' version as not all instantiations of this
+  // multiclass want one (CMP in particular, does not).
+  def : t2InstAlias<!strconcat(opc, "${p}", " $Rn, $imm"),
+     (!cast<Instruction>(!strconcat(baseOpc, "ri")) GPRnopc:$Rn,
+                                                    t2_so_imm:$imm, pred:$p)>;
+  def : t2InstAlias<!strconcat(opc, "${p}", " $Rn, $shift"),
+     (!cast<Instruction>(!strconcat(baseOpc, "rs")) GPRnopc:$Rn,
+                                                    t2_so_reg:$shift,
+                                                    pred:$p)>;
 }
 
 /// T2I_ld - Defines a set of (op r, {imm12|imm8|so_reg}) load patterns.
@@ -2646,14 +2657,14 @@ def : T2Pat<(or (and rGPR:$src1, 0xFFFF0000),
 //
 defm t2CMP  : T2I_cmp_irs<0b1101, "cmp",
                           IIC_iCMPi, IIC_iCMPr, IIC_iCMPsi,
-                          BinOpFrag<(ARMcmp node:$LHS, node:$RHS)>>;
+                          BinOpFrag<(ARMcmp node:$LHS, node:$RHS)>, "t2CMP">;
 
-def : T2Pat<(ARMcmpZ  GPR:$lhs, t2_so_imm:$imm),
-            (t2CMPri  GPR:$lhs, t2_so_imm:$imm)>;
-def : T2Pat<(ARMcmpZ  GPR:$lhs, rGPR:$rhs),
-            (t2CMPrr  GPR:$lhs, rGPR:$rhs)>;
-def : T2Pat<(ARMcmpZ  GPR:$lhs, t2_so_reg:$rhs),
-            (t2CMPrs  GPR:$lhs, t2_so_reg:$rhs)>;
+def : T2Pat<(ARMcmpZ  GPRnopc:$lhs, t2_so_imm:$imm),
+            (t2CMPri  GPRnopc:$lhs, t2_so_imm:$imm)>;
+def : T2Pat<(ARMcmpZ  GPRnopc:$lhs, rGPR:$rhs),
+            (t2CMPrr  GPRnopc:$lhs, rGPR:$rhs)>;
+def : T2Pat<(ARMcmpZ  GPRnopc:$lhs, t2_so_reg:$rhs),
+            (t2CMPrs  GPRnopc:$lhs, t2_so_reg:$rhs)>;
 
 //FIXME: Disable CMN, as CCodes are backwards from compare expectations
 //       Compare-to-zero still works out, just not the relationals
@@ -2661,20 +2672,23 @@ def : T2Pat<(ARMcmpZ  GPR:$lhs, t2_so_reg:$rhs),
 //                          BinOpFrag<(ARMcmp node:$LHS,(ineg node:$RHS))>>;
 defm t2CMNz : T2I_cmp_irs<0b1000, "cmn",
                           IIC_iCMPi, IIC_iCMPr, IIC_iCMPsi,
-                          BinOpFrag<(ARMcmpZ node:$LHS,(ineg node:$RHS))>>;
+                          BinOpFrag<(ARMcmpZ node:$LHS,(ineg node:$RHS))>,
+                          "t2CMNz">;
 
 //def : T2Pat<(ARMcmp  GPR:$src, t2_so_imm_neg:$imm),
 //            (t2CMNri GPR:$src, t2_so_imm_neg:$imm)>;
 
-def : T2Pat<(ARMcmpZ  GPR:$src, t2_so_imm_neg:$imm),
-            (t2CMNzri GPR:$src, t2_so_imm_neg:$imm)>;
+def : T2Pat<(ARMcmpZ  GPRnopc:$src, t2_so_imm_neg:$imm),
+            (t2CMNzri GPRnopc:$src, t2_so_imm_neg:$imm)>;
 
 defm t2TST  : T2I_cmp_irs<0b0000, "tst",
                           IIC_iTSTi, IIC_iTSTr, IIC_iTSTsi,
-                         BinOpFrag<(ARMcmpZ (and_su node:$LHS, node:$RHS), 0)>>;
+                         BinOpFrag<(ARMcmpZ (and_su node:$LHS, node:$RHS), 0)>,
+                          "t2TST">;
 defm t2TEQ  : T2I_cmp_irs<0b0100, "teq",
                           IIC_iTSTi, IIC_iTSTr, IIC_iTSTsi,
-                         BinOpFrag<(ARMcmpZ (xor_su node:$LHS, node:$RHS), 0)>>;
+                         BinOpFrag<(ARMcmpZ (xor_su node:$LHS, node:$RHS), 0)>,
+                          "t2TEQ">;
 
 // Conditional moves
 // FIXME: should be able to write a pattern for ARMcmov, but can't use
@@ -3567,3 +3581,12 @@ def : t2InstAlias<"add${s}${p} $Rd, $Rn, $Rm",
 def : t2InstAlias<"add${s}${p} $Rd, $Rn, $ShiftedRm",
                   (t2ADDrs rGPR:$Rd, GPRnopc:$Rn, t2_so_reg:$ShiftedRm,
                            pred:$p, cc_out:$s)>;
+
+// Alias for compares without the ".w" optional width specifier.
+def : t2InstAlias<"cmn${p} $Rn, $Rm",
+                  (t2CMNzrr GPRnopc:$Rn, rGPR:$Rm, pred:$p)>;
+def : t2InstAlias<"teq${p} $Rn, $Rm",
+                  (t2TEQrr GPRnopc:$Rn, rGPR:$Rm, pred:$p)>;
+def : t2InstAlias<"tst${p} $Rn, $Rm",
+                  (t2TSTrr GPRnopc:$Rn, rGPR:$Rm, pred:$p)>;
+
