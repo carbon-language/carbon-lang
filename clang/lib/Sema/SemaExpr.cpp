@@ -5653,133 +5653,133 @@ QualType Sema::InvalidOperands(SourceLocation Loc, ExprResult &LHS,
   return QualType();
 }
 
-QualType Sema::CheckVectorOperands(ExprResult &lex, ExprResult &rex,
+QualType Sema::CheckVectorOperands(ExprResult &LHS, ExprResult &RHS,
                                    SourceLocation Loc, bool isCompAssign) {
   // For conversion purposes, we ignore any qualifiers.
   // For example, "const float" and "float" are equivalent.
-  QualType lhsType =
-    Context.getCanonicalType(lex.get()->getType()).getUnqualifiedType();
-  QualType rhsType =
-    Context.getCanonicalType(rex.get()->getType()).getUnqualifiedType();
+  QualType LHSType =
+    Context.getCanonicalType(LHS.get()->getType()).getUnqualifiedType();
+  QualType RHSType =
+    Context.getCanonicalType(RHS.get()->getType()).getUnqualifiedType();
 
   // If the vector types are identical, return.
-  if (lhsType == rhsType)
-    return lhsType;
+  if (LHSType == RHSType)
+    return LHSType;
 
   // Handle the case of equivalent AltiVec and GCC vector types
-  if (lhsType->isVectorType() && rhsType->isVectorType() &&
-      Context.areCompatibleVectorTypes(lhsType, rhsType)) {
-    if (lhsType->isExtVectorType()) {
-      rex = ImpCastExprToType(rex.take(), lhsType, CK_BitCast);
-      return lhsType;
+  if (LHSType->isVectorType() && RHSType->isVectorType() &&
+      Context.areCompatibleVectorTypes(LHSType, RHSType)) {
+    if (LHSType->isExtVectorType()) {
+      RHS = ImpCastExprToType(RHS.take(), LHSType, CK_BitCast);
+      return LHSType;
     }
 
     if (!isCompAssign)
-      lex = ImpCastExprToType(lex.take(), rhsType, CK_BitCast);
-    return rhsType;
+      LHS = ImpCastExprToType(LHS.take(), RHSType, CK_BitCast);
+    return RHSType;
   }
 
   if (getLangOptions().LaxVectorConversions &&
-      Context.getTypeSize(lhsType) == Context.getTypeSize(rhsType)) {
+      Context.getTypeSize(LHSType) == Context.getTypeSize(RHSType)) {
     // If we are allowing lax vector conversions, and LHS and RHS are both
     // vectors, the total size only needs to be the same. This is a
     // bitcast; no bits are changed but the result type is different.
     // FIXME: Should we really be allowing this?
-    rex = ImpCastExprToType(rex.take(), lhsType, CK_BitCast);
-    return lhsType;
+    RHS = ImpCastExprToType(RHS.take(), LHSType, CK_BitCast);
+    return LHSType;
   }
 
   // Canonicalize the ExtVector to the LHS, remember if we swapped so we can
   // swap back (so that we don't reverse the inputs to a subtract, for instance.
   bool swapped = false;
-  if (rhsType->isExtVectorType() && !isCompAssign) {
+  if (RHSType->isExtVectorType() && !isCompAssign) {
     swapped = true;
-    std::swap(rex, lex);
-    std::swap(rhsType, lhsType);
+    std::swap(RHS, LHS);
+    std::swap(RHSType, LHSType);
   }
 
   // Handle the case of an ext vector and scalar.
-  if (const ExtVectorType *LV = lhsType->getAs<ExtVectorType>()) {
+  if (const ExtVectorType *LV = LHSType->getAs<ExtVectorType>()) {
     QualType EltTy = LV->getElementType();
-    if (EltTy->isIntegralType(Context) && rhsType->isIntegralType(Context)) {
-      int order = Context.getIntegerTypeOrder(EltTy, rhsType);
+    if (EltTy->isIntegralType(Context) && RHSType->isIntegralType(Context)) {
+      int order = Context.getIntegerTypeOrder(EltTy, RHSType);
       if (order > 0)
-        rex = ImpCastExprToType(rex.take(), EltTy, CK_IntegralCast);
+        RHS = ImpCastExprToType(RHS.take(), EltTy, CK_IntegralCast);
       if (order >= 0) {
-        rex = ImpCastExprToType(rex.take(), lhsType, CK_VectorSplat);
-        if (swapped) std::swap(rex, lex);
-        return lhsType;
+        RHS = ImpCastExprToType(RHS.take(), LHSType, CK_VectorSplat);
+        if (swapped) std::swap(RHS, LHS);
+        return LHSType;
       }
     }
-    if (EltTy->isRealFloatingType() && rhsType->isScalarType() &&
-        rhsType->isRealFloatingType()) {
-      int order = Context.getFloatingTypeOrder(EltTy, rhsType);
+    if (EltTy->isRealFloatingType() && RHSType->isScalarType() &&
+        RHSType->isRealFloatingType()) {
+      int order = Context.getFloatingTypeOrder(EltTy, RHSType);
       if (order > 0)
-        rex = ImpCastExprToType(rex.take(), EltTy, CK_FloatingCast);
+        RHS = ImpCastExprToType(RHS.take(), EltTy, CK_FloatingCast);
       if (order >= 0) {
-        rex = ImpCastExprToType(rex.take(), lhsType, CK_VectorSplat);
-        if (swapped) std::swap(rex, lex);
-        return lhsType;
+        RHS = ImpCastExprToType(RHS.take(), LHSType, CK_VectorSplat);
+        if (swapped) std::swap(RHS, LHS);
+        return LHSType;
       }
     }
   }
 
   // Vectors of different size or scalar and non-ext-vector are errors.
-  if (swapped) std::swap(rex, lex);
+  if (swapped) std::swap(RHS, LHS);
   Diag(Loc, diag::err_typecheck_vector_not_convertable)
-    << lex.get()->getType() << rex.get()->getType()
-    << lex.get()->getSourceRange() << rex.get()->getSourceRange();
+    << LHS.get()->getType() << RHS.get()->getType()
+    << LHS.get()->getSourceRange() << RHS.get()->getSourceRange();
   return QualType();
 }
 
-QualType Sema::CheckMultiplyDivideOperands(ExprResult &lex, ExprResult &rex,
+QualType Sema::CheckMultiplyDivideOperands(ExprResult &LHS, ExprResult &RHS,
                                            SourceLocation Loc,
                                            bool isCompAssign, bool isDiv) {
-  if (lex.get()->getType()->isVectorType() ||
-      rex.get()->getType()->isVectorType())
-    return CheckVectorOperands(lex, rex, Loc, isCompAssign);
+  if (LHS.get()->getType()->isVectorType() ||
+      RHS.get()->getType()->isVectorType())
+    return CheckVectorOperands(LHS, RHS, Loc, isCompAssign);
 
-  QualType compType = UsualArithmeticConversions(lex, rex, isCompAssign);
-  if (lex.isInvalid() || rex.isInvalid())
+  QualType compType = UsualArithmeticConversions(LHS, RHS, isCompAssign);
+  if (LHS.isInvalid() || RHS.isInvalid())
     return QualType();
 
-  if (!lex.get()->getType()->isArithmeticType() ||
-      !rex.get()->getType()->isArithmeticType())
-    return InvalidOperands(Loc, lex, rex);
+  if (!LHS.get()->getType()->isArithmeticType() ||
+      !RHS.get()->getType()->isArithmeticType())
+    return InvalidOperands(Loc, LHS, RHS);
 
   // Check for division by zero.
   if (isDiv &&
-      rex.get()->isNullPointerConstant(Context,
+      RHS.get()->isNullPointerConstant(Context,
                                        Expr::NPC_ValueDependentIsNotNull))
-    DiagRuntimeBehavior(Loc, rex.get(), PDiag(diag::warn_division_by_zero)
-                                          << rex.get()->getSourceRange());
+    DiagRuntimeBehavior(Loc, RHS.get(), PDiag(diag::warn_division_by_zero)
+                                          << RHS.get()->getSourceRange());
 
   return compType;
 }
 
 QualType Sema::CheckRemainderOperands(
-  ExprResult &lex, ExprResult &rex, SourceLocation Loc, bool isCompAssign) {
-  if (lex.get()->getType()->isVectorType() ||
-      rex.get()->getType()->isVectorType()) {
-    if (lex.get()->getType()->hasIntegerRepresentation() && 
-        rex.get()->getType()->hasIntegerRepresentation())
-      return CheckVectorOperands(lex, rex, Loc, isCompAssign);
-    return InvalidOperands(Loc, lex, rex);
+  ExprResult &LHS, ExprResult &RHS, SourceLocation Loc, bool isCompAssign) {
+  if (LHS.get()->getType()->isVectorType() ||
+      RHS.get()->getType()->isVectorType()) {
+    if (LHS.get()->getType()->hasIntegerRepresentation() && 
+        RHS.get()->getType()->hasIntegerRepresentation())
+      return CheckVectorOperands(LHS, RHS, Loc, isCompAssign);
+    return InvalidOperands(Loc, LHS, RHS);
   }
 
-  QualType compType = UsualArithmeticConversions(lex, rex, isCompAssign);
-  if (lex.isInvalid() || rex.isInvalid())
+  QualType compType = UsualArithmeticConversions(LHS, RHS, isCompAssign);
+  if (LHS.isInvalid() || RHS.isInvalid())
     return QualType();
 
-  if (!lex.get()->getType()->isIntegerType() ||
-      !rex.get()->getType()->isIntegerType())
-    return InvalidOperands(Loc, lex, rex);
+  if (!LHS.get()->getType()->isIntegerType() ||
+      !RHS.get()->getType()->isIntegerType())
+    return InvalidOperands(Loc, LHS, RHS);
 
   // Check for remainder by zero.
-  if (rex.get()->isNullPointerConstant(Context,
+  if (RHS.get()->isNullPointerConstant(Context,
                                        Expr::NPC_ValueDependentIsNotNull))
-    DiagRuntimeBehavior(Loc, rex.get(), PDiag(diag::warn_remainder_by_zero)
-                                 << rex.get()->getSourceRange());
+    DiagRuntimeBehavior(Loc, RHS.get(), PDiag(diag::warn_remainder_by_zero)
+                                 << RHS.get()->getSourceRange());
 
   return compType;
 }
