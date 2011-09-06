@@ -1037,8 +1037,8 @@ multiclass AsI1_rbin_irs<bits<4> opcod, string opc,
 
 }
 
-/// AsI1_rbin_s_is - Same as AsI1_rbin_s_is except sets 's' bit.
-let isCodeGenOnly = 1, Defs = [CPSR] in {
+/// AsI1_rbin_s_is - Same as AsI1_rbin_s_is except it sets 's' bit by default.
+let hasPostISelHook = 1, isCodeGenOnly = 1, Defs = [CPSR] in {
 multiclass AsI1_rbin_s_is<bits<4> opcod, string opc,
                      InstrItinClass iii, InstrItinClass iir, InstrItinClass iis,
                         PatFrag opnode, bit Commutable = 0> {
@@ -1101,25 +1101,25 @@ multiclass AsI1_rbin_s_is<bits<4> opcod, string opc,
 }
 }
 
-/// AI1_bin_s_irs - Similar to AsI1_bin_irs except it sets the 's' bit so the
-/// instruction modifies the CPSR register.
-let isCodeGenOnly = 1, Defs = [CPSR] in {
-multiclass AI1_bin_s_irs<bits<4> opcod, string opc,
+/// AsI1_bin_s_irs - Same as AsI1_bin_irs except it sets the 's' bit by default.
+let hasPostISelHook = 1, isCodeGenOnly = 1, Defs = [CPSR] in {
+multiclass AsI1_bin_s_irs<bits<4> opcod, string opc,
                      InstrItinClass iii, InstrItinClass iir, InstrItinClass iis,
                          PatFrag opnode, bit Commutable = 0> {
-  def ri : AI1<opcod, (outs GPR:$Rd), (ins GPR:$Rn, so_imm:$imm), DPFrm,
+  let isReMaterializable = 1 in {
+  def ri : AsI1<opcod, (outs GPR:$Rd), (ins GPR:$Rn, so_imm:$imm), DPFrm,
                iii, opc, "\t$Rd, $Rn, $imm",
                [(set GPR:$Rd, CPSR, (opnode GPR:$Rn, so_imm:$imm))]> {
     bits<4> Rd;
     bits<4> Rn;
     bits<12> imm;
     let Inst{25} = 1;
-    let Inst{20} = 1;
     let Inst{19-16} = Rn;
     let Inst{15-12} = Rd;
     let Inst{11-0} = imm;
   }
-  def rr : AI1<opcod, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm), DPFrm,
+  }
+  def rr : AsI1<opcod, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm), DPFrm,
                iir, opc, "\t$Rd, $Rn, $Rm",
                [(set GPR:$Rd, CPSR, (opnode GPR:$Rn, GPR:$Rm))]> {
     bits<4> Rd;
@@ -1127,13 +1127,12 @@ multiclass AI1_bin_s_irs<bits<4> opcod, string opc,
     bits<4> Rm;
     let isCommutable = Commutable;
     let Inst{25} = 0;
-    let Inst{20} = 1;
     let Inst{19-16} = Rn;
     let Inst{15-12} = Rd;
     let Inst{11-4} = 0b00000000;
     let Inst{3-0} = Rm;
   }
-  def rsi : AI1<opcod, (outs GPR:$Rd),
+  def rsi : AsI1<opcod, (outs GPR:$Rd),
                (ins GPR:$Rn, so_reg_imm:$shift), DPSoRegImmFrm,
                iis, opc, "\t$Rd, $Rn, $shift",
                [(set GPR:$Rd, CPSR, (opnode GPR:$Rn, so_reg_imm:$shift))]> {
@@ -1141,7 +1140,6 @@ multiclass AI1_bin_s_irs<bits<4> opcod, string opc,
     bits<4> Rn;
     bits<12> shift;
     let Inst{25} = 0;
-    let Inst{20} = 1;
     let Inst{19-16} = Rn;
     let Inst{15-12} = Rd;
     let Inst{11-5} = shift{11-5};
@@ -1149,7 +1147,7 @@ multiclass AI1_bin_s_irs<bits<4> opcod, string opc,
     let Inst{3-0} = shift{3-0};
   }
 
-  def rsr : AI1<opcod, (outs GPR:$Rd),
+  def rsr : AsI1<opcod, (outs GPR:$Rd),
                (ins GPR:$Rn, so_reg_reg:$shift), DPSoRegRegFrm,
                iis, opc, "\t$Rd, $Rn, $shift",
                [(set GPR:$Rd, CPSR, (opnode GPR:$Rn, so_reg_reg:$shift))]> {
@@ -3136,10 +3134,12 @@ defm SUB  : AsI1_bin_irs<0b0010, "sub",
                          BinOpFrag<(sub  node:$LHS, node:$RHS)>, "SUB">;
 
 // ADD and SUB with 's' bit set.
-defm ADDS : AI1_bin_s_irs<0b0100, "adds",
+// FIXME: Eliminate them if we can write def : Pat patterns which defines
+// CPSR and the implicit def of CPSR is not needed.
+defm ADDS : AsI1_bin_s_irs<0b0100, "add",
                           IIC_iALUi, IIC_iALUr, IIC_iALUsr,
                           BinOpFrag<(ARMaddc node:$LHS, node:$RHS)>, 1>;
-defm SUBS : AI1_bin_s_irs<0b0010, "subs",
+defm SUBS : AsI1_bin_s_irs<0b0010, "sub",
                           IIC_iALUi, IIC_iALUr, IIC_iALUsr,
                           BinOpFrag<(ARMsubc node:$LHS, node:$RHS)>>;
 
@@ -3153,6 +3153,9 @@ defm SBC : AI1_adde_sube_irs<0b0110, "sbc",
 defm RSB  : AsI1_rbin_irs <0b0011, "rsb",
                          IIC_iALUi, IIC_iALUr, IIC_iALUsr,
                          BinOpFrag<(sub node:$LHS, node:$RHS)>, "RSB">;
+
+// FIXME: Eliminate them if we can write def : Pat patterns which defines
+// CPSR and the implicit def of CPSR is not needed.
 defm RSBS : AsI1_rbin_s_is<0b0011, "rsb",
                          IIC_iALUi, IIC_iALUr, IIC_iALUsr,
                          BinOpFrag<(ARMsubc node:$LHS, node:$RHS)>>;

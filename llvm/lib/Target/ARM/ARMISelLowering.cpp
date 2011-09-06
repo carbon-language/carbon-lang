@@ -5708,7 +5708,7 @@ void ARMTargetLowering::AdjustInstrPostInstrSelection(MachineInstr *MI,
   // the optional operand to CPSR. Otherwise, remove the CPSR implicit def.
   const MCInstrDesc &MCID = MI->getDesc();
   if (Node->hasAnyUseOfValue(1)) {
-    MachineOperand &MO = MI->getOperand(MCID.getNumOperands() - 2);
+    MachineOperand &MO = MI->getOperand(MCID.getNumOperands() - 1);
     MO.setReg(ARM::CPSR);
     MO.setIsDef(true);
   } else {

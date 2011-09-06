@@ -588,44 +588,41 @@ multiclass T2I_rbin_irs<bits<4> opcod, string opc, PatFrag opnode> {
 
 /// T2I_bin_s_irs - Similar to T2I_bin_irs except it sets the 's' bit so the
 /// instruction modifies the CPSR register.
-let isCodeGenOnly = 1, Defs = [CPSR] in {
+let hasPostISelHook = 1, isCodeGenOnly = 1, Defs = [CPSR] in {
 multiclass T2I_bin_s_irs<bits<4> opcod, string opc,
                      InstrItinClass iii, InstrItinClass iir, InstrItinClass iis,
                          PatFrag opnode, bit Commutable = 0> {
    // shifted imm
-   def ri : T2TwoRegImm<
+   def ri : T2sTwoRegImm<
                 (outs rGPR:$Rd), (ins GPR:$Rn, t2_so_imm:$imm), iii,
-                !strconcat(opc, "s"), ".w\t$Rd, $Rn, $imm",
+                opc, ".w\t$Rd, $Rn, $imm",
                 [(set rGPR:$Rd, CPSR, (opnode GPR:$Rn, t2_so_imm:$imm))]> {
      let Inst{31-27} = 0b11110;
      let Inst{25} = 0;
      let Inst{24-21} = opcod;
-     let Inst{20} = 1; // The S bit.
      let Inst{15} = 0;
    }
    // register
-   def rr : T2ThreeReg<
+   def rr : T2sThreeReg<
                 (outs rGPR:$Rd), (ins GPR:$Rn, rGPR:$Rm), iir,
-                !strconcat(opc, "s"), ".w\t$Rd, $Rn, $Rm",
+                opc, ".w\t$Rd, $Rn, $Rm",
                 [(set rGPR:$Rd, CPSR, (opnode GPR:$Rn, rGPR:$Rm))]> {
      let isCommutable = Commutable;
      let Inst{31-27} = 0b11101;
      let Inst{26-25} = 0b01;
      let Inst{24-21} = opcod;
-     let Inst{20} = 1; // The S bit.
      let Inst{14-12} = 0b000; // imm3
      let Inst{7-6} = 0b00; // imm2
      let Inst{5-4} = 0b00; // type
    }
    // shifted register
-   def rs : T2TwoRegShiftedReg<
+   def rs : T2sTwoRegShiftedReg<
                 (outs rGPR:$Rd), (ins GPR:$Rn, t2_so_reg:$ShiftedRm), iis,
-                !strconcat(opc, "s"), ".w\t$Rd, $Rn, $ShiftedRm",
+                opc, ".w\t$Rd, $Rn, $ShiftedRm",
                [(set rGPR:$Rd, CPSR, (opnode GPR:$Rn, t2_so_reg:$ShiftedRm))]> {
      let Inst{31-27} = 0b11101;
      let Inst{26-25} = 0b01;
      let Inst{24-21} = opcod;
-     let Inst{20} = 1; // The S bit.
    }
 }
 }
@@ -737,28 +734,26 @@ multiclass T2I_adde_sube_irs<bits<4> opcod, string opc, PatFrag opnode,
 
 /// T2I_rbin_s_is - Same as T2I_rbin_irs except sets 's' bit and the register
 /// version is not needed since this is only for codegen.
-let isCodeGenOnly = 1, Defs = [CPSR] in {
+let hasPostISelHook = 1, isCodeGenOnly = 1, Defs = [CPSR] in {
 multiclass T2I_rbin_s_is<bits<4> opcod, string opc, PatFrag opnode> {
    // shifted imm
-   def ri : T2TwoRegImm<
+   def ri : T2sTwoRegImm<
                 (outs rGPR:$Rd), (ins rGPR:$Rn, t2_so_imm:$imm), IIC_iALUi,
-                !strconcat(opc, "s"), ".w\t$Rd, $Rn, $imm",
+                opc, ".w\t$Rd, $Rn, $imm",
                 [(set rGPR:$Rd, CPSR, (opnode t2_so_imm:$imm, rGPR:$Rn))]> {
      let Inst{31-27} = 0b11110;
      let Inst{25} = 0;
      let Inst{24-21} = opcod;
-     let Inst{20} = 1; // The S bit.
      let Inst{15} = 0;
    }
    // shifted register
-   def rs : T2TwoRegShiftedReg<
+   def rs : T2sTwoRegShiftedReg<
                 (outs rGPR:$Rd), (ins rGPR:$Rn, t2_so_reg:$ShiftedRm),
-                IIC_iALUsi, !strconcat(opc, "s"), "\t$Rd, $Rn, $ShiftedRm",
+                IIC_iALUsi, opc, "\t$Rd, $Rn, $ShiftedRm",
               [(set rGPR:$Rd, CPSR, (opnode t2_so_reg:$ShiftedRm, rGPR:$Rn))]> {
      let Inst{31-27} = 0b11101;
      let Inst{26-25} = 0b01;
      let Inst{24-21} = opcod;
-     let Inst{20} = 1; // The S bit.
    }
 }
 }
@@ -1699,6 +1694,8 @@ defm t2SUB  : T2I_bin_ii12rs<0b101, "sub",
                              BinOpFrag<(sub  node:$LHS, node:$RHS)>>;
 
 // ADD and SUB with 's' bit set. No 12-bit immediate (T4) variants.
+// FIXME: Eliminate them if we can write def : Pat patterns which defines
+// CPSR and the implicit def of CPSR is not needed.
 defm t2ADDS : T2I_bin_s_irs <0b1000, "add",
                              IIC_iALUi, IIC_iALUr, IIC_iALUsi,
                              BinOpFrag<(ARMaddc node:$LHS, node:$RHS)>, 1>;
@@ -1716,6 +1713,9 @@ defm t2SBC  : T2I_adde_sube_irs<0b1011, "sbc",
 // RSB
 defm t2RSB  : T2I_rbin_irs  <0b1110, "rsb",
                              BinOpFrag<(sub  node:$LHS, node:$RHS)>>;
+
+// FIXME: Eliminate them if we can write def : Pat patterns which defines
+// CPSR and the implicit def of CPSR is not needed.
 defm t2RSBS : T2I_rbin_s_is <0b1110, "rsb",
                              BinOpFrag<(ARMsubc node:$LHS, node:$RHS)>>;
 

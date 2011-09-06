@@ -35,3 +35,13 @@ entry:
 	%dw = add i64 %ch, %bw
 	ret i64 %dw
 }
+
+; rdar://10073745
+define i64 @f4(i64 %x) nounwind readnone {
+entry:
+; CHECK: f4:
+; CHECK: rsbs r
+; CHECK: rsc r
+  %0 = sub nsw i64 0, %x
+  ret i64 %0
+}
