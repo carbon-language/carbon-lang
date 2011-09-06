@@ -299,15 +299,13 @@ public:
         return m_map.size();
     }
     
-    bool
-    Get (ValueObject& valobj,
-         lldb::SummaryFormatSP& entry,
+    lldb::SummaryFormatSP
+    GetSummaryFormat (ValueObject& valobj,
          lldb::DynamicValueType use_dynamic);
     
-    bool
-    Get (ValueObject& valobj,
-         lldb::SyntheticChildrenSP& entry,
-         lldb::DynamicValueType use_dynamic);
+    lldb::SyntheticChildrenSP
+    GetSyntheticChildren (ValueObject& valobj,
+                          lldb::DynamicValueType use_dynamic);
     
 private:
     
@@ -422,20 +420,18 @@ public:
     GetCategory (const ConstString& category_name,
                  bool can_create = true);
     
-    bool
-    Get (ValueObject& valobj,
-         lldb::SummaryFormatSP& entry,
-         lldb::DynamicValueType use_dynamic)
+    lldb::SummaryFormatSP
+    GetSummaryFormat (ValueObject& valobj,
+                      lldb::DynamicValueType use_dynamic)
     {
-        return m_categories_map.Get(valobj, entry, use_dynamic);
+        return m_categories_map.GetSummaryFormat(valobj, use_dynamic);
     }
     
-    bool
-    Get (ValueObject& valobj,
-         lldb::SyntheticChildrenSP& entry,
-         lldb::DynamicValueType use_dynamic)
+    lldb::SyntheticChildrenSP
+    GetSyntheticChildren (ValueObject& valobj,
+                          lldb::DynamicValueType use_dynamic)
     {
-        return m_categories_map.Get(valobj, entry, use_dynamic);
+        return m_categories_map.GetSyntheticChildren(valobj, use_dynamic);
     }
     
     bool

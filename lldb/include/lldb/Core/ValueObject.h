@@ -920,6 +920,7 @@ public:
         m_forced_summary_format = format;
         m_user_id_of_forced_summary = m_update_point.GetModID();
         m_summary_str.clear();
+        m_trying_summary_already = false;
     }
     
     lldb::SummaryFormatSP
@@ -948,6 +949,42 @@ public:
         if (HasCustomSummaryFormat())
             return m_forced_summary_format;
         return m_last_summary_format;
+    }
+    
+    void
+    SetSummaryFormat(lldb::SummaryFormatSP format)
+    {
+        m_last_summary_format = format;
+        m_summary_str.clear();
+        m_trying_summary_already = false;
+    }
+    
+    void
+    SetValueFormat(lldb::ValueFormatSP format)
+    {
+        m_last_value_format = format;
+        m_value_str.clear();
+    }
+    
+    lldb::ValueFormatSP
+    GetValueFormat()
+    {
+        UpdateFormatsIfNeeded(m_last_format_mgr_dynamic);
+        return m_last_value_format;
+    }
+    
+    void
+    SetSyntheticChildren(lldb::SyntheticChildrenSP synth)
+    {
+        m_last_synthetic_filter = synth;
+        m_synthetic_value = NULL;
+    }
+    
+    lldb::SyntheticChildrenSP
+    GetSyntheticChildren()
+    {
+        UpdateFormatsIfNeeded(m_last_format_mgr_dynamic);
+        return m_last_synthetic_filter;
     }
 
     // Use GetParent for display purposes, but if you want to tell the parent to update itself
@@ -1012,13 +1049,15 @@ protected:
                                         // as a shared pointer to any of them has been handed out.  Shared pointers to
                                         // value objects must always be made with the GetSP method.
 
-    std::vector<ValueObject *> m_children;
+    std::vector<ValueObject *>           m_children;
     std::map<ConstString, ValueObject *> m_synthetic_children;
-    ValueObject *m_dynamic_value;
-    ValueObject *m_synthetic_value;
+    
+    ValueObject*                         m_dynamic_value;
+    ValueObject*                         m_synthetic_value;
+    ValueObject*                         m_deref_valobj;
+    
     lldb::ValueObjectSP m_addr_of_valobj_sp; // We have to hold onto a shared pointer to this one because it is created
                                              // as an independent ValueObjectConstResult, which isn't managed by us.
-    ValueObject *m_deref_valobj;
 
     lldb::Format                m_format;
     uint32_t                    m_last_format_mgr_revision;
@@ -1028,6 +1067,7 @@ protected:
     lldb::ValueFormatSP         m_last_value_format;
     lldb::SyntheticChildrenSP   m_last_synthetic_filter;
     ProcessModID                m_user_id_of_forced_summary;
+    AddressType                 m_address_type_of_ptr_or_ref_children;
     
     bool                m_value_is_valid:1,
                         m_value_did_change:1,
@@ -1037,12 +1077,8 @@ protected:
                         m_is_array_item_for_pointer:1,
                         m_is_bitfield_for_scalar:1,
                         m_is_expression_path_child:1,
-                        m_is_child_at_offset:1;
-    
-    // used to prevent endless looping into GetPrintableRepresentation()
-    uint32_t            m_dump_printable_counter;
-    
-    AddressType         m_address_type_of_ptr_or_ref_children;
+                        m_is_child_at_offset:1,
+                        m_trying_summary_already:1; // used to prevent endless recursion in printing summaries
     
     friend class ClangExpressionDeclMap;  // For GetValue
     friend class ClangExpressionVariable; // For SetName

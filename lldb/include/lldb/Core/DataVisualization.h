@@ -48,8 +48,8 @@ public:
     class ValueFormats
     {
     public:
-        static bool
-        Get (ValueObject& valobj, lldb::DynamicValueType use_dynamic, lldb::ValueFormatSP &entry);
+        static lldb::ValueFormatSP
+        Get (ValueObject& valobj, lldb::DynamicValueType use_dynamic);
         
         static void
         Add (const ConstString &type, const lldb::ValueFormatSP &entry);
@@ -67,14 +67,13 @@ public:
         GetCount ();
     };
     
-    static bool
+    static lldb::SummaryFormatSP
     GetSummaryFormat(ValueObject& valobj,
-                     lldb::DynamicValueType use_dynamic,
-                     lldb::SummaryFormatSP& entry);
-    static bool
+                     lldb::DynamicValueType use_dynamic);
+    
+    static lldb::SyntheticChildrenSP
     GetSyntheticChildren(ValueObject& valobj,
-                         lldb::DynamicValueType use_dynamic,
-                         lldb::SyntheticChildrenSP& entry);
+                         lldb::DynamicValueType use_dynamic);
     
     static bool
     AnyMatches(ConstString type_name,

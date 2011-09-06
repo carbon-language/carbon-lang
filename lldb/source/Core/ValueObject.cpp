@@ -94,8 +94,8 @@ ValueObject::ValueObject (ValueObject &parent) :
     m_is_bitfield_for_scalar(false),
     m_is_expression_path_child(false),
     m_is_child_at_offset(false),
-    m_dump_printable_counter(0),
-    m_address_type_of_ptr_or_ref_children(eAddressTypeInvalid)
+    m_address_type_of_ptr_or_ref_children(eAddressTypeInvalid),
+    m_trying_summary_already(false)
 {
     m_manager->ManageObject(this);
 }
@@ -140,8 +140,8 @@ ValueObject::ValueObject (ExecutionContextScope *exe_scope,
     m_is_bitfield_for_scalar(false),
     m_is_expression_path_child(false),
     m_is_child_at_offset(false),
-    m_dump_printable_counter(0),
-    m_address_type_of_ptr_or_ref_children(child_ptr_or_ref_addr_type)
+    m_address_type_of_ptr_or_ref_children(child_ptr_or_ref_addr_type),
+    m_trying_summary_already(false)
 {
     m_manager = new ValueObjectManager();
     m_manager->ManageObject (this);
@@ -241,30 +241,21 @@ ValueObject::UpdateFormatsIfNeeded(DynamicValueType use_dynamic)
     if (HasCustomSummaryFormat() && m_update_point.GetModID() != m_user_id_of_forced_summary)
     {
         ClearCustomSummaryFormat();
-        m_summary_str.clear();
+        
         any_change = true;
     }
+    
     if ( (m_last_format_mgr_revision != DataVisualization::GetCurrentRevision()) ||
           m_last_format_mgr_dynamic != use_dynamic)
     {
-        if (m_last_summary_format.get())
-            m_last_summary_format.reset((StringSummaryFormat*)NULL);
-        if (m_last_value_format.get())
-            m_last_value_format.reset(/*(ValueFormat*)NULL*/);
-        if (m_last_synthetic_filter.get())
-            m_last_synthetic_filter.reset(/*(SyntheticFilter*)NULL*/);
-
-        m_synthetic_value = NULL;
-        
-        any_change = true;
-        DataVisualization::ValueFormats::Get(*this, eNoDynamicValues, m_last_value_format);
-        DataVisualization::GetSummaryFormat(*this, use_dynamic, m_last_summary_format);
-        DataVisualization::GetSyntheticChildren(*this, use_dynamic, m_last_synthetic_filter);
+        SetValueFormat(DataVisualization::ValueFormats::Get(*this, eNoDynamicValues));
+        SetSummaryFormat(DataVisualization::GetSummaryFormat(*this, use_dynamic));
+        SetSyntheticChildren(DataVisualization::GetSyntheticChildren(*this, use_dynamic));
 
         m_last_format_mgr_revision = DataVisualization::GetCurrentRevision();
         m_last_format_mgr_dynamic = use_dynamic;
-
-        ClearUserVisibleData();
+        
+        any_change = true;
     }
     
     return any_change;
@@ -1122,8 +1113,6 @@ ValueObject::GetPrintableRepresentation(Stream& s,
                                         Format custom_format)
 {
 
-    RefCounter ref(&m_dump_printable_counter);
-    
     if (custom_format != eFormatInvalid)
         SetFormat(custom_format);
     
@@ -1136,8 +1125,15 @@ ValueObject::GetPrintableRepresentation(Stream& s,
             return_value = GetValueAsCString();
             break;
         case eDisplaySummary:
-            return_value = GetSummaryAsCString();
-            break;
+            if (m_trying_summary_already)
+                return_value = NULL;
+            else
+            {
+                m_trying_summary_already = true;
+                return_value = GetSummaryAsCString();
+                m_trying_summary_already = false;
+                break;
+            }
         case eDisplayLanguageSpecific:
             return_value = GetObjectDescription();
             break;
@@ -1159,20 +1155,17 @@ ValueObject::GetPrintableRepresentation(Stream& s,
             break;
     }
     
-    // this code snippet might lead to endless recursion, thus we use a RefCounter here to
-    // check that we are not looping endlessly
-    if (!return_value && (m_dump_printable_counter < 3))
+    if (!return_value)
     {
-        // try to pick the other choice
         if (val_obj_display == eDisplayValue)
-            return_value = GetSummaryAsCString();
+            return_value = GetSummaryAsCString();        
         else if (val_obj_display == eDisplaySummary)
         {
             if (ClangASTContext::IsAggregateType (GetClangType()) == true)
             {
                 // this thing has no value, and it seems to have no summary
                 // some combination of unitialized data and other factors can also
-                // raise this condition, so let's print a nice generic error message
+                // raise this condition, so let's print a nice generic description
                 {
                     alloc_mem.resize(684);
                     return_value = &alloc_mem[0];
@@ -3704,6 +3697,7 @@ ValueObject::ClearUserVisibleData()
     m_value_str.clear();
     m_summary_str.clear();
     m_object_desc_str.clear();
+    m_trying_summary_already = false;
 }
 
 SymbolContextScope *

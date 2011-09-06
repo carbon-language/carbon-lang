@@ -38,10 +38,12 @@ DataVisualization::GetCurrentRevision ()
     return GetFormatManager().GetCurrentRevision();
 }
 
-bool
-DataVisualization::ValueFormats::Get (ValueObject& valobj, lldb::DynamicValueType use_dynamic, lldb::ValueFormatSP &entry)
+lldb::ValueFormatSP
+DataVisualization::ValueFormats::Get (ValueObject& valobj, lldb::DynamicValueType use_dynamic)
 {
-    return GetFormatManager().GetValueNavigator().Get(valobj,entry, use_dynamic);
+    lldb::ValueFormatSP entry;
+    GetFormatManager().GetValueNavigator().Get(valobj, entry, use_dynamic);
+    return entry;
 }
 
 void
@@ -74,19 +76,18 @@ DataVisualization::ValueFormats::GetCount ()
     return GetFormatManager().GetValueNavigator().GetCount();
 }
 
-bool
+lldb::SummaryFormatSP
 DataVisualization::GetSummaryFormat (ValueObject& valobj,
-                                     lldb::DynamicValueType use_dynamic,
-                                     lldb::SummaryFormatSP& entry)
+                                     lldb::DynamicValueType use_dynamic)
 {
-    return GetFormatManager().Get(valobj, entry, use_dynamic);
+    return GetFormatManager().GetSummaryFormat(valobj, use_dynamic);
 }
-bool
+
+lldb::SyntheticChildrenSP
 DataVisualization::GetSyntheticChildren (ValueObject& valobj,
-                                         lldb::DynamicValueType use_dynamic,
-                                         lldb::SyntheticChildrenSP& entry)
+                                         lldb::DynamicValueType use_dynamic)
 {
-    return GetFormatManager().Get(valobj, entry, use_dynamic);
+    return GetFormatManager().GetSyntheticChildren(valobj, use_dynamic);
 }
 
 bool

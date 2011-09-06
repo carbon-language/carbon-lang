@@ -873,6 +873,14 @@ CommandObjectTypeSummaryAdd::Execute_StringSummary (Args& command, CommandReturn
     
     const char* format_cstr = (m_options.m_one_liner ? "" : m_options.m_format_string.c_str());
     
+    // ${var%S} is an endless recursion, prevent it
+    if (strcmp(format_cstr, "${var%S}") == 0)
+    {
+        result.AppendError("recursive summary not allowed");
+        result.SetStatus(eReturnStatusFailed);
+        return false;
+    }
+    
     Error error;
     
     lldb::SummaryFormatSP entry(new StringSummaryFormat(m_options.m_cascade,

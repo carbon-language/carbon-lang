@@ -402,10 +402,9 @@ CategoryMap::AnyMatches (ConstString type_name,
     return false;
 }
 
-bool
-CategoryMap::Get (ValueObject& valobj,
-                  lldb::SummaryFormatSP& entry,
-                  lldb::DynamicValueType use_dynamic)
+lldb::SummaryFormatSP
+CategoryMap::GetSummaryFormat (ValueObject& valobj,
+                               lldb::DynamicValueType use_dynamic)
 {
     Mutex::Locker(m_map_mutex);
     
@@ -418,16 +417,14 @@ CategoryMap::Get (ValueObject& valobj,
         lldb::SummaryFormatSP current_format;
         if (!category->Get(valobj, current_format, use_dynamic, &reason_why))
             continue;
-        entry = current_format;
-        return true;
+        return current_format;
     }
-    return false;
+    return lldb::SummaryFormatSP();
 }
 
-bool
-CategoryMap::Get (ValueObject& valobj,
-                  lldb::SyntheticChildrenSP& entry,
-                  lldb::DynamicValueType use_dynamic)
+lldb::SyntheticChildrenSP
+CategoryMap::GetSyntheticChildren (ValueObject& valobj,
+                                   lldb::DynamicValueType use_dynamic)
 {
     Mutex::Locker(m_map_mutex);
     
@@ -441,10 +438,9 @@ CategoryMap::Get (ValueObject& valobj,
         lldb::SyntheticChildrenSP current_format;
         if (!category->Get(valobj, current_format, use_dynamic, &reason_why))
             continue;
-        entry = current_format;
-        return true;
+        return current_format;
     }
-    return false;
+    return lldb::SyntheticChildrenSP();
 }
 
 void
