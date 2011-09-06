@@ -5016,12 +5016,15 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     Ops[4] = DAG.getSrcValue(I.getArgOperand(0));
     Ops[5] = DAG.getSrcValue(F);
 
-    Res = DAG.getNode(ISD::TRAMPOLINE, dl,
-                      DAG.getVTList(TLI.getPointerTy(), MVT::Other),
-                      Ops, 6);
+    Res = DAG.getNode(ISD::INIT_TRAMPOLINE, dl, MVT::Other, Ops, 6);
 
-    setValue(&I, Res);
-    DAG.setRoot(Res.getValue(1));
+    DAG.setRoot(Res);
+    return 0;
+  }
+  case Intrinsic::adjust_trampoline: {
+    setValue(&I, DAG.getNode(ISD::ADJUST_TRAMPOLINE, dl,
+                             TLI.getPointerTy(),
+                             getValue(I.getArgOperand(0))));
     return 0;
   }
   case Intrinsic::gcroot:

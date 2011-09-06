@@ -43,6 +43,26 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
   
   switch (Name[0]) {
   default: break;
+  case 'i':
+    //  This upgrades the old llvm.init.trampoline to the new
+    //  llvm.init.trampoline and llvm.adjust.trampoline pair.
+    if (Name == "init.trampoline") {
+      // The new llvm.init.trampoline returns nothing.
+      if (FTy->getReturnType()->isVoidTy())
+        break;
+
+      assert(FTy->getNumParams() == 3 && "old init.trampoline takes 3 args!");
+
+      // Change the name of the old intrinsic so that we can play with its type.
+      std::string NameTmp = F->getName();
+      F->setName("");
+      NewFn = cast<Function>(M->getOrInsertFunction(
+                               NameTmp,
+                               Type::getVoidTy(M->getContext()),
+                               FTy->getParamType(0), FTy->getParamType(1),
+                               FTy->getParamType(2), (Type *)0));
+      return true;
+    }
   case 'p':
     //  This upgrades the llvm.prefetch intrinsic to accept one more parameter,
     //  which is a instruction / data cache identifier. The old version only
@@ -213,6 +233,32 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       CI->replaceAllUsesWith(NewCI);
 
     //  Clean up the old call now that it has been completely upgraded.
+    CI->eraseFromParent();
+    break;
+  }
+  case Intrinsic::init_trampoline: {
+
+    //  Transform
+    //    %tramp = call i8* llvm.init.trampoline (i8* x, i8* y, i8* z)
+    //  to
+    //    call void llvm.init.trampoline (i8* %x, i8* %y, i8* %z)
+    //    %tramp = call i8* llvm.adjust.trampoline (i8* %x)
+
+    Function *AdjustTrampolineFn =
+      cast<Function>(Intrinsic::getDeclaration(F->getParent(),
+                                               Intrinsic::adjust_trampoline));
+
+    IRBuilder<> Builder(C);
+    Builder.SetInsertPoint(CI);
+
+    Builder.CreateCall3(NewFn, CI->getArgOperand(0), CI->getArgOperand(1),
+                        CI->getArgOperand(2));
+
+    CallInst *AdjustCall = Builder.CreateCall(AdjustTrampolineFn,
+                                              CI->getArgOperand(0),
+                                              CI->getName());
+    if (!CI->use_empty())
+      CI->replaceAllUsesWith(AdjustCall);
     CI->eraseFromParent();
     break;
   }

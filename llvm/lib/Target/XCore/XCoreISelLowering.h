@@ -145,7 +145,8 @@ namespace llvm {
     SDValue LowerUMUL_LOHI(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerSMUL_LOHI(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) const;
-    SDValue LowerTRAMPOLINE(SDValue Op, SelectionDAG &DAG) const;
+    SDValue LowerINIT_TRAMPOLINE(SDValue Op, SelectionDAG &DAG) const;
+    SDValue LowerADJUST_TRAMPOLINE(SDValue Op, SelectionDAG &DAG) const;
 
     // Inline asm support
     std::pair<unsigned, const TargetRegisterClass*>

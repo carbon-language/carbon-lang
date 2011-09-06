@@ -275,9 +275,10 @@
       </li>
       <li><a href="#int_debugger">Debugger intrinsics</a></li>
       <li><a href="#int_eh">Exception Handling intrinsics</a></li>
-      <li><a href="#int_trampoline">Trampoline Intrinsic</a>
+      <li><a href="#int_trampoline">Trampoline Intrinsics</a>
         <ol>
           <li><a href="#int_it">'<tt>llvm.init.trampoline</tt>' Intrinsic</a></li>
+          <li><a href="#int_at">'<tt>llvm.adjust.trampoline</tt>' Intrinsic</a></li>
         </ol>
       </li>
       <li><a href="#int_atomics">Atomic intrinsics</a>
@@ -7680,12 +7681,12 @@ LLVM</a>.</p>
 
 <!-- ======================================================================= -->
 <h3>
-  <a name="int_trampoline">Trampoline Intrinsic</a>
+  <a name="int_trampoline">Trampoline Intrinsics</a>
 </h3>
 
 <div>
 
-<p>This intrinsic makes it possible to excise one parameter, marked with
+<p>These intrinsics make it possible to excise one parameter, marked with
    the <a href="#nest"><tt>nest</tt></a> attribute, from a function.
    The result is a callable
    function pointer lacking the nest parameter - the caller does not need to
@@ -7702,7 +7703,8 @@ LLVM</a>.</p>
 <pre class="doc_code">
   %tramp = alloca [10 x i8], align 4 ; size and alignment only correct for X86
   %tramp1 = getelementptr [10 x i8]* %tramp, i32 0, i32 0
-  %p = call i8* @llvm.init.trampoline(i8* %tramp1, i8* bitcast (i32 (i8*, i32, i32)* @f to i8*), i8* %nval)
+  call i8* @llvm.init.trampoline(i8* %tramp1, i8* bitcast (i32 (i8*, i32, i32)* @f to i8*), i8* %nval)
+  %p = call i8* @llvm.adjust.trampoline(i8* %tramp1)
   %fp = bitcast i8* %p to i32 (i32, i32)*
 </pre>
 
@@ -7720,12 +7722,12 @@ LLVM</a>.</p>
 
 <h5>Syntax:</h5>
 <pre>
-  declare i8* @llvm.init.trampoline(i8* &lt;tramp&gt;, i8* &lt;func&gt;, i8* &lt;nval&gt;)
+  declare void @llvm.init.trampoline(i8* &lt;tramp&gt;, i8* &lt;func&gt;, i8* &lt;nval&gt;)
 </pre>
 
 <h5>Overview:</h5>
-<p>This fills the memory pointed to by <tt>tramp</tt> with code and returns a
-   function pointer suitable for executing it.</p>
+<p>This fills the memory pointed to by <tt>tramp</tt> with executable code,
+   turning it into a trampoline.</p>
 
 <h5>Arguments:</h5>
 <p>The <tt>llvm.init.trampoline</tt> intrinsic takes three arguments, all
@@ -7739,17 +7741,50 @@ LLVM</a>.</p>
 
 <h5>Semantics:</h5>
 <p>The block of memory pointed to by <tt>tramp</tt> is filled with target
-   dependent code, turning it into a function.  A pointer to this function is
-   returned, but needs to be bitcast to an <a href="#int_trampoline">appropriate
-   function pointer type</a> before being called.  The new function's signature
-   is the same as that of <tt>func</tt> with any arguments marked with
-   the <tt>nest</tt> attribute removed.  At most one such <tt>nest</tt> argument
-   is allowed, and it must be of pointer type.  Calling the new function is
-   equivalent to calling <tt>func</tt> with the same argument list, but
-   with <tt>nval</tt> used for the missing <tt>nest</tt> argument.  If, after
-   calling <tt>llvm.init.trampoline</tt>, the memory pointed to
-   by <tt>tramp</tt> is modified, then the effect of any later call to the
-   returned function pointer is undefined.</p>
+   dependent code, turning it into a function.  Then <tt>tramp</tt> needs to be
+   passed to <a href="#int_at">llvm.adjust.trampoline</a> to get a pointer
+   which can be <a href="#int_trampoline">bitcast (to a new function) and
+   called</a>.  The new function's signature is the same as that of
+   <tt>func</tt> with any arguments marked with the <tt>nest</tt> attribute
+   removed.  At most one such <tt>nest</tt> argument is allowed, and it must be of
+   pointer type.  Calling the new function is equivalent to calling <tt>func</tt>
+   with the same argument list, but with <tt>nval</tt> used for the missing
+   <tt>nest</tt> argument.  If, after calling <tt>llvm.init.trampoline</tt>, the
+   memory pointed to by <tt>tramp</tt> is modified, then the effect of any later call
+   to the returned function pointer is undefined.</p>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<h4>
+  <a name="int_at">
+    '<tt>llvm.adjust.trampoline</tt>' Intrinsic
+  </a>
+</h4>
+
+<div>
+
+<h5>Syntax:</h5>
+<pre>
+  declare i8* @llvm.adjust.trampoline(i8* &lt;tramp&gt;)
+</pre>
+
+<h5>Overview:</h5>
+<p>This performs any required machine-specific adjustment to the address of a
+   trampoline (passed as <tt>tramp</tt>).</p>
+
+<h5>Arguments:</h5>
+<p><tt>tramp</tt> must point to a block of memory which already has trampoline code
+   filled in by a previous call to <a href="#int_it"><tt>llvm.init.trampoline</tt>
+   </a>.</p>
+
+<h5>Semantics:</h5>
+<p>On some architectures the address of the code to be executed needs to be
+   different to the address where the trampoline is actually stored.  This
+   intrinsic returns the executable address corresponding to <tt>tramp</tt>
+   after performing the required machine specific adjustments.
+   The pointer returned can then be <a href="#int_trampoline"> bitcast and
+   executed</a>.
+</p>
 
 </div>
 

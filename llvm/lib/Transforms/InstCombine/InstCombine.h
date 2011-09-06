@@ -11,6 +11,7 @@
 #define INSTCOMBINE_INSTCOMBINE_H
 
 #include "InstCombineWorklist.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/Operator.h"
 #include "llvm/Pass.h"
 #include "llvm/Analysis/ValueTracking.h"
@@ -214,7 +215,8 @@ private:
   Instruction *visitCallSite(CallSite CS);
   Instruction *tryOptimizeCall(CallInst *CI, const TargetData *TD);
   bool transformConstExprCastCall(CallSite CS);
-  Instruction *transformCallThroughTrampoline(CallSite CS);
+  Instruction *transformCallThroughTrampoline(CallSite CS,
+                                              IntrinsicInst *Tramp);
   Instruction *transformZExtICmp(ICmpInst *ICI, Instruction &CI,
                                  bool DoXform = true);
   Instruction *transformSExtICmp(ICmpInst *ICI, Instruction &CI);

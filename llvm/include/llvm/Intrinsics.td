@@ -344,10 +344,14 @@ def int_annotation : Intrinsic<[llvm_anyint_ty],
 
 //===------------------------ Trampoline Intrinsics -----------------------===//
 //
-def int_init_trampoline : Intrinsic<[llvm_ptr_ty],
+def int_init_trampoline : Intrinsic<[],
                                     [llvm_ptr_ty, llvm_ptr_ty, llvm_ptr_ty],
-                                    [IntrReadWriteArgMem]>,
-                          GCCBuiltin<"__builtin_init_trampoline">;
+                                    [IntrReadWriteArgMem, NoCapture<0>]>,
+                                   GCCBuiltin<"__builtin_init_trampoline">;
+
+def int_adjust_trampoline : Intrinsic<[llvm_ptr_ty], [llvm_ptr_ty],
+                                      [IntrReadArgMem]>,
+                                     GCCBuiltin<"__builtin_adjust_trampoline">;
 
 //===------------------------ Overflow Intrinsics -------------------------===//
 //

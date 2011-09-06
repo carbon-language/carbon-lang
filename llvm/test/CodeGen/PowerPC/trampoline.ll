@@ -67,7 +67,8 @@ entry:
 	store %struct.NSBitmapImageRep* %4, %struct.NSBitmapImageRep** %3, align 4
 	%TRAMP.91 = bitcast %struct.__builtin_trampoline* %TRAMP.9 to i8*		; <i8*> [#uses=1]
 	%FRAME.72 = bitcast %"struct.FRAME.-[NSBitmapImageRep copyWithZone:]"* %FRAME.7 to i8*		; <i8*> [#uses=1]
-	%tramp = call i8* @llvm.init.trampoline(i8* %TRAMP.91, i8* bitcast (void (%"struct.FRAME.-[NSBitmapImageRep copyWithZone:]"*, %struct.__block_1*, %struct.CGImage*)* @__helper_1.1632 to i8*), i8* %FRAME.72)		; <i8*> [#uses=1]
+	call void @llvm.init.trampoline(i8* %TRAMP.91, i8* bitcast (void (%"struct.FRAME.-[NSBitmapImageRep copyWithZone:]"*, %struct.__block_1*, %struct.CGImage*)* @__helper_1.1632 to i8*), i8* %FRAME.72)		; <i8*> [#uses=1]
+        %tramp = call i8* @llvm.adjust.trampoline(i8* %TRAMP.91)
 	store i8* %tramp, i8** %0, align 4
 	%5 = getelementptr %"struct.FRAME.-[NSBitmapImageRep copyWithZone:]"* %FRAME.7, i32 0, i32 1		; <void (%struct.__block_1*, %struct.CGImage*)**> [#uses=1]
 	%6 = load i8** %0, align 4		; <i8*> [#uses=1]
@@ -113,7 +114,8 @@ return:		; preds = %entry
 	ret %struct.objc_object* %retval5
 }
 
-declare i8* @llvm.init.trampoline(i8*, i8*, i8*) nounwind
+declare void @llvm.init.trampoline(i8*, i8*, i8*) nounwind
+declare i8* @llvm.adjust.trampoline(i8*) nounwind
 
 define internal void @__helper_1.1632(%"struct.FRAME.-[NSBitmapImageRep copyWithZone:]"* nest %CHAIN.8, %struct.__block_1* %_self, %struct.CGImage* %cgImage) nounwind {
 entry:

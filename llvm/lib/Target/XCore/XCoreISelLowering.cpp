@@ -147,7 +147,8 @@ XCoreTargetLowering::XCoreTargetLowering(XCoreTargetMachine &XTM)
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32, Expand);
 
   // TRAMPOLINE is custom lowered.
-  setOperationAction(ISD::TRAMPOLINE, MVT::Other, Custom);
+  setOperationAction(ISD::INIT_TRAMPOLINE, MVT::Other, Custom);
+  setOperationAction(ISD::ADJUST_TRAMPOLINE, MVT::Other, Custom);
 
   maxStoresPerMemset = maxStoresPerMemsetOptSize = 4;
   maxStoresPerMemmove = maxStoresPerMemmoveOptSize
@@ -180,7 +181,8 @@ LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::ADD:
   case ISD::SUB:              return ExpandADDSUB(Op.getNode(), DAG);
   case ISD::FRAMEADDR:        return LowerFRAMEADDR(Op, DAG);
-  case ISD::TRAMPOLINE:       return LowerTRAMPOLINE(Op, DAG);
+  case ISD::INIT_TRAMPOLINE:  return LowerINIT_TRAMPOLINE(Op, DAG);
+  case ISD::ADJUST_TRAMPOLINE: return LowerADJUST_TRAMPOLINE(Op, DAG);
   default:
     llvm_unreachable("unimplemented operand");
     return SDValue();
@@ -789,7 +791,12 @@ SDValue XCoreTargetLowering::LowerFRAMEADDR(SDValue Op,
 }
 
 SDValue XCoreTargetLowering::
-LowerTRAMPOLINE(SDValue Op, SelectionDAG &DAG) const {
+LowerADJUST_TRAMPOLINE(SDValue Op, SelectionDAG &DAG) const {
+  return Op.getOperand(0);
+}
+
+SDValue XCoreTargetLowering::
+LowerINIT_TRAMPOLINE(SDValue Op, SelectionDAG &DAG) const {
   SDValue Chain = Op.getOperand(0);
   SDValue Trmp = Op.getOperand(1); // trampoline
   SDValue FPtr = Op.getOperand(2); // nested function
@@ -841,9 +848,7 @@ LowerTRAMPOLINE(SDValue Op, SelectionDAG &DAG) const {
                               MachinePointerInfo(TrmpAddr, 16), false, false,
                               0);
 
-  SDValue Ops[] =
-    { Trmp, DAG.getNode(ISD::TokenFactor, dl, MVT::Other, OutChains, 5) };
-  return DAG.getMergeValues(Ops, 2, dl);
+  return DAG.getNode(ISD::TokenFactor, dl, MVT::Other, OutChains, 5);
 }
 
 //===----------------------------------------------------------------------===//
