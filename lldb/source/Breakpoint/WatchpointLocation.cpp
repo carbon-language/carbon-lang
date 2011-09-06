@@ -99,7 +99,7 @@ WatchpointLocation::IsEnabled() const
 }
 
 void
-WatchpointLocation::SetEnabled(uint32_t enabled)
+WatchpointLocation::SetEnabled(bool enabled)
 {
     if (!enabled)
         SetHardwareIndex(LLDB_INVALID_INDEX32);

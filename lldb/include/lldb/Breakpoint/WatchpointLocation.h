@@ -37,7 +37,7 @@ public:
     IsEnabled () const;
 
     void
-    SetEnabled (uint32_t enabled);
+    SetEnabled (bool enabled);
 
     bool        WatchpointRead () const;
     bool        WatchpointWrite () const;

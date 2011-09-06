@@ -1882,6 +1882,24 @@ ProcessGDBRemote::DisableBreakpoint (BreakpointSite *bp_site)
     return error;
 }
 
+// Pre-requisite: wp != NULL.
+static GDBStoppointType
+GetGDBStoppointType (WatchpointLocation *wp)
+{
+    assert(wp);
+    bool watch_read = wp->WatchpointRead();
+    bool watch_write = wp->WatchpointWrite();
+
+    // watch_read and watch_write cannot both be false.
+    assert(watch_read || watch_write);
+    if (watch_read && watch_write)
+        return eWatchpointReadWrite;
+    if (watch_read)
+        return eWatchpointRead;
+    if (watch_write)
+        return eWatchpointWrite;
+}
+
 Error
 ProcessGDBRemote::EnableWatchpoint (WatchpointLocation *wp)
 {
@@ -1899,11 +1917,21 @@ ProcessGDBRemote::EnableWatchpoint (WatchpointLocation *wp)
                 log->Printf("ProcessGDBRemote::EnableWatchpoint(watchID = %d) addr = 0x%8.8llx: watchpoint already enabled.", watchID, (uint64_t)addr);
             return error;
         }
-        else
+
+        GDBStoppointType type = GetGDBStoppointType(wp);
+        // Pass down an appropriate z/Z packet...
+        if (m_gdb_comm.SupportsGDBStoppointPacket (type))
         {
-            // Pass down an appropriate z/Z packet...
-            error.SetErrorString("watchpoints not supported");
+            if (m_gdb_comm.SendGDBStoppointTypePacket(type, true, addr, wp->GetByteSize()) == 0)
+            {
+                wp->SetEnabled(true);
+                return error;
+            }
+            else
+                error.SetErrorString("sending gdb watchpoint packet failed");
         }
+        else
+            error.SetErrorString("watchpoints not supported");
     }
     else
     {
@@ -1928,10 +1956,24 @@ ProcessGDBRemote::DisableWatchpoint (WatchpointLocation *wp)
         if (log)
             log->Printf ("ProcessGDBRemote::DisableWatchpoint (watchID = %d) addr = 0x%8.8llx", watchID, (uint64_t)addr);
 
+        if (!wp->IsEnabled())
+        {
+            if (log)
+                log->Printf ("ProcessGDBRemote::DisableWatchpoint (watchID = %d) addr = 0x%8.8llx -- SUCCESS (already disabled)", watchID, (uint64_t)addr);
+            return error;
+        }
+        
         if (wp->IsHardware())
         {
+            GDBStoppointType type = GetGDBStoppointType(wp);
             // Pass down an appropriate z/Z packet...
-            error.SetErrorString("watchpoints not supported");
+            if (m_gdb_comm.SendGDBStoppointTypePacket(type, false, addr, wp->GetByteSize()) == 0)
+            {
+                wp->SetEnabled(false);
+                return error;
+            }
+            else
+                error.SetErrorString("sending gdb watchpoint packet failed"); 
         }
         // TODO: clear software watchpoints if we implement them
     }
