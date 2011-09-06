@@ -68,8 +68,7 @@ public:
 private:
   void EmitCaretDiagnostic(SourceLocation Loc, CharSourceRange *Ranges,
                            unsigned NumRanges, const SourceManager &SM,
-                           const FixItHint *Hints,
-                           unsigned NumHints, unsigned Columns,
+                           ArrayRef<FixItHint> Hints, unsigned Columns,
                            unsigned MacroSkipStart, unsigned MacroSkipEnd);
   
 };

@@ -427,8 +427,7 @@ public:
   void Emit(SourceLocation Loc,
             CharSourceRange *Ranges,
             unsigned NumRanges,
-            const FixItHint *Hints,
-            unsigned NumHints,
+            ArrayRef<FixItHint> Hints,
             unsigned OnMacroInst = 0) {
     assert(!Loc.isInvalid() && "must have a valid source location here");
 
@@ -447,7 +446,7 @@ public:
       SourceLocation OneLevelUp = getImmediateMacroCallerLoc(SM, Loc);
 
       // FIXME: Map ranges?
-      Emit(OneLevelUp, Ranges, NumRanges, Hints, NumHints, OnMacroInst + 1);
+      Emit(OneLevelUp, Ranges, NumRanges, Hints, OnMacroInst + 1);
 
       // Map the location.
       Loc = getImmediateMacroCalleeLoc(SM, Loc);
@@ -484,7 +483,7 @@ public:
         }
         OS << "note: expanded from:\n";
 
-        Emit(Loc, Ranges, NumRanges, 0, 0, OnMacroInst + 1);
+        Emit(Loc, Ranges, NumRanges, ArrayRef<FixItHint>(), OnMacroInst + 1);
         return;
       }
 
@@ -584,7 +583,7 @@ public:
 
     std::string FixItInsertionLine = BuildFixItInsertionLine(FID, FileOffset,
                                                              LineStart, LineEnd,
-                                                             Hints, NumHints);
+                                                             Hints);
 
     // If the source line is too long for our terminal, select only the
     // "interesting" source region within that line.
@@ -617,26 +616,25 @@ public:
     }
 
     // Print out any parseable fixit information requested by the options.
-    EmitParseableFixits(Hints, NumHints);
+    EmitParseableFixits(Hints);
   }
 
 private:
   std::string BuildFixItInsertionLine(FileID FID, unsigned FileOffset,
                                       const char *LineStart,
                                       const char *LineEnd,
-                                      const FixItHint *Hints,
-                                      unsigned NumHints) {
+                                      ArrayRef<FixItHint> Hints) {
     std::string FixItInsertionLine;
-    if (!NumHints || !DiagOpts.ShowFixits)
+    if (Hints.empty() || !DiagOpts.ShowFixits)
       return FixItInsertionLine;
 
-    for (const FixItHint *Hint = Hints, *LastHint = Hints + NumHints;
-         Hint != LastHint; ++Hint) {
-      if (!Hint->CodeToInsert.empty()) {
+    for (ArrayRef<FixItHint>::iterator I = Hints.begin(), E = Hints.end();
+         I != E; ++I) {
+      if (!I->CodeToInsert.empty()) {
         // We have an insertion hint. Determine whether the inserted
         // code is on the same line as the caret.
         std::pair<FileID, unsigned> HintLocInfo
-          = SM.getDecomposedExpansionLoc(Hint->RemoveRange.getBegin());
+          = SM.getDecomposedExpansionLoc(I->RemoveRange.getBegin());
         if (SM.getLineNumber(HintLocInfo.first, HintLocInfo.second) ==
               SM.getLineNumber(FID, FileOffset)) {
           // Insert the new code into the line just below the code
@@ -644,10 +642,10 @@ private:
           unsigned HintColNo
             = SM.getColumnNumber(HintLocInfo.first, HintLocInfo.second);
           unsigned LastColumnModified
-            = HintColNo - 1 + Hint->CodeToInsert.size();
+            = HintColNo - 1 + I->CodeToInsert.size();
           if (LastColumnModified > FixItInsertionLine.size())
             FixItInsertionLine.resize(LastColumnModified, ' ');
-          std::copy(Hint->CodeToInsert.begin(), Hint->CodeToInsert.end(),
+          std::copy(I->CodeToInsert.begin(), I->CodeToInsert.end(),
                     FixItInsertionLine.begin() + HintColNo - 1);
         } else {
           FixItInsertionLine.clear();
@@ -697,44 +695,46 @@ private:
     return FixItInsertionLine;
   }
 
-  void EmitParseableFixits(const FixItHint *Hints, unsigned NumHints) {
+  void EmitParseableFixits(ArrayRef<FixItHint> Hints) {
     if (!DiagOpts.ShowParseableFixits)
       return;
 
     // We follow FixItRewriter's example in not (yet) handling
     // fix-its in macros.
-    for (const FixItHint *Hint = Hints; Hint != Hints + NumHints; ++Hint) {
-      if (Hint->RemoveRange.isInvalid() ||
-          Hint->RemoveRange.getBegin().isMacroID() ||
-          Hint->RemoveRange.getEnd().isMacroID())
+    for (ArrayRef<FixItHint>::iterator I = Hints.begin(), E = Hints.end();
+         I != E; ++I) {
+      if (I->RemoveRange.isInvalid() ||
+          I->RemoveRange.getBegin().isMacroID() ||
+          I->RemoveRange.getEnd().isMacroID())
         return;
     }
 
-    for (const FixItHint *Hint = Hints; Hint != Hints + NumHints; ++Hint) {
-      SourceLocation B = Hint->RemoveRange.getBegin();
-      SourceLocation E = Hint->RemoveRange.getEnd();
+    for (ArrayRef<FixItHint>::iterator I = Hints.begin(), E = Hints.end();
+         I != E; ++I) {
+      SourceLocation BLoc = I->RemoveRange.getBegin();
+      SourceLocation ELoc = I->RemoveRange.getEnd();
 
-      std::pair<FileID, unsigned> BInfo = SM.getDecomposedLoc(B);
-      std::pair<FileID, unsigned> EInfo = SM.getDecomposedLoc(E);
+      std::pair<FileID, unsigned> BInfo = SM.getDecomposedLoc(BLoc);
+      std::pair<FileID, unsigned> EInfo = SM.getDecomposedLoc(ELoc);
 
       // Adjust for token ranges.
-      if (Hint->RemoveRange.isTokenRange())
-        EInfo.second += Lexer::MeasureTokenLength(E, SM, LangOpts);
+      if (I->RemoveRange.isTokenRange())
+        EInfo.second += Lexer::MeasureTokenLength(ELoc, SM, LangOpts);
 
       // We specifically do not do word-wrapping or tab-expansion here,
       // because this is supposed to be easy to parse.
-      PresumedLoc PLoc = SM.getPresumedLoc(B);
+      PresumedLoc PLoc = SM.getPresumedLoc(BLoc);
       if (PLoc.isInvalid())
         break;
 
       OS << "fix-it:\"";
-      OS.write_escaped(SM.getPresumedLoc(B).getFilename());
+      OS.write_escaped(SM.getPresumedLoc(BLoc).getFilename());
       OS << "\":{" << SM.getLineNumber(BInfo.first, BInfo.second)
         << ':' << SM.getColumnNumber(BInfo.first, BInfo.second)
         << '-' << SM.getLineNumber(EInfo.first, EInfo.second)
         << ':' << SM.getColumnNumber(EInfo.first, EInfo.second)
         << "}:\"";
-      OS.write_escaped(Hint->CodeToInsert);
+      OS.write_escaped(I->CodeToInsert);
       OS << "\"\n";
     }
   }
@@ -746,8 +746,7 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
                                                 CharSourceRange *Ranges,
                                                 unsigned NumRanges,
                                                 const SourceManager &SM,
-                                                const FixItHint *Hints,
-                                                unsigned NumHints,
+                                                ArrayRef<FixItHint> Hints,
                                                 unsigned Columns,
                                                 unsigned MacroSkipStart,
                                                 unsigned MacroSkipEnd) {
@@ -757,7 +756,7 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
   // the CaretDiagnostic object.
   CaretDiagnostic CaretDiag(*this, OS, SM, *LangOpts, *DiagOpts,
                             Columns, MacroSkipStart, MacroSkipEnd);
-  CaretDiag.Emit(Loc, Ranges, NumRanges, Hints, NumHints);
+  CaretDiag.Emit(Loc, Ranges, NumRanges, Hints);
 }
 
 /// \brief Skip over whitespace in the string, starting at the given
@@ -1236,8 +1235,8 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
     }        
     
     EmitCaretDiagnostic(LastLoc, Ranges, NumRanges, LastLoc.getManager(),
-                        Info.getFixItHints(),
-                        Info.getNumFixItHints(),
+                        llvm::makeArrayRef(Info.getFixItHints(),
+                                           Info.getNumFixItHints()),
                         DiagOpts->MessageLength,
                         MacroInstSkipStart, MacroInstSkipEnd);
   }
