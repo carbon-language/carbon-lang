@@ -1613,7 +1613,7 @@ PseudoInst<(outs), (ins i32imm:$amt, pred:$p), NoItinerary,
 
 // Atomic pseudo-insts which will be lowered to ldrexd/strexd loops.
 // (These psuedos use a hand-written selection code).
-let usesCustomInserter = 1, Uses = [CPSR] in {
+let usesCustomInserter = 1, Defs = [CPSR] in {
 def ATOMOR6432   : PseudoInst<(outs GPR:$dst1, GPR:$dst2),
                               (ins GPR:$addr, GPR:$src1, GPR:$src2),
                               NoItinerary, []>;
@@ -4104,7 +4104,7 @@ def ISB : AInoP<(outs), (ins memb_opt:$opt), MiscFrm, NoItinerary,
 }
 
 let usesCustomInserter = 1 in {
-  let Uses = [CPSR] in {
+  let Defs = [CPSR] in {
     def ATOMIC_LOAD_ADD_I8 : PseudoInst<
       (outs GPR:$dst), (ins GPR:$ptr, GPR:$incr), NoItinerary,
       [(set GPR:$dst, (atomic_load_add_8 GPR:$ptr, GPR:$incr))]>;

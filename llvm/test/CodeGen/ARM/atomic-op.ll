@@ -1,5 +1,5 @@
-; RUN: llc < %s -mtriple=armv7-apple-darwin10 | FileCheck %s
-; RUN: llc < %s -mtriple=thumbv7-apple-darwin10 | FileCheck %s
+; RUN: llc < %s -mtriple=armv7-apple-darwin10 -verify-machineinstrs | FileCheck %s
+; RUN: llc < %s -mtriple=thumbv7-apple-darwin10 -verify-machineinstrs | FileCheck %s
 
 define void @func(i32 %argc, i8** %argv) nounwind {
 entry:
