@@ -209,9 +209,11 @@ def DuplicateArgDecl : DiagGroup<"duplicate-method-arg">;
 // missing parentheses;  it is off by default.  We do not include it
 // in -Wparentheses because most users who use -Wparentheses explicitly
 // do not want these warnings.
+def ParenthesesOnEquality : DiagGroup<"parentheses-equality">;
 def Parentheses : DiagGroup<"parentheses",
                             [LogicalOpParentheses,
-                             BitwiseOpParentheses]>;
+                             BitwiseOpParentheses,
+                             ParenthesesOnEquality]>;
 
 // -Wconversion has its own warnings, but we split a few out for
 // legacy reasons:

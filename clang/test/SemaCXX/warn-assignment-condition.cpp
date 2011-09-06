@@ -109,6 +109,12 @@ void test() {
   if ((x == 5)) {} // expected-warning {{equality comparison with extraneous parentheses}} \
                    // expected-note {{use '=' to turn this equality comparison into an assignment}} \
                    // expected-note {{remove extraneous parentheses around the comparison to silence this warning}}
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+  if ((x == 5)) {} // no-warning
+#pragma clang diagnostic pop
+
   if ((5 == x)) {}
 
 #define EQ(x,y) ((x) == (y))

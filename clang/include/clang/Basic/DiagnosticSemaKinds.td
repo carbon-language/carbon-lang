@@ -3668,7 +3668,7 @@ def note_condition_assign_silence : Note<
   "place parentheses around the assignment to silence this warning">;
 
 def warn_equality_with_extra_parens : Warning<"equality comparison with "
-  "extraneous parentheses">, InGroup<Parentheses>;
+  "extraneous parentheses">, InGroup<ParenthesesOnEquality>;
 def note_equality_comparison_to_assign : Note<
   "use '=' to turn this equality comparison into an assignment">;
 def note_equality_comparison_silence : Note<
