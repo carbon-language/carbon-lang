@@ -1982,7 +1982,7 @@ const SCEV *ScalarEvolution::getMulExpr(SmallVectorImpl<const SCEV *> &Ops,
         // Given an equation of the form x + y*It + z*It^2 (above), we want to
         // express it in terms of {X,+,Y,+,Z}.
         // {X,+,Y,+,Z} = X + Y*It + Z*(It^2 - It)/2.
-        // Rearranging, X = x, Y = x+y, Z = 2z.
+        // Rearranging, X = x, Y = y+z, Z = 2z.
         //
         // x = A*C, y = (A*D + B*C), z = B*D.
         // Therefore X = A*C, Y = (A*D + B*C) - B*D and Z = 2*B*D.
