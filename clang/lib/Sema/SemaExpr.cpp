@@ -5786,11 +5786,12 @@ QualType Sema::CheckRemainderOperands(
 
 /// \brief Diagnose invalid arithmetic on two void pointers.
 static void diagnoseArithmeticOnTwoVoidPointers(Sema &S, SourceLocation Loc,
-                                                Expr *LHS, Expr *RHS) {
+                                                Expr *LHSExpr, Expr *RHSExpr) {
   S.Diag(Loc, S.getLangOptions().CPlusPlus
                 ? diag::err_typecheck_pointer_arith_void_type
                 : diag::ext_gnu_void_ptr)
-    << 1 /* two pointers */ << LHS->getSourceRange() << RHS->getSourceRange();
+    << 1 /* two pointers */ << LHSExpr->getSourceRange()
+                            << RHSExpr->getSourceRange();
 }
 
 /// \brief Diagnose invalid arithmetic on a void pointer.
@@ -5885,22 +5886,22 @@ static bool checkArithmeticOpPointerOperand(Sema &S, SourceLocation Loc,
 ///
 /// \returns True when the operand is valid to use (even if as an extension).
 static bool checkArithmeticBinOpPointerOperands(Sema &S, SourceLocation Loc,
-                                                Expr *LHS, Expr *RHS) {
-  bool isLHSPointer = LHS->getType()->isAnyPointerType();
-  bool isRHSPointer = RHS->getType()->isAnyPointerType();
+                                                Expr *LHSExpr, Expr *RHSExpr) {
+  bool isLHSPointer = LHSExpr->getType()->isAnyPointerType();
+  bool isRHSPointer = RHSExpr->getType()->isAnyPointerType();
   if (!isLHSPointer && !isRHSPointer) return true;
 
   QualType LHSPointeeTy, RHSPointeeTy;
-  if (isLHSPointer) LHSPointeeTy = LHS->getType()->getPointeeType();
-  if (isRHSPointer) RHSPointeeTy = RHS->getType()->getPointeeType();
+  if (isLHSPointer) LHSPointeeTy = LHSExpr->getType()->getPointeeType();
+  if (isRHSPointer) RHSPointeeTy = RHSExpr->getType()->getPointeeType();
 
   // Check for arithmetic on pointers to incomplete types.
   bool isLHSVoidPtr = isLHSPointer && LHSPointeeTy->isVoidType();
   bool isRHSVoidPtr = isRHSPointer && RHSPointeeTy->isVoidType();
   if (isLHSVoidPtr || isRHSVoidPtr) {
-    if (!isRHSVoidPtr) diagnoseArithmeticOnVoidPointer(S, Loc, LHS);
-    else if (!isLHSVoidPtr) diagnoseArithmeticOnVoidPointer(S, Loc, RHS);
-    else diagnoseArithmeticOnTwoVoidPointers(S, Loc, LHS, RHS);
+    if (!isRHSVoidPtr) diagnoseArithmeticOnVoidPointer(S, Loc, LHSExpr);
+    else if (!isLHSVoidPtr) diagnoseArithmeticOnVoidPointer(S, Loc, RHSExpr);
+    else diagnoseArithmeticOnTwoVoidPointers(S, Loc, LHSExpr, RHSExpr);
 
     return !S.getLangOptions().CPlusPlus;
   }
@@ -5908,15 +5909,16 @@ static bool checkArithmeticBinOpPointerOperands(Sema &S, SourceLocation Loc,
   bool isLHSFuncPtr = isLHSPointer && LHSPointeeTy->isFunctionType();
   bool isRHSFuncPtr = isRHSPointer && RHSPointeeTy->isFunctionType();
   if (isLHSFuncPtr || isRHSFuncPtr) {
-    if (!isRHSFuncPtr) diagnoseArithmeticOnFunctionPointer(S, Loc, LHS);
-    else if (!isLHSFuncPtr) diagnoseArithmeticOnFunctionPointer(S, Loc, RHS);
-    else diagnoseArithmeticOnTwoFunctionPointers(S, Loc, LHS, RHS);
+    if (!isRHSFuncPtr) diagnoseArithmeticOnFunctionPointer(S, Loc, LHSExpr);
+    else if (!isLHSFuncPtr) diagnoseArithmeticOnFunctionPointer(S, Loc,
+                                                                RHSExpr);
+    else diagnoseArithmeticOnTwoFunctionPointers(S, Loc, LHSExpr, RHSExpr);
 
     return !S.getLangOptions().CPlusPlus;
   }
 
-  if (checkArithmeticIncompletePointerType(S, Loc, LHS)) return false;
-  if (checkArithmeticIncompletePointerType(S, Loc, RHS)) return false;
+  if (checkArithmeticIncompletePointerType(S, Loc, LHSExpr)) return false;
+  if (checkArithmeticIncompletePointerType(S, Loc, RHSExpr)) return false;
 
   return true;
 }
@@ -5937,36 +5939,36 @@ static bool checkArithmethicPointerOnNonFragileABI(Sema &S,
 
 /// \brief Warn when two pointers are incompatible.
 static void diagnosePointerIncompatibility(Sema &S, SourceLocation Loc,
-                                           Expr *LHS, Expr *RHS) {
-  assert(LHS->getType()->isAnyPointerType());
-  assert(RHS->getType()->isAnyPointerType());
+                                           Expr *LHSExpr, Expr *RHSExpr) {
+  assert(LHSExpr->getType()->isAnyPointerType());
+  assert(RHSExpr->getType()->isAnyPointerType());
   S.Diag(Loc, diag::err_typecheck_sub_ptr_compatible)
-    << LHS->getType() << RHS->getType() << LHS->getSourceRange()
-    << RHS->getSourceRange();
+    << LHSExpr->getType() << RHSExpr->getType() << LHSExpr->getSourceRange()
+    << RHSExpr->getSourceRange();
 }
 
 QualType Sema::CheckAdditionOperands( // C99 6.5.6
-  ExprResult &lex, ExprResult &rex, SourceLocation Loc, QualType* CompLHSTy) {
-  if (lex.get()->getType()->isVectorType() ||
-      rex.get()->getType()->isVectorType()) {
-    QualType compType = CheckVectorOperands(lex, rex, Loc, CompLHSTy);
+  ExprResult &LHS, ExprResult &RHS, SourceLocation Loc, QualType* CompLHSTy) {
+  if (LHS.get()->getType()->isVectorType() ||
+      RHS.get()->getType()->isVectorType()) {
+    QualType compType = CheckVectorOperands(LHS, RHS, Loc, CompLHSTy);
     if (CompLHSTy) *CompLHSTy = compType;
     return compType;
   }
 
-  QualType compType = UsualArithmeticConversions(lex, rex, CompLHSTy);
-  if (lex.isInvalid() || rex.isInvalid())
+  QualType compType = UsualArithmeticConversions(LHS, RHS, CompLHSTy);
+  if (LHS.isInvalid() || RHS.isInvalid())
     return QualType();
 
   // handle the common case first (both operands are arithmetic).
-  if (lex.get()->getType()->isArithmeticType() &&
-      rex.get()->getType()->isArithmeticType()) {
+  if (LHS.get()->getType()->isArithmeticType() &&
+      RHS.get()->getType()->isArithmeticType()) {
     if (CompLHSTy) *CompLHSTy = compType;
     return compType;
   }
 
   // Put any potential pointer into PExp
-  Expr* PExp = lex.get(), *IExp = rex.get();
+  Expr* PExp = LHS.get(), *IExp = RHS.get();
   if (IExp->getType()->isAnyPointerType())
     std::swap(PExp, IExp);
 
@@ -5983,9 +5985,9 @@ QualType Sema::CheckAdditionOperands( // C99 6.5.6
       CheckArrayAccess(PExp, IExp);
 
       if (CompLHSTy) {
-        QualType LHSTy = Context.isPromotableBitField(lex.get());
+        QualType LHSTy = Context.isPromotableBitField(LHS.get());
         if (LHSTy.isNull()) {
-          LHSTy = lex.get()->getType();
+          LHSTy = LHS.get()->getType();
           if (LHSTy->isPromotableIntegerType())
             LHSTy = Context.getPromotedIntegerType(LHSTy);
         }
@@ -5995,86 +5997,86 @@ QualType Sema::CheckAdditionOperands( // C99 6.5.6
     }
   }
 
-  return InvalidOperands(Loc, lex, rex);
+  return InvalidOperands(Loc, LHS, RHS);
 }
 
 // C99 6.5.6
-QualType Sema::CheckSubtractionOperands(ExprResult &lex, ExprResult &rex,
+QualType Sema::CheckSubtractionOperands(ExprResult &LHS, ExprResult &RHS,
                                         SourceLocation Loc,
                                         QualType* CompLHSTy) {
-  if (lex.get()->getType()->isVectorType() ||
-      rex.get()->getType()->isVectorType()) {
-    QualType compType = CheckVectorOperands(lex, rex, Loc, CompLHSTy);
+  if (LHS.get()->getType()->isVectorType() ||
+      RHS.get()->getType()->isVectorType()) {
+    QualType compType = CheckVectorOperands(LHS, RHS, Loc, CompLHSTy);
     if (CompLHSTy) *CompLHSTy = compType;
     return compType;
   }
 
-  QualType compType = UsualArithmeticConversions(lex, rex, CompLHSTy);
-  if (lex.isInvalid() || rex.isInvalid())
+  QualType compType = UsualArithmeticConversions(LHS, RHS, CompLHSTy);
+  if (LHS.isInvalid() || RHS.isInvalid())
     return QualType();
 
   // Enforce type constraints: C99 6.5.6p3.
 
   // Handle the common case first (both operands are arithmetic).
-  if (lex.get()->getType()->isArithmeticType() &&
-      rex.get()->getType()->isArithmeticType()) {
+  if (LHS.get()->getType()->isArithmeticType() &&
+      RHS.get()->getType()->isArithmeticType()) {
     if (CompLHSTy) *CompLHSTy = compType;
     return compType;
   }
 
   // Either ptr - int   or   ptr - ptr.
-  if (lex.get()->getType()->isAnyPointerType()) {
-    QualType lpointee = lex.get()->getType()->getPointeeType();
+  if (LHS.get()->getType()->isAnyPointerType()) {
+    QualType lpointee = LHS.get()->getType()->getPointeeType();
 
     // Diagnose bad cases where we step over interface counts.
-    if (!checkArithmethicPointerOnNonFragileABI(*this, Loc, lex.get()))
+    if (!checkArithmethicPointerOnNonFragileABI(*this, Loc, LHS.get()))
       return QualType();
 
     // The result type of a pointer-int computation is the pointer type.
-    if (rex.get()->getType()->isIntegerType()) {
-      if (!checkArithmeticOpPointerOperand(*this, Loc, lex.get()))
+    if (RHS.get()->getType()->isIntegerType()) {
+      if (!checkArithmeticOpPointerOperand(*this, Loc, LHS.get()))
         return QualType();
 
-      Expr *IExpr = rex.get()->IgnoreParenCasts();
+      Expr *IExpr = RHS.get()->IgnoreParenCasts();
       UnaryOperator negRex(IExpr, UO_Minus, IExpr->getType(), VK_RValue,
                            OK_Ordinary, IExpr->getExprLoc());
       // Check array bounds for pointer arithemtic
-      CheckArrayAccess(lex.get()->IgnoreParenCasts(), &negRex);
+      CheckArrayAccess(LHS.get()->IgnoreParenCasts(), &negRex);
 
-      if (CompLHSTy) *CompLHSTy = lex.get()->getType();
-      return lex.get()->getType();
+      if (CompLHSTy) *CompLHSTy = LHS.get()->getType();
+      return LHS.get()->getType();
     }
 
     // Handle pointer-pointer subtractions.
     if (const PointerType *RHSPTy
-          = rex.get()->getType()->getAs<PointerType>()) {
+          = RHS.get()->getType()->getAs<PointerType>()) {
       QualType rpointee = RHSPTy->getPointeeType();
 
       if (getLangOptions().CPlusPlus) {
         // Pointee types must be the same: C++ [expr.add]
         if (!Context.hasSameUnqualifiedType(lpointee, rpointee)) {
-          diagnosePointerIncompatibility(*this, Loc, lex.get(), rex.get());
+          diagnosePointerIncompatibility(*this, Loc, LHS.get(), RHS.get());
         }
       } else {
         // Pointee types must be compatible C99 6.5.6p3
         if (!Context.typesAreCompatible(
                 Context.getCanonicalType(lpointee).getUnqualifiedType(),
                 Context.getCanonicalType(rpointee).getUnqualifiedType())) {
-          diagnosePointerIncompatibility(*this, Loc, lex.get(), rex.get());
+          diagnosePointerIncompatibility(*this, Loc, LHS.get(), RHS.get());
           return QualType();
         }
       }
 
       if (!checkArithmeticBinOpPointerOperands(*this, Loc,
-                                               lex.get(), rex.get()))
+                                               LHS.get(), RHS.get()))
         return QualType();
 
-      if (CompLHSTy) *CompLHSTy = lex.get()->getType();
+      if (CompLHSTy) *CompLHSTy = LHS.get()->getType();
       return Context.getPointerDiffType();
     }
   }
 
-  return InvalidOperands(Loc, lex, rex);
+  return InvalidOperands(Loc, LHS, RHS);
 }
 
 static bool isScopedEnumerationType(QualType T) {
