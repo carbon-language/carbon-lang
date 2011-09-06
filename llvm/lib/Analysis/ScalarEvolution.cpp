@@ -1735,7 +1735,7 @@ const SCEV *ScalarEvolution::getAddExpr(SmallVectorImpl<const SCEV *> &Ops,
       // If all of the other operands were loop invariant, we are done.
       if (Ops.size() == 1) return NewRec;
 
-      // Otherwise, add the folded AddRec by the non-live parts.
+      // Otherwise, add the folded AddRec by the non-invariant parts.
       for (unsigned i = 0;; ++i)
         if (Ops[i] == AddRec) {
           Ops[i] = NewRec;
@@ -1960,7 +1960,7 @@ const SCEV *ScalarEvolution::getMulExpr(SmallVectorImpl<const SCEV *> &Ops,
       // If all of the other operands were loop invariant, we are done.
       if (Ops.size() == 1) return NewRec;
 
-      // Otherwise, multiply the folded AddRec by the non-live parts.
+      // Otherwise, multiply the folded AddRec by the non-invariant parts.
       for (unsigned i = 0;; ++i)
         if (Ops[i] == AddRec) {
           Ops[i] = NewRec;
