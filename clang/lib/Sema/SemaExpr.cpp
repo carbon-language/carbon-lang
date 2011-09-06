@@ -5529,8 +5529,8 @@ static void ConstructTransparentUnion(Sema &S, ASTContext &C,
 
 Sema::AssignConvertType
 Sema::CheckTransparentUnionArgumentConstraints(QualType ArgType,
-                                               ExprResult &rExpr) {
-  QualType FromType = rExpr.get()->getType();
+                                               ExprResult &RHS) {
+  QualType RHSType = RHS.get()->getType();
 
   // If the ArgType is a Union type, we want to handle a potential
   // transparent_union GCC extension.
@@ -5549,26 +5549,26 @@ Sema::CheckTransparentUnionArgumentConstraints(QualType ArgType,
       // If the transparent union contains a pointer type, we allow:
       // 1) void pointer
       // 2) null pointer constant
-      if (FromType->isPointerType())
-        if (FromType->getAs<PointerType>()->getPointeeType()->isVoidType()) {
-          rExpr = ImpCastExprToType(rExpr.take(), it->getType(), CK_BitCast);
+      if (RHSType->isPointerType())
+        if (RHSType->getAs<PointerType>()->getPointeeType()->isVoidType()) {
+          RHS = ImpCastExprToType(RHS.take(), it->getType(), CK_BitCast);
           InitField = *it;
           break;
         }
 
-      if (rExpr.get()->isNullPointerConstant(Context,
-                                       Expr::NPC_ValueDependentIsNull)) {
-        rExpr = ImpCastExprToType(rExpr.take(), it->getType(),
-                                  CK_NullToPointer);
+      if (RHS.get()->isNullPointerConstant(Context,
+                                           Expr::NPC_ValueDependentIsNull)) {
+        RHS = ImpCastExprToType(RHS.take(), it->getType(),
+                                CK_NullToPointer);
         InitField = *it;
         break;
       }
     }
 
     CastKind Kind = CK_Invalid;
-    if (CheckAssignmentConstraints(it->getType(), rExpr, Kind)
+    if (CheckAssignmentConstraints(it->getType(), RHS, Kind)
           == Compatible) {
-      rExpr = ImpCastExprToType(rExpr.take(), it->getType(), Kind);
+      RHS = ImpCastExprToType(RHS.take(), it->getType(), Kind);
       InitField = *it;
       break;
     }
@@ -5577,28 +5577,28 @@ Sema::CheckTransparentUnionArgumentConstraints(QualType ArgType,
   if (!InitField)
     return Incompatible;
 
-  ConstructTransparentUnion(*this, Context, rExpr, ArgType, InitField);
+  ConstructTransparentUnion(*this, Context, RHS, ArgType, InitField);
   return Compatible;
 }
 
 Sema::AssignConvertType
-Sema::CheckSingleAssignmentConstraints(QualType lhsType, ExprResult &rExpr) {
+Sema::CheckSingleAssignmentConstraints(QualType LHSType, ExprResult &RHS) {
   if (getLangOptions().CPlusPlus) {
-    if (!lhsType->isRecordType()) {
+    if (!LHSType->isRecordType()) {
       // C++ 5.17p3: If the left operand is not of class type, the
       // expression is implicitly converted (C++ 4) to the
       // cv-unqualified type of the left operand.
-      ExprResult Res = PerformImplicitConversion(rExpr.get(),
-                                                 lhsType.getUnqualifiedType(),
+      ExprResult Res = PerformImplicitConversion(RHS.get(),
+                                                 LHSType.getUnqualifiedType(),
                                                  AA_Assigning);
       if (Res.isInvalid())
         return Incompatible;
       Sema::AssignConvertType result = Compatible;
       if (getLangOptions().ObjCAutoRefCount &&
-          !CheckObjCARCUnavailableWeakConversion(lhsType,
-                                                 rExpr.get()->getType()))
+          !CheckObjCARCUnavailableWeakConversion(LHSType,
+                                                 RHS.get()->getType()))
         result = IncompatibleObjCWeakRef;
-      rExpr = move(Res);
+      RHS = move(Res);
       return result;
     }
 
@@ -5608,12 +5608,12 @@ Sema::CheckSingleAssignmentConstraints(QualType lhsType, ExprResult &rExpr) {
 
   // C99 6.5.16.1p1: the left operand is a pointer and the right is
   // a null pointer constant.
-  if ((lhsType->isPointerType() ||
-       lhsType->isObjCObjectPointerType() ||
-       lhsType->isBlockPointerType())
-      && rExpr.get()->isNullPointerConstant(Context,
-                                            Expr::NPC_ValueDependentIsNull)) {
-    rExpr = ImpCastExprToType(rExpr.take(), lhsType, CK_NullToPointer);
+  if ((LHSType->isPointerType() ||
+       LHSType->isObjCObjectPointerType() ||
+       LHSType->isBlockPointerType())
+      && RHS.get()->isNullPointerConstant(Context,
+                                          Expr::NPC_ValueDependentIsNull)) {
+    RHS = ImpCastExprToType(RHS.take(), LHSType, CK_NullToPointer);
     return Compatible;
   }
 
@@ -5623,15 +5623,15 @@ Sema::CheckSingleAssignmentConstraints(QualType lhsType, ExprResult &rExpr) {
   // expressions that suppress this implicit conversion (&, sizeof).
   //
   // Suppress this for references: C++ 8.5.3p5.
-  if (!lhsType->isReferenceType()) {
-    rExpr = DefaultFunctionArrayLvalueConversion(rExpr.take());
-    if (rExpr.isInvalid())
+  if (!LHSType->isReferenceType()) {
+    RHS = DefaultFunctionArrayLvalueConversion(RHS.take());
+    if (RHS.isInvalid())
       return Incompatible;
   }
 
   CastKind Kind = CK_Invalid;
   Sema::AssignConvertType result =
-    CheckAssignmentConstraints(lhsType, rExpr, Kind);
+    CheckAssignmentConstraints(LHSType, RHS, Kind);
 
   // C99 6.5.16.1p2: The value of the right operand is converted to the
   // type of the assignment expression.
@@ -5639,17 +5639,17 @@ Sema::CheckSingleAssignmentConstraints(QualType lhsType, ExprResult &rExpr) {
   // so that we can use references in built-in functions even in C.
   // The getNonReferenceType() call makes sure that the resulting expression
   // does not have reference type.
-  if (result != Incompatible && rExpr.get()->getType() != lhsType)
-    rExpr = ImpCastExprToType(rExpr.take(),
-                              lhsType.getNonLValueExprType(Context), Kind);
+  if (result != Incompatible && RHS.get()->getType() != LHSType)
+    RHS = ImpCastExprToType(RHS.take(),
+                            LHSType.getNonLValueExprType(Context), Kind);
   return result;
 }
 
-QualType Sema::InvalidOperands(SourceLocation Loc, ExprResult &lex,
-                               ExprResult &rex) {
+QualType Sema::InvalidOperands(SourceLocation Loc, ExprResult &LHS,
+                               ExprResult &RHS) {
   Diag(Loc, diag::err_typecheck_invalid_operands)
-    << lex.get()->getType() << rex.get()->getType()
-    << lex.get()->getSourceRange() << rex.get()->getSourceRange();
+    << LHS.get()->getType() << RHS.get()->getType()
+    << LHS.get()->getSourceRange() << RHS.get()->getSourceRange();
   return QualType();
 }
 
