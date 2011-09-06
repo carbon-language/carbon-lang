@@ -1,5 +1,5 @@
 // RUN: cp %s %t
-// RUN: %clang_cc1 -pedantic -Wunused-label -fixit -x c %t || true
+// RUN: not %clang_cc1 -pedantic -Wunused-label -fixit -x c %t
 // RUN: grep -v CHECK %t > %t2
 // RUN: %clang_cc1 -pedantic -Wunused-label -Werror -x c %t
 // RUN: FileCheck -input-file=%t2 %t

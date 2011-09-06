@@ -1,11 +1,11 @@
 // Objective-C recovery
 // RUN: cp %s %t
-// RUN: %clang_cc1 -pedantic -Wall -fixit -x objective-c %t || true
+// RUN: not %clang_cc1 -pedantic -Wall -fixit -x objective-c %t
 // RUN: %clang_cc1 -fsyntax-only -pedantic -Wall -Werror -x objective-c %t
 
 // Objective-C++ recovery
 // RUN: cp %s %t
-// RUN: %clang_cc1 -pedantic -Wall -fixit -x objective-c++ %t || true
+// RUN: not %clang_cc1 -pedantic -Wall -fixit -x objective-c++ %t
 // RUN: %clang_cc1 -fsyntax-only -pedantic -Wall -Werror -x objective-c++ %t
 
 @interface A

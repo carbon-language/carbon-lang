@@ -1,5 +1,5 @@
 // RUN: cp %s %t
-// RUN: %clang_cc1 -pedantic -Wall -fixit -x c++ %t || true
+// RUN: not %clang_cc1 -pedantic -Wall -fixit -x c++ %t
 // RUN: %clang_cc1 -fsyntax-only -pedantic -Wall -Werror -x c++ %t
 
 /* This is a test of the various code modification hints that are

@@ -1,5 +1,5 @@
 // RUN: cp %s %t
-// RUN: %clang_cc1 -pedantic -Wall -fixit %t || true
+// RUN: %clang_cc1 -pedantic -Wall -fixit %t
 // RUN: %clang_cc1 -fsyntax-only -pedantic -Wall -Werror %t
 // RUN: %clang_cc1 -E -o - %t | FileCheck %s
 
