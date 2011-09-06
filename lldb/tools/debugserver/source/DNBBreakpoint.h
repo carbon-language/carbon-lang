@@ -73,7 +73,7 @@ public:
                     }
                     return false;
                 }
-    void        SetEnabled(uint32_t enabled)
+    void        SetEnabled(bool enabled)
                 {
                     if (!enabled)
                         SetHardwareIndex(INVALID_NUB_HW_INDEX);

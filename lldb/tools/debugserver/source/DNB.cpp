@@ -972,13 +972,13 @@ DNBWatchpointSet (nub_process_t pid, nub_addr_t addr, nub_size_t size, uint32_t 
     {
         return procSP->CreateWatchpoint(addr, size, watch_flags, hardware, THREAD_NULL);
     }
-    return INVALID_NUB_BREAK_ID;
+    return INVALID_NUB_WATCH_ID;
 }
 
 nub_bool_t
 DNBWatchpointClear (nub_process_t pid, nub_watch_t watchID)
 {
-    if (NUB_BREAK_ID_IS_VALID(watchID))
+    if (NUB_WATCH_ID_IS_VALID(watchID))
     {
         MachProcessSP procSP;
         if (GetProcessSP (pid, procSP))
@@ -992,7 +992,7 @@ DNBWatchpointClear (nub_process_t pid, nub_watch_t watchID)
 nub_ssize_t
 DNBWatchpointGetHitCount (nub_process_t pid, nub_watch_t watchID)
 {
-    if (NUB_BREAK_ID_IS_VALID(watchID))
+    if (NUB_WATCH_ID_IS_VALID(watchID))
     {
         MachProcessSP procSP;
         if (GetProcessSP (pid, procSP))
@@ -1008,7 +1008,7 @@ DNBWatchpointGetHitCount (nub_process_t pid, nub_watch_t watchID)
 nub_ssize_t
 DNBWatchpointGetIgnoreCount (nub_process_t pid, nub_watch_t watchID)
 {
-    if (NUB_BREAK_ID_IS_VALID(watchID))
+    if (NUB_WATCH_ID_IS_VALID(watchID))
     {
         MachProcessSP procSP;
         if (GetProcessSP (pid, procSP))
@@ -1024,7 +1024,7 @@ DNBWatchpointGetIgnoreCount (nub_process_t pid, nub_watch_t watchID)
 nub_bool_t
 DNBWatchpointSetIgnoreCount (nub_process_t pid, nub_watch_t watchID, nub_size_t ignore_count)
 {
-    if (NUB_BREAK_ID_IS_VALID(watchID))
+    if (NUB_WATCH_ID_IS_VALID(watchID))
     {
         MachProcessSP procSP;
         if (GetProcessSP (pid, procSP))
@@ -1047,7 +1047,7 @@ DNBWatchpointSetIgnoreCount (nub_process_t pid, nub_watch_t watchID, nub_size_t 
 nub_bool_t
 DNBWatchpointSetCallback (nub_process_t pid, nub_watch_t watchID, DNBCallbackBreakpointHit callback, void *baton)
 {
-    if (NUB_BREAK_ID_IS_VALID(watchID))
+    if (NUB_WATCH_ID_IS_VALID(watchID))
     {
         MachProcessSP procSP;
         if (GetProcessSP (pid, procSP))

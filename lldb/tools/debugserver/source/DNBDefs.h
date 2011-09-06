@@ -66,11 +66,13 @@ typedef uint32_t        nub_bool_t;
 #define INVALID_NUB_BREAK_ID    ((nub_break_t)0)
 #define INVALID_NUB_PROCESS     ((nub_process_t)0)
 #define INVALID_NUB_THREAD      ((nub_thread_t)0)
+#define INVALID_NUB_WATCH_ID    ((nub_watch_t)0)
 #define INVALID_NUB_HW_INDEX    UINT32_MAX
 #define INVALID_NUB_REGNUM      UINT32_MAX
 #define NUB_GENERIC_ERROR       UINT32_MAX
 
 #define NUB_BREAK_ID_IS_VALID(breakID)    ((breakID) != (INVALID_NUB_BREAK_ID))
+#define NUB_WATCH_ID_IS_VALID(watchID)    ((watchID) != (INVALID_NUB_WATCH_ID))
 
 // Watchpoint types
 #define WATCH_TYPE_READ     (1u << 0)
