@@ -811,7 +811,7 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
   // Insert this computation right after this user.  Since our caller is
   // scanning from the top of the BB to the bottom, reuse of the expr are
   // guaranteed to happen later.
-  BasicBlock::iterator InsertPt = MemoryInst;
+  IRBuilder<> Builder(MemoryInst);
 
   // Now that we determined the addressing expression we want to use and know
   // that we have to sink it into this block.  Check to see if we have already
@@ -822,7 +822,7 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
     DEBUG(dbgs() << "CGP: Reusing nonlocal addrmode: " << AddrMode << " for "
                  << *MemoryInst);
     if (SunkAddr->getType() != Addr->getType())
-      SunkAddr = new BitCastInst(SunkAddr, Addr->getType(), "tmp", InsertPt);
+      SunkAddr = Builder.CreateBitCast(SunkAddr, Addr->getType(), "tmp");
   } else {
     DEBUG(dbgs() << "CGP: SINKING nonlocal addrmode: " << AddrMode << " for "
                  << *MemoryInst);
@@ -839,10 +839,9 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
     if (AddrMode.BaseReg) {
       Value *V = AddrMode.BaseReg;
       if (V->getType()->isPointerTy())
-        V = new PtrToIntInst(V, IntPtrTy, "sunkaddr", InsertPt);
+        V = Builder.CreatePtrToInt(V, IntPtrTy, "sunkaddr");
       if (V->getType() != IntPtrTy)
-        V = CastInst::CreateIntegerCast(V, IntPtrTy, /*isSigned=*/true,
-                                        "sunkaddr", InsertPt);
+        V = Builder.CreateIntCast(V, IntPtrTy, /*isSigned=*/true, "sunkaddr");
       Result = V;
     }
 
@@ -852,29 +851,27 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
       if (V->getType() == IntPtrTy) {
         // done.
       } else if (V->getType()->isPointerTy()) {
-        V = new PtrToIntInst(V, IntPtrTy, "sunkaddr", InsertPt);
+        V = Builder.CreatePtrToInt(V, IntPtrTy, "sunkaddr");
       } else if (cast<IntegerType>(IntPtrTy)->getBitWidth() <
                  cast<IntegerType>(V->getType())->getBitWidth()) {
-        V = new TruncInst(V, IntPtrTy, "sunkaddr", InsertPt);
+        V = Builder.CreateTrunc(V, IntPtrTy, "sunkaddr");
       } else {
-        V = new SExtInst(V, IntPtrTy, "sunkaddr", InsertPt);
+        V = Builder.CreateSExt(V, IntPtrTy, "sunkaddr");
       }
       if (AddrMode.Scale != 1)
-        V = BinaryOperator::CreateMul(V, ConstantInt::get(IntPtrTy,
-                                                                AddrMode.Scale),
-                                      "sunkaddr", InsertPt);
+        V = Builder.CreateMul(V, ConstantInt::get(IntPtrTy, AddrMode.Scale),
+                              "sunkaddr");
       if (Result)
-        Result = BinaryOperator::CreateAdd(Result, V, "sunkaddr", InsertPt);
+        Result = Builder.CreateAdd(Result, V, "sunkaddr");
       else
         Result = V;
     }
 
     // Add in the BaseGV if present.
     if (AddrMode.BaseGV) {
-      Value *V = new PtrToIntInst(AddrMode.BaseGV, IntPtrTy, "sunkaddr",
-                                  InsertPt);
+      Value *V = Builder.CreatePtrToInt(AddrMode.BaseGV, IntPtrTy, "sunkaddr");
       if (Result)
-        Result = BinaryOperator::CreateAdd(Result, V, "sunkaddr", InsertPt);
+        Result = Builder.CreateAdd(Result, V, "sunkaddr");
       else
         Result = V;
     }
@@ -883,7 +880,7 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
     if (AddrMode.BaseOffs) {
       Value *V = ConstantInt::get(IntPtrTy, AddrMode.BaseOffs);
       if (Result)
-        Result = BinaryOperator::CreateAdd(Result, V, "sunkaddr", InsertPt);
+        Result = Builder.CreateAdd(Result, V, "sunkaddr");
       else
         Result = V;
     }
@@ -891,7 +888,7 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
     if (Result == 0)
       SunkAddr = Constant::getNullValue(Addr->getType());
     else
-      SunkAddr = new IntToPtrInst(Result, Addr->getType(), "sunkaddr",InsertPt);
+      SunkAddr = Builder.CreateIntToPtr(Result, Addr->getType(), "sunkaddr");
   }
 
   MemoryInst->replaceUsesOfWith(Repl, SunkAddr);
