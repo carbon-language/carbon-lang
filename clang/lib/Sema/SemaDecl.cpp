@@ -6700,6 +6700,9 @@ Decl *Sema::ActOnFinishFunctionBody(Decl *dcl, Stmt *Body,
       DiagnoseUnusedParameters(MD->param_begin(), MD->param_end());
       DiagnoseSizeOfParametersAndReturnValue(MD->param_begin(), MD->param_end(),
                                              MD->getResultType(), MD);
+      
+      if (Body)
+        ComputeNRVO(Body, getCurFunction());
     }
     if (ObjCShouldCallSuperDealloc) {
       Diag(MD->getLocEnd(), diag::warn_objc_missing_super_dealloc);
