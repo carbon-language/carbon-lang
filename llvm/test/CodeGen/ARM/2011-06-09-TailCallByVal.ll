@@ -1,4 +1,5 @@
-; RUN: llc < %s -relocation-model=pic -mcpu=cortex-a8 -arm-tail-calls=1 | FileCheck %s
+; DISABLED: llc < %s -relocation-model=pic -mcpu=cortex-a8 -arm-tail-calls=1 | FileCheck %s
+; RUN: false
 
 ; byval is currently unsupported.
 ; XFAIL: *

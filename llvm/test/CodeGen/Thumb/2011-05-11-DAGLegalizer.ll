@@ -1,4 +1,5 @@
-; RUN: llc -mtriple=thumbv6-apple-darwin < %s
+; DISABLED: llc -mtriple=thumbv6-apple-darwin < %s
+; RUN: false
 ; rdar://problem/9416774
 ; ModuleID = 'reduced.ll'
 
