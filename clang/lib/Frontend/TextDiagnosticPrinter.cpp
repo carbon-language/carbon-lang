@@ -582,70 +582,9 @@ public:
       CaretLine = ' ' + CaretLine;
     }
 
-    std::string FixItInsertionLine;
-    if (NumHints && DiagOpts.ShowFixits) {
-      for (const FixItHint *Hint = Hints, *LastHint = Hints + NumHints;
-           Hint != LastHint; ++Hint) {
-        if (!Hint->CodeToInsert.empty()) {
-          // We have an insertion hint. Determine whether the inserted
-          // code is on the same line as the caret.
-          std::pair<FileID, unsigned> HintLocInfo
-            = SM.getDecomposedExpansionLoc(Hint->RemoveRange.getBegin());
-          if (SM.getLineNumber(HintLocInfo.first, HintLocInfo.second) ==
-                SM.getLineNumber(FID, FileOffset)) {
-            // Insert the new code into the line just below the code
-            // that the user wrote.
-            unsigned HintColNo
-              = SM.getColumnNumber(HintLocInfo.first, HintLocInfo.second);
-            unsigned LastColumnModified
-              = HintColNo - 1 + Hint->CodeToInsert.size();
-            if (LastColumnModified > FixItInsertionLine.size())
-              FixItInsertionLine.resize(LastColumnModified, ' ');
-            std::copy(Hint->CodeToInsert.begin(), Hint->CodeToInsert.end(),
-                      FixItInsertionLine.begin() + HintColNo - 1);
-          } else {
-            FixItInsertionLine.clear();
-            break;
-          }
-        }
-      }
-      // Now that we have the entire fixit line, expand the tabs in it.
-      // Since we don't want to insert spaces in the middle of a word,
-      // find each word and the column it should line up with and insert
-      // spaces until they match.
-      if (!FixItInsertionLine.empty()) {
-        unsigned FixItPos = 0;
-        unsigned LinePos = 0;
-        unsigned TabExpandedCol = 0;
-        unsigned LineLength = LineEnd - LineStart;
-
-        while (FixItPos < FixItInsertionLine.size() && LinePos < LineLength) {
-          // Find the next word in the FixIt line.
-          while (FixItPos < FixItInsertionLine.size() &&
-                 FixItInsertionLine[FixItPos] == ' ')
-            ++FixItPos;
-          unsigned CharDistance = FixItPos - TabExpandedCol;
-
-          // Walk forward in the source line, keeping track of
-          // the tab-expanded column.
-          for (unsigned I = 0; I < CharDistance; ++I, ++LinePos)
-            if (LinePos >= LineLength || LineStart[LinePos] != '\t')
-              ++TabExpandedCol;
-            else
-              TabExpandedCol =
-                (TabExpandedCol/DiagOpts.TabStop + 1) * DiagOpts.TabStop;
-
-          // Adjust the fixit line to match this column.
-          FixItInsertionLine.insert(FixItPos, TabExpandedCol-FixItPos, ' ');
-          FixItPos = TabExpandedCol;
-
-          // Walk to the end of the word.
-          while (FixItPos < FixItInsertionLine.size() &&
-                 FixItInsertionLine[FixItPos] != ' ')
-            ++FixItPos;
-        }
-      }
-    }
+    std::string FixItInsertionLine = BuildFixItInsertionLine(FID, FileOffset,
+                                                             LineStart, LineEnd,
+                                                             Hints, NumHints);
 
     // If the source line is too long for our terminal, select only the
     // "interesting" source region within that line.
@@ -682,6 +621,82 @@ public:
   }
 
 private:
+  std::string BuildFixItInsertionLine(FileID FID, unsigned FileOffset,
+                                      const char *LineStart,
+                                      const char *LineEnd,
+                                      const FixItHint *Hints,
+                                      unsigned NumHints) {
+    std::string FixItInsertionLine;
+    if (!NumHints || !DiagOpts.ShowFixits)
+      return FixItInsertionLine;
+
+    for (const FixItHint *Hint = Hints, *LastHint = Hints + NumHints;
+         Hint != LastHint; ++Hint) {
+      if (!Hint->CodeToInsert.empty()) {
+        // We have an insertion hint. Determine whether the inserted
+        // code is on the same line as the caret.
+        std::pair<FileID, unsigned> HintLocInfo
+          = SM.getDecomposedExpansionLoc(Hint->RemoveRange.getBegin());
+        if (SM.getLineNumber(HintLocInfo.first, HintLocInfo.second) ==
+              SM.getLineNumber(FID, FileOffset)) {
+          // Insert the new code into the line just below the code
+          // that the user wrote.
+          unsigned HintColNo
+            = SM.getColumnNumber(HintLocInfo.first, HintLocInfo.second);
+          unsigned LastColumnModified
+            = HintColNo - 1 + Hint->CodeToInsert.size();
+          if (LastColumnModified > FixItInsertionLine.size())
+            FixItInsertionLine.resize(LastColumnModified, ' ');
+          std::copy(Hint->CodeToInsert.begin(), Hint->CodeToInsert.end(),
+                    FixItInsertionLine.begin() + HintColNo - 1);
+        } else {
+          FixItInsertionLine.clear();
+          break;
+        }
+      }
+    }
+
+    if (FixItInsertionLine.empty())
+      return FixItInsertionLine;
+
+    // Now that we have the entire fixit line, expand the tabs in it.
+    // Since we don't want to insert spaces in the middle of a word,
+    // find each word and the column it should line up with and insert
+    // spaces until they match.
+    unsigned FixItPos = 0;
+    unsigned LinePos = 0;
+    unsigned TabExpandedCol = 0;
+    unsigned LineLength = LineEnd - LineStart;
+
+    while (FixItPos < FixItInsertionLine.size() && LinePos < LineLength) {
+      // Find the next word in the FixIt line.
+      while (FixItPos < FixItInsertionLine.size() &&
+             FixItInsertionLine[FixItPos] == ' ')
+        ++FixItPos;
+      unsigned CharDistance = FixItPos - TabExpandedCol;
+
+      // Walk forward in the source line, keeping track of
+      // the tab-expanded column.
+      for (unsigned I = 0; I < CharDistance; ++I, ++LinePos)
+        if (LinePos >= LineLength || LineStart[LinePos] != '\t')
+          ++TabExpandedCol;
+        else
+          TabExpandedCol =
+            (TabExpandedCol/DiagOpts.TabStop + 1) * DiagOpts.TabStop;
+
+      // Adjust the fixit line to match this column.
+      FixItInsertionLine.insert(FixItPos, TabExpandedCol-FixItPos, ' ');
+      FixItPos = TabExpandedCol;
+
+      // Walk to the end of the word.
+      while (FixItPos < FixItInsertionLine.size() &&
+             FixItInsertionLine[FixItPos] != ' ')
+        ++FixItPos;
+    }
+
+    return FixItInsertionLine;
+  }
+
   void EmitParseableFixits(const FixItHint *Hints, unsigned NumHints) {
     if (!DiagOpts.ShowParseableFixits)
       return;
