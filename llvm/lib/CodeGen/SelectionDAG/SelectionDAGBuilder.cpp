@@ -2626,10 +2626,12 @@ void SelectionDAGBuilder::visitSelect(const User &I) {
   SDValue Cond     = getValue(I.getOperand(0));
   SDValue TrueVal  = getValue(I.getOperand(1));
   SDValue FalseVal = getValue(I.getOperand(2));
+  ISD::NodeType OpCode = Cond.getValueType().isVector() ?
+    ISD::VSELECT : ISD::SELECT;
 
   for (unsigned i = 0; i != NumValues; ++i)
-    Values[i] = DAG.getNode(ISD::SELECT, getCurDebugLoc(),
-                          TrueVal.getNode()->getValueType(TrueVal.getResNo()+i),
+    Values[i] = DAG.getNode(OpCode, getCurDebugLoc(),
+                            TrueVal.getNode()->getValueType(TrueVal.getResNo()+i),
                             Cond,
                             SDValue(TrueVal.getNode(),
                                     TrueVal.getResNo() + i),

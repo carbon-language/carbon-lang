@@ -158,7 +158,7 @@ SDValue VectorLegalizer::LegalizeOp(SDValue Op) {
   case ISD::CTPOP:
   case ISD::SELECT:
   case ISD::SELECT_CC:
-  case ISD::VSETCC:
+  case ISD::SETCC:
   case ISD::ZERO_EXTEND:
   case ISD::ANY_EXTEND:
   case ISD::TRUNCATE:
@@ -214,7 +214,7 @@ SDValue VectorLegalizer::LegalizeOp(SDValue Op) {
       Result = ExpandUINT_TO_FLOAT(Op);
     else if (Node->getOpcode() == ISD::FNEG)
       Result = ExpandFNEG(Op);
-    else if (Node->getOpcode() == ISD::VSETCC)
+    else if (Node->getOpcode() == ISD::SETCC)
       Result = UnrollVSETCC(Op);
     else
       Result = DAG.UnrollVectorOp(Op.getNode());

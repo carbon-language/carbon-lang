@@ -475,11 +475,13 @@ SDValue DAGTypeLegalizer::PromoteIntRes_SELECT_CC(SDNode *N) {
 
 SDValue DAGTypeLegalizer::PromoteIntRes_SETCC(SDNode *N) {
   EVT SVT = TLI.getSetCCResultType(N->getOperand(0).getValueType());
-  assert(isTypeLegal(SVT) && "Illegal SetCC type!");
+
   DebugLoc dl = N->getDebugLoc();
+  assert(SVT.isVector() == N->getOperand(0).getValueType().isVector() &&
+         "Vector compare must return a vector result!");
 
   // Get the SETCC result using the canonical SETCC type.
-  SDValue SetCC = DAG.getNode(ISD::SETCC, dl, SVT, N->getOperand(0),
+  SDValue SetCC = DAG.getNode(N->getOpcode(), dl, SVT, N->getOperand(0),
                               N->getOperand(1), N->getOperand(2));
 
   // Convert to the expected type.
@@ -729,6 +731,7 @@ bool DAGTypeLegalizer::PromoteIntegerOperand(SDNode *N, unsigned OpNo) {
   case ISD::MEMBARRIER:   Res = PromoteIntOp_MEMBARRIER(N); break;
   case ISD::SCALAR_TO_VECTOR:
                           Res = PromoteIntOp_SCALAR_TO_VECTOR(N); break;
+  case ISD::VSELECT:
   case ISD::SELECT:       Res = PromoteIntOp_SELECT(N, OpNo); break;
   case ISD::SELECT_CC:    Res = PromoteIntOp_SELECT_CC(N, OpNo); break;
   case ISD::SETCC:        Res = PromoteIntOp_SETCC(N, OpNo); break;
@@ -921,14 +924,17 @@ SDValue DAGTypeLegalizer::PromoteIntOp_SCALAR_TO_VECTOR(SDNode *N) {
 }
 
 SDValue DAGTypeLegalizer::PromoteIntOp_SELECT(SDNode *N, unsigned OpNo) {
-  assert(OpNo == 0 && "Only know how to promote condition");
+  assert(OpNo == 0 && "Only know how to promote the condition!");
+  SDValue Cond = N->getOperand(0);
+  EVT OpTy = N->getOperand(1).getValueType();
 
   // Promote all the way up to the canonical SetCC type.
-  EVT SVT = TLI.getSetCCResultType(N->getOperand(1).getValueType());
-  SDValue Cond = PromoteTargetBoolean(N->getOperand(0), SVT);
+  EVT SVT = TLI.getSetCCResultType(N->getOpcode() == ISD::SELECT ?
+                                   OpTy.getScalarType() : OpTy);
+  Cond = PromoteTargetBoolean(Cond, SVT);
 
-  return SDValue(DAG.UpdateNodeOperands(N, Cond,
-                                N->getOperand(1), N->getOperand(2)), 0);
+  return SDValue(DAG.UpdateNodeOperands(N, Cond, N->getOperand(1),
+                                        N->getOperand(2)), 0);
 }
 
 SDValue DAGTypeLegalizer::PromoteIntOp_SELECT_CC(SDNode *N, unsigned OpNo) {

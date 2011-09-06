@@ -3757,7 +3757,7 @@ SDValue DAGCombiner::visitSELECT(SDNode *N) {
   if (VT.isInteger() &&
       (VT0 == MVT::i1 ||
        (VT0.isInteger() &&
-        TLI.getBooleanContents() == TargetLowering::ZeroOrOneBooleanContent)) &&
+        TLI.getBooleanContents(false) == TargetLowering::ZeroOrOneBooleanContent)) &&
       N1C && N2C && N1C->isNullValue() && N2C->getAPIntValue() == 1) {
     SDValue XORNode;
     if (VT == VT0)
@@ -4112,7 +4112,7 @@ SDValue DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
         // we know that the element size of the sext'd result matches the
         // element size of the compare operands.
       if (VT.getSizeInBits() == N0VT.getSizeInBits())
-        return DAG.getVSetCC(N->getDebugLoc(), VT, N0.getOperand(0),
+        return DAG.getSetCC(N->getDebugLoc(), VT, N0.getOperand(0),
                              N0.getOperand(1),
                              cast<CondCodeSDNode>(N0.getOperand(2))->get());
       // If the desired elements are smaller or larger than the source
@@ -4126,7 +4126,7 @@ SDValue DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
           EVT::getVectorVT(*DAG.getContext(), MatchingElementType,
                            N0VT.getVectorNumElements());
         SDValue VsetCC =
-          DAG.getVSetCC(N->getDebugLoc(), MatchingVectorType, N0.getOperand(0),
+          DAG.getSetCC(N->getDebugLoc(), MatchingVectorType, N0.getOperand(0),
                         N0.getOperand(1),
                         cast<CondCodeSDNode>(N0.getOperand(2))->get());
         return DAG.getSExtOrTrunc(VsetCC, N->getDebugLoc(), VT);
@@ -4342,7 +4342,7 @@ SDValue DAGCombiner::visitZERO_EXTEND(SDNode *N) {
         // we know that the element size of the sext'd result matches the
         // element size of the compare operands.
         return DAG.getNode(ISD::AND, N->getDebugLoc(), VT,
-                           DAG.getVSetCC(N->getDebugLoc(), VT, N0.getOperand(0),
+                           DAG.getSetCC(N->getDebugLoc(), VT, N0.getOperand(0),
                                          N0.getOperand(1),
                                  cast<CondCodeSDNode>(N0.getOperand(2))->get()),
                            DAG.getNode(ISD::BUILD_VECTOR, N->getDebugLoc(), VT,
@@ -4358,7 +4358,7 @@ SDValue DAGCombiner::visitZERO_EXTEND(SDNode *N) {
         EVT::getVectorVT(*DAG.getContext(), MatchingElementType,
                          N0VT.getVectorNumElements());
       SDValue VsetCC =
-        DAG.getVSetCC(N->getDebugLoc(), MatchingVectorType, N0.getOperand(0),
+        DAG.getSetCC(N->getDebugLoc(), MatchingVectorType, N0.getOperand(0),
                       N0.getOperand(1),
                       cast<CondCodeSDNode>(N0.getOperand(2))->get());
       return DAG.getNode(ISD::AND, N->getDebugLoc(), VT,
@@ -4526,7 +4526,7 @@ SDValue DAGCombiner::visitANY_EXTEND(SDNode *N) {
         // we know that the element size of the sext'd result matches the
         // element size of the compare operands.
       if (VT.getSizeInBits() == N0VT.getSizeInBits())
-        return DAG.getVSetCC(N->getDebugLoc(), VT, N0.getOperand(0),
+        return DAG.getSetCC(N->getDebugLoc(), VT, N0.getOperand(0),
                              N0.getOperand(1),
                              cast<CondCodeSDNode>(N0.getOperand(2))->get());
       // If the desired elements are smaller or larger than the source
@@ -4540,7 +4540,7 @@ SDValue DAGCombiner::visitANY_EXTEND(SDNode *N) {
           EVT::getVectorVT(*DAG.getContext(), MatchingElementType,
                            N0VT.getVectorNumElements());
         SDValue VsetCC =
-          DAG.getVSetCC(N->getDebugLoc(), MatchingVectorType, N0.getOperand(0),
+          DAG.getSetCC(N->getDebugLoc(), MatchingVectorType, N0.getOperand(0),
                         N0.getOperand(1),
                         cast<CondCodeSDNode>(N0.getOperand(2))->get());
         return DAG.getSExtOrTrunc(VsetCC, N->getDebugLoc(), VT);
@@ -7547,7 +7547,8 @@ SDValue DAGCombiner::SimplifySelectCC(DebugLoc DL, SDValue N0, SDValue N1,
 
   // fold select C, 16, 0 -> shl C, 4
   if (N2C && N3C && N3C->isNullValue() && N2C->getAPIntValue().isPowerOf2() &&
-      TLI.getBooleanContents() == TargetLowering::ZeroOrOneBooleanContent) {
+    TLI.getBooleanContents(N0.getValueType().isVector()) ==
+      TargetLowering::ZeroOrOneBooleanContent) {
 
     // If the caller doesn't want us to simplify this into a zext of a compare,
     // don't do it.

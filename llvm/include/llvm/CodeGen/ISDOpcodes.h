@@ -323,6 +323,12 @@ namespace ISD {
     // i1 then the high bits must conform to getBooleanContents.
     SELECT,
 
+    // Select with a vector condition (op #0) and two vector operands (ops #1
+    // and #2), returning a vector result.  All vectors have the same length.
+    // Much like the scalar select and setcc, each bit in the condition selects
+    // whether the corresponding result element is taken from op #1 or op #2.
+    VSELECT,
+
     // Select with condition operator - This selects between a true value and
     // a false value (ops #2 and #3) based on the boolean result of comparing
     // the lhs and rhs (ops #0 and #1) of a conditional expression with the
@@ -333,15 +339,9 @@ namespace ISD {
     // true.  If the result value type is not i1 then the high bits conform
     // to getBooleanContents.  The operands to this are the left and right
     // operands to compare (ops #0, and #1) and the condition code to compare
-    // them with (op #2) as a CondCodeSDNode.
+    // them with (op #2) as a CondCodeSDNode. If the operands are vector types
+    // then the result type must also be a vector type.
     SETCC,
-
-    // RESULT = VSETCC(LHS, RHS, COND) operator - This evaluates to a vector of
-    // integer elements with all bits of the result elements set to true if the
-    // comparison is true or all cleared if the comparison is false.  The
-    // operands to this are the left and right operands to compare (LHS/RHS) and
-    // the condition code to compare them with (COND) as a CondCodeSDNode.
-    VSETCC,
 
     // SHL_PARTS/SRA_PARTS/SRL_PARTS - These operators are used for expanded
     // integer shift operations, just like ADD/SUB_PARTS.  The operation

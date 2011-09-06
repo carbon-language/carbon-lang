@@ -1113,24 +1113,8 @@ DAGTypeLegalizer::ExpandChainLibCall(RTLIB::Libcall LC,
 /// type i1, the bits of which conform to getBooleanContents.
 SDValue DAGTypeLegalizer::PromoteTargetBoolean(SDValue Bool, EVT VT) {
   DebugLoc dl = Bool.getDebugLoc();
-  ISD::NodeType ExtendCode;
-  switch (TLI.getBooleanContents()) {
-  default:
-    assert(false && "Unknown BooleanContent!");
-  case TargetLowering::UndefinedBooleanContent:
-    // Extend to VT by adding rubbish bits.
-    ExtendCode = ISD::ANY_EXTEND;
-    break;
-  case TargetLowering::ZeroOrOneBooleanContent:
-    // Extend to VT by adding zero bits.
-    ExtendCode = ISD::ZERO_EXTEND;
-    break;
-  case TargetLowering::ZeroOrNegativeOneBooleanContent: {
-    // Extend to VT by copying the sign bit.
-    ExtendCode = ISD::SIGN_EXTEND;
-    break;
-  }
-  }
+  ISD::NodeType ExtendCode =
+    TargetLowering::getExtendForContent(TLI.getBooleanContents(VT.isVector()));
   return DAG.getNode(ExtendCode, dl, VT, Bool);
 }
 

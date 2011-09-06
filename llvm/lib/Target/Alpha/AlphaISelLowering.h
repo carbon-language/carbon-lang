@@ -66,7 +66,7 @@ namespace llvm {
     virtual MVT getShiftAmountTy(EVT LHSTy) const { return MVT::i64; }
 
     /// getSetCCResultType - Get the SETCC result ValueType
-    virtual MVT::SimpleValueType getSetCCResultType(EVT VT) const;
+    virtual EVT getSetCCResultType(EVT VT) const;
 
     /// LowerOperation - Provide custom lowering hooks for some operations.
     ///

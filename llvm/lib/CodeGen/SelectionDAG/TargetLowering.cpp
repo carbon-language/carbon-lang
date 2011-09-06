@@ -609,6 +609,7 @@ TargetLowering::TargetLowering(const TargetMachine &tm,
   ExceptionPointerRegister = 0;
   ExceptionSelectorRegister = 0;
   BooleanContents = UndefinedBooleanContent;
+  BooleanVectorContents = UndefinedBooleanContent;
   SchedPreferenceInfo = Sched::Latency;
   JumpBufSize = 0;
   JumpBufAlignment = 0;
@@ -915,7 +916,8 @@ const char *TargetLowering::getTargetNodeName(unsigned Opcode) const {
 }
 
 
-MVT::SimpleValueType TargetLowering::getSetCCResultType(EVT VT) const {
+EVT TargetLowering::getSetCCResultType(EVT VT) const {
+  assert(!VT.isVector() && "No default SetCC type for vectors!");
   return PointerTy.SimpleTy;
 }
 
@@ -2191,7 +2193,7 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
         }
       } else if (N1C->getAPIntValue() == 1 &&
                  (VT == MVT::i1 ||
-                  getBooleanContents() == ZeroOrOneBooleanContent)) {
+                  getBooleanContents(false) == ZeroOrOneBooleanContent)) {
         SDValue Op0 = N0;
         if (Op0.getOpcode() == ISD::TRUNCATE)
           Op0 = Op0.getOperand(0);

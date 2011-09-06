@@ -19,6 +19,12 @@
 #include "llvm/Support/ErrorHandling.h"
 using namespace llvm;
 
+EVT EVT::changeExtendedVectorElementTypeToInteger() const {
+  LLVMContext &Context = LLVMTy->getContext();
+  EVT IntTy = getIntegerVT(Context, getVectorElementType().getSizeInBits());
+  return getVectorVT(Context, IntTy, getVectorNumElements());
+}
+
 EVT EVT::getExtendedIntegerVT(LLVMContext &Context, unsigned BitWidth) {
   EVT VT;
   VT.LLVMTy = IntegerType::get(Context, BitWidth);

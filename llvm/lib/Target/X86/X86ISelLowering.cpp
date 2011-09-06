@@ -181,6 +181,8 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
 
   // X86 is weird, it always uses i8 for shift amounts and setcc results.
   setBooleanContents(ZeroOrOneBooleanContent);
+  // X86-SSE is even stranger. It uses -1 or 0 for vector masks.
+  setBooleanVectorContents(ZeroOrNegativeOneBooleanContent);
 
   // For 64-bit since we have so many registers use the ILP scheduler, for
   // 32-bit code use the register pressure specific scheduling.
@@ -710,7 +712,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::ROTL, (MVT::SimpleValueType)VT, Expand);
     setOperationAction(ISD::ROTR, (MVT::SimpleValueType)VT, Expand);
     setOperationAction(ISD::BSWAP, (MVT::SimpleValueType)VT, Expand);
-    setOperationAction(ISD::VSETCC, (MVT::SimpleValueType)VT, Expand);
+    setOperationAction(ISD::SETCC, (MVT::SimpleValueType)VT, Expand);
     setOperationAction(ISD::FLOG, (MVT::SimpleValueType)VT, Expand);
     setOperationAction(ISD::FLOG2, (MVT::SimpleValueType)VT, Expand);
     setOperationAction(ISD::FLOG10, (MVT::SimpleValueType)VT, Expand);
@@ -787,7 +789,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::VECTOR_SHUFFLE,     MVT::v4f32, Custom);
     setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v4f32, Custom);
     setOperationAction(ISD::SELECT,             MVT::v4f32, Custom);
-    setOperationAction(ISD::VSETCC,             MVT::v4f32, Custom);
+    setOperationAction(ISD::SETCC,              MVT::v4f32, Custom);
   }
 
   if (!UseSoftFloat && Subtarget->hasXMMInt()) {
@@ -817,10 +819,10 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::FSQRT,              MVT::v2f64, Legal);
     setOperationAction(ISD::FNEG,               MVT::v2f64, Custom);
 
-    setOperationAction(ISD::VSETCC,             MVT::v2f64, Custom);
-    setOperationAction(ISD::VSETCC,             MVT::v16i8, Custom);
-    setOperationAction(ISD::VSETCC,             MVT::v8i16, Custom);
-    setOperationAction(ISD::VSETCC,             MVT::v4i32, Custom);
+    setOperationAction(ISD::SETCC,              MVT::v2f64, Custom);
+    setOperationAction(ISD::SETCC,              MVT::v16i8, Custom);
+    setOperationAction(ISD::SETCC,              MVT::v8i16, Custom);
+    setOperationAction(ISD::SETCC,              MVT::v4i32, Custom);
 
     setOperationAction(ISD::SCALAR_TO_VECTOR,   MVT::v16i8, Custom);
     setOperationAction(ISD::SCALAR_TO_VECTOR,   MVT::v8i16, Custom);
@@ -950,7 +952,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   }
 
   if (Subtarget->hasSSE42() || Subtarget->hasAVX())
-    setOperationAction(ISD::VSETCC,             MVT::v2i64, Custom);
+    setOperationAction(ISD::SETCC,             MVT::v2i64, Custom);
 
   if (!UseSoftFloat && Subtarget->hasAVX()) {
     addRegisterClass(MVT::v32i8,  X86::VR256RegisterClass);
@@ -1002,10 +1004,10 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::SRA,               MVT::v8i32, Custom);
     setOperationAction(ISD::SRA,               MVT::v16i16, Custom);
 
-    setOperationAction(ISD::VSETCC,            MVT::v32i8, Custom);
-    setOperationAction(ISD::VSETCC,            MVT::v16i16, Custom);
-    setOperationAction(ISD::VSETCC,            MVT::v8i32, Custom);
-    setOperationAction(ISD::VSETCC,            MVT::v4i64, Custom);
+    setOperationAction(ISD::SETCC,             MVT::v32i8, Custom);
+    setOperationAction(ISD::SETCC,             MVT::v16i16, Custom);
+    setOperationAction(ISD::SETCC,             MVT::v8i32, Custom);
+    setOperationAction(ISD::SETCC,             MVT::v4i64, Custom);
 
     setOperationAction(ISD::SELECT,            MVT::v4f64, Custom);
     setOperationAction(ISD::SELECT,            MVT::v4i64, Custom);
@@ -1145,8 +1147,9 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
 }
 
 
-MVT::SimpleValueType X86TargetLowering::getSetCCResultType(EVT VT) const {
-  return MVT::i8;
+EVT X86TargetLowering::getSetCCResultType(EVT VT) const {
+  if (!VT.isVector()) return MVT::i8;
+  return VT.changeVectorElementTypeToInteger();
 }
 
 
@@ -8319,6 +8322,9 @@ SDValue X86TargetLowering::LowerToBT(SDValue And, ISD::CondCode CC,
 }
 
 SDValue X86TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
+
+  if (Op.getValueType().isVector()) return LowerVSETCC(Op, DAG);
+
   assert(Op.getValueType() == MVT::i8 && "SetCC type must be 8-bit integer");
   SDValue Op0 = Op.getOperand(0);
   SDValue Op1 = Op.getOperand(1);
@@ -8374,7 +8380,7 @@ SDValue X86TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
 static SDValue Lower256IntVETCC(SDValue Op, SelectionDAG &DAG) {
   EVT VT = Op.getValueType();
 
-  assert(VT.getSizeInBits() == 256 && Op.getOpcode() == ISD::VSETCC &&
+  assert(VT.getSizeInBits() == 256 && Op.getOpcode() == ISD::SETCC &&
          "Unsupported value type for operation");
 
   int NumElems = VT.getVectorNumElements();
@@ -10038,7 +10044,6 @@ SDValue X86TargetLowering::LowerSIGN_EXTEND_INREG(SDValue Op, SelectionDAG &DAG)
   SDNode* Node = Op.getNode();
   EVT ExtraVT = cast<VTSDNode>(Node->getOperand(1))->getVT();
   EVT VT = Node->getValueType(0);
-
   if (Subtarget->hasSSE2() && VT.isVector()) {
     unsigned BitsDiff = VT.getScalarType().getSizeInBits() -
                         ExtraVT.getScalarType().getSizeInBits();
@@ -10344,7 +10349,6 @@ SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::FCOPYSIGN:          return LowerFCOPYSIGN(Op, DAG);
   case ISD::FGETSIGN:           return LowerFGETSIGN(Op, DAG);
   case ISD::SETCC:              return LowerSETCC(Op, DAG);
-  case ISD::VSETCC:             return LowerVSETCC(Op, DAG);
   case ISD::SELECT:             return LowerSELECT(Op, DAG);
   case ISD::BRCOND:             return LowerBRCOND(Op, DAG);
   case ISD::JumpTable:          return LowerJumpTable(Op, DAG);

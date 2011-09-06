@@ -49,6 +49,7 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM)
   // Set up the TargetLowering object.
   //I am having problems with shr n i8 1
   setBooleanContents(ZeroOrOneBooleanContent);
+  setBooleanVectorContents(ZeroOrOneBooleanContent); // FIXME: Is this correct?
 
   addRegisterClass(MVT::i64, Alpha::GPRCRegisterClass);
   addRegisterClass(MVT::f64, Alpha::F8RCRegisterClass);
@@ -168,7 +169,7 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM)
   computeRegisterProperties();
 }
 
-MVT::SimpleValueType AlphaTargetLowering::getSetCCResultType(EVT VT) const {
+EVT AlphaTargetLowering::getSetCCResultType(EVT VT) const {
   return MVT::i64;
 }
 

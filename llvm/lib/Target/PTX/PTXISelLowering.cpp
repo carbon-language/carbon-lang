@@ -48,6 +48,7 @@ PTXTargetLowering::PTXTargetLowering(TargetMachine &TM)
   addRegisterClass(MVT::f64, PTX::RegF64RegisterClass);
 
   setBooleanContents(ZeroOrOneBooleanContent);
+  setBooleanVectorContents(ZeroOrOneBooleanContent); // FIXME: Is this correct?
   setMinFunctionAlignment(2);
   
   ////////////////////////////////////
@@ -106,7 +107,7 @@ PTXTargetLowering::PTXTargetLowering(TargetMachine &TM)
   computeRegisterProperties();
 }
 
-MVT::SimpleValueType PTXTargetLowering::getSetCCResultType(EVT VT) const {
+EVT PTXTargetLowering::getSetCCResultType(EVT VT) const {
   return MVT::i1;
 }
 

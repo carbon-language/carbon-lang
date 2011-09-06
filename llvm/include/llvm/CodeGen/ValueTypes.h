@@ -438,6 +438,21 @@ namespace llvm {
       return MVT::INVALID_SIMPLE_VALUE_TYPE;
     }
 
+    /// changeVectorElementTypeToInteger - Return a vector with the same number
+    /// of elements as this vector, but with the element type converted to an
+    /// integer type with the same bitwidth.
+    EVT changeVectorElementTypeToInteger() const {
+      if (!isSimple())
+        return changeExtendedVectorElementTypeToInteger();
+      MVT EltTy = getSimpleVT().getVectorElementType();
+      unsigned BitWidth = EltTy.getSizeInBits();
+      MVT IntTy = MVT::getIntegerVT(BitWidth);
+      MVT VecTy = MVT::getVectorVT(IntTy, getVectorNumElements());
+      assert(VecTy != MVT::INVALID_SIMPLE_VALUE_TYPE &&
+             "Simple vector VT not representable by simple integer vector VT!");
+      return VecTy;
+    }
+
     /// isSimple - Test if the given EVT is simple (as opposed to being
     /// extended).
     bool isSimple() const {
@@ -674,6 +689,7 @@ namespace llvm {
     // Methods for handling the Extended-type case in functions above.
     // These are all out-of-line to prevent users of this header file
     // from having a dependency on Type.h.
+    EVT changeExtendedVectorElementTypeToInteger() const;
     static EVT getExtendedIntegerVT(LLVMContext &C, unsigned BitWidth);
     static EVT getExtendedVectorVT(LLVMContext &C, EVT VT,
                                    unsigned NumElements);

@@ -439,14 +439,26 @@ void DAGTypeLegalizer::SplitRes_MERGE_VALUES(SDNode *N,
 
 void DAGTypeLegalizer::SplitRes_SELECT(SDNode *N, SDValue &Lo,
                                        SDValue &Hi) {
-  SDValue LL, LH, RL, RH;
+  SDValue LL, LH, RL, RH, CL, CH;
   DebugLoc dl = N->getDebugLoc();
   GetSplitOp(N->getOperand(1), LL, LH);
   GetSplitOp(N->getOperand(2), RL, RH);
 
   SDValue Cond = N->getOperand(0);
-  Lo = DAG.getNode(ISD::SELECT, dl, LL.getValueType(), Cond, LL, RL);
-  Hi = DAG.getNode(ISD::SELECT, dl, LH.getValueType(), Cond, LH, RH);
+  CL = CH = Cond;
+  if (Cond.getValueType().isVector()) {
+    assert(Cond.getValueType().getVectorElementType() == MVT::i1 &&
+           "Condition legalized before result?");
+    unsigned NumElements = Cond.getValueType().getVectorNumElements();
+    EVT VCondTy = EVT::getVectorVT(*DAG.getContext(), MVT::i1, NumElements / 2);
+    CL = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, VCondTy, Cond,
+                     DAG.getIntPtrConstant(0));
+    CH = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, VCondTy, Cond,
+                     DAG.getIntPtrConstant(NumElements / 2));
+  }
+
+  Lo = DAG.getNode(N->getOpcode(), dl, LL.getValueType(), CL, LL, RL);
+  Hi = DAG.getNode(N->getOpcode(), dl, LH.getValueType(), CH, LH, RH);
 }
 
 void DAGTypeLegalizer::SplitRes_SELECT_CC(SDNode *N, SDValue &Lo,

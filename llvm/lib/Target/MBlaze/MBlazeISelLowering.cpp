@@ -59,6 +59,7 @@ MBlazeTargetLowering::MBlazeTargetLowering(MBlazeTargetMachine &TM)
   // MBlaze does not have i1 type, so use i32 for
   // setcc operations results (slt, sgt, ...).
   setBooleanContents(ZeroOrOneBooleanContent);
+  setBooleanVectorContents(ZeroOrOneBooleanContent); // FIXME: Is this correct?
 
   // Set up the register classes
   addRegisterClass(MVT::i32, MBlaze::GPRRegisterClass);
@@ -187,7 +188,7 @@ MBlazeTargetLowering::MBlazeTargetLowering(MBlazeTargetMachine &TM)
   computeRegisterProperties();
 }
 
-MVT::SimpleValueType MBlazeTargetLowering::getSetCCResultType(EVT VT) const {
+EVT MBlazeTargetLowering::getSetCCResultType(EVT VT) const {
   return MVT::i32;
 }
 

@@ -439,6 +439,7 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   setOperationAction(ISD::FDIV, MVT::v4f32, Legal);
 
   setBooleanContents(ZeroOrNegativeOneBooleanContent);
+  setBooleanVectorContents(ZeroOrNegativeOneBooleanContent); // FIXME: Is this correct?
 
   setStackPointerRegisterToSaveRestore(SPU::R1);
 
@@ -498,7 +499,7 @@ SPUTargetLowering::getTargetNodeName(unsigned Opcode) const
 // Return the Cell SPU's SETCC result type
 //===----------------------------------------------------------------------===//
 
-MVT::SimpleValueType SPUTargetLowering::getSetCCResultType(EVT VT) const {
+EVT SPUTargetLowering::getSetCCResultType(EVT VT) const {
   // i8, i16 and i32 are valid SETCC result types
   MVT::SimpleValueType retval;
 

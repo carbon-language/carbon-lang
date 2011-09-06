@@ -113,6 +113,22 @@ public:
     ZeroOrNegativeOneBooleanContent // All bits equal to bit 0.
   };
 
+  static ISD::NodeType getExtendForContent(BooleanContent Content) {
+    switch (Content) {
+    default:
+      assert(false && "Unknown BooleanContent!");
+    case UndefinedBooleanContent:
+      // Extend by adding rubbish bits.
+      return ISD::ANY_EXTEND;
+    case ZeroOrOneBooleanContent:
+      // Extend by adding zero bits.
+      return ISD::ZERO_EXTEND;
+    case ZeroOrNegativeOneBooleanContent:
+      // Extend by copying the sign bit.
+      return ISD::SIGN_EXTEND;
+    }
+  }
+
   /// NOTE: The constructor takes ownership of TLOF.
   explicit TargetLowering(const TargetMachine &TM,
                           const TargetLoweringObjectFile *TLOF);
@@ -148,8 +164,7 @@ public:
   /// the condition operand of SELECT and BRCOND nodes.  In the case of
   /// BRCOND the argument passed is MVT::Other since there are no other
   /// operands to get a type hint from.
-  virtual
-  MVT::SimpleValueType getSetCCResultType(EVT VT) const;
+  virtual EVT getSetCCResultType(EVT VT) const;
 
   /// getCmpLibcallReturnType - Return the ValueType for comparison
   /// libcalls. Comparions libcalls include floating point comparion calls,
@@ -162,7 +177,13 @@ public:
   /// "Boolean values" are special true/false values produced by nodes like
   /// SETCC and consumed (as the condition) by nodes like SELECT and BRCOND.
   /// Not to be confused with general values promoted from i1.
-  BooleanContent getBooleanContents() const { return BooleanContents;}
+  /// Some cpus distinguish between vectors of boolean and scalars; the isVec
+  /// parameter selects between the two kinds.  For example on X86 a scalar
+  /// boolean should be zero extended from i1, while the elements of a vector
+  /// of booleans should be sign extended from i1.
+  BooleanContent getBooleanContents(bool isVec) const {
+    return isVec ? BooleanVectorContents : BooleanContents;
+  }
 
   /// getSchedulingPreference - Return target scheduling preference.
   Sched::Preference getSchedulingPreference() const {
@@ -938,6 +959,12 @@ protected:
   /// setBooleanContents - Specify how the target extends the result of a
   /// boolean value from i1 to a wider type.  See getBooleanContents.
   void setBooleanContents(BooleanContent Ty) { BooleanContents = Ty; }
+  /// setBooleanVectorContents - Specify how the target extends the result
+  /// of a vector boolean value from a vector of i1 to a wider type.  See
+  /// getBooleanContents.
+  void setBooleanVectorContents(BooleanContent Ty) {
+    BooleanVectorContents = Ty;
+  }
 
   /// setSchedulingPreference - Specify the target scheduling preference.
   void setSchedulingPreference(Sched::Preference Pref) {
@@ -1657,6 +1684,10 @@ private:
   /// BooleanContents - Information about the contents of the high-bits in
   /// boolean values held in a type wider than i1.  See getBooleanContents.
   BooleanContent BooleanContents;
+  /// BooleanVectorContents - Information about the contents of the high-bits
+  /// in boolean vector values when the element type is wider than i1.  See
+  /// getBooleanContents.
+  BooleanContent BooleanVectorContents;
 
   /// SchedPreferenceInfo - The target scheduling preference: shortest possible
   /// total cycles or lowest register usage.
