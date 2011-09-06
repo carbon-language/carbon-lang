@@ -3173,13 +3173,11 @@ def t2WFI   : T2I_hint<0b00000011, "wfi",   ".w">;
 def t2SEV   : T2I_hint<0b00000100, "sev",   ".w">;
 
 def t2DBG : T2I<(outs), (ins imm0_15:$opt), NoItinerary, "dbg", "\t$opt", []> {
-  let Inst{31-20} = 0xf3a;
-  let Inst{15-14} = 0b10;
-  let Inst{12} = 0;
-  let Inst{10-8} = 0b000;
-  let Inst{7-4} = 0b1111;
-
   bits<4> opt;
+  let Inst{31-20} = 0b111100111010;
+  let Inst{19-16} = 0b1111;
+  let Inst{15-8} = 0b10000000;
+  let Inst{7-4} = 0b1111;
   let Inst{3-0} = opt;
 }
 
