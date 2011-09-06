@@ -708,33 +708,33 @@ static QualType handleIntToFloatConversion(Sema &S, ExprResult &floatExpr,
 
 /// \brief Handle arithmethic conversion with floating point types.  Helper
 /// function of UsualArithmeticConversions()
-static QualType handleFloatConversion(Sema &S, ExprResult &lhsExpr,
-                                      ExprResult &rhsExpr, QualType lhs,
-                                      QualType rhs, bool isCompAssign) {
-  bool LHSFloat = lhs->isRealFloatingType();
-  bool RHSFloat = rhs->isRealFloatingType();
+static QualType handleFloatConversion(Sema &S, ExprResult &LHS,
+                                      ExprResult &RHS, QualType LHSType,
+                                      QualType RHSType, bool isCompAssign) {
+  bool LHSFloat = LHSType->isRealFloatingType();
+  bool RHSFloat = RHSType->isRealFloatingType();
 
   // If we have two real floating types, convert the smaller operand
   // to the bigger result.
   if (LHSFloat && RHSFloat) {
-    int order = S.Context.getFloatingTypeOrder(lhs, rhs);
+    int order = S.Context.getFloatingTypeOrder(LHSType, RHSType);
     if (order > 0) {
-      rhsExpr = S.ImpCastExprToType(rhsExpr.take(), lhs, CK_FloatingCast);
-      return lhs;
+      RHS = S.ImpCastExprToType(RHS.take(), LHSType, CK_FloatingCast);
+      return LHSType;
     }
 
     assert(order < 0 && "illegal float comparison");
     if (!isCompAssign)
-      lhsExpr = S.ImpCastExprToType(lhsExpr.take(), rhs, CK_FloatingCast);
-    return rhs;
+      LHS = S.ImpCastExprToType(LHS.take(), RHSType, CK_FloatingCast);
+    return RHSType;
   }
 
   if (LHSFloat)
-    return handleIntToFloatConversion(S, lhsExpr, rhsExpr, lhs, rhs,
+    return handleIntToFloatConversion(S, LHS, RHS, LHSType, RHSType,
                                       /*convertFloat=*/!isCompAssign,
                                       /*convertInt=*/ true);
   assert(RHSFloat);
-  return handleIntToFloatConversion(S, rhsExpr, lhsExpr, rhs, lhs,
+  return handleIntToFloatConversion(S, RHS, LHS, RHSType, LHSType,
                                     /*convertInt=*/ true,
                                     /*convertFloat=*/!isCompAssign);
 }
@@ -743,42 +743,39 @@ static QualType handleFloatConversion(Sema &S, ExprResult &lhsExpr,
 /// of UsualArithmeticConverions()
 // FIXME: if the operands are (int, _Complex long), we currently
 // don't promote the complex.  Also, signedness?
-static QualType handleComplexIntConvsersion(Sema &S, ExprResult &lhsExpr,
-                                            ExprResult &rhsExpr, QualType lhs,
-                                            QualType rhs, bool isCompAssign) {
-  const ComplexType *lhsComplexInt = lhs->getAsComplexIntegerType();
-  const ComplexType *rhsComplexInt = rhs->getAsComplexIntegerType();
+static QualType handleComplexIntConvsersion(Sema &S, ExprResult &LHS,
+                                            ExprResult &RHS, QualType LHSType,
+                                            QualType RHSType,
+                                            bool isCompAssign) {
+  const ComplexType *LHSComplexInt = LHSType->getAsComplexIntegerType();
+  const ComplexType *RHSComplexInt = RHSType->getAsComplexIntegerType();
 
-  if (lhsComplexInt && rhsComplexInt) {
-    int order = S.Context.getIntegerTypeOrder(lhsComplexInt->getElementType(),
-                                              rhsComplexInt->getElementType());
+  if (LHSComplexInt && RHSComplexInt) {
+    int order = S.Context.getIntegerTypeOrder(LHSComplexInt->getElementType(),
+                                              RHSComplexInt->getElementType());
     assert(order && "inequal types with equal element ordering");
     if (order > 0) {
       // _Complex int -> _Complex long
-      rhsExpr = S.ImpCastExprToType(rhsExpr.take(), lhs,
-                                    CK_IntegralComplexCast);
-      return lhs;
+      RHS = S.ImpCastExprToType(RHS.take(), LHSType, CK_IntegralComplexCast);
+      return LHSType;
     }
 
     if (!isCompAssign)
-      lhsExpr = S.ImpCastExprToType(lhsExpr.take(), rhs,
-                                    CK_IntegralComplexCast);
-    return rhs;
+      LHS = S.ImpCastExprToType(LHS.take(), RHSType, CK_IntegralComplexCast);
+    return RHSType;
   }
 
-  if (lhsComplexInt) {
+  if (LHSComplexInt) {
     // int -> _Complex int
-    rhsExpr = S.ImpCastExprToType(rhsExpr.take(), lhs,
-                                  CK_IntegralRealToComplex);
-    return lhs;
+    RHS = S.ImpCastExprToType(RHS.take(), LHSType, CK_IntegralRealToComplex);
+    return LHSType;
   }
 
-  assert(rhsComplexInt);
+  assert(RHSComplexInt);
   // int -> _Complex int
   if (!isCompAssign)
-    lhsExpr = S.ImpCastExprToType(lhsExpr.take(), rhs,
-                                  CK_IntegralRealToComplex);
-  return rhs;
+    LHS = S.ImpCastExprToType(LHS.take(), RHSType, CK_IntegralRealToComplex);
+  return RHSType;
 }
 
 /// \brief Handle integer arithmetic conversions.  Helper function of
