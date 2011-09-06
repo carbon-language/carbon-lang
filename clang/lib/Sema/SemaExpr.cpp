@@ -6085,27 +6085,27 @@ static bool isScopedEnumerationType(QualType T) {
   return false;
 }
 
-static void DiagnoseBadShiftValues(Sema& S, ExprResult &lex, ExprResult &rex,
+static void DiagnoseBadShiftValues(Sema& S, ExprResult &LHS, ExprResult &RHS,
                                    SourceLocation Loc, unsigned Opc,
-                                   QualType LHSTy) {
+                                   QualType LHSType) {
   llvm::APSInt Right;
   // Check right/shifter operand
-  if (rex.get()->isValueDependent() ||
-      !rex.get()->isIntegerConstantExpr(Right, S.Context))
+  if (RHS.get()->isValueDependent() ||
+      !RHS.get()->isIntegerConstantExpr(Right, S.Context))
     return;
 
   if (Right.isNegative()) {
-    S.DiagRuntimeBehavior(Loc, rex.get(),
+    S.DiagRuntimeBehavior(Loc, RHS.get(),
                           S.PDiag(diag::warn_shift_negative)
-                            << rex.get()->getSourceRange());
+                            << RHS.get()->getSourceRange());
     return;
   }
   llvm::APInt LeftBits(Right.getBitWidth(),
-                       S.Context.getTypeSize(lex.get()->getType()));
+                       S.Context.getTypeSize(LHS.get()->getType()));
   if (Right.uge(LeftBits)) {
-    S.DiagRuntimeBehavior(Loc, rex.get(),
+    S.DiagRuntimeBehavior(Loc, RHS.get(),
                           S.PDiag(diag::warn_shift_gt_typewidth)
-                            << rex.get()->getSourceRange());
+                            << RHS.get()->getSourceRange());
     return;
   }
   if (Opc != BO_Shl)
@@ -6116,9 +6116,9 @@ static void DiagnoseBadShiftValues(Sema& S, ExprResult &lex, ExprResult &rex,
   // integers have defined behavior modulo one more than the maximum value
   // representable in the result type, so never warn for those.
   llvm::APSInt Left;
-  if (lex.get()->isValueDependent() ||
-      !lex.get()->isIntegerConstantExpr(Left, S.Context) ||
-      LHSTy->hasUnsignedIntegerRepresentation())
+  if (LHS.get()->isValueDependent() ||
+      !LHS.get()->isIntegerConstantExpr(Left, S.Context) ||
+      LHSType->hasUnsignedIntegerRepresentation())
     return;
   llvm::APInt ResultBits =
       static_cast<llvm::APInt&>(Right) + Left.getMinSignedBits();
@@ -6138,60 +6138,60 @@ static void DiagnoseBadShiftValues(Sema& S, ExprResult &lex, ExprResult &rex,
   // turned off separately if needed.
   if (LeftBits == ResultBits - 1) {
     S.Diag(Loc, diag::warn_shift_result_sets_sign_bit)
-        << HexResult.str() << LHSTy
-        << lex.get()->getSourceRange() << rex.get()->getSourceRange();
+        << HexResult.str() << LHSType
+        << LHS.get()->getSourceRange() << RHS.get()->getSourceRange();
     return;
   }
 
   S.Diag(Loc, diag::warn_shift_result_gt_typewidth)
-    << HexResult.str() << Result.getMinSignedBits() << LHSTy
-    << Left.getBitWidth() << lex.get()->getSourceRange()
-    << rex.get()->getSourceRange();
+    << HexResult.str() << Result.getMinSignedBits() << LHSType
+    << Left.getBitWidth() << LHS.get()->getSourceRange()
+    << RHS.get()->getSourceRange();
 }
 
 // C99 6.5.7
-QualType Sema::CheckShiftOperands(ExprResult &lex, ExprResult &rex,
+QualType Sema::CheckShiftOperands(ExprResult &LHS, ExprResult &RHS,
                                   SourceLocation Loc, unsigned Opc,
                                   bool isCompAssign) {
   // C99 6.5.7p2: Each of the operands shall have integer type.
-  if (!lex.get()->getType()->hasIntegerRepresentation() || 
-      !rex.get()->getType()->hasIntegerRepresentation())
-    return InvalidOperands(Loc, lex, rex);
+  if (!LHS.get()->getType()->hasIntegerRepresentation() || 
+      !RHS.get()->getType()->hasIntegerRepresentation())
+    return InvalidOperands(Loc, LHS, RHS);
 
   // C++0x: Don't allow scoped enums. FIXME: Use something better than
   // hasIntegerRepresentation() above instead of this.
-  if (isScopedEnumerationType(lex.get()->getType()) ||
-      isScopedEnumerationType(rex.get()->getType())) {
-    return InvalidOperands(Loc, lex, rex);
+  if (isScopedEnumerationType(LHS.get()->getType()) ||
+      isScopedEnumerationType(RHS.get()->getType())) {
+    return InvalidOperands(Loc, LHS, RHS);
   }
 
   // Vector shifts promote their scalar inputs to vector type.
-  if (lex.get()->getType()->isVectorType() ||
-      rex.get()->getType()->isVectorType())
-    return CheckVectorOperands(lex, rex, Loc, isCompAssign);
+  if (LHS.get()->getType()->isVectorType() ||
+      RHS.get()->getType()->isVectorType())
+    return CheckVectorOperands(LHS, RHS, Loc, isCompAssign);
 
   // Shifts don't perform usual arithmetic conversions, they just do integer
   // promotions on each operand. C99 6.5.7p3
 
   // For the LHS, do usual unary conversions, but then reset them away
   // if this is a compound assignment.
-  ExprResult old_lex = lex;
-  lex = UsualUnaryConversions(lex.take());
-  if (lex.isInvalid())
+  ExprResult OldLHS = LHS;
+  LHS = UsualUnaryConversions(LHS.take());
+  if (LHS.isInvalid())
     return QualType();
-  QualType LHSTy = lex.get()->getType();
-  if (isCompAssign) lex = old_lex;
+  QualType LHSType = LHS.get()->getType();
+  if (isCompAssign) LHS = OldLHS;
 
   // The RHS is simpler.
-  rex = UsualUnaryConversions(rex.take());
-  if (rex.isInvalid())
+  RHS = UsualUnaryConversions(RHS.take());
+  if (RHS.isInvalid())
     return QualType();
 
   // Sanity-check shift operands
-  DiagnoseBadShiftValues(*this, lex, rex, Loc, Opc, LHSTy);
+  DiagnoseBadShiftValues(*this, LHS, RHS, Loc, Opc, LHSType);
 
   // "The type of the result is that of the promoted left operand."
-  return LHSTy;
+  return LHSType;
 }
 
 static bool IsWithinTemplateSpecialization(Decl *D) {
