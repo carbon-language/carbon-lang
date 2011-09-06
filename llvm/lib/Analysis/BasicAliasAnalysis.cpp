@@ -847,11 +847,13 @@ BasicAliasAnalysis::getModRefInfo(ImmutableCallSite CS,
       const Value *Src = CS.getArgument(1);
       // If it can't overlap the source dest, then it doesn't modref the loc.
       if (isNoAlias(Location(Dest, Len), Loc)) {
-        if (isNoAlias(Location(Src, 2), Loc))
+        // Always reads 16 bytes of the source.
+        if (isNoAlias(Location(Src, 16), Loc))
           return NoModRef;
         // If it can't overlap the dest, then worst case it reads the loc.
         Min = Ref;
-      } else if (isNoAlias(Location(Src, 2), Loc)) {
+      // Always reads 16 bytes of the source.
+      } else if (isNoAlias(Location(Src, 16), Loc)) {
         // If it can't overlap the source, then worst case it mutates the loc.
         Min = Mod;
       }
