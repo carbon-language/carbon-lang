@@ -1013,23 +1013,17 @@ void MCDwarfFrameEmitter::Emit(MCStreamer &Streamer,
   MCObjectFileInfo *MOFI =
     const_cast<MCObjectFileInfo*>(Context.getObjectFileInfo());
   FrameEmitterImpl Emitter(UsingCFI, IsEH);
-  SmallVector<MCDwarfFrameInfo, 8> RequiresFDE;
-  ArrayRef<MCDwarfFrameInfo> FrameArray;
+  ArrayRef<MCDwarfFrameInfo> FrameArray = Streamer.getFrameInfos();
 
-  if (IsEH && MOFI->getCompactUnwindSection()) {
+  // Emit the compact unwind info if available.
+  // FIXME: This emits both the compact unwind and the old CIE/FDE
+  //        information. Only one of those is needed.
+  if (IsEH && MOFI->getCompactUnwindSection())
     for (unsigned i = 0, n = Streamer.getNumFrameInfos(); i < n; ++i) {
       const MCDwarfFrameInfo &Frame = Streamer.getFrameInfo(i);
-      if (!Frame.CompactUnwindEncoding ||
-          !Emitter.EmitCompactUnwind(Streamer, Frame))
-        RequiresFDE.push_back(Streamer.getFrameInfo(i));
+      if (!Frame.CompactUnwindEncoding)
+        Emitter.EmitCompactUnwind(Streamer, Frame);
     }
-
-    // Early exit if we don't need to emit FDEs.
-    if (RequiresFDE.empty()) return;
-    FrameArray = RequiresFDE;
-  } else {
-    FrameArray = Streamer.getFrameInfos();
-  }
 
   const MCSection &Section = IsEH ? *MOFI->getEHFrameSection() :
                                     *MOFI->getDwarfFrameSection();
