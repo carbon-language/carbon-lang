@@ -6299,28 +6299,28 @@ static void diagnoseFunctionPointerToVoidComparison(Sema &S, SourceLocation Loc,
 }
 
 // C99 6.5.8, C++ [expr.rel]
-QualType Sema::CheckCompareOperands(ExprResult &lex, ExprResult &rex,
+QualType Sema::CheckCompareOperands(ExprResult &LHS, ExprResult &RHS,
                                     SourceLocation Loc, unsigned OpaqueOpc,
                                     bool isRelational) {
   BinaryOperatorKind Opc = (BinaryOperatorKind) OpaqueOpc;
 
   // Handle vector comparisons separately.
-  if (lex.get()->getType()->isVectorType() ||
-      rex.get()->getType()->isVectorType())
-    return CheckVectorCompareOperands(lex, rex, Loc, isRelational);
+  if (LHS.get()->getType()->isVectorType() ||
+      RHS.get()->getType()->isVectorType())
+    return CheckVectorCompareOperands(LHS, RHS, Loc, isRelational);
 
-  QualType lType = lex.get()->getType();
-  QualType rType = rex.get()->getType();
+  QualType LHSType = LHS.get()->getType();
+  QualType RHSType = RHS.get()->getType();
 
-  Expr *LHSStripped = lex.get()->IgnoreParenImpCasts();
-  Expr *RHSStripped = rex.get()->IgnoreParenImpCasts();
+  Expr *LHSStripped = LHS.get()->IgnoreParenImpCasts();
+  Expr *RHSStripped = RHS.get()->IgnoreParenImpCasts();
 
-  checkEnumComparison(*this, Loc, lex, rex);
+  checkEnumComparison(*this, Loc, LHS, RHS);
 
-  if (!lType->hasFloatingRepresentation() &&
-      !(lType->isBlockPointerType() && isRelational) &&
-      !lex.get()->getLocStart().isMacroID() &&
-      !rex.get()->getLocStart().isMacroID()) {
+  if (!LHSType->hasFloatingRepresentation() &&
+      !(LHSType->isBlockPointerType() && isRelational) &&
+      !LHS.get()->getLocStart().isMacroID() &&
+      !RHS.get()->getLocStart().isMacroID()) {
     // For non-floating point types, check for self-comparisons of the form
     // x == x, x != x, x < x, etc.  These always evaluate to a constant, and
     // often indicate logic errors in the program.
@@ -6340,7 +6340,7 @@ QualType Sema::CheckCompareOperands(ExprResult &lex, ExprResult &rex,
                               << (Opc == BO_EQ
                                   || Opc == BO_LE
                                   || Opc == BO_GE));
-        } else if (lType->isArrayType() && rType->isArrayType() &&
+        } else if (LHSType->isArrayType() && RHSType->isArrayType() &&
                    !DRL->getDecl()->getType()->isReferenceType() &&
                    !DRR->getDecl()->getType()->isReferenceType()) {
             // what is it always going to eval to?
@@ -6376,13 +6376,13 @@ QualType Sema::CheckCompareOperands(ExprResult &lex, ExprResult &rex,
     if ((isa<StringLiteral>(LHSStripped) || isa<ObjCEncodeExpr>(LHSStripped)) &&
         !RHSStripped->isNullPointerConstant(Context,
                                             Expr::NPC_ValueDependentIsNull)) {
-      literalString = lex.get();
+      literalString = LHS.get();
       literalStringStripped = LHSStripped;
     } else if ((isa<StringLiteral>(RHSStripped) ||
                 isa<ObjCEncodeExpr>(RHSStripped)) &&
                !LHSStripped->isNullPointerConstant(Context,
                                             Expr::NPC_ValueDependentIsNull)) {
-      literalString = rex.get();
+      literalString = RHS.get();
       literalStringStripped = RHSStripped;
     }
 
@@ -6406,52 +6406,52 @@ QualType Sema::CheckCompareOperands(ExprResult &lex, ExprResult &rex,
   }
 
   // C99 6.5.8p3 / C99 6.5.9p4
-  if (lex.get()->getType()->isArithmeticType() &&
-      rex.get()->getType()->isArithmeticType()) {
-    UsualArithmeticConversions(lex, rex);
-    if (lex.isInvalid() || rex.isInvalid())
+  if (LHS.get()->getType()->isArithmeticType() &&
+      RHS.get()->getType()->isArithmeticType()) {
+    UsualArithmeticConversions(LHS, RHS);
+    if (LHS.isInvalid() || RHS.isInvalid())
       return QualType();
   }
   else {
-    lex = UsualUnaryConversions(lex.take());
-    if (lex.isInvalid())
+    LHS = UsualUnaryConversions(LHS.take());
+    if (LHS.isInvalid())
       return QualType();
 
-    rex = UsualUnaryConversions(rex.take());
-    if (rex.isInvalid())
+    RHS = UsualUnaryConversions(RHS.take());
+    if (RHS.isInvalid())
       return QualType();
   }
 
-  lType = lex.get()->getType();
-  rType = rex.get()->getType();
+  LHSType = LHS.get()->getType();
+  RHSType = RHS.get()->getType();
 
   // The result of comparisons is 'bool' in C++, 'int' in C.
   QualType ResultTy = Context.getLogicalOperationType();
 
   if (isRelational) {
-    if (lType->isRealType() && rType->isRealType())
+    if (LHSType->isRealType() && RHSType->isRealType())
       return ResultTy;
   } else {
     // Check for comparisons of floating point operands using != and ==.
-    if (lType->hasFloatingRepresentation())
-      CheckFloatComparison(Loc, lex.get(), rex.get());
+    if (LHSType->hasFloatingRepresentation())
+      CheckFloatComparison(Loc, LHS.get(), RHS.get());
 
-    if (lType->isArithmeticType() && rType->isArithmeticType())
+    if (LHSType->isArithmeticType() && RHSType->isArithmeticType())
       return ResultTy;
   }
 
-  bool LHSIsNull = lex.get()->isNullPointerConstant(Context,
+  bool LHSIsNull = LHS.get()->isNullPointerConstant(Context,
                                               Expr::NPC_ValueDependentIsNull);
-  bool RHSIsNull = rex.get()->isNullPointerConstant(Context,
+  bool RHSIsNull = RHS.get()->isNullPointerConstant(Context,
                                               Expr::NPC_ValueDependentIsNull);
 
   // All of the following pointer-related warnings are GCC extensions, except
   // when handling null pointer constants. 
-  if (lType->isPointerType() && rType->isPointerType()) { // C99 6.5.8p2
+  if (LHSType->isPointerType() && RHSType->isPointerType()) { // C99 6.5.8p2
     QualType LCanPointeeTy =
-      Context.getCanonicalType(lType->getAs<PointerType>()->getPointeeType());
+      Context.getCanonicalType(LHSType->getAs<PointerType>()->getPointeeType());
     QualType RCanPointeeTy =
-      Context.getCanonicalType(rType->getAs<PointerType>()->getPointeeType());
+      Context.getCanonicalType(RHSType->getAs<PointerType>()->getPointeeType());
 
     if (getLangOptions().CPlusPlus) {
       if (LCanPointeeTy == RCanPointeeTy)
@@ -6465,17 +6465,17 @@ QualType Sema::CheckCompareOperands(ExprResult &lex, ExprResult &rex,
         if ((LCanPointeeTy->isFunctionType() || RCanPointeeTy->isFunctionType())
             && !LHSIsNull && !RHSIsNull) {
           diagnoseFunctionPointerToVoidComparison(
-              *this, Loc, lex, rex, /*isError*/ isSFINAEContext());
+              *this, Loc, LHS, RHS, /*isError*/ isSFINAEContext());
           
           if (isSFINAEContext())
             return QualType();
           
-          rex = ImpCastExprToType(rex.take(), lType, CK_BitCast);
+          RHS = ImpCastExprToType(RHS.take(), LHSType, CK_BitCast);
           return ResultTy;
         }
       }
 
-      if (convertPointersToCompositeType(*this, Loc, lex, rex))
+      if (convertPointersToCompositeType(*this, Loc, LHS, RHS))
         return QualType();
       else
         return ResultTy;
@@ -6486,52 +6486,52 @@ QualType Sema::CheckCompareOperands(ExprResult &lex, ExprResult &rex,
       // Valid unless a relational comparison of function pointers
       if (isRelational && LCanPointeeTy->isFunctionType()) {
         Diag(Loc, diag::ext_typecheck_ordered_comparison_of_function_pointers)
-          << lType << rType << lex.get()->getSourceRange()
-          << rex.get()->getSourceRange();
+          << LHSType << RHSType << LHS.get()->getSourceRange()
+          << RHS.get()->getSourceRange();
       }
     } else if (!isRelational &&
                (LCanPointeeTy->isVoidType() || RCanPointeeTy->isVoidType())) {
       // Valid unless comparison between non-null pointer and function pointer
       if ((LCanPointeeTy->isFunctionType() || RCanPointeeTy->isFunctionType())
           && !LHSIsNull && !RHSIsNull)
-        diagnoseFunctionPointerToVoidComparison(*this, Loc, lex, rex,
+        diagnoseFunctionPointerToVoidComparison(*this, Loc, LHS, RHS,
                                                 /*isError*/false);
     } else {
       // Invalid
-      diagnoseDistinctPointerComparison(*this, Loc, lex, rex, /*isError*/false);
+      diagnoseDistinctPointerComparison(*this, Loc, LHS, RHS, /*isError*/false);
     }
     if (LCanPointeeTy != RCanPointeeTy) {
       if (LHSIsNull && !RHSIsNull)
-        lex = ImpCastExprToType(lex.take(), rType, CK_BitCast);
+        LHS = ImpCastExprToType(LHS.take(), RHSType, CK_BitCast);
       else
-        rex = ImpCastExprToType(rex.take(), lType, CK_BitCast);
+        RHS = ImpCastExprToType(RHS.take(), LHSType, CK_BitCast);
     }
     return ResultTy;
   }
 
   if (getLangOptions().CPlusPlus) {
     // Comparison of nullptr_t with itself.
-    if (lType->isNullPtrType() && rType->isNullPtrType())
+    if (LHSType->isNullPtrType() && RHSType->isNullPtrType())
       return ResultTy;
     
     // Comparison of pointers with null pointer constants and equality
     // comparisons of member pointers to null pointer constants.
     if (RHSIsNull &&
-        ((lType->isAnyPointerType() || lType->isNullPtrType()) ||
+        ((LHSType->isAnyPointerType() || LHSType->isNullPtrType()) ||
          (!isRelational && 
-          (lType->isMemberPointerType() || lType->isBlockPointerType())))) {
-      rex = ImpCastExprToType(rex.take(), lType, 
-                        lType->isMemberPointerType()
+          (LHSType->isMemberPointerType() || LHSType->isBlockPointerType())))) {
+      RHS = ImpCastExprToType(RHS.take(), LHSType, 
+                        LHSType->isMemberPointerType()
                           ? CK_NullToMemberPointer
                           : CK_NullToPointer);
       return ResultTy;
     }
     if (LHSIsNull &&
-        ((rType->isAnyPointerType() || rType->isNullPtrType()) ||
+        ((RHSType->isAnyPointerType() || RHSType->isNullPtrType()) ||
          (!isRelational && 
-          (rType->isMemberPointerType() || rType->isBlockPointerType())))) {
-      lex = ImpCastExprToType(lex.take(), rType, 
-                        rType->isMemberPointerType()
+          (RHSType->isMemberPointerType() || RHSType->isBlockPointerType())))) {
+      LHS = ImpCastExprToType(LHS.take(), RHSType, 
+                        RHSType->isMemberPointerType()
                           ? CK_NullToMemberPointer
                           : CK_NullToPointer);
       return ResultTy;
@@ -6539,8 +6539,8 @@ QualType Sema::CheckCompareOperands(ExprResult &lex, ExprResult &rex,
 
     // Comparison of member pointers.
     if (!isRelational &&
-        lType->isMemberPointerType() && rType->isMemberPointerType()) {
-      if (convertPointersToCompositeType(*this, Loc, lex, rex))
+        LHSType->isMemberPointerType() && RHSType->isMemberPointerType()) {
+      if (convertPointersToCompositeType(*this, Loc, LHS, RHS))
         return QualType();
       else
         return ResultTy;
@@ -6548,83 +6548,85 @@ QualType Sema::CheckCompareOperands(ExprResult &lex, ExprResult &rex,
 
     // Handle scoped enumeration types specifically, since they don't promote
     // to integers.
-    if (lex.get()->getType()->isEnumeralType() &&
-        Context.hasSameUnqualifiedType(lex.get()->getType(),
-                                       rex.get()->getType()))
+    if (LHS.get()->getType()->isEnumeralType() &&
+        Context.hasSameUnqualifiedType(LHS.get()->getType(),
+                                       RHS.get()->getType()))
       return ResultTy;
   }
 
   // Handle block pointer types.
-  if (!isRelational && lType->isBlockPointerType() &&
-      rType->isBlockPointerType()) {
-    QualType lpointee = lType->getAs<BlockPointerType>()->getPointeeType();
-    QualType rpointee = rType->getAs<BlockPointerType>()->getPointeeType();
+  if (!isRelational && LHSType->isBlockPointerType() &&
+      RHSType->isBlockPointerType()) {
+    QualType lpointee = LHSType->getAs<BlockPointerType>()->getPointeeType();
+    QualType rpointee = RHSType->getAs<BlockPointerType>()->getPointeeType();
 
     if (!LHSIsNull && !RHSIsNull &&
         !Context.typesAreCompatible(lpointee, rpointee)) {
       Diag(Loc, diag::err_typecheck_comparison_of_distinct_blocks)
-        << lType << rType << lex.get()->getSourceRange()
-        << rex.get()->getSourceRange();
+        << LHSType << RHSType << LHS.get()->getSourceRange()
+        << RHS.get()->getSourceRange();
     }
-    rex = ImpCastExprToType(rex.take(), lType, CK_BitCast);
+    RHS = ImpCastExprToType(RHS.take(), LHSType, CK_BitCast);
     return ResultTy;
   }
 
   // Allow block pointers to be compared with null pointer constants.
   if (!isRelational
-      && ((lType->isBlockPointerType() && rType->isPointerType())
-          || (lType->isPointerType() && rType->isBlockPointerType()))) {
+      && ((LHSType->isBlockPointerType() && RHSType->isPointerType())
+          || (LHSType->isPointerType() && RHSType->isBlockPointerType()))) {
     if (!LHSIsNull && !RHSIsNull) {
-      if (!((rType->isPointerType() && rType->castAs<PointerType>()
+      if (!((RHSType->isPointerType() && RHSType->castAs<PointerType>()
              ->getPointeeType()->isVoidType())
-            || (lType->isPointerType() && lType->castAs<PointerType>()
+            || (LHSType->isPointerType() && LHSType->castAs<PointerType>()
                 ->getPointeeType()->isVoidType())))
         Diag(Loc, diag::err_typecheck_comparison_of_distinct_blocks)
-          << lType << rType << lex.get()->getSourceRange()
-          << rex.get()->getSourceRange();
+          << LHSType << RHSType << LHS.get()->getSourceRange()
+          << RHS.get()->getSourceRange();
     }
     if (LHSIsNull && !RHSIsNull)
-      lex = ImpCastExprToType(lex.take(), rType, CK_BitCast);
+      LHS = ImpCastExprToType(LHS.take(), RHSType, CK_BitCast);
     else
-      rex = ImpCastExprToType(rex.take(), lType, CK_BitCast);
+      RHS = ImpCastExprToType(RHS.take(), LHSType, CK_BitCast);
     return ResultTy;
   }
 
-  if (lType->isObjCObjectPointerType() || rType->isObjCObjectPointerType()) {
-    const PointerType *LPT = lType->getAs<PointerType>();
-    const PointerType *RPT = rType->getAs<PointerType>();
+  if (LHSType->isObjCObjectPointerType() ||
+      RHSType->isObjCObjectPointerType()) {
+    const PointerType *LPT = LHSType->getAs<PointerType>();
+    const PointerType *RPT = RHSType->getAs<PointerType>();
     if (LPT || RPT) {
       bool LPtrToVoid = LPT ? LPT->getPointeeType()->isVoidType() : false;
       bool RPtrToVoid = RPT ? RPT->getPointeeType()->isVoidType() : false;
 
       if (!LPtrToVoid && !RPtrToVoid &&
-          !Context.typesAreCompatible(lType, rType)) {
-        diagnoseDistinctPointerComparison(*this, Loc, lex, rex,
+          !Context.typesAreCompatible(LHSType, RHSType)) {
+        diagnoseDistinctPointerComparison(*this, Loc, LHS, RHS,
                                           /*isError*/false);
       }
       if (LHSIsNull && !RHSIsNull)
-        lex = ImpCastExprToType(lex.take(), rType, CK_BitCast);
+        LHS = ImpCastExprToType(LHS.take(), RHSType, CK_BitCast);
       else
-        rex = ImpCastExprToType(rex.take(), lType, CK_BitCast);
+        RHS = ImpCastExprToType(RHS.take(), LHSType, CK_BitCast);
       return ResultTy;
     }
-    if (lType->isObjCObjectPointerType() && rType->isObjCObjectPointerType()) {
-      if (!Context.areComparableObjCPointerTypes(lType, rType))
-        diagnoseDistinctPointerComparison(*this, Loc, lex, rex,
+    if (LHSType->isObjCObjectPointerType() &&
+        RHSType->isObjCObjectPointerType()) {
+      if (!Context.areComparableObjCPointerTypes(LHSType, RHSType))
+        diagnoseDistinctPointerComparison(*this, Loc, LHS, RHS,
                                           /*isError*/false);
       if (LHSIsNull && !RHSIsNull)
-        lex = ImpCastExprToType(lex.take(), rType, CK_BitCast);
+        LHS = ImpCastExprToType(LHS.take(), RHSType, CK_BitCast);
       else
-        rex = ImpCastExprToType(rex.take(), lType, CK_BitCast);
+        RHS = ImpCastExprToType(RHS.take(), LHSType, CK_BitCast);
       return ResultTy;
     }
   }
-  if ((lType->isAnyPointerType() && rType->isIntegerType()) ||
-      (lType->isIntegerType() && rType->isAnyPointerType())) {
+  if ((LHSType->isAnyPointerType() && RHSType->isIntegerType()) ||
+      (LHSType->isIntegerType() && RHSType->isAnyPointerType())) {
     unsigned DiagID = 0;
     bool isError = false;
-    if ((LHSIsNull && lType->isIntegerType()) ||
-        (RHSIsNull && rType->isIntegerType())) {
+    if ((LHSIsNull && LHSType->isIntegerType()) ||
+        (RHSIsNull && RHSType->isIntegerType())) {
       if (isRelational && !getLangOptions().CPlusPlus)
         DiagID = diag::ext_typecheck_ordered_comparison_of_pointer_and_zero;
     } else if (isRelational && !getLangOptions().CPlusPlus)
@@ -6637,34 +6639,34 @@ QualType Sema::CheckCompareOperands(ExprResult &lex, ExprResult &rex,
 
     if (DiagID) {
       Diag(Loc, DiagID)
-        << lType << rType << lex.get()->getSourceRange()
-        << rex.get()->getSourceRange();
+        << LHSType << RHSType << LHS.get()->getSourceRange()
+        << RHS.get()->getSourceRange();
       if (isError)
         return QualType();
     }
     
-    if (lType->isIntegerType())
-      lex = ImpCastExprToType(lex.take(), rType,
+    if (LHSType->isIntegerType())
+      LHS = ImpCastExprToType(LHS.take(), RHSType,
                         LHSIsNull ? CK_NullToPointer : CK_IntegralToPointer);
     else
-      rex = ImpCastExprToType(rex.take(), lType,
+      RHS = ImpCastExprToType(RHS.take(), LHSType,
                         RHSIsNull ? CK_NullToPointer : CK_IntegralToPointer);
     return ResultTy;
   }
   
   // Handle block pointers.
   if (!isRelational && RHSIsNull
-      && lType->isBlockPointerType() && rType->isIntegerType()) {
-    rex = ImpCastExprToType(rex.take(), lType, CK_NullToPointer);
+      && LHSType->isBlockPointerType() && RHSType->isIntegerType()) {
+    RHS = ImpCastExprToType(RHS.take(), LHSType, CK_NullToPointer);
     return ResultTy;
   }
   if (!isRelational && LHSIsNull
-      && lType->isIntegerType() && rType->isBlockPointerType()) {
-    lex = ImpCastExprToType(lex.take(), rType, CK_NullToPointer);
+      && LHSType->isIntegerType() && RHSType->isBlockPointerType()) {
+    LHS = ImpCastExprToType(LHS.take(), RHSType, CK_NullToPointer);
     return ResultTy;
   }
 
-  return InvalidOperands(Loc, lex, rex);
+  return InvalidOperands(Loc, LHS, RHS);
 }
 
 /// CheckVectorCompareOperands - vector comparisons are a clang extension that
