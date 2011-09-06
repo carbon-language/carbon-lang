@@ -859,7 +859,9 @@ void ASTDeclReader::ReadCXXDefinitionData(
                                    const RecordData &Record, unsigned &Idx) {
   Data.UserDeclaredConstructor = Record[Idx++];
   Data.UserDeclaredCopyConstructor = Record[Idx++];
+  Data.UserDeclaredMoveConstructor = Record[Idx++];
   Data.UserDeclaredCopyAssignment = Record[Idx++];
+  Data.UserDeclaredMoveAssignment = Record[Idx++];
   Data.UserDeclaredDestructor = Record[Idx++];
   Data.Aggregate = Record[Idx++];
   Data.PlainOldData = Record[Idx++];
@@ -884,7 +886,9 @@ void ASTDeclReader::ReadCXXDefinitionData(
   Data.UserProvidedDefaultConstructor = Record[Idx++];
   Data.DeclaredDefaultConstructor = Record[Idx++];
   Data.DeclaredCopyConstructor = Record[Idx++];
+  Data.DeclaredMoveConstructor = Record[Idx++];
   Data.DeclaredCopyAssignment = Record[Idx++];
+  Data.DeclaredMoveAssignment = Record[Idx++];
   Data.DeclaredDestructor = Record[Idx++];
   Data.FailedImplicitMoveConstructor = Record[Idx++];
   Data.FailedImplicitMoveAssignment = Record[Idx++];

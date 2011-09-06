@@ -3878,7 +3878,9 @@ void ASTWriter::AddCXXDefinitionData(const CXXRecordDecl *D, RecordDataImpl &Rec
   struct CXXRecordDecl::DefinitionData &Data = *D->DefinitionData;
   Record.push_back(Data.UserDeclaredConstructor);
   Record.push_back(Data.UserDeclaredCopyConstructor);
+  Record.push_back(Data.UserDeclaredMoveConstructor);
   Record.push_back(Data.UserDeclaredCopyAssignment);
+  Record.push_back(Data.UserDeclaredMoveAssignment);
   Record.push_back(Data.UserDeclaredDestructor);
   Record.push_back(Data.Aggregate);
   Record.push_back(Data.PlainOldData);
@@ -3903,7 +3905,9 @@ void ASTWriter::AddCXXDefinitionData(const CXXRecordDecl *D, RecordDataImpl &Rec
   Record.push_back(Data.UserProvidedDefaultConstructor);
   Record.push_back(Data.DeclaredDefaultConstructor);
   Record.push_back(Data.DeclaredCopyConstructor);
+  Record.push_back(Data.DeclaredMoveConstructor);
   Record.push_back(Data.DeclaredCopyAssignment);
+  Record.push_back(Data.DeclaredMoveAssignment);
   Record.push_back(Data.DeclaredDestructor);
   Record.push_back(Data.FailedImplicitMoveConstructor);
   Record.push_back(Data.FailedImplicitMoveAssignment);
