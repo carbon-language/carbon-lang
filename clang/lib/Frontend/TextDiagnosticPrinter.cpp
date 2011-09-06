@@ -422,7 +422,6 @@ public:
   /// \param Ranges The underlined ranges for this code snippet.
   /// \param NumRanges The number of unlined ranges.
   /// \param Hints The FixIt hints active for this diagnostic.
-  /// \param NumHints The number of hints active for this diagnostic.
   /// \param OnMacroInst The current depth of the macro expansion stack.
   void Emit(SourceLocation Loc,
             CharSourceRange *Ranges,
