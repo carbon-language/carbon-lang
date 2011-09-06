@@ -728,7 +728,7 @@ private:
         break;
 
       OS << "fix-it:\"";
-      OS.write_escaped(SM.getPresumedLoc(BLoc).getFilename());
+      OS.write_escaped(PLoc.getFilename());
       OS << "\":{" << SM.getLineNumber(BInfo.first, BInfo.second)
         << ':' << SM.getColumnNumber(BInfo.first, BInfo.second)
         << '-' << SM.getLineNumber(EInfo.first, EInfo.second)
