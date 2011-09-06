@@ -406,4 +406,22 @@ namespace test8 {
   void test() {
     throw makeA();
   }
+  // CHECK: define void @_ZN5test84testEv
+}
+
+// Make sure we generate the correct code for the delete[] call which
+// happens if A::A() throws.  (We were previously calling delete[] on
+// a pointer to the first array element, not the pointer returned by new[].)
+// PR10870
+namespace test9 {
+  struct A {
+    A();
+    ~A();
+  };
+  A* test() {
+    return new A[10];
+  }
+  // CHECK: define {{%.*}}* @_ZN5test94testEv
+  // CHECK: [[TEST9_NEW:%.*]] = call noalias i8* @_Znam
+  // CHECK: call void @_ZdaPv(i8* [[TEST9_NEW]])
 }

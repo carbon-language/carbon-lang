@@ -1086,15 +1086,6 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
     Builder.CreateCondBr(isNull, contBB, notNullBB);
     EmitBlock(notNullBB);
   }
-  
-  assert((allocSize == allocSizeWithoutCookie) ==
-         CalculateCookiePadding(*this, E).isZero());
-  if (allocSize != allocSizeWithoutCookie) {
-    assert(E->isArray());
-    allocation = CGM.getCXXABI().InitializeArrayCookie(*this, allocation,
-                                                       numElements,
-                                                       E, allocType);
-  }
 
   // If there's an operator delete, enter a cleanup to call it if an
   // exception is thrown.
@@ -1103,6 +1094,15 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
       !E->getOperatorDelete()->isReservedGlobalPlacementOperator()) {
     EnterNewDeleteCleanup(*this, E, allocation, allocSize, allocatorArgs);
     operatorDeleteCleanup = EHStack.stable_begin();
+  }
+
+  assert((allocSize == allocSizeWithoutCookie) ==
+         CalculateCookiePadding(*this, E).isZero());
+  if (allocSize != allocSizeWithoutCookie) {
+    assert(E->isArray());
+    allocation = CGM.getCXXABI().InitializeArrayCookie(*this, allocation,
+                                                       numElements,
+                                                       E, allocType);
   }
 
   llvm::Type *elementPtrTy
