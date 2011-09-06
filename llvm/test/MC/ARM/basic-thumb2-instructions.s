@@ -401,6 +401,38 @@ _func:
 
 
 @------------------------------------------------------------------------------
+@ DSB
+@------------------------------------------------------------------------------
+        dsb sy
+        dsb st
+        dsb sh
+        dsb ish
+        dsb shst
+        dsb ishst
+        dsb un
+        dsb nsh
+        dsb unst
+        dsb nshst
+        dsb osh
+        dsb oshst
+        dsb
+
+@ CHECK: dsb	sy                      @ encoding: [0xbf,0xf3,0x4f,0x8f]
+@ CHECK: dsb	st                      @ encoding: [0xbf,0xf3,0x4e,0x8f]
+@ CHECK: dsb	ish                     @ encoding: [0xbf,0xf3,0x4b,0x8f]
+@ CHECK: dsb	ish                     @ encoding: [0xbf,0xf3,0x4b,0x8f]
+@ CHECK: dsb	ishst                   @ encoding: [0xbf,0xf3,0x4a,0x8f]
+@ CHECK: dsb	ishst                   @ encoding: [0xbf,0xf3,0x4a,0x8f]
+@ CHECK: dsb	nsh                     @ encoding: [0xbf,0xf3,0x47,0x8f]
+@ CHECK: dsb	nsh                     @ encoding: [0xbf,0xf3,0x47,0x8f]
+@ CHECK: dsb	nshst                   @ encoding: [0xbf,0xf3,0x46,0x8f]
+@ CHECK: dsb	nshst                   @ encoding: [0xbf,0xf3,0x46,0x8f]
+@ CHECK: dsb	osh                     @ encoding: [0xbf,0xf3,0x43,0x8f]
+@ CHECK: dsb	oshst                   @ encoding: [0xbf,0xf3,0x42,0x8f]
+@ CHECK: dsb	sy                      @ encoding: [0xbf,0xf3,0x4f,0x8f]
+
+
+@------------------------------------------------------------------------------
 @ IT
 @------------------------------------------------------------------------------
 @ Test encodings of a few full IT blocks, not just the IT instruction
