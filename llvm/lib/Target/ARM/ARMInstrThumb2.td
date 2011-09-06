@@ -2794,20 +2794,19 @@ def t2DMB : AInoP<(outs), (ins memb_opt:$opt), ThumbFrm, NoItinerary,
 }
 
 def t2DSB : AInoP<(outs), (ins memb_opt:$opt), ThumbFrm, NoItinerary,
-                  "dsb", "\t$opt",
-                  [/* For disassembly only; pattern left blank */]>,
+                  "dsb", "\t$opt", []>,
                   Requires<[IsThumb, HasDB]> {
   bits<4> opt;
   let Inst{31-4} = 0xf3bf8f4;
   let Inst{3-0} = opt;
 }
 
-// ISB has only full system option -- for disassembly only
-def t2ISB : AInoP<(outs), (ins), ThumbFrm, NoItinerary, "isb", "",
-                  [/* For disassembly only; pattern left blank */]>,
-                  Requires<[IsThumb2, HasV7]> {
+def t2ISB : AInoP<(outs), (ins memb_opt:$opt), ThumbFrm, NoItinerary,
+                  "isb", "\t$opt",
+                  []>, Requires<[IsThumb2, HasV7]> {
+  bits<4> opt;
   let Inst{31-4} = 0xf3bf8f6;
-  let Inst{3-0} = 0b1111;
+  let Inst{3-0} = opt;
 }
 
 class T2I_ldrex<bits<2> opcod, dag oops, dag iops, AddrMode am, int sz,
@@ -3591,4 +3590,4 @@ def : t2InstAlias<"tst${p} $Rn, $Rm",
 // Memory barriers
 def : InstAlias<"dmb", (t2DMB 0xf)>, Requires<[IsThumb2, HasDB]>;
 def : InstAlias<"dsb", (t2DSB 0xf)>, Requires<[IsThumb2, HasDB]>;
-//def : InstAlias<"isb", (t2ISB 0xf)>, Requires<[IsThumb2, HasDB]>;
+def : InstAlias<"isb", (t2ISB 0xf)>, Requires<[IsThumb2, HasDB]>;
