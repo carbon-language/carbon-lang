@@ -7847,7 +7847,7 @@ void Sema::DefineImplicitMoveAssignment(SourceLocation CurrentLocation,
     // appropriately-qualified base type.
     Expr *From = OtherRef;
     From = ImpCastExprToType(From, BaseType, CK_UncheckedDerivedToBase,
-                             VK_RValue, &BasePath).take();
+                             VK_XValue, &BasePath).take();
 
     // Dereference "this".
     ExprResult To = CreateBuiltinUnaryOp(Loc, UO_Deref, This);

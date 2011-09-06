@@ -334,16 +334,12 @@ CodeGenFunction::EmitCXXOperatorMemberCallExpr(const CXXOperatorCallExpr *E,
   LValue LV = EmitLValue(E->getArg(0));
   llvm::Value *This = LV.getAddress();
 
-  if (MD->isCopyAssignmentOperator()) {
-    const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(MD->getDeclContext());
-    if (ClassDecl->hasTrivialCopyAssignment()) {
-      assert(!ClassDecl->hasUserDeclaredCopyAssignment() &&
-             "EmitCXXOperatorMemberCallExpr - user declared copy assignment");
-      llvm::Value *Src = EmitLValue(E->getArg(1)).getAddress();
-      QualType Ty = E->getType();
-      EmitAggregateCopy(This, Src, Ty);
-      return RValue::get(This);
-    }
+  if ((MD->isCopyAssignmentOperator() || MD->isMoveAssignmentOperator()) &&
+      MD->isTrivial()) {
+    llvm::Value *Src = EmitLValue(E->getArg(1)).getAddress();
+    QualType Ty = E->getType();
+    EmitAggregateCopy(This, Src, Ty);
+    return RValue::get(This);
   }
 
   llvm::Value *Callee = EmitCXXOperatorMemberCallee(E, MD, This);

@@ -61,9 +61,25 @@ struct I {
   unsigned var[1];
 };
 
+// CHECK: define void @_Z1hv() nounwind {
 void h() {
   I i;
+  // CHECK: call void @llvm.memcpy.
   i = I();
+  // CHECK-NEXT: ret void
+}
+
+// PR10860
+struct Empty { };
+struct VirtualWithEmptyBase : Empty {
+  virtual void f();
+};
+
+// CHECK: define void @_Z25move_VirtualWithEmptyBaseR20VirtualWithEmptyBaseS0_
+void move_VirtualWithEmptyBase(VirtualWithEmptyBase &x, VirtualWithEmptyBase &y) {
+  // CHECK: call {{.*}} @_ZN20VirtualWithEmptyBaseaSEOS_
+  x = static_cast<VirtualWithEmptyBase&&>(y);
+  // CHECK-NEXT: ret void
 }
 
 // move assignment ops
@@ -76,8 +92,12 @@ void h() {
 // CHECK-ASSIGN: br i1
 // CHECK-ASSIGN: call {{.*}} @_ZN1AaSEOS_
 
-// CHECK-ASSIGN: define linkonce_odr {{.*}} @_ZN1IaSEOS_
-// call void @llvm.memcpy.
+// VirtualWithEmptyBase move assignment operatpr
+// CHECK-ASSIGN: define linkonce_odr {{.*}} @_ZN20VirtualWithEmptyBaseaSEOS_
+// CHECK-ASSIGN: store
+// CHECK-ASSIGN-NEXT: store
+// CHECK-NOT: call
+// CHECK: ret
 
 // CHECK-ASSIGN: define linkonce_odr {{.*}} @_ZN1CaSEOS_
 // CHECK-ASSIGN: call {{.*}} @_ZN1AaSEOS_
