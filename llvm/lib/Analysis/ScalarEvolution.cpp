@@ -1998,8 +1998,7 @@ const SCEV *ScalarEvolution::getMulExpr(SmallVectorImpl<const SCEV *> &Ops,
               const SCEV *NewStart = getMulExpr(A, C);
               const SCEV *BD = getMulExpr(B, D);
               const SCEV *NewStep = getAddExpr(getMulExpr(A, D),
-                                               getMulExpr(B, C),
-                                               getNegativeSCEV(BD));
+                                               getMulExpr(B, C), BD);
               const SCEV *NewSecondOrderStep =
                   getMulExpr(BD, getConstant(BD->getType(), 2));
 
