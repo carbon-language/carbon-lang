@@ -740,13 +740,13 @@ static QualType handleFloatConversion(Sema &S, ExprResult &LHS,
 }
 
 /// \brief Handle conversions with GCC complex int extension.  Helper function
-/// of UsualArithmeticConverions()
+/// of UsualArithmeticConversions()
 // FIXME: if the operands are (int, _Complex long), we currently
 // don't promote the complex.  Also, signedness?
-static QualType handleComplexIntConvsersion(Sema &S, ExprResult &LHS,
-                                            ExprResult &RHS, QualType LHSType,
-                                            QualType RHSType,
-                                            bool isCompAssign) {
+static QualType handleComplexIntConversion(Sema &S, ExprResult &LHS,
+                                           ExprResult &RHS, QualType LHSType,
+                                           QualType RHSType,
+                                           bool isCompAssign) {
   const ComplexType *LHSComplexInt = LHSType->getAsComplexIntegerType();
   const ComplexType *RHSComplexInt = RHSType->getAsComplexIntegerType();
 
@@ -890,8 +890,8 @@ QualType Sema::UsualArithmeticConversions(ExprResult &LHS, ExprResult &RHS,
 
   // Handle GCC complex int extension.
   if (LHSType->isComplexIntegerType() || RHSType->isComplexIntegerType())
-    return handleComplexIntConvsersion(*this, LHS, RHS, LHSType, RHSType,
-                                       isCompAssign);
+    return handleComplexIntConversion(*this, LHS, RHS, LHSType, RHSType,
+                                      isCompAssign);
 
   // Finally, we have two differing integer types.
   return handleIntegerConversion(*this, LHS, RHS, LHSType, RHSType,
