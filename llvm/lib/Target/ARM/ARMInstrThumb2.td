@@ -2897,9 +2897,7 @@ def t2STREXD : T2I_strex<0b11, (outs rGPR:$Rd),
   let Inst{11-8} = Rt2;
 }
 
-// Clear-Exclusive is for disassembly only.
-def t2CLREX : T2XI<(outs), (ins), NoItinerary, "clrex",
-                   [/* For disassembly only; pattern left blank */]>,
+def t2CLREX : T2I<(outs), (ins), NoItinerary, "clrex", "", []>,
             Requires<[IsThumb2, HasV7]>  {
   let Inst{31-16} = 0xf3bf;
   let Inst{15-14} = 0b10;
