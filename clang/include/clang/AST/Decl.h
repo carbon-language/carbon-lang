@@ -1965,7 +1965,7 @@ public:
   /// specialization or a member of a class template specialization.
   ///
   /// \returns the first point of instantiation, if this function was 
-  /// instantiated from a template; otherwie, returns an invalid source 
+  /// instantiated from a template; otherwise, returns an invalid source 
   /// location.
   SourceLocation getPointOfInstantiation() const;
                        
