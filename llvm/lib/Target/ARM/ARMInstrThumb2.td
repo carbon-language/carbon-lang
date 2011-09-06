@@ -3588,3 +3588,7 @@ def : t2InstAlias<"teq${p} $Rn, $Rm",
 def : t2InstAlias<"tst${p} $Rn, $Rm",
                   (t2TSTrr GPRnopc:$Rn, rGPR:$Rm, pred:$p)>;
 
+// Memory barriers
+def : InstAlias<"dmb", (t2DMB 0xf)>, Requires<[IsThumb2, HasDB]>;
+def : InstAlias<"dsb", (t2DSB 0xf)>, Requires<[IsThumb2, HasDB]>;
+//def : InstAlias<"isb", (t2ISB 0xf)>, Requires<[IsThumb2, HasDB]>;

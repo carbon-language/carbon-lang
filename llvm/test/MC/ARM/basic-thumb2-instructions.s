@@ -369,6 +369,38 @@ _func:
 
 
 @------------------------------------------------------------------------------
+@ DMB
+@------------------------------------------------------------------------------
+        dmb sy
+        dmb st
+        dmb sh
+        dmb ish
+        dmb shst
+        dmb ishst
+        dmb un
+        dmb nsh
+        dmb unst
+        dmb nshst
+        dmb osh
+        dmb oshst
+        dmb
+
+@ CHECK: dmb	sy                      @ encoding: [0xbf,0xf3,0x5f,0x8f]
+@ CHECK: dmb	st                      @ encoding: [0xbf,0xf3,0x5e,0x8f]
+@ CHECK: dmb	ish                     @ encoding: [0xbf,0xf3,0x5b,0x8f]
+@ CHECK: dmb	ish                     @ encoding: [0xbf,0xf3,0x5b,0x8f]
+@ CHECK: dmb	ishst                   @ encoding: [0xbf,0xf3,0x5a,0x8f]
+@ CHECK: dmb	ishst                   @ encoding: [0xbf,0xf3,0x5a,0x8f]
+@ CHECK: dmb	nsh                     @ encoding: [0xbf,0xf3,0x57,0x8f]
+@ CHECK: dmb	nsh                     @ encoding: [0xbf,0xf3,0x57,0x8f]
+@ CHECK: dmb	nshst                   @ encoding: [0xbf,0xf3,0x56,0x8f]
+@ CHECK: dmb	nshst                   @ encoding: [0xbf,0xf3,0x56,0x8f]
+@ CHECK: dmb	osh                     @ encoding: [0xbf,0xf3,0x53,0x8f]
+@ CHECK: dmb	oshst                   @ encoding: [0xbf,0xf3,0x52,0x8f]
+@ CHECK: dmb	sy                      @ encoding: [0xbf,0xf3,0x5f,0x8f]
+
+
+@------------------------------------------------------------------------------
 @ IT
 @------------------------------------------------------------------------------
 @ Test encodings of a few full IT blocks, not just the IT instruction
