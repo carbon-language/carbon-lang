@@ -242,7 +242,7 @@ int main(int argc, char **argv) {
           << ":" << Error << "\n";
         return 1;
       }
-      DepOut.os() << DependFilename << ":";
+      DepOut.os() << OutputFilename << ":";
       const std::vector<std::string> &Dependencies = Parser.getDependencies();
       for (std::vector<std::string>::const_iterator I = Dependencies.begin(),
                                                           E = Dependencies.end();
