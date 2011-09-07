@@ -594,12 +594,18 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
     ObjCPropertyDecl::PropertyAttributeKind kind 
       = property->getPropertyAttributes();
     QualType PropType = Context.getCanonicalType(property->getType());
-    bool PropertyIsGCWeak = (kind & ObjCPropertyDecl::OBJC_PR_weak &&
-                             !getLangOptions().ObjCAutoRefCount &&
-                             getLangOptions().getGCMode() != 
-                             LangOptions::NonGC);
-    if (PropertyIsGCWeak && !PropType.isObjCGCStrong())
-      PropType = Context.getObjCGCQualType(PropType, Qualifiers::Weak);
+    
+    if ((kind & ObjCPropertyDecl::OBJC_PR_weak) &&
+        !getLangOptions().ObjCAutoRefCount &&
+        getLangOptions().getGCMode() != LangOptions::NonGC) {
+      if (PropType.isObjCGCStrong()) {
+          Diag(PropertyLoc,
+               diag::err_gc_weak_property_strong_type);
+          Diag(property->getLocation(), diag::note_property_declare);    
+      }
+      else
+        PropType = Context.getObjCGCQualType(PropType, Qualifiers::Weak);
+    }
     QualType PropertyIvarType = PropType;
     if (PropType->isReferenceType())
       PropertyIvarType = cast<ReferenceType>(PropType)->getPointeeType();
@@ -721,6 +727,7 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
            getLangOptions().getGCMode() != LangOptions::NonGC)) {
         Diag(PropertyLoc, diag::error_weak_property)
         << property->getDeclName() << Ivar->getDeclName();
+        Diag(Ivar->getLocation(), diag::note_ivar_decl);
         // Fall thru - see previous comment
       }
       // Fall thru - see previous comment

@@ -3,7 +3,7 @@
 
 @interface INTF
 {
-  id IVAR;
+  id IVAR; // expected-note {{ivar is declared here}}
   __weak id II;
   __weak id WID;
   id ID;
