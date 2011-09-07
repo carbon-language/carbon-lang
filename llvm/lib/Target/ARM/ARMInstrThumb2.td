@@ -1494,7 +1494,7 @@ multiclass thumb2_ldst_mult<string asm, InstrItinClass itin,
                             InstrItinClass itin_upd, bit L_bit> {
   def IA :
     T2XI<(outs), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
-         itin, !strconcat(asm, "ia${p}.w\t$Rn, $regs"), []> {
+         itin, !strconcat(asm, "${p}.w\t$Rn, $regs"), []> {
     bits<4>  Rn;
     bits<16> regs;
 
@@ -1509,7 +1509,7 @@ multiclass thumb2_ldst_mult<string asm, InstrItinClass itin,
   }
   def IA_UPD :
     T2XIt<(outs GPR:$wb), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
-          itin_upd, !strconcat(asm, "ia${p}.w\t$Rn!, $regs"), "$Rn = $wb", []> {
+          itin_upd, !strconcat(asm, "${p}.w\t$Rn!, $regs"), "$Rn = $wb", []> {
     bits<4>  Rn;
     bits<16> regs;
 
