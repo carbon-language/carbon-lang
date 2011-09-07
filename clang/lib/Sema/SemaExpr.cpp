@@ -6997,26 +6997,26 @@ static bool CheckForModifiableLvalue(Expr *E, SourceLocation Loc, Sema &S) {
 
 
 // C99 6.5.16.1
-QualType Sema::CheckAssignmentOperands(Expr *LHS, ExprResult &RHS,
+QualType Sema::CheckAssignmentOperands(Expr *LHSExpr, ExprResult &RHS,
                                        SourceLocation Loc,
                                        QualType CompoundType) {
   // Verify that LHS is a modifiable lvalue, and emit error if not.
-  if (CheckForModifiableLvalue(LHS, Loc, *this))
+  if (CheckForModifiableLvalue(LHSExpr, Loc, *this))
     return QualType();
 
-  QualType LHSType = LHS->getType();
+  QualType LHSType = LHSExpr->getType();
   QualType RHSType = CompoundType.isNull() ? RHS.get()->getType() :
                                              CompoundType;
   AssignConvertType ConvTy;
   if (CompoundType.isNull()) {
     QualType LHSTy(LHSType);
     // Simple assignment "x = y".
-    if (LHS->getObjectKind() == OK_ObjCProperty) {
-      ExprResult LHSResult = Owned(LHS);
+    if (LHSExpr->getObjectKind() == OK_ObjCProperty) {
+      ExprResult LHSResult = Owned(LHSExpr);
       ConvertPropertyForLValue(LHSResult, RHS, LHSTy);
       if (LHSResult.isInvalid())
         return QualType();
-      LHS = LHSResult.take();
+      LHSExpr = LHSResult.take();
     }
     ConvTy = CheckSingleAssignmentConstraints(LHSTy, RHS);
     if (RHS.isInvalid())
@@ -7059,9 +7059,9 @@ QualType Sema::CheckAssignmentOperands(Expr *LHS, ExprResult &RHS,
 
     if (ConvTy == Compatible) {
       if (LHSType.getObjCLifetime() == Qualifiers::OCL_Strong)
-        checkRetainCycles(LHS, RHS.get());
+        checkRetainCycles(LHSExpr, RHS.get());
       else if (getLangOptions().ObjCAutoRefCount)
-        checkUnsafeExprAssigns(Loc, LHS, RHS.get());
+        checkUnsafeExprAssigns(Loc, LHSExpr, RHS.get());
     }
   } else {
     // Compound assignment "x += y"
@@ -7072,7 +7072,7 @@ QualType Sema::CheckAssignmentOperands(Expr *LHS, ExprResult &RHS,
                                RHS.get(), AA_Assigning))
     return QualType();
 
-  CheckForNullPointerDereference(*this, LHS);
+  CheckForNullPointerDereference(*this, LHSExpr);
 
   // C99 6.5.16p3: The type of an assignment expression is the type of the
   // left operand unless the left operand has qualified type, in which case
@@ -7597,84 +7597,84 @@ static inline UnaryOperatorKind ConvertTokenKindToUnaryOpcode(
 /// DiagnoseSelfAssignment - Emits a warning if a value is assigned to itself.
 /// This warning is only emitted for builtin assignment operations. It is also
 /// suppressed in the event of macro expansions.
-static void DiagnoseSelfAssignment(Sema &S, Expr *lhs, Expr *rhs,
+static void DiagnoseSelfAssignment(Sema &S, Expr *LHSExpr, Expr *RHSExpr,
                                    SourceLocation OpLoc) {
   if (!S.ActiveTemplateInstantiations.empty())
     return;
   if (OpLoc.isInvalid() || OpLoc.isMacroID())
     return;
-  lhs = lhs->IgnoreParenImpCasts();
-  rhs = rhs->IgnoreParenImpCasts();
-  const DeclRefExpr *LeftDeclRef = dyn_cast<DeclRefExpr>(lhs);
-  const DeclRefExpr *RightDeclRef = dyn_cast<DeclRefExpr>(rhs);
-  if (!LeftDeclRef || !RightDeclRef ||
-      LeftDeclRef->getLocation().isMacroID() ||
-      RightDeclRef->getLocation().isMacroID())
+  LHSExpr = LHSExpr->IgnoreParenImpCasts();
+  RHSExpr = RHSExpr->IgnoreParenImpCasts();
+  const DeclRefExpr *LHSDeclRef = dyn_cast<DeclRefExpr>(LHSExpr);
+  const DeclRefExpr *RHSDeclRef = dyn_cast<DeclRefExpr>(RHSExpr);
+  if (!LHSDeclRef || !RHSDeclRef ||
+      LHSDeclRef->getLocation().isMacroID() ||
+      RHSDeclRef->getLocation().isMacroID())
     return;
-  const ValueDecl *LeftDecl =
-    cast<ValueDecl>(LeftDeclRef->getDecl()->getCanonicalDecl());
-  const ValueDecl *RightDecl =
-    cast<ValueDecl>(RightDeclRef->getDecl()->getCanonicalDecl());
-  if (LeftDecl != RightDecl)
+  const ValueDecl *LHSDecl =
+    cast<ValueDecl>(LHSDeclRef->getDecl()->getCanonicalDecl());
+  const ValueDecl *RHSDecl =
+    cast<ValueDecl>(RHSDeclRef->getDecl()->getCanonicalDecl());
+  if (LHSDecl != RHSDecl)
     return;
-  if (LeftDecl->getType().isVolatileQualified())
+  if (LHSDecl->getType().isVolatileQualified())
     return;
-  if (const ReferenceType *RefTy = LeftDecl->getType()->getAs<ReferenceType>())
+  if (const ReferenceType *RefTy = LHSDecl->getType()->getAs<ReferenceType>())
     if (RefTy->getPointeeType().isVolatileQualified())
       return;
 
   S.Diag(OpLoc, diag::warn_self_assignment)
-      << LeftDeclRef->getType()
-      << lhs->getSourceRange() << rhs->getSourceRange();
+      << LHSDeclRef->getType()
+      << LHSExpr->getSourceRange() << RHSExpr->getSourceRange();
 }
 
 // checkArithmeticNull - Detect when a NULL constant is used improperly in an
 // expression.  These are mainly cases where the null pointer is used as an
 // integer instead of a pointer.
-static void checkArithmeticNull(Sema &S, ExprResult &lex, ExprResult &rex,
+static void checkArithmeticNull(Sema &S, ExprResult &LHS, ExprResult &RHS,
                                 SourceLocation Loc, bool isCompare) {
   // The canonical way to check for a GNU null is with isNullPointerConstant,
   // but we use a bit of a hack here for speed; this is a relatively
   // hot path, and isNullPointerConstant is slow.
-  bool LeftNull = isa<GNUNullExpr>(lex.get()->IgnoreParenImpCasts());
-  bool RightNull = isa<GNUNullExpr>(rex.get()->IgnoreParenImpCasts());
+  bool LHSNull = isa<GNUNullExpr>(LHS.get()->IgnoreParenImpCasts());
+  bool RHSNull = isa<GNUNullExpr>(RHS.get()->IgnoreParenImpCasts());
 
   // Detect when a NULL constant is used improperly in an expression.  These
   // are mainly cases where the null pointer is used as an integer instead
   // of a pointer.
-  if (!LeftNull && !RightNull)
+  if (!LHSNull && !RHSNull)
     return;
 
-  QualType LeftType = lex.get()->getType();
-  QualType RightType = rex.get()->getType();
+  QualType LHSType = LHS.get()->getType();
+  QualType RHSType = RHS.get()->getType();
 
   // Avoid analyzing cases where the result will either be invalid (and
   // diagnosed as such) or entirely valid and not something to warn about.
-  if (LeftType->isBlockPointerType() || LeftType->isMemberPointerType() ||
-      LeftType->isFunctionType() || RightType->isBlockPointerType() ||
-      RightType->isMemberPointerType() || RightType->isFunctionType())
+  if (LHSType->isBlockPointerType() || LHSType->isMemberPointerType() ||
+      LHSType->isFunctionType() || RHSType->isBlockPointerType() ||
+      RHSType->isMemberPointerType() || RHSType->isFunctionType())
     return;
 
   // Comparison operations would not make sense with a null pointer no matter
   // what the other expression is.
   if (!isCompare) {
     S.Diag(Loc, diag::warn_null_in_arithmetic_operation)
-        << (LeftNull ? lex.get()->getSourceRange() : SourceRange())
-        << (RightNull ? rex.get()->getSourceRange() : SourceRange());
+        << (LHSNull ? LHS.get()->getSourceRange() : SourceRange())
+        << (RHSNull ? RHS.get()->getSourceRange() : SourceRange());
     return;
   }
 
   // The rest of the operations only make sense with a null pointer
   // if the other expression is a pointer.
-  if (LeftNull == RightNull || LeftType->isAnyPointerType() ||
-      LeftType->canDecayToPointerType() || RightType->isAnyPointerType() ||
-      RightType->canDecayToPointerType())
+  if (LHSNull == RHSNull || LHSType->isAnyPointerType() ||
+      LHSType->canDecayToPointerType() || RHSType->isAnyPointerType() ||
+      RHSType->canDecayToPointerType())
     return;
 
   S.Diag(Loc, diag::warn_null_in_comparison_operation)
-      << LeftNull /* LHS is NULL */
-      << (LeftNull ? rex.get()->getType() : lex.get()->getType())
-      << lex.get()->getSourceRange() << rex.get()->getSourceRange();
+      << LHSNull /* LHS is NULL */
+      << (LHSNull ? RHS.get()->getType() : LHS.get()->getType())
+      << LHS.get()->getSourceRange() << RHS.get()->getSourceRange();
 }
 /// CreateBuiltinBinOp - Creates a new built-in binary operation with
 /// operator @p Opc at location @c TokLoc. This routine only supports
