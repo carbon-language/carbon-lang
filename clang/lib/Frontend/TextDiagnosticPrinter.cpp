@@ -545,27 +545,7 @@ public:
     else
       CaretLine.push_back('^');
 
-    // Scan the source line, looking for tabs.  If we find any, manually expand
-    // them to spaces and update the CaretLine to match.
-    for (unsigned i = 0; i != SourceLine.size(); ++i) {
-      if (SourceLine[i] != '\t') continue;
-
-      // Replace this tab with at least one space.
-      SourceLine[i] = ' ';
-
-      // Compute the number of spaces we need to insert.
-      unsigned TabStop = DiagOpts.TabStop;
-      assert(0 < TabStop && TabStop <= DiagnosticOptions::MaxTabStop &&
-             "Invalid -ftabstop value");
-      unsigned NumSpaces = ((i+TabStop)/TabStop * TabStop) - (i+1);
-      assert(NumSpaces < TabStop && "Invalid computation of space amt");
-
-      // Insert spaces into the SourceLine.
-      SourceLine.insert(i+1, NumSpaces, ' ');
-
-      // Insert spaces or ~'s into CaretLine.
-      CaretLine.insert(i+1, NumSpaces, CaretLine[i] == '~' ? '~' : ' ');
-    }
+    ExpandTabs(SourceLine, CaretLine);
 
     // If we are in -fdiagnostics-print-source-range-info mode, we are trying
     // to produce easily machine parsable output.  Add a space before the
@@ -687,6 +667,30 @@ private:
     }
 
     return FixItInsertionLine;
+  }
+
+  void ExpandTabs(std::string &SourceLine, std::string &CaretLine) {
+    // Scan the source line, looking for tabs.  If we find any, manually expand
+    // them to spaces and update the CaretLine to match.
+    for (unsigned i = 0; i != SourceLine.size(); ++i) {
+      if (SourceLine[i] != '\t') continue;
+
+      // Replace this tab with at least one space.
+      SourceLine[i] = ' ';
+
+      // Compute the number of spaces we need to insert.
+      unsigned TabStop = DiagOpts.TabStop;
+      assert(0 < TabStop && TabStop <= DiagnosticOptions::MaxTabStop &&
+             "Invalid -ftabstop value");
+      unsigned NumSpaces = ((i+TabStop)/TabStop * TabStop) - (i+1);
+      assert(NumSpaces < TabStop && "Invalid computation of space amt");
+
+      // Insert spaces into the SourceLine.
+      SourceLine.insert(i+1, NumSpaces, ' ');
+
+      // Insert spaces or ~'s into CaretLine.
+      CaretLine.insert(i+1, NumSpaces, CaretLine[i] == '~' ? '~' : ' ');
+    }
   }
 
   void EmitParseableFixits(ArrayRef<FixItHint> Hints) {
