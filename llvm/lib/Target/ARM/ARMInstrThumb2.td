@@ -101,11 +101,13 @@ def lo5AllOne : PatLeaf<(i32 imm), [{
 // Define Thumb2 specific addressing modes.
 
 // t2addrmode_imm12  := reg + imm12
+def t2addrmode_imm12_asmoperand : AsmOperandClass {let Name="MemUImm12Offset";}
 def t2addrmode_imm12 : Operand<i32>,
                        ComplexPattern<i32, 2, "SelectT2AddrModeImm12", []> {
   let PrintMethod = "printAddrModeImm12Operand";
   let EncoderMethod = "getAddrModeImm12OpValue";
   let DecoderMethod = "DecodeT2AddrModeImm12";
+  let ParserMatchClass = t2addrmode_imm12_asmoperand;
   let MIOperandInfo = (ops GPR:$base, i32imm:$offsimm);
 }
 
@@ -120,6 +122,17 @@ def t2adrlabel : Operand<i32> {
   let EncoderMethod = "getT2AdrLabelOpValue";
 }
 
+
+// t2addrmode_negimm8  := reg - imm8
+def MemNegImm8OffsetAsmOperand : AsmOperandClass {let Name="MemNegImm8Offset";}
+def t2addrmode_negimm8 : Operand<i32>,
+                      ComplexPattern<i32, 2, "SelectT2AddrModeImm8", []> {
+  let PrintMethod = "printT2AddrModeImm8Operand";
+  let EncoderMethod = "getT2AddrModeImm8OpValue";
+  let DecoderMethod = "DecodeT2AddrModeImm8";
+  let ParserMatchClass = MemNegImm8OffsetAsmOperand;
+  let MIOperandInfo = (ops GPR:$base, i32imm:$offsimm);
+}
 
 // t2addrmode_imm8  := reg +/- imm8
 def MemImm8OffsetAsmOperand : AsmOperandClass { let Name = "MemImm8Offset"; }
@@ -880,42 +893,35 @@ multiclass T2I_ld<bit signed, bits<2> opcod, string opc,
   def i12 : T2Ii12<(outs target:$Rt), (ins t2addrmode_imm12:$addr), iii,
                    opc, ".w\t$Rt, $addr",
                    [(set target:$Rt, (opnode t2addrmode_imm12:$addr))]> {
-    let Inst{31-27} = 0b11111;
-    let Inst{26-25} = 0b00;
+    bits<4> Rt;
+    bits<17> addr;
+    let Inst{31-25} = 0b1111100;
     let Inst{24} = signed;
     let Inst{23} = 1;
     let Inst{22-21} = opcod;
     let Inst{20} = 1; // load
-
-    bits<4> Rt;
-    let Inst{15-12} = Rt;
-
-    bits<17> addr;
-    let addr{12}    = 1;           // add = TRUE
     let Inst{19-16} = addr{16-13}; // Rn
-    let Inst{23}    = addr{12};    // U
+    let Inst{15-12} = Rt;
     let Inst{11-0}  = addr{11-0};  // imm
   }
-  def i8  : T2Ii8 <(outs target:$Rt), (ins t2addrmode_imm8:$addr), iii,
+  def i8  : T2Ii8 <(outs target:$Rt), (ins t2addrmode_negimm8:$addr), iii,
                    opc, "\t$Rt, $addr",
-                   [(set target:$Rt, (opnode t2addrmode_imm8:$addr))]> {
+                   [(set target:$Rt, (opnode t2addrmode_negimm8:$addr))]> {
+    bits<4> Rt;
+    bits<13> addr;
     let Inst{31-27} = 0b11111;
     let Inst{26-25} = 0b00;
     let Inst{24} = signed;
     let Inst{23} = 0;
     let Inst{22-21} = opcod;
     let Inst{20} = 1; // load
+    let Inst{19-16} = addr{12-9}; // Rn
+    let Inst{15-12} = Rt;
     let Inst{11} = 1;
     // Offset: index==TRUE, wback==FALSE
     let Inst{10} = 1; // The P bit.
-    let Inst{8} = 0; // The W bit.
-
-    bits<4> Rt;
-    let Inst{15-12} = Rt;
-
-    bits<13> addr;
-    let Inst{19-16} = addr{12-9}; // Rn
     let Inst{9}     = addr{8};    // U
+    let Inst{8} = 0; // The W bit.
     let Inst{7-0}   = addr{7-0};  // imm
   }
   def s   : T2Iso <(outs target:$Rt), (ins t2addrmode_so_reg:$addr), iis,
@@ -980,9 +986,9 @@ multiclass T2I_st<bits<2> opcod, string opc,
     let Inst{23}    = addr{12};    // U
     let Inst{11-0}  = addr{11-0};  // imm
   }
-  def i8  : T2Ii8 <(outs), (ins target:$Rt, t2addrmode_imm8:$addr), iii,
+  def i8  : T2Ii8 <(outs), (ins target:$Rt, t2addrmode_negimm8:$addr), iii,
                    opc, "\t$Rt, $addr",
-                   [(opnode target:$Rt, t2addrmode_imm8:$addr)]> {
+                   [(opnode target:$Rt, t2addrmode_negimm8:$addr)]> {
     let Inst{31-27} = 0b11111;
     let Inst{26-23} = 0b0000;
     let Inst{22-21} = opcod;
@@ -1181,8 +1187,8 @@ def t2LDRDi8  : T2Ii8s4<1, 0, 1, (outs rGPR:$Rt, rGPR:$Rt2),
 // zextload i1 -> zextload i8
 def : T2Pat<(zextloadi1 t2addrmode_imm12:$addr),
             (t2LDRBi12  t2addrmode_imm12:$addr)>;
-def : T2Pat<(zextloadi1 t2addrmode_imm8:$addr),
-            (t2LDRBi8   t2addrmode_imm8:$addr)>;
+def : T2Pat<(zextloadi1 t2addrmode_negimm8:$addr),
+            (t2LDRBi8   t2addrmode_negimm8:$addr)>;
 def : T2Pat<(zextloadi1 t2addrmode_so_reg:$addr),
             (t2LDRBs    t2addrmode_so_reg:$addr)>;
 def : T2Pat<(zextloadi1 (ARMWrapper tconstpool:$addr)),
@@ -1193,8 +1199,8 @@ def : T2Pat<(zextloadi1 (ARMWrapper tconstpool:$addr)),
 // earlier?
 def : T2Pat<(extloadi1  t2addrmode_imm12:$addr),
             (t2LDRBi12  t2addrmode_imm12:$addr)>;
-def : T2Pat<(extloadi1  t2addrmode_imm8:$addr),
-            (t2LDRBi8   t2addrmode_imm8:$addr)>;
+def : T2Pat<(extloadi1  t2addrmode_negimm8:$addr),
+            (t2LDRBi8   t2addrmode_negimm8:$addr)>;
 def : T2Pat<(extloadi1  t2addrmode_so_reg:$addr),
             (t2LDRBs    t2addrmode_so_reg:$addr)>;
 def : T2Pat<(extloadi1  (ARMWrapper tconstpool:$addr)),
@@ -1202,8 +1208,8 @@ def : T2Pat<(extloadi1  (ARMWrapper tconstpool:$addr)),
 
 def : T2Pat<(extloadi8  t2addrmode_imm12:$addr),
             (t2LDRBi12  t2addrmode_imm12:$addr)>;
-def : T2Pat<(extloadi8  t2addrmode_imm8:$addr),
-            (t2LDRBi8   t2addrmode_imm8:$addr)>;
+def : T2Pat<(extloadi8  t2addrmode_negimm8:$addr),
+            (t2LDRBi8   t2addrmode_negimm8:$addr)>;
 def : T2Pat<(extloadi8  t2addrmode_so_reg:$addr),
             (t2LDRBs    t2addrmode_so_reg:$addr)>;
 def : T2Pat<(extloadi8  (ARMWrapper tconstpool:$addr)),
@@ -1211,8 +1217,8 @@ def : T2Pat<(extloadi8  (ARMWrapper tconstpool:$addr)),
 
 def : T2Pat<(extloadi16 t2addrmode_imm12:$addr),
             (t2LDRHi12  t2addrmode_imm12:$addr)>;
-def : T2Pat<(extloadi16 t2addrmode_imm8:$addr),
-            (t2LDRHi8   t2addrmode_imm8:$addr)>;
+def : T2Pat<(extloadi16 t2addrmode_negimm8:$addr),
+            (t2LDRHi8   t2addrmode_negimm8:$addr)>;
 def : T2Pat<(extloadi16 t2addrmode_so_reg:$addr),
             (t2LDRHs    t2addrmode_so_reg:$addr)>;
 def : T2Pat<(extloadi16 (ARMWrapper tconstpool:$addr)),
@@ -1444,9 +1450,9 @@ multiclass T2Ipl<bits<1> write, bits<1> instr, string opc> {
     let Inst{11-0}  = addr{11-0};  // imm12
   }
 
-  def i8 : T2Ii8<(outs), (ins t2addrmode_imm8:$addr), IIC_Preload, opc,
+  def i8 : T2Ii8<(outs), (ins t2addrmode_negimm8:$addr), IIC_Preload, opc,
                 "\t$addr",
-               [(ARMPreload t2addrmode_imm8:$addr, (i32 write), (i32 instr))]> {
+            [(ARMPreload t2addrmode_negimm8:$addr, (i32 write), (i32 instr))]> {
     let Inst{31-25} = 0b1111100;
     let Inst{24} = instr;
     let Inst{23} = 0; // U = 0
@@ -3514,38 +3520,38 @@ def : T2Pat<(add rGPR:$Rn, (sext_inreg rGPR:$Rm, i16)),
 // Atomic load/store patterns
 def : T2Pat<(atomic_load_8   t2addrmode_imm12:$addr),
             (t2LDRBi12  t2addrmode_imm12:$addr)>;
-def : T2Pat<(atomic_load_8   t2addrmode_imm8:$addr),
-            (t2LDRBi8   t2addrmode_imm8:$addr)>;
+def : T2Pat<(atomic_load_8   t2addrmode_negimm8:$addr),
+            (t2LDRBi8   t2addrmode_negimm8:$addr)>;
 def : T2Pat<(atomic_load_8   t2addrmode_so_reg:$addr),
             (t2LDRBs    t2addrmode_so_reg:$addr)>;
 def : T2Pat<(atomic_load_16  t2addrmode_imm12:$addr),
             (t2LDRHi12  t2addrmode_imm12:$addr)>;
-def : T2Pat<(atomic_load_16  t2addrmode_imm8:$addr),
-            (t2LDRHi8   t2addrmode_imm8:$addr)>;
+def : T2Pat<(atomic_load_16  t2addrmode_negimm8:$addr),
+            (t2LDRHi8   t2addrmode_negimm8:$addr)>;
 def : T2Pat<(atomic_load_16  t2addrmode_so_reg:$addr),
             (t2LDRHs    t2addrmode_so_reg:$addr)>;
 def : T2Pat<(atomic_load_32  t2addrmode_imm12:$addr),
             (t2LDRi12   t2addrmode_imm12:$addr)>;
-def : T2Pat<(atomic_load_32  t2addrmode_imm8:$addr),
-            (t2LDRi8    t2addrmode_imm8:$addr)>;
+def : T2Pat<(atomic_load_32  t2addrmode_negimm8:$addr),
+            (t2LDRi8    t2addrmode_negimm8:$addr)>;
 def : T2Pat<(atomic_load_32  t2addrmode_so_reg:$addr),
             (t2LDRs     t2addrmode_so_reg:$addr)>;
 def : T2Pat<(atomic_store_8  t2addrmode_imm12:$addr, GPR:$val),
             (t2STRBi12  GPR:$val, t2addrmode_imm12:$addr)>;
-def : T2Pat<(atomic_store_8  t2addrmode_imm8:$addr, GPR:$val),
-            (t2STRBi8   GPR:$val, t2addrmode_imm8:$addr)>;
+def : T2Pat<(atomic_store_8  t2addrmode_negimm8:$addr, GPR:$val),
+            (t2STRBi8   GPR:$val, t2addrmode_negimm8:$addr)>;
 def : T2Pat<(atomic_store_8  t2addrmode_so_reg:$addr, GPR:$val),
             (t2STRBs    GPR:$val, t2addrmode_so_reg:$addr)>;
 def : T2Pat<(atomic_store_16 t2addrmode_imm12:$addr, GPR:$val),
             (t2STRHi12  GPR:$val, t2addrmode_imm12:$addr)>;
-def : T2Pat<(atomic_store_16 t2addrmode_imm8:$addr, GPR:$val),
-            (t2STRHi8   GPR:$val, t2addrmode_imm8:$addr)>;
+def : T2Pat<(atomic_store_16 t2addrmode_negimm8:$addr, GPR:$val),
+            (t2STRHi8   GPR:$val, t2addrmode_negimm8:$addr)>;
 def : T2Pat<(atomic_store_16 t2addrmode_so_reg:$addr, GPR:$val),
             (t2STRHs    GPR:$val, t2addrmode_so_reg:$addr)>;
 def : T2Pat<(atomic_store_32 t2addrmode_imm12:$addr, GPR:$val),
             (t2STRi12   GPR:$val, t2addrmode_imm12:$addr)>;
-def : T2Pat<(atomic_store_32 t2addrmode_imm8:$addr, GPR:$val),
-            (t2STRi8    GPR:$val, t2addrmode_imm8:$addr)>;
+def : T2Pat<(atomic_store_32 t2addrmode_negimm8:$addr, GPR:$val),
+            (t2STRi8    GPR:$val, t2addrmode_negimm8:$addr)>;
 def : T2Pat<(atomic_store_32 t2addrmode_so_reg:$addr, GPR:$val),
             (t2STRs     GPR:$val, t2addrmode_so_reg:$addr)>;
 
@@ -3591,3 +3597,7 @@ def : t2InstAlias<"tst${p} $Rn, $Rm",
 def : InstAlias<"dmb", (t2DMB 0xf)>, Requires<[IsThumb2, HasDB]>;
 def : InstAlias<"dsb", (t2DSB 0xf)>, Requires<[IsThumb2, HasDB]>;
 def : InstAlias<"isb", (t2ISB 0xf)>, Requires<[IsThumb2, HasDB]>;
+
+// Alias for LDRi12 without the ".w" optional width specifier.
+def : t2InstAlias<"ldr${p} $Rd, $addr",
+                  (t2LDRi12 GPR:$Rd, t2addrmode_imm12:$addr, pred:$p)>;
