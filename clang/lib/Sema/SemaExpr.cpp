@@ -6675,17 +6675,17 @@ QualType Sema::CheckCompareOperands(ExprResult &LHS, ExprResult &RHS,
 /// operates on extended vector types.  Instead of producing an IntTy result,
 /// like a scalar comparison, a vector comparison produces a vector of integer
 /// types.
-QualType Sema::CheckVectorCompareOperands(ExprResult &lex, ExprResult &rex,
+QualType Sema::CheckVectorCompareOperands(ExprResult &LHS, ExprResult &RHS,
                                           SourceLocation Loc,
                                           bool isRelational) {
   // Check to make sure we're operating on vectors of the same type and width,
   // Allowing one side to be a scalar of element type.
-  QualType vType = CheckVectorOperands(lex, rex, Loc, /*isCompAssign*/false);
+  QualType vType = CheckVectorOperands(LHS, RHS, Loc, /*isCompAssign*/false);
   if (vType.isNull())
     return vType;
 
-  QualType lType = lex.get()->getType();
-  QualType rType = rex.get()->getType();
+  QualType LHSType = LHS.get()->getType();
+  QualType RHSType = RHS.get()->getType();
 
   // If AltiVec, the comparison results in a numeric type, i.e.
   // bool for C++, int for C
@@ -6695,9 +6695,9 @@ QualType Sema::CheckVectorCompareOperands(ExprResult &lex, ExprResult &rex,
   // For non-floating point types, check for self-comparisons of the form
   // x == x, x != x, x < x, etc.  These always evaluate to a constant, and
   // often indicate logic errors in the program.
-  if (!lType->hasFloatingRepresentation()) {
-    if (DeclRefExpr* DRL = dyn_cast<DeclRefExpr>(lex.get()->IgnoreParens()))
-      if (DeclRefExpr* DRR = dyn_cast<DeclRefExpr>(rex.get()->IgnoreParens()))
+  if (!LHSType->hasFloatingRepresentation()) {
+    if (DeclRefExpr* DRL = dyn_cast<DeclRefExpr>(LHS.get()->IgnoreParens()))
+      if (DeclRefExpr* DRR = dyn_cast<DeclRefExpr>(RHS.get()->IgnoreParens()))
         if (DRL->getDecl() == DRR->getDecl())
           DiagRuntimeBehavior(Loc, 0,
                               PDiag(diag::warn_comparison_always)
@@ -6707,18 +6707,18 @@ QualType Sema::CheckVectorCompareOperands(ExprResult &lex, ExprResult &rex,
   }
 
   // Check for comparisons of floating point operands using != and ==.
-  if (!isRelational && lType->hasFloatingRepresentation()) {
-    assert (rType->hasFloatingRepresentation());
-    CheckFloatComparison(Loc, lex.get(), rex.get());
+  if (!isRelational && LHSType->hasFloatingRepresentation()) {
+    assert (RHSType->hasFloatingRepresentation());
+    CheckFloatComparison(Loc, LHS.get(), RHS.get());
   }
 
   // Return the type for the comparison, which is the same as vector type for
   // integer vectors, or an integer type of identical size and number of
   // elements for floating point vectors.
-  if (lType->hasIntegerRepresentation())
-    return lType;
+  if (LHSType->hasIntegerRepresentation())
+    return LHSType;
 
-  const VectorType *VTy = lType->getAs<VectorType>();
+  const VectorType *VTy = LHSType->getAs<VectorType>();
   unsigned TypeSize = Context.getTypeSize(VTy->getElementType());
   if (TypeSize == Context.getTypeSize(Context.IntTy))
     return Context.getExtVectorType(Context.IntTy, VTy->getNumElements());
@@ -6731,39 +6731,39 @@ QualType Sema::CheckVectorCompareOperands(ExprResult &lex, ExprResult &rex,
 }
 
 inline QualType Sema::CheckBitwiseOperands(
-  ExprResult &lex, ExprResult &rex, SourceLocation Loc, bool isCompAssign) {
-  if (lex.get()->getType()->isVectorType() ||
-      rex.get()->getType()->isVectorType()) {
-    if (lex.get()->getType()->hasIntegerRepresentation() &&
-        rex.get()->getType()->hasIntegerRepresentation())
-      return CheckVectorOperands(lex, rex, Loc, isCompAssign);
+  ExprResult &LHS, ExprResult &RHS, SourceLocation Loc, bool isCompAssign) {
+  if (LHS.get()->getType()->isVectorType() ||
+      RHS.get()->getType()->isVectorType()) {
+    if (LHS.get()->getType()->hasIntegerRepresentation() &&
+        RHS.get()->getType()->hasIntegerRepresentation())
+      return CheckVectorOperands(LHS, RHS, Loc, isCompAssign);
     
-    return InvalidOperands(Loc, lex, rex);
+    return InvalidOperands(Loc, LHS, RHS);
   }
 
-  ExprResult lexResult = Owned(lex), rexResult = Owned(rex);
-  QualType compType = UsualArithmeticConversions(lexResult, rexResult,
+  ExprResult LHSResult = Owned(LHS), RHSResult = Owned(RHS);
+  QualType compType = UsualArithmeticConversions(LHSResult, RHSResult,
                                                  isCompAssign);
-  if (lexResult.isInvalid() || rexResult.isInvalid())
+  if (LHSResult.isInvalid() || RHSResult.isInvalid())
     return QualType();
-  lex = lexResult.take();
-  rex = rexResult.take();
+  LHS = LHSResult.take();
+  RHS = RHSResult.take();
 
-  if (lex.get()->getType()->isIntegralOrUnscopedEnumerationType() &&
-      rex.get()->getType()->isIntegralOrUnscopedEnumerationType())
+  if (LHS.get()->getType()->isIntegralOrUnscopedEnumerationType() &&
+      RHS.get()->getType()->isIntegralOrUnscopedEnumerationType())
     return compType;
-  return InvalidOperands(Loc, lex, rex);
+  return InvalidOperands(Loc, LHS, RHS);
 }
 
 inline QualType Sema::CheckLogicalOperands( // C99 6.5.[13,14]
-  ExprResult &lex, ExprResult &rex, SourceLocation Loc, unsigned Opc) {
+  ExprResult &LHS, ExprResult &RHS, SourceLocation Loc, unsigned Opc) {
   
   // Diagnose cases where the user write a logical and/or but probably meant a
   // bitwise one.  We do this when the LHS is a non-bool integer and the RHS
   // is a constant.
-  if (lex.get()->getType()->isIntegerType() &&
-      !lex.get()->getType()->isBooleanType() &&
-      rex.get()->getType()->isIntegerType() && !rex.get()->isValueDependent() &&
+  if (LHS.get()->getType()->isIntegerType() &&
+      !LHS.get()->getType()->isBooleanType() &&
+      RHS.get()->getType()->isIntegerType() && !RHS.get()->isValueDependent() &&
       // Don't warn in macros or template instantiations.
       !Loc.isMacroID() && ActiveTemplateInstantiations.empty()) {
     // If the RHS can be constant folded, and if it constant folds to something
@@ -6771,11 +6771,11 @@ inline QualType Sema::CheckLogicalOperands( // C99 6.5.[13,14]
     // happened to fold to true/false) then warn.
     // Parens on the RHS are ignored.
     Expr::EvalResult Result;
-    if (rex.get()->Evaluate(Result, Context) && !Result.HasSideEffects)
-      if ((getLangOptions().Bool && !rex.get()->getType()->isBooleanType()) ||
+    if (RHS.get()->Evaluate(Result, Context) && !Result.HasSideEffects)
+      if ((getLangOptions().Bool && !RHS.get()->getType()->isBooleanType()) ||
           (Result.Val.getInt() != 0 && Result.Val.getInt() != 1)) {
         Diag(Loc, diag::warn_logical_instead_of_bitwise)
-          << rex.get()->getSourceRange()
+          << RHS.get()->getSourceRange()
           << (Opc == BO_LAnd ? "&&" : "||");
         // Suggest replacing the logical operator with the bitwise version
         Diag(Loc, diag::note_logical_instead_of_bitwise_change_operator)
@@ -6789,25 +6789,25 @@ inline QualType Sema::CheckLogicalOperands( // C99 6.5.[13,14]
           Diag(Loc, diag::note_logical_instead_of_bitwise_remove_constant)
               << FixItHint::CreateRemoval(
                   SourceRange(
-                      Lexer::getLocForEndOfToken(lex.get()->getLocEnd(),
+                      Lexer::getLocForEndOfToken(LHS.get()->getLocEnd(),
                                                  0, getSourceManager(),
                                                  getLangOptions()),
-                      rex.get()->getLocEnd()));
+                      RHS.get()->getLocEnd()));
       }
   }
   
   if (!Context.getLangOptions().CPlusPlus) {
-    lex = UsualUnaryConversions(lex.take());
-    if (lex.isInvalid())
+    LHS = UsualUnaryConversions(LHS.take());
+    if (LHS.isInvalid())
       return QualType();
 
-    rex = UsualUnaryConversions(rex.take());
-    if (rex.isInvalid())
+    RHS = UsualUnaryConversions(RHS.take());
+    if (RHS.isInvalid())
       return QualType();
 
-    if (!lex.get()->getType()->isScalarType() ||
-        !rex.get()->getType()->isScalarType())
-      return InvalidOperands(Loc, lex, rex);
+    if (!LHS.get()->getType()->isScalarType() ||
+        !RHS.get()->getType()->isScalarType())
+      return InvalidOperands(Loc, LHS, RHS);
 
     return Context.IntTy;
   }
@@ -6818,15 +6818,15 @@ inline QualType Sema::CheckLogicalOperands( // C99 6.5.[13,14]
   // C++ [expr.log.and]p1
   // C++ [expr.log.or]p1
   // The operands are both contextually converted to type bool.
-  ExprResult lexRes = PerformContextuallyConvertToBool(lex.get());
-  if (lexRes.isInvalid())
-    return InvalidOperands(Loc, lex, rex);
-  lex = move(lexRes);
+  ExprResult LHSRes = PerformContextuallyConvertToBool(LHS.get());
+  if (LHSRes.isInvalid())
+    return InvalidOperands(Loc, LHS, RHS);
+  LHS = move(LHSRes);
 
-  ExprResult rexRes = PerformContextuallyConvertToBool(rex.get());
-  if (rexRes.isInvalid())
-    return InvalidOperands(Loc, lex, rex);
-  rex = move(rexRes);
+  ExprResult RHSRes = PerformContextuallyConvertToBool(RHS.get());
+  if (RHSRes.isInvalid())
+    return InvalidOperands(Loc, LHS, RHS);
+  RHS = move(RHSRes);
 
   // C++ [expr.log.and]p2
   // C++ [expr.log.or]p2
