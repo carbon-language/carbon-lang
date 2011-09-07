@@ -3233,8 +3233,10 @@ bool ARMAsmParser::ParseInstruction(StringRef Name, SMLoc NameLoc,
     // For now, we're only parsing Thumb1 (for the most part), so
     // just ignore ".n" qualifiers. We'll use them to restrict
     // matching when we do Thumb2.
-    if (ExtraToken != ".n")
-      Operands.push_back(ARMOperand::CreateToken(ExtraToken, NameLoc));
+    if (ExtraToken != ".n") {
+      SMLoc Loc = SMLoc::getFromPointer(NameLoc.getPointer() + Start);
+      Operands.push_back(ARMOperand::CreateToken(ExtraToken, Loc));
+    }
   }
 
   // Read the remaining operands.
