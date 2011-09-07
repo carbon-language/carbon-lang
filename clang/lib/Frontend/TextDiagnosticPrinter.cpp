@@ -505,6 +505,7 @@ public:
     if (Invalid)
       return;
 
+    unsigned LineNo = SM.getLineNumber(FID, FileOffset);
     unsigned ColNo = SM.getColumnNumber(FID, FileOffset);
     unsigned CaretEndColNo
       = ColNo + Lexer::MeasureTokenLength(Loc, SM, LangOpts);
@@ -533,14 +534,10 @@ public:
     std::string CaretLine(LineEnd-LineStart, ' ');
 
     // Highlight all of the characters covered by Ranges with ~ characters.
-    if (!Ranges.empty()) {
-      unsigned LineNo = SM.getLineNumber(FID, FileOffset);
-
-      for (SmallVectorImpl<CharSourceRange>::iterator I = Ranges.begin(),
-                                                      E = Ranges.end();
-           I != E; ++I)
-        Printer.HighlightRange(*I, SM, LineNo, FID, CaretLine, SourceLine);
-    }
+    for (SmallVectorImpl<CharSourceRange>::iterator I = Ranges.begin(),
+                                                    E = Ranges.end();
+         I != E; ++I)
+      Printer.HighlightRange(*I, SM, LineNo, FID, CaretLine, SourceLine);
 
     // Next, insert the caret itself.
     if (ColNo-1 < CaretLine.size())
@@ -579,7 +576,7 @@ public:
       CaretLine = ' ' + CaretLine;
     }
 
-    std::string FixItInsertionLine = BuildFixItInsertionLine(FID, FileOffset,
+    std::string FixItInsertionLine = BuildFixItInsertionLine(LineNo,
                                                              LineStart, LineEnd,
                                                              Hints);
 
@@ -618,7 +615,7 @@ public:
   }
 
 private:
-  std::string BuildFixItInsertionLine(FileID FID, unsigned FileOffset,
+  std::string BuildFixItInsertionLine(unsigned LineNo,
                                       const char *LineStart,
                                       const char *LineEnd,
                                       ArrayRef<FixItHint> Hints) {
@@ -633,8 +630,7 @@ private:
         // code is on the same line as the caret.
         std::pair<FileID, unsigned> HintLocInfo
           = SM.getDecomposedExpansionLoc(I->RemoveRange.getBegin());
-        if (SM.getLineNumber(HintLocInfo.first, HintLocInfo.second) ==
-              SM.getLineNumber(FID, FileOffset)) {
+        if (LineNo == SM.getLineNumber(HintLocInfo.first, HintLocInfo.second)) {
           // Insert the new code into the line just below the code
           // that the user wrote.
           unsigned HintColNo
