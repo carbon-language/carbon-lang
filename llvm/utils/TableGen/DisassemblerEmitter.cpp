@@ -132,11 +132,12 @@ void DisassemblerEmitter::run(raw_ostream &OS) {
   if (Target.getName() == "ARM" ||
       Target.getName() == "Thumb") {
     FixedLenDecoderEmitter(Records,
+                           "ARM",
                            "if (!Check(S, ", ")) return MCDisassembler::Fail;",
                            "S", "MCDisassembler::Fail",
-                           "MCDisassembler::DecodeStatus S = MCDisassembler::Success;\n(void)S;").run(OS);
+                           "  MCDisassembler::DecodeStatus S = MCDisassembler::Success;\n(void)S;").run(OS);
     return;
   }
 
-  FixedLenDecoderEmitter(Records).run(OS);
+  FixedLenDecoderEmitter(Records, Target.getName()).run(OS);
 }

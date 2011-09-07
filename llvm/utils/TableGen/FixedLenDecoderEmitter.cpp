@@ -330,6 +330,10 @@ protected:
       std::vector<unsigned> &EndBits, std::vector<uint64_t> &FieldVals,
       insn_t &Insn);
 
+  // Emits code to check the Predicates member of an instruction are true.
+  // Returns true if predicate matches were emitted, false otherwise.
+  bool emitPredicateMatch(raw_ostream &o, unsigned &Indentation,unsigned Opc);
+
   // Emits code to decode the singleton.  Return true if we have matched all the
   // well-known bits.
   bool emitSingletonDecoder(raw_ostream &o, unsigned &Indentation,unsigned Opc);
@@ -571,8 +575,9 @@ void FilterChooser::emitTop(raw_ostream &o, unsigned Indentation,
   o.indent(Indentation) <<
     "static MCDisassembler::DecodeStatus decode" << Namespace << "Instruction" << BitWidth
     << "(MCInst &MI, uint" << BitWidth << "_t insn, uint64_t Address, "
-    << "const void *Decoder) {\n";
+    << "const void *Decoder, const MCSubtargetInfo &STI) {\n";
   o.indent(Indentation) << "  unsigned tmp = 0;\n  (void)tmp;\n" << Emitter->Locals << "\n";
+  o.indent(Indentation) << "  unsigned Bits = STI.getFeatureBits();\n";
 
   ++Indentation; ++Indentation;
   // Emits code to decode the instructions.
@@ -757,6 +762,43 @@ void FilterChooser::emitBinaryParser(raw_ostream &o, unsigned &Indentation,
 
 }
 
+static void emitSinglePredicateMatch(raw_ostream &o, StringRef str,
+                                     std::string PredicateNamespace) {
+  const char *X = str.str().c_str();
+  if (X[0] == '!')
+    o << "!(Bits & " << PredicateNamespace << "::" << &X[1] << ")";
+  else
+    o << "(Bits & " << PredicateNamespace << "::" << X << ")";
+}
+
+bool FilterChooser::emitPredicateMatch(raw_ostream &o, unsigned &Indentation,
+                                           unsigned Opc) {
+  ListInit *Predicates = AllInstructions[Opc]->TheDef->getValueAsListInit("Predicates");
+  for (unsigned i = 0; i < Predicates->getSize(); ++i) {
+    Record *Pred = Predicates->getElementAsRecord(i);
+    if (!Pred->getValue("AssemblerMatcherPredicate"))
+      continue;
+
+    std::string P = Pred->getValueAsString("AssemblerCondString");
+
+    if (!P.length())
+      continue;
+
+    if (i != 0)
+      o << " && ";
+
+    StringRef SR(P);
+    std::pair<StringRef, StringRef> pairs = SR.split(',');
+    while (pairs.second.size()) {
+      emitSinglePredicateMatch(o, pairs.first, Emitter->PredicateNamespace);
+      o << " && ";
+      pairs = pairs.second.split(',');
+    }
+    emitSinglePredicateMatch(o, pairs.first, Emitter->PredicateNamespace);
+  }
+  return Predicates->getSize() > 0;
+}  
+
 // Emits code to decode the singleton.  Return true if we have matched all the
 // well-known bits.
 bool FilterChooser::emitSingletonDecoder(raw_ostream &o, unsigned &Indentation,
@@ -775,7 +817,9 @@ bool FilterChooser::emitSingletonDecoder(raw_ostream &o, unsigned &Indentation,
 
   // If we have matched all the well-known bits, just issue a return.
   if (Size == 0) {
-    o.indent(Indentation) << "{\n";
+    o.indent(Indentation) << "if (";
+    emitPredicateMatch(o, Indentation, Opc);
+    o << ") {\n";
     o.indent(Indentation) << "  MI.setOpcode(" << Opc << ");\n";
     std::vector<OperandInfo>& InsnOperands = Operands[Opc];
     for (std::vector<OperandInfo>::iterator
@@ -792,7 +836,7 @@ bool FilterChooser::emitSingletonDecoder(raw_ostream &o, unsigned &Indentation,
 
     o.indent(Indentation) << "  return " << Emitter->ReturnOK << "; // " << nameWithID(Opc)
                           << '\n';
-    o.indent(Indentation) << "}\n";
+    o.indent(Indentation) << "}\n"; // Closing predicate block.
     return true;
   }
 
@@ -804,12 +848,16 @@ bool FilterChooser::emitSingletonDecoder(raw_ostream &o, unsigned &Indentation,
   for (I = Size; I != 0; --I) {
     o << "Inst{" << EndBits[I-1] << '-' << StartBits[I-1] << "} ";
     if (I > 1)
-      o << "&& ";
+      o << " && ";
     else
       o << "for singleton decoding...\n";
   }
 
   o.indent(Indentation) << "if (";
+  if (emitPredicateMatch(o, Indentation, Opc) > 0) {
+    o << " &&\n";
+    o.indent(Indentation+4);
+  }
 
   for (I = Size; I != 0; --I) {
     NumBits = EndBits[I-1] - StartBits[I-1] + 1;

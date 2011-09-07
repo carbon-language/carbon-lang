@@ -1,4 +1,4 @@
-# RUN: llvm-mc --disassemble %s -triple=arm-apple-darwin9 |& grep {invalid instruction encoding}
+# RUN: llvm-mc --disassemble %s -triple=armv7-apple-darwin9 |& grep {invalid instruction encoding}
 # XFAIL: *
 
 # Opcode=737 Name=VLD1DUPq8_UPD Format=ARM_FORMAT_NLdSt(30)

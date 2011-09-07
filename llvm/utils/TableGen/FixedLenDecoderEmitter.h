@@ -50,6 +50,7 @@ struct OperandInfo {
 class FixedLenDecoderEmitter : public TableGenBackend {
 public:
   FixedLenDecoderEmitter(RecordKeeper &R,
+                         std::string PredicateNamespace,
                          std::string GPrefix  = "if (",
                          std::string GPostfix = " == MCDisassembler::Fail) return MCDisassembler::Fail;",
                          std::string ROK      = "MCDisassembler::Success",
@@ -57,6 +58,7 @@ public:
                          std::string L        = "") :
     Records(R), Target(R),
     NumberedInstructions(Target.getInstructionsByEnumValue()),
+    PredicateNamespace(PredicateNamespace),
     GuardPrefix(GPrefix), GuardPostfix(GPostfix),
     ReturnOK(ROK), ReturnFail(RFail), Locals(L) {}
 
@@ -70,6 +72,7 @@ private:
   std::vector<unsigned> Opcodes;
   std::map<unsigned, std::vector<OperandInfo> > Operands;
 public:
+  std::string PredicateNamespace;
   std::string GuardPrefix, GuardPostfix;
   std::string ReturnOK, ReturnFail;
   std::string Locals;

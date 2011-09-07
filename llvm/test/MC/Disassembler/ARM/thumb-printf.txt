@@ -1,4 +1,4 @@
-# RUN: llvm-mc --disassemble %s -triple=thumb-apple-darwin9 | FileCheck %s
+# RUN: llvm-mc --disassemble %s -triple=thumbv7-apple-darwin9 | FileCheck %s
 
 # CHECK:	push	{r0, r1, r2, r3}
 # CHECK-NEXT:	push	{r4, r5, r7, lr}

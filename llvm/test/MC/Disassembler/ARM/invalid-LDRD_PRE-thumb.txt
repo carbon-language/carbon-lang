@@ -1,4 +1,4 @@
-# RUN: llvm-mc --disassemble %s -triple=thumb-apple-darwin9 |& grep {invalid instruction encoding}
+# RUN: llvm-mc --disassemble %s -triple=thumbv7-apple-darwin9 |& grep {invalid instruction encoding}
 # XFAIL: *
 
 # Opcode=1930 Name=t2LDRD_PRE Format=ARM_FORMAT_THUMBFRM(25)
