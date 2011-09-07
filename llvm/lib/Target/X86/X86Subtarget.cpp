@@ -16,9 +16,11 @@
 #include "X86InstrInfo.h"
 #include "llvm/GlobalValue.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetOptions.h"
 #include "llvm/ADT/SmallVector.h"
 
 #define GET_SUBTARGETINFO_TARGET_DESC
@@ -320,6 +322,9 @@ X86Subtarget::X86Subtarget(const std::string &TT, const std::string &CPU,
                << ", 64bit " << HasX86_64 << "\n");
   assert((!In64BitMode || HasX86_64) &&
          "64-bit code requested on a subtarget that doesn't support it!");
+
+  if(EnableSegmentedStacks && !isTargetELF())
+    report_fatal_error("Segmented stacks are only implemented on ELF.");
 
   // Stack alignment is 16 bytes on Darwin, FreeBSD, Linux and Solaris (both
   // 32 and 64 bit) and for all 64-bit targets.
