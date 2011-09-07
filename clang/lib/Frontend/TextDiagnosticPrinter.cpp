@@ -415,17 +415,14 @@ public:
   /// underlines and FixItHint display as appropriate at each level. Walk is
   /// accomplished by calling itself recursively.
   ///
-  /// FIXME: Switch parameters to ArrayRefs.
   /// FIXME: Break up massive function into logical units.
   ///
   /// \param Loc The location for this caret.
   /// \param Ranges The underlined ranges for this code snippet.
-  /// \param NumRanges The number of unlined ranges.
   /// \param Hints The FixIt hints active for this diagnostic.
   /// \param OnMacroInst The current depth of the macro expansion stack.
   void Emit(SourceLocation Loc,
-            CharSourceRange *Ranges,
-            unsigned NumRanges,
+            SmallVectorImpl<CharSourceRange>& Ranges,
             ArrayRef<FixItHint> Hints,
             unsigned OnMacroInst = 0) {
     assert(!Loc.isInvalid() && "must have a valid source location here");
@@ -445,19 +442,20 @@ public:
       SourceLocation OneLevelUp = getImmediateMacroCallerLoc(SM, Loc);
 
       // FIXME: Map ranges?
-      Emit(OneLevelUp, Ranges, NumRanges, Hints, OnMacroInst + 1);
+      Emit(OneLevelUp, Ranges, Hints, OnMacroInst + 1);
 
       // Map the location.
       Loc = getImmediateMacroCalleeLoc(SM, Loc);
 
       // Map the ranges.
-      for (unsigned i = 0; i != NumRanges; ++i) {
-        CharSourceRange &R = Ranges[i];
-        SourceLocation S = R.getBegin(), E = R.getEnd();
-        if (S.isMacroID())
-          R.setBegin(getImmediateMacroCalleeLoc(SM, S));
-        if (E.isMacroID())
-          R.setEnd(getImmediateMacroCalleeLoc(SM, E));
+      for (SmallVectorImpl<CharSourceRange>::iterator I = Ranges.begin(),
+                                                      E = Ranges.end();
+           I != E; ++I) {
+        SourceLocation Start = I->getBegin(), End = I->getEnd();
+        if (Start.isMacroID())
+          I->setBegin(getImmediateMacroCalleeLoc(SM, Start));
+        if (End.isMacroID())
+          I->setEnd(getImmediateMacroCalleeLoc(SM, End));
       }
 
       if (!Suppressed) {
@@ -482,7 +480,7 @@ public:
         }
         OS << "note: expanded from:\n";
 
-        Emit(Loc, Ranges, NumRanges, ArrayRef<FixItHint>(), OnMacroInst + 1);
+        Emit(Loc, Ranges, ArrayRef<FixItHint>(), OnMacroInst + 1);
         return;
       }
 
@@ -535,12 +533,13 @@ public:
     std::string CaretLine(LineEnd-LineStart, ' ');
 
     // Highlight all of the characters covered by Ranges with ~ characters.
-    if (NumRanges) {
+    if (!Ranges.empty()) {
       unsigned LineNo = SM.getLineNumber(FID, FileOffset);
 
-      for (unsigned i = 0, e = NumRanges; i != e; ++i)
-        Printer.HighlightRange(Ranges[i], SM, LineNo, FID, CaretLine,
-                               SourceLine);
+      for (SmallVectorImpl<CharSourceRange>::iterator I = Ranges.begin(),
+                                                      E = Ranges.end();
+           I != E; ++I)
+        Printer.HighlightRange(*I, SM, LineNo, FID, CaretLine, SourceLine);
     }
 
     // Next, insert the caret itself.
@@ -741,21 +740,21 @@ private:
 
 } // end namespace
 
-void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
-                                                CharSourceRange *Ranges,
-                                                unsigned NumRanges,
-                                                const SourceManager &SM,
-                                                ArrayRef<FixItHint> Hints,
-                                                unsigned Columns,
-                                                unsigned MacroSkipStart,
-                                                unsigned MacroSkipEnd) {
+void TextDiagnosticPrinter::EmitCaretDiagnostic(
+    SourceLocation Loc,
+    SmallVectorImpl<CharSourceRange>& Ranges,
+    const SourceManager &SM,
+    ArrayRef<FixItHint> Hints,
+    unsigned Columns,
+    unsigned MacroSkipStart,
+    unsigned MacroSkipEnd) {
   assert(LangOpts && "Unexpected diagnostic outside source file processing");
   assert(DiagOpts && "Unexpected diagnostic without options set");
   // FIXME: Remove this method and have clients directly build and call Emit on
   // the CaretDiagnostic object.
   CaretDiagnostic CaretDiag(*this, OS, SM, *LangOpts, *DiagOpts,
                             Columns, MacroSkipStart, MacroSkipEnd);
-  CaretDiag.Emit(Loc, Ranges, NumRanges, Hints);
+  CaretDiag.Emit(Loc, Ranges, Hints);
 }
 
 /// \brief Skip over whitespace in the string, starting at the given
@@ -1198,19 +1197,15 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
     LastCaretDiagnosticWasNote = (Level == Diagnostic::Note);
 
     // Get the ranges into a local array we can hack on.
-    CharSourceRange Ranges[20];
-    unsigned NumRanges = Info.getNumRanges();
-    assert(NumRanges < 20 && "Out of space");
-    for (unsigned i = 0; i != NumRanges; ++i)
-      Ranges[i] = Info.getRange(i);
+    SmallVector<CharSourceRange, 20> Ranges;
+    Ranges.reserve(Info.getNumRanges());
+    for (unsigned i = 0, e = Info.getNumRanges(); i != e; ++i)
+      Ranges.push_back(Info.getRange(i));
 
-    unsigned NumHints = Info.getNumFixItHints();
-    for (unsigned i = 0; i != NumHints; ++i) {
+    for (unsigned i = 0, e = Info.getNumFixItHints(); i != e; ++i) {
       const FixItHint &Hint = Info.getFixItHint(i);
-      if (Hint.RemoveRange.isValid()) {
-        assert(NumRanges < 20 && "Out of space");
-        Ranges[NumRanges++] = Hint.RemoveRange;
-      }
+      if (Hint.RemoveRange.isValid())
+        Ranges.push_back(Hint.RemoveRange);
     }
 
     const SourceManager &SM = LastLoc.getManager();
@@ -1233,7 +1228,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
       }
     }        
     
-    EmitCaretDiagnostic(LastLoc, Ranges, NumRanges, LastLoc.getManager(),
+    EmitCaretDiagnostic(LastLoc, Ranges, LastLoc.getManager(),
                         llvm::makeArrayRef(Info.getFixItHints(),
                                            Info.getNumFixItHints()),
                         DiagOpts->MessageLength,
