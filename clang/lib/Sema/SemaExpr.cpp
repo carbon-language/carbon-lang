@@ -7327,10 +7327,18 @@ static ValueDecl *getPrimaryDecl(Expr *E) {
   }
 }
 
+namespace {
+  enum {
+    AO_Bit_Field = 0,
+    AO_Vector_Element = 1,
+    AO_Property_Expansion = 2,
+    AO_Register_Variable = 3,
+    AO_No_Error = 4
+  };
+}
 /// \brief Diagnose invalid operand for address of operations.
 ///
 /// \param Type The type of operand which cannot have its address taken.
-/// 0:bit-field 1:vector element 2:property expression 3:register variable
 static void diagnoseAddressOfInvalidType(Sema &S, SourceLocation Loc,
                                          Expr *E, unsigned Type) {
   S.Diag(Loc, diag::err_typecheck_address_of) << Type << E->getSourceRange();
@@ -7375,6 +7383,7 @@ static QualType CheckAddressOfOperand(Sema &S, Expr *OrigOp,
   }
   ValueDecl *dcl = getPrimaryDecl(op);
   Expr::LValueClassification lval = op->ClassifyLValue(S.Context);
+  unsigned AddressOfError = AO_No_Error;
 
   if (lval == Expr::LV_ClassTemporary) { 
     bool sfinae = S.isSFINAEContext();
@@ -7422,16 +7431,13 @@ static QualType CheckAddressOfOperand(Sema &S, Expr *OrigOp,
     }
   } else if (op->getObjectKind() == OK_BitField) { // C99 6.5.3.2p1
     // The operand cannot be a bit-field
-    diagnoseAddressOfInvalidType(S, OpLoc, op, /*bit-field*/ 0);
-    return QualType();
+    AddressOfError = AO_Bit_Field;
   } else if (op->getObjectKind() == OK_VectorComponent) {
     // The operand cannot be an element of a vector
-    diagnoseAddressOfInvalidType(S, OpLoc, op, /*vector element*/ 1);
-    return QualType();
+    AddressOfError = AO_Vector_Element;
   } else if (op->getObjectKind() == OK_ObjCProperty) {
     // cannot take address of a property expression.
-    diagnoseAddressOfInvalidType(S, OpLoc, op, /*property expression*/ 2);
-    return QualType();
+    AddressOfError = AO_Property_Expansion;
   } else if (dcl) { // C99 6.5.3.2p1
     // We have an lvalue with a decl. Make sure the decl is not declared
     // with the register storage-class specifier.
@@ -7440,8 +7446,7 @@ static QualType CheckAddressOfOperand(Sema &S, Expr *OrigOp,
       // variable (c++03 7.1.1P3)
       if (vd->getStorageClass() == SC_Register &&
           !S.getLangOptions().CPlusPlus) {
-        diagnoseAddressOfInvalidType(S, OpLoc, op, /*register variable*/ 3);
-        return QualType();
+        AddressOfError = AO_Register_Variable;
       }
     } else if (isa<FunctionTemplateDecl>(dcl)) {
       return S.Context.OverloadTy;
@@ -7467,6 +7472,11 @@ static QualType CheckAddressOfOperand(Sema &S, Expr *OrigOp,
       }
     } else if (!isa<FunctionDecl>(dcl) && !isa<NonTypeTemplateParmDecl>(dcl))
       assert(0 && "Unknown/unexpected decl type");
+  }
+
+  if (AddressOfError != AO_No_Error) {
+    diagnoseAddressOfInvalidType(S, OpLoc, op, AddressOfError);
+    return QualType();
   }
 
   if (lval == Expr::LV_IncompleteVoidType) {
