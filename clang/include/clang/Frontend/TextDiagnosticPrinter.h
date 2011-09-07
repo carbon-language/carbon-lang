@@ -60,6 +60,11 @@ public:
                                 const DiagnosticInfo &Info);
 
 private:
+  void EmitDiagnosticLoc(Diagnostic::Level Level,
+                         const DiagnosticInfo &Info,
+                         const SourceManager &SM,
+                         PresumedLoc PLoc);
+
   void EmitCaretDiagnostic(SourceLocation Loc,
                            SmallVectorImpl<CharSourceRange> &Ranges,
                            const SourceManager &SM,
