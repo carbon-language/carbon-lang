@@ -1,5 +1,3 @@
-// XFAIL: win32
-
 // RUN: mkdir -p %t/"with space"
 // RUN: cp %S/Inputs/* %t/"with space"
 // RUN: %clang_cc1 -arcmt-migrate -arcmt-migrate-directory %t.migrate %t/"with space"/test1.m.in -x objective-c -fobjc-nonfragile-abi
