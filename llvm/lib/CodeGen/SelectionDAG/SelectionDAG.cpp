@@ -3840,6 +3840,8 @@ SDValue SelectionDAG::getAtomic(unsigned Opcode, DebugLoc dl, EVT MemVT,
   unsigned Flags = MachineMemOperand::MOLoad | MachineMemOperand::MOStore;
 
   // For now, atomics are considered to be volatile always.
+  // FIXME: Volatile isn't really correct; we should keep track of atomic
+  // orderings in the memoperand.
   Flags |= MachineMemOperand::MOVolatile;
 
   MachineMemOperand *MMO =
@@ -3889,9 +3891,16 @@ SDValue SelectionDAG::getAtomic(unsigned Opcode, DebugLoc dl, EVT MemVT,
     Alignment = getEVTAlignment(MemVT);
 
   MachineFunction &MF = getMachineFunction();
-  unsigned Flags = MachineMemOperand::MOLoad | MachineMemOperand::MOStore;
+  // A monotonic store does not load; a release store "loads" in the sense
+  // that other stores cannot be sunk past it.
+  // (An atomicrmw obviously both loads and stores.)
+  unsigned Flags = MachineMemOperand::MOStore;
+  if (Opcode != ISD::ATOMIC_STORE || Ordering > Monotonic)
+    Flags |= MachineMemOperand::MOLoad;
 
   // For now, atomics are considered to be volatile always.
+  // FIXME: Volatile isn't really correct; we should keep track of atomic
+  // orderings in the memoperand.
   Flags |= MachineMemOperand::MOVolatile;
 
   MachineMemOperand *MMO =
@@ -3954,9 +3963,15 @@ SDValue SelectionDAG::getAtomic(unsigned Opcode, DebugLoc dl, EVT MemVT,
     Alignment = getEVTAlignment(MemVT);
 
   MachineFunction &MF = getMachineFunction();
-  unsigned Flags = MachineMemOperand::MOLoad | MachineMemOperand::MOStore;
+  // A monotonic load does not store; an acquire load "stores" in the sense
+  // that other loads cannot be hoisted past it.
+  unsigned Flags = MachineMemOperand::MOLoad;
+  if (Ordering > Monotonic)
+    Flags |= MachineMemOperand::MOStore;
 
   // For now, atomics are considered to be volatile always.
+  // FIXME: Volatile isn't really correct; we should keep track of atomic
+  // orderings in the memoperand.
   Flags |= MachineMemOperand::MOVolatile;
 
   MachineMemOperand *MMO =

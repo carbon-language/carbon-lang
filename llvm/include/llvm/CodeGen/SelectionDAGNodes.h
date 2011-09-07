@@ -998,8 +998,10 @@ class AtomicSDNode : public MemSDNode {
     assert(getOrdering() == Ordering && "Ordering encoding error!");
     assert(getSynchScope() == SynchScope && "Synch-scope encoding error!");
 
-    assert(readMem() && "Atomic MachineMemOperand is not a load!");
-    assert(writeMem() && "Atomic MachineMemOperand is not a store!");
+    assert((readMem() || getOrdering() <= Monotonic) &&
+           "Acquire/Release MachineMemOperand must be a load!");
+    assert((writeMem() || getOrdering() <= Monotonic) &&
+           "Acquire/Release MachineMemOperand must be a store!");
   }
 
 public:
