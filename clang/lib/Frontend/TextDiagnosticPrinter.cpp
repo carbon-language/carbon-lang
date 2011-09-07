@@ -101,86 +101,6 @@ void TextDiagnosticPrinter::PrintIncludeStack(Diagnostic::Level Level,
   PrintIncludeStackRecursively(OS, SM, Loc, DiagOpts->ShowLocation);
 }
 
-/// HighlightRange - Given a SourceRange and a line number, highlight (with ~'s)
-/// any characters in LineNo that intersect the SourceRange.
-void TextDiagnosticPrinter::HighlightRange(const CharSourceRange &R,
-                                           const SourceManager &SM,
-                                           unsigned LineNo, FileID FID,
-                                           std::string &CaretLine,
-                                           const std::string &SourceLine) {
-  assert(CaretLine.size() == SourceLine.size() &&
-         "Expect a correspondence between source and caret line!");
-  if (!R.isValid()) return;
-
-  SourceLocation Begin = SM.getExpansionLoc(R.getBegin());
-  SourceLocation End = SM.getExpansionLoc(R.getEnd());
-
-  // If the End location and the start location are the same and are a macro
-  // location, then the range was something that came from a macro expansion
-  // or _Pragma.  If this is an object-like macro, the best we can do is to
-  // highlight the range.  If this is a function-like macro, we'd also like to
-  // highlight the arguments.
-  if (Begin == End && R.getEnd().isMacroID())
-    End = SM.getExpansionRange(R.getEnd()).second;
-
-  unsigned StartLineNo = SM.getExpansionLineNumber(Begin);
-  if (StartLineNo > LineNo || SM.getFileID(Begin) != FID)
-    return;  // No intersection.
-
-  unsigned EndLineNo = SM.getExpansionLineNumber(End);
-  if (EndLineNo < LineNo || SM.getFileID(End) != FID)
-    return;  // No intersection.
-
-  // Compute the column number of the start.
-  unsigned StartColNo = 0;
-  if (StartLineNo == LineNo) {
-    StartColNo = SM.getExpansionColumnNumber(Begin);
-    if (StartColNo) --StartColNo;  // Zero base the col #.
-  }
-
-  // Compute the column number of the end.
-  unsigned EndColNo = CaretLine.size();
-  if (EndLineNo == LineNo) {
-    EndColNo = SM.getExpansionColumnNumber(End);
-    if (EndColNo) {
-      --EndColNo;  // Zero base the col #.
-
-      // Add in the length of the token, so that we cover multi-char tokens if
-      // this is a token range.
-      if (R.isTokenRange())
-        EndColNo += Lexer::MeasureTokenLength(End, SM, *LangOpts);
-    } else {
-      EndColNo = CaretLine.size();
-    }
-  }
-
-  assert(StartColNo <= EndColNo && "Invalid range!");
-
-  // Check that a token range does not highlight only whitespace.
-  if (R.isTokenRange()) {
-    // Pick the first non-whitespace column.
-    while (StartColNo < SourceLine.size() &&
-           (SourceLine[StartColNo] == ' ' || SourceLine[StartColNo] == '\t'))
-      ++StartColNo;
-
-    // Pick the last non-whitespace column.
-    if (EndColNo > SourceLine.size())
-      EndColNo = SourceLine.size();
-    while (EndColNo-1 &&
-           (SourceLine[EndColNo-1] == ' ' || SourceLine[EndColNo-1] == '\t'))
-      --EndColNo;
-
-    // If the start/end passed each other, then we are trying to highlight a
-    // range that just exists in whitespace, which must be some sort of other
-    // bug.
-    assert(StartColNo <= EndColNo && "Trying to highlight whitespace??");
-  }
-
-  // Fill the range with ~'s.
-  for (unsigned i = StartColNo; i < EndColNo; ++i)
-    CaretLine[i] = '~';
-}
-
 /// \brief When the source code line we want to print is too long for
 /// the terminal, select the "interesting" region.
 static void SelectInterestingSourceRegion(std::string &SourceLine,
@@ -537,7 +457,7 @@ public:
     for (SmallVectorImpl<CharSourceRange>::iterator I = Ranges.begin(),
                                                     E = Ranges.end();
          I != E; ++I)
-      Printer.HighlightRange(*I, SM, LineNo, FID, CaretLine, SourceLine);
+      HighlightRange(*I, LineNo, FID, SourceLine, CaretLine);
 
     // Next, insert the caret itself.
     if (ColNo-1 < CaretLine.size())
@@ -595,6 +515,84 @@ public:
   }
 
 private:
+  /// \brief Highlight a SourceRange (with ~'s) for any characters on LineNo.
+  void HighlightRange(const CharSourceRange &R,
+                      unsigned LineNo, FileID FID,
+                      const std::string &SourceLine,
+                      std::string &CaretLine) {
+    assert(CaretLine.size() == SourceLine.size() &&
+           "Expect a correspondence between source and caret line!");
+    if (!R.isValid()) return;
+
+    SourceLocation Begin = SM.getExpansionLoc(R.getBegin());
+    SourceLocation End = SM.getExpansionLoc(R.getEnd());
+
+    // If the End location and the start location are the same and are a macro
+    // location, then the range was something that came from a macro expansion
+    // or _Pragma.  If this is an object-like macro, the best we can do is to
+    // highlight the range.  If this is a function-like macro, we'd also like to
+    // highlight the arguments.
+    if (Begin == End && R.getEnd().isMacroID())
+      End = SM.getExpansionRange(R.getEnd()).second;
+
+    unsigned StartLineNo = SM.getExpansionLineNumber(Begin);
+    if (StartLineNo > LineNo || SM.getFileID(Begin) != FID)
+      return;  // No intersection.
+
+    unsigned EndLineNo = SM.getExpansionLineNumber(End);
+    if (EndLineNo < LineNo || SM.getFileID(End) != FID)
+      return;  // No intersection.
+
+    // Compute the column number of the start.
+    unsigned StartColNo = 0;
+    if (StartLineNo == LineNo) {
+      StartColNo = SM.getExpansionColumnNumber(Begin);
+      if (StartColNo) --StartColNo;  // Zero base the col #.
+    }
+
+    // Compute the column number of the end.
+    unsigned EndColNo = CaretLine.size();
+    if (EndLineNo == LineNo) {
+      EndColNo = SM.getExpansionColumnNumber(End);
+      if (EndColNo) {
+        --EndColNo;  // Zero base the col #.
+
+        // Add in the length of the token, so that we cover multi-char tokens if
+        // this is a token range.
+        if (R.isTokenRange())
+          EndColNo += Lexer::MeasureTokenLength(End, SM, LangOpts);
+      } else {
+        EndColNo = CaretLine.size();
+      }
+    }
+
+    assert(StartColNo <= EndColNo && "Invalid range!");
+
+    // Check that a token range does not highlight only whitespace.
+    if (R.isTokenRange()) {
+      // Pick the first non-whitespace column.
+      while (StartColNo < SourceLine.size() &&
+             (SourceLine[StartColNo] == ' ' || SourceLine[StartColNo] == '\t'))
+        ++StartColNo;
+
+      // Pick the last non-whitespace column.
+      if (EndColNo > SourceLine.size())
+        EndColNo = SourceLine.size();
+      while (EndColNo-1 &&
+             (SourceLine[EndColNo-1] == ' ' || SourceLine[EndColNo-1] == '\t'))
+        --EndColNo;
+
+      // If the start/end passed each other, then we are trying to highlight a
+      // range that just exists in whitespace, which must be some sort of other
+      // bug.
+      assert(StartColNo <= EndColNo && "Trying to highlight whitespace??");
+    }
+
+    // Fill the range with ~'s.
+    for (unsigned i = StartColNo; i < EndColNo; ++i)
+      CaretLine[i] = '~';
+  }
+
   std::string BuildFixItInsertionLine(unsigned LineNo,
                                       const char *LineStart,
                                       const char *LineEnd,
