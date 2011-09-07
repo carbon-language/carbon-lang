@@ -2927,10 +2927,10 @@ RNBRemote::HandlePacket_z (const char *p)
                 }
                 else
                 {
-                    // We do NOT already have a breakpoint at this address, So lets
+                    // We do NOT already have a watchpoint at this address, So lets
                     // create one.
                     nub_watch_t watch_id = DNBWatchpointSet (pid, addr, byte_size, watch_flags, hardware);
-                    if (watch_id != INVALID_NUB_BREAK_ID)
+                    if (watch_id != INVALID_NUB_WATCH_ID)
                     {
                         // We successfully created a watchpoint, now lets full out
                         // a ref count structure with the watch_id and add it to our
