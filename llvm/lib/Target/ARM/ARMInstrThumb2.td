@@ -3294,6 +3294,110 @@ def t2LDRpci_pic : PseudoInst<(outs rGPR:$dst), (ins i32imm:$addr, pclabel:$cp),
               [(set rGPR:$dst, (ARMpic_add (load (ARMWrapper tconstpool:$addr)),
                                            imm:$cp))]>,
                Requires<[IsThumb2]>;
+//===----------------------------------------------------------------------===//
+// Coprocessor load/store -- for disassembly only
+//
+class T2CI<dag oops, dag iops, string opc, string asm>
+  : T2I<oops, iops, NoItinerary, opc, asm, []> {
+  let Inst{27-25} = 0b110;
+}
+
+multiclass T2LdStCop<bits<4> op31_28, bit load, string opc> {
+  def _OFFSET : T2CI<(outs),
+      (ins nohash_imm:$cop, nohash_imm:$CRd, addrmode2:$addr),
+      opc, "\tp$cop, cr$CRd, $addr"> {
+    let Inst{31-28} = op31_28;
+    let Inst{24} = 1; // P = 1
+    let Inst{21} = 0; // W = 0
+    let Inst{22} = 0; // D = 0
+    let Inst{20} = load;
+    let DecoderMethod = "DecodeCopMemInstruction";
+  }
+
+  def _PRE : T2CI<(outs),
+      (ins nohash_imm:$cop, nohash_imm:$CRd, addrmode2:$addr),
+      opc, "\tp$cop, cr$CRd, $addr!"> {
+    let Inst{31-28} = op31_28;
+    let Inst{24} = 1; // P = 1
+    let Inst{21} = 1; // W = 1
+    let Inst{22} = 0; // D = 0
+    let Inst{20} = load;
+    let DecoderMethod = "DecodeCopMemInstruction";
+  }
+
+  def _POST : T2CI<(outs),
+      (ins nohash_imm:$cop, nohash_imm:$CRd, addrmode2:$addr),
+      opc, "\tp$cop, cr$CRd, $addr"> {
+    let Inst{31-28} = op31_28;
+    let Inst{24} = 0; // P = 0
+    let Inst{21} = 1; // W = 1
+    let Inst{22} = 0; // D = 0
+    let Inst{20} = load;
+    let DecoderMethod = "DecodeCopMemInstruction";
+  }
+
+  def _OPTION : T2CI<(outs),
+      (ins nohash_imm:$cop,nohash_imm:$CRd,GPR:$base, nohash_imm:$option),
+      opc, "\tp$cop, cr$CRd, [$base], \\{$option\\}"> {
+    let Inst{31-28} = op31_28;
+    let Inst{24} = 0; // P = 0
+    let Inst{23} = 1; // U = 1
+    let Inst{21} = 0; // W = 0
+    let Inst{22} = 0; // D = 0
+    let Inst{20} = load;
+    let DecoderMethod = "DecodeCopMemInstruction";
+  }
+
+  def L_OFFSET : T2CI<(outs),
+      (ins nohash_imm:$cop, nohash_imm:$CRd, addrmode2:$addr),
+      !strconcat(opc, "l"), "\tp$cop, cr$CRd, $addr"> {
+    let Inst{31-28} = op31_28;
+    let Inst{24} = 1; // P = 1
+    let Inst{21} = 0; // W = 0
+    let Inst{22} = 1; // D = 1
+    let Inst{20} = load;
+    let DecoderMethod = "DecodeCopMemInstruction";
+  }
+
+  def L_PRE : T2CI<(outs),
+      (ins nohash_imm:$cop, nohash_imm:$CRd, addrmode2:$addr),
+      !strconcat(opc, "l"), "\tp$cop, cr$CRd, $addr!"> {
+    let Inst{31-28} = op31_28;
+    let Inst{24} = 1; // P = 1
+    let Inst{21} = 1; // W = 1
+    let Inst{22} = 1; // D = 1
+    let Inst{20} = load;
+    let DecoderMethod = "DecodeCopMemInstruction";
+  }
+
+  def L_POST : T2CI<(outs),
+      (ins nohash_imm:$cop, nohash_imm:$CRd, addr_offset_none:$addr,
+            postidx_imm8s4:$offset),
+      !strconcat(opc, "l"), "\tp$cop, cr$CRd, $addr, $offset"> {
+    let Inst{31-28} = op31_28;
+    let Inst{24} = 0; // P = 0
+    let Inst{21} = 1; // W = 1
+    let Inst{22} = 1; // D = 1
+    let Inst{20} = load;
+    let DecoderMethod = "DecodeCopMemInstruction";
+  }
+
+  def L_OPTION : T2CI<(outs),
+      (ins nohash_imm:$cop, nohash_imm:$CRd,GPR:$base,nohash_imm:$option),
+      !strconcat(opc, "l"), "\tp$cop, cr$CRd, [$base], \\{$option\\}"> {
+    let Inst{31-28} = op31_28;
+    let Inst{24} = 0; // P = 0
+    let Inst{23} = 1; // U = 1
+    let Inst{21} = 0; // W = 0
+    let Inst{22} = 1; // D = 1
+    let Inst{20} = load;
+    let DecoderMethod = "DecodeCopMemInstruction";
+  }
+}
+
+defm t2LDC  : T2LdStCop<0b1111, 1, "ldc">;
+defm t2STC  : T2LdStCop<0b1111, 0, "stc">;
+
 
 //===----------------------------------------------------------------------===//
 // Move between special register and ARM core register -- for disassembly only

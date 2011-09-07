@@ -997,6 +997,22 @@ static DecodeStatus DecodeCopMemInstruction(llvm::MCInst &Inst, unsigned Insn,
     case ARM::STCL_PRE:
     case ARM::STCL_POST:
     case ARM::STCL_OPTION:
+    case ARM::t2LDC_OFFSET:
+    case ARM::t2LDC_PRE:
+    case ARM::t2LDC_POST:
+    case ARM::t2LDC_OPTION:
+    case ARM::t2LDCL_OFFSET:
+    case ARM::t2LDCL_PRE:
+    case ARM::t2LDCL_POST:
+    case ARM::t2LDCL_OPTION:
+    case ARM::t2STC_OFFSET:
+    case ARM::t2STC_PRE:
+    case ARM::t2STC_POST:
+    case ARM::t2STC_OPTION:
+    case ARM::t2STCL_OFFSET:
+    case ARM::t2STCL_PRE:
+    case ARM::t2STCL_POST:
+    case ARM::t2STCL_OPTION:
       if (coproc == 0xA || coproc == 0xB)
         return MCDisassembler::Fail;
       break;
@@ -1021,6 +1037,12 @@ static DecodeStatus DecodeCopMemInstruction(llvm::MCInst &Inst, unsigned Insn,
     case ARM::STCL_POST:
     case ARM::LDC2L_POST:
     case ARM::STC2L_POST:
+    case ARM::t2LDC_OPTION:
+    case ARM::t2LDCL_OPTION:
+    case ARM::t2STC_OPTION:
+    case ARM::t2STCL_OPTION:
+    case ARM::t2LDCL_POST:
+    case ARM::t2STCL_POST:
       break;
     default:
       Inst.addOperand(MCOperand::CreateReg(0));
@@ -1040,6 +1062,8 @@ static DecodeStatus DecodeCopMemInstruction(llvm::MCInst &Inst, unsigned Insn,
   switch (Inst.getOpcode()) {
     case ARM::LDCL_POST:
     case ARM::STCL_POST:
+    case ARM::t2LDCL_POST:
+    case ARM::t2STCL_POST:
     case ARM::LDC2L_POST:
     case ARM::STC2L_POST:
       imm |= U << 8;
@@ -1051,6 +1075,10 @@ static DecodeStatus DecodeCopMemInstruction(llvm::MCInst &Inst, unsigned Insn,
     case ARM::STCL_OPTION:
     case ARM::STC2_OPTION:
     case ARM::STC2L_OPTION:
+    case ARM::t2LDC_OPTION:
+    case ARM::t2LDCL_OPTION:
+    case ARM::t2STC_OPTION:
+    case ARM::t2STCL_OPTION:
       Inst.addOperand(MCOperand::CreateImm(imm));
       break;
     default:
