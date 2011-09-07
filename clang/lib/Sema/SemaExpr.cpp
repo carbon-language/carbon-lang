@@ -7681,8 +7681,8 @@ static void checkArithmeticNull(Sema &S, ExprResult &LHS, ExprResult &RHS,
 /// built-in operations; ActOnBinOp handles overloaded operators.
 ExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
                                     BinaryOperatorKind Opc,
-                                    Expr *lhsExpr, Expr *rhsExpr) {
-  ExprResult lhs = Owned(lhsExpr), rhs = Owned(rhsExpr);
+                                    Expr *LHSExpr, Expr *RHSExpr) {
+  ExprResult LHS = Owned(LHSExpr), RHS = Owned(RHSExpr);
   QualType ResultTy;     // Result type of the binary operator.
   // The following two variables are used for compound assignment operators
   QualType CompLHSTy;    // Type of LHS after promotions for computation
@@ -7698,13 +7698,13 @@ ExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
   // f<int> == 0;  // resolve f<int> blindly
   // void (*p)(int); p = f<int>;  // resolve f<int> using target
   if (Opc != BO_Assign) { 
-    ExprResult resolvedLHS = CheckPlaceholderExpr(lhs.get());
+    ExprResult resolvedLHS = CheckPlaceholderExpr(LHS.get());
     if (!resolvedLHS.isUsable()) return ExprError();
-    lhs = move(resolvedLHS);
+    LHS = move(resolvedLHS);
 
-    ExprResult resolvedRHS = CheckPlaceholderExpr(rhs.get());
+    ExprResult resolvedRHS = CheckPlaceholderExpr(RHS.get());
     if (!resolvedRHS.isUsable()) return ExprError();
-    rhs = move(resolvedRHS);
+    RHS = move(resolvedRHS);
   }
 
   if (Opc == BO_Mul || Opc == BO_Div || Opc == BO_Rem || Opc == BO_Add ||
@@ -7713,127 +7713,127 @@ ExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
       Opc == BO_DivAssign || Opc == BO_AddAssign || Opc == BO_SubAssign ||
       Opc == BO_RemAssign || Opc == BO_ShlAssign || Opc == BO_ShrAssign ||
       Opc == BO_AndAssign || Opc == BO_OrAssign || Opc == BO_XorAssign)
-    checkArithmeticNull(*this, lhs, rhs, OpLoc, /*isCompare=*/false);
+    checkArithmeticNull(*this, LHS, RHS, OpLoc, /*isCompare=*/false);
   else if (Opc == BO_LE || Opc == BO_LT || Opc == BO_GE || Opc == BO_GT ||
            Opc == BO_EQ || Opc == BO_NE)
-    checkArithmeticNull(*this, lhs, rhs, OpLoc, /*isCompare=*/true);
+    checkArithmeticNull(*this, LHS, RHS, OpLoc, /*isCompare=*/true);
 
   switch (Opc) {
   case BO_Assign:
-    ResultTy = CheckAssignmentOperands(lhs.get(), rhs, OpLoc, QualType());
+    ResultTy = CheckAssignmentOperands(LHS.get(), RHS, OpLoc, QualType());
     if (getLangOptions().CPlusPlus &&
-        lhs.get()->getObjectKind() != OK_ObjCProperty) {
-      VK = lhs.get()->getValueKind();
-      OK = lhs.get()->getObjectKind();
+        LHS.get()->getObjectKind() != OK_ObjCProperty) {
+      VK = LHS.get()->getValueKind();
+      OK = LHS.get()->getObjectKind();
     }
     if (!ResultTy.isNull())
-      DiagnoseSelfAssignment(*this, lhs.get(), rhs.get(), OpLoc);
+      DiagnoseSelfAssignment(*this, LHS.get(), RHS.get(), OpLoc);
     break;
   case BO_PtrMemD:
   case BO_PtrMemI:
-    ResultTy = CheckPointerToMemberOperands(lhs, rhs, VK, OpLoc,
+    ResultTy = CheckPointerToMemberOperands(LHS, RHS, VK, OpLoc,
                                             Opc == BO_PtrMemI);
     break;
   case BO_Mul:
   case BO_Div:
-    ResultTy = CheckMultiplyDivideOperands(lhs, rhs, OpLoc, false,
+    ResultTy = CheckMultiplyDivideOperands(LHS, RHS, OpLoc, false,
                                            Opc == BO_Div);
     break;
   case BO_Rem:
-    ResultTy = CheckRemainderOperands(lhs, rhs, OpLoc);
+    ResultTy = CheckRemainderOperands(LHS, RHS, OpLoc);
     break;
   case BO_Add:
-    ResultTy = CheckAdditionOperands(lhs, rhs, OpLoc);
+    ResultTy = CheckAdditionOperands(LHS, RHS, OpLoc);
     break;
   case BO_Sub:
-    ResultTy = CheckSubtractionOperands(lhs, rhs, OpLoc);
+    ResultTy = CheckSubtractionOperands(LHS, RHS, OpLoc);
     break;
   case BO_Shl:
   case BO_Shr:
-    ResultTy = CheckShiftOperands(lhs, rhs, OpLoc, Opc);
+    ResultTy = CheckShiftOperands(LHS, RHS, OpLoc, Opc);
     break;
   case BO_LE:
   case BO_LT:
   case BO_GE:
   case BO_GT:
-    ResultTy = CheckCompareOperands(lhs, rhs, OpLoc, Opc, true);
+    ResultTy = CheckCompareOperands(LHS, RHS, OpLoc, Opc, true);
     break;
   case BO_EQ:
   case BO_NE:
-    ResultTy = CheckCompareOperands(lhs, rhs, OpLoc, Opc, false);
+    ResultTy = CheckCompareOperands(LHS, RHS, OpLoc, Opc, false);
     break;
   case BO_And:
   case BO_Xor:
   case BO_Or:
-    ResultTy = CheckBitwiseOperands(lhs, rhs, OpLoc);
+    ResultTy = CheckBitwiseOperands(LHS, RHS, OpLoc);
     break;
   case BO_LAnd:
   case BO_LOr:
-    ResultTy = CheckLogicalOperands(lhs, rhs, OpLoc, Opc);
+    ResultTy = CheckLogicalOperands(LHS, RHS, OpLoc, Opc);
     break;
   case BO_MulAssign:
   case BO_DivAssign:
-    CompResultTy = CheckMultiplyDivideOperands(lhs, rhs, OpLoc, true,
+    CompResultTy = CheckMultiplyDivideOperands(LHS, RHS, OpLoc, true,
                                                Opc == BO_DivAssign);
     CompLHSTy = CompResultTy;
-    if (!CompResultTy.isNull() && !lhs.isInvalid() && !rhs.isInvalid())
-      ResultTy = CheckAssignmentOperands(lhs.get(), rhs, OpLoc, CompResultTy);
+    if (!CompResultTy.isNull() && !LHS.isInvalid() && !RHS.isInvalid())
+      ResultTy = CheckAssignmentOperands(LHS.get(), RHS, OpLoc, CompResultTy);
     break;
   case BO_RemAssign:
-    CompResultTy = CheckRemainderOperands(lhs, rhs, OpLoc, true);
+    CompResultTy = CheckRemainderOperands(LHS, RHS, OpLoc, true);
     CompLHSTy = CompResultTy;
-    if (!CompResultTy.isNull() && !lhs.isInvalid() && !rhs.isInvalid())
-      ResultTy = CheckAssignmentOperands(lhs.get(), rhs, OpLoc, CompResultTy);
+    if (!CompResultTy.isNull() && !LHS.isInvalid() && !RHS.isInvalid())
+      ResultTy = CheckAssignmentOperands(LHS.get(), RHS, OpLoc, CompResultTy);
     break;
   case BO_AddAssign:
-    CompResultTy = CheckAdditionOperands(lhs, rhs, OpLoc, &CompLHSTy);
-    if (!CompResultTy.isNull() && !lhs.isInvalid() && !rhs.isInvalid())
-      ResultTy = CheckAssignmentOperands(lhs.get(), rhs, OpLoc, CompResultTy);
+    CompResultTy = CheckAdditionOperands(LHS, RHS, OpLoc, &CompLHSTy);
+    if (!CompResultTy.isNull() && !LHS.isInvalid() && !RHS.isInvalid())
+      ResultTy = CheckAssignmentOperands(LHS.get(), RHS, OpLoc, CompResultTy);
     break;
   case BO_SubAssign:
-    CompResultTy = CheckSubtractionOperands(lhs, rhs, OpLoc, &CompLHSTy);
-    if (!CompResultTy.isNull() && !lhs.isInvalid() && !rhs.isInvalid())
-      ResultTy = CheckAssignmentOperands(lhs.get(), rhs, OpLoc, CompResultTy);
+    CompResultTy = CheckSubtractionOperands(LHS, RHS, OpLoc, &CompLHSTy);
+    if (!CompResultTy.isNull() && !LHS.isInvalid() && !RHS.isInvalid())
+      ResultTy = CheckAssignmentOperands(LHS.get(), RHS, OpLoc, CompResultTy);
     break;
   case BO_ShlAssign:
   case BO_ShrAssign:
-    CompResultTy = CheckShiftOperands(lhs, rhs, OpLoc, Opc, true);
+    CompResultTy = CheckShiftOperands(LHS, RHS, OpLoc, Opc, true);
     CompLHSTy = CompResultTy;
-    if (!CompResultTy.isNull() && !lhs.isInvalid() && !rhs.isInvalid())
-      ResultTy = CheckAssignmentOperands(lhs.get(), rhs, OpLoc, CompResultTy);
+    if (!CompResultTy.isNull() && !LHS.isInvalid() && !RHS.isInvalid())
+      ResultTy = CheckAssignmentOperands(LHS.get(), RHS, OpLoc, CompResultTy);
     break;
   case BO_AndAssign:
   case BO_XorAssign:
   case BO_OrAssign:
-    CompResultTy = CheckBitwiseOperands(lhs, rhs, OpLoc, true);
+    CompResultTy = CheckBitwiseOperands(LHS, RHS, OpLoc, true);
     CompLHSTy = CompResultTy;
-    if (!CompResultTy.isNull() && !lhs.isInvalid() && !rhs.isInvalid())
-      ResultTy = CheckAssignmentOperands(lhs.get(), rhs, OpLoc, CompResultTy);
+    if (!CompResultTy.isNull() && !LHS.isInvalid() && !RHS.isInvalid())
+      ResultTy = CheckAssignmentOperands(LHS.get(), RHS, OpLoc, CompResultTy);
     break;
   case BO_Comma:
-    ResultTy = CheckCommaOperands(*this, lhs, rhs, OpLoc);
-    if (getLangOptions().CPlusPlus && !rhs.isInvalid()) {
-      VK = rhs.get()->getValueKind();
-      OK = rhs.get()->getObjectKind();
+    ResultTy = CheckCommaOperands(*this, LHS, RHS, OpLoc);
+    if (getLangOptions().CPlusPlus && !RHS.isInvalid()) {
+      VK = RHS.get()->getValueKind();
+      OK = RHS.get()->getObjectKind();
     }
     break;
   }
-  if (ResultTy.isNull() || lhs.isInvalid() || rhs.isInvalid())
+  if (ResultTy.isNull() || LHS.isInvalid() || RHS.isInvalid())
     return ExprError();
 
   // Check for array bounds violations for both sides of the BinaryOperator
-  CheckArrayAccess(lhs.get());
-  CheckArrayAccess(rhs.get());
+  CheckArrayAccess(LHS.get());
+  CheckArrayAccess(RHS.get());
 
   if (CompResultTy.isNull())
-    return Owned(new (Context) BinaryOperator(lhs.take(), rhs.take(), Opc,
+    return Owned(new (Context) BinaryOperator(LHS.take(), RHS.take(), Opc,
                                               ResultTy, VK, OK, OpLoc));
-  if (getLangOptions().CPlusPlus && lhs.get()->getObjectKind() !=
+  if (getLangOptions().CPlusPlus && LHS.get()->getObjectKind() !=
       OK_ObjCProperty) {
     VK = VK_LValue;
-    OK = lhs.get()->getObjectKind();
+    OK = LHS.get()->getObjectKind();
   }
-  return Owned(new (Context) CompoundAssignOperator(lhs.take(), rhs.take(), Opc,
+  return Owned(new (Context) CompoundAssignOperator(LHS.take(), RHS.take(), Opc,
                                                     ResultTy, VK, OK, CompLHSTy,
                                                     CompResultTy, OpLoc));
 }
@@ -7843,44 +7843,46 @@ ExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
 /// comparison operators have higher precedence. The most typical example of
 /// such code is "flags & 0x0020 != 0", which is equivalent to "flags & 1".
 static void DiagnoseBitwisePrecedence(Sema &Self, BinaryOperatorKind Opc,
-                                      SourceLocation OpLoc,Expr *lhs,Expr *rhs){
+                                      SourceLocation OpLoc, Expr *LHSExpr,
+                                      Expr *RHSExpr) {
   typedef BinaryOperator BinOp;
-  BinOp::Opcode lhsopc = static_cast<BinOp::Opcode>(-1),
-                rhsopc = static_cast<BinOp::Opcode>(-1);
-  if (BinOp *BO = dyn_cast<BinOp>(lhs))
-    lhsopc = BO->getOpcode();
-  if (BinOp *BO = dyn_cast<BinOp>(rhs))
-    rhsopc = BO->getOpcode();
+  BinOp::Opcode LHSopc = static_cast<BinOp::Opcode>(-1),
+                RHSopc = static_cast<BinOp::Opcode>(-1);
+  if (BinOp *BO = dyn_cast<BinOp>(LHSExpr))
+    LHSopc = BO->getOpcode();
+  if (BinOp *BO = dyn_cast<BinOp>(RHSExpr))
+    RHSopc = BO->getOpcode();
 
   // Subs are not binary operators.
-  if (lhsopc == -1 && rhsopc == -1)
+  if (LHSopc == -1 && RHSopc == -1)
     return;
 
   // Bitwise operations are sometimes used as eager logical ops.
   // Don't diagnose this.
-  if ((BinOp::isComparisonOp(lhsopc) || BinOp::isBitwiseOp(lhsopc)) &&
-      (BinOp::isComparisonOp(rhsopc) || BinOp::isBitwiseOp(rhsopc)))
+  if ((BinOp::isComparisonOp(LHSopc) || BinOp::isBitwiseOp(LHSopc)) &&
+      (BinOp::isComparisonOp(RHSopc) || BinOp::isBitwiseOp(RHSopc)))
     return;
 
-  bool isLeftComp = BinOp::isComparisonOp(lhsopc);
-  bool isRightComp = BinOp::isComparisonOp(rhsopc);
+  bool isLeftComp = BinOp::isComparisonOp(LHSopc);
+  bool isRightComp = BinOp::isComparisonOp(RHSopc);
   if (!isLeftComp && !isRightComp) return;
 
-  SourceRange DiagRange = isLeftComp ? SourceRange(lhs->getLocStart(), OpLoc)
-                                     : SourceRange(OpLoc, rhs->getLocEnd());
-  std::string OpStr = isLeftComp ? BinOp::getOpcodeStr(lhsopc)
-                                 : BinOp::getOpcodeStr(rhsopc);
+  SourceRange DiagRange = isLeftComp ? SourceRange(LHSExpr->getLocStart(),
+                                                   OpLoc)
+                                     : SourceRange(OpLoc, RHSExpr->getLocEnd());
+  std::string OpStr = isLeftComp ? BinOp::getOpcodeStr(LHSopc)
+                                 : BinOp::getOpcodeStr(RHSopc);
   SourceRange ParensRange = isLeftComp ?
-      SourceRange(cast<BinOp>(lhs)->getRHS()->getLocStart(),
-                  rhs->getLocEnd())
-    : SourceRange(lhs->getLocStart(),
-                  cast<BinOp>(rhs)->getLHS()->getLocStart());
+      SourceRange(cast<BinOp>(LHSExpr)->getRHS()->getLocStart(),
+                  RHSExpr->getLocEnd())
+    : SourceRange(LHSExpr->getLocStart(),
+                  cast<BinOp>(RHSExpr)->getLHS()->getLocStart());
 
   Self.Diag(OpLoc, diag::warn_precedence_bitwise_rel)
     << DiagRange << BinOp::getOpcodeStr(Opc) << OpStr;
   SuggestParentheses(Self, OpLoc,
     Self.PDiag(diag::note_precedence_bitwise_silence) << OpStr,
-    rhs->getSourceRange());
+    RHSExpr->getSourceRange());
   SuggestParentheses(Self, OpLoc,
     Self.PDiag(diag::note_precedence_bitwise_first) << BinOp::getOpcodeStr(Opc),
     ParensRange);
