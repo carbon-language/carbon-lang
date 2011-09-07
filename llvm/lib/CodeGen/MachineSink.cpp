@@ -382,6 +382,25 @@ static bool AvoidsSinking(MachineInstr *MI, MachineRegisterInfo *MRI) {
   return MI->isInsertSubreg() || MI->isSubregToReg() || MI->isRegSequence();
 }
 
+/// collectDebgValues - Scan instructions following MI and collect any 
+/// matching DBG_VALUEs.
+static void collectDebugValues(MachineInstr *MI, 
+                               SmallVector<MachineInstr *, 2> & DbgValues) {
+  DbgValues.clear();
+  if (!MI->getOperand(0).isReg())
+    return;
+
+  MachineBasicBlock::iterator DI = MI; ++DI;
+  for (MachineBasicBlock::iterator DE = MI->getParent()->end();
+       DI != DE; ++DI) {
+    if (!DI->isDebugValue())
+      return;
+    if (DI->getOperand(0).isReg() &&
+        DI->getOperand(0).getReg() == MI->getOperand(0).getReg())
+      DbgValues.push_back(DI);
+  }
+}
+
 /// SinkInstruction - Determine whether it is safe to sink the specified machine
 /// instruction out of its current block into a successor.
 bool MachineSinking::SinkInstruction(MachineInstr *MI, bool &SawStore) {
@@ -598,9 +617,21 @@ bool MachineSinking::SinkInstruction(MachineInstr *MI, bool &SawStore) {
   while (InsertPos != SuccToSinkTo->end() && InsertPos->isPHI())
     ++InsertPos;
 
+  // collect matching debug values.
+  SmallVector<MachineInstr *, 2> DbgValuesToSink;
+  collectDebugValues(MI, DbgValuesToSink);
+
   // Move the instruction.
   SuccToSinkTo->splice(InsertPos, ParentBlock, MI,
                        ++MachineBasicBlock::iterator(MI));
+
+  // Move debug values.
+  for (SmallVector<MachineInstr *, 2>::iterator DBI = DbgValuesToSink.begin(),
+         DBE = DbgValuesToSink.end(); DBI != DBE; ++DBI) {
+    MachineInstr *DbgMI = *DBI;
+    SuccToSinkTo->splice(InsertPos, ParentBlock,  DbgMI,
+                         ++MachineBasicBlock::iterator(DbgMI));
+  }
 
   // Conservatively, clear any kill flags, since it's possible that they are no
   // longer correct.
