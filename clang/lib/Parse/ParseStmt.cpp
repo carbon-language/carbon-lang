@@ -1856,7 +1856,9 @@ Decl *Parser::ParseFunctionTryBlock(Decl *Decl, ParseScope &BodyScope) {
   // Constructor initializer list?
   if (Tok.is(tok::colon))
     ParseConstructorInitializer(Decl);
-
+  else
+    Actions.ActOnDefaultCtorInitializers(Decl);
+  
   if (PP.isCodeCompletionEnabled()) {
     if (trySkippingFunctionBodyForCodeCompletion()) {
       BodyScope.Exit();
