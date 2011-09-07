@@ -144,8 +144,6 @@ void Preprocessor::Initialize(const TargetInfo &Target) {
   // We haven't read anything from the external source.
   ReadMacrosFromExternalSource = false;
   
-  LexDepth = 0;
-  
   // "Poison" __VA_ARGS__, which can only appear in the expansion of a macro.
   // This gets unpoisoned where it is allowed.
   (Ident__VA_ARGS__ = getIdentifierInfo("__VA_ARGS__"))->setIsPoisoned();
@@ -524,27 +522,44 @@ void Preprocessor::HandleIdentifier(Token &Identifier) {
   // like "#define TY typeof", "TY(1) x".
   if (II.isExtensionToken() && !DisableMacroExpansion)
     Diag(Identifier, diag::ext_token_used);
+  
+  // If this is the '__import_module__' keyword, note that the next token
+  // indicates a module name.
+  if (II.getTokenID() == tok::kw___import_module__ &&
+      !InMacroArgs && !DisableMacroExpansion) {
+    ModuleImportLoc = Identifier.getLocation();
+    CurLexerKind = CLK_LexAfterModuleImport;
+  }
 }
 
-void Preprocessor::HandleModuleImport(Token &Import) {
+/// \brief Lex a token following the __import_module__ keyword.
+void Preprocessor::LexAfterModuleImport(Token &Result) {
+  // Figure out what kind of lexer we actually have.
+  if (CurLexer)
+    CurLexerKind = CLK_Lexer;
+  else if (CurPTHLexer)
+    CurLexerKind = CLK_PTHLexer;
+  else if (CurTokenLexer)
+    CurLexerKind = CLK_TokenLexer;
+  else 
+    CurLexerKind = CLK_CachingLexer;
+  
+  // Lex the next token.
+  Lex(Result);
+
   // The token sequence 
   //
   //   __import_module__ identifier
   //
-  // indicates a module import directive. We load the module and then 
-  // leave the token sequence for the parser.
-  Token ModuleNameTok = LookAhead(0);
-  if (ModuleNameTok.getKind() != tok::identifier)
+  // indicates a module import directive. We already saw the __import_module__
+  // keyword, so now we're looking for the identifier.
+  if (Result.getKind() != tok::identifier)
     return;
   
-  (void)TheModuleLoader.loadModule(Import.getLocation(),
-                                   *ModuleNameTok.getIdentifierInfo(), 
-                                   ModuleNameTok.getLocation());
-  
-  // FIXME: Transmogrify __import_module__ into some kind of AST-only 
-  // __import_module__ that is not recognized by the preprocessor but is 
-  // recognized by the parser. It would also be useful to stash the ModuleKey
-  // somewhere, so we don't try to load the module twice.
+  // Load the module.
+  (void)TheModuleLoader.loadModule(ModuleImportLoc,
+                                   *Result.getIdentifierInfo(), 
+                                   Result.getLocation());
 }
 
 void Preprocessor::AddCommentHandler(CommentHandler *Handler) {

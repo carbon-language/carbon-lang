@@ -113,7 +113,9 @@ void Preprocessor::EnterSourceFileWithLexer(Lexer *TheLexer,
   CurLexer.reset(TheLexer);
   CurPPLexer = TheLexer;
   CurDirLookup = CurDir;
-
+  if (CurLexerKind != CLK_LexAfterModuleImport)
+    CurLexerKind = CLK_Lexer;
+  
   // Notify the client, if desired, that we are in a new source file.
   if (Callbacks && !CurLexer->Is_PragmaLexer) {
     SrcMgr::CharacteristicKind FileType =
@@ -135,7 +137,9 @@ void Preprocessor::EnterSourceFileWithPTH(PTHLexer *PL,
   CurDirLookup = CurDir;
   CurPTHLexer.reset(PL);
   CurPPLexer = CurPTHLexer.get();
-
+  if (CurLexerKind != CLK_LexAfterModuleImport)
+    CurLexerKind = CLK_PTHLexer;
+  
   // Notify the client, if desired, that we are in a new source file.
   if (Callbacks) {
     FileID FID = CurPPLexer->getFileID();
@@ -159,6 +163,8 @@ void Preprocessor::EnterMacro(Token &Tok, SourceLocation ILEnd,
     CurTokenLexer.reset(TokenLexerCache[--NumCachedTokenLexers]);
     CurTokenLexer->Init(Tok, ILEnd, Args);
   }
+  if (CurLexerKind != CLK_LexAfterModuleImport)
+    CurLexerKind = CLK_TokenLexer;
 }
 
 /// EnterTokenStream - Add a "macro" context to the top of the include stack,
@@ -188,6 +194,8 @@ void Preprocessor::EnterTokenStream(const Token *Toks, unsigned NumToks,
     CurTokenLexer.reset(TokenLexerCache[--NumCachedTokenLexers]);
     CurTokenLexer->Init(Toks, NumToks, DisableMacroExpansion, OwnsTokens);
   }
+  if (CurLexerKind != CLK_LexAfterModuleImport)
+    CurLexerKind = CLK_TokenLexer;
 }
 
 /// HandleEndOfFile - This callback is invoked when the lexer hits the end of

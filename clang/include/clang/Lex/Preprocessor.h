@@ -119,9 +119,6 @@ class Preprocessor : public llvm::RefCountedBase<Preprocessor> {
   /// \brief Whether we have already loaded macros from the external source.
   mutable bool ReadMacrosFromExternalSource : 1;
 
-  /// \brief Tracks the depth of Lex() Calls.
-  unsigned LexDepth;
-  
   /// Identifiers - This is mapping/lookup information for all identifiers in
   /// the program, including program keywords.
   mutable IdentifierTable Identifiers;
@@ -164,6 +161,10 @@ class Preprocessor : public llvm::RefCountedBase<Preprocessor> {
   /// for preprocessing.
   SourceLocation CodeCompletionFileLoc;
 
+  /// \brief The source location of the __import_module__ keyword we just
+  /// lexed, if any.
+  SourceLocation ModuleImportLoc;
+  
   /// \brief True if we hit the code-completion point.
   bool CodeCompletionReached;
 
@@ -187,7 +188,7 @@ class Preprocessor : public llvm::RefCountedBase<Preprocessor> {
   ///  if not expanding a macro.  This is an alias for either CurLexer or
   ///  CurPTHLexer.
   PreprocessorLexer *CurPPLexer;
-
+    
   /// CurLookup - The DirectoryLookup structure used to find the current
   /// FileEntry, if CurLexer is non-null and if applicable.  This allows us to
   /// implement #include_next and find directory-specific properties.
@@ -197,20 +198,31 @@ class Preprocessor : public llvm::RefCountedBase<Preprocessor> {
   /// expanding a macro.  One of CurLexer and CurTokenLexer must be null.
   llvm::OwningPtr<TokenLexer> CurTokenLexer;
 
+  /// \brief The kind of lexer we're currently working with.
+  enum CurLexerKind { 
+    CLK_Lexer, 
+    CLK_PTHLexer, 
+    CLK_TokenLexer, 
+    CLK_CachingLexer,
+    CLK_LexAfterModuleImport
+  } CurLexerKind;
+
   /// IncludeMacroStack - This keeps track of the stack of files currently
   /// #included, and macros currently being expanded from, not counting
   /// CurLexer/CurTokenLexer.
   struct IncludeStackInfo {
+    enum CurLexerKind     CurLexerKind;
     Lexer                 *TheLexer;
     PTHLexer              *ThePTHLexer;
     PreprocessorLexer     *ThePPLexer;
     TokenLexer            *TheTokenLexer;
     const DirectoryLookup *TheDirLookup;
 
-    IncludeStackInfo(Lexer *L, PTHLexer* P, PreprocessorLexer* PPL,
+    IncludeStackInfo(enum CurLexerKind K, Lexer *L, PTHLexer* P, 
+                     PreprocessorLexer* PPL,
                      TokenLexer* TL, const DirectoryLookup *D)
-      : TheLexer(L), ThePTHLexer(P), ThePPLexer(PPL), TheTokenLexer(TL),
-        TheDirLookup(D) {}
+      : CurLexerKind(K), TheLexer(L), ThePTHLexer(P), ThePPLexer(PPL), 
+        TheTokenLexer(TL), TheDirLookup(D) {}
   };
   std::vector<IncludeStackInfo> IncludeMacroStack;
 
@@ -555,22 +567,17 @@ public:
   /// Lex - To lex a token from the preprocessor, just pull a token from the
   /// current lexer or macro object.
   void Lex(Token &Result) {
-    ++LexDepth;
-    if (CurLexer)
-      CurLexer->Lex(Result);
-    else if (CurPTHLexer)
-      CurPTHLexer->Lex(Result);
-    else if (CurTokenLexer)
-      CurTokenLexer->Lex(Result);
-    else
-      CachingLex(Result);
-    --LexDepth;
-    
-    // If we have the __import_module__ keyword, handle the module import now.
-    if (Result.getKind() == tok::kw___import_module__ && LexDepth == 0)
-      HandleModuleImport(Result);
+    switch (CurLexerKind) {
+    case CLK_Lexer: CurLexer->Lex(Result); break;
+    case CLK_PTHLexer: CurPTHLexer->Lex(Result); break;
+    case CLK_TokenLexer: CurTokenLexer->Lex(Result); break;
+    case CLK_CachingLexer: CachingLex(Result); break;
+    case CLK_LexAfterModuleImport: LexAfterModuleImport(Result); break;
+    }
   }
 
+  void LexAfterModuleImport(Token &Result);
+  
   /// LexNonComment - Lex a token.  If it's a comment, keep lexing until we get
   /// something not a comment.  This is useful in -E -C mode where comments
   /// would foul up preprocessor directive handling.
@@ -997,7 +1004,8 @@ public:
 private:
 
   void PushIncludeMacroStack() {
-    IncludeMacroStack.push_back(IncludeStackInfo(CurLexer.take(),
+    IncludeMacroStack.push_back(IncludeStackInfo(CurLexerKind,
+                                                 CurLexer.take(),
                                                  CurPTHLexer.take(),
                                                  CurPPLexer,
                                                  CurTokenLexer.take(),
@@ -1011,6 +1019,7 @@ private:
     CurPPLexer = IncludeMacroStack.back().ThePPLexer;
     CurTokenLexer.reset(IncludeMacroStack.back().TheTokenLexer);
     CurDirLookup  = IncludeMacroStack.back().TheDirLookup;
+    CurLexerKind = IncludeMacroStack.back().CurLexerKind;
     IncludeMacroStack.pop_back();
   }
 
@@ -1065,9 +1074,6 @@ private:
   /// the macro should not be expanded return true, otherwise return false.
   bool HandleMacroExpandedIdentifier(Token &Tok, MacroInfo *MI);
 
-  /// \brief Handle a module import directive.
-  void HandleModuleImport(Token &Import);
-  
   /// \brief Cache macro expanded tokens for TokenLexers.
   //
   /// Works like a stack; a TokenLexer adds the macro expanded tokens that is
