@@ -143,7 +143,7 @@
 # CHECK:	vcmpe.f64	d8, #0
 0xb5 0xee 0xc0 0x8b
 
-# CHECK:	stmdb.w	sp, {r0, r2, r3, r8, r11, lr}
+# CHECK:	stmdb	sp, {r0, r2, r3, r8, r11, lr}
 0x0d 0xe9 0x0d 0x49
 
 # CHECK:	stm	r5!, {r0, r1, r2, r3, r4}
