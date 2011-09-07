@@ -123,6 +123,16 @@ def t2adrlabel : Operand<i32> {
 }
 
 
+// t2addrmode_posimm8  := reg + imm8
+def MemPosImm8OffsetAsmOperand : AsmOperandClass {let Name="MemPosImm8Offset";}
+def t2addrmode_posimm8 : Operand<i32> {
+  let PrintMethod = "printT2AddrModeImm8Operand";
+  let EncoderMethod = "getT2AddrModeImm8OpValue";
+  let DecoderMethod = "DecodeT2AddrModeImm8";
+  let ParserMatchClass = MemPosImm8OffsetAsmOperand;
+  let MIOperandInfo = (ops GPR:$base, i32imm:$offsimm);
+}
+
 // t2addrmode_negimm8  := reg - imm8
 def MemNegImm8OffsetAsmOperand : AsmOperandClass {let Name="MemNegImm8Offset";}
 def t2addrmode_negimm8 : Operand<i32>,
@@ -1291,26 +1301,24 @@ def t2LDRSH_POST : T2Iidxldst<1, 0b01, 1, 0, (outs GPR:$Rt, GPR:$Rn),
                             []>;
 } // mayLoad = 1, neverHasSideEffects = 1
 
-// LDRT, LDRBT, LDRHT, LDRSBT, LDRSHT all have offset mode (PUW=0b110) and are
-// for disassembly only.
+// LDRT, LDRBT, LDRHT, LDRSBT, LDRSHT all have offset mode (PUW=0b110).
 // Ref: A8.6.57 LDR (immediate, Thumb) Encoding T4
 class T2IldT<bit signed, bits<2> type, string opc, InstrItinClass ii>
-  : T2Ii8<(outs rGPR:$Rt), (ins t2addrmode_imm8:$addr), ii, opc,
+  : T2Ii8<(outs rGPR:$Rt), (ins t2addrmode_posimm8:$addr), ii, opc,
           "\t$Rt, $addr", []> {
+  bits<4> Rt;
+  bits<13> addr;
   let Inst{31-27} = 0b11111;
   let Inst{26-25} = 0b00;
   let Inst{24} = signed;
   let Inst{23} = 0;
   let Inst{22-21} = type;
   let Inst{20} = 1; // load
+  let Inst{19-16} = addr{12-9};
+  let Inst{15-12} = Rt;
   let Inst{11} = 1;
   let Inst{10-8} = 0b110; // PUW.
-
-  bits<4> Rt;
-  bits<13> addr;
-  let Inst{15-12} = Rt;
-  let Inst{19-16} = addr{12-9};
-  let Inst{7-0}   = addr{7-0};
+  let Inst{7-0} = addr{7-0};
 }
 
 def t2LDRT   : T2IldT<0, 0b10, "ldrt", IIC_iLoad_i>;

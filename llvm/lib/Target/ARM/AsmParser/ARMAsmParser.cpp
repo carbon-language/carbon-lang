@@ -742,6 +742,14 @@ public:
     int64_t Val = Mem.OffsetImm->getValue();
     return Val > -256 && Val < 256;
   }
+  bool isMemPosImm8Offset() const {
+    if (Kind != Memory || Mem.OffsetRegNum != 0)
+      return false;
+    // Immediate offset in range [0, 255].
+    if (!Mem.OffsetImm) return true;
+    int64_t Val = Mem.OffsetImm->getValue();
+    return Val >= 0 && Val < 256;
+  }
   bool isMemNegImm8Offset() const {
     if (Kind != Memory || Mem.OffsetRegNum != 0)
       return false;
@@ -1108,11 +1116,12 @@ public:
     Inst.addOperand(MCOperand::CreateImm(Val));
   }
 
+  void addMemPosImm8OffsetOperands(MCInst &Inst, unsigned N) const {
+    addMemImm8OffsetOperands(Inst, N);
+  }
+
   void addMemNegImm8OffsetOperands(MCInst &Inst, unsigned N) const {
-    assert(N == 2 && "Invalid number of operands!");
-    int64_t Val = Mem.OffsetImm ? Mem.OffsetImm->getValue() : 0;
-    Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
-    Inst.addOperand(MCOperand::CreateImm(Val));
+    addMemImm8OffsetOperands(Inst, N);
   }
 
   void addMemUImm12OffsetOperands(MCInst &Inst, unsigned N) const {
