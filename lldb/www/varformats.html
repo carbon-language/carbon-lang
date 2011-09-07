@@ -21,34 +21,27 @@
             
             <p>Usually, when you type <code>frame variable</code> or
                 run some <code>expression</code> LLDB will
-                automatically choose a format to display your results on
+                automatically choose the way to display your results on
                 a per-type basis, as in the following example:</p>
             
-            <p> <code> <b>(lldb)</b> frame variable -T sp<br>
-                  (SimpleWithPointers) sp = {<br>
-                  &nbsp;&nbsp;&nbsp;&nbsp;(int *) x = 0x0000000100100120<br>
-                  &nbsp;&nbsp;&nbsp;&nbsp;(float *) y =
-                  0x0000000100100130<br>
-                  &nbsp;&nbsp;&nbsp;&nbsp;(char *) z =
-                  0x0000000100100140 "3"<br>
-                  }<br>
+            <p> <code> <b>(lldb)</b> frame variable<br>
+                  (uint8_t) x = 'a'<br>
+                  (intptr_t) y = 124752287<br>
                 </code> </p>
             
             <p>However, in certain cases, you may want to associate a
-                different format to the display for certain datatypes.
+                different style to the display for certain datatypes.
                 To do so, you need to give hints to the debugger as to
-                how datatypes should be displayed.<br>
+                how variables should be displayed.<br>
                 A new <b>type</b> command has been introduced in LLDB
                 which allows to do just that.<br>
               </p>
             
-            <p>Using it you can obtain a format like this one for <code>sp</code>,
-                instead of the default shown above: </p>
+            <p>Using it you can change your visualization to look like this: </p>
             
-            <p> <code> <b>(lldb)</b> frame variable sp<br>
-                  (SimpleWithPointers) sp =
-                  (x=0x0000000100100120 -&gt; -1, y=0x0000000100100130
-                  -&gt; -2, z="3")<br>
+            <p> <code> <b>(lldb)</b> frame variable<br>
+                (uint8_t) x = chr='a' dec=65 hex=0x41<br>
+                (intptr_t) y = 0x76f919f<br>
                 </code> </p>
             
             <p>There are several features related to data visualization: <span
@@ -100,13 +93,13 @@
           <p>This is done by typing
                 <table class="stats" width="620" cellspacing="0">
                         <td class="content">
-                            <b>(lldb)</b> type format add -f hex int
+                            <b>(lldb)</b> type format add --format hex int
                         </td>
                 <table>
           at the LLDB command line.</p>
                   
-              <p>The <code>-f</code> option accepts a <a
-                  href="#formatstable">format name</a>, and a list of
+              <p>The <code>--format</code> (which you can shorten to <code>-f</code>) option accepts a <a
+                  href="#formatstable">format name</a>. Then, you provide one or more
                 types to which you want the new format applied.</p>
                 
               <p>A frequent scenario is that your program has a <code>typedef</code>
@@ -125,20 +118,28 @@
                 </code></p>
                 
               <p>and you want to show all <code>A</code>'s as hex, all
-                <code>C'</code>s as pointers and leave the defaults
+                <code>C'</code>s as byte arrays and leave the defaults
                 untouched for other types.</p>
                 
               <p>If you simply type <br>
                 <table class="stats" width="620" cellspacing="0">
                         <td class="content">
                             <b>(lldb)</b> type format add -f hex A<br>
-                            <b>(lldb)</b> type format add -f pointer C
+                            <b>(lldb)</b> type format add -f uint8_t[] C
                         </td>
                 <table>
               <br>           
               values of type <code>B</code> will be shown as hex
-                and values of type <code>D</code> as pointers.</p>
+                and values of type <code>D</code> as byte arrays, as in:</p>
                 
+              <p> <code>
+                  <b>(lldb)</b> frame variable -T<br/>
+				(A) a = 0x00000001<br/>
+				(B) b = 0x00000002<br/>
+				(C) c = {0x03 0x00 0x00 0x00}<br/>
+				(D) d = {0x04 0x00 0x00 0x00}<br/>
+			</code> </p>
+
               <p>This is because by default LLDB <i>cascades</i>
                 formats through typedef chains. In order to avoid that
                 you can use the option <code>-C no</code> to prevent
@@ -147,12 +148,21 @@
                 <table class="stats" width="620" cellspacing="0">
                         <td class="content">
                             <b>(lldb)</b> type format add -C no -f hex A<br>
-                            <b>(lldb)</b> type format add -C no -f pointer C
+                            <b>(lldb)</b> type format add -C no -f uint8_t[] C
                         </td>
                 <table>
-                  
+	
+	              <p>which provides the desired output:</p>                  
+	              <p> <code>
+	                  <b>(lldb)</b> frame variable -T<br/>
+					(A) a = 0x00000001<br/>
+					(B) b = 2<br/>
+					(C) c = {0x03 0x00 0x00 0x00}<br/>
+					(D) d = 4<br/>
+					</code> </p>
+
               <p>Two additional options that you will want to look at
-                are <code>-p</code> and <code>-r</code>. These two
+                are <code>--skip-pointers</code> (<code>-p</code>) and <code>--skip-references</code> (<code>-r</code>). These two
                 options prevent LLDB from applying a format for type <code>T</code>
                 to values of type <code>T*</code> and <code>T&amp;</code>
                 respectively.</p>
@@ -168,15 +178,22 @@
                   (int) *pointer = {1.53302e-42}<br>
                 </code> </p>
                 
-              <p>As the previous example highlights, you will most
-                probably want to use <code>-p</code> for your formats.</p>
+              <p>While they can be applied to pointers and references, formats will make no attempt
+	             to dereference the pointer and extract the value before applying the format, which means you
+	             are effectively formatting the address stored in the pointer rather than the pointee value.
+	             For this reason, you may want to use the -p option when defining formats.</p>
 
               <p>If you need to delete a custom format simply type <code>type
                   format delete</code> followed by the name of the type
-                to which the format applies. To delete ALL formats, use
-                <code>type format clear</code>. To see all the formats
-                defined, type <code>type format list</code>.<br>
+                to which the format applies.Even if you
+                defined the same format for multiple types on the same command,
+                <code>type format delete</code> will only remove the format for
+                the type name passed as argument.<br>
               </p>
+              <p>
+				 To delete ALL formats, use
+                <code>type format clear</code>. To see all the formats
+                defined, use <code>type format list</code>.</p>
               
               <p>If all you need to do, however, is display one variable
                 in a custom format, while leaving the others of the same
@@ -392,9 +409,9 @@
               <p> <i>before adding a summary...</i><br>
                 <code> <b>(lldb)</b> frame variable -T one<br>
                   (i_am_cool) one = {<br>
-                  &nbsp;&nbsp;&nbsp;&nbsp;(int) integer = 3<br>
-                  &nbsp;&nbsp;&nbsp;&nbsp;(float) floating = 3.14159<br>
-                  &nbsp;&nbsp;&nbsp;&nbsp;(char) character = 'E'<br>
+                  &nbsp;&nbsp;&nbsp;&nbsp;(int) x = 3<br>
+                  &nbsp;&nbsp;&nbsp;&nbsp;(float) y = 3.14159<br>
+                  &nbsp;&nbsp;&nbsp;&nbsp;(char) z = 'E'<br>
                   }<br>
                 </code> <br>
                 <i>after adding a summary...</i><br>
@@ -403,13 +420,13 @@
                 </code> </p>
                 
             <p>There are two ways to use type summaries: the first one is to bind a <i>
-            summary string</i> to the datatype; the second is to bind a Python script to the
-            datatype. Both options are enabled by the <code>type summary add</code>
+            summary string</i> to the type; the second is to write a Python script that returns
+            the string to be used as summary. Both options are enabled by the <code>type summary add</code>
                 command.</p>
               <p>The command to obtain the output shown in the example is:</p>
                 <table class="stats" width="620" cellspacing="0">
                         <td class="content">
-                            <b>(lldb)</b> type summary add --summary-string "int = ${var.integer}, float = ${var.floating}, char = ${var.character%u}" i_am_cool
+                            <b>(lldb)</b> type summary add --summary-string "int = ${var.x}, float = ${var.y}, char = ${var.z%u}" i_am_cool
                         </td>
                 <table>
                 
@@ -421,36 +438,34 @@
           <div class="post">
             <h1 class="postheader">Summary Strings</h1>
             <div class="postcontent">
-              <p>While you may already have guessed a lot about the format of 
-                summary strings from the above example, a detailed description
-                of their format follows.</p>
+              <p>Summary strings are written using a simple control language, exemplified by the snippet above.
+	             A summary string contains a sequence of tokens that are processed by LLDB to generate the summary.</p>
                 
                 <p>Summary strings can contain plain text, control characters and
-                special symbols that have access to information about
+                special variables that have access to information about
                 the current object and the overall program state.</p>
-              <p>Normal characters are any text that doesn't contain a <code><b>'{'</b></code>,
+              <p>Plain text is any sequence of characters that doesn't contain a <code><b>'{'</b></code>,
                 <code><b>'}'</b></code>, <code><b>'$'</b></code>, or <code><b>'\'</b></code>
-                character.</p>
-              <p>Variable names are found in between a <code><b>"${"</b></code>
+                character, which are the syntax control characters.</p>
+              <p>The special variables are found in between a <code><b>"${"</b></code>
                 prefix, and end with a <code><b>"}"</b></code> suffix. Variables can be a simple name
                 or they can refer to complex objects that have subitems themselves.
                 In other words, a variable looks like <code>"<b>${object}</b>"</code> or 
 				<code>"<b>${object.child.otherchild}</b>"</code>. A variable can also be prefixed or
 				suffixed with other symbols meant to change the way its value is handled. An example is
 				<code>"<b>${*var.int_pointer[0-3]}</b>".</code></p>
-              <p>Basically, all the variables described in <a
+              <p>Basically, the syntax is the same one described <a
                   href="formats.html">Frame and Thread Formatting</a>
-                are accepted. Also acceptable are the control characters
-                and scoping features described in that page.
-                Additionally, <code>${var</code> and <code>${*var</code>
-                become acceptable symbols in this scenario. These special symbols
-				are used to refer to the variable that a summary is being created for.</p>
+                are accepted.
+                Beyond what's described there, additional symbols have become available
+                in the syntax for summary strings. The main of them is <code>${var</code>,
+	            which is used refer to the variable that a summary is being created for.</p>
               <p>The simplest thing you can do is grab a member variable
                 of a class or structure by typing its <i>expression
                   path</i>. In the previous example, the expression path
-                for the floating member is simply <code>.floating</code>.
-                Thus, to ask the summary string to display <code>floating</code>
-                you would type <code>${var.floating}</code>.</p>
+                for the field <code>float y</code> is simply <code>.y</code>.
+                Thus, to ask the summary string to display <code>y</code>
+                you would type <code>${var.y}</code>.</p>
               <p>If you have code like the following: <br>
                 <code> struct A {<br>
                   &nbsp;&nbsp;&nbsp;&nbsp;int x;<br>
@@ -466,8 +481,8 @@
                 type <code>B</code> would be <code>.x.y</code> and you
                 would type <code>${var.x.y}</code> to display it in a
                 summary string for type <code>B</code>. </p>
-              <p>By default, summary strings work for both type <code>T</code> and
-				type <code>T*</code> (there is an option to prevent this if you need to).
+              <p>By default, a summary defined for type <code>T</code>, also works for types
+				<code>T*</code> and <code>T&amp;</code> (you can disable this behavior if desired).
 				For this reason, expression paths do not differentiate between <code>.</code>
                 and <code>-&gt;</code>, and the above expression path <code>.x.y</code>
                 would be just as good if you were displaying a <code>B*</code>,
@@ -553,67 +568,49 @@
                 tells LLDB not to look for a summary string, but instead
                 to just print a listing of all the object's children on
                 one line.</p>
-                <p> As an example, given a type <code>Couple</code>:
+                <p> As an example, given a type <code>pair</code>:
 					<code> <br>
-	                  <b>(lldb)</b> frame variable --show-types a_couple<br>
-	                  (Couple) a_couple = {<br>
-	                  &nbsp;&nbsp;&nbsp;&nbsp;(SimpleWithPointers) sp = {<br>
-	                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(int *) x = 0x00000001001000b0<br>
-	                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(float *) y = 0x00000001001000c0<br>
-	                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(char *) z = 0x00000001001000d0 "X"<br>
-	                  &nbsp;&nbsp;&nbsp;&nbsp;}<br>
-	                  &nbsp;&nbsp;&nbsp;&nbsp;(Simple *) s = 0x00000001001000e0<br>
+	                  <b>(lldb)</b> frame variable --show-types a_pair<br>
+	                  (pair) a_pair = {<br>
+	                  &nbsp;&nbsp;&nbsp;&nbsp;(int) first = 1;<br/>
+	                  &nbsp;&nbsp;&nbsp;&nbsp;(int) second = 2;<br/>
 	                  }<br>
 	                  </code><br>
 	                  If one types the following commands:
                 <table class="stats" width="620" cellspacing="0">
                         <td class="content">
-                            <b>(lldb)</b> type summary add --summary-string "int = ${*var.sp.x},
-                  float = ${*var.sp.y}, char = ${*var.sp.z%u}, Simple =
-                  ${var.s}" Couple<br>
-                        	<b>(lldb)</b> type summary add -c Simple<br>
+                        	<b>(lldb)</b> type summary add --inline-children pair<br>
                         </td>
                 <table>
 					the output becomes: <br><code>
 
-	                  <b>(lldb)</b> frame variable a_couple<br>
-	                  (Couple) a_couple = int = 9, float = 9.99, char = 88, Simple
-	                  = (x=9, y=9.99, z='X')<br>
+	                  <b>(lldb)</b> frame variable a_pair<br>
+	                  (pair) a_pair = (first=1, second=2)<br>
 	                </code> </p>
-				<p>Using the above summary for type <code>Couple</code>, without providing a summary for type <code>Simple</code>
-					would lead LLDB to display the address of the Simple object, as in:
-					<br><code>
-
-	                  <b>(lldb)</b> frame variable a_couple<br>
-	                  (Couple) a_couple = int = 9, float = 9.99, char = 88, Simple
-	                  = Simple @ 0x00007fff5fbff940<br>
-	                </code> <br/>
-				This happens because <code>Simple</code> is an aggregate type, so it has no value of its own to display,
-				but it has no summary defined. Thus, LLDB picks a reasonable default summary and displays it. If you want to reproduce
-				that summary, the summary string to use is <code>${var%T} @ ${var%L}</code>.
-					</p>
             </div>
           </div>
           <div class="post">
             <h1 class="postheader">Bitfields and array syntax</h1>
             <div class="postcontent">
               <p>Sometimes, a basic type's value actually represents
-                several different values packed together in a bitfield.
+                several different values packed together in a bitfield.<br/>
                 With the classical view, there is no way to look at
                 them. Hexadecimal display can help, but if the bits
-                actually span byte boundaries, the help is limited.
+                actually span nibble boundaries, the help is limited.<br/>
                 Binary view would show it all without ambiguity, but is
                 often too detailed and hard to read for real-life
-                scenarios. To cope with the issue, LLDB supports native
+                scenarios.
+				<p>
+				To cope with the issue, LLDB supports native
                 bitfield formatting in summary strings. If your
                 expression paths leads to a so-called <i>scalar type</i>
                 (the usual int, float, char, double, short, long, long
                 long, double, long double and unsigned variants), you
                 can ask LLDB to only grab some bits out of the value and
-                display them in any format you like. The syntax is
-                similar to that used for arrays, just you can also give
-                a pair of indices separated by a <code>-</code>. <br>
-                e.g. <br>
+                display them in any format you like. If you only need one bit
+                you can use the <code>[</code><i>n</i><code>]</code>, just like
+                indexing an array. To extract multiple bits, you can use
+                a slice-like syntax: <code>[</code><i>n</i>-<i>m</i><code>]</code>, e.g. <br><p>
                 <code> <b>(lldb)</b> frame variable float_point<br>
                   (float) float_point = -3.14159<br> </code>
                     <table class="stats" width="620" cellspacing="0">
@@ -622,7 +619,7 @@
                   Exponent: ${var[30-23]%x} Mantissa: ${var[0-22]%u}"
                   float
                         </td>
-                <table><br>
+                </table><br></code>
 				
 				<code> 
                   <b>(lldb)</b> frame variable float_point<br>
@@ -632,11 +629,8 @@
                 representation of a <code>float</code> variable by
                 extracting bitfields out of a float object.</p>
                 
-                <p> As far as the syntax is concerned, it looks
-                much like the normal C array syntax, but also allows you
-                to specify 2 indices, separated by a - symbol (a range).
-                Ranges can be given either with the lower or the higher index
-                first, and range extremes are always included in the bits extracted. </p>
+                <p> When typing a range, the extremes <i>n</i> and <i>m</i> are always
+	            included, and the order of the indices is irrelevant. </p>
                 
               <p>LLDB also allows to use a similar syntax to display
                 array members inside a summary string. For instance, you
@@ -705,10 +699,11 @@
                   <b>(lldb)</b> frame variable sarray<br>
                   (Simple [3]) sarray = [4,7]<br></code></p>
 
-              <p>The same logic works if you are printing a pointer
-                instead of an array, however in this latter case, the empty
-                square brackets operator <code>[]</code>
-                cannot be used and you need to give exact range limits.</p>
+              <p>If you are dealing with a pointer that you know is an array, you can use this
+	             syntax to display the elements contained in the pointed array instead of just
+	             the pointer value. However, because pointers have no notion of their size, the
+	             empty brackets <code>[]</code> operator does not work, and you must explicitly provide
+	             higher and lower bounds.</p>
                 
             <p>In general, LLDB needs the square brackets operator <code>[]</code> in
             order to handle arrays and pointers correctly, and for pointers it also
@@ -791,7 +786,7 @@ public:<br/>
             
             <p>Summary strings are effective to reduce the screen real estate used by
             the default viewing mode, but are not effective if we want to display the
-            area, perimeter and length of diagonal of <code>Rectangle</code> objects</p>
+            area and perimeter of <code>Rectangle</code> objects</p>
             
             <p>To obtain this, we can simply attach a small Python script to the <code>Rectangle</code>
             class, as shown in this example:</p>
@@ -803,31 +798,18 @@ public:<br/>
 def function (valobj,dict):<br/>
      &nbsp;&nbsp;&nbsp;&nbsp;height_val = valobj.GetChildMemberWithName('height')<br/>
      &nbsp;&nbsp;&nbsp;&nbsp;width_val = valobj.GetChildMemberWithName('width')<br/>
-     &nbsp;&nbsp;&nbsp;&nbsp;height_str = height_val.GetValue()<br/>
-     &nbsp;&nbsp;&nbsp;&nbsp;width_str = width_val.GetValue()<br/>
-     &nbsp;&nbsp;&nbsp;&nbsp;height = int(height_str)<br/>
-     &nbsp;&nbsp;&nbsp;&nbsp;width = int(width_str)<br/>
+     &nbsp;&nbsp;&nbsp;&nbsp;height = height_val.GetValueAsUnsigned(0)<br/>
+     &nbsp;&nbsp;&nbsp;&nbsp;width = width_val.GetValueAsUnsigned(0)<br/>
      &nbsp;&nbsp;&nbsp;&nbsp;area = height*width<br/>
-     &nbsp;&nbsp;&nbsp;&nbsp;perimeter = 2*height + 2*width<br/>
-     &nbsp;&nbsp;&nbsp;&nbsp;diag = sqrt(height*height+width*width)<br/>
-     &nbsp;&nbsp;&nbsp;&nbsp;return 'Area: ' + str(area) + ', Perimeter: ' + str(perimeter) + ', Diagonal: ' + str(diag)<br/>
+     &nbsp;&nbsp;&nbsp;&nbsp;perimeter = 2*(height + width)<br/>
+     &nbsp;&nbsp;&nbsp;&nbsp;return 'Area: ' + str(area) + ', Perimeter: ' + str(perimeter)<br/>
      &nbsp;&nbsp;&nbsp;&nbsp;DONE<br/>
-<b>(lldb)</b> script<br/>
-Python Interactive Interpreter. To exit, type 'quit()', 'exit()' or Ctrl-D.<br/>
->>> from math import sqrt<br/>
->>> quit()<br/>
 <b>(lldb)</b> frame variable<br/>
-(Rectangle) r1 = Area: 20, Perimeter: 18, Diagonal: 6.40312423743<br/>
-(Rectangle) r2 = Area: 72, Perimeter: 36, Diagonal: 13.416407865<br/>
-(Rectangle) r3 = Area: 16, Perimeter: 16, Diagonal: 5.65685424949<br/>
+(Rectangle) r1 = Area: 20, Perimeter: 18<br/>
+(Rectangle) r2 = Area: 72, Perimeter: 36<br/>
+(Rectangle) r3 = Area: 16, Perimeter: 16<br/>
                         </td>
                 </table>
-            
-            <p>In this scenario, you need to enter the interactive interpreter to import the
-            function sqrt() from the math library. As the example shows, everything you enter
-            into the interactive interpreter is saved for you to use it in scripts. This way
-            you can define your own utility functions and use them in your summary scripts if
-            necessary.</p>
             
             <p>In order to write effective summary scripts, you need to know the LLDB public
             API, which is the way Python code can access the LLDB object model. For further
@@ -839,11 +821,12 @@ Python Interactive Interpreter. To exit, type 'quit()', 'exit()' or Ctrl-D.<br/>
             
             <p><code>dict</code> is an internal support parameter used by LLDB and you should
             not use it.<br/><code>valobj</code> is the object encapsulating the actual
-            variable being displayed, and its type is SBValue. The most important thing you can
-            do with an SBValue is retrieve its children objects, by calling
-            <code>GetChildMemberWithName()</code>, passing it the child's name as a string, or ask
-            it for its value, by calling <code>GetValue()</code>, which returns a Python string.
-            </p>
+            variable being displayed, and its type is <a href="http://llvm.org/svn/llvm-project/lldb/trunk/include/lldb/API/SBValue.h">SBValue</a>.
+ 			Out of the many possible operations on an SBValue, the basic one is retrieve the children objects
+            it contains (essentially, the fields of the object wrapped by it), by calling
+            <code>GetChildMemberWithName()</code>, passing it the child's name as a string.<br/>
+            If the variable has a value, you can ask for it, and return it as a string using <code>GetValue()</code>,
+            or as a signed/unsigned number using <code>GetValueAsSigned()</code>, <code>GetValueAsUnsigned()</code>.
             
             <p>If you need to delve into several levels of hierarchy, as you can do with summary
             strings, you can use the method <code>GetValueForExpressionPath()</code>, passing it
@@ -851,7 +834,7 @@ Python Interactive Interpreter. To exit, type 'quit()', 'exit()' or Ctrl-D.<br/>
 			is that dereferencing a pointer does not occur by prefixing the path with a <code>*</code>,
 			but by calling the <code>Dereference()</code> method on the returned SBValue).
 			If you need to access array slices, you cannot do that (yet) via this method call, and you must
-            use <code>GetChildMemberWithName()</code> querying it for the array items one by one.
+            use <code>GetChildAtIndex()</code> querying it for the array items one by one.
 			Also, handling custom formats is something you have to deal with on your own.
             
             <p>Other than interactively typing a Python script there are two other ways for you
@@ -873,7 +856,7 @@ Python Interactive Interpreter. To exit, type 'quit()', 'exit()' or Ctrl-D.<br/>
             <li> using the <code>--python-function</code> (<code>-F</code>) option to <code>type summary add </code> and giving the name of a 
             Python function with the correct prototype. Most probably, you will define (or have
             already defined) the function in the interactive interpreter, or somehow
-            loaded it from a file.
+            loaded it from a file, using the <code>script import</code> command.
             </ul>
             
             </p>
@@ -932,14 +915,14 @@ Python Interactive Interpreter. To exit, type 'quit()', 'exit()' or Ctrl-D.<br/>
         <div class="post">
             <h1 class="postheader">Named summaries</h1>
             <div class="postcontent">
-            <p>For a given datatype, there may be different meaningful summary
+            <p>For a given type, there may be different meaningful summary
             representations. However, currently, only one summary can be associated
-            to a given datatype. If you need to temporarily override the association
-            for a variable, without changing the summary string bound to the datatype,
+            to a type at each moment. If you need to temporarily override the association
+            for a variable, without changing the summary string for to its type,
             you can use named summaries.</p>
             
-            <p>Named summaries work by attaching a name to a summary string when creating
-            it. Then, when there is a need to attach the summary string to a variable, the
+            <p>Named summaries work by attaching a name to a summary when creating
+            it. Then, when there is a need to attach the summary to a variable, the
             <code>frame variable</code> command, supports a <code>--summary</code> option
             that tells LLDB to use the named summary given instead of the default one.</p>
             
@@ -977,7 +960,7 @@ Python Interactive Interpreter. To exit, type 'quit()', 'exit()' or Ctrl-D.<br/>
 				When that's the case, expression paths do not work correctly.</p>
 			<p>In other cases, the internals are available to use in expression paths, but they
 				do not provide a user-friendly representation of the object's value.</p>
-			<p>For instance, consider an STL vector:</p>
+			<p>For instance, consider an STL vector, as implemented by the <a href="http://gcc.gnu.org/onlinedocs/libstdc++/">GNU C++ Library</a>:</p>
 			<code>
 				<b>(lldb)</b> frame variable numbers -T<br/>
 				(std::vector&lt;int&gt;) numbers = {<br/>
@@ -1007,31 +990,33 @@ Python Interactive Interpreter. To exit, type 'quit()', 'exit()' or Ctrl-D.<br/>
 			available by default through the debug information. In the example, we can use synthetic children to provide
 			the vector items as children for the std::vector object.</p>
 		<p>In order to create synthetic children, you need to provide a Python class that adheres to a given <i>interface</i>
-			 (the word is italicized because Python has no explicit notion of interface. By that word we mean a given set of methods
+			 (the word is italicized because <a href="http://en.wikipedia.org/wiki/Duck_typing">Python has no explicit notion of interface</a>, by that word we mean a given set of methods
 			  must be implemented by the Python class):</p>
 		<code>
 			<font color=blue>class</font> SyntheticChildrenProvider:<br/>
 			&nbsp;&nbsp;&nbsp;&nbsp;<font color=blue>def</font> __init__(self, valobj, dict):<br/>
-			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;this call should initialize the Python object using valobj as the variable to provide synthetic children for <br/>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>this call should initialize the Python object using valobj as the variable to provide synthetic children for</i> <br/>
 			&nbsp;&nbsp;&nbsp;&nbsp;<font color=blue>def</font> num_children(self): <br/>
-			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;this call should return the number of children that you want your object to have <br/>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>this call should return the number of children that you want your object to have</i> <br/>
 			&nbsp;&nbsp;&nbsp;&nbsp;<font color=blue>def</font> get_child_index(self,name): <br/>
-			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;this call should return the index of the synthetic child whose name is given as argument <br/>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>this call should return the index of the synthetic child whose name is given as argument</i> <br/>
 			&nbsp;&nbsp;&nbsp;&nbsp;<font color=blue>def</font> get_child_at_index(self,index): <br/>
-			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;this call should return a new LLDB SBValue object representing the child at the index given as argument <br/>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>this call should return a new LLDB SBValue object representing the child at the index given as argument</i> <br/>
 			&nbsp;&nbsp;&nbsp;&nbsp;<font color=blue>def</font> update(self): <br/>
-			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;this call should be used to update the internal state of this Python object whenever the state of the variables in LLDB changes.
-			Currently this method is optional, because the internal state of synthetic children providers will not be preserved. However, this is meant to change in future versions
-			of LLDB.<br/>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>this call should be used to update the internal state of this Python object whenever the state of the variables in LLDB changes.</i><sup>[1]</sup><br/>
 		</code>
+<sup>[1]</sup> Currently this method is optional, because the internal state of synthetic children providers will not be preserved. However, this is meant to change in future versions of LLDB.
 		<p>For examples of how synthetic children are created, you are encouraged to look at <a href="http://llvm.org/svn/llvm-project/lldb/trunk/examples/synthetic/">examples/synthetic</a> in the LLDB trunk.
 			You may especially want to begin looking at <a href="http://llvm.org/svn/llvm-project/lldb/trunk/examples/synthetic/StdVectorSynthProvider.py">StdVector</a> to get
-			a feel for this feature.</p>
+			a feel for this feature, as it is a relatively easy and well commented example.</p>
 			<p>While the <code>update</code> method is optional, the design pattern consistently used in synthetic providers shipping with LLDB
 				is to use the <code>__init__</code> to store the SBValue instance as a part of <code>self</code>, and then call <code>update</code>
-				to perform the actual initialization. This pattern should make transition to a future version of LLDB that persists synthetic children
-				providers transparent.</p>
-		
+				to perform the actual initialization. This pattern should make for a transparent transition to a future version of LLDB that persists synthetic children. For example:</p>
+		<code>
+			<font color=blue>def</font> __init__(self, valobj, dict):<br/>
+				&nbsp;&nbsp;&nbsp;&nbsp;self.valobj = valobj;<br/>
+				&nbsp;&nbsp;&nbsp;&nbsp;self.update()
+		</code>
 		<p>Once a synthetic children provider is written, one must load it into LLDB before it can be used.
 			Currently, one can use the LLDB <code>script</code> command to type Python code interactively,
 			or use the <code>script import <i>module</i></code> command to load Python code from a Python module
@@ -1058,15 +1043,15 @@ Python Interactive Interpreter. To exit, type 'quit()', 'exit()' or Ctrl-D.<br/>
 			<p>Currently, in LLDB <a href="http://llvm.org/svn/llvm-project/lldb/trunk/">top of tree</a>, synthetic children providers are enabled for
 				<code>std::vector&lt;T&gt;</code>, <code>std::list&lt;T&gt;</code> and <code>std::map&lt;K,V&gt;</code>.</p>
 
-			<p>Synthetic children enable a new symbol for summary strings, <code>${svar</code>. This symbol tells LLDB to refer expression paths to the
-				synthetic children instead of the real ones. While in certain cases, you can use <code>${var.<i>synthetic-child-path</i>}</code> and LLDB will
-				access the synthetic child correctly, it is best to always use <code>${svar</code> to refer to synthetic children. For instance,</p>
+			<p>Synthetic children extend summary strings by enabling a new special variable: <code>${svar</code>.<br/>
+				This symbol tells LLDB to refer expression paths to the
+				synthetic children instead of the real ones. For instance,</p>
 
 				    <table class="stats" width="620" cellspacing="0">
 		                    <td class="content">
 		                        <b>(lldb)</b> type summary add --expand -x "std::vector&lt;" --summary-string "${svar%#} items"
 		                    </td>
-		            <table>
+		            </table>
 		            <code> <b>(lldb)</b> frame variable numbers<br/>
 						(std::vector&lt;int&gt;) numbers = 4 items {<br/>
 						  &nbsp;&nbsp;&nbsp;&nbsp;(int) [0] = 1<br/>
@@ -1075,7 +1060,21 @@ Python Interactive Interpreter. To exit, type 'quit()', 'exit()' or Ctrl-D.<br/>
 						  &nbsp;&nbsp;&nbsp;&nbsp;(int) [3] = 1234<br/>
 						}<br/>
 		            </code> </p>
-
+			<p>In some cases, if LLDB is unable to use the real object to get a child specified in an expression path, it will automatically refer to the
+				synthetic children. While in summaries it is best to always use <code>${svar</code> to make your intentions clearer, interactive debugging
+					can benefit from this behavior, as in:
+		            <code> <b>(lldb)</b> frame variable numbers[0] numbers[1]<br/>
+						  (int) numbers[0] = 1<br/>
+						  (int) numbers[1] = 12<br/>
+		            </code> </p>
+			Unlike many other visualization features, however, the access to synthetic children only works when using <code>frame variable</code>, and is
+			not supported in <code>expression</code>:<br/>
+            <code> <b>(lldb)</b> expression numbers[0]<br/>
+				Error [IRForTarget]: Call to a function '_ZNSt33vector&lt;int, std::allocator&lt;int&gt; &gt;ixEm' that is not present in the target<br/>
+				error: Couldn't convert the expression to DWARF<br/>
+            </code> </p>
+				The reason for this is that classes might have an overloaded <code><font color="blue">operator</font> []</code>, or other special provisions
+				and the <code>expression</code> command ignores synthetic children when evaluating its arguments.
           </div>
         </div>
 
@@ -1110,9 +1109,9 @@ Python Interactive Interpreter. To exit, type 'quit()', 'exit()' or Ctrl-D.<br/>
           <h1 class="postheader">Objective-C dynamic type discovery</h1>
           <div class="postcontent">
           <p>When doing Objective-C development, you may notice that some of your variables
-          come out as of type <code>id</code>. While this does not influence the ability
-          of the runtime to send messages to them, it can make it impossible for LLDB
-          to determine the actual formatters for that object.</p>
+          come out as of type <code>id</code> (for instance, items extracted from <code>NSArray</code>).
+		While this does not influence the ability of the runtime to send messages to them, it could make it impossible for LLDB
+          to determine the actual formatters for that object, given its type-based algorithm.</p>
           <p>The debugger, however, can dynamically discover the type of an Objective-C
           variable, much like the runtime itself does when invoking a selector. In order
           to let LLDB do that, however, a special option to <code>frame variable</code> is
