@@ -2786,7 +2786,7 @@ DecodeThumb2BCCInstruction(llvm::MCInst &Inst, unsigned Insn,
         break;
       case 0xf3bf8f6:
         Inst.setOpcode(ARM::t2ISB);
-        return MCDisassembler::Success;
+        break;
     }
 
     unsigned imm = fieldFromInstruction32(Insn, 0, 4);
