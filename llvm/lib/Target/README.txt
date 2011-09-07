@@ -2348,3 +2348,13 @@ which can do this in a single operation (instruction or libcall).  It is
 probably best to do this in the code generator.
 
 //===---------------------------------------------------------------------===//
+
+unsigned foo(unsigned x, unsigned y) { return (x & y) == 0 || x == 0; }
+should fold to (x & y) == 0.
+
+//===---------------------------------------------------------------------===//
+
+unsigned foo(unsigned x, unsigned y) { return x > y && x != 0; }
+should fold to x > y.
+
+//===---------------------------------------------------------------------===//
