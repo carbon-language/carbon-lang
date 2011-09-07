@@ -394,7 +394,8 @@ static MCStreamer *createMCStreamer(const Target &T, StringRef TT,
 
 static MCInstPrinter *createX86MCInstPrinter(const Target &T,
                                              unsigned SyntaxVariant,
-                                             const MCAsmInfo &MAI) {
+                                             const MCAsmInfo &MAI,
+                                             const MCSubtargetInfo &STI) {
   if (SyntaxVariant == 0)
     return new X86ATTInstPrinter(MAI);
   if (SyntaxVariant == 1)

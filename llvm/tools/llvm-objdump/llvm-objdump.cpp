@@ -25,6 +25,7 @@
 #include "llvm/MC/MCInstrAnalysis.h"
 #include "llvm/MC/MCInstrDesc.h"
 #include "llvm/MC/MCInstrInfo.h"
+#include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Format.h"
@@ -217,7 +218,14 @@ static void DisassembleInput(const StringRef &Filename) {
       return;
     }
 
-    OwningPtr<const MCDisassembler> DisAsm(TheTarget->createMCDisassembler());
+    OwningPtr<const MCSubtargetInfo> STI(TheTarget->createMCSubtargetInfo(TripleName, "", ""));
+
+    if (!STI) {
+      errs() << "error: no subtarget info for target " << TripleName << "\n";
+      return;
+    }
+
+    OwningPtr<const MCDisassembler> DisAsm(TheTarget->createMCDisassembler(*STI));
     if (!DisAsm) {
       errs() << "error: no disassembler for target " << TripleName << "\n";
       return;
@@ -225,7 +233,7 @@ static void DisassembleInput(const StringRef &Filename) {
 
     int AsmPrinterVariant = AsmInfo->getAssemblerDialect();
     OwningPtr<MCInstPrinter> IP(TheTarget->createMCInstPrinter(
-                                  AsmPrinterVariant, *AsmInfo));
+                                AsmPrinterVariant, *AsmInfo, *STI));
     if (!IP) {
       errs() << "error: no instruction printer for target " << TripleName << '\n';
       return;

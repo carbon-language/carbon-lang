@@ -15,6 +15,7 @@
 namespace llvm {
   
 class MCInst;
+class MCSubtargetInfo;
 class MemoryObject;
 class raw_ostream;
 class MCContext;
@@ -54,7 +55,7 @@ public:
   };
 
   /// Constructor     - Performs initial setup for the disassembler.
-  MCDisassembler() : GetOpInfo(0), DisInfo(0), Ctx(0) {}
+  MCDisassembler(const MCSubtargetInfo &STI) : GetOpInfo(0), DisInfo(0), Ctx(0), STI(STI) {}
   
   virtual ~MCDisassembler();
   
@@ -98,6 +99,9 @@ private:
   // The assembly context for creating symbols and MCExprs in place of
   // immediate operands when there is symbolic information.
   MCContext *Ctx;
+protected:
+  // Subtarget information, for instruction decoding predicates if required.
+  const MCSubtargetInfo &STI;
 
 public:
   void setupForSymbolicDisassembly(LLVMOpInfoCallback getOpInfo,

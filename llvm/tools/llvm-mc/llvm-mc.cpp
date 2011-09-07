@@ -108,6 +108,12 @@ MCPU("mcpu",
      cl::value_desc("cpu-name"),
      cl::init(""));
 
+static cl::list<std::string>
+MAttrs("mattr",
+  cl::CommaSeparated,
+  cl::desc("Target specific attributes (-mattr=help for details)"),
+  cl::value_desc("a1,+a2,-a3,..."));
+
 static cl::opt<Reloc::Model>
 RelocModel("relocation-model",
              cl::desc("Choose relocation model"),
@@ -361,9 +367,6 @@ static int AssembleInput(const char *ProgName) {
   llvm::OwningPtr<MCRegisterInfo> MRI(TheTarget->createMCRegInfo(TripleName));
   assert(MRI && "Unable to create target register info!");
 
-  // Package up features to be passed to target/subtarget
-  std::string FeaturesStr;
-
   // FIXME: This is not pretty. MCContext has a ptr to MCObjectFileInfo and
   // MCObjectFileInfo needs a MCContext reference in order to initialize itself.
   OwningPtr<MCObjectFileInfo> MOFI(new MCObjectFileInfo());
@@ -372,6 +375,15 @@ static int AssembleInput(const char *ProgName) {
 
   if (SaveTempLabels)
     Ctx.setAllowTemporaryLabels(false);
+
+  // Package up features to be passed to target/subtarget
+  std::string FeaturesStr;
+  if (MAttrs.size()) {
+    SubtargetFeatures Features;
+    for (unsigned i = 0; i != MAttrs.size(); ++i)
+      Features.AddFeature(MAttrs[i]);
+    FeaturesStr = Features.getString();
+  }
 
   OwningPtr<tool_output_file> Out(GetOutputStream());
   if (!Out)
@@ -387,7 +399,7 @@ static int AssembleInput(const char *ProgName) {
   // FIXME: There is a bit of code duplication with addPassesToEmitFile.
   if (FileType == OFT_AssemblyFile) {
     MCInstPrinter *IP =
-      TheTarget->createMCInstPrinter(OutputAsmVariant, *MAI);
+      TheTarget->createMCInstPrinter(OutputAsmVariant, *MAI, *STI);
     MCCodeEmitter *CE = 0;
     MCAsmBackend *MAB = 0;
     if (ShowEncoding) {
@@ -453,7 +465,16 @@ static int DisassembleInput(const char *ProgName, bool Enhanced) {
     Res =
       Disassembler::disassembleEnhanced(TripleName, *Buffer.take(), Out->os());
   } else {
-    Res = Disassembler::disassemble(*TheTarget, TripleName,
+    // Package up features to be passed to target/subtarget
+    std::string FeaturesStr;
+    if (MAttrs.size()) {
+      SubtargetFeatures Features;
+      for (unsigned i = 0; i != MAttrs.size(); ++i)
+        Features.AddFeature(MAttrs[i]);
+      FeaturesStr = Features.getString();
+    }
+
+    Res = Disassembler::disassemble(*TheTarget, TripleName, MCPU, FeaturesStr,
                                     *Buffer.take(), Out->os());
   }
 

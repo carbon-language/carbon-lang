@@ -94,10 +94,12 @@ namespace llvm {
                                                   const MCAsmInfo &MAI);
     typedef MCTargetAsmParser *(*MCAsmParserCtorTy)(MCSubtargetInfo &STI,
                                                     MCAsmParser &P);
-    typedef MCDisassembler *(*MCDisassemblerCtorTy)(const Target &T);
+    typedef MCDisassembler *(*MCDisassemblerCtorTy)(const Target &T,
+                                                    const MCSubtargetInfo &STI);
     typedef MCInstPrinter *(*MCInstPrinterCtorTy)(const Target &T,
                                                   unsigned SyntaxVariant,
-                                                  const MCAsmInfo &MAI);
+                                                  const MCAsmInfo &MAI,
+                                                  const MCSubtargetInfo &STI);
     typedef MCCodeEmitter *(*MCCodeEmitterCtorTy)(const MCInstrInfo &II,
                                                   const MCSubtargetInfo &STI,
                                                   MCContext &Ctx);
@@ -373,17 +375,18 @@ namespace llvm {
       return AsmPrinterCtorFn(TM, Streamer);
     }
 
-    MCDisassembler *createMCDisassembler() const {
+    MCDisassembler *createMCDisassembler(const MCSubtargetInfo &STI) const {
       if (!MCDisassemblerCtorFn)
         return 0;
-      return MCDisassemblerCtorFn(*this);
+      return MCDisassemblerCtorFn(*this, STI);
     }
 
     MCInstPrinter *createMCInstPrinter(unsigned SyntaxVariant,
-                                       const MCAsmInfo &MAI) const {
+                                       const MCAsmInfo &MAI,
+                                       const MCSubtargetInfo &STI) const {
       if (!MCInstPrinterCtorFn)
         return 0;
-      return MCInstPrinterCtorFn(*this, SyntaxVariant, MAI);
+      return MCInstPrinterCtorFn(*this, SyntaxVariant, MAI, STI);
     }
 
 

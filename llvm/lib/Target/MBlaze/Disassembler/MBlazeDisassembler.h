@@ -32,8 +32,8 @@ class MBlazeDisassembler : public MCDisassembler {
 public:
   /// Constructor     - Initializes the disassembler.
   ///
-  MBlazeDisassembler() :
-    MCDisassembler() {
+  MBlazeDisassembler(const MCSubtargetInfo &STI) :
+    MCDisassembler(STI) {
   }
 
   ~MBlazeDisassembler() {

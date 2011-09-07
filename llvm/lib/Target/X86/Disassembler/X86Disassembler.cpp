@@ -21,6 +21,7 @@
 #include "llvm/MC/MCDisassembler.h"
 #include "llvm/MC/MCDisassembler.h"
 #include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MemoryObject.h"
 #include "llvm/Support/TargetRegistry.h"
@@ -66,8 +67,8 @@ extern Target TheX86_32Target, TheX86_64Target;
 static bool translateInstruction(MCInst &target,
                                 InternalInstruction &source);
 
-X86GenericDisassembler::X86GenericDisassembler(DisassemblerMode mode) :
-    MCDisassembler(),
+X86GenericDisassembler::X86GenericDisassembler(const MCSubtargetInfo &STI, DisassemblerMode mode) :
+    MCDisassembler(STI),
     fMode(mode) {
 }
 
@@ -578,12 +579,12 @@ static bool translateInstruction(MCInst &mcInst,
   return false;
 }
 
-static MCDisassembler *createX86_32Disassembler(const Target &T) {
-  return new X86Disassembler::X86_32Disassembler;
+static MCDisassembler *createX86_32Disassembler(const Target &T, const MCSubtargetInfo &STI) {
+  return new X86Disassembler::X86_32Disassembler(STI);
 }
 
-static MCDisassembler *createX86_64Disassembler(const Target &T) {
-  return new X86Disassembler::X86_64Disassembler;
+static MCDisassembler *createX86_64Disassembler(const Target &T, const MCSubtargetInfo &STI) {
+  return new X86Disassembler::X86_64Disassembler(STI);
 }
 
 extern "C" void LLVMInitializeX86Disassembler() { 

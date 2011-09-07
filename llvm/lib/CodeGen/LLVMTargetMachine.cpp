@@ -131,13 +131,14 @@ bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
     Context->setAllowTemporaryLabels(false);
 
   const MCAsmInfo &MAI = *getMCAsmInfo();
+  const MCSubtargetInfo &STI = getSubtarget<MCSubtargetInfo>();
   OwningPtr<MCStreamer> AsmStreamer;
 
   switch (FileType) {
   default: return true;
   case CGFT_AssemblyFile: {
     MCInstPrinter *InstPrinter =
-      getTarget().createMCInstPrinter(MAI.getAssemblerDialect(), MAI);
+      getTarget().createMCInstPrinter(MAI.getAssemblerDialect(), MAI, STI);
 
     // Create a code emitter if asked to show the encoding.
     MCCodeEmitter *MCE = 0;
@@ -161,7 +162,6 @@ bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
   case CGFT_ObjectFile: {
     // Create the code emitter for the target if it exists.  If not, .o file
     // emission fails.
-    const MCSubtargetInfo &STI = getSubtarget<MCSubtargetInfo>();
     MCCodeEmitter *MCE = getTarget().createMCCodeEmitter(*getInstrInfo(), STI,
                                                          *Context);
     MCAsmBackend *MAB = getTarget().createMCAsmBackend(getTargetTriple());

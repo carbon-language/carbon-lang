@@ -105,7 +105,8 @@ static MCStreamer *createMCStreamer(const Target &T, StringRef TT,
 
 static MCInstPrinter *createPPCMCInstPrinter(const Target &T,
                                              unsigned SyntaxVariant,
-                                             const MCAsmInfo &MAI) {
+                                             const MCAsmInfo &MAI,
+                                             const MCSubtargetInfo &STI) {
   return new PPCInstPrinter(MAI, SyntaxVariant);
 }
 

@@ -696,8 +696,9 @@ MCDisassembler::DecodeStatus MBlazeDisassembler::getInstruction(MCInst &instr,
   return Success;
 }
 
-static MCDisassembler *createMBlazeDisassembler(const Target &T) {
-  return new MBlazeDisassembler;
+static MCDisassembler *createMBlazeDisassembler(const Target &T,
+                                                const MCSubtargetInfo &STI) {
+  return new MBlazeDisassembler(STI);
 }
 
 extern "C" void LLVMInitializeMBlazeDisassembler() {

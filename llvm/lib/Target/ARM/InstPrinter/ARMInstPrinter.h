@@ -15,6 +15,7 @@
 #define ARMINSTPRINTER_H
 
 #include "llvm/MC/MCInstPrinter.h"
+#include "llvm/MC/MCSubtargetInfo.h"
 
 namespace llvm {
 
@@ -22,8 +23,7 @@ class MCOperand;
 
 class ARMInstPrinter : public MCInstPrinter {
 public:
-  ARMInstPrinter(const MCAsmInfo &MAI)
-    : MCInstPrinter(MAI) {}
+    ARMInstPrinter(const MCAsmInfo &MAI, const MCSubtargetInfo &STI);
 
   virtual void printInst(const MCInst *MI, raw_ostream &O);
   virtual StringRef getOpcodeName(unsigned Opcode) const;

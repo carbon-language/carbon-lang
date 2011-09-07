@@ -95,7 +95,8 @@ static MCStreamer *createMCStreamer(const Target &T, StringRef TT,
 
 static MCInstPrinter *createMBlazeMCInstPrinter(const Target &T,
                                                 unsigned SyntaxVariant,
-                                                const MCAsmInfo &MAI) {
+                                                const MCAsmInfo &MAI,
+                                                const MCSubtargetInfo &STI) {
   if (SyntaxVariant == 0)
     return new MBlazeInstPrinter(MAI);
   return 0;

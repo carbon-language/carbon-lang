@@ -57,19 +57,23 @@ LLVMDisasmContextRef LLVMCreateDisasm(const char *TripleName, void *DisInfo,
   std::string FeaturesStr;
   std::string CPU;
 
+  const MCSubtargetInfo *STI = TheTarget->createMCSubtargetInfo(TripleName, CPU,
+                                                                FeaturesStr);
+  assert(STI && "Unable to create subtarget info!");
+
   // Set up the MCContext for creating symbols and MCExpr's.
   MCContext *Ctx = new MCContext(*MAI, *MRI, 0);
   assert(Ctx && "Unable to create MCContext!");
 
   // Set up disassembler.
-  MCDisassembler *DisAsm = TheTarget->createMCDisassembler();
+  MCDisassembler *DisAsm = TheTarget->createMCDisassembler(*STI);
   assert(DisAsm && "Unable to create disassembler!");
   DisAsm->setupForSymbolicDisassembly(GetOpInfo, DisInfo, Ctx);
 
   // Set up the instruction printer.
   int AsmPrinterVariant = MAI->getAssemblerDialect();
   MCInstPrinter *IP = TheTarget->createMCInstPrinter(AsmPrinterVariant,
-                                                     *MAI);
+                                                     *MAI, *STI);
   assert(IP && "Unable to create instruction printer!");
 
   LLVMDisasmContext *DC = new LLVMDisasmContext(TripleName, DisInfo, TagType,

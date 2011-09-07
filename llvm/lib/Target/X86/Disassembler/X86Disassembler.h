@@ -92,6 +92,7 @@ struct InternalInstruction;
 namespace llvm {
   
 class MCInst;
+class MCSubtargetInfo;
 class MemoryObject;
 class raw_ostream;
 
@@ -107,7 +108,7 @@ protected:
   /// Constructor     - Initializes the disassembler.
   ///
   /// @param mode     - The X86 architecture mode to decode for.
-  X86GenericDisassembler(DisassemblerMode mode);
+  X86GenericDisassembler(const MCSubtargetInfo &STI, DisassemblerMode mode);
 public:
   ~X86GenericDisassembler();
 
@@ -127,24 +128,24 @@ private:
 /// X86_16Disassembler - 16-bit X86 disassembler.
 class X86_16Disassembler : public X86GenericDisassembler {
 public:
-  X86_16Disassembler() :
-    X86GenericDisassembler(MODE_16BIT) {
+  X86_16Disassembler(const MCSubtargetInfo &STI) :
+    X86GenericDisassembler(STI, MODE_16BIT) {
   }
 };  
 
 /// X86_16Disassembler - 32-bit X86 disassembler.
 class X86_32Disassembler : public X86GenericDisassembler {
 public:
-  X86_32Disassembler() :
-    X86GenericDisassembler(MODE_32BIT) {
+  X86_32Disassembler(const MCSubtargetInfo &STI) :
+    X86GenericDisassembler(STI, MODE_32BIT) {
   }
 };
 
 /// X86_16Disassembler - 64-bit X86 disassembler.
 class X86_64Disassembler : public X86GenericDisassembler {
 public:
-  X86_64Disassembler() :
-    X86GenericDisassembler(MODE_64BIT) {
+  X86_64Disassembler(const MCSubtargetInfo &STI) :
+    X86GenericDisassembler(STI, MODE_64BIT) {
   }
 };
 

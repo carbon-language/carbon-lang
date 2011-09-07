@@ -137,6 +137,8 @@ struct EDDisassembler {
   const llvm::Target *Tgt;
   /// The assembly information for the target architecture
   llvm::OwningPtr<const llvm::MCAsmInfo> AsmInfo;
+  /// The subtarget information for the target architecture
+  llvm::OwningPtr<const llvm::MCSubtargetInfo> STI;
   // The register information for the target architecture.
   llvm::OwningPtr<const llvm::MCRegisterInfo> MRI;
   /// The disassembler for the target architecture

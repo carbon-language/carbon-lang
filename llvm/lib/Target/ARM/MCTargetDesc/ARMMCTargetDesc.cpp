@@ -164,9 +164,10 @@ static MCStreamer *createMCStreamer(const Target &T, StringRef TT,
 
 static MCInstPrinter *createARMMCInstPrinter(const Target &T,
                                              unsigned SyntaxVariant,
-                                             const MCAsmInfo &MAI) {
+                                             const MCAsmInfo &MAI,
+                                             const MCSubtargetInfo &STI) {
   if (SyntaxVariant == 0)
-    return new ARMInstPrinter(MAI);
+    return new ARMInstPrinter(MAI, STI);
   return 0;
 }
 

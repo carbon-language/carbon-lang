@@ -178,7 +178,12 @@ EDDisassembler::EDDisassembler(CPUKey &key) :
   if (!AsmInfo)
     return;
 
-  Disassembler.reset(Tgt->createMCDisassembler());
+  STI.reset(Tgt->createMCSubtargetInfo(tripleString, "", ""));
+  
+  if (!STI)
+    return;
+
+  Disassembler.reset(Tgt->createMCDisassembler(*STI));
   
   if (!Disassembler)
     return;
@@ -187,7 +192,7 @@ EDDisassembler::EDDisassembler(CPUKey &key) :
   
   InstString.reset(new std::string);
   InstStream.reset(new raw_string_ostream(*InstString));
-  InstPrinter.reset(Tgt->createMCInstPrinter(LLVMSyntaxVariant, *AsmInfo));
+  InstPrinter.reset(Tgt->createMCInstPrinter(LLVMSyntaxVariant, *AsmInfo, *STI));
   
   if (!InstPrinter)
     return;

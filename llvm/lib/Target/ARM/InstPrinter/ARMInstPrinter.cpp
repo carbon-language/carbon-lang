@@ -35,6 +35,14 @@ static unsigned translateShiftImm(unsigned imm) {
   return imm;
 }
 
+
+ARMInstPrinter::ARMInstPrinter(const MCAsmInfo &MAI,
+                               const MCSubtargetInfo &STI) :
+  MCInstPrinter(MAI) {
+  // Initialize the set of available features.
+  setAvailableFeatures(STI.getFeatureBits());
+}
+
 StringRef ARMInstPrinter::getOpcodeName(unsigned Opcode) const {
   return getInstructionName(Opcode);
 }

@@ -78,7 +78,8 @@ static MCCodeGenInfo *createMipsMCCodeGenInfo(StringRef TT, Reloc::Model RM,
 
 static MCInstPrinter *createMipsMCInstPrinter(const Target &T,
                                               unsigned SyntaxVariant,
-                                              const MCAsmInfo &MAI) {
+                                              const MCAsmInfo &MAI,
+                                              const MCSubtargetInfo &STI) {
   return new MipsInstPrinter(MAI);
 }
 

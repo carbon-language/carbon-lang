@@ -21,6 +21,7 @@
 #include "llvm/MC/MCDisassembler.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstPrinter.h"
+#include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/ADT/Twine.h"
@@ -140,6 +141,8 @@ static bool ByteArrayFromString(ByteArrayTy &ByteArray,
 
 int Disassembler::disassemble(const Target &T,
                               const std::string &Triple,
+                              const std::string &Cpu,
+                              const std::string &FeaturesStr,
                               MemoryBuffer &Buffer,
                               raw_ostream &Out) {
   // Set up disassembler.
@@ -150,7 +153,13 @@ int Disassembler::disassemble(const Target &T,
     return -1;
   }
 
-  OwningPtr<const MCDisassembler> DisAsm(T.createMCDisassembler());
+  OwningPtr<const MCSubtargetInfo> STI(T.createMCSubtargetInfo(Triple, Cpu, FeaturesStr));
+  if (!STI) {
+    errs() << "error: no subtarget info for target " << Triple << "\n";
+    return -1;
+  }
+  
+  OwningPtr<const MCDisassembler> DisAsm(T.createMCDisassembler(*STI));
   if (!DisAsm) {
     errs() << "error: no disassembler for target " << Triple << "\n";
     return -1;
@@ -158,7 +167,7 @@ int Disassembler::disassemble(const Target &T,
 
   int AsmPrinterVariant = AsmInfo->getAssemblerDialect();
   OwningPtr<MCInstPrinter> IP(T.createMCInstPrinter(AsmPrinterVariant,
-                                                    *AsmInfo));
+                                                    *AsmInfo, *STI));
   if (!IP) {
     errs() << "error: no instruction printer for target " << Triple << '\n';
     return -1;

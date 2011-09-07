@@ -11,6 +11,7 @@
 
 #include "ARM.h"
 #include "ARMRegisterInfo.h"
+#include "ARMSubtarget.h"
 #include "MCTargetDesc/ARMAddressingModes.h"
 #include "MCTargetDesc/ARMBaseInfo.h"
 #include "llvm/MC/EDInstInfo.h"
@@ -34,8 +35,8 @@ class ARMDisassembler : public MCDisassembler {
 public:
   /// Constructor     - Initializes the disassembler.
   ///
-  ARMDisassembler() :
-    MCDisassembler() {
+  ARMDisassembler(const MCSubtargetInfo &STI) :
+    MCDisassembler(STI) {
   }
 
   ~ARMDisassembler() {
@@ -58,8 +59,8 @@ class ThumbDisassembler : public MCDisassembler {
 public:
   /// Constructor     - Initializes the disassembler.
   ///
-  ThumbDisassembler() :
-    MCDisassembler() {
+  ThumbDisassembler(const MCSubtargetInfo &STI) :
+    MCDisassembler(STI) {
   }
 
   ~ThumbDisassembler() {
@@ -296,12 +297,12 @@ static DecodeStatus DecodeIT(llvm::MCInst &Inst, unsigned Val,
 #include "ARMGenInstrInfo.inc"
 #include "ARMGenEDInfo.inc"
 
-static MCDisassembler *createARMDisassembler(const Target &T) {
-  return new ARMDisassembler;
+static MCDisassembler *createARMDisassembler(const Target &T, const MCSubtargetInfo &STI) {
+  return new ARMDisassembler(STI);
 }
 
-static MCDisassembler *createThumbDisassembler(const Target &T) {
-  return new ThumbDisassembler;
+static MCDisassembler *createThumbDisassembler(const Target &T, const MCSubtargetInfo &STI) {
+  return new ThumbDisassembler(STI);
 }
 
 EDInstInfo *ARMDisassembler::getEDInfo() const {
