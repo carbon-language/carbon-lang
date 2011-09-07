@@ -63,3 +63,20 @@ template <class T> struct Bar : public Foo<T>, Baz {
 };
 template int Bar<int>::foo();
 }
+
+// PR10883
+namespace PR10883 {
+  template <typename T>
+  class Base {
+   public:
+    typedef long Container;
+  };
+
+  template <typename T>
+  class Derived : public Base<T> {
+   public:
+    using Base<T>::Container;
+
+    void foo(const Container& current); // expected-error {{unknown type name 'Container'}}
+  };
+}

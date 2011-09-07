@@ -3691,6 +3691,7 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
       switch (TmpRes.getResultKind()) {
       case LookupResult::NotFound:
       case LookupResult::NotFoundInCurrentInstantiation:
+      case LookupResult::FoundUnresolvedValue:
         QualifiedResults.insert(Name);
         // We didn't find this name in our scope, or didn't like what we found;
         // ignore it.
@@ -3717,7 +3718,6 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
       }
 
       case LookupResult::Found:
-      case LookupResult::FoundUnresolvedValue:
         I->second.setCorrectionDecl(TmpRes.getAsSingle<NamedDecl>());
         ++I;
         break;
@@ -3754,7 +3754,6 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
 
           switch (TmpRes.getResultKind()) {
           case LookupResult::Found:
-          case LookupResult::FoundUnresolvedValue:
             Consumer.addName((*QRI)->getName(), TmpRes.getAsSingle<NamedDecl>(),
                              QualifiedED, NI->NameSpecifier);
             break;
@@ -3771,6 +3770,7 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
           case LookupResult::NotFound:
           case LookupResult::NotFoundInCurrentInstantiation:
           case LookupResult::Ambiguous:
+          case LookupResult::FoundUnresolvedValue:
             break;
           }
         }
