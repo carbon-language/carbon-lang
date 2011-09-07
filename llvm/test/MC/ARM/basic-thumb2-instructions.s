@@ -574,6 +574,24 @@ _func:
 
 
 @------------------------------------------------------------------------------
+@ LDRB(register)
+@------------------------------------------------------------------------------
+        ldrb r1, [r8, r1]
+        ldrb.w r4, [r5, r2]
+        ldrb r6, [r0, r2, lsl #3]
+        ldrb r8, [r8, r2, lsl #2]
+        ldrb r7, [sp, r2, lsl #1]
+        ldrb r7, [sp, r2, lsl #0]
+
+@ CHECK: ldrb.w	r1, [r8, r1]            @ encoding: [0x18,0xf8,0x01,0x10]
+@ CHECK: ldrb.w	r4, [r5, r2]            @ encoding: [0x15,0xf8,0x02,0x40]
+@ CHECK: ldrb.w	r6, [r0, r2, lsl #3]    @ encoding: [0x10,0xf8,0x32,0x60]
+@ CHECK: ldrb.w	r8, [r8, r2, lsl #2]    @ encoding: [0x18,0xf8,0x22,0x80]
+@ CHECK: ldrb.w	r7, [sp, r2, lsl #1]    @ encoding: [0x1d,0xf8,0x12,0x70]
+@ CHECK: ldrb.w	r7, [sp, r2]            @ encoding: [0x1d,0xf8,0x02,0x70]
+
+
+@------------------------------------------------------------------------------
 @ IT
 @------------------------------------------------------------------------------
 @ Test encodings of a few full IT blocks, not just the IT instruction
