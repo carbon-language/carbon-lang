@@ -2,10 +2,10 @@
 // XFAIL: sparc
 // rdar://7536390
 
-unsigned t(unsigned *ptr, unsigned val) {
+typedef unsigned __INT32_TYPE__ uint32_t;
+
+unsigned t(uint32_t *ptr, uint32_t val) {
   // CHECK:      @t
-  // CHECK:      call void @llvm.memory.barrier
-  // CHECK-NEXT: call i32 @llvm.atomic.swap.i32
-  // CHECK-NEXT: call void @llvm.memory.barrier
+  // CHECK: atomicrmw xchg i32* {{.*}} seq_cst
   return __sync_lock_test_and_set(ptr, val);
 }

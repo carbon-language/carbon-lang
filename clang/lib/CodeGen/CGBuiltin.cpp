@@ -27,20 +27,6 @@ using namespace clang;
 using namespace CodeGen;
 using namespace llvm;
 
-static void EmitMemoryBarrier(CodeGenFunction &CGF,
-                              bool LoadLoad, bool LoadStore,
-                              bool StoreLoad, bool StoreStore,
-                              bool Device) {
-  Value *True = CGF.Builder.getTrue();
-  Value *False = CGF.Builder.getFalse();
-  Value *C[5] = { LoadLoad ? True : False,
-                  LoadStore ? True : False,
-                  StoreLoad ? True : False,
-                  StoreStore ? True : False,
-                  Device ? True : False };
-  CGF.Builder.CreateCall(CGF.CGM.getIntrinsic(Intrinsic::memory_barrier), C);
-}
-
 /// Emit the conversions required to turn the given value into an
 /// integer of the given size.
 static Value *EmitToInt(CodeGenFunction &CGF, llvm::Value *V,
@@ -65,25 +51,11 @@ static Value *EmitFromInt(CodeGenFunction &CGF, llvm::Value *V,
   return V;
 }
 
-// The atomic builtins are also full memory barriers. This is a utility for
-// wrapping a call to the builtins with memory barriers.
-static Value *EmitCallWithBarrier(CodeGenFunction &CGF, Value *Fn,
-                                  ArrayRef<Value *> Args) {
-  // FIXME: We need a target hook for whether this applies to device memory or
-  // not.
-  bool Device = true;
-
-  // Create barriers both before and after the call.
-  EmitMemoryBarrier(CGF, true, true, true, true, Device);
-  Value *Result = CGF.Builder.CreateCall(Fn, Args);
-  EmitMemoryBarrier(CGF, true, true, true, true, Device);
-  return Result;
-}
-
 /// Utility to insert an atomic instruction based on Instrinsic::ID
 /// and the expression node.
 static RValue EmitBinaryAtomic(CodeGenFunction &CGF,
-                               Intrinsic::ID Id, const CallExpr *E) {
+                               llvm::AtomicRMWInst::BinOp Kind,
+                               const CallExpr *E) {
   QualType T = E->getType();
   assert(E->getArg(0)->getType()->isPointerType());
   assert(CGF.getContext().hasSameUnqualifiedType(T,
@@ -99,16 +71,15 @@ static RValue EmitBinaryAtomic(CodeGenFunction &CGF,
                            CGF.getContext().getTypeSize(T));
   llvm::Type *IntPtrType = IntType->getPointerTo(AddrSpace);
 
-  llvm::Type *IntrinsicTypes[2] = { IntType, IntPtrType };
-  llvm::Value *AtomF = CGF.CGM.getIntrinsic(Id, IntrinsicTypes);
-
   llvm::Value *Args[2];
   Args[0] = CGF.Builder.CreateBitCast(DestPtr, IntPtrType);
   Args[1] = CGF.EmitScalarExpr(E->getArg(1));
   llvm::Type *ValueType = Args[1]->getType();
   Args[1] = EmitToInt(CGF, Args[1], T, IntType);
 
-  llvm::Value *Result = EmitCallWithBarrier(CGF, AtomF, Args);
+  llvm::Value *Result =
+      CGF.Builder.CreateAtomicRMW(Kind, Args[0], Args[1],
+                                  llvm::SequentiallyConsistent);
   Result = EmitFromInt(CGF, Result, T, ValueType);
   return RValue::get(Result);
 }
@@ -117,7 +88,8 @@ static RValue EmitBinaryAtomic(CodeGenFunction &CGF,
 /// the expression node, where the return value is the result of the
 /// operation.
 static RValue EmitBinaryAtomicPost(CodeGenFunction &CGF,
-                                   Intrinsic::ID Id, const CallExpr *E,
+                                   llvm::AtomicRMWInst::BinOp Kind,
+                                   const CallExpr *E,
                                    Instruction::BinaryOps Op) {
   QualType T = E->getType();
   assert(E->getArg(0)->getType()->isPointerType());
@@ -134,16 +106,15 @@ static RValue EmitBinaryAtomicPost(CodeGenFunction &CGF,
                            CGF.getContext().getTypeSize(T));
   llvm::Type *IntPtrType = IntType->getPointerTo(AddrSpace);
 
-  llvm::Type *IntrinsicTypes[2] = { IntType, IntPtrType };
-  llvm::Value *AtomF = CGF.CGM.getIntrinsic(Id, IntrinsicTypes);
-
   llvm::Value *Args[2];
   Args[1] = CGF.EmitScalarExpr(E->getArg(1));
   llvm::Type *ValueType = Args[1]->getType();
   Args[1] = EmitToInt(CGF, Args[1], T, IntType);
   Args[0] = CGF.Builder.CreateBitCast(DestPtr, IntPtrType);
 
-  llvm::Value *Result = EmitCallWithBarrier(CGF, AtomF, Args);
+  llvm::Value *Result =
+      CGF.Builder.CreateAtomicRMW(Kind, Args[0], Args[1],
+                                  llvm::SequentiallyConsistent);
   Result = CGF.Builder.CreateBinOp(Op, Result, Args[1]);
   Result = EmitFromInt(CGF, Result, T, ValueType);
   return RValue::get(Result);
@@ -780,76 +751,76 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   case Builtin::BI__sync_fetch_and_add_4:
   case Builtin::BI__sync_fetch_and_add_8:
   case Builtin::BI__sync_fetch_and_add_16:
-    return EmitBinaryAtomic(*this, Intrinsic::atomic_load_add, E);
+    return EmitBinaryAtomic(*this, llvm::AtomicRMWInst::Add, E);
   case Builtin::BI__sync_fetch_and_sub_1:
   case Builtin::BI__sync_fetch_and_sub_2:
   case Builtin::BI__sync_fetch_and_sub_4:
   case Builtin::BI__sync_fetch_and_sub_8:
   case Builtin::BI__sync_fetch_and_sub_16:
-    return EmitBinaryAtomic(*this, Intrinsic::atomic_load_sub, E);
+    return EmitBinaryAtomic(*this, llvm::AtomicRMWInst::Sub, E);
   case Builtin::BI__sync_fetch_and_or_1:
   case Builtin::BI__sync_fetch_and_or_2:
   case Builtin::BI__sync_fetch_and_or_4:
   case Builtin::BI__sync_fetch_and_or_8:
   case Builtin::BI__sync_fetch_and_or_16:
-    return EmitBinaryAtomic(*this, Intrinsic::atomic_load_or, E);
+    return EmitBinaryAtomic(*this, llvm::AtomicRMWInst::Or, E);
   case Builtin::BI__sync_fetch_and_and_1:
   case Builtin::BI__sync_fetch_and_and_2:
   case Builtin::BI__sync_fetch_and_and_4:
   case Builtin::BI__sync_fetch_and_and_8:
   case Builtin::BI__sync_fetch_and_and_16:
-    return EmitBinaryAtomic(*this, Intrinsic::atomic_load_and, E);
+    return EmitBinaryAtomic(*this, llvm::AtomicRMWInst::And, E);
   case Builtin::BI__sync_fetch_and_xor_1:
   case Builtin::BI__sync_fetch_and_xor_2:
   case Builtin::BI__sync_fetch_and_xor_4:
   case Builtin::BI__sync_fetch_and_xor_8:
   case Builtin::BI__sync_fetch_and_xor_16:
-    return EmitBinaryAtomic(*this, Intrinsic::atomic_load_xor, E);
+    return EmitBinaryAtomic(*this, llvm::AtomicRMWInst::Xor, E);
 
   // Clang extensions: not overloaded yet.
   case Builtin::BI__sync_fetch_and_min:
-    return EmitBinaryAtomic(*this, Intrinsic::atomic_load_min, E);
+    return EmitBinaryAtomic(*this, llvm::AtomicRMWInst::Min, E);
   case Builtin::BI__sync_fetch_and_max:
-    return EmitBinaryAtomic(*this, Intrinsic::atomic_load_max, E);
+    return EmitBinaryAtomic(*this, llvm::AtomicRMWInst::Max, E);
   case Builtin::BI__sync_fetch_and_umin:
-    return EmitBinaryAtomic(*this, Intrinsic::atomic_load_umin, E);
+    return EmitBinaryAtomic(*this, llvm::AtomicRMWInst::UMin, E);
   case Builtin::BI__sync_fetch_and_umax:
-    return EmitBinaryAtomic(*this, Intrinsic::atomic_load_umax, E);
+    return EmitBinaryAtomic(*this, llvm::AtomicRMWInst::UMax, E);
 
   case Builtin::BI__sync_add_and_fetch_1:
   case Builtin::BI__sync_add_and_fetch_2:
   case Builtin::BI__sync_add_and_fetch_4:
   case Builtin::BI__sync_add_and_fetch_8:
   case Builtin::BI__sync_add_and_fetch_16:
-    return EmitBinaryAtomicPost(*this, Intrinsic::atomic_load_add, E,
+    return EmitBinaryAtomicPost(*this, llvm::AtomicRMWInst::Add, E,
                                 llvm::Instruction::Add);
   case Builtin::BI__sync_sub_and_fetch_1:
   case Builtin::BI__sync_sub_and_fetch_2:
   case Builtin::BI__sync_sub_and_fetch_4:
   case Builtin::BI__sync_sub_and_fetch_8:
   case Builtin::BI__sync_sub_and_fetch_16:
-    return EmitBinaryAtomicPost(*this, Intrinsic::atomic_load_sub, E,
+    return EmitBinaryAtomicPost(*this, llvm::AtomicRMWInst::Sub, E,
                                 llvm::Instruction::Sub);
   case Builtin::BI__sync_and_and_fetch_1:
   case Builtin::BI__sync_and_and_fetch_2:
   case Builtin::BI__sync_and_and_fetch_4:
   case Builtin::BI__sync_and_and_fetch_8:
   case Builtin::BI__sync_and_and_fetch_16:
-    return EmitBinaryAtomicPost(*this, Intrinsic::atomic_load_and, E,
+    return EmitBinaryAtomicPost(*this, llvm::AtomicRMWInst::And, E,
                                 llvm::Instruction::And);
   case Builtin::BI__sync_or_and_fetch_1:
   case Builtin::BI__sync_or_and_fetch_2:
   case Builtin::BI__sync_or_and_fetch_4:
   case Builtin::BI__sync_or_and_fetch_8:
   case Builtin::BI__sync_or_and_fetch_16:
-    return EmitBinaryAtomicPost(*this, Intrinsic::atomic_load_or, E,
+    return EmitBinaryAtomicPost(*this, llvm::AtomicRMWInst::Or, E,
                                 llvm::Instruction::Or);
   case Builtin::BI__sync_xor_and_fetch_1:
   case Builtin::BI__sync_xor_and_fetch_2:
   case Builtin::BI__sync_xor_and_fetch_4:
   case Builtin::BI__sync_xor_and_fetch_8:
   case Builtin::BI__sync_xor_and_fetch_16:
-    return EmitBinaryAtomicPost(*this, Intrinsic::atomic_load_xor, E,
+    return EmitBinaryAtomicPost(*this, llvm::AtomicRMWInst::Xor, E,
                                 llvm::Instruction::Xor);
 
   case Builtin::BI__sync_val_compare_and_swap_1:
@@ -866,9 +837,6 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
       llvm::IntegerType::get(getLLVMContext(),
                              getContext().getTypeSize(T));
     llvm::Type *IntPtrType = IntType->getPointerTo(AddrSpace);
-    llvm::Type *IntrinsicTypes[2] = { IntType, IntPtrType };
-    Value *AtomF = CGM.getIntrinsic(Intrinsic::atomic_cmp_swap,
-                                    IntrinsicTypes);
 
     Value *Args[3];
     Args[0] = Builder.CreateBitCast(DestPtr, IntPtrType);
@@ -877,7 +845,8 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     Args[1] = EmitToInt(*this, Args[1], T, IntType);
     Args[2] = EmitToInt(*this, EmitScalarExpr(E->getArg(2)), T, IntType);
 
-    Value *Result = EmitCallWithBarrier(*this, AtomF, Args);
+    Value *Result = Builder.CreateAtomicCmpXchg(Args[0], Args[1], Args[2],
+                                                llvm::SequentiallyConsistent);
     Result = EmitFromInt(*this, Result, T, ValueType);
     return RValue::get(Result);
   }
@@ -896,9 +865,6 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
       llvm::IntegerType::get(getLLVMContext(),
                              getContext().getTypeSize(T));
     llvm::Type *IntPtrType = IntType->getPointerTo(AddrSpace);
-    llvm::Type *IntrinsicTypes[2] = { IntType, IntPtrType };
-    Value *AtomF = CGM.getIntrinsic(Intrinsic::atomic_cmp_swap,
-                                    IntrinsicTypes);
 
     Value *Args[3];
     Args[0] = Builder.CreateBitCast(DestPtr, IntPtrType);
@@ -906,7 +872,8 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     Args[2] = EmitToInt(*this, EmitScalarExpr(E->getArg(2)), T, IntType);
 
     Value *OldVal = Args[1];
-    Value *PrevVal = EmitCallWithBarrier(*this, AtomF, Args);
+    Value *PrevVal = Builder.CreateAtomicCmpXchg(Args[0], Args[1], Args[2],
+                                                 llvm::SequentiallyConsistent);
     Value *Result = Builder.CreateICmpEQ(PrevVal, OldVal);
     // zext bool to int.
     Result = Builder.CreateZExt(Result, ConvertType(E->getType()));
@@ -918,14 +885,14 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   case Builtin::BI__sync_swap_4:
   case Builtin::BI__sync_swap_8:
   case Builtin::BI__sync_swap_16:
-    return EmitBinaryAtomic(*this, Intrinsic::atomic_swap, E);
+    return EmitBinaryAtomic(*this, llvm::AtomicRMWInst::Xchg, E);
 
   case Builtin::BI__sync_lock_test_and_set_1:
   case Builtin::BI__sync_lock_test_and_set_2:
   case Builtin::BI__sync_lock_test_and_set_4:
   case Builtin::BI__sync_lock_test_and_set_8:
   case Builtin::BI__sync_lock_test_and_set_16:
-    return EmitBinaryAtomic(*this, Intrinsic::atomic_swap, E);
+    return EmitBinaryAtomic(*this, llvm::AtomicRMWInst::Xchg, E);
 
   case Builtin::BI__sync_lock_release_1:
   case Builtin::BI__sync_lock_release_2:
@@ -937,13 +904,21 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
       cast<llvm::PointerType>(Ptr->getType())->getElementType();
     llvm::StoreInst *Store = 
       Builder.CreateStore(llvm::Constant::getNullValue(ElTy), Ptr);
+    // FIXME: This is completely, utterly wrong; it only even sort-of works
+    // on x86.
     Store->setVolatile(true);
     return RValue::get(0);
   }
 
   case Builtin::BI__sync_synchronize: {
-    // We assume like gcc appears to, that this only applies to cached memory.
-    EmitMemoryBarrier(*this, true, true, true, true, false);
+    // We assume this is supposed to correspond to a C++0x-style
+    // sequentially-consistent fence (i.e. this is only usable for
+    // synchonization, not device I/O or anything like that). This intrinsic
+    // is really badly designed in the sense that in theory, there isn't 
+    // any way to safely use it... but in practice, it mostly works
+    // to use it with non-atomic loads and stores to get acquire/release
+    // semantics.
+    Builder.CreateFence(llvm::SequentiallyConsistent);
     return RValue::get(0);
   }
 
