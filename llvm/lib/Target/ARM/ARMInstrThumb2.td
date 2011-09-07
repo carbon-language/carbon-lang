@@ -3702,6 +3702,10 @@ def : InstAlias<"dmb", (t2DMB 0xf)>, Requires<[IsThumb2, HasDB]>;
 def : InstAlias<"dsb", (t2DSB 0xf)>, Requires<[IsThumb2, HasDB]>;
 def : InstAlias<"isb", (t2ISB 0xf)>, Requires<[IsThumb2, HasDB]>;
 
-// Alias for LDRi12 without the ".w" optional width specifier.
-def : t2InstAlias<"ldr${p} $Rd, $addr",
-                  (t2LDRi12 GPR:$Rd, t2addrmode_imm12:$addr, pred:$p)>;
+// Alias for LDR, LDRB, LDRH without the ".w" optional width specifier.
+def : t2InstAlias<"ldr${p} $Rt, $addr",
+                  (t2LDRi12 GPR:$Rt, t2addrmode_imm12:$addr, pred:$p)>;
+def : t2InstAlias<"ldrb${p} $Rt, $addr",
+                  (t2LDRBi12 rGPR:$Rt, t2addrmode_imm12:$addr, pred:$p)>;
+def : t2InstAlias<"ldrh${p} $Rt, $addr",
+                  (t2LDRHi12 rGPR:$Rt, t2addrmode_imm12:$addr, pred:$p)>;
