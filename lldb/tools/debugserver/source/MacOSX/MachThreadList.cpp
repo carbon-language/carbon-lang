@@ -99,13 +99,25 @@ MachThreadList::GetThreadByID (nub_thread_t tid) const
     PTHREAD_MUTEX_LOCKER (locker, m_threads_mutex);
     MachThreadSP thread_sp;
     const size_t num_threads = m_threads.size();
-    for (size_t idx = 0; idx < num_threads; ++idx)
+    if (MachThread::ThreadIDIsValid(tid))
     {
-        if (m_threads[idx]->ThreadID() == tid)
+        for (size_t idx = 0; idx < num_threads; ++idx)
         {
-            thread_sp = m_threads[idx];
-            break;
+            if (m_threads[idx]->ThreadID() == tid)
+            {
+                thread_sp = m_threads[idx];
+                break;
+            }
         }
+    }
+    else if (num_threads > 0)
+    {
+        // See DNBWatchpointSet() -> MachProcess::CreateWatchpoint() -> MachProcess::EnableWatchpoint()
+        // -> MachThreadList::EnableHardwareWatchpoint() for a use case of this branch.
+        if (m_current_thread)
+            thread_sp = m_current_thread;
+        else
+            thread_sp = m_threads[0];
     }
     return thread_sp;
 }
