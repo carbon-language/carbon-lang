@@ -741,6 +741,32 @@ def LXADD64 : RI<0xC1, MRMSrcMem, (outs GR64:$dst), (ins GR64:$val,i64mem:$ptr),
                 TB, LOCK;
 }
 
+def ACQUIRE_MOV8rm  : I<0, Pseudo, (outs GR8 :$dst), (ins i8mem :$src),
+                      "#ACQUIRE_MOV PSEUDO!",
+                      [(set GR8:$dst,  (atomic_load_8  addr:$src))]>;
+def ACQUIRE_MOV16rm : I<0, Pseudo, (outs GR16:$dst), (ins i16mem:$src),
+                      "#ACQUIRE_MOV PSEUDO!",
+                      [(set GR16:$dst, (atomic_load_16 addr:$src))]>;
+def ACQUIRE_MOV32rm : I<0, Pseudo, (outs GR32:$dst), (ins i32mem:$src),
+                      "#ACQUIRE_MOV PSEUDO!",
+                      [(set GR32:$dst, (atomic_load_32 addr:$src))]>;
+def ACQUIRE_MOV64rm : I<0, Pseudo, (outs GR64:$dst), (ins i64mem:$src),
+                      "#ACQUIRE_MOV PSEUDO!",
+                      [(set GR64:$dst, (atomic_load_64 addr:$src))]>;
+
+def RELEASE_MOV8mr  : I<0, Pseudo, (outs), (ins i8mem :$dst, GR8 :$src),
+                        "#RELEASE_MOV PSEUDO!",
+                        [(atomic_store_8  addr:$dst, GR8 :$src)]>;
+def RELEASE_MOV16mr : I<0, Pseudo, (outs), (ins i16mem:$dst, GR16:$src),
+                        "#RELEASE_MOV PSEUDO!",
+                        [(atomic_store_16 addr:$dst, GR16:$src)]>;
+def RELEASE_MOV32mr : I<0, Pseudo, (outs), (ins i32mem:$dst, GR32:$src),
+                        "#RELEASE_MOV PSEUDO!",
+                        [(atomic_store_32 addr:$dst, GR32:$src)]>;
+def RELEASE_MOV64mr : I<0, Pseudo, (outs), (ins i64mem:$dst, GR64:$src),
+                        "#RELEASE_MOV PSEUDO!",
+                        [(atomic_store_64 addr:$dst, GR64:$src)]>;
+
 //===----------------------------------------------------------------------===//
 // Conditional Move Pseudo Instructions.
 //===----------------------------------------------------------------------===//
@@ -1709,17 +1735,3 @@ def : Pat<(and GR64:$src1, i64immSExt8:$src2),
           (AND64ri8 GR64:$src1, i64immSExt8:$src2)>;
 def : Pat<(and GR64:$src1, i64immSExt32:$src2),
           (AND64ri32 GR64:$src1, i64immSExt32:$src2)>;
-
-def : Pat<(atomic_load_8 addr:$src), (MOV8rm addr:$src)>;
-def : Pat<(atomic_load_16 addr:$src), (MOV16rm addr:$src)>;
-def : Pat<(atomic_load_32 addr:$src), (MOV32rm addr:$src)>;
-def : Pat<(atomic_load_64 addr:$src), (MOV64rm addr:$src)>;
-
-def : Pat<(atomic_store_8 addr:$ptr, GR8:$val),
-          (MOV8mr addr:$ptr, GR8:$val)>;
-def : Pat<(atomic_store_16 addr:$ptr, GR16:$val),
-          (MOV16mr addr:$ptr, GR16:$val)>;
-def : Pat<(atomic_store_32 addr:$ptr, GR32:$val),
-          (MOV32mr addr:$ptr, GR32:$val)>;
-def : Pat<(atomic_store_64 addr:$ptr, GR64:$val),
-          (MOV64mr addr:$ptr, GR64:$val)>;
