@@ -680,6 +680,16 @@ public:
       return false;
     return true;
   }
+  bool isT2MemRegOffset() const {
+    if (Kind != Memory || !Mem.OffsetRegNum || Mem.isNegative)
+      return false;
+    // Only lsl #{0, 1, 2, 3} allowed.
+    if (Mem.ShiftType == ARM_AM::no_shift)
+      return true;
+    if (Mem.ShiftType != ARM_AM::lsl || Mem.ShiftImm > 3)
+      return false;
+    return true;
+  }
   bool isMemThumbRR() const {
     // Thumb reg+reg addressing is simple. Just two registers, a base and
     // an offset. No shifts, negations or any other complicating factors.
@@ -843,7 +853,6 @@ public:
     Inst.addOperand(MCOperand::CreateImm(
       ARM_AM::getSORegOpc(RegShiftedImm.ShiftTy, RegShiftedImm.ShiftImm)));
   }
-
 
   void addShifterImmOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
@@ -1143,6 +1152,13 @@ public:
     Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
     Inst.addOperand(MCOperand::CreateReg(Mem.OffsetRegNum));
     Inst.addOperand(MCOperand::CreateImm(Val));
+  }
+
+  void addT2MemRegOffsetOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 3 && "Invalid number of operands!");
+    Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
+    Inst.addOperand(MCOperand::CreateReg(Mem.OffsetRegNum));
+    Inst.addOperand(MCOperand::CreateImm(Mem.ShiftImm));
   }
 
   void addMemThumbRROperands(MCInst &Inst, unsigned N) const {

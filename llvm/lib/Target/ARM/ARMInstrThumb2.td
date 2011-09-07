@@ -167,11 +167,13 @@ def t2am_imm8s4_offset : Operand<i32> {
 }
 
 // t2addrmode_so_reg  := reg + (reg << imm2)
+def t2addrmode_so_reg_asmoperand : AsmOperandClass {let Name="T2MemRegOffset";}
 def t2addrmode_so_reg : Operand<i32>,
                         ComplexPattern<i32, 3, "SelectT2AddrModeSoReg", []> {
   let PrintMethod = "printT2AddrModeSoRegOperand";
   let EncoderMethod = "getT2AddrModeSORegOpValue";
   let DecoderMethod = "DecodeT2AddrModeSOReg";
+  let ParserMatchClass = t2addrmode_so_reg_asmoperand;
   let MIOperandInfo = (ops GPR:$base, rGPR:$offsreg, i32imm:$offsimm);
 }
 
@@ -3709,3 +3711,9 @@ def : t2InstAlias<"ldrb${p} $Rt, $addr",
                   (t2LDRBi12 rGPR:$Rt, t2addrmode_imm12:$addr, pred:$p)>;
 def : t2InstAlias<"ldrh${p} $Rt, $addr",
                   (t2LDRHi12 rGPR:$Rt, t2addrmode_imm12:$addr, pred:$p)>;
+def : t2InstAlias<"ldr${p} $Rt, $addr",
+                  (t2LDRs GPR:$Rt, t2addrmode_so_reg:$addr, pred:$p)>;
+def : t2InstAlias<"ldrb${p} $Rt, $addr",
+                  (t2LDRBs rGPR:$Rt, t2addrmode_so_reg:$addr, pred:$p)>;
+def : t2InstAlias<"ldrh${p} $Rt, $addr",
+                  (t2LDRHs rGPR:$Rt, t2addrmode_so_reg:$addr, pred:$p)>;
