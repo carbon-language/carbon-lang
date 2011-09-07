@@ -1524,7 +1524,7 @@ multiclass thumb2_ldst_mult<string asm, InstrItinClass itin,
   }
   def DB :
     T2XI<(outs), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
-         itin, !strconcat(asm, "db${p}.w\t$Rn, $regs"), []> {
+         itin, !strconcat(asm, "db${p}\t$Rn, $regs"), []> {
     bits<4>  Rn;
     bits<16> regs;
 
@@ -1539,7 +1539,7 @@ multiclass thumb2_ldst_mult<string asm, InstrItinClass itin,
   }
   def DB_UPD :
     T2XIt<(outs GPR:$wb), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
-          itin_upd, !strconcat(asm, "db${p}.w\t$Rn, $regs"), "$Rn = $wb", []> {
+          itin_upd, !strconcat(asm, "db${p}\t$Rn!, $regs"), "$Rn = $wb", []> {
     bits<4>  Rn;
     bits<16> regs;
 
