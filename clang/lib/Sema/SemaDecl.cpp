@@ -5443,6 +5443,7 @@ namespace {
     }
 
     void VisitMemberExpr(MemberExpr *E) {
+      if (E->getType()->canDecayToPointerType()) return;
       if (isa<FieldDecl>(E->getMemberDecl()))
         if (DeclRefExpr *DRE
               = dyn_cast<DeclRefExpr>(E->getBase()->IgnoreParenImpCasts())) {

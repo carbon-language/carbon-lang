@@ -115,3 +115,5 @@ struct S {
   S(char (*)[5]) : x(boo(x)) {}
   S(char (*)[6]) : x(far(x)) {}
 };
+
+struct C { char a[100], *e; } car = { .e = car.a };
