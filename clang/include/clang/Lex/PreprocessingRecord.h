@@ -336,13 +336,6 @@ namespace clang {
           return Self->LoadedPreprocessedEntities.end()[Position];
         return Self->PreprocessedEntities[Position];
       }
-    
-      pointer operator->() const {
-        if (Position < 0)
-          return &Self->LoadedPreprocessedEntities.end()[Position];
-        
-        return &Self->PreprocessedEntities[Position];        
-      }
       
       reference operator[](difference_type D) {
         return *(*this + D);
