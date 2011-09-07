@@ -136,7 +136,7 @@ void __both3(void) {}
 void __a1(void) __attribute((noinline));
 #pragma weak a1 = __a1
 void __a1(void) {}
-// CHECK: define void @__a1()
+// CHECK: define void @__a1() {{.*}} noinline
 
 // attributes introduced BEFORE a combination of #pragma weak and alias()
 // hold...
@@ -144,13 +144,20 @@ void __a3(void) __attribute((noinline));
 #pragma weak a3 = __a3
 void a3(void) __attribute((alias("__a3")));
 void __a3(void) {}
-// CHECK: define void @__a3()
+// CHECK: define void @__a3() {{.*}} noinline
 
 #pragma weak xxx = __xxx
 __attribute((pure,noinline,const,fastcall)) void __xxx(void) { }
-// CHECK: void @__xxx()
+// CHECK: void @__xxx() {{.*}} noinline
 
-/// TODO: stuff that still doesn't work
+///////////// PR10878: Make sure we can call a weak alias
+void SHA512Pad(void *context) {}
+#pragma weak SHA384Pad = SHA512Pad
+void PR10878() { SHA384Pad(0); }
+// CHECK: call void @SHA384Pad(i8* null)
+
+
+///////////// TODO: stuff that still doesn't work
 
 // due to the fact that disparate TopLevelDecls cannot affect each other
 // (due to clang's Parser and ASTConsumer behavior, and quite reasonable)

@@ -5324,7 +5324,8 @@ public:
   void ActOnPragmaVisibility(bool IsPush, const IdentifierInfo* VisType,
                              SourceLocation PragmaLoc);
 
-  NamedDecl *DeclClonePragmaWeak(NamedDecl *ND, IdentifierInfo *II);
+  NamedDecl *DeclClonePragmaWeak(NamedDecl *ND, IdentifierInfo *II,
+                                 SourceLocation Loc);
   void DeclApplyPragmaWeak(Scope *S, NamedDecl *ND, WeakInfo &W);
 
   /// ActOnPragmaWeakID - Called on well formed #pragma weak ident.

@@ -3631,17 +3631,40 @@ void Sema::ProcessDeclAttributeList(Scope *S, Decl *D,
 
 /// DeclClonePragmaWeak - clone existing decl (maybe definition),
 /// #pragma weak needs a non-definition decl and source may not have one
-NamedDecl * Sema::DeclClonePragmaWeak(NamedDecl *ND, IdentifierInfo *II) {
+NamedDecl * Sema::DeclClonePragmaWeak(NamedDecl *ND, IdentifierInfo *II,
+                                      SourceLocation Loc) {
   assert(isa<FunctionDecl>(ND) || isa<VarDecl>(ND));
   NamedDecl *NewD = 0;
   if (FunctionDecl *FD = dyn_cast<FunctionDecl>(ND)) {
-    NewD = FunctionDecl::Create(FD->getASTContext(), FD->getDeclContext(),
-                                FD->getInnerLocStart(),
-                                FD->getLocation(), DeclarationName(II),
-                                FD->getType(), FD->getTypeSourceInfo());
-    if (FD->getQualifier()) {
-      FunctionDecl *NewFD = cast<FunctionDecl>(NewD);
+    FunctionDecl *NewFD;
+    // FIXME: Missing call to CheckFunctionDeclaration().
+    // FIXME: Mangling?
+    // FIXME: Is the qualifier info correct?
+    // FIXME: Is the DeclContext correct?
+    NewFD = FunctionDecl::Create(FD->getASTContext(), FD->getDeclContext(),
+                                 Loc, Loc, DeclarationName(II),
+                                 FD->getType(), FD->getTypeSourceInfo(),
+                                 SC_None, SC_None,
+                                 false/*isInlineSpecified*/,
+                                 FD->hasPrototype(),
+                                 false/*isConstexprSpecified*/);
+    NewD = NewFD;
+
+    if (FD->getQualifier())
       NewFD->setQualifierInfo(FD->getQualifierLoc());
+
+    // Fake up parameter variables; they are declared as if this were
+    // a typedef.
+    QualType FDTy = FD->getType();
+    if (const FunctionProtoType *FT = FDTy->getAs<FunctionProtoType>()) {
+      SmallVector<ParmVarDecl*, 16> Params;
+      for (FunctionProtoType::arg_type_iterator AI = FT->arg_type_begin(),
+           AE = FT->arg_type_end(); AI != AE; ++AI) {
+        ParmVarDecl *Param = BuildParmVarDeclForTypedef(NewFD, Loc, *AI);
+        Param->setScopeInfo(0, Params.size());
+        Params.push_back(Param);
+      }
+      NewFD->setParams(Params.data(), Params.size());
     }
   } else if (VarDecl *VD = dyn_cast<VarDecl>(ND)) {
     NewD = VarDecl::Create(VD->getASTContext(), VD->getDeclContext(),
@@ -3664,7 +3687,7 @@ void Sema::DeclApplyPragmaWeak(Scope *S, NamedDecl *ND, WeakInfo &W) {
   W.setUsed(true);
   if (W.getAlias()) { // clone decl, impersonate __attribute(weak,alias(...))
     IdentifierInfo *NDId = ND->getIdentifier();
-    NamedDecl *NewD = DeclClonePragmaWeak(ND, W.getAlias());
+    NamedDecl *NewD = DeclClonePragmaWeak(ND, W.getAlias(), W.getLocation());
     NewD->addAttr(::new (Context) AliasAttr(W.getLocation(), Context,
                                             NDId->getName()));
     NewD->addAttr(::new (Context) WeakAttr(W.getLocation(), Context));
