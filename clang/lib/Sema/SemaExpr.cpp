@@ -7932,11 +7932,11 @@ static bool EvaluatesAsFalse(Sema &S, Expr *E) {
 
 /// \brief Look for '&&' in the left hand of a '||' expr.
 static void DiagnoseLogicalAndInLogicalOrLHS(Sema &S, SourceLocation OpLoc,
-                                             Expr *OrLHS, Expr *OrRHS) {
-  if (BinaryOperator *Bop = dyn_cast<BinaryOperator>(OrLHS)) {
+                                             Expr *LHSExpr, Expr *RHSExpr) {
+  if (BinaryOperator *Bop = dyn_cast<BinaryOperator>(LHSExpr)) {
     if (Bop->getOpcode() == BO_LAnd) {
       // If it's "a && b || 0" don't warn since the precedence doesn't matter.
-      if (EvaluatesAsFalse(S, OrRHS))
+      if (EvaluatesAsFalse(S, RHSExpr))
         return;
       // If it's "1 && a || b" don't warn since the precedence doesn't matter.
       if (!EvaluatesAsTrue(S, Bop->getLHS()))
@@ -7954,11 +7954,11 @@ static void DiagnoseLogicalAndInLogicalOrLHS(Sema &S, SourceLocation OpLoc,
 
 /// \brief Look for '&&' in the right hand of a '||' expr.
 static void DiagnoseLogicalAndInLogicalOrRHS(Sema &S, SourceLocation OpLoc,
-                                             Expr *OrLHS, Expr *OrRHS) {
-  if (BinaryOperator *Bop = dyn_cast<BinaryOperator>(OrRHS)) {
+                                             Expr *LHSExpr, Expr *RHSExpr) {
+  if (BinaryOperator *Bop = dyn_cast<BinaryOperator>(RHSExpr)) {
     if (Bop->getOpcode() == BO_LAnd) {
       // If it's "0 || a && b" don't warn since the precedence doesn't matter.
-      if (EvaluatesAsFalse(S, OrLHS))
+      if (EvaluatesAsFalse(S, LHSExpr))
         return;
       // If it's "a || b && 1" don't warn since the precedence doesn't matter.
       if (!EvaluatesAsTrue(S, Bop->getRHS()))
@@ -7979,52 +7979,54 @@ static void DiagnoseBitwiseAndInBitwiseOr(Sema &S, SourceLocation OpLoc,
 /// DiagnoseBinOpPrecedence - Emit warnings for expressions with tricky
 /// precedence.
 static void DiagnoseBinOpPrecedence(Sema &Self, BinaryOperatorKind Opc,
-                                    SourceLocation OpLoc, Expr *lhs, Expr *rhs){
+                                    SourceLocation OpLoc, Expr *LHSExpr,
+                                    Expr *RHSExpr){
   // Diagnose "arg1 'bitwise' arg2 'eq' arg3".
   if (BinaryOperator::isBitwiseOp(Opc))
-    DiagnoseBitwisePrecedence(Self, Opc, OpLoc, lhs, rhs);
+    DiagnoseBitwisePrecedence(Self, Opc, OpLoc, LHSExpr, RHSExpr);
 
   // Diagnose "arg1 & arg2 | arg3"
   if (Opc == BO_Or && !OpLoc.isMacroID()/* Don't warn in macros. */) {
-    DiagnoseBitwiseAndInBitwiseOr(Self, OpLoc, lhs);
-    DiagnoseBitwiseAndInBitwiseOr(Self, OpLoc, rhs);
+    DiagnoseBitwiseAndInBitwiseOr(Self, OpLoc, LHSExpr);
+    DiagnoseBitwiseAndInBitwiseOr(Self, OpLoc, RHSExpr);
   }
 
   // Warn about arg1 || arg2 && arg3, as GCC 4.3+ does.
   // We don't warn for 'assert(a || b && "bad")' since this is safe.
   if (Opc == BO_LOr && !OpLoc.isMacroID()/* Don't warn in macros. */) {
-    DiagnoseLogicalAndInLogicalOrLHS(Self, OpLoc, lhs, rhs);
-    DiagnoseLogicalAndInLogicalOrRHS(Self, OpLoc, lhs, rhs);
+    DiagnoseLogicalAndInLogicalOrLHS(Self, OpLoc, LHSExpr, RHSExpr);
+    DiagnoseLogicalAndInLogicalOrRHS(Self, OpLoc, LHSExpr, RHSExpr);
   }
 }
 
 // Binary Operators.  'Tok' is the token for the operator.
 ExprResult Sema::ActOnBinOp(Scope *S, SourceLocation TokLoc,
                             tok::TokenKind Kind,
-                            Expr *lhs, Expr *rhs) {
+                            Expr *LHSExpr, Expr *RHSExpr) {
   BinaryOperatorKind Opc = ConvertTokenKindToBinaryOpcode(Kind);
-  assert((lhs != 0) && "ActOnBinOp(): missing left expression");
-  assert((rhs != 0) && "ActOnBinOp(): missing right expression");
+  assert((LHSExpr != 0) && "ActOnBinOp(): missing left expression");
+  assert((RHSExpr != 0) && "ActOnBinOp(): missing right expression");
 
   // Emit warnings for tricky precedence issues, e.g. "bitfield & 0x4 == 0"
-  DiagnoseBinOpPrecedence(*this, Opc, TokLoc, lhs, rhs);
+  DiagnoseBinOpPrecedence(*this, Opc, TokLoc, LHSExpr, RHSExpr);
 
-  return BuildBinOp(S, TokLoc, Opc, lhs, rhs);
+  return BuildBinOp(S, TokLoc, Opc, LHSExpr, RHSExpr);
 }
 
 ExprResult Sema::BuildBinOp(Scope *S, SourceLocation OpLoc,
                             BinaryOperatorKind Opc,
-                            Expr *lhs, Expr *rhs) {
+                            Expr *LHSExpr, Expr *RHSExpr) {
   if (getLangOptions().CPlusPlus) {
     bool UseBuiltinOperator;
 
-    if (lhs->isTypeDependent() || rhs->isTypeDependent()) {
+    if (LHSExpr->isTypeDependent() || RHSExpr->isTypeDependent()) {
       UseBuiltinOperator = false;
-    } else if (Opc == BO_Assign && lhs->getObjectKind() == OK_ObjCProperty) {
+    } else if (Opc == BO_Assign &&
+               LHSExpr->getObjectKind() == OK_ObjCProperty) {
       UseBuiltinOperator = true;
     } else {
-      UseBuiltinOperator = !lhs->getType()->isOverloadableType() &&
-                           !rhs->getType()->isOverloadableType();
+      UseBuiltinOperator = !LHSExpr->getType()->isOverloadableType() &&
+                           !RHSExpr->getType()->isOverloadableType();
     }
 
     if (!UseBuiltinOperator) {
@@ -8036,17 +8038,17 @@ ExprResult Sema::BuildBinOp(Scope *S, SourceLocation OpLoc,
       OverloadedOperatorKind OverOp
         = BinaryOperator::getOverloadedOperator(Opc);
       if (S && OverOp != OO_None)
-        LookupOverloadedOperatorName(OverOp, S, lhs->getType(), rhs->getType(),
-                                     Functions);
+        LookupOverloadedOperatorName(OverOp, S, LHSExpr->getType(),
+                                     RHSExpr->getType(), Functions);
 
       // Build the (potentially-overloaded, potentially-dependent)
       // binary operation.
-      return CreateOverloadedBinOp(OpLoc, Opc, Functions, lhs, rhs);
+      return CreateOverloadedBinOp(OpLoc, Opc, Functions, LHSExpr, RHSExpr);
     }
   }
 
   // Build a built-in binary operation.
-  return CreateBuiltinBinOp(OpLoc, Opc, lhs, rhs);
+  return CreateBuiltinBinOp(OpLoc, Opc, LHSExpr, RHSExpr);
 }
 
 ExprResult Sema::CreateBuiltinUnaryOp(SourceLocation OpLoc,
