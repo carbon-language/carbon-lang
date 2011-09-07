@@ -4907,6 +4907,7 @@ def : MnemonicAlias<"swi", "svc">;
 // Load / Store Multiple
 def : MnemonicAlias<"ldmfd", "ldm">;
 def : MnemonicAlias<"ldmia", "ldm">;
+def : MnemonicAlias<"ldmea", "ldmdb">;
 def : MnemonicAlias<"stmfd", "stmdb">;
 def : MnemonicAlias<"stmia", "stm">;
 def : MnemonicAlias<"stmea", "stm">;
