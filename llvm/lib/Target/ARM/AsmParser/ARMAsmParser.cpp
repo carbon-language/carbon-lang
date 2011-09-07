@@ -3339,6 +3339,17 @@ static bool checkLowRegisterList(MCInst Inst, unsigned OpNo, unsigned Reg,
   return false;
 }
 
+// Check if the specified regisgter is in the register list of the inst,
+// starting at the indicated operand number.
+static bool listContainsReg(MCInst &Inst, unsigned OpNo, unsigned Reg) {
+  for (unsigned i = OpNo; i < Inst.getNumOperands(); ++i) {
+    unsigned OpReg = Inst.getOperand(i).getReg();
+    if (OpReg == Reg)
+      return true;
+  }
+  return false;
+}
+
 // FIXME: We would really prefer to have MCInstrInfo (the wrapper around
 // the ARMInsts array) instead. Getting that here requires awkward
 // API changes, though. Better way?
@@ -3430,6 +3441,11 @@ validateInstruction(MCInst &Inst,
     return false;
   }
   case ARM::tLDMIA: {
+    // If we're parsing Thumb2, the .w variant is available and handles
+    // most cases that are normally illegal for a Thumb1 LDM
+    // instruction. We'll make the transformation in processInstruction()
+    // if necessary.
+    //
     // Thumb LDM instructions are writeback iff the base register is not
     // in the register list.
     unsigned Rn = Inst.getOperand(0).getReg();
@@ -3437,19 +3453,27 @@ validateInstruction(MCInst &Inst,
       (static_cast<ARMOperand*>(Operands[3])->isToken() &&
        static_cast<ARMOperand*>(Operands[3])->getToken() == "!");
     bool listContainsBase;
-    if (checkLowRegisterList(Inst, 3, Rn, 0, listContainsBase))
+    if (checkLowRegisterList(Inst, 3, Rn, 0, listContainsBase) && !isThumbTwo())
       return Error(Operands[3 + hasWritebackToken]->getStartLoc(),
                    "registers must be in range r0-r7");
     // If we should have writeback, then there should be a '!' token.
-    if (!listContainsBase && !hasWritebackToken)
+    if (!listContainsBase && !hasWritebackToken && !isThumbTwo())
       return Error(Operands[2]->getStartLoc(),
                    "writeback operator '!' expected");
-    // Likewise, if we should not have writeback, there must not be a '!'
+    // If we should not have writeback, there must not be a '!'. This is
+    // true even for the 32-bit wide encodings.
     if (listContainsBase && hasWritebackToken)
       return Error(Operands[3]->getStartLoc(),
                    "writeback operator '!' not allowed when base register "
                    "in register list");
 
+    break;
+  }
+  case ARM::t2LDMIA_UPD: {
+    if (listContainsReg(Inst, 3, Inst.getOperand(0).getReg()))
+      return Error(Operands[4]->getStartLoc(),
+                   "writeback operator '!' not allowed when base register "
+                   "in register list");
     break;
   }
   case ARM::tPOP: {
@@ -3533,6 +3557,30 @@ processInstruction(MCInst &Inst,
     if (Inst.getOperand(1).getImm() == ARMCC::AL)
       Inst.setOpcode(ARM::tB);
     break;
+  case ARM::tLDMIA: {
+    // If the register list contains any high registers, or if the writeback
+    // doesn't match what tLDMIA can do, we need to use the 32-bit encoding
+    // instead if we're in Thumb2. Otherwise, this should have generated
+    // an error in validateInstruction().
+    unsigned Rn = Inst.getOperand(0).getReg();
+    bool hasWritebackToken =
+      (static_cast<ARMOperand*>(Operands[3])->isToken() &&
+       static_cast<ARMOperand*>(Operands[3])->getToken() == "!");
+    bool listContainsBase;
+    if (checkLowRegisterList(Inst, 3, Rn, 0, listContainsBase) ||
+        (!listContainsBase && !hasWritebackToken) ||
+        (listContainsBase && hasWritebackToken)) {
+      // 16-bit encoding isn't sufficient. Switch to the 32-bit version.
+      assert (isThumbTwo());
+      Inst.setOpcode(hasWritebackToken ? ARM::t2LDMIA_UPD : ARM::t2LDMIA);
+      // If we're switching to the updating version, we need to insert
+      // the writeback tied operand.
+      if (hasWritebackToken)
+        Inst.insert(Inst.begin(),
+                    MCOperand::CreateReg(Inst.getOperand(0).getReg()));
+    }
+    break;
+  }
   case ARM::t2IT: {
     // The mask bits for all but the first condition are represented as
     // the low bit of the condition code value implies 't'. We currently

@@ -463,6 +463,44 @@ _func:
 
 
 @------------------------------------------------------------------------------
+@ LDMIA
+@------------------------------------------------------------------------------
+        ldmia.w r4, {r4, r5, r8, r9}
+        ldmia.w r4, {r5, r6}
+        ldmia.w r5!, {r3, r8}
+        ldm.w r4, {r4, r5, r8, r9}
+        ldm.w r4, {r5, r6}
+        ldm.w r5!, {r3, r8}
+        ldm.w r5!, {r1, r2}
+        ldm.w r2, {r1, r2}
+
+        ldmia r4, {r4, r5, r8, r9}
+        ldmia r4, {r5, r6}
+        ldmia r5!, {r3, r8}
+        ldm r4, {r4, r5, r8, r9}
+        ldm r4, {r5, r6}
+        ldm r5!, {r3, r8}
+        ldmfd r5!, {r3, r8}
+
+@ CHECK: ldm.w	r4, {r4, r5, r8, r9}    @ encoding: [0x94,0xe8,0x30,0x03]
+@ CHECK: ldm.w	r4, {r5, r6}            @ encoding: [0x94,0xe8,0x60,0x00]
+@ CHECK: ldm.w	r5!, {r3, r8}           @ encoding: [0xb5,0xe8,0x08,0x01]
+@ CHECK: ldm.w	r4, {r4, r5, r8, r9}    @ encoding: [0x94,0xe8,0x30,0x03]
+@ CHECK: ldm.w	r4, {r5, r6}            @ encoding: [0x94,0xe8,0x60,0x00]
+@ CHECK: ldm.w	r5!, {r3, r8}           @ encoding: [0xb5,0xe8,0x08,0x01]
+@ CHECK: ldm.w	r5!, {r1, r2}           @ encoding: [0xb5,0xe8,0x06,0x00]
+@ CHECK: ldm.w	r2, {r1, r2}            @ encoding: [0x92,0xe8,0x06,0x00]
+
+@ CHECK: ldm.w	r4, {r4, r5, r8, r9}    @ encoding: [0x94,0xe8,0x30,0x03]
+@ CHECK: ldm.w	r4, {r5, r6}            @ encoding: [0x94,0xe8,0x60,0x00]
+@ CHECK: ldm.w	r5!, {r3, r8}           @ encoding: [0xb5,0xe8,0x08,0x01]
+@ CHECK: ldm.w	r4, {r4, r5, r8, r9}    @ encoding: [0x94,0xe8,0x30,0x03]
+@ CHECK: ldm.w	r4, {r5, r6}            @ encoding: [0x94,0xe8,0x60,0x00]
+@ CHECK: ldm.w	r5!, {r3, r8}           @ encoding: [0xb5,0xe8,0x08,0x01]
+@ CHECK: ldm.w	r5!, {r3, r8}           @ encoding: [0xb5,0xe8,0x08,0x01]
+
+
+@------------------------------------------------------------------------------
 @ IT
 @------------------------------------------------------------------------------
 @ Test encodings of a few full IT blocks, not just the IT instruction
