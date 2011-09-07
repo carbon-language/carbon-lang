@@ -8289,9 +8289,22 @@ Sema::BuildOverloadedCallExpr(Scope *S, Expr *Fn, UnresolvedLookupExpr *ULE,
   // If we found nothing, try to recover.
   // BuildRecoveryCallExpr diagnoses the error itself, so we just bail
   // out if it fails.
-  if (CandidateSet.empty())
+  if (CandidateSet.empty()) {
+    // In Microsoft mode, if we are inside a template class member function then
+    // create a type dependent CallExpr. The goal is to postpone name lookup
+    // to instantiation time to be able to search into type dependent base
+    // classes.
+    if (getLangOptions().Microsoft && CurContext->isDependentContext() && 
+        isa<CXXMethodDecl>(CurContext)) {
+      CallExpr *CE = new (Context) CallExpr(Context, Fn, Args, NumArgs,
+                                          Context.DependentTy, VK_RValue,
+                                          RParenLoc);
+      CE->setTypeDependent(true);
+      return Owned(CE);
+    }
     return BuildRecoveryCallExpr(*this, S, Fn, ULE, LParenLoc, Args, NumArgs,
                                  RParenLoc, /*EmptyLookup=*/true);
+  }
 
   OverloadCandidateSet::iterator Best;
   switch (CandidateSet.BestViableFunction(*this, Fn->getLocStart(), Best)) {

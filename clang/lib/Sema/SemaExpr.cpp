@@ -1456,6 +1456,8 @@ bool Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS, LookupResult &R,
           CXXMethodDecl *DepMethod = cast_or_null<CXXMethodDecl>(
               CurMethod->getInstantiatedFromMemberFunction());
           if (DepMethod) {
+            if (getLangOptions().Microsoft)
+              diagnostic = diag::warn_found_via_dependent_bases_lookup;
             Diag(R.getNameLoc(), diagnostic) << Name
               << FixItHint::CreateInsertion(R.getNameLoc(), "this->");
             QualType DepThisType = DepMethod->getThisType(Context);
