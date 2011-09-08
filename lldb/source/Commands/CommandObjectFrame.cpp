@@ -307,86 +307,6 @@ class CommandObjectFrameVariable : public CommandObject
 {
 public:
 
-    class OptionGroupFrameVariable : public OptionGroup
-    {
-    public:
-
-        OptionGroupFrameVariable ()
-        {
-        }
-
-        virtual
-        ~OptionGroupFrameVariable ()
-        {
-        }
-
-        virtual uint32_t
-        GetNumDefinitions ();
-
-        virtual const OptionDefinition*
-        GetDefinitions ()
-        {
-            return g_option_table;
-        }
-    
-        virtual Error
-        SetOptionValue (CommandInterpreter &interpreter,
-                        uint32_t option_idx, 
-                        const char *option_arg)
-        {
-            Error error;
-            char short_option = (char) g_option_table[option_idx].short_option;
-            switch (short_option)
-            {
-            case 'r':   use_regex    = true;  break;
-            case 'a':   show_args    = false; break;
-            case 'l':   show_locals  = false; break;
-            case 'g':   show_globals = true;  break;
-            case 'c':   show_decl    = true;  break;
-            case 'f':   error = Args::StringToFormat(option_arg, format, NULL); break;
-            case 'G':
-                globals.push_back(ConstString (option_arg));
-                break;
-            case 's':
-                show_scope = true;
-                break;
-
-            default:
-                error.SetErrorStringWithFormat("Invalid short option character '%c'.\n", short_option);
-                break;
-            }
-
-            return error;
-        }
-
-        virtual void
-        OptionParsingStarting (CommandInterpreter &interpreter)
-        {
-            show_args     = true;
-            show_decl     = false;
-            format        = eFormatDefault;
-            show_globals  = false;
-            show_locals   = true;
-            use_regex     = false;
-            show_scope    = false;
-            globals.clear();
-        }
-
-        // Options table: Required for subclasses of Options.
-
-        static OptionDefinition g_option_table[];
-        
-        bool use_regex:1,
-             show_args:1,
-             show_locals:1,
-             show_globals:1,
-             show_scope:1,
-             show_decl:1;
-        lldb::Format format; // The format to use when dumping variables or children of variables
-        std::vector<ConstString> globals;
-        // Instance variables to hold the values for command options.
-    };
-
     CommandObjectFrameVariable (CommandInterpreter &interpreter) :
         CommandObject (interpreter,
                        "frame variable",
@@ -637,7 +557,7 @@ public:
                                 // using the same APIs as the the public API will be
                                 // using...
                                 valobj_sp = frame_sp->GetValueObjectForFrameVariable (var_sp, 
-                                                                                           m_varobj_options.use_dynamic);
+                                                                                      m_varobj_options.use_dynamic);
                                 if (valobj_sp)
                                 {
                                     if (m_option_variable.format != eFormatDefault)
