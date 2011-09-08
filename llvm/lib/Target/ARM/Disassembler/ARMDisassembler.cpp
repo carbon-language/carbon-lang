@@ -77,7 +77,7 @@ public:
   EDInstInfo *getEDInfo() const;
 private:
   mutable std::vector<unsigned> ITBlock;
-  void AddThumbPredicate(MCInst&) const;
+  DecodeStatus AddThumbPredicate(MCInst&) const;
   void UpdateThumbVFPPredicate(MCInst&) const;
 };
 }
@@ -422,13 +422,20 @@ static void AddThumb1SBit(MCInst &MI, bool InITBlock) {
 // encoding, but rather get their predicates from IT context.  We need
 // to fix up the predicate operands using this context information as a
 // post-pass.
-void ThumbDisassembler::AddThumbPredicate(MCInst &MI) const {
+MCDisassembler::DecodeStatus
+ThumbDisassembler::AddThumbPredicate(MCInst &MI) const {
   // A few instructions actually have predicates encoded in them.  Don't
   // try to overwrite it if we're seeing one of those.
   switch (MI.getOpcode()) {
     case ARM::tBcc:
     case ARM::t2Bcc:
-      return;
+      return Success;
+    case ARM::tCBZ:
+    case ARM::tCBNZ:
+      // Some instructions are not allowed in IT blocks.
+      if (!ITBlock.empty())
+        return SoftFail;
+      break;
     default:
       break;
   }
@@ -456,7 +463,7 @@ void ThumbDisassembler::AddThumbPredicate(MCInst &MI) const {
         MI.insert(I, MCOperand::CreateReg(0));
       else
         MI.insert(I, MCOperand::CreateReg(ARM::CPSR));
-      return;
+      return Success;
     }
   }
 
@@ -466,6 +473,8 @@ void ThumbDisassembler::AddThumbPredicate(MCInst &MI) const {
     MI.insert(I, MCOperand::CreateReg(0));
   else
     MI.insert(I, MCOperand::CreateReg(ARM::CPSR));
+
+  return Success;
 }
 
 // Thumb VFP instructions are a special case.  Because we share their
@@ -516,7 +525,7 @@ DecodeStatus ThumbDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
   DecodeStatus result = decodeThumbInstruction16(MI, insn16, Address, this, STI);
   if (result != MCDisassembler::Fail) {
     Size = 2;
-    AddThumbPredicate(MI);
+    Check(result, AddThumbPredicate(MI));
     return result;
   }
 
@@ -525,7 +534,7 @@ DecodeStatus ThumbDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
   if (result) {
     Size = 2;
     bool InITBlock = !ITBlock.empty();
-    AddThumbPredicate(MI);
+    Check(result, AddThumbPredicate(MI));
     AddThumb1SBit(MI, InITBlock);
     return result;
   }
@@ -534,7 +543,7 @@ DecodeStatus ThumbDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
   result = decodeThumb2Instruction16(MI, insn16, Address, this, STI);
   if (result != MCDisassembler::Fail) {
     Size = 2;
-    AddThumbPredicate(MI);
+    Check(result, AddThumbPredicate(MI));
 
     // If we find an IT instruction, we need to parse its condition
     // code and mask operands so that we can apply them correctly
@@ -575,7 +584,7 @@ DecodeStatus ThumbDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
   if (result != MCDisassembler::Fail) {
     Size = 4;
     bool InITBlock = ITBlock.size();
-    AddThumbPredicate(MI);
+    Check(result, AddThumbPredicate(MI));
     AddThumb1SBit(MI, InITBlock);
     return result;
   }
@@ -584,7 +593,7 @@ DecodeStatus ThumbDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
   result = decodeThumb2Instruction32(MI, insn32, Address, this, STI);
   if (result != MCDisassembler::Fail) {
     Size = 4;
-    AddThumbPredicate(MI);
+    Check(result, AddThumbPredicate(MI));
     return result;
   }
 
@@ -600,7 +609,7 @@ DecodeStatus ThumbDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
   result = decodeNEONDupInstruction32(MI, insn32, Address, this, STI);
   if (result != MCDisassembler::Fail) {
     Size = 4;
-    AddThumbPredicate(MI);
+    Check(result, AddThumbPredicate(MI));
     return result;
   }
 
@@ -612,7 +621,7 @@ DecodeStatus ThumbDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
     result = decodeNEONLoadStoreInstruction32(MI, NEONLdStInsn, Address, this, STI);
     if (result != MCDisassembler::Fail) {
       Size = 4;
-      AddThumbPredicate(MI);
+      Check(result, AddThumbPredicate(MI));
       return result;
     }
   }
@@ -626,7 +635,7 @@ DecodeStatus ThumbDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
     result = decodeNEONDataInstruction32(MI, NEONDataInsn, Address, this, STI);
     if (result != MCDisassembler::Fail) {
       Size = 4;
-      AddThumbPredicate(MI);
+      Check(result, AddThumbPredicate(MI));
       return result;
     }
   }
