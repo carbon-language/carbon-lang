@@ -38,6 +38,22 @@ class LangOptions;
 class ASTWriter;
 class ASTReader;
   
+/// There are three different types of locations in a file: a spelling
+/// location, an expansion location, and a presumed location.
+///
+/// Given an example of:
+/// #define min(x, y) x < y ? x : y
+///
+/// and then later on a use of min:
+/// return min(a, b);
+/// #line 17
+///
+/// The expansion location is the line in the source code where the macro
+/// was expanded (the return statement), the spelling location is the
+/// location in the source where the macro was originally defined,
+/// and the presumed location is where the line directive states that
+/// the line is 17, or any other line.
+
 /// SrcMgr - Public enums and private classes that are part of the
 /// SourceManager implementation.
 ///
