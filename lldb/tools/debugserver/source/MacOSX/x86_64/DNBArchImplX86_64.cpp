@@ -554,6 +554,19 @@ DNBArchImplX86_64::NotifyException(MachException::Data& exc)
                     return true;
                 }
             }
+            else if (exc.exc_data.size() >= 2 && exc.exc_data[0] == 1)
+            {
+                // exc_code = EXC_I386_SGL
+                //
+                // Check whether this corresponds to a watchpoint hit event.
+                // If yes, set the exc_sub_code to the data break address.
+                nub_addr_t addr = 0;
+                uint32_t hw_index = GetHardwareWatchpointHit(addr);
+                if (hw_index != INVALID_NUB_HW_INDEX)
+                    exc.exc_data[1] = addr;
+
+                return true;
+            }
             break;
         case EXC_SYSCALL:
             break;
@@ -695,6 +708,23 @@ DNBArchImplX86_64::IsWatchpointHit(const DBG &debug_state, uint32_t hw_index)
     return (debug_state.__dr6 & (1 << hw_index));
 }
 
+nub_addr_t
+DNBArchImplX86_64::GetWatchAddress(const DBG &debug_state, uint32_t hw_index)
+{
+    switch (hw_index) {
+    case 0:
+        return debug_state.__dr0;
+    case 1:
+        return debug_state.__dr1;
+    case 2:
+        return debug_state.__dr2;
+    case 3:
+        return debug_state.__dr3;
+    default:
+        assert(0 && "invalid hardware register index, must be one of 0, 1, 2, or 3");
+    }
+}
+
 uint32_t
 DNBArchImplX86_64::EnableHardwareWatchpoint (nub_addr_t addr, nub_size_t size, bool read, bool write)
 {
@@ -772,7 +802,7 @@ DNBArchImplX86_64::DisableHardwareWatchpoint (uint32_t hw_index)
 
 // Iterate through the debug status register; return the index of the first hit.
 uint32_t
-DNBArchImplX86_64::GetHardwareWatchpointHit()
+DNBArchImplX86_64::GetHardwareWatchpointHit(nub_addr_t &addr)
 {
     // Read the debug state
     kern_return_t kret = GetDBGState(false);
@@ -785,7 +815,10 @@ DNBArchImplX86_64::GetHardwareWatchpointHit()
         {
             if (IsWatchpointHit(debug_state, i))
             {
-                DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchImplX86_64::GetHardwareWatchpointHit() found => %u.", i);
+                addr = GetWatchAddress(debug_state, i);
+                DNBLogThreadedIf(LOG_WATCHPOINTS,
+                                 "DNBArchImplX86_64::GetHardwareWatchpointHit() found => %u (addr = %8.8p).",
+                                 i, addr);
                 return i;
             }
         }

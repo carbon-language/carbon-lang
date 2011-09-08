@@ -54,7 +54,7 @@ public:
     virtual uint32_t        NumSupportedHardwareWatchpoints();
     virtual uint32_t        EnableHardwareWatchpoint (nub_addr_t addr, nub_size_t size, bool read, bool write);
     virtual bool            DisableHardwareWatchpoint (uint32_t hw_break_index);
-    virtual uint32_t        GetHardwareWatchpointHit();
+    virtual uint32_t        GetHardwareWatchpointHit(nub_addr_t &addr);
 
 protected:
     kern_return_t           EnableHardwareSingleStep (bool enable);
@@ -233,6 +233,7 @@ protected:
     static bool IsWatchpointVacant(const DBG &debug_state, uint32_t hw_index);
     static void ClearWatchpointHits(DBG &debug_state);
     static bool IsWatchpointHit(const DBG &debug_state, uint32_t hw_index);
+    static nub_addr_t GetWatchAddress(const DBG &debug_state, uint32_t hw_index);
 
     MachThread *m_thread;
     State       m_state;

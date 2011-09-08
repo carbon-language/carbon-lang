@@ -625,6 +625,19 @@ DNBArchImplI386::NotifyException(MachException::Data& exc)
                 return true;
             }
         }
+        else if (exc.exc_data.size() >= 2 && exc.exc_data[0] == 1)
+        {
+            // exc_code = EXC_I386_SGL
+            //
+            // Check whether this corresponds to a watchpoint hit event.
+            // If yes, set the exc_sub_code to the data break address.
+            nub_addr_t addr = 0;
+            uint32_t hw_index = GetHardwareWatchpointHit(addr);
+            if (hw_index != INVALID_NUB_HW_INDEX)
+                exc.exc_data[1] = addr;
+
+            return true;
+        }
         break;
     case EXC_SYSCALL:
         break;
@@ -634,29 +647,6 @@ DNBArchImplI386::NotifyException(MachException::Data& exc)
         break;
     }
     return false;
-}
-
-// Iterate through the debug status register; return the index of the first hit.
-uint32_t
-DNBArchImplI386::GetHardwareWatchpointHit()
-{
-    // Read the debug state
-    kern_return_t kret = GetDBGState(false);
-    DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchImplI386::GetHardwareWatchpointHit() GetDBGState() => 0x%8.8x.", kret);
-    if (kret == KERN_SUCCESS)
-    {
-        DBG debug_state = m_state.context.dbg;
-        uint32_t i, num = NumSupportedHardwareWatchpoints();
-        for (i = 0; i < num; ++i)
-        {
-            if (IsWatchpointHit(debug_state, i))
-            {
-                DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchImplX86_64::GetHardwareWatchpointHit() found => %u.", i);
-                return i;
-            }
-        }
-    }
-    return INVALID_NUB_HW_INDEX;
 }
 
 uint32_t
@@ -790,6 +780,23 @@ DNBArchImplI386::IsWatchpointHit(const DBG &debug_state, uint32_t hw_index)
     return (debug_state.__dr6 & (1 << hw_index));
 }
 
+nub_addr_t
+DNBArchImplI386::GetWatchAddress(const DBG &debug_state, uint32_t hw_index)
+{
+    switch (hw_index) {
+    case 0:
+        return debug_state.__dr0;
+    case 1:
+        return debug_state.__dr1;
+    case 2:
+        return debug_state.__dr2;
+    case 3:
+        return debug_state.__dr3;
+    default:
+        assert(0 && "invalid hardware register index, must be one of 0, 1, 2, or 3");
+    }
+}
+
 uint32_t
 DNBArchImplI386::EnableHardwareWatchpoint (nub_addr_t addr, nub_size_t size, bool read, bool write)
 {
@@ -863,6 +870,32 @@ DNBArchImplI386::DisableHardwareWatchpoint (uint32_t hw_index)
         }
     }
     return false;
+}
+
+// Iterate through the debug status register; return the index of the first hit.
+uint32_t
+DNBArchImplI386::GetHardwareWatchpointHit(nub_addr_t &addr)
+{
+    // Read the debug state
+    kern_return_t kret = GetDBGState(false);
+    DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchImplI386::GetHardwareWatchpointHit() GetDBGState() => 0x%8.8x.", kret);
+    if (kret == KERN_SUCCESS)
+    {
+        DBG debug_state = m_state.context.dbg;
+        uint32_t i, num = NumSupportedHardwareWatchpoints();
+        for (i = 0; i < num; ++i)
+        {
+            if (IsWatchpointHit(debug_state, i))
+            {
+                addr = GetWatchAddress(debug_state, i);
+                DNBLogThreadedIf(LOG_WATCHPOINTS,
+                                 "DNBArchImplI386::GetHardwareWatchpointHit() found => %u (addr = %8.8p).",
+                                 i, addr);
+                return i;
+            }
+        }
+    }
+    return INVALID_NUB_HW_INDEX;
 }
 
 // Set the single step bit in the processor status register.
