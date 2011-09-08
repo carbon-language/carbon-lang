@@ -62,6 +62,8 @@ TargetInfo::TargetInfo(const std::string &T) : Triple(T) {
                       "i64:64:64-f32:32:32-f64:64:64-n32";
   UserLabelPrefix = "_";
   MCountName = "mcount";
+  RegParmMax = 0;
+  SSERegParmMax = 0;
   HasAlignMac68kSupport = false;
 
   // Default to no types using fpret.
