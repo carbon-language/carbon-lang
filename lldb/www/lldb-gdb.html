@@ -303,23 +303,104 @@
                         </td>
                     </tr>
 
-                    <tr><td class="header" colspan="2">Show all thread registers.</td></tr>
+                    <tr><td class="header" colspan="2">Select a different stack frame by index for the current thread.</td></tr>
                     <tr>
                         <td class="content">
-                            <b>(lldb)</b> register read
+                            <b>(lldb)</b> frame select 12<br>
                         </td>
                         <td class="content">
-                            <b>(gdb)</b> info all-registers
+                            <b>(gdb)</b> frame 12
                         </td>
                     </tr>
 
-                    <tr><td class="header" colspan="2">Show the values for the thread registers name "rax", "rsp" and "rbp".</td></tr>
+                    <tr><td class="header" colspan="2">Select the stack frame that called the current stack frame.</td></tr>
                     <tr>
                         <td class="content">
-                            <b>(lldb)</b> register read rax rsp rbp
+                            <b>(lldb)</b> up<br>
+                            <b>(lldb)</b> frame select --relative=1<br>
                         </td>
                         <td class="content">
-                            <b>(gdb)</b> info all-registers rax rsp rbp
+                            <b>(gdb)</b> up
+                        </td>
+                    </tr>
+
+                    <tr><td class="header" colspan="2">Select the stack frame that is called by the current stack frame.</td></tr>
+                    <tr>
+                        <td class="content">
+                            <b>(lldb)</b> down<br>
+                            <b>(lldb)</b> frame select --relative=-1<br>
+                            <b>(lldb)</b> frame select -r-1<br>
+                        </td>
+                        <td class="content">
+                            <b>(gdb)</b> down
+                        </td>
+                    </tr>
+
+                    <tr><td class="header" colspan="2">Select a different stack frame using a relative offset.</td></tr>
+                    <tr>
+                        <td class="content">
+                            <b>(lldb)</b> frame select --relative 2<br>
+                            <b>(lldb)</b> frame select -r2<br>
+                            <br>
+                            <b>(lldb)</b> frame select --relative -3<br>
+                            <b>(lldb)</b> frame select -r-3<br>
+                        </td>
+                        <td class="content">
+                            <b>(gdb)</b> up 2<br>
+                            <b>(gdb)</b> down 3<br>
+                        </td>
+                    </tr>
+
+                    <tr><td class="header" colspan="2">Show the general purpose registers for the current thread.</td></tr>
+                    <tr>
+                        <td class="content">
+                            <b>(lldb)</b> register read<br>
+                        </td>
+                        <td class="content">
+                            <b>(gdb)</b> info registers<br>
+                        </td>
+                    </tr>
+
+                    <tr><td class="header" colspan="2">Show the general purpose registers for the current thread formatted as <b>unsigned decimal</b>. LLDB tries to use
+                         the same format characters as <b>printf</b> when possible.</td></tr>
+                    <tr>
+                        <td class="content">
+                            <b>(lldb)</b> register read --format i<br>
+                            <b>(lldb)</b> register read -f i<br>
+                        </td>
+                        <td class="content">
+                        </td>
+                    </tr>
+
+                    <tr><td class="header" colspan="2">Show all registers in all register sets for the current thread.</td></tr>
+                    <tr>
+                        <td class="content">
+                            <b>(lldb)</b> register read --all<br>
+                            <b>(lldb)</b> register read -a<br>
+                        </td>
+                        <td class="content">
+                            <b>(gdb)</b> info all-registers<br>
+                        </td>
+                    </tr>
+
+                    <tr><td class="header" colspan="2">Show the values for the registers named "rax", "rsp" and "rbp" in the current thread.</td></tr>
+                    <tr>
+                        <td class="content">
+                            <b>(lldb)</b> register read rax rsp rbp<br>
+                        </td>
+                        <td class="content">
+                            <b>(gdb)</b> info all-registers rax rsp rbp<br>
+                        </td>
+                    </tr>
+
+                    <tr><td class="header" colspan="2">Show the values for the register named "rax" in the current thread formatted as <b>binary</b>.</td></tr>
+                    <tr>
+                        <td class="content">
+                            <b>(lldb)</b> register read --format binary rax<br>
+                            <b>(lldb)</b> register read -f b rax<br>
+                        </td>
+                        <td class="content">
+                            <b>(gdb)</b> p/t $rax<br>
                         </td>
                     </tr>
 
@@ -328,10 +409,10 @@
                         <td class="content">
                             <b>(lldb)</b> memory read --size 4 --format x --count 4 0xbffff3c0<br>
                             <b>(lldb)</b> memory read -s4 -fx -c4 0xbffff3c0<br>
-                            <b>(lldb)</b> x -s4 -fx -c4 0xbffff3c0
+                            <b>(lldb)</b> x -s4 -fx -c4 0xbffff3c0<br>
                         </td>
                         <td class="content">
-                            <b>(gdb)</b> x/4xw 0xbffff3c0
+                            <b>(gdb)</b> x/4xw 0xbffff3c0<br>
                         </td>
                     </tr>
 
