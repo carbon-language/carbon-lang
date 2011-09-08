@@ -764,11 +764,11 @@ void FilterChooser::emitBinaryParser(raw_ostream &o, unsigned &Indentation,
 
 static void emitSinglePredicateMatch(raw_ostream &o, StringRef str,
                                      std::string PredicateNamespace) {
-  const char *X = str.str().c_str();
-  if (X[0] == '!')
-    o << "!(Bits & " << PredicateNamespace << "::" << &X[1] << ")";
+  if (str[0] == '!')
+    o << "!(Bits & " << PredicateNamespace << "::"
+      << str.slice(1,str.size()) << ")";
   else
-    o << "(Bits & " << PredicateNamespace << "::" << X << ")";
+    o << "(Bits & " << PredicateNamespace << "::" << str << ")";
 }
 
 bool FilterChooser::emitPredicateMatch(raw_ostream &o, unsigned &Indentation,
