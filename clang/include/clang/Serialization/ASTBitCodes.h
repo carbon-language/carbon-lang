@@ -693,14 +693,17 @@ namespace clang {
       PREDEF_DECL_INT_128_ID = 5,
 
       /// \brief The unsigned 128-bit integer type.
-      PREDEF_DECL_UNSIGNED_INT_128_ID = 6
+      PREDEF_DECL_UNSIGNED_INT_128_ID = 6,
+      
+      /// \brief The internal 'instancetype' typedef.
+      PREDEF_DECL_OBJC_INSTANCETYPE_ID = 7
     };
 
     /// \brief The number of declaration IDs that are predefined.
     ///
     /// For more information about predefined declarations, see the
     /// \c PredefinedDeclIDs type and the PREDEF_DECL_*_ID constants.
-    const unsigned int NUM_PREDEF_DECL_IDS = 7;
+    const unsigned int NUM_PREDEF_DECL_IDS = 8;
     
     /// \brief Record codes for each kind of declaration.
     ///

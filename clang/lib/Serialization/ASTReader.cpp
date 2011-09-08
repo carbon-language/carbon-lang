@@ -4126,6 +4126,10 @@ Decl *ASTReader::GetDecl(DeclID ID) {
     case PREDEF_DECL_UNSIGNED_INT_128_ID:
       assert(Context && "No context available?");
       return Context->getUInt128Decl();
+        
+    case PREDEF_DECL_OBJC_INSTANCETYPE_ID:
+      assert(Context && "No context available?");
+      return Context->getObjCInstanceTypeDecl();
     }
     
     return 0;

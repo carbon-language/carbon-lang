@@ -211,6 +211,9 @@ class ASTContext : public llvm::RefCountedBase<ASTContext> {
   QualType ObjCConstantStringType;
   mutable RecordDecl *CFConstantStringTypeDecl;
 
+  /// \brief The typedef declaration for the Objective-C "instancetype" type.
+  TypedefDecl *ObjCInstanceTypeDecl;
+  
   /// \brief The type for the C FILE type.
   TypeDecl *FILEDecl;
 
@@ -884,6 +887,16 @@ public:
     ObjCSelRedefinitionType = RedefType;
   }
 
+  /// \brief Retrieve the Objective-C "instancetype" type, if already known;
+  /// otherwise, returns a NULL type;
+  QualType getObjCInstanceType() {
+    return getTypeDeclType(getObjCInstanceTypeDecl());
+  }
+
+  /// \brief Retrieve the typedef declaration corresponding to the Objective-C
+  /// "instancetype" type.
+  TypedefDecl *getObjCInstanceTypeDecl();
+  
   /// \brief Set the type for the C FILE type.
   void setFILEDecl(TypeDecl *FILEDecl) { this->FILEDecl = FILEDecl; }
 

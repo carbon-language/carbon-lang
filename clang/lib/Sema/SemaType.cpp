@@ -3053,6 +3053,13 @@ TypeResult Sema::ActOnTypeName(Scope *S, Declarator &D) {
   return CreateParsedType(T, TInfo);
 }
 
+ParsedType Sema::ActOnObjCInstanceType(SourceLocation Loc) {
+  QualType T = Context.getObjCInstanceType();
+  TypeSourceInfo *TInfo = Context.getTrivialTypeSourceInfo(T, Loc);
+  return CreateParsedType(T, TInfo);
+}
+
+
 //===----------------------------------------------------------------------===//
 // Type Attribute Processing
 //===----------------------------------------------------------------------===//

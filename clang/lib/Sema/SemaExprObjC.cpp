@@ -328,6 +328,10 @@ void Sema::EmitRelatedResultTypeNote(const Expr *E) {
                                      MsgSend->getType()))
     return;
   
+  if (!Context.hasSameUnqualifiedType(Method->getResultType(), 
+                                      Context.getObjCInstanceType()))
+    return;
+  
   Diag(Method->getLocation(), diag::note_related_result_type_inferred)
     << Method->isInstanceMethod() << Method->getSelector()
     << MsgSend->getType();

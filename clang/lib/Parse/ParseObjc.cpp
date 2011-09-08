@@ -801,8 +801,16 @@ ParsedType Parser::ParseObjCTypeName(ObjCDeclSpec &DS,
       ParseTypeName(0, Declarator::ObjCPrototypeContext, &DS);
     if (!TypeSpec.isInvalid())
       Ty = TypeSpec.get();
+  } else if (Context == OTN_ResultType && Tok.is(tok::identifier)) {
+    if (!Ident_instancetype)
+      Ident_instancetype = PP.getIdentifierInfo("instancetype");
+    
+    if (Tok.getIdentifierInfo() == Ident_instancetype) {
+      Ty = Actions.ActOnObjCInstanceType(Tok.getLocation());
+      ConsumeToken();
+    }
   }
-  
+
   if (Tok.is(tok::r_paren))
     ConsumeParen();
   else if (Tok.getLocation() == TypeStartLoc) {

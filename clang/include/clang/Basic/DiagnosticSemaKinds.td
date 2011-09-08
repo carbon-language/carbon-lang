@@ -4696,9 +4696,12 @@ def warn_related_result_type_compatibility_class : Warning<
 def warn_related_result_type_compatibility_protocol : Warning<
   "protocol method is expected to return an instance of the implementing "
   "class, but is declared to return %0">;
-def note_related_result_type_overridden : Note<
+def note_related_result_type_overridden_family : Note<
   "overridden method is part of the '%select{|alloc|copy|init|mutableCopy|"
-  "new|autorelease|dealloc|release|retain|retainCount|self}0' method family">;
+  "new|autorelease|dealloc|finalize|release|retain|retainCount|self}0' method "
+  "family">;
+def note_related_result_type_overridden : Note<
+  "overridden method returns an instance of its class type">;
 def note_related_result_type_inferred : Note<
   "%select{class|instance}0 method %1 is assumed to return an instance of "
   "its receiver type (%2)">;

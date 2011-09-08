@@ -225,7 +225,7 @@ ASTContext::ASTContext(LangOptions& LOpts, SourceManager &SM,
     GlobalNestedNameSpecifier(0), 
     Int128Decl(0), UInt128Decl(0),
     ObjCIdDecl(0), ObjCSelDecl(0), ObjCClassDecl(0),
-    CFConstantStringTypeDecl(0),
+    CFConstantStringTypeDecl(0), ObjCInstanceTypeDecl(0),
     FILEDecl(0), 
     jmp_bufDecl(0), sigjmp_bufDecl(0), BlockDescriptorType(0), 
     BlockDescriptorExtendedType(0), cudaConfigureCallDecl(0),
@@ -3842,6 +3842,17 @@ ASTContext::BuildByRefType(StringRef DeclName, QualType Ty) const {
   T->completeDefinition();
 
   return getPointerType(getTagDeclType(T));
+}
+
+TypedefDecl *ASTContext::getObjCInstanceTypeDecl() {
+  if (!ObjCInstanceTypeDecl)
+    ObjCInstanceTypeDecl = TypedefDecl::Create(*this, 
+                                               getTranslationUnitDecl(),
+                                               SourceLocation(), 
+                                               SourceLocation(),
+                                               &Idents.get("instancetype"), 
+                                     getTrivialTypeSourceInfo(getObjCIdType()));
+  return ObjCInstanceTypeDecl;
 }
 
 // This returns true if a type has been typedefed to BOOL:

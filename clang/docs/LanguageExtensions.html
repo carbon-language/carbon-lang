@@ -723,7 +723,19 @@ related result type. Similarly, the type of the expression
 <code>init</code> has a related result type and its receiver is known
 to have the type <code>NSArray *</code>. If neither <code>alloc</code> nor <code>init</code> had a related result type, the expressions would have had type <code>id</code>, as declared in the method signature.</p>
 
-<p>To determine whether a method has a related result type, the first
+<p>A method with a related result type can be declared by using the
+type <tt>instancetype</tt> as its result type. <tt>instancetype</tt>
+is a contextual keyword that is only permitted in the result type of
+an Objective-C method, e.g.</p>
+
+<pre>
+@interface A
++ (<b>instancetype</b>)constructAnA;
+@end
+</pre>
+
+<p>The related result type can also be inferred for some methods.
+To determine whether a method has an inferred related result type, the first
 word in the camel-case selector (e.g., "init" in "initWithObjects") is
 considered, and the method will a related result type if its return
 type is compatible with the type of its class and if</p>
@@ -752,8 +764,8 @@ with the subclass type. For example:</p>
 
 <p>Related result types only affect the type of a message send or
 property access via the given method. In all other respects, a method
-with a related result type is treated the same way as method without a
-related result type.</p>
+with a related result type is treated the same way as method that
+returns <tt>id</tt>.</p>
 
 <!-- ======================================================================= -->
 <h2 id="objc_arc">Automatic reference counting </h2>

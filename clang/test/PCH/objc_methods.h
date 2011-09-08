@@ -2,7 +2,7 @@
 
 @interface TestPCH
 + alloc;
-- (id)init;
+- (instancetype)instMethod;
 @end
 
 @class TestForwardClassDecl;

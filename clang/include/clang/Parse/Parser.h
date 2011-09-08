@@ -120,6 +120,9 @@ class Parser : public CodeCompletionHandler {
   IdentifierInfo *Ident_vector;
   IdentifierInfo *Ident_pixel;
 
+  /// Objective-C contextual keywords.
+  mutable IdentifierInfo *Ident_instancetype;
+  
   /// \brief Identifier for "introduced".
   IdentifierInfo *Ident_introduced;
 

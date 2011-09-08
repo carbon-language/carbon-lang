@@ -2880,6 +2880,8 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
     DeclIDs[Context.Int128Decl] = PREDEF_DECL_INT_128_ID;
   if (Context.UInt128Decl)
     DeclIDs[Context.UInt128Decl] = PREDEF_DECL_UNSIGNED_INT_128_ID;
+  if (Context.ObjCInstanceTypeDecl)
+    DeclIDs[Context.ObjCInstanceTypeDecl] = PREDEF_DECL_OBJC_INSTANCETYPE_ID;
   
   if (!Chain) {
     // Make sure that we emit IdentifierInfos (and any attached

@@ -443,6 +443,7 @@ void Parser::Initialize() {
     ObjCTypeQuals[objc_byref] = &PP.getIdentifierTable().get("byref");
   }
 
+  Ident_instancetype = 0;
   Ident_final = 0;
   Ident_override = 0;
 

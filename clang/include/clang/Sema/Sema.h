@@ -832,6 +832,10 @@ public:
 
   TypeResult ActOnTypeName(Scope *S, Declarator &D);
   
+  /// \brief The parser has parsed the context-sensitive type 'instancetype'
+  /// in an Objective-C message declaration. Return the appropriate type.
+  ParsedType ActOnObjCInstanceType(SourceLocation Loc);
+  
   bool RequireCompleteType(SourceLocation Loc, QualType T,
                            const PartialDiagnostic &PD,
                            std::pair<SourceLocation, PartialDiagnostic> Note);
