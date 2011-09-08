@@ -144,6 +144,10 @@ public:
   /// operand.
   uint32_t getT2AddrModeImm8s4OpValue(const MCInst &MI, unsigned OpIdx,
                                    SmallVectorImpl<MCFixup> &Fixups) const;
+  /// getT2Imm8s4OpValue - Return encoding info for '+/- imm8<<2'
+  /// operand.
+  uint32_t getT2Imm8s4OpValue(const MCInst &MI, unsigned OpIdx,
+                              SmallVectorImpl<MCFixup> &Fixups) const;
 
 
   /// getLdStSORegOpValue - Return encoding info for 'reg +/- reg shop imm'
@@ -720,6 +724,37 @@ getAddrModeImm12OpValue(const MCInst &MI, unsigned OpIdx,
   return Binary;
 }
 
+/// getT2Imm8s4OpValue - Return encoding info for
+/// '+/- imm8<<2' operand.
+uint32_t ARMMCCodeEmitter::
+getT2Imm8s4OpValue(const MCInst &MI, unsigned OpIdx,
+                   SmallVectorImpl<MCFixup> &Fixups) const {
+  // FIXME: The immediate operand should have already been encoded like this
+  // before ever getting here. The encoder method should just need to combine
+  // the MI operands for the register and the offset into a single
+  // representation for the complex operand in the .td file. This isn't just
+  // style, unfortunately. As-is, we can't represent the distinct encoding
+  // for #-0.
+
+  // {8}    = (U)nsigned (add == '1', sub == '0')
+  // {7-0}  = imm8
+  int32_t Imm8 = MI.getOperand(OpIdx).getImm();
+  bool isAdd = Imm8 >= 0;
+
+  // Immediate is always encoded as positive. The 'U' bit controls add vs sub.
+  if (Imm8 < 0)
+    Imm8 = -Imm8;
+
+  // Scaled by 4.
+  Imm8 /= 4;
+
+  uint32_t Binary = Imm8 & 0xff;
+  // Immediate is always encoded as positive. The 'U' bit controls add vs sub.
+  if (isAdd)
+    Binary |= (1 << 8);
+  return Binary;
+}
+
 /// getT2AddrModeImm8s4OpValue - Return encoding info for
 /// 'reg +/- imm8<<2' operand.
 uint32_t ARMMCCodeEmitter::
@@ -746,6 +781,12 @@ getT2AddrModeImm8s4OpValue(const MCInst &MI, unsigned OpIdx,
   } else
     isAdd = EncodeAddrModeOpValues(MI, OpIdx, Reg, Imm8, Fixups);
 
+  // FIXME: The immediate operand should have already been encoded like this
+  // before ever getting here. The encoder method should just need to combine
+  // the MI operands for the register and the offset into a single
+  // representation for the complex operand in the .td file. This isn't just
+  // style, unfortunately. As-is, we can't represent the distinct encoding
+  // for #-0.
   uint32_t Binary = (Imm8 >> 2) & 0xff;
   // Immediate is always encoded as positive. The 'U' bit controls add vs sub.
   if (isAdd)

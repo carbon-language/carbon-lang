@@ -293,6 +293,10 @@ static DecodeStatus DecodeThumbBLTargetOperand(llvm::MCInst &Inst, unsigned Val,
                                 uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeIT(llvm::MCInst &Inst, unsigned Val,
                                 uint64_t Address, const void *Decoder);
+static DecodeStatus DecodeT2LDRDPreInstruction(llvm::MCInst &Inst,unsigned Insn,
+                               uint64_t Address, const void *Decoder);
+static DecodeStatus DecodeT2STRDPreInstruction(llvm::MCInst &Inst,unsigned Insn,
+                               uint64_t Address, const void *Decoder);
 
 #include "ARMGenDisassemblerTables.inc"
 #include "ARMGenInstrInfo.inc"
@@ -3647,5 +3651,77 @@ static DecodeStatus DecodeIT(llvm::MCInst &Inst, unsigned Insn,
 
   Inst.addOperand(MCOperand::CreateImm(pred));
   Inst.addOperand(MCOperand::CreateImm(mask));
+  return S;
+}
+
+static DecodeStatus
+DecodeT2LDRDPreInstruction(llvm::MCInst &Inst, unsigned Insn,
+                           uint64_t Address, const void *Decoder) {
+  DecodeStatus S = MCDisassembler::Success;
+
+  unsigned Rt = fieldFromInstruction32(Insn, 12, 4);
+  unsigned Rt2 = fieldFromInstruction32(Insn, 8, 4);
+  unsigned Rn = fieldFromInstruction32(Insn, 16, 4);
+  unsigned addr = fieldFromInstruction32(Insn, 0, 8);
+  unsigned W = fieldFromInstruction32(Insn, 21, 1);
+  unsigned U = fieldFromInstruction32(Insn, 23, 1);
+  unsigned P = fieldFromInstruction32(Insn, 24, 1);
+  bool writeback = (W == 1) | (P == 0);
+
+  addr |= (U << 8) | (Rn << 9);
+
+  if (writeback && (Rn == Rt || Rn == Rt2))
+    Check(S, MCDisassembler::SoftFail);
+  if (Rt == Rt2)
+    Check(S, MCDisassembler::SoftFail);
+
+  // Rt
+  if (!Check(S, DecoderGPRRegisterClass(Inst, Rt, Address, Decoder)))
+    return MCDisassembler::Fail;
+  // Rt2
+  if (!Check(S, DecoderGPRRegisterClass(Inst, Rt2, Address, Decoder)))
+    return MCDisassembler::Fail;
+  // Writeback operand
+  if (!Check(S, DecoderGPRRegisterClass(Inst, Rn, Address, Decoder)))
+    return MCDisassembler::Fail;
+  // addr
+  if (!Check(S, DecodeT2AddrModeImm8s4(Inst, addr, Address, Decoder)))
+    return MCDisassembler::Fail;
+
+  return S;
+}
+
+static DecodeStatus
+DecodeT2STRDPreInstruction(llvm::MCInst &Inst, unsigned Insn,
+                           uint64_t Address, const void *Decoder) {
+  DecodeStatus S = MCDisassembler::Success;
+
+  unsigned Rt = fieldFromInstruction32(Insn, 12, 4);
+  unsigned Rt2 = fieldFromInstruction32(Insn, 8, 4);
+  unsigned Rn = fieldFromInstruction32(Insn, 16, 4);
+  unsigned addr = fieldFromInstruction32(Insn, 0, 8);
+  unsigned W = fieldFromInstruction32(Insn, 21, 1);
+  unsigned U = fieldFromInstruction32(Insn, 23, 1);
+  unsigned P = fieldFromInstruction32(Insn, 24, 1);
+  bool writeback = (W == 1) | (P == 0);
+
+  addr |= (U << 8) | (Rn << 9);
+
+  if (writeback && (Rn == Rt || Rn == Rt2))
+    Check(S, MCDisassembler::SoftFail);
+
+  // Writeback operand
+  if (!Check(S, DecoderGPRRegisterClass(Inst, Rn, Address, Decoder)))
+    return MCDisassembler::Fail;
+  // Rt
+  if (!Check(S, DecoderGPRRegisterClass(Inst, Rt, Address, Decoder)))
+    return MCDisassembler::Fail;
+  // Rt2
+  if (!Check(S, DecoderGPRRegisterClass(Inst, Rt2, Address, Decoder)))
+    return MCDisassembler::Fail;
+  // addr
+  if (!Check(S, DecodeT2AddrModeImm8s4(Inst, addr, Address, Decoder)))
+    return MCDisassembler::Fail;
+
   return S;
 }

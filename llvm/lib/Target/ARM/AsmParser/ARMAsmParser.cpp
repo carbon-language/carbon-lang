@@ -158,6 +158,10 @@ class ARMAsmParser : public MCTargetAsmParser {
   OperandMatchResultTy parseAM3Offset(SmallVectorImpl<MCParsedAsmOperand*>&);
 
   // Asm Match Converter Methods
+  bool cvtT2LdrdPre(MCInst &Inst, unsigned Opcode,
+                    const SmallVectorImpl<MCParsedAsmOperand*> &);
+  bool cvtT2StrdPre(MCInst &Inst, unsigned Opcode,
+                    const SmallVectorImpl<MCParsedAsmOperand*> &);
   bool cvtLdWriteBackRegT2AddrModeImm8(MCInst &Inst, unsigned Opcode,
                                   const SmallVectorImpl<MCParsedAsmOperand*> &);
   bool cvtLdWriteBackRegAddrMode2(MCInst &Inst, unsigned Opcode,
@@ -463,6 +467,14 @@ public:
   bool isITMask() const { return Kind == ITCondMask; }
   bool isITCondCode() const { return Kind == CondCode; }
   bool isImm() const { return Kind == Immediate; }
+  bool isImm8s4() const {
+    if (Kind != Immediate)
+      return false;
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    if (!CE) return false;
+    int64_t Value = CE->getValue();
+    return ((Value & 3) == 0) && Value >= -1020 && Value <= 1020;
+  }
   bool isImm0_1020s4() const {
     if (Kind != Immediate)
       return false;
@@ -736,6 +748,14 @@ public:
     int64_t Val = Mem.OffsetImm->getValue();
     return Val >= 0 && Val <= 1020 && (Val % 4) == 0;
   }
+  bool isMemImm8s4Offset() const {
+    if (Kind != Memory || Mem.OffsetRegNum != 0)
+      return false;
+    // Immediate offset a multiple of 4 in range [-1020, 1020].
+    if (!Mem.OffsetImm) return true;
+    int64_t Val = Mem.OffsetImm->getValue();
+    return Val >= -1020 && Val <= 1020 && (Val & 3) == 0;
+  }
   bool isMemImm8Offset() const {
     if (Kind != Memory || Mem.OffsetRegNum != 0)
       return false;
@@ -906,6 +926,14 @@ public:
   void addImmOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     addExpr(Inst, getImm());
+  }
+
+  void addImm8s4Operands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    // FIXME: We really want to scale the value here, but the LDRD/STRD
+    // instruction don't encode operands that way yet.
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    Inst.addOperand(MCOperand::CreateImm(CE->getValue()));
   }
 
   void addImm0_1020s4Operands(MCInst &Inst, unsigned N) const {
@@ -1107,6 +1135,13 @@ public:
     if (Val == INT32_MIN) Val = 0;
     if (Val < 0) Val = -Val;
     Val = ARM_AM::getAM5Opc(AddSub, Val);
+    Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
+    Inst.addOperand(MCOperand::CreateImm(Val));
+  }
+
+  void addMemImm8s4OffsetOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 2 && "Invalid number of operands!");
+    int64_t Val = Mem.OffsetImm ? Mem.OffsetImm->getValue() : 0;
     Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
     Inst.addOperand(MCOperand::CreateImm(Val));
   }
@@ -2398,6 +2433,42 @@ parseAM3Offset(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
                                                   0, S, E));
 
   return MatchOperand_Success;
+}
+
+/// cvtT2LdrdPre - Convert parsed operands to MCInst.
+/// Needed here because the Asm Gen Matcher can't handle properly tied operands
+/// when they refer multiple MIOperands inside a single one.
+bool ARMAsmParser::
+cvtT2LdrdPre(MCInst &Inst, unsigned Opcode,
+             const SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+  // Rt, Rt2
+  ((ARMOperand*)Operands[2])->addRegOperands(Inst, 1);
+  ((ARMOperand*)Operands[3])->addRegOperands(Inst, 1);
+  // Create a writeback register dummy placeholder.
+  Inst.addOperand(MCOperand::CreateReg(0));
+  // addr
+  ((ARMOperand*)Operands[4])->addMemImm8s4OffsetOperands(Inst, 2);
+  // pred
+  ((ARMOperand*)Operands[1])->addCondCodeOperands(Inst, 2);
+  return true;
+}
+
+/// cvtT2StrdPre - Convert parsed operands to MCInst.
+/// Needed here because the Asm Gen Matcher can't handle properly tied operands
+/// when they refer multiple MIOperands inside a single one.
+bool ARMAsmParser::
+cvtT2StrdPre(MCInst &Inst, unsigned Opcode,
+             const SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+  // Create a writeback register dummy placeholder.
+  Inst.addOperand(MCOperand::CreateReg(0));
+  // Rt, Rt2
+  ((ARMOperand*)Operands[2])->addRegOperands(Inst, 1);
+  ((ARMOperand*)Operands[3])->addRegOperands(Inst, 1);
+  // addr
+  ((ARMOperand*)Operands[4])->addMemImm8s4OffsetOperands(Inst, 2);
+  // pred
+  ((ARMOperand*)Operands[1])->addCondCodeOperands(Inst, 2);
+  return true;
 }
 
 /// cvtLdWriteBackRegT2AddrModeImm8 - Convert parsed operands to MCInst.

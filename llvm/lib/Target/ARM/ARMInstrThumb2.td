@@ -164,15 +164,19 @@ def t2am_imm8_offset : Operand<i32>,
 }
 
 // t2addrmode_imm8s4  := reg +/- (imm8 << 2)
+def MemImm8s4OffsetAsmOperand : AsmOperandClass {let Name = "MemImm8s4Offset";}
 def t2addrmode_imm8s4 : Operand<i32> {
   let PrintMethod = "printT2AddrModeImm8s4Operand";
   let EncoderMethod = "getT2AddrModeImm8s4OpValue";
   let DecoderMethod = "DecodeT2AddrModeImm8s4";
+  let ParserMatchClass = MemImm8s4OffsetAsmOperand;
   let MIOperandInfo = (ops GPR:$base, i32imm:$offsimm);
 }
 
+def t2am_imm8s4_offset_asmoperand : AsmOperandClass { let Name = "Imm8s4"; }
 def t2am_imm8s4_offset : Operand<i32> {
   let PrintMethod = "printT2AddrModeImm8s4OffsetOperand";
+  let EncoderMethod = "getT2Imm8s4OpValue";
   let DecoderMethod = "DecodeT2Imm8S4";
 }
 
@@ -1193,7 +1197,7 @@ let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1 in {
 // Load doubleword
 def t2LDRDi8  : T2Ii8s4<1, 0, 1, (outs rGPR:$Rt, rGPR:$Rt2),
                         (ins t2addrmode_imm8s4:$addr),
-                        IIC_iLoad_d_i, "ldrd", "\t$Rt, $Rt2, $addr", []>;
+                        IIC_iLoad_d_i, "ldrd", "\t$Rt, $Rt2, $addr", "", []>;
 } // mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1
 
 // zextload i1 -> zextload i8
@@ -1344,7 +1348,7 @@ defm t2STRH:T2I_st<0b01,"strh", IIC_iStore_bh_i, IIC_iStore_bh_si,
 let mayLoad = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1 in
 def t2STRDi8 : T2Ii8s4<1, 0, 0, (outs),
                        (ins GPR:$Rt, GPR:$Rt2, t2addrmode_imm8s4:$addr),
-               IIC_iStore_d_r, "strd", "\t$Rt, $Rt2, $addr", []>;
+               IIC_iStore_d_r, "strd", "\t$Rt, $Rt2, $addr", "", []>;
 
 // Indexed stores
 def t2STR_PRE  : T2Ipreldst<0, 0b10, 0, 1, (outs GPRnopc:$Rn_wb),
@@ -1424,23 +1428,31 @@ def t2STRHT  : T2IstT<0b01, "strht", IIC_iStore_bh_i>;
 // ldrd / strd pre / post variants
 // For disassembly only.
 
-def t2LDRD_PRE  : T2Ii8s4Tied<1, 1, 1,
-                 (outs rGPR:$Rt, rGPR:$Rt2, GPR:$wb),
-                 (ins GPR:$base, t2am_imm8s4_offset:$imm), IIC_iLoad_d_ru,
-                 "ldrd", "\t$Rt, $Rt2, [$base, $imm]!", []>;
+def t2LDRD_PRE  : T2Ii8s4<1, 1, 1, (outs rGPR:$Rt, rGPR:$Rt2, GPR:$wb),
+                 (ins t2addrmode_imm8s4:$addr), IIC_iLoad_d_ru,
+                 "ldrd", "\t$Rt, $Rt2, $addr!", "$addr.base = $wb", []> {
+  let AsmMatchConverter = "cvtT2LdrdPre";
+  let DecoderMethod = "DecodeT2LDRDPreInstruction";
+}
 
-def t2LDRD_POST : T2Ii8s4Tied<0, 1, 1,
-                 (outs rGPR:$Rt, rGPR:$Rt2, GPR:$wb),
-                 (ins GPR:$base, t2am_imm8s4_offset:$imm), IIC_iLoad_d_ru,
-                 "ldrd", "\t$Rt, $Rt2, [$base], $imm", []>;
+def t2LDRD_POST : T2Ii8s4post<0, 1, 1, (outs rGPR:$Rt, rGPR:$Rt2, GPR:$wb),
+                 (ins addr_offset_none:$addr, t2am_imm8s4_offset:$imm),
+                 IIC_iLoad_d_ru, "ldrd", "\t$Rt, $Rt2, $addr, $imm",
+                 "$addr.base = $wb", []>;
 
-def t2STRD_PRE  : T2Ii8s4Tied<1, 1, 0, (outs GPR:$wb),
-                 (ins rGPR:$Rt, rGPR:$Rt2, GPR:$base, t2am_imm8s4_offset:$imm),
-                 IIC_iStore_d_ru, "strd", "\t$Rt, $Rt2, [$base, $imm]!", []>;
+def t2STRD_PRE  : T2Ii8s4<1, 1, 0, (outs GPR:$wb),
+                 (ins rGPR:$Rt, rGPR:$Rt2, t2addrmode_imm8s4:$addr),
+                 IIC_iStore_d_ru, "strd", "\t$Rt, $Rt2, $addr!",
+                 "$addr.base = $wb", []> {
+  let AsmMatchConverter = "cvtT2StrdPre";
+  let DecoderMethod = "DecodeT2STRDPreInstruction";
+}
 
-def t2STRD_POST : T2Ii8s4Tied<0, 1, 0, (outs GPR:$wb),
-                 (ins rGPR:$Rt, rGPR:$Rt2, GPR:$base, t2am_imm8s4_offset:$imm),
-                 IIC_iStore_d_ru, "strd", "\t$Rt, $Rt2, [$base], $imm", []>;
+def t2STRD_POST : T2Ii8s4post<0, 1, 0, (outs GPR:$wb),
+                 (ins rGPR:$Rt, rGPR:$Rt2, addr_offset_none:$addr,
+                      t2am_imm8s4_offset:$imm),
+                 IIC_iStore_d_ru, "strd", "\t$Rt, $Rt2, $addr, $imm",
+                 "$addr.base = $wb", []>;
 
 // T2Ipl (Preload Data/Instruction) signals the memory system of possible future
 // data/instruction access.  These are for disassembly only.

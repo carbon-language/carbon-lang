@@ -1100,8 +1100,8 @@ class T2Ipc<dag oops, dag iops, InstrItinClass itin,
             string opc, string asm, list<dag> pattern>
   : Thumb2I<oops, iops, AddrModeT2_pc, 4, itin, opc, asm, "", pattern>;
 class T2Ii8s4<bit P, bit W, bit isLoad, dag oops, dag iops, InstrItinClass itin,
-              string opc, string asm, list<dag> pattern>
-  : Thumb2I<oops, iops, AddrModeT2_i8s4, 4, itin, opc, asm, "",
+              string opc, string asm, string cstr, list<dag> pattern>
+  : Thumb2I<oops, iops, AddrModeT2_i8s4, 4, itin, opc, asm, cstr,
             pattern> {
   bits<4> Rt;
   bits<4> Rt2;
@@ -1117,14 +1117,14 @@ class T2Ii8s4<bit P, bit W, bit isLoad, dag oops, dag iops, InstrItinClass itin,
   let Inst{11-8}  = Rt2{3-0};
   let Inst{7-0}   = addr{7-0};
 }
-
-class T2Ii8s4Tied<bit P, bit W, bit isLoad, dag oops, dag iops, InstrItinClass itin,
-              string opc, string asm, list<dag> pattern>
-  : Thumb2I<oops, iops, AddrModeT2_i8s4, 4, itin, opc, asm, "$base = $wb",
+class T2Ii8s4post<bit P, bit W, bit isLoad, dag oops, dag iops,
+                  InstrItinClass itin, string opc, string asm, string cstr,
+                  list<dag> pattern>
+  : Thumb2I<oops, iops, AddrModeT2_i8s4, 4, itin, opc, asm, cstr,
             pattern> {
   bits<4> Rt;
   bits<4> Rt2;
-  bits<4> base;
+  bits<4> addr;
   bits<9> imm;
   let Inst{31-25} = 0b1110100;
   let Inst{24}    = P;
@@ -1132,12 +1132,11 @@ class T2Ii8s4Tied<bit P, bit W, bit isLoad, dag oops, dag iops, InstrItinClass i
   let Inst{22}    = 1;
   let Inst{21}    = W;
   let Inst{20}    = isLoad;
-  let Inst{19-16} = base{3-0};
+  let Inst{19-16} = addr;
   let Inst{15-12} = Rt{3-0};
   let Inst{11-8}  = Rt2{3-0};
   let Inst{7-0}   = imm{7-0};
 }
-
 
 class T2sI<dag oops, dag iops, InstrItinClass itin,
            string opc, string asm, list<dag> pattern>

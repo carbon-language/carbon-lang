@@ -630,6 +630,24 @@ _func:
 
 
 @------------------------------------------------------------------------------
+@ LDRD(immediate)
+@------------------------------------------------------------------------------
+        ldrd r3, r5, [r6, #24]
+        ldrd r3, r5, [r6, #24]!
+        ldrd r3, r5, [r6], #4
+        ldrd r3, r5, [r6], #-8
+        ldrd r3, r5, [r6]
+        ldrd r8, r1, [r3, #0]
+
+@ CHECK: ldrd	r3, r5, [r6, #24]       @ encoding: [0xd6,0xe9,0x06,0x35]
+@ CHECK: ldrd	r3, r5, [r6, #24]!      @ encoding: [0xf6,0xe9,0x06,0x35]
+@ CHECK: ldrd	r3, r5, [r6], #4        @ encoding: [0xf6,0xe8,0x01,0x35]
+@ CHECK: ldrd	r3, r5, [r6], #-8       @ encoding: [0x76,0xe8,0x02,0x35]
+@ CHECK: ldrd	r3, r5, [r6]            @ encoding: [0xd6,0xe9,0x00,0x35]
+@ CHECK: ldrd	r8, r1, [r3]            @ encoding: [0xd3,0xe9,0x00,0x81]
+
+
+@------------------------------------------------------------------------------
 @ IT
 @------------------------------------------------------------------------------
 @ Test encodings of a few full IT blocks, not just the IT instruction
