@@ -1244,6 +1244,10 @@ public:
   void EnterDeclaratorContext(Scope *S, DeclContext *DC);
   void ExitDeclaratorContext(Scope *S);
 
+  /// Push the parameters of D, which must be a function, into scope.
+  void ActOnReenterFunctionContext(Scope* S, Decl* D);
+  void ActOnExitFunctionContext() { PopDeclContext(); }
+
   DeclContext *getFunctionLevelDeclContext();
 
   /// getCurFunctionDecl - If inside of a function body, this returns a pointer

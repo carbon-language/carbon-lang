@@ -304,8 +304,11 @@ static bool checkAttrArgsAreLockableObjs(Sema &S, Decl *D,
   for(unsigned Idx = Sidx; Idx < Attr.getNumArgs(); ++Idx) {
     Expr *ArgExp = Attr.getArg(Idx);
 
-    if (ArgExp->isTypeDependent())
-     continue;
+    if (ArgExp->isTypeDependent()) {
+      // FIXME -- need to processs this again on template instantiation
+      Args.push_back(ArgExp);
+      continue;
+    }
 
     QualType ArgTy = ArgExp->getType();
 
@@ -390,6 +393,7 @@ static void handleGuardedByAttr(Sema &S, Decl *D, const AttributeList &Attr,
     return;
 
   if (Arg->isTypeDependent())
+    // FIXME: handle attributes with dependent types
     return;
 
   // check that the argument is lockable object

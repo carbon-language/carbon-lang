@@ -1219,3 +1219,37 @@ struct Foomgoper {
 };
 
 
+//-----------------------------------------------------
+// Parsing of member variables and function parameters
+//------------------------------------------------------
+
+Mu gmu;
+
+class StaticMu {
+  static Mu statmu;
+};
+
+class FooLate {
+public:
+  void foo1()           __attribute__((exclusive_locks_required(gmu)))   { }
+  void foo2()           __attribute__((exclusive_locks_required(mu)))    { }
+  void foo3(Mu *m)      __attribute__((exclusive_locks_required(m)))     { }
+  void foo3(FooLate *f) __attribute__((exclusive_locks_required(f->mu))) { }
+  void foo4(FooLate *f) __attribute__((exclusive_locks_required(f->mu)));
+
+  static void foo5()    __attribute__((exclusive_locks_required(mu))); // \
+    expected-error {{invalid use of member 'mu' in static member function}}
+
+  template <class T>
+  void foo6() __attribute__((exclusive_locks_required(T::statmu))) { }
+
+  template <class T>
+  void foo7(T* f) __attribute__((exclusive_locks_required(f->mu))) { }
+
+  int a __attribute__((guarded_by(gmu)));
+  int b __attribute__((guarded_by(mu)));
+  int c __attribute__((guarded_by(this->mu)));
+
+  Mu mu;
+};
+

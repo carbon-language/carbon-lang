@@ -782,6 +782,29 @@ void Sema::ExitDeclaratorContext(Scope *S) {
   // disappear.
 }
 
+
+void Sema::ActOnReenterFunctionContext(Scope* S, Decl *D) {
+  FunctionDecl *FD = dyn_cast<FunctionDecl>(D);
+  if (FunctionTemplateDecl *TFD = dyn_cast_or_null<FunctionTemplateDecl>(D)) {
+    // We assume that the caller has already called
+    // ActOnReenterTemplateScope
+    FD = TFD->getTemplatedDecl();
+  }
+  if (!FD)
+    return;
+
+  PushDeclContext(S, FD);
+  for (unsigned P = 0, NumParams = FD->getNumParams(); P < NumParams; ++P) {
+    ParmVarDecl *Param = FD->getParamDecl(P);
+    // If the parameter has an identifier, then add it to the scope
+    if (Param->getIdentifier()) {
+      S->AddDecl(Param);
+      IdResolver.AddDecl(Param);
+    }
+  }
+}
+
+
 /// \brief Determine whether we allow overloading of the function
 /// PrevDecl with another declaration.
 ///

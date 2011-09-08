@@ -759,7 +759,27 @@ void Parser::ParseLexedAttribute(LateParsedAttribute &LA) {
   ParsedAttributes Attrs(AttrFactory);
   SourceLocation endLoc;
 
+  // If the Decl is templatized, add template parameters to scope.
+  bool HasTemplateScope = LA.D && LA.D->isTemplateDecl();
+  ParseScope TempScope(this, Scope::TemplateParamScope, HasTemplateScope);
+  if (HasTemplateScope)
+    Actions.ActOnReenterTemplateScope(Actions.CurScope, LA.D);
+
+  // If the Decl is on a function, add function parameters to the scope.
+  bool HasFunctionScope = LA.D && LA.D->isFunctionOrFunctionTemplate();
+  ParseScope FnScope(this, Scope::FnScope|Scope::DeclScope, HasFunctionScope);
+  if (HasFunctionScope)
+    Actions.ActOnReenterFunctionContext(Actions.CurScope, LA.D);
+
   ParseGNUAttributeArgs(&LA.AttrName, LA.AttrNameLoc, Attrs, &endLoc);
+
+  if (HasFunctionScope) {
+    Actions.ActOnExitFunctionContext();
+    FnScope.Exit();  // Pop scope, and remove Decls from IdResolver
+  }
+  if (HasTemplateScope) {
+    TempScope.Exit();
+  }
 
   // Late parsed attributes must be attached to Decls by hand.  If the
   // LA.D is not set, then this was not done properly.

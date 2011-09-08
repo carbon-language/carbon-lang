@@ -133,6 +133,10 @@ bool Decl::isFunctionOrFunctionTemplate() const {
   return isa<FunctionDecl>(this) || isa<FunctionTemplateDecl>(this);
 }
 
+bool Decl::isTemplateDecl() const {
+  return isa<TemplateDecl>(this);
+}
+
 bool Decl::isDefinedOutsideFunctionOrMethod() const {
   for (const DeclContext *DC = getDeclContext(); 
        DC && !DC->isTranslationUnit(); 
