@@ -2042,7 +2042,11 @@ Expr *Expr::IgnoreParenCasts() {
       E = Materialize->GetTemporaryExpr();
       continue;
     }
-      
+    if (SubstNonTypeTemplateParmExpr *NTTP
+                                  = dyn_cast<SubstNonTypeTemplateParmExpr>(E)) {
+      E = NTTP->getReplacement();
+      continue;
+    }      
     return E;
   }
 }
@@ -2076,6 +2080,10 @@ Expr *Expr::IgnoreParenLValueCasts() {
                                       = dyn_cast<MaterializeTemporaryExpr>(E)) {
       E = Materialize->GetTemporaryExpr();
       continue;
+    } else if (SubstNonTypeTemplateParmExpr *NTTP
+                                  = dyn_cast<SubstNonTypeTemplateParmExpr>(E)) {
+      E = NTTP->getReplacement();
+      continue;
     }
     break;
   }
@@ -2108,6 +2116,11 @@ Expr *Expr::IgnoreParenImpCasts() {
     if (MaterializeTemporaryExpr *Materialize 
                                       = dyn_cast<MaterializeTemporaryExpr>(E)) {
       E = Materialize->GetTemporaryExpr();
+      continue;
+    }
+    if (SubstNonTypeTemplateParmExpr *NTTP
+                                  = dyn_cast<SubstNonTypeTemplateParmExpr>(E)) {
+      E = NTTP->getReplacement();
       continue;
     }
     return E;
@@ -2167,6 +2180,12 @@ Expr *Expr::IgnoreParenNoopCasts(ASTContext &Ctx) {
       }
     }
 
+    if (SubstNonTypeTemplateParmExpr *NTTP
+                                  = dyn_cast<SubstNonTypeTemplateParmExpr>(E)) {
+      E = NTTP->getReplacement();
+      continue;
+    }
+    
     return E;
   }
 }
