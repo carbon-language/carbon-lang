@@ -205,14 +205,34 @@ public:
                     if (frame_idx >= -m_options.relative_frame_offset)
                         frame_idx += m_options.relative_frame_offset;
                     else
-                        frame_idx = 0;
+                    {
+                        if (frame_idx == 0)
+                        {
+                            //If you are already at the bottom of the stack, then just warn and don't reset the frame.
+                            result.AppendError("Already at the bottom of the stack");
+                            result.SetStatus(eReturnStatusFailed);
+                            return false;
+                        }
+                        else
+                            frame_idx = 0;
+                    }
                 }
                 else if (m_options.relative_frame_offset > 0)
                 {
                     if (num_frames - frame_idx > m_options.relative_frame_offset)
                         frame_idx += m_options.relative_frame_offset;
                     else
-                        frame_idx = num_frames - 1;
+                    {
+                        if (frame_idx == num_frames - 1)
+                        {
+                            //If we are already at the top of the stack, just warn and don't reset the frame.
+                            result.AppendError("Already at the top of the stack");
+                            result.SetStatus(eReturnStatusFailed);
+                            return false;
+                        }
+                        else
+                            frame_idx = num_frames - 1;
+                    }
                 }
             }
             else 
