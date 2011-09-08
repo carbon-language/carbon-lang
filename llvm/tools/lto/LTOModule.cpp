@@ -615,6 +615,8 @@ namespace {
 
 bool LTOModule::addAsmGlobalSymbols(MCContext &Context, std::string &errMsg) {
   const std::string &inlineAsm = _module->getModuleInlineAsm();
+  if (inlineAsm.empty())
+    return false;
 
   OwningPtr<RecordStreamer> Streamer(new RecordStreamer(Context));
   MemoryBuffer *Buffer = MemoryBuffer::getMemBuffer(inlineAsm);
