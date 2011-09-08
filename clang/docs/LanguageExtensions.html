@@ -81,6 +81,7 @@
   <ul>
     <li><a href="#objc_instancetype">Related result types</a></li>
     <li><a href="#objc_arc">Automatic reference counting</a></li>
+    <li><a href="#objc_fixed_enum">Enumerations with a fixed underlying type</a></li>
   </ul>
 </li>
 <li><a href="#overloading-in-c">Function Overloading in C</a></li>
@@ -772,6 +773,24 @@ returns <tt>id</tt>.</p>
 <!-- ======================================================================= -->
 
 <p>Clang provides support for <a href="AutomaticReferenceCounting.html">automated reference counting</a> in Objective-C, which eliminates the need for manual retain/release/autorelease message sends. There are two feature macros associated with automatic reference counting: <code>__has_feature(objc_arc)</code> indicates the availability of automated reference counting in general, while <code>__has_feature(objc_arc_weak)</code> indicates that automated reference counting also includes support for <code>__weak</code> pointers to Objective-C objects.</p>
+
+<!-- ======================================================================= -->
+<h2 id="objc_fixed_enum">Enumerations with a fixed underlying type</h2>
+<!-- ======================================================================= -->
+
+<p>Clang provides support for C++0x enumerations with a fixed
+underlying type within Objective-C. For example, one can write an
+enumeration type as:</p>
+
+<pre>
+typedef enum : unsigned char { Red, Green, Blue } Color;
+</pre>
+
+<p>This specifies that the underlying type, which is used to store the
+enumeration value, is <tt>unsigned char</tt>.</p>
+
+<p>Use <tt>__has_feature(objc_fixed_enum)</tt> to determine whether
+support for fixed underlying types is available in Objective-C.</p>
 
 <!-- ======================================================================= -->
 <h2 id="overloading-in-c">Function Overloading in C</h2>

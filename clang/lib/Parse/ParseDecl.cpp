@@ -2555,7 +2555,8 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
   ParsedAttributes attrs(AttrFactory);
   MaybeParseGNUAttributes(attrs);
 
-  bool AllowFixedUnderlyingType = getLang().CPlusPlus0x || getLang().Microsoft;
+  bool AllowFixedUnderlyingType 
+    = getLang().CPlusPlus0x || getLang().Microsoft || getLang().ObjC2;
 
   CXXScopeSpec &SS = DS.getTypeSpecScope();
   if (getLang().CPlusPlus) {
@@ -2658,7 +2659,7 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
       SourceRange Range;
       BaseType = ParseTypeName(&Range);
       
-      if (!getLang().CPlusPlus0x)
+      if (!getLang().CPlusPlus0x && !getLang().ObjC2)
         Diag(StartLoc, diag::ext_ms_enum_fixed_underlying_type)
           << Range;
     }

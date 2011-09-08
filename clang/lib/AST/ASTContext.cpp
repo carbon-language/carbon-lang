@@ -4204,6 +4204,17 @@ static char ObjCEncodingForPrimitiveKind(const ASTContext *C, QualType T) {
     }
 }
 
+static char ObjCEncodingForEnumType(const ASTContext *C, const EnumType *ET) {
+  EnumDecl *Enum = ET->getDecl();
+  
+  // The encoding of an non-fixed enum type is always 'i', regardless of size.
+  if (!Enum->isFixed())
+    return 'i';
+  
+  // The encoding of a fixed enum type matches its fixed underlying type.
+  return ObjCEncodingForPrimitiveKind(C, Enum->getIntegerType());
+}
+
 static void EncodeBitField(const ASTContext *Ctx, std::string& S,
                            QualType T, const FieldDecl *FD) {
   const Expr *E = FD->getBitWidth();
@@ -4228,8 +4239,8 @@ static void EncodeBitField(const ASTContext *Ctx, std::string& S,
     const RecordDecl *RD = FD->getParent();
     const ASTRecordLayout &RL = Ctx->getASTRecordLayout(RD);
     S += llvm::utostr(RL.getFieldOffset(FD->getFieldIndex()));
-    if (T->isEnumeralType())
-      S += 'i';
+    if (const EnumType *ET = T->getAs<EnumType>())
+      S += ObjCEncodingForEnumType(Ctx, ET);
     else
       S += ObjCEncodingForPrimitiveKind(Ctx, T);
   }
@@ -4415,11 +4426,11 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
     return;
   }
   
-  if (T->isEnumeralType()) {
+  if (const EnumType *ET = T->getAs<EnumType>()) {
     if (FD && FD->isBitField())
       EncodeBitField(this, S, T, FD);
     else
-      S += 'i';
+      S += ObjCEncodingForEnumType(this, ET);
     return;
   }
 
