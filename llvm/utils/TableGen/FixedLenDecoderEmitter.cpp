@@ -749,7 +749,7 @@ void FilterChooser::emitBinaryParser(raw_ostream &o, unsigned &Indentation,
     for (OperandInfo::iterator OI = OpInfo.begin(), OE = OpInfo.end();
          OI != OE; ++OI) {
       o.indent(Indentation) << "  tmp |= (fieldFromInstruction" << BitWidth
-                            << "(insn, " << OI->Base << ", " << OI->Width 
+                            << "(insn, " << OI->Base << ", " << OI->Width
                             << ") << " << OI->Offset << ");\n";
     }
   }
@@ -797,7 +797,7 @@ bool FilterChooser::emitPredicateMatch(raw_ostream &o, unsigned &Indentation,
     emitSinglePredicateMatch(o, pairs.first, Emitter->PredicateNamespace);
   }
   return Predicates->getSize() > 0;
-}  
+}
 
 // Emits code to decode the singleton.  Return true if we have matched all the
 // well-known bits.
