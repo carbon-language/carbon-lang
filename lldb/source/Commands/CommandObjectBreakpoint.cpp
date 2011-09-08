@@ -321,31 +321,37 @@ CommandObjectBreakpointSet::Execute
                 FileSpec file;
                 if (m_options.m_filename.empty())
                 {
-                    StackFrame *cur_frame = m_interpreter.GetExecutionContext().frame;
-                    if (cur_frame == NULL)
+                    uint32_t default_line;
+                    // First use the Source Manager's default file. 
+                    // Then use the current stack frame's file.
+                    if (!target->GetSourceManager().GetDefaultFileAndLine(file, default_line))
                     {
-                        result.AppendError ("Attempting to set breakpoint by line number alone with no selected frame.");
-                        result.SetStatus (eReturnStatusFailed);
-                        break;
-                    }
-                    else if (!cur_frame->HasDebugInformation())
-                    {
-                        result.AppendError ("Attempting to set breakpoint by line number alone but selected frame has no debug info.");
-                        result.SetStatus (eReturnStatusFailed);
-                        break;
-                    }
-                    else
-                    {
-                        const SymbolContext &sc = cur_frame->GetSymbolContext (eSymbolContextLineEntry);
-                        if (sc.line_entry.file)
+                        StackFrame *cur_frame = m_interpreter.GetExecutionContext().frame;
+                        if (cur_frame == NULL)
                         {
-                            file = sc.line_entry.file;
+                            result.AppendError ("Attempting to set breakpoint by line number alone with no selected frame.");
+                            result.SetStatus (eReturnStatusFailed);
+                            break;
+                        }
+                        else if (!cur_frame->HasDebugInformation())
+                        {
+                            result.AppendError ("Attempting to set breakpoint by line number alone but selected frame has no debug info.");
+                            result.SetStatus (eReturnStatusFailed);
+                            break;
                         }
                         else
                         {
-                            result.AppendError ("Attempting to set breakpoint by line number alone but can't find the file for the selected frame.");
-                            result.SetStatus (eReturnStatusFailed);
-                            break;
+                            const SymbolContext &sc = cur_frame->GetSymbolContext (eSymbolContextLineEntry);
+                            if (sc.line_entry.file)
+                            {
+                                file = sc.line_entry.file;
+                            }
+                            else
+                            {
+                                result.AppendError ("Attempting to set breakpoint by line number alone but can't find the file for the selected frame.");
+                                result.SetStatus (eReturnStatusFailed);
+                                break;
+                            }
                         }
                     }
                 }

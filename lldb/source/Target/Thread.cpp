@@ -925,15 +925,6 @@ Thread::GetStackFrameList ()
     return *m_curr_frames_sp;
 }
 
-
-
-uint32_t
-Thread::GetStackFrameCount()
-{
-    return GetStackFrameList().GetNumFrames();
-}
-
-
 void
 Thread::ClearStackFrames ()
 {
@@ -943,46 +934,9 @@ Thread::ClearStackFrames ()
 }
 
 lldb::StackFrameSP
-Thread::GetStackFrameAtIndex (uint32_t idx)
-{
-    return GetStackFrameList().GetFrameAtIndex(idx);
-}
-
-uint32_t
-Thread::GetSelectedFrameIndex ()
-{
-    return GetStackFrameList().GetSelectedFrameIndex();
-}
-
-lldb::StackFrameSP
 Thread::GetFrameWithConcreteFrameIndex (uint32_t unwind_idx)
 {
     return GetStackFrameList().GetFrameWithConcreteFrameIndex (unwind_idx);
-}
-
-lldb::StackFrameSP
-Thread::GetFrameWithStackID(StackID &stack_id)
-{
-    return GetStackFrameList().GetFrameWithStackID (stack_id);
-}
-
-
-lldb::StackFrameSP
-Thread::GetSelectedFrame ()
-{
-    return GetStackFrameAtIndex (GetStackFrameList().GetSelectedFrameIndex());
-}
-
-uint32_t
-Thread::SetSelectedFrame (lldb_private::StackFrame *frame)
-{
-    return GetStackFrameList().SetSelectedFrame(frame);
-}
-
-void
-Thread::SetSelectedFrameByIndex (uint32_t idx)
-{
-    GetStackFrameList().SetSelectedFrameByIndex(idx);
 }
 
 void

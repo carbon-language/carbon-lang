@@ -345,7 +345,11 @@ public:
     SourceManager &
     GetSourceManager ()
     {
-        return m_source_manager;
+        lldb::TargetSP selected_target = GetSelectedTarget();
+        if (selected_target)
+            return selected_target->GetSourceManager();
+        else
+            return m_source_manager;
     }
 
     lldb::TargetSP
@@ -458,7 +462,7 @@ protected:
     TargetList m_target_list;
     PlatformList m_platform_list;
     Listener m_listener;
-    SourceManager m_source_manager;
+    SourceManager m_source_manager;    // This is a scratch source manager that we return if we have no targets.
     std::auto_ptr<CommandInterpreter> m_command_interpreter_ap;
 
     InputReaderStack m_input_reader_stack;

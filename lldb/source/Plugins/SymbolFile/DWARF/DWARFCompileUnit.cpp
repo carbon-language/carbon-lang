@@ -792,22 +792,27 @@ DWARFCompileUnit::Index
             {
                 if (name)
                 {
-                    ConstString objc_class_name;
-                    ConstString objc_method_name;
-                    ConstString objc_base_name;
-                    if (ObjCLanguageRuntime::ParseMethodName (name,
-                                                              &objc_class_name,
-                                                              &objc_method_name,
-                                                              &objc_base_name))
+                    // Note, this check is also done in ParseMethodName, but since this is a hot loop, we do the
+                    // simple inlined check outside the call.
+                    if (ObjCLanguageRuntime::IsPossibleObjCMethodName(name))
                     {
-                        objc_class_selectors.Insert(objc_class_name, die_info);
-                        
-                        func_selectors.Insert (objc_method_name, die_info);
-                        
-                        if (!objc_base_name.IsEmpty())
+                        ConstString objc_class_name;
+                        ConstString objc_method_name;
+                        ConstString objc_base_name;
+                        if (ObjCLanguageRuntime::ParseMethodName (name,
+                                                                  &objc_class_name,
+                                                                  &objc_method_name,
+                                                                  &objc_base_name))
                         {
-                                func_basenames.Insert (objc_base_name, die_info);
-                                func_fullnames.Insert (objc_base_name, die_info);
+                            objc_class_selectors.Insert(objc_class_name, die_info);
+                            
+                            func_selectors.Insert (objc_method_name, die_info);
+                            
+                            if (!objc_base_name.IsEmpty())
+                            {
+                                    func_basenames.Insert (objc_base_name, die_info);
+                                    func_fullnames.Insert (objc_base_name, die_info);
+                            }
                         }
                     }
                     // If we have a mangled name, then the DW_AT_name attribute

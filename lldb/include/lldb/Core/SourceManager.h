@@ -71,7 +71,9 @@ public:
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------
-    SourceManager();
+    // A source manager can be made with a non-null target, in which case it can use the path remappings to find 
+    // source files that are not in their build locations.  With no target it won't be able to do this.
+    SourceManager(Target *target);
 
     ~SourceManager();
 
@@ -84,16 +86,14 @@ public:
     }
 
     size_t
-    DisplaySourceLines (Target *target,
-                        const FileSpec &file,
+    DisplaySourceLines (const FileSpec &file,
                         uint32_t line,
                         uint32_t context_before,
                         uint32_t context_after,
                         Stream *s);
 
     size_t
-    DisplaySourceLinesWithLineNumbers (Target *target,
-                                       const FileSpec &file,
+    DisplaySourceLinesWithLineNumbers (const FileSpec &file,
                                        uint32_t line,
                                        uint32_t context_before,
                                        uint32_t context_after,
@@ -114,12 +114,23 @@ public:
     DisplayMoreWithLineNumbers (Stream *s,
                                 const SymbolContextList *bp_locs = NULL);
 
+    bool
+    SetDefaultFileAndLine (const FileSpec &file_spec, uint32_t line);
+    
+    bool 
+    GetDefaultFileAndLine (FileSpec &file_spec, uint32_t &line);
+    
+    bool 
+    DefaultFileAndLineSet ()
+    {
+        return (m_last_file_sp.get() != NULL);
+    }
+
 protected:
 
     FileSP
-    GetFile (const FileSpec &file_spec, Target *target);
+    GetFile (const FileSpec &file_spec);
     
-
     //------------------------------------------------------------------
     // Classes that inherit from SourceManager can see and modify these
     //------------------------------------------------------------------
@@ -129,6 +140,7 @@ protected:
     uint32_t m_last_file_line;
     uint32_t m_last_file_context_before;
     uint32_t m_last_file_context_after;
+    Target *m_target;
 private:
     //------------------------------------------------------------------
     // For SourceManager only

@@ -48,13 +48,16 @@ public:
     // Mark a stack frame as the current frame
     uint32_t
     SetSelectedFrame (lldb_private::StackFrame *frame);
-
+    
     uint32_t
     GetSelectedFrameIndex () const;
 
     // Mark a stack frame as the current frame using the frame index
     void
     SetSelectedFrameByIndex (uint32_t idx);
+
+    void
+    SetDefaultFileAndLineToSelectedFrame();
 
     void
     Clear ();

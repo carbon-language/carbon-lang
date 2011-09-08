@@ -14,11 +14,14 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Core/StreamFile.h"
+#include "lldb/Core/SourceManager.h"
 #include "lldb/Symbol/Block.h"
 #include "lldb/Symbol/Function.h"
 #include "lldb/Symbol/Symbol.h"
+#include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/StackFrame.h"
+#include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/Unwind.h"
 
@@ -401,15 +404,16 @@ StackFrameList::SetSelectedFrame (lldb_private::StackFrame *frame)
     const_iterator pos;
     const_iterator begin = m_frames.begin();
     const_iterator end = m_frames.end();
+    m_selected_frame_idx = 0;
     for (pos = begin; pos != end; ++pos)
     {
         if (pos->get() == frame)
         {
             m_selected_frame_idx = std::distance (begin, pos);
-            return m_selected_frame_idx;
+            break;
         }
     }
-    m_selected_frame_idx = 0;
+    SetDefaultFileAndLineToSelectedFrame();
     return m_selected_frame_idx;
 }
 
@@ -419,6 +423,22 @@ StackFrameList::SetSelectedFrameByIndex (uint32_t idx)
 {
     Mutex::Locker locker (m_mutex);
     m_selected_frame_idx = idx;
+    SetDefaultFileAndLineToSelectedFrame();
+}
+
+void
+StackFrameList::SetDefaultFileAndLineToSelectedFrame()
+{
+    if (m_thread.GetID() == m_thread.GetProcess().GetThreadList().GetSelectedThread()->GetID())
+    {
+        StackFrameSP frame_sp = m_frames[m_selected_frame_idx];
+        if (frame_sp)
+        {
+            SymbolContext sc = frame_sp->GetSymbolContext(eSymbolContextEverything);
+            if (sc.line_entry.file)
+            m_thread.GetProcess().GetTarget().GetSourceManager().SetDefaultFileAndLine (sc.line_entry.file, sc.line_entry.line);
+        }
+    }
 }
 
 // The thread has been run, reset the number stack frames to zero so we can

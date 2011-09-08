@@ -369,8 +369,7 @@ Disassembler::PrintInstructions
                                 
                                 if (sc.comp_unit && sc.line_entry.IsValid())
                                 {
-                                    debugger.GetSourceManager().DisplaySourceLinesWithLineNumbers (debugger.GetTargetList().GetSelectedTarget().get(),
-                                                                                                   sc.line_entry.file,
+                                    debugger.GetSourceManager().DisplaySourceLinesWithLineNumbers (sc.line_entry.file,
                                                                                                    sc.line_entry.line,
                                                                                                    num_mixed_context_lines,
                                                                                                    num_mixed_context_lines,

@@ -42,6 +42,8 @@
 #include "lldb/Symbol/SymbolVendor.h"
 #include "lldb/Symbol/VariableList.h"
 
+#include "lldb/Target/ObjCLanguageRuntime.h"
+
 #include "DWARFCompileUnit.h"
 #include "DWARFDebugAbbrev.h"
 #include "DWARFDebugAranges.h"
@@ -3789,7 +3791,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                         bool type_handled = false;
                         if (tag == DW_TAG_subprogram)
                         {
-                            if (type_name_cstr[1] == '[' && (type_name_cstr[0] == '-' || type_name_cstr[0] == '+'))
+                            if (ObjCLanguageRuntime::IsPossibleObjCMethodName (type_name_cstr))
                             {
                                 // We need to find the DW_TAG_class_type or 
                                 // DW_TAG_struct_type by name so we can add this

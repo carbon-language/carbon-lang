@@ -40,8 +40,9 @@ class BreakpointCommandTestCase(TestBase):
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
-        # Add two breakpoints on the same line.
-        self.expect("breakpoint set -f main.c -l %d" % self.line,
+        # Add two breakpoints on the same line.  The first time we don't specify the file,
+        # since the default file is the one containing main:
+        self.expect("breakpoint set -l %d" % self.line,
                     BREAKPOINT_CREATED,
             startstr = "Breakpoint created: 1: file ='main.c', line = %d, locations = 1" %
                         self.line)

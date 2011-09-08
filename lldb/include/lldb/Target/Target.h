@@ -23,6 +23,7 @@
 #include "lldb/Core/Event.h"
 #include "lldb/Core/ModuleList.h"
 #include "lldb/Core/UserSettingsController.h"
+#include "lldb/Core/SourceManager.h"
 #include "lldb/Expression/ClangPersistentVariables.h"
 #include "lldb/Interpreter/NamedOptionValue.h"
 #include "lldb/Symbol/SymbolContext.h"
@@ -758,6 +759,12 @@ public:
     {
         return m_platform_sp;
     }
+    
+    SourceManager &
+    GetSourceManager ()
+    {
+        return m_source_manager;
+    }
 
     //------------------------------------------------------------------
     // Target::SettingsController
@@ -830,6 +837,7 @@ protected:
     std::auto_ptr<ClangASTContext> m_scratch_ast_context_ap;
     ClangPersistentVariables m_persistent_variables;      ///< These are the persistent variables associated with this process for the expression parser.
 
+    SourceManager m_source_manager;
 
     typedef std::map<lldb::user_id_t, StopHookSP> StopHookCollection;
     StopHookCollection      m_stop_hooks;

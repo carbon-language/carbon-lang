@@ -326,28 +326,55 @@ public:
     }
 
     virtual uint32_t
-    GetStackFrameCount();
+    GetStackFrameCount()
+    {
+        return GetStackFrameList().GetNumFrames();
+    }
 
     virtual lldb::StackFrameSP
-    GetStackFrameAtIndex (uint32_t idx);
+    GetStackFrameAtIndex (uint32_t idx)
+    {
+        return GetStackFrameList().GetFrameAtIndex(idx);
+    }
     
     virtual lldb::StackFrameSP
     GetFrameWithConcreteFrameIndex (uint32_t unwind_idx);
     
     virtual lldb::StackFrameSP
-    GetFrameWithStackID(StackID &stack_id);
+    GetFrameWithStackID(StackID &stack_id)
+    {
+        return GetStackFrameList().GetFrameWithStackID (stack_id);
+    }
 
     uint32_t
-    GetSelectedFrameIndex ();
+    GetSelectedFrameIndex ()
+    {
+        return GetStackFrameList().GetSelectedFrameIndex();
+    }
 
     lldb::StackFrameSP
-    GetSelectedFrame ();
+    GetSelectedFrame ()
+    {
+        return GetStackFrameAtIndex (GetStackFrameList().GetSelectedFrameIndex());
+    }
 
     uint32_t
-    SetSelectedFrame (lldb_private::StackFrame *frame);
+    SetSelectedFrame (lldb_private::StackFrame *frame)
+    {
+        return GetStackFrameList().SetSelectedFrame(frame);
+    }
 
     void
-    SetSelectedFrameByIndex (uint32_t frame_idx);
+    SetSelectedFrameByIndex (uint32_t frame_idx)
+    {
+        GetStackFrameList().SetSelectedFrameByIndex(frame_idx);
+    }
+
+    void
+    SetDefaultFileAndLineToSelectedFrame()
+    {
+        GetStackFrameList().SetDefaultFileAndLineToSelectedFrame();
+    }
 
     virtual lldb::RegisterContextSP
     GetRegisterContext () = 0;

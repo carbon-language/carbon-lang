@@ -111,7 +111,7 @@ ObjCLanguageRuntime::ParseMethodName (const char *name,
     if (method_name) { method_name->Clear(); }
     if (base_name) { base_name->Clear(); }
     
-    if (name && (name[0] == '-' || name[0] == '+') && name[1] == '[')
+    if (IsPossibleObjCMethodName (name))
     {
         int name_len = strlen (name);
         // Objective C methods must have at least:

@@ -61,8 +61,7 @@ SBSourceManager::DisplaySourceLinesWithLineNumbers
 
     if (file.IsValid())
     {
-        return m_opaque_ptr->DisplaySourceLinesWithLineNumbers (NULL,
-                                                                *file,
+        return m_opaque_ptr->DisplaySourceLinesWithLineNumbers (*file,
                                                                 line,
                                                                 context_before,
                                                                 context_after,

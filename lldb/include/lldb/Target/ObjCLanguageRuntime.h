@@ -99,6 +99,12 @@ public:
     static bool
     ParseMethodName (const char *name, ConstString *class_name, ConstString *method_name, ConstString *base_name);
     
+    static bool
+    IsPossibleObjCMethodName (const char *name)
+    {
+        return (name && (name[0] == '+' || name[0] == '-') && name[1] == '[');
+    }
+    
 protected:
     //------------------------------------------------------------------
     // Classes that inherit from ObjCLanguageRuntime can see and modify these

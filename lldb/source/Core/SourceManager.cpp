@@ -29,12 +29,13 @@ static inline bool is_newline_char(char ch)
 //----------------------------------------------------------------------
 // SourceManager constructor
 //----------------------------------------------------------------------
-SourceManager::SourceManager() :
+SourceManager::SourceManager(Target *target) :
     m_file_cache (),
     m_last_file_sp (),
     m_last_file_line (0),
     m_last_file_context_before (0),
-    m_last_file_context_after (0)
+    m_last_file_context_after (10),
+    m_target (target)
 {
 }
 
@@ -48,7 +49,6 @@ SourceManager::~SourceManager()
 size_t
 SourceManager::DisplaySourceLines
 (
-    Target *target,
     const FileSpec &file_spec,
     uint32_t line,
     uint32_t context_before,
@@ -56,7 +56,7 @@ SourceManager::DisplaySourceLines
     Stream *s
 )
 {
-    m_last_file_sp = GetFile (file_spec, target);
+    m_last_file_sp = GetFile (file_spec);
     m_last_file_line = line + context_after + 1;
     m_last_file_context_before = context_before;
     m_last_file_context_after = context_after;
@@ -67,7 +67,7 @@ SourceManager::DisplaySourceLines
 }
 
 SourceManager::FileSP
-SourceManager::GetFile (const FileSpec &file_spec, Target *target)
+SourceManager::GetFile (const FileSpec &file_spec)
 {
     FileSP file_sp;
     FileCache::iterator pos = m_file_cache.find(file_spec);
@@ -75,7 +75,7 @@ SourceManager::GetFile (const FileSpec &file_spec, Target *target)
         file_sp = pos->second;
     else
     {
-        file_sp.reset (new File (file_spec, target));
+        file_sp.reset (new File (file_spec, m_target));
         m_file_cache[file_spec] = file_sp;
     }
     return file_sp;
@@ -151,7 +151,6 @@ SourceManager::DisplaySourceLinesWithLineNumbersUsingLastFile
 size_t
 SourceManager::DisplaySourceLinesWithLineNumbers
 (
-    Target *target,
     const FileSpec &file_spec,
     uint32_t line,
     uint32_t context_before,
@@ -164,7 +163,7 @@ SourceManager::DisplaySourceLinesWithLineNumbers
     bool same_as_previous = m_last_file_sp && m_last_file_sp->FileSpecMatches (file_spec);
 
     if (!same_as_previous)
-        m_last_file_sp = GetFile (file_spec, target);
+        m_last_file_sp = GetFile (file_spec);
 
     if (line == 0)
     {
@@ -187,6 +186,35 @@ SourceManager::DisplayMoreWithLineNumbers (Stream *s, const SymbolContextList *b
     return 0;
 }
 
+bool
+SourceManager::SetDefaultFileAndLine (const FileSpec &file_spec, uint32_t line)
+{
+    FileSP old_file_sp = m_last_file_sp;
+    m_last_file_sp = GetFile (file_spec);
+    if (m_last_file_sp)
+    {
+        m_last_file_line = line;
+        return true;
+    }
+    else
+    {
+        m_last_file_sp = old_file_sp;
+        return false;
+    }
+}
+
+bool 
+SourceManager::GetDefaultFileAndLine (FileSpec &file_spec, uint32_t &line)
+{
+    if (m_last_file_sp)
+    {
+        file_spec = m_last_file_sp->GetFileSpec();
+        line = m_last_file_line;
+        return true;
+    }
+    else
+        return false;
+}
 
 
 SourceManager::File::File(const FileSpec &file_spec, Target *target) :
@@ -198,7 +226,7 @@ SourceManager::File::File(const FileSpec &file_spec, Target *target) :
 {
     if (!m_mod_time.IsValid())
     {
-        if (target->GetSourcePathMap().RemapPath(file_spec.GetDirectory(), m_file_spec.GetDirectory()))
+        if (target && target->GetSourcePathMap().RemapPath(file_spec.GetDirectory(), m_file_spec.GetDirectory()))
             m_mod_time = file_spec.GetModificationTime();
     }
     

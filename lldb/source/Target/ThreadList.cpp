@@ -558,8 +558,12 @@ bool
 ThreadList::SetSelectedThreadByID (lldb::tid_t tid)
 {
     Mutex::Locker locker(m_threads_mutex);
-    if  (FindThreadByID(tid).get())
+    ThreadSP selected_thread_sp(FindThreadByID(tid));
+    if  (selected_thread_sp)
+    {
         m_selected_tid = tid;
+        selected_thread_sp->SetDefaultFileAndLineToSelectedFrame();
+    }
     else
         m_selected_tid = LLDB_INVALID_THREAD_ID;
 
@@ -570,9 +574,12 @@ bool
 ThreadList::SetSelectedThreadByIndexID (uint32_t index_id)
 {
     Mutex::Locker locker(m_threads_mutex);
-    ThreadSP thread_sp (FindThreadByIndexID(index_id));
-    if  (thread_sp.get())
-        m_selected_tid = thread_sp->GetID();
+    ThreadSP selected_thread_sp (FindThreadByIndexID(index_id));
+    if  (selected_thread_sp.get())
+    {
+        m_selected_tid = selected_thread_sp->GetID();
+        selected_thread_sp->SetDefaultFileAndLineToSelectedFrame();
+    }
     else
         m_selected_tid = LLDB_INVALID_THREAD_ID;
 

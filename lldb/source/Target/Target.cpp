@@ -59,6 +59,7 @@ Target::Target(Debugger &debugger, const ArchSpec &target_arch, const lldb::Plat
     m_image_search_paths (ImageSearchPathsChanged, this),
     m_scratch_ast_context_ap (NULL),
     m_persistent_variables (),
+    m_source_manager(this),
     m_stop_hooks (),
     m_stop_hook_next_id (0),
     m_suppress_stop_hooks (false)
@@ -469,6 +470,26 @@ Target::SetExecutableModule (ModuleSP& executable_sp, bool get_dependent_files)
         
         FileSpecList dependent_files;
         ObjectFile *executable_objfile = executable_sp->GetObjectFile();
+        // Let's find the file & line for main and set the default source file from there.
+        if (!m_source_manager.DefaultFileAndLineSet())
+        {
+            SymbolContextList sc_list;
+            uint32_t num_matches;
+            ConstString main_name("main");
+            bool symbols_okay = false;  // Force it to be a debug symbol.
+            bool append = false; 
+            num_matches = executable_sp->FindFunctions (main_name, eFunctionNameTypeBase, symbols_okay, append, sc_list);
+            for (uint32_t idx = 0; idx < num_matches; idx++)
+            {
+                SymbolContext sc;
+                sc_list.GetContextAtIndex(idx, sc);
+                if (sc.line_entry.file)
+                {
+                    m_source_manager.SetDefaultFileAndLine(sc.line_entry.file, sc.line_entry.line);
+                    break;
+                }
+            }
+        }
 
         if (executable_objfile)
         {
