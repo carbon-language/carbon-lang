@@ -2597,7 +2597,7 @@ struct IntRange {
     if (const ComplexType *CT = dyn_cast<ComplexType>(T))
       T = CT->getElementType().getTypePtr();
     if (const EnumType *ET = dyn_cast<EnumType>(T))
-      T = ET->getDecl()->getIntegerType().getTypePtr();
+      T = C.getCanonicalType(ET->getDecl()->getIntegerType()).getTypePtr();
 
     const BuiltinType *BT = cast<BuiltinType>(T);
     assert(BT->isInteger());

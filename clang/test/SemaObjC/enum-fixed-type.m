@@ -20,3 +20,8 @@ struct X {
   enum Other : Integer field3 : 4;
   enum  : Integer { Blah, Blarg } field4 : 4;
 };
+
+void test() {
+  long value = 2;
+  Enumeration e = value;
+}
