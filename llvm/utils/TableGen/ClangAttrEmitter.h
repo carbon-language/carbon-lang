@@ -96,6 +96,19 @@ class ClangAttrSpellingListEmitter : public TableGenBackend {
   void run(raw_ostream &OS);
 };
 
+/// ClangAttrLateParsedListEmitter emits the LateParsed property for attributes
+/// for clang.
+class ClangAttrLateParsedListEmitter : public TableGenBackend {
+  RecordKeeper &Records;
+
+ public:
+  explicit ClangAttrLateParsedListEmitter(RecordKeeper &R)
+    : Records(R)
+    {}
+
+  void run(raw_ostream &OS);
+};
+
 }
 
 #endif
