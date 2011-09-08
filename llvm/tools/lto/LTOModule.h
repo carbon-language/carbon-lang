@@ -76,7 +76,7 @@ struct LTOModule {
 private:
                             LTOModule(llvm::Module* m, llvm::TargetMachine* t);
 
-    bool                    ParseSymbols();
+    bool                    ParseSymbols(std::string &errMsg);
     void                    addDefinedSymbol(llvm::GlobalValue* def, 
                                                     llvm::Mangler& mangler, 
                                                     bool isFunction);
@@ -86,7 +86,8 @@ private:
                                                         llvm::Mangler &mangler);
     void                    addDefinedDataSymbol(llvm::GlobalValue* v, 
                                                         llvm::Mangler &mangler);
-    bool                    addAsmGlobalSymbols(llvm::MCContext &Context);
+    bool                    addAsmGlobalSymbols(llvm::MCContext &Context,
+                                                std::string &errMsg);
     void                    addAsmGlobalSymbol(const char *,
                                                lto_symbol_attributes scope);
     void                    addAsmGlobalSymbolUndef(const char *);
