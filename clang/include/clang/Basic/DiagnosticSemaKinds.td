@@ -1388,47 +1388,48 @@ def err_attribute_argument_not_lockable : Error<
 def err_attribute_decl_not_lockable : Error<
   "%0 attribute can only be applied in a context annotated "
   "with 'lockable' attribute">;
-def warn_unlock_but_no_acquire : Warning<
-  "unlocking '%0' that was not acquired">,
+def warn_unlock_but_no_lock : Warning<
+  "unlocking '%0' that was not locked">,
   InGroup<ThreadSafety>, DefaultIgnore;
 def warn_double_lock : Warning<
-  "locking '%0' that is already acquired">,
+  "locking '%0' that is already locked">,
   InGroup<ThreadSafety>, DefaultIgnore;
-def warn_locks_not_released : Warning<
-  "lock '%0' is not released at the end of function '%1'">,
+def warn_no_unlock : Warning<
+  "mutex '%0' is still held at the end of function '%1'">,
   InGroup<ThreadSafety>, DefaultIgnore;
-def warn_lock_not_released_in_scope : Warning<
-  "lock '%0' is not released at the end of its scope">,
+// FIXME: improve the error message about locks not in scope
+def warn_lock_at_end_of_scope : Warning<
+  "mutex '%0' is still held at the end of its scope">,
   InGroup<ThreadSafety>, DefaultIgnore;
 def warn_expecting_lock_held_on_loop : Warning<
-  "expecting lock '%0' to be %select{held|held exclusively}1 at start of each "
-  "loop">,
+  "expecting lock on '%0' to be %select{held|held exclusively}1 at start of "
+  "each loop">,
   InGroup<ThreadSafety>, DefaultIgnore;
 def warn_lock_exclusive_and_shared : Warning<
-  "lock '%0' is held exclusively and shared in the same scope">,
+  "lock '%0' is exclusive and shared in the same scope">,
   InGroup<ThreadSafety>, DefaultIgnore;
 def note_lock_exclusive_and_shared : Note<
-  "the other acquire of lock '%0' is here">,
+  "the other lock of mutex '%0' is here">,
   InGroup<ThreadSafety>, DefaultIgnore;
 def warn_variable_requires_lock : Warning<
-  "%select{reading|writing}2 variable '%0' requires lock '%1' to be "
+  "%select{reading|writing}2 variable '%0' requires lock on '%1' to be "
   "%select{held|held exclusively}2">,
   InGroup<ThreadSafety>, DefaultIgnore;
 def warn_variable_requires_any_lock : Warning<
   "accessing variable '%0' requires some lock">,
   InGroup<ThreadSafety>, DefaultIgnore;
 def warn_var_deref_requires_lock : Warning<
-  "%select{reading|writing}2 the value pointed to by '%0' requires lock '%1' to"
-  " be %select{held|held exclusively}2">,
+  "%select{reading|writing}2 the value pointed to by '%0' requires lock on '%1'"
+  " to be %select{held|held exclusively}2">,
   InGroup<ThreadSafety>, DefaultIgnore;
 def warn_var_deref_requires_any_lock : Warning<
   "accessing the value pointed to by '%0' requires some lock">,
   InGroup<ThreadSafety>, DefaultIgnore;
 def warn_fun_requires_lock : Warning<
-  "calling function '%0' requires %select{shared|exclusive}2 lock '%1'">,
+  "calling function '%0' requires %select{shared|exclusive}2 lock on '%1'">,
   InGroup<ThreadSafety>, DefaultIgnore;
-def warn_fun_excludes_lock : Warning<
-  "cannot call function '%0' while holding lock '%1'">,
+def warn_fun_excludes_mutex : Warning<
+  "cannot call function '%0' while holding mutex '%1'">,
   InGroup<ThreadSafety>, DefaultIgnore;
 
 
