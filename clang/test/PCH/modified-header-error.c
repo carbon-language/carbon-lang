@@ -3,6 +3,7 @@
 // RUN: echo > %t.dir/header2.h
 // RUN: cp %s %t.dir/t.c
 // RUN: %clang_cc1 -x c-header %t.dir/header1.h -emit-pch -o %t.pch
+// RUN: sleep 2
 // RUN: echo >> %t.dir/header2.h
 // RUN: %clang_cc1 %t.dir/t.c -include-pch %t.pch -fsyntax-only 2>&1 | FileCheck %s
 
