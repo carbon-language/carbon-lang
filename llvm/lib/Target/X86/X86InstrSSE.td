@@ -5843,7 +5843,7 @@ defm VBLENDVPDY : SS41I_quaternary_int_avx<0x4B, "vblendvpd", VR256, i256mem,
 defm VBLENDVPSY : SS41I_quaternary_int_avx<0x4A, "vblendvps", VR256, i256mem,
                                          memopv32i8, int_x86_avx_blendv_ps_256>;
 
-def : Pat<(X86pblendv VR128:$src1, VR128:$src2, VR128:$src3),
+def : Pat<(X86pblendvb VR128:$src1, VR128:$src2, VR128:$src3),
           (VPBLENDVBrr VR128:$src1, VR128:$src2, VR128:$src3)>,
           Requires<[HasAVX]>;
 
@@ -5871,8 +5871,12 @@ defm BLENDVPD     : SS41I_ternary_int<0x15, "blendvpd", int_x86_sse41_blendvpd>;
 defm BLENDVPS     : SS41I_ternary_int<0x14, "blendvps", int_x86_sse41_blendvps>;
 defm PBLENDVB     : SS41I_ternary_int<0x10, "pblendvb", int_x86_sse41_pblendvb>;
 
-def : Pat<(X86pblendv VR128:$src1, VR128:$src2, XMM0),
+def : Pat<(X86pblendvb VR128:$src1, VR128:$src2, XMM0),
           (PBLENDVBrr0 VR128:$src1, VR128:$src2)>, Requires<[HasSSE41]>;
+def : Pat<(X86blendvpd  XMM0, VR128:$src1, VR128:$src2),
+          (BLENDVPDrr0 VR128:$src1, VR128:$src2)>, Requires<[HasSSE41]>;
+def : Pat<(X86blendvps  XMM0, VR128:$src1, VR128:$src2),
+          (BLENDVPSrr0 VR128:$src1, VR128:$src2)>, Requires<[HasSSE41]>;
 
 let Predicates = [HasAVX] in
 def VMOVNTDQArm : SS48I<0x2A, MRMSrcMem, (outs VR128:$dst), (ins i128mem:$src),

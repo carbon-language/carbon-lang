@@ -3,8 +3,8 @@
 
 ; This test is the poster-child for integer-element-promotion.
 ; Until this feature is complete, we mark this test as expected to fail.
-; XFAIL: *
 ; CHECK: vector_code
+; CHECK: blend
 ; CHECK: ret
 define <4 x float> @vector_code(<4 x i64> %A, <4 x i64> %B, <4 x float> %R0, <4 x float> %R1 )  {
    %C = icmp eq <4 x i64> %A, %B

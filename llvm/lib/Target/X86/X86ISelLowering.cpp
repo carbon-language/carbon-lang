@@ -917,6 +917,13 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::SHL,                MVT::v4i32, Custom);
     setOperationAction(ISD::SHL,                MVT::v16i8, Custom);
 
+    setOperationAction(ISD::VSELECT,            MVT::v2f64, Custom);
+    setOperationAction(ISD::VSELECT,            MVT::v2i64, Custom);
+    setOperationAction(ISD::VSELECT,            MVT::v16i8, Custom);
+    setOperationAction(ISD::VSELECT,            MVT::v8i16, Custom);
+    setOperationAction(ISD::VSELECT,            MVT::v4i32, Custom);
+    setOperationAction(ISD::VSELECT,            MVT::v4f32, Custom);
+
     // i8 and i16 vectors are custom , because the source register and source
     // source memory operand types are not the same width.  f32 vectors are
     // custom since the immediate controlling the insert encodes additional
@@ -8684,6 +8691,32 @@ SDValue X86TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
   return DAG.getNode(X86ISD::CMOV, DL, VTs, Ops, array_lengthof(Ops));
 }
 
+SDValue X86TargetLowering::LowerVSELECT(SDValue Op, SelectionDAG &DAG) const {
+  SDValue Cond  = Op.getOperand(0);
+  SDValue Op1 = Op.getOperand(1);
+  SDValue Op2 = Op.getOperand(2);
+  DebugLoc DL = Op.getDebugLoc();
+
+  SDValue Ops[] = {Cond, Op1, Op2};
+
+  assert(Op1.getValueType().isVector() && "Op1 must be a vector");
+  assert(Op2.getValueType().isVector() && "Op2 must be a vector");
+  assert(Cond.getValueType().isVector() && "Cond must be a vector");
+  assert(Op1.getValueType() == Op2.getValueType() && "Type mismatch");
+  
+  switch (Op1.getValueType().getSimpleVT().SimpleTy) {
+    default: break;
+    case MVT::v2i64: return DAG.getNode(X86ISD::BLENDVPD, DL, Op1.getValueType(), Ops, array_lengthof(Ops));
+    case MVT::v2f64: return DAG.getNode(X86ISD::BLENDVPD, DL, Op1.getValueType(), Ops, array_lengthof(Ops));
+    case MVT::v4i32: return DAG.getNode(X86ISD::BLENDVPS, DL, Op1.getValueType(), Ops, array_lengthof(Ops));
+    case MVT::v4f32: return DAG.getNode(X86ISD::BLENDVPS, DL, Op1.getValueType(), Ops, array_lengthof(Ops));
+    case MVT::v16i8: return DAG.getNode(X86ISD::PBLENDVB, DL, Op1.getValueType(), Ops, array_lengthof(Ops));
+  }
+  
+  return SDValue();
+}
+
+
 // isAndOrOfSingleUseSetCCs - Return true if node is an ISD::AND or
 // ISD::OR of two X86ISD::SETCC nodes each of which has no other use apart
 // from the AND / OR.
@@ -10350,6 +10383,7 @@ SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::FGETSIGN:           return LowerFGETSIGN(Op, DAG);
   case ISD::SETCC:              return LowerSETCC(Op, DAG);
   case ISD::SELECT:             return LowerSELECT(Op, DAG);
+  case ISD::VSELECT:            return LowerVSELECT(Op, DAG);
   case ISD::BRCOND:             return LowerBRCOND(Op, DAG);
   case ISD::JumpTable:          return LowerJumpTable(Op, DAG);
   case ISD::VASTART:            return LowerVASTART(Op, DAG);
