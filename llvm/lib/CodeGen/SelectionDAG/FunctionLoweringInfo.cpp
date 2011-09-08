@@ -351,20 +351,18 @@ void FunctionLoweringInfo::ComputePHILiveOutRegInfo(const PHINode *PN) {
   }
 }
 
-/// setByValArgumentFrameIndex - Record frame index for the byval
+/// setArgumentFrameIndex - Record frame index for the byval
 /// argument. This overrides previous frame index entry for this argument,
 /// if any.
-void FunctionLoweringInfo::setByValArgumentFrameIndex(const Argument *A,
+void FunctionLoweringInfo::setArgumentFrameIndex(const Argument *A,
                                                       int FI) {
-  assert (A->hasByValAttr() && "Argument does not have byval attribute!");
   ByValArgFrameIndexMap[A] = FI;
 }
 
-/// getByValArgumentFrameIndex - Get frame index for the byval argument.
+/// getArgumentFrameIndex - Get frame index for the byval argument.
 /// If the argument does not have any assigned frame index then 0 is
 /// returned.
-int FunctionLoweringInfo::getByValArgumentFrameIndex(const Argument *A) {
-  assert (A->hasByValAttr() && "Argument does not have byval attribute!");
+int FunctionLoweringInfo::getArgumentFrameIndex(const Argument *A) {
   DenseMap<const Argument *, int>::iterator I =
     ByValArgFrameIndexMap.find(A);
   if (I != ByValArgFrameIndexMap.end())

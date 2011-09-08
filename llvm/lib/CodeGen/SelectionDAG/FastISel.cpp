@@ -531,13 +531,10 @@ bool FastISel::SelectCall(const User *I) {
     unsigned Reg = 0;
     unsigned Offset = 0;
     if (const Argument *Arg = dyn_cast<Argument>(Address)) {
-      if (Arg->hasByValAttr()) {
-        // Byval arguments' frame index is recorded during argument lowering.
-        // Use this info directly.
-        Offset = FuncInfo.getByValArgumentFrameIndex(Arg);
-        if (Offset)
-          Reg = TRI.getFrameRegister(*FuncInfo.MF);
-      }
+      // Some arguments' frame index is recorded during argument lowering.
+      Offset = FuncInfo.getArgumentFrameIndex(Arg);
+      if (Offset)
+	Reg = TRI.getFrameRegister(*FuncInfo.MF);
     }
     if (!Reg)
       Reg = getRegForValue(Address);

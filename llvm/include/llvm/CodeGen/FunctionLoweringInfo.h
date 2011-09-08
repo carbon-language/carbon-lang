@@ -199,12 +199,12 @@ public:
     LiveOutRegInfo[Reg].IsValid = false;
   }
 
-  /// setByValArgumentFrameIndex - Record frame index for the byval
+  /// setArgumentFrameIndex - Record frame index for the byval
   /// argument.
-  void setByValArgumentFrameIndex(const Argument *A, int FI);
+  void setArgumentFrameIndex(const Argument *A, int FI);
   
-  /// getByValArgumentFrameIndex - Get frame index for the byval argument.
-  int getByValArgumentFrameIndex(const Argument *A);
+  /// getArgumentFrameIndex - Get frame index for the byval argument.
+  int getArgumentFrameIndex(const Argument *A);
 
 private:
   /// LiveOutRegInfo - Information about live out vregs.

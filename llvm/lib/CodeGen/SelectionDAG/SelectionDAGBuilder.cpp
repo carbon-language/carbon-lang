@@ -4394,17 +4394,12 @@ SelectionDAGBuilder::EmitFuncArgumentDbgValue(const Value *V, MDNode *Variable,
     return false;
 
   unsigned Reg = 0;
-  if (Arg->hasByValAttr()) {
-    // Byval arguments' frame index is recorded during argument lowering.
-    // Use this info directly.
-    Reg = TRI->getFrameRegister(MF);
-    Offset = FuncInfo.getByValArgumentFrameIndex(Arg);
-    // If byval argument ofset is not recorded then ignore this.
-    if (!Offset)
-      Reg = 0;
-  }
+  // Some arguments' frame index is recorded during argument lowering.
+  Offset = FuncInfo.getArgumentFrameIndex(Arg);
+  if (Offset)
+      Reg = TRI->getFrameRegister(MF);
 
-  if (N.getNode()) {
+  if (!Reg && N.getNode()) {
     if (N.getOpcode() == ISD::CopyFromReg)
       Reg = cast<RegisterSDNode>(N.getOperand(1))->getReg();
     else
@@ -6733,15 +6728,22 @@ void SelectionDAGISel::LowerArguments(const BasicBlock *LLVMBB) {
     if (ArgValues.empty())
       continue;
 
-    // Note down frame index for byval arguments.
-    if (I->hasByValAttr())
-      if (FrameIndexSDNode *FI =
-          dyn_cast<FrameIndexSDNode>(ArgValues[0].getNode()))
-        FuncInfo->setByValArgumentFrameIndex(I, FI->getIndex());
+    // Note down frame index.
+    if (FrameIndexSDNode *FI =
+	dyn_cast<FrameIndexSDNode>(ArgValues[0].getNode()))
+      FuncInfo->setArgumentFrameIndex(I, FI->getIndex());
 
     SDValue Res = DAG.getMergeValues(&ArgValues[0], NumValues,
                                      SDB->getCurDebugLoc());
+
     SDB->setValue(I, Res);
+    if (!EnableFastISel && Res.getOpcode() == ISD::BUILD_PAIR) {
+      if (LoadSDNode *LNode = 
+          dyn_cast<LoadSDNode>(Res.getOperand(0).getNode()))
+        if (FrameIndexSDNode *FI =
+            dyn_cast<FrameIndexSDNode>(LNode->getBasePtr().getNode()))
+        FuncInfo->setArgumentFrameIndex(I, FI->getIndex());
+    }
 
     // If this argument is live outside of the entry block, insert a copy from
     // wherever we got it to the vreg that other BB's will reference it as.
