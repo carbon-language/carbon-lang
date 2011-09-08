@@ -590,6 +590,16 @@ IsSymbolRefDifferenceFullyResolvedImpl(const MCAssembler &Asm,
         return false;
       return true;
     }
+    // For Darwin x86_64, there is one special case when the reference IsPCRel.
+    // If the fragment with the reference does not have a base symbol but meets
+    // the simple way of dealing with this, in that it is a temporary symbol in
+    // the same atom then it is assumed to be fully resolved.  This is needed so
+    // a relocation entry is not created and so the staitic linker does not
+    // mess up the reference later.
+    else if(!FB.getAtom() &&
+            SA.isTemporary() && SA.isInSection() && &SecA == &SecB){
+      return true;
+    }
   } else {
     if (!TargetObjectWriter->useAggressiveSymbolFolding())
       return false;
