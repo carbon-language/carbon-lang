@@ -314,6 +314,10 @@ class GBFoo {
     gb_field = 0; // \
       // expected-warning {{writing variable 'gb_field' requires lock 'sls_mu' to be held exclusively}}
   }
+
+  void testNoAnal() __attribute__((no_thread_safety_analysis)) {
+    gb_field = 0;
+  }
 };
 
 GBFoo GlobalGBFoo __attribute__((guarded_by(sls_mu)));
@@ -568,6 +572,12 @@ void es_fun_7() {
   sls_mu.Lock();
   elr_fun();
   sls_mu.Unlock();
+}
+
+void es_fun_8() __attribute__((no_thread_safety_analysis));
+
+void es_fun_8() {
+  Bar.aa_elr_fun_s();
 }
 
 void es_bad_0() {

@@ -1305,6 +1305,8 @@ static void warnBackEdgeUnequalLocksets(Sema &S, const Lockset LoopReentrySet,
 static void checkThreadSafety(Sema &S, AnalysisContext &AC) {
   CFG *CFGraph = AC.getCFG();
   if (!CFGraph) return;
+  const Decl *D = AC.getDecl();
+  if (D && D->getAttr<NoThreadSafetyAnalysisAttr>()) return;
 
   Lockset::Factory LocksetFactory;
 
