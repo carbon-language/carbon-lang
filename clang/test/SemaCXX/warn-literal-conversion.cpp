@@ -30,8 +30,7 @@ void test0() {
   // Test passing a literal floating-point value to a function that takes an integer.
   foo(1.2F); // expected-warning {{implicit conversion turns literal floating-point number into integer}}
 
-  // FIXME: -Wconversion-literal doesn't catch "-1.2F".
-  int y10 = -1.2F;
+  int y10 = -1.2F;  // expected-warning {{implicit conversion turns literal floating-point number into integer}}
 
   // -Wconversion-literal does NOT catch const values.
   // (-Wconversion DOES catch them.)

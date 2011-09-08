@@ -3287,6 +3287,11 @@ void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
         return;
       
       Expr *InnerE = E->IgnoreParenImpCasts();
+      // We also want to warn on, e.g., "int i = -1.234"
+      if (UnaryOperator *UOp = dyn_cast<UnaryOperator>(InnerE))
+        if (UOp->getOpcode() == UO_Minus || UOp->getOpcode() == UO_Plus)
+          InnerE = UOp->getSubExpr()->IgnoreParenImpCasts();
+
       if (FloatingLiteral *FL = dyn_cast<FloatingLiteral>(InnerE)) {
         DiagnoseFloatingLiteralImpCast(S, FL, T, CC);
       } else {
