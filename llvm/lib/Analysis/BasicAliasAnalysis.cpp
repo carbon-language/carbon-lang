@@ -977,20 +977,20 @@ BasicAliasAnalysis::aliasGEP(const GEPOperator *GEP1, uint64_t V1Size,
 
   // Try to distinguish something like &A[i][1] against &A[42][0].
   // Grab the least significant bit set in any of the scales.
-  uint64_t Modulo = 0;
-  for (unsigned i = 0, e = GEP1VariableIndices.size();
-       i != e; ++i)
-    Modulo |= (uint64_t)GEP1VariableIndices[0].Scale;
-  Modulo = Modulo ^ (Modulo & (Modulo - 1));
+  if (!GEP1VariableIndices.empty()) {
+    uint64_t Modulo = 0;
+    for (unsigned i = 0, e = GEP1VariableIndices.size(); i != e; ++i)
+      Modulo |= (uint64_t)GEP1VariableIndices[i].Scale;
+    Modulo = Modulo ^ (Modulo & (Modulo - 1));
 
-  // We can compute the difference between the two addresses
-  // mod Modulo. Check whether that difference guarantees that the
-  // two locations do not alias.
-  uint64_t ModOffset = (uint64_t)GEP1BaseOffset & (Modulo - 1);
-  if (V1Size != UnknownSize && V2Size != UnknownSize &&
-      ModOffset >= V2Size && V1Size <= Modulo - ModOffset)
-    return NoAlias;
-
+    // We can compute the difference between the two addresses
+    // mod Modulo. Check whether that difference guarantees that the
+    // two locations do not alias.
+    uint64_t ModOffset = (uint64_t)GEP1BaseOffset & (Modulo - 1);
+    if (V1Size != UnknownSize && V2Size != UnknownSize &&
+        ModOffset >= V2Size && V1Size <= Modulo - ModOffset)
+      return NoAlias;
+  }
 
   // Statically, we can see that the base objects are the same, but the
   // pointers have dynamic offsets which we can't resolve. And none of our
