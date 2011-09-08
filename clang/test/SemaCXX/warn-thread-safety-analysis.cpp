@@ -39,7 +39,6 @@ void sls_fun_0() {
   sls_mw.mu.Unlock();
 }
 
-
 void sls_fun_2() {
   sls_mu.Lock();
   int x = sls_guard_var;
@@ -124,33 +123,33 @@ void sls_fun_good_7() {
 
 void sls_fun_bad_1() {
   sls_mu.Unlock(); // \
-    expected-warning {{unlocking 'sls_mu' that was not acquired}}
+    // expected-warning{{unlocking 'sls_mu' that was not acquired}}
 }
 
 void sls_fun_bad_2() {
   sls_mu.Lock();
   sls_mu.Lock(); // \
-    expected-warning {{locking 'sls_mu' that is already acquired}}
+    // expected-warning{{locking 'sls_mu' that is already acquired}}
   sls_mu.Unlock();
 }
 
 void sls_fun_bad_3() {
   sls_mu.Lock(); // \
-    expected-warning {{lock 'sls_mu' is not released at the end of function 'sls_fun_bad_3'}}
+    // expected-warning{{lock 'sls_mu' is not released at the end of function 'sls_fun_bad_3'}}
 }
 
 void sls_fun_bad_4() {
   if (getBool())
     sls_mu.Lock(); // \
-      expected-warning {{lock 'sls_mu' is not released at the end of its scope}}
+      // expected-warning{{lock 'sls_mu' is not released at the end of its scope}}
   else
     sls_mu2.Lock(); // \
-      expected-warning {{lock 'sls_mu2' is not released at the end of its scope}}
+      // expected-warning{{lock 'sls_mu2' is not released at the end of its scope}}
 }
 
 void sls_fun_bad_5() {
   sls_mu.Lock(); // \
-    expected-warning {{lock 'sls_mu' is not released at the end of its scope}}
+    // expected-warning{{lock 'sls_mu' is not released at the end of its scope}}
   if (getBool())
     sls_mu.Unlock();
 }
@@ -158,7 +157,7 @@ void sls_fun_bad_5() {
 void sls_fun_bad_6() {
   if (getBool()) {
     sls_mu.Lock(); // \
-      expected-warning {{lock 'sls_mu' is not released at the end of its scope}}
+      // expected-warning{{lock 'sls_mu' is not released at the end of its scope}}
   } else {
     if (getBool()) {
       getBool(); // EMPTY
@@ -167,13 +166,13 @@ void sls_fun_bad_6() {
     }
   }
   sls_mu.Unlock(); // \
-    expected-warning {{unlocking 'sls_mu' that was not acquired}}
+    // expected-warning{{unlocking 'sls_mu' that was not acquired}}
 }
 
 void sls_fun_bad_7() {
   sls_mu.Lock();
   while (getBool()) { // \
-      expected-warning {{expecting lock 'sls_mu' to be held at start of each loop}}
+      // expected-warning{{expecting lock 'sls_mu' to be held at start of each loop}}
     sls_mu.Unlock();
     if (getBool()) {
       if (getBool()) {
@@ -181,7 +180,7 @@ void sls_fun_bad_7() {
       }
     }
     sls_mu.Lock(); // \
-      expected-warning {{lock 'sls_mu' is not released at the end of its scope}}
+      // expected-warning{{lock 'sls_mu' is not released at the end of its scope}}
   }
   sls_mu.Unlock();
 }
@@ -190,23 +189,23 @@ void sls_fun_bad_8() {
   sls_mu.Lock();
   do {
     sls_mu.Unlock();  // \
-      expected-warning {{expecting lock 'sls_mu' to be held at start of each loop}}
+      // expected-warning{{expecting lock 'sls_mu' to be held at start of each loop}}
   } while (getBool());
 }
 
 void sls_fun_bad_9() {
   do {
     sls_mu.Lock(); // \
-      expected-warning {{lock 'sls_mu' is not released at the end of its scope}}
+      // expected-warning{{lock 'sls_mu' is not released at the end of its scope}}
   } while (getBool());
   sls_mu.Unlock();
 }
 
 void sls_fun_bad_10() {
   sls_mu.Lock(); // \
-    expected-warning {{lock 'sls_mu' is not released at the end of function 'sls_fun_bad_10'}}
+    // expected-warning{{lock 'sls_mu' is not released at the end of function 'sls_fun_bad_10'}}
   while(getBool()) { // \
-      expected-warning {{expecting lock 'sls_mu' to be held at start of each loop}}
+      // expected-warning{{expecting lock 'sls_mu' to be held at start of each loop}}
     sls_mu.Unlock();
   }
 }
@@ -214,10 +213,10 @@ void sls_fun_bad_10() {
 void sls_fun_bad_11() {
   while (getBool()) {
     sls_mu.Lock(); // \
-      expected-warning {{lock 'sls_mu' is not released at the end of its scope}}
+      // expected-warning{{lock 'sls_mu' is not released at the end of its scope}}
   }
   sls_mu.Unlock(); // \
-    expected-warning {{unlocking 'sls_mu' that was not acquired}}
+    // expected-warning{{unlocking 'sls_mu' that was not acquired}}
 }
 
 
@@ -251,19 +250,19 @@ void aa_fun_2() {
 
 void aa_fun_bad_1() {
   glock.globalUnlock(); // \
-    expected-warning {{unlocking 'aa_mu' that was not acquired}}
+    // expected-warning{{unlocking 'aa_mu' that was not acquired}}
 }
 
 void aa_fun_bad_2() {
   glock.globalLock();
   glock.globalLock(); // \
-    expected-warning {{locking 'aa_mu' that is already acquired}}
+    // expected-warning{{locking 'aa_mu' that is already acquired}}
   glock.globalUnlock();
 }
 
 void aa_fun_bad_3() {
   glock.globalLock(); // \
-    expected-warning {{lock 'aa_mu' is not released at the end of function 'aa_fun_bad_3'}}
+    // expected-warning{{lock 'aa_mu' is not released at the end of function 'aa_fun_bad_3'}}
 }
 
 //--------------------------------------------------//
@@ -276,19 +275,19 @@ Mutex wmu;
 class WeirdMethods {
   WeirdMethods() {
     wmu.Lock(); // \
-      expected-warning {{lock 'wmu' is not released at the end of function 'WeirdMethods'}}
+      // expected-warning {{lock 'wmu' is not released at the end of function 'WeirdMethods'}}
   }
   ~WeirdMethods() {
     wmu.Lock(); // \
-      expected-warning {{lock 'wmu' is not released at the end of function '~WeirdMethods'}}
+      // expected-warning {{lock 'wmu' is not released at the end of function '~WeirdMethods'}}
   }
   void operator++() {
     wmu.Lock(); // \
-      expected-warning {{lock 'wmu' is not released at the end of function 'operator++'}}
+      // expected-warning {{lock 'wmu' is not released at the end of function 'operator++'}}
   }
   operator int*() {
     wmu.Lock(); // \
-      expected-warning {{lock 'wmu' is not released at the end of function 'operator int *'}}
+      // expected-warning {{lock 'wmu' is not released at the end of function 'operator int *'}}
     return 0;
   }
 };
@@ -307,13 +306,13 @@ class PGBFoo {
                  __attribute__((pt_guarded_by(sls_mu)));
   void testFoo() {
     pgb_field = &x; // \
-      expected-warning {{accessing variable 'pgb_field' requires lock 'sls_mu2'}}
+      // expected-warning{{accessing variable 'pgb_field' requires lock 'sls_mu2'}}
     *pgb_field = x; // expected-warning {{accessing variable 'pgb_field' requires lock 'sls_mu2'}} \
-      expected-warning {{accessing the value pointed to by 'pgb_field' requires lock 'sls_mu'}}
+      // expected-warning {{accessing the value pointed to by 'pgb_field' requires lock 'sls_mu'}}
     x = *pgb_field; // expected-warning {{accessing variable 'pgb_field' requires lock 'sls_mu2'}} \
-      expected-warning {{accessing the value pointed to by 'pgb_field' requires lock 'sls_mu'}}
+      // expected-warning {{accessing the value pointed to by 'pgb_field' requires lock 'sls_mu'}}
     (*pgb_field)++; // expected-warning {{accessing variable 'pgb_field' requires lock 'sls_mu2'}} \
-      expected-warning {{accessing the value pointed to by 'pgb_field' requires lock 'sls_mu'}}
+      // expected-warning {{accessing the value pointed to by 'pgb_field' requires lock 'sls_mu'}}
   }
 };
 
@@ -323,7 +322,7 @@ class GBFoo {
 
   void testFoo() {
     gb_field = 0; // \
-      expected-warning {{accessing variable 'gb_field' requires lock 'sls_mu'}}
+      // expected-warning{{accessing variable 'gb_field' requires lock 'sls_mu'}}
   }
 };
 
@@ -352,59 +351,59 @@ void gb_fun_3() {
 
 void gb_bad_0() {
   sls_guard_var = 1; // \
-    expected-warning {{accessing variable 'sls_guard_var' requires some lock}}
+    // expected-warning{{accessing variable 'sls_guard_var' requires some lock}}
 }
 
 void gb_bad_1() {
   int x = sls_guard_var; // \
-    expected-warning {{accessing variable 'sls_guard_var' requires some lock}}
+    // expected-warning{{accessing variable 'sls_guard_var' requires some lock}}
 }
 
 void gb_bad_2() {
   sls_guardby_var = 1; // \
-    expected-warning {{accessing variable 'sls_guardby_var' requires lock 'sls_mu'}}
+    // expected-warning{{accessing variable 'sls_guardby_var' requires lock 'sls_mu'}}
 }
 
 void gb_bad_3() {
   int x = sls_guardby_var; // \
-    expected-warning {{accessing variable 'sls_guardby_var' requires lock 'sls_mu'}}
+    // expected-warning{{accessing variable 'sls_guardby_var' requires lock 'sls_mu'}}
 }
 
 void gb_bad_4() {
   *pgb_gvar = 1; // \
-    expected-warning {{accessing the value pointed to by 'pgb_gvar' requires some lock}}
+    // expected-warning {{accessing the value pointed to by 'pgb_gvar' requires some lock}}
 }
 
 void gb_bad_5() {
   int x = *pgb_gvar; // \
-    expected-warning {{accessing the value pointed to by 'pgb_gvar' requires some lock}}
+    // expected-warning {{accessing the value pointed to by 'pgb_gvar' requires some lock}}
 }
 
 void gb_bad_6() {
   *pgb_var = 1; // \
-    expected-warning {{accessing the value pointed to by 'pgb_var' requires lock 'sls_mu'}}
+    // expected-warning {{accessing the value pointed to by 'pgb_var' requires lock 'sls_mu'}}
 }
 
 void gb_bad_7() {
   int x = *pgb_var; // \
-    expected-warning {{accessing the value pointed to by 'pgb_var' requires lock 'sls_mu'}}
+    // expected-warning {{accessing the value pointed to by 'pgb_var' requires lock 'sls_mu'}}
 }
 
 void gb_bad_8() {
   GBFoo G;
   G.gb_field = 0; // \
-    expected-warning {{accessing variable 'gb_field' requires lock 'sls_mu'}}
+    // expected-warning{{accessing variable 'gb_field' requires lock 'sls_mu'}}
 }
 
 void gb_bad_9() {
   sls_guard_var++; // \
-    expected-warning {{accessing variable 'sls_guard_var' requires some lock}}
+    // expected-warning{{accessing variable 'sls_guard_var' requires some lock}}
   sls_guard_var--; // \
-    expected-warning {{accessing variable 'sls_guard_var' requires some lock}}
+    // expected-warning{{accessing variable 'sls_guard_var' requires some lock}}
   ++sls_guard_var; // \
-    expected-warning {{accessing variable 'sls_guard_var' requires some lock}}
+    // expected-warning{{accessing variable 'sls_guard_var' requires some lock}}
   --sls_guard_var; // \
-    expected-warning {{accessing variable 'sls_guard_var' requires some lock}}    
+    // expected-warning{{accessing variable 'sls_guard_var' requires some lock}}
 }
 
 //-----------------------------------------------//
@@ -420,11 +419,11 @@ public:
 
   void test() {
     a = 0; // \
-      expected-warning {{accessing variable 'a' requires lock 'mu'}}
+      // expected-warning{{accessing variable 'a' requires lock 'mu'}}
     b = a; // \
-      expected-warning {{accessing variable 'a' requires lock 'mu'}}
+      // expected-warning {{accessing variable 'a' requires lock 'mu'}}
     c = 0; // \
-      expected-warning {{accessing variable 'c' requires lock 'mu'}}
+      // expected-warning {{accessing variable 'c' requires lock 'mu'}}
   }
 
   int c __attribute__((guarded_by(mu)));
