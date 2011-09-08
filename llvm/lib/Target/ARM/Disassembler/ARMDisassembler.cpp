@@ -342,16 +342,6 @@ DecodeStatus ARMDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
     return result;
   }
 
-  // Instructions that are shared between ARM and Thumb modes.
-  // FIXME: This shouldn't really exist.  It's an artifact of the
-  // fact that we fail to encode a few instructions properly for Thumb.
-  MI.clear();
-  result = decodeCommonInstruction32(MI, insn, Address, this, STI);
-  if (result != MCDisassembler::Fail) {
-    Size = 4;
-    return result;
-  }
-
   // VFP and NEON instructions, similarly, are shared between ARM
   // and Thumb modes.
   MI.clear();
@@ -588,14 +578,6 @@ DecodeStatus ThumbDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
 
   MI.clear();
   result = decodeThumb2Instruction32(MI, insn32, Address, this, STI);
-  if (result != MCDisassembler::Fail) {
-    Size = 4;
-    AddThumbPredicate(MI);
-    return result;
-  }
-
-  MI.clear();
-  result = decodeCommonInstruction32(MI, insn32, Address, this, STI);
   if (result != MCDisassembler::Fail) {
     Size = 4;
     AddThumbPredicate(MI);

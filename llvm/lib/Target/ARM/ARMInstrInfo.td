@@ -4320,7 +4320,6 @@ class ACI<dag oops, dag iops, string opc, string asm,
 }
 
 multiclass LdStCop<bits<4> op31_28, bit load, dag ops, string opc, string cond>{
-  let DecoderNamespace = "Common" in {
   def _OFFSET : ACI<(outs),
       !con((ins nohash_imm:$cop, nohash_imm:$CRd, addrmode2:$addr), ops),
       !strconcat(opc, cond), "\tp$cop, cr$CRd, $addr"> {
@@ -4415,7 +4414,6 @@ multiclass LdStCop<bits<4> op31_28, bit load, dag ops, string opc, string cond>{
     let Inst{22} = 1; // D = 1
     let Inst{20} = load;
     let DecoderMethod = "DecodeCopMemInstruction";
-  }
   }
 }
 
