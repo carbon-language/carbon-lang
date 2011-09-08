@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -ffreestanding -fsyntax-only -verify %s
 // RUN: %clang_cc1 -ffreestanding -fsyntax-only -verify -fshort-wchar %s
 
-#include <limits.h>
+#include <stdint.h>
 
 const bool swchar = (wchar_t)-1 > (wchar_t)0;
 
