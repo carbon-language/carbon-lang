@@ -429,12 +429,13 @@ ThumbDisassembler::AddThumbPredicate(MCInst &MI) const {
   switch (MI.getOpcode()) {
     case ARM::tBcc:
     case ARM::t2Bcc:
-      return Success;
     case ARM::tCBZ:
     case ARM::tCBNZ:
-      // Some instructions are not allowed in IT blocks.
+      // Some instructions (mostly conditional branches) are not
+      // allowed in IT blocks.
       if (!ITBlock.empty())
         return SoftFail;
+      return Success;
       break;
     default:
       break;
