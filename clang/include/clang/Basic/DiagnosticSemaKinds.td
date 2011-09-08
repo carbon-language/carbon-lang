@@ -1402,8 +1402,7 @@ def warn_lock_at_end_of_scope : Warning<
   "mutex '%0' is still held at the end of its scope">,
   InGroup<ThreadSafety>, DefaultIgnore;
 def warn_expecting_lock_held_on_loop : Warning<
-  "expecting lock on '%0' to be %select{held|held exclusively}1 at start of "
-  "each loop">,
+  "expecting lock on '%0' to be held at start of each loop">,
   InGroup<ThreadSafety>, DefaultIgnore;
 def warn_lock_exclusive_and_shared : Warning<
   "lock '%0' is exclusive and shared in the same scope">,

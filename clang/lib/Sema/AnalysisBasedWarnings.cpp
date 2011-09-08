@@ -1274,8 +1274,7 @@ static void warnBackEdgeUnequalLocksets(Sema &S, const Lockset LoopReentrySet,
       const MutexID &Mutex = I.getKey();
       // We report this error at the location of the first statement in a loop
       PartialDiagnostic Warning =
-        S.PDiag(diag::warn_expecting_lock_held_on_loop)
-          << Mutex.getName() << LK_Shared;
+        S.PDiag(diag::warn_expecting_lock_held_on_loop) << Mutex.getName();
       Warnings.push_back(DelayedDiag(FirstLocInLoop, Warning));
     }
   }
