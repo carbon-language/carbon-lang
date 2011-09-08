@@ -50,7 +50,7 @@
                   style="font-style: italic;">filters</span>, <span
                   style="font-style: italic;">synthetic children</span>.</p>
             
-            <p>To reflect this, the the <b>type</b> command has four
+            <p>To reflect this, the <b>type</b> command has four
                 subcommands:<br>
               </p>
             
@@ -84,7 +84,7 @@
           
           <p>Type formats enable you to quickly override the default
                 format for displaying primitive types (the usual basic
-                C/C++/ObjC types: int, float, char, ...).</p>
+                C/C++/ObjC types: <code><font color="blue">int</font></code>, <code><font color="blue">float</font></code>, <code><font color="blue">char</font></code>, ...).</p>
               
             <p>If for some reason you want all <code>int</code>
               variables in your program to print out as hex, you can add
@@ -111,15 +111,16 @@
               <p>But things can quickly get hierarchical. Let's say you
                 have a situation like the following:</p>
                 
-              <p><code>typedef int A;<br>
-                  typedef A B;<br>
-                  typedef B C;<br>
-                  typedef C D;<br>
+              <p><code><font color="blue">typedef int</font> A;<br>
+                  <font color="blue">typedef</font> A B;<br>
+                  <font color="blue">typedef</font> B C;<br>
+                  <font color="blue">typedef</font> C D;<br>
                 </code></p>
                 
               <p>and you want to show all <code>A</code>'s as hex, all
                 <code>C'</code>s as byte arrays and leave the defaults
-                untouched for other types.</p>
+                untouched for other types (albeit its contrived look, the example is far
+                from unrealistic in large software systems).</p>
                 
               <p>If you simply type <br>
                 <table class="stats" width="620" cellspacing="0">
@@ -181,7 +182,7 @@
               <p>While they can be applied to pointers and references, formats will make no attempt
 	             to dereference the pointer and extract the value before applying the format, which means you
 	             are effectively formatting the address stored in the pointer rather than the pointee value.
-	             For this reason, you may want to use the -p option when defining formats.</p>
+	             For this reason, you may want to use the <code>-p</code> option when defining formats.</p>
 
               <p>If you need to delete a custom format simply type <code>type
                   format delete</code> followed by the name of the type
@@ -467,14 +468,14 @@
                 Thus, to ask the summary string to display <code>y</code>
                 you would type <code>${var.y}</code>.</p>
               <p>If you have code like the following: <br>
-                <code> struct A {<br>
-                  &nbsp;&nbsp;&nbsp;&nbsp;int x;<br>
-                  &nbsp;&nbsp;&nbsp;&nbsp;int y;<br>
+                <code> <font color="blue">struct</font> A {<br>
+                  &nbsp;&nbsp;&nbsp;&nbsp;<font color="blue">int</font> x;<br>
+                  &nbsp;&nbsp;&nbsp;&nbsp;<font color="blue">int</font> y;<br>
                   };<br>
-                  struct B {<br>
+                  <font color="blue">struct</font> B {<br>
                   &nbsp;&nbsp;&nbsp;&nbsp;A x;<br>
                   &nbsp;&nbsp;&nbsp;&nbsp;A y;<br>
-                  &nbsp;&nbsp;&nbsp;&nbsp;int *z;<br>
+                  &nbsp;&nbsp;&nbsp;&nbsp;<font color="blue">int</font> *z;<br>
                   };<br>
                 </code> the expression path for the <code>y</code>
                 member of the <code>x</code> member of an object of
@@ -488,10 +489,10 @@
                 would be just as good if you were displaying a <code>B*</code>,
                 or even if the actual definition of <code>B</code>
                 were: <code><br>
-                  struct B {<br>
+                  <font color="blue">struct</font> B {<br>
                   &nbsp;&nbsp;&nbsp;&nbsp;A *x;<br>
                   &nbsp;&nbsp;&nbsp;&nbsp;A y;<br>
-                  &nbsp;&nbsp;&nbsp;&nbsp;int *z;<br>
+                  &nbsp;&nbsp;&nbsp;&nbsp;<font color="blue">int</font> *z;<br>
                   };<br>
                 </code> </p>
               <p>This is unlike the behavior of <code>frame variable</code>
@@ -587,6 +588,15 @@
 	                  <b>(lldb)</b> frame variable a_pair<br>
 	                  (pair) a_pair = (first=1, second=2)<br>
 	                </code> </p>
+	
+			Of course, one can obtain the same effect by typing
+			<table class="stats" width="620" cellspacing="0">
+                    <td class="content">
+                    	<b>(lldb)</b> type summary add pair --summary-string "(first=${var.first}, second=${var.second})"<br>
+                    </td>
+            <table>
+            
+			While the final result is the same, using <code>--inline-children</code> can often save time.
             </div>
           </div>
           <div class="post">
@@ -768,18 +778,18 @@
             values. As a small example, let's say we have a Rectangle class:</p>
             
             <code>
-class Rectangle<br/>
+<font color="blue">class</font> Rectangle<br/>
 {<br/>
-private:<br/>
-    &nbsp;&nbsp;&nbsp;&nbsp;int height;<br/>
-    &nbsp;&nbsp;&nbsp;&nbsp;int width;<br/>
-public:<br/>
+<font color="blue">private</font>:<br/>
+    &nbsp;&nbsp;&nbsp;&nbsp;<font color="blue">int</font> height;<br/>
+    &nbsp;&nbsp;&nbsp;&nbsp;<font color="blue">int</font> width;<br/>
+<font color="blue">public</font>:<br/>
     &nbsp;&nbsp;&nbsp;&nbsp;Rectangle() : height(3), width(5) {}<br/>
-    &nbsp;&nbsp;&nbsp;&nbsp;Rectangle(int H) : height(H), width(H*2-1) {}<br/>
-    &nbsp;&nbsp;&nbsp;&nbsp;Rectangle(int H, int W) : height(H), width(W) {}<br/>
+    &nbsp;&nbsp;&nbsp;&nbsp;Rectangle(<font color="blue">int</font> H) : height(H), width(H*2-1) {}<br/>
+    &nbsp;&nbsp;&nbsp;&nbsp;Rectangle(<font color="blue">int</font> H, <font color="blue">int</font> W) : height(H), width(W) {}<br/>
     
-    &nbsp;&nbsp;&nbsp;&nbsp;int GetHeight() { return height; }<br/>
-    &nbsp;&nbsp;&nbsp;&nbsp;int GetWidth() { return width; }<br/>
+    &nbsp;&nbsp;&nbsp;&nbsp;<font color="blue">int</font> GetHeight() { return height; }<br/>
+    &nbsp;&nbsp;&nbsp;&nbsp;<font color="blue">int</font> GetWidth() { return width; }<br/>
     
 };<br/>
 </code>
@@ -856,7 +866,9 @@ def function (valobj,dict):<br/>
             <li> using the <code>--python-function</code> (<code>-F</code>) option to <code>type summary add </code> and giving the name of a 
             Python function with the correct prototype. Most probably, you will define (or have
             already defined) the function in the interactive interpreter, or somehow
-            loaded it from a file, using the <code>script import</code> command.
+            loaded it from a file, using the <code>script import</code> command. LLDB will not make any attempt at determining whether
+            the function is defined and syntactically correct, until you try to call it. Any errors will be shown at that stage, as if
+            you were executing your function inside the Python interactive interpreter itself.
             </ul>
             
             </p>
@@ -904,7 +916,14 @@ def function (valobj,dict):<br/>
 				<p>One of the ways LLDB uses this feature internally, is to match
 					the names of STL container classes, regardless of the template
 					arguments provided (e.g. <code>std::vector&lt;T&gt;</code> for any
-						type argument <code>T</code>).</p>
+						type argument <code>T</code>). The regular expressions used for this are:
+						</p>
+				<ul>
+					<li><code>^(std::)?vector&lt;.+&gt;$</code> for <code>std::vector&lt;T&gt;</code></li>
+					<li><code>^(std::)?list&lt;.+&gt;$</code> for <code>std::list&lt;T&gt;</code></li>
+					<li><code>^(std::)?map&lt;.+&gt; &gt;$</code> for <code>std::map&lt;K,V&gt;</code></li>
+				</ul>
+				As you can see, the actual template arguments are ignored by the regular expression.
 
               <p>The regular expression language used by LLDB is the <a href="http://en.wikipedia.org/wiki/Regular_expression#POSIX_Extended_Regular_Expressions">POSIX extended language</a>, as defined by the <a href="http://pubs.opengroup.org/onlinepubs/7908799/xsh/regex.h.html">Single UNIX Specification</a>, of which Mac OS X is a
 	compliant implementation.
@@ -1167,10 +1186,11 @@ def function (valobj,dict):<br/>
 					and can be enabled using the <code>type category enable</code> command. To disable an enabled category,
 					the command to use is <code>type category disable</code>. The order in which categories are enabled or disabled
 					is significant, in that LLDB uses that order when looking for formatters. Therefore, when you enable a category, it becomes
-					the first one to be searched. The default categories are enabled in the order: <code>default</code> as first, then
-					<code>gnu-libstdc++</code>, and finally <code>system</code>. As said, <code>gnu-libstdc++</code> contains formatters for C++ STL
-					data types. <code>system</code> contains formatters for <code>char*</code> and <code>char[]</code>, which are expected to be
-					consistent throughout libraries and systems, and replace </p>
+					the first one to be searched. The default categories are enabled in such a way that the search order is: <code>default</code>
+					then <code>gnu-libstdc++</code> then finally <code>system</code>. As said, <code>gnu-libstdc++</code> contains formatters for C++ STL
+					data types. <code>system</code> contains formatters for <code>char*</code> and <code>char[]</code>, which reflect the behavior
+					of previous versions of LLDB which had built-in formatters for these types. Because now these are formatters, you can even
+					replace them with your own if so you wish.</p>
 				<p>There is no special command to create a category. When you place a formatter in a category, if that category does not
 					exist, it is automatically created. For instance,</p>
 					<p><table class="stats" width="620" cellspacing="0">
@@ -1209,7 +1229,7 @@ def function (valobj,dict):<br/>
                   for the pointee type that does not skip pointers, use
                   it</li>
                 <li>If this object is a reference, and there is a
-                  summary for the referred type that does not skip
+                  formatter for the referred type that does not skip
                   references, use it</li>
                 <li>If this object is an Objective-C class with a parent
                   class, look at the parent class (and parent of parent,
