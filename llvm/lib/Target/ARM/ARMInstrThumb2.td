@@ -1244,61 +1244,66 @@ def : T2Pat<(extloadi16 (ARMWrapper tconstpool:$addr)),
 // Indexed loads
 
 let mayLoad = 1, neverHasSideEffects = 1 in {
-def t2LDR_PRE  : T2Iidxldst<0, 0b10, 1, 1, (outs GPR:$Rt, GPR:$Rn),
+def t2LDR_PRE  : T2Ipreldst<0, 0b10, 1, 1, (outs GPR:$Rt, GPR:$Rn_wb),
                             (ins t2addrmode_imm8:$addr),
                             AddrModeT2_i8, IndexModePre, IIC_iLoad_iu,
-                            "ldr", "\t$Rt, $addr!", "$addr.base = $Rn",
-                            []>;
+                            "ldr", "\t$Rt, $addr!", "$addr.base = $Rn_wb",
+                            []> {
+  let AsmMatchConverter = "cvtLdWriteBackRegT2AddrModeImm8";
+}
 
-def t2LDR_POST : T2Iidxldst<0, 0b10, 1, 0, (outs GPR:$Rt, GPR:$Rn),
-                            (ins GPR:$base, t2am_imm8_offset:$addr),
+def t2LDR_POST : T2Ipostldst<0, 0b10, 1, 0, (outs GPR:$Rt, GPR:$Rn_wb),
+                            (ins GPR:$Rn, t2am_imm8_offset:$addr),
                             AddrModeT2_i8, IndexModePost, IIC_iLoad_iu,
-                          "ldr", "\t$Rt, [$Rn], $addr", "$base = $Rn",
-                            []>;
+                            "ldr", "\t$Rt, [$Rn], $addr", "$Rn = $Rn_wb", []>;
 
-def t2LDRB_PRE : T2Iidxldst<0, 0b00, 1, 1, (outs GPR:$Rt, GPR:$Rn),
+def t2LDRB_PRE : T2Ipreldst<0, 0b00, 1, 1, (outs GPR:$Rt, GPR:$Rn_wb),
                             (ins t2addrmode_imm8:$addr),
                             AddrModeT2_i8, IndexModePre, IIC_iLoad_bh_iu,
-                            "ldrb", "\t$Rt, $addr!", "$addr.base = $Rn",
-                            []>;
-def t2LDRB_POST : T2Iidxldst<0, 0b00, 1, 0, (outs GPR:$Rt, GPR:$Rn),
-                            (ins GPR:$base, t2am_imm8_offset:$addr),
+                            "ldrb", "\t$Rt, $addr!", "$addr.base = $Rn_wb",
+                            []> {
+  let AsmMatchConverter = "cvtLdWriteBackRegT2AddrModeImm8";
+}
+def t2LDRB_POST : T2Ipostldst<0, 0b00, 1, 0, (outs GPR:$Rt, GPR:$Rn_wb),
+                            (ins GPR:$Rn, t2am_imm8_offset:$addr),
                             AddrModeT2_i8, IndexModePost, IIC_iLoad_bh_iu,
-                         "ldrb", "\t$Rt, [$Rn], $addr", "$base = $Rn",
-                            []>;
+                            "ldrb", "\t$Rt, [$Rn], $addr", "$Rn = $Rn_wb", []>;
 
-def t2LDRH_PRE : T2Iidxldst<0, 0b01, 1, 1, (outs GPR:$Rt, GPR:$Rn),
+def t2LDRH_PRE : T2Ipreldst<0, 0b01, 1, 1, (outs GPR:$Rt, GPR:$Rn_wb),
                             (ins t2addrmode_imm8:$addr),
                             AddrModeT2_i8, IndexModePre, IIC_iLoad_bh_iu,
-                            "ldrh", "\t$Rt, $addr!", "$addr.base = $Rn",
-                            []>;
-def t2LDRH_POST : T2Iidxldst<0, 0b01, 1, 0, (outs GPR:$Rt, GPR:$Rn),
-                            (ins GPR:$base, t2am_imm8_offset:$addr),
+                            "ldrh", "\t$Rt, $addr!", "$addr.base = $Rn_wb",
+                            []> {
+  let AsmMatchConverter = "cvtLdWriteBackRegT2AddrModeImm8";
+}
+def t2LDRH_POST : T2Ipostldst<0, 0b01, 1, 0, (outs GPR:$Rt, GPR:$Rn_wb),
+                            (ins GPR:$Rn, t2am_imm8_offset:$addr),
                             AddrModeT2_i8, IndexModePost, IIC_iLoad_bh_iu,
-                         "ldrh", "\t$Rt, [$Rn], $addr", "$base = $Rn",
-                            []>;
+                            "ldrh", "\t$Rt, [$Rn], $addr", "$Rn = $Rn_wb", []>;
 
-def t2LDRSB_PRE : T2Iidxldst<1, 0b00, 1, 1, (outs GPR:$Rt, GPR:$Rn),
+def t2LDRSB_PRE : T2Ipreldst<1, 0b00, 1, 1, (outs GPR:$Rt, GPR:$Rn_wb),
                             (ins t2addrmode_imm8:$addr),
                             AddrModeT2_i8, IndexModePre, IIC_iLoad_bh_iu,
-                            "ldrsb", "\t$Rt, $addr!", "$addr.base = $Rn",
-                            []>;
-def t2LDRSB_POST : T2Iidxldst<1, 0b00, 1, 0, (outs GPR:$Rt, GPR:$Rn),
-                            (ins GPR:$base, t2am_imm8_offset:$addr),
+                            "ldrsb", "\t$Rt, $addr!", "$addr.base = $Rn_wb",
+                            []> {
+  let AsmMatchConverter = "cvtLdWriteBackRegT2AddrModeImm8";
+}
+def t2LDRSB_POST : T2Ipostldst<1, 0b00, 1, 0, (outs GPR:$Rt, GPR:$Rn_wb),
+                            (ins GPR:$Rn, t2am_imm8_offset:$addr),
                             AddrModeT2_i8, IndexModePost, IIC_iLoad_bh_iu,
-                        "ldrsb", "\t$Rt, [$Rn], $addr", "$base = $Rn",
-                            []>;
+                            "ldrsb", "\t$Rt, [$Rn], $addr", "$Rn = $Rn_wb", []>;
 
-def t2LDRSH_PRE : T2Iidxldst<1, 0b01, 1, 1, (outs GPR:$Rt, GPR:$Rn),
+def t2LDRSH_PRE : T2Ipreldst<1, 0b01, 1, 1, (outs GPR:$Rt, GPR:$Rn_wb),
                             (ins t2addrmode_imm8:$addr),
                             AddrModeT2_i8, IndexModePre, IIC_iLoad_bh_iu,
-                            "ldrsh", "\t$Rt, $addr!", "$addr.base = $Rn",
-                            []>;
-def t2LDRSH_POST : T2Iidxldst<1, 0b01, 1, 0, (outs GPR:$Rt, GPR:$Rn),
-                            (ins GPR:$base, t2am_imm8_offset:$addr),
+                            "ldrsh", "\t$Rt, $addr!", "$addr.base = $Rn_wb",
+                            []> {
+  let AsmMatchConverter = "cvtLdWriteBackRegT2AddrModeImm8";
+}
+def t2LDRSH_POST : T2Ipostldst<1, 0b01, 1, 0, (outs GPR:$Rt, GPR:$Rn_wb),
+                            (ins GPR:$Rn, t2am_imm8_offset:$addr),
                             AddrModeT2_i8, IndexModePost, IIC_iLoad_bh_iu,
-                        "ldrsh", "\t$Rt, [$Rn], $addr", "$base = $Rn",
-                            []>;
+                            "ldrsh", "\t$Rt, [$Rn], $addr", "$Rn = $Rn_wb", []>;
 } // mayLoad = 1, neverHasSideEffects = 1
 
 // LDRT, LDRBT, LDRHT, LDRSBT, LDRSHT all have offset mode (PUW=0b110).
@@ -1342,52 +1347,52 @@ def t2STRDi8 : T2Ii8s4<1, 0, 0, (outs),
                IIC_iStore_d_r, "strd", "\t$Rt, $Rt2, $addr", []>;
 
 // Indexed stores
-def t2STR_PRE  : T2Iidxldst<0, 0b10, 0, 1, (outs GPRnopc:$base_wb),
+def t2STR_PRE  : T2Ipreldst<0, 0b10, 0, 1, (outs GPRnopc:$Rn_wb),
                             (ins rGPR:$Rt, GPRnopc:$Rn, t2am_imm8_offset:$addr),
                             AddrModeT2_i8, IndexModePre, IIC_iStore_iu,
                          "str", "\t$Rt, [$Rn, $addr]!",
-                         "$Rn = $base_wb,@earlyclobber $base_wb",
-             [(set GPRnopc:$base_wb,
+                         "$Rn = $Rn_wb,@earlyclobber $Rn_wb",
+             [(set GPRnopc:$Rn_wb,
                    (pre_store rGPR:$Rt, GPRnopc:$Rn, t2am_imm8_offset:$addr))]>;
 
-def t2STR_POST : T2Iidxldst<0, 0b10, 0, 0, (outs GPRnopc:$base_wb),
+def t2STR_POST : T2Ipostldst<0, 0b10, 0, 0, (outs GPRnopc:$Rn_wb),
                             (ins rGPR:$Rt, GPRnopc:$Rn, t2am_imm8_offset:$addr),
                             AddrModeT2_i8, IndexModePost, IIC_iStore_iu,
                           "str", "\t$Rt, [$Rn], $addr",
-                          "$Rn = $base_wb,@earlyclobber $base_wb",
-             [(set GPRnopc:$base_wb,
+                          "$Rn = $Rn_wb,@earlyclobber $Rn_wb",
+             [(set GPRnopc:$Rn_wb,
                   (post_store rGPR:$Rt, GPRnopc:$Rn, t2am_imm8_offset:$addr))]>;
 
-def t2STRH_PRE  : T2Iidxldst<0, 0b01, 0, 1, (outs GPRnopc:$base_wb),
+def t2STRH_PRE  : T2Ipreldst<0, 0b01, 0, 1, (outs GPRnopc:$Rn_wb),
                             (ins rGPR:$Rt, GPRnopc:$Rn, t2am_imm8_offset:$addr),
                             AddrModeT2_i8, IndexModePre, IIC_iStore_iu,
                         "strh", "\t$Rt, [$Rn, $addr]!",
-                        "$Rn = $base_wb,@earlyclobber $base_wb",
-        [(set GPRnopc:$base_wb,
+                        "$Rn = $Rn_wb,@earlyclobber $Rn_wb",
+        [(set GPRnopc:$Rn_wb,
               (pre_truncsti16 rGPR:$Rt, GPRnopc:$Rn, t2am_imm8_offset:$addr))]>;
 
-def t2STRH_POST : T2Iidxldst<0, 0b01, 0, 0, (outs GPRnopc:$base_wb),
+def t2STRH_POST : T2Ipostldst<0, 0b01, 0, 0, (outs GPRnopc:$Rn_wb),
                             (ins rGPR:$Rt, GPRnopc:$Rn, t2am_imm8_offset:$addr),
                             AddrModeT2_i8, IndexModePost, IIC_iStore_bh_iu,
                          "strh", "\t$Rt, [$Rn], $addr",
-                         "$Rn = $base_wb,@earlyclobber $base_wb",
-       [(set GPRnopc:$base_wb,
+                         "$Rn = $Rn_wb,@earlyclobber $Rn_wb",
+       [(set GPRnopc:$Rn_wb,
              (post_truncsti16 rGPR:$Rt, GPRnopc:$Rn, t2am_imm8_offset:$addr))]>;
 
-def t2STRB_PRE  : T2Iidxldst<0, 0b00, 0, 1, (outs GPRnopc:$base_wb),
+def t2STRB_PRE  : T2Ipreldst<0, 0b00, 0, 1, (outs GPRnopc:$Rn_wb),
                             (ins rGPR:$Rt, GPRnopc:$Rn, t2am_imm8_offset:$addr),
                             AddrModeT2_i8, IndexModePre, IIC_iStore_bh_iu,
                         "strb", "\t$Rt, [$Rn, $addr]!",
-                        "$Rn = $base_wb,@earlyclobber $base_wb",
-         [(set GPRnopc:$base_wb,
+                        "$Rn = $Rn_wb,@earlyclobber $Rn_wb",
+         [(set GPRnopc:$Rn_wb,
                (pre_truncsti8 rGPR:$Rt, GPRnopc:$Rn, t2am_imm8_offset:$addr))]>;
 
-def t2STRB_POST : T2Iidxldst<0, 0b00, 0, 0, (outs GPRnopc:$base_wb),
+def t2STRB_POST : T2Ipostldst<0, 0b00, 0, 0, (outs GPRnopc:$Rn_wb),
                             (ins rGPR:$Rt, GPRnopc:$Rn, t2am_imm8_offset:$addr),
                             AddrModeT2_i8, IndexModePost, IIC_iStore_bh_iu,
                          "strb", "\t$Rt, [$Rn], $addr",
-                         "$Rn = $base_wb,@earlyclobber $base_wb",
-        [(set GPRnopc:$base_wb,
+                         "$Rn = $Rn_wb,@earlyclobber $Rn_wb",
+        [(set GPRnopc:$Rn_wb,
               (post_truncsti8 rGPR:$Rt, GPRnopc:$Rn, t2am_imm8_offset:$addr))]>;
 
 // STRT, STRBT, STRHT all have offset mode (PUW=0b110) and are for disassembly

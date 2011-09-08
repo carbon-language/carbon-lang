@@ -548,6 +548,9 @@ _func:
         ldr r8, [r8, r2, lsl #2]
         ldr r7, [sp, r2, lsl #1]
         ldr r7, [sp, r2, lsl #0]
+        ldr r2, [r4, #255]!
+        ldr r8, [sp, #4]!
+        ldr lr, [sp, #-4]!
 
 @ CHECK: ldr.w	r1, [r8, r1]            @ encoding: [0x58,0xf8,0x01,0x10]
 @ CHECK: ldr.w	r4, [r5, r2]            @ encoding: [0x55,0xf8,0x02,0x40]
@@ -555,6 +558,9 @@ _func:
 @ CHECK: ldr.w	r8, [r8, r2, lsl #2]    @ encoding: [0x58,0xf8,0x22,0x80]
 @ CHECK: ldr.w	r7, [sp, r2, lsl #1]    @ encoding: [0x5d,0xf8,0x12,0x70]
 @ CHECK: ldr.w	r7, [sp, r2]            @ encoding: [0x5d,0xf8,0x02,0x70]
+@ CHECK: ldr	r2, [r4, #255]!         @ encoding: [0x54,0xf8,0xff,0x2f]
+@ CHECK: ldr	r8, [sp, #4]!           @ encoding: [0x5d,0xf8,0x04,0x8f]
+@ CHECK: ldr	lr, [sp, #-4]!          @ encoding: [0x5d,0xf8,0x04,0xed]
 
 
 @------------------------------------------------------------------------------
