@@ -1207,7 +1207,7 @@ class T2Ipostldst<bit signed, bits<2> opcod, bit load, bit pre,
 
   bits<4> Rt;
   bits<4> Rn;
-  bits<9> addr;
+  bits<9> offset;
   let Inst{31-27} = 0b11111;
   let Inst{26-25} = 0b00;
   let Inst{24}    = signed;
@@ -1219,9 +1219,9 @@ class T2Ipostldst<bit signed, bits<2> opcod, bit load, bit pre,
   let Inst{11}    = 1;
   // (P, W) = (1, 1) Pre-indexed or (0, 1) Post-indexed
   let Inst{10}    = pre; // The P bit.
-  let Inst{9}     = addr{8}; // Sign bit
+  let Inst{9}     = offset{8}; // Sign bit
   let Inst{8}     = 1; // The W bit.
-  let Inst{7-0}   = addr{7-0};
+  let Inst{7-0}   = offset{7-0};
 }
 
 // Tv5Pat - Same as Pat<>, but requires V5T Thumb mode.
