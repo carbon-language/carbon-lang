@@ -289,11 +289,10 @@ def note_strlcpycat_wrong_size : Note<
 
 /// main()
 // static/inline main() are not errors in C, just in C++.
-def warn_unusual_main_decl : Warning<"'main' should not be declared "
-    "%select{static|inline|static or inline}0">,
+def warn_static_main : Warning<"'main' should not be declared static">,
     InGroup<Main>;
-def err_unusual_main_decl : Error<"'main' is not allowed to be declared "
-    "%select{static|inline|static or inline}0">;
+def err_static_main : Error<"'main' is not allowed to be declared static">;
+def err_inline_main : Error<"'main' is not allowed to be declared inline">;
 def err_main_template_decl : Error<"'main' cannot be a template">;
 def err_main_returns_nonint : Error<"'main' must return 'int'">;
 def err_main_surplus_args : Error<"too many parameters (%0) for 'main': "
