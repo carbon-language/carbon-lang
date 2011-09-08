@@ -169,3 +169,35 @@ define i8 @test10([4 x i8] *%P, i32 %i) {
 ; CHECK: @test10
 ; CHECK: ret i8 0
 }
+
+; (This was a miscompilation.)
+define float @test11(i32 %indvar, [4 x [2 x float]]* %q) nounwind ssp {
+  %tmp = mul i32 %indvar, -1
+  %dec = add i32 %tmp, 3
+  %scevgep = getelementptr [4 x [2 x float]]* %q, i32 0, i32 %dec
+  %scevgep35 = bitcast [2 x float]* %scevgep to i64*
+  %arrayidx28 = getelementptr inbounds [4 x [2 x float]]* %q, i32 0, i32 0
+  %y29 = getelementptr inbounds [2 x float]* %arrayidx28, i32 0, i32 1
+  store float 1.0, float* %y29, align 4
+  store i64 0, i64* %scevgep35, align 4
+  %tmp30 = load float* %y29, align 4
+  ret float %tmp30
+  ; CHECK: @test11
+  ; CHECK: ret float %tmp30
+}
+
+; (This was a miscompilation.)
+define i32 @test12(i32 %x, i32 %y, i8* %p) nounwind {
+  %a = bitcast i8* %p to [13 x i8]*
+  %b = getelementptr [13 x i8]* %a, i32 %x
+  %c = bitcast [13 x i8]* %b to [15 x i8]*
+  %d = getelementptr [15 x i8]* %c, i32 %y, i32 8
+  %castd = bitcast i8* %d to i32*
+  %castp = bitcast i8* %p to i32*
+  store i32 1, i32* %castp
+  store i32 0, i32* %castd
+  %r = load i32* %castp
+  ret i32 %r
+  ; CHECK: @test12
+  ; CHECK: ret i32 %r
+}

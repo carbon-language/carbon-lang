@@ -955,43 +955,43 @@ BasicAliasAnalysis::aliasGEP(const GEPOperator *GEP1, uint64_t V1Size,
   if (GEP1BaseOffset == 0 && GEP1VariableIndices.empty())
     return MustAlias;
 
-  // If there is a difference between the pointers, but the difference is
-  // less than the size of the associated memory object, then we know
-  // that the objects are partially overlapping.
+  // If there is a constant difference between the pointers, but the difference
+  // is less than the size of the associated memory object, then we know
+  // that the objects are partially overlapping.  If the difference is
+  // greater, we know they do not overlap.
   if (GEP1BaseOffset != 0 && GEP1VariableIndices.empty()) {
-    if (GEP1BaseOffset >= 0 ?
-        (V2Size != UnknownSize && (uint64_t)GEP1BaseOffset < V2Size) :
-        (V1Size != UnknownSize && -(uint64_t)GEP1BaseOffset < V1Size &&
-         GEP1BaseOffset != INT64_MIN))
-      return PartialAlias;
+    if (GEP1BaseOffset >= 0) {
+      if (V2Size != UnknownSize) {
+        if ((uint64_t)GEP1BaseOffset < V2Size)
+          return PartialAlias;
+        return NoAlias;
+      }
+    } else {
+      if (V1Size != UnknownSize) {
+        if (-(uint64_t)GEP1BaseOffset < V1Size)
+          return PartialAlias;
+        return NoAlias;
+      }
+    }
   }
 
-  // If we have a known constant offset, see if this offset is larger than the
-  // access size being queried.  If so, and if no variable indices can remove
-  // pieces of this constant, then we know we have a no-alias.  For example,
-  //   &A[100] != &A.
-  
-  // In order to handle cases like &A[100][i] where i is an out of range
-  // subscript, we have to ignore all constant offset pieces that are a multiple
-  // of a scaled index.  Do this by removing constant offsets that are a
-  // multiple of any of our variable indices.  This allows us to transform
-  // things like &A[i][1] because i has a stride of (e.g.) 8 bytes but the 1
-  // provides an offset of 4 bytes (assuming a <= 4 byte access).
+  // Try to distinguish something like &A[i][1] against &A[42][0].
+  // Grab the least significant bit set in any of the scales.
+  uint64_t Modulo = 0;
   for (unsigned i = 0, e = GEP1VariableIndices.size();
-       i != e && GEP1BaseOffset;++i)
-    if (int64_t RemovedOffset = GEP1BaseOffset/GEP1VariableIndices[i].Scale)
-      GEP1BaseOffset -= RemovedOffset*GEP1VariableIndices[i].Scale;
-  
-  // If our known offset is bigger than the access size, we know we don't have
-  // an alias.
-  if (GEP1BaseOffset) {
-    if (GEP1BaseOffset >= 0 ?
-        (V2Size != UnknownSize && (uint64_t)GEP1BaseOffset >= V2Size) :
-        (V1Size != UnknownSize && -(uint64_t)GEP1BaseOffset >= V1Size &&
-         GEP1BaseOffset != INT64_MIN))
-      return NoAlias;
-  }
-  
+       i != e; ++i)
+    Modulo |= (uint64_t)GEP1VariableIndices[0].Scale;
+  Modulo = Modulo ^ (Modulo & (Modulo - 1));
+
+  // We can compute the difference between the two addresses
+  // mod Modulo. Check whether that difference guarantees that the
+  // two locations do not alias.
+  uint64_t ModOffset = (uint64_t)GEP1BaseOffset & (Modulo - 1);
+  if (V1Size != UnknownSize && V2Size != UnknownSize &&
+      ModOffset >= V2Size && V1Size <= Modulo - ModOffset)
+    return NoAlias;
+
+
   // Statically, we can see that the base objects are the same, but the
   // pointers have dynamic offsets which we can't resolve. And none of our
   // little tricks above worked.
