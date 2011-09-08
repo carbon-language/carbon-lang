@@ -1064,6 +1064,10 @@ public:
   Decl *ActOnFinishFunctionBody(Decl *Decl, Stmt *Body);
   Decl *ActOnFinishFunctionBody(Decl *Decl, Stmt *Body, bool IsInstantiation);
 
+  /// ActOnFinishDelayedAttribute - Invoked when we have finished parsing an
+  /// attribute for which parsing is delayed.
+  void ActOnFinishDelayedAttribute(Scope *S, Decl *D, ParsedAttributes &Attrs);
+
   /// \brief Diagnose any unused parameters in the given sequence of
   /// ParmVarDecl pointers.
   void DiagnoseUnusedParameters(ParmVarDecl * const *Begin,

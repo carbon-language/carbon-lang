@@ -1707,6 +1707,9 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
   VirtSpecifiers VS;
   ExprResult Init;
 
+  // Hold late-parsed attributes so we can attach a Decl to them later.
+  LateParsedAttrList LateParsedAttrs;
+
   if (Tok.isNot(tok::colon)) {
     // Don't parse FOO:BAR as if it were a typo for FOO::BAR.
     ColonProtectionRAIIObject X(*this);
@@ -1725,7 +1728,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
     ParseOptionalCXX0XVirtSpecifierSeq(VS);
 
     // If attributes exist after the declarator, but before an '{', parse them.
-    MaybeParseGNUAttributes(DeclaratorInfo);
+    MaybeParseGNUAttributes(DeclaratorInfo, &LateParsedAttrs);
 
     // MSVC permits pure specifier on inline functions declared at class scope.
     // Hence check for =0 before checking for function definition.
@@ -1782,7 +1785,13 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
         return;
       }
 
-      ParseCXXInlineMethodDef(AS, DeclaratorInfo, TemplateInfo, VS, Init);
+      Decl *FunDecl =
+        ParseCXXInlineMethodDef(AS, DeclaratorInfo, TemplateInfo, VS, Init);
+
+      for (unsigned i = 0, ni = LateParsedAttrs.size(); i < ni; ++i) {
+        LateParsedAttrs[i]->setDecl(FunDecl);
+      }
+      LateParsedAttrs.clear();
 
       // Consume the ';' - it's optional unless we have a delete or default
       if (Tok.is(tok::semi)) {
@@ -1824,7 +1833,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
     }
 
     // If attributes exist after the declarator, parse them.
-    MaybeParseGNUAttributes(DeclaratorInfo);
+    MaybeParseGNUAttributes(DeclaratorInfo, &LateParsedAttrs);
 
     // FIXME: When g++ adds support for this, we'll need to check whether it
     // goes before or after the GNU attributes and __asm__.
@@ -1881,6 +1890,12 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
     }
 
     DeclaratorInfo.complete(ThisDecl);
+
+    // Set the Decl for any late parsed attributes
+    for (unsigned i = 0, ni = LateParsedAttrs.size(); i < ni; ++i) {
+      LateParsedAttrs[i]->setDecl(ThisDecl);
+    }
+    LateParsedAttrs.clear();
 
     if (HasDeferredInitializer) {
       if (!getLang().CPlusPlus0x)
@@ -2153,8 +2168,10 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
   if (TagDecl && NonNestedClass) {
     // We are not inside a nested class. This class and its nested classes
     // are complete and we can parse the delayed portions of method
-    // declarations and the lexed inline method definitions.
+    // declarations and the lexed inline method definitions, along with any
+    // delayed attributes.
     SourceLocation SavedPrevTokLocation = PrevTokLocation;
+    ParseLexedAttributes(getCurrentClass());
     ParseLexedMethodDeclarations(getCurrentClass());
     ParseLexedMemberInitializers(getCurrentClass());
     ParseLexedMethodDefs(getCurrentClass());

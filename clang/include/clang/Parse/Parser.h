@@ -22,6 +22,7 @@
 #include "clang/Sema/DeclSpec.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/SmallVector.h"
 #include <stack>
 
 namespace clang {
@@ -664,6 +665,7 @@ private:
     virtual void ParseLexedMethodDeclarations();
     virtual void ParseLexedMemberInitializers();
     virtual void ParseLexedMethodDefs();
+    virtual void ParseLexedAttributes();
   };
 
   /// Inner node of the LateParsedDeclaration tree that parses
@@ -676,11 +678,38 @@ private:
     virtual void ParseLexedMethodDeclarations();
     virtual void ParseLexedMemberInitializers();
     virtual void ParseLexedMethodDefs();
+    virtual void ParseLexedAttributes();
 
   private:
     Parser *Self;
     ParsingClass *Class;
   };
+
+  /// Contains the lexed tokens of an attribute with arguments that 
+  /// may reference member variables and so need to be parsed at the 
+  /// end of the class declaration after parsing all other member 
+  /// member declarations.
+  /// FIXME: Perhaps we should change the name of LateParsedDeclaration to
+  /// LateParsedTokens.
+  struct LateParsedAttribute : public LateParsedDeclaration {
+    Parser *Self;
+    CachedTokens Toks;
+    IdentifierInfo &AttrName;
+    SourceLocation AttrNameLoc;
+    Decl *D;
+
+    explicit LateParsedAttribute(Parser *P, IdentifierInfo &Name, 
+                                 SourceLocation Loc)
+      : Self(P), AttrName(Name), AttrNameLoc(Loc), D(0)  {}
+
+    virtual void ParseLexedAttributes();
+
+    void setDecl(Decl *Dec) { D = Dec; }
+  };
+
+  /// A list of late parsed attributes.  Used by ParseGNUAttributes.
+  typedef llvm::SmallVector<LateParsedAttribute*, 2> LateParsedAttrList;
+
 
   /// Contains the lexed tokens of a member function definition
   /// which needs to be parsed at the end of the class declaration
@@ -1028,6 +1057,8 @@ private:
                                 const ParsedTemplateInfo &TemplateInfo,
                                 const VirtSpecifiers& VS, ExprResult& Init);
   void ParseCXXNonStaticMemberInitializer(Decl *VarD);
+  void ParseLexedAttributes(ParsingClass &Class);
+  void ParseLexedAttribute(LateParsedAttribute &LA);
   void ParseLexedMethodDeclarations(ParsingClass &Class);
   void ParseLexedMethodDeclaration(LateParsedMethodDeclaration &LM);
   void ParseLexedMethodDefs(ParsingClass &Class);
@@ -1665,21 +1696,28 @@ bool ParseAsmOperandsOpt(SmallVectorImpl<IdentifierInfo *> &Names,
   }
   void DiagnoseProhibitedAttributes(ParsedAttributesWithRange &attrs);
 
-  void MaybeParseGNUAttributes(Declarator &D) {
+  void MaybeParseGNUAttributes(Declarator &D,
+                               LateParsedAttrList *LateAttrs = 0) {
     if (Tok.is(tok::kw___attribute)) {
       ParsedAttributes attrs(AttrFactory);
       SourceLocation endLoc;
-      ParseGNUAttributes(attrs, &endLoc);
+      ParseGNUAttributes(attrs, &endLoc, LateAttrs);
       D.takeAttributes(attrs, endLoc);
     }
   }
   void MaybeParseGNUAttributes(ParsedAttributes &attrs,
-                               SourceLocation *endLoc = 0) {
+                               SourceLocation *endLoc = 0,
+                               LateParsedAttrList *LateAttrs = 0) {
     if (Tok.is(tok::kw___attribute))
-      ParseGNUAttributes(attrs, endLoc);
+      ParseGNUAttributes(attrs, endLoc, LateAttrs);
   }
   void ParseGNUAttributes(ParsedAttributes &attrs,
-                          SourceLocation *endLoc = 0);
+                          SourceLocation *endLoc = 0,
+                          LateParsedAttrList *LateAttrs = 0);
+  void ParseGNUAttributeArgs(IdentifierInfo *AttrName,
+                             SourceLocation AttrNameLoc,
+                             ParsedAttributes &Attrs,
+                             SourceLocation *EndLoc);
 
   void MaybeParseCXX0XAttributes(Declarator &D) {
     if (getLang().CPlusPlus0x && isCXX0XAttributeSpecifier()) {

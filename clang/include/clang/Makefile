@@ -1,5 +1,5 @@
 CLANG_LEVEL := ../..
-DIRS := AST Basic Driver Lex Serialization
+DIRS := AST Basic Driver Lex Parse Serialization
 
 include $(CLANG_LEVEL)/Makefile
 

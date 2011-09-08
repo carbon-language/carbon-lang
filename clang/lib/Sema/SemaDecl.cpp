@@ -6778,6 +6778,15 @@ Decl *Sema::ActOnFinishFunctionBody(Decl *dcl, Stmt *Body,
   return dcl;
 }
 
+
+/// When we finish delayed parsing of an attribute, we must attach it to the
+/// relevant Decl.
+void Sema::ActOnFinishDelayedAttribute(Scope *S, Decl *D,
+                                       ParsedAttributes &Attrs) {
+  ProcessDeclAttributeList(S, D, Attrs.getList());
+}
+
+
 /// ImplicitlyDefineFunction - An undeclared identifier was used in a function
 /// call, forming a call to an implicitly defined function (per C99 6.5.1p2).
 NamedDecl *Sema::ImplicitlyDefineFunction(SourceLocation Loc,

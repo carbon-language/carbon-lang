@@ -734,6 +734,8 @@ class LockID {
       NamedDecl *ND = ME->getMemberDecl();
       DeclSeq.push_back(ND);
       buildLock(ME->getBase());
+    } else if (isa<CXXThisExpr>(Exp)) {
+      return;
     } else {
       // FIXME: add diagnostic
       llvm::report_fatal_error("Expected lock expression!");

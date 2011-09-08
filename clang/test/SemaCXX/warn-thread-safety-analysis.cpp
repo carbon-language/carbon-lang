@@ -407,3 +407,28 @@ void gb_bad_9() {
     expected-warning {{accessing variable 'sls_guard_var' requires some lock}}    
 }
 
+//-----------------------------------------------//
+// Warnings on variables with late parsed attributes
+// ----------------------------------------------//
+
+class LateFoo {
+public:
+  int a __attribute__((guarded_by(mu)));
+  int b;
+
+  void foo() __attribute__((exclusive_locks_required(mu))) { }
+
+  void test() {
+    a = 0; // \
+      expected-warning {{accessing variable 'a' requires lock 'mu'}}
+    b = a; // \
+      expected-warning {{accessing variable 'a' requires lock 'mu'}}
+    c = 0; // \
+      expected-warning {{accessing variable 'c' requires lock 'mu'}}
+  }
+
+  int c __attribute__((guarded_by(mu)));
+
+  Mutex mu;
+};
+

@@ -6,6 +6,8 @@
 //-----------------------------------------//
 
 class __attribute__((lockable)) Mu {
+  public:
+  void Lock();
 };
 
 class UnlockableMu{
@@ -39,6 +41,26 @@ MuDoubleWrapper muDoubleWrapper;
 Mu* muPointer;
 Mu ** muDoublePointer = & muPointer;
 Mu& muRef = mu1;
+
+//---------------------------------------//
+// Scoping tests
+//--------------------------------------//
+
+class Foo {
+  Mu foomu;    
+  void needLock() __attribute__((exclusive_lock_function(foomu)));
+};
+
+class Foo2 {
+  void needLock() __attribute__((exclusive_lock_function(foomu)));
+  Mu foomu;    
+};
+
+class Bar {
+ Mu barmu;
+ Mu barmu2 __attribute__((acquired_after(barmu)));
+};
+
 
 //-----------------------------------------//
 //   No Thread Safety Analysis (noanal)    //

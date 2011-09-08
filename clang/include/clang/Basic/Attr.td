@@ -90,7 +90,9 @@ class Attr {
   // The attribute will not be permitted in C++0x attribute-specifiers if
   // this is empty; the empty string can be used as a namespace.
   list<string> Namespaces = [];
-  // Any additional text that should be included verbatim in the class.
+  // Set to true for attributes with arguments which require delayed parsing. 
+  bit LateParsed = 0;  
+  // Any additional text that should be included verbatim in the class.  
   code AdditionalMembers = [{}];
 }
 
@@ -566,64 +568,77 @@ def NoThreadSafetyAnalysis : InheritableAttr {
 def GuardedBy : InheritableAttr {
   let Spellings = ["guarded_by"];
   let Args = [ExprArgument<"Arg">];
+  let LateParsed = 1;
 }
 
 def PtGuardedBy : InheritableAttr {
   let Spellings = ["pt_guarded_by"];
   let Args = [ExprArgument<"Arg">];
+  let LateParsed = 1;
 }
 
 def AcquiredAfter : InheritableAttr {
   let Spellings = ["acquired_after"];
   let Args = [VariadicExprArgument<"Args">];
+  let LateParsed = 1;
 }
 
 def AcquiredBefore : InheritableAttr {
   let Spellings = ["acquired_before"];
   let Args = [VariadicExprArgument<"Args">];
+  let LateParsed = 1;
 }
 
 def ExclusiveLockFunction : InheritableAttr {
   let Spellings = ["exclusive_lock_function"];
   let Args = [VariadicExprArgument<"Args">];
+  let LateParsed = 1;
 }
 
 def SharedLockFunction : InheritableAttr {
   let Spellings = ["shared_lock_function"];
   let Args = [VariadicExprArgument<"Args">];
+  let LateParsed = 1;
 }
 
 def ExclusiveTrylockFunction : InheritableAttr {
   let Spellings = ["exclusive_trylock_function"];
   let Args = [VariadicExprArgument<"Args">];
+  let LateParsed = 1;
 }
 
 def SharedTrylockFunction : InheritableAttr {
   let Spellings = ["shared_trylock_function"];
   let Args = [VariadicExprArgument<"Args">];
+  let LateParsed = 1;
 }
 
 def UnlockFunction : InheritableAttr {
   let Spellings = ["unlock_function"];
   let Args = [VariadicExprArgument<"Args">];
+  let LateParsed = 1;
 }
 
 def LockReturned : InheritableAttr {
   let Spellings = ["lock_returned"];
   let Args = [ExprArgument<"Arg">];
+  let LateParsed = 1;
 }
 
 def LocksExcluded : InheritableAttr {
   let Spellings = ["locks_excluded"];
   let Args = [VariadicExprArgument<"Args">];
+  let LateParsed = 1;
 }
 
 def ExclusiveLocksRequired : InheritableAttr {
   let Spellings = ["exclusive_locks_required"];
   let Args = [VariadicExprArgument<"Args">];
+  let LateParsed = 1;
 }
 
 def SharedLocksRequired : InheritableAttr {
   let Spellings = ["shared_locks_required"];
   let Args = [VariadicExprArgument<"Args">];
+  let LateParsed = 1;
 }
