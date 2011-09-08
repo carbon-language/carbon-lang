@@ -279,6 +279,12 @@ public:
                       lldb::BreakpointResolverSP &resolver_sp,
                       bool internal = false);
 
+    WatchpointLocationList &
+    GetWatchpointLocationList()
+    {
+        return m_watchpoint_location_list;
+    }
+
     void
     RemoveAllBreakpoints (bool internal_also = false);
 

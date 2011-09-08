@@ -299,7 +299,14 @@ StopInfoMachException::CreateStopReasonWithMachException
                 case llvm::Triple::x86_64:
                     if (exc_code == 1) // EXC_I386_SGL
                     {
-                        return StopInfo::CreateStopReasonToTrace(thread);
+                        if (!exc_sub_code)
+                            return StopInfo::CreateStopReasonToTrace(thread);
+
+                        // It's a watchpoint, then.
+                        lldb::WatchpointLocationSP wp_loc_sp =
+                            thread.GetProcess().GetTarget().GetWatchpointLocationList().FindByAddress((lldb::addr_t)exc_sub_code);
+                        if (wp_loc_sp)
+                            return StopInfo::CreateStopReasonWithWatchpointID(thread, wp_loc_sp->GetID());
                     }
                     else if (exc_code == 2) // EXC_I386_BPT
                     {
