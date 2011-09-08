@@ -2888,6 +2888,8 @@ void darwin::Preprocess::ConstructJob(Compilation &C, const JobAction &JA,
 
   Args.AddAllArgs(CmdArgs, options::OPT_d_Group);
 
+  RemoveCC1UnsupportedArgs(CmdArgs);
+
   const char *CC1Name = getCC1Name(Inputs[0].getType());
   const char *Exec =
     Args.MakeArgString(getToolChain().GetProgramPath(CC1Name));

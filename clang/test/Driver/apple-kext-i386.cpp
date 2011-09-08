@@ -33,3 +33,10 @@
 // CHECK-UNSUPPORTED: "-mno-longcall"
 // CHECK-UNSUPPORTED: "-msoft-float"
 
+// RUN: %clang -ccc-host-triple i386-apple-darwin10 \
+// RUN:   -Wconstant-logical-operand -save-temps \
+// RUN:   -fapple-kext -### -fsyntax-only %s 2> %t
+// RUN: FileCheck --check-prefix=CHECK-UNSUPPORTED2 < %t %s
+
+// CHECK-UNSUPPORTED2: cc1plus"
+// CHECK-UNSUPPORTED2-NOT: "-Wconstant-logical-operand"
