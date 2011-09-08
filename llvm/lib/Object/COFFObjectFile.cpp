@@ -327,7 +327,7 @@ COFFObjectFile::COFFObjectFile(MemoryBuffer *Object, error_code &ec)
   Header = reinterpret_cast<const coff_file_header *>(base() + HeaderStart);
   if (!checkAddr(Data, ec, uintptr_t(Header), sizeof(coff_file_header)))
     return;
-  
+
   SectionTable =
     reinterpret_cast<const coff_section *>( base()
                                           + HeaderStart
@@ -360,7 +360,7 @@ COFFObjectFile::COFFObjectFile(MemoryBuffer *Object, error_code &ec)
     ec = object_error::parse_failed;
     return;
   }
-  
+
   ec = object_error::success;
 }
 
@@ -444,6 +444,77 @@ error_code COFFObjectFile::getString(uint32_t offset,
   Result = StringRef(StringTable + offset);
   return object_error::success;
 }
+
+const coff_relocation *COFFObjectFile::toRel(DataRefImpl Rel) const {
+  assert(Rel.d.b < Header->NumberOfSections && "Section index out of range!");
+  const coff_section *Sect;
+  getSection(Rel.d.b, Sect);
+  assert(Rel.d.a < Sect->NumberOfRelocations && "Relocation index out of range!");
+  return
+    reinterpret_cast<const coff_relocation*>(base() +
+                                             Sect->PointerToRelocations) +
+                                             Rel.d.a;
+}
+error_code COFFObjectFile::getRelocationNext(DataRefImpl Rel,
+                                             RelocationRef &Res) const {
+  const coff_section *Sect = NULL;
+  if (error_code ec = getSection(Rel.d.b, Sect))
+    return ec;
+  if (++Rel.d.a >= Sect->NumberOfRelocations) {
+    Rel.d.a = 0;
+    while (++Rel.d.b < Header->NumberOfSections) {
+      const coff_section *Sect;
+      getSection(Rel.d.b, Sect);
+      if (Sect->NumberOfRelocations > 0)
+        break;
+    }
+  }
+  Res = RelocationRef(Rel, this);
+  return object_error::success;
+}
+error_code COFFObjectFile::getRelocationAddress(DataRefImpl Rel,
+                                                uint64_t &Res) const {
+  const coff_section *Sect;
+  if (error_code ec = getSection(Rel.d.b, Sect))
+    return ec;
+  const coff_relocation* R = toRel(Rel);
+  Res = reinterpret_cast<uintptr_t>(base() +
+                                    Sect->PointerToRawData +
+                                    R->VirtualAddress);
+  return object_error::success;
+}
+error_code COFFObjectFile::getRelocationSymbol(DataRefImpl Rel,
+                                               SymbolRef &Res) const {
+  const coff_relocation* R = toRel(Rel);
+  DataRefImpl Symb;
+  Symb.p = reinterpret_cast<uintptr_t>(SymbolTable + R->SymbolTableIndex);
+  Res = SymbolRef(Symb, this);
+  return object_error::success;
+}
+error_code COFFObjectFile::getRelocationType(DataRefImpl Rel,
+                                             uint32_t &Res) const {
+  const coff_relocation* R = toRel(Rel);
+  Res = R->Type;
+  return object_error::success;
+}
+error_code COFFObjectFile::getRelocationAdditionalInfo(DataRefImpl Rel,
+                                                       int64_t &Res) const {
+  Res = 0;
+  return object_error::success;
+}
+ObjectFile::relocation_iterator COFFObjectFile::begin_relocations() const {
+  DataRefImpl ret;
+  ret.d.a = 0;
+  ret.d.b = 1;
+  return relocation_iterator(RelocationRef(ret, this));
+}
+ObjectFile::relocation_iterator COFFObjectFile::end_relocations() const {
+  DataRefImpl ret;
+  ret.d.a = 0;
+  ret.d.b = Header->NumberOfSections;
+  return relocation_iterator(RelocationRef(ret, this));
+}
+
 
 namespace llvm {
 

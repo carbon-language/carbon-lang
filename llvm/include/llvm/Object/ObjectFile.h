@@ -39,22 +39,6 @@ static bool operator ==(const DataRefImpl &a, const DataRefImpl &b) {
   return std::memcmp(&a, &b, sizeof(DataRefImpl)) == 0;
 }
 
-class RelocationRef {
-  DataRefImpl RelocationPimpl;
-  const ObjectFile *OwningObject;
-
-public:
-  RelocationRef() : OwningObject(NULL) {
-    std::memset(&RelocationPimpl, 0, sizeof(RelocationPimpl));
-  }
-
-  RelocationRef(DataRefImpl RelocationP, const ObjectFile *Owner);
-
-  bool operator==(const RelocationRef &Other) const;
-
-  error_code getNext(RelocationRef &Result);
-};
-
 /// SymbolRef - This is a value type class that represents a single symbol in
 /// the list of symbols in the object file.
 class SymbolRef {
@@ -84,6 +68,29 @@ public:
   /// Returns true for symbols that are internal to the object file format such
   /// as section symbols.
   error_code isInternal(bool &Result) const;
+};
+
+/// RelocationRef - This is a value type class that represents a single
+/// relocation in the list of relocations in the object file.
+class RelocationRef {
+  DataRefImpl RelocationPimpl;
+  const ObjectFile *OwningObject;
+
+public:
+  RelocationRef() : OwningObject(NULL) {
+    std::memset(&RelocationPimpl, 0, sizeof(RelocationPimpl));
+  }
+
+  RelocationRef(DataRefImpl RelocationP, const ObjectFile *Owner);
+
+  bool operator==(const RelocationRef &Other) const;
+
+  error_code getNext(RelocationRef &Result) const;
+
+  error_code getAddress(uint64_t &Result) const;
+  error_code getSymbol(SymbolRef &Result) const;
+  error_code getType(uint32_t &Result) const;
+  error_code getAdditionalInfo(int64_t &Result) const;
 };
 
 /// SectionRef - This is a value type class that represents a single section in
@@ -160,6 +167,19 @@ protected:
                                            bool &Result) const = 0;
 
 
+  // Same as above for RelocationRef.
+  friend class RelocationRef;
+  virtual error_code getRelocationNext(DataRefImpl Rel,
+                                       RelocationRef &Res) const = 0;
+  virtual error_code getRelocationAddress(DataRefImpl Rel,
+                                          uint64_t &Res) const =0;
+  virtual error_code getRelocationSymbol(DataRefImpl Rel,
+                                         SymbolRef &Res) const = 0;
+  virtual error_code getRelocationType(DataRefImpl Rel,
+                                       uint32_t &Res) const = 0;
+  virtual error_code getRelocationAdditionalInfo(DataRefImpl Rel,
+                                                 int64_t &Res) const = 0;
+
 public:
   template<class content_type>
   class content_iterator {
@@ -196,12 +216,16 @@ public:
 
   typedef content_iterator<SymbolRef> symbol_iterator;
   typedef content_iterator<SectionRef> section_iterator;
+  typedef content_iterator<RelocationRef> relocation_iterator;
 
   virtual symbol_iterator begin_symbols() const = 0;
   virtual symbol_iterator end_symbols() const = 0;
 
   virtual section_iterator begin_sections() const = 0;
   virtual section_iterator end_sections() const = 0;
+
+  virtual relocation_iterator begin_relocations() const = 0;
+  virtual relocation_iterator end_relocations() const = 0;
 
   /// @brief The number of bytes used to represent an address in this object
   ///        file format.
@@ -300,6 +324,37 @@ inline error_code SectionRef::isText(bool &Result) const {
 inline error_code SectionRef::containsSymbol(SymbolRef S, bool &Result) const {
   return OwningObject->sectionContainsSymbol(SectionPimpl, S.SymbolPimpl,
                                              Result);
+}
+
+
+/// RelocationRef
+inline RelocationRef::RelocationRef(DataRefImpl RelocationP,
+                              const ObjectFile *Owner)
+  : RelocationPimpl(RelocationP)
+  , OwningObject(Owner) {}
+
+inline bool RelocationRef::operator==(const RelocationRef &Other) const {
+  return RelocationPimpl == Other.RelocationPimpl;
+}
+
+inline error_code RelocationRef::getNext(RelocationRef &Result) const {
+  return OwningObject->getRelocationNext(RelocationPimpl, Result);
+}
+
+inline error_code RelocationRef::getAddress(uint64_t &Result) const {
+  return OwningObject->getRelocationAddress(RelocationPimpl, Result);
+}
+
+inline error_code RelocationRef::getSymbol(SymbolRef &Result) const {
+  return OwningObject->getRelocationSymbol(RelocationPimpl, Result);
+}
+
+inline error_code RelocationRef::getType(uint32_t &Result) const {
+  return OwningObject->getRelocationType(RelocationPimpl, Result);
+}
+
+inline error_code RelocationRef::getAdditionalInfo(int64_t &Result) const {
+  return OwningObject->getRelocationAdditionalInfo(RelocationPimpl, Result);
 }
 
 } // end namespace object

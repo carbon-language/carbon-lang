@@ -67,6 +67,12 @@ struct coff_section {
   support::ulittle32_t Characteristics;
 };
 
+struct coff_relocation {
+  support::ulittle32_t VirtualAddress;
+  support::ulittle32_t SymbolTableIndex;
+  support::ulittle16_t Type;
+};
+
 class COFFObjectFile : public ObjectFile {
 private:
   const coff_file_header *Header;
@@ -81,6 +87,7 @@ private:
 
   const coff_symbol      *toSymb(DataRefImpl Symb) const;
   const coff_section     *toSec(DataRefImpl Sec) const;
+  const coff_relocation  *toRel(DataRefImpl Rel) const;
 
 protected:
   virtual error_code getSymbolNext(DataRefImpl Symb, SymbolRef &Res) const;
@@ -99,12 +106,24 @@ protected:
   virtual error_code sectionContainsSymbol(DataRefImpl Sec, DataRefImpl Symb,
                                            bool &Result) const;
 
+  virtual error_code getRelocationNext(DataRefImpl Rel,
+                                       RelocationRef &Res) const;
+  virtual error_code getRelocationAddress(DataRefImpl Rel,
+                                          uint64_t &Res) const;
+  virtual error_code getRelocationSymbol(DataRefImpl Rel,
+                                         SymbolRef &Res) const;
+  virtual error_code getRelocationType(DataRefImpl Rel,
+                                       uint32_t &Res) const;
+  virtual error_code getRelocationAdditionalInfo(DataRefImpl Rel,
+                                                 int64_t &Res) const;
 public:
   COFFObjectFile(MemoryBuffer *Object, error_code &ec);
   virtual symbol_iterator begin_symbols() const;
   virtual symbol_iterator end_symbols() const;
   virtual section_iterator begin_sections() const;
   virtual section_iterator end_sections() const;
+  virtual relocation_iterator begin_relocations() const;
+  virtual relocation_iterator end_relocations() const;
 
   virtual uint8_t getBytesInAddress() const;
   virtual StringRef getFileFormatName() const;
