@@ -8697,7 +8697,7 @@ SDValue X86TargetLowering::LowerVSELECT(SDValue Op, SelectionDAG &DAG) const {
   SDValue Op2 = Op.getOperand(2);
   DebugLoc DL = Op.getDebugLoc();
 
-  SDValue Ops[] = {Cond, Op1, Op2};
+  SDValue Ops[] = {Op1, Op2, Cond};
 
   assert(Op1.getValueType().isVector() && "Op1 must be a vector");
   assert(Op2.getValueType().isVector() && "Op2 must be a vector");
