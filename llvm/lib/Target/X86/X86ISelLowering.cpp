@@ -920,7 +920,6 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::VSELECT,            MVT::v2f64, Custom);
     setOperationAction(ISD::VSELECT,            MVT::v2i64, Custom);
     setOperationAction(ISD::VSELECT,            MVT::v16i8, Custom);
-    setOperationAction(ISD::VSELECT,            MVT::v8i16, Custom);
     setOperationAction(ISD::VSELECT,            MVT::v4i32, Custom);
     setOperationAction(ISD::VSELECT,            MVT::v4f32, Custom);
 
@@ -8703,16 +8702,20 @@ SDValue X86TargetLowering::LowerVSELECT(SDValue Op, SelectionDAG &DAG) const {
   assert(Op2.getValueType().isVector() && "Op2 must be a vector");
   assert(Cond.getValueType().isVector() && "Cond must be a vector");
   assert(Op1.getValueType() == Op2.getValueType() && "Type mismatch");
-  
-  switch (Op1.getValueType().getSimpleVT().SimpleTy) {
+
+  EVT VT = Op1.getValueType();
+  switch (VT.getSimpleVT().SimpleTy) {
     default: break;
-    case MVT::v2i64: return DAG.getNode(X86ISD::BLENDVPD, DL, Op1.getValueType(), Ops, array_lengthof(Ops));
-    case MVT::v2f64: return DAG.getNode(X86ISD::BLENDVPD, DL, Op1.getValueType(), Ops, array_lengthof(Ops));
-    case MVT::v4i32: return DAG.getNode(X86ISD::BLENDVPS, DL, Op1.getValueType(), Ops, array_lengthof(Ops));
-    case MVT::v4f32: return DAG.getNode(X86ISD::BLENDVPS, DL, Op1.getValueType(), Ops, array_lengthof(Ops));
-    case MVT::v16i8: return DAG.getNode(X86ISD::PBLENDVB, DL, Op1.getValueType(), Ops, array_lengthof(Ops));
+    case MVT::v2i64:
+    case MVT::v2f64:
+         return DAG.getNode(X86ISD::BLENDVPD, DL, VT, Ops, array_lengthof(Ops));
+    case MVT::v4i32:
+    case MVT::v4f32:
+         return DAG.getNode(X86ISD::BLENDVPS, DL, VT , Ops, array_lengthof(Ops));
+    case MVT::v16i8:
+         return DAG.getNode(X86ISD::PBLENDVB, DL, VT , Ops, array_lengthof(Ops));
   }
-  
+
   return SDValue();
 }
 
