@@ -1404,16 +1404,25 @@ def warn_lock_not_released_in_scope : Warning<
   "lock '%0' is not released at the end of its scope">,
   InGroup<ThreadSafety>, DefaultIgnore;
 def warn_expecting_lock_held_on_loop : Warning<
-  "expecting lock '%0' to be held at start of each loop">,
+  "expecting lock '%0' to be %select{held|held exclusively}1 at start of each "
+  "loop">,
+  InGroup<ThreadSafety>, DefaultIgnore;
+def warn_lock_exclusive_and_shared : Warning<
+  "lock '%0' is held exclusively and shared in the same scope">,
+  InGroup<ThreadSafety>, DefaultIgnore;
+def note_lock_exclusive_and_shared : Note<
+  "the other acquire of lock '%0' is here">,
   InGroup<ThreadSafety>, DefaultIgnore;
 def warn_variable_requires_lock : Warning<
-  "accessing variable '%0' requires lock '%1'">,
+  "%select{reading|writing}2 variable '%0' requires lock '%1' to be "
+  "%select{held|held exclusively}2">,
   InGroup<ThreadSafety>, DefaultIgnore;
 def warn_variable_requires_any_lock : Warning<
   "accessing variable '%0' requires some lock">,
   InGroup<ThreadSafety>, DefaultIgnore;
 def warn_var_deref_requires_lock : Warning<
-  "accessing the value pointed to by '%0' requires lock '%1'">,
+  "%select{reading|writing}2 the value pointed to by '%0' requires lock '%1' to"
+  " be %select{held|held exclusively}2">,
   InGroup<ThreadSafety>, DefaultIgnore;
 def warn_var_deref_requires_any_lock : Warning<
   "accessing the value pointed to by '%0' requires some lock">,

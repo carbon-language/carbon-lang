@@ -219,7 +219,6 @@ void sls_fun_bad_11() {
     // expected-warning{{unlocking 'sls_mu' that was not acquired}}
 }
 
-
 //-----------------------------------------//
 // Handling lock expressions in attribute args
 // -------------------------------------------//
@@ -306,13 +305,13 @@ class PGBFoo {
                  __attribute__((pt_guarded_by(sls_mu)));
   void testFoo() {
     pgb_field = &x; // \
-      // expected-warning{{accessing variable 'pgb_field' requires lock 'sls_mu2'}}
-    *pgb_field = x; // expected-warning {{accessing variable 'pgb_field' requires lock 'sls_mu2'}} \
-      // expected-warning {{accessing the value pointed to by 'pgb_field' requires lock 'sls_mu'}}
-    x = *pgb_field; // expected-warning {{accessing variable 'pgb_field' requires lock 'sls_mu2'}} \
-      // expected-warning {{accessing the value pointed to by 'pgb_field' requires lock 'sls_mu'}}
-    (*pgb_field)++; // expected-warning {{accessing variable 'pgb_field' requires lock 'sls_mu2'}} \
-      // expected-warning {{accessing the value pointed to by 'pgb_field' requires lock 'sls_mu'}}
+      // expected-warning {{writing variable 'pgb_field' requires lock 'sls_mu2' to be held exclusively}}
+    *pgb_field = x; // expected-warning {{reading variable 'pgb_field' requires lock 'sls_mu2' to be held}} \
+      // expected-warning {{writing the value pointed to by 'pgb_field' requires lock 'sls_mu' to be held exclusively}}
+    x = *pgb_field; // expected-warning {{reading variable 'pgb_field' requires lock 'sls_mu2' to be held}} \
+      // expected-warning {{reading the value pointed to by 'pgb_field' requires lock 'sls_mu' to be held}}
+    (*pgb_field)++; // expected-warning {{reading variable 'pgb_field' requires lock 'sls_mu2' to be held}} \
+      // expected-warning {{writing the value pointed to by 'pgb_field' requires lock 'sls_mu' to be held exclusively}}
   }
 };
 
@@ -322,7 +321,7 @@ class GBFoo {
 
   void testFoo() {
     gb_field = 0; // \
-      // expected-warning{{accessing variable 'gb_field' requires lock 'sls_mu'}}
+      // expected-warning {{writing variable 'gb_field' requires lock 'sls_mu' to be held exclusively}}
   }
 };
 
@@ -361,12 +360,12 @@ void gb_bad_1() {
 
 void gb_bad_2() {
   sls_guardby_var = 1; // \
-    // expected-warning{{accessing variable 'sls_guardby_var' requires lock 'sls_mu'}}
+    // expected-warning {{writing variable 'sls_guardby_var' requires lock 'sls_mu' to be held exclusively}}
 }
 
 void gb_bad_3() {
   int x = sls_guardby_var; // \
-    // expected-warning{{accessing variable 'sls_guardby_var' requires lock 'sls_mu'}}
+    // expected-warning {{reading variable 'sls_guardby_var' requires lock 'sls_mu' to be held}}
 }
 
 void gb_bad_4() {
@@ -381,18 +380,18 @@ void gb_bad_5() {
 
 void gb_bad_6() {
   *pgb_var = 1; // \
-    // expected-warning {{accessing the value pointed to by 'pgb_var' requires lock 'sls_mu'}}
+    // expected-warning {{writing the value pointed to by 'pgb_var' requires lock 'sls_mu' to be held exclusively}}
 }
 
 void gb_bad_7() {
   int x = *pgb_var; // \
-    // expected-warning {{accessing the value pointed to by 'pgb_var' requires lock 'sls_mu'}}
+    // expected-warning {{reading the value pointed to by 'pgb_var' requires lock 'sls_mu' to be held}}
 }
 
 void gb_bad_8() {
   GBFoo G;
   G.gb_field = 0; // \
-    // expected-warning{{accessing variable 'gb_field' requires lock 'sls_mu'}}
+    // expected-warning {{writing variable 'gb_field' requires lock 'sls_mu'}}
 }
 
 void gb_bad_9() {
@@ -419,11 +418,11 @@ public:
 
   void test() {
     a = 0; // \
-      // expected-warning{{accessing variable 'a' requires lock 'mu'}}
+      // expected-warning{{writing variable 'a' requires lock 'mu' to be held exclusively}}
     b = a; // \
-      // expected-warning {{accessing variable 'a' requires lock 'mu'}}
+      // expected-warning {{reading variable 'a' requires lock 'mu' to be held}}
     c = 0; // \
-      // expected-warning {{accessing variable 'c' requires lock 'mu'}}
+      // expected-warning {{writing variable 'c' requires lock 'mu' to be held exclusively}}
   }
 
   int c __attribute__((guarded_by(mu)));
@@ -431,3 +430,85 @@ public:
   Mutex mu;
 };
 
+//-----------------------------------------------//
+// Extra warnings for shared vs. exclusive locks
+// ----------------------------------------------//
+
+void shared_fun_0() {
+  sls_mu.Lock();
+  do {
+    sls_mu.Unlock();
+    sls_mu.Lock();
+  } while (getBool());
+  sls_mu.Unlock();
+}
+
+void shared_fun_1() {
+  sls_mu.ReaderLock();
+  do {
+    sls_mu.Unlock();
+    sls_mu.Lock(); // \
+      // expected-warning {{lock 'sls_mu' is held exclusively and shared in the same scope}}
+  } while (getBool());
+  sls_mu.Unlock();
+}
+
+void shared_fun_3() {
+  if (getBool())
+    sls_mu.Lock();
+  else
+    sls_mu.Lock();
+  *pgb_var = 1;
+  sls_mu.Unlock();
+}
+
+void shared_fun_4() {
+  if (getBool())
+    sls_mu.ReaderLock();
+  else
+    sls_mu.ReaderLock();
+  int x = sls_guardby_var;
+  sls_mu.Unlock();
+}
+
+void shared_fun_8() {
+  if (getBool())
+    sls_mu.Lock(); // \
+      // expected-warning {{lock 'sls_mu' is held exclusively and shared in the same scope}}
+  else
+    sls_mu.ReaderLock(); // \
+      // expected-note {{the other acquire of lock 'sls_mu' is here}}
+  sls_mu.Unlock();
+}
+
+void shared_bad_0() {
+  sls_mu.Lock();
+  do {
+    sls_mu.Unlock();
+    sls_mu.ReaderLock(); // \
+      // expected-warning {{lock 'sls_mu' is held exclusively and shared in the same scope}}
+  } while (getBool());
+  sls_mu.Unlock();
+}
+
+void shared_bad_1() {
+  if (getBool())
+    sls_mu.Lock(); // \
+      // expected-warning {{lock 'sls_mu' is held exclusively and shared in the same scope}}
+  else
+    sls_mu.ReaderLock(); // \
+      // expected-note {{the other acquire of lock 'sls_mu' is here}}
+  *pgb_var = 1;
+  sls_mu.Unlock();
+}
+
+void shared_bad_2() {
+  if (getBool())
+    sls_mu.ReaderLock(); // \
+      // expected-warning {{lock 'sls_mu' is held exclusively and shared in the same scope}}
+  else
+    sls_mu.Lock(); // \
+      // expected-note {{the other acquire of lock 'sls_mu' is here}}
+  *pgb_var = 1;
+  sls_mu.Unlock();
+}
