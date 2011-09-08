@@ -594,6 +594,12 @@ _func:
         ldrb r8, [r8, r2, lsl #2]
         ldrb r7, [sp, r2, lsl #1]
         ldrb r7, [sp, r2, lsl #0]
+        ldrb r5, [r8, #255]!
+        ldrb r2, [r5, #4]!
+        ldrb r1, [r4, #-4]!
+        ldrb lr, [r3], #255
+        ldrb r9, [r2], #4
+        ldrb r3, [sp], #-4
 
 @ CHECK: ldrb.w	r1, [r8, r1]            @ encoding: [0x18,0xf8,0x01,0x10]
 @ CHECK: ldrb.w	r4, [r5, r2]            @ encoding: [0x15,0xf8,0x02,0x40]
@@ -601,6 +607,12 @@ _func:
 @ CHECK: ldrb.w	r8, [r8, r2, lsl #2]    @ encoding: [0x18,0xf8,0x22,0x80]
 @ CHECK: ldrb.w	r7, [sp, r2, lsl #1]    @ encoding: [0x1d,0xf8,0x12,0x70]
 @ CHECK: ldrb.w	r7, [sp, r2]            @ encoding: [0x1d,0xf8,0x02,0x70]
+@ CHECK: ldrb	r5, [r8, #255]!         @ encoding: [0x18,0xf8,0xff,0x5f]
+@ CHECK: ldrb	r2, [r5, #4]!           @ encoding: [0x15,0xf8,0x04,0x2f]
+@ CHECK: ldrb	r1, [r4, #-4]!          @ encoding: [0x14,0xf8,0x04,0x1d]
+@ CHECK: ldrb	lr, [r3], #255          @ encoding: [0x13,0xf8,0xff,0xeb]
+@ CHECK: ldrb	r9, [r2], #4            @ encoding: [0x12,0xf8,0x04,0x9b]
+@ CHECK: ldrb	r3, [sp], #-4           @ encoding: [0x1d,0xf8,0x04,0x39]
 
 
 @------------------------------------------------------------------------------
