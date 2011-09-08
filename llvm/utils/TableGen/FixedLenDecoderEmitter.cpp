@@ -818,7 +818,8 @@ bool FilterChooser::emitSingletonDecoder(raw_ostream &o, unsigned &Indentation,
   // If we have matched all the well-known bits, just issue a return.
   if (Size == 0) {
     o.indent(Indentation) << "if (";
-    emitPredicateMatch(o, Indentation, Opc);
+    if (!emitPredicateMatch(o, Indentation, Opc))
+      o << "1";
     o << ") {\n";
     o.indent(Indentation) << "  MI.setOpcode(" << Opc << ");\n";
     std::vector<OperandInfo>& InsnOperands = Operands[Opc];
