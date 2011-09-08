@@ -532,6 +532,8 @@ DNBArchImplX86_64::NotifyException(MachException::Data& exc)
         case EXC_BREAKPOINT:
             if (exc.exc_data.size() >= 2 && exc.exc_data[0] == 2)
             {
+                // exc_code = EXC_I386_BPT
+                //
                 nub_addr_t pc = GetPC(INVALID_NUB_ADDRESS);
                 if (pc != INVALID_NUB_ADDRESS && pc > 0)
                 {
