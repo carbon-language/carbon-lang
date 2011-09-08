@@ -1055,11 +1055,13 @@ void BuildLockset::addLocksToSet(LockKind LK, Attr *Attr,
 /// \brief When visiting CXXMemberCallExprs we need to examine the attributes on
 /// the method that is being called and add, remove or check locks in the
 /// lockset accordingly.
-/// 
+///
 /// FIXME: For classes annotated with one of the guarded annotations, we need
 /// to treat const method calls as reads and non-const method calls as writes,
 /// and check that the appropriate locks are held. Non-const method calls with 
 /// the same signature as const method calls can be also treated as reads.
+///
+/// FIXME: We need to also visit CallExprs to catch/check global functions.
 void BuildLockset::VisitCXXMemberCallExpr(CXXMemberCallExpr *Exp) {
   NamedDecl *D = dyn_cast_or_null<NamedDecl>(Exp->getCalleeDecl());
 
@@ -1096,10 +1098,57 @@ void BuildLockset::VisitCXXMemberCallExpr(CXXMemberCallExpr *Exp) {
         }
 
         for (UnlockFunctionAttr::args_iterator I = UFAttr->args_begin(),
-            E = UFAttr->args_end(); I != E; ++I)
+             E = UFAttr->args_end(); I != E; ++I)
           removeLock(ExpLocation, *I);
         break;
       }
+
+      case attr::ExclusiveLocksRequired: {
+        // FIXME: Also use this attribute to add required locks to the initial
+        // lockset when processing a CFG for a function annotated with this
+        // attribute.
+        ExclusiveLocksRequiredAttr *ELRAttr =
+            cast<ExclusiveLocksRequiredAttr>(Attr);
+
+        for (ExclusiveLocksRequiredAttr::args_iterator
+             I = ELRAttr->args_begin(), E = ELRAttr->args_end(); I != E; ++I) {
+          LockID Lock(*I);
+          warnIfLockNotHeld(D, Exp, AK_Written, Lock,
+                            diag::warn_fun_requires_lock);
+        }
+        break;
+      }
+
+      case attr::SharedLocksRequired: {
+        // FIXME: Also use this attribute to add required locks to the initial
+        // lockset when processing a CFG for a function annotated with this
+        // attribute.
+        SharedLocksRequiredAttr *SLRAttr = cast<SharedLocksRequiredAttr>(Attr);
+
+        for (SharedLocksRequiredAttr::args_iterator I = SLRAttr->args_begin(),
+             E = SLRAttr->args_end(); I != E; ++I) {
+          LockID Lock(*I);
+          warnIfLockNotHeld(D, Exp, AK_Read, Lock,
+                            diag::warn_fun_requires_lock);
+        }
+        break;
+      }
+
+      case attr::LocksExcluded: {
+        LocksExcludedAttr *LEAttr = cast<LocksExcludedAttr>(Attr);
+        for (LocksExcludedAttr::args_iterator I = LEAttr->args_begin(),
+            E = LEAttr->args_end(); I != E; ++I) {
+          LockID Lock(*I);
+          if (locksetContains(Lock))
+            S.Diag(ExpLocation, diag::warn_fun_excludes_lock)
+              << D->getName() << Lock.getName();
+        }
+        break;
+      }
+
+      case attr::LockReturned:
+        // FIXME: Deal with this attribute.
+        break;
 
       // Ignore other (non thread-safety) attributes
       default:

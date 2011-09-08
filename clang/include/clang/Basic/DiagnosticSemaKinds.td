@@ -1394,9 +1394,6 @@ def warn_unlock_but_no_acquire : Warning<
 def warn_double_lock : Warning<
   "locking '%0' that is already acquired">,
   InGroup<ThreadSafety>, DefaultIgnore;
-def warn_function_requires_lock : Warning<
-  "calling function '%0' requires lock '%0'">,
-  InGroup<ThreadSafety>, DefaultIgnore;
 def warn_locks_not_released : Warning<
   "lock '%0' is not released at the end of function '%1'">,
   InGroup<ThreadSafety>, DefaultIgnore;
@@ -1426,6 +1423,12 @@ def warn_var_deref_requires_lock : Warning<
   InGroup<ThreadSafety>, DefaultIgnore;
 def warn_var_deref_requires_any_lock : Warning<
   "accessing the value pointed to by '%0' requires some lock">,
+  InGroup<ThreadSafety>, DefaultIgnore;
+def warn_fun_requires_lock : Warning<
+  "calling function '%0' requires %select{shared|exclusive}2 lock '%1'">,
+  InGroup<ThreadSafety>, DefaultIgnore;
+def warn_fun_excludes_lock : Warning<
+  "cannot call function '%0' while holding lock '%1'">,
   InGroup<ThreadSafety>, DefaultIgnore;
 
 

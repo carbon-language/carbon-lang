@@ -233,18 +233,9 @@ public:
 
 GlobalLocker glock;
 
-void aa_elr_fun() __attribute__((exclusive_locks_required(aa_mu)));
-void aa_elr_fun() { }
-
 void aa_fun_1() {
   glock.globalLock();
   glock.globalUnlock();
-}
-
-void aa_fun_2() {
-  aa_mu.Lock();
-  aa_elr_fun();
-  aa_mu.Unlock();
 }
 
 void aa_fun_bad_1() {
@@ -510,5 +501,119 @@ void shared_bad_2() {
     sls_mu.Lock(); // \
       // expected-note {{the other acquire of lock 'sls_mu' is here}}
   *pgb_var = 1;
+  sls_mu.Unlock();
+}
+
+// FIXME: Add support for functions (not only methods)
+class LRBar {
+ public:
+  void aa_elr_fun() __attribute__((exclusive_locks_required(aa_mu)));
+  void aa_elr_fun_s() __attribute__((shared_locks_required(aa_mu)));
+  void le_fun() __attribute__((locks_excluded(sls_mu)));
+};
+
+class LRFoo {
+ public:
+  void test() __attribute__((exclusive_locks_required(sls_mu)));
+  void testShared() __attribute__((shared_locks_required(sls_mu2)));
+};
+
+void elr_fun() __attribute__((exclusive_locks_required(sls_mu)));
+void elr_fun() {}
+
+LRFoo MyLRFoo;
+LRBar Bar;
+
+void es_fun_0() {
+  aa_mu.Lock();
+  Bar.aa_elr_fun();
+  aa_mu.Unlock();
+}
+
+void es_fun_1() {
+  aa_mu.Lock();
+  Bar.aa_elr_fun_s();
+  aa_mu.Unlock();
+}
+
+void es_fun_2() {
+  aa_mu.ReaderLock();
+  Bar.aa_elr_fun_s();
+  aa_mu.Unlock();
+}
+
+void es_fun_3() {
+  sls_mu.Lock();
+  MyLRFoo.test();
+  sls_mu.Unlock();
+}
+
+void es_fun_4() {
+  sls_mu2.Lock();
+  MyLRFoo.testShared();
+  sls_mu2.Unlock();
+}
+
+void es_fun_5() {
+  sls_mu2.ReaderLock();
+  MyLRFoo.testShared();
+  sls_mu2.Unlock();
+}
+
+void es_fun_6() {
+  Bar.le_fun();
+}
+
+void es_fun_7() {
+  sls_mu.Lock();
+  elr_fun();
+  sls_mu.Unlock();
+}
+
+void es_bad_0() {
+  Bar.aa_elr_fun(); // \
+    // expected-warning {{calling function 'aa_elr_fun' requires exclusive lock 'aa_mu'}}
+}
+
+void es_bad_1() {
+  aa_mu.ReaderLock();
+  Bar.aa_elr_fun(); // \
+    // expected-warning {{calling function 'aa_elr_fun' requires exclusive lock 'aa_mu'}}
+  aa_mu.Unlock();
+}
+
+void es_bad_2() {
+  Bar.aa_elr_fun_s(); // \
+    // expected-warning {{calling function 'aa_elr_fun_s' requires shared lock 'aa_mu'}}
+}
+
+void es_bad_3() {
+  MyLRFoo.test(); // \
+    // expected-warning {{calling function 'test' requires exclusive lock 'sls_mu'}}
+}
+
+void es_bad_4() {
+  MyLRFoo.testShared(); // \
+    // expected-warning {{calling function 'testShared' requires shared lock 'sls_mu2'}}
+}
+
+void es_bad_5() {
+  sls_mu.ReaderLock();
+  MyLRFoo.test(); // \
+    // expected-warning {{calling function 'test' requires exclusive lock 'sls_mu'}}
+  sls_mu.Unlock();
+}
+
+void es_bad_6() {
+  sls_mu.Lock();
+  Bar.le_fun(); // \
+    // expected-warning {{cannot call function 'le_fun' while holding lock 'sls_mu'}}
+  sls_mu.Unlock();
+}
+
+void es_bad_7() {
+  sls_mu.ReaderLock();
+  Bar.le_fun(); // \
+    // expected-warning {{cannot call function 'le_fun' while holding lock 'sls_mu'}}
   sls_mu.Unlock();
 }
