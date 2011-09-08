@@ -854,7 +854,7 @@ bool FilterChooser::emitSingletonDecoder(raw_ostream &o, unsigned &Indentation,
   }
 
   o.indent(Indentation) << "if (";
-  if (emitPredicateMatch(o, Indentation, Opc) > 0) {
+  if (emitPredicateMatch(o, Indentation, Opc)) {
     o << " &&\n";
     o.indent(Indentation+4);
   }
