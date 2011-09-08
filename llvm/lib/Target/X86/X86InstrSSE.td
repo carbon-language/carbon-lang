@@ -4090,16 +4090,30 @@ def MOVPQIto64rr  : RPDI<0x7E, MRMDestReg, (outs GR64:$dst), (ins VR128:$src),
                          "mov{d|q}\t{$src, $dst|$dst, $src}",
                          [(set GR64:$dst, (vector_extract (v2i64 VR128:$src),
                                            (iPTR 0)))]>;
+//===---------------------------------------------------------------------===//
+// Bitcast FR64 <-> GR64
+//
+let Predicates = [HasAVX] in
+def VMOV64toSDrm : S3SI<0x7E, MRMSrcMem, (outs FR64:$dst), (ins i64mem:$src),
+                        "vmovq\t{$src, $dst|$dst, $src}",
+                        [(set FR64:$dst, (bitconvert (loadi64 addr:$src)))]>,
+                        VEX;
+def VMOVSDto64rr : VRPDI<0x7E, MRMDestReg, (outs GR64:$dst), (ins FR64:$src),
+                         "mov{d|q}\t{$src, $dst|$dst, $src}",
+                         [(set GR64:$dst, (bitconvert FR64:$src))]>;
+def VMOVSDto64mr : VRPDI<0x7E, MRMDestMem, (outs), (ins i64mem:$dst, FR64:$src),
+                         "movq\t{$src, $dst|$dst, $src}",
+                         [(store (i64 (bitconvert FR64:$src)), addr:$dst)]>;
+
 def MOV64toSDrm : S3SI<0x7E, MRMSrcMem, (outs FR64:$dst), (ins i64mem:$src),
                        "movq\t{$src, $dst|$dst, $src}",
                        [(set FR64:$dst, (bitconvert (loadi64 addr:$src)))]>;
-
-def MOVSDto64rr  : RPDI<0x7E, MRMDestReg, (outs GR64:$dst), (ins FR64:$src),
-                        "mov{d|q}\t{$src, $dst|$dst, $src}",
-                        [(set GR64:$dst, (bitconvert FR64:$src))]>;
-def MOVSDto64mr  : RPDI<0x7E, MRMDestMem, (outs), (ins i64mem:$dst, FR64:$src),
-                        "movq\t{$src, $dst|$dst, $src}",
-                        [(store (i64 (bitconvert FR64:$src)), addr:$dst)]>;
+def MOVSDto64rr : RPDI<0x7E, MRMDestReg, (outs GR64:$dst), (ins FR64:$src),
+                       "mov{d|q}\t{$src, $dst|$dst, $src}",
+                       [(set GR64:$dst, (bitconvert FR64:$src))]>;
+def MOVSDto64mr : RPDI<0x7E, MRMDestMem, (outs), (ins i64mem:$dst, FR64:$src),
+                       "movq\t{$src, $dst|$dst, $src}",
+                       [(store (i64 (bitconvert FR64:$src)), addr:$dst)]>;
 
 //===---------------------------------------------------------------------===//
 // Move Scalar Single to Double Int
