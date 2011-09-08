@@ -594,7 +594,7 @@ IsSymbolRefDifferenceFullyResolvedImpl(const MCAssembler &Asm,
     // If the fragment with the reference does not have a base symbol but meets
     // the simple way of dealing with this, in that it is a temporary symbol in
     // the same atom then it is assumed to be fully resolved.  This is needed so
-    // a relocation entry is not created and so the staitic linker does not
+    // a relocation entry is not created and so the static linker does not
     // mess up the reference later.
     else if(!FB.getAtom() &&
             SA.isTemporary() && SA.isInSection() && &SecA == &SecB){
@@ -627,7 +627,8 @@ IsSymbolRefDifferenceFullyResolvedImpl(const MCAssembler &Asm,
   return false;
 }
 
-void MachObjectWriter::WriteObject(MCAssembler &Asm, const MCAsmLayout &Layout) {
+void MachObjectWriter::WriteObject(MCAssembler &Asm,
+				   const MCAsmLayout &Layout) {
   unsigned NumSections = Asm.size();
 
   // The section data starts after the header, the segment load command (and
