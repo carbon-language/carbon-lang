@@ -1,4 +1,5 @@
 ; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=corei7-avx -mattr=+avx | FileCheck %s
+; RUN: llc -O0 < %s -mtriple=x86_64-apple-darwin -mcpu=corei7-avx -mattr=+avx | FileCheck %s -check-prefix=CHECK_O0
 
 ; CHECK: vmovaps
 ; CHECK: vmovaps
@@ -76,5 +77,29 @@ entry:
   %Z = shufflevector <4 x i32>%A, <4 x i32>%B, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
   store <8 x i32> %Z, <8 x i32>* %P, align 16
   ret void
+}
+
+declare void @llvm.x86.avx.maskstore.ps.256(i8*, <8 x float>, <8 x float>) nounwind
+
+; CHECK_O0: _f_f
+; CHECK-O0: vmovss LCPI
+; CHECK-O0: vxorps  %xmm
+; CHECK-O0: vmovss %xmm
+define void @f_f() nounwind {
+allocas:
+  br i1 undef, label %cif_mask_all, label %cif_mask_mixed
+
+cif_mask_all:                                     ; preds = %allocas
+  unreachable
+
+cif_mask_mixed:                                   ; preds = %allocas
+  br i1 undef, label %cif_mixed_test_all, label %cif_mixed_test_any_check
+
+cif_mixed_test_all:                               ; preds = %cif_mask_mixed
+  call void @llvm.x86.avx.maskstore.ps.256(i8* undef, <8 x float> <float 0xFFFFFFFFE0000000, float 0.000000e+00, float 0.000000e+00, float 0.000000e+00, float 0.000000e+00, float 0.000000e+00, float 0.000000e+00, float 0.000000e+00>, <8 x float> undef) nounwind
+  unreachable
+
+cif_mixed_test_any_check:                         ; preds = %cif_mask_mixed
+  unreachable
 }
 

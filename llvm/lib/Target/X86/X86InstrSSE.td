@@ -536,15 +536,15 @@ let Predicates = [HasAVX] in {
   // Move scalar to XMM zero-extended, zeroing a VR128 then do a
   // MOVS{S,D} to the lower bits.
   def : Pat<(v4f32 (X86vzmovl (v4f32 (scalar_to_vector FR32:$src)))),
-            (VMOVSSrr (v4f32 (V_SET0PS)), FR32:$src)>;
+            (VMOVSSrr (v4f32 (AVX_SET0PS)), FR32:$src)>;
   def : Pat<(v4f32 (X86vzmovl (v4f32 VR128:$src))),
-            (VMOVSSrr (v4f32 (V_SET0PS)),
+            (VMOVSSrr (v4f32 (AVX_SET0PS)),
                       (f32 (EXTRACT_SUBREG (v4f32 VR128:$src), sub_ss)))>;
   def : Pat<(v4i32 (X86vzmovl (v4i32 VR128:$src))),
-            (VMOVSSrr (v4i32 (V_SET0PI)),
+            (VMOVSSrr (v4i32 (AVX_SET0PI)),
                       (EXTRACT_SUBREG (v4i32 VR128:$src), sub_ss))>;
   def : Pat<(v2f64 (X86vzmovl (v2f64 (scalar_to_vector FR64:$src)))),
-            (VMOVSDrr (v2f64 (V_SET0PS)), FR64:$src)>;
+            (VMOVSDrr (v2f64 (AVX_SET0PS)), FR64:$src)>;
   }
 
   let AddedComplexity = 20 in {
@@ -579,6 +579,16 @@ let Predicates = [HasAVX] in {
                    (v2f64 (scalar_to_vector (loadf64 addr:$src))), (i32 0)))),
             (SUBREG_TO_REG (i32 0), (VMOVSDrm addr:$src), sub_sd)>;
   }
+  def : Pat<(v8f32 (X86vzmovl (insert_subvector undef,
+                   (v4f32 (scalar_to_vector FR32:$src)), (i32 0)))),
+            (SUBREG_TO_REG (i32 0),
+                           (v4f32 (VMOVSSrr (v4f32 (AVX_SET0PS)), FR32:$src)),
+                           sub_xmm)>;
+  def : Pat<(v4f64 (X86vzmovl (insert_subvector undef,
+                   (v2f64 (scalar_to_vector FR64:$src)), (i32 0)))),
+            (SUBREG_TO_REG (i64 0),
+                           (v2f64 (VMOVSDrr (v2f64 (AVX_SET0PS)), FR64:$src)),
+                           sub_xmm)>;
 
   // Extract and store.
   def : Pat<(store (f32 (vector_extract (v4f32 VR128:$src), (iPTR 0))),
