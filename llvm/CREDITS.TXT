@@ -32,6 +32,10 @@ E: dberlin@dberlin.org
 D: ET-Forest implementation.
 D: Sparse bitmap
 
+N: David Blaikie
+E: dblaikie@gmail.com
+D: General bug fixing/fit & finish, mostly in Clang
+
 N: Neil Booth
 E: neil@daikokuya.co.uk
 D: APFloat implementation.
