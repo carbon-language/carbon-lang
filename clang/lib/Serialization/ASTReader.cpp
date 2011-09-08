@@ -1448,11 +1448,16 @@ PreprocessedEntity *ASTReader::LoadPreprocessedEntity(Module &F) {
     if (PreprocessedEntity *PE = PPRec.getLoadedPreprocessedEntity(GlobalID-1))
       return PE;
     
-    MacroExpansion *ME =
-      new (PPRec) MacroExpansion(getLocalIdentifier(F, Record[3]),
+    bool isBuiltin = Record[3];
+    MacroExpansion *ME;
+    if (isBuiltin)
+      ME = new (PPRec) MacroExpansion(getLocalIdentifier(F, Record[4]),
                                  SourceRange(ReadSourceLocation(F, Record[1]),
-                                             ReadSourceLocation(F, Record[2])),
-                                 getLocalMacroDefinition(F, Record[4]));
+                                             ReadSourceLocation(F, Record[2])));
+    else
+      ME = new (PPRec) MacroExpansion(getLocalMacroDefinition(F, Record[4]),
+                                 SourceRange(ReadSourceLocation(F, Record[1]),
+                                             ReadSourceLocation(F, Record[2])));
     PPRec.setLoadedPreallocatedEntity(GlobalID - 1, ME);
     return ME;
   }

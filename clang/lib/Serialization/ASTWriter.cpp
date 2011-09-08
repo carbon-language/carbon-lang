@@ -1871,8 +1871,11 @@ void ASTWriter::WritePreprocessorDetail(PreprocessingRecord &PPRec) {
       Record.push_back(NextPreprocessorEntityID);
       AddSourceLocation(ME->getSourceRange().getBegin(), Record);
       AddSourceLocation(ME->getSourceRange().getEnd(), Record);
-      AddIdentifierRef(ME->getName(), Record);
-      Record.push_back(getMacroDefinitionID(ME->getDefinition()));
+      Record.push_back(ME->isBuiltinMacro());
+      if (ME->isBuiltinMacro())
+        AddIdentifierRef(ME->getName(), Record);
+      else
+        Record.push_back(getMacroDefinitionID(ME->getDefinition()));
       Stream.EmitRecord(PPD_MACRO_EXPANSION, Record);
       continue;
     }

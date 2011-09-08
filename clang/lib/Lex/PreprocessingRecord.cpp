@@ -14,7 +14,6 @@
 #include "clang/Lex/PreprocessingRecord.h"
 #include "clang/Lex/MacroInfo.h"
 #include "clang/Lex/Token.h"
-#include "clang/Basic/IdentifierTable.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Capacity.h"
 
@@ -113,10 +112,12 @@ void PreprocessingRecord::MacroExpands(const Token &Id, const MacroInfo* MI,
   if (!IncludeNestedMacroExpansions && Id.getLocation().isMacroID())
     return;
 
-  if (MacroDefinition *Def = findMacroDefinition(MI))
+  if (MI->isBuiltinMacro())
     PreprocessedEntities.push_back(
-                       new (*this) MacroExpansion(Id.getIdentifierInfo(),
-                                                  Range, Def));
+                      new (*this) MacroExpansion(Id.getIdentifierInfo(),Range));
+  else if (MacroDefinition *Def = findMacroDefinition(MI))
+    PreprocessedEntities.push_back(
+                       new (*this) MacroExpansion(Def, Range));
 }
 
 void PreprocessingRecord::MacroDefined(const Token &Id,

@@ -16,6 +16,7 @@
 
 #include "clang/Lex/PPCallbacks.h"
 #include "clang/Basic/SourceLocation.h"
+#include "clang/Basic/IdentifierTable.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/Support/Allocator.h"
 #include <vector>
@@ -110,34 +111,6 @@ namespace clang {
     void operator delete(void* data) throw();
   };
   
-  /// \brief Records the location of a macro expansion.
-  class MacroExpansion : public PreprocessedEntity {
-    /// \brief The name of the macro being expanded.
-    IdentifierInfo *Name;
-    
-    /// \brief The definition of this macro.
-    MacroDefinition *Definition;
-    
-  public:
-    MacroExpansion(IdentifierInfo *Name, SourceRange Range,
-                   MacroDefinition *Definition)
-      : PreprocessedEntity(MacroExpansionKind, Range), Name(Name),
-        Definition(Definition) { }
-    
-    /// \brief The name of the macro being expanded.
-    IdentifierInfo *getName() const { return Name; }
-    
-    /// \brief The definition of the macro being expanded.
-    MacroDefinition *getDefinition() const { return Definition; }
-
-    // Implement isa/cast/dyncast/etc.
-    static bool classof(const PreprocessedEntity *PE) {
-      return PE->getKind() == MacroExpansionKind;
-    }
-    static bool classof(const MacroExpansion *) { return true; }
-
-  };
-  
   /// \brief Records the presence of a preprocessor directive.
   class PreprocessingDirective : public PreprocessedEntity {
   public:
@@ -177,6 +150,44 @@ namespace clang {
       return PE->getKind() == MacroDefinitionKind;
     }
     static bool classof(const MacroDefinition *) { return true; }
+  };
+  
+  /// \brief Records the location of a macro expansion.
+  class MacroExpansion : public PreprocessedEntity {
+    /// \brief The definition of this macro or the name of the macro if it is
+    /// a builtin macro.
+    llvm::PointerUnion<IdentifierInfo *, MacroDefinition *> NameOrDef; 
+
+  public:
+    MacroExpansion(IdentifierInfo *BuiltinName, SourceRange Range)
+      : PreprocessedEntity(MacroExpansionKind, Range),
+        NameOrDef(BuiltinName) { }
+
+    MacroExpansion(MacroDefinition *Definition, SourceRange Range)
+      : PreprocessedEntity(MacroExpansionKind, Range),
+        NameOrDef(Definition) { }
+
+    /// \brief True if it is a builtin macro.
+    bool isBuiltinMacro() const { return NameOrDef.is<IdentifierInfo *>(); }
+    
+    /// \brief The name of the macro being expanded.
+    const IdentifierInfo *getName() const {
+      if (MacroDefinition *Def = getDefinition())
+        return Def->getName();
+      return NameOrDef.get<IdentifierInfo*>();
+    }
+    
+    /// \brief The definition of the macro being expanded. May return null if
+    /// this is a builtin macro.
+    MacroDefinition *getDefinition() const {
+      return NameOrDef.dyn_cast<MacroDefinition *>();
+    }
+
+    // Implement isa/cast/dyncast/etc.
+    static bool classof(const PreprocessedEntity *PE) {
+      return PE->getKind() == MacroExpansionKind;
+    }
+    static bool classof(const MacroExpansion *) { return true; }
   };
 
   /// \brief Record the location of an inclusion directive, such as an
