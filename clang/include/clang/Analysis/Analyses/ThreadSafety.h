@@ -18,10 +18,9 @@
 #ifndef LLVM_CLANG_THREADSAFETY_H
 #define LLVM_CLANG_THREADSAFETY_H
 
+#include "clang/Analysis/AnalysisContext.h"
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/StringRef.h"
-#include "clang/Analysis/AnalysisContext.h"
-#include "clang/Sema/SemaInternal.h"
 
 namespace clang {
 namespace thread_safety {
