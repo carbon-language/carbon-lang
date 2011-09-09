@@ -404,7 +404,8 @@ ARMBaseInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
     ? ARM::B : (AFI->isThumb2Function() ? ARM::t2B : ARM::tB);
   int BccOpc = !AFI->isThumbFunction()
     ? ARM::Bcc : (AFI->isThumb2Function() ? ARM::t2Bcc : ARM::tBcc);
-
+  bool isThumb = AFI->isThumbFunction() || AFI->isThumb2Function();
+ 
   // Shouldn't be a fall through.
   assert(TBB && "InsertBranch must not be told to insert a fallthrough");
   assert((Cond.size() == 2 || Cond.size() == 0) &&
@@ -412,7 +413,10 @@ ARMBaseInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
 
   if (FBB == 0) {
     if (Cond.empty()) // Unconditional branch?
-      BuildMI(&MBB, DL, get(BOpc)).addMBB(TBB);
+      if (isThumb)
+        BuildMI(&MBB, DL, get(BOpc)).addMBB(TBB).addImm(ARMCC::AL).addReg(0);
+      else
+        BuildMI(&MBB, DL, get(BOpc)).addMBB(TBB);
     else
       BuildMI(&MBB, DL, get(BccOpc)).addMBB(TBB)
         .addImm(Cond[0].getImm()).addReg(Cond[1].getReg());
@@ -422,7 +426,10 @@ ARMBaseInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
   // Two-way conditional branch.
   BuildMI(&MBB, DL, get(BccOpc)).addMBB(TBB)
     .addImm(Cond[0].getImm()).addReg(Cond[1].getReg());
-  BuildMI(&MBB, DL, get(BOpc)).addMBB(FBB);
+  if (isThumb)
+    BuildMI(&MBB, DL, get(BOpc)).addMBB(FBB).addImm(ARMCC::AL).addReg(0);
+  else
+    BuildMI(&MBB, DL, get(BOpc)).addMBB(FBB);
   return 2;
 }
 

@@ -426,6 +426,8 @@ static void AddThumb1SBit(MCInst &MI, bool InITBlock) {
 // post-pass.
 MCDisassembler::DecodeStatus
 ThumbDisassembler::AddThumbPredicate(MCInst &MI) const {
+  MCDisassembler::DecodeStatus S = Success;
+
   // A few instructions actually have predicates encoded in them.  Don't
   // try to overwrite it if we're seeing one of those.
   switch (MI.getOpcode()) {
@@ -436,8 +438,16 @@ ThumbDisassembler::AddThumbPredicate(MCInst &MI) const {
       // Some instructions (mostly conditional branches) are not
       // allowed in IT blocks.
       if (!ITBlock.empty())
-        return SoftFail;
-      return Success;
+        S = SoftFail;
+      else
+        return Success;
+      break;
+    case ARM::tB:
+    case ARM::t2B:
+      // Some instructions (mostly unconditional branches) can
+      // only appears at the end of, or outside of, an IT.
+      if (ITBlock.size() > 1)
+        S = SoftFail;
       break;
     default:
       break;
@@ -466,7 +476,7 @@ ThumbDisassembler::AddThumbPredicate(MCInst &MI) const {
         MI.insert(I, MCOperand::CreateReg(0));
       else
         MI.insert(I, MCOperand::CreateReg(ARM::CPSR));
-      return Success;
+      return S;
     }
   }
 
@@ -477,7 +487,7 @@ ThumbDisassembler::AddThumbPredicate(MCInst &MI) const {
   else
     MI.insert(I, MCOperand::CreateReg(ARM::CPSR));
 
-  return Success;
+  return S;
 }
 
 // Thumb VFP instructions are a special case.  Because we share their

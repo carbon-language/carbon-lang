@@ -739,7 +739,11 @@ MachineBasicBlock *ARMConstantIslands::SplitBlockBeforeInstr(MachineInstr *MI) {
   // There doesn't seem to be meaningful DebugInfo available; this doesn't
   // correspond to anything in the source.
   unsigned Opc = isThumb ? (isThumb2 ? ARM::t2B : ARM::tB) : ARM::B;
-  BuildMI(OrigBB, DebugLoc(), TII->get(Opc)).addMBB(NewBB);
+  if (!isThumb)
+    BuildMI(OrigBB, DebugLoc(), TII->get(Opc)).addMBB(NewBB);
+  else
+    BuildMI(OrigBB, DebugLoc(), TII->get(Opc)).addMBB(NewBB)
+            .addImm(ARMCC::AL).addReg(0);
   ++NumSplit;
 
   // Update the CFG.  All succs of OrigBB are now succs of NewBB.
@@ -1151,7 +1155,11 @@ void ARMConstantIslands::CreateNewWater(unsigned CPUserIndex,
     // targets will be exchanged, and the altered branch may be out of
     // range, so the machinery has to know about it.
     int UncondBr = isThumb ? ((isThumb2) ? ARM::t2B : ARM::tB) : ARM::B;
-    BuildMI(UserMBB, DebugLoc(), TII->get(UncondBr)).addMBB(NewMBB);
+    if (!isThumb)
+      BuildMI(UserMBB, DebugLoc(), TII->get(UncondBr)).addMBB(NewMBB);
+    else
+      BuildMI(UserMBB, DebugLoc(), TII->get(UncondBr)).addMBB(NewMBB)
+              .addImm(ARMCC::AL).addReg(0);
     unsigned MaxDisp = getUnconditionalBrDisp(UncondBr);
     ImmBranches.push_back(ImmBranch(&UserMBB->back(),
                           MaxDisp, false, UncondBr));
@@ -1893,7 +1901,8 @@ AdjustJTTargetBlockForward(MachineBasicBlock *BB, MachineBasicBlock *JTBB)
   // There doesn't seem to be meaningful DebugInfo available; this doesn't
   // correspond directly to anything in the source.
   assert (isThumb2 && "Adjusting for TB[BH] but not in Thumb2?");
-  BuildMI(NewBB, DebugLoc(), TII->get(ARM::t2B)).addMBB(BB);
+  BuildMI(NewBB, DebugLoc(), TII->get(ARM::t2B)).addMBB(BB)
+          .addImm(ARMCC::AL).addReg(0);
 
   // Update internal data structures to account for the newly inserted MBB.
   MF.RenumberBlocks(NewBB);

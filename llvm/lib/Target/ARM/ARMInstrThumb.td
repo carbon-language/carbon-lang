@@ -487,8 +487,8 @@ let isCall = 1,
 
 let isBranch = 1, isTerminator = 1, isBarrier = 1 in {
   let isPredicable = 1 in
-  def tB   : T1I<(outs), (ins t_brtarget:$target), IIC_Br,
-                 "b\t$target", [(br bb:$target)]>,
+  def tB   : T1pI<(outs), (ins t_brtarget:$target), IIC_Br,
+                 "b", "\t$target", [(br bb:$target)]>,
              T1Encoding<{1,1,1,0,0,?}> {
     bits<11> target;
     let Inst{10-0} = target;
@@ -537,9 +537,10 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
   // Non-Darwin versions (the difference is R9).
   let Defs = [R0, R1, R2, R3, R12, QQQQ0, QQQQ2, QQQQ3, PC],
       Uses = [SP] in {
-    def tTAILJMPdND : tPseudoExpand<(outs), (ins t_brtarget:$dst, variable_ops),
+    def tTAILJMPdND : tPseudoExpand<(outs),
+                   (ins t_brtarget:$dst, pred:$p, variable_ops),
                    4, IIC_Br, [],
-                   (tB t_brtarget:$dst)>,
+                   (tB t_brtarget:$dst, pred:$p)>,
                  Requires<[IsThumb, IsNotDarwin]>;
     def tTAILJMPrND : tPseudoExpand<(outs), (ins tcGPR:$dst, variable_ops),
                      4, IIC_Br, [],

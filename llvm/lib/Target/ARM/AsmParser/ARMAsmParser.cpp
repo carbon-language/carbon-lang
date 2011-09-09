@@ -3567,8 +3567,8 @@ validateInstruction(MCInst &Inst,
   // Check for non-'al' condition codes outside of the IT block.
   } else if (isThumbTwo() && MCID.isPredicable() &&
              Inst.getOperand(MCID.findFirstPredOperandIdx()).getImm() !=
-             ARMCC::AL && Inst.getOpcode() != ARM::tBcc &&
-             Inst.getOpcode() != ARM::t2Bcc)
+             ARMCC::AL && Inst.getOpcode() != ARM::tB &&
+             Inst.getOpcode() != ARM::t2B)
     return Error(Loc, "predicated instructions must be in IT block");
 
   switch (Inst.getOpcode()) {
@@ -3720,6 +3720,16 @@ processInstruction(MCInst &Inst,
     // to encoding T1 if <Rd> is omitted."
     if (Inst.getOperand(3).getImm() < 8 && Operands.size() == 6)
       Inst.setOpcode(ARM::tADDi3);
+    break;
+  case ARM::tB:
+    // A Thumb conditional branch outside of an IT block is a tBcc.
+    if (Inst.getOperand(1).getImm() != ARMCC::AL && !inITBlock())
+      Inst.setOpcode(ARM::tBcc);
+    break;
+  case ARM::t2B:
+    // A Thumb2 conditional branch outside of an IT block is a t2Bcc.
+    if (Inst.getOperand(1).getImm() != ARMCC::AL && !inITBlock())
+      Inst.setOpcode(ARM::t2Bcc);
     break;
   case ARM::t2Bcc:
     // If the conditional is AL or we're in an IT block, we really want t2B.

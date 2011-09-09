@@ -414,6 +414,9 @@ void ARMFrameLowering::emitEpilogue(MachineFunction &MF,
         MIB.addExternalSymbol(JumpTarget.getSymbolName(),
                               JumpTarget.getTargetFlags());
       }
+
+      // Add the default predicate in Thumb mode.
+      if (STI.isThumb()) MIB.addImm(ARMCC::AL).addReg(0);
     } else if (RetOpcode == ARM::TCRETURNri) {
       BuildMI(MBB, MBBI, dl,
               TII.get(STI.isThumb() ? ARM::tTAILJMPr : ARM::TAILJMPr)).

@@ -3004,8 +3004,8 @@ def t2LDMIA_RET: t2PseudoExpand<(outs GPR:$wb), (ins GPR:$Rn, pred:$p,
 
 let isBranch = 1, isTerminator = 1, isBarrier = 1 in {
 let isPredicable = 1 in
-def t2B   : T2XI<(outs), (ins uncondbrtarget:$target), IIC_Br,
-                 "b.w\t$target",
+def t2B   : T2I<(outs), (ins uncondbrtarget:$target), IIC_Br,
+                 "b", ".w\t$target",
                  [(br bb:$target)]> {
   let Inst{31-27} = 0b11110;
   let Inst{15-14} = 0b10;
@@ -3060,7 +3060,7 @@ def t2TBH : T2I<(outs), (ins GPR:$Rn, GPR:$Rm), IIC_Br,
 } // isBranch, isTerminator, isBarrier
 
 // FIXME: should be able to write a pattern for ARMBrcond, but can't use
-// a two-value operand where a dag node expects two operands. :(
+// a two-value operand where a dag node expects ", "two operands. :(
 let isBranch = 1, isTerminator = 1 in
 def t2Bcc : T2I<(outs), (ins brtarget:$target), IIC_Br,
                 "b", ".w\t$target",
@@ -3088,9 +3088,10 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
   // Darwin version.
   let Defs = [R0, R1, R2, R3, R9, R12, QQQQ0, QQQQ2, QQQQ3, PC],
       Uses = [SP] in
-  def tTAILJMPd: tPseudoExpand<(outs), (ins uncondbrtarget:$dst, variable_ops),
+  def tTAILJMPd: tPseudoExpand<(outs),
+                   (ins uncondbrtarget:$dst, pred:$p, variable_ops),
                    4, IIC_Br, [],
-                   (t2B uncondbrtarget:$dst)>,
+                   (t2B uncondbrtarget:$dst, pred:$p)>,
                  Requires<[IsThumb2, IsDarwin]>;
 }
 

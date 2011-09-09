@@ -188,7 +188,7 @@ _func:
 @ CHECK: beq.w	_bar                    @ encoding: [A,0xf0'A',A,0x80'A']
           @   fixup A - offset: 0, value: _bar, kind: fixup_t2_condbranch
 @ CHECK: it	eq                      @ encoding: [0x08,0xbf]
-@ CHECK: b.w	_bar                    @ encoding: [A,0xf0'A',A,0x90'A']
+@ CHECK: beq.w	_bar                    @ encoding: [A,0xf0'A',A,0x90'A']
           @   fixup A - offset: 0, value: _bar, kind: fixup_t2_uncondbranch
 @ CHECK: bmi.w   #-183396                @ encoding: [0x13,0xf5,0xce,0xa9]
 
