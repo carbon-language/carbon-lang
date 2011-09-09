@@ -427,7 +427,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   }
 
   case Builtin::BI__builtin_isfinite: {
-    // isfinite(x) --> x == x && fabs(x) != infinity; }
+    // isfinite(x) --> x == x && fabs(x) != infinity;
     Value *V = EmitScalarExpr(E->getArg(0));
     Value *Eq = Builder.CreateFCmpOEQ(V, V, "iseq");
     
