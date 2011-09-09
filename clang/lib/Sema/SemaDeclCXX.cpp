@@ -9472,7 +9472,7 @@ Decl *Sema::ActOnTemplatedFriendTag(Scope *S, SourceLocation FriendLoc,
       return CheckClassTemplate(S, TagSpec, TUK_Friend, TagLoc,
                                 SS, Name, NameLoc, Attr,
                                 TemplateParams, AS_public,
-                                /*IsModulePrivate=*/false,
+                                /*ModulePrivateLoc=*/SourceLocation(),
                                 TempParamLists.size() - 1,
                    (TemplateParameterList**) TempParamLists.release()).take();
     } else {

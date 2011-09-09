@@ -4716,5 +4716,11 @@ def note_related_result_type_inferred : Note<
 
 }
 
+let CategoryName = "Modules Issue" in {
+def err_module_private_follows_public : Error<
+  "__module_private__ declaration of %0 follows public declaration">;
+  
+}
+
 } // end of sema component.
 

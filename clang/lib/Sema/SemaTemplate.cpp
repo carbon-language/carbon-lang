@@ -811,7 +811,7 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
                          IdentifierInfo *Name, SourceLocation NameLoc,
                          AttributeList *Attr,
                          TemplateParameterList *TemplateParams,
-                         AccessSpecifier AS, bool IsModulePrivate,
+                         AccessSpecifier AS, SourceLocation ModulePrivateLoc,
                          unsigned NumOuterTemplateParamLists,
                          TemplateParameterList** OuterTemplateParamLists) {
   assert(TemplateParams && TemplateParams->size() > 0 &&
@@ -1002,8 +1002,13 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
   
   if (PrevClassTemplate && PrevClassTemplate->isModulePrivate()) {
     NewTemplate->setModulePrivate();
-  } else if (IsModulePrivate)
-    NewTemplate->setModulePrivate();
+  } else if (ModulePrivateLoc.isValid()) {
+    if (PrevClassTemplate && !PrevClassTemplate->isModulePrivate())
+      diagnoseModulePrivateRedeclaration(NewTemplate, PrevClassTemplate,
+                                         ModulePrivateLoc);
+    else
+      NewTemplate->setModulePrivate();
+  }
   
   // Build the type for the class template declaration now.
   QualType T = NewTemplate->getInjectedClassNameSpecialization();
@@ -4943,7 +4948,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
                                 TemplateNameLoc,
                                 Attr,
                                 TemplateParams,
-                                AS_none, /*IsModulePrivate=*/false,
+                                AS_none, /*ModulePrivateLoc=*/SourceLocation(),
                                 TemplateParameterLists.size() - 1,
                   (TemplateParameterList**) TemplateParameterLists.release());
     }
@@ -5978,7 +5983,7 @@ Sema::ActOnExplicitInstantiation(Scope *S,
   bool IsDependent = false;
   Decl *TagD = ActOnTag(S, TagSpec, Sema::TUK_Reference,
                         KWLoc, SS, Name, NameLoc, Attr, AS_none,
-                        /*IsModulePrivate=*/false,
+                        /*ModulePrivateLoc=*/SourceLocation(),
                         MultiTemplateParamsArg(*this, 0, 0),
                         Owned, IsDependent, false, false,
                         TypeResult());

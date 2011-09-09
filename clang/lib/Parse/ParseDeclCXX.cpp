@@ -1193,7 +1193,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
     // Declaration or definition of a class type
     TagOrTempResult = Actions.ActOnTag(getCurScope(), TagType, TUK, StartLoc,
                                        SS, Name, NameLoc, attrs.getList(), AS,
-                                       DS.isModulePrivateSpecified(),
+                                       DS.getModulePrivateSpecLoc(),
                                        TParams, Owned, IsDependent, false,
                                        false, clang::TypeResult());
 
