@@ -701,7 +701,7 @@ void ClangAttrPCHReadEmitter::run(raw_ostream &OS) {
       Args.push_back(A);
       A->writePCHReadDecls(OS);
     }
-    OS << "    New = new (*Context) " << R.getName() << "Attr(Loc, *Context";
+    OS << "    New = new (Context) " << R.getName() << "Attr(Loc, Context";
     for (ri = Args.begin(), re = Args.end(); ri != re; ++ri) {
       OS << ", ";
       (*ri)->writePCHReadArgs(OS);
