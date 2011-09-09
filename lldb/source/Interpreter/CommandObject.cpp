@@ -829,7 +829,8 @@ CommandObject::g_arguments_data[] =
     { eArgTypeValue, "value", CommandCompletions::eNoCompletion, { NULL, false }, "A value could be anything, depending on where and how it is used." },
     { eArgTypeWidth, "width", CommandCompletions::eNoCompletion, { NULL, false }, "Help text goes here." },
     { eArgTypeNone, "none", CommandCompletions::eNoCompletion, { NULL, false }, "No help available for this." },
-    { eArgTypePlatform, "platform-name", CommandCompletions::ePlatformPluginCompletion, { NULL, false }, "The name of an installed platform plug-in . Type 'platform list' to see a complete list of installed platforms." }
+    { eArgTypePlatform, "platform-name", CommandCompletions::ePlatformPluginCompletion, { NULL, false }, "The name of an installed platform plug-in . Type 'platform list' to see a complete list of installed platforms." },
+    { eArgTypeWatchMode, "watch-mode", CommandCompletions::eNoCompletion, { NULL, false }, "Specify the mode for a watchpoint." }
 };
 
 const CommandObject::ArgumentTableEntry*

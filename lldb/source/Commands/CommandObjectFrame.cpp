@@ -28,6 +28,7 @@
 #include "lldb/Interpreter/Options.h"
 #include "lldb/Interpreter/OptionGroupValueObjectDisplay.h"
 #include "lldb/Interpreter/OptionGroupVariable.h"
+#include "lldb/Interpreter/OptionGroupWatchpoint.h"
 #include "lldb/Symbol/ClangASTType.h"
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/ObjectFile.h"
@@ -315,11 +316,15 @@ public:
                        "If any arguments are specified, they can be names of "
                        "argument, local, file static and file global variables. "
                        "Children of aggregate variables can be specified such as "
-                       "'var->child.x'.",
+                       "'var->child.x'. "
+                       "NOTE that '-w' option is not working yet!!! "
+                       "You can choose to watch a variable with the '-w' option. "
+                       "Note that hardware resources for watching are often limited.",
                        NULL,
                        eFlagProcessMustBeLaunched | eFlagProcessMustBePaused),
         m_option_group (interpreter),
         m_option_variable(true), // Include the frame specific options by passing "true"
+        m_option_watchpoint(),
         m_varobj_options()
     {
         CommandArgumentEntry arg;
@@ -336,6 +341,7 @@ public:
         m_arguments.push_back (arg);
         
         m_option_group.Append (&m_option_variable, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
+        m_option_group.Append (&m_option_watchpoint, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
         m_option_group.Append (&m_varobj_options, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
         m_option_group.Finalize();
     }
@@ -601,6 +607,7 @@ protected:
 
     OptionGroupOptions m_option_group;
     OptionGroupVariable m_option_variable;
+    OptionGroupWatchpoint m_option_watchpoint;
     OptionGroupValueObjectDisplay m_varobj_options;
 };
 

@@ -437,6 +437,7 @@
 		9AC70390117675270086C050 /* SBInstructionList.h in Headers */ = {isa = PBXBuildFile; fileRef = 9AC7038F117675270086C050 /* SBInstructionList.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		9AC703AF117675410086C050 /* SBInstruction.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9AC703AE117675410086C050 /* SBInstruction.cpp */; };
 		9AC703B1117675490086C050 /* SBInstructionList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9AC703B0117675490086C050 /* SBInstructionList.cpp */; };
+		B2462247141AD37D00F3D409 /* OptionGroupWatchpoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B2462246141AD37D00F3D409 /* OptionGroupWatchpoint.cpp */; };
 		B271B11413D6139300C3FEDB /* FormatClasses.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94A9112D13D5DF210046D8A6 /* FormatClasses.cpp */; };
 		B27318421416AC12006039C8 /* WatchpointLocationList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B27318411416AC12006039C8 /* WatchpointLocationList.cpp */; };
 		B28058A1139988B0002D96D0 /* InferiorCallPOSIX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B28058A0139988B0002D96D0 /* InferiorCallPOSIX.cpp */; };
@@ -1295,6 +1296,8 @@
 		AF68D3301255A110002FF25B /* UnwindLLDB.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UnwindLLDB.h; path = Utility/UnwindLLDB.h; sourceTree = "<group>"; };
 		AF94005711C03F6500085DB9 /* SymbolVendor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SymbolVendor.cpp; path = source/Symbol/SymbolVendor.cpp; sourceTree = "<group>"; };
 		B23DD24F12EDFAC1000C3894 /* ARMUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ARMUtils.h; path = Utility/ARMUtils.h; sourceTree = "<group>"; };
+		B2462246141AD37D00F3D409 /* OptionGroupWatchpoint.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OptionGroupWatchpoint.cpp; path = source/Interpreter/OptionGroupWatchpoint.cpp; sourceTree = "<group>"; };
+		B2462248141AD39B00F3D409 /* OptionGroupWatchpoint.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = OptionGroupWatchpoint.h; path = include/lldb/Interpreter/OptionGroupWatchpoint.h; sourceTree = "<group>"; };
 		B27318411416AC12006039C8 /* WatchpointLocationList.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = WatchpointLocationList.cpp; path = source/Breakpoint/WatchpointLocationList.cpp; sourceTree = "<group>"; };
 		B27318431416AC43006039C8 /* WatchpointLocationList.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = WatchpointLocationList.h; path = include/lldb/Breakpoint/WatchpointLocationList.h; sourceTree = "<group>"; };
 		B28058A0139988B0002D96D0 /* InferiorCallPOSIX.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = InferiorCallPOSIX.cpp; path = Utility/InferiorCallPOSIX.cpp; sourceTree = "<group>"; };
@@ -2351,7 +2354,9 @@
 				267C0128136880C7006E963E /* OptionGroupValueObjectDisplay.h */,
 				267C012A136880DF006E963E /* OptionGroupValueObjectDisplay.cpp */,
 				26ED3D6F13C5638A0017D45E /* OptionGroupVariable.h */,
+				B2462248141AD39B00F3D409 /* OptionGroupWatchpoint.h */,
 				26ED3D6C13C563810017D45E /* OptionGroupVariable.cpp */,
+				B2462246141AD37D00F3D409 /* OptionGroupWatchpoint.cpp */,
 				26BC7DE510F1B7F900F91463 /* ScriptInterpreter.h */,
 				9A82010B10FFB49800182560 /* ScriptInterpreter.cpp */,
 				9A2771FB1135A35C00E6ADB6 /* ScriptInterpreterNone.h */,
@@ -3358,6 +3363,7 @@
 				26A0DA4E140F7226006DA411 /* HashedNameToDIE.cpp in Sources */,
 				B27318421416AC12006039C8 /* WatchpointLocationList.cpp in Sources */,
 				26E152261419CAD4007967D0 /* ObjectFilePECOFF.cpp in Sources */,
+				B2462247141AD37D00F3D409 /* OptionGroupWatchpoint.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
