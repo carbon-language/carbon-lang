@@ -3730,16 +3730,26 @@ def : InstAlias<"dmb", (t2DMB 0xf)>, Requires<[IsThumb2, HasDB]>;
 def : InstAlias<"dsb", (t2DSB 0xf)>, Requires<[IsThumb2, HasDB]>;
 def : InstAlias<"isb", (t2ISB 0xf)>, Requires<[IsThumb2, HasDB]>;
 
-// Alias for LDR, LDRB, LDRH without the ".w" optional width specifier.
+// Alias for LDR, LDRB, LDRH, LDRSB, and LDRSH without the ".w" optional
+// width specifier.
 def : t2InstAlias<"ldr${p} $Rt, $addr",
                   (t2LDRi12 GPR:$Rt, t2addrmode_imm12:$addr, pred:$p)>;
 def : t2InstAlias<"ldrb${p} $Rt, $addr",
                   (t2LDRBi12 rGPR:$Rt, t2addrmode_imm12:$addr, pred:$p)>;
 def : t2InstAlias<"ldrh${p} $Rt, $addr",
                   (t2LDRHi12 rGPR:$Rt, t2addrmode_imm12:$addr, pred:$p)>;
+def : t2InstAlias<"ldrsb${p} $Rt, $addr",
+                  (t2LDRSBi12 rGPR:$Rt, t2addrmode_imm12:$addr, pred:$p)>;
+def : t2InstAlias<"ldrsh${p} $Rt, $addr",
+                  (t2LDRSHi12 rGPR:$Rt, t2addrmode_imm12:$addr, pred:$p)>;
+
 def : t2InstAlias<"ldr${p} $Rt, $addr",
                   (t2LDRs GPR:$Rt, t2addrmode_so_reg:$addr, pred:$p)>;
 def : t2InstAlias<"ldrb${p} $Rt, $addr",
                   (t2LDRBs rGPR:$Rt, t2addrmode_so_reg:$addr, pred:$p)>;
 def : t2InstAlias<"ldrh${p} $Rt, $addr",
                   (t2LDRHs rGPR:$Rt, t2addrmode_so_reg:$addr, pred:$p)>;
+def : t2InstAlias<"ldrsb${p} $Rt, $addr",
+                  (t2LDRSBs rGPR:$Rt, t2addrmode_so_reg:$addr, pred:$p)>;
+def : t2InstAlias<"ldrsh${p} $Rt, $addr",
+                  (t2LDRSHs rGPR:$Rt, t2addrmode_so_reg:$addr, pred:$p)>;
