@@ -571,7 +571,8 @@ public:
     case CK_NoOp:
       return C;
 
-    case CK_AnyPointerToObjCPointerCast:
+    case CK_CPointerToObjCPointerCast:
+    case CK_BlockPointerToObjCPointerCast:
     case CK_AnyPointerToBlockPointerCast:
     case CK_LValueBitCast:
     case CK_BitCast:

@@ -3808,16 +3808,26 @@ static CastKind PrepareScalarCast(Sema &S, ExprResult &Src, QualType DestTy) {
   if (S.Context.hasSameUnqualifiedType(SrcTy, DestTy))
     return CK_NoOp;
 
-  switch (SrcTy->getScalarTypeKind()) {
+  switch (Type::ScalarTypeKind SrcKind = SrcTy->getScalarTypeKind()) {
   case Type::STK_MemberPointer:
     llvm_unreachable("member pointer type in C");
 
-  case Type::STK_Pointer:
+  case Type::STK_CPointer:
+  case Type::STK_BlockPointer:
+  case Type::STK_ObjCObjectPointer:
     switch (DestTy->getScalarTypeKind()) {
-    case Type::STK_Pointer:
-      return DestTy->isObjCObjectPointerType() ?
-                CK_AnyPointerToObjCPointerCast :
-                CK_BitCast;
+    case Type::STK_CPointer:
+      return CK_BitCast;
+    case Type::STK_BlockPointer:
+      return (SrcKind == Type::STK_BlockPointer
+                ? CK_BitCast : CK_AnyPointerToBlockPointerCast);
+    case Type::STK_ObjCObjectPointer:
+      if (SrcKind == Type::STK_ObjCObjectPointer)
+        return CK_BitCast;
+      else if (SrcKind == Type::STK_CPointer)
+        return CK_CPointerToObjCPointerCast;
+      else
+        return CK_BlockPointerToObjCPointerCast;
     case Type::STK_Bool:
       return CK_PointerToBoolean;
     case Type::STK_Integral:
@@ -3833,7 +3843,9 @@ static CastKind PrepareScalarCast(Sema &S, ExprResult &Src, QualType DestTy) {
   case Type::STK_Bool: // casting from bool is like casting from an integer
   case Type::STK_Integral:
     switch (DestTy->getScalarTypeKind()) {
-    case Type::STK_Pointer:
+    case Type::STK_CPointer:
+    case Type::STK_ObjCObjectPointer:
+    case Type::STK_BlockPointer:
       if (Src.get()->isNullPointerConstant(S.Context,
                                            Expr::NPC_ValueDependentIsNull))
         return CK_NullToPointer;
@@ -3877,7 +3889,9 @@ static CastKind PrepareScalarCast(Sema &S, ExprResult &Src, QualType DestTy) {
                                 DestTy->getAs<ComplexType>()->getElementType(),
                                 CK_FloatingToIntegral);
       return CK_IntegralRealToComplex;
-    case Type::STK_Pointer:
+    case Type::STK_CPointer:
+    case Type::STK_ObjCObjectPointer:
+    case Type::STK_BlockPointer:
       llvm_unreachable("valid float->pointer cast?");
     case Type::STK_MemberPointer:
       llvm_unreachable("member pointer type in C");
@@ -3904,7 +3918,9 @@ static CastKind PrepareScalarCast(Sema &S, ExprResult &Src, QualType DestTy) {
                                 SrcTy->getAs<ComplexType>()->getElementType(),
                                 CK_FloatingComplexToReal);
       return CK_FloatingToIntegral;
-    case Type::STK_Pointer:
+    case Type::STK_CPointer:
+    case Type::STK_ObjCObjectPointer:
+    case Type::STK_BlockPointer:
       llvm_unreachable("valid complex float->pointer cast?");
     case Type::STK_MemberPointer:
       llvm_unreachable("member pointer type in C");
@@ -3931,7 +3947,9 @@ static CastKind PrepareScalarCast(Sema &S, ExprResult &Src, QualType DestTy) {
                                 SrcTy->getAs<ComplexType>()->getElementType(),
                                 CK_IntegralComplexToReal);
       return CK_IntegralToFloating;
-    case Type::STK_Pointer:
+    case Type::STK_CPointer:
+    case Type::STK_ObjCObjectPointer:
+    case Type::STK_BlockPointer:
       llvm_unreachable("valid complex int->pointer cast?");
     case Type::STK_MemberPointer:
       llvm_unreachable("member pointer type in C");
@@ -3940,7 +3958,6 @@ static CastKind PrepareScalarCast(Sema &S, ExprResult &Src, QualType DestTy) {
   }
 
   llvm_unreachable("Unhandled scalar cast");
-  return CK_BitCast;
 }
 
 /// CheckCastTypes - Check type constraints for casting between types.
@@ -4497,12 +4514,12 @@ static QualType checkConditionalPointerCompatibility(Sema &S, ExprResult &LHS,
   QualType lhptee, rhptee;
 
   // Get the pointee types.
-  if (LHSTy->isBlockPointerType()) {
-    lhptee = LHSTy->getAs<BlockPointerType>()->getPointeeType();
-    rhptee = RHSTy->getAs<BlockPointerType>()->getPointeeType();
+  if (const BlockPointerType *LHSBTy = LHSTy->getAs<BlockPointerType>()) {
+    lhptee = LHSBTy->getPointeeType();
+    rhptee = RHSTy->castAs<BlockPointerType>()->getPointeeType();
   } else {
-    lhptee = LHSTy->getAs<PointerType>()->getPointeeType();
-    rhptee = RHSTy->getAs<PointerType>()->getPointeeType();
+    lhptee = LHSTy->castAs<PointerType>()->getPointeeType();
+    rhptee = RHSTy->castAs<PointerType>()->getPointeeType();
   }
 
   if (!S.Context.typesAreCompatible(lhptee.getUnqualifiedType(),
@@ -4752,23 +4769,23 @@ QualType Sema::FindCompositeObjCPointerType(ExprResult &LHS, ExprResult &RHS,
   // redefinition type if an attempt is made to access its fields.
   if (LHSTy->isObjCClassType() &&
       (Context.hasSameType(RHSTy, Context.getObjCClassRedefinitionType()))) {
-    RHS = ImpCastExprToType(RHS.take(), LHSTy, CK_BitCast);
+    RHS = ImpCastExprToType(RHS.take(), LHSTy, CK_CPointerToObjCPointerCast);
     return LHSTy;
   }
   if (RHSTy->isObjCClassType() &&
       (Context.hasSameType(LHSTy, Context.getObjCClassRedefinitionType()))) {
-    LHS = ImpCastExprToType(LHS.take(), RHSTy, CK_BitCast);
+    LHS = ImpCastExprToType(LHS.take(), RHSTy, CK_CPointerToObjCPointerCast);
     return RHSTy;
   }
   // And the same for struct objc_object* / id
   if (LHSTy->isObjCIdType() &&
       (Context.hasSameType(RHSTy, Context.getObjCIdRedefinitionType()))) {
-    RHS = ImpCastExprToType(RHS.take(), LHSTy, CK_BitCast);
+    RHS = ImpCastExprToType(RHS.take(), LHSTy, CK_CPointerToObjCPointerCast);
     return LHSTy;
   }
   if (RHSTy->isObjCIdType() &&
       (Context.hasSameType(LHSTy, Context.getObjCIdRedefinitionType()))) {
-    LHS = ImpCastExprToType(LHS.take(), RHSTy, CK_BitCast);
+    LHS = ImpCastExprToType(LHS.take(), RHSTy, CK_CPointerToObjCPointerCast);
     return RHSTy;
   }
   // And the same for struct objc_selector* / SEL
@@ -4789,8 +4806,8 @@ QualType Sema::FindCompositeObjCPointerType(ExprResult &LHS, ExprResult &RHS,
       // Two identical object pointer types are always compatible.
       return LHSTy;
     }
-    const ObjCObjectPointerType *LHSOPT = LHSTy->getAs<ObjCObjectPointerType>();
-    const ObjCObjectPointerType *RHSOPT = RHSTy->getAs<ObjCObjectPointerType>();
+    const ObjCObjectPointerType *LHSOPT = LHSTy->castAs<ObjCObjectPointerType>();
+    const ObjCObjectPointerType *RHSOPT = RHSTy->castAs<ObjCObjectPointerType>();
     QualType compositeType = LHSTy;
 
     // If both operands are interfaces and either operand can be
@@ -5356,7 +5373,7 @@ Sema::CheckAssignmentConstraints(QualType LHSType, ExprResult &RHS,
     if (isa<ObjCObjectPointerType>(RHSType)) {
       //  - conversions to void*
       if (LHSPointer->getPointeeType()->isVoidType()) {
-        Kind = CK_AnyPointerToObjCPointerCast;
+        Kind = CK_BitCast;
         return Compatible;
       }
 
@@ -5387,7 +5404,7 @@ Sema::CheckAssignmentConstraints(QualType LHSType, ExprResult &RHS,
   if (isa<BlockPointerType>(LHSType)) {
     // U^ -> T^
     if (RHSType->isBlockPointerType()) {
-      Kind = CK_AnyPointerToBlockPointerCast;
+      Kind = CK_BitCast;
       return checkBlockPointerTypesForAssignment(*this, LHSType, RHSType);
     }
 
@@ -5436,9 +5453,10 @@ Sema::CheckAssignmentConstraints(QualType LHSType, ExprResult &RHS,
     // In general, C pointers are not compatible with ObjC object pointers,
     // with two exceptions:
     if (isa<PointerType>(RHSType)) {
+      Kind = CK_CPointerToObjCPointerCast;
+
       //  - conversions from 'void*'
       if (RHSType->isVoidPointerType()) {
-        Kind = CK_AnyPointerToObjCPointerCast;
         return Compatible;
       }
 
@@ -5446,17 +5464,15 @@ Sema::CheckAssignmentConstraints(QualType LHSType, ExprResult &RHS,
       if (LHSType->isObjCClassType() &&
           Context.hasSameType(RHSType, 
                               Context.getObjCClassRedefinitionType())) {
-        Kind = CK_BitCast;
         return Compatible;
       }
 
-      Kind = CK_AnyPointerToObjCPointerCast;
       return IncompatiblePointer;
     }
 
     // T^ -> A*
     if (RHSType->isBlockPointerType()) {
-      Kind = CK_AnyPointerToObjCPointerCast;
+      Kind = CK_BlockPointerToObjCPointerCast;
       return Compatible;
     }
 
@@ -5553,7 +5569,7 @@ Sema::CheckTransparentUnionArgumentConstraints(QualType ArgType,
       // 1) void pointer
       // 2) null pointer constant
       if (RHSType->isPointerType())
-        if (RHSType->getAs<PointerType>()->getPointeeType()->isVoidType()) {
+        if (RHSType->castAs<PointerType>()->getPointeeType()->isVoidType()) {
           RHS = ImpCastExprToType(RHS.take(), it->getType(), CK_BitCast);
           InitField = *it;
           break;
@@ -6452,9 +6468,9 @@ QualType Sema::CheckCompareOperands(ExprResult &LHS, ExprResult &RHS,
   // when handling null pointer constants. 
   if (LHSType->isPointerType() && RHSType->isPointerType()) { // C99 6.5.8p2
     QualType LCanPointeeTy =
-      Context.getCanonicalType(LHSType->getAs<PointerType>()->getPointeeType());
+      LHSType->castAs<PointerType>()->getPointeeType().getCanonicalType();
     QualType RCanPointeeTy =
-      Context.getCanonicalType(RHSType->getAs<PointerType>()->getPointeeType());
+      RHSType->castAs<PointerType>()->getPointeeType().getCanonicalType();
 
     if (getLangOptions().CPlusPlus) {
       if (LCanPointeeTy == RCanPointeeTy)
@@ -6560,8 +6576,8 @@ QualType Sema::CheckCompareOperands(ExprResult &LHS, ExprResult &RHS,
   // Handle block pointer types.
   if (!IsRelational && LHSType->isBlockPointerType() &&
       RHSType->isBlockPointerType()) {
-    QualType lpointee = LHSType->getAs<BlockPointerType>()->getPointeeType();
-    QualType rpointee = RHSType->getAs<BlockPointerType>()->getPointeeType();
+    QualType lpointee = LHSType->castAs<BlockPointerType>()->getPointeeType();
+    QualType rpointee = RHSType->castAs<BlockPointerType>()->getPointeeType();
 
     if (!LHSIsNull && !RHSIsNull &&
         !Context.typesAreCompatible(lpointee, rpointee)) {
@@ -6587,9 +6603,13 @@ QualType Sema::CheckCompareOperands(ExprResult &LHS, ExprResult &RHS,
           << RHS.get()->getSourceRange();
     }
     if (LHSIsNull && !RHSIsNull)
-      LHS = ImpCastExprToType(LHS.take(), RHSType, CK_BitCast);
+      LHS = ImpCastExprToType(LHS.take(), RHSType,
+                              RHSType->isPointerType() ? CK_BitCast
+                                : CK_AnyPointerToBlockPointerCast);
     else
-      RHS = ImpCastExprToType(RHS.take(), LHSType, CK_BitCast);
+      RHS = ImpCastExprToType(RHS.take(), LHSType,
+                              LHSType->isPointerType() ? CK_BitCast
+                                : CK_AnyPointerToBlockPointerCast);
     return ResultTy;
   }
 
@@ -6607,9 +6627,11 @@ QualType Sema::CheckCompareOperands(ExprResult &LHS, ExprResult &RHS,
                                           /*isError*/false);
       }
       if (LHSIsNull && !RHSIsNull)
-        LHS = ImpCastExprToType(LHS.take(), RHSType, CK_BitCast);
+        LHS = ImpCastExprToType(LHS.take(), RHSType,
+                                RPT ? CK_BitCast :CK_CPointerToObjCPointerCast);
       else
-        RHS = ImpCastExprToType(RHS.take(), LHSType, CK_BitCast);
+        RHS = ImpCastExprToType(RHS.take(), LHSType,
+                                LPT ? CK_BitCast :CK_CPointerToObjCPointerCast);
       return ResultTy;
     }
     if (LHSType->isObjCObjectPointerType() &&

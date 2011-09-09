@@ -1357,7 +1357,7 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
           << Receiver->getSourceRange();
         if (ReceiverType->isPointerType())
           Receiver = ImpCastExprToType(Receiver, Context.getObjCIdType(), 
-                            CK_BitCast).take();
+                            CK_CPointerToObjCPointerCast).take();
         else {
           // TODO: specialized warning on null receivers?
           bool IsNull = Receiver->isNullPointerConstant(Context,
@@ -1594,7 +1594,8 @@ namespace {
         case CK_NoOp:
         case CK_LValueToRValue:
         case CK_BitCast:
-        case CK_AnyPointerToObjCPointerCast:
+        case CK_CPointerToObjCPointerCast:
+        case CK_BlockPointerToObjCPointerCast:
         case CK_AnyPointerToBlockPointerCast:
           return Visit(e->getSubExpr());
         default:
@@ -1836,11 +1837,16 @@ ExprResult Sema::BuildObjCBridgedCast(SourceLocation LParenLoc,
   QualType T = TSInfo->getType();
   QualType FromType = SubExpr->getType();
 
+  CastKind CK;
+
   bool MustConsume = false;
   if (T->isDependentType() || SubExpr->isTypeDependent()) {
     // Okay: we'll build a dependent expression type.
+    CK = CK_Dependent;
   } else if (T->isObjCARCBridgableType() && FromType->isCARCBridgableType()) {
     // Casting CF -> id
+    CK = (T->isBlockPointerType() ? CK_AnyPointerToBlockPointerCast
+                                  : CK_CPointerToObjCPointerCast);
     switch (Kind) {
     case OBC_Bridge:
       break;
@@ -1870,6 +1876,7 @@ ExprResult Sema::BuildObjCBridgedCast(SourceLocation LParenLoc,
     }
   } else if (T->isCARCBridgableType() && FromType->isObjCARCBridgableType()) {
     // Okay: id -> CF
+    CK = CK_BitCast;
     switch (Kind) {
     case OBC_Bridge:
       // Reclaiming a value that's going to be __bridge-casted to CF
@@ -1910,7 +1917,7 @@ ExprResult Sema::BuildObjCBridgedCast(SourceLocation LParenLoc,
     return ExprError();
   }
 
-  Expr *Result = new (Context) ObjCBridgedCastExpr(LParenLoc, Kind, 
+  Expr *Result = new (Context) ObjCBridgedCastExpr(LParenLoc, Kind, CK,
                                                    BridgeKeywordLoc,
                                                    TSInfo, SubExpr);
   

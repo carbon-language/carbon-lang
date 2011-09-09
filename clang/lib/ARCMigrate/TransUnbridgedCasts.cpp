@@ -61,7 +61,7 @@ public:
   }
 
   bool VisitCastExpr(CastExpr *E) {
-    if (E->getCastKind() != CK_AnyPointerToObjCPointerCast
+    if (E->getCastKind() != CK_CPointerToObjCPointerCast
         && E->getCastKind() != CK_BitCast)
       return true;
 

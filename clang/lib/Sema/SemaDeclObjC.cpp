@@ -1767,11 +1767,16 @@ static bool matchTypes(ASTContext &Context, Sema::MethodMatchStrategy strategy,
   if (!left->isScalarType() || !right->isScalarType())
     return tryMatchRecordTypes(Context, strategy, left, right);
 
-  // Make scalars agree in kind, except count bools as chars.
+  // Make scalars agree in kind, except count bools as chars, and group
+  // all non-member pointers together.
   Type::ScalarTypeKind leftSK = left->getScalarTypeKind();
   Type::ScalarTypeKind rightSK = right->getScalarTypeKind();
   if (leftSK == Type::STK_Bool) leftSK = Type::STK_Integral;
   if (rightSK == Type::STK_Bool) rightSK = Type::STK_Integral;
+  if (leftSK == Type::STK_CPointer || leftSK == Type::STK_BlockPointer)
+    leftSK = Type::STK_ObjCObjectPointer;
+  if (rightSK == Type::STK_CPointer || rightSK == Type::STK_BlockPointer)
+    rightSK = Type::STK_ObjCObjectPointer;
 
   // Note that data member pointers and function member pointers don't
   // intermix because of the size differences.

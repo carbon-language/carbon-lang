@@ -1458,7 +1458,9 @@ public:
   Qualifiers::ObjCLifetime getObjCARCImplicitLifetime() const;
 
   enum ScalarTypeKind {
-    STK_Pointer,
+    STK_CPointer,
+    STK_BlockPointer,
+    STK_ObjCObjectPointer,
     STK_MemberPointer,
     STK_Bool,
     STK_Integral,

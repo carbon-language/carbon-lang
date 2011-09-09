@@ -833,14 +833,16 @@ Type::ScalarTypeKind Type::getScalarTypeKind() const {
   const Type *T = CanonicalType.getTypePtr();
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(T)) {
     if (BT->getKind() == BuiltinType::Bool) return STK_Bool;
-    if (BT->getKind() == BuiltinType::NullPtr) return STK_Pointer;
+    if (BT->getKind() == BuiltinType::NullPtr) return STK_CPointer;
     if (BT->isInteger()) return STK_Integral;
     if (BT->isFloatingPoint()) return STK_Floating;
     llvm_unreachable("unknown scalar builtin type");
-  } else if (isa<PointerType>(T) ||
-             isa<BlockPointerType>(T) ||
-             isa<ObjCObjectPointerType>(T)) {
-    return STK_Pointer;
+  } else if (isa<PointerType>(T)) {
+    return STK_CPointer;
+  } else if (isa<BlockPointerType>(T)) {
+    return STK_BlockPointer;
+  } else if (isa<ObjCObjectPointerType>(T)) {
+    return STK_ObjCObjectPointer;
   } else if (isa<MemberPointerType>(T)) {
     return STK_MemberPointer;
   } else if (isa<EnumType>(T)) {
@@ -853,7 +855,6 @@ Type::ScalarTypeKind Type::getScalarTypeKind() const {
   }
 
   llvm_unreachable("unknown scalar type");
-  return STK_Pointer;
 }
 
 /// \brief Determines whether the type is a C++ aggregate type or C

@@ -989,10 +989,10 @@ class ObjCBridgedCastExpr : public ExplicitCastExpr {
   
 public:
   ObjCBridgedCastExpr(SourceLocation LParenLoc, ObjCBridgeCastKind Kind,
-                      SourceLocation BridgeKeywordLoc, TypeSourceInfo *TSInfo,
-                      Expr *Operand)
+                      CastKind CK, SourceLocation BridgeKeywordLoc,
+                      TypeSourceInfo *TSInfo, Expr *Operand)
     : ExplicitCastExpr(ObjCBridgedCastExprClass, TSInfo->getType(), VK_RValue,
-                       CK_BitCast, Operand, 0, TSInfo),
+                       CK, Operand, 0, TSInfo),
       LParenLoc(LParenLoc), BridgeKeywordLoc(BridgeKeywordLoc), Kind(Kind) { }
   
   /// \brief Construct an empty Objective-C bridged cast.

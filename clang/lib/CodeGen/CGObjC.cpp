@@ -1997,7 +1997,8 @@ tryEmitARCRetainScalarExpr(CodeGenFunction &CGF, const Expr *e) {
       // These casts can change the type, so remember that and
       // soldier on.  We only need to remember the outermost such
       // cast, though.
-      case CK_AnyPointerToObjCPointerCast:
+      case CK_CPointerToObjCPointerCast:
+      case CK_BlockPointerToObjCPointerCast:
       case CK_AnyPointerToBlockPointerCast:
       case CK_BitCast:
         if (!resultType)

@@ -2133,8 +2133,8 @@ bool Sema::CheckPointerConversion(Expr *From, QualType ToType,
                         PDiag(diag::warn_impcast_bool_to_null_pointer)
                           << ToType << From->getSourceRange());
 
-  if (const PointerType *FromPtrType = FromType->getAs<PointerType>())
-    if (const PointerType *ToPtrType = ToType->getAs<PointerType>()) {
+  if (const PointerType *ToPtrType = ToType->getAs<PointerType>()) {
+    if (const PointerType *FromPtrType = FromType->getAs<PointerType>()) {
       QualType FromPointeeType = FromPtrType->getPointeeType(),
                ToPointeeType   = ToPtrType->getPointeeType();
 
@@ -2152,16 +2152,23 @@ bool Sema::CheckPointerConversion(Expr *From, QualType ToType,
         Kind = CK_DerivedToBase;
       }
     }
-  if (const ObjCObjectPointerType *FromPtrType =
-        FromType->getAs<ObjCObjectPointerType>()) {
-    if (const ObjCObjectPointerType *ToPtrType =
-          ToType->getAs<ObjCObjectPointerType>()) {
+  } else if (const ObjCObjectPointerType *ToPtrType =
+               ToType->getAs<ObjCObjectPointerType>()) {
+    if (const ObjCObjectPointerType *FromPtrType =
+          FromType->getAs<ObjCObjectPointerType>()) {
       // Objective-C++ conversions are always okay.
       // FIXME: We should have a different class of conversions for the
       // Objective-C++ implicit conversions.
       if (FromPtrType->isObjCBuiltinType() || ToPtrType->isObjCBuiltinType())
         return false;
+    } else if (FromType->isBlockPointerType()) {
+      Kind = CK_BlockPointerToObjCPointerCast;
+    } else {
+      Kind = CK_CPointerToObjCPointerCast;
     }
+  } else if (ToType->isBlockPointerType()) {
+    if (!FromType->isBlockPointerType())
+      Kind = CK_AnyPointerToBlockPointerCast;
   }
 
   // We shouldn't fall into this case unless it's valid for other

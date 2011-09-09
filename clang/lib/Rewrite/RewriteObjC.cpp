@@ -1854,9 +1854,15 @@ Stmt *RewriteObjC::RewriteObjCSynchronizedStmt(ObjCAtSynchronizedStmt *S) {
   
   std::string syncBuf;
   syncBuf += " objc_sync_exit(";
-  Expr *syncExpr = NoTypeInfoCStyleCastExpr(Context, Context->getObjCIdType(),
-                                            CK_BitCast,
-                                            S->getSynchExpr());
+
+  Expr *syncExpr = S->getSynchExpr();
+  CastKind CK = syncExpr->getType()->isObjCObjectPointerType()
+                  ? CK_BitCast :
+                syncExpr->getType()->isBlockPointerType()
+                  ? CK_BlockPointerToObjCPointerCast
+                  : CK_CPointerToObjCPointerCast;
+  syncExpr = NoTypeInfoCStyleCastExpr(Context, Context->getObjCIdType(),
+                                      CK, syncExpr);
   std::string syncExprBufS;
   llvm::raw_string_ostream syncExprBuf(syncExprBufS);
   syncExpr->printPretty(syncExprBuf, *Context, 0,
@@ -2709,7 +2715,7 @@ Stmt *RewriteObjC::RewriteObjCStringLiteral(ObjCStringLiteral *Exp) {
                                            SourceLocation());
   // cast to NSConstantString *
   CastExpr *cast = NoTypeInfoCStyleCastExpr(Context, Exp->getType(),
-                                            CK_BitCast, Unop);
+                                            CK_CPointerToObjCPointerCast, Unop);
   ReplaceStmt(Exp, cast);
   // delete Exp; leak for now, see RewritePropertyOrImplicitSetter() usage for more info.
   return cast;
@@ -2849,7 +2855,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
     // (Class)objc_getClass("CurrentClass")
     CastExpr *ArgExpr = NoTypeInfoCStyleCastExpr(Context,
                                              Context->getObjCClassType(),
-                                             CK_BitCast, Cls);
+                                             CK_CPointerToObjCPointerCast, Cls);
     ClsExprs.clear();
     ClsExprs.push_back(ArgExpr);
     Cls = SynthesizeCallToFunctionDecl(GetSuperClassFunctionDecl,
@@ -3051,19 +3057,41 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
       // Make sure we convert "type (^)(...)" to "type (*)(...)".
       (void)convertBlockPointerToFunctionPointer(type);
       const Expr *SubExpr = ICE->IgnoreParenImpCasts();
-      bool integral = SubExpr->getType()->isIntegralType(*Context);
-      userExpr = NoTypeInfoCStyleCastExpr(Context, type, 
-                                          (integral && type->isBooleanType()) 
-                                            ? CK_IntegralToBoolean : CK_BitCast,
-                                          userExpr);
+      CastKind CK;
+      if (SubExpr->getType()->isIntegralType(*Context) && 
+          type->isBooleanType()) {
+        CK = CK_IntegralToBoolean;
+      } else if (type->isObjCObjectPointerType()) {
+        if (SubExpr->getType()->isBlockPointerType()) {
+          CK = CK_BlockPointerToObjCPointerCast;
+        } else if (SubExpr->getType()->isPointerType()) {
+          CK = CK_CPointerToObjCPointerCast;
+        } else {
+          CK = CK_BitCast;
+        }
+      } else {
+        CK = CK_BitCast;
+      }
+
+      userExpr = NoTypeInfoCStyleCastExpr(Context, type, CK, userExpr);
     }
     // Make id<P...> cast into an 'id' cast.
     else if (CStyleCastExpr *CE = dyn_cast<CStyleCastExpr>(userExpr)) {
       if (CE->getType()->isObjCQualifiedIdType()) {
         while ((CE = dyn_cast<CStyleCastExpr>(userExpr)))
           userExpr = CE->getSubExpr();
+        CastKind CK;
+        if (userExpr->getType()->isIntegralType(*Context)) {
+          CK = CK_IntegralToPointer;
+        } else if (userExpr->getType()->isBlockPointerType()) {
+          CK = CK_BlockPointerToObjCPointerCast;
+        } else if (userExpr->getType()->isPointerType()) {
+          CK = CK_CPointerToObjCPointerCast;
+        } else {
+          CK = CK_BitCast;
+        }
         userExpr = NoTypeInfoCStyleCastExpr(Context, Context->getObjCIdType(),
-                                            CK_BitCast, userExpr);
+                                            CK, userExpr);
       }
     }
     MsgExprs.push_back(userExpr);

@@ -2327,68 +2327,7 @@ public:
 private:
   Stmt *Op;
 
-  void CheckCastConsistency() const {
-#ifndef NDEBUG
-    switch (getCastKind()) {
-    case CK_DerivedToBase:
-    case CK_UncheckedDerivedToBase:
-    case CK_DerivedToBaseMemberPointer:
-    case CK_BaseToDerived:
-    case CK_BaseToDerivedMemberPointer:
-      assert(!path_empty() && "Cast kind should have a base path!");
-      break;
-
-    // These should not have an inheritance path.
-    case CK_BitCast:
-    case CK_Dynamic:
-    case CK_ToUnion:
-    case CK_ArrayToPointerDecay:
-    case CK_FunctionToPointerDecay:
-    case CK_NullToMemberPointer:
-    case CK_NullToPointer:
-    case CK_ConstructorConversion:
-    case CK_IntegralToPointer:
-    case CK_PointerToIntegral:
-    case CK_ToVoid:
-    case CK_VectorSplat:
-    case CK_IntegralCast:
-    case CK_IntegralToFloating:
-    case CK_FloatingToIntegral:
-    case CK_FloatingCast:
-    case CK_AnyPointerToObjCPointerCast:
-    case CK_AnyPointerToBlockPointerCast:
-    case CK_ObjCObjectLValueCast:
-    case CK_FloatingRealToComplex:
-    case CK_FloatingComplexToReal:
-    case CK_FloatingComplexCast:
-    case CK_FloatingComplexToIntegralComplex:
-    case CK_IntegralRealToComplex:
-    case CK_IntegralComplexToReal:
-    case CK_IntegralComplexCast:
-    case CK_IntegralComplexToFloatingComplex:
-    case CK_ObjCProduceObject:
-    case CK_ObjCConsumeObject:
-    case CK_ObjCReclaimReturnedObject:
-      assert(!getType()->isBooleanType() && "unheralded conversion to bool");
-      // fallthrough to check for null base path
-
-    case CK_Dependent:
-    case CK_LValueToRValue:
-    case CK_GetObjCProperty:
-    case CK_NoOp:
-    case CK_PointerToBoolean:
-    case CK_IntegralToBoolean:
-    case CK_FloatingToBoolean:
-    case CK_MemberPointerToBoolean:
-    case CK_FloatingComplexToBoolean:
-    case CK_IntegralComplexToBoolean:
-    case CK_LValueBitCast:            // -> bool&
-    case CK_UserDefinedConversion:    // operator bool()
-      assert(path_empty() && "Cast kind should not have a base path!");
-      break;
-    }
-#endif
-  }
+  void CheckCastConsistency() const;
 
   const CXXBaseSpecifier * const *path_buffer() const {
     return const_cast<CastExpr*>(this)->path_buffer();
@@ -2419,7 +2358,9 @@ protected:
     assert(kind != CK_Invalid && "creating cast with invalid cast kind");
     CastExprBits.Kind = kind;
     setBasePathSize(BasePathSize);
+#ifndef NDEBUG
     CheckCastConsistency();
+#endif
   }
 
   /// \brief Construct an empty cast.

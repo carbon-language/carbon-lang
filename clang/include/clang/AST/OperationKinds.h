@@ -31,9 +31,12 @@ enum CastKind {
   /// to be reinterpreted as a bit pattern of another type.  Generally
   /// the operands must have equivalent size and unrelated types.
   ///
-  /// The pointer conversion char* -> int* is a bitcast.  Many other
-  /// pointer conversions which are "physically" bitcasts are given
-  /// special cast kinds.
+  /// The pointer conversion char* -> int* is a bitcast.  A conversion
+  /// from any pointer type to a C pointer type is a bitcast unless
+  /// it's actually BaseToDerived or DerivedToBase.  A conversion to a
+  /// block pointer or ObjC pointer type is a bitcast only if the
+  /// operand has the same type kind; otherwise, it's one of the
+  /// specialized casts below.
   ///
   /// Vector coercions are bitcasts.
   CK_BitCast,
@@ -186,12 +189,16 @@ enum CastKind {
   ///    (float) ld
   CK_FloatingCast,
     
-  /// CK_AnyPointerToObjCPointerCast - Casting any other pointer kind
-  /// to an Objective-C pointer.
-  CK_AnyPointerToObjCPointerCast,
+  /// CK_CPointerToObjCPointerCast - Casting a C pointer kind to an
+  /// Objective-C pointer.
+  CK_CPointerToObjCPointerCast,
 
-  /// CK_AnyPointerToBlockPointerCast - Casting any other pointer kind
-  /// to a block pointer.
+  /// CK_BlockPointerToObjCPointerCast - Casting a block pointer to an
+  /// ObjC pointer.
+  CK_BlockPointerToObjCPointerCast,
+
+  /// CK_AnyPointerToBlockPointerCast - Casting any non-block pointer
+  /// to a block pointer.  Block-to-block casts are bitcasts.
   CK_AnyPointerToBlockPointerCast,
 
   /// \brief Converting between two Objective-C object types, which

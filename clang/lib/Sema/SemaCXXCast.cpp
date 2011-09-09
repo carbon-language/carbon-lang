@@ -871,7 +871,7 @@ static TryCastResult TryStaticCast(Sema &Self, ExprResult &SrcExpr,
       else if (DestType->isObjCObjectPointerType()) {
         // allow both c-style cast and static_cast of objective-c pointers as 
         // they are pervasive.
-        Kind = CK_AnyPointerToObjCPointerCast;
+        Kind = CK_CPointerToObjCPointerCast;
         return TC_Success;
       }
       else if (CStyle && DestType->isBlockPointerType()) {
@@ -1630,16 +1630,34 @@ static TryCastResult TryReinterpretCast(Sema &Self, ExprResult &SrcExpr,
       (DestType->isBlockPointerType() && SrcType->isObjCObjectPointerType()))
     return TC_NotApplicable;
 
+  if (IsLValueCast) {
+    Kind = CK_LValueBitCast;
+  } else if (DestType->isObjCObjectPointerType()) {
+    if (SrcType->isObjCObjectPointerType()) {
+      Kind = CK_BitCast;
+    } else if (SrcType->isBlockPointerType()) {
+      Kind = CK_BlockPointerToObjCPointerCast;
+    } else {
+      Kind = CK_CPointerToObjCPointerCast;
+    }
+  } else if (DestType->isBlockPointerType()) {
+    if (!SrcType->isBlockPointerType()) {
+      Kind = CK_AnyPointerToBlockPointerCast;
+    } else {
+      Kind = CK_BitCast;
+    }
+  } else {
+    Kind = CK_BitCast;
+  }
+
   // Any pointer can be cast to an Objective-C pointer type with a C-style
   // cast.
   if (CStyle && DestType->isObjCObjectPointerType()) {
-    Kind = CK_AnyPointerToObjCPointerCast;
     return TC_Success;
   }
     
   // Not casting away constness, so the only remaining check is for compatible
   // pointer categories.
-  Kind = IsLValueCast? CK_LValueBitCast : CK_BitCast;
 
   if (SrcType->isFunctionPointerType()) {
     if (DestType->isFunctionPointerType()) {
