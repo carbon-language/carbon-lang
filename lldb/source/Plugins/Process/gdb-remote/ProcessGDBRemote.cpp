@@ -1894,9 +1894,9 @@ GetGDBStoppointType (WatchpointLocation *wp)
     assert(watch_read || watch_write);
     if (watch_read && watch_write)
         return eWatchpointReadWrite;
-    if (watch_read)
+    else if (watch_read)
         return eWatchpointRead;
-    if (watch_write)
+    else // Must be watch_write, then.
         return eWatchpointWrite;
 }
 
