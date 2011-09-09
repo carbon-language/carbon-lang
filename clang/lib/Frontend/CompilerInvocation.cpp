@@ -665,6 +665,8 @@ static void LangOptsToArgs(const LangOptions &Opts,
     Res.push_back("-pthread");
   if (Opts.Blocks)
     Res.push_back("-fblocks");
+  if (Opts.BlocksRuntimeOptional)
+    Res.push_back("-fblocks-runtime-optional");
   if (Opts.EmitAllDecls)
     Res.push_back("-femit-all-decls");
   if (Opts.MathErrno)
@@ -1667,6 +1669,7 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
 
   Opts.RTTI = !Args.hasArg(OPT_fno_rtti);
   Opts.Blocks = Args.hasArg(OPT_fblocks);
+  Opts.BlocksRuntimeOptional = Args.hasArg(OPT_fblocks_runtime_optional);
   Opts.CharIsSigned = !Args.hasArg(OPT_fno_signed_char);
   Opts.ShortWChar = Args.hasArg(OPT_fshort_wchar);
   Opts.ShortEnums = Args.hasArg(OPT_fshort_enums);

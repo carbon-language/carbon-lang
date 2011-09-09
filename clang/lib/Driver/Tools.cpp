@@ -1718,6 +1718,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
          Args.hasArg(options::OPT_fobjc_nonfragile_abi) &&
          !Args.hasArg(options::OPT_fno_blocks))) {
     CmdArgs.push_back("-fblocks");
+
+    if (!Args.hasArg(options::OPT_fgnu_runtime) && 
+        !getToolChain().hasBlocksRuntime())
+      CmdArgs.push_back("-fblocks-runtime-optional");
   }
 
   // -faccess-control is default.

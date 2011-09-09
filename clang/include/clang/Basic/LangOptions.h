@@ -139,6 +139,7 @@ public:
 
   unsigned MRTD : 1;            // -mrtd calling convention
   unsigned DelayedTemplateParsing : 1;  // Delayed template parsing
+  unsigned BlocksRuntimeOptional : 1; // The blocks runtime is not guaranteed
 
 private:
   // We declare multibit enums as unsigned because MSVC insists on making enums
@@ -198,7 +199,7 @@ public:
 
     ThreadsafeStatics = 1;
     POSIXThreads = 0;
-    Blocks = 0;
+    Blocks = BlocksRuntimeOptional = 0;
     EmitAllDecls = 0;
     MathErrno = 1;
     SignedOverflowBehavior = SOB_Undefined;

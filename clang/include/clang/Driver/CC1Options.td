@@ -450,7 +450,9 @@ def fno_dollars_in_identifiers : Flag<"-fno-dollars-in-identifiers">,
 def femit_all_decls : Flag<"-femit-all-decls">,
   HelpText<"Emit all declarations, even if unused">;
 def fblocks : Flag<"-fblocks">,
-  HelpText<"enable the 'blocks' language feature">;
+  HelpText<"Enable the 'blocks' language feature">;
+def fblocks_runtime_optional : Flag<"-fblocks-runtime-optional">,
+  HelpText<"Weakly link in the blocks runtime">;
 def fheinous_gnu_extensions : Flag<"-fheinous-gnu-extensions">;
 def fexceptions : Flag<"-fexceptions">,
   HelpText<"Enable support for exception handling">;

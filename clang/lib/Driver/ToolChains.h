@@ -187,6 +187,7 @@ public:
   virtual bool HasNativeLLVMSupport() const;
 
   virtual void configureObjCRuntime(ObjCRuntime &runtime) const;
+  virtual bool hasBlocksRuntime() const;
 
   virtual DerivedArgList *TranslateArgs(const DerivedArgList &Args,
                                         const char *BoundArch) const;

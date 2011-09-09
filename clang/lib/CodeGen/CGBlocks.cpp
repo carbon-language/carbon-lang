@@ -1809,3 +1809,58 @@ void CodeGenFunction::enterByrefCleanup(const AutoVarEmission &emission) {
 
   EHStack.pushCleanup<CallBlockRelease>(NormalAndEHCleanup, emission.Address);
 }
+
+/// Adjust the declaration of something from the blocks API.
+static void configureBlocksRuntimeObject(CodeGenModule &CGM,
+                                         llvm::Constant *C) {
+  if (!CGM.getLangOptions().BlocksRuntimeOptional) return;
+
+  llvm::GlobalValue *GV = cast<llvm::GlobalValue>(C->stripPointerCasts());
+  if (GV->isDeclaration() &&
+      GV->getLinkage() == llvm::GlobalValue::ExternalLinkage)
+    GV->setLinkage(llvm::GlobalValue::ExternalWeakLinkage);
+}
+
+llvm::Constant *CodeGenModule::getBlockObjectDispose() {
+  if (BlockObjectDispose)
+    return BlockObjectDispose;
+
+  llvm::Type *args[] = { Int8PtrTy, Int32Ty };
+  llvm::FunctionType *fty
+    = llvm::FunctionType::get(VoidTy, args, false);
+  BlockObjectDispose = CreateRuntimeFunction(fty, "_Block_object_dispose");
+  configureBlocksRuntimeObject(*this, BlockObjectDispose);
+  return BlockObjectDispose;
+}
+
+llvm::Constant *CodeGenModule::getBlockObjectAssign() {
+  if (BlockObjectAssign)
+    return BlockObjectAssign;
+
+  llvm::Type *args[] = { Int8PtrTy, Int8PtrTy, Int32Ty };
+  llvm::FunctionType *fty
+    = llvm::FunctionType::get(VoidTy, args, false);
+  BlockObjectAssign = CreateRuntimeFunction(fty, "_Block_object_assign");
+  configureBlocksRuntimeObject(*this, BlockObjectAssign);
+  return BlockObjectAssign;
+}
+
+llvm::Constant *CodeGenModule::getNSConcreteGlobalBlock() {
+  if (NSConcreteGlobalBlock)
+    return NSConcreteGlobalBlock;
+
+  NSConcreteGlobalBlock = GetOrCreateLLVMGlobal("_NSConcreteGlobalBlock",
+                                                Int8PtrTy->getPointerTo(), 0);
+  configureBlocksRuntimeObject(*this, NSConcreteGlobalBlock);
+  return NSConcreteGlobalBlock;
+}
+
+llvm::Constant *CodeGenModule::getNSConcreteStackBlock() {
+  if (NSConcreteStackBlock)
+    return NSConcreteStackBlock;
+
+  NSConcreteStackBlock = GetOrCreateLLVMGlobal("_NSConcreteStackBlock",
+                                               Int8PtrTy->getPointerTo(), 0);
+  configureBlocksRuntimeObject(*this, NSConcreteStackBlock);
+  return NSConcreteStackBlock;  
+}

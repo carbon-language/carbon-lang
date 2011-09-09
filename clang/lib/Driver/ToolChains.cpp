@@ -109,6 +109,14 @@ void Darwin::configureObjCRuntime(ObjCRuntime &runtime) const {
     runtime.HasTerminate = false;
 }
 
+/// Darwin provides a blocks runtime starting in MacOS X 10.6 and iOS 3.2.
+bool Darwin::hasBlocksRuntime() const {
+  if (isTargetIPhoneOS())
+    return !isIPhoneOSVersionLT(3, 2);
+  else
+    return !isMacosxVersionLT(10, 6);
+}
+
 // FIXME: Can we tablegen this?
 static const char *GetArmArchForMArch(StringRef Value) {
   if (Value == "armv6k")
