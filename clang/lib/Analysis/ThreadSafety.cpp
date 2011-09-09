@@ -15,7 +15,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Analysis/Analyses/ThreadSafety.h"
-#include "clang/Sema/SemaInternal.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/SourceLocation.h"
 #include "clang/AST/DeclCXX.h"
