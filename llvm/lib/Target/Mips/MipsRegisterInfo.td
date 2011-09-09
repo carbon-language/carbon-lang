@@ -182,9 +182,7 @@ def AFGR64 : RegisterClass<"Mips", [f64], 64, (add
   // Not preserved across procedure calls
   D2, D3, D4, D5, D8, D9,
   // Callee save
-  D10, D11, D12, D13, D14,
-  // Reserved
-  D15)> {
+  D10, D11, D12, D13, D14, D15)> {
   let SubRegClasses = [(FGR32 sub_fpeven, sub_fpodd)];
 }
 
