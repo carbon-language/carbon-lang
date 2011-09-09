@@ -42,20 +42,4 @@ MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &CPU,
   // Is the target system Linux ?
   if (TT.find("linux") == std::string::npos)
     IsLinux = false;
-
-  // When only the target triple is specified and is
-  // a allegrex target, set the features. We also match
-  // big and little endian allegrex cores (dont really
-  // know if a big one exists)
-  if (TT.find("mipsallegrex") != std::string::npos ||
-      TT.find("psp") != std::string::npos) {
-    MipsABI = EABI;
-    IsSingleFloat = true;
-    MipsArchVersion = Mips2;
-    HasVFPU = true; // Enables Allegrex Vector FPU (not supported yet)
-    HasSEInReg = true;
-    HasBitCount = true;
-    HasSwap = true;
-    HasCondMov = true;
-  }
 }

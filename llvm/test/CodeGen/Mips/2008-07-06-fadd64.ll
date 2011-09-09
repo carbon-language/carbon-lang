@@ -1,4 +1,6 @@
-; RUN: llc < %s -march=mips | grep __adddf3
+; DISABLED: llc < %s -march=mips | grep __adddf3
+; RUN: false
+; XFAIL: *
 
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:32-i16:16:32-i32:32:32-i64:32:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64"
 target triple = "mipsallegrexel-unknown-psp-elf"

@@ -82,13 +82,6 @@ def : Proc<"r6000", [FeatureMips2]>;
 def : Proc<"mips32r1", [FeatureMips32]>;
 def : Proc<"4ke", [FeatureMips32r2]>;
 
-// Allegrex is a 32bit subset of r4000, both for integer and fp registers,
-// but much more similar to Mips2 than Mips3. It also contains some of
-// Mips32/Mips32r2 instructions and a custom vector fpu processor.
-def : Proc<"allegrex", [FeatureMips2, FeatureSingleFloat, FeatureEABI,
-      FeatureVFPU, FeatureSEInReg, FeatureCondMov, FeatureMulDivAdd,
-      FeatureMinMax, FeatureSwap, FeatureBitCount]>;
-
 def MipsAsmWriter : AsmWriter {
   string AsmWriterClassName  = "InstPrinter";
   bit isMCAsmWriter = 1;
