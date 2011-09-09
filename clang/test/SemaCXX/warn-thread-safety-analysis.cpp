@@ -345,12 +345,12 @@ void gb_fun_3() {
 
 void gb_bad_0() {
   sls_guard_var = 1; // \
-    // expected-warning{{accessing variable 'sls_guard_var' requires some lock}}
+    // expected-warning{{writing variable 'sls_guard_var' requires lock on 'any mutex' to be held exclusively}}
 }
 
 void gb_bad_1() {
   int x = sls_guard_var; // \
-    // expected-warning{{accessing variable 'sls_guard_var' requires some lock}}
+    // expected-warning{{reading variable 'sls_guard_var' requires lock on 'any mutex' to be held}}
 }
 
 void gb_bad_2() {
@@ -365,12 +365,12 @@ void gb_bad_3() {
 
 void gb_bad_4() {
   *pgb_gvar = 1; // \
-    // expected-warning {{accessing the value pointed to by 'pgb_gvar' requires some lock}}
+    // expected-warning {{writing the value pointed to by 'pgb_gvar' requires lock on 'any mutex' to be held exclusively}}
 }
 
 void gb_bad_5() {
   int x = *pgb_gvar; // \
-    // expected-warning {{accessing the value pointed to by 'pgb_gvar' requires some lock}}
+    // expected-warning {{reading the value pointed to by 'pgb_gvar' requires lock on 'any mutex' to be held}}
 }
 
 void gb_bad_6() {
@@ -391,13 +391,13 @@ void gb_bad_8() {
 
 void gb_bad_9() {
   sls_guard_var++; // \
-    // expected-warning{{accessing variable 'sls_guard_var' requires some lock}}
+    // expected-warning{{writing variable 'sls_guard_var' requires lock on 'any mutex' to be held exclusively}}
   sls_guard_var--; // \
-    // expected-warning{{accessing variable 'sls_guard_var' requires some lock}}
+    // expected-warning{{writing variable 'sls_guard_var' requires lock on 'any mutex' to be held exclusively}}
   ++sls_guard_var; // \
-    // expected-warning{{accessing variable 'sls_guard_var' requires some lock}}
-  --sls_guard_var; // \
-    // expected-warning{{accessing variable 'sls_guard_var' requires some lock}}
+    // expected-warning{{writing variable 'sls_guard_var' requires lock on 'any mutex' to be held exclusively}}
+  --sls_guard_var;// \
+    // expected-warning{{writing variable 'sls_guard_var' requires lock on 'any mutex' to be held exclusively}}
 }
 
 //-----------------------------------------------//

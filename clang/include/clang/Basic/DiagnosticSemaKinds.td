@@ -1414,15 +1414,9 @@ def warn_variable_requires_lock : Warning<
   "%select{reading|writing}2 variable '%0' requires lock on '%1' to be "
   "%select{held|held exclusively}2">,
   InGroup<ThreadSafety>, DefaultIgnore;
-def warn_variable_requires_any_lock : Warning<
-  "accessing variable '%0' requires some lock">,
-  InGroup<ThreadSafety>, DefaultIgnore;
 def warn_var_deref_requires_lock : Warning<
   "%select{reading|writing}2 the value pointed to by '%0' requires lock on '%1'"
   " to be %select{held|held exclusively}2">,
-  InGroup<ThreadSafety>, DefaultIgnore;
-def warn_var_deref_requires_any_lock : Warning<
-  "accessing the value pointed to by '%0' requires some lock">,
   InGroup<ThreadSafety>, DefaultIgnore;
 def warn_fun_requires_lock : Warning<
   "calling function '%0' requires %select{shared|exclusive}2 lock on '%1'">,

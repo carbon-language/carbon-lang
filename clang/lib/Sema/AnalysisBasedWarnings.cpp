@@ -732,20 +732,9 @@ class ThreadSafetyReporter : public clang::thread_safety::ThreadSafetyHandler {
 
   void handleNoMutexHeld(const NamedDecl *D, ProtectedOperationKind POK,
                          AccessKind AK, SourceLocation Loc) {
-    unsigned DiagID;
-    switch (POK) {
-      case POK_VarAccess:
-        DiagID = diag::warn_variable_requires_any_lock;
-        break;
-      case POK_VarDereference:
-        DiagID = diag::warn_var_deref_requires_any_lock;
-        break;
-      default:
-        return;
-        break;
-    }
-    PartialDiagnostic Warning = S.PDiag(DiagID) << D->getName();
-    Warnings.push_back(DelayedDiag(Loc, Warning));
+    // FIXME: It would be nice if this case printed without single quotes around
+    // the phrase 'any mutex'
+    handleMutexNotHeld(D, POK, "any mutex", getLockKindFromAccessKind(AK), Loc);
   }
 
   void handleMutexNotHeld(const NamedDecl *D, ProtectedOperationKind POK,
