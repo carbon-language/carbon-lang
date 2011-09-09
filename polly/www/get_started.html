@@ -35,6 +35,7 @@ commit cd1939ed06617d00159e8e51b72a804b467e98b4.
 <pre>
 git clone git://repo.or.cz/cloog.git
 cd cloog
+git checkout cloog-0.16.3
 ./get_submodules.sh
 cd isl
 git remote update
@@ -48,7 +49,9 @@ make install
 
 <h4> Update an earlier installation</h4>
 <pre>
-git pull
+cd cloog
+git remote update
+git checkout cloog-0.16.3
 cd isl
 git remote update
 git checkout cd1939ed06617d00159e8e51b72a804b467e98b4
