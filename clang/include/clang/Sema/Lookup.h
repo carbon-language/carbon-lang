@@ -274,7 +274,7 @@ public:
     // So long as this declaration is not module-private or was parsed as
     // part of this translation unit (i.e., in the module), we're allowed to
     // find it.
-    if (!D->isModulePrivate() || D->getPCHLevel() == 0)
+    if (!D->isModulePrivate() || !D->isFromASTFile())
       return true;
 
     // FIXME: We should be allowed to refer to a module-private name from 

@@ -2208,12 +2208,12 @@ void ASTWriter::WriteSelectors(Sema &SemaRef) {
         bool changed = false;
         for (ObjCMethodList *M = &Data.Instance; !changed && M && M->Method;
              M = M->Next) {
-          if (M->Method->getPCHLevel() == 0)
+          if (!M->Method->isFromASTFile())
             changed = true;
         }
         for (ObjCMethodList *M = &Data.Factory; !changed && M && M->Method;
              M = M->Next) {
-          if (M->Method->getPCHLevel() == 0)
+          if (!M->Method->isFromASTFile())
             changed = true;
         }
         if (!changed)
@@ -2941,7 +2941,7 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
          TD = SemaRef.LocallyScopedExternalDecls.begin(),
          TDEnd = SemaRef.LocallyScopedExternalDecls.end();
        TD != TDEnd; ++TD) {
-    if (TD->second->getPCHLevel() == 0)
+    if (!TD->second->isFromASTFile())
       AddDeclRef(TD->second, LocallyScopedExternalDecls);
   }
   
@@ -3055,7 +3055,7 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   for (DeclContext::decl_iterator I = TU->noload_decls_begin(),
                                   E = TU->noload_decls_end();
        I != E; ++I) {
-    if ((*I)->getPCHLevel() == 0)
+    if (!(*I)->isFromASTFile())
       NewGlobalDecls.push_back(std::make_pair((*I)->getKind(), GetDeclRef(*I)));
     else if ((*I)->isChangedSinceDeserialization())
       (void)GetDeclRef(*I); // Make sure it's written, but don't record it.
@@ -3992,7 +3992,7 @@ void ASTWriter::CompletedTagDefinition(const TagDecl *D) {
   assert(D->isDefinition());
   if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(D)) {
     // We are interested when a PCH decl is modified.
-    if (RD->getPCHLevel() > 0) {
+    if (RD->isFromASTFile()) {
       // A forward reference was mutated into a definition. Rewrite it.
       // FIXME: This happens during template instantiation, should we
       // have created a new definition decl instead ?
@@ -4006,7 +4006,7 @@ void ASTWriter::CompletedTagDefinition(const TagDecl *D) {
         continue;
 
       // We are interested when a PCH decl is modified.
-      if (Redecl->getPCHLevel() > 0) {
+      if (Redecl->isFromASTFile()) {
         UpdateRecord &Record = DeclUpdates[Redecl];
         Record.push_back(UPD_CXX_SET_DEFINITIONDATA);
         assert(Redecl->DefinitionData);
@@ -4021,7 +4021,7 @@ void ASTWriter::AddedVisibleDecl(const DeclContext *DC, const Decl *D) {
   if (isa<TranslationUnitDecl>(DC) || isa<NamespaceDecl>(DC))
     return;
 
-  if (!(D->getPCHLevel() == 0 && cast<Decl>(DC)->getPCHLevel() > 0))
+  if (!(!D->isFromASTFile() && cast<Decl>(DC)->isFromASTFile()))
     return; // Not a source decl added to a DeclContext from PCH.
 
   AddUpdatedDeclContext(DC);
@@ -4029,7 +4029,7 @@ void ASTWriter::AddedVisibleDecl(const DeclContext *DC, const Decl *D) {
 
 void ASTWriter::AddedCXXImplicitMember(const CXXRecordDecl *RD, const Decl *D) {
   assert(D->isImplicit());
-  if (!(D->getPCHLevel() == 0 && RD->getPCHLevel() > 0))
+  if (!(!D->isFromASTFile() && RD->isFromASTFile()))
     return; // Not a source member added to a class from PCH.
   if (!isa<CXXMethodDecl>(D))
     return; // We are interested in lazily declared implicit methods.
@@ -4045,7 +4045,7 @@ void ASTWriter::AddedCXXTemplateSpecialization(const ClassTemplateDecl *TD,
                                      const ClassTemplateSpecializationDecl *D) {
   // The specializations set is kept in the canonical template.
   TD = TD->getCanonicalDecl();
-  if (!(D->getPCHLevel() == 0 && TD->getPCHLevel() > 0))
+  if (!(!D->isFromASTFile() && TD->isFromASTFile()))
     return; // Not a source specialization added to a template from PCH.
 
   UpdateRecord &Record = DeclUpdates[TD];
@@ -4057,7 +4057,7 @@ void ASTWriter::AddedCXXTemplateSpecialization(const FunctionTemplateDecl *TD,
                                                const FunctionDecl *D) {
   // The specializations set is kept in the canonical template.
   TD = TD->getCanonicalDecl();
-  if (!(D->getPCHLevel() == 0 && TD->getPCHLevel() > 0))
+  if (!(!D->isFromASTFile() && TD->isFromASTFile()))
     return; // Not a source specialization added to a template from PCH.
 
   UpdateRecord &Record = DeclUpdates[TD];
@@ -4066,7 +4066,7 @@ void ASTWriter::AddedCXXTemplateSpecialization(const FunctionTemplateDecl *TD,
 }
 
 void ASTWriter::CompletedImplicitDefinition(const FunctionDecl *D) {
-  if (D->getPCHLevel() == 0)
+  if (!D->isFromASTFile())
     return; // Declaration not imported from PCH.
 
   // Implicit decl from a PCH was defined.
@@ -4075,7 +4075,7 @@ void ASTWriter::CompletedImplicitDefinition(const FunctionDecl *D) {
 }
 
 void ASTWriter::StaticDataMemberInstantiated(const VarDecl *D) {
-  if (D->getPCHLevel() == 0)
+  if (!D->isFromASTFile())
     return;
 
   // Since the actual instantiation is delayed, this really means that we need
@@ -4088,10 +4088,10 @@ void ASTWriter::StaticDataMemberInstantiated(const VarDecl *D) {
 
 void ASTWriter::AddedObjCCategoryToInterface(const ObjCCategoryDecl *CatD,
                                              const ObjCInterfaceDecl *IFD) {
-  if (IFD->getPCHLevel() == 0)
+  if (!IFD->isFromASTFile())
     return; // Declaration not imported from PCH.
   if (CatD->getNextClassCategory() &&
-      CatD->getNextClassCategory()->getPCHLevel() == 0)
+      !CatD->getNextClassCategory()->isFromASTFile())
     return; // We already recorded that the tail of a category chain should be
             // attached to an interface.
 

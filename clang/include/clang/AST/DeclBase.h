@@ -511,6 +511,10 @@ public:
   /// loaded from a PCH file the AST file depends on, and so on.
   unsigned getPCHLevel() const { return PCHLevel; }
 
+  /// \brief Determine whether this declaration came from an AST file (such as
+  /// a precompiled header or module) rather than having been parsed.
+  bool isFromASTFile() const { return PCHLevel > 0; }
+  
   /// \brief The maximum PCH level that any declaration may have.
   static const unsigned MaxPCHLevel = 3;
 
