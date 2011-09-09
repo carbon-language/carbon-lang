@@ -5,7 +5,9 @@
 
 #if defined(MODULE_LEFT)
 
-__module_private__ struct HiddenStruct {
+__module_private__ struct HiddenStruct;
+
+struct HiddenStruct {
 };
 
 
@@ -15,15 +17,23 @@ template<typename T>
 __module_private__ void f1(T*);
 
 template<typename T>
-__module_private__ class vector {
+void f1(T*);
+
+template<typename T>
+__module_private__ class vector;
+
+template<typename T>
+class vector {
 };
 
 vector<float> vec_float;
 
 typedef __module_private__ int Integer;
+typedef int Integer;
 
 #elif defined(MODULE_RIGHT)
 __module_private__ double &f0(double);
+double &f0(double);
 
 __module_private__ int hidden_var;
 

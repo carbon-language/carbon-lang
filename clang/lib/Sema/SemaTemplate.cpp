@@ -945,7 +945,7 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
         // definition, as part of error recovery?
         return true;
       }
-    }
+    }    
   } else if (PrevDecl && PrevDecl->isTemplateParameter()) {
     // Maybe we will complain about the shadowed template parameter.
     DiagnoseTemplateParameterShadow(NameLoc, PrevDecl);
@@ -999,8 +999,10 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
                                 DeclarationName(Name), TemplateParams,
                                 NewClass, PrevClassTemplate);
   NewClass->setDescribedClassTemplate(NewTemplate);
-
-  if (IsModulePrivate)
+  
+  if (PrevClassTemplate && PrevClassTemplate->isModulePrivate()) {
+    NewTemplate->setModulePrivate();
+  } else if (IsModulePrivate)
     NewTemplate->setModulePrivate();
   
   // Build the type for the class template declaration now.

@@ -1394,6 +1394,10 @@ void Sema::MergeTypedefNameDecl(TypedefNameDecl *New, LookupResult &OldDecls) {
   if (TypedefNameDecl *Typedef = dyn_cast<TypedefNameDecl>(Old))
     New->setPreviousDeclaration(Typedef);
 
+  // __module_private__ is propagated to later declarations.
+  if (Old->isModulePrivate())
+    New->setModulePrivate();
+    
   if (getLangOptions().Microsoft)
     return;
 
@@ -1959,6 +1963,10 @@ bool Sema::MergeCompatibleFunctionDecls(FunctionDecl *New, FunctionDecl *Old) {
   if (Old->isPure())
     New->setPure();
 
+  // __module_private__ is propagated to later declarations.
+  if (Old->isModulePrivate())
+    New->setModulePrivate();
+  
   // Merge attributes from the parameters.  These can mismatch with K&R
   // declarations.
   if (New->getNumParams() == Old->getNumParams())
@@ -2140,6 +2148,10 @@ void Sema::MergeVarDecl(VarDecl *New, LookupResult &Previous) {
     Diag(Old->getLocation(), diag::note_previous_definition);
     return New->setInvalidDecl();
   }
+
+  // __module_private__ is propagated to later declarations.
+  if (Old->isModulePrivate())
+    New->setModulePrivate();
 
   // Variables with external linkage are analyzed in FinalizeDeclaratorGroup.
 
@@ -5242,6 +5254,10 @@ void Sema::CheckFunctionDeclaration(Scope *S, FunctionDecl *NewFD,
           NewTemplateDecl->setMemberSpecialization();
           assert(OldTemplateDecl->isMemberSpecialization());
         }
+        
+        if (OldTemplateDecl->isModulePrivate())
+          NewTemplateDecl->setModulePrivate();
+        
       } else {
         if (isa<CXXMethodDecl>(NewFD)) // Set access for out-of-line definitions
           NewFD->setAccess(OldDecl->getAccess());
@@ -7726,7 +7742,9 @@ CreateNewDecl:
     AddMsStructLayoutForRecord(RD);
   }
 
-  if (IsModulePrivate)
+  if (PrevDecl && PrevDecl->isModulePrivate())
+    New->setModulePrivate();
+  else if (IsModulePrivate)
     New->setModulePrivate();
 
   // If this is a specialization of a member class (of a class template),
