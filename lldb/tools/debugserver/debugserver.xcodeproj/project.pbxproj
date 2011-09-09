@@ -130,6 +130,7 @@
 		4971AE7113D10F4F00649E37 /* HasAVX.s */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; path = HasAVX.s; sourceTree = "<group>"; };
 		49F530111331519C008956F6 /* MachRegisterStatesI386.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MachRegisterStatesI386.h; sourceTree = "<group>"; };
 		49F5301213316D7F008956F6 /* MachRegisterStatesX86_64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MachRegisterStatesX86_64.h; sourceTree = "<group>"; };
+		9457ECF61419864100DFE7D8 /* stack_logging.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = stack_logging.h; sourceTree = "<group>"; };
 		AF67ABFF0D34604D0022D128 /* PseudoTerminal.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PseudoTerminal.cpp; sourceTree = "<group>"; };
 		AF67AC000D34604D0022D128 /* PseudoTerminal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PseudoTerminal.h; sourceTree = "<group>"; };
 		EF88788B0D9C7558001831DA /* com.apple.debugserver.applist.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = com.apple.debugserver.applist.plist; sourceTree = "<group>"; };
@@ -300,6 +301,7 @@
 				26C637F80C71334A0024798E /* MachVMRegion.cpp */,
 				26B67DE00EE9BC30006C8BC0 /* MachTask.h */,
 				26B67DE10EE9BC30006C8BC0 /* MachTask.cpp */,
+				9457ECF61419864100DFE7D8 /* stack_logging.h */,
 			);
 			path = MacOSX;
 			sourceTree = "<group>";
