@@ -904,7 +904,7 @@ ExternalASTSource::SetNoExternalVisibleDeclsForName(const DeclContext *DC,
 DeclContext::lookup_result
 ExternalASTSource::SetExternalVisibleDeclsForName(const DeclContext *DC,
                                                   DeclarationName Name,
-                                    SmallVectorImpl<NamedDecl*> &Decls) {
+                                                  ArrayRef<NamedDecl*> Decls) {
   ASTContext &Context = DC->getParentASTContext();;
 
   StoredDeclsMap *Map;
@@ -912,11 +912,12 @@ ExternalASTSource::SetExternalVisibleDeclsForName(const DeclContext *DC,
     Map = DC->CreateStoredDeclsMap(Context);
 
   StoredDeclsList &List = (*Map)[Name];
-  for (unsigned I = 0, N = Decls.size(); I != N; ++I) {
+  for (ArrayRef<NamedDecl*>::iterator
+         I = Decls.begin(), E = Decls.end(); I != E; ++I) {
     if (List.isNull())
-      List.setOnlyValue(Decls[I]);
+      List.setOnlyValue(*I);
     else
-      List.AddSubsequentDecl(Decls[I]);
+      List.AddSubsequentDecl(*I);
   }
 
   return List.getLookupResult();

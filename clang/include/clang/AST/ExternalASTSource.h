@@ -216,7 +216,7 @@ protected:
   static DeclContextLookupResult
   SetExternalVisibleDeclsForName(const DeclContext *DC,
                                  DeclarationName Name,
-                                 SmallVectorImpl<NamedDecl*> &Decls);
+                                 ArrayRef<NamedDecl*> Decls);
 
   static DeclContextLookupResult
   SetNoExternalVisibleDeclsForName(const DeclContext *DC,
