@@ -412,12 +412,12 @@ ARMBaseInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
          "ARM branch conditions have two components!");
 
   if (FBB == 0) {
-    if (Cond.empty()) // Unconditional branch?
+    if (Cond.empty()) { // Unconditional branch?
       if (isThumb)
         BuildMI(&MBB, DL, get(BOpc)).addMBB(TBB).addImm(ARMCC::AL).addReg(0);
       else
         BuildMI(&MBB, DL, get(BOpc)).addMBB(TBB);
-    else
+    } else
       BuildMI(&MBB, DL, get(BccOpc)).addMBB(TBB)
         .addImm(Cond[0].getImm()).addReg(Cond[1].getReg());
     return 1;
