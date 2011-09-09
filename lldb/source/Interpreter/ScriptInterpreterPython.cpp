@@ -1304,7 +1304,7 @@ ScriptInterpreterPython::GenerateScriptAliasFunction (StringList &user_input, St
     
     // Create the function name & definition string.
     
-    sstr.Printf ("def %s (debugger, args, dict):", auto_generated_function_name.c_str());
+    sstr.Printf ("def %s (debugger, args, result, dict):", auto_generated_function_name.c_str());
     auto_generated_function.AppendString (sstr.GetData());
     
     // Pre-pend code for setting up the session dictionary.
