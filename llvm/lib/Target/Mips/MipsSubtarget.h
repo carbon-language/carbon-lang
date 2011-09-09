@@ -28,7 +28,7 @@ class MipsSubtarget : public MipsGenSubtargetInfo {
 
 public:
   enum MipsABIEnum {
-    O32, O64, N32, N64, EABI
+    O32, N32, N64, EABI
   };
 
 protected:

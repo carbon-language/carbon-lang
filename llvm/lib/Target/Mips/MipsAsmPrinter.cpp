@@ -209,7 +209,6 @@ void MipsAsmPrinter::emitFrameDirective() {
 const char *MipsAsmPrinter::getCurrentABIString() const {
   switch (Subtarget->getTargetABI()) {
   case MipsSubtarget::O32:  return "abi32";
-  case MipsSubtarget::O64:  return "abiO64";
   case MipsSubtarget::N32:  return "abiN32";
   case MipsSubtarget::N64:  return "abi64";
   case MipsSubtarget::EABI: return "eabi32"; // TODO: handle eabi64
