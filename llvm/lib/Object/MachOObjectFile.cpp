@@ -104,14 +104,6 @@ MachOObjectFile::MachOObjectFile(MemoryBuffer *Object, MachOObject *MOO,
   uint32_t LoadCommandCount = MachOObj->getHeader().NumLoadCommands;
   while (DRI.d.a < LoadCommandCount) {
     Sections.push_back(DRI);
-    uint64_t Addr;
-    uint64_t Size;
-    StringRef Name;
-    getSectionAddress(DRI, Addr);
-    getSectionSize(DRI, Size);
-    getSectionName(DRI, Name);
-    InMemoryStruct<macho::Section> Sect;
-    getSection(DRI, Sect);
     DRI.d.b++;
     moveToNextSection(DRI);
   }
