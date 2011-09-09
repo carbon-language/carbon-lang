@@ -13,6 +13,7 @@ add_clang_library(clangAnalysis
   PseudoConstantAnalysis.cpp
   ReachableCode.cpp
   ScanfFormatString.cpp
+  ThreadSafety.cpp
   UninitializedValues.cpp
   )
 
