@@ -9,7 +9,6 @@
 
 #ifndef MIPSMCINSTLOWER_H
 #define MIPSMCINSTLOWER_H
-#include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/Support/Compiler.h"
 
@@ -35,9 +34,6 @@ public:
   MipsMCInstLower(Mangler *mang, const MachineFunction &MF,
                   MipsAsmPrinter &asmprinter);  
   void Lower(const MachineInstr *MI, MCInst &OutMI) const;
-  void LowerMips1F64LoadStore(const MachineInstr *MI, unsigned Opc,
-                              SmallVector<MCInst, 4>& MCInsts,
-                              bool isLittle, const unsigned *SubReg) const;
 private:
   MCOperand LowerSymbolOperand(const MachineOperand &MO,
                                MachineOperandType MOTy, unsigned Offset) const;

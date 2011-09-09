@@ -1,6 +1,9 @@
-; RUN: llc < %s -march=mips -relocation-model=static -mcpu=mips1 | FileCheck %s
-; RUN: llc < %s -march=mips -relocation-model=static -regalloc=basic -mcpu=mips1 | FileCheck %s
+; DISABLED: llc < %s -march=mips -relocation-model=static | FileCheck %s
+; DISABLED: llc < %s -march=mips -relocation-model=static -regalloc=basic | FileCheck %s
+; RUN: false
++; XFAIL: *
 ; Fix PR7473
+
 
 define i32 @main() nounwind readnone {
 entry:

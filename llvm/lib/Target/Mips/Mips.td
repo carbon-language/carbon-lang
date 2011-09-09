@@ -54,10 +54,6 @@ def FeatureSwap        : SubtargetFeature<"swap", "HasSwap", "true",
                                 "Enable 'byte/half swap' instructions.">;
 def FeatureBitCount    : SubtargetFeature<"bitcount", "HasBitCount", "true",
                                 "Enable 'count leading bits' instructions.">;
-def FeatureMips1       : SubtargetFeature<"mips1", "MipsArchVersion", "Mips1",
-                                "Mips1 ISA Support">;
-def FeatureMips2       : SubtargetFeature<"mips2", "MipsArchVersion", "Mips2",
-                                "Mips2 ISA Support">;
 def FeatureMips32      : SubtargetFeature<"mips32", "MipsArchVersion", "Mips32",
                                 "Mips32 ISA Support",
                                 [FeatureCondMov, FeatureBitCount]>;
@@ -71,13 +67,6 @@ def FeatureMips32r2    : SubtargetFeature<"mips32r2", "MipsArchVersion",
 
 class Proc<string Name, list<SubtargetFeature> Features>
  : Processor<Name, MipsGenericItineraries, Features>;
-
-def : Proc<"mips1", [FeatureMips1]>;
-def : Proc<"r2000", [FeatureMips1]>;
-def : Proc<"r3000", [FeatureMips1]>;
-
-def : Proc<"mips2", [FeatureMips2]>;
-def : Proc<"r6000", [FeatureMips2]>;
 
 def : Proc<"mips32r1", [FeatureMips32]>;
 def : Proc<"4ke", [FeatureMips32r2]>;

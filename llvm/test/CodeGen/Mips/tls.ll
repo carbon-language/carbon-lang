@@ -1,5 +1,5 @@
-; RUN: llc -march=mipsel -mcpu=mips2 < %s | FileCheck %s -check-prefix=PIC
-; RUN: llc -march=mipsel -mcpu=mips2 -relocation-model=static < %s \
+; RUN: llc -march=mipsel < %s | FileCheck %s -check-prefix=PIC
+; RUN: llc -march=mipsel -relocation-model=static < %s \
 ; RUN:                             | FileCheck %s -check-prefix=STATIC
 
 

@@ -1,5 +1,4 @@
 ; RUN: llc  < %s -march=mipsel -mcpu=4ke | FileCheck %s -check-prefix=CHECK-MIPS32R2
-; RUN: llc  < %s -march=mipsel -mcpu=mips1 | FileCheck %s -check-prefix=CHECK-MIPS1
 
 @g1 = external global i32
 
@@ -9,10 +8,6 @@ entry:
 ; CHECK-MIPS32R2: movt
 ; CHECK-MIPS32R2: c.olt.s
 ; CHECK-MIPS32R2: movt
-; CHECK-MIPS1: c.olt.s
-; CHECK-MIPS1: bc1t
-; CHECK-MIPS1: c.olt.s
-; CHECK-MIPS1: bc1t
   %cmp = fcmp olt float %f0, %f1
   %conv = zext i1 %cmp to i32
   %tmp2 = load i32* @g1, align 4

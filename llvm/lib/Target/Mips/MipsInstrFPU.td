@@ -58,7 +58,6 @@ let PrintMethod = "printFCCOperand" in
 def In32BitMode      : Predicate<"!Subtarget.isFP64bit()">;
 def IsSingleFloat    : Predicate<"Subtarget.isSingleFloat()">;
 def IsNotSingleFloat : Predicate<"!Subtarget.isSingleFloat()">;
-def IsNotMipsI       : Predicate<"!Subtarget.isMips1()">;
 
 //===----------------------------------------------------------------------===//
 // Instruction Class Templates
@@ -254,7 +253,7 @@ def MIPS_FCOND_LE   : PatLeaf<(i32 14)>;
 def MIPS_FCOND_NGT  : PatLeaf<(i32 15)>;
 
 /// Floating Point Compare
-let hasDelaySlot = 1, Defs=[FCR31] in {
+let Defs=[FCR31] in {
   def FCMP_S32 : FCC<0x0, (outs), (ins FGR32:$fs, FGR32:$ft, condcode:$cc),
                      "c.$cc.s\t$fs, $ft",
                      [(MipsFPCmp FGR32:$fs, FGR32:$ft, imm:$cc)]>;

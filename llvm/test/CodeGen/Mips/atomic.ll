@@ -1,4 +1,4 @@
-; RUN: llc -march=mipsel -mcpu=mips2 < %s | FileCheck %s
+; RUN: llc -march=mipsel < %s | FileCheck %s
 
 
 declare i32 @llvm.atomic.load.add.i32.p0i32(i32* nocapture, i32) nounwind

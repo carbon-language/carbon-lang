@@ -60,9 +60,7 @@ runOnMachineBasicBlock(MachineBasicBlock &MBB)
   bool Changed = false;
   for (MachineBasicBlock::iterator I = MBB.begin(); I != MBB.end(); ++I) {
     const MCInstrDesc& MCid = I->getDesc();
-    if (MCid.hasDelaySlot() &&
-        (TM.getSubtarget<MipsSubtarget>().isMips1() ||
-         MCid.isCall() || MCid.isBranch() || MCid.isReturn())) {
+    if (MCid.hasDelaySlot()) {
       MachineBasicBlock::iterator J = I;
       ++J;
       BuildMI(MBB, J, I->getDebugLoc(), TII->get(Mips::NOP));

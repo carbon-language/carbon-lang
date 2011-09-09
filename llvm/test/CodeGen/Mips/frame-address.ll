@@ -1,4 +1,4 @@
-; RUN: llc -march=mipsel -mcpu=mips2 < %s | FileCheck %s
+; RUN: llc -march=mipsel < %s | FileCheck %s
 
 declare i8* @llvm.frameaddress(i32) nounwind readnone
 

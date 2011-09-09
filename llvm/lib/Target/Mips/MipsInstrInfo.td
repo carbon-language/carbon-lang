@@ -273,7 +273,7 @@ class LoadUpper<bits<6> op, string instr_asm>:
       [], IIAlu>;
 
 // Memory Load/Store
-let canFoldAsLoad = 1, hasDelaySlot = 1 in
+let canFoldAsLoad = 1 in
 class LoadM<bits<6> op, string instr_asm, PatFrag OpNode>:
   FI<op, (outs CPURegs:$dst), (ins mem:$addr),
      !strconcat(instr_asm, "\t$dst, $addr"),
@@ -571,7 +571,7 @@ def SYNC : MipsInst<(outs), (ins i32imm:$stype), "sync $stype",
 }
 
 /// Load-linked, Store-conditional
-let mayLoad = 1, hasDelaySlot = 1 in
+let mayLoad = 1 in
   def LL    : FI<0x30, (outs CPURegs:$dst), (ins mem:$addr),
               "ll\t$dst, $addr", [], IILoad>;
 let mayStore = 1, Constraints = "$src = $dst" in
