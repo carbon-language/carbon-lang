@@ -1289,7 +1289,6 @@ bool ASTReader::ReadBlockAbbrevs(llvm::BitstreamCursor &Cursor,
 }
 
 void ASTReader::ReadMacroRecord(Module &F, uint64_t Offset) {
-  assert(PP && "Forgot to set Preprocessor ?");
   llvm::BitstreamCursor &Stream = F.MacroCursor;
 
   // Keep track of where we are in the stream, then jump back there
@@ -1346,7 +1345,7 @@ void ASTReader::ReadMacroRecord(Module &F, uint64_t Offset) {
       SourceLocation Loc = ReadSourceLocation(F, Record[1]);
       bool isUsed = Record[2];
 
-      MacroInfo *MI = PP->AllocateMacroInfo(Loc);
+      MacroInfo *MI = PP.AllocateMacroInfo(Loc);
       MI->setIsUsed(isUsed);
       MI->setIsFromAST();
 
@@ -1367,19 +1366,19 @@ void ASTReader::ReadMacroRecord(Module &F, uint64_t Offset) {
         if (isC99VarArgs) MI->setIsC99Varargs();
         if (isGNUVarArgs) MI->setIsGNUVarargs();
         MI->setArgumentList(MacroArgs.data(), MacroArgs.size(),
-                            PP->getPreprocessorAllocator());
+                            PP.getPreprocessorAllocator());
       }
 
       // Finally, install the macro.
-      PP->setMacroInfo(II, MI);
+      PP.setMacroInfo(II, MI);
 
       // Remember that we saw this macro last so that we add the tokens that
       // form its body to it.
       Macro = MI;
 
-      if (NextIndex + 1 == Record.size() && PP->getPreprocessingRecord()) {
+      if (NextIndex + 1 == Record.size() && PP.getPreprocessingRecord()) {
         // We have a macro definition. Load it now.
-        PP->getPreprocessingRecord()->RegisterMacroDefinition(Macro,
+        PP.getPreprocessingRecord()->RegisterMacroDefinition(Macro,
               getLocalMacroDefinition(F, Record[NextIndex]));
       }
 
@@ -1410,7 +1409,6 @@ void ASTReader::ReadMacroRecord(Module &F, uint64_t Offset) {
 }
 
 PreprocessedEntity *ASTReader::LoadPreprocessedEntity(Module &F) {
-  assert(PP && "Forgot to set Preprocessor ?");
   unsigned Code = F.PreprocessorDetailCursor.ReadCode();
   switch (Code) {
   case llvm::bitc::END_BLOCK:
@@ -1428,13 +1426,13 @@ PreprocessedEntity *ASTReader::LoadPreprocessedEntity(Module &F) {
     break;
   }
 
-  if (!PP->getPreprocessingRecord()) {
+  if (!PP.getPreprocessingRecord()) {
     Error("no preprocessing record");
     return 0;
   }
   
   // Read the record.
-  PreprocessingRecord &PPRec = *PP->getPreprocessingRecord();
+  PreprocessingRecord &PPRec = *PP.getPreprocessingRecord();
   const char *BlobStart = 0;
   unsigned BlobLen = 0;
   RecordData Record;
@@ -1500,7 +1498,7 @@ PreprocessedEntity *ASTReader::LoadPreprocessedEntity(Module &F) {
     
     const char *FullFileNameStart = BlobStart + Record[3];
     const FileEntry *File
-      = PP->getFileManager().getFile(StringRef(FullFileNameStart,
+      = PP.getFileManager().getFile(StringRef(FullFileNameStart,
                                                BlobLen - Record[3]));
     
     // FIXME: Stable encoding
@@ -1791,8 +1789,8 @@ ASTReader::ReadASTBlock(Module &F) {
 
       case PREPROCESSOR_BLOCK_ID:
         F.MacroCursor = Stream;
-        if (PP)
-          PP->setExternalSource(this);
+        if (!PP.getExternalSource())
+          PP.setExternalSource(this);
 
         if (Stream.SkipBlock() ||
             ReadBlockAbbrevs(F.MacroCursor, PREPROCESSOR_BLOCK_ID)) {
@@ -1812,6 +1810,11 @@ ASTReader::ReadASTBlock(Module &F) {
         }
         F.PreprocessorDetailStartOffset
           = F.PreprocessorDetailCursor.GetCurrentBitNo();
+          
+        if (!PP.getPreprocessingRecord())
+          PP.createPreprocessingRecord(true);
+        if (!PP.getPreprocessingRecord()->getExternalSource())
+          PP.getPreprocessingRecord()->SetExternalSource(*this);
         break;
         
       case SOURCE_MANAGER_BLOCK_ID:
@@ -1981,10 +1984,8 @@ ASTReader::ReadASTBlock(Module &F) {
                        (const unsigned char *)F.IdentifierTableData + Record[0],
                        (const unsigned char *)F.IdentifierTableData,
                        ASTIdentifierLookupTrait(*this, F));
-        if (PP) {
-          PP->getIdentifierTable().setExternalIdentifierLookup(this);
-          PP->getHeaderSearchInfo().SetExternalLookup(this);
-        }
+        
+        PP.getIdentifierTable().setExternalIdentifierLookup(this);
       }
       break;
 
@@ -2324,20 +2325,13 @@ ASTReader::ReadASTBlock(Module &F) {
       unsigned LocalBaseMacroID = Record[3];
       
       unsigned StartingID;
-      if (PP) {
-        if (!PP->getPreprocessingRecord())
-          PP->createPreprocessingRecord(true);
-        if (!PP->getPreprocessingRecord()->getExternalSource())
-          PP->getPreprocessingRecord()->SetExternalSource(*this);
-        StartingID 
-          = PP->getPreprocessingRecord()
-              ->allocateLoadedEntities(F.NumPreallocatedPreprocessingEntities);
-      } else {
-        // FIXME: We'll eventually want to kill this path, since it assumes
-        // a particular allocation strategy in the preprocessing record.
-        StartingID = getTotalNumPreprocessedEntities() 
-                   - F.NumPreallocatedPreprocessingEntities;
-      }
+      if (!PP.getPreprocessingRecord())
+        PP.createPreprocessingRecord(true);
+      if (!PP.getPreprocessingRecord()->getExternalSource())
+        PP.getPreprocessingRecord()->SetExternalSource(*this);
+      StartingID 
+        = PP.getPreprocessingRecord()
+            ->allocateLoadedEntities(F.NumPreallocatedPreprocessingEntities);
       F.BaseMacroDefinitionID = getTotalNumMacroDefinitions();
       F.BasePreprocessedEntityID = StartingID;
 
@@ -2452,10 +2446,12 @@ ASTReader::ReadASTBlock(Module &F) {
                    (const unsigned char *)F.HeaderFileInfoTableData + Record[0],
                    (const unsigned char *)F.HeaderFileInfoTableData,
                    HeaderFileInfoTrait(*this, F, 
-                                       PP? &PP->getHeaderSearchInfo() : 0,
+                                       &PP.getHeaderSearchInfo(),
                                        BlobStart + Record[2]));
-        if (PP)
-          PP->getHeaderSearchInfo().SetExternalSource(this);
+        
+        PP.getHeaderSearchInfo().SetExternalSource(this);
+        if (!PP.getHeaderSearchInfo().getExternalLookup())
+          PP.getHeaderSearchInfo().SetExternalLookup(this);
       }
       break;
     }
@@ -2602,34 +2598,32 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
   if (!DisableValidation && Type != MK_Module && CheckPredefinesBuffers())
     return IgnorePCH;
 
-  if (PP) {
-    // Initialization of keywords and pragmas occurs before the
-    // AST file is read, so there may be some identifiers that were
-    // loaded into the IdentifierTable before we intercepted the
-    // creation of identifiers. Iterate through the list of known
-    // identifiers and determine whether we have to establish
-    // preprocessor definitions or top-level identifier declaration
-    // chains for those identifiers.
-    //
-    // We copy the IdentifierInfo pointers to a small vector first,
-    // since de-serializing declarations or macro definitions can add
-    // new entries into the identifier table, invalidating the
-    // iterators.
-    //
-    // FIXME: We need a lazier way to load this information, e.g., by marking
-    // the identifier data as 'dirty', so that it will be looked up in the
-    // AST file(s) if it is uttered in the source. This could save us some
-    // module load time.
-    SmallVector<IdentifierInfo *, 128> Identifiers;
-    for (IdentifierTable::iterator Id = PP->getIdentifierTable().begin(),
-                                IdEnd = PP->getIdentifierTable().end();
-         Id != IdEnd; ++Id)
-      Identifiers.push_back(Id->second);
-    
-    for (unsigned I = 0, N = Identifiers.size(); I != N; ++I) {
-      IdentifierLookupVisitor Visitor(Identifiers[I]->getName());
-      ModuleMgr.visit(IdentifierLookupVisitor::visit, &Visitor);
-    }
+  // Initialization of keywords and pragmas occurs before the
+  // AST file is read, so there may be some identifiers that were
+  // loaded into the IdentifierTable before we intercepted the
+  // creation of identifiers. Iterate through the list of known
+  // identifiers and determine whether we have to establish
+  // preprocessor definitions or top-level identifier declaration
+  // chains for those identifiers.
+  //
+  // We copy the IdentifierInfo pointers to a small vector first,
+  // since de-serializing declarations or macro definitions can add
+  // new entries into the identifier table, invalidating the
+  // iterators.
+  //
+  // FIXME: We need a lazier way to load this information, e.g., by marking
+  // the identifier data as 'dirty', so that it will be looked up in the
+  // AST file(s) if it is uttered in the source. This could save us some
+  // module load time.
+  SmallVector<IdentifierInfo *, 128> Identifiers;
+  for (IdentifierTable::iterator Id = PP.getIdentifierTable().begin(),
+                              IdEnd = PP.getIdentifierTable().end();
+       Id != IdEnd; ++Id)
+    Identifiers.push_back(Id->second);
+  
+  for (unsigned I = 0, N = Identifiers.size(); I != N; ++I) {
+    IdentifierLookupVisitor Visitor(Identifiers[I]->getName());
+    ModuleMgr.visit(IdentifierLookupVisitor::visit, &Visitor);
   }
 
   InitializeContext();
@@ -2779,25 +2773,7 @@ ASTReader::ASTReadResult ASTReader::ReadASTCore(StringRef FileName,
   return Success;
 }
 
-void ASTReader::setPreprocessor(Preprocessor &pp) {
-  PP = &pp;
-  
-  if (unsigned N = getTotalNumPreprocessedEntities()) {
-    if (!PP->getPreprocessingRecord())
-      PP->createPreprocessingRecord(true);
-    PP->getPreprocessingRecord()->SetExternalSource(*this);
-    PP->getPreprocessingRecord()->allocateLoadedEntities(N);
-  }
-  
-  PP->getHeaderSearchInfo().SetExternalLookup(this);
-  PP->getHeaderSearchInfo().SetExternalSource(this);
-}
-
-void ASTReader::InitializeContext() {
-  assert(PP && "Forgot to set Preprocessor ?");
-  PP->getIdentifierTable().setExternalIdentifierLookup(this);
-  PP->setExternalSource(this);
-  
+void ASTReader::InitializeContext() {  
   // If there's a listener, notify them that we "read" the translation unit.
   if (DeserializationListener)
     DeserializationListener->DeclRead(PREDEF_DECL_TRANSLATION_UNIT_ID, 
@@ -4838,7 +4814,6 @@ IdentifierInfo *ASTReader::DecodeIdentifierInfo(IdentifierID ID) {
     return 0;
   }
 
-  assert(PP && "Forgot to set Preprocessor ?");
   ID -= 1;
   if (!IdentifiersLoaded[ID]) {
     GlobalIdentifierMapType::iterator I = GlobalIdentifierMap.find(ID + 1);
@@ -4856,7 +4831,7 @@ IdentifierInfo *ASTReader::DecodeIdentifierInfo(IdentifierID ID) {
     unsigned StrLen = (((unsigned) StrLenPtr[0])
                        | (((unsigned) StrLenPtr[1]) << 8)) - 1;
     IdentifiersLoaded[ID]
-      = &PP->getIdentifierTable().get(StringRef(Str, StrLen));
+      = &PP.getIdentifierTable().get(StringRef(Str, StrLen));
     if (DeserializationListener)
       DeserializationListener->IdentifierRead(ID + 1, IdentifiersLoaded[ID]);
   }
@@ -5440,8 +5415,7 @@ DiagnosticBuilder ASTReader::Diag(SourceLocation Loc, unsigned DiagID) {
 /// \brief Retrieve the identifier table associated with the
 /// preprocessor.
 IdentifierTable &ASTReader::getIdentifierTable() {
-  assert(PP && "Forgot to set Preprocessor ?");
-  return PP->getIdentifierTable();
+  return PP.getIdentifierTable();
 }
 
 /// \brief Record that the given ID maps to the given switch-case
@@ -5496,7 +5470,7 @@ ASTReader::ASTReader(Preprocessor &PP, ASTContext &Context,
                      bool DisableStatCache)
   : Listener(new PCHValidator(PP, *this)), DeserializationListener(0),
     SourceMgr(PP.getSourceManager()), FileMgr(PP.getFileManager()),
-    Diags(PP.getDiagnostics()), SemaObj(0), PP(&PP), Context(Context),
+    Diags(PP.getDiagnostics()), SemaObj(0), PP(PP), Context(Context),
     Consumer(0), ModuleMgr(FileMgr.getFileSystemOptions()),
     RelocatablePCH(false), isysroot(isysroot),
     DisableValidation(DisableValidation),
