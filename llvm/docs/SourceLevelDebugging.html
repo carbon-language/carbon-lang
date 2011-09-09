@@ -324,6 +324,10 @@ height="369">
   i1,        ;; True if this is optimized.
   metadata,  ;; Flags
   i32        ;; Runtime version
+  metadata   ;; List of enums types
+  metadata   ;; List of retained types
+  metadata   ;; List of subprograms
+  metadata   ;; List of global variables
 }
 </pre>
 </div>
@@ -337,7 +341,8 @@ height="369">
 <p>Compile unit descriptors provide the root context for objects declared in a
    specific compilation unit. File descriptors are defined using this context.
    These descriptors are collected by a named metadata 
-   <tt>!llvm.dbg.cu</tt>.
+   <tt>!llvm.dbg.cu</tt>. Compile unit descriptor keeps track of subprograms,
+   global variables and type information.
 
 </div>
 
