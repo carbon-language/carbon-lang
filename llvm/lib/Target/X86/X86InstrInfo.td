@@ -802,30 +802,30 @@ def BSR64rm  : RI<0xBD, MRMSrcMem, (outs GR64:$dst), (ins i64mem:$src),
 
 // These uses the DF flag in the EFLAGS register to inc or dec EDI and ESI
 let Defs = [EDI,ESI], Uses = [EDI,ESI,EFLAGS] in {
-def MOVSB : I<0xA4, RawFrm, (outs), (ins), "{movsb}", []>;
-def MOVSW : I<0xA5, RawFrm, (outs), (ins), "{movsw}", []>, OpSize;
-def MOVSD : I<0xA5, RawFrm, (outs), (ins), "{movsl|movsd}", []>;
+def MOVSB : I<0xA4, RawFrm, (outs), (ins), "movsb", []>;
+def MOVSW : I<0xA5, RawFrm, (outs), (ins), "movsw", []>, OpSize;
+def MOVSD : I<0xA5, RawFrm, (outs), (ins), "movs{l|d}", []>;
 def MOVSQ : RI<0xA5, RawFrm, (outs), (ins), "movsq", []>;
 }
 
 // These uses the DF flag in the EFLAGS register to inc or dec EDI and ESI
 let Defs = [EDI], Uses = [AL,EDI,EFLAGS] in
-def STOSB : I<0xAA, RawFrm, (outs), (ins), "{stosb}", []>;
+def STOSB : I<0xAA, RawFrm, (outs), (ins), "stosb", []>;
 let Defs = [EDI], Uses = [AX,EDI,EFLAGS] in
-def STOSW : I<0xAB, RawFrm, (outs), (ins), "{stosw}", []>, OpSize;
+def STOSW : I<0xAB, RawFrm, (outs), (ins), "stosw", []>, OpSize;
 let Defs = [EDI], Uses = [EAX,EDI,EFLAGS] in
-def STOSD : I<0xAB, RawFrm, (outs), (ins), "{stosl|stosd}", []>;
+def STOSD : I<0xAB, RawFrm, (outs), (ins), "stos{l|d}", []>;
 let Defs = [RCX,RDI], Uses = [RAX,RCX,RDI,EFLAGS] in
 def STOSQ : RI<0xAB, RawFrm, (outs), (ins), "stosq", []>;
 
-def SCAS8 : I<0xAE, RawFrm, (outs), (ins), "scas{b}", []>;
-def SCAS16 : I<0xAF, RawFrm, (outs), (ins), "scas{w}", []>, OpSize;
-def SCAS32 : I<0xAF, RawFrm, (outs), (ins), "scas{l}", []>;
+def SCAS8 : I<0xAE, RawFrm, (outs), (ins), "scasb", []>;
+def SCAS16 : I<0xAF, RawFrm, (outs), (ins), "scasw", []>, OpSize;
+def SCAS32 : I<0xAF, RawFrm, (outs), (ins), "scas{l|d}", []>;
 def SCAS64 : RI<0xAF, RawFrm, (outs), (ins), "scasq", []>;
 
-def CMPS8 : I<0xA6, RawFrm, (outs), (ins), "cmps{b}", []>;
-def CMPS16 : I<0xA7, RawFrm, (outs), (ins), "cmps{w}", []>, OpSize;
-def CMPS32 : I<0xA7, RawFrm, (outs), (ins), "cmps{l}", []>;
+def CMPS8 : I<0xA6, RawFrm, (outs), (ins), "cmpsb", []>;
+def CMPS16 : I<0xA7, RawFrm, (outs), (ins), "cmpsw", []>, OpSize;
+def CMPS32 : I<0xA7, RawFrm, (outs), (ins), "cmps{l|d}", []>;
 def CMPS64 : RI<0xA7, RawFrm, (outs), (ins), "cmpsq", []>;
 
 
