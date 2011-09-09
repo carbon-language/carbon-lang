@@ -7941,7 +7941,7 @@ bool Sema::VerifyBitField(SourceLocation FieldLoc, IdentifierInfo *FieldName,
 /// ActOnField - Each field of a C struct/union is passed into this in order
 /// to create a FieldDecl object for it.
 Decl *Sema::ActOnField(Scope *S, Decl *TagD, SourceLocation DeclStart,
-                       Declarator &D, ExprTy *BitfieldWidth) {
+                       Declarator &D, Expr *BitfieldWidth) {
   FieldDecl *Res = HandleField(S, cast_or_null<RecordDecl>(TagD),
                                DeclStart, D, static_cast<Expr*>(BitfieldWidth),
                                /*HasInit=*/false, AS_public);
@@ -8397,7 +8397,7 @@ TranslateIvarVisibility(tok::ObjCKeywordKind ivarVisibility) {
 /// in order to create an IvarDecl object for it.
 Decl *Sema::ActOnIvar(Scope *S,
                                 SourceLocation DeclStart,
-                                Declarator &D, ExprTy *BitfieldWidth,
+                                Declarator &D, Expr *BitfieldWidth,
                                 tok::ObjCKeywordKind Visibility) {
 
   IdentifierInfo *II = D.getIdentifier();
@@ -9081,7 +9081,7 @@ EnumConstantDecl *Sema::CheckEnumConstant(EnumDecl *Enum,
 Decl *Sema::ActOnEnumConstant(Scope *S, Decl *theEnumDecl, Decl *lastEnumConst,
                               SourceLocation IdLoc, IdentifierInfo *Id,
                               AttributeList *Attr,
-                              SourceLocation EqualLoc, ExprTy *val) {
+                              SourceLocation EqualLoc, Expr *val) {
   EnumDecl *TheEnumDecl = cast<EnumDecl>(theEnumDecl);
   EnumConstantDecl *LastEnumConst =
     cast_or_null<EnumConstantDecl>(lastEnumConst);

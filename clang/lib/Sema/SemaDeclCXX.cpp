@@ -1060,8 +1060,8 @@ bool Sema::CheckIfOverriddenFunctionIsMarkedFinal(const CXXMethodDecl *New,
 Decl *
 Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
                                MultiTemplateParamsArg TemplateParameterLists,
-                               ExprTy *BW, const VirtSpecifiers &VS,
-                               ExprTy *InitExpr, bool HasDeferredInit,
+                               Expr *BW, const VirtSpecifiers &VS,
+                               Expr *InitExpr, bool HasDeferredInit,
                                bool IsDefinition) {
   const DeclSpec &DS = D.getDeclSpec();
   DeclarationNameInfo NameInfo = GetNameForDeclarator(D);
@@ -1329,7 +1329,7 @@ Sema::ActOnMemInitializer(Decl *ConstructorD,
                           ParsedType TemplateTypeTy,
                           SourceLocation IdLoc,
                           SourceLocation LParenLoc,
-                          ExprTy **Args, unsigned NumArgs,
+                          Expr **Args, unsigned NumArgs,
                           SourceLocation RParenLoc,
                           SourceLocation EllipsisLoc) {
   if (!ConstructorD)

@@ -180,7 +180,6 @@ public:
   typedef Attr AttrTy;
   typedef CXXBaseSpecifier BaseTy;
   typedef CXXCtorInitializer MemInitTy;
-  typedef Expr ExprTy;
   typedef Stmt StmtTy;
   typedef TemplateParameterList TemplateParamsTy;
   typedef NestedNameSpecifier CXXScopeTy;
@@ -2503,7 +2502,7 @@ public:
     bool isBrackets;  // true if [expr], false if .ident
     union {
       IdentifierInfo *IdentInfo;
-      ExprTy *E;
+      Expr *E;
     } U;
   };
 
@@ -5935,7 +5934,7 @@ public:
                                     unsigned NumSelIdents,
                                     bool AtArgumentExpression,
                                     bool IsSuper = false);
-  void CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver,
+  void CodeCompleteObjCInstanceMessage(Scope *S, Expr *Receiver,
                                        IdentifierInfo **SelIdents,
                                        unsigned NumSelIdents,
                                        bool AtArgumentExpression,

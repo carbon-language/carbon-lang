@@ -1758,8 +1758,8 @@ StmtResult Parser::ParseAsmStatement(bool &msAsm) {
 //
 // FIXME: Avoid unnecessary std::string trashing.
 bool Parser::ParseAsmOperandsOpt(SmallVectorImpl<IdentifierInfo *> &Names,
-                                 SmallVectorImpl<ExprTy *> &Constraints,
-                                 SmallVectorImpl<ExprTy *> &Exprs) {
+                                 SmallVectorImpl<Expr *> &Constraints,
+                                 SmallVectorImpl<Expr *> &Exprs) {
   // 'asm-operands' isn't present?
   if (!isTokenStringLiteral() && Tok.isNot(tok::l_square))
     return false;

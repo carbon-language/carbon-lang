@@ -3258,7 +3258,7 @@ static void AddObjCProperties(ObjCContainerDecl *Container,
   }
 }
 
-void Sema::CodeCompleteMemberReferenceExpr(Scope *S, ExprTy *BaseE,
+void Sema::CodeCompleteMemberReferenceExpr(Scope *S, Expr *BaseE,
                                            SourceLocation OpLoc,
                                            bool IsArrow) {
   if (!BaseE || !CodeCompleter)
@@ -3562,8 +3562,8 @@ static bool anyNullArguments(Expr **Args, unsigned NumArgs) {
   return false;
 }
 
-void Sema::CodeCompleteCall(Scope *S, ExprTy *FnIn,
-                            ExprTy **ArgsIn, unsigned NumArgs) {
+void Sema::CodeCompleteCall(Scope *S, Expr *FnIn,
+                            Expr **ArgsIn, unsigned NumArgs) {
   if (!CodeCompleter)
     return;
 
@@ -3752,7 +3752,7 @@ void Sema::CodeCompleteAfterIf(Scope *S) {
                             Results.data(),Results.size());
 }
 
-void Sema::CodeCompleteAssignmentRHS(Scope *S, ExprTy *LHS) {
+void Sema::CodeCompleteAssignmentRHS(Scope *S, Expr *LHS) {
   if (LHS)
     CodeCompleteExpression(S, static_cast<Expr *>(LHS)->getType());
   else
@@ -5074,7 +5074,7 @@ void Sema::CodeCompleteObjCClassMessage(Scope *S, ParsedType Receiver,
                             Results.data(), Results.size());
 }
 
-void Sema::CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver,
+void Sema::CodeCompleteObjCInstanceMessage(Scope *S, Expr *Receiver,
                                            IdentifierInfo **SelIdents,
                                            unsigned NumSelIdents,
                                            bool AtArgumentExpression,

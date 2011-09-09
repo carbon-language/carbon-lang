@@ -189,7 +189,7 @@ void Sema::ActOnPragmaOptionsAlign(PragmaOptionsAlignKind Kind,
 }
 
 void Sema::ActOnPragmaPack(PragmaPackKind Kind, IdentifierInfo *Name,
-                           ExprTy *alignment, SourceLocation PragmaLoc,
+                           Expr *alignment, SourceLocation PragmaLoc,
                            SourceLocation LParenLoc, SourceLocation RParenLoc) {
   Expr *Alignment = static_cast<Expr *>(alignment);
 

@@ -114,7 +114,7 @@ namespace clang {
     KindType Kind;
     
     /// \brief The actual template argument representation, which may be
-    /// an \c ActionBase::TypeTy* (for a type), an ActionBase::ExprTy* (for an
+    /// an \c ActionBase::TypeTy* (for a type), an Expr* (for an
     /// expression), or an ActionBase::TemplateTy (for a template).
     void *Arg;
 
