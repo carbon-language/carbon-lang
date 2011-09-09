@@ -1,4 +1,4 @@
-//===--- JumpDiagnostics.cpp - Analyze Jump Targets for VLA issues --------===//
+//===--- JumpDiagnostics.cpp - Protected scope jump analysis ------*- C++ -*-=//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // This file implements the JumpScopeChecker class, which is used to diagnose
-// jumps that enter a VLA scope in an invalid way.
+// jumps that enter a protected scope in an invalid way.
 //
 //===----------------------------------------------------------------------===//
 
