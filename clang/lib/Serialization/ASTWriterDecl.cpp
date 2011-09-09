@@ -1021,7 +1021,7 @@ void ASTDeclWriter::VisitRedeclarableTemplateDecl(RedeclarableTemplateDecl *D) {
     // in a chained PCH, keep track of the association with the map so we can
     // update the first decl during AST reading.
     if (First->getMostRecentDeclaration() == D &&
-        First->getPCHLevel() > D->getPCHLevel()) {
+        First->isFromASTFile() && !D->isFromASTFile()) {
       assert(Writer.FirstLatestDecls.find(First)==Writer.FirstLatestDecls.end()
              && "The latest is already set");
       Writer.FirstLatestDecls[First] = D;
@@ -1243,7 +1243,7 @@ void ASTDeclWriter::VisitRedeclarable(Redeclarable<T> *D) {
   // in a chained PCH, keep track of the association with the map so we can
   // update the first decl during AST reading.
   if (ThisDecl != First && First->getMostRecentDeclaration() == ThisDecl &&
-      First->getPCHLevel() > ThisDecl->getPCHLevel()) {
+      First->isFromASTFile() && !ThisDecl->isFromASTFile()) {
     assert(Writer.FirstLatestDecls.find(First) == Writer.FirstLatestDecls.end()
            && "The latest is already set");
     Writer.FirstLatestDecls[First] = ThisDecl;

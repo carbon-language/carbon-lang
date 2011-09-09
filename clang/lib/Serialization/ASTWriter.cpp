@@ -3140,8 +3140,6 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   for (FirstLatestDeclMap::iterator I = FirstLatestDecls.begin(), 
                                     E = FirstLatestDecls.end(); 
        I != E; ++I) {
-    assert(I->first->getPCHLevel() > I->second->getPCHLevel() &&
-           "Expected first & second to be in different PCHs");
     AddDeclRef(I->first, FirstLatestDeclIDs);
     AddDeclRef(I->second, FirstLatestDeclIDs);
   }
