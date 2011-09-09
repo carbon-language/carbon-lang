@@ -1424,6 +1424,9 @@ def warn_fun_requires_lock : Warning<
 def warn_fun_excludes_mutex : Warning<
   "cannot call function '%0' while holding mutex '%1'">,
   InGroup<ThreadSafety>, DefaultIgnore;
+def warn_cannot_resolve_lock : Warning<
+  "cannot resolve lock expression to a specific lockable object">,
+  InGroup<ThreadSafety>, DefaultIgnore;
 
 
 def warn_impcast_vector_scalar : Warning<

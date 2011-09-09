@@ -37,6 +37,15 @@
 using namespace clang;
 using namespace thread_safety;
 
+// Helper functions
+static Expr *getParent(Expr *Exp) {
+  if (MemberExpr *ME = dyn_cast<MemberExpr>(Exp))
+    return ME->getBase();
+  if (CXXMemberCallExpr *CE = dyn_cast<CXXMemberCallExpr>(Exp))
+    return CE->getImplicitObjectArgument();
+  return 0;
+}
+
 namespace {
 /// \brief Implements a set of CFGBlocks using a BitVector.
 ///
@@ -146,28 +155,32 @@ public:
 /// foo(MyL);  // requires lock MyL->Mu to be held
 class MutexID {
   SmallVector<NamedDecl*, 2> DeclSeq;
+  ThreadSafetyHandler &Handler;
 
   /// Build a Decl sequence representing the lock from the given expression.
   /// Recursive function that bottoms out when the final DeclRefExpr is reached.
-  void buildMutexID(Expr *Exp) {
+  void buildMutexID(Expr *Exp, Expr *Parent) {
     if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(Exp)) {
       NamedDecl *ND = cast<NamedDecl>(DRE->getDecl()->getCanonicalDecl());
       DeclSeq.push_back(ND);
     } else if (MemberExpr *ME = dyn_cast<MemberExpr>(Exp)) {
       NamedDecl *ND = ME->getMemberDecl();
       DeclSeq.push_back(ND);
-      buildMutexID(ME->getBase());
+      buildMutexID(ME->getBase(), Parent);
     } else if (isa<CXXThisExpr>(Exp)) {
-      return;
-    } else {
-      // FIXME: add diagnostic
-      llvm::report_fatal_error("Expected lock expression!");
-    }
+      if (!Parent)
+        return;
+      buildMutexID(Parent, 0);
+    } else if (CastExpr *CE = dyn_cast<CastExpr>(Exp))
+      buildMutexID(CE->getSubExpr(), Parent);
+    else
+      Handler.handleInvalidLockExp(Exp->getExprLoc());
   }
 
 public:
-  MutexID(Expr *LExpr) {
-    buildMutexID(LExpr);
+  MutexID(ThreadSafetyHandler &Handler, Expr *LExpr, Expr *ParentExpr)
+    : Handler(Handler) {
+    buildMutexID(LExpr, ParentExpr);
     assert(!DeclSeq.empty());
   }
 
@@ -252,8 +265,9 @@ class BuildLockset : public StmtVisitor<BuildLockset> {
   Lockset::Factory &LocksetFactory;
 
   // Helper functions
-  void removeLock(SourceLocation UnlockLoc, Expr *LockExp);
-  void addLock(SourceLocation LockLoc, Expr *LockExp, LockKind LK);
+  void removeLock(SourceLocation UnlockLoc, Expr *LockExp, Expr *Parent);
+  void addLock(SourceLocation LockLoc, Expr *LockExp, Expr *Parent,
+               LockKind LK);
   const ValueDecl *getValueDecl(Expr *Exp);
   void warnIfMutexNotHeld (const NamedDecl *D, Expr *Exp, AccessKind AK,
                            Expr *MutexExp, ProtectedOperationKind POK);
@@ -307,10 +321,10 @@ public:
 /// \brief Add a new lock to the lockset, warning if the lock is already there.
 /// \param LockLoc The source location of the acquire
 /// \param LockExp The lock expression corresponding to the lock to be added
-void BuildLockset::addLock(SourceLocation LockLoc, Expr *LockExp,
+void BuildLockset::addLock(SourceLocation LockLoc, Expr *LockExp, Expr *Parent,
                            LockKind LK) {
   // FIXME: deal with acquired before/after annotations
-  MutexID Mutex(LockExp);
+  MutexID Mutex(Handler, LockExp, Parent);
   LockData NewLock(LockLoc, LK);
 
   // FIXME: Don't always warn when we have support for reentrant locks.
@@ -322,8 +336,9 @@ void BuildLockset::addLock(SourceLocation LockLoc, Expr *LockExp,
 /// \brief Remove a lock from the lockset, warning if the lock is not there.
 /// \param LockExp The lock expression corresponding to the lock to be removed
 /// \param UnlockLoc The source location of the unlock (only used in error msg)
-void BuildLockset::removeLock(SourceLocation UnlockLoc, Expr *LockExp) {
-  MutexID Mutex(LockExp);
+void BuildLockset::removeLock(SourceLocation UnlockLoc, Expr *LockExp,
+                              Expr *Parent) {
+  MutexID Mutex(Handler, LockExp, Parent);
 
   Lockset NewLSet = LocksetFactory.remove(LSet, Mutex);
   if(NewLSet == LSet)
@@ -349,7 +364,8 @@ void BuildLockset::warnIfMutexNotHeld(const NamedDecl *D, Expr *Exp,
                                       AccessKind AK, Expr *MutexExp,
                                       ProtectedOperationKind POK) {
   LockKind LK = getLockKindFromAccessKind(AK);
-  MutexID Mutex(MutexExp);
+  Expr *Parent = getParent(Exp);
+  MutexID Mutex(Handler, MutexExp, Parent);
   if (!locksetContainsAtLeast(Mutex, LK))
     Handler.handleMutexNotHeld(D, POK, Mutex.getName(), LK, Exp->getExprLoc());
 }
@@ -451,13 +467,13 @@ void BuildLockset::addLocksToSet(LockKind LK, Attr *Attr,
 
   if (SpecificAttr->args_size() == 0) {
     // The mutex held is the "this" object.
-    addLock(ExpLocation, Parent, LK);
+    addLock(ExpLocation, Parent, Parent, LK);
     return;
   }
 
   for (iterator_type I = SpecificAttr->args_begin(),
        E = SpecificAttr->args_end(); I != E; ++I)
-    addLock(ExpLocation, *I, LK);
+    addLock(ExpLocation, *I, Parent, LK);
 }
 
 /// \brief When visiting CXXMemberCallExprs we need to examine the attributes on
@@ -501,13 +517,13 @@ void BuildLockset::VisitCXXMemberCallExpr(CXXMemberCallExpr *Exp) {
         UnlockFunctionAttr *UFAttr = cast<UnlockFunctionAttr>(Attr);
 
         if (UFAttr->args_size() == 0) { // The lock held is the "this" object.
-          removeLock(ExpLocation, Parent);
+          removeLock(ExpLocation, Parent, Parent);
           break;
         }
 
         for (UnlockFunctionAttr::args_iterator I = UFAttr->args_begin(),
              E = UFAttr->args_end(); I != E; ++I)
-          removeLock(ExpLocation, *I);
+          removeLock(ExpLocation, *I, Parent);
         break;
       }
 
@@ -540,7 +556,7 @@ void BuildLockset::VisitCXXMemberCallExpr(CXXMemberCallExpr *Exp) {
         LocksExcludedAttr *LEAttr = cast<LocksExcludedAttr>(Attr);
         for (LocksExcludedAttr::args_iterator I = LEAttr->args_begin(),
             E = LEAttr->args_end(); I != E; ++I) {
-          MutexID Mutex(*I);
+          MutexID Mutex(Handler, *I, Parent);
           if (locksetContains(Mutex))
             Handler.handleFunExcludesLock(D->getName(), Mutex.getName(),
                                           ExpLocation);

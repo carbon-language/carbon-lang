@@ -47,6 +47,7 @@ public:
   typedef llvm::StringRef Name;
   ThreadSafetyHandler() {}
   virtual ~ThreadSafetyHandler() {}
+  virtual void handleInvalidLockExp(SourceLocation Loc) {}
   virtual void handleUnmatchedUnlock(Name LockName, SourceLocation Loc) {}
   virtual void handleDoubleLock(Name LockName, SourceLocation Loc) {}
   virtual void handleMutexHeldEndOfScope(Name LockName, SourceLocation Loc){}

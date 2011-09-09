@@ -648,6 +648,10 @@ class ThreadSafetyReporter : public clang::thread_safety::ThreadSafetyHandler {
       S.Diag(I->first, I->second);
   }
 
+  void handleInvalidLockExp(SourceLocation Loc) {
+    PartialDiagnostic Warning = S.PDiag(diag::warn_cannot_resolve_lock) << Loc;
+    Warnings.push_back(DelayedDiag(Loc, Warning));
+  }
   void handleUnmatchedUnlock(Name LockName, SourceLocation Loc) {
     warnLockMismatch(diag::warn_unlock_but_no_lock, LockName, Loc);
   }
