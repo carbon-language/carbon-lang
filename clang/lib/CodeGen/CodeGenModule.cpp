@@ -68,9 +68,7 @@ CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
     CFConstantStringClassRef(0), ConstantStringClassRef(0),
     NSConstantStringType(0),
     VMContext(M.getContext()),
-    NSConcreteGlobalBlockDecl(0), NSConcreteStackBlockDecl(0),
     NSConcreteGlobalBlock(0), NSConcreteStackBlock(0),
-    BlockObjectAssignDecl(0), BlockObjectDisposeDecl(0),
     BlockObjectAssign(0), BlockObjectDispose(0),
     BlockDescriptorType(0), GenericBlockLiteralType(0) {
   if (Features.ObjC1)
@@ -739,15 +737,6 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
 
   // Ignore declarations, they will be emitted on their first use.
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(Global)) {
-    if (FD->getIdentifier()) {
-      StringRef Name = FD->getName();
-      if (Name == "_Block_object_assign") {
-        BlockObjectAssignDecl = FD;
-      } else if (Name == "_Block_object_dispose") {
-        BlockObjectDisposeDecl = FD;
-      }
-    }
-
     // Forward declarations are emitted lazily on first use.
     if (!FD->doesThisDeclarationHaveABody()) {
       if (!FD->doesDeclarationForceExternallyVisibleDefinition())
@@ -767,16 +756,6 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
   } else {
     const VarDecl *VD = cast<VarDecl>(Global);
     assert(VD->isFileVarDecl() && "Cannot emit local var decl as global.");
-
-    if (VD->getIdentifier()) {
-      StringRef Name = VD->getName();
-      if (Name == "_NSConcreteGlobalBlock") {
-        NSConcreteGlobalBlockDecl = VD;
-      } else if (Name == "_NSConcreteStackBlock") {
-        NSConcreteStackBlockDecl = VD;
-      }
-    }
-
 
     if (VD->isThisDeclarationADefinition() != VarDecl::Definition)
       return;
@@ -2428,12 +2407,15 @@ llvm::Constant *CodeGenModule::getBlockObjectDispose() {
   if (BlockObjectDispose)
     return BlockObjectDispose;
 
-  // If we saw an explicit decl, use that.
-  if (BlockObjectDisposeDecl) {
-    return BlockObjectDispose = GetAddrOfFunction(
-      BlockObjectDisposeDecl,
-      getTypes().GetFunctionType(BlockObjectDisposeDecl));
-  }
+  DeclarationName DName(&Context.Idents.get("_Block_object_dispose"));
+  DeclContext::lookup_result
+    Lookup = Context.getTranslationUnitDecl()->lookup(DName);
+
+  // If there is an explicit decl, use that.
+  if (Lookup.first != Lookup.second)
+    if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(*Lookup.first))
+      return BlockObjectDispose =
+          GetAddrOfFunction(FD, getTypes().GetFunctionType(FD));
 
   // Otherwise construct the function by hand.
   llvm::Type *args[] = { Int8PtrTy, Int32Ty };
@@ -2447,12 +2429,15 @@ llvm::Constant *CodeGenModule::getBlockObjectAssign() {
   if (BlockObjectAssign)
     return BlockObjectAssign;
 
-  // If we saw an explicit decl, use that.
-  if (BlockObjectAssignDecl) {
-    return BlockObjectAssign = GetAddrOfFunction(
-      BlockObjectAssignDecl,
-      getTypes().GetFunctionType(BlockObjectAssignDecl));
-  }
+  DeclarationName DName(&Context.Idents.get("_Block_object_assign"));
+  DeclContext::lookup_result
+    Lookup = Context.getTranslationUnitDecl()->lookup(DName);
+
+  // If there is an explicit decl, use that.
+  if (Lookup.first != Lookup.second)
+    if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(*Lookup.first))
+      return BlockObjectAssign =
+          GetAddrOfFunction(FD, getTypes().GetFunctionType(FD));
 
   // Otherwise construct the function by hand.
   llvm::Type *args[] = { Int8PtrTy, Int8PtrTy, Int32Ty };
@@ -2466,12 +2451,15 @@ llvm::Constant *CodeGenModule::getNSConcreteGlobalBlock() {
   if (NSConcreteGlobalBlock)
     return NSConcreteGlobalBlock;
 
-  // If we saw an explicit decl, use that.
-  if (NSConcreteGlobalBlockDecl) {
-    return NSConcreteGlobalBlock = GetAddrOfGlobalVar(
-      NSConcreteGlobalBlockDecl,
-      getTypes().ConvertType(NSConcreteGlobalBlockDecl->getType()));
-  }
+  DeclarationName DName(&Context.Idents.get("_NSConcreteGlobalBlock"));
+  DeclContext::lookup_result
+    Lookup = Context.getTranslationUnitDecl()->lookup(DName);
+
+  // If there is an explicit decl, use that.
+  if (Lookup.first != Lookup.second)
+    if (const VarDecl *VD = dyn_cast<VarDecl>(*Lookup.first))
+      return NSConcreteGlobalBlock =
+          GetAddrOfGlobalVar(VD, getTypes().ConvertType(VD->getType()));
 
   // Otherwise construct the variable by hand.
   return NSConcreteGlobalBlock =
@@ -2482,12 +2470,15 @@ llvm::Constant *CodeGenModule::getNSConcreteStackBlock() {
   if (NSConcreteStackBlock)
     return NSConcreteStackBlock;
 
-  // If we saw an explicit decl, use that.
-  if (NSConcreteStackBlockDecl) {
-    return NSConcreteStackBlock = GetAddrOfGlobalVar(
-      NSConcreteStackBlockDecl,
-      getTypes().ConvertType(NSConcreteStackBlockDecl->getType()));
-  }
+  DeclarationName DName(&Context.Idents.get("_NSConcreteStackBlock"));
+  DeclContext::lookup_result
+    Lookup = Context.getTranslationUnitDecl()->lookup(DName);
+
+  // If there is an explicit decl, use that.
+  if (Lookup.first != Lookup.second)
+    if (const VarDecl *VD = dyn_cast<VarDecl>(*Lookup.first))
+      return NSConcreteStackBlock =
+          GetAddrOfGlobalVar(VD, getTypes().ConvertType(VD->getType()));
 
   // Otherwise construct the variable by hand.
   return NSConcreteStackBlock =
