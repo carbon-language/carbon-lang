@@ -79,6 +79,7 @@ def : Proc<"r3000", [FeatureMips1]>;
 def : Proc<"mips2", [FeatureMips2]>;
 def : Proc<"r6000", [FeatureMips2]>;
 
+def : Proc<"mips32r1", [FeatureMips32]>;
 def : Proc<"4ke", [FeatureMips32r2]>;
 
 // Allegrex is a 32bit subset of r4000, both for integer and fp registers,

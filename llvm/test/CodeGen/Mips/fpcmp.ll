@@ -1,5 +1,5 @@
 ; RUN: llc  < %s -march=mipsel -mcpu=4ke | FileCheck %s -check-prefix=CHECK-MIPS32R2
-; RUN: llc  < %s -march=mipsel | FileCheck %s -check-prefix=CHECK-MIPS1
+; RUN: llc  < %s -march=mipsel -mcpu=mips1 | FileCheck %s -check-prefix=CHECK-MIPS1
 
 @g1 = external global i32
 

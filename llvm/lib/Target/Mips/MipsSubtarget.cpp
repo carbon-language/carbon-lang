@@ -31,8 +31,7 @@ MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &CPU,
 {
   std::string CPUName = CPU;
   if (CPUName.empty())
-    CPUName = "mips1";
-  MipsArchVersion = Mips1;
+    CPUName = "mips32r1";
 
   // Parse features string.
   ParseSubtargetFeatures(CPUName, FS);
