@@ -7,6 +7,8 @@
 
 declare void @_Z4barv()
 
+declare void @_Z7cleanupv()
+
 declare i32 @llvm.eh.typeid.for(i8*) nounwind readonly
 
 declare i8* @__cxa_begin_catch(i8*) nounwind
@@ -50,6 +52,7 @@ ppad2:                                            ; preds = %next
   br label %return
 
 next2:                                            ; preds = %next
+  call void @_Z7cleanupv()
   %typeid = tail call i32 @llvm.eh.typeid.for(i8* bitcast (%struct.__fundamental_type_info_pseudo* @_ZTIi to i8*))
 ; CHECK-NOT: call i32 @llvm.eh.typeid.for
   %4 = icmp eq i32 %filter3.i, %typeid
