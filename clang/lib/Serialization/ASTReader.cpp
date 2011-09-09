@@ -2817,6 +2817,11 @@ void ASTReader::InitializeContext(ASTContext &Ctx) {
       DeclContextInfo Info = DCU->second;
       (*M)->DeclContextInfos.erase(DCU);
       (*M)->DeclContextInfos[TU] = Info;
+      
+      if (Info.NumLexicalDecls)
+        TU->setHasExternalLexicalStorage();
+      if (Info.NameLookupTableData)
+        TU->setHasExternalVisibleStorage();
     }
   }
   
@@ -2828,10 +2833,6 @@ void ASTReader::InitializeContext(ASTContext &Ctx) {
   // if there are any.
   loadDeclUpdateRecords(PREDEF_DECL_TRANSLATION_UNIT_ID, TU);
   
-  // Note that the translation unit has external lexical and visible storage.
-  TU->setHasExternalLexicalStorage(true);
-  TU->setHasExternalVisibleStorage(true);
-
   // FIXME: Find a better way to deal with collisions between these
   // built-in types. Right now, we just ignore the problem.
   
