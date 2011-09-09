@@ -87,7 +87,17 @@ PlatformDarwin::ResolveExecutable (const FileSpec &exe_file,
                                                              exe_module_sp);
         }
         else
-            error.SetErrorString ("the platform is not currently connected");
+        {
+            // We may connect to a process and use the provided executable (Don't use local $PATH).
+
+            // Resolve any executable within a bundle on MacOSX
+            Host::ResolveExecutableInBundle (resolved_exe_file);
+
+            if (resolved_exe_file.Exists())
+                error.Clear();
+            else
+                error.SetErrorStringWithFormat("the platform is not currently connected, and '%s' doesn't exist in the system root.");
+        }
     }
     
 
