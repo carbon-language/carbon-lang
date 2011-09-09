@@ -918,12 +918,31 @@ static DecodeStatus DecodeRegListOperand(llvm::MCInst &Inst, unsigned Val,
                                  uint64_t Address, const void *Decoder) {
   DecodeStatus S = MCDisassembler::Success;
 
+  bool writebackLoad = false;
+  unsigned writebackReg = 0;
+  switch (Inst.getOpcode()) {
+    default:
+      break;
+    case ARM::LDMIA_UPD:
+    case ARM::LDMDB_UPD:
+    case ARM::LDMIB_UPD:
+    case ARM::LDMDA_UPD:
+    case ARM::t2LDMIA_UPD:
+    case ARM::t2LDMDB_UPD:
+      writebackLoad = true;
+      writebackReg = Inst.getOperand(0).getReg();
+      break;
+  }
+
   // Empty register lists are not allowed.
   if (CountPopulation_32(Val) == 0) return MCDisassembler::Fail;
   for (unsigned i = 0; i < 16; ++i) {
     if (Val & (1 << i)) {
       if (!Check(S, DecodeGPRRegisterClass(Inst, i, Address, Decoder)))
         return MCDisassembler::Fail;
+      // Writeback not allowed if Rn is in the target list.
+      if (writebackLoad && writebackReg == Inst.end()[-1].getReg())
+        Check(S, MCDisassembler::SoftFail);
     }
   }
 
