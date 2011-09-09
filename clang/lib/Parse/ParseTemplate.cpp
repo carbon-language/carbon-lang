@@ -560,7 +560,7 @@ Parser::ParseTemplateTemplateParameter(unsigned Depth, unsigned Position) {
     return 0;
   }
 
-  TemplateParamsTy *ParamList =
+  TemplateParameterList *ParamList =
     Actions.ActOnTemplateParameterList(Depth, SourceLocation(),
                                        TemplateLoc, LAngleLoc,
                                        TemplateParams.data(),

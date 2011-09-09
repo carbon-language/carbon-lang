@@ -714,7 +714,7 @@ Decl *Sema::ActOnNonTypeTemplateParameter(Scope *S, Declarator &D,
 /// has been parsed. S is the current scope.
 Decl *Sema::ActOnTemplateTemplateParameter(Scope* S,
                                            SourceLocation TmpLoc,
-                                           TemplateParamsTy *Params,
+                                           TemplateParameterList *Params,
                                            SourceLocation EllipsisLoc,
                                            IdentifierInfo *Name,
                                            SourceLocation NameLoc,
@@ -785,7 +785,7 @@ Decl *Sema::ActOnTemplateTemplateParameter(Scope* S,
 
 /// ActOnTemplateParameterList - Builds a TemplateParameterList that
 /// contains the template parameters in Params/NumParams.
-Sema::TemplateParamsTy *
+TemplateParameterList *
 Sema::ActOnTemplateParameterList(unsigned Depth,
                                  SourceLocation ExportLoc,
                                  SourceLocation TemplateLoc,

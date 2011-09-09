@@ -2680,7 +2680,7 @@ Sema::InstantiateMemInitializers(CXXConstructorDecl *New,
                                  const CXXConstructorDecl *Tmpl,
                            const MultiLevelTemplateArgumentList &TemplateArgs) {
 
-  SmallVector<MemInitTy*, 4> NewInits;
+  SmallVector<CXXCtorInitializer*, 4> NewInits;
   bool AnyErrors = false;
   
   // Instantiate all the initializers.
@@ -2830,7 +2830,7 @@ Sema::InstantiateMemInitializers(CXXConstructorDecl *New,
       // FIXME: It would be nice if ASTOwningVector had a release function.
       NewArgs.take();
 
-      NewInits.push_back((MemInitTy *)NewInit.get());
+      NewInits.push_back(NewInit.get());
     }
   }
 

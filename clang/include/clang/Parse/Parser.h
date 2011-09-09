@@ -196,10 +196,6 @@ public:
   // Type forwarding.  All of these are statically 'void*', but they may all be
   // different actual classes based on the actions in place.
   typedef OpaquePtr<DeclGroupRef> DeclGroupPtrTy;
-  typedef CXXBaseSpecifier BaseTy;
-  typedef CXXCtorInitializer MemInitTy;
-  typedef NestedNameSpecifier CXXScopeTy;
-  typedef TemplateParameterList TemplateParamsTy;
   typedef OpaquePtr<TemplateName> TemplateTy;
 
   typedef SmallVector<TemplateParameterList *, 4> TemplateParameterLists;
