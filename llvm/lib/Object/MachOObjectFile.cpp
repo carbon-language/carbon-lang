@@ -521,12 +521,11 @@ error_code MachOObjectFile::getRelocationSymbol(DataRefImpl Rel,
   DataRefImpl Sym;
   Sym.d.a = Sym.d.b = 0;
   moveToNextSymbol(Sym);
-  uint32_t NumLoadCommands = MachOObj->getHeader().NumLoadCommands;
   if (isExtern) {
     for (unsigned i = 0; i < SymbolIdx; i++) {
       Sym.d.b++;
       moveToNextSymbol(Sym);
-      assert(Sym.d.a < NumLoadCommands &&
+      assert(Sym.d.a < MachOObj->getHeader().NumLoadCommands &&
              "Relocation symbol index out of range!");
     }
   }
@@ -625,4 +624,3 @@ unsigned MachOObjectFile::getArch() const {
 }
 
 } // end namespace llvm
-
