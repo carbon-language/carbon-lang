@@ -259,7 +259,7 @@ public:
 
     void
     GetHelp (CommandReturnObject &result,
-             CommandTypes types = eCommandTypesAllThem);
+             uint32_t types = eCommandTypesAllThem);
 
     void
     GetAliasHelp (const char *alias_name, 

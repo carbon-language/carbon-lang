@@ -38,6 +38,18 @@ class CmdPythonTestCase(TestBase):
                     substrs = ['Just a docstring for welcome_impl',
                                'A command that says hello to LLDB users'])
 
+        self.expect("help",
+                    substrs = ['Run Python function welcome.welcome_impl',
+                               'welcome'])
+
+        self.expect("help -a",
+                    substrs = ['Run Python function welcome.welcome_impl',
+                               'welcome'])
+
+        self.expect("help -u", matching=False,
+                    substrs = ['Run Python function welcome.welcome_impl',
+                               'welcome'])
+
         self.runCmd("command script delete welcome");
 
         self.expect('welcome Enrico', matching=False, error=True,

@@ -29,7 +29,7 @@ CommandObjectHelp::CommandObjectHelp (CommandInterpreter &interpreter) :
     CommandObject (interpreter,
                    "help",
                    "Show a list of all debugger commands, or give details about specific commands.",
-                   "help [<cmd-name>]")
+                   "help [<cmd-name>]"), m_options (interpreter)
 {
     CommandArgumentEntry arg;
     CommandArgumentData command_arg;
@@ -49,6 +49,14 @@ CommandObjectHelp::~CommandObjectHelp()
 {
 }
 
+OptionDefinition
+CommandObjectHelp::CommandOptions::g_option_table[] =
+{
+    { LLDB_OPT_SET_ALL, false, "show-aliases", 'a', no_argument, NULL, 0, eArgTypeNone,         "Show aliases in the command list."},
+    { LLDB_OPT_SET_ALL, false, "hide-user-commands", 'u', no_argument, NULL, 0, eArgTypeNone,         "Hide user-defined commands from the list."},
+    { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
+};
+
 bool
 CommandObjectHelp::Execute (Args& command, CommandReturnObject &result)
 {
@@ -56,12 +64,18 @@ CommandObjectHelp::Execute (Args& command, CommandReturnObject &result)
     CommandObject *cmd_obj;
     const int argc = command.GetArgumentCount ();
     
-    // 'help' doesn't take any options or arguments, other than command names.  If argc is 0, we show the user
-    // all commands and aliases.  Otherwise every argument must be the name of a command or a sub-command.
+    // 'help' doesn't take any arguments, other than command names.  If argc is 0, we show the user
+    // all commands (aliases and user commands if asked for).  Otherwise every argument must be the name of a command or a sub-command.
     if (argc == 0)
     {
+        uint32_t cmd_types = CommandInterpreter::eCommandTypesBuiltin;
+        if (m_options.m_show_aliases)
+            cmd_types |= CommandInterpreter::eCommandTypesAliases;
+        if (m_options.m_show_user_defined)
+            cmd_types |= CommandInterpreter::eCommandTypesUserDef;
+
         result.SetStatus (eReturnStatusSuccessFinishNoResult);
-        m_interpreter.GetHelp (result);  // General help, for ALL commands.
+        m_interpreter.GetHelp (result, cmd_types);  // General help
     }
     else
     {

@@ -701,7 +701,7 @@ CommandInterpreter::FindLongestCommandWord (CommandObject::CommandMap &dict)
 
 void
 CommandInterpreter::GetHelp (CommandReturnObject &result,
-                             CommandTypes cmd_types)
+                             uint32_t cmd_types)
 {
     CommandObject::CommandMap::const_iterator pos;
     uint32_t max_len = FindLongestCommandWord (m_command_dict);

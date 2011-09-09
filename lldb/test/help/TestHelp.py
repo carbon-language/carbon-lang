@@ -18,6 +18,18 @@ class HelpCommandTestCase(TestBase):
         self.expect("help",
             startstr = 'The following is a list of built-in, permanent debugger commands')
 
+        self.expect("help", matching=False,
+                    substrs = ['next'])
+        
+        self.expect("help -a", matching=True,
+                    substrs = ['next'])
+    
+    def test_help_on_help(self):
+        """Testing the help on the help facility."""
+        self.expect("help help", matching=True,
+                    substrs = ['--show-aliases',
+                               '--hide-user-commands'])
+
     def version_number_string(self):
         """Helper function to find the version number string of lldb."""
         plist = os.path.join(os.environ["LLDB_SRC"], "resources", "LLDB-Info.plist")
