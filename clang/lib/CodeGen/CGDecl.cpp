@@ -271,13 +271,8 @@ void CodeGenFunction::EmitStaticVarDecl(const VarDecl &D,
 
   GV->setAlignment(getContext().getDeclAlign(&D).getQuantity());
 
-  // FIXME: Merge attribute handling.
-  if (const AnnotateAttr *AA = D.getAttr<AnnotateAttr>()) {
-    SourceManager &SM = CGM.getContext().getSourceManager();
-    llvm::Constant *Ann =
-      CGM.EmitAnnotateAttr(GV, AA, SM.getExpansionLineNumber(D.getLocation()));
-    CGM.AddAnnotation(Ann);
-  }
+  if (D.hasAttr<AnnotateAttr>())
+    CGM.AddGlobalAnnotations(&D, GV);
 
   if (const SectionAttr *SA = D.getAttr<SectionAttr>())
     GV->setSection(SA->getName());
@@ -852,6 +847,9 @@ CodeGenFunction::EmitAutoVarAlloca(const VarDecl &D) {
       } else
         DI->EmitDeclareOfAutoVariable(&D, DeclPtr, Builder);
     }
+
+  if (D.hasAttr<AnnotateAttr>())
+      EmitVarAnnotations(&D, emission.Address);
 
   return emission;
 }
@@ -1502,4 +1500,7 @@ void CodeGenFunction::EmitParmDecl(const VarDecl &D, llvm::Value *Arg,
   // Emit debug info for param declaration.
   if (CGDebugInfo *DI = getDebugInfo())
     DI->EmitDeclareOfArgVariable(&D, DeclPtr, ArgNo, Builder);
+
+  if (D.hasAttr<AnnotateAttr>())
+      EmitVarAnnotations(&D, DeclPtr);
 }

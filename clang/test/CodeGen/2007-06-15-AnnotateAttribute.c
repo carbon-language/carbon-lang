@@ -1,7 +1,6 @@
 // RUN: %clang_cc1 -emit-llvm %s -o - | grep llvm.global.annotations
 // RUN: %clang_cc1 -emit-llvm %s -o - | grep llvm.var.annotation | count 3
 
-// XFAIL: *
 #include <stdio.h>
 
 /* Global variable with attribute */

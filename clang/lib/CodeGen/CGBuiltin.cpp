@@ -991,6 +991,17 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     Value *Result = Builder.CreateICmpSLT(BCArg, ZeroCmp);
     return RValue::get(Builder.CreateZExt(Result, ConvertType(E->getType())));
   }
+  case Builtin::BI__builtin_annotation: {
+    llvm::Value *AnnVal = EmitScalarExpr(E->getArg(0));
+    llvm::Value *F = CGM.getIntrinsic(llvm::Intrinsic::annotation,
+                                      AnnVal->getType());
+
+    // Get the annotation string, go through casts. Sema requires this to be a
+    // non-wide string literal, potentially casted, so the cast<> is safe.
+    const Expr *AnnotationStrExpr = E->getArg(1)->IgnoreParenCasts();
+    llvm::StringRef Str = cast<StringLiteral>(AnnotationStrExpr)->getString();
+    return RValue::get(EmitAnnotationCall(F, AnnVal, Str, E->getExprLoc()));
+  }
   }
 
   // If this is an alias for a libm function (e.g. __builtin_sin) turn it into

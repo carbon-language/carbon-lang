@@ -260,7 +260,11 @@ class CodeGenModule : public CodeGenTypeCache {
   llvm::DenseMap<GlobalDecl, StringRef> MangledDeclNames;
   llvm::BumpPtrAllocator MangledNamesAllocator;
   
+  /// Global annotations.
   std::vector<llvm::Constant*> Annotations;
+
+  /// Map used to get unique annotation strings.
+  llvm::StringMap<llvm::Constant*> AnnotationStrings;
 
   llvm::StringMap<llvm::Constant*> CFConstantStringMap;
   llvm::StringMap<llvm::GlobalVariable*> ConstantStringMap;
@@ -598,8 +602,6 @@ public:
   /// metadata global.
   void AddUsedGlobal(llvm::GlobalValue *GV);
 
-  void AddAnnotation(llvm::Constant *C) { Annotations.push_back(C); }
-
   /// AddCXXDtorEntry - Add a destructor and object to add to the C++ global
   /// destructor function.
   void AddCXXDtorEntry(llvm::Constant *DtorFn, llvm::Constant *Object) {
@@ -642,9 +644,6 @@ public:
   /// type, i.e. a null expression of the given type.  This is usually,
   /// but not always, an LLVM null constant.
   llvm::Constant *EmitNullConstant(QualType T);
-
-  llvm::Constant *EmitAnnotateAttr(llvm::GlobalValue *GV,
-                                   const AnnotateAttr *AA, unsigned LineNo);
 
   /// Error - Emit a general error that something can't be done.
   void Error(SourceLocation loc, StringRef error);
@@ -733,6 +732,33 @@ public:
   
   std::vector<const CXXRecordDecl*> DeferredVTables;
 
+  /// Emit all the global annotations.
+  void EmitGlobalAnnotations();
+
+  /// Emit an annotation string.
+  llvm::Constant *EmitAnnotationString(llvm::StringRef Str);
+
+  /// Emit the annotation's translation unit.
+  llvm::Constant *EmitAnnotationUnit(SourceLocation Loc);
+
+  /// Emit the annotation line number.
+  llvm::Constant *EmitAnnotationLineNo(SourceLocation L);
+
+  /// EmitAnnotateAttr - Generate the llvm::ConstantStruct which contains the
+  /// annotation information for a given GlobalValue. The annotation struct is
+  /// {i8 *, i8 *, i8 *, i32}. The first field is a constant expression, the
+  /// GlobalValue being annotated. The second field is the constant string
+  /// created from the AnnotateAttr's annotation. The third field is a constant
+  /// string containing the name of the translation unit. The fourth field is
+  /// the line number in the file of the annotated value declaration.
+  llvm::Constant *EmitAnnotateAttr(llvm::GlobalValue *GV,
+                                   const AnnotateAttr *AA,
+                                   SourceLocation L);
+
+  /// Add global annotations that are set on D, for the global GV. Those
+  /// annotations are emitted during finalization of the LLVM code.
+  void AddGlobalAnnotations(const ValueDecl *D, llvm::GlobalValue *GV);
+
 private:
   llvm::GlobalValue *GetGlobalValue(StringRef Ref);
 
@@ -817,8 +843,6 @@ private:
   /// the given list and name. This array will have appending linkage and is
   /// suitable for use as a LLVM constructor or destructor array.
   void EmitCtorList(const CtorList &Fns, const char *GlobalName);
-
-  void EmitAnnotations(void);
 
   /// EmitFundamentalRTTIDescriptor - Emit the RTTI descriptors for the
   /// given type.

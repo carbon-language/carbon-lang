@@ -2484,6 +2484,14 @@ static void handleAnnotateAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     S.Diag(ArgExpr->getLocStart(), diag::err_attribute_not_string) <<"annotate";
     return;
   }
+
+  // Don't duplicate annotations that are already set.
+  for (specific_attr_iterator<AnnotateAttr>
+       i = D->specific_attr_begin<AnnotateAttr>(),
+       e = D->specific_attr_end<AnnotateAttr>(); i != e; ++i) {
+      if ((*i)->getAnnotation() == SE->getString())
+          return;
+  }
   D->addAttr(::new (S.Context) AnnotateAttr(Attr.getLoc(), S.Context,
                                             SE->getString()));
 }

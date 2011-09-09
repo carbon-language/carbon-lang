@@ -44,6 +44,8 @@
 using namespace clang;
 using namespace CodeGen;
 
+static const char AnnotationSection[] = "llvm.metadata";
+
 static CGCXXABI &createCXXABI(CodeGenModule &CGM) {
   switch (CGM.getContext().getTargetInfo().getCXXABI()) {
   case CXXABI_ARM: return *CreateARMCXXABI(CGM);
@@ -131,7 +133,7 @@ void CodeGenModule::Release() {
       AddGlobalCtor(ObjCInitFunction);
   EmitCtorList(GlobalCtors, "llvm.global_ctors");
   EmitCtorList(GlobalDtors, "llvm.global_dtors");
-  EmitAnnotations();
+  EmitGlobalAnnotations();
   EmitLLVMUsed();
 
   SimplifyPersonality();
@@ -382,22 +384,6 @@ void CodeGenModule::EmitCtorList(const CtorList &Fns, const char *GlobalName) {
   }
 }
 
-void CodeGenModule::EmitAnnotations() {
-  if (Annotations.empty())
-    return;
-
-  // Create a new global variable for the ConstantStruct in the Module.
-  llvm::Constant *Array =
-  llvm::ConstantArray::get(llvm::ArrayType::get(Annotations[0]->getType(),
-                                                Annotations.size()),
-                           Annotations);
-  llvm::GlobalValue *gv =
-  new llvm::GlobalVariable(TheModule, Array->getType(), false,
-                           llvm::GlobalValue::AppendingLinkage, Array,
-                           "llvm.global.annotations");
-  gv->setSection("llvm.metadata");
-}
-
 llvm::GlobalValue::LinkageTypes
 CodeGenModule::getFunctionLinkage(const FunctionDecl *D) {
   GVALinkage Linkage = getContext().GetGVALinkageForFunction(D);
@@ -642,52 +628,76 @@ void CodeGenModule::EmitDeferred() {
   }
 }
 
-/// EmitAnnotateAttr - Generate the llvm::ConstantStruct which contains the
-/// annotation information for a given GlobalValue.  The annotation struct is
-/// {i8 *, i8 *, i8 *, i32}.  The first field is a constant expression, the
-/// GlobalValue being annotated.  The second field is the constant string
-/// created from the AnnotateAttr's annotation.  The third field is a constant
-/// string containing the name of the translation unit.  The fourth field is
-/// the line number in the file of the annotated value declaration.
-///
-/// FIXME: this does not unique the annotation string constants, as llvm-gcc
-///        appears to.
-///
+void CodeGenModule::EmitGlobalAnnotations() {
+  if (Annotations.empty())
+    return;
+
+  // Create a new global variable for the ConstantStruct in the Module.
+  llvm::Constant *Array = llvm::ConstantArray::get(llvm::ArrayType::get(
+    Annotations[0]->getType(), Annotations.size()), Annotations);
+  llvm::GlobalValue *gv = new llvm::GlobalVariable(getModule(),
+    Array->getType(), false, llvm::GlobalValue::AppendingLinkage, Array,
+    "llvm.global.annotations");
+  gv->setSection(AnnotationSection);
+}
+
+llvm::Constant *CodeGenModule::EmitAnnotationString(llvm::StringRef Str) {
+  llvm::StringMap<llvm::Constant*>::iterator i = AnnotationStrings.find(Str);
+  if (i != AnnotationStrings.end())
+    return i->second;
+
+  // Not found yet, create a new global.
+  llvm::Constant *s = llvm::ConstantArray::get(getLLVMContext(), Str, true);
+  llvm::GlobalValue *gv = new llvm::GlobalVariable(getModule(), s->getType(),
+    true, llvm::GlobalValue::PrivateLinkage, s, ".str");
+  gv->setSection(AnnotationSection);
+  gv->setUnnamedAddr(true);
+  AnnotationStrings[Str] = gv;
+  return gv;
+}
+
+llvm::Constant *CodeGenModule::EmitAnnotationUnit(SourceLocation Loc) {
+  SourceManager &SM = getContext().getSourceManager();
+  PresumedLoc PLoc = SM.getPresumedLoc(Loc);
+  if (PLoc.isValid())
+    return EmitAnnotationString(PLoc.getFilename());
+  return EmitAnnotationString(SM.getBufferName(Loc));
+}
+
+llvm::Constant *CodeGenModule::EmitAnnotationLineNo(SourceLocation L) {
+  SourceManager &SM = getContext().getSourceManager();
+  PresumedLoc PLoc = SM.getPresumedLoc(L);
+  unsigned LineNo = PLoc.isValid() ? PLoc.getLine() :
+    SM.getExpansionLineNumber(L);
+  return llvm::ConstantInt::get(Int32Ty, LineNo);
+}
+
 llvm::Constant *CodeGenModule::EmitAnnotateAttr(llvm::GlobalValue *GV,
                                                 const AnnotateAttr *AA,
-                                                unsigned LineNo) {
-  llvm::Module *M = &getModule();
-
-  // get [N x i8] constants for the annotation string, and the filename string
-  // which are the 2nd and 3rd elements of the global annotation structure.
-  llvm::Type *SBP = llvm::Type::getInt8PtrTy(VMContext);
-  llvm::Constant *anno = llvm::ConstantArray::get(VMContext,
-                                                  AA->getAnnotation(), true);
-  llvm::Constant *unit = llvm::ConstantArray::get(VMContext,
-                                                  M->getModuleIdentifier(),
-                                                  true);
-
-  // Get the two global values corresponding to the ConstantArrays we just
-  // created to hold the bytes of the strings.
-  llvm::GlobalValue *annoGV =
-    new llvm::GlobalVariable(*M, anno->getType(), false,
-                             llvm::GlobalValue::PrivateLinkage, anno,
-                             GV->getName());
-  // translation unit name string, emitted into the llvm.metadata section.
-  llvm::GlobalValue *unitGV =
-    new llvm::GlobalVariable(*M, unit->getType(), false,
-                             llvm::GlobalValue::PrivateLinkage, unit,
-                             ".str");
-  unitGV->setUnnamedAddr(true);
+                                                SourceLocation L) {
+  // Get the globals for file name, annotation, and the line number.
+  llvm::Constant *AnnoGV = EmitAnnotationString(AA->getAnnotation()),
+                 *UnitGV = EmitAnnotationUnit(L),
+                 *LineNoCst = EmitAnnotationLineNo(L);
 
   // Create the ConstantStruct for the global annotation.
   llvm::Constant *Fields[4] = {
-    llvm::ConstantExpr::getBitCast(GV, SBP),
-    llvm::ConstantExpr::getBitCast(annoGV, SBP),
-    llvm::ConstantExpr::getBitCast(unitGV, SBP),
-    llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), LineNo)
+    llvm::ConstantExpr::getBitCast(GV, Int8PtrTy),
+    llvm::ConstantExpr::getBitCast(AnnoGV, Int8PtrTy),
+    llvm::ConstantExpr::getBitCast(UnitGV, Int8PtrTy),
+    LineNoCst
   };
   return llvm::ConstantStruct::getAnon(Fields);
+}
+
+void CodeGenModule::AddGlobalAnnotations(const ValueDecl *D,
+                                         llvm::GlobalValue *GV) {
+  assert(D->hasAttr<AnnotateAttr>() && "no annotate attribute");
+  // Get the struct elements for these annotations.
+  for (specific_attr_iterator<AnnotateAttr>
+       ai = D->specific_attr_begin<AnnotateAttr>(),
+       ae = D->specific_attr_end<AnnotateAttr>(); ai != ae; ++ai)
+    Annotations.push_back(EmitAnnotateAttr(GV, *ai, D->getLocation()));
 }
 
 bool CodeGenModule::MayDeferGeneration(const ValueDecl *Global) {
@@ -1297,11 +1307,8 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
     cast<llvm::GlobalValue>(Entry)->eraseFromParent();
   }
 
-  if (const AnnotateAttr *AA = D->getAttr<AnnotateAttr>()) {
-    SourceManager &SM = Context.getSourceManager();
-    AddAnnotation(EmitAnnotateAttr(
-        GV, AA, SM.getExpansionLineNumber(D->getLocation())));
-  }
+  if (D->hasAttr<AnnotateAttr>())
+    AddGlobalAnnotations(D, GV);
 
   GV->setInitializer(Init);
 
@@ -1530,6 +1537,8 @@ void CodeGenModule::EmitGlobalFunctionDefinition(GlobalDecl GD) {
     AddGlobalCtor(Fn, CA->getPriority());
   if (const DestructorAttr *DA = D->getAttr<DestructorAttr>())
     AddGlobalDtor(Fn, DA->getPriority());
+  if (D->hasAttr<AnnotateAttr>())
+    AddGlobalAnnotations(D, Fn);
 }
 
 void CodeGenModule::EmitAliasDefinition(GlobalDecl GD) {

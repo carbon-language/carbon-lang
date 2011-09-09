@@ -131,7 +131,7 @@ def AnalyzerNoReturn : InheritableAttr {
   let Spellings = ["analyzer_noreturn"];
 }
 
-def Annotate : InheritableAttr {
+def Annotate : InheritableParamAttr {
   let Spellings = ["annotate"];
   let Args = [StringArgument<"Annotation">];
 }

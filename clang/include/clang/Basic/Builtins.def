@@ -741,5 +741,8 @@ LIBBUILTIN(_Block_object_assign, "vv*vC*iC", "f", "Blocks.h", ALL_LANGUAGES)
 LIBBUILTIN(_Block_object_dispose, "vvC*iC", "f", "Blocks.h", ALL_LANGUAGES)
 // FIXME: Also declare NSConcreteGlobalBlock and NSConcreteStackBlock.
 
+// Annotation function
+BUILTIN(__builtin_annotation, "UiUicC*", "nc")
+
 #undef BUILTIN
 #undef LIBBUILTIN

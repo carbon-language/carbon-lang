@@ -88,6 +88,19 @@ static bool checkArgCount(Sema &S, CallExpr *call, unsigned desiredArgCount) {
     << call->getArg(1)->getSourceRange();
 }
 
+/// CheckBuiltinAnnotationString - Checks that string argument to the builtin
+/// annotation is a non wide string literal.
+static bool CheckBuiltinAnnotationString(Sema &S, Expr *Arg) {
+  Arg = Arg->IgnoreParenCasts();
+  StringLiteral *Literal = dyn_cast<StringLiteral>(Arg);
+  if (!Literal || !Literal->isAscii()) {
+    S.Diag(Arg->getLocStart(), diag::err_builtin_annotation_not_string_constant)
+      << Arg->getSourceRange();
+    return true;
+  }
+  return false;
+}
+
 ExprResult
 Sema::CheckBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
   ExprResult TheCallResult(Owned(TheCall));
@@ -184,6 +197,10 @@ Sema::CheckBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
   case Builtin::BI__sync_lock_release:
   case Builtin::BI__sync_swap:
     return SemaBuiltinAtomicOverloaded(move(TheCallResult));
+  case Builtin::BI__builtin_annotation:
+    if (CheckBuiltinAnnotationString(*this, TheCall->getArg(1)))
+      return ExprError();
+    break;
   }
   
   // Since the target specific builtins for each arch overlap, only check those
@@ -639,7 +656,6 @@ Sema::SemaBuiltinAtomicOverloaded(ExprResult TheCallResult) {
 
   return move(TheCallResult);
 }
-
 
 /// CheckObjCString - Checks that the argument to the builtin
 /// CFString constructor is correct
