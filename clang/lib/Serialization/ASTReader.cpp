@@ -4841,8 +4841,16 @@ ASTReader::SetGloballyVisibleDecls(IdentifierInfo *II,
     return;
   }
 
+  ASTContext &Ctx = *getContext();
   for (unsigned I = 0, N = DeclIDs.size(); I != N; ++I) {
     NamedDecl *D = cast<NamedDecl>(GetDecl(DeclIDs[I]));
+
+    // In C++, translation unit's visible decls map gets emitted in the AST
+    // file, but not on C; make the decl visible so it can be looked up.
+    if (!Ctx.getLangOptions().CPlusPlus)
+      SetExternalVisibleDeclsForName(Ctx.getTranslationUnitDecl(),
+                                     DeclarationName(II), D);
+
     if (SemaObj) {
       if (SemaObj->TUScope) {
         // Introduce this declaration into the translation-unit scope
