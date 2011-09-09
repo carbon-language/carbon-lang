@@ -251,8 +251,13 @@ static ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
   } else {
     M = lto_module_create_from_fd(file->fd, file->name, file->filesize);
   }
-  if (!M)
+  if (!M) {
+    if (const char* msg = lto_get_error_message()) {
+      (*message)(LDPL_ERROR, "Failed to create LTO module: %s", msg);
+      return LDPS_ERR;
+    }
     return LDPS_OK;
+  }
 
   *claimed = 1;
   Modules.resize(Modules.size() + 1);
