@@ -299,6 +299,8 @@ static DecodeStatus DecodeT2LDRDPreInstruction(llvm::MCInst &Inst,unsigned Insn,
                                uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeT2STRDPreInstruction(llvm::MCInst &Inst,unsigned Insn,
                                uint64_t Address, const void *Decoder);
+static DecodeStatus DecodeT2Adr(llvm::MCInst &Inst, unsigned Val,
+                                uint64_t Address, const void *Decoder);
 
 #include "ARMGenDisassemblerTables.inc"
 #include "ARMGenInstrInfo.inc"
@@ -3762,3 +3764,19 @@ DecodeT2STRDPreInstruction(llvm::MCInst &Inst, unsigned Insn,
 
   return S;
 }
+
+static DecodeStatus DecodeT2Adr(llvm::MCInst &Inst, uint32_t Insn,
+                                uint64_t Address, const void *Decoder) {
+  unsigned sign1 = fieldFromInstruction32(Insn, 21, 1);
+  unsigned sign2 = fieldFromInstruction32(Insn, 23, 1);
+  if (sign1 != sign2) return MCDisassembler::Fail;
+
+  unsigned Val = fieldFromInstruction32(Insn, 0, 8);
+  Val |= fieldFromInstruction32(Insn, 12, 3) << 8;
+  Val |= fieldFromInstruction32(Insn, 26, 1) << 11;
+  Val |= sign1 << 12;
+  Inst.addOperand(MCOperand::CreateImm(SignExtend32<13>(Val)));
+
+  return MCDisassembler::Success;
+}
+

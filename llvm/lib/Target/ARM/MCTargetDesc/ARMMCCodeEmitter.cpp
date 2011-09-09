@@ -662,7 +662,12 @@ getT2AdrLabelOpValue(const MCInst &MI, unsigned OpIdx,
   if (MO.isExpr())
     return ::getBranchTargetOpValue(MI, OpIdx, ARM::fixup_t2_adr_pcrel_12,
                                     Fixups);
-  return MO.getImm();
+  int32_t Val = MO.getImm();
+  if (Val < 0) {
+    Val *= -1;
+    Val |= 0x1000;
+  }
+  return Val;
 }
 
 /// getAdrLabelOpValue - Return encoding info for 8-bit immediate ADR label

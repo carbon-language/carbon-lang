@@ -1146,7 +1146,7 @@ class T2PCOneRegImm<dag oops, dag iops, InstrItinClass itin,
 // assembler.
 def t2ADR : T2PCOneRegImm<(outs rGPR:$Rd),
               (ins t2adrlabel:$addr, pred:$p),
-              IIC_iALUi, "adr{$p}.w\t$Rd, #$addr", []> {
+              IIC_iALUi, "adr{$p}.w\t$Rd, $addr", []> {
   let Inst{31-27} = 0b11110;
   let Inst{25-24} = 0b10;
   // Inst{23:21} = '11' (add = FALSE) or '00' (add = TRUE)
@@ -1163,6 +1163,8 @@ def t2ADR : T2PCOneRegImm<(outs rGPR:$Rd),
   let Inst{26}    = addr{11};
   let Inst{14-12} = addr{10-8};
   let Inst{7-0}   = addr{7-0};
+
+  let DecoderMethod = "DecodeT2Adr";
 }
 
 let neverHasSideEffects = 1, isReMaterializable = 1 in
