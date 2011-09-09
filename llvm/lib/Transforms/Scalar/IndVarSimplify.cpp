@@ -621,12 +621,12 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L, SCEVExpander &Rewriter) {
 //  To be replaced by -disable-iv-rewrite.
 //===----------------------------------------------------------------------===//
 
-// FIXME: It is an extremely bad idea to indvar substitute anything more
-// complex than affine induction variables.  Doing so will put expensive
-// polynomial evaluations inside of the loop, and the str reduction pass
-// currently can only reduce affine polynomials.  For now just disable
-// indvar subst on anything more complex than an affine addrec, unless
-// it can be expanded to a trivial value.
+/// FIXME: It is an extremely bad idea to indvar substitute anything more
+/// complex than affine induction variables.  Doing so will put expensive
+/// polynomial evaluations inside of the loop, and the str reduction pass
+/// currently can only reduce affine polynomials.  For now just disable
+/// indvar subst on anything more complex than an affine addrec, unless
+/// it can be expanded to a trivial value.
 static bool isSafe(const SCEV *S, const Loop *L, ScalarEvolution *SE) {
   // Loop-invariant values are safe.
   if (SE->isLoopInvariant(S, L)) return true;
@@ -637,7 +637,8 @@ static bool isSafe(const SCEV *S, const Loop *L, ScalarEvolution *SE) {
     return AR->isAffine();
 
   // An add is safe it all its operands are safe.
-  if (const SCEVCommutativeExpr *Commutative = dyn_cast<SCEVCommutativeExpr>(S)) {
+  if (const SCEVCommutativeExpr *Commutative
+      = dyn_cast<SCEVCommutativeExpr>(S)) {
     for (SCEVCommutativeExpr::op_iterator I = Commutative->op_begin(),
          E = Commutative->op_end(); I != E; ++I)
       if (!isSafe(*I, L, SE)) return false;
@@ -950,11 +951,11 @@ static bool HoistStep(Instruction *IncV, Instruction *InsertPos,
   return true;
 }
 
-// GetWideRecurrence - Is this instruction potentially interesting from IVUsers'
-// perspective after widening it's type? In other words, can the extend be
-// safely hoisted out of the loop with SCEV reducing the value to a recurrence
-// on the same loop. If so, return the sign or zero extended
-// recurrence. Otherwise return NULL.
+/// GetWideRecurrence - Is this instruction potentially interesting from
+/// IVUsers' perspective after widening it's type? In other words, can the
+/// extend be safely hoisted out of the loop with SCEV reducing the value to a
+/// recurrence on the same loop. If so, return the sign or zero extended
+/// recurrence. Otherwise return NULL.
 const SCEVAddRecExpr *WidenIV::GetWideRecurrence(Instruction *NarrowUse) {
   if (!SE->isSCEVable(NarrowUse->getType()))
     return 0;
@@ -1270,9 +1271,9 @@ void IndVarSimplify::SimplifyCongruentIVs(Loop *L) {
 //  LinearFunctionTestReplace and its kin. Rewrite the loop exit condition.
 //===----------------------------------------------------------------------===//
 
-// Check for expressions that ScalarEvolution generates to compute
-// BackedgeTakenInfo. If these expressions have not been reduced, then expanding
-// them may incur additional cost (albeit in the loop preheader).
+/// Check for expressions that ScalarEvolution generates to compute
+/// BackedgeTakenInfo. If these expressions have not been reduced, then
+/// expanding them may incur additional cost (albeit in the loop preheader).
 static bool isHighCostExpansion(const SCEV *S, BranchInst *BI,
                                 ScalarEvolution *SE) {
   // If the backedge-taken count is a UDiv, it's very likely a UDiv that
