@@ -2002,10 +2002,10 @@ static APInt ComputeRange(const APInt &First, const APInt &Last) {
 }
 
 /// handleJTSwitchCase - Emit jumptable for current switch case range
-bool SelectionDAGBuilder::handleJTSwitchCase(CaseRec& CR,
-                                             CaseRecVector& WorkList,
-                                             const Value* SV,
-                                             MachineBasicBlock* Default,
+bool SelectionDAGBuilder::handleJTSwitchCase(CaseRec &CR,
+                                             CaseRecVector &WorkList,
+                                             const Value *SV,
+                                             MachineBasicBlock *Default,
                                              MachineBasicBlock *SwitchBB) {
   Case& FrontCase = *CR.Range.first;
   Case& BackCase  = *(CR.Range.second-1);
@@ -2014,8 +2014,7 @@ bool SelectionDAGBuilder::handleJTSwitchCase(CaseRec& CR,
   const APInt &Last  = cast<ConstantInt>(BackCase.High)->getValue();
 
   APInt TSize(First.getBitWidth(), 0);
-  for (CaseItr I = CR.Range.first, E = CR.Range.second;
-       I!=E; ++I)
+  for (CaseItr I = CR.Range.first, E = CR.Range.second; I != E; ++I)
     TSize += I->size();
 
   if (!areJTsAllowed(TLI) || TSize.ult(4))
@@ -2093,7 +2092,6 @@ bool SelectionDAGBuilder::handleJTSwitchCase(CaseRec& CR,
     visitJumpTableHeader(JT, JTH, SwitchBB);
 
   JTCases.push_back(JumpTableBlock(JTH, JT));
-
   return true;
 }
 
