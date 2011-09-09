@@ -271,6 +271,13 @@ ObjCMethodDecl *Sema::tryCaptureObjCSelf() {
   return method;
 }
 
+static QualType stripObjCInstanceType(ASTContext &Context, QualType T) {
+  if (T == Context.getObjCInstanceType())
+    return Context.getObjCIdType();
+  
+  return T;
+}
+
 QualType Sema::getMessageSendResultType(QualType ReceiverType,
                                         ObjCMethodDecl *Method,
                                     bool isClassMessage, bool isSuperMessage) {
@@ -283,7 +290,7 @@ QualType Sema::getMessageSendResultType(QualType ReceiverType,
   //     was a class message send, T is the declared return type of the method
   //     found
   if (Method->isInstanceMethod() && isClassMessage)
-    return Method->getSendResultType();
+    return stripObjCInstanceType(Context, Method->getSendResultType());
   
   //   - if the receiver is super, T is a pointer to the class of the 
   //     enclosing method definition
@@ -302,7 +309,7 @@ QualType Sema::getMessageSendResultType(QualType ReceiverType,
   //     T is the declared return type of the method.
   if (ReceiverType->isObjCClassType() ||
       ReceiverType->isObjCQualifiedClassType())
-    return  Method->getSendResultType();
+    return stripObjCInstanceType(Context, Method->getSendResultType());
   
   //   - if the receiver is id, qualified id, Class, or qualified Class, T
   //     is the receiver type, otherwise
