@@ -878,6 +878,44 @@ _func:
 
 
 @------------------------------------------------------------------------------
+@ LSL (immediate)
+@------------------------------------------------------------------------------
+        lsl r2, r3, #12
+        lsls r8, r3, #31
+        lsls.w r2, r3, #1
+        lsl r2, r3, #4
+        lsls r2, r12, #15
+
+        lsl r3, #19
+        lsls r8, #2
+        lsls.w r7, #5
+        lsl.w r12, #21
+
+@ CHECK: lsl.w	r2, r3, #12             @ encoding: [0x4f,0xea,0x03,0x32]
+@ CHECK: lsls.w	r8, r3, #31             @ encoding: [0x5f,0xea,0xc3,0x78]
+@ CHECK: lsls.w	r2, r3, #1              @ encoding: [0x5f,0xea,0x43,0x02]
+@ CHECK: lsl.w	r2, r3, #4              @ encoding: [0x4f,0xea,0x03,0x12]
+@ CHECK: lsls.w	r2, r12, #15            @ encoding: [0x5f,0xea,0xcc,0x32]
+
+@ CHECK: lsl.w	r3, r3, #19             @ encoding: [0x4f,0xea,0xc3,0x43]
+@ CHECK: lsls.w	r8, r8, #2              @ encoding: [0x5f,0xea,0x88,0x08]
+@ CHECK: lsls.w	r7, r7, #5              @ encoding: [0x5f,0xea,0x47,0x17]
+@ CHECK: lsl.w	r12, r12, #21           @ encoding: [0x4f,0xea,0x4c,0x5c]
+
+
+@------------------------------------------------------------------------------
+@ LSL (register)
+@------------------------------------------------------------------------------
+        lsl r3, r4, r2
+        lsl.w r1, r2
+        lsls r3, r4, r8
+
+@ CHECK: lsl.w	r3, r4, r2              @ encoding: [0x04,0xfa,0x02,0xf3]
+@ CHECK: lsl.w	r1, r1, r2              @ encoding: [0x01,0xfa,0x02,0xf1]
+@ CHECK: lsls.w	r3, r4, r8              @ encoding: [0x14,0xfa,0x08,0xf3]
+
+
+@------------------------------------------------------------------------------
 @ IT
 @------------------------------------------------------------------------------
 @ Test encodings of a few full IT blocks, not just the IT instruction
