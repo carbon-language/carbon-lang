@@ -35,7 +35,7 @@
 #include "Plugins/SymbolFile/Symtab/SymbolFileSymtab.h"
 #include "Plugins/UnwindAssembly/x86/UnwindAssembly-x86.h"
 #include "Plugins/UnwindAssembly/InstEmulation/UnwindAssemblyInstEmulation.h"
-
+#include "Plugins/ObjectFile/PECOFF/ObjectFilePECOFF.h"
 #if defined (__APPLE__)
 #include "Plugins/DynamicLoader/MacOSX-DYLD/DynamicLoaderMacOSXDYLD.h"
 #include "Plugins/DynamicLoader/Darwin-Kernel/DynamicLoaderDarwinKernel.h"
@@ -94,7 +94,7 @@ lldb_private::Initialize ()
         UnwindAssemblyInstEmulation::Initialize();
         UnwindAssembly_x86::Initialize();
         EmulateInstructionARM::Initialize ();
-
+        ObjectFilePECOFF::Initialize ();
 #if defined (__APPLE__)
         //----------------------------------------------------------------------
         // Apple/Darwin hosted plugins
@@ -166,6 +166,7 @@ lldb_private::Terminate ()
     UnwindAssembly_x86::Terminate();
     UnwindAssemblyInstEmulation::Terminate();
     EmulateInstructionARM::Terminate ();
+    ObjectFilePECOFF::Terminate ();
 
 #if defined (__APPLE__)
     DynamicLoaderMacOSXDYLD::Terminate();

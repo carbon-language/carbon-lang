@@ -384,6 +384,7 @@
 		26DE20611161902700A093E2 /* SBBlock.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26DE20601161902600A093E2 /* SBBlock.cpp */; };
 		26DE20631161904200A093E2 /* SBLineEntry.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26DE20621161904200A093E2 /* SBLineEntry.cpp */; };
 		26DE20651161904E00A093E2 /* SBSymbol.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26DE20641161904E00A093E2 /* SBSymbol.cpp */; };
+		26E152261419CAD4007967D0 /* ObjectFilePECOFF.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26E152231419CACA007967D0 /* ObjectFilePECOFF.cpp */; };
 		26ECA04313665FED008D1F18 /* ARM_DWARF_Registers.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26ECA04213665FED008D1F18 /* ARM_DWARF_Registers.cpp */; };
 		26ED3D6D13C563810017D45E /* OptionGroupVariable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26ED3D6C13C563810017D45E /* OptionGroupVariable.cpp */; };
 		26F4A21C13FBA31A0064B613 /* ThreadMemory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26F4A21A13FBA31A0064B613 /* ThreadMemory.cpp */; };
@@ -1060,6 +1061,8 @@
 		26DFBC57113B48F300DD817F /* CommandObjectCrossref.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectCrossref.cpp; path = source/Commands/CommandObjectCrossref.cpp; sourceTree = "<group>"; };
 		26DFBC58113B48F300DD817F /* CommandObjectMultiword.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectMultiword.cpp; path = source/Commands/CommandObjectMultiword.cpp; sourceTree = "<group>"; };
 		26DFBC59113B48F300DD817F /* CommandObjectRegexCommand.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectRegexCommand.cpp; path = source/Interpreter/CommandObjectRegexCommand.cpp; sourceTree = "<group>"; };
+		26E152231419CACA007967D0 /* ObjectFilePECOFF.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ObjectFilePECOFF.cpp; sourceTree = "<group>"; };
+		26E152241419CACA007967D0 /* ObjectFilePECOFF.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ObjectFilePECOFF.h; sourceTree = "<group>"; };
 		26E3EEBD11A9870400FBADB6 /* Unwind.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Unwind.h; path = include/lldb/Target/Unwind.h; sourceTree = "<group>"; };
 		26E3EEE311A9901300FBADB6 /* UnwindMacOSXFrameBackchain.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UnwindMacOSXFrameBackchain.cpp; path = Utility/UnwindMacOSXFrameBackchain.cpp; sourceTree = "<group>"; };
 		26E3EEE411A9901300FBADB6 /* UnwindMacOSXFrameBackchain.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UnwindMacOSXFrameBackchain.h; path = Utility/UnwindMacOSXFrameBackchain.h; sourceTree = "<group>"; };
@@ -1494,6 +1497,7 @@
 			children = (
 				260C898310F57C5600BB2B04 /* ELF */,
 				260C898710F57C5600BB2B04 /* Mach-O */,
+				26E152221419CACA007967D0 /* PECOFF */,
 			);
 			path = ObjectFile;
 			sourceTree = "<group>";
@@ -2553,6 +2557,15 @@
 			name = "lldb-platform";
 			sourceTree = "<group>";
 		};
+		26E152221419CACA007967D0 /* PECOFF */ = {
+			isa = PBXGroup;
+			children = (
+				26E152231419CACA007967D0 /* ObjectFilePECOFF.cpp */,
+				26E152241419CACA007967D0 /* ObjectFilePECOFF.h */,
+			);
+			path = PECOFF;
+			sourceTree = "<group>";
+		};
 		26F5C22410F3D950009D5894 /* Tools */ = {
 			isa = PBXGroup;
 			children = (
@@ -3344,6 +3357,7 @@
 				268ED0A5140FF54200DE830F /* DataEncoder.cpp in Sources */,
 				26A0DA4E140F7226006DA411 /* HashedNameToDIE.cpp in Sources */,
 				B27318421416AC12006039C8 /* WatchpointLocationList.cpp in Sources */,
+				26E152261419CAD4007967D0 /* ObjectFilePECOFF.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
