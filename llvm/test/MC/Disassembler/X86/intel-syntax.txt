@@ -1,0 +1,13 @@
+# RUN: llvm-mc --disassemble %s -triple=x86_64-apple-darwin9 -x86-asm-syntax=intel | FileCheck %s
+
+# CHECK: movsb
+0xa4
+
+# CHECK: movsw
+0x66 0xa5
+
+# CHECK: movsd
+0xa5
+
+# CHECK: movsq
+0x48 0xa5
