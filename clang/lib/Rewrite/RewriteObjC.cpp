@@ -465,6 +465,8 @@ namespace {
                                    const QualType *args,
                                    unsigned numArgs,
                                    bool variadic = false) {
+      if (result == Context->getObjCInstanceType())
+        result =  Context->getObjCIdType();
       FunctionProtoType::ExtProtoInfo fpi;
       fpi.Variadic = variadic;
       return Context->getFunctionType(result, args, numArgs, fpi);
@@ -970,7 +972,7 @@ void RewriteObjC::RewriteForwardClassDecl(
 void RewriteObjC::RewriteMethodDeclaration(ObjCMethodDecl *Method) {
   // When method is a synthesized one, such as a getter/setter there is
   // nothing to rewrite.
-  if (Method->isSynthesized())
+  if (Method->isImplicit())
     return;
   SourceLocation LocStart = Method->getLocStart();
   SourceLocation LocEnd = Method->getLocEnd();
