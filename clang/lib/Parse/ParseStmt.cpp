@@ -497,7 +497,7 @@ StmtResult Parser::ParseCaseStatement(ParsedAttributes &attrs, bool MissingCase,
   // DeepestParsedCaseStmt - This is the deepest statement we have parsed, which
   // gets updated each time a new case is parsed, and whose body is unset so
   // far.  When parsing 'case 4', this is the 'case 3' node.
-  StmtTy *DeepestParsedCaseStmt = 0;
+  Stmt *DeepestParsedCaseStmt = 0;
 
   // While we have case statements, eat and stack them.
   SourceLocation ColonLoc;

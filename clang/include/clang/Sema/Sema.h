@@ -177,10 +177,8 @@ public:
   typedef OpaquePtr<DeclGroupRef> DeclGroupPtrTy;
   typedef OpaquePtr<TemplateName> TemplateTy;
   typedef OpaquePtr<QualType> TypeTy;
-  typedef Attr AttrTy;
   typedef CXXBaseSpecifier BaseTy;
   typedef CXXCtorInitializer MemInitTy;
-  typedef Stmt StmtTy;
   typedef TemplateParameterList TemplateParamsTy;
   typedef NestedNameSpecifier CXXScopeTy;
 
