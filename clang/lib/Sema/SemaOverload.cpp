@@ -3868,25 +3868,57 @@ ExprResult Sema::PerformContextuallyConvertToBool(Expr *From) {
   return ExprError();
 }
 
-/// TryContextuallyConvertToObjCId - Attempt to contextually convert the
-/// expression From to 'id'.
-static ImplicitConversionSequence
-TryContextuallyConvertToObjCId(Sema &S, Expr *From) {
-  QualType Ty = S.Context.getObjCIdType();
-  return TryImplicitConversion(S, From, Ty,
-                               // FIXME: Are these flags correct?
-                               /*SuppressUserConversions=*/false,
-                               /*AllowExplicit=*/true,
-                               /*InOverloadResolution=*/false,
-                               /*CStyle=*/false,
-                               /*AllowObjCWritebackConversion=*/false);
+/// dropPointerConversions - If the given standard conversion sequence
+/// involves any pointer conversions, remove them.  This may change
+/// the result type of the conversion sequence.
+static void dropPointerConversion(StandardConversionSequence &SCS) {
+  if (SCS.Second == ICK_Pointer_Conversion) {
+    SCS.Second = ICK_Identity;
+    SCS.Third = ICK_Identity;
+    SCS.ToTypePtrs[2] = SCS.ToTypePtrs[1] = SCS.ToTypePtrs[0];
+  }
 }
 
-/// PerformContextuallyConvertToObjCId - Perform a contextual conversion
-/// of the expression From to 'id'.
-ExprResult Sema::PerformContextuallyConvertToObjCId(Expr *From) {
+/// TryContextuallyConvertToObjCPointer - Attempt to contextually
+/// convert the expression From to an Objective-C pointer type.
+static ImplicitConversionSequence
+TryContextuallyConvertToObjCPointer(Sema &S, Expr *From) {
+  // Do an implicit conversion to 'id'.
+  QualType Ty = S.Context.getObjCIdType();
+  ImplicitConversionSequence ICS
+    = TryImplicitConversion(S, From, Ty,
+                            // FIXME: Are these flags correct?
+                            /*SuppressUserConversions=*/false,
+                            /*AllowExplicit=*/true,
+                            /*InOverloadResolution=*/false,
+                            /*CStyle=*/false,
+                            /*AllowObjCWritebackConversion=*/false);
+
+  // Strip off any final conversions to 'id'.
+  switch (ICS.getKind()) {
+  case ImplicitConversionSequence::BadConversion:
+  case ImplicitConversionSequence::AmbiguousConversion:
+  case ImplicitConversionSequence::EllipsisConversion:
+    break;
+
+  case ImplicitConversionSequence::UserDefinedConversion:
+    dropPointerConversion(ICS.UserDefined.After);
+    break;
+
+  case ImplicitConversionSequence::StandardConversion:
+    dropPointerConversion(ICS.Standard);
+    break;
+  }
+
+  return ICS;
+}
+
+/// PerformContextuallyConvertToObjCPointer - Perform a contextual
+/// conversion of the expression From to an Objective-C pointer type.
+ExprResult Sema::PerformContextuallyConvertToObjCPointer(Expr *From) {
   QualType Ty = Context.getObjCIdType();
-  ImplicitConversionSequence ICS = TryContextuallyConvertToObjCId(*this, From);
+  ImplicitConversionSequence ICS =
+    TryContextuallyConvertToObjCPointer(*this, From);
   if (!ICS.isBad())
     return PerformImplicitConversion(From, Ty, ICS, AA_Converting);
   return ExprError();

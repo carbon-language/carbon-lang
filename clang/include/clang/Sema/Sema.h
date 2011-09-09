@@ -1387,7 +1387,7 @@ public:
                                                  CXXMethodDecl *Method);
 
   ExprResult PerformContextuallyConvertToBool(Expr *From);
-  ExprResult PerformContextuallyConvertToObjCId(Expr *From);
+  ExprResult PerformContextuallyConvertToObjCPointer(Expr *From);
 
   ExprResult 
   ConvertToIntegralOrEnumerationType(SourceLocation Loc, Expr *FromE,

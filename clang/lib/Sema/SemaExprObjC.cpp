@@ -1366,17 +1366,12 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
                             IsNull ? CK_NullToPointer : CK_IntegralToPointer).take();
         }
         ReceiverType = Receiver->getType();
-      } 
-      else {
+      } else {
         ExprResult ReceiverRes;
         if (getLangOptions().CPlusPlus)
-          ReceiverRes = PerformContextuallyConvertToObjCId(Receiver);
+          ReceiverRes = PerformContextuallyConvertToObjCPointer(Receiver);
         if (ReceiverRes.isUsable()) {
           Receiver = ReceiverRes.take();
-          if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(Receiver)) {
-            Receiver = ICE->getSubExpr();
-            ReceiverType = Receiver->getType();
-          }
           return BuildInstanceMessage(Receiver,
                                       ReceiverType,
                                       SuperLoc,
