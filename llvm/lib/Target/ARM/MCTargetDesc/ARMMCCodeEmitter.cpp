@@ -144,6 +144,12 @@ public:
   /// operand.
   uint32_t getT2AddrModeImm8s4OpValue(const MCInst &MI, unsigned OpIdx,
                                    SmallVectorImpl<MCFixup> &Fixups) const;
+
+  /// getT2AddrModeImm0_1020s4OpValue - Return encoding info for 'reg + imm8<<2'
+  /// operand.
+  uint32_t getT2AddrModeImm0_1020s4OpValue(const MCInst &MI, unsigned OpIdx,
+                                   SmallVectorImpl<MCFixup> &Fixups) const;
+
   /// getT2Imm8s4OpValue - Return encoding info for '+/- imm8<<2'
   /// operand.
   uint32_t getT2Imm8s4OpValue(const MCInst &MI, unsigned OpIdx,
@@ -793,6 +799,20 @@ getT2AddrModeImm8s4OpValue(const MCInst &MI, unsigned OpIdx,
     Binary |= (1 << 8);
   Binary |= (Reg << 9);
   return Binary;
+}
+
+/// getT2AddrModeImm0_1020s4OpValue - Return encoding info for
+/// 'reg + imm8<<2' operand.
+uint32_t ARMMCCodeEmitter::
+getT2AddrModeImm0_1020s4OpValue(const MCInst &MI, unsigned OpIdx,
+                        SmallVectorImpl<MCFixup> &Fixups) const {
+  // {11-8} = reg
+  // {7-0}  = imm8
+  const MCOperand &MO = MI.getOperand(OpIdx);
+  const MCOperand &MO1 = MI.getOperand(OpIdx + 1);
+  unsigned Reg = getARMRegisterNumbering(MO.getReg());
+  unsigned Imm8 = MO1.getImm();
+  return (Reg << 8) | Imm8;
 }
 
 // FIXME: This routine assumes that a binary

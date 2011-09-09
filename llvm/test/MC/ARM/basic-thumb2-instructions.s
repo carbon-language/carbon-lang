@@ -646,6 +646,23 @@ _func:
 @ CHECK: ldrd	r3, r5, [r6]            @ encoding: [0xd6,0xe9,0x00,0x35]
 @ CHECK: ldrd	r8, r1, [r3]            @ encoding: [0xd3,0xe9,0x00,0x81]
 
+@------------------------------------------------------------------------------
+@ LDREX/LDREXB/LDREXH/LDREXD
+@------------------------------------------------------------------------------
+        ldrex r1, [r4]
+        ldrex r8, [r4, #0]
+        ldrex r2, [sp, #128]
+        ldrexb r5, [r7]
+        ldrexh r9, [r12]
+        ldrexd r9, r3, [r4]
+
+@ CHECK: ldrex	r1, [r4]                @ encoding: [0x54,0xe8,0x00,0x1f]
+@ CHECK: ldrex	r8, [r4]                @ encoding: [0x54,0xe8,0x00,0x8f]
+@ CHECK: ldrex	r2, [sp, #128]          @ encoding: [0x5d,0xe8,0x20,0x2f]
+@ CHECK: ldrexb	r5, [r7]                @ encoding: [0xd7,0xe8,0x4f,0x5f]
+@ CHECK: ldrexh	r9, [r12]               @ encoding: [0xdc,0xe8,0x5f,0x9f]
+@ CHECK: ldrexd	r9, r3, [r4]            @ encoding: [0xd4,0xe8,0x7f,0x93]
+
 
 @------------------------------------------------------------------------------
 @ FIXME: LDRD(literal)

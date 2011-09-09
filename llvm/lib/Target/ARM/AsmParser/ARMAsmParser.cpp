@@ -756,6 +756,14 @@ public:
     int64_t Val = Mem.OffsetImm->getValue();
     return Val >= -1020 && Val <= 1020 && (Val & 3) == 0;
   }
+  bool isMemImm0_1020s4Offset() const {
+    if (Kind != Memory || Mem.OffsetRegNum != 0)
+      return false;
+    // Immediate offset a multiple of 4 in range [0, 1020].
+    if (!Mem.OffsetImm) return true;
+    int64_t Val = Mem.OffsetImm->getValue();
+    return Val >= 0 && Val <= 1020 && (Val & 3) == 0;
+  }
   bool isMemImm8Offset() const {
     if (Kind != Memory || Mem.OffsetRegNum != 0)
       return false;
@@ -1142,6 +1150,14 @@ public:
   void addMemImm8s4OffsetOperands(MCInst &Inst, unsigned N) const {
     assert(N == 2 && "Invalid number of operands!");
     int64_t Val = Mem.OffsetImm ? Mem.OffsetImm->getValue() : 0;
+    Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
+    Inst.addOperand(MCOperand::CreateImm(Val));
+  }
+
+  void addMemImm0_1020s4OffsetOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 2 && "Invalid number of operands!");
+    // The lower two bits are always zero and as such are not encoded.
+    int32_t Val = Mem.OffsetImm ? Mem.OffsetImm->getValue() / 4 : 0;
     Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
     Inst.addOperand(MCOperand::CreateImm(Val));
   }

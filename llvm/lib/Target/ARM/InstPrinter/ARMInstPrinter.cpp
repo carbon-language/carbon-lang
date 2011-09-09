@@ -812,6 +812,18 @@ void ARMInstPrinter::printT2AddrModeImm8s4Operand(const MCInst *MI,
   O << "]";
 }
 
+void ARMInstPrinter::printT2AddrModeImm0_1020s4Operand(const MCInst *MI,
+                                                       unsigned OpNum,
+                                                       raw_ostream &O) {
+  const MCOperand &MO1 = MI->getOperand(OpNum);
+  const MCOperand &MO2 = MI->getOperand(OpNum+1);
+
+  O << "[" << getRegisterName(MO1.getReg());
+  if (MO2.getImm())
+    O << ", #" << MO2.getImm() * 4;
+  O << "]";
+}
+
 void ARMInstPrinter::printT2AddrModeImm8OffsetOperand(const MCInst *MI,
                                                       unsigned OpNum,
                                                       raw_ostream &O) {

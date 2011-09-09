@@ -96,6 +96,8 @@ public:
                                   raw_ostream &O);
   void printT2AddrModeImm8s4Operand(const MCInst *MI, unsigned OpNum,
                                     raw_ostream &O);
+  void printT2AddrModeImm0_1020s4Operand(const MCInst *MI, unsigned OpNum,
+                                    raw_ostream &O);
   void printT2AddrModeImm8OffsetOperand(const MCInst *MI, unsigned OpNum,
                                         raw_ostream &O);
   void printT2AddrModeImm8s4OffsetOperand(const MCInst *MI, unsigned OpNum,

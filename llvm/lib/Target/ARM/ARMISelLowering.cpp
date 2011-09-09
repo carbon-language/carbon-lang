@@ -5067,7 +5067,10 @@ ARMTargetLowering::EmitAtomicCmpSwap(MachineInstr *MI,
   //   cmp dest, oldval
   //   bne exitMBB
   BB = loop1MBB;
-  AddDefaultPred(BuildMI(BB, dl, TII->get(ldrOpc), dest).addReg(ptr));
+  MachineInstrBuilder MIB = BuildMI(BB, dl, TII->get(ldrOpc), dest).addReg(ptr);
+  if (ldrOpc == ARM::t2LDREX)
+    MIB.addImm(0);
+  AddDefaultPred(MIB);
   AddDefaultPred(BuildMI(BB, dl, TII->get(isThumb2 ? ARM::t2CMPrr : ARM::CMPrr))
                  .addReg(dest).addReg(oldval));
   BuildMI(BB, dl, TII->get(isThumb2 ? ARM::t2Bcc : ARM::Bcc))
@@ -5080,8 +5083,10 @@ ARMTargetLowering::EmitAtomicCmpSwap(MachineInstr *MI,
   //   cmp scratch, #0
   //   bne loop1MBB
   BB = loop2MBB;
-  AddDefaultPred(BuildMI(BB, dl, TII->get(strOpc), scratch).addReg(newval)
-                 .addReg(ptr));
+  MIB = BuildMI(BB, dl, TII->get(strOpc), scratch).addReg(newval).addReg(ptr);
+  if (strOpc == ARM::t2STREX)
+    MIB.addImm(0);
+  AddDefaultPred(MIB);
   AddDefaultPred(BuildMI(BB, dl, TII->get(isThumb2 ? ARM::t2CMPri : ARM::CMPri))
                  .addReg(scratch).addImm(0));
   BuildMI(BB, dl, TII->get(isThumb2 ? ARM::t2Bcc : ARM::Bcc))
@@ -5167,7 +5172,10 @@ ARMTargetLowering::EmitAtomicBinary(MachineInstr *MI, MachineBasicBlock *BB,
   //   bne- loopMBB
   //   fallthrough --> exitMBB
   BB = loopMBB;
-  AddDefaultPred(BuildMI(BB, dl, TII->get(ldrOpc), dest).addReg(ptr));
+  MachineInstrBuilder MIB = BuildMI(BB, dl, TII->get(ldrOpc), dest).addReg(ptr);
+  if (ldrOpc == ARM::t2LDREX)
+    MIB.addImm(0);
+  AddDefaultPred(MIB);
   if (BinOpcode) {
     // operand order needs to go the other way for NAND
     if (BinOpcode == ARM::BICrr || BinOpcode == ARM::t2BICrr)
@@ -5178,8 +5186,10 @@ ARMTargetLowering::EmitAtomicBinary(MachineInstr *MI, MachineBasicBlock *BB,
                      addReg(dest).addReg(incr)).addReg(0);
   }
 
-  AddDefaultPred(BuildMI(BB, dl, TII->get(strOpc), scratch).addReg(scratch2)
-                 .addReg(ptr));
+  MIB = BuildMI(BB, dl, TII->get(strOpc), scratch).addReg(scratch2).addReg(ptr);
+  if (strOpc == ARM::t2STREX)
+    MIB.addImm(0);
+  AddDefaultPred(MIB);
   AddDefaultPred(BuildMI(BB, dl, TII->get(isThumb2 ? ARM::t2CMPri : ARM::CMPri))
                  .addReg(scratch).addImm(0));
   BuildMI(BB, dl, TII->get(isThumb2 ? ARM::t2Bcc : ARM::Bcc))
@@ -5274,7 +5284,10 @@ ARMTargetLowering::EmitAtomicBinaryMinMax(MachineInstr *MI,
   //   bne- loopMBB
   //   fallthrough --> exitMBB
   BB = loopMBB;
-  AddDefaultPred(BuildMI(BB, dl, TII->get(ldrOpc), dest).addReg(ptr));
+  MachineInstrBuilder MIB = BuildMI(BB, dl, TII->get(ldrOpc), dest).addReg(ptr);
+  if (ldrOpc == ARM::t2LDREX)
+    MIB.addImm(0);
+  AddDefaultPred(MIB);
 
   // Sign extend the value, if necessary.
   if (signExtend && extendOpc) {
@@ -5290,8 +5303,10 @@ ARMTargetLowering::EmitAtomicBinaryMinMax(MachineInstr *MI,
   BuildMI(BB, dl, TII->get(isThumb2 ? ARM::t2MOVCCr : ARM::MOVCCr), scratch2)
          .addReg(oldval).addReg(incr).addImm(Cond).addReg(ARM::CPSR);
 
-  AddDefaultPred(BuildMI(BB, dl, TII->get(strOpc), scratch).addReg(scratch2)
-                 .addReg(ptr));
+  MIB = BuildMI(BB, dl, TII->get(strOpc), scratch).addReg(scratch2).addReg(ptr);
+  if (strOpc == ARM::t2STREX)
+    MIB.addImm(0);
+  AddDefaultPred(MIB);
   AddDefaultPred(BuildMI(BB, dl, TII->get(isThumb2 ? ARM::t2CMPri : ARM::CMPri))
                  .addReg(scratch).addImm(0));
   BuildMI(BB, dl, TII->get(isThumb2 ? ARM::t2Bcc : ARM::Bcc))

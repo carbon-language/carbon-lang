@@ -211,6 +211,8 @@ namespace {
       const { return 0; }
     unsigned getT2AddrModeImm8s4OpValue(const MachineInstr &MI, unsigned Op)
       const { return 0; }
+    unsigned getT2AddrModeImm0_1020s4OpValue(const MachineInstr &MI,unsigned Op)
+      const { return 0; }
     unsigned getT2AddrModeImm8OffsetOpValue(const MachineInstr &MI, unsigned Op)
       const { return 0; }
     unsigned getT2AddrModeImm12OffsetOpValue(const MachineInstr &MI,unsigned Op)

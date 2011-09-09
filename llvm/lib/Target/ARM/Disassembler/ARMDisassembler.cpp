@@ -269,6 +269,8 @@ static DecodeStatus DecodeT2Imm8S4(llvm::MCInst &Inst, unsigned Val,
                                uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeT2AddrModeImm8s4(llvm::MCInst &Inst, unsigned Val,
                                uint64_t Address, const void *Decoder);
+static DecodeStatus DecodeT2AddrModeImm0_1020s4(llvm::MCInst &Inst,unsigned Val,
+                               uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeT2Imm8(llvm::MCInst &Inst, unsigned Val,
                                uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeT2AddrModeImm8(llvm::MCInst &Inst, unsigned Val,
@@ -2665,6 +2667,21 @@ static DecodeStatus DecodeT2AddrModeImm8s4(llvm::MCInst &Inst, unsigned Val,
     return MCDisassembler::Fail;
   if (!Check(S, DecodeT2Imm8S4(Inst, imm, Address, Decoder)))
     return MCDisassembler::Fail;
+
+  return S;
+}
+
+static DecodeStatus DecodeT2AddrModeImm0_1020s4(llvm::MCInst &Inst,unsigned Val,
+                                   uint64_t Address, const void *Decoder) {
+  DecodeStatus S = MCDisassembler::Success;
+
+  unsigned Rn = fieldFromInstruction32(Val, 8, 4);
+  unsigned imm = fieldFromInstruction32(Val, 0, 8);
+
+  if (!Check(S, DecodeGPRnopcRegisterClass(Inst, Rn, Address, Decoder)))
+    return MCDisassembler::Fail;
+
+  Inst.addOperand(MCOperand::CreateImm(imm));
 
   return S;
 }
