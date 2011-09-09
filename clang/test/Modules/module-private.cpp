@@ -88,5 +88,22 @@ __module_private__ void public_func_template(); // expected-error{{__module_priv
 struct public_struct; // expected-note{{previous declaration is here}}
 __module_private__ struct public_struct; // expected-error{{__module_private__ declaration of 'public_struct' follows public declaration}}
 
+// Check for attempts to make specializations private
+template<> __module_private__ void public_func_template<int>(); // expected-error{{template specialization cannot be declared __module_private__}}
+
+template<typename T>
+struct public_class {
+  struct inner_struct;
+  static int static_var;
+};
+
+template<> __module_private__ struct public_class<int>::inner_struct { }; // expected-error{{member specialization cannot be declared __module_private__}}
+template<> __module_private__ int public_class<int>::static_var = 17; // expected-error{{member specialization cannot be declared __module_private__}}
+
+template<>
+__module_private__ struct public_class<float> { }; // expected-error{{template specialization cannot be declared __module_private__}}
+
+template<typename T>
+__module_private__ struct public_class<T *> { }; // expected-error{{partial specialization cannot be declared __module_private__}}
 
 #endif

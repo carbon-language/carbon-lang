@@ -3836,6 +3836,7 @@ public:
   DeclResult
   ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagUseKind TUK,
                                    SourceLocation KWLoc,
+                                   SourceLocation ModulePrivateLoc,
                                    CXXScopeSpec &SS,
                                    TemplateTy Template,
                                    SourceLocation TemplateNameLoc,

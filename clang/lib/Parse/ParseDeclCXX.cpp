@@ -1141,7 +1141,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
       // Build the class template specialization.
       TagOrTempResult
         = Actions.ActOnClassTemplateSpecialization(getCurScope(), TagType, TUK,
-                       StartLoc, SS,
+                       StartLoc, DS.getModulePrivateSpecLoc(), SS,
                        TemplateId->Template,
                        TemplateId->TemplateNameLoc,
                        TemplateId->LAngleLoc,

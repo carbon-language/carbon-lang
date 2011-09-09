@@ -4725,6 +4725,7 @@ DeclResult
 Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
                                        TagUseKind TUK,
                                        SourceLocation KWLoc,
+                                       SourceLocation ModulePrivateLoc,
                                        CXXScopeSpec &SS,
                                        TemplateTy TemplateD,
                                        SourceLocation TemplateNameLoc,
@@ -5090,6 +5091,11 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
   if (Attr)
     ProcessDeclAttributeList(S, Specialization, Attr);
 
+  if (ModulePrivateLoc.isValid())
+    Diag(Specialization->getLocation(), diag::err_module_private_specialization)
+      << (isPartialSpecialization? 1 : 0)
+      << FixItHint::CreateRemoval(ModulePrivateLoc);
+  
   // Build the fully-sugared type for this class template
   // specialization as the user wrote in the specialization
   // itself. This means that we'll pretty-print the type retrieved

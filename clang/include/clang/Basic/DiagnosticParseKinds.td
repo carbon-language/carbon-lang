@@ -574,12 +574,14 @@ def err_seh___except_filter : Error<
 
 def err_seh___finally_block : Error<
   "%0 only allowed in __finally block">;
+  
+} // end of Parse Issue category.
 
-// Modules
+let CategoryName = "Modules Issue" in {
 def err_module_expected_ident : Error<
   "expected a module name after '__import_module__'">;
 def err_module_expected_semi : Error<
   "expected a semicolon name after module name">;
-  
-} // end of Parse Issue category.
+}
+
 } // end of Parser diagnostics

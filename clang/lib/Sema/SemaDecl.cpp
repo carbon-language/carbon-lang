@@ -3821,8 +3821,14 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
       NewVD->setThreadSpecified(true);
   }
 
-  if (D.getDeclSpec().isModulePrivateSpecified())
-    NewVD->setModulePrivate();
+  if (D.getDeclSpec().isModulePrivateSpecified()) {
+    if (isExplicitSpecialization)
+      Diag(NewVD->getLocation(), diag::err_module_private_specialization)
+        << 2
+        << FixItHint::CreateRemoval(D.getDeclSpec().getModulePrivateSpecLoc());
+    else
+      NewVD->setModulePrivate();
+  }
 
   // Set the lexical context. If the declarator has a C++ scope specifier, the
   // lexical context will be different from the semantic context.
@@ -4709,9 +4715,17 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
 
     // If __module_private__ was specified, mark the function accordingly.
     if (D.getDeclSpec().isModulePrivateSpecified()) {
-      NewFD->setModulePrivate();
-      if (FunctionTemplate)
-        FunctionTemplate->setModulePrivate();
+      if (isFunctionTemplateSpecialization) {
+        SourceLocation ModulePrivateLoc
+          = D.getDeclSpec().getModulePrivateSpecLoc();
+        Diag(ModulePrivateLoc, diag::err_module_private_specialization)
+          << 0
+          << FixItHint::CreateRemoval(ModulePrivateLoc);
+      } else {
+        NewFD->setModulePrivate();
+        if (FunctionTemplate)
+          FunctionTemplate->setModulePrivate();
+      }
     }
 
     // Filter out previous declarations that don't match the scope.
@@ -7751,7 +7765,11 @@ CreateNewDecl:
   if (PrevDecl && PrevDecl->isModulePrivate())
     New->setModulePrivate();
   else if (ModulePrivateLoc.isValid()) {
-    if (PrevDecl && !PrevDecl->isModulePrivate())
+    if (isExplicitSpecialization)
+      Diag(New->getLocation(), diag::err_module_private_specialization)
+        << 2
+        << FixItHint::CreateRemoval(ModulePrivateLoc);
+    else if (PrevDecl && !PrevDecl->isModulePrivate())
       diagnoseModulePrivateRedeclaration(New, PrevDecl, ModulePrivateLoc);
     else
       New->setModulePrivate();
