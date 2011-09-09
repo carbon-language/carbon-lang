@@ -1,5 +1,5 @@
-; RUN: llc -march=mips -mcpu=4ke < %s | FileCheck %s
-; RUN: llc -march=mips -mcpu=4ke -regalloc=basic < %s | FileCheck %s
+; RUN: llc -march=mips < %s | FileCheck %s
+; RUN: llc -march=mips -regalloc=basic < %s | FileCheck %s
 
 @i1 = global [3 x i32] [i32 1, i32 2, i32 3], align 4
 @i3 = common global i32* null, align 4

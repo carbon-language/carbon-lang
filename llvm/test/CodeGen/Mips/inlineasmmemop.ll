@@ -1,4 +1,4 @@
-; RUN: llc -march=mipsel -mcpu=4ke < %s | FileCheck %s
+; RUN: llc -march=mipsel < %s | FileCheck %s
 
 @g1 = external global i32
 

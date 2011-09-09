@@ -1,5 +1,5 @@
-; RUN: llc  < %s -march=mipsel -mcpu=4ke | FileCheck %s -check-prefix=CHECK-EL
-; RUN: llc  < %s -march=mips -mcpu=4ke | FileCheck %s -check-prefix=CHECK-EB
+; RUN: llc  < %s -march=mipsel | FileCheck %s -check-prefix=CHECK-EL
+; RUN: llc  < %s -march=mips | FileCheck %s -check-prefix=CHECK-EB
 
 define double @func0(double %d0, double %d1) nounwind readnone {
 entry:

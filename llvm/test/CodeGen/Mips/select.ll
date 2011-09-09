@@ -1,11 +1,11 @@
-; RUN: llc  < %s -march=mipsel -mcpu=4ke | FileCheck %s -check-prefix=CHECK-MIPS32R2
+; RUN: llc  < %s -march=mipsel | FileCheck %s -check-prefix=CHECK
 
 @d2 = external global double
 @d3 = external global double
 
 define i32 @sel1(i32 %s, i32 %f0, i32 %f1) nounwind readnone {
 entry:
-; CHECK-MIPS32R2: movn
+; CHECK: movn
   %tobool = icmp ne i32 %s, 0
   %cond = select i1 %tobool, i32 %f1, i32 %f0
   ret i32 %cond
@@ -13,7 +13,7 @@ entry:
 
 define float @sel2(i32 %s, float %f0, float %f1) nounwind readnone {
 entry:
-; CHECK-MIPS32R2: movn.s
+; CHECK: movn.s
   %tobool = icmp ne i32 %s, 0
   %cond = select i1 %tobool, float %f0, float %f1
   ret float %cond
@@ -21,7 +21,7 @@ entry:
 
 define double @sel2_1(i32 %s, double %f0, double %f1) nounwind readnone {
 entry:
-; CHECK-MIPS32R2: movn.d
+; CHECK: movn.d
   %tobool = icmp ne i32 %s, 0
   %cond = select i1 %tobool, double %f0, double %f1
   ret double %cond
@@ -29,8 +29,8 @@ entry:
 
 define float @sel3(float %f0, float %f1, float %f2, float %f3) nounwind readnone {
 entry:
-; CHECK-MIPS32R2: c.eq.s
-; CHECK-MIPS32R2: movt.s
+; CHECK: c.eq.s
+; CHECK: movt.s
   %cmp = fcmp oeq float %f2, %f3
   %cond = select i1 %cmp, float %f0, float %f1
   ret float %cond
@@ -38,8 +38,8 @@ entry:
 
 define float @sel4(float %f0, float %f1, float %f2, float %f3) nounwind readnone {
 entry:
-; CHECK-MIPS32R2: c.olt.s
-; CHECK-MIPS32R2: movt.s
+; CHECK: c.olt.s
+; CHECK: movt.s
   %cmp = fcmp olt float %f2, %f3
   %cond = select i1 %cmp, float %f0, float %f1
   ret float %cond
@@ -47,8 +47,8 @@ entry:
 
 define float @sel5(float %f0, float %f1, float %f2, float %f3) nounwind readnone {
 entry:
-; CHECK-MIPS32R2: c.ule.s
-; CHECK-MIPS32R2: movf.s
+; CHECK: c.ule.s
+; CHECK: movf.s
   %cmp = fcmp ogt float %f2, %f3
   %cond = select i1 %cmp, float %f0, float %f1
   ret float %cond
@@ -56,8 +56,8 @@ entry:
 
 define double @sel5_1(double %f0, double %f1, float %f2, float %f3) nounwind readnone {
 entry:
-; CHECK-MIPS32R2: c.ule.s
-; CHECK-MIPS32R2: movf.d
+; CHECK: c.ule.s
+; CHECK: movf.d
   %cmp = fcmp ogt float %f2, %f3
   %cond = select i1 %cmp, double %f0, double %f1
   ret double %cond
@@ -65,8 +65,8 @@ entry:
 
 define double @sel6(double %f0, double %f1, double %f2, double %f3) nounwind readnone {
 entry:
-; CHECK-MIPS32R2: c.eq.d
-; CHECK-MIPS32R2: movt.d
+; CHECK: c.eq.d
+; CHECK: movt.d
   %cmp = fcmp oeq double %f2, %f3
   %cond = select i1 %cmp, double %f0, double %f1
   ret double %cond
@@ -74,8 +74,8 @@ entry:
 
 define double @sel7(double %f0, double %f1, double %f2, double %f3) nounwind readnone {
 entry:
-; CHECK-MIPS32R2: c.olt.d
-; CHECK-MIPS32R2: movt.d
+; CHECK: c.olt.d
+; CHECK: movt.d
   %cmp = fcmp olt double %f2, %f3
   %cond = select i1 %cmp, double %f0, double %f1
   ret double %cond
@@ -83,8 +83,8 @@ entry:
 
 define double @sel8(double %f0, double %f1, double %f2, double %f3) nounwind readnone {
 entry:
-; CHECK-MIPS32R2: c.ule.d
-; CHECK-MIPS32R2: movf.d
+; CHECK: c.ule.d
+; CHECK: movf.d
   %cmp = fcmp ogt double %f2, %f3
   %cond = select i1 %cmp, double %f0, double %f1
   ret double %cond
@@ -92,8 +92,8 @@ entry:
 
 define float @sel8_1(float %f0, float %f1, double %f2, double %f3) nounwind readnone {
 entry:
-; CHECK-MIPS32R2: c.ule.d
-; CHECK-MIPS32R2: movf.s
+; CHECK: c.ule.d
+; CHECK: movf.s
   %cmp = fcmp ogt double %f2, %f3
   %cond = select i1 %cmp, float %f0, float %f1
   ret float %cond
@@ -101,8 +101,8 @@ entry:
 
 define i32 @sel9(i32 %f0, i32 %f1, float %f2, float %f3) nounwind readnone {
 entry:
-; CHECK-MIPS32R2: c.eq.s
-; CHECK-MIPS32R2: movt
+; CHECK: c.eq.s
+; CHECK: movt
   %cmp = fcmp oeq float %f2, %f3
   %cond = select i1 %cmp, i32 %f0, i32 %f1
   ret i32 %cond
@@ -110,8 +110,8 @@ entry:
 
 define i32 @sel10(i32 %f0, i32 %f1, float %f2, float %f3) nounwind readnone {
 entry:
-; CHECK-MIPS32R2: c.olt.s
-; CHECK-MIPS32R2: movt
+; CHECK: c.olt.s
+; CHECK: movt
   %cmp = fcmp olt float %f2, %f3
   %cond = select i1 %cmp, i32 %f0, i32 %f1
   ret i32 %cond
@@ -119,8 +119,8 @@ entry:
 
 define i32 @sel11(i32 %f0, i32 %f1, float %f2, float %f3) nounwind readnone {
 entry:
-; CHECK-MIPS32R2: c.ule.s
-; CHECK-MIPS32R2: movf
+; CHECK: c.ule.s
+; CHECK: movf
   %cmp = fcmp ogt float %f2, %f3
   %cond = select i1 %cmp, i32 %f0, i32 %f1
   ret i32 %cond
@@ -128,8 +128,8 @@ entry:
 
 define i32 @sel12(i32 %f0, i32 %f1) nounwind readonly {
 entry:
-; CHECK-MIPS32R2: c.eq.d
-; CHECK-MIPS32R2: movt
+; CHECK: c.eq.d
+; CHECK: movt
   %tmp = load double* @d2, align 8, !tbaa !0
   %tmp1 = load double* @d3, align 8, !tbaa !0
   %cmp = fcmp oeq double %tmp, %tmp1
@@ -139,8 +139,8 @@ entry:
 
 define i32 @sel13(i32 %f0, i32 %f1) nounwind readonly {
 entry:
-; CHECK-MIPS32R2: c.olt.d
-; CHECK-MIPS32R2: movt
+; CHECK: c.olt.d
+; CHECK: movt
   %tmp = load double* @d2, align 8, !tbaa !0
   %tmp1 = load double* @d3, align 8, !tbaa !0
   %cmp = fcmp olt double %tmp, %tmp1
@@ -150,8 +150,8 @@ entry:
 
 define i32 @sel14(i32 %f0, i32 %f1) nounwind readonly {
 entry:
-; CHECK-MIPS32R2: c.ule.d
-; CHECK-MIPS32R2: movf
+; CHECK: c.ule.d
+; CHECK: movf
   %tmp = load double* @d2, align 8, !tbaa !0
   %tmp1 = load double* @d3, align 8, !tbaa !0
   %cmp = fcmp ogt double %tmp, %tmp1

@@ -1,4 +1,4 @@
-; RUN: llc -march=mips -mcpu=4ke < %s | FileCheck %s
+; RUN: llc -march=mips < %s | FileCheck %s
 
 ; FIXME: Disabled because it unpredictably fails on certain platforms.
 ; REQUIRES: disabled

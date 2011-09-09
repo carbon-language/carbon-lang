@@ -1,5 +1,5 @@
-; RUN: llc  < %s -march=mipsel -mcpu=4ke | FileCheck %s -check-prefix=CHECK-EL
-; RUN: llc  < %s -march=mips   -mcpu=4ke | FileCheck %s -check-prefix=CHECK-EB
+; RUN: llc  < %s -march=mipsel | FileCheck %s -check-prefix=CHECK-EL
+; RUN: llc  < %s -march=mips   | FileCheck %s -check-prefix=CHECK-EB
 
 @g1 = global double 0.000000e+00, align 8
 @_ZTId = external constant i8*
