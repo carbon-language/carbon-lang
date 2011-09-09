@@ -55,7 +55,10 @@ my $ResultFile;
 
 # Remove any stale files at exit.
 END { 
-  if (defined $CleanupFile && -z $CleanupFile) {
+  if (defined $ResultFile && -z $ResultFile) {
+    `rm -f $ResultFile`;
+  }
+  if (defined $CleanupFile) {
     `rm -f $CleanupFile`;
   }
 }
@@ -631,7 +634,10 @@ if ($Action eq 'compile' or $Action eq 'link') {
         my ($h, $f) = tempfile("report-XXXXXX", SUFFIX => ".plist",
                                DIR => $HtmlDir);
         $ResultFile = $f;
-        $CleanupFile = $f;
+        # If the HtmlDir is not set, we sould clean up the plist files.
+        if (!defined $HtmlDir || -z $HtmlDir) {
+        	$CleanupFile = $f; 
+        }
       }
     }
 
