@@ -546,15 +546,24 @@ DNBArchImplI386::ThreadWillResume()
         EnableHardwareSingleStep(true);
     }
 
-    // Reset the debug status register before we resume.
+    // Reset the debug status register, if necessary, before we resume.
     kern_return_t kret = GetDBGState(false);
-    DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchImplI386::ThreadWillResume() GetDBGState() => 0x%8.8x.", kret);
-    if (kret == KERN_SUCCESS)
+    DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchImplX86_64::ThreadWillResume() GetDBGState() => 0x%8.8x.", kret);
+    if (kret != KERN_SUCCESS)
+        return;
+
+    DBG debug_state = m_state.context.dbg;
+    bool need_reset = false;
+    uint32_t i, num = NumSupportedHardwareWatchpoints();
+    for (i = 0; i < num; ++i)
+        if (IsWatchpointHit(debug_state, i))
+            need_reset = true;
+
+    if (need_reset)
     {
-        DBG debug_state = m_state.context.dbg;
         ClearWatchpointHits(debug_state);
         kret = SetDBGState();
-        DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchImplI386::ThreadWillResume() SetDBGState() => 0x%8.8x.", kret);
+        DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchImplX86_64::ThreadWillResume() SetDBGState() => 0x%8.8x.", kret);
     }
 }
 
