@@ -375,7 +375,7 @@ bool CursorVisitor::Visit(CXCursor Cursor, bool CheckedRegionOfInterest) {
   if (clang_isDeclaration(Cursor.kind)) {
     Decl *D = getCursorDecl(Cursor);
     assert(D && "Invalid declaration cursor");
-    if (D->getPCHLevel() > MaxPCHLevel && !isa<TranslationUnitDecl>(D))
+    if (D->getPCHLevel() > MaxPCHLevel)
       return false;
 
     if (D->isImplicit())
