@@ -538,8 +538,8 @@ SBFrame::get() const
     return m_opaque_sp.get();
 }
 
-const lldb::StackFrameSP &
-SBFrame::get_sp() const
+lldb::StackFrameSP &
+SBFrame::get_sp()
 {
     return m_opaque_sp;
 }

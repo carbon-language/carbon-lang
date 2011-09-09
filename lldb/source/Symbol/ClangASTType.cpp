@@ -215,6 +215,79 @@ ClangASTType::GetMinimumLanguage ()
                                              m_type);
 }
 
+lldb::TypeClass
+ClangASTType::GetTypeClass (clang::ASTContext *ast_context, lldb::clang_type_t clang_type)
+{
+    if (clang_type == NULL)
+        return lldb::eTypeClassInvalid;
+
+    clang::QualType qual_type(clang::QualType::getFromOpaquePtr(clang_type));
+    
+    switch (qual_type->getTypeClass())
+    {
+        case clang::Type::UnaryTransform:           break;
+        case clang::Type::FunctionNoProto:          return lldb::eTypeClassFunction;
+        case clang::Type::FunctionProto:            return lldb::eTypeClassFunction;
+        case clang::Type::IncompleteArray:          return lldb::eTypeClassArray;
+        case clang::Type::VariableArray:            return lldb::eTypeClassArray;
+        case clang::Type::ConstantArray:            return lldb::eTypeClassArray;
+        case clang::Type::DependentSizedArray:      return lldb::eTypeClassArray;
+        case clang::Type::DependentSizedExtVector:  return lldb::eTypeClassVector;
+        case clang::Type::ExtVector:                return lldb::eTypeClassVector;
+        case clang::Type::Vector:                   return lldb::eTypeClassVector;
+        case clang::Type::Builtin:                  return lldb::eTypeClassBuiltin;
+        case clang::Type::ObjCObjectPointer:        return lldb::eTypeClassObjCObjectPointer;
+        case clang::Type::BlockPointer:             return lldb::eTypeClassBlockPointer;
+        case clang::Type::Pointer:                  return lldb::eTypeClassPointer;
+        case clang::Type::LValueReference:          return lldb::eTypeClassReference;
+        case clang::Type::RValueReference:          return lldb::eTypeClassReference;
+        case clang::Type::MemberPointer:            return lldb::eTypeClassMemberPointer;
+        case clang::Type::Complex:
+            if (qual_type->isComplexType())
+                return lldb::eTypeClassComplexFloat;
+            else
+                return lldb::eTypeClassComplexInteger;
+        case clang::Type::ObjCObject:               return lldb::eTypeClassObjCObject;
+        case clang::Type::ObjCInterface:            return lldb::eTypeClassObjCInterface;
+        case clang::Type::Record:
+            if (ClangASTContext::GetCompleteType (ast_context, clang_type))
+            {
+                const clang::RecordType *record_type = llvm::cast<clang::RecordType>(qual_type.getTypePtr());
+                const clang::RecordDecl *record_decl = record_type->getDecl();
+                if (record_decl->isUnion())
+                    return lldb::eTypeClassUnion;
+                else if (record_decl->isStruct())
+                    return lldb::eTypeClassStruct;
+                else
+                    return lldb::eTypeClassClass;
+            }
+            break;
+        case clang::Type::Enum:                     return lldb::eTypeClassEnumeration;
+        case clang::Type::Typedef:                  return lldb::eTypeClassTypedef;
+        case clang::Type::UnresolvedUsing:          break;
+        case clang::Type::Paren:                    break;
+        case clang::Type::Elaborated:               break;
+        case clang::Type::Attributed:               break;
+        case clang::Type::TemplateTypeParm:         break;
+        case clang::Type::SubstTemplateTypeParm:    break;
+        case clang::Type::SubstTemplateTypeParmPack:break;
+        case clang::Type::Auto:                     break;
+        case clang::Type::InjectedClassName:        break;
+        case clang::Type::DependentName:            break;
+        case clang::Type::DependentTemplateSpecialization: break;
+        case clang::Type::PackExpansion:            break;
+            
+        case clang::Type::TypeOfExpr:               break;
+        case clang::Type::TypeOf:                   break;
+        case clang::Type::Decltype:                 break;
+        case clang::Type::TemplateSpecialization:   break;
+    }
+    // We don't know hot to display this type...
+    return lldb::eTypeClassOther;
+
+}
+
+
 lldb::LanguageType
 ClangASTType::GetMinimumLanguage (clang::ASTContext *ctx,
                                   lldb::clang_type_t clang_type)

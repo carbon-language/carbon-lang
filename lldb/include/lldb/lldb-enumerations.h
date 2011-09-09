@@ -550,7 +550,34 @@ namespace lldb {
         eBasicTypeObjCClass,
         eBasicTypeObjCSel
     } BasicType;
-        
+
+    typedef enum TypeClass
+    {
+        eTypeClassInvalid           = (0u),
+        eTypeClassArray             = (1u << 0),
+        eTypeClassBlockPointer      = (1u << 1),
+        eTypeClassBuiltin           = (1u << 2),
+        eTypeClassClass             = (1u << 3),
+        eTypeClassComplexFloat      = (1u << 4),
+        eTypeClassComplexInteger    = (1u << 5),
+        eTypeClassEnumeration       = (1u << 6),
+        eTypeClassFunction          = (1u << 7),
+        eTypeClassMemberPointer     = (1u << 8),
+        eTypeClassObjCObject        = (1u << 9),
+        eTypeClassObjCInterface     = (1u << 10),
+        eTypeClassObjCObjectPointer = (1u << 11),
+        eTypeClassPointer           = (1u << 12),
+        eTypeClassReference         = (1u << 13),
+        eTypeClassStruct            = (1u << 14),
+        eTypeClassTypedef           = (1u << 15),
+        eTypeClassUnion             = (1u << 16),
+        eTypeClassVector            = (1u << 17),
+        // Define the last type class as the MSBit of a 32 bit value
+        eTypeClassOther             = (1u << 31),
+        // Define a mask that can be used for any type when finding types
+        eTypeClassAny               = (0xffffffffu)
+    }TypeClass;
+
 } // namespace lldb
 
 

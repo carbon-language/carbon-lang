@@ -9,6 +9,35 @@
 
 namespace lldb {
 
+    %feature("docstring",
+"Represents a member of a type in lldb.
+") SBTypeMember;
+
+class SBTypeMember
+{
+public:
+    SBTypeMember ();
+
+    SBTypeMember (const lldb::SBTypeMember& rhs);
+
+    ~SBTypeMember();
+
+    bool
+    IsValid() const;
+
+    const char *
+    GetName ();
+
+    lldb::SBType
+    GetType ();
+
+    uint64_t
+    GetOffsetByteSize();
+
+protected:
+    std::auto_ptr<lldb_private::TypeMemberImpl> m_opaque_ap;
+};
+
 %feature("docstring",
 "Represents a data type in lldb.  The FindFirstType() method of SBTarget/SBModule
 returns a SBType.
@@ -85,39 +114,60 @@ find_type.py:
 class SBType
 {
 public:
-    SBType (const SBType &rhs);
+    SBType (const lldb::SBType &rhs);
 
     ~SBType ();
 
     bool
-    IsValid() const;
+    IsValid();
 
     size_t
-    GetByteSize() const;
+    GetByteSize();
 
     bool
-    IsPointerType() const;
+    IsPointerType();
 
     bool
-    IsReferenceType() const;
+    IsReferenceType();
 
-    SBType
-    GetPointerType() const;
+    lldb::SBType
+    GetPointerType();
 
-    SBType
-    GetPointeeType() const;
+    lldb::SBType
+    GetPointeeType();
 
-    SBType
-    GetReferenceType() const;
+    lldb::SBType
+    GetReferenceType();
 
-    SBType
-    GetDereferencedType() const;
+    lldb::SBType
+    GetDereferencedType();
 
-    SBType
-    GetBasicType(lldb::BasicType type) const;
+    lldb::SBType
+    GetBasicType (lldb::BasicType type);
+
+    uint32_t
+    GetNumberOfFields ();
+    
+    uint32_t
+    GetNumberOfDirectBaseClasses ();
+    
+    uint32_t
+    GetNumberOfVirtualBaseClasses ();
+    
+    lldb::SBTypeMember
+    GetFieldAtIndex (uint32_t idx);
+    
+    lldb::SBTypeMember
+    GetDirectBaseClassAtIndex (uint32_t idx);
+    
+    lldb::SBTypeMember
+    GetVirtualBaseClassAtIndex (uint32_t idx);
 
     const char*
     GetName();
+    
+    lldb::TypeClass
+    GetTypeClass ();
 };
 
 %feature("docstring",
@@ -157,15 +207,15 @@ public:
     SBTypeList();
 
     bool
-    IsValid() const;
+    IsValid();
 
     void
-    Append(const SBType& type);
+    Append (lldb::SBType type);
 
-    SBType
-    GetTypeAtIndex(int index);
+    lldb::SBType
+    GetTypeAtIndex (uint32_t index);
 
-    int
+    uint32_t
     GetSize();
 
     ~SBTypeList();

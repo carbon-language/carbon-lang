@@ -2397,6 +2397,386 @@ ClangASTContext::GetNumChildren (clang::ASTContext *ast, clang_type_t clang_type
     return num_children;
 }
 
+uint32_t
+ClangASTContext::GetNumDirectBaseClasses (clang::ASTContext *ast, clang_type_t clang_type)
+{
+    if (clang_type == NULL)
+        return 0;
+    
+    uint32_t count = 0;
+    QualType qual_type(QualType::getFromOpaquePtr(clang_type));
+    const clang::Type::TypeClass type_class = qual_type->getTypeClass();
+    switch (type_class)
+    {
+        case clang::Type::Record:
+            if (GetCompleteQualType (ast, qual_type))
+            {
+                const CXXRecordDecl *cxx_record_decl = qual_type->getAsCXXRecordDecl();
+                if (cxx_record_decl)
+                    count = cxx_record_decl->getNumBases();
+            }
+            break;
+            
+        case clang::Type::ObjCObject:
+        case clang::Type::ObjCInterface:
+            if (GetCompleteQualType (ast, qual_type))
+            {
+                const ObjCObjectType *objc_class_type = qual_type->getAsObjCQualifiedInterfaceType();
+                if (objc_class_type)
+                {
+                    ObjCInterfaceDecl *class_interface_decl = objc_class_type->getInterface();
+                    
+                    if (class_interface_decl && class_interface_decl->getSuperClass())
+                        count = 1;
+                }
+            }
+            break;
+            
+            
+        case clang::Type::Typedef:
+            count = ClangASTContext::GetNumDirectBaseClasses (ast, cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr());
+            break;
+            
+        case clang::Type::Elaborated:
+            count = ClangASTContext::GetNumDirectBaseClasses (ast, cast<ElaboratedType>(qual_type)->getNamedType().getAsOpaquePtr());
+            break;
+            
+        default:
+            break;
+    }
+    return count;
+}
+
+uint32_t 
+ClangASTContext::GetNumVirtualBaseClasses (clang::ASTContext *ast, 
+                                           clang_type_t clang_type)
+{
+    if (clang_type == NULL)
+        return 0;
+    
+    uint32_t count = 0;
+    QualType qual_type(QualType::getFromOpaquePtr(clang_type));
+    const clang::Type::TypeClass type_class = qual_type->getTypeClass();
+    switch (type_class)
+    {
+        case clang::Type::Record:
+            if (GetCompleteQualType (ast, qual_type))
+            {
+                const CXXRecordDecl *cxx_record_decl = qual_type->getAsCXXRecordDecl();
+                if (cxx_record_decl)
+                    count = cxx_record_decl->getNumVBases();
+            }
+            break;
+            
+        case clang::Type::Typedef:
+            count = ClangASTContext::GetNumVirtualBaseClasses (ast, cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr());
+            break;
+            
+        case clang::Type::Elaborated:
+            count = ClangASTContext::GetNumVirtualBaseClasses (ast, cast<ElaboratedType>(qual_type)->getNamedType().getAsOpaquePtr());
+            break;
+            
+        default:
+            break;
+    }
+    return count;
+}
+
+uint32_t 
+ClangASTContext::GetNumFields (clang::ASTContext *ast, clang_type_t clang_type)
+{
+    if (clang_type == NULL)
+        return 0;
+    
+    uint32_t count = 0;
+    QualType qual_type(QualType::getFromOpaquePtr(clang_type));
+    const clang::Type::TypeClass type_class = qual_type->getTypeClass();
+    switch (type_class)
+    {
+        case clang::Type::Record:
+            if (GetCompleteQualType (ast, qual_type))
+            {
+                const RecordType *record_type = dyn_cast<RecordType>(qual_type.getTypePtr());
+                if (record_type)
+                {
+                    RecordDecl *record_decl = record_type->getDecl();
+                    if (record_decl)
+                    {
+                        uint32_t field_idx = 0;
+                        RecordDecl::field_iterator field, field_end;
+                        for (field = record_decl->field_begin(), field_end = record_decl->field_end(); field != field_end; ++field)
+                            ++field_idx;
+                        count = field_idx;
+                    }
+                }
+            }
+            break;
+            
+        case clang::Type::Typedef:
+            count = ClangASTContext::GetNumFields (ast, cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr());
+            break;
+            
+        case clang::Type::Elaborated:
+            count = ClangASTContext::GetNumFields (ast, cast<ElaboratedType>(qual_type)->getNamedType().getAsOpaquePtr());
+            break;
+            
+        default:
+            break;
+    }
+    return count;
+}
+
+clang_type_t
+ClangASTContext::GetDirectBaseClassAtIndex (clang::ASTContext *ast, 
+                                            clang_type_t clang_type,
+                                            uint32_t idx, 
+                                            uint32_t *byte_offset_ptr)
+{
+    if (clang_type == NULL)
+        return 0;
+    
+    QualType qual_type(QualType::getFromOpaquePtr(clang_type));
+    const clang::Type::TypeClass type_class = qual_type->getTypeClass();
+    switch (type_class)
+    {
+        case clang::Type::Record:
+            if (GetCompleteQualType (ast, qual_type))
+            {
+                const CXXRecordDecl *cxx_record_decl = qual_type->getAsCXXRecordDecl();
+                if (cxx_record_decl)
+                {
+                    uint32_t curr_idx = 0;
+                    CXXRecordDecl::base_class_const_iterator base_class, base_class_end;
+                    for (base_class = cxx_record_decl->bases_begin(), base_class_end = cxx_record_decl->bases_end();
+                         base_class != base_class_end;
+                         ++base_class, ++curr_idx)
+                    {
+                        if (curr_idx == idx)
+                        {
+                            if (byte_offset_ptr)
+                            {
+                                const ASTRecordLayout &record_layout = ast->getASTRecordLayout(cxx_record_decl);
+                                const CXXRecordDecl *base_class_decl = cast<CXXRecordDecl>(base_class->getType()->getAs<RecordType>()->getDecl());
+//                                if (base_class->isVirtual())
+//                                    *byte_offset_ptr = record_layout.getVBaseClassOffset(base_class_decl).getQuantity() * 8;
+//                                else
+                                    *byte_offset_ptr = record_layout.getBaseClassOffset(base_class_decl).getQuantity() * 8;
+                            }
+                            return base_class->getType().getAsOpaquePtr();
+                        }
+                    }
+                }
+            }
+            break;
+            
+        case clang::Type::ObjCObject:
+        case clang::Type::ObjCInterface:
+            if (idx == 0 && GetCompleteQualType (ast, qual_type))
+            {
+                const ObjCObjectType *objc_class_type = qual_type->getAsObjCQualifiedInterfaceType();
+                if (objc_class_type)
+                {
+                    ObjCInterfaceDecl *class_interface_decl = objc_class_type->getInterface();
+                    
+                    if (class_interface_decl)
+                    {
+                        ObjCInterfaceDecl *superclass_interface_decl = class_interface_decl->getSuperClass();
+                        if (superclass_interface_decl)
+                        {
+                            if (byte_offset_ptr)
+                                *byte_offset_ptr = 0;
+                            return ast->getObjCInterfaceType(superclass_interface_decl).getAsOpaquePtr();
+                        }
+                    }
+                }
+            }
+            break;
+            
+            
+        case clang::Type::Typedef:
+            return ClangASTContext::GetDirectBaseClassAtIndex (ast, 
+                                                               cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr(),
+                                                               idx,
+                                                               byte_offset_ptr);
+            
+        case clang::Type::Elaborated:
+            return  ClangASTContext::GetDirectBaseClassAtIndex (ast, 
+                                                                cast<ElaboratedType>(qual_type)->getNamedType().getAsOpaquePtr(),
+                                                                idx,
+                                                                byte_offset_ptr);
+            
+        default:
+            break;
+    }
+    return NULL;
+}
+
+clang_type_t
+ClangASTContext::GetVirtualBaseClassAtIndex (clang::ASTContext *ast, 
+                                             clang_type_t clang_type,
+                                             uint32_t idx, 
+                                             uint32_t *byte_offset_ptr)
+{
+    if (clang_type == NULL)
+        return 0;
+    
+    QualType qual_type(QualType::getFromOpaquePtr(clang_type));
+    const clang::Type::TypeClass type_class = qual_type->getTypeClass();
+    switch (type_class)
+    {
+        case clang::Type::Record:
+            if (GetCompleteQualType (ast, qual_type))
+            {
+                const CXXRecordDecl *cxx_record_decl = qual_type->getAsCXXRecordDecl();
+                if (cxx_record_decl)
+                {
+                    uint32_t curr_idx = 0;
+                    CXXRecordDecl::base_class_const_iterator base_class, base_class_end;
+                    for (base_class = cxx_record_decl->vbases_begin(), base_class_end = cxx_record_decl->vbases_end();
+                         base_class != base_class_end;
+                         ++base_class, ++curr_idx)
+                    {
+                        if (curr_idx == idx)
+                        {
+                            if (byte_offset_ptr)
+                            {
+                                const ASTRecordLayout &record_layout = ast->getASTRecordLayout(cxx_record_decl);
+                                const CXXRecordDecl *base_class_decl = cast<CXXRecordDecl>(base_class->getType()->getAs<RecordType>()->getDecl());
+                                *byte_offset_ptr = record_layout.getVBaseClassOffset(base_class_decl).getQuantity() * 8;
+
+                            }
+                            return base_class->getType().getAsOpaquePtr();
+                        }
+                    }
+                }
+            }
+            break;
+            
+        case clang::Type::Typedef:
+            return ClangASTContext::GetVirtualBaseClassAtIndex (ast, 
+                                                                cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr(),
+                                                                idx,
+                                                                byte_offset_ptr);
+            
+        case clang::Type::Elaborated:
+            return  ClangASTContext::GetVirtualBaseClassAtIndex (ast, 
+                                                                 cast<ElaboratedType>(qual_type)->getNamedType().getAsOpaquePtr(),
+                                                                 idx,
+                                                                 byte_offset_ptr);
+            
+        default:
+            break;
+    }
+    return NULL;
+}
+
+clang_type_t
+ClangASTContext::GetFieldAtIndex (clang::ASTContext *ast, 
+                                  clang_type_t clang_type,
+                                  uint32_t idx, 
+                                  std::string& name,
+                                  uint32_t *byte_offset_ptr)
+{
+    if (clang_type == NULL)
+        return 0;
+    
+    QualType qual_type(QualType::getFromOpaquePtr(clang_type));
+    const clang::Type::TypeClass type_class = qual_type->getTypeClass();
+    switch (type_class)
+    {
+        case clang::Type::Record:
+            if (GetCompleteQualType (ast, qual_type))
+            {
+                const RecordType *record_type = cast<RecordType>(qual_type.getTypePtr());
+                const RecordDecl *record_decl = record_type->getDecl();
+                uint32_t field_idx = 0;
+                RecordDecl::field_iterator field, field_end;
+                for (field = record_decl->field_begin(), field_end = record_decl->field_end(); field != field_end; ++field, ++field_idx)
+                {
+                    if (idx == field_idx)
+                    {
+                        // Print the member type if requested
+                        // Print the member name and equal sign
+                        name.assign(field->getNameAsString());
+                        
+                        // Figure out the type byte size (field_type_info.first) and
+                        // alignment (field_type_info.second) from the AST context.
+                        if (byte_offset_ptr)
+                        {
+                            const ASTRecordLayout &record_layout = ast->getASTRecordLayout(record_decl);
+                            *byte_offset_ptr = (record_layout.getFieldOffset (field_idx) + 7) / 8;
+                        }
+                        
+                        return field->getType().getAsOpaquePtr();
+                    }
+                }
+            }
+            break;
+            
+        case clang::Type::ObjCObject:
+        case clang::Type::ObjCInterface:
+            if (GetCompleteQualType (ast, qual_type))
+            {
+                const ObjCObjectType *objc_class_type = dyn_cast<ObjCObjectType>(qual_type.getTypePtr());
+                assert (objc_class_type);
+                if (objc_class_type)
+                {
+                    ObjCInterfaceDecl *class_interface_decl = objc_class_type->getInterface();
+                    
+                    if (class_interface_decl)
+                    {
+                        if (idx < (class_interface_decl->ivar_size()))
+                        {
+                            ObjCInterfaceDecl::ivar_iterator ivar_pos, ivar_end = class_interface_decl->ivar_end();
+                            uint32_t ivar_idx = 0;
+
+                            for (ivar_pos = class_interface_decl->ivar_begin(); ivar_pos != ivar_end; ++ivar_pos, ++ivar_idx)
+                            {
+                                if (ivar_idx == idx)
+                                {
+                                    const ObjCIvarDecl* ivar_decl = *ivar_pos;
+                                    
+                                    QualType ivar_qual_type(ivar_decl->getType());
+                                    
+                                    name.assign(ivar_decl->getNameAsString());
+
+                                    if (byte_offset_ptr)
+                                    {
+                                        const ASTRecordLayout &interface_layout = ast->getASTObjCInterfaceLayout(class_interface_decl);
+                                        *byte_offset_ptr = (interface_layout.getFieldOffset (ivar_idx) + 7)/8;
+                                    }
+                                    
+                                    return ivar_qual_type.getAsOpaquePtr();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            break;
+            
+            
+        case clang::Type::Typedef:
+            return ClangASTContext::GetFieldAtIndex (ast, 
+                                                     cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr(),
+                                                     idx,
+                                                     name,
+                                                     byte_offset_ptr);
+            
+        case clang::Type::Elaborated:
+            return  ClangASTContext::GetFieldAtIndex (ast, 
+                                                      cast<ElaboratedType>(qual_type)->getNamedType().getAsOpaquePtr(),
+                                                      idx,
+                                                      name,
+                                                      byte_offset_ptr);
+            
+        default:
+            break;
+    }
+    return NULL;
+}
+
+
 // If a pointer to a pointee type (the clang_type arg) says that it has no 
 // children, then we either need to trust it, or override it and return a 
 // different result. For example, an "int *" has one child that is an integer, 
@@ -2616,7 +2996,6 @@ ClangASTContext::GetChildClangTypeAtIndex
                                 bit_offset = record_layout.getBaseClassOffset(base_class_decl).getQuantity() * 8;
 
                             // Base classes should be a multiple of 8 bits in size
-                            assert (bit_offset % 8 == 0);
                             child_byte_offset = bit_offset/8;
                             
                             child_name = ClangASTType::GetTypeNameForQualType(base_class->getType());

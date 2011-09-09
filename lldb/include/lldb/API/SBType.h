@@ -16,23 +16,125 @@ namespace lldb {
 
 class SBTypeList;    
 
+class SBTypeMember
+{
+public:
+    SBTypeMember ();
+    
+    SBTypeMember (const lldb::SBTypeMember& rhs);
+    
+    ~SBTypeMember();
+    
+#ifndef SWIG
+    lldb::SBTypeMember&
+    operator = (const lldb::SBTypeMember& rhs);
+#endif
+
+    bool
+    IsValid() const;
+    
+    const char *
+    GetName ();
+    
+    lldb::SBType
+    GetType ();
+    
+    uint64_t
+    GetOffsetByteSize();
+    
+protected:
+    friend class SBType;
+
+#ifndef SWIG
+    void
+    reset (lldb_private::TypeMemberImpl *);
+
+    lldb_private::TypeMemberImpl &
+    ref ();
+
+    const lldb_private::TypeMemberImpl &
+    ref () const;
+#endif
+
+    std::auto_ptr<lldb_private::TypeMemberImpl> m_opaque_ap;
+};
+
 class SBType
 {
 public:
 
-    SBType (const SBType &rhs);
+    SBType();
+
+    SBType (const lldb::SBType &rhs);
 
     ~SBType ();
 
+    bool
+    IsValid() const;
+    
+    size_t
+    GetByteSize();
+
+    bool
+    IsPointerType();
+    
+    bool
+    IsReferenceType();
+    
+    lldb::SBType
+    GetPointerType();
+    
+    lldb::SBType
+    GetPointeeType();
+    
+    lldb::SBType
+    GetReferenceType();
+    
+    lldb::SBType
+    GetDereferencedType();
+    
+    lldb::SBType
+    GetBasicType(lldb::BasicType type);
+    
+    uint32_t
+    GetNumberOfFields ();
+    
+    uint32_t
+    GetNumberOfDirectBaseClasses ();
+
+    uint32_t
+    GetNumberOfVirtualBaseClasses ();
+    
+    lldb::SBTypeMember
+    GetFieldAtIndex (uint32_t idx);
+    
+    lldb::SBTypeMember
+    GetDirectBaseClassAtIndex (uint32_t idx);
+
+    lldb::SBTypeMember
+    GetVirtualBaseClassAtIndex (uint32_t idx);
+
+    const char*
+    GetName();
+    
+    lldb::TypeClass
+    GetTypeClass ();
+
+    // DEPRECATED: but needed for Xcode right now
+    static bool
+    IsPointerType (void * clang_type);
+        
+protected:
+    
 #ifndef SWIG
-    const lldb::SBType &
+    lldb::SBType &
     operator = (const lldb::SBType &rhs);
     
     bool
-    operator == (const lldb::SBType &rhs) const;
+    operator == (lldb::SBType &rhs);
     
     bool
-    operator != (const lldb::SBType &rhs) const;
+    operator != (lldb::SBType &rhs);
     
     lldb_private::TypeImpl &
     ref ();
@@ -40,54 +142,22 @@ public:
     const lldb_private::TypeImpl &
     ref () const;
     
+    void
+    reset(const lldb::TypeImplSP &type_impl_sp);
 #endif
     
-    bool
-    IsValid() const;
-    
-    size_t
-    GetByteSize() const;
 
-    bool
-    IsPointerType() const;
-    
-    bool
-    IsReferenceType() const;
-    
-    SBType
-    GetPointerType() const;
-    
-    SBType
-    GetPointeeType() const;
-    
-    SBType
-    GetReferenceType() const;
-    
-    SBType
-    GetDereferencedType() const;
-    
-    SBType
-    GetBasicType(lldb::BasicType type) const;
-        
-    const char*
-    GetName();
-    
-    // DEPRECATED: but needed for Xcode right now
-    static bool
-    IsPointerType (void * clang_type);
-        
-protected:
     lldb::TypeImplSP m_opaque_sp;
     
     friend class SBModule;
     friend class SBTarget;
     friend class SBValue;
+    friend class SBTypeMember;
     friend class SBTypeList;
         
     SBType (const lldb_private::ClangASTType &);
     SBType (const lldb::TypeSP &);
     SBType (const lldb::TypeImplSP &);
-    SBType();
     
 };
     
@@ -96,28 +166,30 @@ class SBTypeList
 public:
     SBTypeList();
     
-    SBTypeList(const SBTypeList& rhs);
-    
-    SBTypeList&
-    operator = (const SBTypeList& rhs);
-    
-    bool
-    IsValid() const;
-
-    void
-    Append (const SBType& type);
-    
-    SBType
-    GetTypeAtIndex(int index) const;
-    
-    int
-    GetSize() const;
+    SBTypeList(const lldb::SBTypeList& rhs);
     
     ~SBTypeList();
+
+    lldb::SBTypeList&
+    operator = (const lldb::SBTypeList& rhs);
+    
+    bool
+    IsValid();
+
+    void
+    Append (lldb::SBType type);
+    
+    lldb::SBType
+    GetTypeAtIndex (uint32_t index);
+    
+    uint32_t
+    GetSize();
+    
     
 private:
     std::auto_ptr<lldb_private::TypeListImpl> m_opaque_ap;
 };
+    
 
 } // namespace lldb
 

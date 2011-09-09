@@ -65,7 +65,7 @@ public:
     ~SBValue ();
 
     bool
-    IsValid() const;
+    IsValid();
     
     SBError
     GetError();
@@ -86,7 +86,7 @@ public:
     IsInScope ();
 
     lldb::Format
-    GetFormat () const;
+    GetFormat ();
     
     void
     SetFormat (lldb::Format format);
@@ -185,21 +185,21 @@ public:
                      bool can_create_synthetic);
     
     lldb::SBValue
-    CreateChildAtOffset (const char *name, uint32_t offset, const SBType& type);
+    CreateChildAtOffset (const char *name, uint32_t offset, lldb::SBType type);
     
     lldb::SBValue
-    SBValue::Cast(const SBType& type);
+    SBValue::Cast (lldb::SBType type);
 
     lldb::SBValue
     CreateValueFromExpression (const char *name, const char* expression);
 
     lldb::SBValue
-    CreateValueFromAddress(const char* name, lldb::addr_t address, const SBType& type);
+    CreateValueFromAddress(const char* name, lldb::addr_t address, lldb::SBType type);
     
 	lldb::SBValue
 	CreateValueFromData (const char* name,
-	                     const SBData& data,
-	                     const SBType& type);
+	                     lldb::SBData data,
+	                     lldb::SBType type);
 
     lldb::SBType
     GetType();

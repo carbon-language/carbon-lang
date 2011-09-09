@@ -107,6 +107,10 @@ public:
     GetMinimumLanguage (clang::ASTContext *ctx,
                         lldb::clang_type_t clang_type);
 
+    static lldb::TypeClass
+    GetTypeClass (clang::ASTContext *ast_context, 
+                  lldb::clang_type_t clang_type);
+
     void
     DumpValue (ExecutionContext *exe_ctx,
                Stream *s,

@@ -52,7 +52,7 @@ SBValue::SBValue(const SBValue &rhs) :
 {
 }
 
-const SBValue &
+SBValue &
 SBValue::operator = (const SBValue &rhs)
 {
     if (this != &rhs)
@@ -65,7 +65,7 @@ SBValue::~SBValue()
 }
 
 bool
-SBValue::IsValid () const
+SBValue::IsValid ()
 {
     // If this function ever changes to anything that does more than just
     // check if the opaque shared pointer is non NULL, then we need to update
@@ -146,12 +146,6 @@ SBValue::GetByteSize ()
 }
 
 bool
-SBValue::IsInScope (const SBFrame &sb_frame)
-{
-    return IsInScope();
-}
-
-bool
 SBValue::IsInScope ()
 {
     bool result = false;
@@ -170,12 +164,6 @@ SBValue::IsInScope ()
         log->Printf ("SBValue(%p)::IsInScope () => %i", m_opaque_sp.get(), result);
 
     return result;
-}
-
-const char *
-SBValue::GetValue (const SBFrame &sb_frame)
-{
-    return GetValue();
 }
 
 const char *
@@ -228,12 +216,6 @@ SBValue::GetValueType ()
 }
 
 const char *
-SBValue::GetObjectDescription (const SBFrame &sb_frame)
-{
-    return GetObjectDescription ();
-}
-
-const char *
 SBValue::GetObjectDescription ()
 {
     const char *cstr = NULL;
@@ -254,12 +236,6 @@ SBValue::GetObjectDescription ()
             log->Printf ("SBValue(%p)::GetObjectDescription => NULL", m_opaque_sp.get());
     }
     return cstr;
-}
-
-bool
-SBValue::GetValueDidChange (const SBFrame &sb_frame)
-{
-    return GetValueDidChange ();
 }
 
 SBType
@@ -305,12 +281,6 @@ SBValue::GetValueDidChange ()
 }
 
 const char *
-SBValue::GetSummary (const SBFrame &sb_frame)
-{
-    return GetSummary ();
-}
-
-const char *
 SBValue::GetSummary ()
 {
     const char *cstr = NULL;
@@ -331,12 +301,6 @@ SBValue::GetSummary ()
             log->Printf ("SBValue(%p)::GetSummary => NULL", m_opaque_sp.get());
     }
     return cstr;
-}
-
-const char *
-SBValue::GetLocation (const SBFrame &sb_frame)
-{
-    return GetLocation ();
 }
 
 const char *
@@ -363,12 +327,6 @@ SBValue::GetLocation ()
 }
 
 bool
-SBValue::SetValueFromCString (const SBFrame &sb_frame, const char *value_str)
-{
-    return SetValueFromCString (value_str);
-}
-
-bool
 SBValue::SetValueFromCString (const char *value_str)
 {
     bool success = false;
@@ -384,7 +342,7 @@ SBValue::SetValueFromCString (const char *value_str)
 }
 
 lldb::SBValue
-SBValue::CreateChildAtOffset (const char *name, uint32_t offset, const SBType& type)
+SBValue::CreateChildAtOffset (const char *name, uint32_t offset, SBType type)
 {
     lldb::SBValue result;
     if (m_opaque_sp)
@@ -407,7 +365,7 @@ SBValue::CreateChildAtOffset (const char *name, uint32_t offset, const SBType& t
 }
 
 lldb::SBValue
-SBValue::Cast(const SBType& type)
+SBValue::Cast (SBType type)
 {
     return CreateChildAtOffset(m_opaque_sp->GetName().GetCString(), 0, type);
 }
@@ -419,10 +377,10 @@ SBValue::CreateValueFromExpression (const char *name, const char* expression)
     if (m_opaque_sp)
     {
         ValueObjectSP result_valobj_sp;
-        m_opaque_sp->GetUpdatePoint().GetTargetSP()->EvaluateExpression(expression,
-                                                                      m_opaque_sp->GetUpdatePoint().GetExecutionContextScope()->CalculateStackFrame(),
-                                                                      true, true, eNoDynamicValues,
-                                                                      result_valobj_sp);
+        m_opaque_sp->GetUpdatePoint().GetTargetSP()->EvaluateExpression (expression,
+                                                                         m_opaque_sp->GetUpdatePoint().GetExecutionContextScope()->CalculateStackFrame(),
+                                                                         true, true, eNoDynamicValues,
+                                                                         result_valobj_sp);
         result_valobj_sp->SetName(ConstString(name));
         result = SBValue(result_valobj_sp);
     }
@@ -438,7 +396,7 @@ SBValue::CreateValueFromExpression (const char *name, const char* expression)
 }
 
 lldb::SBValue
-SBValue::CreateValueFromAddress(const char* name, lldb::addr_t address, const SBType& type)
+SBValue::CreateValueFromAddress(const char* name, lldb::addr_t address, SBType type)
 {
     lldb::SBValue result;
     if (m_opaque_sp)
@@ -448,13 +406,13 @@ SBValue::CreateValueFromAddress(const char* name, lldb::addr_t address, const SB
         
         lldb::DataBufferSP buffer(new lldb_private::DataBufferHeap(&address,sizeof(lldb::addr_t)));
         
-        ValueObjectSP ptr_result_valobj_sp(ValueObjectConstResult::Create(m_opaque_sp->GetUpdatePoint().GetExecutionContextScope(),
-                                                                          real_type.m_opaque_sp->GetASTContext(),
-                                                                          real_type.m_opaque_sp->GetOpaqueQualType(),
-                                                                          ConstString(name),
-                                                                          buffer,
-                                                                          lldb::endian::InlHostByteOrder(), 
-                                                                          GetTarget().GetProcess().GetAddressByteSize()));
+        ValueObjectSP ptr_result_valobj_sp(ValueObjectConstResult::Create (m_opaque_sp->GetUpdatePoint().GetExecutionContextScope(),
+                                                                           real_type.m_opaque_sp->GetASTContext(),
+                                                                           real_type.m_opaque_sp->GetOpaqueQualType(),
+                                                                           ConstString(name),
+                                                                           buffer,
+                                                                           lldb::endian::InlHostByteOrder(), 
+                                                                           GetTarget().GetProcess().GetAddressByteSize()));
         
         ValueObjectSP result_valobj_sp;
         
@@ -480,9 +438,7 @@ SBValue::CreateValueFromAddress(const char* name, lldb::addr_t address, const SB
 }
 
 lldb::SBValue
-SBValue::CreateValueFromData (const char* name,
-                              const SBData& data,
-                              const SBType& type)
+SBValue::CreateValueFromData (const char* name, SBData data, SBType type)
 {
     SBValue result;
     
@@ -869,7 +825,7 @@ SBValue::GetThread()
     {
         if (m_opaque_sp->GetUpdatePoint().GetExecutionContextScope())
         {
-            result = SBThread(lldb::ThreadSP(m_opaque_sp->GetUpdatePoint().GetExecutionContextScope()->CalculateThread()));
+            result = SBThread(m_opaque_sp->GetUpdatePoint().GetExecutionContextScope()->CalculateThread()->GetSP());
         }
     }
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
@@ -891,7 +847,7 @@ SBValue::GetFrame()
     {
         if (m_opaque_sp->GetUpdatePoint().GetExecutionContextScope())
         {
-            result = SBFrame(lldb::StackFrameSP(m_opaque_sp->GetUpdatePoint().GetExecutionContextScope()->CalculateStackFrame()));
+            result.SetFrame (m_opaque_sp->GetUpdatePoint().GetExecutionContextScope()->CalculateStackFrame()->GetSP());
         }
     }
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
@@ -980,7 +936,7 @@ SBValue::GetDescription (SBStream &description)
 }
 
 lldb::Format
-SBValue::GetFormat () const
+SBValue::GetFormat ()
 {
     if (m_opaque_sp)
         return m_opaque_sp->GetFormat();

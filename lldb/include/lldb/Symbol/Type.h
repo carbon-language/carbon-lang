@@ -390,6 +390,57 @@ public:
 private:
     std::vector<lldb::TypeImplSP> m_content;
 };
+    
+class TypeMemberImpl
+{
+public:
+    TypeMemberImpl () :
+        m_type_impl_sp (),
+        m_bit_offset (0),
+        m_name ()
+    {
+    }
+
+    TypeMemberImpl (const lldb::TypeImplSP &type_impl_sp, 
+                    uint64_t bit_offset,
+                    const ConstString &name) :
+        m_type_impl_sp (type_impl_sp),
+        m_bit_offset (bit_offset),
+        m_name (name)
+    {
+    }
+    
+    TypeMemberImpl (const lldb::TypeImplSP &type_impl_sp, 
+                    uint64_t bit_offset):
+        m_type_impl_sp (type_impl_sp),
+        m_bit_offset (bit_offset),
+        m_name ()
+    {
+    }
+
+    const lldb::TypeImplSP &
+    GetTypeImpl ()
+    {
+        return m_type_impl_sp;
+    }
+
+    const ConstString &
+    GetName () const
+    {
+        return m_name;
+    }
+
+    uint64_t
+    GetBitOffset () const
+    {
+        return m_bit_offset;
+    }
+
+protected:
+    lldb::TypeImplSP m_type_impl_sp;
+    uint64_t m_bit_offset;
+    ConstString m_name;
+};
 
     
 } // namespace lldb_private

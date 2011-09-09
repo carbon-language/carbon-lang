@@ -413,6 +413,37 @@ public:
                     lldb::clang_type_t clang_type,
                     bool omit_empty_base_classes);
 
+    static uint32_t 
+    GetNumDirectBaseClasses (clang::ASTContext *ast, 
+                             lldb::clang_type_t clang_type);
+
+    static uint32_t 
+    GetNumVirtualBaseClasses (clang::ASTContext *ast, 
+                              lldb::clang_type_t clang_type);
+
+    static uint32_t 
+    GetNumFields (clang::ASTContext *ast, 
+                  lldb::clang_type_t clang_type);
+    
+    static lldb::clang_type_t
+    GetDirectBaseClassAtIndex (clang::ASTContext *ast, 
+                               lldb::clang_type_t clang_type,
+                               uint32_t idx, 
+                               uint32_t *byte_offset_ptr);
+
+    static lldb::clang_type_t
+    GetVirtualBaseClassAtIndex (clang::ASTContext *ast, 
+                                lldb::clang_type_t clang_type,
+                                uint32_t idx, 
+                                uint32_t *byte_offset_ptr);
+
+    static lldb::clang_type_t
+    GetFieldAtIndex (clang::ASTContext *ast, 
+                     lldb::clang_type_t clang_type,
+                     uint32_t idx, 
+                     std::string& name,
+                     uint32_t *byte_offset_ptr);
+
     static uint32_t
     GetNumPointeeChildren (lldb::clang_type_t clang_type);
 

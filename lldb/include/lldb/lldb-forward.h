@@ -170,6 +170,7 @@ class   TypeImpl;
 class   TypeAndOrName;
 class   TypeList;
 class   TypeListImpl;
+class   TypeMemberImpl;    
 class   UUID;
 class   Unwind;
 class   UnwindAssembly;
