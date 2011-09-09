@@ -17,6 +17,7 @@
 #include "clang/Sema/SemaInternal.h"
 #include "clang/Sema/ScopeInfo.h"
 #include "clang/Basic/SourceManager.h"
+#include "clang/Basic/SourceLocation.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclCXX.h"
@@ -37,6 +38,7 @@
 #include "llvm/ADT/ImmutableMap.h"
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Casting.h"
 #include <algorithm>
 #include <vector>
@@ -603,6 +605,178 @@ public:
 //===----------------------------------------------------------------------===//
 // -Wthread-safety
 //===----------------------------------------------------------------------===//
+namespace clang {
+namespace thread_safety {
+typedef std::pair<SourceLocation, PartialDiagnostic> DelayedDiag;
+typedef llvm::SmallVector<DelayedDiag, 4> DiagList;
+
+enum ProtectedOperationKind {
+  POK_VarDereference,
+  POK_VarAccess,
+  POK_FunctionCall
+};
+
+enum LockKind {
+  LK_Shared,
+  LK_Exclusive
+};
+
+enum AccessKind {
+  AK_Read,
+  AK_Written
+};
+
+
+struct SortDiagBySourceLocation {
+  Sema &S;
+  SortDiagBySourceLocation(Sema &S) : S(S) {}
+
+  bool operator()(const DelayedDiag &left, const DelayedDiag &right) {
+    // Although this call will be slow, this is only called when outputting
+    // multiple warnings.
+    return S.getSourceManager().isBeforeInTranslationUnit(left.first,
+                                                          right.first);
+  }
+};
+
+/// \brief Helper function that returns a LockKind required for the given level
+/// of access.
+LockKind getLockKindFromAccessKind(AccessKind AK) {
+  switch (AK) {
+    case AK_Read :
+      return LK_Shared;
+    case AK_Written :
+      return LK_Exclusive;
+  }
+}
+
+class ThreadSafetyHandler {
+public:
+  typedef llvm::StringRef Name;
+  ThreadSafetyHandler() {}
+  virtual ~ThreadSafetyHandler() {}
+  virtual void handleUnmatchedUnlock(Name LockName, SourceLocation Loc) {}
+  virtual void handleDoubleLock(Name LockName, SourceLocation Loc) {}
+  virtual void handleMutexHeldEndOfScope(Name LockName, SourceLocation Loc){}
+  virtual void handleNoLockLoopEntry(Name LockName, SourceLocation Loc) {}
+  virtual void handleNoUnlock(Name LockName, Name FunName,
+                              SourceLocation Loc) {}
+  virtual void handleExclusiveAndShared(Name LockName, SourceLocation Loc1,
+                                        SourceLocation Loc2) {}
+  virtual void handleNoMutexHeld(const NamedDecl *D, ProtectedOperationKind POK,
+                                 AccessKind AK, SourceLocation Loc) {}
+  virtual void handleMutexNotHeld(const NamedDecl *D,
+                                  ProtectedOperationKind POK, Name LockName,
+                                  LockKind LK, SourceLocation Loc) {}
+  virtual void handleFunExcludesLock(Name FunName, Name LockName,
+                                     SourceLocation Loc) {}
+};
+
+class ThreadSafetyReporter : public clang::thread_safety::ThreadSafetyHandler {
+  Sema &S;
+  DiagList Warnings;
+
+  // Helper functions
+  void warnLockMismatch(unsigned DiagID, Name LockName, SourceLocation Loc) {
+    PartialDiagnostic Warning = S.PDiag(DiagID) << LockName;
+    Warnings.push_back(DelayedDiag(Loc, Warning));
+  }
+
+ public:
+  ThreadSafetyReporter(Sema &S) : S(S) {}
+
+  /// \brief Emit all buffered diagnostics in order of sourcelocation.
+  /// We need to output diagnostics produced while iterating through
+  /// the lockset in deterministic order, so this function orders diagnostics
+  /// and outputs them.
+  void emitDiagnostics() {
+    SortDiagBySourceLocation SortDiagBySL(S);
+    sort(Warnings.begin(), Warnings.end(), SortDiagBySL);
+    for (DiagList::iterator I = Warnings.begin(), E = Warnings.end();
+         I != E; ++I)
+      S.Diag(I->first, I->second);
+  }
+
+  void handleUnmatchedUnlock(Name LockName, SourceLocation Loc) {
+    warnLockMismatch(diag::warn_unlock_but_no_lock, LockName, Loc);
+  }
+
+  void handleDoubleLock(Name LockName, SourceLocation Loc) {
+    warnLockMismatch(diag::warn_double_lock, LockName, Loc);
+  }
+
+  void handleMutexHeldEndOfScope(Name LockName, SourceLocation Loc){
+    warnLockMismatch(diag::warn_lock_at_end_of_scope, LockName, Loc);
+  }
+
+  void handleNoLockLoopEntry(Name LockName, SourceLocation Loc) {
+    warnLockMismatch(diag::warn_expecting_lock_held_on_loop, LockName, Loc);
+  }
+
+  void handleNoUnlock(Name LockName, llvm::StringRef FunName,
+                      SourceLocation Loc) {
+    PartialDiagnostic Warning =
+      S.PDiag(diag::warn_no_unlock) << LockName << FunName;
+    Warnings.push_back(DelayedDiag(Loc, Warning));
+  }
+
+  void handleExclusiveAndShared(Name LockName, SourceLocation Loc1,
+                                SourceLocation Loc2) {
+    PartialDiagnostic Warning =
+      S.PDiag(diag::warn_lock_exclusive_and_shared) << LockName;
+    PartialDiagnostic Note =
+      S.PDiag(diag::note_lock_exclusive_and_shared) << LockName;
+    Warnings.push_back(DelayedDiag(Loc1, Warning));
+    Warnings.push_back(DelayedDiag(Loc2, Note));
+  }
+
+  void handleNoMutexHeld(const NamedDecl *D, ProtectedOperationKind POK,
+                         AccessKind AK, SourceLocation Loc) {
+    unsigned DiagID;
+    switch (POK) {
+      case POK_VarAccess:
+        DiagID = diag::warn_variable_requires_any_lock;
+        break;
+      case POK_VarDereference:
+        DiagID = diag::warn_var_deref_requires_any_lock;
+        break;
+      default:
+        return;
+        break;
+    }
+    PartialDiagnostic Warning = S.PDiag(DiagID) << D->getName();
+    Warnings.push_back(DelayedDiag(Loc, Warning));
+  }
+
+  void handleMutexNotHeld(const NamedDecl *D, ProtectedOperationKind POK,
+                          Name LockName, LockKind LK, SourceLocation Loc) {
+    unsigned DiagID;
+    switch (POK) {
+      case POK_VarAccess:
+        DiagID = diag::warn_variable_requires_lock;
+        break;
+      case POK_VarDereference:
+        DiagID = diag::warn_var_deref_requires_lock;
+        break;
+      case POK_FunctionCall:
+        DiagID = diag::warn_fun_requires_lock;
+        break;
+    }
+    PartialDiagnostic Warning = S.PDiag(DiagID)
+      << D->getName().str() << LockName << LK;
+    Warnings.push_back(DelayedDiag(Loc, Warning));
+  }
+
+  void handleFunExcludesLock(Name FunName, Name LockName, SourceLocation Loc) {
+    PartialDiagnostic Warning =
+      S.PDiag(diag::warn_fun_excludes_mutex) << FunName << LockName;
+    Warnings.push_back(DelayedDiag(Loc, Warning));
+  }
+};
+}
+}
+
+using namespace thread_safety;
 
 namespace {
 /// \brief Implements a set of CFGBlocks using a BitVector.
@@ -713,7 +887,7 @@ public:
 /// foo(MyL);  // requires lock MyL->Mu to be held
 class MutexID {
   SmallVector<NamedDecl*, 2> DeclSeq;
- 
+
   /// Build a Decl sequence representing the lock from the given expression.
   /// Recursive function that bottoms out when the final DeclRefExpr is reached.
   void buildMutexID(Expr *Exp) {
@@ -772,16 +946,6 @@ public:
   }
 };
 
-enum LockKind {
-  LK_Shared,
-  LK_Exclusive
-};
-
-enum AccessKind {
-  AK_Read,
-  AK_Written
-};
-
 /// \brief This is a helper class that stores info about the most recent
 /// accquire of a Lock.
 ///
@@ -824,7 +988,7 @@ typedef llvm::ImmutableMap<MutexID, LockData> Lockset;
 /// output error messages related to missing locks.
 /// FIXME: In future, we may be able to not inherit from a visitor.
 class BuildLockset : public StmtVisitor<BuildLockset> {
-  Sema &S;
+  ThreadSafetyHandler &Handler;
   Lockset LSet;
   Lockset::Factory &LocksetFactory;
 
@@ -833,7 +997,7 @@ class BuildLockset : public StmtVisitor<BuildLockset> {
   void addLock(SourceLocation LockLoc, Expr *LockExp, LockKind LK);
   const ValueDecl *getValueDecl(Expr *Exp);
   void warnIfMutexNotHeld (const NamedDecl *D, Expr *Exp, AccessKind AK,
-                           MutexID &Mutex, unsigned DiagID);
+                           Expr *MutexExp, ProtectedOperationKind POK);
   void checkAccess(Expr *Exp, AccessKind AK);
   void checkDereference(Expr *Exp, AccessKind AK);
 
@@ -842,7 +1006,7 @@ class BuildLockset : public StmtVisitor<BuildLockset> {
 
   /// \brief Returns true if the lockset contains a lock, regardless of whether
   /// the lock is held exclusively or shared.
-  bool locksetContains(MutexID Lock) {
+  bool locksetContains(MutexID Lock) const {
     return LSet.lookup(Lock);
   }
 
@@ -853,9 +1017,22 @@ class BuildLockset : public StmtVisitor<BuildLockset> {
     return (LockHeld && KindRequested == LockHeld->LKind);
   }
 
+  /// \brief Returns true if the lockset contains a lock with at least the
+  /// passed in locktype. So for example, if we pass in LK_Shared, this function
+  /// returns true if the lock is held LK_Shared or LK_Exclusive. If we pass in
+  /// LK_Exclusive, this function returns true if the lock is held LK_Exclusive.
+  bool locksetContainsAtLeast(MutexID Lock, LockKind KindRequested) const {
+    switch (KindRequested) {
+      case LK_Shared:
+        return locksetContains(Lock);
+      case LK_Exclusive:
+        return locksetContains(Lock, KindRequested);
+    }
+  }
+
 public:
-  BuildLockset(Sema &S, Lockset LS, Lockset::Factory &F)
-    : StmtVisitor<BuildLockset>(), S(S), LSet(LS),
+  BuildLockset(ThreadSafetyHandler &Handler, Lockset LS, Lockset::Factory &F)
+    : StmtVisitor<BuildLockset>(), Handler(Handler), LSet(LS),
       LocksetFactory(F) {}
 
   Lockset getLockset() {
@@ -879,7 +1056,7 @@ void BuildLockset::addLock(SourceLocation LockLoc, Expr *LockExp,
 
   // FIXME: Don't always warn when we have support for reentrant locks.
   if (locksetContains(Mutex))
-    S.Diag(LockLoc, diag::warn_double_lock) << Mutex.getName();
+    Handler.handleDoubleLock(Mutex.getName(), LockLoc);
   LSet = LocksetFactory.add(LSet, Mutex, NewLock);
 }
 
@@ -891,7 +1068,7 @@ void BuildLockset::removeLock(SourceLocation UnlockLoc, Expr *LockExp) {
 
   Lockset NewLSet = LocksetFactory.remove(LSet, Mutex);
   if(NewLSet == LSet)
-    S.Diag(UnlockLoc, diag::warn_unlock_but_no_lock) << Mutex.getName();
+    Handler.handleUnmatchedUnlock(Mutex.getName(), UnlockLoc);
 
   LSet = NewLSet;
 }
@@ -910,20 +1087,12 @@ const ValueDecl *BuildLockset::getValueDecl(Expr *Exp) {
 /// \brief Warn if the LSet does not contain a lock sufficient to protect access
 /// of at least the passed in AccessType.
 void BuildLockset::warnIfMutexNotHeld(const NamedDecl *D, Expr *Exp,
-                                      AccessKind AK, MutexID &Mutex,
-                                      unsigned DiagID) {
-  switch (AK) {
-    case AK_Read:
-      if (!locksetContains(Mutex))
-        S.Diag(Exp->getExprLoc(), DiagID)
-          << D->getName() << Mutex.getName() << LK_Shared;
-      break;
-    case AK_Written :
-      if (!locksetContains(Mutex, LK_Exclusive))
-        S.Diag(Exp->getExprLoc(), DiagID)
-          << D->getName() << Mutex.getName() << LK_Exclusive;
-      break;
-  }
+                                      AccessKind AK, Expr *MutexExp,
+                                      ProtectedOperationKind POK) {
+  LockKind LK = getLockKindFromAccessKind(AK);
+  MutexID Mutex(MutexExp);
+  if (!locksetContainsAtLeast(Mutex, LK))
+    Handler.handleMutexNotHeld(D, POK, Mutex.getName(), LK, Exp->getExprLoc());
 }
 
 
@@ -944,17 +1113,12 @@ void BuildLockset::checkDereference(Expr *Exp, AccessKind AK) {
     return;
 
   if (D->getAttr<PtGuardedVarAttr>() && LSet.isEmpty())
-    S.Diag(Exp->getExprLoc(), diag::warn_var_deref_requires_any_lock)
-      << D->getName();
+    Handler.handleNoMutexHeld(D, POK_VarDereference, AK, Exp->getExprLoc());
 
   const AttrVec &ArgAttrs = D->getAttrs();
-  for(unsigned i = 0, Size = ArgAttrs.size(); i < Size; ++i) {
-    if (ArgAttrs[i]->getKind() != attr::PtGuardedBy)
-      continue;
-    const PtGuardedByAttr *PGBAttr = cast<PtGuardedByAttr>(ArgAttrs[i]);
-    MutexID Mutex(PGBAttr->getArg());
-    warnIfMutexNotHeld(D, Exp, AK, Mutex, diag::warn_var_deref_requires_lock);
-  }
+  for(unsigned i = 0, Size = ArgAttrs.size(); i < Size; ++i)
+    if (PtGuardedByAttr *PGBAttr = dyn_cast<PtGuardedByAttr>(ArgAttrs[i]))
+      warnIfMutexNotHeld(D, Exp, AK, PGBAttr->getArg(), POK_VarDereference);
 }
 
 /// \brief Checks guarded_by and guarded_var attributes.
@@ -967,17 +1131,12 @@ void BuildLockset::checkAccess(Expr *Exp, AccessKind AK) {
     return;
 
   if (D->getAttr<GuardedVarAttr>() && LSet.isEmpty())
-    S.Diag(Exp->getExprLoc(), diag::warn_variable_requires_any_lock)
-      << D->getName();
+    Handler.handleNoMutexHeld(D, POK_VarAccess, AK, Exp->getExprLoc());
 
   const AttrVec &ArgAttrs = D->getAttrs();
-  for(unsigned i = 0, Size = ArgAttrs.size(); i < Size; ++i) {
-    if (ArgAttrs[i]->getKind() != attr::GuardedBy)
-      continue;
-    const GuardedByAttr *GBAttr = cast<GuardedByAttr>(ArgAttrs[i]);
-    MutexID Mutex(GBAttr->getArg());
-    warnIfMutexNotHeld(D, Exp, AK, Mutex, diag::warn_variable_requires_lock);
-  }
+  for(unsigned i = 0, Size = ArgAttrs.size(); i < Size; ++i)
+    if (GuardedByAttr *GBAttr = dyn_cast<GuardedByAttr>(ArgAttrs[i]))
+      warnIfMutexNotHeld(D, Exp, AK, GBAttr->getArg(), POK_VarAccess);
 }
 
 /// \brief For unary operations which read and write a variable, we need to
@@ -1048,7 +1207,7 @@ void BuildLockset::addLocksToSet(LockKind LK, Attr *Attr,
 ///
 /// FIXME: For classes annotated with one of the guarded annotations, we need
 /// to treat const method calls as reads and non-const method calls as writes,
-/// and check that the appropriate locks are held. Non-const method calls with 
+/// and check that the appropriate locks are held. Non-const method calls with
 /// the same signature as const method calls can be also treated as reads.
 ///
 /// FIXME: We need to also visit CallExprs to catch/check global functions.
@@ -1101,11 +1260,8 @@ void BuildLockset::VisitCXXMemberCallExpr(CXXMemberCallExpr *Exp) {
             cast<ExclusiveLocksRequiredAttr>(Attr);
 
         for (ExclusiveLocksRequiredAttr::args_iterator
-             I = ELRAttr->args_begin(), E = ELRAttr->args_end(); I != E; ++I) {
-          MutexID Mutex(*I);
-          warnIfMutexNotHeld(D, Exp, AK_Written, Mutex,
-                            diag::warn_fun_requires_lock);
-        }
+             I = ELRAttr->args_begin(), E = ELRAttr->args_end(); I != E; ++I)
+          warnIfMutexNotHeld(D, Exp, AK_Written, *I, POK_FunctionCall);
         break;
       }
 
@@ -1116,11 +1272,8 @@ void BuildLockset::VisitCXXMemberCallExpr(CXXMemberCallExpr *Exp) {
         SharedLocksRequiredAttr *SLRAttr = cast<SharedLocksRequiredAttr>(Attr);
 
         for (SharedLocksRequiredAttr::args_iterator I = SLRAttr->args_begin(),
-             E = SLRAttr->args_end(); I != E; ++I) {
-          MutexID Mutex(*I);
-          warnIfMutexNotHeld(D, Exp, AK_Read, Mutex,
-                            diag::warn_fun_requires_lock);
-        }
+             E = SLRAttr->args_end(); I != E; ++I)
+          warnIfMutexNotHeld(D, Exp, AK_Read, *I, POK_FunctionCall);
         break;
       }
 
@@ -1130,8 +1283,8 @@ void BuildLockset::VisitCXXMemberCallExpr(CXXMemberCallExpr *Exp) {
             E = LEAttr->args_end(); I != E; ++I) {
           MutexID Mutex(*I);
           if (locksetContains(Mutex))
-            S.Diag(ExpLocation, diag::warn_fun_excludes_mutex)
-              << D->getName() << Mutex.getName();
+            Handler.handleFunExcludesLock(D->getName(), Mutex.getName(),
+                                          ExpLocation);
         }
         break;
       }
@@ -1147,37 +1300,13 @@ void BuildLockset::VisitCXXMemberCallExpr(CXXMemberCallExpr *Exp) {
   }
 }
 
-typedef std::pair<SourceLocation, PartialDiagnostic> DelayedDiag;
-typedef llvm::SmallVector<DelayedDiag, 4> DiagList;
-
-struct SortDiagBySourceLocation {
-  Sema &S;
-
-  SortDiagBySourceLocation(Sema &S) : S(S) {}
-
-  bool operator()(const DelayedDiag &left, const DelayedDiag &right) {
-    // Although this call will be slow, this is only called when outputting
-    // multiple warnings.
-    return S.getSourceManager().isBeforeInTranslationUnit(left.first,
-                                                          right.first);
-  }
-};
 } // end anonymous namespace
 
-/// \brief Emit all buffered diagnostics in order of sourcelocation.
-/// We need to output diagnostics produced while iterating through
-/// the lockset in deterministic order, so this function orders diagnostics
-/// and outputs them.
-static void EmitDiagnostics(Sema &S, DiagList &D) {
-  SortDiagBySourceLocation SortDiagBySL(S);
-  sort(D.begin(), D.end(), SortDiagBySL);
-  for (DiagList::iterator I = D.begin(), E = D.end(); I != E; ++I)
-    S.Diag(I->first, I->second);
-}
-
-static Lockset warnIfNotInFirstSetOrNotSameKind(Sema &S, const Lockset LSet1,
+/// \brief Flags a warning for each lock that is in LSet2 but not LSet1, or
+/// else mutexes that are held shared in one lockset and exclusive in the other.
+static Lockset warnIfNotInFirstSetOrNotSameKind(ThreadSafetyHandler &Handler,
+                                                const Lockset LSet1,
                                                 const Lockset LSet2,
-                                                DiagList &Warnings,
                                                 Lockset Intersection,
                                                 Lockset::Factory &Fact) {
   for (Lockset::iterator I = LSet2.begin(), E = LSet2.end(); I != E; ++I) {
@@ -1185,19 +1314,15 @@ static Lockset warnIfNotInFirstSetOrNotSameKind(Sema &S, const Lockset LSet1,
     const LockData &LSet2LockData = I.getData();
     if (const LockData *LD = LSet1.lookup(LSet2Mutex)) {
       if (LD->LKind != LSet2LockData.LKind) {
-        PartialDiagnostic Warning =
-          S.PDiag(diag::warn_lock_exclusive_and_shared) << LSet2Mutex.getName();
-        PartialDiagnostic Note =
-          S.PDiag(diag::note_lock_exclusive_and_shared) << LSet2Mutex.getName();
-        Warnings.push_back(DelayedDiag(LSet2LockData.AcquireLoc, Warning));
-        Warnings.push_back(DelayedDiag(LD->AcquireLoc, Note));
+        Handler.handleExclusiveAndShared(LSet2Mutex.getName(),
+                                         LSet2LockData.AcquireLoc,
+                                         LD->AcquireLoc);
         if (LD->LKind != LK_Exclusive)
           Intersection = Fact.add(Intersection, LSet2Mutex, LSet2LockData);
       }
     } else {
-      PartialDiagnostic Warning =
-        S.PDiag(diag::warn_lock_at_end_of_scope) << LSet2Mutex.getName();
-      Warnings.push_back(DelayedDiag(LSet2LockData.AcquireLoc, Warning));
+      Handler.handleMutexHeldEndOfScope(LSet2Mutex.getName(),
+                                        LSet2LockData.AcquireLoc);
     }
   }
   return Intersection;
@@ -1212,27 +1337,22 @@ static Lockset warnIfNotInFirstSetOrNotSameKind(Sema &S, const Lockset LSet1,
 /// A; if () then B; else C; D; we need to check that the lockset after B and C
 /// are the same. In the event of a difference, we use the intersection of these
 /// two locksets at the start of D.
-static Lockset intersectAndWarn(Sema &S, const Lockset LSet1,
-                                const Lockset LSet2,
+static Lockset intersectAndWarn(ThreadSafetyHandler &Handler,
+                                const Lockset LSet1, const Lockset LSet2,
                                 Lockset::Factory &Fact) {
   Lockset Intersection = LSet1;
-  DiagList Warnings;
-
-  Intersection = warnIfNotInFirstSetOrNotSameKind(S, LSet1, LSet2, Warnings,
+  Intersection = warnIfNotInFirstSetOrNotSameKind(Handler, LSet1, LSet2,
                                                   Intersection, Fact);
 
   for (Lockset::iterator I = LSet1.begin(), E = LSet1.end(); I != E; ++I) {
     if (!LSet2.contains(I.getKey())) {
       const MutexID &Mutex = I.getKey();
       const LockData &MissingLock = I.getData();
-      PartialDiagnostic Warning =
-        S.PDiag(diag::warn_lock_at_end_of_scope) << Mutex.getName();
-      Warnings.push_back(DelayedDiag(MissingLock.AcquireLoc, Warning));
+      Handler.handleMutexHeldEndOfScope(Mutex.getName(),
+                                        MissingLock.AcquireLoc);
       Intersection = Fact.remove(Intersection, Mutex);
     }
   }
-
-  EmitDiagnostics(S, Warnings);
   return Intersection;
 }
 
@@ -1260,38 +1380,35 @@ static SourceLocation getFirstStmtLocation(CFGBlock *Block) {
 ///
 /// \param LoopEntrySet Locks before starting the loop
 /// \param LoopReentrySet Locks in the last CFG block of the loop
-static void warnBackEdgeUnequalLocksets(Sema &S, const Lockset LoopReentrySet,
+static void warnBackEdgeUnequalLocksets(ThreadSafetyHandler &Handler,
+                                        const Lockset LoopReentrySet,
                                         const Lockset LoopEntrySet,
                                         SourceLocation FirstLocInLoop,
                                         Lockset::Factory &Fact) {
   assert(FirstLocInLoop.isValid());
-  DiagList Warnings;
-
   // Warn for locks held at the start of the loop, but not the end.
   for (Lockset::iterator I = LoopEntrySet.begin(), E = LoopEntrySet.end();
        I != E; ++I) {
     if (!LoopReentrySet.contains(I.getKey())) {
-      const MutexID &Mutex = I.getKey();
       // We report this error at the location of the first statement in a loop
-      PartialDiagnostic Warning =
-        S.PDiag(diag::warn_expecting_lock_held_on_loop) << Mutex.getName();
-      Warnings.push_back(DelayedDiag(FirstLocInLoop, Warning));
+      Handler.handleNoLockLoopEntry(I.getKey().getName(), FirstLocInLoop);
     }
   }
 
   // Warn for locks held at the end of the loop, but not at the start.
-  warnIfNotInFirstSetOrNotSameKind(S, LoopEntrySet, LoopReentrySet, Warnings,
+  warnIfNotInFirstSetOrNotSameKind(Handler, LoopEntrySet, LoopReentrySet,
                                    LoopReentrySet, Fact);
-
-  EmitDiagnostics(S, Warnings);
 }
 
+
+namespace clang { namespace thread_safety {
 /// \brief Check a function's CFG for thread-safety violations.
 ///
 /// We traverse the blocks in the CFG, compute the set of mutexes that are held
 /// at the end of each block, and issue warnings for thread safety violations.
 /// Each block in the CFG is traversed exactly once.
-static void checkThreadSafety(Sema &S, AnalysisContext &AC) {
+void runThreadSafetyAnalysis(AnalysisContext &AC,
+                             ThreadSafetyHandler &Handler) {
   CFG *CFGraph = AC.getCFG();
   if (!CFGraph) return;
   const Decl *D = AC.getDecl();
@@ -1348,12 +1465,12 @@ static void checkThreadSafety(Sema &S, AnalysisContext &AC) {
         Entryset = ExitLocksets[PrevBlockID];
         LocksetInitialized = true;
       } else {
-        Entryset = intersectAndWarn(S, Entryset, ExitLocksets[PrevBlockID],
-                                LocksetFactory);
+        Entryset = intersectAndWarn(Handler, Entryset,
+                                    ExitLocksets[PrevBlockID], LocksetFactory);
       }
     }
 
-    BuildLockset LocksetBuilder(S, Entryset, LocksetFactory);
+    BuildLockset LocksetBuilder(Handler, Entryset, LocksetFactory);
     for (CFGBlock::const_iterator BI = CurrBlock->begin(),
          BE = CurrBlock->end(); BI != BE; ++BI) {
       if (const CFGStmt *CfgStmt = dyn_cast<CFGStmt>(&*BI))
@@ -1383,14 +1500,13 @@ static void checkThreadSafety(Sema &S, AnalysisContext &AC) {
 
       Lockset PreLoop = EntryLocksets[FirstLoopBlock->getBlockID()];
       Lockset LoopEnd = ExitLocksets[CurrBlockID];
-      warnBackEdgeUnequalLocksets(S, LoopEnd, PreLoop, FirstLoopLocation,
+      warnBackEdgeUnequalLocksets(Handler, LoopEnd, PreLoop, FirstLoopLocation,
                                   LocksetFactory);
     }
   }
 
   Lockset FinalLockset = ExitLocksets[CFGraph->getExit().getBlockID()];
   if (!FinalLockset.isEmpty()) {
-    DiagList Warnings;
     for (Lockset::iterator I=FinalLockset.begin(), E=FinalLockset.end();
          I != E; ++I) {
       const MutexID &Mutex = I.getKey();
@@ -1401,14 +1517,12 @@ static void checkThreadSafety(Sema &S, AnalysisContext &AC) {
         FunName = ContextDecl->getDeclName().getAsString();
       }
 
-      PartialDiagnostic Warning =
-        S.PDiag(diag::warn_no_unlock)
-          << Mutex.getName() << FunName;
-      Warnings.push_back(DelayedDiag(MissingLock.AcquireLoc, Warning));
+      Handler.handleNoUnlock(Mutex.getName(), FunName, MissingLock.AcquireLoc);
     }
-    EmitDiagnostics(S, Warnings);
   }
 }
+
+}} // end namespace clang::thread_safety
 
 
 //===----------------------------------------------------------------------===//
@@ -1571,10 +1685,13 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
   // Warning: check for unreachable code
   if (P.enableCheckUnreachable)
     CheckUnreachable(S, AC);
-  
+
   // Check for thread safety violations
-  if (P.enableThreadSafetyAnalysis)
-    checkThreadSafety(S, AC);
+  if (P.enableThreadSafetyAnalysis) {
+    thread_safety::ThreadSafetyReporter Reporter(S);
+    thread_safety::runThreadSafetyAnalysis(AC, Reporter);
+    Reporter.emitDiagnostics();
+  }
 
   if (Diags.getDiagnosticLevel(diag::warn_uninit_var, D->getLocStart())
       != Diagnostic::Ignored ||
