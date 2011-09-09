@@ -39,7 +39,7 @@ DataVisualization::GetCurrentRevision ()
 }
 
 lldb::ValueFormatSP
-DataVisualization::ValueFormats::Get (ValueObject& valobj, lldb::DynamicValueType use_dynamic)
+DataVisualization::ValueFormats::GetFormat (ValueObject& valobj, lldb::DynamicValueType use_dynamic)
 {
     lldb::ValueFormatSP entry;
     GetFormatManager().GetValueNavigator().Get(valobj, entry, use_dynamic);
@@ -105,7 +105,7 @@ DataVisualization::AnyMatches (ConstString type_name,
 }
 
 bool
-DataVisualization::Categories::Get (const ConstString &category, lldb::FormatCategorySP &entry)
+DataVisualization::Categories::GetCategory (const ConstString &category, lldb::FormatCategorySP &entry)
 {
     entry = GetFormatManager().GetCategory(category);
     return true;
@@ -168,7 +168,7 @@ DataVisualization::Categories::GetCount ()
 }
 
 bool
-DataVisualization::NamedSummaryFormats::Get (const ConstString &type, lldb::SummaryFormatSP &entry)
+DataVisualization::NamedSummaryFormats::GetSummaryFormat (const ConstString &type, lldb::SummaryFormatSP &entry)
 {
     return GetFormatManager().GetNamedSummaryNavigator().Get(type,entry);
 }

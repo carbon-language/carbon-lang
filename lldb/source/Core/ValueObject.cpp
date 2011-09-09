@@ -248,9 +248,9 @@ ValueObject::UpdateFormatsIfNeeded(DynamicValueType use_dynamic)
     if ( (m_last_format_mgr_revision != DataVisualization::GetCurrentRevision()) ||
           m_last_format_mgr_dynamic != use_dynamic)
     {
-        SetValueFormat(DataVisualization::ValueFormats::Get(*this, eNoDynamicValues));
-        SetSummaryFormat(DataVisualization::GetSummaryFormat(*this, use_dynamic));
-        SetSyntheticChildren(DataVisualization::GetSyntheticChildren(*this, use_dynamic));
+        SetValueFormat(DataVisualization::ValueFormats::GetFormat (*this, eNoDynamicValues));
+        SetSummaryFormat(DataVisualization::GetSummaryFormat (*this, use_dynamic));
+        SetSyntheticChildren(DataVisualization::GetSyntheticChildren (*this, use_dynamic));
 
         m_last_format_mgr_revision = DataVisualization::GetCurrentRevision();
         m_last_format_mgr_dynamic = use_dynamic;

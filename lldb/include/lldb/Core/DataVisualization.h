@@ -49,7 +49,7 @@ public:
     {
     public:
         static lldb::ValueFormatSP
-        Get (ValueObject& valobj, lldb::DynamicValueType use_dynamic);
+        GetFormat (ValueObject& valobj, lldb::DynamicValueType use_dynamic);
         
         static void
         Add (const ConstString &type, const lldb::ValueFormatSP &entry);
@@ -86,7 +86,7 @@ public:
     {
     public:
         static bool
-        Get (const ConstString &type, lldb::SummaryFormatSP &entry);
+        GetSummaryFormat (const ConstString &type, lldb::SummaryFormatSP &entry);
         
         static void
         Add (const ConstString &type, const lldb::SummaryFormatSP &entry);
@@ -109,7 +109,7 @@ public:
     public:
         
         static bool
-        Get (const ConstString &category, lldb::FormatCategorySP &entry);
+        GetCategory (const ConstString &category, lldb::FormatCategorySP &entry);
         
         static void
         Add (const ConstString &category);

@@ -1049,7 +1049,7 @@ CommandObjectTypeSummaryAdd::AddSummary(const ConstString& type_name,
                                         Error* error)
 {
     lldb::FormatCategorySP category;
-    DataVisualization::Categories::Get(ConstString(category_name.c_str()), category);
+    DataVisualization::Categories::GetCategory(ConstString(category_name.c_str()), category);
     
     if (type == eRegexSummary)
     {
@@ -1234,7 +1234,7 @@ public:
         }
         
         lldb::FormatCategorySP category;
-        DataVisualization::Categories::Get(ConstString(m_options.m_category.c_str()), category);
+        DataVisualization::Categories::GetCategory(ConstString(m_options.m_category.c_str()), category);
         
         bool delete_category = category->Delete(typeCS,
                                                 eFormatCategoryItemSummary | eFormatCategoryItemRegexSummary);
@@ -1365,10 +1365,10 @@ public:
             {
                 const char* cat_name = command.GetArgumentAtIndex(0);
                 ConstString cat_nameCS(cat_name);
-                DataVisualization::Categories::Get(cat_nameCS, category);
+                DataVisualization::Categories::GetCategory(cat_nameCS, category);
             }
             else
-                DataVisualization::Categories::Get(ConstString(NULL), category);
+                DataVisualization::Categories::GetCategory(ConstString(NULL), category);
             category->Clear(eFormatCategoryItemSummary | eFormatCategoryItemRegexSummary);
         }
         
@@ -1667,7 +1667,7 @@ public:
             }
             DataVisualization::Categories::Enable(typeCS);
             lldb::FormatCategorySP cate;
-            if (DataVisualization::Categories::Get(typeCS, cate) && cate.get())
+            if (DataVisualization::Categories::GetCategory(typeCS, cate) && cate.get())
             {
                 if (cate->GetCount() == 0)
                 {
@@ -2462,7 +2462,7 @@ public:
         }
         
         lldb::FormatCategorySP category;
-        DataVisualization::Categories::Get(ConstString(m_options.m_category.c_str()), category);
+        DataVisualization::Categories::GetCategory(ConstString(m_options.m_category.c_str()), category);
         
         bool delete_category = category->GetFilterNavigator()->Delete(typeCS);
         delete_category = category->GetRegexFilterNavigator()->Delete(typeCS) || delete_category;
@@ -2624,7 +2624,7 @@ public:
         }
         
         lldb::FormatCategorySP category;
-        DataVisualization::Categories::Get(ConstString(m_options.m_category.c_str()), category);
+        DataVisualization::Categories::GetCategory(ConstString(m_options.m_category.c_str()), category);
         
         bool delete_category = category->GetSyntheticNavigator()->Delete(typeCS);
         delete_category = category->GetRegexSyntheticNavigator()->Delete(typeCS) || delete_category;
@@ -2757,10 +2757,10 @@ public:
             {
                 const char* cat_name = command.GetArgumentAtIndex(0);
                 ConstString cat_nameCS(cat_name);
-                DataVisualization::Categories::Get(cat_nameCS, category);
+                DataVisualization::Categories::GetCategory(cat_nameCS, category);
             }
             else
-                DataVisualization::Categories::Get(ConstString(NULL), category);
+                DataVisualization::Categories::GetCategory(ConstString(NULL), category);
             category->GetFilterNavigator()->Clear();
             category->GetRegexFilterNavigator()->Clear();
         }
@@ -2883,10 +2883,10 @@ public:
             {
                 const char* cat_name = command.GetArgumentAtIndex(0);
                 ConstString cat_nameCS(cat_name);
-                DataVisualization::Categories::Get(cat_nameCS, category);
+                DataVisualization::Categories::GetCategory(cat_nameCS, category);
             }
             else
-                DataVisualization::Categories::Get(ConstString(NULL), category);
+                DataVisualization::Categories::GetCategory(ConstString(NULL), category);
             category->GetSyntheticNavigator()->Clear();
             category->GetRegexSyntheticNavigator()->Clear();
         }
@@ -3037,7 +3037,7 @@ public:
         
         
         lldb::FormatCategorySP category;
-        DataVisualization::Categories::Get(ConstString(options->m_category.c_str()), category);
+        DataVisualization::Categories::GetCategory(ConstString(options->m_category.c_str()), category);
         
         Error error;
         
@@ -3156,7 +3156,7 @@ CommandObjectTypeSynthAdd::Execute_PythonClass (Args& command, CommandReturnObje
     // now I have a valid provider, let's add it to every type
     
     lldb::FormatCategorySP category;
-    DataVisualization::Categories::Get(ConstString(m_options.m_category.c_str()), category);
+    DataVisualization::Categories::GetCategory(ConstString(m_options.m_category.c_str()), category);
     
     Error error;
     
@@ -3215,7 +3215,7 @@ CommandObjectTypeSynthAdd::AddSynth(const ConstString& type_name,
          Error* error)
 {
     lldb::FormatCategorySP category;
-    DataVisualization::Categories::Get(ConstString(category_name.c_str()), category);
+    DataVisualization::Categories::GetCategory(ConstString(category_name.c_str()), category);
     
     if (category->AnyMatches(type_name,
                              eFormatCategoryItemFilter | eFormatCategoryItemRegexFilter,
@@ -3392,7 +3392,7 @@ private:
               Error* error)
     {
         lldb::FormatCategorySP category;
-        DataVisualization::Categories::Get(ConstString(category_name.c_str()), category);
+        DataVisualization::Categories::GetCategory(ConstString(category_name.c_str()), category);
         
         if (category->AnyMatches(type_name,
                                  eFormatCategoryItemSynth | eFormatCategoryItemRegexSynth,
@@ -3514,7 +3514,7 @@ public:
         // now I have a valid provider, let's add it to every type
         
         lldb::FormatCategorySP category;
-        DataVisualization::Categories::Get(ConstString(m_options.m_category.c_str()), category);
+        DataVisualization::Categories::GetCategory(ConstString(m_options.m_category.c_str()), category);
         
         Error error;
         
