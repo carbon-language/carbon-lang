@@ -174,7 +174,7 @@ public:
 
   void visitVAArgInst(VAArgInst &I);
   void visitInstruction(Instruction &I) {
-    errs() << I;
+    errs() << I << "\n";
     llvm_unreachable("Instruction not interpretable yet!");
   }
 
