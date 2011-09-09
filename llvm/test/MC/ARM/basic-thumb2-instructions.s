@@ -795,6 +795,61 @@ _func:
 
 
 @------------------------------------------------------------------------------
+@ LDRSH(immediate)
+@------------------------------------------------------------------------------
+        ldrsh r5, [r5, #-4]
+        ldrsh r5, [r6, #32]
+        ldrsh r5, [r6, #33]
+        ldrsh r5, [r6, #257]
+        ldrsh.w lr, [r7, #257]
+
+@ CHECK: ldrsh	r5, [r5, #-4]           @ encoding: [0x35,0xf9,0x04,0x5c]
+@ CHECK: ldrsh.w r5, [r6, #32]          @ encoding: [0xb6,0xf9,0x20,0x50]
+@ CHECK: ldrsh.w r5, [r6, #33]          @ encoding: [0xb6,0xf9,0x21,0x50]
+@ CHECK: ldrsh.w r5, [r6, #257]         @ encoding: [0xb6,0xf9,0x01,0x51]
+@ CHECK: ldrsh.w lr, [r7, #257]         @ encoding: [0xb7,0xf9,0x01,0xe1]
+
+
+@------------------------------------------------------------------------------
+@ LDRSH(register)
+@------------------------------------------------------------------------------
+        ldrsh r1, [r8, r1]
+        ldrsh.w r4, [r5, r2]
+        ldrsh r6, [r0, r2, lsl #3]
+        ldrsh r8, [r8, r2, lsl #2]
+        ldrsh r7, [sp, r2, lsl #1]
+        ldrsh r7, [sp, r2, lsl #0]
+        ldrsh r5, [r8, #255]!
+        ldrsh r2, [r5, #4]!
+        ldrsh r1, [r4, #-4]!
+        ldrsh lr, [r3], #255
+        ldrsh r9, [r2], #4
+        ldrsh r3, [sp], #-4
+
+@ CHECK: ldrsh.w r1, [r8, r1]           @ encoding: [0x38,0xf9,0x01,0x10]
+@ CHECK: ldrsh.w r4, [r5, r2]           @ encoding: [0x35,0xf9,0x02,0x40]
+@ CHECK: ldrsh.w r6, [r0, r2, lsl #3]   @ encoding: [0x30,0xf9,0x32,0x60]
+@ CHECK: ldrsh.w r8, [r8, r2, lsl #2]   @ encoding: [0x38,0xf9,0x22,0x80]
+@ CHECK: ldrsh.w r7, [sp, r2, lsl #1]   @ encoding: [0x3d,0xf9,0x12,0x70]
+@ CHECK: ldrsh.w r7, [sp, r2]           @ encoding: [0x3d,0xf9,0x02,0x70]
+@ CHECK: ldrsh	r5, [r8, #255]!         @ encoding: [0x38,0xf9,0xff,0x5f]
+@ CHECK: ldrsh	r2, [r5, #4]!           @ encoding: [0x35,0xf9,0x04,0x2f]
+@ CHECK: ldrsh	r1, [r4, #-4]!          @ encoding: [0x34,0xf9,0x04,0x1d]
+@ CHECK: ldrsh	lr, [r3], #255          @ encoding: [0x33,0xf9,0xff,0xeb]
+@ CHECK: ldrsh	r9, [r2], #4            @ encoding: [0x32,0xf9,0x04,0x9b]
+@ CHECK: ldrsh	r3, [sp], #-4           @ encoding: [0x3d,0xf9,0x04,0x39]
+
+
+@------------------------------------------------------------------------------
+@ LDRSH(literal)
+@------------------------------------------------------------------------------
+        ldrsh r5, _bar
+
+@ CHECK: ldrsh.w r5, _bar               @ encoding: [0xbf'A',0xf9'A',A,0x50'A']
+@ CHECK:      @   fixup A - offset: 0, value: _bar, kind: fixup_t2_ldst_pcrel_12
+
+
+@------------------------------------------------------------------------------
 @ IT
 @------------------------------------------------------------------------------
 @ Test encodings of a few full IT blocks, not just the IT instruction
