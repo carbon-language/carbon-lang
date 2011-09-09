@@ -614,13 +614,20 @@ Sema::SemaBuiltinAtomicOverloaded(ExprResult TheCallResult) {
     TheCall->setArg(i+1, Arg.get());
   }
 
-  // Switch the DeclRefExpr to refer to the new decl.
-  DRE->setDecl(NewBuiltinDecl);
-  DRE->setType(NewBuiltinDecl->getType());
+  ASTContext& Context = this->getASTContext();
+
+  // Create a new DeclRefExpr to refer to the new decl.
+  DeclRefExpr* NewDRE = DeclRefExpr::Create(
+      Context,
+      DRE->getQualifierLoc(),
+      NewBuiltinDecl,
+      DRE->getLocation(),
+      NewBuiltinDecl->getType(),
+      DRE->getValueKind());
 
   // Set the callee in the CallExpr.
   // FIXME: This leaks the original parens and implicit casts.
-  ExprResult PromotedCall = UsualUnaryConversions(DRE);
+  ExprResult PromotedCall = UsualUnaryConversions(NewDRE);
   if (PromotedCall.isInvalid())
     return ExprError();
   TheCall->setCallee(PromotedCall.take());
