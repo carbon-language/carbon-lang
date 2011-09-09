@@ -1771,7 +1771,7 @@ static void handleSentinelAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     return;
   }
 
-  int sentinel = 0;
+  unsigned sentinel = 0;
   if (Attr.getNumArgs() > 0) {
     Expr *E = Attr.getArg(0);
     llvm::APSInt Idx(32);
@@ -1781,16 +1781,17 @@ static void handleSentinelAttr(Sema &S, Decl *D, const AttributeList &Attr) {
        << "sentinel" << 1 << E->getSourceRange();
       return;
     }
-    sentinel = Idx.getZExtValue();
 
-    if (sentinel < 0) {
+    if (Idx.isSigned() && Idx.isNegative()) {
       S.Diag(Attr.getLoc(), diag::err_attribute_sentinel_less_than_zero)
         << E->getSourceRange();
       return;
     }
+
+    sentinel = Idx.getZExtValue();
   }
 
-  int nullPos = 0;
+  unsigned nullPos = 0;
   if (Attr.getNumArgs() > 1) {
     Expr *E = Attr.getArg(1);
     llvm::APSInt Idx(32);
@@ -1802,7 +1803,7 @@ static void handleSentinelAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     }
     nullPos = Idx.getZExtValue();
 
-    if (nullPos > 1 || nullPos < 0) {
+    if ((Idx.isSigned() && Idx.isNegative()) || nullPos > 1) {
       // FIXME: This error message could be improved, it would be nice
       // to say what the bounds actually are.
       S.Diag(Attr.getLoc(), diag::err_attribute_sentinel_not_zero_or_one)
@@ -1812,9 +1813,7 @@ static void handleSentinelAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   }
 
   if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
-    const FunctionType *FT = FD->getType()->getAs<FunctionType>();
-    assert(FT && "FunctionDecl has non-function type?");
-
+    const FunctionType *FT = FD->getType()->castAs<FunctionType>();
     if (isa<FunctionNoProtoType>(FT)) {
       S.Diag(Attr.getLoc(), diag::warn_attribute_sentinel_named_arguments);
       return;

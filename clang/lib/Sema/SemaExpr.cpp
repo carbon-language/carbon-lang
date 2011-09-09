@@ -146,90 +146,74 @@ std::string Sema::getDeletedOrUnavailableSuffix(const FunctionDecl *FD) {
   return std::string();
 }
 
-/// DiagnoseSentinelCalls - This routine checks on method dispatch calls
-/// (and other functions in future), which have been declared with sentinel
-/// attribute. It warns if call does not have the sentinel argument.
-///
+/// DiagnoseSentinelCalls - This routine checks whether a call or
+/// message-send is to a declaration with the sentinel attribute, and
+/// if so, it checks that the requirements of the sentinel are
+/// satisfied.
 void Sema::DiagnoseSentinelCalls(NamedDecl *D, SourceLocation Loc,
-                                 Expr **Args, unsigned NumArgs) {
+                                 Expr **args, unsigned numArgs) {
   const SentinelAttr *attr = D->getAttr<SentinelAttr>();
   if (!attr)
     return;
 
-  int sentinelPos = attr->getSentinel();
-  int nullPos = attr->getNullPos();
+  // The number of formal parameters of the declaration.
+  unsigned numFormalParams;
 
-  unsigned int i = 0;
-  bool warnNotEnoughArgs = false;
-  int isMethod = 0;
+  // The kind of declaration.  This is also an index into a %select in
+  // the diagnostic.
+  enum CalleeType { CT_Function, CT_Method, CT_Block } calleeType;
+
   if (ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D)) {
-    // skip over named parameters.
-    ObjCMethodDecl::param_iterator P, E = MD->param_end();
-    for (P = MD->param_begin(); (P != E && i < NumArgs); ++P) {
-      if (nullPos)
-        --nullPos;
-      else
-        ++i;
-    }
-    warnNotEnoughArgs = (P != E || i >= NumArgs);
-    isMethod = 1;
+    numFormalParams = MD->param_size();
+    calleeType = CT_Method;
   } else if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
-    // skip over named parameters.
-    ObjCMethodDecl::param_iterator P, E = FD->param_end();
-    for (P = FD->param_begin(); (P != E && i < NumArgs); ++P) {
-      if (nullPos)
-        --nullPos;
-      else
-        ++i;
-    }
-    warnNotEnoughArgs = (P != E || i >= NumArgs);
-  } else if (VarDecl *V = dyn_cast<VarDecl>(D)) {
-    // block or function pointer call.
-    QualType Ty = V->getType();
-    if (Ty->isBlockPointerType() || Ty->isFunctionPointerType()) {
-      const FunctionType *FT = Ty->isFunctionPointerType()
-      ? Ty->getAs<PointerType>()->getPointeeType()->getAs<FunctionType>()
-      : Ty->getAs<BlockPointerType>()->getPointeeType()->getAs<FunctionType>();
-      if (const FunctionProtoType *Proto = dyn_cast<FunctionProtoType>(FT)) {
-        unsigned NumArgsInProto = Proto->getNumArgs();
-        unsigned k;
-        for (k = 0; (k != NumArgsInProto && i < NumArgs); k++) {
-          if (nullPos)
-            --nullPos;
-          else
-            ++i;
-        }
-        warnNotEnoughArgs = (k != NumArgsInProto || i >= NumArgs);
-      }
-      if (Ty->isBlockPointerType())
-        isMethod = 2;
-    } else
+    numFormalParams = FD->param_size();
+    calleeType = CT_Function;
+  } else if (isa<VarDecl>(D)) {
+    QualType type = cast<ValueDecl>(D)->getType();
+    const FunctionType *fn = 0;
+    if (const PointerType *ptr = type->getAs<PointerType>()) {
+      fn = ptr->getPointeeType()->getAs<FunctionType>();
+      if (!fn) return;
+      calleeType = CT_Function;
+    } else if (const BlockPointerType *ptr = type->getAs<BlockPointerType>()) {
+      fn = ptr->getPointeeType()->castAs<FunctionType>();
+      calleeType = CT_Block;
+    } else {
       return;
-  } else
-    return;
+    }
 
-  if (warnNotEnoughArgs) {
-    Diag(Loc, diag::warn_not_enough_argument) << D->getDeclName();
-    Diag(D->getLocation(), diag::note_sentinel_here) << isMethod;
+    if (const FunctionProtoType *proto = dyn_cast<FunctionProtoType>(fn)) {
+      numFormalParams = proto->getNumArgs();
+    } else {
+      numFormalParams = 0;
+    }
+  } else {
     return;
   }
-  int sentinel = i;
-  while (sentinelPos > 0 && i < NumArgs-1) {
-    --sentinelPos;
-    ++i;
-  }
-  if (sentinelPos > 0) {
+
+  // "nullPos" is the number of formal parameters at the end which
+  // effectively count as part of the variadic arguments.  This is
+  // useful if you would prefer to not have *any* formal parameters,
+  // but the language forces you to have at least one.
+  unsigned nullPos = attr->getNullPos();
+  assert((nullPos == 0 || nullPos == 1) && "invalid null position on sentinel");
+  numFormalParams = (nullPos > numFormalParams ? 0 : numFormalParams - nullPos);
+
+  // The number of arguments which should follow the sentinel.
+  unsigned numArgsAfterSentinel = attr->getSentinel();
+
+  // If there aren't enough arguments for all the formal parameters,
+  // the sentinel, and the args after the sentinel, complain.
+  if (numArgs < numFormalParams + numArgsAfterSentinel + 1) {
     Diag(Loc, diag::warn_not_enough_argument) << D->getDeclName();
-    Diag(D->getLocation(), diag::note_sentinel_here) << isMethod;
+    Diag(D->getLocation(), diag::note_sentinel_here) << calleeType;
     return;
   }
-  while (i < NumArgs-1) {
-    ++i;
-    ++sentinel;
-  }
-  Expr *sentinelExpr = Args[sentinel];
+
+  // Otherwise, find the sentinel expression.
+  Expr *sentinelExpr = args[numArgs - numArgsAfterSentinel - 1];
   if (!sentinelExpr) return;
-  if (sentinelExpr->isTypeDependent()) return;
   if (sentinelExpr->isValueDependent()) return;
 
   // nullptr_t is always treated as null.
@@ -243,23 +227,25 @@ void Sema::DiagnoseSentinelCalls(NamedDecl *D, SourceLocation Loc,
   // Unfortunately, __null has type 'int'.
   if (isa<GNUNullExpr>(sentinelExpr)) return;
 
-  SourceLocation MissingNilLoc 
+  // Pick a reasonable string to insert.  Optimistically use 'nil' or
+  // 'NULL' if those are actually defined in the context.  Only use
+  // 'nil' for ObjC methods, where it's much more likely that the
+  // variadic arguments form a list of object pointers.
+  SourceLocation MissingNilLoc
     = PP.getLocForEndOfToken(sentinelExpr->getLocEnd());
   std::string NullValue;
-  if (isMethod && PP.getIdentifierInfo("nil")->hasMacroDefinition())
+  if (calleeType == CT_Method &&
+      PP.getIdentifierInfo("nil")->hasMacroDefinition())
     NullValue = "nil";
   else if (PP.getIdentifierInfo("NULL")->hasMacroDefinition())
     NullValue = "NULL";
-  else if (Context.getTypeSize(Context.IntTy)
-                                  == Context.getTypeSize(Context.getSizeType()))
-    NullValue = "0";
   else
-    NullValue = "0L";
+    NullValue = "(void*) 0";
   
   Diag(MissingNilLoc, diag::warn_missing_sentinel) 
-    << isMethod 
+    << calleeType
     << FixItHint::CreateInsertion(MissingNilLoc, ", " + NullValue);
-  Diag(D->getLocation(), diag::note_sentinel_here) << isMethod;
+  Diag(D->getLocation(), diag::note_sentinel_here) << calleeType;
 }
 
 SourceRange Sema::getExprRange(Expr *E) const {
