@@ -233,7 +233,7 @@ private:
   Preprocessor *PP;
 
   /// \brief The AST context into which we'll read the AST files.
-  ASTContext *Context;
+  ASTContext &Context;
       
   /// \brief The AST consumer.
   ASTConsumer *Consumer;
@@ -752,8 +752,8 @@ public:
   /// \brief Set the Preprocessor to use.
   void setPreprocessor(Preprocessor &pp);
 
-  /// \brief Sets and initializes the given Context.
-  void InitializeContext(ASTContext &Context);
+  /// \brief Initializes the ASTContext
+  void InitializeContext();
 
   /// \brief Add in-memory (virtual file) buffer.
   void addInMemoryBuffer(StringRef &FileName, llvm::MemoryBuffer *Buffer) {
@@ -1267,7 +1267,7 @@ public:
   }
   
   /// \brief Retrieve the AST context that this AST reader supplements.
-  ASTContext *getContext() { return Context; }
+  ASTContext &getContext() { return Context; }
 
   // \brief Contains declarations that were loaded before we have
   // access to a Sema object.
