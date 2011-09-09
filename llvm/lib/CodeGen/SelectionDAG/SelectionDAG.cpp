@@ -771,11 +771,14 @@ static void VerifyNodeCommon(SDNode *N) {
     assert(N->getNumOperands() == N->getValueType(0).getVectorNumElements() &&
            "Wrong number of operands!");
     EVT EltVT = N->getValueType(0).getVectorElementType();
-    for (SDNode::op_iterator I = N->op_begin(), E = N->op_end(); I != E; ++I)
+    for (SDNode::op_iterator I = N->op_begin(), E = N->op_end(); I != E; ++I) {
       assert((I->getValueType() == EltVT ||
              (EltVT.isInteger() && I->getValueType().isInteger() &&
               EltVT.bitsLE(I->getValueType()))) &&
             "Wrong operand type!");
+      assert(I->getValueType() == N->getOperand(0).getValueType() &&
+             "Operands must all have the same type");
+    }
     break;
   }
   }
