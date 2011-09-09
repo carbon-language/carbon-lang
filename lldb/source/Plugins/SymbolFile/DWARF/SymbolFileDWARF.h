@@ -234,7 +234,7 @@ protected:
         flagsGotDebugRangesData     = (1 << 9),
         flagsGotDebugStrData        = (1 << 10),
         flagsGotDebugNamesData      = (1 << 11),
-        flagsGotDebugTypesData      = (1 << 12),
+        flagsGotDebugTypesData      = (1 << 12)
     };
 
     DISALLOW_COPY_AND_ASSIGN (SymbolFileDWARF);

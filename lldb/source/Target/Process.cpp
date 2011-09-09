@@ -1155,7 +1155,8 @@ Process::LoadImage (const FileSpec &image_spec, Error &error)
                 const char *prefix = "extern \"C\" void* dlopen (const char *path, int mode);\n";
                 lldb::ValueObjectSP result_valobj_sp;
                 ClangUserExpression::Evaluate (exe_ctx, unwind_on_error, expr.GetData(), prefix, result_valobj_sp);
-                if (result_valobj_sp->GetError().Success())
+                error = result_valobj_sp->GetError();
+                if (error.Success())
                 {
                     Scalar scalar;
                     if (result_valobj_sp->ResolveValue (scalar))
