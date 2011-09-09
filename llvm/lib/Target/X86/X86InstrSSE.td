@@ -5868,12 +5868,37 @@ defm VBLENDVPSY : SS41I_quaternary_int_avx<0x4A, "vblendvps", VR256, i256mem,
                                          memopv32i8, int_x86_avx_blendv_ps_256>;
 
 let Predicates = [HasAVX] in {
-  def : Pat<(X86pblendvb VR128:$src1, VR128:$src2, VR128:$mask),
-            (VPBLENDVBrr VR128:$src1, VR128:$src2, VR128:$mask)>;
-  def : Pat<(X86blendvpd VR128:$src1, VR128:$src2, VR128:$mask),
-            (VBLENDVPDrr VR128:$src1, VR128:$src2, VR128:$mask)>;
-  def : Pat<(X86blendvps VR128:$src1, VR128:$src2, VR128:$mask),
-            (VBLENDVPSrr VR128:$src1, VR128:$src2, VR128:$mask)>;
+def : Pat<(v16i8 (X86blendv (v16i8 VR128:$src1), (v16i8 VR128:$src2),
+                  VR128:$mask)),
+    (VPBLENDVBrr VR128:$src1, VR128:$src2, VR128:$mask)>;
+def : Pat<(v4i32 (X86blendv (v4i32 VR128:$src1), (v4i32 VR128:$src2),
+                  VR128:$mask)),
+    (VBLENDVPSrr VR128:$src1, VR128:$src2, VR128:$mask)>;
+def : Pat<(v4f32 (X86blendv (v4f32 VR128:$src1), (v4f32 VR128:$src2),
+                  VR128:$mask)),
+    (VBLENDVPSrr VR128:$src1, VR128:$src2, VR128:$mask)>;
+def : Pat<(v2i64 (X86blendv (v2i64 VR128:$src1), (v2i64 VR128:$src2),
+                  VR128:$mask)),
+    (VBLENDVPDrr VR128:$src1, VR128:$src2, VR128:$mask)>;
+def : Pat<(v2f64 (X86blendv (v2f64 VR128:$src1), (v2f64 VR128:$src2),
+                  VR128:$mask)),
+    (VBLENDVPDrr VR128:$src1, VR128:$src2, VR128:$mask)>;
+
+
+def : Pat<(v8i32 (X86blendv (v8i32 VR256:$src1), (v8i32 VR256:$src2),
+                  VR256:$mask)),
+    (VBLENDVPSYrr VR256:$src1, VR256:$src2, VR256:$mask)>;
+def : Pat<(v8f32 (X86blendv (v8f32 VR256:$src1), (v8f32 VR256:$src2),
+                  VR256:$mask)),
+    (VBLENDVPSYrr VR256:$src1, VR256:$src2, VR256:$mask)>;
+
+
+def : Pat<(v4i64 (X86blendv (v4i64 VR256:$src1), (v4i64 VR256:$src2),
+                  VR256:$mask)),
+    (VBLENDVPDYrr VR256:$src1, VR256:$src2, VR256:$mask)>;
+def : Pat<(v4f64 (X86blendv (v4f64 VR256:$src1), (v4f64 VR256:$src2),
+                  VR256:$mask)),
+    (VBLENDVPDYrr VR256:$src1, VR256:$src2, VR256:$mask)>;
 }
 
 /// SS41I_ternary_int - SSE 4.1 ternary operator
@@ -5901,12 +5926,16 @@ defm BLENDVPS : SS41I_ternary_int<0x14, "blendvps", int_x86_sse41_blendvps>;
 defm PBLENDVB : SS41I_ternary_int<0x10, "pblendvb", int_x86_sse41_pblendvb>;
 
 let Predicates = [HasSSE41] in {
-  def : Pat<(X86pblendvb VR128:$src1, VR128:$src2, XMM0),
+  def : Pat<(v16i8 (X86blendv (v16i8 VR128:$src1), (v16i8 VR128:$src2), XMM0)),
             (PBLENDVBrr0 VR128:$src1, VR128:$src2)>;
-  def : Pat<(X86blendvpd VR128:$src1, VR128:$src2, XMM0),
-            (BLENDVPDrr0 VR128:$src1, VR128:$src2)>;
-  def : Pat<(X86blendvps VR128:$src1, VR128:$src2, XMM0),
+  def : Pat<(v4i32 (X86blendv (v4i32 VR128:$src1), (v4i32 VR128:$src2), XMM0)),
             (BLENDVPSrr0 VR128:$src1, VR128:$src2)>;
+  def : Pat<(v4f32 (X86blendv (v4f32 VR128:$src1), (v4f32 VR128:$src2), XMM0)),
+            (BLENDVPSrr0 VR128:$src1, VR128:$src2)>;
+  def : Pat<(v2i64 (X86blendv (v2i64 VR128:$src1), (v2i64 VR128:$src2), XMM0)),
+            (BLENDVPDrr0 VR128:$src1, VR128:$src2)>;
+  def : Pat<(v2f64 (X86blendv (v2f64 VR128:$src1), (v2f64 VR128:$src2), XMM0)),
+            (BLENDVPDrr0 VR128:$src1, VR128:$src2)>;
 }
 
 let Predicates = [HasAVX] in

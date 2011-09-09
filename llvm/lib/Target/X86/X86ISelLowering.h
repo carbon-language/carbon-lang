@@ -175,10 +175,8 @@ namespace llvm {
       /// PSIGNB/W/D - Copy integer sign.
       PSIGNB, PSIGNW, PSIGND,
 
-      /// BLENDVXX family of opcodes
-      PBLENDVB,
-      BLENDVPD,
-      BLENDVPS,
+      /// BLEND family of opcodes
+      BLENDV,
 
       /// FMAX, FMIN - Floating point max and min.
       ///

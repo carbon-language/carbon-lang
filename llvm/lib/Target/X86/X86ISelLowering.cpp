@@ -1019,6 +1019,11 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::SELECT,            MVT::v4i64, Custom);
     setOperationAction(ISD::SELECT,            MVT::v8f32, Custom);
 
+    setOperationAction(ISD::VSELECT,            MVT::v4f64, Custom);
+    setOperationAction(ISD::VSELECT,            MVT::v4i64, Custom);
+    setOperationAction(ISD::VSELECT,            MVT::v8i32, Custom);
+    setOperationAction(ISD::VSELECT,            MVT::v8f32, Custom);
+
     setOperationAction(ISD::ADD,               MVT::v4i64, Custom);
     setOperationAction(ISD::ADD,               MVT::v8i32, Custom);
     setOperationAction(ISD::ADD,               MVT::v16i16, Custom);
@@ -8706,14 +8711,21 @@ SDValue X86TargetLowering::LowerVSELECT(SDValue Op, SelectionDAG &DAG) const {
   EVT VT = Op1.getValueType();
   switch (VT.getSimpleVT().SimpleTy) {
     default: break;
+    // SSE4:
     case MVT::v2i64:
     case MVT::v2f64:
-         return DAG.getNode(X86ISD::BLENDVPD, DL, VT, Ops, array_lengthof(Ops));
     case MVT::v4i32:
     case MVT::v4f32:
-         return DAG.getNode(X86ISD::BLENDVPS, DL, VT , Ops, array_lengthof(Ops));
     case MVT::v16i8:
-         return DAG.getNode(X86ISD::PBLENDVB, DL, VT , Ops, array_lengthof(Ops));
+    case MVT::v8i16:
+    // AVX:
+    case MVT::v4i64:
+    case MVT::v4f64:
+    case MVT::v8i32:
+    case MVT::v8f32:
+    case MVT::v32i8:
+    case MVT::v16i16:
+      return DAG.getNode(X86ISD::BLENDV, DL, VT, Ops, array_lengthof(Ops));
   }
 
   return SDValue();
@@ -9973,7 +9985,7 @@ SDValue X86TargetLowering::LowerShift(SDValue Op, SelectionDAG &DAG) const {
     M = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
                     DAG.getConstant(Intrinsic::x86_sse2_pslli_w, MVT::i32), M,
                     DAG.getConstant(4, MVT::i32));
-    R = DAG.getNode(X86ISD::PBLENDVB, dl, VT, R, M, Op);
+    R = DAG.getNode(X86ISD::BLENDV, dl, VT, R, M, Op);
     // a += a
     Op = DAG.getNode(ISD::ADD, dl, VT, Op, Op);
 
@@ -9988,12 +10000,12 @@ SDValue X86TargetLowering::LowerShift(SDValue Op, SelectionDAG &DAG) const {
     M = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
                     DAG.getConstant(Intrinsic::x86_sse2_pslli_w, MVT::i32), M,
                     DAG.getConstant(2, MVT::i32));
-    R = DAG.getNode(X86ISD::PBLENDVB, dl, VT, R, M, Op);
+    R = DAG.getNode(X86ISD::BLENDV, dl, VT, R, M, Op);
     // a += a
     Op = DAG.getNode(ISD::ADD, dl, VT, Op, Op);
 
     // return pblendv(r, r+r, a);
-    R = DAG.getNode(X86ISD::PBLENDVB, dl, VT,
+    R = DAG.getNode(X86ISD::BLENDV, dl, VT,
                     R, DAG.getNode(ISD::ADD, dl, VT, R, R), Op);
     return R;
   }
@@ -10631,7 +10643,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::PSIGNB:             return "X86ISD::PSIGNB";
   case X86ISD::PSIGNW:             return "X86ISD::PSIGNW";
   case X86ISD::PSIGND:             return "X86ISD::PSIGND";
-  case X86ISD::PBLENDVB:           return "X86ISD::PBLENDVB";
+  case X86ISD::BLENDV:             return "X86ISD::BLENDV";
   case X86ISD::FMAX:               return "X86ISD::FMAX";
   case X86ISD::FMIN:               return "X86ISD::FMIN";
   case X86ISD::FRSQRT:             return "X86ISD::FRSQRT";
@@ -13361,7 +13373,7 @@ static SDValue PerformOrCombine(SDNode *N, SelectionDAG &DAG,
         X = DAG.getNode(ISD::BITCAST, DL, MVT::v16i8, X);
         Y = DAG.getNode(ISD::BITCAST, DL, MVT::v16i8, Y);
         Mask = DAG.getNode(ISD::BITCAST, DL, MVT::v16i8, Mask);
-        Mask = DAG.getNode(X86ISD::PBLENDVB, DL, MVT::v16i8, X, Y, Mask);
+        Mask = DAG.getNode(X86ISD::BLENDV, DL, MVT::v16i8, X, Y, Mask);
         return DAG.getNode(ISD::BITCAST, DL, MVT::v2i64, Mask);
       }
     }

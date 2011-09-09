@@ -58,14 +58,8 @@ def X86psignw  : SDNode<"X86ISD::PSIGNW",
 def X86psignd  : SDNode<"X86ISD::PSIGND",
                  SDTypeProfile<1, 2, [SDTCisVT<0, v4i32>, SDTCisSameAs<0,1>,
                                       SDTCisSameAs<0,2>]>>;
-def X86pblendvb : SDNode<"X86ISD::PBLENDVB",
-                 SDTypeProfile<1, 3, [SDTCisVT<0, v16i8>, SDTCisSameAs<0,1>,
-                                      SDTCisSameAs<0,2>, SDTCisSameAs<0,3>]>>;
-def X86blendvpd : SDNode<"X86ISD::BLENDVPD",
-                  SDTypeProfile<1, 3, [SDTCisVT<0, v2i64>, SDTCisSameAs<0,1>,
-                                       SDTCisSameAs<0,2>, SDTCisSameAs<0,3>]>>;
-def X86blendvps : SDNode<"X86ISD::BLENDVPS",
-                 SDTypeProfile<1, 3, [SDTCisVT<0, v4i32>, SDTCisSameAs<0,1>,
+def X86blendv : SDNode<"X86ISD::BLENDV",
+                 SDTypeProfile<1, 3, [SDTCisVec<0>, SDTCisVec<1>,
                                       SDTCisSameAs<0,2>, SDTCisSameAs<0,3>]>>;
 def X86pextrb  : SDNode<"X86ISD::PEXTRB",
                  SDTypeProfile<1, 2, [SDTCisVT<0, i32>, SDTCisPtrTy<2>]>>;
