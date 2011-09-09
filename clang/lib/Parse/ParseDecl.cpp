@@ -1502,6 +1502,7 @@ Parser::getDeclSpecContextFromDeclaratorContext(unsigned Context) {
 ///         type-specifier declaration-specifiers[opt]
 /// [C99]   function-specifier declaration-specifiers[opt]
 /// [GNU]   attributes declaration-specifiers[opt]
+/// [Clang] '__module_private__' declaration-specifiers[opt]
 ///
 ///       storage-class-specifier: [C99 6.7.1]
 ///         'typedef'
@@ -1952,6 +1953,11 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       }
       break;
 
+    // Modules
+    case tok::kw___module_private__:
+      isInvalid = DS.setModulePrivateSpec(Loc, PrevSpec, DiagID);
+      break;
+        
     // constexpr
     case tok::kw_constexpr:
       isInvalid = DS.SetConstexprSpec(Loc, PrevSpec, DiagID);
@@ -2844,7 +2850,7 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
   unsigned DiagID;
   Decl *TagDecl = Actions.ActOnTag(getCurScope(), DeclSpec::TST_enum, TUK,
                                    StartLoc, SS, Name, NameLoc, attrs.getList(),
-                                   AS,
+                                   AS, DS.isModulePrivateSpecified(),
                                    MultiTemplateParamsArg(Actions),
                                    Owned, IsDependent, IsScopedEnum,
                                    IsScopedUsingClassTag, BaseType);
@@ -3207,6 +3213,9 @@ bool Parser::isDeclarationSpecifier(bool DisambiguatingWithExpression) {
   case tok::kw_register:
   case tok::kw___thread:
 
+    // Modules
+  case tok::kw___module_private__:
+      
     // type-specifiers
   case tok::kw_short:
   case tok::kw_long:

@@ -313,8 +313,12 @@ void DeclPrinter::VisitTranslationUnitDecl(TranslationUnitDecl *D) {
 void DeclPrinter::VisitTypedefDecl(TypedefDecl *D) {
   std::string S = D->getNameAsString();
   D->getUnderlyingType().getAsStringInternal(S, Policy);
-  if (!Policy.SuppressSpecifiers)
+  if (!Policy.SuppressSpecifiers) {
     Out << "typedef ";
+    
+    if (D->isModulePrivate())
+      Out << "__module_private__ ";
+  }
   Out << S;
 }
 
@@ -324,6 +328,8 @@ void DeclPrinter::VisitTypeAliasDecl(TypeAliasDecl *D) {
 }
 
 void DeclPrinter::VisitEnumDecl(EnumDecl *D) {
+  if (!Policy.SuppressSpecifiers && D->isModulePrivate())
+    Out << "__module_private__ ";
   Out << "enum ";
   if (D->isScoped()) {
     if (D->isScopedUsingClassTag())
@@ -347,6 +353,8 @@ void DeclPrinter::VisitEnumDecl(EnumDecl *D) {
 }
 
 void DeclPrinter::VisitRecordDecl(RecordDecl *D) {
+  if (!Policy.SuppressSpecifiers && D->isModulePrivate())
+    Out << "__module_private__ ";
   Out << D->getKindName();
   if (D->getIdentifier())
     Out << ' ' << D;
@@ -376,8 +384,9 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
     case SC_Auto: case SC_Register: llvm_unreachable("invalid for functions");
     }
 
-    if (D->isInlineSpecified())           Out << "inline ";
+    if (D->isInlineSpecified())  Out << "inline ";
     if (D->isVirtualAsWritten()) Out << "virtual ";
+    if (D->isModulePrivate())    Out << "__module_private__ ";
   }
 
   PrintingPolicy SubPolicy(Policy);
@@ -558,6 +567,8 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
 void DeclPrinter::VisitFieldDecl(FieldDecl *D) {
   if (!Policy.SuppressSpecifiers && D->isMutable())
     Out << "mutable ";
+  if (!Policy.SuppressSpecifiers && D->isModulePrivate())
+    Out << "__module_private__ ";
 
   std::string Name = D->getNameAsString();
   D->getType().getAsStringInternal(Name, Policy);
@@ -586,6 +597,8 @@ void DeclPrinter::VisitVarDecl(VarDecl *D) {
 
   if (!Policy.SuppressSpecifiers && D->isThreadSpecified())
     Out << "__thread ";
+  if (!Policy.SuppressSpecifiers && D->isModulePrivate())
+    Out << "__module_private__ ";
 
   std::string Name = D->getNameAsString();
   QualType T = D->getType();
@@ -650,6 +663,8 @@ void DeclPrinter::VisitNamespaceAliasDecl(NamespaceAliasDecl *D) {
 }
 
 void DeclPrinter::VisitCXXRecordDecl(CXXRecordDecl *D) {
+  if (!Policy.SuppressSpecifiers && D->isModulePrivate())
+    Out << "__module_private__ ";
   Out << D->getKindName();
   if (D->getIdentifier())
     Out << ' ' << D;

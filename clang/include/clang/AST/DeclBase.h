@@ -243,7 +243,7 @@ private:
   /// evaluated context or not, e.g. functions used in uninstantiated templates
   /// are regarded as "referenced" but not "used".
   unsigned Referenced : 1;
-
+  
 protected:
   /// Access - Used by C++ decls for the access specifier.
   // NOTE: VC++ treats enums as signed, avoid using the AccessSpecifier enum
@@ -255,6 +255,10 @@ protected:
 
   /// ChangedAfterLoad - if this declaration has changed since being loaded
   unsigned ChangedAfterLoad : 1;
+
+  /// \brief Whether this declaration is private to the module in which it was
+  /// defined.
+  unsigned ModulePrivate : 1;
 
   /// IdentifierNamespace - This specifies what IDNS_* namespace this lives in.
   unsigned IdentifierNamespace : 12;
@@ -269,7 +273,9 @@ protected:
   /// This field is only valid for NamedDecls subclasses.
   mutable unsigned CachedLinkage : 2;
   
-  
+  friend class ASTDeclWriter;
+  friend class ASTDeclReader;
+
 private:
   void CheckAccessDeclContext() const;
 
@@ -280,6 +286,7 @@ protected:
       Loc(L), DeclKind(DK), InvalidDecl(0),
       HasAttrs(false), Implicit(false), Used(false), Referenced(false),
       Access(AS_none), PCHLevel(0), ChangedAfterLoad(false),
+      ModulePrivate(0),
       IdentifierNamespace(getIdentifierNamespaceForKind(DK)),
       HasCachedLinkage(0) 
   {
@@ -290,6 +297,7 @@ protected:
     : NextDeclInContext(0), DeclKind(DK), InvalidDecl(0),
       HasAttrs(false), Implicit(false), Used(false), Referenced(false),
       Access(AS_none), PCHLevel(0), ChangedAfterLoad(false),
+      ModulePrivate(0),
       IdentifierNamespace(getIdentifierNamespaceForKind(DK)),
       HasCachedLinkage(0)
   {

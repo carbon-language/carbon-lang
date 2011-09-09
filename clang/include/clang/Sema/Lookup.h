@@ -268,7 +268,19 @@ public:
 
   /// \brief Tests whether the given declaration is acceptable.
   bool isAcceptableDecl(NamedDecl *D) const {
-    return D->isInIdentifierNamespace(IDNS);
+    if (!D->isInIdentifierNamespace(IDNS))
+      return false;
+    
+    // So long as this declaration is not module-private or was parsed as
+    // part of this translation unit (i.e., in the module), we're allowed to
+    // find it.
+    if (!D->isModulePrivate() || D->getPCHLevel() == 0)
+      return true;
+
+    // FIXME: We should be allowed to refer to a module-private name from 
+    // within the same module, e.g., during template instantiation.
+    // This requires us know which module a particular declaration came from.
+    return false;
   }
 
   /// \brief Returns the identifier namespace mask for this lookup.

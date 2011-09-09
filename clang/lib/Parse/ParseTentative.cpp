@@ -871,6 +871,9 @@ Parser::TPResult Parser::isCXXDeclarationSpecifier() {
   case tok::kw_virtual:
   case tok::kw_explicit:
 
+    // Modules
+  case tok::kw___module_private__:
+      
     // type-specifier:
     //   simple-type-specifier
     //   class-specifier

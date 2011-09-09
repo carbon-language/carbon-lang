@@ -1131,6 +1131,7 @@ public:
                  SourceLocation KWLoc, CXXScopeSpec &SS,
                  IdentifierInfo *Name, SourceLocation NameLoc,
                  AttributeList *Attr, AccessSpecifier AS,
+                 bool IsModulePrivate,
                  MultiTemplateParamsArg TemplateParameterLists,
                  bool &OwnedDecl, bool &IsDependent, bool ScopedEnum,
                  bool ScopedEnumUsesClassTag, TypeResult UnderlyingType);
@@ -3778,7 +3779,7 @@ public:
                                 IdentifierInfo *Name, SourceLocation NameLoc,
                                 AttributeList *Attr,
                                 TemplateParameterList *TemplateParams,
-                                AccessSpecifier AS,
+                                AccessSpecifier AS, bool IsModulePrivate,
                                 unsigned NumOuterTemplateParamLists,
                             TemplateParameterList **OuterTemplateParamLists);
 

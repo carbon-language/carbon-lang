@@ -248,6 +248,7 @@ void ASTDeclReader::VisitDecl(Decl *D) {
   D->setReferenced(Record[Idx++]);
   D->setAccess((AccessSpecifier)Record[Idx++]);
   D->setPCHLevel(Record[Idx++] + (F.Kind <= MK_PCH));
+  D->ModulePrivate = Record[Idx++];
 }
 
 void ASTDeclReader::VisitTranslationUnitDecl(TranslationUnitDecl *TU) {

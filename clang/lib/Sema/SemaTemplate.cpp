@@ -811,7 +811,7 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
                          IdentifierInfo *Name, SourceLocation NameLoc,
                          AttributeList *Attr,
                          TemplateParameterList *TemplateParams,
-                         AccessSpecifier AS,
+                         AccessSpecifier AS, bool IsModulePrivate,
                          unsigned NumOuterTemplateParamLists,
                          TemplateParameterList** OuterTemplateParamLists) {
   assert(TemplateParams && TemplateParams->size() > 0 &&
@@ -1000,6 +1000,9 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
                                 NewClass, PrevClassTemplate);
   NewClass->setDescribedClassTemplate(NewTemplate);
 
+  if (IsModulePrivate)
+    NewTemplate->setModulePrivate();
+  
   // Build the type for the class template declaration now.
   QualType T = NewTemplate->getInjectedClassNameSpecialization();
   T = Context.getInjectedClassNameType(NewClass, T);
@@ -4931,14 +4934,14 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
       //   -- The argument list of the specialization shall not be identical
       //      to the implicit argument list of the primary template.
       Diag(TemplateNameLoc, diag::err_partial_spec_args_match_primary_template)
-      << (TUK == TUK_Definition)
-      << FixItHint::CreateRemoval(SourceRange(LAngleLoc, RAngleLoc));
+        << (TUK == TUK_Definition)
+        << FixItHint::CreateRemoval(SourceRange(LAngleLoc, RAngleLoc));
       return CheckClassTemplate(S, TagSpec, TUK, KWLoc, SS,
                                 ClassTemplate->getIdentifier(),
                                 TemplateNameLoc,
                                 Attr,
                                 TemplateParams,
-                                AS_none,
+                                AS_none, /*IsModulePrivate=*/false,
                                 TemplateParameterLists.size() - 1,
                   (TemplateParameterList**) TemplateParameterLists.release());
     }
@@ -5973,6 +5976,7 @@ Sema::ActOnExplicitInstantiation(Scope *S,
   bool IsDependent = false;
   Decl *TagD = ActOnTag(S, TagSpec, Sema::TUK_Reference,
                         KWLoc, SS, Name, NameLoc, Attr, AS_none,
+                        /*IsModulePrivate=*/false,
                         MultiTemplateParamsArg(*this, 0, 0),
                         Owned, IsDependent, false, false,
                         TypeResult());

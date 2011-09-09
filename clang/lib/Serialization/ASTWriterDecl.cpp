@@ -156,6 +156,7 @@ void ASTDeclWriter::VisitDecl(Decl *D) {
   Record.push_back(D->isReferenced());
   Record.push_back(D->getAccess());
   Record.push_back(D->getPCHLevel());
+  Record.push_back(D->ModulePrivate);
 }
 
 void ASTDeclWriter::VisitTranslationUnitDecl(TranslationUnitDecl *D) {
@@ -185,6 +186,7 @@ void ASTDeclWriter::VisitTypedefDecl(TypedefDecl *D) {
       !D->isInvalidDecl() &&
       !D->isReferenced() &&
       D->getAccess() == AS_none &&
+      !D->isModulePrivate() &&
       D->getDeclName().getNameKind() == DeclarationName::Identifier)
     AbbrevToUse = Writer.getDeclTypedefAbbrev();
 
@@ -234,6 +236,7 @@ void ASTDeclWriter::VisitEnumDecl(EnumDecl *D) {
       !D->isInvalidDecl() &&
       !D->isReferenced() &&
       D->getAccess() == AS_none &&
+      !D->isModulePrivate() &&
       !CXXRecordDecl::classofKind(D->getKind()) &&
       !D->getIntegerTypeSourceInfo() &&
       D->getDeclName().getNameKind() == DeclarationName::Identifier)
@@ -257,6 +260,7 @@ void ASTDeclWriter::VisitRecordDecl(RecordDecl *D) {
       !D->isInvalidDecl() &&
       !D->isReferenced() &&
       D->getAccess() == AS_none &&
+      !D->isModulePrivate() &&
       !CXXRecordDecl::classofKind(D->getKind()) &&
       D->getDeclName().getNameKind() == DeclarationName::Identifier)
     AbbrevToUse = Writer.getDeclRecordAbbrev();
@@ -473,6 +477,7 @@ void ASTDeclWriter::VisitObjCIvarDecl(ObjCIvarDecl *D) {
       !D->isInvalidDecl() &&
       !D->isReferenced() &&
       D->getPCHLevel() == 0 &&
+      !D->isModulePrivate() &&
       !D->getBitWidth() &&
       !D->hasExtInfo() &&
       D->getDeclName())
@@ -611,6 +616,7 @@ void ASTDeclWriter::VisitFieldDecl(FieldDecl *D) {
       !D->isInvalidDecl() &&
       !D->isReferenced() &&
       D->getPCHLevel() == 0 &&
+      !D->isModulePrivate() &&
       !D->getBitWidth() &&
       !D->hasInClassInitializer() &&
       !D->hasExtInfo() &&
@@ -663,6 +669,7 @@ void ASTDeclWriter::VisitVarDecl(VarDecl *D) {
       !D->isInvalidDecl() &&
       !D->isReferenced() &&
       D->getAccess() == AS_none &&
+      !D->isModulePrivate() &&
       D->getPCHLevel() == 0 &&
       D->getDeclName().getNameKind() == DeclarationName::Identifier &&
       !D->hasExtInfo() &&
@@ -704,6 +711,7 @@ void ASTDeclWriter::VisitParmVarDecl(ParmVarDecl *D) {
       !D->isImplicit() &&
       !D->isUsed(false) &&
       D->getAccess() == AS_none &&
+      !D->isModulePrivate() &&
       D->getPCHLevel() == 0 &&
       D->getStorageClass() == 0 &&
       !D->hasCXXDirectInitializer() && // Can params have this ever?
@@ -1265,6 +1273,7 @@ void ASTWriter::WriteDeclsBlockAbbrevs() {
   Abv->Add(BitCodeAbbrevOp(0));                       // isReferenced
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 2));  // AccessSpecifier
   Abv->Add(BitCodeAbbrevOp(0));                       // PCH level
+  Abv->Add(BitCodeAbbrevOp(0));                       // ModulePrivate
   // NamedDecl
   Abv->Add(BitCodeAbbrevOp(0));                       // NameKind = Identifier
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // Name
@@ -1296,6 +1305,7 @@ void ASTWriter::WriteDeclsBlockAbbrevs() {
   Abv->Add(BitCodeAbbrevOp(0));                       // isReferenced
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 2));  // AccessSpecifier
   Abv->Add(BitCodeAbbrevOp(0));                       // PCH level
+  Abv->Add(BitCodeAbbrevOp(0));                       // ModulePrivate
   // NamedDecl
   Abv->Add(BitCodeAbbrevOp(0));                       // NameKind = Identifier
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // Name
@@ -1330,6 +1340,7 @@ void ASTWriter::WriteDeclsBlockAbbrevs() {
   Abv->Add(BitCodeAbbrevOp(0));                       // isReferenced
   Abv->Add(BitCodeAbbrevOp(AS_none));                 // C++ AccessSpecifier
   Abv->Add(BitCodeAbbrevOp(0));                       // PCH level
+  Abv->Add(BitCodeAbbrevOp(0));                       // ModulePrivate
   // NamedDecl
   Abv->Add(BitCodeAbbrevOp(0));                       // NameKind = Identifier
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // Name
@@ -1375,6 +1386,7 @@ void ASTWriter::WriteDeclsBlockAbbrevs() {
   Abv->Add(BitCodeAbbrevOp(0));                       // isReferenced
   Abv->Add(BitCodeAbbrevOp(AS_none));                 // C++ AccessSpecifier
   Abv->Add(BitCodeAbbrevOp(0));                       // PCH level
+  Abv->Add(BitCodeAbbrevOp(0));                       // ModulePrivate
   // NamedDecl
   Abv->Add(BitCodeAbbrevOp(0));                       // NameKind = Identifier
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // Name
@@ -1414,6 +1426,7 @@ void ASTWriter::WriteDeclsBlockAbbrevs() {
   Abv->Add(BitCodeAbbrevOp(0));                       // isReferenced
   Abv->Add(BitCodeAbbrevOp(AS_none));                 // C++ AccessSpecifier
   Abv->Add(BitCodeAbbrevOp(0));                       // PCH level
+  Abv->Add(BitCodeAbbrevOp(0));                       // ModulePrivate
   // NamedDecl
   Abv->Add(BitCodeAbbrevOp(0));                       // NameKind = Identifier
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // Name
@@ -1462,6 +1475,7 @@ void ASTWriter::WriteDeclsBlockAbbrevs() {
   Abv->Add(BitCodeAbbrevOp(0));                       // isReferenced
   Abv->Add(BitCodeAbbrevOp(AS_none));                 // C++ AccessSpecifier
   Abv->Add(BitCodeAbbrevOp(0));                       // PCH level
+  Abv->Add(BitCodeAbbrevOp(0));                       // ModulePrivate
   // NamedDecl
   Abv->Add(BitCodeAbbrevOp(0));                       // NameKind = Identifier
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // Name
@@ -1487,6 +1501,7 @@ void ASTWriter::WriteDeclsBlockAbbrevs() {
   Abv->Add(BitCodeAbbrevOp(0));                       // isReferenced
   Abv->Add(BitCodeAbbrevOp(AS_none));                 // C++ AccessSpecifier
   Abv->Add(BitCodeAbbrevOp(0));                       // PCH level
+  Abv->Add(BitCodeAbbrevOp(0));                       // ModulePrivate
   // NamedDecl
   Abv->Add(BitCodeAbbrevOp(0));                       // NameKind = Identifier
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // Name

@@ -401,6 +401,7 @@ KEYWORD(__array_extent              , KEYCXX)
 // Apple Extension.
 KEYWORD(__private_extern__          , KEYALL)
 KEYWORD(__import_module__           , KEYALL)
+KEYWORD(__module_private__          , KEYALL)
 
 // Microsoft Extension.
 KEYWORD(__declspec                  , KEYALL)

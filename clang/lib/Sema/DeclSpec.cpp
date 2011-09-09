@@ -695,6 +695,18 @@ bool DeclSpec::SetFriendSpec(SourceLocation Loc, const char *&PrevSpec,
   return false;
 }
 
+bool DeclSpec::setModulePrivateSpec(SourceLocation Loc, const char *&PrevSpec,
+                                    unsigned &DiagID) {
+  if (isModulePrivateSpecified()) {
+    PrevSpec = "__module_private__";
+    DiagID = diag::ext_duplicate_declspec;
+    return true;
+  }
+  
+  ModulePrivateLoc = Loc;
+  return false;
+}
+
 bool DeclSpec::SetConstexprSpec(SourceLocation Loc, const char *&PrevSpec,
                                 unsigned &DiagID) {
   // 'constexpr constexpr' is ok.

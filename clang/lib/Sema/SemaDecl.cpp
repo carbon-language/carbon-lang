@@ -3803,6 +3803,9 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
       NewVD->setThreadSpecified(true);
   }
 
+  if (D.getDeclSpec().isModulePrivateSpecified())
+    NewVD->setModulePrivate();
+
   // Set the lexical context. If the declarator has a C++ scope specifier, the
   // lexical context will be different from the semantic context.
   NewVD->setLexicalDeclContext(CurContext);
@@ -4686,6 +4689,12 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
              diag::err_constexpr_dtor);
     }
 
+    // If __module_private__ was specified, mark the function accordingly.
+    if (D.getDeclSpec().isModulePrivateSpecified()) {
+      NewFD->setModulePrivate();
+      if (FunctionTemplate)
+        FunctionTemplate->setModulePrivate();
+    }
 
     // Filter out previous declarations that don't match the scope.
     FilterLookupForScope(Previous, DC, S, NewFD->hasLinkage(),
@@ -6970,6 +6979,9 @@ TypedefDecl *Sema::ParseTypedefDecl(Scope *S, Declarator &D, QualType T,
     return NewTD;
   }
 
+  if (D.getDeclSpec().isModulePrivateSpecified())
+    NewTD->setModulePrivate();
+  
   // C++ [dcl.typedef]p8:
   //   If the typedef declaration defines an unnamed class (or
   //   enum), the first typedef-name declared by the declaration
@@ -7111,6 +7123,7 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
                      SourceLocation KWLoc, CXXScopeSpec &SS,
                      IdentifierInfo *Name, SourceLocation NameLoc,
                      AttributeList *Attr, AccessSpecifier AS,
+                     bool IsModulePrivate,
                      MultiTemplateParamsArg TemplateParameterLists,
                      bool &OwnedDecl, bool &IsDependent,
                      bool ScopedEnum, bool ScopedEnumUsesClassTag,
@@ -7150,6 +7163,7 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
         DeclResult Result = CheckClassTemplate(S, TagSpec, TUK, KWLoc,
                                                SS, Name, NameLoc, Attr,
                                                TemplateParams, AS,
+                                               IsModulePrivate,
                                            TemplateParameterLists.size() - 1,
                  (TemplateParameterList**) TemplateParameterLists.release());
         return Result.get();
@@ -7711,6 +7725,9 @@ CreateNewDecl:
     
     AddMsStructLayoutForRecord(RD);
   }
+
+  if (IsModulePrivate)
+    New->setModulePrivate();
 
   // If this is a specialization of a member class (of a class template),
   // check the specialization.
