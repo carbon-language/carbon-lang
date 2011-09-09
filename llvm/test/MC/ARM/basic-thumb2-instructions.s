@@ -916,6 +916,63 @@ _func:
 
 
 @------------------------------------------------------------------------------
+@ LSR (immediate)
+@------------------------------------------------------------------------------
+        lsr r2, r3, #12
+        lsrs r8, r3, #32
+        lsrs.w r2, r3, #1
+        lsr r2, r3, #4
+        lsrs r2, r12, #15
+
+        lsr r3, #19
+        lsrs r8, #2
+        lsrs.w r7, #5
+        lsr.w r12, #21
+
+@ CHECK: lsr.w	r2, r3, #12             @ encoding: [0x4f,0xea,0x13,0x32]
+@ CHECK: lsrs.w	r8, r3, #32             @ encoding: [0x5f,0xea,0x13,0x08]
+@ CHECK: lsrs.w	r2, r3, #1              @ encoding: [0x5f,0xea,0x53,0x02]
+@ CHECK: lsr.w	r2, r3, #4              @ encoding: [0x4f,0xea,0x13,0x12]
+@ CHECK: lsrs.w	r2, r12, #15            @ encoding: [0x5f,0xea,0xdc,0x32]
+
+@ CHECK: lsr.w	r3, r3, #19             @ encoding: [0x4f,0xea,0xd3,0x43]
+@ CHECK: lsrs.w	r8, r8, #2              @ encoding: [0x5f,0xea,0x98,0x08]
+@ CHECK: lsrs.w	r7, r7, #5              @ encoding: [0x5f,0xea,0x57,0x17]
+@ CHECK: lsr.w	r12, r12, #21           @ encoding: [0x4f,0xea,0x5c,0x5c]
+
+
+@------------------------------------------------------------------------------
+@ LSR (register)
+@------------------------------------------------------------------------------
+        lsr r3, r4, r2
+        lsr.w r1, r2
+        lsrs r3, r4, r8
+
+@ CHECK: lsr.w	r3, r4, r2              @ encoding: [0x24,0xfa,0x02,0xf3]
+@ CHECK: lsr.w	r1, r1, r2              @ encoding: [0x21,0xfa,0x02,0xf1]
+@ CHECK: lsrs.w	r3, r4, r8              @ encoding: [0x34,0xfa,0x08,0xf3]
+
+@------------------------------------------------------------------------------
+@ MCR/MCR2
+@------------------------------------------------------------------------------
+        mcr  p7, #1, r5, c1, c1, #4
+        mcr2  p7, #1, r5, c1, c1, #4
+
+@ CHECK: mcr	p7, #1, r5, c1, c1, #4  @ encoding: [0x21,0xee,0x91,0x57]
+@ CHECK: mcr2	p7, #1, r5, c1, c1, #4  @ encoding: [0x21,0xfe,0x91,0x57]
+
+
+@------------------------------------------------------------------------------
+@ MCRR/MCRR2
+@------------------------------------------------------------------------------
+        mcrr  p7, #15, r5, r4, c1
+        mcrr2  p7, #15, r5, r4, c1
+
+@ CHECK: mcrr	p7, #15, r5, r4, c1     @ encoding: [0x44,0xec,0xf1,0x57]
+@ CHECK: mcrr2	p7, #15, r5, r4, c1     @ encoding: [0x44,0xfc,0xf1,0x57]
+
+
+@------------------------------------------------------------------------------
 @ IT
 @------------------------------------------------------------------------------
 @ Test encodings of a few full IT blocks, not just the IT instruction
