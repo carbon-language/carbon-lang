@@ -7290,7 +7290,7 @@ SourceLocation GetLocationForCandidate(const OverloadCandidate *Cand) {
 
 static unsigned RankDeductionFailure(
     const OverloadCandidate::DeductionFailureInfo &DFI) {
-  switch (DFI.Result) {
+  switch ((Sema::TemplateDeductionResult)DFI.Result) {
   case Sema::TDK_Success:
   case Sema::TDK_Incomplete:
     return 1;
