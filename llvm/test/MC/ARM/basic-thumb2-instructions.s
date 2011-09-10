@@ -989,6 +989,30 @@ _func:
 
 
 @------------------------------------------------------------------------------
+@ MOV(immediate)
+@------------------------------------------------------------------------------
+        movs r1, #21
+        movs.w r1, #21
+        movs r8, #21
+        movw r0, #65535
+        movw r1, #43777
+        movw r1, #43792
+        mov.w r0, #0x3fc0000
+        mov r0, #0x3fc0000
+        movs.w r0, #0x3fc0000
+
+@ CHECK: movs	r1, #21                 @ encoding: [0x15,0x21]
+@ CHECK: movs.w	r1, #21                 @ encoding: [0x5f,0xf0,0x15,0x01]
+@ CHECK: movs.w	r8, #21                 @ encoding: [0x5f,0xf0,0x15,0x08]
+@ CHECK: movw	r0, #65535              @ encoding: [0x4f,0xf6,0xff,0x70]
+@ CHECK: movw	r1, #43777              @ encoding: [0x4a,0xf6,0x01,0x31]
+@ CHECK: movw	r1, #43792              @ encoding: [0x4a,0xf6,0x10,0x31]
+@ CHECK: mov.w	r0, #66846720           @ encoding: [0x4f,0xf0,0x7f,0x70]
+@ CHECK: mov.w	r0, #66846720           @ encoding: [0x4f,0xf0,0x7f,0x70]
+@ CHECK: movs.w	r0, #66846720           @ encoding: [0x5f,0xf0,0x7f,0x70]
+
+
+@------------------------------------------------------------------------------
 @ IT
 @------------------------------------------------------------------------------
 @ Test encodings of a few full IT blocks, not just the IT instruction

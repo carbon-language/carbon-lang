@@ -3203,7 +3203,7 @@ getMnemonicAcceptInfo(StringRef Mnemonic, bool &CanAcceptCarrySet,
        !isThumb()) ||
       ((Mnemonic.startswith("rfe") || Mnemonic.startswith("srs")) &&
        !isThumb()) ||
-      Mnemonic.startswith("cps") || (Mnemonic == "movs" && isThumb())) {
+      Mnemonic.startswith("cps") || (Mnemonic == "movs" && isThumbOne())) {
     CanAcceptPredicationCode = false;
   } else {
     CanAcceptPredicationCode = true;
@@ -3762,6 +3762,47 @@ processInstruction(MCInst &Inst,
       if (hasWritebackToken)
         Inst.insert(Inst.begin(),
                     MCOperand::CreateReg(Inst.getOperand(0).getReg()));
+    }
+    break;
+  }
+  case ARM::t2MOVi: {
+    // If we can use the 16-bit encoding and the user didn't explicitly
+    // request the 32-bit variant, transform it here.
+    if (isARMLowRegister(Inst.getOperand(0).getReg()) &&
+        Inst.getOperand(1).getImm() <= 255 &&
+        Inst.getOperand(2).getImm() == ARMCC::AL &&
+        Inst.getOperand(4).getReg() == ARM::CPSR &&
+        (!static_cast<ARMOperand*>(Operands[2])->isToken() ||
+         static_cast<ARMOperand*>(Operands[2])->getToken() != ".w")) {
+      // The operands aren't in the same order for tMOVi8...
+      MCInst TmpInst;
+      TmpInst.setOpcode(ARM::tMOVi8);
+      TmpInst.addOperand(Inst.getOperand(0));
+      TmpInst.addOperand(Inst.getOperand(4));
+      TmpInst.addOperand(Inst.getOperand(1));
+      TmpInst.addOperand(Inst.getOperand(2));
+      TmpInst.addOperand(Inst.getOperand(3));
+      Inst = TmpInst;
+    }
+    break;
+  }
+  case ARM::t2MOVr: {
+    // If we can use the 16-bit encoding and the user didn't explicitly
+    // request the 32-bit variant, transform it here.
+    if (isARMLowRegister(Inst.getOperand(0).getReg()) &&
+        isARMLowRegister(Inst.getOperand(1).getReg()) &&
+        Inst.getOperand(2).getImm() == ARMCC::AL &&
+        Inst.getOperand(4).getReg() == ARM::CPSR &&
+        (!static_cast<ARMOperand*>(Operands[2])->isToken() ||
+         static_cast<ARMOperand*>(Operands[2])->getToken() != ".w")) {
+      // The operands aren't the same for tMOV[S]r... (no cc_out)
+      MCInst TmpInst;
+      TmpInst.setOpcode(Inst.getOperand(4).getReg() ? ARM::tMOVSr : ARM::tMOVr);
+      TmpInst.addOperand(Inst.getOperand(0));
+      TmpInst.addOperand(Inst.getOperand(1));
+      TmpInst.addOperand(Inst.getOperand(2));
+      TmpInst.addOperand(Inst.getOperand(3));
+      Inst = TmpInst;
     }
     break;
   }
