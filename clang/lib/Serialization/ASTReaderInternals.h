@@ -161,7 +161,7 @@ public:
   static unsigned ComputeHash(Selector Sel);
   
   static const internal_key_type&
-  GetInternalKey(const external_key_type& x) { return x; };
+  GetInternalKey(const external_key_type& x) { return x; }
   
   static std::pair<unsigned, unsigned>
   ReadKeyDataLength(const unsigned char*& d);
