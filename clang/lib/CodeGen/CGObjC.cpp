@@ -546,39 +546,35 @@ void CodeGenFunction::GenerateObjCGetter(ObjCImplementationDecl *IMP,
 }
 
 void CodeGenFunction::GenerateObjCAtomicSetterBody(ObjCMethodDecl *OMD,
-                                                   ObjCIvarDecl *Ivar) {
+                                                   ObjCIvarDecl *ivar) {
   // objc_copyStruct (&structIvar, &Arg, 
   //                  sizeof (struct something), true, false);
-  llvm::Value *GetCopyStructFn =
-  CGM.getObjCRuntime().GetSetStructFunction();
-  CodeGenTypes &Types = CGM.getTypes();
-  CallArgList Args;
-  LValue LV = EmitLValueForIvar(TypeOfSelfObject(), LoadObjCSelf(), Ivar, 0);
-  RValue RV =
-    RValue::get(Builder.CreateBitCast(LV.getAddress(),
-                Types.ConvertType(getContext().VoidPtrTy)));
-  Args.add(RV, getContext().VoidPtrTy);
-  llvm::Value *Arg = LocalDeclMap[*OMD->param_begin()];
-  llvm::Value *ArgAsPtrTy =
-  Builder.CreateBitCast(Arg,
-                      Types.ConvertType(getContext().VoidPtrTy));
-  RV = RValue::get(ArgAsPtrTy);
-  Args.add(RV, getContext().VoidPtrTy);
-  // sizeof (Type of Ivar)
-  CharUnits Size =  getContext().getTypeSizeInChars(Ivar->getType());
-  llvm::Value *SizeVal =
-  llvm::ConstantInt::get(Types.ConvertType(getContext().LongTy), 
-                         Size.getQuantity());
-  Args.add(RValue::get(SizeVal), getContext().LongTy);
-  llvm::Value *True =
-  llvm::ConstantInt::get(Types.ConvertType(getContext().BoolTy), 1);
-  Args.add(RValue::get(True), getContext().BoolTy);
-  llvm::Value *False =
-  llvm::ConstantInt::get(Types.ConvertType(getContext().BoolTy), 0);
-  Args.add(RValue::get(False), getContext().BoolTy);
-  EmitCall(Types.getFunctionInfo(getContext().VoidTy, Args,
-                                 FunctionType::ExtInfo()),
-           GetCopyStructFn, ReturnValueSlot(), Args);
+  CallArgList args;
+
+  // The first argument is the address of the ivar.
+  llvm::Value *ivarAddr =
+    EmitLValueForIvar(TypeOfSelfObject(), LoadObjCSelf(), ivar, 0).getAddress();
+  ivarAddr = Builder.CreateBitCast(ivarAddr, Int8PtrTy);
+  args.add(RValue::get(ivarAddr), getContext().VoidPtrTy);
+
+  // The second argument is the address of the parameter variable.
+  llvm::Value *argAddr = LocalDeclMap[*OMD->param_begin()];
+  argAddr = Builder.CreateBitCast(argAddr, Int8PtrTy);
+  args.add(RValue::get(argAddr), getContext().VoidPtrTy);
+
+  // The third argument is the sizeof the type.
+  llvm::Value *size =
+    CGM.getSize(getContext().getTypeSizeInChars(ivar->getType()));
+  args.add(RValue::get(size), getContext().getSizeType());
+
+  // The fourth and fifth arguments are just flags.
+  args.add(RValue::get(Builder.getTrue()), getContext().BoolTy);
+  args.add(RValue::get(Builder.getFalse()), getContext().BoolTy);
+
+  llvm::Value *copyStructFn = CGM.getObjCRuntime().GetSetStructFunction();
+  EmitCall(getTypes().getFunctionInfo(getContext().VoidTy, args,
+                                      FunctionType::ExtInfo()),
+           copyStructFn, ReturnValueSlot(), args);
 }
 
 static bool hasTrivialAssignment(const ObjCPropertyImplDecl *PID) {
