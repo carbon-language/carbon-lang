@@ -4095,8 +4095,8 @@ ExprResult Sema::MaybeBindToTemporary(Expr *E) {
 
     ExprNeedsCleanups = true;
 
-    CastKind ck = (ReturnsRetained ? CK_ObjCConsumeObject
-                                   : CK_ObjCReclaimReturnedObject);
+    CastKind ck = (ReturnsRetained ? CK_ARCConsumeObject
+                                   : CK_ARCReclaimReturnedObject);
     return Owned(ImplicitCastExpr::Create(Context, E->getType(), ck, E, 0,
                                           VK_RValue));
   }

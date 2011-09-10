@@ -4662,7 +4662,7 @@ InitializationSequence::Perform(Sema &S,
 
     case SK_ProduceObjCObject:
       CurInit = S.Owned(ImplicitCastExpr::Create(S.Context, Step->Type,
-                                                 CK_ObjCProduceObject,
+                                                 CK_ARCProduceObject,
                                                  CurInit.take(), 0, VK_RValue));
       break;
     }

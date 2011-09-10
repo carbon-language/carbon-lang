@@ -1076,10 +1076,10 @@ void CastExpr::CheckCastConsistency() const {
   case CK_IntegralComplexToReal:
   case CK_IntegralComplexCast:
   case CK_IntegralComplexToFloatingComplex:
-  case CK_ObjCProduceObject:
-  case CK_ObjCConsumeObject:
-  case CK_ObjCReclaimReturnedObject:
-  case CK_ObjCExtendBlockObject:
+  case CK_ARCProduceObject:
+  case CK_ARCConsumeObject:
+  case CK_ARCReclaimReturnedObject:
+  case CK_ARCExtendBlockObject:
     assert(!getType()->isBooleanType() && "unheralded conversion to bool");
     goto CheckNoBasePath;
 
@@ -1193,14 +1193,14 @@ const char *CastExpr::getCastKindName() const {
     return "IntegralComplexCast";
   case CK_IntegralComplexToFloatingComplex:
     return "IntegralComplexToFloatingComplex";
-  case CK_ObjCConsumeObject:
-    return "ObjCConsumeObject";
-  case CK_ObjCProduceObject:
-    return "ObjCProduceObject";
-  case CK_ObjCReclaimReturnedObject:
-    return "ObjCReclaimReturnedObject";
-  case CK_ObjCExtendBlockObject:
-    return "ObjCExtendBlockObject";
+  case CK_ARCConsumeObject:
+    return "ARCConsumeObject";
+  case CK_ARCProduceObject:
+    return "ARCProduceObject";
+  case CK_ARCReclaimReturnedObject:
+    return "ARCReclaimReturnedObject";
+  case CK_ARCExtendBlockObject:
+    return "ARCCExtendBlockObject";
   }
 
   llvm_unreachable("Unhandled cast kind!");

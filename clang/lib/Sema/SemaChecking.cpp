@@ -3853,7 +3853,7 @@ static bool findRetainCycleOwner(Expr *e, RetainCycleOwner &owner) {
       case CK_BitCast:
       case CK_LValueBitCast:
       case CK_LValueToRValue:
-      case CK_ObjCReclaimReturnedObject:
+      case CK_ARCReclaimReturnedObject:
         e = cast->getSubExpr();
         continue;
 
@@ -4038,7 +4038,7 @@ bool Sema::checkUnsafeAssigns(SourceLocation Loc,
     return false;
   // strip off any implicit cast added to get to the one arc-specific
   while (ImplicitCastExpr *cast = dyn_cast<ImplicitCastExpr>(RHS)) {
-    if (cast->getCastKind() == CK_ObjCConsumeObject) {
+    if (cast->getCastKind() == CK_ARCConsumeObject) {
       Diag(Loc, diag::warn_arc_retained_assign)
         << (LT == Qualifiers::OCL_ExplicitNone) 
         << RHS->getSourceRange();
@@ -4069,7 +4069,7 @@ void Sema::checkUnsafeExprAssigns(SourceLocation Loc,
     unsigned Attributes = PD->getPropertyAttributes();
     if (Attributes & ObjCPropertyDecl::OBJC_PR_assign)
       while (ImplicitCastExpr *cast = dyn_cast<ImplicitCastExpr>(RHS)) {
-        if (cast->getCastKind() == CK_ObjCConsumeObject) {
+        if (cast->getCastKind() == CK_ARCConsumeObject) {
           Diag(Loc, diag::warn_arc_retained_property_assign)
           << RHS->getSourceRange();
           return;

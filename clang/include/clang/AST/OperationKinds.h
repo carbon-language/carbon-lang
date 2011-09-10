@@ -257,24 +257,24 @@ enum CastKind {
   /// \brief [ARC] Produces a retainable object pointer so that it may
   /// be consumed, e.g. by being passed to a consuming parameter.
   /// Calls objc_retain.
-  CK_ObjCProduceObject,
+  CK_ARCProduceObject,
 
   /// \brief [ARC] Consumes a retainable object pointer that has just
   /// been produced, e.g. as the return value of a retaining call.
   /// Enters a cleanup to call objc_release at some indefinite time.
-  CK_ObjCConsumeObject,
+  CK_ARCConsumeObject,
 
   /// \brief [ARC] Reclaim a retainable object pointer object that may
   /// have been produced and autoreleased as part of a function return
   /// sequence.
-  CK_ObjCReclaimReturnedObject,
+  CK_ARCReclaimReturnedObject,
 
   /// \brief [ARC] Causes a value of block type to be copied to the
   /// heap, if it is not already there.  A number of other operations
   /// in ARC cause blocks to be copied; this is for cases where that
   /// would not otherwise be guaranteed, such as when casting to a
   /// non-block pointer type.
-  CK_ObjCExtendBlockObject
+  CK_ARCExtendBlockObject
 };
 
 #define CK_Invalid ((CastKind) -1)

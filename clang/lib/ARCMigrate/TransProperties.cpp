@@ -339,7 +339,7 @@ private:
       while (implCE && implCE->getCastKind() ==  CK_BitCast)
         implCE = dyn_cast<ImplicitCastExpr>(implCE->getSubExpr());
 
-      if (implCE && implCE->getCastKind() == CK_ObjCConsumeObject)
+      if (implCE && implCE->getCastKind() == CK_ARCConsumeObject)
         return false;
       }
 

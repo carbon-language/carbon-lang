@@ -1821,7 +1821,7 @@ static Expr *maybeUndoReclaimObject(Expr *e) {
   // value-propagating subexpressions --- we can't reliably rebuild
   // in-place because of expression sharing.
   if (ImplicitCastExpr *ice = dyn_cast<ImplicitCastExpr>(e))
-    if (ice->getCastKind() == CK_ObjCReclaimReturnedObject)
+    if (ice->getCastKind() == CK_ARCReclaimReturnedObject)
       return ice->getSubExpr();
 
   return e;
@@ -1889,7 +1889,7 @@ ExprResult Sema::BuildObjCBridgedCast(SourceLocation LParenLoc,
     case OBC_BridgeRetained:        
       // Produce the object before casting it.
       SubExpr = ImplicitCastExpr::Create(Context, FromType,
-                                         CK_ObjCProduceObject,
+                                         CK_ARCProduceObject,
                                          SubExpr, 0, VK_RValue);
       break;
       
@@ -1925,7 +1925,7 @@ ExprResult Sema::BuildObjCBridgedCast(SourceLocation LParenLoc,
   
   if (MustConsume) {
     ExprNeedsCleanups = true;
-    Result = ImplicitCastExpr::Create(Context, T, CK_ObjCConsumeObject, Result, 
+    Result = ImplicitCastExpr::Create(Context, T, CK_ARCConsumeObject, Result, 
                                       0, VK_RValue);    
   }
   

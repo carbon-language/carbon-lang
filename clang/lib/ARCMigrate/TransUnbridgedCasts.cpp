@@ -237,9 +237,9 @@ private:
     }
 
     if (ImplicitCastExpr *implCE = dyn_cast<ImplicitCastExpr>(E->getSubExpr())){
-      if (implCE->getCastKind() == CK_ObjCConsumeObject)
+      if (implCE->getCastKind() == CK_ARCConsumeObject)
         return rewriteToBridgedCast(E, OBC_BridgeRetained);
-      if (implCE->getCastKind() == CK_ObjCReclaimReturnedObject)
+      if (implCE->getCastKind() == CK_ARCReclaimReturnedObject)
         return rewriteToBridgedCast(E, OBC_Bridge);
     }
   }

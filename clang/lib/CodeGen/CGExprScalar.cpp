@@ -1115,16 +1115,16 @@ Value *ScalarExprEmitter::VisitCastExpr(CastExpr *CE) {
     return CGF.CGM.getCXXABI().EmitMemberPointerConversion(CGF, CE, Src);
   }
 
-  case CK_ObjCProduceObject:
+  case CK_ARCProduceObject:
     return CGF.EmitARCRetainScalarExpr(E);
-  case CK_ObjCConsumeObject:
+  case CK_ARCConsumeObject:
     return CGF.EmitObjCConsumeObject(E->getType(), Visit(E));
-  case CK_ObjCReclaimReturnedObject: {
+  case CK_ARCReclaimReturnedObject: {
     llvm::Value *value = Visit(E);
     value = CGF.EmitARCRetainAutoreleasedReturnValue(value);
     return CGF.EmitObjCConsumeObject(E->getType(), value);
   }
-  case CK_ObjCExtendBlockObject: {
+  case CK_ARCExtendBlockObject: {
     llvm::Value *value = CGF.EmitARCRetainScalarExpr(E);
     return CGF.EmitObjCConsumeObject(E->getType(), value);
   }

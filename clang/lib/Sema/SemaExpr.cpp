@@ -3792,7 +3792,7 @@ static void maybeExtendBlockObject(Sema &S, ExprResult &E) {
   if (!S.getLangOptions().ObjCAutoRefCount) return;
 
   E = ImplicitCastExpr::Create(S.Context, E.get()->getType(),
-                               CK_ObjCExtendBlockObject, E.get(),
+                               CK_ARCExtendBlockObject, E.get(),
                                /*base path*/ 0, VK_RValue);
   S.ExprNeedsCleanups = true;
 }
@@ -8283,7 +8283,7 @@ static Expr *maybeRebuildARCConsumingStmt(Stmt *Statement) {
   if (!cleanups) return 0;
 
   ImplicitCastExpr *cast = dyn_cast<ImplicitCastExpr>(cleanups->getSubExpr());
-  if (!cast || cast->getCastKind() != CK_ObjCConsumeObject)
+  if (!cast || cast->getCastKind() != CK_ARCConsumeObject)
     return 0;
 
   // Splice out the cast.  This shouldn't modify any interesting

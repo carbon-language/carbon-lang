@@ -1270,7 +1270,7 @@ void CodeGenFunction::EmitObjCAtSynchronizedStmt(
   CGM.getObjCRuntime().EmitSynchronizedStmt(*this, S);
 }
 
-/// Produce the code for a CK_ObjCProduceObject.  Just does a
+/// Produce the code for a CK_ARCProduceObject.  Just does a
 /// primitive retain.
 llvm::Value *CodeGenFunction::EmitObjCProduceObject(QualType type,
                                                     llvm::Value *value) {
@@ -1288,7 +1288,7 @@ namespace {
   };
 }
 
-/// Produce the code for a CK_ObjCConsumeObject.  Does a primitive
+/// Produce the code for a CK_ARCConsumeObject.  Does a primitive
 /// release at the end of the full-expression.
 llvm::Value *CodeGenFunction::EmitObjCConsumeObject(QualType type,
                                                     llvm::Value *object) {
@@ -1975,9 +1975,9 @@ static bool shouldEmitSeparateBlockRetain(const Expr *e) {
     switch (cast->getCastKind()) {
     // Emitting these operations in +1 contexts is goodness.
     case CK_LValueToRValue:
-    case CK_ObjCReclaimReturnedObject:
-    case CK_ObjCConsumeObject:
-    case CK_ObjCProduceObject:
+    case CK_ARCReclaimReturnedObject:
+    case CK_ARCConsumeObject:
+    case CK_ARCProduceObject:
       return false;
 
     // These operations preserve a block type.
@@ -2045,7 +2045,7 @@ tryEmitARCRetainScalarExpr(CodeGenFunction &CGF, const Expr *e) {
 
       // For consumptions, just emit the subexpression and thus elide
       // the retain/release pair.
-      case CK_ObjCConsumeObject: {
+      case CK_ARCConsumeObject: {
         llvm::Value *result = CGF.EmitScalarExpr(ce->getSubExpr());
         if (resultType) result = CGF.Builder.CreateBitCast(result, resultType);
         return TryEmitResult(result, true);
@@ -2054,7 +2054,7 @@ tryEmitARCRetainScalarExpr(CodeGenFunction &CGF, const Expr *e) {
       // Block extends are net +0.  Naively, we could just recurse on
       // the subexpression, but actually we need to ensure that the
       // value is copied as a block, so there's a little filter here.
-      case CK_ObjCExtendBlockObject: {
+      case CK_ARCExtendBlockObject: {
         llvm::Value *result; // will be a +0 value
 
         // If we can't safely assume the sub-expression will produce a
@@ -2087,7 +2087,7 @@ tryEmitARCRetainScalarExpr(CodeGenFunction &CGF, const Expr *e) {
 
       // For reclaims, emit the subexpression as a retained call and
       // skip the consumption.
-      case CK_ObjCReclaimReturnedObject: {
+      case CK_ARCReclaimReturnedObject: {
         llvm::Value *result = emitARCRetainCall(CGF, ce->getSubExpr());
         if (resultType) result = CGF.Builder.CreateBitCast(result, resultType);
         return TryEmitResult(result, true);
