@@ -4615,8 +4615,16 @@ static SDValue getShuffleScalarElt(SDNode *N, int Index, SelectionDAG &DAG,
       DecodeVPERM2F128Mask(VT, cast<ConstantSDNode>(ImmN)->getZExtValue(),
                            ShuffleMask);
       break;
+    case X86ISD::MOVDDUP:
+    case X86ISD::MOVLHPD:
+    case X86ISD::MOVLPD:
+    case X86ISD::MOVLPS:
+    case X86ISD::MOVSHDUP:
+    case X86ISD::MOVSLDUP:
+    case X86ISD::PALIGN:
+      return SDValue(); // Not yet implemented.
     default:
-      assert(0 && "not implemented for target shuffle node");
+      assert(0 && "unknown target shuffle node");
       return SDValue();
     }
 
