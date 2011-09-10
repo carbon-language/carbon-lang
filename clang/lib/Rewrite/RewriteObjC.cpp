@@ -420,8 +420,14 @@ namespace {
       else if (T->isObjCQualifiedClassType())
         T = Context->getObjCClassType();
       else if (T->isObjCObjectPointerType() &&
-               T->getPointeeType()->isObjCQualifiedInterfaceType())
-        T = Context->getObjCIdType();
+               T->getPointeeType()->isObjCQualifiedInterfaceType()) {
+        if (const ObjCObjectPointerType * OBJPT =
+              T->getAsObjCInterfacePointerType()) {
+          const ObjCInterfaceType *IFaceT = OBJPT->getInterfaceType();
+          T = QualType(IFaceT, 0);
+          T = Context->getPointerType(T);
+        }
+     }
     }
     
     // FIXME: This predicate seems like it would be useful to add to ASTContext.
@@ -3124,8 +3130,8 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
       (void)convertBlockPointerToFunctionPointer(t);
       ArgTypes.push_back(t);
     }
-    returnType = OMD->getResultType()->isObjCQualifiedIdType()
-                   ? Context->getObjCIdType() : OMD->getResultType();
+    returnType = Exp->getType();
+    convertToUnqualifiedObjCType(returnType);
     (void)convertBlockPointerToFunctionPointer(returnType);
   } else {
     returnType = Context->getObjCIdType();

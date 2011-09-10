@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -x objective-c++ -Wno-return-type -fblocks -fms-extensions -rewrite-objc %s -o %t-rw.cpp
+// RUN: %clang_cc1 -fsyntax-only -fblocks -Wno-address-of-temporary -D"Class=void*" -D"id=void*" -D"SEL=void*" -D"__declspec(X)=" %t-rw.cpp
 
 void *sel_registerName(const char *);
 
@@ -62,7 +63,8 @@ void test_instancetype_narrow_method_search() {
 
   // Exact type checks
   // Message sends to Class.
-  Subclass1<Proto1> *sc1proto1_2 = [[[sc1proto1 class] alloc] init];
+  // FIXME. This is not supported due to missing capability in rewriter and not due to instancetype issues
+  //  Subclass1<Proto1> *sc1proto1_2 = [[[sc1proto1 class] alloc] init];
 
   // Property access
   [sc1proto1.self methodInProto2]; // expected-warning{{method '-methodInProto2' not found (return type defaults to 'id')}}
