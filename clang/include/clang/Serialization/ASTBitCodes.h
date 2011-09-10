@@ -666,6 +666,9 @@ namespace clang {
       /// \brief Objective-C "SEL" redefinition type
       SPECIAL_TYPE_OBJC_SEL_REDEFINITION       = 8
     };
+    
+    /// \brief The number of special type IDs.
+    const unsigned NumSpecialTypeIDs = 0;
 
     /// \brief Predefined declaration IDs.
     ///
