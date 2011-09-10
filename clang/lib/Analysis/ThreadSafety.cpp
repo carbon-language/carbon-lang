@@ -300,6 +300,7 @@ class BuildLockset : public StmtVisitor<BuildLockset> {
       case LK_Exclusive:
         return locksetContains(Lock, KindRequested);
     }
+    llvm_unreachable("Unknown LockKind");
   }
 
 public:
@@ -805,5 +806,6 @@ LockKind getLockKindFromAccessKind(AccessKind AK) {
     case AK_Written :
       return LK_Exclusive;
   }
+  llvm_unreachable("Unknown AccessKind");
 }
 }} // end namespace clang::thread_safety

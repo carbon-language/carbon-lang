@@ -7288,10 +7288,12 @@ SourceLocation GetLocationForCandidate(const OverloadCandidate *Cand) {
   return SourceLocation();
 }
 
-static unsigned RankDeductionFailure(
-    const OverloadCandidate::DeductionFailureInfo &DFI) {
+static unsigned
+RankDeductionFailure(const OverloadCandidate::DeductionFailureInfo &DFI) {
   switch ((Sema::TemplateDeductionResult)DFI.Result) {
   case Sema::TDK_Success:
+    assert(0 && "TDK_success while diagnosing bad deduction");
+
   case Sema::TDK_Incomplete:
     return 1;
 
@@ -7314,6 +7316,7 @@ static unsigned RankDeductionFailure(
   case Sema::TDK_TooFewArguments:
     return 6;
   }
+  llvm_unreachable("Unhandled deduction result");
 }
 
 struct CompareOverloadCandidatesForDisplay {
