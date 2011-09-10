@@ -155,7 +155,7 @@ void ELFCodeEmitter::emitConstantPool(MachineConstantPool *MCP) {
     CPSections.push_back(CstPool.SectionIdx);
 
     if (CPE.isMachineConstantPoolEntry())
-      assert("CPE.isMachineConstantPoolEntry not supported yet");
+      assert(0 && "CPE.isMachineConstantPoolEntry not supported yet");
 
     // Emit the constant to constant pool section
     EW.EmitGlobalConstant(CPE.Val.ConstVal, CstPool);
