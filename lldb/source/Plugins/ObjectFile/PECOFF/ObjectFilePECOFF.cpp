@@ -72,6 +72,46 @@ static uint32_t COFFMachineToMachCPU(uint16_t machine);
 #define IMAGE_FILE_UP_SYSTEM_ONLY           0x4000
 #define IMAGE_FILE_BYTES_REVERSED_HI        0x8000
 
+
+// Section Flags
+// The section flags in the Characteristics field of the section header indicate
+// characteristics of the section.
+#define IMAGE_SCN_TYPE_NO_PAD               0x00000008 // The section should not be padded to the next boundary. This flag is obsolete and is replaced by IMAGE_SCN_ALIGN_1BYTES. This is valid only for object files.
+#define IMAGE_SCN_CNT_CODE                  0x00000020 // The section contains executable code.
+#define IMAGE_SCN_CNT_INITIALIZED_DATA      0x00000040 // The section contains initialized data.
+#define IMAGE_SCN_CNT_UNINITIALIZED_DATA    0x00000080 // The section contains uninitialized data.
+#define IMAGE_SCN_LNK_OTHER                 0x00000100 // Reserved for future use.
+#define IMAGE_SCN_LNK_INFO                  0x00000200 // The section contains comments or other information. The .drectve section has this type. This is valid for object files only.
+#define IMAGE_SCN_LNK_REMOVE                0x00000800 // The section will not become part of the image. This is valid only for object files.
+#define IMAGE_SCN_LNK_COMDAT                0x00001000 // The section contains COMDAT data. For more information, see section 5.5.6, “COMDAT Sections (Object Only).” This is valid only for object files.
+#define IMAGE_SCN_GPREL                     0x00008000 // The section contains data referenced through the global pointer (GP).
+#define IMAGE_SCN_MEM_PURGEABLE             0x00020000
+#define IMAGE_SCN_MEM_16BIT                 0x00020000 // For ARM machine types, the section contains Thumb code.  Reserved for future use with other machine types.
+#define IMAGE_SCN_MEM_LOCKED                0x00040000
+#define IMAGE_SCN_MEM_PRELOAD               0x00080000
+#define IMAGE_SCN_ALIGN_1BYTES              0x00100000 // Align data on a 1-byte boundary. Valid only for object files.
+#define IMAGE_SCN_ALIGN_2BYTES              0x00200000 // Align data on a 2-byte boundary. Valid only for object files.
+#define IMAGE_SCN_ALIGN_4BYTES              0x00300000 // Align data on a 4-byte boundary. Valid only for object files.
+#define IMAGE_SCN_ALIGN_8BYTES              0x00400000 // Align data on an 8-byte boundary. Valid only for object files.
+#define IMAGE_SCN_ALIGN_16BYTES             0x00500000 // Align data on a 16-byte boundary. Valid only for object files.
+#define IMAGE_SCN_ALIGN_32BYTES             0x00600000 // Align data on a 32-byte boundary. Valid only for object files.
+#define IMAGE_SCN_ALIGN_64BYTES             0x00700000 // Align data on a 64-byte boundary. Valid only for object files.
+#define IMAGE_SCN_ALIGN_128BYTES            0x00800000 // Align data on a 128-byte boundary. Valid only for object files.
+#define IMAGE_SCN_ALIGN_256BYTES            0x00900000 // Align data on a 256-byte boundary. Valid only for object files.
+#define IMAGE_SCN_ALIGN_512BYTES            0x00A00000 // Align data on a 512-byte boundary. Valid only for object files.
+#define IMAGE_SCN_ALIGN_1024BYTES           0x00B00000 // Align data on a 1024-byte boundary. Valid only for object files.
+#define IMAGE_SCN_ALIGN_2048BYTES           0x00C00000 // Align data on a 2048-byte boundary. Valid only for object files.
+#define IMAGE_SCN_ALIGN_4096BYTES           0x00D00000 // Align data on a 4096-byte boundary. Valid only for object files.
+#define IMAGE_SCN_ALIGN_8192BYTES           0x00E00000 // Align data on an 8192-byte boundary. Valid only for object files.
+#define IMAGE_SCN_LNK_NRELOC_OVFL           0x01000000 // The section contains extended relocations.
+#define IMAGE_SCN_MEM_DISCARDABLE           0x02000000 // The section can be discarded as needed.
+#define IMAGE_SCN_MEM_NOT_CACHED            0x04000000 // The section cannot be cached.
+#define IMAGE_SCN_MEM_NOT_PAGED             0x08000000 // The section is not pageable.
+#define IMAGE_SCN_MEM_SHARED                0x10000000 // The section can be shared in memory.
+#define IMAGE_SCN_MEM_EXECUTE               0x20000000 // The section can be executed as code.
+#define IMAGE_SCN_MEM_READ                  0x40000000 // The section can be read.
+#define IMAGE_SCN_MEM_WRITE                 0x80000000 // The section can be written to.
+
 using namespace lldb;
 using namespace lldb_private;
 
@@ -162,12 +202,14 @@ ObjectFilePECOFF::ParseHeader ()
         uint32_t pe_signature = m_data.GetU32 (&offset);
         if (pe_signature != IMAGE_NT_SIGNATURE)
             return false;
-    }
-    if (ParseCOFFHeader(&offset))
-    {
-        if (m_coff_header.hdrsize > 0)
-            ParseCOFFOptionalHeader(&offset);
-        ParseSectionHeaders (offset);
+        if (ParseCOFFHeader(&offset))
+        {
+            if (m_coff_header.hdrsize > 0)
+                ParseCOFFOptionalHeader(&offset);
+            ParseSectionHeaders (offset);
+        }
+        StreamFile s(stdout, false);// REMOVE THIS LINE!!!
+        Dump(&s);// REMOVE THIS LINE!!!
         return true;
     }
     return false;
@@ -334,7 +376,7 @@ ObjectFilePECOFF::ParseCOFFOptionalHeader(uint32_t* offset_ptr)
                 m_coff_header_opt.reserved1                     = m_data.GetU32(offset_ptr); 
                 m_coff_header_opt.image_size                    = m_data.GetU32(offset_ptr); 
                 m_coff_header_opt.header_size                   = m_data.GetU32(offset_ptr); 
-                m_coff_header_opt.checksym                      = m_data.GetU32(offset_ptr); 
+                m_coff_header_opt.checksum                      = m_data.GetU32(offset_ptr); 
                 m_coff_header_opt.subsystem                     = m_data.GetU16(offset_ptr); 
                 m_coff_header_opt.dll_flags                     = m_data.GetU16(offset_ptr); 
                 m_coff_header_opt.stack_reserve_size            = m_data.GetMaxU64 (offset_ptr, addr_byte_size);
@@ -436,39 +478,57 @@ ObjectFilePECOFF::GetSymtab()
         SectionList *sect_list = GetSectionList();
         m_symtab_ap.reset(new Symtab(this));
         Mutex::Locker symtab_locker (m_symtab_ap->GetMutex());
-        DataExtractor stab_data;
-        DataExtractor stabstr_data;
-        static ConstString g_stab_sect_name(".stab");
-        static ConstString g_stabstr_sect_name(".stabstr");
-        const Section *stab_section = sect_list->FindSectionByName (g_stab_sect_name).get();
-        if (stab_section == NULL)
-            return m_symtab_ap.get();
-        const Section *stabstr_section = sect_list->FindSectionByName (g_stabstr_sect_name).get();
-        if (stabstr_section == NULL)
-            return m_symtab_ap.get();
-        uint32_t offset = 0;
-        if (stab_section->ReadSectionDataFromObjectFile (this, stab_data) &&
-            stabstr_section->ReadSectionDataFromObjectFile (this, stabstr_data))
+        
+        const uint32_t num_syms = m_coff_header.nsyms;
+
+        if (num_syms > 0 && m_coff_header.symoff > 0)
         {
-            const uint32_t num_syms = stab_data.GetByteSize() / sizeof (coff_symbol_t);
+            const uint32_t symbol_size = sizeof(section_header_t);
+            const uint32_t addr_byte_size = GetAddressByteSize ();
+            const size_t symbol_data_size = num_syms * symbol_size; 
+            // Include the 4 bytes string table size at the end of the symbols
+            DataBufferSP symtab_data_sp(m_file.ReadFileContents (m_coff_header.symoff, symbol_data_size + 4));
+            DataExtractor symtab_data (symtab_data_sp, GetByteOrder(), addr_byte_size);
+            uint32_t offset = symbol_data_size;
+            const uint32_t strtab_size = symtab_data.GetU32 (&offset);
+            DataBufferSP strtab_data_sp(m_file.ReadFileContents (m_coff_header.symoff + symbol_data_size + 4, strtab_size));
+            DataExtractor strtab_data (strtab_data_sp, GetByteOrder(), addr_byte_size);
+
+            offset = 0;
+            std::string symbol_name;
             Symbol *symbols = m_symtab_ap->Resize (num_syms);
             for (uint32_t i=0; i<num_syms; ++i)
             {
                 coff_symbol_t symbol;
-                const void *name_data = stab_data.GetData(&offset, sizeof(symbol.name));
-                
-                if (name_data == NULL)
-                    break;
-                memcpy (symbol.name, name_data, sizeof(symbol.name));
-                symbol.value = stab_data.GetU32 (&offset);
-                symbol.sect = stab_data.GetU16 (&offset);
-                symbol.type = stab_data.GetU16 (&offset);
-                symbol.storage = stab_data.GetU8 (&offset);
-                symbol.naux = stab_data.GetU8 (&offset);		
-
-                symbol.name[sizeof(symbol.name)-1] = '\0';
+                const uint32_t symbol_offset = offset;
+                const char *symbol_name_cstr = NULL;
+                // If the first 4 bytes of the symbol string are zero, then we
+                // it is followed by a 4 byte string table offset. Else these
+                // 8 bytes contain the symbol name
+                if (symtab_data.GetU32 (&offset) == 0)
+                {
+                    // Long string that doesn't fit into the symbol table name,
+                    // so now we must read the 4 byte string table offset
+                    uint32_t strtab_offset = symtab_data.GetU32 (&offset);
+                    symbol_name_cstr = strtab_data.PeekCStr (strtab_offset);
+                    symbol_name.assign (symbol_name_cstr);
+                }
+                else
+                {
+                    // Short string that fits into the symbol table name which is 8 bytes
+                    offset += sizeof(symbol.name) - 4; // Skip remaining 
+                    symbol_name_cstr = symtab_data.PeekCStr (symbol_offset);
+                    if (symbol_name_cstr == NULL)
+                        break;
+                    symbol_name.assign (symbol_name_cstr, sizeof(symbol.name));
+                }
+                symbol.value    = symtab_data.GetU32 (&offset);
+                symbol.sect     = symtab_data.GetU16 (&offset);
+                symbol.type     = symtab_data.GetU16 (&offset);
+                symbol.storage  = symtab_data.GetU8  (&offset);
+                symbol.naux     = symtab_data.GetU8  (&offset);		
                 Address symbol_addr(sect_list->GetSectionAtIndex(symbol.sect-1).get(), symbol.value);
-                symbols[i].GetMangled ().SetValue(symbol.name, symbol.name[0]=='_' && symbol.name[1] == 'Z');
+                symbols[i].GetMangled ().SetValue (symbol_name.c_str(), symbol_name[0]=='_' && symbol_name[1] == 'Z');
                 symbols[i].SetValue(symbol_addr);
 
                 if (symbol.naux > 0)
@@ -495,14 +555,70 @@ ObjectFilePECOFF::GetSectionList()
             std::string sect_name;
             GetSectionName (sect_name, m_sect_headers[idx]);
             ConstString const_sect_name (sect_name.c_str());
-            
+            static ConstString g_code_sect_name (".code");
+            static ConstString g_CODE_sect_name ("CODE");
+            static ConstString g_data_sect_name (".data");
+            static ConstString g_DATA_sect_name ("DATA");
+            static ConstString g_bss_sect_name (".bss");
+            static ConstString g_BSS_sect_name ("BSS");
+            static ConstString g_debug_sect_name (".debug");
+            static ConstString g_reloc_sect_name (".reloc");
+            static ConstString g_stab_sect_name (".stab");
+            static ConstString g_stabstr_sect_name (".stabstr");
+            SectionType section_type = eSectionTypeOther;
+            if (m_sect_headers[idx].flags & IMAGE_SCN_CNT_CODE && 
+                ((const_sect_name == g_code_sect_name) || (const_sect_name == g_CODE_sect_name)))
+            {
+                section_type = eSectionTypeCode;
+            }
+            else if (m_sect_headers[idx].flags & IMAGE_SCN_CNT_INITIALIZED_DATA && 
+                     ((const_sect_name == g_data_sect_name) || (const_sect_name == g_DATA_sect_name)))
+            {
+                section_type = eSectionTypeData;
+            }
+            else if (m_sect_headers[idx].flags & IMAGE_SCN_CNT_UNINITIALIZED_DATA && 
+                     ((const_sect_name == g_bss_sect_name) || (const_sect_name == g_BSS_sect_name)))
+            {
+                if (m_sect_headers[idx].size == 0)
+                    section_type = eSectionTypeZeroFill;
+                else
+                    section_type = eSectionTypeData;
+            }
+            else if (const_sect_name == g_debug_sect_name)
+            {
+                section_type = eSectionTypeDebug;
+            }
+            else if (const_sect_name == g_stabstr_sect_name)
+            {
+                section_type = eSectionTypeDataCString;
+            }
+            else if (const_sect_name == g_reloc_sect_name)
+            {
+                section_type = eSectionTypeOther;
+            }
+            else if (m_sect_headers[idx].flags & IMAGE_SCN_CNT_CODE)
+            {
+                section_type = eSectionTypeCode;
+            }
+            else if (m_sect_headers[idx].flags & IMAGE_SCN_CNT_INITIALIZED_DATA)
+            {
+                section_type = eSectionTypeData;
+            }
+            else if (m_sect_headers[idx].flags & IMAGE_SCN_CNT_UNINITIALIZED_DATA)
+            {
+                if (m_sect_headers[idx].size == 0)
+                    section_type = eSectionTypeZeroFill;
+                else
+                    section_type = eSectionTypeData;
+            }
+
             // Use a segment ID of the segment index shifted left by 8 so they
             // never conflict with any of the sections.
             SectionSP section_sp (new Section (NULL,
                                                module,                       // Module to which this section belongs
                                                idx + 1,                      // Section ID is the 1 based segment index shifted right by 8 bits as not to collide with any of the 256 section IDs that are possible
                                                const_sect_name,              // Name of this section
-                                               eSectionTypeCode,             // This section is a container of other sections.
+                                               section_type,                    // This section is a container of other sections.
                                                m_sect_headers[idx].vmaddr,   // File VM address == addresses as they are found in the object file
                                                m_sect_headers[idx].vmsize,   // VM size in bytes of this section
                                                m_sect_headers[idx].offset,   // Offset to the data for this section in the file
@@ -659,7 +775,7 @@ ObjectFilePECOFF::DumpOptCOFFHeader(Stream *s, const coff_opt_header_t& header)
     s->Printf ("  reserved1               = 0x%8.8x\n", header.reserved1);
     s->Printf ("  image_size              = 0x%8.8x\n", header.image_size);
     s->Printf ("  header_size             = 0x%8.8x\n", header.header_size);
-    s->Printf ("  checksym                = 0x%8.8x\n", header.checksym);
+    s->Printf ("  checksum                = 0x%8.8x\n", header.checksum);
     s->Printf ("  subsystem               = 0x%4.4x\n", header.subsystem);
     s->Printf ("  dll_flags               = 0x%4.4x\n", header.dll_flags);
     s->Printf ("  stack_reserve_size      = 0x%16.16llx\n", header.stack_reserve_size);
@@ -671,7 +787,7 @@ ObjectFilePECOFF::DumpOptCOFFHeader(Stream *s, const coff_opt_header_t& header)
     uint32_t i;
     for (i=0; i<header.data_dirs.size(); i++)
     {
-        s->Printf ("  data_dirs[%u] vmaddr = 0x%8.8x, vmsize = 0x%8.8x\n", 
+        s->Printf ("  data_dirs[%2u] vmaddr = 0x%8.8x, vmsize = 0x%8.8x\n", 
                    i,
                    header.data_dirs[i].vmaddr,
                    header.data_dirs[i].vmsize);
@@ -689,10 +805,10 @@ ObjectFilePECOFF::DumpSectionHeader(Stream *s, const section_header_t& sh)
     GetSectionName(name, sh);
     s->Printf ("%-16s 0x%8.8x 0x%8.8x 0x%8.8x 0x%8.8x 0x%8.8x 0x%8.8x 0x%4.4x 0x%4.4x 0x%8.8x\n",
                name.c_str(),
-               sh.vmsize,
                sh.vmaddr,
-               sh.size,
+               sh.vmsize,
                sh.offset,
+               sh.size,
                sh.reloff,
                sh.lineoff,
                sh.nreloc,
@@ -711,15 +827,15 @@ ObjectFilePECOFF::DumpSectionHeaders(Stream *s)
 {
     
     s->PutCString ("Section Headers\n");
-    s->PutCString ("IDX  name             vm size  vm addr  size     offset   reloff   lineoff  nrel nlin flags\n");
-    s->PutCString ("==== ---------------- -------- -------- -------- -------- -------- -------- ---- ---- --------\n");
+    s->PutCString ("IDX  name             vm addr    vm size    file off   file size  reloc off  line off   nreloc nline  flags\n");
+    s->PutCString ("==== ---------------- ---------- ---------- ---------- ---------- ---------- ---------- ------ ------ ----------\n");
     
     uint32_t idx = 0;
     SectionHeaderCollIter pos, end = m_sect_headers.end();
     
     for (pos = m_sect_headers.begin(); pos != end; ++pos, ++idx)
     {
-        s->Printf ("[%2u]", idx);
+        s->Printf ("[%2u] ", idx);
         ObjectFilePECOFF::DumpSectionHeader(s, *pos);
     }
 }

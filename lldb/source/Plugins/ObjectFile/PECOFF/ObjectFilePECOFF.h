@@ -173,7 +173,7 @@ protected:
 		uint32_t	reserved1;
 		uint32_t	image_size;
 		uint32_t	header_size;
-		uint32_t	checksym;
+		uint32_t	checksum;
 		uint16_t	subsystem;
 		uint16_t	dll_flags;
 		uint64_t	stack_reserve_size;
