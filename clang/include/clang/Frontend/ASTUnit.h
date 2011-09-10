@@ -451,10 +451,6 @@ public:
   bool getOwnsRemappedFileBuffers() const { return OwnsRemappedFileBuffers; }
   void setOwnsRemappedFileBuffers(bool val) { OwnsRemappedFileBuffers = val; }
 
-  /// \brief Retrieve the maximum PCH level of declarations that a
-  /// traversal of the translation unit should consider.
-  unsigned getMaxPCHLevel() const;
-
   void setLastASTLocation(ASTLocation ALoc) { LastLoc = ALoc; }
   ASTLocation getLastASTLocation() const { return LastLoc; }
 

@@ -250,9 +250,9 @@ protected:
   unsigned Access : 2;
   friend class CXXClassMemberWrapper;
 
-  /// PCHLevel - the "level" of AST file from which this declaration was built.
-  unsigned PCHLevel : 2;
-
+  /// \brief Whether this declaration was loaded from an AST file.
+  unsigned FromASTFile : 1;
+  
   /// ChangedAfterLoad - if this declaration has changed since being loaded
   unsigned ChangedAfterLoad : 1;
 
@@ -285,7 +285,7 @@ protected:
     : NextDeclInContext(0), DeclCtx(DC),
       Loc(L), DeclKind(DK), InvalidDecl(0),
       HasAttrs(false), Implicit(false), Used(false), Referenced(false),
-      Access(AS_none), PCHLevel(0), ChangedAfterLoad(false),
+      Access(AS_none), FromASTFile(0), ChangedAfterLoad(false),
       ModulePrivate(0),
       IdentifierNamespace(getIdentifierNamespaceForKind(DK)),
       HasCachedLinkage(0) 
@@ -296,7 +296,7 @@ protected:
   Decl(Kind DK, EmptyShell Empty)
     : NextDeclInContext(0), DeclKind(DK), InvalidDecl(0),
       HasAttrs(false), Implicit(false), Used(false), Referenced(false),
-      Access(AS_none), PCHLevel(0), ChangedAfterLoad(false),
+      Access(AS_none), FromASTFile(0), ChangedAfterLoad(false),
       ModulePrivate(0),
       IdentifierNamespace(getIdentifierNamespaceForKind(DK)),
       HasCachedLinkage(0)
@@ -501,29 +501,10 @@ public:
   /// declaration cannot be weak-imported because it has a definition.
   bool canBeWeakImported(bool &IsDefinition) const;
 
-  /// \brief Retrieve the level of precompiled header from which this
-  /// declaration was generated.
-  ///
-  /// The PCH level of a declaration describes where the declaration originated
-  /// from. A PCH level of 0 indicates that the declaration was parsed from
-  /// source. A PCH level of 1 indicates that the declaration was loaded from
-  /// a top-level AST file. A PCH level 2 indicates that the declaration was
-  /// loaded from a PCH file the AST file depends on, and so on.
-  unsigned getPCHLevel() const { return PCHLevel; }
-
   /// \brief Determine whether this declaration came from an AST file (such as
   /// a precompiled header or module) rather than having been parsed.
-  bool isFromASTFile() const { return PCHLevel > 0; }
+  bool isFromASTFile() const { return FromASTFile; }
   
-  /// \brief The maximum PCH level that any declaration may have.
-  static const unsigned MaxPCHLevel = 3;
-
-  /// \brief Set the PCH level of this declaration.
-  void setPCHLevel(unsigned Level) { 
-    assert(Level <= MaxPCHLevel && "PCH level exceeds the maximum");
-    PCHLevel = Level;
-  }
-
   /// \brief Query whether this declaration was changed in a significant way
   /// since being loaded from an AST file.
   ///

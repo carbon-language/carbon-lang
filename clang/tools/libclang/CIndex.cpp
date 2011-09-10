@@ -183,11 +183,6 @@ class CursorVisitor : public DeclVisitor<CursorVisitor, bool>,
   /// \brief The opaque client data, to be passed along to the visitor.
   CXClientData ClientData;
 
-  // MaxPCHLevel - the maximum PCH level of declarations that we will pass on
-  // to the visitor. Declarations with a PCH level greater than this value will
-  // be suppressed.
-  unsigned MaxPCHLevel;
-
   /// \brief Whether we should visit the preprocessing record entries last, 
   /// after visiting other declarations.
   bool VisitPreprocessorLast;
@@ -238,12 +233,11 @@ class CursorVisitor : public DeclVisitor<CursorVisitor, bool>,
 public:
   CursorVisitor(CXTranslationUnit TU, CXCursorVisitor Visitor,
                 CXClientData ClientData,
-                unsigned MaxPCHLevel,
                 bool VisitPreprocessorLast,
                 SourceRange RegionOfInterest = SourceRange())
     : TU(TU), AU(static_cast<ASTUnit*>(TU->TUData)),
       Visitor(Visitor), ClientData(ClientData),
-      MaxPCHLevel(MaxPCHLevel), VisitPreprocessorLast(VisitPreprocessorLast),
+      VisitPreprocessorLast(VisitPreprocessorLast),
       RegionOfInterest(RegionOfInterest), DI_current(0)
   {
     Parent.kind = CXCursor_NoDeclFound;
@@ -375,9 +369,6 @@ bool CursorVisitor::Visit(CXCursor Cursor, bool CheckedRegionOfInterest) {
   if (clang_isDeclaration(Cursor.kind)) {
     Decl *D = getCursorDecl(Cursor);
     assert(D && "Invalid declaration cursor");
-    if (D->getPCHLevel() > MaxPCHLevel)
-      return false;
-
     if (D->isImplicit())
       return false;
   }
@@ -3030,7 +3021,6 @@ unsigned clang_visitChildren(CXCursor parent,
                              CXCursorVisitor visitor,
                              CXClientData client_data) {
   CursorVisitor CursorVis(getCursorTU(parent), visitor, client_data, 
-                          getCursorASTUnit(parent)->getMaxPCHLevel(),
                           false);
   return CursorVis.VisitChildren(parent);
 }
@@ -3527,7 +3517,8 @@ CXCursor clang_getCursor(CXTranslationUnit TU, CXSourceLocation Loc) {
     GetCursorData ResultData(CXXUnit->getSourceManager(), SLoc, Result);
     CXCursor Parent = clang_getTranslationUnitCursor(TU);
     CursorVisitor CursorVis(TU, GetCursorVisitor, &ResultData,
-                            Decl::MaxPCHLevel, true, SourceLocation(SLoc));
+                            /*VisitPreprocessorLast=*/true, 
+                            SourceLocation(SLoc));
     CursorVis.VisitChildren(Parent);
   }
   
@@ -4564,8 +4555,7 @@ public:
     : Annotated(annotated), Tokens(tokens), Cursors(cursors),
       NumTokens(numTokens), TokIdx(0), PreprocessingTokIdx(0),
       AnnotateVis(tu,
-                  AnnotateTokensVisitor, this,
-                  Decl::MaxPCHLevel, true, RegionOfInterest),
+                  AnnotateTokensVisitor, this, true, RegionOfInterest),
       SrcMgr(static_cast<ASTUnit*>(tu->TUData)->getSourceManager()),
       HasContextSensitiveKeywords(false) { }
 
@@ -5029,7 +5019,7 @@ static void clang_annotateTokensImpl(void *UserData) {
                                       Tokens, NumTokens);
     CursorVisitor MacroArgMarker(TU,
                                  MarkMacroArgTokensVisitorDelegate, &Visitor,
-                                 Decl::MaxPCHLevel, true, RegionOfInterest);
+                                 true, RegionOfInterest);
     MacroArgMarker.visitPreprocessedEntitiesInRegion();
   }
   

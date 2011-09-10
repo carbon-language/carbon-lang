@@ -247,7 +247,7 @@ void ASTDeclReader::VisitDecl(Decl *D) {
   D->setUsed(Record[Idx++]);
   D->setReferenced(Record[Idx++]);
   D->setAccess((AccessSpecifier)Record[Idx++]);
-  D->setPCHLevel(Record[Idx++] + (F.Kind <= MK_PCH));
+  D->FromASTFile = true;
   D->ModulePrivate = Record[Idx++];
 }
 

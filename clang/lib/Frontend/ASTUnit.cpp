@@ -1563,13 +1563,6 @@ ASTUnit::pp_entity_iterator ASTUnit::pp_entity_end() {
   return PreprocessedEntities.end();
 }
 
-unsigned ASTUnit::getMaxPCHLevel() const {
-  if (!getOnlyLocalDecls())
-    return Decl::MaxPCHLevel;
-
-  return 0;
-}
-
 StringRef ASTUnit::getMainFileName() const {
   return Invocation->getFrontendOpts().Inputs[0].second;
 }
