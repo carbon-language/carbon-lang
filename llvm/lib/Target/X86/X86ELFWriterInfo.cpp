@@ -147,7 +147,7 @@ long int X86ELFWriterInfo::computeRelocation(unsigned SymOffset,
   if (RelTy == ELF::R_X86_64_PC32 || RelTy == ELF::R_386_PC32)
     return SymOffset - (RelOffset + 4);
   else
-    assert("computeRelocation unknown for this relocation type");
+    assert(0 && "computeRelocation unknown for this relocation type");
 
   return 0;
 }

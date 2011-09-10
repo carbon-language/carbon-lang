@@ -216,6 +216,6 @@ GenericValue MCJIT::runFunction(Function *F,
     }
   }
 
-  assert("Full-featured argument passing not supported yet!");
+  assert(0 && "Full-featured argument passing not supported yet!");
   return GenericValue();
 }
