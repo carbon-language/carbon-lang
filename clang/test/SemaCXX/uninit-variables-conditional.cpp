@@ -15,7 +15,7 @@ int init(double *);
 // the destructor in Foo fouls about the minor bit of path-sensitivity in
 // -Wuninitialized.
 double test() {
-  double x; // expected-note {{variable 'x' is declared here}} expected-note{{add initialization to silence this warning}}
+  double x; // expected-note{{initialize the variable 'x' to silence this warning}}
   if (bar() || baz() || Foo() || init(&x))
     return 1.0;
 

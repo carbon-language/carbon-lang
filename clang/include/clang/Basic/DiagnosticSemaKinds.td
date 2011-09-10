@@ -1032,7 +1032,7 @@ def warn_maybe_uninit_var_captured_by_block : Warning<
   "variable %0 may be uninitialized when captured by block">,
   InGroup<UninitializedMaybe>, DefaultIgnore;
 def note_var_fixit_add_initialization : Note<
-  "add initialization to silence this warning">;
+  "initialize the variable %0 to silence this warning">;
 def err_init_incomplete_type : Error<"initialization of incomplete type %0">;
 
 def err_temp_copy_no_viable : Error<

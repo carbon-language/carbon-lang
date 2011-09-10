@@ -433,6 +433,50 @@ public:
 };
 }
 
+static bool SuggestInitializationFixit(Sema &S, const VarDecl *VD) {
+  // Don't issue a fixit if there is already an initializer.
+  if (VD->getInit())
+    return false;
+
+  // Suggest possible initialization (if any).
+  const char *initialization = 0;
+  QualType VariableTy = VD->getType().getCanonicalType();
+
+  if (VariableTy->isObjCObjectPointerType() ||
+      VariableTy->isBlockPointerType()) {
+    // Check if 'nil' is defined.
+    if (S.PP.getMacroInfo(&S.getASTContext().Idents.get("nil")))
+      initialization = " = nil";
+    else
+      initialization = " = 0";
+  }
+  else if (VariableTy->isRealFloatingType())
+    initialization = " = 0.0";
+  else if (VariableTy->isBooleanType() && S.Context.getLangOptions().CPlusPlus)
+    initialization = " = false";
+  else if (VariableTy->isEnumeralType())
+    return false;
+  else if (VariableTy->isPointerType() || VariableTy->isMemberPointerType()) {
+    if (S.Context.getLangOptions().CPlusPlus0x)
+      initialization = " = nullptr";
+    // Check if 'NULL' is defined.
+    else if (S.PP.getMacroInfo(&S.getASTContext().Idents.get("NULL")))
+      initialization = " = NULL";
+    else
+      initialization = " = 0";
+  }
+  else if (VariableTy->isScalarType())
+    initialization = " = 0";
+
+  if (initialization) {
+    SourceLocation loc = S.PP.getLocForEndOfToken(VD->getLocEnd());
+    S.Diag(loc, diag::note_var_fixit_add_initialization) << VD->getDeclName()
+      << FixItHint::CreateInsertion(loc, initialization);
+    return true;
+  }
+  return false;
+}
+
 /// DiagnoseUninitializedUse -- Helper function for diagnosing uses of an
 /// uninitialized variable. This manages the different forms of diagnostic
 /// emitted for particular types of uses. Returns true if the use was diagnosed
@@ -487,54 +531,13 @@ static bool DiagnoseUninitializedUse(Sema &S, const VarDecl *VD,
   }
 
   // Report where the variable was declared when the use wasn't within
-  // the initializer of that declaration.
-  if (!isSelfInit)
+  // the initializer of that declaration & we didn't already suggest
+  // an initialization fixit.
+  if (!isSelfInit && !SuggestInitializationFixit(S, VD))
     S.Diag(VD->getLocStart(), diag::note_uninit_var_def)
       << VD->getDeclName();
 
   return true;
-}
-
-static void SuggestInitializationFixit(Sema &S, const VarDecl *VD) {
-  // Don't issue a fixit if there is already an initializer.
-  if (VD->getInit())
-    return;
-
-  // Suggest possible initialization (if any).
-  const char *initialization = 0;
-  QualType VariableTy = VD->getType().getCanonicalType();
-
-  if (VariableTy->isObjCObjectPointerType() ||
-      VariableTy->isBlockPointerType()) {
-    // Check if 'nil' is defined.
-    if (S.PP.getMacroInfo(&S.getASTContext().Idents.get("nil")))
-      initialization = " = nil";
-    else
-      initialization = " = 0";
-  }
-  else if (VariableTy->isRealFloatingType())
-    initialization = " = 0.0";
-  else if (VariableTy->isBooleanType() && S.Context.getLangOptions().CPlusPlus)
-    initialization = " = false";
-  else if (VariableTy->isEnumeralType())
-    return;
-  else if (VariableTy->isPointerType() || VariableTy->isMemberPointerType()) {
-    if (S.Context.getLangOptions().CPlusPlus0x)
-      initialization = " = nullptr";
-    // Check if 'NULL' is defined.
-    else if (S.PP.getMacroInfo(&S.getASTContext().Idents.get("NULL")))
-      initialization = " = NULL";
-    else
-      initialization = " = 0";
-  }
-  else if (VariableTy->isScalarType())
-    initialization = " = 0";
-
-  if (initialization) {
-    SourceLocation loc = S.PP.getLocForEndOfToken(VD->getLocEnd());
-    S.Diag(loc, diag::note_var_fixit_add_initialization)
-      << FixItHint::CreateInsertion(loc, initialization);
-  }
 }
 
 typedef std::pair<const Expr*, bool> UninitUse;
@@ -587,15 +590,11 @@ public:
       
       for (UsesVec::iterator vi = vec->begin(), ve = vec->end(); vi != ve;
            ++vi) {
-        if (!DiagnoseUninitializedUse(S, vd, vi->first,
+        if (DiagnoseUninitializedUse(S, vd, vi->first,
                                       /*isAlwaysUninit=*/vi->second))
-          continue;
-
-        SuggestInitializationFixit(S, vd);
-
-        // Skip further diagnostics for this variable. We try to warn only on
-        // the first point at which a variable is used uninitialized.
-        break;
+          // Skip further diagnostics for this variable. We try to warn only on
+          // the first point at which a variable is used uninitialized.
+          break;
       }
 
       delete vec;

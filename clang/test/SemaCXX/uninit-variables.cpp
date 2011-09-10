@@ -26,7 +26,7 @@ void unevaluated_tests() {
 // Warn for glvalue arguments to typeid whose type is polymorphic.
 struct A { virtual ~A() {} };
 void polymorphic_test() {
-  A *a; // expected-note{{declared here}} expected-note{{add initialization}}
+  A *a; // expected-note{{initialize the variable 'a' to silence this warning}}
   (void)typeid(*a); // expected-warning{{variable 'a' is uninitialized when used here }}
 }
 
@@ -50,7 +50,7 @@ unsigned test3_b() {
   return x; // no-warning
 }
 unsigned test3_c() {
-  unsigned x; // expected-note{{declared here}} expected-note{{add initialization}}
+  unsigned x; // expected-note{{initialize the variable 'x' to silence this warning}}
   const bool flag = false;
   if (flag && (x = test3_aux()) == 0) {
     x = 1;
@@ -126,7 +126,7 @@ void test_noop_cast()
 }
 
 void test_noop_cast2() {
-    int x; // expected-note {{declared here}} expected-note {{add initialization}}
+    int x; // expected-note {{initialize the variable 'x' to silence this warning}}
     int y = (int&)x; // expected-warning {{uninitialized when used here}}
 }
 
@@ -137,7 +137,7 @@ void test_bitcasts() {
 }
 
 void test_bitcasts_2() {
-  int x;  // expected-note {{declared here}} expected-note {{add initialization}}
+  int x;  // expected-note {{initialize the variable 'x' to silence this warning}}
   int y = (float &)x; // expected-warning {{uninitialized when used here}}
 }
 
