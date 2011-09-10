@@ -15,6 +15,7 @@
 // Project includes
 #include "lldb/Target/Target.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
+#include "lldb/Utility/Utils.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -88,6 +89,7 @@ OptionGroupVariable::OptionParsingStarting (CommandInterpreter &interpreter)
     summary       = "";
 }
 
+#define NUM_FRAME_OPTS 3
 
 const OptionDefinition*
 OptionGroupVariable::GetDefinitions ()
@@ -99,16 +101,18 @@ OptionGroupVariable::GetDefinitions ()
 
     // Skip the "--no-args", "--no-locals" and "--show-globals" 
     // options if we are not showing frame specific options (globals only)
-    return &g_option_table[3];
+    return &g_option_table[NUM_FRAME_OPTS];
 }
 
 uint32_t
 OptionGroupVariable::GetNumDefinitions ()
 {
+    // Count the "--no-args", "--no-locals" and "--show-globals" 
+    // options if we are showing frame specific options.
     if (include_frame_options)
-        return 8;
+        return arraysize(g_option_table);
     else
-        return 5;
+        return arraysize(g_option_table) - NUM_FRAME_OPTS;
 }
 
 
