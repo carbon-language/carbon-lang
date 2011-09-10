@@ -12,6 +12,7 @@
 
 namespace lldb_private {
 
+// Return the number of elements of a static array.
 template <typename T, unsigned size>
 inline unsigned arraysize(T (&v)[size]) { return size; }
 
