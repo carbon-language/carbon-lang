@@ -1,6 +1,5 @@
 // REQUIRES: x86-registered-target
 // RUN: %clang_cc1 %s -triple=i686-apple-darwin -target-feature +ssse3 -O1 -S -o - | FileCheck %s
-// XFAIL: *
 
 #define _mm_alignr_epi8(a, b, n) (__builtin_ia32_palignr128((a), (b), (n)))
 typedef __attribute__((vector_size(16))) int int4;
