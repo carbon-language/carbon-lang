@@ -1,8 +1,6 @@
 // RUN: %clang_cc1 -emit-llvm %s -o - | grep llvm.global.annotations
 // RUN: %clang_cc1 -emit-llvm %s -o - | grep llvm.var.annotation | count 3
 
-#include <stdio.h>
-
 /* Global variable with attribute */
 int X __attribute__((annotate("GlobalValAnnotation")));
 
@@ -19,6 +17,5 @@ int foo(int y __attribute__((annotate("LocalValAnnotation")))) {
 int main() {
   static int a __attribute__((annotate("GlobalValAnnotation")));
   a = foo(2);
-  printf("hello world%d\n", a);
   return 0;
 }
