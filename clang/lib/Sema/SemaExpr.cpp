@@ -3783,6 +3783,35 @@ Sema::ActOnInitList(SourceLocation LBraceLoc, MultiExprArg InitArgList,
   return Owned(E);
 }
 
+/// Do an explicit extend of the given block pointer if we're in ARC.
+static void maybeExtendBlockObject(Sema &S, ExprResult &E) {
+  assert(E.get()->getType()->isBlockPointerType());
+  assert(E.get()->isRValue());
+
+  // Only do this in an r-value context.
+  if (!S.getLangOptions().ObjCAutoRefCount) return;
+
+  E = ImplicitCastExpr::Create(S.Context, E.get()->getType(),
+                               CK_ObjCExtendBlockObject, E.get(),
+                               /*base path*/ 0, VK_RValue);
+  S.ExprNeedsCleanups = true;
+}
+
+/// Prepare a conversion of the given expression to an ObjC object
+/// pointer type.
+CastKind Sema::PrepareCastToObjCObjectPointer(ExprResult &E) {
+  QualType type = E.get()->getType();
+  if (type->isObjCObjectPointerType()) {
+    return CK_BitCast;
+  } else if (type->isBlockPointerType()) {
+    maybeExtendBlockObject(*this, E);
+    return CK_BlockPointerToObjCPointerCast;
+  } else {
+    assert(type->isPointerType());
+    return CK_CPointerToObjCPointerCast;
+  }
+}
+
 /// Prepares for a scalar cast, performing all the necessary stages
 /// except the final cast and returning the kind required.
 static CastKind PrepareScalarCast(Sema &S, ExprResult &Src, QualType DestTy) {
@@ -3812,8 +3841,10 @@ static CastKind PrepareScalarCast(Sema &S, ExprResult &Src, QualType DestTy) {
         return CK_BitCast;
       else if (SrcKind == Type::STK_CPointer)
         return CK_CPointerToObjCPointerCast;
-      else
+      else {
+        maybeExtendBlockObject(S, Src);
         return CK_BlockPointerToObjCPointerCast;
+      }
     case Type::STK_Bool:
       return CK_PointerToBoolean;
     case Type::STK_Integral:
@@ -5458,6 +5489,7 @@ Sema::CheckAssignmentConstraints(QualType LHSType, ExprResult &RHS,
 
     // T^ -> A*
     if (RHSType->isBlockPointerType()) {
+      maybeExtendBlockObject(*this, RHS);
       Kind = CK_BlockPointerToObjCPointerCast;
       return Compatible;
     }

@@ -589,6 +589,7 @@ public:
     case CK_ObjCProduceObject:
     case CK_ObjCConsumeObject:
     case CK_ObjCReclaimReturnedObject:
+    case CK_ObjCExtendBlockObject:
       return 0;
 
     // These might need to be supported for constexpr.

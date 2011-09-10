@@ -382,6 +382,7 @@ void AggExprEmitter::VisitCastExpr(CastExpr *E) {
   case CK_ObjCProduceObject:
   case CK_ObjCConsumeObject:
   case CK_ObjCReclaimReturnedObject:
+  case CK_ObjCExtendBlockObject:
     llvm_unreachable("cast kind invalid for aggregate types");
   }
 }

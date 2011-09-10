@@ -2061,7 +2061,8 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
   case CK_AnyPointerToBlockPointerCast:
   case CK_ObjCProduceObject:
   case CK_ObjCConsumeObject:
-  case CK_ObjCReclaimReturnedObject: {
+  case CK_ObjCReclaimReturnedObject:
+  case CK_ObjCExtendBlockObject: {
     // These casts only produce lvalues when we're binding a reference to a 
     // temporary realized from a (converted) pure rvalue. Emit the expression
     // as a value, copy it into a temporary, and return an lvalue referring to

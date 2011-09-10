@@ -1633,13 +1633,7 @@ static TryCastResult TryReinterpretCast(Sema &Self, ExprResult &SrcExpr,
   if (IsLValueCast) {
     Kind = CK_LValueBitCast;
   } else if (DestType->isObjCObjectPointerType()) {
-    if (SrcType->isObjCObjectPointerType()) {
-      Kind = CK_BitCast;
-    } else if (SrcType->isBlockPointerType()) {
-      Kind = CK_BlockPointerToObjCPointerCast;
-    } else {
-      Kind = CK_CPointerToObjCPointerCast;
-    }
+    Kind = Self.PrepareCastToObjCObjectPointer(SrcExpr);
   } else if (DestType->isBlockPointerType()) {
     if (!SrcType->isBlockPointerType()) {
       Kind = CK_AnyPointerToBlockPointerCast;

@@ -1855,3 +1855,40 @@ void test62(void) {
 // CHECK: call i8* @objc_getProperty
 // CHECK: call void @objc_setProperty 
 
+// rdar://problem/10088932
+void test64_helper(id);
+void test64a(void) {
+  int x;
+  test64_helper(^{ (void) x; });
+
+  // CHECK:    define void @test64a()
+  // CHECK:      [[X:%.*]] = alloca i32, align 4
+  // CHECK-NEXT: [[BLOCK:%.*]] = alloca [[BLOCK_T:<{.*}>]], align 8
+  // CHECK:      [[T0:%.*]] = bitcast [[BLOCK_T]]* [[BLOCK]] to void ()*
+  // CHECK-NEXT: [[T1:%.*]] = bitcast void ()* [[T0]] to i8*
+  // CHECK-NEXT: [[T2:%.*]] = call i8* @objc_retainBlock(i8* [[T1]])
+  // CHECK-NEXT: [[T3:%.*]] = bitcast i8* [[T2]] to void ()*
+  // CHECK-NEXT: [[T4:%.*]] = bitcast void ()* [[T3]] to i8*
+  // CHECK-NEXT: call void @test64_helper(i8* [[T4]])
+  // CHECK-NEXT: [[T5:%.*]] = bitcast void ()* [[T3]] to i8*
+  // CHECK-NEXT: call void @objc_release(i8* [[T5]])
+  // CHECK-NEXT: ret void
+}
+void test64b(void) {
+  int x;
+  id b = ^{ (void) x; };
+
+  // CHECK:    define void @test64b()
+  // CHECK:      [[X:%.*]] = alloca i32, align 4
+  // CHECK-NEXT: [[B:%.*]] = alloca i8*, align 8
+  // CHECK-NEXT: [[BLOCK:%.*]] = alloca [[BLOCK_T:<{.*}>]], align 8
+  // CHECK:      [[T0:%.*]] = bitcast [[BLOCK_T]]* [[BLOCK]] to void ()*
+  // CHECK-NEXT: [[T1:%.*]] = bitcast void ()* [[T0]] to i8*
+  // CHECK-NEXT: [[T2:%.*]] = call i8* @objc_retainBlock(i8* [[T1]])
+  // CHECK-NEXT: [[T3:%.*]] = bitcast i8* [[T2]] to void ()*
+  // CHECK-NEXT: [[T4:%.*]] = bitcast void ()* [[T3]] to i8*
+  // CHECK-NEXT: store i8* [[T4]], i8** [[B]], align 8
+  // CHECK-NEXT: [[T5:%.*]] = load i8** [[B]]
+  // CHECK-NEXT: call void @objc_release(i8* [[T5]])
+  // CHECK-NEXT: ret void
+}

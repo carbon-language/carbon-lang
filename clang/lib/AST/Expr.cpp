@@ -1079,6 +1079,7 @@ void CastExpr::CheckCastConsistency() const {
   case CK_ObjCProduceObject:
   case CK_ObjCConsumeObject:
   case CK_ObjCReclaimReturnedObject:
+  case CK_ObjCExtendBlockObject:
     assert(!getType()->isBooleanType() && "unheralded conversion to bool");
     goto CheckNoBasePath;
 
@@ -1198,6 +1199,8 @@ const char *CastExpr::getCastKindName() const {
     return "ObjCProduceObject";
   case CK_ObjCReclaimReturnedObject:
     return "ObjCReclaimReturnedObject";
+  case CK_ObjCExtendBlockObject:
+    return "ObjCExtendBlockObject";
   }
 
   llvm_unreachable("Unhandled cast kind!");

@@ -254,20 +254,27 @@ enum CastKind {
   ///   _Complex unsigned -> _Complex float
   CK_IntegralComplexToFloatingComplex,
 
-  /// \brief Produces a retainable object pointer so that it may be
-  /// consumed, e.g. by being passed to a consuming parameter.  Calls
-  /// objc_retain.
+  /// \brief [ARC] Produces a retainable object pointer so that it may
+  /// be consumed, e.g. by being passed to a consuming parameter.
+  /// Calls objc_retain.
   CK_ObjCProduceObject,
 
-  /// \brief Consumes a retainable object pointer that has just been
-  /// produced, e.g. as the return value of a retaining call.  Enters
-  /// a cleanup to call objc_release at some indefinite time.
+  /// \brief [ARC] Consumes a retainable object pointer that has just
+  /// been produced, e.g. as the return value of a retaining call.
+  /// Enters a cleanup to call objc_release at some indefinite time.
   CK_ObjCConsumeObject,
 
-  /// \brief Reclaim a retainable object pointer object that may have
-  /// been produced and autoreleased as part of a function return
+  /// \brief [ARC] Reclaim a retainable object pointer object that may
+  /// have been produced and autoreleased as part of a function return
   /// sequence.
-  CK_ObjCReclaimReturnedObject
+  CK_ObjCReclaimReturnedObject,
+
+  /// \brief [ARC] Causes a value of block type to be copied to the
+  /// heap, if it is not already there.  A number of other operations
+  /// in ARC cause blocks to be copied; this is for cases where that
+  /// would not otherwise be guaranteed, such as when casting to a
+  /// non-block pointer type.
+  CK_ObjCExtendBlockObject
 };
 
 #define CK_Invalid ((CastKind) -1)

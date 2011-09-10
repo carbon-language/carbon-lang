@@ -1357,6 +1357,7 @@ public:
   bool FunctionArgTypesAreEqual(const FunctionProtoType *OldType, 
                                 const FunctionProtoType *NewType);
   
+  CastKind PrepareCastToObjCObjectPointer(ExprResult &E);
   bool CheckPointerConversion(Expr *From, QualType ToType,
                               CastKind &Kind,
                               CXXCastPath& BasePath,

@@ -2388,6 +2388,15 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
     CXXCastPath BasePath;
     if (CheckPointerConversion(From, ToType, Kind, BasePath, CStyle))
       return ExprError();
+
+    // Make sure we extend blocks if necessary.
+    // FIXME: doing this here is really ugly.
+    if (Kind == CK_BlockPointerToObjCPointerCast) {
+      ExprResult E = From;
+      (void) PrepareCastToObjCObjectPointer(E);
+      From = E.take();
+    }
+
     From = ImpCastExprToType(From, ToType, Kind, VK_RValue, &BasePath, CCK)
              .take();
     break;

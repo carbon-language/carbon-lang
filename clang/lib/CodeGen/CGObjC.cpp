@@ -1959,6 +1959,42 @@ static llvm::Value *emitARCRetainAfterCall(CodeGenFunction &CGF,
   }
 }
 
+/// Determine whether it might be important to emit a separate
+/// objc_retain_block on the result of the given expression, or
+/// whether it's okay to just emit it in a +1 context.
+static bool shouldEmitSeparateBlockRetain(const Expr *e) {
+  assert(e->getType()->isBlockPointerType());
+  e = e->IgnoreParens();
+
+  // For future goodness, emit block expressions directly in +1
+  // contexts if we can.
+  if (isa<BlockExpr>(e))
+    return false;
+
+  if (const CastExpr *cast = dyn_cast<CastExpr>(e)) {
+    switch (cast->getCastKind()) {
+    // Emitting these operations in +1 contexts is goodness.
+    case CK_LValueToRValue:
+    case CK_ObjCReclaimReturnedObject:
+    case CK_ObjCConsumeObject:
+    case CK_ObjCProduceObject:
+      return false;
+
+    // These operations preserve a block type.
+    case CK_NoOp:
+    case CK_BitCast:
+      return shouldEmitSeparateBlockRetain(cast->getSubExpr());
+
+    // These operations are known to be bad (or haven't been considered).
+    case CK_AnyPointerToBlockPointerCast:
+    default:
+      return true;
+    }
+  }
+
+  return true;
+}
+
 static TryEmitResult
 tryEmitARCRetainScalarExpr(CodeGenFunction &CGF, const Expr *e) {
   // Look through cleanups.
@@ -2011,6 +2047,40 @@ tryEmitARCRetainScalarExpr(CodeGenFunction &CGF, const Expr *e) {
       // the retain/release pair.
       case CK_ObjCConsumeObject: {
         llvm::Value *result = CGF.EmitScalarExpr(ce->getSubExpr());
+        if (resultType) result = CGF.Builder.CreateBitCast(result, resultType);
+        return TryEmitResult(result, true);
+      }
+
+      // Block extends are net +0.  Naively, we could just recurse on
+      // the subexpression, but actually we need to ensure that the
+      // value is copied as a block, so there's a little filter here.
+      case CK_ObjCExtendBlockObject: {
+        llvm::Value *result; // will be a +0 value
+
+        // If we can't safely assume the sub-expression will produce a
+        // block-copied value, emit the sub-expression at +0.
+        if (shouldEmitSeparateBlockRetain(ce->getSubExpr())) {
+          result = CGF.EmitScalarExpr(ce->getSubExpr());
+
+        // Otherwise, try to emit the sub-expression at +1 recursively.
+        } else {
+          TryEmitResult subresult
+            = tryEmitARCRetainScalarExpr(CGF, ce->getSubExpr());
+          result = subresult.getPointer();
+
+          // If that produced a retained value, just use that,
+          // possibly casting down.
+          if (subresult.getInt()) {
+            if (resultType)
+              result = CGF.Builder.CreateBitCast(result, resultType);
+            return TryEmitResult(result, true);
+          }
+
+          // Otherwise it's +0.
+        }
+
+        // Retain the object as a block, then cast down.
+        result = CGF.EmitARCRetainBlock(result);
         if (resultType) result = CGF.Builder.CreateBitCast(result, resultType);
         return TryEmitResult(result, true);
       }

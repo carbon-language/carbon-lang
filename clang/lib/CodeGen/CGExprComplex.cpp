@@ -414,6 +414,7 @@ ComplexPairTy ComplexExprEmitter::EmitCast(CastExpr::CastKind CK, Expr *Op,
   case CK_ObjCProduceObject:
   case CK_ObjCConsumeObject:
   case CK_ObjCReclaimReturnedObject:
+  case CK_ObjCExtendBlockObject:
     llvm_unreachable("invalid cast kind for complex value");
 
   case CK_FloatingRealToComplex:

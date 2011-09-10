@@ -1830,6 +1830,7 @@ bool IntExprEvaluator::VisitCastExpr(const CastExpr *E) {
   case CK_ObjCProduceObject:
   case CK_ObjCConsumeObject:
   case CK_ObjCReclaimReturnedObject:
+  case CK_ObjCExtendBlockObject:
     return false;
 
   case CK_LValueToRValue:
@@ -2338,6 +2339,7 @@ bool ComplexExprEvaluator::VisitCastExpr(const CastExpr *E) {
   case CK_ObjCProduceObject:
   case CK_ObjCConsumeObject:
   case CK_ObjCReclaimReturnedObject:
+  case CK_ObjCExtendBlockObject:
     llvm_unreachable("invalid cast kind for complex value");
 
   case CK_LValueToRValue:

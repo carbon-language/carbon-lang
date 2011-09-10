@@ -1027,7 +1027,7 @@ Value *ScalarExprEmitter::VisitCastExpr(CastExpr *CE) {
                           ConvertType(CGF.getContext().getPointerType(DestTy)));
     return EmitLoadOfLValue(CGF.MakeAddrLValue(V, DestTy));
   }
-      
+
   case CK_CPointerToObjCPointerCast:
   case CK_BlockPointerToObjCPointerCast:
   case CK_AnyPointerToBlockPointerCast:
@@ -1122,6 +1122,10 @@ Value *ScalarExprEmitter::VisitCastExpr(CastExpr *CE) {
   case CK_ObjCReclaimReturnedObject: {
     llvm::Value *value = Visit(E);
     value = CGF.EmitARCRetainAutoreleasedReturnValue(value);
+    return CGF.EmitObjCConsumeObject(E->getType(), value);
+  }
+  case CK_ObjCExtendBlockObject: {
+    llvm::Value *value = CGF.EmitARCRetainScalarExpr(E);
     return CGF.EmitObjCConsumeObject(E->getType(), value);
   }
 
