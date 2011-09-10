@@ -581,16 +581,209 @@ void CodeGenFunction::GenerateObjCAtomicSetterBody(ObjCMethodDecl *OMD,
            GetCopyStructFn, ReturnValueSlot(), Args);
 }
 
-static bool
-IvarAssignHasTrvialAssignment(const ObjCPropertyImplDecl *PID,
-                              QualType IvarT) {
-  bool HasTrvialAssignment = true;
-  if (PID->getSetterCXXAssignment()) {
-    const CXXRecordDecl *classDecl = IvarT->getAsCXXRecordDecl();
-    HasTrvialAssignment = 
-      (!classDecl || classDecl->hasTrivialCopyAssignment());
+static bool hasTrivialAssignment(const ObjCPropertyImplDecl *PID) {
+  Expr *assign = PID->getSetterCXXAssignment();
+  if (!assign) return true;
+
+  // An operator call is trivial if the function it calls is trivial.
+  if (CallExpr *call = dyn_cast<CallExpr>(assign)) {
+    if (const FunctionDecl *callee
+          = dyn_cast_or_null<FunctionDecl>(call->getCalleeDecl()))
+      if (callee->isTrivial())
+        return true;
+    return false;
   }
-  return HasTrvialAssignment;
+
+  assert(isa<BinaryOperator>(assign));
+  return true;
+}
+
+/// Should the setter use objc_setProperty?
+static bool shouldUseSetProperty(CodeGenFunction &CGF,
+                                 ObjCPropertyDecl::SetterKind setterKind) {
+  // Copy setters require objc_setProperty.
+  if (setterKind == ObjCPropertyDecl::Copy)
+    return true;
+
+  // So do retain setters, if we're not in GC-only mode (where
+  // 'retain' is ignored).
+  if (setterKind == ObjCPropertyDecl::Retain &&
+      CGF.getLangOptions().getGCMode() != LangOptions::GCOnly)
+    return true;
+
+  // Otherwise, we don't need this.
+  return false;
+}
+
+static bool isAssignmentImplicitlyAtomic(CodeGenFunction &CGF,
+                                         const ObjCIvarDecl *ivar) {
+  // Aggregate assignment is not implicitly atomic if it includes a GC
+  // barrier.
+  QualType ivarType = ivar->getType();
+  if (CGF.getLangOptions().getGCMode())
+    if (const RecordType *ivarRecordTy = ivarType->getAs<RecordType>())
+      if (ivarRecordTy->getDecl()->hasObjectMember())
+        return false;
+
+  // Assume that any store no larger than a pointer, and as aligned as
+  // the required size, can be performed atomically.
+  ASTContext &Context = CGF.getContext();
+  std::pair<CharUnits,CharUnits> ivarSizeAndAlignment
+    = Context.getTypeInfoInChars(ivar->getType());
+
+  return (ivarSizeAndAlignment.first
+            <= CharUnits::fromQuantity(CGF.PointerSizeInBytes) &&
+          ivarSizeAndAlignment.second >= ivarSizeAndAlignment.first);
+}
+
+void
+CodeGenFunction::generateObjCSetterBody(const ObjCImplementationDecl *classImpl,
+                                        const ObjCPropertyImplDecl *propImpl) {
+  // Just use the setter expression if Sema gave us one and it's
+  // non-trivial.  There's no way to do this atomically.
+  if (!hasTrivialAssignment(propImpl)) {
+    EmitStmt(propImpl->getSetterCXXAssignment());
+    return;
+  }
+
+  const ObjCPropertyDecl *prop = propImpl->getPropertyDecl();
+  ObjCIvarDecl *ivar = propImpl->getPropertyIvarDecl();  
+  ObjCMethodDecl *setterMethod = prop->getSetterMethodDecl();
+
+  // A property is copy if it says it's copy.
+  ObjCPropertyDecl::SetterKind setterKind = prop->getSetterKind();
+  bool isCopy = (setterKind == ObjCPropertyDecl::Copy);
+
+  // A property is atomic if it doesn't say it's nonatomic.
+  bool isAtomic =
+    !(prop->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_nonatomic);
+
+  // Should we call the runtime's set property function?
+  if (shouldUseSetProperty(*this, setterKind)) {
+    llvm::Value *setPropertyFn =
+      CGM.getObjCRuntime().GetPropertySetFunction();
+    if (!setPropertyFn) {
+      CGM.ErrorUnsupported(propImpl, "Obj-C setter requiring atomic copy");
+      return;
+    }
+
+    // Emit objc_setProperty((id) self, _cmd, offset, arg,
+    //                       <is-atomic>, <is-copy>).
+    llvm::Value *cmd =
+      Builder.CreateLoad(LocalDeclMap[setterMethod->getCmdDecl()]);
+    llvm::Value *self =
+      Builder.CreateBitCast(LoadObjCSelf(), VoidPtrTy);
+    llvm::Value *ivarOffset =
+      EmitIvarOffset(classImpl->getClassInterface(), ivar);
+    llvm::Value *arg = LocalDeclMap[*setterMethod->param_begin()];
+    arg = Builder.CreateBitCast(Builder.CreateLoad(arg, "arg"), VoidPtrTy);
+
+    CallArgList args;
+    args.add(RValue::get(self), getContext().getObjCIdType());
+    args.add(RValue::get(cmd), getContext().getObjCSelType());
+    args.add(RValue::get(ivarOffset), getContext().getPointerDiffType());
+    args.add(RValue::get(arg), getContext().getObjCIdType());
+    args.add(RValue::get(Builder.getInt1(isAtomic)), getContext().BoolTy);
+    args.add(RValue::get(Builder.getInt1(isCopy)), getContext().BoolTy);
+    // FIXME: We shouldn't need to get the function info here, the runtime
+    // already should have computed it to build the function.
+    EmitCall(getTypes().getFunctionInfo(getContext().VoidTy, args,
+                                        FunctionType::ExtInfo()),
+             setPropertyFn, ReturnValueSlot(), args);
+    return;
+  }
+
+  // If the property is atomic but has ARC or GC qualification, we
+  // must use the expression expansion.  This isn't actually right for
+  // ARC strong, but we shouldn't actually get here for ARC strong,
+  // which should always end up using setProperty.
+  if (isAtomic &&
+      (ivar->getType().hasNonTrivialObjCLifetime() ||
+       (getLangOptions().getGCMode() &&
+        getContext().getObjCGCAttrKind(ivar->getType())))) {
+    // fallthrough
+
+  // If the property is atomic and can be implicitly performed
+  // atomically with an assignment, do so.
+  } else if (isAtomic && isAssignmentImplicitlyAtomic(*this, ivar)) {
+    llvm::Value *argAddr = LocalDeclMap[*setterMethod->param_begin()];
+
+    LValue ivarLValue =
+      EmitLValueForIvar(TypeOfSelfObject(), LoadObjCSelf(), ivar, /*quals*/ 0);
+    llvm::Value *ivarAddr = ivarLValue.getAddress();
+
+    // If necessary, use a non-aggregate type.
+    llvm::Type *eltType =
+      cast<llvm::PointerType>(ivarAddr->getType())->getElementType();
+    if (eltType->isAggregateType()) {
+      eltType = llvm::Type::getIntNTy(getLLVMContext(),
+                                  getContext().getTypeSize(ivar->getType()));
+    }
+
+    // Cast both arguments to the chosen operation type.
+    argAddr = Builder.CreateBitCast(argAddr, eltType->getPointerTo());
+    ivarAddr = Builder.CreateBitCast(ivarAddr, eltType->getPointerTo());
+
+    // Emit a single store.
+    // TODO: this should be a 'store atomic unordered'.
+    Builder.CreateStore(Builder.CreateLoad(argAddr), ivarAddr);
+    return;
+
+  // Otherwise, if the property is atomic, try to use the runtime's
+  // atomic-store-struct routine.
+  } else if (isAtomic && CGM.getObjCRuntime().GetSetStructFunction()) {
+    GenerateObjCAtomicSetterBody(setterMethod, ivar);
+    return;
+  }
+
+  // Otherwise, fake up some ASTs and emit a normal assignment.
+  ValueDecl *selfDecl = setterMethod->getSelfDecl();
+  DeclRefExpr self(selfDecl, selfDecl->getType(), VK_LValue, SourceLocation());
+  ImplicitCastExpr selfLoad(ImplicitCastExpr::OnStack,
+                            selfDecl->getType(), CK_LValueToRValue, &self,
+                            VK_RValue);
+  ObjCIvarRefExpr ivarRef(ivar, ivar->getType().getNonReferenceType(),
+                          SourceLocation(), &selfLoad, true, true);
+
+  ParmVarDecl *argDecl = *setterMethod->param_begin();
+  QualType argType = argDecl->getType().getNonReferenceType();
+  DeclRefExpr arg(argDecl, argType, VK_LValue, SourceLocation());
+  ImplicitCastExpr argLoad(ImplicitCastExpr::OnStack,
+                           argType.getUnqualifiedType(), CK_LValueToRValue,
+                           &arg, VK_RValue);
+    
+  // The property type can differ from the ivar type in some situations with
+  // Objective-C pointer types, we can always bit cast the RHS in these cases.
+  // The following absurdity is just to ensure well-formed IR.
+  CastKind argCK = CK_NoOp;
+  if (ivarRef.getType()->isObjCObjectPointerType()) {
+    if (argLoad.getType()->isObjCObjectPointerType())
+      argCK = CK_BitCast;
+    else if (argLoad.getType()->isBlockPointerType())
+      argCK = CK_BlockPointerToObjCPointerCast;
+    else
+      argCK = CK_CPointerToObjCPointerCast;
+  } else if (ivarRef.getType()->isBlockPointerType()) {
+     if (argLoad.getType()->isBlockPointerType())
+      argCK = CK_BitCast;
+    else
+      argCK = CK_AnyPointerToBlockPointerCast;
+  } else if (ivarRef.getType()->isPointerType()) {
+    argCK = CK_BitCast;
+  }
+  ImplicitCastExpr argCast(ImplicitCastExpr::OnStack,
+                           ivarRef.getType(), argCK, &argLoad,
+                           VK_RValue);
+  Expr *finalArg = &argLoad;
+  if (!getContext().hasSameUnqualifiedType(ivarRef.getType(),
+                                           argLoad.getType()))
+    finalArg = &argCast;
+
+
+  BinaryOperator assign(&ivarRef, finalArg, BO_Assign,
+                        ivarRef.getType(), VK_RValue, OK_Ordinary,
+                        SourceLocation());
+  EmitStmt(&assign);
 }
 
 /// GenerateObjCSetter - Generate an Objective-C property setter
@@ -598,136 +791,12 @@ IvarAssignHasTrvialAssignment(const ObjCPropertyImplDecl *PID,
 /// is illegal within a category.
 void CodeGenFunction::GenerateObjCSetter(ObjCImplementationDecl *IMP,
                                          const ObjCPropertyImplDecl *PID) {
-  ObjCIvarDecl *Ivar = PID->getPropertyIvarDecl();
   const ObjCPropertyDecl *PD = PID->getPropertyDecl();
   ObjCMethodDecl *OMD = PD->getSetterMethodDecl();
   assert(OMD && "Invalid call to generate setter (empty method)");
   StartObjCMethod(OMD, IMP->getClassInterface(), PID->getLocStart());
-  const llvm::Triple &Triple = getContext().getTargetInfo().getTriple();
-  QualType IVART = Ivar->getType();
-  bool IsCopy = PD->getSetterKind() == ObjCPropertyDecl::Copy;
-  bool IsAtomic =
-    !(PD->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_nonatomic);
 
-  // Determine if we should use an objc_setProperty call for
-  // this. Properties with 'copy' semantics always use it, as do
-  // non-atomic properties with 'release' semantics as long as we are
-  // not in gc-only mode.
-  if (IsCopy ||
-      (CGM.getLangOptions().getGCMode() != LangOptions::GCOnly &&
-       PD->getSetterKind() == ObjCPropertyDecl::Retain)) {
-    llvm::Value *SetPropertyFn =
-      CGM.getObjCRuntime().GetPropertySetFunction();
-
-    if (!SetPropertyFn) {
-      CGM.ErrorUnsupported(PID, "Obj-C getter requiring atomic copy");
-      FinishFunction();
-      return;
-    }
-
-    // Emit objc_setProperty((id) self, _cmd, offset, arg,
-    //                       <is-atomic>, <is-copy>).
-    // FIXME: Can't this be simpler? This might even be worse than the
-    // corresponding gcc code.
-    CodeGenTypes &Types = CGM.getTypes();
-    ValueDecl *Cmd = OMD->getCmdDecl();
-    llvm::Value *CmdVal = Builder.CreateLoad(LocalDeclMap[Cmd], "cmd");
-    QualType IdTy = getContext().getObjCIdType();
-    llvm::Value *SelfAsId =
-      Builder.CreateBitCast(LoadObjCSelf(), Types.ConvertType(IdTy));
-    llvm::Value *Offset = EmitIvarOffset(IMP->getClassInterface(), Ivar);
-    llvm::Value *Arg = LocalDeclMap[*OMD->param_begin()];
-    llvm::Value *ArgAsId =
-      Builder.CreateBitCast(Builder.CreateLoad(Arg, "arg"),
-                            Types.ConvertType(IdTy));
-    llvm::Value *True =
-      llvm::ConstantInt::get(Types.ConvertType(getContext().BoolTy), 1);
-    llvm::Value *False =
-      llvm::ConstantInt::get(Types.ConvertType(getContext().BoolTy), 0);
-    CallArgList Args;
-    Args.add(RValue::get(SelfAsId), IdTy);
-    Args.add(RValue::get(CmdVal), Cmd->getType());
-    Args.add(RValue::get(Offset), getContext().getPointerDiffType());
-    Args.add(RValue::get(ArgAsId), IdTy);
-    Args.add(RValue::get(IsAtomic ? True : False),  getContext().BoolTy);
-    Args.add(RValue::get(IsCopy ? True : False), getContext().BoolTy);
-    // FIXME: We shouldn't need to get the function info here, the runtime
-    // already should have computed it to build the function.
-    EmitCall(Types.getFunctionInfo(getContext().VoidTy, Args,
-                                   FunctionType::ExtInfo()),
-             SetPropertyFn,
-             ReturnValueSlot(), Args);
-  } else if (IsAtomic && hasAggregateLLVMType(IVART) &&
-             !IVART->isAnyComplexType() &&
-             IvarAssignHasTrvialAssignment(PID, IVART) &&
-             ((Triple.getArch() == llvm::Triple::x86 &&
-              (getContext().getTypeSizeInChars(IVART)
-               > CharUnits::fromQuantity(4))) ||
-              (Triple.getArch() == llvm::Triple::x86_64 &&
-              (getContext().getTypeSizeInChars(IVART)
-               > CharUnits::fromQuantity(8))))
-             && CGM.getObjCRuntime().GetSetStructFunction()) {
-          // objc_copyStruct (&structIvar, &Arg, 
-          //                  sizeof (struct something), true, false);
-    GenerateObjCAtomicSetterBody(OMD, Ivar);
-  } else if (PID->getSetterCXXAssignment()) {
-    EmitIgnoredExpr(PID->getSetterCXXAssignment());
-  } else {
-    if (IsAtomic &&
-        IVART->isScalarType() &&
-        (Triple.getArch() == llvm::Triple::arm ||
-         Triple.getArch() == llvm::Triple::thumb) &&
-        (getContext().getTypeSizeInChars(IVART)
-          > CharUnits::fromQuantity(4)) &&
-        CGM.getObjCRuntime().GetGetStructFunction()) {
-      GenerateObjCAtomicSetterBody(OMD, Ivar);
-    }
-    else if (IsAtomic &&
-             (IVART->isScalarType() && !IVART->isRealFloatingType()) &&
-             Triple.getArch() == llvm::Triple::x86 &&
-             (getContext().getTypeSizeInChars(IVART)
-              > CharUnits::fromQuantity(4)) &&
-             CGM.getObjCRuntime().GetGetStructFunction()) {
-      GenerateObjCAtomicSetterBody(OMD, Ivar);
-    }
-    else if (IsAtomic &&
-             (IVART->isScalarType() && !IVART->isRealFloatingType()) &&
-             Triple.getArch() == llvm::Triple::x86_64 &&
-             (getContext().getTypeSizeInChars(IVART)
-              > CharUnits::fromQuantity(8)) &&
-             CGM.getObjCRuntime().GetGetStructFunction()) {
-      GenerateObjCAtomicSetterBody(OMD, Ivar);
-    }
-    else {
-      // FIXME: Find a clean way to avoid AST node creation.
-      SourceLocation Loc = PID->getLocStart();
-      ValueDecl *Self = OMD->getSelfDecl();
-      ObjCIvarDecl *Ivar = PID->getPropertyIvarDecl();
-      DeclRefExpr Base(Self, Self->getType(), VK_RValue, Loc);
-      ParmVarDecl *ArgDecl = *OMD->param_begin();
-      QualType T = ArgDecl->getType();
-      if (T->isReferenceType())
-        T = cast<ReferenceType>(T)->getPointeeType();
-      DeclRefExpr Arg(ArgDecl, T, VK_LValue, Loc);
-      ObjCIvarRefExpr IvarRef(Ivar, Ivar->getType(), Loc, &Base, true, true);
-    
-      // The property type can differ from the ivar type in some situations with
-      // Objective-C pointer types, we can always bit cast the RHS in these cases.
-      if (getContext().getCanonicalType(Ivar->getType()) !=
-          getContext().getCanonicalType(ArgDecl->getType())) {
-        ImplicitCastExpr ArgCasted(ImplicitCastExpr::OnStack,
-                                   Ivar->getType(), CK_BitCast, &Arg,
-                                   VK_RValue);
-        BinaryOperator Assign(&IvarRef, &ArgCasted, BO_Assign,
-                              Ivar->getType(), VK_RValue, OK_Ordinary, Loc);
-        EmitStmt(&Assign);
-      } else {
-        BinaryOperator Assign(&IvarRef, &Arg, BO_Assign,
-                              Ivar->getType(), VK_RValue, OK_Ordinary, Loc);
-        EmitStmt(&Assign);
-      }
-    }
-  }
+  generateObjCSetterBody(IMP, PID);
 
   FinishFunction();
 }

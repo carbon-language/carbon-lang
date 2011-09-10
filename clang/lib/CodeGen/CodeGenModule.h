@@ -129,8 +129,12 @@ namespace CodeGen {
     /// The width of a pointer into the generic address space.
     unsigned char PointerWidthInBits;
 
-    /// The alignment of a pointer into the generic address space.
-    unsigned char PointerAlignInBytes;
+    /// The size and alignment of a pointer into the generic address
+    /// space.
+    union {
+      unsigned char PointerAlignInBytes;
+      unsigned char PointerSizeInBytes;
+    };
   };
 
 struct RREntrypoints {
