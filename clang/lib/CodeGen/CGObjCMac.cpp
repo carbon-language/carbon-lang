@@ -3549,13 +3549,6 @@ llvm::Function *CGObjCCommonMac::GetMethodDefinition(const ObjCMethodDecl *MD) {
   if (I != MethodDefinitions.end())
     return I->second;
 
-  if (MD->hasBody() && MD->isFromASTFile()) {
-    // MD isn't emitted yet because it comes from PCH.
-    CGM.EmitTopLevelDecl(const_cast<ObjCMethodDecl*>(MD));
-    assert(MethodDefinitions[MD] && "EmitTopLevelDecl didn't emit the method!");
-    return MethodDefinitions[MD];
-  }
-
   return NULL;
 }
 

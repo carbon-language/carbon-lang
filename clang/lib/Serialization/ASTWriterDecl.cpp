@@ -1595,7 +1595,7 @@ void ASTWriter::WriteDeclsBlockAbbrevs() {
 /// decls.
 static bool isRequiredDecl(const Decl *D, ASTContext &Context) {
   // File scoped assembly or obj-c implementation must be seen.
-  if (isa<FileScopeAsmDecl>(D) || isa<ObjCImplementationDecl>(D))
+  if (isa<FileScopeAsmDecl>(D) || isa<ObjCImplDecl>(D))
     return true;
 
   return Context.DeclMustBeEmitted(D);

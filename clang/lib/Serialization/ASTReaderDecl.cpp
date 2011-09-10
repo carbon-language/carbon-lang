@@ -1393,14 +1393,19 @@ inline void ASTReader::LoadedDecl(unsigned Index, Decl *D) {
 /// code generation, e.g., inline function definitions, Objective-C
 /// declarations with metadata, etc.
 static bool isConsumerInterestedIn(Decl *D) {
-  if (isa<FileScopeAsmDecl>(D))
+  if (isa<FileScopeAsmDecl>(D) || 
+      isa<ObjCProtocolDecl>(D) || 
+      isa<ObjCImplDecl>(D))
     return true;
   if (VarDecl *Var = dyn_cast<VarDecl>(D))
     return Var->isFileVarDecl() &&
            Var->isThisDeclarationADefinition() == VarDecl::Definition;
   if (FunctionDecl *Func = dyn_cast<FunctionDecl>(D))
     return Func->doesThisDeclarationHaveABody();
-  return isa<ObjCProtocolDecl>(D) || isa<ObjCImplementationDecl>(D);
+  if (ObjCMethodDecl *Method = dyn_cast<ObjCMethodDecl>(D))
+    return Method->hasBody();
+  
+  return false;
 }
 
 /// \brief Get the correct cursor and offset for loading a declaration.
@@ -1732,9 +1737,15 @@ Decl *ASTReader::ReadDeclRecord(DeclID ID) {
   // AST consumer might need to know about, queue it.
   // We don't pass it to the consumer immediately because we may be in recursive
   // loading, and some declarations may still be initializing.
-  if (isConsumerInterestedIn(D))
-    InterestingDecls.push_back(D);
-
+  if (isConsumerInterestedIn(D)) {
+    if (Consumer) {
+      DeclGroupRef DG(D);
+      Consumer->HandleInterestingDecl(DG);
+    } else {
+      InterestingDecls.push_back(D);
+    }
+  }
+  
   return D;
 }
 
