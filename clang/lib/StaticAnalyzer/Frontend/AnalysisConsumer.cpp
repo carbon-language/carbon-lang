@@ -222,7 +222,7 @@ void AnalysisConsumer::HandleDeclContextDecl(ASTContext &C, Decl *D) {
           if (!Opts.AnalyzeSpecificFunction.empty() &&
               Opts.AnalyzeSpecificFunction != 
                 (*MI)->getSelector().getAsString())
-            break;
+            continue;
           DisplayFunction(*MI);
           HandleCode(*MI);
         }
