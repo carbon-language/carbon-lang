@@ -1,6 +1,5 @@
 ; RUN: llc < %s -march=x86 -mcpu=core2 -mattr=+ssse3 | FileCheck %s
 ; RUN: llc < %s -march=x86 -mcpu=yonah | FileCheck --check-prefix=YONAH %s
-; XFAIL: *
 
 define <4 x i32> @test1(<4 x i32> %A, <4 x i32> %B) nounwind {
 ; CHECK: test1:
