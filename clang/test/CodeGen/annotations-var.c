@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm -o %t1 %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -emit-llvm -o %t1 %s
 // RUN: FileCheck --check-prefix=LOCAL %s < %t1
 // RUN: FileCheck --check-prefix=UNDEF %s < %t1
 // RUN: FileCheck --check-prefix=PARAM %s < %t1
@@ -28,16 +28,20 @@ int foo(int v __attribute__((annotate("param_ann_0"))) __attribute__((annotate("
 // PARAM-NEXT: call void @llvm.var.annotation(
 }
 
-int main(int argc, char **argv) {
+void local(void) {
     int localvar __attribute__((annotate("localvar_ann_0"))) __attribute__((annotate("localvar_ann_1"))) = 3;
-// LOCAL: %localvar1 = bitcast i32* %localvar to i8*
-// LOCAL-NEXT: call void @llvm.var.annotation(i8* %localvar1, i8* getelementptr inbounds ([15 x i8]* @{{.*}}), i8* getelementptr inbounds ({{.*}}), i32 32)
-// LOCAL-NEXT: %localvar2 = bitcast i32* %localvar to i8*
-// LOCAL-NEXT: call void @llvm.var.annotation(i8* %localvar2, i8* getelementptr inbounds ([15 x i8]* @{{.*}}), i8* getelementptr inbounds ({{.*}}), i32 32)
+// LOCAL: define void @local()
+// LOCAL:      [[LOCALVAR:%.*]] = alloca i32,
+// LOCAL-NEXT: [[T0:%.*]] = bitcast i32* [[LOCALVAR]] to i8*
+// LOCAL-NEXT: call void @llvm.var.annotation(i8* [[T0]], i8* getelementptr inbounds ([15 x i8]* @{{.*}}), i8* getelementptr inbounds ({{.*}}), i32 32)
+// LOCAL-NEXT: [[T0:%.*]] = bitcast i32* [[LOCALVAR]] to i8*
+// LOCAL-NEXT: call void @llvm.var.annotation(i8* [[T0]], i8* getelementptr inbounds ([15 x i8]* @{{.*}}), i8* getelementptr inbounds ({{.*}}), i32 32)
+}
+
+void undef(void) {
     int undefvar __attribute__((annotate("undefvar_ann_0")));
-// UNDEF: %undefvar3 = bitcast i32* %undefvar to i8*
-// UNDEF-NEXT: call void @llvm.var.annotation(i8* %undefvar3, i8* getelementptr inbounds ([15 x i8]* @{{.*}}), i8* getelementptr inbounds ({{.*}}), i32 37)
-    localvar += argc;
-    undefvar = localvar;
-    return undefvar + localvar;
+// UNDEF: define void @undef()
+// UNDEF:      [[UNDEFVAR:%.*]] = alloca i32,
+// UNDEF-NEXT: [[T0:%.*]] = bitcast i32* [[UNDEFVAR]] to i8*
+// UNDEF-NEXT: call void @llvm.var.annotation(i8* [[T0]], i8* getelementptr inbounds ([15 x i8]* @{{.*}}), i8* getelementptr inbounds ({{.*}}), i32 42)
 }
