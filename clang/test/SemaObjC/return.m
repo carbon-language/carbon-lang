@@ -39,3 +39,12 @@ NSString *rdar_4289832() {  // no-warning
     }
 }
 
+void exit(int) __attribute__((noreturn));
+@interface rdar10098695
+@end
+
+@implementation rdar10098695
+- (void)method { // expected-warning{{method 'method' could be declared with attribute 'noreturn'}}
+  exit(1);
+}
+@end

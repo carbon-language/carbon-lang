@@ -382,7 +382,10 @@ static void CheckFallThroughForBody(Sema &S, const Decl *D, const Stmt *Body,
         if (ReturnsVoid && !HasNoReturn && CD.diag_NeverFallThroughOrReturn) {
           if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
             S.Diag(Compound->getLBracLoc(), CD.diag_NeverFallThroughOrReturn)
-              << FD;
+              << 0 << FD;
+          } else if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D)) {
+            S.Diag(Compound->getLBracLoc(), CD.diag_NeverFallThroughOrReturn)
+              << 1 << MD;
           } else {
             S.Diag(Compound->getLBracLoc(), CD.diag_NeverFallThroughOrReturn);
           }
