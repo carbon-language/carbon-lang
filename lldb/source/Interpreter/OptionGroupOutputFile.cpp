@@ -13,6 +13,7 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
+#include "lldb/Utility/Utils.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -30,16 +31,14 @@ OptionGroupOutputFile::~OptionGroupOutputFile ()
 static OptionDefinition
 g_option_table[] =
 {
-{ LLDB_OPT_SET_1 , false, "outfile", 'o', required_argument, NULL, 0, eArgTypePath , "Specify a path for capturing command output."},
-{ LLDB_OPT_SET_1 , false, "append-outfile" , 'A', no_argument, NULL, 0, eArgTypeNone , "Append to the the file specified with '--outfile <path>'."},
+    { LLDB_OPT_SET_1 , false, "outfile", 'o', required_argument, NULL, 0, eArgTypePath , "Specify a path for capturing command output."},
+    { LLDB_OPT_SET_1 , false, "append-outfile" , 'A', no_argument, NULL, 0, eArgTypeNone , "Append to the the file specified with '--outfile <path>'."},
 };
-
-const uint32_t k_num_file_options = sizeof(g_option_table)/sizeof(OptionDefinition);
 
 uint32_t
 OptionGroupOutputFile::GetNumDefinitions ()
 {
-    return k_num_file_options;
+    return arraysize(g_option_table);
 }
 
 const OptionDefinition *

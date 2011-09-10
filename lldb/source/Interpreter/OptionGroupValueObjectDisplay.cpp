@@ -15,6 +15,7 @@
 // Project includes
 #include "lldb/Target/Target.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
+#include "lldb/Utility/Utils.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -45,12 +46,10 @@ g_option_table[] =
     { 0, false, NULL, 0, 0, NULL, NULL, eArgTypeNone, NULL }
 };
 
-const uint32_t k_num_file_options = sizeof(g_option_table)/sizeof(OptionDefinition);
-
 uint32_t
 OptionGroupValueObjectDisplay::GetNumDefinitions ()
 {
-    return k_num_file_options;
+    return arraysize(g_option_table);
 }
 
 const OptionDefinition *

@@ -1298,6 +1298,7 @@
 		B23DD24F12EDFAC1000C3894 /* ARMUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ARMUtils.h; path = Utility/ARMUtils.h; sourceTree = "<group>"; };
 		B2462246141AD37D00F3D409 /* OptionGroupWatchpoint.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OptionGroupWatchpoint.cpp; path = source/Interpreter/OptionGroupWatchpoint.cpp; sourceTree = "<group>"; };
 		B2462248141AD39B00F3D409 /* OptionGroupWatchpoint.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = OptionGroupWatchpoint.h; path = include/lldb/Interpreter/OptionGroupWatchpoint.h; sourceTree = "<group>"; };
+		B2462249141AE62200F3D409 /* Utils.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Utils.h; path = include/lldb/Utility/Utils.h; sourceTree = "<group>"; };
 		B27318411416AC12006039C8 /* WatchpointLocationList.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = WatchpointLocationList.cpp; path = source/Breakpoint/WatchpointLocationList.cpp; sourceTree = "<group>"; };
 		B27318431416AC43006039C8 /* WatchpointLocationList.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = WatchpointLocationList.h; path = include/lldb/Breakpoint/WatchpointLocationList.h; sourceTree = "<group>"; };
 		B28058A0139988B0002D96D0 /* InferiorCallPOSIX.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = InferiorCallPOSIX.cpp; path = Utility/InferiorCallPOSIX.cpp; sourceTree = "<group>"; };
@@ -1841,6 +1842,7 @@
 				2682F16A115EDA0D00CCFF99 /* PseudoTerminal.cpp */,
 				94031A9F13CF5B3D00DCFF3C /* PriorityPointerPair.h */,
 				94EBAC8313D9EE26009BA64E /* PythonPointer.h */,
+				B2462249141AE62200F3D409 /* Utils.h */,
 			);
 			name = Utility;
 			sourceTree = "<group>";

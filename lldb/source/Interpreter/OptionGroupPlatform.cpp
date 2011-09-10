@@ -15,6 +15,7 @@
 // Project includes
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Target/Platform.h"
+#include "lldb/Utility/Utils.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -67,8 +68,6 @@ g_option_table[] =
     { LLDB_OPT_SET_ALL, false, "sysroot" , 's', required_argument, NULL, 0, eArgTypeFilename, "Specify the SDK root directory that contains a root of all remote system files." }
 };
 
-static const uint32_t k_option_table_size = sizeof(g_option_table)/sizeof (OptionDefinition);
-
 const OptionDefinition*
 OptionGroupPlatform::GetDefinitions ()
 {
@@ -81,8 +80,8 @@ uint32_t
 OptionGroupPlatform::GetNumDefinitions ()
 {
     if (m_include_platform_option)
-        return k_option_table_size;
-    return k_option_table_size - 1;
+        return arraysize(g_option_table);
+    return arraysize(g_option_table) - 1;
 }
 
 

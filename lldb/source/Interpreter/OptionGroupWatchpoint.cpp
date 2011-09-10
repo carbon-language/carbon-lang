@@ -15,6 +15,7 @@
 // Project includes
 #include "lldb/lldb-enumerations.h"
 #include "lldb/Interpreter/Args.h"
+#include "lldb/Utility/Utils.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -84,7 +85,5 @@ OptionGroupWatchpoint::GetDefinitions ()
 uint32_t
 OptionGroupWatchpoint::GetNumDefinitions ()
 {
-    return 1;
+    return arraysize(g_option_table);
 }
-
-

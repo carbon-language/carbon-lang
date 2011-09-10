@@ -13,6 +13,7 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
+#include "lldb/Utility/Utils.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -29,15 +30,13 @@ OptionGroupArchitecture::~OptionGroupArchitecture ()
 static OptionDefinition
 g_option_table[] =
 {
-{ LLDB_OPT_SET_1 , false, "arch"    , 'a', required_argument, NULL, 0, eArgTypeArchitecture , "Specify the architecture for the target."},
+    { LLDB_OPT_SET_1 , false, "arch"    , 'a', required_argument, NULL, 0, eArgTypeArchitecture , "Specify the architecture for the target."},
 };
-
-const uint32_t k_num_file_options = sizeof(g_option_table)/sizeof(OptionDefinition);
 
 uint32_t
 OptionGroupArchitecture::GetNumDefinitions ()
 {
-    return k_num_file_options;
+    return arraysize(g_option_table);
 }
 
 const OptionDefinition *
