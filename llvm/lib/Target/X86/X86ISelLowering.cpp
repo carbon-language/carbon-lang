@@ -4616,7 +4616,7 @@ static SDValue getShuffleScalarElt(SDNode *N, int Index, SelectionDAG &DAG,
                            ShuffleMask);
       break;
     default:
-      assert("not implemented for target shuffle node");
+      assert(0 && "not implemented for target shuffle node");
       return SDValue();
     }
 
