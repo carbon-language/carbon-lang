@@ -72,7 +72,7 @@ void
 OptionGroupWatchpoint::OptionParsingStarting (CommandInterpreter &interpreter)
 {
     watch_variable = false;
-    watch_mode     = eWatchRead;
+    watch_mode     = eWatchInvalid;
 }
 
 

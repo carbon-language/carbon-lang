@@ -46,6 +46,7 @@ namespace lldb_private {
         OptionParsingStarting (CommandInterpreter &interpreter);
         
         typedef enum WatchMode {
+            eWatchInvalid,
             eWatchRead,
             eWatchWrite,
             eWatchReadWrite
