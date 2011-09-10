@@ -858,6 +858,8 @@ protected:
 
   const SCEVAddRecExpr *GetWideRecurrence(Instruction *NarrowUse);
 
+  const SCEVAddRecExpr* GetExtendedOperandRecurrence(NarrowIVDefUse DU);
+
   Instruction *WidenIVUse(NarrowIVDefUse DU);
 
   void pushNarrowIVUsers(Instruction *NarrowDef, Instruction *WideDef);
@@ -951,6 +953,41 @@ static bool HoistStep(Instruction *IncV, Instruction *InsertPos,
   return true;
 }
 
+/// No-wrap operations can transfer sign extension of their result to their
+/// operands. Generate the SCEV value for the widened operation without
+/// actually modifying the IR yet. If the expression after extending the
+/// operands is an AddRec for this loop, return it.
+const SCEVAddRecExpr* WidenIV::GetExtendedOperandRecurrence(NarrowIVDefUse DU) {
+  // Handle the common case of add<nsw/nuw>
+  if (DU.NarrowUse->getOpcode() != Instruction::Add)
+    return 0;
+
+  // One operand (NarrowDef) has already been extended to WideDef. Now determine
+  // if extending the other will lead to a recurrence.
+  unsigned ExtendOperIdx = DU.NarrowUse->getOperand(0) == DU.NarrowDef ? 1 : 0;
+  assert(DU.NarrowUse->getOperand(1-ExtendOperIdx) == DU.NarrowDef && "bad DU");
+
+  const SCEV *ExtendOperExpr = 0;
+  const OverflowingBinaryOperator *OBO =
+    cast<OverflowingBinaryOperator>(DU.NarrowUse);
+  if (IsSigned && OBO->hasNoSignedWrap())
+    ExtendOperExpr = SE->getSignExtendExpr(
+      SE->getSCEV(DU.NarrowUse->getOperand(ExtendOperIdx)), WideType);
+  else if(!IsSigned && OBO->hasNoUnsignedWrap())
+    ExtendOperExpr = SE->getZeroExtendExpr(
+      SE->getSCEV(DU.NarrowUse->getOperand(ExtendOperIdx)), WideType);
+  else
+    return 0;
+
+  const SCEVAddRecExpr *AddRec = dyn_cast<SCEVAddRecExpr>(
+    SE->getAddExpr(SE->getSCEV(DU.WideDef), ExtendOperExpr,
+                   IsSigned ? SCEV::FlagNSW : SCEV::FlagNUW));
+
+  if (!AddRec || AddRec->getLoop() != L)
+    return 0;
+  return AddRec;
+}
+
 /// GetWideRecurrence - Is this instruction potentially interesting from
 /// IVUsers' perspective after widening it's type? In other words, can the
 /// extend be safely hoisted out of the loop with SCEV reducing the value to a
@@ -974,7 +1011,6 @@ const SCEVAddRecExpr *WidenIV::GetWideRecurrence(Instruction *NarrowUse) {
   const SCEVAddRecExpr *AddRec = dyn_cast<SCEVAddRecExpr>(WideExpr);
   if (!AddRec || AddRec->getLoop() != L)
     return 0;
-
   return AddRec;
 }
 
@@ -1027,6 +1063,9 @@ Instruction *WidenIV::WidenIVUse(NarrowIVDefUse DU) {
 
   // Does this user itself evaluate to a recurrence after widening?
   const SCEVAddRecExpr *WideAddRec = GetWideRecurrence(DU.NarrowUse);
+  if (!WideAddRec) {
+      WideAddRec = GetExtendedOperandRecurrence(DU);
+  }
   if (!WideAddRec) {
     // This user does not evaluate to a recurence after widening, so don't
     // follow it. Instead insert a Trunc to kill off the original use,
