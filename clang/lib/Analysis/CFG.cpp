@@ -723,9 +723,7 @@ void CFGBuilder::addLocalScopeForStmt(Stmt *S) {
   if (CompoundStmt *CS = dyn_cast<CompoundStmt>(S)) {
     for (CompoundStmt::body_iterator BI = CS->body_begin(), BE = CS->body_end()
         ; BI != BE; ++BI) {
-      Stmt *SI = *BI;
-      if (LabelStmt *LS = dyn_cast<LabelStmt>(SI))
-        SI = LS->getSubStmt();
+      Stmt *SI = (*BI)->stripLabelLikeStatements();
       if (DeclStmt *DS = dyn_cast<DeclStmt>(SI))
         Scope = addLocalScopeForDeclStmt(DS, Scope);
     }
@@ -734,9 +732,7 @@ void CFGBuilder::addLocalScopeForStmt(Stmt *S) {
 
   // For any other statement scope will be implicit and as such will be
   // interesting only for DeclStmt.
-  if (LabelStmt *LS = dyn_cast<LabelStmt>(S))
-    S = LS->getSubStmt();
-  if (DeclStmt *DS = dyn_cast<DeclStmt>(S))
+  if (DeclStmt *DS = dyn_cast<DeclStmt>(S->stripLabelLikeStatements()))
     addLocalScopeForDeclStmt(DS);
 }
 

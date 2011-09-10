@@ -296,6 +296,12 @@ public:
   /// statement, such as ExprWithCleanups or ImplicitCastExpr nodes.
   Stmt *IgnoreImplicit();
 
+  const Stmt *stripLabelLikeStatements() const;
+  Stmt *stripLabelLikeStatements() {
+    return const_cast<Stmt*>(
+      const_cast<const Stmt*>(this)->stripLabelLikeStatements());
+  }
+
   // Implement isa<T> support.
   static bool classof(const Stmt *) { return true; }
 

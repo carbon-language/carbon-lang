@@ -8,23 +8,37 @@ struct pr6884_abort_struct {
   ~pr6884_abort_struct() __attribute__((noreturn)) { pr6884_abort(); }
 };
 
-int pr6884_f(int x) {
-  switch (x) { default: pr6884_abort(); }
-}
+// Ensure that destructors from objects are properly modeled in the CFG despite
+// the presence of switches, case statements, labels, and blocks. These tests
+// try to cover bugs reported in both PR6884 and PR10063.
+namespace abort_struct_complex_cfgs {
+  int basic(int x) {
+    switch (x) { default: pr6884_abort(); }
+  }
+  int f1(int x) {
+    switch (x) default: pr6884_abort_struct();
+  }
+  int f2(int x) {
+    switch (x) { default: pr6884_abort_struct(); }
+  }
+  int f2_positive(int x) {
+    switch (x) { default: ; }
+  } // expected-warning {{control reaches end of non-void function}}
+  int f3(int x) {
+    switch (x) { default: { pr6884_abort_struct(); } }
+  }
+  int f4(int x) {
+    switch (x) default: L1: L2: case 4: pr6884_abort_struct();
+  }
+  int f5(int x) {
+    switch (x) default: L1: { L2: case 4: pr6884_abort_struct(); }
+  }
+  int f6(int x) {
+    switch (x) default: L1: L2: case 4: { pr6884_abort_struct(); }
+  }
 
-int pr6884_g(int x) {
-  switch (x) { default: pr6884_abort_struct(); }
-}
-
-int pr6884_g_positive(int x) {
-  switch (x) { default: ; }
-} // expected-warning {{control reaches end of non-void function}}
-
-int pr6884_h(int x) {
-  switch (x) {
-    default: {
-      pr6884_abort_struct a;
-    }
+  int h(int x) {
+    switch (x) { default: { pr6884_abort_struct a; } }
   }
 }
 
