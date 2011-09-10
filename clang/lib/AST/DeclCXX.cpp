@@ -1693,7 +1693,7 @@ static const char *getAccessName(AccessSpecifier AS) {
   switch (AS) {
     default:
     case AS_none:
-      assert("Invalid access specifier!");
+      assert(0 && "Invalid access specifier!");
       return 0;
     case AS_public:
       return "public";
