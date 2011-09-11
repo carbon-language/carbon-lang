@@ -356,6 +356,18 @@ def VMOVSSrr : sse12_move_rr<FR32, v4f32,
 def VMOVSDrr : sse12_move_rr<FR64, v2f64,
                 "movsd\t{$src2, $src1, $dst|$dst, $src1, $src2}">, XD, VEX_4V;
 
+// For the disassembler
+let isCodeGenOnly = 1 in {
+  def VMOVSSrr_REV : SI<0x11, MRMDestReg, (outs VR128:$dst),
+                        (ins VR128:$src1, FR32:$src2),
+                        "movss\t{$src2, $src1, $dst|$dst, $src1, $src2}", []>,
+                        XS, VEX_4V;
+  def VMOVSDrr_REV : SI<0x11, MRMDestReg, (outs VR128:$dst),
+                        (ins VR128:$src1, FR64:$src2),
+                        "movsd\t{$src2, $src1, $dst|$dst, $src1, $src2}", []>,
+                        XD, VEX_4V;
+}
+
 let canFoldAsLoad = 1, isReMaterializable = 1 in {
   def VMOVSSrm : sse12_move_rm<FR32, f32mem, loadf32, "movss">, XS, VEX;
   let AddedComplexity = 20 in
@@ -375,6 +387,16 @@ let Constraints = "$src1 = $dst" in {
                           "movss\t{$src2, $dst|$dst, $src2}">, XS;
   def MOVSDrr : sse12_move_rr<FR64, v2f64,
                           "movsd\t{$src2, $dst|$dst, $src2}">, XD;
+
+  // For the disassembler
+  let isCodeGenOnly = 1 in {
+    def MOVSSrr_REV : SI<0x11, MRMDestReg, (outs VR128:$dst),
+                         (ins VR128:$src1, FR32:$src2),
+                         "movss\t{$src2, $dst|$dst, $src2}", []>, XS;
+    def MOVSDrr_REV : SI<0x11, MRMDestReg, (outs VR128:$dst),
+                         (ins VR128:$src1, FR64:$src2),
+                         "movsd\t{$src2, $dst|$dst, $src2}", []>, XD;
+  }
 }
 
 let canFoldAsLoad = 1, isReMaterializable = 1 in {
@@ -706,6 +728,34 @@ def VMOVUPDYmr : VPDI<0x11, MRMDestMem, (outs), (ins f256mem:$dst, VR256:$src),
                    "movupd\t{$src, $dst|$dst, $src}",
                    [(store (v4f64 VR256:$src), addr:$dst)]>, VEX;
 
+// For disassembler
+let isCodeGenOnly = 1 in {
+  def VMOVAPSrr_REV : VPSI<0x29, MRMDestReg, (outs VR128:$dst),
+                          (ins VR128:$src),
+                          "movaps\t{$src, $dst|$dst, $src}", []>, VEX;
+  def VMOVAPDrr_REV : VPDI<0x29, MRMDestReg, (outs VR128:$dst),
+                           (ins VR128:$src),
+                           "movapd\t{$src, $dst|$dst, $src}", []>, VEX;
+  def VMOVUPSrr_REV : VPSI<0x11, MRMDestReg, (outs VR128:$dst),
+                           (ins VR128:$src),
+                           "movups\t{$src, $dst|$dst, $src}", []>, VEX;
+  def VMOVUPDrr_REV : VPDI<0x11, MRMDestReg, (outs VR128:$dst),
+                           (ins VR128:$src),
+                           "movupd\t{$src, $dst|$dst, $src}", []>, VEX;
+  def VMOVAPSYrr_REV : VPSI<0x29, MRMDestReg, (outs VR256:$dst),
+                            (ins VR256:$src),
+                            "movaps\t{$src, $dst|$dst, $src}", []>, VEX;
+  def VMOVAPDYrr_REV : VPDI<0x29, MRMDestReg, (outs VR256:$dst),
+                            (ins VR256:$src),
+                            "movapd\t{$src, $dst|$dst, $src}", []>, VEX;
+  def VMOVUPSYrr_REV : VPSI<0x11, MRMDestReg, (outs VR256:$dst),
+                            (ins VR256:$src),
+                            "movups\t{$src, $dst|$dst, $src}", []>, VEX;
+  def VMOVUPDYrr_REV : VPDI<0x11, MRMDestReg, (outs VR256:$dst),
+                            (ins VR256:$src),
+                            "movupd\t{$src, $dst|$dst, $src}", []>, VEX;
+}
+
 def : Pat<(int_x86_avx_loadu_ps_256 addr:$src), (VMOVUPSYrm addr:$src)>;
 def : Pat<(int_x86_avx_storeu_ps_256 addr:$dst, VR256:$src),
           (VMOVUPSYmr addr:$dst, VR256:$src)>;
@@ -726,6 +776,18 @@ def MOVUPSmr : PSI<0x11, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
 def MOVUPDmr : PDI<0x11, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
                    "movupd\t{$src, $dst|$dst, $src}",
                    [(store (v2f64 VR128:$src), addr:$dst)]>;
+
+// For disassembler
+let isCodeGenOnly = 1 in {
+  def MOVAPSrr_REV : PSI<0x29, MRMDestReg, (outs VR128:$dst), (ins VR128:$src),
+                         "movaps\t{$src, $dst|$dst, $src}", []>;
+  def MOVAPDrr_REV : PDI<0x29, MRMDestReg, (outs VR128:$dst), (ins VR128:$src),
+                         "movapd\t{$src, $dst|$dst, $src}", []>;
+  def MOVUPSrr_REV : PSI<0x11, MRMDestReg, (outs VR128:$dst), (ins VR128:$src),
+                         "movups\t{$src, $dst|$dst, $src}", []>;
+  def MOVUPDrr_REV : PDI<0x11, MRMDestReg, (outs VR128:$dst), (ins VR128:$src),
+                         "movupd\t{$src, $dst|$dst, $src}", []>;
+}
 
 let Predicates = [HasAVX] in {
   def : Pat<(int_x86_sse_storeu_ps addr:$dst, VR128:$src),
