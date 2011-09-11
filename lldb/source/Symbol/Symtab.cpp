@@ -462,20 +462,11 @@ Symtab::AppendSymbolIndexesWithName (const ConstString& symbol_name, std::vector
     Timer scoped_timer (__PRETTY_FUNCTION__, "%s", __PRETTY_FUNCTION__);
     if (symbol_name)
     {
-        const size_t old_size = indexes.size();
+        const char *symbol_cstr = symbol_name.GetCString();
         if (!m_name_indexes_computed)
             InitNameIndexes();
 
-        const char *symbol_cstr = symbol_name.GetCString();
-        const UniqueCStringMap<uint32_t>::Entry *entry_ptr;
-
-        for (entry_ptr = m_name_to_index.FindFirstValueForName (symbol_cstr);
-             entry_ptr!= NULL;
-             entry_ptr = m_name_to_index.FindNextValueForName (symbol_cstr, entry_ptr))
-        {
-            indexes.push_back (entry_ptr->value);
-        }
-        return indexes.size() - old_size;
+        return m_name_to_index.GetValues (symbol_cstr, indexes);
     }
     return 0;
 }
@@ -493,13 +484,13 @@ Symtab::AppendSymbolIndexesWithName (const ConstString& symbol_name, Debug symbo
             InitNameIndexes();
 
         const char *symbol_cstr = symbol_name.GetCString();
-        const UniqueCStringMap<uint32_t>::Entry *entry_ptr;
-        for (entry_ptr = m_name_to_index.FindFirstValueForName (symbol_cstr);
-             entry_ptr!= NULL;
-             entry_ptr = m_name_to_index.FindNextValueForName (symbol_cstr, entry_ptr))
+        
+        std::vector<uint32_t> all_name_indexes;
+        const size_t name_match_count = m_name_to_index.GetValues (symbol_cstr, all_name_indexes);
+        for (size_t i=0; i<name_match_count; ++i)
         {
-            if (CheckSymbolAtIndex(entry_ptr->value, symbol_debug_type, symbol_visibility))
-                indexes.push_back (entry_ptr->value);
+            if (CheckSymbolAtIndex(all_name_indexes[i], symbol_debug_type, symbol_visibility))
+                indexes.push_back (all_name_indexes[i]);
         }
         return indexes.size() - old_size;
     }

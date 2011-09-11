@@ -37,7 +37,11 @@ public:
     ///
     /// Initializes the string to an empty string.
     //------------------------------------------------------------------
-    ConstString ();
+    ConstString ():
+        m_string (NULL)
+    {
+    }
+
 
     //------------------------------------------------------------------
     /// Copy constructor
@@ -48,7 +52,10 @@ public:
     /// @param[in] rhs
     ///     Another string object to copy.
     //------------------------------------------------------------------
-    ConstString (const ConstString& rhs);
+    ConstString (const ConstString& rhs) :
+        m_string (rhs.m_string)
+    {
+    }
 
     //------------------------------------------------------------------
     /// Construct with C String value
@@ -99,7 +106,10 @@ public:
     /// greater than zero, the string will remain in the string pool
     /// until the last reference is released by other ConstString objects.
     //------------------------------------------------------------------
-    ~ConstString ();
+    ~ConstString ()
+    {
+    }
+
 
     //----------------------------------------------------------------------
     /// C string equality function object for CStrings contains in the
@@ -405,7 +415,11 @@ public:
     /// @see ConstString::StaticMemorySize ()
     //------------------------------------------------------------------
     size_t
-    MemorySize () const;
+    MemorySize () const
+    {
+        return sizeof(ConstString);
+    }
+    
 
     //------------------------------------------------------------------
     /// Get the size in bytes of the current global string pool.

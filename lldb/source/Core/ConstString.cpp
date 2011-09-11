@@ -191,27 +191,6 @@ StringPool()
 }
 
 //----------------------------------------------------------------------
-// Default constructor
-//
-// Initializes the string to an empty string.
-//----------------------------------------------------------------------
-ConstString::ConstString () :
-    m_string (NULL)
-{
-}
-
-//----------------------------------------------------------------------
-// Copy constructor
-//
-// Copies the string value in "rhs" and retains an extra reference
-// to the string value in the string pool.
-//----------------------------------------------------------------------
-ConstString::ConstString (const ConstString& rhs) :
-    m_string (rhs.m_string)
-{
-}
-
-//----------------------------------------------------------------------
 // Construct with C String value
 //
 // Constructs this object with a C string by looking to see if the
@@ -241,18 +220,6 @@ ConstString::ConstString (const char *cstr) :
 //----------------------------------------------------------------------
 ConstString::ConstString (const char *cstr, size_t cstr_len) :
     m_string (StringPool().GetConstCStringWithLength (cstr, cstr_len))
-{
-}
-
-//----------------------------------------------------------------------
-// Destructor
-//
-// Decrements the reference count on the contained string, and if
-// the resulting reference count is zero, then the string is removed
-// from the string pool. If the reference count is still greater
-// than zero, the string will remain in the string pool
-//----------------------------------------------------------------------
-ConstString::~ConstString ()
 {
 }
 
@@ -399,17 +366,6 @@ void
 ConstString::SetTrimmedCStringWithLength (const char *cstr, size_t cstr_len)
 {
     m_string = StringPool().GetConstTrimmedCStringWithLength (cstr, cstr_len);
-}
-
-//----------------------------------------------------------------------
-// Return the size in bytes that this object takes in memory. The
-// resulting size will not include any of the C string values from
-// the global string pool (see StaticMemorySize ()).
-//----------------------------------------------------------------------
-size_t
-ConstString::MemorySize() const
-{
-    return sizeof(ConstString);
 }
 
 //----------------------------------------------------------------------
