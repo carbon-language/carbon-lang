@@ -1793,38 +1793,45 @@ CommandInterpreter::GetOptionArgumentPosition (const char *in_string)
 void
 CommandInterpreter::SourceInitFile (bool in_cwd, CommandReturnObject &result)
 {
-    // Don't parse any .lldbinit files if we were asked not to
-    if (m_skip_lldbinit_files && m_skip_app_init_files)
-        return;
-
-    const char *init_file_path = in_cwd ? "./.lldbinit" : "~/.lldbinit";
-
-    std::string app_specific_init;
-    
-    if (!m_skip_app_init_files)
-    {
-        FileSpec host_spec = Host::GetProgramFileSpec();
-        const char *host_name = host_spec.GetFilename().AsCString();
-    
-        if (host_name != NULL && strcmp (host_name, "lldb") != 0)
-        {
-            app_specific_init += init_file_path;
-            app_specific_init += "-";
-            app_specific_init += host_name;
-        }
-    }
-    
     FileSpec init_file;
-    if (!app_specific_init.empty())
+    if (in_cwd)
     {
-        init_file.SetFile (app_specific_init.c_str(), true);
+        // In the current working directory we don't load any program specific
+        // .lldbinit files, we only look for a "./.lldbinit" file.
+        if (m_skip_lldbinit_files)
+            return;
+
+        init_file.SetFile ("./.lldbinit", true);
     }
-    
-    if (!m_skip_lldbinit_files && !init_file.Exists())
+    else
     {
-        init_file.SetFile (init_file_path, true);
-    }
+        // If we aren't looking in the current working directory we are looking
+        // in the home directory. We will first see if there is an application
+        // specific ".lldbinit" file whose name is "~/.lldbinit" followed by a 
+        // "-" and the name of the program. If this file doesn't exist, we fall
+        // back to just the "~/.lldbinit" file. We also obey any requests to not
+        // load the init files.
+        const char *init_file_path = "~/.lldbinit";
+
+        if (m_skip_app_init_files == false)
+        {
+            FileSpec program_file_spec (Host::GetProgramFileSpec());
+            const char *program_name = program_file_spec.GetFilename().AsCString();
     
+            if (program_name)
+            {
+                char program_init_file_name[PATH_MAX];
+                ::snprintf (program_init_file_name, sizeof(program_init_file_name), "%s-%s", init_file_path, program_name);
+                init_file.SetFile (program_init_file_name, true);
+                if (!init_file.Exists())
+                    init_file.Clear();
+            }
+        }
+        
+        if (!init_file && !m_skip_lldbinit_files)
+			init_file.SetFile (init_file_path, true);
+    }
+
     // If the file exists, tell HandleCommand to 'source' it; this will do the actual broadcasting
     // of the commands back to any appropriate listener (see CommandObjectSource::Execute for more details).
 
