@@ -437,10 +437,10 @@ void f(int* a) {
       SequentiallyConsistent operations may not be reordered.</dd>
   <dt>Notes for code generation</dt>
   <dd>SequentiallyConsistent loads minimally require the same barriers
-     as Acquire operations and SequeuentiallyConsistent stores require
+     as Acquire operations and SequentiallyConsistent stores require
      Release barriers. Additionally, the code generator must enforce
-     ordering between SequeuentiallyConsistent stores followed by
-     SequeuentiallyConsistent loads. This is usually done by emitting
+     ordering between SequentiallyConsistent stores followed by
+     SequentiallyConsistent loads. This is usually done by emitting
      either a full fence before the loads or a full fence after the
      stores; which is preferred varies by architecture.</dd>
 </dl>
