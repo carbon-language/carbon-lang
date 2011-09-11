@@ -15,6 +15,8 @@
 #include <algorithm>
 #include <vector>
 
+#include "lldb/Core/RegularExpression.h"
+
 namespace lldb_private {
 
 
@@ -103,17 +105,36 @@ public:
     }
 
     //------------------------------------------------------------------
-    // Get an entry by index.
+    // Get an entries by index in a variety of forms.
     //
     // The caller is responsible for ensuring that the collection does
-    // not change during while using the returned pointer.
+    // not change during while using the returned values.
     //------------------------------------------------------------------
-    const T *
-    GetValueAtIndex (uint32_t idx) const
+    bool
+    GetValueAtIndex (uint32_t idx, T &value) const
     {
         if (idx < m_map.size())
-            return &m_map[idx].value;
-        return NULL;
+        {
+            value = m_map[idx].value;
+            return true;
+        }
+        return false;
+    }
+
+    // Use this function if you have simple types in your map that you
+    // can easily copy when accessing values by index.
+    T
+    GetValueAtIndexUnchecked (uint32_t idx) const
+    {
+        return m_map[idx].value;        
+    }
+
+    // Use this function if you have complex types in your map that you
+    // don't want to copy when accessing values by index.
+    const T &
+    GetValueRefAtIndexUnchecked (uint32_t idx) const
+    {
+        return m_map[idx].value;
     }
 
     const char *
@@ -155,7 +176,7 @@ public:
     // not change during while using the returned pointer.
     //------------------------------------------------------------------
     const Entry *
-    FindNextValueForName (const char *unique_cstr, const Entry *entry_ptr) const
+    FindNextValueForName (const Entry *entry_ptr) const
     {
         if (!m_map.empty())
         {
@@ -164,11 +185,44 @@ public:
             const Entry *next_entry = entry_ptr + 1;
             if (first_entry <= next_entry && next_entry < after_last_entry)
             {
-                if (next_entry->cstring == unique_cstr)
+                if (next_entry->cstring == entry_ptr->cstring)
                     return next_entry;
             }
         }
         return NULL;
+    }
+
+    size_t
+    GetValues (const char *unique_cstr, std::vector<T> &values) const
+    {
+        const size_t start_size = values.size();
+
+        Entry search_entry (unique_cstr);
+        const_iterator pos, end = m_map.end();
+        for (pos = std::lower_bound (m_map.begin(), end, search_entry); pos != end; ++pos)
+        {
+            if (pos->cstring == unique_cstr)
+                values.push_back (pos->value);
+            else
+                break;
+        }
+
+        return values.size() - start_size;
+    }
+    
+    size_t
+    GetValues (const RegularExpression& regex, std::vector<T> &values) const
+    {
+        const size_t start_size = values.size();
+
+        const_iterator pos, end = m_map.end();
+        for (pos = m_map.begin(); pos != end; ++pos)
+        {
+            if (regex.Execute(pos->cstring))
+                values.push_back (pos->value);
+        }
+
+        return values.size() - start_size;
     }
 
     //------------------------------------------------------------------
@@ -218,6 +272,24 @@ public:
     Sort ()
     {
         std::sort (m_map.begin(), m_map.end());
+    }
+    
+    //------------------------------------------------------------------
+    // Since we are using a vector to contain our items it will always 
+    // double its memory consumption as things are added to the vector,
+    // so if you intend to keep a UniqueCStringMap around and have
+    // a lot of entries in the map, you will want to call this function
+    // to create a new vector and copy _only_ the exact size needed as
+    // part of the finalization of the string map.
+    //------------------------------------------------------------------
+    void
+    SizeToFit ()
+    {
+        if (m_map.size() < m_map.capacity())
+        {
+            collection temp (m_map.begin(), m_map.end());
+            m_map.swap(temp);
+        }
     }
 
 protected:
