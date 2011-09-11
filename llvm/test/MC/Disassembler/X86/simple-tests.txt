@@ -161,3 +161,15 @@
 
 # CHECK: pause
 0xf3 0x90
+
+# CHECK: addl %eax, %edi
+0x01 0xc7
+
+# CHECK: addl %edi, %eax
+0x03 0xc7
+
+# CHECK: movl %eax, %edi
+0x89 0xc7
+
+# CHECK: movl %edi, %eax
+0x8b 0xc7
