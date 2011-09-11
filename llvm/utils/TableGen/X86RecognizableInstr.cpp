@@ -325,7 +325,7 @@ InstructionContext RecognizableInstr::insnContext() const {
       insnContext = IC_OPSIZE;
     else if (Prefix == X86Local::XD)
       insnContext = IC_XD;
-    else if (Prefix == X86Local::XS)
+    else if (Prefix == X86Local::XS || Prefix == X86Local::REP)
       insnContext = IC_XS;
     else
       insnContext = IC;
@@ -882,6 +882,7 @@ void RecognizableInstr::emitDecodePath(DisassemblerTables &tables) const {
     }
     opcodeToSet = 0xd8 + (Prefix - X86Local::D8);
     break;
+  case X86Local::REP:
   default:
     opcodeType = ONEBYTE;
     switch (Opcode) {

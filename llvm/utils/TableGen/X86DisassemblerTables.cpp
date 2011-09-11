@@ -613,8 +613,10 @@ void DisassemblerTables::setTableFields(ModRMDecision     &decision,
         if(newInfo.filtered)
           continue; // filtered instructions get lowest priority
         
-        if(previousInfo.name == "NOOP")
-          continue; // special case for XCHG32ar and NOOP
+        if(previousInfo.name == "NOOP" && (newInfo.name == "XCHG16ar" ||
+                                           newInfo.name == "XCHG32ar" ||
+                                           newInfo.name == "XCHG64ar"))
+          continue; // special case for XCHG*ar and NOOP
 
         if (outranks(previousInfo.insnContext, newInfo.insnContext))
           continue;
