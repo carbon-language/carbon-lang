@@ -149,6 +149,10 @@ def SDTSelect : SDTypeProfile<1, 3, [       // select
   SDTCisInt<1>, SDTCisSameAs<0, 2>, SDTCisSameAs<2, 3>
 ]>;
 
+def SDTVSelect : SDTypeProfile<1, 3, [       // vselect
+  SDTCisInt<1>, SDTCisSameAs<0, 2>, SDTCisSameAs<2, 3>
+]>;
+
 def SDTSelectCC : SDTypeProfile<1, 5, [     // select_cc
   SDTCisSameAs<1, 2>, SDTCisSameAs<3, 4>, SDTCisSameAs<0, 3>,
   SDTCisVT<5, OtherVT>
@@ -390,8 +394,8 @@ def f32_to_f16 : SDNode<"ISD::FP32_TO_FP16", SDTFPToIntOp>;
 
 def setcc      : SDNode<"ISD::SETCC"      , SDTSetCC>;
 def select     : SDNode<"ISD::SELECT"     , SDTSelect>;
+def vselect    : SDNode<"ISD::VSELECT"    , SDTVSelect>;
 def selectcc   : SDNode<"ISD::SELECT_CC"  , SDTSelectCC>;
-def vsetcc     : SDNode<"ISD::VSETCC"     , SDTSetCC>;
 
 def brcond     : SDNode<"ISD::BRCOND"     , SDTBrcond, [SDNPHasChain]>;
 def brind      : SDNode<"ISD::BRIND"      , SDTBrind,  [SDNPHasChain]>;

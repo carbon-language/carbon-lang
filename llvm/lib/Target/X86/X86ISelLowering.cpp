@@ -917,11 +917,11 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::SHL,                MVT::v4i32, Custom);
     setOperationAction(ISD::SHL,                MVT::v16i8, Custom);
 
-    setOperationAction(ISD::VSELECT,            MVT::v2f64, Custom);
-    setOperationAction(ISD::VSELECT,            MVT::v2i64, Custom);
-    setOperationAction(ISD::VSELECT,            MVT::v16i8, Custom);
-    setOperationAction(ISD::VSELECT,            MVT::v4i32, Custom);
-    setOperationAction(ISD::VSELECT,            MVT::v4f32, Custom);
+    setOperationAction(ISD::VSELECT,            MVT::v2f64, Legal);
+    setOperationAction(ISD::VSELECT,            MVT::v2i64, Legal);
+    setOperationAction(ISD::VSELECT,            MVT::v16i8, Legal);
+    setOperationAction(ISD::VSELECT,            MVT::v4i32, Legal);
+    setOperationAction(ISD::VSELECT,            MVT::v4f32, Legal);
 
     // i8 and i16 vectors are custom , because the source register and source
     // source memory operand types are not the same width.  f32 vectors are
@@ -1019,10 +1019,10 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::SELECT,            MVT::v4i64, Custom);
     setOperationAction(ISD::SELECT,            MVT::v8f32, Custom);
 
-    setOperationAction(ISD::VSELECT,            MVT::v4f64, Custom);
-    setOperationAction(ISD::VSELECT,            MVT::v4i64, Custom);
-    setOperationAction(ISD::VSELECT,            MVT::v8i32, Custom);
-    setOperationAction(ISD::VSELECT,            MVT::v8f32, Custom);
+    setOperationAction(ISD::VSELECT,            MVT::v4f64, Legal);
+    setOperationAction(ISD::VSELECT,            MVT::v4i64, Legal);
+    setOperationAction(ISD::VSELECT,            MVT::v8i32, Legal);
+    setOperationAction(ISD::VSELECT,            MVT::v8f32, Legal);
 
     setOperationAction(ISD::ADD,               MVT::v4i64, Custom);
     setOperationAction(ISD::ADD,               MVT::v8i32, Custom);
@@ -8703,43 +8703,6 @@ SDValue X86TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
   return DAG.getNode(X86ISD::CMOV, DL, VTs, Ops, array_lengthof(Ops));
 }
 
-SDValue X86TargetLowering::LowerVSELECT(SDValue Op, SelectionDAG &DAG) const {
-  SDValue Cond  = Op.getOperand(0);
-  SDValue Op1 = Op.getOperand(1);
-  SDValue Op2 = Op.getOperand(2);
-  DebugLoc DL = Op.getDebugLoc();
-
-  SDValue Ops[] = {Op1, Op2, Cond};
-
-  assert(Op1.getValueType().isVector() && "Op1 must be a vector");
-  assert(Op2.getValueType().isVector() && "Op2 must be a vector");
-  assert(Cond.getValueType().isVector() && "Cond must be a vector");
-  assert(Op1.getValueType() == Op2.getValueType() && "Type mismatch");
-
-  EVT VT = Op1.getValueType();
-  switch (VT.getSimpleVT().SimpleTy) {
-    default: break;
-    // SSE4:
-    case MVT::v2i64:
-    case MVT::v2f64:
-    case MVT::v4i32:
-    case MVT::v4f32:
-    case MVT::v16i8:
-    case MVT::v8i16:
-    // AVX:
-    case MVT::v4i64:
-    case MVT::v4f64:
-    case MVT::v8i32:
-    case MVT::v8f32:
-    case MVT::v32i8:
-    case MVT::v16i16:
-      return DAG.getNode(X86ISD::BLENDV, DL, VT, Ops, array_lengthof(Ops));
-  }
-
-  return SDValue();
-}
-
-
 // isAndOrOfSingleUseSetCCs - Return true if node is an ISD::AND or
 // ISD::OR of two X86ISD::SETCC nodes each of which has no other use apart
 // from the AND / OR.
@@ -9993,7 +9956,7 @@ SDValue X86TargetLowering::LowerShift(SDValue Op, SelectionDAG &DAG) const {
     M = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
                     DAG.getConstant(Intrinsic::x86_sse2_pslli_w, MVT::i32), M,
                     DAG.getConstant(4, MVT::i32));
-    R = DAG.getNode(X86ISD::BLENDV, dl, VT, R, M, Op);
+    R = DAG.getNode(ISD::VSELECT, dl, VT, Op, R, M);
     // a += a
     Op = DAG.getNode(ISD::ADD, dl, VT, Op, Op);
 
@@ -10008,13 +9971,13 @@ SDValue X86TargetLowering::LowerShift(SDValue Op, SelectionDAG &DAG) const {
     M = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
                     DAG.getConstant(Intrinsic::x86_sse2_pslli_w, MVT::i32), M,
                     DAG.getConstant(2, MVT::i32));
-    R = DAG.getNode(X86ISD::BLENDV, dl, VT, R, M, Op);
+    R = DAG.getNode(ISD::VSELECT, dl, VT, Op, R, M);
     // a += a
     Op = DAG.getNode(ISD::ADD, dl, VT, Op, Op);
 
     // return pblendv(r, r+r, a);
-    R = DAG.getNode(X86ISD::BLENDV, dl, VT,
-                    R, DAG.getNode(ISD::ADD, dl, VT, R, R), Op);
+    R = DAG.getNode(ISD::VSELECT, dl, VT, Op,
+                    R, DAG.getNode(ISD::ADD, dl, VT, R, R));
     return R;
   }
   return SDValue();
@@ -10406,7 +10369,6 @@ SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::FGETSIGN:           return LowerFGETSIGN(Op, DAG);
   case ISD::SETCC:              return LowerSETCC(Op, DAG);
   case ISD::SELECT:             return LowerSELECT(Op, DAG);
-  case ISD::VSELECT:            return LowerVSELECT(Op, DAG);
   case ISD::BRCOND:             return LowerBRCOND(Op, DAG);
   case ISD::JumpTable:          return LowerJumpTable(Op, DAG);
   case ISD::VASTART:            return LowerVASTART(Op, DAG);
@@ -10651,7 +10613,6 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::PSIGNB:             return "X86ISD::PSIGNB";
   case X86ISD::PSIGNW:             return "X86ISD::PSIGNW";
   case X86ISD::PSIGND:             return "X86ISD::PSIGND";
-  case X86ISD::BLENDV:             return "X86ISD::BLENDV";
   case X86ISD::FMAX:               return "X86ISD::FMAX";
   case X86ISD::FMIN:               return "X86ISD::FMIN";
   case X86ISD::FRSQRT:             return "X86ISD::FRSQRT";
@@ -13381,7 +13342,7 @@ static SDValue PerformOrCombine(SDNode *N, SelectionDAG &DAG,
         X = DAG.getNode(ISD::BITCAST, DL, MVT::v16i8, X);
         Y = DAG.getNode(ISD::BITCAST, DL, MVT::v16i8, Y);
         Mask = DAG.getNode(ISD::BITCAST, DL, MVT::v16i8, Mask);
-        Mask = DAG.getNode(X86ISD::BLENDV, DL, MVT::v16i8, X, Y, Mask);
+        Mask = DAG.getNode(ISD::VSELECT, DL, MVT::v16i8, Mask, X, Y);
         return DAG.getNode(ISD::BITCAST, DL, MVT::v2i64, Mask);
       }
     }
