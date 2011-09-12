@@ -51,8 +51,6 @@ STATISTIC(NumGlobalSplits, "Number of split global live ranges");
 STATISTIC(NumLocalSplits,  "Number of split local live ranges");
 STATISTIC(NumEvicted,      "Number of interferences evicted");
 
-static cl::opt<bool> CompactRegions("compact-regions", cl::init(true));
-
 static cl::opt<SplitEditor::ComplementSpillMode>
 SplitSpillMode("split-spill-mode", cl::Hidden,
   cl::desc("Spill mode for splitting live ranges"),
@@ -410,15 +408,11 @@ void RAGreedy::enqueue(LiveInterval *LI) {
 
   if (ExtraRegInfo[Reg].Stage == RS_Split) {
     // Unsplit ranges that couldn't be allocated immediately are deferred until
-    // everything else has been allocated. Long ranges are allocated last so
-    // they are split against realistic interference.
-    if (CompactRegions)
-      Prio = Size;
-    else
-      Prio = (1u << 31) - Size;
+    // everything else has been allocated.
+    Prio = Size;
   } else {
-    // Everything else is allocated in long->short order. Long ranges that don't
-    // fit should be spilled ASAP so they don't create interference.
+    // Everything is allocated in long->short order. Long ranges that don't fit
+    // should be spilled (or split) ASAP so they don't create interference.
     Prio = (1u << 31) + Size;
 
     // Boost ranges that have a physical register hint.
@@ -1092,7 +1086,7 @@ unsigned RAGreedy::tryRegionSplit(LiveInterval &VirtReg, AllocationOrder &Order,
   SmallVector<unsigned, 8> UsedCands;
 
   // Check if we can split this live range around a compact region.
-  bool HasCompact = CompactRegions && calcCompactRegion(GlobalCand.front());
+  bool HasCompact = calcCompactRegion(GlobalCand.front());
   if (HasCompact) {
     // Yes, keep GlobalCand[0] as the compact region candidate.
     NumCands = 1;
