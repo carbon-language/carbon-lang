@@ -19,3 +19,23 @@ void* test2(void *p) {
   MyFuncTest1 fp = (MyFuncTest1) p;
   return (*fp)();
 }
+
+// <radar://10087620>
+// A cast from int onjective C property reference to int.
+typedef signed char BOOL;
+@protocol NSObject  - (BOOL)isEqual:(id)object; @end
+@interface NSObject <NSObject> {} - (id)init; @end
+typedef enum {
+  AIMediaTypeAudio,
+  AIMediaTypeVideo
+} AIMediaType;
+@interface AIMedia : NSObject {
+  AIMediaType   mediaType;
+}
+@property (readwrite, nonatomic) AIMediaType mediaType;
+static void
+adium_media_ready_cb(AIMedia *adiumMedia, const char *sid)
+{
+  adiumMedia.mediaType |= AIMediaTypeVideo;
+}
+@end

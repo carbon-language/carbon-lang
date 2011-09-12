@@ -213,8 +213,13 @@ SVal SValBuilder::evalCast(SVal val, QualType castTy, QualType originalTy) {
     return UnknownVal();
   
   // Check for casts from integers to integers.
-  if (castTy->isIntegerType() && originalTy->isIntegerType())
-    return evalCastFromNonLoc(cast<NonLoc>(val), castTy);
+  if (castTy->isIntegerType() && originalTy->isIntegerType()) {
+    if (isa<Loc>(val))
+      // This can be a cast to ObjC property of type int.
+      return evalCastFromLoc(cast<Loc>(val), castTy);
+    else
+      return evalCastFromNonLoc(cast<NonLoc>(val), castTy);
+  }
 
   // Check for casts from pointers to integers.
   if (castTy->isIntegerType() && Loc::isLocType(originalTy))
