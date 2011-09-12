@@ -44,6 +44,11 @@ class multidict:
     
 #
 
+class CmpOptions:
+    def __init__(self, verboseLog=None, root=""):
+        self.root = root
+        self.verboseLog = verboseLog
+
 class AnalysisReport:
     def __init__(self, run, files):
         self.run = run
@@ -170,6 +175,52 @@ def compareResults(A, B):
 
     return res
 
+def cmpScanBuildResults(dirA, dirB, opts):
+    # Load the run results.
+    resultsA = loadResults(dirA, opts)
+    resultsB = loadResults(dirB, opts)
+    
+    # Open the verbose log, if given.
+    if opts.verboseLog:
+        auxLog = open(opts.verboseLog, "wb")
+    else:
+        auxLog = None
+
+    diff = compareResults(resultsA, resultsB)
+    foundDiffs = False
+    for res in diff:
+        a,b,confidence = res
+        if a is None:
+            print "ADDED: %r" % b.getReadableName()
+            foundDiffs = True
+            if auxLog:
+                print >>auxLog, ("('ADDED', %r, %r)" % (b.getReadableName(),
+                                                        b.getReportData()))
+        elif b is None:
+            print "REMOVED: %r" % a.getReadableName()
+            foundDiffs = True
+            if auxLog:
+                print >>auxLog, ("('REMOVED', %r, %r)" % (a.getReadableName(),
+                                                          a.getReportData()))
+        elif confidence:
+            print "CHANGED: %r to %r" % (a.getReadableName(),
+                                         b.getReadableName())
+            foundDiffs = True
+            if auxLog:
+                print >>auxLog, ("('CHANGED', %r, %r, %r, %r)" 
+                                 % (a.getReadableName(),
+                                    b.getReadableName(),
+                                    a.getReportData(),
+                                    b.getReportData()))
+        else:
+            pass
+
+    print "TOTAL REPORTS: %r" % len(resultsB.diagnostics)
+    if auxLog:
+        print >>auxLog, "('TOTAL REPORTS', %r)" % len(resultsB.diagnostics)
+    
+    return foundDiffs    
+
 def main():
     from optparse import OptionParser
     parser = OptionParser("usage: %prog [options] [dir A] [dir B]")
@@ -187,44 +238,7 @@ def main():
 
     dirA,dirB = args
 
-    # Load the run results.
-    resultsA = loadResults(dirA, opts)
-    resultsB = loadResults(dirB, opts)
-    
-    # Open the verbose log, if given.
-    if opts.verboseLog:
-        auxLog = open(opts.verboseLog, "wb")
-    else:
-        auxLog = None
-
-    diff = compareResults(resultsA, resultsB)
-    for res in diff:
-        a,b,confidence = res
-        if a is None:
-            print "ADDED: %r" % b.getReadableName()
-            if auxLog:
-                print >>auxLog, ("('ADDED', %r, %r)" % (b.getReadableName(),
-                                                        b.getReportData()))
-        elif b is None:
-            print "REMOVED: %r" % a.getReadableName()
-            if auxLog:
-                print >>auxLog, ("('REMOVED', %r, %r)" % (a.getReadableName(),
-                                                          a.getReportData()))
-        elif confidence:
-            print "CHANGED: %r to %r" % (a.getReadableName(),
-                                         b.getReadableName())
-            if auxLog:
-                print >>auxLog, ("('CHANGED', %r, %r, %r, %r)" 
-                                 % (a.getReadableName(),
-                                    b.getReadableName(),
-                                    a.getReportData(),
-                                    b.getReportData()))
-        else:
-            pass
-
-    print "TOTAL REPORTS: %r" % len(resultsB.diagnostics)
-    if auxLog:
-        print >>auxLog, "('TOTAL', %r)" % len(resultsB.diagnostics)
+    cmpScanBuildResults(dirA, dirB, opts)    
 
 if __name__ == '__main__':
     main()
