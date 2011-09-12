@@ -879,7 +879,10 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
   llvm::CrashRecoveryContextCleanupRegistrar<CompilerInstance>
     CICleanup(Clang.get());
 
-  Clang->setInvocation(&*Invocation);
+  llvm::IntrusiveRefCntPtr<CompilerInvocation>
+    CCInvocation(new CompilerInvocation(*Invocation));
+
+  Clang->setInvocation(CCInvocation.getPtr());
   OriginalSourceFile = Clang->getFrontendOpts().Inputs[0].second;
     
   // Set up diagnostics, capturing any diagnostics that would
@@ -942,13 +945,11 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
   PreprocessorOptions &PreprocessorOpts = Clang->getPreprocessorOpts();
   PreprocessorOpts.DetailedRecordIncludesNestedMacroExpansions
     = NestedMacroExpansions;
-  std::string PriorImplicitPCHInclude;
   if (OverrideMainBuffer) {
     PreprocessorOpts.addRemappedFile(OriginalSourceFile, OverrideMainBuffer);
     PreprocessorOpts.PrecompiledPreambleBytes.first = Preamble.size();
     PreprocessorOpts.PrecompiledPreambleBytes.second
                                                     = PreambleEndsAtStartOfLine;
-    PriorImplicitPCHInclude = PreprocessorOpts.ImplicitPCHInclude;
     PreprocessorOpts.ImplicitPCHInclude = PreambleFile;
     PreprocessorOpts.DisablePCHValidation = true;
     
@@ -967,9 +968,6 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
 
     // Keep track of the override buffer;
     SavedMainFileBuffer = OverrideMainBuffer;
-  } else {
-    PreprocessorOpts.PrecompiledPreambleBytes.first = 0;
-    PreprocessorOpts.PrecompiledPreambleBytes.second = false;
   }
   
   llvm::OwningPtr<TopLevelDeclTrackerAction> Act(
@@ -1003,21 +1001,11 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
   
   Act->EndSourceFile();
 
-  // Remove the overridden buffer we used for the preamble.
-  if (OverrideMainBuffer) {
-    PreprocessorOpts.eraseRemappedFile(
-                               PreprocessorOpts.remapped_file_buffer_end() - 1);
-    PreprocessorOpts.ImplicitPCHInclude = PriorImplicitPCHInclude;
-  }
-
   return false;
 
 error:
   // Remove the overridden buffer we used for the preamble.
   if (OverrideMainBuffer) {
-    PreprocessorOpts.eraseRemappedFile(
-                               PreprocessorOpts.remapped_file_buffer_end() - 1);
-    PreprocessorOpts.ImplicitPCHInclude = PriorImplicitPCHInclude;
     delete OverrideMainBuffer;
     SavedMainFileBuffer = 0;
   }

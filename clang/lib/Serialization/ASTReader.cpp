@@ -2595,7 +2595,11 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
   // Here comes stuff that we only do once the entire chain is loaded.
   
   // Check the predefines buffers.
-  if (!DisableValidation && Type != MK_Module && CheckPredefinesBuffers())
+  if (!DisableValidation && Type != MK_Module && Type != MK_Preamble &&
+      // FIXME: CheckPredefinesBuffers also sets the SuggestedPredefines;
+      // if DisableValidation is true, defines that were set on command-line
+      // but not in the PCH file will not be added to SuggestedPredefines.
+      CheckPredefinesBuffers())
     return IgnorePCH;
 
   // Initialization of keywords and pragmas occurs before the
