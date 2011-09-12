@@ -26,16 +26,16 @@ typedef signed char BOOL;
 @protocol NSObject  - (BOOL)isEqual:(id)object; @end
 @interface NSObject <NSObject> {} - (id)init; @end
 typedef enum {
-  AIMediaTypeAudio,
-  AIMediaTypeVideo
-} AIMediaType;
-@interface AIMedia : NSObject {
-  AIMediaType   mediaType;
+  EEOne,
+  EETwo
+} RDR10087620Enum;
+@interface RDR10087620 : NSObject {
+  RDR10087620Enum   elem;
 }
-@property (readwrite, nonatomic) AIMediaType mediaType;
+@property (readwrite, nonatomic) RDR10087620Enum elem;
 static void
-adium_media_ready_cb(AIMedia *adiumMedia, const char *sid)
+adium_media_ready_cb(RDR10087620 *InObj)
 {
-  adiumMedia.mediaType |= AIMediaTypeVideo;
+  InObj.elem |= EEOne;
 }
 @end
