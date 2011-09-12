@@ -2124,46 +2124,46 @@ multiclass sse12_cmp_packed<RegisterClass RC, X86MemOperand x86memop,
                             Domain d> {
   let isAsmParserOnly = 1 in {
     def rri : PIi8<0xC2, MRMSrcReg,
-               (outs RC:$dst), (ins RC:$src1, RC:$src, SSECC:$cc), asm,
-               [(set RC:$dst, (Int RC:$src1, RC:$src, imm:$cc))], d>;
+               (outs RC:$dst), (ins RC:$src1, RC:$src2, SSECC:$cc), asm,
+               [(set RC:$dst, (Int RC:$src1, RC:$src2, imm:$cc))], d>;
     def rmi : PIi8<0xC2, MRMSrcMem,
-               (outs RC:$dst), (ins RC:$src1, f128mem:$src, SSECC:$cc), asm,
-               [(set RC:$dst, (Int RC:$src1, (memop addr:$src), imm:$cc))], d>;
+               (outs RC:$dst), (ins RC:$src1, f128mem:$src2, SSECC:$cc), asm,
+               [(set RC:$dst, (Int RC:$src1, (memop addr:$src2), imm:$cc))], d>;
   }
 
   // Accept explicit immediate argument form instead of comparison code.
   def rri_alt : PIi8<0xC2, MRMSrcReg,
-             (outs RC:$dst), (ins RC:$src1, RC:$src, i8imm:$src2),
+             (outs RC:$dst), (ins RC:$src1, RC:$src2, i8imm:$cc),
              asm_alt, [], d>;
   def rmi_alt : PIi8<0xC2, MRMSrcMem,
-             (outs RC:$dst), (ins RC:$src1, f128mem:$src, i8imm:$src2),
+             (outs RC:$dst), (ins RC:$src1, f128mem:$src2, i8imm:$cc),
              asm_alt, [], d>;
 }
 
 defm VCMPPS : sse12_cmp_packed<VR128, f128mem, int_x86_sse_cmp_ps,
-               "cmp${cc}ps\t{$src, $src1, $dst|$dst, $src1, $src}",
-               "cmpps\t{$src2, $src, $src1, $dst|$dst, $src1, $src, $src2}",
+               "cmp${cc}ps\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+               "cmpps\t{$cc, $src2, $src1, $dst|$dst, $src1, $src2, $cc}",
                SSEPackedSingle>, TB, VEX_4V;
 defm VCMPPD : sse12_cmp_packed<VR128, f128mem, int_x86_sse2_cmp_pd,
-               "cmp${cc}pd\t{$src, $src1, $dst|$dst, $src1, $src}",
-               "cmppd\t{$src2, $src, $src1, $dst|$dst, $src1, $src, $src2}",
+               "cmp${cc}pd\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+               "cmppd\t{$cc, $src2, $src1, $dst|$dst, $src1, $src2, $cc}",
                SSEPackedDouble>, TB, OpSize, VEX_4V;
 defm VCMPPSY : sse12_cmp_packed<VR256, f256mem, int_x86_avx_cmp_ps_256,
-               "cmp${cc}ps\t{$src, $src1, $dst|$dst, $src1, $src}",
-               "cmpps\t{$src2, $src, $src1, $dst|$dst, $src1, $src, $src2}",
+               "cmp${cc}ps\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+               "cmpps\t{$cc, $src2, $src1, $dst|$dst, $src1, $src2, $cc}",
                SSEPackedSingle>, TB, VEX_4V;
 defm VCMPPDY : sse12_cmp_packed<VR256, f256mem, int_x86_avx_cmp_pd_256,
-               "cmp${cc}pd\t{$src, $src1, $dst|$dst, $src1, $src}",
-               "cmppd\t{$src2, $src, $src1, $dst|$dst, $src1, $src, $src2}",
+               "cmp${cc}pd\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+               "cmppd\t{$cc, $src2, $src1, $dst|$dst, $src1, $src2, $cc}",
                SSEPackedDouble>, TB, OpSize, VEX_4V;
 let Constraints = "$src1 = $dst" in {
   defm CMPPS : sse12_cmp_packed<VR128, f128mem, int_x86_sse_cmp_ps,
-                 "cmp${cc}ps\t{$src, $dst|$dst, $src}",
-                 "cmpps\t{$src2, $src, $dst|$dst, $src, $src2}",
+                 "cmp${cc}ps\t{$src2, $dst|$dst, $src2}",
+                 "cmpps\t{$cc, $src2, $dst|$dst, $src2, $cc}",
                  SSEPackedSingle>, TB;
   defm CMPPD : sse12_cmp_packed<VR128, f128mem, int_x86_sse2_cmp_pd,
-                 "cmp${cc}pd\t{$src, $dst|$dst, $src}",
-                 "cmppd\t{$src2, $src, $dst|$dst, $src, $src2}",
+                 "cmp${cc}pd\t{$src2, $dst|$dst, $src2}",
+                 "cmppd\t{$cc, $src2, $dst|$dst, $src2, $cc}",
                  SSEPackedDouble>, TB, OpSize;
 }
 
