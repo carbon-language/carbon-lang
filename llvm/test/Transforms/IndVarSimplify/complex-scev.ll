@@ -1,7 +1,9 @@
 ; The i induction variable looks like a wrap-around, but it really is just
 ; a simple affine IV.  Make sure that indvars eliminates it.
 
-; RUN: opt < %s -indvars -S | grep phi | count 1
+; RUN: opt < %s -indvars -S -enable-iv-rewrite | FileCheck %s
+; CHECK: phi
+; CHECK-NOT: phi
 
 define void @foo() {
 entry:
