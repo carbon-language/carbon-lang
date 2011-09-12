@@ -119,4 +119,14 @@ __module_private__ struct public_class<float> { }; // expected-error{{template s
 template<typename T>
 __module_private__ struct public_class<T *> { }; // expected-error{{partial specialization cannot be declared __module_private__}}
 
+// Check for attempts to make parameters and variables with automatic
+// storage module-private.
+
+void local_var_private(__module_private__ int param) { // expected-error{{parameter 'param' cannot be declared __module_private__}}
+  __module_private__ struct Local { int x, y; } local; //expected-error{{local variable 'local' cannot be declared __module_private__}}
+
+  __module_private__ struct OtherLocal { int x; }; // expected-error{{local struct cannot be declared __module_private__}}
+
+  typedef __module_private__ int local_typedef; // expected-error{{typedef 'local_typedef' cannot be declared __module_private__}}
+}
 #endif

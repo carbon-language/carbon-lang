@@ -2373,6 +2373,12 @@ Decl *Sema::ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
   if (DS.isExplicitSpecified())
     Diag(DS.getExplicitSpecLoc(), diag::warn_standalone_specifier) <<"explicit";
 
+  if (DS.isModulePrivateSpecified() && 
+      Tag && Tag->getDeclContext()->isFunctionOrMethod())
+    Diag(DS.getModulePrivateSpecLoc(), diag::err_module_private_local_class)
+      << Tag->getTagKind()
+      << FixItHint::CreateRemoval(DS.getModulePrivateSpecLoc());
+
   // FIXME: Warn on useless attributes
 
   return TagD;
@@ -3818,6 +3824,10 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
     }
   }
 
+  // Set the lexical context. If the declarator has a C++ scope specifier, the
+  // lexical context will be different from the semantic context.
+  NewVD->setLexicalDeclContext(CurContext);
+
   if (D.getDeclSpec().isThreadSpecified()) {
     if (NewVD->hasLocalStorage())
       Diag(D.getDeclSpec().getThreadSpecLoc(), diag::err_thread_non_global);
@@ -3832,13 +3842,14 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
       Diag(NewVD->getLocation(), diag::err_module_private_specialization)
         << 2
         << FixItHint::CreateRemoval(D.getDeclSpec().getModulePrivateSpecLoc());
+    else if (NewVD->hasLocalStorage())
+      Diag(NewVD->getLocation(), diag::err_module_private_local)
+        << 0 << NewVD->getDeclName()
+        << SourceRange(D.getDeclSpec().getModulePrivateSpecLoc())
+        << FixItHint::CreateRemoval(D.getDeclSpec().getModulePrivateSpecLoc());
     else
       NewVD->setModulePrivate();
   }
-
-  // Set the lexical context. If the declarator has a C++ scope specifier, the
-  // lexical context will be different from the semantic context.
-  NewVD->setLexicalDeclContext(CurContext);
 
   // Handle attributes prior to checking for duplicates in MergeVarDecl
   ProcessDeclAttributes(S, NewVD, D);
@@ -6357,6 +6368,12 @@ Decl *Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
 
   ProcessDeclAttributes(S, New, D);
 
+  if (D.getDeclSpec().isModulePrivateSpecified())
+    Diag(New->getLocation(), diag::err_module_private_local)
+      << 1 << New->getDeclName()
+      << SourceRange(D.getDeclSpec().getModulePrivateSpecLoc())
+      << FixItHint::CreateRemoval(D.getDeclSpec().getModulePrivateSpecLoc());
+
   if (New->hasAttr<BlocksAttr>()) {
     Diag(New->getLocation(), diag::err_block_on_nonlocal);
   }
@@ -7021,8 +7038,15 @@ TypedefDecl *Sema::ParseTypedefDecl(Scope *S, Declarator &D, QualType T,
     return NewTD;
   }
 
-  if (D.getDeclSpec().isModulePrivateSpecified())
-    NewTD->setModulePrivate();
+  if (D.getDeclSpec().isModulePrivateSpecified()) {
+    if (CurContext->isFunctionOrMethod())
+      Diag(NewTD->getLocation(), diag::err_module_private_local)
+        << 2 << NewTD->getDeclName()
+        << SourceRange(D.getDeclSpec().getModulePrivateSpecLoc())
+        << FixItHint::CreateRemoval(D.getDeclSpec().getModulePrivateSpecLoc());
+    else
+      NewTD->setModulePrivate();
+  }
   
   // C++ [dcl.typedef]p8:
   //   If the typedef declaration defines an unnamed class (or
@@ -7777,7 +7801,11 @@ CreateNewDecl:
         << FixItHint::CreateRemoval(ModulePrivateLoc);
     else if (PrevDecl && !PrevDecl->isModulePrivate())
       diagnoseModulePrivateRedeclaration(New, PrevDecl, ModulePrivateLoc);
-    else
+    // __module_private__ does not apply to local classes. However, we only
+    // diagnose this as an error when the declaration specifiers are
+    // freestanding. Here, we just ignore the __module_private__.
+    // foobar
+    else if (!SearchDC->isFunctionOrMethod())
       New->setModulePrivate();
   }
   
