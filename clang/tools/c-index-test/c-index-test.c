@@ -774,6 +774,8 @@ int perform_test_reparse_source(int argc, const char **argv, int trials,
   int num_unsaved_files = 0;
   int result;
   int trial;
+  int remap_after_trial = 0;
+  char *endptr = 0;
   
   Idx = clang_createIndex(/* excludeDeclsFromPCH */
                           !strcmp(filter, "local") ? 1 : 0,
@@ -797,8 +799,15 @@ int perform_test_reparse_source(int argc, const char **argv, int trials,
     return 1;
   }
   
+  if (getenv("CINDEXTEST_REMAP_AFTER_TRIAL")) {
+    remap_after_trial =
+        strtol(getenv("CINDEXTEST_REMAP_AFTER_TRIAL"), &endptr, 10);
+  }
+
   for (trial = 0; trial < trials; ++trial) {
-    if (clang_reparseTranslationUnit(TU, num_unsaved_files, unsaved_files,
+    if (clang_reparseTranslationUnit(TU,
+                             trial >= remap_after_trial ? num_unsaved_files : 0,
+                             trial >= remap_after_trial ? unsaved_files : 0,
                                      clang_defaultReparseOptions(TU))) {
       fprintf(stderr, "Unable to reparse translation unit!\n");
       clang_disposeTranslationUnit(TU);
