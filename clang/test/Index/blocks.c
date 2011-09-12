@@ -24,7 +24,7 @@ void test() {
 // CHECK: blocks.c:9:28: UnexposedStmt= Extent=[9:28 - 9:58]
 // CHECK: blocks.c:9:30: UnexposedStmt= Extent=[9:30 - 9:55]
 // CHECK: blocks.c:9:37: UnexposedExpr= Extent=[9:37 - 9:55]
-// CHECK: blocks.c:9:37: UnexposedExpr=x:4:19 Extent=[9:37 - 9:51]
+// CHECK: blocks.c:9:37: UnexposedExpr= Extent=[9:37 - 9:51]
 // CHECK: blocks.c:9:38: TypeRef=int_t:3:13 Extent=[9:38 - 9:43]
 // CHECK: blocks.c:9:50: MemberRefExpr=x:4:19 SingleRefName=[9:50 - 9:51] RefName=[9:50 - 9:51] Extent=[9:45 - 9:51]
 // CHECK: blocks.c:9:45: DeclRefExpr=foo:9:23 Extent=[9:45 - 9:48]

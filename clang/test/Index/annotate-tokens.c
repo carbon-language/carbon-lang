@@ -38,10 +38,10 @@ enum Color g(int i, ...) {
 // CHECK: Punctuation: "*" [4:4 - 4:5] VarDecl=t_ptr:4:6 (Definition)
 // CHECK: Identifier: "t_ptr" [4:6 - 4:11] VarDecl=t_ptr:4:6 (Definition)
 // CHECK: Punctuation: "=" [4:12 - 4:13] VarDecl=t_ptr:4:6 (Definition)
-// CHECK: Punctuation: "(" [4:14 - 4:15] UnexposedExpr=ptr:3:14
+// CHECK: Punctuation: "(" [4:14 - 4:15] UnexposedExpr=
 // CHECK: Identifier: "T" [4:15 - 4:16] TypeRef=T:1:13
-// CHECK: Punctuation: "*" [4:17 - 4:18] UnexposedExpr=ptr:3:14
-// CHECK: Punctuation: ")" [4:18 - 4:19] UnexposedExpr=ptr:3:14
+// CHECK: Punctuation: "*" [4:17 - 4:18] UnexposedExpr=
+// CHECK: Punctuation: ")" [4:18 - 4:19] UnexposedExpr=
 // CHECK: Identifier: "ptr" [4:19 - 4:22] DeclRefExpr=ptr:3:14
 // CHECK: Punctuation: ";" [4:22 - 4:23] UnexposedStmt=
 // CHECK: Punctuation: "(" [5:3 - 5:4] UnexposedExpr=

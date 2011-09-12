@@ -299,9 +299,9 @@ static Rdar8595462_A * Rdar8595462_staticVar;
 // CHECK: Punctuation: ")" [43:18 - 43:19] ParmDecl=x:43:19 (Definition)
 // CHECK: Identifier: "x" [43:19 - 43:20] ParmDecl=x:43:19 (Definition)
 // CHECK: Punctuation: "{" [44:1 - 44:2] UnexposedStmt=
-// CHECK: Punctuation: "(" [45:3 - 45:4] UnexposedExpr=x:43:19
-// CHECK: Keyword: "void" [45:4 - 45:8] UnexposedExpr=x:43:19
-// CHECK: Punctuation: ")" [45:8 - 45:9] UnexposedExpr=x:43:19
+// CHECK: Punctuation: "(" [45:3 - 45:4] UnexposedExpr=
+// CHECK: Keyword: "void" [45:4 - 45:8] UnexposedExpr=
+// CHECK: Punctuation: ")" [45:8 - 45:9] UnexposedExpr=
 // CHECK: Identifier: "x" [45:10 - 45:11] DeclRefExpr=x:43:19
 // CHECK: Punctuation: ";" [45:11 - 45:12] UnexposedStmt=
 // CHECK: Punctuation: "}" [46:1 - 46:2] UnexposedStmt=
@@ -442,9 +442,9 @@ static Rdar8595462_A * Rdar8595462_staticVar;
 // CHECK: Punctuation: "(" [87:7 - 87:8] FunctionDecl=f:87:6 (Definition)
 // CHECK: Punctuation: ")" [87:8 - 87:9] FunctionDecl=f:87:6 (Definition)
 // CHECK: Punctuation: "{" [87:10 - 87:11] UnexposedStmt=
-// CHECK: Punctuation: "(" [88:3 - 88:4] UnexposedExpr=Proto:85:1
-// CHECK: Keyword: "void" [88:4 - 88:8] UnexposedExpr=Proto:85:1
-// CHECK: Punctuation: ")" [88:8 - 88:9] UnexposedExpr=Proto:85:1
+// CHECK: Punctuation: "(" [88:3 - 88:4] UnexposedExpr=
+// CHECK: Keyword: "void" [88:4 - 88:8] UnexposedExpr=
+// CHECK: Punctuation: ")" [88:8 - 88:9] UnexposedExpr=
 // CHECK: Punctuation: "@" [88:9 - 88:10] UnexposedExpr=Proto:85:1
 // CHECK: Keyword: "protocol" [88:10 - 88:18] UnexposedExpr=Proto:85:1
 // CHECK: Punctuation: "(" [88:18 - 88:19] UnexposedExpr=Proto:85:1

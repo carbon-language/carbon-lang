@@ -202,8 +202,9 @@ void casts(int *ip) {
 // CHECK: load-stmts.cpp:80:21: DeclRefExpr=j:79:44 Extent=[80:21 - 80:22]
 // CHECK: load-stmts.cpp:82:9: TypeRef=Integer:81:15 Extent=[82:9 - 82:16]
 // CHECK: load-stmts.cpp:82:17: DeclRefExpr=i:79:37 Extent=[82:17 - 82:18]
-// CHECK: load-stmts.cpp:83:3: UnexposedExpr=i:79:37 Extent=[83:3 - 83:13]
+// CHECK: load-stmts.cpp:83:3: UnexposedExpr= Extent=[83:3 - 83:13]
 // CHECK: load-stmts.cpp:83:4: TypeRef=Integer:81:15 Extent=[83:4 - 83:11]
+// CHECK: load-stmts.cpp:83:12: UnexposedExpr=i:79:37 Extent=[83:12 - 83:13]
 // CHECK: load-stmts.cpp:83:12: DeclRefExpr=i:79:37 Extent=[83:12 - 83:13]
 // CHECK: load-stmts.cpp:84:3: UnexposedExpr= Extent=[84:3 - 84:12]
 // CHECK: load-stmts.cpp:84:3: TypeRef=Integer:81:15 Extent=[84:3 - 84:10]
@@ -225,5 +226,6 @@ void casts(int *ip) {
 // CHECK: load-stmts.cpp:108:2: LabelStmt=start_over Extent=[108:2 - 109:28]
 // CHECK: load-stmts.cpp:109:17: LabelRef=start_over:108:2 Extent=[109:17 - 109:27]
 // CHECK: load-stmts.cpp:113:10: LabelRef=start_over:108:2 Extent=[113:10 - 113:20]
-// CHECK: load-stmts.cpp:117:9: UnexposedExpr=ip:116:17 Extent=[117:9 - 117:38]
+// CHECK: load-stmts.cpp:117:35: UnexposedExpr=ip:116:17 Extent=[117:35 - 117:37]
+// CHECK: load-stmts.cpp:117:35: DeclRefExpr=ip:116:17 Extent=[117:35 - 117:37]
 

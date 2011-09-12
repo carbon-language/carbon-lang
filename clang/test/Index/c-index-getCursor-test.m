@@ -158,7 +158,7 @@ void f() {
 // CHECK: [52:7 - 52:8] CallExpr=main:44:5
 // CHECK: [52:8 - 52:16] DeclRefExpr=someEnum:41:3
 // CHECK: [52:16 - 52:18] CallExpr=main:44:5
-// CHECK: [52:18 - 52:33] UnexposedExpr=bee:45:8
+// CHECK: [52:18 - 52:33] UnexposedExpr=
 // CHECK: [52:33 - 52:36] DeclRefExpr=bee:45:8
 // CHECK: [52:36 - 52:37] CallExpr=main:44:5
 // CHECK: [52:37 - 53:2] UnexposedStmt=
