@@ -301,6 +301,9 @@ static DecodeStatus DecodeT2STRDPreInstruction(llvm::MCInst &Inst,unsigned Insn,
                                uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeT2Adr(llvm::MCInst &Inst, unsigned Val,
                                 uint64_t Address, const void *Decoder);
+static DecodeStatus DecodeT2LdStPre(llvm::MCInst &Inst, unsigned Val,
+                                uint64_t Address, const void *Decoder);
+
 
 #include "ARMGenDisassemblerTables.inc"
 #include "ARMGenInstrInfo.inc"
@@ -2755,6 +2758,35 @@ static DecodeStatus DecodeT2AddrModeImm8(llvm::MCInst &Inst, unsigned Val,
   return S;
 }
 
+static DecodeStatus DecodeT2LdStPre(llvm::MCInst &Inst, unsigned Insn,
+                                    uint64_t Address, const void *Decoder) {
+  DecodeStatus S = MCDisassembler::Success;
+
+  unsigned Rt = fieldFromInstruction32(Insn, 12, 4);
+  unsigned Rn = fieldFromInstruction32(Insn, 16, 4);
+  unsigned addr = fieldFromInstruction32(Insn, 0, 8);
+  addr |= fieldFromInstruction32(Insn, 9, 1) << 8;
+  addr |= Rn << 9;
+  unsigned load = fieldFromInstruction32(Insn, 20, 1);
+
+  if (!load) {
+    if (!Check(S, DecodeGPRRegisterClass(Inst, Rn, Address, Decoder)))
+      return MCDisassembler::Fail;
+  }
+
+  if (!Check(S, DecodeGPRRegisterClass(Inst, Rt, Address, Decoder)))
+    return MCDisassembler::Fail;
+
+  if (load) {
+    if (!Check(S, DecodeGPRRegisterClass(Inst, Rn, Address, Decoder)))
+      return MCDisassembler::Fail;
+  }
+
+  if (!Check(S, DecodeT2AddrModeImm8(Inst, addr, Address, Decoder)))
+    return MCDisassembler::Fail;
+
+  return S;
+}
 
 static DecodeStatus DecodeT2AddrModeImm12(llvm::MCInst &Inst, unsigned Val,
                                   uint64_t Address, const void *Decoder) {

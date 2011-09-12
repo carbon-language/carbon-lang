@@ -1189,6 +1189,8 @@ class T2Ipreldst<bit signed, bits<2> opcod, bit load, bit pre,
   let Inst{9}     = addr{8}; // Sign bit
   let Inst{8}     = 1; // The W bit.
   let Inst{7-0}   = addr{7-0};
+
+  let DecoderMethod = "DecodeT2LdStPre";
 }
 
 // T2Ipostldst - Thumb2 post-indexed load / store instructions.
@@ -1221,6 +1223,8 @@ class T2Ipostldst<bit signed, bits<2> opcod, bit load, bit pre,
   let Inst{9}     = offset{8}; // Sign bit
   let Inst{8}     = 1; // The W bit.
   let Inst{7-0}   = offset{7-0};
+
+  let DecoderMethod = "DecodeT2LdStPre";
 }
 
 // Tv5Pat - Same as Pat<>, but requires V5T Thumb mode.
