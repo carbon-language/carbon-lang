@@ -190,6 +190,43 @@
                         </td>
                     </tr>
 
+                    <tr><td class="header" colspan="2">Display a the variable "argc" and "argv" everytime you stop.</td></tr>
+                    <tr>
+                        <td class="content">
+                            <b>(lldb)</b> target stop-hook add --one-liner "frame variable argc argv"<br>
+                        </td>
+                        <td class="content">
+                            <b>(gdb)</b> display argc<br>
+                            <b>(gdb)</b> display argv<br>
+                        </td>
+                    </tr>
+
+                    <tr><td class="header" colspan="2">Display a the variable "argc" and "argv" only when you stop in the function named <b>main</b>.</td></tr>
+                    <tr>
+                        <td class="content" colspan="2">
+                            <b>(lldb)</b> target stop-hook add --name main --one-liner "frame variable argc argv"<br>
+                        </td>
+                    </tr>
+
+                    <tr><td class="header" colspan="2">Display the variable "*this" only when you stop in c class named <b>MyClass</b>.</td></tr>
+                    <tr>
+                        <td class="content" colspan="2">
+                            <b>(lldb)</b> target stop-hook add --classname MyClass --one-liner "frame variable *this"<br>
+                        </td>
+                    </tr>
+
+                    <tr><td class="header" colspan="2">Backtrace and disassemble every time you stop.</td></tr>
+                    <tr>
+                        <td class="content" colspan="2">
+                            <b>(lldb)</b> target stop-hook add"<br>
+                            Enter your stop hook command(s).  Type 'DONE' to end.<br>
+                            &gt; bt<br>
+                            &gt; disassemble --pc<br>
+                            &gt; DONE<br>
+                            Stop hook #1 added.<br>
+                        </td>
+                    </tr>
+
                     </table>
                     <p>
                 </div>
