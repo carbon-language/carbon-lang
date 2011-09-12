@@ -4250,11 +4250,11 @@ let Predicates = [HasAVX] in {
   // AVX 128-bit movd/movq instruction write zeros in the high 128-bit part.
   let AddedComplexity = 20 in {
     def : Pat<(v4i32 (X86vzmovl (loadv4i32 addr:$src))),
-              (SUBREG_TO_REG (i32 0), (VMOVZDI2PDIrm addr:$src), sub_xmm)>;
+              (VMOVZDI2PDIrm addr:$src)>;
     def : Pat<(v4i32 (X86vzmovl (bc_v4i32 (loadv4f32 addr:$src)))),
-              (SUBREG_TO_REG (i32 0), (VMOVZDI2PDIrm addr:$src), sub_xmm)>;
+              (VMOVZDI2PDIrm addr:$src)>;
     def : Pat<(v4i32 (X86vzmovl (bc_v4i32 (loadv2i64 addr:$src)))),
-              (SUBREG_TO_REG (i32 0), (VMOVZDI2PDIrm addr:$src), sub_xmm)>;
+              (VMOVZDI2PDIrm addr:$src)>;
   }
   // Use regular 128-bit instructions to match 256-bit scalar_to_vec+zext.
   def : Pat<(v8i32 (X86vzmovl (insert_subvector undef,
@@ -4347,11 +4347,11 @@ let Predicates = [HasSSE2], AddedComplexity = 20 in {
 
 let Predicates = [HasAVX], AddedComplexity = 20 in {
   def : Pat<(v2i64 (X86vzmovl (loadv2i64 addr:$src))),
-            (SUBREG_TO_REG (i64 0), (VMOVZQI2PQIrm addr:$src), sub_xmm)>;
+            (VMOVZQI2PQIrm addr:$src)>;
   def : Pat<(v2i64 (X86vzmovl (bc_v2i64 (loadv4f32 addr:$src)))),
-            (SUBREG_TO_REG (i64 0), (VMOVZQI2PQIrm addr:$src), sub_xmm)>;
+            (VMOVZQI2PQIrm addr:$src)>;
   def : Pat<(v2i64 (X86vzload addr:$src)),
-            (SUBREG_TO_REG (i64 0), (VMOVZQI2PQIrm addr:$src), sub_xmm)>;
+            (VMOVZQI2PQIrm addr:$src)>;
 }
 
 //===---------------------------------------------------------------------===//
@@ -4392,9 +4392,9 @@ let AddedComplexity = 20 in {
   }
   let Predicates = [HasAVX] in {
     def : Pat<(v2i64 (X86vzmovl (bc_v2i64 (loadv4i32 addr:$src)))),
-              (SUBREG_TO_REG (i64 0), (VMOVZPQILo2PQIrm addr:$src), sub_xmm)>;
+              (VMOVZPQILo2PQIrm addr:$src)>;
     def : Pat<(v2f64 (X86vzmovl (v2f64 VR128:$src))),
-              (SUBREG_TO_REG (i64 0), (MOVZPQILo2PQIrr VR128:$src), sub_xmm)>;
+              (VMOVZPQILo2PQIrr VR128:$src)>;
   }
 }
 

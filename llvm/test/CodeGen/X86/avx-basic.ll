@@ -91,3 +91,17 @@ entry:
   ret <8 x i32> %shuffle
 }
 
+;;; Don't crash on movd
+; CHECK: _VMOVZQI2PQI
+; CHECK: vmovd (%
+define <8 x i32> @VMOVZQI2PQI([0 x float]* nocapture %aFOO) nounwind {
+allocas:
+  %ptrcast.i33.i = bitcast [0 x float]* %aFOO to i32*
+  %val.i34.i = load i32* %ptrcast.i33.i, align 4
+  %ptroffset.i22.i992 = getelementptr [0 x float]* %aFOO, i64 0, i64 1
+  %ptrcast.i23.i = bitcast float* %ptroffset.i22.i992 to i32*
+  %val.i24.i = load i32* %ptrcast.i23.i, align 4
+  %updatedret.i30.i = insertelement <8 x i32> undef, i32 %val.i34.i, i32 1
+  ret <8 x i32> %updatedret.i30.i
+}
+
