@@ -676,7 +676,8 @@ static void warnBackEdgeUnequalLocksets(ThreadSafetyHandler &Handler,
 }
 
 
-namespace clang { namespace thread_safety {
+namespace clang {
+namespace thread_safety {
 /// \brief Check a function's CFG for thread-safety violations.
 ///
 /// We traverse the blocks in the CFG, compute the set of mutexes that are held
