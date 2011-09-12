@@ -76,6 +76,10 @@ void DIBuilder::createCompileUnit(unsigned Lang, StringRef Filename,
                                   StringRef Directory, StringRef Producer,
                                   bool isOptimized, StringRef Flags,
                                   unsigned RunTimeVer) {
+  assert (Lang <= dwarf::DW_LANG_D && Lang >= dwarf::DW_LANG_C89
+	  && "Invalid Language tag");
+  assert (!Filename.empty() 
+	  && "Unable to create compile unit without filename");
   Value *TElts[] = { GetTagConstant(VMContext, DW_TAG_base_type) };
   TempEnumTypes = MDNode::getTemporary(VMContext, TElts);
   Value *THElts[] = { TempEnumTypes };
@@ -121,6 +125,7 @@ void DIBuilder::createCompileUnit(unsigned Lang, StringRef Filename,
 /// for a file.
 DIFile DIBuilder::createFile(StringRef Filename, StringRef Directory) {
   assert(TheCU && "Unable to create DW_TAG_file_type without CompileUnit");
+  assert(!Filename.empty() && "Unable to create file without name");
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_file_type),
     MDString::get(VMContext, Filename),
@@ -132,6 +137,7 @@ DIFile DIBuilder::createFile(StringRef Filename, StringRef Directory) {
 
 /// createEnumerator - Create a single enumerator value.
 DIEnumerator DIBuilder::createEnumerator(StringRef Name, uint64_t Val) {
+  assert(!Name.empty() && "Unable to create enumerator without name");
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_enumerator),
     MDString::get(VMContext, Name),
@@ -145,6 +151,7 @@ DIEnumerator DIBuilder::createEnumerator(StringRef Name, uint64_t Val) {
 DIType DIBuilder::createBasicType(StringRef Name, uint64_t SizeInBits,
                                   uint64_t AlignInBits,
                                   unsigned Encoding) {
+  assert(!Name.empty() && "Unable to create type without name");
   // Basic types are encoded in DIBasicType format. Line number, filename,
   // offset and flags are always empty here.
   Value *Elts[] = {
@@ -202,6 +209,7 @@ DIType DIBuilder::createPointerType(DIType PointeeTy, uint64_t SizeInBits,
 
 /// createReferenceType - Create debugging information entry for a reference.
 DIType DIBuilder::createReferenceType(DIType RTy) {
+  assert(RTy.Verify() && "Unable to create reference type");
   // References are encoded in DIDerivedType format.
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_reference_type),
@@ -262,6 +270,7 @@ DIType DIBuilder::createFriend(DIType Ty, DIType FriendTy) {
 /// inheritnace relationship between two types.
 DIType DIBuilder::createInheritance(DIType Ty, DIType BaseTy,
                                     uint64_t BaseOffset, unsigned Flags) {
+  assert(Ty.Verify() && "Unable to create inheritance");
   // TAG_inheritance is encoded in DIDerivedType format.
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_inheritance),
