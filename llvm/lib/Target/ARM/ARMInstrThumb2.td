@@ -1527,7 +1527,7 @@ defm t2PLI  : T2Ipl<0, 1, "pli">,  Requires<[IsThumb2,HasV7]>;
 //  Load / store multiple Instructions.
 //
 
-multiclass thumb2_ldst_mult<string asm, InstrItinClass itin,
+multiclass thumb2_ld_mult<string asm, InstrItinClass itin,
                             InstrItinClass itin_upd, bit L_bit> {
   def IA :
     T2XI<(outs), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
@@ -1542,7 +1542,8 @@ multiclass thumb2_ldst_mult<string asm, InstrItinClass itin,
     let Inst{21}    = 0;        // No writeback
     let Inst{20}    = L_bit;
     let Inst{19-16} = Rn;
-    let Inst{15-0}  = regs;
+    let Inst{15}    = 0;
+    let Inst{14-0}  = regs{14-0};
   }
   def IA_UPD :
     T2XIt<(outs GPR:$wb), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
@@ -1557,7 +1558,8 @@ multiclass thumb2_ldst_mult<string asm, InstrItinClass itin,
     let Inst{21}    = 1;        // Writeback
     let Inst{20}    = L_bit;
     let Inst{19-16} = Rn;
-    let Inst{15-0}  = regs;
+    let Inst{15}    = 0;
+    let Inst{14-0}  = regs{14-0};
   }
   def DB :
     T2XI<(outs), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
@@ -1572,7 +1574,8 @@ multiclass thumb2_ldst_mult<string asm, InstrItinClass itin,
     let Inst{21}    = 0;        // No writeback
     let Inst{20}    = L_bit;
     let Inst{19-16} = Rn;
-    let Inst{15-0}  = regs;
+    let Inst{15}    = 0;
+    let Inst{14-0}  = regs{14-0};
   }
   def DB_UPD :
     T2XIt<(outs GPR:$wb), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
@@ -1587,17 +1590,95 @@ multiclass thumb2_ldst_mult<string asm, InstrItinClass itin,
     let Inst{21}    = 1;        // Writeback
     let Inst{20}    = L_bit;
     let Inst{19-16} = Rn;
-    let Inst{15-0}  = regs;
+    let Inst{15}    = 0;
+    let Inst{14-0}  = regs{14-0};
   }
 }
 
 let neverHasSideEffects = 1 in {
 
 let mayLoad = 1, hasExtraDefRegAllocReq = 1 in
-defm t2LDM : thumb2_ldst_mult<"ldm", IIC_iLoad_m, IIC_iLoad_mu, 1>;
+defm t2LDM : thumb2_ld_mult<"ldm", IIC_iLoad_m, IIC_iLoad_mu, 1>;
+
+multiclass thumb2_st_mult<string asm, InstrItinClass itin,
+                            InstrItinClass itin_upd, bit L_bit> {
+  def IA :
+    T2XI<(outs), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
+         itin, !strconcat(asm, "${p}.w\t$Rn, $regs"), []> {
+    bits<4>  Rn;
+    bits<16> regs;
+
+    let Inst{31-27} = 0b11101;
+    let Inst{26-25} = 0b00;
+    let Inst{24-23} = 0b01;     // Increment After
+    let Inst{22}    = 0;
+    let Inst{21}    = 0;        // No writeback
+    let Inst{20}    = L_bit;
+    let Inst{19-16} = Rn;
+    let Inst{15}    = 0;
+    let Inst{14}    = regs{14};
+    let Inst{13}    = 0;
+    let Inst{12-0}  = regs{12-0};
+  }
+  def IA_UPD :
+    T2XIt<(outs GPR:$wb), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
+          itin_upd, !strconcat(asm, "${p}.w\t$Rn!, $regs"), "$Rn = $wb", []> {
+    bits<4>  Rn;
+    bits<16> regs;
+
+    let Inst{31-27} = 0b11101;
+    let Inst{26-25} = 0b00;
+    let Inst{24-23} = 0b01;     // Increment After
+    let Inst{22}    = 0;
+    let Inst{21}    = 1;        // Writeback
+    let Inst{20}    = L_bit;
+    let Inst{19-16} = Rn;
+    let Inst{15}    = 0;
+    let Inst{14}    = regs{14};
+    let Inst{13}    = 0;
+    let Inst{12-0}  = regs{12-0};
+  }
+  def DB :
+    T2XI<(outs), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
+         itin, !strconcat(asm, "db${p}\t$Rn, $regs"), []> {
+    bits<4>  Rn;
+    bits<16> regs;
+
+    let Inst{31-27} = 0b11101;
+    let Inst{26-25} = 0b00;
+    let Inst{24-23} = 0b10;     // Decrement Before
+    let Inst{22}    = 0;
+    let Inst{21}    = 0;        // No writeback
+    let Inst{20}    = L_bit;
+    let Inst{19-16} = Rn;
+    let Inst{15}    = 0;
+    let Inst{14}    = regs{14};
+    let Inst{13}    = 0;
+    let Inst{12-0}  = regs{12-0};
+  }
+  def DB_UPD :
+    T2XIt<(outs GPR:$wb), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
+          itin_upd, !strconcat(asm, "db${p}\t$Rn!, $regs"), "$Rn = $wb", []> {
+    bits<4>  Rn;
+    bits<16> regs;
+
+    let Inst{31-27} = 0b11101;
+    let Inst{26-25} = 0b00;
+    let Inst{24-23} = 0b10;     // Decrement Before
+    let Inst{22}    = 0;
+    let Inst{21}    = 1;        // Writeback
+    let Inst{20}    = L_bit;
+    let Inst{19-16} = Rn;
+    let Inst{15}    = 0;
+    let Inst{14}    = regs{14};
+    let Inst{13}    = 0;
+    let Inst{12-0}  = regs{12-0};
+  }
+}
+
 
 let mayStore = 1, hasExtraSrcRegAllocReq = 1 in
-defm t2STM : thumb2_ldst_mult<"stm", IIC_iStore_m, IIC_iStore_mu, 0>;
+defm t2STM : thumb2_st_mult<"stm", IIC_iStore_m, IIC_iStore_mu, 0>;
 
 } // neverHasSideEffects
 
