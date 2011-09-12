@@ -1,9 +1,9 @@
 // RUN: mkdir -p %t
 // RUN: %clang_cc1 -emit-module -o %t/diamond_top.pcm %s -D MODULE_TOP
-// RUN: %clang_cc1 -I %t -emit-module -o %t/diamond_left.pcm %s -D MODULE_LEFT
-// RUN: %clang_cc1 -I %t -emit-module -o %t/diamond_right.pcm %s -D MODULE_RIGHT
-// RUN: %clang_cc1 -I %t -emit-module -o %t/diamond_bottom.pcm %s -D MODULE_BOTTOM
-// RUN: %clang_cc1 -I %t %s -verify
+// RUN: %clang_cc1 -fmodule-cache-path %t -emit-module -o %t/diamond_left.pcm %s -D MODULE_LEFT
+// RUN: %clang_cc1 -fmodule-cache-path %t -emit-module -o %t/diamond_right.pcm %s -D MODULE_RIGHT
+// RUN: %clang_cc1 -fmodule-cache-path %t -emit-module -o %t/diamond_bottom.pcm %s -D MODULE_BOTTOM
+// RUN: %clang_cc1 -fmodule-cache-path %t %s -verify
 
 /*============================================================================*/
 #ifdef MODULE_TOP

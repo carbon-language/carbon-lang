@@ -636,14 +636,8 @@ ModuleKey CompilerInstance::loadModule(SourceLocation ImportLoc,
     CurFile = SourceMgr.getFileEntryForID(SourceMgr.getMainFileID());
 
   // Search for a module with the given name.
-  std::string Filename = ModuleName.getName().str();
-  Filename += ".pcm";
-  const DirectoryLookup *CurDir = 0;  
   const FileEntry *ModuleFile
-    = PP->getHeaderSearchInfo().LookupFile(Filename, /*isAngled=*/false,
-                                           /*FromDir=*/0, CurDir, CurFile, 
-                                           /*SearchPath=*/0, 
-                                           /*RelativePath=*/0);
+    = PP->getHeaderSearchInfo().lookupModule(ModuleName.getName());
   if (!ModuleFile) {
     getDiagnostics().Report(ModuleNameLoc, diag::err_module_not_found)
       << ModuleName.getName()

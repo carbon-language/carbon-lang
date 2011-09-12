@@ -75,6 +75,9 @@ public:
   /// etc.).
   std::string ResourceDir;
 
+  /// \brief The directory used for the module cache.
+  std::string ModuleCachePath;
+  
   /// Include the compiler builtin includes.
   unsigned UseBuiltinIncludes : 1;
 

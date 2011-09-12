@@ -98,6 +98,16 @@ const HeaderMap *HeaderSearch::CreateHeaderMap(const FileEntry *FE) {
   return 0;
 }
 
+const FileEntry *HeaderSearch::lookupModule(StringRef ModuleName) {
+  // If we don't have a module cache path, we can't do anything.
+  if (ModuleCachePath.empty())
+    return 0;
+  
+  llvm::SmallString<256> FileName(ModuleCachePath);
+  llvm::sys::path::append(FileName, ModuleName + ".pcm");
+  return getFileMgr().getFile(FileName);
+}
+
 //===----------------------------------------------------------------------===//
 // File lookup within a DirectoryLookup scope
 //===----------------------------------------------------------------------===//

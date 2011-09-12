@@ -10,8 +10,8 @@ void test(id x) {
 
 // RUN: %clang_cc1 -emit-module -x objective-c -o %T/lookup_left_objc.pcm %S/Inputs/lookup_left.h
 // RUN: %clang_cc1 -emit-module -x objective-c -o %T/lookup_right_objc.pcm %S/Inputs/lookup_right.h
-// RUN: %clang_cc1 -x objective-c -I %T -verify %s
-// RUN: %clang_cc1 -ast-print -x objective-c -I %T %s | FileCheck -check-prefix=CHECK-PRINT %s
+// RUN: %clang_cc1 -x objective-c -fmodule-cache-path %T -verify %s
+// RUN: %clang_cc1 -ast-print -x objective-c -fmodule-cache-path %T %s | FileCheck -check-prefix=CHECK-PRINT %s
 
 // CHECK-PRINT: - (int) method;
 // CHECK-PRINT: - (double) method

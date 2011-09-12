@@ -129,6 +129,9 @@ class HeaderSearch {
   unsigned SystemDirIdx;
   bool NoCurDirSearch;
 
+  /// \brief The path to the module cache.
+  std::string ModuleCachePath;
+  
   /// FileInfo - This contains all of the preprocessor-specific data about files
   /// that are included.  The vector is indexed by the FileEntry's UID.
   ///
@@ -193,6 +196,11 @@ public:
     //LookupFileCache.clear();
   }
 
+  /// \brief Set the path to the module cache.
+  void setModuleCachePath(StringRef Path) {
+    ModuleCachePath = Path;
+  }
+  
   /// ClearFileInfo - Forget everything we know about headers so far.
   void ClearFileInfo() {
     FileInfo.clear();
@@ -308,6 +316,13 @@ public:
   /// FileEntry, uniquing them through the the 'HeaderMaps' datastructure.
   const HeaderMap *CreateHeaderMap(const FileEntry *FE);
 
+  /// \brief Search in the module cache path for a module with the given
+  /// name.
+  ///
+  /// \returns A file describing the named module, if available, or NULL to
+  /// indicate that the module could not be found.
+  const FileEntry *lookupModule(StringRef ModuleName);
+  
   void IncrementFrameworkLookupCount() { ++NumFrameworkLookups; }
 
   typedef std::vector<HeaderFileInfo>::const_iterator header_file_iterator;

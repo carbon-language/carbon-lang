@@ -1,7 +1,7 @@
 // RUN: mkdir -p %t
 // RUN: %clang_cc1 -x c++ -emit-module -o %t/left.pcm %s -D MODULE_LEFT
 // RUN: %clang_cc1 -x c++ -emit-module -o %t/right.pcm %s -D MODULE_RIGHT
-// RUN: %clang_cc1 -I %t %s -verify
+// RUN: %clang_cc1 -fmodule-cache-path %t %s -verify
 
 #if defined(MODULE_LEFT)
 

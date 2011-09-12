@@ -576,6 +576,10 @@ static void HeaderSearchOptsToArgs(const HeaderSearchOptions &Opts,
     Res.push_back("-resource-dir");
     Res.push_back(Opts.ResourceDir);
   }
+  if (!Opts.ModuleCachePath.empty()) {
+    Res.push_back("-fmodule-cache-path");
+    Res.push_back(Opts.ModuleCachePath);
+  }
   if (!Opts.UseStandardIncludes)
     Res.push_back("-nostdinc");
   if (!Opts.UseStandardCXXIncludes)
@@ -1378,7 +1382,8 @@ static void ParseHeaderSearchArgs(HeaderSearchOptions &Opts, ArgList &Args) {
   if (const Arg *A = Args.getLastArg(OPT_stdlib_EQ))
     Opts.UseLibcxx = (strcmp(A->getValue(Args), "libc++") == 0);
   Opts.ResourceDir = Args.getLastArgValue(OPT_resource_dir);
-
+  Opts.ModuleCachePath = Args.getLastArgValue(OPT_fmodule_cache_path);
+  
   // Add -I..., -F..., and -index-header-map options in order.
   bool IsIndexHeaderMap = false;
   for (arg_iterator it = Args.filtered_begin(OPT_I, OPT_F, 
@@ -1426,7 +1431,7 @@ static void ParseHeaderSearchArgs(HeaderSearchOptions &Opts, ArgList &Args) {
                  ((*it)->getOption().matches(OPT_cxx_isystem) ?
                    frontend::CXXSystem : frontend::System),
                  true, false, !(*it)->getOption().matches(OPT_iwithsysroot));
-
+  
   // FIXME: Need options for the various environment variables!
 }
 
