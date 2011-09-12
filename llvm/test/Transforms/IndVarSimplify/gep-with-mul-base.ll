@@ -1,7 +1,16 @@
-; RUN: opt < %s -indvars -S > %t
-; RUN: grep add %t | count 6
-; RUN: grep sub %t | count 2
-; RUN: grep mul %t | count 6
+; RUN: opt < %s -indvars -S -enable-iv-rewrite | FileCheck %s
+; CHECK: define void @foo
+; CHECK: mul
+; CHECK: mul
+; CHECK: mul
+; CHECK: add
+; CHECK: sub
+; CHECK: define void @bar
+; CHECK: mul
+; CHECK: mul
+; CHECK: mul
+; CHECK: add
+; CHECK: sub
 
 define void @foo(i64 %n, i64 %m, i64 %o, double* nocapture %p) nounwind {
 entry:
