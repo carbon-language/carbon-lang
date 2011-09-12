@@ -55,9 +55,10 @@ OptionGroupWatchpoint::SetOptionValue (CommandInterpreter &interpreter,
     switch (short_option)
     {
         case 'w': {
-            watch_variable = false;
             OptionEnumValueElement *enum_values = g_option_table[option_idx].enum_values;
             watch_mode = (WatchMode) Args::StringToOptionEnum(option_arg, enum_values, 0, &watch_variable);
+            if (!watch_variable)
+                error.SetErrorStringWithFormat("Invalid option arg for '-w': '%s'.\n", option_arg);
             break;
         }
         default:

@@ -414,6 +414,22 @@ public:
             
             if (variable_list)
             {
+                // If watching a variable, there are certain restrictions to be followed.
+                if (m_option_watchpoint.watch_variable)
+                {
+                    if (command.GetArgumentCount() != 1) {
+                        result.GetErrorStream().Printf("error: specify exactly one variable when using the '-w' option\n");
+                        result.SetStatus(eReturnStatusFailed);
+                        return false;
+                    } else if (m_option_variable.use_regex) {
+                        result.GetErrorStream().Printf("error: specify your variable name exactly (no regex) when using the '-w' option\n");
+                        result.SetStatus(eReturnStatusFailed);
+                        return false;
+                    }
+
+                    // Things have checked out ok...
+                    // m_option_watchpoint.watch_mode specifies the mode for watching.
+                }
                 if (command.GetArgumentCount() > 0)
                 {
                     VariableList regex_var_list;
