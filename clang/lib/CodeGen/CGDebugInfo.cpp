@@ -290,6 +290,8 @@ llvm::DIType CGDebugInfo::CreateType(const BuiltinType *BT) {
   const char *BTName = NULL;
   switch (BT->getKind()) {
   default:
+    assert(0 && "Unexpected builtin");
+    return llvm::DIType();
   case BuiltinType::Void:
     return llvm::DIType();
   case BuiltinType::ObjCClass:
