@@ -1202,9 +1202,6 @@ public:
   /// GenerateObjCGetter - Synthesize an Objective-C property getter function.
   void GenerateObjCGetter(ObjCImplementationDecl *IMP,
                           const ObjCPropertyImplDecl *PID);
-  void GenerateObjCGetterBody(ObjCIvarDecl *Ivar, bool IsAtomic, bool IsStrong);
-  void GenerateObjCAtomicSetterBody(ObjCMethodDecl *OMD,
-                                    ObjCIvarDecl *Ivar);
 
   void GenerateObjCCtorDtorMethod(ObjCImplementationDecl *IMP,
                                   ObjCMethodDecl *MD, bool ctor);
