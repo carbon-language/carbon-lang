@@ -17,6 +17,9 @@
 
 #include "llvm-c/lto.h"
 
+#include "llvm/ADT/OwningPtr.h"
+#include "llvm/Support/system_error.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Support/Errno.h"
 #include "llvm/Support/Path.h"
@@ -235,25 +238,38 @@ ld_plugin_status onload(ld_plugin_tv *tv) {
 static ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
                                         int *claimed) {
   lto_module_t M;
-
+  const void *view;
+  OwningPtr<MemoryBuffer> buffer;
   if (get_view) {
-    const void *view;
     if (get_view(file->handle, &view) != LDPS_OK) {
       (*message)(LDPL_ERROR, "Failed to get a view of %s", file->name);
       return LDPS_ERR;
     }
-    M = lto_module_create_from_memory(view, file->filesize);
-  } else if (file->offset) {
+  } else {
+    off_t offset = 0;
     // Gold has found what might be IR part-way inside of a file, such as
     // an .a archive.
-    M = lto_module_create_from_fd_at_offset(file->fd, file->name, -1,
-                                            file->filesize, file->offset);
-  } else {
-    M = lto_module_create_from_fd(file->fd, file->name, file->filesize);
+    if (file->offset) {
+      offset = file->offset;
+    }
+    if (error_code ec =
+        MemoryBuffer::getOpenFile(file->fd, file->name, buffer, file->filesize,
+                                  -1, offset, false)) {
+      (*message)(LDPL_ERROR, ec.message().c_str());
+      return LDPS_ERR;
+    }
+    view = buffer->getBufferStart();
   }
+
+  if (!lto_module_is_object_file_in_memory(view, file->filesize))
+    return LDPS_OK;
+
+  M = lto_module_create_from_memory(view, file->filesize);
   if (!M) {
     if (const char* msg = lto_get_error_message()) {
-      (*message)(LDPL_ERROR, "Failed to create LTO module: %s", msg);
+      (*message)(LDPL_ERROR,
+                 "LLVM gold plugin has failed to create LTO module: %s",
+                 msg);
       return LDPS_ERR;
     }
     return LDPS_OK;
