@@ -6,14 +6,9 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-//
 
-//
-//===----------------------------------------------------------------------===//
-
- #ifndef liblldb_DWARFFormValue_h_
- #define SymbolFileDWARF_DWARFFormValue_h_
+#ifndef SymbolFileDWARF_DWARFFormValue_h_
+#define SymbolFileDWARF_DWARFFormValue_h_
 
 #include "SymbolFileDWARF.h"
 #include <stddef.h> // for NULL

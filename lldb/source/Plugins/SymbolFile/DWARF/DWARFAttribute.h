@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_DWARFAttribute_h_
-#define liblldb_DWARFAttribute_h_
+#ifndef SymbolFileDWARF_DWARFAttribute_h_
+#define SymbolFileDWARF_DWARFAttribute_h_
 
 #include "DWARFDefines.h"
 #include <vector>
@@ -42,4 +42,4 @@ protected:
 };
 
 
-#endif  // liblldb_DWARFAttribute_h_
+#endif  // SymbolFileDWARF_DWARFAttribute_h_

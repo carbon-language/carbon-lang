@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_DWARFDefines_h_
-#define liblldb_DWARFDefines_h_
+#ifndef SymbolFileDWARF_DWARFDefines_h_
+#define SymbolFileDWARF_DWARFDefines_h_
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -113,4 +113,4 @@ const char *DW_GNU_EH_PE_value_to_name (uint32_t val);
 } // namespace lldb_private
 
 
-#endif  // liblldb_DWARFDefines_h_
+#endif  // SymbolFileDWARF_DWARFDefines_h_

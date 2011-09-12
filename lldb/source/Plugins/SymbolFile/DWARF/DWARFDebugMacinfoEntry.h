@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_DWARFDebugMacinfoEntry_h_
+#ifndef SymbolFileDWARF_DWARFDebugMacinfoEntry_h_
 #define SymbolFileDWARF_DWARFDebugMacinfoEntry_h_
 
 #include "SymbolFileDWARF.h"

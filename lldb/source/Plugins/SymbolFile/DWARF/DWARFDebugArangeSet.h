@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_DWARFDebugArangeSet_h_
+#ifndef SymbolFileDWARF_DWARFDebugArangeSet_h_
 #define SymbolFileDWARF_DWARFDebugArangeSet_h_
 
 #include "SymbolFileDWARF.h"

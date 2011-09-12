@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_DWARFDebugRanges_h_
-#define liblldb_DWARFDebugRanges_h_
+#ifndef SymbolFileDWARF_DWARFDebugRanges_h_
+#define SymbolFileDWARF_DWARFDebugRanges_h_
 
 #include "SymbolFileDWARF.h"
 #include <map>
@@ -86,4 +86,4 @@ protected:
 };
 
 
-#endif  // liblldb_DWARFDebugRanges_h_
+#endif  // SymbolFileDWARF_DWARFDebugRanges_h_

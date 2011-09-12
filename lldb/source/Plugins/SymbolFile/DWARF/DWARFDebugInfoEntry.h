@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_DWARFDebugInfoEntry_h_
-#define liblldb_DWARFDebugInfoEntry_h_
+#ifndef SymbolFileDWARF_DWARFDebugInfoEntry_h_
+#define SymbolFileDWARF_DWARFDebugInfoEntry_h_
 
 #include "SymbolFileDWARF.h"
 
@@ -332,4 +332,4 @@ protected:
     const DWARFAbbreviationDeclaration* m_abbrevDecl;
 };
 
-#endif  // liblldb_DWARFDebugInfoEntry_h_
+#endif  // SymbolFileDWARF_DWARFDebugInfoEntry_h_

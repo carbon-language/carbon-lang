@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_DWARFDebugPubnamesSet_h_
+#ifndef SymbolFileDWARF_DWARFDebugPubnamesSet_h_
 #define SymbolFileDWARF_DWARFDebugPubnamesSet_h_
 
 #include "SymbolFileDWARF.h"

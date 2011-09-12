@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_SymbolFileDWARFDebugMap_h_
-#define liblldb_SymbolFileDWARFDebugMap_h_
+#ifndef SymbolFileDWARF_SymbolFileDWARFDebugMap_h_
+#define SymbolFileDWARF_SymbolFileDWARFDebugMap_h_
 
 
 #include <vector>
@@ -219,4 +219,4 @@ protected:
     UniqueDWARFASTTypeMap m_unique_ast_type_map;
 };
 
-#endif // #ifndef liblldb_SymbolFileDWARFDebugMap_h_
+#endif // #ifndef SymbolFileDWARF_SymbolFileDWARFDebugMap_h_

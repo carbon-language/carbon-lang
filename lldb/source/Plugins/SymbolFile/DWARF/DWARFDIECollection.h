@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_DWARFDIECollection_h_
+#ifndef SymbolFileDWARF_DWARFDIECollection_h_
 #define SymbolFileDWARF_DWARFDIECollection_h_
 
 #include "SymbolFileDWARF.h"

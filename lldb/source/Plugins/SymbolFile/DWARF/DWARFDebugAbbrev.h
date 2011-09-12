@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_DWARFDebugAbbrev_h_
+#ifndef SymbolFileDWARF_DWARFDebugAbbrev_h_
 #define SymbolFileDWARF_DWARFDebugAbbrev_h_
 
 #include <list>
