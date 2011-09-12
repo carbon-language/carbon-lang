@@ -572,7 +572,7 @@ def STWDP_lru6 : _FLRU6<(outs), (ins GRRegs:$val, MEMii:$addr),
                   [(store GRRegs:$val, ADDRdpii:$addr)]>;
 
 //let Uses = [CP] in ..
-let mayLoad = 1, isReMaterializable = 1 in
+let mayLoad = 1, isReMaterializable = 1, neverHasSideEffects = 1 in
 defm LDWCP : FRU6_LRU6_cp<"ldw">;
 
 let Uses = [SP] in {
