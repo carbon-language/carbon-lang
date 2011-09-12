@@ -8445,16 +8445,25 @@ SDValue X86TargetLowering::LowerVSETCC(SDValue Op, SelectionDAG &DAG) const {
     unsigned Opc = EltVT == MVT::f32 ? X86ISD::CMPPS : X86ISD::CMPPD;
     bool Swap = false;
 
+    // SSE Condition code mapping:
+    //  0 - EQ
+    //  1 - LT
+    //  2 - LE
+    //  3 - UNORD
+    //  4 - NEQ
+    //  5 - NLT
+    //  6 - NLE
+    //  7 - ORD
     switch (SetCCOpcode) {
     default: break;
     case ISD::SETOEQ:
     case ISD::SETEQ:  SSECC = 0; break;
-    case ISD::SETOGT:
-    case ISD::SETGT: Swap = true; // Fallthrough
-    case ISD::SETLT:
-    case ISD::SETOLT: SSECC = 1; break;
     case ISD::SETOGE:
     case ISD::SETGE: Swap = true; // Fallthrough
+    case ISD::SETLT:
+    case ISD::SETOLT: SSECC = 1; break;
+    case ISD::SETOGT:
+    case ISD::SETGT: Swap = true; // Fallthrough
     case ISD::SETLE:
     case ISD::SETOLE: SSECC = 2; break;
     case ISD::SETUO:  SSECC = 3; break;
@@ -8473,20 +8482,20 @@ SDValue X86TargetLowering::LowerVSETCC(SDValue Op, SelectionDAG &DAG) const {
     if (SSECC == 8) {
       if (SetCCOpcode == ISD::SETUEQ) {
         SDValue UNORD, EQ;
-        UNORD = DAG.getNode(Opc, dl, VT, Op0, Op1, DAG.getConstant(3, MVT::i8));
-        EQ = DAG.getNode(Opc, dl, VT, Op0, Op1, DAG.getConstant(0, MVT::i8));
+        UNORD = DAG.getNode(Opc, dl, VT, Op1, Op0, DAG.getConstant(3, MVT::i8));
+        EQ = DAG.getNode(Opc, dl, VT, Op1, Op0, DAG.getConstant(0, MVT::i8));
         return DAG.getNode(ISD::OR, dl, VT, UNORD, EQ);
       }
       else if (SetCCOpcode == ISD::SETONE) {
         SDValue ORD, NEQ;
-        ORD = DAG.getNode(Opc, dl, VT, Op0, Op1, DAG.getConstant(7, MVT::i8));
-        NEQ = DAG.getNode(Opc, dl, VT, Op0, Op1, DAG.getConstant(4, MVT::i8));
+        ORD = DAG.getNode(Opc, dl, VT, Op1, Op0, DAG.getConstant(7, MVT::i8));
+        NEQ = DAG.getNode(Opc, dl, VT, Op1, Op0, DAG.getConstant(4, MVT::i8));
         return DAG.getNode(ISD::AND, dl, VT, ORD, NEQ);
       }
       llvm_unreachable("Illegal FP comparison");
     }
     // Handle all other FP comparisons here.
-    return DAG.getNode(Opc, dl, VT, Op0, Op1, DAG.getConstant(SSECC, MVT::i8));
+    return DAG.getNode(Opc, dl, VT, Op1, Op0, DAG.getConstant(SSECC, MVT::i8));
   }
 
   // Break 256-bit integer vector compare into smaller ones.

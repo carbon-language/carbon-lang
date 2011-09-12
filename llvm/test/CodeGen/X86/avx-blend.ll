@@ -82,4 +82,23 @@ define <8 x i64> @vsel_i648(<8 x i64> %v1, <8 x i64> %v2) {
   ret <8 x i64> %vsel
 }
 
+;; TEST blend + compares
+; CHECK: A
+define <2 x double> @A(<2 x double> %x, <2 x double> %y) {
+  ; CHECK: vcmpltpd
+  ; CHECK: vblendvpd
+  %max_is_x = fcmp oge <2 x double> %x, %y
+  %max = select <2 x i1> %max_is_x, <2 x double> %x, <2 x double> %y
+  ret <2 x double> %max
+}
+
+; CHECK: B
+define <2 x double> @B(<2 x double> %x, <2 x double> %y) {
+  ; CHECK: vcmplepd
+  ; CHECK: vblendvpd
+  %max_is_x = fcmp ogt <2 x double> %x, %y
+  %max = select <2 x i1> %max_is_x, <2 x double> %x, <2 x double> %y
+  ret <2 x double> %max
+}
+
 
