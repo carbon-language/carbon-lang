@@ -5869,7 +5869,7 @@ static void diagnoseArithmeticOnFunctionPointer(Sema &S, SourceLocation Loc,
     << Pointer->getSourceRange();
 }
 
-/// \brief Warn if Operand is incomplete pointer type
+/// \brief Emit error if Operand is incomplete pointer type
 ///
 /// \returns True if pointer has incomplete type
 static bool checkArithmeticIncompletePointerType(Sema &S, SourceLocation Loc,
@@ -5975,7 +5975,7 @@ static bool checkArithmethicPointerOnNonFragileABI(Sema &S,
   return false;
 }
 
-/// \brief Warn when two pointers are incompatible.
+/// \brief Emit error when two pointers are incompatible.
 static void diagnosePointerIncompatibility(Sema &S, SourceLocation Loc,
                                            Expr *LHSExpr, Expr *RHSExpr) {
   assert(LHSExpr->getType()->isAnyPointerType());
