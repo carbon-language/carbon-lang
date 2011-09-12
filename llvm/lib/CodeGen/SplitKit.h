@@ -255,7 +255,7 @@ class SplitEditor {
   // live-out value and its defining block.
   // One of these conditions shall be true:
   //
-  //  1. !LiveOutCache.count(MBB)
+  //  1. !LiveOutSeen.count(MBB->getNumber())
   //  2. LiveOutCache[MBB].second.getNode() == MBB
   //  3. forall P in preds(MBB): LiveOutCache[P] == LiveOutCache[MBB]
   //
@@ -264,12 +264,13 @@ class SplitEditor {
   //  VNI = Edit.get(RegIdx)->getVNInfoAt(LIS.getMBBEndIdx(MBB))
   //  Node = mbt_[LIS.getMBBFromIndex(VNI->def)]
   //
-  // The cache is also used as a visited set by extendRange(). It can be shared
-  // by all the new registers because at most one is live out of each block.
+  // The cache can be shared by all the new registers because at most one is
+  // live out of each block.
   LiveOutMap LiveOutCache;
 
   // LiveOutSeen - Indexed by MBB->getNumber(), a bit is set for each valid
-  // entry in LiveOutCache.
+  // entry in LiveOutCache.  This is also used as a visited set for
+  // findReachingDefs().
   BitVector LiveOutSeen;
 
   /// LiveInBlock - Info for updateSSA() about a block where a register is
