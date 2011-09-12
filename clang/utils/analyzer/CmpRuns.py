@@ -90,7 +90,7 @@ class AnalysisRun:
             return path[len(self.opts.root):]
         return path
 
-def loadResults(path, opts):
+def loadResults(path, opts, deleteEmpty=True):
     run = AnalysisRun(path, opts)
 
     for f in os.listdir(path):
@@ -101,8 +101,10 @@ def loadResults(path, opts):
         p = os.path.join(path, f)
         data = plistlib.readPlist(p)
 
-        # Ignore empty reports.
+        # Ignore/delete empty reports.
         if not data['files']:
+            if deleteEmpty == True:
+                os.remove(p)
             continue
 
         # Extract the HTML reports, if they exists.
@@ -175,10 +177,10 @@ def compareResults(A, B):
 
     return res
 
-def cmpScanBuildResults(dirA, dirB, opts):
+def cmpScanBuildResults(dirA, dirB, opts, deleteEmpty=True):
     # Load the run results.
-    resultsA = loadResults(dirA, opts)
-    resultsB = loadResults(dirB, opts)
+    resultsA = loadResults(dirA, opts, deleteEmpty)
+    resultsB = loadResults(dirB, opts, deleteEmpty)
     
     # Open the verbose log, if given.
     if opts.verboseLog:
