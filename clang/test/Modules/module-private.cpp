@@ -96,8 +96,8 @@ struct public_class {
   struct inner_struct;
   static int static_var;
 
-  friend __module_private__ void public_func(); // expected-error{{friend cannot be declared __module_private__}}
-  friend __module_private__ struct public_struct; // expected-error{{friend cannot be declared __module_private__}}
+  friend __module_private__ void public_func_friend();
+  friend __module_private__ struct public_struct_friend;
 };
 
 template<> __module_private__ struct public_class<int>::inner_struct { }; // expected-error{{member specialization cannot be declared __module_private__}}

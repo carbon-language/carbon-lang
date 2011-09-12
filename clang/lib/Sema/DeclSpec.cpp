@@ -899,13 +899,6 @@ void DeclSpec::Finish(Diagnostic &D, Preprocessor &PP) {
     ClearStorageClassSpecs();
   }
 
-  // A friend cannot be specified as module-private.
-  if (isFriendSpecified() && isModulePrivateSpecified()) {
-    Diag(D, ModulePrivateLoc, diag::err_module_private_friend)
-      << FixItHint::CreateRemoval(ModulePrivateLoc);
-    ModulePrivateLoc = SourceLocation();
-  }
-
   assert(!TypeSpecOwned || isDeclRep((TST) TypeSpecType));
  
   // Okay, now we can infer the real type.

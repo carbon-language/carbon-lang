@@ -582,8 +582,6 @@ def err_module_expected_ident : Error<
   "expected a module name after '__import_module__'">;
 def err_module_expected_semi : Error<
   "expected a semicolon name after module name">;
-def err_module_private_friend : Error<
-  "friend cannot be declared __module_private__">;
 }
 
 } // end of Parser diagnostics
