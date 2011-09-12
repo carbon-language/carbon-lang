@@ -1893,16 +1893,12 @@ parseRegisterList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
 
     const AsmToken &RegTok = Parser.getTok();
     SMLoc RegLoc = RegTok.getLoc();
-    if (RegTok.isNot(AsmToken::Identifier)) {
-      Error(RegLoc, "register expected");
-      return true;
-    }
+    if (RegTok.isNot(AsmToken::Identifier))
+      return Error(RegLoc, "register expected");
 
     int RegNum = tryParseRegister();
-    if (RegNum == -1) {
-      Error(RegLoc, "register expected");
-      return true;
-    }
+    if (RegNum == -1)
+      return Error(RegLoc, "register expected");
 
     if (IsRange) {
       int Reg = PrevRegNum;
@@ -1910,9 +1906,8 @@ parseRegisterList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
         ++Reg;
         Registers.push_back(std::make_pair(Reg, RegLoc));
       } while (Reg != RegNum);
-    } else {
+    } else
       Registers.push_back(std::make_pair(RegNum, RegLoc));
-    }
 
     PrevRegNum = RegNum;
   } while (Parser.getTok().is(AsmToken::Comma) ||
@@ -1920,10 +1915,8 @@ parseRegisterList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
 
   // Process the right curly brace of the list.
   const AsmToken &RCurlyTok = Parser.getTok();
-  if (RCurlyTok.isNot(AsmToken::RCurly)) {
-    Error(RCurlyTok.getLoc(), "'}' expected");
-    return true;
-  }
+  if (RCurlyTok.isNot(AsmToken::RCurly))
+    return Error(RCurlyTok.getLoc(), "'}' expected");
 
   SMLoc E = RCurlyTok.getLoc();
   Parser.Lex(); // Eat right curly brace token.
@@ -1936,10 +1929,8 @@ parseRegisterList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
     const std::pair<unsigned, SMLoc> &RegInfo = Registers[i];
     unsigned Reg = getARMRegisterNumbering(RegInfo.first);
 
-    if (RegMap[Reg]) {
-      Error(RegInfo.second, "register duplicated in register list");
-      return true;
-    }
+    if (RegMap[Reg])
+      return Error(RegInfo.second, "register duplicated in register list");
 
     if (!EmittedWarning && Reg < HighRegNum)
       Warning(RegInfo.second,
