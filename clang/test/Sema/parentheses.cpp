@@ -40,6 +40,8 @@ void test(S *s, bool (S::*m_ptr)()) {
                                      // expected-note {{place parentheses around the '?:' expression to evaluate it first}} \
                                      // expected-note {{place parentheses around the '+' expression to silence this warning}}
 
+  (void)((*s + true) ? "foo" : "bar"); // No warning.
+
   // Don't crash on unusual member call expressions.
   (void)((s->*m_ptr)() ? "foo" : "bar");
 }

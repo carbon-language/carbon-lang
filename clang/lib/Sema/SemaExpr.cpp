@@ -4926,9 +4926,10 @@ static bool IsArithmeticOp(BinaryOperatorKind Opc) {
 /// expression.
 static bool IsArithmeticBinaryExpr(Expr *E, BinaryOperatorKind *Opcode,
                                    Expr **RHSExprs) {
-  E = E->IgnoreParenImpCasts();
+  // Don't strip parenthesis: we should not warn if E is in parenthesis.
+  E = E->IgnoreImpCasts();
   E = E->IgnoreConversionOperator();
-  E = E->IgnoreParenImpCasts();
+  E = E->IgnoreImpCasts();
 
   // Built-in binary operator.
   if (BinaryOperator *OP = dyn_cast<BinaryOperator>(E)) {
