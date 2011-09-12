@@ -178,10 +178,14 @@
   <li><code>cd libcxx/test</code></li>
   <li><code>./testit</code></li>
      <ul>
-       <li><p>On Mac OS 10.6 add "-U__STRICT_ANSI__" to the command line with:</p>
-           <blockquote><pre>
-export OPTIONS="-std=c++0x -stdlib=libc++ -U__STRICT_ANSI__"
-           </pre></blockqutoe></li>
+       <li>On Mac OS 10.6, to work around bugs in libc headers like
+           math.h and inttypes.h, add "-U__STRICT_ANSI__" and
+           "-D__STDC_FORMAT_MACROS" to the command line with:
+           <blockquote>
+             <pre>export OPTIONS="-std=c++0x -stdlib=libc++ -U__STRICT_ANSI__ -D__STDC_FORMAT_MACROS"</pre>
+           </blockquote></li>
+       <li>People porting libc++ to other OSes will likely have to
+           define similar macros.</li>
      </ul>
   </ul>
 
