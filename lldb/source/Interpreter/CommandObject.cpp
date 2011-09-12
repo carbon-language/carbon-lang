@@ -830,7 +830,7 @@ CommandObject::g_arguments_data[] =
     { eArgTypeWidth, "width", CommandCompletions::eNoCompletion, { NULL, false }, "Help text goes here." },
     { eArgTypeNone, "none", CommandCompletions::eNoCompletion, { NULL, false }, "No help available for this." },
     { eArgTypePlatform, "platform-name", CommandCompletions::ePlatformPluginCompletion, { NULL, false }, "The name of an installed platform plug-in . Type 'platform list' to see a complete list of installed platforms." },
-    { eArgTypeWatchMode, "watch-mode", CommandCompletions::eNoCompletion, { NULL, false }, "Specify the mode for a watchpoint." }
+    { eArgTypeWatchType, "watch-type", CommandCompletions::eNoCompletion, { NULL, false }, "Specify the type for a watchpoint." }
 };
 
 const CommandObject::ArgumentTableEntry*

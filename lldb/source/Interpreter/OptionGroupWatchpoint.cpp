@@ -20,7 +20,7 @@
 using namespace lldb;
 using namespace lldb_private;
 
-static OptionEnumValueElement g_watch_mode[] =
+static OptionEnumValueElement g_watch_type[] =
 {
     { OptionGroupWatchpoint::eWatchRead,      "read",       "Watch for read"},
     { OptionGroupWatchpoint::eWatchWrite,     "write",      "Watch for write"},
@@ -32,7 +32,7 @@ static OptionEnumValueElement g_watch_mode[] =
 static OptionDefinition
 g_option_table[] =
 {
-    { LLDB_OPT_SET_1, false, "watch", 'w', required_argument, g_watch_mode, 0, eArgTypeWatchMode, "Determine how to watch a memory location (read, write, or read/write)."}
+    { LLDB_OPT_SET_1, false, "watch", 'w', required_argument, g_watch_type, 0, eArgTypeWatchType, "Determine how to watch a memory location (read, write, or read/write)."}
 };
 
 
@@ -56,7 +56,7 @@ OptionGroupWatchpoint::SetOptionValue (CommandInterpreter &interpreter,
     {
         case 'w': {
             OptionEnumValueElement *enum_values = g_option_table[option_idx].enum_values;
-            watch_mode = (WatchMode) Args::StringToOptionEnum(option_arg, enum_values, 0, &watch_variable);
+            watch_type = (WatchType) Args::StringToOptionEnum(option_arg, enum_values, 0, &watch_variable);
             if (!watch_variable)
                 error.SetErrorStringWithFormat("Invalid option arg for '-w': '%s'.\n", option_arg);
             break;
@@ -73,7 +73,7 @@ void
 OptionGroupWatchpoint::OptionParsingStarting (CommandInterpreter &interpreter)
 {
     watch_variable = false;
-    watch_mode     = eWatchInvalid;
+    watch_type     = eWatchInvalid;
 }
 
 

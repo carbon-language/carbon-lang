@@ -493,7 +493,7 @@ public:
                                     result.GetErrorStream().Printf ("error: unkown regex error when compiling '%s'\n", name_cstr);
                             }
                         }
-                        else
+                        else // No regex, either exact variable names or variable expressions.
                         {
                             Error error;
                             uint32_t expr_path_options = StackFrame::eExpressionPathOptionCheckPtrVsMember;
@@ -514,10 +514,34 @@ public:
                                 }
                                 if (summary_format_sp)
                                     valobj_sp->SetCustomSummaryFormat(summary_format_sp);
-                                ValueObject::DumpValueObject (result.GetOutputStream(), 
+
+                                Stream &output_stream = result.GetOutputStream();
+                                ValueObject::DumpValueObject (output_stream, 
                                                               valobj_sp.get(), 
                                                               valobj_sp->GetParent() ? name_cstr : NULL,
                                                               options);
+                                // Process watchpoint if necessary.
+                                if (m_option_watchpoint.watch_variable)
+                                {
+                                    lldb::addr_t addr = LLDB_INVALID_ADDRESS;
+                                    size_t size = 0;
+                                    uint32_t watch_type = m_option_watchpoint.watch_type;
+                                    WatchpointLocation *wp_loc =
+                                        exe_ctx.target->CreateWatchpointLocation(addr, size, watch_type).get();
+                                    if (wp_loc)
+                                    {
+                                        output_stream.Printf("Watchpoint created: ");
+                                        wp_loc->GetDescription(&output_stream, lldb::eDescriptionLevelBrief);
+                                        output_stream.EOL();
+                                        result.SetStatus(eReturnStatusSuccessFinishResult);
+                                    }
+                                    else
+                                    {
+                                        result.AppendErrorWithFormat("Watchpoint creation failed.\n");
+                                        result.SetStatus(eReturnStatusFailed);
+                                    }
+                                    return (wp_loc != NULL);
+                                }
                             }
                             else
                             {

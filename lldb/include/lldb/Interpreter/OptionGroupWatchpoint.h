@@ -45,15 +45,18 @@ namespace lldb_private {
         virtual void
         OptionParsingStarting (CommandInterpreter &interpreter);
         
-        typedef enum WatchMode {
-            eWatchInvalid,
+        // Note:
+        // eWatchRead == LLDB_WATCH_TYPE_EREAD; and
+        // eWatchWrite == LLDB_WATCH_TYPE_WRITE
+        typedef enum WatchType {
+            eWatchInvalid = 0,
             eWatchRead,
             eWatchWrite,
             eWatchReadWrite
-        } WatchMode;
+        } WatchType;
 
         bool watch_variable;
-        WatchMode watch_mode;
+        WatchType watch_type;
 
     private:
         DISALLOW_COPY_AND_ASSIGN(OptionGroupWatchpoint);

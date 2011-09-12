@@ -46,6 +46,7 @@ public:
     void        SetWatchpointType (uint32_t type);
     bool        BreakpointWasHit (StoppointCallbackContext *context);
     bool        SetCallback (WatchpointHitCallback callback, void *callback_baton);
+    void        GetDescription (Stream *s, lldb::DescriptionLevel level);
     void        Dump (Stream *s) const;
 
 private:

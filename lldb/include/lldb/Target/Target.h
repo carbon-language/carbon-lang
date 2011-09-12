@@ -280,6 +280,12 @@ public:
                       lldb::BreakpointResolverSP &resolver_sp,
                       bool internal = false);
 
+    // Use this to create a watchpoint location:
+    lldb::WatchpointLocationSP
+    CreateWatchpointLocation (lldb::addr_t addr,
+                              size_t size,
+                              uint32_t type);
+
     WatchpointLocationList &
     GetWatchpointLocationList()
     {

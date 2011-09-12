@@ -328,6 +328,15 @@ Target::CreateBreakpoint (SearchFilterSP &filter_sp, BreakpointResolverSP &resol
     return bp_sp;
 }
 
+// See also WatchpointLocation::SetWatchpointType() and OptionGroupWatchpoint::WatchType.
+WatchpointLocationSP
+Target::CreateWatchpointLocation(lldb::addr_t addr, size_t size, uint32_t type)
+{
+    WatchpointLocationSP wp_loc_sp;
+    if (addr == LLDB_INVALID_ADDRESS || size == 0 || GetProcessSP())
+        return wp_loc_sp;
+}
+
 void
 Target::RemoveAllBreakpoints (bool internal_also)
 {

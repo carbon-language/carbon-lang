@@ -408,7 +408,7 @@ namespace lldb {
         eArgTypeWidth,
         eArgTypeNone,
         eArgTypePlatform,
-        eArgTypeWatchMode,
+        eArgTypeWatchType,
         eArgTypeLastArg  // Always keep this entry as the last entry in this enumeration!!
     } CommandArgumentType;
 
