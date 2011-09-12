@@ -333,9 +333,9 @@ llvm::DIType CGDebugInfo::CreateType(const BuiltinType *BT) {
   case BuiltinType::UChar:
   case BuiltinType::Char_U: Encoding = llvm::dwarf::DW_ATE_unsigned_char; break;
   case BuiltinType::Char_S:
-  case BuiltinType::Char16:
-  case BuiltinType::Char32:
   case BuiltinType::SChar: Encoding = llvm::dwarf::DW_ATE_signed_char; break;
+  case BuiltinType::Char16:
+  case BuiltinType::Char32: Encoding = llvm::dwarf::DW_ATE_UTF; break;
   case BuiltinType::UShort:
   case BuiltinType::UInt:
   case BuiltinType::UInt128:
