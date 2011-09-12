@@ -499,10 +499,10 @@ public:
                             uint32_t expr_path_options = StackFrame::eExpressionPathOptionCheckPtrVsMember;
                             lldb::VariableSP var_sp;
                             valobj_sp = frame_sp->GetValueForVariableExpressionPath (name_cstr, 
-                                                                                          m_varobj_options.use_dynamic, 
-                                                                                          expr_path_options,
-                                                                                          var_sp,
-                                                                                          error);
+                                                                                     m_varobj_options.use_dynamic, 
+                                                                                     expr_path_options,
+                                                                                     var_sp,
+                                                                                     error);
                             if (valobj_sp)
                             {
                                 if (m_option_variable.format != eFormatDefault)
@@ -530,7 +530,7 @@ public:
                         }
                     }
                 }
-                else
+                else // No command arg specified.  Use variable_list, instead.
                 {
                     const uint32_t num_variables = variable_list->GetSize();
         
