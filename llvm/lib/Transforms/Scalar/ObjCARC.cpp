@@ -3474,7 +3474,7 @@ ObjCARCContract::ContractAutorelease(Function &F, Instruction *Autorelease,
 void ObjCARCContract::ContractRelease(Instruction *Release,
                                       inst_iterator &Iter) {
   LoadInst *Load = dyn_cast<LoadInst>(GetObjCArg(Release));
-  if (!Load || Load->isVolatile()) return;
+  if (!Load || !Load->isSimple()) return;
 
   // For now, require everything to be in one basic block.
   BasicBlock *BB = Release->getParent();
@@ -3490,7 +3490,7 @@ void ObjCARCContract::ContractRelease(Instruction *Release,
           !(AA->getModRefInfo(I, Loc) & AliasAnalysis::Mod)))
     ++I;
   StoreInst *Store = dyn_cast<StoreInst>(I);
-  if (!Store || Store->isVolatile()) return;
+  if (!Store || !Store->isSimple()) return;
   if (Store->getPointerOperand() != Loc.Ptr) return;
 
   Value *New = StripPointerCastsAndObjCCalls(Store->getValueOperand());

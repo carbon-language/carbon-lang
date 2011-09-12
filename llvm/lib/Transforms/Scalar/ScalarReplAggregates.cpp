@@ -489,7 +489,7 @@ bool ConvertToScalarInfo::CanConvertToScalar(Value *V, uint64_t Offset) {
 
     if (LoadInst *LI = dyn_cast<LoadInst>(User)) {
       // Don't break volatile loads.
-      if (LI->isVolatile())
+      if (!LI->isSimple())
         return false;
       // Don't touch MMX operations.
       if (LI->getType()->isX86_MMXTy())
@@ -501,7 +501,7 @@ bool ConvertToScalarInfo::CanConvertToScalar(Value *V, uint64_t Offset) {
 
     if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
       // Storing the pointer, not into the value?
-      if (SI->getOperand(0) == V || SI->isVolatile()) return false;
+      if (SI->getOperand(0) == V || !SI->isSimple()) return false;
       // Don't touch MMX operations.
       if (SI->getOperand(0)->getType()->isX86_MMXTy())
         return false;
@@ -1224,7 +1224,7 @@ static bool isSafeSelectToSpeculate(SelectInst *SI, const TargetData *TD) {
   for (Value::use_iterator UI = SI->use_begin(), UE = SI->use_end();
        UI != UE; ++UI) {
     LoadInst *LI = dyn_cast<LoadInst>(*UI);
-    if (LI == 0 || LI->isVolatile()) return false;
+    if (LI == 0 || !LI->isSimple()) return false;
     
     // Both operands to the select need to be dereferencable, either absolutely
     // (e.g. allocas) or at this point because we can see other accesses to it.
@@ -1265,7 +1265,7 @@ static bool isSafePHIToSpeculate(PHINode *PN, const TargetData *TD) {
   for (Value::use_iterator UI = PN->use_begin(), UE = PN->use_end();
        UI != UE; ++UI) {
     LoadInst *LI = dyn_cast<LoadInst>(*UI);
-    if (LI == 0 || LI->isVolatile()) return false;
+    if (LI == 0 || !LI->isSimple()) return false;
     
     // For now we only allow loads in the same block as the PHI.  This is a
     // common case that happens when instcombine merges two loads through a PHI.
@@ -1323,13 +1323,13 @@ static bool tryToMakeAllocaBePromotable(AllocaInst *AI, const TargetData *TD) {
        UI != UE; ++UI) {
     User *U = *UI;
     if (LoadInst *LI = dyn_cast<LoadInst>(U)) {
-      if (LI->isVolatile())
+      if (!LI->isSimple())
         return false;
       continue;
     }
     
     if (StoreInst *SI = dyn_cast<StoreInst>(U)) {
-      if (SI->getOperand(0) == AI || SI->isVolatile())
+      if (SI->getOperand(0) == AI || !SI->isSimple())
         return false;   // Don't allow a store OF the AI, only INTO the AI.
       continue;
     }
@@ -1717,7 +1717,7 @@ void SROA::isSafeForScalarRepl(Instruction *I, uint64_t Offset,
                       UI.getOperandNo() == 0, Info, MI,
                       true /*AllowWholeAccess*/);
     } else if (LoadInst *LI = dyn_cast<LoadInst>(User)) {
-      if (LI->isVolatile())
+      if (!LI->isSimple())
         return MarkUnsafe(Info, User);
       Type *LIType = LI->getType();
       isSafeMemAccess(Offset, TD->getTypeAllocSize(LIType),
@@ -1726,7 +1726,7 @@ void SROA::isSafeForScalarRepl(Instruction *I, uint64_t Offset,
         
     } else if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
       // Store is ok if storing INTO the pointer, not storing the pointer
-      if (SI->isVolatile() || SI->getOperand(0) == I)
+      if (!SI->isSimple() || SI->getOperand(0) == I)
         return MarkUnsafe(Info, User);
         
       Type *SIType = SI->getOperand(0)->getType();
@@ -1776,7 +1776,7 @@ void SROA::isSafePHISelectUseForScalarRepl(Instruction *I, uint64_t Offset,
         return MarkUnsafe(Info, User);
       isSafePHISelectUseForScalarRepl(GEPI, Offset, Info);
     } else if (LoadInst *LI = dyn_cast<LoadInst>(User)) {
-      if (LI->isVolatile())
+      if (!LI->isSimple())
         return MarkUnsafe(Info, User);
       Type *LIType = LI->getType();
       isSafeMemAccess(Offset, TD->getTypeAllocSize(LIType),
@@ -1785,7 +1785,7 @@ void SROA::isSafePHISelectUseForScalarRepl(Instruction *I, uint64_t Offset,
       
     } else if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
       // Store is ok if storing INTO the pointer, not storing the pointer
-      if (SI->isVolatile() || SI->getOperand(0) == I)
+      if (!SI->isSimple() || SI->getOperand(0) == I)
         return MarkUnsafe(Info, User);
       
       Type *SIType = SI->getOperand(0)->getType();
@@ -2688,7 +2688,7 @@ isOnlyCopiedFromConstantGlobal(Value *V, MemTransferInst *&TheCopy,
 
     if (LoadInst *LI = dyn_cast<LoadInst>(U)) {
       // Ignore non-volatile loads, they are always ok.
-      if (LI->isVolatile()) return false;
+      if (!LI->isSimple()) return false;
       continue;
     }
 

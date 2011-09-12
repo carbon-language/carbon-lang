@@ -811,8 +811,8 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
 /// important optimization that encourages jump threading, and needs to be run
 /// interlaced with other jump threading tasks.
 bool JumpThreading::SimplifyPartiallyRedundantLoad(LoadInst *LI) {
-  // Don't hack volatile loads.
-  if (LI->isVolatile()) return false;
+  // Don't hack volatile/atomic loads.
+  if (!LI->isSimple()) return false;
 
   // If the load is defined in a block with exactly one predecessor, it can't be
   // partially redundant.
