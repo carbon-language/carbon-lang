@@ -30,16 +30,16 @@ using namespace std;
 extern int g_verbose;
 
 DWARFCompileUnit::DWARFCompileUnit(SymbolFileDWARF* dwarf2Data) :
-    m_dwarf2Data    ( dwarf2Data ),
-    m_offset        ( DW_INVALID_OFFSET ),
-    m_length        ( 0 ),
-    m_version       ( 0 ),
-    m_abbrevs       ( NULL ),
-    m_addr_size     ( DWARFCompileUnit::GetDefaultAddressSize() ),
-    m_base_addr     ( 0 ),
+    m_dwarf2Data    (dwarf2Data),
+    m_abbrevs       (NULL),
+    m_user_data     (NULL),
     m_die_array     (),
-    m_aranges_ap    (),
-    m_user_data     ( NULL )
+    m_func_aranges_ap (),
+    m_base_addr     (0),
+    m_offset        (DW_INVALID_OFFSET),
+    m_length        (0),
+    m_version       (0),
+    m_addr_size     (DWARFCompileUnit::GetDefaultAddressSize())
 {
 }
 
@@ -53,7 +53,7 @@ DWARFCompileUnit::Clear()
     m_addr_size     = DWARFCompileUnit::GetDefaultAddressSize();
     m_base_addr     = 0;
     m_die_array.clear();
-    m_aranges_ap.reset();
+    m_func_aranges_ap.reset();
     m_user_data     = NULL;
 }
 
@@ -324,6 +324,50 @@ DWARFCompileUnit::SetDefaultAddressSize(uint8_t addr_size)
     g_default_addr_size = addr_size;
 }
 
+void
+DWARFCompileUnit::BuildAddressRangeTable (SymbolFileDWARF* dwarf2Data,
+                                          DWARFDebugAranges* debug_aranges,
+                                          bool clear_dies_if_already_not_parsed)
+{
+    // This function is usually called if there in no .debug_aranges section
+    // in order to produce a compile unit level set of address ranges that
+    // is accurate. If the DIEs weren't parsed, then we don't want all dies for
+    // all compile units to stay loaded when they weren't needed. So we can end
+    // up parsing the DWARF and then throwing them all away to keep memory usage
+    // down.
+    const bool clear_dies = ExtractDIEsIfNeeded (false) > 1;
+    
+    DIE()->BuildAddressRangeTable(dwarf2Data, this, debug_aranges);
+    
+    // Keep memory down by clearing DIEs if this generate function
+    // caused them to be parsed
+    if (clear_dies)
+        ClearDIEs (true);
+
+}
+
+
+const DWARFDebugAranges &
+DWARFCompileUnit::GetFunctionAranges ()
+{
+    if (m_func_aranges_ap.get() == NULL)
+    {
+        m_func_aranges_ap.reset (new DWARFDebugAranges());
+        Log *log = LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_ARANGES);
+
+        if (log)
+            log->Printf ("DWARFCompileUnit::GetFunctionAranges() for \"%s/%s\" compile unit at 0x%8.8x",
+                         m_dwarf2Data->GetObjectFile()->GetFileSpec().GetDirectory().GetCString(),
+                         m_dwarf2Data->GetObjectFile()->GetFileSpec().GetFilename().GetCString(),
+                         m_offset);
+        DIE()->BuildFunctionAddressRangeTable (m_dwarf2Data, this, m_func_aranges_ap.get());
+        const bool minimize = false;
+        const uint32_t fudge_size = 0;        
+        m_func_aranges_ap->Sort(minimize, fudge_size);
+    }
+    return *m_func_aranges_ap.get();
+}
+
 bool
 DWARFCompileUnit::LookupAddress
 (
@@ -336,16 +380,13 @@ DWARFCompileUnit::LookupAddress
 
     if (function_die_handle != NULL && DIE())
     {
-        if (m_aranges_ap.get() == NULL)
-        {
-            m_aranges_ap.reset(new DWARFDebugAranges());
-            m_die_array.front().BuildFunctionAddressRangeTable(m_dwarf2Data, this, m_aranges_ap.get());
-        }
+
+        const DWARFDebugAranges &func_aranges = GetFunctionAranges ();
 
         // Re-check the aranges auto pointer contents in case it was created above
-        if (m_aranges_ap.get() != NULL)
+        if (!func_aranges.IsEmpty())
         {
-            *function_die_handle = GetDIEPtr(m_aranges_ap->FindAddress(address));
+            *function_die_handle = GetDIEPtr(func_aranges.FindAddress(address));
             if (*function_die_handle != NULL)
             {
                 success = true;
@@ -581,26 +622,20 @@ DWARFCompileUnit::AppendDIEsWithTag (const dw_tag_t tag, DWARFDIECollection& die
 
 
 void
-DWARFCompileUnit::Index 
-(
-    const uint32_t cu_idx,
-    NameToDIE& func_basenames,
-    NameToDIE& func_fullnames,
-    NameToDIE& func_methods,
-    NameToDIE& func_selectors,
-    NameToDIE& objc_class_selectors,
-    NameToDIE& globals,
-    NameToDIE& types,
-    NameToDIE& namespaces,
-    const DWARFDebugRanges *debug_ranges,
-    DWARFDebugAranges *aranges
-)
+DWARFCompileUnit::Index (const uint32_t cu_idx,
+                         NameToDIE& func_basenames,
+                         NameToDIE& func_fullnames,
+                         NameToDIE& func_methods,
+                         NameToDIE& func_selectors,
+                         NameToDIE& objc_class_selectors,
+                         NameToDIE& globals,
+                         NameToDIE& types,
+                         NameToDIE& namespaces)
 {
     const DataExtractor* debug_str = &m_dwarf2Data->get_debug_str_data();
 
     const uint8_t *fixed_form_sizes = DWARFFormValue::GetFixedFormSizesForAddressSize (GetAddressByteSize());
 
-    NameToDIE::Info die_info = { cu_idx, 0 };
     DWARFDebugInfoEntry::const_iterator pos;
     DWARFDebugInfoEntry::const_iterator begin = m_die_array.begin();
     DWARFDebugInfoEntry::const_iterator end = m_die_array.end();
@@ -640,9 +675,6 @@ DWARFCompileUnit::Index
         bool has_address = false;
         bool has_location = false;
         bool is_global_or_static_variable = false;
-        dw_addr_t lo_pc = DW_INVALID_ADDRESS;
-        dw_addr_t hi_pc = DW_INVALID_ADDRESS;
-        DWARFDebugRanges::RangeList ranges;
 
         dw_offset_t specification_die_offset = DW_INVALID_OFFSET;
         const size_t num_attributes = die.GetAttributes(m_dwarf2Data, this, fixed_form_sizes, attributes);
@@ -677,33 +709,8 @@ DWARFCompileUnit::Index
                     break;
 
                 case DW_AT_low_pc:
-                    has_address = true;
-                    if (tag == DW_TAG_subprogram && attributes.ExtractFormValueAtIndex(m_dwarf2Data, i, form_value))
-                    {
-                        lo_pc = form_value.Unsigned();
-                    }
-                    break;
-
                 case DW_AT_high_pc:
-                    has_address = true;
-                    if (tag == DW_TAG_subprogram && attributes.ExtractFormValueAtIndex(m_dwarf2Data, i, form_value))
-                    {
-                        hi_pc = form_value.Unsigned();
-                    }
-                    break;
-
                 case DW_AT_ranges:
-                    if (tag == DW_TAG_subprogram && attributes.ExtractFormValueAtIndex(m_dwarf2Data, i, form_value))
-                    {
-                        if (debug_ranges)
-                        {
-                            debug_ranges->FindRanges(form_value.Unsigned(), ranges);
-                            // All DW_AT_ranges are relative to the base address of the
-                            // compile unit. We add the compile unit base address to make
-                            // sure all the addresses are properly fixed up.
-                            ranges.AddOffset(GetBaseAddress());
-                        }
-                    }
                     has_address = true;
                     break;
 
@@ -765,25 +772,7 @@ DWARFCompileUnit::Index
                     break;
                 }
             }
-            
-            if (tag == DW_TAG_subprogram)
-            {
-                if (lo_pc != DW_INVALID_ADDRESS && hi_pc != DW_INVALID_ADDRESS)
-                {
-                    aranges->AppendRange (m_offset, lo_pc, hi_pc);
-                }
-                else
-                {
-                    for (uint32_t i=0, num_ranges = ranges.Size(); i<num_ranges; ++i)
-                    {
-                        const DWARFDebugRanges::Range *range = ranges.RangeAtIndex (i);
-                        aranges->AppendRange (m_offset, range->begin_offset, range->end_offset);
-                    }
-                }
-            }
         }
-
-        die_info.die_idx = std::distance (begin, pos);
 
         switch (tag)
         {
@@ -804,14 +793,14 @@ DWARFCompileUnit::Index
                                                                   &objc_method_name,
                                                                   &objc_base_name))
                         {
-                            objc_class_selectors.Insert(objc_class_name, die_info);
+                            objc_class_selectors.Insert(objc_class_name, die.GetOffset());
                             
-                            func_selectors.Insert (objc_method_name, die_info);
+                            func_selectors.Insert (objc_method_name, die.GetOffset());
                             
                             if (!objc_base_name.IsEmpty())
                             {
-                                    func_basenames.Insert (objc_base_name, die_info);
-                                    func_fullnames.Insert (objc_base_name, die_info);
+                                func_basenames.Insert (objc_base_name, die.GetOffset());
+                                func_fullnames.Insert (objc_base_name, die.GetOffset());
                             }
                         }
                     }
@@ -849,9 +838,9 @@ DWARFCompileUnit::Index
 
 
                     if (is_method)
-                        func_methods.Insert (ConstString(name), die_info);
+                        func_methods.Insert (ConstString(name), die.GetOffset());
                     else
-                        func_basenames.Insert (ConstString(name), die_info);
+                        func_basenames.Insert (ConstString(name), die.GetOffset());
                 }
                 if (mangled_cstr)
                 {
@@ -862,9 +851,9 @@ DWARFCompileUnit::Index
                     if (name != mangled_cstr && ((mangled_cstr[0] == '_') || (::strcmp(name, mangled_cstr) != 0)))
                     {
                         Mangled mangled (mangled_cstr, true);
-                        func_fullnames.Insert (mangled.GetMangledName(), die_info);
+                        func_fullnames.Insert (mangled.GetMangledName(), die.GetOffset());
                         if (mangled.GetDemangledName())
-                            func_fullnames.Insert (mangled.GetDemangledName(), die_info);
+                            func_fullnames.Insert (mangled.GetDemangledName(), die.GetOffset());
                     }
                 }
             }
@@ -874,7 +863,7 @@ DWARFCompileUnit::Index
             if (has_address)
             {
                 if (name)
-                    func_basenames.Insert (ConstString(name), die_info);
+                    func_basenames.Insert (ConstString(name), die.GetOffset());
                 if (mangled_cstr)
                 {
                     // Make sure our mangled name isn't the same string table entry
@@ -884,9 +873,9 @@ DWARFCompileUnit::Index
                     if (name != mangled_cstr && ((mangled_cstr[0] == '_') || (::strcmp(name, mangled_cstr) != 0)))
                     {
                         Mangled mangled (mangled_cstr, true);
-                        func_fullnames.Insert (mangled.GetMangledName(), die_info);
+                        func_fullnames.Insert (mangled.GetMangledName(), die.GetOffset());
                         if (mangled.GetDemangledName())
-                            func_fullnames.Insert (mangled.GetDemangledName(), die_info);
+                            func_fullnames.Insert (mangled.GetDemangledName(), die.GetOffset());
                     }
                 }
             }
@@ -903,19 +892,19 @@ DWARFCompileUnit::Index
         case DW_TAG_typedef:
             if (name && is_declaration == false)
             {
-                types.Insert (ConstString(name), die_info);
+                types.Insert (ConstString(name), die.GetOffset());
             }
             break;
 
         case DW_TAG_namespace:
             if (name)
-                namespaces.Insert (ConstString(name), die_info);
+                namespaces.Insert (ConstString(name), die.GetOffset());
             break;
 
         case DW_TAG_variable:
             if (name && has_location && is_global_or_static_variable)
             {
-                globals.Insert (ConstString(name), die_info);
+                globals.Insert (ConstString(name), die.GetOffset());
                 // Be sure to include variables by their mangled and demangled
                 // names if they have any since a variable can have a basename
                 // "i", a mangled named "_ZN12_GLOBAL__N_11iE" and a demangled 
@@ -928,9 +917,9 @@ DWARFCompileUnit::Index
                 if (mangled_cstr && name != mangled_cstr && ((mangled_cstr[0] == '_') || (::strcmp(name, mangled_cstr) != 0)))
                 {
                     Mangled mangled (mangled_cstr, true);
-                    globals.Insert (mangled.GetMangledName(), die_info);
+                    globals.Insert (mangled.GetMangledName(), die.GetOffset());
                     if (mangled.GetDemangledName())
-                        globals.Insert (mangled.GetDemangledName(), die_info);
+                        globals.Insert (mangled.GetDemangledName(), die.GetOffset());
                 }
             }
             break;

@@ -79,6 +79,8 @@ ClangUserExpression::ASTTransformer (clang::ASTConsumer *passthrough)
 void
 ClangUserExpression::ScanContext(ExecutionContext &exe_ctx)
 {
+    m_target = exe_ctx.target;
+    
     if (!exe_ctx.frame)
         return;
     
@@ -86,8 +88,6 @@ ClangUserExpression::ScanContext(ExecutionContext &exe_ctx)
     
     if (!sym_ctx.function)
         return;
-    
-    m_target = &exe_ctx.GetProcess()->GetTarget();
     
     clang::DeclContext *decl_context;
     

@@ -10,24 +10,18 @@
 #ifndef SymbolFileDWARF_NameToDIE_h_
 #define SymbolFileDWARF_NameToDIE_h_
 
-#include <map>
-#include <vector>
+#include "lldb/Core/UniqueCStringMap.h"
 #include "lldb/lldb-defines.h"
 
 class SymbolFileDWARF;
 
+typedef std::vector<uint32_t> DIEArray;
+
 class NameToDIE
 {
 public:
-    typedef struct Info 
-    {
-        uint32_t cu_idx;
-        uint32_t die_idx;
-    } Info;
-    
-
-    NameToDIE () :
-        m_collection ()
+    NameToDIE () :   
+        m_map()
     {
     }
     
@@ -39,27 +33,27 @@ public:
     Dump (lldb_private::Stream *s);
 
     void
-    Insert (const lldb_private::ConstString& name, const Info &info);
-    
+    Insert (const lldb_private::ConstString& name, uint32_t die_offset);
+
+    void
+    Finalize();
+
     size_t
     Find (const lldb_private::ConstString &name, 
-          std::vector<Info> &info_array) const;
+          DIEArray &info_array) const;
     
     size_t
     Find (const lldb_private::RegularExpression& regex, 
-          std::vector<Info> &info_array) const;
+          DIEArray &info_array) const;
 
     size_t
-    FindAllEntriesForCompileUnitWithIndex (const uint32_t cu_idx, 
-                                           std::vector<Info> &info_array) const;
-
-    void
-    Hash (lldb_private::Stream *s, SymbolFileDWARF *dwarf);
+    FindAllEntriesForCompileUnit (uint32_t cu_offset, 
+                                  uint32_t cu_end_offset, 
+                                  DIEArray &info_array) const;
 
 protected:
-    typedef std::multimap<const char *, Info> collection;
+    lldb_private::UniqueCStringMap<uint32_t> m_map;
 
-    collection m_collection;
 };
 
 #endif  // SymbolFileDWARF_NameToDIE_h_

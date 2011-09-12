@@ -108,7 +108,7 @@ SymbolFileDWARF::Terminate()
 const char *
 SymbolFileDWARF::GetPluginNameStatic()
 {
-    return "symbol-file.dwarf2";
+    return "dwarf";
 }
 
 const char *
@@ -163,17 +163,17 @@ SymbolFileDWARF::SymbolFileDWARF(ObjectFile* objfile) :
     m_debug_map_symfile (NULL),
     m_clang_tu_decl (NULL),
     m_flags(),
-    m_data_debug_abbrev(),
-    m_data_debug_frame(),
-    m_data_debug_info(),
-    m_data_debug_line(),
-    m_data_debug_loc(),
-    m_data_debug_ranges(),
-    m_data_debug_str(),
+    m_data_debug_abbrev (),
+    m_data_debug_aranges (),
+    m_data_debug_frame (),
+    m_data_debug_info (),
+    m_data_debug_line (),
+    m_data_debug_loc (),
+    m_data_debug_ranges (),
+    m_data_debug_str (),
     m_data_debug_names (),
     m_data_debug_types (),
     m_abbr(),
-    m_aranges(),
     m_info(),
     m_line(),
     m_debug_names (this, m_data_debug_names),
@@ -413,6 +413,12 @@ SymbolFileDWARF::get_debug_abbrev_data()
 }
 
 const DataExtractor&
+SymbolFileDWARF::get_debug_aranges_data()
+{
+    return GetCachedSectionData (flagsGotDebugArangesData, eSectionTypeDWARFDebugAranges, m_data_debug_aranges);
+}
+
+const DataExtractor&
 SymbolFileDWARF::get_debug_frame_data()
 {
     return GetCachedSectionData (flagsGotDebugFrameData, eSectionTypeDWARFDebugFrame, m_data_debug_frame);
@@ -481,41 +487,6 @@ const DWARFDebugAbbrev*
 SymbolFileDWARF::DebugAbbrev() const
 {
     return m_abbr.get();
-}
-
-DWARFDebugAranges*
-SymbolFileDWARF::DebugAranges()
-{
-    // It turns out that llvm-gcc doesn't generate .debug_aranges in .o files
-    // and we are already parsing all of the DWARF because the .debug_pubnames
-    // is useless (it only mentions symbols that are externally visible), so
-    // don't use the .debug_aranges section, we should be using a debug aranges
-    // we got from SymbolFileDWARF::Index().
-
-    if (!m_indexed)
-        Index();
-    
-    
-//    if (m_aranges.get() == NULL)
-//    {
-//        Timer scoped_timer(__PRETTY_FUNCTION__, "%s this = %p", __PRETTY_FUNCTION__, this);
-//        m_aranges.reset(new DWARFDebugAranges());
-//        if (m_aranges.get())
-//        {
-//            const DataExtractor &debug_aranges_data = get_debug_aranges_data();
-//            if (debug_aranges_data.GetByteSize() > 0)
-//                m_aranges->Extract(debug_aranges_data);
-//            else
-//                m_aranges->Generate(this);
-//        }
-//    }
-    return m_aranges.get();
-}
-
-const DWARFDebugAranges*
-SymbolFileDWARF::DebugAranges() const
-{
-    return m_aranges.get();
 }
 
 
@@ -1569,20 +1540,17 @@ SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (lldb::clang_type_t clang_type
                 {
                 
                     ConstString class_name (class_str.c_str());
-                    std::vector<NameToDIE::Info> method_die_infos;
-                    if (m_objc_class_selectors_index.Find (class_name, method_die_infos))
+                    DIEArray method_die_offsets;
+                    if (m_objc_class_selectors_index.Find (class_name, method_die_offsets))
                     {
-                        DWARFCompileUnit* method_cu = NULL;
-                        DWARFCompileUnit* prev_method_cu = NULL;
-                        const size_t num_objc_methods = method_die_infos.size();
-                        for (size_t i=0;i<num_objc_methods; ++i, prev_method_cu = method_cu)
-                        {
-                            method_cu = debug_info->GetCompileUnitAtIndex(method_die_infos[i].cu_idx);
-                            
-                            if (method_cu != prev_method_cu)
-                                method_cu->ExtractDIEsIfNeeded (false);
+                        DWARFDebugInfo* debug_info = DebugInfo();
 
-                            DWARFDebugInfoEntry *method_die = method_cu->GetDIEAtIndexUnchecked(method_die_infos[i].die_idx);
+                        DWARFCompileUnit* method_cu = NULL;
+                        const size_t num_matches = method_die_offsets.size();
+                        for (size_t i=0; i<num_matches; ++i)
+                        {
+                            const dw_offset_t die_offset = method_die_offsets[i];
+                            DWARFDebugInfoEntry *method_die = debug_info->GetDIEPtrWithCompileUnitHint (die_offset, &method_cu);
                             
                             ResolveType (method_cu, method_die);
                         }
@@ -1722,11 +1690,10 @@ SymbolFileDWARF::ResolveSymbolContext (const Address& so_addr, uint32_t resolve_
     {
         lldb::addr_t file_vm_addr = so_addr.GetFileAddress();
 
-        DWARFDebugAranges* debug_aranges = DebugAranges();
         DWARFDebugInfo* debug_info = DebugInfo();
-        if (debug_aranges)
+        if (debug_info)
         {
-            dw_offset_t cu_offset = debug_aranges->FindAddress(file_vm_addr);
+            dw_offset_t cu_offset = debug_info->GetCompileUnitAranges().FindAddress(file_vm_addr);
             if (cu_offset != DW_INVALID_OFFSET)
             {
                 uint32_t cu_idx;
@@ -1932,8 +1899,6 @@ SymbolFileDWARF::Index ()
     DWARFDebugInfo* debug_info = DebugInfo();
     if (debug_info)
     {
-        m_aranges.reset(new DWARFDebugAranges());
-    
         uint32_t cu_idx = 0;
         const uint32_t num_compile_units = GetNumCompileUnits();
         for (cu_idx = 0; cu_idx < num_compile_units; ++cu_idx)
@@ -1950,9 +1915,7 @@ SymbolFileDWARF::Index ()
                             m_objc_class_selectors_index,
                             m_global_index, 
                             m_type_index,
-                            m_namespace_index,
-                            DebugRanges(),
-                            m_aranges.get());  
+                            m_namespace_index);
             
             // Keep memory down by clearing DIEs if this generate function
             // caused them to be parsed
@@ -1960,7 +1923,14 @@ SymbolFileDWARF::Index ()
                 curr_cu->ClearDIEs (true);
         }
         
-        m_aranges->Sort();
+        m_function_basename_index.Finalize();
+        m_function_fullname_index.Finalize();
+        m_function_method_index.Finalize();
+        m_function_selector_index.Finalize();
+        m_objc_class_selectors_index.Finalize();
+        m_global_index.Finalize(); 
+        m_type_index.Finalize();
+        m_namespace_index.Finalize();
 
 #if defined (ENABLE_DEBUG_PRINTF)
         StreamFile s(stdout, false);
@@ -2002,27 +1972,26 @@ SymbolFileDWARF::FindGlobalVariables (const ConstString &name, bool append, uint
     sc.module_sp = m_obj_file->GetModule()->GetSP();
     assert (sc.module_sp);
     
-    DWARFCompileUnit* curr_cu = NULL;
-    DWARFCompileUnit* prev_cu = NULL;
+    DWARFCompileUnit* dwarf_cu = NULL;
     const DWARFDebugInfoEntry* die = NULL;
-    std::vector<NameToDIE::Info> die_info_array;
-    const size_t num_matches = m_global_index.Find(name, die_info_array);
-    for (size_t i=0; i<num_matches; ++i, prev_cu = curr_cu)
+    DIEArray die_offsets;
+    const size_t num_matches = m_global_index.Find (name, die_offsets);
+    if (num_matches)
     {
-        curr_cu = info->GetCompileUnitAtIndex(die_info_array[i].cu_idx);
-        
-        if (curr_cu != prev_cu)
-            curr_cu->ExtractDIEsIfNeeded (false);
+        DWARFDebugInfo* debug_info = DebugInfo();
+        for (size_t i=0; i<num_matches; ++i)
+        {
+            const dw_offset_t die_offset = die_offsets[i];
+            die = debug_info->GetDIEPtrWithCompileUnitHint (die_offset, &dwarf_cu);
 
-        die = curr_cu->GetDIEAtIndexUnchecked(die_info_array[i].die_idx);
+            sc.comp_unit = GetCompUnitForDWARFCompUnit(dwarf_cu, UINT32_MAX);
+            assert(sc.comp_unit != NULL);
 
-        sc.comp_unit = GetCompUnitForDWARFCompUnit(curr_cu, UINT32_MAX);
-        assert(sc.comp_unit != NULL);
+            ParseVariables(sc, dwarf_cu, LLDB_INVALID_ADDRESS, die, false, false, &variables);
 
-        ParseVariables(sc, curr_cu, LLDB_INVALID_ADDRESS, die, false, false, &variables);
-
-        if (variables.GetSize() - original_size >= max_matches)
-            break;
+            if (variables.GetSize() - original_size >= max_matches)
+                break;
+        }
     }
 
     // Return the number of variable that were appended to the list
@@ -2052,27 +2021,25 @@ SymbolFileDWARF::FindGlobalVariables(const RegularExpression& regex, bool append
     sc.module_sp = m_obj_file->GetModule()->GetSP();
     assert (sc.module_sp);
     
-    DWARFCompileUnit* curr_cu = NULL;
-    DWARFCompileUnit* prev_cu = NULL;
+    DWARFCompileUnit* dwarf_cu = NULL;
     const DWARFDebugInfoEntry* die = NULL;
-    std::vector<NameToDIE::Info> die_info_array;
-    const size_t num_matches = m_global_index.Find(regex, die_info_array);
-    for (size_t i=0; i<num_matches; ++i, prev_cu = curr_cu)
+    DIEArray die_offsets;
+    const size_t num_matches = m_global_index.Find (regex, die_offsets);
+    if (num_matches)
     {
-        curr_cu = info->GetCompileUnitAtIndex(die_info_array[i].cu_idx);
-        
-        if (curr_cu != prev_cu)
-            curr_cu->ExtractDIEsIfNeeded (false);
+        DWARFDebugInfo* debug_info = DebugInfo();
+        for (size_t i=0; i<num_matches; ++i)
+        {
+            const dw_offset_t die_offset = die_offsets[i];
+            die = debug_info->GetDIEPtrWithCompileUnitHint (die_offset, &dwarf_cu);
+            sc.comp_unit = GetCompUnitForDWARFCompUnit(dwarf_cu, UINT32_MAX);
+            assert(sc.comp_unit != NULL);
 
-        die = curr_cu->GetDIEAtIndexUnchecked(die_info_array[i].die_idx);
+            ParseVariables(sc, dwarf_cu, LLDB_INVALID_ADDRESS, die, false, false, &variables);
 
-        sc.comp_unit = GetCompUnitForDWARFCompUnit(curr_cu, UINT32_MAX);
-        assert(sc.comp_unit != NULL);
-
-        ParseVariables(sc, curr_cu, LLDB_INVALID_ADDRESS, die, false, false, &variables);
-
-        if (variables.GetSize() - original_size >= max_matches)
-            break;
+            if (variables.GetSize() - original_size >= max_matches)
+                break;
+        }
     }
 
     // Return the number of variable that were appended to the list
@@ -2166,64 +2133,62 @@ SymbolFileDWARF::FindFunctions
     sc.module_sp = m_obj_file->GetModule()->GetSP();
     assert (sc.module_sp);
     
-    DWARFCompileUnit* curr_cu = NULL;
-    DWARFCompileUnit* prev_cu = NULL;
+    DWARFCompileUnit* dwarf_cu = NULL;
     const DWARFDebugInfoEntry* die = NULL;
-    std::vector<NameToDIE::Info> die_info_array;
-    const size_t num_matches = name_to_die.Find (name, die_info_array);
-    for (size_t i=0; i<num_matches; ++i, prev_cu = curr_cu)
+    DIEArray die_offsets;
+    const size_t num_matches = name_to_die.Find (name, die_offsets);
+    if (num_matches)
     {
-        curr_cu = info->GetCompileUnitAtIndex(die_info_array[i].cu_idx);
-        
-        if (curr_cu != prev_cu)
-            curr_cu->ExtractDIEsIfNeeded (false);
-
-        die = curr_cu->GetDIEAtIndexUnchecked(die_info_array[i].die_idx);
-        
-        const DWARFDebugInfoEntry* inlined_die = NULL;
-        if (die->Tag() == DW_TAG_inlined_subroutine)
+        DWARFDebugInfo* debug_info = DebugInfo();
+        for (size_t i=0; i<num_matches; ++i)
         {
-            inlined_die = die;
-            
-            while ((die = die->GetParent()) != NULL)
+            const dw_offset_t die_offset = die_offsets[i];
+            die = debug_info->GetDIEPtrWithCompileUnitHint (die_offset, &dwarf_cu);
+            const DWARFDebugInfoEntry* inlined_die = NULL;
+            if (die->Tag() == DW_TAG_inlined_subroutine)
             {
-                if (die->Tag() == DW_TAG_subprogram)
-                    break;
-            }
-        }
-        assert (die->Tag() == DW_TAG_subprogram);
-        if (GetFunction (curr_cu, die, sc))
-        {
-            Address addr;
-            // Parse all blocks if needed
-            if (inlined_die)
-            {
-                sc.block = sc.function->GetBlock (true).FindBlockByID (inlined_die->GetOffset());
-                assert (sc.block != NULL);
-                if (sc.block->GetStartAddress (addr) == false)
-                    addr.Clear();
-            }
-            else 
-            {
-                sc.block = NULL;
-                addr = sc.function->GetAddressRange().GetBaseAddress();
-            }
-
-            if (addr.IsValid())
-            {
-            
-                // We found the function, so we should find the line table
-                // and line table entry as well
-                LineTable *line_table = sc.comp_unit->GetLineTable();
-                if (line_table == NULL)
+                inlined_die = die;
+                
+                while ((die = die->GetParent()) != NULL)
                 {
-                    if (ParseCompileUnitLineTable(sc))
-                        line_table = sc.comp_unit->GetLineTable();
+                    if (die->Tag() == DW_TAG_subprogram)
+                        break;
                 }
-                if (line_table != NULL)
-                    line_table->FindLineEntryByAddress (addr, sc.line_entry);
+            }
+            assert (die->Tag() == DW_TAG_subprogram);
+            if (GetFunction (dwarf_cu, die, sc))
+            {
+                Address addr;
+                // Parse all blocks if needed
+                if (inlined_die)
+                {
+                    sc.block = sc.function->GetBlock (true).FindBlockByID (inlined_die->GetOffset());
+                    assert (sc.block != NULL);
+                    if (sc.block->GetStartAddress (addr) == false)
+                        addr.Clear();
+                }
+                else 
+                {
+                    sc.block = NULL;
+                    addr = sc.function->GetAddressRange().GetBaseAddress();
+                }
 
-                sc_list.Append(sc);
+                if (addr.IsValid())
+                {
+                
+                    // We found the function, so we should find the line table
+                    // and line table entry as well
+                    LineTable *line_table = sc.comp_unit->GetLineTable();
+                    if (line_table == NULL)
+                    {
+                        if (ParseCompileUnitLineTable(sc))
+                            line_table = sc.comp_unit->GetLineTable();
+                    }
+                    if (line_table != NULL)
+                        line_table->FindLineEntryByAddress (addr, sc.line_entry);
+
+                    sc_list.Append(sc);
+                }
             }
         }
     }
@@ -2246,64 +2211,63 @@ SymbolFileDWARF::FindFunctions
     sc.module_sp = m_obj_file->GetModule()->GetSP();
     assert (sc.module_sp);
     
-    DWARFCompileUnit* curr_cu = NULL;
-    DWARFCompileUnit* prev_cu = NULL;
+    DWARFCompileUnit* dwarf_cu = NULL;
     const DWARFDebugInfoEntry* die = NULL;
-    std::vector<NameToDIE::Info> die_info_array;
-    const size_t num_matches = name_to_die.Find(regex, die_info_array);
-    for (size_t i=0; i<num_matches; ++i, prev_cu = curr_cu)
+    DIEArray die_offsets;
+    const size_t num_matches = name_to_die.Find (regex, die_offsets);
+    if (num_matches)
     {
-        curr_cu = info->GetCompileUnitAtIndex(die_info_array[i].cu_idx);
-        
-        if (curr_cu != prev_cu)
-            curr_cu->ExtractDIEsIfNeeded (false);
-
-        die = curr_cu->GetDIEAtIndexUnchecked(die_info_array[i].die_idx);
-        
-        const DWARFDebugInfoEntry* inlined_die = NULL;
-        if (die->Tag() == DW_TAG_inlined_subroutine)
+        DWARFDebugInfo* debug_info = DebugInfo();
+        for (size_t i=0; i<num_matches; ++i)
         {
-            inlined_die = die;
-            
-            while ((die = die->GetParent()) != NULL)
+            const dw_offset_t die_offset = die_offsets[i];
+            die = debug_info->GetDIEPtrWithCompileUnitHint (die_offset, &dwarf_cu);
+        
+            const DWARFDebugInfoEntry* inlined_die = NULL;
+            if (die->Tag() == DW_TAG_inlined_subroutine)
             {
-                if (die->Tag() == DW_TAG_subprogram)
-                    break;
-            }
-        }
-        assert (die->Tag() == DW_TAG_subprogram);
-        if (GetFunction (curr_cu, die, sc))
-        {
-            Address addr;
-            // Parse all blocks if needed
-            if (inlined_die)
-            {
-                sc.block = sc.function->GetBlock (true).FindBlockByID (inlined_die->GetOffset());
-                assert (sc.block != NULL);
-                if (sc.block->GetStartAddress (addr) == false)
-                    addr.Clear();
-            }
-            else 
-            {
-                sc.block = NULL;
-                addr = sc.function->GetAddressRange().GetBaseAddress();
-            }
-
-            if (addr.IsValid())
-            {
-            
-                // We found the function, so we should find the line table
-                // and line table entry as well
-                LineTable *line_table = sc.comp_unit->GetLineTable();
-                if (line_table == NULL)
+                inlined_die = die;
+                
+                while ((die = die->GetParent()) != NULL)
                 {
-                    if (ParseCompileUnitLineTable(sc))
-                        line_table = sc.comp_unit->GetLineTable();
+                    if (die->Tag() == DW_TAG_subprogram)
+                        break;
                 }
-                if (line_table != NULL)
-                    line_table->FindLineEntryByAddress (addr, sc.line_entry);
+            }
+            assert (die->Tag() == DW_TAG_subprogram);
+            if (GetFunction (dwarf_cu, die, sc))
+            {
+                Address addr;
+                // Parse all blocks if needed
+                if (inlined_die)
+                {
+                    sc.block = sc.function->GetBlock (true).FindBlockByID (inlined_die->GetOffset());
+                    assert (sc.block != NULL);
+                    if (sc.block->GetStartAddress (addr) == false)
+                        addr.Clear();
+                }
+                else 
+                {
+                    sc.block = NULL;
+                    addr = sc.function->GetAddressRange().GetBaseAddress();
+                }
 
-                sc_list.Append(sc);
+                if (addr.IsValid())
+                {
+                
+                    // We found the function, so we should find the line table
+                    // and line table entry as well
+                    LineTable *line_table = sc.comp_unit->GetLineTable();
+                    if (line_table == NULL)
+                    {
+                        if (ParseCompileUnitLineTable(sc))
+                            line_table = sc.comp_unit->GetLineTable();
+                    }
+                    if (line_table != NULL)
+                        line_table->FindLineEntryByAddress (addr, sc.line_entry);
+
+                    sc_list.Append(sc);
+                }
             }
         }
     }
@@ -2421,34 +2385,33 @@ SymbolFileDWARF::FindTypes(const SymbolContext& sc, const ConstString &name, boo
         Index ();
 
     const uint32_t initial_types_size = types.GetSize();
-    DWARFCompileUnit* curr_cu = NULL;
-    DWARFCompileUnit* prev_cu = NULL;
+    DWARFCompileUnit* dwarf_cu = NULL;
     const DWARFDebugInfoEntry* die = NULL;
-    std::vector<NameToDIE::Info> die_info_array;
-    const size_t num_matches = m_type_index.Find (name, die_info_array);
-    for (size_t i=0; i<num_matches; ++i, prev_cu = curr_cu)
+    DIEArray die_offsets;
+    const size_t num_matches = m_type_index.Find (name, die_offsets);
+    if (num_matches)
     {
-        curr_cu = info->GetCompileUnitAtIndex(die_info_array[i].cu_idx);
-        
-        if (curr_cu != prev_cu)
-            curr_cu->ExtractDIEsIfNeeded (false);
-
-        die = curr_cu->GetDIEAtIndexUnchecked(die_info_array[i].die_idx);
-
-        Type *matching_type = ResolveType (curr_cu, die);
-        if (matching_type)
+        DWARFDebugInfo* debug_info = DebugInfo();
+        for (size_t i=0; i<num_matches; ++i)
         {
-            // We found a type pointer, now find the shared pointer form our type list
-            TypeSP type_sp (GetTypeList()->FindType(matching_type->GetID()));
-            if (type_sp)
+            const dw_offset_t die_offset = die_offsets[i];
+            die = debug_info->GetDIEPtrWithCompileUnitHint (die_offset, &dwarf_cu);
+
+            Type *matching_type = ResolveType (dwarf_cu, die);
+            if (matching_type)
             {
-                types.InsertUnique (type_sp);
-                if (types.GetSize() >= max_matches)
-                    break;
-            }
-            else
-            {
-                fprintf (stderr, "error: can't find shared pointer for type 0x%8.8x.\n", matching_type->GetID());
+                // We found a type pointer, now find the shared pointer form our type list
+                TypeSP type_sp (GetTypeList()->FindType(matching_type->GetID()));
+                if (type_sp)
+                {
+                    types.InsertUnique (type_sp);
+                    if (types.GetSize() >= max_matches)
+                        break;
+                }
+                else
+                {
+                    fprintf (stderr, "error: can't find shared pointer for type 0x%8.8x.\n", matching_type->GetID());
+                }
             }
         }
     }
@@ -2469,25 +2432,25 @@ SymbolFileDWARF::FindNamespace (const SymbolContext& sc,
         if (!m_indexed)
             Index ();
 
-        DWARFCompileUnit* curr_cu = NULL;
-        DWARFCompileUnit* prev_cu = NULL;
+        
+        DWARFCompileUnit* dwarf_cu = NULL;
         const DWARFDebugInfoEntry* die = NULL;
-        std::vector<NameToDIE::Info> die_info_array;
-        const size_t num_matches = m_namespace_index.Find (name, die_info_array);
-        for (size_t i=0; i<num_matches; ++i, prev_cu = curr_cu)
+        DIEArray die_offsets;
+        const size_t num_matches = m_namespace_index.Find (name, die_offsets);
+        if (num_matches)
         {
-            curr_cu = info->GetCompileUnitAtIndex(die_info_array[i].cu_idx);
-            
-            if (curr_cu != prev_cu)
-                curr_cu->ExtractDIEsIfNeeded (false);
-
-            die = curr_cu->GetDIEAtIndexUnchecked(die_info_array[i].die_idx);
-
-            clang::NamespaceDecl *clang_namespace_decl = ResolveNamespaceDIE (curr_cu, die);
-            if (clang_namespace_decl)
+            DWARFDebugInfo* debug_info = DebugInfo();
+            for (size_t i=0; i<num_matches; ++i)
             {
-                namespace_decl.SetASTContext (GetClangASTContext().getASTContext());
-                namespace_decl.SetNamespaceDecl (clang_namespace_decl);
+                const dw_offset_t die_offset = die_offsets[i];
+                die = debug_info->GetDIEPtrWithCompileUnitHint (die_offset, &dwarf_cu);
+
+                clang::NamespaceDecl *clang_namespace_decl = ResolveNamespaceDIE (dwarf_cu, die);
+                if (clang_namespace_decl)
+                {
+                    namespace_decl.SetASTContext (GetClangASTContext().getASTContext());
+                    namespace_decl.SetNamespaceDecl (clang_namespace_decl);
+                }
             }
         }
     }
@@ -3110,24 +3073,18 @@ SymbolFileDWARF::FindDefinitionTypeForDIE (
         Index ();
 
     const dw_tag_t type_tag = die->Tag();
-    std::vector<NameToDIE::Info> die_info_array;
-    const size_t num_matches = m_type_index.Find (type_name, die_info_array);
-    if (num_matches > 0)
+    
+    DWARFCompileUnit* type_cu = NULL;
+    const DWARFDebugInfoEntry* type_die = NULL;
+    DIEArray die_offsets;
+    const size_t num_matches = m_type_index.Find (type_name, die_offsets);
+    if (num_matches)
     {
-        DWARFCompileUnit* type_cu = NULL;
-        DWARFCompileUnit* curr_cu = cu;
-        DWARFDebugInfo *info = DebugInfo();
+        DWARFDebugInfo* debug_info = DebugInfo();
         for (size_t i=0; i<num_matches; ++i)
         {
-            type_cu = info->GetCompileUnitAtIndex (die_info_array[i].cu_idx);
-            
-            if (type_cu != curr_cu)
-            {
-                type_cu->ExtractDIEsIfNeeded (false);
-                curr_cu = type_cu;
-            }
-
-            DWARFDebugInfoEntry *type_die = type_cu->GetDIEAtIndexUnchecked (die_info_array[i].die_idx);
+            const dw_offset_t die_offset = die_offsets[i];
+            type_die = debug_info->GetDIEPtrWithCompileUnitHint (die_offset, &type_cu);
             
             if (type_die != die && type_die->Tag() == type_tag)
             {
@@ -4254,15 +4211,25 @@ SymbolFileDWARF::ParseVariablesForContext (const SymbolContext& sc)
                 if (!m_indexed)
                     Index ();
 
-                std::vector<NameToDIE::Info> global_die_info_array;
-                const size_t num_globals = m_global_index.FindAllEntriesForCompileUnitWithIndex (cu_idx, global_die_info_array);
-                for (size_t idx=0; idx<num_globals; ++idx)
+                DWARFCompileUnit* match_dwarf_cu = NULL;
+                const DWARFDebugInfoEntry* die = NULL;
+                DIEArray die_offsets;
+                const size_t num_matches = m_global_index.FindAllEntriesForCompileUnit (dwarf_cu->GetOffset(), 
+                                                                                        dwarf_cu->GetNextCompileUnitOffset(), 
+                                                                                        die_offsets);
+                if (num_matches)
                 {
-                    VariableSP var_sp (ParseVariableDIE(sc, dwarf_cu, dwarf_cu->GetDIEAtIndexUnchecked(global_die_info_array[idx].die_idx), LLDB_INVALID_ADDRESS));
-                    if (var_sp)
+                    DWARFDebugInfo* debug_info = DebugInfo();
+                    for (size_t i=0; i<num_matches; ++i)
                     {
-                        variables->AddVariableIfUnique (var_sp);
-                        ++vars_added;
+                        const dw_offset_t die_offset = die_offsets[i];
+                        die = debug_info->GetDIEPtrWithCompileUnitHint (die_offset, &match_dwarf_cu);
+                        VariableSP var_sp (ParseVariableDIE(sc, dwarf_cu, die, LLDB_INVALID_ADDRESS));
+                        if (var_sp)
+                        {
+                            variables->AddVariableIfUnique (var_sp);
+                            ++vars_added;
+                        }
                     }
                 }
             }
@@ -4694,24 +4661,23 @@ SymbolFileDWARF::SearchDeclContext (const clang::DeclContext *decl_context,
     
     DWARFDebugInfo* info = DebugInfo();
     
-    std::vector<NameToDIE::Info> die_info_array;
+    DIEArray die_offsets;
     
-    size_t num_matches = m_type_index.Find (ConstString(name), die_info_array);
+    DWARFCompileUnit* dwarf_cu = NULL;
+    const DWARFDebugInfoEntry* die = NULL;
+    size_t num_matches = m_type_index.Find (ConstString(name), die_offsets);
     
     if (num_matches)
     {
-        for (int i = 0;
-             i < num_matches;
-             ++i)
+        for (size_t i = 0; i < num_matches; ++i)
         {
-            DWARFCompileUnit* compile_unit = info->GetCompileUnitAtIndex(die_info_array[i].cu_idx);
-            compile_unit->ExtractDIEsIfNeeded (false);
-            const DWARFDebugInfoEntry *die = compile_unit->GetDIEAtIndexUnchecked(die_info_array[i].die_idx);
-            
+            const dw_offset_t die_offset = die_offsets[i];
+            die = info->GetDIEPtrWithCompileUnitHint (die_offset, &dwarf_cu);
+
             if (die->GetParent() != context_die)
                 continue;
             
-            Type *matching_type = ResolveType (compile_unit, die);
+            Type *matching_type = ResolveType (dwarf_cu, die);
             
             lldb::clang_type_t type = matching_type->GetClangFullType();
             clang::QualType qual_type = clang::QualType::getFromOpaquePtr(type);

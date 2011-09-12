@@ -44,7 +44,7 @@ SymbolFileDWARFDebugMap::Terminate()
 const char *
 SymbolFileDWARFDebugMap::GetPluginNameStatic()
 {
-    return "symbol-file.dwarf2-debugmap";
+    return "dwarf-debugmap";
 }
 
 const char *

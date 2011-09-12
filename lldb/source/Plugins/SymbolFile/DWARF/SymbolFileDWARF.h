@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_SymbolFileDWARF_h_
-#define liblldb_SymbolFileDWARF_h_
+#ifndef SymbolFileDWARF_SymbolFileDWARF_h_
+#define SymbolFileDWARF_SymbolFileDWARF_h_
 
 // C Includes
 // C++ Includes
@@ -156,21 +156,19 @@ public:
     //virtual size_t        GetCompUnitCount() = 0;
     //virtual CompUnitSP    GetCompUnitAtIndex(size_t cu_idx) = 0;
 
-    const lldb_private::DataExtractor&      get_debug_abbrev_data();
-    const lldb_private::DataExtractor&      get_debug_frame_data();
-    const lldb_private::DataExtractor&      get_debug_info_data();
-    const lldb_private::DataExtractor&      get_debug_line_data();
-    const lldb_private::DataExtractor&      get_debug_loc_data();
-    const lldb_private::DataExtractor&      get_debug_ranges_data();
-    const lldb_private::DataExtractor&      get_debug_str_data();
-    const lldb_private::DataExtractor&      get_debug_names_data();
-    const lldb_private::DataExtractor&      get_debug_types_data();
+    const lldb_private::DataExtractor&      get_debug_abbrev_data ();
+    const lldb_private::DataExtractor&      get_debug_aranges_data ();
+    const lldb_private::DataExtractor&      get_debug_frame_data ();
+    const lldb_private::DataExtractor&      get_debug_info_data ();
+    const lldb_private::DataExtractor&      get_debug_line_data ();
+    const lldb_private::DataExtractor&      get_debug_loc_data ();
+    const lldb_private::DataExtractor&      get_debug_ranges_data ();
+    const lldb_private::DataExtractor&      get_debug_str_data ();
+    const lldb_private::DataExtractor&      get_debug_names_data ();
+    const lldb_private::DataExtractor&      get_debug_types_data ();
 
     DWARFDebugAbbrev*       DebugAbbrev();
     const DWARFDebugAbbrev* DebugAbbrev() const;
-
-    DWARFDebugAranges*      DebugAranges();
-    const DWARFDebugAranges*DebugAranges() const;
 
     DWARFDebugInfo*         DebugInfo();
     const DWARFDebugInfo*   DebugInfo() const;
@@ -374,6 +372,7 @@ protected:
     lldb_private::Flags             m_flags;
     lldb_private::DataExtractor     m_dwarf_data; 
     lldb_private::DataExtractor     m_data_debug_abbrev;
+    lldb_private::DataExtractor     m_data_debug_aranges;
     lldb_private::DataExtractor     m_data_debug_frame;
     lldb_private::DataExtractor     m_data_debug_info;
     lldb_private::DataExtractor     m_data_debug_line;
@@ -386,7 +385,6 @@ protected:
     // The auto_ptr items below are generated on demand if and when someone accesses
     // them through a non const version of this class.
     std::auto_ptr<DWARFDebugAbbrev>     m_abbr;
-    std::auto_ptr<DWARFDebugAranges>    m_aranges;
     std::auto_ptr<DWARFDebugInfo>       m_info;
     std::auto_ptr<DWARFDebugLine>       m_line;
     HashedNameToDIE                     m_debug_names;
@@ -417,4 +415,4 @@ protected:
     ClangTypeToDIE m_forward_decl_clang_type_to_die;
 };
 
-#endif  // liblldb_SymbolFileDWARF_h_
+#endif  // SymbolFileDWARF_SymbolFileDWARF_h_

@@ -1843,7 +1843,7 @@ DWARFDebugInfoEntry::BuildAddressRangeTable
             if (hi_pc != DW_INVALID_ADDRESS)
             {
             /// printf("BuildAddressRangeTable() 0x%8.8x: %30s: [0x%8.8x - 0x%8.8x)\n", m_offset, DW_TAG_value_to_name(tag), lo_pc, hi_pc);
-                debug_aranges->InsertRange(cu->GetOffset(), lo_pc, hi_pc);
+                debug_aranges->AppendRange (cu->GetOffset(), lo_pc, hi_pc);
             }
         }
 
@@ -1885,7 +1885,7 @@ DWARFDebugInfoEntry::BuildFunctionAddressRangeTable
             if (hi_pc != DW_INVALID_ADDRESS)
             {
             //  printf("BuildAddressRangeTable() 0x%8.8x: [0x%16.16llx - 0x%16.16llx)\n", m_offset, lo_pc, hi_pc); // DEBUG ONLY
-                debug_aranges->InsertRange(GetOffset(), lo_pc, hi_pc);
+                debug_aranges->AppendRange (GetOffset(), lo_pc, hi_pc);
             }
         }
 

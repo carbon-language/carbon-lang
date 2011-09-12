@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_DWARFDebugAranges_h_
+#ifndef SymbolFileDWARF_DWARFDebugAranges_h_
 #define SymbolFileDWARF_DWARFDebugAranges_h_
 
 #include "DWARFDebugArangeSet.h"
@@ -20,35 +20,60 @@ class DWARFDebugAranges
 public:
     struct Range
     {
-        Range(
-            dw_addr_t   _lo_pc = DW_INVALID_ADDRESS,
-            dw_addr_t   _hi_pc = DW_INVALID_ADDRESS,
-            dw_offset_t _offset = DW_INVALID_OFFSET) :
-                lo_pc(_lo_pc),
-                hi_pc(_hi_pc),
-                offset(_offset)
+        explicit 
+        Range (dw_addr_t lo = DW_INVALID_ADDRESS,
+               dw_addr_t hi = DW_INVALID_ADDRESS,
+               dw_offset_t off = DW_INVALID_OFFSET) :
+                lo_pc  (lo),
+                length (hi-lo),
+                offset (off)
         {
         }
 
         void Clear()
         {
-            lo_pc = hi_pc = DW_INVALID_ADDRESS;
+            lo_pc = DW_INVALID_ADDRESS;
+            length = 0;
             offset = DW_INVALID_OFFSET;
         }
 
-        bool ValidRange() const
+        void
+        set_hi_pc (dw_addr_t hi_pc)
         {
-            return hi_pc > lo_pc;
+            if (hi_pc == DW_INVALID_ADDRESS || hi_pc <= lo_pc)
+                length = 0;
+            else
+                length = hi_pc - lo_pc;
+        }
+        dw_addr_t
+        hi_pc() const
+        {
+            if (length)
+                return lo_pc + length;
+            return DW_INVALID_ADDRESS;
+        }
+        bool 
+        ValidRange() const
+        {
+            return length > 0;
+        }
+        
+        static bool 
+        SortedOverlapCheck (const Range& curr_range, const Range& next_range, uint32_t n)
+        {
+            if (curr_range.offset != next_range.offset)
+                return false;
+            return curr_range.hi_pc() + n >= next_range.lo_pc;
         }
 
         bool Contains(const Range& range) const
         {
-            return lo_pc <= range.lo_pc && range.hi_pc <= hi_pc;
+            return lo_pc <= range.lo_pc && range.hi_pc() <= hi_pc();
         }
 
         void Dump(lldb_private::Stream *s) const;
         dw_addr_t   lo_pc;      // Start of address range
-        dw_addr_t   hi_pc;      // End of address range (not including this address)
+        uint32_t    length;      // End of address range (not including this address)
         dw_offset_t offset;     // Offset of the compile unit or die
     };
 
@@ -59,12 +84,10 @@ public:
     bool        GetMaxRange(dw_addr_t& lo_pc, dw_addr_t& hi_pc) const;
     bool        Extract(const lldb_private::DataExtractor &debug_aranges_data);
     bool        Generate(SymbolFileDWARF* dwarf2Data);
-    void        InsertRange (dw_offset_t cu_offset, dw_addr_t low_pc, dw_addr_t high_pc);
-    void        InsertRange (const DWARFDebugAranges::Range& range);
     
                 // Use append range multiple times and then call sort
     void        AppendRange (dw_offset_t cu_offset, dw_addr_t low_pc, dw_addr_t high_pc);
-    void        Sort();
+    void        Sort (bool minimize, uint32_t n);
 
     const Range* RangeAtIndex(uint32_t idx) const
                 {
@@ -72,7 +95,7 @@ public:
                         return &m_aranges[idx];
                     return NULL;
                 }
-    void        Print() const;
+    void        Dump (lldb_private::Log *log) const;
     dw_offset_t FindAddress(dw_addr_t address) const;
     bool        IsEmpty() const { return m_aranges.empty(); }
 //    void        Dump(lldb_private::Stream *s);

@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_DWARFDebugInfo_h_
+#ifndef SymbolFileDWARF_DWARFDebugInfo_h_
 #define SymbolFileDWARF_DWARFDebugInfo_h_
 
 #include <vector>
@@ -36,7 +36,6 @@ public:
 
     DWARFDebugInfo();
     void SetDwarfData(SymbolFileDWARF* dwarf2Data);
-    bool BuildFunctionAddressRangeTable(DWARFDebugAranges* debug_aranges);
 
     bool LookupAddress(
             const dw_addr_t address,
@@ -70,12 +69,14 @@ public:
         eDumpFlag_ShowAncestors         = (1<<2)    // Show all parent DIEs when dumping single DIEs
     };
 
+    DWARFDebugAranges &
+    GetCompileUnitAranges ();
 
 protected:
     SymbolFileDWARF* m_dwarf2Data;
     typedef std::vector<DWARFCompileUnitSP>     CompileUnitColl;
-
     CompileUnitColl m_compile_units;
+    std::auto_ptr<DWARFDebugAranges> m_cu_aranges_ap; // A quick address to compile unit table
 
 private:
     // All parsing needs to be done partially any managed by this class as accessors are called.

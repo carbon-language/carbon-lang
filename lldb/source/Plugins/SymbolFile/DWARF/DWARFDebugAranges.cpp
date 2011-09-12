@@ -14,9 +14,11 @@
 
 #include <algorithm>
 
+#include "lldb/Core/Log.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/Timer.h"
 
+#include "LogChannelDWARF.h"
 #include "SymbolFileDWARF.h"
 #include "DWARFDebugInfo.h"
 #include "DWARFCompileUnit.h"
@@ -73,7 +75,7 @@ public:
         for (uint32_t i=0; (arange_desc_ptr = set.GetDescriptor(i)) != NULL; ++i)
         {
             range.lo_pc = arange_desc_ptr->address;
-            range.hi_pc = arange_desc_ptr->address + arange_desc_ptr->length;
+            range.length = arange_desc_ptr->length;
 
             // Insert each item in increasing address order so binary searching
             // can later be done!
@@ -90,7 +92,7 @@ public:
 static void PrintRange(const DWARFDebugAranges::Range& range)
 {
     // Cast the address values in case the address type is compiled as 32 bit
-    printf("0x%8.8x: [0x%8.8llx - 0x%8.8llx)\n", range.offset, (long long)range.lo_pc, (long long)range.hi_pc);
+    printf("0x%8.8x: [0x%8.8llx - 0x%8.8llx)\n", range.offset, (long long)range.lo_pc, (long long)range.hi_pc());
 }
 
 //----------------------------------------------------------------------
@@ -139,13 +141,14 @@ DWARFDebugAranges::Generate(SymbolFileDWARF* dwarf2Data)
     DWARFDebugInfo* debug_info = dwarf2Data->DebugInfo();
     if (debug_info)
     {
+        const bool clear_dies_if_already_not_parsed = true;
         uint32_t cu_idx = 0;
         const uint32_t num_compile_units = dwarf2Data->GetNumCompileUnits();
         for (cu_idx = 0; cu_idx < num_compile_units; ++cu_idx)
         {
             DWARFCompileUnit* cu = debug_info->GetCompileUnitAtIndex(cu_idx);
             if (cu)
-                cu->DIE()->BuildAddressRangeTable(dwarf2Data, cu, this);
+                cu->BuildAddressRangeTable(dwarf2Data, this, clear_dies_if_already_not_parsed);
         }
     }
     return !IsEmpty();
@@ -153,17 +156,23 @@ DWARFDebugAranges::Generate(SymbolFileDWARF* dwarf2Data)
 
 
 void
-DWARFDebugAranges::Print() const
+DWARFDebugAranges::Dump (Log *log) const
 {
-    puts("\n\nDWARFDebugAranges address range list is:\n");
-    for_each(m_aranges.begin(), m_aranges.end(), PrintRange);
+    if (log == NULL)
+        return;
+    const uint32_t num_ranges = NumRanges();
+    for (uint32_t i = 0; i < num_ranges; ++i)
+    {
+        const Range &range = m_aranges[i];
+        log->Printf ("0x%8.8x: [0x%8.8llx - 0x%8.8llx)", range.offset, (uint64_t)range.lo_pc, (uint64_t)range.hi_pc());
+    }
 }
 
 
 void
 DWARFDebugAranges::Range::Dump(Stream *s) const
 {
-    s->Printf("{0x%8.8x}: [0x%8.8llx - 0x%8.8llx)\n", offset, lo_pc, hi_pc);
+    s->Printf("{0x%8.8x}: [0x%8.8llx - 0x%8.8llx)\n", offset, lo_pc, hi_pc());
 }
 
 //----------------------------------------------------------------------
@@ -232,57 +241,14 @@ DWARFDebugAranges::Range::Dump(Stream *s) const
 //  debug_ranges.AppendMax64(0, addr_size);
 //
 //}
-//
-//----------------------------------------------------------------------
-// ArangeSetContainsAddress
-//----------------------------------------------------------------------
-class ArangeSetContainsAddress
-{
-public:
-    ArangeSetContainsAddress (dw_addr_t the_address) : address(the_address), offset(DW_INVALID_OFFSET) {}
-    bool operator() (const DWARFDebugArangeSet& set)
-    {
-        offset = set.FindAddress(address);
-        return (offset != DW_INVALID_OFFSET);
-    }
-    const dw_addr_t address;
-    dw_offset_t offset;
-};
-
-
-//----------------------------------------------------------------------
-// InsertRange
-//----------------------------------------------------------------------
-void
-DWARFDebugAranges::InsertRange(dw_offset_t offset, dw_addr_t low_pc, dw_addr_t high_pc)
-{
-    // Insert each item in increasing address order so binary searching
-    // can later be done!
-    DWARFDebugAranges::Range range(low_pc, high_pc, offset);
-    InsertRange(range);
-}
-
-//----------------------------------------------------------------------
-// InsertRange
-//----------------------------------------------------------------------
-void
-DWARFDebugAranges::InsertRange(const DWARFDebugAranges::Range& range)
-{
-    // Insert each item in increasing address order so binary searching
-    // can later be done!
-    RangeColl::iterator insert_pos = lower_bound(m_aranges.begin(), m_aranges.end(), range, RangeLessThan);
-    m_aranges.insert(insert_pos, range);
-}
-
-
 void
 DWARFDebugAranges::AppendRange (dw_offset_t offset, dw_addr_t low_pc, dw_addr_t high_pc)
 {
     if (!m_aranges.empty())
     {
-        if (m_aranges.back().offset == offset && m_aranges.back().hi_pc == low_pc)
+        if (m_aranges.back().offset == offset && m_aranges.back().hi_pc() == low_pc)
         {
-            m_aranges.back().hi_pc = high_pc;
+            m_aranges.back().set_hi_pc(high_pc);
             return;
         }
     }
@@ -290,49 +256,83 @@ DWARFDebugAranges::AppendRange (dw_offset_t offset, dw_addr_t low_pc, dw_addr_t 
 }
 
 void
-DWARFDebugAranges::Sort()
+DWARFDebugAranges::Sort (bool minimize, uint32_t n)
 {    
     Timer scoped_timer(__PRETTY_FUNCTION__, "%s this = %p",
                        __PRETTY_FUNCTION__, this);
 
+    Log *log = LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_ARANGES);
+    const size_t orig_arange_size = m_aranges.size();
+    if (log)
+    {
+        log->Printf ("DWARFDebugAranges::Sort(minimize = %u, n = %u) with %zu entries", minimize, n, orig_arange_size);
+        Dump (log);
+    }
+
+    // Size of one? If so, no sorting is needed
+    if (orig_arange_size <= 1)
+        return;
     // Sort our address range entries
     std::stable_sort (m_aranges.begin(), m_aranges.end(), RangeLessThan);
 
-    // Merge all neighbouring ranges into a single range and remember the
-    // indices of all ranges merged.
-    const size_t old_size = m_aranges.size();
-    std::vector<size_t> merged;
-    for (size_t merge, cursor = 1; cursor < old_size; ++cursor)
-    {
-        merge = cursor - 1;
-        Range &r1 = m_aranges[merge];
-        Range &r2 = m_aranges[cursor];
-
-        if (r1.hi_pc == r2.lo_pc && r1.offset == r2.offset)
-        {
-            r2.lo_pc = r1.lo_pc;
-            merged.push_back(merge);
-        }
-    }
-
-    if (merged.empty())
+    
+    if (!minimize)
         return;
 
-    // Remove the merged ranges by shifting down all the keepers...
-    const size_t new_size = old_size - merged.size();
-    for (size_t i = 0, src = 0, dst = 0; dst < new_size; ++src, ++dst)
+    // Most address ranges are contiguous from function to function
+    // so our new ranges will likely be smaller. We calculate the size
+    // of the new ranges since although std::vector objects can be resized, 
+    // the will never reduce their allocated block size and free any excesss
+    // memory, so we might as well start a brand new collection so it is as
+    // small as possible.
+
+    // First calculate the size of the new minimal arange vector
+    // so we don't have to do a bunch of re-allocations as we 
+    // copy the new minimal stuff over to the new collection
+    size_t minimal_size = 1;
+    size_t i;
+    for (i=1; i<orig_arange_size; ++i)
     {
-        while (src == merged[i]) {
-            ++src;
-            ++i;
-        }
-        if (src == dst)
-            continue;
-        m_aranges[dst] = m_aranges[src];
+        if (!DWARFDebugAranges::Range::SortedOverlapCheck (m_aranges[i-1], m_aranges[i], n))
+            ++minimal_size;
     }
 
-    // ...and drop the extra elements.
-    m_aranges.resize(new_size);
+    // If the sizes are the same, then no consecutive aranges can be 
+    // combined, we are done
+    if (minimal_size == orig_arange_size)
+        return;
+
+    // Else, make a new RangeColl that _only_ contains what we need.
+    RangeColl minimal_aranges;
+    minimal_aranges.resize(minimal_size);
+    uint32_t j=0;
+    minimal_aranges[j] = m_aranges[0];
+    for (i=1; i<orig_arange_size; ++i)
+    {
+        if (DWARFDebugAranges::Range::SortedOverlapCheck (minimal_aranges[j], m_aranges[i], n))
+        {
+            minimal_aranges[j].set_hi_pc (m_aranges[i].hi_pc());
+        }
+        else
+        {
+            // Only increment j if we aren't merging
+            minimal_aranges[++j] = m_aranges[i];            
+        }
+    }
+    assert (j+1 == minimal_size);
+    
+    // Now swap our new minimal aranges into place. The local
+    // minimal_aranges will then contian the old big collection
+    // which will get freed.
+    minimal_aranges.swap(m_aranges);
+    
+    if (log)
+    {
+        size_t delta = orig_arange_size - m_aranges.size();
+        log->Printf ("DWARFDebugAranges::Sort() %zu entries after minimizing (%zu entries combined for %zu bytes saved)", 
+                     m_aranges.size(), delta, delta * sizeof(Range));
+        Dump (log);
+    }
 }
 
 //----------------------------------------------------------------------
@@ -348,7 +348,7 @@ DWARFDebugAranges::FindAddress(dw_addr_t address) const
         DWARFDebugAranges::RangeCollIterator end = m_aranges.end();
         DWARFDebugAranges::RangeCollIterator pos = lower_bound(begin, end, range, RangeLessThan);
 
-        if ((pos != end) && (pos->lo_pc <= address && address < pos->hi_pc))
+        if ((pos != end) && (pos->lo_pc <= address && address < pos->hi_pc()))
         {
         //  printf("FindAddress(1) found 0x%8.8x in compile unit: 0x%8.8x\n", address, pos->offset);
             return pos->offset;
@@ -356,7 +356,7 @@ DWARFDebugAranges::FindAddress(dw_addr_t address) const
         else if (pos != begin)
         {
             --pos;
-            if ((pos->lo_pc <= address) && (address < pos->hi_pc))
+            if ((pos->lo_pc <= address) && (address < pos->hi_pc()))
             {
             //  printf("FindAddress(2) found 0x%8.8x in compile unit: 0x%8.8x\n", address, pos->offset);
                 return (*pos).offset;
@@ -384,10 +384,10 @@ DWARFDebugAranges::AllRangesAreContiguous(dw_addr_t& lo_pc, dw_addr_t& hi_pc) co
     {
         if ((pos != begin) && (pos->lo_pc != next_addr))
             return false;
-        next_addr = pos->hi_pc;
+        next_addr = pos->hi_pc();
     }
     lo_pc = m_aranges.front().lo_pc;    // We checked for empty at the start of function so front() will be valid
-    hi_pc = m_aranges.back().hi_pc;     // We checked for empty at the start of function so back() will be valid
+    hi_pc = m_aranges.back().hi_pc();     // We checked for empty at the start of function so back() will be valid
     return true;
 }
 
@@ -398,7 +398,7 @@ DWARFDebugAranges::GetMaxRange(dw_addr_t& lo_pc, dw_addr_t& hi_pc) const
         return false;
 
     lo_pc = m_aranges.front().lo_pc;    // We checked for empty at the start of function so front() will be valid
-    hi_pc = m_aranges.back().hi_pc;     // We checked for empty at the start of function so back() will be valid
+    hi_pc = m_aranges.back().hi_pc();   // We checked for empty at the start of function so back() will be valid
     return true;
 }
 

@@ -14,12 +14,15 @@
 
 #include "lldb/Core/RegularExpression.h"
 #include "lldb/Core/Stream.h"
+#include "lldb/Symbol/ObjectFile.h"
 
+#include "DWARFDebugAranges.h"
 #include "DWARFDebugInfo.h"
 #include "DWARFCompileUnit.h"
 #include "DWARFDebugAranges.h"
 #include "DWARFDebugInfoEntry.h"
 #include "DWARFFormValue.h"
+#include "LogChannelDWARF.h"
 
 using namespace lldb_private;
 using namespace std;
@@ -29,7 +32,8 @@ using namespace std;
 //----------------------------------------------------------------------
 DWARFDebugInfo::DWARFDebugInfo() :
     m_dwarf2Data(NULL),
-    m_compile_units()
+    m_compile_units(),
+    m_cu_aranges_ap ()
 {
 }
 
@@ -43,24 +47,59 @@ DWARFDebugInfo::SetDwarfData(SymbolFileDWARF* dwarf2Data)
     m_compile_units.clear();
 }
 
-//----------------------------------------------------------------------
-// BuildDIEAddressRangeTable
-//----------------------------------------------------------------------
-bool
-DWARFDebugInfo::BuildFunctionAddressRangeTable(DWARFDebugAranges* debug_aranges)
+
+DWARFDebugAranges &
+DWARFDebugInfo::GetCompileUnitAranges ()
 {
-    const uint32_t num_compile_units = GetNumCompileUnits();
-    uint32_t idx;
-    for (idx = 0; idx < num_compile_units; ++idx)
+    if (m_cu_aranges_ap.get() == NULL && m_dwarf2Data)
     {
-        DWARFCompileUnit* cu = GetCompileUnitAtIndex (idx);
-        if (cu)
+        Log *log = LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_ARANGES);
+
+        m_cu_aranges_ap.reset (new DWARFDebugAranges());
+        const DataExtractor &debug_aranges_data = m_dwarf2Data->get_debug_aranges_data();
+        if (debug_aranges_data.GetByteSize() > 0)
         {
-            cu->DIE()->BuildFunctionAddressRangeTable(m_dwarf2Data, cu, debug_aranges);
+            if (log)
+                log->Printf ("DWARFDebugInfo::GetCompileUnitAranges() for \"%s/%s\" from .debug_aranges", 
+                             m_dwarf2Data->GetObjectFile()->GetFileSpec().GetDirectory().GetCString(),
+                             m_dwarf2Data->GetObjectFile()->GetFileSpec().GetFilename().GetCString());
+            m_cu_aranges_ap->Extract (debug_aranges_data);
+            
         }
+        else
+        {
+            if (log)
+                log->Printf ("DWARFDebugInfo::GetCompileUnitAranges() for \"%s/%s\" by parsing", 
+                             m_dwarf2Data->GetObjectFile()->GetFileSpec().GetDirectory().GetCString(),
+                             m_dwarf2Data->GetObjectFile()->GetFileSpec().GetFilename().GetCString());
+            const uint32_t num_compile_units = GetNumCompileUnits();
+            uint32_t idx;
+            const bool clear_dies_if_already_not_parsed = true;
+            for (idx = 0; idx < num_compile_units; ++idx)
+            {
+                DWARFCompileUnit* cu = GetCompileUnitAtIndex(idx);
+                if (cu)
+                    cu->BuildAddressRangeTable (m_dwarf2Data, m_cu_aranges_ap.get(), clear_dies_if_already_not_parsed);
+            }
+        }
+
+        // Sort with a fudge factor of 16 to make sure if we have a lot
+        // of functions in the compile unit whose end address if followed
+        // a start address that is "fudge_size" bytes close, it will combine
+        // the arange entries. This currently happens a lot on x86_64. This
+        // will help reduce the size of the aranges since sort will sort all
+        // of them and combine aranges that are consecutive for ranges in the
+        // same compile unit and we really don't need it to be all that 
+        // accurate since we will get exact accuracy when we search the 
+        // actual compile unit aranges which point to the exact range and 
+        // the exact DIE offset of the function.
+        const bool minimize = true;
+        const uint32_t fudge_factor = 16;
+        m_cu_aranges_ap->Sort (minimize, fudge_factor);
     }
-    return !debug_aranges->IsEmpty();
+    return *m_cu_aranges_ap.get();
 }
+
 
 //----------------------------------------------------------------------
 // LookupAddress
@@ -80,28 +119,9 @@ DWARFDebugInfo::LookupAddress
         cu_sp = GetCompileUnit(hint_die_offset);
     else
     {
-        // Get a non const version of the address ranges
-        DWARFDebugAranges* debug_aranges = ((SymbolFileDWARF*)m_dwarf2Data)->DebugAranges();
-
-        if (debug_aranges != NULL)
-        {
-            // If we have an empty address ranges section, lets build a sorted
-            // table ourselves by going through all of the debug information so we
-            // can do quick subsequent searches.
-
-            if (debug_aranges->IsEmpty())
-            {
-                const uint32_t num_compile_units = GetNumCompileUnits();
-                uint32_t idx;
-                for (idx = 0; idx < num_compile_units; ++idx)
-                {
-                    DWARFCompileUnit* cu = GetCompileUnitAtIndex(idx);
-                    if (cu)
-                        cu->DIE()->BuildAddressRangeTable(m_dwarf2Data, cu, debug_aranges);
-                }
-            }
-            cu_sp = GetCompileUnit(debug_aranges->FindAddress(address));
-        }
+        DWARFDebugAranges &cu_aranges = GetCompileUnitAranges ();
+        const dw_offset_t cu_offset = cu_aranges.FindAddress (address);
+        cu_sp = GetCompileUnit(cu_offset);
     }
 
     if (cu_sp.get())
@@ -613,7 +633,7 @@ VerifyCallback
                 range.lo_pc = die->GetAttributeValueAsUnsigned(dwarf2Data, cu, DW_AT_low_pc, DW_INVALID_ADDRESS);
                 if (range.lo_pc != DW_INVALID_ADDRESS)
                 {
-                    range.hi_pc = die->GetAttributeValueAsUnsigned(dwarf2Data, cu, DW_AT_high_pc, DW_INVALID_ADDRESS);
+                    range.set_hi_pc (die->GetAttributeValueAsUnsigned(dwarf2Data, cu, DW_AT_high_pc, DW_INVALID_ADDRESS));
                     if (s->GetVerbose())
                     {
                         s->Printf("\n    CU ");
@@ -636,8 +656,8 @@ VerifyCallback
                 range.lo_pc = die->GetAttributeValueAsUnsigned(dwarf2Data, cu, DW_AT_low_pc, DW_INVALID_ADDRESS);
                 if (range.lo_pc != DW_INVALID_ADDRESS)
                 {
-                    range.hi_pc = die->GetAttributeValueAsUnsigned(dwarf2Data, cu, DW_AT_high_pc, DW_INVALID_ADDRESS);
-                    if (range.hi_pc != DW_INVALID_ADDRESS)
+                    range.set_hi_pc (die->GetAttributeValueAsUnsigned(dwarf2Data, cu, DW_AT_high_pc, DW_INVALID_ADDRESS));
+                    if (range.hi_pc() != DW_INVALID_ADDRESS)
                     {
                         range.offset = die->GetOffset();
                         bool valid = range.ValidRange();
@@ -651,10 +671,6 @@ VerifyCallback
                                 s->Printf(" ERROR: Invalid address range for function.");
                             }
                         }
-
-                        // Only add to our subroutine ranges if our compile unit has a valid address range
-                    //  if (valid && verifyInfo->die_ranges.size() >= 2 && verifyInfo->die_ranges[1].range.ValidRange())
-                    //      verifyInfo->subroutine_ranges.InsertRange(range);
                     }
                 }
                 break;
@@ -665,8 +681,8 @@ VerifyCallback
                     range.lo_pc = die->GetAttributeValueAsUnsigned(dwarf2Data, cu, DW_AT_low_pc, DW_INVALID_ADDRESS);
                     if (range.lo_pc != DW_INVALID_ADDRESS)
                     {
-                        range.hi_pc = die->GetAttributeValueAsUnsigned(dwarf2Data, cu, DW_AT_high_pc, DW_INVALID_ADDRESS);
-                        if (range.hi_pc != DW_INVALID_ADDRESS)
+                        range.set_hi_pc (die->GetAttributeValueAsUnsigned(dwarf2Data, cu, DW_AT_high_pc, DW_INVALID_ADDRESS));
+                        if (range.hi_pc() != DW_INVALID_ADDRESS)
                         {
                             range.offset = die->GetOffset();
                             bool valid = range.ValidRange();
