@@ -40,6 +40,12 @@ __module_private__ int hidden_var;
 inline void test_f0_in_right() {
   double &dr = f0(hidden_var);
 }
+
+struct VisibleStruct {
+  __module_private__ int field;
+  __module_private__ void setField(int f);
+};
+
 #else
 __import_module__ left;
 __import_module__ right;
@@ -59,6 +65,10 @@ int test_broken() {
   vector<int> vec; // expected-error{{use of undeclared identifier 'vector'}} \
   // expected-error{{expected '(' for function-style cast or type construction}} \
   // expected-error{{use of undeclared identifier 'vec'}}
+
+  VisibleStruct vs;
+  vs.field = 0; // expected-error{{no member named 'field' in 'VisibleStruct'}}
+  vs.setField(1); // expected-error{{no member named 'setField' in 'VisibleStruct'}}
 
   return hidden_var; // expected-error{{use of undeclared identifier 'hidden_var'}}
 }

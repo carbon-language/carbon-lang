@@ -8079,6 +8079,9 @@ FieldDecl *Sema::HandleField(Scope *S, RecordDecl *Record,
   if (NewFD->isInvalidDecl())
     Record->setInvalidDecl();
 
+  if (D.getDeclSpec().isModulePrivateSpecified())
+    NewFD->setModulePrivate();
+  
   if (NewFD->isInvalidDecl() && PrevDecl) {
     // Don't introduce NewFD into scope; there's already something
     // with the same name in the same scope.
@@ -8556,6 +8559,9 @@ Decl *Sema::ActOnIvar(Scope *S,
   if (getLangOptions().ObjCAutoRefCount && inferObjCARCLifetime(NewID))
     NewID->setInvalidDecl();
 
+  if (D.getDeclSpec().isModulePrivateSpecified())
+    NewID->setModulePrivate();
+  
   if (II) {
     // FIXME: When interfaces are DeclContexts, we'll need to add
     // these to the interface.
