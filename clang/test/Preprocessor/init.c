@@ -94,7 +94,7 @@
 // OBJCGC:#define __OBJC_GC__ 1
 //
 // 
-// RUN: %clang_cc1 -x objective-c -fobjc-nonfragile-abi -E -dM < /dev/null | FileCheck -check-prefix NONFRAGILE %s
+// RUN: %clang_cc1 -x objective-c -fobjc-exceptions -fobjc-nonfragile-abi -E -dM < /dev/null | FileCheck -check-prefix NONFRAGILE %s
 //
 // NONFRAGILE:#define OBJC_ZEROCOST_EXCEPTIONS 1
 // NONFRAGILE:#define __OBJC2__ 1

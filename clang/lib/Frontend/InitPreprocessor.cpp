@@ -426,7 +426,9 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   if (LangOpts.ObjC1) {
     if (LangOpts.ObjCNonFragileABI) {
       Builder.defineMacro("__OBJC2__");
-      Builder.defineMacro("OBJC_ZEROCOST_EXCEPTIONS");
+      
+      if (LangOpts.ObjCExceptions)
+        Builder.defineMacro("OBJC_ZEROCOST_EXCEPTIONS");
     }
 
     if (LangOpts.getGCMode() != LangOptions::NonGC)
@@ -452,7 +454,7 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
     Builder.defineMacro("__BLOCKS__");
   }
 
-  if (LangOpts.Exceptions)
+  if (LangOpts.CXXExceptions)
     Builder.defineMacro("__EXCEPTIONS");
   if (LangOpts.RTTI)
     Builder.defineMacro("__GXX_RTTI");
