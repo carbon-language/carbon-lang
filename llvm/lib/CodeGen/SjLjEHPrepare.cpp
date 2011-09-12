@@ -71,6 +71,7 @@ namespace {
     void markInvokeCallSite(InvokeInst *II, int InvokeNo, Value *CallSite,
                             SwitchInst *CatchSwitch);
     void splitLiveRangesAcrossInvokes(SmallVector<InvokeInst*,16> &Invokes);
+    void splitLandingPad(InvokeInst *II);
     bool insertSjLjEHSupport(Function &F);
   };
 } // end anonymous namespace
@@ -130,6 +131,42 @@ void SjLjEHPass::insertCallSiteStore(Instruction *I, int Number,
   new StoreInst(CallSiteNoC, CallSite, true, I);  // volatile
 }
 
+/// splitLandingPad - Split a landing pad. This takes considerable care because
+/// of PHIs and other nasties. The problem is that the jump table needs to jump
+/// to the landing pad block. However, the landing pad block can be jumped to
+/// only by an invoke instruction. So we clone the landingpad instruction into
+/// its own basic block, have the invoke jump to there. The landingpad
+/// instruction's basic block's successor is now the target for the jump table.
+///
+/// But because of PHI nodes, we need to create another basic block for the jump
+/// table to jump to. This is definitely a hack, because the values for the PHI
+/// nodes may not be defined on the edge from the jump table. But that's okay,
+/// because the jump table is simply a construct to mimic what is happening in
+/// the CFG. So the values are mysteriously there, even though there is no value
+/// for the PHI from the jump table's edge (hence calling this a hack).
+void SjLjEHPass::splitLandingPad(InvokeInst *II) {
+  SmallVector<BasicBlock*, 2> NewBBs;
+  SplitLandingPadPredecessors(II->getUnwindDest(), II->getParent(),
+                              ".1", ".2", this, NewBBs);
+
+  // Create an empty block so that the jump table has something to jump to
+  // which doesn't have any PHI nodes.
+  BasicBlock *LPad = NewBBs[0];
+  BasicBlock *Succ = *succ_begin(LPad);
+  BasicBlock *JumpTo = BasicBlock::Create(II->getContext(), "jt.land",
+                                          LPad->getParent(), Succ);
+  LPad->getTerminator()->eraseFromParent();
+  BranchInst::Create(JumpTo, LPad);
+  BranchInst::Create(Succ, JumpTo);
+  LPadSuccMap[II] = JumpTo;
+
+  for (BasicBlock::iterator I = Succ->begin(); isa<PHINode>(I); ++I) {
+    PHINode *PN = cast<PHINode>(I);
+    Value *Val = PN->removeIncomingValue(LPad, false);
+    PN->addIncoming(Val, JumpTo);
+  }
+}
+
 /// markInvokeCallSite - Insert code to mark the call_site for this invoke
 void SjLjEHPass::markInvokeCallSite(InvokeInst *II, int InvokeNo,
                                     Value *CallSite,
@@ -139,19 +176,15 @@ void SjLjEHPass::markInvokeCallSite(InvokeInst *II, int InvokeNo,
   // The runtime comes back to the dispatcher with the call_site - 1 in
   // the context. Odd, but there it is.
   ConstantInt *SwitchValC = ConstantInt::get(Type::getInt32Ty(II->getContext()),
-                                            InvokeNo - 1);
+                                             InvokeNo - 1);
 
   // If the unwind edge has phi nodes, split the edge.
   if (isa<PHINode>(II->getUnwindDest()->begin())) {
     // FIXME: New EH - This if-condition will be always true in the new scheme.
-    if (II->getUnwindDest()->isLandingPad()) {
-      SmallVector<BasicBlock*, 2> NewBBs;
-      SplitLandingPadPredecessors(II->getUnwindDest(), II->getParent(),
-                                  ".1", ".2", this, NewBBs);
-      LPadSuccMap[II] = *succ_begin(NewBBs[0]);
-    } else {
+    if (II->getUnwindDest()->isLandingPad())
+      splitLandingPad(II);
+    else
       SplitCriticalEdge(II, 1, this);
-    }
 
     // If there are any phi nodes left, they must have a single predecessor.
     while (PHINode *PN = dyn_cast<PHINode>(II->getUnwindDest()->begin())) {
@@ -201,14 +234,10 @@ splitLiveRangesAcrossInvokes(SmallVector<InvokeInst*,16> &Invokes) {
     SplitCriticalEdge(II, 0, this);
 
     // FIXME: New EH - This if-condition will be always true in the new scheme.
-    if (II->getUnwindDest()->isLandingPad()) {
-      SmallVector<BasicBlock*, 2> NewBBs;
-      SplitLandingPadPredecessors(II->getUnwindDest(), II->getParent(),
-                                  ".1", ".2", this, NewBBs);
-      LPadSuccMap[II] = *succ_begin(NewBBs[0]);
-    } else {
+    if (II->getUnwindDest()->isLandingPad())
+      splitLandingPad(II);
+    else
       SplitCriticalEdge(II, 1, this);
-    }
 
     assert(!isa<PHINode>(II->getNormalDest()) &&
            !isa<PHINode>(II->getUnwindDest()) &&
