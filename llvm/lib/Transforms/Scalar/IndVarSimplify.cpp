@@ -11,17 +11,6 @@
 // computations derived from them) into simpler forms suitable for subsequent
 // analysis and transformation.
 //
-// Additionally, unless -disable-iv-rewrite is on, this transformation makes the
-// following changes to each loop with an identifiable induction variable:
-//   1. All loops are transformed to have a SINGLE canonical induction variable
-//      which starts at zero and steps by one.
-//   2. The canonical induction variable is guaranteed to be the first PHI node
-//      in the loop header block.
-//   3. The canonical induction variable is guaranteed to be in a wide enough
-//      type so that IV expressions need not be (directly) zero-extended or
-//      sign-extended.
-//   4. Any pointer arithmetic recurrences are raised to use array subscripts.
-//
 // If the trip count of a loop is computable, this pass also makes the following
 // changes:
 //   1. The exit condition for the loop is canonicalized to compare the
@@ -32,9 +21,6 @@
 //      the dependence on the exit value of the induction variable.  If the only
 //      purpose of the loop is to compute the exit value of some derived
 //      expression, this transformation will make the loop dead.
-//
-// This transformation should be followed by strength reduction after all of the
-// desired loop transformations have been performed.
 //
 //===----------------------------------------------------------------------===//
 
@@ -73,9 +59,9 @@ STATISTIC(NumElimExt     , "Number of IV sign/zero extends eliminated");
 STATISTIC(NumElimIV      , "Number of congruent IVs eliminated");
 
 namespace llvm {
-  cl::opt<bool> DisableIVRewrite(
-    "disable-iv-rewrite", cl::Hidden,
-    cl::desc("Disable canonical induction variable rewriting"));
+  cl::opt<bool> EnableIVRewrite(
+    "enable-iv-rewrite", cl::Hidden, cl::init(true),
+    cl::desc("Enable canonical induction variable rewriting"));
 
   // Trip count verification can be enabled by default under NDEBUG if we
   // implement a strong expression equivalence checker in SCEV. Until then, we
@@ -84,12 +70,6 @@ namespace llvm {
     "verify-indvars", cl::Hidden,
     cl::desc("Verify the ScalarEvolution result after running indvars"));
 }
-
-// Temporary flag for use with -disable-iv-rewrite to force a canonical IV for
-// LFTR purposes.
-static cl::opt<bool> ForceLFTR(
-  "force-lftr", cl::Hidden,
-  cl::desc("Enable forced linear function test replacement"));
 
 namespace {
   class IndVarSimplify : public LoopPass {
@@ -117,12 +97,12 @@ namespace {
       AU.addRequired<ScalarEvolution>();
       AU.addRequiredID(LoopSimplifyID);
       AU.addRequiredID(LCSSAID);
-      if (!DisableIVRewrite)
+      if (EnableIVRewrite)
         AU.addRequired<IVUsers>();
       AU.addPreserved<ScalarEvolution>();
       AU.addPreservedID(LoopSimplifyID);
       AU.addPreservedID(LCSSAID);
-      if (!DisableIVRewrite)
+      if (EnableIVRewrite)
         AU.addPreserved<IVUsers>();
       AU.setPreservesCFG();
     }
@@ -618,7 +598,7 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L, SCEVExpander &Rewriter) {
 
 //===----------------------------------------------------------------------===//
 //  Rewrite IV users based on a canonical IV.
-//  To be replaced by -disable-iv-rewrite.
+//  Only for use with -enable-iv-rewrite.
 //===----------------------------------------------------------------------===//
 
 /// FIXME: It is an extremely bad idea to indvar substitute anything more
@@ -1333,7 +1313,7 @@ static bool isHighCostExpansion(const SCEV *S, BranchInst *BI,
     }
   }
 
-  if (!DisableIVRewrite || ForceLFTR)
+  if (EnableIVRewrite)
     return false;
 
   // Recurse past add expressions, which commonly occur in the
@@ -1610,10 +1590,9 @@ LinearFunctionTestReplace(Loop *L,
   assert(canExpandBackedgeTakenCount(L, SE) && "precondition");
   BranchInst *BI = cast<BranchInst>(L->getExitingBlock()->getTerminator());
 
-  // In DisableIVRewrite mode, IndVar is not necessarily a canonical IV. In this
-  // mode, LFTR can ignore IV overflow and truncate to the width of
+  // LFTR can ignore IV overflow and truncate to the width of
   // BECount. This avoids materializing the add(zext(add)) expression.
-  Type *CntTy = DisableIVRewrite ?
+  Type *CntTy = !EnableIVRewrite ?
     BackedgeTakenCount->getType() : IndVar->getType();
 
   const SCEV *IVLimit = BackedgeTakenCount;
@@ -1663,7 +1642,7 @@ LinearFunctionTestReplace(Loop *L,
     const SCEV *IVInit = AR->getStart();
 
     // For pointer types, sign extend BECount in order to materialize a GEP.
-    // Note that for DisableIVRewrite, we never run SCEVExpander on a
+    // Note that for without EnableIVRewrite, we never run SCEVExpander on a
     // pointer type, because we must preserve the existing GEPs. Instead we
     // directly generate a GEP later.
     if (IVInit->getType()->isPointerTy()) {
@@ -1841,7 +1820,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   if (!L->isLoopSimplifyForm())
     return false;
 
-  if (!DisableIVRewrite)
+  if (EnableIVRewrite)
     IU = &getAnalysis<IVUsers>();
   LI = &getAnalysis<LoopInfo>();
   SE = &getAnalysis<ScalarEvolution>();
@@ -1866,7 +1845,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   // attempt to avoid evaluating SCEVs for sign/zero extend operations until
   // other expressions involving loop IVs have been evaluated. This helps SCEV
   // set no-wrap flags before normalizing sign/zero extension.
-  if (DisableIVRewrite) {
+  if (!EnableIVRewrite) {
     Rewriter.disableCanonicalMode();
     SimplifyAndExtend(L, Rewriter, LPM);
   }
@@ -1881,26 +1860,25 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
     RewriteLoopExitValues(L, Rewriter);
 
   // Eliminate redundant IV users.
-  if (!DisableIVRewrite)
+  if (EnableIVRewrite)
     Changed |= simplifyIVUsers(IU, SE, &LPM, DeadInsts);
 
   // Eliminate redundant IV cycles.
-  if (DisableIVRewrite)
+  if (!EnableIVRewrite)
     SimplifyCongruentIVs(L);
 
   // Compute the type of the largest recurrence expression, and decide whether
   // a canonical induction variable should be inserted.
   Type *LargestType = 0;
   bool NeedCannIV = false;
-  bool ReuseIVForExit = DisableIVRewrite && !ForceLFTR;
   bool ExpandBECount = canExpandBackedgeTakenCount(L, SE);
-  if (ExpandBECount && !ReuseIVForExit) {
+  if (EnableIVRewrite && ExpandBECount) {
     // If we have a known trip count and a single exit block, we'll be
     // rewriting the loop exit test condition below, which requires a
     // canonical induction variable.
     NeedCannIV = true;
     Type *Ty = BackedgeTakenCount->getType();
-    if (DisableIVRewrite) {
+    if (!EnableIVRewrite) {
       // In this mode, SimplifyIVUsers may have already widened the IV used by
       // the backedge test and inserted a Trunc on the compare's operand. Get
       // the wider type to avoid creating a redundant narrow IV only used by the
@@ -1912,7 +1890,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
         SE->getTypeSizeInBits(LargestType))
       LargestType = SE->getEffectiveSCEVType(Ty);
   }
-  if (!DisableIVRewrite) {
+  if (EnableIVRewrite) {
     for (IVUsers::const_iterator I = IU->begin(), E = IU->end(); I != E; ++I) {
       NeedCannIV = true;
       Type *Ty =
@@ -1957,7 +1935,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
       OldCannIV->insertBefore(L->getHeader()->getFirstInsertionPt());
     }
   }
-  else if (ExpandBECount && ReuseIVForExit && needsLFTR(L, DT)) {
+  else if (!EnableIVRewrite && ExpandBECount && needsLFTR(L, DT)) {
     IndVar = FindLoopCounter(L, BackedgeTakenCount, SE, DT, TD);
   }
   // If we have a trip count expression, rewrite the loop's exit condition
@@ -1978,7 +1956,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
         LinearFunctionTestReplace(L, BackedgeTakenCount, IndVar, Rewriter);
   }
   // Rewrite IV-derived expressions.
-  if (!DisableIVRewrite)
+  if (EnableIVRewrite)
     RewriteIVExpressions(L, Rewriter);
 
   // Clear the rewriter cache, because values that are in the rewriter's cache
@@ -2015,7 +1993,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   // Verify that LFTR, and any other change have not interfered with SCEV's
   // ability to compute trip count.
 #ifndef NDEBUG
-  if (DisableIVRewrite && VerifyIndvars &&
+  if (!EnableIVRewrite && VerifyIndvars &&
       !isa<SCEVCouldNotCompute>(BackedgeTakenCount)) {
     SE->forgetLoop(L);
     const SCEV *NewBECount = SE->getBackedgeTakenCount(L);

@@ -1,4 +1,4 @@
-; RUN: opt < %s -indvars -disable-iv-rewrite -S | FileCheck %s
+; RUN: opt < %s -indvars -enable-iv-rewrite=false -S | FileCheck %s
 ;
 ; Make sure that indvars isn't inserting canonical IVs.
 ; This is kinda hard to do until linear function test replacement is removed.

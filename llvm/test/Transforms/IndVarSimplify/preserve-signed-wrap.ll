@@ -1,5 +1,5 @@
 ; RUN: opt < %s -indvars -S | FileCheck %s
-; RUN: opt < %s -indvars -disable-iv-rewrite -S | FileCheck %s
+; RUN: opt < %s -indvars -enable-iv-rewrite=false -S | FileCheck %s
 
 ; Indvars should insert a 64-bit induction variable to eliminate the
 ; sext for the addressing, however it shouldn't eliminate the sext

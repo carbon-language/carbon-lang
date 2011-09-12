@@ -1,5 +1,5 @@
 ; RUN: opt < %s -indvars -S | FileCheck %s
-; RUN: opt < %s -indvars -disable-iv-rewrite -S | FileCheck %s
+; RUN: opt < %s -indvars -enable-iv-rewrite=false -S | FileCheck %s
 ;
 ; PR1301
 
