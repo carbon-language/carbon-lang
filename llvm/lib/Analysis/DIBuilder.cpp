@@ -267,7 +267,7 @@ DIType DIBuilder::createFriend(DIType Ty, DIType FriendTy) {
 }
 
 /// createInheritance - Create debugging information entry to establish
-/// inheritnace relationship between two types.
+/// inheritance relationship between two types.
 DIType DIBuilder::createInheritance(DIType Ty, DIType BaseTy,
                                     uint64_t BaseOffset, unsigned Flags) {
   assert(Ty.Verify() && "Unable to create inheritance");
