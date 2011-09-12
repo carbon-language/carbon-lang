@@ -553,7 +553,7 @@ ConditionBRVisitor::VisitTrueTest(const Expr *Cond,
       default:
         return 0;
       case Stmt::BinaryOperatorClass:
-        return VisitTrueTest(Cond, cast<BinaryOperator>(Cond), tookTrue, BRC);
+        return VisitTrueTest(Cond, cast<BinaryOperator>(Ex), tookTrue, BRC);
       case Stmt::DeclRefExprClass:
         return VisitTrueTest(Cond, cast<DeclRefExpr>(Ex), tookTrue, BRC);
       case Stmt::UnaryOperatorClass: {

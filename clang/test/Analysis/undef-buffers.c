@@ -15,6 +15,17 @@ char stackBased2 () {
   return buf[0]; // expected-warning{{Undefined}}
 }
 
+// Exercise the conditional visitor. Radar://10105448
+char stackBased3 (int *x) {
+  char buf[2];
+  int *y;
+  buf[0] = 'a';
+  if (!(y = x)) {
+    return buf[1]; // expected-warning{{Undefined}}
+  }
+  return buf[0];
+}
+
 char heapBased1 () {
   char *buf = malloc(2);
   buf[0] = 'a';
