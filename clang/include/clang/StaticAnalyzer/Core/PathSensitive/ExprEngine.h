@@ -67,10 +67,10 @@ class ExprEngine : public SubEngine {
   /// currentStmt - The current block-level statement.
   const Stmt *currentStmt;
 
-  // Obj-C Class Identifiers.
+  /// Obj-C Class Identifiers.
   IdentifierInfo* NSExceptionII;
 
-  // Obj-C Selectors.
+  /// Obj-C Selectors.
   Selector* NSExceptionInstanceRaiseSelectors;
   Selector RaiseSel;
   
