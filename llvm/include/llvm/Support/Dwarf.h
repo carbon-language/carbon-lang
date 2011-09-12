@@ -428,6 +428,7 @@ enum dwarf_constants {
   DW_ATE_unsigned = 0x07,
   DW_ATE_unsigned_char = 0x08,
   DW_ATE_imaginary_float = 0x09,
+  DW_ATE_UTF = 0x10,
   DW_ATE_packed_decimal = 0x0a,
   DW_ATE_numeric_string = 0x0b,
   DW_ATE_edited = 0x0c,

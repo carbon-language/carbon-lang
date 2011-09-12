@@ -416,6 +416,7 @@ const char *llvm::dwarf::AttributeEncodingString(unsigned Encoding) {
   case DW_ATE_unsigned:                  return "DW_ATE_unsigned";
   case DW_ATE_unsigned_char:             return "DW_ATE_unsigned_char";
   case DW_ATE_imaginary_float:           return "DW_ATE_imaginary_float";
+  case DW_ATE_UTF:                       return "DW_ATE_UTF";
   case DW_ATE_packed_decimal:            return "DW_ATE_packed_decimal";
   case DW_ATE_numeric_string:            return "DW_ATE_numeric_string";
   case DW_ATE_edited:                    return "DW_ATE_edited";
