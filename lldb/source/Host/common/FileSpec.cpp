@@ -352,10 +352,9 @@ FileSpec::SetFile (const char *pathname, bool resolve)
 //  if (file_spec)
 //  {}
 //----------------------------------------------------------------------
-FileSpec::operator
-void*() const
+FileSpec::operator bool() const
 {
-    return (m_directory || m_filename) ? const_cast<FileSpec*>(this) : NULL;
+    return m_filename || m_directory;
 }
 
 //----------------------------------------------------------------------

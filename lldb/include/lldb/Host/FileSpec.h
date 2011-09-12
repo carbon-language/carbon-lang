@@ -180,8 +180,7 @@ public:
     ///     A pointer to this object if either the directory or filename
     ///     is valid, NULL otherwise.
     //------------------------------------------------------------------
-    operator
-    void* () const;
+    operator bool() const;
 
     //------------------------------------------------------------------
     /// Logical NOT operator.
