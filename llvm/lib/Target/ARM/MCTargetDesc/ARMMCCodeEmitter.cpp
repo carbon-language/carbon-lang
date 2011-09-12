@@ -713,17 +713,26 @@ getAddrModeImm12OpValue(const MCInst &MI, unsigned OpIdx,
     Imm12 = 0;
     isAdd = false ; // 'U' bit is set as part of the fixup.
 
-    assert(MO.isExpr() && "Unexpected machine operand type!");
-    const MCExpr *Expr = MO.getExpr();
+    if (MO.isExpr()) {
+      const MCExpr *Expr = MO.getExpr();
 
-    MCFixupKind Kind;
-    if (isThumb2())
-      Kind = MCFixupKind(ARM::fixup_t2_ldst_pcrel_12);
-    else
-      Kind = MCFixupKind(ARM::fixup_arm_ldst_pcrel_12);
-    Fixups.push_back(MCFixup::Create(0, Expr, Kind));
+      MCFixupKind Kind;
+      if (isThumb2())
+        Kind = MCFixupKind(ARM::fixup_t2_ldst_pcrel_12);
+      else
+        Kind = MCFixupKind(ARM::fixup_arm_ldst_pcrel_12);
+      Fixups.push_back(MCFixup::Create(0, Expr, Kind));
 
-    ++MCNumCPRelocations;
+      ++MCNumCPRelocations;
+    } else {
+      Reg = ARM::PC;
+      int32_t Offset = MO.getImm();
+      if (Offset < 0) {
+        Offset *= -1;
+        isAdd = false;
+      }
+      Imm12 = Offset;
+    }
   } else
     isAdd = EncodeAddrModeOpValues(MI, OpIdx, Reg, Imm12, Fixups);
 
