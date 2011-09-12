@@ -1999,21 +1999,25 @@ let neverHasSideEffects = 1 in {
 
 let Constraints = "$src1 = $dst" in {
 def CMPSSrr : SIi8<0xC2, MRMSrcReg,
-                  (outs FR32:$dst), (ins FR32:$src1, FR32:$src2, SSECC:$cc),
-                  "cmp${cc}ss\t{$src2, $dst|$dst, $src2}",
-                  [(set FR32:$dst, (X86cmpss (f32 FR32:$src1), FR32:$src2, imm:$cc))]>, XS;
+              (outs FR32:$dst), (ins FR32:$src1, FR32:$src2, SSECC:$cc),
+              "cmp${cc}ss\t{$src2, $dst|$dst, $src2}",
+              [(set FR32:$dst, (X86cmpss (f32 FR32:$src1), FR32:$src2,
+                                         imm:$cc))]>, XS;
 def CMPSSrm : SIi8<0xC2, MRMSrcMem,
-                  (outs FR32:$dst), (ins FR32:$src1, f32mem:$src2, SSECC:$cc),
-                  "cmp${cc}ss\t{$src2, $dst|$dst, $src2}",
-                  [(set FR32:$dst, (X86cmpss (f32 FR32:$src1), (loadf32 addr:$src2), imm:$cc))]>, XS;
+              (outs FR32:$dst), (ins FR32:$src1, f32mem:$src2, SSECC:$cc),
+              "cmp${cc}ss\t{$src2, $dst|$dst, $src2}",
+              [(set FR32:$dst, (X86cmpss (f32 FR32:$src1),
+                                         (loadf32 addr:$src2), imm:$cc))]>, XS;
 def CMPSDrr : SIi8<0xC2, MRMSrcReg,
-                  (outs FR64:$dst), (ins FR64:$src1, FR64:$src2, SSECC:$cc),
-                  "cmp${cc}sd\t{$src2, $dst|$dst, $src2}",
-                  [(set FR64:$dst, (X86cmpsd (f64 FR64:$src1), FR64:$src2, imm:$cc))]>, XD;
+              (outs FR64:$dst), (ins FR64:$src1, FR64:$src2, SSECC:$cc),
+              "cmp${cc}sd\t{$src2, $dst|$dst, $src2}",
+              [(set FR64:$dst, (X86cmpsd (f64 FR64:$src1), FR64:$src2,
+                                         imm:$cc))]>, XD;
 def CMPSDrm : SIi8<0xC2, MRMSrcMem,
-                  (outs FR64:$dst), (ins FR64:$src1, f64mem:$src2, SSECC:$cc),
-                  "cmp${cc}sd\t{$src2, $dst|$dst, $src2}",
-                  [(set FR64:$dst, (X86cmpsd (f64 FR64:$src1), (loadf64 addr:$src2), imm:$cc))]>, XD;
+              (outs FR64:$dst), (ins FR64:$src1, f64mem:$src2, SSECC:$cc),
+              "cmp${cc}sd\t{$src2, $dst|$dst, $src2}",
+              [(set FR64:$dst, (X86cmpsd (f64 FR64:$src1), (loadf64 addr:$src2),
+                                         imm:$cc))]>, XD;
 }
 let Constraints = "$src1 = $dst", neverHasSideEffects = 1 in {
 def CMPSSrr_alt : SIi8<0xC2, MRMSrcReg,
