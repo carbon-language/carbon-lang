@@ -8458,12 +8458,12 @@ SDValue X86TargetLowering::LowerVSETCC(SDValue Op, SelectionDAG &DAG) const {
     default: break;
     case ISD::SETOEQ:
     case ISD::SETEQ:  SSECC = 0; break;
-    case ISD::SETOGE:
-    case ISD::SETGE: Swap = true; // Fallthrough
-    case ISD::SETLT:
-    case ISD::SETOLT: SSECC = 1; break;
     case ISD::SETOGT:
     case ISD::SETGT: Swap = true; // Fallthrough
+    case ISD::SETLT:
+    case ISD::SETOLT: SSECC = 1; break;
+    case ISD::SETOGE:
+    case ISD::SETGE: Swap = true; // Fallthrough
     case ISD::SETLE:
     case ISD::SETOLE: SSECC = 2; break;
     case ISD::SETUO:  SSECC = 3; break;
