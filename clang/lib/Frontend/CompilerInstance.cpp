@@ -21,6 +21,7 @@
 #include "clang/Lex/PTHManager.h"
 #include "clang/Frontend/ChainedDiagnosticClient.h"
 #include "clang/Frontend/FrontendAction.h"
+#include "clang/Frontend/FrontendActions.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/LogDiagnosticPrinter.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
@@ -624,6 +625,64 @@ bool CompilerInstance::ExecuteAction(FrontendAction &Act) {
   return !getDiagnostics().getClient()->getNumErrors();
 }
 
+/// \brief Determine the appropriate source input kind based on language
+/// options.
+static InputKind getSourceInputKindFromOptions(const LangOptions &LangOpts) {
+  if (LangOpts.OpenCL)
+    return IK_OpenCL;
+  if (LangOpts.CUDA)
+    return IK_CUDA;
+  if (LangOpts.ObjC1)
+    return LangOpts.CPlusPlus? IK_ObjCXX : IK_ObjC;
+  return LangOpts.CPlusPlus? IK_CXX : IK_C;
+}
+
+/// \brief Compile a module file for the given module name with the given
+/// umbrella header, using the options provided by the importing compiler
+/// instance.
+static void compileModule(CompilerInstance &ImportingInstance,
+                          StringRef ModuleName,
+                          StringRef UmbrellaHeader) {
+  // Determine the file that we'll be writing to.
+  llvm::SmallString<128> ModuleFile;
+  ModuleFile += 
+    ImportingInstance.getInvocation().getHeaderSearchOpts().ModuleCachePath;
+  llvm::sys::path::append(ModuleFile, ModuleName + ".pcm");
+  
+  // Construct a compiler invocation for creating this module.
+  llvm::IntrusiveRefCntPtr<CompilerInvocation> Invocation
+    (new CompilerInvocation(ImportingInstance.getInvocation()));
+  FrontendOptions &FrontendOpts = Invocation->getFrontendOpts();
+  FrontendOpts.OutputFile = ModuleFile.str();
+  FrontendOpts.DisableFree = false;
+  FrontendOpts.Inputs.clear();
+  FrontendOpts.Inputs.push_back(
+    std::make_pair(getSourceInputKindFromOptions(Invocation->getLangOpts()), 
+                                                 UmbrellaHeader));
+  // FIXME: Strip away all of the compilation options that won't be transferred
+  // down to the module. This presumably includes -D flags, optimization 
+  // settings, etc.
+  
+  // Construct a compiler instance that will be used to actually create the
+  // module.
+  CompilerInstance Instance;
+  Instance.setInvocation(&*Invocation);
+  //  Instance.setDiagnostics(&ImportingInstance.getDiagnostics());
+  // FIXME: Need to route diagnostics over to the same diagnostic client!
+  Instance.createDiagnostics(0, 0, 0);
+
+  // Construct a module-generating action.
+  GeneratePCHAction CreateModuleAction(true);
+  
+  // Execute the action to actually build the module in-place.
+  // FIXME: Need to synchronize when multiple processes do this.
+  Instance.ExecuteAction(CreateModuleAction);
+  
+  // Tell the importing instance's file manager to forget about the module
+  // file, since we've just created it.
+  ImportingInstance.getFileManager().forgetFile(ModuleFile);
+}
+
 ModuleKey CompilerInstance::loadModule(SourceLocation ImportLoc, 
                                        IdentifierInfo &ModuleName,
                                        SourceLocation ModuleNameLoc) {  
@@ -636,10 +695,25 @@ ModuleKey CompilerInstance::loadModule(SourceLocation ImportLoc,
     CurFile = SourceMgr.getFileEntryForID(SourceMgr.getMainFileID());
 
   // Search for a module with the given name.
+  std::string UmbrellaHeader;
   const FileEntry *ModuleFile
-    = PP->getHeaderSearchInfo().lookupModule(ModuleName.getName());
+    = PP->getHeaderSearchInfo().lookupModule(ModuleName.getName(),
+                                             &UmbrellaHeader);
+  
+  bool BuildingModule = false;
+  if (!ModuleFile && !UmbrellaHeader.empty()) {
+    // We didn't find the module, but there is an umbrella header that
+    // can be used to create the module file. Create a separate compilation
+    // module to do so.
+    BuildingModule = true;
+    compileModule(*this, ModuleName.getName(), UmbrellaHeader);
+    ModuleFile = PP->getHeaderSearchInfo().lookupModule(ModuleName.getName());
+  }
+  
   if (!ModuleFile) {
-    getDiagnostics().Report(ModuleNameLoc, diag::err_module_not_found)
+    getDiagnostics().Report(ModuleNameLoc, 
+                            BuildingModule? diag::err_module_not_built
+                                          : diag::err_module_not_found)
       << ModuleName.getName()
       << SourceRange(ImportLoc, ModuleNameLoc);
     return 0;

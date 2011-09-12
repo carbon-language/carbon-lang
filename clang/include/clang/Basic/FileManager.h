@@ -187,6 +187,10 @@ public:
   /// \param openFile if true and the file exists, it will be opened.
   const FileEntry *getFile(StringRef Filename, bool openFile = false);
 
+  /// \brief Forget any information about the given file name, because (for 
+  /// example) something within this process has changed the file in some way.
+  void forgetFile(StringRef Filename);
+  
   /// \brief Returns the current file system options
   const FileSystemOptions &getFileSystemOptions() { return FileSystemOpts; }
 

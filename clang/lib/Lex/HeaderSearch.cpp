@@ -98,14 +98,48 @@ const HeaderMap *HeaderSearch::CreateHeaderMap(const FileEntry *FE) {
   return 0;
 }
 
-const FileEntry *HeaderSearch::lookupModule(StringRef ModuleName) {
+const FileEntry *HeaderSearch::lookupModule(StringRef ModuleName,
+                                            std::string *UmbrellaHeader) {
   // If we don't have a module cache path, we can't do anything.
   if (ModuleCachePath.empty())
     return 0;
-  
+
+  // Try to find the module path.
   llvm::SmallString<256> FileName(ModuleCachePath);
   llvm::sys::path::append(FileName, ModuleName + ".pcm");
-  return getFileMgr().getFile(FileName);
+  if (const FileEntry *ModuleFile = getFileMgr().getFile(FileName))
+    return ModuleFile;
+  
+  // We didn't find the module. If we're not supposed to look for an
+  // umbrella header, this is the end of the road.
+  if (!UmbrellaHeader)
+    return 0;
+  
+  // Look in each of the framework directories for an umbrella header with
+  // the same name as the module.
+  // FIXME: We need a way for non-frameworks to provide umbrella headers.
+  llvm::SmallString<128> UmbrellaHeaderName;
+  UmbrellaHeaderName = ModuleName;
+  UmbrellaHeaderName += '/';
+  UmbrellaHeaderName += ModuleName;
+  UmbrellaHeaderName += ".h";
+  for (unsigned Idx = 0, N = SearchDirs.size(); Idx != N; ++Idx) {
+    // Skip non-framework include paths
+    if (!SearchDirs[Idx].isFramework())
+      continue;
+    
+    // Look for the umbrella header in this directory.
+    if (const FileEntry *HeaderFile
+          = SearchDirs[Idx].LookupFile(UmbrellaHeaderName, *this, 0, 0)) {
+      *UmbrellaHeader = HeaderFile->getName();
+      return 0;
+    }
+  }
+  
+  // We did not find an umbrella header. Clear out the UmbrellaHeader pointee
+  // so our caller knows that we failed.
+  UmbrellaHeader->clear();
+  return 0;
 }
 
 //===----------------------------------------------------------------------===//

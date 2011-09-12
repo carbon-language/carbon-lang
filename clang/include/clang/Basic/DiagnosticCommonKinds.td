@@ -60,6 +60,7 @@ def err_friends_define_only_namespace_scope : Error<
 def err_deleted_non_function : Error<
   "only functions can have deleted definitions">;
 def err_module_not_found : Error<"module '%0' not found">, DefaultFatal;
+def err_module_not_built : Error<"could not build module '%0'">, DefaultFatal;
   
 // Sema && Lex
 def ext_longlong : Extension<

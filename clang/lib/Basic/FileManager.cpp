@@ -380,6 +380,10 @@ const FileEntry *FileManager::getFile(StringRef Filename, bool openFile) {
   return &UFE;
 }
 
+void FileManager::forgetFile(StringRef Filename) {
+  SeenFileEntries.erase(Filename);
+}
+
 const FileEntry *
 FileManager::getVirtualFile(StringRef Filename, off_t Size,
                             time_t ModificationTime) {
