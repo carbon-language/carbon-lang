@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_LogChannelDWARF_h_
-#define liblldb_LogChannelDWARF_h_
+#ifndef SymbolFileDWARF_LogChannelDWARF_h_
+#define SymbolFileDWARF_LogChannelDWARF_h_
 
 // C Includes
 // C++ Includes
@@ -22,6 +22,7 @@
 #define DWARF_LOG_DEBUG_LINE        (1u << 2)
 #define DWARF_LOG_DEBUG_PUBNAMES    (1u << 3)
 #define DWARF_LOG_DEBUG_PUBTYPES    (1u << 4)
+#define DWARF_LOG_DEBUG_ARANGES     (1u << 5)
 #define DWARF_LOG_ALL               (UINT32_MAX)
 #define DWARF_LOG_DEFAULT           (DWARF_LOG_DEBUG_INFO)
 
@@ -82,4 +83,4 @@ public:
     LogIf (uint32_t mask, const char *format, ...);
 };
 
-#endif  // liblldb_LogChannelDWARF_h_
+#endif  // SymbolFileDWARF_LogChannelDWARF_h_

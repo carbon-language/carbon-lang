@@ -108,6 +108,7 @@ LogChannelDWARF::Disable (Args &categories, Stream *feedback_strm)
         else if (::strcasecmp (arg, "line")       == 0   ) flag_bits &= ~DWARF_LOG_DEBUG_LINE;
         else if (::strcasecmp (arg, "pubnames")   == 0   ) flag_bits &= ~DWARF_LOG_DEBUG_PUBNAMES;
         else if (::strcasecmp (arg, "pubtypes")   == 0   ) flag_bits &= ~DWARF_LOG_DEBUG_PUBTYPES;
+        else if (::strcasecmp (arg, "aranges")    == 0   ) flag_bits &= ~DWARF_LOG_DEBUG_ARANGES;
         else if (::strcasecmp (arg, "default")    == 0   ) flag_bits &= ~DWARF_LOG_DEFAULT;
         else
         {
@@ -149,6 +150,7 @@ LogChannelDWARF::Enable
         else if (::strcasecmp (arg, "line")       == 0   ) flag_bits |= DWARF_LOG_DEBUG_LINE;
         else if (::strcasecmp (arg, "pubnames")   == 0   ) flag_bits |= DWARF_LOG_DEBUG_PUBNAMES;
         else if (::strcasecmp (arg, "pubtypes")   == 0   ) flag_bits |= DWARF_LOG_DEBUG_PUBTYPES;
+        else if (::strcasecmp (arg, "aranges")    == 0   ) flag_bits |= DWARF_LOG_DEBUG_ARANGES;
         else if (::strcasecmp (arg, "default")    == 0   ) flag_bits |= DWARF_LOG_DEFAULT;
         else
         {
@@ -170,13 +172,13 @@ LogChannelDWARF::Enable
 void
 LogChannelDWARF::ListCategories (Stream *strm)
 {
-    strm->Printf("Logging categories for '%s':\n"
-        "   all - turn on all available logging categories\n"
-        "   info - log the parsing if .debug_info\n"
-        "   line - log the parsing if .debug_line\n"
-        "   pubnames - log the parsing if .debug_pubnames\n"
-        "   pubtypes - log the parsing if .debug_pubtypes\n\n",
-        SymbolFileDWARF::GetPluginNameStatic());
+    strm->Printf ("Logging categories for '%s':\n"
+                  "  all - turn on all available logging categories\n"
+                  "  info - log the parsing if .debug_info\n"
+                  "  line - log the parsing if .debug_line\n"
+                  "  pubnames - log the parsing if .debug_pubnames\n"
+                  "  pubtypes - log the parsing if .debug_pubtypes\n\n",
+                  SymbolFileDWARF::GetPluginNameStatic());
 }
 
 Log *

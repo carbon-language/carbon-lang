@@ -151,21 +151,21 @@ ProcessGDBRemoteLog::EnableLog (StreamSP &log_stream_sp, uint32_t log_options, A
 void
 ProcessGDBRemoteLog::ListLogCategories (Stream *strm)
 {
-    strm->Printf("Logging categories for '%s':\n"
-        "\tall - turn on all available logging categories\n"
-        "\tasync - log asynchronous activity\n"
-        "\tbreak - log breakpoints\n"
-        "\tcommunication - log communication activity\n"
-        "\tdefault - enable the default set of logging categories for liblldb\n"
-        "\tpackets - log gdb remote packets\n"
-        "\tmemory - log memory reads and writes\n"
-        "\tdata-short - log memory bytes for memory reads and writes for short transactions only\n"
-        "\tdata-long - log memory bytes for memory reads and writes for all transactions\n"
-        "\tprocess - log process events and activities\n"
-        "\tthread - log thread events and activities\n"
-        "\tstep - log step related activities\n"
-        "\tverbose - enable verbose logging\n"
-        "\twatch - log watchpoint related activities\n", ProcessGDBRemote::GetPluginNameStatic());
+    strm->Printf ("Logging categories for '%s':\n"
+                  "  all - turn on all available logging categories\n"
+                  "  async - log asynchronous activity\n"
+                  "  break - log breakpoints\n"
+                  "  communication - log communication activity\n"
+                  "  default - enable the default set of logging categories for liblldb\n"
+                  "  packets - log gdb remote packets\n"
+                  "  memory - log memory reads and writes\n"
+                  "  data-short - log memory bytes for memory reads and writes for short transactions only\n"
+                  "  data-long - log memory bytes for memory reads and writes for all transactions\n"
+                  "  process - log process events and activities\n"
+                  "  thread - log thread events and activities\n"
+                  "  step - log step related activities\n"
+                  "  verbose - enable verbose logging\n"
+                  "  watch - log watchpoint related activities\n", ProcessGDBRemote::GetPluginNameStatic());
 }
 
 
