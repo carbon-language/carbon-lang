@@ -14,21 +14,6 @@
 using namespace lldb_private;
 
 
-//----------------------------------------------------------------------
-// The global string pool is implemented as a hash_map that maps
-// std::string objects to a uint32_t reference count.
-//
-// In debug builds the value that is stored in the ConstString objects is
-// a C string that is owned by one of the std::string objects in the
-// hash map. This was done for visibility purposes when debugging as
-// gcc was often generating insufficient debug info for the
-// iterator objects.
-//
-// In release builds, the value that is stored in the ConstString objects
-// is the iterator into the ConstString::HashMap. This is much faster when
-// it comes to modifying the reference count, and removing strings from
-// the pool.
-//----------------------------------------------------------------------
 class Pool
 {
 public:
@@ -147,7 +132,7 @@ public:
 
     //------------------------------------------------------------------
     // Return the size in bytes that this object and any items in its
-    // collection of uniqued strings + reference count values takes in
+    // collection of uniqued strings + data count values takes in
     // memory.
     //------------------------------------------------------------------
     size_t
@@ -190,34 +175,11 @@ StringPool()
     return string_pool;
 }
 
-//----------------------------------------------------------------------
-// Construct with C String value
-//
-// Constructs this object with a C string by looking to see if the
-// C string already exists in the global string pool. If it does
-// exist, it retains an extra reference to the string in the string
-// pool. If it doesn't exist, it is added to the string pool with
-// a reference count of 1.
-//----------------------------------------------------------------------
 ConstString::ConstString (const char *cstr) :
     m_string (StringPool().GetConstCString (cstr))
 {
 }
 
-//----------------------------------------------------------------------
-// Construct with C String value with max length
-//
-// Constructs this object with a C string with a length. If
-// the length of the string is greather than "cstr_len", the
-// string length will be truncated. This allows substrings to be
-// created without the need to NULL terminate the string as it
-// is passed into this function.
-//
-// If the C string already exists in the global string pool, it
-// retains an extra reference to the string in the string
-// pool. If it doesn't exist, it is added to the string pool with
-// a reference count of 1.
-//----------------------------------------------------------------------
 ConstString::ConstString (const char *cstr, size_t cstr_len) :
     m_string (StringPool().GetConstCStringWithLength (cstr, cstr_len))
 {
@@ -240,9 +202,6 @@ ConstString::operator < (const ConstString& rhs) const
     return lhs_string_ref.data() == NULL;
 }
 
-//----------------------------------------------------------------------
-// Stream the string value "str" to the stream "s"
-//----------------------------------------------------------------------
 Stream&
 lldb_private::operator << (Stream& s, const ConstString& str)
 {
@@ -259,14 +218,6 @@ ConstString::GetLength () const
     return StringPool().GetConstCStringLength (m_string);
 }
 
-//----------------------------------------------------------------------
-// Compare two string objects.
-//
-// Returns:
-//  -1 if a < b
-//   0 if a == b
-//   1 if a > b
-//----------------------------------------------------------------------
 int
 ConstString::Compare (const ConstString& lhs, const ConstString& rhs)
 {
@@ -288,12 +239,6 @@ ConstString::Compare (const ConstString& lhs, const ConstString& rhs)
         return -1;  // LHS is NULL but RHS isn't
 }
 
-//----------------------------------------------------------------------
-// Dump the string value to the stream "s". If the contained string
-// is empty, print "fail_value" to the stream instead. If
-// "fail_value" is NULL, then nothing will be dumped to the
-// stream.
-//----------------------------------------------------------------------
 void
 ConstString::Dump(Stream *s, const char *fail_value) const
 {
@@ -302,9 +247,6 @@ ConstString::Dump(Stream *s, const char *fail_value) const
         s->PutCString (cstr);
 }
 
-//----------------------------------------------------------------------
-// Dump extra debug information to the stream "s".
-//----------------------------------------------------------------------
 void
 ConstString::DumpDebug(Stream *s) const
 {
@@ -315,15 +257,6 @@ ConstString::DumpDebug(Stream *s) const
     s->Printf("%*p: ConstString, string = %s%s%s, length = %zu", (int)sizeof(void*) * 2, this, parens, cstr, parens, cstr_len);
 }
 
-//----------------------------------------------------------------------
-// Set the string value in the object by uniquing the "cstr" string
-// value in our global string pool.
-//
-// If the C string already exists in the global string pool, it
-// retains an extra reference to the string in the string
-// pool. If it doesn't exist, it is added to the string pool with
-// a reference count of 1.
-//----------------------------------------------------------------------
 void
 ConstString::SetCString (const char *cstr)
 {
@@ -343,19 +276,6 @@ ConstString::GetMangledCounterpart (ConstString &counterpart) const
     return counterpart;
 }
 
-//----------------------------------------------------------------------
-// Set the string value in the object by uniquing "cstr_len" bytes
-// starting at the "cstr" string value in our global string pool.
-// If trim is true, then "cstr_len" indicates a maximum length of
-// the CString and if the actual length of the string is less, then
-// it will be trimmed. If trim is false, then this allows strings
-// with NULL characters ('\0') to be added to the string pool.
-//
-// If the C string already exists in the global string pool, it
-// retains an extra reference to the string in the string
-// pool. If it doesn't exist, it is added to the string pool with
-// a reference count of 1.
-//----------------------------------------------------------------------
 void
 ConstString::SetCStringWithLength (const char *cstr, size_t cstr_len)
 {
@@ -368,11 +288,6 @@ ConstString::SetTrimmedCStringWithLength (const char *cstr, size_t cstr_len)
     m_string = StringPool().GetConstTrimmedCStringWithLength (cstr, cstr_len);
 }
 
-//----------------------------------------------------------------------
-// Reports the the size in bytes of all shared C string values,
-// containers and reference count values as a byte size for the
-// entire string pool.
-//----------------------------------------------------------------------
 size_t
 ConstString::StaticMemorySize()
 {

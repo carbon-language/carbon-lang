@@ -23,11 +23,15 @@ namespace lldb_private {
 /// @class ConstString ConstString.h "lldb/Core/ConstString.h"
 /// @brief A uniqued constant string class.
 ///
-/// Provides an efficient way to store strings as uniqued ref counted
-/// strings. Since the strings are uniqued, finding strings that are
-/// equal to one another is very fast (pointer compares). It also allows
-/// for many common strings from many different sources to be shared to
-/// keep the memory footprint low.
+/// Provides an efficient way to store strings as uniqued strings. After
+/// the strings are uniqued, finding strings that are equal to one 
+/// another is very fast as just the pointers need to be compared. It 
+/// also allows for many common strings from many different sources to
+/// be shared to keep the memory footprint low.
+///
+/// No reference counting is done on strings that are added to the 
+/// string pool, once strings are added they are in the string pool for
+/// the life of the program.
 //----------------------------------------------------------------------
 class ConstString
 {
@@ -46,8 +50,7 @@ public:
     //------------------------------------------------------------------
     /// Copy constructor
     ///
-    /// Copies the string value in \a rhs and retains an extra reference
-    /// to the string value in the string pool.
+    /// Copies the string value in \a rhs into this object.
     ///
     /// @param[in] rhs
     ///     Another string object to copy.
@@ -61,10 +64,8 @@ public:
     /// Construct with C String value
     ///
     /// Constructs this object with a C string by looking to see if the
-    /// C string already exists in the global string pool. If it does
-    /// exist, it retains an extra reference to the string in the string
-    /// pool. If it doesn't exist, it is added to the string pool with
-    /// a reference count of 1.
+    /// C string already exists in the global string pool. If it doesn't
+    /// exist, it is added to the string pool.
     ///
     /// @param[in] cstr
     ///     A NULL terminated C string to add to the string pool.
@@ -80,13 +81,12 @@ public:
     /// be created without the need to NULL terminate the string as it
     /// is passed into this function.
     ///
-    /// If the C string already exists in the global string pool, it
-    /// retains an extra reference to the string in the string
-    /// pool. If it doesn't exist, it is added to the string pool with
-    /// a reference count of 1.
-    ///
     /// @param[in] cstr
-    ///     A NULL terminated C string to add to the string pool.
+    ///     A pointer to the first character in the C string. The C 
+    ///     string can be NULL terminated in a buffer that contains
+    ///     more characters than the length of the stirng, or the
+    ///     string can be part of another string and a new substring
+    ///     can be created.
     ///
     /// @param[in] max_cstr_len
     ///     The max length of \a cstr. If the string length of \a cstr
@@ -100,11 +100,8 @@ public:
     //------------------------------------------------------------------
     /// Destructor
     ///
-    /// Decrements the reference count on the contained string, and if
-    /// the resulting reference count is zero, then the string is removed
-    /// from the global string pool. If the reference count is still
-    /// greater than zero, the string will remain in the string pool
-    /// until the last reference is released by other ConstString objects.
+    /// Since constant string values are currently not reference counted,
+    /// there isn't much to do here.
     //------------------------------------------------------------------
     ~ConstString ()
     {
@@ -112,8 +109,8 @@ public:
 
 
     //----------------------------------------------------------------------
-    /// C string equality function object for CStrings contains in the
-    /// same StringPool only. (binary predicate).
+    /// C string equality binary predicate function object for ConstString
+    /// objects.
     //----------------------------------------------------------------------
     struct StringIsEqual
     {
@@ -157,12 +154,7 @@ public:
     //------------------------------------------------------------------
     /// Assignment operator
     ///
-    /// Assigns the string in this object with the value from \a rhs
-    /// and increments the reference count of that string.
-    ///
-    /// The previously contained string will be get its reference count
-    /// decremented and removed from the string pool if its reference
-    /// count reaches zero.
+    /// Assigns the string in this object with the value from \a rhs.
     ///
     /// @param[in] rhs
     ///     Another string object to copy into this object.
@@ -182,8 +174,8 @@ public:
     ///
     /// Returns true if this string is equal to the string in \a rhs.
     /// This operation is very fast as it results in a pointer
-    /// comparison since all strings are in a uniqued and reference
-    /// counted string pool.
+    /// comparison since all strings are in a uniqued in a global string
+    /// pool.
     ///
     /// @param[in] rhs
     ///     Another string object to compare this object to.
@@ -205,8 +197,8 @@ public:
     ///
     /// Returns true if this string is not equal to the string in \a rhs.
     /// This operation is very fast as it results in a pointer
-    /// comparison since all strings are in a uniqued and reference
-    /// counted string pool.
+    /// comparison since all strings are in a uniqued in a global string 
+    /// pool.
     ///
     /// @param[in] rhs
     ///     Another string object to compare this object to.
@@ -244,12 +236,32 @@ public:
         return m_string;
     }
 
+    //------------------------------------------------------------------
+    /// Get the string value as a llvm::StringRef
+    ///
+    /// @return
+    ///     Returns a new llvm::StringRef object filled in with the
+    ///     needed data.
+    //------------------------------------------------------------------
     llvm::StringRef
     GetStringRef () const
     {
         return llvm::StringRef (m_string, GetLength());
     }
     
+    //------------------------------------------------------------------
+    /// Get the string value as a C string.
+    ///
+    /// Get the value of the contained string as a NULL terminated C
+    /// string value. Similar to the ConstString::AsCString() function,
+    /// yet this function will always return NULL if the string is not
+    /// valid. So this function is a direct accessor to the string 
+    /// pointer value.
+    ///
+    /// @return
+    ///     Returns NULL the string is invalid, otherwise the C string
+    ///     value contained in this object.
+    //------------------------------------------------------------------
     const char *
     GetCString () const
     {
@@ -257,17 +269,24 @@ public:
     }
 
 
+    //------------------------------------------------------------------
+    /// Get the length in bytes of string value.
+    ///
+    /// The string pool stores the length of the string, so we can avoid
+    /// calling strlen() on the pointer value with this function.
+    ///
+    /// @return
+    ///     Returns the number of bytes that this string occupies in
+    ///     memory, not including the NULL termination byte.
+    //------------------------------------------------------------------
     size_t
     GetLength () const;
+
     //------------------------------------------------------------------
     /// Clear this object's state.
     ///
     /// Clear any contained string and reset the value to the an empty
     /// string value.
-    ///
-    /// The previously contained string will be get its reference count
-    /// decremented and removed from the string pool if its reference
-    /// count reaches zero.
     //------------------------------------------------------------------
     void
     Clear ()
@@ -280,6 +299,11 @@ public:
     ///
     /// Compares the C string values contained in \a lhs and \a rhs and
     /// returns an integer result.
+    ///
+    /// NOTE: only call this function when you want a true string 
+    /// comparision. If you want string equality use the, use the ==
+    /// operator as it is much more efficient. Also if you want string
+    /// inequality, use the != operator for the same reasons.
     ///
     /// @param[in] lhs
     ///     The Left Hand Side const ConstString object reference.
@@ -316,9 +340,6 @@ public:
     //------------------------------------------------------------------
     /// Dump the object debug description to a stream.
     ///
-    /// Dump the string value and the reference count to the stream \a
-    /// s.
-    ///
     /// @param[in] s
     ///     The stream that will be used to dump the object description.
     //------------------------------------------------------------------
@@ -338,7 +359,6 @@ public:
         return m_string == NULL || m_string[0] == '\0';
     }
 
-
     //------------------------------------------------------------------
     /// Set the C string value.
     ///
@@ -346,9 +366,8 @@ public:
     /// string value in our global string pool.
     ///
     /// If the C string already exists in the global string pool, it
-    /// finds the current entry and retains an extra reference to the
-    /// string in the string pool. If it doesn't exist, it is added to
-    /// the string pool with a reference count of 1.
+    /// finds the current entry and returns the existing value. If it 
+    /// doesn't exist, it is added to the string pool.
     ///
     /// @param[in] cstr
     ///     A NULL terminated C string to add to the string pool.
@@ -356,9 +375,47 @@ public:
     void
     SetCString (const char *cstr);
 
+    //------------------------------------------------------------------
+    /// Set the C string value and its mangled counterpart.
+    ///
+    /// Object files and debug sybmols often use mangled string to 
+    /// represent the linkage name for a symbol, function or global. 
+    /// The string pool can efficiently store these values and their
+    /// counterparts so when we run into another instance of a mangled
+    /// name, we can avoid calling the name demangler over and over on
+    /// the same strings and then trying to unique them.
+    ///
+    /// @param[in] demangled
+    ///     The demangled C string to correlate with the \a mangled
+    ///     name.
+    ///
+    /// @param[in] mangled
+    ///     The already uniqued mangled ConstString to correlate the
+    ///     soon to be uniqued version of \a demangled.
+    //------------------------------------------------------------------
     void
-    SetCStringWithMangledCounterpart (const char *demangled, const ConstString &mangled);
+    SetCStringWithMangledCounterpart (const char *demangled, 
+                                      const ConstString &mangled);
 
+    //------------------------------------------------------------------
+    /// Retrieve the mangled or demangled counterpart for a mangled
+    /// or demangled ConstString.
+    ///
+    /// Object files and debug sybmols often use mangled string to 
+    /// represent the linkage name for a symbol, function or global. 
+    /// The string pool can efficiently store these values and their
+    /// counterparts so when we run into another instance of a mangled
+    /// name, we can avoid calling the name demangler over and over on
+    /// the same strings and then trying to unique them.
+    ///
+    /// @param[in] counterpart
+    ///     A reference to a ConstString object that might get filled in
+    ///     with the demangled/mangled counterpart.
+    ///
+    /// @return
+    ///     /b True if \a counterpart was filled in with the counterpart
+    ///     /b false otherwise.
+    //------------------------------------------------------------------
     bool
     GetMangledCounterpart (ConstString &counterpart) const;
 
@@ -369,25 +426,17 @@ public:
     /// starting at the \a cstr string value in our global string pool.
     /// If trim is true, then \a cstr_len indicates a maximum length of
     /// the CString and if the actual length of the string is less, then
-    /// it will be trimmed. If trim is false, then this allows strings
-    /// with NULL characters to be added to the string pool.
+    /// it will be trimmed.
     ///
     /// If the C string already exists in the global string pool, it
-    /// retains an extra reference to the string in the string
-    /// pool. If it doesn't exist, it is added to the string pool with
-    /// a reference count of 1.
+    /// finds the current entry and returns the existing value. If it 
+    /// doesn't exist, it is added to the string pool.
     ///
     /// @param[in] cstr
     ///     A NULL terminated C string to add to the string pool.
     ///
     /// @param[in] cstr_len
-    ///     The absolute length of the C string if \a trim is false,
-    ///     or the maximum length of the C string if \a trim is true.
-    ///
-    /// @param[in] trim
-    ///     If \b true, trim \a cstr to it's actual length before adding
-    ///     it to the string pool. If \b false then cstr_len is the
-    ///     actual length of the C string to add.
+    ///     The maximum length of the C string.
     //------------------------------------------------------------------
     void
     SetCStringWithLength (const char *cstr, size_t cstr_len);
@@ -425,7 +474,7 @@ public:
     /// Get the size in bytes of the current global string pool.
     ///
     /// Reports the the size in bytes of all shared C string values,
-    /// containers and reference count values as a byte size for the
+    /// containers and any other values as a byte size for the
     /// entire string pool.
     ///
     /// @return
