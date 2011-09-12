@@ -1,7 +1,7 @@
-; RUN: opt < %s -indvars -S > %t
-; RUN: not grep ptrtoint %t
-; RUN: not grep inttoptr %t
-; RUN: grep getelementptr %t | count 1
+; RUN: opt < %s -indvars -S -enable-iv-rewrite | FileCheck %s
+; CHECK-NOT: {{ptrtoint|inttoptr}}
+; CHECK: getelementptr
+; CHECK-NOT: {{ptrtoint|inttoptr|getelementptr}}
 
 ; Indvars shouldn't leave getelementptrs expanded out as
 ; inttoptr+ptrtoint in its output in common cases.

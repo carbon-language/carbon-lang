@@ -1,15 +1,16 @@
-; RUN: opt < %s -indvars -S > %t
-; Exactly one getelementptr for each load+store.
-; RUN: grep getelementptr %t | count 6
-; Each getelementptr using %struct.Q* %s as a base and not i8*.
-; RUN: grep {getelementptr \[%\]struct\\.Q\\* \[%\]s,} %t | count 6
+; RUN: opt < %s -indvars -S -enable-iv-rewrite | FileCheck %s
 ; No explicit integer multiplications!
-; RUN: not grep {= mul} %t
 ; No i8* arithmetic or pointer casting anywhere!
-; RUN: not grep {i8\\*} %t
-; RUN: not grep bitcast %t
-; RUN: not grep inttoptr %t
-; RUN: not grep ptrtoint %t
+; CHECK-NOT: = {{= mul|i8\*|bitcast|inttoptr|ptrtoint}}
+; Exactly one getelementptr for each load+store.
+; Each getelementptr using %struct.Q* %s as a base and not i8*.
+; CHECK: getelementptr %struct.Q* %s,
+; CHECK: getelementptr %struct.Q* %s,
+; CHECK: getelementptr %struct.Q* %s,
+; CHECK: getelementptr %struct.Q* %s,
+; CHECK: getelementptr %struct.Q* %s,
+; CHECK: getelementptr %struct.Q* %s,
+; CHECK-NOT: = {{= mul|i8\*|bitcast|inttoptr|ptrtoint}}
 
 ; FIXME: This test should pass with or without TargetData. Until opt
 ; supports running tests without targetdata, just hardware this in.

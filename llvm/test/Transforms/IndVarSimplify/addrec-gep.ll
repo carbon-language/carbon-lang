@@ -1,8 +1,8 @@
-; RUN: opt < %s -indvars -S > %t
-; RUN: grep getelementptr %t | count 1
-; RUN: grep {mul .*, 37}  %t | count 1
-; RUN: grep {add .*, 5203}  %t | count 1
-; RUN: not grep cast %t
+; RUN: opt < %s -indvars -S -enable-iv-rewrite | FileCheck %s
+; CHECK: getelementptr
+; CHECK: mul {{.*}}, 37
+; CHECK: add {{.*}}, 5203
+; CHECK-NOT: cast
 
 ; This test tests several things. The load and store should use the
 ; same address instead of having it computed twice, and SCEVExpander should
