@@ -217,6 +217,36 @@ class SplitEditor {
   const TargetInstrInfo &TII;
   const TargetRegisterInfo &TRI;
 
+public:
+
+  /// ComplementSpillMode - Select how the complement live range should be
+  /// created.  SplitEditor automatically creates interval 0 to contain
+  /// anything that isn't added to another interval.  This complement interval
+  /// can get quite complicated, and it can sometimes be an advantage to allow
+  /// it to overlap the other intervals.  If it is going to spill anyway, no
+  /// registers are wasted by keeping a value in two places at the same time.
+  enum ComplementSpillMode {
+    /// SM_Partition(Default) - Try to create the complement interval so it
+    /// doesn't overlap any other intervals, and the original interval is
+    /// partitioned.  This may require a large number of back copies and extra
+    /// PHI-defs.  Only segments marked with overlapIntv will be overlapping.
+    SM_Partition,
+
+    /// SM_Size - Overlap intervals to minimize the number of inserted COPY
+    /// instructions.  Copies to the complement interval are hoisted to their
+    /// common dominator, so only one COPY is required per value in the
+    /// complement interval.  This also means that no extra PHI-defs need to be
+    /// inserted in the complement interval.
+    SM_Size,
+
+    /// SM_Speed - Overlap intervals to minimize the expected execution
+    /// frequency of the inserted copies.  This is very similar to SM_Size, but
+    /// the complement interval may get some extra PHI-defs.
+    SM_Speed
+  };
+
+private:
+
   /// Edit - The current parent register and new intervals created.
   LiveRangeEdit *Edit;
 
@@ -224,6 +254,9 @@ class SplitEditor {
   /// The index 0 is used for the complement, so the first interval started by
   /// openIntv will be 1.
   unsigned OpenIdx;
+
+  /// The current spill mode, selected by reset().
+  ComplementSpillMode SpillMode;
 
   typedef IntervalMap<SlotIndex, unsigned> RegAssignMap;
 
@@ -354,7 +387,7 @@ public:
               MachineDominatorTree&);
 
   /// reset - Prepare for a new split.
-  void reset(LiveRangeEdit&);
+  void reset(LiveRangeEdit&, ComplementSpillMode = SM_Partition);
 
   /// Create a new virtual register and live interval.
   /// Return the interval index, starting from 1. Interval index 0 is the

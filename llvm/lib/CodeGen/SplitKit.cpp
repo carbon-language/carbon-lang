@@ -309,11 +309,13 @@ SplitEditor::SplitEditor(SplitAnalysis &sa,
     TRI(*vrm.getMachineFunction().getTarget().getRegisterInfo()),
     Edit(0),
     OpenIdx(0),
+    SpillMode(SM_Partition),
     RegAssign(Allocator)
 {}
 
-void SplitEditor::reset(LiveRangeEdit &lre) {
-  Edit = &lre;
+void SplitEditor::reset(LiveRangeEdit &LRE, ComplementSpillMode SM) {
+  Edit = &LRE;
+  SpillMode = SM;
   OpenIdx = 0;
   RegAssign.clear();
   Values.clear();

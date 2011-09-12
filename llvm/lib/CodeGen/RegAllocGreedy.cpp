@@ -53,6 +53,15 @@ STATISTIC(NumEvicted,      "Number of interferences evicted");
 
 static cl::opt<bool> CompactRegions("compact-regions", cl::init(true));
 
+static cl::opt<SplitEditor::ComplementSpillMode>
+SplitSpillMode("split-spill-mode", cl::Hidden,
+  cl::desc("Spill mode for splitting live ranges"),
+  cl::values(clEnumValN(SplitEditor::SM_Partition, "default", "Default"),
+             clEnumValN(SplitEditor::SM_Size,  "size",  "Optimize for size"),
+             clEnumValN(SplitEditor::SM_Speed, "speed", "Optimize for speed"),
+             clEnumValEnd),
+  cl::init(SplitEditor::SM_Partition));
+
 static RegisterRegAlloc greedyRegAlloc("greedy", "greedy register allocator",
                                        createGreedyRegisterAllocator);
 
@@ -1166,7 +1175,7 @@ unsigned RAGreedy::tryRegionSplit(LiveInterval &VirtReg, AllocationOrder &Order,
 
   // Prepare split editor.
   LiveRangeEdit LREdit(VirtReg, NewVRegs, this);
-  SE->reset(LREdit);
+  SE->reset(LREdit, SplitSpillMode);
 
   // Assign all edge bundles to the preferred candidate, or NoCand.
   BundleCand.assign(Bundles->getNumBundles(), NoCand);
@@ -1214,7 +1223,7 @@ unsigned RAGreedy::tryBlockSplit(LiveInterval &VirtReg, AllocationOrder &Order,
   unsigned Reg = VirtReg.reg;
   bool SingleInstrs = RegClassInfo.isProperSubClass(MRI->getRegClass(Reg));
   LiveRangeEdit LREdit(VirtReg, NewVRegs, this);
-  SE->reset(LREdit);
+  SE->reset(LREdit, SplitSpillMode);
   ArrayRef<SplitAnalysis::BlockInfo> UseBlocks = SA->getUseBlocks();
   for (unsigned i = 0; i != UseBlocks.size(); ++i) {
     const SplitAnalysis::BlockInfo &BI = UseBlocks[i];
