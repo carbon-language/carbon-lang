@@ -289,8 +289,20 @@ llvm::DIType CGDebugInfo::CreateType(const BuiltinType *BT) {
   unsigned Encoding = 0;
   const char *BTName = NULL;
   switch (BT->getKind()) {
-  default:
-    assert(0 && "Unexpected builtin");
+  case BuiltinType::Dependent:
+    assert(0 && "Unexpected builtin type Dependent");
+    return llvm::DIType();
+  case BuiltinType::Overload:
+    assert(0 && "Unexpected builtin type Overload");
+    return llvm::DIType();
+  case BuiltinType::BoundMember:
+    assert(0 && "Unexpected builtin type BoundMember");
+    return llvm::DIType();
+  case BuiltinType::UnknownAny:
+    assert(0 && "Unexpected builtin type UnknownAny");
+    return llvm::DIType();
+  case BuiltinType::NullPtr:
+    assert(0 && "Unexpected builtin type NullPtr");
     return llvm::DIType();
   case BuiltinType::Void:
     return llvm::DIType();
