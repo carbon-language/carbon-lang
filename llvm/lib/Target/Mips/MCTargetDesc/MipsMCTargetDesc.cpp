@@ -66,8 +66,7 @@ static MCCodeGenInfo *createMipsMCCodeGenInfo(StringRef TT, Reloc::Model RM,
   MCCodeGenInfo *X = new MCCodeGenInfo();
   if (RM == Reloc::Default) {
     // Abicall enables PIC by default
-    if (TT.find("mipsallegrex") != std::string::npos ||
-        TT.find("psp") != std::string::npos)
+    if (TT.find("psp") != std::string::npos)
       RM = Reloc::Static;
     else
       RM = Reloc::PIC_;
