@@ -43,7 +43,7 @@ inline void test_f0_in_right() {
 
 struct VisibleStruct {
   __module_private__ int field;
-  __module_private__ void setField(int f);
+  __module_private__ virtual void setField(int f);
 };
 
 #else
@@ -129,4 +129,12 @@ void local_var_private(__module_private__ int param) { // expected-error{{parame
 
   typedef __module_private__ int local_typedef; // expected-error{{typedef 'local_typedef' cannot be declared __module_private__}}
 }
+
+// Check struct size
+struct LikeVisibleStruct {
+  int field;
+  virtual void setField(int f);
+};
+
+int check_struct_size[sizeof(VisibleStruct) == sizeof(LikeVisibleStruct)? 1 : -1];
 #endif
