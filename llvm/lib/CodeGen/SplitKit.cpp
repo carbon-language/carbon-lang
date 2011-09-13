@@ -317,7 +317,6 @@ void SplitEditor::reset(LiveRangeEdit &LRE, ComplementSpillMode SM) {
   Edit = &LRE;
   SpillMode = SM;
   OpenIdx = 0;
-  OverlappedComplement.clear();
   RegAssign.clear();
   Values.clear();
 
@@ -355,7 +354,8 @@ VNInfo *SplitEditor::defValue(unsigned RegIdx,
 
   // Use insert for lookup, so we can add missing values with a second lookup.
   std::pair<ValueMap::iterator, bool> InsP =
-    Values.insert(std::make_pair(std::make_pair(RegIdx, ParentVNI->id), VNI));
+    Values.insert(std::make_pair(std::make_pair(RegIdx, ParentVNI->id),
+                                 ValueForcePair(VNI, false)));
 
   // This was the first time (RegIdx, ParentVNI) was mapped.
   // Keep it as a simple def without any liveness.
@@ -363,11 +363,11 @@ VNInfo *SplitEditor::defValue(unsigned RegIdx,
     return VNI;
 
   // If the previous value was a simple mapping, add liveness for it now.
-  if (VNInfo *OldVNI = InsP.first->second) {
+  if (VNInfo *OldVNI = InsP.first->second.getPointer()) {
     SlotIndex Def = OldVNI->def;
     LI->addRange(LiveRange(Def, Def.getNextSlot(), OldVNI));
-    // No longer a simple mapping.
-    InsP.first->second = 0;
+    // No longer a simple mapping.  Switch to a complex, non-forced mapping.
+    InsP.first->second = ValueForcePair();
   }
 
   // This is a complex mapping, add liveness for VNI
@@ -377,29 +377,24 @@ VNInfo *SplitEditor::defValue(unsigned RegIdx,
   return VNI;
 }
 
-void SplitEditor::markComplexMapped(unsigned RegIdx, const VNInfo *ParentVNI) {
+void SplitEditor::forceRecompute(unsigned RegIdx, const VNInfo *ParentVNI) {
   assert(ParentVNI && "Mapping  NULL value");
-  VNInfo *&VNI = Values[std::make_pair(RegIdx, ParentVNI->id)];
+  ValueForcePair &VFP = Values[std::make_pair(RegIdx, ParentVNI->id)];
+  VNInfo *VNI = VFP.getPointer();
 
-  // ParentVNI was either unmapped or already complex mapped. Either way.
-  if (!VNI)
+  // ParentVNI was either unmapped or already complex mapped. Either way, just
+  // set the force bit.
+  if (!VNI) {
+    VFP.setInt(true);
     return;
+  }
 
   // This was previously a single mapping. Make sure the old def is represented
   // by a trivial live range.
   SlotIndex Def = VNI->def;
   Edit->get(RegIdx)->addRange(LiveRange(Def, Def.getNextSlot(), VNI));
-  VNI = 0;
-}
-
-void SplitEditor::markOverlappedComplement(const VNInfo *ParentVNI) {
-  if (OverlappedComplement.insert(ParentVNI))
-    markComplexMapped(0, ParentVNI);
-}
-
-bool SplitEditor::needsRecompute(unsigned RegIdx, const VNInfo *ParentVNI) {
-  return (RegIdx == 0 && OverlappedComplement.count(ParentVNI)) ||
-    Edit->didRematerialize(ParentVNI);
+  // Mark as complex mapped, forced.
+  VFP = ValueForcePair(0, true);
 }
 
 VNInfo *SplitEditor::defFromParent(unsigned RegIdx,
@@ -586,7 +581,7 @@ void SplitEditor::overlapIntv(SlotIndex Start, SlotIndex End) {
 
   // The complement interval will be extended as needed by LRCalc.extend().
   if (ParentVNI)
-    markOverlappedComplement(ParentVNI);
+    forceRecompute(0, ParentVNI);
   DEBUG(dbgs() << "    overlapIntv [" << Start << ';' << End << "):");
   RegAssign.insert(Start, End, OpenIdx);
   DEBUG(dump());
@@ -631,7 +626,7 @@ void SplitEditor::removeBackCopies(SmallVectorImpl<VNInfo*> &Copies) {
     unsigned RegIdx = AssignI.value();
     if (AtBegin || !MBBI->readsVirtualRegister(Edit->getReg())) {
       DEBUG(dbgs() << "  cannot find simple kill of RegIdx " << RegIdx << '\n');
-      markComplexMapped(RegIdx, Edit->getParent().getVNInfoAt(Def));
+      forceRecompute(RegIdx, Edit->getParent().getVNInfoAt(Def));
     } else {
       SlotIndex Kill = LIS.getInstructionIndex(MBBI).getDefIndex();
       DEBUG(dbgs() << "  move kill to " << Kill << '\t' << *MBBI);
@@ -676,7 +671,7 @@ void SplitEditor::hoistCopiesForSize() {
     }
     // Skip the singly mapped values.  There is nothing to gain from hoisting a
     // single back-copy.
-    if (Values.lookup(std::make_pair(0, ParentVNI->id))) {
+    if (Values.lookup(std::make_pair(0, ParentVNI->id)).getPointer()) {
       DEBUG(dbgs() << "Single complement def at " << VNI->def << '\n');
       continue;
     }
@@ -729,7 +724,7 @@ void SplitEditor::hoistCopiesForSize() {
     if (!Dom.first || Dom.second == VNI->def)
       continue;
     BackCopies.push_back(VNI);
-    markOverlappedComplement(ParentVNI);
+    forceRecompute(0, ParentVNI);
   }
   removeBackCopies(BackCopies);
 }
@@ -768,17 +763,17 @@ bool SplitEditor::transferValues() {
       LiveInterval *LI = Edit->get(RegIdx);
 
       // Check for a simply defined value that can be blitted directly.
-      if (VNInfo *VNI = Values.lookup(std::make_pair(RegIdx, ParentVNI->id))) {
+      ValueForcePair VFP = Values.lookup(std::make_pair(RegIdx, ParentVNI->id));
+      if (VNInfo *VNI = VFP.getPointer()) {
         DEBUG(dbgs() << ':' << VNI->id);
         LI->addRange(LiveRange(Start, End, VNI));
         Start = End;
         continue;
       }
 
-      // Skip rematerialized values, we need to use LRCalc.extend() and
-      // extendPHIKillRanges() to completely recompute the live ranges.
-      if (needsRecompute(RegIdx, ParentVNI)) {
-        DEBUG(dbgs() << "(remat)");
+      // Skip values with forced recomputation.
+      if (VFP.getInt()) {
+        DEBUG(dbgs() << "(recalc)");
         Skipped = true;
         Start = End;
         continue;
@@ -967,11 +962,11 @@ void SplitEditor::finish(SmallVectorImpl<unsigned> *LRMap) {
     VNI->setIsPHIDef(ParentVNI->isPHIDef());
     VNI->setCopy(ParentVNI->getCopy());
 
-    // Mark rematted values as complex everywhere to force liveness computation.
+    // Force rematted values to be recomputed everywhere.
     // The new live ranges may be truncated.
     if (Edit->didRematerialize(ParentVNI))
       for (unsigned i = 0, e = Edit->size(); i != e; ++i)
-        markComplexMapped(i, ParentVNI);
+        forceRecompute(i, ParentVNI);
   }
 
   // Hoist back-copies to the complement interval when in spill mode.

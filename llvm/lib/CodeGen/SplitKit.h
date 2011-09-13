@@ -250,10 +250,6 @@ private:
   /// The current spill mode, selected by reset().
   ComplementSpillMode SpillMode;
 
-  /// Parent interval values where the complement interval may be overlapping
-  /// other intervals.
-  SmallPtrSet<const VNInfo*, 8> OverlappedComplement;
-
   typedef IntervalMap<SlotIndex, unsigned> RegAssignMap;
 
   /// Allocator for the interval map. This will eventually be shared with
@@ -265,15 +261,20 @@ private:
   /// Idx.
   RegAssignMap RegAssign;
 
-  typedef DenseMap<std::pair<unsigned, unsigned>, VNInfo*> ValueMap;
+  typedef PointerIntPair<VNInfo*, 1> ValueForcePair;
+  typedef DenseMap<std::pair<unsigned, unsigned>, ValueForcePair> ValueMap;
 
   /// Values - keep track of the mapping from parent values to values in the new
   /// intervals. Given a pair (RegIdx, ParentVNI->id), Values contains:
   ///
   /// 1. No entry - the value is not mapped to Edit.get(RegIdx).
-  /// 2. Null - the value is mapped to multiple values in Edit.get(RegIdx).
-  ///    Each value is represented by a minimal live range at its def.
-  /// 3. A non-null VNInfo - the value is mapped to a single new value.
+  /// 2. (Null, false) - the value is mapped to multiple values in
+  ///    Edit.get(RegIdx).  Each value is represented by a minimal live range at
+  ///    its def.  The full live range can be inferred exactly from the range
+  ///    of RegIdx in RegAssign.
+  /// 3. (Null, true).  As above, but the ranges in RegAssign are too large, and
+  ///    the live range must be recomputed using LiveRangeCalc::extend().
+  /// 4. (VNI, false) The value is mapped to a single new value.
   ///    The new value has no live ranges anywhere.
   ValueMap Values;
 
@@ -296,20 +297,11 @@ private:
   /// Return the new LI value.
   VNInfo *defValue(unsigned RegIdx, const VNInfo *ParentVNI, SlotIndex Idx);
 
-  /// markComplexMapped - Mark ParentVNI as complex mapped in RegIdx regardless
-  /// of the number of defs.
-  void markComplexMapped(unsigned RegIdx, const VNInfo *ParentVNI);
-
-  /// markOverlappedComplement - Mark ParentVNI as being overlapped in the
-  /// complement interval.  The complement interval may overlap other intervals
-  /// after overlapIntv has been called, or when in spill mode.
-  void markOverlappedComplement(const VNInfo *ParentVNI);
-
-  /// needsRecompute - Returns true if the live range of ParentVNI needs to be
-  /// recomputed in RegIdx using LiveRangeCalc::extend.  This is the case if
-  /// the value has been rematerialized, or when back-copies have been hoisted
-  /// in spill mode.
-  bool needsRecompute(unsigned RegIdx, const VNInfo *ParentVNI);
+  /// forceRecompute - Force the live range of ParentVNI in RegIdx to be
+  /// recomputed by LiveRangeCalc::extend regardless of the number of defs.
+  /// This is used for values whose live range doesn't match RegAssign exactly.
+  /// They could have rematerialized, or back-copies may have been moved.
+  void forceRecompute(unsigned RegIdx, const VNInfo *ParentVNI);
 
   /// defFromParent - Define Reg from ParentVNI at UseIdx using either
   /// rematerialization or a COPY from parent. Return the new value.
