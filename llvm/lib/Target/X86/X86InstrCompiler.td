@@ -713,7 +713,7 @@ def LCMPXCHG32 : I<0xB1, MRMDestMem, (outs), (ins i32mem:$ptr, GR32:$swap),
 let Defs = [RAX, EFLAGS], Uses = [RAX], isCodeGenOnly = 1 in {
 def LCMPXCHG64 : RI<0xB1, MRMDestMem, (outs), (ins i64mem:$ptr, GR64:$swap),
                "lock\n\t"
-               "cmpxchgq\t$swap,$ptr",
+               "cmpxchg{q}\t{$swap, $ptr|$ptr, $swap}",
                [(X86cas addr:$ptr, GR64:$swap, 8)]>, TB, LOCK;
 }
 
@@ -736,7 +736,7 @@ def LXADD32 : I<0xC1, MRMSrcMem, (outs GR32:$dst), (ins GR32:$val, i32mem:$ptr),
                 TB, LOCK;
 def LXADD64 : RI<0xC1, MRMSrcMem, (outs GR64:$dst), (ins GR64:$val,i64mem:$ptr),
                "lock\n\t"
-               "xadd\t$val, $ptr",
+               "xadd{q}\t{$val, $ptr|$ptr, $val}",
                [(set GR64:$dst, (atomic_load_add_64 addr:$ptr, GR64:$val))]>,
                 TB, LOCK;
 }
