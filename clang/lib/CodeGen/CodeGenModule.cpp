@@ -27,7 +27,6 @@
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/Mangle.h"
 #include "clang/AST/RecordLayout.h"
-#include "clang/Basic/Builtins.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
@@ -1609,35 +1608,6 @@ void CodeGenModule::EmitAliasDefinition(GlobalDecl GD) {
   }
 
   SetCommonAttributes(D, GA);
-}
-
-/// getBuiltinLibFunction - Given a builtin id for a function like
-/// "__builtin_fabsf", return a Function* for "fabsf".
-llvm::Value *CodeGenModule::getBuiltinLibFunction(const FunctionDecl *FD,
-                                                  unsigned BuiltinID) {
-  assert((Context.BuiltinInfo.isLibFunction(BuiltinID) ||
-          Context.BuiltinInfo.isPredefinedLibFunction(BuiltinID)) &&
-         "isn't a lib fn");
-
-  // Get the name, skip over the __builtin_ prefix (if necessary).
-  StringRef Name;
-  GlobalDecl D(FD);
-
-  // If the builtin has been declared explicitly with an assembler label,
-  // use the mangled name. This differs from the plain label on platforms
-  // that prefix labels.
-  if (FD->hasAttr<AsmLabelAttr>())
-    Name = getMangledName(D);
-  else if (Context.BuiltinInfo.isLibFunction(BuiltinID))
-    Name = Context.BuiltinInfo.GetName(BuiltinID) + 10;
-  else
-    Name = Context.BuiltinInfo.GetName(BuiltinID);
-
-
-  llvm::FunctionType *Ty =
-    cast<llvm::FunctionType>(getTypes().ConvertType(FD->getType()));
-
-  return GetOrCreateLLVMFunction(Name, Ty, D, /*ForVTable=*/false);
 }
 
 llvm::Function *CodeGenModule::getIntrinsic(unsigned IID,

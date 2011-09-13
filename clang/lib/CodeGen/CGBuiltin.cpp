@@ -27,6 +27,30 @@ using namespace clang;
 using namespace CodeGen;
 using namespace llvm;
 
+/// getBuiltinLibFunction - Given a builtin id for a function like
+/// "__builtin_fabsf", return a Function* for "fabsf".
+llvm::Value *CodeGenModule::getBuiltinLibFunction(const FunctionDecl *FD,
+                                                  unsigned BuiltinID) {
+  assert(Context.BuiltinInfo.isLibFunction(BuiltinID));
+
+  // Get the name, skip over the __builtin_ prefix (if necessary).
+  StringRef Name;
+  GlobalDecl D(FD);
+
+  // If the builtin has been declared explicitly with an assembler label,
+  // use the mangled name. This differs from the plain label on platforms
+  // that prefix labels.
+  if (FD->hasAttr<AsmLabelAttr>())
+    Name = getMangledName(D);
+  else
+    Name = Context.BuiltinInfo.GetName(BuiltinID) + 10;
+
+  llvm::FunctionType *Ty =
+    cast<llvm::FunctionType>(getTypes().ConvertType(FD->getType()));
+
+  return GetOrCreateLLVMFunction(Name, Ty, D, /*ForVTable=*/false);
+}
+
 /// Emit the conversions required to turn the given value into an
 /// integer of the given size.
 static Value *EmitToInt(CodeGenFunction &CGF, llvm::Value *V,
@@ -140,6 +164,12 @@ static Value *EmitFAbs(CodeGenFunction &CGF, Value *V, QualType ValTy) {
   llvm::Value *Fn = CGF.CGM.CreateRuntimeFunction(FT, FnName);
 
   return CGF.Builder.CreateCall(Fn, V, "abs");
+}
+
+static RValue emitLibraryCall(CodeGenFunction &CGF, const FunctionDecl *Fn,
+                              const CallExpr *E, llvm::Value *calleeValue) {
+  return CGF.EmitCall(E->getCallee()->getType(), calleeValue,
+                      ReturnValueSlot(), E->arg_begin(), E->arg_end(), Fn);
 }
 
 RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
@@ -1005,13 +1035,17 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   }
   }
 
-  // If this is an alias for a libm function (e.g. __builtin_sin) turn it into
-  // that function.
-  if (getContext().BuiltinInfo.isLibFunction(BuiltinID) ||
-      getContext().BuiltinInfo.isPredefinedLibFunction(BuiltinID))
-    return EmitCall(E->getCallee()->getType(),
-                    CGM.getBuiltinLibFunction(FD, BuiltinID),
-                    ReturnValueSlot(), E->arg_begin(), E->arg_end(), FD);
+  // If this is an alias for a lib function (e.g. __builtin_sin), emit
+  // the call using the normal call path, but using the unmangled
+  // version of the function name.
+  if (getContext().BuiltinInfo.isLibFunction(BuiltinID))
+    return emitLibraryCall(*this, FD, E,
+                           CGM.getBuiltinLibFunction(FD, BuiltinID));
+  
+  // If this is a predefined lib function (e.g. malloc), emit the call
+  // using exactly the normal call path.
+  if (getContext().BuiltinInfo.isPredefinedLibFunction(BuiltinID))
+    return emitLibraryCall(*this, FD, E, EmitScalarExpr(E->getCallee()));
 
   // See if we have a target specific intrinsic.
   const char *Name = getContext().BuiltinInfo.GetName(BuiltinID);
