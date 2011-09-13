@@ -3532,7 +3532,10 @@ validateInstruction(MCInst &Inst,
   MCInstrDesc &MCID = getInstDesc(Inst.getOpcode());
   SMLoc Loc = Operands[0]->getStartLoc();
   // Check the IT block state first.
-  if (inITBlock()) {
+  // NOTE: In Thumb mode, the BKPT instruction has the interesting property of
+  // being allowed in IT blocks, but not being predicable.  It just always
+  // executes.
+  if (inITBlock() && Inst.getOpcode() != ARM::tBKPT) {
     unsigned bit = 1;
     if (ITState.FirstCond)
       ITState.FirstCond = false;
