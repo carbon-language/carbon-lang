@@ -667,7 +667,7 @@ class ThreadSafetyReporter : public clang::thread_safety::ThreadSafetyHandler {
 
   void handleMutexNotHeld(const NamedDecl *D, ProtectedOperationKind POK,
                           Name LockName, LockKind LK, SourceLocation Loc) {
-    unsigned DiagID;
+    unsigned DiagID = 0;
     switch (POK) {
       case POK_VarAccess:
         DiagID = diag::warn_variable_requires_lock;
