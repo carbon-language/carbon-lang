@@ -13,5 +13,5 @@
 array0 a0;
 array1 a1;
 
-// CHECK-ERR1: PCH file was compiled with automated reference counting, which is currently disabled
-// CHECK-ERR2: PCH file was compiled without automated reference counting, which is currently enabled
+// CHECK-ERR1: Objective-C automated reference counting was enabled in PCH file but is currently disabled
+// CHECK-ERR2: Objective-C automated reference counting was disabled in PCH file but is currently enabled

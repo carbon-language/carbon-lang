@@ -1047,93 +1047,11 @@ void ASTWriter::WriteMetadata(ASTContext &Context, StringRef isysroot,
 /// \brief Write the LangOptions structure.
 void ASTWriter::WriteLanguageOptions(const LangOptions &LangOpts) {
   RecordData Record;
-  Record.push_back(LangOpts.Trigraphs);
-  Record.push_back(LangOpts.BCPLComment);  // BCPL-style '//' comments.
-  Record.push_back(LangOpts.DollarIdents);  // '$' allowed in identifiers.
-  Record.push_back(LangOpts.AsmPreprocessor);  // Preprocessor in asm mode.
-  Record.push_back(LangOpts.GNUMode);  // True in gnu99 mode false in c99 mode (etc)
-  Record.push_back(LangOpts.GNUKeywords);  // Allow GNU-extension keywords
-  Record.push_back(LangOpts.ImplicitInt);  // C89 implicit 'int'.
-  Record.push_back(LangOpts.Digraphs);  // C94, C99 and C++
-  Record.push_back(LangOpts.HexFloats);  // C99 Hexadecimal float constants.
-  Record.push_back(LangOpts.C99);  // C99 Support
-  Record.push_back(LangOpts.C1X);  // C1X Support
-  Record.push_back(LangOpts.Microsoft);  // Microsoft extensions.
-  // LangOpts.MSCVersion is ignored because all it does it set a macro, which is
-  // already saved elsewhere.
-  Record.push_back(LangOpts.CPlusPlus);  // C++ Support
-  Record.push_back(LangOpts.CPlusPlus0x);  // C++0x Support
-  Record.push_back(LangOpts.CXXOperatorNames);  // Treat C++ operator names as keywords.
-
-  Record.push_back(LangOpts.ObjC1);  // Objective-C 1 support enabled.
-  Record.push_back(LangOpts.ObjC2);  // Objective-C 2 support enabled.
-  Record.push_back(LangOpts.ObjCNonFragileABI);  // Objective-C
-                                                 // modern abi enabled.
-  Record.push_back(LangOpts.ObjCNonFragileABI2); // Objective-C enhanced
-                                                 // modern abi enabled.
-  Record.push_back(LangOpts.AppleKext);          // Apple's kernel extensions ABI
-  Record.push_back(LangOpts.ObjCDefaultSynthProperties); // Objective-C auto-synthesized
-                                                      // properties enabled.
-  Record.push_back(LangOpts.ObjCInferRelatedResultType);
-  Record.push_back(LangOpts.NoConstantCFStrings); // non cfstring generation enabled..
-
-  Record.push_back(LangOpts.PascalStrings);  // Allow Pascal strings
-  Record.push_back(LangOpts.WritableStrings);  // Allow writable strings
-  Record.push_back(LangOpts.LaxVectorConversions);
-  Record.push_back(LangOpts.AltiVec);
-  Record.push_back(LangOpts.Exceptions);  // Support exception handling.
-  Record.push_back(LangOpts.ObjCExceptions);
-  Record.push_back(LangOpts.CXXExceptions);
-  Record.push_back(LangOpts.SjLjExceptions);
-
-  Record.push_back(LangOpts.MSBitfields); // MS-compatible structure layout
-  Record.push_back(LangOpts.NeXTRuntime); // Use NeXT runtime.
-  Record.push_back(LangOpts.Freestanding); // Freestanding implementation
-  Record.push_back(LangOpts.NoBuiltin); // Do not use builtin functions (-fno-builtin)
-
-  // Whether static initializers are protected by locks.
-  Record.push_back(LangOpts.ThreadsafeStatics);
-  Record.push_back(LangOpts.POSIXThreads);
-  Record.push_back(LangOpts.Blocks); // block extension to C
-  Record.push_back(LangOpts.EmitAllDecls); // Emit all declarations, even if
-                                  // they are unused.
-  Record.push_back(LangOpts.MathErrno); // Math functions must respect errno
-                                  // (modulo the platform support).
-
-  Record.push_back(LangOpts.getSignedOverflowBehavior());
-  Record.push_back(LangOpts.HeinousExtensions);
-
-  Record.push_back(LangOpts.Optimize); // Whether __OPTIMIZE__ should be defined.
-  Record.push_back(LangOpts.OptimizeSize); // Whether __OPTIMIZE_SIZE__ should be
-                                  // defined.
-  Record.push_back(LangOpts.Static); // Should __STATIC__ be defined (as
-                                  // opposed to __DYNAMIC__).
-  Record.push_back(LangOpts.PICLevel); // The value for __PIC__, if non-zero.
-
-  Record.push_back(LangOpts.GNUInline); // Should GNU inline semantics be
-                                  // used (instead of C99 semantics).
-  Record.push_back(LangOpts.NoInline); // Should __NO_INLINE__ be defined.
-  Record.push_back(LangOpts.Deprecated); // Should __DEPRECATED be defined.
-  Record.push_back(LangOpts.AccessControl); // Whether C++ access control should
-                                            // be enabled.
-  Record.push_back(LangOpts.CharIsSigned); // Whether char is a signed or
-                                           // unsigned type
-  Record.push_back(LangOpts.ShortWChar);  // force wchar_t to be unsigned short
-  Record.push_back(LangOpts.ShortEnums);  // Should the enum type be equivalent
-                                          // to the smallest integer type with
-                                          // enough room.
-  Record.push_back(LangOpts.getGC());
-  Record.push_back(LangOpts.getVisibilityMode());
-  Record.push_back(LangOpts.getStackProtector());
-  Record.push_back(LangOpts.InstantiationDepth);
-  Record.push_back(LangOpts.OpenCL);
-  Record.push_back(LangOpts.CUDA);
-  Record.push_back(LangOpts.CatchUndefined);
-  Record.push_back(LangOpts.DefaultFPContract);
-  Record.push_back(LangOpts.ElideConstructors);
-  Record.push_back(LangOpts.SpellChecking);
-  Record.push_back(LangOpts.MRTD);
-  Record.push_back(LangOpts.ObjCAutoRefCount);
+#define LANGOPT(Name, Bits, Default, Description) \
+  Record.push_back(LangOpts.Name);
+#define ENUM_LANGOPT(Name, Type, Bits, Default, Description) \
+  Record.push_back(static_cast<unsigned>(LangOpts.get##Name()));
+#include "clang/Basic/LangOptions.def"  
   Stream.EmitRecord(LANGUAGE_OPTIONS, Record);
 }
 

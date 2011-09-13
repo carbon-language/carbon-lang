@@ -65,98 +65,32 @@ ASTReaderListener::~ASTReaderListener() {}
 bool
 PCHValidator::ReadLanguageOptions(const LangOptions &LangOpts) {
   const LangOptions &PPLangOpts = PP.getLangOptions();
-#define PARSE_LANGOPT_BENIGN(Option)
-#define PARSE_LANGOPT_IMPORTANT(Option, DiagID)                    \
-  if (PPLangOpts.Option != LangOpts.Option) {                      \
-    Reader.Diag(DiagID) << LangOpts.Option << PPLangOpts.Option;   \
-    return true;                                                   \
+  
+#define LANGOPT(Name, Bits, Default, Description)         \
+  if (PPLangOpts.Name != LangOpts.Name) {                 \
+    Reader.Diag(diag::err_pch_langopt_mismatch)           \
+      << Description << LangOpts.Name << PPLangOpts.Name; \
+    return true;                                          \
   }
 
-  PARSE_LANGOPT_BENIGN(Trigraphs);
-  PARSE_LANGOPT_BENIGN(BCPLComment);
-  PARSE_LANGOPT_BENIGN(DollarIdents);
-  PARSE_LANGOPT_BENIGN(AsmPreprocessor);
-  PARSE_LANGOPT_IMPORTANT(GNUMode, diag::warn_pch_gnu_extensions);
-  PARSE_LANGOPT_IMPORTANT(GNUKeywords, diag::warn_pch_gnu_keywords);
-  PARSE_LANGOPT_BENIGN(ImplicitInt);
-  PARSE_LANGOPT_BENIGN(Digraphs);
-  PARSE_LANGOPT_BENIGN(HexFloats);
-  PARSE_LANGOPT_IMPORTANT(C99, diag::warn_pch_c99);
-  PARSE_LANGOPT_IMPORTANT(C1X, diag::warn_pch_c1x);
-  PARSE_LANGOPT_IMPORTANT(Microsoft, diag::warn_pch_microsoft_extensions);
-  PARSE_LANGOPT_BENIGN(MSCVersion);
-  PARSE_LANGOPT_IMPORTANT(CPlusPlus, diag::warn_pch_cplusplus);
-  PARSE_LANGOPT_IMPORTANT(CPlusPlus0x, diag::warn_pch_cplusplus0x);
-  PARSE_LANGOPT_BENIGN(CXXOperatorName);
-  PARSE_LANGOPT_IMPORTANT(ObjC1, diag::warn_pch_objective_c);
-  PARSE_LANGOPT_IMPORTANT(ObjC2, diag::warn_pch_objective_c2);
-  PARSE_LANGOPT_IMPORTANT(ObjCNonFragileABI, diag::warn_pch_nonfragile_abi);
-  PARSE_LANGOPT_IMPORTANT(ObjCNonFragileABI2, diag::warn_pch_nonfragile_abi2);
-  PARSE_LANGOPT_IMPORTANT(AppleKext, diag::warn_pch_apple_kext);
-  PARSE_LANGOPT_IMPORTANT(ObjCDefaultSynthProperties,
-                          diag::warn_pch_objc_auto_properties);
-  PARSE_LANGOPT_BENIGN(ObjCInferRelatedResultType)
-  PARSE_LANGOPT_IMPORTANT(NoConstantCFStrings,
-                          diag::warn_pch_no_constant_cfstrings);
-  PARSE_LANGOPT_BENIGN(PascalStrings);
-  PARSE_LANGOPT_BENIGN(WritableStrings);
-  PARSE_LANGOPT_IMPORTANT(LaxVectorConversions,
-                          diag::warn_pch_lax_vector_conversions);
-  PARSE_LANGOPT_IMPORTANT(AltiVec, diag::warn_pch_altivec);
-  PARSE_LANGOPT_IMPORTANT(Exceptions, diag::warn_pch_exceptions);
-  PARSE_LANGOPT_IMPORTANT(ObjCExceptions, diag::warn_pch_objc_exceptions);
-  PARSE_LANGOPT_IMPORTANT(CXXExceptions, diag::warn_pch_cxx_exceptions);
-  PARSE_LANGOPT_IMPORTANT(SjLjExceptions, diag::warn_pch_sjlj_exceptions);
-  PARSE_LANGOPT_IMPORTANT(MSBitfields, diag::warn_pch_ms_bitfields);
-  PARSE_LANGOPT_IMPORTANT(NeXTRuntime, diag::warn_pch_objc_runtime);
-  PARSE_LANGOPT_IMPORTANT(Freestanding, diag::warn_pch_freestanding);
-  PARSE_LANGOPT_IMPORTANT(NoBuiltin, diag::warn_pch_builtins);
-  PARSE_LANGOPT_IMPORTANT(ThreadsafeStatics,
-                          diag::warn_pch_thread_safe_statics);
-  PARSE_LANGOPT_IMPORTANT(POSIXThreads, diag::warn_pch_posix_threads);
-  PARSE_LANGOPT_IMPORTANT(Blocks, diag::warn_pch_blocks);
-  PARSE_LANGOPT_BENIGN(EmitAllDecls);
-  PARSE_LANGOPT_IMPORTANT(MathErrno, diag::warn_pch_math_errno);
-  PARSE_LANGOPT_BENIGN(getSignedOverflowBehavior());
-  PARSE_LANGOPT_IMPORTANT(HeinousExtensions,
-                          diag::warn_pch_heinous_extensions);
-  // FIXME: Most of the options below are benign if the macro wasn't
-  // used. Unfortunately, this means that a PCH compiled without
-  // optimization can't be used with optimization turned on, even
-  // though the only thing that changes is whether __OPTIMIZE__ was
-  // defined... but if __OPTIMIZE__ never showed up in the header, it
-  // doesn't matter. We could consider making this some special kind
-  // of check.
-  PARSE_LANGOPT_IMPORTANT(Optimize, diag::warn_pch_optimize);
-  PARSE_LANGOPT_IMPORTANT(OptimizeSize, diag::warn_pch_optimize_size);
-  PARSE_LANGOPT_IMPORTANT(Static, diag::warn_pch_static);
-  PARSE_LANGOPT_IMPORTANT(PICLevel, diag::warn_pch_pic_level);
-  PARSE_LANGOPT_IMPORTANT(GNUInline, diag::warn_pch_gnu_inline);
-  PARSE_LANGOPT_IMPORTANT(NoInline, diag::warn_pch_no_inline);
-  PARSE_LANGOPT_IMPORTANT(Deprecated, diag::warn_pch_deprecated);
-  PARSE_LANGOPT_IMPORTANT(AccessControl, diag::warn_pch_access_control);
-  PARSE_LANGOPT_IMPORTANT(CharIsSigned, diag::warn_pch_char_signed);
-  PARSE_LANGOPT_IMPORTANT(ShortWChar, diag::warn_pch_short_wchar);
-  PARSE_LANGOPT_IMPORTANT(ShortEnums, diag::warn_pch_short_enums);
-  if ((PPLangOpts.getGC() != 0) != (LangOpts.getGC() != 0)) {
-    Reader.Diag(diag::warn_pch_gc_mode)
-      << LangOpts.getGC() << PPLangOpts.getGC();
-    return true;
-  }
-  PARSE_LANGOPT_BENIGN(getVisibilityMode());
-  PARSE_LANGOPT_IMPORTANT(getStackProtector(),
-                          diag::warn_pch_stack_protector);
-  PARSE_LANGOPT_BENIGN(InstantiationDepth);
-  PARSE_LANGOPT_IMPORTANT(OpenCL, diag::warn_pch_opencl);
-  PARSE_LANGOPT_IMPORTANT(CUDA, diag::warn_pch_cuda);
-  PARSE_LANGOPT_BENIGN(CatchUndefined);
-  PARSE_LANGOPT_BENIGN(DefaultFPContract);
-  PARSE_LANGOPT_IMPORTANT(ElideConstructors, diag::warn_pch_elide_constructors);
-  PARSE_LANGOPT_BENIGN(SpellChecking);
-  PARSE_LANGOPT_IMPORTANT(ObjCAutoRefCount, diag::warn_pch_auto_ref_count);
-#undef PARSE_LANGOPT_IMPORTANT
-#undef PARSE_LANGOPT_BENIGN
+#define VALUE_LANGOPT(Name, Bits, Default, Description) \
+  if (PPLangOpts.Name != LangOpts.Name) {               \
+    Reader.Diag(diag::err_pch_langopt_value_mismatch)   \
+      << Description;                                   \
+  return true;                                          \
+}
 
+#define ENUM_LANGOPT(Name, Type, Bits, Default, Description) \
+  if (PPLangOpts.get##Name() != LangOpts.get##Name()) {      \
+    Reader.Diag(diag::err_pch_langopt_value_mismatch)        \
+      << Description;                                        \
+    return true;                                             \
+  }
+
+#define BENIGN_LANGOPT(Name, Bits, Default, Description)
+#define BENIGN_ENUM_LANGOPT(Name, Type, Bits, Default, Description)
+#include "clang/Basic/LangOptions.def"
+  
   return false;
 }
 
@@ -2989,81 +2923,13 @@ bool ASTReader::ParseLanguageOptions(
                              const SmallVectorImpl<uint64_t> &Record) {
   if (Listener) {
     LangOptions LangOpts;
-
-  #define PARSE_LANGOPT(Option)                  \
-      LangOpts.Option = Record[Idx];             \
-      ++Idx
-
     unsigned Idx = 0;
-    PARSE_LANGOPT(Trigraphs);
-    PARSE_LANGOPT(BCPLComment);
-    PARSE_LANGOPT(DollarIdents);
-    PARSE_LANGOPT(AsmPreprocessor);
-    PARSE_LANGOPT(GNUMode);
-    PARSE_LANGOPT(GNUKeywords);
-    PARSE_LANGOPT(ImplicitInt);
-    PARSE_LANGOPT(Digraphs);
-    PARSE_LANGOPT(HexFloats);
-    PARSE_LANGOPT(C99);
-    PARSE_LANGOPT(C1X);
-    PARSE_LANGOPT(Microsoft);
-    PARSE_LANGOPT(CPlusPlus);
-    PARSE_LANGOPT(CPlusPlus0x);
-    PARSE_LANGOPT(CXXOperatorNames);
-    PARSE_LANGOPT(ObjC1);
-    PARSE_LANGOPT(ObjC2);
-    PARSE_LANGOPT(ObjCNonFragileABI);
-    PARSE_LANGOPT(ObjCNonFragileABI2);
-    PARSE_LANGOPT(AppleKext);
-    PARSE_LANGOPT(ObjCDefaultSynthProperties);
-    PARSE_LANGOPT(ObjCInferRelatedResultType);
-    PARSE_LANGOPT(NoConstantCFStrings);
-    PARSE_LANGOPT(PascalStrings);
-    PARSE_LANGOPT(WritableStrings);
-    PARSE_LANGOPT(LaxVectorConversions);
-    PARSE_LANGOPT(AltiVec);
-    PARSE_LANGOPT(Exceptions);
-    PARSE_LANGOPT(ObjCExceptions);
-    PARSE_LANGOPT(CXXExceptions);
-    PARSE_LANGOPT(SjLjExceptions);
-    PARSE_LANGOPT(MSBitfields);
-    PARSE_LANGOPT(NeXTRuntime);
-    PARSE_LANGOPT(Freestanding);
-    PARSE_LANGOPT(NoBuiltin);
-    PARSE_LANGOPT(ThreadsafeStatics);
-    PARSE_LANGOPT(POSIXThreads);
-    PARSE_LANGOPT(Blocks);
-    PARSE_LANGOPT(EmitAllDecls);
-    PARSE_LANGOPT(MathErrno);
-    LangOpts.setSignedOverflowBehavior((LangOptions::SignedOverflowBehaviorTy)
-                                       Record[Idx++]);
-    PARSE_LANGOPT(HeinousExtensions);
-    PARSE_LANGOPT(Optimize);
-    PARSE_LANGOPT(OptimizeSize);
-    PARSE_LANGOPT(Static);
-    PARSE_LANGOPT(PICLevel);
-    PARSE_LANGOPT(GNUInline);
-    PARSE_LANGOPT(NoInline);
-    PARSE_LANGOPT(Deprecated);
-    PARSE_LANGOPT(AccessControl);
-    PARSE_LANGOPT(CharIsSigned);
-    PARSE_LANGOPT(ShortWChar);
-    PARSE_LANGOPT(ShortEnums);
-    LangOpts.setGC((LangOptions::GCMode)Record[Idx++]);
-    LangOpts.setVisibilityMode((Visibility)Record[Idx++]);
-    LangOpts.setStackProtector((LangOptions::StackProtectorMode)
-                                  Record[Idx++]);
-    PARSE_LANGOPT(InstantiationDepth);
-    PARSE_LANGOPT(OpenCL);
-    PARSE_LANGOPT(CUDA);
-    PARSE_LANGOPT(CatchUndefined);
-    PARSE_LANGOPT(DefaultFPContract);
-    PARSE_LANGOPT(ElideConstructors);
-    PARSE_LANGOPT(SpellChecking);
-    PARSE_LANGOPT(MRTD);
-    PARSE_LANGOPT(ObjCAutoRefCount);
-  #undef PARSE_LANGOPT
-
+#define LANGOPT(Name, Bits, Default, Description) \
+  LangOpts.Name = Record[Idx++];
+#define ENUM_LANGOPT(Name, Type, Bits, Default, Description) \
+  LangOpts.set##Name(static_cast<LangOptions::Type>(Record[Idx++]));
+#include "clang/Basic/LangOptions.def"
+    
     return Listener->ReadLanguageOptions(LangOpts);
   }
 

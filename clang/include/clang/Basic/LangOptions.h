@@ -19,12 +19,12 @@
 
 namespace clang {
 
-class OptionSignature;
-  
 /// LangOptions - This class keeps track of the various options that can be
 /// enabled, which controls the dialect of C that is accepted.
 class LangOptions {
 public:
+  typedef clang::Visibility Visibility;
+  
   enum GCMode { NonGC, GCOnly, HybridGC };
   enum StackProtectorMode { SSPOff, SSPOn, SSPReq };
   

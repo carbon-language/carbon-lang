@@ -14,6 +14,6 @@ __import_module__ load_failure;
 // RUN: FileCheck -check-prefix=CHECK-FAILURE %s < %t
 
 // FIXME: Clean up diagnostic text below and give it a location
-// CHECK-FAILURE: error: C99 support was disabled in PCH file but is currently enabled
+// CHECK-FAILURE: error: C99 was disabled in PCH file but is currently enabled
 
 
