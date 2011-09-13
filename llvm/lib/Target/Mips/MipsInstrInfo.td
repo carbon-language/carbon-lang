@@ -734,16 +734,20 @@ def : Pat<(MipsJmpLink (i32 texternalsym:$dst)),
 // hi/lo relocs
 def : Pat<(MipsHi tglobaladdr:$in), (LUi tglobaladdr:$in)>;
 def : Pat<(MipsHi tblockaddress:$in), (LUi tblockaddress:$in)>;
+def : Pat<(MipsLo tglobaladdr:$in), (ADDiu ZERO, tglobaladdr:$in)>;
+def : Pat<(MipsLo tblockaddress:$in), (ADDiu ZERO, tblockaddress:$in)>;
 def : Pat<(add CPURegs:$hi, (MipsLo tglobaladdr:$lo)),
           (ADDiu CPURegs:$hi, tglobaladdr:$lo)>;
 def : Pat<(add CPURegs:$hi, (MipsLo tblockaddress:$lo)),
           (ADDiu CPURegs:$hi, tblockaddress:$lo)>;
 
 def : Pat<(MipsHi tjumptable:$in), (LUi tjumptable:$in)>;
+def : Pat<(MipsLo tjumptable:$in), (ADDiu ZERO, tjumptable:$in)>;
 def : Pat<(add CPURegs:$hi, (MipsLo tjumptable:$lo)),
           (ADDiu CPURegs:$hi, tjumptable:$lo)>;
 
 def : Pat<(MipsHi tconstpool:$in), (LUi tconstpool:$in)>;
+def : Pat<(MipsLo tconstpool:$in), (ADDiu ZERO, tconstpool:$in)>;
 def : Pat<(add CPURegs:$hi, (MipsLo tconstpool:$lo)),
           (ADDiu CPURegs:$hi, tconstpool:$lo)>;
 
@@ -759,6 +763,7 @@ def : Pat<(add CPURegs:$gp, (MipsTlsGd tglobaltlsaddr:$in)),
 
 // tprel hi/lo
 def : Pat<(MipsTprelHi tglobaltlsaddr:$in), (LUi tglobaltlsaddr:$in)>;
+def : Pat<(MipsTprelLo tglobaltlsaddr:$in), (ADDiu ZERO, tglobaltlsaddr:$in)>;
 def : Pat<(add CPURegs:$hi, (MipsTprelLo tglobaltlsaddr:$lo)),
           (ADDiu CPURegs:$hi, tglobaltlsaddr:$lo)>;
 
