@@ -548,6 +548,8 @@ ThreadList::GetSelectedThread ()
     ThreadSP thread_sp = FindThreadByID(m_selected_tid);
     if (!thread_sp.get())
     {
+        if (m_threads.size() == 0)
+            return thread_sp;
         m_selected_tid = m_threads[0]->GetID();
         thread_sp = m_threads[0];
     }
