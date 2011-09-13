@@ -144,14 +144,14 @@ namespace llvm {
     /// isFloatingPoint - Return true if this is a FP, or a vector FP type.
     bool isFloatingPoint() const {
       return ((SimpleTy >= MVT::f32 && SimpleTy <= MVT::ppcf128) ||
-        (SimpleTy >= MVT::v2f32 && SimpleTy <= MVT::v4f64));
+	      (SimpleTy >= MVT::v2f32 && SimpleTy <= MVT::v4f64));
     }
 
     /// isInteger - Return true if this is an integer, or a vector integer type.
     bool isInteger() const {
       return ((SimpleTy >= MVT::FIRST_INTEGER_VALUETYPE &&
                SimpleTy <= MVT::LAST_INTEGER_VALUETYPE) ||
-               (SimpleTy >= MVT::v2i8 && SimpleTy <= MVT::v8i64));
+	      (SimpleTy >= MVT::v2i8 && SimpleTy <= MVT::v8i64));
     }
 
     /// isVector - Return true if this is a vector value type.
