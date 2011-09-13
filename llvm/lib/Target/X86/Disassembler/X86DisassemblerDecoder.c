@@ -1434,11 +1434,10 @@ static int readImmediate(struct InternalInstruction* insn, uint8_t size) {
 }
 
 /*
- * readVVVV - Consumes an immediate operand from an instruction, given the
- *   desired operand size.
+ * readVVVV - Consumes vvvv from an instruction if it has a VEX prefix.
  *
  * @param insn  - The instruction whose operand is to be read.
- * @return      - 0 if the immediate was successfully consumed; nonzero
+ * @return      - 0 if the vvvv was successfully consumed; nonzero
  *                otherwise.
  */
 static int readVVVV(struct InternalInstruction* insn) {
@@ -1463,8 +1462,14 @@ static int readVVVV(struct InternalInstruction* insn) {
  */
 static int readOperands(struct InternalInstruction* insn) {
   int index;
+  int hasVVVV, needVVVV;
   
   dbgprintf(insn, "readOperands()");
+
+  /* If non-zero vvvv specified, need to make sure one of the operands
+     uses it. */
+  hasVVVV = !readVVVV(insn);
+  needVVVV = hasVVVV && (insn->vvvv != 0);
   
   for (index = 0; index < X86_MAX_OPERANDS; ++index) {
     switch (insn->spec->operands[index].encoding) {
@@ -1537,7 +1542,8 @@ static int readOperands(struct InternalInstruction* insn) {
         return -1;
       break;
     case ENCODING_VVVV:
-      if (readVVVV(insn))
+      needVVVV = 0; /* Mark that we have found a VVVV operand. */
+      if (!hasVVVV)
         return -1;
       if (fixupReg(insn, &insn->spec->operands[index]))
         return -1;
@@ -1549,6 +1555,9 @@ static int readOperands(struct InternalInstruction* insn) {
       return -1;
     }
   }
+
+  /* If we didn't find ENCODING_VVVV operand, but non-zero vvvv present, fail */
+  if (needVVVV) return -1;
   
   return 0;
 }
