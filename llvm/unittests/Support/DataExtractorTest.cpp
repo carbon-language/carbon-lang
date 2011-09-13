@@ -35,10 +35,10 @@ TEST(DataExtractorTest, UnsignedNumbers) {
   EXPECT_EQ(0x8090FFFFU, DE.getU32(&offset));
   EXPECT_EQ(4U, offset);
   offset = 0;
-  EXPECT_EQ(0x8090FFFF80000000U, DE.getU64(&offset));
+  EXPECT_EQ(0x8090FFFF80000000ULL, DE.getU64(&offset));
   EXPECT_EQ(8U, offset);
   offset = 0;
-  EXPECT_EQ(0x8090FFFF80000000U, DE.getAddress(&offset));
+  EXPECT_EQ(0x8090FFFF80000000ULL, DE.getAddress(&offset));
   EXPECT_EQ(8U, offset);
   offset = 0;
 
@@ -57,7 +57,7 @@ TEST(DataExtractorTest, UnsignedNumbers) {
   EXPECT_EQ(0xFFFF9080U, DE.getU32(&offset));
   EXPECT_EQ(4U, offset);
   offset = 0;
-  EXPECT_EQ(0x80FFFF9080U, DE.getU64(&offset));
+  EXPECT_EQ(0x80FFFF9080ULL, DE.getU64(&offset));
   EXPECT_EQ(8U, offset);
   offset = 0;
   EXPECT_EQ(0xFFFF9080U, DE.getAddress(&offset));
