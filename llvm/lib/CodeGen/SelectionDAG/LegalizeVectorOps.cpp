@@ -266,7 +266,7 @@ SDValue VectorLegalizer::ExpandVSELECT(SDValue Op) {
   // Implement VSELECT in terms of XOR, AND, OR
   // on platforms which do not support blend natively.
   EVT VT =  Op.getOperand(0).getValueType();
-  EVT OVT = Op.getOperand(0).getValueType();
+  EVT OVT = Op.getOperand(1).getValueType();
   DebugLoc DL = Op.getDebugLoc();
 
   SDValue Mask = Op.getOperand(0);
