@@ -3402,6 +3402,9 @@ void SelectionDAGBuilder::visitAtomicLoad(const LoadInst &I) {
 
   EVT VT = EVT::getEVT(I.getType());
 
+  if (I.getAlignment() * 8 != VT.getSizeInBits())
+    report_fatal_error("Cannot generate unaligned atomic load");
+
   SDValue L =
     DAG.getAtomic(ISD::ATOMIC_LOAD, dl, VT, VT, InChain,
                   getValue(I.getPointerOperand()),
@@ -3427,13 +3430,17 @@ void SelectionDAGBuilder::visitAtomicStore(const StoreInst &I) {
 
   SDValue InChain = getRoot();
 
+  EVT VT = EVT::getEVT(I.getValueOperand()->getType());
+
+  if (I.getAlignment() * 8 != VT.getSizeInBits())
+    report_fatal_error("Cannot generate unaligned atomic store");
+
   if (TLI.getInsertFencesForAtomic())
     InChain = InsertFenceForAtomic(InChain, Order, Scope, true, dl,
                                    DAG, TLI);
 
   SDValue OutChain =
-    DAG.getAtomic(ISD::ATOMIC_STORE, dl,
-                  getValue(I.getValueOperand()).getValueType().getSimpleVT(),
+    DAG.getAtomic(ISD::ATOMIC_STORE, dl, VT,
                   InChain,
                   getValue(I.getPointerOperand()),
                   getValue(I.getValueOperand()),
