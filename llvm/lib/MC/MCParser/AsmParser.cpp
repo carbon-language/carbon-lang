@@ -153,6 +153,8 @@ private:
   void CheckForValidSection();
 
   bool ParseStatement();
+  void EatToEndOfLine();
+  bool ParseCppHashLineFilenameComment(const SMLoc &L);
 
   bool HandleMacroEntry(StringRef Name, SMLoc NameLoc, const Macro *M);
   bool expandMacro(SmallString<256> &Buf, StringRef Body,
@@ -937,10 +939,8 @@ bool AsmParser::ParseStatement() {
   StringRef IDVal;
   int64_t LocalLabelVal = -1;
   // A full line comment is a '#' as the first token.
-  if (Lexer.is(AsmToken::Hash)) {
-    EatToEndOfStatement();
-    return false;
-  }
+  if (Lexer.is(AsmToken::Hash))
+    return ParseCppHashLineFilenameComment(IDLoc);
 
   // Allow an integer followed by a ':' as a directional local label.
   if (Lexer.is(AsmToken::Integer)) {
@@ -1206,6 +1206,49 @@ bool AsmParser::ParseStatement() {
 
   // Don't skip the rest of the line, the instruction parser is responsible for
   // that.
+  return false;
+}
+
+/// EatToEndOfLine uses the Lexer to eat the characters to the end of the line
+/// since they may not be able to be tokenized to get to the end of line token.
+void AsmParser::EatToEndOfLine() {
+ Lexer.LexUntilEndOfLine();
+ // Eat EOL.
+ Lex();
+}
+
+/// ParseCppHashLineFilenameComment as this:
+///   ::= # number "filename"
+/// or just as a full line comment if it doesn't have a number and a string.
+bool AsmParser::ParseCppHashLineFilenameComment(const SMLoc &L) {
+  Lex(); // Eat the hash token.
+
+  if (getLexer().isNot(AsmToken::Integer)) {
+    // Consume the line since in cases it is not a well-formed line directive,
+    // as if were simply a full line comment.
+    EatToEndOfLine();
+    return false;
+  }
+
+  int64_t LineNumber = getTok().getIntVal();
+  // FIXME: remember to remove this line that is silencing a warning for now.
+  (void) LineNumber;
+  Lex();
+
+  if (getLexer().isNot(AsmToken::String)) {
+    EatToEndOfLine();
+    return false;
+  }
+
+  StringRef Filename = getTok().getString();
+  // Get rid of the enclosing quotes.
+  Filename = Filename.substr(1, Filename.size()-2);
+
+  // TODO: Now with the Filename, LineNumber set up a mapping to the SMLoc for
+  // later use by diagnostics.
+
+  // Ignore any trailing characters, they're just comment.
+  EatToEndOfLine();
   return false;
 }
 

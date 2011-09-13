@@ -47,6 +47,7 @@ public:
   void setBuffer(const MemoryBuffer *buf, const char *ptr = NULL);
 
   virtual StringRef LexUntilEndOfStatement();
+  StringRef LexUntilEndOfLine();
 
   bool isAtStartOfComment(char Char);
   bool isAtStatementSeparator(const char *Ptr);
