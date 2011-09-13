@@ -1885,7 +1885,7 @@ parseRegisterList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
 
   // Read the rest of the registers in the list.
   unsigned PrevRegNum = 0;
-  SmallVector<std::pair<unsigned, SMLoc>, 32> Registers;
+  SmallVector<std::pair<unsigned, SMLoc>, 16> Registers;
 
   do {
     bool IsRange = Parser.getTok().is(AsmToken::Minus);
