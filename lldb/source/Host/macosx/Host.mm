@@ -1095,6 +1095,10 @@ Host::FindProcesses (const ProcessInstanceInfoMatch &match_info, ProcessInstance
         else
             kinfo_user_matches = kinfo.kp_eproc.e_pcred.p_ruid == our_uid;
 
+        // Special case, if lldb is being run as root we can attach to anything.
+        if (our_uid == 0)
+          kinfo_user_matches = true;
+
         if (kinfo_user_matches == false         || // Make sure the user is acceptable
             kinfo.kp_proc.p_pid == our_pid      || // Skip this process
             kinfo.kp_proc.p_pid == 0            || // Skip kernel (kernel pid is zero)
