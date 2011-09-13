@@ -273,8 +273,17 @@ private:
   ///    The new value has no live ranges anywhere.
   ValueMap Values;
 
-  /// LRCalc - Cache for computing live ranges and SSA update.
-  LiveRangeCalc LRCalc;
+  /// LRCalc - Cache for computing live ranges and SSA update.  Each instance
+  /// can only handle non-overlapping live ranges, so use a separate
+  /// LiveRangeCalc instance for the complement interval when in spill mode.
+  LiveRangeCalc LRCalc[2];
+
+  /// getLRCalc - Return the LRCalc to use for RegIdx.  In spill mode, the
+  /// complement interval can overlap the other intervals, so it gets its own
+  /// LRCalc instance.  When not in spill mode, all intervals can share one.
+  LiveRangeCalc &getLRCalc(unsigned RegIdx) {
+    return LRCalc[SpillMode != SM_Partition && RegIdx != 0];
+  }
 
   /// defValue - define a value in RegIdx from ParentVNI at Idx.
   /// Idx does not have to be ParentVNI->def, but it must be contained within

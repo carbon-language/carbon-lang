@@ -319,7 +319,11 @@ void SplitEditor::reset(LiveRangeEdit &LRE, ComplementSpillMode SM) {
   OpenIdx = 0;
   RegAssign.clear();
   Values.clear();
-  LRCalc.reset(&VRM.getMachineFunction());
+
+  // Reset the LiveRangeCalc instances needed for this spill mode.
+  LRCalc[0].reset(&VRM.getMachineFunction());
+  if (SpillMode)
+    LRCalc[1].reset(&VRM.getMachineFunction());
 
   // We don't need an AliasAnalysis since we will only be performing
   // cheap-as-a-copy remats anyway.
@@ -390,8 +394,8 @@ void SplitEditor::markComplexMapped(unsigned RegIdx, const VNInfo *ParentVNI) {
 // extendRange - Extend the live range to reach Idx.
 // Potentially create phi-def values.
 void SplitEditor::extendRange(unsigned RegIdx, SlotIndex Idx) {
-  LRCalc.extend(Edit->get(RegIdx), Idx.getNextSlot(),
-                LIS.getSlotIndexes(), &MDT, &LIS.getVNInfoAllocator());
+  getLRCalc(RegIdx).extend(Edit->get(RegIdx), Idx.getNextSlot(),
+                         LIS.getSlotIndexes(), &MDT, &LIS.getVNInfoAllocator());
 }
 
 VNInfo *SplitEditor::defFromParent(unsigned RegIdx,
@@ -633,6 +637,8 @@ bool SplitEditor::transferValues() {
         continue;
       }
 
+      LiveRangeCalc &LRC = getLRCalc(RegIdx);
+
       // This value has multiple defs in RegIdx, but it wasn't rematerialized,
       // so the live range is accurate. Add live-in blocks in [Start;End) to the
       // LiveInBlocks.
@@ -648,7 +654,7 @@ bool SplitEditor::transferValues() {
         DEBUG(dbgs() << ':' << VNI->id << "*BB#" << MBB->getNumber());
         // MBB has its own def. Is it also live-out?
         if (BlockEnd <= End)
-          LRCalc.setLiveOutValue(MBB, VNI);
+          LRC.setLiveOutValue(MBB, VNI);
 
         // Skip to the next block for live-in.
         ++MBB;
@@ -667,16 +673,16 @@ bool SplitEditor::transferValues() {
                                          std::min(BlockEnd, End).getPrevSlot());
           assert(VNI && "Missing def for complex mapped parent PHI");
           if (End >= BlockEnd)
-            LRCalc.setLiveOutValue(MBB, VNI); // Live-out as well.
+            LRC.setLiveOutValue(MBB, VNI); // Live-out as well.
         } else {
           // This block needs a live-in value.  The last block covered may not
           // be live-out.
           if (End < BlockEnd)
-            LRCalc.addLiveInBlock(LI, MDT[MBB], End);
+            LRC.addLiveInBlock(LI, MDT[MBB], End);
           else {
             // Live-through, and we don't know the value.
-            LRCalc.addLiveInBlock(LI, MDT[MBB]);
-            LRCalc.setLiveOutValue(MBB, 0);
+            LRC.addLiveInBlock(LI, MDT[MBB]);
+            LRC.setLiveOutValue(MBB, 0);
           }
         }
         BlockStart = BlockEnd;
@@ -687,7 +693,11 @@ bool SplitEditor::transferValues() {
     DEBUG(dbgs() << '\n');
   }
 
-  LRCalc.calculateValues(LIS.getSlotIndexes(), &MDT, &LIS.getVNInfoAllocator());
+  LRCalc[0].calculateValues(LIS.getSlotIndexes(), &MDT,
+                            &LIS.getVNInfoAllocator());
+  if (SpillMode)
+    LRCalc[1].calculateValues(LIS.getSlotIndexes(), &MDT,
+                              &LIS.getVNInfoAllocator());
 
   return Skipped;
 }
