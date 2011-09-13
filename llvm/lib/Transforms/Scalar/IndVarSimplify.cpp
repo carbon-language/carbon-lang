@@ -60,7 +60,7 @@ STATISTIC(NumElimIV      , "Number of congruent IVs eliminated");
 
 namespace llvm {
   cl::opt<bool> EnableIVRewrite(
-    "enable-iv-rewrite", cl::Hidden,
+    "enable-iv-rewrite", cl::Hidden, cl::init(true),
     cl::desc("Enable canonical induction variable rewriting"));
 
   // Trip count verification can be enabled by default under NDEBUG if we
