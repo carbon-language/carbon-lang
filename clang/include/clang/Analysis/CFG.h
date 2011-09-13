@@ -506,6 +506,10 @@ public:
     Elements.push_back(CFGTemporaryDtor(E), C);
   }
 
+  void appendAutomaticObjDtor(VarDecl *VD, Stmt *S, BumpVectorContext &C) {
+    Elements.push_back(CFGAutomaticObjDtor(VD, S), C);
+  }
+
   // Destructors must be inserted in reversed order. So insertion is in two
   // steps. First we prepare space for some number of elements, then we insert
   // the elements beginning at the last position in prepared space.
