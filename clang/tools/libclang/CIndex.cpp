@@ -559,7 +559,15 @@ bool CursorVisitor::VisitChildren(CXCursor Cursor) {
       }
     }
   }
-  
+
+  if (Cursor.kind == CXCursor_IBOutletCollectionAttr) {
+    IBOutletCollectionAttr *A =
+      cast<IBOutletCollectionAttr>(cxcursor::getCursorAttr(Cursor));
+    if (const ObjCInterfaceType *InterT = A->getInterface()->getAs<ObjCInterfaceType>())
+      return Visit(cxcursor::MakeCursorObjCClassRef(InterT->getInterface(),
+                                                    A->getInterfaceLoc(), TU));
+  }
+
   // Nothing to visit at the moment.
   return false;
 }
