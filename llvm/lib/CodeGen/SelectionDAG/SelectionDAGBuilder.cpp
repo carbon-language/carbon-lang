@@ -3402,7 +3402,7 @@ void SelectionDAGBuilder::visitAtomicLoad(const LoadInst &I) {
 
   EVT VT = EVT::getEVT(I.getType());
 
-  if (I.getAlignment() * 8 != VT.getSizeInBits())
+  if (I.getAlignment() * 8 < VT.getSizeInBits())
     report_fatal_error("Cannot generate unaligned atomic load");
 
   SDValue L =
@@ -3432,7 +3432,7 @@ void SelectionDAGBuilder::visitAtomicStore(const StoreInst &I) {
 
   EVT VT = EVT::getEVT(I.getValueOperand()->getType());
 
-  if (I.getAlignment() * 8 != VT.getSizeInBits())
+  if (I.getAlignment() * 8 < VT.getSizeInBits())
     report_fatal_error("Cannot generate unaligned atomic store");
 
   if (TLI.getInsertFencesForAtomic())
