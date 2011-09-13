@@ -1450,7 +1450,9 @@ enum CXCursorKind {
   CXCursor_IBActionAttr                  = 401,
   CXCursor_IBOutletAttr                  = 402,
   CXCursor_IBOutletCollectionAttr        = 403,
-  CXCursor_LastAttr                      = CXCursor_IBOutletCollectionAttr,
+  CXCursor_CXXFinalAttr                  = 404,
+  CXCursor_CXXOverrideAttr               = 405,
+  CXCursor_LastAttr                      = CXCursor_CXXOverrideAttr,
      
   /* Preprocessing */
   CXCursor_PreprocessingDirective        = 500,
