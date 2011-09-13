@@ -206,7 +206,7 @@ public:
     lldb::SBTarget
     GetSelectedTarget ();
 
-    lldb::SBSourceManager &
+    lldb::SBSourceManager
     GetSourceManager ();
 
     // REMOVE: just for a quick fix, need to expose platforms through

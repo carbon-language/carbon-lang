@@ -223,6 +223,8 @@ class Debugger :
     public UserID,
     public DebuggerInstanceSettings
 {
+friend class SourceManager;  // For GetSourceFileCache.
+
 public:
 
     class SettingsController : public UserSettingsController
@@ -342,16 +344,17 @@ public:
         return m_listener;
     }
 
+    // This returns the Debugger's scratch source manager.  It won't be able to look up files in debug
+    // information, but it can look up files by absolute path and display them to you.
+    // To get the target's source manager, call GetSourceManager on the target instead.
     SourceManager &
     GetSourceManager ()
     {
-        lldb::TargetSP selected_target = GetSelectedTarget();
-        if (selected_target)
-            return selected_target->GetSourceManager();
-        else
-            return m_source_manager;
+        return m_source_manager;
     }
 
+public:
+    
     lldb::TargetSP
     GetSelectedTarget ()
     {
@@ -455,6 +458,12 @@ protected:
         m_input_comm.Clear ();
     }
 
+    SourceManager::SourceFileCache &
+    GetSourceFileCache ()
+    {
+        return m_source_file_cache;
+    }
+
     Communication m_input_comm;
     StreamFile m_input_file;
     StreamFile m_output_file;
@@ -463,6 +472,8 @@ protected:
     PlatformList m_platform_list;
     Listener m_listener;
     SourceManager m_source_manager;    // This is a scratch source manager that we return if we have no targets.
+    SourceManager::SourceFileCache m_source_file_cache; // All the source managers for targets created in this debugger used this shared
+                                                        // source file cache.
     std::auto_ptr<CommandInterpreter> m_command_interpreter_ap;
 
     InputReaderStack m_input_reader_stack;

@@ -26,9 +26,12 @@ class SourceManager
 {
 public:
 #ifndef SWIG
+    
     class File
     {
+    friend bool operator== (const SourceManager::File &lhs, const SourceManager::File &rhs);
     public:
+    
         File (const FileSpec &file_spec, Target *target);
         ~File();
 
@@ -52,7 +55,7 @@ public:
         {
             return m_file_spec;
         }
-
+        
     protected:
 
         bool
@@ -65,6 +68,28 @@ public:
         typedef std::vector<uint32_t> LineOffsets;
         LineOffsets m_offsets;
     };
+
+#endif // SWIG
+
+    typedef lldb::SharedPtr<File>::Type FileSP;
+
+#ifndef SWIG
+
+   // The SourceFileCache class separates the source manager from the cache of source files, so the 
+   // cache can be stored in the Debugger, but the source managers can be per target.     
+    class SourceFileCache
+    {
+    public:
+        SourceFileCache () {};
+        ~SourceFileCache() {};
+        
+        void AddSourceFile (const FileSP &file_sp);
+        FileSP FindSourceFile (const FileSpec &file_spec) const;
+        
+    protected:
+        typedef std::map <FileSpec, FileSP> FileCache;
+        FileCache m_file_cache;
+    };
 #endif
 
 
@@ -73,11 +98,11 @@ public:
     //------------------------------------------------------------------
     // A source manager can be made with a non-null target, in which case it can use the path remappings to find 
     // source files that are not in their build locations.  With no target it won't be able to do this.
-    SourceManager(Target *target);
+    SourceManager (Debugger &debugger);
+    SourceManager (Target &target);
 
     ~SourceManager();
 
-    typedef lldb::SharedPtr<File>::Type FileSP;
 
     FileSP
     GetLastFile () 
@@ -134,13 +159,13 @@ protected:
     //------------------------------------------------------------------
     // Classes that inherit from SourceManager can see and modify these
     //------------------------------------------------------------------
-    typedef std::map <FileSpec, FileSP> FileCache;
-    FileCache m_file_cache;
     FileSP m_last_file_sp;
     uint32_t m_last_file_line;
     uint32_t m_last_file_context_before;
     uint32_t m_last_file_context_after;
     Target *m_target;
+    Debugger *m_debugger;
+    
 private:
     //------------------------------------------------------------------
     // For SourceManager only
@@ -148,6 +173,7 @@ private:
     DISALLOW_COPY_AND_ASSIGN (SourceManager);
 };
 
+bool operator== (const SourceManager::File &lhs, const SourceManager::File &rhs);
 } // namespace lldb_private
 
 #endif  // liblldb_SourceManager_h_

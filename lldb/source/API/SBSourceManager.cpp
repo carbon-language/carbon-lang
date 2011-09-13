@@ -7,39 +7,108 @@
 //
 //===----------------------------------------------------------------------===//
 
-
+#include "lldb/API/SBDebugger.h"
 #include "lldb/API/SBSourceManager.h"
+#include "lldb/API/SBTarget.h"
 #include "lldb/API/SBStream.h"
 
 #include "lldb/API/SBFileSpec.h"
+#include "lldb/Core/Debugger.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Core/SourceManager.h"
 
+#include "lldb/Target/Target.h"
 
 using namespace lldb;
 using namespace lldb_private;
 
-
-SBSourceManager::SBSourceManager (SourceManager* source_manager) :
-    m_opaque_ptr (source_manager)
+class lldb::SBSourceManager_impl
 {
+public:
+    SBSourceManager_impl (const SBDebugger &debugger)
+    {
+        m_debugger_sp = debugger.m_opaque_sp;
+    }
+    
+    SBSourceManager_impl (const SBTarget &target)
+    {
+        m_target_sp = target.m_opaque_sp;
+    }
+    
+    SBSourceManager_impl (const SBSourceManager_impl &rhs)
+    {
+        if (&rhs == this)
+            return;
+        m_debugger_sp = rhs.m_debugger_sp;
+        m_target_sp   = rhs.m_target_sp;
+    }
+
+    size_t
+    DisplaySourceLinesWithLineNumbers
+    (
+        const SBFileSpec &file,
+        uint32_t line,
+        uint32_t context_before,
+        uint32_t context_after,
+        const char* current_line_cstr,
+        SBStream &s
+    )
+    {
+        if (!file.IsValid())
+            return 0;
+            
+        if (m_debugger_sp)
+            return m_debugger_sp->GetSourceManager().DisplaySourceLinesWithLineNumbers (*file,
+                                                                                        line,
+                                                                                        context_before,
+                                                                                        context_after,
+                                                                                        current_line_cstr,
+                                                                                        s.m_opaque_ap.get());
+        else if (m_target_sp)
+            return m_target_sp->GetSourceManager().DisplaySourceLinesWithLineNumbers (*file,
+                                                                                      line,
+                                                                                      context_before,
+                                                                                      context_after,
+                                                                                      current_line_cstr,
+                                                                                      s.m_opaque_ap.get());
+        else
+            return 0;
+    }
+    
+private:
+    lldb::DebuggerSP m_debugger_sp;
+    lldb::TargetSP   m_target_sp;
+    
+};
+
+SBSourceManager::SBSourceManager (const SBDebugger &debugger)
+{
+    m_opaque_ap.reset(new SBSourceManager_impl (debugger));
+}
+
+SBSourceManager::SBSourceManager (const SBTarget &target)
+{
+    m_opaque_ap.reset(new SBSourceManager_impl (target));
+}
+
+SBSourceManager::SBSourceManager (const SBSourceManager &rhs)
+{
+    if (&rhs == this)
+        return;
+        
+    m_opaque_ap.reset(new SBSourceManager_impl (*(rhs.m_opaque_ap.get())));
+}
+
+const lldb::SBSourceManager &
+SBSourceManager::operator = (const lldb::SBSourceManager &rhs)
+{
+    m_opaque_ap.reset (new SBSourceManager_impl (*(rhs.m_opaque_ap.get())));
+    return *this;
 }
 
 SBSourceManager::~SBSourceManager()
 {
-}
-
-SBSourceManager::SBSourceManager(const SBSourceManager &rhs) :
-    m_opaque_ptr (rhs.m_opaque_ptr)
-{
-}
-
-const SBSourceManager &
-SBSourceManager::operator = (const SBSourceManager &rhs)
-{
-    m_opaque_ptr = rhs.m_opaque_ptr;
-    return *this;
 }
 
 size_t
@@ -53,20 +122,13 @@ SBSourceManager::DisplaySourceLinesWithLineNumbers
     SBStream &s
 )
 {
-    if (m_opaque_ptr == NULL)
+    if (m_opaque_ap.get() == NULL)
         return 0;
 
-    if (s.m_opaque_ap.get() == NULL)
-        return 0;
-
-    if (file.IsValid())
-    {
-        return m_opaque_ptr->DisplaySourceLinesWithLineNumbers (*file,
-                                                                line,
-                                                                context_before,
-                                                                context_after,
-                                                                current_line_cstr,
-                                                                s.m_opaque_ap.get());
-    }
-    return 0;
+    return m_opaque_ap->DisplaySourceLinesWithLineNumbers (file,
+                                                           line,
+                                                           context_before,
+                                                           context_after,
+                                                           current_line_cstr,
+                                                           s);
 }

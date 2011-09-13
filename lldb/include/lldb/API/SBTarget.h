@@ -349,6 +349,9 @@ public:
     
     lldb::SBTypeList
     FindTypes (const char* type);
+    
+    SBSourceManager
+    GetSourceManager();
 
 #ifndef SWIG
     bool
@@ -375,6 +378,7 @@ protected:
     friend class SBSymbol;
     friend class SBModule;
     friend class SBValue;
+    friend class SBSourceManager_impl;
 
     //------------------------------------------------------------------
     // Constructors are private, use static Target::Create function to

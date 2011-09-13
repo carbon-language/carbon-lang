@@ -127,7 +127,7 @@ public:
     lldb::SBTarget
     GetSelectedTarget ();
 
-    lldb::SBSourceManager &
+    lldb::SBSourceManager
     GetSourceManager ();
 
     // REMOVE: just for a quick fix, need to expose platforms through
@@ -234,6 +234,7 @@ private:
     friend class SBInputReader;
     friend class SBProcess;
     friend class SBTarget;
+    friend class SBSourceManager_impl;
     
     lldb::SBTarget
     FindTargetWithLLDBProcess (const lldb::ProcessSP &processSP);

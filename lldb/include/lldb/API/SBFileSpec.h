@@ -63,7 +63,7 @@ private:
     friend class SBLineEntry;
     friend class SBModule;
     friend class SBProcess;
-    friend class SBSourceManager;
+    friend class SBSourceManager_impl;
     friend class SBThread;
     friend class SBTarget;
 

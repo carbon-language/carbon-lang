@@ -357,12 +357,11 @@ SBDebugger::HandleProcessEvent (const SBProcess &process, const SBEvent &event, 
     }
 }
 
-SBSourceManager &
+SBSourceManager
 SBDebugger::GetSourceManager ()
 {
-    static SourceManager g_lldb_source_manager(NULL);
-    static SBSourceManager g_sb_source_manager (&g_lldb_source_manager);
-    return g_sb_source_manager;
+    SBSourceManager sb_source_manager (*this);
+    return sb_source_manager;
 }
 
 

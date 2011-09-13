@@ -327,6 +327,9 @@ public:
     lldb::SBTypeList
     FindTypes (const char* type);
 
+    lldb::SBSourceManager
+    GetSourceManager ();
+
     %feature("docstring", "
     //------------------------------------------------------------------
     /// Find global and static variables by name.

@@ -16,10 +16,14 @@
 
 namespace lldb {
 
+class SBSourceManager_impl;
+
 class SBSourceManager
 {
 public:
-    SBSourceManager (const lldb::SBSourceManager &rhs);
+    SBSourceManager (const SBDebugger &debugger);
+    SBSourceManager (const SBTarget &target);
+    SBSourceManager (const SBSourceManager &rhs);
     
     ~SBSourceManager();
 
@@ -45,7 +49,7 @@ protected:
 
 private:
 
-    lldb_private::SourceManager *m_opaque_ptr;
+    std::auto_ptr<SBSourceManager_impl> m_opaque_ap;
 };
 
 } // namespace lldb

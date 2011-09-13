@@ -237,7 +237,8 @@ Debugger::Debugger () :
     m_target_list (),
     m_platform_list (),
     m_listener ("lldb.Debugger"),
-    m_source_manager(NULL),
+    m_source_manager(*this),
+    m_source_file_cache(),
     m_command_interpreter_ap (new CommandInterpreter (*this, eScriptLanguageDefault, false)),
     m_input_reader_stack (),
     m_input_reader_data ()

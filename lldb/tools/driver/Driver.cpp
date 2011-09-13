@@ -29,7 +29,6 @@
 #include "lldb/API/SBEvent.h"
 #include "lldb/API/SBHostOS.h"
 #include "lldb/API/SBListener.h"
-#include "lldb/API/SBSourceManager.h"
 #include "lldb/API/SBStream.h"
 #include "lldb/API/SBTarget.h"
 #include "lldb/API/SBThread.h"

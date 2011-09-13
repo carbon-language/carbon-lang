@@ -16,6 +16,7 @@
 #include "lldb/API/SBFileSpec.h"
 #include "lldb/API/SBListener.h"
 #include "lldb/API/SBModule.h"
+#include "lldb/API/SBSourceManager.h"
 #include "lldb/API/SBProcess.h"
 #include "lldb/API/SBStream.h"
 #include "lldb/API/SBSymbolContextList.h"
@@ -958,3 +959,9 @@ SBTarget::FindGlobalVariables (const char *name, uint32_t max_matches)
     return sb_value_list;
 }
 
+SBSourceManager
+SBTarget::GetSourceManager()
+{
+    SBSourceManager source_manager (*this);
+    return source_manager;
+}

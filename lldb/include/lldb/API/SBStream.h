@@ -69,7 +69,7 @@ protected:
     friend class SBInstruction;
     friend class SBInstructionList;
     friend class SBModule;
-    friend class SBSourceManager;
+    friend class SBSourceManager_impl;
     friend class SBSymbol;
     friend class SBSymbolContext;
     friend class SBTarget;

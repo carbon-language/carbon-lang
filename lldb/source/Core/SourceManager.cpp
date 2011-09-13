@@ -14,6 +14,7 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Core/DataBuffer.h"
+#include "lldb/Core/Debugger.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Target/Target.h"
@@ -29,13 +30,24 @@ static inline bool is_newline_char(char ch)
 //----------------------------------------------------------------------
 // SourceManager constructor
 //----------------------------------------------------------------------
-SourceManager::SourceManager(Target *target) :
-    m_file_cache (),
+SourceManager::SourceManager(Target &target) :
     m_last_file_sp (),
     m_last_file_line (0),
     m_last_file_context_before (0),
     m_last_file_context_after (10),
-    m_target (target)
+    m_target (&target),
+    m_debugger(NULL)
+{
+    m_debugger = &(m_target->GetDebugger());
+}
+
+SourceManager::SourceManager(Debugger &debugger) :
+    m_last_file_sp (),
+    m_last_file_line (0),
+    m_last_file_context_before (0),
+    m_last_file_context_after (10),
+    m_target (NULL),
+    m_debugger (&debugger)
 {
 }
 
@@ -70,13 +82,12 @@ SourceManager::FileSP
 SourceManager::GetFile (const FileSpec &file_spec)
 {
     FileSP file_sp;
-    FileCache::iterator pos = m_file_cache.find(file_spec);
-    if (pos != m_file_cache.end())
-        file_sp = pos->second;
-    else
+    file_sp = m_debugger->GetSourceFileCache().FindSourceFile (file_spec);
+    if (!file_sp)
     {
         file_sp.reset (new File (file_spec, m_target));
-        m_file_cache[file_spec] = file_sp;
+
+        m_debugger->GetSourceFileCache().AddSourceFile(file_sp);
     }
     return file_sp;
 }
@@ -92,6 +103,7 @@ SourceManager::DisplaySourceLinesWithLineNumbersUsingLastFile
     const SymbolContextList *bp_locs
 )
 {
+    size_t return_value = 0;
     if (line == 0)
     {
         if (m_last_file_line != 0
@@ -134,18 +146,21 @@ SourceManager::DisplaySourceLinesWithLineNumbersUsingLastFile
                     ::snprintf (prefix, sizeof (prefix), "    ");
             }
 
-            s->Printf("%s%2.2s %-4u\t", 
+            return_value += s->Printf("%s%2.2s %-4u\t", 
                       prefix,
                       curr_line == line ? current_line_cstr : "", 
                       curr_line);
-            if (m_last_file_sp->DisplaySourceLines (curr_line, 0, 0, s) == 0)
+            size_t this_line_size = m_last_file_sp->DisplaySourceLines (curr_line, 0, 0, s); 
+            if (this_line_size == 0)
             {
                 m_last_file_line = UINT32_MAX;
                 break;
             }
+            else
+                return_value += this_line_size;
         }
     }
-    return 0;
+    return return_value;
 }
 
 size_t
@@ -181,7 +196,7 @@ SourceManager::DisplayMoreWithLineNumbers (Stream *s, const SymbolContextList *b
     {
         if (m_last_file_line == UINT32_MAX)
             return 0;
-        DisplaySourceLinesWithLineNumbersUsingLastFile (0, m_last_file_context_before, m_last_file_context_after, "", s, bp_locs);
+        return DisplaySourceLinesWithLineNumbersUsingLastFile (0, m_last_file_context_before, m_last_file_context_after, "", s, bp_locs);
     }
     return 0;
 }
@@ -226,8 +241,57 @@ SourceManager::File::File(const FileSpec &file_spec, Target *target) :
 {
     if (!m_mod_time.IsValid())
     {
-        if (target && target->GetSourcePathMap().RemapPath(file_spec.GetDirectory(), m_file_spec.GetDirectory()))
-            m_mod_time = file_spec.GetModificationTime();
+        if (target)
+        {
+            if (!file_spec.GetDirectory() && file_spec.GetFilename())
+            {
+                // If this is just a file name, lets see if we can find it in the target:
+                bool check_inlines = false;
+                SymbolContextList sc_list;
+                size_t num_matches = target->GetImages().ResolveSymbolContextForFilePath (file_spec.GetFilename().AsCString(),
+                                                                                          0,
+                                                                                          check_inlines,
+                                                                                          lldb::eSymbolContextModule | lldb::eSymbolContextCompUnit,
+                                                                                          sc_list);
+                bool got_multiple = false;
+                if (num_matches != 0)
+                {
+                    if (num_matches > 1)
+                    {
+                        SymbolContext sc;
+                        FileSpec *test_cu_spec = NULL;
+
+                        for (unsigned i = 0; i < num_matches; i++)
+                        {
+                            sc_list.GetContextAtIndex(i, sc);
+                            if (sc.comp_unit)
+                            {
+                                if (test_cu_spec)
+                                {
+                                    if (test_cu_spec != static_cast<FileSpec *> (sc.comp_unit))
+                                        got_multiple = true;
+                                        break;
+                                }
+                                else
+                                    test_cu_spec = sc.comp_unit;
+                            }
+                        }
+                    }
+                    if (!got_multiple)
+                    {
+                        SymbolContext sc;
+                        sc_list.GetContextAtIndex (0, sc);
+                        m_file_spec = static_cast<FileSpec *>(sc.comp_unit);
+                        m_mod_time = m_file_spec.GetModificationTime();
+                    }
+                }
+            }
+            else
+            {
+                if (target->GetSourcePathMap().RemapPath(file_spec.GetDirectory(), m_file_spec.GetDirectory()))
+                   m_mod_time = file_spec.GetModificationTime();
+            }
+        }
     }
     
     if (m_mod_time.IsValid())
@@ -310,6 +374,26 @@ SourceManager::File::FileSpecMatches (const FileSpec &file_spec)
     return FileSpec::Equal (m_file_spec, file_spec, false);
 }
 
+bool
+lldb_private::operator== (const SourceManager::File &lhs, const SourceManager::File &rhs)
+{
+    if (lhs.m_file_spec == rhs.m_file_spec)
+    {
+        if (lhs.m_mod_time.IsValid())
+        {
+            if (rhs.m_mod_time.IsValid())
+                return lhs.m_mod_time == rhs.m_mod_time;
+            else
+                return false;
+        }
+        else if (rhs.m_mod_time.IsValid())
+            return false;
+        else
+            return true;
+    }
+    else
+        return false;
+}
 
 bool
 SourceManager::File::CalculateLineOffsets (uint32_t line)
@@ -372,3 +456,28 @@ SourceManager::File::CalculateLineOffsets (uint32_t line)
     }
     return false;
 }
+
+void 
+SourceManager::SourceFileCache::AddSourceFile (const FileSP &file_sp)
+{
+    FileSpec file_spec;
+    FileCache::iterator pos = m_file_cache.find(file_spec);
+    if (pos == m_file_cache.end())
+        m_file_cache[file_spec] = file_sp;
+    else
+    {
+        if (file_sp != pos->second)
+            m_file_cache[file_spec] = file_sp;
+    }
+}
+
+SourceManager::FileSP 
+SourceManager::SourceFileCache::FindSourceFile (const FileSpec &file_spec) const
+{
+    FileSP file_sp;
+    FileCache::const_iterator pos = m_file_cache.find(file_spec);
+    if (pos != m_file_cache.end())
+        file_sp = pos->second;
+    return file_sp;
+}
+

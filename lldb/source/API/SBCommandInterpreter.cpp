@@ -18,7 +18,6 @@
 #include "lldb/API/SBBroadcaster.h"
 #include "lldb/API/SBDebugger.h"
 #include "lldb/API/SBCommandReturnObject.h"
-#include "lldb/API/SBSourceManager.h"
 #include "lldb/API/SBCommandInterpreter.h"
 #include "lldb/API/SBProcess.h"
 #include "lldb/API/SBTarget.h"
