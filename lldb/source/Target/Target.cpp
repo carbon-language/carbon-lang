@@ -335,6 +335,9 @@ Target::CreateWatchpointLocation(lldb::addr_t addr, size_t size, uint32_t type)
     WatchpointLocationSP wp_loc_sp;
     if (addr == LLDB_INVALID_ADDRESS || size == 0 || GetProcessSP())
         return wp_loc_sp;
+
+    // FIXME: Add implmenetation.
+    return wp_loc_sp;
 }
 
 void
