@@ -1,8 +1,8 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -Wno-c++0x-extensions %s
 
 namespace fizbin { class Foobar; } // expected-note{{'fizbin::Foobar' declared here}}
-Foobar *my_bar = new Foobar; // expected-error{{unknown type name 'Foobar'; did you mean 'fizbin::Foobar'?}} \
-                             // expected-error{{expected a type}}
+Foobar *my_bar  // expected-error{{unknown type name 'Foobar'; did you mean 'fizbin::Foobar'?}}
+    = new Foobar;  // expected-error{{expected a type}}
 
 namespace barstool { int toFoobar() { return 1; } } // expected-note 3 {{'barstool::toFoobar' declared here}}
 int Double(int x) { return x + x; }
