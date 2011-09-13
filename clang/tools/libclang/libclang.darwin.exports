@@ -102,6 +102,7 @@ _clang_getNumOverloadedDecls
 _clang_getOverloadedDecl
 _clang_getOverriddenCursors
 _clang_getPointeeType
+_clang_getPresumedLocation
 _clang_getRange
 _clang_getRangeEnd
 _clang_getRangeStart

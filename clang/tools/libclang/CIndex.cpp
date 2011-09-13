@@ -2861,6 +2861,34 @@ void clang_getExpansionLocation(CXSourceLocation location,
     *offset = SM.getDecomposedLoc(ExpansionLoc).second;
 }
 
+void clang_getPresumedLocation(CXSourceLocation location,
+                               CXString *filename,
+                               unsigned *line,
+                               unsigned *column) {
+  SourceLocation Loc = SourceLocation::getFromRawEncoding(location.int_data);
+
+  if (!location.ptr_data[0] || Loc.isInvalid()) {
+    if (filename)
+      *filename = createCXString("");
+    if (line)
+      *line = 0;
+    if (column)
+      *column = 0;
+  }
+  else {
+	const SourceManager &SM =
+        *static_cast<const SourceManager*>(location.ptr_data[0]);
+    PresumedLoc PreLoc = SM.getPresumedLoc(Loc);
+
+    if (filename)
+      *filename = createCXString(PreLoc.getFilename());
+    if (line)
+      *line = PreLoc.getLine();
+    if (column)
+      *column = PreLoc.getColumn();
+  }
+}
+
 void clang_getInstantiationLocation(CXSourceLocation location,
                                     CXFile *file,
                                     unsigned *line,
