@@ -71,6 +71,27 @@ LiveDebugVariables::LiveDebugVariables() : MachineFunctionPass(ID), pImpl(0) {
 /// LocMap - Map of where a user value is live, and its location.
 typedef IntervalMap<SlotIndex, unsigned, 4> LocMap;
 
+/// UserValueScopes - Keeps track of lexical scopes associated with an
+/// user value's source location.
+class UserValueScopes {
+  DebugLoc DL;
+  LexicalScopes &LS;
+  SmallPtrSet<const MachineBasicBlock *, 4> LBlocks;
+
+public:
+  UserValueScopes(DebugLoc D, LexicalScopes &L) : DL(D), LS(L) {}
+
+  /// dominates - Return true if current scope dominates at least one machine
+  /// instruction in a given machine basic block.
+  bool dominates(MachineBasicBlock *MBB) {
+    if (LBlocks.empty())
+      LS.getMachineBasicBlocks(DL, LBlocks);
+    if (LBlocks.count(MBB) != 0 || LS.dominates(DL, MBB))
+      return true;
+    return false;
+  }
+};
+
 /// UserValue - A user value is a part of a debug info user variable.
 ///
 /// A DBG_VALUE instruction notes that (a sub-register of) a virtual register
@@ -203,7 +224,7 @@ public:
                  LiveInterval *LI, const VNInfo *VNI,
                  SmallVectorImpl<SlotIndex> *Kills,
                  LiveIntervals &LIS, MachineDominatorTree &MDT,
-                 LexicalScopes &LS);
+		 UserValueScopes &UVS);
 
   /// addDefsFromCopies - The value in LI/LocNo may be copies to other
   /// registers. Determine if any of the copies are available at the kill
@@ -222,7 +243,7 @@ public:
   /// collecting all their def points.
   void computeIntervals(MachineRegisterInfo &MRI,
                         LiveIntervals &LIS, MachineDominatorTree &MDT,
-                        LexicalScopes &LS);
+                        UserValueScopes &UVS);
 
   /// renameRegister - Update locations to rewrite OldReg as NewReg:SubIdx.
   void renameRegister(unsigned OldReg, unsigned NewReg, unsigned SubIdx,
@@ -245,6 +266,9 @@ public:
   /// Only first one needs DebugLoc to identify variable's lexical scope
   /// in source file.
   DebugLoc findDebugLoc();
+
+  /// getDebugLoc - Return DebugLoc of this UserValue.
+  DebugLoc getDebugLoc() { return dl;}
   void print(raw_ostream&, const TargetMachine*);
 };
 } // namespace
@@ -460,11 +484,9 @@ void UserValue::extendDef(SlotIndex Idx, unsigned LocNo,
                           LiveInterval *LI, const VNInfo *VNI,
                           SmallVectorImpl<SlotIndex> *Kills,
                           LiveIntervals &LIS, MachineDominatorTree &MDT,
-                          LexicalScopes &LS) {
+			  UserValueScopes &UVS) {
   SmallVector<SlotIndex, 16> Todo;
   Todo.push_back(Idx);
-  SmallPtrSet<const MachineBasicBlock *, 4> LBlocks;
-  LS.getMachineBasicBlocks(dl, LBlocks);
   do {
     SlotIndex Start = Todo.pop_back_val();
     MachineBasicBlock *MBB = LIS.getMBBFromIndex(Start);
@@ -513,7 +535,7 @@ void UserValue::extendDef(SlotIndex Idx, unsigned LocNo,
       MDT.getNode(MBB)->getChildren();
     for (unsigned i = 0, e = Children.size(); i != e; ++i) {
       MachineBasicBlock *MBB = Children[i]->getBlock();
-      if (LBlocks.count(MBB) != 0 || LS.dominates(dl, MBB))
+      if (UVS.dominates(MBB))
         Todo.push_back(LIS.getMBBStartIdx(MBB));
     }
   } while (!Todo.empty());
@@ -596,7 +618,7 @@ void
 UserValue::computeIntervals(MachineRegisterInfo &MRI,
                             LiveIntervals &LIS,
                             MachineDominatorTree &MDT,
-                            LexicalScopes &LS) {
+			    UserValueScopes &UVS) {
   SmallVector<std::pair<SlotIndex, unsigned>, 16> Defs;
 
   // Collect all defs to be extended (Skipping undefs).
@@ -615,10 +637,10 @@ UserValue::computeIntervals(MachineRegisterInfo &MRI,
       LiveInterval *LI = &LIS.getInterval(Loc.getReg());
       const VNInfo *VNI = LI->getVNInfoAt(Idx);
       SmallVector<SlotIndex, 16> Kills;
-      extendDef(Idx, LocNo, LI, VNI, &Kills, LIS, MDT, LS);
+      extendDef(Idx, LocNo, LI, VNI, &Kills, LIS, MDT, UVS);
       addDefsFromCopies(LI, LocNo, Kills, Defs, MRI, LIS);
     } else
-      extendDef(Idx, LocNo, 0, 0, 0, LIS, MDT, LS);
+      extendDef(Idx, LocNo, 0, 0, 0, LIS, MDT, UVS);
   }
 
   // Finally, erase all the undefs.
@@ -631,7 +653,8 @@ UserValue::computeIntervals(MachineRegisterInfo &MRI,
 
 void LDVImpl::computeIntervals() {
   for (unsigned i = 0, e = userValues.size(); i != e; ++i) {
-    userValues[i]->computeIntervals(MF->getRegInfo(), *LIS, *MDT, LS);
+    UserValueScopes UVS(userValues[i]->getDebugLoc(), LS);
+    userValues[i]->computeIntervals(MF->getRegInfo(), *LIS, *MDT, UVS);
     userValues[i]->mapVirtRegs(this);
   }
 }
