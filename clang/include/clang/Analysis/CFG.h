@@ -333,10 +333,21 @@ class CFGBlock {
   AdjacentBlocks Preds;
   AdjacentBlocks Succs;
 
+  /// NoReturn - This bit is set when the basic block contains a function call
+  /// or implicit destructor that is attributed as 'noreturn'. In that case,
+  /// control cannot technically ever proceed past this block. All such blocks
+  /// will have a single immediate successor: the exit block. This allows them
+  /// to be easily reached from the exit block and using this bit quickly
+  /// recognized without scanning the contents of the block.
+  ///
+  /// Optimization Note: This bit could be profitably folded with Terminator's
+  /// storage if the memory usage of CFGBlock becomes an issue.
+  unsigned HasNoReturnElement : 1;
+
 public:
   explicit CFGBlock(unsigned blockid, BumpVectorContext &C)
     : Elements(C), Label(NULL), Terminator(NULL), LoopTarget(NULL),
-      BlockID(blockid), Preds(C, 1), Succs(C, 1) {}
+      BlockID(blockid), Preds(C, 1), Succs(C, 1), HasNoReturnElement(false) {}
   ~CFGBlock() {}
 
   // Statement iterators
@@ -458,6 +469,7 @@ public:
   void setTerminator(Stmt *Statement) { Terminator = Statement; }
   void setLabel(Stmt *Statement) { Label = Statement; }
   void setLoopTarget(const Stmt *loopTarget) { LoopTarget = loopTarget; }
+  void setHasNoReturnElement() { HasNoReturnElement = true; }
 
   CFGTerminator getTerminator() { return Terminator; }
   const CFGTerminator getTerminator() const { return Terminator; }
@@ -472,6 +484,8 @@ public:
 
   Stmt *getLabel() { return Label; }
   const Stmt *getLabel() const { return Label; }
+
+  bool hasNoReturnElement() const { return HasNoReturnElement; }
 
   unsigned getBlockID() const { return BlockID; }
 

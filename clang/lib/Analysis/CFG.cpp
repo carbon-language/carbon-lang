@@ -603,6 +603,7 @@ CFGBlock *CFGBuilder::createBlock(bool add_successor) {
 /// directly tied to the exit block in order to be reachable.
 CFGBlock *CFGBuilder::createNoReturnBlock() {
   CFGBlock *B = createBlock(false);
+  B->setHasNoReturnElement();
   addSuccessor(B, &cfg->getExit());
   return B;
 }
