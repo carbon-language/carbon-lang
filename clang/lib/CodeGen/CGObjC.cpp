@@ -564,12 +564,18 @@ void CodeGenFunction::GenerateObjCGetter(ObjCImplementationDecl *IMP,
   FinishFunction();
 }
 
-static bool hasTrivialGetExpr(const ObjCPropertyImplDecl *PID) {
-  const Expr *getter = PID->getGetterCXXConstructor();
+static bool hasTrivialGetExpr(const ObjCPropertyImplDecl *propImpl) {
+  const Expr *getter = propImpl->getGetterCXXConstructor();
   if (!getter) return true;
 
   // Sema only makes only of these when the ivar has a C++ class type,
   // so the form is pretty constrained.
+
+  // If the property has a reference type, we might just be binding a
+  // reference, in which case the result will be a gl-value.  We should
+  // treat this as a non-trivial operation.
+  if (getter->isGLValue())
+    return false;
 
   // If we selected a trivial copy-constructor, we're okay.
   if (const CXXConstructExpr *construct = dyn_cast<CXXConstructExpr>(getter))
