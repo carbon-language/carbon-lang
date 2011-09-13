@@ -2961,8 +2961,6 @@ static TargetInfo *AllocateTarget(const std::string &T) {
 
   case llvm::Triple::mips:
     switch (os) {
-    case llvm::Triple::Psp:
-      return new PSPTargetInfo<MipsTargetInfo>(T);
     case llvm::Triple::Linux:
       return new LinuxTargetInfo<MipsTargetInfo>(T);
     case llvm::Triple::RTEMS:
@@ -2977,8 +2975,6 @@ static TargetInfo *AllocateTarget(const std::string &T) {
 
   case llvm::Triple::mipsel:
     switch (os) {
-    case llvm::Triple::Psp:
-      return new PSPTargetInfo<MipselTargetInfo>(T);
     case llvm::Triple::Linux:
       return new LinuxTargetInfo<MipselTargetInfo>(T);
     case llvm::Triple::RTEMS:
