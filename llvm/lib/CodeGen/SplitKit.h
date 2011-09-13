@@ -304,10 +304,6 @@ private:
                         MachineBasicBlock &MBB,
                         MachineBasicBlock::iterator I);
 
-  /// extendRange - Extend the live range of Edit.get(RegIdx) so it reaches Idx.
-  /// Insert PHIDefs as needed to preserve SSA form.
-  void extendRange(unsigned RegIdx, SlotIndex Idx);
-
   /// transferValues - Transfer values to the new ranges.
   /// Return true if any ranges were skipped.
   bool transferValues();

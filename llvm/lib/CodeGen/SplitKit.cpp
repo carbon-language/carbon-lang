@@ -391,13 +391,6 @@ void SplitEditor::markComplexMapped(unsigned RegIdx, const VNInfo *ParentVNI) {
   VNI = 0;
 }
 
-// extendRange - Extend the live range to reach Idx.
-// Potentially create phi-def values.
-void SplitEditor::extendRange(unsigned RegIdx, SlotIndex Idx) {
-  getLRCalc(RegIdx).extend(Edit->get(RegIdx), Idx.getNextSlot(),
-                         LIS.getSlotIndexes(), &MDT, &LIS.getVNInfoAllocator());
-}
-
 VNInfo *SplitEditor::defFromParent(unsigned RegIdx,
                                    VNInfo *ParentVNI,
                                    SlotIndex UseIdx,
@@ -580,7 +573,7 @@ void SplitEditor::overlapIntv(SlotIndex Start, SlotIndex End) {
   assert(LIS.getMBBFromIndex(Start) == LIS.getMBBFromIndex(End) &&
          "Range cannot span basic blocks");
 
-  // The complement interval will be extended as needed by extendRange().
+  // The complement interval will be extended as needed by LRCalc.extend().
   if (ParentVNI)
     markComplexMapped(0, ParentVNI);
   DEBUG(dbgs() << "    overlapIntv [" << Start << ';' << End << "):");
@@ -589,7 +582,7 @@ void SplitEditor::overlapIntv(SlotIndex Start, SlotIndex End) {
 }
 
 /// transferValues - Transfer all possible values to the new live ranges.
-/// Values that were rematerialized are left alone, they need extendRange().
+/// Values that were rematerialized are left alone, they need LRCalc.extend().
 bool SplitEditor::transferValues() {
   bool Skipped = false;
   RegAssignMap::const_iterator AssignI = RegAssign.begin();
@@ -628,7 +621,7 @@ bool SplitEditor::transferValues() {
         continue;
       }
 
-      // Skip rematerialized values, we need to use extendRange() and
+      // Skip rematerialized values, we need to use LRCalc.extend() and
       // extendPHIKillRanges() to completely recompute the live ranges.
       if (Edit->didRematerialize(ParentVNI)) {
         DEBUG(dbgs() << "(remat)");
@@ -708,16 +701,20 @@ void SplitEditor::extendPHIKillRanges() {
     if (PHIVNI->isUnused() || !PHIVNI->isPHIDef())
       continue;
     unsigned RegIdx = RegAssign.lookup(PHIVNI->def);
+    LiveInterval *LI = Edit->get(RegIdx);
+    LiveRangeCalc &LRC = getLRCalc(RegIdx);
     MachineBasicBlock *MBB = LIS.getMBBFromIndex(PHIVNI->def);
     for (MachineBasicBlock::pred_iterator PI = MBB->pred_begin(),
          PE = MBB->pred_end(); PI != PE; ++PI) {
-      SlotIndex End = LIS.getMBBEndIdx(*PI).getPrevSlot();
+      SlotIndex End = LIS.getMBBEndIdx(*PI);
+      SlotIndex LastUse = End.getPrevSlot();
       // The predecessor may not have a live-out value. That is OK, like an
       // undef PHI operand.
-      if (Edit->getParent().liveAt(End)) {
-        assert(RegAssign.lookup(End) == RegIdx &&
+      if (Edit->getParent().liveAt(LastUse)) {
+        assert(RegAssign.lookup(LastUse) == RegIdx &&
                "Different register assignment in phi predecessor");
-        extendRange(RegIdx, End);
+        LRC.extend(LI, End,
+                   LIS.getSlotIndexes(), &MDT, &LIS.getVNInfoAllocator());
       }
     }
   }
@@ -746,7 +743,8 @@ void SplitEditor::rewriteAssigned(bool ExtendRanges) {
 
     // Rewrite to the mapped register at Idx.
     unsigned RegIdx = RegAssign.lookup(Idx);
-    MO.setReg(Edit->get(RegIdx)->reg);
+    LiveInterval *LI = Edit->get(RegIdx);
+    MO.setReg(LI->reg);
     DEBUG(dbgs() << "  rewr BB#" << MI->getParent()->getNumber() << '\t'
                  << Idx << ':' << RegIdx << '\t' << *MI);
 
@@ -766,7 +764,8 @@ void SplitEditor::rewriteAssigned(bool ExtendRanges) {
     } else
       Idx = Idx.getUseIndex();
 
-    extendRange(RegIdx, Idx);
+    getLRCalc(RegIdx).extend(LI, Idx.getNextSlot(), LIS.getSlotIndexes(),
+                             &MDT, &LIS.getVNInfoAllocator());
   }
 }
 
