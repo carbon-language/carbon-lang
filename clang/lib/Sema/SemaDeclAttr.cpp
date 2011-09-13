@@ -815,8 +815,8 @@ static void handleIBOutletCollection(Sema &S, Decl *D,
     S.Diag(Attr.getLoc(), diag::err_iboutletcollection_type) << II;
     return;
   }
-  D->addAttr(::new (S.Context) IBOutletCollectionAttr(Attr.getRange(), S.Context,
-                                                      QT));
+  D->addAttr(::new (S.Context) IBOutletCollectionAttr(Attr.getRange(),S.Context,
+                                                   QT, Attr.getParameterLoc()));
 }
 
 static void possibleTransparentUnionPointerType(QualType &T) {

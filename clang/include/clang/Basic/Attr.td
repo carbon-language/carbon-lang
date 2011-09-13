@@ -54,6 +54,7 @@ class ExprArgument<string name> : Argument<name>;
 class FunctionArgument<string name> : Argument<name>;
 class TypeArgument<string name> : Argument<name>;
 class UnsignedArgument<string name> : Argument<name>;
+class SourceLocArgument<string name> : Argument<name>;
 class VariadicUnsignedArgument<string name> : Argument<name>;
 class VariadicExprArgument<string name> : Argument<name>;
 
@@ -287,7 +288,7 @@ def IBOutlet : InheritableAttr {
 
 def IBOutletCollection : InheritableAttr {
   let Spellings = ["iboutletcollection"];
-  let Args = [TypeArgument<"InterFace">];
+  let Args = [TypeArgument<"InterFace">, SourceLocArgument<"InterFaceLoc">];
 }
 
 def Malloc : InheritableAttr {
