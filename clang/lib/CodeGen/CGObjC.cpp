@@ -374,152 +374,325 @@ static void emitStructGetterCall(CodeGenFunction &CGF, ObjCIvarDecl *ivar,
                fn, ReturnValueSlot(), args);
 }
 
-// FIXME: I wasn't sure about the synthesis approach. If we end up generating an
-// AST for the whole body we can just fall back to having a GenerateFunction
-// which takes the body Stmt.
+/// Determine whether the given architecture supports unaligned atomic
+/// accesses.  They don't have to be fast, just faster than a function
+/// call and a mutex.
+static bool hasUnalignedAtomics(llvm::Triple::ArchType arch) {
+  return (arch == llvm::Triple::x86 || arch == llvm::Triple::x86_64);
+}
+
+/// Return the maximum size that permits atomic accesses for the given
+/// architecture.
+static CharUnits getMaxAtomicAccessSize(CodeGenModule &CGM,
+                                        llvm::Triple::ArchType arch) {
+  // ARM has 8-byte atomic accesses, but it's not clear whether we
+  // want to rely on them here.
+
+  // In the default case, just assume that any size up to a pointer is
+  // fine given adequate alignment.
+  return CharUnits::fromQuantity(CGM.PointerSizeInBytes);
+}
+
+namespace {
+  class PropertyImplStrategy {
+  public:
+    enum StrategyKind {
+      /// The 'native' strategy is to use the architecture's provided
+      /// reads and writes.
+      Native,
+
+      /// Use objc_setProperty and objc_getProperty.
+      GetSetProperty,
+
+      /// Use objc_setProperty for the setter, but use expression
+      /// evaluation for the getter.
+      SetPropertyAndExpressionGet,
+
+      /// Use objc_copyStruct.
+      CopyStruct,
+
+      /// The 'expression' strategy is to emit normal assignment or
+      /// lvalue-to-rvalue expressions.
+      Expression
+    };
+
+    StrategyKind getKind() const { return StrategyKind(Kind); }
+
+    bool hasStrongMember() const { return HasStrong; }
+    bool isAtomic() const { return IsAtomic; }
+    bool isCopy() const { return IsCopy; }
+
+    CharUnits getIvarSize() const { return IvarSize; }
+    CharUnits getIvarAlignment() const { return IvarAlignment; }
+
+    PropertyImplStrategy(CodeGenModule &CGM,
+                         const ObjCPropertyImplDecl *propImpl);
+
+  private:
+    unsigned Kind : 8;
+    unsigned IsAtomic : 1;
+    unsigned IsCopy : 1;
+    unsigned HasStrong : 1;
+
+    CharUnits IvarSize;
+    CharUnits IvarAlignment;
+  };
+}
+
+/// Pick an implementation strategy for the the given property synthesis.
+PropertyImplStrategy::PropertyImplStrategy(CodeGenModule &CGM,
+                                     const ObjCPropertyImplDecl *propImpl) {
+  const ObjCPropertyDecl *prop = propImpl->getPropertyDecl();
+  ObjCPropertyDecl::PropertyAttributeKind attrs = prop->getPropertyAttributes();
+
+  IsCopy = (attrs & ObjCPropertyDecl::OBJC_PR_copy);
+  IsAtomic = !(attrs & ObjCPropertyDecl::OBJC_PR_nonatomic);
+  HasStrong = false; // doesn't matter here.
+
+  // Evaluate the ivar's size and alignment.
+  ObjCIvarDecl *ivar = propImpl->getPropertyIvarDecl();
+  QualType ivarType = ivar->getType();
+  llvm::tie(IvarSize, IvarAlignment)
+    = CGM.getContext().getTypeInfoInChars(ivarType);
+
+  // If we have a copy property, we always have to use getProperty/setProperty.
+  if (IsCopy) {
+    Kind = GetSetProperty;
+    return;
+  }
+
+  // Handle retain/strong.
+  if (attrs & (ObjCPropertyDecl::OBJC_PR_retain
+               | ObjCPropertyDecl::OBJC_PR_strong)) {
+    // In GC-only, there's nothing special that needs to be done.
+    if (CGM.getLangOptions().getGCMode() == LangOptions::GCOnly) {
+      // fallthrough
+
+    // In ARC, if the property is non-atomic, use expression emission,
+    // which translates to objc_storeStrong.  This isn't required, but
+    // it's slightly nicer.
+    } else if (CGM.getLangOptions().ObjCAutoRefCount && !IsAtomic) {
+      Kind = Expression;
+      return;
+
+    // Otherwise, we need to at least use setProperty.  However, if
+    // the property isn't atomic, we can use normal expression
+    // emission for the getter.
+    } else if (!IsAtomic) {
+      Kind = SetPropertyAndExpressionGet;
+      return;
+
+    // Otherwise, we have to use both setProperty and getProperty.
+    } else {
+      Kind = GetSetProperty;
+      return;
+    }
+  }
+
+  // If we're not atomic, just use expression accesses.
+  if (!IsAtomic) {
+    Kind = Expression;
+    return;
+  }
+
+  // GC-qualified or ARC-qualified ivars need to be emitted as
+  // expressions.  This actually works out to being atomic anyway,
+  // except for ARC __strong, but that should trigger the above code.
+  if (ivarType.hasNonTrivialObjCLifetime() ||
+      (CGM.getLangOptions().getGCMode() &&
+       CGM.getContext().getObjCGCAttrKind(ivarType))) {
+    Kind = Expression;
+    return;
+  }
+
+  // Compute whether the ivar has strong members.
+  if (CGM.getLangOptions().getGCMode())
+    if (const RecordType *recordType = ivarType->getAs<RecordType>())
+      HasStrong = recordType->getDecl()->hasObjectMember();
+
+  // We can never access structs with object members with a native
+  // access, because we need to use write barriers.  This is what
+  // objc_copyStruct is for.
+  if (HasStrong) {
+    Kind = CopyStruct;
+    return;
+  }
+
+  // Otherwise, this is target-dependent and based on the size and
+  // alignment of the ivar.
+  llvm::Triple::ArchType arch =
+    CGM.getContext().getTargetInfo().getTriple().getArch();
+
+  // Most architectures require memory to fit within a single cache
+  // line, so the alignment has to be at least the size of the access.
+  // Otherwise we have to grab a lock.
+  if (IvarAlignment < IvarSize && !hasUnalignedAtomics(arch)) {
+    Kind = CopyStruct;
+    return;
+  }
+
+  // If the ivar's size exceeds the architecture's maximum atomic
+  // access size, we have to use CopyStruct.
+  if (IvarSize > getMaxAtomicAccessSize(CGM, arch)) {
+    Kind = CopyStruct;
+    return;
+  }
+
+  // Otherwise, we can use native loads and stores.
+  Kind = Native;
+}
 
 /// GenerateObjCGetter - Generate an Objective-C property getter
 /// function. The given Decl must be an ObjCImplementationDecl. @synthesize
 /// is illegal within a category.
 void CodeGenFunction::GenerateObjCGetter(ObjCImplementationDecl *IMP,
                                          const ObjCPropertyImplDecl *PID) {
-  ObjCIvarDecl *Ivar = PID->getPropertyIvarDecl();
   const ObjCPropertyDecl *PD = PID->getPropertyDecl();
-  bool IsAtomic =
-    !(PD->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_nonatomic);
   ObjCMethodDecl *OMD = PD->getGetterMethodDecl();
   assert(OMD && "Invalid call to generate getter (empty method)");
   StartObjCMethod(OMD, IMP->getClassInterface(), PID->getLocStart());
-  
-  // Determine if we should use an objc_getProperty call for
-  // this. Non-atomic properties are directly evaluated.
-  // atomic 'copy' and 'retain' properties are also directly
-  // evaluated in gc-only mode.
-  if (CGM.getLangOptions().getGCMode() != LangOptions::GCOnly &&
-      IsAtomic &&
-      (PD->getSetterKind() == ObjCPropertyDecl::Copy ||
-       PD->getSetterKind() == ObjCPropertyDecl::Retain)) {
-    llvm::Value *GetPropertyFn =
-      CGM.getObjCRuntime().GetPropertyGetFunction();
 
-    if (!GetPropertyFn) {
-      CGM.ErrorUnsupported(PID, "Obj-C getter requiring atomic copy");
-      FinishFunction();
+  generateObjCGetterBody(IMP, PID);
+
+  FinishFunction();
+}
+
+static bool hasTrivialGetExpr(const ObjCPropertyImplDecl *PID) {
+  const Expr *getter = PID->getGetterCXXConstructor();
+  if (!getter) return true;
+
+  // Sema only makes only of these when the ivar has a C++ class type,
+  // so the form is pretty constrained.
+
+  // If we selected a trivial copy-constructor, we're okay.
+  if (const CXXConstructExpr *construct = dyn_cast<CXXConstructExpr>(getter))
+    return (construct->getConstructor()->isTrivial());
+
+  // The constructor might require cleanups (in which case it's never
+  // trivial).
+  assert(isa<ExprWithCleanups>(getter));
+  return false;
+}
+
+void
+CodeGenFunction::generateObjCGetterBody(const ObjCImplementationDecl *classImpl,
+                                        const ObjCPropertyImplDecl *propImpl) {
+  // If there's a non-trivial 'get' expression, we just have to emit that.
+  if (!hasTrivialGetExpr(propImpl)) {
+    ReturnStmt ret(SourceLocation(), propImpl->getGetterCXXConstructor(),
+                   /*nrvo*/ 0);
+    EmitReturnStmt(ret);
+    return;
+  }
+
+  const ObjCPropertyDecl *prop = propImpl->getPropertyDecl();
+  QualType propType = prop->getType();
+  ObjCMethodDecl *getterMethod = prop->getGetterMethodDecl();
+
+  ObjCIvarDecl *ivar = propImpl->getPropertyIvarDecl();  
+
+  // Pick an implementation strategy.
+  PropertyImplStrategy strategy(CGM, propImpl);
+  switch (strategy.getKind()) {
+  case PropertyImplStrategy::Native: {
+    LValue LV = EmitLValueForIvar(TypeOfSelfObject(), LoadObjCSelf(), ivar, 0);
+
+    // Currently, all atomic accesses have to be through integer
+    // types, so there's no point in trying to pick a prettier type.
+    llvm::Type *bitcastType =
+      llvm::Type::getIntNTy(getLLVMContext(),
+                            getContext().toBits(strategy.getIvarSize()));
+    bitcastType = bitcastType->getPointerTo(); // addrspace 0 okay
+
+    // Perform an atomic load.  This does not impose ordering constraints.
+    llvm::Value *ivarAddr = LV.getAddress();
+    ivarAddr = Builder.CreateBitCast(ivarAddr, bitcastType);
+    llvm::LoadInst *load = Builder.CreateLoad(ivarAddr, "load");
+    load->setAlignment(strategy.getIvarAlignment().getQuantity());
+    load->setAtomic(llvm::Unordered);
+
+    // Store that value into the return address.  Doing this with a
+    // bitcast is likely to produce some pretty ugly IR, but it's not
+    // the *most* terrible thing in the world.
+    Builder.CreateStore(load, Builder.CreateBitCast(ReturnValue, bitcastType));
+
+    // Make sure we don't do an autorelease.
+    AutoreleaseResult = false;
+    return;
+  }
+
+  case PropertyImplStrategy::GetSetProperty: {
+    llvm::Value *getPropertyFn =
+      CGM.getObjCRuntime().GetPropertyGetFunction();
+    if (!getPropertyFn) {
+      CGM.ErrorUnsupported(propImpl, "Obj-C getter requiring atomic copy");
       return;
     }
 
     // Return (ivar-type) objc_getProperty((id) self, _cmd, offset, true).
     // FIXME: Can't this be simpler? This might even be worse than the
     // corresponding gcc code.
-    ValueDecl *Cmd = OMD->getCmdDecl();
-    llvm::Value *CmdVal = Builder.CreateLoad(LocalDeclMap[Cmd], "cmd");
-    llvm::Value *SelfAsId = Builder.CreateBitCast(LoadObjCSelf(), VoidPtrTy);
-    llvm::Value *Offset = EmitIvarOffset(IMP->getClassInterface(), Ivar);
-    CallArgList Args;
-    Args.add(RValue::get(SelfAsId), getContext().getObjCIdType());
-    Args.add(RValue::get(CmdVal), Cmd->getType());
-    Args.add(RValue::get(Offset), getContext().getPointerDiffType());
-    Args.add(RValue::get(Builder.getTrue()), getContext().BoolTy);
+    llvm::Value *cmd =
+      Builder.CreateLoad(LocalDeclMap[getterMethod->getCmdDecl()], "cmd");
+    llvm::Value *self = Builder.CreateBitCast(LoadObjCSelf(), VoidPtrTy);
+    llvm::Value *ivarOffset =
+      EmitIvarOffset(classImpl->getClassInterface(), ivar);
+
+    CallArgList args;
+    args.add(RValue::get(self), getContext().getObjCIdType());
+    args.add(RValue::get(cmd), getContext().getObjCSelType());
+    args.add(RValue::get(ivarOffset), getContext().getPointerDiffType());
+
+    assert(strategy.isAtomic());
+    args.add(RValue::get(Builder.getTrue()), getContext().BoolTy);
+
     // FIXME: We shouldn't need to get the function info here, the
     // runtime already should have computed it to build the function.
-    RValue RV = EmitCall(getTypes().getFunctionInfo(PD->getType(), Args,
+    RValue RV = EmitCall(getTypes().getFunctionInfo(propType, args,
                                                     FunctionType::ExtInfo()),
-                         GetPropertyFn, ReturnValueSlot(), Args);
+                         getPropertyFn, ReturnValueSlot(), args);
+
     // We need to fix the type here. Ivars with copy & retain are
     // always objects so we don't need to worry about complex or
     // aggregates.
     RV = RValue::get(Builder.CreateBitCast(RV.getScalarVal(),
-                                     getTypes().ConvertType(PD->getType())));
-    EmitReturnOfRValue(RV, PD->getType());
+                                           getTypes().ConvertType(propType)));
+
+    EmitReturnOfRValue(RV, propType);
 
     // objc_getProperty does an autorelease, so we should suppress ours.
     AutoreleaseResult = false;
-  } else {
-    const llvm::Triple &Triple = getContext().getTargetInfo().getTriple();
-    QualType IVART = Ivar->getType();
-    if (IsAtomic &&
-        IVART->isScalarType() &&
-        (Triple.getArch() == llvm::Triple::arm ||
-         Triple.getArch() == llvm::Triple::thumb) &&
-        (getContext().getTypeSizeInChars(IVART) 
-         > CharUnits::fromQuantity(4)) &&
-        CGM.getObjCRuntime().GetGetStructFunction()) {
-      emitStructGetterCall(*this, Ivar, true, false);
-    }
-    else if (IsAtomic &&
-             (IVART->isScalarType() && !IVART->isRealFloatingType()) &&
-             Triple.getArch() == llvm::Triple::x86 &&
-             (getContext().getTypeSizeInChars(IVART) 
-              > CharUnits::fromQuantity(4)) &&
-             CGM.getObjCRuntime().GetGetStructFunction()) {
-      emitStructGetterCall(*this, Ivar, true, false);
-    }
-    else if (IsAtomic &&
-             (IVART->isScalarType() && !IVART->isRealFloatingType()) &&
-             Triple.getArch() == llvm::Triple::x86_64 &&
-             (getContext().getTypeSizeInChars(IVART) 
-              > CharUnits::fromQuantity(8)) &&
-             CGM.getObjCRuntime().GetGetStructFunction()) {
-      emitStructGetterCall(*this, Ivar, true, false);
-    }
-    else if (IVART->isAnyComplexType()) {
-      LValue LV = EmitLValueForIvar(TypeOfSelfObject(), LoadObjCSelf(), 
-                                    Ivar, 0);
-      ComplexPairTy Pair = LoadComplexFromAddr(LV.getAddress(),
-                                               LV.isVolatileQualified());
-      StoreComplexToAddr(Pair, ReturnValue, LV.isVolatileQualified());
-    }
-    else if (hasAggregateLLVMType(IVART)) {
-      bool IsStrong = false;
-      if ((IsStrong = IvarTypeWithAggrGCObjects(IVART))
-          && CurFnInfo->getReturnInfo().getKind() == ABIArgInfo::Indirect
-          && CGM.getObjCRuntime().GetGetStructFunction()) {
-        emitStructGetterCall(*this, Ivar, IsAtomic, IsStrong);
-      }
-      else {
-        const CXXRecordDecl *classDecl = IVART->getAsCXXRecordDecl();
-        
-        if (PID->getGetterCXXConstructor() &&
-            classDecl && !classDecl->hasTrivialDefaultConstructor()) {
-          ReturnStmt *Stmt = 
-            new (getContext()) ReturnStmt(SourceLocation(), 
-                                          PID->getGetterCXXConstructor(),
-                                          0);
-          EmitReturnStmt(*Stmt);
-        } else if (IsAtomic &&
-                   !IVART->isAnyComplexType() &&
-                   Triple.getArch() == llvm::Triple::x86 &&
-                   (getContext().getTypeSizeInChars(IVART) 
-                    > CharUnits::fromQuantity(4)) &&
-                   CGM.getObjCRuntime().GetGetStructFunction()) {
-          emitStructGetterCall(*this, Ivar, true, false);
-        }
-        else if (IsAtomic &&
-                 !IVART->isAnyComplexType() &&
-                 Triple.getArch() == llvm::Triple::x86_64 &&
-                 (getContext().getTypeSizeInChars(IVART) 
-                  > CharUnits::fromQuantity(8)) &&
-                 CGM.getObjCRuntime().GetGetStructFunction()) {
-          emitStructGetterCall(*this, Ivar, true, false);
-        }
-        else {
-          LValue LV = EmitLValueForIvar(TypeOfSelfObject(), LoadObjCSelf(), 
-                                        Ivar, 0);
-          EmitAggregateCopy(ReturnValue, LV.getAddress(), IVART);
-        }
-      }
-    } else {
-      LValue LV = EmitLValueForIvar(TypeOfSelfObject(), LoadObjCSelf(), 
-                                    Ivar, 0);
-      QualType propType = PD->getType();
 
+    return;
+  }
+
+  case PropertyImplStrategy::CopyStruct:
+    emitStructGetterCall(*this, ivar, strategy.isAtomic(),
+                         strategy.hasStrongMember());
+    return;
+
+  case PropertyImplStrategy::Expression:
+  case PropertyImplStrategy::SetPropertyAndExpressionGet: {
+    LValue LV = EmitLValueForIvar(TypeOfSelfObject(), LoadObjCSelf(), ivar, 0);
+
+    QualType ivarType = ivar->getType();
+    if (ivarType->isAnyComplexType()) {
+      ComplexPairTy pair = LoadComplexFromAddr(LV.getAddress(),
+                                               LV.isVolatileQualified());
+      StoreComplexToAddr(pair, ReturnValue, LV.isVolatileQualified());
+    } else if (hasAggregateLLVMType(ivarType)) {
+      // The return value slot is guaranteed to not be aliased, but
+      // that's not necessarily the same as "on the stack", so
+      // we still potentially need objc_memmove_collectable.
+      EmitAggregateCopy(ReturnValue, LV.getAddress(), ivarType);
+    } else {
       llvm::Value *value;
       if (propType->isReferenceType()) {
         value = LV.getAddress();
       } else {
         // We want to load and autoreleaseReturnValue ARC __weak ivars.
         if (LV.getQuals().getObjCLifetime() == Qualifiers::OCL_Weak) {
-          value = emitARCRetainLoadOfScalar(*this, LV, IVART);
+          value = emitARCRetainLoadOfScalar(*this, LV, ivarType);
 
         // Otherwise we want to do a simple load, suppressing the
         // final autorelease.
@@ -533,9 +706,11 @@ void CodeGenFunction::GenerateObjCGetter(ObjCImplementationDecl *IMP,
       
       EmitReturnOfRValue(RValue::get(value), propType);
     }
+    return;
   }
 
-  FinishFunction();
+  }
+  llvm_unreachable("bad @property implementation strategy!");
 }
 
 /// emitStructSetterCall - Call the runtime function to store the value
@@ -578,12 +753,19 @@ static void emitStructSetterCall(CodeGenFunction &CGF, ObjCMethodDecl *OMD,
                copyStructFn, ReturnValueSlot(), args);
 }
 
-static bool hasTrivialAssignment(const ObjCPropertyImplDecl *PID) {
-  Expr *assign = PID->getSetterCXXAssignment();
-  if (!assign) return true;
+static bool hasTrivialSetExpr(const ObjCPropertyImplDecl *PID) {
+  Expr *setter = PID->getSetterCXXAssignment();
+  if (!setter) return true;
+
+  // Sema only makes only of these when the ivar has a C++ class type,
+  // so the form is pretty constrained.
 
   // An operator call is trivial if the function it calls is trivial.
-  if (CallExpr *call = dyn_cast<CallExpr>(assign)) {
+  // This also implies that there's nothing non-trivial going on with
+  // the arguments, because operator= can only be trivial if it's a
+  // synthesized assignment operator and therefore both parameters are
+  // references.
+  if (CallExpr *call = dyn_cast<CallExpr>(setter)) {
     if (const FunctionDecl *callee
           = dyn_cast_or_null<FunctionDecl>(call->getCalleeDecl()))
       if (callee->isTrivial())
@@ -591,46 +773,8 @@ static bool hasTrivialAssignment(const ObjCPropertyImplDecl *PID) {
     return false;
   }
 
-  assert(isa<BinaryOperator>(assign));
-  return true;
-}
-
-/// Should the setter use objc_setProperty?
-static bool shouldUseSetProperty(CodeGenFunction &CGF,
-                                 ObjCPropertyDecl::SetterKind setterKind) {
-  // Copy setters require objc_setProperty.
-  if (setterKind == ObjCPropertyDecl::Copy)
-    return true;
-
-  // So do retain setters, if we're not in GC-only mode (where
-  // 'retain' is ignored).
-  if (setterKind == ObjCPropertyDecl::Retain &&
-      CGF.getLangOptions().getGCMode() != LangOptions::GCOnly)
-    return true;
-
-  // Otherwise, we don't need this.
+  assert(isa<ExprWithCleanups>(setter));
   return false;
-}
-
-static bool isAssignmentImplicitlyAtomic(CodeGenFunction &CGF,
-                                         const ObjCIvarDecl *ivar) {
-  // Aggregate assignment is not implicitly atomic if it includes a GC
-  // barrier.
-  QualType ivarType = ivar->getType();
-  if (CGF.getLangOptions().getGCMode())
-    if (const RecordType *ivarRecordTy = ivarType->getAs<RecordType>())
-      if (ivarRecordTy->getDecl()->hasObjectMember())
-        return false;
-
-  // Assume that any store no larger than a pointer, and as aligned as
-  // the required size, can be performed atomically.
-  ASTContext &Context = CGF.getContext();
-  std::pair<CharUnits,CharUnits> ivarSizeAndAlignment
-    = Context.getTypeInfoInChars(ivar->getType());
-
-  return (ivarSizeAndAlignment.first
-            <= CharUnits::fromQuantity(CGF.PointerSizeInBytes) &&
-          ivarSizeAndAlignment.second >= ivarSizeAndAlignment.first);
 }
 
 void
@@ -638,7 +782,7 @@ CodeGenFunction::generateObjCSetterBody(const ObjCImplementationDecl *classImpl,
                                         const ObjCPropertyImplDecl *propImpl) {
   // Just use the setter expression if Sema gave us one and it's
   // non-trivial.  There's no way to do this atomically.
-  if (!hasTrivialAssignment(propImpl)) {
+  if (!hasTrivialSetExpr(propImpl)) {
     EmitStmt(propImpl->getSetterCXXAssignment());
     return;
   }
@@ -647,16 +791,38 @@ CodeGenFunction::generateObjCSetterBody(const ObjCImplementationDecl *classImpl,
   ObjCIvarDecl *ivar = propImpl->getPropertyIvarDecl();  
   ObjCMethodDecl *setterMethod = prop->getSetterMethodDecl();
 
-  // A property is copy if it says it's copy.
-  ObjCPropertyDecl::SetterKind setterKind = prop->getSetterKind();
-  bool isCopy = (setterKind == ObjCPropertyDecl::Copy);
+  PropertyImplStrategy strategy(CGM, propImpl);
+  switch (strategy.getKind()) {
+  case PropertyImplStrategy::Native: {
+    llvm::Value *argAddr = LocalDeclMap[*setterMethod->param_begin()];
 
-  // A property is atomic if it doesn't say it's nonatomic.
-  bool isAtomic =
-    !(prop->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_nonatomic);
+    LValue ivarLValue =
+      EmitLValueForIvar(TypeOfSelfObject(), LoadObjCSelf(), ivar, /*quals*/ 0);
+    llvm::Value *ivarAddr = ivarLValue.getAddress();
 
-  // Should we call the runtime's set property function?
-  if (shouldUseSetProperty(*this, setterKind)) {
+    // Currently, all atomic accesses have to be through integer
+    // types, so there's no point in trying to pick a prettier type.
+    llvm::Type *bitcastType =
+      llvm::Type::getIntNTy(getLLVMContext(),
+                            getContext().toBits(strategy.getIvarSize()));
+    bitcastType = bitcastType->getPointerTo(); // addrspace 0 okay
+
+    // Cast both arguments to the chosen operation type.
+    argAddr = Builder.CreateBitCast(argAddr, bitcastType);
+    ivarAddr = Builder.CreateBitCast(ivarAddr, bitcastType);
+
+    // This bitcast load is likely to cause some nasty IR.
+    llvm::Value *load = Builder.CreateLoad(argAddr);
+
+    // Perform an atomic store.  There are no memory ordering requirements.
+    llvm::StoreInst *store = Builder.CreateStore(load, ivarAddr);
+    store->setAlignment(strategy.getIvarAlignment().getQuantity());
+    store->setAtomic(llvm::Unordered);
+    return;
+  }
+
+  case PropertyImplStrategy::GetSetProperty:
+  case PropertyImplStrategy::SetPropertyAndExpressionGet: {
     llvm::Value *setPropertyFn =
       CGM.getObjCRuntime().GetPropertySetFunction();
     if (!setPropertyFn) {
@@ -680,8 +846,10 @@ CodeGenFunction::generateObjCSetterBody(const ObjCImplementationDecl *classImpl,
     args.add(RValue::get(cmd), getContext().getObjCSelType());
     args.add(RValue::get(ivarOffset), getContext().getPointerDiffType());
     args.add(RValue::get(arg), getContext().getObjCIdType());
-    args.add(RValue::get(Builder.getInt1(isAtomic)), getContext().BoolTy);
-    args.add(RValue::get(Builder.getInt1(isCopy)), getContext().BoolTy);
+    args.add(RValue::get(Builder.getInt1(strategy.isAtomic())),
+             getContext().BoolTy);
+    args.add(RValue::get(Builder.getInt1(strategy.isCopy())),
+             getContext().BoolTy);
     // FIXME: We shouldn't need to get the function info here, the runtime
     // already should have computed it to build the function.
     EmitCall(getTypes().getFunctionInfo(getContext().VoidTy, args,
@@ -690,47 +858,12 @@ CodeGenFunction::generateObjCSetterBody(const ObjCImplementationDecl *classImpl,
     return;
   }
 
-  // If the property is atomic but has ARC or GC qualification, we
-  // must use the expression expansion.  This isn't actually right for
-  // ARC strong, but we shouldn't actually get here for ARC strong,
-  // which should always end up using setProperty.
-  if (isAtomic &&
-      (ivar->getType().hasNonTrivialObjCLifetime() ||
-       (getLangOptions().getGCMode() &&
-        getContext().getObjCGCAttrKind(ivar->getType())))) {
-    // fallthrough
-
-  // If the property is atomic and can be implicitly performed
-  // atomically with an assignment, do so.
-  } else if (isAtomic && isAssignmentImplicitlyAtomic(*this, ivar)) {
-    llvm::Value *argAddr = LocalDeclMap[*setterMethod->param_begin()];
-
-    LValue ivarLValue =
-      EmitLValueForIvar(TypeOfSelfObject(), LoadObjCSelf(), ivar, /*quals*/ 0);
-    llvm::Value *ivarAddr = ivarLValue.getAddress();
-
-    // If necessary, use a non-aggregate type.
-    llvm::Type *eltType =
-      cast<llvm::PointerType>(ivarAddr->getType())->getElementType();
-    if (eltType->isAggregateType()) {
-      eltType = llvm::Type::getIntNTy(getLLVMContext(),
-                                  getContext().getTypeSize(ivar->getType()));
-    }
-
-    // Cast both arguments to the chosen operation type.
-    argAddr = Builder.CreateBitCast(argAddr, eltType->getPointerTo());
-    ivarAddr = Builder.CreateBitCast(ivarAddr, eltType->getPointerTo());
-
-    // Emit a single store.
-    // TODO: this should be a 'store atomic unordered'.
-    Builder.CreateStore(Builder.CreateLoad(argAddr), ivarAddr);
-    return;
-
-  // Otherwise, if the property is atomic, try to use the runtime's
-  // atomic-store-struct routine.
-  } else if (isAtomic && CGM.getObjCRuntime().GetSetStructFunction()) {
+  case PropertyImplStrategy::CopyStruct:
     emitStructSetterCall(*this, setterMethod, ivar);
     return;
+
+  case PropertyImplStrategy::Expression:
+    break;
   }
 
   // Otherwise, fake up some ASTs and emit a normal assignment.

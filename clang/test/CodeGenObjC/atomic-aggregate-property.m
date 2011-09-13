@@ -23,7 +23,20 @@ struct s1 {
 @synthesize y;
 @synthesize z;
 @end
-// CHECK-LP64: call void @objc_copyStruct
-// CHECK-LP64: call void @objc_copyStruct
-// CHECK-LP64: call void @objc_copyStruct
-// CHECK-LP64: call i8* @objc_memmove_collectable
+// CHECK-LP64: define internal double @"\01-[A x]"(
+// CHECK-LP64: load atomic i64* {{%.*}} unordered, align 8
+
+// CHECK-LP64: define internal void @"\01-[A setX:]"(
+// CHECK-LP64: store atomic i64 {{%.*}}, i64* {{%.*}} unordered, align 8
+
+// CHECK-LP64: define internal void @"\01-[A y]"(
+// CHECK-LP64: call void @objc_copyStruct(i8* {{%.*}}, i8* {{%.*}}, i64 32, i1 zeroext true, i1 zeroext false)
+
+// CHECK-LP64: define internal void @"\01-[A setY:]"(
+// CHECK-LP64: call void @objc_copyStruct(i8* {{%.*}}, i8* {{%.*}}, i64 32, i1 zeroext true, i1 zeroext false)
+
+// CHECK-LP64: define internal void @"\01-[A z]"(
+// CHECK-LP64: call i8* @objc_memmove_collectable(
+
+// CHECK-LP64: define internal void @"\01-[A setZ:]"(
+// CHECK-LP64: call i8* @objc_memmove_collectable(
