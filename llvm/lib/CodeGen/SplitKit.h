@@ -15,13 +15,11 @@
 #ifndef LLVM_CODEGEN_SPLITKIT_H
 #define LLVM_CODEGEN_SPLITKIT_H
 
+#include "LiveRangeCalc.h"
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/IndexedMap.h"
 #include "llvm/ADT/IntervalMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/CodeGen/SlotIndexes.h"
 
 namespace llvm {
 
@@ -37,12 +35,6 @@ class TargetRegisterInfo;
 class VirtRegMap;
 class VNInfo;
 class raw_ostream;
-
-/// At some point we should just include MachineDominators.h:
-class MachineDominatorTree;
-template <class NodeT> class DomTreeNodeBase;
-typedef DomTreeNodeBase<MachineBasicBlock> MachineDomTreeNode;
-
 
 /// SplitAnalysis - Analyze a LiveInterval, looking for live range splitting
 /// opportunities.
@@ -281,54 +273,8 @@ private:
   ///    The new value has no live ranges anywhere.
   ValueMap Values;
 
-  typedef std::pair<VNInfo*, MachineDomTreeNode*> LiveOutPair;
-  typedef IndexedMap<LiveOutPair, MBB2NumberFunctor> LiveOutMap;
-
-  // LiveOutCache - Map each basic block where a new register is live out to the
-  // live-out value and its defining block.
-  // One of these conditions shall be true:
-  //
-  //  1. !LiveOutSeen.count(MBB->getNumber())
-  //  2. LiveOutCache[MBB].second.getNode() == MBB
-  //  3. forall P in preds(MBB): LiveOutCache[P] == LiveOutCache[MBB]
-  //
-  // This is only a cache, the values can be computed as:
-  //
-  //  VNI = Edit.get(RegIdx)->getVNInfoAt(LIS.getMBBEndIdx(MBB))
-  //  Node = mbt_[LIS.getMBBFromIndex(VNI->def)]
-  //
-  // The cache can be shared by all the new registers because at most one is
-  // live out of each block.
-  LiveOutMap LiveOutCache;
-
-  // LiveOutSeen - Indexed by MBB->getNumber(), a bit is set for each valid
-  // entry in LiveOutCache.  This is also used as a visited set for
-  // findReachingDefs().
-  BitVector LiveOutSeen;
-
-  /// LiveInBlock - Info for updateSSA() about a block where a register is
-  /// live-in.
-  /// The updateSSA caller provides DomNode and Kill inside MBB, updateSSA()
-  /// adds the computed live-in value.
-  struct LiveInBlock {
-    // Dominator tree node for the block.
-    // Cleared by updateSSA when the final value has been determined.
-    MachineDomTreeNode *DomNode;
-
-    // Live-in value filled in by updateSSA once it is known.
-    VNInfo *Value;
-
-    // Position in block where the live-in range ends, or SlotIndex() if the
-    // range passes through the block.
-    SlotIndex Kill;
-
-    LiveInBlock(MachineDomTreeNode *node) : DomNode(node), Value(0) {}
-  };
-
-  /// LiveInBlocks - List of live-in blocks used by findReachingDefs() and
-  /// updateSSA(). This list is usually empty, it exists here to avoid frequent
-  /// reallocations.
-  SmallVector<LiveInBlock, 16> LiveInBlocks;
+  /// LRCalc - Cache for computing live ranges and SSA update.
+  LiveRangeCalc LRCalc;
 
   /// defValue - define a value in RegIdx from ParentVNI at Idx.
   /// Idx does not have to be ParentVNI->def, but it must be contained within
@@ -352,19 +298,6 @@ private:
   /// extendRange - Extend the live range of Edit.get(RegIdx) so it reaches Idx.
   /// Insert PHIDefs as needed to preserve SSA form.
   void extendRange(unsigned RegIdx, SlotIndex Idx);
-
-  /// findReachingDefs - Starting from MBB, add blocks to LiveInBlocks until all
-  /// reaching defs for LI are found.
-  /// @param LI   Live interval whose value is needed.
-  /// @param MBB  Block where LI should be live-in.
-  /// @param Kill Kill point in MBB.
-  /// @return Unique value seen, or NULL.
-  VNInfo *findReachingDefs(LiveInterval *LI, MachineBasicBlock *MBB,
-                           SlotIndex Kill);
-
-  /// updateSSA - Compute and insert PHIDefs such that all blocks in
-  // LiveInBlocks get a known live-in value. Add live ranges to the blocks.
-  void updateSSA();
 
   /// transferValues - Transfer values to the new ranges.
   /// Return true if any ranges were skipped.
