@@ -42,18 +42,19 @@ getValueAsListOfStrings(Record &R, StringRef FieldName) {
   return Strings;
 }
 
-std::string ReadPCHRecord(StringRef type) {
+static std::string ReadPCHRecord(StringRef type) {
   return StringSwitch<std::string>(type)
     .EndsWith("Decl *", "GetLocalDeclAs<" 
               + std::string(type, 0, type.size()-1) + ">(F, Record[Idx++])")
     .Case("QualType", "getLocalType(F, Record[Idx++])")
     .Case("Expr *", "ReadSubExpr()")
     .Case("IdentifierInfo *", "GetIdentifierInfo(F, Record, Idx)")
+    .Case("SourceLocation", "ReadSourceLocation(F, Record, Idx)")
     .Default("Record[Idx++]");
 }
 
 // Assumes that the way to get the value is SA->getname()
-std::string WritePCHRecord(StringRef type, StringRef name) {
+static std::string WritePCHRecord(StringRef type, StringRef name) {
   return StringSwitch<std::string>(type)
     .EndsWith("Decl *", "AddDeclRef(" + std::string(name) +
                         ", Record);\n")
@@ -61,6 +62,8 @@ std::string WritePCHRecord(StringRef type, StringRef name) {
     .Case("Expr *", "AddStmt(" + std::string(name) + ");\n")
     .Case("IdentifierInfo *", 
           "AddIdentifierRef(" + std::string(name) + ", Record);\n")
+    .Case("SourceLocation", 
+          "AddSourceLocation(" + std::string(name) + ", Record);\n")
     .Default("Record.push_back(" + std::string(name) + ");\n");
 }
 
@@ -487,6 +490,8 @@ static Argument *createArgument(Record &Arg, StringRef Attr,
     Ptr = new SimpleArgument(Arg, Attr, "QualType");
   else if (ArgName == "UnsignedArgument")
     Ptr = new SimpleArgument(Arg, Attr, "unsigned");
+  else if (ArgName == "SourceLocArgument")
+    Ptr = new SimpleArgument(Arg, Attr, "SourceLocation");
   else if (ArgName == "VariadicUnsignedArgument")
     Ptr = new VariadicArgument(Arg, Attr, "unsigned");
   else if (ArgName == "VariadicExprArgument")
