@@ -136,31 +136,23 @@ static ControlFlowKind CheckFallThrough(AnalysisContext &AC) {
     if (!live[B.getBlockID()])
       continue;
 
+    // Skip blocks which contain an element marked as no-return. They don't
+    // represent actually viable edges into the exit block, so mark them as
+    // abnormal.
+    if (B.hasNoReturnElement()) {
+      HasAbnormalEdge = true;
+      continue;
+    }
+
     // Destructors can appear after the 'return' in the CFG.  This is
     // normal.  We need to look pass the destructors for the return
     // statement (if it exists).
     CFGBlock::const_reverse_iterator ri = B.rbegin(), re = B.rend();
-    bool hasNoReturnDtor = false;
-    
-    for ( ; ri != re ; ++ri) {
-      CFGElement CE = *ri;
 
-      // FIXME: The right solution is to just sever the edges in the
-      // CFG itself.
-      if (const CFGImplicitDtor *iDtor = ri->getAs<CFGImplicitDtor>())
-        if (iDtor->isNoReturn(AC.getASTContext())) {
-          hasNoReturnDtor = true;
-          HasFakeEdge = true;
-          break;
-        }
-      
-      if (isa<CFGStmt>(CE))
+    for ( ; ri != re ; ++ri)
+      if (isa<CFGStmt>(*ri))
         break;
-    }
-    
-    if (hasNoReturnDtor)
-      continue;
-    
+
     // No more CFGElements in the block?
     if (ri == re) {
       if (B.getTerminator() && isa<CXXTryStmt>(B.getTerminator())) {
@@ -197,34 +189,13 @@ static ControlFlowKind CheckFallThrough(AnalysisContext &AC) {
       HasAbnormalEdge = true;
       continue;
     }
-
-    bool NoReturnEdge = false;
-    if (const CallExpr *C = dyn_cast<CallExpr>(S)) {
-      if (std::find(B.succ_begin(), B.succ_end(), &cfg->getExit())
-            == B.succ_end()) {
-        HasAbnormalEdge = true;
-        continue;
-      }
-      const Expr *CEE = C->getCallee()->IgnoreParenCasts();
-      QualType calleeType = CEE->getType();
-      if (calleeType == AC.getASTContext().BoundMemberTy) {
-        calleeType = Expr::findBoundMemberType(CEE);
-        assert(!calleeType.isNull() && "analyzing unresolved call?");
-      }
-      if (getFunctionExtInfo(calleeType).getNoReturn()) {
-        NoReturnEdge = true;
-        HasFakeEdge = true;
-      } else if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(CEE)) {
-        const ValueDecl *VD = DRE->getDecl();
-        if (VD->hasAttr<NoReturnAttr>()) {
-          NoReturnEdge = true;
-          HasFakeEdge = true;
-        }
-      }
+    if (std::find(B.succ_begin(), B.succ_end(), &cfg->getExit())
+        == B.succ_end()) {
+      HasAbnormalEdge = true;
+      continue;
     }
-    // FIXME: Add noreturn message sends.
-    if (NoReturnEdge == false)
-      HasPlainEdge = true;
+
+    HasPlainEdge = true;
   }
   if (!HasPlainEdge) {
     if (HasLiveReturn)
