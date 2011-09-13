@@ -671,9 +671,8 @@ static void compileModule(CompilerInstance &ImportingInstance,
   
   Invocation->getDiagnosticOpts().VerifyDiagnostics = 0;
   
-  // FIXME: Strip away all of the compilation options that won't be transferred
-  // down to the module. This presumably includes -D flags, optimization 
-  // settings, etc.
+  assert(ImportingInstance.getInvocation().getModuleHash() ==
+           Invocation->getModuleHash() && "Module hash mismatch!");
   
   // Construct a compiler instance that will be used to actually create the
   // module.
