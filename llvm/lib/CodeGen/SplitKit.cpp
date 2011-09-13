@@ -648,8 +648,7 @@ bool SplitEditor::transferValues() {
 
       // The first block may be live-in, or it may have its own def.
       if (Start != BlockStart) {
-        VNInfo *VNI = LI->extendInBlock(BlockStart,
-                                        std::min(BlockEnd, End).getPrevSlot());
+        VNInfo *VNI = LI->extendInBlock(BlockStart, std::min(BlockEnd, End));
         assert(VNI && "Missing def for complex mapped value");
         DEBUG(dbgs() << ':' << VNI->id << "*BB#" << MBB->getNumber());
         // MBB has its own def. Is it also live-out?
@@ -669,8 +668,7 @@ bool SplitEditor::transferValues() {
         if (BlockStart == ParentVNI->def) {
           // This block has the def of a parent PHI, so it isn't live-in.
           assert(ParentVNI->isPHIDef() && "Non-phi defined at block start?");
-          VNInfo *VNI = LI->extendInBlock(BlockStart,
-                                         std::min(BlockEnd, End).getPrevSlot());
+          VNInfo *VNI = LI->extendInBlock(BlockStart, std::min(BlockEnd, End));
           assert(VNI && "Missing def for complex mapped parent PHI");
           if (End >= BlockEnd)
             LRC.setLiveOutValue(MBB, VNI); // Live-out as well.

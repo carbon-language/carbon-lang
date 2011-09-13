@@ -63,13 +63,12 @@ void LiveRangeCalc::extend(LiveInterval *LI,
   assert(Kill.isValid() && "Invalid SlotIndex");
   assert(Indexes && "Missing SlotIndexes");
   assert(DomTree && "Missing dominator tree");
-  SlotIndex LastUse = Kill.getPrevSlot();
 
-  MachineBasicBlock *KillMBB = Indexes->getMBBFromIndex(LastUse);
+  MachineBasicBlock *KillMBB = Indexes->getMBBFromIndex(Kill.getPrevSlot());
   assert(Kill && "No MBB at Kill");
 
   // Is there a def in the same MBB we can extend?
-  if (LI->extendInBlock(Indexes->getMBBStartIdx(KillMBB), LastUse))
+  if (LI->extendInBlock(Indexes->getMBBStartIdx(KillMBB), Kill))
     return;
 
   // Find the single reaching def, or determine if Kill is jointly dominated by
@@ -134,7 +133,7 @@ VNInfo *LiveRangeCalc::findReachingDefs(LiveInterval *LI,
 
        // First time we see Pred.  Try to determine the live-out value, but set
        // it as null if Pred is live-through with an unknown value.
-       VNInfo *VNI = LI->extendInBlock(Start, End.getPrevSlot());
+       VNInfo *VNI = LI->extendInBlock(Start, End);
        setLiveOutValue(Pred, VNI);
        if (VNI) {
          if (TheVNI && TheVNI != VNI)

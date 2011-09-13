@@ -294,20 +294,20 @@ LiveInterval::addRangeFrom(LiveRange LR, iterator From) {
   return ranges.insert(it, LR);
 }
 
-/// extendInBlock - If this interval is live before UseIdx in the basic
-/// block that starts at StartIdx, extend it to be live at UseIdx and return
-/// the value. If there is no live range before UseIdx, return NULL.
-VNInfo *LiveInterval::extendInBlock(SlotIndex StartIdx, SlotIndex UseIdx) {
+/// extendInBlock - If this interval is live before Kill in the basic
+/// block that starts at StartIdx, extend it to be live up to Kill and return
+/// the value. If there is no live range before Kill, return NULL.
+VNInfo *LiveInterval::extendInBlock(SlotIndex StartIdx, SlotIndex Kill) {
   if (empty())
     return 0;
-  iterator I = std::upper_bound(begin(), end(), UseIdx);
+  iterator I = std::upper_bound(begin(), end(), Kill.getPrevSlot());
   if (I == begin())
     return 0;
   --I;
   if (I->end <= StartIdx)
     return 0;
-  if (I->end <= UseIdx)
-    extendIntervalEndTo(I, UseIdx.getNextSlot());
+  if (I->end < Kill)
+    extendIntervalEndTo(I, Kill);
   return I->valno;
 }
 
