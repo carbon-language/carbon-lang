@@ -283,9 +283,6 @@ public:
   unsigned getBitfieldInvertedMaskOpValue(const MCInst &MI, unsigned Op,
                                       SmallVectorImpl<MCFixup> &Fixups) const;
 
-  unsigned getMsbOpValue(const MCInst &MI, unsigned Op,
-                         SmallVectorImpl<MCFixup> &Fixups) const;
-
   unsigned getRegisterListOpValue(const MCInst &MI, unsigned Op,
                                   SmallVectorImpl<MCFixup> &Fixups) const;
   unsigned getAddrMode6AddressOpValue(const MCInst &MI, unsigned Op,
@@ -1302,17 +1299,6 @@ getBitfieldInvertedMaskOpValue(const MCInst &MI, unsigned Op,
   uint32_t msb = (32 - CountLeadingZeros_32 (v)) - 1;
   assert (v != 0 && lsb < 32 && msb < 32 && "Illegal bitfield mask!");
   return lsb | (msb << 5);
-}
-
-unsigned ARMMCCodeEmitter::
-getMsbOpValue(const MCInst &MI, unsigned Op,
-              SmallVectorImpl<MCFixup> &Fixups) const {
-  // MSB - 5 bits.
-  uint32_t lsb = MI.getOperand(Op-1).getImm();
-  uint32_t width = MI.getOperand(Op).getImm();
-  uint32_t msb = lsb+width-1;
-  assert (width != 0 && msb < 32 && "Illegal bit width!");
-  return msb;
 }
 
 unsigned ARMMCCodeEmitter::
