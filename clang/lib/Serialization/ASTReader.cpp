@@ -4142,12 +4142,31 @@ ASTReader::FindExternalVisibleDeclsByName(const DeclContext *DC,
   return const_cast<DeclContext*>(DC)->lookup(Name);
 }
 
+/// \brief Under non-PCH compilation the consumer receives the objc methods
+/// before receiving the implementation, and codegen depends on this.
+/// We simulate this by deserializing and passing to consumer the methods of the
+/// implementation before passing the deserialized implementation decl.
+static void PassObjCImplDeclToConsumer(ObjCImplDecl *ImplD,
+                                       ASTConsumer *Consumer) {
+  assert(ImplD && Consumer);
+
+  for (ObjCImplDecl::method_iterator
+         I = ImplD->meth_begin(), E = ImplD->meth_end(); I != E; ++I)
+    Consumer->HandleInterestingDecl(DeclGroupRef(*I));
+
+  Consumer->HandleInterestingDecl(DeclGroupRef(ImplD));
+}
+
 void ASTReader::PassInterestingDeclsToConsumer() {
   assert(Consumer);
   while (!InterestingDecls.empty()) {
-    DeclGroupRef DG(InterestingDecls.front());
+    Decl *D = InterestingDecls.front();
     InterestingDecls.pop_front();
-    Consumer->HandleInterestingDecl(DG);
+
+    if (ObjCImplDecl *ImplD = dyn_cast<ObjCImplDecl>(D))
+      PassObjCImplDeclToConsumer(ImplD, Consumer);
+    else
+      Consumer->HandleInterestingDecl(DeclGroupRef(D));
   }
 }
 

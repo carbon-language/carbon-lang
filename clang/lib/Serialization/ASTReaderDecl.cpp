@@ -1393,6 +1393,9 @@ inline void ASTReader::LoadedDecl(unsigned Index, Decl *D) {
 /// code generation, e.g., inline function definitions, Objective-C
 /// declarations with metadata, etc.
 static bool isConsumerInterestedIn(Decl *D) {
+  // An ObjCMethodDecl is never considered as "interesting" because its
+  // implementation container always is.
+
   if (isa<FileScopeAsmDecl>(D) || 
       isa<ObjCProtocolDecl>(D) || 
       isa<ObjCImplDecl>(D))
@@ -1402,8 +1405,6 @@ static bool isConsumerInterestedIn(Decl *D) {
            Var->isThisDeclarationADefinition() == VarDecl::Definition;
   if (FunctionDecl *Func = dyn_cast<FunctionDecl>(D))
     return Func->doesThisDeclarationHaveABody();
-  if (ObjCMethodDecl *Method = dyn_cast<ObjCMethodDecl>(D))
-    return Method->hasBody();
   
   return false;
 }
@@ -1737,14 +1738,8 @@ Decl *ASTReader::ReadDeclRecord(DeclID ID) {
   // AST consumer might need to know about, queue it.
   // We don't pass it to the consumer immediately because we may be in recursive
   // loading, and some declarations may still be initializing.
-  if (isConsumerInterestedIn(D)) {
-    if (Consumer) {
-      DeclGroupRef DG(D);
-      Consumer->HandleInterestingDecl(DG);
-    } else {
+  if (isConsumerInterestedIn(D))
       InterestingDecls.push_back(D);
-    }
-  }
   
   return D;
 }

@@ -1594,6 +1594,9 @@ void ASTWriter::WriteDeclsBlockAbbrevs() {
 /// relatively painless since they would presumably only do it for top-level
 /// decls.
 static bool isRequiredDecl(const Decl *D, ASTContext &Context) {
+  // An ObjCMethodDecl is never considered as "required" because its
+  // implementation container always is.
+
   // File scoped assembly or obj-c implementation must be seen.
   if (isa<FileScopeAsmDecl>(D) || isa<ObjCImplDecl>(D))
     return true;

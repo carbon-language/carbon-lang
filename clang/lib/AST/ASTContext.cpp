@@ -6387,7 +6387,7 @@ bool ASTContext::DeclMustBeEmitted(const Decl *D) {
   if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
     if (!VD->isFileVarDecl())
       return false;
-  } else if (!isa<FunctionDecl>(D) && !isa<ObjCMethodDecl>(D))
+  } else if (!isa<FunctionDecl>(D))
     return false;
 
   // Weak references don't produce any output by themselves.
@@ -6427,9 +6427,6 @@ bool ASTContext::DeclMustBeEmitted(const Decl *D) {
       return false;
     return true;
   }
-
-  if (const ObjCMethodDecl *Method = dyn_cast<ObjCMethodDecl>(D))
-    return Method->hasBody();
   
   const VarDecl *VD = cast<VarDecl>(D);
   assert(VD->isFileVarDecl() && "Expected file scoped var");
