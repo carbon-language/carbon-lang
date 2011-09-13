@@ -159,6 +159,8 @@ static bool hasMemoryWrite(Instruction *I) {
 }
 
 /// getLocForWrite - Return a Location stored to by the specified instruction.
+/// If isRemovable returns true, this function and getLocForRead completely
+/// describe the memory operations for this instruction.
 static AliasAnalysis::Location
 getLocForWrite(Instruction *Inst, AliasAnalysis &AA) {
   if (StoreInst *SI = dyn_cast<StoreInst>(Inst))
