@@ -255,4 +255,58 @@ void f()
   Z* b;
 }
 
- }
+}
+
+
+
+
+
+
+
+
+
+
+namespace ms_protected_scope {
+  struct C { C(); };
+
+  int jump_over_variable_init(bool b) {
+    if (b)
+      goto foo; // expected-warning {{illegal goto into protected scope}}
+    C c; // expected-note {{jump bypasses variable initialization}}
+  foo:
+    return 1;
+  }
+
+struct Y {
+  ~Y();
+};
+
+void jump_over_var_with_dtor() {
+  goto end; // expected-warning{{goto into protected scope}}
+  Y y; // expected-note {{jump bypasses variable initialization}}
+ end:
+    ;
+}
+
+  void jump_over_variable_case(int c) {
+    switch (c) {
+    case 0:
+      int x = 56; // expected-note {{jump bypasses variable initialization}}
+    case 1:       // expected-error {{switch case is in protected scope}}
+      x = 10;
+    }
+  }
+
+ 
+void exception_jump() {
+  goto l2; // expected-error {{illegal goto into protected scope}}
+  try { // expected-note {{jump bypasses initialization of try block}}
+     l2: ;
+  } catch(int) {
+  }
+}
+  
+}
+
+
+

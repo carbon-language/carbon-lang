@@ -76,8 +76,8 @@ private:
   void VerifyIndirectJumps();
   void DiagnoseIndirectJump(IndirectGotoStmt *IG, unsigned IGScope,
                             LabelDecl *Target, unsigned TargetScope);
-  void CheckJump(Stmt *From, Stmt *To,
-                 SourceLocation DiagLoc, unsigned JumpDiag);
+  void CheckJump(Stmt *From, Stmt *To, SourceLocation DiagLoc,
+                 unsigned JumpDiag, unsigned JumpDiagWarning);
 
   unsigned GetDeepestCommonScope(unsigned A, unsigned B);
 };
@@ -476,7 +476,8 @@ void JumpScopeChecker::VerifyJumps() {
     // With a goto,
     if (GotoStmt *GS = dyn_cast<GotoStmt>(Jump)) {
       CheckJump(GS, GS->getLabel()->getStmt(), GS->getGotoLoc(),
-                diag::err_goto_into_protected_scope);
+                diag::err_goto_into_protected_scope,
+                diag::warn_goto_into_protected_scope);
       continue;
     }
 
@@ -484,7 +485,7 @@ void JumpScopeChecker::VerifyJumps() {
     if (IndirectGotoStmt *IGS = dyn_cast<IndirectGotoStmt>(Jump)) {
       LabelDecl *Target = IGS->getConstantTarget();
       CheckJump(IGS, Target->getStmt(), IGS->getGotoLoc(),
-                diag::err_goto_into_protected_scope);
+                diag::err_goto_into_protected_scope, 0);
       continue;
     }
 
@@ -493,7 +494,7 @@ void JumpScopeChecker::VerifyJumps() {
          SC = SC->getNextSwitchCase()) {
       assert(LabelAndGotoScopes.count(SC) && "Case not visited?");
       CheckJump(SS, SC, SC->getLocStart(),
-                diag::err_switch_into_protected_scope);
+                diag::err_switch_into_protected_scope, 0);
     }
   }
 }
@@ -660,10 +661,20 @@ void JumpScopeChecker::DiagnoseIndirectJump(IndirectGotoStmt *Jump,
       S.Diag(Scopes[I].Loc, Scopes[I].InDiag);
 }
 
+/// Return true if a particular error+note combination must be downgraded
+/// to a warning in Microsoft mode.
+static bool IsMicrosoftJumpWarning(unsigned JumpDiag, unsigned InDiagNote)
+{
+    return (JumpDiag == diag::err_goto_into_protected_scope && 
+           (InDiagNote == diag::note_protected_by_variable_init || 
+            InDiagNote == diag::note_protected_by_variable_nontriv_destructor));
+}
+
+
 /// CheckJump - Validate that the specified jump statement is valid: that it is
 /// jumping within or out of its current scope, not into a deeper one.
-void JumpScopeChecker::CheckJump(Stmt *From, Stmt *To,
-                                 SourceLocation DiagLoc, unsigned JumpDiag) {
+void JumpScopeChecker::CheckJump(Stmt *From, Stmt *To, SourceLocation DiagLoc,
+                             unsigned JumpDiagError, unsigned JumpDiagWarning) {
   assert(LabelAndGotoScopes.count(From) && "Jump didn't get added to scopes?");
   unsigned FromScope = LabelAndGotoScopes[From];
 
@@ -679,19 +690,30 @@ void JumpScopeChecker::CheckJump(Stmt *From, Stmt *To,
   if (CommonScope == ToScope) return;
 
   // Pull out (and reverse) any scopes we might need to diagnose skipping.
-  SmallVector<unsigned, 10> ToScopes;
-  for (unsigned I = ToScope; I != CommonScope; I = Scopes[I].ParentScope)
-    if (Scopes[I].InDiag)
-      ToScopes.push_back(I);
+  SmallVector<unsigned, 10> ToScopesError;
+  SmallVector<unsigned, 10> ToScopesWarning;
+  for (unsigned I = ToScope; I != CommonScope; I = Scopes[I].ParentScope) {
+    if (S.getLangOptions().Microsoft &&
+        IsMicrosoftJumpWarning(JumpDiagError, Scopes[I].InDiag))
+      ToScopesWarning.push_back(I);
+    else if (Scopes[I].InDiag)
+      ToScopesError.push_back(I);
+  }
 
-  // If the only scopes present are cleanup scopes, we're okay.
-  if (ToScopes.empty()) return;
+  // Handle warnings.
+  if (!ToScopesWarning.empty()) {
+    S.Diag(DiagLoc, JumpDiagWarning);
+    for (unsigned i = 0, e = ToScopesWarning.size(); i != e; ++i)
+      S.Diag(Scopes[ToScopesWarning[i]].Loc, Scopes[ToScopesWarning[i]].InDiag);
+  }
 
-  S.Diag(DiagLoc, JumpDiag);
-
-  // Emit diagnostics for whatever is left in ToScopes.
-  for (unsigned i = 0, e = ToScopes.size(); i != e; ++i)
-    S.Diag(Scopes[ToScopes[i]].Loc, Scopes[ToScopes[i]].InDiag);
+  // Handle errors.
+  if (!ToScopesError.empty()) {
+    S.Diag(DiagLoc, JumpDiagError);
+    // Emit diagnostics note for whatever is left in ToScopesError.
+    for (unsigned i = 0, e = ToScopesError.size(); i != e; ++i)
+      S.Diag(Scopes[ToScopesError[i]].Loc, Scopes[ToScopesError[i]].InDiag);
+  }
 }
 
 void Sema::DiagnoseInvalidJumps(Stmt *Body) {
