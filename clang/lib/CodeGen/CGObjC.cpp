@@ -495,6 +495,13 @@ PropertyImplStrategy::PropertyImplStrategy(CodeGenModule &CGM,
     return;
   }
 
+  // Properties on bitfield ivars need to be emitted using expression
+  // accesses even if they're nominally atomic.
+  if (ivar->isBitField()) {
+    Kind = Expression;
+    return;
+  }
+
   // GC-qualified or ARC-qualified ivars need to be emitted as
   // expressions.  This actually works out to being atomic anyway,
   // except for ARC __strong, but that should trigger the above code.

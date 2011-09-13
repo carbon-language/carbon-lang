@@ -103,3 +103,12 @@ void test4(Test4 *t) {
   // CHECK-NEXT: ret void
   test4_printf("%.2f", t.f);
 }
+
+@interface Test5 {
+  unsigned _x : 5;
+}
+@property unsigned x;
+@end
+@implementation Test5
+@synthesize x = _x;
+@end
