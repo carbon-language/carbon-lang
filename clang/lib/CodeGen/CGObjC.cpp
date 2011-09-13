@@ -527,6 +527,14 @@ PropertyImplStrategy::PropertyImplStrategy(CodeGenModule &CGM,
 
   // Otherwise, this is target-dependent and based on the size and
   // alignment of the ivar.
+
+  // If the size of the ivar is not a power of two, give up.  We don't
+  // want to get into the business of doing compare-and-swaps.
+  if (!IvarSize.isPowerOfTwo()) {
+    Kind = CopyStruct;
+    return;
+  }
+
   llvm::Triple::ArchType arch =
     CGM.getContext().getTargetInfo().getTriple().getArch();
 
