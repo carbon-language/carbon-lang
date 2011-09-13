@@ -463,7 +463,7 @@ processLoopStridedStore(Value *DestPtr, unsigned StoreSize,
     SplatValue = 0;
   } else {
     // Otherwise, this isn't an idiom we can transform.  For example, we can't
-    // do anything with a 3-byte store, for example.
+    // do anything with a 3-byte store.
     return false;
   }
 
