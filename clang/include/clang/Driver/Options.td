@@ -134,6 +134,8 @@ def ccc_ : Joined<"-ccc-">, Group<ccc_Group>, Flags<[Unsupported]>;
 
 def _HASH_HASH_HASH : Flag<"-###">, Flags<[DriverOption]>,
     HelpText<"Print the commands to run for this compilation">;
+// The '--' option is here for the sake of compatibility with gcc, but is 
+// being ignored by the driver.
 def _DASH_DASH : Flag<"--">, Flags<[DriverOption]>;
 def A : JoinedOrSeparate<"-A">;
 def B : JoinedOrSeparate<"-B">;
