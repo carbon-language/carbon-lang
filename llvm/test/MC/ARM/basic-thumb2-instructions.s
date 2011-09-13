@@ -1029,3 +1029,11 @@ _func:
 @ CHECK: nopne                          @ encoding: [0x00,0xbf]
 @ CHECK: subne	r5, r6, r7              @ encoding: [0xf5,0x1b]
 @ CHECK: addeq	r1, r2, #4              @ encoding: [0x11,0x1d]
+
+@------------------------------------------------------------------------------
+@ SUB (register)
+@------------------------------------------------------------------------------
+        sub.w r5, r2, r12, rrx
+
+@ CHECK: sub.w r5, r2, r12, rrx        @ encoding: [0xa2,0xeb,0x3c,0x05]
+
