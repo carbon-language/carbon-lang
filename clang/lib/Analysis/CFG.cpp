@@ -374,6 +374,7 @@ private:
 
   void autoCreateBlock() { if (!Block) Block = createBlock(); }
   CFGBlock *createBlock(bool add_successor = true);
+  CFGBlock *createNoReturnBlock();
 
   CFGBlock *addStmt(Stmt *S) {
     return Visit(S, AddStmtChoice::AlwaysAdd);
@@ -597,6 +598,15 @@ CFGBlock *CFGBuilder::createBlock(bool add_successor) {
   return B;
 }
 
+/// createNoReturnBlock - Used to create a block is a 'noreturn' point in the
+/// CFG. It is *not* connected to the current (global) successor, and instead
+/// directly tied to the exit block in order to be reachable.
+CFGBlock *CFGBuilder::createNoReturnBlock() {
+  CFGBlock *B = createBlock(false);
+  addSuccessor(B, &cfg->getExit());
+  return B;
+}
+
 /// addInitializer - Add C++ base or member initializer element to CFG.
 CFGBlock *CFGBuilder::addInitializer(CXXCtorInitializer *I) {
   if (!BuildOpts.AddInitializers)
@@ -667,16 +677,10 @@ void CFGBuilder::addAutomaticObjDtors(LocalScope::const_iterator B,
     if (const ArrayType *AT = Context->getAsArrayType(Ty))
       Ty = AT->getElementType();
     const CXXDestructorDecl *Dtor = Ty->getAsCXXRecordDecl()->getDestructor();
-    if (cast<FunctionType>(Dtor->getType())->getNoReturnAttr()) {
-      Block = createBlock(/*add_successor=*/false);
-      // Wire up this block directly to the exit block if we're in the
-      // no-return case. We pruned any other successors because control flow
-      // won't actually exit this block, but we want to be able to find all of
-      // these entries in the CFG when doing analyses.
-      addSuccessor(Block, &cfg->getExit());
-    } else {
+    if (cast<FunctionType>(Dtor->getType())->getNoReturnAttr())
+      Block = createNoReturnBlock();
+    else
       autoCreateBlock();
-    }
 
     appendAutomaticObjDtor(Block, *I, S);
   }
@@ -1207,13 +1211,13 @@ CFGBlock *CFGBuilder::VisitCallExpr(CallExpr *C, AddStmtChoice asc) {
       return 0;
   }
 
-  Block = createBlock(!NoReturn);
+  if (NoReturn)
+    Block = createNoReturnBlock();
+  else
+    Block = createBlock();
+
   appendStmt(Block, C);
 
-  if (NoReturn) {
-    // Wire this to the exit block directly.
-    addSuccessor(Block, &cfg->getExit());
-  }
   if (AddEHEdge) {
     // Add exceptional edges.
     if (TryTerminatedBlock)
@@ -2884,16 +2888,10 @@ CFGBlock *CFGBuilder::VisitCXXBindTemporaryExprForTemporaryDtors(
     // a new block for the destructor which does not have as a successor
     // anything built thus far. Control won't flow out of this block.
     const CXXDestructorDecl *Dtor = E->getTemporary()->getDestructor();
-    if (cast<FunctionType>(Dtor->getType())->getNoReturnAttr()) {
-      Block = createBlock(/*add_successor=*/false);
-      // Wire up this block directly to the exit block if we're in the
-      // no-return case. We pruned any other successors because control flow
-      // won't actually exit this block, but we want to be able to find all of
-      // these entries in the CFG when doing analyses.
-      addSuccessor(Block, &cfg->getExit());
-    } else {
+    if (cast<FunctionType>(Dtor->getType())->getNoReturnAttr())
+      Block = createNoReturnBlock();
+    else
       autoCreateBlock();
-    }
 
     appendTemporaryDtor(Block, E);
     B = Block;
