@@ -443,10 +443,10 @@ namespace {
 PropertyImplStrategy::PropertyImplStrategy(CodeGenModule &CGM,
                                      const ObjCPropertyImplDecl *propImpl) {
   const ObjCPropertyDecl *prop = propImpl->getPropertyDecl();
-  ObjCPropertyDecl::PropertyAttributeKind attrs = prop->getPropertyAttributes();
+  ObjCPropertyDecl::SetterKind setterKind = prop->getSetterKind();
 
-  IsCopy = (attrs & ObjCPropertyDecl::OBJC_PR_copy);
-  IsAtomic = !(attrs & ObjCPropertyDecl::OBJC_PR_nonatomic);
+  IsCopy = (setterKind == ObjCPropertyDecl::Copy);
+  IsAtomic = prop->isAtomic();
   HasStrong = false; // doesn't matter here.
 
   // Evaluate the ivar's size and alignment.
@@ -456,14 +456,14 @@ PropertyImplStrategy::PropertyImplStrategy(CodeGenModule &CGM,
     = CGM.getContext().getTypeInfoInChars(ivarType);
 
   // If we have a copy property, we always have to use getProperty/setProperty.
+  // TODO: we could actually use setProperty and an expression for non-atomics.
   if (IsCopy) {
     Kind = GetSetProperty;
     return;
   }
 
-  // Handle retain/strong.
-  if (attrs & (ObjCPropertyDecl::OBJC_PR_retain
-               | ObjCPropertyDecl::OBJC_PR_strong)) {
+  // Handle retain.
+  if (setterKind == ObjCPropertyDecl::Retain) {
     // In GC-only, there's nothing special that needs to be done.
     if (CGM.getLangOptions().getGC() == LangOptions::GCOnly) {
       // fallthrough
@@ -663,9 +663,8 @@ CodeGenFunction::generateObjCGetterBody(const ObjCImplementationDecl *classImpl,
     args.add(RValue::get(self), getContext().getObjCIdType());
     args.add(RValue::get(cmd), getContext().getObjCSelType());
     args.add(RValue::get(ivarOffset), getContext().getPointerDiffType());
-
-    assert(strategy.isAtomic());
-    args.add(RValue::get(Builder.getTrue()), getContext().BoolTy);
+    args.add(RValue::get(Builder.getInt1(strategy.isAtomic())),
+             getContext().BoolTy);
 
     // FIXME: We shouldn't need to get the function info here, the
     // runtime already should have computed it to build the function.

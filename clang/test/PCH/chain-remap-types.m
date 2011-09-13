@@ -5,7 +5,7 @@
 
 // CHECK: @class X;
 // CHECK: struct Y 
-// CHECK: @property ( assign,readwrite ) X * prop
+// CHECK: @property ( assign,readwrite,atomic ) X * prop
 // CHECK: void h(X *);
 // CHECK: @interface X(Blah)
 // CHECK: void g(X *);

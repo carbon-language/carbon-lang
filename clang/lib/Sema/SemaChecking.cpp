@@ -3862,10 +3862,7 @@ static bool findRetainCycleOwner(Expr *e, RetainCycleOwner &owner) {
         const ObjCPropertyRefExpr *pre = cast->getSubExpr()->getObjCProperty();
         if (pre->isImplicitProperty()) return false;
         ObjCPropertyDecl *property = pre->getExplicitProperty();
-        if (!(property->getPropertyAttributes() &
-              (ObjCPropertyDecl::OBJC_PR_retain |
-               ObjCPropertyDecl::OBJC_PR_copy |
-               ObjCPropertyDecl::OBJC_PR_strong)) &&
+        if (!property->isRetaining() &&
             !(property->getPropertyIvarDecl() &&
               property->getPropertyIvarDecl()->getType()
                 .getObjCLifetime() == Qualifiers::OCL_Strong))

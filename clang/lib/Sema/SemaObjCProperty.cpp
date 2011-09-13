@@ -24,6 +24,37 @@ using namespace clang;
 // Grammar actions.
 //===----------------------------------------------------------------------===//
 
+/// getImpliedARCOwnership - Given a set of property attributes and a
+/// type, infer an expected lifetime.  The type's ownership qualification
+/// is not considered.
+///
+/// Returns OCL_None if the attributes as stated do not imply an ownership.
+/// Never returns OCL_Autoreleasing.
+static Qualifiers::ObjCLifetime getImpliedARCOwnership(
+                               ObjCPropertyDecl::PropertyAttributeKind attrs,
+                                                QualType type) {
+  // retain, strong, copy, weak, and unsafe_unretained are only legal
+  // on properties of retainable pointer type.
+  if (attrs & (ObjCPropertyDecl::OBJC_PR_retain |
+               ObjCPropertyDecl::OBJC_PR_strong |
+               ObjCPropertyDecl::OBJC_PR_copy)) {
+    return Qualifiers::OCL_Strong;
+  } else if (attrs & ObjCPropertyDecl::OBJC_PR_weak) {
+    return Qualifiers::OCL_Weak;
+  } else if (attrs & ObjCPropertyDecl::OBJC_PR_unsafe_unretained) {
+    return Qualifiers::OCL_ExplicitNone;
+  }
+
+  // assign can appear on other types, so we have to check the
+  // property type.
+  if (attrs & ObjCPropertyDecl::OBJC_PR_assign &&
+      type->isObjCRetainableType()) {
+    return Qualifiers::OCL_ExplicitNone;
+  }
+
+  return Qualifiers::OCL_None;
+}
+
 /// Check the internal consistency of a property declaration.
 static void checkARCPropertyDecl(Sema &S, ObjCPropertyDecl *property) {
   if (property->isInvalidDecl()) return;
@@ -36,26 +67,23 @@ static void checkARCPropertyDecl(Sema &S, ObjCPropertyDecl *property) {
   // Nothing to do if we don't have a lifetime.
   if (propertyLifetime == Qualifiers::OCL_None) return;
 
-  Qualifiers::ObjCLifetime expectedLifetime;
-  unsigned selector;
-
-  // Strong properties should have either strong or no lifetime.
-  if (propertyKind & (ObjCPropertyDecl::OBJC_PR_retain |
-                      ObjCPropertyDecl::OBJC_PR_strong |
-                      ObjCPropertyDecl::OBJC_PR_copy)) {
-    expectedLifetime = Qualifiers::OCL_Strong;
-    selector = 0;
-  } else if (propertyKind & ObjCPropertyDecl::OBJC_PR_weak) {
-    expectedLifetime = Qualifiers::OCL_Weak;
-    selector = 1;
-  } else if (propertyKind & (ObjCPropertyDecl::OBJC_PR_assign |
-                             ObjCPropertyDecl::OBJC_PR_unsafe_unretained) &&
-             property->getType()->isObjCRetainableType()) {
-    expectedLifetime = Qualifiers::OCL_ExplicitNone;
-    selector = 2;
-  } else {
+  Qualifiers::ObjCLifetime expectedLifetime
+    = getImpliedARCOwnership(propertyKind, property->getType());
+  if (!expectedLifetime) {
     // We have a lifetime qualifier but no dominating property
-    // attribute.  That's okay.
+    // attribute.  That's okay, but restore reasonable invariants by
+    // setting the property attribute according to the lifetime
+    // qualifier.
+    ObjCPropertyDecl::PropertyAttributeKind attr;
+    if (propertyLifetime == Qualifiers::OCL_Strong) {
+      attr = ObjCPropertyDecl::OBJC_PR_strong;
+    } else if (propertyLifetime == Qualifiers::OCL_Weak) {
+      attr = ObjCPropertyDecl::OBJC_PR_weak;
+    } else {
+      assert(propertyLifetime == Qualifiers::OCL_ExplicitNone);
+      attr = ObjCPropertyDecl::OBJC_PR_unsafe_unretained;
+    }
+    property->setPropertyAttributes(attr);
     return;
   }
 
@@ -65,7 +93,7 @@ static void checkARCPropertyDecl(Sema &S, ObjCPropertyDecl *property) {
   S.Diag(property->getLocation(),
          diag::err_arc_inconsistent_property_ownership)
     << property->getDeclName()
-    << selector
+    << expectedLifetime
     << propertyLifetime;
 }
 
@@ -393,9 +421,10 @@ ObjCPropertyDecl *Sema::CreatePropertyDecl(Scope *S,
   if (isAssign)
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_assign);
 
+  // In the semantic attributes, one of nonatomic or atomic is always set.
   if (Attributes & ObjCDeclSpec::DQ_PR_nonatomic)
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_nonatomic);
-  else if (Attributes & ObjCDeclSpec::DQ_PR_atomic)
+  else
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_atomic);
 
   // 'unsafe_unretained' is alias for 'assign'.
@@ -417,84 +446,49 @@ static void checkARCPropertyImpl(Sema &S, SourceLocation propertyImplLoc,
                                  ObjCIvarDecl *ivar) {
   if (property->isInvalidDecl() || ivar->isInvalidDecl()) return;
 
-  QualType propertyType = property->getType();
-  Qualifiers::ObjCLifetime propertyLifetime = propertyType.getObjCLifetime();
-  ObjCPropertyDecl::PropertyAttributeKind propertyKind
-    = property->getPropertyAttributes();
-
   QualType ivarType = ivar->getType();
   Qualifiers::ObjCLifetime ivarLifetime = ivarType.getObjCLifetime();
-          
-  // Case 1: strong properties.
-  if (propertyLifetime == Qualifiers::OCL_Strong ||
-      (propertyKind & (ObjCPropertyDecl::OBJC_PR_retain |
-                       ObjCPropertyDecl::OBJC_PR_strong |
-                       ObjCPropertyDecl::OBJC_PR_copy))) {
-    switch (ivarLifetime) {
-    case Qualifiers::OCL_Strong:
-      // Okay.
-      return;
 
-    case Qualifiers::OCL_None:
-    case Qualifiers::OCL_Autoreleasing:
-      // These aren't valid lifetimes for object ivars;  don't diagnose twice.
-      return;
+  // The lifetime implied by the property's attributes.
+  Qualifiers::ObjCLifetime propertyLifetime =
+    getImpliedARCOwnership(property->getPropertyAttributes(),
+                           property->getType());
 
-    case Qualifiers::OCL_ExplicitNone:
-    case Qualifiers::OCL_Weak:
-      S.Diag(propertyImplLoc, diag::err_arc_strong_property_ownership)
-        << property->getDeclName()
-        << ivar->getDeclName()
-        << ivarLifetime;
-      break;
-    }
+  // We're fine if they match.
+  if (propertyLifetime == ivarLifetime) return;
 
-  // Case 2: weak properties.
-  } else if (propertyLifetime == Qualifiers::OCL_Weak ||
-             (propertyKind & ObjCPropertyDecl::OBJC_PR_weak)) {
-    switch (ivarLifetime) {
-    case Qualifiers::OCL_Weak:
-      // Okay.
-      return;
+  // These aren't valid lifetimes for object ivars;  don't diagnose twice.
+  if (ivarLifetime == Qualifiers::OCL_None ||
+      ivarLifetime == Qualifiers::OCL_Autoreleasing)
+    return;
 
-    case Qualifiers::OCL_None:
-    case Qualifiers::OCL_Autoreleasing:
-      // These aren't valid lifetimes for object ivars;  don't diagnose twice.
-      return;
+  switch (propertyLifetime) {
+  case Qualifiers::OCL_Strong:
+    S.Diag(propertyImplLoc, diag::err_arc_strong_property_ownership)
+      << property->getDeclName()
+      << ivar->getDeclName()
+      << ivarLifetime;
+    break;
 
-    case Qualifiers::OCL_ExplicitNone:
-    case Qualifiers::OCL_Strong:
-      S.Diag(propertyImplLoc, diag::error_weak_property)
-        << property->getDeclName()
-        << ivar->getDeclName();
-      break;
-    }
+  case Qualifiers::OCL_Weak:
+    S.Diag(propertyImplLoc, diag::error_weak_property)
+      << property->getDeclName()
+      << ivar->getDeclName();
+    break;
 
-  // Case 3: assign properties.
-  } else if ((propertyKind & ObjCPropertyDecl::OBJC_PR_assign) &&
-             propertyType->isObjCRetainableType()) {
-    switch (ivarLifetime) {
-    case Qualifiers::OCL_ExplicitNone:
-      // Okay.
-      return;
+  case Qualifiers::OCL_ExplicitNone:
+    S.Diag(propertyImplLoc, diag::err_arc_assign_property_ownership)
+      << property->getDeclName()
+      << ivar->getDeclName()
+      << ((property->getPropertyAttributesAsWritten() 
+           & ObjCPropertyDecl::OBJC_PR_assign) != 0);
+    break;
 
-    case Qualifiers::OCL_None:
-    case Qualifiers::OCL_Autoreleasing:
-      // These aren't valid lifetimes for object ivars;  don't diagnose twice.
-      return;
+  case Qualifiers::OCL_Autoreleasing:
+    llvm_unreachable("properties cannot be autoreleasing");
 
-    case Qualifiers::OCL_Weak:
-    case Qualifiers::OCL_Strong:
-      S.Diag(propertyImplLoc, diag::err_arc_assign_property_ownership)
-        << property->getDeclName()
-        << ivar->getDeclName()
-        << ((property->getPropertyAttributesAsWritten() 
-            & ObjCPropertyDecl::OBJC_PR_assign) != 0);
-      break;
-    }
-
-  // Any other property should be ignored.
-  } else {
+  case Qualifiers::OCL_None:
+    // Any other property should be ignored.
     return;
   }
 
@@ -593,63 +587,54 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
       PropertyIvar = PropertyId;
     ObjCPropertyDecl::PropertyAttributeKind kind 
       = property->getPropertyAttributes();
-    QualType PropType = Context.getCanonicalType(property->getType());
-    
-    if ((kind & ObjCPropertyDecl::OBJC_PR_weak) &&
-        !getLangOptions().ObjCAutoRefCount &&
+    QualType PropType = property->getType();
+
+    QualType PropertyIvarType = PropType.getNonReferenceType();
+
+    // Add GC __weak to the ivar type if the property is weak.
+    if ((kind & ObjCPropertyDecl::OBJC_PR_weak) && 
         getLangOptions().getGC() != LangOptions::NonGC) {
-      if (PropType.isObjCGCStrong()) {
-          Diag(PropertyLoc,
-               diag::err_gc_weak_property_strong_type);
-          Diag(property->getLocation(), diag::note_property_declare);    
+      assert(!getLangOptions().ObjCAutoRefCount);
+      if (PropertyIvarType.isObjCGCStrong()) {
+        Diag(PropertyLoc, diag::err_gc_weak_property_strong_type);
+        Diag(property->getLocation(), diag::note_property_declare);
+      } else {
+        PropertyIvarType =
+          Context.getObjCGCQualType(PropertyIvarType, Qualifiers::Weak);
       }
-      else
-        PropType = Context.getObjCGCQualType(PropType, Qualifiers::Weak);
     }
-    QualType PropertyIvarType = PropType;
-    if (PropType->isReferenceType())
-      PropertyIvarType = cast<ReferenceType>(PropType)->getPointeeType();
+
     // Check that this is a previously declared 'ivar' in 'IDecl' interface
     ObjCInterfaceDecl *ClassDeclared;
     Ivar = IDecl->lookupInstanceVariable(PropertyIvar, ClassDeclared);
     if (!Ivar) {
-      // In ARC, give the ivar a lifetime qualifier based on its
+      // In ARC, give the ivar a lifetime qualifier based on the
       // property attributes.
       if (getLangOptions().ObjCAutoRefCount &&
-          !PropertyIvarType.getObjCLifetime()) {
+          !PropertyIvarType.getObjCLifetime() &&
+          PropertyIvarType->isObjCRetainableType()) {
 
+        // It's an error if we have to do this and the user didn't
+        // explicitly write an ownership attribute on the property.
         if (!property->hasWrittenStorageAttribute() &&
-            property->getType()->isObjCRetainableType() &&
-            !(kind & ObjCPropertyDecl::OBJC_PR_strong) ) {
+            !(kind & ObjCPropertyDecl::OBJC_PR_strong)) {
           Diag(PropertyLoc,
                diag::err_arc_objc_property_default_assign_on_object);
           Diag(property->getLocation(), diag::note_property_declare);
-        }
+        } else {
+          Qualifiers::ObjCLifetime lifetime =
+            getImpliedARCOwnership(kind, PropertyIvarType);
+          assert(lifetime && "no lifetime for property?");
 
-        // retain/copy have retaining lifetime.
-        if (kind & (ObjCPropertyDecl::OBJC_PR_retain |
-                    ObjCPropertyDecl::OBJC_PR_strong |
-                    ObjCPropertyDecl::OBJC_PR_copy)) {
-          Qualifiers qs;
-          qs.addObjCLifetime(Qualifiers::OCL_Strong);
-          PropertyIvarType = Context.getQualifiedType(PropertyIvarType, qs);
-        }
-        else if (kind & ObjCPropertyDecl::OBJC_PR_weak) {
-          if (!getLangOptions().ObjCRuntimeHasWeak) {
+          if (lifetime == Qualifiers::OCL_Weak &&
+              !getLangOptions().ObjCRuntimeHasWeak) {
             Diag(PropertyLoc, diag::err_arc_weak_no_runtime);
             Diag(property->getLocation(), diag::note_property_declare);
           }
+
           Qualifiers qs;
-          qs.addObjCLifetime(Qualifiers::OCL_Weak);
+          qs.addObjCLifetime(lifetime);
           PropertyIvarType = Context.getQualifiedType(PropertyIvarType, qs);   
-        }
-        else if (kind & ObjCPropertyDecl::OBJC_PR_assign &&
-                 PropertyIvarType->isObjCRetainableType()) {
-            // assume that an 'assign' property synthesizes __unsafe_unretained
-            // ivar
-            Qualifiers qs;
-            qs.addObjCLifetime(Qualifiers::OCL_ExplicitNone);
-            PropertyIvarType = Context.getQualifiedType(PropertyIvarType, qs);  
         }
       }
 
@@ -685,7 +670,7 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
     QualType IvarType = Context.getCanonicalType(Ivar->getType());
 
     // Check that type of property and its ivar are type compatible.
-    if (PropertyIvarType != IvarType) {
+    if (Context.getCanonicalType(PropertyIvarType) != IvarType) {
       bool compat = false;
       if (isa<ObjCObjectPointerType>(PropertyIvarType) 
           && isa<ObjCObjectPointerType>(IvarType))
@@ -1375,10 +1360,10 @@ Sema::AtomicPropertySetterGetterRules (ObjCImplDecl* IMPDecl,
     bool LookedUpGetterSetter = false;
 
     unsigned Attributes = Property->getPropertyAttributes();
-    unsigned AttributesAsWrittern = Property->getPropertyAttributesAsWritten();
+    unsigned AttributesAsWritten = Property->getPropertyAttributesAsWritten();
 
-    if (!(AttributesAsWrittern & ObjCPropertyDecl::OBJC_PR_atomic) &&
-        !(AttributesAsWrittern & ObjCPropertyDecl::OBJC_PR_nonatomic)) {
+    if (!(AttributesAsWritten & ObjCPropertyDecl::OBJC_PR_atomic) &&
+        !(AttributesAsWritten & ObjCPropertyDecl::OBJC_PR_nonatomic)) {
       GetterMethod = IMPDecl->getInstanceMethod(Property->getGetterName());
       SetterMethod = IMPDecl->getInstanceMethod(Property->getSetterName());
       LookedUpGetterSetter = true;

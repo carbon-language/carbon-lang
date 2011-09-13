@@ -1495,6 +1495,17 @@ public:
     return (PropertyAttributes & OBJC_PR_readonly);
   }
 
+  /// isAtomic - Return true if the property is atomic.
+  bool isAtomic() const {
+    return (PropertyAttributes & OBJC_PR_atomic);
+  }
+
+  /// isRetaining - Return true if the property retains its value.
+  bool isRetaining() const {
+    return (PropertyAttributes &
+            (OBJC_PR_retain | OBJC_PR_strong | OBJC_PR_copy));
+  }
+
   /// getSetterKind - Return the method used for doing assignment in
   /// the property setter. This is only valid if the property has been
   /// defined to have a setter.
