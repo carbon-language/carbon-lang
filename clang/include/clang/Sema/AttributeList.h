@@ -56,7 +56,7 @@ private:
   IdentifierInfo *AttrName;
   IdentifierInfo *ScopeName;
   IdentifierInfo *ParmName;
-  SourceLocation AttrLoc;
+  SourceRange AttrRange;
   SourceLocation ScopeLoc;
   SourceLocation ParmLoc;
 
@@ -114,13 +114,13 @@ private:
 
   size_t allocated_size() const;
 
-  AttributeList(IdentifierInfo *attrName, SourceLocation attrLoc,
+  AttributeList(IdentifierInfo *attrName, SourceRange attrRange,
                 IdentifierInfo *scopeName, SourceLocation scopeLoc,
                 IdentifierInfo *parmName, SourceLocation parmLoc,
                 Expr **args, unsigned numArgs,
                 bool declspec, bool cxx0x)
     : AttrName(attrName), ScopeName(scopeName), ParmName(parmName),
-      AttrLoc(attrLoc), ScopeLoc(scopeLoc), ParmLoc(parmLoc),
+      AttrRange(attrRange), ScopeLoc(scopeLoc), ParmLoc(parmLoc),
       NumArgs(numArgs),
       DeclspecAttribute(declspec), CXX0XAttribute(cxx0x), Invalid(false),
       IsAvailability(false), NextInPosition(0), NextInPool(0) {
@@ -128,7 +128,7 @@ private:
     AttrKind = getKind(getName());
   }
 
-  AttributeList(IdentifierInfo *attrName, SourceLocation attrLoc,
+  AttributeList(IdentifierInfo *attrName, SourceRange attrRange,
                 IdentifierInfo *scopeName, SourceLocation scopeLoc,
                 IdentifierInfo *parmName, SourceLocation parmLoc,
                 const AvailabilityChange &introduced,
@@ -137,7 +137,7 @@ private:
                 SourceLocation unavailable,
                 bool declspec, bool cxx0x)
     : AttrName(attrName), ScopeName(scopeName), ParmName(parmName),
-      AttrLoc(attrLoc), ScopeLoc(scopeLoc), ParmLoc(parmLoc),
+      AttrRange(attrRange), ScopeLoc(scopeLoc), ParmLoc(parmLoc),
       NumArgs(0), DeclspecAttribute(declspec), CXX0XAttribute(cxx0x),
       Invalid(false), IsAvailability(true), UnavailableLoc(unavailable),
       NextInPosition(0), NextInPool(0) {
@@ -268,7 +268,8 @@ public:
   };
 
   IdentifierInfo *getName() const { return AttrName; }
-  SourceLocation getLoc() const { return AttrLoc; }
+  SourceLocation getLoc() const { return AttrRange.getBegin(); }
+  SourceRange getRange() const { return AttrRange; }
   
   bool hasScope() const { return ScopeName; }
   IdentifierInfo *getScopeName() const { return ScopeName; }
@@ -459,21 +460,21 @@ public:
     if (Head) Factory.reclaimPool(Head);
   }
 
-  AttributeList *create(IdentifierInfo *attrName, SourceLocation attrLoc,
+  AttributeList *create(IdentifierInfo *attrName, SourceRange attrRange,
                         IdentifierInfo *scopeName, SourceLocation scopeLoc,
                         IdentifierInfo *parmName, SourceLocation parmLoc,
                         Expr **args, unsigned numArgs,
                         bool declspec = false, bool cxx0x = false) {
     void *memory = allocate(sizeof(AttributeList)
                             + numArgs * sizeof(Expr*));
-    return add(new (memory) AttributeList(attrName, attrLoc,
+    return add(new (memory) AttributeList(attrName, attrRange,
                                           scopeName, scopeLoc,
                                           parmName, parmLoc,
                                           args, numArgs,
                                           declspec, cxx0x));
   }
 
-  AttributeList *create(IdentifierInfo *attrName, SourceLocation attrLoc,
+  AttributeList *create(IdentifierInfo *attrName, SourceRange attrRange,
                         IdentifierInfo *scopeName, SourceLocation scopeLoc,
                         IdentifierInfo *parmName, SourceLocation parmLoc,
                         const AvailabilityChange &introduced,
@@ -482,7 +483,7 @@ public:
                         SourceLocation unavailable,
                         bool declspec = false, bool cxx0x = false) {
     void *memory = allocate(AttributeFactory::AvailabilityAllocSize);
-    return add(new (memory) AttributeList(attrName, attrLoc,
+    return add(new (memory) AttributeList(attrName, attrRange,
                                           scopeName, scopeLoc,
                                           parmName, parmLoc,
                                           introduced, deprecated, obsoleted,
@@ -585,19 +586,19 @@ public:
   AttributeList *&getListRef() { return list; }
 
 
-  AttributeList *addNew(IdentifierInfo *attrName, SourceLocation attrLoc,
+  AttributeList *addNew(IdentifierInfo *attrName, SourceRange attrRange,
                         IdentifierInfo *scopeName, SourceLocation scopeLoc,
                         IdentifierInfo *parmName, SourceLocation parmLoc,
                         Expr **args, unsigned numArgs,
                         bool declspec = false, bool cxx0x = false) {
     AttributeList *attr =
-      pool.create(attrName, attrLoc, scopeName, scopeLoc, parmName, parmLoc,
+      pool.create(attrName, attrRange, scopeName, scopeLoc, parmName, parmLoc,
                   args, numArgs, declspec, cxx0x);
     add(attr);
     return attr;
   }
 
-  AttributeList *addNew(IdentifierInfo *attrName, SourceLocation attrLoc,
+  AttributeList *addNew(IdentifierInfo *attrName, SourceRange attrRange,
                         IdentifierInfo *scopeName, SourceLocation scopeLoc,
                         IdentifierInfo *parmName, SourceLocation parmLoc,
                         const AvailabilityChange &introduced,
@@ -606,7 +607,7 @@ public:
                         SourceLocation unavailable,
                         bool declspec = false, bool cxx0x = false) {
     AttributeList *attr =
-      pool.create(attrName, attrLoc, scopeName, scopeLoc, parmName, parmLoc,
+      pool.create(attrName, attrRange, scopeName, scopeLoc, parmName, parmLoc,
                   introduced, deprecated, obsoleted, unavailable,
                   declspec, cxx0x);
     add(attr);

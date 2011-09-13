@@ -1998,7 +1998,7 @@ static void handleNothrowAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   
   if (NoThrowAttr *Existing = D->getAttr<NoThrowAttr>()) {
     if (Existing->getLocation().isInvalid())
-      Existing->setLocation(Attr.getLoc());
+      Existing->setRange(Attr.getRange());
   } else {
     D->addAttr(::new (S.Context) NoThrowAttr(Attr.getLoc(), S.Context));
   }
@@ -2013,7 +2013,7 @@ static void handleConstAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 
   if (ConstAttr *Existing = D->getAttr<ConstAttr>()) {
    if (Existing->getLocation().isInvalid())
-     Existing->setLocation(Attr.getLoc());
+     Existing->setRange(Attr.getRange());
   } else {
     D->addAttr(::new (S.Context) ConstAttr(Attr.getLoc(), S.Context));
   }
@@ -2393,7 +2393,7 @@ static void handleFormatAttr(Sema &S, Decl *D, const AttributeList &Attr) {
       // If we don't have a valid location for this attribute, adopt the
       // location.
       if (f->getLocation().isInvalid())
-        f->setLocation(Attr.getLoc());
+        f->setRange(Attr.getRange());
       return;
     }
   }
