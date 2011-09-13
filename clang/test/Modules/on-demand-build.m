@@ -1,11 +1,12 @@
-// RUN: mkdir -p %t
-// RUN: rm -f %t/Module.pcm
+// RUN: rm -rf %t
+// RUN: %clang_cc1 -fmodule-cache-path %t -F %S/Inputs -DFOO -verify %s
+// RUN: %clang_cc1 -x objective-c++ -fmodule-cache-path %t -F %S/Inputs -DFOO -verify %s
 // RUN: %clang_cc1 -fmodule-cache-path %t -F %S/Inputs -DFOO -verify %s
 
 __import_module__ Module;
 void test_getModuleVersion() {
-  int version = getModuleVersion(); // expected-warning{{incompatible pointer to integer conversion initializing 'int' with an expression of type 'const char *'}}
-  int version2 = [Module version]; // expected-warning{{incompatible pointer to integer conversion initializing 'int' with an expression of type 'const char *'}}
+  const char *version = getModuleVersion();
+  const char *version2 = [Module version];
 }
 
 

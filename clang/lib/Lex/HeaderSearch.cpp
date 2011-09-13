@@ -99,15 +99,24 @@ const HeaderMap *HeaderSearch::CreateHeaderMap(const FileEntry *FE) {
 }
 
 const FileEntry *HeaderSearch::lookupModule(StringRef ModuleName,
+                                            std::string *ModuleFileName,
                                             std::string *UmbrellaHeader) {
   // If we don't have a module cache path, we can't do anything.
-  if (ModuleCachePath.empty())
+  if (ModuleCachePath.empty()) {
+    if (ModuleFileName)
+      ModuleFileName->clear();
     return 0;
-
+  }
+  
   // Try to find the module path.
   llvm::SmallString<256> FileName(ModuleCachePath);
   llvm::sys::path::append(FileName, ModuleName + ".pcm");
-  if (const FileEntry *ModuleFile = getFileMgr().getFile(FileName))
+  if (ModuleFileName)
+    *ModuleFileName = FileName.str();
+    
+  if (const FileEntry *ModuleFile
+        = getFileMgr().getFile(FileName, /*OpenFile=*/false,
+                               /*CacheFailure=*/false))
     return ModuleFile;
   
   // We didn't find the module. If we're not supposed to look for an

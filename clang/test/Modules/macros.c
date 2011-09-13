@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 -emit-module -o %t/macros.pcm -DMODULE %s
-// RUN: %clang_cc1 -verify -fmodule-cache-path %t %s
+// RUN: %clang_cc1 -verify -fmodule-cache-path %t -fdisable-module-hash %s
 
 #if defined(MODULE)
 #define INTEGER(X) int

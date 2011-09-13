@@ -217,7 +217,8 @@ void FileManager::removeStatCache(FileSystemStatCache *statCache) {
 /// \brief Retrieve the directory that the given file name resides in.
 /// Filename can point to either a real file or a virtual file.
 static const DirectoryEntry *getDirectoryFromFile(FileManager &FileMgr,
-                                                  StringRef Filename) {
+                                                  StringRef Filename,
+                                                  bool CacheFailure) {
   if (Filename.empty())
     return NULL;
 
@@ -229,7 +230,7 @@ static const DirectoryEntry *getDirectoryFromFile(FileManager &FileMgr,
   if (DirName.empty())
     DirName = ".";
 
-  return FileMgr.getDirectory(DirName);
+  return FileMgr.getDirectory(DirName, CacheFailure);
 }
 
 /// Add all ancestors of the given path (pointing to either a file or
@@ -263,7 +264,8 @@ void FileManager::addAncestorsAsVirtualDirs(StringRef Path) {
 /// (real or virtual).  This returns NULL if the directory doesn't
 /// exist.
 ///
-const DirectoryEntry *FileManager::getDirectory(StringRef DirName) {
+const DirectoryEntry *FileManager::getDirectory(StringRef DirName,
+                                                bool CacheFailure) {
   ++NumDirLookups;
   llvm::StringMapEntry<DirectoryEntry *> &NamedDirEnt =
     SeenDirEntries.GetOrCreateValue(DirName);
@@ -287,6 +289,8 @@ const DirectoryEntry *FileManager::getDirectory(StringRef DirName) {
   struct stat StatBuf;
   if (getStatValue(InterndDirName, StatBuf, 0/*directory lookup*/)) {
     // There's no real directory at the given path.
+    if (!CacheFailure)
+      SeenDirEntries.erase(DirName);
     return 0;
   }
 
@@ -309,7 +313,8 @@ const DirectoryEntry *FileManager::getDirectory(StringRef DirName) {
 /// getFile - Lookup, cache, and verify the specified file (real or
 /// virtual).  This returns NULL if the file doesn't exist.
 ///
-const FileEntry *FileManager::getFile(StringRef Filename, bool openFile) {
+const FileEntry *FileManager::getFile(StringRef Filename, bool openFile,
+                                      bool CacheFailure) {
   ++NumFileLookups;
 
   // See if there is already an entry in the map.
@@ -335,10 +340,15 @@ const FileEntry *FileManager::getFile(StringRef Filename, bool openFile) {
   // subdirectory.  This will let us avoid having to waste time on known-to-fail
   // searches when we go to find sys/bar.h, because all the search directories
   // without a 'sys' subdir will get a cached failure result.
-  const DirectoryEntry *DirInfo = getDirectoryFromFile(*this, Filename);
-  if (DirInfo == 0)  // Directory doesn't exist, file can't exist.
+  const DirectoryEntry *DirInfo = getDirectoryFromFile(*this, Filename,
+                                                       CacheFailure);
+  if (DirInfo == 0) {  // Directory doesn't exist, file can't exist.
+    if (!CacheFailure)
+      SeenFileEntries.erase(Filename);
+    
     return 0;
-
+  }
+  
   // FIXME: Use the directory info to prune this, before doing the stat syscall.
   // FIXME: This will reduce the # syscalls.
 
@@ -347,6 +357,9 @@ const FileEntry *FileManager::getFile(StringRef Filename, bool openFile) {
   struct stat StatBuf;
   if (getStatValue(InterndFileName, StatBuf, &FileDescriptor)) {
     // There's no real file at the given path.
+    if (!CacheFailure)
+      SeenFileEntries.erase(Filename);
+    
     return 0;
   }
 
@@ -380,10 +393,6 @@ const FileEntry *FileManager::getFile(StringRef Filename, bool openFile) {
   return &UFE;
 }
 
-void FileManager::forgetFile(StringRef Filename) {
-  SeenFileEntries.erase(Filename);
-}
-
 const FileEntry *
 FileManager::getVirtualFile(StringRef Filename, off_t Size,
                             time_t ModificationTime) {
@@ -408,7 +417,8 @@ FileManager::getVirtualFile(StringRef Filename, off_t Size,
   // Now that all ancestors of Filename are in the cache, the
   // following call is guaranteed to find the DirectoryEntry from the
   // cache.
-  const DirectoryEntry *DirInfo = getDirectoryFromFile(*this, Filename);
+  const DirectoryEntry *DirInfo = getDirectoryFromFile(*this, Filename,
+                                                       /*CacheFailure=*/true);
   assert(DirInfo &&
          "The directory of a virtual file should already be in the cache.");
 

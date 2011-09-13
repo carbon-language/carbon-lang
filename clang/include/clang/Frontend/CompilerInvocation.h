@@ -123,6 +123,10 @@ public:
   static void setLangDefaults(LangOptions &Opts, InputKind IK,
                    LangStandard::Kind LangStd = LangStandard::lang_unspecified);
   
+  /// \brief Retrieve a module hash string that is suitable for uniquely 
+  /// identifying the conditions under which the module was built.
+  std::string getModuleHash() const;
+  
   /// @}
   /// @name Option Subgroups
   /// @{

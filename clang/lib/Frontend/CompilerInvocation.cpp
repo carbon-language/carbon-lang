@@ -1383,6 +1383,7 @@ static void ParseHeaderSearchArgs(HeaderSearchOptions &Opts, ArgList &Args) {
     Opts.UseLibcxx = (strcmp(A->getValue(Args), "libc++") == 0);
   Opts.ResourceDir = Args.getLastArgValue(OPT_resource_dir);
   Opts.ModuleCachePath = Args.getLastArgValue(OPT_fmodule_cache_path);
+  Opts.DisableModuleHash = Args.hasArg(OPT_fdisable_module_hash);
   
   // Add -I..., -F..., and -index-header-map options in order.
   bool IsIndexHeaderMap = false;
@@ -1913,4 +1914,85 @@ void CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
   ParsePreprocessorArgs(Res.getPreprocessorOpts(), *Args, FileMgr, Diags);
   ParsePreprocessorOutputArgs(Res.getPreprocessorOutputOpts(), *Args);
   ParseTargetArgs(Res.getTargetOpts(), *Args);
+}
+
+namespace {
+
+  class ModuleSignature {
+    llvm::SmallVector<uint64_t, 16> Data;
+    unsigned CurBit;
+    uint64_t CurValue;
+    
+  public:
+    ModuleSignature() : CurBit(0), CurValue(0) { }
+    
+    void add(uint64_t Value, unsigned Bits);
+    void add(StringRef Value);
+    void flush();
+    
+    llvm::APInt getAsInteger() const;
+  };
+}
+
+void ModuleSignature::add(uint64_t Value, unsigned int NumBits) {
+  CurValue |= Value << CurBit;
+  if (CurBit + NumBits < 64) {
+    CurBit += NumBits;
+    return;
+  }
+  
+  // Add the current word.
+  Data.push_back(CurValue);
+  
+  if (CurBit)
+    CurValue = Value >> (64-CurBit);
+  else
+    CurValue = 0;
+  CurBit = (CurBit+NumBits) & 63;
+}
+
+void ModuleSignature::flush() {
+  if (CurBit == 0)
+    return;
+  
+  Data.push_back(CurValue);
+  CurBit = 0;
+  CurValue = 0;
+}
+
+void ModuleSignature::add(StringRef Value) {
+  for (StringRef::iterator I = Value.begin(), IEnd = Value.end(); I != IEnd;++I)
+    add(*I, 8);
+}
+
+llvm::APInt ModuleSignature::getAsInteger() const {
+  return llvm::APInt(Data.size() * 64, Data);
+}
+
+std::string CompilerInvocation::getModuleHash() const {
+  ModuleSignature Signature;
+  
+  // Start the signature with the compiler version.
+  Signature.add(getClangFullRepositoryVersion());
+  
+  // Extend the signature with the language options
+#define LANGOPT(Name, Bits, Default, Description) \
+  Signature.add(LangOpts.Name, Bits);
+#define ENUM_LANGOPT(Name, Type, Bits, Default, Description) \
+  Signature.add(static_cast<unsigned>(LangOpts.get##Name()), Bits);
+#define BENIGN_LANGOPT(Name, Bits, Default, Description)
+#define BENIGN_ENUM_LANGOPT(Name, Type, Bits, Default, Description)
+#include "clang/Basic/LangOptions.def"
+  
+  // Extend the signature with the target triple
+  llvm::Triple T(TargetOpts.Triple);
+  Signature.add((unsigned)T.getArch(), 5);
+  Signature.add((unsigned)T.getVendor(), 4);
+  Signature.add((unsigned)T.getOS(), 5);
+  Signature.add((unsigned)T.getEnvironment(), 4);
+
+  // We've generated the signature. Treat it as one large APInt that we'll
+  // encode as hex and return.
+  Signature.flush();
+  return Signature.getAsInteger().toString(16, /*Signed=*/false);
 }

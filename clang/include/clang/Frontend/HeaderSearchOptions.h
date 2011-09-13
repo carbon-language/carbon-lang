@@ -78,6 +78,12 @@ public:
   /// \brief The directory used for the module cache.
   std::string ModuleCachePath;
   
+  /// \brief Whether we should disable the use of the hash string within the
+  /// module cache.
+  ///
+  /// Note: Only used for testing!
+  unsigned DisableModuleHash : 1;
+  
   /// Include the compiler builtin includes.
   unsigned UseBuiltinIncludes : 1;
 
@@ -95,7 +101,7 @@ public:
 
 public:
   HeaderSearchOptions(StringRef _Sysroot = "/")
-    : Sysroot(_Sysroot), UseBuiltinIncludes(true),
+    : Sysroot(_Sysroot), DisableModuleHash(0), UseBuiltinIncludes(true),
       UseStandardIncludes(true), UseStandardCXXIncludes(true), UseLibcxx(false),
       Verbose(false) {}
 
