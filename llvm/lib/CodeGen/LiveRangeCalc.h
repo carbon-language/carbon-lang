@@ -191,7 +191,7 @@ public:
   /// addLiveInBlock().
   void setLiveOutValue(MachineBasicBlock *MBB, VNInfo *VNI) {
     Seen.set(MBB->getNumber());
-    LiveOut[MBB] = LiveOutPair(VNI, 0);
+    LiveOut[MBB] = LiveOutPair(VNI, (MachineDomTreeNode *)0);
   }
 
   /// addLiveInBlock - Add a block with an unknown live-in value.  This

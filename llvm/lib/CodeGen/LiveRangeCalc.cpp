@@ -47,7 +47,7 @@ void LiveRangeCalc::updateLiveIns(VNInfo *OverrideVNI, SlotIndexes *Indexes) {
       // The value is live-through, update LiveOut as well.  Defer the Domtree
       // lookup until it is needed.
       assert(Seen.test(MBB->getNumber()));
-      LiveOut[MBB] = LiveOutPair(VNI, 0);
+      LiveOut[MBB] = LiveOutPair(VNI, (MachineDomTreeNode *)0);
     }
   }
   LiveIn.clear();
