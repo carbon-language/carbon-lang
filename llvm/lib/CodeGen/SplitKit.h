@@ -319,6 +319,14 @@ private:
                         MachineBasicBlock &MBB,
                         MachineBasicBlock::iterator I);
 
+  /// removeBackCopies - Remove the copy instructions that defines the values
+  /// in the vector in the complement interval.
+  void removeBackCopies(SmallVectorImpl<VNInfo*> &Copies);
+
+  /// hoistCopiesForSize - Hoist back-copies to the complement interval in a
+  /// way that minimizes code size. This implements the SM_Size spill mode.
+  void hoistCopiesForSize();
+
   /// transferValues - Transfer values to the new ranges.
   /// Return true if any ranges were skipped.
   bool transferValues();

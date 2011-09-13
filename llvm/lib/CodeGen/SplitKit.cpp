@@ -592,6 +592,149 @@ void SplitEditor::overlapIntv(SlotIndex Start, SlotIndex End) {
   DEBUG(dump());
 }
 
+//===----------------------------------------------------------------------===//
+//                                  Spill modes
+//===----------------------------------------------------------------------===//
+
+void SplitEditor::removeBackCopies(SmallVectorImpl<VNInfo*> &Copies) {
+  LiveInterval *LI = Edit->get(0);
+  DEBUG(dbgs() << "Removing " << Copies.size() << " back-copies.\n");
+  RegAssignMap::iterator AssignI;
+  AssignI.setMap(RegAssign);
+
+  for (unsigned i = 0, e = Copies.size(); i != e; ++i) {
+    VNInfo *VNI = Copies[i];
+    SlotIndex Def = VNI->def;
+    MachineInstr *MI = LIS.getInstructionFromIndex(Def);
+    assert(MI && "No instruction for back-copy");
+
+    MachineBasicBlock *MBB = MI->getParent();
+    MachineBasicBlock::iterator MBBI(MI);
+    bool AtBegin;
+    do AtBegin = MBBI == MBB->begin();
+    while (!AtBegin && (--MBBI)->isDebugValue());
+
+    DEBUG(dbgs() << "Removing " << Def << '\t' << *MI);
+    LI->removeValNo(VNI);
+    LIS.RemoveMachineInstrFromMaps(MI);
+    MI->eraseFromParent();
+
+    // Adjust RegAssign if a register assignment is killed at VNI->def.  We
+    // want to avoid calculating the live range of the source register if
+    // possible.
+    AssignI.find(VNI->def.getPrevSlot());
+    if (!AssignI.valid() || AssignI.start() >= Def)
+      continue;
+    // If MI doesn't kill the assigned register, just leave it.
+    if (AssignI.stop() != Def)
+      continue;
+    unsigned RegIdx = AssignI.value();
+    if (AtBegin || !MBBI->readsVirtualRegister(Edit->getReg())) {
+      DEBUG(dbgs() << "  cannot find simple kill of RegIdx " << RegIdx << '\n');
+      markComplexMapped(RegIdx, Edit->getParent().getVNInfoAt(Def));
+    } else {
+      SlotIndex Kill = LIS.getInstructionIndex(MBBI).getDefIndex();
+      DEBUG(dbgs() << "  move kill to " << Kill << '\t' << *MBBI);
+      AssignI.setStop(Kill);
+    }
+  }
+}
+
+void SplitEditor::hoistCopiesForSize() {
+  // Get the complement interval, always RegIdx 0.
+  LiveInterval *LI = Edit->get(0);
+  LiveInterval *Parent = &Edit->getParent();
+
+  // Track the nearest common dominator for all back-copies for each ParentVNI,
+  // indexed by ParentVNI->id.
+  typedef std::pair<MachineBasicBlock*, SlotIndex> DomPair;
+  SmallVector<DomPair, 8> NearestDom(Parent->getNumValNums());
+
+  // Find the nearest common dominator for parent values with multiple
+  // back-copies.  If a single back-copy dominates, put it in DomPair.second.
+  for (LiveInterval::vni_iterator VI = LI->vni_begin(), VE = LI->vni_end();
+       VI != VE; ++VI) {
+    VNInfo *VNI = *VI;
+    VNInfo *ParentVNI = Edit->getParent().getVNInfoAt(VNI->def);
+    assert(ParentVNI && "Parent not live at complement def");
+
+    // Don't hoist remats.  The complement is probably going to disappear
+    // completely anyway.
+    if (Edit->didRematerialize(ParentVNI))
+      continue;
+
+    MachineBasicBlock *ValMBB = LIS.getMBBFromIndex(VNI->def);
+    DomPair &Dom = NearestDom[ParentVNI->id];
+
+    // Keep directly defined parent values.  This is either a PHI or an
+    // instruction in the complement range.  All other copies of ParentVNI
+    // should be eliminated.
+    if (VNI->def == ParentVNI->def) {
+      DEBUG(dbgs() << "Direct complement def at " << VNI->def << '\n');
+      Dom = DomPair(ValMBB, VNI->def);
+      continue;
+    }
+    // Skip the singly mapped values.  There is nothing to gain from hoisting a
+    // single back-copy.
+    if (Values.lookup(std::make_pair(0, ParentVNI->id))) {
+      DEBUG(dbgs() << "Single complement def at " << VNI->def << '\n');
+      continue;
+    }
+
+    if (!Dom.first) {
+      // First time we see ParentVNI.  VNI dominates itself.
+      Dom = DomPair(ValMBB, VNI->def);
+    } else if (Dom.first == ValMBB) {
+      // Two defs in the same block.  Pick the earlier def.
+      if (!Dom.second.isValid() || VNI->def < Dom.second)
+        Dom.second = VNI->def;
+    } else {
+      // Different basic blocks. Check if one dominates.
+      MachineBasicBlock *Near =
+        MDT.findNearestCommonDominator(Dom.first, ValMBB);
+      if (Near == ValMBB)
+        // Def ValMBB dominates.
+        Dom = DomPair(ValMBB, VNI->def);
+      else if (Near != Dom.first)
+        // None dominate. Hoist to common dominator, need new def.
+        Dom = DomPair(Near, SlotIndex());
+    }
+
+    DEBUG(dbgs() << "Multi-mapped complement " << VNI->id << '@' << VNI->def
+                 << " for parent " << ParentVNI->id << '@' << ParentVNI->def
+                 << " hoist to BB#" << Dom.first->getNumber() << ' '
+                 << Dom.second << '\n');
+  }
+
+  // Insert the hoisted copies.
+  for (unsigned i = 0, e = Parent->getNumValNums(); i != e; ++i) {
+    DomPair &Dom = NearestDom[i];
+    if (!Dom.first || Dom.second.isValid())
+      continue;
+    // This value needs a hoisted copy inserted at the end of Dom.second.
+    SlotIndex Last = LIS.getMBBEndIdx(Dom.first).getPrevSlot();
+    Dom.second =
+      defFromParent(0, Parent->getValNumInfo(i), Last, *Dom.first,
+                    LIS.getLastSplitPoint(Edit->getParent(), Dom.first))->def;
+  }
+
+  // Remove redundant back-copies that are now known to be dominated by another
+  // def with the same value.
+  SmallVector<VNInfo*, 8> BackCopies;
+  for (LiveInterval::vni_iterator VI = LI->vni_begin(), VE = LI->vni_end();
+       VI != VE; ++VI) {
+    VNInfo *VNI = *VI;
+    VNInfo *ParentVNI = Edit->getParent().getVNInfoAt(VNI->def);
+    const DomPair &Dom = NearestDom[ParentVNI->id];
+    if (!Dom.first || Dom.second == VNI->def)
+      continue;
+    BackCopies.push_back(VNI);
+    markOverlappedComplement(ParentVNI);
+  }
+  removeBackCopies(BackCopies);
+}
+
+
 /// transferValues - Transfer all possible values to the new live ranges.
 /// Values that were rematerialized are left alone, they need LRCalc.extend().
 bool SplitEditor::transferValues() {
@@ -829,6 +972,19 @@ void SplitEditor::finish(SmallVectorImpl<unsigned> *LRMap) {
     if (Edit->didRematerialize(ParentVNI))
       for (unsigned i = 0, e = Edit->size(); i != e; ++i)
         markComplexMapped(i, ParentVNI);
+  }
+
+  // Hoist back-copies to the complement interval when in spill mode.
+  switch (SpillMode) {
+  case SM_Partition:
+    // Leave all back-copies as is.
+    break;
+  case SM_Size:
+    hoistCopiesForSize();
+    break;
+  case SM_Speed:
+    llvm_unreachable("Spill mode 'speed' not implemented yet");
+    break;
   }
 
   // Transfer the simply mapped values, check if any are skipped.
