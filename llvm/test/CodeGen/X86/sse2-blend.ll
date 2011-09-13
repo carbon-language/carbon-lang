@@ -1,4 +1,7 @@
-; RUN: llc < %s -march=x86 -mcpu=yonah -promote-elements -mattr=+sse2,-sse41
+; RUN: llc < %s -march=x86 -mcpu=yonah -promote-elements -mattr=+sse2,-sse41 | FileCheck %s
+
+
+; currently (xor v4i32) is defined as illegal, so we scalarize the code.
 
 define void@vsel_float(<4 x float>* %v1, <4 x float>* %v2) {
   %A = load <4 x float>* %v1
@@ -8,6 +11,8 @@ define void@vsel_float(<4 x float>* %v1, <4 x float>* %v2) {
   ret void
 }
 
+; currently (xor v4i32) is defined as illegal, so we scalarize the code.
+
 define void@vsel_i32(<4 x i32>* %v1, <4 x i32>* %v2) {
   %A = load <4 x i32>* %v1
   %B = load <4 x i32>* %v2
@@ -16,6 +21,12 @@ define void@vsel_i32(<4 x i32>* %v1, <4 x i32>* %v2) {
   ret void
 }
 
+; CHECK: vsel_i64
+; CHECK: pxor
+; CHECK: pand
+; CHECK: pandn
+; CHECK: por
+; CHECK: ret
 
 define void@vsel_i64(<4 x i64>* %v1, <4 x i64>* %v2) {
   %A = load <4 x i64>* %v1
@@ -24,6 +35,13 @@ define void@vsel_i64(<4 x i64>* %v1, <4 x i64>* %v2) {
   store <4 x i64 > %vsel, <4 x i64>* %v1
   ret void
 }
+
+; CHECK: vsel_double
+; CHECK: pxor
+; CHECK: pand
+; CHECK: pandn
+; CHECK: por
+; CHECK: ret
 
 
 define void@vsel_double(<4 x double>* %v1, <4 x double>* %v2) {
