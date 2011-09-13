@@ -1892,3 +1892,23 @@ void test64b(void) {
   // CHECK-NEXT: call void @objc_release(i8* [[T5]])
   // CHECK-NEXT: ret void
 }
+
+// rdar://problem/9979150
+@interface Test65
+@property (strong) void(^ablock)(void);
+@property (nonatomic, strong) void(^nblock)(void);
+@end
+@implementation Test65
+@synthesize ablock, nblock;
+// CHECK:    define internal void ()* @"\01-[Test65 ablock]"(
+// CHECK:    call i8* @objc_getProperty(i8* {{%.*}}, i8* {{%.*}}, i64 {{%.*}}, i1 zeroext true)
+
+// CHECK:    define internal void @"\01-[Test65 setAblock:]"(
+// CHECK:    call void @objc_setProperty(i8* {{%.*}}, i8* {{%.*}}, i64 {{%.*}}, i8* {{%.*}}, i1 zeroext true, i1 zeroext true)
+
+// CHECK:    define internal void ()* @"\01-[Test65 nblock]"(
+// CHECK:    call i8* @objc_getProperty(i8* {{%.*}}, i8* {{%.*}}, i64 {{%.*}}, i1 zeroext false)
+
+// CHECK:    define internal void @"\01-[Test65 setNblock:]"(
+// CHECK:    call void @objc_setProperty(i8* {{%.*}}, i8* {{%.*}}, i64 {{%.*}}, i8* {{%.*}}, i1 zeroext false, i1 zeroext true)
+@end

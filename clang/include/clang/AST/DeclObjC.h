@@ -1510,7 +1510,9 @@ public:
   /// the property setter. This is only valid if the property has been
   /// defined to have a setter.
   SetterKind getSetterKind() const {
-    if (PropertyAttributes & (OBJC_PR_retain|OBJC_PR_strong))
+    if (PropertyAttributes & OBJC_PR_strong)
+      return getType()->isBlockPointerType() ? Copy : Retain;
+    if (PropertyAttributes & OBJC_PR_retain)
       return Retain;
     if (PropertyAttributes & OBJC_PR_copy)
       return Copy;
