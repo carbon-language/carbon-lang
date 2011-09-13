@@ -74,7 +74,8 @@ WatchpointLocation::BreakpointWasHit (StoppointCallbackContext *context)
 void
 WatchpointLocation::GetDescription (Stream *s, lldb::DescriptionLevel level)
 {
-    // FIXME: Add implmentation of GetDescription().
+    s->Printf(" ");
+    Dump(s);
     return;
 }
 
