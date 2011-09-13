@@ -3253,10 +3253,10 @@ def VMOVDQArr  : VPDI<0x6F, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
 def VMOVDQAYrr : VPDI<0x6F, MRMSrcReg, (outs VR256:$dst), (ins VR256:$src),
                     "movdqa\t{$src, $dst|$dst, $src}", []>, VEX;
 }
-def VMOVDQUrr  : VPDI<0x6F, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
-                    "movdqu\t{$src, $dst|$dst, $src}", []>, XS, VEX;
-def VMOVDQUYrr : VPDI<0x6F, MRMSrcReg, (outs VR256:$dst), (ins VR256:$src),
-                    "movdqu\t{$src, $dst|$dst, $src}", []>, XS, VEX;
+def VMOVDQUrr  : VSSI<0x6F, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
+                    "movdqu\t{$src, $dst|$dst, $src}", []>, VEX;
+def VMOVDQUYrr : VSSI<0x6F, MRMSrcReg, (outs VR256:$dst), (ins VR256:$src),
+                    "movdqu\t{$src, $dst|$dst, $src}", []>, VEX;
 
 let canFoldAsLoad = 1, mayLoad = 1 in {
 def VMOVDQArm  : VPDI<0x6F, MRMSrcMem, (outs VR128:$dst), (ins i128mem:$src),
