@@ -67,7 +67,8 @@ bb:		; preds = %bb, %entry
 return:
 	ret void
 ; CHECK: @test4
-; CHECK: fcmp
+; CHECK-NOT: cmp
+; CHECK: br i1 false
 }
 
 ; PR6761
@@ -84,9 +85,8 @@ define void @test5() nounwind {
 
 exit:
   ret void
-  
+
 ; CHECK: @test5
 ; CHECK: icmp eq i32 {{.*}}, 10
 ; CHECK-NEXT: br i1
 }
-

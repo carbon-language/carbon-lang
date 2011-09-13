@@ -351,14 +351,14 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PN) {
   // Positive and negative strides have different safety conditions.
   if (IncValue > 0) {
     // If we have a positive stride, we require the init to be less than the
-    // exit value and an equality or less than comparison.
-    if (InitValue >= ExitValue ||
-        NewPred == CmpInst::ICMP_SGT || NewPred == CmpInst::ICMP_SGE)
+    // exit value.
+    if (InitValue >= ExitValue)
       return;
 
     uint32_t Range = uint32_t(ExitValue-InitValue);
-    if (NewPred == CmpInst::ICMP_SLE) {
-      // Normalize SLE -> SLT, check for infinite loop.
+    // Check for infinite loop, either:
+    // while (i <= Exit) or until (i > Exit)
+    if (NewPred == CmpInst::ICMP_SLE || NewPred == CmpInst::ICMP_SGT) {
       if (++Range == 0) return;  // Range overflows.
     }
 
@@ -378,14 +378,14 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PN) {
 
   } else {
     // If we have a negative stride, we require the init to be greater than the
-    // exit value and an equality or greater than comparison.
-    if (InitValue >= ExitValue ||
-        NewPred == CmpInst::ICMP_SLT || NewPred == CmpInst::ICMP_SLE)
+    // exit value.
+    if (InitValue <= ExitValue)
       return;
 
     uint32_t Range = uint32_t(InitValue-ExitValue);
-    if (NewPred == CmpInst::ICMP_SGE) {
-      // Normalize SGE -> SGT, check for infinite loop.
+    // Check for infinite loop, either:
+    // while (i >= Exit) or until (i < Exit)
+    if (NewPred == CmpInst::ICMP_SGE || NewPred == CmpInst::ICMP_SLT) {
       if (++Range == 0) return;  // Range overflows.
     }
 
