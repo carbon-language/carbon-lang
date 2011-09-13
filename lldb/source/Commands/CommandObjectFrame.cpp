@@ -522,8 +522,14 @@ public:
                             // Process watchpoint if necessary.
                             if (m_option_watchpoint.watch_variable)
                             {
-                                lldb::addr_t addr = LLDB_INVALID_ADDRESS;
+                                AddressType addr_type;
+                                lldb::addr_t addr = valobj_sp->GetAddressOf(false, &addr_type);
                                 size_t size = 0;
+                                if (addr_type == eAddressTypeLoad) {
+                                    // We're in business.
+                                    // Find out the size of this variable.
+                                    size = valobj_sp->GetByteSize();
+                                }
                                 uint32_t watch_type = m_option_watchpoint.watch_type;
                                 WatchpointLocation *wp_loc =
                                     exe_ctx.target->CreateWatchpointLocation(addr, size, watch_type).get();
