@@ -204,15 +204,26 @@ def loadv4f64    : PatFrag<(ops node:$ptr), (v4f64 (load node:$ptr))>;
 def loadv8i32    : PatFrag<(ops node:$ptr), (v8i32 (load node:$ptr))>;
 def loadv4i64    : PatFrag<(ops node:$ptr), (v4i64 (load node:$ptr))>;
 
-// Like 'store', but always requires vector alignment.
+// Like 'store', but always requires 128-bit vector alignment.
 def alignedstore : PatFrag<(ops node:$val, node:$ptr),
                            (store node:$val, node:$ptr), [{
   return cast<StoreSDNode>(N)->getAlignment() >= 16;
 }]>;
 
-// Like 'load', but always requires vector alignment.
+// Like 'store', but always requires 256-bit vector alignment.
+def alignedstore256 : PatFrag<(ops node:$val, node:$ptr),
+                              (store node:$val, node:$ptr), [{
+  return cast<StoreSDNode>(N)->getAlignment() >= 32;
+}]>;
+
+// Like 'load', but always requires 128-bit vector alignment.
 def alignedload : PatFrag<(ops node:$ptr), (load node:$ptr), [{
   return cast<LoadSDNode>(N)->getAlignment() >= 16;
+}]>;
+
+// Like 'load', but always requires 256-bit vector alignment.
+def alignedload256 : PatFrag<(ops node:$ptr), (load node:$ptr), [{
+  return cast<LoadSDNode>(N)->getAlignment() >= 32;
 }]>;
 
 def alignedloadfsf32 : PatFrag<(ops node:$ptr),
@@ -232,13 +243,13 @@ def alignedloadv2i64 : PatFrag<(ops node:$ptr),
 
 // 256-bit aligned load pattern fragments
 def alignedloadv8f32 : PatFrag<(ops node:$ptr),
-                               (v8f32 (alignedload node:$ptr))>;
+                               (v8f32 (alignedload256 node:$ptr))>;
 def alignedloadv4f64 : PatFrag<(ops node:$ptr),
-                               (v4f64 (alignedload node:$ptr))>;
+                               (v4f64 (alignedload256 node:$ptr))>;
 def alignedloadv8i32 : PatFrag<(ops node:$ptr),
-                               (v8i32 (alignedload node:$ptr))>;
+                               (v8i32 (alignedload256 node:$ptr))>;
 def alignedloadv4i64 : PatFrag<(ops node:$ptr),
-                               (v4i64 (alignedload node:$ptr))>;
+                               (v4i64 (alignedload256 node:$ptr))>;
 
 // Like 'load', but uses special alignment checks suitable for use in
 // memory operands in most SSE instructions, which are required to

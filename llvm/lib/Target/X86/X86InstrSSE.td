@@ -717,10 +717,10 @@ def VMOVUPDmr : VPDI<0x11, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
                    [(store (v2f64 VR128:$src), addr:$dst)]>, VEX;
 def VMOVAPSYmr : VPSI<0x29, MRMDestMem, (outs), (ins f256mem:$dst, VR256:$src),
                    "movaps\t{$src, $dst|$dst, $src}",
-                   [(alignedstore (v8f32 VR256:$src), addr:$dst)]>, VEX;
+                   [(alignedstore256 (v8f32 VR256:$src), addr:$dst)]>, VEX;
 def VMOVAPDYmr : VPDI<0x29, MRMDestMem, (outs), (ins f256mem:$dst, VR256:$src),
                    "movapd\t{$src, $dst|$dst, $src}",
-                   [(alignedstore (v4f64 VR256:$src), addr:$dst)]>, VEX;
+                   [(alignedstore256 (v4f64 VR256:$src), addr:$dst)]>, VEX;
 def VMOVUPSYmr : VPSI<0x11, MRMDestMem, (outs), (ins f256mem:$dst, VR256:$src),
                    "movups\t{$src, $dst|$dst, $src}",
                    [(store (v8f32 VR256:$src), addr:$dst)]>, VEX;
@@ -872,13 +872,13 @@ let Predicates = [HasAVX] in {
             (VMOVAPSYrm addr:$src)>;
   def : Pat<(loadv8i32 addr:$src),
             (VMOVUPSYrm addr:$src)>;
-  def : Pat<(alignedstore (v4i64 VR256:$src), addr:$dst),
+  def : Pat<(alignedstore256 (v4i64 VR256:$src), addr:$dst),
             (VMOVAPSYmr addr:$dst, VR256:$src)>;
-  def : Pat<(alignedstore (v8i32 VR256:$src), addr:$dst),
+  def : Pat<(alignedstore256 (v8i32 VR256:$src), addr:$dst),
             (VMOVAPSYmr addr:$dst, VR256:$src)>;
-  def : Pat<(alignedstore (v16i16 VR256:$src), addr:$dst),
+  def : Pat<(alignedstore256 (v16i16 VR256:$src), addr:$dst),
             (VMOVAPSYmr addr:$dst, VR256:$src)>;
-  def : Pat<(alignedstore (v32i8 VR256:$src), addr:$dst),
+  def : Pat<(alignedstore256 (v32i8 VR256:$src), addr:$dst),
             (VMOVAPSYmr addr:$dst, VR256:$src)>;
   def : Pat<(store (v4i64 VR256:$src), addr:$dst),
             (VMOVUPSYmr addr:$dst, VR256:$src)>;
