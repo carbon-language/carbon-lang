@@ -3258,6 +3258,18 @@ def VMOVDQUrr  : VSSI<0x6F, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
 def VMOVDQUYrr : VSSI<0x6F, MRMSrcReg, (outs VR256:$dst), (ins VR256:$src),
                     "movdqu\t{$src, $dst|$dst, $src}", []>, VEX;
 
+// For Disassembler
+let isCodeGenOnly = 1 in {
+def VMOVDQArr_REV  : VPDI<0x7F, MRMDestReg, (outs VR128:$dst), (ins VR128:$src),
+                        "movdqa\t{$src, $dst|$dst, $src}", []>, VEX;
+def VMOVDQAYrr_REV : VPDI<0x7F, MRMDestReg, (outs VR256:$dst), (ins VR256:$src),
+                        "movdqa\t{$src, $dst|$dst, $src}", []>, VEX;
+def VMOVDQUrr_REV  : VSSI<0x7F, MRMDestReg, (outs VR128:$dst), (ins VR128:$src),
+                        "movdqu\t{$src, $dst|$dst, $src}", []>, VEX;
+def VMOVDQUYrr_REV : VSSI<0x7F, MRMDestReg, (outs VR256:$dst), (ins VR256:$src),
+                        "movdqu\t{$src, $dst|$dst, $src}", []>, VEX;
+}
+
 let canFoldAsLoad = 1, mayLoad = 1 in {
 def VMOVDQArm  : VPDI<0x6F, MRMSrcMem, (outs VR128:$dst), (ins i128mem:$src),
                    "movdqa\t{$src, $dst|$dst, $src}", []>, VEX;
@@ -3293,6 +3305,16 @@ def MOVDQArr : PDI<0x6F, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
 def MOVDQUrr :   I<0x6F, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                    "movdqu\t{$src, $dst|$dst, $src}",
                    []>, XS, Requires<[HasSSE2]>;
+
+// For Disassembler
+let isCodeGenOnly = 1 in {
+def MOVDQArr_REV : PDI<0x7F, MRMDestReg, (outs VR128:$dst), (ins VR128:$src),
+                       "movdqa\t{$src, $dst|$dst, $src}", []>;
+
+def MOVDQUrr_REV :   I<0x7F, MRMDestReg, (outs VR128:$dst), (ins VR128:$src),
+                       "movdqu\t{$src, $dst|$dst, $src}",
+                       []>, XS, Requires<[HasSSE2]>;
+}
 
 let canFoldAsLoad = 1, mayLoad = 1 in {
 def MOVDQArm : PDI<0x6F, MRMSrcMem, (outs VR128:$dst), (ins i128mem:$src),

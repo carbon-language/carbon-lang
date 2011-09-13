@@ -354,9 +354,7 @@ RecognizableInstr::filter_ret RecognizableInstr::filter() const {
     
   // TEMPORARY pending bug fixes
 
-  if (Name.find("VMOVDQU") != Name.npos ||
-      Name.find("VMOVDQA") != Name.npos ||
-      Name.find("VROUND") != Name.npos)
+  if (Name.find("VROUND") != Name.npos)
     return FILTER_STRONG;
     
   // Filter out artificial instructions
