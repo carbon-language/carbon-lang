@@ -29,7 +29,7 @@ class WatchpointLocation :
 {
 public:
 
-    WatchpointLocation (lldb::addr_t m_addr, size_t size, bool hardware);
+    WatchpointLocation (lldb::addr_t addr, size_t size, bool hardware = true);
 
     ~WatchpointLocation ();
 

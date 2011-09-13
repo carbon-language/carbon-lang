@@ -481,7 +481,7 @@ DNBArchImplX86_64::ThreadWillResume()
     if (kret != KERN_SUCCESS)
         return;
 
-    DBG debug_state = m_state.context.dbg;
+    DBG &debug_state = m_state.context.dbg;
     bool need_reset = false;
     uint32_t i, num = NumSupportedHardwareWatchpoints();
     for (i = 0; i < num; ++i)
@@ -650,13 +650,13 @@ DNBArchImplX86_64::SetWatchpoint(DBG &debug_state, uint32_t hw_index, nub_addr_t
                           size_and_rw_bits(size, read, write) << (16+4*hw_index));
     switch (hw_index) {
     case 0:
-        debug_state.__dr0 == addr; break;
+        debug_state.__dr0 = addr; break;
     case 1:
-        debug_state.__dr1 == addr; break;
+        debug_state.__dr1 = addr; break;
     case 2:
-        debug_state.__dr2 == addr; break;
+        debug_state.__dr2 = addr; break;
     case 3:
-        debug_state.__dr3 == addr; break;
+        debug_state.__dr3 = addr; break;
     default:
         assert(0 && "invalid hardware register index, must be one of 0, 1, 2, or 3");
     }
@@ -669,13 +669,13 @@ DNBArchImplX86_64::ClearWatchpoint(DBG &debug_state, uint32_t hw_index)
     debug_state.__dr7 &= ~(3 << (2*hw_index));
     switch (hw_index) {
     case 0:
-        debug_state.__dr0 == 0; break;
+        debug_state.__dr0 = 0; break;
     case 1:
-        debug_state.__dr1 == 0; break;
+        debug_state.__dr1 = 0; break;
     case 2:
-        debug_state.__dr2 == 0; break;
+        debug_state.__dr2 = 0; break;
     case 3:
-        debug_state.__dr3 == 0; break;
+        debug_state.__dr3 = 0; break;
     default:
         assert(0 && "invalid hardware register index, must be one of 0, 1, 2, or 3");
     }
@@ -759,7 +759,7 @@ DNBArchImplX86_64::EnableHardwareWatchpoint (nub_addr_t addr, nub_size_t size, b
         // Check to make sure we have the needed hardware support
         uint32_t i = 0;
 
-        DBG debug_state = m_state.context.dbg;
+        DBG &debug_state = m_state.context.dbg;
         for (i = 0; i < num_hw_watchpoints; ++i)
         {
             if (IsWatchpointVacant(debug_state, i))
@@ -794,7 +794,7 @@ DNBArchImplX86_64::DisableHardwareWatchpoint (uint32_t hw_index)
     const uint32_t num_hw_points = NumSupportedHardwareWatchpoints();
     if (kret == KERN_SUCCESS)
     {
-        DBG debug_state = m_state.context.dbg;
+        DBG &debug_state = m_state.context.dbg;
         if (hw_index < num_hw_points && !IsWatchpointVacant(debug_state, hw_index))
         {
             // Modify our local copy of the debug state, first.
@@ -820,7 +820,7 @@ DNBArchImplX86_64::GetHardwareWatchpointHit(nub_addr_t &addr)
     DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchImplX86_64::GetHardwareWatchpointHit() GetDBGState() => 0x%8.8x.", kret);
     if (kret == KERN_SUCCESS)
     {
-        DBG debug_state = m_state.context.dbg;
+        DBG &debug_state = m_state.context.dbg;
         uint32_t i, num = NumSupportedHardwareWatchpoints();
         for (i = 0; i < num; ++i)
         {

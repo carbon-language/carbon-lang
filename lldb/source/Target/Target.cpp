@@ -341,7 +341,27 @@ Target::CreateWatchpointLocation(lldb::addr_t addr, size_t size, uint32_t type)
     if (size == 0)
         return wp_loc_sp;
 
-    // FIXME: Add implmenetation.
+    WatchpointLocationSP matched_sp = m_watchpoint_location_list.FindByAddress(addr);
+    if (matched_sp)
+    {
+        size_t old_size = wp_loc_sp->GetByteSize();
+        uint32_t old_type =
+            (wp_loc_sp->WatchpointRead() ? LLDB_WATCH_TYPE_READ : 0) |
+            (wp_loc_sp->WatchpointWrite() ? LLDB_WATCH_TYPE_WRITE : 0);
+        // Return an empty watchpoint location if the same one exists already.
+        if (size == old_size && type == old_type)
+            return wp_loc_sp;
+
+        // Nil the matched watchpoint location; we will be creating a new one.
+        m_process_sp->DisableWatchpoint(matched_sp.get());
+        m_watchpoint_location_list.Remove(matched_sp->GetID());
+    }
+
+    WatchpointLocation *new_loc = new WatchpointLocation(addr, size);
+    new_loc->SetWatchpointType(type);
+    wp_loc_sp.reset(new_loc);
+    m_watchpoint_location_list.Add(wp_loc_sp);
+    m_process_sp->EnableWatchpoint(wp_loc_sp.get());
     return wp_loc_sp;
 }
 

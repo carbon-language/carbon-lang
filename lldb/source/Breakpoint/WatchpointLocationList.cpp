@@ -188,3 +188,8 @@ WatchpointLocationList::GetDescription (Stream *s, lldb::DescriptionLevel level)
     }
 }
 
+void
+WatchpointLocationList::GetListMutex (Mutex::Locker &locker)
+{
+    return locker.Reset (m_mutex.GetMutex());
+}

@@ -174,6 +174,15 @@ public:
     GetDescription (Stream *s,
                     lldb::DescriptionLevel level);
 
+    //------------------------------------------------------------------
+    /// Sets the passed in Locker to hold the Watchpoint Location List mutex.
+    ///
+    /// @param[in] locker
+    ///   The locker object that is set.
+    //------------------------------------------------------------------
+    void
+    GetListMutex (lldb_private::Mutex::Locker &locker);
+
 protected:
     typedef std::map<lldb::addr_t, lldb::WatchpointLocationSP> addr_map;
 

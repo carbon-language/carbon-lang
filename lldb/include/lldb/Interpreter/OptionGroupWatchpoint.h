@@ -46,7 +46,7 @@ namespace lldb_private {
         OptionParsingStarting (CommandInterpreter &interpreter);
         
         // Note:
-        // eWatchRead == LLDB_WATCH_TYPE_EREAD; and
+        // eWatchRead == LLDB_WATCH_TYPE_READ; and
         // eWatchWrite == LLDB_WATCH_TYPE_WRITE
         typedef enum WatchType {
             eWatchInvalid = 0,
