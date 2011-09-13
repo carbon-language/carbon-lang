@@ -138,13 +138,12 @@ ARMSelectionDAGInfo::EmitTargetCodeForMemcpy(SelectionDAG &DAG, DebugLoc dl,
 // Adjust parameters for memset, EABI uses format (ptr, size, value),
 // GNU library uses (ptr, value, size)
 // See RTABI section 4.3.4
-SDValue
-ARMSelectionDAGInfo::EmitTargetCodeForMemset(SelectionDAG &DAG, DebugLoc dl,
-                                             SDValue Chain, SDValue Dst,
-                                             SDValue Src, SDValue Size,
-                                             unsigned Align, bool isVolatile,
-                                             MachinePointerInfo DstPtrInfo) const
-{
+SDValue ARMSelectionDAGInfo::
+EmitTargetCodeForMemset(SelectionDAG &DAG, DebugLoc dl,
+                        SDValue Chain, SDValue Dst,
+                        SDValue Src, SDValue Size,
+                        unsigned Align, bool isVolatile,
+                        MachinePointerInfo DstPtrInfo) const {
   // Use default for non AAPCS subtargets
   if (!Subtarget->isAAPCS_ABI())
     return SDValue();

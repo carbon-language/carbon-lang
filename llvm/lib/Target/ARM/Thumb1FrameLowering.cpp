@@ -21,7 +21,7 @@
 
 using namespace llvm;
 
-bool Thumb1FrameLowering::hasReservedCallFrame(const MachineFunction &MF) const {
+bool Thumb1FrameLowering::hasReservedCallFrame(const MachineFunction &MF) const{
   const MachineFrameInfo *FFI = MF.getFrameInfo();
   unsigned CFSize = FFI->getMaxCallFrameSize();
   // It's not always a good idea to include the call frame as part of the
