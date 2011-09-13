@@ -743,11 +743,11 @@ CGObjCGNU::CGObjCGNU(CodeGenModule &cgm, unsigned runtimeABIVersion,
               true));
 
   const LangOptions &Opts = CGM.getLangOptions();
-  if ((Opts.getGCMode() != LangOptions::NonGC) || Opts.ObjCAutoRefCount)
+  if ((Opts.getGC() != LangOptions::NonGC) || Opts.ObjCAutoRefCount)
     RuntimeVersion = 10;
 
   // Don't bother initialising the GC stuff unless we're compiling in GC mode
-  if (Opts.getGCMode() != LangOptions::NonGC) {
+  if (Opts.getGC() != LangOptions::NonGC) {
     // This is a bit of an hack.  We should sort this out by having a proper
     // CGObjCGNUstep subclass for GC, but we may want to really support the old
     // ABI and GC added in ObjectiveC2.framework, so we fudge it a bit for now
@@ -970,7 +970,7 @@ CGObjCGNU::GenerateMessageSendSuper(CodeGenFunction &CGF,
                                     const CallArgList &CallArgs,
                                     const ObjCMethodDecl *Method) {
   CGBuilderTy &Builder = CGF.Builder;
-  if (CGM.getLangOptions().getGCMode() == LangOptions::GCOnly) {
+  if (CGM.getLangOptions().getGC() == LangOptions::GCOnly) {
     if (Sel == RetainSel || Sel == AutoreleaseSel) {
       return RValue::get(EnforceType(Builder, Receiver,
                   CGM.getTypes().ConvertType(ResultType)));
@@ -1078,7 +1078,7 @@ CGObjCGNU::GenerateMessageSend(CodeGenFunction &CGF,
   CGBuilderTy &Builder = CGF.Builder;
 
   // Strip out message sends to retain / release in GC mode
-  if (CGM.getLangOptions().getGCMode() == LangOptions::GCOnly) {
+  if (CGM.getLangOptions().getGC() == LangOptions::GCOnly) {
     if (Sel == RetainSel || Sel == AutoreleaseSel) {
       return RValue::get(EnforceType(Builder, Receiver,
                   CGM.getTypes().ConvertType(ResultType)));
@@ -2169,7 +2169,7 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
   Elements.push_back(SymTab);
 
   if (RuntimeVersion >= 10)
-    switch (CGM.getLangOptions().getGCMode()) {
+    switch (CGM.getLangOptions().getGC()) {
       case LangOptions::GCOnly:
         Elements.push_back(llvm::ConstantInt::get(IntTy, 2));
         break;

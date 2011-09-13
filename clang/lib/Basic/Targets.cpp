@@ -89,7 +89,7 @@ static void getDarwinDefines(MacroBuilder &Builder, const LangOptions &Opts,
     Builder.defineMacro("__weak", "__attribute__((objc_gc(weak)))");
 
     // Darwin defines __strong even in C mode (just to nothing).
-    if (Opts.getGCMode() != LangOptions::NonGC)
+    if (Opts.getGC() != LangOptions::NonGC)
       Builder.defineMacro("__strong", "__attribute__((objc_gc(strong)))");
     else
       Builder.defineMacro("__strong", "");

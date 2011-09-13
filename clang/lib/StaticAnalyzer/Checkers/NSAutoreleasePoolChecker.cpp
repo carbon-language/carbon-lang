@@ -75,6 +75,6 @@ void NSAutoreleasePoolChecker::checkPreObjCMessage(ObjCMessage msg,
 }
 
 void ento::registerNSAutoreleasePoolChecker(CheckerManager &mgr) {
-  if (mgr.getLangOptions().getGCMode() != LangOptions::NonGC)
+  if (mgr.getLangOptions().getGC() != LangOptions::NonGC)
     mgr.registerChecker<NSAutoreleasePoolChecker>();
 }

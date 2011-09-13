@@ -473,9 +473,9 @@ void CodeGenModule::SetLLVMFunctionAttributesForDefinition(const Decl *D,
   if (isa<CXXConstructorDecl>(D) || isa<CXXDestructorDecl>(D))
     F->setUnnamedAddr(true);
 
-  if (Features.getStackProtectorMode() == LangOptions::SSPOn)
+  if (Features.getStackProtector() == LangOptions::SSPOn)
     F->addFnAttr(llvm::Attribute::StackProtect);
-  else if (Features.getStackProtectorMode() == LangOptions::SSPReq)
+  else if (Features.getStackProtector() == LangOptions::SSPReq)
     F->addFnAttr(llvm::Attribute::StackProtectReq);
   
   unsigned alignment = D->getMaxAlignment() / Context.getCharWidth();

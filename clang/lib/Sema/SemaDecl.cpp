@@ -4086,7 +4086,7 @@ void Sema::CheckVariableDeclaration(VarDecl *NewVD,
 
   if (NewVD->hasLocalStorage() && T.isObjCGCWeak()
       && !NewVD->hasAttr<BlocksAttr>()) {
-    if (getLangOptions().getGCMode() != LangOptions::NonGC)
+    if (getLangOptions().getGC() != LangOptions::NonGC)
       Diag(NewVD->getLocation(), diag::warn_gc_attribute_weak_on_local);
     else
       Diag(NewVD->getLocation(), diag::warn_attribute_weak_on_local);
@@ -8796,7 +8796,7 @@ void Sema::ActOnFields(Scope* S,
         }
       }
       else if (getLangOptions().ObjC1 &&
-               getLangOptions().getGCMode() != LangOptions::NonGC &&
+               getLangOptions().getGC() != LangOptions::NonGC &&
                Record && !Record->hasObjectMember()) {
         if (FD->getType()->isObjCObjectPointerType() ||
             FD->getType().isObjCGCStrong())

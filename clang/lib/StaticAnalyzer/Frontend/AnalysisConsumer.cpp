@@ -336,7 +336,7 @@ static void ActionExprEngine(AnalysisConsumer &C, AnalysisManager &mgr,
 static void RunPathSensitiveChecks(AnalysisConsumer &C, AnalysisManager &mgr,
                                    Decl *D) {
 
-  switch (mgr.getLangOptions().getGCMode()) {
+  switch (mgr.getLangOptions().getGC()) {
   default:
     llvm_unreachable("Invalid GC mode.");
   case LangOptions::NonGC:

@@ -1212,7 +1212,7 @@ void CodeGenFunction::EmitStoreThroughExtVectorComponentLValue(RValue Src,
 // or neither.
 static void setObjCGCLValueClass(const ASTContext &Ctx, const Expr *E,
                                  LValue &LV) {
-  if (Ctx.getLangOptions().getGCMode() == LangOptions::NonGC)
+  if (Ctx.getLangOptions().getGC() == LangOptions::NonGC)
     return;
   
   if (isa<ObjCIvarRefExpr>(E)) {
@@ -1419,7 +1419,7 @@ LValue CodeGenFunction::EmitUnaryOpLValue(const UnaryOperator *E) {
     // But, we continue to generate __strong write barrier on indirect write
     // into a pointer to object.
     if (getContext().getLangOptions().ObjC1 &&
-        getContext().getLangOptions().getGCMode() != LangOptions::NonGC &&
+        getContext().getLangOptions().getGC() != LangOptions::NonGC &&
         LV.isObjCWeak())
       LV.setNonGC(!E->isOBJCGCCandidate(getContext()));
     return LV;
@@ -1680,7 +1680,7 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
   LV.getQuals().setAddressSpace(E->getBase()->getType().getAddressSpace());
 
   if (getContext().getLangOptions().ObjC1 &&
-      getContext().getLangOptions().getGCMode() != LangOptions::NonGC) {
+      getContext().getLangOptions().getGC() != LangOptions::NonGC) {
     LV.setNonGC(!E->isOBJCGCCandidate(getContext()));
     setObjCGCLValueClass(getContext(), E, LV);
   }

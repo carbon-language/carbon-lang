@@ -80,7 +80,7 @@ Decl *Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
   unsigned Attributes = ODS.getPropertyAttributes();
   TypeSourceInfo *TSI = GetTypeForDeclarator(FD.D, S);
   QualType T = TSI->getType();
-  if ((getLangOptions().getGCMode() != LangOptions::NonGC && 
+  if ((getLangOptions().getGC() != LangOptions::NonGC && 
        T.isObjCGCWeak()) ||
       (getLangOptions().ObjCAutoRefCount &&
        T.getObjCLifetime() == Qualifiers::OCL_Weak))
@@ -291,7 +291,7 @@ ObjCPropertyDecl *Sema::CreatePropertyDecl(Scope *S,
 
   // Issue a warning if property is 'assign' as default and its object, which is
   // gc'able conforms to NSCopying protocol
-  if (getLangOptions().getGCMode() != LangOptions::NonGC &&
+  if (getLangOptions().getGC() != LangOptions::NonGC &&
       isAssign && !(Attributes & ObjCDeclSpec::DQ_PR_assign))
     if (const ObjCObjectPointerType *ObjPtrTy =
           T->getAs<ObjCObjectPointerType>()) {
@@ -597,7 +597,7 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
     
     if ((kind & ObjCPropertyDecl::OBJC_PR_weak) &&
         !getLangOptions().ObjCAutoRefCount &&
-        getLangOptions().getGCMode() != LangOptions::NonGC) {
+        getLangOptions().getGC() != LangOptions::NonGC) {
       if (PropType.isObjCGCStrong()) {
           Diag(PropertyLoc,
                diag::err_gc_weak_property_strong_type);
@@ -655,7 +655,7 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
 
       if (kind & ObjCPropertyDecl::OBJC_PR_weak &&
           !getLangOptions().ObjCAutoRefCount &&
-          getLangOptions().getGCMode() == LangOptions::NonGC) {
+          getLangOptions().getGC() == LangOptions::NonGC) {
         Diag(PropertyLoc, diag::error_synthesize_weak_non_arc_or_gc);
         Diag(property->getLocation(), diag::note_property_declare);
       }
@@ -724,7 +724,7 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
       }
       // __weak is explicit. So it works on Canonical type.
       if ((PropType.isObjCGCWeak() && !IvarType.isObjCGCWeak() &&
-           getLangOptions().getGCMode() != LangOptions::NonGC)) {
+           getLangOptions().getGC() != LangOptions::NonGC)) {
         Diag(PropertyLoc, diag::error_weak_property)
         << property->getDeclName() << Ivar->getDeclName();
         Diag(Ivar->getLocation(), diag::note_ivar_decl);
@@ -733,7 +733,7 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
       // Fall thru - see previous comment
       if ((property->getType()->isObjCObjectPointerType() ||
            PropType.isObjCGCStrong()) && IvarType.isObjCGCWeak() &&
-          getLangOptions().getGCMode() != LangOptions::NonGC) {
+          getLangOptions().getGC() != LangOptions::NonGC) {
         Diag(PropertyLoc, diag::error_strong_property)
         << property->getDeclName() << Ivar->getDeclName();
         // Fall thru - see previous comment
@@ -1364,7 +1364,7 @@ void
 Sema::AtomicPropertySetterGetterRules (ObjCImplDecl* IMPDecl,
                                        ObjCContainerDecl* IDecl) {
   // Rules apply in non-GC mode only
-  if (getLangOptions().getGCMode() != LangOptions::NonGC)
+  if (getLangOptions().getGC() != LangOptions::NonGC)
     return;
   for (ObjCContainerDecl::prop_iterator I = IDecl->prop_begin(),
        E = IDecl->prop_end();
@@ -1422,7 +1422,7 @@ Sema::AtomicPropertySetterGetterRules (ObjCImplDecl* IMPDecl,
 }
 
 void Sema::DiagnoseOwningPropertyGetterSynthesis(const ObjCImplementationDecl *D) {
-  if (getLangOptions().getGCMode() == LangOptions::GCOnly)
+  if (getLangOptions().getGC() == LangOptions::GCOnly)
     return;
 
   for (ObjCImplementationDecl::propimpl_iterator
@@ -1739,11 +1739,11 @@ void Sema::CheckObjCPropertyAttributes(Decl *PDecl,
         PropertyDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_strong);
       else {
           // Skip this warning in gc-only mode.
-          if (getLangOptions().getGCMode() != LangOptions::GCOnly)
+          if (getLangOptions().getGC() != LangOptions::GCOnly)
             Diag(Loc, diag::warn_objc_property_no_assignment_attribute);
 
           // If non-gc code warn that this is likely inappropriate.
-          if (getLangOptions().getGCMode() == LangOptions::NonGC)
+          if (getLangOptions().getGC() == LangOptions::NonGC)
             Diag(Loc, diag::warn_objc_property_default_assign_on_object);
       }
 
@@ -1755,7 +1755,7 @@ void Sema::CheckObjCPropertyAttributes(Decl *PDecl,
 
   if (!(Attributes & ObjCDeclSpec::DQ_PR_copy)
       &&!(Attributes & ObjCDeclSpec::DQ_PR_readonly)
-      && getLangOptions().getGCMode() == LangOptions::GCOnly
+      && getLangOptions().getGC() == LangOptions::GCOnly
       && PropertyTy->isBlockPointerType())
     Diag(Loc, diag::warn_objc_property_copy_missing_on_block);
 }

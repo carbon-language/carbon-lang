@@ -1122,9 +1122,9 @@ void ASTWriter::WriteLanguageOptions(const LangOptions &LangOpts) {
   Record.push_back(LangOpts.ShortEnums);  // Should the enum type be equivalent
                                           // to the smallest integer type with
                                           // enough room.
-  Record.push_back(LangOpts.getGCMode());
+  Record.push_back(LangOpts.getGC());
   Record.push_back(LangOpts.getVisibilityMode());
-  Record.push_back(LangOpts.getStackProtectorMode());
+  Record.push_back(LangOpts.getStackProtector());
   Record.push_back(LangOpts.InstantiationDepth);
   Record.push_back(LangOpts.OpenCL);
   Record.push_back(LangOpts.CUDA);

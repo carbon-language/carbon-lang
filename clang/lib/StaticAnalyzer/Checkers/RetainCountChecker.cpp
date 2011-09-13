@@ -1772,7 +1772,7 @@ void CFRefReport::addGCModeDescription(const LangOptions &LOpts,
                                        bool GCEnabled) {
   const char *GCModeDescription = 0;
 
-  switch (LOpts.getGCMode()) {
+  switch (LOpts.getGC()) {
   case LangOptions::GCOnly:
     assert(GCEnabled);
     GCModeDescription = "Code is compiled to only use garbage collection";
@@ -2354,7 +2354,7 @@ public:
       return leakWithinFunctionGC.get();
     } else {
       if (!leakWithinFunction) {
-        if (LOpts.getGCMode() == LangOptions::HybridGC) {
+        if (LOpts.getGC() == LangOptions::HybridGC) {
           leakWithinFunction.reset(new LeakWithinFunction("Leak of object when "
                                                           "not using garbage "
                                                           "collection (GC) in "
@@ -2376,7 +2376,7 @@ public:
       return leakAtReturnGC.get();
     } else {
       if (!leakAtReturn) {
-        if (LOpts.getGCMode() == LangOptions::HybridGC) {
+        if (LOpts.getGC() == LangOptions::HybridGC) {
           leakAtReturn.reset(new LeakAtReturn("Leak of returned object when "
                                               "not using garbage collection "
                                               "(GC) in dual GC/non-GC code"));

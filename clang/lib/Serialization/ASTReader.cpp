@@ -138,13 +138,13 @@ PCHValidator::ReadLanguageOptions(const LangOptions &LangOpts) {
   PARSE_LANGOPT_IMPORTANT(CharIsSigned, diag::warn_pch_char_signed);
   PARSE_LANGOPT_IMPORTANT(ShortWChar, diag::warn_pch_short_wchar);
   PARSE_LANGOPT_IMPORTANT(ShortEnums, diag::warn_pch_short_enums);
-  if ((PPLangOpts.getGCMode() != 0) != (LangOpts.getGCMode() != 0)) {
+  if ((PPLangOpts.getGC() != 0) != (LangOpts.getGC() != 0)) {
     Reader.Diag(diag::warn_pch_gc_mode)
-      << LangOpts.getGCMode() << PPLangOpts.getGCMode();
+      << LangOpts.getGC() << PPLangOpts.getGC();
     return true;
   }
   PARSE_LANGOPT_BENIGN(getVisibilityMode());
-  PARSE_LANGOPT_IMPORTANT(getStackProtectorMode(),
+  PARSE_LANGOPT_IMPORTANT(getStackProtector(),
                           diag::warn_pch_stack_protector);
   PARSE_LANGOPT_BENIGN(InstantiationDepth);
   PARSE_LANGOPT_IMPORTANT(OpenCL, diag::warn_pch_opencl);
@@ -3049,10 +3049,10 @@ bool ASTReader::ParseLanguageOptions(
     PARSE_LANGOPT(CharIsSigned);
     PARSE_LANGOPT(ShortWChar);
     PARSE_LANGOPT(ShortEnums);
-    LangOpts.setGCMode((LangOptions::GCMode)Record[Idx++]);
+    LangOpts.setGC((LangOptions::GCMode)Record[Idx++]);
     LangOpts.setVisibilityMode((Visibility)Record[Idx++]);
-    LangOpts.setStackProtectorMode((LangOptions::StackProtectorMode)
-                                   Record[Idx++]);
+    LangOpts.setStackProtector((LangOptions::StackProtectorMode)
+                                  Record[Idx++]);
     PARSE_LANGOPT(InstantiationDepth);
     PARSE_LANGOPT(OpenCL);
     PARSE_LANGOPT(CUDA);

@@ -79,7 +79,7 @@ public:
   void EmitMoveFromReturnSlot(const Expr *E, RValue Src);
 
   AggValueSlot::NeedsGCBarriers_t needsGC(QualType T) {
-    if (CGF.getLangOptions().getGCMode() && TypeRequiresGCollection(T))
+    if (CGF.getLangOptions().getGC() && TypeRequiresGCollection(T))
       return AggValueSlot::NeedsGCBarriers;
     return AggValueSlot::DoesNotNeedGCBarriers;
   }
@@ -1123,7 +1123,7 @@ void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
   SrcPtr = Builder.CreateBitCast(SrcPtr, SBP, "tmp");
 
   // Don't do any of the memmove_collectable tests if GC isn't set.
-  if (CGM.getLangOptions().getGCMode() == LangOptions::NonGC) {
+  if (CGM.getLangOptions().getGC() == LangOptions::NonGC) {
     // fall through
   } else if (const RecordType *RecordTy = Ty->getAs<RecordType>()) {
     RecordDecl *Record = RecordTy->getDecl();

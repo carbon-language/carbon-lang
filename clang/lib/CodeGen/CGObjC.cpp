@@ -465,7 +465,7 @@ PropertyImplStrategy::PropertyImplStrategy(CodeGenModule &CGM,
   if (attrs & (ObjCPropertyDecl::OBJC_PR_retain
                | ObjCPropertyDecl::OBJC_PR_strong)) {
     // In GC-only, there's nothing special that needs to be done.
-    if (CGM.getLangOptions().getGCMode() == LangOptions::GCOnly) {
+    if (CGM.getLangOptions().getGC() == LangOptions::GCOnly) {
       // fallthrough
 
     // In ARC, if the property is non-atomic, use expression emission,
@@ -506,14 +506,14 @@ PropertyImplStrategy::PropertyImplStrategy(CodeGenModule &CGM,
   // expressions.  This actually works out to being atomic anyway,
   // except for ARC __strong, but that should trigger the above code.
   if (ivarType.hasNonTrivialObjCLifetime() ||
-      (CGM.getLangOptions().getGCMode() &&
+      (CGM.getLangOptions().getGC() &&
        CGM.getContext().getObjCGCAttrKind(ivarType))) {
     Kind = Expression;
     return;
   }
 
   // Compute whether the ivar has strong members.
-  if (CGM.getLangOptions().getGCMode())
+  if (CGM.getLangOptions().getGC())
     if (const RecordType *recordType = ivarType->getAs<RecordType>())
       HasStrong = recordType->getDecl()->hasObjectMember();
 
@@ -1066,7 +1066,7 @@ bool CodeGenFunction::IndirectObjCSetterArg(const CGFunctionInfo &FI) {
 }
 
 bool CodeGenFunction::IvarTypeWithAggrGCObjects(QualType Ty) {
-  if (CGM.getLangOptions().getGCMode() == LangOptions::NonGC)
+  if (CGM.getLangOptions().getGC() == LangOptions::NonGC)
     return false;
   if (const RecordType *FDTTy = Ty.getTypePtr()->getAs<RecordType>())
     return FDTTy->getDecl()->hasObjectMember();

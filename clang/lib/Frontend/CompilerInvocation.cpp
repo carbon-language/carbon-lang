@@ -713,11 +713,11 @@ static void LangOptsToArgs(const LangOptions &Opts,
     Res.push_back("-fshort-wchar");
   if (!Opts.ElideConstructors)
     Res.push_back("-fno-elide-constructors");
-  if (Opts.getGCMode() != LangOptions::NonGC) {
-    if (Opts.getGCMode() == LangOptions::HybridGC) {
+  if (Opts.getGC() != LangOptions::NonGC) {
+    if (Opts.getGC() == LangOptions::HybridGC) {
       Res.push_back("-fobjc-gc");
     } else {
-      assert(Opts.getGCMode() == LangOptions::GCOnly && "Invalid GC mode!");
+      assert(Opts.getGC() == LangOptions::GCOnly && "Invalid GC mode!");
       Res.push_back("-fobjc-gc-only");
     }
   }
@@ -744,9 +744,9 @@ static void LangOptsToArgs(const LangOptions &Opts,
   if (Opts.InlineVisibilityHidden)
     Res.push_back("-fvisibility-inlines-hidden");
 
-  if (Opts.getStackProtectorMode() != 0) {
+  if (Opts.getStackProtector() != 0) {
     Res.push_back("-stack-protector");
-    Res.push_back(llvm::utostr(Opts.getStackProtectorMode()));
+    Res.push_back(llvm::utostr(Opts.getStackProtector()));
   }
   if (Opts.InstantiationDepth != DefaultLangOpts.InstantiationDepth) {
     Res.push_back("-ftemplate-depth");
@@ -1586,9 +1586,9 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
 
   if (Opts.ObjC1) {
     if (Args.hasArg(OPT_fobjc_gc_only))
-      Opts.setGCMode(LangOptions::GCOnly);
+      Opts.setGC(LangOptions::GCOnly);
     else if (Args.hasArg(OPT_fobjc_gc))
-      Opts.setGCMode(LangOptions::HybridGC);
+      Opts.setGC(LangOptions::HybridGC);
     else if (Args.hasArg(OPT_fobjc_arc)) {
       Opts.ObjCAutoRefCount = 1;
       if (!Args.hasArg(OPT_fobjc_nonfragile_abi))
@@ -1737,9 +1737,9 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
     Diags.Report(diag::err_drv_invalid_value)
       << Args.getLastArg(OPT_stack_protector)->getAsString(Args) << SSP;
     break;
-  case 0: Opts.setStackProtectorMode(LangOptions::SSPOff); break;
-  case 1: Opts.setStackProtectorMode(LangOptions::SSPOn);  break;
-  case 2: Opts.setStackProtectorMode(LangOptions::SSPReq); break;
+  case 0: Opts.setStackProtector(LangOptions::SSPOff); break;
+  case 1: Opts.setStackProtector(LangOptions::SSPOn);  break;
+  case 2: Opts.setStackProtector(LangOptions::SSPReq); break;
   }
 }
 

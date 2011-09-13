@@ -1,0 +1,148 @@
+//===--- LangOptions.def - Language option database --------------- C++ -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// This file defines the language options. Users of this file must
+// define the LANGOPT macro to make use of this information. 
+// Optionally, the user may also define BENIGN_LANGOPT
+// (for options that don't affect the construction of the AST in an
+// incompatible way), ENUM_LANGOPT (for options that have enumeration,
+// rather than unsigned, type), and BENIGN_ENUM_LANGOPT (for benign
+// options that have enumeration type).
+//
+//===----------------------------------------------------------------------===//
+#ifndef LANGOPT
+#  error Define the LANGOPT macro to handle language options
+#endif
+
+#ifndef BENIGN_LANGOPT
+#  define BENIGN_LANGOPT(Name, Bits, Default, Description) \
+     LANGOPT(Name, Bits, Default, Description)
+#endif
+
+#ifndef ENUM_LANGOPT
+#  define ENUM_LANGOPT(Name, Type, Bits, Default, Description) \
+     LANGOPT(Name, Bits, Default, Description)
+#endif
+
+#ifndef BENIGN_ENUM_LANGOPT
+#  define BENIGN_ENUM_LANGOPT(Name, Type, Bits, Default, Description) \
+     ENUM_LANGOPT(Name, Type, Bits, Default, Description)
+#endif
+
+LANGOPT(Trigraphs         , 1, 0,"Trigraphs in source files")
+LANGOPT(BCPLComment       , 1, 0, "BCPL-style '//' comments")
+LANGOPT(Bool              , 1, 0, "'bool', 'true', 'false' keywords")
+BENIGN_LANGOPT(DollarIdents      , 1, 0, "'$' allowed in identifiers")
+BENIGN_LANGOPT(AsmPreprocessor   , 1, 0, "Preprocessor in asm mode")
+BENIGN_LANGOPT(GNUMode           , 1, 0, "True in gnu99 mode false in c99 mode (etc)")
+LANGOPT(GNUKeywords       , 1, 0, "True if GNU-only keywords are allowed")
+BENIGN_LANGOPT(ImplicitInt       , 1, 0, "C89 implicit 'int'")
+LANGOPT(Digraphs          , 1, 0, "C94, C99 and C++")
+BENIGN_LANGOPT(HexFloats         , 1, 0, "C99 Hexadecimal float constants")
+LANGOPT(C99               , 1, 0, "C99 Support")
+LANGOPT(C1X               , 1, 0, "C1X Support")
+LANGOPT(Microsoft         , 1, 0, "Microsoft extensions")
+LANGOPT(Borland           , 1, 0, "Borland extensions")
+LANGOPT(CPlusPlus         , 1, 0, "C++ Support")
+LANGOPT(CPlusPlus0x       , 1, 0, "C++0x Support")
+LANGOPT(CXXOperatorNames  , 1, 0, "Treat C++ operator names as keywords")
+LANGOPT(ObjC1             , 1, 0, "Objective-C 1 support enabled")
+LANGOPT(ObjC2             , 1, 0, "Objective-C 2 support enabled")
+LANGOPT(ObjCNonFragileABI , 1, 0, "Objective-C modern abi enabled")
+LANGOPT(ObjCNonFragileABI2 , 1, 0, "Objective-C enhanced modern abi enabled")
+BENIGN_LANGOPT(ObjCDefaultSynthProperties , 1, 0, 
+               "Objective-C auto-synthesized properties")
+BENIGN_LANGOPT(ObjCInferRelatedResultType , 1, 1, 
+               "Infer Objective-C related return types")
+LANGOPT(AppleKext         , 1, 0, "Allow apple kext features")
+BENIGN_LANGOPT(PascalStrings     , 1, 0, "Allow Pascal strings")
+LANGOPT(WritableStrings   , 1, 0, "Allow writable strings")
+LANGOPT(ConstStrings      , 1, 0, 
+        "Add const qualifier to strings (-Wwrite-strings)")
+LANGOPT(LaxVectorConversions , 1, 1, "Supprt lax vector conversions")
+LANGOPT(AltiVec           , 1, 0, "Support AltiVec-style vector initializers")
+LANGOPT(Exceptions        , 1, 0, "Support exception handling")
+LANGOPT(ObjCExceptions    , 1, 0, "Support Objective-C exceptions")
+LANGOPT(CXXExceptions     , 1, 0, "Support C++ exceptions")
+LANGOPT(SjLjExceptions    , 1, 0, "Use setjmp-longjump exception handling")
+LANGOPT(TraditionalCPP    , 1, 0, "Enable some traditional CPP emulation")
+LANGOPT(RTTI              , 1, 1, "Support RTTI information")
+LANGOPT(MSBitfields       , 1, 0, "MS-compatible structure layout")
+LANGOPT(NeXTRuntime       , 1, 1, "Use NeXT runtime")
+BENIGN_LANGOPT(Freestanding      , 1, 0, "Freestanding implementation")
+LANGOPT(NoBuiltin         , 1, 0, "Do not use builtin functions (-fno-builtin)")
+
+BENIGN_LANGOPT(ThreadsafeStatics , 1, 1, "Whether static initializers are protected by locks")
+LANGOPT(POSIXThreads      , 1, 0, "Compiling with POSIX thread support")
+BENIGN_LANGOPT(Blocks            , 1, 0, "Support blocks extension to C")
+BENIGN_LANGOPT(EmitAllDecls      , 1, 0, "Emit all declarations, even if they are unused")
+LANGOPT(MathErrno         , 1, 1, "Math functions must respect errno (modulo the platform support)")
+BENIGN_LANGOPT(HeinousExtensions , 1, 0, "Extensions that we really don't like and may be ripped out at any time")
+
+LANGOPT(Optimize          , 1, 0, "Whether __OPTIMIZE__ should be defined")
+LANGOPT(OptimizeSize      , 1, 0, "Whether __OPTIMIZE_SIZE__ should be defined")
+LANGOPT(Static            , 1, 0, "Should __STATIC__ be defined (as opposed to __DYNAMIC__)")
+LANGOPT(PICLevel          , 2, 0, "The value for __PIC__, if non-zero")
+LANGOPT(GNUInline         , 1, 0, "Should GNU inline semantics be used (instead of C99 semantics)")
+LANGOPT(NoInline          , 1, 0, "Should __NO_INLINE__ be defined")
+LANGOPT(Deprecated        , 1, 0, "Should __DEPRECATED be defined")
+
+LANGOPT(ObjCGCBitmapPrint , 1, 0, "Enable printing of gc's bitmap layout for __weak/__strong ivars")
+
+BENIGN_LANGOPT(AccessControl     , 1, 1, "Whether C++ access control should be enabled")
+LANGOPT(CharIsSigned      , 1, 1, "Whether char is a signed or unsigned type")
+LANGOPT(ShortWChar        , 1, 0, "Force wchar_t to be unsigned short int")
+
+LANGOPT(ShortEnums        , 1, 0, "The enum type will be equivalent to the smallest integer type with enough room")
+
+LANGOPT(OpenCL            , 1, 0, "OpenCL C99 language extensions")
+LANGOPT(CUDA              , 1, 0, "CUDA C++ language extensions")
+
+LANGOPT(AssumeSaneOperatorNew , 1, 1, "Whether to add __attribute__((malloc)) to the declaration of C++'s new operators")
+BENIGN_LANGOPT(ElideConstructors , 1, 1, "Whether C++ copy constructors should be elided if possible")
+BENIGN_LANGOPT(CatchUndefined    , 1, 0, "Generate code to check for undefined ops")
+BENIGN_LANGOPT(DumpRecordLayouts , 1, 0, "Dump the layout of IRgen'd records")
+BENIGN_LANGOPT(DumpVTableLayouts , 1, 0, "Dump the layouts of emitted vtables")
+LANGOPT(NoConstantCFStrings , 1, 0, "Do not do CF strings")
+LANGOPT(InlineVisibilityHidden , 1, 0, "Whether inline C++ methods have hidden visibility by default")
+BENIGN_LANGOPT(ParseUnknownAnytype, 1, 0, "Let the user write __unknown_anytype")
+BENIGN_LANGOPT(DebuggerSupport , 1, 0, "Do things that only make sense when supporting a debugger")
+
+BENIGN_LANGOPT(SpellChecking , 1, 1, "Whether to perform spell-checking for error recovery")
+LANGOPT(SinglePrecisionConstants , 1, 0, "Whether to treat double-precision floating point constants as single precision constants")
+LANGOPT(FastRelaxedMath , 1, 0, "OpenCL fast relaxed math (on its own, defines __FAST_RELAXED_MATH__)")
+LANGOPT(DefaultFPContract , 1, 0, "Default setting for FP_CONTRACT")
+LANGOPT(NoBitFieldTypeAlign , 1, 0, "Temporary option, used for testing purposes")
+LANGOPT(ObjCAutoRefCount , 1, 0, "Objective C automated reference counting")
+LANGOPT(ObjCRuntimeHasWeak , 1, 0, "The ARC runtime supports __weak")
+LANGOPT(FakeAddressSpaceMap , 1, 0, "Use a fake address space map, for testing languages such as OpenCL")
+
+LANGOPT(MRTD , 1, 0, "-mrtd calling convention")
+BENIGN_LANGOPT(DelayedTemplateParsing , 1, 0, "Delayed template parsing")
+LANGOPT(BlocksRuntimeOptional , 1, 0, "The blocks runtime is not guaranteed")
+
+ENUM_LANGOPT(GC, GCMode, 2, NonGC, "Objective-C Garbage Collection mode")
+ENUM_LANGOPT(VisibilityMode, Visibility, 3, DefaultVisibility, 
+             "symbol visibility")
+ENUM_LANGOPT(StackProtector, StackProtectorMode, 2, SSPOff, 
+             "Whether stack protectors are on")
+ENUM_LANGOPT(SignedOverflowBehavior, SignedOverflowBehaviorTy, 2, SOB_Undefined,
+             "How to handle signed integer overflow.")
+
+BENIGN_LANGOPT(InstantiationDepth, 32, 1024, "Maximum template instantiation depth")
+BENIGN_LANGOPT(NumLargeByValueCopy, 32, 0, 
+        "Warn if parameter/return value is larger in bytes than this setting. 0 is no check.")
+BENIGN_LANGOPT(MSCVersion, 32, 0, 
+        "Version of Microsoft Visual C/C++ we are pretending to be")
+
+#undef LANGOPT
+#undef BENIGN_LANGOPT
+#undef ENUM_LANGOPT
+#undef BENIGN_ENUM_LANGOPT
+

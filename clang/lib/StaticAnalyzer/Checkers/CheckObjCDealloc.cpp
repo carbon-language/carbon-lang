@@ -99,7 +99,7 @@ static bool scan_ivar_release(Stmt *S, ObjCIvarDecl *ID,
 static void checkObjCDealloc(const ObjCImplementationDecl *D,
                              const LangOptions& LOpts, BugReporter& BR) {
 
-  assert (LOpts.getGCMode() != LangOptions::GCOnly);
+  assert (LOpts.getGC() != LangOptions::GCOnly);
 
   ASTContext &Ctx = BR.getContext();
   const ObjCInterfaceDecl *ID = D->getClassInterface();
@@ -168,7 +168,7 @@ static void checkObjCDealloc(const ObjCImplementationDecl *D,
 
   if (!MD) { // No dealloc found.
 
-    const char* name = LOpts.getGCMode() == LangOptions::NonGC
+    const char* name = LOpts.getGC() == LangOptions::NonGC
                        ? "missing -dealloc"
                        : "missing -dealloc (Hybrid MM, non-GC)";
 
@@ -183,7 +183,7 @@ static void checkObjCDealloc(const ObjCImplementationDecl *D,
   // dealloc found.  Scan for missing [super dealloc].
   if (MD->getBody() && !scan_dealloc(MD->getBody(), S)) {
 
-    const char* name = LOpts.getGCMode() == LangOptions::NonGC
+    const char* name = LOpts.getGC() == LangOptions::NonGC
                        ? "missing [super dealloc]"
                        : "missing [super dealloc] (Hybrid MM, non-GC)";
 
@@ -240,7 +240,7 @@ static void checkObjCDealloc(const ObjCImplementationDecl *D,
       llvm::raw_string_ostream os(buf);
 
       if (requiresRelease) {
-        name = LOpts.getGCMode() == LangOptions::NonGC
+        name = LOpts.getGC() == LangOptions::NonGC
                ? "missing ivar release (leak)"
                : "missing ivar release (Hybrid MM, non-GC)";
 
@@ -248,7 +248,7 @@ static void checkObjCDealloc(const ObjCImplementationDecl *D,
            << "' instance variable was retained by a synthesized property but "
               "wasn't released in 'dealloc'";
       } else {
-        name = LOpts.getGCMode() == LangOptions::NonGC
+        name = LOpts.getGC() == LangOptions::NonGC
                ? "extra ivar release (use-after-release)"
                : "extra ivar release (Hybrid MM, non-GC)";
 
@@ -272,7 +272,7 @@ class ObjCDeallocChecker : public Checker<
 public:
   void checkASTDecl(const ObjCImplementationDecl *D, AnalysisManager& mgr,
                     BugReporter &BR) const {
-    if (mgr.getLangOptions().getGCMode() == LangOptions::GCOnly)
+    if (mgr.getLangOptions().getGC() == LangOptions::GCOnly)
       return;
     checkObjCDealloc(cast<ObjCImplementationDecl>(D), mgr.getLangOptions(), BR);
   }

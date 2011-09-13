@@ -4930,7 +4930,7 @@ CanQualType ASTContext::getFromTargetType(unsigned Type) const {
 /// garbage collection attribute.
 ///
 Qualifiers::GC ASTContext::getObjCGCAttrKind(QualType Ty) const {
-  if (getLangOptions().getGCMode() == LangOptions::NonGC)
+  if (getLangOptions().getGC() == LangOptions::NonGC)
     return Qualifiers::GCNone;
 
   assert(getLangOptions().ObjC1);
