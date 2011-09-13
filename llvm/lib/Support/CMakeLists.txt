@@ -15,6 +15,7 @@ add_llvm_library(LLVMSupport
   CommandLine.cpp
   ConstantRange.cpp
   CrashRecoveryContext.cpp
+  DataExtractor.cpp
   Debug.cpp
   DeltaAlgorithm.cpp
   DAGDeltaAlgorithm.cpp
