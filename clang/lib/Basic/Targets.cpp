@@ -2712,11 +2712,6 @@ public:
       Builder.defineMacro("_ABI64", "3");
       Builder.defineMacro("_MIPS_SIM", "_ABI64");
     }
-    else if (ABI == "o64") {
-      Builder.defineMacro("__mips_o64");
-      Builder.defineMacro("_ABIO64", "4");
-      Builder.defineMacro("_MIPS_SIM", "_ABIO64");
-    }
     else if (ABI == "eabi")
       Builder.defineMacro("__mips_eabi");
   }
