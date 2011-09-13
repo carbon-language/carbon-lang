@@ -1634,9 +1634,11 @@ void MPPassManager::addLowerLevelRequiredPass(Pass *P, Pass *RequiredPass) {
   FPP->add(RequiredPass);
 
   // Register P as the last user of RequiredPass.
-  SmallVector<Pass *, 1> LU;
-  LU.push_back(RequiredPass);
-  FPP->setLastUser(LU,  P);
+  if (RequiredPass) {
+    SmallVector<Pass *, 1> LU;
+    LU.push_back(RequiredPass);
+    FPP->setLastUser(LU,  P);
+  }
 }
 
 /// Return function pass corresponding to PassInfo PI, that is
