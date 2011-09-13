@@ -1415,10 +1415,9 @@ public:
                 SMLoc StartLoc, SMLoc EndLoc) {
     KindTy Kind = RegisterList;
 
-    if (llvm::ARMMCRegisterClasses[ARM::DPRRegClassID].
-        contains(Regs.front().first))
+    if (ARMMCRegisterClasses[ARM::DPRRegClassID].contains(Regs.front().first))
       Kind = DPRRegisterList;
-    else if (llvm::ARMMCRegisterClasses[ARM::SPRRegClassID].
+    else if (ARMMCRegisterClasses[ARM::SPRRegClassID].
              contains(Regs.front().first))
       Kind = SPRRegisterList;
 
