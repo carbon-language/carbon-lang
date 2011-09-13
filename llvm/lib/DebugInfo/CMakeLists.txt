@@ -1,4 +1,4 @@
-add_llvm_library(LLVMMC
+add_llvm_library(LLVMDebugInfo
   DIContext.cpp
   DWARFAbbreviationDeclaration.cpp
   DWARFCompileUnit.cpp
