@@ -250,6 +250,10 @@ private:
   /// The current spill mode, selected by reset().
   ComplementSpillMode SpillMode;
 
+  /// Parent interval values where the complement interval may be overlapping
+  /// other intervals.
+  SmallPtrSet<const VNInfo*, 8> OverlappedComplement;
+
   typedef IntervalMap<SlotIndex, unsigned> RegAssignMap;
 
   /// Allocator for the interval map. This will eventually be shared with
@@ -295,6 +299,17 @@ private:
   /// markComplexMapped - Mark ParentVNI as complex mapped in RegIdx regardless
   /// of the number of defs.
   void markComplexMapped(unsigned RegIdx, const VNInfo *ParentVNI);
+
+  /// markOverlappedComplement - Mark ParentVNI as being overlapped in the
+  /// complement interval.  The complement interval may overlap other intervals
+  /// after overlapIntv has been called, or when in spill mode.
+  void markOverlappedComplement(const VNInfo *ParentVNI);
+
+  /// needsRecompute - Returns true if the live range of ParentVNI needs to be
+  /// recomputed in RegIdx using LiveRangeCalc::extend.  This is the case if
+  /// the value has been rematerialized, or when back-copies have been hoisted
+  /// in spill mode.
+  bool needsRecompute(unsigned RegIdx, const VNInfo *ParentVNI);
 
   /// defFromParent - Define Reg from ParentVNI at UseIdx using either
   /// rematerialization or a COPY from parent. Return the new value.

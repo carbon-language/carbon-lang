@@ -317,6 +317,7 @@ void SplitEditor::reset(LiveRangeEdit &LRE, ComplementSpillMode SM) {
   Edit = &LRE;
   SpillMode = SM;
   OpenIdx = 0;
+  OverlappedComplement.clear();
   RegAssign.clear();
   Values.clear();
 
@@ -389,6 +390,16 @@ void SplitEditor::markComplexMapped(unsigned RegIdx, const VNInfo *ParentVNI) {
   SlotIndex Def = VNI->def;
   Edit->get(RegIdx)->addRange(LiveRange(Def, Def.getNextSlot(), VNI));
   VNI = 0;
+}
+
+void SplitEditor::markOverlappedComplement(const VNInfo *ParentVNI) {
+  if (OverlappedComplement.insert(ParentVNI))
+    markComplexMapped(0, ParentVNI);
+}
+
+bool SplitEditor::needsRecompute(unsigned RegIdx, const VNInfo *ParentVNI) {
+  return (RegIdx == 0 && OverlappedComplement.count(ParentVNI)) ||
+    Edit->didRematerialize(ParentVNI);
 }
 
 VNInfo *SplitEditor::defFromParent(unsigned RegIdx,
@@ -575,7 +586,7 @@ void SplitEditor::overlapIntv(SlotIndex Start, SlotIndex End) {
 
   // The complement interval will be extended as needed by LRCalc.extend().
   if (ParentVNI)
-    markComplexMapped(0, ParentVNI);
+    markOverlappedComplement(ParentVNI);
   DEBUG(dbgs() << "    overlapIntv [" << Start << ';' << End << "):");
   RegAssign.insert(Start, End, OpenIdx);
   DEBUG(dump());
@@ -623,7 +634,7 @@ bool SplitEditor::transferValues() {
 
       // Skip rematerialized values, we need to use LRCalc.extend() and
       // extendPHIKillRanges() to completely recompute the live ranges.
-      if (Edit->didRematerialize(ParentVNI)) {
+      if (needsRecompute(RegIdx, ParentVNI)) {
         DEBUG(dbgs() << "(remat)");
         Skipped = true;
         Start = End;
