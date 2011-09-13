@@ -56,6 +56,9 @@ public:
 
     void
     SetAsync (bool b);
+    
+    bool 
+    GetAsync ();
 
     void
     SkipLLDBInitFiles (bool b);
@@ -126,6 +129,9 @@ public:
 
     lldb::SBTarget
     GetSelectedTarget ();
+
+    void
+    SetSelectedTarget (SBTarget& target);
 
     lldb::SBSourceManager
     GetSourceManager ();

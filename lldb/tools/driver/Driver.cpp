@@ -64,21 +64,27 @@ typedef struct
                                              // pass it.
 } OptionDefinition;
 
-#define LLDB_2_TO_4 LLDB_OPT_SET_2|LLDB_OPT_SET_3|LLDB_OPT_SET_4
+#define LLDB_3_TO_5 LLDB_OPT_SET_3|LLDB_OPT_SET_4|LLDB_OPT_SET_5
+#define LLDB_4_TO_5 LLDB_OPT_SET_4|LLDB_OPT_SET_5
+
 static OptionDefinition g_options[] =
 {
-    { LLDB_OPT_SET_1,                   true , "help"           , 'h', no_argument      , NULL,  eArgTypeNone, "Prints out the usage information for the LLDB debugger." },
-    { LLDB_OPT_SET_2,                   true , "version"        , 'v', no_argument      , NULL,  eArgTypeNone, "Prints out the current version number of the LLDB debugger." },
-    { LLDB_OPT_SET_3,                   true , "arch"           , 'a', required_argument, NULL,  eArgTypeArchitecture,"Tells the debugger to use the specified architecture when starting and running the program.  <architecture> must be one of the architectures for which the program was compiled." },
-    { LLDB_OPT_SET_3 | LLDB_OPT_SET_4,  false, "script-language", 'l', required_argument, NULL,  eArgTypeScriptLang,"Tells the debugger to use the specified scripting language for user-defined scripts, rather than the default.  Valid scripting languages that can be specified include Python, Perl, Ruby and Tcl.  Currently only the Python extensions have been implemented." },
-    { LLDB_OPT_SET_3 | LLDB_OPT_SET_4,  false, "debug"          , 'd', no_argument      , NULL,  eArgTypeNone,"Tells the debugger to print out extra information for debugging itself." },
-    { LLDB_OPT_SET_3 | LLDB_OPT_SET_4,  false, "source"         , 's', required_argument, NULL,  eArgTypeFilename, "Tells the debugger to read in and execute the file <file>, which should contain lldb commands." },
-    { LLDB_OPT_SET_3,                   true , "file"           , 'f', required_argument, NULL,  eArgTypeFilename, "Tells the debugger to use the file <filename> as the program to be debugged." },
-    { LLDB_2_TO_4,                      false, "editor"         , 'e', no_argument      , NULL,  eArgTypeNone, "Tells the debugger to open source files using the host's \"external editor\" mechanism." },
-    { LLDB_2_TO_4,                      false, "no-lldbinit"    , 'n', no_argument      , NULL,  eArgTypeNone, "Do not automatically parse any '.lldbinit' files." },
-    { 0,                                false, NULL             , 0  , 0                , NULL,  eArgTypeNone, NULL }
+    { LLDB_OPT_SET_1,    true , "help"           , 'h', no_argument      , NULL,  eArgTypeNone,         "Prints out the usage information for the LLDB debugger." },
+    { LLDB_OPT_SET_2,    true , "version"        , 'v', no_argument      , NULL,  eArgTypeNone,         "Prints out the current version number of the LLDB debugger." },
+    { LLDB_OPT_SET_3,    true , "arch"           , 'a', required_argument, NULL,  eArgTypeArchitecture, "Tells the debugger to use the specified architecture when starting and running the program.  <architecture> must be one of the architectures for which the program was compiled." },
+    { LLDB_OPT_SET_3,    true , "file"           , 'f', required_argument, NULL,  eArgTypeFilename,     "Tells the debugger to use the file <filename> as the program to be debugged." },
+    { LLDB_OPT_SET_4,    true , "attach-name"    , 'n', required_argument, NULL,  eArgTypeProcessName,  "Tells the debugger to attach to a process with the given name." },
+    { LLDB_OPT_SET_4,    true , "wait-for"       , 'w', no_argument      , NULL,  eArgTypeNone,         "Tells the debugger to wait for a process with the given pid or name to launch before attaching." },
+    { LLDB_OPT_SET_5,    true , "attach-pid"     , 'p', required_argument, NULL,  eArgTypePid,          "Tells the debugger to attach to a process with the given pid." },
+    { LLDB_3_TO_5,       false, "script-language", 'l', required_argument, NULL,  eArgTypeScriptLang,   "Tells the debugger to use the specified scripting language for user-defined scripts, rather than the default.  Valid scripting languages that can be specified include Python, Perl, Ruby and Tcl.  Currently only the Python extensions have been implemented." },
+    { LLDB_3_TO_5,       false, "debug"          , 'd', no_argument      , NULL,  eArgTypeNone,         "Tells the debugger to print out extra information for debugging itself." },
+    { LLDB_3_TO_5,       false, "source"         , 's', required_argument, NULL,  eArgTypeFilename,     "Tells the debugger to read in and execute the file <file>, which should contain lldb commands." },
+    { LLDB_3_TO_5,       false, "editor"         , 'e', no_argument      , NULL,  eArgTypeNone,         "Tells the debugger to open source files using the host's \"external editor\" mechanism." },
+    { LLDB_3_TO_5,       false, "no-lldbinit"    , 'x', no_argument      , NULL,  eArgTypeNone,         "Do not automatically parse any '.lldbinit' files." },
+    { 0,                 false, NULL             , 0  , 0                , NULL,  eArgTypeNone,         NULL }
 };
 
+static const uint32_t last_option_set_with_args = 2;
 
 Driver::Driver () :
     SBBroadcaster ("Driver"),
@@ -259,7 +265,7 @@ ShowUsage (FILE *out, OptionDefinition *option_table, Driver::OptionData data)
                 }
             }
         }
-        if (!is_help_line)
+        if (!is_help_line && (opt_set <= last_option_set_with_args))
             fprintf (out, " [[--] <PROGRAM-ARG-1> [<PROGRAM_ARG-2> ...]]");
     }
 
@@ -358,6 +364,9 @@ Driver::OptionData::OptionData () :
     m_print_version (false),
     m_print_help (false),
     m_use_external_editor(false),
+    m_wait_for(false),
+    m_process_name(),
+    m_process_pid(LLDB_INVALID_PROCESS_ID),
     m_seen_options()
 {
 }
@@ -376,6 +385,9 @@ Driver::OptionData::Clear ()
     m_print_help = false;
     m_print_version = false;
     m_use_external_editor = false;
+    m_wait_for = false;
+    m_process_name.erase();
+    m_process_pid = LLDB_INVALID_PROCESS_ID;
 }
 
 void
@@ -561,7 +573,7 @@ Driver::ParseArgs (int argc, const char *argv[], FILE *out_fh, bool &exit)
                         m_option_data.m_use_external_editor = true;
                         break;
 
-                    case 'n':
+                    case 'x':
                         m_debugger.SkipLLDBInitFiles (true);
                         m_debugger.SkipAppInitFiles (true);
                         break;
@@ -597,6 +609,23 @@ Driver::ParseArgs (int argc, const char *argv[], FILE *out_fh, bool &exit)
                         m_option_data.m_debug_mode = true;
                         break;
 
+                    case 'n':
+                        m_option_data.m_process_name = optarg;
+                        break;
+                    
+                    case 'w':
+                        m_option_data.m_wait_for = true;
+                        break;
+                        
+                    case 'p':
+                        {
+                            char *remainder;
+                            m_option_data.m_process_pid = strtol (optarg, &remainder, 0);
+                            if (remainder == optarg || *remainder != '\0')
+                                error.SetErrorStringWithFormat ("Could not convert process PID: \"%s\" into a pid.",
+                                                                optarg);
+                        }
+                        break;
                     case 's':
                         {
                             SBFileSpec file(optarg);
@@ -645,7 +674,7 @@ Driver::ParseArgs (int argc, const char *argv[], FILE *out_fh, bool &exit)
     {
         // Handle crash log stuff here.
     }
-    else
+    else if (m_option_data.m_process_name.empty() && m_option_data.m_process_pid == LLDB_INVALID_PROCESS_ID)
     {
         // Any arguments that are left over after option parsing are for
         // the program. If a file was specified with -f then the filename
@@ -667,6 +696,15 @@ Driver::ParseArgs (int argc, const char *argv[], FILE *out_fh, bool &exit)
             }
         }
         
+    }
+    else
+    {
+        // Skip any options we consumed with getopt_long
+        argc -= optind;
+        argv += optind;
+
+        if (argc > 0)
+            ::fprintf (out_fh, "Warning: program arguments are ignored when attaching.\n");
     }
 
     return error;
@@ -1202,7 +1240,10 @@ Driver::MainLoop ()
                     char arg_cstr[1024];
                     for (size_t arg_idx = 1; arg_idx < num_args; ++arg_idx)
                     {
-                        ::snprintf (arg_cstr, sizeof(arg_cstr), "settings append target.process.run-args \"%s\"", m_option_data.m_args[arg_idx].c_str());
+                        ::snprintf (arg_cstr, 
+                                    sizeof(arg_cstr), 
+                                    "settings append target.process.run-args \"%s\"", 
+                                    m_option_data.m_args[arg_idx].c_str());
                         m_debugger.HandleCommand (arg_cstr);
                     }
                 }
@@ -1225,7 +1266,42 @@ Driver::MainLoop ()
                                                          *m_io_channel_ap,
                                                          IOChannel::eBroadcastBitThreadDidStart, 
                                                          event);
-            
+            // If we were asked to attach, then do that here:
+            // I'm going to use the command string rather than directly
+            // calling the API's because then I don't have to recode the
+            // event handling here.
+            if (!m_option_data.m_process_name.empty()
+                || m_option_data.m_process_pid != LLDB_INVALID_PROCESS_ID)
+            {
+                std::string command_str("process attach ");
+                if (m_option_data.m_process_pid != LLDB_INVALID_PROCESS_ID)
+                {
+                    command_str.append("-p ");
+                    char pid_buffer[32];
+                    ::snprintf (pid_buffer, sizeof(pid_buffer), "%d", m_option_data.m_process_pid);
+                    command_str.append(pid_buffer);
+                }
+                else 
+                {
+                    command_str.append("-n \"");
+                    command_str.append(m_option_data.m_process_name);
+                    command_str.push_back('\"');
+                    if (m_option_data.m_wait_for)
+                        command_str.append(" -w");
+                }
+                
+                if (m_debugger.GetOutputFileHandle())
+                    ::fprintf (m_debugger.GetOutputFileHandle(), 
+                               "Attaching to process with:\n    %s\n", 
+                               command_str.c_str());
+                                               
+                // Force the attach to be synchronous:
+                bool orig_async = m_debugger.GetAsync();
+                m_debugger.SetAsync(true);
+                m_debugger.HandleCommand(command_str.c_str());
+                m_debugger.SetAsync(orig_async);                
+            }
+                        
             ReadyForCommand ();
 
             bool done = false;

@@ -166,6 +166,15 @@ SBDebugger::SetAsync (bool b)
         m_opaque_sp->SetAsyncExecution(b);
 }
 
+bool
+SBDebugger::GetAsync ()
+{
+    if (m_opaque_sp)
+        return m_opaque_sp->GetAsyncExecution();
+    else
+        return false;
+}
+
 void
 SBDebugger::SkipLLDBInitFiles (bool b)
 {
@@ -639,6 +648,24 @@ SBDebugger::GetSelectedTarget ()
     }
 
     return sb_target;
+}
+
+void
+SBDebugger::SetSelectedTarget (SBTarget &sb_target)
+{
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+
+    if (m_opaque_sp)
+    {
+        m_opaque_sp->GetTargetList().SetSelectedTarget (sb_target.get());
+    }
+    if (log)
+    {
+        SBStream sstr;
+        sb_target.GetDescription (sstr, eDescriptionLevelBrief);
+        log->Printf ("SBDebugger(%p)::SetSelectedTarget () => SBTarget(%p): %s", m_opaque_sp.get(),
+                     sb_target.get(), sstr.GetData());
+    }
 }
 
 void
