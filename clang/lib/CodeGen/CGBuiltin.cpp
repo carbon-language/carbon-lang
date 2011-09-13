@@ -900,13 +900,14 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   case Builtin::BI__sync_lock_release_8:
   case Builtin::BI__sync_lock_release_16: {
     Value *Ptr = EmitScalarExpr(E->getArg(0));
-    llvm::Type *ElTy =
+    llvm::Type *ElLLVMTy =
       cast<llvm::PointerType>(Ptr->getType())->getElementType();
     llvm::StoreInst *Store = 
-      Builder.CreateStore(llvm::Constant::getNullValue(ElTy), Ptr);
-    // FIXME: This is completely, utterly wrong; it only even sort-of works
-    // on x86.
-    Store->setVolatile(true);
+      Builder.CreateStore(llvm::Constant::getNullValue(ElLLVMTy), Ptr);
+    QualType ElTy = E->getArg(0)->getType()->getPointeeType();
+    CharUnits StoreSize = getContext().getTypeSizeInChars(ElTy);
+    Store->setAlignment(StoreSize.getQuantity());
+    Store->setAtomic(llvm::Release);
     return RValue::get(0);
   }
 

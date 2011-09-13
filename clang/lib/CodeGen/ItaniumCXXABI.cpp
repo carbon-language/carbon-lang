@@ -1130,20 +1130,27 @@ void ItaniumCXXABI::EmitGuardedInit(CodeGenFunction &CGF,
   } else {
     // Load the first byte of the guard variable.
     llvm::Type *PtrTy = Builder.getInt8PtrTy();
-    llvm::Value *V = 
+    llvm::LoadInst *LI = 
       Builder.CreateLoad(Builder.CreateBitCast(GuardVariable, PtrTy), "tmp");
+    LI->setAlignment(1);
 
-    IsInitialized = Builder.CreateIsNull(V, "guard.uninitialized");
+    // Itanium ABI:
+    //   An implementation supporting thread-safety on multiprocessor
+    //   systems must also guarantee that references to the initialized
+    //   object do not occur before the load of the initialization flag.
+    //
+    // In LLVM, we do this by marking the load Acquire.
+    if (threadsafe)
+      LI->setAtomic(llvm::Acquire);
+
+    IsInitialized = Builder.CreateIsNull(LI, "guard.uninitialized");
   }
 
   llvm::BasicBlock *InitCheckBlock = CGF.createBasicBlock("init.check");
   llvm::BasicBlock *EndBlock = CGF.createBasicBlock("init.end");
 
-  llvm::BasicBlock *NoCheckBlock = EndBlock;
-  if (threadsafe) NoCheckBlock = CGF.createBasicBlock("init.barrier");
-
   // Check if the first byte of the guard variable is zero.
-  Builder.CreateCondBr(IsInitialized, InitCheckBlock, NoCheckBlock);
+  Builder.CreateCondBr(IsInitialized, InitCheckBlock, EndBlock);
 
   CGF.EmitBlock(InitCheckBlock);
 
@@ -1175,24 +1182,6 @@ void ItaniumCXXABI::EmitGuardedInit(CodeGenFunction &CGF,
     Builder.CreateCall(getGuardReleaseFn(CGM, GuardPtrTy), GuardVariable);
   } else {
     Builder.CreateStore(llvm::ConstantInt::get(GuardTy, 1), GuardVariable);
-  }
-
-  // Emit an acquire memory barrier if using thread-safe statics:
-  // Itanium ABI:
-  //   An implementation supporting thread-safety on multiprocessor
-  //   systems must also guarantee that references to the initialized
-  //   object do not occur before the load of the initialization flag.
-  if (threadsafe) {
-    Builder.CreateBr(EndBlock);
-    CGF.EmitBlock(NoCheckBlock);
-
-    llvm::Value *_false = Builder.getFalse();
-    llvm::Value *_true = Builder.getTrue();
-
-    Builder.CreateCall5(CGM.getIntrinsic(llvm::Intrinsic::memory_barrier),
-                        /* load-load, load-store */ _true, _true,
-                        /* store-load, store-store */ _false, _false,
-                        /* device or I/O */ _false);
   }
 
   CGF.EmitBlock(EndBlock);
