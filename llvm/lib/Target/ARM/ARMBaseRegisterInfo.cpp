@@ -680,85 +680,48 @@ unsigned ARMBaseRegisterInfo::getRegisterPairEven(unsigned Reg,
   default: break;
   // Return 0 if either register of the pair is a special register.
   // So no R12, etc.
-  case ARM::R1:
-    return ARM::R0;
-  case ARM::R3:
-    return ARM::R2;
-  case ARM::R5:
-    return ARM::R4;
+  case ARM::R1: return ARM::R0;
+  case ARM::R3: return ARM::R2;
+  case ARM::R5: return ARM::R4;
   case ARM::R7:
     return (isReservedReg(MF, ARM::R7) || isReservedReg(MF, ARM::R6))
       ? 0 : ARM::R6;
-  case ARM::R9:
-    return isReservedReg(MF, ARM::R9)  ? 0 :ARM::R8;
-  case ARM::R11:
-    return isReservedReg(MF, ARM::R11) ? 0 : ARM::R10;
+  case ARM::R9: return isReservedReg(MF, ARM::R9)  ? 0 :ARM::R8;
+  case ARM::R11: return isReservedReg(MF, ARM::R11) ? 0 : ARM::R10;
 
-  case ARM::S1:
-    return ARM::S0;
-  case ARM::S3:
-    return ARM::S2;
-  case ARM::S5:
-    return ARM::S4;
-  case ARM::S7:
-    return ARM::S6;
-  case ARM::S9:
-    return ARM::S8;
-  case ARM::S11:
-    return ARM::S10;
-  case ARM::S13:
-    return ARM::S12;
-  case ARM::S15:
-    return ARM::S14;
-  case ARM::S17:
-    return ARM::S16;
-  case ARM::S19:
-    return ARM::S18;
-  case ARM::S21:
-    return ARM::S20;
-  case ARM::S23:
-    return ARM::S22;
-  case ARM::S25:
-    return ARM::S24;
-  case ARM::S27:
-    return ARM::S26;
-  case ARM::S29:
-    return ARM::S28;
-  case ARM::S31:
-    return ARM::S30;
+  case ARM::S1: return ARM::S0;
+  case ARM::S3: return ARM::S2;
+  case ARM::S5: return ARM::S4;
+  case ARM::S7: return ARM::S6;
+  case ARM::S9: return ARM::S8;
+  case ARM::S11: return ARM::S10;
+  case ARM::S13: return ARM::S12;
+  case ARM::S15: return ARM::S14;
+  case ARM::S17: return ARM::S16;
+  case ARM::S19: return ARM::S18;
+  case ARM::S21: return ARM::S20;
+  case ARM::S23: return ARM::S22;
+  case ARM::S25: return ARM::S24;
+  case ARM::S27: return ARM::S26;
+  case ARM::S29: return ARM::S28;
+  case ARM::S31: return ARM::S30;
 
-  case ARM::D1:
-    return ARM::D0;
-  case ARM::D3:
-    return ARM::D2;
-  case ARM::D5:
-    return ARM::D4;
-  case ARM::D7:
-    return ARM::D6;
-  case ARM::D9:
-    return ARM::D8;
-  case ARM::D11:
-    return ARM::D10;
-  case ARM::D13:
-    return ARM::D12;
-  case ARM::D15:
-    return ARM::D14;
-  case ARM::D17:
-    return ARM::D16;
-  case ARM::D19:
-    return ARM::D18;
-  case ARM::D21:
-    return ARM::D20;
-  case ARM::D23:
-    return ARM::D22;
-  case ARM::D25:
-    return ARM::D24;
-  case ARM::D27:
-    return ARM::D26;
-  case ARM::D29:
-    return ARM::D28;
-  case ARM::D31:
-    return ARM::D30;
+  case ARM::D1: return ARM::D0;
+  case ARM::D3: return ARM::D2;
+  case ARM::D5: return ARM::D4;
+  case ARM::D7: return ARM::D6;
+  case ARM::D9: return ARM::D8;
+  case ARM::D11: return ARM::D10;
+  case ARM::D13: return ARM::D12;
+  case ARM::D15: return ARM::D14;
+  case ARM::D17: return ARM::D16;
+  case ARM::D19: return ARM::D18;
+  case ARM::D21: return ARM::D20;
+  case ARM::D23: return ARM::D22;
+  case ARM::D25: return ARM::D24;
+  case ARM::D27: return ARM::D26;
+  case ARM::D29: return ARM::D28;
+  case ARM::D31: return ARM::D30;
   }
 
   return 0;
@@ -770,85 +733,48 @@ unsigned ARMBaseRegisterInfo::getRegisterPairOdd(unsigned Reg,
   default: break;
   // Return 0 if either register of the pair is a special register.
   // So no R12, etc.
-  case ARM::R0:
-    return ARM::R1;
-  case ARM::R2:
-    return ARM::R3;
-  case ARM::R4:
-    return ARM::R5;
+  case ARM::R0: return ARM::R1;
+  case ARM::R2: return ARM::R3;
+  case ARM::R4: return ARM::R5;
   case ARM::R6:
     return (isReservedReg(MF, ARM::R7) || isReservedReg(MF, ARM::R6))
       ? 0 : ARM::R7;
-  case ARM::R8:
-    return isReservedReg(MF, ARM::R9)  ? 0 :ARM::R9;
-  case ARM::R10:
-    return isReservedReg(MF, ARM::R11) ? 0 : ARM::R11;
+  case ARM::R8: return isReservedReg(MF, ARM::R9)  ? 0 :ARM::R9;
+  case ARM::R10: return isReservedReg(MF, ARM::R11) ? 0 : ARM::R11;
 
-  case ARM::S0:
-    return ARM::S1;
-  case ARM::S2:
-    return ARM::S3;
-  case ARM::S4:
-    return ARM::S5;
-  case ARM::S6:
-    return ARM::S7;
-  case ARM::S8:
-    return ARM::S9;
-  case ARM::S10:
-    return ARM::S11;
-  case ARM::S12:
-    return ARM::S13;
-  case ARM::S14:
-    return ARM::S15;
-  case ARM::S16:
-    return ARM::S17;
-  case ARM::S18:
-    return ARM::S19;
-  case ARM::S20:
-    return ARM::S21;
-  case ARM::S22:
-    return ARM::S23;
-  case ARM::S24:
-    return ARM::S25;
-  case ARM::S26:
-    return ARM::S27;
-  case ARM::S28:
-    return ARM::S29;
-  case ARM::S30:
-    return ARM::S31;
+  case ARM::S0: return ARM::S1;
+  case ARM::S2: return ARM::S3;
+  case ARM::S4: return ARM::S5;
+  case ARM::S6: return ARM::S7;
+  case ARM::S8: return ARM::S9;
+  case ARM::S10: return ARM::S11;
+  case ARM::S12: return ARM::S13;
+  case ARM::S14: return ARM::S15;
+  case ARM::S16: return ARM::S17;
+  case ARM::S18: return ARM::S19;
+  case ARM::S20: return ARM::S21;
+  case ARM::S22: return ARM::S23;
+  case ARM::S24: return ARM::S25;
+  case ARM::S26: return ARM::S27;
+  case ARM::S28: return ARM::S29;
+  case ARM::S30: return ARM::S31;
 
-  case ARM::D0:
-    return ARM::D1;
-  case ARM::D2:
-    return ARM::D3;
-  case ARM::D4:
-    return ARM::D5;
-  case ARM::D6:
-    return ARM::D7;
-  case ARM::D8:
-    return ARM::D9;
-  case ARM::D10:
-    return ARM::D11;
-  case ARM::D12:
-    return ARM::D13;
-  case ARM::D14:
-    return ARM::D15;
-  case ARM::D16:
-    return ARM::D17;
-  case ARM::D18:
-    return ARM::D19;
-  case ARM::D20:
-    return ARM::D21;
-  case ARM::D22:
-    return ARM::D23;
-  case ARM::D24:
-    return ARM::D25;
-  case ARM::D26:
-    return ARM::D27;
-  case ARM::D28:
-    return ARM::D29;
-  case ARM::D30:
-    return ARM::D31;
+  case ARM::D0: return ARM::D1;
+  case ARM::D2: return ARM::D3;
+  case ARM::D4: return ARM::D5;
+  case ARM::D6: return ARM::D7;
+  case ARM::D8: return ARM::D9;
+  case ARM::D10: return ARM::D11;
+  case ARM::D12: return ARM::D13;
+  case ARM::D14: return ARM::D15;
+  case ARM::D16: return ARM::D17;
+  case ARM::D18: return ARM::D19;
+  case ARM::D20: return ARM::D21;
+  case ARM::D22: return ARM::D23;
+  case ARM::D24: return ARM::D25;
+  case ARM::D26: return ARM::D27;
+  case ARM::D28: return ARM::D29;
+  case ARM::D30: return ARM::D31;
   }
 
   return 0;
