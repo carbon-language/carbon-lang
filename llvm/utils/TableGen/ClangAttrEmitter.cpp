@@ -540,7 +540,7 @@ void ClangAttrClassEmitter::run(raw_ostream &OS) {
     ae = Args.end();
 
     OS << "\n public:\n";
-    OS << "  " << R.getName() << "Attr(SourceLocation L, ASTContext &Ctx\n";
+    OS << "  " << R.getName() << "Attr(SourceRange R, ASTContext &Ctx\n";
     
     for (ai = Args.begin(); ai != ae; ++ai) {
       OS << "              , ";
@@ -549,7 +549,7 @@ void ClangAttrClassEmitter::run(raw_ostream &OS) {
     }
     
     OS << "             )\n";
-    OS << "    : " << SuperName << "(attr::" << R.getName() << ", L)\n";
+    OS << "    : " << SuperName << "(attr::" << R.getName() << ", R)\n";
 
     for (ai = Args.begin(); ai != ae; ++ai) {
       OS << "              , ";
@@ -701,7 +701,7 @@ void ClangAttrPCHReadEmitter::run(raw_ostream &OS) {
       Args.push_back(A);
       A->writePCHReadDecls(OS);
     }
-    OS << "    New = new (Context) " << R.getName() << "Attr(Loc, Context";
+    OS << "    New = new (Context) " << R.getName() << "Attr(Range, Context";
     for (ri = Args.begin(), re = Args.end(); ri != re; ++ri) {
       OS << ", ";
       (*ri)->writePCHReadArgs(OS);
