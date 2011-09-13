@@ -87,6 +87,6 @@ exit:
   ret void
 
 ; CHECK: @test5
-; CHECK: icmp eq i32 {{.*}}, 10
+; CHECK: icmp slt i32 {{.*}}, 0
 ; CHECK-NEXT: br i1
 }
