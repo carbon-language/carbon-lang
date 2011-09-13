@@ -6,6 +6,8 @@
 struct s3 { char c[3]; };
 
 // This structure's size is, so it does, because it can.
+// FIXME: But we don't at the moment; the backend doesn't know how to generate
+// correct code.
 struct s4 { char c[4]; };
 
 @interface Test0
@@ -23,7 +25,7 @@ struct s4 { char c[4]; };
 // CHECK: call void @objc_copyStruct
 
 // CHECK: define internal i32 @"\01-[Test0 s4]"(
-// CHECK: load atomic i32* {{%.*}} unordered, align 1
+// CHECK: call void @objc_copyStruct
 
 // CHECK: define internal void @"\01-[Test0 setS4:]"(
-// CHECK: store atomic i32 {{%.*}}, i32* {{%.*}} unordered, align 1
+// CHECK: call void @objc_copyStruct
