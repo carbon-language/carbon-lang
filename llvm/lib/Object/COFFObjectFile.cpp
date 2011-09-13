@@ -447,7 +447,7 @@ error_code COFFObjectFile::getString(uint32_t offset,
 
 const coff_relocation *COFFObjectFile::toRel(DataRefImpl Rel) const {
   assert(Rel.d.b < Header->NumberOfSections && "Section index out of range!");
-  const coff_section *Sect;
+  const coff_section *Sect = NULL;
   getSection(Rel.d.b, Sect);
   assert(Rel.d.a < Sect->NumberOfRelocations && "Relocation index out of range!");
   return
@@ -463,7 +463,7 @@ error_code COFFObjectFile::getRelocationNext(DataRefImpl Rel,
   if (++Rel.d.a >= Sect->NumberOfRelocations) {
     Rel.d.a = 0;
     while (++Rel.d.b < Header->NumberOfSections) {
-      const coff_section *Sect;
+      const coff_section *Sect = NULL;
       getSection(Rel.d.b, Sect);
       if (Sect->NumberOfRelocations > 0)
         break;
@@ -474,7 +474,7 @@ error_code COFFObjectFile::getRelocationNext(DataRefImpl Rel,
 }
 error_code COFFObjectFile::getRelocationAddress(DataRefImpl Rel,
                                                 uint64_t &Res) const {
-  const coff_section *Sect;
+  const coff_section *Sect = NULL;
   if (error_code ec = getSection(Rel.d.b, Sect))
     return ec;
   const coff_relocation* R = toRel(Rel);
