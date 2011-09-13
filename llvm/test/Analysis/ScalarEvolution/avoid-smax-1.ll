@@ -1,6 +1,4 @@
-; RUN: opt < %s -indvars -S > %t
-; RUN: grep select %t | count 2
-; RUN: grep {icmp ne i32.\* } %t
+; RUN: opt < %s -indvars -S -enable-iv-rewrite | FileCheck %s
 
 ; Indvars should be able to insert a canonical induction variable
 ; for the bb6 loop without using a maximum calculation (icmp, select)
@@ -8,6 +6,9 @@
 ; by an appropriate conditional branch. Unfortunately, indvars is
 ; not yet able to find the comparison for the other two loops in
 ; this testcase.
+; CHECK: entry:
+; CHECK-NOT: select
+; CHECK: bb6:
 
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:128:128"
 target triple = "i386-apple-darwin9"
