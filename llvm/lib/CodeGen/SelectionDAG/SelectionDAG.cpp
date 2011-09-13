@@ -6440,6 +6440,10 @@ SDValue SelectionDAG::UnrollVectorOp(SDNode *N, unsigned ResNE) {
       Scalars.push_back(getNode(N->getOpcode(), dl, EltVT,
                                 &Operands[0], Operands.size()));
       break;
+    case ISD::VSELECT:
+      Scalars.push_back(getNode(ISD::SELECT, dl, EltVT,
+                                &Operands[0], Operands.size()));
+      break;
     case ISD::SHL:
     case ISD::SRA:
     case ISD::SRL:

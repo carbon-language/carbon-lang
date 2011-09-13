@@ -61,6 +61,9 @@ class VectorLegalizer {
   // Implements expansion for UINT_TO_FLOAT; falls back to UnrollVectorOp if
   // SINT_TO_FLOAT and SHR on vectors isn't legal.
   SDValue ExpandUINT_TO_FLOAT(SDValue Op);
+  // Implement vselect in terms of XOR, AND,OR when blend is not supported
+  //  by the target.
+  SDValue ExpandVSELECT(SDValue Op);
   SDValue ExpandFNEG(SDValue Op);
   // Implements vector promotion; this is essentially just bitcasting the
   // operands to a different type and bitcasting the result back to the
@@ -157,6 +160,7 @@ SDValue VectorLegalizer::LegalizeOp(SDValue Op) {
   case ISD::CTLZ:
   case ISD::CTPOP:
   case ISD::SELECT:
+  case ISD::VSELECT:
   case ISD::SELECT_CC:
   case ISD::SETCC:
   case ISD::ZERO_EXTEND:
@@ -210,7 +214,9 @@ SDValue VectorLegalizer::LegalizeOp(SDValue Op) {
     // FALL THROUGH
   }
   case TargetLowering::Expand:
-    if (Node->getOpcode() == ISD::UINT_TO_FP)
+    if (Node->getOpcode() == ISD::VSELECT)
+      Result = ExpandVSELECT(Op);
+    else if (Node->getOpcode() == ISD::UINT_TO_FP)
       Result = ExpandUINT_TO_FLOAT(Op);
     else if (Node->getOpcode() == ISD::FNEG)
       Result = ExpandFNEG(Op);
@@ -256,9 +262,42 @@ SDValue VectorLegalizer::PromoteVectorOp(SDValue Op) {
   return DAG.getNode(ISD::BITCAST, dl, VT, Op);
 }
 
+SDValue VectorLegalizer::ExpandVSELECT(SDValue Op) {
+  // Implement VSELECT in terms of XOR, AND, OR
+  // on platforms which do not support blend natively.
+  EVT VT =  Op.getOperand(0).getValueType();
+  EVT OVT = Op.getOperand(0).getValueType();
+  DebugLoc DL = Op.getDebugLoc();
+
+  SDValue Mask = Op.getOperand(0);
+  SDValue Op1 = Op.getOperand(1);
+  SDValue Op2 = Op.getOperand(2);
+
+  // If we can't even use the basic vector operations of
+  // AND,OR,XOR, we will have to scalarize the op.
+  if (!TLI.isOperationLegalOrCustom(ISD::AND, VT) ||
+      !TLI.isOperationLegalOrCustom(ISD::XOR, VT) ||
+      !TLI.isOperationLegalOrCustom(ISD::OR, VT)) {
+    return DAG.UnrollVectorOp(Op.getNode());
+  }
+
+  assert(VT.getSizeInBits() == OVT.getSizeInBits() && "Invalid mask size");
+  // Bitcast the operands to be the same type as the mask.
+  // This is needed when we select between FP types because
+  // the mask is a vector of integers.
+  Op1 = DAG.getNode(ISD::BITCAST, DL, VT, Op1);
+  Op2 = DAG.getNode(ISD::BITCAST, DL, VT, Op2);
+
+  SDValue AllOnes = DAG.getConstant(
+    APInt::getAllOnesValue(VT.getScalarType().getSizeInBits()), VT);
+  SDValue NotMask = DAG.getNode(ISD::XOR, DL, VT, Mask, AllOnes);
+
+  Op1 = DAG.getNode(ISD::AND, DL, VT, Op1, Mask);
+  Op2 = DAG.getNode(ISD::AND, DL, VT, Op2, NotMask);
+  return DAG.getNode(ISD::OR, DL, VT, Op1, Op2);
+}
+
 SDValue VectorLegalizer::ExpandUINT_TO_FLOAT(SDValue Op) {
-
-
   EVT VT = Op.getOperand(0).getValueType();
   DebugLoc DL = Op.getDebugLoc();
 

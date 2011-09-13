@@ -727,6 +727,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::SIGN_EXTEND,  (MVT::SimpleValueType)VT, Expand);
     setOperationAction(ISD::ZERO_EXTEND,  (MVT::SimpleValueType)VT, Expand);
     setOperationAction(ISD::ANY_EXTEND,  (MVT::SimpleValueType)VT, Expand);
+    setOperationAction(ISD::VSELECT,  (MVT::SimpleValueType)VT, Expand);
     for (unsigned InnerVT = (unsigned)MVT::FIRST_VECTOR_VALUETYPE;
          InnerVT <= (unsigned)MVT::LAST_VECTOR_VALUETYPE; ++InnerVT)
       setTruncStoreAction((MVT::SimpleValueType)VT,
