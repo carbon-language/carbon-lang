@@ -38,8 +38,7 @@ DWARFAbbreviationDeclaration::extract(DataExtractor data, uint32_t* offset_ptr,
     }
 
     return Tag != 0;
-  }
-  else {
+  } else {
     Tag = 0;
     HasChildren = false;
   }

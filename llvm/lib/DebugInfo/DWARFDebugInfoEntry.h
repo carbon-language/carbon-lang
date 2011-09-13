@@ -85,19 +85,16 @@ public:
       // We know we are kept in a vector of contiguous entries, so we know
       // our parent will be some index behind "this".
       ParentIdx = this - parent;
-    }
-    else
+    } else
       ParentIdx = 0;
   }
   void setSibling(DWARFDebugInfoEntryMinimal *sibling) {
-    if (sibling)
-    {
+    if (sibling) {
       // We know we are kept in a vector of contiguous entries, so we know
       // our sibling will be some index after "this".
       SiblingIdx = sibling - this;
       sibling->setParent(getParent());
-    }
-    else
+    } else
       SiblingIdx = 0;
   }
 

@@ -51,7 +51,7 @@ public:
   void dump(raw_ostream &OS, const DataExtractor *debug_str_data,
             const DWARFCompileUnit* cu) const;
   bool extractValue(DataExtractor data, uint32_t *offset_ptr,
-      const DWARFCompileUnit *cu);
+                    const DWARFCompileUnit *cu);
   bool isInlinedCStr() const {
     return Value.data != NULL && Value.data == (uint8_t*)Value.cstr;
   }

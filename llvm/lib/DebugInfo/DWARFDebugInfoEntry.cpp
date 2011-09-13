@@ -351,8 +351,7 @@ DWARFDebugInfoEntryMinimal::getAttributeValue(const DWARFCompileUnit *cu,
 
       const uint32_t attr_offset = offset;
       form_value = DWARFFormValue(AbbrevDecl->getFormByIndex(idx));
-      if (form_value.extractValue(debug_info_data, &offset, cu))
-      {
+      if (form_value.extractValue(debug_info_data, &offset, cu)) {
         if (end_attr_offset_ptr)
           *end_attr_offset_ptr = offset;
         return attr_offset;

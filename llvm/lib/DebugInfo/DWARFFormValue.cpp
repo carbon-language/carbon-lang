@@ -17,156 +17,156 @@ using namespace llvm;
 using namespace dwarf;
 
 static const uint8_t form_sizes_addr4[] = {
-    0, // 0x00 unused
-    4, // 0x01 DW_FORM_addr
-    0, // 0x02 unused
-    0, // 0x03 DW_FORM_block2
-    0, // 0x04 DW_FORM_block4
-    2, // 0x05 DW_FORM_data2
-    4, // 0x06 DW_FORM_data4
-    8, // 0x07 DW_FORM_data8
-    0, // 0x08 DW_FORM_string
-    0, // 0x09 DW_FORM_block
-    0, // 0x0a DW_FORM_block1
-    1, // 0x0b DW_FORM_data1
-    1, // 0x0c DW_FORM_flag
-    0, // 0x0d DW_FORM_sdata
-    4, // 0x0e DW_FORM_strp
-    0, // 0x0f DW_FORM_udata
-    4, // 0x10 DW_FORM_ref_addr
-    1, // 0x11 DW_FORM_ref1
-    2, // 0x12 DW_FORM_ref2
-    4, // 0x13 DW_FORM_ref4
-    8, // 0x14 DW_FORM_ref8
-    0, // 0x15 DW_FORM_ref_udata
-    0, // 0x16 DW_FORM_indirect
+  0, // 0x00 unused
+  4, // 0x01 DW_FORM_addr
+  0, // 0x02 unused
+  0, // 0x03 DW_FORM_block2
+  0, // 0x04 DW_FORM_block4
+  2, // 0x05 DW_FORM_data2
+  4, // 0x06 DW_FORM_data4
+  8, // 0x07 DW_FORM_data8
+  0, // 0x08 DW_FORM_string
+  0, // 0x09 DW_FORM_block
+  0, // 0x0a DW_FORM_block1
+  1, // 0x0b DW_FORM_data1
+  1, // 0x0c DW_FORM_flag
+  0, // 0x0d DW_FORM_sdata
+  4, // 0x0e DW_FORM_strp
+  0, // 0x0f DW_FORM_udata
+  4, // 0x10 DW_FORM_ref_addr
+  1, // 0x11 DW_FORM_ref1
+  2, // 0x12 DW_FORM_ref2
+  4, // 0x13 DW_FORM_ref4
+  8, // 0x14 DW_FORM_ref8
+  0, // 0x15 DW_FORM_ref_udata
+  0, // 0x16 DW_FORM_indirect
 };
 
 static const uint8_t form_sizes_addr8[] = {
-    0, // 0x00 unused
-    8, // 0x01 DW_FORM_addr
-    0, // 0x02 unused
-    0, // 0x03 DW_FORM_block2
-    0, // 0x04 DW_FORM_block4
-    2, // 0x05 DW_FORM_data2
-    4, // 0x06 DW_FORM_data4
-    8, // 0x07 DW_FORM_data8
-    0, // 0x08 DW_FORM_string
-    0, // 0x09 DW_FORM_block
-    0, // 0x0a DW_FORM_block1
-    1, // 0x0b DW_FORM_data1
-    1, // 0x0c DW_FORM_flag
-    0, // 0x0d DW_FORM_sdata
-    4, // 0x0e DW_FORM_strp
-    0, // 0x0f DW_FORM_udata
-    8, // 0x10 DW_FORM_ref_addr
-    1, // 0x11 DW_FORM_ref1
-    2, // 0x12 DW_FORM_ref2
-    4, // 0x13 DW_FORM_ref4
-    8, // 0x14 DW_FORM_ref8
-    0, // 0x15 DW_FORM_ref_udata
-    0, // 0x16 DW_FORM_indirect
+  0, // 0x00 unused
+  8, // 0x01 DW_FORM_addr
+  0, // 0x02 unused
+  0, // 0x03 DW_FORM_block2
+  0, // 0x04 DW_FORM_block4
+  2, // 0x05 DW_FORM_data2
+  4, // 0x06 DW_FORM_data4
+  8, // 0x07 DW_FORM_data8
+  0, // 0x08 DW_FORM_string
+  0, // 0x09 DW_FORM_block
+  0, // 0x0a DW_FORM_block1
+  1, // 0x0b DW_FORM_data1
+  1, // 0x0c DW_FORM_flag
+  0, // 0x0d DW_FORM_sdata
+  4, // 0x0e DW_FORM_strp
+  0, // 0x0f DW_FORM_udata
+  8, // 0x10 DW_FORM_ref_addr
+  1, // 0x11 DW_FORM_ref1
+  2, // 0x12 DW_FORM_ref2
+  4, // 0x13 DW_FORM_ref4
+  8, // 0x14 DW_FORM_ref8
+  0, // 0x15 DW_FORM_ref_udata
+  0, // 0x16 DW_FORM_indirect
 };
 
 const uint8_t *
 DWARFFormValue::getFixedFormSizesForAddressSize(uint8_t addr_size) {
-    switch (addr_size) {
-    case 4: return form_sizes_addr4;
-    case 8: return form_sizes_addr8;
-    }
-    return NULL;
+  switch (addr_size) {
+  case 4: return form_sizes_addr4;
+  case 8: return form_sizes_addr8;
+  }
+  return NULL;
 }
 
 bool
 DWARFFormValue::extractValue(DataExtractor data, uint32_t *offset_ptr,
                              const DWARFCompileUnit* cu) {
-    bool indirect = false;
-    bool is_block = false;
-    Value.data = NULL;
-    // Read the value for the form into value and follow and DW_FORM_indirect
-    // instances we run into
-    do {
-        indirect = false;
-        switch (Form) {
-        case DW_FORM_addr:
-        case DW_FORM_ref_addr:
-          Value.uval = data.getUnsigned(offset_ptr, cu->getAddressByteSize());
-          break;
-        case DW_FORM_block:
-          Value.uval = data.getULEB128(offset_ptr);
-          is_block = true;
-          break;
-        case DW_FORM_block1:
-          Value.uval = data.getU8(offset_ptr);
-          is_block = true;
-          break;
-        case DW_FORM_block2:
-          Value.uval = data.getU16(offset_ptr);
-          is_block = true;
-          break;
-        case DW_FORM_block4:
-          Value.uval = data.getU32(offset_ptr);
-          is_block = true;
-          break;
-        case DW_FORM_data1:
-        case DW_FORM_ref1:
-        case DW_FORM_flag:
-          Value.uval = data.getU8(offset_ptr);
-          break;
-        case DW_FORM_data2:
-        case DW_FORM_ref2:
-          Value.uval = data.getU16(offset_ptr);
-          break;
-        case DW_FORM_data4:
-        case DW_FORM_ref4:
-          Value.uval = data.getU32(offset_ptr);
-          break;
-        case DW_FORM_data8:
-        case DW_FORM_ref8:
-          Value.uval = data.getU64(offset_ptr);
-          break;
-        case DW_FORM_sdata:
-          Value.sval = data.getSLEB128(offset_ptr);
-          break;
-        case DW_FORM_strp:
-          Value.uval = data.getU32(offset_ptr);
-          break;
-        case DW_FORM_udata:
-        case DW_FORM_ref_udata:
-          Value.uval = data.getULEB128(offset_ptr);
-          break;
-        case DW_FORM_string:
-          Value.cstr = data.getCStr(offset_ptr);
-          // Set the string value to also be the data for inlined cstr form
-          // values only so we can tell the differnence between DW_FORM_string
-          // and DW_FORM_strp form values
-          Value.data = (uint8_t*)Value.cstr;
-          break;
-        case DW_FORM_indirect:
-          Form = data.getULEB128(offset_ptr);
-          indirect = true;
-          break;
-        default:
-          return false;
-        }
-    } while (indirect);
-
-    if (is_block) {
-      StringRef str = data.getData().substr(*offset_ptr, Value.uval);
-      Value.data = NULL;
-      if (!str.empty()) {
-        Value.data = reinterpret_cast<const uint8_t *>(str.data());
-        *offset_ptr += Value.uval;
+  bool indirect = false;
+  bool is_block = false;
+  Value.data = NULL;
+  // Read the value for the form into value and follow and DW_FORM_indirect
+  // instances we run into
+  do {
+      indirect = false;
+      switch (Form) {
+      case DW_FORM_addr:
+      case DW_FORM_ref_addr:
+        Value.uval = data.getUnsigned(offset_ptr, cu->getAddressByteSize());
+        break;
+      case DW_FORM_block:
+        Value.uval = data.getULEB128(offset_ptr);
+        is_block = true;
+        break;
+      case DW_FORM_block1:
+        Value.uval = data.getU8(offset_ptr);
+        is_block = true;
+        break;
+      case DW_FORM_block2:
+        Value.uval = data.getU16(offset_ptr);
+        is_block = true;
+        break;
+      case DW_FORM_block4:
+        Value.uval = data.getU32(offset_ptr);
+        is_block = true;
+        break;
+      case DW_FORM_data1:
+      case DW_FORM_ref1:
+      case DW_FORM_flag:
+        Value.uval = data.getU8(offset_ptr);
+        break;
+      case DW_FORM_data2:
+      case DW_FORM_ref2:
+        Value.uval = data.getU16(offset_ptr);
+        break;
+      case DW_FORM_data4:
+      case DW_FORM_ref4:
+        Value.uval = data.getU32(offset_ptr);
+        break;
+      case DW_FORM_data8:
+      case DW_FORM_ref8:
+        Value.uval = data.getU64(offset_ptr);
+        break;
+      case DW_FORM_sdata:
+        Value.sval = data.getSLEB128(offset_ptr);
+        break;
+      case DW_FORM_strp:
+        Value.uval = data.getU32(offset_ptr);
+        break;
+      case DW_FORM_udata:
+      case DW_FORM_ref_udata:
+        Value.uval = data.getULEB128(offset_ptr);
+        break;
+      case DW_FORM_string:
+        Value.cstr = data.getCStr(offset_ptr);
+        // Set the string value to also be the data for inlined cstr form
+        // values only so we can tell the differnence between DW_FORM_string
+        // and DW_FORM_strp form values
+        Value.data = (uint8_t*)Value.cstr;
+        break;
+      case DW_FORM_indirect:
+        Form = data.getULEB128(offset_ptr);
+        indirect = true;
+        break;
+      default:
+        return false;
       }
-    }
+  } while (indirect);
 
-    return true;
+  if (is_block) {
+    StringRef str = data.getData().substr(*offset_ptr, Value.uval);
+    Value.data = NULL;
+    if (!str.empty()) {
+      Value.data = reinterpret_cast<const uint8_t *>(str.data());
+      *offset_ptr += Value.uval;
+    }
+  }
+
+  return true;
 }
 
 bool
 DWARFFormValue::skipValue(DataExtractor debug_info_data, uint32_t* offset_ptr,
                           const DWARFCompileUnit* cu) const {
-    return DWARFFormValue::skipValue(Form, debug_info_data, offset_ptr, cu);
+  return DWARFFormValue::skipValue(Form, debug_info_data, offset_ptr, cu);
 }
 
 bool
@@ -261,8 +261,7 @@ DWARFFormValue::dump(raw_ostream &OS, const DataExtractor *debug_str_data,
   uint64_t uvalue = getUnsigned();
   bool cu_relative_offset = false;
 
-  switch (Form)
-  {
+  switch (Form) {
   case DW_FORM_addr:      OS << format("0x%016x", uvalue); break;
   case DW_FORM_flag:
   case DW_FORM_data1:     OS << format("0x%02x", uvalue);  break;
@@ -365,22 +364,21 @@ DWARFFormValue::getAsCString(const DataExtractor *debug_str_data_ptr) const {
   return NULL;
 }
 
-uint64_t
-DWARFFormValue::getReference(const DWARFCompileUnit *cu) const {
-    uint64_t die_offset = Value.uval;
-    switch (Form) {
-    case DW_FORM_ref1:
-    case DW_FORM_ref2:
-    case DW_FORM_ref4:
-    case DW_FORM_ref8:
-    case DW_FORM_ref_udata:
-        die_offset += (cu ? cu->getOffset() : 0);
-        break;
-    default:
-        break;
-    }
+uint64_t DWARFFormValue::getReference(const DWARFCompileUnit *cu) const {
+  uint64_t die_offset = Value.uval;
+  switch (Form) {
+  case DW_FORM_ref1:
+  case DW_FORM_ref2:
+  case DW_FORM_ref4:
+  case DW_FORM_ref8:
+  case DW_FORM_ref_udata:
+      die_offset += (cu ? cu->getOffset() : 0);
+      break;
+  default:
+      break;
+  }
 
-    return die_offset;
+  return die_offset;
 }
 
 bool
@@ -391,44 +389,41 @@ DWARFFormValue::resolveCompileUnitReferences(const DWARFCompileUnit* cu) {
     case DW_FORM_ref4:
     case DW_FORM_ref8:
     case DW_FORM_ref_udata:
-        Value.uval += cu->getOffset();
-        Form = DW_FORM_ref_addr;
-        return true;
+      Value.uval += cu->getOffset();
+      Form = DW_FORM_ref_addr;
+      return true;
     default:
-        break;
+      break;
     }
-
     return false;
 }
 
 const uint8_t *DWARFFormValue::BlockData() const {
-    if (!isInlinedCStr())
-        return Value.data;
-    return NULL;
+  if (!isInlinedCStr())
+      return Value.data;
+  return NULL;
 }
 
 bool DWARFFormValue::isBlockForm(uint16_t form) {
-    switch (form)
-    {
-    case DW_FORM_block:
-    case DW_FORM_block1:
-    case DW_FORM_block2:
-    case DW_FORM_block4:
-        return true;
-    }
-    return false;
+  switch (form) {
+  case DW_FORM_block:
+  case DW_FORM_block1:
+  case DW_FORM_block2:
+  case DW_FORM_block4:
+    return true;
+  }
+  return false;
 }
 
 bool DWARFFormValue::isDataForm(uint16_t form) {
-    switch (form)
-    {
-    case DW_FORM_sdata:
-    case DW_FORM_udata:
-    case DW_FORM_data1:
-    case DW_FORM_data2:
-    case DW_FORM_data4:
-    case DW_FORM_data8:
-        return true;
-    }
-    return false;
+  switch (form) {
+  case DW_FORM_sdata:
+  case DW_FORM_udata:
+  case DW_FORM_data1:
+  case DW_FORM_data2:
+  case DW_FORM_data4:
+  case DW_FORM_data8:
+    return true;
+  }
+  return false;
 }

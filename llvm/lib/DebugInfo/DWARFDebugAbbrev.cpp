@@ -32,12 +32,10 @@ bool DWARFAbbreviationDeclarationSet::extract(DataExtractor data,
   return beginOffset != *offset_ptr;
 }
 
-
 void DWARFAbbreviationDeclarationSet::dump(raw_ostream &OS) const {
   for (unsigned i = 0, e = Decls.size(); i != e; ++i)
     Decls[i].dump(OS);
 }
-
 
 const DWARFAbbreviationDeclaration*
 DWARFAbbreviationDeclarationSet::getAbbreviationDeclaration(uint32_t abbrCode)
@@ -58,8 +56,8 @@ DWARFAbbreviationDeclarationSet::getAbbreviationDeclaration(uint32_t abbrCode)
 }
 
 DWARFDebugAbbrev::DWARFDebugAbbrev() :
-  m_abbrevCollMap(),
-  m_prev_abbr_offset_pos(m_abbrevCollMap.end()) {}
+  AbbrevCollMap(),
+  PrevAbbrOffsetPos(AbbrevCollMap.end()) {}
 
 
 void DWARFDebugAbbrev::parse(DataExtractor data) {
@@ -70,21 +68,21 @@ void DWARFDebugAbbrev::parse(DataExtractor data) {
     DWARFAbbreviationDeclarationSet abbrevDeclSet;
 
     if (abbrevDeclSet.extract(data, &offset))
-      m_abbrevCollMap[initial_cu_offset] = abbrevDeclSet;
+      AbbrevCollMap[initial_cu_offset] = abbrevDeclSet;
     else
       break;
   }
-  m_prev_abbr_offset_pos = m_abbrevCollMap.end();
+  PrevAbbrOffsetPos = AbbrevCollMap.end();
 }
 
 void DWARFDebugAbbrev::dump(raw_ostream &OS) const {
-  if (m_abbrevCollMap.empty()) {
+  if (AbbrevCollMap.empty()) {
     OS << "< EMPTY >\n";
     return;
   }
 
   DWARFAbbreviationDeclarationCollMapConstIter pos;
-  for (pos = m_abbrevCollMap.begin(); pos != m_abbrevCollMap.end(); ++pos) {
+  for (pos = AbbrevCollMap.begin(); pos != AbbrevCollMap.end(); ++pos) {
     OS << format("Abbrev table for offset: 0x%8.8x\n", pos->first);
     pos->second.dump(OS);
   }
@@ -92,17 +90,17 @@ void DWARFDebugAbbrev::dump(raw_ostream &OS) const {
 
 const DWARFAbbreviationDeclarationSet*
 DWARFDebugAbbrev::getAbbreviationDeclarationSet(uint64_t cu_abbr_offset) const {
-  DWARFAbbreviationDeclarationCollMapConstIter end = m_abbrevCollMap.end();
+  DWARFAbbreviationDeclarationCollMapConstIter end = AbbrevCollMap.end();
   DWARFAbbreviationDeclarationCollMapConstIter pos;
-  if (m_prev_abbr_offset_pos != end &&
-      m_prev_abbr_offset_pos->first == cu_abbr_offset) {
-    return &(m_prev_abbr_offset_pos->second);
+  if (PrevAbbrOffsetPos != end &&
+      PrevAbbrOffsetPos->first == cu_abbr_offset) {
+    return &(PrevAbbrOffsetPos->second);
   } else {
-    pos = m_abbrevCollMap.find(cu_abbr_offset);
-    m_prev_abbr_offset_pos = pos;
+    pos = AbbrevCollMap.find(cu_abbr_offset);
+    PrevAbbrOffsetPos = pos;
   }
 
-  if (pos != m_abbrevCollMap.end())
+  if (pos != AbbrevCollMap.end())
     return &(pos->second);
   return NULL;
 }

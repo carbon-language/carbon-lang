@@ -47,23 +47,25 @@ class DWARFAbbreviationDeclarationSet {
     getAbbreviationDeclaration(uint32_t abbrCode) const;
 };
 
-typedef std::map<uint64_t, DWARFAbbreviationDeclarationSet>
-  DWARFAbbreviationDeclarationCollMap;
-typedef DWARFAbbreviationDeclarationCollMap::iterator
-  DWARFAbbreviationDeclarationCollMapIter;
-typedef DWARFAbbreviationDeclarationCollMap::const_iterator
-  DWARFAbbreviationDeclarationCollMapConstIter;
-
 class DWARFDebugAbbrev {
+public:
+  typedef std::map<uint64_t, DWARFAbbreviationDeclarationSet>
+    DWARFAbbreviationDeclarationCollMap;
+  typedef DWARFAbbreviationDeclarationCollMap::iterator
+    DWARFAbbreviationDeclarationCollMapIter;
+  typedef DWARFAbbreviationDeclarationCollMap::const_iterator
+    DWARFAbbreviationDeclarationCollMapConstIter;
+
+private:
+  DWARFAbbreviationDeclarationCollMap AbbrevCollMap;
+  mutable DWARFAbbreviationDeclarationCollMapConstIter PrevAbbrOffsetPos;
+
 public:
   DWARFDebugAbbrev();
   const DWARFAbbreviationDeclarationSet *
     getAbbreviationDeclarationSet(uint64_t cu_abbr_offset) const;
   void dump(raw_ostream &OS) const;
   void parse(DataExtractor data);
-protected:
-  DWARFAbbreviationDeclarationCollMap m_abbrevCollMap;
-  mutable DWARFAbbreviationDeclarationCollMapConstIter m_prev_abbr_offset_pos;
 };
 
 }
