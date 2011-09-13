@@ -1,6 +1,6 @@
 // RUN: mkdir -p %t
 // RUN: rm -f %t/Module.pcm
-// RUN: %clang_cc1 -fmodule-cache-path %t -F %S/Inputs -verify %s
+// RUN: %clang_cc1 -fmodule-cache-path %t -F %S/Inputs -DFOO -verify %s
 
 __import_module__ Module;
 void test_getModuleVersion() {

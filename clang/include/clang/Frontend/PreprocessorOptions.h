@@ -190,6 +190,16 @@ public:
     RemappedFiles.clear();
     RemappedFileBuffers.clear();
   }
+  
+  /// \brief Reset any options that are not considered when building a
+  /// module.
+  void resetNonModularOptions() {
+    Macros.clear();
+    MacroIncludes.clear();
+    DumpDeserializedPCHDecls = false;
+    TokenCache.clear();
+    RetainRemappedFileBuffers = true;
+  }
 };
 
 } // end namespace clang

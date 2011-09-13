@@ -19,3 +19,9 @@ LangOptions::LangOptions() {
 #define ENUM_LANGOPT(Name, Type, Bits, Default, Description) set##Name(Default);
 #include "clang/Basic/LangOptions.def"
 }
+
+void LangOptions::resetNonModularOptions() {
+#define LANGOPT(Name, Bits, Default, Description)
+#define BENIGN_LANGOPT(Name, Bits, Default, Description) Name = Default;
+}
+

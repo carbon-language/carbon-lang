@@ -654,6 +654,9 @@ static void compileModule(CompilerInstance &ImportingInstance,
   // Construct a compiler invocation for creating this module.
   llvm::IntrusiveRefCntPtr<CompilerInvocation> Invocation
     (new CompilerInvocation(ImportingInstance.getInvocation()));
+  Invocation->getLangOpts().resetNonModularOptions();
+  Invocation->getPreprocessorOpts().resetNonModularOptions();
+  
   FrontendOptions &FrontendOpts = Invocation->getFrontendOpts();
   FrontendOpts.OutputFile = ModuleFile.str();
   FrontendOpts.DisableFree = false;

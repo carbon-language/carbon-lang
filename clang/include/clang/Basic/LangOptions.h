@@ -66,6 +66,10 @@ public:
   bool isSignedOverflowDefined() const {
     return getSignedOverflowBehavior() == SOB_Defined;
   }
+
+  /// \brief Reset all of the options that are not considered when building a
+  /// module.
+  void resetNonModularOptions();
 };
 
 /// Floating point control options
