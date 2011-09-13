@@ -20,14 +20,19 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace clang;
 
-VerifyDiagnosticsClient::VerifyDiagnosticsClient(Diagnostic &_Diags,
-                                                 DiagnosticClient *_Primary)
-  : Diags(_Diags), PrimaryClient(_Primary),
-    Buffer(new TextDiagnosticBuffer()), CurrentPreprocessor(0) {
+VerifyDiagnosticsClient::VerifyDiagnosticsClient(Diagnostic &_Diags)
+  : Diags(_Diags), PrimaryClient(Diags.getClient()),
+    OwnsPrimaryClient(Diags.ownsClient()),
+    Buffer(new TextDiagnosticBuffer()), CurrentPreprocessor(0) 
+{
+  Diags.takeClient();
 }
 
 VerifyDiagnosticsClient::~VerifyDiagnosticsClient() {
-  CheckDiagnostics();
+  CheckDiagnostics();  
+  Diags.takeClient();
+  if (OwnsPrimaryClient)
+    delete PrimaryClient;
 }
 
 // DiagnosticClient interface.
@@ -477,8 +482,9 @@ void VerifyDiagnosticsClient::CheckDiagnostics() {
   ExpectedData ED;
 
   // Ensure any diagnostics go to the primary client.
+  bool OwnsCurClient = Diags.ownsClient();
   DiagnosticClient *CurClient = Diags.takeClient();
-  Diags.setClient(PrimaryClient.get());
+  Diags.setClient(PrimaryClient, false);
 
   // If we have a preprocessor, scan the source for expected diagnostic
   // markers. If not then any diagnostics are unexpected.
@@ -513,7 +519,7 @@ void VerifyDiagnosticsClient::CheckDiagnostics() {
   }
 
   Diags.takeClient();
-  Diags.setClient(CurClient);
+  Diags.setClient(CurClient, OwnsCurClient);
 
   // Reset the buffer, we have processed all the diagnostics in it.
   Buffer.reset(new TextDiagnosticBuffer());

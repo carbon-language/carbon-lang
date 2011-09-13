@@ -315,6 +315,9 @@ public:
   DiagnosticClient *getClient() { return Client; }
   const DiagnosticClient *getClient() const { return Client; }
 
+  /// \brief Determine whether this \c Diagnostic object own its client.
+  bool ownsClient() const { return OwnsDiagClient; }
+  
   /// \brief Return the current diagnostic client along with ownership of that
   /// client.
   DiagnosticClient *takeClient() {

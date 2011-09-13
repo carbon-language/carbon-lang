@@ -65,7 +65,8 @@ class TextDiagnosticBuffer;
 class VerifyDiagnosticsClient : public DiagnosticClient {
 public:
   Diagnostic &Diags;
-  llvm::OwningPtr<DiagnosticClient> PrimaryClient;
+  DiagnosticClient *PrimaryClient;
+  bool OwnsPrimaryClient;
   llvm::OwningPtr<TextDiagnosticBuffer> Buffer;
   Preprocessor *CurrentPreprocessor;
 
@@ -75,10 +76,9 @@ private:
 
 public:
   /// Create a new verifying diagnostic client, which will issue errors to \arg
-  /// PrimaryClient when a diagnostic does not match what is expected (as
-  /// indicated in the source file). The verifying diagnostic client takes
-  /// ownership of \arg PrimaryClient.
-  VerifyDiagnosticsClient(Diagnostic &Diags, DiagnosticClient *PrimaryClient);
+  /// the currently-attached diagnostic client when a diagnostic does not match 
+  /// what is expected (as indicated in the source file).
+  VerifyDiagnosticsClient(Diagnostic &Diags);
   ~VerifyDiagnosticsClient();
 
   virtual void BeginSourceFile(const LangOptions &LangOpts,

@@ -112,7 +112,7 @@ static bool checkForMigration(StringRef resourcesPath,
   // Chain in -verify checker, if requested.
   VerifyDiagnosticsClient *verifyDiag = 0;
   if (VerifyDiags) {
-    verifyDiag = new VerifyDiagnosticsClient(*Diags, Diags->takeClient());
+    verifyDiag = new VerifyDiagnosticsClient(*Diags);
     Diags->setClient(verifyDiag);
   }
 

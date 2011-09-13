@@ -140,15 +140,17 @@ static void SetUpDiagnosticLog(const DiagnosticOptions &DiagOpts,
 }
 
 void CompilerInstance::createDiagnostics(int Argc, const char* const *Argv,
-                                         DiagnosticClient *Client) {
+                                         DiagnosticClient *Client,
+                                         bool ShouldOwnClient) {
   Diagnostics = createDiagnostics(getDiagnosticOpts(), Argc, Argv, Client,
-                                  &getCodeGenOpts());
+                                  ShouldOwnClient, &getCodeGenOpts());
 }
 
 llvm::IntrusiveRefCntPtr<Diagnostic> 
 CompilerInstance::createDiagnostics(const DiagnosticOptions &Opts,
                                     int Argc, const char* const *Argv,
                                     DiagnosticClient *Client,
+                                    bool ShouldOwnClient,
                                     const CodeGenOptions *CodeGenOpts) {
   llvm::IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
   llvm::IntrusiveRefCntPtr<Diagnostic> Diags(new Diagnostic(DiagID));
@@ -156,13 +158,13 @@ CompilerInstance::createDiagnostics(const DiagnosticOptions &Opts,
   // Create the diagnostic client for reporting errors or for
   // implementing -verify.
   if (Client)
-    Diags->setClient(Client);
+    Diags->setClient(Client, ShouldOwnClient);
   else
     Diags->setClient(new TextDiagnosticPrinter(llvm::errs(), Opts));
 
   // Chain in -verify checker, if requested.
-  if (Opts.VerifyDiagnostics)
-    Diags->setClient(new VerifyDiagnosticsClient(*Diags, Diags->takeClient()));
+  if (Opts.VerifyDiagnostics) 
+    Diags->setClient(new VerifyDiagnosticsClient(*Diags));
 
   // Chain in -diagnostic-log-file dumper, if requested.
   if (!Opts.DiagnosticLogFile.empty())
@@ -659,6 +661,9 @@ static void compileModule(CompilerInstance &ImportingInstance,
   FrontendOpts.Inputs.push_back(
     std::make_pair(getSourceInputKindFromOptions(Invocation->getLangOpts()), 
                                                  UmbrellaHeader));
+  
+  Invocation->getDiagnosticOpts().VerifyDiagnostics = 0;
+  
   // FIXME: Strip away all of the compilation options that won't be transferred
   // down to the module. This presumably includes -D flags, optimization 
   // settings, etc.
@@ -667,9 +672,9 @@ static void compileModule(CompilerInstance &ImportingInstance,
   // module.
   CompilerInstance Instance;
   Instance.setInvocation(&*Invocation);
-  //  Instance.setDiagnostics(&ImportingInstance.getDiagnostics());
-  // FIXME: Need to route diagnostics over to the same diagnostic client!
-  Instance.createDiagnostics(0, 0, 0);
+  Instance.createDiagnostics(/*argc=*/0, /*argv=*/0, 
+                             &ImportingInstance.getDiagnosticClient(),
+                             /*ShouldOwnClient=*/false);
 
   // Construct a module-generating action.
   GeneratePCHAction CreateModuleAction(true);
@@ -681,7 +686,13 @@ static void compileModule(CompilerInstance &ImportingInstance,
   // Tell the importing instance's file manager to forget about the module
   // file, since we've just created it.
   ImportingInstance.getFileManager().forgetFile(ModuleFile);
-}
+  
+  // Tell the diagnostic client that it's (re-)starting to process a source
+  // file.
+  ImportingInstance.getDiagnosticClient()
+    .BeginSourceFile(ImportingInstance.getLangOpts(),
+                     &ImportingInstance.getPreprocessor());
+} 
 
 ModuleKey CompilerInstance::loadModule(SourceLocation ImportLoc, 
                                        IdentifierInfo &ModuleName,

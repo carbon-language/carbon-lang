@@ -457,8 +457,12 @@ public:
   /// \param Client If non-NULL, a diagnostic client that will be
   /// attached to (and, then, owned by) the Diagnostic inside this AST
   /// unit.
+  ///
+  /// \param ShouldOwnClient If Client is non-NULL, specifies whether 
+  /// the diagnostic object should take ownership of the client.
   void createDiagnostics(int Argc, const char* const *Argv,
-                         DiagnosticClient *Client = 0);
+                         DiagnosticClient *Client = 0,
+                         bool ShouldOwnClient = true);
 
   /// Create a Diagnostic object with a the TextDiagnosticPrinter.
   ///
@@ -487,6 +491,7 @@ public:
   createDiagnostics(const DiagnosticOptions &Opts, int Argc,
                     const char* const *Argv,
                     DiagnosticClient *Client = 0,
+                    bool ShouldOwnClient = true,
                     const CodeGenOptions *CodeGenOpts = 0);
 
   /// Create the file manager and replace any existing one with it.
