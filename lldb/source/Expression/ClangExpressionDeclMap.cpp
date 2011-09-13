@@ -919,13 +919,13 @@ ClangExpressionDeclMap::DoMaterialize
     if (!m_struct_vars->m_struct_laid_out)
     {
         err.SetErrorString("Structure hasn't been laid out yet");
-        return LLDB_INVALID_ADDRESS;
+        return false;
     }
     
     if (!exe_ctx.frame)
     {
         err.SetErrorString("Received null execution frame");
-        return LLDB_INVALID_ADDRESS;
+        return false;
     }
     
     ClangPersistentVariables &persistent_vars = exe_ctx.target->GetPersistentVariables();
