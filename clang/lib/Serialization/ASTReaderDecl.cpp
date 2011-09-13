@@ -1361,7 +1361,7 @@ void ASTReader::ReadAttributes(Module &F, AttrVec &Attrs,
   for (unsigned i = 0, e = Record[Idx++]; i != e; ++i) {
     Attr *New = 0;
     attr::Kind Kind = (attr::Kind)Record[Idx++];
-    SourceLocation Loc = ReadSourceLocation(F, Record, Idx);
+    SourceRange Range = ReadSourceRange(F, Record, Idx);
 
 #include "clang/Serialization/AttrPCHRead.inc"
 

@@ -147,7 +147,8 @@ static void HandleX86ForceAlignArgPointerAttr(Decl *D,
     return;
   }
 
-  D->addAttr(::new (S.Context) X86ForceAlignArgPointerAttr(Attr.getLoc(), S.Context));
+  D->addAttr(::new (S.Context) X86ForceAlignArgPointerAttr(Attr.getRange(),
+                                                           S.Context));
 }
 
 static void HandleDLLImportAttr(Decl *D, const AttributeList &Attr, Sema &S) {

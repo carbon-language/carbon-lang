@@ -109,8 +109,8 @@ public:
 
 class InheritableAttr : public Attr {
 protected:
-  InheritableAttr(attr::Kind AK, SourceLocation L)
-    : Attr(AK, L) {}
+  InheritableAttr(attr::Kind AK, SourceRange R)
+    : Attr(AK, R) {}
 
 public:
   void setInherited(bool I) { Inherited = I; }
@@ -124,8 +124,8 @@ public:
 
 class InheritableParamAttr : public InheritableAttr {
 protected:
-  InheritableParamAttr(attr::Kind AK, SourceLocation L)
-    : InheritableAttr(AK, L) {}
+  InheritableParamAttr(attr::Kind AK, SourceRange R)
+    : InheritableAttr(AK, R) {}
 
 public:
   // Implement isa/cast/dyncast/etc.

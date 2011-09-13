@@ -5388,8 +5388,8 @@ public:
   void FreeVisContext();
 
   /// AddAlignedAttr - Adds an aligned attribute to a particular declaration.
-  void AddAlignedAttr(SourceLocation AttrLoc, Decl *D, Expr *E);
-  void AddAlignedAttr(SourceLocation AttrLoc, Decl *D, TypeSourceInfo *T);
+  void AddAlignedAttr(SourceRange AttrRange, Decl *D, Expr *E);
+  void AddAlignedAttr(SourceRange AttrRange, Decl *D, TypeSourceInfo *T);
 
   /// CastCategory - Get the correct forwarded implicit cast result category
   /// from the inner expression.
