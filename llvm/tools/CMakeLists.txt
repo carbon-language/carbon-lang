@@ -39,6 +39,7 @@ add_subdirectory(llvm-diff)
 add_subdirectory(macho-dump)
 add_subdirectory(llvm-objdump)
 add_subdirectory(llvm-rtdyld)
+add_subdirectory(llvm-dwarfdump)
 
 add_subdirectory(bugpoint)
 add_subdirectory(bugpoint-passes)

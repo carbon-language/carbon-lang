@@ -1,4 +1,4 @@
-##===- lib/Makefile ----------------------------------------*- Makefile -*-===##
+##===- tools/llvm-dwarfdump/Makefile -----------------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -6,12 +6,12 @@
 # License. See LICENSE.TXT for details.
 #
 ##===----------------------------------------------------------------------===##
-LEVEL = ..
+LEVEL = ../..
 
-include $(LEVEL)/Makefile.config
+TOOLNAME = llvm-dwarfdump
+LINK_COMPONENTS = DebugInfo Object
 
-PARALLEL_DIRS := VMCore AsmParser Bitcode Archive Analysis Transforms CodeGen \
-                Target ExecutionEngine Linker MC CompilerDriver Object DebugInfo
+# This tool has no plugins, optimize startup time.
+TOOL_NO_EXPORTS = 1
 
 include $(LEVEL)/Makefile.common
-
