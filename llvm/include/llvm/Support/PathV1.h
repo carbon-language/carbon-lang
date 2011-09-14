@@ -733,6 +733,7 @@ namespace sys {
     Mach_O_DynamicLinker_FileType,     ///< The Mach-O dynamic linker
     Mach_O_Bundle_FileType,            ///< Mach-O Bundle file
     Mach_O_DynamicallyLinkedSharedLibStub_FileType, ///< Mach-O Shared lib stub
+    Mach_O_DSYMCompanion_FileType,     ///< Mach-O dSYM companion file
     COFF_FileType                      ///< COFF object file or lib
   };
 

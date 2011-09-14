@@ -121,7 +121,7 @@ sys::IdentifyFileType(const char *magic, unsigned length) {
         case 7: return Mach_O_DynamicLinker_FileType;
         case 8: return Mach_O_Bundle_FileType;
         case 9: return Mach_O_DynamicallyLinkedSharedLibStub_FileType;
-        case 10: break; // FIXME: MH_DSYM companion file with only debug.
+        case 10: return Mach_O_DSYMCompanion_FileType;
       }
       break;
     }
