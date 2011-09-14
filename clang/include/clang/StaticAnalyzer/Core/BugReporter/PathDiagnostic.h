@@ -120,15 +120,6 @@ public:
     return !(*this == X);
   }
 
-  PathDiagnosticLocation& operator=(const PathDiagnosticLocation &X) {
-    K = X.K;
-    R = X.R;
-    S = X.S;
-    D = X.D;
-    SM = X.SM;
-    return *this;
-  }
-
   bool isValid() const {
     return SM != 0;
   }
