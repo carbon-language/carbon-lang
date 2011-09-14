@@ -28,12 +28,12 @@ void DWARFDebugInfoEntryMinimal::dump(raw_ostream &OS,
   if (debug_info_data.isValidOffset(offset)) {
     uint64_t abbrCode = debug_info_data.getULEB128(&offset);
 
-    OS.indent(indent) << format("\n0x%8.8x: ", Offset);
+    OS << format("\n0x%8.8x: ", Offset);
     if (abbrCode) {
       if (AbbrevDecl) {
-        OS << TagString(AbbrevDecl->getTag())
-           << format(" [%u] %c\n", abbrCode,
-                                   AbbrevDecl->hasChildren() ? '*': ' ');
+        OS.indent(indent) << TagString(AbbrevDecl->getTag())
+                          << format(" [%u] %c\n", abbrCode,
+                                    AbbrevDecl->hasChildren() ? '*': ' ');
 
         // Dump all data in the .debug_info for the attributes
         const uint32_t numAttributes = AbbrevDecl->getNumAttributes();
@@ -55,7 +55,7 @@ void DWARFDebugInfoEntryMinimal::dump(raw_ostream &OS,
            << abbrCode << '\n';
       }
     } else {
-      OS << "NULL\n";
+      OS.indent(indent) << "NULL\n";
     }
   }
 }
@@ -66,9 +66,9 @@ void DWARFDebugInfoEntryMinimal::dumpAttribute(raw_ostream &OS,
                                                uint16_t attr,
                                                uint16_t form,
                                                unsigned indent) const {
-  OS.indent(indent) << format("0x%8.8x: ", *offset_ptr)
-                    << AttributeString(attr)
-                    << " [" << FormEncodingString(form) << ']';
+  OS << format("0x%8.8x: ", *offset_ptr);
+  OS.indent(indent+2)   << AttributeString(attr)
+                      << " [" << FormEncodingString(form) << ']';
 
   DWARFFormValue formValue(form);
 
