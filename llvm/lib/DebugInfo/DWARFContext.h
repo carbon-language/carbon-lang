@@ -11,13 +11,12 @@
 #define LLVM_DEBUGINFO_DWARFCONTEXT_H
 
 #include "DWARFCompileUnit.h"
+#include "DWARFDebugAranges.h"
 #include "llvm/DebugInfo/DIContext.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallVector.h"
 
 namespace llvm {
-
-class DWARFDebugAbbrev;
 
 /// DWARFContext
 /// This data structure is the top level entity that deals with dwarf debug
@@ -28,6 +27,7 @@ class DWARFContext : public DIContext {
 
   SmallVector<DWARFCompileUnit, 1> CUs;
   OwningPtr<DWARFDebugAbbrev> Abbrev;
+  OwningPtr<DWARFDebugAranges> Aranges;
 
   DWARFContext(DWARFContext &); // = delete
   DWARFContext &operator=(DWARFContext &); // = delete
@@ -53,6 +53,9 @@ public:
 
   /// Get a pointer to the parsed DebugAbbrev object.
   const DWARFDebugAbbrev *getDebugAbbrev();
+
+  /// Get a pointer to the parsed DebugAranges object.
+  const DWARFDebugAranges *getDebugAranges();
 
   bool isLittleEndian() const { return IsLittleEndian; }
 
