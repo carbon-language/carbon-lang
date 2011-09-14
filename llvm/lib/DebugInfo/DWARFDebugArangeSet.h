@@ -23,11 +23,11 @@ public:
     // The total length of the entries for that set, not including the length
     // field itself.
     uint32_t Length;
-    // The DWARF version number.
-    uint16_t Version;
     // The offset from the beginning of the .debug_info section of the
     // compilation unit entry referenced by the table.
     uint32_t CuOffset;
+    // The DWARF version number.
+    uint16_t Version;
     // The size in bytes of an address on the target architecture. For segmented
     // addressing, this is the size of the offset portion of the address.
     uint8_t AddrSize;
