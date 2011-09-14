@@ -736,20 +736,26 @@ ModuleKey CompilerInstance::loadModule(SourceLocation ImportLoc,
   
   // If we don't already have an ASTReader, create one now.
   if (!ModuleManager) {
+    if (!hasASTContext())
+      createASTContext();
+
     std::string Sysroot = getHeaderSearchOpts().Sysroot;
     const PreprocessorOptions &PPOpts = getPreprocessorOpts();
     ModuleManager = new ASTReader(getPreprocessor(), *Context,
                                   Sysroot.empty() ? "" : Sysroot.c_str(),
                                   PPOpts.DisablePCHValidation, 
                                   PPOpts.DisableStatCache);
-    ModuleManager->setDeserializationListener(
-      getASTConsumer().GetASTDeserializationListener());
-    getASTContext().setASTMutationListener(
-      getASTConsumer().GetASTMutationListener());
+    if (hasASTConsumer()) {
+      ModuleManager->setDeserializationListener(
+        getASTConsumer().GetASTDeserializationListener());
+      getASTContext().setASTMutationListener(
+        getASTConsumer().GetASTMutationListener());
+    }
     llvm::OwningPtr<ExternalASTSource> Source;
     Source.reset(ModuleManager);
     getASTContext().setExternalSource(Source);
-    ModuleManager->InitializeSema(getSema());
+    if (hasSema())
+      ModuleManager->InitializeSema(getSema());
   }
   
   // Try to load the module we found.
