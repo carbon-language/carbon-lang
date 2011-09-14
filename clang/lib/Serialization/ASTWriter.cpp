@@ -2223,24 +2223,26 @@ class ASTIdentifierTableTrait {
   /// that needs a full IdentifierInfo structure written into the hash
   /// table.
   bool isInterestingIdentifier(IdentifierInfo *II, MacroInfo *&Macro) {
-    Macro = 0;
-    
     if (II->isPoisoned() ||
         II->isExtensionToken() ||
         II->getObjCOrBuiltinID() ||
         II->getFETokenInfo<void>())
       return true;
 
+    return hasMacroDefinition(II, Macro);
+  }
+  
+  bool hasMacroDefinition(IdentifierInfo *II, MacroInfo *&Macro) {
     if (!II->hasMacroDefinition())
       return false;
     
     if (!IsModule)
       return true;
     
-    if ((Macro = PP.getMacroInfo(II)))
+    if (Macro || (Macro = PP.getMacroInfo(II)))
       return Macro->isExported();
     
-    return false;
+    return false;    
   }
 
 public:
@@ -2261,11 +2263,10 @@ public:
     EmitKeyDataLength(raw_ostream& Out, IdentifierInfo* II, IdentID ID) {
     unsigned KeyLen = II->getLength() + 1;
     unsigned DataLen = 4; // 4 bytes for the persistent ID << 1
-    MacroInfo *Macro;
+    MacroInfo *Macro = 0;
     if (isInterestingIdentifier(II, Macro)) {
       DataLen += 2; // 2 bytes for builtin ID, flags
-      if (II->hasMacroDefinition() &&
-          !PP.getMacroInfo(const_cast<IdentifierInfo *>(II))->isBuiltinMacro())
+      if (hasMacroDefinition(const_cast<IdentifierInfo *>(II), Macro))
         DataLen += 4;
       for (IdentifierResolver::iterator D = IdentifierResolver::begin(II),
                                      DEnd = IdentifierResolver::end();
@@ -2290,7 +2291,7 @@ public:
 
   void EmitData(raw_ostream& Out, IdentifierInfo* II,
                 IdentID ID, unsigned) {
-    MacroInfo *Macro;
+    MacroInfo *Macro = 0;
     if (!isInterestingIdentifier(II, Macro)) {
       clang::io::Emit32(Out, ID << 1);
       return;
@@ -2298,19 +2299,16 @@ public:
 
     clang::io::Emit32(Out, (ID << 1) | 0x01);
     uint32_t Bits = 0;
-    bool hasMacroDefinition 
-      = II->hasMacroDefinition() && 
-        (Macro || (Macro = PP.getMacroInfo(II))) && !Macro->isBuiltinMacro() &&
-        (!IsModule || Macro->isExported());
+    bool HasMacroDefinition = hasMacroDefinition(II, Macro);
     Bits = (uint32_t)II->getObjCOrBuiltinID();
-    Bits = (Bits << 1) | unsigned(hasMacroDefinition);
+    Bits = (Bits << 1) | unsigned(HasMacroDefinition);
     Bits = (Bits << 1) | unsigned(II->isExtensionToken());
     Bits = (Bits << 1) | unsigned(II->isPoisoned());
     Bits = (Bits << 1) | unsigned(II->hasRevertedTokenIDToIdentifier());
     Bits = (Bits << 1) | unsigned(II->isCPlusPlusOperatorKeyword());
     clang::io::Emit16(Out, Bits);
 
-    if (hasMacroDefinition)
+    if (HasMacroDefinition)
       clang::io::Emit32(Out, Writer.getMacroOffset(II));
 
     // Emit the declaration IDs in reverse order, because the
