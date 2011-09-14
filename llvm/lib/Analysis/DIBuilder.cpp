@@ -146,6 +146,26 @@ DIEnumerator DIBuilder::createEnumerator(StringRef Name, uint64_t Val) {
   return DIEnumerator(MDNode::get(VMContext, Elts));
 }
 
+/// createNullPtrType - Create C++0x nullptr type.
+DIType DIBuilder::createNullPtrType(StringRef Name) {
+  assert(!Name.empty() && "Unable to create type without name");
+  // nullptr is encoded in DIBasicType format. Line number, filename,
+  // ,size, alignment, offset and flags are always empty here.
+  Value *Elts[] = {
+    GetTagConstant(VMContext, dwarf::DW_TAG_unspecified_type),
+    NULL, //TheCU,
+    MDString::get(VMContext, Name),
+    NULL, // Filename
+    ConstantInt::get(Type::getInt32Ty(VMContext), 0), // Line
+    ConstantInt::get(Type::getInt64Ty(VMContext), 0), // Size
+    ConstantInt::get(Type::getInt64Ty(VMContext), 0), // Align
+    ConstantInt::get(Type::getInt64Ty(VMContext), 0), // Offset
+    ConstantInt::get(Type::getInt32Ty(VMContext), 0), // Flags;
+    ConstantInt::get(Type::getInt32Ty(VMContext), 0), // Encoding
+  };
+  return DIType(MDNode::get(VMContext, Elts));
+}
+
 /// createBasicType - Create debugging information entry for a basic
 /// type, e.g 'char'.
 DIType DIBuilder::createBasicType(StringRef Name, uint64_t SizeInBits,

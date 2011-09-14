@@ -658,13 +658,20 @@ void CompileUnit::addPubTypes(DISubprogram SP) {
 void CompileUnit::constructTypeDIE(DIE &Buffer, DIBasicType BTy) {
   // Get core information.
   StringRef Name = BTy.getName();
-  Buffer.setTag(dwarf::DW_TAG_base_type);
-  addUInt(&Buffer, dwarf::DW_AT_encoding,  dwarf::DW_FORM_data1,
-          BTy.getEncoding());
-
   // Add name if not anonymous or intermediate type.
   if (!Name.empty())
     addString(&Buffer, dwarf::DW_AT_name, dwarf::DW_FORM_string, Name);
+
+  if (BTy.getTag() == dwarf::DW_TAG_unspecified_type) {
+    Buffer.setTag(dwarf::DW_TAG_unspecified_type);
+    // Unspecified types has only name, nothing else.
+    return;
+  }
+
+  Buffer.setTag(dwarf::DW_TAG_base_type);
+  addUInt(&Buffer, dwarf::DW_AT_encoding,  dwarf::DW_FORM_data1,
+	  BTy.getEncoding());
+
   uint64_t Size = BTy.getSizeInBits() >> 3;
   addUInt(&Buffer, dwarf::DW_AT_byte_size, 0, Size);
 }

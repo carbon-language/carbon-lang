@@ -97,6 +97,9 @@ namespace llvm {
     /// createEnumerator - Create a single enumerator value.
     DIEnumerator createEnumerator(StringRef Name, uint64_t Val);
 
+    /// createNullPtrType - Create C++0x nullptr type.
+    DIType createNullPtrType(StringRef Name);
+
     /// createBasicType - Create debugging information entry for a basic 
     /// type.
     /// @param Name        Type name.
