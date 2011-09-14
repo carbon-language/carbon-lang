@@ -201,30 +201,6 @@ error_code rename(const Twine &from, const Twine &to);
 ///          platform specific error_code.
 error_code resize_file(const Twine &path, uint64_t size);
 
-/// @brief Make file readable.
-///
-/// @param path Input path.
-/// @param value If true, make readable, else, make unreadable.
-/// @results errc::success if readability has been successfully set, otherwise a
-///          platform specific error_code.
-error_code set_read(const Twine &path, bool value);
-
-/// @brief Make file writeable.
-///
-/// @param path Input path.
-/// @param value If true, make writeable, else, make unwriteable.
-/// @results errc::success if writeability has been successfully set, otherwise
-///          a platform specific error_code.
-error_code set_write(const Twine &path, bool value);
-
-/// @brief Make file executable.
-///
-/// @param path Input path.
-/// @param value If true, make executable, else, make unexecutable.
-/// @results errc::success if executability has been successfully set, otherwise
-///          a platform specific error_code.
-error_code set_execute(const Twine &path, bool value);
-
 /// @}
 /// @name Physical Observers
 /// @{
@@ -289,15 +265,6 @@ bool is_directory(file_status status);
 ///          platform specific error_code.
 error_code is_directory(const Twine &path, bool &result);
 
-/// @brief Is path an empty file?
-///
-/// @param path Input path.
-/// @param result Set to true if \a path is a an empty file, false if it is not.
-///               Undefined otherwise.
-/// @results errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
-error_code is_empty(const Twine &path, bool &result);
-
 /// @brief Does status represent a regular file?
 ///
 /// @param status A file_status previously returned from status.
@@ -346,40 +313,6 @@ bool is_symlink(file_status status);
 ///          platform specific error_code.
 error_code is_symlink(const Twine &path, bool &result);
 
-/// @brief Get last write time without changing it.
-///
-/// @param path Input path.
-/// @param result Set to the last write time (UNIX time) of \a path if it
-///               exists.
-/// @results errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
-error_code last_write_time(const Twine &path, std::time_t &result);
-
-/// @brief Set last write time.
-///
-/// @param path Input path.
-/// @param value Time to set (UNIX time) \a path's last write time to.
-/// @results errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
-error_code set_last_write_time(const Twine &path, std::time_t value);
-
-/// @brief Read a symlink's value.
-///
-/// @param path Input path.
-/// @param result Set to the value of the symbolic link \a path.
-/// @results errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
-error_code read_symlink(const Twine &path, SmallVectorImpl<char> &result);
-
-/// @brief Get disk space usage information.
-///
-/// @param path Input path.
-/// @param result Set to the capacity, free, and available space on the device
-///               \a path is on.
-/// @results errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
-error_code disk_space(const Twine &path, space_info &result);
-
 /// @brief Get file status as if by POSIX stat().
 ///
 /// @param path Input path.
@@ -401,16 +334,6 @@ bool status_known(file_status s);
 /// @results errc::success if result has been successfully set, otherwise a
 ///          platform specific error_code.
 error_code status_known(const Twine &path, bool &result);
-
-/// @brief Get file status as if by POSIX lstat().
-///
-/// Does not resolve symlinks.
-///
-/// @param path Input path.
-/// @param result Set to the file status.
-/// @results errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
-error_code symlink_status(const Twine &path, file_status &result);
 
 /// @brief Generate a unique path and open it as a file.
 ///
@@ -475,60 +398,6 @@ error_code get_magic(const Twine &path, uint32_t len,
 ///          platform specific error_code.
 error_code identify_magic(const Twine &path, LLVMFileType &result);
 
-/// @brief Is file bitcode?
-///
-/// @param path Input path.
-/// @param result Set to true if \a path is a bitcode file, false if it is not,
-///               undefined otherwise.
-/// @results errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
-error_code is_bitcode(const Twine &path, bool &result);
-
-/// @brief Is file a dynamic library?
-///
-/// @param path Input path.
-/// @param result Set to true if \a path is a dynamic library, false if it is
-///               not, undefined otherwise.
-/// @results errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
-error_code is_dynamic_library(const Twine &path, bool &result);
-
-/// @brief Is an object file?
-///
-/// @param path Input path.
-/// @param result Set to true if \a path is an object file, false if it is not,
-///               undefined otherwise.
-/// @results errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
-error_code is_object_file(const Twine &path, bool &result);
-
-/// @brief Can file be read?
-///
-/// @param path Input path.
-/// @param result Set to true if \a path is readable, false it it is not,
-///               undefined otherwise.
-/// @results errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
-error_code can_read(const Twine &path, bool &result);
-
-/// @brief Can file be written?
-///
-/// @param path Input path.
-/// @param result Set to true if \a path is writeable, false it it is not,
-///               undefined otherwise.
-/// @results errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
-error_code can_write(const Twine &path, bool &result);
-
-/// @brief Can file be executed?
-///
-/// @param path Input path.
-/// @param result Set to true if \a path is executable, false it it is not,
-///               undefined otherwise.
-/// @results errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
-error_code can_execute(const Twine &path, bool &result);
-
 /// @brief Get library paths the system linker uses.
 ///
 /// @param result Set to the list of system library paths.
@@ -572,35 +441,28 @@ error_code GetMainExecutable(const char *argv0, void *MainAddr,
 /// @{
 
 /// directory_entry - A single entry in a directory. Caches the status either
-/// from the result of the iteration syscall, or the first time status or
-/// symlink_status is called.
+/// from the result of the iteration syscall, or the first time status is
+/// called.
 class directory_entry {
   std::string Path;
   mutable file_status Status;
-  mutable file_status SymlinkStatus;
 
 public:
-  explicit directory_entry(const Twine &path, file_status st = file_status(),
-                                       file_status symlink_st = file_status())
+  explicit directory_entry(const Twine &path, file_status st = file_status())
     : Path(path.str())
-    , Status(st)
-    , SymlinkStatus(symlink_st) {}
+    , Status(st) {}
 
   directory_entry() {}
 
-  void assign(const Twine &path, file_status st = file_status(),
-                          file_status symlink_st = file_status()) {
+  void assign(const Twine &path, file_status st = file_status()) {
     Path = path.str();
     Status = st;
-    SymlinkStatus = symlink_st;
   }
 
-  void replace_filename(const Twine &filename, file_status st = file_status(),
-                              file_status symlink_st = file_status());
+  void replace_filename(const Twine &filename, file_status st = file_status());
 
   const std::string &path() const { return Path; }
   error_code status(file_status &result) const;
-  error_code symlink_status(file_status &result) const;
 
   bool operator==(const directory_entry& rhs) const { return Path == rhs.Path; }
   bool operator!=(const directory_entry& rhs) const { return !(*this == rhs); }

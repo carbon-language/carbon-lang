@@ -682,14 +682,12 @@ bool is_other(file_status status) {
          !is_symlink(status);
 }
 
-void directory_entry::replace_filename(const Twine &filename, file_status st,
-                                       file_status symlink_st) {
+void directory_entry::replace_filename(const Twine &filename, file_status st) {
   SmallString<128> path(Path.begin(), Path.end());
   path::remove_filename(path);
   path::append(path, filename);
   Path = path.str();
   Status = st;
-  SymlinkStatus = symlink_st;
 }
 
 error_code has_magic(const Twine &path, const Twine &magic, bool &result) {
