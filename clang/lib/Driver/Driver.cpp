@@ -241,8 +241,16 @@ Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
   llvm::PrettyStackTraceString CrashInfo("Compilation construction");
 
   // FIXME: Handle environment options which affect driver behavior, somewhere
-  // (client?). GCC_EXEC_PREFIX, COMPILER_PATH, LIBRARY_PATH, LPATH,
-  // CC_PRINT_OPTIONS.
+  // (client?). GCC_EXEC_PREFIX, LIBRARY_PATH, LPATH, CC_PRINT_OPTIONS.
+
+  if (char *env = ::getenv("COMPILER_PATH")) {
+    StringRef CompilerPath = env;
+    while (!CompilerPath.empty()) {
+      std::pair<StringRef, StringRef> Split = CompilerPath.split(':');      
+      PrefixDirs.push_back(Split.first);
+      CompilerPath = Split.second;
+    }
+  }
 
   // FIXME: What are we going to do with -V and -b?
 
