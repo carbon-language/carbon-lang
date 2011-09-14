@@ -62,13 +62,17 @@ static void DumpInput(const StringRef &Filename) {
     i->getName(name);
     StringRef data;
     i->getContents(data);
-    if (name.endswith("debug_info"))
+
+    if (name.startswith("__DWARF,"))
+      name = name.substr(8); // Skip "__DWARF," prefix.
+    name = name.substr(name.find_first_not_of("._")); // Skip . and _ prefixes.
+    if (name == "debug_info")
       DebugInfoSection = data;
-    else if (name.endswith("debug_abbrev"))
+    else if (name == "debug_abbrev")
       DebugAbbrevSection = data;
-    else if (name.endswith("debug_line"))
+    else if (name == "debug_line")
       DebugLineSection = data;
-    else if (name.endswith("debug_aranges"))
+    else if (name == "debug_aranges")
       DebugArangesSection = data;
   }
 

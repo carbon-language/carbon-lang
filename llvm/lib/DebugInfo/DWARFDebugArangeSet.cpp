@@ -72,6 +72,13 @@ DWARFDebugArangeSet::extract(DataExtractor data, uint32_t *offset_ptr) {
     Header.AddrSize = data.getU8(offset_ptr);
     Header.SegSize = data.getU8(offset_ptr);
 
+    // Perform basic validation of the header fields.
+    if (!data.isValidOffsetForDataOfSize(Offset, Header.Length) ||
+        (Header.AddrSize != 4 && Header.AddrSize != 8)) {
+      clear();
+      return false;
+    }
+
     // The first tuple following the header in each set begins at an offset
     // that is a multiple of the size of a single tuple (that is, twice the
     // size of an address). The header is padded, if necessary, to the
