@@ -1220,6 +1220,28 @@ _func:
 
 
 @------------------------------------------------------------------------------
+@ PKH
+@------------------------------------------------------------------------------
+        pkhbt r2, r2, r3
+        pkhbt r2, r2, r3, lsl #31
+        pkhbt r2, r2, r3, lsl #0
+        pkhbt r2, r2, r3, lsl #15
+
+        pkhtb r2, r2, r3
+        pkhtb r2, r2, r3, asr #31
+        pkhtb r2, r2, r3, asr #15
+
+@ CHECK: pkhbt	r2, r2, r3              @ encoding: [0xc2,0xea,0x03,0x02]
+@ CHECK: pkhbt	r2, r2, r3, lsl #31     @ encoding: [0xc2,0xea,0xc3,0x72]
+@ CHECK: pkhbt	r2, r2, r3              @ encoding: [0xc2,0xea,0x03,0x02]
+@ CHECK: pkhbt	r2, r2, r3, lsl #15     @ encoding: [0xc2,0xea,0xc3,0x32]
+
+@ CHECK: pkhbt	r2, r2, r3              @ encoding: [0xc2,0xea,0x03,0x02]
+@ CHECK: pkhtb	r2, r2, r3, asr #31     @ encoding: [0xc2,0xea,0xe3,0x72]
+@ CHECK: pkhtb	r2, r2, r3, asr #15     @ encoding: [0xc2,0xea,0xe3,0x32]
+
+
+@------------------------------------------------------------------------------
 @ IT
 @------------------------------------------------------------------------------
 @ Test encodings of a few full IT blocks, not just the IT instruction

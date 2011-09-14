@@ -2707,8 +2707,8 @@ def : T2Pat<(or (sra (shl rGPR:$Rm, (i32 24)), (i32 16)),
             (t2REVSH rGPR:$Rm)>;
 
 def t2PKHBT : T2ThreeReg<
-            (outs rGPR:$Rd), (ins rGPR:$Rn, rGPR:$Rm, i32imm:$sh),
-                  IIC_iBITsi, "pkhbt", "\t$Rd, $Rn, $Rm, lsl $sh",
+            (outs rGPR:$Rd), (ins rGPR:$Rn, rGPR:$Rm, pkh_lsl_amt:$sh),
+                  IIC_iBITsi, "pkhbt", "\t$Rd, $Rn, $Rm$sh",
                   [(set rGPR:$Rd, (or (and rGPR:$Rn, 0xFFFF),
                                       (and (shl rGPR:$Rm, pkh_lsl_amt:$sh),
                                            0xFFFF0000)))]>,
@@ -2735,8 +2735,8 @@ def : T2Pat<(or (and rGPR:$src1, 0xFFFF), (shl rGPR:$src2, imm16_31:$sh)),
 // Note: Shifts of 1-15 bits will be transformed to srl instead of sra and
 // will match the pattern below.
 def t2PKHTB : T2ThreeReg<
-                  (outs rGPR:$Rd), (ins rGPR:$Rn, rGPR:$Rm, i32imm:$sh),
-                  IIC_iBITsi, "pkhtb", "\t$Rd, $Rn, $Rm, asr $sh",
+                  (outs rGPR:$Rd), (ins rGPR:$Rn, rGPR:$Rm, pkh_asr_amt:$sh),
+                  IIC_iBITsi, "pkhtb", "\t$Rd, $Rn, $Rm$sh",
                   [(set rGPR:$Rd, (or (and rGPR:$Rn, 0xFFFF0000),
                                        (and (sra rGPR:$Rm, pkh_asr_amt:$sh),
                                             0xFFFF)))]>,
@@ -3825,3 +3825,13 @@ def : t2InstAlias<"mvn${s}${p} $Rd, $Rm",
            (t2MVNr rGPR:$Rd, rGPR:$Rm, pred:$p, cc_out:$s)>;
 def : t2InstAlias<"mvn${s}${p} $Rd, $ShiftedRm",
            (t2MVNs rGPR:$Rd, t2_so_reg:$ShiftedRm, pred:$p, cc_out:$s)>;
+
+// PKHBT/PKHTB with default shift amount. PKHTB is equivalent to PKHBT when the
+// shift amount is zero (i.e., unspecified).
+def : InstAlias<"pkhbt${p} $Rd, $Rn, $Rm",
+                (t2PKHBT rGPR:$Rd, rGPR:$Rn, rGPR:$Rm, 0, pred:$p)>,
+            Requires<[HasT2ExtractPack, IsThumb2]>;
+def : InstAlias<"pkhtb${p} $Rd, $Rn, $Rm",
+                (t2PKHBT rGPR:$Rd, rGPR:$Rn, rGPR:$Rm, 0, pred:$p)>,
+            Requires<[HasT2ExtractPack, IsThumb2]>;
+
