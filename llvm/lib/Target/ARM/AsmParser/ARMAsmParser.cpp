@@ -3307,7 +3307,7 @@ bool ARMAsmParser::shouldOmitCCOutOperand(StringRef Mnemonic,
     // If both registers are low, we're in an IT block, and the immediate is
     // in range, we should use encoding T1 instead, which has a cc_out.
     if (inITBlock() &&
-        isARMLowRegister(static_cast<ARMOperand*>(Operands[4])->getReg()) &&
+        isARMLowRegister(static_cast<ARMOperand*>(Operands[3])->getReg()) &&
         isARMLowRegister(static_cast<ARMOperand*>(Operands[4])->getReg()) &&
         static_cast<ARMOperand*>(Operands[5])->isImm0_7())
       return false;
@@ -3316,6 +3316,28 @@ bool ARMAsmParser::shouldOmitCCOutOperand(StringRef Mnemonic,
     // operand.
     return true;
   }
+
+  // The thumb2 multiply instruction doesn't have a CCOut register, so
+  // if we have a "mul" mnemonic in Thumb mode, check if we'll be able to
+  // use the 16-bit encoding or not.
+  if (isThumbTwo() && Mnemonic == "mul" && Operands.size() == 6 &&
+      static_cast<ARMOperand*>(Operands[1])->getReg() == 0 &&
+      static_cast<ARMOperand*>(Operands[3])->isReg() &&
+      static_cast<ARMOperand*>(Operands[4])->isReg() &&
+      static_cast<ARMOperand*>(Operands[5])->isReg() &&
+      // If the registers aren't low regs, the destination reg isn't the
+      // same as one of the source regs, or the cc_out operand is zero
+      // outside of an IT block, we have to use the 32-bit encoding, so
+      // remove the cc_out operand.
+      (!isARMLowRegister(static_cast<ARMOperand*>(Operands[3])->getReg()) ||
+       !isARMLowRegister(static_cast<ARMOperand*>(Operands[4])->getReg()) ||
+       !inITBlock() ||
+       (static_cast<ARMOperand*>(Operands[3])->getReg() !=
+        static_cast<ARMOperand*>(Operands[5])->getReg() &&
+        static_cast<ARMOperand*>(Operands[3])->getReg() !=
+        static_cast<ARMOperand*>(Operands[4])->getReg())))
+    return true;
+
 
 
   // Register-register 'add/sub' for thumb does not have a cc_out operand

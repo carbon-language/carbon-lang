@@ -1109,6 +1109,21 @@ _func:
 
 
 @------------------------------------------------------------------------------
+@ MUL
+@------------------------------------------------------------------------------
+        muls r3, r4, r3
+        mul r3, r4, r3
+        mul r3, r4, r6
+        it eq
+        muleq r3, r4, r5
+
+@ CHECK: muls	r3, r4, r3              @ encoding: [0x63,0x43]
+@ CHECK: mul	r3, r4, r3              @ encoding: [0x04,0xfb,0x03,0xf3]
+@ CHECK: mul	r3, r4, r6              @ encoding: [0x04,0xfb,0x06,0xf3]
+@ CHECK: it	eq                      @ encoding: [0x08,0xbf]
+@ CHECK: muleq	r3, r4, r5              @ encoding: [0x04,0xfb,0x05,0xf3]
+
+@------------------------------------------------------------------------------
 @ IT
 @------------------------------------------------------------------------------
 @ Test encodings of a few full IT blocks, not just the IT instruction
