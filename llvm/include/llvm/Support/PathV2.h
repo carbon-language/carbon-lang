@@ -268,7 +268,10 @@ bool is_separator(char value);
 /// "/var/tmp" or "C:/TEMP"
 ///
 /// @param erasedOnReboot Whether to favor a path that is erased on reboot
-/// rather than one that potentially persists longer.
+/// rather than one that potentially persists longer. This parameter will be
+/// ignored if the user or system has set the typical environment variable
+/// (e.g., TEMP on Windows, TMPDIR on *nix) to specify a temporary directory.
+///
 /// @param Result Holds the resulting path name.
 void system_temp_directory(bool erasedOnReboot, SmallVectorImpl<char> &result);
 

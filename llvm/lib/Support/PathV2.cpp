@@ -510,7 +510,7 @@ void system_temp_directory(bool erasedOnReboot, SmallVectorImpl<char> &result) {
   const char *DefaultResult;
 #ifdef LLVM_ON_WIN32
   (void)erasedOnReboot;
-  DefaultResult = "C:\TEMP";
+  DefaultResult = "C:\\TEMP";
 #else
   if (erasedOnReboot)
     DefaultResult = "/tmp";
