@@ -20,6 +20,7 @@
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
@@ -635,6 +636,60 @@ void SplitEditor::removeBackCopies(SmallVectorImpl<VNInfo*> &Copies) {
   }
 }
 
+MachineBasicBlock*
+SplitEditor::findShallowDominator(MachineBasicBlock *MBB,
+                                  MachineBasicBlock *DefMBB) {
+  if (MBB == DefMBB)
+    return MBB;
+  assert(MDT.dominates(DefMBB, MBB) && "MBB must be dominated by the def.");
+
+  const MachineLoopInfo &Loops = SA.Loops;
+  const MachineLoop *DefLoop = Loops.getLoopFor(DefMBB);
+  MachineDomTreeNode *DefDomNode = MDT[DefMBB];
+
+  // Best candidate so far.
+  MachineBasicBlock *BestMBB = MBB;
+  unsigned BestDepth = UINT_MAX;
+
+  for (;;) {
+    const MachineLoop *Loop = Loops.getLoopFor(MBB);
+
+    // MBB isn't in a loop, it doesn't get any better.  All dominators have a
+    // higher frequency by definition.
+    if (!Loop) {
+      DEBUG(dbgs() << "Def in BB#" << DefMBB->getNumber() << " dominates BB#"
+                   << MBB->getNumber() << " at depth 0\n");
+      return MBB;
+    }
+
+    // We'll never be able to exit the DefLoop.
+    if (Loop == DefLoop) {
+      DEBUG(dbgs() << "Def in BB#" << DefMBB->getNumber() << " dominates BB#"
+                   << MBB->getNumber() << " in the same loop\n");
+      return MBB;
+    }
+
+    // Least busy dominator seen so far.
+    unsigned Depth = Loop->getLoopDepth();
+    if (Depth < BestDepth) {
+      BestMBB = MBB;
+      BestDepth = Depth;
+      DEBUG(dbgs() << "Def in BB#" << DefMBB->getNumber() << " dominates BB#"
+                   << MBB->getNumber() << " at depth " << Depth << '\n');
+    }
+
+    // Leave loop by going to the immediate dominator of the loop header.
+    // This is a bigger stride than simply walking up the dominator tree.
+    MachineDomTreeNode *IDom = MDT[Loop->getHeader()]->getIDom();
+
+    // Too far up the dominator tree?
+    if (!IDom || !MDT.dominates(DefDomNode, IDom))
+      return BestMBB;
+
+    MBB = IDom->getBlock();
+  }
+}
+
 void SplitEditor::hoistCopiesForSize() {
   // Get the complement interval, always RegIdx 0.
   LiveInterval *LI = Edit->get(0);
@@ -706,10 +761,14 @@ void SplitEditor::hoistCopiesForSize() {
     DomPair &Dom = NearestDom[i];
     if (!Dom.first || Dom.second.isValid())
       continue;
-    // This value needs a hoisted copy inserted at the end of Dom.second.
+    // This value needs a hoisted copy inserted at the end of Dom.first.
+    VNInfo *ParentVNI = Parent->getValNumInfo(i);
+    MachineBasicBlock *DefMBB = LIS.getMBBFromIndex(ParentVNI->def);
+    // Get a less loopy dominator than Dom.first.
+    Dom.first = findShallowDominator(Dom.first, DefMBB);
     SlotIndex Last = LIS.getMBBEndIdx(Dom.first).getPrevSlot();
     Dom.second =
-      defFromParent(0, Parent->getValNumInfo(i), Last, *Dom.first,
+      defFromParent(0, ParentVNI, Last, *Dom.first,
                     LIS.getLastSplitPoint(Edit->getParent(), Dom.first))->def;
   }
 

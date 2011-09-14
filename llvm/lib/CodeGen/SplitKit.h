@@ -315,6 +315,11 @@ private:
   /// in the vector in the complement interval.
   void removeBackCopies(SmallVectorImpl<VNInfo*> &Copies);
 
+  /// getShallowDominator - Returns the least busy dominator of MBB that is
+  /// also dominated by DefMBB.  Busy is measured by loop depth.
+  MachineBasicBlock *findShallowDominator(MachineBasicBlock *MBB,
+                                          MachineBasicBlock *DefMBB);
+
   /// hoistCopiesForSize - Hoist back-copies to the complement interval in a
   /// way that minimizes code size. This implements the SM_Size spill mode.
   void hoistCopiesForSize();
