@@ -605,7 +605,7 @@ def nostdincxx : Flag<"-nostdinc++">,
   HelpText<"Disable standard #include directories for the C++ standard library">;
 def nobuiltininc : Flag<"-nobuiltininc">,
   HelpText<"Disable builtin #include directories">;
-def fmodule_cache_path : JoinedOrSeparate<"-fmodule-cache-path">, 
+def fmodule_cache_path : Separate<"-fmodule-cache-path">, 
   MetaVarName<"<directory>">,
   HelpText<"Specify the module cache path">;           
 def fdisable_module_hash : Flag<"-fdisable-module-hash">,
