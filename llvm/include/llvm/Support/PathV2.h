@@ -187,7 +187,7 @@ const StringRef root_name(StringRef path);
 /// @result The root directory of \a path if it has one, otherwise
 ///               "".
 const StringRef root_directory(StringRef path);
-
+  
 /// @brief Get root path.
 ///
 /// Equivalent to root_name + root_directory.
@@ -263,6 +263,14 @@ const StringRef extension(StringRef path);
 /// @param value a character
 /// @result true if \a value is a path separator character on the host OS
 bool is_separator(char value);
+
+/// @brief Get the typical temporary directory for the system, e.g., 
+/// "/var/tmp" or "C:/TEMP"
+///
+/// @param erasedOnReboot Whether to favor a path that is erased on reboot
+/// rather than one that potentially persists longer.
+/// @param Result Holds the resulting path name.
+void system_temp_directory(bool erasedOnReboot, SmallVectorImpl<char> &result);
 
 /// @brief Has root name?
 ///

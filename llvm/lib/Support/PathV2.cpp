@@ -490,6 +490,36 @@ bool is_separator(char value) {
   }
 }
 
+void system_temp_directory(bool erasedOnReboot, SmallVectorImpl<char> &result) {
+  result.clear();
+  
+  // Check whether the temporary directory is specified by an environment
+  // variable.
+  const char *EnvironmentVariable;
+#ifdef LLVM_ON_WIN32
+  EnvironmentVariable = "TEMP";
+#else
+  EnvironmentVariable = "TMPDIR";
+#endif
+  if (char *RequestedDir = getenv(EnvironmentVariable)) {
+    result.append(RequestedDir, RequestedDir + strlen(RequestedDir));
+    return;
+  }
+    
+  // Fall back to a system default.
+  const char *DefaultResult;
+#ifdef LLVM_ON_WIN32
+  (void)erasedOnReboot;
+  DefaultResult = "C:\TEMP";
+#else
+  if (erasedOnReboot)
+    DefaultResult = "/tmp";
+  else
+    DefaultResult = "/var/tmp";
+#endif
+  result.append(DefaultResult, DefaultResult + strlen(DefaultResult));
+}
+  
 bool has_root_name(const Twine &path) {
   SmallString<128> path_storage;
   StringRef p = path.toStringRef(path_storage);
