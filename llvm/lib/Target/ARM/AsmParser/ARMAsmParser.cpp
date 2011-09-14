@@ -1874,70 +1874,113 @@ parseCoprocRegOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   return MatchOperand_Success;
 }
 
-/// Parse a register list, return it if successful else return null.  The first
-/// token must be a '{' when called.
+// For register list parsing, we need to map from raw GPR register numbering
+// to the enumeration values. The enumeration values aren't sorted by
+// register number due to our using "sp", "lr" and "pc" as canonical names.
+static unsigned getNextRegister(unsigned Reg) {
+  // If this is a GPR, we need to do it manually, otherwise we can rely
+  // on the sort ordering of the enumeration since the other reg-classes
+  // are sane.
+  if (!ARMMCRegisterClasses[ARM::GPRRegClassID].contains(Reg))
+    return Reg + 1;
+  switch(Reg) {
+  default: assert(0 && "Invalid GPR number!");
+  case ARM::R0:  return ARM::R1;  case ARM::R1:  return ARM::R2;
+  case ARM::R2:  return ARM::R3;  case ARM::R3:  return ARM::R4;
+  case ARM::R4:  return ARM::R5;  case ARM::R5:  return ARM::R6;
+  case ARM::R6:  return ARM::R7;  case ARM::R7:  return ARM::R8;
+  case ARM::R8:  return ARM::R9;  case ARM::R9:  return ARM::R10;
+  case ARM::R10: return ARM::R11; case ARM::R11: return ARM::R12;
+  case ARM::R12: return ARM::SP;  case ARM::SP:  return ARM::LR;
+  case ARM::LR:  return ARM::PC;  case ARM::PC:  return ARM::R0;
+  }
+}
+
+/// Parse a register list.
 bool ARMAsmParser::
 parseRegisterList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   assert(Parser.getTok().is(AsmToken::LCurly) &&
          "Token is not a Left Curly Brace");
   SMLoc S = Parser.getTok().getLoc();
+  Parser.Lex(); // Eat '{' token.
+  SMLoc RegLoc = Parser.getTok().getLoc();
 
-  // Read the rest of the registers in the list.
-  unsigned PrevRegNum = 0;
+  // Check the first register in the list to see what register class
+  // this is a list of.
+  int Reg = tryParseRegister();
+  if (Reg == -1)
+    return Error(RegLoc, "register expected");
+
+  MCRegisterClass *RC;
+  if (ARMMCRegisterClasses[ARM::GPRRegClassID].contains(Reg))
+    RC = &ARMMCRegisterClasses[ARM::GPRRegClassID];
+  else if (ARMMCRegisterClasses[ARM::DPRRegClassID].contains(Reg))
+    RC = &ARMMCRegisterClasses[ARM::DPRRegClassID];
+  else if (ARMMCRegisterClasses[ARM::SPRRegClassID].contains(Reg))
+    RC = &ARMMCRegisterClasses[ARM::SPRRegClassID];
+  else
+    return Error(RegLoc, "invalid register in register list");
+
+  // The reglist instructions have at most 16 registers, so reserve
+  // space for that many.
   SmallVector<std::pair<unsigned, SMLoc>, 16> Registers;
+  // Store the first register.
+  Registers.push_back(std::pair<unsigned, SMLoc>(Reg, RegLoc));
 
-  do {
-    bool IsRange = Parser.getTok().is(AsmToken::Minus);
-    Parser.Lex(); // Eat non-identifier token.
+  // This starts immediately after the first register token in the list,
+  // so we can see either a comma or a minus (range separator) as a legal
+  // next token.
+  while (Parser.getTok().is(AsmToken::Comma) ||
+         Parser.getTok().is(AsmToken::Minus)) {
+    if (Parser.getTok().is(AsmToken::Minus)) {
+      Parser.Lex(); // Eat the comma.
+      SMLoc EndLoc = Parser.getTok().getLoc();
+      int EndReg = tryParseRegister();
+      if (EndReg == -1)
+        return Error(EndLoc, "register expected");
+      // If the register is the same as the start reg, there's nothing
+      // more to do.
+      if (Reg == EndReg)
+        continue;
+      // The register must be in the same register class as the first.
+      if (!RC->contains(EndReg))
+        return Error(EndLoc, "invalid register in register list");
+      // Ranges must go from low to high.
+      if (getARMRegisterNumbering(Reg) > getARMRegisterNumbering(EndReg))
+        return Error(EndLoc, "bad range in register list");
 
-    const AsmToken &RegTok = Parser.getTok();
-    SMLoc RegLoc = RegTok.getLoc();
-    if (RegTok.isNot(AsmToken::Identifier))
+      // Add all the registers in the range to the register list.
+      while (Reg != EndReg) {
+        Reg = getNextRegister(Reg);
+        Registers.push_back(std::pair<unsigned, SMLoc>(Reg, RegLoc));
+      }
+      continue;
+    }
+    Parser.Lex(); // Eat the comma.
+    RegLoc = Parser.getTok().getLoc();
+    int OldReg = Reg;
+    Reg = tryParseRegister();
+    if (Reg == -1)
       return Error(RegLoc, "register expected");
-
-    int RegNum = tryParseRegister();
-    if (RegNum == -1)
-      return Error(RegLoc, "register expected");
-
-    if (IsRange) {
-      int Reg = PrevRegNum;
-      do {
-        ++Reg;
-        Registers.push_back(std::make_pair(Reg, RegLoc));
-      } while (Reg != RegNum);
-    } else
-      Registers.push_back(std::make_pair(RegNum, RegLoc));
-
-    PrevRegNum = RegNum;
-  } while (Parser.getTok().is(AsmToken::Comma) ||
-           Parser.getTok().is(AsmToken::Minus));
-
-  // Process the right curly brace of the list.
-  const AsmToken &RCurlyTok = Parser.getTok();
-  if (RCurlyTok.isNot(AsmToken::RCurly))
-    return Error(RCurlyTok.getLoc(), "'}' expected");
-
-  SMLoc E = RCurlyTok.getLoc();
-  Parser.Lex(); // Eat right curly brace token.
-
-  // Verify the register list.
-  bool EmittedWarning = false;
-  unsigned HighRegNum = 0;
-  BitVector RegMap(32);
-  for (unsigned i = 0, e = Registers.size(); i != e; ++i) {
-    const std::pair<unsigned, SMLoc> &RegInfo = Registers[i];
-    unsigned Reg = getARMRegisterNumbering(RegInfo.first);
-
-    if (RegMap[Reg])
-      return Error(RegInfo.second, "register duplicated in register list");
-
-    if (!EmittedWarning && Reg < HighRegNum)
-      Warning(RegInfo.second,
-              "register not in ascending order in register list");
-
-    RegMap.set(Reg);
-    HighRegNum = std::max(Reg, HighRegNum);
+    // The register must be in the same register class as the first.
+    if (!RC->contains(Reg))
+      return Error(RegLoc, "invalid register in register list");
+    // List must be monotonically increasing.
+    if (getARMRegisterNumbering(Reg) <= getARMRegisterNumbering(OldReg))
+      return Error(RegLoc, "register list not in ascending order");
+    // VFP register lists must also be contiguous.
+    // It's OK to use the enumeration values directly here rather, as the
+    // VFP register classes have the enum sorted properly.
+    if (RC != &ARMMCRegisterClasses[ARM::GPRRegClassID] &&
+        Reg != OldReg + 1)
+      return Error(RegLoc, "non-contiguous register range");
+    Registers.push_back(std::pair<unsigned, SMLoc>(Reg, RegLoc));
   }
+
+  SMLoc E = Parser.getTok().getLoc();
+  if (Parser.getTok().isNot(AsmToken::RCurly))
+    return Error(E, "'}' expected");
+  Parser.Lex(); // Eat '}' token.
 
   Operands.push_back(ARMOperand::CreateRegList(Registers, S, E));
   return false;
