@@ -1009,6 +1009,10 @@ _func:
         mov.w r0, #0x3fc0000
         mov r0, #0x3fc0000
         movs.w r0, #0x3fc0000
+        itte eq
+        movseq r1, #12
+        moveq r1, #12
+        movne.w r1, #12
 
 @ CHECK: movs	r1, #21                 @ encoding: [0x15,0x21]
 @ CHECK: movs.w	r1, #21                 @ encoding: [0x5f,0xf0,0x15,0x01]
@@ -1019,6 +1023,11 @@ _func:
 @ CHECK: mov.w	r0, #66846720           @ encoding: [0x4f,0xf0,0x7f,0x70]
 @ CHECK: mov.w	r0, #66846720           @ encoding: [0x4f,0xf0,0x7f,0x70]
 @ CHECK: movs.w	r0, #66846720           @ encoding: [0x5f,0xf0,0x7f,0x70]
+@ CHECK: itte	eq                      @ encoding: [0x06,0xbf]
+@ CHECK: movseq.w	r1, #12         @ encoding: [0x5f,0xf0,0x0c,0x01]
+@ CHECK: moveq	r1, #12                 @ encoding: [0x0c,0x21]
+@ CHECK: movne.w r1, #12                @ encoding: [0x4f,0xf0,0x0c,0x01]
+
 
 
 @------------------------------------------------------------------------------

@@ -3806,8 +3806,9 @@ processInstruction(MCInst &Inst,
     // request the 32-bit variant, transform it here.
     if (isARMLowRegister(Inst.getOperand(0).getReg()) &&
         Inst.getOperand(1).getImm() <= 255 &&
-        Inst.getOperand(2).getImm() == ARMCC::AL &&
-        Inst.getOperand(4).getReg() == ARM::CPSR &&
+        ((!inITBlock() && Inst.getOperand(2).getImm() == ARMCC::AL &&
+         Inst.getOperand(4).getReg() == ARM::CPSR) ||
+        (inITBlock() && Inst.getOperand(4).getReg() == 0)) &&
         (!static_cast<ARMOperand*>(Operands[2])->isToken() ||
          static_cast<ARMOperand*>(Operands[2])->getToken() != ".w")) {
       // The operands aren't in the same order for tMOVi8...
