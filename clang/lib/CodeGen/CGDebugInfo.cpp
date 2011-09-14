@@ -302,8 +302,8 @@ llvm::DIType CGDebugInfo::CreateType(const BuiltinType *BT) {
     assert(0 && "Unexpected builtin type UnknownAny");
     return llvm::DIType();
   case BuiltinType::NullPtr:
-    assert(0 && "Unexpected builtin type NullPtr");
-    return llvm::DIType();
+    return DBuilder.
+      createNullPtrType(BT->getName(CGM.getContext().getLangOptions()));
   case BuiltinType::Void:
     return llvm::DIType();
   case BuiltinType::ObjCClass:
