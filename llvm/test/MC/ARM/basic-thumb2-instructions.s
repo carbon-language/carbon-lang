@@ -1198,6 +1198,26 @@ _func:
 
 
 @------------------------------------------------------------------------------
+@ ORR
+@------------------------------------------------------------------------------
+        orr r4, r5, #0xf000
+        orr r4, r5, r6
+        orr r4, r5, r6, lsl #5
+        orrs r4, r5, r6, lsr #5
+        orr r4, r5, r6, lsr #5
+        orrs r4, r5, r6, asr #5
+        orr r4, r5, r6, ror #5
+
+@ CHECK: orr	r4, r5, #61440          @ encoding: [0x45,0xf4,0x70,0x44]
+@ CHECK: orr.w	r4, r5, r6              @ encoding: [0x45,0xea,0x06,0x04]
+@ CHECK: orr.w	r4, r5, r6, lsl #5      @ encoding: [0x45,0xea,0x46,0x14]
+@ CHECK: orrs.w	r4, r5, r6, lsr #5      @ encoding: [0x55,0xea,0x56,0x14]
+@ CHECK: orr.w	r4, r5, r6, lsr #5      @ encoding: [0x45,0xea,0x56,0x14]
+@ CHECK: orrs.w	r4, r5, r6, asr #5      @ encoding: [0x55,0xea,0x66,0x14]
+@ CHECK: orr.w	r4, r5, r6, ror #5      @ encoding: [0x45,0xea,0x76,0x14]
+
+
+@------------------------------------------------------------------------------
 @ IT
 @------------------------------------------------------------------------------
 @ Test encodings of a few full IT blocks, not just the IT instruction
