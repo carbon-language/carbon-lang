@@ -4284,8 +4284,6 @@ static void DiagnoseInvalidRedeclaration(Sema &S, FunctionDecl *NewFD,
   } else if ((Correction = S.CorrectTypo(Prev.getLookupNameInfo(),
                                          Prev.getLookupKind(), 0, 0, DC)) &&
              Correction.getCorrection() != Name) {
-    DiagMsg = isFriendDecl ? diag::err_no_matching_local_friend_suggest
-                           : diag::err_member_def_does_not_match_suggest;
     for (TypoCorrection::decl_iterator CDecl = Correction.begin(),
                                     CDeclEnd = Correction.end();
          CDecl != CDeclEnd; ++CDecl) {
@@ -4299,7 +4297,14 @@ static void DiagnoseInvalidRedeclaration(Sema &S, FunctionDecl *NewFD,
         NearMatches.push_back(std::make_pair(FD, ParamNum));
       }
     }
+    if (!NearMatches.empty())
+      DiagMsg = isFriendDecl ? diag::err_no_matching_local_friend_suggest
+                             : diag::err_member_def_does_not_match_suggest;
   }
+
+  // Ignore the correction if it didn't yield any close FunctionDecl matches
+  if (Correction && NearMatches.empty())
+    Correction = TypoCorrection();
 
   if (Correction)
     S.Diag(NewFD->getLocation(), DiagMsg)

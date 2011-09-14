@@ -70,3 +70,12 @@ using test1::Foo;
 void Bar::f(Foo::Inner foo) { // expected-error {{out-of-line definition of 'f' does not match any declaration in 'Bar'}}
   (void)foo;
 }
+
+class Crash {
+ public:
+  void GetCart(int count) const;
+};
+// This out-of-line definition was fine...
+void Crash::cart(int count) const {} // expected-error {{out-of-line definition of 'cart' does not match any declaration in 'Crash'}}
+// ...while this one crashed clang
+void Crash::chart(int count) const {} // expected-error {{out-of-line definition of 'chart' does not match any declaration in 'Crash'}}

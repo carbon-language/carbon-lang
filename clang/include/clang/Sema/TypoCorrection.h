@@ -118,7 +118,9 @@ public:
   }
 
   typedef llvm::SmallVector<NamedDecl*, 1>::iterator decl_iterator;
-  decl_iterator begin() { return CorrectionDecls.begin(); }
+  decl_iterator begin() {
+    return isKeyword() ? CorrectionDecls.end() : CorrectionDecls.begin();
+  }
   decl_iterator end() { return CorrectionDecls.end(); }
 
 private:
