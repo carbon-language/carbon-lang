@@ -838,7 +838,7 @@ Lforward:
         msr  SPSR_fsxc, #5
         msr  cpsr_fsxc, #5
 
-@ CHECK: msr	CPSR_fc, #5             @ encoding: [0x05,0xf0,0x29,0xe3]
+@ CHECK: msr	APSR_nzcvq, #5          @ encoding: [0x05,0xf0,0x28,0xe3]
 @ CHECK: msr	APSR_g, #5              @ encoding: [0x05,0xf0,0x24,0xe3]
 @ CHECK: msr	APSR_nzcvq, #5          @ encoding: [0x05,0xf0,0x28,0xe3]
 @ CHECK: msr	APSR_nzcvq, #5          @ encoding: [0x05,0xf0,0x28,0xe3]
@@ -868,7 +868,7 @@ Lforward:
         msr  SPSR_fsxc, r0
         msr  cpsr_fsxc, r0
 
-@ CHECK: msr  CPSR_fc, r0 @ encoding: [0x00,0xf0,0x29,0xe1]
+@ CHECK: msr  APSR_nzcvq, r0 @ encoding: [0x00,0xf0,0x28,0xe1]
 @ CHECK: msr  APSR_g, r0 @ encoding: [0x00,0xf0,0x24,0xe1]
 @ CHECK: msr  APSR_nzcvq, r0 @ encoding: [0x00,0xf0,0x28,0xe1]
 @ CHECK: msr  APSR_nzcvq, r0 @ encoding: [0x00,0xf0,0x28,0xe1]

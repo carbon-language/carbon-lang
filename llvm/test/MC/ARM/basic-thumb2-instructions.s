@@ -1063,6 +1063,52 @@ _func:
 
 
 @------------------------------------------------------------------------------
+@ MRS
+@------------------------------------------------------------------------------
+        mrs  r8, apsr
+        mrs  r8, cpsr
+        mrs  r8, spsr
+
+@ CHECK: mrs	r8, apsr                @ encoding: [0xef,0xf3,0x00,0x88]
+@ CHECK: mrs	r8, apsr                @ encoding: [0xef,0xf3,0x00,0x88]
+@ CHECK: mrs	r8, spsr                @ encoding: [0xff,0xf3,0x00,0x88]
+
+
+@------------------------------------------------------------------------------
+@ MSR
+@------------------------------------------------------------------------------
+        msr  apsr, r1
+        msr  apsr_g, r2
+        msr  apsr_nzcvq, r3
+        msr  APSR_nzcvq, r4
+        msr  apsr_nzcvqg, r5
+        msr  cpsr_fc, r6
+        msr  cpsr_c, r7
+        msr  cpsr_x, r8
+        msr  cpsr_fc, r9
+        msr  cpsr_all, r11
+        msr  cpsr_fsx, r12
+        msr  spsr_fc, r0
+        msr  SPSR_fsxc, r5
+        msr  cpsr_fsxc, r8
+
+@ CHECK: msr	APSR_nzcvq, r1          @ encoding: [0x81,0xf3,0x00,0x88]
+@ CHECK: msr	APSR_g, r2              @ encoding: [0x82,0xf3,0x00,0x84]
+@ CHECK: msr	APSR_nzcvq, r3          @ encoding: [0x83,0xf3,0x00,0x88]
+@ CHECK: msr	APSR_nzcvq, r4          @ encoding: [0x84,0xf3,0x00,0x88]
+@ CHECK: msr	APSR_nzcvqg, r5         @ encoding: [0x85,0xf3,0x00,0x8c]
+@ CHECK: msr	CPSR_fc, r6             @ encoding: [0x86,0xf3,0x00,0x89]
+@ CHECK: msr	CPSR_c, r7              @ encoding: [0x87,0xf3,0x00,0x81]
+@ CHECK: msr	CPSR_x, r8              @ encoding: [0x88,0xf3,0x00,0x82]
+@ CHECK: msr	CPSR_fc, r9             @ encoding: [0x89,0xf3,0x00,0x89]
+@ CHECK: msr	CPSR_fc, r11            @ encoding: [0x8b,0xf3,0x00,0x89]
+@ CHECK: msr	CPSR_fsx, r12           @ encoding: [0x8c,0xf3,0x00,0x8e]
+@ CHECK: msr	SPSR_fc, r0             @ encoding: [0x90,0xf3,0x00,0x89]
+@ CHECK: msr	SPSR_fsxc, r5           @ encoding: [0x95,0xf3,0x00,0x8f]
+@ CHECK: msr	CPSR_fsxc, r8           @ encoding: [0x88,0xf3,0x00,0x8f]
+
+
+@------------------------------------------------------------------------------
 @ IT
 @------------------------------------------------------------------------------
 @ Test encodings of a few full IT blocks, not just the IT instruction

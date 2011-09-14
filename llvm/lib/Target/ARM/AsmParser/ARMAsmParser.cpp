@@ -2077,7 +2077,7 @@ parseMSRMaskOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
       if (!Flags.empty())
         return MatchOperand_NoMatch;
       else
-        FlagsVal = 0; // No flag
+        FlagsVal = 8; // No flag
     }
   } else if (SpecReg == "cpsr" || SpecReg == "spsr") {
     if (Flags == "all") // cpsr_all is an alias for cpsr_fc

@@ -3507,33 +3507,22 @@ defm t2STC  : T2LdStCop<0b1111, 0, "stc">;
 //===----------------------------------------------------------------------===//
 // Move between special register and ARM core register -- for disassembly only
 //
-
-class T2SpecialReg<bits<12> op31_20, bits<2> op15_14, bits<1> op12,
-          dag oops, dag iops, InstrItinClass itin,
-          string opc, string asm, list<dag> pattern>
-  : T2I<oops, iops, itin, opc, asm, pattern> {
-  let Inst{31-20} = op31_20{11-0};
-  let Inst{15-14} = op15_14{1-0};
-  let Inst{13}    = 0b0;
-  let Inst{12} = op12{0};
-  let Inst{7-0}   = 0;
-}
-
-class T2MRS<bits<12> op31_20, bits<2> op15_14, bits<1> op12,
-          dag oops, dag iops, InstrItinClass itin,
-          string opc, string asm, list<dag> pattern>
-  : T2SpecialReg<op31_20, op15_14, op12, oops, iops, itin, opc, asm, pattern> {
+// Move to ARM core register from Special Register
+def t2MRS : T2I<(outs GPR:$Rd), (ins), NoItinerary, "mrs", "\t$Rd, apsr", []> {
   bits<4> Rd;
+  let Inst{31-12} = 0b11110011111011111000;
   let Inst{11-8} = Rd;
-  let Inst{19-16} = 0b1111;
+  let Inst{7-0} = 0b0000;
 }
 
-def t2MRS : T2MRS<0b111100111110, 0b10, 0,
-                (outs rGPR:$Rd), (ins), NoItinerary, "mrs", "\t$Rd, cpsr",
-                [/* For disassembly only; pattern left blank */]>;
-def t2MRSsys : T2MRS<0b111100111111, 0b10, 0,
-                   (outs rGPR:$Rd), (ins), NoItinerary, "mrs", "\t$Rd, spsr",
-                   [/* For disassembly only; pattern left blank */]>;
+def : t2InstAlias<"mrs${p} $Rd, cpsr", (t2MRS GPR:$Rd, pred:$p)>;
+
+def t2MRSsys:T2I<(outs GPR:$Rd), (ins), NoItinerary, "mrs", "\t$Rd, spsr", []> {
+  bits<4> Rd;
+  let Inst{31-12} = 0b11110011111111111000;
+  let Inst{11-8} = Rd;
+  let Inst{7-0} = 0b0000;
+}
 
 // Move from ARM core register to Special Register
 //
@@ -3541,15 +3530,16 @@ def t2MRSsys : T2MRS<0b111100111111, 0b10, 0,
 // same and the assembly parser has no way to distinguish between them. The mask
 // operand contains the special register (R Bit) in bit 4 and bits 3-0 contains
 // the mask with the fields to be accessed in the special register.
-def t2MSR : T2SpecialReg<0b111100111000 /* op31-20 */, 0b10 /* op15-14 */,
-                         0 /* op12 */, (outs), (ins msr_mask:$mask, rGPR:$Rn),
-                         NoItinerary, "msr", "\t$mask, $Rn",
-                         [/* For disassembly only; pattern left blank */]> {
+def t2MSR : T2I<(outs), (ins msr_mask:$mask, rGPR:$Rn),
+                NoItinerary, "msr", "\t$mask, $Rn", []> {
   bits<5> mask;
   bits<4> Rn;
-  let Inst{19-16} = Rn;
+  let Inst{31-21} = 0b11110011100;
   let Inst{20}    = mask{4}; // R Bit
+  let Inst{19-16} = Rn;
+  let Inst{15-12} = 0b1000;
   let Inst{11-8}  = mask{3-0};
+  let Inst{7-0}   = 0;
 }
 
 //===----------------------------------------------------------------------===//
