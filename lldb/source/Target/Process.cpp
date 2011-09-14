@@ -2167,6 +2167,25 @@ Process::AttachCompletionHandler::PerformAction (lldb::EventSP &event_sp)
             // lldb_private::Process subclasses must set the process must set
             // the new process ID.
             assert (m_process->GetID() != LLDB_INVALID_PROCESS_ID);
+            // We just attached, if we haven't gotten a valid architecture at this point we should do so now.
+            Target &target = m_process->GetTarget();
+            if (!target.GetArchitecture().IsValid())
+            {
+                // FIXME: We shouldn't be getting the Selected Platform, there should
+                // be a platform for the target, and we should get that.
+                PlatformSP platform_sp (target.GetDebugger().GetPlatformList().GetSelectedPlatform ());
+                if (platform_sp)
+                {
+                    ProcessInstanceInfo process_info;
+                    platform_sp->GetProcessInfo (m_process->GetID(), process_info);
+                    const ArchSpec &process_arch = process_info.GetArchitecture();
+                    if (process_arch.IsValid())
+                    {
+                        // Set the architecture on the target.
+                        target.SetArchitecture (process_arch);
+                    }
+                }
+            }
             m_process->CompleteAttach ();
             return eEventActionSuccess;
         }
