@@ -333,6 +333,11 @@ Target::CreateBreakpoint (SearchFilterSP &filter_sp, BreakpointResolverSP &resol
 WatchpointLocationSP
 Target::CreateWatchpointLocation(lldb::addr_t addr, size_t size, uint32_t type)
 {
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
+    if (log)
+        log->Printf("Target::%s (addr = 0x%8.8llx size = %zu type = %u)\n",
+                    __FUNCTION__, addr, size, type);
+
     WatchpointLocationSP wp_loc_sp;
     bool process_is_valid = m_process_sp && m_process_sp->IsAlive();
     if (!process_is_valid)
@@ -348,10 +353,10 @@ Target::CreateWatchpointLocation(lldb::addr_t addr, size_t size, uint32_t type)
     WatchpointLocationSP matched_sp = m_watchpoint_location_list.FindByAddress(addr);
     if (matched_sp)
     {
-        size_t old_size = wp_loc_sp->GetByteSize();
+        size_t old_size = matched_sp->GetByteSize();
         uint32_t old_type =
-            (wp_loc_sp->WatchpointRead() ? LLDB_WATCH_TYPE_READ : 0) |
-            (wp_loc_sp->WatchpointWrite() ? LLDB_WATCH_TYPE_WRITE : 0);
+            (matched_sp->WatchpointRead() ? LLDB_WATCH_TYPE_READ : 0) |
+            (matched_sp->WatchpointWrite() ? LLDB_WATCH_TYPE_WRITE : 0);
         // Return an empty watchpoint location if the same one exists already.
         if (size == old_size && type == old_type)
             return wp_loc_sp;
@@ -362,10 +367,22 @@ Target::CreateWatchpointLocation(lldb::addr_t addr, size_t size, uint32_t type)
     }
 
     WatchpointLocation *new_loc = new WatchpointLocation(addr, size);
+    if (!new_loc)
+        printf("WatchpointLocation ctor failed, out of memory?\n");
+
     new_loc->SetWatchpointType(type);
     wp_loc_sp.reset(new_loc);
     m_watchpoint_location_list.Add(wp_loc_sp);
-    m_process_sp->EnableWatchpoint(wp_loc_sp.get());
+    Error rc = m_process_sp->EnableWatchpoint(wp_loc_sp.get());
+    if (rc.Success())
+        wp_loc_sp->SetEnabled(true);
+        
+    if (log)
+            log->Printf("Target::%s (creation of watchpoint %s with id = %u)\n",
+                        __FUNCTION__,
+                        rc.Success() ? "succeeded" : "failed",
+                        wp_loc_sp->GetID());
+
     return wp_loc_sp;
 }
 

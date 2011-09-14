@@ -85,15 +85,13 @@ WatchpointLocation::Dump(Stream *s) const
     if (s == NULL)
         return;
 
-    s->Printf("WatchpointLocation %u: addr = 0x%8.8llx  size = %zu  state = %s  type = %s watchpoint (%s%s)  hw_index = %i  hit_count = %-4u  ignore_count = %-4u  callback = %8p baton = %8p",
+    s->Printf("WatchpointLocation %u: addr = 0x%8.8llx  size = %zu  state = %s  type = %s%s  hit_count = %-4u  ignore_count = %-4u  callback = %8p baton = %8p",
             GetID(),
             (uint64_t)m_addr,
             m_byte_size,
             m_enabled ? "enabled " : "disabled",
-            IsHardware() ? "hardware" : "software",
             m_watch_read ? "r" : "",
             m_watch_write ? "w" : "",
-            GetHardwareIndex(),
             GetHitCount(),
             GetIgnoreCount(),
             m_callback,
