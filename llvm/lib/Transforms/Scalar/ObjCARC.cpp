@@ -746,7 +746,6 @@ ObjCARCAliasAnalysis::getModRefInfo(ImmutableCallSite CS, const Location &Loc) {
   switch (GetBasicInstructionClass(CS.getInstruction())) {
   case IC_Retain:
   case IC_RetainRV:
-  case IC_RetainBlock:
   case IC_Autorelease:
   case IC_AutoreleaseRV:
   case IC_NoopCast:
@@ -754,6 +753,8 @@ ObjCARCAliasAnalysis::getModRefInfo(ImmutableCallSite CS, const Location &Loc) {
   case IC_FusedRetainAutorelease:
   case IC_FusedRetainAutoreleaseRV:
     // These functions don't access any memory visible to the compiler.
+    // Note that this doesn't include objc_retainBlock, becuase it updates
+    // pointers when it copies block data.
     return NoModRef;
   default:
     break;
