@@ -28,3 +28,17 @@
 @ CHECK-ERRORS: error: predicated instructions must be in IT block
 @ CHECK-ERRORS:         nopeq
 @ CHECK-ERRORS:         ^
+
+        @ Out of range immediates for MRC/MRC2/MRRC/MRRC2
+        mrc  p14, #8, r1, c1, c2, #4
+        mrc  p14, #1, r1, c1, c2, #8
+        mrc2  p14, #8, r1, c1, c2, #4
+        mrc2  p14, #0, r1, c1, c2, #9
+        mrrc  p7, #16, r5, r4, c1
+        mrrc2  p7, #17, r5, r4, c1
+@ CHECK-ERRORS: error: invalid operand for instruction
+@ CHECK-ERRORS: error: invalid operand for instruction
+@ CHECK-ERRORS: error: invalid operand for instruction
+@ CHECK-ERRORS: error: invalid operand for instruction
+@ CHECK-ERRORS: error: invalid operand for instruction
+@ CHECK-ERRORS: error: invalid operand for instruction
