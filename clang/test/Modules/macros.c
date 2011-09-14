@@ -9,6 +9,8 @@
 #__export_macro__ INTEGER
 #__export_macro__ DOUBLE
 
+int (INTEGER);
+
 #else
 
 __import_module__ macros;
@@ -30,4 +32,7 @@ DOUBLE *dp = &d;
 
 #__export_macro__ WIBBLE // expected-error{{no macro named 'WIBBLE' to export}}
 
+void f() {
+  int i = INTEGER; // the value was exported, the macro was not.
+}
 #endif

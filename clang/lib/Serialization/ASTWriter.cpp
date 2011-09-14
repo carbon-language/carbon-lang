@@ -2300,7 +2300,8 @@ public:
     uint32_t Bits = 0;
     bool hasMacroDefinition 
       = II->hasMacroDefinition() && 
-        (Macro || (Macro = PP.getMacroInfo(II))) && !Macro->isBuiltinMacro();
+        (Macro || (Macro = PP.getMacroInfo(II))) && !Macro->isBuiltinMacro() &&
+        (!IsModule || Macro->isExported());
     Bits = (uint32_t)II->getObjCOrBuiltinID();
     Bits = (Bits << 1) | unsigned(hasMacroDefinition);
     Bits = (Bits << 1) | unsigned(II->isExtensionToken());
