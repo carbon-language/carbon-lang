@@ -3857,37 +3857,38 @@ def : ARMV6Pat<(or (sra (shl GPR:$Rm, (i32 24)), (i32 16)),
                    (and (srl GPR:$Rm, (i32 8)), 0xFF)),
                (REVSH GPR:$Rm)>;
 
-def PKHBT : APKHI<0b01101000, 0, (outs GPR:$Rd),
-                              (ins GPR:$Rn, GPR:$Rm, pkh_lsl_amt:$sh),
+def PKHBT : APKHI<0b01101000, 0, (outs GPRnopc:$Rd),
+                              (ins GPRnopc:$Rn, GPRnopc:$Rm, pkh_lsl_amt:$sh),
                IIC_iALUsi, "pkhbt", "\t$Rd, $Rn, $Rm$sh",
-               [(set GPR:$Rd, (or (and GPR:$Rn, 0xFFFF),
-                                  (and (shl GPR:$Rm, pkh_lsl_amt:$sh),
-                                       0xFFFF0000)))]>,
+               [(set GPRnopc:$Rd, (or (and GPRnopc:$Rn, 0xFFFF),
+                                      (and (shl GPRnopc:$Rm, pkh_lsl_amt:$sh),
+                                           0xFFFF0000)))]>,
                Requires<[IsARM, HasV6]>;
 
 // Alternate cases for PKHBT where identities eliminate some nodes.
-def : ARMV6Pat<(or (and GPR:$Rn, 0xFFFF), (and GPR:$Rm, 0xFFFF0000)),
-               (PKHBT GPR:$Rn, GPR:$Rm, 0)>;
-def : ARMV6Pat<(or (and GPR:$Rn, 0xFFFF), (shl GPR:$Rm, imm16_31:$sh)),
-               (PKHBT GPR:$Rn, GPR:$Rm, imm16_31:$sh)>;
+def : ARMV6Pat<(or (and GPRnopc:$Rn, 0xFFFF), (and GPRnopc:$Rm, 0xFFFF0000)),
+               (PKHBT GPRnopc:$Rn, GPRnopc:$Rm, 0)>;
+def : ARMV6Pat<(or (and GPRnopc:$Rn, 0xFFFF), (shl GPRnopc:$Rm, imm16_31:$sh)),
+               (PKHBT GPRnopc:$Rn, GPRnopc:$Rm, imm16_31:$sh)>;
 
 // Note: Shifts of 1-15 bits will be transformed to srl instead of sra and
 // will match the pattern below.
-def PKHTB : APKHI<0b01101000, 1, (outs GPR:$Rd),
-                              (ins GPR:$Rn, GPR:$Rm, pkh_asr_amt:$sh),
+def PKHTB : APKHI<0b01101000, 1, (outs GPRnopc:$Rd),
+                              (ins GPRnopc:$Rn, GPRnopc:$Rm, pkh_asr_amt:$sh),
                IIC_iBITsi, "pkhtb", "\t$Rd, $Rn, $Rm$sh",
-               [(set GPR:$Rd, (or (and GPR:$Rn, 0xFFFF0000),
-                                  (and (sra GPR:$Rm, pkh_asr_amt:$sh),
-                                       0xFFFF)))]>,
+               [(set GPRnopc:$Rd, (or (and GPRnopc:$Rn, 0xFFFF0000),
+                                      (and (sra GPRnopc:$Rm, pkh_asr_amt:$sh),
+                                           0xFFFF)))]>,
                Requires<[IsARM, HasV6]>;
 
 // Alternate cases for PKHTB where identities eliminate some nodes.  Note that
 // a shift amount of 0 is *not legal* here, it is PKHBT instead.
-def : ARMV6Pat<(or (and GPR:$src1, 0xFFFF0000), (srl GPR:$src2, imm16_31:$sh)),
-               (PKHTB GPR:$src1, GPR:$src2, imm16_31:$sh)>;
-def : ARMV6Pat<(or (and GPR:$src1, 0xFFFF0000),
-                   (and (srl GPR:$src2, imm1_15:$sh), 0xFFFF)),
-               (PKHTB GPR:$src1, GPR:$src2, imm1_15:$sh)>;
+def : ARMV6Pat<(or (and GPRnopc:$src1, 0xFFFF0000),
+                   (srl GPRnopc:$src2, imm16_31:$sh)),
+               (PKHTB GPRnopc:$src1, GPRnopc:$src2, imm16_31:$sh)>;
+def : ARMV6Pat<(or (and GPRnopc:$src1, 0xFFFF0000),
+                   (and (srl GPRnopc:$src2, imm1_15:$sh), 0xFFFF)),
+               (PKHTB GPRnopc:$src1, GPRnopc:$src2, imm1_15:$sh)>;
 
 //===----------------------------------------------------------------------===//
 //  Comparison Instructions...
@@ -4882,10 +4883,10 @@ def : MnemonicAlias<"stmea", "stm">;
 // PKHBT/PKHTB with default shift amount. PKHTB is equivalent to PKHBT when the
 // shift amount is zero (i.e., unspecified).
 def : InstAlias<"pkhbt${p} $Rd, $Rn, $Rm",
-                (PKHBT GPR:$Rd, GPR:$Rn, GPR:$Rm, 0, pred:$p)>,
+                (PKHBT GPRnopc:$Rd, GPRnopc:$Rn, GPRnopc:$Rm, 0, pred:$p)>,
         Requires<[IsARM, HasV6]>;
 def : InstAlias<"pkhtb${p} $Rd, $Rn, $Rm",
-                (PKHBT GPR:$Rd, GPR:$Rn, GPR:$Rm, 0, pred:$p)>,
+                (PKHBT GPRnopc:$Rd, GPRnopc:$Rn, GPRnopc:$Rm, 0, pred:$p)>,
         Requires<[IsARM, HasV6]>;
 
 // PUSH/POP aliases for STM/LDM
