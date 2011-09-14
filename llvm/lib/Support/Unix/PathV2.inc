@@ -42,6 +42,9 @@
 #if HAVE_STDIO_H
 #include <stdio.h>
 #endif
+#if HAVE_LIMITS_H
+#include <limits.h>
+#endif
 
 using namespace llvm;
 
