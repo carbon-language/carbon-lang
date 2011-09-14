@@ -328,7 +328,8 @@ Target::CreateBreakpoint (SearchFilterSP &filter_sp, BreakpointResolverSP &resol
     return bp_sp;
 }
 
-// See also WatchpointLocation::SetWatchpointType() and OptionGroupWatchpoint::WatchType.
+// See also WatchpointLocation::SetWatchpointType(uint32_t type) and
+// the OptionGroupWatchpoint::WatchType enum type.
 WatchpointLocationSP
 Target::CreateWatchpointLocation(lldb::addr_t addr, size_t size, uint32_t type)
 {
@@ -341,6 +342,9 @@ Target::CreateWatchpointLocation(lldb::addr_t addr, size_t size, uint32_t type)
     if (size == 0)
         return wp_loc_sp;
 
+    // Currently we only support one watchpoint location per address, with total
+    // number of watchpoint locations limited by the hardware which the inferior
+    // is running on.
     WatchpointLocationSP matched_sp = m_watchpoint_location_list.FindByAddress(addr);
     if (matched_sp)
     {
