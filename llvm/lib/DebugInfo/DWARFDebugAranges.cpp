@@ -83,6 +83,19 @@ bool DWARFDebugAranges::extract(DataExtractor debug_aranges_data) {
   return false;
 }
 
+bool DWARFDebugAranges::generate(DWARFContext *ctx) {
+  clear();
+  if (ctx) {
+    const uint32_t num_compile_units = ctx->getNumCompileUnits();
+    for (uint32_t cu_idx = 0; cu_idx < num_compile_units; ++cu_idx) {
+      DWARFCompileUnit *cu = ctx->getCompileUnitAtIndex(cu_idx);
+      if (cu)
+        cu->buildAddressRangeTable(this, true);
+    }
+  }
+  return !isEmpty();
+}
+
 void DWARFDebugAranges::dump(raw_ostream &OS) const {
   const uint32_t num_ranges = getNumRanges();
   for (uint32_t i = 0; i < num_ranges; ++i) {

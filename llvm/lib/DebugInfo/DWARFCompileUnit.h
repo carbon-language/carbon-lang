@@ -91,6 +91,11 @@ public:
       DieArray.reserve(getDebugInfoSize() / 14);
     DieArray.push_back(die);
   }
+
+  void clearDIEs(bool keep_compile_unit_die);
+
+  void buildAddressRangeTable(DWARFDebugAranges *debug_aranges,
+                              bool clear_dies_if_already_not_parsed);
 };
 
 }

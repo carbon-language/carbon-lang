@@ -15,6 +15,7 @@
 
 namespace llvm {
 
+class DWARFDebugAranges;
 class DWARFCompileUnit;
 class DWARFContext;
 class DWARFFormValue;
@@ -124,6 +125,9 @@ public:
   int64_t getAttributeValueAsSigned(const DWARFCompileUnit* cu,
                                     const uint16_t attr,
                                     int64_t fail_value) const;
+
+  void buildAddressRangeTable(const DWARFCompileUnit *cu,
+                              DWARFDebugAranges *debug_aranges) const;
 };
 
 }

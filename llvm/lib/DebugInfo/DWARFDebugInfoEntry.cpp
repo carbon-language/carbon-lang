@@ -397,11 +397,35 @@ DWARFDebugInfoEntryMinimal::getAttributeValueAsSigned(
 }
 
 uint64_t
-DWARFDebugInfoEntryMinimal::getAttributeValueAsReference(const DWARFCompileUnit* cu,
+DWARFDebugInfoEntryMinimal::getAttributeValueAsReference(
+                                                  const DWARFCompileUnit* cu,
                                                   const uint16_t attr,
                                                   uint64_t fail_value) const {
   DWARFFormValue form_value;
   if (getAttributeValue(cu, attr, form_value))
       return form_value.getReference(cu);
   return fail_value;
+}
+
+void
+DWARFDebugInfoEntryMinimal::buildAddressRangeTable(const DWARFCompileUnit *cu,
+                                               DWARFDebugAranges *debug_aranges)
+                                                   const {
+  if (AbbrevDecl) {
+    uint16_t tag = AbbrevDecl->getTag();
+    if (tag == DW_TAG_subprogram) {
+      uint64_t hi_pc = -1ULL;
+      uint64_t lo_pc = getAttributeValueAsUnsigned(cu, DW_AT_low_pc, -1ULL);
+      if (lo_pc != -1ULL)
+        hi_pc = getAttributeValueAsUnsigned(cu, DW_AT_high_pc, -1ULL);
+      if (hi_pc != -1ULL)
+        debug_aranges->appendRange(cu->getOffset(), lo_pc, hi_pc);
+    }
+
+    const DWARFDebugInfoEntryMinimal *child = getFirstChild();
+    while (child) {
+      child->buildAddressRangeTable(cu, debug_aranges);
+      child = child->getSibling();
+    }
+  }
 }

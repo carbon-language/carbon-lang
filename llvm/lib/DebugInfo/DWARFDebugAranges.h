@@ -64,6 +64,7 @@ public:
   bool allRangesAreContiguous(uint64_t& LoPC, uint64_t& HiPC) const;
   bool getMaxRange(uint64_t& LoPC, uint64_t& HiPC) const;
   bool extract(DataExtractor debug_aranges_data);
+  bool generate(DWARFContext *ctx);
 
   // Use append range multiple times and then call sort
   void appendRange(uint32_t cu_offset, uint64_t low_pc, uint64_t high_pc);

@@ -46,6 +46,8 @@ const DWARFDebugAranges *DWARFContext::getDebugAranges() {
 
   Aranges.reset(new DWARFDebugAranges());
   Aranges->extract(arangesData);
+  if (Aranges->isEmpty()) // No aranges in file, generate them from the DIEs.
+    Aranges->generate(this);
   return Aranges.get();
 }
 

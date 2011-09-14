@@ -200,3 +200,40 @@ size_t DWARFCompileUnit::extractDIEsIfNeeded(bool cu_die_only) {
   setDIERelations();
   return DieArray.size();
 }
+
+void DWARFCompileUnit::clearDIEs(bool keep_compile_unit_die) {
+  if (DieArray.size() > 1) {
+    // std::vectors never get any smaller when resized to a smaller size,
+    // or when clear() or erase() are called, the size will report that it
+    // is smaller, but the memory allocated remains intact (call capacity()
+    // to see this). So we need to create a temporary vector and swap the
+    // contents which will cause just the internal pointers to be swapped
+    // so that when "tmp_array" goes out of scope, it will destroy the
+    // contents.
+
+    // Save at least the compile unit DIE
+    std::vector<DWARFDebugInfoEntryMinimal> tmpArray;
+    DieArray.swap(tmpArray);
+    if (keep_compile_unit_die)
+      DieArray.push_back(tmpArray.front());
+  }
+}
+
+void
+DWARFCompileUnit::buildAddressRangeTable(DWARFDebugAranges *debug_aranges,
+                                         bool clear_dies_if_already_not_parsed){
+  // This function is usually called if there in no .debug_aranges section
+  // in order to produce a compile unit level set of address ranges that
+  // is accurate. If the DIEs weren't parsed, then we don't want all dies for
+  // all compile units to stay loaded when they weren't needed. So we can end
+  // up parsing the DWARF and then throwing them all away to keep memory usage
+  // down.
+  const bool clear_dies = extractDIEsIfNeeded(false) > 1;
+
+  DieArray[0].buildAddressRangeTable(this, debug_aranges);
+
+  // Keep memory down by clearing DIEs if this generate function
+  // caused them to be parsed.
+  if (clear_dies)
+    clearDIEs(true);
+}
