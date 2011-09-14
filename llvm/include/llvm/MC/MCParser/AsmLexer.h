@@ -32,6 +32,7 @@ class AsmLexer : public MCAsmLexer {
 
   const char *CurPtr;
   const MemoryBuffer *CurBuf;
+  bool isAtStartOfLine;
 
   void operator=(const AsmLexer&); // DO NOT IMPLEMENT
   AsmLexer(const AsmLexer&);       // DO NOT IMPLEMENT

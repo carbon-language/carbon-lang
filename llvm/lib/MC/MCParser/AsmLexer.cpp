@@ -24,6 +24,7 @@ using namespace llvm;
 AsmLexer::AsmLexer(const MCAsmInfo &_MAI) : MAI(_MAI)  {
   CurBuf = NULL;
   CurPtr = NULL;
+  isAtStartOfLine = true;
 }
 
 AsmLexer::~AsmLexer() {
@@ -356,7 +357,6 @@ bool AsmLexer::isAtStatementSeparator(const char *Ptr) {
 }
 
 AsmToken AsmLexer::LexToken() {
-  static bool isAtStartOfLine = true;
   TokStart = CurPtr;
   // This always consumes at least one character.
   int CurChar = getNextChar();
