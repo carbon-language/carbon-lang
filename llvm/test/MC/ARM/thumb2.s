@@ -226,9 +226,6 @@
 @ CHECK: qdsub  r1, r2, r3 @ encoding: [0x83,0xfa,0xb2,0xf1]
         qdsub  r1, r2, r3
 
-@ CHECK: nop.w @ encoding: [0xaf,0xf3,0x00,0x80]
-        nop.w
-
 @ CHECK: yield.w @ encoding: [0xaf,0xf3,0x01,0x80]
         yield.w
 
