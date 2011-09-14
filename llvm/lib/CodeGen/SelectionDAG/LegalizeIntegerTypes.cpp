@@ -64,6 +64,7 @@ void DAGTypeLegalizer::PromoteIntegerResult(SDNode *N, unsigned ResNo) {
                          Res = PromoteIntRes_EXTRACT_VECTOR_ELT(N); break;
   case ISD::LOAD:        Res = PromoteIntRes_LOAD(cast<LoadSDNode>(N));break;
   case ISD::SELECT:      Res = PromoteIntRes_SELECT(N); break;
+  case ISD::VSELECT:     Res = PromoteIntRes_VSELECT(N); break;
   case ISD::SELECT_CC:   Res = PromoteIntRes_SELECT_CC(N); break;
   case ISD::SETCC:       Res = PromoteIntRes_SETCC(N); break;
   case ISD::SHL:         Res = PromoteIntRes_SHL(N); break;
@@ -463,6 +464,14 @@ SDValue DAGTypeLegalizer::PromoteIntRes_SELECT(SDNode *N) {
   SDValue RHS = GetPromotedInteger(N->getOperand(2));
   return DAG.getNode(ISD::SELECT, N->getDebugLoc(),
                      LHS.getValueType(), N->getOperand(0),LHS,RHS);
+}
+
+SDValue DAGTypeLegalizer::PromoteIntRes_VSELECT(SDNode *N) {
+  SDValue Mask = GetPromotedInteger(N->getOperand(0));
+  SDValue LHS = GetPromotedInteger(N->getOperand(1));
+  SDValue RHS = GetPromotedInteger(N->getOperand(2));
+  return DAG.getNode(ISD::VSELECT, N->getDebugLoc(),
+                     LHS.getValueType(), Mask, LHS, RHS);
 }
 
 SDValue DAGTypeLegalizer::PromoteIntRes_SELECT_CC(SDNode *N) {
