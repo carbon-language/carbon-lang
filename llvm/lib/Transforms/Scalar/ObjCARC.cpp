@@ -425,9 +425,10 @@ static bool IsAlwaysTail(InstructionClass Class) {
 /// IsNoThrow - Test if the given class represents instructions which are always
 /// safe to mark with the nounwind attribute..
 static bool IsNoThrow(InstructionClass Class) {
+  // objc_retainBlock is not nounwind because it calls user copy constructors
+  // which could theoretically throw.
   return Class == IC_Retain ||
          Class == IC_RetainRV ||
-         Class == IC_RetainBlock ||
          Class == IC_Release ||
          Class == IC_Autorelease ||
          Class == IC_AutoreleaseRV ||
@@ -1605,7 +1606,8 @@ Constant *ObjCARCOpt::getRetainBlockCallee(Module *M) {
     std::vector<Type *> Params;
     Params.push_back(PointerType::getUnqual(Type::getInt8Ty(C)));
     AttrListPtr Attributes;
-    Attributes.addAttr(~0u, Attribute::NoUnwind);
+    // objc_retainBlock is not nounwind because it calls user copy constructors
+    // which could theoretically throw.
     RetainBlockCallee =
       M->getOrInsertFunction(
         "objc_retainBlock",
