@@ -48,17 +48,17 @@ inline static uint64_t* getMemory(unsigned numWords) {
 inline static unsigned getDigit(char cdigit, uint8_t radix) {
   unsigned r;
 
-  if (radix == 16) {
+  if (radix == 16 || radix == 36) {
     r = cdigit - '0';
     if (r <= 9)
       return r;
 
     r = cdigit - 'A';
-    if (r <= 5)
+    if (r <= radix-11)
       return r + 10;
 
     r = cdigit - 'a';
-    if (r <= 5)
+    if (r <= radix-11)
       return r + 10;
   }
 
@@ -621,8 +621,9 @@ void APInt::flipBit(unsigned bitPosition) {
 
 unsigned APInt::getBitsNeeded(StringRef str, uint8_t radix) {
   assert(!str.empty() && "Invalid string length");
-  assert((radix == 10 || radix == 8 || radix == 16 || radix == 2) &&
-         "Radix should be 2, 8, 10, or 16!");
+  assert((radix == 10 || radix == 8 || radix == 16 || radix == 2 || 
+          radix == 36) &&
+         "Radix should be 2, 8, 10, 16, or 36!");
 
   size_t slen = str.size();
 
@@ -644,6 +645,8 @@ unsigned APInt::getBitsNeeded(StringRef str, uint8_t radix) {
   if (radix == 16)
     return slen * 4 + isNegative;
 
+  // FIXME: base 36
+  
   // This is grossly inefficient but accurate. We could probably do something
   // with a computation of roughly slen*64/20 and then adjust by the value of
   // the first few digits. But, I'm not sure how accurate that could be.
@@ -652,7 +655,9 @@ unsigned APInt::getBitsNeeded(StringRef str, uint8_t radix) {
   // be too large. This avoids the assertion in the constructor. This
   // calculation doesn't work appropriately for the numbers 0-9, so just use 4
   // bits in that case.
-  unsigned sufficient = slen == 1 ? 4 : slen * 64/18;
+  unsigned sufficient 
+    = radix == 10? (slen == 1 ? 4 : slen * 64/18)
+                 : (slen == 1 ? 7 : slen * 16/3);
 
   // Convert to the actual binary value.
   APInt tmp(sufficient, StringRef(p, slen), radix);
@@ -2115,8 +2120,9 @@ APInt APInt::sshl_ov(unsigned ShAmt, bool &Overflow) const {
 void APInt::fromString(unsigned numbits, StringRef str, uint8_t radix) {
   // Check our assumptions here
   assert(!str.empty() && "Invalid string length");
-  assert((radix == 10 || radix == 8 || radix == 16 || radix == 2) &&
-         "Radix should be 2, 8, 10, or 16!");
+  assert((radix == 10 || radix == 8 || radix == 16 || radix == 2 || 
+          radix == 36) &&
+         "Radix should be 2, 8, 10, 16, or 36!");
 
   StringRef::iterator p = str.begin();
   size_t slen = str.size();
@@ -2173,7 +2179,8 @@ void APInt::fromString(unsigned numbits, StringRef str, uint8_t radix) {
 
 void APInt::toString(SmallVectorImpl<char> &Str, unsigned Radix,
                      bool Signed, bool formatAsCLiteral) const {
-  assert((Radix == 10 || Radix == 8 || Radix == 16 || Radix == 2) &&
+  assert((Radix == 10 || Radix == 8 || Radix == 16 || Radix == 2 || 
+          Radix == 36) &&
          "Radix should be 2, 8, 10, or 16!");
 
   const char *Prefix = "";
@@ -2203,7 +2210,7 @@ void APInt::toString(SmallVectorImpl<char> &Str, unsigned Radix,
     return;
   }
 
-  static const char Digits[] = "0123456789ABCDEF";
+  static const char Digits[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
   if (isSingleWord()) {
     char Buffer[65];
@@ -2257,7 +2264,7 @@ void APInt::toString(SmallVectorImpl<char> &Str, unsigned Radix,
   // For the 2, 8 and 16 bit cases, we can just shift instead of divide
   // because the number of bits per digit (1, 3 and 4 respectively) divides
   // equaly.  We just shift until the value is zero.
-  if (Radix != 10) {
+  if (Radix == 2 || Radix == 8 || Radix == 16) {
     // Just shift tmp right for each digit width until it becomes zero
     unsigned ShiftAmt = (Radix == 16 ? 4 : (Radix == 8 ? 3 : 1));
     unsigned MaskAmt = Radix - 1;
@@ -2268,7 +2275,7 @@ void APInt::toString(SmallVectorImpl<char> &Str, unsigned Radix,
       Tmp = Tmp.lshr(ShiftAmt);
     }
   } else {
-    APInt divisor(4, 10);
+    APInt divisor(Radix == 10? 4 : 8, Radix);
     while (Tmp != 0) {
       APInt APdigit(1, 0);
       APInt tmp2(Tmp.getBitWidth(), 0);

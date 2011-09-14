@@ -161,7 +161,7 @@ class APInt {
   /// not assume that the string is well-formed and (2) grows the
   /// result to hold the input.
   ///
-  /// @param radix 2, 8, 10, or 16
+  /// @param radix 2, 8, 10, 16, or 36
   /// @brief Convert a char array into an APInt
   void fromString(unsigned numBits, StringRef str, uint8_t radix);
 
@@ -252,8 +252,8 @@ public:
   /// This constructor interprets the string \arg str in the given radix. The
   /// interpretation stops when the first character that is not suitable for the
   /// radix is encountered, or the end of the string. Acceptable radix values
-  /// are 2, 8, 10 and 16. It is an error for the value implied by the string to
-  /// require more bits than numBits.
+  /// are 2, 8, 10, 16, and 36. It is an error for the value implied by the 
+  /// string to require more bits than numBits.
   ///
   /// @param numBits the bit width of the constructed APInt
   /// @param str the string to be interpreted
@@ -1257,13 +1257,13 @@ public:
                 bool formatAsCLiteral = false) const;
 
   /// Considers the APInt to be unsigned and converts it into a string in the
-  /// radix given. The radix can be 2, 8, 10 or 16.
+  /// radix given. The radix can be 2, 8, 10 16, or 36.
   void toStringUnsigned(SmallVectorImpl<char> &Str, unsigned Radix = 10) const {
     toString(Str, Radix, false, false);
   }
 
   /// Considers the APInt to be signed and converts it into a string in the
-  /// radix given. The radix can be 2, 8, 10 or 16.
+  /// radix given. The radix can be 2, 8, 10, 16, or 36.
   void toStringSigned(SmallVectorImpl<char> &Str, unsigned Radix = 10) const {
     toString(Str, Radix, true, false);
   }
