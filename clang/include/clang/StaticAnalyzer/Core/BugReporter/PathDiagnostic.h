@@ -24,10 +24,13 @@
 namespace clang {
 
 class Decl;
+class LocationContext;
 class SourceManager;
 class Stmt;
 
 namespace ento {
+
+class ExplodedNode;
 
 //===----------------------------------------------------------------------===//
 // High-level interface for handlers of path-sensitive diagnostics.
@@ -96,6 +99,10 @@ public:
   PathDiagnosticLocation(const Stmt *s, const SourceManager &sm)
     : K(StmtK), S(s), D(0), SM(&sm) {}
 
+  /// Create a location corresponding to the next valid ExplodedNode.
+  static PathDiagnosticLocation create(const ExplodedNode* N,
+                                       const SourceManager &SM);
+
   PathDiagnosticLocation(SourceRange r, const SourceManager &sm)
     : K(RangeK), R(r), S(0), D(0), SM(&sm) {}
 
@@ -122,8 +129,6 @@ public:
   bool isValid() const {
     return SM != 0;
   }
-
-  const SourceManager& getSourceManager() const { assert(isValid());return *SM;}
 
   FullSourceLoc asLocation() const;
   PathDiagnosticRange asRange() const;

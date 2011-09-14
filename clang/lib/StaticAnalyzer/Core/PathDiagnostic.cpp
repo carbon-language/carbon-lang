@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/StaticAnalyzer/Core/BugReporter/PathDiagnostic.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/ExplodedGraph.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
@@ -127,6 +128,30 @@ void PathDiagnosticClient::HandlePathDiagnostic(const PathDiagnostic *D) {
 //===----------------------------------------------------------------------===//
 // PathDiagnosticLocation methods.
 //===----------------------------------------------------------------------===//
+
+PathDiagnosticLocation PathDiagnosticLocation::create(const ExplodedNode* N,
+                                                      const SourceManager &SM) {
+  assert(N && "Cannot create a location with a null node.");
+
+  const ExplodedNode *NI = N;
+
+  while (NI) {
+    ProgramPoint P = NI->getLocation();
+
+    if (const StmtPoint *PS = dyn_cast<StmtPoint>(&P)) {
+      return PathDiagnosticLocation(PS->getStmt(), SM);
+    }
+    else if (const BlockEdge *BE = dyn_cast<BlockEdge>(&P)) {
+      const Stmt *Term = BE->getSrc()->getTerminator();
+      assert(Term);
+      return PathDiagnosticLocation(Term, SM);
+    }
+    NI = NI->succ_empty() ? 0 : *(NI->succ_begin());
+  }
+
+  const Decl &D = N->getCodeDecl();
+  return PathDiagnosticLocation(D.getBodyRBrace(), SM);
+}
 
 FullSourceLoc PathDiagnosticLocation::asLocation() const {
   assert(isValid());
