@@ -377,6 +377,10 @@ void RAGreedy::LRE_WillShrinkVirtReg(unsigned VirtReg) {
 }
 
 void RAGreedy::LRE_DidCloneVirtReg(unsigned New, unsigned Old) {
+  // Cloning a register we haven't even heard about yet?  Just ignore it.
+  if (!ExtraRegInfo.inBounds(Old))
+    return;
+
   // LRE may clone a virtual register because dead code elimination causes it to
   // be split into connected components. The new components are much smaller
   // than the original, so they should get a new chance at being assigned.
