@@ -342,9 +342,7 @@ Target::CreateWatchpointLocation(lldb::addr_t addr, size_t size, uint32_t type)
     bool process_is_valid = m_process_sp && m_process_sp->IsAlive();
     if (!process_is_valid)
         return wp_loc_sp;
-    if (addr == LLDB_INVALID_ADDRESS)
-        return wp_loc_sp;
-    if (size == 0)
+    if (addr == LLDB_INVALID_ADDRESS || size == 0)
         return wp_loc_sp;
 
     // Currently we only support one watchpoint location per address, with total
@@ -357,32 +355,36 @@ Target::CreateWatchpointLocation(lldb::addr_t addr, size_t size, uint32_t type)
         uint32_t old_type =
             (matched_sp->WatchpointRead() ? LLDB_WATCH_TYPE_READ : 0) |
             (matched_sp->WatchpointWrite() ? LLDB_WATCH_TYPE_WRITE : 0);
-        // Return an empty watchpoint location if the same one exists already.
-        if (size == old_size && type == old_type)
-            return wp_loc_sp;
-
-        // Nil the matched watchpoint location; we will be creating a new one.
-        m_process_sp->DisableWatchpoint(matched_sp.get());
-        m_watchpoint_location_list.Remove(matched_sp->GetID());
+        // Return the existing watchpoint location if both size and type match.
+        if (size == old_size && type == old_type) {
+            wp_loc_sp = matched_sp;
+            wp_loc_sp->SetEnabled(false);
+        } else {
+            // Nil the matched watchpoint location; we will be creating a new one.
+            m_process_sp->DisableWatchpoint(matched_sp.get());
+            m_watchpoint_location_list.Remove(matched_sp->GetID());
+        }
     }
 
-    WatchpointLocation *new_loc = new WatchpointLocation(addr, size);
-    if (!new_loc)
-        printf("WatchpointLocation ctor failed, out of memory?\n");
+    if (!wp_loc_sp) {
+        WatchpointLocation *new_loc = new WatchpointLocation(addr, size);
+        if (!new_loc) {
+            printf("WatchpointLocation ctor failed, out of memory?\n");
+            return wp_loc_sp;
+        }
+        new_loc->SetWatchpointType(type);
+        wp_loc_sp.reset(new_loc);
+        m_watchpoint_location_list.Add(wp_loc_sp);
+    }
 
-    new_loc->SetWatchpointType(type);
-    wp_loc_sp.reset(new_loc);
-    m_watchpoint_location_list.Add(wp_loc_sp);
     Error rc = m_process_sp->EnableWatchpoint(wp_loc_sp.get());
-    if (rc.Success())
-        wp_loc_sp->SetEnabled(true);
-        
     if (log)
             log->Printf("Target::%s (creation of watchpoint %s with id = %u)\n",
                         __FUNCTION__,
                         rc.Success() ? "succeeded" : "failed",
                         wp_loc_sp->GetID());
 
+    if (rc.Fail()) wp_loc_sp.reset();
     return wp_loc_sp;
 }
 
