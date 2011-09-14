@@ -170,3 +170,16 @@ namespace PR6424 {
 
   template void Y2<3>::f();
 }
+
+namespace PR10864 {
+  template<typename T> class Vals {};
+  template<> class Vals<int> { public: static const int i = 1; };
+  template<> class Vals<float> { public: static const double i; };
+  template<typename T> void test_asm_tied(T o) {
+    __asm("addl $1, %0" : "=r" (o) : "0"(Vals<T>::i)); // expected-error {{input with type 'double' matching output with type 'float'}}
+  }
+  void test_asm_tied() {
+    test_asm_tied(1);
+    test_asm_tied(1.f); // expected-note {{instantiation of}}
+  }
+}
