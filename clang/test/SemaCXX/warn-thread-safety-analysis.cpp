@@ -28,14 +28,15 @@ bool getBool();
 class MutexWrapper {
 public:
    Mutex mu;
-   // int x __attribute__((guarded_by(mu))); // FIXME: scoping error
+   int x __attribute__((guarded_by(mu)));
+   void MyLock() __attribute__((exclusive_lock_function(mu))); 
 };
 
 MutexWrapper sls_mw;
 
 void sls_fun_0() {
   sls_mw.mu.Lock();
-  // sls_mw.x = 5; // FIXME: turn mu into sls_mw.mu
+  sls_mw.x = 5; 
   sls_mw.mu.Unlock();
 }
 
@@ -119,6 +120,11 @@ void sls_fun_good_7() {
     sls_mu.Lock();
   }
   sls_mu.Unlock();
+}
+
+void sls_fun_good_8() {
+  sls_mw.MyLock();
+  sls_mw.mu.Unlock();
 }
 
 void sls_fun_bad_1() {
@@ -701,3 +707,31 @@ void es_bad_7() {
     // expected-warning {{cannot call function 'le_fun' while holding mutex 'sls_mu'}}
   sls_mu.Unlock();
 }
+
+//-----------------------------------------------//
+// Unparseable lock expressions
+// ----------------------------------------------//
+
+Mutex UPmu;
+// FIXME: add support for lock expressions involving arrays.
+Mutex mua[5];
+
+int x __attribute__((guarded_by(UPmu = sls_mu))); // \
+  // expected-warning{{cannot resolve lock expression to a specific lockable object}}
+int y __attribute__((guarded_by(mua[0]))); // \
+  // expected-warning{{cannot resolve lock expression to a specific lockable object}}
+
+
+void testUnparse() {
+  // no errors, since the lock expressions are not resolved
+  x = 5;
+  y = 5;
+}
+
+void testUnparse2() {
+  mua[0].Lock(); // \
+    // expected-warning{{cannot resolve lock expression to a specific lockable object}}
+  (&(mua[0]) + 4)->Lock(); // \
+    // expected-warning{{cannot resolve lock expression to a specific lockable object}}
+}
+
