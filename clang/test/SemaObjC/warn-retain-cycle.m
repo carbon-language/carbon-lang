@@ -27,7 +27,7 @@ void test0(Test0 *x) {
 }
 
 @interface BlockOwner
-@property (retain) void (^strong)(void);
+@property (retain) void (^strong)(void); // expected-warning {{retain'ed block property does not copy the block - use copy attribute instead}}
 @end
 
 @interface Test1 {

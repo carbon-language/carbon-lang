@@ -1701,7 +1701,7 @@ void Sema::CheckObjCPropertyAttributes(Decl *PDecl,
            (Attributes & ObjCDeclSpec::DQ_PR_weak)) {
       Diag(Loc, diag::err_objc_property_attr_mutually_exclusive)
         << "retain" << "weak";
-      Attributes &= ~ObjCDeclSpec::DQ_PR_weak;
+      Attributes &= ~ObjCDeclSpec::DQ_PR_retain;
   }
   else if ((Attributes & ObjCDeclSpec::DQ_PR_strong) &&
            (Attributes & ObjCDeclSpec::DQ_PR_weak)) {
@@ -1743,4 +1743,10 @@ void Sema::CheckObjCPropertyAttributes(Decl *PDecl,
       && getLangOptions().getGC() == LangOptions::GCOnly
       && PropertyTy->isBlockPointerType())
     Diag(Loc, diag::warn_objc_property_copy_missing_on_block);
+  else if (getLangOptions().ObjCAutoRefCount &&
+           (Attributes & ObjCDeclSpec::DQ_PR_retain) &&
+           !(Attributes & ObjCDeclSpec::DQ_PR_readonly) &&
+           !(Attributes & ObjCDeclSpec::DQ_PR_strong) &&
+           PropertyTy->isBlockPointerType())
+      Diag(Loc, diag::warn_objc_property_retain_of_block);
 }
