@@ -567,6 +567,10 @@ DecodeStatus ThumbDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
     // code and mask operands so that we can apply them correctly
     // to the subsequent instructions.
     if (MI.getOpcode() == ARM::t2IT) {
+      // Nested IT blocks are UNPREDICTABLE.
+      if (!ITBlock.empty())
+        return MCDisassembler::SoftFail;
+
       // (3 - the number of trailing zeros) is the number of then / else.
       unsigned firstcond = MI.getOperand(0).getImm();
       unsigned Mask = MI.getOperand(1).getImm();
