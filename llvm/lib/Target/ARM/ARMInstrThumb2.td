@@ -458,47 +458,6 @@ class T2MulLong<bits<3> opc22_20, bits<4> opc7_4,
 }
 
 
-/// T2I_un_irs - Defines a set of (op reg, {so_imm|r|so_reg}) patterns for a
-/// unary operation that produces a value. These are predicable and can be
-/// changed to modify CPSR.
-multiclass T2I_un_irs<bits<4> opcod, string opc,
-                     InstrItinClass iii, InstrItinClass iir, InstrItinClass iis,
-                      PatFrag opnode, bit Cheap = 0, bit ReMat = 0> {
-   // shifted imm
-   def i : T2sOneRegImm<(outs rGPR:$Rd), (ins t2_so_imm:$imm), iii,
-                opc, "\t$Rd, $imm",
-                [(set rGPR:$Rd, (opnode t2_so_imm:$imm))]> {
-     let isAsCheapAsAMove = Cheap;
-     let isReMaterializable = ReMat;
-     let Inst{31-27} = 0b11110;
-     let Inst{25} = 0;
-     let Inst{24-21} = opcod;
-     let Inst{19-16} = 0b1111; // Rn
-     let Inst{15} = 0;
-   }
-   // register
-   def r : T2sTwoReg<(outs rGPR:$Rd), (ins rGPR:$Rm), iir,
-                opc, ".w\t$Rd, $Rm",
-                [(set rGPR:$Rd, (opnode rGPR:$Rm))]> {
-     let Inst{31-27} = 0b11101;
-     let Inst{26-25} = 0b01;
-     let Inst{24-21} = opcod;
-     let Inst{19-16} = 0b1111; // Rn
-     let Inst{14-12} = 0b000; // imm3
-     let Inst{7-6} = 0b00; // imm2
-     let Inst{5-4} = 0b00; // type
-   }
-   // shifted register
-   def s : T2sOneRegShiftedReg<(outs rGPR:$Rd), (ins t2_so_reg:$ShiftedRm), iis,
-                opc, ".w\t$Rd, $ShiftedRm",
-                [(set rGPR:$Rd, (opnode t2_so_reg:$ShiftedRm))]> {
-     let Inst{31-27} = 0b11101;
-     let Inst{26-25} = 0b01;
-     let Inst{24-21} = opcod;
-     let Inst{19-16} = 0b1111; // Rn
-   }
-}
-
 /// T2I_bin_irs - Defines a set of (op reg, {so_imm|r|so_reg}) patterns for a
 /// binary operation that produces a value. These are predicable and can be
 /// changed to modify CPSR.
@@ -2247,12 +2206,52 @@ defm t2ORN  : T2I_bin_irs<0b0011, "orn",
                           BinOpFrag<(or  node:$LHS, (not node:$RHS))>,
                           "t2ORN", 0, "">;
 
+/// T2I_un_irs - Defines a set of (op reg, {so_imm|r|so_reg}) patterns for a
+/// unary operation that produces a value. These are predicable and can be
+/// changed to modify CPSR.
+multiclass T2I_un_irs<bits<4> opcod, string opc,
+                     InstrItinClass iii, InstrItinClass iir, InstrItinClass iis,
+                      PatFrag opnode, bit Cheap = 0, bit ReMat = 0> {
+   // shifted imm
+   def i : T2sOneRegImm<(outs rGPR:$Rd), (ins t2_so_imm:$imm), iii,
+                opc, "\t$Rd, $imm",
+                [(set rGPR:$Rd, (opnode t2_so_imm:$imm))]> {
+     let isAsCheapAsAMove = Cheap;
+     let isReMaterializable = ReMat;
+     let Inst{31-27} = 0b11110;
+     let Inst{25} = 0;
+     let Inst{24-21} = opcod;
+     let Inst{19-16} = 0b1111; // Rn
+     let Inst{15} = 0;
+   }
+   // register
+   def r : T2sTwoReg<(outs rGPR:$Rd), (ins rGPR:$Rm), iir,
+                opc, ".w\t$Rd, $Rm",
+                [(set rGPR:$Rd, (opnode rGPR:$Rm))]> {
+     let Inst{31-27} = 0b11101;
+     let Inst{26-25} = 0b01;
+     let Inst{24-21} = opcod;
+     let Inst{19-16} = 0b1111; // Rn
+     let Inst{14-12} = 0b000; // imm3
+     let Inst{7-6} = 0b00; // imm2
+     let Inst{5-4} = 0b00; // type
+   }
+   // shifted register
+   def s : T2sOneRegShiftedReg<(outs rGPR:$Rd), (ins t2_so_reg:$ShiftedRm), iis,
+                opc, ".w\t$Rd, $ShiftedRm",
+                [(set rGPR:$Rd, (opnode t2_so_reg:$ShiftedRm))]> {
+     let Inst{31-27} = 0b11101;
+     let Inst{26-25} = 0b01;
+     let Inst{24-21} = opcod;
+     let Inst{19-16} = 0b1111; // Rn
+   }
+}
+
 // Prefer over of t2EORri ra, rb, -1 because mvn has 16-bit version
 let AddedComplexity = 1 in
 defm t2MVN  : T2I_un_irs <0b0011, "mvn",
                           IIC_iMVNi, IIC_iMVNr, IIC_iMVNsi,
                           UnOpFrag<(not node:$Src)>, 1, 1>;
-
 
 let AddedComplexity = 1 in
 def : T2Pat<(and     rGPR:$src, t2_so_imm_not:$imm),
@@ -3820,3 +3819,9 @@ def : t2InstAlias<"ldrsb${p} $Rt, $addr",
                   (t2LDRSBs rGPR:$Rt, t2addrmode_so_reg:$addr, pred:$p)>;
 def : t2InstAlias<"ldrsh${p} $Rt, $addr",
                   (t2LDRSHs rGPR:$Rt, t2addrmode_so_reg:$addr, pred:$p)>;
+
+// Alias for MVN without the ".w" optional width specifier.
+def : t2InstAlias<"mvn${s}${p} $Rd, $Rm",
+           (t2MVNr rGPR:$Rd, rGPR:$Rm, pred:$p, cc_out:$s)>;
+def : t2InstAlias<"mvn${s}${p} $Rd, $ShiftedRm",
+           (t2MVNs rGPR:$Rd, t2_so_reg:$ShiftedRm, pred:$p, cc_out:$s)>;

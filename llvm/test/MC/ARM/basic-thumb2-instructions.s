@@ -1123,6 +1123,51 @@ _func:
 @ CHECK: it	eq                      @ encoding: [0x08,0xbf]
 @ CHECK: muleq	r3, r4, r5              @ encoding: [0x04,0xfb,0x05,0xf3]
 
+
+@------------------------------------------------------------------------------
+@ MVN(immediate)
+@------------------------------------------------------------------------------
+        mvns r8, #21
+        mvn r0, #0x3fc0000
+        mvns r0, #0x3fc0000
+        itte eq
+        mvnseq r1, #12
+        mvneq r1, #12
+        mvnne r1, #12
+
+@ CHECK: mvns	r8, #21                 @ encoding: [0x7f,0xf0,0x15,0x08]
+@ CHECK: mvn	r0, #66846720           @ encoding: [0x6f,0xf0,0x7f,0x70]
+@ CHECK: mvns	r0, #66846720           @ encoding: [0x7f,0xf0,0x7f,0x70]
+@ CHECK: itte	eq                      @ encoding: [0x06,0xbf]
+@ CHECK: mvnseq	r1, #12                 @ encoding: [0x7f,0xf0,0x0c,0x01]
+@ CHECK: mvneq	r1, #12                 @ encoding: [0x6f,0xf0,0x0c,0x01]
+@ CHECK: mvnne	r1, #12                 @ encoding: [0x6f,0xf0,0x0c,0x01]
+
+
+@------------------------------------------------------------------------------
+@ MVN(register)
+@------------------------------------------------------------------------------
+        mvn r2, r3
+        mvns r2, r3
+        mvn r5, r6, lsl #19
+        mvn r5, r6, lsr #9
+        mvn r5, r6, asr #4
+        mvn r5, r6, ror #6
+        mvn r5, r6, rrx
+        it eq
+        mvneq r2, r3
+
+@ CHECK: mvn.w	r2, r3                  @ encoding: [0x6f,0xea,0x03,0x02]
+@ CHECK: mvns	r2, r3                  @ encoding: [0xda,0x43]
+@ CHECK: mvn.w	r5, r6, lsl #19         @ encoding: [0x6f,0xea,0xc6,0x45]
+@ CHECK: mvn.w	r5, r6, lsr #9          @ encoding: [0x6f,0xea,0x56,0x25]
+@ CHECK: mvn.w	r5, r6, asr #4          @ encoding: [0x6f,0xea,0x26,0x15]
+@ CHECK: mvn.w	r5, r6, ror #6          @ encoding: [0x6f,0xea,0xb6,0x15]
+@ CHECK: mvn.w	r5, r6, rrx             @ encoding: [0x6f,0xea,0x36,0x05]
+@ CHECK: it	eq                      @ encoding: [0x08,0xbf]
+@ CHECK: mvneq	r2, r3                  @ encoding: [0xda,0x43]
+
+
 @------------------------------------------------------------------------------
 @ IT
 @------------------------------------------------------------------------------
