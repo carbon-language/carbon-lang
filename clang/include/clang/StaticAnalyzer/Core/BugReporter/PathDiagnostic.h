@@ -89,32 +89,35 @@ private:
   const Stmt *S;
   const Decl *D;
   const SourceManager *SM;
+  const LocationContext *LC;
 public:
   PathDiagnosticLocation()
-    : K(SingleLocK), S(0), D(0), SM(0) {}
+    : K(SingleLocK), S(0), D(0), SM(0), LC(0) {}
 
   PathDiagnosticLocation(FullSourceLoc L)
-    : K(SingleLocK), R(L, L), S(0), D(0), SM(&L.getManager()) {}
+    : K(SingleLocK), R(L, L), S(0), D(0), SM(&L.getManager()), LC(0) {}
 
-  PathDiagnosticLocation(const Stmt *s, const SourceManager &sm)
-    : K(StmtK), S(s), D(0), SM(&sm) {}
+  PathDiagnosticLocation(const Stmt *s,
+                         const SourceManager &sm,
+                         const LocationContext *lc = 0)
+    : K(StmtK), S(s), D(0), SM(&sm), LC(lc) {}
 
   /// Create a location corresponding to the next valid ExplodedNode.
   static PathDiagnosticLocation create(const ExplodedNode* N,
                                        const SourceManager &SM);
 
   PathDiagnosticLocation(SourceRange r, const SourceManager &sm)
-    : K(RangeK), R(r), S(0), D(0), SM(&sm) {}
+    : K(RangeK), R(r), S(0), D(0), SM(&sm), LC(0) {}
 
   PathDiagnosticLocation(const Decl *d, const SourceManager &sm)
-    : K(DeclK), S(0), D(d), SM(&sm) {}
+    : K(DeclK), S(0), D(d), SM(&sm), LC(0) {}
 
   bool operator==(const PathDiagnosticLocation &X) const {
-    return K == X.K && R == X.R && S == X.S && D == X.D;
+    return K == X.K && R == X.R && S == X.S && D == X.D && LC == X.LC;
   }
 
   bool operator!=(const PathDiagnosticLocation &X) const {
-    return K != X.K || R != X.R || S != X.S || D != X.D;;
+    return !(*this == X);
   }
 
   PathDiagnosticLocation& operator=(const PathDiagnosticLocation &X) {
