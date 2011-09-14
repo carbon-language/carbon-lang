@@ -40,6 +40,8 @@ void f(BOOL b, id p) {
 }
 @end
 
+extern void consumeParam(CFStringRef CF_CONSUMED p);
+
 void f2(NSString *s) {
   CFStringRef ref = (__bridge CFStringRef)([s string]);
   ref = (__bridge CFStringRef)[s string];
@@ -53,4 +55,7 @@ void f2(NSString *s) {
   ref = (__bridge_retained CFTypeRef)([s string]);
   ref = (__bridge_retained CFTypeRef)(s);
   ref = (__bridge_retained CFStringRef)(s);
+
+  consumeParam((__bridge_retained CFStringRef)s);
+  consumeParam((__bridge_retained CFStringRef)(s));
 }

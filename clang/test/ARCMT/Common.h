@@ -4,6 +4,8 @@
 #define NS_AUTOMATED_REFCOUNT_UNAVAILABLE
 #endif
 
+#define CF_CONSUMED __attribute__((cf_consumed))
+
 #define nil ((void*) 0)
 
 typedef int BOOL;
