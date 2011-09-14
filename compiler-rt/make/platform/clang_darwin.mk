@@ -51,6 +51,19 @@ UniversalArchs.osx := $(call CheckArches,i386 x86_64)
 Configs += cc_kext
 UniversalArchs.cc_kext := $(call CheckArches,armv6 armv7 i386 x86_64)
 
+# If RC_SUPPORTED_ARCHS is defined, treat it as a list of the architectures we
+# are intended to support and limit what we try to build to that.
+#
+# We make sure to remove empty configs if we end up dropping all the requested
+# archs for a particular config.
+ifneq ($(RC_SUPPORTED_ARCHS),)
+$(foreach config,$(Configs),\
+  $(call Set,UniversalArchs.$(config),\
+	$(filter $(RC_SUPPORTED_ARCHS),$(UniversalArchs.$(config))))\
+  $(if $(UniversalArchs.$(config)),,\
+	$(call Set,Configs,$(filter-out $(config),$(Configs)))))
+endif
+
 ###
 
 CC := gcc
