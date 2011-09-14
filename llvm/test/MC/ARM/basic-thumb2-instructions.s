@@ -1284,6 +1284,50 @@ _func:
 @ CHECK: pld	[sp, r2]                @ encoding: [0x1d,0xf8,0x02,0xf0]
 
 @------------------------------------------------------------------------------
+@ PLI(immediate)
+@------------------------------------------------------------------------------
+        pli [r5, #-4]
+        pli [r6, #32]
+        pli [r6, #33]
+        pli [r6, #257]
+        pli [r7, #257]
+
+@ CHECK: pli	[r5, #-4]               @ encoding: [0x15,0xf9,0x04,0xfc]
+@ CHECK: pli	[r6, #32]               @ encoding: [0x96,0xf9,0x20,0xf0]
+@ CHECK: pli	[r6, #33]               @ encoding: [0x96,0xf9,0x21,0xf0]
+@ CHECK: pli	[r6, #257]              @ encoding: [0x96,0xf9,0x01,0xf1]
+@ CHECK: pli	[r7, #257]              @ encoding: [0x97,0xf9,0x01,0xf1]
+
+
+@------------------------------------------------------------------------------
+@ PLI(literal)
+@------------------------------------------------------------------------------
+        pli  _foo
+
+
+@ CHECK: pli	_foo                    @ encoding: [0x9f'A',0xf9'A',A,0xf0'A']
+           @   fixup A - offset: 0, value: _foo, kind: fixup_t2_ldst_pcrel_12
+
+
+@------------------------------------------------------------------------------
+@ PLI(register)
+@------------------------------------------------------------------------------
+        pli [r8, r1]
+        pli [r5, r2]
+        pli [r0, r2, lsl #3]
+        pli [r8, r2, lsl #2]
+        pli [sp, r2, lsl #1]
+        pli [sp, r2, lsl #0]
+
+@ CHECK: pli	[r8, r1]                @ encoding: [0x18,0xf9,0x01,0xf0]
+@ CHECK: pli	[r5, r2]                @ encoding: [0x15,0xf9,0x02,0xf0]
+@ CHECK: pli	[r0, r2, lsl #3]        @ encoding: [0x10,0xf9,0x32,0xf0]
+@ CHECK: pli	[r8, r2, lsl #2]        @ encoding: [0x18,0xf9,0x22,0xf0]
+@ CHECK: pli	[sp, r2, lsl #1]        @ encoding: [0x1d,0xf9,0x12,0xf0]
+@ CHECK: pli	[sp, r2]                @ encoding: [0x1d,0xf9,0x02,0xf0]
+
+
+@------------------------------------------------------------------------------
 @ IT
 @------------------------------------------------------------------------------
 @ Test encodings of a few full IT blocks, not just the IT instruction
