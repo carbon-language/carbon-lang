@@ -27,6 +27,7 @@ class StringRef;
 class MipsSubtarget : public MipsGenSubtargetInfo {
 
 public:
+  // NOTE: O64 will not be supported.
   enum MipsABIEnum {
     O32, N32, N64, EABI
   };
