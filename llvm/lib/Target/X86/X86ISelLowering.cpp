@@ -5014,9 +5014,12 @@ static SDValue EltsFromConsecutiveLoads(EVT VT, SmallVectorImpl<SDValue> &Elts,
              DAG.getTargetLoweringInfo().isTypeLegal(MVT::v2i64)) {
     SDVTList Tys = DAG.getVTList(MVT::v2i64, MVT::Other);
     SDValue Ops[] = { LDBase->getChain(), LDBase->getBasePtr() };
-    SDValue ResNode = DAG.getMemIntrinsicNode(X86ISD::VZEXT_LOAD, DL, Tys,
-                                              Ops, 2, MVT::i32,
-                                              LDBase->getMemOperand());
+    SDValue ResNode =
+        DAG.getMemIntrinsicNode(X86ISD::VZEXT_LOAD, DL, Tys, Ops, 2, MVT::i64,
+                                LDBase->getPointerInfo(),
+                                LDBase->getAlignment(),
+                                false/*isVolatile*/, true/*ReadMem*/,
+                                false/*WriteMem*/);
     return DAG.getNode(ISD::BITCAST, DL, VT, ResNode);
   }
   return SDValue();
