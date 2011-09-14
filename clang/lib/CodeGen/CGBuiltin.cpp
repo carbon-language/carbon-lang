@@ -2187,7 +2187,7 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
       return Builder.CreateCall(F, makeArrayRef(&Ops[0], 2), "palignr");
     }
     
-    // If palignr is shifting the pair of vectors more than 32 bytes, emit zero.
+    // If palignr is shifting the pair of vectors more than 16 bytes, emit zero.
     return llvm::Constant::getNullValue(ConvertType(E->getType()));
   }
   case X86::BI__builtin_ia32_palignr128: {
