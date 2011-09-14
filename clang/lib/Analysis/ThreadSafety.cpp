@@ -10,7 +10,8 @@
 // A intra-procedural analysis for thread safety (e.g. deadlocks and race
 // conditions), based off of an annotation system.
 //
-// See http://gcc.gnu.org/wiki/ThreadSafetyAnnotation for the gcc version.
+// See http://clang.llvm.org/docs/LanguageExtensions.html#threadsafety for more
+// information.
 //
 //===----------------------------------------------------------------------===//
 
@@ -35,6 +36,9 @@
 
 using namespace clang;
 using namespace thread_safety;
+
+// Key method definition
+ThreadSafetyHandler::~ThreadSafetyHandler() {}
 
 // Helper functions
 static Expr *getParent(Expr *Exp) {
