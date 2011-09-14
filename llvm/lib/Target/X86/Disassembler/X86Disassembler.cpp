@@ -221,6 +221,12 @@ static void translateImmediate(MCInst &mcInst, uint64_t immediate,
   }
 
   switch (type) {
+  case TYPE_XMM128:
+    mcInst.addOperand(MCOperand::CreateReg(X86::XMM0 + (immediate >> 4)));
+    return;
+  case TYPE_XMM256:
+    mcInst.addOperand(MCOperand::CreateReg(X86::YMM0 + (immediate >> 4)));
+    return;
   case TYPE_MOFFS8:
   case TYPE_REL8:
     if(immediate & 0x80)
