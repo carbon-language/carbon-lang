@@ -28,32 +28,25 @@ namespace thread_safety {
 
 /// This enum distinguishes between different kinds of operations that may
 /// need to be protected by locks. We use this enum in error handling.
-/// \enum POK_VarDereference -- Dereferencing a variable (e.g. p in *p = 5;)
-/// \enum POK_VarAccess --  Reading or writing a variable (e.g. x in x = 5;)
-/// \enum POK_FunctionCall -- making a function call (e.g. fool())
 enum ProtectedOperationKind {
-  POK_VarDereference,
-  POK_VarAccess,
-  POK_FunctionCall
+  POK_VarDereference, /// Dereferencing a variable (e.g. p in *p = 5;)
+  POK_VarAccess, /// Reading or writing a variable (e.g. x in x = 5;)
+  POK_FunctionCall /// Making a function call (e.g. fool())
 };
 
 /// This enum distinguishes between different kinds of lock actions. For
 /// example, it is an error to write a variable protected by shared version of a
 /// mutex.
-/// \enum LK_Shared -- Shared/reader lock of a mutex
-/// \enum LK_Exclusive -- Exclusive/writer lock of a mutex
 enum LockKind {
-  LK_Shared,
-  LK_Exclusive
+  LK_Shared, /// Shared/reader lock of a mutex
+  LK_Exclusive /// Exclusive/writer lock of a mutex
 };
 
 /// This enum distinguishes between different ways to access (read or write) a
 /// variable.
-/// \enum AK_Read -- reading a variable
-/// \enum AK_Written -- writing a variable
 enum AccessKind {
-  AK_Read,
-  AK_Written
+  AK_Read, /// Reading a variable
+  AK_Written /// Writing a variable
 };
 
 /// Handler class for thread safety warnings.
@@ -76,7 +69,7 @@ public:
   /// Warn about lock function calls for locks which are already held.
   /// \param LockName -- A StringRef name for the lock expression, to be printed
   /// in the error message.
-  /// \param Loc -- The Loc of the second lock expression.
+  /// \param Loc -- The location of the second lock expression.
   virtual void handleDoubleLock(Name LockName, SourceLocation Loc) {}
 
   /// Warn about situations where a mutex is sometimes held and sometimes not.
@@ -84,7 +77,8 @@ public:
   /// branch.
   /// \param LockName -- A StringRef name for the lock expression, to be printed
   /// in the error message.
-  /// \param Loc -- The Loc of the lock expression where the mutex is locked
+  /// \param Loc -- The location of the lock expression where the mutex is
+  /// locked
   virtual void handleMutexHeldEndOfScope(Name LockName, SourceLocation Loc){}
 
   /// Warn when a mutex is only held at the start of some loop iterations.
@@ -97,7 +91,7 @@ public:
   /// \param LockName -- A StringRef name for the lock expression, to be printed
   /// in the error message.
   /// \param FunName -- The name of the function
-  /// \param Loc -- The Loc of the lock expression
+  /// \param Loc -- The location of the lock expression
   virtual void handleNoUnlock(Name LockName, Name FunName,
                               SourceLocation Loc) {}
 
@@ -106,8 +100,8 @@ public:
   /// during the else branch.
   /// \param LockName -- A StringRef name for the lock expression, to be printed
   /// in the error message.
-  /// \param Loc1 -- The Loc of the first lock expression.
-  /// \param Loc2 -- The Loc of the second lock expression.
+  /// \param Loc1 -- The location of the first lock expression.
+  /// \param Loc2 -- The location of the second lock expression.
   virtual void handleExclusiveAndShared(Name LockName, SourceLocation Loc1,
                                         SourceLocation Loc2) {}
 
@@ -115,7 +109,7 @@ public:
   /// \param D -- The decl for the protected variable or function
   /// \param POK -- The kind of protected operation (e.g. variable access)
   /// \param AK -- The kind of access (i.e. read or write) that occurred
-  /// \param Loc -- The Loc of the protected operation.
+  /// \param Loc -- The location of the protected operation.
   virtual void handleNoMutexHeld(const NamedDecl *D, ProtectedOperationKind POK,
                                  AccessKind AK, SourceLocation Loc) {}
 
@@ -126,7 +120,7 @@ public:
   /// \param D -- The decl for the protected variable or function
   /// \param POK -- The kind of protected operation (e.g. variable access)
   /// \param AK -- The kind of access (i.e. read or write) that occurred
-  /// \param Loc -- The Loc of the protected operation.
+  /// \param Loc -- The location of the protected operation.
   virtual void handleMutexNotHeld(const NamedDecl *D,
                                   ProtectedOperationKind POK, Name LockName,
                                   LockKind LK, SourceLocation Loc) {}
@@ -136,7 +130,7 @@ public:
   /// \param FunName -- The name of the function
   /// \param LockName -- A StringRef name for the lock expression, to be printed
   /// in the error message.
-  /// \param Loc -- The Loc of the function call.
+  /// \param Loc -- The location of the function call.
   virtual void handleFunExcludesLock(Name FunName, Name LockName,
                                      SourceLocation Loc) {}
 };
