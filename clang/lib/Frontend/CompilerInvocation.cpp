@@ -1991,8 +1991,12 @@ std::string CompilerInvocation::getModuleHash() const {
   Signature.add((unsigned)T.getOS(), 5);
   Signature.add((unsigned)T.getEnvironment(), 4);
 
+  // Extend the signature with preprocessor options.
+  Signature.add(getPreprocessorOpts().UsePredefines, 1);
+  Signature.add(getPreprocessorOpts().DetailedRecord, 1);
+  
   // We've generated the signature. Treat it as one large APInt that we'll
-  // encode as hex and return.
+  // encode in base-36 and return.
   Signature.flush();
-  return Signature.getAsInteger().toString(16, /*Signed=*/false);
+  return Signature.getAsInteger().toString(36, /*Signed=*/false);
 }
