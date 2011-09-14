@@ -74,6 +74,33 @@ namespace MipsII {
     MO_TPREL_HI,
     MO_TPREL_LO
   };
+
+  enum {
+    //===------------------------------------------------------------------===//
+    // Instruction encodings.  These are the standard/most common forms for
+    // Mips instructions.
+    //
+
+    // Pseudo - This represents an instruction that is a pseudo instruction
+    // or one that has not been implemented yet.  It is illegal to code generate
+    // it, but tolerated for intermediate implementation stages.
+    Pseudo   = 0,
+
+    /// FrmR - This form is for instructions of the format R.
+    FrmR  = 1,
+    /// FrmI - This form is for instructions of the format I.
+    FrmI  = 2,
+    /// FrmJ - This form is for instructions of the format J.
+    FrmJ  = 3,
+    /// FrmFR - This form is for instructions of the format FR.
+    FrmFR = 4,
+    /// FrmFI - This form is for instructions of the format FI.
+    FrmFI = 5,
+    /// FrmOther - This form is for instructions that have no specific format.
+    FrmOther = 6,
+
+    FormMask = 15
+  };
 }
 
 class MipsInstrInfo : public MipsGenInstrInfo {

@@ -42,7 +42,11 @@ static TargetJITInfo::JITCompilerFn JITCompilerFunction;
 #define GETASMPREFIX(X) GETASMPREFIX2(X)
 #define ASMPREFIX GETASMPREFIX(__USER_LABEL_PREFIX__)
 
-// save registers, call MipsCompilationCallbackC, restore registers
+// CompilationCallback stub - We can't use a C function with inline assembly in
+// it, because the prolog/epilog inserted by GCC won't work for us. Instead,
+// write our own wrapper, which does things our way, so we have complete control
+// over register saving and restoring. This code saves registers, calls
+// MipsCompilationCallbackC and restores registers.
 extern "C" {
 #if defined (__mips__)
 void MipsCompilationCallback();
@@ -53,35 +57,46 @@ void MipsCompilationCallback();
     ".globl " ASMPREFIX "MipsCompilationCallback\n"
     ASMPREFIX "MipsCompilationCallback:\n"
     ".ent " ASMPREFIX "MipsCompilationCallback\n"
+    ".frame  $29, 32, $31\n"
     ".set  noreorder\n"
     ".cpload $t9\n"
-    ".frame  $29, 32, $31\n"
 
-    "addiu $sp, $sp, -40\n"
-    "sw $a0, 4($sp)\n"
-    "sw $a1, 8($sp)\n"
-    "sw $a2, 12($sp)\n"
-    "sw $a3, 20($sp)\n"
-    "sw $ra, 24($sp)\n"
-    "sw $v0, 28($sp)\n"
-    "sw $v1, 32($sp)\n"
-    "sw $t8, 36($sp)\n"
+    "addiu $sp, $sp, -60\n"
     ".cprestore 16\n"
 
+    // Save argument registers a0, a1, a2, a3, f12, f14 since they may contain
+    // stuff for the real target function right now. We have to act as if this
+    // whole compilation callback doesn't exist as far as the caller is
+    // concerned. We also need to save the ra register since it contains the
+    // original return address, and t8 register since it contains the address
+    // of the end of function stub.
+    "sw $a0, 20($sp)\n"
+    "sw $a1, 24($sp)\n"
+    "sw $a2, 28($sp)\n"
+    "sw $a3, 32($sp)\n"
+    "sw $ra, 36($sp)\n"
+    "sw $t8, 40($sp)\n"
+    "sdc1 $f12, 44($sp)\n"
+    "sdc1 $f14, 52($sp)\n"
+
+    // t8 points at the end of function stub. Pass the beginning of the stub
+    // to the MipsCompilationCallbackC.
     "addiu $a0, $t8, -16\n"
-    "jal   " ASMPREFIX "MipsCompilationCallbackC\n"
+    "jal " ASMPREFIX "MipsCompilationCallbackC\n"
     "nop\n"
 
-    "lw $a0, 4($sp)\n"
-    "lw $a1, 8($sp)\n"
-    "lw $a2, 12($sp)\n"
-    "lw $a3, 20($sp)\n"
-    "lw $ra, 24($sp)\n"
-    "lw $v0, 28($sp)\n"
-    "lw $v1, 32($sp)\n"
-    "lw $t8, 36($sp)\n"
-    "addiu $sp, $sp, 40\n"
+    // Restore registers.
+    "lw $a0, 20($sp)\n"
+    "lw $a1, 24($sp)\n"
+    "lw $a2, 28($sp)\n"
+    "lw $a3, 32($sp)\n"
+    "lw $ra, 36($sp)\n"
+    "lw $t8, 40($sp)\n"
+    "ldc1 $f12, 44($sp)\n"
+    "ldc1 $f14, 52($sp)\n"
+    "addiu $sp, $sp, 60\n"
 
+    // Jump to the (newly modified) stub to invoke the real function.
     "addiu $t8, $t8, -16\n"
     "jr $t8\n"
     "nop\n"
@@ -102,14 +117,26 @@ void MipsCompilationCallback();
 /// This function must locate the start of the stub or call site and pass
 /// it into the JIT compiler function.
 extern "C" void MipsCompilationCallbackC(intptr_t StubAddr) {
-
   // Get the address of the compiled code for this function.
   intptr_t NewVal = (intptr_t) JITCompilerFunction((void*) StubAddr);
 
-  *(intptr_t *) (StubAddr) = 2 << 26 | ((NewVal & 0x0fffffff) >> 2); // J NewVal
-  *(intptr_t *) (StubAddr + 4) = 0; // NOP
-  *(intptr_t *) (StubAddr + 8) = 0; // NOP
-  *(intptr_t *) (StubAddr + 12) = 0; // NOP
+  // Rewrite the function stub so that we don't end up here every time we
+  // execute the call. We're replacing the first four instructions of the
+  // stub with code that jumps to the compiled function:
+  //   lui $t9, %hi(NewVal)
+  //   addiu $t9, $t9, %lo(NewVal)
+  //   jr $t9
+  //   nop
+
+  int Hi = ((unsigned)NewVal & 0xffff0000) >> 16;
+  if ((NewVal & 0x8000) != 0)
+    Hi++;
+  int Lo = (int)(NewVal & 0xffff);
+
+  *(intptr_t *)(StubAddr) = 0xf << 26 | 25 << 16 | Hi;
+  *(intptr_t *)(StubAddr + 4) = 9 << 26 | 25 << 21 | 25 << 16 | Lo;
+  *(intptr_t *)(StubAddr + 8) = 25 << 21 | 8;
+  *(intptr_t *)(StubAddr + 12) = 0;
 
   sys::Memory::InvalidateInstructionCache((void*) StubAddr, 16);
 }
@@ -121,7 +148,9 @@ TargetJITInfo::LazyResolverFn MipsJITInfo::getLazyResolverFunction(
 }
 
 TargetJITInfo::StubLayout MipsJITInfo::getStubLayout() {
-  StubLayout Result = { 24, 4 }; // {Size. Alignment} (of FunctionStub)
+  // The stub contains 4 4-byte instructions, aligned at 4 bytes. See
+  // emitFunctionStub for details.
+  StubLayout Result = { 4*4, 4 };
   return Result;
 }
 
@@ -129,22 +158,33 @@ void *MipsJITInfo::emitFunctionStub(const Function* F, void *Fn,
     JITCodeEmitter &JCE) {
   JCE.emitAlignment(4);
   void *Addr = (void*) (JCE.getCurrentPCValue());
+  if (!sys::Memory::setRangeWritable(Addr, 16))
+    llvm_unreachable("ERROR: Unable to mark stub writable.");
 
-  unsigned arg0 = ((intptr_t) MipsCompilationCallback >> 16);
-  if ((((intptr_t) MipsCompilationCallback & 0xffff) >> 15) == 1) {
-    arg0 += 1;  // same hack as in relocate()
-  }
+  intptr_t EmittedAddr;
+  if (Fn != (void*)(intptr_t)MipsCompilationCallback)
+    EmittedAddr = (intptr_t)Fn;
+  else
+    EmittedAddr = (intptr_t)MipsCompilationCallback;
 
-  // LUI t9, %hi(MipsCompilationCallback)
-  JCE.emitWordLE(0xf << 26 | 25 << 16 | arg0);
-  // ADDiu t9, t9, %lo(MipsCompilationCallback)
-  JCE.emitWordLE(9 << 26 | 25 << 21 | 25 << 16
-          | ((intptr_t) MipsCompilationCallback & 0xffff));
-  // JALR t8, t9
+
+  int Hi = ((unsigned)EmittedAddr & 0xffff0000) >> 16;
+  if ((EmittedAddr & 0x8000) != 0)
+    Hi++;
+  int Lo = (int)(EmittedAddr & 0xffff);
+
+  // lui t9, %hi(EmittedAddr)
+  // addiu t9, t9, %lo(EmittedAddr)
+  // jalr t8, t9
+  // nop
+  JCE.emitWordLE(0xf << 26 | 25 << 16 | Hi);
+  JCE.emitWordLE(9 << 26 | 25 << 21 | 25 << 16 | Lo);
   JCE.emitWordLE(25 << 21 | 24 << 11 | 9);
-  JCE.emitWordLE(0);  // NOP
+  JCE.emitWordLE(0);
 
-  sys::Memory::InvalidateInstructionCache((void*) Addr, 16);
+  sys::Memory::InvalidateInstructionCache(Addr, 16);
+  if (!sys::Memory::setRangeExecutable(Addr, 16))
+    llvm_unreachable("ERROR: Unable to mark stub executable.");
 
   return Addr;
 }
@@ -160,27 +200,22 @@ void MipsJITInfo::relocate(void *Function, MachineRelocation *MR,
     intptr_t ResultPtr = (intptr_t) MR->getResultPointer();
 
     switch ((Mips::RelocationType) MR->getRelocationType()) {
-    case Mips::reloc_mips_pcrel:
+    case Mips::reloc_mips_branch:
       ResultPtr = (((ResultPtr - (intptr_t) RelocPos) - 4) >> 2) & 0xffff;
       *((unsigned*) RelocPos) |= (unsigned) ResultPtr;
       break;
 
-    case Mips::reloc_mips_j_jal: {
+    case Mips::reloc_mips_26:
       ResultPtr = (ResultPtr & 0x0fffffff) >> 2;
       *((unsigned*) RelocPos) |= (unsigned) ResultPtr;
-    }
       break;
 
-    case Mips::reloc_mips_hi: {
+    case Mips::reloc_mips_hi:
       ResultPtr = ResultPtr >> 16;
-
-      // see See MIPS Run Linux, chapter 9.4
       if ((((intptr_t) (MR->getResultPointer()) & 0xffff) >> 15) == 1) {
         ResultPtr += 1;
       }
-
       *((unsigned*) RelocPos) |= (unsigned) ResultPtr;
-    }
       break;
 
     case Mips::reloc_mips_lo:
@@ -189,7 +224,7 @@ void MipsJITInfo::relocate(void *Function, MachineRelocation *MR,
       break;
 
     default:
-      assert(0 && "MipsJITInfo.unknown relocation;");
+      llvm_unreachable("ERROR: Unknown Mips relocation.");
     }
   }
 }

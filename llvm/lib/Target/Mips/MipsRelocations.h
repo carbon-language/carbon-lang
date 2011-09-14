@@ -20,13 +20,22 @@
 namespace llvm {
   namespace Mips{
     enum RelocationType {
-      reloc_mips_pcrel = 1,
-      reloc_mips_hi = 3,
-      reloc_mips_lo = 4,
-      reloc_mips_j_jal = 5
+      // reloc_mips_branch - pc relative relocation for branches. The lower 18
+      // bits of the difference between the branch target and the branch
+      // instruction, shifted right by 2.
+      reloc_mips_branch = 1,
+
+      // reloc_mips_hi - upper 16 bits of the address (modified by +1 if the
+      // lower 16 bits of the address is negative).
+      reloc_mips_hi = 2,
+
+      // reloc_mips_lo - lower 16 bits of the address.
+      reloc_mips_lo = 3,
+
+      // reloc_mips_26 - lower 28 bits of the address, shifted right by 2.
+      reloc_mips_26 = 4
     };
   }
 }
 
 #endif /* MIPSRELOCATIONS_H_ */
-
