@@ -191,7 +191,7 @@ static void DisassembleInput(const StringRef &Filename) {
       bool contains;
       if (!error(i->containsSymbol(*si, contains)) && contains) {
         uint64_t Address;
-        if (error(si->getAddress(Address))) break;
+        if (error(si->getOffset(Address))) break;
         StringRef Name;
         if (error(si->getName(Name))) break;
         Symbols.push_back(std::make_pair(Address, Name));

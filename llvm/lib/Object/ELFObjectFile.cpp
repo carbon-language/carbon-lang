@@ -310,10 +310,13 @@ class ELFObjectFile : public ObjectFile {
 protected:
   virtual error_code getSymbolNext(DataRefImpl Symb, SymbolRef &Res) const;
   virtual error_code getSymbolName(DataRefImpl Symb, StringRef &Res) const;
+  virtual error_code getSymbolOffset(DataRefImpl Symb, uint64_t &Res) const;
   virtual error_code getSymbolAddress(DataRefImpl Symb, uint64_t &Res) const;
   virtual error_code getSymbolSize(DataRefImpl Symb, uint64_t &Res) const;
   virtual error_code getSymbolNMTypeChar(DataRefImpl Symb, char &Res) const;
   virtual error_code isSymbolInternal(DataRefImpl Symb, bool &Res) const;
+  virtual error_code isSymbolGlobal(DataRefImpl Symb, bool &Res) const;
+  virtual error_code getSymbolType(DataRefImpl Symb, SymbolRef::SymbolType &Res) const;
 
   virtual error_code getSectionNext(DataRefImpl Sec, SectionRef &Res) const;
   virtual error_code getSectionName(DataRefImpl Sec, StringRef &Res) const;
@@ -415,7 +418,7 @@ error_code ELFObjectFile<target_endianness, is64Bits>
 
 template<support::endianness target_endianness, bool is64Bits>
 error_code ELFObjectFile<target_endianness, is64Bits>
-                        ::getSymbolAddress(DataRefImpl Symb,
+                        ::getSymbolOffset(DataRefImpl Symb,
                                            uint64_t &Result) const {
   validateSymbol(Symb);
   const Elf_Sym  *symb = getSymbol(Symb);
@@ -440,6 +443,43 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   case ELF::STT_OBJECT:
   case ELF::STT_NOTYPE:
     Result = symb->st_value;
+    return object_error::success;
+  default:
+    Result = UnknownAddressOrSize;
+    return object_error::success;
+  }
+}
+
+template<support::endianness target_endianness, bool is64Bits>
+error_code ELFObjectFile<target_endianness, is64Bits>
+                        ::getSymbolAddress(DataRefImpl Symb,
+                                           uint64_t &Result) const {
+  validateSymbol(Symb);
+  const Elf_Sym  *symb = getSymbol(Symb);
+  const Elf_Shdr *Section;
+  switch (symb->st_shndx) {
+  case ELF::SHN_COMMON: // Fall through.
+   // Undefined symbols have no address yet.
+  case ELF::SHN_UNDEF:
+    Result = UnknownAddressOrSize;
+    return object_error::success;
+  case ELF::SHN_ABS:
+    Result = reinterpret_cast<uintptr_t>(base()+symb->st_value);
+    return object_error::success;
+  default: Section = getSection(symb->st_shndx);
+  }
+  const uint8_t* addr = base();
+  if (Section)
+    addr += Section->sh_offset;
+  switch (symb->getType()) {
+  case ELF::STT_SECTION:
+    Result = reinterpret_cast<uintptr_t>(addr);
+    return object_error::success;
+  case ELF::STT_FUNC: // Fall through.
+  case ELF::STT_OBJECT: // Fall through.
+  case ELF::STT_NOTYPE:
+    addr += symb->st_value;
+    Result = reinterpret_cast<uintptr_t>(addr);
     return object_error::success;
   default:
     Result = UnknownAddressOrSize;
@@ -521,6 +561,43 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   }
 
   Result = ret;
+  return object_error::success;
+}
+
+template<support::endianness target_endianness, bool is64Bits>
+error_code ELFObjectFile<target_endianness, is64Bits>
+                        ::getSymbolType(DataRefImpl Symb,
+                                        SymbolRef::SymbolType &Result) const {
+  validateSymbol(Symb);
+  const Elf_Sym  *symb = getSymbol(Symb);
+
+  if (symb->st_shndx == ELF::SHN_UNDEF) {
+    Result = SymbolRef::ST_External;
+    return object_error::success;
+  }
+
+  switch (symb->getType()) {
+  case ELF::STT_FUNC:
+    Result = SymbolRef::ST_Function;
+    break;
+  case ELF::STT_OBJECT:
+    Result = SymbolRef::ST_Data;
+    break;
+  default:
+    Result = SymbolRef::ST_Other;
+    break;
+  }
+  return object_error::success;
+}
+
+template<support::endianness target_endianness, bool is64Bits>
+error_code ELFObjectFile<target_endianness, is64Bits>
+                        ::isSymbolGlobal(DataRefImpl Symb,
+                                        bool &Result) const {
+  validateSymbol(Symb);
+  const Elf_Sym  *symb = getSymbol(Symb);
+
+  Result = symb->getBinding() == ELF::STB_GLOBAL;
   return object_error::success;
 }
 

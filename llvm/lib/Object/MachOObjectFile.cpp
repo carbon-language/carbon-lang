@@ -49,10 +49,13 @@ public:
 protected:
   virtual error_code getSymbolNext(DataRefImpl Symb, SymbolRef &Res) const;
   virtual error_code getSymbolName(DataRefImpl Symb, StringRef &Res) const;
+  virtual error_code getSymbolOffset(DataRefImpl Symb, uint64_t &Res) const;
   virtual error_code getSymbolAddress(DataRefImpl Symb, uint64_t &Res) const;
   virtual error_code getSymbolSize(DataRefImpl Symb, uint64_t &Res) const;
   virtual error_code getSymbolNMTypeChar(DataRefImpl Symb, char &Res) const;
   virtual error_code isSymbolInternal(DataRefImpl Symb, bool &Res) const;
+  virtual error_code isSymbolGlobal(DataRefImpl Symb, bool &Res) const;
+  virtual error_code getSymbolType(DataRefImpl Symb, SymbolRef::SymbolType &Res) const;
 
   virtual error_code getSectionNext(DataRefImpl Sec, SectionRef &Res) const;
   virtual error_code getSectionName(DataRefImpl Sec, StringRef &Res) const;
@@ -190,7 +193,7 @@ error_code MachOObjectFile::getSymbolName(DataRefImpl DRI,
   return object_error::success;
 }
 
-error_code MachOObjectFile::getSymbolAddress(DataRefImpl DRI,
+error_code MachOObjectFile::getSymbolOffset(DataRefImpl DRI,
                                              uint64_t &Result) const {
   if (MachOObj->is64Bit()) {
     InMemoryStruct<macho::Symbol64TableEntry> Entry;
@@ -201,6 +204,27 @@ error_code MachOObjectFile::getSymbolAddress(DataRefImpl DRI,
     getSymbolTableEntry(DRI, Entry);
     Result = Entry->Value;
   }
+  return object_error::success;
+}
+
+error_code MachOObjectFile::getSymbolAddress(DataRefImpl DRI,
+                                             uint64_t &Result) const {
+  uint64_t SymbolOffset;
+  uint8_t SectionIndex;
+  if (MachOObj->is64Bit()) {
+    InMemoryStruct<macho::Symbol64TableEntry> Entry;
+    getSymbol64TableEntry(DRI, Entry);
+    SymbolOffset = Entry->Value;
+    SectionIndex = Entry->SectionIndex;
+  } else {
+    InMemoryStruct<macho::SymbolTableEntry> Entry;
+    getSymbolTableEntry(DRI, Entry);
+    SymbolOffset = Entry->Value;
+    SectionIndex = Entry->SectionIndex;
+  }
+  getSectionAddress(Sections[SectionIndex], Result);
+  Result += SymbolOffset;
+
   return object_error::success;
 }
 
@@ -258,6 +282,45 @@ error_code MachOObjectFile::isSymbolInternal(DataRefImpl DRI,
   }
   return object_error::success;
 }
+
+error_code MachOObjectFile::isSymbolGlobal(DataRefImpl Symb, bool &Res) const {
+
+  if (MachOObj->is64Bit()) {
+    InMemoryStruct<macho::Symbol64TableEntry> Entry;
+    getSymbol64TableEntry(Symb, Entry);
+    Res = Entry->Type & MachO::NlistMaskExternal;
+  } else {
+    InMemoryStruct<macho::SymbolTableEntry> Entry;
+    getSymbolTableEntry(Symb, Entry);
+    Res = Entry->Type & MachO::NlistMaskExternal;
+  }
+  return object_error::success;
+}
+
+error_code MachOObjectFile::getSymbolType(DataRefImpl Symb,
+                                          SymbolRef::SymbolType &Res) const {
+  uint8_t n_type;
+  if (MachOObj->is64Bit()) {
+    InMemoryStruct<macho::Symbol64TableEntry> Entry;
+    getSymbol64TableEntry(Symb, Entry);
+    n_type = Entry->Type;
+  } else {
+    InMemoryStruct<macho::SymbolTableEntry> Entry;
+    getSymbolTableEntry(Symb, Entry);
+    n_type = Entry->Type;
+  }
+  Res = SymbolRef::ST_Other;
+  switch (n_type & MachO::NlistMaskType) {
+    case MachO::NListTypeUndefined :
+      Res = SymbolRef::ST_External;
+      break;
+    case MachO::NListTypeSection :
+      Res = SymbolRef::ST_Function;
+      break;
+  }
+  return object_error::success;
+}
+
 
 ObjectFile::symbol_iterator MachOObjectFile::begin_symbols() const {
   // DRI.d.a = segment number; DRI.d.b = symbol index.

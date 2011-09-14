@@ -92,10 +92,13 @@ private:
 protected:
   virtual error_code getSymbolNext(DataRefImpl Symb, SymbolRef &Res) const;
   virtual error_code getSymbolName(DataRefImpl Symb, StringRef &Res) const;
+  virtual error_code getSymbolOffset(DataRefImpl Symb, uint64_t &Res) const;
   virtual error_code getSymbolAddress(DataRefImpl Symb, uint64_t &Res) const;
   virtual error_code getSymbolSize(DataRefImpl Symb, uint64_t &Res) const;
   virtual error_code getSymbolNMTypeChar(DataRefImpl Symb, char &Res) const;
   virtual error_code isSymbolInternal(DataRefImpl Symb, bool &Res) const;
+  virtual error_code isSymbolGlobal(DataRefImpl Symb, bool &Res) const;
+  virtual error_code getSymbolType(DataRefImpl Symb, SymbolRef::SymbolType &Res) const;
 
   virtual error_code getSectionNext(DataRefImpl Sec, SectionRef &Res) const;
   virtual error_code getSectionName(DataRefImpl Sec, StringRef &Res) const;

@@ -114,7 +114,7 @@ error_code COFFObjectFile::getSymbolNext(DataRefImpl Symb,
   return object_error::success;
 }
 
-error_code COFFObjectFile::getSymbolAddress(DataRefImpl Symb,
+error_code COFFObjectFile::getSymbolOffset(DataRefImpl Symb,
                                             uint64_t &Result) const {
   const coff_symbol *symb = toSymb(Symb);
   const coff_section *Section = NULL;
@@ -129,6 +129,55 @@ error_code COFFObjectFile::getSymbolAddress(DataRefImpl Symb,
     Result = Section->VirtualAddress + symb->Value;
   else
     Result = symb->Value;
+  return object_error::success;
+}
+
+error_code COFFObjectFile::getSymbolAddress(DataRefImpl Symb,
+                                            uint64_t &Result) const {
+  const coff_symbol *symb = toSymb(Symb);
+  const coff_section *Section = NULL;
+  if (error_code ec = getSection(symb->SectionNumber, Section))
+    return ec;
+  char Type;
+  if (error_code ec = getSymbolNMTypeChar(Symb, Type))
+    return ec;
+  if (Type == 'U' || Type == 'w')
+    Result = UnknownAddressOrSize;
+  else if (Section)
+    Result = reinterpret_cast<uintptr_t>(base() +
+                                         Section->PointerToRawData +
+                                         symb->Value);
+  else
+    Result = reinterpret_cast<uintptr_t>(base() + symb->Value);
+  return object_error::success;
+}
+
+error_code COFFObjectFile::getSymbolType(DataRefImpl Symb,
+                                         SymbolRef::SymbolType &Result) const {
+  const coff_symbol *symb = toSymb(Symb);
+  Result = SymbolRef::ST_Other;
+  if (symb->StorageClass == COFF::IMAGE_SYM_CLASS_EXTERNAL &&
+      symb->SectionNumber == COFF::IMAGE_SYM_UNDEFINED) {
+    Result = SymbolRef::ST_External;
+  } else {
+    if (symb->Type.ComplexType == COFF::IMAGE_SYM_DTYPE_FUNCTION) {
+      Result = SymbolRef::ST_Function;
+    } else {
+      char Type;
+      if (error_code ec = getSymbolNMTypeChar(Symb, Type))
+        return ec;
+      if (Type == 'r' || Type == 'R') {
+        Result = SymbolRef::ST_Data;
+      }
+    }
+  }
+  return object_error::success;
+}
+
+error_code COFFObjectFile::isSymbolGlobal(DataRefImpl Symb,
+                                          bool &Result) const {
+  const coff_symbol *symb = toSymb(Symb);
+  Result = (symb->StorageClass == COFF::IMAGE_SYM_CLASS_EXTERNAL);
   return object_error::success;
 }
 

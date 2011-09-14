@@ -51,6 +51,13 @@ public:
     std::memset(&SymbolPimpl, 0, sizeof(SymbolPimpl));
   }
 
+  enum SymbolType {
+    ST_Function,
+    ST_Data,
+    ST_External,    // Defined in another object file
+    ST_Other
+  };
+
   SymbolRef(DataRefImpl SymbolP, const ObjectFile *Owner);
 
   bool operator==(const SymbolRef &Other) const;
@@ -59,7 +66,9 @@ public:
 
   error_code getName(StringRef &Result) const;
   error_code getAddress(uint64_t &Result) const;
+  error_code getOffset(uint64_t &Result) const;
   error_code getSize(uint64_t &Result) const;
+  error_code getSymbolType(SymbolRef::SymbolType &Result) const;
 
   /// Returns the ascii char that should be displayed in a symbol table dump via
   /// nm for this symbol.
@@ -68,6 +77,10 @@ public:
   /// Returns true for symbols that are internal to the object file format such
   /// as section symbols.
   error_code isInternal(bool &Result) const;
+
+  /// Returns true for symbols that can be used in another objects,
+  /// such as library functions
+  error_code isGlobal(bool &Result) const;
 };
 
 /// RelocationRef - This is a value type class that represents a single
@@ -151,9 +164,12 @@ protected:
   virtual error_code getSymbolNext(DataRefImpl Symb, SymbolRef &Res) const = 0;
   virtual error_code getSymbolName(DataRefImpl Symb, StringRef &Res) const = 0;
   virtual error_code getSymbolAddress(DataRefImpl Symb, uint64_t &Res) const =0;
+  virtual error_code getSymbolOffset(DataRefImpl Symb, uint64_t &Res) const =0;
   virtual error_code getSymbolSize(DataRefImpl Symb, uint64_t &Res) const = 0;
   virtual error_code getSymbolNMTypeChar(DataRefImpl Symb, char &Res) const = 0;
   virtual error_code isSymbolInternal(DataRefImpl Symb, bool &Res) const = 0;
+  virtual error_code isSymbolGlobal(DataRefImpl Symb, bool &Res) const = 0;
+  virtual error_code getSymbolType(DataRefImpl Symb, SymbolRef::SymbolType &Res) const = 0;
 
   // Same as above for SectionRef.
   friend class SectionRef;
@@ -274,6 +290,10 @@ inline error_code SymbolRef::getAddress(uint64_t &Result) const {
   return OwningObject->getSymbolAddress(SymbolPimpl, Result);
 }
 
+inline error_code SymbolRef::getOffset(uint64_t &Result) const {
+  return OwningObject->getSymbolOffset(SymbolPimpl, Result);
+}
+
 inline error_code SymbolRef::getSize(uint64_t &Result) const {
   return OwningObject->getSymbolSize(SymbolPimpl, Result);
 }
@@ -284,6 +304,14 @@ inline error_code SymbolRef::getNMTypeChar(char &Result) const {
 
 inline error_code SymbolRef::isInternal(bool &Result) const {
   return OwningObject->isSymbolInternal(SymbolPimpl, Result);
+}
+
+inline error_code SymbolRef::isGlobal(bool &Result) const {
+  return OwningObject->isSymbolGlobal(SymbolPimpl, Result);
+}
+
+inline error_code SymbolRef::getSymbolType(SymbolRef::SymbolType &Result) const {
+  return OwningObject->getSymbolType(SymbolPimpl, Result);
 }
 
 
