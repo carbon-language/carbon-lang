@@ -95,8 +95,7 @@ void DWARFCompileUnit::dump(raw_ostream &OS) {
      << ")\n";
 
   extractDIEsIfNeeded(false);
-  for (unsigned i = 0, e = DieArray.size(); i != e; ++i)
-    DieArray[i].dump(OS, this, 10);
+  DieArray[0].dump(OS, this, -1U);
 }
 
 void DWARFCompileUnit::setDIERelations() {

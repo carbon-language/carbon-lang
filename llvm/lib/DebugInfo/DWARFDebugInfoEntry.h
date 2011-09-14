@@ -33,6 +33,9 @@ class DWARFDebugInfoEntryMinimal {
 
   const DWARFAbbreviationDeclaration *AbbrevDecl;
 public:
+  DWARFDebugInfoEntryMinimal()
+    : Offset(0), ParentIdx(0), SiblingIdx(0), AbbrevDecl(0) {}
+
   void dump(raw_ostream &OS, const DWARFCompileUnit *cu,
             unsigned recurseDepth, unsigned indent = 0) const;
   void dumpAttribute(raw_ostream &OS, const DWARFCompileUnit *cu,

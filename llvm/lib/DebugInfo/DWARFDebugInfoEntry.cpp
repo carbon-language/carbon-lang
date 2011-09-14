@@ -45,12 +45,10 @@ void DWARFDebugInfoEntryMinimal::dump(raw_ostream &OS,
 
         const DWARFDebugInfoEntryMinimal *child = getFirstChild();
         if (recurseDepth > 0 && child) {
-          indent += 2;
           while (child) {
-            child->dump(OS, cu, recurseDepth-1, indent);
+            child->dump(OS, cu, recurseDepth-1, indent+2);
             child = child->getSibling();
           }
-          indent -= 2;
         }
       } else {
         OS << "Abbreviation code not found in 'debug_abbrev' class for code: "
