@@ -1242,6 +1242,48 @@ _func:
 
 
 @------------------------------------------------------------------------------
+@ PLD(immediate)
+@------------------------------------------------------------------------------
+        pld [r5, #-4]
+        pld [r6, #32]
+        pld [r6, #33]
+        pld [r6, #257]
+        pld [r7, #257]
+
+@ CHECK: pld	[r5, #-4]               @ encoding: [0x15,0xf8,0x04,0xfc]
+@ CHECK: pld	[r6, #32]               @ encoding: [0x96,0xf8,0x20,0xf0]
+@ CHECK: pld	[r6, #33]               @ encoding: [0x96,0xf8,0x21,0xf0]
+@ CHECK: pld	[r6, #257]              @ encoding: [0x96,0xf8,0x01,0xf1]
+@ CHECK: pld	[r7, #257]              @ encoding: [0x97,0xf8,0x01,0xf1]
+
+
+@------------------------------------------------------------------------------
+@ PLD(literal)
+@------------------------------------------------------------------------------
+        pld  _foo
+
+@ CHECK: pld	_foo                    @ encoding: [0x9f'A',0xf8'A',A,0xf0'A']
+            @   fixup A - offset: 0, value: _foo, kind: fixup_t2_ldst_pcrel_12
+
+
+@------------------------------------------------------------------------------
+@ PLD(register)
+@------------------------------------------------------------------------------
+        pld [r8, r1]
+        pld [r5, r2]
+        pld [r0, r2, lsl #3]
+        pld [r8, r2, lsl #2]
+        pld [sp, r2, lsl #1]
+        pld [sp, r2, lsl #0]
+
+@ CHECK: pld	[r8, r1]                @ encoding: [0x18,0xf8,0x01,0xf0]
+@ CHECK: pld	[r5, r2]                @ encoding: [0x15,0xf8,0x02,0xf0]
+@ CHECK: pld	[r0, r2, lsl #3]        @ encoding: [0x10,0xf8,0x32,0xf0]
+@ CHECK: pld	[r8, r2, lsl #2]        @ encoding: [0x18,0xf8,0x22,0xf0]
+@ CHECK: pld	[sp, r2, lsl #1]        @ encoding: [0x1d,0xf8,0x12,0xf0]
+@ CHECK: pld	[sp, r2]                @ encoding: [0x1d,0xf8,0x02,0xf0]
+
+@------------------------------------------------------------------------------
 @ IT
 @------------------------------------------------------------------------------
 @ Test encodings of a few full IT blocks, not just the IT instruction
