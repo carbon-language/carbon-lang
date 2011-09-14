@@ -6348,7 +6348,9 @@ SDValue getMOVLP(SDValue &Op, DebugLoc &dl, SelectionDAG &DAG, bool HasSSE2) {
   // matching to x86 specific nodes. Note that for the 1st condition all
   // types are matched with movsd.
   if (HasSSE2) {
-    if (NumElems == 2)
+    // FIXME: isMOVLMask should be checked and matched before getMOVLP,
+    // as to remove this logic from here, as much as possible
+    if (NumElems == 2 || !X86::isMOVLMask(SVOp))
       return getTargetShuffleNode(X86ISD::MOVSD, dl, VT, V1, V2, DAG);
     return getTargetShuffleNode(X86ISD::MOVSS, dl, VT, V1, V2, DAG);
   }

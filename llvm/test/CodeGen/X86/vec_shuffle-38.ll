@@ -43,3 +43,17 @@ entry:
   %shuffle = shufflevector <4 x float> %vecin1, <4 x float> %vecin2, <4 x i32> <i32 0, i32 1, i32 4, i32 5>
   ret <4 x float> %shuffle
 }
+
+; rdar://10119696
+; CHECK: f
+define <4 x float> @f(<4 x float> %x, double* nocapture %y) nounwind uwtable readonly ssp {
+entry:
+  ; CHECK: movsd  (%
+  ; CHECK-NEXT: movsd  %xmm
+  %u110.i = load double* %y, align 1
+  %tmp8.i = insertelement <2 x double> undef, double %u110.i, i32 0
+  %tmp9.i = bitcast <2 x double> %tmp8.i to <4 x float>
+  %shuffle.i = shufflevector <4 x float> %x, <4 x float> %tmp9.i, <4 x i32> <i32 4, i32 5, i32 2, i32 3>
+  ret <4 x float> %shuffle.i
+}
+
