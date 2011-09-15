@@ -549,6 +549,7 @@ MachThread::NotifyException(MachException::Data& exc)
 {
     // Allow the arch specific protocol to process (MachException::Data &)exc
     // first before possible reassignment of m_stop_exception with exc.
+    // See also MachThread::GetStopException().
     bool handled = m_arch_ap->NotifyException(exc);
 
     if (m_stop_exception.IsValid())
