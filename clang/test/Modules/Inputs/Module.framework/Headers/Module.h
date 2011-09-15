@@ -6,5 +6,6 @@ const char *getModuleVersion(void);
 
 @interface Module
 +(const char *)version; // retrieve module version
++alloc;
 @end
 

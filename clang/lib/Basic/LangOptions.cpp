@@ -23,5 +23,8 @@ LangOptions::LangOptions() {
 void LangOptions::resetNonModularOptions() {
 #define LANGOPT(Name, Bits, Default, Description)
 #define BENIGN_LANGOPT(Name, Bits, Default, Description) Name = Default;
+#define BENIGN_ENUM_LANGOPT(Name, Type, Bits, Default, Description) \
+  Name = Default;
+#include "clang/Basic/LangOptions.def"
 }
 
