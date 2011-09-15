@@ -1363,6 +1363,31 @@ def : T1Pat<(sextloadi16 t_addrmode_rrs2:$addr),
 def : T1Pat<(sextloadi16 t_addrmode_is2:$addr),
             (tASRri (tLSLri (tLDRHi t_addrmode_is2:$addr), 16), 16)>;
 
+def : T1Pat<(atomic_load_8 t_addrmode_is1:$src),
+             (tLDRBi t_addrmode_is1:$src)>;
+def : T1Pat<(atomic_load_8 t_addrmode_rrs1:$src),
+             (tLDRBr t_addrmode_rrs1:$src)>;
+def : T1Pat<(atomic_load_16 t_addrmode_is2:$src),
+             (tLDRHi t_addrmode_is2:$src)>;
+def : T1Pat<(atomic_load_16 t_addrmode_rrs2:$src),
+             (tLDRHr t_addrmode_rrs2:$src)>;
+def : T1Pat<(atomic_load_32 t_addrmode_is4:$src),
+             (tLDRi t_addrmode_is4:$src)>;
+def : T1Pat<(atomic_load_32 t_addrmode_rrs4:$src),
+             (tLDRr t_addrmode_rrs4:$src)>;
+def : T1Pat<(atomic_store_8 t_addrmode_is1:$ptr, tGPR:$val),
+             (tSTRBi tGPR:$val, t_addrmode_is1:$ptr)>;
+def : T1Pat<(atomic_store_8 t_addrmode_rrs1:$ptr, tGPR:$val),
+             (tSTRBr tGPR:$val, t_addrmode_rrs1:$ptr)>;
+def : T1Pat<(atomic_store_16 t_addrmode_is2:$ptr, tGPR:$val),
+             (tSTRHi tGPR:$val, t_addrmode_is2:$ptr)>;
+def : T1Pat<(atomic_store_16 t_addrmode_rrs2:$ptr, tGPR:$val),
+             (tSTRHr tGPR:$val, t_addrmode_rrs2:$ptr)>;
+def : T1Pat<(atomic_store_32 t_addrmode_is4:$ptr, tGPR:$val),
+             (tSTRi tGPR:$val, t_addrmode_is4:$ptr)>;
+def : T1Pat<(atomic_store_32 t_addrmode_rrs4:$ptr, tGPR:$val),
+             (tSTRr tGPR:$val, t_addrmode_rrs4:$ptr)>;
+
 // Large immediate handling.
 
 // Two piece imms.

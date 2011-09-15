@@ -639,8 +639,10 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     setOperationAction(ISD::ATOMIC_LOAD_MAX, MVT::i32, Expand);
     setOperationAction(ISD::ATOMIC_LOAD_UMIN, MVT::i32, Expand);
     setOperationAction(ISD::ATOMIC_LOAD_UMAX, MVT::i32, Expand);
-    setOperationAction(ISD::ATOMIC_LOAD, MVT::i32, Expand);
-    setOperationAction(ISD::ATOMIC_STORE, MVT::i32, Expand);
+    // Mark ATOMIC_LOAD and ATOMIC_STORE custom so we can handle the
+    // Unordered/Monotonic case.
+    setOperationAction(ISD::ATOMIC_LOAD, MVT::i32, Custom);
+    setOperationAction(ISD::ATOMIC_STORE, MVT::i32, Custom);
     // Since the libcalls include locking, fold in the fences
     setShouldFoldAtomicFences(true);
   }
@@ -4861,6 +4863,18 @@ static SDValue LowerADDC_ADDE_SUBC_SUBE(SDValue Op, SelectionDAG &DAG) {
                      Op.getOperand(1), Op.getOperand(2));
 }
 
+static SDValue LowerAtomicLoadStore(SDValue Op, SelectionDAG &DAG,
+                                    const ARMSubtarget *ST) {
+  // Monotonic load/store is legal for all targets
+  if (cast<AtomicSDNode>(Op)->getOrdering() <= Monotonic)
+    return Op;
+
+  // Aquire/Release load/store is not legal for targets without a
+  // dmb or equivalent available.
+  return SDValue();
+}
+
+
 static void
 ReplaceATOMIC_OP_64(SDNode *Node, SmallVectorImpl<SDValue>& Results,
                     SelectionDAG &DAG, unsigned NewOp) {
@@ -4945,6 +4959,8 @@ SDValue ARMTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::ADDE:
   case ISD::SUBC:
   case ISD::SUBE:          return LowerADDC_ADDE_SUBC_SUBE(Op, DAG);
+  case ISD::ATOMIC_LOAD:
+  case ISD::ATOMIC_STORE:  return LowerAtomicLoadStore(Op, DAG, Subtarget);
   }
   return SDValue();
 }
