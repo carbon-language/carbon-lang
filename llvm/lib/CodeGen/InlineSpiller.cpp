@@ -1002,6 +1002,7 @@ bool InlineSpiller::coalesceStackAccess(MachineInstr *MI, unsigned Reg) {
 bool InlineSpiller::foldMemoryOperand(MachineBasicBlock::iterator MI,
                                       const SmallVectorImpl<unsigned> &Ops,
                                       MachineInstr *LoadMI) {
+  bool WasCopy = MI->isCopy();
   // TargetInstrInfo::foldMemoryOperand only expects explicit, non-tied
   // operands.
   SmallVector<unsigned, 8> FoldOps;
@@ -1031,7 +1032,12 @@ bool InlineSpiller::foldMemoryOperand(MachineBasicBlock::iterator MI,
     VRM.addSpillSlotUse(StackSlot, FoldMI);
   MI->eraseFromParent();
   DEBUG(dbgs() << "\tfolded: " << *FoldMI);
-  ++NumFolded;
+  if (!WasCopy)
+    ++NumFolded;
+  else if (Ops.front() == 0)
+    ++NumSpills;
+  else
+    ++NumReloads;
   return true;
 }
 
