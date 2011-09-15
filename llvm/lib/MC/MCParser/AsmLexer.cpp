@@ -375,8 +375,15 @@ AsmToken AsmLexer::LexToken() {
     return AsmToken(AsmToken::EndOfStatement,
                     StringRef(TokStart, strlen(MAI.getSeparatorString())));
   }
-  isAtStartOfLine = false;
 
+  // If we're missing a newline at EOF, make sure we still get an
+  // EndOfStatement token before the Eof token.
+  if (CurChar == EOF && !isAtStartOfLine) {
+    isAtStartOfLine = true;
+    return AsmToken(AsmToken::EndOfStatement, StringRef(TokStart, 1));
+  }
+
+  isAtStartOfLine = false;
   switch (CurChar) {
   default:
     // Handle identifier: [a-zA-Z_.][a-zA-Z0-9_$.@]*
