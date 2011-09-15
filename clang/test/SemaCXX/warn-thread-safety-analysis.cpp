@@ -662,6 +662,16 @@ void es_fun_8() {
   Bar.aa_elr_fun_s();
 }
 
+void es_fun_9() __attribute__((shared_locks_required(aa_mu)));
+void es_fun_9() {
+  Bar.aa_elr_fun_s();
+}
+
+void es_fun_10() __attribute__((exclusive_locks_required(aa_mu)));
+void es_fun_10() {
+  Bar.aa_elr_fun_s();
+}
+
 void es_bad_0() {
   Bar.aa_elr_fun(); // \
     // expected-warning {{calling function 'aa_elr_fun' requires exclusive lock on 'aa_mu'}}

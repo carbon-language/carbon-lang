@@ -119,6 +119,10 @@ public:
   iterator end() {
     return Blocks.rend();
   }
+
+  bool empty() {
+    return begin() == end();
+  }
 };
 
 /// \brief A MutexID object uniquely identifies a particular mutex, and
@@ -640,7 +644,7 @@ static Lockset intersectAndWarn(ThreadSafetyHandler &Handler,
 }
 
 /// \brief Returns the location of the first Stmt in a Block.
-static SourceLocation getFirstStmtLocation(CFGBlock *Block) {
+static SourceLocation getFirstStmtLocation(const CFGBlock *Block) {
   SourceLocation Loc;
   for (CFGBlock::const_iterator BI = Block->begin(), BE = Block->end();
        BI != BE; ++BI) {
@@ -649,11 +653,24 @@ static SourceLocation getFirstStmtLocation(CFGBlock *Block) {
       if (Loc.isValid()) return Loc;
     }
   }
-  if (Stmt *S = Block->getTerminator().getStmt()) {
+  if (const Stmt *S = Block->getTerminator().getStmt()) {
     Loc = S->getLocStart();
     if (Loc.isValid()) return Loc;
   }
   return Loc;
+}
+
+static Lockset addLock(ThreadSafetyHandler &Handler,
+                       Lockset::Factory &LocksetFactory,
+                       Lockset &LSet, Expr *LockExp, LockKind LK,
+                       SourceLocation Loc) {
+  MutexID Mutex(LockExp, 0);
+  if (!Mutex.isValid()) {
+    Handler.handleInvalidLockExp(LockExp->getExprLoc());
+    return LSet;
+  }
+  LockData NewLock(Loc, LK);
+  return LocksetFactory.add(LSet, Mutex, NewLock);
 }
 
 namespace clang {
@@ -683,6 +700,32 @@ void runThreadSafetyAnalysis(AnalysisContext &AC,
   // predecessor locksets when exploring a new block.
   TopologicallySortedCFG SortedGraph(CFGraph);
   CFGBlockSet VisitedBlocks(CFGraph);
+
+  if (!SortedGraph.empty() && D->hasAttrs()) {
+    const CFGBlock *FirstBlock = *SortedGraph.begin();
+    Lockset &InitialLockset = EntryLocksets[FirstBlock->getBlockID()];
+    const AttrVec &ArgAttrs = D->getAttrs();
+    for(unsigned i = 0; i < ArgAttrs.size(); ++i) {
+      Attr *Attr = ArgAttrs[i];
+      if (SharedLocksRequiredAttr *SLRAttr
+            = dyn_cast<SharedLocksRequiredAttr>(Attr)) {
+        for (SharedLocksRequiredAttr::args_iterator
+            SLRIter = SLRAttr->args_begin(),
+            SLREnd = SLRAttr->args_end(); SLRIter != SLREnd; ++SLRIter)
+          InitialLockset = addLock(Handler, LocksetFactory, InitialLockset,
+                                   *SLRIter, LK_Shared,
+                                   getFirstStmtLocation(FirstBlock));
+      } else if (ExclusiveLocksRequiredAttr *ELRAttr
+                   = dyn_cast<ExclusiveLocksRequiredAttr>(Attr)) {
+        for (ExclusiveLocksRequiredAttr::args_iterator
+            ELRIter = ELRAttr->args_begin(),
+            ELREnd = ELRAttr->args_end(); ELRIter != ELREnd; ++ELRIter)
+          InitialLockset = addLock(Handler, LocksetFactory, InitialLockset,
+                                   *ELRIter, LK_Exclusive,
+                                   getFirstStmtLocation(FirstBlock));
+      }
+    }
+  }
 
   for (TopologicallySortedCFG::iterator I = SortedGraph.begin(),
        E = SortedGraph.end(); I!= E; ++I) {
