@@ -82,6 +82,9 @@ const char *llvm::dwarf::TagString(unsigned Tag) {
   case DW_TAG_arg_variable:              return "DW_TAG_arg_variable";
   case DW_TAG_return_variable:           return "DW_TAG_return_variable";
   case DW_TAG_vector_type:               return "DW_TAG_vector_type";
+  case DW_TAG_rvalue_reference_type:     return "DW_TAG_rvalue_reference_type";
+  case DW_TAG_template_alias:            return "DW_TAG_template_alias";
+  case DW_TAG_type_unit:                 return "DW_TAG_type_unit";
   }
   return 0;
 }
@@ -186,6 +189,12 @@ const char *llvm::dwarf::AttributeString(unsigned Attribute) {
   case DW_AT_elemental:                  return "DW_AT_elemental";
   case DW_AT_pure:                       return "DW_AT_pure";
   case DW_AT_recursive:                  return "DW_AT_recursive";
+  case DW_AT_signature:                  return "DW_AT_signature";
+  case DW_AT_main_subprogram:            return "DW_AT_main_subprogram";
+  case DW_AT_data_bit_offset:            return "DW_AT_data_bit_offset";
+  case DW_AT_const_expr:                 return "DW_AT_const_expr";
+  case DW_AT_enum_class:                 return "DW_AT_enum_class";
+  case DW_AT_linkage_name:               return "DW_AT_linkage_name";
   case DW_AT_MIPS_linkage_name:          return "DW_AT_MIPS_linkage_name";
   case DW_AT_sf_names:                   return "DW_AT_sf_names";
   case DW_AT_src_info:                   return "DW_AT_src_info";
@@ -237,6 +246,10 @@ const char *llvm::dwarf::FormEncodingString(unsigned Encoding) {
   case DW_FORM_ref8:                     return "DW_FORM_ref8";
   case DW_FORM_ref_udata:                return "DW_FORM_ref_udata";
   case DW_FORM_indirect:                 return "DW_FORM_indirect";
+  case DW_FORM_sec_offset:               return "DW_FORM_sec_offset";
+  case DW_FORM_exprloc:                  return "DW_FORM_exprloc";
+  case DW_FORM_flag_present:             return "DW_FORM_flag_present";
+  case DW_FORM_ref_sig8:                 return "DW_FORM_ref_sig8";
   }
   return 0;
 }
@@ -397,6 +410,8 @@ const char *llvm::dwarf::OperationEncodingString(unsigned Encoding) {
   case DW_OP_form_tls_address:           return "DW_OP_form_tls_address";
   case DW_OP_call_frame_cfa:             return "DW_OP_call_frame_cfa";
   case DW_OP_bit_piece:                  return "DW_OP_bit_piece";
+  case DW_OP_implicit_value:             return "DW_OP_implicit_value";
+  case DW_OP_stack_value:                return "DW_OP_stack_value";
   case DW_OP_lo_user:                    return "DW_OP_lo_user";
   case DW_OP_hi_user:                    return "DW_OP_hi_user";
   }
@@ -603,6 +618,7 @@ const char *llvm::dwarf::LNExtendedString(unsigned Encoding) {
   case DW_LNE_end_sequence:              return "DW_LNE_end_sequence";
   case DW_LNE_set_address:               return "DW_LNE_set_address";
   case DW_LNE_define_file:               return "DW_LNE_define_file";
+  case DW_LNE_set_discriminator:         return "DW_LNE_set_discriminator";
   case DW_LNE_lo_user:                   return "DW_LNE_lo_user";
   case DW_LNE_hi_user:                   return "DW_LNE_hi_user";
   }

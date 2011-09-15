@@ -119,7 +119,9 @@ enum dwarf_constants {
   DW_TAG_imported_unit = 0x3d,
   DW_TAG_condition = 0x3f,
   DW_TAG_shared_type = 0x40,
-  DW_TAG_rvalue_reference_type = 0x41,
+  DW_TAG_type_unit = 0x41,
+  DW_TAG_rvalue_reference_type = 0x42,
+  DW_TAG_template_alias = 0x43,
   DW_TAG_lo_user = 0x4080,
   DW_TAG_hi_user = 0xffff,
 
@@ -214,6 +216,12 @@ enum dwarf_constants {
   DW_AT_elemental = 0x66,
   DW_AT_pure = 0x67,
   DW_AT_recursive = 0x68,
+  DW_AT_signature = 0x69,
+  DW_AT_main_subprogram = 0x6a,
+  DW_AT_data_bit_offset = 0x6b,
+  DW_AT_const_expr = 0x6c,
+  DW_AT_enum_class = 0x6d,
+  DW_AT_linkage_name = 0x6e,
   DW_AT_MIPS_linkage_name = 0x2007,
   DW_AT_sf_names   = 0x2101,
   DW_AT_src_info = 0x2102,
@@ -261,6 +269,10 @@ enum dwarf_constants {
   DW_FORM_ref8 = 0x14,
   DW_FORM_ref_udata = 0x15,
   DW_FORM_indirect = 0x16,
+  DW_FORM_sec_offset = 0x17,
+  DW_FORM_exprloc = 0x18,
+  DW_FORM_flag_present = 0x19,
+  DW_FORM_ref_sig8 = 0x20,
 
   // Operation encodings
   DW_OP_addr = 0x03,
@@ -415,6 +427,8 @@ enum dwarf_constants {
   DW_OP_form_tls_address = 0x9b,
   DW_OP_call_frame_cfa = 0x9c,
   DW_OP_bit_piece = 0x9d,
+  DW_OP_implicit_value = 0x9e,
+  DW_OP_stack_value = 0x9f,
   DW_OP_lo_user = 0xe0,
   DW_OP_hi_user = 0xff,
 
@@ -487,6 +501,7 @@ enum dwarf_constants {
   DW_LANG_ObjC_plus_plus = 0x0011,
   DW_LANG_UPC = 0x0012,
   DW_LANG_D = 0x0013,
+  DW_LANG_Python = 0x0014,
   DW_LANG_lo_user = 0x8000,
   DW_LANG_hi_user = 0xffff,
 
@@ -536,6 +551,7 @@ enum dwarf_constants {
   DW_LNE_end_sequence = 0x01,
   DW_LNE_set_address = 0x02,
   DW_LNE_define_file = 0x03,
+  DW_LNE_set_discriminator = 0x04,
   DW_LNE_lo_user = 0x80,
   DW_LNE_hi_user = 0xff,
 
