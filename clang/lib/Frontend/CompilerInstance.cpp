@@ -658,10 +658,18 @@ static void compileModule(CompilerInstance &ImportingInstance,
   // Construct a compiler invocation for creating this module.
   llvm::IntrusiveRefCntPtr<CompilerInvocation> Invocation
     (new CompilerInvocation(ImportingInstance.getInvocation()));
+  
+  // For any options that aren't intended to affect how a module is built,
+  // reset them to their default values.
   Invocation->getLangOpts().resetNonModularOptions();
   Invocation->getPreprocessorOpts().resetNonModularOptions();
+  
+  // Note that this module is part of the module build path, so that we 
+  // can detect cycles in the module graph.
   Invocation->getPreprocessorOpts().ModuleBuildPath.push_back(ModuleName);
   
+  // Set up the inputs/outputs so that we build the module from its umbrella
+  // header.
   FrontendOptions &FrontendOpts = Invocation->getFrontendOpts();
   FrontendOpts.OutputFile = ModuleFileName.str();
   FrontendOpts.DisableFree = false;
