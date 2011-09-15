@@ -2167,25 +2167,6 @@ Process::AttachCompletionHandler::PerformAction (lldb::EventSP &event_sp)
             // lldb_private::Process subclasses must set the process must set
             // the new process ID.
             assert (m_process->GetID() != LLDB_INVALID_PROCESS_ID);
-            // We just attached, if we haven't gotten a valid architecture at this point we should do so now.
-            Target &target = m_process->GetTarget();
-            if (!target.GetArchitecture().IsValid())
-            {
-                // FIXME: We shouldn't be getting the Selected Platform, there should
-                // be a platform for the target, and we should get that.
-                PlatformSP platform_sp (target.GetDebugger().GetPlatformList().GetSelectedPlatform ());
-                if (platform_sp)
-                {
-                    ProcessInstanceInfo process_info;
-                    platform_sp->GetProcessInfo (m_process->GetID(), process_info);
-                    const ArchSpec &process_arch = process_info.GetArchitecture();
-                    if (process_arch.IsValid())
-                    {
-                        // Set the architecture on the target.
-                        target.SetArchitecture (process_arch);
-                    }
-                }
-            }
             m_process->CompleteAttach ();
             return eEventActionSuccess;
         }
@@ -2219,21 +2200,6 @@ Process::Attach (lldb::pid_t attach_pid)
 
     m_abi_sp.reset();
     m_process_input_reader.reset();
-
-    // Find the process and its architecture.  Make sure it matches the architecture
-    // of the current Target, and if not adjust it.
-    
-    ProcessInstanceInfo process_info;
-    PlatformSP platform_sp (m_target.GetDebugger().GetPlatformList().GetSelectedPlatform ());
-    if (platform_sp)
-    {
-        if (platform_sp->GetProcessInfo (attach_pid, process_info))
-        {
-            const ArchSpec &process_arch = process_info.GetArchitecture();
-            if (process_arch.IsValid())
-                GetTarget().SetArchitecture(process_arch);
-        }
-    }
 
     m_dyld_ap.reset();
     m_os_ap.reset();
@@ -2278,7 +2244,9 @@ Process::Attach (const char *process_name, bool wait_for_launch)
     if (!wait_for_launch)
     {
         ProcessInstanceInfoList process_infos;
-        PlatformSP platform_sp (m_target.GetDebugger().GetPlatformList().GetSelectedPlatform ());
+        PlatformSP platform_sp (m_target.GetPlatform ());
+        assert (platform_sp.get());
+        
         if (platform_sp)
         {
             ProcessInstanceInfoMatch match_info;
@@ -2292,19 +2260,6 @@ Process::Attach (const char *process_name, bool wait_for_launch)
             else if (process_infos.GetSize() == 0)
             {
                 error.SetErrorStringWithFormat ("Could not find a process named %s\n", process_name);
-            }
-            else 
-            {
-                ProcessInstanceInfo process_info;
-                if (process_infos.GetInfoAtIndex (0, process_info))
-                {
-                    const ArchSpec &process_arch = process_info.GetArchitecture();
-                    if (process_arch.IsValid() && process_arch != GetTarget().GetArchitecture())
-                    {
-                        // Set the architecture on the target.
-                        GetTarget().SetArchitecture (process_arch);
-                    }
-                }
             }
         }
         else
@@ -2352,7 +2307,20 @@ Process::CompleteAttach ()
     // before we go looking for a dynamic loader plug-in.
     DidAttach();
 
-    // We have complete the attach, now it is time to find the dynamic loader
+    // We just attached.  If we have a platform, ask it for the process architecture, and if it isn't
+    // the same as the one we've already set, switch architectures.
+    PlatformSP platform_sp (m_target.GetPlatform ());
+    assert (platform_sp.get());
+    if (platform_sp)
+    {
+        ProcessInstanceInfo process_info;
+        platform_sp->GetProcessInfo (GetID(), process_info);
+        const ArchSpec &process_arch = process_info.GetArchitecture();
+        if (process_arch.IsValid() && m_target.GetArchitecture() != process_arch)
+            m_target.SetArchitecture (process_arch);
+    }
+
+    // We have completed the attach, now it is time to find the dynamic loader
     // plug-in
     m_dyld_ap.reset (DynamicLoader::FindPlugin(this, NULL));
     if (m_dyld_ap.get())
