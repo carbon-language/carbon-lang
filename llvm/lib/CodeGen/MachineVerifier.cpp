@@ -1166,18 +1166,8 @@ void MachineVerifier::verifyLiveIntervals() {
           SlotIndex PEnd = LiveInts->getMBBEndIdx(*PI).getPrevSlot();
           const VNInfo *PVNI = LI.getVNInfoAt(PEnd);
 
-          if (VNI->isPHIDef() && VNI->def == LiveInts->getMBBStartIdx(MFI)) {
-            if (PVNI && !PVNI->hasPHIKill()) {
-              report("Value live out of predecessor doesn't have PHIKill", MF);
-              *OS << "Valno #" << PVNI->id << " live out of BB#"
-                  << (*PI)->getNumber() << '@' << PEnd
-                  << " doesn't have PHIKill, but Valno #" << VNI->id
-                  << " is PHIDef and defined at the beginning of BB#"
-                  << MFI->getNumber() << '@' << LiveInts->getMBBStartIdx(MFI)
-                  << " in " << LI << '\n';
-            }
+          if (VNI->isPHIDef() && VNI->def == LiveInts->getMBBStartIdx(MFI))
             continue;
-          }
 
           if (!PVNI) {
             report("Register not marked live out of predecessor", *PI);

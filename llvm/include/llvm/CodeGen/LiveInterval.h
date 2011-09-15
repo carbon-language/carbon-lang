@@ -100,6 +100,7 @@ namespace llvm {
     bool isDefByCopy() const { return copy != 0; }
 
     /// Returns true if one or more kills are PHI nodes.
+    /// Obsolete, do not use!
     bool hasPHIKill() const { return flags & HAS_PHI_KILL; }
     /// Set the PHI kill flag on this value.
     void setHasPHIKill(bool hasKill) {
