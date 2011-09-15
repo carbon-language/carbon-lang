@@ -1579,6 +1579,24 @@ _func:
 
 
 @------------------------------------------------------------------------------
+@ SASX
+@------------------------------------------------------------------------------
+        saddsubx r9, r2, r7
+        it ne
+        saddsubxne r2, r5, r6
+        sasx r9, r2, r7
+        it ne
+        sasxne r2, r5, r6
+
+@ CHECK: sasx	r9, r2, r7              @ encoding: [0xa2,0xfa,0x07,0xf9]
+@ CHECK: it	ne                      @ encoding: [0x18,0xbf]
+@ CHECK: sasxne	r2, r5, r6              @ encoding: [0xa5,0xfa,0x06,0xf2]
+@ CHECK: sasx	r9, r2, r7              @ encoding: [0xa2,0xfa,0x07,0xf9]
+@ CHECK: it	ne                      @ encoding: [0x18,0xbf]
+@ CHECK: sasxne	r2, r5, r6              @ encoding: [0xa5,0xfa,0x06,0xf2]
+
+
+@------------------------------------------------------------------------------
 @ SUB (register)
 @------------------------------------------------------------------------------
         sub.w r5, r2, r12, rrx

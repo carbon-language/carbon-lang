@@ -4944,6 +4944,8 @@ def : MnemonicAlias<"srs", "srsia">;
 
 // QSAX == QSUBADDX
 def : MnemonicAlias<"qsubaddx", "qsax">;
+// SASX == SADDSUBX
+def : MnemonicAlias<"saddsubx", "sasx">;
 
 // LDRSBT/LDRHT/LDRSHT post-index offset if optional.
 // Note that the write-back output register is a dummy operand for MC (it's
