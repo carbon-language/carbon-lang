@@ -1,8 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -Wthread-safety %s
 
-#include <map> // for test 50
-#include <string> // for test 58
-
 #define LOCKABLE            __attribute__ ((lockable))
 #define SCOPED_LOCKABLE     __attribute__ ((scoped_lockable))
 #define GUARDED_BY(x)       __attribute__ ((guarded_by(x)))
