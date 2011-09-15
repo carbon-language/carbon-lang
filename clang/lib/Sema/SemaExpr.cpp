@@ -7691,9 +7691,7 @@ static void checkArithmeticNull(Sema &S, ExprResult &LHS, ExprResult &RHS,
   bool LHSNull = isa<GNUNullExpr>(LHS.get()->IgnoreParenImpCasts());
   bool RHSNull = isa<GNUNullExpr>(RHS.get()->IgnoreParenImpCasts());
 
-  QualType LHSType = LHS.get()->getType();
-  QualType RHSType = RHS.get()->getType();
-  QualType NonNullType = LHSNull ? RHSType : LHSType; 
+  QualType NonNullType = LHSNull ? RHS.get()->getType() : LHS.get()->getType(); 
 
   // Avoid analyzing cases where the result will either be invalid (and
   // diagnosed as such) or entirely valid and not something to warn about.
