@@ -176,6 +176,8 @@ STOPPED_DUE_TO_SIGNAL = "Process state is stopped due to signal"
 
 STOPPED_DUE_TO_STEP_IN = "Process state is stopped due to step in"
 
+STOPPED_DUE_TO_WATCHPOINT = "Process should be stopped due to watchpoint"
+
 DATA_TYPES_DISPLAYED_CORRECTLY = "Data type(s) displayed correctly"
 
 VALID_BREAKPOINT = "Got a valid breakpoint"
@@ -198,6 +200,7 @@ VALID_VARIABLE = "Got a valid variable"
 
 VARIABLES_DISPLAYED_CORRECTLY = "Variable(s) displayed correctly"
 
+WATCHPOINT_CREATED = "Watchpoint created successfully"
 
 def CMD_MSG(str):
     '''A generic "Command '%s' returns successfully" message generator.'''
