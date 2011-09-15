@@ -11,6 +11,7 @@
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
+#include <algorithm>
 using namespace llvm;
 using namespace dwarf;
 
