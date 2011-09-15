@@ -411,6 +411,14 @@ namespace llvm {
       return I == end() ? 0 : I->valno;
     }
 
+    /// getVNInfoBefore - Return the VNInfo that is live up to but not
+    /// necessarilly including Idx, or NULL. Use this to find the reaching def
+    /// used by an instruction at this SlotIndex position.
+    VNInfo *getVNInfoBefore(SlotIndex Idx) const {
+      const_iterator I = FindLiveRangeContaining(Idx.getPrevIndex());
+      return I == end() ? 0 : I->valno;
+    }
+
     /// FindLiveRangeContaining - Return an iterator to the live range that
     /// contains the specified index, or end() if there is none.
     iterator FindLiveRangeContaining(SlotIndex Idx) {

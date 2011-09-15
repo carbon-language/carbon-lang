@@ -692,7 +692,7 @@ bool RegisterCoalescer::RemoveCopyByCommutingDef(const CoalescerPair &CP,
 
   // If some of the uses of IntA.reg is already coalesced away, return false.
   // It's not possible to determine whether it's safe to perform the coalescing.
-  for (MachineRegisterInfo::use_nodbg_iterator UI = 
+  for (MachineRegisterInfo::use_nodbg_iterator UI =
          MRI->use_nodbg_begin(IntA.reg),
        UE = MRI->use_nodbg_end(); UI != UE; ++UI) {
     MachineInstr *UseMI = &*UI;
@@ -1370,6 +1370,7 @@ static unsigned ComputeUltimateVN(VNInfo *VNI,
 // which allows us to coalesce A and B.
 // VNI is the definition of B. LR is the life range of A that includes
 // the slot just before B. If we return true, we add "B = X" to DupCopies.
+// This implies that A dominates B.
 static bool RegistersDefinedFromSameValue(LiveIntervals &li,
                                           const TargetRegisterInfo &tri,
                                           CoalescerPair &CP,
@@ -1421,7 +1422,9 @@ static bool RegistersDefinedFromSameValue(LiveIntervals &li,
   // If the copies use two different value numbers of X, we cannot merge
   // A and B.
   LiveInterval &SrcInt = li.getInterval(Src);
-  if (SrcInt.getVNInfoAt(Other->def) != SrcInt.getVNInfoAt(VNI->def))
+  // getVNInfoBefore returns NULL for undef copies. In this case, the
+  // optimization is still safe.
+  if (SrcInt.getVNInfoBefore(Other->def) != SrcInt.getVNInfoBefore(VNI->def))
     return false;
 
   DupCopies.push_back(MI);
