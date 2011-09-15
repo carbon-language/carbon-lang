@@ -1597,6 +1597,52 @@ _func:
 
 
 @------------------------------------------------------------------------------
+@ SBC (immediate)
+@------------------------------------------------------------------------------
+        sbc r0, r1, #4
+        sbcs r0, r1, #0
+        sbc r1, r2, #255
+        sbc r3, r7, #0x00550055
+        sbc r8, r12, #0xaa00aa00
+        sbc r9, r7, #0xa5a5a5a5
+        sbc r5, r3, #0x87000000
+        sbc r4, r2, #0x7f800000
+        sbc r4, r2, #0x00000680
+
+@ CHECK: sbc	r0, r1, #4              @ encoding: [0x61,0xf1,0x04,0x00]
+@ CHECK: sbcs	r0, r1, #0              @ encoding: [0x71,0xf1,0x00,0x00]
+@ CHECK: sbc	r1, r2, #255            @ encoding: [0x62,0xf1,0xff,0x01]
+@ CHECK: sbc	r3, r7, #5570645        @ encoding: [0x67,0xf1,0x55,0x13]
+@ CHECK: sbc	r8, r12, #2852170240    @ encoding: [0x6c,0xf1,0xaa,0x28]
+@ CHECK: sbc	r9, r7, #2779096485     @ encoding: [0x67,0xf1,0xa5,0x39]
+@ CHECK: sbc	r5, r3, #2264924160     @ encoding: [0x63,0xf1,0x07,0x45]
+@ CHECK: sbc	r4, r2, #2139095040     @ encoding: [0x62,0xf1,0xff,0x44]
+@ CHECK: sbc	r4, r2, #1664           @ encoding: [0x62,0xf5,0xd0,0x64]
+
+
+@------------------------------------------------------------------------------
+@ SBC (register)
+@------------------------------------------------------------------------------
+        sbc r4, r5, r6
+        sbcs r4, r5, r6
+        sbc.w r9, r1, r3
+        sbcs.w r9, r1, r3
+        sbc	r0, r1, r3, ror #4
+        sbcs	r0, r1, r3, lsl #7
+        sbc.w	r0, r1, r3, lsr #31
+        sbcs.w	r0, r1, r3, asr #32
+
+@ CHECK: sbc.w	r4, r5, r6              @ encoding: [0x65,0xeb,0x06,0x04]
+@ CHECK: sbcs.w	r4, r5, r6              @ encoding: [0x75,0xeb,0x06,0x04]
+@ CHECK: sbc.w	r9, r1, r3              @ encoding: [0x61,0xeb,0x03,0x09]
+@ CHECK: sbcs.w	r9, r1, r3              @ encoding: [0x71,0xeb,0x03,0x09]
+@ CHECK: sbc.w	r0, r1, r3, ror #4      @ encoding: [0x61,0xeb,0x33,0x10]
+@ CHECK: sbcs.w	r0, r1, r3, lsl #7      @ encoding: [0x71,0xeb,0xc3,0x10]
+@ CHECK: sbc.w	r0, r1, r3, lsr #31     @ encoding: [0x61,0xeb,0xd3,0x70]
+@ CHECK: sbcs.w	r0, r1, r3, asr #32     @ encoding: [0x71,0xeb,0x23,0x00]
+
+
+@------------------------------------------------------------------------------
 @ SUB (register)
 @------------------------------------------------------------------------------
         sub.w r5, r2, r12, rrx
