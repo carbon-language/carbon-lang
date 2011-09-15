@@ -130,16 +130,19 @@ bool X86TargetMachine::addPostRegAlloc(PassManagerBase &PM,
 
 bool X86TargetMachine::addPreEmitPass(PassManagerBase &PM,
                                       CodeGenOpt::Level OptLevel) {
-  if (OptLevel != CodeGenOpt::None && Subtarget.hasSSE2()) {
+  bool ShouldPrint = false;
+  if (OptLevel != CodeGenOpt::None &&
+      (Subtarget.hasSSE2() || Subtarget.hasAVX())) {
     PM.add(createSSEDomainFixPass());
-    return true;
+    ShouldPrint = true;
   }
 
   if (Subtarget.hasAVX() && UseVZeroUpper) {
     PM.add(createX86IssueVZeroUpperPass());
-    return true;
+    ShouldPrint = true;
   }
-  return false;
+
+  return ShouldPrint;
 }
 
 bool X86TargetMachine::addCodeEmitter(PassManagerBase &PM,
