@@ -1526,6 +1526,33 @@ _func:
 @ CHECK: rrxlt	r9, r12                 @ encoding: [0x4f,0xea,0x3c,0x09]
 @ CHECK: rrxsge	r8, r3                  @ encoding: [0x5f,0xea,0x33,0x08]
 
+@------------------------------------------------------------------------------
+@ RSB (immediate)
+@------------------------------------------------------------------------------
+        rsb r2, r5, #0xff000
+        rsbs r3, r12, #0xf
+        rsb r1, #0xff
+        rsb r1, r1, #0xff
+
+@ CHECK: rsb.w	r2, r5, #1044480        @ encoding: [0xc5,0xf5,0x7f,0x22]
+@ CHECK: rsbs.w	r3, r12, #15            @ encoding: [0xdc,0xf1,0x0f,0x03]
+@ CHECK: rsb.w	r1, r1, #255            @ encoding: [0xc1,0xf1,0xff,0x01]
+@ CHECK: rsb.w	r1, r1, #255            @ encoding: [0xc1,0xf1,0xff,0x01]
+
+
+@------------------------------------------------------------------------------
+@ RSB (register)
+@------------------------------------------------------------------------------
+        rsb r4, r8
+        rsb r4, r9, r8
+        rsb r1, r4, r8, asr #3
+        rsbs r2, r1, r7, lsl #1
+
+@ CHECK: rsb	r4, r4, r8              @ encoding: [0xc4,0xeb,0x08,0x04]
+@ CHECK: rsb	r4, r9, r8              @ encoding: [0xc9,0xeb,0x08,0x04]
+@ CHECK: rsb	r1, r4, r8, asr #3      @ encoding: [0xc4,0xeb,0xe8,0x01]
+@ CHECK: rsbs	r2, r1, r7, lsl #1      @ encoding: [0xd1,0xeb,0x47,0x02]
+
 
 @------------------------------------------------------------------------------
 @ SUB (register)

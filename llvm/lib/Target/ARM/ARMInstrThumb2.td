@@ -3845,3 +3845,16 @@ def : t2InstAlias<"pop${p} $regs", (t2LDMIA_UPD SP, pred:$p, reglist:$regs)>;
 def : t2InstAlias<"rev${p} $Rd, $Rm", (t2REV rGPR:$Rd, rGPR:$Rm, pred:$p)>;
 def : t2InstAlias<"rev16${p} $Rd, $Rm", (t2REV16 rGPR:$Rd, rGPR:$Rm, pred:$p)>;
 def : t2InstAlias<"revsh${p} $Rd, $Rm", (t2REVSH rGPR:$Rd, rGPR:$Rm, pred:$p)>;
+
+
+// Alias for RSB without the ".w" optional width specifier, and with optional
+// implied destination register.
+def : t2InstAlias<"rsb${s}${p} $Rd, $Rn, $imm",
+           (t2RSBri rGPR:$Rd, rGPR:$Rn, t2_so_imm:$imm, pred:$p, cc_out:$s)>;
+def : t2InstAlias<"rsb${s}${p} $Rdn, $imm",
+           (t2RSBri rGPR:$Rdn, rGPR:$Rdn, t2_so_imm:$imm, pred:$p, cc_out:$s)>;
+def : t2InstAlias<"rsb${s}${p} $Rdn, $Rm",
+           (t2RSBrr rGPR:$Rdn, rGPR:$Rdn, rGPR:$Rm, pred:$p, cc_out:$s)>;
+def : t2InstAlias<"rsb${s}${p} $Rdn, $ShiftedRm",
+           (t2RSBrs rGPR:$Rdn, rGPR:$Rdn, t2_so_reg:$ShiftedRm, pred:$p,
+                    cc_out:$s)>;
