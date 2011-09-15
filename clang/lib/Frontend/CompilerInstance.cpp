@@ -660,6 +660,7 @@ static void compileModule(CompilerInstance &ImportingInstance,
     (new CompilerInvocation(ImportingInstance.getInvocation()));
   Invocation->getLangOpts().resetNonModularOptions();
   Invocation->getPreprocessorOpts().resetNonModularOptions();
+  Invocation->getPreprocessorOpts().ModuleBuildPath.push_back(ModuleName);
   
   FrontendOptions &FrontendOpts = Invocation->getFrontendOpts();
   FrontendOpts.OutputFile = ModuleFileName.str();
@@ -670,6 +671,7 @@ static void compileModule(CompilerInstance &ImportingInstance,
                                                  UmbrellaHeader));
   
   Invocation->getDiagnosticOpts().VerifyDiagnostics = 0;
+  
   
   assert(ImportingInstance.getInvocation().getModuleHash() ==
            Invocation->getModuleHash() && "Module hash mismatch!");
@@ -691,6 +693,7 @@ static void compileModule(CompilerInstance &ImportingInstance,
   
   // Tell the diagnostic client that it's (re-)starting to process a source
   // file.
+  // FIXME: This is a hack. We probably want to clone the diagnostic client.
   ImportingInstance.getDiagnosticClient()
     .BeginSourceFile(ImportingInstance.getLangOpts(),
                      &ImportingInstance.getPreprocessor());
@@ -720,6 +723,26 @@ ModuleKey CompilerInstance::loadModule(SourceLocation ImportLoc,
     // We didn't find the module, but there is an umbrella header that
     // can be used to create the module file. Create a separate compilation
     // module to do so.
+    
+    // Check whether there is a cycle in the module graph.
+    SmallVectorImpl<std::string> &ModuleBuildPath
+      = getPreprocessorOpts().ModuleBuildPath;
+    SmallVectorImpl<std::string>::iterator Pos 
+      = std::find(ModuleBuildPath.begin(), ModuleBuildPath.end(),
+                  ModuleName.getName());
+    if (Pos != ModuleBuildPath.end()) {
+      llvm::SmallString<256> CyclePath;
+      for (; Pos != ModuleBuildPath.end(); ++Pos) {
+        CyclePath += *Pos;
+        CyclePath += " -> ";
+      }
+      CyclePath += ModuleName.getName();
+      
+      getDiagnostics().Report(ModuleNameLoc, diag::err_module_cycle)
+        << ModuleName.getName() << CyclePath;
+      return 0;
+    }
+    
     BuildingModule = true;
     compileModule(*this, ModuleName.getName(), ModuleFileName, UmbrellaHeader);
     ModuleFile = PP->getHeaderSearchInfo().lookupModule(ModuleName.getName());

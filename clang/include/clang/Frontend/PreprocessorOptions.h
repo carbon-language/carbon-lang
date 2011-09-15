@@ -117,6 +117,14 @@ public:
   /// by providing appropriate definitions to retrofit the standard library
   /// with support for lifetime-qualified pointers.
   ObjCXXARCStandardLibraryKind ObjCXXARCStandardLibrary;
+    
+  /// \brief The path of modules being build, which is used to detect
+  /// cycles in the module dependency graph as modules are being built.
+  ///
+  /// There is no way to set this value from the command line. If we ever need
+  /// to do so (e.g., if on-demand module construction moves out-of-process),
+  /// we can add a cc1-level option to do so.
+  SmallVector<std::string, 2> ModuleBuildPath;
   
   typedef std::vector<std::pair<std::string, std::string> >::iterator
     remapped_file_iterator;

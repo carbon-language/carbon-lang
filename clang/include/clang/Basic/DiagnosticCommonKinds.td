@@ -61,7 +61,9 @@ def err_deleted_non_function : Error<
   "only functions can have deleted definitions">;
 def err_module_not_found : Error<"module '%0' not found">, DefaultFatal;
 def err_module_not_built : Error<"could not build module '%0'">, DefaultFatal;
-  
+def err_module_cycle : Error<"cyclic dependency in module '%0': %1">, 
+  DefaultFatal;
+
 // Sema && Lex
 def ext_longlong : Extension<
   "'long long' is an extension when C99 mode is not enabled">,
