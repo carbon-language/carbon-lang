@@ -6,7 +6,7 @@
 
 define void @zero128() nounwind ssp {
 entry:
-  ; CHECK: vxorps
+  ; CHECK: vpxor
   ; CHECK: vmovaps
   store <4 x float> zeroinitializer, <4 x float>* @z, align 16
   ret void
