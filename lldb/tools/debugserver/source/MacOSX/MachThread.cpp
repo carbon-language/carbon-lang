@@ -547,6 +547,10 @@ MachThread::ThreadDidStop()
 bool
 MachThread::NotifyException(MachException::Data& exc)
 {
+    // Allow the arch specific protocol to process (MachException::Data &)exc
+    // first before possible reassignment of m_stop_exception with exc.
+    bool handled = m_arch_ap->NotifyException(exc);
+
     if (m_stop_exception.IsValid())
     {
         // We may have more than one exception for a thread, but we need to
@@ -560,32 +564,7 @@ MachThread::NotifyException(MachException::Data& exc)
     {
         m_stop_exception = exc;
     }
-    bool handled = m_arch_ap->NotifyException(exc);
-    if (!handled)
-    {
-        handled = true;
-//        switch (exc.exc_type)
-//        {
-//        case EXC_BAD_ACCESS:
-//            break;
-//        case EXC_BAD_INSTRUCTION:
-//            break;
-//        case EXC_ARITHMETIC:
-//            break;
-//        case EXC_EMULATION:
-//            break;
-//        case EXC_SOFTWARE:
-//            break;
-//        case EXC_BREAKPOINT:
-//            break;
-//        case EXC_SYSCALL:
-//            break;
-//        case EXC_MACH_SYSCALL:
-//            break;
-//        case EXC_RPC_ALERT:
-//            break;
-//        }
-    }
+
     return handled;
 }
 
