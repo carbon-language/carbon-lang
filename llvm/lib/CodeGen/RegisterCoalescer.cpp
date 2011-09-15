@@ -805,9 +805,7 @@ bool RegisterCoalescer::ReMaterializeTrivialDef(LiveInterval &SrcInt,
   LiveInterval::iterator SrcLR = SrcInt.FindLiveRangeContaining(CopyIdx);
   assert(SrcLR != SrcInt.end() && "Live range not found!");
   VNInfo *ValNo = SrcLR->valno;
-  // If other defs can reach uses of this def, then it's not safe to perform
-  // the optimization.
-  if (ValNo->isPHIDef() || ValNo->isUnused() || ValNo->hasPHIKill())
+  if (ValNo->isPHIDef() || ValNo->isUnused())
     return false;
   MachineInstr *DefMI = LIS->getInstructionFromIndex(ValNo->def);
   if (!DefMI)
