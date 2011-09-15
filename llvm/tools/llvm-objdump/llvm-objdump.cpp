@@ -262,13 +262,14 @@ static void DisassembleInput(const StringRef &Filename) {
       if (!CFG) {
         for (Index = Start; Index < End; Index += Size) {
           MCInst Inst;
+
           if (DisAsm->getInstruction(Inst, Size, memoryObject, Index,
-                                     DebugOut)) {
+                                     DebugOut, nulls())) {
             uint64_t addr;
             if (error(i->getAddress(addr))) break;
             outs() << format("%8x:\t", addr + Index);
             DumpBytes(StringRef(Bytes.data() + Index, Size));
-            IP->printInst(&Inst, outs());
+            IP->printInst(&Inst, outs(), "");
             outs() << "\n";
           } else {
             errs() << ToolName << ": warning: invalid instruction encoding\n";
@@ -323,7 +324,7 @@ static void DisassembleInput(const StringRef &Filename) {
             // Simple loops.
             if (fi->second.contains(&fi->second))
               outs() << '\t';
-            IP->printInst(&Inst.Inst, outs());
+            IP->printInst(&Inst.Inst, outs(), "");
             outs() << '\n';
           }
         }
@@ -359,7 +360,7 @@ static void DisassembleInput(const StringRef &Filename) {
             // Escape special chars and print the instruction in mnemonic form.
             std::string Str;
             raw_string_ostream OS(Str);
-            IP->printInst(&i->second.getInsts()[ii].Inst, OS);
+            IP->printInst(&i->second.getInsts()[ii].Inst, OS, "");
             Out << DOT::EscapeString(OS.str()) << '|';
           }
           Out << "<o>\" shape=\"record\" ];\n";

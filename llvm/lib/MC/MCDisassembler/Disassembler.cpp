@@ -144,7 +144,7 @@ size_t LLVMDisasmInstruction(LLVMDisasmContextRef DCR, uint8_t *Bytes,
   MCInstPrinter *IP = DC->getIP();
   MCDisassembler::DecodeStatus S;
   S = DisAsm->getInstruction(Inst, Size, MemoryObject, PC,
-                             /*REMOVE*/ nulls());
+                             /*REMOVE*/ nulls(), DC->CommentStream);
   switch (S) {
   case MCDisassembler::Fail:
   case MCDisassembler::SoftFail:
@@ -152,28 +152,16 @@ size_t LLVMDisasmInstruction(LLVMDisasmContextRef DCR, uint8_t *Bytes,
     return 0;
 
   case MCDisassembler::Success: {
-    SmallVector<char, 64> InsnStr;
-    raw_svector_ostream OS(InsnStr);
-    IP->printInst(&Inst, OS);
-    OS.flush();
-
     DC->CommentStream.flush();
-    assert(DC->CommentsToEmit.back() == '\n');
-
-    DC->CommentsToEmit.push_back('\n');
     StringRef Comments = DC->CommentsToEmit.str();
 
-    do {
-      // Emit a line of comments.
-      size_t Position = Comments.find('\n');
-      OS << ' ' << DC->getAsmInfo()->getCommentString()
-         << ' ' << Comments.substr(0, Position) << '\n';
+    SmallVector<char, 64> InsnStr;
+    raw_svector_ostream OS(InsnStr);
+    IP->printInst(&Inst, OS, Comments);
+    OS.flush();
 
-      Comments = Comments.substr(Position+1);
-    } while (!Comments.empty());
-
-    DC->CommentsToEmit.clear();
     // Tell the comment stream that the vector changed underneath it.
+    DC->CommentsToEmit.clear();
     DC->CommentStream.resync();
 
     assert(OutStringSize != 0 && "Output buffer cannot be zero size");

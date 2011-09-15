@@ -51,7 +51,8 @@ void ARMInstPrinter::printRegName(raw_ostream &OS, unsigned RegNo) const {
   OS << getRegisterName(RegNo);
 }
 
-void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O) {
+void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
+                               StringRef Annot) {
   unsigned Opcode = MI->getOpcode();
 
   // Check for MOVs and print canonical forms, instead.
@@ -71,9 +72,7 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O) {
 
     O << ", " << getRegisterName(MO2.getReg());
     assert(ARM_AM::getSORegOffset(MO3.getImm()) == 0);
-
-    if (CommentStream) printAnnotations(MI, *CommentStream);
-
+    if (CommentStream) printAnnotation(*CommentStream, Annot);
     return;
   }
 
@@ -91,13 +90,12 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O) {
       << ", " << getRegisterName(MO1.getReg());
 
     if (ARM_AM::getSORegShOp(MO2.getImm()) == ARM_AM::rrx) {
-      if (CommentStream) printAnnotations(MI, *CommentStream);
+      if (CommentStream) printAnnotation(*CommentStream, Annot);
       return;
     }
 
     O << ", #" << translateShiftImm(ARM_AM::getSORegOffset(MO2.getImm()));
-
-    if (CommentStream) printAnnotations(MI, *CommentStream);
+    if (CommentStream) printAnnotation(*CommentStream, Annot);
     return;
   }
 
@@ -111,7 +109,7 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O) {
       O << ".w";
     O << '\t';
     printRegisterList(MI, 4, O);
-    if (CommentStream) printAnnotations(MI, *CommentStream);
+    if (CommentStream) printAnnotation(*CommentStream, Annot);
     return;
   }
   if (Opcode == ARM::STR_PRE_IMM && MI->getOperand(2).getReg() == ARM::SP &&
@@ -119,7 +117,7 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O) {
     O << '\t' << "push";
     printPredicateOperand(MI, 4, O);
     O << "\t{" << getRegisterName(MI->getOperand(1).getReg()) << "}";
-    if (CommentStream) printAnnotations(MI, *CommentStream);
+    if (CommentStream) printAnnotation(*CommentStream, Annot);
     return;
   }
 
@@ -132,7 +130,7 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O) {
       O << ".w";
     O << '\t';
     printRegisterList(MI, 4, O);
-    if (CommentStream) printAnnotations(MI, *CommentStream);
+    if (CommentStream) printAnnotation(*CommentStream, Annot);
     return;
   }
   if (Opcode == ARM::LDR_POST_IMM && MI->getOperand(2).getReg() == ARM::SP &&
@@ -140,7 +138,7 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O) {
     O << '\t' << "pop";
     printPredicateOperand(MI, 5, O);
     O << "\t{" << getRegisterName(MI->getOperand(0).getReg()) << "}";
-    if (CommentStream) printAnnotations(MI, *CommentStream);
+    if (CommentStream) printAnnotation(*CommentStream, Annot);
     return;
   }
 
@@ -152,7 +150,7 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O) {
     printPredicateOperand(MI, 2, O);
     O << '\t';
     printRegisterList(MI, 4, O);
-    if (CommentStream) printAnnotations(MI, *CommentStream);
+    if (CommentStream) printAnnotation(*CommentStream, Annot);
     return;
   }
 
@@ -163,7 +161,7 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O) {
     printPredicateOperand(MI, 2, O);
     O << '\t';
     printRegisterList(MI, 4, O);
-    if (CommentStream) printAnnotations(MI, *CommentStream);
+    if (CommentStream) printAnnotation(*CommentStream, Annot);
     return;
   }
 
@@ -182,7 +180,7 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O) {
     if (Writeback) O << "!";
     O << ", ";
     printRegisterList(MI, 3, O);
-    if (CommentStream) printAnnotations(MI, *CommentStream);
+    if (CommentStream) printAnnotation(*CommentStream, Annot);
     return;
   }
 
@@ -191,12 +189,12 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O) {
       MI->getOperand(1).getReg() == ARM::R8) {
     O << "\tnop";
     printPredicateOperand(MI, 2, O);
-    if (CommentStream) printAnnotations(MI, *CommentStream);
+    if (CommentStream) printAnnotation(*CommentStream, Annot);
     return;
   }
 
   printInstruction(MI, O);
-  if (CommentStream) printAnnotations(MI, *CommentStream);
+  if (CommentStream) printAnnotation(*CommentStream, Annot);
 }
 
 void ARMInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,

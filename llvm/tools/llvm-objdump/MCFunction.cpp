@@ -40,7 +40,7 @@ MCFunction::createFunctionFromMC(StringRef Name, const MCDisassembler *DisAsm,
   for (uint64_t Index = Start; Index < End; Index += Size) {
     MCInst Inst;
 
-    if (DisAsm->getInstruction(Inst, Size, Region, Index, DebugOut)) {
+    if (DisAsm->getInstruction(Inst, Size, Region, Index, DebugOut, nulls())) {
       if (Ana->isBranch(Inst)) {
         uint64_t targ = Ana->evaluateBranch(Inst, Index, Size);
         // FIXME: Distinguish relocations from nop jumps.

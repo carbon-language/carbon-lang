@@ -39,14 +39,15 @@ void X86ATTInstPrinter::printRegName(raw_ostream &OS,
   OS << '%' << getRegisterName(RegNo);
 }
 
-void X86ATTInstPrinter::printInst(const MCInst *MI, raw_ostream &OS) {
+void X86ATTInstPrinter::printInst(const MCInst *MI, raw_ostream &OS,
+                                  StringRef Annot) {
   // Try to print any aliases first.
   if (!printAliasInstr(MI, OS))
     printInstruction(MI, OS);
   
   // If verbose assembly is enabled, we can print some informative comments.
   if (CommentStream) {
-    printAnnotations(MI, *CommentStream);
+    printAnnotation(*CommentStream, Annot);
     EmitAnyX86InstComments(MI, *CommentStream, getRegisterName);
   }
 }

@@ -32,7 +32,7 @@ public:
   }
   
   virtual void printRegName(raw_ostream &OS, unsigned RegNo) const;
-  virtual void printInst(const MCInst *MI, raw_ostream &O);
+  virtual void printInst(const MCInst *MI, raw_ostream &O, StringRef Annot);
   virtual StringRef getOpcodeName(unsigned Opcode) const;
   
   static const char *getInstructionName(unsigned Opcode);

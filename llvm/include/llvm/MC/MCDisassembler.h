@@ -70,6 +70,7 @@ public:
   /// @param address  - The address, in the memory space of region, of the first
   ///                   byte of the instruction.
   /// @param vStream  - The stream to print warnings and diagnostic messages on.
+  /// @param cStream  - The stream to print comments and annotations on.
   /// @return         - MCDisassembler::Success if the instruction is valid,
   ///                   MCDisassembler::SoftFail if the instruction was 
   ///                                            disassemblable but invalid,
@@ -78,7 +79,8 @@ public:
                                        uint64_t& size,
                                        const MemoryObject &region,
                                        uint64_t address,
-                                       raw_ostream &vStream) const = 0;
+                                       raw_ostream &vStream,
+                                       raw_ostream &cStream) const = 0;
 
   /// getEDInfo - Returns the enhanced instruction information corresponding to
   ///   the disassembler.

@@ -41,16 +41,6 @@ void MCInst::print(raw_ostream &OS, const MCAsmInfo *MAI) const {
     OS << " ";
     getOperand(i).print(OS, MAI);
   }
-
-  if (getNumAnnotations()) {
-    OS << " # Annots: ";
-    for (unsigned i = 0, e = getNumAnnotations(); i != e; ++i) {
-      OS << " \"";
-      OS << getAnnotation(i);
-      OS << '"';
-    }
-  }
-
   OS << ">";
 }
 
@@ -67,17 +57,6 @@ void MCInst::dump_pretty(raw_ostream &OS, const MCAsmInfo *MAI,
     OS << Separator;
     getOperand(i).print(OS, MAI);
   }
-
-  if (getNumAnnotations()) {
-    OS << " # Annots: ";
-    for (unsigned i = 0, e = getNumAnnotations(); i != e; ++i) {
-      OS << Separator;
-      OS << '"';
-      OS << getAnnotation(i);
-      OS << '"';
-    }
-  }
-
   OS << ">";
 }
 

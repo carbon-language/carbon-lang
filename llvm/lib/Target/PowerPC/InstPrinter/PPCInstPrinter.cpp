@@ -31,7 +31,8 @@ void PPCInstPrinter::printRegName(raw_ostream &OS, unsigned RegNo) const {
   OS << getRegisterName(RegNo);
 }
 
-void PPCInstPrinter::printInst(const MCInst *MI, raw_ostream &O) {
+void PPCInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
+                               StringRef Annot) {
   // Check for slwi/srwi mnemonics.
   if (MI->getOpcode() == PPC::RLWINM) {
     unsigned char SH = MI->getOperand(2).getImm();
@@ -50,6 +51,8 @@ void PPCInstPrinter::printInst(const MCInst *MI, raw_ostream &O) {
       O << ", ";
       printOperand(MI, 1, O);
       O << ", " << (unsigned int)SH;
+
+      if (CommentStream) printAnnotation(*CommentStream, Annot);
       return;
     }
   }
@@ -60,6 +63,7 @@ void PPCInstPrinter::printInst(const MCInst *MI, raw_ostream &O) {
     printOperand(MI, 0, O);
     O << ", ";
     printOperand(MI, 1, O);
+    if (CommentStream) printAnnotation(*CommentStream, Annot);
     return;
   }
   
@@ -73,11 +77,13 @@ void PPCInstPrinter::printInst(const MCInst *MI, raw_ostream &O) {
       O << ", ";
       printOperand(MI, 1, O);
       O << ", " << (unsigned int)SH;
+      if (CommentStream) printAnnotation(*CommentStream, Annot);
       return;
     }
   }
   
   printInstruction(MI, O);
+  if (CommentStream) printAnnotation(*CommentStream, Annot);
 }
 
 

@@ -246,7 +246,7 @@ EDInst *EDDisassembler::createInst(EDByteReaderCallback byteReader,
   
   MCDisassembler::DecodeStatus S;
   S = Disassembler->getInstruction(*inst, byteSize, memoryObject, address,
-                                   ErrorStream);
+                                   ErrorStream, nulls());
   switch (S) {
   case MCDisassembler::Fail:
   case MCDisassembler::SoftFail:
@@ -327,7 +327,7 @@ bool EDDisassembler::registerIsProgramCounter(unsigned registerID) {
 int EDDisassembler::printInst(std::string &str, MCInst &inst) {
   PrinterMutex.acquire();
   
-  InstPrinter->printInst(&inst, *InstStream);
+  InstPrinter->printInst(&inst, *InstStream, "");
   InstStream->flush();
   str = *InstString;
   InstString->clear();
