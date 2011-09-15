@@ -138,25 +138,27 @@ public:
                                          BugReport &BR);
 
   PathDiagnosticPiece *VisitTerminator(const Stmt *Term,
-                                       const ProgramState *CurrentState,
-                                       const ProgramState *PrevState,
+                                       const ExplodedNode *N,
                                        const CFGBlock *srcBlk,
                                        const CFGBlock *dstBlk,
                                        BugReporterContext &BRC);
 
   PathDiagnosticPiece *VisitTrueTest(const Expr *Cond,
                                      bool tookTrue,
-                                     BugReporterContext &BRC);
+                                     BugReporterContext &BRC,
+                                     const LocationContext *LC);
 
   PathDiagnosticPiece *VisitTrueTest(const Expr *Cond,
                                      const DeclRefExpr *DR,
                                      const bool tookTrue,
-                                     BugReporterContext &BRC);
+                                     BugReporterContext &BRC,
+                                     const LocationContext *LC);
 
   PathDiagnosticPiece *VisitTrueTest(const Expr *Cond,
                                      const BinaryOperator *BExpr,
                                      const bool tookTrue,
-                                     BugReporterContext &BRC);
+                                     BugReporterContext &BRC,
+                                     const LocationContext *LC);
 
   bool patternMatch(const Expr *Ex,
                     llvm::raw_ostream &Out,

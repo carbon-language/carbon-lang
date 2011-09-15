@@ -1875,7 +1875,8 @@ PathDiagnosticPiece *CFRefReportVisitor::VisitNode(const ExplodedNode *N,
       os << "+0 retain count";
     }
 
-    PathDiagnosticLocation Pos(S, BRC.getSourceManager());
+    PathDiagnosticLocation Pos(S, BRC.getSourceManager(),
+                                  N->getLocationContext());
     return new PathDiagnosticEventPiece(Pos, os.str());
   }
 
@@ -2039,7 +2040,8 @@ PathDiagnosticPiece *CFRefReportVisitor::VisitNode(const ExplodedNode *N,
     return 0; // We have nothing to say!
 
   const Stmt *S = cast<StmtPoint>(N->getLocation()).getStmt();
-  PathDiagnosticLocation Pos(S, BRC.getSourceManager());
+  PathDiagnosticLocation Pos(S, BRC.getSourceManager(),
+                                N->getLocationContext());
   PathDiagnosticPiece *P = new PathDiagnosticEventPiece(Pos, os.str());
 
   // Add the range by scanning the children of the statement for any bindings

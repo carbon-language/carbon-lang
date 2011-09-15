@@ -156,23 +156,20 @@ PathDiagnosticLocation PathDiagnosticLocation::create(const ExplodedNode* N,
 
 static SourceLocation getValidSourceLocation(const Stmt* S,
                                              const LocationContext *LC) {
+  assert(LC);
   SourceLocation L = S->getLocStart();
 
   // S might be a temporary statement that does not have a location in the
   // source code, so find an enclosing statement and use it's location.
-  if (!L.isValid() && LC) {
-    assert(LC);
+  if (!L.isValid()) {
     ParentMap & PM = LC->getParentMap();
 
-    const Stmt *PS = S;
     while (!L.isValid()) {
-      PS = PM.getParent(PS);
-      L = PS->getLocStart();
+      S = PM.getParent(S);
+      L = S->getLocStart();
     }
   }
 
-  // TODO: either change the name or uncomment the assert.
-  //assert(L.isValid());
   return L;
 }
 
@@ -190,6 +187,10 @@ FullSourceLoc PathDiagnosticLocation::asLocation() const {
     case DeclK:
       return FullSourceLoc(D->getLocation(), const_cast<SourceManager&>(*SM));
   }
+
+  if (!R.isValid())
+    return FullSourceLoc(LC->getDecl()->getBodyRBrace(),
+                         const_cast<SourceManager&>(*SM));
 
   return FullSourceLoc(R.getBegin(), const_cast<SourceManager&>(*SM));
 }

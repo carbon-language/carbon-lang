@@ -90,9 +90,8 @@ BugReporterVisitor::getDefaultEndPath(BugReporterContext &BRC,
   if (const BlockEntrance *BE = dyn_cast<BlockEntrance>(&PP)) {
     const CFGBlock *block = BE->getBlock();
     if (block->getBlockID() == 0) {
-      L = PathDiagnosticLocation(
-          EndPathNode->getLocationContext()->getDecl()->getBodyRBrace(),
-          BRC.getSourceManager());
+      L = PathDiagnosticLocation(PP.getLocationContext(),
+                                 BRC.getSourceManager());
     }
   }
 
@@ -102,7 +101,8 @@ BugReporterVisitor::getDefaultEndPath(BugReporterContext &BRC,
     if (!S)
       return NULL;
 
-    L = PathDiagnosticLocation(S, BRC.getSourceManager());
+    L = PathDiagnosticLocation(S, BRC.getSourceManager(),
+                                  PP.getLocationContext());
   }
 
   BugReport::ranges_iterator Beg, End;
@@ -254,7 +254,7 @@ PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *N,
     return NULL;
 
   // Construct a new PathDiagnosticPiece.
-  PathDiagnosticLocation L(S, BRC.getSourceManager());
+  PathDiagnosticLocation L(S, BRC.getSourceManager(), P.getLocationContext());
   return new PathDiagnosticEventPiece(L, os.str());
 }
 
@@ -314,7 +314,7 @@ TrackConstraintBRVisitor::VisitNode(const ExplodedNode *N,
       return NULL;
 
     // Construct a new PathDiagnosticPiece.
-    PathDiagnosticLocation L(S, BRC.getSourceManager());
+    PathDiagnosticLocation L(S, BRC.getSourceManager(), P.getLocationContext());
     return new PathDiagnosticEventPiece(L, os.str());
   }
 
@@ -424,7 +424,8 @@ PathDiagnosticPiece *NilReceiverBRVisitor::VisitNode(const ExplodedNode *N,
   // the receiver was null.
   BR.addVisitor(bugreporter::getTrackNullOrUndefValueVisitor(N, Receiver));
   // Issue a message saying that the method was skipped.
-  PathDiagnosticLocation L(Receiver, BRC.getSourceManager());
+  PathDiagnosticLocation L(Receiver, BRC.getSourceManager(),
+                                     N->getLocationContext());
   return new PathDiagnosticEventPiece(L, "No method actually called "
       "because the receiver is nil");
 }
@@ -489,8 +490,7 @@ PathDiagnosticPiece *ConditionBRVisitor::VisitNode(const ExplodedNode *N,
   if (const BlockEdge *BE = dyn_cast<BlockEdge>(&progPoint)) {
     const CFGBlock *srcBlk = BE->getSrc();    
     if (const Stmt *term = srcBlk->getTerminator())
-      return VisitTerminator(term, CurrentState, PrevState,
-                             srcBlk, BE->getDst(), BRC);
+      return VisitTerminator(term, N, srcBlk, BE->getDst(), BRC);
     return 0;
   }
   
@@ -503,9 +503,11 @@ PathDiagnosticPiece *ConditionBRVisitor::VisitNode(const ExplodedNode *N,
 
     const ProgramPointTag *tag = PS->getTag();
     if (tag == tags.first)
-      return VisitTrueTest(cast<Expr>(PS->getStmt()), true, BRC);
+      return VisitTrueTest(cast<Expr>(PS->getStmt()), true,
+                           BRC, N->getLocationContext());
     if (tag == tags.second)
-      return VisitTrueTest(cast<Expr>(PS->getStmt()), false, BRC);
+      return VisitTrueTest(cast<Expr>(PS->getStmt()), false,
+                           BRC, N->getLocationContext());
                            
     return 0;
   }
@@ -515,8 +517,7 @@ PathDiagnosticPiece *ConditionBRVisitor::VisitNode(const ExplodedNode *N,
 
 PathDiagnosticPiece *
 ConditionBRVisitor::VisitTerminator(const Stmt *Term,
-                                    const ProgramState *CurrentState,
-                                    const ProgramState *PrevState,
+                                    const ExplodedNode *N,
                                     const CFGBlock *srcBlk,
                                     const CFGBlock *dstBlk,
                                     BugReporterContext &BRC) {
@@ -537,13 +538,14 @@ ConditionBRVisitor::VisitTerminator(const Stmt *Term,
   assert(srcBlk->succ_size() == 2);
   const bool tookTrue = *(srcBlk->succ_begin()) == dstBlk;
   return VisitTrueTest(Cond->IgnoreParenNoopCasts(BRC.getASTContext()),
-                       tookTrue, BRC);
+                       tookTrue, BRC, N->getLocationContext());
 }
 
 PathDiagnosticPiece *
 ConditionBRVisitor::VisitTrueTest(const Expr *Cond,
                                   bool tookTrue,
-                                  BugReporterContext &BRC) {
+                                  BugReporterContext &BRC,
+                                  const LocationContext *LC) {
   
   const Expr *Ex = Cond;
   
@@ -553,9 +555,9 @@ ConditionBRVisitor::VisitTrueTest(const Expr *Cond,
       default:
         return 0;
       case Stmt::BinaryOperatorClass:
-        return VisitTrueTest(Cond, cast<BinaryOperator>(Ex), tookTrue, BRC);
+        return VisitTrueTest(Cond, cast<BinaryOperator>(Ex), tookTrue, BRC, LC);
       case Stmt::DeclRefExprClass:
-        return VisitTrueTest(Cond, cast<DeclRefExpr>(Ex), tookTrue, BRC);
+        return VisitTrueTest(Cond, cast<DeclRefExpr>(Ex), tookTrue, BRC, LC);
       case Stmt::UnaryOperatorClass: {
         const UnaryOperator *UO = cast<UnaryOperator>(Ex);
         if (UO->getOpcode() == UO_LNot) {
@@ -610,7 +612,8 @@ PathDiagnosticPiece *
 ConditionBRVisitor::VisitTrueTest(const Expr *Cond,
                                   const BinaryOperator *BExpr,
                                   const bool tookTrue,
-                                  BugReporterContext &BRC) {
+                                  BugReporterContext &BRC,
+                                  const LocationContext *LC) {
   
   bool shouldInvert = false;
   
@@ -670,7 +673,7 @@ ConditionBRVisitor::VisitTrueTest(const Expr *Cond,
   
   Out << (shouldInvert ? LhsString : RhsString);
 
-  PathDiagnosticLocation Loc(Cond, BRC.getSourceManager());
+  PathDiagnosticLocation Loc(Cond, BRC.getSourceManager(), LC);
   return new PathDiagnosticEventPiece(Loc, Out.str());
 }
   
@@ -678,7 +681,8 @@ PathDiagnosticPiece *
 ConditionBRVisitor::VisitTrueTest(const Expr *Cond,
                                   const DeclRefExpr *DR,
                                   const bool tookTrue,
-                                  BugReporterContext &BRC) {
+                                  BugReporterContext &BRC,
+                                  const LocationContext *LC) {
 
   const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl());
   if (!VD)
@@ -702,6 +706,6 @@ ConditionBRVisitor::VisitTrueTest(const Expr *Cond,
   else
     return 0;
   
-  PathDiagnosticLocation Loc(Cond, BRC.getSourceManager());
+  PathDiagnosticLocation Loc(Cond, BRC.getSourceManager(), LC);
   return new PathDiagnosticEventPiece(Loc, Out.str());
 }

@@ -622,7 +622,8 @@ PathDiagnosticPiece *MacOSKeychainAPIChecker::SecKeychainBugVisitor::VisitNode(
   unsigned Idx = getTrackedFunctionIndex(funName, true);
   assert(Idx != InvalidIdx && "This should be a call to an allocator.");
   const Expr *ArgExpr = CE->getArg(FunctionsToTrack[Idx].Param);
-  PathDiagnosticLocation Pos(ArgExpr, BRC.getSourceManager());
+  PathDiagnosticLocation Pos(ArgExpr, BRC.getSourceManager(),
+                             N->getLocationContext());
   return new PathDiagnosticEventPiece(Pos, "Data is allocated here.");
 }
 
