@@ -76,6 +76,9 @@ ClangExpressionDeclMap::WillParse(ExecutionContext &exe_ctx)
         m_parser_vars->m_sym_ctx = exe_ctx.thread->GetStackFrameAtIndex(0)->GetSymbolContext(lldb::eSymbolContextEverything);
     else if (exe_ctx.process)
         m_parser_vars->m_sym_ctx = SymbolContext(exe_ctx.target->GetSP(), ModuleSP());
+    else if (exe_ctx.target)
+        m_parser_vars->m_sym_ctx = SymbolContext(exe_ctx.target->GetSP(), ModuleSP());
+    
     if (exe_ctx.target)
         m_parser_vars->m_persistent_vars = &exe_ctx.target->GetPersistentVariables();
     
