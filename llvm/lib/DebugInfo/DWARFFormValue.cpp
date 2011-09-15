@@ -9,6 +9,7 @@
 
 #include "DWARFFormValue.h"
 #include "DWARFCompileUnit.h"
+#include "DWARFContext.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
@@ -256,8 +257,8 @@ DWARFFormValue::skipValue(uint16_t form, DataExtractor debug_info_data,
 }
 
 void
-DWARFFormValue::dump(raw_ostream &OS, const DataExtractor *debug_str_data,
-                     const DWARFCompileUnit *cu) const {
+DWARFFormValue::dump(raw_ostream &OS, const DWARFCompileUnit *cu) const {
+  DataExtractor debug_str_data(cu->getContext().getStringSection(), true, 0);
   uint64_t uvalue = getUnsigned();
   bool cu_relative_offset = false;
 
@@ -302,19 +303,16 @@ DWARFFormValue::dump(raw_ostream &OS, const DataExtractor *debug_str_data,
 
   case DW_FORM_sdata:     OS << getSigned();   break;
   case DW_FORM_udata:     OS << getUnsigned(); break;
-  case DW_FORM_strp:
-    if (debug_str_data) {
-      OS << format(" .debug_str[0x%8.8x] = ", (uint32_t)uvalue);
-      const char* dbg_str = getAsCString(debug_str_data);
-      if (dbg_str) {
-        OS << '"';
-        OS.write_escaped(dbg_str);
-        OS << '"';
-      }
-    } else {
-      OS << format("0x%08x", uvalue);
+  case DW_FORM_strp: {
+    OS << format(" .debug_str[0x%8.8x] = ", (uint32_t)uvalue);
+    const char* dbg_str = getAsCString(&debug_str_data);
+    if (dbg_str) {
+      OS << '"';
+      OS.write_escaped(dbg_str);
+      OS << '"';
     }
     break;
+  }
   case DW_FORM_ref_addr:
     OS << format("0x%016x", uvalue);
     break;

@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "DWARFContext.h"
+#include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
@@ -27,8 +28,18 @@ void DWARFContext::dump(raw_ostream &OS) {
     set.dump(OS);
 
   OS << "\n.debug_lines contents:\n";
-  DataExtractor lineData(getLineSection(), isLittleEndian(), 8);
+  // FIXME: must be done per CU.
+  DataExtractor lineData(getLineSection(), isLittleEndian(), /*FIXME*/8);
   DWARFDebugLine::dump(lineData, OS);
+
+  OS << "\n.debug_str contents:\n";
+  DataExtractor strData(getStringSection(), isLittleEndian(), 0);
+  offset = 0;
+  uint32_t lastOffset = 0;
+  while (const char *s = strData.getCStr(&offset)) {
+    OS << format("0x%8.8x: \"%s\"\n", lastOffset, s);
+    lastOffset = offset;
+  }
 }
 
 const DWARFDebugAbbrev *DWARFContext::getDebugAbbrev() {

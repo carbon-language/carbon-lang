@@ -89,7 +89,7 @@ void DWARFDebugInfoEntryMinimal::dumpAttribute(raw_ostream &OS,
     return;
 
   OS << "\t(";
-  formValue.dump(OS, 0, cu);
+  formValue.dump(OS, cu);
   OS << ")\n";
 }
 

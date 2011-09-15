@@ -48,8 +48,7 @@ public:
   DWARFFormValue(uint16_t form = 0) : Form(form) {}
   uint16_t getForm() const { return Form; }
   const ValueType& value() const { return Value; }
-  void dump(raw_ostream &OS, const DataExtractor *debug_str_data,
-            const DWARFCompileUnit* cu) const;
+  void dump(raw_ostream &OS, const DWARFCompileUnit* cu) const;
   bool extractValue(DataExtractor data, uint32_t *offset_ptr,
                     const DWARFCompileUnit *cu);
   bool isInlinedCStr() const {

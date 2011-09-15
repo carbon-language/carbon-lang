@@ -53,6 +53,7 @@ static void DumpInput(const StringRef &Filename) {
   StringRef DebugAbbrevSection;
   StringRef DebugLineSection;
   StringRef DebugArangesSection;
+  StringRef DebugStringSection;
 
   error_code ec;
   for (ObjectFile::section_iterator i = Obj->begin_sections(),
@@ -74,13 +75,16 @@ static void DumpInput(const StringRef &Filename) {
       DebugLineSection = data;
     else if (name == "debug_aranges")
       DebugArangesSection = data;
+    else if (name == "debug_str")
+      DebugStringSection = data;
   }
 
   OwningPtr<DIContext> dictx(DIContext::getDWARFContext(/*FIXME*/true,
                                                         DebugInfoSection,
                                                         DebugAbbrevSection,
                                                         DebugArangesSection,
-                                                        DebugLineSection));
+                                                        DebugLineSection,
+                                                        DebugStringSection));
   dictx->dump(outs());
 }
 
