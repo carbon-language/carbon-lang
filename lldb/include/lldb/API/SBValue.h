@@ -221,7 +221,7 @@ public:
     //------------------------------------------------------------------
     lldb::SBData
     GetPointeeData (uint32_t item_idx = 0,
-					uint32_t item_count = 1);
+                    uint32_t item_count = 1);
     
     //------------------------------------------------------------------
     /// Get an SBData wrapping the contents of this SBValue.
