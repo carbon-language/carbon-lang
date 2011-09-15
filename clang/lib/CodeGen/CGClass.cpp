@@ -559,11 +559,9 @@ static void EmitMemberInitializer(CodeGenFunction &CGF,
     LHS = CGF.EmitLValueForFieldInitialization(ThisPtr, Field, 0);
   }
 
-  // FIXME: If there's no initializer and the CXXCtorInitializer
-  // was implicitly generated, we shouldn't be zeroing memory.
-  if (FieldType->isArrayType() && !MemberInit->getInit()) {
-    CGF.EmitNullInitialization(LHS.getAddress(), Field->getType());
-  } else if (!CGF.hasAggregateLLVMType(Field->getType())) {
+  assert(MemberInit->getInit());
+
+  if (!CGF.hasAggregateLLVMType(Field->getType())) {
     if (LHS.isSimple()) {
       CGF.EmitExprAsInit(MemberInit->getInit(), Field, LHS, false);
     } else {
