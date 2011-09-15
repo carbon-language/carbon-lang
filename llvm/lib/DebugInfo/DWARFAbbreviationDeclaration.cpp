@@ -47,11 +47,16 @@ DWARFAbbreviationDeclaration::extract(DataExtractor data, uint32_t* offset_ptr,
 }
 
 void DWARFAbbreviationDeclaration::dump(raw_ostream &OS) const {
-  OS << '[' << getCode() << "] " << TagString(getTag()) << "\tDW_CHILDREN_"
+  const char *tagString = TagString(getTag());
+  OS << '[' << getCode() << "] " << (tagString ? tagString : "DW_TAG_Unknown")
+     << "\tDW_CHILDREN_"
      << (hasChildren() ? "yes" : "no") << '\n';
-  for (unsigned i = 0, e = Attributes.size(); i != e; ++i)
-    OS << '\t' << AttributeString(Attributes[i].getAttribute())
-       << '\t' << FormEncodingString(Attributes[i].getForm()) << '\n';
+  for (unsigned i = 0, e = Attributes.size(); i != e; ++i) {
+    const char *attrString = AttributeString(Attributes[i].getAttribute());
+    const char *formString = FormEncodingString(Attributes[i].getForm());
+    OS << '\t' << (attrString ? attrString : "DW_AT_Unknown")
+       << '\t' << (formString ? formString : "DW_FORM_Unknown") << '\n';
+  }
   OS << '\n';
 }
 
