@@ -91,6 +91,8 @@ void DWARFDebugLine::LineTable::dump(raw_ostream &OS) const {
   }
 }
 
+DWARFDebugLine::State::~State() {}
+
 void DWARFDebugLine::State::appendRowToMatrix(uint32_t offset) {
   ++row;  // Increase the row number.
   LineTable::appendRow(*this);
@@ -116,6 +118,8 @@ void DWARFDebugLine::parse(const DataExtractor debug_line_data) {
       ++offset; // Try next byte in line table
   }
 }
+
+DWARFDebugLine::DumpingState::~DumpingState() {}
 
 void DWARFDebugLine::DumpingState::finalize(uint32_t offset) {
   LineTable::dump(OS);

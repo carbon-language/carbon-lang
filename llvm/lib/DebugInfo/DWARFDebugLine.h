@@ -148,6 +148,7 @@ public:
     };
 
     State() : row(0) {}
+    virtual ~State();
 
     virtual void appendRowToMatrix(uint32_t offset);
     virtual void finalize(uint32_t offset) { row = DoneParsingLineTable; }
@@ -160,6 +161,7 @@ public:
 
   struct DumpingState : public State {
     DumpingState(raw_ostream &OS) : OS(OS) {}
+    virtual ~DumpingState();
     virtual void finalize(uint32_t offset);
   private:
     raw_ostream &OS;
