@@ -3112,13 +3112,16 @@ X86InstrInfo::areLoadsFromSameBasePtr(SDNode *Load1, SDNode *Load2,
   case X86::MMX_MOVQ64rm:
   case X86::FsMOVAPSrm:
   case X86::FsMOVAPDrm:
-  case X86::FsVMOVAPSrm:
-  case X86::FsVMOVAPDrm:
   case X86::MOVAPSrm:
   case X86::MOVUPSrm:
   case X86::MOVAPDrm:
   case X86::MOVDQArm:
   case X86::MOVDQUrm:
+  // AVX load instructions
+  case X86::VMOVSSrm:
+  case X86::VMOVSDrm:
+  case X86::FsVMOVAPSrm:
+  case X86::FsVMOVAPDrm:
   case X86::VMOVAPSrm:
   case X86::VMOVUPSrm:
   case X86::VMOVAPDrm:
@@ -3146,13 +3149,16 @@ X86InstrInfo::areLoadsFromSameBasePtr(SDNode *Load1, SDNode *Load2,
   case X86::MMX_MOVQ64rm:
   case X86::FsMOVAPSrm:
   case X86::FsMOVAPDrm:
-  case X86::FsVMOVAPSrm:
-  case X86::FsVMOVAPDrm:
   case X86::MOVAPSrm:
   case X86::MOVUPSrm:
   case X86::MOVAPDrm:
   case X86::MOVDQArm:
   case X86::MOVDQUrm:
+  // AVX load instructions
+  case X86::VMOVSSrm:
+  case X86::VMOVSDrm:
+  case X86::FsVMOVAPSrm:
+  case X86::FsVMOVAPDrm:
   case X86::VMOVAPSrm:
   case X86::VMOVUPSrm:
   case X86::VMOVAPDrm:
@@ -3383,6 +3389,29 @@ bool X86InstrInfo::isHighLatencyDef(int opc) const {
   case X86::SQRTSSm_Int:
   case X86::SQRTSSr:
   case X86::SQRTSSr_Int:
+  // AVX instructions with high latency
+  case X86::VDIVSDrm:
+  case X86::VDIVSDrm_Int:
+  case X86::VDIVSDrr:
+  case X86::VDIVSDrr_Int:
+  case X86::VDIVSSrm:
+  case X86::VDIVSSrm_Int:
+  case X86::VDIVSSrr:
+  case X86::VDIVSSrr_Int:
+  case X86::VSQRTPDm:
+  case X86::VSQRTPDm_Int:
+  case X86::VSQRTPDr:
+  case X86::VSQRTPDr_Int:
+  case X86::VSQRTPSm:
+  case X86::VSQRTPSm_Int:
+  case X86::VSQRTPSr:
+  case X86::VSQRTPSr_Int:
+  case X86::VSQRTSDm:
+  case X86::VSQRTSDm_Int:
+  case X86::VSQRTSDr:
+  case X86::VSQRTSSm:
+  case X86::VSQRTSSm_Int:
+  case X86::VSQRTSSr:
     return true;
   }
 }
