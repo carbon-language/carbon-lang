@@ -601,56 +601,78 @@ ArchSpec::CoreUpdated (bool update_triple)
 bool
 lldb_private::operator== (const ArchSpec& lhs, const ArchSpec& rhs)
 {
+    if (lhs.GetByteOrder() != rhs.GetByteOrder())
+        return false;
+        
     const ArchSpec::Core lhs_core = lhs.GetCore ();
     const ArchSpec::Core rhs_core = rhs.GetCore ();
 
+    bool core_match = false;
     if (lhs_core == rhs_core)
-        return true;
+        core_match = true;
+    else
+    {
 
-    if (lhs_core == ArchSpec::kCore_any || rhs_core == ArchSpec::kCore_any)
-        return true;
-
-    if (lhs_core == ArchSpec::kCore_arm_any)
+        if (lhs_core == ArchSpec::kCore_any || rhs_core == ArchSpec::kCore_any)
+            core_match = true;
+        else
+        {
+            if (lhs_core == ArchSpec::kCore_arm_any)
+            {
+                if ((rhs_core >= ArchSpec::kCore_arm_first && rhs_core <= ArchSpec::kCore_arm_last) || (rhs_core == ArchSpec::kCore_arm_any))
+                    core_match = true;
+            }
+            else if (rhs_core == ArchSpec::kCore_arm_any)
+            {
+                if ((lhs_core >= ArchSpec::kCore_arm_first && lhs_core <= ArchSpec::kCore_arm_last) || (lhs_core == ArchSpec::kCore_arm_any))
+                    core_match = true;
+            }
+            else if (lhs_core == ArchSpec::kCore_x86_32_any)
+            {
+                if ((rhs_core >= ArchSpec::kCore_x86_32_first && rhs_core <= ArchSpec::kCore_x86_32_last) || (rhs_core == ArchSpec::kCore_x86_32_any))
+                    core_match = true;
+            }
+            else if (rhs_core == ArchSpec::kCore_x86_32_any)
+            {
+                if ((lhs_core >= ArchSpec::kCore_x86_32_first && lhs_core <= ArchSpec::kCore_x86_32_last) || (lhs_core == ArchSpec::kCore_x86_32_any))
+                    core_match = true;
+            }
+            else if (lhs_core == ArchSpec::kCore_ppc_any)
+            {
+                if ((rhs_core >= ArchSpec::kCore_ppc_first && rhs_core <= ArchSpec::kCore_ppc_last) || (rhs_core == ArchSpec::kCore_ppc_any))
+                    core_match = true;
+            }
+            else if (rhs_core == ArchSpec::kCore_ppc_any)
+            {
+                if ((lhs_core >= ArchSpec::kCore_ppc_first && lhs_core <= ArchSpec::kCore_ppc_last) || (lhs_core == ArchSpec::kCore_ppc_any))
+                    core_match = true;
+            }
+            else if (lhs_core == ArchSpec::kCore_ppc64_any)
+            {
+                if ((rhs_core >= ArchSpec::kCore_ppc64_first && rhs_core <= ArchSpec::kCore_ppc64_last) || (rhs_core == ArchSpec::kCore_ppc64_any))
+                    core_match = true;
+            }
+            else if (rhs_core == ArchSpec::kCore_ppc64_any)
+            {
+                if ((lhs_core >= ArchSpec::kCore_ppc64_first && lhs_core <= ArchSpec::kCore_ppc64_last) || (lhs_core == ArchSpec::kCore_ppc64_any))
+                    core_match = true;
+            }
+        }
+    }
+    if (!core_match)
+        return false;
+    else
     {
-        if ((rhs_core >= ArchSpec::kCore_arm_first && rhs_core <= ArchSpec::kCore_arm_last) || (rhs_core == ArchSpec::kCore_arm_any))
+        const llvm::Triple &lhs_triple = lhs.GetTriple();
+        const llvm::Triple &rhs_triple = rhs.GetTriple();
+        if (lhs_triple.getVendor() != rhs_triple.getVendor()
+            || lhs_triple.getOS() != rhs_triple.getOS()
+            || lhs_triple.getArch() != rhs_triple.getArch()
+            || lhs_triple.getEnvironment() != rhs_triple.getEnvironment())
+            return false;
+        else
             return true;
     }
-    else if (rhs_core == ArchSpec::kCore_arm_any)
-    {
-        if ((lhs_core >= ArchSpec::kCore_arm_first && lhs_core <= ArchSpec::kCore_arm_last) || (lhs_core == ArchSpec::kCore_arm_any))
-            return true;
-    }
-    else if (lhs_core == ArchSpec::kCore_x86_32_any)
-    {
-        if ((rhs_core >= ArchSpec::kCore_x86_32_first && rhs_core <= ArchSpec::kCore_x86_32_last) || (rhs_core == ArchSpec::kCore_x86_32_any))
-            return true;
-    }
-    else if (rhs_core == ArchSpec::kCore_x86_32_any)
-    {
-        if ((lhs_core >= ArchSpec::kCore_x86_32_first && lhs_core <= ArchSpec::kCore_x86_32_last) || (lhs_core == ArchSpec::kCore_x86_32_any))
-            return true;
-    }
-    else if (lhs_core == ArchSpec::kCore_ppc_any)
-    {
-        if ((rhs_core >= ArchSpec::kCore_ppc_first && rhs_core <= ArchSpec::kCore_ppc_last) || (rhs_core == ArchSpec::kCore_ppc_any))
-            return true;
-    }
-    else if (rhs_core == ArchSpec::kCore_ppc_any)
-    {
-        if ((lhs_core >= ArchSpec::kCore_ppc_first && lhs_core <= ArchSpec::kCore_ppc_last) || (lhs_core == ArchSpec::kCore_ppc_any))
-            return true;
-    }
-    else if (lhs_core == ArchSpec::kCore_ppc64_any)
-    {
-        if ((rhs_core >= ArchSpec::kCore_ppc64_first && rhs_core <= ArchSpec::kCore_ppc64_last) || (rhs_core == ArchSpec::kCore_ppc64_any))
-            return true;
-    }
-    else if (rhs_core == ArchSpec::kCore_ppc64_any)
-    {
-        if ((lhs_core >= ArchSpec::kCore_ppc64_first && lhs_core <= ArchSpec::kCore_ppc64_last) || (lhs_core == ArchSpec::kCore_ppc64_any))
-            return true;
-    }
-    return false;
 }
 
 bool
