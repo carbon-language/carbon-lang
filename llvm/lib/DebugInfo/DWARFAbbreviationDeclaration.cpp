@@ -9,6 +9,7 @@
 
 #include "DWARFAbbreviationDeclaration.h"
 #include "llvm/Support/Dwarf.h"
+#include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 using namespace dwarf;
@@ -48,14 +49,26 @@ DWARFAbbreviationDeclaration::extract(DataExtractor data, uint32_t* offset_ptr,
 
 void DWARFAbbreviationDeclaration::dump(raw_ostream &OS) const {
   const char *tagString = TagString(getTag());
-  OS << '[' << getCode() << "] " << (tagString ? tagString : "DW_TAG_Unknown")
-     << "\tDW_CHILDREN_"
-     << (hasChildren() ? "yes" : "no") << '\n';
+  OS << '[' << getCode() << "] ";
+  if (tagString)
+    OS << tagString;
+  else
+    OS << format("DW_TAG_Unknown_%x", getTag());
+  OS << "\tDW_CHILDREN_" << (hasChildren() ? "yes" : "no") << '\n';
   for (unsigned i = 0, e = Attributes.size(); i != e; ++i) {
+    OS << '\t';
     const char *attrString = AttributeString(Attributes[i].getAttribute());
+    if (attrString)
+      OS << attrString;
+    else
+      OS << format("DW_AT_Unknown_%x", Attributes[i].getAttribute());
+    OS << '\t';
     const char *formString = FormEncodingString(Attributes[i].getForm());
-    OS << '\t' << (attrString ? attrString : "DW_AT_Unknown")
-       << '\t' << (formString ? formString : "DW_FORM_Unknown") << '\n';
+    if (formString)
+      OS << formString;
+    else
+      OS << format("DW_FORM_Unknown_%x", Attributes[i].getForm());
+    OS << '\n';
   }
   OS << '\n';
 }
