@@ -246,7 +246,7 @@ static ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
       return LDPS_ERR;
     }
   } else {
-    off_t offset = 0;
+    int64_t offset = 0;
     // Gold has found what might be IR part-way inside of a file, such as
     // an .a archive.
     if (file->offset) {

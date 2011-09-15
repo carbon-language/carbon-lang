@@ -75,9 +75,9 @@ public:
   /// return a MemoryBuffer.
   static error_code getOpenFile(int FD, const char *Filename,
                                 OwningPtr<MemoryBuffer> &result,
-                                size_t FileSize = -1,
-                                size_t MapSize = -1,
-                                off_t Offset = 0,
+                                uint64_t FileSize = -1,
+                                uint64_t MapSize = -1,
+                                int64_t Offset = 0,
                                 bool RequiresNullTerminator = true);
 
   /// getMemBuffer - Open the specified memory range as a MemoryBuffer.  Note

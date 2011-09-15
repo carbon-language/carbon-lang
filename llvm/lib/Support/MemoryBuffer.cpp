@@ -275,16 +275,16 @@ static bool shouldUseMmap(int FD,
 
 error_code MemoryBuffer::getOpenFile(int FD, const char *Filename,
                                      OwningPtr<MemoryBuffer> &result,
-                                     size_t FileSize, size_t MapSize,
-                                     off_t Offset,
+                                     uint64_t FileSize, uint64_t MapSize,
+                                     int64_t Offset,
                                      bool RequiresNullTerminator) {
   static int PageSize = sys::Process::GetPageSize();
 
   // Default is to map the full file.
-  if (MapSize == size_t(-1)) {
+  if (MapSize == uint64_t(-1)) {
     // If we don't know the file size, use fstat to find out.  fstat on an open
     // file descriptor is cheaper than stat on a random path.
-    if (FileSize == size_t(-1)) {
+    if (FileSize == uint64_t(-1)) {
       struct stat FileInfo;
       // TODO: This should use fstat64 when available.
       if (fstat(FD, &FileInfo) == -1) {
