@@ -228,7 +228,10 @@ void CompilerInstance::createPreprocessor() {
   if (!getHeaderSearchOpts().DisableModuleHash)
     llvm::sys::path::append(SpecificModuleCache, 
                             getInvocation().getModuleHash());
-  PP->getHeaderSearchInfo().setModuleCachePath(SpecificModuleCache);
+  PP->getHeaderSearchInfo().configureModules(SpecificModuleCache,
+    getPreprocessorOpts().ModuleBuildPath.empty()
+      ? std::string() 
+      : getPreprocessorOpts().ModuleBuildPath.back());
   
   // Handle generating dependencies, if requested.
   const DependencyOutputOptions &DepOpts = getDependencyOutputOpts();

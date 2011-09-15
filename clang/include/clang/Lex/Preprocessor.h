@@ -106,7 +106,8 @@ class Preprocessor : public llvm::RefCountedBase<Preprocessor> {
   bool KeepComments : 1;
   bool KeepMacroComments : 1;
   bool SuppressIncludeNotFoundError : 1;
-
+  bool AutoModuleImport : 1;
+  
   // State that changes while the preprocessor runs:
   bool InMacroArgs : 1;            // True if parsing fn macro invocation args.
 
@@ -383,6 +384,11 @@ public:
     return SuppressIncludeNotFoundError;
   }
 
+  /// \brief Specify whether automatic module imports are enabled.
+  void setAutoModuleImport(bool AutoModuleImport = true) {
+    this->AutoModuleImport = AutoModuleImport;
+  }
+  
   /// isCurrentLexer - Return true if we are lexing directly from the specified
   /// lexer.
   bool isCurrentLexer(const PreprocessorLexer *L) const {
@@ -973,7 +979,8 @@ public:
                               bool isAngled, const DirectoryLookup *FromDir,
                               const DirectoryLookup *&CurDir,
                               SmallVectorImpl<char> *SearchPath,
-                              SmallVectorImpl<char> *RelativePath);
+                              SmallVectorImpl<char> *RelativePath,
+                              StringRef *SuggestedModule);
 
   /// GetCurLookup - The DirectoryLookup structure used to find the current
   /// FileEntry, if CurLexer is non-null and if applicable.  This allows us to

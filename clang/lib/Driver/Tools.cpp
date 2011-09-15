@@ -390,6 +390,8 @@ void Clang::AddPreprocessingOptions(const Driver &D,
     CmdArgs.push_back("-fmodule-cache-path");
     CmdArgs.push_back(Args.MakeArgString(DefaultModuleCache));
   }
+  
+  Args.AddAllArgs(CmdArgs, options::OPT_fauto_module_import);
 }
 
 /// getARMTargetCPU - Get the (LLVM) name of the ARM cpu we are targeting.

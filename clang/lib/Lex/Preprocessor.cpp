@@ -133,6 +133,7 @@ void Preprocessor::Initialize(const TargetInfo &Target) {
   KeepComments = false;
   KeepMacroComments = false;
   SuppressIncludeNotFoundError = false;
+  AutoModuleImport = false;
   
   // Macro expansion is enabled.
   DisableMacroExpansion = false;

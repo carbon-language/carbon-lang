@@ -50,6 +50,10 @@ public:
                                /// record of all macro definitions and
                                /// expansions.
   
+  /// \brief Whether we should automatically translate #include or #import
+  /// operations into module imports when possible.
+  unsigned AutoModuleImport : 1;
+
   /// \brief Whether the detailed preprocessing record includes nested macro 
   /// expansions.
   unsigned DetailedRecordIncludesNestedMacroExpansions : 1;
@@ -162,6 +166,7 @@ public:
   
 public:
   PreprocessorOptions() : UsePredefines(true), DetailedRecord(false),
+                          AutoModuleImport(false),
                           DetailedRecordIncludesNestedMacroExpansions(true),
                           DisablePCHValidation(false), DisableStatCache(false),
                           DumpDeserializedPCHDecls(false),

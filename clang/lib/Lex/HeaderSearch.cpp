@@ -139,7 +139,8 @@ const FileEntry *HeaderSearch::lookupModule(StringRef ModuleName,
     
     // Look for the umbrella header in this directory.
     if (const FileEntry *HeaderFile
-          = SearchDirs[Idx].LookupFile(UmbrellaHeaderName, *this, 0, 0)) {
+          = SearchDirs[Idx].LookupFile(UmbrellaHeaderName, *this, 0, 0, 
+                                       StringRef(), 0)) {
       *UmbrellaHeader = HeaderFile->getName();
       return 0;
     }
@@ -173,7 +174,9 @@ const FileEntry *DirectoryLookup::LookupFile(
     StringRef Filename,
     HeaderSearch &HS,
     SmallVectorImpl<char> *SearchPath,
-    SmallVectorImpl<char> *RelativePath) const {
+    SmallVectorImpl<char> *RelativePath,
+    StringRef BuildingModule,
+    StringRef *SuggestedModule) const {
   llvm::SmallString<1024> TmpDir;
   if (isNormalDir()) {
     // Concatenate the requested file onto the directory.
@@ -192,7 +195,8 @@ const FileEntry *DirectoryLookup::LookupFile(
   }
 
   if (isFramework())
-    return DoFrameworkLookup(Filename, HS, SearchPath, RelativePath);
+    return DoFrameworkLookup(Filename, HS, SearchPath, RelativePath,
+                             BuildingModule, SuggestedModule);
 
   assert(isHeaderMap() && "Unknown directory lookup");
   const FileEntry * const Result = getHeaderMap()->LookupFile(
@@ -218,7 +222,10 @@ const FileEntry *DirectoryLookup::DoFrameworkLookup(
     StringRef Filename,
     HeaderSearch &HS,
     SmallVectorImpl<char> *SearchPath,
-    SmallVectorImpl<char> *RelativePath) const {
+    SmallVectorImpl<char> *RelativePath,
+    StringRef BuildingModule,
+    StringRef *SuggestedModule) const 
+{
   FileManager &FileMgr = HS.getFileMgr();
 
   // Framework names must have a '/' in the filename.
@@ -280,9 +287,15 @@ const FileEntry *DirectoryLookup::DoFrameworkLookup(
     SearchPath->append(FrameworkName.begin(), FrameworkName.end()-1);
   }
 
+  /// Determine whether this is the module we're building or not.
+  bool AutomaticImport = SuggestedModule &&
+    (BuildingModule != StringRef(Filename.begin(), SlashPos));
+  
   FrameworkName.append(Filename.begin()+SlashPos+1, Filename.end());
   if (const FileEntry *FE = FileMgr.getFile(FrameworkName.str(),
-                                            /*openFile=*/true)) {
+                                            /*openFile=*/!AutomaticImport)) {
+    if (AutomaticImport)
+      *SuggestedModule = StringRef(Filename.begin(), SlashPos);
     return FE;
   }
 
@@ -294,7 +307,11 @@ const FileEntry *DirectoryLookup::DoFrameworkLookup(
     SearchPath->insert(SearchPath->begin()+OrigSize, Private,
                        Private+strlen(Private));
 
-  return FileMgr.getFile(FrameworkName.str(), /*openFile=*/true);
+  const FileEntry *FE = FileMgr.getFile(FrameworkName.str(), 
+                                        /*openFile=*/!AutomaticImport);
+  if (FE && AutomaticImport)
+    *SuggestedModule = StringRef(Filename.begin(), SlashPos);
+  return FE;
 }
 
 
@@ -315,7 +332,12 @@ const FileEntry *HeaderSearch::LookupFile(
     const DirectoryLookup *&CurDir,
     const FileEntry *CurFileEnt,
     SmallVectorImpl<char> *SearchPath,
-    SmallVectorImpl<char> *RelativePath) {
+    SmallVectorImpl<char> *RelativePath,
+    StringRef *SuggestedModule) 
+{
+  if (SuggestedModule)
+    *SuggestedModule = StringRef();
+    
   // If 'Filename' is absolute, check to see if it exists and no searching.
   if (llvm::sys::path::is_absolute(Filename)) {
     CurDir = 0;
@@ -400,7 +422,8 @@ const FileEntry *HeaderSearch::LookupFile(
   // Check each directory in sequence to see if it contains this file.
   for (; i != SearchDirs.size(); ++i) {
     const FileEntry *FE =
-      SearchDirs[i].LookupFile(Filename, *this, SearchPath, RelativePath);
+      SearchDirs[i].LookupFile(Filename, *this, SearchPath, RelativePath,
+                               BuildingModule, SuggestedModule);
     if (!FE) continue;
 
     CurDir = &SearchDirs[i];
@@ -439,7 +462,8 @@ const FileEntry *HeaderSearch::LookupFile(
       
       const FileEntry *Result = LookupFile(ScratchFilename, /*isAngled=*/true,
                                            FromDir, CurDir, CurFileEnt, 
-                                           SearchPath, RelativePath);
+                                           SearchPath, RelativePath,
+                                           SuggestedModule);
       std::pair<unsigned, unsigned> &CacheLookup 
         = LookupFileCache.GetOrCreateValue(Filename).getValue();
       CacheLookup.second

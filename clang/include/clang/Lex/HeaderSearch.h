@@ -132,6 +132,9 @@ class HeaderSearch {
   /// \brief The path to the module cache.
   std::string ModuleCachePath;
   
+  /// \brief The name of the module we're building.
+  std::string BuildingModule;
+  
   /// FileInfo - This contains all of the preprocessor-specific data about files
   /// that are included.  The vector is indexed by the FileEntry's UID.
   ///
@@ -196,9 +199,11 @@ public:
     //LookupFileCache.clear();
   }
 
-  /// \brief Set the path to the module cache.
-  void setModuleCachePath(StringRef Path) {
-    ModuleCachePath = Path;
+  /// \brief Set the path to the module cache and the name of the module
+  /// we're building
+  void configureModules(StringRef CachePath, StringRef BuildingModule) {
+    ModuleCachePath = CachePath;
+    this->BuildingModule = BuildingModule;
   }
   
   /// ClearFileInfo - Forget everything we know about headers so far.
@@ -240,12 +245,17 @@ public:
   /// \param RelativePath If non-null, will be set to the path relative to
   /// SearchPath at which the file was found. This only differs from the
   /// Filename for framework includes.
+  ///
+  /// \param SuggestedModule If non-null, and the file found is semantically
+  /// part of a known module, this will be set to the name of the module that
+  /// could be imported instead of preprocessing/parsing the file found.
   const FileEntry *LookupFile(StringRef Filename, bool isAngled,
                               const DirectoryLookup *FromDir,
                               const DirectoryLookup *&CurDir,
                               const FileEntry *CurFileEnt,
                               SmallVectorImpl<char> *SearchPath,
-                              SmallVectorImpl<char> *RelativePath);
+                              SmallVectorImpl<char> *RelativePath,
+                              StringRef *SuggestedModule);
 
   /// LookupSubframeworkHeader - Look up a subframework for the specified
   /// #include file.  For example, if #include'ing <HIToolbox/HIToolbox.h> from

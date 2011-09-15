@@ -344,6 +344,9 @@ def fmsc_version : Joined<"-fmsc-version=">, Group<f_Group>;
 def fdelayed_template_parsing : Flag<"-fdelayed-template-parsing">, Group<f_Group>;
 def fmodule_cache_path : Separate<"-fmodule-cache-path">, Group<i_Group>, 
   Flags<[NoForward]>;
+def fauto_module_import : Flag <"-fauto-module-import">, Group<f_Group>,
+  Flags<[NoForward]>;
+  
 def fmudflapth : Flag<"-fmudflapth">, Group<f_Group>;
 def fmudflap : Flag<"-fmudflap">, Group<f_Group>;
 def fnested_functions : Flag<"-fnested-functions">, Group<f_Group>;

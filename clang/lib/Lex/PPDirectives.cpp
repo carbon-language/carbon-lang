@@ -17,6 +17,7 @@
 #include "clang/Lex/MacroInfo.h"
 #include "clang/Lex/LexDiagnostic.h"
 #include "clang/Lex/CodeCompletionHandler.h"
+#include "clang/Lex/ModuleLoader.h"
 #include "clang/Lex/Pragma.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
@@ -478,7 +479,8 @@ const FileEntry *Preprocessor::LookupFile(
     const DirectoryLookup *FromDir,
     const DirectoryLookup *&CurDir,
     SmallVectorImpl<char> *SearchPath,
-    SmallVectorImpl<char> *RelativePath) {
+    SmallVectorImpl<char> *RelativePath,
+    StringRef *SuggestedModule) {
   // If the header lookup mechanism may be relative to the current file, pass in
   // info about where the current file is.
   const FileEntry *CurFileEnt = 0;
@@ -502,12 +504,13 @@ const FileEntry *Preprocessor::LookupFile(
   CurDir = CurDirLookup;
   const FileEntry *FE = HeaderInfo.LookupFile(
       Filename, isAngled, FromDir, CurDir, CurFileEnt,
-      SearchPath, RelativePath);
+      SearchPath, RelativePath, SuggestedModule);
   if (FE) return FE;
 
   // Otherwise, see if this is a subframework header.  If so, this is relative
   // to one of the headers on the #include stack.  Walk the list of the current
   // headers on the #include stack and pass them to HeaderInfo.
+  // FIXME: SuggestedModule!
   if (IsFileLexer()) {
     if ((CurFileEnt = SourceMgr.getFileEntryForID(CurPPLexer->getFileID())))
       if ((FE = HeaderInfo.LookupSubframeworkHeader(Filename, CurFileEnt,
@@ -1214,10 +1217,21 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
   llvm::SmallString<1024> RelativePath;
   // We get the raw path only if we have 'Callbacks' to which we later pass
   // the path.
+  StringRef SuggestedModule;
   const FileEntry *File = LookupFile(
       Filename, isAngled, LookupFrom, CurDir,
-      Callbacks ? &SearchPath : NULL, Callbacks ? &RelativePath : NULL);
+      Callbacks ? &SearchPath : NULL, Callbacks ? &RelativePath : NULL,
+      AutoModuleImport? &SuggestedModule : 0);
 
+  // If we are supposed to import a module rather than including the header,
+  // do so now.
+  if (!SuggestedModule.empty()) {
+    TheModuleLoader.loadModule(IncludeTok.getLocation(),
+                               Identifiers.get(SuggestedModule),
+                               FilenameTok.getLocation());
+    return;
+  }
+  
   // Notify the callback object that we've seen an inclusion directive.
   if (Callbacks)
     Callbacks->InclusionDirective(HashLoc, IncludeTok, Filename, isAngled, File,

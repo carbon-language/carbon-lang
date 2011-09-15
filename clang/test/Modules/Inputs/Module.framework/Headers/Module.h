@@ -9,3 +9,4 @@ const char *getModuleVersion(void);
 +alloc;
 @end
 
+#define MODULE_H_MACRO 1
