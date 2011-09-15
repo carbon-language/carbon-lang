@@ -7691,20 +7691,14 @@ static void checkArithmeticNull(Sema &S, ExprResult &LHS, ExprResult &RHS,
   bool LHSNull = isa<GNUNullExpr>(LHS.get()->IgnoreParenImpCasts());
   bool RHSNull = isa<GNUNullExpr>(RHS.get()->IgnoreParenImpCasts());
 
-  // Detect when a NULL constant is used improperly in an expression.  These
-  // are mainly cases where the null pointer is used as an integer instead
-  // of a pointer.
-  if (!LHSNull && !RHSNull)
-    return;
-
   QualType LHSType = LHS.get()->getType();
   QualType RHSType = RHS.get()->getType();
+  QualType NonNullType = LHSNull ? RHSType : LHSType; 
 
   // Avoid analyzing cases where the result will either be invalid (and
   // diagnosed as such) or entirely valid and not something to warn about.
-  if (LHSType->isBlockPointerType() || LHSType->isMemberPointerType() ||
-      LHSType->isFunctionType() || RHSType->isBlockPointerType() ||
-      RHSType->isMemberPointerType() || RHSType->isFunctionType())
+  if ((!LHSNull && !RHSNull) || NonNullType->isBlockPointerType() ||
+      NonNullType->isMemberPointerType() || NonNullType->isFunctionType())
     return;
 
   // Comparison operations would not make sense with a null pointer no matter
@@ -7718,14 +7712,12 @@ static void checkArithmeticNull(Sema &S, ExprResult &LHS, ExprResult &RHS,
 
   // The rest of the operations only make sense with a null pointer
   // if the other expression is a pointer.
-  if (LHSNull == RHSNull || LHSType->isAnyPointerType() ||
-      LHSType->canDecayToPointerType() || RHSType->isAnyPointerType() ||
-      RHSType->canDecayToPointerType())
+  if (LHSNull == RHSNull || NonNullType->isAnyPointerType() ||
+      NonNullType->canDecayToPointerType())
     return;
 
   S.Diag(Loc, diag::warn_null_in_comparison_operation)
-      << LHSNull /* LHS is NULL */
-      << (LHSNull ? RHS.get()->getType() : LHS.get()->getType())
+      << LHSNull /* LHS is NULL */ << NonNullType
       << LHS.get()->getSourceRange() << RHS.get()->getSourceRange();
 }
 /// CreateBuiltinBinOp - Creates a new built-in binary operation with
