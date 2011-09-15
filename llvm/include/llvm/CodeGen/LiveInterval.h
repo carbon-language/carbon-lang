@@ -313,7 +313,6 @@ namespace llvm {
 
     /// RenumberValues - Renumber all values in order of appearance and remove
     /// unused values.
-    /// Recalculate phi-kill flags in case any phi-def values were removed.
     void RenumberValues(LiveIntervals &lis);
 
     /// isOnlyLROfValNo - Return true if the specified live range is the only

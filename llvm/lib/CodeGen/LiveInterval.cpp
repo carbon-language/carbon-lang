@@ -148,7 +148,6 @@ void LiveInterval::markValNoForDeletion(VNInfo *ValNo) {
 /// remaining unused values.
 void LiveInterval::RenumberValues(LiveIntervals &lis) {
   SmallPtrSet<VNInfo*, 8> Seen;
-  bool seenPHIDef = false;
   valnos.clear();
   for (const_iterator I = begin(), E = end(); I != E; ++I) {
     VNInfo *VNI = I->valno;
@@ -157,26 +156,6 @@ void LiveInterval::RenumberValues(LiveIntervals &lis) {
     assert(!VNI->isUnused() && "Unused valno used by live range");
     VNI->id = (unsigned)valnos.size();
     valnos.push_back(VNI);
-    VNI->setHasPHIKill(false);
-    if (VNI->isPHIDef())
-      seenPHIDef = true;
-  }
-
-  // Recompute phi kill flags.
-  if (!seenPHIDef)
-    return;
-  for (const_vni_iterator I = vni_begin(), E = vni_end(); I != E; ++I) {
-    VNInfo *VNI = *I;
-    if (!VNI->isPHIDef())
-      continue;
-    const MachineBasicBlock *PHIBB = lis.getMBBFromIndex(VNI->def);
-    assert(PHIBB && "No basic block for phi-def");
-    for (MachineBasicBlock::const_pred_iterator PI = PHIBB->pred_begin(),
-         PE = PHIBB->pred_end(); PI != PE; ++PI) {
-      VNInfo *KVNI = getVNInfoAt(lis.getMBBEndIdx(*PI).getPrevSlot());
-      if (KVNI)
-        KVNI->setHasPHIKill(true);
-    }
   }
 }
 
