@@ -251,7 +251,7 @@ enum dwarf_constants {
   DW_AT_body_begin = 0x2105,
   DW_AT_body_end = 0x2106,
   DW_AT_GNU_vector = 0x2107,
-  DW_AT_GNU_template_name = 0x2108,
+  DW_AT_GNU_template_name = 0x2110,
   DW_AT_MIPS_assumed_size = 0x2011,
   DW_AT_lo_user = 0x2000,
   DW_AT_hi_user = 0x3fff,
