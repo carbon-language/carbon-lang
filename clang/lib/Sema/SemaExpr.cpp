@@ -5227,35 +5227,6 @@ checkBlockPointerTypesForAssignment(Sema &S, QualType LHSType,
   return ConvTy;
 }
 
-static Sema::AssignConvertType
-checkObjCPointerTypesForAssignment(Sema &S, QualType LHSType,
-                                   QualType RHSType);
-/// checkClassTypes - Routine checks for conversion of "Class" type.
-// Conversion from type Class to any root class type in a class method
-// is allowed.
-static Sema::AssignConvertType
-checkClassTypes(Sema &S, QualType LHSType) {
-  // Conversion from type Class to any root class type is allowed.
-  DeclContext *DC = S.CurContext;
-  while (isa<BlockDecl>(DC))
-    DC = DC->getParent();
-  ObjCMethodDecl *MD = dyn_cast_or_null<ObjCMethodDecl>(DC);
-  if (MD && MD->isClassMethod()) {
-    ObjCInterfaceDecl *Root = 0;
-      if (ObjCInterfaceDecl * IDecl = MD->getClassInterface())
-        do
-          Root = IDecl;
-        while ((IDecl = IDecl->getSuperClass()));
-      if (Root){
-        QualType RHSType = 
-          S.Context.getObjCObjectPointerType(
-                                 S.Context.getObjCInterfaceType(Root));
-        return checkObjCPointerTypesForAssignment(S, LHSType, RHSType);
-      }
-  }
-  return Sema::IncompatiblePointer;
-}
-
 /// checkObjCPointerTypesForAssignment - Compares two objective-c pointer types
 /// for assignment compatibility.
 static Sema::AssignConvertType
@@ -5274,7 +5245,7 @@ checkObjCPointerTypesForAssignment(Sema &S, QualType LHSType,
   if (RHSType->isObjCBuiltinType()) {
     if (RHSType->isObjCClassType() && !LHSType->isObjCBuiltinType() &&
         !LHSType->isObjCQualifiedClassType())
-      return checkClassTypes(S, LHSType);
+      return Sema::IncompatiblePointer;
     return Sema::Compatible;
   }
   QualType lhptee = LHSType->getAs<ObjCObjectPointerType>()->getPointeeType();
