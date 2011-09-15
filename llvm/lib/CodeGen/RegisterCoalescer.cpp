@@ -566,14 +566,16 @@ bool RegisterCoalescer::AdjustCopiesBackFrom(const CoalescerPair &CP,
 }
 
 /// HasOtherReachingDefs - Return true if there are definitions of IntB
-/// other than BValNo val# that can reach uses of AValno val# of IntA.
+/// other than BValNo val# that can reach uses of AValno val# of IntA, or any
+/// of its phis.
 bool RegisterCoalescer::HasOtherReachingDefs(LiveInterval &IntA,
-                                                    LiveInterval &IntB,
-                                                    VNInfo *AValNo,
-                                                    VNInfo *BValNo) {
+                                             LiveInterval &IntB,
+                                             VNInfo *AValNo,
+                                             VNInfo *BValNo) {
   for (LiveInterval::iterator AI = IntA.begin(), AE = IntA.end();
        AI != AE; ++AI) {
-    if (AI->valno != AValNo) continue;
+    if (AI->valno != AValNo && !AI->valno->isPHIDef())
+      continue;
     LiveInterval::Ranges::iterator BI =
       std::upper_bound(IntB.ranges.begin(), IntB.ranges.end(), AI->start);
     if (BI != IntB.ranges.begin())
@@ -645,9 +647,7 @@ bool RegisterCoalescer::RemoveCopyByCommutingDef(const CoalescerPair &CP,
   VNInfo *AValNo = IntA.getVNInfoAt(CopyIdx.getUseIndex());
   assert(AValNo && "COPY source not live");
 
-  // If other defs can reach uses of this def, then it's not safe to perform
-  // the optimization.
-  if (AValNo->isPHIDef() || AValNo->isUnused() || AValNo->hasPHIKill())
+  if (AValNo->isPHIDef() || AValNo->isUnused())
     return false;
   MachineInstr *DefMI = LIS->getInstructionFromIndex(AValNo->def);
   if (!DefMI)
