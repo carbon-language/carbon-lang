@@ -1960,11 +1960,16 @@ bool AsmParser::ParseDirectiveSymbolAttribute(MCSymbolAttr Attr) {
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     for (;;) {
       StringRef Name;
+      SMLoc Loc = getTok().getLoc();
 
       if (ParseIdentifier(Name))
-        return TokError("expected identifier in directive");
+        return Error(Loc, "expected identifier in directive");
 
       MCSymbol *Sym = getContext().GetOrCreateSymbol(Name);
+
+      // Assembler local symbols don't make any sense here. Complain loudly.
+      if (Sym->isTemporary())
+        return Error(Loc, "non-local symbol required in directive");
 
       getStreamer().EmitSymbolAttribute(Sym, Attr);
 
