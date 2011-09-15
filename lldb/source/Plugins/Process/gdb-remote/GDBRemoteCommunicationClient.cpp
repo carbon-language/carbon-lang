@@ -949,7 +949,7 @@ GDBRemoteCommunicationClient::GetHostInfo (bool force)
                             if (!vendor_name.empty())
                                 m_host_arch.GetTriple().setVendorName (llvm::StringRef (vendor_name));
                             if (!os_name.empty())
-                                m_host_arch.GetTriple().setVendorName (llvm::StringRef (os_name));
+                                m_host_arch.GetTriple().setOSName (llvm::StringRef (os_name));
                                 
                         }
                     }
