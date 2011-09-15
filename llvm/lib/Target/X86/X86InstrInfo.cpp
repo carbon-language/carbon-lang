@@ -2572,6 +2572,8 @@ X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
 /// Instead of
 ///   cvtss2sd (%rdi), %xmm0
 ///
+/// FIXME: This should be turned into a TSFlags.
+///
 static bool hasPartialRegUpdate(unsigned Opcode) {
   switch (Opcode) {
   case X86::CVTSD2SSrr:
