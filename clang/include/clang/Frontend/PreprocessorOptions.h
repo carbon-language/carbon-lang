@@ -41,7 +41,6 @@ class PreprocessorOptions {
 public:
   std::vector<std::pair<std::string, bool/*isUndef*/> > Macros;
   std::vector<std::string> Includes;
-  std::vector<std::string> Modules;
   std::vector<std::string> MacroIncludes;
 
   unsigned UsePredefines : 1; /// Initialize the preprocessor with the compiler
@@ -196,7 +195,6 @@ public:
   void resetNonModularOptions() {
     Macros.clear();
     Includes.clear();
-    Modules.clear();
     MacroIncludes.clear();
     ChainedIncludes.clear();
     DumpDeserializedPCHDecls = false;

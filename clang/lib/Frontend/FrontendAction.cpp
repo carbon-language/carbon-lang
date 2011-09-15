@@ -240,30 +240,6 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
                                 DeserialListener);
       if (!CI.getASTContext().getExternalSource())
         goto failure;
-    } else if (!CI.getPreprocessorOpts().Modules.empty()) {
-      // Use PCH.
-      assert(hasPCHSupport() && "This action does not have PCH support!");
-      ASTDeserializationListener *DeserialListener =
-          Consumer->GetASTDeserializationListener();
-      if (CI.getPreprocessorOpts().DumpDeserializedPCHDecls)
-        DeserialListener = new DeserializedDeclsDumper(DeserialListener);
-      if (!CI.getPreprocessorOpts().DeserializedPCHDeclsToErrorOn.empty())
-        DeserialListener = new DeserializedDeclsChecker(CI.getASTContext(),
-                         CI.getPreprocessorOpts().DeserializedPCHDeclsToErrorOn,
-                                                        DeserialListener);
-
-      CI.createPCHExternalASTSource(CI.getPreprocessorOpts().Modules[0],
-                                    true, true, DeserialListener);
-
-      for (unsigned I = 1, E = CI.getPreprocessorOpts().Modules.size(); I != E;
-          ++I) {
-
-        ASTReader *ModMgr = CI.getModuleManager();
-        ModMgr->ReadAST(CI.getPreprocessorOpts().Modules[I],
-            serialization::MK_Module);
-      }
-      if (!CI.getASTContext().getExternalSource())
-        goto failure;
     }
 
     CI.setASTConsumer(Consumer.take());
