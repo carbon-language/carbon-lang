@@ -357,17 +357,6 @@ private:
   /// global selector ID to produce a local ID.
   GlobalSelectorMapType GlobalSelectorMap;
 
-  /// \brief The macro definitions we have already loaded.
-  SmallVector<MacroDefinition *, 16> MacroDefinitionsLoaded;
-
-  typedef ContinuousRangeMap<serialization::MacroID, Module *, 4> 
-    GlobalMacroDefinitionMapType;
-  
-  /// \brief Mapping from global macro definition IDs to the module in which the
-  /// selector resides along with the offset that should be added to the
-  /// global selector ID to produce a local ID.
-  GlobalMacroDefinitionMapType GlobalMacroDefinitionMap;
-
   /// \brief Mapping from identifiers that represent macros whose definitions
   /// have not yet been deserialized to the global offset where the macro
   /// record resides.
@@ -776,9 +765,12 @@ public:
   /// which contains a (typically-empty) subset of the predefines
   /// build prior to including the precompiled header.
   const std::string &getSuggestedPredefines() { return SuggestedPredefines; }
-      
-  /// \brief Read preprocessed entities into the preprocessing record.
-  virtual void ReadPreprocessedEntities();
+
+  /// \brief Read a preallocated preprocessed entity from the external source.
+  ///
+  /// \returns null if an error occurred that prevented the preprocessed
+  /// entity from being loaded.
+  virtual PreprocessedEntity *ReadPreprocessedEntity(unsigned Index);
 
   /// \brief Read the preprocessed entity at the given offset.
   virtual PreprocessedEntity *ReadPreprocessedEntityAtOffset(uint64_t Offset);
@@ -819,15 +811,10 @@ public:
     unsigned Result = 0;
     for (ModuleConstIterator I = ModuleMgr.begin(),
         E = ModuleMgr.end(); I != E; ++I) {
-      Result += (*I)->NumPreallocatedPreprocessingEntities;
+      Result += (*I)->NumPreprocessedEntities;
     }
     
     return Result;
-  }
-  
-  /// \brief Returns the number of macro definitions found in the chain.
-  unsigned getTotalNumMacroDefinitions() const {
-    return static_cast<unsigned>(MacroDefinitionsLoaded.size());
   }
       
   /// \brief Returns the number of C++ base specifiers found in the chain.
@@ -1245,20 +1232,6 @@ public:
   /// into the unread macro record offsets table.
   void LoadMacroDefinition(
                      llvm::DenseMap<IdentifierInfo *, uint64_t>::iterator Pos);
-      
-  /// \brief Retrieve the macro definition with the given ID.
-  MacroDefinition *getMacroDefinition(serialization::MacroID ID);
-
-  /// \brief Retrieve the global macro definition ID that corresponds to the
-  /// local macro definition ID within a given module.
-  serialization::MacroID getGlobalMacroDefinitionID(Module &M, 
-                                                    unsigned LocalID);
-
-  /// \brief Deserialize a macro definition that is local to the given
-  /// module.
-  MacroDefinition *getLocalMacroDefinition(Module &M, unsigned LocalID) {
-    return getMacroDefinition(getGlobalMacroDefinitionID(M, LocalID));
-  }
   
   /// \brief Retrieve the AST context that this AST reader supplements.
   ASTContext &getContext() { return Context; }

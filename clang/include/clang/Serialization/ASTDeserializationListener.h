@@ -45,7 +45,7 @@ public:
   /// \brief A selector was read from the AST file.
   virtual void SelectorRead(serialization::SelectorID iD, Selector Sel) { }
   /// \brief A macro definition was read from the AST file.
-  virtual void MacroDefinitionRead(serialization::MacroID, 
+  virtual void MacroDefinitionRead(serialization::PreprocessedEntityID, 
                                    MacroDefinition *MD) { }
 };
 

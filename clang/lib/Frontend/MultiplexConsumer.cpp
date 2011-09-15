@@ -37,7 +37,7 @@ public:
   virtual void TypeRead(serialization::TypeIdx Idx, QualType T);
   virtual void DeclRead(serialization::DeclID ID, const Decl *D);
   virtual void SelectorRead(serialization::SelectorID iD, Selector Sel);
-  virtual void MacroDefinitionRead(serialization::MacroID, 
+  virtual void MacroDefinitionRead(serialization::PreprocessedEntityID, 
                                    MacroDefinition *MD);
 private:
   std::vector<ASTDeserializationListener*> Listeners;
@@ -79,7 +79,7 @@ void MultiplexASTDeserializationListener::SelectorRead(
 }
 
 void MultiplexASTDeserializationListener::MacroDefinitionRead(
-    serialization::MacroID ID, MacroDefinition *MD) {
+    serialization::PreprocessedEntityID ID, MacroDefinition *MD) {
   for (size_t i = 0, e = Listeners.size(); i != e; ++i)
     Listeners[i]->MacroDefinitionRead(ID, MD);
 }

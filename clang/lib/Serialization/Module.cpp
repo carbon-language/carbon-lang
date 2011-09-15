@@ -27,16 +27,15 @@ Module::Module(ModuleKind Kind)
     SLocFileOffsets(0), LocalNumIdentifiers(0), 
     IdentifierOffsets(0), BaseIdentifierID(0), IdentifierTableData(0),
     IdentifierLookupTable(0), BasePreprocessedEntityID(0),
-    LocalNumMacroDefinitions(0), MacroDefinitionOffsets(0), 
-    BaseMacroDefinitionID(0), LocalNumHeaderFileInfos(0), 
+    PreprocessedEntityOffsets(0), NumPreprocessedEntities(0),
+    LocalNumHeaderFileInfos(0), 
     HeaderFileInfoTableData(0), HeaderFileInfoTable(0),
     HeaderFileFrameworkStrings(0),
     LocalNumSelectors(0), SelectorOffsets(0), BaseSelectorID(0),
     SelectorLookupTableData(0), SelectorLookupTable(0), LocalNumDecls(0),
     DeclOffsets(0), BaseDeclID(0),
     LocalNumCXXBaseSpecifiers(0), CXXBaseSpecifiersOffsets(0),
-    LocalNumTypes(0), TypeOffsets(0), BaseTypeIndex(0), StatCache(0),
-    NumPreallocatedPreprocessingEntities(0)
+    LocalNumTypes(0), TypeOffsets(0), BaseTypeIndex(0), StatCache(0)
 {}
 
 Module::~Module() {
@@ -96,16 +95,9 @@ void Module::dump() {
   llvm::errs() << "  Base preprocessed entity ID: " << BasePreprocessedEntityID
                << '\n'  
                << "  Number of preprocessed entities: " 
-               << NumPreallocatedPreprocessingEntities << '\n';
+               << NumPreprocessedEntities << '\n';
   dumpLocalRemap("Preprocessed entity ID local -> global map", 
                  PreprocessedEntityRemap);
-  
-  llvm::errs() << "  Base macro definition ID: " << BaseMacroDefinitionID 
-               << '\n'
-               << "  Number of macro definitions: " << LocalNumMacroDefinitions
-               << '\n';
-  dumpLocalRemap("Macro definition ID local -> global map", 
-                 MacroDefinitionRemap);
   
   llvm::errs() << "  Base type index: " << BaseTypeIndex << '\n'
                << "  Number of types: " << LocalNumTypes << '\n';

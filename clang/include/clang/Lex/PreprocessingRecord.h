@@ -44,6 +44,9 @@ namespace clang {
   public:
     /// \brief The kind of preprocessed entity an object describes.
     enum EntityKind {
+      /// \brief Indicates a problem trying to load the preprocessed entity.
+      InvalidKind,
+
       /// \brief A macro expansion.
       MacroExpansionKind,
       
@@ -74,7 +77,9 @@ namespace clang {
   protected:
     PreprocessedEntity(EntityKind Kind, SourceRange Range)
       : Kind(Kind), Range(Range) { }
-    
+
+    friend class PreprocessingRecord;
+
   public:
     /// \brief Retrieve the kind of preprocessed entity stored in this object.
     EntityKind getKind() const { return Kind; }
@@ -82,7 +87,11 @@ namespace clang {
     /// \brief Retrieve the source range that covers this entire preprocessed 
     /// entity.
     SourceRange getSourceRange() const { return Range; }
-    
+
+    /// \brief Returns true if there was a problem loading the preprocessed
+    /// entity.
+    bool isInvalid() const { return Kind == InvalidKind; }
+
     // Implement isa/cast/dyncast/etc.
     static bool classof(const PreprocessedEntity *) { return true; }
 
@@ -256,10 +265,12 @@ namespace clang {
   public:
     virtual ~ExternalPreprocessingRecordSource();
     
-    /// \brief Read any preallocated preprocessed entities from the external
-    /// source.
-    virtual void ReadPreprocessedEntities() = 0;
-    
+    /// \brief Read a preallocated preprocessed entity from the external source.
+    ///
+    /// \returns null if an error occurred that prevented the preprocessed
+    /// entity from being loaded.
+    virtual PreprocessedEntity *ReadPreprocessedEntity(unsigned Index) = 0;
+
     /// \brief Read the preprocessed entity at the given offset.
     virtual PreprocessedEntity *
     ReadPreprocessedEntityAtOffset(uint64_t Offset) = 0;
@@ -286,17 +297,47 @@ namespace clang {
     /// The entries in this vector are loaded lazily from the external source,
     /// and are referenced by the iterator using negative indices.
     std::vector<PreprocessedEntity *> LoadedPreprocessedEntities;
-    
+
+    /// \brief Global (loaded or local) ID for a preprocessed entity.
+    /// Negative values are used to indicate preprocessed entities
+    /// loaded from the external source while non-negative values are used to
+    /// indicate preprocessed entities introduced by the current preprocessor.
+    /// If M is the number of loaded preprocessed entities, value -M
+    /// corresponds to element 0 in the loaded entities vector, position -M+1
+    /// corresponds to element 1 in the loaded entities vector, etc.
+    typedef int PPEntityID;
+
+    PPEntityID getPPEntityID(unsigned Index, bool isLoaded) const {
+      return isLoaded ? PPEntityID(Index) - LoadedPreprocessedEntities.size()
+                      : Index;
+    }
+
     /// \brief Mapping from MacroInfo structures to their definitions.
-    llvm::DenseMap<const MacroInfo *, MacroDefinition *> MacroDefinitions;
+    llvm::DenseMap<const MacroInfo *, PPEntityID> MacroDefinitions;
 
     /// \brief External source of preprocessed entities.
     ExternalPreprocessingRecordSource *ExternalSource;
+
+    /// \brief Retrieve the preprocessed entity at the given ID.
+    PreprocessedEntity *getPreprocessedEntity(PPEntityID PPID);
+
+    /// \brief Retrieve the loaded preprocessed entity at the given index.
+    PreprocessedEntity *getLoadedPreprocessedEntity(unsigned Index);
     
-    /// \brief Whether we have already loaded all of the preallocated entities.
-    mutable bool LoadedPreallocatedEntities;
+    /// \brief Determine the number of preprocessed entities that were
+    /// loaded (or can be loaded) from an external source.
+    unsigned getNumLoadedPreprocessedEntities() const {
+      return LoadedPreprocessedEntities.size();
+    }
     
-    void MaybeLoadPreallocatedEntities() const ;
+    /// \brief Allocate space for a new set of loaded preprocessed entities.
+    ///
+    /// \returns The index into the set of loaded preprocessed entities, which
+    /// corresponds to the first newly-allocated entity.
+    unsigned allocateLoadedEntities(unsigned NumEntities);
+
+    /// \brief Register a new macro definition.
+    void RegisterMacroDefinition(MacroInfo *Macro, PPEntityID PPID);
     
   public:
     /// \brief Construct a new preprocessing record.
@@ -328,7 +369,7 @@ namespace clang {
       /// corresponds to element 0 in the loaded entities vector, position -M+1
       /// corresponds to element 1 in the loaded entities vector, etc. This
       /// gives us a reasonably efficient, source-order walk.
-      int Position;
+      PPEntityID Position;
       
     public:
       typedef PreprocessedEntity *value_type;
@@ -342,20 +383,11 @@ namespace clang {
       iterator(PreprocessingRecord *Self, int Position) 
         : Self(Self), Position(Position) { }
       
-      reference operator*() const {
-        if (Position < 0)
-          return Self->LoadedPreprocessedEntities.end()[Position];
-        return Self->PreprocessedEntities[Position];
-      }
-    
-      pointer operator->() const {
-        if (Position < 0)
-          return &Self->LoadedPreprocessedEntities.end()[Position];
-        
-        return &Self->PreprocessedEntities[Position];        
+      value_type operator*() const {
+        return Self->getPreprocessedEntity(Position);
       }
       
-      reference operator[](difference_type D) {
+      value_type operator[](difference_type D) {
         return *(*this + D);
       }
       
@@ -450,33 +482,6 @@ namespace clang {
       return ExternalSource;
     }
     
-    /// \brief Allocate space for a new set of loaded preprocessed entities.
-    ///
-    /// \returns The index into the set of loaded preprocessed entities, which
-    /// corresponds to the first newly-allocated entity.
-    unsigned allocateLoadedEntities(unsigned NumEntities);
-
-    /// \brief Set the preallocated entry at the given index to the given
-    /// preprocessed entity, which was loaded from the external source.
-    void setLoadedPreallocatedEntity(unsigned Index, 
-                                     PreprocessedEntity *Entity);
-
-    /// \brief Register a new macro definition.
-    void RegisterMacroDefinition(MacroInfo *Macro, MacroDefinition *MD);
-                           
-    /// \brief Retrieve the loaded preprocessed entity at the given index.
-    PreprocessedEntity *getLoadedPreprocessedEntity(unsigned Index) {
-      assert(Index < LoadedPreprocessedEntities.size() && 
-             "Out-of bounds loaded preprocessed entity");
-      return LoadedPreprocessedEntities[Index];
-    }
-    
-    /// \brief Determine the number of preprocessed entities that were
-    /// loaded (or can be loaded) from an external source.
-    unsigned getNumLoadedPreprocessedEntities() const {
-      return LoadedPreprocessedEntities.size();
-    }
-    
     /// \brief Retrieve the macro definition that corresponds to the given
     /// \c MacroInfo.
     MacroDefinition *findMacroDefinition(const MacroInfo *MI);
@@ -493,6 +498,9 @@ namespace clang {
                                     SourceLocation EndLoc,
                                     StringRef SearchPath,
                                     StringRef RelativePath);
+
+    friend class ASTReader;
+    friend class ASTWriter;
   };
 } // end namespace clang
 

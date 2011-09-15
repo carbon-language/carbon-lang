@@ -177,19 +177,8 @@ public:
   /// \brief Remapping table for preprocessed entity IDs in this module.
   ContinuousRangeMap<uint32_t, int, 2> PreprocessedEntityRemap;
   
-  /// \brief The number of macro definitions in this file.
-  unsigned LocalNumMacroDefinitions;
-  
-  /// \brief Offsets of all of the macro definitions in the preprocessing
-  /// record in the AST file.
-  const uint32_t *MacroDefinitionOffsets;
-  
-  /// \brief Base macro definition ID for macro definitions local to this 
-  /// module.
-  serialization::MacroID BaseMacroDefinitionID;
-  
-  /// \brief Remapping table for macro definition IDs in this module.
-  ContinuousRangeMap<uint32_t, int, 2> MacroDefinitionRemap;
+  const uint32_t *PreprocessedEntityOffsets;
+  unsigned NumPreprocessedEntities;
   
   // === Header search information ===
   
@@ -308,10 +297,6 @@ public:
   ///
   /// The dynamic type of this stat cache is always ASTStatCache
   void *StatCache;
-  
-  /// \brief The number of preallocated preprocessing entities in the
-  /// preprocessing record.
-  unsigned NumPreallocatedPreprocessingEntities;
   
   /// \brief List of modules which depend on this module
   llvm::SetVector<Module *> ImportedBy;

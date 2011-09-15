@@ -764,7 +764,7 @@ void ASTWriter::WriteBlockInfoBlock() {
   RECORD(STAT_CACHE);
   RECORD(EXT_VECTOR_DECLS);
   RECORD(VERSION_CONTROL_BRANCH_REVISION);
-  RECORD(MACRO_DEFINITION_OFFSETS);
+  RECORD(PPD_ENTITIES_OFFSETS);
   RECORD(IMPORTS);
   RECORD(REFERENCED_SELECTOR_POOL);
   RECORD(TU_UPDATE_LEXICAL);
@@ -1586,6 +1586,10 @@ static int compareMacroDefinitions(const void *XPtr, const void *YPtr) {
 /// preprocessor.
 ///
 void ASTWriter::WritePreprocessor(const Preprocessor &PP, bool IsModule) {
+  PreprocessingRecord *PPRec = PP.getPreprocessingRecord();
+  if (PPRec)
+    WritePreprocessorDetail(*PPRec);
+
   RecordData Record;
 
   // If the preprocessor __COUNTER__ value has been bumped, remember it.
@@ -1606,7 +1610,6 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP, bool IsModule) {
 
   // Loop over all the macro definitions that are live at the end of the file,
   // emitting each to the PP section.
-  PreprocessingRecord *PPRec = PP.getPreprocessingRecord();
 
   // Construct the list of macro definitions that need to be serialized.
   SmallVector<std::pair<const IdentifierInfo *, MacroInfo *>, 2> 
@@ -1676,7 +1679,7 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP, bool IsModule) {
     // If we have a detailed preprocessing record, record the macro definition
     // ID that corresponds to this macro.
     if (PPRec)
-      Record.push_back(getMacroDefinitionID(PPRec->findMacroDefinition(MI)));
+      Record.push_back(MacroDefinitions[PPRec->findMacroDefinition(MI)]);
 
     Stream.EmitRecord(Code, Record);
     Record.clear();
@@ -1705,15 +1708,14 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP, bool IsModule) {
     ++NumMacros;
   }
   Stream.ExitBlock();
-
-  if (PPRec)
-    WritePreprocessorDetail(*PPRec);
 }
 
 void ASTWriter::WritePreprocessorDetail(PreprocessingRecord &PPRec) {
   if (PPRec.begin(Chain) == PPRec.end(Chain))
     return;
-  
+
+  SmallVector<uint32_t, 64> PreprocessedEntityOffsets;
+
   // Enter the preprocessor block.
   Stream.EnterSubblock(PREPROCESSOR_DETAIL_BLOCK_ID, 3);
 
@@ -1748,30 +1750,18 @@ void ASTWriter::WritePreprocessorDetail(PreprocessingRecord &PPRec) {
        (void)++E, ++NumPreprocessingRecords, ++NextPreprocessorEntityID) {
     Record.clear();
 
+    PreprocessedEntityOffsets.push_back(Stream.GetCurrentBitNo());
+
     if (MacroDefinition *MD = dyn_cast<MacroDefinition>(*E)) {
-      // Record this macro definition's location.
-      MacroID ID = getMacroDefinitionID(MD);
-      
-      // Don't write the macro definition if it is from another AST file.
-      if (ID < FirstMacroID)
-        continue;
+      // Record this macro definition's ID.
+      MacroDefinitions[MD] = NextPreprocessorEntityID;
       
       // Notify the serialization listener that we're serializing this entity.
       if (SerializationListener)
         SerializationListener->SerializedPreprocessedEntity(*E, 
           BitsInChain + Stream.GetCurrentBitNo());
-
-      unsigned Position = ID - FirstMacroID;
-      if (Position != MacroDefinitionOffsets.size()) {
-        if (Position > MacroDefinitionOffsets.size())
-          MacroDefinitionOffsets.resize(Position + 1);
-        
-        MacroDefinitionOffsets[Position] = Stream.GetCurrentBitNo();
-      } else
-        MacroDefinitionOffsets.push_back(Stream.GetCurrentBitNo());
       
       Record.push_back(NextPreprocessorEntityID);
-      Record.push_back(ID);
       AddSourceLocation(MD->getSourceRange().getBegin(), Record);
       AddSourceLocation(MD->getSourceRange().getEnd(), Record);
       AddIdentifierRef(MD->getName(), Record);
@@ -1793,7 +1783,7 @@ void ASTWriter::WritePreprocessorDetail(PreprocessingRecord &PPRec) {
       if (ME->isBuiltinMacro())
         AddIdentifierRef(ME->getName(), Record);
       else
-        Record.push_back(getMacroDefinitionID(ME->getDefinition()));
+        Record.push_back(MacroDefinitions[ME->getDefinition()]);
       Stream.EmitRecord(PPD_MACRO_EXPANSION, Record);
       continue;
     }
@@ -1819,25 +1809,21 @@ void ASTWriter::WritePreprocessorDetail(PreprocessingRecord &PPRec) {
 
   // Write the offsets table for the preprocessing record.
   if (NumPreprocessingRecords > 0) {
+    assert(PreprocessedEntityOffsets.size() == NumPreprocessingRecords);
+
     // Write the offsets table for identifier IDs.
     using namespace llvm;
     BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
-    Abbrev->Add(BitCodeAbbrevOp(MACRO_DEFINITION_OFFSETS));
-    Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // # of records
+    Abbrev->Add(BitCodeAbbrevOp(PPD_ENTITIES_OFFSETS));
     Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // first pp entity
-    Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // # of macro defs
-    Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // first macro def
     Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));
-    unsigned MacroDefOffsetAbbrev = Stream.EmitAbbrev(Abbrev);
+    unsigned PPEOffsetAbbrev = Stream.EmitAbbrev(Abbrev);
 
     Record.clear();
-    Record.push_back(MACRO_DEFINITION_OFFSETS);
-    Record.push_back(NumPreprocessingRecords);
+    Record.push_back(PPD_ENTITIES_OFFSETS);
     Record.push_back(FirstPreprocessorEntityID - NUM_PREDEF_PP_ENTITY_IDS);
-    Record.push_back(MacroDefinitionOffsets.size());
-    Record.push_back(FirstMacroID - NUM_PREDEF_MACRO_IDS);
-    Stream.EmitRecordWithBlob(MacroDefOffsetAbbrev, Record,
-                              data(MacroDefinitionOffsets));
+    Stream.EmitRecordWithBlob(PPEOffsetAbbrev, Record,
+                              data(PreprocessedEntityOffsets));
   }
 }
 
@@ -2737,7 +2723,6 @@ ASTWriter::ASTWriter(llvm::BitstreamWriter &Stream)
     FirstTypeID(NUM_PREDEF_TYPE_IDS), NextTypeID(FirstTypeID),
     FirstIdentID(NUM_PREDEF_IDENT_IDS), NextIdentID(FirstIdentID), 
     FirstSelectorID(NUM_PREDEF_SELECTOR_IDS), NextSelectorID(FirstSelectorID),
-    FirstMacroID(NUM_PREDEF_MACRO_IDS), NextMacroID(FirstMacroID),
     CollectedStmts(&StmtsToEmit),
     NumStatements(0), NumMacros(0), NumLexicalDeclContexts(0),
     NumVisibleDeclContexts(0),
@@ -2950,7 +2935,6 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
         io::Emit32(Out, (*M)->SLocEntryBaseOffset);
         io::Emit32(Out, (*M)->BaseIdentifierID);
         io::Emit32(Out, (*M)->BasePreprocessedEntityID);
-        io::Emit32(Out, (*M)->BaseMacroDefinitionID);
         io::Emit32(Out, (*M)->BaseSelectorID);
         io::Emit32(Out, (*M)->BaseDeclID);
         io::Emit32(Out, (*M)->BaseTypeIndex);
@@ -3228,16 +3212,6 @@ IdentID ASTWriter::getIdentifierRef(const IdentifierInfo *II) {
   IdentID &ID = IdentifierIDs[II];
   if (ID == 0)
     ID = NextIdentID++;
-  return ID;
-}
-
-MacroID ASTWriter::getMacroDefinitionID(MacroDefinition *MD) {
-  if (MD == 0)
-    return 0;
-
-  MacroID &ID = MacroDefinitions[MD];
-  if (ID == 0)
-    ID = NextMacroID++;
   return ID;
 }
 
@@ -3853,7 +3827,6 @@ void ASTWriter::ReaderInitialized(ASTReader *Reader) {
          FirstTypeID == NextTypeID &&
          FirstIdentID == NextIdentID &&
          FirstSelectorID == NextSelectorID &&
-         FirstMacroID == NextMacroID &&
          "Setting chain after writing has started.");
 
   Chain = Reader;
@@ -3862,12 +3835,10 @@ void ASTWriter::ReaderInitialized(ASTReader *Reader) {
   FirstTypeID = NUM_PREDEF_TYPE_IDS + Chain->getTotalNumTypes();
   FirstIdentID = NUM_PREDEF_IDENT_IDS + Chain->getTotalNumIdentifiers();
   FirstSelectorID = NUM_PREDEF_SELECTOR_IDS + Chain->getTotalNumSelectors();
-  FirstMacroID = NUM_PREDEF_MACRO_IDS + Chain->getTotalNumMacroDefinitions();
   NextDeclID = FirstDeclID;
   NextTypeID = FirstTypeID;
   NextIdentID = FirstIdentID;
   NextSelectorID = FirstSelectorID;
-  NextMacroID = FirstMacroID;
 }
 
 void ASTWriter::IdentifierRead(IdentID ID, IdentifierInfo *II) {
@@ -3895,8 +3866,9 @@ void ASTWriter::SelectorRead(SelectorID ID, Selector S) {
   SelectorIDs[S] = ID;
 }
 
-void ASTWriter::MacroDefinitionRead(serialization::MacroID ID,
+void ASTWriter::MacroDefinitionRead(serialization::PreprocessedEntityID ID,
                                     MacroDefinition *MD) {
+  assert(MacroDefinitions.find(MD) == MacroDefinitions.end());
   MacroDefinitions[MD] = ID;
 }
 

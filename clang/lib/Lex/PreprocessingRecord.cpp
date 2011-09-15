@@ -37,17 +37,9 @@ InclusionDirective::InclusionDirective(PreprocessingRecord &PPRec,
   this->FileName = StringRef(Memory, FileName.size());
 }
 
-void PreprocessingRecord::MaybeLoadPreallocatedEntities() const {
-  if (!ExternalSource || LoadedPreallocatedEntities)
-    return;
-  
-  LoadedPreallocatedEntities = true;
-  ExternalSource->ReadPreprocessedEntities();
-}
-
 PreprocessingRecord::PreprocessingRecord(bool IncludeNestedMacroExpansions)
   : IncludeNestedMacroExpansions(IncludeNestedMacroExpansions),
-    ExternalSource(0), LoadedPreallocatedEntities(false)
+    ExternalSource(0)
 {
 }
 
@@ -56,14 +48,10 @@ PreprocessingRecord::begin(bool OnlyLocalEntities) {
   if (OnlyLocalEntities)
     return iterator(this, 0);
   
-  MaybeLoadPreallocatedEntities();
   return iterator(this, -(int)LoadedPreprocessedEntities.size());
 }
 
 PreprocessingRecord::iterator PreprocessingRecord::end(bool OnlyLocalEntities) {
-  if (!OnlyLocalEntities)
-    MaybeLoadPreallocatedEntities();
-  
   return iterator(this, PreprocessedEntities.size());
 }
 
@@ -85,26 +73,49 @@ unsigned PreprocessingRecord::allocateLoadedEntities(unsigned NumEntities) {
   return Result;
 }
 
-void 
-PreprocessingRecord::setLoadedPreallocatedEntity(unsigned Index, 
-                                                 PreprocessedEntity *Entity) {
-  assert(Index < LoadedPreprocessedEntities.size() &&
-         "Out-of-bounds preallocated entity");
-  LoadedPreprocessedEntities[Index] = Entity;
+void PreprocessingRecord::RegisterMacroDefinition(MacroInfo *Macro,
+                                                  PPEntityID PPID) {
+  MacroDefinitions[Macro] = PPID;
 }
 
-void PreprocessingRecord::RegisterMacroDefinition(MacroInfo *Macro, 
-                                                  MacroDefinition *MD) {
-  MacroDefinitions[Macro] = MD;
+/// \brief Retrieve the preprocessed entity at the given ID.
+PreprocessedEntity *PreprocessingRecord::getPreprocessedEntity(PPEntityID PPID){
+  if (PPID < 0) {
+    assert(unsigned(-PPID-1) < LoadedPreprocessedEntities.size() &&
+           "Out-of bounds loaded preprocessed entity");
+    return getLoadedPreprocessedEntity(LoadedPreprocessedEntities.size()+PPID);
+  }
+  assert(unsigned(PPID) < PreprocessedEntities.size() &&
+         "Out-of bounds local preprocessed entity");
+  return PreprocessedEntities[PPID];
+}
+
+/// \brief Retrieve the loaded preprocessed entity at the given index.
+PreprocessedEntity *
+PreprocessingRecord::getLoadedPreprocessedEntity(unsigned Index) {
+  assert(Index < LoadedPreprocessedEntities.size() && 
+         "Out-of bounds loaded preprocessed entity");
+  assert(ExternalSource && "No external source to load from");
+  PreprocessedEntity *&Entity = LoadedPreprocessedEntities[Index];
+  if (!Entity) {
+    Entity = ExternalSource->ReadPreprocessedEntity(Index);
+    if (!Entity) // Failed to load.
+      Entity = new (*this)
+         PreprocessedEntity(PreprocessedEntity::InvalidKind, SourceRange());
+  }
+  return Entity;
 }
 
 MacroDefinition *PreprocessingRecord::findMacroDefinition(const MacroInfo *MI) {
-  llvm::DenseMap<const MacroInfo *, MacroDefinition *>::iterator Pos
+  llvm::DenseMap<const MacroInfo *, PPEntityID>::iterator Pos
     = MacroDefinitions.find(MI);
   if (Pos == MacroDefinitions.end())
     return 0;
   
-  return Pos->second;
+  PreprocessedEntity *Entity = getPreprocessedEntity(Pos->second);
+  if (Entity->isInvalid())
+    return 0;
+  return cast<MacroDefinition>(Entity);
 }
 
 void PreprocessingRecord::MacroExpands(const Token &Id, const MacroInfo* MI,
@@ -127,13 +138,14 @@ void PreprocessingRecord::MacroDefined(const Token &Id,
       = new (*this) MacroDefinition(Id.getIdentifierInfo(),
                                     MI->getDefinitionLoc(),
                                     R);
-  MacroDefinitions[MI] = Def;
   PreprocessedEntities.push_back(Def);
+  MacroDefinitions[MI] = getPPEntityID(PreprocessedEntities.size()-1,
+                                       /*isLoaded=*/false);
 }
 
 void PreprocessingRecord::MacroUndefined(const Token &Id,
                                          const MacroInfo *MI) {
-  llvm::DenseMap<const MacroInfo *, MacroDefinition *>::iterator Pos
+  llvm::DenseMap<const MacroInfo *, PPEntityID>::iterator Pos
     = MacroDefinitions.find(MI);
   if (Pos != MacroDefinitions.end())
     MacroDefinitions.erase(Pos);

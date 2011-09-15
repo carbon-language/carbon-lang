@@ -205,21 +205,11 @@ private:
 
   /// \brief The set of identifiers that had macro definitions at some point.
   std::vector<const IdentifierInfo *> DeserializedMacroNames;
-                    
-  /// \brief The first ID number we can use for our own macro definitions.
-  serialization::MacroID FirstMacroID;
-  
-  /// \brief The decl ID that will be assigned to the next new macro definition.
-  serialization::MacroID NextMacroID;
   
   /// \brief Mapping from macro definitions (as they occur in the preprocessing
   /// record) to the macro IDs.
-  llvm::DenseMap<const MacroDefinition *, serialization::MacroID>
+  llvm::DenseMap<const MacroDefinition *, serialization::PreprocessedEntityID>
       MacroDefinitions;
-  
-  /// \brief Mapping from the macro definition indices in \c MacroDefinitions
-  /// to the corresponding offsets within the preprocessor block.
-  std::vector<uint32_t> MacroDefinitionOffsets;
 
   typedef SmallVector<uint64_t, 2> UpdateRecord;
   typedef llvm::DenseMap<const Decl *, UpdateRecord> DeclUpdateMap;
@@ -461,10 +451,6 @@ public:
            "Identifier does not name a macro");
     return MacroOffsets[II];
   }
-
-  /// \brief Retrieve the ID number corresponding to the given macro 
-  /// definition.
-  serialization::MacroID getMacroDefinitionID(MacroDefinition *MD);
   
   /// \brief Emit a reference to a type.
   void AddTypeRef(QualType T, RecordDataImpl &Record);
@@ -626,7 +612,8 @@ public:
   void TypeRead(serialization::TypeIdx Idx, QualType T);
   void DeclRead(serialization::DeclID ID, const Decl *D);
   void SelectorRead(serialization::SelectorID ID, Selector Sel);
-  void MacroDefinitionRead(serialization::MacroID ID, MacroDefinition *MD);
+  void MacroDefinitionRead(serialization::PreprocessedEntityID ID,
+                           MacroDefinition *MD);
 
   // ASTMutationListener implementation.
   virtual void CompletedTagDefinition(const TagDecl *D);
