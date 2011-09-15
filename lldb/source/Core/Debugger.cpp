@@ -157,6 +157,8 @@ Debugger::Destroy (lldb::DebuggerSP &debugger_sp)
     if (debugger_sp.get() == NULL)
         return;
         
+    debugger_sp->Clear();
+
     Mutex::Locker locker (GetDebuggerListMutex ());
     DebuggerList &debugger_list = GetDebuggerList ();
     DebuggerList::iterator pos, end = debugger_list.end();
@@ -168,7 +170,6 @@ Debugger::Destroy (lldb::DebuggerSP &debugger_sp)
             return;
         }
     }
-
 }
 
 lldb::DebuggerSP
@@ -252,17 +253,28 @@ Debugger::Debugger () :
 
 Debugger::~Debugger ()
 {
+    Clear();
+}
+
+void
+Debugger::Clear()
+{
     CleanUpInputReaders();
     int num_targets = m_target_list.GetNumTargets();
     for (int i = 0; i < num_targets; i++)
     {
         ProcessSP process_sp (m_target_list.GetTargetAtIndex (i)->GetProcessSP());
         if (process_sp)
-            process_sp->Destroy();
+        {
+            if (process_sp->AttachedToProcess())
+                process_sp->Detach();
+            else
+                process_sp->Destroy();
+        }
     }
     DisconnectInput();
-}
 
+}
 
 bool
 Debugger::GetCloseInputOnEOF () const

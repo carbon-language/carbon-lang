@@ -600,6 +600,7 @@ Process::Process(Target &target, Listener &listener) :
     m_stdout_data (),
     m_memory_cache (*this),
     m_allocated_memory_cache (*this),
+    m_attached_to_process (false),
     m_next_event_action_ap()
 {
     UpdateInstanceName();
@@ -2305,6 +2306,7 @@ Process::CompleteAttach ()
 {
     // Let the process subclass figure out at much as it can about the process
     // before we go looking for a dynamic loader plug-in.
+    m_attached_to_process = true;
     DidAttach();
 
     // We just attached.  If we have a platform, ask it for the process architecture, and if it isn't
