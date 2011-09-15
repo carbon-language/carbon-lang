@@ -25,6 +25,10 @@ void DWARFContext::dump(raw_ostream &OS) {
   DWARFDebugArangeSet set;
   while (set.extract(arangesData, &offset))
     set.dump(OS);
+
+  OS << "\n.debug_lines contents:\n";
+  DataExtractor lineData(getLineSection(), isLittleEndian(), 8);
+  DWARFDebugLine::dump(lineData, OS);
 }
 
 const DWARFDebugAbbrev *DWARFContext::getDebugAbbrev() {
@@ -49,6 +53,17 @@ const DWARFDebugAranges *DWARFContext::getDebugAranges() {
   if (Aranges->isEmpty()) // No aranges in file, generate them from the DIEs.
     Aranges->generate(this);
   return Aranges.get();
+}
+
+const DWARFDebugLine *DWARFContext::getDebugLine() {
+  if (Line)
+    return Line.get();
+
+  DataExtractor lineData(getLineSection(), isLittleEndian(), 0);
+
+  Line.reset(new DWARFDebugLine());
+  Line->parse(lineData);
+  return Line.get();
 }
 
 void DWARFContext::parseCompileUnits() {

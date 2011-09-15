@@ -12,6 +12,7 @@
 
 #include "DWARFCompileUnit.h"
 #include "DWARFDebugAranges.h"
+#include "DWARFDebugLine.h"
 #include "llvm/DebugInfo/DIContext.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallVector.h"
@@ -28,6 +29,7 @@ class DWARFContext : public DIContext {
   SmallVector<DWARFCompileUnit, 1> CUs;
   OwningPtr<DWARFDebugAbbrev> Abbrev;
   OwningPtr<DWARFDebugAranges> Aranges;
+  OwningPtr<DWARFDebugLine> Line;
 
   DWARFContext(DWARFContext &); // = delete
   DWARFContext &operator=(DWARFContext &); // = delete
@@ -56,6 +58,9 @@ public:
 
   /// Get a pointer to the parsed DebugAranges object.
   const DWARFDebugAranges *getDebugAranges();
+
+  /// Get a pointer to the parsed DWARFDebugLine object.
+  const DWARFDebugLine *getDebugLine();
 
   bool isLittleEndian() const { return IsLittleEndian; }
 

@@ -79,7 +79,8 @@ static void DumpInput(const StringRef &Filename) {
   OwningPtr<DIContext> dictx(DIContext::getDWARFContext(/*FIXME*/true,
                                                         DebugInfoSection,
                                                         DebugAbbrevSection,
-                                                        DebugArangesSection));
+                                                        DebugArangesSection,
+                                                        DebugLineSection));
   dictx->dump(outs());
 }
 
