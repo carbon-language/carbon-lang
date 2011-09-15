@@ -386,9 +386,6 @@ def rewrite_objc : Flag<"-rewrite-objc">,
   HelpText<"Rewrite ObjC into C (code rewriter example)">;
 def rewrite_macros : Flag<"-rewrite-macros">,
   HelpText<"Expand macros without full preprocessing">;
-
-def create_module : Flag<"-create-module">,
-  HelpText<"Create a module definition file">;
 }
 
 def arcmt_check : Flag<"-arcmt-check">,
