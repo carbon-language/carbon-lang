@@ -477,6 +477,24 @@ _func:
 
 
 @------------------------------------------------------------------------------
+@ IT
+@------------------------------------------------------------------------------
+@ Test encodings of a few full IT blocks, not just the IT instruction
+
+        iteet eq
+        addeq r0, r1, r2
+        nopne
+        subne r5, r6, r7
+        addeq r1, r2, #4
+
+@ CHECK: iteet	eq                      @ encoding: [0x0d,0xbf]
+@ CHECK: addeq	r0, r1, r2              @ encoding: [0x88,0x18]
+@ CHECK: nopne                          @ encoding: [0x00,0xbf]
+@ CHECK: subne	r5, r6, r7              @ encoding: [0xf5,0x1b]
+@ CHECK: addeq	r1, r2, #4              @ encoding: [0x11,0x1d]
+
+
+@------------------------------------------------------------------------------
 @ LDMIA
 @------------------------------------------------------------------------------
         ldmia.w r4, {r4, r5, r8, r9}
@@ -1326,23 +1344,6 @@ _func:
 @ CHECK: pli	[sp, r2, lsl #1]        @ encoding: [0x1d,0xf9,0x12,0xf0]
 @ CHECK: pli	[sp, r2]                @ encoding: [0x1d,0xf9,0x02,0xf0]
 
-
-@------------------------------------------------------------------------------
-@ IT
-@------------------------------------------------------------------------------
-@ Test encodings of a few full IT blocks, not just the IT instruction
-
-        iteet eq
-        addeq r0, r1, r2
-        nopne
-        subne r5, r6, r7
-        addeq r1, r2, #4
-
-@ CHECK: iteet	eq                      @ encoding: [0x0d,0xbf]
-@ CHECK: addeq	r0, r1, r2              @ encoding: [0x88,0x18]
-@ CHECK: nopne                          @ encoding: [0x00,0xbf]
-@ CHECK: subne	r5, r6, r7              @ encoding: [0xf5,0x1b]
-@ CHECK: addeq	r1, r2, #4              @ encoding: [0x11,0x1d]
 
 @------------------------------------------------------------------------------
 @ SUB (register)
