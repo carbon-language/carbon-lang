@@ -59,8 +59,9 @@ public:
   /// Get a pointer to the parsed DebugAranges object.
   const DWARFDebugAranges *getDebugAranges();
 
-  /// Get a pointer to the parsed DWARFDebugLine object.
-  const DWARFDebugLine *getDebugLine();
+  /// Get a pointer to a parsed line table corresponding to a compile unit.
+  const DWARFDebugLine::LineTable *
+  getLineTableForCompileUnit(DWARFCompileUnit *cu);
 
   bool isLittleEndian() const { return IsLittleEndian; }
 

@@ -99,48 +99,10 @@ void DWARFDebugLine::State::appendRowToMatrix(uint32_t offset) {
   Row::postAppend();
 }
 
-void DWARFDebugLine::parse(const DataExtractor debug_line_data) {
-  LineTableMap.clear();
-  uint32_t offset = 0;
-  State state;
-  while (debug_line_data.isValidOffset(offset)) {
-    const uint32_t debug_line_offset = offset;
-
-    if (parseStatementTable(debug_line_data, &offset, state)) {
-      // Make sure we don't don't loop infinitely
-      if (offset <= debug_line_offset)
-        break;
-
-      LineTableMap[debug_line_offset] = state;
-      state.reset();
-    }
-    else
-      ++offset; // Try next byte in line table
-  }
-}
-
 DWARFDebugLine::DumpingState::~DumpingState() {}
 
 void DWARFDebugLine::DumpingState::finalize(uint32_t offset) {
   LineTable::dump(OS);
-}
-
-void DWARFDebugLine::dump(const DataExtractor debug_line_data, raw_ostream &OS){
-  uint32_t offset = 0;
-  DumpingState state(OS);
-    while (debug_line_data.isValidOffset(offset)) {
-    const uint32_t debug_line_offset = offset;
-
-    if (parseStatementTable(debug_line_data, &offset, state)) {
-      // Make sure we don't don't loop infinitely
-      if (offset <= debug_line_offset)
-        break;
-
-      state.reset();
-    }
-    else
-      ++offset; // Try next byte in line table
-  }
 }
 
 const DWARFDebugLine::LineTable *
@@ -149,6 +111,20 @@ DWARFDebugLine::getLineTable(uint32_t offset) const {
   if (pos != LineTableMap.end())
     return &pos->second;
   return 0;
+}
+
+const DWARFDebugLine::LineTable *
+DWARFDebugLine::getOrParseLineTable(DataExtractor debug_line_data,
+                                    uint32_t offset) {
+  LineTableIter pos = LineTableMap.find(offset);
+  if (pos == LineTableMap.end()) {
+    // Parse and cache the line table for at this offset.
+    State state;
+    if (!parseStatementTable(debug_line_data, &offset, state))
+      return 0;
+    pos->second = state;
+  }
+  return &pos->second;
 }
 
 bool

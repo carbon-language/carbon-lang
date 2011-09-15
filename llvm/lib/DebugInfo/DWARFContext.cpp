@@ -77,15 +77,25 @@ const DWARFDebugAranges *DWARFContext::getDebugAranges() {
   return Aranges.get();
 }
 
-const DWARFDebugLine *DWARFContext::getDebugLine() {
-  if (Line)
-    return Line.get();
+const DWARFDebugLine::LineTable *
+DWARFContext::getLineTableForCompileUnit(DWARFCompileUnit *cu) {
+  if (!Line)
+    Line.reset(new DWARFDebugLine());
 
-  DataExtractor lineData(getLineSection(), isLittleEndian(), 0);
+  unsigned stmtOffset =
+    cu->getCompileUnitDIE()->getAttributeValueAsUnsigned(cu, DW_AT_stmt_list,
+                                                         -1U);
+  if (stmtOffset == -1U)
+    return 0; // No line table for this compile unit.
 
-  Line.reset(new DWARFDebugLine());
-  Line->parse(lineData);
-  return Line.get();
+  // See if the line table is cached.
+  if (const DWARFDebugLine::LineTable *lt = Line->getLineTable(stmtOffset))
+    return lt;
+
+  // We have to parse it first.
+  DataExtractor lineData(getLineSection(), isLittleEndian(),
+                         cu->getAddressByteSize());
+  return Line->getOrParseLineTable(lineData, stmtOffset);
 }
 
 void DWARFContext::parseCompileUnits() {

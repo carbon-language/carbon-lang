@@ -147,7 +147,7 @@ public:
       DoneParsingLineTable = -1
     };
 
-    State() : row(0) {}
+    State() : row(StartParsingLineTable) {}
     virtual ~State();
 
     virtual void appendRowToMatrix(uint32_t offset);
@@ -173,15 +173,9 @@ public:
   static bool parseStatementTable(DataExtractor debug_line_data,
                                   uint32_t *offset_ptr, State &state);
 
-  /// Parse all information in the debug_line_data into an internal
-  /// representation.
-  void parse(DataExtractor debug_line_data);
-  void parseIfNeeded(DataExtractor debug_line_data) {
-    if (LineTableMap.empty())
-      parse(debug_line_data);
-  }
-  static void dump(DataExtractor debug_line_data, raw_ostream &OS);
   const LineTable *getLineTable(uint32_t offset) const;
+  const LineTable *getOrParseLineTable(DataExtractor debug_line_data,
+                                       uint32_t offset);
 
 private:
   typedef std::map<uint32_t, LineTable> LineTableMapTy;
