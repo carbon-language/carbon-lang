@@ -394,7 +394,7 @@ DWARFDebugLine::parseStatementTable(DataExtractor debug_line_data,
         // of such opcodes because they are specified in the prologue
         // as a multiple of LEB128 operands for each opcode.
         {
-          assert(opcode - 1 < prologue->StandardOpcodeLengths.size());
+          assert(opcode - 1U < prologue->StandardOpcodeLengths.size());
           uint8_t opcode_length = prologue->StandardOpcodeLengths[opcode - 1];
           for (uint8_t i=0; i<opcode_length; ++i)
             debug_line_data.getULEB128(offset_ptr);
