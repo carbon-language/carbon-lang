@@ -962,6 +962,9 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
       unsigned MaskVal = Shuffle->getMaskValue(i);
       if (MaskVal == -1u) {
         UndefElts.setBit(i);
+      } else if (!DemandedElts[i]) {
+        NewUndefElts = true;
+        UndefElts.setBit(i);
       } else if (MaskVal < LHSVWidth) {
         if (UndefElts4[MaskVal]) {
           NewUndefElts = true;

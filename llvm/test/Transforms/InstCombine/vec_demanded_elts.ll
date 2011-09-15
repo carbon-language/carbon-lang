@@ -152,3 +152,14 @@ entry:
 	ret <4 x i32> %0
 }
 declare <4 x i32> @llvm.x86.sse41.pmovzxwd(<8 x i16>) nounwind readnone
+
+define <4 x float> @dead_shuffle_elt(<4 x float> %x, <2 x float> %y) nounwind {
+entry:
+; CHECK: define <4 x float> @dead_shuffle_elt
+; CHECK: shufflevector <2 x float> %y, <2 x float> undef, <4 x i32> <i32 0, i32 1, i32 undef, i32 undef>
+  %shuffle.i = shufflevector <2 x float> %y, <2 x float> %y, <4 x i32> <i32 0, i32 1, i32 0, i32 1>
+  %shuffle9.i = shufflevector <4 x float> %x, <4 x float> %shuffle.i, <4 x i32> <i32 4, i32 5, i32 2, i32 3>
+  ret <4 x float> %shuffle9.i
+}
+
+
