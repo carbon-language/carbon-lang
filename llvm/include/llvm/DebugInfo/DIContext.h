@@ -16,6 +16,7 @@
 #define LLVM_DEBUGINFO_DICONTEXT_H
 
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/DataTypes.h"
 
 namespace llvm {
 
