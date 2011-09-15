@@ -1440,8 +1440,8 @@ Lforward:
         setend be
         setend le
 
-        sel	r9, r2, r1              @ encoding: [0xb1,0x9f,0x82,0xe6]
-        selne	r9, r2, r1              @ encoding: [0xb1,0x9f,0x82,0x16]
+@ CHECK: setend	be                      @ encoding: [0x00,0x02,0x01,0xf1]
+@ CHECK: setend	le                      @ encoding: [0x00,0x00,0x01,0xf1]
 
 
 @------------------------------------------------------------------------------
@@ -1981,12 +1981,9 @@ Lforward:
 
 @ CHECK: sxtab	r2, r3, r4              @ encoding: [0x74,0x20,0xa3,0xe6]
 @ CHECK: sxtab	r4, r5, r6              @ encoding: [0x76,0x40,0xa5,0xe6]
-@ CHECK: sxtablt	r6, r2, r9, ror #8
-                                        @ encoding: [0x79,0x64,0xa2,0xb6]
-@ CHECK: sxtab	r5, r1, r4, ror #16
-                                        @ encoding: [0x74,0x58,0xa1,0xe6]
-@ CHECK: sxtab	r7, r8, r3, ror #24
-                                        @ encoding: [0x73,0x7c,0xa8,0xe6]
+@ CHECK: sxtablt r6, r2, r9, ror #8     @ encoding: [0x79,0x64,0xa2,0xb6]
+@ CHECK: sxtab	r5, r1, r4, ror #16     @ encoding: [0x74,0x58,0xa1,0xe6]
+@ CHECK: sxtab	r7, r8, r3, ror #24     @ encoding: [0x73,0x7c,0xa8,0xe6]
 
 
 @------------------------------------------------------------------------------
@@ -2000,12 +1997,9 @@ Lforward:
 
 @ CHECK: sxtab16ge	r0, r1, r4      @ encoding: [0x74,0x00,0x81,0xa6]
 @ CHECK: sxtab16	r6, r2, r7      @ encoding: [0x77,0x60,0x82,0xe6]
-@ CHECK: sxtab16	r3, r5, r8, ror #8
-                                        @ encoding: [0x78,0x34,0x85,0xe6]
-@ CHECK: sxtab16	r3, r2, r1, ror #16
-                                        @ encoding: [0x71,0x38,0x82,0xe6]
-@ CHECK: sxtab16eq	r1, r2, r3, ror #24
-                                        @ encoding: [0x73,0x1c,0x82,0x06]
+@ CHECK: sxtab16 r3, r5, r8, ror #8     @ encoding: [0x78,0x34,0x85,0xe6]
+@ CHECK: sxtab16 r3, r2, r1, ror #16    @ encoding: [0x71,0x38,0x82,0xe6]
+@ CHECK: sxtab16eq r1, r2, r3, ror #24  @ encoding: [0x73,0x1c,0x82,0x06]
 
 @------------------------------------------------------------------------------
 @ SXTAH
@@ -2018,12 +2012,9 @@ Lforward:
 
 @ CHECK: sxtah	r1, r3, r9              @ encoding: [0x79,0x10,0xb3,0xe6]
 @ CHECK: sxtahhi	r6, r1, r6      @ encoding: [0x76,0x60,0xb1,0x86]
-@ CHECK: sxtah	r3, r8, r3, ror #8
-                                        @ encoding: [0x73,0x34,0xb8,0xe6]
-@ CHECK: sxtahlo	r2, r2, r4, ror #16
-                                        @ encoding: [0x74,0x28,0xb2,0x36]
-@ CHECK: sxtah	r9, r3, r3, ror #24
-                                        @ encoding: [0x73,0x9c,0xb3,0xe6]
+@ CHECK: sxtah	r3, r8, r3, ror #8      @ encoding: [0x73,0x34,0xb8,0xe6]
+@ CHECK: sxtahlo r2, r2, r4, ror #16    @ encoding: [0x74,0x28,0xb2,0x36]
+@ CHECK: sxtah	r9, r3, r3, ror #24     @ encoding: [0x73,0x9c,0xb3,0xe6]
 
 @------------------------------------------------------------------------------
 @ SXTB
@@ -2036,12 +2027,9 @@ Lforward:
 
 @ CHECK: sxtbge	r2, r4                  @ encoding: [0x74,0x20,0xaf,0xa6]
 @ CHECK: sxtb	r5, r6                  @ encoding: [0x76,0x50,0xaf,0xe6]
-@ CHECK: sxtb	r6, r9, ror #8
-                                        @ encoding: [0x79,0x64,0xaf,0xe6]
-@ CHECK: sxtblo	r5, r1, ror #16
-                                        @ encoding: [0x71,0x58,0xaf,0x36]
-@ CHECK: sxtb	r8, r3, ror #24
-                                        @ encoding: [0x73,0x8c,0xaf,0xe6]
+@ CHECK: sxtb	r6, r9, ror #8          @ encoding: [0x79,0x64,0xaf,0xe6]
+@ CHECK: sxtblo	r5, r1, ror #16         @ encoding: [0x71,0x58,0xaf,0x36]
+@ CHECK: sxtb	r8, r3, ror #24         @ encoding: [0x73,0x8c,0xaf,0xe6]
 
 
 @------------------------------------------------------------------------------
@@ -2055,12 +2043,9 @@ Lforward:
 
 @ CHECK: sxtb16	r1, r4                  @ encoding: [0x74,0x10,0x8f,0xe6]
 @ CHECK: sxtb16	r6, r7                  @ encoding: [0x77,0x60,0x8f,0xe6]
-@ CHECK: sxtb16hs	r3, r5, ror #8
-                                        @ encoding: [0x75,0x34,0x8f,0x26]
-@ CHECK: sxtb16	r3, r1, ror #16
-                                        @ encoding: [0x71,0x38,0x8f,0xe6]
-@ CHECK: sxtb16ge	r2, r3, ror #24
-                                        @ encoding: [0x73,0x2c,0x8f,0xa6]
+@ CHECK: sxtb16hs	r3, r5, ror #8  @ encoding: [0x75,0x34,0x8f,0x26]
+@ CHECK: sxtb16	r3, r1, ror #16         @ encoding: [0x71,0x38,0x8f,0xe6]
+@ CHECK: sxtb16ge	r2, r3, ror #24 @ encoding: [0x73,0x2c,0x8f,0xa6]
 
 
 @------------------------------------------------------------------------------
@@ -2074,12 +2059,9 @@ Lforward:
 
 @ CHECK: sxthne	r3, r9                  @ encoding: [0x79,0x30,0xbf,0x16]
 @ CHECK: sxth	r1, r6                  @ encoding: [0x76,0x10,0xbf,0xe6]
-@ CHECK: sxth	r3, r8, ror #8
-                                        @ encoding: [0x78,0x34,0xbf,0xe6]
-@ CHECK: sxthle	r2, r2, ror #16
-                                        @ encoding: [0x72,0x28,0xbf,0xd6]
-@ CHECK: sxth	r9, r3, ror #24
-                                        @ encoding: [0x73,0x9c,0xbf,0xe6]
+@ CHECK: sxth	r3, r8, ror #8          @ encoding: [0x78,0x34,0xbf,0xe6]
+@ CHECK: sxthle	r2, r2, ror #16         @ encoding: [0x72,0x28,0xbf,0xd6]
+@ CHECK: sxth	r9, r3, ror #24         @ encoding: [0x73,0x9c,0xbf,0xe6]
 
 
 @------------------------------------------------------------------------------
@@ -2376,12 +2358,9 @@ Lforward:
 
 @ CHECK: uxtab	r2, r3, r4              @ encoding: [0x74,0x20,0xe3,0xe6]
 @ CHECK: uxtab	r4, r5, r6              @ encoding: [0x76,0x40,0xe5,0xe6]
-@ CHECK: uxtablt	r6, r2, r9, ror #8
-                                        @ encoding: [0x79,0x64,0xe2,0xb6]
-@ CHECK: uxtab	r5, r1, r4, ror #16
-                                        @ encoding: [0x74,0x58,0xe1,0xe6]
-@ CHECK: uxtab	r7, r8, r3, ror #24
-                                        @ encoding: [0x73,0x7c,0xe8,0xe6]
+@ CHECK: uxtablt r6, r2, r9, ror #8     @ encoding: [0x79,0x64,0xe2,0xb6]
+@ CHECK: uxtab	r5, r1, r4, ror #16     @ encoding: [0x74,0x58,0xe1,0xe6]
+@ CHECK: uxtab	r7, r8, r3, ror #24     @ encoding: [0x73,0x7c,0xe8,0xe6]
 
 
 @------------------------------------------------------------------------------
@@ -2395,12 +2374,9 @@ Lforward:
 
 @ CHECK: uxtab16ge	r0, r1, r4      @ encoding: [0x74,0x00,0xc1,0xa6]
 @ CHECK: uxtab16	r6, r2, r7      @ encoding: [0x77,0x60,0xc2,0xe6]
-@ CHECK: uxtab16	r3, r5, r8, ror #8
-                                        @ encoding: [0x78,0x34,0xc5,0xe6]
-@ CHECK: uxtab16	r3, r2, r1, ror #16
-                                        @ encoding: [0x71,0x38,0xc2,0xe6]
-@ CHECK: uxtab16eq	r1, r2, r3, ror #24
-                                        @ encoding: [0x73,0x1c,0xc2,0x06]
+@ CHECK: uxtab16	r3, r5, r8, ror #8 @ encoding: [0x78,0x34,0xc5,0xe6]
+@ CHECK: uxtab16	r3, r2, r1, ror #16 @ encoding: [0x71,0x38,0xc2,0xe6]
+@ CHECK: uxtab16eq	r1, r2, r3, ror #24 @ encoding: [0x73,0x1c,0xc2,0x06]
 
 @------------------------------------------------------------------------------
 @ UXTAH
@@ -2413,12 +2389,9 @@ Lforward:
 
 @ CHECK: uxtah	r1, r3, r9              @ encoding: [0x79,0x10,0xf3,0xe6]
 @ CHECK: uxtahhi	r6, r1, r6      @ encoding: [0x76,0x60,0xf1,0x86]
-@ CHECK: uxtah	r3, r8, r3, ror #8
-                                        @ encoding: [0x73,0x34,0xf8,0xe6]
-@ CHECK: uxtahlo	r2, r2, r4, ror #16
-                                        @ encoding: [0x74,0x28,0xf2,0x36]
-@ CHECK: uxtah	r9, r3, r3, ror #24
-                                        @ encoding: [0x73,0x9c,0xf3,0xe6]
+@ CHECK: uxtah	r3, r8, r3, ror #8      @ encoding: [0x73,0x34,0xf8,0xe6]
+@ CHECK: uxtahlo	r2, r2, r4, ror #16 @ encoding: [0x74,0x28,0xf2,0x36]
+@ CHECK: uxtah	r9, r3, r3, ror #24     @ encoding: [0x73,0x9c,0xf3,0xe6]
 
 @------------------------------------------------------------------------------
 @ UXTB
@@ -2431,12 +2404,9 @@ Lforward:
 
 @ CHECK: uxtbge	r2, r4                  @ encoding: [0x74,0x20,0xef,0xa6]
 @ CHECK: uxtb	r5, r6                  @ encoding: [0x76,0x50,0xef,0xe6]
-@ CHECK: uxtb	r6, r9, ror #8
-                                        @ encoding: [0x79,0x64,0xef,0xe6]
-@ CHECK: uxtblo	r5, r1, ror #16
-                                        @ encoding: [0x71,0x58,0xef,0x36]
-@ CHECK: uxtb	r8, r3, ror #24
-                                        @ encoding: [0x73,0x8c,0xef,0xe6]
+@ CHECK: uxtb	r6, r9, ror #8          @ encoding: [0x79,0x64,0xef,0xe6]
+@ CHECK: uxtblo	r5, r1, ror #16         @ encoding: [0x71,0x58,0xef,0x36]
+@ CHECK: uxtb	r8, r3, ror #24         @ encoding: [0x73,0x8c,0xef,0xe6]
 
 
 @------------------------------------------------------------------------------
@@ -2450,12 +2420,9 @@ Lforward:
 
 @ CHECK: uxtb16	r1, r4                  @ encoding: [0x74,0x10,0xcf,0xe6]
 @ CHECK: uxtb16	r6, r7                  @ encoding: [0x77,0x60,0xcf,0xe6]
-@ CHECK: uxtb16hs	r3, r5, ror #8
-                                        @ encoding: [0x75,0x34,0xcf,0x26]
-@ CHECK: uxtb16	r3, r1, ror #16
-                                        @ encoding: [0x71,0x38,0xcf,0xe6]
-@ CHECK: uxtb16ge	r2, r3, ror #24
-                                        @ encoding: [0x73,0x2c,0xcf,0xa6]
+@ CHECK: uxtb16hs	r3, r5, ror #8  @ encoding: [0x75,0x34,0xcf,0x26]
+@ CHECK: uxtb16	r3, r1, ror #16         @ encoding: [0x71,0x38,0xcf,0xe6]
+@ CHECK: uxtb16ge	r2, r3, ror #24 @ encoding: [0x73,0x2c,0xcf,0xa6]
 
 
 @------------------------------------------------------------------------------
@@ -2469,12 +2436,9 @@ Lforward:
 
 @ CHECK: uxthne	r3, r9                  @ encoding: [0x79,0x30,0xff,0x16]
 @ CHECK: uxth	r1, r6                  @ encoding: [0x76,0x10,0xff,0xe6]
-@ CHECK: uxth	r3, r8, ror #8
-                                        @ encoding: [0x78,0x34,0xff,0xe6]
-@ CHECK: uxthle	r2, r2, ror #16
-                                        @ encoding: [0x72,0x28,0xff,0xd6]
-@ CHECK: uxth	r9, r3, ror #24
-                                        @ encoding: [0x73,0x9c,0xff,0xe6]
+@ CHECK: uxth	r3, r8, ror #8          @ encoding: [0x78,0x34,0xff,0xe6]
+@ CHECK: uxthle	r2, r2, ror #16         @ encoding: [0x72,0x28,0xff,0xd6]
+@ CHECK: uxth	r9, r3, ror #24         @ encoding: [0x73,0x9c,0xff,0xe6]
 
 @------------------------------------------------------------------------------
 @ WFE/WFI/YIELD

@@ -1450,11 +1450,11 @@ _func:
         rev16ne r1, r2
         rev16ne r1, r8
 
-	rev16.w	r1, r2                  @ encoding: [0x92,0xfa,0x92,0xf1]
-	rev16.w	r2, r8                  @ encoding: [0x98,0xfa,0x98,0xf2]
-	itt	ne                      @ encoding: [0x1c,0xbf]
-	rev16ne	r1, r2                  @ encoding: [0x51,0xba]
-	rev16ne.w	r1, r8          @ encoding: [0x98,0xfa,0x98,0xf1]
+@ CHECK: rev16.w r1, r2                 @ encoding: [0x92,0xfa,0x92,0xf1]
+@ CHECK: rev16.w r2, r8                 @ encoding: [0x98,0xfa,0x98,0xf2]
+@ CHECK: itt	ne                      @ encoding: [0x1c,0xbf]
+@ CHECK: rev16ne r1, r2                 @ encoding: [0x51,0xba]
+@ CHECK: rev16ne.w	r1, r8          @ encoding: [0x98,0xfa,0x98,0xf1]
 
 
 @------------------------------------------------------------------------------
@@ -1466,11 +1466,11 @@ _func:
         revshne r1, r2
         revshne r1, r8
 
-	revsh.w	r1, r2                  @ encoding: [0x92,0xfa,0xb2,0xf1]
-	revsh.w	r2, r8                  @ encoding: [0x98,0xfa,0xb8,0xf2]
-	itt	ne                      @ encoding: [0x1c,0xbf]
-	revshne	r1, r2                  @ encoding: [0xd1,0xba]
-	revshne.w	r1, r8          @ encoding: [0x98,0xfa,0xb8,0xf1]
+@ CHECK: revsh.w r1, r2                 @ encoding: [0x92,0xfa,0xb2,0xf1]
+@ CHECK: revsh.w r2, r8                 @ encoding: [0x98,0xfa,0xb8,0xf2]
+@ CHECK: itt	ne                      @ encoding: [0x1c,0xbf]
+@ CHECK: revshne r1, r2                 @ encoding: [0xd1,0xba]
+@ CHECK: revshne.w	r1, r8          @ encoding: [0x98,0xfa,0xb8,0xf1]
 
 
 @------------------------------------------------------------------------------
