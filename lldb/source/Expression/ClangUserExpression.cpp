@@ -614,6 +614,9 @@ ClangUserExpression::EvaluateWithError (ExecutionContext &exe_ctx,
             return execution_results;
         }
     }
+    
+    if (exe_ctx.process == NULL)
+        execution_policy = eExecutionPolicyNever;
         
     if (execution_policy != eExecutionPolicyNever && !exe_ctx.process->GetDynamicCheckers())
     {
