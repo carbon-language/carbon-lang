@@ -28,6 +28,7 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -44,6 +45,9 @@ STATISTIC(NumFoldedLoads,     "Number of folded loads");
 STATISTIC(NumRemats,          "Number of rematerialized defs for spilling");
 STATISTIC(NumOmitReloadSpill, "Number of omitted spills of reloads");
 STATISTIC(NumHoists,          "Number of hoisted spills");
+
+static cl::opt<bool> DisableHoisting("disable-spill-hoist", cl::Hidden,
+                                     cl::desc("Disable inline spill hoisting"));
 
 namespace {
 class InlineSpiller : public Spiller {
@@ -367,7 +371,7 @@ void InlineSpiller::propagateSiblingValue(SibValueMap::iterator SVI,
 
     // Should this value be propagated as a preferred spill candidate?  We don't
     // propagate values of registers that are about to spill.
-    bool PropSpill = !isRegToSpill(SV.SpillReg);
+    bool PropSpill = !DisableHoisting && !isRegToSpill(SV.SpillReg);
     unsigned SpillDepth = ~0u;
 
     for (TinyPtrVector<VNInfo*>::iterator DepI = Deps->begin(),
