@@ -1346,6 +1346,74 @@ _func:
 
 
 @------------------------------------------------------------------------------
+@ QADD/QADD16/QADD8
+@------------------------------------------------------------------------------
+        qadd r1, r2, r3
+        qadd16 r1, r2, r3
+        qadd8 r1, r2, r3
+        itte gt
+        qaddgt r1, r2, r3
+        qadd16gt r1, r2, r3
+        qadd8le r1, r2, r3
+
+@ CHECK: qadd	r1, r2, r3              @ encoding: [0x83,0xfa,0x82,0xf1]
+@ CHECK: qadd16	r1, r2, r3              @ encoding: [0x92,0xfa,0x13,0xf1]
+@ CHECK: qadd8	r1, r2, r3              @ encoding: [0x82,0xfa,0x13,0xf1]
+@ CHECK: itte	gt                      @ encoding: [0xc6,0xbf]
+@ CHECK: qaddgt	r1, r2, r3              @ encoding: [0x83,0xfa,0x82,0xf1]
+@ CHECK: qadd16gt r1, r2, r3            @ encoding: [0x92,0xfa,0x13,0xf1]
+@ CHECK: qadd8le r1, r2, r3             @ encoding: [0x82,0xfa,0x13,0xf1]
+
+
+@------------------------------------------------------------------------------
+@ QDADD/QDSUB
+@------------------------------------------------------------------------------
+        qdadd r6, r7, r8
+        qdsub r6, r7, r8
+        itt hi
+        qdaddhi r6, r7, r8
+        qdsubhi r6, r7, r8
+
+@ CHECK: qdadd	r6, r7, r8              @ encoding: [0x88,0xfa,0x97,0xf6]
+@ CHECK: qdsub	r6, r7, r8              @ encoding: [0x88,0xfa,0xb7,0xf6]
+@ CHECK: itt	hi                      @ encoding: [0x84,0xbf]
+@ CHECK: qdaddhi r6, r7, r8             @ encoding: [0x88,0xfa,0x97,0xf6]
+@ CHECK: qdsubhi r6, r7, r8             @ encoding: [0x88,0xfa,0xb7,0xf6]
+
+
+@------------------------------------------------------------------------------
+@ QSAX
+@------------------------------------------------------------------------------
+        qsax r9, r12, r0
+        it eq
+        qsaxeq r9, r12, r0
+
+@ CHECK: qsax	r9, r12, r0             @ encoding: [0xec,0xfa,0x10,0xf9]
+@ CHECK: it	eq                      @ encoding: [0x08,0xbf]
+@ CHECK: qsaxeq	r9, r12, r0             @ encoding: [0xec,0xfa,0x10,0xf9]
+
+
+@------------------------------------------------------------------------------
+@ QSUB/QSUB16/QSUB8
+@------------------------------------------------------------------------------
+        qsub r1, r2, r3
+        qsub16 r1, r2, r3
+        qsub8 r1, r2, r3
+        itet le
+        qsuble r1, r2, r3
+        qsub16gt r1, r2, r3
+        qsub8le r1, r2, r3
+
+@ CHECK: qsub	r1, r2, r3              @ encoding: [0x83,0xfa,0xa2,0xf1]
+@ CHECK: qsub16	r1, r2, r3              @ encoding: [0xd2,0xfa,0x13,0xf1]
+@ CHECK: qsub8	r1, r2, r3              @ encoding: [0xc2,0xfa,0x13,0xf1]
+@ CHECK: itet	le                      @ encoding: [0xd6,0xbf]
+@ CHECK: qsuble	r1, r2, r3              @ encoding: [0x83,0xfa,0xa2,0xf1]
+@ CHECK: qsub16gt	r1, r2, r3      @ encoding: [0xd2,0xfa,0x13,0xf1]
+@ CHECK: qsub8le r1, r2, r3             @ encoding: [0xc2,0xfa,0x13,0xf1]
+
+
+@------------------------------------------------------------------------------
 @ SUB (register)
 @------------------------------------------------------------------------------
         sub.w r5, r2, r12, rrx
