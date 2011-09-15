@@ -189,6 +189,16 @@ WatchpointLocationList::GetDescription (Stream *s, lldb::DescriptionLevel level)
 }
 
 void
+WatchpointLocationList::ClearAllWatchpointLocations ()
+{
+    Mutex::Locker locker(m_mutex);
+    addr_map::iterator pos, end = m_address_to_location.end();
+
+    for (pos = m_address_to_location.begin(); pos != end; ++pos)
+        m_address_to_location.erase(pos);        
+}
+
+void
 WatchpointLocationList::GetListMutex (Mutex::Locker &locker)
 {
     return locker.Reset (m_mutex.GetMutex());

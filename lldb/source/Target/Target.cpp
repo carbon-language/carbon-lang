@@ -124,6 +124,7 @@ Target::DeleteCurrentProcess ()
         // clean up needs some help from the process.
         m_breakpoint_list.ClearAllBreakpointSites();
         m_internal_breakpoint_list.ClearAllBreakpointSites();
+        m_watchpoint_location_list.ClearAllWatchpointLocations();
         m_process_sp.reset();
     }
 }

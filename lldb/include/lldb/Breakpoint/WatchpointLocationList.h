@@ -174,6 +174,9 @@ public:
     GetDescription (Stream *s,
                     lldb::DescriptionLevel level);
 
+    void
+    ClearAllWatchpointLocations ();
+    
     //------------------------------------------------------------------
     /// Sets the passed in Locker to hold the Watchpoint Location List mutex.
     ///
