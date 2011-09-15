@@ -200,6 +200,8 @@ DWARFDebugLine::parseStatementTable(DataExtractor debug_line_data,
   const uint32_t end_offset = debug_line_offset + prologue->TotalLength +
                               sizeof(prologue->TotalLength);
 
+  state.reset();
+
   while (*offset_ptr < end_offset) {
     uint8_t opcode = debug_line_data.getU8(offset_ptr);
 

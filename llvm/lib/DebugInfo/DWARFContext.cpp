@@ -141,10 +141,8 @@ DWARFCompileUnit *DWARFContext::getCompileUnitForOffset(uint32_t offset) {
 }
 
 DILineInfo DWARFContext::getLineInfoForAddress(uint64_t address) {
-  // First, get the index for the arange.
-  uint32_t arangeIndex = getDebugAranges()->findAddress(address);
-  // From there, get the offset of the compile unit.
-  uint32_t cuOffset = getDebugAranges()->offsetAtIndex(arangeIndex);
+  // First, get the offset of the compile unit.
+  uint32_t cuOffset = getDebugAranges()->findAddress(address);
   // Retrieve the compile unit.
   DWARFCompileUnit *cu = getCompileUnitForOffset(cuOffset);
   if (!cu)

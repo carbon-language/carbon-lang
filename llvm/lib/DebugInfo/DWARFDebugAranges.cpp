@@ -100,7 +100,7 @@ void DWARFDebugAranges::dump(raw_ostream &OS) const {
   const uint32_t num_ranges = getNumRanges();
   for (uint32_t i = 0; i < num_ranges; ++i) {
     const Range &range = Aranges[i];
-    OS << format("0x%8.8x: [0x%8.8llx - 0x%8.8llx)", range.Offset,
+    OS << format("0x%8.8x: [0x%8.8llx - 0x%8.8llx)\n", range.Offset,
                  (uint64_t)range.LoPC, (uint64_t)range.HiPC());
   }
 }
