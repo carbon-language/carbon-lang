@@ -4092,6 +4092,7 @@ void ASTReader::StartTranslationUnit(ASTConsumer *Consumer) {
     // passing to the consumer.
     GetDecl(ExternalDefinitions[I]);
   }
+  ExternalDefinitions.clear();
 
   PassInterestingDeclsToConsumer();
 }

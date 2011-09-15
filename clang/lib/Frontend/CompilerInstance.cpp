@@ -756,6 +756,8 @@ ModuleKey CompilerInstance::loadModule(SourceLocation ImportLoc,
     getASTContext().setExternalSource(Source);
     if (hasSema())
       ModuleManager->InitializeSema(getSema());
+    if (hasASTConsumer())
+      ModuleManager->StartTranslationUnit(&getASTConsumer());
   }
   
   // Try to load the module we found.
