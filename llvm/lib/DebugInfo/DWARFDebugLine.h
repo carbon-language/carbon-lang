@@ -79,7 +79,6 @@ public:
       IncludeDirectories.clear();
       FileNames.clear();
     }
-    bool getFile(uint32_t file_idx, std::string& file, std::string& dir) const;
   };
 
   // Standard .debug_line state machine structure.
@@ -182,7 +181,7 @@ public:
   static void dump(DataExtractor debug_line_data, raw_ostream &OS);
   const LineTable *getLineTable(uint32_t offset) const;
 
-protected:
+private:
   typedef std::map<uint32_t, LineTable> LineTableMapTy;
   typedef LineTableMapTy::iterator LineTableIter;
   typedef LineTableMapTy::const_iterator LineTableConstIter;

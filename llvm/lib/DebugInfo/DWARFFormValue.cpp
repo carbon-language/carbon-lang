@@ -79,76 +79,76 @@ DWARFFormValue::getFixedFormSizesForAddressSize(uint8_t addr_size) {
 
 bool
 DWARFFormValue::extractValue(DataExtractor data, uint32_t *offset_ptr,
-                             const DWARFCompileUnit* cu) {
+                             const DWARFCompileUnit *cu) {
   bool indirect = false;
   bool is_block = false;
   Value.data = NULL;
   // Read the value for the form into value and follow and DW_FORM_indirect
   // instances we run into
   do {
-      indirect = false;
-      switch (Form) {
-      case DW_FORM_addr:
-      case DW_FORM_ref_addr:
-        Value.uval = data.getUnsigned(offset_ptr, cu->getAddressByteSize());
-        break;
-      case DW_FORM_block:
-        Value.uval = data.getULEB128(offset_ptr);
-        is_block = true;
-        break;
-      case DW_FORM_block1:
-        Value.uval = data.getU8(offset_ptr);
-        is_block = true;
-        break;
-      case DW_FORM_block2:
-        Value.uval = data.getU16(offset_ptr);
-        is_block = true;
-        break;
-      case DW_FORM_block4:
-        Value.uval = data.getU32(offset_ptr);
-        is_block = true;
-        break;
-      case DW_FORM_data1:
-      case DW_FORM_ref1:
-      case DW_FORM_flag:
-        Value.uval = data.getU8(offset_ptr);
-        break;
-      case DW_FORM_data2:
-      case DW_FORM_ref2:
-        Value.uval = data.getU16(offset_ptr);
-        break;
-      case DW_FORM_data4:
-      case DW_FORM_ref4:
-        Value.uval = data.getU32(offset_ptr);
-        break;
-      case DW_FORM_data8:
-      case DW_FORM_ref8:
-        Value.uval = data.getU64(offset_ptr);
-        break;
-      case DW_FORM_sdata:
-        Value.sval = data.getSLEB128(offset_ptr);
-        break;
-      case DW_FORM_strp:
-        Value.uval = data.getU32(offset_ptr);
-        break;
-      case DW_FORM_udata:
-      case DW_FORM_ref_udata:
-        Value.uval = data.getULEB128(offset_ptr);
-        break;
-      case DW_FORM_string:
-        Value.cstr = data.getCStr(offset_ptr);
-        // Set the string value to also be the data for inlined cstr form
-        // values only so we can tell the differnence between DW_FORM_string
-        // and DW_FORM_strp form values
-        Value.data = (uint8_t*)Value.cstr;
-        break;
-      case DW_FORM_indirect:
-        Form = data.getULEB128(offset_ptr);
-        indirect = true;
-        break;
-      default:
-        return false;
-      }
+    indirect = false;
+    switch (Form) {
+    case DW_FORM_addr:
+    case DW_FORM_ref_addr:
+      Value.uval = data.getUnsigned(offset_ptr, cu->getAddressByteSize());
+      break;
+    case DW_FORM_block:
+      Value.uval = data.getULEB128(offset_ptr);
+      is_block = true;
+      break;
+    case DW_FORM_block1:
+      Value.uval = data.getU8(offset_ptr);
+      is_block = true;
+      break;
+    case DW_FORM_block2:
+      Value.uval = data.getU16(offset_ptr);
+      is_block = true;
+      break;
+    case DW_FORM_block4:
+      Value.uval = data.getU32(offset_ptr);
+      is_block = true;
+      break;
+    case DW_FORM_data1:
+    case DW_FORM_ref1:
+    case DW_FORM_flag:
+      Value.uval = data.getU8(offset_ptr);
+      break;
+    case DW_FORM_data2:
+    case DW_FORM_ref2:
+      Value.uval = data.getU16(offset_ptr);
+      break;
+    case DW_FORM_data4:
+    case DW_FORM_ref4:
+      Value.uval = data.getU32(offset_ptr);
+      break;
+    case DW_FORM_data8:
+    case DW_FORM_ref8:
+      Value.uval = data.getU64(offset_ptr);
+      break;
+    case DW_FORM_sdata:
+      Value.sval = data.getSLEB128(offset_ptr);
+      break;
+    case DW_FORM_strp:
+      Value.uval = data.getU32(offset_ptr);
+      break;
+    case DW_FORM_udata:
+    case DW_FORM_ref_udata:
+      Value.uval = data.getULEB128(offset_ptr);
+      break;
+    case DW_FORM_string:
+      Value.cstr = data.getCStr(offset_ptr);
+      // Set the string value to also be the data for inlined cstr form
+      // values only so we can tell the differnence between DW_FORM_string
+      // and DW_FORM_strp form values
+      Value.data = (uint8_t*)Value.cstr;
+      break;
+    case DW_FORM_indirect:
+      Form = data.getULEB128(offset_ptr);
+      indirect = true;
+      break;
+    default:
+      return false;
+    }
   } while (indirect);
 
   if (is_block) {
@@ -165,7 +165,7 @@ DWARFFormValue::extractValue(DataExtractor data, uint32_t *offset_ptr,
 
 bool
 DWARFFormValue::skipValue(DataExtractor debug_info_data, uint32_t* offset_ptr,
-                          const DWARFCompileUnit* cu) const {
+                          const DWARFCompileUnit *cu) const {
   return DWARFFormValue::skipValue(Form, debug_info_data, offset_ptr, cu);
 }
 
@@ -382,25 +382,25 @@ uint64_t DWARFFormValue::getReference(const DWARFCompileUnit *cu) const {
 }
 
 bool
-DWARFFormValue::resolveCompileUnitReferences(const DWARFCompileUnit* cu) {
-    switch (Form) {
-    case DW_FORM_ref1:
-    case DW_FORM_ref2:
-    case DW_FORM_ref4:
-    case DW_FORM_ref8:
-    case DW_FORM_ref_udata:
-      Value.uval += cu->getOffset();
-      Form = DW_FORM_ref_addr;
-      return true;
-    default:
-      break;
-    }
-    return false;
+DWARFFormValue::resolveCompileUnitReferences(const DWARFCompileUnit *cu) {
+  switch (Form) {
+  case DW_FORM_ref1:
+  case DW_FORM_ref2:
+  case DW_FORM_ref4:
+  case DW_FORM_ref8:
+  case DW_FORM_ref_udata:
+    Value.uval += cu->getOffset();
+    Form = DW_FORM_ref_addr;
+    return true;
+  default:
+    break;
+  }
+  return false;
 }
 
 const uint8_t *DWARFFormValue::BlockData() const {
   if (!isInlinedCStr())
-      return Value.data;
+    return Value.data;
   return NULL;
 }
 
