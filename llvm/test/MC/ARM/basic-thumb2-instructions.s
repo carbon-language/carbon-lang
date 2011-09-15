@@ -1474,6 +1474,44 @@ _func:
 
 
 @------------------------------------------------------------------------------
+@ ROR (immediate)
+@------------------------------------------------------------------------------
+        ror r2, r3, #12
+        rors r8, r3, #31
+        rors.w r2, r3, #1
+        ror r2, r3, #4
+        rors r2, r12, #15
+
+        ror r3, #19
+        rors r8, #2
+        rors.w r7, #5
+        ror.w r12, #21
+
+@ CHECK: ror.w	r2, r3, #12             @ encoding: [0x4f,0xea,0x33,0x32]
+@ CHECK: rors.w	r8, r3, #31             @ encoding: [0x5f,0xea,0xf3,0x78]
+@ CHECK: rors.w	r2, r3, #1              @ encoding: [0x5f,0xea,0x73,0x02]
+@ CHECK: ror.w	r2, r3, #4              @ encoding: [0x4f,0xea,0x33,0x12]
+@ CHECK: rors.w	r2, r12, #15            @ encoding: [0x5f,0xea,0xfc,0x32]
+
+@ CHECK: ror.w	r3, r3, #19             @ encoding: [0x4f,0xea,0xf3,0x43]
+@ CHECK: rors.w	r8, r8, #2              @ encoding: [0x5f,0xea,0xb8,0x08]
+@ CHECK: rors.w	r7, r7, #5              @ encoding: [0x5f,0xea,0x77,0x17]
+@ CHECK: ror.w	r12, r12, #21           @ encoding: [0x4f,0xea,0x7c,0x5c]
+
+
+@------------------------------------------------------------------------------
+@ ROR (register)
+@------------------------------------------------------------------------------
+        ror r3, r4, r2
+        ror.w r1, r2
+        rors r3, r4, r8
+
+@ CHECK: ror.w	r3, r4, r2              @ encoding: [0x64,0xfa,0x02,0xf3]
+@ CHECK: ror.w	r1, r1, r2              @ encoding: [0x61,0xfa,0x02,0xf1]
+@ CHECK: rors.w	r3, r4, r8              @ encoding: [0x74,0xfa,0x08,0xf3]
+
+
+@------------------------------------------------------------------------------
 @ SUB (register)
 @------------------------------------------------------------------------------
         sub.w r5, r2, r12, rrx
