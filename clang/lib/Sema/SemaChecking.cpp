@@ -2504,11 +2504,11 @@ do {
 /// Check for comparisons of floating point operands using != and ==.
 /// Issue a warning if these are no self-comparisons, as they are not likely
 /// to do what the programmer intended.
-void Sema::CheckFloatComparison(SourceLocation loc, Expr* lex, Expr *rex) {
+void Sema::CheckFloatComparison(SourceLocation Loc, Expr* LHS, Expr *RHS) {
   bool EmitWarning = true;
 
-  Expr* LeftExprSansParen = lex->IgnoreParenImpCasts();
-  Expr* RightExprSansParen = rex->IgnoreParenImpCasts();
+  Expr* LeftExprSansParen = LHS->IgnoreParenImpCasts();
+  Expr* RightExprSansParen = RHS->IgnoreParenImpCasts();
 
   // Special case: check for x == x (which is OK).
   // Do not emit warnings for such cases.
@@ -2547,8 +2547,8 @@ void Sema::CheckFloatComparison(SourceLocation loc, Expr* lex, Expr *rex) {
 
   // Emit the diagnostic.
   if (EmitWarning)
-    Diag(loc, diag::warn_floatingpoint_eq)
-      << lex->getSourceRange() << rex->getSourceRange();
+    Diag(Loc, diag::warn_floatingpoint_eq)
+      << LHS->getSourceRange() << RHS->getSourceRange();
 }
 
 //===--- CHECK: Integer mixed-sign comparisons (-Wsign-compare) --------===//
@@ -3013,10 +3013,7 @@ void AnalyzeImpConvsInComparison(Sema &S, BinaryOperator *E) {
 
 /// \brief Implements -Wsign-compare.
 ///
-/// \param lex the left-hand expression
-/// \param rex the right-hand expression
-/// \param OpLoc the location of the joining operator
-/// \param BinOpc binary opcode or 0
+/// \param E the binary operator to check for warnings
 void AnalyzeComparison(Sema &S, BinaryOperator *E) {
   // The type the comparison is being performed in.
   QualType T = E->getLHS()->getType();
@@ -3033,20 +3030,20 @@ void AnalyzeComparison(Sema &S, BinaryOperator *E) {
       || E->isValueDependent() || E->isIntegerConstantExpr(S.Context))
     return AnalyzeImpConvsInComparison(S, E);
 
-  Expr *lex = E->getLHS()->IgnoreParenImpCasts();
-  Expr *rex = E->getRHS()->IgnoreParenImpCasts();
+  Expr *LHS = E->getLHS()->IgnoreParenImpCasts();
+  Expr *RHS = E->getRHS()->IgnoreParenImpCasts();
 
   // Check to see if one of the (unmodified) operands is of different
   // signedness.
   Expr *signedOperand, *unsignedOperand;
-  if (lex->getType()->hasSignedIntegerRepresentation()) {
-    assert(!rex->getType()->hasSignedIntegerRepresentation() &&
+  if (LHS->getType()->hasSignedIntegerRepresentation()) {
+    assert(!RHS->getType()->hasSignedIntegerRepresentation() &&
            "unsigned comparison between two signed integer expressions?");
-    signedOperand = lex;
-    unsignedOperand = rex;
-  } else if (rex->getType()->hasSignedIntegerRepresentation()) {
-    signedOperand = rex;
-    unsignedOperand = lex;
+    signedOperand = LHS;
+    unsignedOperand = RHS;
+  } else if (RHS->getType()->hasSignedIntegerRepresentation()) {
+    signedOperand = RHS;
+    unsignedOperand = LHS;
   } else {
     CheckTrivialUnsignedComparison(S, E);
     return AnalyzeImpConvsInComparison(S, E);
@@ -3057,8 +3054,8 @@ void AnalyzeComparison(Sema &S, BinaryOperator *E) {
 
   // Go ahead and analyze implicit conversions in the operands.  Note
   // that we skip the implicit conversions on both sides.
-  AnalyzeImplicitConversions(S, lex, E->getOperatorLoc());
-  AnalyzeImplicitConversions(S, rex, E->getOperatorLoc());
+  AnalyzeImplicitConversions(S, LHS, E->getOperatorLoc());
+  AnalyzeImplicitConversions(S, RHS, E->getOperatorLoc());
 
   // If the signed range is non-negative, -Wsign-compare won't fire,
   // but we should still check for comparisons which are always true
@@ -3083,8 +3080,8 @@ void AnalyzeComparison(Sema &S, BinaryOperator *E) {
   }
 
   S.Diag(E->getOperatorLoc(), diag::warn_mixed_sign_comparison)
-    << lex->getType() << rex->getType()
-    << lex->getSourceRange() << rex->getSourceRange();
+    << LHS->getType() << RHS->getType()
+    << LHS->getSourceRange() << RHS->getSourceRange();
 }
 
 /// Analyzes an attempt to assign the given value to a bitfield.

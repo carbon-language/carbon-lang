@@ -5614,7 +5614,7 @@ public:
   QualType InvalidOperands(SourceLocation Loc, ExprResult &LHS,
                            ExprResult &RHS);
   QualType CheckPointerToMemberOperands( // C++ 5.5
-    ExprResult &lex, ExprResult &rex, ExprValueKind &VK,
+    ExprResult &LHS, ExprResult &RHS, ExprValueKind &VK,
     SourceLocation OpLoc, bool isIndirect);
   QualType CheckMultiplyDivideOperands( // C99 6.5.5
     ExprResult &LHS, ExprResult &RHS, SourceLocation Loc, bool IsCompAssign,
@@ -6059,7 +6059,7 @@ private:
 
   void CheckReturnStackAddr(Expr *RetValExp, QualType lhsType,
                             SourceLocation ReturnLoc);
-  void CheckFloatComparison(SourceLocation loc, Expr* lex, Expr* rex);
+  void CheckFloatComparison(SourceLocation Loc, Expr* LHS, Expr* RHS);
   void CheckImplicitConversions(Expr *E, SourceLocation CC = SourceLocation());
 
   void CheckBitFieldInitialization(SourceLocation InitLoc, FieldDecl *Field,
