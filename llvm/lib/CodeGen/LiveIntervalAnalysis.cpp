@@ -747,6 +747,9 @@ bool LiveIntervals::shrinkToUses(LiveInterval *li,
   // Find all the values used, including PHI kills.
   SmallVector<std::pair<SlotIndex, VNInfo*>, 16> WorkList;
 
+  // Blocks that have already been added to WorkList as live-out.
+  SmallPtrSet<MachineBasicBlock*, 16> LiveOut;
+
   // Visit all instructions reading li->reg.
   for (MachineRegisterInfo::reg_iterator I = mri_->reg_begin(li->reg);
        MachineInstr *UseMI = I.skipInstruction();) {
@@ -780,8 +783,6 @@ bool LiveIntervals::shrinkToUses(LiveInterval *li,
     VNInfo *VNI = *I;
     if (VNI->isUnused())
       continue;
-    // We may eliminate PHI values, so recompute PHIKill flags.
-    VNI->setHasPHIKill(false);
     NewLI.addRange(LiveRange(VNI->def, VNI->def.getNextSlot(), VNI));
 
     // A use tied to an early-clobber def ends at the load slot and isn't caught
@@ -813,13 +814,12 @@ bool LiveIntervals::shrinkToUses(LiveInterval *li,
       // The PHI is live, make sure the predecessors are live-out.
       for (MachineBasicBlock::const_pred_iterator PI = MBB->pred_begin(),
            PE = MBB->pred_end(); PI != PE; ++PI) {
+        if (!LiveOut.insert(*PI))
+          continue;
         SlotIndex Stop = getMBBEndIdx(*PI).getPrevSlot();
-        VNInfo *PVNI = li->getVNInfoAt(Stop);
         // A predecessor is not required to have a live-out value for a PHI.
-        if (PVNI) {
-          PVNI->setHasPHIKill(true);
+        if (VNInfo *PVNI = li->getVNInfoAt(Stop))
           WorkList.push_back(std::make_pair(Stop, PVNI));
-        }
       }
       continue;
     }
@@ -831,6 +831,8 @@ bool LiveIntervals::shrinkToUses(LiveInterval *li,
     // Make sure VNI is live-out from the predecessors.
     for (MachineBasicBlock::const_pred_iterator PI = MBB->pred_begin(),
          PE = MBB->pred_end(); PI != PE; ++PI) {
+      if (!LiveOut.insert(*PI))
+        continue;
       SlotIndex Stop = getMBBEndIdx(*PI).getPrevSlot();
       assert(li->getVNInfoAt(Stop) == VNI && "Wrong value out of predecessor");
       WorkList.push_back(std::make_pair(Stop, VNI));
