@@ -562,7 +562,9 @@ public:
              CommandReturnObject &result)
     {
         Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
-        bool synchronous_execution = m_interpreter.GetSynchronous ();
+        // N.B. The attach should be synchronous.  It doesn't help much to get the prompt back between initiating the attach
+        // and the target actually stopping.  So even if the interpreter is set to be asynchronous, we wait for the stop
+        // ourselves here.
         
         Process *process = m_interpreter.GetExecutionContext().process;
         StateType state = eStateInvalid;
@@ -671,19 +673,11 @@ public:
                     // Otherwise just return.  
                     // FIXME: in the async case it will now be possible to get to the command
                     // interpreter with a state eStateAttaching.  Make sure we handle that correctly.
-                    if (synchronous_execution)
-                    {
-                        StateType state = process->WaitForProcessToStop (NULL);
+                    StateType state = process->WaitForProcessToStop (NULL);
 
-                        result.SetDidChangeProcessState (true);
-                        result.AppendMessageWithFormat ("Process %i %s\n", process->GetID(), StateAsCString (state));
-                        result.SetStatus (eReturnStatusSuccessFinishNoResult);
-                    }
-                    else
-                    {
-                        result.SetDidChangeProcessState (true);
-                        result.SetStatus (eReturnStatusSuccessFinishNoResult);
-                    }
+                    result.SetDidChangeProcessState (true);
+                    result.AppendMessageWithFormat ("Process %i %s\n", process->GetID(), StateAsCString (state));
+                    result.SetStatus (eReturnStatusSuccessFinishNoResult);
                 }
                 else
                 {
@@ -731,20 +725,11 @@ public:
                                                          error.AsCString());
                             result.SetStatus (eReturnStatusFailed);
                         }
-                        // See comment for synchronous_execution above.
-                        if (synchronous_execution)
-                        {
-                            StateType state = process->WaitForProcessToStop (NULL);
+                        StateType state = process->WaitForProcessToStop (NULL);
 
-                            result.SetDidChangeProcessState (true);
-                            result.AppendMessageWithFormat ("Process %i %s\n", process->GetID(), StateAsCString (state));
-                            result.SetStatus (eReturnStatusSuccessFinishNoResult);
-                        }
-                        else
-                        {
-                            result.SetDidChangeProcessState (true);
-                            result.SetStatus (eReturnStatusSuccessFinishNoResult);
-                        }
+                        result.SetDidChangeProcessState (true);
+                        result.AppendMessageWithFormat ("Process %i %s\n", process->GetID(), StateAsCString (state));
+                        result.SetStatus (eReturnStatusSuccessFinishNoResult);
                     }
                     else
                     {
