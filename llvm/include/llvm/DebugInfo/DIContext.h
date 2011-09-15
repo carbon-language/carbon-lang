@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines DIContext, and abstract data structure that holds
+// This file defines DIContext, an abstract data structure that holds
 // debug information data.
 //
 //===----------------------------------------------------------------------===//
@@ -20,6 +20,20 @@
 namespace llvm {
 
 class raw_ostream;
+
+/// DILineInfo - a format-neutral container for source line information.
+class DILineInfo {
+  const char *FileName;
+  uint32_t Line;
+  uint32_t Column;
+public:
+  DILineInfo(const char *fileName, uint32_t line, uint32_t column)
+    : FileName(fileName), Line(line), Column(column) {}
+
+  const char *getFileName() const { return FileName; }
+  uint32_t getLine() const { return Line; }
+  uint32_t getColumn() const { return Column; }
+};
 
 class DIContext {
 public:
@@ -34,6 +48,8 @@ public:
                                     StringRef stringSection = StringRef());
 
   virtual void dump(raw_ostream &OS) = 0;
+
+  virtual DILineInfo getLineInfoForAddress(uint64_t address) = 0;
 };
 
 }

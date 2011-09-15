@@ -122,7 +122,9 @@ DWARFDebugLine::getOrParseLineTable(DataExtractor debug_line_data,
     State state;
     if (!parseStatementTable(debug_line_data, &offset, state))
       return 0;
-    pos->second = state;
+    // FIXME: double lookup.
+    LineTableMap[offset] = state;
+    return &LineTableMap[offset];
   }
   return &pos->second;
 }

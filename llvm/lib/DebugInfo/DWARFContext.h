@@ -53,6 +53,9 @@ public:
     return &CUs[index];
   }
 
+  /// Return the compile unit that includes an offset (relative to .debug_info).
+  DWARFCompileUnit *getCompileUnitForOffset(uint32_t offset);
+
   /// Get a pointer to the parsed DebugAbbrev object.
   const DWARFDebugAbbrev *getDebugAbbrev();
 
@@ -62,6 +65,8 @@ public:
   /// Get a pointer to a parsed line table corresponding to a compile unit.
   const DWARFDebugLine::LineTable *
   getLineTableForCompileUnit(DWARFCompileUnit *cu);
+
+  virtual DILineInfo getLineInfoForAddress(uint64_t address);
 
   bool isLittleEndian() const { return IsLittleEndian; }
 
