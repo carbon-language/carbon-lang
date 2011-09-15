@@ -41,6 +41,10 @@ public:
   ///
   virtual void printInst(const MCInst *MI, raw_ostream &OS) = 0;
 
+  /// printAnnotations - Print the annotation comments attached to specified
+  /// MCInst to the specified raw_ostream.
+  void printAnnotations(const MCInst *MI, raw_ostream &OS);
+
   /// getOpcodeName - Return the name of the specified opcode enum (e.g.
   /// "MOV32ri") or empty if we can't resolve it.
   virtual StringRef getOpcodeName(unsigned Opcode) const;

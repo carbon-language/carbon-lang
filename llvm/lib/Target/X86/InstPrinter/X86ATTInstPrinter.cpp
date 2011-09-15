@@ -45,8 +45,10 @@ void X86ATTInstPrinter::printInst(const MCInst *MI, raw_ostream &OS) {
     printInstruction(MI, OS);
   
   // If verbose assembly is enabled, we can print some informative comments.
-  if (CommentStream)
+  if (CommentStream) {
+    printAnnotations(MI, *CommentStream);
     EmitAnyX86InstComments(MI, *CommentStream, getRegisterName);
+  }
 }
 
 StringRef X86ATTInstPrinter::getOpcodeName(unsigned Opcode) const {

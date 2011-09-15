@@ -129,6 +129,7 @@ public:
 class MCInst {
   unsigned Opcode;
   SmallVector<MCOperand, 8> Operands;
+  SmallVector<std::string, 1> Annotations;
 public:
   MCInst() : Opcode(0) {}
 
@@ -144,7 +145,15 @@ public:
     Operands.push_back(Op);
   }
 
-  void clear() { Operands.clear(); }
+  void addAnnotation(const std::string &Annot) {
+    Annotations.push_back(Annot);
+  }
+
+  void clear() {
+    Operands.clear();
+    Annotations.clear();
+  }
+
   size_t size() { return Operands.size(); }
 
   typedef SmallVector<MCOperand, 8>::iterator iterator;
@@ -153,6 +162,9 @@ public:
   iterator insert(iterator I, const MCOperand &Op) {
     return Operands.insert(I, Op);
   }
+
+  size_t getNumAnnotations() const { return Annotations.size(); }
+  std::string getAnnotation(size_t i) const { return Annotations[i]; }
 
   void print(raw_ostream &OS, const MCAsmInfo *MAI) const;
   void dump() const;
