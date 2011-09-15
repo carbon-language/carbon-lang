@@ -84,11 +84,7 @@ _mm_hsub_pd(__m128d a, __m128d b)
   return __builtin_ia32_hsubpd(a, b);
 }
 
-static __inline__ __m128d __attribute__((__always_inline__, __nodebug__))
-_mm_loaddup_pd(double const *dp)
-{
-  return (__m128d){ *dp, *dp };
-}
+#define        _mm_loaddup_pd(dp)        _mm_load1_pd(dp)
 
 static __inline__ __m128d __attribute__((__always_inline__, __nodebug__))
 _mm_movedup_pd(__m128d a)
