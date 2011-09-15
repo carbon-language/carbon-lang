@@ -4942,6 +4942,9 @@ def : MnemonicAlias<"srsfd", "srsia">;
 def : MnemonicAlias<"srsed", "srsib">;
 def : MnemonicAlias<"srs", "srsia">;
 
+// QSAX == QSUBADDX
+def : MnemonicAlias<"qsubaddx", "qsax">;
+
 // LDRSBT/LDRHT/LDRSHT post-index offset if optional.
 // Note that the write-back output register is a dummy operand for MC (it's
 // only meaningful for codegen), so we just pass zero here.
