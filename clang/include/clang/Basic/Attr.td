@@ -602,15 +602,19 @@ def SharedLockFunction : InheritableAttr {
   let LateParsed = 1;
 }
 
+// The first argument is an integer or boolean value specifying the return value
+// of a successful lock acquisition.
 def ExclusiveTrylockFunction : InheritableAttr {
   let Spellings = ["exclusive_trylock_function"];
-  let Args = [VariadicExprArgument<"Args">];
+  let Args = [ExprArgument<"SuccessValue">, VariadicExprArgument<"Args">];
   let LateParsed = 1;
 }
 
+// The first argument is an integer or boolean value specifying the return value
+// of a successful lock acquisition.
 def SharedTrylockFunction : InheritableAttr {
   let Spellings = ["shared_trylock_function"];
-  let Args = [VariadicExprArgument<"Args">];
+  let Args = [ExprArgument<"SuccessValue">, VariadicExprArgument<"Args">];
   let LateParsed = 1;
 }
 

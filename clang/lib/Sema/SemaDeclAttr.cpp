@@ -540,23 +540,23 @@ static void handleTrylockFunAttr(Sema &S, Decl *D, const AttributeList &Attr,
   }
 
   SmallVector<Expr*, 2> Args;
-  Args.push_back(Attr.getArg(0)); //FIXME
   // check that all arguments are lockable objects
   if (!checkAttrArgsAreLockableObjs(S, D, Attr, Args, 1))
     return;
 
   unsigned Size = Args.size();
-  assert(Size == Attr.getNumArgs());
   Expr **StartArg = Size == 0 ? 0 : &Args[0];
 
   if (exclusive)
     D->addAttr(::new (S.Context) ExclusiveTrylockFunctionAttr(Attr.getRange(),
                                                               S.Context,
+                                                              Attr.getArg(0),
                                                               StartArg, Size));
   else
     D->addAttr(::new (S.Context) SharedTrylockFunctionAttr(Attr.getRange(),
-                                                           S.Context, StartArg,
-                                                           Size));
+                                                           S.Context,
+                                                           Attr.getArg(0),
+                                                           StartArg, Size));
 }
 
 static void handleLocksRequiredAttr(Sema &S, Decl *D, const AttributeList &Attr,
