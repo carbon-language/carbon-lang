@@ -35,6 +35,10 @@ static cl::list<std::string>
 InputFilenames(cl::Positional, cl::desc("<input object files>"),
                cl::ZeroOrMore);
 
+static cl::opt<unsigned long long>
+Address("address", cl::init(-1ULL),
+        cl::desc("Print line information for a given address"));
+
 static void DumpInput(const StringRef &Filename) {
   OwningPtr<MemoryBuffer> Buff;
 
@@ -44,10 +48,6 @@ static void DumpInput(const StringRef &Filename) {
   }
 
   OwningPtr<ObjectFile> Obj(ObjectFile::createObjectFile(Buff.take()));
-
-  outs() << '\n';
-  outs() << Filename
-         << ":\tfile format " << Obj->getFileFormatName() << "\n\n";
 
   StringRef DebugInfoSection;
   StringRef DebugAbbrevSection;
@@ -85,7 +85,17 @@ static void DumpInput(const StringRef &Filename) {
                                                         DebugArangesSection,
                                                         DebugLineSection,
                                                         DebugStringSection));
-  dictx->dump(outs());
+  if (Address == -1ULL) {
+    outs() << Filename
+           << ":\tfile format " << Obj->getFileFormatName() << "\n\n";
+    // Dump the complete DWARF structure.
+    dictx->dump(outs());
+  } else {
+    // Print line info for the specified address.
+    DILineInfo dli = dictx->getLineInfoForAddress(Address);
+    outs() << (dli.getFileName() ? dli.getFileName() : "<unknown>") << ':'
+           << dli.getLine() << ':' << dli.getColumn() << '\n';
+  }
 }
 
 int main(int argc, char **argv) {
