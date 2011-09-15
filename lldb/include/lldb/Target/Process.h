@@ -1364,58 +1364,13 @@ public:
     
     virtual Error
     ConnectRemote (const char *remote_url);
-    //------------------------------------------------------------------
-    /// List the processes matching the given partial name.
-    ///
-    /// FIXME: Is it too heavyweight to create an entire process object to do this?
-    /// The problem is for remote processes we're going to have to set up the same transport
-    /// to get this data as to actually attach.  So we need to factor out transport
-    /// and process before we can do this separately from the process.
-    ///
-    /// @param[in] name
-    ///     A partial name to match against the current process list.
-    ///
-    /// @param[out] matches
-    ///     The list of process names matching \a name.
-    ///
-    /// @param[in] pids
-    ///     A vector filled with the pids that correspond to the names in \a matches.
-    ///
-    /// @return
-    ///     Returns the number of matching processes.
-    //------------------------------------------------------------------
 
-//    virtual uint32_t
-//    ListProcessesMatchingName (const char *name, StringList &matches, std::vector<lldb::pid_t> &pids);
+    bool
+    AttachedToProcess() const
+    {
+        return m_attached_to_process;
+    }
     
-    //------------------------------------------------------------------
-    /// Find the architecture of a process by pid.
-    ///
-    /// FIXME: See comment for ListProcessesMatchingName.
-    ///
-    /// @param[in] pid
-    ///     A pid to inspect.
-    ///
-    /// @return
-    ///     Returns the architecture of the process or an invalid architecture if the process can't be found.
-    //------------------------------------------------------------------
-//    virtual ArchSpec
-//    GetArchSpecForExistingProcess (lldb::pid_t pid);
-    
-    //------------------------------------------------------------------
-    /// Find the architecture of a process by name.
-    ///
-    /// FIXME: See comment for ListProcessesMatchingName.
-    ///
-    /// @param[in] process_name
-    ///     The process name to inspect.
-    ///
-    /// @return
-    ///     Returns the architecture of the process or an invalid architecture if the process can't be found.
-    //------------------------------------------------------------------
-//    virtual ArchSpec
-//    GetArchSpecForExistingProcess (const char *process_name);
-
     //------------------------------------------------------------------
     /// Get the image information address for the current process.
     ///
@@ -2810,6 +2765,7 @@ protected:
     std::string                 m_stdout_data;
     MemoryCache                 m_memory_cache;
     AllocatedMemoryCache        m_allocated_memory_cache;
+    bool                        m_attached_to_process;   /// Did we launch the process or attach to it?
 
     typedef std::map<lldb::LanguageType, lldb::LanguageRuntimeSP> LanguageRuntimeCollection; 
     LanguageRuntimeCollection m_language_runtimes;

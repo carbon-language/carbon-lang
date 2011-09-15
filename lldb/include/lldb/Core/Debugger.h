@@ -276,6 +276,8 @@ public:
     Destroy (lldb::DebuggerSP &debugger_sp);
 
     ~Debugger ();
+    
+    void Clear();
 
     lldb::DebuggerSP
     GetSP ();

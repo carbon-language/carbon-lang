@@ -69,18 +69,33 @@ typedef struct
 
 static OptionDefinition g_options[] =
 {
-    { LLDB_OPT_SET_1,    true , "help"           , 'h', no_argument      , NULL,  eArgTypeNone,         "Prints out the usage information for the LLDB debugger." },
-    { LLDB_OPT_SET_2,    true , "version"        , 'v', no_argument      , NULL,  eArgTypeNone,         "Prints out the current version number of the LLDB debugger." },
-    { LLDB_OPT_SET_3,    true , "arch"           , 'a', required_argument, NULL,  eArgTypeArchitecture, "Tells the debugger to use the specified architecture when starting and running the program.  <architecture> must be one of the architectures for which the program was compiled." },
-    { LLDB_OPT_SET_3,    true , "file"           , 'f', required_argument, NULL,  eArgTypeFilename,     "Tells the debugger to use the file <filename> as the program to be debugged." },
-    { LLDB_OPT_SET_4,    true , "attach-name"    , 'n', required_argument, NULL,  eArgTypeProcessName,  "Tells the debugger to attach to a process with the given name." },
-    { LLDB_OPT_SET_4,    true , "wait-for"       , 'w', no_argument      , NULL,  eArgTypeNone,         "Tells the debugger to wait for a process with the given pid or name to launch before attaching." },
-    { LLDB_OPT_SET_5,    true , "attach-pid"     , 'p', required_argument, NULL,  eArgTypePid,          "Tells the debugger to attach to a process with the given pid." },
-    { LLDB_3_TO_5,       false, "script-language", 'l', required_argument, NULL,  eArgTypeScriptLang,   "Tells the debugger to use the specified scripting language for user-defined scripts, rather than the default.  Valid scripting languages that can be specified include Python, Perl, Ruby and Tcl.  Currently only the Python extensions have been implemented." },
-    { LLDB_3_TO_5,       false, "debug"          , 'd', no_argument      , NULL,  eArgTypeNone,         "Tells the debugger to print out extra information for debugging itself." },
-    { LLDB_3_TO_5,       false, "source"         , 's', required_argument, NULL,  eArgTypeFilename,     "Tells the debugger to read in and execute the file <file>, which should contain lldb commands." },
-    { LLDB_3_TO_5,       false, "editor"         , 'e', no_argument      , NULL,  eArgTypeNone,         "Tells the debugger to open source files using the host's \"external editor\" mechanism." },
-    { LLDB_3_TO_5,       false, "no-lldbinit"    , 'x', no_argument      , NULL,  eArgTypeNone,         "Do not automatically parse any '.lldbinit' files." },
+    { LLDB_OPT_SET_1,    true , "help"           , 'h', no_argument      , NULL,  eArgTypeNone,         
+        "Prints out the usage information for the LLDB debugger." },
+    { LLDB_OPT_SET_2,    true , "version"        , 'v', no_argument      , NULL,  eArgTypeNone,         
+        "Prints out the current version number of the LLDB debugger." },
+    { LLDB_OPT_SET_3,    true , "arch"           , 'a', required_argument, NULL,  eArgTypeArchitecture, 
+        "Tells the debugger to use the specified architecture when starting and running the program.  <architecture> must "
+        "be one of the architectures for which the program was compiled." },
+    { LLDB_OPT_SET_3,    true , "file"           , 'f', required_argument, NULL,  eArgTypeFilename,     
+        "Tells the debugger to use the file <filename> as the program to be debugged." },
+    { LLDB_OPT_SET_4,    true , "attach-name"    , 'n', required_argument, NULL,  eArgTypeProcessName,  
+        "Tells the debugger to attach to a process with the given name." },
+    { LLDB_OPT_SET_4,    true , "wait-for"       , 'w', no_argument      , NULL,  eArgTypeNone,         
+        "Tells the debugger to wait for a process with the given pid or name to launch before attaching." },
+    { LLDB_OPT_SET_5,    true , "attach-pid"     , 'p', required_argument, NULL,  eArgTypePid,          
+        "Tells the debugger to attach to a process with the given pid." },
+    { LLDB_3_TO_5,       false, "script-language", 'l', required_argument, NULL,  eArgTypeScriptLang,   
+        "Tells the debugger to use the specified scripting language for user-defined scripts, rather than the default.  "
+        "Valid scripting languages that can be specified include Python, Perl, Ruby and Tcl.  Currently only the Python "
+        "extensions have been implemented." },
+    { LLDB_3_TO_5,       false, "debug"          , 'd', no_argument      , NULL,  eArgTypeNone,         
+        "Tells the debugger to print out extra information for debugging itself." },
+    { LLDB_3_TO_5,       false, "source"         , 's', required_argument, NULL,  eArgTypeFilename,     
+        "Tells the debugger to read in and execute the file <file>, which should contain lldb commands." },
+    { LLDB_3_TO_5,       false, "editor"         , 'e', no_argument      , NULL,  eArgTypeNone,         
+        "Tells the debugger to open source files using the host's \"external editor\" mechanism." },
+    { LLDB_3_TO_5,       false, "no-lldbinit"    , 'x', no_argument      , NULL,  eArgTypeNone,         
+        "Do not automatically parse any '.lldbinit' files." },
     { 0,                 false, NULL             , 0  , 0                , NULL,  eArgTypeNone,         NULL }
 };
 
@@ -1365,9 +1380,7 @@ Driver::MainLoop ()
                 }
             }
 
-            SBProcess process = m_debugger.GetSelectedTarget().GetProcess();
-            if (process.IsValid())
-                process.Destroy();
+            SBDebugger::Destroy (m_debugger);
         }
     }
 }
