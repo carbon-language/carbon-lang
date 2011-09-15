@@ -19,7 +19,7 @@ class SBDataAPICase(TestBase):
         self.data_api()
 
     @python_api_test
-    def test_with_dwarf_and_process_launch_api(self):
+    def test_with_dwarf_and_run_command(self):
         """Test the SBData APIs."""
         self.buildDwarf()
         self.data_api()
