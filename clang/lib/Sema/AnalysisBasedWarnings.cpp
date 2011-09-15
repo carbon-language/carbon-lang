@@ -633,20 +633,23 @@ class ThreadSafetyReporter : public clang::thread_safety::ThreadSafetyHandler {
     warnLockMismatch(diag::warn_double_lock, LockName, Loc);
   }
 
-  void handleMutexHeldEndOfScope(Name LockName, SourceLocation Loc){
-    warnLockMismatch(diag::warn_lock_at_end_of_scope, LockName, Loc);
+  void handleMutexHeldEndOfScope(Name LockName, SourceLocation Loc,
+                                 LockErrorKind LEK){
+    unsigned DiagID = 0;
+    switch (LEK) {
+      case LEK_LockedSomePredecessors:
+        DiagID = diag::warn_lock_at_end_of_scope;
+        break;
+      case LEK_LockedSomeLoopIterations:
+        DiagID = diag::warn_expecting_lock_held_on_loop;
+        break;
+      case LEK_LockedAtEndOfFunction:
+        DiagID = diag::warn_no_unlock;
+        break;
+    }
+    warnLockMismatch(DiagID, LockName, Loc);
   }
 
-  void handleNoLockLoopEntry(Name LockName, SourceLocation Loc) {
-    warnLockMismatch(diag::warn_expecting_lock_held_on_loop, LockName, Loc);
-  }
-
-  void handleNoUnlock(Name LockName, llvm::StringRef FunName,
-                      SourceLocation Loc) {
-    PartialDiagnostic Warning =
-      S.PDiag(diag::warn_no_unlock) << LockName << FunName;
-    Warnings.push_back(DelayedDiag(Loc, Warning));
-  }
 
   void handleExclusiveAndShared(Name LockName, SourceLocation Loc1,
                                 SourceLocation Loc2) {

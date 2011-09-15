@@ -176,9 +176,9 @@ void sls_fun_bad_6() {
 }
 
 void sls_fun_bad_7() {
-  sls_mu.Lock();
-  while (getBool()) { // \
-      // expected-warning{{expecting lock on 'sls_mu' to be held at start of each loop}}
+  sls_mu.Lock(); // \
+    // expected-warning{{expecting lock on 'sls_mu' to be held at start of each loop}}
+  while (getBool()) {
     sls_mu.Unlock();
     if (getBool()) {
       if (getBool()) {
@@ -192,26 +192,26 @@ void sls_fun_bad_7() {
 }
 
 void sls_fun_bad_8() {
-  sls_mu.Lock();
+  sls_mu.Lock(); // \
+    // expected-warning{{expecting lock on 'sls_mu' to be held at start of each loop}}
   do {
-    sls_mu.Unlock();  // \
-      // expected-warning{{expecting lock on 'sls_mu' to be held at start of each loop}}
+    sls_mu.Unlock();
   } while (getBool());
 }
 
 void sls_fun_bad_9() {
   do {
     sls_mu.Lock(); // \
-      // expected-warning{{mutex 'sls_mu' is still held at the end of its scope}}
+      // expected-warning{{expecting lock on 'sls_mu' to be held at start of each loop}}
   } while (getBool());
   sls_mu.Unlock();
 }
 
 void sls_fun_bad_10() {
   sls_mu.Lock(); // \
-    // expected-warning{{mutex 'sls_mu' is still held at the end of function 'sls_fun_bad_10'}}
-  while(getBool()) { // \
-      // expected-warning{{expecting lock on 'sls_mu' to be held at start of each loop}}
+    // expected-warning{{mutex 'sls_mu' is still held at the end of function 'sls_fun_bad_10'}} \
+    // expected-warning{{expecting lock on 'sls_mu' to be held at start of each loop}}
+  while(getBool()) {
     sls_mu.Unlock();
   }
 }
@@ -219,7 +219,7 @@ void sls_fun_bad_10() {
 void sls_fun_bad_11() {
   while (getBool()) {
     sls_mu.Lock(); // \
-      // expected-warning{{mutex 'sls_mu' is still held at the end of its scope}}
+      // expected-warning{{expecting lock on 'sls_mu' to be held at start of each loop}}
   }
   sls_mu.Unlock(); // \
     // expected-warning{{unlocking 'sls_mu' that was not locked}}
@@ -519,11 +519,12 @@ void shared_fun_0() {
 }
 
 void shared_fun_1() {
-  sls_mu.ReaderLock();
+  sls_mu.ReaderLock(); // \
+    // expected-warning {{lock 'sls_mu' is exclusive and shared in the same scope}}
   do {
     sls_mu.Unlock();
-    sls_mu.Lock(); // \
-      // expected-warning {{lock 'sls_mu' is exclusive and shared in the same scope}}
+    sls_mu.Lock();  // \
+      // expected-note {{the other lock of mutex 'sls_mu' is here}}
   } while (getBool());
   sls_mu.Unlock();
 }
@@ -557,11 +558,12 @@ void shared_fun_8() {
 }
 
 void shared_bad_0() {
-  sls_mu.Lock();
+  sls_mu.Lock();  // \
+    // expected-warning {{lock 'sls_mu' is exclusive and shared in the same scope}}
   do {
     sls_mu.Unlock();
-    sls_mu.ReaderLock(); // \
-      // expected-warning {{lock 'sls_mu' is exclusive and shared in the same scope}}
+    sls_mu.ReaderLock();  // \
+      // expected-note {{the other lock of mutex 'sls_mu' is here}}
   } while (getBool());
   sls_mu.Unlock();
 }

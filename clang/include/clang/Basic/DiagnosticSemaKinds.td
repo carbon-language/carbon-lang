@@ -1398,7 +1398,7 @@ def warn_double_lock : Warning<
   "locking '%0' that is already locked">,
   InGroup<ThreadSafety>, DefaultIgnore;
 def warn_no_unlock : Warning<
-  "mutex '%0' is still held at the end of function '%1'">,
+  "mutex '%0' is still held at the end of function">,
   InGroup<ThreadSafety>, DefaultIgnore;
 // FIXME: improve the error message about locks not in scope
 def warn_lock_at_end_of_scope : Warning<

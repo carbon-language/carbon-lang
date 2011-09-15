@@ -49,6 +49,20 @@ enum AccessKind {
   AK_Written /// Writing a variable
 };
 
+/// This enum distinguishes between different situations where we warn due to
+/// inconsistent locking.
+/// \enum SK_LockedSomeLoopIterations -- a mutex is locked for some but not all
+/// loop iterations.
+/// \enum SK_LockedSomePredecessors -- a mutex is locked in some but not all
+/// predecessors of a CFGBlock.
+/// \enum SK_LockedAtEndOfFunction -- a mutex is still locked at the end of a
+/// function.
+enum LockErrorKind {
+  LEK_LockedSomeLoopIterations,
+  LEK_LockedSomePredecessors,
+  LEK_LockedAtEndOfFunction
+};
+
 /// Handler class for thread safety warnings.
 class ThreadSafetyHandler {
 public:
@@ -73,27 +87,16 @@ public:
   virtual void handleDoubleLock(Name LockName, SourceLocation Loc) {}
 
   /// Warn about situations where a mutex is sometimes held and sometimes not.
-  /// For example, a mutex is locked on an "if" branch but not the "else"
-  /// branch.
+  /// The three situations are:
+  /// 1. a mutex is locked on an "if" branch but not the "else" branch,
+  /// 2, or a mutex is only held at the start of some loop iterations,
+  /// 3. or when a mutex is locked but not unlocked inside a function.
   /// \param LockName -- A StringRef name for the lock expression, to be printed
   /// in the error message.
-  /// \param Loc -- The location of the lock expression where the mutex is
-  /// locked
-  virtual void handleMutexHeldEndOfScope(Name LockName, SourceLocation Loc){}
-
-  /// Warn when a mutex is only held at the start of some loop iterations.
-  /// \param LockName -- A StringRef name for the lock expression, to be printed
-  /// in the error message.
-  /// \param Loc -- The Loc of the lock expression.
-  virtual void handleNoLockLoopEntry(Name LockName, SourceLocation Loc) {}
-
-  /// Warn when a mutex is locked but not unlocked inside a function.
-  /// \param LockName -- A StringRef name for the lock expression, to be printed
-  /// in the error message.
-  /// \param FunName -- The name of the function
-  /// \param Loc -- The location of the lock expression
-  virtual void handleNoUnlock(Name LockName, Name FunName,
-                              SourceLocation Loc) {}
+  /// \param Loc -- The location of the lock expression where the mutex is locked
+  /// \param LEK -- which of the three above cases we should warn for
+  virtual void handleMutexHeldEndOfScope(Name LockName, SourceLocation Loc,
+                                         LockErrorKind LEK){}
 
   /// Warn when a mutex is held exclusively and shared at the same point. For
   /// example, if a mutex is locked exclusively during an if branch and shared

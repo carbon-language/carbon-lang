@@ -598,13 +598,18 @@ void BuildLockset::VisitCXXMemberCallExpr(CXXMemberCallExpr *Exp) {
 
 } // end anonymous namespace
 
-/// \brief Flags a warning for each lock that is in LSet2 but not LSet1, or
-/// else mutexes that are held shared in one lockset and exclusive in the other.
-static Lockset warnIfNotInFirstSetOrNotSameKind(ThreadSafetyHandler &Handler,
-                                                const Lockset LSet1,
-                                                const Lockset LSet2,
-                                                Lockset Intersection,
-                                                Lockset::Factory &Fact) {
+/// \brief Compute the intersection of two locksets and issue warnings for any
+/// locks in the symmetric difference.
+///
+/// This function is used at a merge point in the CFG when comparing the lockset
+/// of each branch being merged. For example, given the following sequence:
+/// A; if () then B; else C; D; we need to check that the lockset after B and C
+/// are the same. In the event of a difference, we use the intersection of these
+/// two locksets at the start of D.
+static Lockset intersectAndWarn(ThreadSafetyHandler &Handler,
+                                const Lockset LSet1, const Lockset LSet2,
+                                Lockset::Factory &Fact, LockErrorKind LEK) {
+  Lockset Intersection = LSet1;
   for (Lockset::iterator I = LSet2.begin(), E = LSet2.end(); I != E; ++I) {
     const MutexID &LSet2Mutex = I.getKey();
     const LockData &LSet2LockData = I.getData();
@@ -618,34 +623,16 @@ static Lockset warnIfNotInFirstSetOrNotSameKind(ThreadSafetyHandler &Handler,
       }
     } else {
       Handler.handleMutexHeldEndOfScope(LSet2Mutex.getName(),
-                                        LSet2LockData.AcquireLoc);
+                                        LSet2LockData.AcquireLoc, LEK);
     }
   }
-  return Intersection;
-}
-
-
-/// \brief Compute the intersection of two locksets and issue warnings for any
-/// locks in the symmetric difference.
-///
-/// This function is used at a merge point in the CFG when comparing the lockset
-/// of each branch being merged. For example, given the following sequence:
-/// A; if () then B; else C; D; we need to check that the lockset after B and C
-/// are the same. In the event of a difference, we use the intersection of these
-/// two locksets at the start of D.
-static Lockset intersectAndWarn(ThreadSafetyHandler &Handler,
-                                const Lockset LSet1, const Lockset LSet2,
-                                Lockset::Factory &Fact) {
-  Lockset Intersection = LSet1;
-  Intersection = warnIfNotInFirstSetOrNotSameKind(Handler, LSet1, LSet2,
-                                                  Intersection, Fact);
 
   for (Lockset::iterator I = LSet1.begin(), E = LSet1.end(); I != E; ++I) {
     if (!LSet2.contains(I.getKey())) {
       const MutexID &Mutex = I.getKey();
       const LockData &MissingLock = I.getData();
       Handler.handleMutexHeldEndOfScope(Mutex.getName(),
-                                        MissingLock.AcquireLoc);
+                                        MissingLock.AcquireLoc, LEK);
       Intersection = Fact.remove(Intersection, Mutex);
     }
   }
@@ -668,34 +655,6 @@ static SourceLocation getFirstStmtLocation(CFGBlock *Block) {
   }
   return Loc;
 }
-
-/// \brief Warn about different locksets along backedges of loops.
-/// This function is called when we encounter a back edge. At that point,
-/// we need to verify that the lockset before taking the backedge is the
-/// same as the lockset before entering the loop.
-///
-/// \param LoopEntrySet Locks before starting the loop
-/// \param LoopReentrySet Locks in the last CFG block of the loop
-static void warnBackEdgeUnequalLocksets(ThreadSafetyHandler &Handler,
-                                        const Lockset LoopReentrySet,
-                                        const Lockset LoopEntrySet,
-                                        SourceLocation FirstLocInLoop,
-                                        Lockset::Factory &Fact) {
-  assert(FirstLocInLoop.isValid());
-  // Warn for locks held at the start of the loop, but not the end.
-  for (Lockset::iterator I = LoopEntrySet.begin(), E = LoopEntrySet.end();
-       I != E; ++I) {
-    if (!LoopReentrySet.contains(I.getKey())) {
-      // We report this error at the location of the first statement in a loop
-      Handler.handleNoLockLoopEntry(I.getKey().getName(), FirstLocInLoop);
-    }
-  }
-
-  // Warn for locks held at the end of the loop, but not at the start.
-  warnIfNotInFirstSetOrNotSameKind(Handler, LoopEntrySet, LoopReentrySet,
-                                   LoopReentrySet, Fact);
-}
-
 
 namespace clang {
 namespace thread_safety {
@@ -763,7 +722,8 @@ void runThreadSafetyAnalysis(AnalysisContext &AC,
         LocksetInitialized = true;
       } else {
         Entryset = intersectAndWarn(Handler, Entryset,
-                                    ExitLocksets[PrevBlockID], LocksetFactory);
+                                    ExitLocksets[PrevBlockID], LocksetFactory,
+                                    LEK_LockedSomePredecessors);
       }
     }
 
@@ -787,36 +747,17 @@ void runThreadSafetyAnalysis(AnalysisContext &AC,
         continue;
 
       CFGBlock *FirstLoopBlock = *SI;
-      SourceLocation FirstLoopLocation = getFirstStmtLocation(FirstLoopBlock);
-
-      assert(FirstLoopLocation.isValid());
-
-      // Fail gracefully in release code.
-      if (!FirstLoopLocation.isValid())
-        continue;
-
       Lockset PreLoop = EntryLocksets[FirstLoopBlock->getBlockID()];
       Lockset LoopEnd = ExitLocksets[CurrBlockID];
-      warnBackEdgeUnequalLocksets(Handler, LoopEnd, PreLoop, FirstLoopLocation,
-                                  LocksetFactory);
+      intersectAndWarn(Handler, LoopEnd, PreLoop, LocksetFactory,
+                       LEK_LockedSomeLoopIterations);
     }
   }
 
+  Lockset InitialLockset = EntryLocksets[CFGraph->getEntry().getBlockID()];
   Lockset FinalLockset = ExitLocksets[CFGraph->getExit().getBlockID()];
-  if (!FinalLockset.isEmpty()) {
-    for (Lockset::iterator I=FinalLockset.begin(), E=FinalLockset.end();
-         I != E; ++I) {
-      const MutexID &Mutex = I.getKey();
-      const LockData &MissingLock = I.getData();
-
-      std::string FunName = "<unknown>";
-      if (const NamedDecl *ContextDecl = dyn_cast<NamedDecl>(AC.getDecl())) {
-        FunName = ContextDecl->getDeclName().getAsString();
-      }
-
-      Handler.handleNoUnlock(Mutex.getName(), FunName, MissingLock.AcquireLoc);
-    }
-  }
+  intersectAndWarn(Handler, InitialLockset, FinalLockset, LocksetFactory,
+                   LEK_LockedAtEndOfFunction);
 }
 
 /// \brief Helper function that returns a LockKind required for the given level
