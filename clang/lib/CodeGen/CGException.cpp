@@ -367,6 +367,14 @@ llvm::Value *CodeGenFunction::getEHSelectorSlot() {
   return EHSelectorSlot;
 }
 
+llvm::Value *CodeGenFunction::getExceptionFromSlot() {
+  return Builder.CreateLoad(getExceptionSlot(), "exn");
+}
+
+llvm::Value *CodeGenFunction::getSelectorFromSlot() {
+  return Builder.CreateLoad(getEHSelectorSlot(), "sel");
+}
+
 void CodeGenFunction::EmitCXXThrowExpr(const CXXThrowExpr *E) {
   if (!E->getSubExpr()) {
     if (getInvokeDest()) {
@@ -483,9 +491,7 @@ static void emitFilterDispatchBlock(CodeGenFunction &CGF,
   // here because the filter triggered.
   if (filterScope.getNumFilters()) {
     // Load the selector value.
-    llvm::Value *selector =
-      CGF.Builder.CreateLoad(CGF.getEHSelectorSlot(), "selector");
-
+    llvm::Value *selector = CGF.getSelectorFromSlot();
     llvm::BasicBlock *unexpectedBB = CGF.createBasicBlock("ehspec.unexpected");
 
     llvm::Value *zero = CGF.Builder.getInt32(0);
@@ -500,7 +506,7 @@ static void emitFilterDispatchBlock(CodeGenFunction &CGF,
   // because __cxa_call_unexpected magically filters exceptions
   // according to the last landing pad the exception was thrown
   // into.  Seriously.
-  llvm::Value *exn = CGF.Builder.CreateLoad(CGF.getExceptionSlot());
+  llvm::Value *exn = CGF.getExceptionFromSlot();
   CGF.Builder.CreateCall(getUnexpectedFn(CGF), exn)
     ->setDoesNotReturn();
   CGF.Builder.CreateUnreachable();
@@ -899,7 +905,7 @@ static void InitCatchParam(CodeGenFunction &CGF,
                            const VarDecl &CatchParam,
                            llvm::Value *ParamAddr) {
   // Load the exception from where the landing pad saved it.
-  llvm::Value *Exn = CGF.Builder.CreateLoad(CGF.getExceptionSlot(), "exn");
+  llvm::Value *Exn = CGF.getExceptionFromSlot();
 
   CanQualType CatchType =
     CGF.CGM.getContext().getCanonicalType(CatchParam.getType());
@@ -1074,7 +1080,7 @@ static void BeginCatch(CodeGenFunction &CGF, const CXXCatchStmt *S) {
 
   VarDecl *CatchParam = S->getExceptionDecl();
   if (!CatchParam) {
-    llvm::Value *Exn = CGF.Builder.CreateLoad(CGF.getExceptionSlot(), "exn");
+    llvm::Value *Exn = CGF.getExceptionFromSlot();
     CallBeginCatch(CGF, Exn, true);
     return;
   }
@@ -1116,8 +1122,7 @@ static void emitCatchDispatchBlock(CodeGenFunction &CGF,
     CGF.CGM.getIntrinsic(llvm::Intrinsic::eh_typeid_for);
 
   // Load the selector value.
-  llvm::Value *selector =
-    CGF.Builder.CreateLoad(CGF.getEHSelectorSlot(), "selector");
+  llvm::Value *selector = CGF.getSelectorFromSlot();
 
   // Test against each of the exception types we claim to catch.
   for (unsigned i = 0, e = catchScope.getNumHandlers(); ; ++i) {
@@ -1423,13 +1428,13 @@ void CodeGenFunction::FinallyInfo::exit(CodeGenFunction &CGF) {
 
     // If there's a begin-catch function, call it.
     if (BeginCatchFn) {
-      exn = CGF.Builder.CreateLoad(CGF.getExceptionSlot());
+      exn = CGF.getExceptionFromSlot();
       CGF.Builder.CreateCall(BeginCatchFn, exn)->setDoesNotThrow();
     }
 
     // If we need to remember the exception pointer to rethrow later, do so.
     if (SavedExnVar) {
-      if (!exn) exn = CGF.Builder.CreateLoad(CGF.getExceptionSlot());
+      if (!exn) exn = CGF.getExceptionFromSlot();
       CGF.Builder.CreateStore(exn, SavedExnVar);
     }
 
@@ -1519,10 +1524,10 @@ llvm::BasicBlock *CodeGenFunction::getEHResumeBlock() {
   StringRef RethrowName = Personality.getCatchallRethrowFnName();
   if (!RethrowName.empty()) {
     Builder.CreateCall(getCatchallRethrowFn(*this, RethrowName),
-                       Builder.CreateLoad(getExceptionSlot()))
+                       getExceptionFromSlot())
       ->setDoesNotReturn();
   } else {
-    llvm::Value *Exn = Builder.CreateLoad(getExceptionSlot());
+    llvm::Value *Exn = getExceptionFromSlot();
 
     switch (CleanupHackLevel) {
     case CHL_MandatoryCatchall:
@@ -1534,7 +1539,7 @@ llvm::BasicBlock *CodeGenFunction::getEHResumeBlock() {
       break;
     case CHL_MandatoryCleanup: {
       // In mandatory-cleanup mode, we should use llvm.eh.resume.
-      llvm::Value *Selector = Builder.CreateLoad(getEHSelectorSlot());
+      llvm::Value *Selector = getSelectorFromSlot();
       Builder.CreateCall2(CGM.getIntrinsic(llvm::Intrinsic::eh_resume),
                           Exn, Selector)
         ->setDoesNotReturn();

@@ -1121,6 +1121,11 @@ public:
   llvm::Value *getExceptionSlot();
   llvm::Value *getEHSelectorSlot();
 
+  /// Returns the contents of the function's exception object and selector
+  /// slots.
+  llvm::Value *getExceptionFromSlot();
+  llvm::Value *getSelectorFromSlot();
+
   llvm::Value *getNormalCleanupDestSlot();
 
   llvm::BasicBlock *getUnreachableBlock() {
