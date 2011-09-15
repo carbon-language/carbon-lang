@@ -112,7 +112,9 @@ public:
     /// Constructs an ArchSpec with properties consistent with the given
     /// Triple.
     //------------------------------------------------------------------
+    explicit 
     ArchSpec (const llvm::Triple &triple);
+    explicit 
     ArchSpec (const char *triple_cstr, Platform *platform);
     //------------------------------------------------------------------
     /// Constructor over architecture name.
@@ -120,6 +122,7 @@ public:
     /// Constructs an ArchSpec with properties consistent with the given
     /// object type and architecture name.
     //------------------------------------------------------------------
+    explicit 
     ArchSpec (ArchitectureType arch_type,
               uint32_t cpu_type,
               uint32_t cpu_subtype);
