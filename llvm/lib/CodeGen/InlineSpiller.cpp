@@ -34,16 +34,16 @@
 using namespace llvm;
 
 STATISTIC(NumSpilledRanges,   "Number of spilled live ranges");
-STATISTIC(NumSnippets,        "Number of snippets included in spills");
+STATISTIC(NumSnippets,        "Number of spilled snippets");
 STATISTIC(NumSpills,          "Number of spills inserted");
+STATISTIC(NumSpillsRemoved,   "Number of spills removed");
 STATISTIC(NumReloads,         "Number of reloads inserted");
+STATISTIC(NumReloadsRemoved,  "Number of reloads removed");
 STATISTIC(NumFolded,          "Number of folded stack accesses");
 STATISTIC(NumFoldedLoads,     "Number of folded loads");
 STATISTIC(NumRemats,          "Number of rematerialized defs for spilling");
-STATISTIC(NumOmitReloadSpill, "Number of omitted spills after reloads");
-STATISTIC(NumHoistLocal,      "Number of locally hoisted spills");
-STATISTIC(NumHoistGlobal,     "Number of globally hoisted spills");
-STATISTIC(NumRedundantSpills, "Number of redundant spills identified");
+STATISTIC(NumOmitReloadSpill, "Number of omitted spills of reloads");
+STATISTIC(NumHoists,          "Number of hoisted spills");
 
 namespace {
 class InlineSpiller : public Spiller {
@@ -715,10 +715,8 @@ bool InlineSpiller::hoistSpill(LiveInterval &SpillLI, MachineInstr *CopyMI) {
   VRM.addSpillSlotUse(StackSlot, MII);
   DEBUG(dbgs() << "\thoisted: " << SVI.SpillVNI->def << '\t' << *MII);
 
-  if (MBB == CopyMI->getParent())
-    ++NumHoistLocal;
-  else
-    ++NumHoistGlobal;
+  ++NumSpills;
+  ++NumHoists;
   return true;
 }
 
@@ -773,7 +771,8 @@ void InlineSpiller::eliminateRedundantSpills(LiveInterval &SLI, VNInfo *VNI) {
         // eliminateDeadDefs won't normally remove stores, so switch opcode.
         MI->setDesc(TII.get(TargetOpcode::KILL));
         DeadDefs.push_back(MI);
-        ++NumRedundantSpills;
+        ++NumSpillsRemoved;
+        --NumSpills;
       }
     }
   } while (!WorkList.empty());
@@ -971,10 +970,10 @@ void InlineSpiller::reMaterializeAll() {
 /// If MI is a load or store of StackSlot, it can be removed.
 bool InlineSpiller::coalesceStackAccess(MachineInstr *MI, unsigned Reg) {
   int FI = 0;
-  unsigned InstrReg;
-  if (!(InstrReg = TII.isLoadFromStackSlot(MI, FI)) &&
-      !(InstrReg = TII.isStoreToStackSlot(MI, FI)))
-    return false;
+  unsigned InstrReg = TII.isLoadFromStackSlot(MI, FI);
+  bool IsLoad = InstrReg;
+  if (!IsLoad)
+    InstrReg = TII.isStoreToStackSlot(MI, FI);
 
   // We have a stack access. Is it the right register and slot?
   if (InstrReg != Reg || FI != StackSlot)
@@ -983,6 +982,15 @@ bool InlineSpiller::coalesceStackAccess(MachineInstr *MI, unsigned Reg) {
   DEBUG(dbgs() << "Coalescing stack access: " << *MI);
   LIS.RemoveMachineInstrFromMaps(MI);
   MI->eraseFromParent();
+
+  if (IsLoad) {
+    ++NumReloadsRemoved;
+    --NumReloads;
+  } else {
+    ++NumSpillsRemoved;
+    --NumSpills;
+  }
+
   return true;
 }
 
