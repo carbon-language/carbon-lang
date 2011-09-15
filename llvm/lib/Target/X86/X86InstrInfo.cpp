@@ -2558,6 +2558,49 @@ X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
   return NULL;
 }
 
+/// hasPartialRegUpdate - Return true for all instructions that only update
+/// the first 32 or 64-bits of the destination register and leave the rest
+/// unmodified. This can be used to avoid folding loads if the instructions
+/// only update part of the destination register, and the non-updated part is
+/// not needed. e.g. cvtss2sd, sqrtss. Unfolding the load from these
+/// instructions breaks the partial register dependency and it can improve
+/// performance. e.g.:
+///
+///   movss (%rdi), %xmm0
+///   cvtss2sd %xmm0, %xmm0
+///
+/// Instead of
+///   cvtss2sd (%rdi), %xmm0
+///
+static bool hasPartialRegUpdate(unsigned Opcode) {
+  switch (Opcode) {
+  case X86::CVTSD2SSrr:
+  case X86::Int_CVTSD2SSrr:
+  case X86::CVTSS2SDrr:
+  case X86::Int_CVTSS2SDrr:
+  case X86::RCPSSr:
+  case X86::RCPSSr_Int:
+  case X86::ROUNDSDr:
+  case X86::ROUNDSSr:
+  case X86::RSQRTSSr:
+  case X86::RSQRTSSr_Int:
+  case X86::SQRTSSr:
+  case X86::SQRTSSr_Int:
+  // AVX encoded versions
+  case X86::VCVTSD2SSrr:
+  case X86::Int_VCVTSD2SSrr:
+  case X86::VCVTSS2SDrr:
+  case X86::Int_VCVTSS2SDrr:
+  case X86::VRCPSSr:
+  case X86::VROUNDSDr:
+  case X86::VROUNDSSr:
+  case X86::VRSQRTSSr:
+  case X86::VSQRTSSr:
+    return true;
+  }
+
+  return false;
+}
 
 MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
                                                   MachineInstr *MI,
@@ -2566,22 +2609,11 @@ MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
   // Check switch flag
   if (NoFusing) return NULL;
 
-  if (!MF.getFunction()->hasFnAttr(Attribute::OptimizeForSize))
-    switch (MI->getOpcode()) {
-    case X86::CVTSD2SSrr:
-    case X86::Int_CVTSD2SSrr:
-    case X86::CVTSS2SDrr:
-    case X86::Int_CVTSS2SDrr:
-    case X86::RCPSSr:
-    case X86::RCPSSr_Int:
-    case X86::ROUNDSDr:
-    case X86::ROUNDSSr:
-    case X86::RSQRTSSr:
-    case X86::RSQRTSSr_Int:
-    case X86::SQRTSSr:
-    case X86::SQRTSSr_Int:
-      return 0;
-    }
+  // Unless optimizing for size, don't fold to avoid partial
+  // register update stalls
+  if (!MF.getFunction()->hasFnAttr(Attribute::OptimizeForSize) &&
+      hasPartialRegUpdate(MI->getOpcode()))
+    return 0;
 
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   unsigned Size = MFI->getObjectSize(FrameIndex);
@@ -2618,22 +2650,11 @@ MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
   // Check switch flag
   if (NoFusing) return NULL;
 
-  if (!MF.getFunction()->hasFnAttr(Attribute::OptimizeForSize))
-    switch (MI->getOpcode()) {
-    case X86::CVTSD2SSrr:
-    case X86::Int_CVTSD2SSrr:
-    case X86::CVTSS2SDrr:
-    case X86::Int_CVTSS2SDrr:
-    case X86::RCPSSr:
-    case X86::RCPSSr_Int:
-    case X86::ROUNDSDr:
-    case X86::ROUNDSSr:
-    case X86::RSQRTSSr:
-    case X86::RSQRTSSr_Int:
-    case X86::SQRTSSr:
-    case X86::SQRTSSr_Int:
-      return 0;
-    }
+  // Unless optimizing for size, don't fold to avoid partial
+  // register update stalls
+  if (!MF.getFunction()->hasFnAttr(Attribute::OptimizeForSize) &&
+      hasPartialRegUpdate(MI->getOpcode()))
+    return 0;
 
   // Determine the alignment of the load.
   unsigned Alignment = 0;
