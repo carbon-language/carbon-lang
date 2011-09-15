@@ -20,6 +20,8 @@
 #include "llvm-c/Disassembler.h"
 #include <string>
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/SmallString.h"
+#include "llvm/Support/raw_ostream.h"
 
 namespace llvm {
 class MCContext;
@@ -67,6 +69,10 @@ private:
   llvm::OwningPtr<llvm::MCInstPrinter> IP;
 
 public:
+  // Comment stream and backing vector.
+  SmallString<128> CommentsToEmit;
+  raw_svector_ostream CommentStream;
+
   LLVMDisasmContext(std::string tripleName, void *disInfo, int tagType,
                     LLVMOpInfoCallback getOpInfo,
                     LLVMSymbolLookupCallback symbolLookUp,
@@ -75,7 +81,8 @@ public:
                     llvm::MCContext *ctx, const MCDisassembler *disAsm,
                     MCInstPrinter *iP) : TripleName(tripleName),
                     DisInfo(disInfo), TagType(tagType), GetOpInfo(getOpInfo),
-                    SymbolLookUp(symbolLookUp), TheTarget(theTarget) {
+                    SymbolLookUp(symbolLookUp), TheTarget(theTarget),
+                    CommentStream(CommentsToEmit) {
     MAI.reset(mAI);
     MRI.reset(mRI);
     Ctx.reset(ctx);
@@ -83,6 +90,7 @@ public:
     IP.reset(iP);
   }
   const MCDisassembler *getDisAsm() const { return DisAsm.get(); }
+  const MCAsmInfo *getAsmInfo() const { return MAI.get(); }
   MCInstPrinter *getIP() { return IP.get(); }
 };
 

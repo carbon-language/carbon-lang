@@ -81,6 +81,9 @@ LLVMDisasmContextRef LLVMCreateDisasm(const char *TripleName, void *DisInfo,
                                                 TheTarget, MAI, MRI,
                                                 Ctx, DisAsm, IP);
   assert(DC && "Allocation failure!");
+
+  IP->setCommentStream(DC->CommentStream);
+
   return DC;
 }
 
@@ -153,6 +156,25 @@ size_t LLVMDisasmInstruction(LLVMDisasmContextRef DCR, uint8_t *Bytes,
     raw_svector_ostream OS(InsnStr);
     IP->printInst(&Inst, OS);
     OS.flush();
+
+    DC->CommentStream.flush();
+    assert(DC->CommentsToEmit.back() == '\n');
+
+    DC->CommentsToEmit.push_back('\n');
+    StringRef Comments = DC->CommentsToEmit.str();
+
+    do {
+      // Emit a line of comments.
+      size_t Position = Comments.find('\n');
+      OS << ' ' << DC->getAsmInfo()->getCommentString()
+         << ' ' << Comments.substr(0, Position) << '\n';
+
+      Comments = Comments.substr(Position+1);
+    } while (!Comments.empty());
+
+    DC->CommentsToEmit.clear();
+    // Tell the comment stream that the vector changed underneath it.
+    DC->CommentStream.resync();
 
     assert(OutStringSize != 0 && "Output buffer cannot be zero size");
     size_t OutputSize = std::min(OutStringSize-1, InsnStr.size());
