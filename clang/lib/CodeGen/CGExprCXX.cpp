@@ -710,56 +710,75 @@ static void StoreAnyExprIntoOneUnit(CodeGenFunction &CGF, const CXXNewExpr *E,
 
 void
 CodeGenFunction::EmitNewArrayInitializer(const CXXNewExpr *E, 
-                                         llvm::Value *NewPtr,
-                                         llvm::Value *NumElements) {
+                                         QualType elementType,
+                                         llvm::Value *beginPtr,
+                                         llvm::Value *numElements) {
   // We have a POD type.
   if (E->getNumConstructorArgs() == 0)
     return;
-  
-  llvm::Type *SizeTy = ConvertType(getContext().getSizeType());
-  
-  // Create a temporary for the loop index and initialize it with 0.
-  llvm::Value *IndexPtr = CreateTempAlloca(SizeTy, "loop.index");
-  llvm::Value *Zero = llvm::Constant::getNullValue(SizeTy);
-  Builder.CreateStore(Zero, IndexPtr);
-  
-  // Start the loop with a block that tests the condition.
-  llvm::BasicBlock *CondBlock = createBasicBlock("for.cond");
-  llvm::BasicBlock *AfterFor = createBasicBlock("for.end");
-  
-  EmitBlock(CondBlock);
-  
-  llvm::BasicBlock *ForBody = createBasicBlock("for.body");
-  
-  // Generate: if (loop-index < number-of-elements fall to the loop body,
-  // otherwise, go to the block after the for-loop.
-  llvm::Value *Counter = Builder.CreateLoad(IndexPtr);
-  llvm::Value *IsLess = Builder.CreateICmpULT(Counter, NumElements, "isless");
-  // If the condition is true, execute the body.
-  Builder.CreateCondBr(IsLess, ForBody, AfterFor);
-  
-  EmitBlock(ForBody);
-  
-  llvm::BasicBlock *ContinueBlock = createBasicBlock("for.inc");
-  // Inside the loop body, emit the constructor call on the array element.
-  Counter = Builder.CreateLoad(IndexPtr);
-  llvm::Value *Address = Builder.CreateInBoundsGEP(NewPtr, Counter, 
-                                                   "arrayidx");
-  StoreAnyExprIntoOneUnit(*this, E, Address);
-  
-  EmitBlock(ContinueBlock);
-  
-  // Emit the increment of the loop counter.
-  llvm::Value *NextVal = llvm::ConstantInt::get(SizeTy, 1);
-  Counter = Builder.CreateLoad(IndexPtr);
-  NextVal = Builder.CreateAdd(Counter, NextVal, "inc");
-  Builder.CreateStore(NextVal, IndexPtr);
-  
-  // Finally, branch back up to the condition for the next iteration.
-  EmitBranch(CondBlock);
-  
-  // Emit the fall-through block.
-  EmitBlock(AfterFor, true);
+
+  // Check if the number of elements is constant.
+  bool checkZero = true;
+  if (llvm::ConstantInt *constNum = dyn_cast<llvm::ConstantInt>(numElements)) {
+    // If it's constant zero, skip the whole loop.
+    if (constNum->isZero()) return;
+
+    checkZero = false;
+  }
+
+  // Find the end of the array, hoisted out of the loop.
+  llvm::Value *endPtr =
+    Builder.CreateInBoundsGEP(beginPtr, numElements, "array.end");
+
+  // Create the continuation block.
+  llvm::BasicBlock *contBB = createBasicBlock("new.loop.end");
+
+  // If we need to check for zero, do so now.
+  if (checkZero) {
+    llvm::BasicBlock *nonEmptyBB = createBasicBlock("new.loop.nonempty");
+    llvm::Value *isEmpty = Builder.CreateICmpEQ(beginPtr, endPtr,
+                                                "array.isempty");
+    Builder.CreateCondBr(isEmpty, contBB, nonEmptyBB);
+    EmitBlock(nonEmptyBB);
+  }
+
+  // Enter the loop.
+  llvm::BasicBlock *entryBB = Builder.GetInsertBlock();
+  llvm::BasicBlock *loopBB = createBasicBlock("new.loop");
+
+  EmitBlock(loopBB);
+
+  // Set up the current-element phi.
+  llvm::PHINode *curPtr =
+    Builder.CreatePHI(beginPtr->getType(), 2, "array.cur");
+  curPtr->addIncoming(beginPtr, entryBB);
+
+  // Enter a partial-destruction cleanup if necessary.
+  QualType::DestructionKind dtorKind = elementType.isDestructedType();
+  EHScopeStack::stable_iterator cleanup;
+  if (needsEHCleanup(dtorKind)) {
+    pushRegularPartialArrayCleanup(beginPtr, curPtr, elementType,
+                                   getDestroyer(dtorKind));
+    cleanup = EHStack.stable_begin();
+  }
+
+  // Emit the initializer into this element.
+  StoreAnyExprIntoOneUnit(*this, E, curPtr);
+
+  // Leave the cleanup if we entered one.
+  if (cleanup != EHStack.stable_end())
+    DeactivateCleanupBlock(cleanup);
+
+  // Advance to the next element.
+  llvm::Value *nextPtr = Builder.CreateConstGEP1_32(curPtr, 1, "array.next");
+
+  // Check whether we've gotten to the end of the array and, if so,
+  // exit the loop.
+  llvm::Value *isEnd = Builder.CreateICmpEQ(nextPtr, endPtr, "array.atend");
+  Builder.CreateCondBr(isEnd, contBB, loopBB);
+  curPtr->addIncoming(nextPtr, Builder.GetInsertBlock());
+
+  EmitBlock(contBB);
 }
 
 static void EmitZeroMemSet(CodeGenFunction &CGF, QualType T,
@@ -771,6 +790,7 @@ static void EmitZeroMemSet(CodeGenFunction &CGF, QualType T,
 }
                        
 static void EmitNewInitializer(CodeGenFunction &CGF, const CXXNewExpr *E,
+                               QualType ElementType,
                                llvm::Value *NewPtr,
                                llvm::Value *NumElements,
                                llvm::Value *AllocSizeWithoutCookie) {
@@ -783,11 +803,10 @@ static void EmitNewInitializer(CodeGenFunction &CGF, const CXXNewExpr *E,
         if (!E->hasInitializer() || Ctor->getParent()->isEmpty())
           return;
       
-        if (CGF.CGM.getTypes().isZeroInitializable(E->getAllocatedType())) {
+        if (CGF.CGM.getTypes().isZeroInitializable(ElementType)) {
           // Optimization: since zero initialization will just set the memory
           // to all zeroes, generate a single memset to do it in one shot.
-          EmitZeroMemSet(CGF, E->getAllocatedType(), NewPtr, 
-                         AllocSizeWithoutCookie);
+          EmitZeroMemSet(CGF, ElementType, NewPtr, AllocSizeWithoutCookie);
           return;
         }
 
@@ -803,11 +822,10 @@ static void EmitNewInitializer(CodeGenFunction &CGF, const CXXNewExpr *E,
                isa<ImplicitValueInitExpr>(E->getConstructorArg(0))) {
       // Optimization: since zero initialization will just set the memory
       // to all zeroes, generate a single memset to do it in one shot.
-      EmitZeroMemSet(CGF, E->getAllocatedType(), NewPtr, 
-                     AllocSizeWithoutCookie);
-      return;      
+      EmitZeroMemSet(CGF, ElementType, NewPtr, AllocSizeWithoutCookie);
+      return;
     } else {
-      CGF.EmitNewArrayInitializer(E, NewPtr, NumElements);
+      CGF.EmitNewArrayInitializer(E, ElementType, NewPtr, NumElements);
       return;
     }
   }
@@ -819,7 +837,7 @@ static void EmitNewInitializer(CodeGenFunction &CGF, const CXXNewExpr *E,
     if (E->hasInitializer() && 
         !Ctor->getParent()->hasUserDeclaredConstructor() &&
         !Ctor->getParent()->isEmpty())
-      CGF.EmitNullInitialization(NewPtr, E->getAllocatedType());
+      CGF.EmitNullInitialization(NewPtr, ElementType);
       
     CGF.EmitCXXConstructorCall(Ctor, Ctor_Complete, /*ForVirtualBase=*/false, 
                                NewPtr, E->constructor_arg_begin(),
@@ -1109,17 +1127,15 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
     = ConvertTypeForMem(allocType)->getPointerTo(AS);
   llvm::Value *result = Builder.CreateBitCast(allocation, elementPtrTy);
 
+  EmitNewInitializer(*this, E, allocType, result, numElements,
+                     allocSizeWithoutCookie);
   if (E->isArray()) {
-    EmitNewInitializer(*this, E, result, numElements, allocSizeWithoutCookie);
-
     // NewPtr is a pointer to the base element type.  If we're
     // allocating an array of arrays, we'll need to cast back to the
     // array pointer type.
     llvm::Type *resultType = ConvertTypeForMem(E->getType());
     if (result->getType() != resultType)
       result = Builder.CreateBitCast(result, resultType);
-  } else {
-    EmitNewInitializer(*this, E, result, numElements, allocSizeWithoutCookie);
   }
 
   // Deactivate the 'operator delete' cleanup if we finished

@@ -1669,8 +1669,8 @@ public:
   void EmitCXXDestructorCall(const CXXDestructorDecl *D, CXXDtorType Type,
                              bool ForVirtualBase, llvm::Value *This);
 
-  void EmitNewArrayInitializer(const CXXNewExpr *E, llvm::Value *NewPtr,
-                               llvm::Value *NumElements);
+  void EmitNewArrayInitializer(const CXXNewExpr *E, QualType elementType,
+                               llvm::Value *NewPtr, llvm::Value *NumElements);
 
   void EmitCXXTemporary(const CXXTemporary *Temporary, llvm::Value *Ptr);
 
