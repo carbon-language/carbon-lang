@@ -1,5 +1,28 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -Wthread-safety %s
 
+#include <map> // for test 50
+#include <string> // for test 58
+
+#define LOCKABLE            __attribute__ ((lockable))
+#define SCOPED_LOCKABLE     __attribute__ ((scoped_lockable))
+#define GUARDED_BY(x)       __attribute__ ((guarded_by(x)))
+#define GUARDED_VAR         __attribute__ ((guarded_var))
+#define PT_GUARDED_BY(x)    __attribute__ ((pt_guarded_by(x)))
+#define PT_GUARDED_VAR      __attribute__ ((pt_guarded_var))
+#define ACQUIRED_AFTER(...) __attribute__ ((acquired_after(__VA_ARGS__)))
+#define ACQUIRED_BEFORE(...) __attribute__ ((acquired_before(__VA_ARGS__)))
+#define EXCLUSIVE_LOCK_FUNCTION(...)   __attribute__ ((exclusive_lock_function(__VA_ARGS__)))
+#define SHARED_LOCK_FUNCTION(...)      __attribute__ ((shared_lock_function(__VA_ARGS__)))
+#define EXCLUSIVE_TRYLOCK_FUNCTION(...) __attribute__ ((exclusive_trylock_function(__VA_ARGS__)))
+#define SHARED_TRYLOCK_FUNCTION(...)    __attribute__ ((shared_trylock_function(__VA_ARGS__)))
+#define UNLOCK_FUNCTION(...)            __attribute__ ((unlock_function(__VA_ARGS__)))
+#define LOCK_RETURNED(x)    __attribute__ ((lock_returned(x)))
+#define LOCKS_EXCLUDED(...) __attribute__ ((locks_excluded(__VA_ARGS__)))
+#define EXCLUSIVE_LOCKS_REQUIRED(...) \
+  __attribute__ ((exclusive_locks_required(__VA_ARGS__)))
+#define SHARED_LOCKS_REQUIRED(...) \
+  __attribute__ ((shared_locks_required(__VA_ARGS__)))
+#define NO_THREAD_SAFETY_ANALYSIS  __attribute__ ((no_thread_safety_analysis))
 
 //-----------------------------------------//
 //  Helper fields
@@ -746,4 +769,657 @@ void testUnparse2() {
   (&(mua[0]) + 4)->Lock(); // \
     // expected-warning{{cannot resolve lock expression to a specific lockable object}}
 }
+
+
+//----------------------------------------------------------------------------//
+// The following test cases are ported from the gcc thread safety implementation
+// They are each wrapped inside a namespace with the test number of the gcc test
+//
+// FIXME: add all the gcc tests, once this analysis passes them.
+//----------------------------------------------------------------------------//
+
+//-----------------------------------------//
+// Good testcases (no errors)
+//-----------------------------------------//
+
+namespace thread_annot_lock_20 {
+class Bar {
+ public:
+  static int func1() EXCLUSIVE_LOCKS_REQUIRED(mu1_);
+  static int b_ GUARDED_BY(mu1_);
+  static Mutex mu1_;
+  static int a_ GUARDED_BY(mu1_);
+};
+
+Bar b1;
+
+int Bar::func1()
+{
+  int res = 5;
+
+  if (a_ == 4)
+    res = b_;
+  return res;
+}
+} // end namespace thread_annot_lock_20
+
+namespace thread_annot_lock_22 {
+// Test various usage of GUARDED_BY and PT_GUARDED_BY annotations, especially
+// uses in class definitions.
+Mutex mu;
+
+class Bar {
+ public:
+  int a_ GUARDED_BY(mu1_);
+  int b_;
+  int *q PT_GUARDED_BY(mu);
+  Mutex mu1_ ACQUIRED_AFTER(mu);
+};
+
+Bar b1, *b3;
+int *p GUARDED_BY(mu) PT_GUARDED_BY(mu);
+int res GUARDED_BY(mu) = 5;
+
+int func(int i)
+{
+  int x;
+  mu.Lock();
+  b1.mu1_.Lock();
+  res = b1.a_ + b3->b_;
+  *p = i;
+  b1.a_ = res + b3->b_;
+  b3->b_ = *b1.q;
+  b1.mu1_.Unlock();
+  b1.b_ = res;
+  x = res;
+  mu.Unlock();
+  return x;
+}
+} // end namespace thread_annot_lock_22
+
+namespace thread_annot_lock_27_modified {
+// test lock annotations applied to function definitions
+// Modified: applied annotations only to function declarations
+Mutex mu1;
+Mutex mu2 ACQUIRED_AFTER(mu1);
+
+class Foo {
+ public:
+  int method1(int i) SHARED_LOCKS_REQUIRED(mu2) EXCLUSIVE_LOCKS_REQUIRED(mu1);
+};
+
+int Foo::method1(int i) {
+  return i;
+}
+
+
+int foo(int i) EXCLUSIVE_LOCKS_REQUIRED(mu2) SHARED_LOCKS_REQUIRED(mu1);
+int foo(int i) {
+  return i;
+}
+
+static int bar(int i) EXCLUSIVE_LOCKS_REQUIRED(mu1);
+static int bar(int i) {
+  return i;
+}
+
+void main() {
+  Foo a;
+
+  mu1.Lock();
+  mu2.Lock();
+  a.method1(1);
+  foo(2);
+  mu2.Unlock();
+  bar(3);
+  mu1.Unlock();
+}
+} // end namespace thread_annot_lock_27_modified
+
+
+namespace thread_annot_lock_38 {
+// Test the case where a template member function is annotated with lock
+// attributes in a non-template class.
+class Foo {
+ public:
+  void func1(int y) LOCKS_EXCLUDED(mu_);
+  template <typename T> void func2(T x) LOCKS_EXCLUDED(mu_);
+ private:
+  Mutex mu_;
+};
+
+Foo *foo;
+
+void main()
+{
+  foo->func1(5);
+  foo->func2(5);
+}
+} // end namespace thread_annot_lock_38
+
+namespace thread_annot_lock_43 {
+// Tests lock canonicalization
+class Foo {
+ public:
+  Mutex *mu_;
+};
+
+class FooBar {
+ public:
+  Foo *foo_;
+  int GetA() EXCLUSIVE_LOCKS_REQUIRED(foo_->mu_) { return a_; }
+  int a_ GUARDED_BY(foo_->mu_);
+};
+
+FooBar *fb;
+
+void main()
+{
+  int x;
+  fb->foo_->mu_->Lock();
+  x = fb->GetA();
+  fb->foo_->mu_->Unlock();
+}
+} // end namespace thread_annot_lock_43
+
+namespace thread_annot_lock_49 {
+// Test the support for use of lock expression in the annotations
+class Foo {
+ public:
+  Mutex foo_mu_;
+};
+
+class Bar {
+ private:
+  Foo *foo;
+  Mutex bar_mu_ ACQUIRED_AFTER(foo->foo_mu_);
+
+ public:
+  void Test1() {
+    foo->foo_mu_.Lock();
+    bar_mu_.Lock();
+    bar_mu_.Unlock();
+    foo->foo_mu_.Unlock();
+  }
+};
+
+void main() {
+  Bar bar;
+  bar.Test1();
+}
+} // end namespace thread_annot_lock_49
+
+namespace thread_annot_lock_61_modified {
+  // Modified to fix the compiler errors
+  // Test the fix for a bug introduced by the support of pass-by-reference
+  // paramters.
+  struct Foo { Foo &operator<< (bool) {return *this;} };
+  Foo &getFoo();
+  struct Bar { Foo &func () {return getFoo();} };
+  struct Bas { void operator& (Foo &) {} };
+  void mumble()
+  {
+    Bas() & Bar().func() << "" << "";
+    Bas() & Bar().func() << "";
+  }
+} // end namespace thread_annot_lock_61_modified
+
+
+namespace thread_annot_lock_65 {
+// Test the fix for a bug in the support of allowing reader locks for
+// non-const, non-modifying overload functions. (We didn't handle the builtin
+// properly.)
+enum MyFlags {
+  Zero,
+  One,
+  Two,
+  Three,
+  Four,
+  Five,
+  Six,
+  Seven,
+  Eight,
+  Nine
+};
+
+inline MyFlags
+operator|(MyFlags a, MyFlags b)
+{
+  return MyFlags(static_cast<int>(a) | static_cast<int>(b));
+}
+
+inline MyFlags&
+operator|=(MyFlags& a, MyFlags b)
+{
+    return a = a | b;
+}
+} // end namespace thread_annot_lock_65
+
+namespace thread_annot_lock_66_modified {
+// Modified: Moved annotation to function defn
+// Test annotations on out-of-line definitions of member functions where the
+// annotations refer to locks that are also data members in the class.
+Mutex mu;
+
+class Foo {
+ public:
+  int method1(int i) SHARED_LOCKS_REQUIRED(mu1, mu, mu2);
+  int data GUARDED_BY(mu1);
+  Mutex *mu1;
+  Mutex *mu2;
+};
+
+int Foo::method1(int i)
+{
+  return data + i;
+}
+
+void main()
+{
+  Foo a;
+
+  a.mu2->Lock();
+  a.mu1->Lock();
+  mu.Lock();
+  a.method1(1);
+  mu.Unlock();
+  a.mu1->Unlock();
+  a.mu2->Unlock();
+}
+} // end namespace thread_annot_lock_66_modified
+
+namespace thread_annot_lock_68_modified {
+// Test a fix to a bug in the delayed name binding with nested template
+// instantiation. We use a stack to make sure a name is not resolved to an
+// inner context.
+template <typename T>
+class Bar {
+  Mutex mu_;
+};
+
+template <typename T>
+class Foo {
+ public:
+  void func(T x) {
+    mu_.Lock();
+    count_ = x;
+    mu_.Unlock();
+  }
+
+ private:
+  T count_ GUARDED_BY(mu_);
+  Bar<T> bar_;
+  Mutex mu_;
+};
+
+void main()
+{
+  Foo<int> *foo;
+  foo->func(5);
+}
+} // end namespace thread_annot_lock_68_modified
+
+namespace thread_annot_lock_30_modified {
+// Test delay parsing of lock attribute arguments with nested classes.
+// Modified: trylocks replaced with exclusive_lock_fun
+int a = 0;
+
+class Bar {
+  struct Foo;
+
+ public:
+  void MyLock() EXCLUSIVE_LOCK_FUNCTION(mu);
+
+  int func() {
+    MyLock();
+//    if (foo == 0) {
+//      return 0;
+//    }
+    a = 5;
+    mu.Unlock();
+    return 1;
+  }
+
+  class FooBar {
+    int x;
+    int y;
+  };
+
+ private:
+  Mutex mu;
+};
+
+Bar *bar;
+
+void main()
+{
+  bar->func();
+}
+} // end namespace thread_annot_lock_30_modified
+
+namespace thread_annot_lock_47 {
+// Test the support for annotations on virtual functions.
+// This is a good test case. (i.e. There should be no warning emitted by the
+// compiler.)
+class Base {
+ public:
+  virtual void func1() EXCLUSIVE_LOCKS_REQUIRED(mu_);
+  virtual void func2() LOCKS_EXCLUDED(mu_);
+  Mutex mu_;
+};
+
+class Child : public Base {
+ public:
+  virtual void func1() EXCLUSIVE_LOCKS_REQUIRED(mu_);
+  virtual void func2() LOCKS_EXCLUDED(mu_);
+};
+
+void main() {
+  Child *c;
+  Base *b = c;
+
+  b->mu_.Lock();
+  b->func1();
+  b->mu_.Unlock();
+  b->func2();
+
+  c->mu_.Lock();
+  c->func1();
+  c->mu_.Unlock();
+  c->func2();
+}
+} // end namespace thread_annot_lock_47
+
+//-----------------------------------------//
+// Tests which produce errors
+//-----------------------------------------//
+
+namespace thread_annot_lock_13 {
+Mutex mu1;
+Mutex mu2;
+
+int g GUARDED_BY(mu1);
+int w GUARDED_BY(mu2);
+
+class Foo {
+ public:
+  void bar() LOCKS_EXCLUDED(mu_, mu1);
+  int foo() SHARED_LOCKS_REQUIRED(mu_) EXCLUSIVE_LOCKS_REQUIRED(mu2);
+
+ private:
+  int a_ GUARDED_BY(mu_);
+ public:
+  Mutex mu_ ACQUIRED_AFTER(mu1);
+};
+
+int Foo::foo()
+{
+  int res;
+  w = 5.2;
+  res = a_ + 5;
+  return res;
+}
+
+void Foo::bar()
+{
+  int x;
+  mu_.Lock();
+  x = foo(); // expected-warning {{calling function 'foo' requires exclusive lock on 'mu2'}}
+  a_ = x + 1;
+  mu_.Unlock();
+  if (x > 5) {
+    mu1.Lock();
+    g = 2.3;
+    mu1.Unlock();
+  }
+}
+
+void main()
+{
+  Foo f1, *f2;
+  f1.mu_.Lock();
+  f1.bar(); // expected-warning {{cannot call function 'bar' while holding mutex 'mu_'}}
+  mu2.Lock();
+  f1.foo();
+  mu2.Unlock();
+  f1.mu_.Unlock();
+  f2->mu_.Lock();
+  f2->bar(); // expected-warning {{cannot call function 'bar' while holding mutex 'mu_'}}
+  f2->mu_.Unlock();
+  mu2.Lock();
+  w = 2.5;
+  mu2.Unlock();
+}
+} // end namespace thread_annot_lock_13
+
+namespace thread_annot_lock_18_modified {
+// Modified: Trylocks removed
+// Test the ability to distnguish between the same lock field of
+// different objects of a class.
+  class Bar {
+ public:
+  bool MyLock() EXCLUSIVE_LOCK_FUNCTION(mu1_);
+  void MyUnlock() UNLOCK_FUNCTION(mu1_);
+  int a_ GUARDED_BY(mu1_);
+
+ private:
+  Mutex mu1_;
+};
+
+Bar *b1, *b2;
+
+void func()
+{
+  b1->MyLock();
+  b1->a_ = 5;
+  b2->a_ = 3; // expected-warning {{writing variable 'a_' requires lock on 'mu1_' to be held exclusively}}
+  b2->MyLock();
+  b2->MyUnlock();
+  b1->MyUnlock();
+}
+} // end namespace thread_annot_lock_18_modified
+
+namespace thread_annot_lock_21 {
+// Test various usage of GUARDED_BY and PT_GUARDED_BY annotations, especially
+// uses in class definitions.
+Mutex mu;
+
+class Bar {
+ public:
+  int a_ GUARDED_BY(mu1_);
+  int b_;
+  int *q PT_GUARDED_BY(mu);
+  Mutex mu1_ ACQUIRED_AFTER(mu);
+};
+
+Bar b1, *b3;
+int *p GUARDED_BY(mu) PT_GUARDED_BY(mu);
+
+int res GUARDED_BY(mu) = 5;
+
+int func(int i)
+{
+  int x;
+  b3->mu1_.Lock();
+  res = b1.a_ + b3->b_; // expected-warning {{reading variable 'a_' requires lock on 'mu1_' to be held}} \
+    // expected-warning {{writing variable 'res' requires lock on 'mu' to be held exclusively}}
+  *p = i; // expected-warning {{reading variable 'p' requires lock on 'mu' to be held}} \
+    // expected-warning {{writing the value pointed to by 'p' requires lock on 'mu' to be held exclusively}}
+  b1.a_ = res + b3->b_; // expected-warning {{reading variable 'res' requires lock on 'mu' to be held}} \
+    // expected-warning {{writing variable 'a_' requires lock on 'mu1_' to be held exclusively}}
+  b3->b_ = *b1.q; // expected-warning {{reading the value pointed to by 'q' requires lock on 'mu' to be held}}
+  b3->mu1_.Unlock();
+  b1.b_ = res; // expected-warning {{reading variable 'res' requires lock on 'mu' to be held}}
+  x = res; // expected-warning {{reading variable 'res' requires lock on 'mu' to be held}}
+  return x;
+}
+} // end namespace thread_annot_lock_21
+
+namespace thread_annot_lock_35_modified {
+// Test the analyzer's ability to distinguish the lock field of different
+// objects.
+class Foo {
+ private:
+  Mutex lock_;
+  int a_ GUARDED_BY(lock_);
+
+ public:
+  void Func(Foo* child) LOCKS_EXCLUDED(lock_) {
+     Foo *new_foo = new Foo;
+
+     lock_.Lock();
+
+     child->Func(new_foo); // There shouldn't be any warning here as the
+                           // acquired lock is not in child.
+     child->bar(7); // expected-warning {{calling function 'bar' requires exclusive lock on 'lock_'}}
+     child->a_ = 5; // expected-warning {{writing variable 'a_' requires lock on 'lock_' to be held exclusively}}
+     lock_.Unlock();
+  }
+
+  void bar(int y) EXCLUSIVE_LOCKS_REQUIRED(lock_) {
+    a_ = y;
+  }
+};
+
+Foo *x;
+
+void main() {
+  Foo *child = new Foo;
+  x->Func(child);
+}
+} // end namespace thread_annot_lock_35_modified
+
+namespace thread_annot_lock_36_modified {
+// Modified to move the annotations to function defns.
+// Test the analyzer's ability to distinguish the lock field of different
+// objects
+class Foo {
+ private:
+  Mutex lock_;
+  int a_ GUARDED_BY(lock_);
+
+ public:
+  void Func(Foo* child) LOCKS_EXCLUDED(lock_);
+  void bar(int y) EXCLUSIVE_LOCKS_REQUIRED(lock_);
+};
+
+void Foo::Func(Foo* child) {
+  Foo *new_foo = new Foo;
+
+  lock_.Lock();
+
+  child->lock_.Lock();
+  child->Func(new_foo); // expected-warning {{cannot call function 'Func' while holding mutex 'lock_'}}
+  child->bar(7);
+  child->a_ = 5;
+  child->lock_.Unlock();
+
+  lock_.Unlock();
+}
+
+void Foo::bar(int y) {
+  a_ = y;
+}
+
+
+Foo *x;
+
+void main() {
+  Foo *child = new Foo;
+  x->Func(child);
+}
+} // end namespace thread_annot_lock_36_modified
+
+
+namespace thread_annot_lock_42 {
+// Test support of multiple lock attributes of the same kind on a decl.
+class Foo {
+ private:
+  Mutex mu1, mu2, mu3;
+  int x GUARDED_BY(mu1) GUARDED_BY(mu2);
+  int y GUARDED_BY(mu2);
+
+  void f2() LOCKS_EXCLUDED(mu1) LOCKS_EXCLUDED(mu2) LOCKS_EXCLUDED(mu3) {
+    mu2.Lock();
+    y = 2;
+    mu2.Unlock();
+  }
+
+ public:
+  void f1() EXCLUSIVE_LOCKS_REQUIRED(mu2) EXCLUSIVE_LOCKS_REQUIRED(mu1) {
+    x = 5;
+    f2(); // expected-warning {{cannot call function 'f2' while holding mutex 'mu1'}} \
+      // expected-warning {{cannot call function 'f2' while holding mutex 'mu2'}}
+  }
+};
+
+Foo *foo;
+
+void func()
+{
+  foo->f1(); // expected-warning {{calling function 'f1' requires exclusive lock on 'mu2'}} \
+    // expected-warning {{calling function 'f1' requires exclusive lock on 'mu1'}}
+}
+} // end namespace thread_annot_lock_42
+
+namespace thread_annot_lock_46 {
+// Test the support for annotations on virtual functions.
+class Base {
+ public:
+  virtual void func1() EXCLUSIVE_LOCKS_REQUIRED(mu_);
+  virtual void func2() LOCKS_EXCLUDED(mu_);
+  Mutex mu_;
+};
+
+class Child : public Base {
+ public:
+  virtual void func1() EXCLUSIVE_LOCKS_REQUIRED(mu_);
+  virtual void func2() LOCKS_EXCLUDED(mu_);
+};
+
+void main() {
+  Child *c;
+  Base *b = c;
+
+  b->func1(); // expected-warning {{calling function 'func1' requires exclusive lock on 'mu_'}}
+  b->mu_.Lock();
+  b->func2(); // expected-warning {{cannot call function 'func2' while holding mutex 'mu_'}}
+  b->mu_.Unlock();
+
+  c->func1(); // expected-warning {{calling function 'func1' requires exclusive lock on 'mu_'}}
+  c->mu_.Lock();
+  c->func2(); // expected-warning {{cannot call function 'func2' while holding mutex 'mu_'}}
+  c->mu_.Unlock();
+}
+} // end namespace thread_annot_lock_46
+
+namespace thread_annot_lock_67_modified {
+// Modified: attributes on definitions moved to declarations
+// Test annotations on out-of-line definitions of member functions where the
+// annotations refer to locks that are also data members in the class.
+Mutex mu;
+Mutex mu3;
+
+class Foo {
+ public:
+  int method1(int i) SHARED_LOCKS_REQUIRED(mu1, mu, mu2, mu3);
+  int data GUARDED_BY(mu1);
+  Mutex *mu1;
+  Mutex *mu2;
+};
+
+int Foo::method1(int i) {
+  return data + i;
+}
+
+void main()
+{
+  Foo a;
+  a.method1(1); // expected-warning {{calling function 'method1' requires shared lock on 'mu1'}} \
+    // expected-warning {{calling function 'method1' requires shared lock on 'mu'}} \
+    // expected-warning {{calling function 'method1' requires shared lock on 'mu2'}} \
+    // expected-warning {{calling function 'method1' requires shared lock on 'mu3'}}
+}
+} // end namespace thread_annot_lock_67_modified
+
 
