@@ -984,21 +984,6 @@ void rdar8331641(int x) {
 // CHECK:       <key>col</key><integer>1</integer>
 // CHECK:       <key>file</key><integer>0</integer>
 // CHECK:      </dict>
-// CHECK:      <key>ranges</key>
-// CHECK:      <array>
-// CHECK:        <array>
-// CHECK:         <dict>
-// CHECK:          <key>line</key><integer>57</integer>
-// CHECK:          <key>col</key><integer>1</integer>
-// CHECK:          <key>file</key><integer>0</integer>
-// CHECK:         </dict>
-// CHECK:         <dict>
-// CHECK:          <key>line</key><integer>57</integer>
-// CHECK:          <key>col</key><integer>1</integer>
-// CHECK:          <key>file</key><integer>0</integer>
-// CHECK:         </dict>
-// CHECK:        </array>
-// CHECK:      </array>
 // CHECK:      <key>extended_message</key>
 // CHECK:      <string>Object leaked: object allocated and stored into &apos;value&apos; is not referenced later in this execution path and has a retain count of +1</string>
 // CHECK:      <key>message</key>

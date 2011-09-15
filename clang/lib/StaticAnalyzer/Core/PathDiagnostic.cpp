@@ -132,7 +132,7 @@ void PathDiagnosticClient::HandlePathDiagnostic(const PathDiagnostic *D) {
 
 PathDiagnosticLocation::PathDiagnosticLocation(const LocationContext *lc,
                                                const SourceManager &sm)
-  : K(RangeK), S(0), D(0), SM(&sm), LC(lc) {
+  : K(SingleLocK), S(0), D(0), SM(&sm), LC(lc) {
   SourceLocation L = LC->getDecl()->getBodyRBrace();
   R = SourceRange(L, L);
 }
