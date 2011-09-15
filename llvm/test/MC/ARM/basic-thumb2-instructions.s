@@ -1679,6 +1679,42 @@ _func:
 
 
 @------------------------------------------------------------------------------
+@ SHASX
+@------------------------------------------------------------------------------
+        shasx r4, r8, r2
+        it gt
+        shasxgt r4, r8, r2
+        shaddsubx r4, r8, r2
+        it gt
+        shaddsubxgt r4, r8, r2
+
+@ CHECK: shasx	r4, r8, r2              @ encoding: [0xa8,0xfa,0x22,0xf4]
+@ CHECK: it	gt                      @ encoding: [0xc8,0xbf]
+@ CHECK: shasxgt r4, r8, r2             @ encoding: [0xa8,0xfa,0x22,0xf4]
+@ CHECK: shasx	r4, r8, r2              @ encoding: [0xa8,0xfa,0x22,0xf4]
+@ CHECK: it	gt                      @ encoding: [0xc8,0xbf]
+@ CHECK: shasxgt r4, r8, r2             @ encoding: [0xa8,0xfa,0x22,0xf4]
+
+
+@------------------------------------------------------------------------------
+@ SHASX
+@------------------------------------------------------------------------------
+        shsax r4, r8, r2
+        it gt
+        shsaxgt r4, r8, r2
+        shsubaddx r4, r8, r2
+        it gt
+        shsubaddxgt r4, r8, r2
+
+@ CHECK: shsax	r4, r8, r2              @ encoding: [0xe8,0xfa,0x22,0xf4]
+@ CHECK: it	gt                      @ encoding: [0xc8,0xbf]
+@ CHECK: shsaxgt r4, r8, r2             @ encoding: [0xe8,0xfa,0x22,0xf4]
+@ CHECK: shsax	r4, r8, r2              @ encoding: [0xe8,0xfa,0x22,0xf4]
+@ CHECK: it	gt                      @ encoding: [0xc8,0xbf]
+@ CHECK: shsaxgt r4, r8, r2             @ encoding: [0xe8,0xfa,0x22,0xf4]
+
+
+@------------------------------------------------------------------------------
 @ SUB (register)
 @------------------------------------------------------------------------------
         sub.w r5, r2, r12, rrx
