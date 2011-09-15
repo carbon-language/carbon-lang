@@ -4863,8 +4863,7 @@ static SDValue LowerADDC_ADDE_SUBC_SUBE(SDValue Op, SelectionDAG &DAG) {
                      Op.getOperand(1), Op.getOperand(2));
 }
 
-static SDValue LowerAtomicLoadStore(SDValue Op, SelectionDAG &DAG,
-                                    const ARMSubtarget *ST) {
+static SDValue LowerAtomicLoadStore(SDValue Op, SelectionDAG &DAG) {
   // Monotonic load/store is legal for all targets
   if (cast<AtomicSDNode>(Op)->getOrdering() <= Monotonic)
     return Op;
@@ -4960,7 +4959,7 @@ SDValue ARMTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::SUBC:
   case ISD::SUBE:          return LowerADDC_ADDE_SUBC_SUBE(Op, DAG);
   case ISD::ATOMIC_LOAD:
-  case ISD::ATOMIC_STORE:  return LowerAtomicLoadStore(Op, DAG, Subtarget);
+  case ISD::ATOMIC_STORE:  return LowerAtomicLoadStore(Op, DAG);
   }
   return SDValue();
 }
