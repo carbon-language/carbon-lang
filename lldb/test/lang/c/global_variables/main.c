@@ -15,7 +15,7 @@ static const char *g_file_static_cstr = "g_file_static_cstr";
 extern int g_a;
 int main (int argc, char const *argv[])
 {
-	static const char *g_func_static_cstr = "g_func_static_cstr";
-	printf ("%s %s\n", g_file_global_cstr, g_file_static_cstr);
+    static const char *g_func_static_cstr = "g_func_static_cstr";
+    printf ("%s %s\n", g_file_global_cstr, g_file_static_cstr);
     return g_file_global_int + g_a; // Set break point at this line.  //// break $source:$line; continue; var -global g_a -global g_global_int
 }
