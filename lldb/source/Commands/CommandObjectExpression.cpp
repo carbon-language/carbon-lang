@@ -95,12 +95,13 @@ CommandObjectExpression::CommandOptions::SetOptionValue (uint32_t option_idx, co
         break;
         
     case 'u':
-        bool success;
-        unwind_on_error = Args::StringToBoolean(option_arg, true, &success);
-        if (!success)
-            error.SetErrorStringWithFormat("Could not convert \"%s\" to a boolean value.", option_arg);
-        break;
-
+        {
+            bool success;
+            unwind_on_error = Args::StringToBoolean(option_arg, true, &success);
+            if (!success)
+                error.SetErrorStringWithFormat("Could not convert \"%s\" to a boolean value.", option_arg);
+            break;
+        }
     default:
         error.SetErrorStringWithFormat("Invalid short option character '%c'.\n", short_option);
         break;
@@ -292,7 +293,13 @@ CommandObjectExpression::EvaluateExpression
             break;
         }
         
-        exe_results = m_exe_ctx.target->EvaluateExpression(expr, m_exe_ctx.frame, m_options.unwind_on_error, keep_in_memory, use_dynamic, result_valobj_sp);
+        exe_results = m_exe_ctx.target->EvaluateExpression(expr, 
+                                                           m_exe_ctx.frame,
+                                                           eExecutionPolicyOnlyWhenNeeded,
+                                                           m_options.unwind_on_error,
+                                                           keep_in_memory, 
+                                                           use_dynamic, 
+                                                           result_valobj_sp);
         
         if (exe_results == eExecutionInterrupted && !m_options.unwind_on_error)
         {
@@ -488,7 +495,6 @@ CommandObjectExpression::CommandOptions::g_option_table[] =
 { LLDB_OPT_SET_2,   false, "dynamic-value",      'd', required_argument, NULL, 0, eArgTypeBoolean,    "Upcast the value resulting from the expression to its dynamic type if available."},
 { LLDB_OPT_SET_ALL, false, "unwind-on-error",    'u', required_argument, NULL, 0, eArgTypeBoolean,    "Clean up program state if the expression causes a crash, breakpoint hit or signal."},
 { LLDB_OPT_SET_ALL, false, "debug",              'g', no_argument,       NULL, 0, eArgTypeNone,       "Enable verbose debug logging of the expression parsing and evaluation."},
-{ LLDB_OPT_SET_ALL, false, "use-ir",             'i', no_argument,       NULL, 0, eArgTypeNone,       "[Temporary] Instructs the expression evaluator to use IR instead of ASTs."},
 { 0,                false, NULL,                 0,   0,                 NULL, 0, eArgTypeNone,       NULL }
 };
 

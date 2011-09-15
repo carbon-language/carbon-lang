@@ -349,6 +349,130 @@ public:
     GetSymbolAddress (const ConstString &name);
     
     //------------------------------------------------------------------
+    /// [Used by IRInterpreter] Get basic target information.
+    ///
+    /// @param[out] byte_order
+    ///     The byte order of the target.
+    ///
+    /// @param[out] address_byte_size
+    ///     The size of a pointer in bytes.
+    ///
+    /// @return
+    ///     True if the information could be determined; false 
+    ///     otherwise.
+    //------------------------------------------------------------------
+    struct TargetInfo
+    {
+        lldb::ByteOrder byte_order;
+        size_t address_byte_size;
+        
+        TargetInfo() :
+            byte_order(lldb::eByteOrderInvalid),
+            address_byte_size(0)
+        {
+        }
+        
+        bool IsValid()
+        {
+            return (byte_order != lldb::eByteOrderInvalid &&
+                    address_byte_size != 0);
+        }
+    };
+    TargetInfo GetTargetInfo();
+    
+    //------------------------------------------------------------------
+    /// [Used by IRInterpreter] Write to the target.
+    ///
+    /// @param[in] addr
+    ///     The address to write to.
+    ///
+    /// @param[in] data
+    ///     The address of the data buffer to read from.
+    ///
+    /// @param[in] length
+    ///     The amount of data to write, in bytes.
+    ///
+    /// @return
+    ///     True if the write could be performed; false otherwise.
+    //------------------------------------------------------------------
+    bool
+    WriteTarget (lldb_private::Value &value,
+                 const uint8_t *data,
+                 size_t length);
+    
+    //------------------------------------------------------------------
+    /// [Used by IRInterpreter] Read from the target.
+    ///
+    /// @param[in] data
+    ///     The address of the data buffer to write to.
+    ///
+    /// @param[in] addr
+    ///     The address to read from.
+    ///
+    /// @param[in] length
+    ///     The amount of data to read, in bytes.
+    ///
+    /// @return
+    ///     True if the read could be performed; false otherwise.
+    //------------------------------------------------------------------
+    bool
+    ReadTarget (uint8_t *data,
+                lldb_private::Value &value,
+                size_t length);
+    
+    //------------------------------------------------------------------
+    /// [Used by IRInterpreter] Get the Value for a NamedDecl.
+    ///
+    /// @param[in] decl
+    ///     The Decl whose value is to be found.
+    ///
+    /// @return
+    ///     The value, or NULL.
+    //------------------------------------------------------------------
+    lldb_private::Value
+    LookupDecl (clang::NamedDecl *decl);
+    
+    //------------------------------------------------------------------
+    /// [Used by IRInterpreter] Returns true if the result is a
+    ///   reference to data in the target, meaning it must be
+    ///   dereferenced once more to get its data.
+    ///
+    /// @param[in] name
+    ///     The name of the result.
+    ///
+    /// @return
+    ///     True if the result is a reference; false otherwise (or on
+    ///     error).
+    //------------------------------------------------------------------
+    bool
+    ResultIsReference (const ConstString &name);
+    
+    //------------------------------------------------------------------
+    /// [Used by IRInterpreter] Find the result persistent variable,
+    ///   propagate the given value to it, and return it.
+    ///
+    /// @param[out] valobj
+    ///     Set to the complete object.
+    ///
+    /// @param[in] value
+    ///     A value indicating the location of the value's contents.
+    ///
+    /// @param[in] name
+    ///     The name of the result.
+    ///
+    /// @param[in] type
+    ///     The type of the data.
+    ///
+    /// @return
+    ///     True on success; false otherwise.
+    //------------------------------------------------------------------
+    bool
+    CompleteResultVariable (lldb::ClangExpressionVariableSP &valobj, 
+                            lldb_private::Value &value,
+                            const ConstString &name,
+                            lldb_private::TypeFromParser type);
+    
+    //------------------------------------------------------------------
     /// [Used by CommandObjectExpression] Materialize the entire struct
     /// at a given address, which should be aligned as specified by 
     /// GetStructInfo().
@@ -596,6 +720,7 @@ private:
         bool                        m_enable_lookups;   ///< Set to true during parsing if we have found the first "$__lldb" name.
         bool                        m_ignore_lookups;   ///< True during an import when we should be ignoring type lookups.
         std::auto_ptr<ClangASTImporter> m_ast_importer; ///< The importer used to import types on the parser's behalf.
+        TargetInfo                  m_target_info;      ///< Basic information about the target.
     private:
         DISALLOW_COPY_AND_ASSIGN (ParserVars);
     };
@@ -740,6 +865,29 @@ private:
     Symbol *
     FindGlobalDataSymbol (Target &target,
                           const ConstString &name);
+    
+    //------------------------------------------------------------------
+    /// Given a target, find a variable that matches the given name and 
+    /// type.
+    ///
+    /// @param[in] target
+    ///     The target to use as a basis for finding the variable.
+    ///
+    /// @param[in] name
+    ///     The name as a plain C string.
+    ///
+    /// @param[in] type
+    ///     The required type for the variable.  This function may be called
+    ///     during parsing, in which case we don't know its type; hence the
+    ///     default.
+    ///
+    /// @return
+    ///     The LLDB Variable found, or NULL if none was found.
+    //------------------------------------------------------------------
+    lldb::VariableSP
+    FindGlobalVariable (Target &target,
+                        const char *name,
+                        TypeFromUser *type = NULL);
     
     //------------------------------------------------------------------
     /// Get the value of a variable in a given execution context and return

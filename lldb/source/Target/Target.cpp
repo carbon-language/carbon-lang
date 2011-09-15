@@ -1133,6 +1133,7 @@ Target::EvaluateExpression
 (
     const char *expr_cstr,
     StackFrame *frame,
+    lldb_private::ExecutionPolicy execution_policy,
     bool unwind_on_error,
     bool keep_in_memory,
     lldb::DynamicValueType use_dynamic,
@@ -1242,8 +1243,9 @@ Target::EvaluateExpression
         else
         {
             const char *prefix = GetExpressionPrefixContentsAsCString();
-        
+                    
             execution_results = ClangUserExpression::Evaluate (exe_ctx, 
+                                                               execution_policy,
                                                                unwind_on_error,
                                                                expr_cstr, 
                                                                prefix, 

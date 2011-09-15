@@ -214,6 +214,15 @@ typedef enum FormatCategoryItem
     eFormatCategoryItemRegexSynth =      0x0020
 } FormatCategoryItem;
 
+//------------------------------------------------------------------
+/// Expression execution policies
+//------------------------------------------------------------------  
+typedef enum {
+    eExecutionPolicyOnlyWhenNeeded,
+    eExecutionPolicyNever,
+    eExecutionPolicyAlways
+} ExecutionPolicy;
+    
 } // namespace lldb
 
 

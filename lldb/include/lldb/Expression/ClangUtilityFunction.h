@@ -149,16 +149,6 @@ public:
     }
     
     //------------------------------------------------------------------
-    /// Return the stream that the parser should use to write DWARF
-    /// opcodes.
-    //------------------------------------------------------------------
-    StreamString &
-    DwarfOpcodeStream ()
-    {
-        return *((StreamString*)NULL);
-    }
-    
-    //------------------------------------------------------------------
     /// Return true if validation code should be inserted into the
     /// expression.
     //------------------------------------------------------------------

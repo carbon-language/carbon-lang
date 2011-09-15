@@ -1,4 +1,4 @@
-//===-- IRForTarget.cpp -------------------------------------------*- C++ -*-===//
+//===-- IRForTarget.cpp -----------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -26,6 +26,7 @@
 #include "lldb/Core/Scalar.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Expression/ClangExpressionDeclMap.h"
+#include "lldb/Expression/IRInterpreter.h"
 #include "lldb/Host/Endian.h"
 #include "lldb/Symbol/ClangASTContext.h"
 
@@ -45,12 +46,15 @@ IRForTarget::StaticDataAllocator::~StaticDataAllocator()
 
 IRForTarget::IRForTarget (lldb_private::ClangExpressionDeclMap *decl_map,
                           bool resolve_vars,
+                          lldb_private::ExecutionPolicy execution_policy,
                           lldb::ClangExpressionVariableSP &const_result,
                           StaticDataAllocator *data_allocator,
                           lldb_private::Stream *error_stream,
                           const char *func_name) :
     ModulePass(ID),
     m_resolve_vars(resolve_vars),
+    m_execution_policy(execution_policy),
+    m_interpret_success(false),
     m_func_name(func_name),
     m_module(NULL),
     m_decl_map(decl_map),
@@ -309,12 +313,13 @@ IRForTarget::ResolveFunctionPointers(llvm::Module &llvm_module,
     return true;
 }
 
+
 clang::NamedDecl *
-IRForTarget::DeclForGlobal (GlobalValue *global_val)
+IRForTarget::DeclForGlobal (const GlobalValue *global_val, Module *module)
 {
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
-    NamedMDNode *named_metadata = m_module->getNamedMetadata("clang.global.decl.ptrs");
+    NamedMDNode *named_metadata = module->getNamedMetadata("clang.global.decl.ptrs");
     
     if (!named_metadata)
         return NULL;
@@ -348,6 +353,12 @@ IRForTarget::DeclForGlobal (GlobalValue *global_val)
     }
     
     return NULL;
+}
+
+clang::NamedDecl *
+IRForTarget::DeclForGlobal (GlobalValue *global_val)
+{        
+    return DeclForGlobal(global_val, m_module);
 }
 
 void 
@@ -553,9 +564,7 @@ IRForTarget::CreateResultVariable (llvm::Function &llvm_function)
     
     // Get the next available result name from m_decl_map and create the persistent
     // variable for it
-    
-    lldb_private::TypeFromParser result_decl_type;
-    
+        
     // If the result is an Lvalue, it is emitted as a pointer; see
     // ASTResultSynthesizer::SynthesizeBodyResult.
     if (m_result_is_pointer)
@@ -577,19 +586,19 @@ IRForTarget::CreateResultVariable (llvm::Function &llvm_function)
         
         clang::QualType element_qual_type = pointer_pointertype->getPointeeType();
         
-        result_decl_type = lldb_private::TypeFromParser(element_qual_type.getAsOpaquePtr(),
+        m_result_type = lldb_private::TypeFromParser(element_qual_type.getAsOpaquePtr(),
                                                         &result_decl->getASTContext());
     }
     else
     {
-        result_decl_type = lldb_private::TypeFromParser(result_var->getType().getAsOpaquePtr(),
+        m_result_type = lldb_private::TypeFromParser(result_var->getType().getAsOpaquePtr(),
                                                         &result_decl->getASTContext());
     }
     
     if (log)
     {
         lldb_private::StreamString type_desc_stream;
-        result_decl_type.DumpTypeDescription(&type_desc_stream);
+        m_result_type.DumpTypeDescription(&type_desc_stream);
         
         log->Printf("Result decl type: \"%s\"", type_desc_stream.GetString().c_str());
     }
@@ -665,7 +674,7 @@ IRForTarget::CreateResultVariable (llvm::Function &llvm_function)
         {
             MaybeSetConstantResult (initializer, 
                                     m_result_name, 
-                                    result_decl_type);
+                                    m_result_type);
         }
                 
         StoreInst *synthesized_store = new StoreInst(initializer,
@@ -677,9 +686,9 @@ IRForTarget::CreateResultVariable (llvm::Function &llvm_function)
     }
     else
     {
-        if (!m_has_side_effects && lldb_private::ClangASTContext::IsPointerType (result_decl_type.GetOpaqueQualType()))
+        if (!m_has_side_effects && lldb_private::ClangASTContext::IsPointerType (m_result_type.GetOpaqueQualType()))
         {
-            MaybeSetCastResult (result_decl_type);
+            MaybeSetCastResult (m_result_type);
         }
         
         result_global->replaceAllUsesWith(new_result_global);
@@ -688,7 +697,7 @@ IRForTarget::CreateResultVariable (llvm::Function &llvm_function)
     if (!m_const_result)
         m_decl_map->AddPersistentVariable(result_decl, 
                                           m_result_name, 
-                                          result_decl_type,
+                                          m_result_type,
                                           true,
                                           m_result_is_pointer);
         
@@ -2247,6 +2256,9 @@ IRForTarget::BuildRelocation(llvm::Type *type,
 bool 
 IRForTarget::CompleteDataAllocation ()
 {
+    if (!m_data_allocator)
+        return true;
+    
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
     if (!m_data_allocator->GetStream().GetSize())
@@ -2335,9 +2347,49 @@ IRForTarget::runOnModule (Module &llvm_module)
         
         return false;
     }
-    
-    if (m_const_result)
+        
+    if (m_const_result && m_execution_policy != lldb_private::eExecutionPolicyAlways)
+    {
+        m_interpret_success = true;
         return true;
+    }
+    
+    for (bbi = function->begin();
+         bbi != function->end();
+         ++bbi)
+    {
+        if (!RemoveGuards(*bbi))
+        {
+            if (log)
+                log->Printf("RemoveGuards() failed");
+            
+            // RemoveGuards() reports its own errors, so we don't do so here
+            
+            return false;
+        }
+        
+        if (!RewritePersistentAllocs(*bbi))
+        {
+            if (log)
+                log->Printf("RewritePersistentAllocs() failed");
+            
+            // RewritePersistentAllocs() reports its own errors, so we don't do so here
+            
+            return false;
+        }
+    }
+    
+    if (m_decl_map && m_execution_policy != lldb_private::eExecutionPolicyAlways)
+    {
+        IRInterpreter interpreter (*m_decl_map,
+                                   m_error_stream);
+
+        if (interpreter.maybeRunOnFunction(m_const_result, m_result_name, m_result_type, *function, llvm_module))
+        {
+            m_interpret_success = true;
+            return true;
+        }
+    }
     
     if (log)
     {
@@ -2379,34 +2431,10 @@ IRForTarget::runOnModule (Module &llvm_module)
         return false;
     }
     
-    //////////////////////////////////
-    // Run basic-block level passes
-    //
-    
     for (bbi = function->begin();
          bbi != function->end();
          ++bbi)
     {
-        if (!RemoveGuards(*bbi))
-        {
-            if (log)
-                log->Printf("RemoveGuards() failed");
-            
-            // RemoveGuards() reports its own errors, so we don't do so here
-            
-            return false;
-        }
-        
-        if (!RewritePersistentAllocs(*bbi))
-        {
-            if (log)
-                log->Printf("RewritePersistentAllocs() failed");
-            
-            // RewritePersistentAllocs() reports its own errors, so we don't do so here
-            
-            return false;
-        }
-        
         if (!RewriteObjCSelectors(*bbi))
         {
             if (log)

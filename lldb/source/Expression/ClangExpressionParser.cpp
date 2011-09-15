@@ -19,7 +19,6 @@
 #include "lldb/Expression/ClangExpression.h"
 #include "lldb/Expression/ClangExpressionDeclMap.h"
 #include "lldb/Expression/IRDynamicChecks.h"
-#include "lldb/Expression/IRToDWARF.h"
 #include "lldb/Expression/RecordingMemoryManager.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/ObjCLanguageRuntime.h"
@@ -418,66 +417,14 @@ static bool FindFunctionInModule (std::string &mangled_name,
 }
 
 Error
-ClangExpressionParser::MakeDWARF ()
-{
-    Error err;
-    
-    llvm::Module *module = m_code_generator->GetModule();
-    
-    if (!module)
-    {
-        err.SetErrorToGenericError();
-        err.SetErrorString("IR doesn't contain a module");
-        return err;
-    }
-    
-    ClangExpressionVariableList *local_variables = m_expr.LocalVariables();
-    ClangExpressionDeclMap *decl_map = m_expr.DeclMap();
-    
-    if (!local_variables)
-    {
-        err.SetErrorToGenericError();
-        err.SetErrorString("Can't convert an expression without a VariableList to DWARF");
-        return err;
-    }
-    
-    if (!decl_map)
-    {
-        err.SetErrorToGenericError();
-        err.SetErrorString("Can't convert an expression without a DeclMap to DWARF");
-        return err;
-    }
-    
-    std::string function_name;
-    
-    if (!FindFunctionInModule(function_name, module, m_expr.FunctionName()))
-    {
-        err.SetErrorToGenericError();
-        err.SetErrorStringWithFormat("Couldn't find %s() in the module", m_expr.FunctionName());
-        return err;
-    }
-    
-    IRToDWARF ir_to_dwarf(*local_variables, decl_map, m_expr.DwarfOpcodeStream(), function_name.c_str());
-    
-    if (!ir_to_dwarf.runOnModule(*module))
-    {
-        err.SetErrorToGenericError();
-        err.SetErrorString("Couldn't convert the expression to DWARF");
-        return err;
-    }
-    
-    err.Clear();
-    return err;
-}
-
-Error
-ClangExpressionParser::MakeJIT (lldb::addr_t &func_allocation_addr, 
-                                lldb::addr_t &func_addr, 
-                                lldb::addr_t &func_end, 
-                                ExecutionContext &exe_ctx,
-                                IRForTarget::StaticDataAllocator *data_allocator,
-                                lldb::ClangExpressionVariableSP &const_result,
-                                bool jit_only_if_needed)
+ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_allocation_addr, 
+                                            lldb::addr_t &func_addr, 
+                                            lldb::addr_t &func_end, 
+                                            ExecutionContext &exe_ctx,
+                                            IRForTarget::StaticDataAllocator *data_allocator,
+                                            bool &evaluated_statically,
+                                            lldb::ClangExpressionVariableSP &const_result,
+                                            ExecutionPolicy execution_policy)
 {
     func_allocation_addr = LLDB_INVALID_ADDRESS;
 	func_addr = LLDB_INVALID_ADDRESS;
@@ -520,8 +467,9 @@ ClangExpressionParser::MakeJIT (lldb::addr_t &func_allocation_addr,
         if (exe_ctx.target)
             error_stream = &exe_ctx.target->GetDebugger().GetErrorStream();
     
-        IRForTarget ir_for_target(decl_map, 
+        IRForTarget ir_for_target(decl_map,
                                   m_expr.NeedsVariableResolution(),
+                                  execution_policy,
                                   const_result,
                                   data_allocator,
                                   error_stream,
@@ -530,17 +478,25 @@ ClangExpressionParser::MakeJIT (lldb::addr_t &func_allocation_addr,
         if (!ir_for_target.runOnModule(*module))
         {
             err.SetErrorToGenericError();
-            err.SetErrorString("Couldn't convert the expression to DWARF");
+            err.SetErrorString("Couldn't prepare the expression for execution in the target");
             return err;
         }
         
-        if (jit_only_if_needed && const_result.get())
+        if (execution_policy != eExecutionPolicyAlways && ir_for_target.interpretSuccess())
         {
+            evaluated_statically = true;
             err.Clear();
             return err;
         }
         
-        if (m_expr.NeedsValidation() && exe_ctx.process->GetDynamicCheckers())
+        if (!exe_ctx.process || execution_policy == eExecutionPolicyNever)
+        {
+            err.SetErrorToGenericError();
+            err.SetErrorString("Execution needed to run in the target, but the target can't be run");
+            return err;
+        }
+        
+        if (m_expr.NeedsValidation() && exe_ctx.process && exe_ctx.process->GetDynamicCheckers())
         {
             IRDynamicChecks ir_dynamic_checks(*exe_ctx.process->GetDynamicCheckers(), function_name.c_str());
         

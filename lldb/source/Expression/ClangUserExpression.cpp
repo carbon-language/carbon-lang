@@ -53,6 +53,7 @@ ClangUserExpression::ClangUserExpression (const char *expr,
     m_objectivec (false),
     m_needs_object_ptr (false),
     m_const_object (false),
+    m_evaluated_statically (false),
     m_const_result (),
     m_target (NULL)
 {
@@ -167,6 +168,7 @@ bool
 ClangUserExpression::Parse (Stream &error_stream, 
                             ExecutionContext &exe_ctx,
                             TypeFromUser desired_type,
+                            lldb_private::ExecutionPolicy execution_policy,
                             bool keep_result_in_memory)
 {
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
@@ -279,39 +281,23 @@ ClangUserExpression::Parse (Stream &error_stream,
         return false;
     }
     
-    ///////////////////////////////////////////////
-    // Convert the output of the parser to DWARF
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // Prepare the output of the parser for execution, evaluating it statically if possible
     //
-
-    m_dwarf_opcodes.reset(new StreamString);
-    m_dwarf_opcodes->SetByteOrder (lldb::endian::InlHostByteOrder());
-    m_dwarf_opcodes->GetFlags ().Set (Stream::eBinary);
-    
-    m_local_variables.reset(new ClangExpressionVariableList());
-            
-    Error dwarf_error = parser.MakeDWARF ();
-    
-    if (dwarf_error.Success())
-    {
-        if (log)
-            log->Printf("Code can be interpreted.");
         
-        m_expr_decl_map->DidParse();
-        
-        return true;
-    }
+    if (execution_policy != eExecutionPolicyNever && exe_ctx.process)
+        m_data_allocator.reset(new ProcessDataAllocator(*exe_ctx.process));
     
-    //////////////////////////////////
-    // JIT the output of the parser
-    //
+    Error jit_error = parser.PrepareForExecution (m_jit_alloc,
+                                                  m_jit_start_addr,
+                                                  m_jit_end_addr,
+                                                  exe_ctx,
+                                                  m_data_allocator.get(),
+                                                  m_evaluated_statically,
+                                                  m_const_result,
+                                                  execution_policy);
     
-    m_dwarf_opcodes.reset();
-    
-    m_data_allocator.reset(new ProcessDataAllocator(*exe_ctx.process));
-    
-    Error jit_error = parser.MakeJIT (m_jit_alloc, m_jit_start_addr, m_jit_end_addr, exe_ctx, m_data_allocator.get(), m_const_result, true);
-    
-    if (log)
+    if (log && m_data_allocator.get())
     {
         StreamString dump_string;
         m_data_allocator->Dump(dump_string);
@@ -505,15 +491,7 @@ ClangUserExpression::Execute (Stream &error_stream,
     // expression, it's quite convenient to have these logs come out with the STEP log as well.
     lldb::LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_EXPRESSIONS | LIBLLDB_LOG_STEP));
 
-    if (m_dwarf_opcodes.get())
-    {
-        // TODO execute the JITted opcodes
-        
-        error_stream.Printf("We don't currently support executing DWARF expressions");
-        
-        return eExecutionSetupError;
-    }
-    else if (m_jit_start_addr != LLDB_INVALID_ADDRESS)
+    if (m_jit_start_addr != LLDB_INVALID_ADDRESS)
     {
         lldb::addr_t struct_address;
                 
@@ -594,38 +572,31 @@ ClangUserExpression::Execute (Stream &error_stream,
     }
     else
     {
-        error_stream.Printf("Expression can't be run; neither DWARF nor a JIT compiled function is present");
+        error_stream.Printf("Expression can't be run, because there is no JIT compiled function");
         return eExecutionSetupError;
     }
 }
 
-StreamString &
-ClangUserExpression::DwarfOpcodeStream ()
-{
-    if (!m_dwarf_opcodes.get())
-        m_dwarf_opcodes.reset(new StreamString());
-    
-    return *m_dwarf_opcodes.get();
-}
-
 ExecutionResults
-ClangUserExpression::Evaluate (ExecutionContext &exe_ctx, 
+ClangUserExpression::Evaluate (ExecutionContext &exe_ctx,
+                               lldb_private::ExecutionPolicy execution_policy,
                                bool discard_on_error,
                                const char *expr_cstr,
                                const char *expr_prefix,
                                lldb::ValueObjectSP &result_valobj_sp)
 {
     Error error;
-    return EvaluateWithError (exe_ctx, discard_on_error, expr_cstr, expr_prefix, result_valobj_sp, error);
+    return EvaluateWithError (exe_ctx, execution_policy, discard_on_error, expr_cstr, expr_prefix, result_valobj_sp, error);
 }
 
 ExecutionResults
-ClangUserExpression::EvaluateWithError (ExecutionContext &exe_ctx, 
-                               bool discard_on_error,
-                               const char *expr_cstr,
-                               const char *expr_prefix,
-                               lldb::ValueObjectSP &result_valobj_sp,
-                               Error &error)
+ClangUserExpression::EvaluateWithError (ExecutionContext &exe_ctx,
+                                        lldb_private::ExecutionPolicy execution_policy,
+                                        bool discard_on_error,
+                                        const char *expr_cstr,
+                                        const char *expr_prefix,
+                                        lldb::ValueObjectSP &result_valobj_sp,
+                                        Error &error)
 {
     lldb::LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_EXPRESSIONS | LIBLLDB_LOG_STEP));
 
@@ -633,13 +604,18 @@ ClangUserExpression::EvaluateWithError (ExecutionContext &exe_ctx,
     
     if (exe_ctx.process == NULL || exe_ctx.process->GetState() != lldb::eStateStopped)
     {
-        error.SetErrorString ("must have a stopped process to evaluate expressions.");
+        if (execution_policy == eExecutionPolicyAlways)
+        {
+            if (log)
+                log->Printf("== [ClangUserExpression::Evaluate] Expression may not run, but is not constant ==");
             
-        result_valobj_sp = ValueObjectConstResult::Create (NULL, error);
-        return eExecutionSetupError;
+            error.SetErrorString ("expression needed to run but couldn't");
+            
+            return execution_results;
+        }
     }
-    
-    if (!exe_ctx.process->GetDynamicCheckers())
+        
+    if (execution_policy != eExecutionPolicyNever && !exe_ctx.process->GetDynamicCheckers())
     {
         if (log)
             log->Printf("== [ClangUserExpression::Evaluate] Installing dynamic checkers ==");
@@ -672,7 +648,9 @@ ClangUserExpression::EvaluateWithError (ExecutionContext &exe_ctx,
     if (log)
         log->Printf("== [ClangUserExpression::Evaluate] Parsing expression %s ==", expr_cstr);
     
-    if (!user_expression_sp->Parse (error_stream, exe_ctx, TypeFromUser(NULL, NULL), true))
+    const bool keep_expression_in_memory = true;
+    
+    if (!user_expression_sp->Parse (error_stream, exe_ctx, TypeFromUser(NULL, NULL), execution_policy, keep_expression_in_memory))
     {
         if (error_stream.GetString().empty())
             error.SetErrorString ("expression failed to parse, unknown error");
@@ -683,13 +661,25 @@ ClangUserExpression::EvaluateWithError (ExecutionContext &exe_ctx,
     {
         lldb::ClangExpressionVariableSP expr_result;
 
-        if (user_expression_sp->m_const_result.get())
+        if (user_expression_sp->EvaluatedStatically())
         {
             if (log)
                 log->Printf("== [ClangUserExpression::Evaluate] Expression evaluated as a constant ==");
             
-            result_valobj_sp = user_expression_sp->m_const_result->GetValueObject();
+            if (user_expression_sp->m_const_result)
+                result_valobj_sp = user_expression_sp->m_const_result->GetValueObject();
+            else
+                error.SetError(ClangUserExpression::kNoResult, lldb::eErrorTypeGeneric);
+            
             execution_results = eExecutionCompleted;
+        }
+        else if (execution_policy == eExecutionPolicyNever)
+        {
+            if (log)
+                log->Printf("== [ClangUserExpression::Evaluate] Expression may not run, but is not constant ==");
+            
+            if (error_stream.GetString().empty())
+                error.SetErrorString ("expression needed to run but couldn't");
         }
         else
         {    

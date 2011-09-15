@@ -253,7 +253,16 @@ ClangFunction::WriteFunctionWrapper (ExecutionContext &exe_ctx, Stream &errors)
     
     lldb::ClangExpressionVariableSP const_result;
     
-    Error jit_error (m_parser->MakeJIT (m_jit_alloc, m_jit_start_addr, m_jit_end_addr, exe_ctx, NULL, const_result));
+    bool evaluated_statically = false; // should stay that way
+    
+    Error jit_error (m_parser->PrepareForExecution (m_jit_alloc,
+                                                    m_jit_start_addr,
+                                                    m_jit_end_addr,
+                                                    exe_ctx, 
+                                                    NULL,
+                                                    evaluated_statically,
+                                                    const_result,
+                                                    eExecutionPolicyAlways));
     
     if (!jit_error.Success())
         return false;

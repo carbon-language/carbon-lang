@@ -73,20 +73,8 @@ public:
     Parse (Stream &stream);
     
     //------------------------------------------------------------------
-    /// Convert the IR for an already-parsed expression to DWARF if possible.
-    ///
-    /// @param[in] dwarf_opcode_strm
-    ///     The stream to place the resulting DWARF code into.
-    ///
-    /// @return
-    ///     An error code indicating the success or failure of the operation.
-    ///     Test with Success().
-    //------------------------------------------------------------------
-    Error
-    MakeDWARF ();
-    
-    //------------------------------------------------------------------
-    /// JIT-compile the IR for an already-parsed expression.
+    /// Ready an already-parsed expression for execution, possibly
+    /// evaluating it statically.
     ///
     /// @param[out] func_allocation_addr
     ///     The address which can be used to deallocate the code for this
@@ -104,30 +92,36 @@ public:
     ///     The execution context to write the function into.
     ///
     /// @param[in] data_allocator
-    ///     If non-NULL, he static data allocator to use for literal strings.
+    ///     If non-NULL, the static data allocator to use for literal strings.
+    ///
+    /// @param[out] evaluated_statically
+    ///     Set to true if the expression could be interpreted statically;
+    ///     untouched otherwise.
     ///
     /// @param[out] const_result
     ///     If the result of the expression is constant, and the
     ///     expression has no side effects, this is set to the result of the 
     ///     expression.
     ///
-    /// @param[in] jit_only_if_needed
-    ///     True if the expression must be compiled, regardless of whether a
-    ///     constant result could be extracted from the IR or no.
+    /// @param[in] execution_policy
+    ///     Determines whether the expression must be JIT-compiled, must be
+    ///     evaluated statically, or whether this decision may be made
+    ///     opportunistically.
     ///
     /// @return
     ///     An error code indicating the success or failure of the operation.
     ///     Test with Success().
     //------------------------------------------------------------------
     Error
-    MakeJIT (lldb::addr_t &func_allocation_addr, 
-             lldb::addr_t &func_addr,
-             lldb::addr_t &func_end,
-             ExecutionContext &exe_ctx,
-             IRForTarget::StaticDataAllocator *data_allocator,
-             lldb::ClangExpressionVariableSP &const_result,
-             bool jit_only_if_needed = false);
-    
+    PrepareForExecution (lldb::addr_t &func_allocation_addr, 
+                         lldb::addr_t &func_addr,
+                         lldb::addr_t &func_end,
+                         ExecutionContext &exe_ctx,
+                         IRForTarget::StaticDataAllocator *data_allocator,
+                         bool &evaluated_statically,
+                         lldb::ClangExpressionVariableSP &const_result,
+                         lldb_private::ExecutionPolicy execution_policy);
+        
     //------------------------------------------------------------------
     /// Disassemble the machine code for a JITted function from the target 
     /// process's memory and print the result to a stream.

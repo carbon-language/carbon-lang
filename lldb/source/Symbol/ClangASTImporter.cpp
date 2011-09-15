@@ -117,7 +117,8 @@ clang::Decl
     {
         ObjCInterfaceDecl *to_interface_decl = dyn_cast<ObjCInterfaceDecl>(to);
         
-        to_interface_decl->setExternallyCompleted();
+        if (!to_interface_decl->isForwardDecl())
+            to_interface_decl->setExternallyCompleted();
     }
     
     return clang::ASTImporter::Imported(from, to);

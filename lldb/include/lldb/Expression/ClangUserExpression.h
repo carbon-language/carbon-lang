@@ -83,6 +83,9 @@ public:
     ///     The type that the expression should be coerced to.  If NULL,
     ///     inferred from the expression itself.
     ///
+    /// @param[in] execution_policy
+    ///     Determines whether interpretation is possible or mandatory.
+    ///
     /// @param[in] keep_result_in_memory
     ///     True if the resulting persistent variable should reside in 
     ///     target memory, if applicable.
@@ -94,6 +97,7 @@ public:
     Parse (Stream &error_stream, 
            ExecutionContext &exe_ctx,
            TypeFromUser desired_type,
+           lldb_private::ExecutionPolicy execution_policy,
            bool keep_result_in_memory);
     
     //------------------------------------------------------------------
@@ -227,13 +231,6 @@ public:
     ASTTransformer (clang::ASTConsumer *passthrough);
     
     //------------------------------------------------------------------
-    /// Return the stream that the parser should use to write DWARF
-    /// opcodes.
-    //------------------------------------------------------------------
-    StreamString &
-    DwarfOpcodeStream ();
-    
-    //------------------------------------------------------------------
     /// Return true if validation code should be inserted into the
     /// expression.
     //------------------------------------------------------------------
@@ -259,6 +256,10 @@ public:
     /// @param[in] exe_ctx
     ///     The execution context to use when evaluating the expression.
     ///
+    /// @param[in] execution_policy
+    ///     Determines whether or not to try using the IR interpreter to
+    ///     avoid running the expression on the parser.
+    ///
     /// @param[in] discard_on_error
     ///     True if the thread's state should be restored in the case 
     ///     of an error.
@@ -277,14 +278,16 @@ public:
     ///      A Process::ExecutionResults value.  eExecutionCompleted for success.
     //------------------------------------------------------------------
     static ExecutionResults
-    Evaluate (ExecutionContext &exe_ctx, 
+    Evaluate (ExecutionContext &exe_ctx,
+              lldb_private::ExecutionPolicy execution_policy,
               bool discard_on_error,
               const char *expr_cstr,
               const char *expr_prefix,
               lldb::ValueObjectSP &result_valobj_sp);
               
     static ExecutionResults
-    EvaluateWithError (ExecutionContext &exe_ctx, 
+    EvaluateWithError (ExecutionContext &exe_ctx,
+              lldb_private::ExecutionPolicy execution_policy,
               bool discard_on_error,
               const char *expr_cstr,
               const char *expr_prefix,
@@ -307,6 +310,12 @@ private:
                                    lldb::addr_t &object_ptr,
                                    lldb::addr_t &cmd_ptr);
     
+    bool
+    EvaluatedStatically ()
+    {
+        return m_evaluated_statically;
+    }
+    
     std::string                                 m_expr_text;            ///< The text of the expression, as typed by the user
     std::string                                 m_expr_prefix;          ///< The text of the translation-level definitions, as provided by the user
     std::string                                 m_transformed_text;     ///< The text of the expression, as send to the parser
@@ -314,7 +323,6 @@ private:
     
     std::auto_ptr<ClangExpressionDeclMap>       m_expr_decl_map;        ///< The map to use when parsing and materializing the expression.
     std::auto_ptr<ClangExpressionVariableList>  m_local_variables;      ///< The local expression variables, if the expression is DWARF.
-    std::auto_ptr<StreamString>                 m_dwarf_opcodes;        ///< The DWARF opcodes for the expression.  May be NULL.
     std::auto_ptr<ProcessDataAllocator>         m_data_allocator;       ///< The allocator that the parser uses to place strings for use by JIT-compiled code.
     
     bool                                        m_cplusplus;            ///< True if the expression is compiled as a C++ member function (true if it was parsed when exe_ctx was in a C++ method).
@@ -323,6 +331,7 @@ private:
     bool                                        m_const_object;         ///< True if "this" is const.
     Target                                     *m_target;               ///< The target for storing persistent data like types and variables.
     
+    bool                                        m_evaluated_statically; ///< True if the expression could be evaluated statically; false otherwise.
     lldb::ClangExpressionVariableSP             m_const_result;         ///< The statically-computed result of the expression.  NULL if it could not be computed statically or the expression has side effects.
 };
     

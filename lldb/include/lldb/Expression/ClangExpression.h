@@ -98,13 +98,6 @@ public:
     ASTTransformer (clang::ASTConsumer *passthrough) = 0;
     
     //------------------------------------------------------------------
-    /// Return the stream that the parser should use to write DWARF
-    /// opcodes.
-    //------------------------------------------------------------------
-    virtual StreamString &
-    DwarfOpcodeStream () = 0;
-    
-    //------------------------------------------------------------------
     /// Flags
     //------------------------------------------------------------------
     

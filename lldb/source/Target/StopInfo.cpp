@@ -194,11 +194,12 @@ public:
                         const bool discard_on_error = true;
                         Error error;
                         result_code = ClangUserExpression::EvaluateWithError (context.exe_ctx,
-                                                                discard_on_error,
-                                                                bp_loc_sp->GetConditionText(),
-                                                                NULL,
-                                                                result_value_sp,
-                                                                error);
+                                                                              eExecutionPolicyAlways,
+                                                                              discard_on_error,
+                                                                              bp_loc_sp->GetConditionText(),
+                                                                              NULL,
+                                                                              result_value_sp,
+                                                                              error);
                         if (result_code == eExecutionCompleted)
                         {
                             if (result_value_sp)

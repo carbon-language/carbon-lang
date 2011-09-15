@@ -73,6 +73,10 @@ public:
     ///     variables) should be resolved.  If not, only external functions
     ///     are resolved.
     ///
+    /// @param[in] execution_policy
+    ///     Determines whether an IR interpreter can be used to statically
+    ///     evaluate the expression.
+    ///
     /// @param[in] const_result
     ///     This variable is populated with the statically-computed result
     ///     of the function, if it has no side-effects and the result can
@@ -89,6 +93,7 @@ public:
     //------------------------------------------------------------------
     IRForTarget(lldb_private::ClangExpressionDeclMap *decl_map,
                 bool resolve_vars,
+                lldb_private::ExecutionPolicy execution_policy,
                 lldb::ClangExpressionVariableSP &const_result,
                 StaticDataAllocator *data_allocator,
                 lldb_private::Stream *error_stream,
@@ -133,6 +138,18 @@ public:
     //------------------------------------------------------------------
     virtual llvm::PassManagerType 
     getPotentialPassManagerType() const;
+    
+    //------------------------------------------------------------------
+    /// Checks whether the IR interpreter successfully interpreted the
+    /// expression.
+    ///
+    /// Returns true if it did; false otherwise.
+    //------------------------------------------------------------------
+    bool
+    interpretSuccess ()
+    {
+        return m_interpret_success;
+    }
 
 private:
     //------------------------------------------------------------------
@@ -236,16 +253,22 @@ private:
     //------------------------------------------------------------------
     
     //------------------------------------------------------------------
-    /// Set the constant result variable m_const_result to the provided
-    /// constant, assuming it can be evaluated.  The result variable
-    /// will be reset to NULL later if the expression has side effects.
+    /// Find the NamedDecl corresponding to a Value.  This interface is
+    /// exposed for the IR interpreter.
+    ///
+    /// @param[in] module
+    ///     The module containing metadata to search
     ///
     /// @param[in] global
     ///     The global entity to search for
     ///
     /// @return
     ///     The corresponding variable declaration
-    //------------------------------------------------------------------   
+    //------------------------------------------------------------------
+public:
+    static clang::NamedDecl *
+    DeclForGlobal (const llvm::GlobalValue *global_val, llvm::Module *module);
+private:
     clang::NamedDecl *
     DeclForGlobal (llvm::GlobalValue *global);
     
@@ -549,8 +572,11 @@ private:
     
     /// Flags
     bool                                    m_resolve_vars;             ///< True if external variable references and persistent variable references should be resolved
+    lldb_private::ExecutionPolicy           m_execution_policy;         ///< True if the interpreter should be used to attempt to get a static result
+    bool                                    m_interpret_success;        ///< True if the interpreter successfully handled the whole expression
     std::string                             m_func_name;                ///< The name of the function to translate
     lldb_private::ConstString               m_result_name;              ///< The name of the result variable ($0, $1, ...)
+    lldb_private::TypeFromParser            m_result_type;              ///< The type of the result variable.
     llvm::Module                           *m_module;                   ///< The module being processed, or NULL if that has not been determined yet.
     lldb_private::ClangExpressionDeclMap   *m_decl_map;                 ///< The DeclMap containing the Decls 
     StaticDataAllocator                    *m_data_allocator;           ///< If non-NULL, the allocator to use for constant strings

@@ -759,7 +759,8 @@ SBFrame::EvaluateExpression (const char *expr, lldb::DynamicValueType fetch_dyna
         const bool keep_in_memory = false;
 
         exe_results = m_opaque_sp->GetThread().GetProcess().GetTarget().EvaluateExpression(expr, 
-                                                                                           m_opaque_sp.get(), 
+                                                                                           m_opaque_sp.get(),
+                                                                                           eExecutionPolicyOnlyWhenNeeded,
                                                                                            unwind_on_error, 
                                                                                            keep_in_memory, 
                                                                                            fetch_dynamic_value, 

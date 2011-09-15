@@ -574,16 +574,6 @@ public:
     ASTTransformer (clang::ASTConsumer *passthrough);
     
     //------------------------------------------------------------------
-    /// Return the stream that the parser should use to write DWARF
-    /// opcodes.
-    //------------------------------------------------------------------
-    StreamString &
-    DwarfOpcodeStream ()
-    {
-        return *((StreamString*)0);
-    }
-    
-    //------------------------------------------------------------------
     /// Return true if validation code should be inserted into the
     /// expression.
     //------------------------------------------------------------------
