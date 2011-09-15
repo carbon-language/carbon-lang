@@ -415,7 +415,7 @@ namespace llvm {
     /// necessarilly including Idx, or NULL. Use this to find the reaching def
     /// used by an instruction at this SlotIndex position.
     VNInfo *getVNInfoBefore(SlotIndex Idx) const {
-      const_iterator I = FindLiveRangeContaining(Idx.getPrevIndex());
+      const_iterator I = FindLiveRangeContaining(Idx.getPrevSlot());
       return I == end() ? 0 : I->valno;
     }
 
