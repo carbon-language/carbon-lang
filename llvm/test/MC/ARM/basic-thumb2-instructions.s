@@ -1731,6 +1731,22 @@ _func:
 
 
 @------------------------------------------------------------------------------
+@ SHSUB16/SHSUB8
+@------------------------------------------------------------------------------
+        shsub16 r4, r8, r2
+        shsub8 r4, r8, r2
+        itt gt
+        shsub16gt r4, r8, r2
+        shsub8gt r4, r8, r2
+
+@ CHECK: shsub16 r4, r8, r2             @ encoding: [0xd8,0xfa,0x22,0xf4]
+@ CHECK: shsub8	r4, r8, r2              @ encoding: [0xc8,0xfa,0x22,0xf4]
+@ CHECK: itt	gt                      @ encoding: [0xc4,0xbf]
+@ CHECK: shsub16gt	r4, r8, r2      @ encoding: [0xd8,0xfa,0x22,0xf4]
+@ CHECK: shsub8gt	r4, r8, r2      @ encoding: [0xc8,0xfa,0x22,0xf4]
+
+
+@------------------------------------------------------------------------------
 @ SUB (register)
 @------------------------------------------------------------------------------
         sub.w r5, r2, r12, rrx
