@@ -55,6 +55,9 @@ public:
     lldb::UnwindPlanSP
     GetUnwindPlanArchitectureDefault (lldb_private::Thread& thread);
 
+    lldb::UnwindPlanSP
+    GetUnwindPlanArchitectureDefaultAtFunctionEntry (lldb_private::Thread& thread);
+
     Address&
     GetFirstNonPrologueInsn (Target& target);
 
@@ -78,11 +81,14 @@ private:
     lldb::UnwindPlanSP m_unwind_plan_non_call_site_sp;
     lldb::UnwindPlanSP m_unwind_plan_fast_sp;
     lldb::UnwindPlanSP m_unwind_plan_arch_default_sp;
+    lldb::UnwindPlanSP m_unwind_plan_arch_default_at_func_entry_sp;
 
     bool m_tried_unwind_at_call_site:1,
          m_tried_unwind_at_non_call_site:1,
          m_tried_unwind_fast:1,
-         m_tried_unwind_arch_default:1;
+         m_tried_unwind_arch_default:1,
+         m_tried_unwind_arch_default_at_func_entry:1;
+         
          
     Address m_first_non_prologue_insn;
 

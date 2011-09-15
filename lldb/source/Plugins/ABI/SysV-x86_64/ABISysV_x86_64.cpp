@@ -661,7 +661,7 @@ ABISysV_x86_64::CreateFunctionEntryUnwindPlan (UnwindPlan &unwind_plan)
     row.SetCFAOffset (8);
     row.SetRegisterLocationToAtCFAPlusOffset(pc_reg_num, -8, false);    
     unwind_plan.AppendRow (row);
-    unwind_plan.SetSourceName (pluginName);
+    unwind_plan.SetSourceName ("x86_64 at-func-entry default");
     return true;
 }
 

@@ -552,7 +552,19 @@ RegisterContextLLDB::GetFullUnwindPlanForFrame ()
         m_all_registers_available = true;
     }
 
-    // No Module for the current pc, try using the architecture default unwind.
+    // If we've done a jmp 0x0 / bl 0x0 (called through a null function pointer) so the pc is 0x0
+    // in the zeroth frame, we need to use the "unwind at first instruction" arch default UnwindPlan
+    if (behaves_like_zeroth_frame 
+        && m_current_pc.IsValid() 
+        && m_current_pc.GetLoadAddress (&m_thread.GetProcess().GetTarget()) == 0)
+    {
+        unwind_plan_sp.reset (new UnwindPlan (lldb::eRegisterKindGeneric));
+        abi->CreateFunctionEntryUnwindPlan(*unwind_plan_sp);
+        m_frame_type = eNormalFrame;
+        return unwind_plan_sp;
+    }
+
+    // No Module fm_current_pc.GetLoadAddress (&m_thread.GetProcess().GetTarget()or the current pc, try using the architecture default unwind.
     if (!m_current_pc.IsValid() || m_current_pc.GetModule() == NULL || m_current_pc.GetModule()->GetObjectFile() == NULL)
     {
         m_frame_type = eNormalFrame;

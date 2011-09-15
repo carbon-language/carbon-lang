@@ -42,6 +42,7 @@ FuncUnwinders::FuncUnwinders
     m_tried_unwind_at_non_call_site (false),
     m_tried_unwind_fast (false),
     m_tried_unwind_arch_default (false),
+    m_tried_unwind_arch_default_at_func_entry (false),
     m_first_non_prologue_insn() 
 {
 }
@@ -180,6 +181,43 @@ FuncUnwinders::GetUnwindPlanArchitectureDefault (Thread& thread)
 
     return m_unwind_plan_arch_default_sp;
 }
+
+UnwindPlanSP
+FuncUnwinders::GetUnwindPlanArchitectureDefaultAtFunctionEntry (Thread& thread)
+{
+    // Lock the mutex to ensure we can always give out the most appropriate
+    // information. We want to make sure if someone requests an unwind
+    // plan, that they get one and don't run into a race condition where one
+    // thread has started to create the unwind plan and has put it into 
+    // the auto_ptr member variable, and have another thread enter this function
+    // and return the partially filled pointer contained in the auto_ptr.
+    // We also want to make sure that we lock out other unwind plans from
+    // being accessed until this one is done creating itself in case someone
+    // had some code like:
+    //  UnwindPlan *best_unwind_plan = ...GetUnwindPlanAtCallSite (...)
+    //  if (best_unwind_plan == NULL)
+    //      best_unwind_plan = GetUnwindPlanAtNonCallSite (...)
+    Mutex::Locker locker (m_mutex);
+    if (m_tried_unwind_arch_default_at_func_entry == false && m_unwind_plan_arch_default_at_func_entry_sp.get() == NULL)
+    {
+        m_tried_unwind_arch_default_at_func_entry = true;
+        Address current_pc;
+        Target *target = thread.CalculateTarget();
+        if (target)
+        {
+            ABI *abi = thread.GetProcess().GetABI().get();
+            if (abi)
+            {
+                m_unwind_plan_arch_default_at_func_entry_sp.reset (new UnwindPlan (lldb::eRegisterKindGeneric));
+                if (m_unwind_plan_arch_default_at_func_entry_sp)
+                    abi->CreateFunctionEntryUnwindPlan(*m_unwind_plan_arch_default_at_func_entry_sp);
+            }
+        }
+    }
+
+    return m_unwind_plan_arch_default_sp;
+}
+
 
 Address&
 FuncUnwinders::GetFirstNonPrologueInsn (Target& target)

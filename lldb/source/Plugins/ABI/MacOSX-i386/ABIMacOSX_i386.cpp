@@ -803,7 +803,7 @@ ABIMacOSX_i386::CreateFunctionEntryUnwindPlan (UnwindPlan &unwind_plan)
     row.SetCFAOffset (4);
     row.SetRegisterLocationToAtCFAPlusOffset(pc_reg_num, -4, false);    
     unwind_plan.AppendRow (row);
-    unwind_plan.SetSourceName (pluginName);
+    unwind_plan.SetSourceName ("i386 at-func-entry default");
     return true;
 }
 

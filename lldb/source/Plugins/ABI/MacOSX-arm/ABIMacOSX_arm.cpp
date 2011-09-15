@@ -538,7 +538,7 @@ ABIMacOSX_arm::CreateFunctionEntryUnwindPlan (UnwindPlan &unwind_plan)
     
     // All other registers are the same.
     
-    unwind_plan.SetSourceName (pluginName);
+    unwind_plan.SetSourceName ("arm at-func-entry default");
     return true;
 }
 
