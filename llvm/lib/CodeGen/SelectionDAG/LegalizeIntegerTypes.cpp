@@ -116,6 +116,9 @@ void DAGTypeLegalizer::PromoteIntegerResult(SDNode *N, unsigned ResNo) {
   case ISD::SMULO:
   case ISD::UMULO:       Res = PromoteIntRes_XMULO(N, ResNo); break;
 
+  case ISD::ATOMIC_LOAD:
+    Res = PromoteIntRes_Atomic0(cast<AtomicSDNode>(N)); break;
+
   case ISD::ATOMIC_LOAD_ADD:
   case ISD::ATOMIC_LOAD_SUB:
   case ISD::ATOMIC_LOAD_AND:
@@ -155,6 +158,19 @@ SDValue DAGTypeLegalizer::PromoteIntRes_AssertZext(SDNode *N) {
   SDValue Op = ZExtPromotedInteger(N->getOperand(0));
   return DAG.getNode(ISD::AssertZext, N->getDebugLoc(),
                      Op.getValueType(), Op, N->getOperand(1));
+}
+
+SDValue DAGTypeLegalizer::PromoteIntRes_Atomic0(AtomicSDNode *N) {
+  EVT ResVT = TLI.getTypeToTransformTo(*DAG.getContext(), N->getValueType(0));
+  SDValue Res = DAG.getAtomic(N->getOpcode(), N->getDebugLoc(),
+                              N->getMemoryVT(), ResVT,
+                              N->getChain(), N->getBasePtr(),
+                              N->getMemOperand(), N->getOrdering(),
+                              N->getSynchScope());
+  // Legalized the chain result - switch anything that used the old chain to
+  // use the new one.
+  ReplaceValueWith(SDValue(N, 1), Res.getValue(1));
+  return Res;
 }
 
 SDValue DAGTypeLegalizer::PromoteIntRes_Atomic1(AtomicSDNode *N) {
@@ -726,6 +742,9 @@ bool DAGTypeLegalizer::PromoteIntegerOperand(SDNode *N, unsigned OpNo) {
     llvm_unreachable("Do not know how to promote this operator's operand!");
 
   case ISD::ANY_EXTEND:   Res = PromoteIntOp_ANY_EXTEND(N); break;
+  case ISD::ATOMIC_STORE:
+    Res = PromoteIntOp_ATOMIC_STORE(cast<AtomicSDNode>(N));
+    break;
   case ISD::BITCAST:      Res = PromoteIntOp_BITCAST(N); break;
   case ISD::BR_CC:        Res = PromoteIntOp_BR_CC(N, OpNo); break;
   case ISD::BRCOND:       Res = PromoteIntOp_BRCOND(N, OpNo); break;
@@ -809,6 +828,13 @@ void DAGTypeLegalizer::PromoteSetCCOperands(SDValue &NewLHS,SDValue &NewRHS,
 SDValue DAGTypeLegalizer::PromoteIntOp_ANY_EXTEND(SDNode *N) {
   SDValue Op = GetPromotedInteger(N->getOperand(0));
   return DAG.getNode(ISD::ANY_EXTEND, N->getDebugLoc(), N->getValueType(0), Op);
+}
+
+SDValue DAGTypeLegalizer::PromoteIntOp_ATOMIC_STORE(AtomicSDNode *N) {
+  SDValue Op2 = GetPromotedInteger(N->getOperand(2));
+  return DAG.getAtomic(N->getOpcode(), N->getDebugLoc(), N->getMemoryVT(),
+                       N->getChain(), N->getBasePtr(), Op2, N->getMemOperand(),
+                       N->getOrdering(), N->getSynchScope());
 }
 
 SDValue DAGTypeLegalizer::PromoteIntOp_BITCAST(SDNode *N) {

@@ -216,6 +216,7 @@ private:
   SDValue PromoteIntRes_MERGE_VALUES(SDNode *N);
   SDValue PromoteIntRes_AssertSext(SDNode *N);
   SDValue PromoteIntRes_AssertZext(SDNode *N);
+  SDValue PromoteIntRes_Atomic0(AtomicSDNode *N);
   SDValue PromoteIntRes_Atomic1(AtomicSDNode *N);
   SDValue PromoteIntRes_Atomic2(AtomicSDNode *N);
   SDValue PromoteIntRes_EXTRACT_SUBVECTOR(SDNode *N);
@@ -258,6 +259,7 @@ private:
   // Integer Operand Promotion.
   bool PromoteIntegerOperand(SDNode *N, unsigned OperandNo);
   SDValue PromoteIntOp_ANY_EXTEND(SDNode *N);
+  SDValue PromoteIntOp_ATOMIC_STORE(AtomicSDNode *N);
   SDValue PromoteIntOp_BITCAST(SDNode *N);
   SDValue PromoteIntOp_BUILD_PAIR(SDNode *N);
   SDValue PromoteIntOp_BR_CC(SDNode *N, unsigned OpNo);

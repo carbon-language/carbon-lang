@@ -2971,7 +2971,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
   }
   case ISD::ATOMIC_LOAD: {
     // There is no libcall for atomic load; fake it with ATOMIC_CMP_SWAP.
-    SDValue Zero = DAG.getConstant(0, cast<AtomicSDNode>(Node)->getMemoryVT());
+    SDValue Zero = DAG.getConstant(0, Node->getValueType(0));
     SDValue Swap = DAG.getAtomic(ISD::ATOMIC_CMP_SWAP, dl,
                                  cast<AtomicSDNode>(Node)->getMemoryVT(),
                                  Node->getOperand(0),
