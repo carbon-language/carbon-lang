@@ -41,8 +41,8 @@
 #include <algorithm>
 using namespace llvm;
 
-STATISTIC(NumSpills  , "Number of register spills");
-STATISTIC(NumIdCopies, "Number of identity moves eliminated after rewriting");
+STATISTIC(NumSpillSlots, "Number of spill slots allocated");
+STATISTIC(NumIdCopies,   "Number of identity moves eliminated after rewriting");
 
 //===----------------------------------------------------------------------===//
 //  VirtRegMap implementation
@@ -111,6 +111,7 @@ unsigned VirtRegMap::createSpillSlot(const TargetRegisterClass *RC) {
   unsigned Idx = SS-LowSpillSlot;
   while (Idx >= SpillSlotToUsesMap.size())
     SpillSlotToUsesMap.resize(SpillSlotToUsesMap.size()*2);
+  ++NumSpillSlots;
   return SS;
 }
 
@@ -130,7 +131,6 @@ int VirtRegMap::assignVirt2StackSlot(unsigned virtReg) {
   assert(Virt2StackSlotMap[virtReg] == NO_STACK_SLOT &&
          "attempt to assign stack slot to already spilled register");
   const TargetRegisterClass* RC = MF->getRegInfo().getRegClass(virtReg);
-  ++NumSpills;
   return Virt2StackSlotMap[virtReg] = createSpillSlot(RC);
 }
 
