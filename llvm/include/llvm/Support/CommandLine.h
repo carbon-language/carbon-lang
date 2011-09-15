@@ -806,6 +806,28 @@ public:
 EXTERN_TEMPLATE_INSTANTIATION(class basic_parser<unsigned>);
 
 //--------------------------------------------------
+// parser<unsigned long long>
+//
+template<>
+class parser<unsigned long long> : public basic_parser<unsigned long long> {
+public:
+  // parse - Return true on error.
+  bool parse(Option &O, StringRef ArgName, StringRef Arg,
+             unsigned long long &Val);
+
+  // getValueName - Overload in subclass to provide a better default value.
+  virtual const char *getValueName() const { return "uint"; }
+
+  void printOptionDiff(const Option &O, unsigned long long V, OptVal Default,
+                       size_t GlobalWidth) const;
+
+  // An out-of-line virtual method to provide a 'home' for this class.
+  virtual void anchor();
+};
+
+EXTERN_TEMPLATE_INSTANTIATION(class basic_parser<unsigned long long>);
+
+//--------------------------------------------------
 // parser<double>
 //
 template<>
