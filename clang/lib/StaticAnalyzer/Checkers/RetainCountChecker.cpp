@@ -2144,13 +2144,13 @@ CFRefLeakReportVisitor::getEndPath(BugReporterContext &BRC,
   llvm::tie(AllocNode, FirstBinding) =
     GetAllocationSite(BRC.getStateManager(), EndN, Sym);
 
-  SourceManager& SMgr = BRC.getSourceManager();
+  SourceManager& SM = BRC.getSourceManager();
 
   // Compute an actual location for the leak.  Sometimes a leak doesn't
   // occur at an actual statement (e.g., transition between blocks; end
   // of function) so we need to walk the graph and compute a real location.
   const ExplodedNode *LeakN = EndN;
-  PathDiagnosticLocation L = PathDiagnosticLocation::create(LeakN, SMgr);
+  PathDiagnosticLocation L = PathDiagnosticLocation::createEndOfPath(LeakN, SM);
 
   std::string sbuf;
   llvm::raw_string_ostream os(sbuf);

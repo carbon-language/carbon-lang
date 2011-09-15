@@ -238,23 +238,11 @@ PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *N,
       return NULL;
   }
 
-  // FIXME: Refactor this into BugReporterContext.
-  const Stmt *S = 0;
-  ProgramPoint P = N->getLocation();
-
-  if (BlockEdge *BE = dyn_cast<BlockEdge>(&P)) {
-    const CFGBlock *BSrc = BE->getSrc();
-    S = BSrc->getTerminatorCondition();
-  }
-  else if (PostStmt *PS = dyn_cast<PostStmt>(&P)) {
-    S = PS->getStmt();
-  }
-
-  if (!S)
-    return NULL;
-
   // Construct a new PathDiagnosticPiece.
-  PathDiagnosticLocation L(S, BRC.getSourceManager(), P.getLocationContext());
+  ProgramPoint P = N->getLocation();
+  PathDiagnosticLocation L = PathDiagnosticLocation(P,BRC.getSourceManager());
+  if (!L.isValid())
+    return NULL;
   return new PathDiagnosticEventPiece(L, os.str());
 }
 
@@ -298,23 +286,11 @@ TrackConstraintBRVisitor::VisitNode(const ExplodedNode *N,
     if (os.str().empty())
       return NULL;
 
-    // FIXME: Refactor this into BugReporterContext.
-    const Stmt *S = 0;
-    ProgramPoint P = N->getLocation();
-
-    if (BlockEdge *BE = dyn_cast<BlockEdge>(&P)) {
-      const CFGBlock *BSrc = BE->getSrc();
-      S = BSrc->getTerminatorCondition();
-    }
-    else if (PostStmt *PS = dyn_cast<PostStmt>(&P)) {
-      S = PS->getStmt();
-    }
-
-    if (!S)
-      return NULL;
-
     // Construct a new PathDiagnosticPiece.
-    PathDiagnosticLocation L(S, BRC.getSourceManager(), P.getLocationContext());
+    ProgramPoint P = N->getLocation();
+    PathDiagnosticLocation L = PathDiagnosticLocation(P,BRC.getSourceManager());
+    if (!L.isValid())
+      return NULL;
     return new PathDiagnosticEventPiece(L, os.str());
   }
 

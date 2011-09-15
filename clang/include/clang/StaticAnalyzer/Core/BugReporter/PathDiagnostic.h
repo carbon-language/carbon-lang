@@ -25,6 +25,7 @@ namespace clang {
 
 class Decl;
 class LocationContext;
+class ProgramPoint;
 class SourceManager;
 class Stmt;
 
@@ -99,9 +100,8 @@ public:
 
   /// Constructs a location when no specific statement is available.
   /// Defaults to end of brace for the enclosing function body.
-  PathDiagnosticLocation(const LocationContext *lc, const SourceManager &sm)
-    : K(SingleLocK), S(0), D(0), SM(&sm), LC(lc) {}
-
+  PathDiagnosticLocation(const LocationContext *lc, const SourceManager &sm);
+  
   PathDiagnosticLocation(const Stmt *s,
                          const SourceManager &sm,
                          const LocationContext *lc)
@@ -113,9 +113,13 @@ public:
   PathDiagnosticLocation(const Decl *d, const SourceManager &sm)
     : K(DeclK), S(0), D(d), SM(&sm), LC(0) {}
 
-  /// Create a location corresponding to the next valid ExplodedNode.
-  static PathDiagnosticLocation create(const ExplodedNode* N,
-                                       const SourceManager &SM);
+  /// Create a location corresponding to the given valid ExplodedNode.
+  PathDiagnosticLocation(const ProgramPoint& P, const SourceManager &SMng);
+
+  /// Create a location corresponding to the next valid ExplodedNode as end
+  /// of path location.
+  static PathDiagnosticLocation createEndOfPath(const ExplodedNode* N,
+                                                const SourceManager &SM);
 
   bool operator==(const PathDiagnosticLocation &X) const {
     return K == X.K && R == X.R && S == X.S && D == X.D && LC == X.LC;

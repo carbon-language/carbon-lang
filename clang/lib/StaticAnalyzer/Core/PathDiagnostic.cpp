@@ -130,7 +130,31 @@ void PathDiagnosticClient::HandlePathDiagnostic(const PathDiagnostic *D) {
 // PathDiagnosticLocation methods.
 //===----------------------------------------------------------------------===//
 
-PathDiagnosticLocation PathDiagnosticLocation::create(const ExplodedNode* N,
+PathDiagnosticLocation::PathDiagnosticLocation(const LocationContext *lc,
+                                               const SourceManager &sm)
+  : K(RangeK), S(0), D(0), SM(&sm), LC(lc) {
+  SourceLocation L = LC->getDecl()->getBodyRBrace();
+  R = SourceRange(L, L);
+}
+
+PathDiagnosticLocation::PathDiagnosticLocation(const ProgramPoint& P,
+                                               const SourceManager &SMng)
+  : K(StmtK), S(0), D(0), SM(&SMng), LC(P.getLocationContext()) {
+
+  if (const BlockEdge *BE = dyn_cast<BlockEdge>(&P)) {
+    const CFGBlock *BSrc = BE->getSrc();
+    S = BSrc->getTerminatorCondition();
+  }
+  else if (const PostStmt *PS = dyn_cast<PostStmt>(&P)) {
+    S = PS->getStmt();
+  }
+
+  if (!S)
+    invalidate();
+}
+
+PathDiagnosticLocation PathDiagnosticLocation::createEndOfPath(
+                                                      const ExplodedNode* N,
                                                       const SourceManager &SM) {
   assert(N && "Cannot create a location with a null node.");
 
@@ -150,8 +174,7 @@ PathDiagnosticLocation PathDiagnosticLocation::create(const ExplodedNode* N,
     NI = NI->succ_empty() ? 0 : *(NI->succ_begin());
   }
 
-  const Decl &D = N->getCodeDecl();
-  return PathDiagnosticLocation(D.getBodyRBrace(), SM);
+  return PathDiagnosticLocation(N->getLocationContext(), SM);
 }
 
 static SourceLocation getValidSourceLocation(const Stmt* S,
@@ -187,10 +210,6 @@ FullSourceLoc PathDiagnosticLocation::asLocation() const {
     case DeclK:
       return FullSourceLoc(D->getLocation(), const_cast<SourceManager&>(*SM));
   }
-
-  if (!R.isValid())
-    return FullSourceLoc(LC->getDecl()->getBodyRBrace(),
-                         const_cast<SourceManager&>(*SM));
 
   return FullSourceLoc(R.getBegin(), const_cast<SourceManager&>(*SM));
 }
