@@ -94,8 +94,7 @@ void DWARFCompileUnit::dump(raw_ostream &OS) {
      << " (next CU at " << format("0x%08x", getNextCompileUnitOffset())
      << ")\n";
 
-  extractDIEsIfNeeded(false);
-  DieArray[0].dump(OS, this, -1U);
+  getCompileUnitDIE(false)->dump(OS, this, -1U);
 }
 
 void DWARFCompileUnit::setDIERelations() {

@@ -70,6 +70,14 @@ public:
     BaseAddr = base_addr;
   }
 
+  const DWARFDebugInfoEntryMinimal *
+  getCompileUnitDIE(bool extract_cu_die_only = true) {
+    extractDIEsIfNeeded(extract_cu_die_only);
+    if (DieArray.empty())
+      return NULL;
+    return &DieArray[0];
+  }
+
   /// setDIERelations - We read in all of the DIE entries into our flat list
   /// of DIE entries and now we need to go back through all of them and set the
   /// parent, sibling and child pointers for quick DIE navigation.
