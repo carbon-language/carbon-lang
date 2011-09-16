@@ -1003,8 +1003,12 @@ static DecodeStatus DecodeBitfieldMaskOperand(llvm::MCInst &Inst, unsigned Val,
   // create the final mask.
   unsigned msb = fieldFromInstruction32(Val, 5, 5);
   unsigned lsb = fieldFromInstruction32(Val, 0, 5);
+
   uint32_t msb_mask = (1 << (msb+1)) - 1;
+  if (msb == 31) msb_mask = 0xFFFFFFFF;
   uint32_t lsb_mask = (1 << lsb) - 1;
+  if (lsb == 31) lsb_mask = 0xFFFFFFFF;
+
   Inst.addOperand(MCOperand::CreateImm(~(msb_mask ^ lsb_mask)));
   return MCDisassembler::Success;
 }
