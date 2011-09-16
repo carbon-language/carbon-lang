@@ -3217,9 +3217,10 @@ getMnemonicAcceptInfo(StringRef Mnemonic, bool &CanAcceptCarrySet,
       Mnemonic == "mul" || Mnemonic == "bic" || Mnemonic == "asr" ||
       Mnemonic == "umlal" || Mnemonic == "orr" || Mnemonic == "mvn" ||
       Mnemonic == "rsb" || Mnemonic == "rsc" || Mnemonic == "orn" ||
-      Mnemonic == "sbc" || Mnemonic == "umull" ||
-      Mnemonic == "eor" || Mnemonic == "smlal" || Mnemonic == "neg" ||
-      ((Mnemonic == "mov" || Mnemonic == "mla") && !isThumb())) {
+      Mnemonic == "sbc" || Mnemonic == "umull" || Mnemonic == "eor" ||
+      Mnemonic == "neg" ||
+      (!isThumb() && (Mnemonic == "mov" || Mnemonic == "mla" ||
+                      Mnemonic == "smlal"))) {
     CanAcceptCarrySet = true;
   } else {
     CanAcceptCarrySet = false;
