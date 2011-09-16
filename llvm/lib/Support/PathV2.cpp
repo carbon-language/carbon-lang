@@ -656,7 +656,7 @@ error_code create_directories(const Twine &path, bool &existed) {
   if (error_code ec = fs::exists(parent, parent_exists)) return ec;
 
   if (!parent_exists)
-    return create_directories(parent, existed);
+    if (error_code ec = create_directories(parent, existed)) return ec;
 
   return create_directory(p, existed);
 }
