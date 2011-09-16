@@ -110,18 +110,6 @@ if [ "$ARM_HOSTED_BUILD" = yes ]; then
   done
 
   PATH=$DIR/bin:$PATH
-# otherwise, try to use clang if it's available
-elif [ $DARWIN_VERS -gt 9 ]; then
-  # If the user has set CC or CXX, respect their wishes.  If not,
-  # compile with clang/clang++ if available; if LLVM is not
-  # available, fall back to usual GCC/G++ default.
-  savedPATH=$PATH ; PATH="/Developer/usr/bin:$PATH"
-  XTMPCC=$(which clang)
-  if [ x$CC  = x -a x$XTMPCC != x ] ; then export CC=$XTMPCC  ; fi
-  XTMPCC=$(which clang++)
-  if [ x$CXX = x -a x$XTMPCC != x ] ; then export CXX=$XTMPCC ; fi
-  PATH=$savedPATH
-  unset XTMPCC savedPATH
 fi
 
 if [ "$ARM_HOSTED_BUILD" = yes ]; then
