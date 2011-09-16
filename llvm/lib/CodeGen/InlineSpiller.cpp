@@ -90,6 +90,9 @@ public:
     // True when value is defined by an original PHI not from splitting.
     bool DefByOrigPHI;
 
+    // True when the COPY defining this value killed its source.
+    bool KillsSource;
+
     // The preferred register to spill.
     unsigned SpillReg;
 
@@ -112,7 +115,7 @@ public:
     TinyPtrVector<VNInfo*> Deps;
 
     SibValueInfo(unsigned Reg, VNInfo *VNI)
-      : AllDefsAreReloads(true), DefByOrigPHI(false),
+      : AllDefsAreReloads(true), DefByOrigPHI(false), KillsSource(false),
         SpillReg(Reg), SpillVNI(VNI), SpillMBB(0), DefMI(0) {}
 
     // Returns true when a def has been found.
@@ -319,6 +322,8 @@ static raw_ostream &operator<<(raw_ostream &OS,
     OS << " all-reloads";
   if (SVI.DefByOrigPHI)
     OS << " orig-phi";
+  if (SVI.KillsSource)
+    OS << " kill";
   OS << " deps[";
   for (unsigned i = 0, e = SVI.Deps.size(); i != e; ++i)
     OS << ' ' << SVI.Deps[i]->id << '@' << SVI.Deps[i]->def;
@@ -402,7 +407,7 @@ void InlineSpiller::propagateSiblingValue(SibValueMap::iterator SVI,
       if (PropSpill && SV.SpillVNI != DepSV.SpillVNI) {
         if (SV.SpillMBB == DepSV.SpillMBB) {
           // DepSV is in the same block.  Hoist when dominated.
-          if (SV.SpillVNI->def < DepSV.SpillVNI->def) {
+          if (DepSV.KillsSource && SV.SpillVNI->def < DepSV.SpillVNI->def) {
             // This is an alternative def earlier in the same MBB.
             // Hoist the spill as far as possible in SpillMBB. This can ease
             // register pressure:
@@ -418,6 +423,7 @@ void InlineSpiller::propagateSiblingValue(SibValueMap::iterator SVI,
             //   spill x
             //   y = use x<kill>
             //
+            // This hoist only helps when the DepSV copy kills its source.
             Changed = true;
             DepSV.SpillReg = SV.SpillReg;
             DepSV.SpillVNI = SV.SpillVNI;
@@ -572,10 +578,14 @@ MachineInstr *InlineSpiller::traceSiblingValue(unsigned UseReg, VNInfo *UseVNI,
     if (unsigned SrcReg = isFullCopyOf(MI, Reg)) {
       if (isSibling(SrcReg)) {
         LiveInterval &SrcLI = LIS.getInterval(SrcReg);
-        VNInfo *SrcVNI = SrcLI.getVNInfoAt(VNI->def.getUseIndex());
-        assert(SrcVNI && "Copy from non-existing value");
+        LiveRange *SrcLR = SrcLI.getLiveRangeContaining(VNI->def.getUseIndex());
+        assert(SrcLR && "Copy from non-existing value");
+        // Check if this COPY kills its source.
+        SVI->second.KillsSource = (SrcLR->end == VNI->def);
+        VNInfo *SrcVNI = SrcLR->valno;
         DEBUG(dbgs() << "copy of " << PrintReg(SrcReg) << ':'
-                     << SrcVNI->id << '@' << SrcVNI->def << '\n');
+                     << SrcVNI->id << '@' << SrcVNI->def
+                     << " kill=" << unsigned(SVI->second.KillsSource) << '\n');
         // Known sibling source value? Try an insertion.
         tie(SVI, Inserted) = SibValues.insert(std::make_pair(SrcVNI,
                                                  SibValueInfo(SrcReg, SrcVNI)));
