@@ -1839,6 +1839,22 @@ _func:
 
 
 @------------------------------------------------------------------------------
+@ SMLAWB/SMLAWT
+@------------------------------------------------------------------------------
+        smlawb r2, r3, r10, r8
+        smlawt r8, r3, r5, r9
+        ite eq
+        smlawbeq r2, r7, r5, r8
+        smlawtne r1, r3, r0, r8
+
+@ CHECK: smlawb	r2, r3, r10, r8         @ encoding: [0x33,0xfb,0x0a,0x82]
+@ CHECK: smlawt	r8, r3, r5, r9          @ encoding: [0x33,0xfb,0x15,0x98]
+@ CHECK: ite	eq                      @ encoding: [0x0c,0xbf]
+@ CHECK: smlawbeq	r2, r7, r5, r8  @ encoding: [0x37,0xfb,0x05,0x82]
+@ CHECK: smlawtne	r1, r3, r0, r8  @ encoding: [0x33,0xfb,0x10,0x81]
+
+
+@------------------------------------------------------------------------------
 @ SUB (register)
 @------------------------------------------------------------------------------
         sub.w r5, r2, r12, rrx
