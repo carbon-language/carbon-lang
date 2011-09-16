@@ -1323,12 +1323,14 @@ def t2STR_PRE  : T2Ipreldst<0, 0b10, 0, 1, (outs GPRnopc:$Rn_wb),
                    (pre_store rGPR:$Rt, GPRnopc:$Rn, t2am_imm8_offset:$addr))]>;
 
 def t2STR_POST : T2Ipostldst<0, 0b10, 0, 0, (outs GPRnopc:$Rn_wb),
-                            (ins rGPR:$Rt, addr_offset_none:$Rn, t2am_imm8_offset:$offset),
+                            (ins rGPR:$Rt, addr_offset_none:$Rn,
+                                 t2am_imm8_offset:$offset),
                             AddrModeT2_i8, IndexModePost, IIC_iStore_iu,
                           "str", "\t$Rt, $Rn, $offset",
                           "$Rn = $Rn_wb,@earlyclobber $Rn_wb",
              [(set GPRnopc:$Rn_wb,
-                  (post_store rGPR:$Rt, addr_offset_none:$Rn, t2am_imm8_offset:$offset))]>;
+                  (post_store rGPR:$Rt, addr_offset_none:$Rn,
+                              t2am_imm8_offset:$offset))]>;
 
 def t2STRH_PRE  : T2Ipreldst<0, 0b01, 0, 1, (outs GPRnopc:$Rn_wb),
                             (ins rGPR:$Rt, GPRnopc:$Rn, t2am_imm8_offset:$addr),
@@ -1339,12 +1341,14 @@ def t2STRH_PRE  : T2Ipreldst<0, 0b01, 0, 1, (outs GPRnopc:$Rn_wb),
               (pre_truncsti16 rGPR:$Rt, GPRnopc:$Rn, t2am_imm8_offset:$addr))]>;
 
 def t2STRH_POST : T2Ipostldst<0, 0b01, 0, 0, (outs GPRnopc:$Rn_wb),
-                            (ins rGPR:$Rt, addr_offset_none:$Rn, t2am_imm8_offset:$offset),
+                            (ins rGPR:$Rt, addr_offset_none:$Rn,
+                                 t2am_imm8_offset:$offset),
                             AddrModeT2_i8, IndexModePost, IIC_iStore_bh_iu,
                          "strh", "\t$Rt, $Rn, $offset",
                          "$Rn = $Rn_wb,@earlyclobber $Rn_wb",
        [(set GPRnopc:$Rn_wb,
-             (post_truncsti16 rGPR:$Rt, addr_offset_none:$Rn, t2am_imm8_offset:$offset))]>;
+             (post_truncsti16 rGPR:$Rt, addr_offset_none:$Rn,
+                              t2am_imm8_offset:$offset))]>;
 
 def t2STRB_PRE  : T2Ipreldst<0, 0b00, 0, 1, (outs GPRnopc:$Rn_wb),
                             (ins rGPR:$Rt, GPRnopc:$Rn, t2am_imm8_offset:$addr),
@@ -1355,12 +1359,14 @@ def t2STRB_PRE  : T2Ipreldst<0, 0b00, 0, 1, (outs GPRnopc:$Rn_wb),
                (pre_truncsti8 rGPR:$Rt, GPRnopc:$Rn, t2am_imm8_offset:$addr))]>;
 
 def t2STRB_POST : T2Ipostldst<0, 0b00, 0, 0, (outs GPRnopc:$Rn_wb),
-                            (ins rGPR:$Rt, addr_offset_none:$Rn, t2am_imm8_offset:$offset),
+                            (ins rGPR:$Rt, addr_offset_none:$Rn,
+                                 t2am_imm8_offset:$offset),
                             AddrModeT2_i8, IndexModePost, IIC_iStore_bh_iu,
                          "strb", "\t$Rt, $Rn, $offset",
                          "$Rn = $Rn_wb,@earlyclobber $Rn_wb",
         [(set GPRnopc:$Rn_wb,
-              (post_truncsti8 rGPR:$Rt, addr_offset_none:$Rn, t2am_imm8_offset:$offset))]>;
+              (post_truncsti8 rGPR:$Rt, addr_offset_none:$Rn,
+                              t2am_imm8_offset:$offset))]>;
 
 // STRT, STRBT, STRHT all have offset mode (PUW=0b110) and are for disassembly
 // only.
