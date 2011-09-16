@@ -3249,7 +3249,9 @@ bool ARMAsmParser::shouldOmitCCOutOperand(StringRef Mnemonic,
   // when it's an ADD Rdm, SP, {Rdm|#imm0_255} instruction. We do
   // have to check the immediate range here since Thumb2 has a variant
   // that can handle a different range and has a cc_out operand.
-  if (isThumb() && Mnemonic == "add" && Operands.size() == 6 &&
+  if (((isThumb() && Mnemonic == "add") ||
+       (isThumbTwo() && Mnemonic == "sub")) &&
+      Operands.size() == 6 &&
       static_cast<ARMOperand*>(Operands[3])->isReg() &&
       static_cast<ARMOperand*>(Operands[4])->isReg() &&
       static_cast<ARMOperand*>(Operands[4])->getReg() == ARM::SP &&
@@ -3257,12 +3259,13 @@ bool ARMAsmParser::shouldOmitCCOutOperand(StringRef Mnemonic,
       (static_cast<ARMOperand*>(Operands[5])->isReg() ||
        static_cast<ARMOperand*>(Operands[5])->isImm0_1020s4()))
     return true;
-  // For Thumb2, add immediate does not have a cc_out operand for the
-  // imm0_4096 variant. That's the least-preferred variant when
+  // For Thumb2, add/sub immediate does not have a cc_out operand for the
+  // imm0_4095 variant. That's the least-preferred variant when
   // selecting via the generic "add" mnemonic, so to know that we
   // should remove the cc_out operand, we have to explicitly check that
   // it's not one of the other variants. Ugh.
-  if (isThumbTwo() && Mnemonic == "add" && Operands.size() == 6 &&
+  if (isThumbTwo() && (Mnemonic == "add" || Mnemonic == "sub") &&
+      Operands.size() == 6 &&
       static_cast<ARMOperand*>(Operands[3])->isReg() &&
       static_cast<ARMOperand*>(Operands[4])->isReg() &&
       static_cast<ARMOperand*>(Operands[5])->isImm()) {
@@ -3749,6 +3752,14 @@ processInstruction(MCInst &Inst,
     // to encoding T1 if <Rd> is omitted."
     if (Inst.getOperand(3).getImm() < 8 && Operands.size() == 6)
       Inst.setOpcode(ARM::tADDi3);
+    break;
+  case ARM::tSUBi8:
+    // If the immediate is in the range 0-7, we want tADDi3 iff Rd was
+    // explicitly specified. From the ARM ARM: "Encoding T1 is preferred
+    // to encoding T2 if <Rd> is specified and encoding T2 is preferred
+    // to encoding T1 if <Rd> is omitted."
+    if (Inst.getOperand(3).getImm() < 8 && Operands.size() == 6)
+      Inst.setOpcode(ARM::tSUBi3);
     break;
   case ARM::tB:
     // A Thumb conditional branch outside of an IT block is a tBcc.

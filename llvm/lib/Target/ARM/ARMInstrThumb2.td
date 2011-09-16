@@ -3810,6 +3810,17 @@ def : t2InstAlias<"add${s}${p} $Rd, $Rn, $ShiftedRm",
                   (t2ADDrs rGPR:$Rd, GPRnopc:$Rn, t2_so_reg:$ShiftedRm,
                            pred:$p, cc_out:$s)>;
 
+// Aliases for SUB without the ".w" optional width specifier.
+def : t2InstAlias<"sub${s}${p} $Rd, $Rn, $imm",
+           (t2SUBri rGPR:$Rd, GPRnopc:$Rn, t2_so_imm:$imm, pred:$p, cc_out:$s)>;
+def : t2InstAlias<"sub${p} $Rd, $Rn, $imm",
+           (t2SUBri12 rGPR:$Rd, GPR:$Rn, imm0_4095:$imm, pred:$p)>;
+def : t2InstAlias<"sub${s}${p} $Rd, $Rn, $Rm",
+                 (t2SUBrr rGPR:$Rd, GPRnopc:$Rn, rGPR:$Rm, pred:$p, cc_out:$s)>;
+def : t2InstAlias<"sub${s}${p} $Rd, $Rn, $ShiftedRm",
+                  (t2SUBrs rGPR:$Rd, GPRnopc:$Rn, t2_so_reg:$ShiftedRm,
+                           pred:$p, cc_out:$s)>;
+
 // Alias for compares without the ".w" optional width specifier.
 def : t2InstAlias<"cmn${p} $Rn, $Rm",
                   (t2CMNzrr GPRnopc:$Rn, rGPR:$Rm, pred:$p)>;

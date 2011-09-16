@@ -1145,7 +1145,7 @@ def tSBC :                      // A8.6.151
 
 // Subtract immediate
 def tSUBi3 :                    // A8.6.210 T1
-  T1sIGenEncodeImm<0b01111, (outs tGPR:$Rd), (ins tGPR:$Rm, i32imm:$imm3),
+  T1sIGenEncodeImm<0b01111, (outs tGPR:$Rd), (ins tGPR:$Rm, imm0_7:$imm3),
                    IIC_iALUi,
                    "sub", "\t$Rd, $Rm, $imm3",
                    [(set tGPR:$Rd, (add tGPR:$Rm, imm0_7_neg:$imm3))]> {
@@ -1154,8 +1154,8 @@ def tSUBi3 :                    // A8.6.210 T1
 }
 
 def tSUBi8 :                    // A8.6.210 T2
-  T1sItGenEncodeImm<{1,1,1,?,?}, (outs tGPR:$Rdn), (ins tGPR:$Rn, i32imm:$imm8),
-                    IIC_iALUi,
+  T1sItGenEncodeImm<{1,1,1,?,?}, (outs tGPR:$Rdn),
+                    (ins tGPR:$Rn, imm0_255:$imm8), IIC_iALUi,
                     "sub", "\t$Rdn, $imm8",
                     [(set tGPR:$Rdn, (add tGPR:$Rn, imm8_255_neg:$imm8))]>;
 

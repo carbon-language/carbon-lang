@@ -2391,6 +2391,34 @@ _func:
 
 
 @------------------------------------------------------------------------------
+@ SUB (immediate)
+@------------------------------------------------------------------------------
+        itet eq
+        subeq r1, r2, #4
+        subwne r5, r3, #1023
+        subeq r4, r5, #293
+        sub r2, sp, #1024
+        sub r2, r8, #0xff00
+        sub r2, r3, #257
+        subw r2, r3, #257
+        sub r12, r6, #0x100
+        subw r12, r6, #0x100
+        subs r1, r2, #0x1f0
+
+@ CHECK: itet	eq                      @ encoding: [0x0a,0xbf]
+@ CHECK: subeq	r1, r2, #4              @ encoding: [0x11,0x1f]
+@ CHECK: subwne	r5, r3, #1023           @ encoding: [0xa3,0xf2,0xff,0x35]
+@ CHECK: subweq	r4, r5, #293            @ encoding: [0xa5,0xf2,0x25,0x14]
+@ CHECK: sub.w	r2, sp, #1024           @ encoding: [0xad,0xf5,0x80,0x62]
+@ CHECK: sub.w	r2, r8, #65280          @ encoding: [0xa8,0xf5,0x7f,0x42]
+@ CHECK: subw	r2, r3, #257            @ encoding: [0xa3,0xf2,0x01,0x12]
+@ CHECK: subw	r2, r3, #257            @ encoding: [0xa3,0xf2,0x01,0x12]
+@ CHECK: sub.w	r12, r6, #256           @ encoding: [0xa6,0xf5,0x80,0x7c]
+@ CHECK: subw	r12, r6, #256           @ encoding: [0xa6,0xf2,0x00,0x1c]
+@ CHECK: subs.w	r1, r2, #496            @ encoding: [0xb2,0xf5,0xf8,0x71]
+
+
+@------------------------------------------------------------------------------
 @ SUB (register)
 @------------------------------------------------------------------------------
         sub.w r5, r2, r12, rrx
