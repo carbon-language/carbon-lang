@@ -31,6 +31,8 @@ class HelloWatchpointTestCase(TestBase):
         self.source = 'main.c'
         # Find the line number to break inside main().
         self.line = line_number(self.source, '// Set break point at this line.')
+        # And the watchpoint variable declaration line number.
+        self.decl = line_number(self.source, '// Watchpoint variable declaration.')
         # Build dictionary to have unique executable names for each test method.
         self.exe_name = self.testMethodName
         self.d = {'C_SOURCES': self.source, 'EXE': self.exe_name}
@@ -57,7 +59,8 @@ class HelloWatchpointTestCase(TestBase):
         # Now let's set a write-type watchpoint for 'global'.
         # There should be only one watchpoint hit (see main.c).
         self.expect("frame variable -w write -g -L global", WATCHPOINT_CREATED,
-            substrs = ['Watchpoint created', 'size = 4', 'type = w'])
+            substrs = ['Watchpoint created', 'size = 4', 'type = w',
+                       '%s:%d' % (self.source, self.decl)])
 
         self.runCmd("process continue")
 

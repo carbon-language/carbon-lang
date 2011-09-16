@@ -14,6 +14,7 @@
 
 // C++ Includes
 #include <list>
+#include <string>
 
 // Other libraries and framework includes
 
@@ -46,8 +47,10 @@ public:
     void        SetWatchpointType (uint32_t type);
     bool        BreakpointWasHit (StoppointCallbackContext *context);
     bool        SetCallback (WatchpointHitCallback callback, void *callback_baton);
+    void        SetDeclInfo (std::string &str);
     void        GetDescription (Stream *s, lldb::DescriptionLevel level);
     void        Dump (Stream *s) const;
+    void        DumpWithLevel (Stream *s, lldb::DescriptionLevel description_level) const;
 
 private:
     bool        m_enabled;          // Is this breakpoint enabled
@@ -58,6 +61,7 @@ private:
     uint32_t    m_ignore_count;     // Number of times to ignore this breakpoint
     WatchpointHitCallback m_callback;
     void *      m_callback_baton;   // Callback user data to pass to callback
+    std::string m_decl_str;         // Declaration information, if any.
 
     static lldb::break_id_t
     GetNextID();

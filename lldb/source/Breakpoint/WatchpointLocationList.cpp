@@ -54,6 +54,12 @@ WatchpointLocationList::Add (const WatchpointLocationSP &wp_loc_sp)
 void
 WatchpointLocationList::Dump (Stream *s) const
 {
+    DumpWithLevel(s, lldb::eDescriptionLevelBrief);
+}
+
+void
+WatchpointLocationList::DumpWithLevel (Stream *s, lldb::DescriptionLevel description_level) const
+{
     Mutex::Locker locker (m_mutex);
     s->Printf("%.*p: ", (int)sizeof(void*) * 2, this);
     //s->Indent();
@@ -62,7 +68,7 @@ WatchpointLocationList::Dump (Stream *s) const
     s->IndentMore();
     addr_map::const_iterator pos, end = m_address_to_location.end();
     for (pos = m_address_to_location.begin(); pos != end; ++pos)
-        pos->second->Dump(s);
+        pos->second->DumpWithLevel(s, description_level);
     s->IndentLess();
 }
 

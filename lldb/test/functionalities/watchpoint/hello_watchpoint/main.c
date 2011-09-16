@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include <stdint.h>
 
-int32_t global = 10;
+int32_t global = 10; // Watchpoint variable declaration.
 
 int main(int argc, char** argv) {
     int local = 0;

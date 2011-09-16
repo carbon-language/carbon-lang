@@ -50,6 +50,13 @@ WatchpointLocation::SetCallback (WatchpointHitCallback callback, void *callback_
     return true;
 }
 
+void
+WatchpointLocation::SetDeclInfo (std::string &str)
+{
+    m_decl_str = str;
+    return;
+}
+
 
 // RETURNS - true if we should stop at this breakpoint, false if we
 // should continue.
@@ -75,27 +82,42 @@ void
 WatchpointLocation::GetDescription (Stream *s, lldb::DescriptionLevel level)
 {
     s->Printf(" ");
-    Dump(s);
+    DumpWithLevel(s, level);
     return;
 }
 
 void
 WatchpointLocation::Dump(Stream *s) const
 {
+    DumpWithLevel(s, lldb::eDescriptionLevelBrief);
+}
+
+void
+WatchpointLocation::DumpWithLevel(Stream *s, lldb::DescriptionLevel description_level) const
+{
     if (s == NULL)
         return;
 
-    s->Printf("WatchpointLocation %u: addr = 0x%8.8llx  size = %zu  state = %s  type = %s%s  hit_count = %-4u  ignore_count = %-4u  callback = %8p baton = %8p",
-            GetID(),
-            (uint64_t)m_addr,
-            m_byte_size,
-            m_enabled ? "enabled " : "disabled",
-            m_watch_read ? "r" : "",
-            m_watch_write ? "w" : "",
-            GetHitCount(),
-            GetIgnoreCount(),
-            m_callback,
-            m_callback_baton);
+    assert(description_level >= lldb::eDescriptionLevelBrief &&
+           description_level <= lldb::eDescriptionLevelVerbose);
+
+    s->Printf("WatchpointLocation %u: addr = 0x%8.8llx size = %zu state = %s type = %s%s",
+              GetID(),
+              (uint64_t)m_addr,
+              m_byte_size,
+              m_enabled ? "enabled" : "disabled",
+              m_watch_read ? "r" : "",
+              m_watch_write ? "w" : "");
+
+    if (description_level >= lldb::eDescriptionLevelFull)
+        s->Printf("\n    declare @ '%s'", m_decl_str.c_str());
+
+    if (description_level >= lldb::eDescriptionLevelVerbose)
+        s->Printf("\n    hit_count = %-4u  ignore_count = %-4u  callback = %8p baton = %8p",
+                  GetHitCount(),
+                  GetIgnoreCount(),
+                  m_callback,
+                  m_callback_baton);
 }
 
 bool

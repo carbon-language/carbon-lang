@@ -67,6 +67,12 @@ public:
     Dump (Stream *s) const;
 
     //------------------------------------------------------------------
+    /// Dump with lldb::DescriptionLevel.
+    //------------------------------------------------------------------
+    void
+    DumpWithLevel (Stream *s, lldb::DescriptionLevel description_level) const;
+
+    //------------------------------------------------------------------
     /// Returns a shared pointer to the watchpoint location at address
     /// \a addr - const version.
     ///

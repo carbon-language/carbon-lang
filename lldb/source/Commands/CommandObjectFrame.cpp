@@ -11,12 +11,14 @@
 
 // C Includes
 // C++ Includes
+#include <string>
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Core/DataVisualization.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/StreamFile.h"
+#include "lldb/Core/StreamString.h"
 #include "lldb/Core/Timer.h"
 #include "lldb/Core/Value.h"
 #include "lldb/Core/ValueObject.h"
@@ -535,8 +537,15 @@ public:
                                     exe_ctx.target->CreateWatchpointLocation(addr, size, watch_type).get();
                                 if (wp_loc)
                                 {
+                                    if (var_sp && var_sp->GetDeclaration().GetFile())
+                                    {
+                                        StreamString ss;
+                                        var_sp->GetDeclaration().DumpStopContext(&ss, true);
+                                        wp_loc->SetDeclInfo(ss.GetString());
+                                    }
+                                    StreamString ss;
                                     output_stream.Printf("Watchpoint created: ");
-                                    wp_loc->GetDescription(&output_stream, lldb::eDescriptionLevelBrief);
+                                    wp_loc->GetDescription(&output_stream, lldb::eDescriptionLevelFull);
                                     output_stream.EOL();
                                     result.SetStatus(eReturnStatusSuccessFinishResult);
                                 }
