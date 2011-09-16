@@ -415,6 +415,7 @@ static void handleLockableAttr(Sema &S, Decl *D, const AttributeList &Attr,
   if (!checkAttributeNumArgs(S, Attr, 0))
     return;
 
+  // FIXME: Lockable structs for C code.
   if (!isa<CXXRecordDecl>(D)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
       << Attr.getName() << ExpectedClass;

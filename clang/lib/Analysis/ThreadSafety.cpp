@@ -165,6 +165,8 @@ class MutexID {
 
   /// Build a Decl sequence representing the lock from the given expression.
   /// Recursive function that bottoms out when the final DeclRefExpr is reached.
+  // FIXME: Lock expressions that involve array indices or function calls.
+  // FIXME: Deal with LockReturned attribute.
   void buildMutexID(Expr *Exp, Expr *Parent) {
     if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(Exp)) {
       NamedDecl *ND = cast<NamedDecl>(DRE->getDecl()->getCanonicalDecl());
@@ -335,7 +337,8 @@ public:
 /// \param LockExp The lock expression corresponding to the lock to be added
 void BuildLockset::addLock(SourceLocation LockLoc, Expr *LockExp, Expr *Parent,
                            LockKind LK) {
-  // FIXME: deal with acquired before/after annotations
+  // FIXME: deal with acquired before/after annotations. We can write a first
+  // pass that does the transitive lookup lazily, and refine afterwards.
   MutexID Mutex(LockExp, Parent);
   if (!Mutex.isValid()) {
     Handler.handleInvalidLockExp(LockExp->getExprLoc());
@@ -509,6 +512,9 @@ void BuildLockset::addLocksToSet(LockKind LK, Attr *Attr,
 /// the same signature as const method calls can be also treated as reads.
 ///
 /// FIXME: We need to also visit CallExprs to catch/check global functions.
+///
+/// FIXME: Do not flag an error for member variables accessed in constructors/
+/// destructors
 void BuildLockset::VisitCXXMemberCallExpr(CXXMemberCallExpr *Exp) {
   NamedDecl *D = dyn_cast_or_null<NamedDecl>(Exp->getCalleeDecl());
 
@@ -551,9 +557,6 @@ void BuildLockset::VisitCXXMemberCallExpr(CXXMemberCallExpr *Exp) {
       }
 
       case attr::ExclusiveLocksRequired: {
-        // FIXME: Also use this attribute to add required locks to the initial
-        // lockset when processing a CFG for a function annotated with this
-        // attribute.
         ExclusiveLocksRequiredAttr *ELRAttr =
             cast<ExclusiveLocksRequiredAttr>(Attr);
 
@@ -564,9 +567,6 @@ void BuildLockset::VisitCXXMemberCallExpr(CXXMemberCallExpr *Exp) {
       }
 
       case attr::SharedLocksRequired: {
-        // FIXME: Also use this attribute to add required locks to the initial
-        // lockset when processing a CFG for a function annotated with this
-        // attribute.
         SharedLocksRequiredAttr *SLRAttr = cast<SharedLocksRequiredAttr>(Attr);
 
         for (SharedLocksRequiredAttr::args_iterator I = SLRAttr->args_begin(),
@@ -588,10 +588,6 @@ void BuildLockset::VisitCXXMemberCallExpr(CXXMemberCallExpr *Exp) {
         }
         break;
       }
-
-      case attr::LockReturned:
-        // FIXME: Deal with this attribute.
-        break;
 
       // Ignore other (non thread-safety) attributes
       default:
@@ -643,23 +639,6 @@ static Lockset intersectAndWarn(ThreadSafetyHandler &Handler,
   return Intersection;
 }
 
-/// \brief Returns the location of the first Stmt in a Block.
-static SourceLocation getFirstStmtLocation(const CFGBlock *Block) {
-  SourceLocation Loc;
-  for (CFGBlock::const_iterator BI = Block->begin(), BE = Block->end();
-       BI != BE; ++BI) {
-    if (const CFGStmt *CfgStmt = dyn_cast<CFGStmt>(&(*BI))) {
-      Loc = CfgStmt->getStmt()->getLocStart();
-      if (Loc.isValid()) return Loc;
-    }
-  }
-  if (const Stmt *S = Block->getTerminator().getStmt()) {
-    Loc = S->getLocStart();
-    if (Loc.isValid()) return Loc;
-  }
-  return Loc;
-}
-
 static Lockset addLock(ThreadSafetyHandler &Handler,
                        Lockset::Factory &LocksetFactory,
                        Lockset &LSet, Expr *LockExp, LockKind LK,
@@ -707,6 +686,7 @@ void runThreadSafetyAnalysis(AnalysisContext &AC,
     const AttrVec &ArgAttrs = D->getAttrs();
     for(unsigned i = 0; i < ArgAttrs.size(); ++i) {
       Attr *Attr = ArgAttrs[i];
+      SourceLocation AttrLoc = Attr->getLocation();
       if (SharedLocksRequiredAttr *SLRAttr
             = dyn_cast<SharedLocksRequiredAttr>(Attr)) {
         for (SharedLocksRequiredAttr::args_iterator
@@ -714,7 +694,7 @@ void runThreadSafetyAnalysis(AnalysisContext &AC,
             SLREnd = SLRAttr->args_end(); SLRIter != SLREnd; ++SLRIter)
           InitialLockset = addLock(Handler, LocksetFactory, InitialLockset,
                                    *SLRIter, LK_Shared,
-                                   getFirstStmtLocation(FirstBlock));
+                                   AttrLoc);
       } else if (ExclusiveLocksRequiredAttr *ELRAttr
                    = dyn_cast<ExclusiveLocksRequiredAttr>(Attr)) {
         for (ExclusiveLocksRequiredAttr::args_iterator
@@ -722,7 +702,7 @@ void runThreadSafetyAnalysis(AnalysisContext &AC,
             ELREnd = ELRAttr->args_end(); ELRIter != ELREnd; ++ELRIter)
           InitialLockset = addLock(Handler, LocksetFactory, InitialLockset,
                                    *ELRIter, LK_Exclusive,
-                                   getFirstStmtLocation(FirstBlock));
+                                   AttrLoc);
       }
     }
   }
@@ -799,6 +779,8 @@ void runThreadSafetyAnalysis(AnalysisContext &AC,
 
   Lockset InitialLockset = EntryLocksets[CFGraph->getEntry().getBlockID()];
   Lockset FinalLockset = ExitLocksets[CFGraph->getExit().getBlockID()];
+
+  // FIXME: Should we call this function for all blocks which exit the function?
   intersectAndWarn(Handler, InitialLockset, FinalLockset, LocksetFactory,
                    LEK_LockedAtEndOfFunction);
 }
