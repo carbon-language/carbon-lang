@@ -2624,12 +2624,12 @@ def t2SMLSDX  : T2FourReg_mac<0, 0b100, 0b0001, (outs rGPR:$Rd),
             "\t$Rd, $Rn, $Rm, $Ra", []>,
           Requires<[IsThumb2, HasThumb2DSP]>;
 def t2SMLALD  : T2FourReg_mac<1, 0b100, 0b1100, (outs rGPR:$Ra,rGPR:$Rd),
-                        (ins rGPR:$Rm, rGPR:$Rn), IIC_iMAC64, "smlald",
-                        "\t$Ra, $Rd, $Rm, $Rn", []>,
+                        (ins rGPR:$Rn, rGPR:$Rm), IIC_iMAC64, "smlald",
+                        "\t$Ra, $Rd, $Rn, $Rm", []>,
           Requires<[IsThumb2, HasThumb2DSP]>;
 def t2SMLALDX : T2FourReg_mac<1, 0b100, 0b1101, (outs rGPR:$Ra,rGPR:$Rd),
-                        (ins rGPR:$Rm,rGPR:$Rn), IIC_iMAC64, "smlaldx",
-                        "\t$Ra, $Rd, $Rm, $Rn", []>,
+                        (ins rGPR:$Rn,rGPR:$Rm), IIC_iMAC64, "smlaldx",
+                        "\t$Ra, $Rd, $Rn, $Rm", []>,
           Requires<[IsThumb2, HasThumb2DSP]>;
 def t2SMLSLD  : T2FourReg_mac<1, 0b101, 0b1100, (outs rGPR:$Ra,rGPR:$Rd),
                         (ins rGPR:$Rm,rGPR:$Rn), IIC_iMAC64, "smlsld",

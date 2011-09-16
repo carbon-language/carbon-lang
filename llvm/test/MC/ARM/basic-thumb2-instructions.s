@@ -1823,6 +1823,22 @@ _func:
 
 
 @------------------------------------------------------------------------------
+@ SMLALD/SMLALDX
+@------------------------------------------------------------------------------
+        smlald r2, r3, r5, r8
+        smlaldx r2, r3, r5, r8
+        ite eq
+        smlaldeq r2, r3, r5, r8
+        smlaldxne r2, r3, r5, r8
+
+@ CHECK: smlald	r2, r3, r5, r8          @ encoding: [0xc5,0xfb,0xc8,0x23]
+@ CHECK: smlaldx r2, r3, r5, r8         @ encoding: [0xc5,0xfb,0xd8,0x23]
+@ CHECK: ite	eq                      @ encoding: [0x0c,0xbf]
+@ CHECK: smlaldeq	r2, r3, r5, r8  @ encoding: [0xc5,0xfb,0xc8,0x23]
+@ CHECK: smlaldxne	r2, r3, r5, r8  @ encoding: [0xc5,0xfb,0xd8,0x23]
+
+
+@------------------------------------------------------------------------------
 @ SUB (register)
 @------------------------------------------------------------------------------
         sub.w r5, r2, r12, rrx
