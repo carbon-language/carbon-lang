@@ -87,10 +87,6 @@ class ARMAsmParser : public MCTargetAsmParser {
   bool parseMemory(SmallVectorImpl<MCParsedAsmOperand*> &);
   bool parseOperand(SmallVectorImpl<MCParsedAsmOperand*> &, StringRef Mnemonic);
   bool parsePrefix(ARMMCExpr::VariantKind &RefKind);
-  const MCExpr *applyPrefixToExpr(const MCExpr *E,
-                                  MCSymbolRefExpr::VariantKind Variant);
-
-
   bool parseMemRegOffsetShift(ARM_AM::ShiftOpc &ShiftType,
                               unsigned &ShiftAmount);
   bool parseDirectiveWord(unsigned Size, SMLoc L);
@@ -3066,47 +3062,6 @@ bool ARMAsmParser::parsePrefix(ARMMCExpr::VariantKind &RefKind) {
   }
   Parser.Lex(); // Eat the last ':'
   return false;
-}
-
-const MCExpr *
-ARMAsmParser::applyPrefixToExpr(const MCExpr *E,
-                                MCSymbolRefExpr::VariantKind Variant) {
-  // Recurse over the given expression, rebuilding it to apply the given variant
-  // to the leftmost symbol.
-  if (Variant == MCSymbolRefExpr::VK_None)
-    return E;
-
-  switch (E->getKind()) {
-  case MCExpr::Target:
-    llvm_unreachable("Can't handle target expr yet");
-  case MCExpr::Constant:
-    llvm_unreachable("Can't handle lower16/upper16 of constant yet");
-
-  case MCExpr::SymbolRef: {
-    const MCSymbolRefExpr *SRE = cast<MCSymbolRefExpr>(E);
-
-    if (SRE->getKind() != MCSymbolRefExpr::VK_None)
-      return 0;
-
-    return MCSymbolRefExpr::Create(&SRE->getSymbol(), Variant, getContext());
-  }
-
-  case MCExpr::Unary:
-    llvm_unreachable("Can't handle unary expressions yet");
-
-  case MCExpr::Binary: {
-    const MCBinaryExpr *BE = cast<MCBinaryExpr>(E);
-    const MCExpr *LHS = applyPrefixToExpr(BE->getLHS(), Variant);
-    const MCExpr *RHS = BE->getRHS();
-    if (!LHS)
-      return 0;
-
-    return MCBinaryExpr::Create(BE->getOpcode(), LHS, RHS, getContext());
-  }
-  }
-
-  assert(0 && "Invalid expression kind!");
-  return 0;
 }
 
 /// \brief Given a mnemonic, split out possible predication code and carry
