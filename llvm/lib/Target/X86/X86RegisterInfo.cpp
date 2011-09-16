@@ -822,7 +822,7 @@ namespace {
       for (unsigned i = 0, e = RI.getNumVirtRegs(); i != e; ++i) {
         unsigned Reg = TargetRegisterInfo::index2VirtReg(i);
         if (RI.getRegClass(Reg)->getAlignment() > StackAlignment) {
-          FuncInfo->setReserveFP(true);
+          FuncInfo->setForceFramePointer(true);
           return true;
         }
       }
