@@ -5769,9 +5769,50 @@ QualType Sema::CheckVectorOperands(ExprResult &LHS, ExprResult &RHS,
   return QualType();
 }
 
+// checkArithmeticNull - Detect when a NULL constant is used improperly in an
+// expression.  These are mainly cases where the null pointer is used as an
+// integer instead of a pointer.
+static void checkArithmeticNull(Sema &S, ExprResult &LHS, ExprResult &RHS,
+                                SourceLocation Loc, bool IsCompare) {
+  // The canonical way to check for a GNU null is with isNullPointerConstant,
+  // but we use a bit of a hack here for speed; this is a relatively
+  // hot path, and isNullPointerConstant is slow.
+  bool LHSNull = isa<GNUNullExpr>(LHS.get()->IgnoreParenImpCasts());
+  bool RHSNull = isa<GNUNullExpr>(RHS.get()->IgnoreParenImpCasts());
+
+  QualType NonNullType = LHSNull ? RHS.get()->getType() : LHS.get()->getType();
+
+  // Avoid analyzing cases where the result will either be invalid (and
+  // diagnosed as such) or entirely valid and not something to warn about.
+  if ((!LHSNull && !RHSNull) || NonNullType->isBlockPointerType() ||
+      NonNullType->isMemberPointerType() || NonNullType->isFunctionType())
+    return;
+
+  // Comparison operations would not make sense with a null pointer no matter
+  // what the other expression is.
+  if (!IsCompare) {
+    S.Diag(Loc, diag::warn_null_in_arithmetic_operation)
+        << (LHSNull ? LHS.get()->getSourceRange() : SourceRange())
+        << (RHSNull ? RHS.get()->getSourceRange() : SourceRange());
+    return;
+  }
+
+  // The rest of the operations only make sense with a null pointer
+  // if the other expression is a pointer.
+  if (LHSNull == RHSNull || NonNullType->isAnyPointerType() ||
+      NonNullType->canDecayToPointerType())
+    return;
+
+  S.Diag(Loc, diag::warn_null_in_comparison_operation)
+      << LHSNull /* LHS is NULL */ << NonNullType
+      << LHS.get()->getSourceRange() << RHS.get()->getSourceRange();
+}
+
 QualType Sema::CheckMultiplyDivideOperands(ExprResult &LHS, ExprResult &RHS,
                                            SourceLocation Loc,
                                            bool IsCompAssign, bool IsDiv) {
+  checkArithmeticNull(*this, LHS, RHS, Loc, /*isCompare=*/false);
+
   if (LHS.get()->getType()->isVectorType() ||
       RHS.get()->getType()->isVectorType())
     return CheckVectorOperands(LHS, RHS, Loc, IsCompAssign);
@@ -5796,6 +5837,8 @@ QualType Sema::CheckMultiplyDivideOperands(ExprResult &LHS, ExprResult &RHS,
 
 QualType Sema::CheckRemainderOperands(
   ExprResult &LHS, ExprResult &RHS, SourceLocation Loc, bool IsCompAssign) {
+  checkArithmeticNull(*this, LHS, RHS, Loc, /*isCompare=*/false);
+
   if (LHS.get()->getType()->isVectorType() ||
       RHS.get()->getType()->isVectorType()) {
     if (LHS.get()->getType()->hasIntegerRepresentation() && 
@@ -5986,6 +6029,8 @@ static void diagnosePointerIncompatibility(Sema &S, SourceLocation Loc,
 
 QualType Sema::CheckAdditionOperands( // C99 6.5.6
   ExprResult &LHS, ExprResult &RHS, SourceLocation Loc, QualType* CompLHSTy) {
+  checkArithmeticNull(*this, LHS, RHS, Loc, /*isCompare=*/false);
+
   if (LHS.get()->getType()->isVectorType() ||
       RHS.get()->getType()->isVectorType()) {
     QualType compType = CheckVectorOperands(LHS, RHS, Loc, CompLHSTy);
@@ -6042,6 +6087,8 @@ QualType Sema::CheckAdditionOperands( // C99 6.5.6
 QualType Sema::CheckSubtractionOperands(ExprResult &LHS, ExprResult &RHS,
                                         SourceLocation Loc,
                                         QualType* CompLHSTy) {
+  checkArithmeticNull(*this, LHS, RHS, Loc, /*isCompare=*/false);
+
   if (LHS.get()->getType()->isVectorType() ||
       RHS.get()->getType()->isVectorType()) {
     QualType compType = CheckVectorOperands(LHS, RHS, Loc, CompLHSTy);
@@ -6191,6 +6238,8 @@ static void DiagnoseBadShiftValues(Sema& S, ExprResult &LHS, ExprResult &RHS,
 QualType Sema::CheckShiftOperands(ExprResult &LHS, ExprResult &RHS,
                                   SourceLocation Loc, unsigned Opc,
                                   bool IsCompAssign) {
+  checkArithmeticNull(*this, LHS, RHS, Loc, /*isCompare=*/false);
+
   // C99 6.5.7p2: Each of the operands shall have integer type.
   if (!LHS.get()->getType()->hasIntegerRepresentation() || 
       !RHS.get()->getType()->hasIntegerRepresentation())
@@ -6340,6 +6389,8 @@ static void diagnoseFunctionPointerToVoidComparison(Sema &S, SourceLocation Loc,
 QualType Sema::CheckCompareOperands(ExprResult &LHS, ExprResult &RHS,
                                     SourceLocation Loc, unsigned OpaqueOpc,
                                     bool IsRelational) {
+  checkArithmeticNull(*this, LHS, RHS, Loc, /*isCompare=*/true);
+
   BinaryOperatorKind Opc = (BinaryOperatorKind) OpaqueOpc;
 
   // Handle vector comparisons separately.
@@ -6774,6 +6825,8 @@ QualType Sema::CheckVectorCompareOperands(ExprResult &LHS, ExprResult &RHS,
 
 inline QualType Sema::CheckBitwiseOperands(
   ExprResult &LHS, ExprResult &RHS, SourceLocation Loc, bool IsCompAssign) {
+  checkArithmeticNull(*this, LHS, RHS, Loc, /*isCompare=*/false);
+
   if (LHS.get()->getType()->isVectorType() ||
       RHS.get()->getType()->isVectorType()) {
     if (LHS.get()->getType()->hasIntegerRepresentation() &&
@@ -7680,44 +7733,6 @@ static void DiagnoseSelfAssignment(Sema &S, Expr *LHSExpr, Expr *RHSExpr,
       << LHSExpr->getSourceRange() << RHSExpr->getSourceRange();
 }
 
-// checkArithmeticNull - Detect when a NULL constant is used improperly in an
-// expression.  These are mainly cases where the null pointer is used as an
-// integer instead of a pointer.
-static void checkArithmeticNull(Sema &S, ExprResult &LHS, ExprResult &RHS,
-                                SourceLocation Loc, bool IsCompare) {
-  // The canonical way to check for a GNU null is with isNullPointerConstant,
-  // but we use a bit of a hack here for speed; this is a relatively
-  // hot path, and isNullPointerConstant is slow.
-  bool LHSNull = isa<GNUNullExpr>(LHS.get()->IgnoreParenImpCasts());
-  bool RHSNull = isa<GNUNullExpr>(RHS.get()->IgnoreParenImpCasts());
-
-  QualType NonNullType = LHSNull ? RHS.get()->getType() : LHS.get()->getType(); 
-
-  // Avoid analyzing cases where the result will either be invalid (and
-  // diagnosed as such) or entirely valid and not something to warn about.
-  if ((!LHSNull && !RHSNull) || NonNullType->isBlockPointerType() ||
-      NonNullType->isMemberPointerType() || NonNullType->isFunctionType())
-    return;
-
-  // Comparison operations would not make sense with a null pointer no matter
-  // what the other expression is.
-  if (!IsCompare) {
-    S.Diag(Loc, diag::warn_null_in_arithmetic_operation)
-        << (LHSNull ? LHS.get()->getSourceRange() : SourceRange())
-        << (RHSNull ? RHS.get()->getSourceRange() : SourceRange());
-    return;
-  }
-
-  // The rest of the operations only make sense with a null pointer
-  // if the other expression is a pointer.
-  if (LHSNull == RHSNull || NonNullType->isAnyPointerType() ||
-      NonNullType->canDecayToPointerType())
-    return;
-
-  S.Diag(Loc, diag::warn_null_in_comparison_operation)
-      << LHSNull /* LHS is NULL */ << NonNullType
-      << LHS.get()->getSourceRange() << RHS.get()->getSourceRange();
-}
 /// CreateBuiltinBinOp - Creates a new built-in binary operation with
 /// operator @p Opc at location @c TokLoc. This routine only supports
 /// built-in operations; ActOnBinOp handles overloaded operators.
@@ -7748,17 +7763,6 @@ ExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
     if (!resolvedRHS.isUsable()) return ExprError();
     RHS = move(resolvedRHS);
   }
-
-  if (Opc == BO_Mul || Opc == BO_Div || Opc == BO_Rem || Opc == BO_Add ||
-      Opc == BO_Sub || Opc == BO_Shl || Opc == BO_Shr || Opc == BO_And ||
-      Opc == BO_Xor || Opc == BO_Or || Opc == BO_MulAssign ||
-      Opc == BO_DivAssign || Opc == BO_AddAssign || Opc == BO_SubAssign ||
-      Opc == BO_RemAssign || Opc == BO_ShlAssign || Opc == BO_ShrAssign ||
-      Opc == BO_AndAssign || Opc == BO_OrAssign || Opc == BO_XorAssign)
-    checkArithmeticNull(*this, LHS, RHS, OpLoc, /*isCompare=*/false);
-  else if (Opc == BO_LE || Opc == BO_LT || Opc == BO_GE || Opc == BO_GT ||
-           Opc == BO_EQ || Opc == BO_NE)
-    checkArithmeticNull(*this, LHS, RHS, OpLoc, /*isCompare=*/true);
 
   switch (Opc) {
   case BO_Assign:
