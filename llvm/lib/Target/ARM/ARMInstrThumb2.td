@@ -3864,3 +3864,19 @@ def : t2InstAlias<"usat${p} $Rd, $sat_imm, $Rn",
 // STM w/o the .w suffix.
 def : t2InstAlias<"stm${p} $Rn, $regs",
                   (t2STMIA GPR:$Rn, pred:$p, reglist:$regs)>;
+
+// Alias for STR, STRB, and STRH without the ".w" optional
+// width specifier.
+def : t2InstAlias<"str${p} $Rt, $addr",
+                  (t2STRi12 GPR:$Rt, t2addrmode_imm12:$addr, pred:$p)>;
+def : t2InstAlias<"strb${p} $Rt, $addr",
+                  (t2STRBi12 rGPR:$Rt, t2addrmode_imm12:$addr, pred:$p)>;
+def : t2InstAlias<"strh${p} $Rt, $addr",
+                  (t2STRHi12 rGPR:$Rt, t2addrmode_imm12:$addr, pred:$p)>;
+
+def : t2InstAlias<"str${p} $Rt, $addr",
+                  (t2STRs GPR:$Rt, t2addrmode_so_reg:$addr, pred:$p)>;
+def : t2InstAlias<"strb${p} $Rt, $addr",
+                  (t2STRBs rGPR:$Rt, t2addrmode_so_reg:$addr, pred:$p)>;
+def : t2InstAlias<"strh${p} $Rt, $addr",
+                  (t2STRHs rGPR:$Rt, t2addrmode_so_reg:$addr, pred:$p)>;
