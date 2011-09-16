@@ -3679,7 +3679,7 @@ validateInstruction(MCInst &Inst,
   }
   case ARM::tSTMIA_UPD: {
     bool listContainsBase;
-    if (checkLowRegisterList(Inst, 4, 0, 0, listContainsBase))
+    if (checkLowRegisterList(Inst, 4, 0, 0, listContainsBase) && !isThumbTwo())
       return Error(Operands[4]->getStartLoc(),
                    "registers must be in range r0-r7");
     break;
@@ -3775,6 +3775,19 @@ processInstruction(MCInst &Inst,
       if (hasWritebackToken)
         Inst.insert(Inst.begin(),
                     MCOperand::CreateReg(Inst.getOperand(0).getReg()));
+    }
+    break;
+  }
+  case ARM::tSTMIA_UPD: {
+    // If the register list contains any high registers, we need to use
+    // the 32-bit encoding instead if we're in Thumb2. Otherwise, this
+    // should have generated an error in validateInstruction().
+    unsigned Rn = Inst.getOperand(0).getReg();
+    bool listContainsBase;
+    if (checkLowRegisterList(Inst, 4, Rn, 0, listContainsBase)) {
+      // 16-bit encoding isn't sufficient. Switch to the 32-bit version.
+      assert (isThumbTwo());
+      Inst.setOpcode(ARM::t2STMIA_UPD);
     }
     break;
   }

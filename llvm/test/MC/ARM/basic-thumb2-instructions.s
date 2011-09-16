@@ -2109,6 +2109,44 @@ _func:
 
 
 @------------------------------------------------------------------------------
+@ STMIA
+@------------------------------------------------------------------------------
+        stmia.w r4, {r4, r5, r8, r9}
+        stmia.w r4, {r5, r6}
+        stmia.w r5!, {r3, r8}
+        stm.w r4, {r4, r5, r8, r9}
+        stm.w r4, {r5, r6}
+        stm.w r5!, {r3, r8}
+        stm.w r5!, {r1, r2}
+        stm.w r2, {r1, r2}
+
+        stmia r4, {r4, r5, r8, r9}
+        stmia r4, {r5, r6}
+        stmia r5!, {r3, r8}
+        stm r4, {r4, r5, r8, r9}
+        stm r4, {r5, r6}
+        stm r5!, {r3, r8}
+        stmea r5!, {r3, r8}
+
+@ CHECK: stm.w	r4, {r4, r5, r8, r9}    @ encoding: [0x84,0xe8,0x30,0x03]
+@ CHECK: stm.w	r4, {r5, r6}            @ encoding: [0x84,0xe8,0x60,0x00]
+@ CHECK: stm.w	r5!, {r3, r8}           @ encoding: [0xa5,0xe8,0x08,0x01]
+@ CHECK: stm.w	r4, {r4, r5, r8, r9}    @ encoding: [0x84,0xe8,0x30,0x03]
+@ CHECK: stm.w	r4, {r5, r6}            @ encoding: [0x84,0xe8,0x60,0x00]
+@ CHECK: stm.w	r5!, {r3, r8}           @ encoding: [0xa5,0xe8,0x08,0x01]
+@ CHECK: stm.w	r5!, {r1, r2}           @ encoding: [0xa5,0xe8,0x06,0x00]
+@ CHECK: stm.w	r2, {r1, r2}            @ encoding: [0x82,0xe8,0x06,0x00]
+
+@ CHECK: stm.w	r4, {r4, r5, r8, r9}    @ encoding: [0x84,0xe8,0x30,0x03]
+@ CHECK: stm.w	r4, {r5, r6}            @ encoding: [0x84,0xe8,0x60,0x00]
+@ CHECK: stm.w	r5!, {r3, r8}           @ encoding: [0xa5,0xe8,0x08,0x01]
+@ CHECK: stm.w	r4, {r4, r5, r8, r9}    @ encoding: [0x84,0xe8,0x30,0x03]
+@ CHECK: stm.w	r4, {r5, r6}            @ encoding: [0x84,0xe8,0x60,0x00]
+@ CHECK: stm.w	r5!, {r3, r8}           @ encoding: [0xa5,0xe8,0x08,0x01]
+@ CHECK: stm.w	r5!, {r3, r8}           @ encoding: [0xa5,0xe8,0x08,0x01]
+
+
+@------------------------------------------------------------------------------
 @ SUB (register)
 @------------------------------------------------------------------------------
         sub.w r5, r2, r12, rrx

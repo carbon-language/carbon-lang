@@ -3861,3 +3861,6 @@ def : t2InstAlias<"ssat${p} $Rd, $sat_imm, $Rn",
 def : t2InstAlias<"usat${p} $Rd, $sat_imm, $Rn",
                   (t2USAT rGPR:$Rd, imm0_31:$sat_imm, rGPR:$Rn, 0, pred:$p)>;
 
+// STM w/o the .w suffix.
+def : t2InstAlias<"stm${p} $Rn, $regs",
+                  (t2STMIA GPR:$Rn, pred:$p, reglist:$regs)>;
