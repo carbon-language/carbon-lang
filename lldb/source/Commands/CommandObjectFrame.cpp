@@ -540,6 +540,7 @@ public:
                                     if (var_sp && var_sp->GetDeclaration().GetFile())
                                     {
                                         StreamString ss;
+                                        // True to show fullpath for declrarion file.
                                         var_sp->GetDeclaration().DumpStopContext(&ss, true);
                                         wp_loc->SetDeclInfo(ss.GetString());
                                     }
