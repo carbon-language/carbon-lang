@@ -2168,12 +2168,51 @@ _func:
         str r5, [r6, #33]
         str r5, [r6, #257]
         str.w pc, [r7, #257]
+        str r2, [r4, #255]!
+        str r8, [sp, #4]!
+        str lr, [sp, #-4]!
+        str r2, [r4], #255
+        str r8, [sp], #4
+        str lr, [sp], #-4
 
 @ CHECK: str	r5, [r5, #-4]           @ encoding: [0x45,0xf8,0x04,0x5c]
 @ CHECK: str	r5, [r6, #32]           @ encoding: [0x35,0x62]
 @ CHECK: str.w	r5, [r6, #33]           @ encoding: [0xc6,0xf8,0x21,0x50]
 @ CHECK: str.w	r5, [r6, #257]          @ encoding: [0xc6,0xf8,0x01,0x51]
 @ CHECK: str.w	pc, [r7, #257]          @ encoding: [0xc7,0xf8,0x01,0xf1]
+@ CHECK: str	r2, [r4, #255]!         @ encoding: [0x44,0xf8,0xff,0x2f]
+@ CHECK: str	r8, [sp, #4]!           @ encoding: [0x4d,0xf8,0x04,0x8f]
+@ CHECK: str	lr, [sp, #-4]!          @ encoding: [0x4d,0xf8,0x04,0xed]
+@ CHECK: str	r2, [r4], #255          @ encoding: [0x44,0xf8,0xff,0x2b]
+@ CHECK: str	r8, [sp], #4            @ encoding: [0x4d,0xf8,0x04,0x8b]
+@ CHECK: str	lr, [sp], #-4           @ encoding: [0x4d,0xf8,0x04,0xe9]
+
+
+@------------------------------------------------------------------------------
+@ STR(literal)
+@------------------------------------------------------------------------------
+        str.w r5, _foo
+
+@ CHECK: str.w	r5, _foo                @ encoding: [0xcf'A',0xf8'A',A,0x50'A']
+@ CHECK:    @   fixup A - offset: 0, value: _foo, kind: fixup_t2_ldst_pcrel_12
+
+
+@------------------------------------------------------------------------------
+@ STR(register)
+@------------------------------------------------------------------------------
+        str r1, [r8, r1]
+        str.w r4, [r5, r2]
+        str r6, [r0, r2, lsl #3]
+        str r8, [r8, r2, lsl #2]
+        str r7, [sp, r2, lsl #1]
+        str r7, [sp, r2, lsl #0]
+
+@ CHECK: str.w	r1, [r8, r1]            @ encoding: [0x48,0xf8,0x01,0x10]
+@ CHECK: str.w	r4, [r5, r2]            @ encoding: [0x45,0xf8,0x02,0x40]
+@ CHECK: str.w	r6, [r0, r2, lsl #3]    @ encoding: [0x40,0xf8,0x32,0x60]
+@ CHECK: str.w	r8, [r8, r2, lsl #2]    @ encoding: [0x48,0xf8,0x22,0x80]
+@ CHECK: str.w	r7, [sp, r2, lsl #1]    @ encoding: [0x4d,0xf8,0x12,0x70]
+@ CHECK: str.w	r7, [sp, r2]            @ encoding: [0x4d,0xf8,0x02,0x70]
 
 
 @------------------------------------------------------------------------------
