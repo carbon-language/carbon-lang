@@ -520,17 +520,28 @@ SlotIndex SplitEditor::leaveIntvAfter(SlotIndex Idx) {
   DEBUG(dbgs() << "    leaveIntvAfter " << Idx);
 
   // The interval must be live beyond the instruction at Idx.
-  Idx = Idx.getBoundaryIndex();
-  VNInfo *ParentVNI = Edit->getParent().getVNInfoAt(Idx);
+  SlotIndex Boundary = Idx.getBoundaryIndex();
+  VNInfo *ParentVNI = Edit->getParent().getVNInfoAt(Boundary);
   if (!ParentVNI) {
     DEBUG(dbgs() << ": not live\n");
-    return Idx.getNextSlot();
+    return Boundary.getNextSlot();
   }
   DEBUG(dbgs() << ": valno " << ParentVNI->id << '\n');
-
-  MachineInstr *MI = LIS.getInstructionFromIndex(Idx);
+  MachineInstr *MI = LIS.getInstructionFromIndex(Boundary);
   assert(MI && "No instruction at index");
-  VNInfo *VNI = defFromParent(0, ParentVNI, Idx, *MI->getParent(),
+
+  // In spill mode, make live ranges as short as possible by inserting the copy
+  // before MI.  This is only possible if that instruction doesn't redefine the
+  // value.  The inserted COPY is not a kill, and we don't need to recompute
+  // the source live range.  The spiller also won't try to hoist this copy.
+  if (SpillMode && !SlotIndex::isSameInstr(ParentVNI->def, Idx) &&
+      MI->readsVirtualRegister(Edit->getReg())) {
+    forceRecompute(0, ParentVNI);
+    defFromParent(0, ParentVNI, Idx, *MI->getParent(), MI);
+    return Idx;
+  }
+
+  VNInfo *VNI = defFromParent(0, ParentVNI, Boundary, *MI->getParent(),
                               llvm::next(MachineBasicBlock::iterator(MI)));
   return VNI->def;
 }
