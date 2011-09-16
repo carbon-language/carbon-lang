@@ -609,12 +609,24 @@ _func:
         ldrb r5, [r6, #33]
         ldrb r5, [r6, #257]
         ldrb.w lr, [r7, #257]
+        ldrb r5, [r8, #255]!
+        ldrb r2, [r5, #4]!
+        ldrb r1, [r4, #-4]!
+        ldrb lr, [r3], #255
+        ldrb r9, [r2], #4
+        ldrb r3, [sp], #-4
 
 @ CHECK: ldrb	r5, [r5, #-4]           @ encoding: [0x15,0xf8,0x04,0x5c]
 @ CHECK: ldrb.w	r5, [r6, #32]           @ encoding: [0x96,0xf8,0x20,0x50]
 @ CHECK: ldrb.w	r5, [r6, #33]           @ encoding: [0x96,0xf8,0x21,0x50]
 @ CHECK: ldrb.w	r5, [r6, #257]          @ encoding: [0x96,0xf8,0x01,0x51]
 @ CHECK: ldrb.w	lr, [r7, #257]          @ encoding: [0x97,0xf8,0x01,0xe1]
+@ CHECK: ldrb	r5, [r8, #255]!         @ encoding: [0x18,0xf8,0xff,0x5f]
+@ CHECK: ldrb	r2, [r5, #4]!           @ encoding: [0x15,0xf8,0x04,0x2f]
+@ CHECK: ldrb	r1, [r4, #-4]!          @ encoding: [0x14,0xf8,0x04,0x1d]
+@ CHECK: ldrb	lr, [r3], #255          @ encoding: [0x13,0xf8,0xff,0xeb]
+@ CHECK: ldrb	r9, [r2], #4            @ encoding: [0x12,0xf8,0x04,0x9b]
+@ CHECK: ldrb	r3, [sp], #-4           @ encoding: [0x1d,0xf8,0x04,0x39]
 
 
 @------------------------------------------------------------------------------
@@ -626,12 +638,6 @@ _func:
         ldrb r8, [r8, r2, lsl #2]
         ldrb r7, [sp, r2, lsl #1]
         ldrb r7, [sp, r2, lsl #0]
-        ldrb r5, [r8, #255]!
-        ldrb r2, [r5, #4]!
-        ldrb r1, [r4, #-4]!
-        ldrb lr, [r3], #255
-        ldrb r9, [r2], #4
-        ldrb r3, [sp], #-4
 
 @ CHECK: ldrb.w	r1, [r8, r1]            @ encoding: [0x18,0xf8,0x01,0x10]
 @ CHECK: ldrb.w	r4, [r5, r2]            @ encoding: [0x15,0xf8,0x02,0x40]
@@ -639,12 +645,6 @@ _func:
 @ CHECK: ldrb.w	r8, [r8, r2, lsl #2]    @ encoding: [0x18,0xf8,0x22,0x80]
 @ CHECK: ldrb.w	r7, [sp, r2, lsl #1]    @ encoding: [0x1d,0xf8,0x12,0x70]
 @ CHECK: ldrb.w	r7, [sp, r2]            @ encoding: [0x1d,0xf8,0x02,0x70]
-@ CHECK: ldrb	r5, [r8, #255]!         @ encoding: [0x18,0xf8,0xff,0x5f]
-@ CHECK: ldrb	r2, [r5, #4]!           @ encoding: [0x15,0xf8,0x04,0x2f]
-@ CHECK: ldrb	r1, [r4, #-4]!          @ encoding: [0x14,0xf8,0x04,0x1d]
-@ CHECK: ldrb	lr, [r3], #255          @ encoding: [0x13,0xf8,0xff,0xeb]
-@ CHECK: ldrb	r9, [r2], #4            @ encoding: [0x12,0xf8,0x04,0x9b]
-@ CHECK: ldrb	r3, [sp], #-4           @ encoding: [0x1d,0xf8,0x04,0x39]
 
 
 @------------------------------------------------------------------------------
@@ -710,12 +710,24 @@ _func:
         ldrh r5, [r6, #33]
         ldrh r5, [r6, #257]
         ldrh.w lr, [r7, #257]
+        ldrh r5, [r8, #255]!
+        ldrh r2, [r5, #4]!
+        ldrh r1, [r4, #-4]!
+        ldrh lr, [r3], #255
+        ldrh r9, [r2], #4
+        ldrh r3, [sp], #-4
 
 @ CHECK: ldrh	r5, [r5, #-4]           @ encoding: [0x35,0xf8,0x04,0x5c]
 @ CHECK: ldrh	r5, [r6, #32]           @ encoding: [0x35,0x8c]
 @ CHECK: ldrh.w	r5, [r6, #33]           @ encoding: [0xb6,0xf8,0x21,0x50]
 @ CHECK: ldrh.w	r5, [r6, #257]          @ encoding: [0xb6,0xf8,0x01,0x51]
 @ CHECK: ldrh.w	lr, [r7, #257]          @ encoding: [0xb7,0xf8,0x01,0xe1]
+@ CHECK: ldrh	r5, [r8, #255]!         @ encoding: [0x38,0xf8,0xff,0x5f]
+@ CHECK: ldrh	r2, [r5, #4]!           @ encoding: [0x35,0xf8,0x04,0x2f]
+@ CHECK: ldrh	r1, [r4, #-4]!          @ encoding: [0x34,0xf8,0x04,0x1d]
+@ CHECK: ldrh	lr, [r3], #255          @ encoding: [0x33,0xf8,0xff,0xeb]
+@ CHECK: ldrh	r9, [r2], #4            @ encoding: [0x32,0xf8,0x04,0x9b]
+@ CHECK: ldrh	r3, [sp], #-4           @ encoding: [0x3d,0xf8,0x04,0x39]
 
 
 @------------------------------------------------------------------------------
@@ -727,12 +739,6 @@ _func:
         ldrh r8, [r8, r2, lsl #2]
         ldrh r7, [sp, r2, lsl #1]
         ldrh r7, [sp, r2, lsl #0]
-        ldrh r5, [r8, #255]!
-        ldrh r2, [r5, #4]!
-        ldrh r1, [r4, #-4]!
-        ldrh lr, [r3], #255
-        ldrh r9, [r2], #4
-        ldrh r3, [sp], #-4
 
 @ CHECK: ldrh.w	r1, [r8, r1]            @ encoding: [0x38,0xf8,0x01,0x10]
 @ CHECK: ldrh.w	r4, [r5, r2]            @ encoding: [0x35,0xf8,0x02,0x40]
@@ -740,12 +746,6 @@ _func:
 @ CHECK: ldrh.w	r8, [r8, r2, lsl #2]    @ encoding: [0x38,0xf8,0x22,0x80]
 @ CHECK: ldrh.w	r7, [sp, r2, lsl #1]    @ encoding: [0x3d,0xf8,0x12,0x70]
 @ CHECK: ldrh.w	r7, [sp, r2]            @ encoding: [0x3d,0xf8,0x02,0x70]
-@ CHECK: ldrh	r5, [r8, #255]!         @ encoding: [0x38,0xf8,0xff,0x5f]
-@ CHECK: ldrh	r2, [r5, #4]!           @ encoding: [0x35,0xf8,0x04,0x2f]
-@ CHECK: ldrh	r1, [r4, #-4]!          @ encoding: [0x34,0xf8,0x04,0x1d]
-@ CHECK: ldrh	lr, [r3], #255          @ encoding: [0x33,0xf8,0xff,0xeb]
-@ CHECK: ldrh	r9, [r2], #4            @ encoding: [0x32,0xf8,0x04,0x9b]
-@ CHECK: ldrh	r3, [sp], #-4           @ encoding: [0x3d,0xf8,0x04,0x39]
 
 
 @------------------------------------------------------------------------------
