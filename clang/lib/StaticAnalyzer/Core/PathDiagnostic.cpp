@@ -130,11 +130,71 @@ void PathDiagnosticClient::HandlePathDiagnostic(const PathDiagnostic *D) {
 // PathDiagnosticLocation methods.
 //===----------------------------------------------------------------------===//
 
-PathDiagnosticLocation::PathDiagnosticLocation(const LocationContext *lc,
-                                               const SourceManager &sm)
-  : K(SingleLocK), S(0), D(0), SM(&sm), LC(lc) {
+static SourceLocation getValidSourceLocation(const Stmt* S,
+                                             const LocationContext *LC) {
+  assert(LC);
+  SourceLocation L = S->getLocStart();
+
+  // S might be a temporary statement that does not have a location in the
+  // source code, so find an enclosing statement and use it's location.
+  if (!L.isValid()) {
+    ParentMap & PM = LC->getParentMap();
+
+    while (!L.isValid()) {
+      S = PM.getParent(S);
+      L = S->getLocStart();
+    }
+  }
+
+  return L;
+}
+
+PathDiagnosticLocation
+  PathDiagnosticLocation::createBeginStmt(const Stmt *S,
+                                          const SourceManager &SM,
+                                          const LocationContext *LC) {
+  return PathDiagnosticLocation(getValidSourceLocation(S, LC), SM, SingleLocK);
+}
+
+PathDiagnosticLocation
+  PathDiagnosticLocation::createOperatorLoc(const BinaryOperator *BO,
+                                            const SourceManager &SM) {
+  return PathDiagnosticLocation(BO->getOperatorLoc(), SM, SingleLocK);
+}
+
+PathDiagnosticLocation
+  PathDiagnosticLocation::createBeginBrace(const CompoundStmt *CS,
+                                           const SourceManager &SM) {
+  SourceLocation L = CS->getLBracLoc();
+  return PathDiagnosticLocation(L, SM, SingleLocK);
+}
+
+PathDiagnosticLocation
+  PathDiagnosticLocation::createEndBrace(const CompoundStmt *CS,
+                                         const SourceManager &SM) {
+  SourceLocation L = CS->getRBracLoc();
+  return PathDiagnosticLocation(L, SM, SingleLocK);
+}
+
+PathDiagnosticLocation
+  PathDiagnosticLocation::createDeclBegin(const LocationContext *LC,
+                                          const SourceManager &SM) {
+  // FIXME: Should handle CXXTryStmt if analyser starts supporting C++.
+  if (const CompoundStmt *CS =
+        dyn_cast_or_null<CompoundStmt>(LC->getDecl()->getBody()))
+    if (!CS->body_empty()) {
+      SourceLocation Loc = (*CS->body_begin())->getLocStart();
+      return PathDiagnosticLocation(Loc, SM, SingleLocK);
+    }
+
+  return PathDiagnosticLocation();
+}
+
+PathDiagnosticLocation
+  PathDiagnosticLocation::createDeclEnd(const LocationContext *LC,
+                                             const SourceManager &SM) {
   SourceLocation L = LC->getDecl()->getBodyRBrace();
-  R = SourceRange(L, L);
+  return PathDiagnosticLocation(L, SM, SingleLocK);
 }
 
 PathDiagnosticLocation::PathDiagnosticLocation(const ProgramPoint& P,
@@ -153,9 +213,9 @@ PathDiagnosticLocation::PathDiagnosticLocation(const ProgramPoint& P,
     invalidate();
 }
 
-PathDiagnosticLocation PathDiagnosticLocation::createEndOfPath(
-                                                      const ExplodedNode* N,
-                                                      const SourceManager &SM) {
+PathDiagnosticLocation
+  PathDiagnosticLocation::createEndOfPath(const ExplodedNode* N,
+                                          const SourceManager &SM) {
   assert(N && "Cannot create a location with a null node.");
 
   const ExplodedNode *NI = N;
@@ -174,26 +234,7 @@ PathDiagnosticLocation PathDiagnosticLocation::createEndOfPath(
     NI = NI->succ_empty() ? 0 : *(NI->succ_begin());
   }
 
-  return PathDiagnosticLocation(N->getLocationContext(), SM);
-}
-
-static SourceLocation getValidSourceLocation(const Stmt* S,
-                                             const LocationContext *LC) {
-  assert(LC);
-  SourceLocation L = S->getLocStart();
-
-  // S might be a temporary statement that does not have a location in the
-  // source code, so find an enclosing statement and use it's location.
-  if (!L.isValid()) {
-    ParentMap & PM = LC->getParentMap();
-
-    while (!L.isValid()) {
-      S = PM.getParent(S);
-      L = S->getLocStart();
-    }
-  }
-
-  return L;
+  return createDeclEnd(N->getLocationContext(), SM);
 }
 
 FullSourceLoc PathDiagnosticLocation::asLocation() const {

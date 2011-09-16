@@ -175,8 +175,8 @@ PathDiagnosticBuilder::ExecutionContinues(const ExplodedNode *N) {
   if (const Stmt *S = GetNextStmt(N))
     return PathDiagnosticLocation(S, getSourceManager(), getLocationContext());
 
-  return FullSourceLoc(N->getLocationContext()->getDecl()->getBodyRBrace(),
-                       getSourceManager());
+  return PathDiagnosticLocation::createDeclEnd(N->getLocationContext(),
+                                               getSourceManager());
 }
 
 PathDiagnosticLocation
@@ -665,7 +665,8 @@ static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
             if (*(Src->succ_begin()+1) == Dst) {
               os << "false";
               PathDiagnosticLocation End(B->getLHS(), SMgr, LC);
-              PathDiagnosticLocation Start(B->getOperatorLoc(), SMgr);
+              PathDiagnosticLocation Start =
+                PathDiagnosticLocation::createOperatorLoc(B, SMgr);
               PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
                                                                os.str()));
             }
@@ -691,7 +692,8 @@ static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
             else {
               os << "true";
               PathDiagnosticLocation End(B->getLHS(), SMgr, LC);
-              PathDiagnosticLocation Start(B->getOperatorLoc(), SMgr);
+              PathDiagnosticLocation Start =
+                PathDiagnosticLocation::createOperatorLoc(B, SMgr);
               PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
                                                                os.str()));
             }
@@ -879,7 +881,7 @@ class EdgeBuilder {
     }
 
     if (firstCharOnly)
-      L = PathDiagnosticLocation(L.asLocation());
+      L.setSingleLocKind();
 
     return L;
   }
@@ -908,17 +910,14 @@ public:
 
   ~EdgeBuilder() {
     while (!CLocs.empty()) popLocation();
-
+    
     // Finally, add an initial edge from the start location of the first
     // statement (if it doesn't already exist).
-    // FIXME: Should handle CXXTryStmt if analyser starts supporting C++.
-    if (const CompoundStmt *CS =
-          dyn_cast_or_null<CompoundStmt>(PDB.getCodeDecl().getBody()))
-      if (!CS->body_empty()) {
-        SourceLocation Loc = (*CS->body_begin())->getLocStart();
-        rawAddEdge(PathDiagnosticLocation(Loc, PDB.getSourceManager()));
-      }
-
+    PathDiagnosticLocation L = PathDiagnosticLocation::createDeclBegin(
+                                                       PDB.getLocationContext(),
+                                                       PDB.getSourceManager());
+    if (L.isValid())
+      rawAddEdge(L);
   }
 
   void addEdge(PathDiagnosticLocation NewLoc, bool alwaysAdd = false);
@@ -1117,6 +1116,7 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
                                             PathDiagnosticBuilder &PDB,
                                             const ExplodedNode *N) {
   EdgeBuilder EB(PD, PDB);
+  const SourceManager& SM = PDB.getSourceManager();
 
   const ExplodedNode *NextNode = N->pred_empty() ? NULL : *(N->pred_begin());
   while (NextNode) {
@@ -1132,8 +1132,7 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
 
         // Are we jumping to the head of a loop?  Add a special diagnostic.
         if (const Stmt *Loop = BE->getDst()->getLoopTarget()) {
-          PathDiagnosticLocation L(Loop, PDB.getSourceManager(),
-                                         PDB.getLocationContext());
+          PathDiagnosticLocation L(Loop, SM, PDB.getLocationContext());
           const CompoundStmt *CS = NULL;
 
           if (!Term) {
@@ -1151,9 +1150,8 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
           PD.push_front(p);
 
           if (CS) {
-            PathDiagnosticLocation BL(CS->getRBracLoc(),
-                                      PDB.getSourceManager());
-            BL = PathDiagnosticLocation(BL.asLocation());
+            PathDiagnosticLocation BL =
+              PathDiagnosticLocation::createEndBrace(CS, SM);
             EB.addEdge(BL);
           }
         }

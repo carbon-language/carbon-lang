@@ -90,8 +90,8 @@ BugReporterVisitor::getDefaultEndPath(BugReporterContext &BRC,
   if (const BlockEntrance *BE = dyn_cast<BlockEntrance>(&PP)) {
     const CFGBlock *block = BE->getBlock();
     if (block->getBlockID() == 0) {
-      L = PathDiagnosticLocation(PP.getLocationContext(),
-                                 BRC.getSourceManager());
+      L = PathDiagnosticLocation::createDeclEnd(PP.getLocationContext(),
+                                                BRC.getSourceManager());
     }
   }
 

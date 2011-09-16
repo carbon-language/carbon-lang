@@ -23,6 +23,8 @@
 
 namespace clang {
 
+class BinaryOperator;
+class CompoundStmt;
 class Decl;
 class LocationContext;
 class ProgramPoint;
@@ -98,20 +100,47 @@ public:
   PathDiagnosticLocation(FullSourceLoc L)
     : K(SingleLocK), R(L, L), S(0), D(0), SM(&L.getManager()), LC(0) {}
 
-  /// Constructs a location when no specific statement is available.
-  /// Defaults to end of brace for the enclosing function body.
-  PathDiagnosticLocation(const LocationContext *lc, const SourceManager &sm);
-  
+  PathDiagnosticLocation(SourceLocation L, const SourceManager &sm,
+                         Kind kind = SingleLocK)
+    : K(kind), R(L, L), S(0), D(0), SM(&sm), LC(0) {}
+
   PathDiagnosticLocation(const Stmt *s,
                          const SourceManager &sm,
                          const LocationContext *lc)
     : K(StmtK), S(s), D(0), SM(&sm), LC(lc) {}
 
-  PathDiagnosticLocation(SourceRange r, const SourceManager &sm)
-    : K(RangeK), R(r), S(0), D(0), SM(&sm), LC(0) {}
-
   PathDiagnosticLocation(const Decl *d, const SourceManager &sm)
     : K(DeclK), S(0), D(d), SM(&sm), LC(0) {}
+
+  // Create a location for the beginning of the statement.
+  static PathDiagnosticLocation createBeginStmt(const Stmt *S,
+                                                const SourceManager &SM,
+                                                const LocationContext *LC);
+
+  /// Create the location for the operator of the binary expression.
+  /// Assumes the statement has a valid location.
+  static PathDiagnosticLocation createOperatorLoc(const BinaryOperator *BO,
+                                                  const SourceManager &SM);
+
+  /// Create a location for the beginning of the compound statement.
+  /// Assumes the statement has a valid location.
+  static PathDiagnosticLocation createBeginBrace(const CompoundStmt *CS,
+                                                 const SourceManager &SM);
+
+  /// Create a location for the end of the compound statement.
+  /// Assumes the statement has a valid location.
+  static PathDiagnosticLocation createEndBrace(const CompoundStmt *CS,
+                                               const SourceManager &SM);
+
+  /// Create a location for the beginning of the enclosing declaration body.
+  /// Defaults to the beginning of the first statement in the declaration body.
+  static PathDiagnosticLocation createDeclBegin(const LocationContext *LC,
+                                                const SourceManager &SM);
+
+  /// Constructs a location for the end of the enclosing declaration body.
+  /// Defaults to the end of brace.
+  static PathDiagnosticLocation createDeclEnd(const LocationContext *LC,
+                                                   const SourceManager &SM);
 
   /// Create a location corresponding to the given valid ExplodedNode.
   PathDiagnosticLocation(const ProgramPoint& P, const SourceManager &SMng);
@@ -142,6 +171,16 @@ public:
 
   void invalidate() {
     *this = PathDiagnosticLocation();
+  }
+
+  /// Specify that the object represents a single location.
+  void setSingleLocKind() {
+    if (K == SingleLocK)
+      return;
+
+    SourceLocation L = asLocation();
+    K = SingleLocK;
+    R = SourceRange(L, L);
   }
 
   void flatten();
