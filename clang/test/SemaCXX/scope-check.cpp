@@ -191,4 +191,19 @@ bool recurse() {
       break;
   }
 }
+
+
+namespace test10 {
+
+int test() {
+  static void *ps[] = { &&a0 };
+  goto *&&a0; // expected-error {{goto into protected scope}}
+  int a = 3; // expected-note {{jump bypasses variable initialization}}
+ a0:
+  return 0;
 }
+
+}
+
+}
+

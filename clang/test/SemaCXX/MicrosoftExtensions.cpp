@@ -258,14 +258,6 @@ void f()
 }
 
 
-
-
-
-
-
-
-
-
 namespace ms_protected_scope {
   struct C { C(); };
 
@@ -304,6 +296,14 @@ void exception_jump() {
      l2: ;
   } catch(int) {
   }
+}
+
+int jump_over_indirect_goto() {
+  static void *ps[] = { &&a0 };
+  goto *&&a0; // expected-warning {{goto into protected scope}}
+  int a = 3; // expected-note {{jump bypasses variable initialization}}
+ a0:
+  return 0;
 }
   
 }

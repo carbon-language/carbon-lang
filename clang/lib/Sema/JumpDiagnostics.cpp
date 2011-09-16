@@ -485,7 +485,8 @@ void JumpScopeChecker::VerifyJumps() {
     if (IndirectGotoStmt *IGS = dyn_cast<IndirectGotoStmt>(Jump)) {
       LabelDecl *Target = IGS->getConstantTarget();
       CheckJump(IGS, Target->getStmt(), IGS->getGotoLoc(),
-                diag::err_goto_into_protected_scope, 0);
+                diag::err_goto_into_protected_scope,
+                diag::warn_goto_into_protected_scope);
       continue;
     }
 
@@ -693,7 +694,7 @@ void JumpScopeChecker::CheckJump(Stmt *From, Stmt *To, SourceLocation DiagLoc,
   SmallVector<unsigned, 10> ToScopesError;
   SmallVector<unsigned, 10> ToScopesWarning;
   for (unsigned I = ToScope; I != CommonScope; I = Scopes[I].ParentScope) {
-    if (S.getLangOptions().Microsoft &&
+    if (S.getLangOptions().Microsoft && JumpDiagWarning != 0 &&
         IsMicrosoftJumpWarning(JumpDiagError, Scopes[I].InDiag))
       ToScopesWarning.push_back(I);
     else if (Scopes[I].InDiag)
