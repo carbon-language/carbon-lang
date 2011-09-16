@@ -886,7 +886,7 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, RegisterLoc
             if (active_row->GetRegisterInfo (row_regnum, unwindplan_regloc))
             {
                 have_unwindplan_regloc = true;
-                if (log && IsLogVerbose ())
+                if (log)
                 {                
                     log->Printf("%*sFrame %u supplying caller's saved reg %d's location using %s UnwindPlan",
                                 m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number,
@@ -906,7 +906,7 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, RegisterLoc
             const RegisterInfo *reg_info = GetRegisterInfoAtIndex(lldb_regnum);
             if (reg_info && abi->RegisterIsVolatile (reg_info))
             {
-                if (log)
+                if (log && IsLogVerbose ())
                 {
                     log->Printf("%*sFrame %u did not supply reg location for %d because it is volatile",
                                 m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number,
@@ -1136,7 +1136,7 @@ RegisterContextLLDB::ReadRegister (const RegisterInfo *reg_info, RegisterValue &
     // If this is the 0th frame, hand this over to the live register context
     if (IsFrameZero ())
     {
-        if (log)
+        if (log && IsLogVerbose ())
         {
             log->Printf("%*sFrame %u passing along to the live register context for reg %d",
                         m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number,
@@ -1171,7 +1171,7 @@ RegisterContextLLDB::WriteRegister (const RegisterInfo *reg_info, const Register
     // If this is the 0th frame, hand this over to the live register context
     if (IsFrameZero ())
     {
-        if (log)
+        if (log && IsLogVerbose ())
         {
             log->Printf("%*sFrame %u passing along to the live register context for reg %d",
                         m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number,

@@ -104,7 +104,7 @@ UnwindAssemblyInstEmulation::GetNonCallSiteUnwindPlanFromAssembly (AddressRange&
                     if (inst)
                     {
 
-                        if (log)
+                        if (log && IsLogVerbose ())
                         {
                             StreamString strm;
                             inst->Dump(&strm, inst_list.GetMaxOpcocdeByteSize (), show_address, show_bytes, &exe_ctx, raw);
@@ -130,7 +130,7 @@ UnwindAssemblyInstEmulation::GetNonCallSiteUnwindPlanFromAssembly (AddressRange&
             }
         }
         
-        if (log)
+        if (log && IsLogVerbose ())
         {
             StreamString strm;
             lldb::addr_t base_addr = range.GetBaseAddress().GetLoadAddress(&thread.GetProcess().GetTarget());
@@ -264,7 +264,7 @@ UnwindAssemblyInstEmulation::ReadMemory (EmulateInstruction *instruction,
 {
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND));
 
-    if (log)
+    if (log && IsLogVerbose ())
     {
         StreamString strm;
         strm.Printf ("UnwindAssemblyInstEmulation::ReadMemory    (addr = 0x%16.16llx, dst = %p, dst_len = %zu, context = ", 
@@ -304,7 +304,7 @@ UnwindAssemblyInstEmulation::WriteMemory (EmulateInstruction *instruction,
 
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND));
 
-    if (log)
+    if (log && IsLogVerbose ())
     {
         StreamString strm;
 
@@ -407,7 +407,7 @@ UnwindAssemblyInstEmulation::ReadRegister (EmulateInstruction *instruction,
 
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND));
     
-    if (log)
+    if (log && IsLogVerbose ())
     {
         
         StreamString strm;
@@ -437,7 +437,7 @@ UnwindAssemblyInstEmulation::WriteRegister (EmulateInstruction *instruction,
 {
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND));
 
-    if (log)
+    if (log && IsLogVerbose ())
     {
         
         StreamString strm;
