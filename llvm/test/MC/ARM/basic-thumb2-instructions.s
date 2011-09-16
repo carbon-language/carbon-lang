@@ -1951,6 +1951,30 @@ _func:
 
 
 @------------------------------------------------------------------------------
+@ SMULBB/SMULBT/SMULTB/SMULTT
+@------------------------------------------------------------------------------
+        smulbb r3, r9, r0
+        smulbt r5, r4, r1
+        smultb r4, r2, r2
+        smultt r8, r3, r4
+        itete ge
+        smulbbge r1, r9, r0
+        smulbtlt r5, r6, r4
+        smultbge r2, r3, r2
+        smulttlt r8, r3, r4
+
+@ CHECK: smulbb	r3, r9, r0              @ encoding: [0x19,0xfb,0x00,0xf3]
+@ CHECK: smulbt	r5, r4, r1              @ encoding: [0x14,0xfb,0x11,0xf5]
+@ CHECK: smultb	r4, r2, r2              @ encoding: [0x12,0xfb,0x22,0xf4]
+@ CHECK: smultt	r8, r3, r4              @ encoding: [0x13,0xfb,0x34,0xf8]
+@ CHECK: itete	ge                      @ encoding: [0xab,0xbf]
+@ CHECK: smulbbge	r1, r9, r0      @ encoding: [0x19,0xfb,0x00,0xf1]
+@ CHECK: smulbtlt	r5, r6, r4      @ encoding: [0x16,0xfb,0x14,0xf5]
+@ CHECK: smultbge	r2, r3, r2      @ encoding: [0x13,0xfb,0x22,0xf2]
+@ CHECK: smulttlt	r8, r3, r4      @ encoding: [0x13,0xfb,0x34,0xf8]
+
+
+@------------------------------------------------------------------------------
 @ SUB (register)
 @------------------------------------------------------------------------------
         sub.w r5, r2, r12, rrx
