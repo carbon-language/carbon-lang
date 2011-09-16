@@ -1068,11 +1068,11 @@ public:
         typename enable_if<is_convertible<_Up, iterator_type>::value>::type* = 0) _NOEXCEPT
         : __i(__u.base())
     {
-#ifdef _LIBCPP_DEBUG2
+#if _LIBCPP_DEBUG_LEVEL >= 2
         __get_db()->__iterator_copy(this, &__u);
 #endif
     }
-#ifdef _LIBCPP_DEBUG2
+#if _LIBCPP_DEBUG_LEVEL >= 2
     _LIBCPP_INLINE_VISIBILITY
     __wrap_iter(const __wrap_iter& __x)
         : __i(__x.base())
@@ -1097,15 +1097,19 @@ public:
 #endif
     _LIBCPP_INLINE_VISIBILITY reference operator*() const _NOEXCEPT
     {
+#if _LIBCPP_DEBUG_LEVEL >= 2
         _LIBCPP_ASSERT(__get_const_db()->__dereferenceable(this),
                        "Attempted to dereference a non-dereferenceable iterator");
+#endif
         return *__i;
     }
     _LIBCPP_INLINE_VISIBILITY pointer  operator->() const _NOEXCEPT {return &(operator*());}
     _LIBCPP_INLINE_VISIBILITY __wrap_iter& operator++() _NOEXCEPT
     {
+#if _LIBCPP_DEBUG_LEVEL >= 2
         _LIBCPP_ASSERT(__get_const_db()->__dereferenceable(this),
                        "Attempted to increment non-incrementable iterator");
+#endif
         ++__i;
         return *this;
     }
@@ -1113,8 +1117,10 @@ public:
         {__wrap_iter __tmp(*this); ++(*this); return __tmp;}
     _LIBCPP_INLINE_VISIBILITY __wrap_iter& operator--() _NOEXCEPT
     {
+#if _LIBCPP_DEBUG_LEVEL >= 2
         _LIBCPP_ASSERT(__get_const_db()->__decrementable(this),
                        "Attempted to decrement non-decrementable iterator");
+#endif
         --__i;
         return *this;
     }
@@ -1124,8 +1130,10 @@ public:
         {__wrap_iter __w(*this); __w += __n; return __w;}
     _LIBCPP_INLINE_VISIBILITY __wrap_iter& operator+=(difference_type __n) _NOEXCEPT
     {
+#if _LIBCPP_DEBUG_LEVEL >= 2
         _LIBCPP_ASSERT(__get_const_db()->__addable(this, __n),
                    "Attempted to add/subtract iterator outside of valid range");
+#endif
         __i += __n;
         return *this;
     }
@@ -1135,8 +1143,10 @@ public:
         {*this += -__n; return *this;}
     _LIBCPP_INLINE_VISIBILITY reference        operator[](difference_type __n) const _NOEXCEPT
     {
+#if _LIBCPP_DEBUG_LEVEL >= 2
         _LIBCPP_ASSERT(__get_const_db()->__subscriptable(this, __n),
                    "Attempted to subscript iterator outside of valid range");
+#endif
         return __i[__n];
     }
 
@@ -1144,7 +1154,7 @@ public:
 
 private:
     _LIBCPP_INLINE_VISIBILITY __wrap_iter(iterator_type __x) _NOEXCEPT : __i(__x) {}
-#ifdef _LIBCPP_DEBUG2
+#if _LIBCPP_DEBUG_LEVEL >= 2
     _LIBCPP_INLINE_VISIBILITY __wrap_iter(const void* __p, iterator_type __x) : __i(__x)
     {
         __get_db()->__insert_ic(this, __p);
@@ -1215,8 +1225,10 @@ inline _LIBCPP_INLINE_VISIBILITY
 bool
 operator==(const __wrap_iter<_Iter1>& __x, const __wrap_iter<_Iter2>& __y) _NOEXCEPT
 {
+#if _LIBCPP_DEBUG_LEVEL >= 2
     _LIBCPP_ASSERT(__get_const_db()->__comparable(&__x, &__y),
                    "Attempted to compare incomparable iterators");
+#endif
     return __x.base() == __y.base();
 }
 
@@ -1225,8 +1237,10 @@ inline _LIBCPP_INLINE_VISIBILITY
 bool
 operator<(const __wrap_iter<_Iter1>& __x, const __wrap_iter<_Iter2>& __y) _NOEXCEPT
 {
+#if _LIBCPP_DEBUG_LEVEL >= 2
     _LIBCPP_ASSERT(__get_const_db()->__comparable(&__x, &__y),
                    "Attempted to compare incomparable iterators");
+#endif
     return __x.base() < __y.base();
 }
 
@@ -1267,8 +1281,10 @@ inline _LIBCPP_INLINE_VISIBILITY
 typename __wrap_iter<_Iter1>::difference_type
 operator-(const __wrap_iter<_Iter1>& __x, const __wrap_iter<_Iter2>& __y) _NOEXCEPT
 {
+#if _LIBCPP_DEBUG_LEVEL >= 2
     _LIBCPP_ASSERT(__get_const_db()->__comparable(&__x, &__y),
                    "Attempted to subtract incompatible iterators");
+#endif
     return __x.base() - __y.base();
 }
 

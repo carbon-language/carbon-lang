@@ -11,10 +11,16 @@
 #ifndef _LIBCPP_DEBUG_H
 #define _LIBCPP_DEBUG_H
 
+#if _LIBCPP_DEBUG_LEVEL >= 1
+
 #   include <cstdlib>
 #   include <cstdio>
 #   include <cstddef>
 #   define _LIBCPP_ASSERT(x, m) ((x) ? (void)0 : (_VSTD::printf("%s\n", m), _VSTD::abort()))
+
+#endif
+
+#if _LIBCPP_DEBUG_LEVEL >= 2
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
@@ -176,6 +182,8 @@ _LIBCPP_VISIBLE const __libcpp_db* __get_const_db();
 
 
 _LIBCPP_END_NAMESPACE_STD
+
+#endif
 
 #endif  // _LIBCPP_DEBUG_H
 

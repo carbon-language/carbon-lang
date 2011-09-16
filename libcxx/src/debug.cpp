@@ -7,7 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define _LIBCPP_DEBUG2
+#define _LIBCPP_DEBUG2 1
+#include "__config"
 #include "__debug"
 #include "functional"
 #include "algorithm"
@@ -35,11 +36,6 @@ namespace
 {
 
 typedef mutex mutex_type;
-// struct mutex_type
-// {
-//     void lock() {}
-//     void unlock() {};
-// };
 typedef lock_guard<mutex_type> WLock;
 typedef lock_guard<mutex_type> RLock;
 
