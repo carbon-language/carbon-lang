@@ -289,7 +289,8 @@ const FileEntry *DirectoryLookup::DoFrameworkLookup(
 
   /// Determine whether this is the module we're building or not.
   bool AutomaticImport = SuggestedModule &&
-    (BuildingModule != StringRef(Filename.begin(), SlashPos));
+    (BuildingModule != StringRef(Filename.begin(), SlashPos)) &&
+    !Filename.substr(SlashPos + 1).startswith("..");
   
   FrameworkName.append(Filename.begin()+SlashPos+1, Filename.end());
   if (const FileEntry *FE = FileMgr.getFile(FrameworkName.str(),
