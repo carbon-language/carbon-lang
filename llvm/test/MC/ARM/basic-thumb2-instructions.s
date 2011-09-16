@@ -1747,6 +1747,30 @@ _func:
 
 
 @------------------------------------------------------------------------------
+@ SMLABB/SMLABT/SMLATB/SMLATT
+@------------------------------------------------------------------------------
+        smlabb r3, r1, r9, r0
+        smlabt r5, r6, r4, r1
+        smlatb r4, r2, r3, r2
+        smlatt r8, r3, r8, r4
+        itete gt
+        smlabbgt r3, r1, r9, r0
+        smlabtle r5, r6, r4, r1
+        smlatbgt r4, r2, r3, r2
+        smlattle r8, r3, r8, r4
+
+@ CHECK: smlabb	r3, r1, r9, r0          @ encoding: [0x11,0xfb,0x09,0x03]
+@ CHECK: smlabt	r5, r6, r4, r1          @ encoding: [0x16,0xfb,0x14,0x15]
+@ CHECK: smlatb	r4, r2, r3, r2          @ encoding: [0x12,0xfb,0x23,0x24]
+@ CHECK: smlatt	r8, r3, r8, r4          @ encoding: [0x13,0xfb,0x38,0x48]
+@ CHECK: itete	gt                      @ encoding: [0xcb,0xbf]
+@ CHECK: smlabbgt	r3, r1, r9, r0  @ encoding: [0x11,0xfb,0x09,0x03]
+@ CHECK: smlabtle	r5, r6, r4, r1  @ encoding: [0x16,0xfb,0x14,0x15]
+@ CHECK: smlatbgt	r4, r2, r3, r2  @ encoding: [0x12,0xfb,0x23,0x24]
+@ CHECK: smlattle	r8, r3, r8, r4  @ encoding: [0x13,0xfb,0x38,0x48]
+
+
+@------------------------------------------------------------------------------
 @ SUB (register)
 @------------------------------------------------------------------------------
         sub.w r5, r2, r12, rrx
