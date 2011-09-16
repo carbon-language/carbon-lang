@@ -110,7 +110,9 @@ __libcpp_db::__find_c_from_i(void* __i) const
 {
     RLock _(mut());
     __i_node* i = __find_iterator(__i);
-    return i != nullptr ? (i->__c_ != nullptr ? i->__c_->__c_ : nullptr) : nullptr;
+    _LIBCPP_ASSERT(i != nullptr, "iterator constructed in translation unit with debug mode not enabled."
+                   "  #define _LIBCPP_DEBUG2 1 for that translation unit.");
+    return i->__c_ != nullptr ? i->__c_->__c_ : nullptr;
 }
 
 void
@@ -118,14 +120,20 @@ __libcpp_db::__insert_ic(void* __i, const void* __c)
 {
     WLock _(mut());
     __i_node* i = __insert_iterator(__i);
-    _LIBCPP_ASSERT(__cbeg_ != __cend_, "debug mode internal logic error __insert_ic A");
+    _LIBCPP_ASSERT(__cbeg_ != __cend_, "Container constructed in a translation unit with debug mode disabled."
+                   " But it is being used in a translation unit with debug mode enabled."
+                   " Enable it in the other translation unit with #define _LIBCPP_DEBUG2 1");
     size_t hc = hash<const void*>()(__c) % (__cend_ - __cbeg_);
     __c_node* c = __cbeg_[hc];
-    _LIBCPP_ASSERT(c != nullptr, "debug mode internal logic error __insert_ic B");
+    _LIBCPP_ASSERT(c != nullptr, "Container constructed in a translation unit with debug mode disabled."
+                   " But it is being used in a translation unit with debug mode enabled."
+                   " Enable it in the other translation unit with #define _LIBCPP_DEBUG2 1");
     while (c->__c_ != __c)
     {
         c = c->__next_;
-        _LIBCPP_ASSERT(c != nullptr, "debug mode internal logic error __insert_ic C");
+        _LIBCPP_ASSERT(c != nullptr, "Container constructed in a translation unit with debug mode disabled."
+                   " But it is being used in a translation unit with debug mode enabled."
+                   " Enable it in the other translation unit with #define _LIBCPP_DEBUG2 1");
     }
     c->__add(i);
     i->__c_ = c;
@@ -363,6 +371,13 @@ __libcpp_db::swap(void* c1, void* c2)
         (*p)->__c_ = p1;
     for (__i_node** p = p2->beg_; p != p2->end_; ++p)
         (*p)->__c_ = p2;
+}
+
+void
+__libcpp_db::__insert_i(void* __i)
+{
+    WLock _(mut());
+    __insert_iterator(__i);
 }
 
 // private api

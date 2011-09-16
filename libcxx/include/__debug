@@ -148,6 +148,7 @@ public:
         ::new(__n) _C_node<_Cont>(__n->__c_, __n->__next_);
     }
 
+    void __insert_i(void* __i);
     __c_node* __insert_c(void* __c);
     void __erase_c(void* __c);
 

@@ -1063,7 +1063,12 @@ public:
 private:
     iterator_type __i;
 public:
-    _LIBCPP_INLINE_VISIBILITY __wrap_iter() _NOEXCEPT {}
+    _LIBCPP_INLINE_VISIBILITY __wrap_iter() _NOEXCEPT
+    {
+#if _LIBCPP_DEBUG_LEVEL >= 2
+        __get_db()->__insert_i(this);
+#endif
+    }
     template <class _Up> _LIBCPP_INLINE_VISIBILITY __wrap_iter(const __wrap_iter<_Up>& __u,
         typename enable_if<is_convertible<_Up, iterator_type>::value>::type* = 0) _NOEXCEPT
         : __i(__u.base())
