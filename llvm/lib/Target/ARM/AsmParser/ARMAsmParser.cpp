@@ -3168,14 +3168,14 @@ getMnemonicAcceptInfo(StringRef Mnemonic, bool &CanAcceptCarrySet,
                       bool &CanAcceptPredicationCode) {
   if (Mnemonic == "and" || Mnemonic == "lsl" || Mnemonic == "lsr" ||
       Mnemonic == "rrx" || Mnemonic == "ror" || Mnemonic == "sub" ||
-      Mnemonic == "smull" || Mnemonic == "add" || Mnemonic == "adc" ||
+      Mnemonic == "add" || Mnemonic == "adc" ||
       Mnemonic == "mul" || Mnemonic == "bic" || Mnemonic == "asr" ||
       Mnemonic == "umlal" || Mnemonic == "orr" || Mnemonic == "mvn" ||
       Mnemonic == "rsb" || Mnemonic == "rsc" || Mnemonic == "orn" ||
       Mnemonic == "sbc" || Mnemonic == "umull" || Mnemonic == "eor" ||
       Mnemonic == "neg" ||
-      (!isThumb() && (Mnemonic == "mov" || Mnemonic == "mla" ||
-                      Mnemonic == "smlal"))) {
+      (!isThumb() && (Mnemonic == "smull" || Mnemonic == "mov" ||
+                      Mnemonic == "mla" || Mnemonic == "smlal"))) {
     CanAcceptCarrySet = true;
   } else
     CanAcceptCarrySet = false;
