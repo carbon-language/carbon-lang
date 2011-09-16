@@ -1327,6 +1327,13 @@ multiclass sse12_cvt_s<bits<8> opc, RegisterClass SrcRC, RegisterClass DstRC,
                         [(set DstRC:$dst, (OpNode (ld_frag addr:$src)))]>;
 }
 
+multiclass sse12_cvt_s_np<bits<8> opc, RegisterClass SrcRC, RegisterClass DstRC,
+                          X86MemOperand x86memop, string asm> {
+  def rr : SI<opc, MRMSrcReg, (outs DstRC:$dst), (ins SrcRC:$src), asm, []>;
+  let mayLoad = 1 in
+  def rm : SI<opc, MRMSrcMem, (outs DstRC:$dst), (ins x86memop:$src), asm, []>;
+}
+
 multiclass sse12_cvt_p<bits<8> opc, RegisterClass SrcRC, RegisterClass DstRC,
                          SDNode OpNode, X86MemOperand x86memop, PatFrag ld_frag,
                          string asm, Domain d> {
@@ -1449,12 +1456,11 @@ defm Int_VCVTSD2SI64 : sse12_cvt_sint<0x2D, VR128, GR64,
 // Get rid of this hack or rename the intrinsics, there are several
 // intructions that only match with the intrinsic form, why create duplicates
 // to let them be recognized by the assembler?
-let Pattern = []<dag> in {
-defm VCVTSD2SI     : sse12_cvt_s<0x2D, FR64, GR32, undef, f64mem, load,
+defm VCVTSD2SI     : sse12_cvt_s_np<0x2D, FR64, GR32, f64mem,
                       "cvtsd2si\t{$src, $dst|$dst, $src}">, XD, VEX;
-defm VCVTSD2SI64   : sse12_cvt_s<0x2D, FR64, GR64, undef, f64mem, load,
+defm VCVTSD2SI64   : sse12_cvt_s_np<0x2D, FR64, GR64, f64mem,
                       "cvtsd2si\t{$src, $dst|$dst, $src}">, XD, VEX, VEX_W;
-}
+
 defm CVTSD2SI : sse12_cvt_sint<0x2D, VR128, GR32, int_x86_sse2_cvtsd2si,
                 f128mem, load, "cvtsd2si{l}">, XD;
 defm CVTSD2SI64 : sse12_cvt_sint<0x2D, VR128, GR64, int_x86_sse2_cvtsd2si64,
@@ -1564,6 +1570,7 @@ def VCVTSD2SSrr  : VSDI<0x5A, MRMSrcReg, (outs FR32:$dst),
                        (ins FR64:$src1, FR64:$src2),
                       "cvtsd2ss\t{$src2, $src1, $dst|$dst, $src1, $src2}", []>,
                       VEX_4V;
+let mayLoad = 1 in
 def VCVTSD2SSrm  : I<0x5A, MRMSrcMem, (outs FR32:$dst),
                        (ins FR64:$src1, f64mem:$src2),
                       "vcvtsd2ss\t{$src2, $src1, $dst|$dst, $src1, $src2}",
@@ -1593,6 +1600,7 @@ def VCVTSS2SDrr : I<0x5A, MRMSrcReg, (outs FR64:$dst),
                     (ins FR32:$src1, FR32:$src2),
                     "vcvtss2sd\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                     []>, XS, Requires<[HasAVX]>, VEX_4V;
+let mayLoad = 1 in
 def VCVTSS2SDrm : I<0x5A, MRMSrcMem, (outs FR64:$dst),
                     (ins FR32:$src1, f32mem:$src2),
                     "vcvtss2sd\t{$src2, $src1, $dst|$dst, $src1, $src2}",
@@ -1756,10 +1764,12 @@ def Int_CVTPD2DQrm : I<0xE6, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
 // SSE2 packed instructions with XS prefix
 def VCVTTPS2DQrr : VSSI<0x5B, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                       "cvttps2dq\t{$src, $dst|$dst, $src}", []>, VEX;
+let mayLoad = 1 in
 def VCVTTPS2DQrm : VSSI<0x5B, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
                       "cvttps2dq\t{$src, $dst|$dst, $src}", []>, VEX;
 def VCVTTPS2DQYrr : VSSI<0x5B, MRMSrcReg, (outs VR256:$dst), (ins VR256:$src),
                       "cvttps2dq\t{$src, $dst|$dst, $src}", []>, VEX;
+let mayLoad = 1 in
 def VCVTTPS2DQYrm : VSSI<0x5B, MRMSrcMem, (outs VR256:$dst), (ins f256mem:$src),
                       "cvttps2dq\t{$src, $dst|$dst, $src}", []>, VEX;
 def CVTTPS2DQrr : SSI<0x5B, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
@@ -2865,6 +2875,7 @@ multiclass sse1_fp_unop_s_avx<bits<8> opc, string OpcodeStr> {
   def SSr : SSI<opc, MRMSrcReg, (outs FR32:$dst), (ins FR32:$src1, FR32:$src2),
                 !strconcat(OpcodeStr,
                            "ss\t{$src2, $src1, $dst|$dst, $src1, $src2}"), []>;
+  let mayLoad = 1 in
   def SSm : SSI<opc, MRMSrcMem, (outs FR32:$dst), (ins FR32:$src1,f32mem:$src2),
                 !strconcat(OpcodeStr,
                            "ss\t{$src2, $src1, $dst|$dst, $src1, $src2}"), []>;
