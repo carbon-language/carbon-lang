@@ -58,6 +58,12 @@ if test ${srcdir} != "." ; then
   fi
 fi
 
+dnl We need to check for the compiler up here to avoid anything else
+dnl starting with a different one.
+AC_PROG_CC(clang llvm-gcc gcc)
+AC_PROG_CXX(clang++ llvm-g++ g++)
+AC_PROG_CPP
+
 dnl Configure all of the projects present in our source tree. While we could
 dnl just AC_CONFIG_SUBDIRS on the set of directories in projects that have a
 dnl configure script, that usage of the AC_CONFIG_SUBDIRS macro is deprecated.
@@ -964,11 +970,6 @@ dnl===
 dnl=== SECTION 4: Check for programs we need and that they are the right version
 dnl===
 dnl===-----------------------------------------------------------------------===
-
-dnl Check for compilation tools
-AC_PROG_CPP
-AC_PROG_CC(clang llvm-gcc gcc)
-AC_PROG_CXX(clang++ llvm-g++ g++)
 
 AC_PROG_NM
 AC_SUBST(NM)
