@@ -1315,12 +1315,27 @@ def t2STRDi8 : T2Ii8s4<1, 0, 0, (outs),
 
 // Indexed stores
 def t2STR_PRE  : T2Ipreldst<0, 0b10, 0, 1, (outs GPRnopc:$Rn_wb),
-                            (ins rGPR:$Rt, GPRnopc:$Rn, t2am_imm8_offset:$addr),
+                            (ins rGPR:$Rt, t2addrmode_imm8:$addr),
                             AddrModeT2_i8, IndexModePre, IIC_iStore_iu,
-                         "str", "\t$Rt, [$Rn, $addr]!",
-                         "$Rn = $Rn_wb,@earlyclobber $Rn_wb",
-             [(set GPRnopc:$Rn_wb,
-                   (pre_store rGPR:$Rt, GPRnopc:$Rn, t2am_imm8_offset:$addr))]>;
+                            "str", "\t$Rt, $addr!",
+                            "$addr.base = $Rn_wb,@earlyclobber $Rn_wb", []> {
+  let AsmMatchConverter = "cvtStWriteBackRegT2AddrModeImm8";
+}
+def t2STRH_PRE  : T2Ipreldst<0, 0b01, 0, 1, (outs GPRnopc:$Rn_wb),
+                            (ins rGPR:$Rt, t2addrmode_imm8:$addr),
+                            AddrModeT2_i8, IndexModePre, IIC_iStore_iu,
+                        "strh", "\t$Rt, $addr!",
+                        "$addr.base = $Rn_wb,@earlyclobber $Rn_wb", []> {
+  let AsmMatchConverter = "cvtStWriteBackRegT2AddrModeImm8";
+}
+
+def t2STRB_PRE  : T2Ipreldst<0, 0b00, 0, 1, (outs GPRnopc:$Rn_wb),
+                            (ins rGPR:$Rt, t2addrmode_imm8:$addr),
+                            AddrModeT2_i8, IndexModePre, IIC_iStore_bh_iu,
+                        "strb", "\t$Rt, $addr!",
+                        "$addr.base = $Rn_wb,@earlyclobber $Rn_wb", []> {
+  let AsmMatchConverter = "cvtStWriteBackRegT2AddrModeImm8";
+}
 
 def t2STR_POST : T2Ipostldst<0, 0b10, 0, 0, (outs GPRnopc:$Rn_wb),
                             (ins rGPR:$Rt, addr_offset_none:$Rn,
@@ -1332,14 +1347,6 @@ def t2STR_POST : T2Ipostldst<0, 0b10, 0, 0, (outs GPRnopc:$Rn_wb),
                   (post_store rGPR:$Rt, addr_offset_none:$Rn,
                               t2am_imm8_offset:$offset))]>;
 
-def t2STRH_PRE  : T2Ipreldst<0, 0b01, 0, 1, (outs GPRnopc:$Rn_wb),
-                            (ins rGPR:$Rt, GPRnopc:$Rn, t2am_imm8_offset:$addr),
-                            AddrModeT2_i8, IndexModePre, IIC_iStore_iu,
-                        "strh", "\t$Rt, [$Rn, $addr]!",
-                        "$Rn = $Rn_wb,@earlyclobber $Rn_wb",
-        [(set GPRnopc:$Rn_wb,
-              (pre_truncsti16 rGPR:$Rt, GPRnopc:$Rn, t2am_imm8_offset:$addr))]>;
-
 def t2STRH_POST : T2Ipostldst<0, 0b01, 0, 0, (outs GPRnopc:$Rn_wb),
                             (ins rGPR:$Rt, addr_offset_none:$Rn,
                                  t2am_imm8_offset:$offset),
@@ -1350,14 +1357,6 @@ def t2STRH_POST : T2Ipostldst<0, 0b01, 0, 0, (outs GPRnopc:$Rn_wb),
              (post_truncsti16 rGPR:$Rt, addr_offset_none:$Rn,
                               t2am_imm8_offset:$offset))]>;
 
-def t2STRB_PRE  : T2Ipreldst<0, 0b00, 0, 1, (outs GPRnopc:$Rn_wb),
-                            (ins rGPR:$Rt, GPRnopc:$Rn, t2am_imm8_offset:$addr),
-                            AddrModeT2_i8, IndexModePre, IIC_iStore_bh_iu,
-                        "strb", "\t$Rt, [$Rn, $addr]!",
-                        "$Rn = $Rn_wb,@earlyclobber $Rn_wb",
-         [(set GPRnopc:$Rn_wb,
-               (pre_truncsti8 rGPR:$Rt, GPRnopc:$Rn, t2am_imm8_offset:$addr))]>;
-
 def t2STRB_POST : T2Ipostldst<0, 0b00, 0, 0, (outs GPRnopc:$Rn_wb),
                             (ins rGPR:$Rt, addr_offset_none:$Rn,
                                  t2am_imm8_offset:$offset),
@@ -1367,6 +1366,31 @@ def t2STRB_POST : T2Ipostldst<0, 0b00, 0, 0, (outs GPRnopc:$Rn_wb),
         [(set GPRnopc:$Rn_wb,
               (post_truncsti8 rGPR:$Rt, addr_offset_none:$Rn,
                               t2am_imm8_offset:$offset))]>;
+
+// Pseudo-instructions for pattern matching the pre-indexed stores. We can't
+// put the patterns on the instruction definitions directly as ISel wants
+// the address base and offset to be separate operands, not a single
+// complex operand like we represent the instructions themselves. The
+// pseudos map between the two.
+let usesCustomInserter = 1,
+    Constraints = "$Rn = $Rn_wb,@earlyclobber $Rn_wb" in {
+def t2STR_preidx: t2PseudoInst<(outs GPRnopc:$Rn_wb),
+               (ins rGPR:$Rt, GPRnopc:$Rn, t2am_imm8_offset:$offset, pred:$p),
+               4, IIC_iStore_ru,
+      [(set GPRnopc:$Rn_wb,
+            (pre_store rGPR:$Rt, GPRnopc:$Rn, t2am_imm8_offset:$offset))]>;
+def t2STRB_preidx: t2PseudoInst<(outs GPRnopc:$Rn_wb),
+               (ins rGPR:$Rt, GPRnopc:$Rn, t2am_imm8_offset:$offset, pred:$p),
+               4, IIC_iStore_ru,
+      [(set GPRnopc:$Rn_wb,
+            (pre_truncsti8 rGPR:$Rt, GPRnopc:$Rn, t2am_imm8_offset:$offset))]>;
+def t2STRH_preidx: t2PseudoInst<(outs GPRnopc:$Rn_wb),
+               (ins rGPR:$Rt, GPRnopc:$Rn, t2am_imm8_offset:$offset, pred:$p),
+               4, IIC_iStore_ru,
+      [(set GPRnopc:$Rn_wb,
+            (pre_truncsti16 rGPR:$Rt, GPRnopc:$Rn, t2am_imm8_offset:$offset))]>;
+}
+
 
 // STRT, STRBT, STRHT all have offset mode (PUW=0b110) and are for disassembly
 // only.

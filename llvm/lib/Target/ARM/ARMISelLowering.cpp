@@ -5495,6 +5495,19 @@ ARMTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     MI->dump();
     llvm_unreachable("Unexpected instr type to insert");
   }
+  // The Thumb2 pre-indexed stores have the same MI operands, they just
+  // define them differently in the .td files from the isel patterns, so
+  // they need pseudos.
+  case ARM::t2STR_preidx:
+    MI->setDesc(TII->get(ARM::t2STR_PRE));
+    return BB;
+  case ARM::t2STRB_preidx:
+    MI->setDesc(TII->get(ARM::t2STRB_PRE));
+    return BB;
+  case ARM::t2STRH_preidx:
+    MI->setDesc(TII->get(ARM::t2STRH_PRE));
+    return BB;
+
   case ARM::STRi_preidx:
   case ARM::STRBi_preidx: {
     unsigned NewOpc = MI->getOpcode() == ARM::STRi_preidx ?
