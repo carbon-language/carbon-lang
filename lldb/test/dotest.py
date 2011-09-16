@@ -21,6 +21,7 @@ for available options.
 """
 
 import os, signal, sys, time
+import subprocess
 import unittest2
 
 def is_exe(fpath):
@@ -618,7 +619,6 @@ def setupSysPath():
         #print "The 'lldb' executable path is", lldbExec
         os.system('%s -v' % lldbExec)
     
-    import subprocess
     if os.path.isdir(os.path.join(base, '.svn')):
         pipe = subprocess.Popen(["svn", "info", base], stdout = subprocess.PIPE)
         svn_info = pipe.stdout.read()
@@ -784,7 +784,6 @@ def lldbLoggings():
             raise Exception('log enable failed (check GDB_REMOTE_LOG env variable.')
 
 def getMyCommandLine():
-    import subprocess
     ps = subprocess.Popen(['ps', '-o', "command=CMD", str(os.getpid())], stdout=subprocess.PIPE).communicate()[0]
     lines = ps.split('\n')
     cmd_line = lines[1]
@@ -795,6 +794,21 @@ def getMyCommandLine():
 # Execution of the test driver starts here #
 #                                          #
 # ======================================== #
+
+def checkDsymForUUIDIsNotOn():
+    pipe = subprocess.Popen(["defaults", "read", "com.apple.DebugSymbols"], stdout = subprocess.PIPE)
+    debug_symbols_output = pipe.stdout.read()
+    if "DBGFileMappedPaths = " in debug_symbols_output:
+        print "defaults read com.apple.DebugSysmbols =>"
+        print debug_symbols_output
+        print "Disable automatic lookup and caching of dSYMs before running the test suite!"
+        print "Exiting..."
+        sys.exit(0)
+
+# On MacOS X, check to make sure that domain for com.apple.DebugSymbols defaults
+# does not exist before proceeding to running the test suite.
+if sys.platform.startswith("darwin"):
+    checkDsymForUUIDIsNotOn()
 
 #
 # Start the actions by first parsing the options while setting up the test
@@ -1079,7 +1093,6 @@ if sdir_has_content:
 # Terminate the test suite if ${LLDB_TESTSUITE_FORCE_FINISH} is defined.
 # This should not be necessary now.
 if ("LLDB_TESTSUITE_FORCE_FINISH" in os.environ):
-    import subprocess
     print "Terminating Test suite..."
     subprocess.Popen(["/bin/sh", "-c", "kill %s; exit 0" % (os.getpid())])
 
