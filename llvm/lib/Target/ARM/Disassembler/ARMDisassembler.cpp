@@ -2731,7 +2731,10 @@ static DecodeStatus DecodeT2AddrModeImm0_1020s4(llvm::MCInst &Inst,unsigned Val,
 static DecodeStatus DecodeT2Imm8(llvm::MCInst &Inst, unsigned Val,
                          uint64_t Address, const void *Decoder) {
   int imm = Val & 0xFF;
-  if (!(Val & 0x100)) imm *= -1;
+  if (Val == 0)
+    imm = INT32_MIN;
+  else if (!(Val & 0x100))
+    imm *= -1;
   Inst.addOperand(MCOperand::CreateImm(imm));
 
   return MCDisassembler::Success;

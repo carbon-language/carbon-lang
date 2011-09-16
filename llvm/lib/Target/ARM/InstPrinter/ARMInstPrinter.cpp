@@ -802,7 +802,9 @@ void ARMInstPrinter::printT2AddrModeImm8Operand(const MCInst *MI,
 
   int32_t OffImm = (int32_t)MO2.getImm();
   // Don't print +0.
-  if (OffImm < 0)
+  if (OffImm == INT32_MIN)
+    O << ", #-0";
+  else if (OffImm < 0)
     O << ", #-" << -OffImm;
   else if (OffImm > 0)
     O << ", #" << OffImm;
