@@ -2003,6 +2003,22 @@ _func:
 
 
 @------------------------------------------------------------------------------
+@ SMUSD/SMUSDX
+@------------------------------------------------------------------------------
+        smusd r3, r0, r1
+        smusdx r3, r9, r2
+        ite eq
+        smusdeq r8, r3, r2
+        smusdxne r7, r4, r3
+
+@ CHECK: smusd	r3, r0, r1              @ encoding: [0x40,0xfb,0x01,0xf3]
+@ CHECK: smusdx	r3, r9, r2              @ encoding: [0x49,0xfb,0x12,0xf3]
+@ CHECK: ite	eq                      @ encoding: [0x0c,0xbf]
+@ CHECK: smusdeq	r8, r3, r2      @ encoding: [0x43,0xfb,0x02,0xf8]
+@ CHECK: smusdxne	r7, r4, r3      @ encoding: [0x44,0xfb,0x13,0xf7]
+
+
+@------------------------------------------------------------------------------
 @ SUB (register)
 @------------------------------------------------------------------------------
         sub.w r5, r2, r12, rrx
