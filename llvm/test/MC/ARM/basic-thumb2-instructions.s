@@ -1919,6 +1919,22 @@ _func:
 
 
 @------------------------------------------------------------------------------
+@ SMMUL/SMMULR
+@------------------------------------------------------------------------------
+        smmul r2, r3, r4
+        smmulr r3, r2, r1
+        ite cc
+        smmulcc r2, r3, r4
+        smmulrhs r3, r2, r1
+
+@ CHECK: smmul	r2, r3, r4              @ encoding: [0x53,0xfb,0x04,0xf2]
+@ CHECK: smmulr	r3, r2, r1              @ encoding: [0x52,0xfb,0x11,0xf3]
+@ CHECK: ite	lo                      @ encoding: [0x34,0xbf]
+@ CHECK: smmullo	r2, r3, r4      @ encoding: [0x53,0xfb,0x04,0xf2]
+@ CHECK: smmulrhs	r3, r2, r1      @ encoding: [0x52,0xfb,0x11,0xf3]
+
+
+@------------------------------------------------------------------------------
 @ SUB (register)
 @------------------------------------------------------------------------------
         sub.w r5, r2, r12, rrx
