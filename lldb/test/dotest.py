@@ -603,7 +603,7 @@ def setupSysPath():
         if not lldbExec:
             lldbExec = lldbHere
         os.environ["LLDB_BUILD_DIR"] = os.path.split(lldbExec)[0]
-        print os.environ["LLDB_BUILD_DIR"]
+        print "LLDB build dir:", os.environ["LLDB_BUILD_DIR"]
 
     # One last chance to locate the 'lldb' executable.
     if not lldbExec:
@@ -796,11 +796,12 @@ def getMyCommandLine():
 # ======================================== #
 
 def checkDsymForUUIDIsNotOn():
-    pipe = subprocess.Popen(["defaults", "read", "com.apple.DebugSymbols"], stdout = subprocess.PIPE)
-    debug_symbols_output = pipe.stdout.read()
-    if "DBGFileMappedPaths = " in debug_symbols_output:
-        print "defaults read com.apple.DebugSysmbols =>"
-        print debug_symbols_output
+    cmd = ["defaults", "read", "com.apple.DebugSymbols"]
+    pipe = subprocess.Popen(cmd, stdout = subprocess.PIPE, stderr = subprocess.STDOUT)
+    cmd_output = pipe.stdout.read()
+    if "DBGFileMappedPaths = " in cmd_output:
+        print "Executing: '%s' =>" % ' '.join(cmd)
+        print cmd_output
         print "Disable automatic lookup and caching of dSYMs before running the test suite!"
         print "Exiting..."
         sys.exit(0)
