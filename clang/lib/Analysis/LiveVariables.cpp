@@ -4,6 +4,9 @@
 #include "clang/Analysis/AnalysisContext.h"
 #include "clang/AST/StmtVisitor.h"
 
+#include "llvm/ADT/PostOrderIterator.h"
+#include "llvm/ADT/DenseMap.h"
+
 #include <deque>
 #include <algorithm>
 #include <vector>
@@ -11,31 +14,199 @@
 using namespace clang;
 
 namespace {
-  class LiveVariablesImpl {
-  public:  
-    AnalysisContext &analysisContext;
-    std::vector<LiveVariables::LivenessValues> cfgBlockValues;
-    llvm::ImmutableSet<const Stmt *>::Factory SSetFact;
-    llvm::ImmutableSet<const VarDecl *>::Factory DSetFact;
-    llvm::DenseMap<const CFGBlock *, LiveVariables::LivenessValues> blocksEndToLiveness;
-    llvm::DenseMap<const CFGBlock *, LiveVariables::LivenessValues> blocksBeginToLiveness;
-    llvm::DenseMap<const Stmt *, LiveVariables::LivenessValues> stmtsToLiveness;
-    llvm::DenseMap<const DeclRefExpr *, unsigned> inAssignment;
-    const bool killAtAssign;
-    
-    LiveVariables::LivenessValues
-    merge(LiveVariables::LivenessValues valsA,
-          LiveVariables::LivenessValues valsB);
-        
-    LiveVariables::LivenessValues runOnBlock(const CFGBlock *block,
-                                             LiveVariables::LivenessValues val,
-                                             LiveVariables::Observer *obs = 0);
 
-    void dumpBlockLiveness(const SourceManager& M);
-
-    LiveVariablesImpl(AnalysisContext &ac, bool KillAtAssign)
-      : analysisContext(ac), killAtAssign(KillAtAssign) {}
+// FIXME: This is copy-pasted from ThreadSafety.c.  I wanted a patch that
+// contained working code before refactoring the implementation of both
+// files.
+class CFGBlockSet {
+  llvm::BitVector VisitedBlockIDs;
+  
+public:
+  // po_iterator requires this iterator, but the only interface needed is the
+  // value_type typedef.
+  struct iterator {
+    typedef const CFGBlock *value_type;
   };
+  
+  CFGBlockSet() {}
+  CFGBlockSet(const CFG *G) : VisitedBlockIDs(G->getNumBlockIDs(), false) {}
+  
+  /// \brief Set the bit associated with a particular CFGBlock.
+  /// This is the important method for the SetType template parameter.
+  bool insert(const CFGBlock *Block) {
+    // Note that insert() is called by po_iterator, which doesn't check to make
+    // sure that Block is non-null.  Moreover, the CFGBlock iterator will
+    // occasionally hand out null pointers for pruned edges, so we catch those
+    // here.
+    if (Block == 0)
+      return false;  // if an edge is trivially false.
+    if (VisitedBlockIDs.test(Block->getBlockID()))
+      return false;
+    VisitedBlockIDs.set(Block->getBlockID());
+    return true;
+  }
+  
+  /// \brief Check if the bit for a CFGBlock has been already set.
+  /// This method is for tracking visited blocks in the main threadsafety loop.
+  /// Block must not be null.
+  bool alreadySet(const CFGBlock *Block) {
+    return VisitedBlockIDs.test(Block->getBlockID());
+  }
+};
+
+/// \brief We create a helper class which we use to iterate through CFGBlocks in
+/// the topological order.
+class TopologicallySortedCFG {
+  typedef llvm::po_iterator<const CFG*, CFGBlockSet, true>  po_iterator;
+  
+  std::vector<const CFGBlock*> Blocks;
+  
+  typedef llvm::DenseMap<const CFGBlock *, unsigned> BlockOrderTy;
+  BlockOrderTy BlockOrder;
+  
+  
+public:
+  typedef std::vector<const CFGBlock*>::reverse_iterator iterator;
+  
+  TopologicallySortedCFG(const CFG *CFGraph) {
+    Blocks.reserve(CFGraph->getNumBlockIDs());
+    CFGBlockSet BSet(CFGraph);
+    
+    for (po_iterator I = po_iterator::begin(CFGraph, BSet),
+         E = po_iterator::end(CFGraph, BSet); I != E; ++I) {
+      BlockOrder[*I] = Blocks.size() + 1;
+      Blocks.push_back(*I);      
+    }
+  }
+  
+  iterator begin() {
+    return Blocks.rbegin();
+  }
+  
+  iterator end() {
+    return Blocks.rend();
+  }
+  
+  bool empty() {
+    return begin() == end();
+  }
+  
+  struct BlockOrderCompare;
+  friend struct BlockOrderCompare;
+
+  struct BlockOrderCompare {
+    const TopologicallySortedCFG &TSC;
+  public:
+    BlockOrderCompare(const TopologicallySortedCFG &tsc) : TSC(tsc) {}
+    
+    bool operator()(const CFGBlock *b1, const CFGBlock *b2) const {
+      TopologicallySortedCFG::BlockOrderTy::const_iterator b1It = TSC.BlockOrder.find(b1);
+      TopologicallySortedCFG::BlockOrderTy::const_iterator b2It = TSC.BlockOrder.find(b2);
+      
+      unsigned b1V = (b1It == TSC.BlockOrder.end()) ? 0 : b1It->second;
+      unsigned b2V = (b2It == TSC.BlockOrder.end()) ? 0 : b2It->second;
+      return b1V > b2V;
+    }  
+  };
+  
+  BlockOrderCompare getComparator() const {
+    return BlockOrderCompare(*this);
+  }
+};
+
+class DataflowWorklist {
+  SmallVector<const CFGBlock *, 20> worklist;
+  llvm::BitVector enqueuedBlocks;
+  TopologicallySortedCFG TSC;
+public:
+  DataflowWorklist(const CFG &cfg)
+    : enqueuedBlocks(cfg.getNumBlockIDs()),
+      TSC(&cfg) {}
+  
+  void enqueueBlock(const CFGBlock *block);
+  void enqueueSuccessors(const CFGBlock *block);
+  void enqueuePredecessors(const CFGBlock *block);
+
+  const CFGBlock *dequeue();
+
+  void sortWorklist();
+};
+
+}
+
+void DataflowWorklist::enqueueBlock(const clang::CFGBlock *block) {
+  if (block && !enqueuedBlocks[block->getBlockID()]) {
+    enqueuedBlocks[block->getBlockID()] = true;
+    worklist.push_back(block);
+  }
+}
+  
+void DataflowWorklist::enqueueSuccessors(const clang::CFGBlock *block) {
+  const unsigned OldWorklistSize = worklist.size();
+  for (CFGBlock::const_succ_iterator I = block->succ_begin(),
+       E = block->succ_end(); I != E; ++I) {
+    enqueueBlock(*I);
+  }
+
+  if (OldWorklistSize == 0 || OldWorklistSize == worklist.size())
+    return;
+
+  sortWorklist();
+}
+
+void DataflowWorklist::enqueuePredecessors(const clang::CFGBlock *block) {
+  const unsigned OldWorklistSize = worklist.size();
+  for (CFGBlock::const_pred_iterator I = block->pred_begin(),
+       E = block->pred_end(); I != E; ++I) {
+    enqueueBlock(*I);
+  }
+  
+  if (OldWorklistSize == 0 || OldWorklistSize == worklist.size())
+    return;
+
+  sortWorklist();
+}
+
+void DataflowWorklist::sortWorklist() {
+  std::sort(worklist.begin(), worklist.end(), TSC.getComparator());
+}
+
+
+const CFGBlock *DataflowWorklist::dequeue() {
+  if (worklist.empty())
+    return 0;
+  const CFGBlock *b = worklist.back();
+  worklist.pop_back();
+  enqueuedBlocks[b->getBlockID()] = false;
+  return b;
+}
+
+namespace {
+class LiveVariablesImpl {
+public:  
+  AnalysisContext &analysisContext;
+  std::vector<LiveVariables::LivenessValues> cfgBlockValues;
+  llvm::ImmutableSet<const Stmt *>::Factory SSetFact;
+  llvm::ImmutableSet<const VarDecl *>::Factory DSetFact;
+  llvm::DenseMap<const CFGBlock *, LiveVariables::LivenessValues> blocksEndToLiveness;
+  llvm::DenseMap<const CFGBlock *, LiveVariables::LivenessValues> blocksBeginToLiveness;
+  llvm::DenseMap<const Stmt *, LiveVariables::LivenessValues> stmtsToLiveness;
+  llvm::DenseMap<const DeclRefExpr *, unsigned> inAssignment;
+  const bool killAtAssign;
+  
+  LiveVariables::LivenessValues
+  merge(LiveVariables::LivenessValues valsA,
+        LiveVariables::LivenessValues valsB);
+      
+  LiveVariables::LivenessValues runOnBlock(const CFGBlock *block,
+                                           LiveVariables::LivenessValues val,
+                                           LiveVariables::Observer *obs = 0);
+
+  void dumpBlockLiveness(const SourceManager& M);
+
+  LiveVariablesImpl(AnalysisContext &ac, bool KillAtAssign)
+    : analysisContext(ac), killAtAssign(KillAtAssign) {}
+};
 }
 
 static LiveVariablesImpl &getImpl(void *x) {
@@ -56,9 +227,12 @@ bool LiveVariables::LivenessValues::isLive(const VarDecl *D) const {
 
 namespace {
   template <typename SET>
-  SET mergeSets(typename SET::Factory &F, SET A, SET B) {
+  SET mergeSets(SET A, SET B) {
+    if (A.isEmpty())
+      return B;
+    
     for (typename SET::iterator it = B.begin(), ei = B.end(); it != ei; ++it) {
-      A = F.add(A, *it);
+      A = A.add(*it);
     }
     return A;
   }
@@ -67,8 +241,22 @@ namespace {
 LiveVariables::LivenessValues
 LiveVariablesImpl::merge(LiveVariables::LivenessValues valsA,
                          LiveVariables::LivenessValues valsB) {  
-  return LiveVariables::LivenessValues(mergeSets(SSetFact, valsA.liveStmts, valsB.liveStmts),
-                        mergeSets(DSetFact, valsA.liveDecls, valsB.liveDecls));
+  
+  llvm::ImmutableSetRef<const Stmt *>
+    SSetRefA(valsA.liveStmts.getRootWithoutRetain(), SSetFact.getTreeFactory()),
+    SSetRefB(valsB.liveStmts.getRootWithoutRetain(), SSetFact.getTreeFactory());
+                                                
+  
+  llvm::ImmutableSetRef<const VarDecl *>
+    DSetRefA(valsA.liveDecls.getRootWithoutRetain(), DSetFact.getTreeFactory()),
+    DSetRefB(valsB.liveDecls.getRootWithoutRetain(), DSetFact.getTreeFactory());
+  
+
+  SSetRefA = mergeSets(SSetRefA, SSetRefB);
+  DSetRefA = mergeSets(DSetRefA, DSetRefB);
+  
+  return LiveVariables::LivenessValues(SSetRefA.asImmutableSet(),
+                                       DSetRefA.asImmutableSet());  
 }
 
 bool LiveVariables::LivenessValues::equals(const LivenessValues &V) const {
@@ -100,29 +288,6 @@ bool LiveVariables::isLive(const Stmt *Loc, const Stmt *S) {
 //===----------------------------------------------------------------------===//
 
 namespace {
-class Worklist {
-  llvm::BitVector isBlockEnqueued;
-  std::deque<const CFGBlock *> workListContents;
-public:
-  Worklist(CFG &cfg) : isBlockEnqueued(cfg.getNumBlockIDs()) {}
-  
-  bool empty() const { return workListContents.empty(); }
-  
-  const CFGBlock *getNextItem() {
-    const CFGBlock *block = workListContents.front();
-    workListContents.pop_front();
-    isBlockEnqueued[block->getBlockID()] = false;
-    return block;
-  }
-  
-  void enqueueBlock(const CFGBlock *block) {
-    if (!isBlockEnqueued[block->getBlockID()]) {
-      isBlockEnqueued[block->getBlockID()] = true;
-      workListContents.push_back(block);
-    }
-  }
-};
-  
 class TransferFunctions : public StmtVisitor<TransferFunctions> {
   LiveVariablesImpl &LV;
   LiveVariables::LivenessValues &val;
@@ -390,7 +555,7 @@ LiveVariables::computeLiveness(AnalysisContext &AC,
 
   // Construct the dataflow worklist.  Enqueue the exit block as the
   // start of the analysis.
-  Worklist worklist(*cfg);
+  DataflowWorklist worklist(*cfg);
   llvm::BitVector everAnalyzedBlock(cfg->getNumBlockIDs());
 
   // FIXME: we should enqueue using post order.
@@ -418,10 +583,9 @@ LiveVariables::computeLiveness(AnalysisContext &AC,
       }
   }
   
-  while (!worklist.empty()) {
-    // Dequeue blocks in FIFO order.
-    const CFGBlock *block = worklist.getNextItem();
-    
+  worklist.sortWorklist();
+  
+  while (const CFGBlock *block = worklist.dequeue()) {
     // Determine if the block's end value has changed.  If not, we
     // have nothing left to do for this block.
     LivenessValues &prevVal = LV->blocksEndToLiveness[block];
@@ -430,8 +594,9 @@ LiveVariables::computeLiveness(AnalysisContext &AC,
     LivenessValues val;
     for (CFGBlock::const_succ_iterator it = block->succ_begin(),
                                        ei = block->succ_end(); it != ei; ++it) {
-      if (const CFGBlock *succ = *it)      
+      if (const CFGBlock *succ = *it) {     
         val = LV->merge(val, LV->blocksBeginToLiveness[succ]);
+      }
     }
     
     if (!everAnalyzedBlock[block->getBlockID()])
@@ -445,12 +610,7 @@ LiveVariables::computeLiveness(AnalysisContext &AC,
     LV->blocksBeginToLiveness[block] = LV->runOnBlock(block, val);
     
     // Enqueue the value to the predecessors.
-    for (CFGBlock::const_pred_iterator it = block->pred_begin(),
-                                       ei = block->pred_end(); it != ei; ++it)
-    {
-      if (const CFGBlock *pred = *it)
-        worklist.enqueueBlock(pred);
-    }    
+    worklist.enqueuePredecessors(block);
   }
   
   return new LiveVariables(LV);
