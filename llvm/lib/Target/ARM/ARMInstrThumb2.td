@@ -2046,6 +2046,7 @@ def t2SSAT16: T2SatI<
   let Inst{21} = 1;        // sh = '1'
   let Inst{14-12} = 0b000; // imm3 = '000'
   let Inst{7-6} = 0b00;    // imm2 = '00'
+  let Inst{5-4} = 0b00;
 }
 
 def t2USAT: T2SatI<
