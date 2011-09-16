@@ -256,6 +256,159 @@ public:
   }
 };
 
+// NOTE: This will possibly become the new implementation of ImmutableMap some day.
+template <typename KeyT, typename ValT,
+typename ValInfo = ImutKeyValueInfo<KeyT,ValT> >
+class ImmutableMapRef {
+public:
+  typedef typename ValInfo::value_type      value_type;
+  typedef typename ValInfo::value_type_ref  value_type_ref;
+  typedef typename ValInfo::key_type        key_type;
+  typedef typename ValInfo::key_type_ref    key_type_ref;
+  typedef typename ValInfo::data_type       data_type;
+  typedef typename ValInfo::data_type_ref   data_type_ref;
+  typedef ImutAVLTree<ValInfo>              TreeTy;
+  typedef typename TreeTy::Factory          FactoryTy;
+  
+protected:
+  TreeTy *Root;
+  FactoryTy *Factory;
+  
+public:
+  /// Constructs a map from a pointer to a tree root.  In general one
+  /// should use a Factory object to create maps instead of directly
+  /// invoking the constructor, but there are cases where make this
+  /// constructor public is useful.
+  explicit ImmutableMapRef(const TreeTy* R, FactoryTy *F) 
+    : Root(const_cast<TreeTy*>(R)),
+      Factory(F) {
+    if (Root) { Root->retain(); }
+  }
+  
+  ImmutableMapRef(const ImmutableMapRef &X)
+    : Root(X.Root),
+      Factory(X.Factory) {
+    if (Root) { Root->retain(); }
+  }
+
+  ImmutableMapRef &operator=(const ImmutableMapRef &X) {
+    if (Root != X.Root) {
+      if (X.Root)
+        X.Root->retain();
+      
+      if (Root)
+        Root->release();
+      
+      Root = X.Root;
+      Factory = X.Factory;
+    }
+    return *this;
+  }
+
+  ~ImmutableMapRef() {
+    if (Root)
+      Root->release();
+  }
+  
+  static inline ImmutableMapRef getEmptyMap(FactoryTy *F) {
+    return ImmutableMapRef(0, F);
+  }
+
+  ImmutableMapRef add(key_type_ref K, data_type_ref D) {
+    TreeTy *NewT = Factory->add(Root, std::pair<key_type, data_type>(K, D));
+    return ImmutableMapRef(NewT, Factory);
+  }
+
+  ImmutableMapRef remove(key_type_ref K) {
+    TreeTy *NewT = Factory->remove(Root, K);
+    return ImmutableMapRef(NewT, Factory);
+  }
+  
+  bool contains(key_type_ref K) const {
+    return Root ? Root->contains(K) : false;
+  }
+  
+  ImmutableMap<KeyT, ValT> asImmutableMap() const {
+    return ImmutableMap<KeyT, ValT>(Factory->getCanonicalTree(Root));
+  }
+  
+  bool operator==(const ImmutableMapRef &RHS) const {
+    return Root && RHS.Root ? Root->isEqual(*RHS.Root) : Root == RHS.Root;
+  }
+  
+  bool operator!=(const ImmutableMapRef &RHS) const {
+    return Root && RHS.Root ? Root->isNotEqual(*RHS.Root) : Root != RHS.Root;
+  }
+    
+  bool isEmpty() const { return !Root; }
+    
+  //===--------------------------------------------------===//
+  // For testing.
+  //===--------------------------------------------------===//
+  
+  void verify() const { if (Root) Root->verify(); }
+  
+  //===--------------------------------------------------===//
+  // Iterators.
+  //===--------------------------------------------------===//
+  
+  class iterator {
+    typename TreeTy::iterator itr;
+    
+    iterator() {}
+    iterator(TreeTy* t) : itr(t) {}
+    friend class ImmutableMapRef;
+    
+  public:
+    value_type_ref operator*() const { return itr->getValue(); }
+    value_type*    operator->() const { return &itr->getValue(); }
+    
+    key_type_ref getKey() const { return itr->getValue().first; }
+    data_type_ref getData() const { return itr->getValue().second; }
+    
+    
+    iterator& operator++() { ++itr; return *this; }
+    iterator  operator++(int) { iterator tmp(*this); ++itr; return tmp; }
+    iterator& operator--() { --itr; return *this; }
+    iterator  operator--(int) { iterator tmp(*this); --itr; return tmp; }
+    bool operator==(const iterator& RHS) const { return RHS.itr == itr; }
+    bool operator!=(const iterator& RHS) const { return RHS.itr != itr; }
+  };
+  
+  iterator begin() const { return iterator(Root); }
+  iterator end() const { return iterator(); }
+  
+  data_type* lookup(key_type_ref K) const {
+    if (Root) {
+      TreeTy* T = Root->find(K);
+      if (T) return &T->getValue().second;
+    }
+    
+    return 0;
+  }
+  
+  /// getMaxElement - Returns the <key,value> pair in the ImmutableMap for
+  ///  which key is the highest in the ordering of keys in the map.  This
+  ///  method returns NULL if the map is empty.
+  value_type* getMaxElement() const {
+    return Root ? &(Root->getMaxElement()->getValue()) : 0;
+  }
+  
+  //===--------------------------------------------------===//
+  // Utility methods.
+  //===--------------------------------------------------===//
+  
+  unsigned getHeight() const { return Root ? Root->getHeight() : 0; }
+  
+  static inline void Profile(FoldingSetNodeID& ID, const ImmutableMapRef &M) {
+    ID.AddPointer(M.Root);
+  }
+  
+  inline void Profile(FoldingSetNodeID& ID) const {
+    return Profile(ID, *this);
+  }
+};
+  
 } // end namespace llvm
 
 #endif
