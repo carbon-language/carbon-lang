@@ -1670,6 +1670,101 @@
 0xc3 0xfb 0xa2 0x42
 0xc8 0xfb 0xb4 0x83
 
+#------------------------------------------------------------------------------
+# SMLALD/SMLALDX
+#------------------------------------------------------------------------------
+# CHECK: smlald r2, r3, r5, r8
+# CHECK: smlaldx r2, r3, r5, r8
+# CHECK: ite eq
+# CHECK: smlaldeq r2, r3, r5, r8
+# CHECK: smlaldxne r2, r3, r5, r8
+
+0xc5 0xfb 0xc8 0x23
+0xc5 0xfb 0xd8 0x23
+0x0c 0xbf
+0xc5 0xfb 0xc8 0x23
+0xc5 0xfb 0xd8 0x23
+
+
+#------------------------------------------------------------------------------
+# SMLAWB/SMLAWT
+#------------------------------------------------------------------------------
+# CHECK: smlawb r2, r3, r10, r8
+# CHECK: smlawt r8, r3, r5, r9
+# CHECK: ite eq
+# CHECK: smlawbeq r2, r7, r5, r8
+# CHECK: smlawtne r1, r3, r0, r8
+
+0x33 0xfb 0x0a 0x82
+0x33 0xfb 0x15 0x98
+0x0c 0xbf
+0x37 0xfb 0x05 0x82
+0x33 0xfb 0x10 0x81
+
+
+#------------------------------------------------------------------------------
+# SMLSD/SMLSDX
+#------------------------------------------------------------------------------
+# CHECK: smlsd r2, r3, r5, r8
+# CHECK: smlsdx r2, r3, r5, r8
+# CHECK: ite le
+# CHECK: smlsdle r2, r3, r5, r8
+# CHECK: smlsdxgt r2, r3, r5, r8
+
+0x43 0xfb 0x05 0x82
+0x43 0xfb 0x15 0x82
+0xd4 0xbf
+0x43 0xfb 0x05 0x82
+0x43 0xfb 0x15 0x82
+
+
+#------------------------------------------------------------------------------
+# SMLSLD/SMLSLDX
+#------------------------------------------------------------------------------
+# CHECK: smlsld r2, r9, r5, r1
+# CHECK: smlsldx r4, r11, r2, r8
+# CHECK: ite ge
+# CHECK: smlsldge r8, r2, r5, r6
+# CHECK: smlsldxlt r1, r0, r3, r8
+
+0xd5 0xfb 0xc1 0x29
+0xd2 0xfb 0xd8 0x4b
+0xac 0xbf
+0xd5 0xfb 0xc6 0x82
+0xd3 0xfb 0xd8 0x10
+
+
+#------------------------------------------------------------------------------
+# SMMLA/SMMLAR
+#------------------------------------------------------------------------------
+# CHECK: smmla r1, r2, r3, r4
+# CHECK: smmlar r4, r3, r2, r1
+# CHECK: ite lo
+# CHECK: smmlalo r1, r2, r3, r4
+# CHECK: smmlarhs r4, r3, r2, r1
+
+0x52 0xfb 0x03 0x41
+0x53 0xfb 0x12 0x14
+0x34 0xbf
+0x52 0xfb 0x03 0x41
+0x53 0xfb 0x12 0x14
+
+
+#------------------------------------------------------------------------------
+# SMMLS/SMMLSR
+#------------------------------------------------------------------------------
+# CHECK: smmls r1, r2, r3, r4
+# CHECK: smmlsr r4, r3, r2, r1
+# CHECK: ite lo
+# CHECK: smmlslo r1, r2, r3, r4
+# CHECK: smmlsrhs r4, r3, r2, r1
+
+0x62 0xfb 0x03 0x41
+0x63 0xfb 0x12 0x14
+0x34 0xbf
+0x62 0xfb 0x03 0x41
+0x63 0xfb 0x12 0x14
+
 
 #------------------------------------------------------------------------------
 # STRD (immediate)
