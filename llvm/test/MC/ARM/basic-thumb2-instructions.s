@@ -1771,6 +1771,22 @@ _func:
 
 
 @------------------------------------------------------------------------------
+@ SMLAD/SMLADX
+@------------------------------------------------------------------------------
+        smlad r2, r3, r5, r8
+        smladx r2, r3, r5, r8
+        itt hi
+        smladhi r2, r3, r5, r8
+        smladxhi r2, r3, r5, r8
+
+@ CHECK: smlad	r2, r3, r5, r8          @ encoding: [0x23,0xfb,0x05,0x82]
+@ CHECK: smladx	r2, r3, r5, r8          @ encoding: [0x23,0xfb,0x15,0x82]
+@ CHECK: itt	hi                      @ encoding: [0x84,0xbf]
+@ CHECK: smladhi r2, r3, r5, r8         @ encoding: [0x23,0xfb,0x05,0x82]
+@ CHECK: smladxhi	r2, r3, r5, r8  @ encoding: [0x23,0xfb,0x15,0x82]
+
+
+@------------------------------------------------------------------------------
 @ SUB (register)
 @------------------------------------------------------------------------------
         sub.w r5, r2, r12, rrx
