@@ -1887,6 +1887,22 @@ _func:
 
 
 @------------------------------------------------------------------------------
+@ SMMLA/SMMLAR
+@------------------------------------------------------------------------------
+        smmla r1, r2, r3, r4
+        smmlar r4, r3, r2, r1
+        ite lo
+        smmlalo r1, r2, r3, r4
+        smmlarcs r4, r3, r2, r1
+
+@ CHECK: smmla	r1, r2, r3, r4          @ encoding: [0x52,0xfb,0x03,0x41]
+@ CHECK: smmlar	r4, r3, r2, r1          @ encoding: [0x53,0xfb,0x12,0x14]
+@ CHECK: ite	lo                      @ encoding: [0x34,0xbf]
+@ CHECK: smmlalo	r1, r2, r3, r4  @ encoding: [0x52,0xfb,0x03,0x41]
+@ CHECK: smmlarhs	r4, r3, r2, r1  @ encoding: [0x53,0xfb,0x12,0x14]
+
+
+@------------------------------------------------------------------------------
 @ SUB (register)
 @------------------------------------------------------------------------------
         sub.w r5, r2, r12, rrx
