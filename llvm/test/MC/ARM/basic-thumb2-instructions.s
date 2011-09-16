@@ -2019,6 +2019,36 @@ _func:
 
 
 @------------------------------------------------------------------------------
+@ SRS
+@------------------------------------------------------------------------------
+        srsdb sp, #1
+        srsia sp, #0
+
+        srsdb sp!, #19
+        srsia sp!, #2
+
+        srsea sp, #10
+        srsfd sp, #9
+
+        srsea sp!, #5
+        srsfd sp!, #5
+
+        srs sp, #5
+        srs sp!, #5
+
+@ CHECK: srsdb	sp, #1                  @ encoding: [0x0d,0xe8,0x01,0xc0]
+@ CHECK: srsia	sp, #0                  @ encoding: [0x8d,0xe9,0x00,0xc0]
+@ CHECK: srsdb	sp!, #19                @ encoding: [0x2d,0xe8,0x13,0xc0]
+@ CHECK: srsia	sp!, #2                 @ encoding: [0xad,0xe9,0x02,0xc0]
+@ CHECK: srsdb	sp, #10                 @ encoding: [0x0d,0xe8,0x0a,0xc0]
+@ CHECK: srsia	sp, #9                  @ encoding: [0x8d,0xe9,0x09,0xc0]
+@ CHECK: srsdb	sp!, #5                 @ encoding: [0x2d,0xe8,0x05,0xc0]
+@ CHECK: srsia	sp!, #5                 @ encoding: [0xad,0xe9,0x05,0xc0]
+@ CHECK: srsia	sp, #5                  @ encoding: [0x8d,0xe9,0x05,0xc0]
+@ CHECK: srsia	sp!, #5                 @ encoding: [0xad,0xe9,0x05,0xc0]
+
+
+@------------------------------------------------------------------------------
 @ SUB (register)
 @------------------------------------------------------------------------------
         sub.w r5, r2, r12, rrx

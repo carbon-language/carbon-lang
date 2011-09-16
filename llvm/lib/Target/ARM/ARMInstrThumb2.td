@@ -3300,32 +3300,30 @@ def t2SMC : T2I<(outs), (ins imm0_15:$opt), NoItinerary, "smc", "\t$opt",
   let Inst{19-16} = opt;
 }
 
-class T2SRS<bits<12> op31_20,
-           dag oops, dag iops, InstrItinClass itin,
-          string opc, string asm, list<dag> pattern>
+class T2SRS<bits<2> Op, bit W, dag oops, dag iops, InstrItinClass itin,
+            string opc, string asm, list<dag> pattern>
   : T2I<oops, iops, itin, opc, asm, pattern> {
-  let Inst{31-20} = op31_20{11-0};
-
   bits<5> mode;
+  let Inst{31-25} = 0b1110100;
+  let Inst{24-23} = Op;
+  let Inst{22} = 0;
+  let Inst{21} = W;
+  let Inst{20-16} = 0b01101;
+  let Inst{15-5} = 0b11000000000;
   let Inst{4-0} = mode{4-0};
 }
 
-// Store Return State is a system instruction -- for disassembly only
-def t2SRSDBW : T2SRS<0b111010000010,
-                   (outs),(ins i32imm:$mode),NoItinerary,"srsdb","\tsp!, $mode",
-                   [/* For disassembly only; pattern left blank */]>;
-def t2SRSDB  : T2SRS<0b111010000000,
-                   (outs),(ins i32imm:$mode),NoItinerary,"srsdb","\tsp, $mode",
-                   [/* For disassembly only; pattern left blank */]>;
-def t2SRSIAW : T2SRS<0b111010011010,
-                   (outs),(ins i32imm:$mode),NoItinerary,"srsia","\tsp!, $mode",
-                   [/* For disassembly only; pattern left blank */]>;
-def t2SRSIA  : T2SRS<0b111010011000,
-                   (outs), (ins i32imm:$mode),NoItinerary,"srsia","\tsp, $mode",
-                   [/* For disassembly only; pattern left blank */]>;
+// Store Return State is a system instruction.
+def t2SRSDB_UPD : T2SRS<0b00, 1, (outs), (ins imm0_31:$mode), NoItinerary,
+                        "srsdb", "\tsp!, $mode", []>;
+def t2SRSDB  : T2SRS<0b00, 0, (outs), (ins imm0_31:$mode), NoItinerary,
+                     "srsdb","\tsp, $mode", []>;
+def t2SRSIA_UPD : T2SRS<0b11, 1, (outs), (ins imm0_31:$mode), NoItinerary,
+                        "srsia","\tsp!, $mode", []>;
+def t2SRSIA  : T2SRS<0b11, 0, (outs), (ins imm0_31:$mode), NoItinerary,
+                     "srsia","\tsp, $mode", []>;
 
-// Return From Exception is a system instruction -- for disassembly only
-
+// Return From Exception is a system instruction.
 class T2RFE<bits<12> op31_20, dag oops, dag iops, InstrItinClass itin,
           string opc, string asm, list<dag> pattern>
   : T2I<oops, iops, itin, opc, asm, pattern> {
