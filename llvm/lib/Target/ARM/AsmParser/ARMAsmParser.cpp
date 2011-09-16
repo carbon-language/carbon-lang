@@ -3222,9 +3222,8 @@ getMnemonicAcceptInfo(StringRef Mnemonic, bool &CanAcceptCarrySet,
       (!isThumb() && (Mnemonic == "mov" || Mnemonic == "mla" ||
                       Mnemonic == "smlal"))) {
     CanAcceptCarrySet = true;
-  } else {
+  } else
     CanAcceptCarrySet = false;
-  }
 
   if (Mnemonic == "cbnz" || Mnemonic == "setend" || Mnemonic == "dmb" ||
       Mnemonic == "cps" || Mnemonic == "mcr2" || Mnemonic == "it" ||
@@ -3239,14 +3238,14 @@ getMnemonicAcceptInfo(StringRef Mnemonic, bool &CanAcceptCarrySet,
        !isThumb()) ||
       Mnemonic.startswith("cps") || (Mnemonic == "movs" && isThumbOne())) {
     CanAcceptPredicationCode = false;
-  } else {
+  } else
     CanAcceptPredicationCode = true;
-  }
 
-  if (isThumb())
+  if (isThumb()) {
     if (Mnemonic == "bkpt" || Mnemonic == "mcr" || Mnemonic == "mcrr" ||
         Mnemonic == "mrc" || Mnemonic == "mrrc" || Mnemonic == "cdp")
       CanAcceptPredicationCode = false;
+  }
 }
 
 bool ARMAsmParser::shouldOmitCCOutOperand(StringRef Mnemonic,
