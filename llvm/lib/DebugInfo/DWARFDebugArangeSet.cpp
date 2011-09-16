@@ -127,14 +127,16 @@ void DWARFDebugArangeSet::dump(raw_ostream &OS) const {
 }
 
 
-class DescriptorContainsAddress {
-  const uint64_t Address;
-public:
-  DescriptorContainsAddress(uint64_t address) : Address(address) {}
-  bool operator()(const DWARFDebugArangeSet::Descriptor &desc) const {
-    return Address >= desc.Address && Address < (desc.Address + desc.Length);
-  }
-};
+namespace {
+  class DescriptorContainsAddress {
+    const uint64_t Address;
+  public:
+    DescriptorContainsAddress(uint64_t address) : Address(address) {}
+    bool operator()(const DWARFDebugArangeSet::Descriptor &desc) const {
+      return Address >= desc.Address && Address < (desc.Address + desc.Length);
+    }
+  };
+}
 
 uint32_t DWARFDebugArangeSet::findAddress(uint64_t address) const {
   DescriptorConstIter end = ArangeDescriptors.end();

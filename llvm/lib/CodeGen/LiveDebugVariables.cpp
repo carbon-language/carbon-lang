@@ -71,6 +71,7 @@ LiveDebugVariables::LiveDebugVariables() : MachineFunctionPass(ID), pImpl(0) {
 /// LocMap - Map of where a user value is live, and its location.
 typedef IntervalMap<SlotIndex, unsigned, 4> LocMap;
 
+namespace {
 /// UserValueScopes - Keeps track of lexical scopes associated with an
 /// user value's source location.
 class UserValueScopes {
@@ -91,6 +92,7 @@ public:
     return false;
   }
 };
+} // end anonymous namespace
 
 /// UserValue - A user value is a part of a debug info user variable.
 ///
