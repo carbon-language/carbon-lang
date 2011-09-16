@@ -2075,6 +2075,24 @@ _func:
 
 
 @------------------------------------------------------------------------------
+@ SSAX
+@------------------------------------------------------------------------------
+        ssubaddx r2, r3, r4
+        it lt
+        ssubaddxlt r2, r3, r4
+        ssax r2, r3, r4
+        it lt
+        ssaxlt r2, r3, r4
+
+@ CHECK: ssax	r2, r3, r4              @ encoding: [0xe3,0xfa,0x04,0xf2]
+@ CHECK: it	lt                      @ encoding: [0xb8,0xbf]
+@ CHECK: ssaxlt	r2, r3, r4              @ encoding: [0xe3,0xfa,0x04,0xf2]
+@ CHECK: ssax	r2, r3, r4              @ encoding: [0xe3,0xfa,0x04,0xf2]
+@ CHECK: it	lt                      @ encoding: [0xb8,0xbf]
+@ CHECK: ssaxlt	r2, r3, r4              @ encoding: [0xe3,0xfa,0x04,0xf2]
+
+
+@------------------------------------------------------------------------------
 @ SUB (register)
 @------------------------------------------------------------------------------
         sub.w r5, r2, r12, rrx
