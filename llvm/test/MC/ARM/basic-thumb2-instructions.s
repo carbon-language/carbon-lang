@@ -1935,6 +1935,22 @@ _func:
 
 
 @------------------------------------------------------------------------------
+@ SMUAD/SMUADX
+@------------------------------------------------------------------------------
+        smuad r2, r3, r4
+        smuadx r3, r2, r1
+        ite lt
+        smuadlt r2, r3, r4
+        smuadxge r3, r2, r1
+
+@ CHECK: smuad	r2, r3, r4              @ encoding: [0x23,0xfb,0x04,0xf2]
+@ CHECK: smuadx	r3, r2, r1              @ encoding: [0x22,0xfb,0x11,0xf3]
+@ CHECK: ite	lt                      @ encoding: [0xb4,0xbf]
+@ CHECK: smuadlt	r2, r3, r4      @ encoding: [0x23,0xfb,0x04,0xf2]
+@ CHECK: smuadxge	r3, r2, r1      @ encoding: [0x22,0xfb,0x11,0xf3]
+
+
+@------------------------------------------------------------------------------
 @ SUB (register)
 @------------------------------------------------------------------------------
         sub.w r5, r2, r12, rrx
