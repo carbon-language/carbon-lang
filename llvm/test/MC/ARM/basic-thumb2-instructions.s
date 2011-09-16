@@ -1903,6 +1903,22 @@ _func:
 
 
 @------------------------------------------------------------------------------
+@ SMMLS/SMMLSR
+@------------------------------------------------------------------------------
+        smmls r1, r2, r3, r4
+        smmlsr r4, r3, r2, r1
+        ite lo
+        smmlslo r1, r2, r3, r4
+        smmlsrcs r4, r3, r2, r1
+
+@ CHECK: smmls	r1, r2, r3, r4          @ encoding: [0x62,0xfb,0x03,0x41]
+@ CHECK: smmlsr	r4, r3, r2, r1          @ encoding: [0x63,0xfb,0x12,0x14]
+@ CHECK: ite	lo                      @ encoding: [0x34,0xbf]
+@ CHECK: smmlslo	r1, r2, r3, r4  @ encoding: [0x62,0xfb,0x03,0x41]
+@ CHECK: smmlsrhs	r4, r3, r2, r1  @ encoding: [0x63,0xfb,0x12,0x14]
+
+
+@------------------------------------------------------------------------------
 @ SUB (register)
 @------------------------------------------------------------------------------
         sub.w r5, r2, r12, rrx
