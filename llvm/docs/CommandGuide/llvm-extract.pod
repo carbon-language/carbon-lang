@@ -37,10 +37,22 @@ B<llvm-extract> will write raw bitcode regardless of the output device.
 Extract the function named I<function-name> from the LLVM bitcode. May be
 specified multiple times to extract multiple functions at once.
 
+=item B<--rfunc> I<function-regular-expr>
+
+Extract the function(s) matching I<function-regular-expr> from the LLVM bitcode.
+All functions matching the regular expression will be extracted.  May be 
+specified multiple times.
+
 =item B<--glob> I<global-name>
 
 Extract the global variable named I<global-name> from the LLVM bitcode. May be
 specified multiple times to extract multiple global variables at once.
+
+=item B<--rglob> I<glob-regular-expr>
+
+Extract the global variable(s) matching I<global-regular-expr> from the LLVM
+bitcode. All global variables matching the regular expression will be extracted.
+May be specified multiple times.
 
 =item B<-help>
 

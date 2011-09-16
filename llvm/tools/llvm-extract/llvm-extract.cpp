@@ -26,7 +26,9 @@
 #include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Support/SystemUtils.h"
 #include "llvm/Support/Signals.h"
+#include "llvm/Support/Regex.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SetVector.h"
 #include <memory>
 using namespace llvm;
 
@@ -45,15 +47,29 @@ Force("f", cl::desc("Enable binary output on terminals"));
 static cl::opt<bool>
 DeleteFn("delete", cl::desc("Delete specified Globals from Module"));
 
-// ExtractFuncs - The functions to extract from the module... 
+// ExtractFuncs - The functions to extract from the module.
 static cl::list<std::string>
 ExtractFuncs("func", cl::desc("Specify function to extract"),
              cl::ZeroOrMore, cl::value_desc("function"));
 
-// ExtractGlobals - The globals to extract from the module...
+// ExtractRegExpFuncs - The functions, matched via regular expression, to 
+// extract from the module.
+static cl::list<std::string>
+ExtractRegExpFuncs("rfunc", cl::desc("Specify function(s) to extract using a "
+                                     "regular expression"),
+                   cl::ZeroOrMore, cl::value_desc("rfunction"));
+
+// ExtractGlobals - The globals to extract from the module.
 static cl::list<std::string>
 ExtractGlobals("glob", cl::desc("Specify global to extract"),
                cl::ZeroOrMore, cl::value_desc("global"));
+
+// ExtractRegExpGlobals - The globals, matched via regular expression, to
+// extract from the module...
+static cl::list<std::string>
+ExtractRegExpGlobals("rglob", cl::desc("Specify global(s) to extract using a "
+                                       "regular expression"),
+                     cl::ZeroOrMore, cl::value_desc("rglobal"));
 
 static cl::opt<bool>
 OutputAssembly("S",
@@ -78,7 +94,8 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  std::vector<GlobalValue *> GVs;
+  // Use SetVector to avoid duplicates.
+  SetVector<GlobalValue *> GVs;
 
   // Figure out which globals we should extract.
   for (size_t i = 0, e = ExtractGlobals.size(); i != e; ++i) {
@@ -88,7 +105,30 @@ int main(int argc, char **argv) {
              << ExtractGlobals[i] << "'!\n";
       return 1;
     }
-    GVs.push_back(GV);
+    GVs.insert(GV);
+  }
+
+  // Extract globals via regular expression matching.
+  for (size_t i = 0, e = ExtractRegExpGlobals.size(); i != e; ++i) {
+    std::string Error;
+    Regex RegEx(ExtractRegExpGlobals[i]);
+    if (!RegEx.isValid(Error)) {
+      errs() << argv[0] << ": '" << ExtractRegExpGlobals[i] << "' "
+        "invalid regex: " << Error;
+    }
+    bool match = false;
+    for (Module::global_iterator GV = M.get()->global_begin(), 
+           E = M.get()->global_end(); GV != E; GV++) {
+      if (RegEx.match(GV->getName())) {
+        GVs.insert(&*GV);
+        match = true;
+      }
+    }
+    if (!match) {
+      errs() << argv[0] << ": program doesn't contain global named '"
+             << ExtractRegExpGlobals[i] << "'!\n";
+      return 1;
+    }
   }
 
   // Figure out which functions we should extract.
@@ -99,7 +139,30 @@ int main(int argc, char **argv) {
              << ExtractFuncs[i] << "'!\n";
       return 1;
     }
-    GVs.push_back(GV);
+    GVs.insert(GV);
+  }
+  // Extract functions via regular expression matching.
+  for (size_t i = 0, e = ExtractRegExpFuncs.size(); i != e; ++i) {
+    std::string Error;
+    StringRef RegExStr = ExtractRegExpFuncs[i];
+    Regex RegEx(RegExStr);
+    if (!RegEx.isValid(Error)) {
+      errs() << argv[0] << ": '" << ExtractRegExpFuncs[i] << "' "
+        "invalid regex: " << Error;
+    }
+    bool match = false;
+    for (Module::iterator F = M.get()->begin(), E = M.get()->end(); F != E; 
+         F++) {
+      if (RegEx.match(F->getName())) {
+        GVs.insert(&*F);
+        match = true;
+      }
+    }
+    if (!match) {
+      errs() << argv[0] << ": program doesn't contain global named '"
+             << ExtractRegExpFuncs[i] << "'!\n";
+      return 1;
+    }
   }
 
   // Materialize requisite global values.
@@ -145,7 +208,9 @@ int main(int argc, char **argv) {
   PassManager Passes;
   Passes.add(new TargetData(M.get())); // Use correct TargetData
 
-  Passes.add(createGVExtractionPass(GVs, DeleteFn));
+  std::vector<GlobalValue*> Gvs(GVs.begin(), GVs.end());
+
+  Passes.add(createGVExtractionPass(Gvs, DeleteFn));
   if (!DeleteFn)
     Passes.add(createGlobalDCEPass());           // Delete unreachable globals
   Passes.add(createStripDeadDebugInfoPass());    // Remove dead debug info
