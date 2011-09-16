@@ -2253,6 +2253,52 @@ _func:
 
 
 @------------------------------------------------------------------------------
+@ STRH(immediate)
+@------------------------------------------------------------------------------
+        strh r5, [r5, #-4]
+        strh r5, [r6, #32]
+        strh r5, [r6, #33]
+        strh r5, [r6, #257]
+        strh.w lr, [r7, #257]
+        strh r5, [r8, #255]!
+        strh r2, [r5, #4]!
+        strh r1, [r4, #-4]!
+        strh lr, [r3], #255
+        strh r9, [r2], #4
+        strh r3, [sp], #-4
+
+@ CHECK: strh	r5, [r5, #-4]           @ encoding: [0x25,0xf8,0x04,0x5c]
+@ CHECK: strh	r5, [r6, #32]           @ encoding: [0x35,0x84]
+@ CHECK: strh.w	r5, [r6, #33]           @ encoding: [0xa6,0xf8,0x21,0x50]
+@ CHECK: strh.w	r5, [r6, #257]          @ encoding: [0xa6,0xf8,0x01,0x51]
+@ CHECK: strh.w	lr, [r7, #257]          @ encoding: [0xa7,0xf8,0x01,0xe1]
+@ CHECK: strh	r5, [r8, #255]!         @ encoding: [0x28,0xf8,0xff,0x5f]
+@ CHECK: strh	r2, [r5, #4]!           @ encoding: [0x25,0xf8,0x04,0x2f]
+@ CHECK: strh	r1, [r4, #-4]!          @ encoding: [0x24,0xf8,0x04,0x1d]
+@ CHECK: strh	lr, [r3], #255          @ encoding: [0x23,0xf8,0xff,0xeb]
+@ CHECK: strh	r9, [r2], #4            @ encoding: [0x22,0xf8,0x04,0x9b]
+@ CHECK: strh	r3, [sp], #-4           @ encoding: [0x2d,0xf8,0x04,0x39]
+
+
+@------------------------------------------------------------------------------
+@ STRH(register)
+@------------------------------------------------------------------------------
+        strh r1, [r8, r1]
+        strh.w r4, [r5, r2]
+        strh r6, [r0, r2, lsl #3]
+        strh r8, [r8, r2, lsl #2]
+        strh r7, [sp, r2, lsl #1]
+        strh r7, [sp, r2, lsl #0]
+
+@ CHECK: strh.w	r1, [r8, r1]            @ encoding: [0x28,0xf8,0x01,0x10]
+@ CHECK: strh.w	r4, [r5, r2]            @ encoding: [0x25,0xf8,0x02,0x40]
+@ CHECK: strh.w	r6, [r0, r2, lsl #3]    @ encoding: [0x20,0xf8,0x32,0x60]
+@ CHECK: strh.w	r8, [r8, r2, lsl #2]    @ encoding: [0x28,0xf8,0x22,0x80]
+@ CHECK: strh.w	r7, [sp, r2, lsl #1]    @ encoding: [0x2d,0xf8,0x12,0x70]
+@ CHECK: strh.w	r7, [sp, r2]            @ encoding: [0x2d,0xf8,0x02,0x70]
+
+
+@------------------------------------------------------------------------------
 @ SUB (register)
 @------------------------------------------------------------------------------
         sub.w r5, r2, r12, rrx
