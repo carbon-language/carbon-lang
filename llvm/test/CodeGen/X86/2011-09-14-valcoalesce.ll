@@ -15,21 +15,21 @@
 ; consider vreg1 and vreg27 to be copies of the same value. It would
 ; then remove one of the critical edge copes, which cannot safely be removed.
 ;
-; CHECK: ## %while.body85.i
-; CHECK-NOT: ## %
+; CHECK: # %while.body85.i
+; CHECK-NOT: # %
 ; CHECK-NOT: add
 ; CHECK: movl %[[POSTR:e[abcdxi]+]], %[[PRER:e[abcdxi]+]]
 ; CHECK: addl %{{.*}}, %[[POSTR]]
-; CHECK: ## %while.end.i
+; CHECK: # %while.end.i
 ; CHECK: movl %[[POSTR]], %[[USER:e[abcdxi]+]]
-; CHECK: ## %land.lhs.true.i
+; CHECK: # %land.lhs.true.i
 ; CHECK: movl %[[POSTR]], %[[USER]]
-; CHECK: ## %land.lhs.true103.i
+; CHECK: # %land.lhs.true103.i
 ; CHECK: movl %[[POSTR]], %[[USER]]
-; CHECK: ## %if.then108.i
+; CHECK: # %if.then108.i
 ; [[PRER] live out, so nothing on this path should define it.
 ; CHECK-NOT: , %[[PRER]]
-; CHECK: ## %if.end117.i
+; CHECK: # %if.end117.i
 
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:128:128-n8:16:32"
 
