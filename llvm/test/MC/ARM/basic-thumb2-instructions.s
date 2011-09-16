@@ -1987,6 +1987,22 @@ _func:
 
 
 @------------------------------------------------------------------------------
+@ SMULWB/SMULWT
+@------------------------------------------------------------------------------
+        smulwb r3, r9, r0
+        smulwt r3, r9, r2
+        ite gt
+        smulwbgt r3, r9, r0
+        smulwtle r3, r9, r2
+
+@ CHECK: smulwb	r3, r9, r0              @ encoding: [0x39,0xfb,0x00,0xf3]
+@ CHECK: smulwt	r3, r9, r2              @ encoding: [0x39,0xfb,0x12,0xf3]
+@ CHECK: ite	gt                      @ encoding: [0xcc,0xbf]
+@ CHECK: smulwbgt	r3, r9, r0      @ encoding: [0x39,0xfb,0x00,0xf3]
+@ CHECK: smulwtle	r3, r9, r2      @ encoding: [0x39,0xfb,0x12,0xf3]
+
+
+@------------------------------------------------------------------------------
 @ SUB (register)
 @------------------------------------------------------------------------------
         sub.w r5, r2, r12, rrx
