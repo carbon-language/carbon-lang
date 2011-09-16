@@ -1871,6 +1871,22 @@ _func:
 
 
 @------------------------------------------------------------------------------
+@ SMLSLD/SMLSLDX
+@------------------------------------------------------------------------------
+        smlsld r2, r9, r5, r1
+        smlsldx r4, r11, r2, r8
+        ite ge
+        smlsldge r8, r2, r5, r6
+        smlsldxlt r1, r0, r3, r8
+
+@ CHECK: smlsld	r2, r9, r5, r1          @ encoding: [0xd5,0xfb,0xc1,0x29]
+@ CHECK: smlsldx	r4, r11, r2, r8 @ encoding: [0xd2,0xfb,0xd8,0x4b]
+@ CHECK: ite	ge                      @ encoding: [0xac,0xbf]
+@ CHECK: smlsldge	r8, r2, r5, r6  @ encoding: [0xd5,0xfb,0xc6,0x82]
+@ CHECK: smlsldxlt	r1, r0, r3, r8  @ encoding: [0xd3,0xfb,0xd8,0x10]
+
+
+@------------------------------------------------------------------------------
 @ SUB (register)
 @------------------------------------------------------------------------------
         sub.w r5, r2, r12, rrx
