@@ -800,7 +800,7 @@ def checkDsymForUUIDIsNotOn():
     pipe = subprocess.Popen(cmd, stdout = subprocess.PIPE, stderr = subprocess.STDOUT)
     cmd_output = pipe.stdout.read()
     if cmd_output and "DBGFileMappedPaths = " in cmd_output:
-        print "Executing: '%s' =>" % ' '.join(cmd)
+        print "%s =>" % ' '.join(cmd)
         print cmd_output
         print "Disable automatic lookup and caching of dSYMs before running the test suite!"
         print "Exiting..."
