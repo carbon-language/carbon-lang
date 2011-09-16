@@ -2285,6 +2285,24 @@ _func:
 
 
 @------------------------------------------------------------------------------
+@ STREX/STREXB/STREXH/STREXD
+@------------------------------------------------------------------------------
+        strex r1, r8, [r4]
+        strex r8, r2, [r4, #0]
+        strex r2, r12, [sp, #128]
+        strexb r5, r1, [r7]
+        strexh r9, r7, [r12]
+        strexd r9, r3, r6, [r4]
+
+@ CHECK: strex	r1, r8, [r4]            @ encoding: [0x44,0xe8,0x00,0x81]
+@ CHECK: strex	r8, r2, [r4]            @ encoding: [0x44,0xe8,0x00,0x28]
+@ CHECK: strex	r2, r12, [sp, #128]     @ encoding: [0x4d,0xe8,0x20,0xc2]
+@ CHECK: strexb	r5, r1, [r7]            @ encoding: [0xc7,0xe8,0x45,0x1f]
+@ CHECK: strexh	r9, r7, [r12]           @ encoding: [0xcc,0xe8,0x59,0x7f]
+@ CHECK: strexd	r9, r3, r6, [r4]        @ encoding: [0xc4,0xe8,0x79,0x36]
+
+
+@------------------------------------------------------------------------------
 @ STRH(immediate)
 @------------------------------------------------------------------------------
         strh r5, [r5, #-4]
