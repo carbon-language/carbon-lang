@@ -2019,7 +2019,7 @@ def t2SSAT16: T2SatI<
 }
 
 def t2USAT: T2SatI<
-                (outs rGPR:$Rd), (ins i32imm:$sat_imm, rGPR:$Rn, shift_imm:$sh),
+               (outs rGPR:$Rd), (ins imm0_31:$sat_imm, rGPR:$Rn, shift_imm:$sh),
                 NoItinerary, "usat", "\t$Rd, $sat_imm, $Rn$sh",
                 [/* For disassembly only; pattern left blank */]> {
   let Inst{31-27} = 0b11110;
@@ -2028,7 +2028,7 @@ def t2USAT: T2SatI<
   let Inst{15} = 0;
 }
 
-def t2USAT16: T2SatI<(outs rGPR:$Rd), (ins i32imm:$sat_imm, rGPR:$Rn),
+def t2USAT16: T2SatI<(outs rGPR:$Rd), (ins imm0_15:$sat_imm, rGPR:$Rn),
                      NoItinerary,
                      "usat16", "\t$Rd, $sat_imm, $Rn",
                      [/* For disassembly only; pattern left blank */]>,
@@ -3854,3 +3854,10 @@ def : t2InstAlias<"rsb${s}${p} $Rdn, $Rm",
 def : t2InstAlias<"rsb${s}${p} $Rdn, $ShiftedRm",
            (t2RSBrs rGPR:$Rdn, rGPR:$Rdn, t2_so_reg:$ShiftedRm, pred:$p,
                     cc_out:$s)>;
+
+// SSAT/USAT optional shift operand.
+def : t2InstAlias<"ssat${p} $Rd, $sat_imm, $Rn",
+                  (t2SSAT rGPR:$Rd, imm1_32:$sat_imm, rGPR:$Rn, 0, pred:$p)>;
+def : t2InstAlias<"usat${p} $Rd, $sat_imm, $Rn",
+                  (t2USAT rGPR:$Rd, imm0_31:$sat_imm, rGPR:$Rn, 0, pred:$p)>;
+
