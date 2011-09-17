@@ -54,11 +54,12 @@ __import_module__ diamond_top;
 #elif defined(MODULE_BOTTOM)
 
 __import_module__ diamond_left;
-__import_module__ diamond_right;
 
 @interface Foo(Bottom)
 -(void)bottom;
 @end
+
+__import_module__ diamond_right;
 
 @interface LeftFoo(Bottom)
 -(void)bottom;

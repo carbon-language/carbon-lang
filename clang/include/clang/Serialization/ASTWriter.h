@@ -97,6 +97,10 @@ private:
   /// \brief A listener object that receives notifications when certain 
   /// entities are serialized.                    
   ASTSerializationListener *SerializationListener;
+                   
+  /// \brief Indicates when the AST writing is actively performing 
+  /// serialization, rather than just queueing updates.
+  bool WritingAST;
                     
   /// \brief Stores a declaration or a type to be written to the AST file.
   class DeclOrType {
@@ -251,11 +255,15 @@ private:
   struct ChainedObjCCategoriesData {
     /// \brief The interface in the imported module.
     const ObjCInterfaceDecl *Interface;
-    /// \brief ID of the interface.
+    /// \brief The local tail category ID that got chained to the imported
+    /// interface.
+    const ObjCCategoryDecl *TailCategory;
+    
+    /// \brief ID corresponding to \c Interface.
     serialization::DeclID InterfaceID;
-    /// \brief ID of the locally tail category ID that got chained to the
-    /// imported interface.
-    serialization::DeclID TailCatID;
+    
+    /// \brief ID corresponding to TailCategoryID.
+    serialization::DeclID TailCategoryID;
   };
   /// \brief ObjC categories that got chained to an interface imported from
   /// another module.
@@ -351,8 +359,10 @@ private:
   void WriteReferencedSelectorsPool(Sema &SemaRef);
   void WriteIdentifierTable(Preprocessor &PP, bool IsModule);
   void WriteAttributes(const AttrVec &Attrs, RecordDataImpl &Record);
+  void ResolveDeclUpdatesBlocks();
   void WriteDeclUpdatesBlocks();
   void WriteDeclReplacementsBlock();
+  void ResolveChainedObjCCategories();
   void WriteChainedObjCCategories();
   void WriteDeclContextVisibleUpdate(const DeclContext *DC);
   void WriteFPPragmaOptions(const FPOptions &Opts);

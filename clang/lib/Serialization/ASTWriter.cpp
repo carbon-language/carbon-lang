@@ -2719,6 +2719,7 @@ void ASTWriter::SetSelectorOffset(Selector Sel, uint32_t Offset) {
 
 ASTWriter::ASTWriter(llvm::BitstreamWriter &Stream)
   : Stream(Stream), Context(0), Chain(0), SerializationListener(0), 
+    WritingAST(false),
     FirstDeclID(NUM_PREDEF_DECL_IDS), NextDeclID(FirstDeclID),
     FirstTypeID(NUM_PREDEF_TYPE_IDS), NextTypeID(FirstTypeID),
     FirstIdentID(NUM_PREDEF_IDENT_IDS), NextIdentID(FirstIdentID), 
@@ -2740,6 +2741,8 @@ ASTWriter::ASTWriter(llvm::BitstreamWriter &Stream)
 void ASTWriter::WriteAST(Sema &SemaRef, MemorizeStatCalls *StatCalls,
                          const std::string &OutputFile,
                          bool IsModule, StringRef isysroot) {
+  WritingAST = true;
+  
   // Emit the file header.
   Stream.Emit((unsigned)'C', 8);
   Stream.Emit((unsigned)'P', 8);
@@ -2751,6 +2754,8 @@ void ASTWriter::WriteAST(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   Context = &SemaRef.Context;
   WriteASTCore(SemaRef, StatCalls, isysroot, OutputFile, IsModule);
   Context = 0;
+  
+  WritingAST = false;
 }
 
 template<typename Vector>
@@ -2983,9 +2988,14 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
     ASTWriter::UpdateRecord &Record = DeclUpdates[TU];
     if (Record.empty()) {
       Record.push_back(UPD_CXX_ADDED_ANONYMOUS_NAMESPACE);
-      AddDeclRef(NS, Record);
+      Record.push_back(reinterpret_cast<uint64_t>(NS));
     }
   }
+  
+  // Resolve any declaration pointers within the declaration updates block and
+  // chained Objective-C categories block to declaration IDs.
+  ResolveDeclUpdatesBlocks();
+  ResolveChainedObjCCategories();
   
   // Form the record of special types.
   RecordData SpecialTypes;
@@ -3120,6 +3130,36 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   Stream.ExitBlock();
 }
 
+/// \brief Go through the declaration update blocks and resolve declaration
+/// pointers into declaration IDs.
+void ASTWriter::ResolveDeclUpdatesBlocks() {
+  for (DeclUpdateMap::iterator
+       I = DeclUpdates.begin(), E = DeclUpdates.end(); I != E; ++I) {
+    const Decl *D = I->first;
+    UpdateRecord &URec = I->second;
+    
+    if (DeclsToRewrite.count(D))
+      continue; // The decl will be written completely
+
+    unsigned Idx = 0, N = URec.size();
+    while (Idx < N) {
+      switch ((DeclUpdateKind)URec[Idx++]) {
+      case UPD_CXX_SET_DEFINITIONDATA:
+      case UPD_CXX_ADDED_IMPLICIT_MEMBER:
+      case UPD_CXX_ADDED_TEMPLATE_SPECIALIZATION:
+      case UPD_CXX_ADDED_ANONYMOUS_NAMESPACE:
+        URec[Idx] = GetDeclRef(reinterpret_cast<Decl *>(URec[Idx]));
+        ++Idx;
+        break;
+          
+      case UPD_CXX_INSTANTIATED_STATIC_DATA_MEMBER:
+        ++Idx;
+        break;
+      }
+    }
+  }
+}
+
 void ASTWriter::WriteDeclUpdatesBlocks() {
   if (DeclUpdates.empty())
     return;
@@ -3157,6 +3197,17 @@ void ASTWriter::WriteDeclReplacementsBlock() {
   Stream.EmitRecord(DECL_REPLACEMENTS, Record);
 }
 
+void ASTWriter::ResolveChainedObjCCategories() {
+  for (SmallVector<ChainedObjCCategoriesData, 16>::iterator
+       I = LocalChainedObjCCategories.begin(),
+       E = LocalChainedObjCCategories.end(); I != E; ++I) {
+    ChainedObjCCategoriesData &Data = *I;
+    Data.InterfaceID = GetDeclRef(Data.Interface);
+    Data.TailCategoryID = GetDeclRef(Data.TailCategory);
+  }
+
+}
+
 void ASTWriter::WriteChainedObjCCategories() {
   if (LocalChainedObjCCategories.empty())
     return;
@@ -3172,7 +3223,7 @@ void ASTWriter::WriteChainedObjCCategories() {
 
     Record.push_back(Data.InterfaceID);
     Record.push_back(HeadCatID);
-    Record.push_back(Data.TailCatID);
+    Record.push_back(Data.TailCategoryID);
   }
   Stream.EmitRecord(OBJC_CHAINED_CATEGORIES, Record);
 }
@@ -3354,6 +3405,8 @@ void ASTWriter::AddDeclRef(const Decl *D, RecordDataImpl &Record) {
 }
 
 DeclID ASTWriter::GetDeclRef(const Decl *D) {
+  assert(WritingAST && "Cannot request a declaration ID before AST writing");
+  
   if (D == 0) {
     return 0;
   }
@@ -3874,6 +3927,7 @@ void ASTWriter::MacroDefinitionRead(serialization::PreprocessedEntityID ID,
 
 void ASTWriter::CompletedTagDefinition(const TagDecl *D) {
   assert(D->isDefinition());
+  assert(!WritingAST && "Already writing the AST!");
   if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(D)) {
     // We are interested when a PCH decl is modified.
     if (RD->isFromASTFile()) {
@@ -3895,12 +3949,14 @@ void ASTWriter::CompletedTagDefinition(const TagDecl *D) {
         Record.push_back(UPD_CXX_SET_DEFINITIONDATA);
         assert(Redecl->DefinitionData);
         assert(Redecl->DefinitionData->Definition == D);
-        AddDeclRef(D, Record); // the DefinitionDecl
+        Record.push_back(reinterpret_cast<uint64_t>(D)); // the DefinitionDecl
       }
     }
   }
 }
 void ASTWriter::AddedVisibleDecl(const DeclContext *DC, const Decl *D) {
+  assert(!WritingAST && "Already writing the AST!");
+
   // TU and namespaces are handled elsewhere.
   if (isa<TranslationUnitDecl>(DC) || isa<NamespaceDecl>(DC))
     return;
@@ -3912,6 +3968,7 @@ void ASTWriter::AddedVisibleDecl(const DeclContext *DC, const Decl *D) {
 }
 
 void ASTWriter::AddedCXXImplicitMember(const CXXRecordDecl *RD, const Decl *D) {
+  assert(!WritingAST && "Already writing the AST!");
   assert(D->isImplicit());
   if (!(!D->isFromASTFile() && RD->isFromASTFile()))
     return; // Not a source member added to a class from PCH.
@@ -3922,34 +3979,37 @@ void ASTWriter::AddedCXXImplicitMember(const CXXRecordDecl *RD, const Decl *D) {
   assert(RD->isDefinition());
   UpdateRecord &Record = DeclUpdates[RD];
   Record.push_back(UPD_CXX_ADDED_IMPLICIT_MEMBER);
-  AddDeclRef(D, Record);
+  Record.push_back(reinterpret_cast<uint64_t>(D));
 }
 
 void ASTWriter::AddedCXXTemplateSpecialization(const ClassTemplateDecl *TD,
                                      const ClassTemplateSpecializationDecl *D) {
   // The specializations set is kept in the canonical template.
+  assert(!WritingAST && "Already writing the AST!");
   TD = TD->getCanonicalDecl();
   if (!(!D->isFromASTFile() && TD->isFromASTFile()))
     return; // Not a source specialization added to a template from PCH.
 
   UpdateRecord &Record = DeclUpdates[TD];
   Record.push_back(UPD_CXX_ADDED_TEMPLATE_SPECIALIZATION);
-  AddDeclRef(D, Record);
+  Record.push_back(reinterpret_cast<uint64_t>(D));
 }
 
 void ASTWriter::AddedCXXTemplateSpecialization(const FunctionTemplateDecl *TD,
                                                const FunctionDecl *D) {
   // The specializations set is kept in the canonical template.
+  assert(!WritingAST && "Already writing the AST!");
   TD = TD->getCanonicalDecl();
   if (!(!D->isFromASTFile() && TD->isFromASTFile()))
     return; // Not a source specialization added to a template from PCH.
 
   UpdateRecord &Record = DeclUpdates[TD];
   Record.push_back(UPD_CXX_ADDED_TEMPLATE_SPECIALIZATION);
-  AddDeclRef(D, Record);
+  Record.push_back(reinterpret_cast<uint64_t>(D));
 }
 
 void ASTWriter::CompletedImplicitDefinition(const FunctionDecl *D) {
+  assert(!WritingAST && "Already writing the AST!");
   if (!D->isFromASTFile())
     return; // Declaration not imported from PCH.
 
@@ -3959,6 +4019,7 @@ void ASTWriter::CompletedImplicitDefinition(const FunctionDecl *D) {
 }
 
 void ASTWriter::StaticDataMemberInstantiated(const VarDecl *D) {
+  assert(!WritingAST && "Already writing the AST!");
   if (!D->isFromASTFile())
     return;
 
@@ -3972,6 +4033,7 @@ void ASTWriter::StaticDataMemberInstantiated(const VarDecl *D) {
 
 void ASTWriter::AddedObjCCategoryToInterface(const ObjCCategoryDecl *CatD,
                                              const ObjCInterfaceDecl *IFD) {
+  assert(!WritingAST && "Already writing the AST!");
   if (!IFD->isFromASTFile())
     return; // Declaration not imported from PCH.
   if (CatD->getNextClassCategory() &&
@@ -3979,7 +4041,7 @@ void ASTWriter::AddedObjCCategoryToInterface(const ObjCCategoryDecl *CatD,
     return; // We already recorded that the tail of a category chain should be
             // attached to an interface.
 
-  ChainedObjCCategoriesData Data =  { IFD, GetDeclRef(IFD), GetDeclRef(CatD) };
+  ChainedObjCCategoriesData Data =  { IFD, CatD, 0, 0 };
   LocalChainedObjCCategories.push_back(Data);
 }
 
