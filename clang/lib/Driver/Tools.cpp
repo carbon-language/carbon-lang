@@ -379,7 +379,6 @@ void Clang::AddPreprocessingOptions(const Driver &D,
   // If a module path was provided, pass it along. Otherwise, use a temporary
   // directory.
   if (Arg *A = Args.getLastArg(options::OPT_fmodule_cache_path)) {
-    CmdArgs.push_back(A->getValue(Args));
     A->claim();
     A->render(Args, CmdArgs);
   } else {
