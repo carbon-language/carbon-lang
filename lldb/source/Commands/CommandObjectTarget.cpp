@@ -2725,7 +2725,7 @@ public:
                     if (use_global_module_list)
                     {
                         module = Module::GetAllocatedModuleAtIndex(image_idx);
-                        module_sp = module->GetSP();
+                        module_sp = module;
                     }
                     else
                     {

@@ -168,8 +168,7 @@ SymbolFileDWARFDebugMap::GetModuleByCompUnitInfo (CompileUnitInfo *comp_unit_inf
             FileSpec oso_file_spec(oso_symbol->GetMangled().GetName().AsCString(), true);
             // Don't allow cached .o files since we dress up each .o file with
             // new sections. We want them to be in the module list so we can 
-            // always find a shared pointer to the module (in Module::GetSP()),
-            // but just don't share them.
+            // always find a shared pointer to the module but just don't share them.
             const bool always_create = true;
             ModuleList::GetSharedModule (oso_file_spec,
                                          m_obj_file->GetModule()->GetArchitecture(),

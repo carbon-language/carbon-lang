@@ -147,7 +147,7 @@ StackFrame::StackFrame
     {
         if (pc_module)
         {
-            m_sc.module_sp = pc_module->GetSP();
+            m_sc.module_sp = pc_module;
             m_flags.Set (eSymbolContextModule);
         }
         else
@@ -227,7 +227,7 @@ StackFrame::GetFrameCodeAddress()
                 Module *module = section->GetModule();
                 if (module)
                 {
-                    m_sc.module_sp = module->GetSP();
+                    m_sc.module_sp = module;
                     if (m_sc.module_sp)
                         m_flags.Set(eSymbolContextModule);
                 }

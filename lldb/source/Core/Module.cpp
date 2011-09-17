@@ -128,13 +128,6 @@ Module::~Module()
 }
 
 
-ModuleSP
-Module::GetSP () const
-{
-    ModuleSP module_sp(const_cast<Module*>(this));
-    return module_sp;
-}
-
 const lldb_private::UUID&
 Module::GetUUID()
 {
@@ -177,8 +170,8 @@ Module::ParseAllDebugSymbols()
     if (num_comp_units == 0)
         return;
 
-    TargetSP null_target;
-    SymbolContext sc(null_target, GetSP());
+    SymbolContext sc;
+    sc.module_sp = this;
     uint32_t cu_idx;
     SymbolVendor *symbols = GetSymbolVendor ();
 
@@ -212,7 +205,7 @@ Module::ParseAllDebugSymbols()
 void
 Module::CalculateSymbolContext(SymbolContext* sc)
 {
-    sc->module_sp = GetSP();
+    sc->module_sp = this;
 }
 
 Module *
@@ -282,7 +275,7 @@ Module::ResolveSymbolContextForAddress (const Address& so_addr, uint32_t resolve
     {
         // If the section offset based address resolved itself, then this
         // is the right module.
-        sc.module_sp = GetSP();
+        sc.module_sp = this;
         resolved_flags |= eSymbolContextModule;
 
         // Resolve the compile unit, function, block, line table or line
@@ -384,7 +377,7 @@ Module::FindCompileUnits (const FileSpec &path,
     const uint32_t start_size = sc_list.GetSize();
     const uint32_t num_compile_units = GetNumCompileUnits();
     SymbolContext sc;
-    sc.module_sp = GetSP();
+    sc.module_sp = this;
     const bool compare_directory = path.GetDirectory();
     for (uint32_t i=0; i<num_compile_units; ++i)
     {

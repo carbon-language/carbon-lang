@@ -221,9 +221,9 @@ SBAddress::GetModule ()
     SBModule sb_module;
     if (m_opaque_ap.get())
     {
-        const Module *module = m_opaque_ap->GetModule();
+        Module *module = m_opaque_ap->GetModule();
         if (module)
-            *sb_module = module->GetSP();
+            *sb_module = module;
     }
     return sb_module;
 }

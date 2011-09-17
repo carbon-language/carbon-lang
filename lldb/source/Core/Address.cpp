@@ -737,7 +737,7 @@ Address::CalculateSymbolContext (SymbolContext *sc, uint32_t resolve_scope)
         Module *address_module = m_section->GetModule();
         if (address_module)
         {
-            sc->module_sp = address_module->GetSP();
+            sc->module_sp = address_module;
             if (sc->module_sp)
                 return sc->module_sp->ResolveSymbolContextForAddress (*this, resolve_scope, *sc);
         }
@@ -759,7 +759,7 @@ Address::CalculateSymbolContextCompileUnit ()
     if (m_section)
     {
         SymbolContext sc;
-        sc.module_sp = m_section->GetModule()->GetSP();
+        sc.module_sp = m_section->GetModule();
         if (sc.module_sp)
         {
             sc.module_sp->ResolveSymbolContextForAddress (*this, eSymbolContextCompUnit, sc);
@@ -775,7 +775,7 @@ Address::CalculateSymbolContextFunction ()
     if (m_section)
     {
         SymbolContext sc;
-        sc.module_sp = m_section->GetModule()->GetSP();
+        sc.module_sp = m_section->GetModule();
         if (sc.module_sp)
         {
             sc.module_sp->ResolveSymbolContextForAddress (*this, eSymbolContextFunction, sc);
@@ -791,7 +791,7 @@ Address::CalculateSymbolContextBlock ()
     if (m_section)
     {
         SymbolContext sc;
-        sc.module_sp = m_section->GetModule()->GetSP();
+        sc.module_sp = m_section->GetModule();
         if (sc.module_sp)
         {
             sc.module_sp->ResolveSymbolContextForAddress (*this, eSymbolContextBlock, sc);
@@ -807,7 +807,7 @@ Address::CalculateSymbolContextSymbol ()
     if (m_section)
     {
         SymbolContext sc;
-        sc.module_sp = m_section->GetModule()->GetSP();
+        sc.module_sp = m_section->GetModule();
         if (sc.module_sp)
         {
             sc.module_sp->ResolveSymbolContextForAddress (*this, eSymbolContextSymbol, sc);
@@ -823,7 +823,7 @@ Address::CalculateSymbolContextLineEntry (LineEntry &line_entry)
     if (m_section)
     {
         SymbolContext sc;
-        sc.module_sp = m_section->GetModule()->GetSP();
+        sc.module_sp = m_section->GetModule();
         if (sc.module_sp)
         {
             sc.module_sp->ResolveSymbolContextForAddress (*this, eSymbolContextLineEntry, sc);

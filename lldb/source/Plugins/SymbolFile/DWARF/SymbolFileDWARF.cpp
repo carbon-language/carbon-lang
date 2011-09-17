@@ -1664,7 +1664,7 @@ SymbolFileDWARF::GetFunction (DWARFCompileUnit* curr_cu, const DWARFDebugInfoEnt
 {
     sc.Clear();
     // Check if the symbol vendor already knows about this compile unit?
-    sc.module_sp = m_obj_file->GetModule()->GetSP();
+    sc.module_sp = m_obj_file->GetModule();
     sc.comp_unit = GetCompUnitForDWARFCompUnit(curr_cu, UINT32_MAX);
 
     sc.function = sc.comp_unit->FindFunctionByUID (func_die->GetOffset()).get();
@@ -1969,7 +1969,7 @@ SymbolFileDWARF::FindGlobalVariables (const ConstString &name, bool append, uint
         Index ();
 
     SymbolContext sc;
-    sc.module_sp = m_obj_file->GetModule()->GetSP();
+    sc.module_sp = m_obj_file->GetModule();
     assert (sc.module_sp);
     
     DWARFCompileUnit* dwarf_cu = NULL;
@@ -2018,7 +2018,7 @@ SymbolFileDWARF::FindGlobalVariables(const RegularExpression& regex, bool append
         Index ();
 
     SymbolContext sc;
-    sc.module_sp = m_obj_file->GetModule()->GetSP();
+    sc.module_sp = m_obj_file->GetModule();
     assert (sc.module_sp);
     
     DWARFCompileUnit* dwarf_cu = NULL;
@@ -2057,7 +2057,7 @@ SymbolFileDWARF::ResolveFunctions (const DIEArray &die_offsets,
     
     const uint32_t sc_list_initial_size = sc_list.GetSize();
     SymbolContext sc;
-    sc.module_sp = m_obj_file->GetModule()->GetSP();
+    sc.module_sp = m_obj_file->GetModule();
     assert (sc.module_sp);
     
     DWARFCompileUnit* dwarf_cu = NULL;
@@ -2130,7 +2130,7 @@ SymbolFileDWARF::FindFunctions
         return;
 
     SymbolContext sc;
-    sc.module_sp = m_obj_file->GetModule()->GetSP();
+    sc.module_sp = m_obj_file->GetModule();
     assert (sc.module_sp);
     
     DWARFCompileUnit* dwarf_cu = NULL;
@@ -2208,7 +2208,7 @@ SymbolFileDWARF::FindFunctions
         return;
 
     SymbolContext sc;
-    sc.module_sp = m_obj_file->GetModule()->GetSP();
+    sc.module_sp = m_obj_file->GetModule();
     assert (sc.module_sp);
     
     DWARFCompileUnit* dwarf_cu = NULL;

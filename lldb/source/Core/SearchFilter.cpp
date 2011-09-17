@@ -401,7 +401,7 @@ SearchFilterByModule::Search (Searcher &searcher)
         Module* module = m_target_sp->GetImages().GetModulePointerAtIndex(i);
         if (FileSpec::Compare (m_module_spec, module->GetFileSpec(), false) == 0)
         {
-            SymbolContext matchingContext(m_target_sp, module->GetSP());
+            SymbolContext matchingContext(m_target_sp, ModuleSP(module));
             Searcher::CallbackReturn shouldContinue;
 
             shouldContinue = DoModuleIteration(matchingContext, searcher);

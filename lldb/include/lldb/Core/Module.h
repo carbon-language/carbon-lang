@@ -103,13 +103,6 @@ public:
     ~Module ();
 
     //------------------------------------------------------------------
-    /// If you have an instance of Module, get its corresponding shared
-    /// pointer if it has one in the shared module list.
-    //------------------------------------------------------------------
-    lldb::ModuleSP
-    GetSP () const;
-
-    //------------------------------------------------------------------
     /// @copydoc SymbolContextScope::CalculateSymbolContext(SymbolContext*)
     ///
     /// @see SymbolContextScope

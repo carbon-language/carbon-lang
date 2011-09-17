@@ -359,7 +359,7 @@ Symbol::CalculateSymbolContext (SymbolContext *sc)
         Module *module = range->GetBaseAddress().GetModule ();
         if (module)
         {
-            sc->module_sp = module->GetSP();
+            sc->module_sp = module;
             return;
         }
     }
