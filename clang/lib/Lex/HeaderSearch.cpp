@@ -580,7 +580,31 @@ LookupSubframeworkHeader(StringRef Filename,
 // File Info Management.
 //===----------------------------------------------------------------------===//
 
+/// \brief Merge the header file info provided by \p OtherHFI into the current
+/// header file info (\p HFI)
+static void mergeHeaderFileInfo(HeaderFileInfo &HFI, 
+                                const HeaderFileInfo &OtherHFI) {
+  HFI.isImport |= OtherHFI.isImport;
+  HFI.isPragmaOnce |= OtherHFI.isPragmaOnce;
+  HFI.NumIncludes += OtherHFI.NumIncludes;
+  
+  if (!HFI.ControllingMacro && !HFI.ControllingMacroID) {
+    HFI.ControllingMacro = OtherHFI.ControllingMacro;
+    HFI.ControllingMacroID = OtherHFI.ControllingMacroID;
+  }
+  
+  if (OtherHFI.External) {
+    HFI.DirInfo = OtherHFI.DirInfo;
+    HFI.External = OtherHFI.External;
+    HFI.IndexHeaderMapHeader = OtherHFI.IndexHeaderMapHeader;
+  }
 
+  if (HFI.Framework.empty())
+    HFI.Framework = OtherHFI.Framework;
+  
+  HFI.Resolved = true;
+}
+                                
 /// getFileInfo - Return the HeaderFileInfo structure for the specified
 /// FileEntry.
 HeaderFileInfo &HeaderSearch::getFileInfo(const FileEntry *FE) {
@@ -588,10 +612,8 @@ HeaderFileInfo &HeaderSearch::getFileInfo(const FileEntry *FE) {
     FileInfo.resize(FE->getUID()+1);
   
   HeaderFileInfo &HFI = FileInfo[FE->getUID()];
-  if (ExternalSource && !HFI.Resolved) {
-    HFI = ExternalSource->GetHeaderFileInfo(FE);
-    HFI.Resolved = true;
-  }
+  if (ExternalSource && !HFI.Resolved)
+    mergeHeaderFileInfo(HFI, ExternalSource->GetHeaderFileInfo(FE));
   return HFI;
 }
 
@@ -602,10 +624,8 @@ bool HeaderSearch::isFileMultipleIncludeGuarded(const FileEntry *File) {
 
   // Resolve header file info from the external source, if needed.
   HeaderFileInfo &HFI = FileInfo[File->getUID()];
-  if (ExternalSource && !HFI.Resolved) {
-    HFI = ExternalSource->GetHeaderFileInfo(File);
-    HFI.Resolved = true;
-  }
+  if (ExternalSource && !HFI.Resolved)
+    mergeHeaderFileInfo(HFI, ExternalSource->GetHeaderFileInfo(File));
 
   return HFI.isPragmaOnce || HFI.ControllingMacro || HFI.ControllingMacroID;
 }
