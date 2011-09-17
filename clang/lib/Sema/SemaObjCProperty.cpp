@@ -508,7 +508,7 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
                                   IdentifierInfo *PropertyIvar,
                                   SourceLocation PropertyIvarLoc) {
   ObjCContainerDecl *ClassImpDecl =
-    cast_or_null<ObjCContainerDecl>(CurContext);
+    dyn_cast_or_null<ObjCContainerDecl>(CurContext);
   // Make sure we have a context for the property implementation declaration.
   if (!ClassImpDecl) {
     Diag(AtLoc, diag::error_missing_property_context);

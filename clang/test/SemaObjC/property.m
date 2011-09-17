@@ -63,3 +63,5 @@ typedef id BYObjectIdentifier;
 @property int treeController;  // expected-error {{property has a previous declaration}}
 @end
 
+// rdar://10127639
+@synthesize window; // expected-error {{missing context for property implementation declaration}}
