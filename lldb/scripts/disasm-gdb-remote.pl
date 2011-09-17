@@ -20,6 +20,7 @@ our $reg32_href = { extract => \&get32, format => "0x%8.8x" };
 our $reg64_href = { extract => \&get64, format => "0x%s" };
 our $reg80_href = { extract => \&get80, format => "0x%s" };
 our $reg128_href = { extract => \&get128, format => "0x%s" };
+our $reg256_href = { extract => \&get256, format => "0x%s" };
 our $float32_href = { extract => \&get32, format => "0x%8.8x" };
 our $float64_href = { extract => \&get64, format => "0x%s" };
 our $float96_href = { extract => \&get96, format => "0x%s" };
@@ -770,9 +771,12 @@ sub dump_general_query_rsp
 				{
 					if    ($byte_size == 4)  {push @$registers_aref, { name => $reg_name, info => $reg32_href };}
 					elsif ($byte_size == 8)  {push @$registers_aref, { name => $reg_name, info => $reg64_href };}
+					elsif ($byte_size == 1)  {push @$registers_aref, { name => $reg_name, info => $reg8_href };}
+					elsif ($byte_size == 2)  {push @$registers_aref, { name => $reg_name, info => $reg16_href };}
 					elsif ($byte_size == 10) {push @$registers_aref, { name => $reg_name, info => $reg80_href };}
 					elsif ($byte_size == 12) {push @$registers_aref, { name => $reg_name, info => $float96_href };}
 					elsif ($byte_size == 16) {push @$registers_aref, { name => $reg_name, info => $reg128_href };}
+					elsif ($byte_size == 32) {push @$registers_aref, { name => $reg_name, info => $reg256_href };}
 				}
 			}
 			elsif ($gen_query_rsp_len == 3 and index($gen_query_rsp, 'E') == 0)
@@ -964,9 +968,9 @@ sub dump_deallocate_memory_cmd
 sub dump_read_single_register_cmd
 {
 	my $cmd = shift;
-	my $reg_num = get_hex(\@_);
+	$reg_cmd_reg = get_hex(\@_);
 	my $thread = get_thread_from_thread_suffix (\@_);
-	my $reg_href = $$registers_aref[$reg_num];
+	my $reg_href = $$registers_aref[$reg_cmd_reg];
   
 	if (defined $thread)
 	{
@@ -1455,7 +1459,7 @@ sub get64
 	}
 	else
 	{
-	    (@nibbles) = splice(@$arrayref, 0, 24);
+	    (@nibbles) = splice(@$arrayref, 0, ((64/8) * 2));
 	}
     $val = join('', @nibbles);        
 	return $val;
@@ -1488,7 +1492,7 @@ sub get80
 	}
 	else
 	{
-	    (@nibbles) = splice(@$arrayref, 0, 24);
+	    (@nibbles) = splice(@$arrayref, 0, ((80/8) * 2));
 	}
     $val = join('', @nibbles);        
 	return $val;
@@ -1523,7 +1527,7 @@ sub get96
 	}
 	else
 	{
-	    (@nibbles) = splice(@$arrayref, 0, 24);
+	    (@nibbles) = splice(@$arrayref, 0, ((96/8) * 2));
 	}
     $val = join('', @nibbles);        
 	return $val;
@@ -1562,7 +1566,62 @@ sub get128
 	}
 	else
 	{
-	    (@nibbles) = splice(@$arrayref, 0, 24);
+	    (@nibbles) = splice(@$arrayref, 0, ((128/8) * 2));
+	}
+    $val = join('', @nibbles);        
+	return $val;
+}
+
+#----------------------------------------------------------------------
+# Get a 256 bit hex value as a string
+#
+# The argument for this function needs to be a reference to an array 
+# that contains single character strings and the array will get 
+# updated by shifting characters off the front of it (no leading # "0x")
+#----------------------------------------------------------------------
+sub get256
+{
+	my $arrayref = shift;
+	my $val = '';
+	my @nibbles;
+	if ($swap)
+	{
+        push @nibbles, splice(@$arrayref, 62, 2);
+        push @nibbles, splice(@$arrayref, 60, 2);
+        push @nibbles, splice(@$arrayref, 58, 2);
+        push @nibbles, splice(@$arrayref, 56, 2);
+        push @nibbles, splice(@$arrayref, 54, 2);
+        push @nibbles, splice(@$arrayref, 52, 2);
+        push @nibbles, splice(@$arrayref, 50, 2);
+        push @nibbles, splice(@$arrayref, 48, 2);
+        push @nibbles, splice(@$arrayref, 46, 2);
+        push @nibbles, splice(@$arrayref, 44, 2);
+        push @nibbles, splice(@$arrayref, 42, 2);
+        push @nibbles, splice(@$arrayref, 40, 2);
+        push @nibbles, splice(@$arrayref, 38, 2);
+        push @nibbles, splice(@$arrayref, 36, 2);
+        push @nibbles, splice(@$arrayref, 34, 2);
+        push @nibbles, splice(@$arrayref, 32, 2);
+        push @nibbles, splice(@$arrayref, 30, 2);
+        push @nibbles, splice(@$arrayref, 28, 2);
+        push @nibbles, splice(@$arrayref, 26, 2);
+        push @nibbles, splice(@$arrayref, 24, 2);
+        push @nibbles, splice(@$arrayref, 22, 2);
+        push @nibbles, splice(@$arrayref, 20, 2);
+        push @nibbles, splice(@$arrayref, 18, 2);
+        push @nibbles, splice(@$arrayref, 16, 2);
+        push @nibbles, splice(@$arrayref, 14, 2);
+        push @nibbles, splice(@$arrayref, 12, 2);
+        push @nibbles, splice(@$arrayref, 10, 2);
+        push @nibbles, splice(@$arrayref, 8, 2);
+        push @nibbles, splice(@$arrayref, 6, 2);
+        push @nibbles, splice(@$arrayref, 4, 2);
+        push @nibbles, splice(@$arrayref, 2, 2);
+        push @nibbles, splice(@$arrayref, 0, 2);
+	}
+	else
+	{
+	    (@nibbles) = splice(@$arrayref, 0, ((256/8) * 2));
 	}
     $val = join('', @nibbles);        
 	return $val;
