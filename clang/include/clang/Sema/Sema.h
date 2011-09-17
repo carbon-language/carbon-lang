@@ -675,8 +675,9 @@ public:
 
   GlobalMethodPool::iterator ReadMethodPool(Selector Sel);
 
-  /// Private Helper predicate to check for 'self'.
-  bool isSelfExpr(Expr *RExpr);
+  /// Private Helper predicate to check for 'self'. Upon success, it
+  /// returns method declaration where 'self' is referenced.
+  const ObjCMethodDecl *GetMethodIfSelfExpr(Expr *RExpr);
 public:
   Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
        TranslationUnitKind TUKind = TU_Complete,
