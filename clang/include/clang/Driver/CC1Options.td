@@ -472,7 +472,9 @@ def stdlib_EQ : Joined<"-stdlib=">,
 def fmath_errno : Flag<"-fmath-errno">,
   HelpText<"Require math functions to indicate errors by setting errno">;
 def fms_extensions : Flag<"-fms-extensions">,
-  HelpText<"Accept some non-standard constructs used in Microsoft header files ">;
+  HelpText<"Accept some non-standard constructs supported by the Microsoft compiler">;
+def fms_compatibility : Flag<"-fms-compatibility">,
+  HelpText<"Enable Microsoft compatibility mode">;
 def fmsc_version : Joined<"-fmsc-version=">,
   HelpText<"Version of the Microsoft C/C++ compiler to report in _MSC_VER (0 = don't define it (default))">;
 def fborland_extensions : Flag<"-fborland-extensions">,
