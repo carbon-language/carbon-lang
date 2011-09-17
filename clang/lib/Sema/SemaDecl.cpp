@@ -362,7 +362,7 @@ bool Sema::DiagnoseUnknownTypeName(const IdentifierInfo &II,
       << &II << DC << SS->getRange();
   else if (isDependentScopeSpecifier(*SS)) {
     unsigned DiagID = diag::err_typename_missing;
-    if (getLangOptions().Microsoft && isMicrosoftMissingTypename(SS))
+    if (getLangOptions().MicrosoftExt && isMicrosoftMissingTypename(SS))
       DiagID = diag::warn_typename_missing;
 
     Diag(SS->getRange().getBegin(), DiagID)
@@ -1400,7 +1400,7 @@ void Sema::MergeTypedefNameDecl(TypedefNameDecl *New, LookupResult &OldDecls) {
   else if (New->isModulePrivate())
     diagnoseModulePrivateRedeclaration(New, Old);
            
-  if (getLangOptions().Microsoft)
+  if (getLangOptions().MicrosoftExt)
     return;
 
   if (getLangOptions().CPlusPlus) {
@@ -1636,7 +1636,7 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
       New->getStorageClass() == SC_Static &&
       Old->getStorageClass() != SC_Static &&
       !canRedefineFunction(Old, getLangOptions())) {
-    if (getLangOptions().Microsoft) {
+    if (getLangOptions().MicrosoftExt) {
       Diag(New->getLocation(), diag::warn_static_non_static) << New;
       Diag(Old->getLocation(), PrevDiag);
     } else {
@@ -2298,7 +2298,7 @@ Decl *Sema::ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
   }
 
   // Check for Microsoft C extension: anonymous struct.
-  if (getLangOptions().Microsoft && !getLangOptions().CPlusPlus &&
+  if (getLangOptions().MicrosoftExt && !getLangOptions().CPlusPlus &&
       CurContext->isRecord() &&
       DS.getStorageClassSpec() == DeclSpec::SCS_unspecified) {
     // Handle 2 kinds of anonymous struct:
@@ -2656,7 +2656,7 @@ Decl *Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
         if (!MemRecord->isAnonymousStructOrUnion() &&
             MemRecord->getDeclName()) {
           // Visual C++ allows type definition in anonymous struct or union.
-          if (getLangOptions().Microsoft)
+          if (getLangOptions().MicrosoftExt)
             Diag(MemRecord->getLocation(), diag::ext_anonymous_record_with_type)
               << (int)Record->isUnion();
           else {
@@ -2680,7 +2680,7 @@ Decl *Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
           DK = diag::err_anonymous_record_with_static;
         
         // Visual C++ allows type definition in anonymous struct or union.
-        if (getLangOptions().Microsoft &&
+        if (getLangOptions().MicrosoftExt &&
             DK == diag::err_anonymous_record_with_type)
           Diag((*Mem)->getLocation(), diag::ext_anonymous_record_with_type)
             << (int)Record->isUnion();
@@ -4953,7 +4953,7 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
       if (CurContext->isDependentContext() && CurContext->isRecord() 
           && !isFriend) {
         isDependentClassScopeExplicitSpecialization = true;
-        Diag(NewFD->getLocation(), getLangOptions().Microsoft ? 
+        Diag(NewFD->getLocation(), getLangOptions().MicrosoftExt ? 
           diag::ext_function_specialization_in_class :
           diag::err_function_specialization_in_class)
           << NewFD->getDeclName();
@@ -6686,7 +6686,7 @@ Decl *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Decl *D) {
     // dllimport attribute cannot be directly applied to definition.
     // Microsoft accepts dllimport for functions defined within class scope. 
     if (!DA->isInherited() &&
-        !(LangOpts.Microsoft && FD->getLexicalDeclContext()->isRecord())) {
+        !(LangOpts.MicrosoftExt && FD->getLexicalDeclContext()->isRecord())) {
       Diag(FD->getLocation(),
            diag::err_attribute_can_be_applied_only_to_symbol_declaration)
         << "dllimport";
@@ -6696,7 +6696,7 @@ Decl *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Decl *D) {
 
     // Visual C++ appears to not think this is an issue, so only issue
     // a warning when Microsoft extensions are disabled.
-    if (!LangOpts.Microsoft) {
+    if (!LangOpts.MicrosoftExt) {
       // If a symbol previously declared dllimport is later defined, the
       // attribute is ignored in subsequent references, and a warning is
       // emitted.
@@ -6773,7 +6773,7 @@ Decl *Sema::ActOnFinishFunctionBody(Decl *dcl, Stmt *Body,
 
     // MSVC permits the use of pure specifier (=0) on function definition,
     // defined at class scope, warn about this non standard construct.
-    if (getLangOptions().Microsoft && FD->isPure())
+    if (getLangOptions().MicrosoftExt && FD->isPure())
       Diag(FD->getLocation(), diag::warn_pure_function_definition);
 
     if (!FD->isInvalidDecl()) {
@@ -7277,7 +7277,7 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
                                           UPPC_FixedUnderlyingType))
         EnumUnderlying = Context.IntTy.getTypePtr();
 
-    } else if (getLangOptions().Microsoft)
+    } else if (getLangOptions().MicrosoftExt)
       // Microsoft enums are always of int type.
       EnumUnderlying = Context.IntTy.getTypePtr();
   }
@@ -7576,7 +7576,7 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
           // For our current ASTs this shouldn't be a problem, but will
           // need to be changed with DeclGroups.
           if ((TUK == TUK_Reference && (!PrevTagDecl->getFriendObjectKind() ||
-               getLangOptions().Microsoft)) || TUK == TUK_Friend)
+               getLangOptions().MicrosoftExt)) || TUK == TUK_Friend)
             return PrevTagDecl;
 
           // Diagnose attempts to redefine a tag.
@@ -7728,7 +7728,7 @@ CreateNewDecl:
         Diag(Def->getLocation(), diag::note_previous_definition);
       } else {
         unsigned DiagID = diag::ext_forward_ref_enum;
-        if (getLangOptions().Microsoft)
+        if (getLangOptions().MicrosoftExt)
           DiagID = diag::ext_ms_forward_ref_enum;
         else if (getLangOptions().CPlusPlus)
           DiagID = diag::err_forward_ref_enum;
@@ -7840,7 +7840,7 @@ CreateNewDecl:
   // the tag name visible.
   if (TUK == TUK_Friend)
     New->setObjectOfFriendDecl(/* PreviouslyDeclared = */ !Previous.empty() ||
-                               getLangOptions().Microsoft);
+                               getLangOptions().MicrosoftExt);
 
   // Set the access specifier.
   if (!Invalid && SearchDC->isRecord())
@@ -8702,13 +8702,14 @@ void Sema::ActOnFields(Scope* S,
       continue;
     } else if (FDTy->isIncompleteArrayType() && Record && 
                ((i == NumFields - 1 && !Record->isUnion()) ||
-                ((getLangOptions().Microsoft || getLangOptions().CPlusPlus) &&
+                ((getLangOptions().MicrosoftExt ||
+                  getLangOptions().CPlusPlus) &&
                  (i == NumFields - 1 || Record->isUnion())))) {
       // Flexible array member.
       // Microsoft and g++ is more permissive regarding flexible array.
       // It will accept flexible array in union and also
       // as the sole element of a struct/class.
-      if (getLangOptions().Microsoft) {
+      if (getLangOptions().MicrosoftExt) {
         if (Record->isUnion()) 
           Diag(FD->getLocation(), diag::ext_flexible_array_union_ms)
             << FD->getDeclName();
@@ -9071,7 +9072,7 @@ EnumConstantDecl *Sema::CheckEnumConstant(EnumDecl *Enum,
           //   ... if the initializing value of an enumerator cannot be
           //   represented by the underlying type, the program is ill-formed.
           if (!isRepresentableIntegerValue(Context, EnumVal, EltTy)) {
-            if (getLangOptions().Microsoft) {
+            if (getLangOptions().MicrosoftExt) {
               Diag(IdLoc, diag::ext_enumerator_too_large) << EltTy;
               Val = ImpCastExprToType(Val, EltTy, CK_IntegralCast).take();
             } else 

@@ -664,7 +664,7 @@ static QualType ConvertDeclSpecToType(TypeProcessingState &state) {
       // each struct declaration and type name."
       // FIXME: Does Microsoft really have the implicit int extension in C++?
       if (S.getLangOptions().CPlusPlus &&
-          !S.getLangOptions().Microsoft) {
+          !S.getLangOptions().MicrosoftExt) {
         S.Diag(DeclLoc, diag::err_missing_type_specifier)
           << DS.getSourceRange();
 

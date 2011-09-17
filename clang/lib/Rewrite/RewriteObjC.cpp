@@ -589,7 +589,7 @@ void RewriteObjC::Initialize(ASTContext &context) {
   Preamble += "struct objc_selector; struct objc_class;\n";
   Preamble += "struct __rw_objc_super { struct objc_object *object; ";
   Preamble += "struct objc_object *superClass; ";
-  if (LangOpts.Microsoft) {
+  if (LangOpts.MicrosoftExt) {
     // Add a constructor for creating temporary objects.
     Preamble += "__rw_objc_super(struct objc_object *o, struct objc_object *s) "
                 ": ";
@@ -600,7 +600,7 @@ void RewriteObjC::Initialize(ASTContext &context) {
   Preamble += "typedef struct objc_object Protocol;\n";
   Preamble += "#define _REWRITER_typedef_Protocol\n";
   Preamble += "#endif\n";
-  if (LangOpts.Microsoft) {
+  if (LangOpts.MicrosoftExt) {
     Preamble += "#define __OBJC_RW_DLLIMPORT extern \"C\" __declspec(dllimport)\n";
     Preamble += "#define __OBJC_RW_STATICIMPORT extern \"C\"\n";
   } else
@@ -677,7 +677,7 @@ void RewriteObjC::Initialize(ASTContext &context) {
   Preamble += "__OBJC_RW_DLLIMPORT void *_NSConcreteStackBlock[32];\n";
   Preamble += "#endif\n";
   Preamble += "#endif\n";
-  if (LangOpts.Microsoft) {
+  if (LangOpts.MicrosoftExt) {
     Preamble += "#undef __OBJC_RW_DLLIMPORT\n";
     Preamble += "#undef __OBJC_RW_STATICIMPORT\n";
     Preamble += "#ifndef KEEP_ATTRIBUTES\n";  // We use this for clang tests.
@@ -1139,7 +1139,7 @@ void RewriteObjC::RewriteObjCMethodDecl(const ObjCInterfaceDecl *IDecl,
   if (OMD->isInstanceMethod()) {
     QualType selfTy = Context->getObjCInterfaceType(IDecl);
     selfTy = Context->getPointerType(selfTy);
-    if (!LangOpts.Microsoft) {
+    if (!LangOpts.MicrosoftExt) {
       if (ObjCSynthesizedStructs.count(const_cast<ObjCInterfaceDecl*>(IDecl)))
         ResultStr += "struct ";
     }
@@ -2880,7 +2880,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
     QualType superType = getSuperStructType();
     Expr *SuperRep;
 
-    if (LangOpts.Microsoft) {
+    if (LangOpts.MicrosoftExt) {
       SynthSuperContructorFunctionDecl();
       // Simulate a contructor call...
       DeclRefExpr *DRE = new (Context) DeclRefExpr(SuperContructorFunctionDecl,
@@ -2989,7 +2989,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
     QualType superType = getSuperStructType();
     Expr *SuperRep;
 
-    if (LangOpts.Microsoft) {
+    if (LangOpts.MicrosoftExt) {
       SynthSuperContructorFunctionDecl();
       // Simulate a contructor call...
       DeclRefExpr *DRE = new (Context) DeclRefExpr(SuperContructorFunctionDecl,
@@ -3336,7 +3336,7 @@ void RewriteObjC::SynthesizeObjCInternalStruct(ObjCInterfaceDecl *CDecl,
   // SynthesizeObjCInternalStruct is ever called recursively.
   Result += "\nstruct ";
   Result += CDecl->getNameAsString();
-  if (LangOpts.Microsoft)
+  if (LangOpts.MicrosoftExt)
     Result += "_IMPL";
 
   if (NumIvars > 0) {
@@ -3827,7 +3827,7 @@ void RewriteObjC::SynthesizeIvarOffsetComputation(ObjCIvarDecl *ivar,
   } else {
     Result += "__OFFSETOFIVAR__(struct ";
     Result += ivar->getContainingInterface()->getNameAsString();
-    if (LangOpts.Microsoft)
+    if (LangOpts.MicrosoftExt)
       Result += "_IMPL";
     Result += ", ";
     Result += ivar->getNameAsString();
@@ -4071,7 +4071,7 @@ void RewriteObjC::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
     // class has size. Must synthesize its size.
     Result += ",sizeof(struct ";
     Result += CDecl->getNameAsString();
-    if (LangOpts.Microsoft)
+    if (LangOpts.MicrosoftExt)
       Result += "_IMPL";
     Result += ")";
   }
@@ -4189,7 +4189,7 @@ void RewriteObjC::SynthesizeMetaDataIntoBuffer(std::string &Result) {
   ", sizeof(struct _objc_module), \"\", &_OBJC_SYMBOLS\n";
   Result += "};\n\n";
 
-  if (LangOpts.Microsoft) {
+  if (LangOpts.MicrosoftExt) {
     if (ProtocolExprDecls.size()) {
       Result += "#pragma section(\".objc_protocol$B\",long,read,write)\n";
       Result += "#pragma data_seg(push, \".objc_protocol$B\")\n";

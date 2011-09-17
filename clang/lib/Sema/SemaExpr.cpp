@@ -1441,7 +1441,7 @@ bool Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS, LookupResult &R,
           CXXMethodDecl *DepMethod = cast_or_null<CXXMethodDecl>(
               CurMethod->getInstantiatedFromMemberFunction());
           if (DepMethod) {
-            if (getLangOptions().Microsoft)
+            if (getLangOptions().MicrosoftExt)
               diagnostic = diag::warn_found_via_dependent_bases_lookup;
             Diag(R.getNameLoc(), diagnostic) << Name
               << FixItHint::CreateInsertion(R.getNameLoc(), "this->");
@@ -2601,7 +2601,7 @@ ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
           // To be compatible with MSVC, hex integer literals ending with the
           // LL or i64 suffix are always signed in Microsoft mode.
           if (!Literal.isUnsigned && (ResultVal[LongLongSize-1] == 0 ||
-              (getLangOptions().Microsoft && Literal.isLongLong)))
+              (getLangOptions().MicrosoftExt && Literal.isLongLong)))
             Ty = Context.LongLongTy;
           else if (AllowUnsigned)
             Ty = Context.UnsignedLongLongTy;

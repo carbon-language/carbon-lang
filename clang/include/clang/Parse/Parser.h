@@ -1739,7 +1739,7 @@ private:
 
   void MaybeParseMicrosoftAttributes(ParsedAttributes &attrs,
                                      SourceLocation *endLoc = 0) {
-    if (getLang().Microsoft && Tok.is(tok::l_square))
+    if (getLang().MicrosoftExt && Tok.is(tok::l_square))
       ParseMicrosoftAttributes(attrs, endLoc);
   }
   void ParseMicrosoftAttributes(ParsedAttributes &attrs,

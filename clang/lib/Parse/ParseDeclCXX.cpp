@@ -1733,7 +1733,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
 
     // MSVC permits pure specifier on inline functions declared at class scope.
     // Hence check for =0 before checking for function definition.
-    if (getLang().Microsoft && Tok.is(tok::equal) &&
+    if (getLang().MicrosoftExt && Tok.is(tok::equal) &&
         DeclaratorInfo.isFunctionDeclarator() && 
         NextToken().is(tok::numeric_constant)) {
       ConsumeToken();
@@ -2110,7 +2110,7 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
     while (Tok.isNot(tok::r_brace) && Tok.isNot(tok::eof)) {
       // Each iteration of this loop reads one member-declaration.
 
-      if (getLang().Microsoft && (Tok.is(tok::kw___if_exists) ||
+      if (getLang().MicrosoftExt && (Tok.is(tok::kw___if_exists) ||
           Tok.is(tok::kw___if_not_exists))) {
         ParseMicrosoftIfExistsClassDeclaration((DeclSpec::TST)TagType, CurAS);
         continue;
@@ -2426,7 +2426,7 @@ ExceptionSpecificationType Parser::ParseDynamicExceptionSpecification(
   // can throw anything".
   if (Tok.is(tok::ellipsis)) {
     SourceLocation EllipsisLoc = ConsumeToken();
-    if (!getLang().Microsoft)
+    if (!getLang().MicrosoftExt)
       Diag(EllipsisLoc, diag::ext_ellipsis_exception_spec);
     SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
     SpecificationRange.setEnd(RParenLoc);

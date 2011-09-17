@@ -3322,7 +3322,7 @@ static bool isKnownDeclSpecAttr(const AttributeList &Attr) {
 //===----------------------------------------------------------------------===//
 
 static void handleUuidAttr(Sema &S, Decl *D, const AttributeList &Attr) {
-  if (S.LangOpts.Microsoft || S.LangOpts.Borland) {
+  if (S.LangOpts.MicrosoftExt || S.LangOpts.Borland) {
     // check the attribute arguments.
     if (!checkAttributeNumArgs(S, Attr, 1))
       return;

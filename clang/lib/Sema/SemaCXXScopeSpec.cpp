@@ -632,7 +632,7 @@ bool Sema::BuildCXXNestedNameSpecifier(Scope *S,
   // public:
   //   void foo() { D::foo2(); }
   // };
-  if (getLangOptions().Microsoft) {
+  if (getLangOptions().MicrosoftExt) {
     DeclContext *DC = LookupCtx ? LookupCtx : CurContext;
     if (DC->isDependentContext() && DC->isFunctionOrMethod()) {
       SS.Extend(Context, &Identifier, IdentifierLoc, CCLoc);

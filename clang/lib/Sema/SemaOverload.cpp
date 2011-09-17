@@ -1665,7 +1665,7 @@ bool Sema::IsPointerConversion(Expr *From, QualType FromType, QualType ToType,
   }
 
   // MSVC allows implicit function to void* type conversion.
-  if (getLangOptions().Microsoft && FromPointeeType->isFunctionType() &&
+  if (getLangOptions().MicrosoftExt && FromPointeeType->isFunctionType() &&
       ToPointeeType->isVoidType()) {
     ConvertedType = BuildSimilarlyQualifiedPointerType(FromTypePtr,
                                                        ToPointeeType,
@@ -8373,7 +8373,7 @@ Sema::BuildOverloadedCallExpr(Scope *S, Expr *Fn, UnresolvedLookupExpr *ULE,
     // create a type dependent CallExpr. The goal is to postpone name lookup
     // to instantiation time to be able to search into type dependent base
     // classes.
-    if (getLangOptions().Microsoft && CurContext->isDependentContext() && 
+    if (getLangOptions().MicrosoftExt && CurContext->isDependentContext() && 
         isa<CXXMethodDecl>(CurContext)) {
       CallExpr *CE = new (Context) CallExpr(Context, Fn, Args, NumArgs,
                                           Context.DependentTy, VK_RValue,
@@ -9209,7 +9209,7 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
 
 
       // Microsoft supports direct constructor calls.
-      if (getLangOptions().Microsoft && isa<CXXConstructorDecl>(Func)) {
+      if (getLangOptions().MicrosoftExt && isa<CXXConstructorDecl>(Func)) {
         AddOverloadCandidate(cast<CXXConstructorDecl>(Func), I.getPair(), Args, NumArgs,
                              CandidateSet);
       } else if ((Method = dyn_cast<CXXMethodDecl>(Func))) {

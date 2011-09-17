@@ -1593,7 +1593,7 @@ static TryCastResult TryReinterpretCast(Sema &Self, ExprResult &SrcExpr,
     //   integral type size doesn't matter.
     if ((Self.Context.getTypeSize(SrcType) >
          Self.Context.getTypeSize(DestType)) &&
-         !Self.getLangOptions().Microsoft) {
+         !Self.getLangOptions().MicrosoftExt) {
       msg = diag::err_bad_reinterpret_cast_small_int;
       return TC_Failed;
     }

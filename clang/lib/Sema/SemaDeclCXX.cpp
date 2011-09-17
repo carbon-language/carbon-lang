@@ -392,7 +392,7 @@ bool Sema::MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old) {
       // MSVC accepts that default parameters be redefined for member functions
       // of template class. The new default parameter's value is ignored.
       Invalid = true;
-      if (getLangOptions().Microsoft) {
+      if (getLangOptions().MicrosoftExt) {
         CXXMethodDecl* MD = dyn_cast<CXXMethodDecl>(New);
         if (MD && MD->getParent()->getDescribedClassTemplate()) {
           // Merge the old default argument into the new parameter.

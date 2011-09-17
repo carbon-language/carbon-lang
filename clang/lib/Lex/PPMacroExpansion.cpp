@@ -93,7 +93,7 @@ void Preprocessor::RegisterBuiltinMacros() {
   Ident__has_include_next = RegisterBuiltinMacro(*this, "__has_include_next");
 
   // Microsoft Extensions.
-  if (Features.Microsoft) 
+  if (Features.MicrosoftExt) 
     Ident__pragma = RegisterBuiltinMacro(*this, "__pragma");
   else
     Ident__pragma = 0;

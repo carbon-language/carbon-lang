@@ -115,7 +115,7 @@ static void AddKeyword(StringRef Keyword,
   else if (LangOpts.CPlusPlus0x && (Flags & KEYCXX0X)) AddResult = 2;
   else if (LangOpts.C99 && (Flags & KEYC99)) AddResult = 2;
   else if (LangOpts.GNUKeywords && (Flags & KEYGNU)) AddResult = 1;
-  else if (LangOpts.Microsoft && (Flags & KEYMS)) AddResult = 1;
+  else if (LangOpts.MicrosoftExt && (Flags & KEYMS)) AddResult = 1;
   else if (LangOpts.Borland && (Flags & KEYBORLAND)) AddResult = 1;
   else if (LangOpts.Bool && (Flags & BOOLSUPPORT)) AddResult = 2;
   else if (LangOpts.AltiVec && (Flags & KEYALTIVEC)) AddResult = 2;

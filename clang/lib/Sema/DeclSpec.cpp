@@ -866,7 +866,7 @@ void DeclSpec::Finish(Diagnostic &D, Preprocessor &PP) {
   // class specifier, then assume this is an attempt to use C++0x's 'auto'
   // type specifier.
   // FIXME: Does Microsoft really support implicit int in C++?
-  if (PP.getLangOptions().CPlusPlus && !PP.getLangOptions().Microsoft &&
+  if (PP.getLangOptions().CPlusPlus && !PP.getLangOptions().MicrosoftExt &&
       TypeSpecType == TST_unspecified && StorageClassSpec == SCS_auto) {
     TypeSpecType = TST_auto;
     StorageClassSpec = StorageClassSpecAsWritten = SCS_unspecified;

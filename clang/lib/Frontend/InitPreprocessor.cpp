@@ -344,7 +344,7 @@ static void InitializeStandardPredefinedMacros(const TargetInfo &TI,
                                                const LangOptions &LangOpts,
                                                const FrontendOptions &FEOpts,
                                                MacroBuilder &Builder) {
-  if (!LangOpts.Microsoft && !LangOpts.TraditionalCPP)
+  if (!LangOpts.MicrosoftExt && !LangOpts.TraditionalCPP)
     Builder.defineMacro("__STDC__");
   if (LangOpts.Freestanding)
     Builder.defineMacro("__STDC_HOSTED__", "0");
@@ -470,7 +470,7 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
     Builder.defineMacro("__private_extern__", "extern");
   }
 
-  if (LangOpts.Microsoft) {
+  if (LangOpts.MicrosoftExt) {
     // Both __PRETTY_FUNCTION__ and __FUNCTION__ are GCC extensions, however
     // VC++ appears to only like __FUNCTION__.
     Builder.defineMacro("__PRETTY_FUNCTION__", "__FUNCTION__");

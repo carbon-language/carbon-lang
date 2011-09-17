@@ -1351,7 +1351,7 @@ Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
       if (ParseUnqualifiedId(SS, 
                              /*EnteringContext=*/false, 
                              /*AllowDestructorName=*/true,
-                             /*AllowConstructorName=*/ getLang().Microsoft, 
+                             /*AllowConstructorName=*/ getLang().MicrosoftExt, 
                              ObjectType,
                              Name))
         LHS = ExprError();

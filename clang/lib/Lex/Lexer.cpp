@@ -1353,7 +1353,7 @@ void Lexer::LexNumericConstant(Token &Result, const char *CurPtr) {
   if ((C == '-' || C == '+') && (PrevCh == 'E' || PrevCh == 'e')) {
     // If we are in Microsoft mode, don't continue if the constant is hex.
     // For example, MSVC will accept the following as 3 tokens: 0x1234567e+1
-    if (!Features.Microsoft || !isHexaLiteral(BufferPtr, Features))
+    if (!Features.MicrosoftExt || !isHexaLiteral(BufferPtr, Features))
       return LexNumericConstant(Result, ConsumeChar(CurPtr, Size, Result));
   }
 
@@ -2327,7 +2327,7 @@ LexNextToken:
       
   case 26:  // DOS & CP/M EOF: "^Z".
     // If we're in Microsoft extensions mode, treat this as end of file.
-    if (Features.Microsoft) {
+    if (Features.MicrosoftExt) {
       // Read the PP instance variable into an automatic variable, because
       // LexEndOfFile will often delete 'this'.
       Preprocessor *PPCache = PP;
@@ -2716,7 +2716,7 @@ LexNextToken:
         Kind = tok::hashhash;                          // '%:%:' -> '##'
         CurPtr = ConsumeChar(ConsumeChar(CurPtr, SizeTmp, Result),
                              SizeTmp2, Result);
-      } else if (Char == '@' && Features.Microsoft) {  // %:@ -> #@ -> Charize
+      } else if (Char == '@' && Features.MicrosoftExt) {// %:@ -> #@ -> Charize
         CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
         if (!isLexingRawMode())
           Diag(BufferPtr, diag::charize_microsoft_ext);
@@ -2890,7 +2890,7 @@ LexNextToken:
     if (Char == '#') {
       Kind = tok::hashhash;
       CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
-    } else if (Char == '@' && Features.Microsoft) {  // #@ -> Charize
+    } else if (Char == '@' && Features.MicrosoftExt) {  // #@ -> Charize
       Kind = tok::hashat;
       if (!isLexingRawMode())
         Diag(BufferPtr, diag::charize_microsoft_ext);

@@ -101,7 +101,7 @@ bool Sema::CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New) {
   bool MissingExceptionSpecification = false;
   bool MissingEmptyExceptionSpecification = false;
   unsigned DiagID = diag::err_mismatched_exception_spec;
-  if (getLangOptions().Microsoft)
+  if (getLangOptions().MicrosoftExt)
     DiagID = diag::warn_mismatched_exception_spec; 
   
   if (!CheckEquivalentExceptionSpec(PDiag(DiagID),
@@ -264,7 +264,7 @@ bool Sema::CheckEquivalentExceptionSpec(
     const FunctionProtoType *Old, SourceLocation OldLoc,
     const FunctionProtoType *New, SourceLocation NewLoc) {
   unsigned DiagID = diag::err_mismatched_exception_spec;
-  if (getLangOptions().Microsoft)
+  if (getLangOptions().MicrosoftExt)
     DiagID = diag::warn_mismatched_exception_spec; 
   return CheckEquivalentExceptionSpec(
                                       PDiag(DiagID),
@@ -717,7 +717,7 @@ bool Sema::CheckOverridingFunctionExceptionSpec(const CXXMethodDecl *New,
     }
   }
   unsigned DiagID = diag::err_override_exception_spec;
-  if (getLangOptions().Microsoft)
+  if (getLangOptions().MicrosoftExt)
     DiagID = diag::warn_override_exception_spec;
   return CheckExceptionSpecSubset(PDiag(DiagID),
                                   PDiag(diag::note_overridden_virtual_function),

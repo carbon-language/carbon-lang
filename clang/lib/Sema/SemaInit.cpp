@@ -2958,7 +2958,7 @@ static void TryReferenceInitialization(Sema &S,
       //
       //   The constructor that would be used to make the copy shall
       //   be callable whether or not the copy is actually done.
-      if (!S.getLangOptions().CPlusPlus0x && !S.getLangOptions().Microsoft)
+      if (!S.getLangOptions().CPlusPlus0x && !S.getLangOptions().MicrosoftExt)
         Sequence.AddExtraneousCopyToTemporary(cv2T2);
     }
 
@@ -5176,7 +5176,7 @@ static void DiagnoseNarrowingInInitList(
     bool Constant, const APValue &ConstantValue) {
   if (Constant) {
     S.Diag(InitE->getLocStart(),
-           S.getLangOptions().CPlusPlus0x && !S.getLangOptions().Microsoft
+           S.getLangOptions().CPlusPlus0x && !S.getLangOptions().MicrosoftExt
            ? diag::err_init_list_constant_narrowing
            : diag::warn_init_list_constant_narrowing)
       << InitE->getSourceRange()
@@ -5184,7 +5184,7 @@ static void DiagnoseNarrowingInInitList(
       << EntityType.getLocalUnqualifiedType();
   } else
     S.Diag(InitE->getLocStart(),
-           S.getLangOptions().CPlusPlus0x && !S.getLangOptions().Microsoft
+           S.getLangOptions().CPlusPlus0x && !S.getLangOptions().MicrosoftExt
            ? diag::err_init_list_variable_narrowing
            : diag::warn_init_list_variable_narrowing)
       << InitE->getSourceRange()

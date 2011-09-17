@@ -1432,7 +1432,7 @@ ExprResult Sema::ActOnMemberAccessExpr(Scope *S, Expr *Base,
     return ExprError();
 
   // Warn about the explicit constructor calls Microsoft extension.
-  if (getLangOptions().Microsoft &&
+  if (getLangOptions().MicrosoftExt &&
       Id.getKind() == UnqualifiedId::IK_ConstructorName)
     Diag(Id.getSourceRange().getBegin(),
          diag::ext_ms_explicit_constructor_call);

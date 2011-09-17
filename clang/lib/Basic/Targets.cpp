@@ -505,7 +505,7 @@ protected:
     if (Opts.MSCVersion != 0)
       Builder.defineMacro("_MSC_VER", Twine(Opts.MSCVersion));
 
-    if (Opts.Microsoft) {
+    if (Opts.MicrosoftExt) {
       Builder.defineMacro("_MSC_EXTENSIONS");
 
       if (Opts.CPlusPlus0x) {
@@ -1512,7 +1512,7 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
     break;
   }
 
-  if (Opts.Microsoft && PointerWidth == 32) {
+  if (Opts.MicrosoftExt && PointerWidth == 32) {
     switch (SSELevel) {
     case SSE42:
     case SSE41:
@@ -1732,7 +1732,7 @@ public:
 
     // mingw32-gcc provides __declspec(a) as alias of __attribute__((a)).
     // In contrast, clang-cc1 provides __declspec(a) with -fms-extensions.
-    if (Opts.Microsoft)
+    if (Opts.MicrosoftExt)
       // Provide "as-is" __declspec.
       Builder.defineMacro("__declspec", "__declspec");
     else
@@ -1948,7 +1948,7 @@ public:
 
     // mingw32-gcc provides __declspec(a) as alias of __attribute__((a)).
     // In contrast, clang-cc1 provides __declspec(a) with -fms-extensions.
-    if (Opts.Microsoft)
+    if (Opts.MicrosoftExt)
       // Provide "as-is" __declspec.
       Builder.defineMacro("__declspec", "__declspec");
     else

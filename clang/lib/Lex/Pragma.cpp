@@ -1034,7 +1034,7 @@ void Preprocessor::RegisterBuiltinPragmas() {
   AddPragmaHandler("STDC", new PragmaSTDC_UnknownHandler());
 
   // MS extensions.
-  if (Features.Microsoft) {
+  if (Features.MicrosoftExt) {
     AddPragmaHandler(new PragmaCommentHandler());
   }
 }

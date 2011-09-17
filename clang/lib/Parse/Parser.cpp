@@ -1222,7 +1222,7 @@ bool Parser::TryAnnotateTypeOrScopeToken(bool EnteringContext) {
                                        0, /*IsTypename*/true))
       return true;
     if (!SS.isSet()) {
-      if (getLang().Microsoft)
+      if (getLang().MicrosoftExt)
         Diag(Tok.getLocation(), diag::warn_expected_qualified_after_typename);
       else
         Diag(Tok.getLocation(), diag::err_expected_qualified_after_typename);
