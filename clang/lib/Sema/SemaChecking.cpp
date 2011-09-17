@@ -3709,7 +3709,7 @@ void Sema::CheckArrayAccess(const Expr *BaseExpr, const Expr *IndexExpr,
       return;
 
     const Type* BaseType = getElementType(BaseExpr);
-    if (!isSubscript && BaseType != EffectiveType) {
+    if (BaseType != EffectiveType) {
       // Make sure we're comparing apples to apples when comparing index to size
       uint64_t ptrarith_typesize = Context.getTypeSize(EffectiveType);
       uint64_t array_typesize = Context.getTypeSize(BaseType);
