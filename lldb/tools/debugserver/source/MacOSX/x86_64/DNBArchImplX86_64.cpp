@@ -369,11 +369,17 @@ DNBArchImplX86_64::GetFPUState(bool force)
             {
                 mach_msg_type_number_t count = e_regSetWordSizeAVX;
                 m_state.SetError(e_regSetFPU, Read, ::thread_get_state(m_thread->ThreadID(), __x86_64_AVX_STATE, (thread_state_t)&m_state.context.fpu.avx, &count));
+                DNBLogThreadedIf (LOG_THREAD, "::thread_get_state (0x%4.4x, %u, &avx, %u (%u passed in) carp) => 0x%8.8x",
+                                  m_thread->ThreadID(), x86_AVX_STATE64, (uint32_t)count, 
+                                  e_regSetWordSizeAVX, m_state.GetError(e_regSetFPU, Read));
             }
             else
             {
-                mach_msg_type_number_t count = e_regSetWordSizeFPR;
+                mach_msg_type_number_t count = e_regSetWordSizeFPU;
                 m_state.SetError(e_regSetFPU, Read, ::thread_get_state(m_thread->ThreadID(), __x86_64_FLOAT_STATE, (thread_state_t)&m_state.context.fpu.no_avx, &count));
+                DNBLogThreadedIf (LOG_THREAD, "::thread_get_state (0x%4.4x, %u, &fpu, %u (%u passed in) => 0x%8.8x",
+                                  m_thread->ThreadID(), __x86_64_FLOAT_STATE, (uint32_t)count, 
+                                  e_regSetWordSizeFPU, m_state.GetError(e_regSetFPU, Read));
             }
         }        
     }
@@ -434,7 +440,7 @@ DNBArchImplX86_64::SetFPUState()
         }
         else
         {
-            m_state.SetError(e_regSetFPU, Write, ::thread_set_state(m_thread->ThreadID(), __x86_64_FLOAT_STATE, (thread_state_t)&m_state.context.fpu.no_avx, e_regSetWordSizeFPR));
+            m_state.SetError(e_regSetFPU, Write, ::thread_set_state(m_thread->ThreadID(), __x86_64_FLOAT_STATE, (thread_state_t)&m_state.context.fpu.no_avx, e_regSetWordSizeFPU));
             return m_state.GetError(e_regSetFPU, Write);
         }
     }
@@ -1714,9 +1720,29 @@ DNBArchImplX86_64::GetRegisterContext (void *buf, nub_size_t buf_len)
             size = buf_len;
 
         bool force = false;
-        if (GetGPRState(force) | GetFPUState(force) | GetEXCState(force))
-            return 0;
-        ::memcpy (buf, &m_state.context, size);
+        kern_return_t kret;
+        if ((kret = GetGPRState(force)) != KERN_SUCCESS)
+        {
+            DNBLogThreadedIf (LOG_THREAD, "DNBArchImplX86_64::GetRegisterContext (buf = %p, len = %zu) error: GPR regs failed to read: %u ", buf, buf_len, kret);
+            size = 0;
+        }
+        else 
+        if ((kret = GetFPUState(force)) != KERN_SUCCESS)
+        {
+            DNBLogThreadedIf (LOG_THREAD, "DNBArchImplX86_64::GetRegisterContext (buf = %p, len = %zu) error: %s regs failed to read: %u", buf, buf_len, CPUHasAVX() ? "AVX" : "FPU", kret);
+            size = 0;
+        }
+        else 
+        if ((kret = GetEXCState(force)) != KERN_SUCCESS)
+        {
+            DNBLogThreadedIf (LOG_THREAD, "DNBArchImplX86_64::GetRegisterContext (buf = %p, len = %zu) error: EXC regs failed to read: %u", buf, buf_len, kret);
+            size = 0;
+        }
+        else
+        {
+            // Success
+            ::memcpy (buf, &m_state.context, size);
+        }
     }
     DNBLogThreadedIf (LOG_THREAD, "DNBArchImplX86_64::GetRegisterContext (buf = %p, len = %zu) => %zu", buf, buf_len, size);
     // Return the size of the register context even if NULL was passed in
@@ -1736,9 +1762,13 @@ DNBArchImplX86_64::SetRegisterContext (const void *buf, nub_size_t buf_len)
             size = buf_len;
 
         ::memcpy (&m_state.context, buf, size);
-        SetGPRState();
-        SetFPUState();
-        SetEXCState();
+        kern_return_t kret;
+        if ((kret = SetGPRState()) != KERN_SUCCESS)
+            DNBLogThreadedIf (LOG_THREAD, "DNBArchImplX86_64::SetRegisterContext (buf = %p, len = %zu) error: GPR regs failed to write: %u", buf, buf_len, kret);
+        if ((kret = SetFPUState()) != KERN_SUCCESS)
+            DNBLogThreadedIf (LOG_THREAD, "DNBArchImplX86_64::SetRegisterContext (buf = %p, len = %zu) error: %s regs failed to write: %u", buf, buf_len, CPUHasAVX() ? "AVX" : "FPU", kret);
+        if ((kret = SetEXCState()) != KERN_SUCCESS)
+            DNBLogThreadedIf (LOG_THREAD, "DNBArchImplX86_64::SetRegisterContext (buf = %p, len = %zu) error: EXP regs failed to write: %u", buf, buf_len, kret);
     }
     DNBLogThreadedIf (LOG_THREAD, "DNBArchImplX86_64::SetRegisterContext (buf = %p, len = %zu) => %zu", buf, buf_len, size);
     return size;

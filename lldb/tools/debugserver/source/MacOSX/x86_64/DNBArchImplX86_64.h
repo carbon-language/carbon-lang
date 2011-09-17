@@ -91,7 +91,7 @@ protected:
     typedef enum RegisterSetWordSizeTag
     {
         e_regSetWordSizeGPR = sizeof(GPR) / sizeof(int),
-        e_regSetWordSizeFPR = sizeof(FPU) / sizeof(int),
+        e_regSetWordSizeFPU = sizeof(FPU) / sizeof(int),
         e_regSetWordSizeEXC = sizeof(EXC) / sizeof(int),
         e_regSetWordSizeAVX = sizeof(AVX) / sizeof(int),
         e_regSetWordSizeDBG = sizeof(DBG) / sizeof(int)
