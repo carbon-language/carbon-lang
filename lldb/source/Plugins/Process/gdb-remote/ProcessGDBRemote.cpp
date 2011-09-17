@@ -1228,7 +1228,8 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                                                                                                        exc_type, 
                                                                                                        exc_data_size,
                                                                                                        exc_data_size >= 1 ? exc_data[0] : 0,
-                                                                                                       exc_data_size >= 2 ? exc_data[1] : 0));
+                                                                                                       exc_data_size >= 2 ? exc_data[1] : 0,
+                                                                                                       exc_data_size >= 3 ? exc_data[2] : 0));
                 }
                 else
                 {

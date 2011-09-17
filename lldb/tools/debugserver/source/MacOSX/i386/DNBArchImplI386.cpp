@@ -645,7 +645,11 @@ DNBArchImplI386::NotifyException(MachException::Data& exc)
             nub_addr_t addr = 0;
             uint32_t hw_index = GetHardwareWatchpointHit(addr);
             if (hw_index != INVALID_NUB_HW_INDEX)
+            {
                 exc.exc_data[1] = addr;
+                // Piggyback the hw_index in the exc.data.
+                exc.exc_data.push_back(hw_index);
+            }
 
             return true;
         }

@@ -60,7 +60,8 @@ public:
                                        uint32_t exc_type, 
                                        uint32_t exc_data_count,
                                        uint64_t exc_code, 
-                                       uint64_t exc_subcode);
+                                       uint64_t exc_sub_code,
+                                       uint64_t exc_sub_sub_code);
     
 protected:
     uint32_t m_exc_data_count;

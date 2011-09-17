@@ -245,7 +245,8 @@ StopInfoMachException::CreateStopReasonWithMachException
     uint32_t exc_type, 
     uint32_t exc_data_count,
     uint64_t exc_code,
-    uint64_t exc_sub_code
+    uint64_t exc_sub_code,
+    uint64_t exc_sub_sub_code
 )
 {
     if (exc_type != 0)
@@ -303,10 +304,17 @@ StopInfoMachException::CreateStopReasonWithMachException
                             return StopInfo::CreateStopReasonToTrace(thread);
 
                         // It's a watchpoint, then.
+                        // The exc_sub_code indicates the data break address.
                         lldb::WatchpointLocationSP wp_loc_sp =
                             thread.GetProcess().GetTarget().GetWatchpointLocationList().FindByAddress((lldb::addr_t)exc_sub_code);
                         if (wp_loc_sp)
+                        {
+                            // Debugserver may piggyback the hardware index of the fired watchpoint in the exception data.
+                            // Set the hardware index if that's the case.
+                            if (exc_data_count >=3)
+                                wp_loc_sp->SetHardwareIndex((uint32_t)exc_sub_sub_code);
                             return StopInfo::CreateStopReasonWithWatchpointID(thread, wp_loc_sp->GetID());
+                        }
                     }
                     else if (exc_code == 2) // EXC_I386_BPT
                     {
