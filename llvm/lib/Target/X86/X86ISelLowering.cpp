@@ -1129,6 +1129,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setTargetDAGCombine(ISD::VECTOR_SHUFFLE);
   setTargetDAGCombine(ISD::EXTRACT_VECTOR_ELT);
   setTargetDAGCombine(ISD::BUILD_VECTOR);
+  setTargetDAGCombine(ISD::VSELECT);
   setTargetDAGCombine(ISD::SELECT);
   setTargetDAGCombine(ISD::SHL);
   setTargetDAGCombine(ISD::SRA);
@@ -12551,7 +12552,8 @@ static SDValue PerformEXTRACT_VECTOR_ELTCombine(SDNode *N, SelectionDAG &DAG,
   return SDValue();
 }
 
-/// PerformSELECTCombine - Do target-specific dag combines on SELECT nodes.
+/// PerformSELECTCombine - Do target-specific dag combines on SELECT and VSELECT
+/// nodes.
 static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
                                     const X86Subtarget *Subtarget) {
   DebugLoc DL = N->getDebugLoc();
@@ -12564,9 +12566,9 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
   // instructions match the semantics of the common C idiom x<y?x:y but not
   // x<=y?x:y, because of how they handle negative zero (which can be
   // ignored in unsafe-math mode).
-  if (Subtarget->hasXMMInt() &&
-      (LHS.getValueType() == MVT::f32 || LHS.getValueType() == MVT::f64) &&
-      Cond.getOpcode() == ISD::SETCC) {
+  if (Subtarget->hasXMMInt() && Cond.getOpcode() == ISD::SETCC &&
+      (LHS.getValueType() == MVT::f32 || LHS.getValueType() == MVT::f64 ||
+       LHS.getValueType() == MVT::v4f32 || LHS.getValueType() == MVT::v2f64)) {
     ISD::CondCode CC = cast<CondCodeSDNode>(Cond.getOperand(2))->get();
 
     unsigned Opcode = 0;
@@ -13871,6 +13873,7 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   default: break;
   case ISD::EXTRACT_VECTOR_ELT:
     return PerformEXTRACT_VECTOR_ELTCombine(N, DAG, *this);
+  case ISD::VSELECT:
   case ISD::SELECT:         return PerformSELECTCombine(N, DAG, Subtarget);
   case X86ISD::CMOV:        return PerformCMOVCombine(N, DAG, DCI);
   case ISD::ADD:            return OptimizeConditionalInDecrement(N, DAG);

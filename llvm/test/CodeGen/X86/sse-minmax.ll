@@ -1,6 +1,6 @@
-; RUN: llc < %s -march=x86-64 -asm-verbose=false -join-physregs | FileCheck %s
-; RUN: llc < %s -march=x86-64 -asm-verbose=false -join-physregs -enable-unsafe-fp-math -enable-no-nans-fp-math | FileCheck -check-prefix=UNSAFE %s
-; RUN: llc < %s -march=x86-64 -asm-verbose=false -join-physregs -enable-no-nans-fp-math | FileCheck -check-prefix=FINITE %s
+; RUN: llc < %s -march=x86-64 -asm-verbose=false -join-physregs -promote-elements | FileCheck %s
+; RUN: llc < %s -march=x86-64 -asm-verbose=false -join-physregs -enable-unsafe-fp-math -enable-no-nans-fp-math -promote-elements | FileCheck -check-prefix=UNSAFE %s
+; RUN: llc < %s -march=x86-64 -asm-verbose=false -join-physregs -enable-no-nans-fp-math -promote-elements | FileCheck -check-prefix=FINITE %s
 
 ; Some of these patterns can be matched as SSE min or max. Some of
 ; then can be matched provided that the operands are swapped.
@@ -932,4 +932,36 @@ entry:
   %0 = fcmp uge double %x, 3.000000e+03           ; <i1> [#uses=1]
   %x_addr.0 = select i1 %0, double 3.000000e+03, double %x ; <double> [#uses=1]
   ret double %x_addr.0
+}
+
+; UNSAFE: maxpd:
+; UNSAFE: maxpd
+define <2 x double> @maxpd(<2 x double> %x, <2 x double> %y) {
+  %max_is_x = fcmp oge <2 x double> %x, %y
+  %max = select <2 x i1> %max_is_x, <2 x double> %x, <2 x double> %y
+  ret <2 x double> %max
+}
+
+; UNSAFE: minpd:
+; UNSAFE: minpd
+define <2 x double> @minpd(<2 x double> %x, <2 x double> %y) {
+  %min_is_x = fcmp ole <2 x double> %x, %y
+  %min = select <2 x i1> %min_is_x, <2 x double> %x, <2 x double> %y
+  ret <2 x double> %min
+}
+
+; UNSAFE: maxps:
+; UNSAFE: maxps
+define <4 x float> @maxps(<4 x float> %x, <4 x float> %y) {
+  %max_is_x = fcmp oge <4 x float> %x, %y
+  %max = select <4 x i1> %max_is_x, <4 x float> %x, <4 x float> %y
+  ret <4 x float> %max
+}
+
+; UNSAFE: minps:
+; UNSAFE: minps
+define <4 x float> @minps(<4 x float> %x, <4 x float> %y) {
+  %min_is_x = fcmp ole <4 x float> %x, %y
+  %min = select <4 x i1> %min_is_x, <4 x float> %x, <4 x float> %y
+  ret <4 x float> %min
 }
