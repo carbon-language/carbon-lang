@@ -2480,7 +2480,8 @@ RNBRemote::HandlePacket_G (const char *p)
             std::vector<uint8_t> reg_ctx;
             reg_ctx.resize(reg_ctx_size);
             
-            if (packet.GetHexBytes (&reg_ctx[0], reg_ctx.size(), 0xcc) == reg_ctx.size())
+            const nub_size_t bytes_extracted = packet.GetHexBytes (&reg_ctx[0], reg_ctx.size(), 0xcc);
+            if (bytes_extracted == reg_ctx.size())
             {
                 // Now write the register context
                 reg_ctx_size = DNBThreadSetRegisterContext(pid, tid, reg_ctx.data(), reg_ctx.size());
@@ -2489,7 +2490,14 @@ RNBRemote::HandlePacket_G (const char *p)
                 else 
                     return SendPacket ("E55");
             }
+            else
+            {
+                DNBLogError("RNBRemote::HandlePacket_G(%s): extracted %zu of %zu bytes, size mismatch\n", p, bytes_extracted, reg_ctx_size);
+                return SendPacket ("E64");
+            }
         }
+        else
+            return SendPacket ("E65");
     }
 
 
