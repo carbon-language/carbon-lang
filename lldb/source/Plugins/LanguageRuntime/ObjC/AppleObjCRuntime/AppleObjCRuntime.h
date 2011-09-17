@@ -98,7 +98,7 @@ protected:
     AppleIsModuleObjCLibrary (const lldb::ModuleSP &module_sp);
 
     static enum ObjCRuntimeVersions
-    GetObjCVersion (Process *process, ModuleSP &objc_module_sp);
+    GetObjCVersion (Process *process, lldb::ModuleSP &objc_module_sp);
 
     //------------------------------------------------------------------
     // PluginInterface protocol

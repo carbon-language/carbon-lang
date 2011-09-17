@@ -50,7 +50,7 @@ namespace lldb {
     typedef SharedPtr<lldb_private::Listener>::Type ListenerSP;
     typedef SharedPtr<lldb_private::Log>::Type LogSP;
     typedef SharedPtr<lldb_private::LogChannel>::Type LogChannelSP;
-    typedef SharedPtr<lldb_private::Module>::Type ModuleSP;
+    typedef IntrusiveSharedPtr<lldb_private::Module>::Type ModuleSP;
     typedef SharedPtr<lldb_private::OptionValue>::Type OptionValueSP;
     typedef SharedPtr<lldb_private::Platform>::Type PlatformSP;
     typedef SharedPtr<lldb_private::Process>::Type ProcessSP;

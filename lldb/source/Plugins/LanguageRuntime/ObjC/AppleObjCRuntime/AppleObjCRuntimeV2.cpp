@@ -91,8 +91,9 @@ extern \"C\" void *__lldb_apple_objc_v2_find_class_name (                       
 const char *AppleObjCRuntimeV2::g_objc_class_symbol_prefix = "OBJC_CLASS_$_";
 const char *AppleObjCRuntimeV2::g_objc_class_data_section_name = "__objc_data";
 
-AppleObjCRuntimeV2::AppleObjCRuntimeV2 (Process *process, ModuleSP &objc_module_sp) : 
-    lldb_private::AppleObjCRuntime (process),
+AppleObjCRuntimeV2::AppleObjCRuntimeV2 (Process *process, 
+                                        const ModuleSP &objc_module_sp) : 
+    AppleObjCRuntime (process),
     m_get_class_name_args(LLDB_INVALID_ADDRESS),
     m_get_class_name_args_mutex(Mutex::eMutexTypeNormal),
     m_isa_to_name_cache(),
@@ -109,7 +110,7 @@ AppleObjCRuntimeV2::RunFunctionToFindClassName(lldb::addr_t object_addr, Thread 
     
     StreamString errors;
     
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));  // FIXME - a more appropriate log channel?
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));  // FIXME - a more appropriate log channel?
     
     int32_t debug;
     if (log)
@@ -417,7 +418,7 @@ AppleObjCRuntimeV2::GetDynamicTypeAndAddress (ValueObject &in_value,
 //------------------------------------------------------------------
 // Static Functions
 //------------------------------------------------------------------
-lldb_private::LanguageRuntime *
+LanguageRuntime *
 AppleObjCRuntimeV2::CreateInstance (Process *process, lldb::LanguageType language)
 {
     // FIXME: This should be a MacOS or iOS process, and we need to look for the OBJC section to make
@@ -581,7 +582,7 @@ AppleObjCRuntimeV2::IsTaggedPointer(lldb::addr_t ptr)
 // this code relies on the assumption that an Objective-C object always starts
 // with an ISA at offset 0. an ISA is effectively a pointer to an instance of
 // struct class_t in the ObjCv2 runtime
-lldb_private::ObjCLanguageRuntime::ObjCISA
+ObjCLanguageRuntime::ObjCISA
 AppleObjCRuntimeV2::GetISA(ValueObject& valobj)
 {
     if (ClangASTType::GetMinimumLanguage(valobj.GetClangAST(),valobj.GetClangType()) != lldb::eLanguageTypeObjC)
@@ -602,7 +603,7 @@ AppleObjCRuntimeV2::GetISA(ValueObject& valobj)
     uint8_t pointer_size = valobj.GetUpdatePoint().GetProcessSP()->GetAddressByteSize();
     
     Error error;
-    lldb_private::ObjCLanguageRuntime::ObjCISA isa = 
+    ObjCLanguageRuntime::ObjCISA isa = 
     valobj.GetUpdatePoint().GetProcessSP()->ReadUnsignedIntegerFromMemory(isa_pointer,
                                                                           pointer_size,
                                                                           0,
@@ -613,7 +614,7 @@ AppleObjCRuntimeV2::GetISA(ValueObject& valobj)
 // TODO: should we have a transparent_kvo parameter here to say if we 
 // want to replace the KVO swizzled class with the actual user-level type?
 ConstString
-AppleObjCRuntimeV2::GetActualTypeName(lldb_private::ObjCLanguageRuntime::ObjCISA isa)
+AppleObjCRuntimeV2::GetActualTypeName(ObjCLanguageRuntime::ObjCISA isa)
 {
     if (!IsValidISA(isa))
         return ConstString(NULL);
@@ -713,8 +714,8 @@ AppleObjCRuntimeV2::GetActualTypeName(lldb_private::ObjCLanguageRuntime::ObjCISA
         return ConstString("unknown");
 }
 
-lldb_private::ObjCLanguageRuntime::ObjCISA
-AppleObjCRuntimeV2::GetParentClass(lldb_private::ObjCLanguageRuntime::ObjCISA isa)
+ObjCLanguageRuntime::ObjCISA
+AppleObjCRuntimeV2::GetParentClass(ObjCLanguageRuntime::ObjCISA isa)
 {
     if (!IsValidISA(isa))
         return 0;

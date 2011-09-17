@@ -69,6 +69,12 @@ namespace lldb {
         {
             typedef lldb_private::LoggingSharingPtr<_Tp> Type;
         };
+    
+        template <typename _Tp>
+        struct IntrusiveSharedPtr 
+        {
+            typedef lldb_private::IntrusiveSharingPtr<_Tp> Type;
+        };
 
 } // namespace lldb
 

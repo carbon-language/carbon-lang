@@ -13,28 +13,27 @@
 // C Includes
 // C++ Includes
 #include <map>
-#include <string>
+#include <vector>
 // Other libraries and framework includes
 // Project includes
-#include "lldb/Expression/ClangExpression.h"
-#include "lldb/Expression/ClangFunction.h"
-#include "lldb/Expression/ClangUtilityFunction.h"
+#include "lldb/lldb-public.h"
 #include "lldb/Host/Mutex.h"
 
 
 namespace lldb_private
 {
-using namespace lldb;
   
 class AppleObjCTrampolineHandler {
 public:
     
-    AppleObjCTrampolineHandler (ProcessSP process_sp, ModuleSP objc_module_sp);
+    AppleObjCTrampolineHandler (const lldb::ProcessSP &process_sp, 
+                                const lldb::ModuleSP &objc_module_sp);
     
-    ~AppleObjCTrampolineHandler() {}
+    ~AppleObjCTrampolineHandler();
             
-    ThreadPlanSP
-    GetStepThroughDispatchPlan (Thread &thread, bool stop_others);
+    lldb::ThreadPlanSP
+    GetStepThroughDispatchPlan (Thread &thread, 
+                                bool stop_others);
     
     ClangFunction *
     GetLookupImplementationWrapperFunction ();
@@ -80,7 +79,7 @@ private:
     private:
         struct VTableDescriptor 
         {
-            VTableDescriptor(uint32_t in_flags, addr_t in_code_start) :
+            VTableDescriptor(uint32_t in_flags, lldb::addr_t in_code_start) :
                 flags(in_flags),
                 code_start(in_code_start) {}
             
@@ -151,7 +150,8 @@ private:
         };
         
     public:
-        AppleObjCVTables(ProcessSP &process_sp, ModuleSP &objc_module_sp);
+        AppleObjCVTables(const lldb::ProcessSP &process_sp, 
+                         const lldb::ModuleSP &objc_module_sp);
         
         ~AppleObjCVTables();
                 
@@ -177,7 +177,7 @@ private:
         }
         
     private:
-        ProcessSP m_process_sp;
+        lldb::ProcessSP m_process_sp;
         typedef std::vector<VTableRegion> region_collection;
         lldb::addr_t m_trampoline_header;
         lldb::break_id_t m_trampolines_changed_bp_id;
@@ -190,8 +190,8 @@ private:
     
     typedef std::map<lldb::addr_t, int> MsgsendMap; // This table maps an dispatch fn address to the index in g_dispatch_functions
     MsgsendMap m_msgSend_map;
-    ProcessSP m_process_sp;
-    ModuleSP m_objc_module_sp;
+    lldb::ProcessSP m_process_sp;
+    lldb::ModuleSP m_objc_module_sp;
     std::auto_ptr<ClangFunction> m_impl_function;
     std::auto_ptr<ClangUtilityFunction> m_impl_code;
     Mutex m_impl_function_mutex;

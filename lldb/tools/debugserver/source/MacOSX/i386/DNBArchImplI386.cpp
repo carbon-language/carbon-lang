@@ -252,7 +252,8 @@ enum
     gdb_ymm7       = gdb_xmm7
 };
 
-enum DNBArchImplI386::AVXPresence DNBArchImplI386::s_has_avx = DNBArchImplI386::kAVXUnknown;
+// AVX support isn't working at all from user space, so disable it for now.
+enum DNBArchImplI386::AVXPresence DNBArchImplI386::s_has_avx = DNBArchImplI386::kAVXNotPresent;
 
 uint64_t
 DNBArchImplI386::GetPC(uint64_t failValue)

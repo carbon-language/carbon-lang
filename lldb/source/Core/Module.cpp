@@ -131,7 +131,8 @@ Module::~Module()
 ModuleSP
 Module::GetSP () const
 {
-    return ModuleList::GetModuleSP (this);
+    ModuleSP module_sp(const_cast<Module*>(this));
+    return module_sp;
 }
 
 const lldb_private::UUID&

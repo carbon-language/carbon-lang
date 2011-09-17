@@ -82,6 +82,10 @@ SymbolContext::SymbolContext (SymbolContextScope *sc_scope) :
     sc_scope->CalculateSymbolContext (this);
 }
 
+SymbolContext::~SymbolContext ()
+{
+}
+
 const SymbolContext&
 SymbolContext::operator= (const SymbolContext& rhs)
 {
@@ -447,7 +451,7 @@ SymbolContext::FindFunctionsByName (const ConstString &name,
         // for methods matching name.
     }
 
-    if (module_sp != NULL)
+    if (module_sp)
         module_sp->FindFunctions (name, eFunctionNameTypeBase | eFunctionNameTypeFull, include_symbols, true, sc_list);
 
     if (target_sp)
@@ -488,6 +492,24 @@ SymbolContext::FindTypeByName (const ConstString &name) const
 //  SymbolContextSpecifier
 //
 //----------------------------------------------------------------------
+
+SymbolContextSpecifier::SymbolContextSpecifier (const TargetSP &target_sp) :
+    m_target_sp (target_sp),
+    m_module_spec (),
+    m_module_sp (),
+    m_file_spec_ap (),
+    m_start_line (0),
+    m_end_line (0),
+    m_function_spec (),
+    m_class_name (),
+    m_address_range_ap (),
+    m_type (eNothingSpecified)
+{
+}   
+
+SymbolContextSpecifier::~SymbolContextSpecifier()
+{
+}
 
 bool
 SymbolContextSpecifier::AddLineSpecification (uint32_t line_no, SpecificationType type)

@@ -44,6 +44,7 @@
 namespace lldb_private {
 
 class Module :
+    public ReferenceCountedBaseVirtual<Module>,
     public SymbolContextScope
 {
 public:

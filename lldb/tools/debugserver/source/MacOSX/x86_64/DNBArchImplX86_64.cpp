@@ -65,7 +65,7 @@ static bool ForceAVXRegs ()
 #define FORCE_AVX_REGS (0)
 #endif
 
-enum DNBArchImplX86_64::AVXPresence DNBArchImplX86_64::s_has_avx = DNBArchImplX86_64::kAVXUnknown;
+enum DNBArchImplX86_64::AVXPresence DNBArchImplX86_64::s_has_avx = DNBArchImplX86_64::kAVXNotPresent;
 
 uint64_t
 DNBArchImplX86_64::GetPC(uint64_t failValue)

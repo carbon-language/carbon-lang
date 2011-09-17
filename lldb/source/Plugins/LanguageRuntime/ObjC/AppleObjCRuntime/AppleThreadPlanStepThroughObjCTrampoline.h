@@ -82,9 +82,9 @@ private:
     lldb::addr_t m_object_addr;  // This is only for Description.
     lldb::addr_t m_isa_addr;     // isa_addr and sel_addr are the keys we will use to cache the implementation.
     lldb::addr_t m_sel_addr;
-    ThreadPlanSP m_func_sp;       // This is the function call plan.  We fill it at start, then set it
-                                  // to NULL when this plan is done.  That way we know to go to:
-    ThreadPlanSP m_run_to_sp;     // The plan that runs to the target.
+    lldb::ThreadPlanSP m_func_sp;       // This is the function call plan.  We fill it at start, then set it
+                                        // to NULL when this plan is done.  That way we know to go to:
+    lldb::ThreadPlanSP m_run_to_sp;     // The plan that runs to the target.
     ClangFunction *m_impl_function;  // This is a pointer to a impl function that 
                                      // is owned by the client that pushes this plan.
     bool m_stop_others;

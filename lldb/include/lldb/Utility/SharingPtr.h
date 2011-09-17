@@ -531,7 +531,282 @@ public:
         baton_ = 0;
     }
 };
+    
+    
+template <class T>
+class IntrusiveSharingPtr;
 
-} // namespace lldb
+template <class T>
+class ReferenceCountedBase
+{
+public:
+    explicit ReferenceCountedBase(long refs = 0)
+        : shared_owners_(refs) 
+    {
+    }
+    
+    void
+    add_shared()
+    {
+        __sync_add_and_fetch(&shared_owners_, 1);
+    }
+    void
+    release_shared()
+    {
+        if (__sync_add_and_fetch(&shared_owners_, -1) == -1)
+            delete static_cast<T*>(this);
+    }
+
+    long 
+    use_count() const 
+    {
+        return shared_owners_ + 1;
+    }
+    
+protected:
+    long shared_owners_;
+   
+    friend class IntrusiveSharingPtr<T>;
+    
+private:
+    ReferenceCountedBase(const ReferenceCountedBase&);
+    ReferenceCountedBase& operator=(const ReferenceCountedBase&);
+};
+
+    
+//template <class T>
+//class ReferenceCountedBaseVirtual
+//{
+//public:
+//    explicit ReferenceCountedBaseVirtual(long refs = 0) : 
+//        shared_owners_(refs) 
+//    {
+//    }
+//    
+//    void
+//    add_shared();
+//
+//    void
+//    release_shared();
+//    
+//    long 
+//    use_count() const 
+//    {
+//        return shared_owners_ + 1;
+//    }
+//    
+//protected:
+//    long shared_owners_;
+//    
+//    virtual ~ReferenceCountedBaseVirtual() {}
+//    
+//    friend class IntrusiveSharingPtr<T>;
+//    
+//private:
+//    ReferenceCountedBaseVirtual(const ReferenceCountedBaseVirtual&);
+//    ReferenceCountedBaseVirtual& operator=(const ReferenceCountedBaseVirtual&);
+//};
+//
+//template <class T>
+//void
+//ReferenceCountedBaseVirtual<T>::add_shared()
+//{
+//    __sync_add_and_fetch(&shared_owners_, 1);
+//}
+//
+//template <class T>
+//void
+//ReferenceCountedBaseVirtual<T>::release_shared()
+//{
+//    if (__sync_add_and_fetch(&shared_owners_, -1) == -1)
+//        delete this;
+//}
+
+    
+template <class T>
+class ReferenceCountedBaseVirtual : public imp::shared_count
+{
+public:
+    explicit ReferenceCountedBaseVirtual () : 
+        imp::shared_count(-1)
+    {
+    }
+    
+    virtual
+    ~ReferenceCountedBaseVirtual ()
+    {
+    }
+    
+    virtual void on_zero_shared ();
+    
+};
+
+template <class T>
+void
+ReferenceCountedBaseVirtual<T>::on_zero_shared()
+{
+}
+
+template <typename T>
+class IntrusiveSharingPtr 
+{
+public:
+    typedef T element_type;
+    
+    explicit 
+    IntrusiveSharingPtr () : 
+        ptr_(0) 
+    {
+    }
+    
+    explicit
+    IntrusiveSharingPtr (T* ptr) : 
+        ptr_(ptr) 
+    {
+        add_shared();
+    }
+    
+    IntrusiveSharingPtr (const IntrusiveSharingPtr& rhs) : 
+        ptr_(rhs.ptr_) 
+    {
+        add_shared();
+    }
+    
+    template <class X>
+    IntrusiveSharingPtr (const IntrusiveSharingPtr<X>& rhs)
+        : ptr_(rhs.get()) 
+    {
+        add_shared();
+    }
+    
+    IntrusiveSharingPtr& 
+    operator= (const IntrusiveSharingPtr& rhs) 
+    {
+        reset(rhs.get());
+        return *this;
+    }
+    
+    template <class X> IntrusiveSharingPtr& 
+    operator= (const IntrusiveSharingPtr<X>& rhs) 
+    {
+        reset(rhs.get());
+        return *this;
+    }
+    
+    IntrusiveSharingPtr& 
+    operator= (T *ptr) 
+    {
+        reset(ptr);
+        return *this;
+    }
+    
+    ~IntrusiveSharingPtr() 
+    {
+        release_shared(); 
+    }
+    
+    T& 
+    operator*() const 
+    {
+        return *ptr_; 
+    }
+    
+    T* 
+    operator->() const
+    {
+        return ptr_; 
+    }
+    
+    T* 
+    get() const
+    {
+        return ptr_; 
+    }
+    
+    operator bool() const
+    {
+        return ptr_ != 0;
+    }
+    
+    void 
+    swap (IntrusiveSharingPtr& rhs) 
+    {
+        std::swap(ptr_, rhs.ptr_);
+    }
+
+    void 
+    reset(T* ptr = NULL) 
+    {
+        IntrusiveSharingPtr(ptr).swap(*this);
+    }
+
+    long
+    use_count () const
+    {
+        if (ptr_)
+            return ptr_->use_count();
+        return 0;
+    }
+    
+    bool
+    unique () const
+    {
+        return use_count () == 1;
+    }
+
+private:
+    element_type *ptr_;
+
+    void
+    add_shared() 
+    {
+        if (ptr_) 
+            ptr_->add_shared(); 
+    }
+    void
+    release_shared()
+    { 
+        if (ptr_) 
+            ptr_->release_shared(); 
+    }
+};
+
+template<class T, class U>
+inline bool operator== (const IntrusiveSharingPtr<T>& lhs, const IntrusiveSharingPtr<U>& rhs)
+{
+    return lhs.get() == rhs.get();
+}
+
+template<class T, class U>
+inline bool operator!= (const IntrusiveSharingPtr<T>& lhs, const IntrusiveSharingPtr<U>& rhs)
+{
+    return lhs.get() != rhs.get();
+}
+
+template<class T, class U>
+inline bool operator== (const IntrusiveSharingPtr<T>& lhs, U* rhs)
+{
+    return lhs.get() == rhs;
+}
+
+template<class T, class U>
+inline bool operator!= (const IntrusiveSharingPtr<T>& lhs, U* rhs)
+{
+    return lhs.get() != rhs;
+}
+
+template<class T, class U>
+inline bool operator== (T* lhs, const IntrusiveSharingPtr<U>& rhs)
+{
+    return lhs == rhs.get();
+}
+
+template<class T, class U>
+inline bool operator!= (T* lhs, const IntrusiveSharingPtr<U>& rhs)
+{
+    return lhs != rhs.get();
+}
+
+} // namespace lldb_private
 
 #endif  // utility_SharingPtr_h_

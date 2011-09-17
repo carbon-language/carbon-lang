@@ -97,6 +97,7 @@ public:
                    LineEntry *line_entry = NULL,
                    Symbol *symbol = NULL);
 
+    ~SymbolContext ();
     //------------------------------------------------------------------
     /// Copy constructor
     ///
@@ -294,13 +295,9 @@ public:
     } SpecificationType;
     
     // This one produces a specifier that matches everything...
-    SymbolContextSpecifier (lldb::TargetSP target_sp) :
-        m_start_line(0),
-        m_end_line(0)
-    {
-        m_target_sp = target_sp;
-        m_type = eNothingSpecified;
-    }   
+    SymbolContextSpecifier (const lldb::TargetSP& target_sp);
+    
+    ~SymbolContextSpecifier();
     
     bool
     AddSpecification (const char *spec_string, SpecificationType type);

@@ -15,12 +15,8 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/lldb-private.h"
-#include "lldb/Target/LanguageRuntime.h"
 #include "lldb/Target/ObjCLanguageRuntime.h"
-#include "lldb/Core/ValueObject.h"
 #include "AppleObjCRuntime.h"
-#include "AppleObjCTrampolineHandler.h"
-#include "AppleThreadPlanStepThroughObjCTrampoline.h"
 
 namespace lldb_private {
     

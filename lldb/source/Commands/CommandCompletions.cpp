@@ -684,7 +684,7 @@ CommandCompletions::ModuleCompleter::SearchCallback (
     bool complete
 )
 {
-    if (context.module_sp != NULL)
+    if (context.module_sp)
     {
         const char *cur_file_name = context.module_sp->GetFileSpec().GetFilename().GetCString();
         const char *cur_dir_name = context.module_sp->GetFileSpec().GetDirectory().GetCString();

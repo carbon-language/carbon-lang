@@ -22,6 +22,10 @@
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/Value.h"
+#include "lldb/Expression/ClangExpression.h"
+#include "lldb/Expression/ClangFunction.h"
+#include "lldb/Expression/ClangUtilityFunction.h"
+
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Target/ObjCLanguageRuntime.h"
 #include "lldb/Target/Process.h"
@@ -154,6 +158,10 @@ AppleObjCTrampolineHandler::AppleObjCVTables::VTableRegion::VTableRegion(AppleOb
     m_next_region (0)
 {
     SetUpRegion ();
+}
+
+AppleObjCTrampolineHandler::~AppleObjCTrampolineHandler()
+{
 }
 
 void
@@ -301,11 +309,12 @@ AppleObjCTrampolineHandler::AppleObjCVTables::VTableRegion::Dump (Stream &s)
     }
 }
         
-AppleObjCTrampolineHandler::AppleObjCVTables::AppleObjCVTables (ProcessSP &process_sp, ModuleSP &objc_module_sp) :
-        m_process_sp(process_sp),
-        m_trampoline_header(LLDB_INVALID_ADDRESS),
-        m_trampolines_changed_bp_id(LLDB_INVALID_BREAK_ID),
-        m_objc_module_sp(objc_module_sp)
+AppleObjCTrampolineHandler::AppleObjCVTables::AppleObjCVTables (const ProcessSP &process_sp, 
+                                                                const ModuleSP &objc_module_sp) :
+    m_process_sp (process_sp),
+    m_trampoline_header (LLDB_INVALID_ADDRESS),
+    m_trampolines_changed_bp_id (LLDB_INVALID_BREAK_ID),
+    m_objc_module_sp (objc_module_sp)
 {
     
 }
@@ -510,7 +519,8 @@ AppleObjCTrampolineHandler::g_dispatch_functions[] =
     {NULL}
 };
 
-AppleObjCTrampolineHandler::AppleObjCTrampolineHandler (ProcessSP process_sp, ModuleSP objc_module_sp) :
+AppleObjCTrampolineHandler::AppleObjCTrampolineHandler (const ProcessSP &process_sp, 
+                                                        const ModuleSP &objc_module_sp) :
     m_process_sp (process_sp),
     m_objc_module_sp (objc_module_sp),
     m_impl_fn_addr (LLDB_INVALID_ADDRESS),

@@ -23,6 +23,8 @@
 #include "lldb/Target/ThreadPlanStepOut.h"
 #include "lldb/Core/Log.h"
 
+
+using namespace lldb;
 using namespace lldb_private;
 
 //----------------------------------------------------------------------
