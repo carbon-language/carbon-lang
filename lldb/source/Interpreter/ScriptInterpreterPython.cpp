@@ -19,6 +19,7 @@
 #include <string>
 
 #include "lldb/API/SBValue.h"
+#include "lldb/Breakpoint/BreakpointLocation.h"
 #include "lldb/Breakpoint/StoppointCallbackContext.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/Timer.h"

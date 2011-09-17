@@ -41,11 +41,11 @@ using namespace lldb_private;
 
 StackFrame::StackFrame 
 (
-    lldb::user_id_t frame_idx, 
-    lldb::user_id_t unwind_frame_index, 
+    user_id_t frame_idx, 
+    user_id_t unwind_frame_index, 
     Thread &thread, 
-    lldb::addr_t cfa, 
-    lldb::addr_t pc, 
+    addr_t cfa, 
+    addr_t pc, 
     const SymbolContext *sc_ptr
 ) :
     m_thread (thread),
@@ -71,12 +71,12 @@ StackFrame::StackFrame
 
 StackFrame::StackFrame 
 (
-    lldb::user_id_t frame_idx, 
-    lldb::user_id_t unwind_frame_index, 
+    user_id_t frame_idx, 
+    user_id_t unwind_frame_index, 
     Thread &thread, 
     const RegisterContextSP &reg_context_sp, 
-    lldb::addr_t cfa, 
-    lldb::addr_t pc, 
+    addr_t cfa, 
+    addr_t pc, 
     const SymbolContext *sc_ptr
 ) :
     m_thread (thread),
@@ -108,11 +108,11 @@ StackFrame::StackFrame
 
 StackFrame::StackFrame 
 (
-    lldb::user_id_t frame_idx, 
-    lldb::user_id_t unwind_frame_index, 
+    user_id_t frame_idx, 
+    user_id_t unwind_frame_index, 
     Thread &thread, 
     const RegisterContextSP &reg_context_sp, 
-    lldb::addr_t cfa, 
+    addr_t cfa, 
     const Address& pc_addr,
     const SymbolContext *sc_ptr
 ) :
@@ -515,9 +515,9 @@ StackFrame::GetInScopeVariableList (bool get_file_globals)
 
 ValueObjectSP
 StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr, 
-                                               lldb::DynamicValueType use_dynamic,
+                                               DynamicValueType use_dynamic,
                                                uint32_t options, 
-                                               lldb::VariableSP &var_sp,
+                                               VariableSP &var_sp,
                                                Error &error)
 {
 
@@ -643,7 +643,7 @@ StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr,
                             if (!child_valobj_sp)
                             {
                                 if (no_synth_child == false)
-                                    child_valobj_sp = valobj_sp->GetSyntheticValue(lldb::eUseSyntheticFilter)->GetChildMemberWithName (child_name, true);
+                                    child_valobj_sp = valobj_sp->GetSyntheticValue(eUseSyntheticFilter)->GetChildMemberWithName (child_name, true);
                                 
                                 if (no_synth_child || !child_valobj_sp)
                                 {
@@ -667,7 +667,7 @@ StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr,
                             }
                             // Remove the child name from the path
                             var_path.erase(0, child_name.GetLength());
-                            if (use_dynamic != lldb::eNoDynamicValues)
+                            if (use_dynamic != eNoDynamicValues)
                             {
                                 ValueObjectSP dynamic_value_sp(child_valobj_sp->GetDynamicValue(use_dynamic));
                                 if (dynamic_value_sp)
@@ -728,12 +728,12 @@ StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr,
                                     if (no_synth_child == false
                                         && 
                                         ClangASTType::GetMinimumLanguage(valobj_sp->GetClangAST(),
-                                                                         valobj_sp->GetClangType()) == lldb::eLanguageTypeObjC /* is ObjC pointer */
+                                                                         valobj_sp->GetClangType()) == eLanguageTypeObjC /* is ObjC pointer */
                                         &&
                                         ClangASTContext::IsPointerType(ClangASTType::GetPointeeType(valobj_sp->GetClangType())) == false /* is not double-ptr */)
                                     {
                                         // dereferencing ObjC variables is not valid.. so let's try and recur to synthetic children
-                                        lldb::ValueObjectSP synthetic = valobj_sp->GetSyntheticValue(lldb::eUseSyntheticFilter);
+                                        ValueObjectSP synthetic = valobj_sp->GetSyntheticValue(eUseSyntheticFilter);
                                         if (synthetic.get() == NULL /* no synthetic */
                                             || synthetic == valobj_sp) /* synthetic is the same as the original object */
                                         {
@@ -805,7 +805,7 @@ StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr,
                                 }
                                 else
                                 {
-                                    lldb::ValueObjectSP synthetic = valobj_sp->GetSyntheticValue(lldb::eUseSyntheticFilter);
+                                    ValueObjectSP synthetic = valobj_sp->GetSyntheticValue(eUseSyntheticFilter);
                                     if (no_synth_child /* synthetic is forbidden */ ||
                                         synthetic.get() == NULL /* no synthetic */
                                         || synthetic == valobj_sp) /* synthetic is the same as the original object */
@@ -847,7 +847,7 @@ StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr,
                                 // %i is the array index
                                 var_path.erase(0, (end - var_path.c_str()) + 1);
                                 separator_idx = var_path.find_first_of(".-[");
-                                if (use_dynamic != lldb::eNoDynamicValues)
+                                if (use_dynamic != eNoDynamicValues)
                                 {
                                     ValueObjectSP dynamic_value_sp(child_valobj_sp->GetDynamicValue(use_dynamic));
                                     if (dynamic_value_sp)
@@ -948,7 +948,7 @@ StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr,
                                 // %i is the index
                                 var_path.erase(0, (real_end - var_path.c_str()) + 1);
                                 separator_idx = var_path.find_first_of(".-[");
-                                if (use_dynamic != lldb::eNoDynamicValues)
+                                if (use_dynamic != eNoDynamicValues)
                                 {
                                     ValueObjectSP dynamic_value_sp(child_valobj_sp->GetDynamicValue(use_dynamic));
                                     if (dynamic_value_sp)
@@ -1077,7 +1077,7 @@ StackFrame::HasDebugInformation ()
 
 
 ValueObjectSP
-StackFrame::GetValueObjectForFrameVariable (const VariableSP &variable_sp, lldb::DynamicValueType use_dynamic)
+StackFrame::GetValueObjectForFrameVariable (const VariableSP &variable_sp, DynamicValueType use_dynamic)
 {
     ValueObjectSP valobj_sp;
     VariableList *var_list = GetVariableList (true);
@@ -1098,7 +1098,7 @@ StackFrame::GetValueObjectForFrameVariable (const VariableSP &variable_sp, lldb:
             }
         }
     }
-    if (use_dynamic != lldb::eNoDynamicValues && valobj_sp)
+    if (use_dynamic != eNoDynamicValues && valobj_sp)
     {
         ValueObjectSP dynamic_sp = valobj_sp->GetDynamicValue (use_dynamic);
         if (dynamic_sp)
@@ -1108,7 +1108,7 @@ StackFrame::GetValueObjectForFrameVariable (const VariableSP &variable_sp, lldb:
 }
 
 ValueObjectSP
-StackFrame::TrackGlobalVariable (const VariableSP &variable_sp, lldb::DynamicValueType use_dynamic)
+StackFrame::TrackGlobalVariable (const VariableSP &variable_sp, DynamicValueType use_dynamic)
 {
     // Check to make sure we aren't already tracking this variable?
     ValueObjectSP valobj_sp (GetValueObjectForFrameVariable (variable_sp, use_dynamic));
@@ -1254,10 +1254,12 @@ StackFrame::HasCachedData () const
     return false;
 }
 
-lldb::StackFrameSP
+StackFrameSP
 StackFrame::GetSP ()
 {
-    return m_thread.GetStackFrameSPForStackFramePtr (this);
+    // This object contains an instrusive ref count base class so we can
+    // easily make a shared pointer to this object
+    return StackFrameSP (this);
 }
 
 

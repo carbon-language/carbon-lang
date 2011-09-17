@@ -85,6 +85,7 @@ private:
 };
 
 class Thread :
+    public ReferenceCountedBaseVirtual<Thread>,
     public UserID,
     public ExecutionContextScope,
     public ThreadInstanceSettings

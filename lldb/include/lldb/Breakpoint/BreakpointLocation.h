@@ -46,7 +46,9 @@ namespace lldb_private {
 /// would be useful if you've set options on the locations.
 //----------------------------------------------------------------------
 
-class BreakpointLocation : public StoppointLocation
+class BreakpointLocation : 
+    public ReferenceCountedBase<BreakpointLocation>,
+    public StoppointLocation
 {
 public:
 

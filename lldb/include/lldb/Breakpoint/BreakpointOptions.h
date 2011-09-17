@@ -116,7 +116,7 @@ public:
     ///     A thread plan to run to test the condition, or NULL if there is no thread plan.
     //------------------------------------------------------------------
     ThreadPlan *GetThreadPlanToTestCondition (ExecutionContext &exe_ctx, 
-                                              lldb::BreakpointLocationSP break_loc_sp, 
+                                              const lldb::BreakpointLocationSP& break_loc_sp, 
                                               Stream &error);
     
     //------------------------------------------------------------------

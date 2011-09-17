@@ -74,6 +74,7 @@ namespace lldb_private {
 /// not by the breakpoint.
 //----------------------------------------------------------------------
 class Breakpoint:
+    public ReferenceCountedBase<Breakpoint>,
     public Stoppoint
 {
 public:
@@ -513,21 +514,6 @@ public:
     bool
     InvokeCallback (StoppointCallbackContext *context,
                     lldb::break_id_t bp_loc_id);
-
-    //------------------------------------------------------------------
-    /// Returns the shared pointer that this breakpoint holds for the
-    /// breakpoint location passed in as \a bp_loc_ptr.  Passing in a 
-    /// breakpoint location that doesn't belong to this breakpoint will
-    /// cause an assert.
-    ///
-    /// Meant to be used by the BreakpointLocation::GetSP() function.
-    ///
-    /// @return
-    ///     A copy of the shared pointer for the given location.
-    //------------------------------------------------------------------
-    lldb::BreakpointLocationSP
-    GetLocationSP (BreakpointLocation *bp_loc_ptr);
-
 
 protected:
     friend class Target;

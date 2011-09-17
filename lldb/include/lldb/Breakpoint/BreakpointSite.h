@@ -38,7 +38,9 @@ namespace lldb_private {
 /// site. Breakpoint sites are owned by the process.
 //----------------------------------------------------------------------
 
-class BreakpointSite : public StoppointLocation
+class BreakpointSite : 
+    public ReferenceCountedBase<BreakpointSite>,
+    public StoppointLocation
 {
 public:
 

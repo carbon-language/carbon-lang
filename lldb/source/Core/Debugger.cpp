@@ -152,7 +152,7 @@ Debugger::CreateInstance ()
 }
 
 void
-Debugger::Destroy (lldb::DebuggerSP &debugger_sp)
+Debugger::Destroy (DebuggerSP &debugger_sp)
 {
     if (debugger_sp.get() == NULL)
         return;
@@ -172,29 +172,18 @@ Debugger::Destroy (lldb::DebuggerSP &debugger_sp)
     }
 }
 
-lldb::DebuggerSP
+DebuggerSP
 Debugger::GetSP ()
 {
-    lldb::DebuggerSP debugger_sp;
-    
-    Mutex::Locker locker (GetDebuggerListMutex ());
-    DebuggerList &debugger_list = GetDebuggerList();
-    DebuggerList::iterator pos, end = debugger_list.end();
-    for (pos = debugger_list.begin(); pos != end; ++pos)
-    {
-        if ((*pos).get() == this)
-        {
-            debugger_sp = *pos;
-            break;
-        }
-    }
-    return debugger_sp;
+    // This object contains an instrusive ref count base class so we can
+    // easily make a shared pointer to this object
+    return DebuggerSP (this);
 }
 
-lldb::DebuggerSP
+DebuggerSP
 Debugger::FindDebuggerWithInstanceName (const ConstString &instance_name)
 {
-    lldb::DebuggerSP debugger_sp;
+    DebuggerSP debugger_sp;
    
     Mutex::Locker locker (GetDebuggerListMutex ());
     DebuggerList &debugger_list = GetDebuggerList();
@@ -214,7 +203,7 @@ Debugger::FindDebuggerWithInstanceName (const ConstString &instance_name)
 TargetSP
 Debugger::FindTargetWithProcessID (lldb::pid_t pid)
 {
-    lldb::TargetSP target_sp;
+    TargetSP target_sp;
     Mutex::Locker locker (GetDebuggerListMutex ());
     DebuggerList &debugger_list = GetDebuggerList();
     DebuggerList::iterator pos, end = debugger_list.end();
@@ -350,7 +339,7 @@ Debugger::GetSelectedExecutionContext ()
     ExecutionContext exe_ctx;
     exe_ctx.Clear();
     
-    lldb::TargetSP target_sp = GetSelectedTarget();
+    TargetSP target_sp = GetSelectedTarget();
     exe_ctx.target = target_sp.get();
     
     if (target_sp)
@@ -469,7 +458,7 @@ Debugger::NotifyTopInputReader (InputReaderAction notification)
 }
 
 bool
-Debugger::InputReaderIsTopReader (const lldb::InputReaderSP& reader_sp)
+Debugger::InputReaderIsTopReader (const InputReaderSP& reader_sp)
 {
     InputReaderSP top_reader_sp (GetCurrentInputReader());
 
@@ -531,7 +520,7 @@ Debugger::PushInputReader (const InputReaderSP& reader_sp)
 }
 
 bool
-Debugger::PopInputReader (const lldb::InputReaderSP& pop_reader_sp)
+Debugger::PopInputReader (const InputReaderSP& pop_reader_sp)
 {
     bool result = false;
 
@@ -627,7 +616,7 @@ Debugger::GetAsyncErrorStream ()
 DebuggerSP
 Debugger::FindDebuggerWithID (lldb::user_id_t id)
 {
-    lldb::DebuggerSP debugger_sp;
+    DebuggerSP debugger_sp;
 
     Mutex::Locker locker (GetDebuggerListMutex ());
     DebuggerList &debugger_list = GetDebuggerList();
@@ -710,7 +699,7 @@ ScanFormatDescriptor (const char* var_name_begin,
                       const char* var_name_end,
                       const char** var_name_final,
                       const char** percent_position,
-                      lldb::Format* custom_format,
+                      Format* custom_format,
                       ValueObject::ValueObjectRepresentationStyle* val_obj_display)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
@@ -1033,7 +1022,7 @@ Debugger::FormatPrompt
                                 
                                 if (*var_name_begin == 's')
                                 {
-                                    valobj = valobj->GetSyntheticValue(lldb::eUseSyntheticFilter).get();
+                                    valobj = valobj->GetSyntheticValue(eUseSyntheticFilter).get();
                                     var_name_begin++;
                                 }
                                 
@@ -1053,7 +1042,7 @@ Debugger::FormatPrompt
                                 options.DontCheckDotVsArrowSyntax().DoAllowBitfieldSyntax().DoAllowFragileIVar().DoAllowSyntheticChildren();
                                 ValueObject::ValueObjectRepresentationStyle val_obj_display = ValueObject::eDisplaySummary;
                                 ValueObject* target = NULL;
-                                lldb::Format custom_format = eFormatInvalid;
+                                Format custom_format = eFormatInvalid;
                                 const char* var_name_final = NULL;
                                 const char* var_name_final_if_array_range = NULL;
                                 const char* close_bracket_position = NULL;
@@ -1847,7 +1836,7 @@ Debugger::FormatPrompt
 //--------------------------------------------------
 
 Debugger::SettingsController::SettingsController () :
-    UserSettingsController ("", lldb::UserSettingsControllerSP())
+    UserSettingsController ("", UserSettingsControllerSP())
 {
     m_default_settings.reset (new DebuggerInstanceSettings (*this, false, 
                                                             InstanceSettings::GetDefaultName().AsCString()));
@@ -1858,12 +1847,12 @@ Debugger::SettingsController::~SettingsController ()
 }
 
 
-lldb::InstanceSettingsSP
+InstanceSettingsSP
 Debugger::SettingsController::CreateInstanceSettings (const char *instance_name)
 {
     DebuggerInstanceSettings *new_settings = new DebuggerInstanceSettings (*GetSettingsController(),
                                                                            false, instance_name);
-    lldb::InstanceSettingsSP new_settings_sp (new_settings);
+    InstanceSettingsSP new_settings_sp (new_settings);
     return new_settings_sp;
 }
 
@@ -1900,7 +1889,7 @@ DebuggerInstanceSettings::DebuggerInstanceSettings
 
     if (live_instance)
     {
-        const lldb::InstanceSettingsSP &pending_settings = m_owner.FindPendingSettings (m_instance_name);
+        const InstanceSettingsSP &pending_settings = m_owner.FindPendingSettings (m_instance_name);
         CopyInstanceSettings (pending_settings, false);
     }
 }
@@ -1914,7 +1903,7 @@ DebuggerInstanceSettings::DebuggerInstanceSettings (const DebuggerInstanceSettin
     m_use_external_editor (rhs.m_use_external_editor),
     m_auto_confirm_on(rhs.m_auto_confirm_on)
 {
-    const lldb::InstanceSettingsSP &pending_settings = m_owner.FindPendingSettings (m_instance_name);
+    const InstanceSettingsSP &pending_settings = m_owner.FindPendingSettings (m_instance_name);
     CopyInstanceSettings (pending_settings, false);
     m_owner.RemovePendingSettings (m_instance_name);
 }
@@ -2082,7 +2071,7 @@ DebuggerInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
 }
 
 void
-DebuggerInstanceSettings::CopyInstanceSettings (const lldb::InstanceSettingsSP &new_settings,
+DebuggerInstanceSettings::CopyInstanceSettings (const InstanceSettingsSP &new_settings,
                                                 bool pending)
 {
     if (new_settings.get() == NULL)

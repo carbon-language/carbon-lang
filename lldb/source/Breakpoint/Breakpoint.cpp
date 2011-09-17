@@ -124,13 +124,6 @@ Breakpoint::GetLocationAtIndex (uint32_t index)
     return m_locations.GetByIndex(index);
 }
 
-BreakpointLocationSP
-Breakpoint::GetLocationSP (BreakpointLocation *bp_loc_ptr)
-{
-    return m_locations.FindByID(bp_loc_ptr->GetID());
-}
-
-
 // For each of the overall options we need to decide how they propagate to
 // the location options.  This will determine the precedence of options on
 // the breakpoint vrs. its locations.
@@ -567,5 +560,7 @@ Breakpoint::GetFilterDescription (Stream *s)
 const BreakpointSP
 Breakpoint::GetSP ()
 {
-    return m_target.GetBreakpointList().FindBreakpointByID (GetID());
+    // This object contains an instrusive ref count base class so we can
+    // easily make a shared pointer to this object
+    return BreakpointSP (this);
 }

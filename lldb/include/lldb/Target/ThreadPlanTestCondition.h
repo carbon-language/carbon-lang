@@ -30,10 +30,10 @@ public:
     virtual ~ThreadPlanTestCondition ();
 
     ThreadPlanTestCondition (Thread &thread,
-                         ExecutionContext &exe_ctx,
-                         ClangUserExpression *expression,
-                         lldb::BreakpointLocationSP break_loc_sp,
-                         bool stop_others);
+                             ExecutionContext &exe_ctx,
+                             ClangUserExpression *expression,
+                             const lldb::BreakpointLocationSP &break_loc_sp,
+                             bool stop_others);
                          
     virtual void GetDescription (Stream *s, lldb::DescriptionLevel level);
     virtual bool ValidatePlan (Stream *error);

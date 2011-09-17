@@ -27,6 +27,7 @@
 namespace lldb_private {
 
 class StackFrame :
+    public ReferenceCountedBaseVirtual<StackFrame>,
     public ExecutionContextScope
 {
 public:

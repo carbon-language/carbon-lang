@@ -373,7 +373,7 @@ AppleObjCTrampolineHandler::AppleObjCVTables::InitializeVTableSymbols ()
                 if (changed_addr != LLDB_INVALID_ADDRESS)
                 {
                     BreakpointSP trampolines_changed_bp_sp = target.CreateBreakpoint (changed_addr, true);
-                    if (trampolines_changed_bp_sp != NULL)
+                    if (trampolines_changed_bp_sp)
                     {
                         m_trampolines_changed_bp_id = trampolines_changed_bp_sp->GetID();
                         trampolines_changed_bp_sp->SetCallback (RefreshTrampolines, this, true);

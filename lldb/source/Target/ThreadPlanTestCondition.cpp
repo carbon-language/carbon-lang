@@ -37,12 +37,11 @@ using namespace lldb_private;
 // based on the value of \a type.
 //----------------------------------------------------------------------
 
-ThreadPlanTestCondition::ThreadPlanTestCondition (
-        Thread& thread,
-        ExecutionContext &exe_ctx, 
-        ClangUserExpression *expression, 
-        lldb::BreakpointLocationSP break_loc_sp, 
-        bool stop_others) :
+ThreadPlanTestCondition::ThreadPlanTestCondition (Thread& thread,
+                                                  ExecutionContext &exe_ctx, 
+                                                  ClangUserExpression *expression, 
+                                                  const BreakpointLocationSP &break_loc_sp, 
+                                                  bool stop_others) :
     ThreadPlan (ThreadPlan::eKindTestCondition, "test condition", thread, eVoteNoOpinion, eVoteNoOpinion),
     m_expression (expression),
     m_exe_ctx (exe_ctx),

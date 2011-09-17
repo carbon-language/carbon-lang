@@ -220,6 +220,7 @@ private:
 
 
 class Debugger :
+    public ReferenceCountedBaseVirtual<Debugger>,
     public UserID,
     public DebuggerInstanceSettings
 {
@@ -275,6 +276,7 @@ public:
     static void
     Destroy (lldb::DebuggerSP &debugger_sp);
 
+    virtual
     ~Debugger ();
     
     void Clear();

@@ -172,7 +172,7 @@ BreakpointOptions::SetCondition (const char *condition)
 
 ThreadPlan * 
 BreakpointOptions::GetThreadPlanToTestCondition (ExecutionContext &exe_ctx, 
-                                                 lldb::BreakpointLocationSP break_loc_sp,
+                                                 const BreakpointLocationSP &break_loc_sp,
                                                  Stream &error_stream)
 {
     // No condition means we should stop, so return NULL.

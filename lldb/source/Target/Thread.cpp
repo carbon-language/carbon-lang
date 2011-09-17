@@ -970,7 +970,9 @@ Thread::DumpUsingSettingsFormat (Stream &strm, uint32_t frame_idx)
 lldb::ThreadSP
 Thread::GetSP ()
 {
-    return m_process.GetThreadList().GetThreadSPForThreadPtr(this);
+    // This object contains an instrusive ref count base class so we can
+    // easily make a shared pointer to this object
+    return ThreadSP(this);
 }
 
 

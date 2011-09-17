@@ -574,7 +574,7 @@ CommandObjectMultiwordBreakpoint::VerifyBreakpointIDs (Args &args, Target *targe
 
     if (args.GetArgumentCount() == 0)
     {
-        if (target->GetLastCreatedBreakpoint() != NULL)
+        if (target->GetLastCreatedBreakpoint())
         {
             valid_ids->AddBreakpointID (BreakpointID(target->GetLastCreatedBreakpoint()->GetID(), LLDB_INVALID_BREAK_ID));
             result.SetStatus (eReturnStatusSuccessFinishNoResult);

@@ -351,13 +351,13 @@ public:
         ExecutionContextScope *
         GetExecutionContextScope ();
                 
-        lldb::TargetSP
+        const lldb::TargetSP &
         GetTargetSP () const
         {
             return m_target_sp;
         }
         
-        lldb::ProcessSP
+        const lldb::ProcessSP &
         GetProcessSP () const
         {
             return m_process_sp;

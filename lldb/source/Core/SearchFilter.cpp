@@ -131,7 +131,7 @@ SearchFilter::Search (Searcher &searcher)
 {
     SymbolContext empty_sc;
 
-    if (m_target_sp == NULL)
+    if (!m_target_sp)
         return;
     empty_sc.target_sp = m_target_sp;
 
@@ -146,7 +146,7 @@ SearchFilter::SearchInModuleList (Searcher &searcher, ModuleList &modules)
 {
     SymbolContext empty_sc;
 
-    if (m_target_sp == NULL)
+    if (!m_target_sp)
         return;
     empty_sc.target_sp = m_target_sp;
 

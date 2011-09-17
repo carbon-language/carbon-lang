@@ -123,6 +123,7 @@ protected:
 // Target
 //----------------------------------------------------------------------
 class Target :
+    public ReferenceCountedBaseVirtual<Target>,
     public Broadcaster,
     public ExecutionContextScope,
     public TargetInstanceSettings

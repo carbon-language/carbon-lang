@@ -16,6 +16,20 @@
 namespace lldb_private {
 
 namespace imp {
+    
+template <class T>
+inline T
+increment(T& t)
+{
+    return __sync_add_and_fetch(&t, 1);
+}
+
+template <class T>
+inline T
+decrement(T& t)
+{
+    return __sync_add_and_fetch(&t, -1);
+}
 
 class shared_count
 {
@@ -540,22 +554,16 @@ template <class T>
 class ReferenceCountedBase
 {
 public:
-    explicit ReferenceCountedBase(long refs = 0)
-        : shared_owners_(refs) 
+    explicit ReferenceCountedBase()
+        : shared_owners_(-1) 
     {
     }
     
     void
-    add_shared()
-    {
-        __sync_add_and_fetch(&shared_owners_, 1);
-    }
+    add_shared();
+
     void
-    release_shared()
-    {
-        if (__sync_add_and_fetch(&shared_owners_, -1) == -1)
-            delete static_cast<T*>(this);
-    }
+    release_shared();
 
     long 
     use_count() const 
@@ -573,54 +581,20 @@ private:
     ReferenceCountedBase& operator=(const ReferenceCountedBase&);
 };
 
+    template <class T>
+    void
+    lldb_private::ReferenceCountedBase<T>::add_shared()
+    {
+        imp::increment(shared_owners_);
+    }
     
-//template <class T>
-//class ReferenceCountedBaseVirtual
-//{
-//public:
-//    explicit ReferenceCountedBaseVirtual(long refs = 0) : 
-//        shared_owners_(refs) 
-//    {
-//    }
-//    
-//    void
-//    add_shared();
-//
-//    void
-//    release_shared();
-//    
-//    long 
-//    use_count() const 
-//    {
-//        return shared_owners_ + 1;
-//    }
-//    
-//protected:
-//    long shared_owners_;
-//    
-//    virtual ~ReferenceCountedBaseVirtual() {}
-//    
-//    friend class IntrusiveSharingPtr<T>;
-//    
-//private:
-//    ReferenceCountedBaseVirtual(const ReferenceCountedBaseVirtual&);
-//    ReferenceCountedBaseVirtual& operator=(const ReferenceCountedBaseVirtual&);
-//};
-//
-//template <class T>
-//void
-//ReferenceCountedBaseVirtual<T>::add_shared()
-//{
-//    __sync_add_and_fetch(&shared_owners_, 1);
-//}
-//
-//template <class T>
-//void
-//ReferenceCountedBaseVirtual<T>::release_shared()
-//{
-//    if (__sync_add_and_fetch(&shared_owners_, -1) == -1)
-//        delete this;
-//}
+    template <class T>
+    void
+    lldb_private::ReferenceCountedBase<T>::release_shared()
+    {
+        if (imp::decrement(shared_owners_) == -1)
+            delete static_cast<T*>(this);
+    }
 
     
 template <class T>

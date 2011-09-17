@@ -886,7 +886,7 @@ Options::HandleOptionArgumentCompletion
                     FileSpec module_spec(module_name, false);
                     lldb::TargetSP target_sp = m_interpreter.GetDebugger().GetSelectedTarget();
                     // Search filters require a target...
-                    if (target_sp != NULL)
+                    if (target_sp)
                         filter_ap.reset (new SearchFilterByModule (target_sp, module_spec));
                 }
                 break;

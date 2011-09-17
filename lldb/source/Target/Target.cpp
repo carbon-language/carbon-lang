@@ -146,7 +146,9 @@ Target::GetProcessSP () const
 lldb::TargetSP
 Target::GetSP()
 {
-    return m_debugger.GetTargetList().GetTargetSP(this);
+    // This object contains an instrusive ref count base class so we can
+    // easily make a shared pointer to this object
+    return TargetSP(this);
 }
 
 void
