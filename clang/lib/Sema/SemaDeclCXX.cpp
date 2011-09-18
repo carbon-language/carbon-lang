@@ -2767,8 +2767,9 @@ void Sema::ActOnMemInitializers(Decl *ConstructorDecl,
 void
 Sema::MarkBaseAndMemberDestructorsReferenced(SourceLocation Location,
                                              CXXRecordDecl *ClassDecl) {
-  // Ignore dependent contexts.
-  if (ClassDecl->isDependentContext())
+  // Ignore dependent contexts. Also ignore unions, since their members never
+  // have destructors implicitly called.
+  if (ClassDecl->isDependentContext() || ClassDecl->isUnion())
     return;
 
   // FIXME: all the access-control diagnostics are positioned on the

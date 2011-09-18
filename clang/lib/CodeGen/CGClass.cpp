@@ -980,6 +980,10 @@ void CodeGenFunction::EnterDtorCleanups(const CXXDestructorDecl *DD,
 
   const CXXRecordDecl *ClassDecl = DD->getParent();
 
+  // Unions have no bases and do not call field destructors.
+  if (ClassDecl->isUnion())
+    return;
+
   // The complete-destructor phase just destructs all the virtual bases.
   if (DtorType == Dtor_Complete) {
 
