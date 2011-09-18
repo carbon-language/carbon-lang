@@ -13445,7 +13445,7 @@ static SDValue PerformLOADCombine(SDNode *N, SelectionDAG &DAG,
 
   ISD::LoadExtType Ext = Ld->getExtensionType();
 
-  // If yhis is a vector EXT Load then attempt to optimize it using a
+  // If this is a vector EXT Load then attempt to optimize it using a
   // shuffle. We need SSE4 for the shuffles.
   // TODO: It is possible to support ZExt by zeroing the undef values
   // during the shuffle phase or after the shuffle.
@@ -13457,7 +13457,7 @@ static SDValue PerformLOADCombine(SDNode *N, SelectionDAG &DAG,
     unsigned RegSz = RegVT.getSizeInBits();
     unsigned MemSz = MemVT.getSizeInBits();
     assert(RegSz > MemSz && "Register size must be greater than the mem size");
-    // All sized must be a power of two
+    // All sizes must be a power of two
     if (!isPowerOf2_32(RegSz * MemSz * NumElems)) return SDValue();
 
     // Attempt to load the original value using a single load op.
