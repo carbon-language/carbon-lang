@@ -8414,9 +8414,9 @@ SDValue X86TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
                      DAG.getConstant(X86CC, MVT::i8), EFLAGS);
 }
 
-// Lower256IntVETCC - Break a VSETCC 256-bit integer VSETCC into two new 128
+// Lower256IntVSETCC - Break a VSETCC 256-bit integer VSETCC into two new 128
 // ones, and then concatenate the result back.
-static SDValue Lower256IntVETCC(SDValue Op, SelectionDAG &DAG) {
+static SDValue Lower256IntVSETCC(SDValue Op, SelectionDAG &DAG) {
   EVT VT = Op.getValueType();
 
   assert(VT.getSizeInBits() == 256 && Op.getOpcode() == ISD::SETCC &&
@@ -8520,7 +8520,7 @@ SDValue X86TargetLowering::LowerVSETCC(SDValue Op, SelectionDAG &DAG) const {
 
   // Break 256-bit integer vector compare into smaller ones.
   if (!isFP && VT.getSizeInBits() == 256)
-    return Lower256IntVETCC(Op, DAG);
+    return Lower256IntVSETCC(Op, DAG);
 
   // We are handling one of the integer comparisons here.  Since SSE only has
   // GT and EQ comparisons for integer, swapping operands and multiple
