@@ -1138,6 +1138,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setTargetDAGCombine(ISD::AND);
   setTargetDAGCombine(ISD::ADD);
   setTargetDAGCombine(ISD::SUB);
+  setTargetDAGCombine(ISD::LOAD);
   setTargetDAGCombine(ISD::STORE);
   setTargetDAGCombine(ISD::ZERO_EXTEND);
   setTargetDAGCombine(ISD::SINT_TO_FP);
@@ -13433,6 +13434,89 @@ static SDValue PerformOrCombine(SDNode *N, SelectionDAG &DAG,
   return SDValue();
 }
 
+/// PerformLOADCombine - Do target-specific dag combines on LOAD nodes.
+static SDValue PerformLOADCombine(SDNode *N, SelectionDAG &DAG,
+                                   const X86Subtarget *Subtarget) {
+  LoadSDNode *Ld = cast<LoadSDNode>(N);
+  EVT RegVT = Ld->getValueType(0);
+  EVT MemVT = Ld->getMemoryVT();
+  DebugLoc dl = Ld->getDebugLoc();
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+
+  ISD::LoadExtType Ext = Ld->getExtensionType();
+
+  // If yhis is a vector EXT Load then attempt to optimize it using a
+  // shuffle. We need SSE4 for the shuffles.
+  // TODO: It is possible to support ZExt by zeroing the undef values
+  // during the shuffle phase or after the shuffle.
+  if (RegVT.isVector() && Ext == ISD::EXTLOAD && Subtarget->hasSSE41()) {
+    assert(MemVT != RegVT && "Cannot extend to the same type");
+    assert(MemVT.isVector() && "Must load a vector from memory");
+
+    unsigned NumElems = RegVT.getVectorNumElements();
+    unsigned RegSz = RegVT.getSizeInBits();
+    unsigned MemSz = MemVT.getSizeInBits();
+    assert(RegSz > MemSz && "Register size must be greater than the mem size");
+    // All sized must be a power of two
+    if (!isPowerOf2_32(RegSz * MemSz * NumElems)) return SDValue();
+
+    // Attempt to load the original value using a single load op.
+    // Find a scalar type which is equal to the loaded word size.
+    MVT SclrLoadTy = MVT::i8;
+    for (unsigned tp = MVT::FIRST_INTEGER_VALUETYPE;
+         tp < MVT::LAST_INTEGER_VALUETYPE; ++tp) {
+      MVT Tp = (MVT::SimpleValueType)tp;
+      if (TLI.isTypeLegal(Tp) &&  Tp.getSizeInBits() == MemSz) {
+        SclrLoadTy = Tp;
+        break;
+      }
+    }
+
+    // Proceed if a load word is found.
+    if (SclrLoadTy.getSizeInBits() != MemSz) return SDValue();
+
+    EVT LoadUnitVecVT = EVT::getVectorVT(*DAG.getContext(), SclrLoadTy,
+      RegSz/SclrLoadTy.getSizeInBits());
+
+    EVT WideVecVT = EVT::getVectorVT(*DAG.getContext(), MemVT.getScalarType(),
+                                  RegSz/MemVT.getScalarType().getSizeInBits());
+    // Can't shuffle using an illegal type.
+    if (!TLI.isTypeLegal(WideVecVT)) return SDValue();
+
+    // Perform a single load.
+    SDValue ScalarLoad = DAG.getLoad(SclrLoadTy, dl, Ld->getChain(),
+                                  Ld->getBasePtr(),
+                                  Ld->getPointerInfo(), Ld->isVolatile(),
+                                  Ld->isNonTemporal(), Ld->getAlignment());
+
+    // Insert the word loaded into a vector.
+    SDValue ScalarInVector = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl,
+      LoadUnitVecVT, ScalarLoad);
+
+    // Bitcast the loaded value to a vector of the original element type, in
+    // the size of the target vector type.
+    SDValue SlicedVec = DAG.getNode(ISD::BITCAST, dl, WideVecVT, ScalarInVector);
+    unsigned SizeRatio = RegSz/MemSz;
+
+    // Redistribute the loaded elements into the different locations.
+    SmallVector<int, 8> ShuffleVec(NumElems * SizeRatio, -1);
+    for (unsigned i = 0; i < NumElems; i++) ShuffleVec[i*SizeRatio] = i;
+
+    SDValue Shuff = DAG.getVectorShuffle(WideVecVT, dl, SlicedVec,
+                                DAG.getUNDEF(SlicedVec.getValueType()),
+                                ShuffleVec.data());
+
+    // Bitcast to the requested type.
+    Shuff = DAG.getNode(ISD::BITCAST, dl, RegVT, Shuff);
+    // Replace the original load with the new sequence
+    // and return the new chain.
+    DAG.ReplaceAllUsesOfValueWith(SDValue(N, 0), Shuff);
+    return SDValue(ScalarLoad.getNode(), 1);
+  }
+
+  return SDValue();
+}
+
 /// PerformSTORECombine - Do target-specific dag combines on STORE nodes.
 static SDValue PerformSTORECombine(SDNode *N, SelectionDAG &DAG,
                                    const X86Subtarget *Subtarget) {
@@ -13479,9 +13563,7 @@ static SDValue PerformSTORECombine(SDNode *N, SelectionDAG &DAG,
 
     // From, To sizes and ElemCount must be pow of two
     if (!isPowerOf2_32(NumElems * FromSz * ToSz)) return SDValue();
-    // We are going to use the original vector elt for storing.
-    // accumulated smaller vector elements must be a multiple of bigger size.
-    if (0 != (NumElems * ToSz) % FromSz) return SDValue();
+
     unsigned SizeRatio  = FromSz / ToSz;
 
     assert(SizeRatio * NumElems * ToSz == VT.getSizeInBits());
@@ -13885,6 +13967,7 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case ISD::SRL:            return PerformShiftCombine(N, DAG, Subtarget);
   case ISD::AND:            return PerformAndCombine(N, DAG, DCI, Subtarget);
   case ISD::OR:             return PerformOrCombine(N, DAG, DCI, Subtarget);
+  case ISD::LOAD:           return PerformLOADCombine(N, DAG, Subtarget);
   case ISD::STORE:          return PerformSTORECombine(N, DAG, Subtarget);
   case ISD::SINT_TO_FP:     return PerformSINT_TO_FPCombine(N, DAG, this);
   case X86ISD::FXOR:
