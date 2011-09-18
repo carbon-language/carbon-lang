@@ -308,7 +308,7 @@ public:
     typedef __uint32_t mask;
 #endif
 
-#if __APPLE__
+#if __APPLE__ || __FreeBSD__
     static const mask space  = _CTYPE_S;
     static const mask print  = _CTYPE_R;
     static const mask cntrl  = _CTYPE_C;
