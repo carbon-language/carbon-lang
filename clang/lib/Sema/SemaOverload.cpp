@@ -2866,6 +2866,25 @@ CompareStandardConversionSequences(Sema &S,
     }
   }
 
+  // In Microsoft mode, prefer an integral conversion to a
+  // floating-to-integral conversion if the integral conversion
+  // is between types of the same size.
+  // For example:
+  // void f(float);
+  // void f(int);
+  // int main {
+  //    long a;
+  //    f(a);
+  // }
+  // Here, MSVC will call f(int) instead of generating a compile error
+  // as clang will do in standard mode.
+  if (S.getLangOptions().MicrosoftMode &&
+      SCS1.Second == ICK_Integral_Conversion &&
+      SCS2.Second == ICK_Floating_Integral && 
+      S.Context.getTypeSize(SCS1.getFromType()) ==
+      S.Context.getTypeSize(SCS1.getToType(2)))
+    return ImplicitConversionSequence::Better;
+
   return ImplicitConversionSequence::Indistinguishable;
 }
 
