@@ -94,11 +94,11 @@ define <2 x double> @A(<2 x double> %x, <2 x double> %y) {
 
 ; CHECK: B
 define <2 x double> @B(<2 x double> %x, <2 x double> %y) {
-  ; CHECK: vcmpltpd
+  ; CHECK: vcmpnlepd
   ; CHECK: vblendvpd
-  %max_is_x = fcmp ogt <2 x double> %x, %y
-  %max = select <2 x i1> %max_is_x, <2 x double> %x, <2 x double> %y
-  ret <2 x double> %max
+  %min_is_x = fcmp ult <2 x double> %x, %y
+  %min = select <2 x i1> %min_is_x, <2 x double> %x, <2 x double> %y
+  ret <2 x double> %min
 }
 
 
