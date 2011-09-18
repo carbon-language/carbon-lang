@@ -75,6 +75,7 @@ placed.
 <h2><a name="usage">Usage</a></h2>
 <!--=========================================================================-->
 <div>
+
   <p>The linker takes a <tt>-plugin</tt> option that points to the path of
   the plugin <tt>.so</tt> file. To find out what link command <tt>gcc</tt>
   would run in a given situation, run <tt>gcc -v <em>[...]</em></tt> and look
@@ -82,19 +83,21 @@ placed.
   <tt>ld-new -plugin /path/to/LLVMgold.so</tt> to test it out. Once you're
   ready to switch to using gold, backup your existing <tt>/usr/bin/ld</tt>
   then replace it with <tt>ld-new</tt>.</p>
-  <p>You can produce bitcode files from <tt>llvm-gcc</tt> using
+
+  <p>You can produce bitcode files from <tt>clang</tt> using
   <tt>-emit-llvm</tt> or <tt>-flto</tt>, or the <tt>-O4</tt> flag which is
   synonymous with <tt>-O3 -flto</tt>.</p>
-  <p><tt>llvm-gcc</tt> has a <tt>-use-gold-plugin</tt> option which looks
-  for the gold plugin in the same directories as it looks for <tt>cc1</tt> and
-  passes the <tt>-plugin</tt> option to ld. It will not look for an alternate
+
+  <p><tt>Clang</tt> has a <tt>-use-gold-plugin</tt> option which looks for the
+  gold plugin in the same directories as it looks for <tt>cc1</tt> and passes
+  the <tt>-plugin</tt> option to <tt>ld</tt>. It will not look for an alternate
   linker, which is why you need gold to be the installed system linker in your
   path.</p>
+
   <p>If you want <tt>ar</tt> and <tt>nm</tt> to work seamlessly as well, install
   <tt>LLVMgold.so</tt> to <tt>/usr/lib/bfd-plugins</tt>. If you built your
   own gold, be sure to install the <tt>ar</tt> and <tt>nm-new</tt> you built to
-  <tt>/usr/bin</tt>.
-  <p>
+  <tt>/usr/bin</tt>.<p>
 
 <!-- ======================================================================= -->
 <h3>
@@ -137,11 +140,12 @@ void foo4(void) {
 }
 
 --- command lines ---
-$ llvm-gcc -flto a.c -c -o a.o              # &lt;-- a.o is LLVM bitcode file
+$ clang -flto a.c -c -o a.o                 # &lt;-- a.o is LLVM bitcode file
 $ ar q a.a a.o                              # &lt;-- a.a is an archive with LLVM bitcode
-$ llvm-gcc b.c -c -o b.o                    # &lt;-- b.o is native object file
-$ llvm-gcc -use-gold-plugin a.a b.o -o main # &lt;-- link with LLVMgold plugin
+$ clang b.c -c -o b.o                       # &lt;-- b.o is native object file
+$ clang -use-gold-plugin a.a b.o -o main    # &lt;-- link with LLVMgold plugin
 </pre>
+
   <p>Gold informs the plugin that foo3 is never referenced outside the IR,
   leading LLVM to delete that function. However, unlike in the
   <a href="LinkTimeOptimization.html#example1">libLTO
@@ -158,20 +162,21 @@ $ llvm-gcc -use-gold-plugin a.a b.o -o main # &lt;-- link with LLVMgold plugin
 </h2>
 <!--=========================================================================-->
 <div>
-  <p>Once your system <tt>ld</tt>, <tt>ar</tt> and <tt>nm</tt> all support LLVM
-  bitcode, everything is in place for an easy to use LTO build of autotooled
-  projects:</p>
+  <p>Once your system <tt>ld</tt>, <tt>ar</tt>, and <tt>nm</tt> all support LLVM
+     bitcode, everything is in place for an easy to use LTO build of autotooled
+     projects:</p>
+
   <ul>
     <li>Follow the instructions <a href="#build">on how to build LLVMgold.so</a>.</li>
     <li>Install the newly built binutils to <tt>$PREFIX</tt></li>
     <li>Copy <tt>Release/lib/LLVMgold.so</tt> to
-    <tt>$PREFIX/libexec/gcc/x86_64-unknown-linux-gnu/4.2.1/</tt> and
-    <tt>$PREFIX/lib/bfd-plugins/</tt></li>
-    <li>Set environment variables (<tt>$PREFIX</tt> is where you installed llvm-gcc and
-    binutils):
-    <pre class="doc_code">
-export CC="$PREFIX/bin/llvm-gcc -use-gold-plugin"
-export CXX="$PREFIX/bin/llvm-g++ -use-gold-plugin"
+        <tt>$PREFIX/libexec/gcc/x86_64-unknown-linux-gnu/4.2.1/</tt> and
+        <tt>$PREFIX/lib/bfd-plugins/</tt></li>
+    <li>Set environment variables (<tt>$PREFIX</tt> is where you installed clang and
+        binutils):
+<pre class="doc_code">
+export CC="$PREFIX/bin/clang -use-gold-plugin"
+export CXX="$PREFIX/bin/clang++ -use-gold-plugin"
 export AR="$PREFIX/bin/ar"
 export NM="$PREFIX/bin/nm"
 export RANLIB=/bin/true #ranlib is not needed, and doesn't support .bc files in .a
@@ -179,18 +184,22 @@ export CFLAGS="-O4"
 </pre>
      </li>
      <li>Or you can just set your path:
-    <pre class="doc_code">
+<pre class="doc_code">
 export PATH="$PREFIX/bin:$PATH"
-export CC="llvm-gcc -use-gold-plugin"
-export CXX="llvm-g++ -use-gold-plugin"
+export CC="clang -use-gold-plugin"
+export CXX="clang++ -use-gold-plugin"
 export RANLIB=/bin/true
 export CFLAGS="-O4"
-</pre>
-     </li>
-     <li>Configure &amp; build the project as usual: <tt>./configure &amp;&amp; make &amp;&amp; make check</tt> </li>
+</pre></li>
+     <li>Configure &amp; build the project as usual:
+<pre class="doc_code">
+% ./configure &amp;&amp; make &amp;&amp; make check
+</pre></li>
    </ul>
-   <p> The environment variable settings may work for non-autotooled projects
-   too, but you may need to set the <tt>LD</tt> environment variable as well.</p>
+
+   <p>The environment variable settings may work for non-autotooled projects
+      too, but you may need to set the <tt>LD</tt> environment variable as
+      well.</p>
 </div>
 
 <!--=========================================================================-->
