@@ -61,8 +61,8 @@ class VectorLegalizer {
   // Implements expansion for UINT_TO_FLOAT; falls back to UnrollVectorOp if
   // SINT_TO_FLOAT and SHR on vectors isn't legal.
   SDValue ExpandUINT_TO_FLOAT(SDValue Op);
-  // Implement vselect in terms of XOR, AND,OR when blend is not supported
-  //  by the target.
+  // Implement vselect in terms of XOR, AND, OR when blend is not supported
+  // by the target.
   SDValue ExpandVSELECT(SDValue Op);
   SDValue ExpandFNEG(SDValue Op);
   // Implements vector promotion; this is essentially just bitcasting the
@@ -277,9 +277,8 @@ SDValue VectorLegalizer::ExpandVSELECT(SDValue Op) {
   // AND,OR,XOR, we will have to scalarize the op.
   if (!TLI.isOperationLegalOrCustom(ISD::AND, VT) ||
       !TLI.isOperationLegalOrCustom(ISD::XOR, VT) ||
-      !TLI.isOperationLegalOrCustom(ISD::OR, VT)) {
-    return DAG.UnrollVectorOp(Op.getNode());
-  }
+      !TLI.isOperationLegalOrCustom(ISD::OR, VT))
+        return DAG.UnrollVectorOp(Op.getNode());
 
   assert(VT.getSizeInBits() == OVT.getSizeInBits() && "Invalid mask size");
   // Bitcast the operands to be the same type as the mask.
