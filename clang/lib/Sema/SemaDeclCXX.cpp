@@ -2291,6 +2291,11 @@ static bool CollectFieldInitializer(Sema &SemaRef, BaseAndFieldInfo &Info,
     return false;
   }
 
+  // Don't build an implicit initializer for union members if none was
+  // explicitly specified.
+  if (Field->getParent()->isUnion())
+    return false;
+
   // Don't try to build an implicit initializer if there were semantic
   // errors in any of the initializers (and therefore we might be
   // missing some that the user actually wrote).
@@ -2461,17 +2466,6 @@ bool Sema::SetCtorInitializers(CXXConstructorDecl *Constructor,
       if (F->getType()->isIncompleteArrayType()) {
         assert(ClassDecl->hasFlexibleArrayMember() &&
                "Incomplete array type is not valid");
-        continue;
-      }
-      
-      // If this field is somewhere within an anonymous union, we only 
-      // initialize it if there's an explicit initializer.
-      if (isWithinAnonymousUnion(F)) {
-        if (CXXCtorInitializer *Init
-              = Info.AllBaseFields.lookup(F->getAnonField())) {
-          Info.AllToInit.push_back(Init);
-        }
-        
         continue;
       }
       
