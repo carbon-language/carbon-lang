@@ -2739,6 +2739,12 @@ Decl *Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
                            Record->getLocation(), /*IdentifierInfo=*/0,
                            Context.getTypeDeclType(Record),
                            TInfo, SC, SCAsWritten);
+
+    // Default-initialize the implicit variable. This initialization will be
+    // trivial in almost all cases, except if a union member has an in-class
+    // initializer:
+    //   union { int n = 0; };
+    ActOnUninitializedDecl(Anon, /*TypeMayContainAuto=*/false);
   }
   Anon->setImplicit();
 

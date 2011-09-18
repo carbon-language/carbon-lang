@@ -533,17 +533,6 @@ namespace test15 {
   template void f<7>(S<7 + e>);
 }
 
-// rdar://problem/8125400.  Don't crash.
-namespace test16 {
-  static union {};
-  static union { union {}; };
-  static union { struct {}; };
-  static union { union { union {}; }; };
-  static union { union { struct {}; }; };
-  static union { struct { union {}; }; };
-  static union { struct { struct {}; }; };
-}
-
 // rdar://problem/8302148
 namespace test17 {
   template <int N> struct A {};

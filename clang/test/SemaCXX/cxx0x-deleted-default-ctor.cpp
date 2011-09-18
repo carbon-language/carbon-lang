@@ -118,3 +118,15 @@ struct late_delete {
   late_delete();
 };
 late_delete::late_delete() = default; // expected-error {{would delete it}}
+
+// See also rdar://problem/8125400.
+namespace empty {
+  static union {}; // expected-error {{deleted constructor}} expected-note {{here}}
+  static union { union {}; };
+  static union { struct {}; };
+  static union { union { union {}; }; };
+  static union { union { struct {}; }; };
+  static union { struct { union {}; }; }; // expected-error {{deleted constructor}} expected-note {{here}}
+  static union { struct { struct {}; }; };
+}
+
