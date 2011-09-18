@@ -821,7 +821,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::FSQRT,              MVT::v2f64, Legal);
     setOperationAction(ISD::FNEG,               MVT::v2f64, Custom);
 
-    setOperationAction(ISD::SETCC,              MVT::v2f64, Custom);
+    setOperationAction(ISD::SETCC,              MVT::v2i64, Custom);
     setOperationAction(ISD::SETCC,              MVT::v16i8, Custom);
     setOperationAction(ISD::SETCC,              MVT::v8i16, Custom);
     setOperationAction(ISD::SETCC,              MVT::v4i32, Custom);
