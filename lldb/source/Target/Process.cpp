@@ -3381,7 +3381,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
     
     uint32_t selected_tid;
     StackID selected_stack_id;
-    if (selected_thread_sp != NULL)
+    if (selected_thread_sp)
     {
         selected_tid = selected_thread_sp->GetIndexID();
         selected_stack_id = selected_thread_sp->GetSelectedFrame()->GetStackID();

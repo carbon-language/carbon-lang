@@ -196,7 +196,7 @@ ObjectContainerUniversalMachO::GetArchitectureAtIndex (uint32_t idx, ArchSpec& a
     return false;
 }
 
-ObjectFile *
+ObjectFileSP
 ObjectContainerUniversalMachO::GetObjectFile (const FileSpec *file)
 {
     uint32_t arch_idx = 0;
@@ -219,11 +219,14 @@ ObjectContainerUniversalMachO::GetObjectFile (const FileSpec *file)
         {
             if (arch == curr_arch)
             {
-                return ObjectFile::FindPlugin (m_module, file, m_offset + m_fat_archs[arch_idx].offset, m_fat_archs[arch_idx].size);
+                return ObjectFile::FindPlugin (m_module, 
+                                               file, 
+                                               m_offset + m_fat_archs[arch_idx].offset, 
+                                               m_fat_archs[arch_idx].size);
             }
         }
     }
-    return NULL;
+    return ObjectFileSP();
 }
 
 

@@ -188,7 +188,7 @@ public:
     ///     arch and optional \a name. Returns NULL of no such object
     ///     file exists in the container.
     //------------------------------------------------------------------
-    virtual ObjectFile *
+    virtual lldb::ObjectFileSP
     GetObjectFile (const FileSpec *file) = 0;
 
     virtual bool

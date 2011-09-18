@@ -68,7 +68,7 @@ Module::Module(const FileSpec& file_spec, const ArchSpec& arch, const ConstStrin
     m_platform_file(),
     m_object_name (),
     m_object_offset (object_offset),
-    m_objfile_ap (),
+    m_objfile_sp (),
     m_symfile_ap (),
     m_ast (),
     m_did_load_objfile (false),
@@ -124,7 +124,7 @@ Module::~Module()
     // here because symbol files can require the module object file. So we tear
     // down the symbol file first, then the object file.
     m_symfile_ap.reset();
-    m_objfile_ap.reset();
+    m_objfile_sp.reset();
 }
 
 
@@ -636,9 +636,9 @@ Module::GetObjectFile()
         m_did_load_objfile = true;
         Timer scoped_timer(__PRETTY_FUNCTION__,
                            "Module::GetObjectFile () module = %s", GetFileSpec().GetFilename().AsCString(""));
-        m_objfile_ap.reset(ObjectFile::FindPlugin(this, &m_file, m_object_offset, m_file.GetByteSize()));
+        m_objfile_sp = ObjectFile::FindPlugin(this, &m_file, m_object_offset, m_file.GetByteSize());
     }
-    return m_objfile_ap.get();
+    return m_objfile_sp.get();
 }
 
 

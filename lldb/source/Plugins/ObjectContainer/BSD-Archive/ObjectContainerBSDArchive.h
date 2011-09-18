@@ -63,10 +63,17 @@ public:
     virtual bool
     ParseHeader ();
 
+    virtual size_t
+    GetNumObjects () const
+    {
+        if (m_archive_sp)
+            return m_archive_sp->GetNumObjects();
+        return 0;
+    }
     virtual void
     Dump (lldb_private::Stream *s) const;
 
-    virtual lldb_private::ObjectFile *
+    virtual lldb::ObjectFileSP
     GetObjectFile (const lldb_private::FileSpec *file);
 
     //------------------------------------------------------------------
@@ -101,6 +108,7 @@ protected:
         uint32_t        ar_size;        // size in bytes
         uint32_t        ar_file_offset; // file offset in bytes from the beginning of the file of the object data
         uint32_t        ar_file_size;   // length of the object data
+        lldb::ObjectFileSP object_file_sp;
 
         typedef std::vector<Object>         collection;
         typedef collection::iterator        iterator;
@@ -136,6 +144,12 @@ protected:
         ~Archive ();
 
         size_t
+        GetNumObjects () const
+        {
+            return m_objects.size();
+        }
+
+        size_t
         ParseObjects (lldb_private::DataExtractor &data);
 
         Object *
@@ -152,6 +166,9 @@ protected:
         {
             return m_arch;
         }
+        
+        bool
+        HasNoExternalReferences() const;
 
     protected:
 

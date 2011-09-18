@@ -50,6 +50,7 @@ namespace lldb_private {
 /// this abstract class.
 //----------------------------------------------------------------------
 class ObjectFile:
+    public ReferenceCountedBaseVirtual<ObjectFile>,
     public PluginInterface,
     public ModuleChild
 {
@@ -84,19 +85,11 @@ public:
     /// supplied upon construction. The at an offset within a file for
     /// objects that contain more than one architecture or object.
     //------------------------------------------------------------------
-    ObjectFile (Module* module, const FileSpec *file_spec_ptr, lldb::addr_t offset, lldb::addr_t length, lldb::DataBufferSP& headerDataSP) :
-        ModuleChild (module),
-        m_file (),  // This file could be different from the original module's file
-        m_type (eTypeInvalid),
-        m_strata (eStrataInvalid),
-        m_offset (offset),
-        m_length (length),
-        m_data (headerDataSP, lldb::endian::InlHostByteOrder(), 4),
-        m_unwind_table (*this)
-    {
-        if (file_spec_ptr)
-            m_file = *file_spec_ptr;
-    }
+    ObjectFile (Module* module, 
+                const FileSpec *file_spec_ptr, 
+                lldb::addr_t offset, 
+                lldb::addr_t length, 
+                lldb::DataBufferSP& headerDataSP);
 
     //------------------------------------------------------------------
     /// Destructor.
@@ -105,9 +98,10 @@ public:
     /// inherited from by the plug-in instance.
     //------------------------------------------------------------------
     virtual
-    ~ObjectFile()
-    {
-    }
+    ~ObjectFile();
+    
+    lldb::ObjectFileSP
+    GetSP ();
 
     //------------------------------------------------------------------
     /// Dump a description of this object to a Stream.
@@ -148,7 +142,7 @@ public:
     ///
     /// @see ObjectFile::ParseHeader()
     //------------------------------------------------------------------
-    static ObjectFile*
+    static lldb::ObjectFileSP
     FindPlugin (Module* module,
                 const FileSpec* file_spec,
                 lldb::addr_t file_offset,

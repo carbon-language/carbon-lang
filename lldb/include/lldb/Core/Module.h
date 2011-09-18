@@ -654,7 +654,7 @@ protected:
     FileSpec                    m_platform_file;///< The path to the module on the platform on which it is being debugged
     ConstString                 m_object_name;  ///< The name an object within this module that is selected, or empty of the module is represented by \a m_file.
     uint64_t                    m_object_offset;
-    std::auto_ptr<ObjectFile>   m_objfile_ap;   ///< A pointer to the object file parser for this module.
+    lldb::ObjectFileSP          m_objfile_sp;   ///< A shared pointer to the object file parser for this module as it may or may not be shared with the SymbolFile
     std::auto_ptr<SymbolVendor> m_symfile_ap;   ///< A pointer to the symbol vendor for this module.
     ClangASTContext             m_ast;          ///< The AST context for this module.
     bool                        m_did_load_objfile:1,

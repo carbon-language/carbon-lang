@@ -166,19 +166,14 @@ SymbolFileDWARFDebugMap::GetModuleByCompUnitInfo (CompileUnitInfo *comp_unit_inf
         if (oso_symbol)
         {
             FileSpec oso_file_spec(oso_symbol->GetMangled().GetName().AsCString(), true);
-            // Don't allow cached .o files since we dress up each .o file with
-            // new sections. We want them to be in the module list so we can 
-            // always find a shared pointer to the module but just don't share them.
-            const bool always_create = true;
-            ModuleList::GetSharedModule (oso_file_spec,
-                                         m_obj_file->GetModule()->GetArchitecture(),
-                                         NULL,  // lldb_private::UUID pointer
-                                         NULL,  // object name
-                                         0,     // object offset
-                                         comp_unit_info->oso_module_sp,
-                                         NULL,
-                                         NULL,
-                                         always_create);
+            // Always create a new module for .o files. Why? Because we
+            // use the debug map, to add new sections to each .o file and
+            // even though a .o file might not have changed, the sections
+            // that get added to the .o file can change.
+            comp_unit_info->oso_module_sp = new Module (oso_file_spec, 
+                                                        m_obj_file->GetModule()->GetArchitecture(),
+                                                        NULL, 
+                                                        0);
         }
     }
     return comp_unit_info->oso_module_sp.get();

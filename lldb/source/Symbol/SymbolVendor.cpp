@@ -55,7 +55,11 @@ SymbolVendor::FindPlugin (Module* module)
     // file representation for the module.
     instance_ap.reset(new SymbolVendor(module));
     if (instance_ap.get())
-        instance_ap->AddSymbolFileRepresendation(module->GetObjectFile());
+    {
+        ObjectFile *objfile = module->GetObjectFile();
+        if (objfile)
+            instance_ap->AddSymbolFileRepresendation(objfile->GetSP());
+    }
     return instance_ap.release();
 }
 
@@ -82,11 +86,14 @@ SymbolVendor::~SymbolVendor()
 // Add a represantion given an object file.
 //----------------------------------------------------------------------
 void
-SymbolVendor::AddSymbolFileRepresendation(ObjectFile *obj_file)
+SymbolVendor::AddSymbolFileRepresendation(const ObjectFileSP &objfile_sp)
 {
     Mutex::Locker locker(m_mutex);
-    if (obj_file != NULL)
-        m_sym_file_ap.reset(SymbolFile::FindPlugin(obj_file));
+    if (objfile_sp)
+    {
+        m_objfile_sp = objfile_sp;
+        m_sym_file_ap.reset(SymbolFile::FindPlugin(objfile_sp.get()));
+    }
 }
 
 bool

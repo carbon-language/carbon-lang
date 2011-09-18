@@ -160,14 +160,33 @@ ObjectContainerBSDArchive::Archive::FindCachedArchive (const FileSpec &file, con
     Mutex::Locker locker(Archive::GetArchiveCacheMutex ());
     shared_ptr archive_sp;
     Archive::Map &archive_map = Archive::GetArchiveCache ();
-    Archive::Map::iterator pos;
-    for (pos = archive_map.find (file); pos != archive_map.end() && pos->first == file; ++pos)
+    Archive::Map::iterator pos = archive_map.find (file);
+    // Don't cache a value for "archive_map.end()" below since we might
+    // delete an archive entry...
+    while (pos != archive_map.end() && pos->first == file)
     {
-        if (pos->second->GetArchitecture() == arch &&
-            pos->second->GetModificationTime() == time)
+        if (pos->second->GetArchitecture() == arch)
         {
-            archive_sp = pos->second;
+            if (pos->second->GetModificationTime() == time)
+            {
+                return pos->second;
+            }
+            else
+            {
+                // We have a file at the same path with the same architecture
+                // whose modification time doesn't match. It doesn't make sense
+                // for us to continue to use this BSD archive since we cache only
+                // the object info which consists of file time info and also the
+                // file offset and file size of any contianed objects. Since
+                // this information is now out of date, we won't get the correct
+                // information if we go and extract the file data, so we should 
+                // remove the old and outdated entry.
+                archive_map.erase (pos);
+                pos = archive_map.find (file);
+                continue;
+            }
         }
+        ++pos;
     }
     return archive_sp;
 }
@@ -266,7 +285,7 @@ ObjectContainerBSDArchive::CreateInstance
         
         // Read everything since we need that in order to index all the
         // objects in the archive
-        data_sp = file->ReadFileContents(offset, length);
+        data_sp = file->MemoryMapFileContents (offset, length);
 
         std::auto_ptr<ObjectContainerBSDArchive> container_ap(new ObjectContainerBSDArchive (module, data_sp, file, offset, length));
         if (container_ap->ParseHeader())
@@ -363,7 +382,7 @@ ObjectContainerBSDArchive::Dump (Stream *s) const
     s->EOL();
 }
 
-ObjectFile *
+ObjectFileSP
 ObjectContainerBSDArchive::GetObjectFile (const FileSpec *file)
 {
     if (m_module->GetObjectName() && m_archive_sp)
@@ -372,7 +391,7 @@ ObjectContainerBSDArchive::GetObjectFile (const FileSpec *file)
         if (object)
             return ObjectFile::FindPlugin (m_module, file, m_offset + object->ar_file_offset, object->ar_file_size);
     }
-    return NULL;
+    return ObjectFileSP();
 }
 
 

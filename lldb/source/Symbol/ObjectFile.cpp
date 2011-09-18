@@ -8,6 +8,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/lldb-private.h"
+#include "lldb/lldb-private-log.h"
+#include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/RegularExpression.h"
@@ -19,15 +21,15 @@
 using namespace lldb;
 using namespace lldb_private;
 
-ObjectFile*
-ObjectFile::FindPlugin (Module* module, const FileSpec* file, lldb::addr_t file_offset, lldb::addr_t file_size)
+ObjectFileSP
+ObjectFile::FindPlugin (Module* module, const FileSpec* file, addr_t file_offset, addr_t file_size)
 {
     Timer scoped_timer (__PRETTY_FUNCTION__,
                         "ObjectFile::FindPlugin (module = %s/%s, file = %p, file_offset = 0x%z8.8x, file_size = 0x%z8.8x)",
                         module->GetFileSpec().GetDirectory().AsCString(),
                         module->GetFileSpec().GetFilename().AsCString(),
                         file, file_offset, file_size);
-    std::auto_ptr<ObjectFile> object_file_ap;
+    ObjectFileSP object_file_sp;
 
     if (module != NULL)
     {
@@ -72,9 +74,9 @@ ObjectFile::FindPlugin (Module* module, const FileSpec* file, lldb::addr_t file_
             ObjectFileCreateInstance create_object_file_callback;
             for (idx = 0; (create_object_file_callback = PluginManager::GetObjectFileCreateCallbackAtIndex(idx)) != NULL; ++idx)
             {
-                object_file_ap.reset (create_object_file_callback(module, file_header_data_sp, file, file_offset, file_size));
-                if (object_file_ap.get())
-                    return object_file_ap.release();
+                object_file_sp.reset (create_object_file_callback(module, file_header_data_sp, file, file_offset, file_size));
+                if (object_file_sp.get())
+                    return object_file_sp;
             }
 
             // Check if this is a object container by iterating through
@@ -86,14 +88,87 @@ ObjectFile::FindPlugin (Module* module, const FileSpec* file, lldb::addr_t file_
                 std::auto_ptr<ObjectContainer> object_container_ap(create_object_container_callback(module, file_header_data_sp, file, file_offset, file_size));
 
                 if (object_container_ap.get())
-                    object_file_ap.reset (object_container_ap->GetObjectFile(file));
+                    object_file_sp = object_container_ap->GetObjectFile(file);
 
-                if (object_file_ap.get())
-                    return object_file_ap.release();
+                if (object_file_sp.get())
+                    return object_file_sp;
             }
         }
     }
-    return NULL;
+    // We didn't find it, so clear our shared pointer in case it
+    // contains anything and return an empty shared pointer
+    object_file_sp.reset();
+    return object_file_sp;
+}
+
+ObjectFile::ObjectFile (Module* module, 
+                        const FileSpec *file_spec_ptr, 
+                        addr_t offset, 
+                        addr_t length, 
+                        DataBufferSP& headerDataSP) :
+    ModuleChild (module),
+    m_file (),  // This file could be different from the original module's file
+    m_type (eTypeInvalid),
+    m_strata (eStrataInvalid),
+    m_offset (offset),
+    m_length (length),
+    m_data (headerDataSP, endian::InlHostByteOrder(), 4),
+    m_unwind_table (*this)
+{    
+    if (file_spec_ptr)
+        m_file = *file_spec_ptr;
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
+    if (log)
+    {
+        if (m_file)
+        {
+            log->Printf ("%p ObjectFile::ObjectFile () module = %s/%s, file = %s/%s, offset = 0x%8.8llx, size = %llu\n",
+                         this,
+                         m_module->GetFileSpec().GetDirectory().AsCString(),
+                         m_module->GetFileSpec().GetFilename().AsCString(),
+                         m_file.GetDirectory().AsCString(),
+                         m_file.GetFilename().AsCString(),
+                         m_offset,
+                         m_length);
+        }
+        else
+        {
+            log->Printf ("%p ObjectFile::ObjectFile () module = %s/%s, file = <NULL>, offset = 0x%8.8llx, size = %llu\n",
+                         this,
+                         m_module->GetFileSpec().GetDirectory().AsCString(),
+                         m_module->GetFileSpec().GetFilename().AsCString(),
+                         m_offset,
+                         m_length);
+        }
+    }
+}
+
+ObjectFile::~ObjectFile()
+{
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
+    if (log)
+    {
+        if (m_file)
+        {
+            log->Printf ("%p ObjectFile::~ObjectFile () module = %s/%s, file = %s/%s, offset = 0x%8.8llx, size = %llu\n",
+                         this,
+                         m_module->GetFileSpec().GetDirectory().AsCString(),
+                         m_module->GetFileSpec().GetFilename().AsCString(),
+                         m_file.GetDirectory().AsCString(),
+                         m_file.GetFilename().AsCString(),
+                         m_offset,
+                         m_length);
+        }
+        else
+        {
+            log->Printf ("%p ObjectFile::~ObjectFile () module = %s/%s, file = <NULL>, offset = 0x%8.8llx, size = %llu\n",
+                         this,
+                         m_module->GetFileSpec().GetDirectory().AsCString(),
+                         m_module->GetFileSpec().GetFilename().AsCString(),
+                         m_offset,
+                         m_length);
+        }
+    }
 }
 
 bool 
@@ -103,7 +178,7 @@ ObjectFile::SetModulesArchitecture (const ArchSpec &new_arch)
 }
 
 AddressClass
-ObjectFile::GetAddressClass (lldb::addr_t file_addr)
+ObjectFile::GetAddressClass (addr_t file_addr)
 {
     Symtab *symtab = GetSymtab();
     if (symtab)
@@ -186,6 +261,14 @@ ObjectFile::GetAddressClass (lldb::addr_t file_addr)
         }
     }
     return eAddressClassUnknown;
+}
+
+ObjectFileSP
+ObjectFile::GetSP ()
+{
+    // This object contains an instrusive ref count base class so we can
+    // easily make a shared pointer to this object
+    return ObjectFileSP (this);
 }
 
 

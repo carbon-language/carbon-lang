@@ -79,7 +79,7 @@ SBThread::~SBThread()
 bool
 SBThread::IsValid() const
 {
-    return m_opaque_sp != NULL;
+    return m_opaque_sp;
 }
 
 void

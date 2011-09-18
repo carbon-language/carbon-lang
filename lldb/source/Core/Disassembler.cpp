@@ -512,7 +512,7 @@ Instruction::ReadArray (FILE *in_file, Stream *out_stream, OptionValue::Type dat
     {
         if (!fgets (buffer, 1023, in_file))
         {
-            out_stream->Printf ("Instruction::ReadArray:  Erroe reading file (fgets).\n");
+            out_stream->Printf ("Instruction::ReadArray:  Error reading file (fgets).\n");
             option_value_sp.reset ();
             return option_value_sp;
         }
