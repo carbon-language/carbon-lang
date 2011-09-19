@@ -370,7 +370,7 @@ DNBArchImplX86_64::GetFPUState(bool force)
                 mach_msg_type_number_t count = e_regSetWordSizeAVX;
                 m_state.SetError(e_regSetFPU, Read, ::thread_get_state(m_thread->ThreadID(), __x86_64_AVX_STATE, (thread_state_t)&m_state.context.fpu.avx, &count));
                 DNBLogThreadedIf (LOG_THREAD, "::thread_get_state (0x%4.4x, %u, &avx, %u (%u passed in) carp) => 0x%8.8x",
-                                  m_thread->ThreadID(), x86_AVX_STATE64, (uint32_t)count, 
+                                  m_thread->ThreadID(), __x86_64_AVX_STATE, (uint32_t)count, 
                                   e_regSetWordSizeAVX, m_state.GetError(e_regSetFPU, Read));
             }
             else
