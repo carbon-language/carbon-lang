@@ -5790,7 +5790,6 @@ fi
 
 
 
-
 { echo "$as_me:$LINENO: checking for BSD-compatible nm" >&5
 echo $ECHO_N "checking for BSD-compatible nm... $ECHO_C" >&6; }
 if test "${lt_cv_path_NM+set}" = set; then
@@ -10596,7 +10595,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10599 "configure"
+#line 10598 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
