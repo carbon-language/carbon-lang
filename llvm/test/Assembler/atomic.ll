@@ -1,4 +1,4 @@
-; RUN: opt -S < %s | FileCheck %s
+; RUN: opt < %s | opt -S | FileCheck %s
 ; Basic smoke test for atomic operations.
 
 define void @f(i32* %x) {

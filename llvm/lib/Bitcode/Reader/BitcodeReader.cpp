@@ -2653,7 +2653,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
         return Error("Invalid STOREATOMIC record");
 
       AtomicOrdering Ordering = GetDecodedOrdering(Record[OpNum+2]);
-      if (Ordering == NotAtomic || Ordering == Release ||
+      if (Ordering == NotAtomic || Ordering == Acquire ||
           Ordering == AcquireRelease)
         return Error("Invalid STOREATOMIC record");
       SynchronizationScope SynchScope = GetDecodedSynchScope(Record[OpNum+3]);
