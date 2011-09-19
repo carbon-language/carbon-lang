@@ -1440,8 +1440,8 @@ PreprocessedEntity *ASTReader::LoadPreprocessedEntity(Module &F) {
 }
 
 PreprocessedEntityID 
-ASTReader::getGlobalPreprocessedEntityID(Module &M, unsigned LocalID) {
-  ContinuousRangeMap<uint32_t, int, 2>::iterator 
+ASTReader::getGlobalPreprocessedEntityID(Module &M, unsigned LocalID) const {
+  ContinuousRangeMap<uint32_t, int, 2>::const_iterator 
     I = M.PreprocessedEntityRemap.find(LocalID - NUM_PREDEF_PP_ENTITY_IDS);
   assert(I != M.PreprocessedEntityRemap.end() 
          && "Invalid index into preprocessed entity index remap");

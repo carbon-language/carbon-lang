@@ -1142,7 +1142,7 @@ public:
                           unsigned &Idx);
 
   /// \brief Read a source location from raw form.
-  SourceLocation ReadSourceLocation(Module &Module, unsigned Raw) {
+  SourceLocation ReadSourceLocation(Module &Module, unsigned Raw) const {
     unsigned Flag = Raw & (1U << 31);
     unsigned Offset = Raw & ~(1U << 31);
     assert(Module.SLocRemap.find(Offset) != Module.SLocRemap.end() &&
@@ -1215,7 +1215,7 @@ public:
   /// \brief Determine the global preprocessed entity ID that corresponds to
   /// the given local ID within the given module.
   serialization::PreprocessedEntityID 
-  getGlobalPreprocessedEntityID(Module &M, unsigned LocalID);
+  getGlobalPreprocessedEntityID(Module &M, unsigned LocalID) const;
   
   /// \brief Note that the identifier is a macro whose record will be loaded
   /// from the given AST file at the given (file-local) offset.
