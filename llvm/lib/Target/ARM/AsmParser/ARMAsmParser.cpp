@@ -687,6 +687,18 @@ public:
     return (Val >= -1020 && Val <= 1020 && ((Val & 3) == 0)) ||
            Val == INT32_MIN;
   }
+  bool isMemTBB() const {
+    if (Kind != Memory || !Mem.OffsetRegNum || Mem.isNegative ||
+        Mem.ShiftType != ARM_AM::no_shift)
+      return false;
+    return true;
+  }
+  bool isMemTBH() const {
+    if (Kind != Memory || !Mem.OffsetRegNum || Mem.isNegative ||
+        Mem.ShiftType != ARM_AM::lsl || Mem.ShiftImm != 1)
+      return false;
+    return true;
+  }
   bool isMemRegOffset() const {
     if (Kind != Memory || !Mem.OffsetRegNum)
       return false;
@@ -1203,6 +1215,18 @@ public:
     int64_t Val = Mem.OffsetImm ? Mem.OffsetImm->getValue() : 0;
     Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
     Inst.addOperand(MCOperand::CreateImm(Val));
+  }
+
+  void addMemTBBOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 2 && "Invalid number of operands!");
+    Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
+    Inst.addOperand(MCOperand::CreateReg(Mem.OffsetRegNum));
+  }
+
+  void addMemTBHOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 2 && "Invalid number of operands!");
+    Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
+    Inst.addOperand(MCOperand::CreateReg(Mem.OffsetRegNum));
   }
 
   void addMemRegOffsetOperands(MCInst &Inst, unsigned N) const {

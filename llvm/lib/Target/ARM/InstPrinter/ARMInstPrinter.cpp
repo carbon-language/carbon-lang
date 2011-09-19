@@ -307,6 +307,22 @@ void ARMInstPrinter::printAM2PostIndexOp(const MCInst *MI, unsigned Op,
     << " #" << ShImm;
 }
 
+void ARMInstPrinter::printAddrModeTBB(const MCInst *MI, unsigned Op,
+                                           raw_ostream &O) {
+  const MCOperand &MO1 = MI->getOperand(Op);
+  const MCOperand &MO2 = MI->getOperand(Op+1);
+  O << "[" << getRegisterName(MO1.getReg()) << ", "
+    << getRegisterName(MO2.getReg()) << "]";
+}
+
+void ARMInstPrinter::printAddrModeTBH(const MCInst *MI, unsigned Op,
+                                           raw_ostream &O) {
+  const MCOperand &MO1 = MI->getOperand(Op);
+  const MCOperand &MO2 = MI->getOperand(Op+1);
+  O << "[" << getRegisterName(MO1.getReg()) << ", "
+    << getRegisterName(MO2.getReg()) << ", lsl #1]";
+}
+
 void ARMInstPrinter::printAddrMode2Operand(const MCInst *MI, unsigned Op,
                                            raw_ostream &O) {
   const MCOperand &MO1 = MI->getOperand(Op);

@@ -203,6 +203,20 @@ def t2addrmode_so_reg : Operand<i32>,
   let MIOperandInfo = (ops GPR:$base, rGPR:$offsreg, i32imm:$offsimm);
 }
 
+// Addresses for the TBB/TBH instructions.
+def addrmode_tbb_asmoperand : AsmOperandClass { let Name = "MemTBB"; }
+def addrmode_tbb : Operand<i32> {
+  let PrintMethod = "printAddrModeTBB";
+  let ParserMatchClass = addrmode_tbb_asmoperand;
+  let MIOperandInfo = (ops GPR:$Rn, rGPR:$Rm);
+}
+def addrmode_tbh_asmoperand : AsmOperandClass { let Name = "MemTBH"; }
+def addrmode_tbh : Operand<i32> {
+  let PrintMethod = "printAddrModeTBH";
+  let ParserMatchClass = addrmode_tbh_asmoperand;
+  let MIOperandInfo = (ops GPR:$Rn, rGPR:$Rm);
+}
+
 //===----------------------------------------------------------------------===//
 // Multiclass helpers...
 //
@@ -3135,8 +3149,8 @@ def t2TBB_JT : t2PseudoInst<(outs),
 def t2TBH_JT : t2PseudoInst<(outs),
         (ins GPR:$index, i32imm:$jt, i32imm:$id), 0, IIC_Br, []>;
 
-def t2TBB : T2I<(outs), (ins GPR:$Rn, GPR:$Rm), IIC_Br,
-                    "tbb", "\t[$Rn, $Rm]", []> {
+def t2TBB : T2I<(outs), (ins addrmode_tbb:$addr), IIC_Br,
+                    "tbb", "\t$addr", []> {
   bits<4> Rn;
   bits<4> Rm;
   let Inst{31-20} = 0b111010001101;
@@ -3144,10 +3158,12 @@ def t2TBB : T2I<(outs), (ins GPR:$Rn, GPR:$Rm), IIC_Br,
   let Inst{15-5} = 0b11110000000;
   let Inst{4} = 0; // B form
   let Inst{3-0} = Rm;
+
+  let DecoderMethod = "DecodeThumbTableBranch";
 }
 
-def t2TBH : T2I<(outs), (ins GPR:$Rn, GPR:$Rm), IIC_Br,
-                   "tbh", "\t[$Rn, $Rm, lsl #1]", []> {
+def t2TBH : T2I<(outs), (ins addrmode_tbh:$addr), IIC_Br,
+                   "tbh", "\t$addr", []> {
   bits<4> Rn;
   bits<4> Rm;
   let Inst{31-20} = 0b111010001101;
@@ -3155,6 +3171,8 @@ def t2TBH : T2I<(outs), (ins GPR:$Rn, GPR:$Rm), IIC_Br,
   let Inst{15-5} = 0b11110000000;
   let Inst{4} = 1; // H form
   let Inst{3-0} = Rm;
+
+  let DecoderMethod = "DecodeThumbTableBranch";
 }
 } // isNotDuplicable, isIndirectBranch
 

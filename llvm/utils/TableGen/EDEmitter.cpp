@@ -686,6 +686,8 @@ static int ARMFlagFromOpName(LiteralConstantEmitter *type,
   MISC("t_addrmode_rr", "kOperandTypeThumbAddrModeRR");           // R, R
   MISC("t_addrmode_sp", "kOperandTypeThumbAddrModeSP");           // R, I
   MISC("t_addrmode_pc", "kOperandTypeThumbAddrModePC");           // R, I
+  MISC("addrmode_tbb", "kOperandTypeThumbAddrModeRR");            // R, R
+  MISC("addrmode_tbh", "kOperandTypeThumbAddrModeRR");            // R, R
 
   return 1;
 }

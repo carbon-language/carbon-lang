@@ -41,6 +41,8 @@ public:
   void printSORegRegOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printSORegImmOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
 
+  void printAddrModeTBB(const MCInst *MI, unsigned OpNum, raw_ostream &O);
+  void printAddrModeTBH(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printAddrMode2Operand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printAM2PostIndexOp(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printAM2PreOrOffsetIndexOp(const MCInst *MI, unsigned OpNum,

@@ -287,6 +287,8 @@ static DecodeStatus DecodeThumbBLXOffset(llvm::MCInst &Inst, unsigned Insn,
                                 uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeT2AddrModeImm12(llvm::MCInst &Inst, unsigned Val,
                                 uint64_t Address, const void *Decoder);
+static DecodeStatus DecodeThumbTableBranch(llvm::MCInst &Inst, unsigned Val,
+                                uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeThumb2BCCInstruction(llvm::MCInst &Inst, unsigned Val,
                                 uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeT2SOImm(llvm::MCInst &Inst, unsigned Val,
@@ -2896,6 +2898,22 @@ static DecodeStatus DecodeCoprocessor(llvm::MCInst &Inst, unsigned Val,
 
   Inst.addOperand(MCOperand::CreateImm(Val));
   return MCDisassembler::Success;
+}
+
+static DecodeStatus
+DecodeThumbTableBranch(llvm::MCInst &Inst, unsigned Insn,
+                       uint64_t Address, const void *Decoder) {
+  DecodeStatus S = MCDisassembler::Success;
+
+  unsigned Rn = fieldFromInstruction32(Insn, 16, 4);
+  unsigned Rm = fieldFromInstruction32(Insn, 0, 4);
+
+  if (Rn == ARM::SP) S = MCDisassembler::SoftFail;
+  if (!Check(S, DecodeGPRRegisterClass(Inst, Rn, Address, Decoder)))
+    return MCDisassembler::Fail;
+  if (!Check(S, DecoderGPRRegisterClass(Inst, Rm, Address, Decoder)))
+    return MCDisassembler::Fail;
+  return S;
 }
 
 static DecodeStatus
