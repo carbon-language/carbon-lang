@@ -2686,3 +2686,21 @@ _func:
 @ CHECK: ite	gt                      @ encoding: [0xcc,0xbf]
 @ CHECK: uadd16gt	r1, r2, r3      @ encoding: [0x92,0xfa,0x43,0xf1]
 @ CHECK: uadd8le	r1, r2, r3      @ encoding: [0x82,0xfa,0x43,0xf1]
+
+
+@------------------------------------------------------------------------------
+@ UASX
+@------------------------------------------------------------------------------
+        uasx r9, r12, r0
+        it eq
+        uasxeq r9, r12, r0
+        uaddsubx r9, r12, r0
+        it eq
+        uaddsubxeq r9, r12, r0
+
+@ CHECK: uasx	r9, r12, r0             @ encoding: [0xac,0xfa,0x40,0xf9]
+@ CHECK: it	eq                      @ encoding: [0x08,0xbf]
+@ CHECK: uasxeq	r9, r12, r0             @ encoding: [0xac,0xfa,0x40,0xf9]
+@ CHECK: uasx	r9, r12, r0             @ encoding: [0xac,0xfa,0x40,0xf9]
+@ CHECK: it	eq                      @ encoding: [0x08,0xbf]
+@ CHECK: uasxeq	r9, r12, r0             @ encoding: [0xac,0xfa,0x40,0xf9]
