@@ -1223,6 +1223,16 @@ public:
   std::pair<int, unsigned>
   AllocateLoadedSLocEntries(unsigned NumSLocEntries, unsigned TotalSize);
 
+  /// \brief Returns true if \arg Loc came from a PCH/Module.
+  bool isLoadedSourceLocation(SourceLocation Loc) const {
+    return Loc.getOffset() >= CurrentLoadedOffset;
+  }
+
+  /// \brief Returns true if \arg Loc did not come from a PCH/Module.
+  bool isLocalSourceLocation(SourceLocation Loc) const {
+    return Loc.getOffset() < NextLocalOffset;
+  }
+
 private:
   const llvm::MemoryBuffer *getFakeBufferForRecovery() const;
 
