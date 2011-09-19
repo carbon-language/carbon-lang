@@ -1631,8 +1631,11 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
     // DiagnoseUnusedComparison should be as well.
     const CXXOperatorCallExpr *Op = cast<CXXOperatorCallExpr>(this);
     if (Op->getOperator() == OO_EqualEqual ||
-        Op->getOperator() == OO_ExclaimEqual)
+        Op->getOperator() == OO_ExclaimEqual) {
+      Loc = Op->getOperatorLoc();
+      R1 = Op->getSourceRange();
       return true;
+    }
 
     // Fallthrough for generic call handling.
   }

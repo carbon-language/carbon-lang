@@ -15,3 +15,18 @@ namespace test0 {
     box->j;
   }
 }
+
+namespace test1 {
+struct Foo {
+  int i;
+  bool operator==(const Foo& rhs) {
+    return i == rhs.i;
+  }
+};
+
+#define NOP(x) (x)
+void b(Foo f1, Foo f2) {
+  NOP(f1 == f2);  // expected-warning {{expression result unused}}
+}
+#undef NOP
+}
