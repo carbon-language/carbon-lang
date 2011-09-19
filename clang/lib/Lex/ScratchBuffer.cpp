@@ -53,7 +53,7 @@ SourceLocation ScratchBuffer::getToken(const char *Buf, unsigned Len,
   // diagnostic points to one.
   CurBuffer[BytesUsed-1] = '\0';
 
-  return BufferStartLoc.getFileLocWithOffset(BytesUsed-Len-1);
+  return BufferStartLoc.getLocWithOffset(BytesUsed-Len-1);
 }
 
 void ScratchBuffer::AllocScratchBuffer(unsigned RequestLen) {

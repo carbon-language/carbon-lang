@@ -94,7 +94,7 @@ SourceLocation trans::findLocationAfterSemi(SourceLocation loc,
   SourceLocation SemiLoc = findSemiAfterLocation(loc, Ctx);
   if (SemiLoc.isInvalid())
     return SourceLocation();
-  return SemiLoc.getFileLocWithOffset(1);
+  return SemiLoc.getLocWithOffset(1);
 }
 
 /// \brief \arg Loc is the end of a statement range. This returns the location

@@ -315,12 +315,12 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, prec::Level MinPrec) {
           FILoc = SM.getExpansionLoc(FILoc);
           bool IsInvalid = false;
           const char *SourcePtr =
-            SM.getCharacterData(FILoc.getFileLocWithOffset(-1), &IsInvalid);
+            SM.getCharacterData(FILoc.getLocWithOffset(-1), &IsInvalid);
           if (!IsInvalid && *SourcePtr == ' ') {
             SourcePtr =
-              SM.getCharacterData(FILoc.getFileLocWithOffset(-2), &IsInvalid);
+              SM.getCharacterData(FILoc.getLocWithOffset(-2), &IsInvalid);
             if (!IsInvalid && *SourcePtr == ' ') {
-              FILoc = FILoc.getFileLocWithOffset(-1);
+              FILoc = FILoc.getLocWithOffset(-1);
               FIText = ":";
             }
           }

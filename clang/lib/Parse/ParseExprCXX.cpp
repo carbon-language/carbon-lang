@@ -38,7 +38,7 @@ static int SelectDigraphErrorMessage(tok::TokenKind Kind) {
 static bool AreTokensAdjacent(Preprocessor &PP, Token &First, Token &Second) {
   SourceManager &SM = PP.getSourceManager();
   SourceLocation FirstLoc = SM.getSpellingLoc(First.getLocation());
-  SourceLocation FirstEnd = FirstLoc.getFileLocWithOffset(First.getLength());
+  SourceLocation FirstEnd = FirstLoc.getLocWithOffset(First.getLength());
   return FirstEnd == SM.getSpellingLoc(Second.getLocation());
 }
 
@@ -59,7 +59,7 @@ static void FixDigraph(Parser &P, Preprocessor &PP, Token &DigraphToken,
 
   // Update token information to reflect their change in token type.
   ColonToken.setKind(tok::coloncolon);
-  ColonToken.setLocation(ColonToken.getLocation().getFileLocWithOffset(-1));
+  ColonToken.setLocation(ColonToken.getLocation().getLocWithOffset(-1));
   ColonToken.setLength(2);
   DigraphToken.setKind(tok::less);
   DigraphToken.setLength(1);

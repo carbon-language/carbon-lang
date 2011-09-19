@@ -287,7 +287,7 @@ static void ParseDirective(const char *CommentStart, unsigned CommentLen,
 
     // next token: {{
     if (!PH.Next("{{")) {
-      PP.Diag(Pos.getFileLocWithOffset(PH.C-PH.Begin),
+      PP.Diag(Pos.getLocWithOffset(PH.C-PH.Begin),
               diag::err_verify_missing_start) << KindStr;
       continue;
     }
@@ -296,7 +296,7 @@ static void ParseDirective(const char *CommentStart, unsigned CommentLen,
 
     // search for token: }}
     if (!PH.Search("}}")) {
-      PP.Diag(Pos.getFileLocWithOffset(PH.C-PH.Begin),
+      PP.Diag(Pos.getLocWithOffset(PH.C-PH.Begin),
               diag::err_verify_missing_end) << KindStr;
       continue;
     }
@@ -323,7 +323,7 @@ static void ParseDirective(const char *CommentStart, unsigned CommentLen,
     if (D->isValid(Error))
       DL->push_back(D);
     else {
-      PP.Diag(Pos.getFileLocWithOffset(ContentBegin-PH.Begin),
+      PP.Diag(Pos.getLocWithOffset(ContentBegin-PH.Begin),
               diag::err_verify_invalid_content)
         << KindStr << Error;
     }

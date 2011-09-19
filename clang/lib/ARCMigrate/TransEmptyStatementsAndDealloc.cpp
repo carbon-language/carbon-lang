@@ -47,7 +47,7 @@ static bool isEmptyARCMTMacroStatement(NullStmt *S,
                          SourceManager::LocBeforeThanCompare(SM));
   --I;
   SourceLocation
-      AfterMacroLoc = I->getFileLocWithOffset(getARCMTMacroName().size());
+      AfterMacroLoc = I->getLocWithOffset(getARCMTMacroName().size());
   assert(AfterMacroLoc.isFileID());
 
   if (AfterMacroLoc == SemiLoc)

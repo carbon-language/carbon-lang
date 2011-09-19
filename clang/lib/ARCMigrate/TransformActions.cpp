@@ -479,7 +479,7 @@ void TransformActionsImpl::commitReplaceText(SourceLocation loc,
   SourceManager &SM = Ctx.getSourceManager();
   loc = SM.getExpansionLoc(loc);
   // canReplaceText already checked if loc points at text.
-  SourceLocation afterText = loc.getFileLocWithOffset(text.size());
+  SourceLocation afterText = loc.getLocWithOffset(text.size());
 
   addRemoval(CharSourceRange::getCharRange(loc, afterText));
   commitInsert(loc, replacementText);  

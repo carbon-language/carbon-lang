@@ -1302,7 +1302,7 @@ getSpecifierRange(const char *startSpecifier, unsigned specifierLen) {
   SourceLocation End   = getLocationOfByte(startSpecifier + specifierLen - 1);
 
   // Advance the end SourceLocation by one due to half-open ranges.
-  End = End.getFileLocWithOffset(1);
+  End = End.getLocWithOffset(1);
 
   return CharSourceRange::getCharRange(Start, End);
 }

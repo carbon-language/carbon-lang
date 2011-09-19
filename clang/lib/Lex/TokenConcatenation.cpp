@@ -143,7 +143,7 @@ bool TokenConcatenation::AvoidConcat(const Token &PrevPrevTok,
   // source.  If they were, it must be okay to stick them together: if there
   // were an issue, the tokens would have been lexed differently.
   if (PrevTok.getLocation().isFileID() && Tok.getLocation().isFileID() &&
-      PrevTok.getLocation().getFileLocWithOffset(PrevTok.getLength()) ==
+      PrevTok.getLocation().getLocWithOffset(PrevTok.getLength()) ==
         Tok.getLocation())
     return false;
 

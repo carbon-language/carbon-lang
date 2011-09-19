@@ -120,7 +120,7 @@ CXSourceRange cxloc::translateSourceRange(const SourceManager &SM,
     EndLoc = SM.getExpansionRange(EndLoc).second;
   if (R.isTokenRange() && !EndLoc.isInvalid() && EndLoc.isFileID()) {
     unsigned Length = Lexer::MeasureTokenLength(EndLoc, SM, LangOpts);
-    EndLoc = EndLoc.getFileLocWithOffset(Length);
+    EndLoc = EndLoc.getLocWithOffset(Length);
   }
 
   CXSourceRange Result = { { (void *)&SM, (void *)&LangOpts },
@@ -2780,7 +2780,7 @@ CXSourceLocation clang_getLocationForOffset(CXTranslationUnit tu,
                                               1, 1);
   if (Start.isInvalid()) return clang_getNullLocation();
 
-  SourceLocation SLoc = Start.getFileLocWithOffset(offset);
+  SourceLocation SLoc = Start.getLocWithOffset(offset);
 
   if (SLoc.isInvalid()) return clang_getNullLocation();
 

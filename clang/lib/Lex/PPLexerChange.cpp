@@ -94,7 +94,7 @@ void Preprocessor::EnterSourceFile(FileID FID, const DirectoryLookup *CurDir,
       SourceMgr.getFileEntryForID(FID) == CodeCompletionFile) {
     CodeCompletionFileLoc = SourceMgr.getLocForStartOfFile(FID);
     CodeCompletionLoc =
-        CodeCompletionFileLoc.getFileLocWithOffset(CodeCompletionOffset);
+        CodeCompletionFileLoc.getLocWithOffset(CodeCompletionOffset);
   }
 
   EnterSourceFileWithLexer(new Lexer(FID, InputFile, *this), CurDir);

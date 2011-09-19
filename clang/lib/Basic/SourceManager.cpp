@@ -802,7 +802,7 @@ SourceLocation SourceManager::getSpellingLocSlowCase(SourceLocation Loc) const {
   do {
     std::pair<FileID, unsigned> LocInfo = getDecomposedLoc(Loc);
     Loc = getSLocEntry(LocInfo.first).getExpansion().getSpellingLoc();
-    Loc = Loc.getFileLocWithOffset(LocInfo.second);
+    Loc = Loc.getLocWithOffset(LocInfo.second);
   } while (!Loc.isFileID());
   return Loc;
 }
@@ -834,7 +834,7 @@ SourceManager::getDecomposedSpellingLocSlowCase(const SrcMgr::SLocEntry *E,
   SourceLocation Loc;
   do {
     Loc = E->getExpansion().getSpellingLoc();
-    Loc = Loc.getFileLocWithOffset(Offset);
+    Loc = Loc.getLocWithOffset(Offset);
 
     FID = getFileID(Loc);
     E = &getSLocEntry(FID);
@@ -852,7 +852,7 @@ SourceLocation SourceManager::getImmediateSpellingLoc(SourceLocation Loc) const{
   if (Loc.isFileID()) return Loc;
   std::pair<FileID, unsigned> LocInfo = getDecomposedLoc(Loc);
   Loc = getSLocEntry(LocInfo.first).getExpansion().getSpellingLoc();
-  return Loc.getFileLocWithOffset(LocInfo.second);
+  return Loc.getLocWithOffset(LocInfo.second);
 }
 
 
@@ -1273,7 +1273,7 @@ PresumedLoc SourceManager::getPresumedLoc(SourceLocation Loc) const {
       // Handle virtual #include manipulation.
       if (Entry->IncludeOffset) {
         IncludeLoc = getLocForStartOfFile(LocInfo.first);
-        IncludeLoc = IncludeLoc.getFileLocWithOffset(Entry->IncludeOffset);
+        IncludeLoc = IncludeLoc.getLocWithOffset(Entry->IncludeOffset);
       }
     }
   }
@@ -1457,7 +1457,7 @@ SourceLocation SourceManager::translateFileLineCol(const FileEntry *SourceFile,
     unsigned Size = Content->getBuffer(Diag, *this)->getBufferSize();
     if (Size > 0)
       --Size;
-    return getLocForStartOfFile(FirstFID).getFileLocWithOffset(Size);
+    return getLocForStartOfFile(FirstFID).getLocWithOffset(Size);
   }
 
   unsigned FilePos = Content->SourceLineCache[Line - 1];
@@ -1469,9 +1469,9 @@ SourceLocation SourceManager::translateFileLineCol(const FileEntry *SourceFile,
   while (i < BufLength-1 && i < Col-1 && Buf[i] != '\n' && Buf[i] != '\r')
     ++i;
   if (i < Col-1)
-    return getLocForStartOfFile(FirstFID).getFileLocWithOffset(FilePos + i);
+    return getLocForStartOfFile(FirstFID).getLocWithOffset(FilePos + i);
 
-  return getLocForStartOfFile(FirstFID).getFileLocWithOffset(FilePos + Col - 1);
+  return getLocForStartOfFile(FirstFID).getLocWithOffset(FilePos + Col - 1);
 }
 
 /// \brief Compute a map of macro argument chunks to their expanded source
@@ -1584,7 +1584,7 @@ SourceLocation SourceManager::getMacroArgExpandedLocation(SourceLocation Loc) {
   unsigned MacroArgBeginOffs = I->first;
   SourceLocation MacroArgExpandedLoc = I->second;
   if (MacroArgExpandedLoc.isValid())
-    return MacroArgExpandedLoc.getFileLocWithOffset(Offset - MacroArgBeginOffs);
+    return MacroArgExpandedLoc.getLocWithOffset(Offset - MacroArgBeginOffs);
 
   return Loc;
 }

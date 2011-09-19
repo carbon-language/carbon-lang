@@ -1147,7 +1147,7 @@ public:
     assert(Module.SLocRemap.find(Loc.getOffset()) != Module.SLocRemap.end() &&
            "Cannot find offset to remap.");
     int Remap = Module.SLocRemap.find(Loc.getOffset())->second;
-    return Loc.getFileLocWithOffset(Remap);
+    return Loc.getLocWithOffset(Remap);
   }
 
   /// \brief Read a source location.

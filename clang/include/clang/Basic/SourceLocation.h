@@ -125,11 +125,10 @@ private:
   }
 public:
 
-  /// getFileLocWithOffset - Return a source location with the specified offset
-  /// from this file SourceLocation.
-  SourceLocation getFileLocWithOffset(int Offset) const {
-    assert(((getOffset()+Offset) & MacroIDBit) == 0 &&
-           "offset overflow or macro loc");
+  /// \brief Return a source location with the specified offset from this
+  /// SourceLocation.
+  SourceLocation getLocWithOffset(int Offset) const {
+    assert(((getOffset()+Offset) & MacroIDBit) == 0 && "offset overflow");
     SourceLocation L;
     L.ID = ID+Offset;
     return L;

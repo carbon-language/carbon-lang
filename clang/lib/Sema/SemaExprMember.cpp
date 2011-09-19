@@ -1392,7 +1392,7 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
       ExprResult NewBase =
           ActOnCallExpr(0, BaseExpr.take(), ParenInsertionLoc,
                         MultiExprArg(*this, 0, 0),
-                        ParenInsertionLoc.getFileLocWithOffset(1));
+                        ParenInsertionLoc.getLocWithOffset(1));
       if (NewBase.isInvalid())
         return ExprError();
       BaseExpr = NewBase;

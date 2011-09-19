@@ -652,7 +652,7 @@ TokenLexer::getExpansionLocForMacroDefLoc(SourceLocation loc) const {
 
   unsigned relativeOffset = 0;
   SM.isInSLocAddrSpace(loc, MacroDefStart, MacroDefLength, &relativeOffset);
-  return MacroExpansionStart.getFileLocWithOffset(relativeOffset);
+  return MacroExpansionStart.getLocWithOffset(relativeOffset);
 }
 
 /// \brief Finds the tokens that are consecutive (from the same FileID)
@@ -713,7 +713,7 @@ static void updateConsecutiveMacroArgTokens(SourceManager &SM,
     Token &Tok = *begin_tokens;
     int RelOffs = 0;
     SM.isInSameSLocAddrSpace(FirstLoc, Tok.getLocation(), &RelOffs);
-    Tok.setLocation(Expansion.getFileLocWithOffset(RelOffs));
+    Tok.setLocation(Expansion.getLocWithOffset(RelOffs));
   }
 }
 
