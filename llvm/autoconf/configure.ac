@@ -1756,9 +1756,6 @@ if test -f ${srcdir}/tools/clang/README.txt; then
   AC_CONFIG_FILES([tools/clang/docs/doxygen.cfg])
 fi
 
-dnl Configure llvmc's Base plugin
-AC_CONFIG_FILES([tools/llvmc/src/Base.td])
-
 dnl Do the first stage of configuration for llvm-config.in.
 AC_CONFIG_FILES([tools/llvm-config/llvm-config.in])
 

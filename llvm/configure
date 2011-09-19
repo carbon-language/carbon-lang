@@ -21605,9 +21605,6 @@ if test -f ${srcdir}/tools/clang/README.txt; then
 
 fi
 
-ac_config_files="$ac_config_files tools/llvmc/src/Base.td"
-
-
 ac_config_files="$ac_config_files tools/llvm-config/llvm-config.in"
 
 
@@ -22227,7 +22224,6 @@ do
     "llvm.spec") CONFIG_FILES="$CONFIG_FILES llvm.spec" ;;
     "docs/doxygen.cfg") CONFIG_FILES="$CONFIG_FILES docs/doxygen.cfg" ;;
     "tools/clang/docs/doxygen.cfg") CONFIG_FILES="$CONFIG_FILES tools/clang/docs/doxygen.cfg" ;;
-    "tools/llvmc/src/Base.td") CONFIG_FILES="$CONFIG_FILES tools/llvmc/src/Base.td" ;;
     "tools/llvm-config/llvm-config.in") CONFIG_FILES="$CONFIG_FILES tools/llvm-config/llvm-config.in" ;;
     "setup") CONFIG_COMMANDS="$CONFIG_COMMANDS setup" ;;
     "Makefile") CONFIG_COMMANDS="$CONFIG_COMMANDS Makefile" ;;

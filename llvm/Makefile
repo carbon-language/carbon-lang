@@ -187,8 +187,7 @@ FilesToConfig := \
   include/llvm/Config/AsmPrinters.def \
   include/llvm/Config/AsmParsers.def \
   include/llvm/Config/Disassemblers.def \
-  include/llvm/Support/DataTypes.h \
-  tools/llvmc/src/Base.td
+  include/llvm/Support/DataTypes.h
 FilesToConfigPATH  := $(addprefix $(LLVM_OBJ_ROOT)/,$(FilesToConfig))
 
 all-local:: $(FilesToConfigPATH)
