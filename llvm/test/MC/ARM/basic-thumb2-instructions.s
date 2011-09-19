@@ -2504,3 +2504,111 @@ _func:
 @ CHECK: ite	hi                      @ encoding: [0x8c,0xbf]
 @ CHECK: sxtahhi r6, r1, r6             @ encoding: [0x01,0xfa,0x86,0xf6]
 @ CHECK: sxtahls r2, r2, r4, ror #16    @ encoding: [0x02,0xfa,0xa4,0xf2]
+
+
+@------------------------------------------------------------------------------
+@ SXTB
+@------------------------------------------------------------------------------
+        sxtb r5, r6, ror #0
+        sxtb r6, r9, ror #8
+        sxtb r8, r3, ror #24
+        ite ge
+        sxtbge r2, r4
+        sxtblt r5, r1, ror #16
+
+@ CHECK: sxtb	r5, r6                  @ encoding: [0x75,0xb2]
+@ CHECK: sxtb.w	r6, r9, ror #8          @ encoding: [0x4f,0xfa,0x99,0xf6]
+@ CHECK: sxtb.w	r8, r3, ror #24         @ encoding: [0x4f,0xfa,0xb3,0xf8]
+@ CHECK: ite	ge                      @ encoding: [0xac,0xbf]
+@ CHECK: sxtbge	r2, r4                  @ encoding: [0x62,0xb2]
+@ CHECK: sxtblt.w	r5, r1, ror #16 @ encoding: [0x4f,0xfa,0xa1,0xf5]
+
+
+@------------------------------------------------------------------------------
+@ SXTB16
+@------------------------------------------------------------------------------
+        sxtb16 r1, r4
+        sxtb16 r6, r7, ror #0
+        sxtb16 r3, r1, ror #16
+        ite cs
+        sxtb16cs r3, r5, ror #8
+        sxtb16lo r2, r3, ror #24
+
+@ CHECK: sxtb16	r1, r4                  @ encoding: [0x2f,0xfa,0x84,0xf1]
+@ CHECK: sxtb16	r6, r7                  @ encoding: [0x2f,0xfa,0x87,0xf6]
+@ CHECK: sxtb16	r3, r1, ror #16         @ encoding: [0x2f,0xfa,0xa1,0xf3]
+@ CHECK: ite	hs                      @ encoding: [0x2c,0xbf]
+@ CHECK: sxtb16hs	r3, r5, ror #8  @ encoding: [0x2f,0xfa,0x95,0xf3]
+@ CHECK: sxtb16lo	r2, r3, ror #24 @ encoding: [0x2f,0xfa,0xb3,0xf2]
+
+
+@------------------------------------------------------------------------------
+@ SXTH
+@------------------------------------------------------------------------------
+        sxth r1, r6, ror #0
+        sxth r3, r8, ror #8
+        sxth r9, r3, ror #24
+        itt ne
+        sxthne r3, r9
+        sxthne r2, r2, ror #16
+
+@ CHECK: sxth	r1, r6                  @ encoding: [0x31,0xb2]
+@ CHECK: sxth.w	r3, r8, ror #8          @ encoding: [0x0f,0xfa,0x98,0xf3]
+@ CHECK: sxth.w	r9, r3, ror #24         @ encoding: [0x0f,0xfa,0xb3,0xf9]
+@ CHECK: itt	ne                      @ encoding: [0x1c,0xbf]
+@ CHECK: sxthne.w	r3, r9          @ encoding: [0x0f,0xfa,0x89,0xf3]
+@ CHECK: sxthne.w	r2, r2, ror #16 @ encoding: [0x0f,0xfa,0xa2,0xf2]
+
+
+@------------------------------------------------------------------------------
+@ SXTB
+@------------------------------------------------------------------------------
+        sxtb r5, r6, ror #0
+        sxtb.w r6, r9, ror #8
+        sxtb r8, r3, ror #24
+        ite ge
+        sxtbge r2, r4
+        sxtblt r5, r1, ror #16
+
+@ CHECK: sxtb	r5, r6                  @ encoding: [0x75,0xb2]
+@ CHECK: sxtb.w	r6, r9, ror #8          @ encoding: [0x4f,0xfa,0x99,0xf6]
+@ CHECK: sxtb.w	r8, r3, ror #24         @ encoding: [0x4f,0xfa,0xb3,0xf8]
+@ CHECK: ite	ge                      @ encoding: [0xac,0xbf]
+@ CHECK: sxtbge	r2, r4                  @ encoding: [0x62,0xb2]
+@ CHECK: sxtblt.w	r5, r1, ror #16 @ encoding: [0x4f,0xfa,0xa1,0xf5]
+
+
+@------------------------------------------------------------------------------
+@ SXTB16
+@------------------------------------------------------------------------------
+        sxtb16 r1, r4
+        sxtb16 r6, r7, ror #0
+        sxtb16 r3, r1, ror #16
+        ite cs
+        sxtb16cs r3, r5, ror #8
+        sxtb16lo r2, r3, ror #24
+
+@ CHECK: sxtb16	r1, r4                  @ encoding: [0x2f,0xfa,0x84,0xf1]
+@ CHECK: sxtb16	r6, r7                  @ encoding: [0x2f,0xfa,0x87,0xf6]
+@ CHECK: sxtb16	r3, r1, ror #16         @ encoding: [0x2f,0xfa,0xa1,0xf3]
+@ CHECK: ite	hs                      @ encoding: [0x2c,0xbf]
+@ CHECK: sxtb16hs	r3, r5, ror #8  @ encoding: [0x2f,0xfa,0x95,0xf3]
+@ CHECK: sxtb16lo	r2, r3, ror #24 @ encoding: [0x2f,0xfa,0xb3,0xf2]
+
+
+@------------------------------------------------------------------------------
+@ SXTH
+@------------------------------------------------------------------------------
+        sxth r1, r6, ror #0
+        sxth.w r3, r8, ror #8
+        sxth r9, r3, ror #24
+        itt ne
+        sxthne r3, r9
+        sxthne r2, r2, ror #16
+
+@ CHECK: sxth	r1, r6                  @ encoding: [0x31,0xb2]
+@ CHECK: sxth.w	r3, r8, ror #8          @ encoding: [0x0f,0xfa,0x98,0xf3]
+@ CHECK: sxth.w	r9, r3, ror #24         @ encoding: [0x0f,0xfa,0xb3,0xf9]
+@ CHECK: itt	ne                      @ encoding: [0x1c,0xbf]
+@ CHECK: sxthne.w	r3, r9          @ encoding: [0x0f,0xfa,0x89,0xf3]
+@ CHECK: sxthne.w	r2, r2, ror #16 @ encoding: [0x0f,0xfa,0xa2,0xf2]

@@ -1785,8 +1785,6 @@ def t2SXTAH : T2I_exta_rrot<0b000, "sxtah",
                         BinOpFrag<(add node:$LHS, (sext_inreg node:$RHS,i16))>>;
 def t2SXTAB16 : T2I_exta_rrot_np<0b010, "sxtab16">;
 
-// TODO: SXT(A){B|H}16
-
 // Zero extenders
 
 let AddedComplexity = 16 in {
@@ -3931,3 +3929,17 @@ def : t2InstAlias<"sxtah${p} $Rd, $Rn, $Rm",
                 (t2SXTAH rGPR:$Rd, rGPR:$Rn, rGPR:$Rm, 0, pred:$p)>;
 def : t2InstAlias<"sxtab16${p} $Rd, $Rn, $Rm",
                 (t2SXTAB16 rGPR:$Rd, rGPR:$Rn, rGPR:$Rm, 0, pred:$p)>;
+def : t2InstAlias<"sxtb${p} $Rd, $Rm",
+                (t2SXTB rGPR:$Rd, rGPR:$Rm, 0, pred:$p)>;
+def : t2InstAlias<"sxtb16${p} $Rd, $Rm",
+                (t2SXTB16 rGPR:$Rd, rGPR:$Rm, 0, pred:$p)>;
+def : t2InstAlias<"sxth${p} $Rd, $Rm",
+                (t2SXTH rGPR:$Rd, rGPR:$Rm, 0, pred:$p)>;
+
+// Extend instruction w/o the ".w" optional width specifier.
+def : t2InstAlias<"sxtb${p} $Rd, $Rm$rot",
+                  (t2SXTB rGPR:$Rd, rGPR:$Rm, rot_imm:$rot, pred:$p)>;
+def : t2InstAlias<"sxtb16${p} $Rd, $Rm$rot",
+                  (t2SXTB16 rGPR:$Rd, rGPR:$Rm, rot_imm:$rot, pred:$p)>;
+def : t2InstAlias<"sxth${p} $Rd, $Rm$rot",
+                  (t2SXTH rGPR:$Rd, rGPR:$Rm, rot_imm:$rot, pred:$p)>;

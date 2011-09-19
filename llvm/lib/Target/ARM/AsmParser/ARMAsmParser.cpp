@@ -2254,15 +2254,11 @@ ARMAsmParser::OperandMatchResultTy ARMAsmParser::
 parseRotImm(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   const AsmToken &Tok = Parser.getTok();
   SMLoc S = Tok.getLoc();
-  if (Tok.isNot(AsmToken::Identifier)) {
-    Error(S, "rotate operator 'ror' expected");
-    return MatchOperand_ParseFail;
-  }
+  if (Tok.isNot(AsmToken::Identifier))
+    return MatchOperand_NoMatch;
   StringRef ShiftName = Tok.getString();
-  if (ShiftName != "ror" && ShiftName != "ROR") {
-    Error(S, "rotate operator 'ror' expected");
-    return MatchOperand_ParseFail;
-  }
+  if (ShiftName != "ror" && ShiftName != "ROR")
+    return MatchOperand_NoMatch;
   Parser.Lex(); // Eat the operator.
 
   // A '#' and a rotate amount.
@@ -3863,6 +3859,28 @@ processInstruction(MCInst &Inst,
       TmpInst.addOperand(Inst.getOperand(1));
       TmpInst.addOperand(Inst.getOperand(2));
       TmpInst.addOperand(Inst.getOperand(3));
+      Inst = TmpInst;
+    }
+    break;
+  }
+  case ARM::t2SXTH:
+  case ARM::t2SXTB: {
+    // If we can use the 16-bit encoding and the user didn't explicitly
+    // request the 32-bit variant, transform it here.
+    if (isARMLowRegister(Inst.getOperand(0).getReg()) &&
+        isARMLowRegister(Inst.getOperand(1).getReg()) &&
+        Inst.getOperand(2).getImm() == 0 &&
+        (!static_cast<ARMOperand*>(Operands[2])->isToken() ||
+         static_cast<ARMOperand*>(Operands[2])->getToken() != ".w")) {
+      unsigned NewOpc = (Inst.getOpcode() == ARM::t2SXTH) ?
+        ARM::tSXTH : ARM::tSXTB;
+      // The operands aren't the same for thumb1 (no rotate operand).
+      MCInst TmpInst;
+      TmpInst.setOpcode(NewOpc);
+      TmpInst.addOperand(Inst.getOperand(0));
+      TmpInst.addOperand(Inst.getOperand(1));
+      TmpInst.addOperand(Inst.getOperand(3));
+      TmpInst.addOperand(Inst.getOperand(4));
       Inst = TmpInst;
     }
     break;

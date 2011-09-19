@@ -248,7 +248,7 @@
         sxtah r9, r3, r3, ror #-8
         sxtb16ge r2, r3, lsr #24
 
-@ CHECK-ERRORS: error: rotate operator 'ror' expected
+@ CHECK-ERRORS: error: invalid operand for instruction
 @ CHECK-ERRORS:         sxtb r8, r3, #8
 @ CHECK-ERRORS:                      ^
 @ CHECK-ERRORS: error: '#' expected
@@ -269,7 +269,7 @@
 @ CHECK-ERRORS: error: 'ror' rotate amount must be 8, 16, or 24
 @ CHECK-ERRORS:         sxtah r9, r3, r3, ror #-8
 @ CHECK-ERRORS:                                ^
-@ CHECK-ERRORS: error: rotate operator 'ror' expected
+@ CHECK-ERRORS: error: invalid operand for instruction
 @ CHECK-ERRORS:         sxtb16ge r2, r3, lsr #24
 @ CHECK-ERRORS:                          ^
 
