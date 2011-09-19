@@ -5933,7 +5933,6 @@ NamedDecl *Sema::BuildUsingDeclaration(Scope *S, AccessSpecifier AS,
   // Otherwise, look up the target name.
 
   LookupResult R(*this, NameInfo, LookupOrdinaryName);
-  R.setUsingDeclaration(true);
 
   // Unlike most lookups, we don't always want to hide tag
   // declarations: tag names are visible through the using declaration

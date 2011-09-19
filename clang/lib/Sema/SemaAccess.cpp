@@ -146,10 +146,8 @@ struct AccessTarget : public AccessedEntity {
                MemberNonce _,
                CXXRecordDecl *NamingClass,
                DeclAccessPair FoundDecl,
-               QualType BaseObjectType,
-               bool IsUsingDecl = false)
-    : AccessedEntity(Context, Member, NamingClass, FoundDecl, BaseObjectType),
-      IsUsingDeclaration(IsUsingDecl) {
+               QualType BaseObjectType)
+    : AccessedEntity(Context, Member, NamingClass, FoundDecl, BaseObjectType) {
     initialize();
   }
 
@@ -218,7 +216,6 @@ private:
     DeclaringClass = DeclaringClass->getCanonicalDecl();
   }
 
-  bool IsUsingDeclaration : 1;
   bool HasInstanceContext : 1;
   mutable bool CalculatedInstanceContext : 1;
   mutable const CXXRecordDecl *InstanceContext;
@@ -1638,7 +1635,7 @@ void Sema::CheckLookupAccess(const LookupResult &R) {
     if (I.getAccess() != AS_public) {
       AccessTarget Entity(Context, AccessedEntity::Member,
                           R.getNamingClass(), I.getPair(),
-                          R.getBaseObjectType(), R.isUsingDeclaration());
+                          R.getBaseObjectType());
       Entity.setDiag(diag::err_access);
       CheckAccess(*this, R.getNameLoc(), Entity);
     }
