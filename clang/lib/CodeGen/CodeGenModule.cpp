@@ -400,7 +400,12 @@ CodeGenModule::getFunctionLinkage(const FunctionDecl *D) {
   // definition somewhere else, so we can use available_externally linkage.
   if (Linkage == GVA_C99Inline)
     return llvm::Function::AvailableExternallyLinkage;
-  
+
+  // Note that Apple's kernel linker doesn't support symbol
+  // coalescing, so we need to avoid linkonce and weak linkages there.
+  // Normally, this means we just map to internal, but for explicit
+  // instantiations we'll map to external.
+
   // In C++, the compiler has to emit a definition in every translation unit
   // that references the function.  We should use linkonce_odr because
   // a) if all references in this translation unit are optimized away, we
@@ -419,7 +424,7 @@ CodeGenModule::getFunctionLinkage(const FunctionDecl *D) {
   if (Linkage == GVA_ExplicitTemplateInstantiation)
     return !Context.getLangOptions().AppleKext
              ? llvm::Function::WeakODRLinkage
-             : llvm::Function::InternalLinkage;
+             : llvm::Function::ExternalLinkage;
   
   // Otherwise, we have strong external linkage.
   assert(Linkage == GVA_StrongExternal);
