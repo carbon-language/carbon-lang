@@ -68,7 +68,7 @@ void AnalysisContextManager::clear() {
   Contexts.clear();
 }
 
-Stmt *AnalysisContext::getBody() {
+Stmt *AnalysisContext::getBody() const {
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
     return FD->getBody();
   else if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D))

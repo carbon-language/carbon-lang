@@ -103,7 +103,7 @@ public:
   void registerForcedBlockExpression(const Stmt *stmt);
   const CFGBlock *getBlockForRegisteredExpression(const Stmt *stmt);
   
-  Stmt *getBody();
+  Stmt *getBody() const;
   CFG *getCFG();
   
   CFGStmtMap *getCFGStmtMap();
