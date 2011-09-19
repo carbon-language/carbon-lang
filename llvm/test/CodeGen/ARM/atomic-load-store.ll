@@ -35,7 +35,22 @@ define void @test3(i8* %ptr1, i8* %ptr2) {
 ; ARM: test3
 ; ARM: ldrb
 ; ARM: strb
+; THUMBTWO: test3
+; THUMBTWO: ldrb
+; THUMBTWO: strb
+; THUMBONE: test3
+; THUMBONE: ldrb
+; THUMBONE: strb
   %val = load atomic i8* %ptr1 unordered, align 1
   store atomic i8 %val, i8* %ptr2 unordered, align 1
+  ret void
+}
+
+define void @test4(i8* %ptr1, i8* %ptr2) {
+; THUMBONE: test4
+; THUMBONE: ___sync_val_compare_and_swap_1
+; THUMBONE: ___sync_lock_test_and_set_1
+  %val = load atomic i8* %ptr1 seq_cst, align 1
+  store atomic i8 %val, i8* %ptr2 seq_cst, align 1
   ret void
 }
