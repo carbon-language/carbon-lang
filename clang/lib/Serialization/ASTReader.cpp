@@ -2633,9 +2633,11 @@ ASTReader::ASTReadResult ASTReader::ReadASTCore(StringRef FileName,
   // Preload SLocEntries.
   for (unsigned I = 0, N = M->PreloadSLocEntries.size(); I != N; ++I) {
     int Index = int(M->PreloadSLocEntries[I] - 1) + F.SLocEntryBaseID;
-    ASTReadResult Result = ReadSLocEntryRecord(Index);
-    if (Result != Success)
-      return Failure;
+    // Load it through the SourceManager and don't call ReadSLocEntryRecord()
+    // directly because the entry may have already been loaded in which case
+    // calling ReadSLocEntryRecord() directly would trigger an assertion in
+    // SourceManager.
+    SourceMgr.getLoadedSLocEntryByID(Index);
   }
 
 

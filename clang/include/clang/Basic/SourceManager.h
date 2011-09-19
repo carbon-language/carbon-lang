@@ -1296,6 +1296,9 @@ private:
   getDecomposedSpellingLocSlowCase(const SrcMgr::SLocEntry *E,
                                    unsigned Offset) const;
   void computeMacroArgsCache(SrcMgr::ContentCache *Content, FileID FID);
+
+  friend class ASTReader;
+  friend class ASTWriter;
 };
 
 
