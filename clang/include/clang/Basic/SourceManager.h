@@ -434,8 +434,11 @@ public:
 
     // It is common for multiple macro expansions to be "included" from the same
     // location (expansion location), in which case use the order of the FileIDs
-    // to determine which came first.
-    if (LOffset == ROffset && LQueryFID != CommonFID && RQueryFID != CommonFID)
+    // to determine which came first. This will also take care the case where
+    // one of the locations points at the inclusion/expansion point of the other
+    // in which case its FileID will come before the other.
+    if (LOffset == ROffset &&
+        (LQueryFID != CommonFID || RQueryFID != CommonFID))
       return IsLQFIDBeforeRQFID;
 
     return LOffset < ROffset;
