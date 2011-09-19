@@ -84,6 +84,8 @@ private:
 class SourceLocation {
   unsigned ID;
   friend class SourceManager;
+  friend class ASTReader;
+  friend class ASTWriter;
   enum {
     MacroIDBit = 1U << 31
   };

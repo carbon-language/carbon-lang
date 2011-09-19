@@ -1143,15 +1143,11 @@ public:
 
   /// \brief Read a source location from raw form.
   SourceLocation ReadSourceLocation(Module &Module, unsigned Raw) const {
-    unsigned Flag = Raw & (1U << 31);
-    unsigned Offset = Raw & ~(1U << 31);
-    assert(Module.SLocRemap.find(Offset) != Module.SLocRemap.end() &&
+    SourceLocation Loc = SourceLocation::getFromRawEncoding(Raw);
+    assert(Module.SLocRemap.find(Loc.getOffset()) != Module.SLocRemap.end() &&
            "Cannot find offset to remap.");
-    int Remap = Module.SLocRemap.find(Offset)->second;
-    Offset += Remap;
-    assert((Offset & (1U << 31)) == 0 &&
-           "Bad offset in reading source location");
-    return SourceLocation::getFromRawEncoding(Offset | Flag);
+    int Remap = Module.SLocRemap.find(Loc.getOffset())->second;
+    return Loc.getFileLocWithOffset(Remap);
   }
 
   /// \brief Read a source location.
