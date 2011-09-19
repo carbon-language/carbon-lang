@@ -4172,11 +4172,11 @@ def MOVPDI2DImr  : PDI<0x7E, MRMDestMem, (outs), (ins i32mem:$dst, VR128:$src),
 //===---------------------------------------------------------------------===//
 // Move Packed Doubleword Int first element to Doubleword Int
 //
-let isCodeGenOnly = 1 in
-def VMOVPQIto64rr : VRPDI<0x7E, MRMDestReg, (outs GR64:$dst), (ins VR128:$src),
+def VMOVPQIto64rr : I<0x7E, MRMDestReg, (outs GR64:$dst), (ins VR128:$src),
                           "mov{d|q}\t{$src, $dst|$dst, $src}",
                           [(set GR64:$dst, (vector_extract (v2i64 VR128:$src),
-                                                           (iPTR 0)))]>;
+                                                           (iPTR 0)))]>,
+                      TB, OpSize, VEX, VEX_W, Requires<[HasAVX, In64BitMode]>;
 
 def MOVPQIto64rr : RPDI<0x7E, MRMDestReg, (outs GR64:$dst), (ins VR128:$src),
                         "mov{d|q}\t{$src, $dst|$dst, $src}",
