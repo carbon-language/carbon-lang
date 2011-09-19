@@ -2732,3 +2732,29 @@ _func:
 @ CHECK: itt	gt                      @ encoding: [0xc4,0xbf]
 @ CHECK: uhadd16gt	r4, r8, r2      @ encoding: [0x98,0xfa,0x62,0xf4]
 @ CHECK: uhadd8gt	r4, r8, r2      @ encoding: [0x88,0xfa,0x62,0xf4]
+
+
+@------------------------------------------------------------------------------
+@ UHASX/UHSAX
+@------------------------------------------------------------------------------
+        uhasx r4, r1, r5
+        uhsax r5, r6, r6
+        itt gt
+        uhasxgt r6, r9, r8
+        uhsaxgt r7, r8, r12
+        uhaddsubx r4, r1, r5
+        uhsubaddx r5, r6, r6
+        itt gt
+        uhaddsubxgt r6, r9, r8
+        uhsubaddxgt r7, r8, r12
+
+@ CHECK: uhasx	r4, r1, r5              @ encoding: [0xa1,0xfa,0x65,0xf4]
+@ CHECK: uhsax	r5, r6, r6              @ encoding: [0xe6,0xfa,0x66,0xf5]
+@ CHECK: itt	gt                      @ encoding: [0xc4,0xbf]
+@ CHECK: uhasxgt r6, r9, r8             @ encoding: [0xa9,0xfa,0x68,0xf6]
+@ CHECK: uhsaxgt r7, r8, r12            @ encoding: [0xe8,0xfa,0x6c,0xf7]
+@ CHECK: uhasx	r4, r1, r5              @ encoding: [0xa1,0xfa,0x65,0xf4]
+@ CHECK: uhsax	r5, r6, r6              @ encoding: [0xe6,0xfa,0x66,0xf5]
+@ CHECK: itt	gt                      @ encoding: [0xc4,0xbf]
+@ CHECK: uhasxgt r6, r9, r8             @ encoding: [0xa9,0xfa,0x68,0xf6]
+@ CHECK: uhsaxgt r7, r8, r12            @ encoding: [0xe8,0xfa,0x6c,0xf7]
