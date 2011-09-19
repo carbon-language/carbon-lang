@@ -1174,30 +1174,31 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
         ((A == C && B == D) || (A == D && B == C)))
       return BinaryOperator::CreateXor(A, B);
     
-    if (Op0->hasOneUse() &&
-        match(Op0, m_Xor(m_Value(A), m_Value(B)))) {
-      if (A == Op1) {                                // (A^B)&A -> A&(A^B)
-        I.swapOperands();     // Simplify below
-        std::swap(Op0, Op1);
-      } else if (B == Op1) {                         // (A^B)&B -> B&(B^A)
-        cast<BinaryOperator>(Op0)->swapOperands();
-        I.swapOperands();     // Simplify below
-        std::swap(Op0, Op1);
+    // A&(A^B) => A & ~B
+    {
+      Value *tmpOp0 = Op0;
+      Value *tmpOp1 = Op1;
+      if (Op0->hasOneUse() &&
+          match(Op0, m_Xor(m_Value(A), m_Value(B)))) {
+        if (A == Op1 || B == Op1 ) {
+          tmpOp1 = Op0;
+          tmpOp0 = Op1;
+          // Simplify below
+        }
       }
-    }
 
-    if (Op1->hasOneUse() &&
-        match(Op1, m_Xor(m_Value(A), m_Value(B)))) {
-      if (B == Op0) {                                // B&(A^B) -> B&(B^A)
-        cast<BinaryOperator>(Op1)->swapOperands();
-        std::swap(A, B);
+      if (tmpOp1->hasOneUse() &&
+          match(tmpOp1, m_Xor(m_Value(A), m_Value(B)))) {
+        if (B == tmpOp0) {
+          std::swap(A, B);
+        }
+        // Notice that the patten (A&(~B)) is actually (A&(-1^B)), so if
+        // A is originally -1 (or a vector of -1 and undefs), then we enter
+        // an endless loop. By checking that A is non-constant we ensure that
+        // we will never get to the loop.
+        if (A == tmpOp0 && !isa<Constant>(A)) // A&(A^B) -> A & ~B
+          return BinaryOperator::CreateAnd(A, Builder->CreateNot(B, "tmp"));
       }
-      // Notice that the patten (A&(~B)) is actually (A&(-1^B)), so if
-      // A is originally -1 (or a vector of -1 and undefs), then we enter
-      // an endless loop. By checking that A is non-constant we ensure that
-      // we will never get to the loop.
-      if (A == Op0 && !isa<Constant>(A)) // A&(A^B) -> A & ~B
-        return BinaryOperator::CreateAnd(A, Builder->CreateNot(B, "tmp"));
     }
 
     // (A&((~A)|B)) -> A&B

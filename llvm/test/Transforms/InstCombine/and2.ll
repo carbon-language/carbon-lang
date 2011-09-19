@@ -35,3 +35,10 @@ define i1 @test4(i32 %X) {
 ; CHECK: @test4
 ; CHECK-NEXT: ret i1 false
 }
+
+; Make sure we don't go into an infinite loop with this test
+define <4 x i32> @test5(<4 x i32> %A) {
+  %1 = xor <4 x i32> %A, <i32 1, i32 2, i32 3, i32 4>
+  %2 = and <4 x i32> <i32 1, i32 2, i32 3, i32 4>, %1
+  ret <4 x i32> %2
+}
