@@ -2421,7 +2421,19 @@ _func:
 @------------------------------------------------------------------------------
 @ SUB (register)
 @------------------------------------------------------------------------------
+        sub r4, r5, r6
+        sub r4, r5, r6, lsl #5
+        sub r4, r5, r6, lsr #5
+        sub.w r4, r5, r6, lsr #5
+        sub r4, r5, r6, asr #5
+        sub r4, r5, r6, ror #5
         sub.w r5, r2, r12, rrx
 
-@ CHECK: sub.w r5, r2, r12, rrx        @ encoding: [0xa2,0xeb,0x3c,0x05]
+@ CHECK: sub.w	r4, r5, r6              @ encoding: [0xa5,0xeb,0x06,0x04]
+@ CHECK: sub.w	r4, r5, r6, lsl #5      @ encoding: [0xa5,0xeb,0x46,0x14]
+@ CHECK: sub.w	r4, r5, r6, lsr #5      @ encoding: [0xa5,0xeb,0x56,0x14]
+@ CHECK: sub.w	r4, r5, r6, lsr #5      @ encoding: [0xa5,0xeb,0x56,0x14]
+@ CHECK: sub.w	r4, r5, r6, asr #5      @ encoding: [0xa5,0xeb,0x66,0x14]
+@ CHECK: sub.w	r4, r5, r6, ror #5      @ encoding: [0xa5,0xeb,0x76,0x14]
+@ CHECK: sub.w r5, r2, r12, rrx         @ encoding: [0xa2,0xeb,0x3c,0x05]
 
