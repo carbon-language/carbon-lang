@@ -2704,3 +2704,15 @@ _func:
 @ CHECK: uasx	r9, r12, r0             @ encoding: [0xac,0xfa,0x40,0xf9]
 @ CHECK: it	eq                      @ encoding: [0x08,0xbf]
 @ CHECK: uasxeq	r9, r12, r0             @ encoding: [0xac,0xfa,0x40,0xf9]
+
+
+@------------------------------------------------------------------------------
+@ UBFX
+@------------------------------------------------------------------------------
+        ubfx r4, r5, #16, #1
+        it gt
+        ubfxgt r4, r5, #16, #16
+
+@ CHECK: ubfx	r4, r5, #16, #1         @ encoding: [0xc5,0xf3,0x00,0x44]
+@ CHECK: it	gt                      @ encoding: [0xc8,0xbf]
+@ CHECK: ubfxgt	r4, r5, #16, #16        @ encoding: [0xc5,0xf3,0x0f,0x44]
