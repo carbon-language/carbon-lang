@@ -1194,7 +1194,7 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
   }
 
   const ASTRecordLayout &RL = CGM.getContext().getASTObjCInterfaceLayout(ID);
-
+  ObjCImplementationDecl *ImpD = ID->getImplementation();
   unsigned FieldNo = 0;
   for (ObjCIvarDecl *Field = ID->all_declared_ivar_begin(); Field;
        Field = Field->getNextIvar(), ++FieldNo) {
@@ -1238,13 +1238,17 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
     StringRef PropertyGetter;
     StringRef PropertySetter;
     unsigned PropertyAttributes = 0;
-    if (ObjCPropertyDecl *PD =
-        ID->FindPropertyVisibleInPrimaryClass(Field->getIdentifier())) {
+    ObjCPropertyDecl *PD = NULL;
+    if (ImpD)
+      if (ObjCPropertyImplDecl *PImpD = 
+	  ImpD->FindPropertyImplIvarDecl(Field->getIdentifier()))
+	PD = PImpD->getPropertyDecl();
+    if (PD) {
       PropertyName = PD->getName();
       PropertyGetter = getSelectorName(PD->getGetterName());
       PropertySetter = getSelectorName(PD->getSetterName());
       PropertyAttributes = PD->getPropertyAttributes();
-    }
+    } 
     FieldTy = DBuilder.createObjCIVar(FieldName, FieldDefUnit,
                                       FieldLine, FieldSize, FieldAlign,
                                       FieldOffset, Flags, FieldTy,
