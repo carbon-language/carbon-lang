@@ -2758,3 +2758,19 @@ _func:
 @ CHECK: itt	gt                      @ encoding: [0xc4,0xbf]
 @ CHECK: uhasxgt r6, r9, r8             @ encoding: [0xa9,0xfa,0x68,0xf6]
 @ CHECK: uhsaxgt r7, r8, r12            @ encoding: [0xe8,0xfa,0x6c,0xf7]
+
+
+@------------------------------------------------------------------------------
+@ UHSUB16/UHSUB8
+@------------------------------------------------------------------------------
+        uhsub16 r5, r8, r3
+        uhsub8 r1, r7, r6
+        itt lt
+        uhsub16lt r4, r9, r12
+        uhsub8lt r3, r1, r5
+
+@ CHECK: uhsub16	r5, r8, r3      @ encoding: [0xd8,0xfa,0x63,0xf5]
+@ CHECK: uhsub8	r1, r7, r6              @ encoding: [0xc7,0xfa,0x66,0xf1]
+@ CHECK: itt	lt                      @ encoding: [0xbc,0xbf]
+@ CHECK: uhsub16lt	r4, r9, r12     @ encoding: [0xd9,0xfa,0x6c,0xf4]
+@ CHECK: uhsub8lt	r3, r1, r5      @ encoding: [0xc1,0xfa,0x65,0xf3]
