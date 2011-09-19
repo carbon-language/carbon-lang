@@ -1200,7 +1200,7 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
     if (Preamble.size() == NewPreamble.second.first &&
         PreambleEndsAtStartOfLine == NewPreamble.second.second &&
         NewPreamble.first->getBufferSize() < PreambleReservedSize-2 &&
-        memcmp(&Preamble[0], NewPreamble.first->getBufferStart(),
+        memcmp(Preamble.getBufferStart(), NewPreamble.first->getBufferStart(),
                NewPreamble.second.first) == 0) {
       // The preamble has not changed. We may be able to re-use the precompiled
       // preamble.
@@ -1332,7 +1332,9 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
 
   // Save the preamble text for later; we'll need to compare against it for
   // subsequent reparses.
-  Preamble.assign(NewPreamble.first->getBufferStart(), 
+  StringRef MainFilename = PreambleInvocation->getFrontendOpts().Inputs[0].second;
+  Preamble.assign(FileMgr->getFile(MainFilename),
+                  NewPreamble.first->getBufferStart(), 
                   NewPreamble.first->getBufferStart() 
                                                   + NewPreamble.second.first);
   PreambleEndsAtStartOfLine = NewPreamble.second.second;
@@ -2395,4 +2397,42 @@ void ASTUnit::TranslateStoredDiagnostics(
                                       SD.getMessage(), Loc, Ranges, FixIts));
   }
   Result.swap(Out);
+}
+
+SourceLocation ASTUnit::getLocation(const FileEntry *File,
+                                    unsigned Line, unsigned Col) const {
+  const SourceManager &SM = getSourceManager();
+  SourceLocation Loc;
+  if (!Preamble.empty() && Line <= Preamble.getNumLines())
+    Loc = SM.translateLineCol(SM.getPreambleFileID(), Line, Col);
+  else
+    Loc = SM.translateFileLineCol(File, Line, Col);
+
+  return SM.getMacroArgExpandedLocation(Loc);
+}
+
+SourceLocation ASTUnit::getLocation(const FileEntry *File,
+                                    unsigned Offset) const {
+  const SourceManager &SM = getSourceManager();
+  SourceLocation FileLoc;
+  if (!Preamble.empty() && Offset < Preamble.size())
+    FileLoc = SM.getLocForStartOfFile(SM.getPreambleFileID());
+  else
+    FileLoc = SM.translateFileLineCol(File, 1, 1);
+
+  return SM.getMacroArgExpandedLocation(FileLoc.getLocWithOffset(Offset));
+}
+
+void ASTUnit::PreambleData::countLines() const {
+  NumLines = 0;
+  if (empty())
+    return;
+
+  for (std::vector<char>::const_iterator
+         I = Buffer.begin(), E = Buffer.end(); I != E; ++I) {
+    if (*I == '\n')
+      ++NumLines;
+  }
+  if (Buffer.back() != '\n')
+    ++NumLines;
 }

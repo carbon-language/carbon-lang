@@ -2750,8 +2750,7 @@ CXSourceLocation clang_getLocation(CXTranslationUnit tu,
   bool Logging = ::getenv("LIBCLANG_LOGGING");
   ASTUnit *CXXUnit = static_cast<ASTUnit *>(tu->TUData);
   const FileEntry *File = static_cast<const FileEntry *>(file);
-  SourceLocation SLoc
-    = CXXUnit->getSourceManager().getLocation(File, line, column);
+  SourceLocation SLoc = CXXUnit->getLocation(File, line, column);
   if (SLoc.isInvalid()) {
     if (Logging)
       llvm::errs() << "clang_getLocation(\"" << File->getName() 
@@ -2774,14 +2773,8 @@ CXSourceLocation clang_getLocationForOffset(CXTranslationUnit tu,
     return clang_getNullLocation();
   
   ASTUnit *CXXUnit = static_cast<ASTUnit *>(tu->TUData);
-  SourceLocation Start 
-    = CXXUnit->getSourceManager().getLocation(
-                                        static_cast<const FileEntry *>(file),
-                                              1, 1);
-  if (Start.isInvalid()) return clang_getNullLocation();
-
-  SourceLocation SLoc = Start.getLocWithOffset(offset);
-
+  SourceLocation SLoc 
+    = CXXUnit->getLocation(static_cast<const FileEntry *>(file), offset);
   if (SLoc.isInvalid()) return clang_getNullLocation();
 
   return cxloc::translateSourceLocation(CXXUnit->getASTContext(), SLoc);

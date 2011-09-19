@@ -1324,7 +1324,8 @@ static llvm::Optional<ino_t> getActualFileInode(const FileEntry *File) {
 /// If the source file is included multiple times, the source location will
 /// be based upon an arbitrary inclusion.
 SourceLocation SourceManager::translateFileLineCol(const FileEntry *SourceFile,
-                                                  unsigned Line, unsigned Col) {
+                                                  unsigned Line,
+                                                  unsigned Col) const {
   assert(SourceFile && "Null source file!");
   assert(Line && Col && "Line and column should start from 1!");
 
@@ -1439,7 +1440,8 @@ SourceLocation SourceManager::translateFileLineCol(const FileEntry *SourceFile,
 /// \brief Get the source location in \arg FID for the given line:col.
 /// Returns null location if \arg FID is not a file SLocEntry.
 SourceLocation SourceManager::translateLineCol(FileID FID,
-                                               unsigned Line, unsigned Col) {
+                                               unsigned Line,
+                                               unsigned Col) const {
   if (FID.isInvalid())
     return SourceLocation();
 
@@ -1496,7 +1498,8 @@ SourceLocation SourceManager::translateLineCol(FileID FID,
 ///     0   -> SourceLocation()
 ///     100 -> Expanded macro arg location
 ///     110 -> SourceLocation()
-void SourceManager::computeMacroArgsCache(ContentCache *Content, FileID FID) {
+void SourceManager::computeMacroArgsCache(ContentCache *Content,
+                                          FileID FID) const {
   assert(!Content->MacroArgsCache);
   assert(!FID.isInvalid());
 
@@ -1575,7 +1578,8 @@ void SourceManager::computeMacroArgsCache(ContentCache *Content, FileID FID) {
 ///             ^
 /// Passing a file location pointing at 'foo', will yield a macro location
 /// where 'foo' was expanded into.
-SourceLocation SourceManager::getMacroArgExpandedLocation(SourceLocation Loc) {
+SourceLocation
+SourceManager::getMacroArgExpandedLocation(SourceLocation Loc) const {
   if (Loc.isInvalid() || !Loc.isFileID())
     return Loc;
 

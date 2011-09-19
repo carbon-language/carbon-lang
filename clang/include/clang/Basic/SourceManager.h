@@ -559,6 +559,9 @@ class SourceManager : public llvm::RefCountedBase<SourceManager> {
   /// MainFileID - The file ID for the main source file of the translation unit.
   FileID MainFileID;
 
+  /// \brief The file ID for the precompiled preamble there is one.
+  FileID PreambleFileID;
+
   // Statistics for -print-stats.
   mutable unsigned NumLinearScans, NumBinaryProbes;
 
@@ -610,12 +613,14 @@ public:
     return MainFileID;
   }
 
-  /// \brief Set the file ID for the precompiled preamble, which is also the
-  /// main file.
-  void SetPreambleFileID(FileID Preamble) {
-    assert(MainFileID.isInvalid() && "MainFileID already set!");
-    MainFileID = Preamble;
+  /// \brief Set the file ID for the precompiled preamble.
+  void setPreambleFileID(FileID Preamble) {
+    assert(PreambleFileID.isInvalid() && "PreambleFileID already set!");
+    PreambleFileID = Preamble;
   }
+
+  /// \brief Get the file ID for the precompiled preamble if there is one.
+  FileID getPreambleFileID() const { return PreambleFileID; }
 
   //===--------------------------------------------------------------------===//
   // Methods to create new FileID's and macro expansions.
@@ -1117,11 +1122,12 @@ public:
   /// If the source file is included multiple times, the source location will
   /// be based upon the first inclusion.
   SourceLocation translateFileLineCol(const FileEntry *SourceFile,
-                                      unsigned Line, unsigned Col);
+                                      unsigned Line, unsigned Col) const;
 
   /// \brief Get the source location in \arg FID for the given line:col.
   /// Returns null location if \arg FID is not a file SLocEntry.
-  SourceLocation translateLineCol(FileID FID, unsigned Line, unsigned Col);
+  SourceLocation translateLineCol(FileID FID,
+                                  unsigned Line, unsigned Col) const;
 
   /// \brief If \arg Loc points inside a function macro argument, the returned
   /// location will be the macro location in which the argument was expanded.
@@ -1132,7 +1138,7 @@ public:
   ///             ^
   /// Passing a file location pointing at 'foo', will yield a macro location
   /// where 'foo' was expanded into.
-  SourceLocation getMacroArgExpandedLocation(SourceLocation Loc);
+  SourceLocation getMacroArgExpandedLocation(SourceLocation Loc) const;
 
   /// \brief Determines the order of 2 source locations in the translation unit.
   ///
@@ -1309,7 +1315,7 @@ private:
   std::pair<FileID, unsigned>
   getDecomposedSpellingLocSlowCase(const SrcMgr::SLocEntry *E,
                                    unsigned Offset) const;
-  void computeMacroArgsCache(SrcMgr::ContentCache *Content, FileID FID);
+  void computeMacroArgsCache(SrcMgr::ContentCache *Content, FileID FID) const;
 
   friend class ASTReader;
   friend class ASTWriter;

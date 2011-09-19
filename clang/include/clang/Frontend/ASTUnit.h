@@ -196,9 +196,41 @@ private:
   /// \brief The file in which the precompiled preamble is stored.
   std::string PreambleFile;
   
+  class PreambleData {
+    const FileEntry *File;
+    std::vector<char> Buffer;
+    mutable unsigned NumLines;
+    
+  public:
+    PreambleData() : File(0), NumLines(0) { }
+    
+    void assign(const FileEntry *F, const char *begin, const char *end) {
+      File = F;
+      Buffer.assign(begin, end);
+      NumLines = 0;
+    }
+
+    void clear() { Buffer.clear(); File = 0; NumLines = 0; }
+
+    size_t size() const { return Buffer.size(); }
+    bool empty() const { return Buffer.empty(); }
+
+    const char *getBufferStart() const { return &Buffer[0]; }
+
+    unsigned getNumLines() const {
+      if (NumLines)
+        return NumLines;
+      countLines();
+      return NumLines;
+    }
+
+  private:
+    void countLines() const;
+  };
+
   /// \brief The contents of the preamble that has been precompiled to
   /// \c PreambleFile.
-  std::vector<char> Preamble;
+  PreambleData Preamble;
 
   /// \brief Whether the preamble ends at the start of a new line.
   /// 
@@ -515,6 +547,21 @@ public:
   PreprocessedEntitiesByFileMap &getPreprocessedEntitiesByFile() {
     return PreprocessedEntitiesByFile;
   }
+
+  /// \brief Get the source location for the given file:line:col triplet.
+  ///
+  /// The difference with SourceManager::getLocation is that this method checks
+  /// whether the requested location points inside the precompiled preamble
+  /// in which case the returned source location will be a "loaded" one.
+  SourceLocation getLocation(const FileEntry *File,
+                             unsigned Line, unsigned Col) const;
+
+  /// \brief Get the source location for the given file:offset pair.
+  ///
+  /// The difference with SourceManager::getLocation is that this method checks
+  /// whether the requested location points inside the precompiled preamble
+  /// in which case the returned source location will be a "loaded" one.
+  SourceLocation getLocation(const FileEntry *File, unsigned Offset) const;
   
   // Retrieve the diagnostics associated with this AST
   typedef const StoredDiagnostic *stored_diag_iterator;

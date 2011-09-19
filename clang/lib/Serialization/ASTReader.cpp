@@ -2508,23 +2508,15 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
   if (DeserializationListener)
     DeserializationListener->ReaderInitialized(this);
 
-  // If this AST file is a precompiled preamble, then set the main file ID of 
-  // the source manager to the file source file from which the preamble was
-  // built. This is the only valid way to use a precompiled preamble.
+  // If this AST file is a precompiled preamble, then set the preamble file ID
+  // of the source manager to the file source file from which the preamble was
+  // built.
   if (Type == MK_Preamble) {
-    if (OriginalFileID.isInvalid()) {
-      SourceLocation Loc
-        = SourceMgr.getLocation(FileMgr.getFile(getOriginalSourceFile()), 1, 1);
-      if (Loc.isValid())
-        OriginalFileID = SourceMgr.getDecomposedLoc(Loc).first;
-    }
-    else {
+    if (!OriginalFileID.isInvalid()) {
       OriginalFileID = FileID::get(ModuleMgr.getPrimaryModule().SLocEntryBaseID
                                         + OriginalFileID.getOpaqueValue() - 1);
+      SourceMgr.setPreambleFileID(OriginalFileID);
     }
-
-    if (!OriginalFileID.isInvalid())
-      SourceMgr.SetPreambleFileID(OriginalFileID);
   }
   
   return Success;
