@@ -707,8 +707,8 @@ Lforward:
         mcr  p7, #1, r5, c1, c1, #4
         mcr2  p7, #1, r5, c1, c1, #4
 
-@ CHECK: mcr  p7, #1, r5, c1, c1, #4 @ encoding: [0x91,0x57,0x21,0xee]
-@ CHECK: mcr2  p7, #1, r5, c1, c1, #4 @ encoding: [0x91,0x57,0x21,0xfe]
+@ CHECK: mcr  p7, #1, r5, c1, c1, #4    @ encoding: [0x91,0x57,0x21,0xee]
+@ CHECK: mcr2  p7, #1, r5, c1, c1, #4   @ encoding: [0x91,0x57,0x21,0xfe]
 
 @------------------------------------------------------------------------------
 @ MCRR/MCRR2
@@ -716,8 +716,8 @@ Lforward:
         mcrr  p7, #15, r5, r4, c1
         mcrr2  p7, #15, r5, r4, c1
 
-@ CHECK: mcrr  p7, #15, r5, r4, c1 @ encoding: [0xf1,0x57,0x44,0xec]
-@ CHECK: mcrr2  p7, #15, r5, r4, c1 @ encoding: [0xf1,0x57,0x44,0xfc]
+@ CHECK: mcrr  p7, #15, r5, r4, c1      @ encoding: [0xf1,0x57,0x44,0xec]
+@ CHECK: mcrr2  p7, #15, r5, r4, c1     @ encoding: [0xf1,0x57,0x44,0xfc]
 
 
 @------------------------------------------------------------------------------
@@ -728,10 +728,10 @@ Lforward:
         mlane  r1,r2,r3,r4
         mlasne r1,r2,r3,r4
 
-@ CHECK: mla 	r1, r2, r3, r4 @ encoding: [0x92,0x43,0x21,0xe0]
-@ CHECK: mlas	r1, r2, r3, r4 @ encoding: [0x92,0x43,0x31,0xe0]
-@ CHECK: mlane 	r1, r2, r3, r4 @ encoding: [0x92,0x43,0x21,0x10]
-@ CHECK: mlasne	r1, r2, r3, r4 @ encoding: [0x92,0x43,0x31,0x10]
+@ CHECK: mla 	r1, r2, r3, r4          @ encoding: [0x92,0x43,0x21,0xe0]
+@ CHECK: mlas	r1, r2, r3, r4          @ encoding: [0x92,0x43,0x31,0xe0]
+@ CHECK: mlane 	r1, r2, r3, r4          @ encoding: [0x92,0x43,0x21,0x10]
+@ CHECK: mlasne	r1, r2, r3, r4          @ encoding: [0x92,0x43,0x31,0x10]
 
 @------------------------------------------------------------------------------
 @ MLS
@@ -813,9 +813,9 @@ Lforward:
         mrs  r8, apsr
         mrs  r8, cpsr
         mrs  r8, spsr
-@ CHECK: mrs  r8, apsr @ encoding: [0x00,0x80,0x0f,0xe1]
-@ CHECK: mrs  r8, apsr @ encoding: [0x00,0x80,0x0f,0xe1]
-@ CHECK: mrs  r8, spsr @ encoding: [0x00,0x80,0x4f,0xe1]
+@ CHECK: mrs  r8, apsr                  @ encoding: [0x00,0x80,0x0f,0xe1]
+@ CHECK: mrs  r8, apsr                  @ encoding: [0x00,0x80,0x0f,0xe1]
+@ CHECK: mrs  r8, spsr                  @ encoding: [0x00,0x80,0x4f,0xe1]
 
 
 
@@ -868,20 +868,20 @@ Lforward:
         msr  SPSR_fsxc, r0
         msr  cpsr_fsxc, r0
 
-@ CHECK: msr  APSR_nzcvq, r0 @ encoding: [0x00,0xf0,0x28,0xe1]
-@ CHECK: msr  APSR_g, r0 @ encoding: [0x00,0xf0,0x24,0xe1]
-@ CHECK: msr  APSR_nzcvq, r0 @ encoding: [0x00,0xf0,0x28,0xe1]
-@ CHECK: msr  APSR_nzcvq, r0 @ encoding: [0x00,0xf0,0x28,0xe1]
-@ CHECK: msr  APSR_nzcvqg, r0 @ encoding: [0x00,0xf0,0x2c,0xe1]
-@ CHECK: msr  CPSR_fc, r0 @ encoding: [0x00,0xf0,0x29,0xe1]
-@ CHECK: msr  CPSR_c, r0 @ encoding: [0x00,0xf0,0x21,0xe1]
-@ CHECK: msr  CPSR_x, r0 @ encoding: [0x00,0xf0,0x22,0xe1]
-@ CHECK: msr  CPSR_fc, r0 @ encoding: [0x00,0xf0,0x29,0xe1]
-@ CHECK: msr  CPSR_fc, r0 @ encoding: [0x00,0xf0,0x29,0xe1]
-@ CHECK: msr  CPSR_fsx, r0 @ encoding: [0x00,0xf0,0x2e,0xe1]
-@ CHECK: msr  SPSR_fc, r0 @ encoding: [0x00,0xf0,0x69,0xe1]
-@ CHECK: msr  SPSR_fsxc, r0 @ encoding: [0x00,0xf0,0x6f,0xe1]
-@ CHECK: msr  CPSR_fsxc, r0 @ encoding: [0x00,0xf0,0x2f,0xe1]
+@ CHECK: msr  APSR_nzcvq, r0            @ encoding: [0x00,0xf0,0x28,0xe1]
+@ CHECK: msr  APSR_g, r0                @ encoding: [0x00,0xf0,0x24,0xe1]
+@ CHECK: msr  APSR_nzcvq, r0            @ encoding: [0x00,0xf0,0x28,0xe1]
+@ CHECK: msr  APSR_nzcvq, r0            @ encoding: [0x00,0xf0,0x28,0xe1]
+@ CHECK: msr  APSR_nzcvqg, r0           @ encoding: [0x00,0xf0,0x2c,0xe1]
+@ CHECK: msr  CPSR_fc, r0               @ encoding: [0x00,0xf0,0x29,0xe1]
+@ CHECK: msr  CPSR_c, r0                @ encoding: [0x00,0xf0,0x21,0xe1]
+@ CHECK: msr  CPSR_x, r0                @ encoding: [0x00,0xf0,0x22,0xe1]
+@ CHECK: msr  CPSR_fc, r0               @ encoding: [0x00,0xf0,0x29,0xe1]
+@ CHECK: msr  CPSR_fc, r0               @ encoding: [0x00,0xf0,0x29,0xe1]
+@ CHECK: msr  CPSR_fsx, r0              @ encoding: [0x00,0xf0,0x2e,0xe1]
+@ CHECK: msr  SPSR_fc, r0               @ encoding: [0x00,0xf0,0x69,0xe1]
+@ CHECK: msr  SPSR_fsxc, r0             @ encoding: [0x00,0xf0,0x6f,0xe1]
+@ CHECK: msr  CPSR_fsxc, r0             @ encoding: [0x00,0xf0,0x2f,0xe1]
 
 @------------------------------------------------------------------------------
 @ MUL
@@ -1450,8 +1450,9 @@ Lforward:
         sev
         seveq
 
-@ CHECK: sev                             @ encoding: [0x04,0xf0,0x20,0xe3]
-@ CHECK: seveq                           @ encoding: [0x04,0xf0,0x20,0x03]
+@ CHECK: sev                            @ encoding: [0x04,0xf0,0x20,0xe3]
+@ CHECK: seveq                          @ encoding: [0x04,0xf0,0x20,0x03]
+
 
 @------------------------------------------------------------------------------
 @ SHADD16/SHADD8
@@ -1866,8 +1867,8 @@ Lforward:
 
 @ CHECK: stm	r8!, {r1, r3, r4, r5, r6, sp} @ encoding: [0x7a,0x20,0xa8,0xe8]
 @ CHECK: stmib	r9!, {r1, r3, r4, r5, r6, sp} @ encoding: [0x7a,0x20,0xa9,0xe9]
-@ CHECK: stmda	sp!, {r1, r3, r4, r5, r6} @ encoding: [0x7a,0x00,0x2d,0xe8]
-@ CHECK: stmdb	r0!, {r1, r5, r7, sp}   @ encoding: [0xa2,0x20,0x20,0xe9]
+@ CHECK: stmda	sp!, {r1, r3, r4, r5, r6}     @ encoding: [0x7a,0x00,0x2d,0xe8]
+@ CHECK: stmdb	r0!, {r1, r5, r7, sp}         @ encoding: [0xa2,0x20,0x20,0xe9]
 
 
 @------------------------------------------------------------------------------
@@ -2199,7 +2200,7 @@ Lforward:
         umaallt r3, r4, r5, r6
 
 @ CHECK: umaal	r3, r4, r5, r6          @ encoding: [0x95,0x36,0x44,0xe0]
-@ CHECK: umaallt	r3, r4, r5, r6          @ encoding: [0x95,0x36,0x44,0xb0]
+@ CHECK: umaallt	r3, r4, r5, r6  @ encoding: [0x95,0x36,0x44,0xb0]
 
 
 @------------------------------------------------------------------------------
