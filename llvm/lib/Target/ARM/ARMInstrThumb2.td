@@ -2032,6 +2032,7 @@ def t2SSAT: T2SatI<
   let Inst{25-22} = 0b1100;
   let Inst{20} = 0;
   let Inst{15} = 0;
+  let Inst{5}  = 0;
 }
 
 def t2SSAT16: T2SatI<
