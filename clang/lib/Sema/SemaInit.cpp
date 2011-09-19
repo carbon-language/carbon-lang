@@ -195,6 +195,11 @@ class InitListChecker {
                            unsigned &Index,
                            InitListExpr *StructuredList,
                            unsigned &StructuredIndex);
+  void CheckComplexType(const InitializedEntity &Entity,
+                        InitListExpr *IList, QualType DeclType,
+                        unsigned &Index,
+                        InitListExpr *StructuredList,
+                        unsigned &StructuredIndex);
   void CheckScalarType(const InitializedEntity &Entity,
                        InitListExpr *IList, QualType DeclType,
                        unsigned &Index,
@@ -610,7 +615,7 @@ void InitListChecker::CheckExplicitInitList(const InitializedEntity &Entity,
     }
   }
 
-  if (T->isScalarType() && !TopLevelObject)
+  if (T->isScalarType() && IList->getNumInits() == 1 && !TopLevelObject)
     SemaRef.Diag(IList->getLocStart(), diag::warn_braces_around_scalar_init)
       << IList->getSourceRange()
       << FixItHint::CreateRemoval(IList->getLocStart())
@@ -625,7 +630,12 @@ void InitListChecker::CheckListElementTypes(const InitializedEntity &Entity,
                                             InitListExpr *StructuredList,
                                             unsigned &StructuredIndex,
                                             bool TopLevelObject) {
-  if (DeclType->isScalarType()) {
+  if (DeclType->isAnyComplexType() && SubobjectIsDesignatorContext) {
+    // Explicitly braced initializer for complex type can be real+imaginary
+    // parts.
+    CheckComplexType(Entity, IList, DeclType, Index,
+                     StructuredList, StructuredIndex);
+  } else if (DeclType->isScalarType()) {
     CheckScalarType(Entity, IList, DeclType, Index,
                     StructuredList, StructuredIndex);
   } else if (DeclType->isVectorType()) {
@@ -796,6 +806,43 @@ void InitListChecker::CheckSubElementType(const InitializedEntity &Entity,
     ++StructuredIndex;
   }
 }
+
+void InitListChecker::CheckComplexType(const InitializedEntity &Entity,
+                                       InitListExpr *IList, QualType DeclType,
+                                       unsigned &Index,
+                                       InitListExpr *StructuredList,
+                                       unsigned &StructuredIndex) {
+  assert(Index == 0 && "Index in explicit init list must be zero");
+
+  // As an extension, clang supports complex initializers, which initialize
+  // a complex number component-wise.  When an explicit initializer list for
+  // a complex number contains two two initializers, this extension kicks in:
+  // it exepcts the initializer list to contain two elements convertible to
+  // the element type of the complex type. The first element initializes
+  // the real part, and the second element intitializes the imaginary part.
+
+  if (IList->getNumInits() != 2)
+    return CheckScalarType(Entity, IList, DeclType, Index, StructuredList,
+                           StructuredIndex);
+
+  // This is an extension in C.  (The builtin _Complex type does not exist
+  // in the C++ standard.)
+  if (!SemaRef.getLangOptions().CPlusPlus)
+    SemaRef.Diag(IList->getLocStart(), diag::ext_complex_component_init)
+      << IList->getSourceRange();
+
+  // Initialize the complex number.
+  QualType elementType = DeclType->getAs<ComplexType>()->getElementType();
+  InitializedEntity ElementEntity =
+    InitializedEntity::InitializeElement(SemaRef.Context, 0, Entity);
+
+  for (unsigned i = 0; i < 2; ++i) {
+    ElementEntity.setElementIndex(Index);
+    CheckSubElementType(ElementEntity, IList, elementType, Index,
+                        StructuredList, StructuredIndex);
+  }
+}
+
 
 void InitListChecker::CheckScalarType(const InitializedEntity &Entity,
                                       InitListExpr *IList, QualType DeclType,
@@ -2060,9 +2107,14 @@ InitializedEntity::InitializedEntity(ASTContext &Context, unsigned Index,
   if (const ArrayType *AT = Context.getAsArrayType(Parent.getType())) {
     Kind = EK_ArrayElement;
     Type = AT->getElementType();
-  } else {
+  } else if (const VectorType *VT = Parent.getType()->getAs<VectorType>()) {
     Kind = EK_VectorElement;
-    Type = Parent.getType()->getAs<VectorType>()->getElementType();
+    Type = VT->getElementType();
+  } else {
+    const ComplexType *CT = Parent.getType()->getAs<ComplexType>();
+    assert(CT && "Unexpected type");
+    Kind = EK_ComplexElement;
+    Type = CT->getElementType();
   }
 }
 
@@ -2099,6 +2151,7 @@ DeclarationName InitializedEntity::getName() const {
   case EK_Delegating:
   case EK_ArrayElement:
   case EK_VectorElement:
+  case EK_ComplexElement:
   case EK_BlockElement:
     return DeclarationName();
   }
@@ -2124,6 +2177,7 @@ DeclaratorDecl *InitializedEntity::getDecl() const {
   case EK_Delegating:
   case EK_ArrayElement:
   case EK_VectorElement:
+  case EK_ComplexElement:
   case EK_BlockElement:
     return 0;
   }
@@ -2147,6 +2201,7 @@ bool InitializedEntity::allowsNRVO() const {
   case EK_Delegating:
   case EK_ArrayElement:
   case EK_VectorElement:
+  case EK_ComplexElement:
   case EK_BlockElement:
     break;
   }
@@ -2599,7 +2654,10 @@ static void TryListInitialization(Sema &S,
   //   is equivalent to
   //
   //     T x = a;
-  if (DestType->isScalarType()) {
+  if (DestType->isAnyComplexType()) {
+    // We allow more than 1 init for complex types in some cases, even though
+    // they are scalar.
+  } else if (DestType->isScalarType()) {
     if (InitList->getNumInits() > 1 && S.getLangOptions().CPlusPlus) {
       Sequence.SetFailed(InitializationSequence::FK_TooManyInitsForScalar);
       return;
@@ -3812,6 +3870,7 @@ getAssignmentAction(const InitializedEntity &Entity) {
   case InitializedEntity::EK_Member:
   case InitializedEntity::EK_ArrayElement:
   case InitializedEntity::EK_VectorElement:
+  case InitializedEntity::EK_ComplexElement:
   case InitializedEntity::EK_BlockElement:
     return Sema::AA_Initializing;
   }
@@ -3831,6 +3890,7 @@ static bool shouldBindAsTemporary(const InitializedEntity &Entity) {
   case InitializedEntity::EK_Base:
   case InitializedEntity::EK_Delegating:
   case InitializedEntity::EK_VectorElement:
+  case InitializedEntity::EK_ComplexElement:
   case InitializedEntity::EK_Exception:
   case InitializedEntity::EK_BlockElement:
     return false;
@@ -3853,6 +3913,7 @@ static bool shouldDestroyTemporary(const InitializedEntity &Entity) {
     case InitializedEntity::EK_Base:
     case InitializedEntity::EK_Delegating:
     case InitializedEntity::EK_VectorElement:
+    case InitializedEntity::EK_ComplexElement:
     case InitializedEntity::EK_BlockElement:
       return false;
 
@@ -3938,6 +3999,7 @@ static ExprResult CopyObject(Sema &S,
   case InitializedEntity::EK_Base:
   case InitializedEntity::EK_Delegating:
   case InitializedEntity::EK_VectorElement:
+  case InitializedEntity::EK_ComplexElement:
   case InitializedEntity::EK_BlockElement:
     Loc = CurInitExpr->getLocStart();
     break;

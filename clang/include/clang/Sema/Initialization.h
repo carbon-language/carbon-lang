@@ -67,7 +67,10 @@ public:
     EK_VectorElement,
     /// \brief The entity being initialized is a field of block descriptor for
     /// the copied-in c++ object.
-    EK_BlockElement
+    EK_BlockElement,
+    /// \brief The entity being initialized is the real or imaginary part of a
+    /// complex number.
+    EK_ComplexElement
   };
   
 private:
@@ -111,8 +114,9 @@ private:
     /// virtual base.
     uintptr_t Base;
 
-    /// \brief When Kind == EK_ArrayElement or EK_VectorElement, the
-    /// index of the array or vector element being initialized. 
+    /// \brief When Kind == EK_ArrayElement, EK_VectorElement, or
+    /// EK_ComplexElement, the index of the array or vector element being
+    /// initialized. 
     unsigned Index;
   };
 
@@ -309,7 +313,8 @@ public:
   /// \brief If this is already the initializer for an array or vector
   /// element, sets the element index.
   void setElementIndex(unsigned Index) {
-    assert(getKind() == EK_ArrayElement || getKind() == EK_VectorElement);
+    assert(getKind() == EK_ArrayElement || getKind() == EK_VectorElement ||
+           EK_ComplexElement);
     this->Index = Index;
   }
 };

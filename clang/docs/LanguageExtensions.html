@@ -4,7 +4,7 @@
 <html>
 <head>
   <META http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
-  <title>Clang LanguageExtensions</title>
+  <title>Clang Language Extensions</title>
   <link type="text/css" rel="stylesheet" href="../menu.css">
   <link type="text/css" rel="stylesheet" href="../content.css">
   <style type="text/css">
@@ -85,6 +85,7 @@
   </ul>
 </li>
 <li><a href="#overloading-in-c">Function Overloading in C</a></li>
+<li><a href="#complex-list-init">Initializer lists for complex numbers in C</a></li>
 <li><a href="#builtins">Builtin Functions</a>
   <ul>
   <li><a href="#__builtin_shufflevector">__builtin_shufflevector</a></li>
@@ -895,6 +896,41 @@ caveats to this use of name mangling:</p>
 
 <p>Query for this feature with __has_extension(attribute_overloadable).</p>
 
+<!-- ======================================================================= -->
+<h2 id="complex-list-init">Initializer lists for complex numbers in C</h2>
+<!-- ======================================================================= -->
+
+<p>clang supports an extension which allows the following in C:</p>
+
+<blockquote>
+<pre>
+#include &lt;math.h&gt;
+#include &lt;complex.h&gt;
+complex float x = { 1.0f, INFINITY }; // Init to (1, Inf)
+</pre>
+</blockquote>
+
+<p>This construct is useful because there is no way to separately
+initialize the real and imaginary parts of a complex variable in
+standard C, given that clang does not support <code>_Imaginary</code>.
+(clang also supports the <code>__real__</code> and <code>__imag__</code>
+extensions from gcc, which help in some cases, but are not usable in
+static initializers.)
+
+<p>Note that this extension does not allow eliding the braces; the
+meaning of the following two lines is different:</p>
+
+<blockquote>
+<pre>
+complex float x[] = { { 1.0f, 1.0f } }; // [0] = (1, 1)
+complex float x[] = { 1.0f, 1.0f }; // [0] = (1, 0), [1] = (1, 0)
+</pre>
+</blockquote>
+
+<p>This extension also works in C++ mode, as far as that goes, but does not
+    apply to the C++ <code>std::complex</code>.  (In C++11, list
+    initialization allows the same syntax to be used with
+    <code>std::complex</code> with the same meaning.)
 
 <!-- ======================================================================= -->
 <h2 id="builtins">Builtin Functions</h2>

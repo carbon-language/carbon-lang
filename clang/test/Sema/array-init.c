@@ -53,7 +53,7 @@ void func() {
 
 void test() {
   int y1[3] = { 
-    { 1, 2, 3 } // expected-warning{{braces around scalar initializer}} expected-warning{{excess elements in scalar initializer}}
+    { 1, 2, 3 } // expected-warning{{excess elements in scalar initializer}}
   };
   int y3[4][3] = {  
     { 1, 3, 5 },
