@@ -1237,6 +1237,10 @@ private:
   // C++ Expressions
   ExprResult ParseCXXIdExpression(bool isAddressOfOperand = false);
 
+  void CheckForTemplateAndDigraph(Token &Next, ParsedType ObjectTypePtr,
+                                  bool EnteringContext, IdentifierInfo &II,
+                                  CXXScopeSpec &SS);
+
   bool ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
                                       ParsedType ObjectType,
                                       bool EnteringContext,

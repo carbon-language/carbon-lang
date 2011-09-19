@@ -114,6 +114,11 @@ Retry:
       CXXScopeSpec SS;
       IdentifierInfo *Name = Tok.getIdentifierInfo();
       SourceLocation NameLoc = Tok.getLocation();
+
+      if (getLang().CPlusPlus)
+        CheckForTemplateAndDigraph(Next, ParsedType(),
+                                   /*EnteringContext=*/false, *Name, SS);
+
       Sema::NameClassification Classification
         = Actions.ClassifyName(getCurScope(), SS, Name, NameLoc, Next);
       switch (Classification.getKind()) {

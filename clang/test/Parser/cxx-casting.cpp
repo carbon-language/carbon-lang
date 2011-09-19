@@ -67,3 +67,19 @@ void test2(char x, struct B * b) {
   test1::A LCC B> e; // expected-error{{found '<::' after a template name which forms the digraph '<:' (aka '[') and a ':', did you mean '< ::'?}}
   (void)static_cast LCC c>(&x); // expected-error{{found '<::' after a static_cast which forms the digraph '<:' (aka '[') and a ':', did you mean '< ::'?}}
 }
+
+template <class T> class D {};
+template <class T> void E() {};
+class F {};
+
+void test3() {
+  ::D<::F> A1; // expected-error{{found '<::' after a template name which forms the digraph '<:' (aka '[') and a ':', did you mean '< ::'?}}
+  D<::F> A2; // expected-error{{found '<::' after a template name which forms the digraph '<:' (aka '[') and a ':', did you mean '< ::'?}}
+  ::E<::F>(); // expected-error{{found '<::' after a template name which forms the digraph '<:' (aka '[') and a ':', did you mean '< ::'?}}
+  E<::F>(); // expected-error{{found '<::' after a template name which forms the digraph '<:' (aka '[') and a ':', did you mean '< ::'?}}
+
+  ::D< ::F> A3;
+  D< ::F> A4;
+  ::E< ::F>();
+  E< ::F>();
+}

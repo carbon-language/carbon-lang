@@ -70,6 +70,31 @@ static void FixDigraph(Parser &P, Preprocessor &PP, Token &DigraphToken,
     PP.EnterToken(DigraphToken);
 }
 
+// Check for '<::' which should be '< ::' instead of '[:' when following
+// a template name.
+void Parser::CheckForTemplateAndDigraph(Token &Next, ParsedType ObjectType,
+                                        bool EnteringContext,
+                                        IdentifierInfo &II, CXXScopeSpec &SS) {
+  if (!Next.is(tok::l_square) || !Next.getLength() == 2)
+    return;
+
+  Token SecondToken = GetLookAheadToken(2);
+  if (!SecondToken.is(tok::colon) || !AreTokensAdjacent(PP, Next, SecondToken))
+    return;
+
+  TemplateTy Template;
+  UnqualifiedId TemplateName;
+  TemplateName.setIdentifier(&II, Tok.getLocation());
+  bool MemberOfUnknownSpecialization;
+  if (!Actions.isTemplateName(getCurScope(), SS, /*hasTemplateKeyword=*/false,
+                              TemplateName, ObjectType, EnteringContext,
+                              Template, MemberOfUnknownSpecialization))
+    return;
+
+  FixDigraph(*this, PP, Next, SecondToken, tok::kw_template,
+             /*AtDigraph*/false);
+}
+
 /// \brief Parse global scope or nested-name-specifier if present.
 ///
 /// Parses a C++ global scope specifier ('::') or nested-name-specifier (which
@@ -341,28 +366,7 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
       continue;
     }
 
-    // Check for '<::' which should be '< ::' instead of '[:' when following
-    // a template name.
-    if (Next.is(tok::l_square) && Next.getLength() == 2) {
-      Token SecondToken = GetLookAheadToken(2);
-      if (SecondToken.is(tok::colon) &&
-          AreTokensAdjacent(PP, Next, SecondToken)) {
-        TemplateTy Template;
-        UnqualifiedId TemplateName;
-        TemplateName.setIdentifier(&II, Tok.getLocation());
-        bool MemberOfUnknownSpecialization;
-        if (Actions.isTemplateName(getCurScope(), SS,
-                                   /*hasTemplateKeyword=*/false,
-                                   TemplateName,
-                                   ObjectType,
-                                   EnteringContext,
-                                   Template,
-                                   MemberOfUnknownSpecialization)) {
-          FixDigraph(*this, PP, Next, SecondToken, tok::kw_template,
-                     /*AtDigraph*/false);
-        }
-      }
-    }
+    CheckForTemplateAndDigraph(Next, ObjectType, EnteringContext, II, SS);
 
     // nested-name-specifier:
     //   type-name '<'
