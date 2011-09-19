@@ -248,10 +248,10 @@ private:
   /// \brief A map of negated SLocEntryIDs to the modules containing them.
   ContinuousRangeMap<unsigned, Module*, 64> GlobalSLocEntryMap;
 
-  typedef ContinuousRangeMap<int, Module*, 64> GlobalSLocOffsetMapType;
+  typedef ContinuousRangeMap<unsigned, Module*, 64> GlobalSLocOffsetMapType;
   
-  /// \brief A map of negated SourceLocation offsets to the modules containing
-  /// them.
+  /// \brief A map of reversed (SourceManager::MaxLoadedOffset - SLocOffset)
+  /// SourceLocation offsets to the modules containing them.
   GlobalSLocOffsetMapType GlobalSLocOffsetMap;
   
   /// \brief Types that have already been loaded from the chain.
