@@ -2437,3 +2437,17 @@ _func:
 @ CHECK: sub.w	r4, r5, r6, ror #5      @ encoding: [0xa5,0xeb,0x76,0x14]
 @ CHECK: sub.w r5, r2, r12, rrx         @ encoding: [0xa2,0xeb,0x3c,0x05]
 
+
+@------------------------------------------------------------------------------
+@ SVC
+@------------------------------------------------------------------------------
+        svc #0
+        ite eq
+        svceq #255
+        swine #33
+
+@ CHECK: svc	#0                      @ encoding: [0x00,0xdf]
+@ CHECK: ite	eq                      @ encoding: [0x0c,0xbf]
+@ CHECK: svceq	#255                    @ encoding: [0xff,0xdf]
+@ CHECK: svcne	#33                     @ encoding: [0x21,0xdf]
+
