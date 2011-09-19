@@ -1,7 +1,7 @@
 ; RUN: opt < %s -inline -disable-output
 
 define i32 @test() {
-        unwind
+        unreachable
 }
 
 define i32 @caller() {

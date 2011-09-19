@@ -155,7 +155,7 @@ endif.0:		; preds = %entry
 define fastcc void @_ZSt20__throw_length_errorPKc() {
 entry:
 	call fastcc void @_ZNSt12length_errorC1ERKSs( )
-	unwind
+	ret void
 }
 
 define fastcc void @_ZNSs16_S_construct_auxIPKcEEPcT_S3_RKSaIcE12__false_type() {
@@ -178,8 +178,10 @@ entry:
 			to label %invoke_cont.1 unwind label %invoke_catch.1
 
 invoke_catch.1:		; preds = %entry
+        %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+                 catch i8* null
 	call fastcc void @_ZNSaIcED1Ev( )
-	unwind
+	resume { i8*, i32 } %exn
 
 invoke_cont.1:		; preds = %entry
 	call fastcc void @_ZNSaIcEC2ERKS_( )
@@ -306,7 +308,9 @@ entry:
 			to label %_ZNSt11logic_errorC2ERKSs.exit unwind label %invoke_catch.i
 
 invoke_catch.i:		; preds = %entry
-	unwind
+        %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+                 catch i8* null
+	resume { i8*, i32 } %exn
 
 _ZNSt11logic_errorC2ERKSs.exit:		; preds = %entry
 	ret void
@@ -336,3 +340,5 @@ define fastcc void @_ZNSt5ctypeIcEC1EPKtbj() {
 entry:
 	ret void
 }
+
+declare i32 @__gxx_personality_v0(...)

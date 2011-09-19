@@ -5,7 +5,7 @@
 ; exists.
 
 define internal void @Callee1() {
-        unwind
+        unreachable
 }
 
 define void @Callee2() {

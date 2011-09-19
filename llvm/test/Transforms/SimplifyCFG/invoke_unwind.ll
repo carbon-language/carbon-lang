@@ -12,21 +12,9 @@ define i32 @test1() {
                         to label %1 unwind label %Rethrow
         ret i32 0
 Rethrow:
-        unwind
+        %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+                 catch i8* null
+        resume { i8*, i32 } %exn
 }
 
-
-; Verify that simplifycfg isn't duplicating 'unwind' instructions.  Doing this
-; is bad because it discourages commoning.
-define i32 @test2(i1 %c) {
-; CHECK: @test2
-; CHECK: T:
-; CHECK-NEXT: call void @bar()
-; CHECK-NEXT: br label %F
-  br i1 %c, label %T, label %F
-T:
-  call void @bar()
-  br label %F
-F:
-  unwind
-}
+declare i32 @__gxx_personality_v0(...)
