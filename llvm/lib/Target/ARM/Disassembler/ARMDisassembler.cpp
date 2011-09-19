@@ -449,6 +449,7 @@ ThumbDisassembler::AddThumbPredicate(MCInst &MI) const {
     case ARM::t2CPS3p:
     case ARM::t2CPS2p:
     case ARM::t2CPS1p:
+    case ARM::tMOVSr:
       // Some instructions (mostly conditional branches) are not
       // allowed in IT blocks.
       if (!ITBlock.empty())
