@@ -2807,6 +2807,13 @@ parseMemory(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
     Operands.push_back(ARMOperand::CreateMem(BaseRegNum, 0, 0, ARM_AM::no_shift,
                                              0, false, S, E));
 
+    // If there's a pre-indexing writeback marker, '!', just add it as a token
+    // operand. It's rather odd, but syntactically valid.
+    if (Parser.getTok().is(AsmToken::Exclaim)) {
+      Operands.push_back(ARMOperand::CreateToken("!",Parser.getTok().getLoc()));
+      Parser.Lex(); // Eat the '!'.
+    }
+
     return false;
   }
 
