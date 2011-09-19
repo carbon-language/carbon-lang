@@ -1119,6 +1119,10 @@ public:
   SourceLocation translateFileLineCol(const FileEntry *SourceFile,
                                       unsigned Line, unsigned Col);
 
+  /// \brief Get the source location in \arg FID for the given line:col.
+  /// Returns null location if \arg FID is not a file SLocEntry.
+  SourceLocation translateLineCol(FileID FID, unsigned Line, unsigned Col);
+
   /// \brief If \arg Loc points inside a function macro argument, the returned
   /// location will be the macro location in which the argument was expanded.
   /// If a macro argument is used multiple times, the expanded location will

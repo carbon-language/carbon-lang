@@ -1432,15 +1432,30 @@ SourceLocation SourceManager::translateFileLineCol(const FileEntry *SourceFile,
       }
     }      
   }
-    
-  if (FirstFID.isInvalid())
+
+  return translateLineCol(FirstFID, Line, Col);
+}
+
+/// \brief Get the source location in \arg FID for the given line:col.
+/// Returns null location if \arg FID is not a file SLocEntry.
+SourceLocation SourceManager::translateLineCol(FileID FID,
+                                               unsigned Line, unsigned Col) {
+  if (FID.isInvalid())
+    return SourceLocation();
+
+  bool Invalid = false;
+  const SLocEntry &Entry = getSLocEntry(FID, &Invalid);
+  if (Invalid)
+    return SourceLocation();
+  
+  if (!Entry.isFile())
     return SourceLocation();
 
   if (Line == 1 && Col == 1)
-    return getLocForStartOfFile(FirstFID);
+    return getLocForStartOfFile(FID);
 
   ContentCache *Content
-    = const_cast<ContentCache *>(getOrCreateContentCache(SourceFile));
+    = const_cast<ContentCache *>(Entry.getFile().getContentCache());
   if (!Content)
     return SourceLocation();
     
@@ -1457,7 +1472,7 @@ SourceLocation SourceManager::translateFileLineCol(const FileEntry *SourceFile,
     unsigned Size = Content->getBuffer(Diag, *this)->getBufferSize();
     if (Size > 0)
       --Size;
-    return getLocForStartOfFile(FirstFID).getLocWithOffset(Size);
+    return getLocForStartOfFile(FID).getLocWithOffset(Size);
   }
 
   unsigned FilePos = Content->SourceLineCache[Line - 1];
@@ -1469,9 +1484,9 @@ SourceLocation SourceManager::translateFileLineCol(const FileEntry *SourceFile,
   while (i < BufLength-1 && i < Col-1 && Buf[i] != '\n' && Buf[i] != '\r')
     ++i;
   if (i < Col-1)
-    return getLocForStartOfFile(FirstFID).getLocWithOffset(FilePos + i);
+    return getLocForStartOfFile(FID).getLocWithOffset(FilePos + i);
 
-  return getLocForStartOfFile(FirstFID).getLocWithOffset(FilePos + Col - 1);
+  return getLocForStartOfFile(FID).getLocWithOffset(FilePos + Col - 1);
 }
 
 /// \brief Compute a map of macro argument chunks to their expanded source
