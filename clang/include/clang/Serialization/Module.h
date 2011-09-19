@@ -177,7 +177,7 @@ public:
   /// \brief Remapping table for preprocessed entity IDs in this module.
   ContinuousRangeMap<uint32_t, int, 2> PreprocessedEntityRemap;
   
-  const uint32_t *PreprocessedEntityOffsets;
+  const PPEntityOffset *PreprocessedEntityOffsets;
   unsigned NumPreprocessedEntities;
   
   // === Header search information ===

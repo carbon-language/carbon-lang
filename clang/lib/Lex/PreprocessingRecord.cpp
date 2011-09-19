@@ -37,8 +37,9 @@ InclusionDirective::InclusionDirective(PreprocessingRecord &PPRec,
   this->FileName = StringRef(Memory, FileName.size());
 }
 
-PreprocessingRecord::PreprocessingRecord(bool IncludeNestedMacroExpansions)
-  : IncludeNestedMacroExpansions(IncludeNestedMacroExpansions),
+PreprocessingRecord::PreprocessingRecord(SourceManager &SM,
+                                         bool IncludeNestedMacroExpansions)
+  : SourceMgr(SM), IncludeNestedMacroExpansions(IncludeNestedMacroExpansions),
     ExternalSource(0)
 {
 }
@@ -55,7 +56,111 @@ PreprocessingRecord::iterator PreprocessingRecord::end(bool OnlyLocalEntities) {
   return iterator(this, PreprocessedEntities.size());
 }
 
+/// \brief Returns a pair of [Begin, End) iterators of preprocessed entities
+/// that source range \arg R encompasses.
+std::pair<PreprocessingRecord::iterator, PreprocessingRecord::iterator>
+PreprocessingRecord::getPreprocessedEntitiesInRange(SourceRange Range) {
+  if (Range.isInvalid())
+    return std::make_pair(iterator(this, 0), iterator(this, 0));
+  assert(!SourceMgr.isBeforeInTranslationUnit(Range.getEnd(),Range.getBegin()));
+
+  std::pair<unsigned, unsigned>
+    Local = findLocalPreprocessedEntitiesInRange(Range);
+
+  // Check if range spans local entities.
+  if (!ExternalSource || SourceMgr.isLocalSourceLocation(Range.getBegin()))
+    return std::make_pair(iterator(this, Local.first),
+                          iterator(this, Local.second));
+
+  std::pair<unsigned, unsigned>
+    Loaded = ExternalSource->findPreprocessedEntitiesInRange(Range);
+
+  // Check if range spans local entities.
+  if (Loaded.first == Loaded.second)
+    return std::make_pair(iterator(this, Local.first),
+                          iterator(this, Local.second));
+
+  unsigned TotalLoaded = LoadedPreprocessedEntities.size();
+
+  // Check if range spans loaded entities.
+  if (Local.first == Local.second)
+    return std::make_pair(iterator(this, int(Loaded.first)-TotalLoaded),
+                          iterator(this, int(Loaded.second)-TotalLoaded));
+
+  // Range spands loaded and local entities.
+  return std::make_pair(iterator(this, int(Loaded.first)-TotalLoaded),
+                        iterator(this, Local.second));
+}
+
+std::pair<unsigned, unsigned>
+PreprocessingRecord::findLocalPreprocessedEntitiesInRange(
+                                                      SourceRange Range) const {
+  if (Range.isInvalid())
+    return std::make_pair(0,0);
+  assert(!SourceMgr.isBeforeInTranslationUnit(Range.getEnd(),Range.getBegin()));
+
+  unsigned Begin = findBeginLocalPreprocessedEntity(Range.getBegin());
+  unsigned End = findEndLocalPreprocessedEntity(Range.getEnd());
+  return std::make_pair(Begin, End);
+}
+
+namespace {
+
+template <SourceLocation (SourceRange::*getRangeLoc)() const>
+struct PPEntityComp {
+  const SourceManager &SM;
+
+  explicit PPEntityComp(const SourceManager &SM) : SM(SM) { }
+
+  bool operator()(PreprocessedEntity *L, SourceLocation RHS) {
+    SourceLocation LHS = getLoc(L);
+    return SM.isBeforeInTranslationUnit(LHS, RHS);
+  }
+
+  bool operator()(SourceLocation LHS, PreprocessedEntity *R) {
+    SourceLocation RHS = getLoc(R);
+    return SM.isBeforeInTranslationUnit(LHS, RHS);
+  }
+
+  SourceLocation getLoc(PreprocessedEntity *PPE) const {
+    return (PPE->getSourceRange().*getRangeLoc)();
+  }
+};
+
+}
+
+unsigned PreprocessingRecord::findBeginLocalPreprocessedEntity(
+                                                     SourceLocation Loc) const {
+  if (SourceMgr.isLoadedSourceLocation(Loc))
+    return 0;
+
+  std::vector<PreprocessedEntity *>::const_iterator
+    I = std::lower_bound(PreprocessedEntities.begin(),
+                         PreprocessedEntities.end(),
+                         Loc,
+                         PPEntityComp<&SourceRange::getEnd>(SourceMgr));
+  return I - PreprocessedEntities.begin();
+}
+
+unsigned PreprocessingRecord::findEndLocalPreprocessedEntity(
+                                                     SourceLocation Loc) const {
+  if (SourceMgr.isLoadedSourceLocation(Loc))
+    return 0;
+
+  std::vector<PreprocessedEntity *>::const_iterator
+  I = std::upper_bound(PreprocessedEntities.begin(),
+                       PreprocessedEntities.end(),
+                       Loc,
+                       PPEntityComp<&SourceRange::getBegin>(SourceMgr));
+  return I - PreprocessedEntities.begin();
+}
+
 void PreprocessingRecord::addPreprocessedEntity(PreprocessedEntity *Entity) {
+  SourceLocation Loc = Entity->getSourceRange().getBegin();
+  assert((PreprocessedEntities.empty() ||
+          !SourceMgr.isBeforeInTranslationUnit(Loc,
+                     PreprocessedEntities.back()->getSourceRange().getEnd())) &&
+         "Adding a preprocessed entity that is before the previous one in TU");
   PreprocessedEntities.push_back(Entity);
 }
 
@@ -124,10 +229,10 @@ void PreprocessingRecord::MacroExpands(const Token &Id, const MacroInfo* MI,
     return;
 
   if (MI->isBuiltinMacro())
-    PreprocessedEntities.push_back(
+    addPreprocessedEntity(
                       new (*this) MacroExpansion(Id.getIdentifierInfo(),Range));
   else if (MacroDefinition *Def = findMacroDefinition(MI))
-    PreprocessedEntities.push_back(
+    addPreprocessedEntity(
                        new (*this) MacroExpansion(Def, Range));
 }
 
@@ -138,7 +243,7 @@ void PreprocessingRecord::MacroDefined(const Token &Id,
       = new (*this) MacroDefinition(Id.getIdentifierInfo(),
                                     MI->getDefinitionLoc(),
                                     R);
-  PreprocessedEntities.push_back(Def);
+  addPreprocessedEntity(Def);
   MacroDefinitions[MI] = getPPEntityID(PreprocessedEntities.size()-1,
                                        /*isLoaded=*/false);
 }
@@ -187,7 +292,7 @@ void PreprocessingRecord::InclusionDirective(
   clang::InclusionDirective *ID
     = new (*this) clang::InclusionDirective(*this, Kind, FileName, !IsAngled, 
                                             File, SourceRange(HashLoc, EndLoc));
-  PreprocessedEntities.push_back(ID);
+  addPreprocessedEntity(ID);
 }
 
 size_t PreprocessingRecord::getTotalMemory() const {

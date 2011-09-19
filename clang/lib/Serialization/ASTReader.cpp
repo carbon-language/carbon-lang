@@ -2011,8 +2011,10 @@ ASTReader::ReadASTBlock(Module &F) {
     case SOURCE_LOCATION_OFFSETS: {
       F.SLocEntryOffsets = (const uint32_t *)BlobStart;
       F.LocalNumSLocEntries = Record[0];
+      unsigned SLocSpaceSize = Record[1];
       llvm::tie(F.SLocEntryBaseID, F.SLocEntryBaseOffset) =
-          SourceMgr.AllocateLoadedSLocEntries(F.LocalNumSLocEntries, Record[1]);
+          SourceMgr.AllocateLoadedSLocEntries(F.LocalNumSLocEntries,
+                                              SLocSpaceSize);
       // Make our entry in the range map. BaseID is negative and growing, so
       // we invert it. Because we invert it, though, we need the other end of
       // the range.
@@ -2020,6 +2022,12 @@ ASTReader::ReadASTBlock(Module &F) {
           unsigned(-F.SLocEntryBaseID) - F.LocalNumSLocEntries + 1;
       GlobalSLocEntryMap.insert(std::make_pair(RangeStart, &F));
       F.FirstLoc = SourceLocation::getFromRawEncoding(F.SLocEntryBaseOffset);
+
+      // SLocEntryBaseOffset is lower than MaxLoadedOffset and decreasing.
+      assert((F.SLocEntryBaseOffset & (1U << 31U)) == 0);
+      GlobalSLocOffsetMap.insert(
+          std::make_pair(SourceManager::MaxLoadedOffset - F.SLocEntryBaseOffset
+                           - SLocSpaceSize,&F));
 
       // Initialize the remapping table.
       // Invalid stays invalid.
@@ -2201,9 +2209,9 @@ ASTReader::ReadASTBlock(Module &F) {
     }
 
     case PPD_ENTITIES_OFFSETS: {
-      F.PreprocessedEntityOffsets = (const uint32_t *)BlobStart;
-      assert(BlobLen % sizeof(uint32_t) == 0);
-      F.NumPreprocessedEntities = BlobLen / sizeof(uint32_t);
+      F.PreprocessedEntityOffsets = (const PPEntityOffset *)BlobStart;
+      assert(BlobLen % sizeof(PPEntityOffset) == 0);
+      F.NumPreprocessedEntities = BlobLen / sizeof(PPEntityOffset);
 
       unsigned LocalBasePreprocessedEntityID = Record[0];
       
@@ -2878,8 +2886,125 @@ PreprocessedEntity *ASTReader::ReadPreprocessedEntity(unsigned Index) {
   unsigned LocalIndex = Index - M.BasePreprocessedEntityID;
 
   SavedStreamPosition SavedPosition(M.PreprocessorDetailCursor);  
-  M.PreprocessorDetailCursor.JumpToBit(M.PreprocessedEntityOffsets[LocalIndex]);
+  M.PreprocessorDetailCursor.JumpToBit(
+                             M.PreprocessedEntityOffsets[LocalIndex].BitOffset);
   return LoadPreprocessedEntity(M);
+}
+
+/// \brief \arg SLocMapI points at a chunk of a module that contains no
+/// preprocessed entities or the entities it contains are not the ones we are
+/// looking for. Find the next module that contains entities and return the ID
+/// of the first entry.
+PreprocessedEntityID ASTReader::findNextPreprocessedEntity(
+                       GlobalSLocOffsetMapType::const_iterator SLocMapI) const {
+  ++SLocMapI;
+  for (GlobalSLocOffsetMapType::const_iterator
+         EndI = GlobalSLocOffsetMap.end(); SLocMapI != EndI; ++SLocMapI) {
+    Module &M = *SLocMapI->second;
+    if (M.NumPreprocessedEntities)
+      return getGlobalPreprocessedEntityID(M, M.BasePreprocessedEntityID);
+  }
+
+  return getTotalNumPreprocessedEntities();
+}
+
+namespace {
+
+template <unsigned PPEntityOffset::*PPLoc>
+struct PPEntityComp {
+  const ASTReader &Reader;
+  Module &M;
+
+  PPEntityComp(const ASTReader &Reader, Module &M) : Reader(Reader), M(M) { }
+
+  bool operator()(const PPEntityOffset &L, SourceLocation RHS) {
+    SourceLocation LHS = getLoc(L);
+    return Reader.getSourceManager().isBeforeInTranslationUnit(LHS, RHS);
+  }
+
+  bool operator()(SourceLocation LHS, const PPEntityOffset &R) {
+    SourceLocation RHS = getLoc(R);
+    return Reader.getSourceManager().isBeforeInTranslationUnit(LHS, RHS);
+  }
+
+  SourceLocation getLoc(const PPEntityOffset &PPE) const {
+    return Reader.ReadSourceLocation(M, PPE.*PPLoc);
+  }
+};
+
+}
+
+/// \brief Returns the first preprocessed entity ID that ends after \arg BLoc.
+PreprocessedEntityID
+ASTReader::findBeginPreprocessedEntity(SourceLocation BLoc) const {
+  if (SourceMgr.isLocalSourceLocation(BLoc))
+    return getTotalNumPreprocessedEntities();
+
+  GlobalSLocOffsetMapType::const_iterator
+    SLocMapI = GlobalSLocOffsetMap.find(SourceManager::MaxLoadedOffset -
+                                        BLoc.getOffset());
+  assert(SLocMapI != GlobalSLocOffsetMap.end() &&
+         "Corrupted global sloc offset map");
+
+  if (SLocMapI->second->NumPreprocessedEntities == 0)
+    return findNextPreprocessedEntity(SLocMapI);
+
+  Module &M = *SLocMapI->second;
+  typedef const PPEntityOffset *pp_iterator;
+  pp_iterator pp_begin = M.PreprocessedEntityOffsets;
+  pp_iterator pp_end = pp_begin + M.NumPreprocessedEntities;
+  pp_iterator PPI =
+      std::lower_bound(pp_begin, pp_end, BLoc,
+                       PPEntityComp<&PPEntityOffset::End>(*this, M));
+
+  if (PPI == pp_end)
+    return findNextPreprocessedEntity(SLocMapI);
+
+  return getGlobalPreprocessedEntityID(M,
+                                 M.BasePreprocessedEntityID + (PPI - pp_begin));
+}
+
+/// \brief Returns the first preprocessed entity ID that begins after \arg ELoc.
+PreprocessedEntityID
+ASTReader::findEndPreprocessedEntity(SourceLocation ELoc) const {
+  if (SourceMgr.isLocalSourceLocation(ELoc))
+    return getTotalNumPreprocessedEntities();
+
+  GlobalSLocOffsetMapType::const_iterator
+    SLocMapI = GlobalSLocOffsetMap.find(SourceManager::MaxLoadedOffset -
+                                        ELoc.getOffset());
+  assert(SLocMapI != GlobalSLocOffsetMap.end() &&
+         "Corrupted global sloc offset map");
+
+  if (SLocMapI->second->NumPreprocessedEntities == 0)
+    return findNextPreprocessedEntity(SLocMapI);
+
+  Module &M = *SLocMapI->second;
+  typedef const PPEntityOffset *pp_iterator;
+  pp_iterator pp_begin = M.PreprocessedEntityOffsets;
+  pp_iterator pp_end = pp_begin + M.NumPreprocessedEntities;
+  pp_iterator PPI =
+      std::upper_bound(pp_begin, pp_end, ELoc,
+                       PPEntityComp<&PPEntityOffset::Begin>(*this, M));
+
+  if (PPI == pp_end)
+    return findNextPreprocessedEntity(SLocMapI);
+
+  return getGlobalPreprocessedEntityID(M,
+                                 M.BasePreprocessedEntityID + (PPI - pp_begin));
+}
+
+/// \brief Returns a pair of [Begin, End) indices of preallocated
+/// preprocessed entities that \arg Range encompasses.
+std::pair<unsigned, unsigned>
+    ASTReader::findPreprocessedEntitiesInRange(SourceRange Range) {
+  if (Range.isInvalid())
+    return std::make_pair(0,0);
+  assert(!SourceMgr.isBeforeInTranslationUnit(Range.getEnd(),Range.getBegin()));
+
+  PreprocessedEntityID BeginID = findBeginPreprocessedEntity(Range.getBegin());
+  PreprocessedEntityID EndID = findEndPreprocessedEntity(Range.getEnd());
+  return std::make_pair(BeginID, EndID);
 }
 
 PreprocessedEntity *ASTReader::ReadPreprocessedEntityAtOffset(uint64_t Offset) {

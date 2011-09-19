@@ -248,6 +248,12 @@ private:
   /// \brief A map of negated SLocEntryIDs to the modules containing them.
   ContinuousRangeMap<unsigned, Module*, 64> GlobalSLocEntryMap;
 
+  typedef ContinuousRangeMap<int, Module*, 64> GlobalSLocOffsetMapType;
+  
+  /// \brief A map of negated SourceLocation offsets to the modules containing
+  /// them.
+  GlobalSLocOffsetMapType GlobalSLocOffsetMap;
+  
   /// \brief Types that have already been loaded from the chain.
   ///
   /// When the pointer at index I is non-NULL, the type with
@@ -680,7 +686,23 @@ private:
   
   RecordLocation getLocalBitOffset(uint64_t GlobalOffset);
   uint64_t getGlobalBitOffset(Module &M, uint32_t LocalOffset);
-  
+
+  /// \brief Returns the first preprocessed entity ID that ends after \arg BLoc.
+  serialization::PreprocessedEntityID
+    findBeginPreprocessedEntity(SourceLocation BLoc) const;
+
+  /// \brief Returns the first preprocessed entity ID that begins after \arg ELoc.
+  serialization::PreprocessedEntityID
+    findEndPreprocessedEntity(SourceLocation ELoc) const;
+
+  /// \brief \arg SLocMapI points at a chunk of a module that contains no
+  /// preprocessed entities or the entities it contains are not the ones we are
+  /// looking for. Find the next module that contains entities and return the ID
+  /// of the first entry.
+  serialization::PreprocessedEntityID
+    findNextPreprocessedEntity(
+                        GlobalSLocOffsetMapType::const_iterator SLocMapI) const;
+
   void PassInterestingDeclsToConsumer();
 
   /// \brief Produce an error diagnostic and return true.
@@ -723,6 +745,8 @@ public:
 
   ~ASTReader();
 
+  SourceManager &getSourceManager() const { return SourceMgr; }
+  
   /// \brief Load the AST file designated by the given file name.
   ASTReadResult ReadAST(const std::string &FileName, ModuleKind Type);
 
@@ -771,6 +795,11 @@ public:
   /// \returns null if an error occurred that prevented the preprocessed
   /// entity from being loaded.
   virtual PreprocessedEntity *ReadPreprocessedEntity(unsigned Index);
+
+  /// \brief Returns a pair of [Begin, End) indices of preallocated
+  /// preprocessed entities that \arg Range encompasses.
+  virtual std::pair<unsigned, unsigned>
+      findPreprocessedEntitiesInRange(SourceRange Range);
 
   /// \brief Read the preprocessed entity at the given offset.
   virtual PreprocessedEntity *ReadPreprocessedEntityAtOffset(uint64_t Offset);

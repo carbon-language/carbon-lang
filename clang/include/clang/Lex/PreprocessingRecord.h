@@ -271,6 +271,11 @@ namespace clang {
     /// entity from being loaded.
     virtual PreprocessedEntity *ReadPreprocessedEntity(unsigned Index) = 0;
 
+    /// \brief Returns a pair of [Begin, End) indices of preallocated
+    /// preprocessed entities that \arg Range encompasses.
+    virtual std::pair<unsigned, unsigned>
+        findPreprocessedEntitiesInRange(SourceRange Range) = 0;
+
     /// \brief Read the preprocessed entity at the given offset.
     virtual PreprocessedEntity *
     ReadPreprocessedEntityAtOffset(uint64_t Offset) = 0;
@@ -280,6 +285,8 @@ namespace clang {
   /// including the various preprocessing directives processed, macros 
   /// expanded, etc.
   class PreprocessingRecord : public PPCallbacks {
+    SourceManager &SourceMgr;
+
     /// \brief Whether we should include nested macro expansions in
     /// the preprocessing record.
     bool IncludeNestedMacroExpansions;
@@ -329,7 +336,14 @@ namespace clang {
     unsigned getNumLoadedPreprocessedEntities() const {
       return LoadedPreprocessedEntities.size();
     }
-    
+
+    /// \brief Returns a pair of [Begin, End) indices of local preprocessed
+    /// entities that \arg Range encompasses.
+    std::pair<unsigned, unsigned>
+      findLocalPreprocessedEntitiesInRange(SourceRange Range) const;
+    unsigned findBeginLocalPreprocessedEntity(SourceLocation Loc) const;
+    unsigned findEndLocalPreprocessedEntity(SourceLocation Loc) const;
+
     /// \brief Allocate space for a new set of loaded preprocessed entities.
     ///
     /// \returns The index into the set of loaded preprocessed entities, which
@@ -341,7 +355,7 @@ namespace clang {
     
   public:
     /// \brief Construct a new preprocessing record.
-    explicit PreprocessingRecord(bool IncludeNestedMacroExpansions);
+    PreprocessingRecord(SourceManager &SM, bool IncludeNestedMacroExpansions);
     
     /// \brief Allocate memory in the preprocessing record.
     void *Allocate(unsigned Size, unsigned Align = 8) {
@@ -352,6 +366,8 @@ namespace clang {
     void Deallocate(void *Ptr) { }
 
     size_t getTotalMemory() const;
+
+    SourceManager &getSourceManager() const { return SourceMgr; }
 
     // Iteration over the preprocessed entities.
     class iterator {
@@ -470,6 +486,10 @@ namespace clang {
     
     iterator begin(bool OnlyLocalEntities = false);
     iterator end(bool OnlyLocalEntities = false);
+
+    /// \brief Returns a pair of [Begin, End) iterators of preprocessed entities
+    /// that source range \arg R encompasses.
+    std::pair<iterator, iterator> getPreprocessedEntitiesInRange(SourceRange R);
 
     /// \brief Add a new preprocessed entity to this record.
     void addPreprocessedEntity(PreprocessedEntity *Entity);

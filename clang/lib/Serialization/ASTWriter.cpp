@@ -1714,7 +1714,7 @@ void ASTWriter::WritePreprocessorDetail(PreprocessingRecord &PPRec) {
   if (PPRec.begin(Chain) == PPRec.end(Chain))
     return;
 
-  SmallVector<uint32_t, 64> PreprocessedEntityOffsets;
+  SmallVector<PPEntityOffset, 64> PreprocessedEntityOffsets;
 
   // Enter the preprocessor block.
   Stream.EnterSubblock(PREPROCESSOR_DETAIL_BLOCK_ID, 3);
@@ -1750,7 +1750,8 @@ void ASTWriter::WritePreprocessorDetail(PreprocessingRecord &PPRec) {
        (void)++E, ++NumPreprocessingRecords, ++NextPreprocessorEntityID) {
     Record.clear();
 
-    PreprocessedEntityOffsets.push_back(Stream.GetCurrentBitNo());
+    PreprocessedEntityOffsets.push_back(PPEntityOffset((*E)->getSourceRange(),
+                                                     Stream.GetCurrentBitNo()));
 
     if (MacroDefinition *MD = dyn_cast<MacroDefinition>(*E)) {
       // Record this macro definition's ID.

@@ -602,6 +602,7 @@ void Preprocessor::createPreprocessingRecord(
   if (Record)
     return;
   
-  Record = new PreprocessingRecord(IncludeNestedMacroExpansions);
+  Record = new PreprocessingRecord(getSourceManager(),
+                                   IncludeNestedMacroExpansions);
   addPPCallbacks(Record);
 }

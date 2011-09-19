@@ -141,6 +141,21 @@ namespace clang {
     /// preprocessing record.
     typedef uint32_t PreprocessedEntityID;
 
+    /// \brief Source range/offset of a preprocessed entity.
+    struct PPEntityOffset {
+      /// \brief Raw source location of beginning of range.
+      unsigned Begin;
+      /// \brief Raw source location of end of range.
+      unsigned End;
+      /// \brief Offset in the AST file.
+      uint32_t BitOffset;
+
+      PPEntityOffset(SourceRange R, uint32_t BitOffset)
+        : Begin(R.getBegin().getRawEncoding()),
+          End(R.getEnd().getRawEncoding()),
+          BitOffset(BitOffset) { }
+    };
+
     /// \brief The number of predefined preprocessed entity IDs.
     const unsigned int NUM_PREDEF_PP_ENTITY_IDS = 1;
 
