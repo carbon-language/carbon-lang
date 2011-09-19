@@ -282,6 +282,8 @@ N: Jakob Stoklund Olesen
 E: stoklund@2pi.dk
 D: Machine code verifier
 D: Blackfin backend
+D: Fast register allocator
+D: Greedy register allocator
 
 N: Richard Osborne
 E: richard@xmos.com
