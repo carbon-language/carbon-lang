@@ -10,9 +10,6 @@ Cont:           ; preds = %EB
         ret i32 %V
 
 Unw:            ; preds = %EB
-        %exn = landingpad {i8*, i32} personality i32 (...)* @__gcc_personality_v0
-                 catch i8* null
-        resume { i8*, i32 } %exn
+        unwind
 }
 
-declare i32 @__gcc_personality_v0(...)
