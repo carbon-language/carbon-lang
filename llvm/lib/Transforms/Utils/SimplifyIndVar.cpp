@@ -85,6 +85,8 @@ namespace {
 /// foldIVUser - Fold an IV operand into its use.  This removes increments of an
 /// aligned IV when used by a instruction that ignores the low bits.
 ///
+/// IVOperand is guaranteed SCEVable, but UseInst may not be.
+///
 /// Return the operand of IVOperand for this induction variable if IVOperand can
 /// be folded (in case more folding opportunities have been exposed).
 /// Otherwise return null.
@@ -241,6 +243,7 @@ void SimplifyIndvar::eliminateIVRemainder(BinaryOperator *Rem,
 
 /// eliminateIVUser - Eliminate an operation that consumes a simple IV and has
 /// no observable side-effect given the range of IV values.
+/// IVOperand is guaranteed SCEVable, but UseInst may not be.
 bool SimplifyIndvar::eliminateIVUser(Instruction *UseInst,
                                      Instruction *IVOperand) {
   if (ICmpInst *ICmp = dyn_cast<ICmpInst>(UseInst)) {
@@ -324,6 +327,9 @@ static bool isSimpleIVUser(Instruction *I, const Loop *L, ScalarEvolution *SE) {
 /// Once DisableIVRewrite is default, LSR will be the only client of IVUsers.
 ///
 void SimplifyIndvar::simplifyUsers(PHINode *CurrIV, IVVisitor *V) {
+  if (!SE->isSCEVable(CurrIV->getType()))
+    return;
+
   // Instructions processed by SimplifyIndvar for CurrIV.
   SmallPtrSet<Instruction*,16> Simplified;
 
