@@ -2650,3 +2650,23 @@ _func:
 @ CHECK: teq.w	r4, r5, lsr #5          @ encoding: [0x94,0xea,0x55,0x1f]
 @ CHECK: teq.w	r4, r5, asr #5          @ encoding: [0x94,0xea,0x65,0x1f]
 @ CHECK: teq.w	r4, r5, ror #5          @ encoding: [0x94,0xea,0x75,0x1f]
+
+
+@------------------------------------------------------------------------------
+@ TEQ
+@------------------------------------------------------------------------------
+        tst r5, #0xf000
+        tst r2, r5
+        tst r3, r12, lsl #5
+        tst r4, r11, lsr #4
+        tst r5, r10, lsr #12
+        tst r6, r9, asr #30
+        tst r7, r8, ror #2
+
+@ CHECK: tst.w	r5, #61440              @ encoding: [0x15,0xf4,0x70,0x4f]
+@ CHECK: tst	r2, r5                  @ encoding: [0x2a,0x42]
+@ CHECK: tst.w	r3, r12, lsl #5         @ encoding: [0x13,0xea,0x4c,0x1f]
+@ CHECK: tst.w	r4, r11, lsr #4         @ encoding: [0x14,0xea,0x1b,0x1f]
+@ CHECK: tst.w	r5, r10, lsr #12        @ encoding: [0x15,0xea,0x1a,0x3f]
+@ CHECK: tst.w	r6, r9, asr #30         @ encoding: [0x16,0xea,0xa9,0x7f]
+@ CHECK: tst.w	r7, r8, ror #2          @ encoding: [0x17,0xea,0xb8,0x0f]
