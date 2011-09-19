@@ -48,4 +48,12 @@ namespace VariantMembers {
     K(int n) : n(n) {}
     K(int n, bool) : ndc(n) {}
   };
+  struct Nested {
+    Nested() {}
+    union {
+      struct {
+        NoDefaultCtor ndc;
+      };
+    };
+  };
 }
