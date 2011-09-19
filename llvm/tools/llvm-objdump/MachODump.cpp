@@ -353,7 +353,7 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
         FunctionMap[Sections[SectIdx].Offset] = &Functions.back();
 
         for (unsigned i = 0, e = Calls.size(); i != e; ++i)
-          FunctionMap.insert(std::pair<uint64_t, MCFunction*>(Calls[i], 0));
+          FunctionMap.insert(std::make_pair(Calls[i], (MCFunction*)0));
       }
       for (std::map<uint64_t, MCFunction*>::iterator mi = FunctionMap.begin(),
            me = FunctionMap.end(); mi != me; ++mi)
