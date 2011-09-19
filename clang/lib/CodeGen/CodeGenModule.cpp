@@ -18,6 +18,7 @@
 #include "CGCall.h"
 #include "CGCXXABI.h"
 #include "CGObjCRuntime.h"
+#include "CGOpenCLRuntime.h"
 #include "TargetInfo.h"
 #include "clang/Frontend/CodeGenOptions.h"
 #include "clang/AST/ASTContext.h"
@@ -65,15 +66,17 @@ CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
     ABI(createCXXABI(*this)), 
     Types(C, M, TD, getTargetCodeGenInfo().getABIInfo(), ABI, CGO),
     TBAA(0),
-    VTables(*this), ObjCRuntime(0), DebugInfo(0), ARCData(0), RRData(0),
-    CFConstantStringClassRef(0), ConstantStringClassRef(0),
+    VTables(*this), ObjCRuntime(0), OpenCLRuntime(0), DebugInfo(0), ARCData(0),
+    RRData(0), CFConstantStringClassRef(0), ConstantStringClassRef(0),
     NSConstantStringType(0),
     VMContext(M.getContext()),
     NSConcreteGlobalBlock(0), NSConcreteStackBlock(0),
     BlockObjectAssign(0), BlockObjectDispose(0),
     BlockDescriptorType(0), GenericBlockLiteralType(0) {
   if (Features.ObjC1)
-     createObjCRuntime();
+    createObjCRuntime();
+  if (Features.OpenCL)
+    createOpenCLRuntime();
 
   // Enable TBAA unless it's suppressed.
   if (!CodeGenOpts.RelaxedAliasing && CodeGenOpts.OptimizationLevel > 0)
@@ -109,6 +112,7 @@ CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
 
 CodeGenModule::~CodeGenModule() {
   delete ObjCRuntime;
+  delete OpenCLRuntime;
   delete &ABI;
   delete TBAA;
   delete DebugInfo;
@@ -121,6 +125,10 @@ void CodeGenModule::createObjCRuntime() {
     ObjCRuntime = CreateGNUObjCRuntime(*this);
   else
     ObjCRuntime = CreateMacObjCRuntime(*this);
+}
+
+void CodeGenModule::createOpenCLRuntime() {
+  OpenCLRuntime = new CGOpenCLRuntime(*this);
 }
 
 void CodeGenModule::Release() {

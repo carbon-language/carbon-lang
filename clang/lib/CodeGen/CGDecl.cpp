@@ -14,6 +14,7 @@
 #include "CGDebugInfo.h"
 #include "CodeGenFunction.h"
 #include "CodeGenModule.h"
+#include "CGOpenCLRuntime.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/CharUnits.h"
 #include "clang/AST/Decl.h"
@@ -131,6 +132,8 @@ void CodeGenFunction::EmitVarDecl(const VarDecl &D) {
   case SC_PrivateExtern:
     // Don't emit it now, allow it to be emitted lazily on its first use.
     return;
+  case SC_OpenCLWorkGroupLocal:
+    return CGM.getOpenCLRuntime().EmitWorkGroupLocalVarDecl(*this, D);
   }
 
   assert(0 && "Unknown storage class");

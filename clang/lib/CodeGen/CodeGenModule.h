@@ -75,6 +75,7 @@ namespace CodeGen {
   class CGCXXABI;
   class CGDebugInfo;
   class CGObjCRuntime;
+  class CGOpenCLRuntime;
   class BlockFieldFlags;
   class FunctionArgList;
   
@@ -226,6 +227,7 @@ class CodeGenModule : public CodeGenTypeCache {
   friend class CodeGenVTables;
 
   CGObjCRuntime* ObjCRuntime;
+  CGOpenCLRuntime* OpenCLRuntime;
   CGDebugInfo* DebugInfo;
   ARCEntrypoints *ARCData;
   RREntrypoints *RRData;
@@ -317,6 +319,8 @@ class CodeGenModule : public CodeGenTypeCache {
   /// Lazily create the Objective-C runtime
   void createObjCRuntime();
 
+  void createOpenCLRuntime();
+
   llvm::LLVMContext &VMContext;
 
   /// @name Cache for Blocks Runtime Globals
@@ -355,6 +359,12 @@ public:
   /// hasObjCRuntime() - Return true iff an Objective-C runtime has
   /// been configured.
   bool hasObjCRuntime() { return !!ObjCRuntime; }
+
+  /// getObjCRuntime() - Return a reference to the configured OpenCL runtime.
+  CGOpenCLRuntime &getOpenCLRuntime() {
+    assert(OpenCLRuntime != 0);
+    return *OpenCLRuntime;
+  }
 
   /// getCXXABI() - Return a reference to the configured C++ ABI.
   CGCXXABI &getCXXABI() { return ABI; }
