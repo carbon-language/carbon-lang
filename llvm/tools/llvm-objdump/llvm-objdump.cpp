@@ -13,6 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm-objdump.h"
 #include "MCFunction.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/ADT/OwningPtr.h"
@@ -46,39 +47,37 @@
 using namespace llvm;
 using namespace object;
 
-namespace {
-  cl::list<std::string>
-  InputFilenames(cl::Positional, cl::desc("<input object files>"),
-                 cl::ZeroOrMore);
+static cl::list<std::string>
+InputFilenames(cl::Positional, cl::desc("<input object files>"),cl::ZeroOrMore);
 
-  cl::opt<bool>
-  Disassemble("disassemble",
-    cl::desc("Display assembler mnemonics for the machine instructions"));
-  cl::alias
-  Disassembled("d", cl::desc("Alias for --disassemble"),
-               cl::aliasopt(Disassemble));
+static cl::opt<bool>
+Disassemble("disassemble",
+  cl::desc("Display assembler mnemonics for the machine instructions"));
+static cl::alias
+Disassembled("d", cl::desc("Alias for --disassemble"),
+             cl::aliasopt(Disassemble));
 
-  cl::opt<bool>
-  CFG("cfg", cl::desc("Create a CFG for every symbol in the object file and"
-                      "write it to a graphviz file"));
+static cl::opt<bool>
+MachO("macho", cl::desc("Use MachO specific object file parser"));
+static cl::alias
+MachOm("m", cl::desc("Alias for --macho"), cl::aliasopt(MachO));
 
-  cl::opt<std::string>
-  TripleName("triple", cl::desc("Target triple to disassemble for, "
+cl::opt<std::string>
+llvm::TripleName("triple", cl::desc("Target triple to disassemble for, "
+                                    "see -version for available targets"));
+
+cl::opt<std::string>
+llvm::ArchName("arch", cl::desc("Target arch to disassemble for, "
                                 "see -version for available targets"));
 
-  cl::opt<std::string>
-  ArchName("arch", cl::desc("Target arch to disassemble for, "
-                            "see -version for available targets"));
+static StringRef ToolName;
 
-  StringRef ToolName;
+static bool error(error_code ec) {
+  if (!ec) return false;
 
-  bool error(error_code ec) {
-    if (!ec) return false;
-
-    outs() << ToolName << ": error reading file: " << ec.message() << ".\n";
-    outs().flush();
-    return true;
-  }
+  outs() << ToolName << ": error reading file: " << ec.message() << ".\n";
+  outs().flush();
+  return true;
 }
 
 static const Target *GetTarget(const ObjectFile *Obj = NULL) {
@@ -106,27 +105,8 @@ static const Target *GetTarget(const ObjectFile *Obj = NULL) {
   return 0;
 }
 
-namespace {
-class StringRefMemoryObject : public MemoryObject {
-private:
-  StringRef Bytes;
-public:
-  StringRefMemoryObject(StringRef bytes) : Bytes(bytes) {}
-
-  uint64_t getBase() const { return 0; }
-  uint64_t getExtent() const { return Bytes.size(); }
-
-  int readByte(uint64_t Addr, uint8_t *Byte) const {
-    if (Addr >= getExtent())
-      return -1;
-    *Byte = Bytes[Addr];
-    return 0;
-  }
-};
-}
-
-static void DumpBytes(StringRef bytes) {
-  static char hex_rep[] = "0123456789abcdef";
+void llvm::DumpBytes(StringRef bytes) {
+  static const char hex_rep[] = "0123456789abcdef";
   // FIXME: The real way to do this is to figure out the longest instruction
   //        and align to that size before printing. I'll fix this when I get
   //        around to outputting relocations.
@@ -151,7 +131,7 @@ static void DumpBytes(StringRef bytes) {
   outs() << output;
 }
 
-static void DisassembleInput(const StringRef &Filename) {
+void llvm::DisassembleInputLibObject(StringRef Filename) {
   OwningPtr<MemoryBuffer> Buff;
 
   if (error_code ec = MemoryBuffer::getFileOrSTDIN(Filename, Buff)) {
@@ -259,118 +239,22 @@ static void DisassembleInput(const StringRef &Filename) {
         raw_ostream &DebugOut = nulls();
 #endif
 
-      if (!CFG) {
-        for (Index = Start; Index < End; Index += Size) {
-          MCInst Inst;
+      for (Index = Start; Index < End; Index += Size) {
+        MCInst Inst;
 
-          if (DisAsm->getInstruction(Inst, Size, memoryObject, Index,
-                                     DebugOut, nulls())) {
-            uint64_t addr;
-            if (error(i->getAddress(addr))) break;
-            outs() << format("%8x:\t", addr + Index);
-            DumpBytes(StringRef(Bytes.data() + Index, Size));
-            IP->printInst(&Inst, outs(), "");
-            outs() << "\n";
-          } else {
-            errs() << ToolName << ": warning: invalid instruction encoding\n";
-            if (Size == 0)
-              Size = 1; // skip illegible bytes
-          }
+        if (DisAsm->getInstruction(Inst, Size, memoryObject, Index,
+                                   DebugOut, nulls())) {
+          uint64_t addr;
+          if (error(i->getAddress(addr))) break;
+          outs() << format("%8x:\t", addr + Index);
+          DumpBytes(StringRef(Bytes.data() + Index, Size));
+          IP->printInst(&Inst, outs(), "");
+          outs() << "\n";
+        } else {
+          errs() << ToolName << ": warning: invalid instruction encoding\n";
+          if (Size == 0)
+            Size = 1; // skip illegible bytes
         }
-
-      } else {
-        // Create CFG and use it for disassembly.
-        MCFunction f =
-          MCFunction::createFunctionFromMC(Symbols[si].second, DisAsm.get(),
-                                           memoryObject, Start, End,
-                                           InstrAnalysis.get(), DebugOut);
-
-        for (MCFunction::iterator fi = f.begin(), fe = f.end(); fi != fe; ++fi){
-          bool hasPreds = false;
-          // Only print blocks that have predecessors.
-          // FIXME: Slow.
-          for (MCFunction::iterator pi = f.begin(), pe = f.end(); pi != pe;
-              ++pi)
-            if (pi->second.contains(&fi->second)) {
-              hasPreds = true;
-              break;
-            }
-
-          // Data block.
-          if (!hasPreds && fi != f.begin()) {
-            uint64_t End = llvm::next(fi) == fe ? SectSize :
-                                                  llvm::next(fi)->first;
-            uint64_t addr;
-            if (error(i->getAddress(addr))) break;
-            outs() << "# " << End-fi->first << " bytes of data:\n";
-            for (unsigned pos = fi->first; pos != End; ++pos) {
-              outs() << format("%8x:\t", addr + pos);
-              DumpBytes(StringRef(Bytes.data() + pos, 1));
-              outs() << format("\t.byte 0x%02x\n", (uint8_t)Bytes[pos]);
-            }
-            continue;
-          }
-
-          if (fi->second.contains(&fi->second))
-            outs() << "# Loop begin:\n";
-
-          for (unsigned ii = 0, ie = fi->second.getInsts().size(); ii != ie;
-               ++ii) {
-            uint64_t addr;
-            if (error(i->getAddress(addr))) break;
-            const MCDecodedInst &Inst = fi->second.getInsts()[ii];
-            outs() << format("%8x:\t", addr + Inst.Address);
-            DumpBytes(StringRef(Bytes.data() + Inst.Address, Inst.Size));
-            // Simple loops.
-            if (fi->second.contains(&fi->second))
-              outs() << '\t';
-            IP->printInst(&Inst.Inst, outs(), "");
-            outs() << '\n';
-          }
-        }
-
-        // Start a new dot file.
-        std::string Error;
-        raw_fd_ostream Out((f.getName().str() + ".dot").c_str(), Error);
-        if (!Error.empty()) {
-          errs() << ToolName << ": warning: " << Error << '\n';
-          continue;
-        }
-
-        Out << "digraph " << f.getName() << " {\n";
-        Out << "graph [ rankdir = \"LR\" ];\n";
-        for (MCFunction::iterator i = f.begin(), e = f.end(); i != e; ++i) {
-          bool hasPreds = false;
-          // Only print blocks that have predecessors.
-          // FIXME: Slow.
-          for (MCFunction::iterator pi = f.begin(), pe = f.end(); pi != pe;
-               ++pi)
-            if (pi->second.contains(&i->second)) {
-              hasPreds = true;
-              break;
-            }
-
-          if (!hasPreds && i != f.begin())
-            continue;
-
-          Out << '"' << (uintptr_t)&i->second << "\" [ label=\"<a>";
-          // Print instructions.
-          for (unsigned ii = 0, ie = i->second.getInsts().size(); ii != ie;
-               ++ii) {
-            // Escape special chars and print the instruction in mnemonic form.
-            std::string Str;
-            raw_string_ostream OS(Str);
-            IP->printInst(&i->second.getInsts()[ii].Inst, OS, "");
-            Out << DOT::EscapeString(OS.str()) << '|';
-          }
-          Out << "<o>\" shape=\"record\" ];\n";
-
-          // Add edges.
-          for (MCBasicBlock::succ_iterator si = i->second.succ_begin(),
-              se = i->second.succ_end(); si != se; ++si)
-            Out << (uintptr_t)&i->second << ":o -> " << (uintptr_t)*si <<":a\n";
-        }
-        Out << "}\n";
       }
     }
   }
@@ -404,8 +288,12 @@ int main(int argc, char **argv) {
     return 2;
   }
 
-  std::for_each(InputFilenames.begin(), InputFilenames.end(),
-                DisassembleInput);
+  if (MachO)
+    std::for_each(InputFilenames.begin(), InputFilenames.end(),
+                  DisassembleInputMachO);
+  else
+    std::for_each(InputFilenames.begin(), InputFilenames.end(),
+                  DisassembleInputLibObject);
 
   return 0;
 }
