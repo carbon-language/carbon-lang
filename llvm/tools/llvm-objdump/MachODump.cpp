@@ -271,7 +271,7 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
 
     uint64_t VMAddr = Sections[SectIdx].Address - Sections[SectIdx].Offset;
     for (unsigned i = 0, e = FoundFns.size(); i != e; ++i)
-      FunctionMap.insert(std::pair<uint64_t,MCFunction*>(FoundFns[i]+VMAddr,0));
+      FunctionMap.insert(std::make_pair(FoundFns[i]+VMAddr, (MCFunction*)0));
 
     StringRef Bytes = MachOObj->getData(Sections[SectIdx].Offset,
                                         Sections[SectIdx].Size);
@@ -335,7 +335,7 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
         FunctionMap[Start] = &Functions.back();
 
         for (unsigned i = 0, e = Calls.size(); i != e; ++i)
-          FunctionMap.insert(std::pair<uint64_t, MCFunction*>(Calls[i], 0));
+          FunctionMap.insert(std::make_pair(Calls[i], (MCFunction*)0));
       }
     }
 
