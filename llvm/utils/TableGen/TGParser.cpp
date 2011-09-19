@@ -1416,6 +1416,10 @@ std::vector<Init*> TGParser::ParseValueList(Record *CurRec, Record *ArgsRec,
   if (ArgsRec != 0 && EltTy == 0) {
     const std::vector<std::string> &TArgs = ArgsRec->getTemplateArgs();
     const RecordVal *RV = ArgsRec->getValue(TArgs[ArgN]);
+    if (!RV) {
+      errs() << "Cannot find template arg " << ArgN << " (" << TArgs[ArgN]
+        << ")\n";
+    }
     assert(RV && "Template argument record not found??");
     ItemType = RV->getType();
     ++ArgN;
