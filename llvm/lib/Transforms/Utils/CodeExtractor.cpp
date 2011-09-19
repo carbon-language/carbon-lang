@@ -664,7 +664,13 @@ ExtractCodeRegion(const std::vector<BasicBlock*> &code) {
   //  * Pass in uses as args
   // 3) Move code region, add call instr to func
   //
-  BlocksToExtract.insert(code.begin(), code.end());
+  for (std::vector<BasicBlock*>::const_iterator
+         I = code.begin(), E = code.end(); I != E; ++I) {
+    BasicBlock *BB = *I;
+    BlocksToExtract.insert(BB);
+    if (InvokeInst *II = dyn_cast<InvokeInst>(BB->getTerminator()))
+      BlocksToExtract.insert(II->getUnwindDest());
+  }
 
   Values inputs, outputs;
 
@@ -788,6 +794,7 @@ Function* llvm::ExtractLoop(DominatorTree &DT, Loop *L, bool AggregateArgs) {
 /// ExtractBasicBlock - slurp a basic block into a brand new function
 ///
 Function* llvm::ExtractBasicBlock(BasicBlock *BB, bool AggregateArgs) {
+  if (BB->isLandingPad()) return 0;
   std::vector<BasicBlock*> Blocks;
   Blocks.push_back(BB);
   return CodeExtractor(0, AggregateArgs).ExtractCodeRegion(Blocks);
