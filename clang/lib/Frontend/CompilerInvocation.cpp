@@ -1373,7 +1373,8 @@ static void ParseHeaderSearchArgs(HeaderSearchOptions &Opts, ArgList &Args) {
   using namespace cc1options;
   Opts.Sysroot = Args.getLastArgValue(OPT_isysroot, "/");
   Opts.Verbose = Args.hasArg(OPT_v);
-  Opts.UseBuiltinIncludes = !Args.hasArg(OPT_nobuiltininc);
+  Opts.UseBuiltinIncludes = !Args.hasArg(OPT_nobuiltininc) &&
+                            !Args.hasArg(OPT_fms_compatibility);
   Opts.UseStandardIncludes = !Args.hasArg(OPT_nostdinc);
   Opts.UseStandardCXXIncludes = !Args.hasArg(OPT_nostdincxx);
   if (const Arg *A = Args.getLastArg(OPT_stdlib_EQ))
