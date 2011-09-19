@@ -123,6 +123,11 @@ public:
     return cast<ObjCPropertyRefExpr>(MsgOrPropE)->getReceiverLocation();
   }
 
+  const Expr *getMsgOrPropExpr() const {
+    assert(isValid() && "This ObjCMessage is uninitialized!");
+    return MsgOrPropE;
+  }
+
   SourceRange getSourceRange() const {
     assert(isValid() && "This ObjCMessage is uninitialized!");
     return MsgOrPropE->getSourceRange();
