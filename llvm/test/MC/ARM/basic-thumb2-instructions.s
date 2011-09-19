@@ -2451,3 +2451,56 @@ _func:
 @ CHECK: svceq	#255                    @ encoding: [0xff,0xdf]
 @ CHECK: svcne	#33                     @ encoding: [0x21,0xdf]
 
+
+@------------------------------------------------------------------------------
+@ SXTAB
+@------------------------------------------------------------------------------
+        sxtab r2, r3, r4
+        sxtab r4, r5, r6, ror #0
+        it lt
+        sxtablt r6, r2, r9, ror #8
+        sxtab r5, r1, r4, ror #16
+        sxtab r7, r8, r3, ror #24
+
+@ CHECK: sxtab	r2, r3, r4              @ encoding: [0x43,0xfa,0x84,0xf2]
+@ CHECK: sxtab	r4, r5, r6              @ encoding: [0x45,0xfa,0x86,0xf4]
+@ CHECK: it	lt                      @ encoding: [0xb8,0xbf]
+@ CHECK: sxtablt r6, r2, r9, ror #8     @ encoding: [0x42,0xfa,0x99,0xf6]
+@ CHECK: sxtab	r5, r1, r4, ror #16     @ encoding: [0x41,0xfa,0xa4,0xf5]
+@ CHECK: sxtab	r7, r8, r3, ror #24     @ encoding: [0x48,0xfa,0xb3,0xf7]
+
+
+@------------------------------------------------------------------------------
+@ SXTAB16
+@------------------------------------------------------------------------------
+        sxtab16 r6, r2, r7, ror #0
+        sxtab16 r3, r5, r8, ror #8
+        sxtab16 r3, r2, r1, ror #16
+        ite ne
+        sxtab16ne r0, r1, r4
+        sxtab16eq r1, r2, r3, ror #24
+
+@ CHECK: sxtab16 r6, r2, r7             @ encoding: [0x22,0xfa,0x87,0xf6]
+@ CHECK: sxtab16 r3, r5, r8, ror #8     @ encoding: [0x25,0xfa,0x98,0xf3]
+@ CHECK: sxtab16 r3, r2, r1, ror #16    @ encoding: [0x22,0xfa,0xa1,0xf3]
+@ CHECK: ite	ne                      @ encoding: [0x14,0xbf]
+@ CHECK: sxtab16ne r0, r1, r4           @ encoding: [0x21,0xfa,0x84,0xf0]
+@ CHECK: sxtab16eq r1, r2, r3, ror #24  @ encoding: [0x22,0xfa,0xb3,0xf1]
+
+
+@------------------------------------------------------------------------------
+@ SXTAH
+@------------------------------------------------------------------------------
+        sxtah r1, r3, r9
+        sxtah r3, r8, r3, ror #8
+        sxtah r9, r3, r3, ror #24
+        ite hi
+        sxtahhi r6, r1, r6, ror #0
+        sxtahls r2, r2, r4, ror #16
+
+@ CHECK: sxtah	r1, r3, r9              @ encoding: [0x03,0xfa,0x89,0xf1]
+@ CHECK: sxtah	r3, r8, r3, ror #8      @ encoding: [0x08,0xfa,0x93,0xf3]
+@ CHECK: sxtah	r9, r3, r3, ror #24     @ encoding: [0x03,0xfa,0xb3,0xf9]
+@ CHECK: ite	hi                      @ encoding: [0x8c,0xbf]
+@ CHECK: sxtahhi r6, r1, r6             @ encoding: [0x01,0xfa,0x86,0xf6]
+@ CHECK: sxtahls r2, r2, r4, ror #16    @ encoding: [0x02,0xfa,0xa4,0xf2]

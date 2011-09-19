@@ -3922,3 +3922,11 @@ def : t2InstAlias<"strb${p} $Rt, $addr",
                   (t2STRBs rGPR:$Rt, t2addrmode_so_reg:$addr, pred:$p)>;
 def : t2InstAlias<"strh${p} $Rt, $addr",
                   (t2STRHs rGPR:$Rt, t2addrmode_so_reg:$addr, pred:$p)>;
+
+// Extend instruction optional rotate operand.
+def : t2InstAlias<"sxtab${p} $Rd, $Rn, $Rm",
+                (t2SXTAB rGPR:$Rd, rGPR:$Rn, rGPR:$Rm, 0, pred:$p)>;
+def : t2InstAlias<"sxtah${p} $Rd, $Rn, $Rm",
+                (t2SXTAH rGPR:$Rd, rGPR:$Rn, rGPR:$Rm, 0, pred:$p)>;
+def : t2InstAlias<"sxtab16${p} $Rd, $Rn, $Rm",
+                (t2SXTAB16 rGPR:$Rd, rGPR:$Rn, rGPR:$Rm, 0, pred:$p)>;
