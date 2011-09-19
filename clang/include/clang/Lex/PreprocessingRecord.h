@@ -483,9 +483,26 @@ namespace clang {
       }
     };
     friend class iterator;
-    
-    iterator begin(bool OnlyLocalEntities = false);
-    iterator end(bool OnlyLocalEntities = false);
+
+    /// \brief Begin iterator for all preprocessed entities.
+    iterator begin() {
+      return iterator(this, -(int)LoadedPreprocessedEntities.size());
+    }
+
+    /// \brief End iterator for all preprocessed entities.
+    iterator end() {
+      return iterator(this, PreprocessedEntities.size());
+    }
+
+    /// \brief Begin iterator for local, non-loaded, preprocessed entities.
+    iterator local_begin() {
+      return iterator(this, 0);
+    }
+
+    /// \brief End iterator for local, non-loaded, preprocessed entities.
+    iterator local_end() {
+      return iterator(this, PreprocessedEntities.size());
+    }
 
     /// \brief Returns a pair of [Begin, End) iterators of preprocessed entities
     /// that source range \arg R encompasses.

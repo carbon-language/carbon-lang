@@ -44,18 +44,6 @@ PreprocessingRecord::PreprocessingRecord(SourceManager &SM,
 {
 }
 
-PreprocessingRecord::iterator 
-PreprocessingRecord::begin(bool OnlyLocalEntities) {
-  if (OnlyLocalEntities)
-    return iterator(this, 0);
-  
-  return iterator(this, -(int)LoadedPreprocessedEntities.size());
-}
-
-PreprocessingRecord::iterator PreprocessingRecord::end(bool OnlyLocalEntities) {
-  return iterator(this, PreprocessedEntities.size());
-}
-
 /// \brief Returns a pair of [Begin, End) iterators of preprocessed entities
 /// that source range \arg R encompasses.
 std::pair<PreprocessingRecord::iterator, PreprocessingRecord::iterator>

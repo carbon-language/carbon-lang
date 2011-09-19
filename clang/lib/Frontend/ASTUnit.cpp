@@ -1534,7 +1534,7 @@ void ASTUnit::RealizePreprocessedEntitiesFromPreamble() {
     return;
   
   PreprocessedEntities.insert(PreprocessedEntities.end(), 
-                              PPRec->begin(true), PPRec->end(true));
+                              PPRec->local_begin(), PPRec->local_end());
 }
 
 ASTUnit::pp_entity_iterator ASTUnit::pp_entity_begin() {

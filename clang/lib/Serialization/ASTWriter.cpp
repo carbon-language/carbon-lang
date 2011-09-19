@@ -1711,7 +1711,7 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP, bool IsModule) {
 }
 
 void ASTWriter::WritePreprocessorDetail(PreprocessingRecord &PPRec) {
-  if (PPRec.begin(Chain) == PPRec.end(Chain))
+  if (PPRec.local_begin() == PPRec.local_end())
     return;
 
   SmallVector<PPEntityOffset, 64> PreprocessedEntityOffsets;
@@ -1744,8 +1744,8 @@ void ASTWriter::WritePreprocessorDetail(PreprocessingRecord &PPRec) {
   unsigned NextPreprocessorEntityID = FirstPreprocessorEntityID;
   RecordData Record;
   uint64_t BitsInChain = Chain? Chain->TotalModulesSizeInBits : 0;
-  for (PreprocessingRecord::iterator E = PPRec.begin(Chain),
-                                  EEnd = PPRec.end(Chain);
+  for (PreprocessingRecord::iterator E = PPRec.local_begin(),
+                                  EEnd = PPRec.local_end();
        E != EEnd; 
        (void)++E, ++NumPreprocessingRecords, ++NextPreprocessorEntityID) {
     Record.clear();
