@@ -43,7 +43,7 @@ else:		; preds = %entry
 	br i1 %nullcheck, label %unwind, label %recurse
 
 unwind:		; preds = %else
-	unwind
+	unreachable
 
 recurse:		; preds = %else
 	%tmp7 = add i32 %start_arg, 1		; <i32> [#uses=1]
@@ -89,7 +89,7 @@ else:		; preds = %entry
 	br i1 %nullcheck, label %unwind, label %recurse
 
 unwind:		; preds = %else
-	unwind
+	unreachable
 
 recurse:		; preds = %else
 	%tmp7 = add i32 %start_arg, 1		; <i32> [#uses=1]
