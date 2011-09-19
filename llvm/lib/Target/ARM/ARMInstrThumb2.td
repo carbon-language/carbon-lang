@@ -3270,14 +3270,12 @@ let isBranch = 1, isTerminator = 1 in {
 }
 
 
-// Change Processor State is a system instruction -- for disassembly and
-// parsing only.
+// Change Processor State is a system instruction.
 // FIXME: Since the asm parser has currently no clean way to handle optional
 // operands, create 3 versions of the same instruction. Once there's a clean
 // framework to represent optional operands, change this behavior.
 class t2CPS<dag iops, string asm_op> : T2XI<(outs), iops, NoItinerary,
-            !strconcat("cps", asm_op),
-            [/* For disassembly only; pattern left blank */]> {
+            !strconcat("cps", asm_op), []> {
   bits<2> imod;
   bits<3> iflags;
   bits<5> mode;
@@ -3307,10 +3305,8 @@ let imod = 0, iflags = 0, M = 1 in
 
 // A6.3.4 Branches and miscellaneous control
 // Table A6-14 Change Processor State, and hint instructions
-// Helper class for disassembly only.
 class T2I_hint<bits<8> op7_0, string opc, string asm>
-  : T2I<(outs), (ins), NoItinerary, opc, asm,
-        [/* For disassembly only; pattern left blank */]> {
+  : T2I<(outs), (ins), NoItinerary, opc, asm, []> {
   let Inst{31-20} = 0xf3a;
   let Inst{19-16} = 0b1111;
   let Inst{15-14} = 0b10;
@@ -3334,10 +3330,9 @@ def t2DBG : T2I<(outs), (ins imm0_15:$opt), NoItinerary, "dbg", "\t$opt", []> {
   let Inst{3-0} = opt;
 }
 
-// Secure Monitor Call is a system instruction -- for disassembly only
+// Secure Monitor Call is a system instruction.
 // Option = Inst{19-16}
-def t2SMC : T2I<(outs), (ins imm0_15:$opt), NoItinerary, "smc", "\t$opt",
-                [/* For disassembly only; pattern left blank */]> {
+def t2SMC : T2I<(outs), (ins imm0_15:$opt), NoItinerary, "smc", "\t$opt", []> {
   let Inst{31-27} = 0b11110;
   let Inst{26-20} = 0b1111111;
   let Inst{15-12} = 0b1000;
