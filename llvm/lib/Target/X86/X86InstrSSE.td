@@ -1973,73 +1973,44 @@ def : Pat<(v4f64 (fextend (loadv4f32 addr:$src))),
 
 // sse12_cmp_scalar - sse 1 & 2 compare scalar instructions
 multiclass sse12_cmp_scalar<RegisterClass RC, X86MemOperand x86memop,
+                            SDNode OpNode, ValueType VT, PatFrag ld_frag,
                             string asm, string asm_alt> {
-  let isAsmParserOnly = 1 in {
-    def rr : SIi8<0xC2, MRMSrcReg,
-                  (outs RC:$dst), (ins RC:$src1, RC:$src, SSECC:$cc),
-                  asm, []>;
-    let mayLoad = 1 in
-    def rm : SIi8<0xC2, MRMSrcMem,
-                  (outs RC:$dst), (ins RC:$src1, x86memop:$src, SSECC:$cc),
-                  asm, []>;
-  }
+  def rr : SIi8<0xC2, MRMSrcReg,
+                (outs RC:$dst), (ins RC:$src1, RC:$src2, SSECC:$cc), asm,
+                [(set RC:$dst, (OpNode (VT RC:$src1), RC:$src2, imm:$cc))]>;
+  def rm : SIi8<0xC2, MRMSrcMem,
+                (outs RC:$dst), (ins RC:$src1, x86memop:$src2, SSECC:$cc), asm,
+                [(set RC:$dst, (OpNode (VT RC:$src1),
+                                         (ld_frag addr:$src2), imm:$cc))]>;
 
   // Accept explicit immediate argument form instead of comparison code.
-  def rr_alt : SIi8<0xC2, MRMSrcReg,
-                (outs RC:$dst), (ins RC:$src1, RC:$src, i8imm:$src2),
-                asm_alt, []>;
-  let mayLoad = 1 in
-  def rm_alt : SIi8<0xC2, MRMSrcMem,
-                (outs RC:$dst), (ins RC:$src1, x86memop:$src, i8imm:$src2),
-                asm_alt, []>;
+  let neverHasSideEffects = 1 in {
+    def rr_alt : SIi8<0xC2, MRMSrcReg, (outs RC:$dst),
+                      (ins RC:$src1, RC:$src2, i8imm:$cc), asm_alt, []>;
+    let mayLoad = 1 in
+    def rm_alt : SIi8<0xC2, MRMSrcMem, (outs RC:$dst),
+                      (ins RC:$src1, x86memop:$src2, i8imm:$cc), asm_alt, []>;
+  }
 }
 
-let neverHasSideEffects = 1 in {
-  defm VCMPSS  : sse12_cmp_scalar<FR32, f32mem,
-                  "cmp${cc}ss\t{$src, $src1, $dst|$dst, $src1, $src}",
-                  "cmpss\t{$src2, $src, $src1, $dst|$dst, $src1, $src, $src2}">,
-                  XS, VEX_4V;
-  defm VCMPSD  : sse12_cmp_scalar<FR64, f64mem,
-                  "cmp${cc}sd\t{$src, $src1, $dst|$dst, $src1, $src}",
-                  "cmpsd\t{$src2, $src, $src1, $dst|$dst, $src1, $src, $src2}">,
-                  XD, VEX_4V;
-}
+defm VCMPSS : sse12_cmp_scalar<FR32, f32mem, X86cmpss, f32, loadf32,
+                 "cmp${cc}ss\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                 "cmpss\t{$cc, $src2, $src1, $dst|$dst, $src1, $src2, $cc}">,
+                 XS, VEX_4V;
+defm VCMPSD : sse12_cmp_scalar<FR64, f64mem, X86cmpsd, f64, loadf64,
+                 "cmp${cc}sd\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                 "cmpsd\t{$cc, $src2, $src1, $dst|$dst, $src1, $src2, $cc}">,
+                 XD, VEX_4V;
 
 let Constraints = "$src1 = $dst" in {
-def CMPSSrr : SIi8<0xC2, MRMSrcReg,
-              (outs FR32:$dst), (ins FR32:$src1, FR32:$src2, SSECC:$cc),
-              "cmp${cc}ss\t{$src2, $dst|$dst, $src2}",
-              [(set FR32:$dst, (X86cmpss (f32 FR32:$src1), FR32:$src2,
-                                         imm:$cc))]>, XS;
-def CMPSSrm : SIi8<0xC2, MRMSrcMem,
-              (outs FR32:$dst), (ins FR32:$src1, f32mem:$src2, SSECC:$cc),
-              "cmp${cc}ss\t{$src2, $dst|$dst, $src2}",
-              [(set FR32:$dst, (X86cmpss (f32 FR32:$src1),
-                                         (loadf32 addr:$src2), imm:$cc))]>, XS;
-def CMPSDrr : SIi8<0xC2, MRMSrcReg,
-              (outs FR64:$dst), (ins FR64:$src1, FR64:$src2, SSECC:$cc),
-              "cmp${cc}sd\t{$src2, $dst|$dst, $src2}",
-              [(set FR64:$dst, (X86cmpsd (f64 FR64:$src1), FR64:$src2,
-                                         imm:$cc))]>, XD;
-def CMPSDrm : SIi8<0xC2, MRMSrcMem,
-              (outs FR64:$dst), (ins FR64:$src1, f64mem:$src2, SSECC:$cc),
-              "cmp${cc}sd\t{$src2, $dst|$dst, $src2}",
-              [(set FR64:$dst, (X86cmpsd (f64 FR64:$src1), (loadf64 addr:$src2),
-                                         imm:$cc))]>, XD;
-}
-let Constraints = "$src1 = $dst", neverHasSideEffects = 1 in {
-def CMPSSrr_alt : SIi8<0xC2, MRMSrcReg,
-                  (outs FR32:$dst), (ins FR32:$src1, FR32:$src, i8imm:$src2),
-                  "cmpss\t{$src2, $src, $dst|$dst, $src, $src2}", []>, XS;
-def CMPSSrm_alt : SIi8<0xC2, MRMSrcMem,
-                  (outs FR32:$dst), (ins FR32:$src1, f32mem:$src, i8imm:$src2),
-                  "cmpss\t{$src2, $src, $dst|$dst, $src, $src2}", []>, XS;
-def CMPSDrr_alt : SIi8<0xC2, MRMSrcReg,
-                  (outs FR64:$dst), (ins FR64:$src1, FR64:$src, i8imm:$src2),
-                  "cmpsd\t{$src2, $src, $dst|$dst, $src, $src2}", []>, XD;
-def CMPSDrm_alt : SIi8<0xC2, MRMSrcMem,
-                  (outs FR64:$dst), (ins FR64:$src1, f64mem:$src, i8imm:$src2),
-                  "cmpsd\t{$src2, $src, $dst|$dst, $src, $src2}", []>, XD;
+  defm CMPSS : sse12_cmp_scalar<FR32, f32mem, X86cmpss, f32, loadf32,
+                  "cmp${cc}ss\t{$src2, $dst|$dst, $src2}",
+                  "cmpss\t{$cc, $src2, $dst|$dst, $src2, $cc}">,
+                  XS;
+  defm CMPSD : sse12_cmp_scalar<FR64, f64mem, X86cmpsd, f64, loadf64,
+                  "cmp${cc}sd\t{$src2, $dst|$dst, $src2}",
+                  "cmpsd\t{$cc, $src2, $dst|$dst, $src2, $cc}">,
+                  XD;
 }
 
 multiclass sse12_cmp_scalar_int<RegisterClass RC, X86MemOperand x86memop,

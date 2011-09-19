@@ -130,3 +130,21 @@ define <32 x i8> @v32i8-cmpeq(<32 x i8> %i, <32 x i8> %j) nounwind readnone {
   ret <32 x i8> %x
 }
 
+;; Scalar comparison
+
+; CHECK: scalarcmpA
+; CHECK: vcmpeqsd
+define i32 @scalarcmpA() uwtable ssp {
+  %cmp29 = fcmp oeq double undef, 0.000000e+00
+  %res = zext i1 %cmp29 to i32
+  ret i32 %res
+}
+
+; CHECK: scalarcmpB
+; CHECK: vcmpeqss
+define i32 @scalarcmpB() uwtable ssp {
+  %cmp29 = fcmp oeq float undef, 0.000000e+00
+  %res = zext i1 %cmp29 to i32
+  ret i32 %res
+}
+
