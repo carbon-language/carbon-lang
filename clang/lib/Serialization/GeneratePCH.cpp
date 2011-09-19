@@ -46,9 +46,6 @@ PCHGenerator::~PCHGenerator() {
 void PCHGenerator::HandleTranslationUnit(ASTContext &Ctx) {
   if (PP.getDiagnostics().hasErrorOccurred())
     return;
-
-  // Set up the serialization listener.
-  Writer.SetSerializationListener(GetASTSerializationListener());
   
   // Emit the PCH file
   assert(SemaPtr && "No Sema?");
@@ -66,10 +63,6 @@ void PCHGenerator::HandleTranslationUnit(ASTContext &Ctx) {
 
 ASTMutationListener *PCHGenerator::GetASTMutationListener() {
   return &Writer;
-}
-
-ASTSerializationListener *PCHGenerator::GetASTSerializationListener() {
-  return 0;
 }
 
 ASTDeserializationListener *PCHGenerator::GetASTDeserializationListener() {

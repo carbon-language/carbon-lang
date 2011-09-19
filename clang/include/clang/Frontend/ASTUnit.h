@@ -68,10 +68,6 @@ class GlobalCodeCompletionAllocator
 /// \brief Utility class for loading a ASTContext from an AST file.
 ///
 class ASTUnit : public ModuleLoader {
-public:
-  typedef std::map<FileID, std::vector<PreprocessedEntity *> > 
-    PreprocessedEntitiesByFileMap;
-  
 private:
   llvm::IntrusiveRefCntPtr<Diagnostic> Diagnostics;
   llvm::IntrusiveRefCntPtr<FileManager>      FileMgr;
@@ -130,14 +126,6 @@ private:
   // source. In the long term we should make the Index library use efficient and
   // more scalable search mechanisms.
   std::vector<Decl*> TopLevelDecls;
-
-  /// \brief The list of preprocessed entities which appeared when the ASTUnit
-  /// was loaded.
-  ///
-  /// FIXME: This is just an optimization hack to avoid deserializing large
-  /// parts of a PCH file while performing a walk or search. In the long term,
-  /// we should provide more scalable search mechanisms.
-  std::vector<PreprocessedEntity *> PreprocessedEntities;
   
   /// The name of the original source file used to generate this ASTUnit.
   std::string OriginalSourceFile;
@@ -162,15 +150,6 @@ private:
   /// \brief Temporary files that should be removed when the ASTUnit is 
   /// destroyed.
   SmallVector<llvm::sys::Path, 4> TemporaryFiles;
-
-  /// \brief A mapping from file IDs to the set of preprocessed entities
-  /// stored in that file. 
-  ///
-  /// FIXME: This is just an optimization hack to avoid searching through
-  /// many preprocessed entities during cursor traversal in the CIndex library.
-  /// Ideally, we would just be able to perform a binary search within the
-  /// list of preprocessed entities.
-  PreprocessedEntitiesByFileMap PreprocessedEntitiesByFile;
   
   /// \brief Simple hack to allow us to assert that ASTUnit is not being
   /// used concurrently, which is not supported.
@@ -270,10 +249,6 @@ private:
   /// \brief A list of the serialization ID numbers for each of the top-level
   /// declarations parsed within the precompiled preamble.
   std::vector<serialization::DeclID> TopLevelDeclsInPreamble;
-
-  /// \brief A list of the offsets into the precompiled preamble which
-  /// correspond to preprocessed entities.
-  std::vector<uint64_t> PreprocessedEntitiesInPreamble;
   
   /// \brief Whether we should be caching code-completion results.
   bool ShouldCacheCodeCompletionResults;
@@ -418,7 +393,6 @@ private:
                                                      bool AllowRebuild = true,
                                                         unsigned MaxLines = 0);
   void RealizeTopLevelDeclsFromPreamble();
-  void RealizePreprocessedEntitiesFromPreamble();
   
 public:
   class ConcurrencyCheck {
@@ -530,23 +504,6 @@ public:
   ///
   /// Note: This is used internally by the top-level tracking action
   unsigned &getCurrentTopLevelHashValue() { return CurrentTopLevelHashValue; }
-  
-  typedef std::vector<PreprocessedEntity *>::iterator pp_entity_iterator;
-  
-  pp_entity_iterator pp_entity_begin();
-  pp_entity_iterator pp_entity_end();
-  
-  /// \brief Add a new preprocessed entity that's stored at the given offset
-  /// in the precompiled preamble.
-  void addPreprocessedEntityFromPreamble(uint64_t Offset) {
-    PreprocessedEntitiesInPreamble.push_back(Offset);
-  }
-  
-  /// \brief Retrieve the mapping from File IDs to the preprocessed entities
-  /// within that file.
-  PreprocessedEntitiesByFileMap &getPreprocessedEntitiesByFile() {
-    return PreprocessedEntitiesByFile;
-  }
 
   /// \brief Get the source location for the given file:line:col triplet.
   ///

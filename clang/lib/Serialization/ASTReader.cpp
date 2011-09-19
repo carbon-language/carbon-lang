@@ -2999,16 +2999,6 @@ std::pair<unsigned, unsigned>
   return std::make_pair(BeginID, EndID);
 }
 
-PreprocessedEntity *ASTReader::ReadPreprocessedEntityAtOffset(uint64_t Offset) {
-  RecordLocation Loc = getLocalBitOffset(Offset);
-
-  // Keep track of where we are in the stream, then jump back there
-  // after reading this entity.
-  SavedStreamPosition SavedPosition(Loc.F->PreprocessorDetailCursor);  
-  Loc.F->PreprocessorDetailCursor.JumpToBit(Loc.Offset);
-  return LoadPreprocessedEntity(*Loc.F);
-}
-
 namespace {
   /// \brief Visitor used to search for information about a header file.
   class HeaderFileInfoVisitor {

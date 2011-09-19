@@ -801,9 +801,6 @@ public:
   virtual std::pair<unsigned, unsigned>
       findPreprocessedEntitiesInRange(SourceRange Range);
 
-  /// \brief Read the preprocessed entity at the given offset.
-  virtual PreprocessedEntity *ReadPreprocessedEntityAtOffset(uint64_t Offset);
-
   /// \brief Read the header file information for the given file entry.
   virtual HeaderFileInfo GetHeaderFileInfo(const FileEntry *FE);
 

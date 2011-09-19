@@ -275,10 +275,6 @@ namespace clang {
     /// preprocessed entities that \arg Range encompasses.
     virtual std::pair<unsigned, unsigned>
         findPreprocessedEntitiesInRange(SourceRange Range) = 0;
-
-    /// \brief Read the preprocessed entity at the given offset.
-    virtual PreprocessedEntity *
-    ReadPreprocessedEntityAtOffset(uint64_t Offset) = 0;
   };
   
   /// \brief A record of the steps taken while preprocessing a source file,

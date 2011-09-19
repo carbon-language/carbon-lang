@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Serialization/ASTWriter.h"
-#include "clang/Serialization/ASTSerializationListener.h"
 #include "ASTCommon.h"
 #include "clang/Sema/Sema.h"
 #include "clang/Sema/IdentifierResolver.h"
@@ -1743,7 +1742,6 @@ void ASTWriter::WritePreprocessorDetail(PreprocessingRecord &PPRec) {
     + NUM_PREDEF_PP_ENTITY_IDS;
   unsigned NextPreprocessorEntityID = FirstPreprocessorEntityID;
   RecordData Record;
-  uint64_t BitsInChain = Chain? Chain->TotalModulesSizeInBits : 0;
   for (PreprocessingRecord::iterator E = PPRec.local_begin(),
                                   EEnd = PPRec.local_end();
        E != EEnd; 
@@ -1757,11 +1755,6 @@ void ASTWriter::WritePreprocessorDetail(PreprocessingRecord &PPRec) {
       // Record this macro definition's ID.
       MacroDefinitions[MD] = NextPreprocessorEntityID;
       
-      // Notify the serialization listener that we're serializing this entity.
-      if (SerializationListener)
-        SerializationListener->SerializedPreprocessedEntity(*E, 
-          BitsInChain + Stream.GetCurrentBitNo());
-      
       Record.push_back(NextPreprocessorEntityID);
       AddSourceLocation(MD->getSourceRange().getBegin(), Record);
       AddSourceLocation(MD->getSourceRange().getEnd(), Record);
@@ -1770,11 +1763,6 @@ void ASTWriter::WritePreprocessorDetail(PreprocessingRecord &PPRec) {
       Stream.EmitRecord(PPD_MACRO_DEFINITION, Record);
       continue;
     }
-
-    // Notify the serialization listener that we're serializing this entity.
-    if (SerializationListener)
-      SerializationListener->SerializedPreprocessedEntity(*E, 
-        BitsInChain + Stream.GetCurrentBitNo());
 
     if (MacroExpansion *ME = dyn_cast<MacroExpansion>(*E)) {
       Record.push_back(NextPreprocessorEntityID);
@@ -2719,8 +2707,7 @@ void ASTWriter::SetSelectorOffset(Selector Sel, uint32_t Offset) {
 }
 
 ASTWriter::ASTWriter(llvm::BitstreamWriter &Stream)
-  : Stream(Stream), Context(0), Chain(0), SerializationListener(0), 
-    WritingAST(false),
+  : Stream(Stream), Context(0), Chain(0), WritingAST(false),
     FirstDeclID(NUM_PREDEF_DECL_IDS), NextDeclID(FirstDeclID),
     FirstTypeID(NUM_PREDEF_TYPE_IDS), NextTypeID(FirstTypeID),
     FirstIdentID(NUM_PREDEF_IDENT_IDS), NextIdentID(FirstIdentID), 
@@ -4045,5 +4032,3 @@ void ASTWriter::AddedObjCCategoryToInterface(const ObjCCategoryDecl *CatD,
   ChainedObjCCategoriesData Data =  { IFD, CatD, 0, 0 };
   LocalChainedObjCCategories.push_back(Data);
 }
-
-ASTSerializationListener::~ASTSerializationListener() { }

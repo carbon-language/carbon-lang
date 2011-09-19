@@ -38,7 +38,6 @@ namespace llvm {
 namespace clang {
 
 class ASTContext;
-class ASTSerializationListener;
 class NestedNameSpecifier;
 class CXXBaseSpecifier;
 class CXXCtorInitializer;
@@ -93,10 +92,6 @@ private:
                     
   /// \brief The reader of existing AST files, if we're chaining.
   ASTReader *Chain;
-
-  /// \brief A listener object that receives notifications when certain 
-  /// entities are serialized.                    
-  ASTSerializationListener *SerializationListener;
                    
   /// \brief Indicates when the AST writing is actively performing 
   /// serialization, rather than just queueing updates.
@@ -393,12 +388,6 @@ public:
   /// \brief Create a new precompiled header writer that outputs to
   /// the given bitstream.
   ASTWriter(llvm::BitstreamWriter &Stream);
-
-  /// \brief Set the listener that will receive notification of serialization
-  /// events.
-  void SetSerializationListener(ASTSerializationListener *Listener) {
-    SerializationListener = Listener;
-  }
                     
   /// \brief Write a precompiled header for the given semantic analysis.
   ///
@@ -665,7 +654,6 @@ public:
   virtual void InitializeSema(Sema &S) { SemaPtr = &S; }
   virtual void HandleTranslationUnit(ASTContext &Ctx);
   virtual ASTMutationListener *GetASTMutationListener();
-  virtual ASTSerializationListener *GetASTSerializationListener();
   virtual ASTDeserializationListener *GetASTDeserializationListener();
 };
 
