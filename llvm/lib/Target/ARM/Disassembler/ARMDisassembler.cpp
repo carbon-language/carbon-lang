@@ -454,6 +454,8 @@ ThumbDisassembler::AddThumbPredicate(MCInst &MI) const {
       break;
     case ARM::tB:
     case ARM::t2B:
+    case ARM::t2TBB:
+    case ARM::t2TBH:
       // Some instructions (mostly unconditional branches) can
       // only appears at the end of, or outside of, an IT.
       if (ITBlock.size() > 1)
