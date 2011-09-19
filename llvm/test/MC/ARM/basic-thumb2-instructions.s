@@ -2612,3 +2612,23 @@ _func:
 @ CHECK: itt	ne                      @ encoding: [0x1c,0xbf]
 @ CHECK: sxthne.w	r3, r9          @ encoding: [0x0f,0xfa,0x89,0xf3]
 @ CHECK: sxthne.w	r2, r2, ror #16 @ encoding: [0x0f,0xfa,0xa2,0xf2]
+
+
+@------------------------------------------------------------------------------
+@ TEQ
+@------------------------------------------------------------------------------
+        teq r5, #0xf000
+        teq r4, r5
+        teq r4, r5, lsl #5
+        teq r4, r5, lsr #5
+        teq r4, r5, lsr #5
+        teq r4, r5, asr #5
+        teq r4, r5, ror #5
+
+@ CHECK: teq.w	r5, #61440              @ encoding: [0x95,0xf4,0x70,0x4f]
+@ CHECK: teq.w	r4, r5                  @ encoding: [0x94,0xea,0x05,0x0f]
+@ CHECK: teq.w	r4, r5, lsl #5          @ encoding: [0x94,0xea,0x45,0x1f]
+@ CHECK: teq.w	r4, r5, lsr #5          @ encoding: [0x94,0xea,0x55,0x1f]
+@ CHECK: teq.w	r4, r5, lsr #5          @ encoding: [0x94,0xea,0x55,0x1f]
+@ CHECK: teq.w	r4, r5, asr #5          @ encoding: [0x94,0xea,0x65,0x1f]
+@ CHECK: teq.w	r4, r5, ror #5          @ encoding: [0x94,0xea,0x75,0x1f]
