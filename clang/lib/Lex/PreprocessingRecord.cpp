@@ -111,7 +111,8 @@ struct PPEntityComp {
   }
 
   SourceLocation getLoc(PreprocessedEntity *PPE) const {
-    return (PPE->getSourceRange().*getRangeLoc)();
+    SourceRange Range = PPE->getSourceRange();
+    return (Range.*getRangeLoc)();
   }
 };
 
