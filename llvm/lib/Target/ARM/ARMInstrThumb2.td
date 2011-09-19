@@ -3301,7 +3301,7 @@ let mode = 0, M = 0 in
   def t2CPS2p : t2CPS<(ins imod_op:$imod, iflags_op:$iflags),
                       "$imod.w\t$iflags">;
 let imod = 0, iflags = 0, M = 1 in
-  def t2CPS1p : t2CPS<(ins i32imm:$mode), "\t$mode">;
+  def t2CPS1p : t2CPS<(ins imm0_31:$mode), "\t$mode">;
 
 // A6.3.4 Branches and miscellaneous control
 // Table A6-14 Change Processor State, and hint instructions
