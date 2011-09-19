@@ -3130,12 +3130,10 @@ def t2BR_JT : t2PseudoInst<(outs),
 
 // FIXME: Add a non-pc based case that can be predicated.
 def t2TBB_JT : t2PseudoInst<(outs),
-        (ins GPR:$index, i32imm:$jt, i32imm:$id),
-         0, IIC_Br, []>;
+        (ins GPR:$index, i32imm:$jt, i32imm:$id), 0, IIC_Br, []>;
 
 def t2TBH_JT : t2PseudoInst<(outs),
-        (ins GPR:$index, i32imm:$jt, i32imm:$id),
-         0, IIC_Br, []>;
+        (ins GPR:$index, i32imm:$jt, i32imm:$id), 0, IIC_Br, []>;
 
 def t2TBB : T2I<(outs), (ins GPR:$Rn, GPR:$Rm), IIC_Br,
                     "tbb", "\t[$Rn, $Rm]", []> {
