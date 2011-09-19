@@ -14,13 +14,13 @@
 // Project includes
 #include "lldb/Breakpoint/WatchpointLocationList.h"
 #include "lldb/Breakpoint/WatchpointLocation.h"
-#include "lldb/Core/ModuleList.h"
 #include "lldb/Target/Target.h"
 
 using namespace lldb;
 using namespace lldb_private;
 
 WatchpointLocationList::WatchpointLocationList() :
+    m_locations (),
     m_address_to_location (),
     m_mutex (Mutex::eMutexTypeRecursive)
 {
@@ -47,7 +47,15 @@ WatchpointLocationList::Add (const WatchpointLocationSP &wp_loc_sp)
     else
     {
         m_address_to_location[wp_addr] = wp_loc_sp;
+        collection::iterator pos, end = m_locations.end();
+        for (pos = m_locations.begin(); pos != end; ++pos)
+            if ((*pos)->GetLoadAddress() == wp_addr)
+            {
+                m_locations.erase(pos);
+                break;
+            }
     }
+    m_locations.push_back(wp_loc_sp);
     return wp_loc_sp->GetID();
 }
 
@@ -141,6 +149,28 @@ WatchpointLocationList::FindIDByAddress (lldb::addr_t addr)
     return LLDB_INVALID_WATCH_ID;
 }
 
+WatchpointLocationSP
+WatchpointLocationList::GetByIndex (uint32_t i)
+{
+    Mutex::Locker locker (m_mutex);
+    WatchpointLocationSP wp_loc_sp;
+    if (i < m_locations.size())
+        wp_loc_sp = m_locations[i];
+
+    return wp_loc_sp;
+}
+
+const WatchpointLocationSP
+WatchpointLocationList::GetByIndex (uint32_t i) const
+{
+    Mutex::Locker locker (m_mutex);
+    WatchpointLocationSP wp_loc_sp;
+    if (i < m_locations.size())
+        wp_loc_sp = m_locations[i];
+
+    return wp_loc_sp;
+}
+
 bool
 WatchpointLocationList::Remove (lldb::watch_id_t watch_id)
 {
@@ -149,6 +179,13 @@ WatchpointLocationList::Remove (lldb::watch_id_t watch_id)
     if (pos != m_address_to_location.end())
     {
         m_address_to_location.erase(pos);
+        collection::iterator pos, end = m_locations.end();
+        for (pos = m_locations.begin(); pos != end; ++pos)
+            if ((*pos)->GetID() == watch_id)
+            {
+                m_locations.erase(pos);
+                break;
+            }
         return true;
     }
     return false;

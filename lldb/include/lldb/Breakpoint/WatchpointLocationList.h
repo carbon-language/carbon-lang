@@ -114,6 +114,34 @@ public:
     FindIDByAddress (lldb::addr_t addr);
 
     //------------------------------------------------------------------
+    /// Returns a shared pointer to the watchpoint location with
+    /// index \a i.
+    ///
+    /// @param[in] i
+    ///     The watchpoint location index to seek for.
+    ///
+    /// @result
+    ///     A shared pointer to the watchpoint location.  May contain a NULL
+    ///     pointer if the watchpoint location doesn't exist.
+    //------------------------------------------------------------------
+    lldb::WatchpointLocationSP
+    GetByIndex (uint32_t i);
+
+    //------------------------------------------------------------------
+    /// Returns a shared pointer to the watchpoint location with index
+    /// \a i, const version.
+    ///
+    /// @param[in] i
+    ///     The watchpoint location index to seek for.
+    ///
+    /// @result
+    ///     A shared pointer to the watchpoint location.  May contain a NULL
+    ///     pointer if the watchpoint location doesn't exist.
+    //------------------------------------------------------------------
+    const lldb::WatchpointLocationSP
+    GetByIndex (uint32_t i) const;
+
+    //------------------------------------------------------------------
     /// Removes the watchpoint location given by \b watchID from this list.
     ///
     /// @param[in] watchID
@@ -193,6 +221,7 @@ public:
     GetListMutex (lldb_private::Mutex::Locker &locker);
 
 protected:
+    typedef std::vector<lldb::WatchpointLocationSP> collection;
     typedef std::map<lldb::addr_t, lldb::WatchpointLocationSP> addr_map;
 
     addr_map::iterator
@@ -201,6 +230,7 @@ protected:
     addr_map::const_iterator
     GetIDConstIterator(lldb::watch_id_t watchID) const;
 
+    collection m_locations;
     addr_map m_address_to_location;
     mutable Mutex m_mutex;
 };
