@@ -2716,3 +2716,19 @@ _func:
 @ CHECK: ubfx	r4, r5, #16, #1         @ encoding: [0xc5,0xf3,0x00,0x44]
 @ CHECK: it	gt                      @ encoding: [0xc8,0xbf]
 @ CHECK: ubfxgt	r4, r5, #16, #16        @ encoding: [0xc5,0xf3,0x0f,0x44]
+
+
+@------------------------------------------------------------------------------
+@ UHADD16/UHADD8
+@------------------------------------------------------------------------------
+        uhadd16 r4, r8, r2
+        uhadd8 r4, r8, r2
+        itt gt
+        uhadd16gt r4, r8, r2
+        uhadd8gt r4, r8, r2
+
+@ CHECK: uhadd16	r4, r8, r2      @ encoding: [0x98,0xfa,0x62,0xf4]
+@ CHECK: uhadd8	r4, r8, r2              @ encoding: [0x88,0xfa,0x62,0xf4]
+@ CHECK: itt	gt                      @ encoding: [0xc4,0xbf]
+@ CHECK: uhadd16gt	r4, r8, r2      @ encoding: [0x98,0xfa,0x62,0xf4]
+@ CHECK: uhadd8gt	r4, r8, r2      @ encoding: [0x88,0xfa,0x62,0xf4]
