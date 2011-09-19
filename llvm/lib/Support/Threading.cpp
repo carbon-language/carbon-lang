@@ -24,7 +24,7 @@ static bool multithreaded_mode = false;
 static sys::Mutex* global_lock = 0;
 
 bool llvm::llvm_start_multithreaded() {
-#ifdef LLVM_MULTITHREADED
+#if ENABLE_THREADS != 0
   assert(!multithreaded_mode && "Already multithreaded!");
   multithreaded_mode = true;
   global_lock = new sys::Mutex(true);
@@ -39,7 +39,7 @@ bool llvm::llvm_start_multithreaded() {
 }
 
 void llvm::llvm_stop_multithreaded() {
-#ifdef LLVM_MULTITHREADED
+#if ENABLE_THREADS != 0
   assert(multithreaded_mode && "Not currently multithreaded!");
 
   // We fence here to insure that all threaded operations are complete BEFORE we
@@ -63,7 +63,7 @@ void llvm::llvm_release_global_lock() {
   if (multithreaded_mode) global_lock->release();
 }
 
-#if defined(LLVM_MULTITHREADED) && defined(HAVE_PTHREAD_H)
+#if ENABLE_THREADS != 0 && defined(HAVE_PTHREAD_H)
 #include <pthread.h>
 
 struct ThreadInfo {
@@ -102,7 +102,7 @@ void llvm::llvm_execute_on_thread(void (*Fn)(void*), void *UserData,
  error:
   ::pthread_attr_destroy(&Attr);
 }
-#elif defined(LLVM_MULTITHREADED) && defined(LLVM_ON_WIN32)
+#elif ENABLE_THREADS!=0 && defined(LLVM_ON_WIN32)
 #include "Windows/Windows.h"
 #include <process.h>
 

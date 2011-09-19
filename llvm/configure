@@ -21027,7 +21027,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 echo "${ECHO_T}yes" >&6; }
 
 cat >>confdefs.h <<\_ACEOF
-#define LLVM_MULTITHREADED 1
+#define LLVM_HAS_ATOMICS 1
 _ACEOF
 
 else
@@ -21038,7 +21038,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 echo "${ECHO_T}no" >&6; }
 
 cat >>confdefs.h <<\_ACEOF
-#define LLVM_MULTITHREADED 0
+#define LLVM_HAS_ATOMICS 0
 _ACEOF
 
   { echo "$as_me:$LINENO: WARNING: LLVM will be built thread-unsafe because atomic builtins are missing" >&5

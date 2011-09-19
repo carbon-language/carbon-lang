@@ -46,8 +46,8 @@
 /* Installation directory for man pages */
 #cmakedefine LLVM_MANDIR "${LLVM_MANDIR}"
 
-/* Build multithreading support into LLVM */
-#cmakedefine LLVM_MULTITHREADED ${LLVM_MULTITHREADED}
+/* Has gcc/MSVC atomic intrinsics */
+#define LLVM_HAS_ATOMICS ${LLVM_HAS_ATOMICS}
 
 /* LLVM architecture name for the native architecture, if available */
 #cmakedefine LLVM_NATIVE_ARCH ${LLVM_NATIVE_ARCH}

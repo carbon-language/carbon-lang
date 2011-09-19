@@ -22,8 +22,8 @@ int main() {
 #endif
         return 0;
       }
-" LLVM_MULTITHREADED)
+" LLVM_HAS_ATOMICS)
 
-if( NOT LLVM_MULTITHREADED )
+if( NOT LLVM_HAS_ATOMICS )
   message(STATUS "Warning: LLVM will be built thread-unsafe because atomic builtins are missing")
 endif()

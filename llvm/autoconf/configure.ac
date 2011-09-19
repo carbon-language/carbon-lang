@@ -1515,9 +1515,9 @@ AC_LINK_IFELSE(
     ]]),
   AC_LANG_POP([C++])
   AC_MSG_RESULT(yes)
-  AC_DEFINE(LLVM_MULTITHREADED, 1, Build multithreading support into LLVM),
+  AC_DEFINE(LLVM_HAS_ATOMICS, 1, Has gcc/MSVC atomic intrinsics),
   AC_MSG_RESULT(no)
-  AC_DEFINE(LLVM_MULTITHREADED, 0, Build multithreading support into LLVM)
+  AC_DEFINE(LLVM_HAS_ATOMICS, 0, Has gcc/MSVC atomic intrinsics)
   AC_MSG_WARN([LLVM will be built thread-unsafe because atomic builtins are missing]))
 
 dnl===-----------------------------------------------------------------------===
