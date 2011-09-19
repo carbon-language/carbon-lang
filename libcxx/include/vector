@@ -1106,8 +1106,8 @@ vector<_Tp, _Allocator>::vector(vector&& __x)
     : __base(_VSTD::move(__x.__alloc()))
 {
 #if _LIBCPP_DEBUG_LEVEL >= 2
-    __x.__invalidate_all_iterators();
     __get_db()->__insert_c(this);
+    __get_db()->swap(this, &__x);
 #endif
     this->__begin_ = __x.__begin_;
     this->__end_ = __x.__end_;
@@ -1129,7 +1129,9 @@ vector<_Tp, _Allocator>::vector(vector&& __x, const allocator_type& __a)
         this->__end_ = __x.__end_;
         this->__end_cap() = __x.__end_cap();
         __x.__begin_ = __x.__end_ = __x.__end_cap() = nullptr;
-        __x.__invalidate_all_iterators();
+#if _LIBCPP_DEBUG_LEVEL >= 2
+        __get_db()->swap(this, &__x);
+#endif
     }
     else
     {
@@ -1208,6 +1210,9 @@ vector<_Tp, _Allocator>::__move_assign(vector& __c, true_type)
     this->__end_cap() = __c.__end_cap();
     __base::__move_assign_alloc(__c);
     __c.__begin_ = __c.__end_ = __c.__end_cap() = nullptr;
+#if _LIBCPP_DEBUG_LEVEL >= 2
+    __get_db()->swap(this, &__c);
+#endif
 }
 
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
