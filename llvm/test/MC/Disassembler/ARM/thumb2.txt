@@ -1788,4 +1788,154 @@
 0x65 0xe8 0x00 0x85
 0x65 0xe8 0x01 0x74
 
+#------------------------------------------------------------------------------
+# STREX/STREXB/STREXH/STREXD
+#------------------------------------------------------------------------------
+# CHECK: strex r1, r8, [r4]
+# CHECK: strex r8, r2, [r4]
+# CHECK: strex r2, r12, [sp, #128]
+# CHECK: strexb r5, r1, [r7]
+# CHECK: strexh r9, r7, [r12]
+# CHECK: strexd r9, r3, r6, [r4]
+
+0x44 0xe8 0x00 0x81
+0x44 0xe8 0x00 0x28
+0x4d 0xe8 0x20 0xc2
+0xc7 0xe8 0x45 0x1f
+0xcc 0xe8 0x59 0x7f
+0xc4 0xe8 0x79 0x36
+
+
+#------------------------------------------------------------------------------
+# STRH(immediate)
+#------------------------------------------------------------------------------
+# CHECK: strh r5, [r5, #-4]
+# CHECK: strh r5, [r6, #32]
+# CHECK: strh.w r5, [r6, #33]
+# CHECK: strh.w r5, [r6, #257]
+# CHECK: strh.w lr, [r7, #257]
+# CHECK: strh r5, [r8, #255]!
+# CHECK: strh r2, [r5, #4]!
+# CHECK: strh r1, [r4, #-4]!
+# CHECK: strh lr, [r3], #255
+# CHECK: strh r9, [r2], #4
+# CHECK: strh r3, [sp], #-4
+
+0x25 0xf8 0x04 0x5c
+0x35 0x84
+0xa6 0xf8 0x21 0x50
+0xa6 0xf8 0x01 0x51
+0xa7 0xf8 0x01 0xe1
+0x28 0xf8 0xff 0x5f
+0x25 0xf8 0x04 0x2f
+0x24 0xf8 0x04 0x1d
+0x23 0xf8 0xff 0xeb
+0x22 0xf8 0x04 0x9b
+0x2d 0xf8 0x04 0x39
+
+
+#------------------------------------------------------------------------------
+# STRH(register)
+#------------------------------------------------------------------------------
+# CHECK: strh.w r1, [r8, r1]
+# CHECK: strh.w r4, [r5, r2]
+# CHECK: strh.w r6, [r0, r2, lsl #3]
+# CHECK: strh.w r8, [r8, r2, lsl #2]
+# CHECK: strh.w r7, [sp, r2, lsl #1]
+# CHECK: strh.w r7, [sp, r2]
+
+0x28 0xf8 0x01 0x10
+0x25 0xf8 0x02 0x40
+0x20 0xf8 0x32 0x60
+0x28 0xf8 0x22 0x80
+0x2d 0xf8 0x12 0x70
+0x2d 0xf8 0x02 0x70
+
+
+#------------------------------------------------------------------------------
+# STRHT
+#------------------------------------------------------------------------------
+# CHECK: strht r1, [r2]
+# CHECK: strht r1, [r8]
+# CHECK: strht r1, [r8, #3]
+# CHECK: strht r1, [r8, #255]
+
+0x22 0xf8 0x00 0x1e
+0x28 0xf8 0x00 0x1e
+0x28 0xf8 0x03 0x1e
+0x28 0xf8 0xff 0x1e
+
+
+#------------------------------------------------------------------------------
+# STRT
+#------------------------------------------------------------------------------
+# CHECK: strt r1, [r2]
+# CHECK: strt r1, [r8]
+# CHECK: strt r1, [r8, #3]
+# CHECK: strt r1, [r8, #255]
+
+0x42 0xf8 0x00 0x1e
+0x48 0xf8 0x00 0x1e
+0x48 0xf8 0x03 0x1e
+0x48 0xf8 0xff 0x1e
+
+
+#------------------------------------------------------------------------------
+# SUB (immediate)
+#------------------------------------------------------------------------------
+# CHECK: itet eq
+# CHECK: subeq r1, r2, #4
+# CHECK: subwne r5, r3, #1023
+# CHECK: subweq r4, r5, #293
+# CHECK: sub.w r2, sp, #1024
+# CHECK: sub.w r2, r8, #65280
+# CHECK: subw r2, r3, #257
+# CHECK: sub.w r12, r6, #256
+# CHECK: subw r12, r6, #256
+# CHECK: subs.w r1, r2, #496
+
+0x0a 0xbf
+0x11 0x1f
+0xa3 0xf2 0xff 0x35
+0xa5 0xf2 0x25 0x14
+0xad 0xf5 0x80 0x62
+0xa8 0xf5 0x7f 0x42
+0xa3 0xf2 0x01 0x12
+0xa6 0xf5 0x80 0x7c
+0xa6 0xf2 0x00 0x1c
+0xb2 0xf5 0xf8 0x71
+
+
+#------------------------------------------------------------------------------
+# SUB (register)
+#------------------------------------------------------------------------------
+# CHECK: sub.w r4, r5, r6
+# CHECK: sub.w r4, r5, r6, lsl #5
+# CHECK: sub.w r4, r5, r6, lsr #5
+# CHECK: sub.w r4, r5, r6, lsr #5
+# CHECK: sub.w r4, r5, r6, asr #5
+# CHECK: sub.w r4, r5, r6, ror #5
+# CHECK: sub.w r5, r2, r12, rrx
+
+0xa5 0xeb 0x06 0x04
+0xa5 0xeb 0x46 0x14
+0xa5 0xeb 0x56 0x14
+0xa5 0xeb 0x56 0x14
+0xa5 0xeb 0x66 0x14
+0xa5 0xeb 0x76 0x14
+0xa2 0xeb 0x3c 0x05
+
+
+#------------------------------------------------------------------------------
+# SVC
+#------------------------------------------------------------------------------
+# CHECK: svc #0
+# CHECK: ite eq
+# CHECK: svceq #255
+# CHECK: svcne #33
+
+0x00 0xdf
+0x0c 0xbf
+0xff 0xdf
+0x21 0xdf
 

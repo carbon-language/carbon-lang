@@ -2761,6 +2761,9 @@ static DecodeStatus DecodeT2AddrModeImm8(llvm::MCInst &Inst, unsigned Val,
     case ARM::t2LDRHT:
     case ARM::t2LDRSBT:
     case ARM::t2LDRSHT:
+    case ARM::t2STRT:
+    case ARM::t2STRBT:
+    case ARM::t2STRHT:
       imm |= 0x100;
       break;
     default:
