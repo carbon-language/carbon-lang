@@ -239,21 +239,36 @@ static bool PersonalityHasOnlyCXXUses(llvm::Constant *Fn) {
       continue;
     }
 
-    // Otherwise, it has to be a selector call.
-    if (!isa<llvm::EHSelectorInst>(User)) return false;
+    // Otherwise, it has to be a landingpad instruction.
+    llvm::LandingPadInst *LPI = dyn_cast<llvm::LandingPadInst>(User);
+    if (!LPI) return false;
 
-    llvm::EHSelectorInst *Selector = cast<llvm::EHSelectorInst>(User);
-    for (unsigned I = 2, E = Selector->getNumArgOperands(); I != E; ++I) {
+    for (unsigned I = 0, E = LPI->getNumClauses(); I != E; ++I) {
       // Look for something that would've been returned by the ObjC
       // runtime's GetEHType() method.
-      llvm::GlobalVariable *GV
-        = dyn_cast<llvm::GlobalVariable>(Selector->getArgOperand(I));
-      if (!GV) continue;
+      llvm::Value *Val = LPI->getClause(I)->stripPointerCasts();
+      if (LPI->isCatch(I)) {
+        // Check if the catch value has the ObjC prefix.
+        llvm::GlobalVariable *GV = cast<llvm::GlobalVariable>(Val);
 
-      // ObjC EH selector entries are always global variables with
-      // names starting like this.
-      if (GV->getName().startswith("OBJC_EHTYPE"))
-        return false;
+        // ObjC EH selector entries are always global variables with
+        // names starting like this.
+        if (GV->getName().startswith("OBJC_EHTYPE"))
+          return false;
+      } else {
+        // Check if any of the filter values have the ObjC prefix.
+        llvm::Constant *CVal = cast<llvm::Constant>(Val);
+        for (llvm::User::op_iterator
+               II = CVal->op_begin(), IE = CVal->op_end(); II != IE; ++II) {
+          llvm::GlobalVariable *GV =
+            cast<llvm::GlobalVariable>((*II)->stripPointerCasts());
+
+          // ObjC EH selector entries are always global variables with
+          // names starting like this.
+          if (GV->getName().startswith("OBJC_EHTYPE"))
+            return false;
+        }
+      }
     }
   }
 
@@ -811,10 +826,9 @@ llvm::BasicBlock *CodeGenFunction::EmitLandingPad() {
   // If we have an EH filter, we need to add those handlers in the
   // right place in the landingpad, which is to say, at the end.
   } else if (hasFilter) {
-    // Create a filter expression: an integer constant saying how many
-    // filters there are (+1 to avoid ambiguity with 0 for cleanup),
-    // followed by the filter types.  The personality routine only
-    // lands here if the filter doesn't match.
+    // Create a filter expression: a constant array indicating which filter
+    // types there are. The personality routine only lands here if the filter
+    // doesn't match.
     llvm::SmallVector<llvm::Constant*, 8> Filters;
     llvm::ArrayType *AType =
       llvm::ArrayType::get(!filterTypes.empty() ?
