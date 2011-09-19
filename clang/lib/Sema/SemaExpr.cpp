@@ -5074,10 +5074,11 @@ ExprResult Sema::ActOnConditionalOp(SourceLocation QuestionLoc,
                               OK));
 }
 
-/// SelfInClassMethodType - convet type of 'self' in class method
+/// ConvertObjCSelfToClassRootType - convet type of 'self' in class method
 /// to pointer to root of method's class.
-static void
-SelfInClassMethodType(Sema &S, Expr *selfExpr, QualType &SelfType) {
+static QualType
+ConvertObjCSelfToClassRootType(Sema &S, Expr *selfExpr) {
+  QualType SelfType;
   if (const ObjCMethodDecl *MD = S.GetMethodIfSelfExpr(selfExpr))
     if (MD->isClassMethod()) {
       const ObjCInterfaceDecl *Root = 0;
@@ -5086,9 +5087,10 @@ SelfInClassMethodType(Sema &S, Expr *selfExpr, QualType &SelfType) {
         Root = IDecl;
       } while ((IDecl = IDecl->getSuperClass()));
       if (Root)
-        SelfType = S.Context.getObjCObjectPointerType(
-                                                   S.Context.getObjCInterfaceType(Root)); 
+        SelfType =  S.Context.getObjCObjectPointerType(
+                      S.Context.getObjCInterfaceType(Root)); 
     }
+  return SelfType;
 }
 
 // checkPointerTypesForAssignment - This is a very tricky routine (despite
@@ -5326,8 +5328,6 @@ Sema::CheckAssignmentConstraints(QualType LHSType, ExprResult &RHS,
     return Compatible;
   }
 
-  SelfInClassMethodType(*this, RHS.get(), RHSType);
-
   // If the left-hand side is a reference type, then we are in a
   // (rare!) case where we've allowed the use of references in C,
   // e.g., as a parameter type in a built-in function. In this case,
@@ -5420,7 +5420,7 @@ Sema::CheckAssignmentConstraints(QualType LHSType, ExprResult &RHS,
         Kind = CK_BitCast;
         return Compatible;
       }
-
+      
       Kind = CK_BitCast;
       return IncompatiblePointer;
     }
@@ -5468,6 +5468,9 @@ Sema::CheckAssignmentConstraints(QualType LHSType, ExprResult &RHS,
 
   // Conversions to Objective-C pointers.
   if (isa<ObjCObjectPointerType>(LHSType)) {
+    QualType RHSQT = ConvertObjCSelfToClassRootType(*this, RHS.get());
+    if (!RHSQT.isNull())
+      RHSType = RHSQT;
     // A* -> B*
     if (RHSType->isObjCObjectPointerType()) {
       Kind = CK_BitCast;
