@@ -733,51 +733,7 @@ struct _LIBCPP_VISIBLE is_base_of
 
 #else  // __has_feature(is_base_of)
 
-//  (C) Copyright Rani Sharoni 2003.
-//  Use, modification and distribution are subject to the Boost Software License,
-//  Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
-//  http://www.boost.org/LICENSE_1_0.txt).
-//
-//  See http://www.boost.org/libs/type_traits for most recent version including documentation.
-
-template <class _Bp, class _Dp>
-struct __is_base_of_tests
-{
-    template <class _Tp>
-    static char  __test(const volatile _Dp*, _Tp);
-    static __two __test(const volatile _Bp*, int);
-};
-
-template <class _Bp, class _Dp>
-struct __is_base_of_imp
-{
-    struct __host
-    {
-        operator const volatile _Bp*() const;
-        operator const volatile _Dp*();
-    };
-
-    static const size_t __complete_check = sizeof(_Dp);
-    static const bool value = sizeof(__is_base_of_tests<_Bp, _Dp>::__test(__host(), 0)) == 1;
-};
-
-template <class _Bp, class _Dp, bool = is_class<_Bp>::value,
-                                bool = is_class<_Dp>::value,
-                                bool = is_same<_Bp, _Dp>::value>
-struct __libcpp_base_of : public false_type {};
-
-template <class _Bp, class _Dp>
-struct __libcpp_base_of<_Bp, _Dp, true, true, true> : public true_type {};
-
-template <class _Bp, class _Dp>
-struct __libcpp_base_of<_Bp, _Dp, true, true, false>
-    : public integral_constant<bool, __is_base_of_imp<_Bp, _Dp>::value> {};
-
-template <class _Bp, class _Dp>
-struct _LIBCPP_VISIBLE is_base_of
-    : public __libcpp_base_of<typename remove_cv<_Bp>::type, typename remove_cv<_Dp>::type>
-{
-};
+#error is_base_of not implemented.
 
 #endif  // __has_feature(is_base_of)
 
