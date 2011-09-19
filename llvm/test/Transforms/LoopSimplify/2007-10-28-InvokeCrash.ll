@@ -18,16 +18,12 @@ invcont17.normaldest:		; preds = %invcont17.normaldest917, %bb_main
 	br label %bb_main
 
 invcont17.normaldest.normaldest:		; No predecessors!
-        %eh_ptr = call i8* @llvm.eh.exception()
-	%eh_select = tail call i32 (i8*, i8*, ...)* @llvm.eh.selector(i8* %eh_ptr, i8* bitcast (void ()* @__gxx_personality_v0 to i8*), i8* null)
+        %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+                 catch i8* null
         store i32 %tmp23, i32* undef
 	br label %bb_main
 }
 
 declare i32 @foo()
 
-declare i8* @llvm.eh.exception()
-
-declare i32 @llvm.eh.selector(i8*, i8*, ...)
-
-declare void @__gxx_personality_v0()
+declare i32 @__gxx_personality_v0(...)
