@@ -2670,3 +2670,19 @@ _func:
 @ CHECK: tst.w	r5, r10, lsr #12        @ encoding: [0x15,0xea,0x1a,0x3f]
 @ CHECK: tst.w	r6, r9, asr #30         @ encoding: [0x16,0xea,0xa9,0x7f]
 @ CHECK: tst.w	r7, r8, ror #2          @ encoding: [0x17,0xea,0xb8,0x0f]
+
+
+@------------------------------------------------------------------------------
+@ UADD16/UADD8
+@------------------------------------------------------------------------------
+        uadd16 r1, r2, r3
+        uadd8 r1, r2, r3
+        ite gt
+        uadd16gt r1, r2, r3
+        uadd8le r1, r2, r3
+
+@ CHECK: uadd16	r1, r2, r3              @ encoding: [0x92,0xfa,0x43,0xf1]
+@ CHECK: uadd8	r1, r2, r3              @ encoding: [0x82,0xfa,0x43,0xf1]
+@ CHECK: ite	gt                      @ encoding: [0xcc,0xbf]
+@ CHECK: uadd16gt	r1, r2, r3      @ encoding: [0x92,0xfa,0x43,0xf1]
+@ CHECK: uadd8le	r1, r2, r3      @ encoding: [0x82,0xfa,0x43,0xf1]
