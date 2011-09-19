@@ -81,11 +81,6 @@ protected:
   llvm::ImmutableList<BugReporterVisitor*> Callbacks;
   llvm::FoldingSet<BugReporterVisitor> CallbacksSet;
 
-  /// Profile to identify equivalent bug reports for error report coalescing.
-  /// Reports are uniqued to ensure that we do not emit multiple diagnostics
-  /// for each bug.
-  virtual void Profile(llvm::FoldingSetNodeID& hash) const;
-
 public:
   BugReport(BugType& bt, StringRef desc, const ExplodedNode *errornode)
     : BT(bt), Description(desc), ErrorNode(errornode),
@@ -161,6 +156,11 @@ public:
 	/// Iterators through the custom diagnostic visitors.
   visitor_iterator visitor_begin() { return Callbacks.begin(); }
   visitor_iterator visitor_end() { return Callbacks.end(); }
+
+  /// Profile to identify equivalent bug reports for error report coalescing.
+  /// Reports are uniqued to ensure that we do not emit multiple diagnostics
+  /// for each bug.
+  virtual void Profile(llvm::FoldingSetNodeID& hash) const;
 };
 
 //===----------------------------------------------------------------------===//

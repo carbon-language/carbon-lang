@@ -1804,11 +1804,8 @@ class DiagCacheItem : public llvm::FoldingSetNode {
   llvm::FoldingSetNodeID ID;
 public:
   DiagCacheItem(BugReport *R, PathDiagnostic *PD) {
-    ID.AddString(R->getBugType().getName());
-    ID.AddString(R->getBugType().getCategory());
-    ID.AddString(R->getDescription());
-    ID.AddInteger(R->getLocation().getRawEncoding());
-    PD->Profile(ID);    
+    R->Profile(ID);
+    PD->Profile(ID);
   }
   
   void Profile(llvm::FoldingSetNodeID &id) {
