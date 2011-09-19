@@ -3213,12 +3213,12 @@ getMnemonicAcceptInfo(StringRef Mnemonic, bool &CanAcceptCarrySet,
       Mnemonic == "rrx" || Mnemonic == "ror" || Mnemonic == "sub" ||
       Mnemonic == "add" || Mnemonic == "adc" ||
       Mnemonic == "mul" || Mnemonic == "bic" || Mnemonic == "asr" ||
-      Mnemonic == "umlal" || Mnemonic == "orr" || Mnemonic == "mvn" ||
+      Mnemonic == "orr" || Mnemonic == "mvn" ||
       Mnemonic == "rsb" || Mnemonic == "rsc" || Mnemonic == "orn" ||
-      Mnemonic == "sbc" || Mnemonic == "umull" || Mnemonic == "eor" ||
-      Mnemonic == "neg" ||
+      Mnemonic == "sbc" || Mnemonic == "eor" || Mnemonic == "neg" ||
       (!isThumb() && (Mnemonic == "smull" || Mnemonic == "mov" ||
-                      Mnemonic == "mla" || Mnemonic == "smlal"))) {
+                      Mnemonic == "mla" || Mnemonic == "smlal" ||
+                      Mnemonic == "umlal" || Mnemonic == "umull"))) {
     CanAcceptCarrySet = true;
   } else
     CanAcceptCarrySet = false;

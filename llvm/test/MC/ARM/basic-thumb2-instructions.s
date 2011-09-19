@@ -2774,3 +2774,39 @@ _func:
 @ CHECK: itt	lt                      @ encoding: [0xbc,0xbf]
 @ CHECK: uhsub16lt	r4, r9, r12     @ encoding: [0xd9,0xfa,0x6c,0xf4]
 @ CHECK: uhsub8lt	r3, r1, r5      @ encoding: [0xc1,0xfa,0x65,0xf3]
+
+
+@------------------------------------------------------------------------------
+@ UMAAL
+@------------------------------------------------------------------------------
+        umaal r3, r4, r5, r6
+        it lt
+        umaallt r3, r4, r5, r6
+
+@ CHECK: umaal	r3, r4, r5, r6          @ encoding: [0xe5,0xfb,0x66,0x34]
+@ CHECK: it	lt                      @ encoding: [0xb8,0xbf]
+@ CHECK: umaallt	r3, r4, r5, r6  @ encoding: [0xe5,0xfb,0x66,0x34]
+
+
+@------------------------------------------------------------------------------
+@ UMLAL
+@------------------------------------------------------------------------------
+        umlal r2, r4, r6, r8
+        it gt
+        umlalgt r6, r1, r2, r6
+
+@ CHECK: umlal	r2, r4, r6, r8          @ encoding: [0xe6,0xfb,0x08,0x24]
+@ CHECK: it	gt                      @ encoding: [0xc8,0xbf]
+@ CHECK: umlalgt	r6, r1, r2, r6  @ encoding: [0xe2,0xfb,0x06,0x61]
+
+
+@------------------------------------------------------------------------------
+@ UMULL
+@------------------------------------------------------------------------------
+        umull r2, r4, r6, r8
+        it gt
+        umullgt r6, r1, r2, r6
+
+@ CHECK: umull	r2, r4, r6, r8          @ encoding: [0xa6,0xfb,0x08,0x24]
+@ CHECK: it	gt                      @ encoding: [0xc8,0xbf]
+@ CHECK: umullgt	r6, r1, r2, r6  @ encoding: [0xa2,0xfb,0x06,0x61]
