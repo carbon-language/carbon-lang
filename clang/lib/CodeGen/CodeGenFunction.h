@@ -612,12 +612,12 @@ public:
   /// EHResumeBlock - Unified block containing a call to llvm.eh.resume.
   llvm::BasicBlock *EHResumeBlock;
 
-  /// The exception slot.  All landing pads write the current
-  /// exception pointer into this alloca.
+  /// The exception slot.  All landing pads write the current exception pointer
+  /// into this alloca.
   llvm::Value *ExceptionSlot;
 
-  /// The selector slot.  Under the MandatoryCleanup model, all
-  /// landing pads write the current selector value into this alloca.
+  /// The selector slot.  Under the MandatoryCleanup model, all landing pads
+  /// write the current selector value into this alloca.
   llvm::AllocaInst *EHSelectorSlot;
 
   /// Emits a landing pad for the current EH stack.
@@ -1116,8 +1116,8 @@ public:
 
   const LangOptions &getLangOptions() const { return CGM.getLangOptions(); }
 
-  /// Returns a pointer to the function's exception object slot, which
-  /// is assigned in every landing pad.
+  /// Returns a pointer to the function's exception object and selector slot,
+  /// which is assigned in every landing pad.
   llvm::Value *getExceptionSlot();
   llvm::Value *getEHSelectorSlot();
 

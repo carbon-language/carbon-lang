@@ -14,9 +14,9 @@ void test0() {
     // CHECK: call void @log(i32 1)
 
   } @catch (C *c) {
-    // CHECK: call i8* @llvm.eh.exception()
-    // CHECK: call i32 (i8*, i8*, ...)* @llvm.eh.selector({{.*}} @__gnu_objc_personality_v0
-    // CHECK: br i1
+    // CHECK:      landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gnu_objc_personality_v0 to i8*)
+    // CHECK-NEXT:   catch i8* getelementptr inbounds ([2 x i8]* @0, i64 0, i64 0)
+    // CHECK:      br i1
 
     // CHECK: call void @log(i32 0)
 

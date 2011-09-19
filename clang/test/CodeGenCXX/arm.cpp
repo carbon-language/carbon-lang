@@ -308,9 +308,10 @@ namespace test7 {
     // CHECK:      ret void
     static int x = foo();
 
-    // CHECK:      call i8* @llvm.eh.exception()
+    // CHECK:      landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+    // CHECK-NEXT:   cleanup
     // CHECK:      call void @__cxa_guard_abort(i32* @_ZGVZN5test74testEvE1x)
-    // CHECK:      call void @llvm.eh.resume(
+    // CHECK:      resume { i8*, i32 }
   }
 }
 
@@ -347,9 +348,10 @@ namespace test8 {
     // CHECK:      ret void
     static A x;
 
-    // CHECK:      call i8* @llvm.eh.exception()
+    // CHECK:      landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+    // CHECK-NEXT:   cleanup
     // CHECK:      call void @__cxa_guard_abort(i32* @_ZGVZN5test84testEvE1x)
-    // CHECK:      call void @llvm.eh.resume(
+    // CHECK:      resume { i8*, i32 }
   }
 }
 

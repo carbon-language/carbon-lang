@@ -115,9 +115,12 @@ namespace test7 {
         throw 1;
       }
 
-// CHECK:      [[CAUGHTEXN:%.*]] = call i8* @llvm.eh.exception()
-// CHECK-NEXT: [[SELECTOR:%.*]] = call i32 (i8*, i8*, ...)* @llvm.eh.selector(i8* [[CAUGHTEXN]], i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*), i8* bitcast (i8** @_ZTIi to i8*), i8* null)
+// CHECK:      [[CAUGHTVAL:%.*]] = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+// CHECK-NEXT:   catch i8* bitcast (i8** @_ZTIi to i8*)
+// CHECK-NEXT:   catch i8* null
+// CHECK-NEXT: [[CAUGHTEXN:%.*]] = extractvalue { i8*, i32 } [[CAUGHTVAL]], 0
 // CHECK-NEXT: store i8* [[CAUGHTEXN]], i8** [[CAUGHTEXNVAR]]
+// CHECK-NEXT: [[SELECTOR:%.*]] = extractvalue { i8*, i32 } [[CAUGHTVAL]], 1
 // CHECK-NEXT: store i32 [[SELECTOR]], i32* [[SELECTORVAR]]
 // CHECK-NEXT: br label
 // CHECK:      [[SELECTOR:%.*]] = load i32* [[SELECTORVAR]]
@@ -134,9 +137,11 @@ namespace test7 {
         throw;
       }
     }
-// CHECK:      [[CAUGHTEXN:%.*]] = call i8* @llvm.eh.exception()
-// CHECK-NEXT: [[SELECTOR:%.*]] = call i32 (i8*, i8*, ...)* @llvm.eh.selector(i8* [[CAUGHTEXN]], i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*), i8* null)
+// CHECK:      [[CAUGHTVAL:%.*]] = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+// CHECK-NEXT:   catch i8* null
+// CHECK-NEXT: [[CAUGHTEXN:%.*]] = extractvalue { i8*, i32 } [[CAUGHTVAL]], 0
 // CHECK-NEXT: store i8* [[CAUGHTEXN]], i8** [[CAUGHTEXNVAR]]
+// CHECK-NEXT: [[SELECTOR:%.*]] = extractvalue { i8*, i32 } [[CAUGHTVAL]], 1
 // CHECK-NEXT: store i32 [[SELECTOR]], i32* [[SELECTORVAR]]
 // CHECK-NEXT: call void @__cxa_end_catch()
 // CHECK-NEXT: br label
@@ -188,8 +193,8 @@ namespace test9 {
   // CHECK:      invoke void @_ZN5test96opaqueEv()
     opaque();
   } catch (int x) {
-  // CHECK:      call i8* @llvm.eh.exception
-  // CHECK:      call i32 (i8*, i8*, ...)* @llvm.eh.selector(i8* {{.*}}, i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*), i8* bitcast (i8** @_ZTIi to i8*))
+  // CHECK:      landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  // CHECK-NEXT:   catch i8* bitcast (i8** @_ZTIi to i8*)
 
   // CHECK:      call i8* @__cxa_begin_catch
   // CHECK:      invoke void @_ZN5test96opaqueEv()

@@ -306,12 +306,6 @@ static llvm::Constant *getCatchAllValue(CodeGenFunction &CGF) {
   return llvm::ConstantPointerNull::get(CGF.Int8PtrTy);
 }
 
-/// Returns the value to inject into a selector to indicate the
-/// presence of a cleanup.
-static llvm::Constant *getCleanupValue(CodeGenFunction &CGF) {
-  return llvm::ConstantInt::get(CGF.Builder.getInt32Ty(), 0);
-}
-
 namespace {
   /// A cleanup to free the exception object if its initialization
   /// throws.
@@ -733,17 +727,19 @@ llvm::BasicBlock *CodeGenFunction::EmitLandingPad() {
   llvm::BasicBlock *lpad = createBasicBlock("lpad");
   EmitBlock(lpad);
 
+  llvm::LandingPadInst *LPadInst =
+    Builder.CreateLandingPad(llvm::StructType::get(Int8PtrTy, Int32Ty, NULL),
+                             getOpaquePersonalityFn(CGM, personality), 0);
+
+  llvm::Value *LPadExn = Builder.CreateExtractValue(LPadInst, 0);
+  Builder.CreateStore(LPadExn, getExceptionSlot());
+  llvm::Value *LPadSel = Builder.CreateExtractValue(LPadInst, 1);
+  Builder.CreateStore(LPadSel, getEHSelectorSlot());
+
   // Save the exception pointer.  It's safe to use a single exception
   // pointer per function because EH cleanups can never have nested
   // try/catches.
-  llvm::CallInst *exn =
-    Builder.CreateCall(CGM.getIntrinsic(llvm::Intrinsic::eh_exception), "exn");
-  exn->setDoesNotThrow();
-  
-  // Build the selector arguments.
-  SmallVector<llvm::Value*, 8> selector;
-  selector.push_back(exn);
-  selector.push_back(getOpaquePersonalityFn(CGM, personality));
+  // Build the landingpad instruction.
 
   // Accumulate all the handlers in scope.
   bool hasCatchAll = false;
@@ -764,7 +760,7 @@ llvm::BasicBlock *CodeGenFunction::EmitLandingPad() {
       assert(I.next() == EHStack.end() && "EH filter is not end of EH stack");
       assert(!hasCatchAll && "EH filter reached after catch-all");
 
-      // Filter scopes get added to the selector in weird ways.
+      // Filter scopes get added to the landingpad in weird ways.
       EHFilterScope &filter = cast<EHFilterScope>(*I);
       hasFilter = true;
 
@@ -800,54 +796,52 @@ llvm::BasicBlock *CodeGenFunction::EmitLandingPad() {
       }
 
       // Check whether we already have a handler for this type.
-      if (catchTypes.insert(handler.Type)) {
-        // If not, add it directly to the selector.
-        selector.push_back(handler.Type);
-      }
+      if (catchTypes.insert(handler.Type))
+        // If not, add it directly to the landingpad.
+        LPadInst->addClause(handler.Type);
     }
   }
 
  done:
-  // If we have a catch-all, add null to the selector.
+  // If we have a catch-all, add null to the landingpad.
   assert(!(hasCatchAll && hasFilter));
   if (hasCatchAll) {
-    selector.push_back(getCatchAllValue(*this));
+    LPadInst->addClause(getCatchAllValue(*this));
 
   // If we have an EH filter, we need to add those handlers in the
-  // right place in the selector, which is to say, at the end.
+  // right place in the landingpad, which is to say, at the end.
   } else if (hasFilter) {
     // Create a filter expression: an integer constant saying how many
     // filters there are (+1 to avoid ambiguity with 0 for cleanup),
     // followed by the filter types.  The personality routine only
     // lands here if the filter doesn't match.
-    selector.push_back(Builder.getInt32(filterTypes.size() + 1));
-    selector.append(filterTypes.begin(), filterTypes.end());
+    llvm::SmallVector<llvm::Constant*, 8> Filters;
+    llvm::ArrayType *AType =
+      llvm::ArrayType::get(!filterTypes.empty() ?
+                             filterTypes[0]->getType() : Int8PtrTy,
+                           filterTypes.size());
+
+    for (unsigned i = 0, e = filterTypes.size(); i != e; ++i)
+      Filters.push_back(cast<llvm::Constant>(filterTypes[i]));
+    llvm::Constant *FilterArray = llvm::ConstantArray::get(AType, Filters);
+    LPadInst->addClause(FilterArray);
 
     // Also check whether we need a cleanup.
-    if (CleanupHackLevel == CHL_MandatoryCatchall || hasCleanup)
-      selector.push_back(CleanupHackLevel == CHL_MandatoryCatchall
-                           ? getCatchAllValue(*this)
-                           : getCleanupValue(*this));
+    if (hasCleanup)
+      LPadInst->setCleanup(true);
 
   // Otherwise, signal that we at least have cleanups.
   } else if (CleanupHackLevel == CHL_MandatoryCatchall || hasCleanup) {
-    selector.push_back(CleanupHackLevel == CHL_MandatoryCatchall
-                         ? getCatchAllValue(*this)
-                         : getCleanupValue(*this));
+    if (CleanupHackLevel == CHL_MandatoryCatchall)
+      LPadInst->addClause(getCatchAllValue(*this));
+    else
+      LPadInst->setCleanup(true);
   }
 
-  assert(selector.size() >= 3 && "selector call has only two arguments!");
+  assert((LPadInst->getNumClauses() > 0 || LPadInst->isCleanup()) &&
+         "landingpad instruction has no clauses!");
 
   // Tell the backend how to generate the landing pad.
-  llvm::CallInst *selectorCall =
-    Builder.CreateCall(CGM.getIntrinsic(llvm::Intrinsic::eh_selector),
-                       selector, "eh.selector");
-  selectorCall->setDoesNotThrow();
-
-  // Save the selector and exception pointer.
-  Builder.CreateStore(exn, getExceptionSlot());
-  Builder.CreateStore(selectorCall, getEHSelectorSlot());
-
   Builder.CreateBr(getEHDispatchBlock(EHStack.getInnermostEHScope()));
 
   // Restore the old IR generation state.
@@ -1462,19 +1456,11 @@ llvm::BasicBlock *CodeGenFunction::getTerminateLandingPad() {
   Builder.SetInsertPoint(TerminateLandingPad);
 
   // Tell the backend that this is a landing pad.
-  llvm::CallInst *Exn =
-    Builder.CreateCall(CGM.getIntrinsic(llvm::Intrinsic::eh_exception), "exn");
-  Exn->setDoesNotThrow();
-
   const EHPersonality &Personality = EHPersonality::get(CGM.getLangOptions());
-  
-  // Tell the backend what the exception table should be:
-  // nothing but a catch-all.
-  llvm::Value *Args[3] = { Exn, getOpaquePersonalityFn(CGM, Personality),
-                           getCatchAllValue(*this) };
-  Builder.CreateCall(CGM.getIntrinsic(llvm::Intrinsic::eh_selector),
-                     Args, "eh.selector")
-    ->setDoesNotThrow();
+  llvm::LandingPadInst *LPadInst =
+    Builder.CreateLandingPad(llvm::StructType::get(Int8PtrTy, Int32Ty, NULL),
+                             getOpaquePersonalityFn(CGM, Personality), 0);
+  LPadInst->addClause(getCatchAllValue(*this));
 
   llvm::CallInst *TerminateCall = Builder.CreateCall(getTerminateFn(*this));
   TerminateCall->setDoesNotReturn();
@@ -1538,12 +1524,21 @@ llvm::BasicBlock *CodeGenFunction::getEHResumeBlock() {
         ->setDoesNotReturn();
       break;
     case CHL_MandatoryCleanup: {
-      // In mandatory-cleanup mode, we should use llvm.eh.resume.
-      llvm::Value *Selector = getSelectorFromSlot();
-      Builder.CreateCall2(CGM.getIntrinsic(llvm::Intrinsic::eh_resume),
-                          Exn, Selector)
-        ->setDoesNotReturn();
-      break;
+      // In mandatory-cleanup mode, we should use 'resume'.
+
+      // Recreate the landingpad's return value for the 'resume' instruction.
+      llvm::Value *Exn = getExceptionFromSlot();
+      llvm::Value *Sel = getSelectorFromSlot();
+
+      llvm::Type *LPadType = llvm::StructType::get(Exn->getType(),
+                                                   Sel->getType(), NULL);
+      llvm::Value *LPadVal = llvm::UndefValue::get(LPadType);
+      LPadVal = Builder.CreateInsertValue(LPadVal, Exn, 0, "lpad.val");
+      LPadVal = Builder.CreateInsertValue(LPadVal, Sel, 1, "lpad.val");
+
+      Builder.CreateResume(LPadVal);
+      Builder.restoreIP(SavedIP);
+      return EHResumeBlock;
     }
     case CHL_Ideal:
       // In an idealized mode where we don't have to worry about the

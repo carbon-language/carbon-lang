@@ -7,7 +7,8 @@ void target() noexcept
   // CHECK: invoke void @_Z8externalv()
   external();
 }
-// CHECK:  call i32 (i8*, i8*, ...)* @llvm.eh.selector({{.*}} i8* null) nounwind
+// CHECK: landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+// CHECK-NEXT:  catch i8* null
 // CHECK-NEXT: call void @_ZSt9terminatev() noreturn nounwind
 // CHECK-NEXT: unreachable
 

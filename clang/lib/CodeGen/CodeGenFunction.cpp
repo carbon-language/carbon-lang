@@ -365,9 +365,12 @@ static void TryMarkNoThrow(llvm::Function *F) {
   for (llvm::Function::iterator FI = F->begin(), FE = F->end(); FI != FE; ++FI)
     for (llvm::BasicBlock::iterator
            BI = FI->begin(), BE = FI->end(); BI != BE; ++BI)
-      if (llvm::CallInst *Call = dyn_cast<llvm::CallInst>(&*BI))
+      if (llvm::CallInst *Call = dyn_cast<llvm::CallInst>(&*BI)) {
         if (!Call->doesNotThrow())
           return;
+      } else if (isa<llvm::ResumeInst>(&*BI)) {
+        return;
+      }
   F->setDoesNotThrow(true);
 }
 

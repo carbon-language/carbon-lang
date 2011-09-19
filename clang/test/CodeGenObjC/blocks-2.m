@@ -30,8 +30,9 @@ void test1() {
   // CHECK-NEXT: call void @_Block_object_dispose(i8* [[T1]], i32 8)
   // CHECK-NEXT: ret void
 
-  // CHECK:      call i8* @llvm.eh.exception()
+  // CHECK:      landingpad { i8*, i32 } personality
+  // CHECK-NEXT:   cleanup
   // CHECK:      [[T1:%.*]] = bitcast [[N_T]]* [[N]] to i8*
   // CHECK-NEXT: call void @_Block_object_dispose(i8* [[T1]], i32 8)
-  // CHECK:      call void @llvm.eh.resume(
+  // CHECK:      resume { i8*, i32 }
 }

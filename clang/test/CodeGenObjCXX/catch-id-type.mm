@@ -30,7 +30,10 @@ id FUNC() {
     }
     catch( id error )
     { 
-      // CHECK: call i32 (i8*, i8*, ...)* @llvm.eh.selector({{.*}} @__gxx_personality_v0 {{.*}} @_ZTIP4INTF {{.*}} @_ZTIP11objc_object {{.*}} @_ZTIP10objc_class
+      // CHECK:      landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+      // CHECK-NEXT:   catch i8* bitcast ({ i8*, i8*, i32, i8* }* @_ZTIP4INTF to i8*)
+      // CHECK-NEXT:   catch i8* bitcast ({ i8*, i8*, i32, i8* }* @_ZTIP11objc_object to i8*)
+      // CHECK-NEXT:   catch i8* bitcast ({ i8*, i8*, i32, i8* }* @_ZTIP10objc_class to i8*)
       error = error; 
       groups = [ns_array array]; 
     }

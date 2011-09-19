@@ -21,9 +21,8 @@ void f() {
   throw Y();
 
   // Finally, the landing pad.
-  // CHECK: call i8* @llvm.eh.exception()
-  // CHECK: call i32 (i8*, i8*, ...)* @llvm.eh.selector
+  // CHECK: landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  // CHECK:   cleanup
   // CHECK: call void @__cxa_guard_abort(i64* @_ZGVZ1fvE1x)
-  // CHECK: call void @llvm.eh.resume(
-  // CHECK: unreachable
+  // CHECK: resume { i8*, i32 }
 }

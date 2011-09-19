@@ -11,7 +11,8 @@ namespace test0 {
       // CHECK: invoke void @_Z6opaquev
       opaque();
     } catch (OCType *T) {
-      // CHECK: call i32 (i8*, i8*, ...)* @llvm.eh.selector({{.*}} @__objc_personality_v0 {{.*}} @"OBJC_EHTYPE_$_OCType"
+      // CHECK:      landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__objc_personality_v0 to i8*)
+      // CHECK-NEXT:   catch %struct._objc_typeinfo* @"OBJC_EHTYPE_$_OCType"
     }
   }
 }

@@ -68,8 +68,10 @@ X test2(bool B) {
   // -> %cleanup, %lpad1
 
   // %lpad: landing pad for ctor of 'y', dtor of 'y'
-  // CHECK-EH:      call i8* @llvm.eh.exception()
-  // CHECK-EH: call i32 (i8*, i8*, ...)* @llvm.eh.selector
+  // CHECK-EH:      [[CAUGHTVAL:%.*]] = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  // CHECK-EH-NEXT:   cleanup
+  // CHECK-EH-NEXT: extractvalue { i8*, i32 } [[CAUGHTVAL]], 0
+  // CHECK-EH-NEXT: extractvalue { i8*, i32 } [[CAUGHTVAL]], 1
   // CHECK-EH-NEXT: br label
   // -> %eh.cleanup
 
@@ -95,12 +97,11 @@ X test2(bool B) {
 
   // %invoke.cont17: rethrow block for %eh.cleanup.
   // This really should be elsewhere in the function.
-  // CHECK-EH:      call void @llvm.eh.resume(
-  // CHECK-EH-NEXT: unreachable
+  // CHECK-EH:      resume { i8*, i32 }
 
   // %terminate.lpad: terminate landing pad.
-  // CHECK-EH:      call i8* @llvm.eh.exception()
-  // CHECK-EH-NEXT: call i32 (i8*, i8*, ...)* @llvm.eh.selector
+  // CHECK-EH:      landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  // CHECK-EH-NEXT:   catch i8* null
   // CHECK-EH-NEXT: call void @_ZSt9terminatev()
   // CHECK-EH-NEXT: unreachable
 

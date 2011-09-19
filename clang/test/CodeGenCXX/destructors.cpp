@@ -356,9 +356,10 @@ namespace test8 {
   // CHECK: invoke void @_ZN5test312_GLOBAL__N_11DD1Ev(
   // CHECK: call void @_ZdlPv({{.*}}) nounwind
   // CHECK: ret void
-  // CHECK: call i8* @llvm.eh.exception(
+  // CHECK: landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  // CHECK-NEXT: cleanup
   // CHECK: call void @_ZdlPv({{.*}}) nounwind
-  // CHECK: call void @llvm.eh.resume(
+  // CHECK: resume { i8*, i32 }
 
   // Checked at top of file:
   // @_ZN5test312_GLOBAL__N_11DD1Ev = alias internal {{.*}} @_ZN5test312_GLOBAL__N_11DD2Ev
@@ -386,9 +387,10 @@ namespace test8 {
   // CHECK: invoke void @_ZN5test312_GLOBAL__N_11CD1Ev(
   // CHECK: call void @_ZdlPv({{.*}}) nounwind
   // CHECK: ret void
-  // CHECK: call i8* @llvm.eh.exception()
+  // CHECK: landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  // CHECK-NEXT: cleanup
   // CHECK: call void @_ZdlPv({{.*}}) nounwind
-  // CHECK: call void @llvm.eh.resume(
+  // CHECK: resume { i8*, i32 }
 
   // CHECK: define internal void @_ZThn8_N5test312_GLOBAL__N_11CD1Ev(
   // CHECK: getelementptr inbounds i8* {{.*}}, i64 -8
