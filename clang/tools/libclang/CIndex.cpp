@@ -5478,7 +5478,6 @@ unsigned clang_CXXMethod_isVirtual(CXCursor C) {
     Method = dyn_cast_or_null<CXXMethodDecl>(D);
   return (Method && Method->isVirtual()) ? 1 : 0;
 }
-
 } // end: extern "C"
 
 //===----------------------------------------------------------------------===//
