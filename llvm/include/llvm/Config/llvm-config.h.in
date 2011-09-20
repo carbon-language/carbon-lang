@@ -97,6 +97,9 @@
 /* Define to path to twopi program if found or 'echo twopi' otherwise */
 #undef LLVM_PATH_TWOPI
 
+/* Define to path to xdot.py program if found or 'echo xdot.py' otherwise */
+#undef LLVM_PATH_XDOT_PY
+
 /* Installation prefix directory */
 #undef LLVM_PREFIX
 
