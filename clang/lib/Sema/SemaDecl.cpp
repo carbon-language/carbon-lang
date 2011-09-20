@@ -6148,8 +6148,7 @@ void Sema::ActOnCXXForRangeDecl(Decl *D) {
     Error = 4;
     break;
   case SC_OpenCLWorkGroupLocal:
-    assert(0 && "Unexpected storage class");
-    break;
+    llvm_unreachable("Unexpected storage class");
   }
   // FIXME: constexpr isn't allowed here.
   //if (DS.isConstexprSpecified())
