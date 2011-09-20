@@ -145,10 +145,10 @@ unsigned PreprocessingRecord::findEndLocalPreprocessedEntity(
 }
 
 void PreprocessingRecord::addPreprocessedEntity(PreprocessedEntity *Entity) {
-  SourceLocation Loc = Entity->getSourceRange().getBegin();
+  assert(Entity);
   assert((PreprocessedEntities.empty() ||
-          !SourceMgr.isBeforeInTranslationUnit(Loc,
-                     PreprocessedEntities.back()->getSourceRange().getEnd())) &&
+       !SourceMgr.isBeforeInTranslationUnit(Entity->getSourceRange().getBegin(),
+                   PreprocessedEntities.back()->getSourceRange().getBegin())) &&
          "Adding a preprocessed entity that is before the previous one in TU");
   PreprocessedEntities.push_back(Entity);
 }
