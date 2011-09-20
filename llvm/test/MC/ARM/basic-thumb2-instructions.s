@@ -2946,3 +2946,121 @@ _func:
 @ CHECK: ite	hi                      @ encoding: [0x8c,0xbf]
 @ CHECK: usub16hi	r1, r1, r3      @ encoding: [0xd1,0xfa,0x43,0xf1]
 @ CHECK: usub8ls	r9, r2, r3      @ encoding: [0xc2,0xfa,0x43,0xf9]
+
+
+@------------------------------------------------------------------------------
+@ UXTAB
+@------------------------------------------------------------------------------
+        uxtab r2, r3, r4
+        uxtab r4, r5, r6, ror #0
+        it lt
+        uxtablt r6, r2, r9, ror #8
+        uxtab r5, r1, r4, ror #16
+        uxtab r7, r8, r3, ror #24
+
+@ CHECK: uxtab	r2, r3, r4              @ encoding: [0x53,0xfa,0x84,0xf2]
+@ CHECK: uxtab	r4, r5, r6              @ encoding: [0x55,0xfa,0x86,0xf4]
+@ CHECK: it	lt                      @ encoding: [0xb8,0xbf]
+@ CHECK: uxtablt r6, r2, r9, ror #8     @ encoding: [0x52,0xfa,0x99,0xf6]
+@ CHECK: uxtab	r5, r1, r4, ror #16     @ encoding: [0x51,0xfa,0xa4,0xf5]
+@ CHECK: uxtab	r7, r8, r3, ror #24     @ encoding: [0x58,0xfa,0xb3,0xf7]
+
+
+@------------------------------------------------------------------------------
+@ UXTAB16
+@------------------------------------------------------------------------------
+        it ge
+        uxtab16ge r0, r1, r4
+        uxtab16 r6, r2, r7, ror #0
+        uxtab16 r3, r5, r8, ror #8
+        uxtab16 r3, r2, r1, ror #16
+        it eq
+        uxtab16eq r1, r2, r3, ror #24
+
+@ CHECK: it	ge                      @ encoding: [0xa8,0xbf]
+@ CHECK: uxtab16ge	r0, r1, r4      @ encoding: [0x31,0xfa,0x84,0xf0]
+@ CHECK: uxtab16 r6, r2, r7             @ encoding: [0x32,0xfa,0x87,0xf6]
+@ CHECK: uxtab16 r3, r5, r8, ror #8     @ encoding: [0x35,0xfa,0x98,0xf3]
+@ CHECK: uxtab16 r3, r2, r1, ror #16    @ encoding: [0x32,0xfa,0xa1,0xf3]
+@ CHECK: it	eq                      @ encoding: [0x08,0xbf]
+@ CHECK: uxtab16eq r1, r2, r3, ror #24  @ encoding: [0x32,0xfa,0xb3,0xf1]
+
+
+@------------------------------------------------------------------------------
+@ UXTAH
+@------------------------------------------------------------------------------
+        uxtah r1, r3, r9
+        it hi
+        uxtahhi r6, r1, r6, ror #0
+        uxtah r3, r8, r3, ror #8
+        it lo
+        uxtahlo r2, r2, r4, ror #16
+        uxtah r9, r3, r3, ror #24
+
+@ CHECK: uxtah	r1, r3, r9              @ encoding: [0x13,0xfa,0x89,0xf1]
+@ CHECK: it	hi                      @ encoding: [0x88,0xbf]
+@ CHECK: uxtahhi r6, r1, r6             @ encoding: [0x11,0xfa,0x86,0xf6]
+@ CHECK: uxtah	r3, r8, r3, ror #8      @ encoding: [0x18,0xfa,0x93,0xf3]
+@ CHECK: it	lo                      @ encoding: [0x38,0xbf]
+@ CHECK: uxtahlo r2, r2, r4, ror #16    @ encoding: [0x12,0xfa,0xa4,0xf2]
+@ CHECK: uxtah	r9, r3, r3, ror #24     @ encoding: [0x13,0xfa,0xb3,0xf9]
+
+
+@------------------------------------------------------------------------------
+@ UXTB
+@------------------------------------------------------------------------------
+        it ge
+        uxtbge r2, r4
+        uxtb r5, r6, ror #0
+        uxtb r6, r9, ror #8
+        it cc
+        uxtbcc r5, r1, ror #16
+        uxtb r8, r3, ror #24
+
+@ CHECK: it	ge                      @ encoding: [0xa8,0xbf]
+@ CHECK: uxtbge	r2, r4                  @ encoding: [0xe2,0xb2]
+@ CHECK: uxtb	r5, r6                  @ encoding: [0xf5,0xb2]
+@ CHECK: uxtb.w	r6, r9, ror #8          @ encoding: [0x5f,0xfa,0x99,0xf6]
+@ CHECK: it	lo                      @ encoding: [0x38,0xbf]
+@ CHECK: uxtblo.w	r5, r1, ror #16 @ encoding: [0x5f,0xfa,0xa1,0xf5]
+@ CHECK: uxtb.w	r8, r3, ror #24         @ encoding: [0x5f,0xfa,0xb3,0xf8]
+
+
+@------------------------------------------------------------------------------
+@ UXTB16
+@------------------------------------------------------------------------------
+        uxtb16 r1, r4
+        uxtb16 r6, r7, ror #0
+        it cs
+        uxtb16cs r3, r5, ror #8
+        uxtb16 r3, r1, ror #16
+        it ge
+        uxtb16ge r2, r3, ror #24
+
+@ CHECK: uxtb16	r1, r4                  @ encoding: [0x3f,0xfa,0x84,0xf1]
+@ CHECK: uxtb16	r6, r7                  @ encoding: [0x3f,0xfa,0x87,0xf6]
+@ CHECK: it	hs                      @ encoding: [0x28,0xbf]
+@ CHECK: uxtb16hs	r3, r5, ror #8  @ encoding: [0x3f,0xfa,0x95,0xf3]
+@ CHECK: uxtb16	r3, r1, ror #16         @ encoding: [0x3f,0xfa,0xa1,0xf3]
+@ CHECK: it	ge                      @ encoding: [0xa8,0xbf]
+@ CHECK: uxtb16ge	r2, r3, ror #24 @ encoding: [0x3f,0xfa,0xb3,0xf2]
+
+
+@------------------------------------------------------------------------------
+@ UXTH
+@------------------------------------------------------------------------------
+        it ne
+        uxthne r3, r9
+        uxth r1, r6, ror #0
+        uxth r3, r8, ror #8
+        it le
+        uxthle r2, r2, ror #16
+        uxth r9, r3, ror #24
+
+@ CHECK: it	ne                      @ encoding: [0x18,0xbf]
+@ CHECK: uxthne.w	r3, r9          @ encoding: [0x1f,0xfa,0x89,0xf3]
+@ CHECK: uxth	r1, r6                  @ encoding: [0xb1,0xb2]
+@ CHECK: uxth.w	r3, r8, ror #8          @ encoding: [0x1f,0xfa,0x98,0xf3]
+@ CHECK: it	le                      @ encoding: [0xd8,0xbf]
+@ CHECK: uxthle.w	r2, r2, ror #16 @ encoding: [0x1f,0xfa,0xa2,0xf2]
+@ CHECK: uxth.w	r9, r3, ror #24         @ encoding: [0x1f,0xfa,0xb3,0xf9]

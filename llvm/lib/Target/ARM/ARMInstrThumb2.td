@@ -3941,7 +3941,27 @@ def : t2InstAlias<"sxtb16${p} $Rd, $Rm",
 def : t2InstAlias<"sxth${p} $Rd, $Rm",
                 (t2SXTH rGPR:$Rd, rGPR:$Rm, 0, pred:$p)>;
 
+def : t2InstAlias<"uxtab${p} $Rd, $Rn, $Rm",
+                (t2UXTAB rGPR:$Rd, rGPR:$Rn, rGPR:$Rm, 0, pred:$p)>;
+def : t2InstAlias<"uxtah${p} $Rd, $Rn, $Rm",
+                (t2UXTAH rGPR:$Rd, rGPR:$Rn, rGPR:$Rm, 0, pred:$p)>;
+def : t2InstAlias<"uxtab16${p} $Rd, $Rn, $Rm",
+                (t2UXTAB16 rGPR:$Rd, rGPR:$Rn, rGPR:$Rm, 0, pred:$p)>;
+def : t2InstAlias<"uxtb${p} $Rd, $Rm",
+                (t2UXTB rGPR:$Rd, rGPR:$Rm, 0, pred:$p)>;
+def : t2InstAlias<"uxtb16${p} $Rd, $Rm",
+                (t2UXTB16 rGPR:$Rd, rGPR:$Rm, 0, pred:$p)>;
+def : t2InstAlias<"uxth${p} $Rd, $Rm",
+                (t2UXTH rGPR:$Rd, rGPR:$Rm, 0, pred:$p)>;
+
 // Extend instruction w/o the ".w" optional width specifier.
+def : t2InstAlias<"uxtb${p} $Rd, $Rm$rot",
+                  (t2UXTB rGPR:$Rd, rGPR:$Rm, rot_imm:$rot, pred:$p)>;
+def : t2InstAlias<"uxtb16${p} $Rd, $Rm$rot",
+                  (t2UXTB16 rGPR:$Rd, rGPR:$Rm, rot_imm:$rot, pred:$p)>;
+def : t2InstAlias<"uxth${p} $Rd, $Rm$rot",
+                  (t2UXTH rGPR:$Rd, rGPR:$Rm, rot_imm:$rot, pred:$p)>;
+
 def : t2InstAlias<"sxtb${p} $Rd, $Rm$rot",
                   (t2SXTB rGPR:$Rd, rGPR:$Rm, rot_imm:$rot, pred:$p)>;
 def : t2InstAlias<"sxtb16${p} $Rd, $Rm$rot",

@@ -3888,7 +3888,9 @@ processInstruction(MCInst &Inst,
     break;
   }
   case ARM::t2SXTH:
-  case ARM::t2SXTB: {
+  case ARM::t2SXTB:
+  case ARM::t2UXTH:
+  case ARM::t2UXTB: {
     // If we can use the 16-bit encoding and the user didn't explicitly
     // request the 32-bit variant, transform it here.
     if (isARMLowRegister(Inst.getOperand(0).getReg()) &&
@@ -3896,8 +3898,14 @@ processInstruction(MCInst &Inst,
         Inst.getOperand(2).getImm() == 0 &&
         (!static_cast<ARMOperand*>(Operands[2])->isToken() ||
          static_cast<ARMOperand*>(Operands[2])->getToken() != ".w")) {
-      unsigned NewOpc = (Inst.getOpcode() == ARM::t2SXTH) ?
-        ARM::tSXTH : ARM::tSXTB;
+      unsigned NewOpc;
+      switch (Inst.getOpcode()) {
+      default: llvm_unreachable("Illegal opcode!");
+      case ARM::t2SXTH: NewOpc = ARM::tSXTH; break;
+      case ARM::t2SXTB: NewOpc = ARM::tSXTB; break;
+      case ARM::t2UXTH: NewOpc = ARM::tUXTH; break;
+      case ARM::t2UXTB: NewOpc = ARM::tUXTB; break;
+      }
       // The operands aren't the same for thumb1 (no rotate operand).
       MCInst TmpInst;
       TmpInst.setOpcode(NewOpc);
