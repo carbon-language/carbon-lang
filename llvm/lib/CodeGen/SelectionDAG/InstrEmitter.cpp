@@ -763,7 +763,8 @@ EmitMachineNode(SDNode *Node, bool IsClone, bool IsCloned,
     }
 
   // Run post-isel target hook to adjust this instruction if needed.
-  TLI->AdjustInstrPostInstrSelection(MI, Node);
+  if (II.hasPostISelHook())
+    TLI->AdjustInstrPostInstrSelection(MI, Node);
 }
 
 /// EmitSpecialNode - Generate machine code for a target-independent node and

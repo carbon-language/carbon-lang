@@ -309,6 +309,7 @@ CodeGenInstruction::CodeGenInstruction(Record *R) : TheDef(R), Operands(R) {
   isReMaterializable = R->getValueAsBit("isReMaterializable");
   hasDelaySlot = R->getValueAsBit("hasDelaySlot");
   usesCustomInserter = R->getValueAsBit("usesCustomInserter");
+  hasPostISelHook = R->getValueAsBit("hasPostISelHook");
   hasCtrlDep   = R->getValueAsBit("hasCtrlDep");
   isNotDuplicable = R->getValueAsBit("isNotDuplicable");
   hasSideEffects = R->getValueAsBit("hasSideEffects");
