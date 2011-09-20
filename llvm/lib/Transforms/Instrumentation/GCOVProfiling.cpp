@@ -186,7 +186,7 @@ namespace {
   // other blocks.
   class GCOVBlock : public GCOVRecord {
    public:
-    GCOVLines &getFile(std::string Filename) {
+    GCOVLines &getFile(StringRef Filename) {
       GCOVLines *&Lines = LinesByFile[Filename];
       if (!Lines) {
         Lines = new GCOVLines(os);
