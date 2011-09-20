@@ -27,6 +27,7 @@ class BinaryOperator;
 class CompoundStmt;
 class Decl;
 class LocationContext;
+class ParentMap;
 class ProgramPoint;
 class SourceManager;
 class Stmt;
@@ -79,10 +80,12 @@ protected:
 
 class PathDiagnosticRange : public SourceRange {
 public:
-  const bool isPoint;
+  bool isPoint;
 
   PathDiagnosticRange(const SourceRange &R, bool isP = false)
     : SourceRange(R), isPoint(isP) {}
+
+  PathDiagnosticRange() : isPoint(false) {}
 };
 
 class PathDiagnosticLocation {
@@ -93,24 +96,36 @@ private:
   const Decl *D;
   const SourceManager *SM;
   const LocationContext *LC;
+  FullSourceLoc Loc;
+  PathDiagnosticRange Range;
+
+  FullSourceLoc genLocation(const ParentMap *PM=0) const;
+  PathDiagnosticRange genRange(const ParentMap *PM=0) const;
+
 public:
   PathDiagnosticLocation()
-    : K(SingleLocK), S(0), D(0), SM(0), LC(0) {}
+    : K(SingleLocK), S(0), D(0), SM(0), LC(0) {
+  }
 
   PathDiagnosticLocation(FullSourceLoc L)
-    : K(SingleLocK), R(L, L), S(0), D(0), SM(&L.getManager()), LC(0) {}
+    : K(SingleLocK), R(L, L), S(0), D(0), SM(&L.getManager()), LC(0),
+      Loc(genLocation()), Range(genRange()) {
+  }
 
   PathDiagnosticLocation(SourceLocation L, const SourceManager &sm,
                          Kind kind = SingleLocK)
-    : K(kind), R(L, L), S(0), D(0), SM(&sm), LC(0) {}
+    : K(kind), R(L, L), S(0), D(0), SM(&sm), LC(0),
+      Loc(genLocation()), Range(genRange()) {
+  }
 
   PathDiagnosticLocation(const Stmt *s,
                          const SourceManager &sm,
-                         const LocationContext *lc)
-    : K(StmtK), S(s), D(0), SM(&sm), LC(lc) {}
+                         const LocationContext *lc);
 
   PathDiagnosticLocation(const Decl *d, const SourceManager &sm)
-    : K(DeclK), S(0), D(d), SM(&sm), LC(0) {}
+    : K(DeclK), S(0), D(d), SM(&sm), LC(0),
+      Loc(genLocation()), Range(genRange()) {
+  }
 
   // Create a location for the beginning of the statement.
   static PathDiagnosticLocation createBeginStmt(const Stmt *S,
@@ -167,8 +182,14 @@ public:
     return SM != 0;
   }
 
-  FullSourceLoc asLocation() const;
-  PathDiagnosticRange asRange() const;
+  FullSourceLoc asLocation() const {
+    return Loc;
+  }
+
+  PathDiagnosticRange asRange() const {
+    return Range;
+  }
+
   const Stmt *asStmt() const { assert(isValid()); return S; }
   const Decl *asDecl() const { assert(isValid()); return D; }
 
