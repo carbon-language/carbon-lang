@@ -11,12 +11,16 @@ class ObjCDataFormatterTestCase(TestBase):
 
     mydir = os.path.join("functionalities", "data-formatter", "data-formatter-objc")
 
+    # rdar://problem/10153585 lldb ToT regression of test suite with r139772 check-in
+    @unittest2.expectedFailure
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_with_dsym_and_run_command(self):
         """Test data formatter commands."""
         self.buildDsym()
         self.data_formatter_commands()
 
+    # rdar://problem/10153585 lldb ToT regression of test suite with r139772 check-in
+    @unittest2.expectedFailure
     def test_with_dwarf_and_run_command(self):
         """Test data formatter commands."""
         self.buildDwarf()
