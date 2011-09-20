@@ -82,43 +82,6 @@ PathDiagnostic::PathDiagnostic(StringRef bugtype, StringRef desc,
     Desc(StripTrailingDots(desc)),
     Category(StripTrailingDots(category)) {}
 
-void PathDiagnosticClient::HandleDiagnostic(Diagnostic::Level DiagLevel,
-                                            const DiagnosticInfo &Info) {
-  // Default implementation (Warnings/errors count).
-  DiagnosticClient::HandleDiagnostic(DiagLevel, Info);
-
-  // Create a PathDiagnostic with a single piece.
-
-  PathDiagnostic* D = new PathDiagnostic();
-
-  const char *LevelStr;
-  switch (DiagLevel) {
-  default:
-  case Diagnostic::Ignored: assert(0 && "Invalid diagnostic type");
-  case Diagnostic::Note:    LevelStr = "note: "; break;
-  case Diagnostic::Warning: LevelStr = "warning: "; break;
-  case Diagnostic::Error:   LevelStr = "error: "; break;
-  case Diagnostic::Fatal:   LevelStr = "fatal error: "; break;
-  }
-
-  llvm::SmallString<100> StrC;
-  StrC += LevelStr;
-  Info.FormatDiagnostic(StrC);
-
-  PathDiagnosticPiece *P =
-    new PathDiagnosticEventPiece(FullSourceLoc(Info.getLocation(),
-                                               Info.getSourceManager()),
-                                 StrC.str());
-
-  for (unsigned i = 0, e = Info.getNumRanges(); i != e; ++i)
-    P->addRange(Info.getRange(i).getAsRange());
-  for (unsigned i = 0, e = Info.getNumFixItHints(); i != e; ++i)
-    P->addFixItHint(Info.getFixItHint(i));
-  D->push_front(P);
-
-  HandlePathDiagnostic(D);
-}
-
 void PathDiagnosticClient::HandlePathDiagnostic(const PathDiagnostic *D) {
   // For now this simply forwards to HandlePathDiagnosticImpl.  In the future
   // we can use this indirection to control for multi-threaded access to

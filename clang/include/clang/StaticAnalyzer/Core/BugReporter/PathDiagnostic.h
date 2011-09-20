@@ -45,7 +45,7 @@ class ExplodedNode;
 
 class PathDiagnostic;
 
-class PathDiagnosticClient : public DiagnosticClient  {
+class PathDiagnosticClient {
 public:
   PathDiagnosticClient() {}
 
@@ -60,8 +60,6 @@ public:
   
   virtual StringRef getName() const = 0;
   
-  virtual void HandleDiagnostic(Diagnostic::Level DiagLevel,
-                                const DiagnosticInfo &Info);
   void HandlePathDiagnostic(const PathDiagnostic* D);
 
   enum PathGenerationScheme { Minimal, Extensive };
