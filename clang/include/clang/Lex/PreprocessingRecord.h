@@ -50,11 +50,8 @@ namespace clang {
       /// \brief A macro expansion.
       MacroExpansionKind,
       
-      /// \brief A preprocessing directive whose kind is not specified.
-      ///
-      /// This kind will be used for any preprocessing directive that does not
-      /// have a more specific kind within the \c DirectiveKind enumeration.
-      PreprocessingDirectiveKind,
+      /// \defgroup Preprocessing directives
+      /// @{
       
       /// \brief A macro definition.
       MacroDefinitionKind,
@@ -63,7 +60,9 @@ namespace clang {
       /// #import, or \c #include_next.
       InclusionDirectiveKind,
 
-      FirstPreprocessingDirective = PreprocessingDirectiveKind,
+      /// @}
+
+      FirstPreprocessingDirective = MacroDefinitionKind,
       LastPreprocessingDirective = InclusionDirectiveKind
     };
 
