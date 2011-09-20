@@ -249,34 +249,6 @@ proc RunLLVMTests { test_source_files } {
   }
 }
 
-# This procedure provides an interface to check the LLVMGCC_LANGS makefile
-# variable to see if llvm-gcc supports compilation of a particular language.
-proc llvm_gcc_supports { lang } {
-  global llvmgcc llvmgcc_langs
-  # validate the language choices and determine the name of the compiler
-  # component responsible for determining if the compiler has been built.
-  switch "$lang" {
-    ada     { set file gnat1 }
-    c       { set file cc1 }
-    c++     { set file cc1plus }
-    objc    { set file cc1obj }
-    obj-c++ { set file cc1objplus }
-    fortran { set file f951 }
-    default { return 0 }
-  }
-  foreach supported_lang [split "$llvmgcc_langs" ,] {
-    if { "$lang" == "$supported_lang" } {
-      # FIXME: Knowing it is configured is not enough. We should do two more
-      # checks here. First, we need to run llvm-gcc -print-prog-name=$file to
-      # get the path to the compiler. If we don't get a path, the language isn't
-      # properly configured or built. If we do get a path, we should check to
-      # make sure that it is executable and perhaps even try executing it.
-      return 1;
-    }
-  }
-  return 0;
-}
-
 # This procedure provides an interface to check the TARGETS_TO_BUILD makefile
 # variable to see if a particular target has been configured to build. This
 # helps avoid running tests for targets that aren't available.

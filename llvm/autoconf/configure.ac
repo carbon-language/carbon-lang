@@ -724,47 +724,6 @@ esac
 AC_DEFINE_UNQUOTED([ENABLE_CBE_PRINTF_A],$ENABLE_CBE_PRINTF_A,
                    [Define if CBE is enabled for printf %a output])
 
-dnl Allow a specific llvm-gcc/llvm-g++ pair to be used with this LLVM config.
-AC_ARG_WITH(llvmgccdir,
-  AS_HELP_STRING([--with-llvmgccdir],
-    [Specify location of llvm-gcc install dir (default searches PATH)]),,
-    withval=default)
-case "$withval" in
-  default) WITH_LLVMGCCDIR=default ;;
-  /* | [[A-Za-z]]:[[\\/]]*)      WITH_LLVMGCCDIR=$withval ;;
-  *) AC_MSG_ERROR([Invalid path for --with-llvmgccdir. Provide full path]) ;;
-esac
-
-dnl Allow a specific llvm-gcc compiler to be used with this LLVM config.
-AC_ARG_WITH(llvmgcc,
-  AS_HELP_STRING([--with-llvmgcc],
-    [Specify location of llvm-gcc driver (default searches PATH)]),
-    LLVMGCC=$with_llvmgcc
-      WITH_LLVMGCCDIR="",)
-
-dnl Allow a specific llvm-g++ compiler to be used with this LLVM config.
-AC_ARG_WITH(llvmgxx,
-  AS_HELP_STRING([--with-llvmgxx],
-    [Specify location of llvm-g++ driver (default searches PATH)]),
-    LLVMGXX=$with_llvmgxx
-    WITH_LLVMGCCDIR="",)
-
-if test -n "$LLVMGCC"; then
-   LLVMGCCCOMMAND="$LLVMGCC"
-fi
-
-if test -n "$LLVMGXX"; then
-   LLVMGXXCOMMAND="$LLVMGXX"
-fi
-
-if test -n "$LLVMGCC" && test -z "$LLVMGXX"; then
-   AC_MSG_ERROR([Invalid llvm-g++. Use --with-llvmgxx when --with-llvmgcc is used]);
-fi
-
-if test -n "$LLVMGXX" && test -z "$LLVMGCC"; then
-   AC_MSG_ERROR([Invalid llvm-gcc. Use --with-llvmgcc when --with-llvmgxx is used]);
-fi
-
 dnl Allow a specific Clang compiler to be used with this LLVM config.
 AC_ARG_WITH(clang,
   AS_HELP_STRING([--with-clang],
@@ -1142,33 +1101,8 @@ dnl libtool).
 AC_LIBTOOL_DLOPEN
 AC_LIB_LTDL
 
-if test "$WITH_LLVMGCCDIR" = "default" ; then
-  LLVMGCC="llvm-gcc${EXEEXT}"
-  LLVMGXX="llvm-g++${EXEEXT}"
-  LLVMGCCCOMMAND="$LLVMGCC"
-  LLVMGXXCOMMAND="$LLVMGXX"
-  AC_SUBST(LLVMGCCCOMMAND,$LLVMGCCCOMMAND)
-  AC_SUBST(LLVMGXXCOMMAND,$LLVMGXXCOMMAND)
-  AC_PATH_PROG(LLVMGCC, $LLVMGCC, [])
-  AC_PATH_PROG(LLVMGXX, $LLVMGXX, [])
-else
-  if test -z "$LLVMGCC"; then
-    LLVMGCC="$WITH_LLVMGCCDIR/bin/llvm-gcc${EXEEXT}"
-    LLVMGCCCOMMAND="$LLVMGCC"
-  fi
-  if test -z "$LLVMGXX"; then
-    LLVMGXX="$WITH_LLVMGCCDIR/bin/llvm-g++${EXEEXT}"
-    LLVMGXXCOMMAND="$LLVMGXX"
-  fi
-
-  AC_SUBST(LLVMGCC,$LLVMGCC)
-  AC_SUBST(LLVMGXX,$LLVMGXX)
-  AC_SUBST(LLVMGCCCOMMAND,$LLVMGCCCOMMAND)
-  AC_SUBST(LLVMGXXCOMMAND,$LLVMGXXCOMMAND)
-fi
-
-dnl Select the LLVM capable compiler to use, we default to using llvm-gcc if
-dnl found, otherwise clang if available.
+dnl Select the LLVM capable compiler to use, we default to using clang if
+dnl found.
 AC_ARG_WITH(llvmcc,
   AS_HELP_STRING([--with-llvmcc=<name>],
     [Choose the LLVM capable compiler to use (llvm-gcc, clang, or none; default=check)]),
@@ -1178,11 +1112,9 @@ if test "$with_llvmcc" != "check"; then
    if (test "$with_llvmcc" != "llvm-gcc" &&
        test "$with_llvmcc" != "clang" &&
        test "$with_llvmcc" != "none"); then
-      AC_MSG_ERROR([invalid value for --with-llvmcc, expected 'llvm-gcc', 'clang', or 'none'.])
+      AC_MSG_ERROR([invalid value for --with-llvmcc, expected 'clang', 'llvm-gcc', or 'none'.])
    fi
    WITH_LLVMCC="$with_llvmcc"
-elif test -n "$LLVMGCC"; then
-   WITH_LLVMCC=llvm-gcc
 elif test -n "$WITH_CLANGPATH" || test "$WITH_BUILT_CLANG" -ne "0"; then
    WITH_LLVMCC=clang
 else
@@ -1538,60 +1470,6 @@ fi
 
 dnl Check whether __dso_handle is present
 AC_CHECK_FUNCS([__dso_handle])
-
-dnl Check whether llvm-gcc is based on dragonegg
-AC_CACHE_CHECK([whether llvm-gcc is dragonegg],[llvm_cv_llvmgcc_dragonegg],
-[llvm_cv_llvmgcc_dragonegg="no"
-if test -n "$LLVMGCC" ; then
-  cp /dev/null conftest.c
-  $LLVMGCC -fplugin-arg-dragonegg-emit-ir -S -o - conftest.c > /dev/null 2>&1
-  if test $? -eq 0 ; then
-    llvm_cv_llvmgcc_dragonegg="yes"
-  fi
-  rm conftest.c
-fi])
-
-dnl Set the flags needed to emit LLVM IR and to disable optimizations
-dnl in llvmgcc
-if test "$llvm_cv_llvmgcc_dragonegg" = "yes" ; then
-  LLVMCC_EMITIR_FLAG="-fplugin-arg-dragonegg-emit-ir"
-  LLVMCC_DISABLEOPT_FLAGS="-fplugin-arg-dragonegg-llvm-ir-optimize=0"
-else
-  LLVMCC_EMITIR_FLAG="-emit-llvm"
-  LLVMCC_DISABLEOPT_FLAGS="-mllvm -disable-llvm-optzns"
-fi
-
-AC_SUBST(LLVMCC_EMITIR_FLAG)
-
-dnl See if the llvm-gcc executable can compile to LLVM assembly
-AC_CACHE_CHECK([whether llvm-gcc is sane],[llvm_cv_llvmgcc_sanity],
-[llvm_cv_llvmgcc_sanity="no"
-if test -n "$LLVMGCC" ; then
-  cp /dev/null conftest.c
-  $LLVMGCC "$LLVMCC_EMITIR_FLAG" -S -o - conftest.c | \
-      grep 'target datalayout =' > /dev/null 2>&1
-  if test $? -eq 0 ; then
-    llvm_cv_llvmgcc_sanity="yes"
-  fi
-  rm conftest.c
-fi])
-
-dnl Since we have a sane llvm-gcc, identify it and its sub-tools
-dnl Furthermore, add some information about the tools
-if test "$llvm_cv_llvmgcc_sanity" = "yes" ; then
-  AC_MSG_CHECKING([llvm-gcc component support])
-  llvmcc1path=`$LLVMGCC --print-prog-name=cc1`
-  AC_SUBST(LLVMCC1,$llvmcc1path)
-  llvmcc1pluspath=`$LLVMGCC --print-prog-name=cc1plus`
-  AC_SUBST(LLVMCC1PLUS,$llvmcc1pluspath)
-  llvmgccdir=`echo "$llvmcc1path" | sed 's,/libexec/.*,,'`
-  AC_SUBST(LLVMGCCDIR,$llvmgccdir)
-  llvmgcclangs=[`$LLVMGCC -v --help 2>&1 | grep '^Configured with:' | sed 's/^.*--enable-languages=\([^ ]*\).*/\1/'`]
-  AC_SUBST(LLVMGCC_LANGS,$llvmgcclangs)
-  AC_SUBST(LLVMGCC_DRAGONEGG,$llvm_cv_llvmgcc_dragonegg)
-  AC_SUBST(LLVMCC_DISABLEOPT_FLAGS)
-  AC_MSG_RESULT([ok])
-fi
 
 dnl Propagate the shared library extension that the libltdl checks did to
 dnl the Makefiles so we can use it there too
