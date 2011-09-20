@@ -108,7 +108,7 @@ SBData::GetByteSize ()
         value = m_opaque_sp->GetByteSize();
     if (log)
         log->Printf ("SBData::GetByteSize () => "
-                     "(%i)", value);
+                     "(%lu)", value);
     return value;
 }
 
@@ -187,7 +187,7 @@ SBData::GetLongDouble (lldb::SBError& error, uint32_t offset)
     }
     if (log)
         log->Printf ("SBData::GetLongDouble (error=%p,offset=%d) => "
-                     "(%lf)", error.get(), offset, value);
+                     "(%Lf)", error.get(), offset, value);
     return value;
 }
 
@@ -297,7 +297,7 @@ SBData::GetUnsignedInt64 (lldb::SBError& error, uint32_t offset)
     }
     if (log)
         log->Printf ("SBData::GetUnsignedInt64 (error=%p,offset=%d) => "
-                     "(%q)", error.get(), offset, value);
+                     "(%lld)", error.get(), offset, value);
     return value;
 }
 
@@ -385,7 +385,7 @@ SBData::GetSignedInt64 (lldb::SBError& error, uint32_t offset)
     }
     if (log)
         log->Printf ("SBData::GetSignedInt64 (error=%p,offset=%d) => "
-                     "(%q)", error.get(), offset, value);
+                     "(%lld)", error.get(), offset, value);
     return value;
 }
 
@@ -453,7 +453,7 @@ SBData::ReadRawData (lldb::SBError& error,
             error.SetErrorString("unable to read data");
     }
     if (log)
-        log->Printf ("SBData::ReadRawData (error=%p,offset=%d,buf=%p,size=%d) => "
+        log->Printf ("SBData::ReadRawData (error=%p,offset=%d,buf=%p,size=%lu) => "
                      "(%p)", error.get(), offset, buf, size, ok);
     return ok ? size : 0;
 }
@@ -471,7 +471,7 @@ SBData::SetData(lldb::SBError& error,
     else
         m_opaque_sp->SetData(buf, size, endian);
     if (log)
-        log->Printf ("SBData::SetData (error=%p,buf=%p,size=%d,endian=%d,addr_size=%c) => "
+        log->Printf ("SBData::SetData (error=%p,buf=%p,size=%lu,endian=%d,addr_size=%c) => "
                      "(%p)", error.get(), buf, size, endian, addr_size, m_opaque_sp.get());
 }
 

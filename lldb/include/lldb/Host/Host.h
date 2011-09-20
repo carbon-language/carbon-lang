@@ -337,7 +337,7 @@ public:
     ///     description string.
     //------------------------------------------------------------------
     static void
-    SetCrashDescriptionWithFormat (const char *format, ...);
+    SetCrashDescriptionWithFormat (const char *format, ...)  __attribute__ ((format (printf, 1, 2)));
 
     static void
     SetCrashDescription (const char *description);

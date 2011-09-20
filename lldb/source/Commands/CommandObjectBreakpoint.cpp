@@ -885,7 +885,7 @@ CommandObjectBreakpointEnable::Execute
     {
         // No breakpoint selected; enable all currently set breakpoints.
         target->EnableAllBreakpoints ();
-        result.AppendMessageWithFormat ("All breakpoints enabled. (%d breakpoints)\n", num_breakpoints);
+        result.AppendMessageWithFormat ("All breakpoints enabled. (%lu breakpoints)\n", num_breakpoints);
         result.SetStatus (eReturnStatusSuccessFinishNoResult);
     }
     else
@@ -998,7 +998,7 @@ CommandObjectBreakpointDisable::Execute
     {
         // No breakpoint selected; disable all currently set breakpoints.
         target->DisableAllBreakpoints ();
-        result.AppendMessageWithFormat ("All breakpoints disabled. (%d breakpoints)\n", num_breakpoints);
+        result.AppendMessageWithFormat ("All breakpoints disabled. (%lu breakpoints)\n", num_breakpoints);
         result.SetStatus (eReturnStatusSuccessFinishNoResult);
     }
     else
@@ -1301,7 +1301,7 @@ CommandObjectBreakpointDelete::Execute
         else
         {
             target->RemoveAllBreakpoints ();
-            result.AppendMessageWithFormat ("All breakpoints removed. (%d breakpoints)\n", num_breakpoints);
+            result.AppendMessageWithFormat ("All breakpoints removed. (%lu breakpoints)\n", num_breakpoints);
         }
         result.SetStatus (eReturnStatusSuccessFinishNoResult);
     }

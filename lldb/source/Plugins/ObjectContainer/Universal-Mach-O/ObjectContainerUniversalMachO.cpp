@@ -156,11 +156,11 @@ ObjectContainerUniversalMachO::ParseHeader ()
 void
 ObjectContainerUniversalMachO::Dump (Stream *s) const
 {
-    s->Printf("%.*p: ", (int)sizeof(void*) * 2, this);
+    s->Printf("%p: ", this);
     s->Indent();
     const size_t num_archs = GetNumArchitectures();
     const size_t num_objects = GetNumObjects();
-    s->Printf("ObjectContainerUniversalMachO, num_archs = %u, num_objects = %u", num_archs, num_objects);
+    s->Printf("ObjectContainerUniversalMachO, num_archs = %lu, num_objects = %lu", num_archs, num_objects);
     uint32_t i;
     ArchSpec arch;
     s->IndentMore();
@@ -168,12 +168,12 @@ ObjectContainerUniversalMachO::Dump (Stream *s) const
     {
         s->Indent();
         GetArchitectureAtIndex(i, arch);
-        s->Printf("arch[%u] = %s\n", arch.GetArchitectureName());
+        s->Printf("arch[%u] = %s\n", i, arch.GetArchitectureName());
     }
     for (i=0; i<num_objects; i++)
     {
         s->Indent();
-        s->Printf("object[%u] = %s\n", GetObjectNameAtIndex (i));
+        s->Printf("object[%u] = %s\n", i, GetObjectNameAtIndex (i));
     }
     s->IndentLess();
     s->EOL();

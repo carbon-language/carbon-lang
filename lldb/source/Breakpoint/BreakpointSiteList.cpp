@@ -167,7 +167,7 @@ BreakpointSiteList::FindByAddress (lldb::addr_t addr)
 void
 BreakpointSiteList::Dump (Stream *s) const
 {
-    s->Printf("%.*p: ", (int)sizeof(void*) * 2, this);
+    s->Printf("%p: ", this);
     //s->Indent();
     s->Printf("BreakpointSiteList with %u BreakpointSites:\n", (uint32_t)m_bp_site_list.size());
     s->IndentMore();

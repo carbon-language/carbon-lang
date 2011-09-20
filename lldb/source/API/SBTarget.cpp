@@ -646,7 +646,7 @@ SBTarget::BreakpointCreateByAddress (addr_t address)
     
     if (log)
     {
-        log->Printf ("SBTarget(%p)::BreakpointCreateByAddress (%p, address=%p) => SBBreakpoint(%p)", m_opaque_sp.get(), address, sb_bp.get());
+        log->Printf ("SBTarget(%p)::BreakpointCreateByAddress (address=%llu) => SBBreakpoint(%p)", m_opaque_sp.get(), (uint64_t) address, sb_bp.get());
     }
 
     return sb_bp;

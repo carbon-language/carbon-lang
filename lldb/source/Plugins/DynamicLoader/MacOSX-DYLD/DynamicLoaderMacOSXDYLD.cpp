@@ -686,7 +686,7 @@ DynamicLoaderMacOSXDYLD::AddModulesUsingImageInfosAddress (lldb::addr_t image_in
     DYLDImageInfo::collection image_infos;
     LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_DYNAMIC_LOADER));
     if (log)
-        log->Printf ("Adding %d modules.\n");
+        log->Printf ("Adding %d modules.\n", image_infos_count);
         
     Mutex::Locker locker(m_mutex);
     if (m_process->GetStopID() == m_dyld_image_infos_stop_id)

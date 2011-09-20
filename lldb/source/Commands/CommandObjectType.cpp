@@ -557,7 +557,7 @@ public:
                                                     &error);
             if (error.Fail())
             {
-                out_stream->Printf (error.AsCString());
+                out_stream->Printf ("%s", error.AsCString());
                 out_stream->Flush();
                 return;
             }
@@ -574,14 +574,14 @@ public:
                                                                   &error);
                 if (error.Fail())
                 {
-                    out_stream->Printf (error.AsCString());
+                    out_stream->Printf ("%s", error.AsCString());
                     out_stream->Flush();
                     return;
                 }
             }
             else
             {
-                out_stream->Printf (error.AsCString());
+                out_stream->Printf ("%s", error.AsCString());
                 out_stream->Flush();
                 return;
             }

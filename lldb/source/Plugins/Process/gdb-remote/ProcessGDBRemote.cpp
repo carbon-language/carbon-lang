@@ -1737,7 +1737,7 @@ ProcessGDBRemote::GetSTDOUT (char *buf, size_t buf_size, Error &error)
     {
         LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS));
         if (log)
-            log->Printf ("ProcessGDBRemote::%s (&%p[%u]) ...", __FUNCTION__, buf, buf_size);
+            log->Printf ("ProcessGDBRemote::%s (&%p[%lu]) ...", __FUNCTION__, buf, buf_size);
         if (bytes_available > buf_size)
         {
             memcpy(buf, m_stdout_data.c_str(), buf_size);

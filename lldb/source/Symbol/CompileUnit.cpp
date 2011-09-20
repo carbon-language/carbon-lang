@@ -93,7 +93,7 @@ CompileUnit::GetDescription(Stream *s, lldb::DescriptionLevel level) const
 void
 CompileUnit::Dump(Stream *s, bool show_context) const
 {
-    s->Printf("%.*p: ", (int)sizeof(void*) * 2, this);
+    s->Printf("%p: ", this);
     s->Indent();
     *s << "CompileUnit" << (const UserID&)*this
         << ", language = \"" << (const Language&)*this

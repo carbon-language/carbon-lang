@@ -167,7 +167,7 @@ ProcessInstanceInfo::DumpAsTableRow (Stream &s, Platform *platform, bool show_ar
         }
         else
         {
-            s.Printf ("%-10s %.*-7s ", 
+            s.Printf ("%-10s %-7d %s ", 
                       platform->GetUserName (m_euid),
                       (int)m_arch.GetTriple().getArchName().size(),
                       m_arch.GetTriple().getArchName().data());
@@ -1107,7 +1107,7 @@ Process::SetPrivateState (StateType new_state)
     else
     {
         if (log)
-            log->Printf("Process::SetPrivateState (%s) state didn't change. Ignoring...", StateAsCString(new_state), StateAsCString(old_state));
+            log->Printf("Process::SetPrivateState (%s) state didn't change. Ignoring...", StateAsCString(new_state));
     }
 }
 
@@ -2682,7 +2682,7 @@ Process::ShouldBroadcastEvent (Event *event_ptr)
     }
 
     if (log)
-        log->Printf ("Process::ShouldBroadcastEvent (%p) => %s", event_ptr, StateAsCString(state), return_value ? "YES" : "NO");
+        log->Printf ("Process::ShouldBroadcastEvent (%p) => %s - %s", event_ptr, StateAsCString(state), return_value ? "YES" : "NO");
     return return_value;
 }
 
@@ -2830,8 +2830,7 @@ Process::HandlePrivateEvent (EventSP &event_sp)
                          __FUNCTION__, 
                          GetID(), 
                          StateAsCString(new_state), 
-                         StateAsCString (GetState ()),
-                         IsHijackedForEvent(eBroadcastBitStateChanged) ? "hijacked" : "public");
+                         StateAsCString (GetState ()));
         }
     }
 }

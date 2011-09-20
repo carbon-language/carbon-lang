@@ -245,7 +245,7 @@ GDBRemoteCommunicationClient::SendPacketAndWaitForResponse
         else 
         {
             if (log)
-                log->Printf("error: failed to send '%*s'", payload_length, payload);   
+                log->Printf("error: failed to send '%*s'", (int) payload_length, payload);   
         }
     }
     else
@@ -311,13 +311,13 @@ GDBRemoteCommunicationClient::SendPacketAndWaitForResponse
         else
         {
             if (log) 
-                log->Printf("error: packet mutex taken and send_async == false, not sending packet '%*s'", payload_length, payload);
+                log->Printf("error: packet mutex taken and send_async == false, not sending packet '%*s'", (int) payload_length, payload);
         }
     }
     if (response_len == 0)
     {
         if (log) 
-            log->Printf("error: failed to get response for '%*s'", payload_length, payload);
+            log->Printf("error: failed to get response for '%*s'", (int) payload_length, payload);
     }        
     return response_len;
 }
@@ -385,7 +385,7 @@ GDBRemoteCommunicationClient::SendContinuePacketAndWaitForResponse
         got_stdout = false;
 
         if (log)
-            log->Printf ("GDBRemoteCommunicationClient::%s () WaitForPacket(%.*s)", __FUNCTION__);
+            log->Printf ("GDBRemoteCommunicationClient::%s () WaitForPacket(%s)", __FUNCTION__, continue_packet.c_str());
 
         if (WaitForPacketWithTimeoutMicroSeconds (response, UINT32_MAX))
         {

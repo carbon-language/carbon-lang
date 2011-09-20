@@ -166,7 +166,7 @@ UnwindPlan::Row::Dump (Stream& s, const UnwindPlan* unwind_plan, Thread* thread,
     if (base_addr != LLDB_INVALID_ADDRESS)
         s.Printf ("0x%16.16llx: CFA=", base_addr + GetOffset());
     else
-        s.Printf ("0x%8.8x: CFA=", GetOffset());
+        s.Printf ("0x%8.8llx: CFA=", GetOffset());
             
     if (reg_info)
         s.Printf ("%s", reg_info->name);

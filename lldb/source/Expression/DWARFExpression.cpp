@@ -310,8 +310,8 @@ DWARFExpression::DumpLocation (Stream *s, uint32_t offset, uint32_t length, lldb
         case DW_OP_const4s: s->Printf("DW_OP_const4s(0x%8.8x) ", m_data.GetU32(&offset)); break;      // 0x0d 1 4-byte constant
         case DW_OP_const8u: s->Printf("DW_OP_const8u(0x%16.16llx) ", m_data.GetU64(&offset)); break;  // 0x0e 1 8-byte constant
         case DW_OP_const8s: s->Printf("DW_OP_const8s(0x%16.16llx) ", m_data.GetU64(&offset)); break;  // 0x0f 1 8-byte constant
-        case DW_OP_constu:  s->Printf("DW_OP_constu(0x%x) ", m_data.GetULEB128(&offset)); break;      // 0x10 1 ULEB128 constant
-        case DW_OP_consts:  s->Printf("DW_OP_consts(0x%x) ", m_data.GetSLEB128(&offset)); break;      // 0x11 1 SLEB128 constant
+        case DW_OP_constu:  s->Printf("DW_OP_constu(0x%llx) ", m_data.GetULEB128(&offset)); break;    // 0x10 1 ULEB128 constant
+        case DW_OP_consts:  s->Printf("DW_OP_consts(0x%lld) ", m_data.GetSLEB128(&offset)); break;    // 0x11 1 SLEB128 constant
         case DW_OP_dup:     s->PutCString("DW_OP_dup"); break;                                        // 0x12
         case DW_OP_drop:    s->PutCString("DW_OP_drop"); break;                                       // 0x13
         case DW_OP_over:    s->PutCString("DW_OP_over"); break;                                       // 0x14
@@ -330,7 +330,7 @@ DWARFExpression::DumpLocation (Stream *s, uint32_t offset, uint32_t length, lldb
         case DW_OP_or:      s->PutCString("DW_OP_or"); break;                                         // 0x21
         case DW_OP_plus:    s->PutCString("DW_OP_plus"); break;                                       // 0x22
         case DW_OP_plus_uconst:                                                                 // 0x23 1 ULEB128 addend
-            s->Printf("DW_OP_plus_uconst(0x%x) ", m_data.GetULEB128(&offset));
+            s->Printf("DW_OP_plus_uconst(0x%llx) ", m_data.GetULEB128(&offset));
             break;
 
         case DW_OP_shl:     s->PutCString("DW_OP_shl"); break;                                        // 0x24
@@ -541,7 +541,7 @@ DWARFExpression::DumpLocation (Stream *s, uint32_t offset, uint32_t length, lldb
             }
             break;
         case DW_OP_piece:                                                   // 0x93 1 ULEB128 size of piece addressed
-            s->Printf("DW_OP_piece(0x%x)", m_data.GetULEB128(&offset));
+            s->Printf("DW_OP_piece(0x%llx)", m_data.GetULEB128(&offset));
             break;
         case DW_OP_deref_size:                                              // 0x94 1 1-byte size of data retrieved
             s->Printf("DW_OP_deref_size(0x%2.2x)", m_data.GetU8(&offset));
@@ -568,7 +568,7 @@ DWARFExpression::DumpLocation (Stream *s, uint32_t offset, uint32_t length, lldb
 //      case DW_OP_lo_user:     s->PutCString("DW_OP_lo_user"); break;                        // 0xe0
 //      case DW_OP_hi_user:     s->PutCString("DW_OP_hi_user"); break;                        // 0xff
         case DW_OP_APPLE_extern:
-            s->Printf("DW_OP_APPLE_extern(%u)", m_data.GetULEB128(&offset));
+            s->Printf("DW_OP_APPLE_extern(%llu)", m_data.GetULEB128(&offset));
             break;
         case DW_OP_APPLE_array_ref:
             s->PutCString("DW_OP_APPLE_array_ref");
@@ -589,7 +589,7 @@ DWARFExpression::DumpLocation (Stream *s, uint32_t offset, uint32_t length, lldb
             s->PutCString("DW_OP_APPLE_deref_type");
             break;
         case DW_OP_APPLE_expr_local:    // 0xF5 - ULEB128 expression local index
-            s->Printf("DW_OP_APPLE_expr_local(%u)", m_data.GetULEB128(&offset));
+            s->Printf("DW_OP_APPLE_expr_local(%llu)", m_data.GetULEB128(&offset));
             break;
         case DW_OP_APPLE_constf:        // 0xF6 - 1 byte float size, followed by constant float data
             {
@@ -1029,7 +1029,7 @@ DWARFExpression::Evaluate
         if (log)
         {
             size_t count = stack.size();
-            log->Printf("Stack before operation has %d values:", count);
+            log->Printf("Stack before operation has %lu values:", count);
             for (size_t i=0; i<count; ++i)
             {
                 StreamString new_value;
@@ -2856,7 +2856,7 @@ DWARFExpression::Evaluate
     else if (log)
     {
         size_t count = stack.size();
-        log->Printf("Stack after operation has %d values:", count);
+        log->Printf("Stack after operation has %lu values:", count);
         for (size_t i=0; i<count; ++i)
         {
             StreamString new_value;

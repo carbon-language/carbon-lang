@@ -204,8 +204,7 @@ ScriptInterpreterPython::ScriptInterpreterPython (CommandInterpreter &interprete
     PyRun_SimpleString (run_string.GetData());
     
     run_string.Clear();
-    run_string.Printf ("run_one_line (%s, 'import gnu_libstdcpp')", m_dictionary_name.c_str(),
-                       interpreter.GetDebugger().GetID());
+    run_string.Printf ("run_one_line (%s, 'import gnu_libstdcpp')", m_dictionary_name.c_str());
     PyRun_SimpleString (run_string.GetData());
     
     if (m_dbg_stdout != NULL)
@@ -629,7 +628,7 @@ ScriptInterpreterPython::InputReaderCallback
         if (script_interpreter->m_embedded_python_pty.GetMasterFileDescriptor() != -1)
         {
             if (log)
-                log->Printf ("ScriptInterpreterPython::InputReaderCallback, GotToken, bytes='%s', byte_len = %d", bytes,
+                log->Printf ("ScriptInterpreterPython::InputReaderCallback, GotToken, bytes='%s', byte_len = %lu", bytes,
                              bytes_len);
             if (bytes && bytes_len)
             {
@@ -643,7 +642,7 @@ ScriptInterpreterPython::InputReaderCallback
         else
         {
             if (log)
-                log->Printf ("ScriptInterpreterPython::InputReaderCallback, GotToken, bytes='%s', byte_len = %d, Master File Descriptor is bad.", 
+                log->Printf ("ScriptInterpreterPython::InputReaderCallback, GotToken, bytes='%s', byte_len = %lu, Master File Descriptor is bad.", 
                              bytes,
                              bytes_len);
             reader.SetIsDone (true);

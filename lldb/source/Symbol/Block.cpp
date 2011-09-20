@@ -78,7 +78,7 @@ Block::Dump(Stream *s, addr_t base_addr, int32_t depth, bool show_context) const
         }
     }
 
-    s->Printf("%.*p: ", (int)sizeof(void*) * 2, this);
+    s->Printf("%p: ", this);
     s->Indent();
     *s << "Block" << ((const UserID&)*this);
     const Block* parent_block = GetParent();

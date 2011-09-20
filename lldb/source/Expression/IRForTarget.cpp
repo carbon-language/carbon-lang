@@ -1465,7 +1465,7 @@ IRForTarget::MaybeHandleVariable (Value *llvm_value_ptr)
         off_t value_alignment = (ast_context->getTypeAlign(qual_type) + 7) / 8;
         
         if (log)
-            log->Printf("Type of \"%s\" is [clang \"%s\", llvm \"%s\"] [size %d, align %d]", 
+            log->Printf("Type of \"%s\" is [clang \"%s\", llvm \"%s\"] [size %lu, align %lld]", 
                         name.c_str(), 
                         qual_type.getAsString().c_str(), 
                         PrintType(value_type).c_str(), 
@@ -1815,7 +1815,7 @@ IRForTarget::ReplaceStaticLiterals (llvm::BasicBlock &basic_block)
                 }
                 ss.flush();
                 
-                log->Printf("Found ConstantFP with size %d and raw data %s", operand_data_size, s.c_str());
+                log->Printf("Found ConstantFP with size %lu and raw data %s", operand_data_size, s.c_str());
             }
             
             lldb_private::DataBufferHeap data(operand_data_size, 0);
@@ -2186,7 +2186,7 @@ IRForTarget::ReplaceVariables (Function &llvm_function)
         }
             
         if (log)
-            log->Printf("  \"%s\" [\"%s\"] (\"%s\") placed at %d",
+            log->Printf("  \"%s\" [\"%s\"] (\"%s\") placed at %lld",
                         value->getName().str().c_str(),
                         name.GetCString(),
                         PrintValue(value, true).c_str(),
@@ -2225,7 +2225,7 @@ IRForTarget::ReplaceVariables (Function &llvm_function)
     }
     
     if (log)
-        log->Printf("Total structure [align %d, size %d]", alignment, size);
+        log->Printf("Total structure [align %lld, size %lu]", alignment, size);
     
     return true;
 }

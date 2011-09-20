@@ -154,7 +154,7 @@ void
 BreakpointList::Dump (Stream *s) const
 {
     Mutex::Locker locker(m_mutex);
-    s->Printf("%.*p: ", (int)sizeof(void*) * 2, this);
+    s->Printf("%p: ", this);
     s->Indent();
     s->Printf("BreakpointList with %u Breakpoints:\n", (uint32_t)m_breakpoints.size());
     s->IndentMore();

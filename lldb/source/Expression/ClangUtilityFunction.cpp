@@ -173,7 +173,7 @@ ClangUtilityFunction::Install (Stream &error_stream,
         if (error_cstr && error_cstr[0])
             error_stream.Printf ("error: %s\n", error_cstr);
         else
-            error_stream.Printf ("error: expression can't be interpreted or run\n", num_errors);
+            error_stream.Printf ("error: expression can't be interpreted or run\n");
         return false;
     }
 }

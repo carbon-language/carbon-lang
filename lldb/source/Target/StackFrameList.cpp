@@ -266,7 +266,7 @@ StackFrameList::Dump (Stream *s)
             frame->DumpUsingSettingsFormat (s);
         }
         else
-            s->Printf("frame #%u", std::distance (begin, pos));
+            s->Printf("frame #%ld", std::distance (begin, pos));
         s->EOL();
     }
     s->EOL();

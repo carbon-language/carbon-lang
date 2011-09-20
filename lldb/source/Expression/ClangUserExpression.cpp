@@ -319,7 +319,7 @@ ClangUserExpression::Parse (Stream &error_stream,
         if (error_cstr && error_cstr[0])
             error_stream.Printf ("error: %s\n", error_cstr);
         else
-            error_stream.Printf ("error: expression can't be interpreted or run\n", num_errors);
+            error_stream.Printf ("error: expression can't be interpreted or run\n");
         return false;
     }
 }
@@ -550,7 +550,7 @@ ClangUserExpression::Execute (Stream &error_stream,
             if (error_desc)
                 error_stream.Printf ("Execution was interrupted, reason: %s.", error_desc);
             else
-                error_stream.Printf ("Execution was interrupted.", error_desc);
+                error_stream.Printf ("Execution was interrupted.");
                 
             if (discard_on_error)
                 error_stream.Printf ("\nThe process has been returned to the state before execution.");

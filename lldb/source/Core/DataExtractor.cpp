@@ -1414,15 +1414,15 @@ DataExtractor::Dump
                 {
                     switch (ch)
                     {
-                    case '\e': s->Printf ("\\e", (uint8_t)ch); break;
-                    case '\a': s->Printf ("\\a", ch); break;
-                    case '\b': s->Printf ("\\b", ch); break;
-                    case '\f': s->Printf ("\\f", ch); break;
-                    case '\n': s->Printf ("\\n", ch); break;
-                    case '\r': s->Printf ("\\r", ch); break;
-                    case '\t': s->Printf ("\\t", ch); break;
-                    case '\v': s->Printf ("\\v", ch); break;
-                    case '\0': s->Printf ("\\0", ch); break;
+                    case '\e': s->Printf ("\\e"); break;
+                    case '\a': s->Printf ("\\a"); break;
+                    case '\b': s->Printf ("\\b"); break;
+                    case '\f': s->Printf ("\\f"); break;
+                    case '\n': s->Printf ("\\n"); break;
+                    case '\r': s->Printf ("\\r"); break;
+                    case '\t': s->Printf ("\\t"); break;
+                    case '\v': s->Printf ("\\v"); break;
+                    case '\0': s->Printf ("\\0"); break;
                     default:   
                         if (item_byte_size == 1)
                             s->Printf ("\\x%2.2x", ch); 
@@ -1492,15 +1492,15 @@ DataExtractor::Dump
                     {
                         switch (ch)
                         {
-                        case '\e': s->Printf ("\\e", (uint8_t)ch); break;
-                        case '\a': s->Printf ("\\a", ch); break;
-                        case '\b': s->Printf ("\\b", ch); break;
-                        case '\f': s->Printf ("\\f", ch); break;
-                        case '\n': s->Printf ("\\n", ch); break;
-                        case '\r': s->Printf ("\\r", ch); break;
-                        case '\t': s->Printf ("\\t", ch); break;
-                        case '\v': s->Printf ("\\v", ch); break;
-                        case '\0': s->Printf ("\\0", ch); break;
+                        case '\e': s->Printf ("\\e"); break;
+                        case '\a': s->Printf ("\\a"); break;
+                        case '\b': s->Printf ("\\b"); break;
+                        case '\f': s->Printf ("\\f"); break;
+                        case '\n': s->Printf ("\\n"); break;
+                        case '\r': s->Printf ("\\r"); break;
+                        case '\t': s->Printf ("\\t"); break;
+                        case '\v': s->Printf ("\\v"); break;
+                        case '\0': s->Printf ("\\0"); break;
                         default:   s->Printf ("\\x%2.2x", ch); break;
                         }
                     }
@@ -1521,7 +1521,7 @@ DataExtractor::Dump
                     s->Printf("\"%s\"", cstr);
                 else
                 {
-                    s->Printf("NULL", cstr);
+                    s->Printf("NULL");
                     offset = UINT32_MAX;
                 }
             }

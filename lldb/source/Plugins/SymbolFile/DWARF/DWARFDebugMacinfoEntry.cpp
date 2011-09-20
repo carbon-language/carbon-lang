@@ -65,7 +65,7 @@ DWARFDebugMacinfoEntry::Dump(Stream *s) const
             break;
 
         case DW_MACINFO_start_file:
-            s->Printf(" line:%u  file index: '%s'\n", (uint32_t)m_line, (uint32_t)m_op2.file_idx);
+            s->Printf(" line:%u  file index: '%u'\n", (uint32_t)m_line, (uint32_t)m_op2.file_idx);
             break;
 
         case DW_MACINFO_end_file:

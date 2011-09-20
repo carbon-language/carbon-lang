@@ -355,7 +355,7 @@ Function::GetDescription(Stream *s, lldb::DescriptionLevel level, Target *target
 void
 Function::Dump(Stream *s, bool show_context) const
 {
-    s->Printf("%.*p: ", (int)sizeof(void*) * 2, this);
+    s->Printf("%p: ", this);
     s->Indent();
     *s << "Function" << (const UserID&)*this;
 
@@ -363,7 +363,7 @@ Function::Dump(Stream *s, bool show_context) const
 
     if (m_type)
     {
-        s->Printf(", type = %.*p", (int)sizeof(void*) * 2, m_type);
+        s->Printf(", type = %p", m_type);
     }
     else if (m_type_uid != LLDB_INVALID_UID)
     {

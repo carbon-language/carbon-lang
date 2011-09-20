@@ -84,7 +84,7 @@ Variable::NameMatches (const RegularExpression& regex) const
 void
 Variable::Dump(Stream *s, bool show_context) const
 {
-    s->Printf("%.*p: ", (int)sizeof(void*) * 2, this);
+    s->Printf("%p: ", this);
     s->Indent();
     *s << "Variable" << (const UserID&)*this;
 

@@ -547,7 +547,7 @@ public:
             }
             else if (m_memory_options.m_count.OptionWasSet())
             {
-                result.AppendErrorWithFormat("specify either the end address (0x%llx) or the count (--count %u), not both.\n", end_addr, item_count);
+                result.AppendErrorWithFormat("specify either the end address (0x%llx) or the count (--count %lu), not both.\n", end_addr, item_count);
                 result.SetStatus(eReturnStatusFailed);
                 return false;
             }
@@ -572,7 +572,7 @@ public:
             }
             
             if (bytes_read < total_byte_size)
-                result.AppendWarningWithFormat("Not all bytes (%u/%u) were able to be read from 0x%llx.\n", bytes_read, total_byte_size, addr);
+                result.AppendWarningWithFormat("Not all bytes (%lu/%lu) were able to be read from 0x%llx.\n", bytes_read, total_byte_size, addr);
         }
 
         StreamFile outfile_stream;
@@ -1012,7 +1012,7 @@ public:
                 }
                 else if (!UIntValueIsValidForSize (uval64, item_byte_size))
                 {
-                    result.AppendErrorWithFormat ("Value 0x%llx is too large to fit in a %u byte unsigned integer value.\n", uval64, item_byte_size);
+                    result.AppendErrorWithFormat ("Value 0x%llx is too large to fit in a %lu byte unsigned integer value.\n", uval64, item_byte_size);
                     result.SetStatus(eReturnStatusFailed);
                     return false;
                 }
@@ -1040,7 +1040,7 @@ public:
                 }
                 else if (!UIntValueIsValidForSize (uval64, item_byte_size))
                 {
-                    result.AppendErrorWithFormat ("Value 0x%llx is too large to fit in a %u byte unsigned integer value.\n", uval64, item_byte_size);
+                    result.AppendErrorWithFormat ("Value 0x%llx is too large to fit in a %lu byte unsigned integer value.\n", uval64, item_byte_size);
                     result.SetStatus(eReturnStatusFailed);
                     return false;
                 }
@@ -1080,7 +1080,7 @@ public:
                 }
                 else if (!SIntValueIsValidForSize (sval64, item_byte_size))
                 {
-                    result.AppendErrorWithFormat ("Value %lli is too large or small to fit in a %u byte signed integer value.\n", sval64, item_byte_size);
+                    result.AppendErrorWithFormat ("Value %lli is too large or small to fit in a %lu byte signed integer value.\n", sval64, item_byte_size);
                     result.SetStatus(eReturnStatusFailed);
                     return false;
                 }
@@ -1097,7 +1097,7 @@ public:
                 }
                 else if (!UIntValueIsValidForSize (uval64, item_byte_size))
                 {
-                    result.AppendErrorWithFormat ("Value %llu is too large to fit in a %u byte unsigned integer value.\n", uval64, item_byte_size);
+                    result.AppendErrorWithFormat ("Value %llu is too large to fit in a %lu byte unsigned integer value.\n", uval64, item_byte_size);
                     result.SetStatus(eReturnStatusFailed);
                     return false;
                 }
@@ -1114,7 +1114,7 @@ public:
                 }
                 else if (!UIntValueIsValidForSize (uval64, item_byte_size))
                 {
-                    result.AppendErrorWithFormat ("Value %llo is too large to fit in a %u byte unsigned integer value.\n", uval64, item_byte_size);
+                    result.AppendErrorWithFormat ("Value %llo is too large to fit in a %lu byte unsigned integer value.\n", uval64, item_byte_size);
                     result.SetStatus(eReturnStatusFailed);
                     return false;
                 }

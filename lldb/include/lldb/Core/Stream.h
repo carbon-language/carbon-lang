@@ -126,7 +126,7 @@ public:
     ///     The number of bytes that were appended to the stream.
     //------------------------------------------------------------------
     int
-    PrintfAsRawHex8 (const char *format, ...);
+    PrintfAsRawHex8 (const char *format, ...)  __attribute__ ((format (printf, 2, 3)));
 
     //------------------------------------------------------------------
     /// Format a C string from a printf style format and variable
@@ -519,7 +519,7 @@ public:
     ///     format string \a format.
     //------------------------------------------------------------------
     int
-    Printf (const char *format, ...);
+    Printf (const char *format, ...)  __attribute__ ((format (printf, 2, 3)));
 
     int
     PrintfVarArg(const char *format, va_list args);

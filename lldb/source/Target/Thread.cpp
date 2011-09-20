@@ -1018,7 +1018,7 @@ Thread::UpdateInstanceName ()
     if (name && name[0] != '\0')
         sstr.Printf ("%s", name);
     else if ((GetIndexID() != 0) || (GetID() != 0))
-        sstr.Printf ("0x%4.4x", GetIndexID(), GetID());
+        sstr.Printf ("0x%4.4x", GetIndexID());
 
     if (sstr.GetSize() > 0)
 	Thread::GetSettingsController()->RenameInstanceSettings (GetInstanceName().AsCString(), sstr.GetData());

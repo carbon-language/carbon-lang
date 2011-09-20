@@ -87,7 +87,7 @@ public:
     PutCString(const char* string, int len = -1);
     
     size_t
-    Printf(const char* format, ...);
+    Printf(const char* format, ...)  __attribute__ ((format (printf, 2, 3)));
     
 protected:
     friend class SBCommandInterpreter;

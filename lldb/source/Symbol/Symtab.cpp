@@ -87,7 +87,7 @@ Symtab::Dump (Stream *s, Target *target, SortOrder sort_order)
         object_name = m_objfile->GetModule()->GetObjectName().GetCString();
 
     if (file_spec)
-        s->Printf("Symtab, file = %s/%s%s%s%s, num_symbols = %u",
+        s->Printf("Symtab, file = %s/%s%s%s%s, num_symbols = %lu",
         file_spec.GetDirectory().AsCString(),
         file_spec.GetFilename().AsCString(),
         object_name ? "(" : "",
@@ -95,7 +95,7 @@ Symtab::Dump (Stream *s, Target *target, SortOrder sort_order)
         object_name ? ")" : "",
         m_symbols.size());
     else
-        s->Printf("Symtab, num_symbols = %u", m_symbols.size());
+        s->Printf("Symtab, num_symbols = %lu", m_symbols.size());
 
     if (!m_symbols.empty())
     {
@@ -169,7 +169,7 @@ Symtab::Dump(Stream *s, Target *target, std::vector<uint32_t>& indexes) const
     const size_t num_symbols = GetNumSymbols();
     //s->Printf("%.*p: ", (int)sizeof(void*) * 2, this);
     s->Indent();
-    s->Printf("Symtab %u symbol indexes (%u symbols total):\n", indexes.size(), m_symbols.size());
+    s->Printf("Symtab %lu symbol indexes (%lu symbols total):\n", indexes.size(), m_symbols.size());
     s->IndentMore();
 
     if (!indexes.empty())

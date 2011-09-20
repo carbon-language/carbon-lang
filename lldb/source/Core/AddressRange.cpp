@@ -196,7 +196,7 @@ AddressRange::Dump(Stream *s, Target *target, Address::DumpStyle style, Address:
 void
 AddressRange::DumpDebug (Stream *s) const
 {
-    s->Printf("%.*p: AddressRange section = %*p, offset = 0x%16.16llx, byte_size = 0x%16.16llx\n", (int)sizeof(void*) * 2, this, (int)sizeof(void*) * 2, m_base_addr.GetSection(), m_base_addr.GetOffset(), GetByteSize());
+    s->Printf("%p: AddressRange section = %p, offset = 0x%16.16llx, byte_size = 0x%16.16llx\n", this, m_base_addr.GetSection(), m_base_addr.GetOffset(), GetByteSize());
 }
 //
 //bool

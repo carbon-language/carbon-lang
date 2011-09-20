@@ -493,7 +493,7 @@ DynamicLoaderDarwinKernel::ParseKextSummaries (const Address &kext_summary_addr,
     OSKextLoadedKextSummary::collection kext_summaries;
     LogSP log(GetLogIfAnyCategoriesSet (LIBLLDB_LOG_DYNAMIC_LOADER));
     if (log)
-        log->Printf ("Adding %d modules.\n");
+        log->Printf ("Adding %d modules.\n", count);
         
     Mutex::Locker locker(m_mutex);
 

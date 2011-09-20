@@ -279,7 +279,7 @@ SymbolVendor::Dump(Stream *s)
     Mutex::Locker locker(m_mutex);
     bool show_context = false;
 
-    s->Printf("%.*p: ", (int)sizeof(void*) * 2, this);
+    s->Printf("%p: ", this);
     s->Indent();
     s->PutCString("SymbolVendor");
     if (m_sym_file_ap.get())

@@ -1479,7 +1479,7 @@ void
 ObjectFileMachO::Dump (Stream *s)
 {
     lldb_private::Mutex::Locker locker(m_mutex);
-    s->Printf("%.*p: ", (int)sizeof(void*) * 2, this);
+    s->Printf("%p: ", this);
     s->Indent();
     if (m_header.magic == HeaderMagic64 || m_header.magic == HeaderMagic64Swapped)
         s->PutCString("ObjectFileMachO64");

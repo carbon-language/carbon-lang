@@ -217,7 +217,7 @@ Module::CalculateSymbolContextModule ()
 void
 Module::DumpSymbolContext(Stream *s)
 {
-    s->Printf(", Module{0x%8.8x}", this);
+    s->Printf(", Module{%p}", this);
 }
 
 uint32_t

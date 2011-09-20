@@ -126,37 +126,37 @@ public:
     PutCString (const char *cstr);
 
     void
-    Printf (const char *format, ...);
+    Printf (const char *format, ...)  __attribute__ ((format (printf, 2, 3)));
 
     void
     VAPrintf (const char *format, va_list args);
 
     void
-    PrintfWithFlags( uint32_t flags, const char *format, ...);
+    PrintfWithFlags( uint32_t flags, const char *format, ...)  __attribute__ ((format (printf, 3, 4)));
 
     void
-    LogIf (uint32_t mask, const char *fmt, ...);
+    LogIf (uint32_t mask, const char *fmt, ...)  __attribute__ ((format (printf, 3, 4)));
 
     void
-    Debug (const char *fmt, ...);
+    Debug (const char *fmt, ...)  __attribute__ ((format (printf, 2, 3)));
 
     void
-    DebugVerbose (const char *fmt, ...);
+    DebugVerbose (const char *fmt, ...)  __attribute__ ((format (printf, 2, 3)));
 
     void
-    Error (const char *fmt, ...);
+    Error (const char *fmt, ...)  __attribute__ ((format (printf, 2, 3)));
 
     void
-    FatalError (int err, const char *fmt, ...);
+    FatalError (int err, const char *fmt, ...)  __attribute__ ((format (printf, 3, 4)));
 
     void
-    Verbose (const char *fmt, ...);
+    Verbose (const char *fmt, ...)  __attribute__ ((format (printf, 2, 3)));
 
     void
-    Warning (const char *fmt, ...);
+    Warning (const char *fmt, ...)  __attribute__ ((format (printf, 2, 3)));
 
     void
-    WarningVerbose (const char *fmt, ...);
+    WarningVerbose (const char *fmt, ...)  __attribute__ ((format (printf, 2, 3)));
 
     Flags &
     GetOptions();

@@ -274,7 +274,7 @@ DWARFDebugLine::DumpStatementOpcodes(Log *log, const DataExtractor& debug_line_d
                 {
                     dw_uleb128_t addr_offset_n = debug_line_data.GetULEB128(&offset);
                     dw_uleb128_t addr_offset = addr_offset_n * prologue.min_inst_length;
-                    log->Printf( "0x%8.8x: DW_LNS_advance_pc (0x%llx)", op_offset, addr_offset);
+                    log->Printf( "0x%8.8x: DW_LNS_advance_pc (0x%x)", op_offset, addr_offset);
                     row.address += addr_offset;
                 }
                 break;

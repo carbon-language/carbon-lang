@@ -389,7 +389,7 @@ public:
                         sc_list.GetContextAtIndex (i, scratch_sc);
                         if (scratch_sc.function != NULL)
                         {
-                            s.Printf("\n%d: ", i); 
+                            s.Printf("\n%lu: ", i); 
                             scratch_sc.function->Dump (&s, true);
                         }
                     }

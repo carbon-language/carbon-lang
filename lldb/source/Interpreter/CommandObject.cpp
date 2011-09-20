@@ -600,7 +600,7 @@ CommandObject::GetFormattedCommandArguments (Stream &str)
                     str.Printf ("[<%s>]", names.GetData());
                     break;
                 case eArgRepeatRange:
-                    str.Printf ("<%s_1> .. <%s_n>", names.GetData());
+                    str.Printf ("<%s_1> .. <%s_n>", names.GetData(), names.GetData());
                     break;
                 // Explicitly test for all the rest of the cases, so if new types get added we will notice the
                 // missing case statement(s).

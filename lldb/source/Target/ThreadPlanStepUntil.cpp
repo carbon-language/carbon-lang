@@ -147,7 +147,7 @@ ThreadPlanStepUntil::GetDescription (Stream *s, lldb::DescriptionLevel level)
                 s->Printf ("\n\t0x%llx (bp: %d)", (uint64_t) (*pos).first, (*pos).second);
             }
         }
-        s->Printf(" stepped out address is 0x%lx.", (uint64_t) m_return_addr);
+        s->Printf(" stepped out address is 0x%llx.", (uint64_t) m_return_addr);
     }
 }
 

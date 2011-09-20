@@ -790,7 +790,7 @@ ScanBracketedRange (const char* var_name_begin,
             *index_lower = ::strtoul (*open_bracket_position+1, &end, 0);
             *index_higher = *index_lower;
             if (log)
-                log->Printf("[%d] detected, high index is same", *index_lower);
+                log->Printf("[%lld] detected, high index is same", *index_lower);
         }
         else if (*close_bracket_position && *close_bracket_position < var_name_end)
         {
@@ -798,7 +798,7 @@ ScanBracketedRange (const char* var_name_begin,
             *index_lower = ::strtoul (*open_bracket_position+1, &end, 0);
             *index_higher = ::strtoul (*separator_position+1, &end, 0);
             if (log)
-                log->Printf("[%d-%d] detected", *index_lower, *index_higher);
+                log->Printf("[%lld-%lld] detected", *index_lower, *index_higher);
         }
         else
         {
@@ -1267,7 +1267,7 @@ Debugger::FormatPrompt
                                         if (!item)
                                         {
                                             if (log)
-                                                log->Printf("ERROR in getting child item at index %d", index_lower);
+                                                log->Printf("ERROR in getting child item at index %lld", index_lower);
                                         }
                                         else
                                         {

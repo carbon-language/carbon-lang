@@ -437,7 +437,7 @@ DWARFFormValue::Dump(Stream &s, const DataExtractor* debug_str_data, const DWARF
         if (verbose)
             s.PutCString(" => ");
 
-        s.Printf("{0x%8.8x}", (uvalue + (cu ? cu->GetOffset() : 0)));
+        s.Printf("{0x%8.8llx}", (uvalue + (cu ? cu->GetOffset() : 0)));
     }
 }
 

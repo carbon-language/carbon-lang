@@ -656,7 +656,7 @@ void
 ObjectFilePECOFF::Dump(Stream *s)
 {
     Mutex::Locker locker(m_mutex);
-    s->Printf("%.*p: ", (int)sizeof(void*) * 2, this);
+    s->Printf("%p: ", this);
     s->Indent();
     s->PutCString("ObjectFilePECOFF");
     

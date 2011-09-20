@@ -106,7 +106,7 @@ SBValue::GetName()
         if (name)
             log->Printf ("SBValue(%p)::GetName () => \"%s\"", m_opaque_sp.get(), name);
         else
-            log->Printf ("SBValue(%p)::GetName () => NULL", m_opaque_sp.get(), name);
+            log->Printf ("SBValue(%p)::GetName () => NULL", m_opaque_sp.get());
     }
 
     return name;
@@ -357,7 +357,7 @@ SBValue::CreateChildAtOffset (const char *name, uint32_t offset, SBType type)
     if (log)
     {
         if (result.IsValid())
-            log->Printf ("SBValue(%p)::GetChildAtOffset => \"%s\"", m_opaque_sp.get(), result.m_opaque_sp.get());
+            log->Printf ("SBValue(%p)::GetChildAtOffset => \"%s\"", m_opaque_sp.get(), result.m_opaque_sp->GetName().AsCString());
         else
             log->Printf ("SBValue(%p)::GetChildAtOffset => NULL", m_opaque_sp.get());
     }
@@ -391,7 +391,7 @@ SBValue::CreateValueFromExpression (const char *name, const char* expression)
     if (log)
     {
         if (result.IsValid())
-            log->Printf ("SBValue(%p)::GetChildFromExpression => \"%s\"", m_opaque_sp.get(), result.m_opaque_sp.get());
+            log->Printf ("SBValue(%p)::GetChildFromExpression => \"%s\"", m_opaque_sp.get(), result.m_opaque_sp->GetName().AsCString());
         else
             log->Printf ("SBValue(%p)::GetChildFromExpression => NULL", m_opaque_sp.get());
     }
@@ -433,7 +433,7 @@ SBValue::CreateValueFromAddress(const char* name, lldb::addr_t address, SBType t
     if (log)
     {
         if (result.IsValid())
-            log->Printf ("SBValue(%p)::GetChildFromAddress => \"%s\"", m_opaque_sp.get(), result.m_opaque_sp.get());
+            log->Printf ("SBValue(%p)::GetChildFromAddress => \"%s\"", m_opaque_sp.get(), result.m_opaque_sp->GetName().AsCString());
         else
             log->Printf ("SBValue(%p)::GetChildFromAddress => NULL", m_opaque_sp.get());
     }
@@ -463,7 +463,7 @@ SBValue::CreateValueFromData (const char* name, SBData data, SBType type)
     if (log)
     {
         if (result.IsValid())
-            log->Printf ("SBValue(%p)::GetChildFromExpression => \"%s\"", m_opaque_sp.get(), result.m_opaque_sp.get());
+            log->Printf ("SBValue(%p)::GetChildFromExpression => \"%s\"", m_opaque_sp.get(), result.m_opaque_sp->GetName().AsCString());
         else
             log->Printf ("SBValue(%p)::GetChildFromExpression => NULL", m_opaque_sp.get());
     }
@@ -541,7 +541,7 @@ SBValue::GetIndexOfChildWithName (const char *name)
     if (log)
     {
         if (idx == UINT32_MAX)
-            log->Printf ("SBValue(%p)::GetIndexOfChildWithName (name=\"%s\") => NOT FOUND", m_opaque_sp.get(), name, idx);
+            log->Printf ("SBValue(%p)::GetIndexOfChildWithName (name=\"%s\") => NOT FOUND", m_opaque_sp.get(), name);
         else
             log->Printf ("SBValue(%p)::GetIndexOfChildWithName (name=\"%s\") => %u", m_opaque_sp.get(), name, idx);
     }

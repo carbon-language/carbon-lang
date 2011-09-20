@@ -743,7 +743,7 @@ CommunicationKDP::DumpPacket (Stream &s, const DataExtractor& packet)
                                 const addr_t region_addr = packet.GetPointer (&offset);
                                 const uint32_t region_size = packet.GetU32 (&offset);
                                 const uint32_t region_prot = packet.GetU32 (&offset);
-                                s.Printf("\n\tregion[%i] = { range = [0x%16.16llx - 0x%16.16llx), size = 0x%8.8x, prot = %s }", region_addr, region_addr + region_size, region_size, GetPermissionsAsCString (region_prot)); 
+                                s.Printf("\n\tregion[%llu] = { range = [0x%16.16llx - 0x%16.16llx), size = 0x%8.8x, prot = %s }", region_addr, region_addr, region_addr + region_size, region_size, GetPermissionsAsCString (region_prot)); 
                             }
                         }
                         break;

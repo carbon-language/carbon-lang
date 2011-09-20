@@ -436,7 +436,7 @@ public:
                 if (thread == NULL)
                 {
                     result.AppendErrorWithFormat ("Thread index %u is out of range (valid values are 0 - %u).\n", 
-                                                  step_thread_idx, 0, num_threads);
+                                                  step_thread_idx, num_threads);
                     result.SetStatus (eReturnStatusFailed);
                     return false;
                 }
@@ -944,7 +944,6 @@ public:
                 const uint32_t num_threads = process->GetThreadList().GetSize();
                 result.AppendErrorWithFormat ("Thread index %u is out of range (valid values are 0 - %u).\n", 
                                               m_options.m_thread_idx, 
-                                              0, 
                                               num_threads);
                 result.SetStatus (eReturnStatusFailed);
                 return false;
@@ -1135,7 +1134,7 @@ public:
         }
         else if (command.GetArgumentCount() != 1)
         {
-            result.AppendErrorWithFormat("'%s' takes exactly one thread index argument:\nUsage: \n", m_cmd_name.c_str(), m_cmd_syntax.c_str());
+            result.AppendErrorWithFormat("'%s' takes exactly one thread index argument:\nUsage: %s\n", m_cmd_name.c_str(), m_cmd_syntax.c_str());
             result.SetStatus (eReturnStatusFailed);
             return false;
         }

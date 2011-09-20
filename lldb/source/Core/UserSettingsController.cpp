@@ -859,9 +859,7 @@ UserSettingsController::GetAllPendingSettingValues (Stream &strm)
 
             StreamString value_str;
 
-            if (tmp_value.GetSize() == 0)
-                value_str.Printf ("");
-            else if (tmp_value.GetSize() == 1)
+            if (tmp_value.GetSize() == 1)
                 value_str.Printf ("%s", tmp_value.GetStringAtIndex (0));
             else
             {

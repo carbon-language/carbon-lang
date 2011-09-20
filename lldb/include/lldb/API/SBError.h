@@ -60,7 +60,7 @@ public:
     SetErrorString (const char *err_str);
 
     int
-    SetErrorStringWithFormat (const char *format, ...);
+    SetErrorStringWithFormat (const char *format, ...) __attribute__ ((format (printf, 2, 3)));
 
     bool
     IsValid () const;

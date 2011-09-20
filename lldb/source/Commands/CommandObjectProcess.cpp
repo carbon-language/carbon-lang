@@ -610,7 +610,7 @@ public:
 
         if (command.GetArgumentCount())
         {
-            result.AppendErrorWithFormat("Invalid arguments for '%s'.\nUsage: \n", m_cmd_name.c_str(), m_cmd_syntax.c_str());
+            result.AppendErrorWithFormat("Invalid arguments for '%s'.\nUsage: %s\n", m_cmd_name.c_str(), m_cmd_syntax.c_str());
             result.SetStatus (eReturnStatusFailed);
         }
         else
@@ -733,9 +733,7 @@ public:
                     }
                     else
                     {
-                        result.AppendErrorWithFormat ("No PID specified for attach\n", 
-                                                         attach_pid, 
-                                                         error.AsCString());
+                        result.AppendErrorWithFormat ("No PID specified for attach\n");
                         result.SetStatus (eReturnStatusFailed);
                     
                     }
@@ -1081,15 +1079,14 @@ public:
             }
             else
             {
-                result.AppendErrorWithFormat ("Unable to find process plug-in for remote URL '%s'.\nPlease specify a process plug-in name with the --plugin option, or specify an object file using the \"file\" command: \n", 
-                                              m_cmd_name.c_str(),
-                                              m_cmd_syntax.c_str());
+                result.AppendErrorWithFormat ("Unable to find process plug-in for remote URL '%s'.\nPlease specify a process plug-in name with the --plugin option, or specify an object file using the \"file\" command.\n", 
+                                              m_cmd_name.c_str());
                 result.SetStatus (eReturnStatusFailed);
             }
         }
         else
         {
-            result.AppendErrorWithFormat ("'%s' takes exactly one argument:\nUsage: \n", 
+            result.AppendErrorWithFormat ("'%s' takes exactly one argument:\nUsage: %s\n", 
                                           m_cmd_name.c_str(),
                                           m_cmd_syntax.c_str());
             result.SetStatus (eReturnStatusFailed);
@@ -1317,7 +1314,7 @@ public:
         }
         else
         {
-            result.AppendErrorWithFormat("'%s' takes exactly one signal number argument:\nUsage: \n", m_cmd_name.c_str(),
+            result.AppendErrorWithFormat("'%s' takes exactly one signal number argument:\nUsage: %s\n", m_cmd_name.c_str(),
                                         m_cmd_syntax.c_str());
             result.SetStatus (eReturnStatusFailed);
         }
@@ -1380,7 +1377,7 @@ public:
         }
         else
         {
-            result.AppendErrorWithFormat("'%s' takes no arguments:\nUsage: \n",
+            result.AppendErrorWithFormat("'%s' takes no arguments:\nUsage: %s\n",
                                         m_cmd_name.c_str(),
                                         m_cmd_syntax.c_str());
             result.SetStatus (eReturnStatusFailed);
@@ -1438,7 +1435,7 @@ public:
         }
         else
         {
-            result.AppendErrorWithFormat("'%s' takes no arguments:\nUsage: \n",
+            result.AppendErrorWithFormat("'%s' takes no arguments:\nUsage: %s\n",
                                         m_cmd_name.c_str(),
                                         m_cmd_syntax.c_str());
             result.SetStatus (eReturnStatusFailed);

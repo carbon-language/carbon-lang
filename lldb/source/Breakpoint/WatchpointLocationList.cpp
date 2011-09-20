@@ -69,7 +69,7 @@ void
 WatchpointLocationList::DumpWithLevel (Stream *s, lldb::DescriptionLevel description_level) const
 {
     Mutex::Locker locker (m_mutex);
-    s->Printf("%.*p: ", (int)sizeof(void*) * 2, this);
+    s->Printf("%p: ", this);
     //s->Indent();
     s->Printf("WatchpointLocationList with %zu WatchpointLocations:\n",
               m_address_to_location.size());

@@ -885,7 +885,7 @@ DWARFDebugInfo::Verify(Stream *s, SymbolFileDWARF* dwarf2Data)
     }
 
     s->Printf("-------- -------- -------- -------------------------------------------\n");
-    s->Printf("%7u %8u 100.00% Total for all DIEs\n", total_die_count, total_die_size);
+    s->Printf("%7u %8u 100.00%% Total for all DIEs\n", total_die_count, total_die_size);
 
     float total_category_percentages[kNumTagCategories] =
     {

@@ -175,7 +175,7 @@ public:
     ///     format string \a format.
     //------------------------------------------------------------------
     void
-    PutToLog (Log *log, const char *format, ...);
+    PutToLog (Log *log, const char *format, ...)  __attribute__ ((format (printf, 3, 4)));
 
     //------------------------------------------------------------------
     /// Log an error to Log() if the error value is an error.
@@ -196,7 +196,7 @@ public:
     ///     format string \a format.
     //------------------------------------------------------------------
     void
-    LogIfError (Log *log, const char *format, ...);
+    LogIfError (Log *log, const char *format, ...)  __attribute__ ((format (printf, 3, 4)));
 
     //------------------------------------------------------------------
     /// Set accessor from a kern_return_t.
