@@ -191,19 +191,6 @@ install-local:: all-local
 install-bytecode:: install-bytecode-local
 
 ###############################################################################
-# LLVMC: Provide rules for compiling llvmc-based driver
-###############################################################################
-
-ifdef LLVMC_BASED_DRIVER
-
-TOOLNAME = $(LLVMC_BASED_DRIVER)
-
-LLVMLIBS = CompilerDriver.a
-LINK_COMPONENTS = support
-
-endif # LLVMC_BASED_DRIVER
-
-###############################################################################
 # VARIABLES: Set up various variables based on configuration data
 ###############################################################################
 
@@ -1686,10 +1673,6 @@ ifdef TARGET
 TABLEGEN_INC_FILES_COMMON = 1
 endif
 
-ifdef LLVMC_BASED_DRIVER
-TABLEGEN_INC_FILES_COMMON = 1
-endif
-
 ifdef TABLEGEN_INC_FILES_COMMON
 
 INCFiles := $(filter %.inc,$(BUILT_SOURCES))
@@ -1804,27 +1787,6 @@ clean-local::
 	-$(Verb) $(RM) -f $(INCFiles)
 
 endif # TARGET
-
-ifdef LLVMC_BASED_DRIVER
-
-TDSrc := $(sort $(strip $(wildcard $(PROJ_SRC_DIR)/*.td)) \
-		$(strip $(wildcard $(PROJ_OBJ_DIR)/*.td)))
-
-TDCommon := $(strip $(wildcard \
-		$(LLVM_SRC_ROOT)/include/llvm/CompilerDriver/*.td))
-
-TDFiles := $(TDSrc) $(TDCommon)
-
-$(INCTMPFiles) : $(TBLGEN) $(TDFiles)
-
-$(ObjDir)/%.inc.tmp: %.td $(ObjDir)/.dir
-	$(Echo) "Building LLVMC compilation graph description with tblgen"
-	$(Verb) $(TableGen) -gen-llvmc -o $(call SYSPATH, $@) $<
-
-clean-local::
-	-$(Verb) $(RM) -f $(INCFiles)
-
-endif # LLVMC_BASED_DRIVER
 
 ###############################################################################
 # OTHER RULES: Other rules needed

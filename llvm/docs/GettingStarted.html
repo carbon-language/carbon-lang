@@ -1595,16 +1595,6 @@ information is in the <a href="CommandGuide/index.html">Command Guide</a>.</p>
   href="HowToSubmitABug.html">HowToSubmitABug.html</a> for more information
   on using <tt>bugpoint</tt>.</dd>
 
-  <dt><tt><b>llvmc</b></tt></dt>
-  <dd>The LLVM Compiler Driver. This program can
-  be configured to utilize both LLVM and non-LLVM compilation tools to enable
-  pre-processing, translation, optimization, assembly, and linking of programs
-  all from one command line. <tt>llvmc</tt> also takes care of processing the
-  dependent libraries found in bitcode. This reduces the need to get the
-  traditional <tt>-l&lt;name&gt;</tt> options right on the command line. Please
-  note that this tool, while functional, is still experimental and not feature
-  complete.</dd>
-
   <dt><tt><b>llvm-ar</b></tt></dt>
   <dd>The archiver produces an archive containing
   the given LLVM bitcode files, optionally with an index for faster
@@ -1620,9 +1610,9 @@ information is in the <a href="CommandGuide/index.html">Command Guide</a>.</p>
 
   <dt><tt><b>llvm-ld</b></tt></dt>
   <dd><tt>llvm-ld</tt> is a general purpose and extensible linker for LLVM. 
-  This is the linker invoked by <tt>llvmc</tt>. It performs standard link time
-  optimizations and allows optimization modules to be loaded and run so that 
-  language specific optimizations can be applied at link time.</dd>
+  It performs standard link time optimizations and allows optimization
+  modules to be loaded and run so that language specific optimizations can 
+  be applied at link time.</dd>
 
   <dt><tt><b>llvm-link</b></tt></dt>
   <dd><tt>llvm-link</tt>, not surprisingly, links multiple LLVM modules into 
