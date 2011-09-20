@@ -1426,3 +1426,11 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
 // In Thumb1, "nop" is encoded as a "mov r8, r8". Technically, the bf00
 // encoding is available on ARMv6K, but we don't differentiate that finely.
 def : InstAlias<"nop", (tMOVr R8, R8, 14, 0)>,Requires<[IsThumb, IsThumb1Only]>;
+
+
+// For round-trip assembly/disassembly, we have to handle a CPS instruction
+// without any iflags. That's not, strictly speaking, valid syntax, but it's
+// a useful extention and assembles to defined behaviour (the insn does
+// nothing).
+def : tInstAlias<"cps$imod", (tCPS imod_op:$imod, 0)>;
+def : tInstAlias<"cps$imod", (tCPS imod_op:$imod, 0)>;
