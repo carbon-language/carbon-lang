@@ -141,6 +141,14 @@ static inline sys::Path IsLibrary(StringRef Name,
   if (FullPath.isBitcodeFile())    // .so file containing bitcode?
     return FullPath;
 
+  // Try libX form, to make it possible to add dependency on the
+  // specific version of .so, like liblzma.so.1.0.0
+  FullPath.eraseSuffix();
+  if (FullPath.isDynamicLibrary())  // Native shared library?
+    return FullPath;
+  if (FullPath.isBitcodeFile())    // .so file containing bitcode?
+    return FullPath;
+
   // Not found .. fall through
 
   // Indicate that the library was not found in the directory.
