@@ -177,14 +177,13 @@ namespace {
       for (int i = 0, e = Lines.size(); i != e; ++i)
         write(Lines[i]);
     }
-   private:
-    friend class GCOVBlock;
 
     GCOVLines(StringRef F, raw_ostream *os) 
       : Filename(F) {
       this->os = os;
     }
 
+   private:
     StringRef Filename;
     SmallVector<uint32_t, 32> Lines;
   };
