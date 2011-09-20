@@ -286,8 +286,7 @@ def tSETEND : T1I<(outs), (ins setend_op:$end), NoItinerary, "setend\t$end",
 
 // Change Processor State is a system instruction -- for disassembly only.
 def tCPS : T1I<(outs), (ins imod_op:$imod, iflags_op:$iflags),
-                NoItinerary, "cps$imod $iflags",
-                [/* For disassembly only; pattern left blank */]>,
+                NoItinerary, "cps$imod $iflags", []>,
            T1Misc<0b0110011> {
   // A8.6.38 & B6.1.1
   bit imod;
