@@ -1404,7 +1404,6 @@ PreprocessedEntity *ASTReader::LoadPreprocessedEntity(Module &F) {
     IdentifierInfo *II = getLocalIdentifier(F, Record[3]);
     MacroDefinition *MD
       = new (PPRec) MacroDefinition(II,
-                                    ReadSourceLocation(F, Record[4]),
                                     SourceRange(
                                           ReadSourceLocation(F, Record[1]),
                                           ReadSourceLocation(F, Record[2])));

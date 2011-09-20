@@ -138,21 +138,16 @@ namespace clang {
   class MacroDefinition : public PreprocessingDirective {
     /// \brief The name of the macro being defined.
     const IdentifierInfo *Name;
-    
-    /// \brief The location of the macro name in the macro definition.
-    SourceLocation Location;
 
   public:
-    explicit MacroDefinition(const IdentifierInfo *Name, SourceLocation Location,
-                             SourceRange Range)
-      : PreprocessingDirective(MacroDefinitionKind, Range), Name(Name), 
-        Location(Location) { }
+    explicit MacroDefinition(const IdentifierInfo *Name, SourceRange Range)
+      : PreprocessingDirective(MacroDefinitionKind, Range), Name(Name) { }
     
     /// \brief Retrieve the name of the macro being defined.
     const IdentifierInfo *getName() const { return Name; }
     
     /// \brief Retrieve the location of the macro name in the definition.
-    SourceLocation getLocation() const { return Location; }
+    SourceLocation getLocation() const { return getSourceRange().getBegin(); }
     
     // Implement isa/cast/dyncast/etc.
     static bool classof(const PreprocessedEntity *PE) {
