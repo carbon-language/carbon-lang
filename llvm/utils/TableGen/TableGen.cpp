@@ -30,7 +30,6 @@
 #include "FastISelEmitter.h"
 #include "InstrInfoEmitter.h"
 #include "IntrinsicEmitter.h"
-#include "LLVMCConfigurationEmitter.h"
 #include "NeonEmitter.h"
 #include "OptParserEmitter.h"
 #include "PseudoLoweringEmitter.h"
@@ -81,7 +80,6 @@ enum ActionType {
   GenSubtarget,
   GenIntrinsic,
   GenTgtIntrinsic,
-  GenLLVMCConf,
   GenEDInfo,
   GenArmNeon,
   GenArmNeonSema,
@@ -156,8 +154,6 @@ namespace {
                                "Generate Clang AST statement nodes"),
                     clEnumValN(GenClangSACheckers, "gen-clang-sa-checkers",
                                "Generate Clang Static Analyzer checkers"),
-                    clEnumValN(GenLLVMCConf, "gen-llvmc",
-                               "Generate LLVMC configuration library"),
                     clEnumValN(GenEDInfo, "gen-enhanced-disassembly-info",
                                "Generate enhanced disassembly info"),
                     clEnumValN(GenArmNeon, "gen-arm-neon",
@@ -348,9 +344,6 @@ int main(int argc, char **argv) {
       break;
     case GenTgtIntrinsic:
       IntrinsicEmitter(Records, true).run(Out.os());
-      break;
-    case GenLLVMCConf:
-      LLVMCConfigurationEmitter(Records).run(Out.os());
       break;
     case GenEDInfo:
       EDEmitter(Records).run(Out.os());

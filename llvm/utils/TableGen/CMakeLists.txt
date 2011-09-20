@@ -31,7 +31,6 @@ add_llvm_utility(tblgen
   InstrEnumEmitter.cpp
   InstrInfoEmitter.cpp
   IntrinsicEmitter.cpp
-  LLVMCConfigurationEmitter.cpp
   NeonEmitter.cpp
   OptParserEmitter.cpp
   PseudoLoweringEmitter.cpp
