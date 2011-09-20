@@ -556,9 +556,6 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   if (!TargetInfo::isTypeSigned(TI.getWIntType()))
     Builder.defineMacro("__WINT_UNSIGNED__");
 
-  if (!TargetInfo::isTypeSigned(TI.getWCharType()))
-    Builder.defineMacro("__WCHAR_UNSIGNED__");
-
   // Define exact-width integer types for stdint.h
   Builder.defineMacro("__INT" + Twine(TI.getCharWidth()) + "_TYPE__",
                       "char");
