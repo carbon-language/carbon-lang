@@ -1270,7 +1270,7 @@ static AccessResult CheckEffectiveAccess(Sema &S,
                                          AccessTarget &Entity) {
   assert(Entity.getAccess() != AS_public && "called for public access!");
 
-  if (S.getLangOptions().MicrosoftExt &&
+  if (S.getLangOptions().MicrosoftMode &&
       IsMicrosoftUsingDeclarationAccessBug(S, Loc, Entity))
     return AR_accessible;
 

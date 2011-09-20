@@ -70,3 +70,23 @@ int jump_over_indirect_goto() {
 
 
 
+namespace ms_using_declaration_bug {
+
+class A {
+public: 
+  int f(); 
+};
+
+class B : public A {
+private:   
+  using A::f;
+};
+
+class C : public B { 
+private:   
+  using B::f; // expected-warning {{using declaration refers to inaccessible member 'ms_using_declaration_bug::B::f', which refers to accessible member 'ms_using_declaration_bug::A::f', accepted for Microsoft compatibility}}
+};
+
+}
+
+
