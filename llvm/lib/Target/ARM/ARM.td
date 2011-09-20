@@ -108,7 +108,7 @@ def HasV6Ops    : SubtargetFeature<"v6", "HasV6Ops", "true",
                                    [HasV5TEOps]>;
 def HasV6T2Ops  : SubtargetFeature<"v6t2", "HasV6T2Ops", "true",
                                    "Support ARM v6t2 instructions",
-                                   [HasV6Ops, FeatureThumb2, FeatureDSPThumb2]>;
+                                   [HasV6Ops, FeatureThumb2]>;
 def HasV7Ops    : SubtargetFeature<"v7", "HasV7Ops", "true",
                                    "Support ARM v7 instructions",
                                    [HasV6T2Ops]>;
@@ -188,9 +188,11 @@ def : Processor<"cortex-m0",        ARMV6Itineraries, [HasV6Ops, FeatureNoARM,
                                                        FeatureDB]>;
 
 // V6T2 Processors.
-def : Processor<"arm1156t2-s",      ARMV6Itineraries, [HasV6T2Ops]>;
+def : Processor<"arm1156t2-s",      ARMV6Itineraries, [HasV6T2Ops,
+                                                       FeatureDSPThumb2]>;
 def : Processor<"arm1156t2f-s",     ARMV6Itineraries, [HasV6T2Ops, FeatureVFP2,
-                                                       FeatureHasSlowFPVMLx]>;
+                                                       FeatureHasSlowFPVMLx,
+                                                       FeatureDSPThumb2]>;
 
 // V7a Processors.
 def : Processor<"cortex-a8",        CortexA8Itineraries,
