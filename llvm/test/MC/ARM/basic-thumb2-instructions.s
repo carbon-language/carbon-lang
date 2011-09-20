@@ -2870,3 +2870,19 @@ _func:
 @ CHECK: ite	gt                      @ encoding: [0xcc,0xbf]
 @ CHECK: uqsub8gt	r3, r1, r6      @ encoding: [0xc1,0xfa,0x56,0xf3]
 @ CHECK: uqsub16le	r4, r6, r4      @ encoding: [0xd6,0xfa,0x54,0xf4]
+
+
+@------------------------------------------------------------------------------
+@ UQSUB16/UQSUB8
+@------------------------------------------------------------------------------
+        usad8 r1, r9, r7
+        usada8 r8, r2, r9, r12
+        ite gt
+        usada8gt r3, r1, r6, r9
+        usad8le r4, r6, r4
+
+@ CHECK: usad8	r1, r9, r7              @ encoding: [0x79,0xfb,0x07,0xf1]
+@ CHECK: usada8	r8, r2, r9, r12         @ encoding: [0x72,0xfb,0x09,0xc8]
+@ CHECK: ite	gt                      @ encoding: [0xcc,0xbf]
+@ CHECK: usada8gt	r3, r1, r6, r9  @ encoding: [0x71,0xfb,0x06,0x93]
+@ CHECK: usad8le	r4, r6, r4      @ encoding: [0x76,0xfb,0x04,0xf4]
