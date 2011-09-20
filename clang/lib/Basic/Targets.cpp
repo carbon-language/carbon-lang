@@ -2755,26 +2755,18 @@ namespace {
 }
 
 namespace {
-class MipsTargetInfo : public TargetInfo {
-  std::string ABI, CPU;
-  static const TargetInfo::GCCRegAlias GCCRegAliases[];
-  static const char * const GCCRegNames[];
+class MipsTargetInfoBase : public TargetInfo {
+  std::string CPU;
+protected:
+  std::string ABI;
 public:
-  MipsTargetInfo(const std::string& triple) : TargetInfo(triple), ABI("o32") {
-    DescriptionString = "E-p:32:32:32-i1:8:8-i8:8:32-i16:16:32-i32:32:32-"
-                        "i64:64:64-f32:32:32-f64:64:64-v64:64:64-n32";
+  MipsTargetInfoBase(const std::string& triple, const std::string& ABIStr)
+    : TargetInfo(triple), ABI(ABIStr) {
     SizeType = UnsignedInt;
     PtrDiffType = SignedInt;
   }
   virtual const char *getABI() const { return ABI.c_str(); }
-  virtual bool setABI(const std::string &Name) {
-
-    if ((Name == "o32") || (Name == "eabi")) {
-      ABI = Name;
-      return true;
-    } else
-      return false;
-  }
+  virtual bool setABI(const std::string &Name) = 0;
   virtual bool setCPU(const std::string &Name) {
     CPU = Name;
     return true;
@@ -2785,35 +2777,9 @@ public:
     Features[CPU] = true;
   }
   virtual void getArchDefines(const LangOptions &Opts,
-                                MacroBuilder &Builder) const {
-    // NOTE: O64 will not be supported.
-    if (ABI == "o32") {
-      Builder.defineMacro("__mips_o32");
-      Builder.defineMacro("_ABIO32", "1");
-      Builder.defineMacro("_MIPS_SIM", "_ABIO32");
-    }
-    else if (ABI == "n32") {
-      Builder.defineMacro("__mips_n32");
-      Builder.defineMacro("_ABIN32", "2");
-      Builder.defineMacro("_MIPS_SIM", "_ABIN32");
-    }
-    else if (ABI == "n64") {
-      Builder.defineMacro("__mips_n64");
-      Builder.defineMacro("_ABI64", "3");
-      Builder.defineMacro("_MIPS_SIM", "_ABI64");
-    }
-    else if (ABI == "eabi")
-      Builder.defineMacro("__mips_eabi");
-  }
+                              MacroBuilder &Builder) const = 0;
   virtual void getTargetDefines(const LangOptions &Opts,
-                                MacroBuilder &Builder) const {
-    DefineStd(Builder, "mips", Opts);
-    Builder.defineMacro("_mips");
-    DefineStd(Builder, "MIPSEB", Opts);
-    Builder.defineMacro("_MIPSEB");
-    Builder.defineMacro("__REGISTER_PREFIX__", "");
-    getArchDefines(Opts, Builder);
-  }
+                                MacroBuilder &Builder) const = 0;
   virtual void getTargetBuiltins(const Builtin::Info *&Records,
                                  unsigned &NumRecords) const {
     // FIXME: Implement!
@@ -2822,9 +2788,24 @@ public:
     return "typedef void* __builtin_va_list;";
   }
   virtual void getGCCRegNames(const char * const *&Names,
-                              unsigned &NumNames) const;
+                              unsigned &NumNames) const {
+    static const char * const GCCRegNames[] = {
+      "$0",   "$1",   "$2",   "$3",   "$4",   "$5",   "$6",   "$7",
+      "$8",   "$9",   "$10",  "$11",  "$12",  "$13",  "$14",  "$15",
+      "$16",  "$17",  "$18",  "$19",  "$20",  "$21",  "$22",  "$23",
+      "$24",  "$25",  "$26",  "$27",  "$28",  "$sp",  "$fp",  "$31",
+      "$f0",  "$f1",  "$f2",  "$f3",  "$f4",  "$f5",  "$f6",  "$f7",
+      "$f8",  "$f9",  "$f10", "$f11", "$f12", "$f13", "$f14", "$f15",
+      "$f16", "$f17", "$f18", "$f19", "$f20", "$f21", "$f22", "$f23",
+      "$f24", "$f25", "$f26", "$f27", "$f28", "$f29", "$f30", "$f31",
+      "hi",   "lo",   "",     "$fcc0","$fcc1","$fcc2","$fcc3","$fcc4",
+      "$fcc5","$fcc6","$fcc7"
+    };
+    Names = GCCRegNames;
+    NumNames = llvm::array_lengthof(GCCRegNames);
+  }
   virtual void getGCCRegAliases(const GCCRegAlias *&Aliases,
-                                unsigned &NumAliases) const;
+                                unsigned &NumAliases) const = 0;
   virtual bool validateAsmConstraint(const char *&Name,
                                      TargetInfo::ConstraintInfo &Info) const {
     switch (*Name) {
@@ -2845,87 +2826,102 @@ public:
   }
 };
 
-const char * const MipsTargetInfo::GCCRegNames[] = {
-  "$0",   "$1",   "$2",   "$3",   "$4",   "$5",   "$6",   "$7",
-  "$8",   "$9",   "$10",  "$11",  "$12",  "$13",  "$14",  "$15",
-  "$16",  "$17",  "$18",  "$19",  "$20",  "$21",  "$22",  "$23",
-  "$24",  "$25",  "$26",  "$27",  "$28",  "$sp",  "$fp",  "$31",
-  "$f0",  "$f1",  "$f2",  "$f3",  "$f4",  "$f5",  "$f6",  "$f7",
-  "$f8",  "$f9",  "$f10", "$f11", "$f12", "$f13", "$f14", "$f15",
-  "$f16", "$f17", "$f18", "$f19", "$f20", "$f21", "$f22", "$f23",
-  "$f24", "$f25", "$f26", "$f27", "$f28", "$f29", "$f30", "$f31",
-  "hi",   "lo",   "",     "$fcc0","$fcc1","$fcc2","$fcc3","$fcc4",
-  "$fcc5","$fcc6","$fcc7"
-};
-
-void MipsTargetInfo::getGCCRegNames(const char * const *&Names,
-                                       unsigned &NumNames) const {
-  Names = GCCRegNames;
-  NumNames = llvm::array_lengthof(GCCRegNames);
-}
-
-const TargetInfo::GCCRegAlias MipsTargetInfo::GCCRegAliases[] = {
-  { { "at" },  "$1" },
-  { { "v0" },  "$2" },
-  { { "v1" },  "$3" },
-  { { "a0" },  "$4" },
-  { { "a1" },  "$5" },
-  { { "a2" },  "$6" },
-  { { "a3" },  "$7" },
-  { { "t0" },  "$8" },
-  { { "t1" },  "$9" },
-  { { "t2" }, "$10" },
-  { { "t3" }, "$11" },
-  { { "t4" }, "$12" },
-  { { "t5" }, "$13" },
-  { { "t6" }, "$14" },
-  { { "t7" }, "$15" },
-  { { "s0" }, "$16" },
-  { { "s1" }, "$17" },
-  { { "s2" }, "$18" },
-  { { "s3" }, "$19" },
-  { { "s4" }, "$20" },
-  { { "s5" }, "$21" },
-  { { "s6" }, "$22" },
-  { { "s7" }, "$23" },
-  { { "t8" }, "$24" },
-  { { "t9" }, "$25" },
-  { { "k0" }, "$26" },
-  { { "k1" }, "$27" },
-  { { "gp" }, "$28" },
-  { { "sp" }, "$29" },
-  { { "fp" }, "$30" },
-  { { "ra" }, "$31" }
-};
-
-void MipsTargetInfo::getGCCRegAliases(const GCCRegAlias *&Aliases,
-                                         unsigned &NumAliases) const {
-  Aliases = GCCRegAliases;
-  NumAliases = llvm::array_lengthof(GCCRegAliases);
-}
-} // end anonymous namespace.
-
-namespace {
-class MipselTargetInfo : public MipsTargetInfo {
+class Mips32TargetInfoBase : public MipsTargetInfoBase {
 public:
-  MipselTargetInfo(const std::string& triple) : MipsTargetInfo(triple) {
+  Mips32TargetInfoBase(const std::string& triple) :
+    MipsTargetInfoBase(triple, "o32") {}
+  virtual bool setABI(const std::string &Name) {
+    if ((Name == "o32") || (Name == "eabi")) {
+      ABI = Name;
+      return true;
+    } else
+      return false;
+  }
+  virtual void getArchDefines(const LangOptions &Opts,
+                              MacroBuilder &Builder) const {
+    if (ABI == "o32") {
+      Builder.defineMacro("__mips_o32");
+      Builder.defineMacro("_ABIO32", "1");
+      Builder.defineMacro("_MIPS_SIM", "_ABIO32");
+    }
+    else if (ABI == "eabi")
+      Builder.defineMacro("__mips_eabi");
+    else
+      assert(false && "Invalid ABI for Mips32.");
+  }
+  virtual void getGCCRegAliases(const GCCRegAlias *&Aliases,
+                                unsigned &NumAliases) const {
+    static const TargetInfo::GCCRegAlias GCCRegAliases[] = {
+      { { "at" },  "$1" },
+      { { "v0" },  "$2" },
+      { { "v1" },  "$3" },
+      { { "a0" },  "$4" },
+      { { "a1" },  "$5" },
+      { { "a2" },  "$6" },
+      { { "a3" },  "$7" },
+      { { "t0" },  "$8" },
+      { { "t1" },  "$9" },
+      { { "t2" }, "$10" },
+      { { "t3" }, "$11" },
+      { { "t4" }, "$12" },
+      { { "t5" }, "$13" },
+      { { "t6" }, "$14" },
+      { { "t7" }, "$15" },
+      { { "s0" }, "$16" },
+      { { "s1" }, "$17" },
+      { { "s2" }, "$18" },
+      { { "s3" }, "$19" },
+      { { "s4" }, "$20" },
+      { { "s5" }, "$21" },
+      { { "s6" }, "$22" },
+      { { "s7" }, "$23" },
+      { { "t8" }, "$24" },
+      { { "t9" }, "$25" },
+      { { "k0" }, "$26" },
+      { { "k1" }, "$27" },
+      { { "gp" }, "$28" },
+      { { "sp" }, "$29" },
+      { { "fp" }, "$30" },
+      { { "ra" }, "$31" }
+    };
+    Aliases = GCCRegAliases;
+    NumAliases = llvm::array_lengthof(GCCRegAliases);
+  }
+};
+
+class Mips32EBTargetInfo : public Mips32TargetInfoBase {
+public:
+  Mips32EBTargetInfo(const std::string& triple) : Mips32TargetInfoBase(triple) {
+    DescriptionString = "E-p:32:32:32-i1:8:8-i8:8:32-i16:16:32-i32:32:32-"
+                        "i64:64:64-f32:32:32-f64:64:64-v64:64:64-n32";
+  }
+  virtual void getTargetDefines(const LangOptions &Opts,
+                                MacroBuilder &Builder) const {
+    DefineStd(Builder, "mips", Opts);
+    Builder.defineMacro("_mips");
+    DefineStd(Builder, "MIPSEB", Opts);
+    Builder.defineMacro("_MIPSEB");
+    Builder.defineMacro("__REGISTER_PREFIX__", "");
+    getArchDefines(Opts, Builder);
+  }
+};
+
+class Mips32ELTargetInfo : public Mips32TargetInfoBase {
+public:
+  Mips32ELTargetInfo(const std::string& triple) : Mips32TargetInfoBase(triple) {
     DescriptionString = "e-p:32:32:32-i1:8:8-i8:8:32-i16:16:32-i32:32:32-"
                         "i64:64:64-f32:32:32-f64:64:64-v64:64:64-n32";
   }
-
   virtual void getTargetDefines(const LangOptions &Opts,
-                                MacroBuilder &Builder) const;
+                                MacroBuilder &Builder) const {
+    DefineStd(Builder, "mips", Opts);
+    Builder.defineMacro("_mips");
+    DefineStd(Builder, "MIPSEL", Opts);
+    Builder.defineMacro("_MIPSEL");
+    Builder.defineMacro("__REGISTER_PREFIX__", "");
+    getArchDefines(Opts, Builder);
+  }
 };
-
-void MipselTargetInfo::getTargetDefines(const LangOptions &Opts,
-                                        MacroBuilder &Builder) const {
-  DefineStd(Builder, "mips", Opts);
-  Builder.defineMacro("_mips");
-  DefineStd(Builder, "MIPSEL", Opts);
-  Builder.defineMacro("_MIPSEL");
-  Builder.defineMacro("__REGISTER_PREFIX__", "");
-  getArchDefines(Opts, Builder);
-}
 } // end anonymous namespace.
 
 namespace {
@@ -3045,29 +3041,29 @@ static TargetInfo *AllocateTarget(const std::string &T) {
   case llvm::Triple::mips:
     switch (os) {
     case llvm::Triple::Linux:
-      return new LinuxTargetInfo<MipsTargetInfo>(T);
+      return new LinuxTargetInfo<Mips32EBTargetInfo>(T);
     case llvm::Triple::RTEMS:
-      return new RTEMSTargetInfo<MipsTargetInfo>(T);
+      return new RTEMSTargetInfo<Mips32EBTargetInfo>(T);
     case llvm::Triple::FreeBSD:
-      return new FreeBSDTargetInfo<MipsTargetInfo>(T);
+      return new FreeBSDTargetInfo<Mips32EBTargetInfo>(T);
     case llvm::Triple::NetBSD:
-      return new NetBSDTargetInfo<MipsTargetInfo>(T);
+      return new NetBSDTargetInfo<Mips32EBTargetInfo>(T);
     default:
-      return new MipsTargetInfo(T);
+      return new Mips32EBTargetInfo(T);
     }
 
   case llvm::Triple::mipsel:
     switch (os) {
     case llvm::Triple::Linux:
-      return new LinuxTargetInfo<MipselTargetInfo>(T);
+      return new LinuxTargetInfo<Mips32ELTargetInfo>(T);
     case llvm::Triple::RTEMS:
-      return new RTEMSTargetInfo<MipselTargetInfo>(T);
+      return new RTEMSTargetInfo<Mips32ELTargetInfo>(T);
     case llvm::Triple::FreeBSD:
-      return new FreeBSDTargetInfo<MipselTargetInfo>(T);
+      return new FreeBSDTargetInfo<Mips32ELTargetInfo>(T);
     case llvm::Triple::NetBSD:
-      return new NetBSDTargetInfo<MipselTargetInfo>(T);
+      return new NetBSDTargetInfo<Mips32ELTargetInfo>(T);
     default:
-      return new MipsTargetInfo(T);
+      return new Mips32ELTargetInfo(T);
     }
 
   case llvm::Triple::le32:
