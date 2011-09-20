@@ -158,8 +158,7 @@ namespace {
   class GCOVBlock;
 
   // Constructed only by requesting it from a GCOVBlock, this object stores a
-  // list of line numbers and a single filename, representing lines that belong
-  // to the block.
+  // list of line numbers representing lines that belong to the block.
   class GCOVLines : public GCOVRecord {
    public:
     void addLine(uint32_t Line) {
