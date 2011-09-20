@@ -2902,3 +2902,13 @@ _func:
 @ CHECK: usat	r8, #5, r10, lsl #31    @ encoding: [0x8a,0xf3,0xc5,0x78]
 @ CHECK: usat	r8, #31, r10, asr #32   @ encoding: [0xaa,0xf3,0x1f,0x08]
 @ CHECK: usat	r8, #16, r10, asr #1    @ encoding: [0xaa,0xf3,0x50,0x08]
+
+
+@------------------------------------------------------------------------------
+@ USAT16
+@------------------------------------------------------------------------------
+        usat16	r2, #2, r7
+        usat16	r3, #15, r5
+
+@ CHECK: usat16	r2, #2, r7              @ encoding: [0xa7,0xf3,0x02,0x02]
+@ CHECK: usat16	r3, #15, r5             @ encoding: [0xa5,0xf3,0x0f,0x03]
