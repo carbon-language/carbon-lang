@@ -3340,3 +3340,9 @@ vdivpd  -4(%rcx,%rbx,8), %xmm10, %xmm11
 // CHECK: encoding: [0xc4,0xa1,0x78,0x29,0x1c,0x18]
           vmovaps %xmm3, (%rax,%r11)
 
+// CHECK: vpshufb _foo(%rip), %xmm0, %xmm0
+// CHECK: encoding: [0xc4,0xe2,0x79,0x00,0x05,A,A,A,A]
+// CHECK: kind: reloc_riprel_4byte
+_foo:
+  nop
+  vpshufb _foo(%rip), %xmm0, %xmm0
