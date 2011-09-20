@@ -158,7 +158,8 @@ namespace {
   class GCOVBlock;
 
   // Constructed only by requesting it from a GCOVBlock, this object stores a
-  // list of line numbers representing lines that belong to the block.
+  // list of line numbers and a single filename, representing lines that belong
+  // to the block.
   class GCOVLines : public GCOVRecord {
    public:
     void addLine(uint32_t Line) {
@@ -166,17 +167,25 @@ namespace {
     }
 
     uint32_t length() {
-      // FIXME: ??? What is the significance of 2 here ?
-      return 2 + Lines.size();
+      // Here 2 = 1 for string lenght + 1 for '0' id#.
+      return lengthOfGCOVString(Filename) + 2 + Lines.size();
     }
 
+    void writeOut() {
+      write(0);
+      writeGCOVString(Filename);
+      for (int i = 0, e = Lines.size(); i != e; ++i)
+        write(Lines[i]);
+    }
    private:
     friend class GCOVBlock;
 
-    GCOVLines(raw_ostream *os) {
+    GCOVLines(StringRef F, raw_ostream *os) 
+      : Filename(F) {
       this->os = os;
     }
 
+    StringRef Filename;
     SmallVector<uint32_t, 32> Lines;
   };
 
@@ -188,7 +197,7 @@ namespace {
     GCOVLines &getFile(StringRef Filename) {
       GCOVLines *&Lines = LinesByFile[Filename];
       if (!Lines) {
-        Lines = new GCOVLines(os);
+        Lines = new GCOVLines(Filename, os);
       }
       return *Lines;
     }
@@ -201,20 +210,15 @@ namespace {
       uint32_t Len = 3;
       for (StringMap<GCOVLines *>::iterator I = LinesByFile.begin(),
                E = LinesByFile.end(); I != E; ++I) {
-        Len = Len + lengthOfGCOVString(I->first()) + I->second->length();
+        Len += I->second->length();
       }
 
       writeBytes(LinesTag, 4);
       write(Len);
       write(Number);
       for (StringMap<GCOVLines *>::iterator I = LinesByFile.begin(),
-               E = LinesByFile.end(); I != E; ++I) {
-        write(0);
-        writeGCOVString(I->first());
-        for (int i = 0, e = I->second->Lines.size(); i != e; ++i) {
-          write(I->second->Lines[i]);
-        }
-      }
+               E = LinesByFile.end(); I != E; ++I) 
+        I->second->writeOut();
       write(0);
       write(0);
     }
