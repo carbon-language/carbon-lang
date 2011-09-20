@@ -60,11 +60,12 @@ void UnreachableCodeChecker::checkEndAnalysis(ExplodedGraph &G,
 
   CFG *C = 0;
   ParentMap *PM = 0;
+  const LocationContext *LC = 0;
   // Iterate over ExplodedGraph
   for (ExplodedGraph::node_iterator I = G.nodes_begin(), E = G.nodes_end();
       I != E; ++I) {
     const ProgramPoint &P = I->getLocation();
-    const LocationContext *LC = P.getLocationContext();
+    LC = P.getLocationContext();
 
     // Save the CFG if we don't have it already
     if (!C)
@@ -128,11 +129,13 @@ void UnreachableCodeChecker::checkEndAnalysis(ExplodedGraph &G,
 
     // We found a block that wasn't covered - find the statement to report
     SourceRange SR;
+    PathDiagnosticLocation DL;
     SourceLocation SL;
     if (const Stmt *S = getUnreachableStmt(CB)) {
       SR = S->getSourceRange();
-      SL = S->getLocStart();
-      if (SR.isInvalid() || SL.isInvalid())
+      DL = PathDiagnosticLocation::createBegin(S, B.getSourceManager(), LC);
+      SL = DL.asLocation();
+      if (SR.isInvalid() || !SL.isValid())
         continue;
     }
     else
@@ -144,7 +147,7 @@ void UnreachableCodeChecker::checkEndAnalysis(ExplodedGraph &G,
       continue;
 
     B.EmitBasicReport("Unreachable code", "Dead code", "This statement is never"
-        " executed", SL, SR);
+        " executed", DL, SR);
   }
 }
 

@@ -17,6 +17,7 @@
 
 #include "clang/Basic/SourceLocation.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugReporterVisitor.h"
+#include "clang/StaticAnalyzer/Core/BugReporter/PathDiagnostic.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/ImmutableList.h"
@@ -34,8 +35,6 @@ class ParentMap;
 namespace ento {
 
 class PathDiagnostic;
-class PathDiagnosticPiece;
-class PathDiagnosticClient;
 class ExplodedNode;
 class ExplodedGraph;
 class BugReport;
@@ -70,7 +69,7 @@ protected:
   BugType& BT;
   std::string ShortDescription;
   std::string Description;
-  FullSourceLoc Location;
+  PathDiagnosticLocation Location;
   const ExplodedNode *ErrorNode;
   SmallVector<SourceRange, 4> Ranges;
   ExtraTextList ExtraText;
@@ -91,7 +90,7 @@ public:
     : BT(bt), ShortDescription(shortDesc), Description(desc),
       ErrorNode(errornode), Callbacks(F.getEmptyList()) {}
 
-  BugReport(BugType& bt, StringRef desc, FullSourceLoc l)
+  BugReport(BugType& bt, StringRef desc, PathDiagnosticLocation l)
     : BT(bt), Description(desc), Location(l), ErrorNode(0),
       Callbacks(F.getEmptyList()) {}
 
@@ -124,7 +123,7 @@ public:
   ///  While a bug can span an entire path, usually there is a specific
   ///  location that can be used to identify where the key issue occurred.
   ///  This location is used by clients rendering diagnostics.
-  virtual SourceLocation getLocation() const;
+  virtual PathDiagnosticLocation getLocation(const SourceManager &SM) const;
 
   const Stmt *getStmt() const;
 
@@ -296,31 +295,31 @@ public:
   void EmitReport(BugReport *R);
 
   void EmitBasicReport(StringRef BugName, StringRef BugStr,
-                       SourceLocation Loc,
+                       PathDiagnosticLocation Loc,
                        SourceRange* RangeBeg, unsigned NumRanges);
 
   void EmitBasicReport(StringRef BugName, StringRef BugCategory,
-                       StringRef BugStr, SourceLocation Loc,
+                       StringRef BugStr, PathDiagnosticLocation Loc,
                        SourceRange* RangeBeg, unsigned NumRanges);
 
 
   void EmitBasicReport(StringRef BugName, StringRef BugStr,
-                       SourceLocation Loc) {
+                       PathDiagnosticLocation Loc) {
     EmitBasicReport(BugName, BugStr, Loc, 0, 0);
   }
 
   void EmitBasicReport(StringRef BugName, StringRef BugCategory,
-                       StringRef BugStr, SourceLocation Loc) {
+                       StringRef BugStr, PathDiagnosticLocation Loc) {
     EmitBasicReport(BugName, BugCategory, BugStr, Loc, 0, 0);
   }
 
   void EmitBasicReport(StringRef BugName, StringRef BugStr,
-                       SourceLocation Loc, SourceRange R) {
+                       PathDiagnosticLocation Loc, SourceRange R) {
     EmitBasicReport(BugName, BugStr, Loc, &R, 1);
   }
 
   void EmitBasicReport(StringRef BugName, StringRef Category,
-                       StringRef BugStr, SourceLocation Loc,
+                       StringRef BugStr, PathDiagnosticLocation Loc,
                        SourceRange R) {
     EmitBasicReport(BugName, Category, BugStr, Loc, &R, 1);
   }

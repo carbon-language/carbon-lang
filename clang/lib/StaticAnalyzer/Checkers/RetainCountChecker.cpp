@@ -1756,7 +1756,6 @@ namespace {
   };
 
   class CFRefLeakReport : public CFRefReport {
-    SourceLocation AllocSite;
     const MemRegion* AllocBinding;
 
   public:
@@ -1764,7 +1763,10 @@ namespace {
                     const SummaryLogTy &Log, ExplodedNode *n, SymbolRef sym,
                     ExprEngine &Eng);
 
-    SourceLocation getLocation() const { return AllocSite; }
+    PathDiagnosticLocation getLocation(const SourceManager &SM) const {
+      assert(Location.isValid());
+      return Location;
+    }
   };
 } // end anonymous namespace
 
@@ -2219,18 +2221,20 @@ CFRefLeakReport::CFRefLeakReport(CFRefBug &D, const LangOptions &LOpts,
   // same SourceLocation.
   const ExplodedNode *AllocNode = 0;
 
+  const SourceManager& SMgr = Eng.getContext().getSourceManager();
+
   llvm::tie(AllocNode, AllocBinding) =  // Set AllocBinding.
     GetAllocationSite(Eng.getStateManager(), getErrorNode(), sym);
 
   // Get the SourceLocation for the allocation site.
   ProgramPoint P = AllocNode->getLocation();
-  AllocSite = cast<PostStmt>(P).getStmt()->getLocStart();
-
+  const Stmt *AllocStmt = cast<PostStmt>(P).getStmt();
+  Location = PathDiagnosticLocation::createBegin(AllocStmt, SMgr,
+                                                  n->getLocationContext());
   // Fill in the description of the bug.
   Description.clear();
   llvm::raw_string_ostream os(Description);
-  SourceManager& SMgr = Eng.getContext().getSourceManager();
-  unsigned AllocLine = SMgr.getExpansionLineNumber(AllocSite);
+  unsigned AllocLine = SMgr.getExpansionLineNumber(AllocStmt->getLocStart());
   os << "Potential leak ";
   if (GCEnabled)
     os << "(when using garbage collection) ";

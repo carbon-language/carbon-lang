@@ -12,12 +12,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangSACheckers.h"
+#include "clang/Analysis/AnalysisContext.h"
+#include "clang/AST/StmtVisitor.h"
+#include "clang/Basic/TargetInfo.h"
 #include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugReporter.h"
-#include "clang/Basic/TargetInfo.h"
-#include "clang/AST/StmtVisitor.h"
-#include "llvm/Support/raw_ostream.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/AnalysisManager.h"
 #include "llvm/ADT/StringSwitch.h"
+#include "llvm/Support/raw_ostream.h"
 
 using namespace clang;
 using namespace ento;
@@ -34,14 +36,16 @@ static bool isArc4RandomAvailable(const ASTContext &Ctx) {
 namespace {
 class WalkAST : public StmtVisitor<WalkAST> {
   BugReporter &BR;
+  AnalysisContext* AC;
   enum { num_setids = 6 };
   IdentifierInfo *II_setid[num_setids];
 
   const bool CheckRand;
 
 public:
-  WalkAST(BugReporter &br) : BR(br), II_setid(),
-                 CheckRand(isArc4RandomAvailable(BR.getContext())) {}
+  WalkAST(BugReporter &br, AnalysisContext* ac)
+  : BR(br), AC(ac), II_setid(),
+    CheckRand(isArc4RandomAvailable(BR.getContext())) {}
 
   // Statement visitor methods.
   void VisitCallExpr(CallExpr *CE);
@@ -247,8 +251,11 @@ void WalkAST::checkLoopConditionForFloat(const ForStmt *FS) {
   ranges.push_back(drInc->getSourceRange());
 
   const char *bugType = "Floating point variable used as loop counter";
+
+  PathDiagnosticLocation FSLoc =
+    PathDiagnosticLocation::createBegin(FS, BR.getSourceManager(), AC);
   BR.EmitBasicReport(bugType, "Security", os.str(),
-                     FS->getLocStart(), ranges.data(), ranges.size());
+                     FSLoc, ranges.data(), ranges.size());
 }
 
 //===----------------------------------------------------------------------===//
@@ -278,11 +285,13 @@ void WalkAST::checkCall_gets(const CallExpr *CE, const FunctionDecl *FD) {
 
   // Issue a warning.
   SourceRange R = CE->getCallee()->getSourceRange();
+  PathDiagnosticLocation CELoc =
+    PathDiagnosticLocation::createBegin(CE, BR.getSourceManager(), AC);
   BR.EmitBasicReport("Potential buffer overflow in call to 'gets'",
                      "Security",
                      "Call to function 'gets' is extremely insecure as it can "
                      "always result in a buffer overflow",
-                     CE->getLocStart(), &R, 1);
+                     CELoc, &R, 1);
 }
 
 //===----------------------------------------------------------------------===//
@@ -314,11 +323,13 @@ void WalkAST::checkCall_getpw(const CallExpr *CE, const FunctionDecl *FD) {
 
   // Issue a warning.
   SourceRange R = CE->getCallee()->getSourceRange();
+  PathDiagnosticLocation CELoc =
+    PathDiagnosticLocation::createBegin(CE, BR.getSourceManager(), AC);
   BR.EmitBasicReport("Potential buffer overflow in call to 'getpw'",
                      "Security",
                      "The getpw() function is dangerous as it may overflow the "
                      "provided buffer. It is obsoleted by getpwuid().",
-                     CE->getLocStart(), &R, 1);
+                     CELoc, &R, 1);
 }
 
 //===----------------------------------------------------------------------===//
@@ -347,11 +358,13 @@ void WalkAST::checkCall_mktemp(const CallExpr *CE, const FunctionDecl *FD) {
 
   // Issue a waring.
   SourceRange R = CE->getCallee()->getSourceRange();
+  PathDiagnosticLocation CELoc =
+    PathDiagnosticLocation::createBegin(CE, BR.getSourceManager(), AC);
   BR.EmitBasicReport("Potential insecure temporary file in call 'mktemp'",
                      "Security",
                      "Call to function 'mktemp' is insecure as it always "
                      "creates or uses insecure temporary file.  Use 'mkstemp' instead",
-                     CE->getLocStart(), &R, 1);
+                     CELoc, &R, 1);
 }
 
 //===----------------------------------------------------------------------===//
@@ -366,6 +379,8 @@ void WalkAST::checkCall_strcpy(const CallExpr *CE, const FunctionDecl *FD) {
 
   // Issue a warning.
   SourceRange R = CE->getCallee()->getSourceRange();
+  PathDiagnosticLocation CELoc =
+    PathDiagnosticLocation::createBegin(CE, BR.getSourceManager(), AC);
   BR.EmitBasicReport("Potential insecure memory buffer bounds restriction in "
                      "call 'strcpy'",
                      "Security",
@@ -373,7 +388,7 @@ void WalkAST::checkCall_strcpy(const CallExpr *CE, const FunctionDecl *FD) {
 		     "provide bounding of the memory buffer. Replace "
 		     "unbounded copy functions with analogous functions that "
 		     "support length arguments such as 'strncpy'. CWE-119.",
-                     CE->getLocStart(), &R, 1);
+                     CELoc, &R, 1);
 }
 
 //===----------------------------------------------------------------------===//
@@ -388,6 +403,8 @@ void WalkAST::checkCall_strcat(const CallExpr *CE, const FunctionDecl *FD) {
 
   // Issue a warning.
   SourceRange R = CE->getCallee()->getSourceRange();
+  PathDiagnosticLocation CELoc =
+    PathDiagnosticLocation::createBegin(CE, BR.getSourceManager(), AC);
   BR.EmitBasicReport("Potential insecure memory buffer bounds restriction in "
 		     "call 'strcat'",
 		     "Security",
@@ -395,7 +412,7 @@ void WalkAST::checkCall_strcat(const CallExpr *CE, const FunctionDecl *FD) {
 		     "provide bounding of the memory buffer. Replace "
 		     "unbounded copy functions with analogous functions that "
 		     "support length arguments such as 'strncat'. CWE-119.",
-                     CE->getLocStart(), &R, 1);
+                     CELoc, &R, 1);
 }
 
 //===----------------------------------------------------------------------===//
@@ -467,7 +484,9 @@ void WalkAST::checkCall_rand(const CallExpr *CE, const FunctionDecl *FD) {
       << "  Use 'arc4random' instead";
 
   SourceRange R = CE->getCallee()->getSourceRange();
-  BR.EmitBasicReport(os1.str(), "Security", os2.str(),CE->getLocStart(), &R, 1);
+  PathDiagnosticLocation CELoc =
+    PathDiagnosticLocation::createBegin(CE, BR.getSourceManager(), AC);
+  BR.EmitBasicReport(os1.str(), "Security", os2.str(), CELoc, &R, 1);
 }
 
 //===----------------------------------------------------------------------===//
@@ -490,11 +509,13 @@ void WalkAST::checkCall_random(const CallExpr *CE, const FunctionDecl *FD) {
 
   // Issue a warning.
   SourceRange R = CE->getCallee()->getSourceRange();
+  PathDiagnosticLocation CELoc =
+    PathDiagnosticLocation::createBegin(CE, BR.getSourceManager(), AC);
   BR.EmitBasicReport("'random' is not a secure random number generator",
                      "Security",
                      "The 'random' function produces a sequence of values that "
                      "an adversary may be able to predict.  Use 'arc4random' "
-                     "instead", CE->getLocStart(), &R, 1);
+                     "instead", CELoc, &R, 1);
 }
 
 //===----------------------------------------------------------------------===//
@@ -554,7 +575,9 @@ void WalkAST::checkUncheckedReturnValue(CallExpr *CE) {
       << "', the following code may execute with unexpected privileges";
 
   SourceRange R = CE->getCallee()->getSourceRange();
-  BR.EmitBasicReport(os1.str(), "Security", os2.str(),CE->getLocStart(), &R, 1);
+  PathDiagnosticLocation CELoc =
+    PathDiagnosticLocation::createBegin(CE, BR.getSourceManager(), AC);
+  BR.EmitBasicReport(os1.str(), "Security", os2.str(), CELoc, &R, 1);
 }
 
 //===----------------------------------------------------------------------===//
@@ -566,7 +589,7 @@ class SecuritySyntaxChecker : public Checker<check::ASTCodeBody> {
 public:
   void checkASTCodeBody(const Decl *D, AnalysisManager& mgr,
                         BugReporter &BR) const {
-    WalkAST walker(BR);
+    WalkAST walker(BR, mgr.getAnalysisContext(D));
     walker.Visit(D->getBody());
   }
 };

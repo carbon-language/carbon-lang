@@ -166,6 +166,9 @@ static void checkObjCDealloc(const ObjCImplementationDecl *D,
     }
   }
 
+  PathDiagnosticLocation DLoc =
+    PathDiagnosticLocation::createBegin(D, BR.getSourceManager());
+
   if (!MD) { // No dealloc found.
 
     const char* name = LOpts.getGC() == LangOptions::NonGC
@@ -176,7 +179,7 @@ static void checkObjCDealloc(const ObjCImplementationDecl *D,
     llvm::raw_string_ostream os(buf);
     os << "Objective-C class '" << D << "' lacks a 'dealloc' instance method";
 
-    BR.EmitBasicReport(name, os.str(), D->getLocStart());
+    BR.EmitBasicReport(name, os.str(), DLoc);
     return;
   }
 
@@ -193,7 +196,7 @@ static void checkObjCDealloc(const ObjCImplementationDecl *D,
        << "' does not send a 'dealloc' message to its super class"
            " (missing [super dealloc])";
 
-    BR.EmitBasicReport(name, os.str(), D->getLocStart());
+    BR.EmitBasicReport(name, os.str(), DLoc);
     return;
   }
 
@@ -257,7 +260,10 @@ static void checkObjCDealloc(const ObjCImplementationDecl *D,
               "but was released in 'dealloc'";
       }
 
-      BR.EmitBasicReport(name, category, os.str(), (*I)->getLocation());
+      PathDiagnosticLocation SDLoc =
+        PathDiagnosticLocation::createBegin((*I), BR.getSourceManager());
+
+      BR.EmitBasicReport(name, category, os.str(), SDLoc);
     }
   }
 }

@@ -156,9 +156,15 @@ static SourceLocation getValidSourceLocation(const Stmt* S,
 }
 
 PathDiagnosticLocation
-  PathDiagnosticLocation::createBeginStmt(const Stmt *S,
-                                          const SourceManager &SM,
-                                          LocationOrAnalysisContext LAC) {
+  PathDiagnosticLocation::createBegin(const Decl *D,
+                                      const SourceManager &SM) {
+  return PathDiagnosticLocation(D->getLocStart(), SM, SingleLocK);
+}
+
+PathDiagnosticLocation
+  PathDiagnosticLocation::createBegin(const Stmt *S,
+                                      const SourceManager &SM,
+                                      LocationOrAnalysisContext LAC) {
   return PathDiagnosticLocation(getValidSourceLocation(S, LAC),
                                 SM, SingleLocK);
 }
@@ -167,6 +173,12 @@ PathDiagnosticLocation
   PathDiagnosticLocation::createOperatorLoc(const BinaryOperator *BO,
                                             const SourceManager &SM) {
   return PathDiagnosticLocation(BO->getOperatorLoc(), SM, SingleLocK);
+}
+
+PathDiagnosticLocation
+  PathDiagnosticLocation::createMemberLoc(const MemberExpr *ME,
+                                          const SourceManager &SM) {
+  return PathDiagnosticLocation(ME->getMemberLoc(), SM, SingleLocK);
 }
 
 PathDiagnosticLocation

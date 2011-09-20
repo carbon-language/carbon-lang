@@ -66,8 +66,12 @@ static void CompareReturnTypes(const ObjCMethodDecl *MethDerived,
        << "'.  These two types are incompatible, and may result in undefined "
           "behavior for clients of these classes.";
 
+    PathDiagnosticLocation MethDLoc =
+      PathDiagnosticLocation::createBegin(MethDerived,
+                                          BR.getSourceManager());
+
     BR.EmitBasicReport("Incompatible instance method return type",
-                       os.str(), MethDerived->getLocStart());
+                       os.str(), MethDLoc);
   }
 }
 

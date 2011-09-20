@@ -212,8 +212,10 @@ void MallocOverflowSecurityChecker::OutputPossibleOverflows(
        ++i) {
     SourceRange R = i->mulop->getSourceRange();
     BR.EmitBasicReport("MallocOverflowSecurityChecker",
-        "the computation of the size of the memory allocation may overflow",
-        i->mulop->getOperatorLoc(), &R, 1);
+      "the computation of the size of the memory allocation may overflow",
+      PathDiagnosticLocation::createOperatorLoc(i->mulop,
+                                                BR.getSourceManager()),
+      &R, 1);
   }
 }
 

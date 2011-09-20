@@ -72,6 +72,7 @@ class DeadStoreObs : public LiveVariables::Observer {
   const CFG &cfg;
   ASTContext &Ctx;
   BugReporter& BR;
+  AnalysisContext* AC;
   ParentMap& Parents;
   llvm::SmallPtrSet<const VarDecl*, 20> Escaped;
   llvm::OwningPtr<ReachableCode> reachableCode;
@@ -81,15 +82,15 @@ class DeadStoreObs : public LiveVariables::Observer {
 
 public:
   DeadStoreObs(const CFG &cfg, ASTContext &ctx,
-               BugReporter& br, ParentMap& parents,
+               BugReporter& br, AnalysisContext* ac, ParentMap& parents,
                llvm::SmallPtrSet<const VarDecl*, 20> &escaped)
-    : cfg(cfg), Ctx(ctx), BR(br), Parents(parents),
+    : cfg(cfg), Ctx(ctx), BR(br), AC(ac), Parents(parents),
       Escaped(escaped), currentBlock(0) {}
 
   virtual ~DeadStoreObs() {}
 
   void Report(const VarDecl *V, DeadStoreKind dsk,
-              SourceLocation L, SourceRange R) {
+              PathDiagnosticLocation L, SourceRange R) {
     if (Escaped.count(V))
       return;
     
@@ -146,9 +147,12 @@ public:
       return;
 
     if (!Live.isLive(VD) && 
-        !(VD->getAttr<UnusedAttr>() || VD->getAttr<BlocksAttr>()))
-      Report(VD, dsk, Ex->getSourceRange().getBegin(),
-             Val->getSourceRange());
+        !(VD->getAttr<UnusedAttr>() || VD->getAttr<BlocksAttr>())) {
+
+      PathDiagnosticLocation ExLoc =
+        PathDiagnosticLocation::createBegin(Ex, BR.getSourceManager(), AC);
+      Report(VD, dsk, ExLoc, Val->getSourceRange());
+    }
   }
 
   void CheckDeclRef(const DeclRefExpr *DR, const Expr *Val, DeadStoreKind dsk,
@@ -293,7 +297,9 @@ public:
                     return;
                 }
 
-              Report(V, DeadInit, V->getLocation(), E->getSourceRange());
+              PathDiagnosticLocation Loc =
+                PathDiagnosticLocation::create(V, BR.getSourceManager());
+              Report(V, DeadInit, Loc, E->getSourceRange());
             }
           }
         }
@@ -344,10 +350,11 @@ public:
                         BugReporter &BR) const {
     if (LiveVariables *L = mgr.getLiveVariables(D)) {
       CFG &cfg = *mgr.getCFG(D);
+      AnalysisContext *AC = mgr.getAnalysisContext(D);
       ParentMap &pmap = mgr.getParentMap(D);
       FindEscaped FS(&cfg);
       FS.getCFG().VisitBlockStmts(FS);
-      DeadStoreObs A(cfg, BR.getContext(), BR, pmap, FS.Escaped);
+      DeadStoreObs A(cfg, BR.getContext(), BR, AC, pmap, FS.Escaped);
       L->runOnAllBlocks(A);
     }
   }

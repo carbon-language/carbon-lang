@@ -435,13 +435,13 @@ public:
       return true;
 
     // Create the diagnostic.
-    FullSourceLoc L(S->getLocStart(), BR.getSourceManager());
-
     if (Loc::isLocType(VD->getType())) {
       llvm::SmallString<64> buf;
       llvm::raw_svector_ostream os(buf);
       os << '\'' << VD << "' now aliases '" << MostRecent << '\'';
-
+      PathDiagnosticLocation L =
+        PathDiagnosticLocation::createBegin(S, BR.getSourceManager(),
+                                                   Pred->getLocationContext());
       PD.push_front(new PathDiagnosticEventPiece(L, os.str()));
     }
 
@@ -533,7 +533,9 @@ static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
       if (!T)
         continue;
 
-      FullSourceLoc Start(T->getLocStart(), SMgr);
+      PathDiagnosticLocation Start =
+        PathDiagnosticLocation::createBegin(T, SMgr,
+                                                N->getLocationContext());
 
       switch (T->getStmtClass()) {
         default:
@@ -1231,8 +1233,13 @@ BugReport::~BugReport() {
 
 void BugReport::Profile(llvm::FoldingSetNodeID& hash) const {
   hash.AddPointer(&BT);
-  hash.AddInteger(getLocation().getRawEncoding());
   hash.AddString(Description);
+  if (Location.isValid()) {
+    Location.Profile(hash);
+  } else {
+    assert(ErrorNode);
+    hash.AddPointer(GetCurrentOrPreviousStmt(ErrorNode));
+  }
 
   for (SmallVectorImpl<SourceRange>::const_iterator I =
       Ranges.begin(), E = Ranges.end(); I != E; ++I) {
@@ -1280,28 +1287,29 @@ BugReport::getRanges() {
     return std::make_pair(Ranges.begin(), Ranges.end());
 }
 
-SourceLocation BugReport::getLocation() const {
+PathDiagnosticLocation BugReport::getLocation(const SourceManager &SM) const {
   if (ErrorNode) {
-    (Location.isInvalid() &&
+    assert(!Location.isValid() &&
      "Either Location or ErrorNode should be specified but not both.");
 
     if (const Stmt *S = GetCurrentOrPreviousStmt(ErrorNode)) {
+      const LocationContext *LC = ErrorNode->getLocationContext();
+
       // For member expressions, return the location of the '.' or '->'.
       if (const MemberExpr *ME = dyn_cast<MemberExpr>(S))
-        return ME->getMemberLoc();
+        return PathDiagnosticLocation::createMemberLoc(ME, SM);
       // For binary operators, return the location of the operator.
       if (const BinaryOperator *B = dyn_cast<BinaryOperator>(S))
-        return B->getOperatorLoc();
+        return PathDiagnosticLocation::createOperatorLoc(B, SM);
 
-      return S->getLocStart();
+      return PathDiagnosticLocation::createBegin(S, SM, LC);
     }
-
   } else {
     assert(Location.isValid());
     return Location;
   }
 
-  return FullSourceLoc();
+  return PathDiagnosticLocation();
 }
 
 //===----------------------------------------------------------------------===//
@@ -1564,7 +1572,9 @@ static void CompactPathDiagnostic(PathDiagnostic &PD, const SourceManager& SM) {
 
     if (!MacroGroup || ParentInstantiationLoc == MacroStack.back().second) {
       // Create a new macro group and add it to the stack.
-      PathDiagnosticMacroPiece *NewGroup = new PathDiagnosticMacroPiece(Loc);
+      PathDiagnosticMacroPiece *NewGroup =
+        new PathDiagnosticMacroPiece(
+          PathDiagnosticLocation::createSingleLocation(I->getLocation()));
 
       if (MacroGroup)
         MacroGroup->push_back(NewGroup);
@@ -1872,7 +1882,6 @@ void BugReporter::FlushReport(BugReportEquivClass& EQ) {
   BugReport::ranges_iterator Beg, End;
   llvm::tie(Beg, End) = exampleReport->getRanges();
   Diagnostic &Diag = getDiagnostic();
-  FullSourceLoc L(exampleReport->getLocation(), getSourceManager());
   
   // Search the description for '%', as that will be interpretted as a
   // format character by FormatDiagnostics.
@@ -1892,7 +1901,8 @@ void BugReporter::FlushReport(BugReportEquivClass& EQ) {
   }        
 
   {
-    DiagnosticBuilder diagBuilder = Diag.Report(L, ErrorDiag);
+    DiagnosticBuilder diagBuilder = Diag.Report(
+      exampleReport->getLocation(getSourceManager()).asLocation(), ErrorDiag);
     for (BugReport::ranges_iterator I = Beg; I != End; ++I)
       diagBuilder << *I;
   }
@@ -1902,8 +1912,9 @@ void BugReporter::FlushReport(BugReportEquivClass& EQ) {
     return;
 
   if (D->empty()) {
-    PathDiagnosticPiece *piece =
-      new PathDiagnosticEventPiece(L, exampleReport->getDescription());
+    PathDiagnosticPiece *piece = new PathDiagnosticEventPiece(
+                                 exampleReport->getLocation(getSourceManager()),
+                                 exampleReport->getDescription());
 
     for ( ; Beg != End; ++Beg) piece->addRange(*Beg);
     D->push_back(piece);
@@ -1913,20 +1924,19 @@ void BugReporter::FlushReport(BugReportEquivClass& EQ) {
 }
 
 void BugReporter::EmitBasicReport(StringRef name, StringRef str,
-                                  SourceLocation Loc,
+                                  PathDiagnosticLocation Loc,
                                   SourceRange* RBeg, unsigned NumRanges) {
   EmitBasicReport(name, "", str, Loc, RBeg, NumRanges);
 }
 
 void BugReporter::EmitBasicReport(StringRef name,
                                   StringRef category,
-                                  StringRef str, SourceLocation Loc,
+                                  StringRef str, PathDiagnosticLocation Loc,
                                   SourceRange* RBeg, unsigned NumRanges) {
 
   // 'BT' is owned by BugReporter.
   BugType *BT = getBugTypeForName(name, category);
-  FullSourceLoc L = getContext().getFullLoc(Loc);
-  BugReport *R = new BugReport(*BT, str, L);
+  BugReport *R = new BugReport(*BT, str, Loc);
   for ( ; NumRanges > 0 ; --NumRanges, ++RBeg) R->addRange(*RBeg);
   EmitReport(R);
 }

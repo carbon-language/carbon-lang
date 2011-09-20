@@ -175,9 +175,10 @@ void StringRefCheckerVisitor::VisitVarDecl(VarDecl *VD) {
   // Okay, badness!  Report an error.
   const char *desc = "StringRef should not be bound to temporary "
                      "std::string that it outlives";
-
+  PathDiagnosticLocation VDLoc =
+    PathDiagnosticLocation::createBegin(VD, BR.getSourceManager());
   BR.EmitBasicReport(desc, "LLVM Conventions", desc,
-                     VD->getLocStart(), Init->getSourceRange());
+                     VDLoc, Init->getSourceRange());
 }
 
 //===----------------------------------------------------------------------===//
@@ -279,8 +280,10 @@ void ASTFieldVisitor::ReportError(QualType T) {
   // just report warnings when we see an out-of-line method definition for a
   // class, as that heuristic doesn't always work (the complete definition of
   // the class may be in the header file, for example).
+  PathDiagnosticLocation L = PathDiagnosticLocation::createBegin(
+                               FieldChain.front(), BR.getSourceManager());
   BR.EmitBasicReport("AST node allocates heap memory", "LLVM Conventions",
-                     os.str(), FieldChain.front()->getLocStart());
+                     os.str(), L);
 }
 
 //===----------------------------------------------------------------------===//

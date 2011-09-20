@@ -29,6 +29,7 @@ class BinaryOperator;
 class CompoundStmt;
 class Decl;
 class LocationContext;
+class MemberExpr;
 class ParentMap;
 class ProgramPoint;
 class SourceManager;
@@ -103,6 +104,12 @@ private:
   FullSourceLoc Loc;
   PathDiagnosticRange Range;
 
+  PathDiagnosticLocation(SourceLocation L, const SourceManager &sm,
+                         Kind kind)
+    : K(kind), R(L, L), S(0), D(0), SM(&sm),
+      Loc(genLocation()), Range(genRange()) {
+  }
+  
   FullSourceLoc
     genLocation(LocationOrAnalysisContext LAC = (AnalysisContext*)0) const;
   PathDiagnosticRange
@@ -118,12 +125,6 @@ public:
       Loc(genLocation()), Range(genRange()) {
   }
 
-  PathDiagnosticLocation(SourceLocation L, const SourceManager &sm,
-                         Kind kind = SingleLocK)
-    : K(kind), R(L, L), S(0), D(0), SM(&sm),
-      Loc(genLocation()), Range(genRange()) {
-  }
-
   PathDiagnosticLocation(const Stmt *s,
                          const SourceManager &sm,
                          LocationOrAnalysisContext lac)
@@ -136,15 +137,29 @@ public:
       Loc(genLocation()), Range(genRange()) {
   }
 
-  // Create a location for the beginning of the statement.
-  static PathDiagnosticLocation createBeginStmt(const Stmt *S,
-                                                const SourceManager &SM,
-                                                LocationOrAnalysisContext LAC);
+  static PathDiagnosticLocation create(const Decl *D,
+                                       const SourceManager &SM) {
+    return PathDiagnosticLocation(D, SM);
+  }
+
+  /// Create a location for the beginning of the declaration.
+  static PathDiagnosticLocation createBegin(const Decl *D,
+                                            const SourceManager &SM);
+
+  /// Create a location for the beginning of the statement.
+  static PathDiagnosticLocation createBegin(const Stmt *S,
+                                            const SourceManager &SM,
+                                            const LocationOrAnalysisContext LAC);
 
   /// Create the location for the operator of the binary expression.
   /// Assumes the statement has a valid location.
   static PathDiagnosticLocation createOperatorLoc(const BinaryOperator *BO,
                                                   const SourceManager &SM);
+
+  /// For member expressions, return the location of the '.' or '->'.
+  /// Assumes the statement has a valid location.
+  static PathDiagnosticLocation createMemberLoc(const MemberExpr *ME,
+                                                const SourceManager &SM);
 
   /// Create a location for the beginning of the compound statement.
   /// Assumes the statement has a valid location.

@@ -159,8 +159,10 @@ static void checkObjCUnusedIvar(const ObjCImplementationDecl *D,
          << "' is never used by the methods in its @implementation "
             "(although it may be used by category methods).";
 
+      PathDiagnosticLocation L =
+        PathDiagnosticLocation::create(I->first, BR.getSourceManager());
       BR.EmitBasicReport("Unused instance variable", "Optimization",
-                         os.str(), I->first->getLocation());
+                         os.str(), L);
     }
 }
 
