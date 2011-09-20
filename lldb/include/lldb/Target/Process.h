@@ -2301,6 +2301,24 @@ public:
     AllocateMemory (size_t size, uint32_t permissions, Error &error);
 
     //------------------------------------------------------------------
+    /// Determines whether executing JIT-compiled code in this process 
+    /// is possible.
+    ///
+    /// @return
+    ///     True if execution of JIT code is possible; false otherwise.
+    //------------------------------------------------------------------    
+    bool CanJIT ();
+    
+    //------------------------------------------------------------------
+    /// Sets whether executing JIT-compiled code in this process 
+    /// is possible.
+    ///
+    /// @param[in] can_jit
+    ///     True if execution of JIT code is possible; false otherwise.
+    //------------------------------------------------------------------
+    void SetCanJIT (bool can_jit);
+    
+    //------------------------------------------------------------------
     /// Actually deallocate memory in the process.
     ///
     /// This function will deallocate memory in the process's address
@@ -2770,6 +2788,12 @@ protected:
     typedef std::map<lldb::LanguageType, lldb::LanguageRuntimeSP> LanguageRuntimeCollection; 
     LanguageRuntimeCollection m_language_runtimes;
     std::auto_ptr<NextEventAction> m_next_event_action_ap;
+
+    enum {
+        eCanJITDontKnow= 0,
+        eCanJITYes,
+        eCanJITNo
+    } m_can_jit;
 
     size_t
     RemoveBreakpointOpcodesFromBuffer (lldb::addr_t addr, size_t size, uint8_t *buf) const;

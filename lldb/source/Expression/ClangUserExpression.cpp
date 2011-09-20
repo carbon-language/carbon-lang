@@ -615,34 +615,8 @@ ClangUserExpression::EvaluateWithError (ExecutionContext &exe_ctx,
         }
     }
     
-    if (exe_ctx.process == NULL)
+    if (exe_ctx.process == NULL || !exe_ctx.process->CanJIT())
         execution_policy = eExecutionPolicyNever;
-        
-    if (execution_policy != eExecutionPolicyNever && !exe_ctx.process->GetDynamicCheckers())
-    {
-        if (log)
-            log->Printf("== [ClangUserExpression::Evaluate] Installing dynamic checkers ==");
-        
-        DynamicCheckerFunctions *dynamic_checkers = new DynamicCheckerFunctions();
-        
-        StreamString install_errors;
-        
-        if (!dynamic_checkers->Install(install_errors, exe_ctx))
-        {
-            if (install_errors.GetString().empty())
-                error.SetErrorString ("couldn't install checkers, unknown error");
-            else
-                error.SetErrorString (install_errors.GetString().c_str());
-            
-            result_valobj_sp = ValueObjectConstResult::Create (NULL, error);
-            return eExecutionSetupError;
-        }
-            
-        exe_ctx.process->SetDynamicCheckers(dynamic_checkers);
-        
-        if (log)
-            log->Printf("== [ClangUserExpression::Evaluate] Finished installing dynamic checkers ==");
-    }
     
     ClangUserExpressionSP user_expression_sp (new ClangUserExpression (expr_cstr, expr_prefix));
 

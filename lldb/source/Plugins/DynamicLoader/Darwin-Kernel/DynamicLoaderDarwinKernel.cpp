@@ -78,7 +78,10 @@ DynamicLoaderDarwinKernel::CreateInstance (Process* process, bool force)
     }
     
     if (create)
+    {
+        process->SetCanJIT(false);
         return new DynamicLoaderDarwinKernel (process);
+    }
     return NULL;
 }
 

@@ -601,7 +601,8 @@ Process::Process(Target &target, Listener &listener) :
     m_memory_cache (*this),
     m_allocated_memory_cache (*this),
     m_attached_to_process (false),
-    m_next_event_action_ap()
+    m_next_event_action_ap(),
+    m_can_jit(eCanJITYes)
 {
     UpdateInstanceName();
 
@@ -1954,6 +1955,18 @@ Process::AllocateMemory(size_t size, uint32_t permissions, Error &error)
                     m_mod_id.GetMemoryID());
     return allocated_addr;
 #endif
+}
+
+bool
+Process::CanJIT ()
+{
+    return m_can_jit == eCanJITYes;
+}
+
+void
+Process::SetCanJIT (bool can_jit)
+{
+    m_can_jit = (can_jit ? eCanJITYes : eCanJITNo);
 }
 
 Error

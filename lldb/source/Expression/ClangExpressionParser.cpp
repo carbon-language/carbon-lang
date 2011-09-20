@@ -496,8 +496,32 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_allocation_addr,
             return err;
         }
         
-        if (m_expr.NeedsValidation() && exe_ctx.process && exe_ctx.process->GetDynamicCheckers())
+        if (execution_policy != eExecutionPolicyNever &&
+            m_expr.NeedsValidation() && 
+            exe_ctx.process)
         {
+            if (!exe_ctx.process->GetDynamicCheckers())
+            {                
+                DynamicCheckerFunctions *dynamic_checkers = new DynamicCheckerFunctions();
+                
+                StreamString install_errors;
+                
+                if (!dynamic_checkers->Install(install_errors, exe_ctx))
+                {
+                    if (install_errors.GetString().empty())
+                        err.SetErrorString ("couldn't install checkers, unknown error");
+                    else
+                        err.SetErrorString (install_errors.GetString().c_str());
+                    
+                    return err;
+                }
+                
+                exe_ctx.process->SetDynamicCheckers(dynamic_checkers);
+                
+                if (log)
+                    log->Printf("== [ClangUserExpression::Evaluate] Finished installing dynamic checkers ==");
+            }
+            
             IRDynamicChecks ir_dynamic_checks(*exe_ctx.process->GetDynamicCheckers(), function_name.c_str());
         
             if (!ir_dynamic_checks.runOnModule(*module))
