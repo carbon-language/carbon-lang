@@ -3064,3 +3064,23 @@ _func:
 @ CHECK: it	le                      @ encoding: [0xd8,0xbf]
 @ CHECK: uxthle.w	r2, r2, ror #16 @ encoding: [0x1f,0xfa,0xa2,0xf2]
 @ CHECK: uxth.w	r9, r3, ror #24         @ encoding: [0x1f,0xfa,0xb3,0xf9]
+
+
+@------------------------------------------------------------------------------
+@ WFE/WFI/YIELD
+@------------------------------------------------------------------------------
+        wfe
+        wfi
+        yield
+        itet lt
+        wfelt
+        wfige
+        yieldlt
+
+@ CHECK: wfe                            @ encoding: [0x20,0xbf]
+@ CHECK: wfi                            @ encoding: [0x30,0xbf]
+@ CHECK: yield                          @ encoding: [0x10,0xbf]
+@ CHECK: itet	lt                      @ encoding: [0xb6,0xbf]
+@ CHECK: wfelt                          @ encoding: [0x20,0xbf]
+@ CHECK: wfige                          @ encoding: [0x30,0xbf]
+@ CHECK: yieldlt                        @ encoding: [0x10,0xbf]
