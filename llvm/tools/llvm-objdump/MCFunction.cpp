@@ -47,44 +47,39 @@ MCFunction::createFunctionFromMC(StringRef Name, const MCDisassembler *DisAsm,
   while (!WorkList.empty()) {
     uint64_t Index = WorkList.pop_back_val();
     if (VisitedInsts.find(Index) != VisitedInsts.end())
-      continue;
+      continue; // Already visited this location.
 
     for (;Index < End; Index += Size) {
-      MCInst Inst;
+      VisitedInsts.insert(Index);
 
+      MCInst Inst;
       if (DisAsm->getInstruction(Inst, Size, Region, Index, DebugOut, nulls())){
+        Instructions.push_back(MCDecodedInst(Index, Size, Inst));
         if (Ana->isBranch(Inst)) {
           uint64_t targ = Ana->evaluateBranch(Inst, Index, Size);
-          if (targ != -1ULL && targ == Index+Size) {
-            Instructions.push_back(MCDecodedInst(Index, Size, Inst));
-            VisitedInsts.insert(Index);
-            continue;
-          }
+          if (targ != -1ULL && targ == Index+Size)
+            continue; // Skip nop jumps.
+
+          // If we could determine the branch target, make a note to start a
+          // new basic block there and add the target to the worklist.
           if (targ != -1ULL) {
             Splits.insert(targ);
             WorkList.push_back(targ);
             WorkList.push_back(Index+Size);
           }
           Splits.insert(Index+Size);
-          Instructions.push_back(MCDecodedInst(Index, Size, Inst));
-          VisitedInsts.insert(Index);
           break;
         } else if (Ana->isReturn(Inst)) {
+          // Return instruction. This basic block ends here.
           Splits.insert(Index+Size);
-          Instructions.push_back(MCDecodedInst(Index, Size, Inst));
-          VisitedInsts.insert(Index);
           break;
         } else if (Ana->isCall(Inst)) {
           uint64_t targ = Ana->evaluateBranch(Inst, Index, Size);
-          if (targ != -1ULL && targ != Index+Size) {
+          // Add the call to the call list if the destination is known.
+          if (targ != -1ULL && targ != Index+Size)
             Calls.push_back(targ);
-          }
         }
-
-        Instructions.push_back(MCDecodedInst(Index, Size, Inst));
-        VisitedInsts.insert(Index);
       } else {
-        VisitedInsts.insert(Index);
         errs().write_hex(Index) << ": warning: invalid instruction encoding\n";
         if (Size == 0)
           Size = 1; // skip illegible bytes
@@ -93,9 +88,10 @@ MCFunction::createFunctionFromMC(StringRef Name, const MCDisassembler *DisAsm,
   }
   }
 
+  // Make sure the instruction list is sorted.
   std::sort(Instructions.begin(), Instructions.end());
 
-   // Create basic blocks.
+  // Create basic blocks.
   unsigned ii = 0, ie = Instructions.size();
   for (std::set<uint64_t>::iterator spi = Splits.begin(),
        spe = llvm::prior(Splits.end()); spi != spe; ++spi) {
@@ -115,7 +111,7 @@ MCFunction::createFunctionFromMC(StringRef Name, const MCDisassembler *DisAsm,
 
   // Calculate successors of each block.
   for (MCFunction::iterator i = f.begin(), e = f.end(); i != e; ++i) {
-    MCBasicBlock &BB = i->second;
+    MCBasicBlock &BB = const_cast<MCBasicBlock&>(i->second);
     if (BB.getInsts().empty()) continue;
     const MCDecodedInst &Inst = BB.getInsts().back();
 

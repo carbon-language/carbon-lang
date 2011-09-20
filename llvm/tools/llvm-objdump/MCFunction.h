@@ -83,9 +83,9 @@ public:
                        const MCInstrAnalysis *Ana, raw_ostream &DebugOut,
                        SmallVectorImpl<uint64_t> &Calls);
 
-  typedef MapTy::iterator iterator;
-  iterator begin() { return Blocks.begin(); }
-  iterator end() { return Blocks.end(); }
+  typedef MapTy::const_iterator iterator;
+  iterator begin() const { return Blocks.begin(); }
+  iterator end() const { return Blocks.end(); }
 
   StringRef getName() const { return Name; }
 
