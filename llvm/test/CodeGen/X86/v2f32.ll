@@ -1,6 +1,6 @@
 ; RUN: llc < %s -mtriple=x86_64-linux -mcpu=penryn -asm-verbose=0 -o - | FileCheck %s -check-prefix=X64
 ; RUN: llc < %s -mtriple=x86_64-win32 -mcpu=penryn -asm-verbose=0 -o - | FileCheck %s -check-prefix=W64
-; RUN: llc < %s -mcpu=yonah -march=x86 -asm-verbose=0 -o - | FileCheck %s -check-prefix=X32
+; RUN: llc < %s -mcpu=yonah -march=x86 -mtriple=i386-linux-gnu -asm-verbose=0 -o - | FileCheck %s -check-prefix=X32
 
 ; PR7518
 define void @test1(<2 x float> %Q, float *%P2) nounwind {

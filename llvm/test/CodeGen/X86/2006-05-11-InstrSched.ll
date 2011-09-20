@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -mattr=+sse2 -stats -realign-stack=0 |&\
+; RUN: llc < %s -march=x86 -mtriple=i386-linux-gnu -mattr=+sse2 -stats -realign-stack=0 |&\
 ; RUN:     grep {asm-printer} | grep 34
 
 target datalayout = "e-p:32:32"
