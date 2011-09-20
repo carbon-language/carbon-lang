@@ -278,7 +278,8 @@ bool BlockExtractorPass::runOnModule(Module &M) {
   for (unsigned i = 0, e = BlocksToExtract.size(); i != e; ++i) {
     SmallVector<BasicBlock*, 2> BlocksToExtractVec;
     BlocksToExtractVec.push_back(BlocksToExtract[i]);
-    if (const InvokeInst *II = dyn_cast<InvokeInst>(BlocksToExtract[i]))
+    if (const InvokeInst *II =
+        dyn_cast<InvokeInst>(BlocksToExtract[i]->getTerminator()))
       BlocksToExtractVec.push_back(II->getUnwindDest());
     ExtractBasicBlock(BlocksToExtractVec);
   }
