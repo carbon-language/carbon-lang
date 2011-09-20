@@ -2886,3 +2886,19 @@ _func:
 @ CHECK: ite	gt                      @ encoding: [0xcc,0xbf]
 @ CHECK: usada8gt	r3, r1, r6, r9  @ encoding: [0x71,0xfb,0x06,0x93]
 @ CHECK: usad8le	r4, r6, r4      @ encoding: [0x76,0xfb,0x04,0xf4]
+
+
+@------------------------------------------------------------------------------
+@ USAT
+@------------------------------------------------------------------------------
+        usat	r8, #1, r10
+        usat	r8, #4, r10, lsl #0
+        usat	r8, #5, r10, lsl #31
+        usat	r8, #31, r10, asr #32
+        usat	r8, #16, r10, asr #1
+
+@ CHECK: usat	r8, #1, r10             @ encoding: [0x8a,0xf3,0x01,0x08]
+@ CHECK: usat	r8, #4, r10             @ encoding: [0x8a,0xf3,0x04,0x08]
+@ CHECK: usat	r8, #5, r10, lsl #31    @ encoding: [0x8a,0xf3,0xc5,0x78]
+@ CHECK: usat	r8, #31, r10, asr #32   @ encoding: [0xaa,0xf3,0x1f,0x08]
+@ CHECK: usat	r8, #16, r10, asr #1    @ encoding: [0xaa,0xf3,0x50,0x08]
