@@ -16,6 +16,7 @@
 
 #include "clang/Basic/Diagnostic.h"
 #include "llvm/ADT/FoldingSet.h"
+#include "llvm/ADT/PointerUnion.h"
 #include <deque>
 #include <iterator>
 #include <string>
@@ -23,6 +24,7 @@
 
 namespace clang {
 
+class AnalysisContext;
 class BinaryOperator;
 class CompoundStmt;
 class Decl;
@@ -88,6 +90,9 @@ public:
   PathDiagnosticRange() : isPoint(false) {}
 };
 
+typedef llvm::PointerUnion<const LocationContext*, AnalysisContext*>
+                                                   LocationOrAnalysisContext;
+
 class PathDiagnosticLocation {
 private:
   enum Kind { RangeK, SingleLocK, StmtK, DeclK } K;
@@ -98,8 +103,10 @@ private:
   FullSourceLoc Loc;
   PathDiagnosticRange Range;
 
-  FullSourceLoc genLocation(const LocationContext *LC=0) const;
-  PathDiagnosticRange genRange(const LocationContext *LC=0) const;
+  FullSourceLoc
+    genLocation(LocationOrAnalysisContext LAC = (AnalysisContext*)0) const;
+  PathDiagnosticRange
+    genRange(LocationOrAnalysisContext LAC = (AnalysisContext*)0) const;
 
 public:
   PathDiagnosticLocation()
@@ -119,9 +126,9 @@ public:
 
   PathDiagnosticLocation(const Stmt *s,
                          const SourceManager &sm,
-                         const LocationContext *lc)
+                         LocationOrAnalysisContext lac)
     : K(StmtK), S(s), D(0), SM(&sm),
-      Loc(genLocation(lc)), Range(genRange(lc)) {}
+      Loc(genLocation(lac)), Range(genRange(lac)) {}
 
 
   PathDiagnosticLocation(const Decl *d, const SourceManager &sm)
@@ -132,7 +139,7 @@ public:
   // Create a location for the beginning of the statement.
   static PathDiagnosticLocation createBeginStmt(const Stmt *S,
                                                 const SourceManager &SM,
-                                                const LocationContext *LC);
+                                                LocationOrAnalysisContext LAC);
 
   /// Create the location for the operator of the binary expression.
   /// Assumes the statement has a valid location.
