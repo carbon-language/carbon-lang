@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=x86-64 -mattr=+avx -asm-verbose=false -join-physregs -enable-unsafe-fp-math -enable-no-nans-fp-math -promote-elements | FileCheck -check-prefix=UNSAFE %s
 
 ; UNSAFE: maxpd:
-; UNSAFE: vmaxpd %xmm
+; UNSAFE: vmaxpd {{.+}}, %xmm
 define <2 x double> @maxpd(<2 x double> %x, <2 x double> %y) {
   %max_is_x = fcmp oge <2 x double> %x, %y
   %max = select <2 x i1> %max_is_x, <2 x double> %x, <2 x double> %y
@@ -9,7 +9,7 @@ define <2 x double> @maxpd(<2 x double> %x, <2 x double> %y) {
 }
 
 ; UNSAFE: minpd:
-; UNSAFE: vminpd %xmm
+; UNSAFE: vminpd {{.+}}, %xmm
 define <2 x double> @minpd(<2 x double> %x, <2 x double> %y) {
   %min_is_x = fcmp ole <2 x double> %x, %y
   %min = select <2 x i1> %min_is_x, <2 x double> %x, <2 x double> %y
@@ -17,7 +17,7 @@ define <2 x double> @minpd(<2 x double> %x, <2 x double> %y) {
 }
 
 ; UNSAFE: maxps:
-; UNSAFE: vmaxps %xmm
+; UNSAFE: vmaxps {{.+}}, %xmm
 define <4 x float> @maxps(<4 x float> %x, <4 x float> %y) {
   %max_is_x = fcmp oge <4 x float> %x, %y
   %max = select <4 x i1> %max_is_x, <4 x float> %x, <4 x float> %y
@@ -25,7 +25,7 @@ define <4 x float> @maxps(<4 x float> %x, <4 x float> %y) {
 }
 
 ; UNSAFE: minps:
-; UNSAFE: vminps %xmm
+; UNSAFE: vminps {{.+}}, %xmm
 define <4 x float> @minps(<4 x float> %x, <4 x float> %y) {
   %min_is_x = fcmp ole <4 x float> %x, %y
   %min = select <4 x i1> %min_is_x, <4 x float> %x, <4 x float> %y
