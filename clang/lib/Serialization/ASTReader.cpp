@@ -1346,98 +1346,6 @@ void ASTReader::ReadMacroRecord(Module &F, uint64_t Offset) {
   return;
 }
 
-PreprocessedEntity *ASTReader::LoadPreprocessedEntity(Module &F) {
-  unsigned Code = F.PreprocessorDetailCursor.ReadCode();
-  switch (Code) {
-  case llvm::bitc::END_BLOCK:
-    return 0;
-    
-  case llvm::bitc::ENTER_SUBBLOCK:
-    Error("unexpected subblock record in preprocessor detail block");
-    return 0;
-      
-  case llvm::bitc::DEFINE_ABBREV:
-    Error("unexpected abbrevation record in preprocessor detail block");
-    return 0;
-      
-  default:
-    break;
-  }
-
-  if (!PP.getPreprocessingRecord()) {
-    Error("no preprocessing record");
-    return 0;
-  }
-  
-  // Read the record.
-  PreprocessingRecord &PPRec = *PP.getPreprocessingRecord();
-  const char *BlobStart = 0;
-  unsigned BlobLen = 0;
-  RecordData Record;
-  PreprocessorDetailRecordTypes RecType =
-    (PreprocessorDetailRecordTypes)F.PreprocessorDetailCursor.ReadRecord(
-                                             Code, Record, BlobStart, BlobLen);
-  switch (RecType) {
-  case PPD_MACRO_EXPANSION: {
-    bool isBuiltin = Record[3];
-    MacroExpansion *ME;
-    if (isBuiltin) {
-      ME = new (PPRec) MacroExpansion(getLocalIdentifier(F, Record[4]),
-                                 SourceRange(ReadSourceLocation(F, Record[1]),
-                                             ReadSourceLocation(F, Record[2])));
-    } else {
-      PreprocessedEntityID
-          GlobalID = getGlobalPreprocessedEntityID(F, Record[4]);
-      ME = new (PPRec) MacroExpansion(
-           cast<MacroDefinition>(PPRec.getLoadedPreprocessedEntity(GlobalID-1)),
-                                 SourceRange(ReadSourceLocation(F, Record[1]),
-                                             ReadSourceLocation(F, Record[2])));
-    }
-    return ME;
-  }
-      
-  case PPD_MACRO_DEFINITION: {
-    PreprocessedEntityID GlobalID = getGlobalPreprocessedEntityID(F, Record[0]);
-    
-    // Decode the identifier info and then check again; if the macro is
-    // still defined and associated with the identifier,
-    IdentifierInfo *II = getLocalIdentifier(F, Record[3]);
-    MacroDefinition *MD
-      = new (PPRec) MacroDefinition(II,
-                                    SourceRange(
-                                          ReadSourceLocation(F, Record[1]),
-                                          ReadSourceLocation(F, Record[2])));
-
-    if (DeserializationListener)
-      DeserializationListener->MacroDefinitionRead(GlobalID, MD);
-
-    return MD;
-  }
-      
-  case PPD_INCLUSION_DIRECTIVE: {
-    const char *FullFileNameStart = BlobStart + Record[3];
-    const FileEntry *File
-      = PP.getFileManager().getFile(StringRef(FullFileNameStart,
-                                               BlobLen - Record[3]));
-    
-    // FIXME: Stable encoding
-    InclusionDirective::InclusionKind Kind
-      = static_cast<InclusionDirective::InclusionKind>(Record[5]);
-    InclusionDirective *ID
-      = new (PPRec) InclusionDirective(PPRec, Kind,
-                                       StringRef(BlobStart, Record[3]),
-                                       Record[4],
-                                       File,
-                                 SourceRange(ReadSourceLocation(F, Record[1]),
-                                             ReadSourceLocation(F, Record[2])));
-    return ID;
-  }
-  }
-  
-  Error("invalid offset in preprocessor detail block");
-  return 0;
-}
-
 PreprocessedEntityID 
 ASTReader::getGlobalPreprocessedEntityID(Module &M, unsigned LocalID) const {
   ContinuousRangeMap<uint32_t, int, 2>::const_iterator 
@@ -2869,6 +2777,7 @@ bool ASTReader::ParseLanguageOptions(
 }
 
 PreprocessedEntity *ASTReader::ReadPreprocessedEntity(unsigned Index) {
+  PreprocessedEntityID PPID = Index+1;
   GlobalPreprocessedEntityMapType::iterator
     I = GlobalPreprocessedEntityMap.find(Index);
   assert(I != GlobalPreprocessedEntityMap.end() && 
@@ -2879,7 +2788,99 @@ PreprocessedEntity *ASTReader::ReadPreprocessedEntity(unsigned Index) {
   SavedStreamPosition SavedPosition(M.PreprocessorDetailCursor);  
   M.PreprocessorDetailCursor.JumpToBit(
                              M.PreprocessedEntityOffsets[LocalIndex].BitOffset);
-  return LoadPreprocessedEntity(M);
+
+  unsigned Code = M.PreprocessorDetailCursor.ReadCode();
+  switch (Code) {
+  case llvm::bitc::END_BLOCK:
+    return 0;
+    
+  case llvm::bitc::ENTER_SUBBLOCK:
+    Error("unexpected subblock record in preprocessor detail block");
+    return 0;
+      
+  case llvm::bitc::DEFINE_ABBREV:
+    Error("unexpected abbrevation record in preprocessor detail block");
+    return 0;
+      
+  default:
+    break;
+  }
+
+  if (!PP.getPreprocessingRecord()) {
+    Error("no preprocessing record");
+    return 0;
+  }
+  
+  // Read the record.
+  PreprocessingRecord &PPRec = *PP.getPreprocessingRecord();
+  const char *BlobStart = 0;
+  unsigned BlobLen = 0;
+  RecordData Record;
+  PreprocessorDetailRecordTypes RecType =
+    (PreprocessorDetailRecordTypes)M.PreprocessorDetailCursor.ReadRecord(
+                                             Code, Record, BlobStart, BlobLen);
+  switch (RecType) {
+  case PPD_MACRO_EXPANSION: {
+    SourceRange Range(ReadSourceLocation(M, Record[0]),
+                      ReadSourceLocation(M, Record[1]));
+    bool isBuiltin = Record[2];
+    IdentifierInfo *Name = 0;
+    MacroDefinition *Def = 0;
+    if (isBuiltin)
+      Name = getLocalIdentifier(M, Record[3]);
+    else {
+      PreprocessedEntityID
+          GlobalID = getGlobalPreprocessedEntityID(M, Record[3]);
+      Def =cast<MacroDefinition>(PPRec.getLoadedPreprocessedEntity(GlobalID-1));
+    }
+
+    MacroExpansion *ME;
+    if (isBuiltin)
+      ME = new (PPRec) MacroExpansion(Name, Range);
+    else
+      ME = new (PPRec) MacroExpansion(Def, Range);
+
+    return ME;
+  }
+      
+  case PPD_MACRO_DEFINITION: {
+    // Decode the identifier info and then check again; if the macro is
+    // still defined and associated with the identifier,
+    IdentifierInfo *II = getLocalIdentifier(M, Record[2]);
+    MacroDefinition *MD
+      = new (PPRec) MacroDefinition(II,
+                                    SourceRange(
+                                          ReadSourceLocation(M, Record[0]),
+                                          ReadSourceLocation(M, Record[1])));
+
+    if (DeserializationListener)
+      DeserializationListener->MacroDefinitionRead(PPID, MD);
+
+    return MD;
+  }
+      
+  case PPD_INCLUSION_DIRECTIVE: {
+    const char *FullFileNameStart = BlobStart + Record[2];
+    const FileEntry *File
+      = PP.getFileManager().getFile(StringRef(FullFileNameStart,
+                                               BlobLen - Record[2]));
+    
+    // FIXME: Stable encoding
+    InclusionDirective::InclusionKind Kind
+      = static_cast<InclusionDirective::InclusionKind>(Record[4]);
+    InclusionDirective *ID
+      = new (PPRec) InclusionDirective(PPRec, Kind,
+                                       StringRef(BlobStart, Record[2]),
+                                       Record[3],
+                                       File,
+                                 SourceRange(ReadSourceLocation(M, Record[0]),
+                                             ReadSourceLocation(M, Record[1])));
+    return ID;
+  }
+  }
+  
+  Error("invalid offset in preprocessor detail block");
+  return 0;
 }
 
 /// \brief \arg SLocMapI points at a chunk of a module that contains no

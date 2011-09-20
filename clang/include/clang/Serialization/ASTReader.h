@@ -1229,10 +1229,6 @@ public:
 
   /// \brief Reads the macro record located at the given offset.
   void ReadMacroRecord(Module &F, uint64_t Offset);
-
-  /// \brief Reads the preprocessed entity located at the current stream
-  /// position.
-  PreprocessedEntity *LoadPreprocessedEntity(Module &F);
       
   /// \brief Determine the global preprocessed entity ID that corresponds to
   /// the given local ID within the given module.

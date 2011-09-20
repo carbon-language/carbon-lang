@@ -1727,7 +1727,6 @@ void ASTWriter::WritePreprocessorDetail(PreprocessingRecord &PPRec) {
   {
     BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
     Abbrev->Add(BitCodeAbbrevOp(PPD_INCLUSION_DIRECTIVE));
-    Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // index
     Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // start location
     Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // end location
     Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // filename length
@@ -1755,7 +1754,6 @@ void ASTWriter::WritePreprocessorDetail(PreprocessingRecord &PPRec) {
       // Record this macro definition's ID.
       MacroDefinitions[MD] = NextPreprocessorEntityID;
       
-      Record.push_back(NextPreprocessorEntityID);
       AddSourceLocation(MD->getSourceRange().getBegin(), Record);
       AddSourceLocation(MD->getSourceRange().getEnd(), Record);
       AddIdentifierRef(MD->getName(), Record);
@@ -1764,7 +1762,6 @@ void ASTWriter::WritePreprocessorDetail(PreprocessingRecord &PPRec) {
     }
 
     if (MacroExpansion *ME = dyn_cast<MacroExpansion>(*E)) {
-      Record.push_back(NextPreprocessorEntityID);
       AddSourceLocation(ME->getSourceRange().getBegin(), Record);
       AddSourceLocation(ME->getSourceRange().getEnd(), Record);
       Record.push_back(ME->isBuiltinMacro());
@@ -1778,7 +1775,6 @@ void ASTWriter::WritePreprocessorDetail(PreprocessingRecord &PPRec) {
 
     if (InclusionDirective *ID = dyn_cast<InclusionDirective>(*E)) {
       Record.push_back(PPD_INCLUSION_DIRECTIVE);
-      Record.push_back(NextPreprocessorEntityID);
       AddSourceLocation(ID->getSourceRange().getBegin(), Record);
       AddSourceLocation(ID->getSourceRange().getEnd(), Record);
       Record.push_back(ID->getFileName().size());
