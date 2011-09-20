@@ -2940,9 +2940,12 @@ public:
     this->IntMaxType = TargetInfo::SignedLongLong;
     this->UIntMaxType = TargetInfo::UnsignedLongLong;
     this->Int64Type = TargetInfo::SignedLongLong;
-    this->SizeType = TargetInfo::UnsignedInt;
     this->DoubleAlign = 64;
+    this->LongDoubleWidth = 64;
     this->LongDoubleAlign = 64;
+    this->SizeType = TargetInfo::UnsignedInt;
+    this->PtrDiffType = TargetInfo::SignedInt;
+    this->IntPtrType = TargetInfo::SignedInt;
     DescriptionString = "e-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-"
                         "f32:32:32-f64:64:64-p:32:32:32-v128:32:32";
   }
@@ -2971,12 +2974,7 @@ public:
                                  unsigned &NumRecords) const {
   }
   virtual const char *getVAListDeclaration() const {
-    return "typedef struct __va_list_tag {"
-           "  void* ptr;"
-           "  void* padding1;"
-           "  void* padding2;"
-           "  void* padding3;"
-           "} __builtin_va_list[1];";
+    return "typedef int __builtin_va_list[4];";
   }
   virtual void getGCCRegNames(const char * const *&Names,
                               unsigned &NumNames) const;
