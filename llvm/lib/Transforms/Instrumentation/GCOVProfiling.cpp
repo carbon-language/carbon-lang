@@ -167,18 +167,17 @@ namespace {
     }
 
     uint32_t length() {
-      return lengthOfGCOVString(Filename) + 2 + Lines.size();
+      // FIXME: ??? What is the significance of 2 here ?
+      return 2 + Lines.size();
     }
 
    private:
     friend class GCOVBlock;
 
-    GCOVLines(std::string Filename, raw_ostream *os)
-        : Filename(Filename) {
+    GCOVLines(raw_ostream *os) {
       this->os = os;
     }
 
-    std::string Filename;
     SmallVector<uint32_t, 32> Lines;
   };
 
@@ -190,7 +189,7 @@ namespace {
     GCOVLines &getFile(std::string Filename) {
       GCOVLines *&Lines = LinesByFile[Filename];
       if (!Lines) {
-        Lines = new GCOVLines(Filename, os);
+        Lines = new GCOVLines(os);
       }
       return *Lines;
     }
@@ -203,7 +202,7 @@ namespace {
       uint32_t Len = 3;
       for (StringMap<GCOVLines *>::iterator I = LinesByFile.begin(),
                E = LinesByFile.end(); I != E; ++I) {
-        Len += I->second->length();
+        Len = Len + lengthOfGCOVString(I->first()) + I->second->length();
       }
 
       writeBytes(LinesTag, 4);
@@ -212,7 +211,7 @@ namespace {
       for (StringMap<GCOVLines *>::iterator I = LinesByFile.begin(),
                E = LinesByFile.end(); I != E; ++I) {
         write(0);
-        writeGCOVString(I->second->Filename);
+        writeGCOVString(I->first());
         for (int i = 0, e = I->second->Lines.size(); i != e; ++i) {
           write(I->second->Lines[i]);
         }
