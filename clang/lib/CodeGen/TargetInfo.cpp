@@ -3172,6 +3172,10 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
   case llvm::Triple::mipsel:
     return *(TheTargetCodeGenInfo = new MIPSTargetCodeGenInfo(Types, 24));
 
+  case llvm::Triple::mips64:
+  case llvm::Triple::mips64el:
+    return *(TheTargetCodeGenInfo = new MIPSTargetCodeGenInfo(Types, 32));
+
   case llvm::Triple::arm:
   case llvm::Triple::thumb:
     {
