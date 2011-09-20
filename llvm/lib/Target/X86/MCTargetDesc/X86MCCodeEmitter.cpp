@@ -195,11 +195,11 @@ EmitImmediate(const MCOperand &DispOp, unsigned Size, MCFixupKind FixupKind,
               SmallVectorImpl<MCFixup> &Fixups, int ImmOffset) const {
   const MCExpr *Expr = NULL;
   if (DispOp.isImm()) {
-    // If this is a simple integer displacement that doesn't require a relocation,
-    // emit it now.
+    // If this is a simple integer displacement that doesn't require a
+    // relocation, emit it now.
     if (FixupKind != FK_PCRel_1 &&
-	FixupKind != FK_PCRel_2 &&
-	FixupKind != FK_PCRel_4) {
+        FixupKind != FK_PCRel_2 &&
+	      FixupKind != FK_PCRel_4) {
       EmitConstant(DispOp.getImm()+ImmOffset, Size, CurByte, OS);
       return;
     }
@@ -1041,8 +1041,7 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     // in bits[7:4] of a immediate byte, and bits[3:0] are ignored.
     if ((TSFlags >> X86II::VEXShift) & X86II::VEX_I8IMM) {
       const MCOperand &MO = MI.getOperand(CurOp++);
-      bool IsExtReg =
-        X86II::isX86_64ExtendedReg(MO.getReg());
+      bool IsExtReg = X86II::isX86_64ExtendedReg(MO.getReg());
       unsigned RegNum = (IsExtReg ? (1 << 7) : 0);
       RegNum |= GetX86RegNum(MO) << 4;
       EmitImmediate(MCOperand::CreateImm(RegNum), 1, FK_Data_1, CurByte, OS,
