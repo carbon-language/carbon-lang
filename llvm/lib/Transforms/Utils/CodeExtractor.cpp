@@ -55,9 +55,9 @@ namespace {
     CodeExtractor(DominatorTree* dt = 0, bool AggArgs = false)
       : DT(dt), AggregateArgs(AggArgs||AggregateArgsOpt), NumExitBlocks(~0U) {}
 
-    Function *ExtractCodeRegion(const std::vector<BasicBlock*> &code);
+    Function *ExtractCodeRegion(ArrayRef<BasicBlock*> code);
 
-    bool isEligible(const std::vector<BasicBlock*> &code);
+    bool isEligible(ArrayRef<BasicBlock*> code);
 
   private:
     /// definedInRegion - Return true if the specified value is defined in the
@@ -654,7 +654,7 @@ void CodeExtractor::moveCodeToFunction(Function *newFunction) {
 /// computed result back into memory.
 ///
 Function *CodeExtractor::
-ExtractCodeRegion(const std::vector<BasicBlock*> &code) {
+ExtractCodeRegion(ArrayRef<BasicBlock*> code) {
   if (!isEligible(code))
     return 0;
 
@@ -754,9 +754,13 @@ ExtractCodeRegion(const std::vector<BasicBlock*> &code) {
   return newFunction;
 }
 
-bool CodeExtractor::isEligible(const std::vector<BasicBlock*> &code) {
+bool CodeExtractor::isEligible(ArrayRef<BasicBlock*> code) {
+  // Deny a single basic block that's a landing pad block.
+  if (code.size() == 1 && code[0]->isLandingPad())
+    return false;
+
   // Deny code region if it contains allocas or vastarts.
-  for (std::vector<BasicBlock*>::const_iterator BB = code.begin(), e=code.end();
+  for (ArrayRef<BasicBlock*>::iterator BB = code.begin(), e=code.end();
        BB != e; ++BB)
     for (BasicBlock::const_iterator I = (*BB)->begin(), Ie = (*BB)->end();
          I != Ie; ++I)
@@ -788,7 +792,5 @@ Function* llvm::ExtractLoop(DominatorTree &DT, Loop *L, bool AggregateArgs) {
 /// ExtractBasicBlock - Slurp a basic block into a brand new function.
 ///
 Function* llvm::ExtractBasicBlock(BasicBlock *BB, bool AggregateArgs) {
-  std::vector<BasicBlock*> Blocks;
-  Blocks.push_back(BB);
-  return CodeExtractor(0, AggregateArgs).ExtractCodeRegion(Blocks);
+  return CodeExtractor(0, AggregateArgs).ExtractCodeRegion(BB);
 }
