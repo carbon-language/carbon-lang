@@ -262,7 +262,7 @@ SDNode* MipsDAGToDAGISel::Select(SDNode *Node) {
 
     /// Special Muls
     case ISD::MUL:
-      if (Subtarget.isMips32())
+      if (Subtarget.hasMips32())
         break;
     case ISD::MULHS:
     case ISD::MULHU: {

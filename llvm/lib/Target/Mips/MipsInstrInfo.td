@@ -125,8 +125,8 @@ def HasSEInReg  : Predicate<"Subtarget.hasSEInReg()">;
 def HasBitCount : Predicate<"Subtarget.hasBitCount()">;
 def HasSwap     : Predicate<"Subtarget.hasSwap()">;
 def HasCondMov  : Predicate<"Subtarget.hasCondMov()">;
-def IsMips32    : Predicate<"Subtarget.isMips32()">;
-def IsMips32r2  : Predicate<"Subtarget.isMips32r2()">;
+def HasMips32    : Predicate<"Subtarget.hasMips32()">;
+def HasMips32r2  : Predicate<"Subtarget.hasMips32r2()">;
 
 //===----------------------------------------------------------------------===//
 // Mips Operand, Complex Patterns and Transformations Definitions.
@@ -409,7 +409,7 @@ class ReadHardware: FR<0x1f, 0x3b, (outs CPURegs:$dst), (ins HWRegs:$src),
 class ExtIns<bits<6> _funct, string instr_asm, dag outs, dag ins,
              list<dag> pattern, InstrItinClass itin>:
   FR<0x1f, _funct, outs, ins, !strconcat(instr_asm, " $rt, $rs, $pos, $sz"),
-     pattern, itin>, Requires<[IsMips32r2]> {
+     pattern, itin>, Requires<[HasMips32r2]> {
   bits<5> pos;
   bits<5> sz;
   let rd = sz;
@@ -546,7 +546,7 @@ def SRLV    : LogicR_shift_rotate_reg<0x06, 0x00, "srlv", srl>;
 def SRAV    : LogicR_shift_rotate_reg<0x07, 0x00, "srav", sra>;
 
 // Rotate Instructions
-let Predicates = [IsMips32r2] in {
+let Predicates = [HasMips32r2] in {
     def ROTR    : LogicR_shift_rotate_imm<0x02, 0x01, "rotr", rotr>;
     def ROTRV   : LogicR_shift_rotate_reg<0x06, 0x01, "rotrv", rotr>;
 }
@@ -683,7 +683,7 @@ def MSUBU : MArithR<5, "msubu", MipsMSubu>;
 
 // MUL is a assembly macro in the current used ISAs. In recent ISA's
 // it is a real instruction.
-def MUL   : ArithR<0x1c, 0x02, "mul", mul, IIImul, 1>, Requires<[IsMips32]>;
+def MUL   : ArithR<0x1c, 0x02, "mul", mul, IIImul, 1>, Requires<[HasMips32]>;
 
 def RDHWR : ReadHardware;
 

@@ -143,7 +143,7 @@ MipsTargetLowering(MipsTargetMachine &TM)
   setOperationAction(ISD::CTTZ,              MVT::i32,   Expand);
   setOperationAction(ISD::ROTL,              MVT::i32,   Expand);
 
-  if (!Subtarget->isMips32r2())
+  if (!Subtarget->hasMips32r2())
     setOperationAction(ISD::ROTR, MVT::i32,   Expand);
 
   setOperationAction(ISD::SHL_PARTS,         MVT::i32,   Expand);
@@ -378,7 +378,7 @@ static SDValue PerformADDECombine(SDNode *N, SelectionDAG& DAG,
   if (DCI.isBeforeLegalize())
     return SDValue();
 
-  if (Subtarget->isMips32() && SelectMadd(N, &DAG))
+  if (Subtarget->hasMips32() && SelectMadd(N, &DAG))
     return SDValue(N, 0);
 
   return SDValue();
@@ -390,7 +390,7 @@ static SDValue PerformSUBECombine(SDNode *N, SelectionDAG& DAG,
   if (DCI.isBeforeLegalize())
     return SDValue();
 
-  if (Subtarget->isMips32() && SelectMsub(N, &DAG))
+  if (Subtarget->hasMips32() && SelectMsub(N, &DAG))
     return SDValue(N, 0);
 
   return SDValue();
@@ -526,7 +526,7 @@ static SDValue PerformANDCombine(SDNode *N, SelectionDAG& DAG,
   // Pattern match EXT.
   //  $dst = and ((sra or srl) $src , pos), (2**size - 1)
   //  => ext $dst, $src, size, pos
-  if (DCI.isBeforeLegalizeOps() || !Subtarget->isMips32r2())
+  if (DCI.isBeforeLegalizeOps() || !Subtarget->hasMips32r2())
     return SDValue();
 
   SDValue ShiftRight = N->getOperand(0), Mask = N->getOperand(1);
@@ -567,7 +567,7 @@ static SDValue PerformORCombine(SDNode *N, SelectionDAG& DAG,
   //  $dst = or (and $src1 , mask0), (and (shl $src, pos), mask1),
   //  where mask1 = (2**size - 1) << pos, mask0 = ~mask1 
   //  => ins $dst, $src, size, pos, $src1
-  if (DCI.isBeforeLegalizeOps() || !Subtarget->isMips32r2())
+  if (DCI.isBeforeLegalizeOps() || !Subtarget->hasMips32r2())
     return SDValue();
 
   SDValue And0 = N->getOperand(0), And1 = N->getOperand(1);
