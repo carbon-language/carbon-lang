@@ -161,7 +161,7 @@ static MCFixupKind getImmFixupKind(uint64_t TSFlags) {
 static bool Is32BitMemOperand(const MCInst &MI, unsigned Op) {
   const MCOperand &BaseReg  = MI.getOperand(Op+X86::AddrBaseReg);
   const MCOperand &IndexReg = MI.getOperand(Op+X86::AddrIndexReg);
-  
+
   if ((BaseReg.getReg() != 0 &&
        X86MCRegisterClasses[X86::GR32RegClassID].contains(BaseReg.getReg())) ||
       (IndexReg.getReg() != 0 &&
@@ -199,7 +199,7 @@ EmitImmediate(const MCOperand &DispOp, unsigned Size, MCFixupKind FixupKind,
     // relocation, emit it now.
     if (FixupKind != FK_PCRel_1 &&
         FixupKind != FK_PCRel_2 &&
-	      FixupKind != FK_PCRel_4) {
+        FixupKind != FK_PCRel_4) {
       EmitConstant(DispOp.getImm()+ImmOffset, Size, CurByte, OS);
       return;
     }
@@ -766,7 +766,7 @@ void X86MCCodeEmitter::EmitOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   if ((TSFlags & X86II::AdSize) ||
       (MemOperand != -1 && is64BitMode() && Is32BitMemOperand(MI, MemOperand)))
     EmitByte(0x67, CurByte, OS);
-  
+
   // Emit the operand size opcode prefix as needed.
   if (TSFlags & X86II::OpSize)
     EmitByte(0x66, CurByte, OS);
@@ -869,7 +869,6 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   if ((TSFlags >> X86II::VEXShift) & X86II::VEX_4V)
     HasVEX_4V = true;
 
-  
   // Determine where the memory operand starts, if present.
   int MemoryOperand = X86II::getMemoryOperandNo(TSFlags);
   if (MemoryOperand != -1) MemoryOperand += CurOp;
@@ -879,12 +878,11 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   else
     EmitVEXOpcodePrefix(TSFlags, CurByte, MemoryOperand, MI, Desc, OS);
 
-  
   unsigned char BaseOpcode = X86II::getBaseOpcodeFor(TSFlags);
-  
+
   if ((TSFlags >> X86II::VEXShift) & X86II::Has3DNow0F0FOpcode)
     BaseOpcode = 0x0F;   // Weird 3DNow! encoding.
-  
+
   unsigned SrcRegNum = 0;
   switch (TSFlags & X86II::FormMask) {
   case X86II::MRMInitReg:
@@ -896,7 +894,6 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   case X86II::RawFrm:
     EmitByte(BaseOpcode, CurByte, OS);
     break;
-      
   case X86II::RawFrmImm8:
     EmitByte(BaseOpcode, CurByte, OS);
     EmitImmediate(MI.getOperand(CurOp++),
@@ -1064,7 +1061,6 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
 
   if ((TSFlags >> X86II::VEXShift) & X86II::Has3DNow0F0FOpcode)
     EmitByte(X86II::getBaseOpcodeFor(TSFlags), CurByte, OS);
-  
 
 #ifndef NDEBUG
   // FIXME: Verify.
