@@ -575,7 +575,7 @@ ScriptInterpreterPython::InputReaderCallback
                 if (IS_VALID_LLDB_HOST_THREAD(embedded_interpreter_thread))
                 {
                     if (log)
-                        log->Printf ("ScriptInterpreterPython::InputReaderCallback, Activate, succeeded in creating thread (thread = %d)", embedded_interpreter_thread);
+                        log->Printf ("ScriptInterpreterPython::InputReaderCallback, Activate, succeeded in creating thread (thread_t = %p)", embedded_interpreter_thread);
                     Error detach_error;
                     Host::ThreadDetach (embedded_interpreter_thread, &detach_error);
                 }
