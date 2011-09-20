@@ -4958,6 +4958,10 @@ def : MnemonicAlias<"uaddsubx", "uasx">;
 def : MnemonicAlias<"uhaddsubx", "uhasx">;
 // UHSAX == UHSUBADDX
 def : MnemonicAlias<"uhsubaddx", "uhsax">;
+// UQASX == UQADDSUBX
+def : MnemonicAlias<"uqaddsubx", "uqasx">;
+// UQSAX == UQSUBADDX
+def : MnemonicAlias<"uqsubaddx", "uqsax">;
 
 // LDRSBT/LDRHT/LDRSHT post-index offset if optional.
 // Note that the write-back output register is a dummy operand for MC (it's

@@ -2826,3 +2826,31 @@ _func:
 @ CHECK: ite	gt                      @ encoding: [0xcc,0xbf]
 @ CHECK: uqadd16gt	r4, r7, r9      @ encoding: [0x97,0xfa,0x59,0xf4]
 @ CHECK: uqadd8le	r8, r1, r2      @ encoding: [0x81,0xfa,0x52,0xf8]
+
+
+@------------------------------------------------------------------------------
+@ UQASX/UQSAX
+@------------------------------------------------------------------------------
+        uqasx r1, r2, r3
+        uqsax r3, r4, r8
+        ite gt
+        uqasxgt r4, r7, r9
+        uqsaxle r8, r1, r2
+
+        uqaddsubx r1, r2, r3
+        uqsubaddx r3, r4, r8
+        ite gt
+        uqaddsubxgt r4, r7, r9
+        uqsubaddxle r8, r1, r2
+
+@ CHECK: uqasx	r1, r2, r3              @ encoding: [0xa2,0xfa,0x53,0xf1]
+@ CHECK: uqsax	r3, r4, r8              @ encoding: [0xe4,0xfa,0x58,0xf3]
+@ CHECK: ite	gt                      @ encoding: [0xcc,0xbf]
+@ CHECK: uqasxgt r4, r7, r9             @ encoding: [0xa7,0xfa,0x59,0xf4]
+@ CHECK: uqsaxle r8, r1, r2             @ encoding: [0xe1,0xfa,0x52,0xf8]
+
+@ CHECK: uqasx	r1, r2, r3              @ encoding: [0xa2,0xfa,0x53,0xf1]
+@ CHECK: uqsax	r3, r4, r8              @ encoding: [0xe4,0xfa,0x58,0xf3]
+@ CHECK: ite	gt                      @ encoding: [0xcc,0xbf]
+@ CHECK: uqasxgt r4, r7, r9             @ encoding: [0xa7,0xfa,0x59,0xf4]
+@ CHECK: uqsaxle r8, r1, r2             @ encoding: [0xe1,0xfa,0x52,0xf8]
