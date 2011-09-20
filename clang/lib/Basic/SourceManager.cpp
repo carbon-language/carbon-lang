@@ -1453,8 +1453,10 @@ SourceLocation SourceManager::translateLineCol(FileID FID,
   if (!Entry.isFile())
     return SourceLocation();
 
+  SourceLocation FileLoc = SourceLocation::getFileLoc(Entry.getOffset());
+
   if (Line == 1 && Col == 1)
-    return getLocForStartOfFile(FID);
+    return FileLoc;
 
   ContentCache *Content
     = const_cast<ContentCache *>(Entry.getFile().getContentCache());
@@ -1474,21 +1476,24 @@ SourceLocation SourceManager::translateLineCol(FileID FID,
     unsigned Size = Content->getBuffer(Diag, *this)->getBufferSize();
     if (Size > 0)
       --Size;
-    return getLocForStartOfFile(FID).getLocWithOffset(Size);
+    return FileLoc.getLocWithOffset(Size);
   }
 
   unsigned FilePos = Content->SourceLineCache[Line - 1];
   const char *Buf = Content->getBuffer(Diag, *this)->getBufferStart() + FilePos;
   unsigned BufLength = Content->getBuffer(Diag, *this)->getBufferEnd() - Buf;
+  if (BufLength == 0)
+    return FileLoc.getLocWithOffset(FilePos);
+
   unsigned i = 0;
 
   // Check that the given column is valid.
   while (i < BufLength-1 && i < Col-1 && Buf[i] != '\n' && Buf[i] != '\r')
     ++i;
   if (i < Col-1)
-    return getLocForStartOfFile(FID).getLocWithOffset(FilePos + i);
+    return FileLoc.getLocWithOffset(FilePos + i);
 
-  return getLocForStartOfFile(FID).getLocWithOffset(FilePos + Col - 1);
+  return FileLoc.getLocWithOffset(FilePos + Col - 1);
 }
 
 /// \brief Compute a map of macro argument chunks to their expanded source
