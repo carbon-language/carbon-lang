@@ -240,7 +240,8 @@ PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *N,
 
   // Construct a new PathDiagnosticPiece.
   ProgramPoint P = N->getLocation();
-  PathDiagnosticLocation L = PathDiagnosticLocation(P,BRC.getSourceManager());
+  PathDiagnosticLocation L =
+    PathDiagnosticLocation::create(P, BRC.getSourceManager());
   if (!L.isValid())
     return NULL;
   return new PathDiagnosticEventPiece(L, os.str());
@@ -288,7 +289,8 @@ TrackConstraintBRVisitor::VisitNode(const ExplodedNode *N,
 
     // Construct a new PathDiagnosticPiece.
     ProgramPoint P = N->getLocation();
-    PathDiagnosticLocation L = PathDiagnosticLocation(P,BRC.getSourceManager());
+    PathDiagnosticLocation L =
+      PathDiagnosticLocation::create(P, BRC.getSourceManager());
     if (!L.isValid())
       return NULL;
     return new PathDiagnosticEventPiece(L, os.str());

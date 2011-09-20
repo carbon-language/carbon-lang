@@ -156,6 +156,7 @@ PathDiagnosticLocation
   return PathDiagnosticLocation(getValidSourceLocation(S, LC), SM, SingleLocK);
 }
 
+
 PathDiagnosticLocation
   PathDiagnosticLocation::createOperatorLoc(const BinaryOperator *BO,
                                             const SourceManager &SM) {
@@ -192,15 +193,16 @@ PathDiagnosticLocation
 
 PathDiagnosticLocation
   PathDiagnosticLocation::createDeclEnd(const LocationContext *LC,
-                                             const SourceManager &SM) {
+                                        const SourceManager &SM) {
   SourceLocation L = LC->getDecl()->getBodyRBrace();
   return PathDiagnosticLocation(L, SM, SingleLocK);
 }
 
-PathDiagnosticLocation::PathDiagnosticLocation(const ProgramPoint& P,
-                                               const SourceManager &SMng)
-  : K(StmtK), S(0), D(0), SM(&SMng), LC(P.getLocationContext()) {
+PathDiagnosticLocation
+  PathDiagnosticLocation::create(const ProgramPoint& P,
+                                 const SourceManager &SMng) {
 
+  const Stmt* S = 0;
   if (const BlockEdge *BE = dyn_cast<BlockEdge>(&P)) {
     const CFGBlock *BSrc = BE->getSrc();
     S = BSrc->getTerminatorCondition();
@@ -209,8 +211,10 @@ PathDiagnosticLocation::PathDiagnosticLocation(const ProgramPoint& P,
     S = PS->getStmt();
   }
 
+  return PathDiagnosticLocation(S, SMng, P.getLocationContext());
+
   if (!S)
-    invalidate();
+    return PathDiagnosticLocation();
 }
 
 PathDiagnosticLocation
@@ -223,9 +227,8 @@ PathDiagnosticLocation
   while (NI) {
     ProgramPoint P = NI->getLocation();
     const LocationContext *LC = P.getLocationContext();
-    if (const StmtPoint *PS = dyn_cast<StmtPoint>(&P)) {
+    if (const StmtPoint *PS = dyn_cast<StmtPoint>(&P))
       return PathDiagnosticLocation(PS->getStmt(), SM, LC);
-    }
     else if (const BlockEdge *BE = dyn_cast<BlockEdge>(&P)) {
       const Stmt *Term = BE->getSrc()->getTerminator();
       assert(Term);
@@ -235,6 +238,12 @@ PathDiagnosticLocation
   }
 
   return createDeclEnd(N->getLocationContext(), SM);
+}
+
+PathDiagnosticLocation PathDiagnosticLocation::createSingleLocation(
+                                           const PathDiagnosticLocation &PDL) {
+  FullSourceLoc L = PDL.asLocation();
+  return PathDiagnosticLocation(L, L.getManager(), SingleLocK);
 }
 
 FullSourceLoc PathDiagnosticLocation::asLocation() const {

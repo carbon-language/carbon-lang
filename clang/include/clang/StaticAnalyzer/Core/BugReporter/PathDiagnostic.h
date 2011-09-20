@@ -143,12 +143,17 @@ public:
                                                    const SourceManager &SM);
 
   /// Create a location corresponding to the given valid ExplodedNode.
-  PathDiagnosticLocation(const ProgramPoint& P, const SourceManager &SMng);
+  static PathDiagnosticLocation create(const ProgramPoint& P,
+                                       const SourceManager &SMng);
 
   /// Create a location corresponding to the next valid ExplodedNode as end
   /// of path location.
   static PathDiagnosticLocation createEndOfPath(const ExplodedNode* N,
                                                 const SourceManager &SM);
+
+  /// Convert the given location into a single kind location.
+  static PathDiagnosticLocation createSingleLocation(
+                                             const PathDiagnosticLocation &PDL);
 
   bool operator==(const PathDiagnosticLocation &X) const {
     return K == X.K && R == X.R && S == X.S && D == X.D && LC == X.LC;
@@ -171,16 +176,6 @@ public:
 
   void invalidate() {
     *this = PathDiagnosticLocation();
-  }
-
-  /// Specify that the object represents a single location.
-  void setSingleLocKind() {
-    if (K == SingleLocK)
-      return;
-
-    SourceLocation L = asLocation();
-    K = SingleLocK;
-    R = SourceRange(L, L);
   }
 
   void flatten();

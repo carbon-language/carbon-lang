@@ -881,7 +881,7 @@ class EdgeBuilder {
     }
 
     if (firstCharOnly)
-      L.setSingleLocKind();
+      L  = PathDiagnosticLocation::createSingleLocation(L);
 
     return L;
   }
