@@ -2005,8 +2005,7 @@ class T2FourReg_mac<bit long, bits<3> op22_20, bits<4> op7_4, dag oops,
   let Inst{7-4}   = op7_4;
 }
 
-// Unsigned Sum of Absolute Differences [and Accumulate] -- for disassembly only
-
+// Unsigned Sum of Absolute Differences [and Accumulate].
 def t2USAD8   : T2ThreeReg_mac<0, 0b111, 0b0000, (outs rGPR:$Rd),
                                            (ins rGPR:$Rn, rGPR:$Rm),
                         NoItinerary, "usad8", "\t$Rd, $Rn, $Rm", []>,
@@ -2018,8 +2017,7 @@ def t2USADA8  : T2FourReg_mac<0, 0b111, 0b0000, (outs rGPR:$Rd),
                         "usada8", "\t$Rd, $Rn, $Rm, $Ra", []>,
           Requires<[IsThumb2, HasThumb2DSP]>;
 
-// Signed/Unsigned saturate -- for disassembly only
-
+// Signed/Unsigned saturate.
 class T2SatI<dag oops, dag iops, InstrItinClass itin,
            string opc, string asm, list<dag> pattern>
   : T2I<oops, iops, itin, opc, asm, pattern> {
@@ -2038,8 +2036,7 @@ class T2SatI<dag oops, dag iops, InstrItinClass itin,
 
 def t2SSAT: T2SatI<
               (outs rGPR:$Rd), (ins imm1_32:$sat_imm, rGPR:$Rn, shift_imm:$sh),
-              NoItinerary, "ssat", "\t$Rd, $sat_imm, $Rn$sh",
-              [/* For disassembly only; pattern left blank */]> {
+              NoItinerary, "ssat", "\t$Rd, $sat_imm, $Rn$sh", []> {
   let Inst{31-27} = 0b11110;
   let Inst{25-22} = 0b1100;
   let Inst{20} = 0;
@@ -2049,8 +2046,7 @@ def t2SSAT: T2SatI<
 
 def t2SSAT16: T2SatI<
                 (outs rGPR:$Rd), (ins imm1_16:$sat_imm, rGPR:$Rn), NoItinerary,
-                "ssat16", "\t$Rd, $sat_imm, $Rn",
-                [/* For disassembly only; pattern left blank */]>,
+                "ssat16", "\t$Rd, $sat_imm, $Rn", []>,
           Requires<[IsThumb2, HasThumb2DSP]> {
   let Inst{31-27} = 0b11110;
   let Inst{25-22} = 0b1100;
@@ -2064,8 +2060,7 @@ def t2SSAT16: T2SatI<
 
 def t2USAT: T2SatI<
                (outs rGPR:$Rd), (ins imm0_31:$sat_imm, rGPR:$Rn, shift_imm:$sh),
-                NoItinerary, "usat", "\t$Rd, $sat_imm, $Rn$sh",
-                [/* For disassembly only; pattern left blank */]> {
+                NoItinerary, "usat", "\t$Rd, $sat_imm, $Rn$sh", []> {
   let Inst{31-27} = 0b11110;
   let Inst{25-22} = 0b1110;
   let Inst{20} = 0;
@@ -2074,8 +2069,7 @@ def t2USAT: T2SatI<
 
 def t2USAT16: T2SatI<(outs rGPR:$Rd), (ins imm0_15:$sat_imm, rGPR:$Rn),
                      NoItinerary,
-                     "usat16", "\t$Rd, $sat_imm, $Rn",
-                     [/* For disassembly only; pattern left blank */]>,
+                     "usat16", "\t$Rd, $sat_imm, $Rn", []>,
           Requires<[IsThumb2, HasThumb2DSP]> {
   let Inst{31-27} = 0b11110;
   let Inst{25-22} = 0b1110;
