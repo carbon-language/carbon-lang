@@ -40,7 +40,7 @@ using namespace thread_safety;
 // Key method definition
 ThreadSafetyHandler::~ThreadSafetyHandler() {}
 
-// Helper functions
+// Helper function
 static Expr *getParent(Expr *Exp) {
   if (MemberExpr *ME = dyn_cast<MemberExpr>(Exp))
     return ME->getBase();
