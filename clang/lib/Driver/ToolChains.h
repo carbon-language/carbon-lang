@@ -262,6 +262,9 @@ public:
 
 /// DarwinClang - The Darwin toolchain used by Clang.
 class LLVM_LIBRARY_VISIBILITY DarwinClang : public Darwin {
+private:
+  void AddGCCLibexecPath(unsigned darwinVersion);
+
 public:
   DarwinClang(const HostInfo &Host, const llvm::Triple& Triple);
 
