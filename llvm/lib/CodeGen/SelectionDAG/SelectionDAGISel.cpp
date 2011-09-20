@@ -179,12 +179,7 @@ TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
 
 void TargetLowering::AdjustInstrPostInstrSelection(MachineInstr *MI,
                                                    SDNode *Node) const {
-#ifndef NDEBUG
-  dbgs() << "If a target marks an instruction with "
-          "'hasPostISelHook', it must implement "
-          "TargetLowering::AdjustInstrPostInstrSelection!";
-#endif
-  llvm_unreachable(0);
+  // Do nothing unless the target overrides it.
 }
 
 //===----------------------------------------------------------------------===//

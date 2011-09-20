@@ -1026,7 +1026,7 @@ multiclass AsI1_rbin_irs<bits<4> opcod, string opc,
 }
 
 /// AsI1_rbin_s_is - Same as AsI1_rbin_s_is except it sets 's' bit by default.
-let hasPostISelHook = 1, isCodeGenOnly = 1, Defs = [CPSR] in {
+let isCodeGenOnly = 1, Defs = [CPSR] in {
 multiclass AsI1_rbin_s_is<bits<4> opcod, string opc,
                      InstrItinClass iii, InstrItinClass iir, InstrItinClass iis,
                         PatFrag opnode, bit Commutable = 0> {
@@ -1090,7 +1090,7 @@ multiclass AsI1_rbin_s_is<bits<4> opcod, string opc,
 }
 
 /// AsI1_bin_s_irs - Same as AsI1_bin_irs except it sets the 's' bit by default.
-let hasPostISelHook = 1, isCodeGenOnly = 1, Defs = [CPSR] in {
+let isCodeGenOnly = 1, Defs = [CPSR] in {
 multiclass AsI1_bin_s_irs<bits<4> opcod, string opc,
                      InstrItinClass iii, InstrItinClass iir, InstrItinClass iis,
                          PatFrag opnode, bit Commutable = 0> {
@@ -1278,7 +1278,7 @@ class AI_exta_rrot_np<bits<8> opcod, string opc>
 /// AI1_adde_sube_irs - Define instructions and patterns for adde and sube.
 multiclass AI1_adde_sube_irs<bits<4> opcod, string opc, PatFrag opnode,
                              string baseOpc, bit Commutable = 0> {
-  let hasPostISelHook = 1, Defs = [CPSR], Uses = [CPSR] in {
+  let Defs = [CPSR], Uses = [CPSR] in {
   def ri : AsI1<opcod, (outs GPR:$Rd), (ins GPR:$Rn, so_imm:$imm),
                 DPFrm, IIC_iALUi, opc, "\t$Rd, $Rn, $imm",
                [(set GPR:$Rd, CPSR, (opnode GPR:$Rn, so_imm:$imm, CPSR))]>,
@@ -1366,7 +1366,7 @@ multiclass AI1_adde_sube_irs<bits<4> opcod, string opc, PatFrag opnode,
 /// AI1_rsc_irs - Define instructions and patterns for rsc
 multiclass AI1_rsc_irs<bits<4> opcod, string opc, PatFrag opnode,
                        string baseOpc> {
-  let hasPostISelHook = 1, Defs = [CPSR], Uses = [CPSR] in {
+  let Defs = [CPSR], Uses = [CPSR] in {
   def ri : AsI1<opcod, (outs GPR:$Rd), (ins GPR:$Rn, so_imm:$imm),
                 DPFrm, IIC_iALUi, opc, "\t$Rd, $Rn, $imm",
                [(set GPR:$Rd, CPSR, (opnode so_imm:$imm, GPR:$Rn, CPSR))]>,

@@ -288,7 +288,6 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
   if (Inst.isNotDuplicable)    OS << "|(1<<MCID::NotDuplicable)";
   if (Inst.Operands.hasOptionalDef) OS << "|(1<<MCID::HasOptionalDef)";
   if (Inst.usesCustomInserter) OS << "|(1<<MCID::UsesCustomInserter)";
-  if (Inst.hasPostISelHook)    OS << "|(1<<MCID::HasPostISelHook)";
   if (Inst.Operands.isVariadic)OS << "|(1<<MCID::Variadic)";
   if (Inst.hasSideEffects)     OS << "|(1<<MCID::UnmodeledSideEffects)";
   if (Inst.isAsCheapAsAMove)   OS << "|(1<<MCID::CheapAsAMove)";
@@ -345,7 +344,7 @@ void InstrInfoEmitter::emitEnums(raw_ostream &OS) {
 
   // We must emit the PHI opcode first...
   std::string Namespace = Target.getInstNamespace();
-  
+
   if (Namespace.empty()) {
     fprintf(stderr, "No instructions defined!\n");
     exit(1);

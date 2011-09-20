@@ -477,14 +477,6 @@ public:
     return Flags & (1 << MCID::UsesCustomInserter);
   }
 
-  /// hasPostISelHook - Return true if this instruction requires *adjustment*
-  /// after instruction selection by calling a target hook. For example, this
-  /// can be used to fill in ARM 's' optional operand depending on whether
-  /// the conditional flag register is used.
-  bool hasPostISelHook() const {
-    return Flags & (1 << MCID::HasPostISelHook);
-  }
-
   /// isRematerializable - Returns true if this instruction is a candidate for
   /// remat.  This flag is deprecated, please don't use it anymore.  If this
   /// flag is set, the isReallyTriviallyReMaterializable() method is called to

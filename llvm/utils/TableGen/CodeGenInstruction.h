@@ -233,7 +233,6 @@ namespace llvm {
     bool isReMaterializable;
     bool hasDelaySlot;
     bool usesCustomInserter;
-    bool hasPostISelHook;
     bool hasCtrlDep;
     bool isNotDuplicable;
     bool hasSideEffects;
