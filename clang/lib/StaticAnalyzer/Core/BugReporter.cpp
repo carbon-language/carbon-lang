@@ -877,7 +877,7 @@ class EdgeBuilder {
       }
 
       if (S != Original)
-        L = PathDiagnosticLocation(S, L.getManager(), L.getLocationContext());
+        L = PathDiagnosticLocation(S, L.getManager(), PDB.getLocationContext());
     }
 
     if (firstCharOnly)

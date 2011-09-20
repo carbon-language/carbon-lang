@@ -147,7 +147,7 @@ static SourceLocation getValidSourceLocation(const Stmt* S,
 PathDiagnosticLocation::PathDiagnosticLocation(const Stmt *s,
                                                const SourceManager &sm,
                                                const LocationContext *lc)
-  : K(StmtK), S(s), D(0), SM(&sm), LC(lc)
+  : K(StmtK), S(s), D(0), SM(&sm)
 {
   const ParentMap* PM = 0;
   if (lc)
@@ -264,7 +264,7 @@ FullSourceLoc
     case RangeK:
       break;
     case StmtK:
-      return FullSourceLoc(getValidSourceLocation(S, LC->getParentMap()),
+      return FullSourceLoc(getValidSourceLocation(S, *PM),
                            const_cast<SourceManager&>(*SM));
     case DeclK:
       return FullSourceLoc(D->getLocation(), const_cast<SourceManager&>(*SM));
@@ -309,7 +309,7 @@ PathDiagnosticRange
         case Stmt::BinaryConditionalOperatorClass:
         case Stmt::ConditionalOperatorClass:
         case Stmt::ObjCForCollectionStmtClass: {
-          SourceLocation L = getValidSourceLocation(S, LC->getParentMap());
+          SourceLocation L = getValidSourceLocation(S, *PM);
           return SourceRange(L, L);
         }
       }
