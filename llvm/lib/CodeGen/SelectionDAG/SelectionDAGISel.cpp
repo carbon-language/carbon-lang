@@ -752,7 +752,7 @@ bool SelectionDAGISel::TryToFoldFastISelLoad(const LoadInst *LI,
   // isn't one of the folded instructions, then we can't succeed here.  Handle
   // this by scanning the single-use users of the load until we get to FoldInst.
   unsigned MaxUsers = 6;  // Don't scan down huge single-use chains of instrs.
-  
+
   const Instruction *TheUser = LI->use_back();
   while (TheUser != FoldInst &&   // Scan up until we find FoldInst.
          // Stay in the right block.
@@ -761,15 +761,15 @@ bool SelectionDAGISel::TryToFoldFastISelLoad(const LoadInst *LI,
     // If there are multiple or no uses of this instruction, then bail out.
     if (!TheUser->hasOneUse())
       return false;
-    
+
     TheUser = TheUser->use_back();
   }
-  
+
   // If we didn't find the fold instruction, then we failed to collapse the
   // sequence.
   if (TheUser != FoldInst)
     return false;
-  
+
   // Don't try to fold volatile loads.  Target has to deal with alignment
   // constraints.
   if (LI->isVolatile()) return false;

@@ -4890,7 +4890,7 @@ ReplaceATOMIC_OP_64(SDNode *Node, SmallVectorImpl<SDValue>& Results,
   // High part of Val1
   Ops.push_back(DAG.getNode(ISD::EXTRACT_ELEMENT, dl, MVT::i32,
                             Node->getOperand(2), DAG.getIntPtrConstant(1)));
-  if (NewOp == ARMISD::ATOMCMPXCHG64_DAG) { 
+  if (NewOp == ARMISD::ATOMCMPXCHG64_DAG) {
     // High part of Val1
     Ops.push_back(DAG.getNode(ISD::EXTRACT_ELEMENT, dl, MVT::i32,
                               Node->getOperand(3), DAG.getIntPtrConstant(0)));
@@ -5410,7 +5410,7 @@ ARMTargetLowering::EmitAtomicBinary64(MachineInstr *MI, MachineBasicBlock *BB,
   // Note that the registers are explicitly specified because there is not any
   // way to force the register allocator to allocate a register pair.
   //
-  // FIXME: The hardcoded registers are not necessary for Thumb2, but we 
+  // FIXME: The hardcoded registers are not necessary for Thumb2, but we
   // need to properly enforce the restriction that the two output registers
   // for ldrexd must be different.
   BB = loopMBB;
@@ -7928,7 +7928,7 @@ ARMTargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
         return RCPair(0U, ARM::GPRRegisterClass);
     case 'h': // High regs or no regs.
       if (Subtarget->isThumb())
-	return RCPair(0U, ARM::hGPRRegisterClass);
+        return RCPair(0U, ARM::hGPRRegisterClass);
       break;
     case 'r':
       return RCPair(0U, ARM::GPRRegisterClass);
@@ -7942,15 +7942,15 @@ ARMTargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
       break;
     case 'x':
       if (VT == MVT::f32)
-	return RCPair(0U, ARM::SPR_8RegisterClass);
+        return RCPair(0U, ARM::SPR_8RegisterClass);
       if (VT.getSizeInBits() == 64)
-	return RCPair(0U, ARM::DPR_8RegisterClass);
+        return RCPair(0U, ARM::DPR_8RegisterClass);
       if (VT.getSizeInBits() == 128)
-	return RCPair(0U, ARM::QPR_8RegisterClass);
+        return RCPair(0U, ARM::QPR_8RegisterClass);
       break;
     case 't':
       if (VT == MVT::f32)
-	return RCPair(0U, ARM::SPRRegisterClass);
+        return RCPair(0U, ARM::SPRRegisterClass);
       break;
     }
   }
@@ -7990,12 +7990,12 @@ void ARMTargetLowering::LowerAsmOperandForConstraint(SDValue Op,
 
     switch (ConstraintLetter) {
       case 'j':
-	// Constant suitable for movw, must be between 0 and
-	// 65535.
-	if (Subtarget->hasV6T2Ops())
-	  if (CVal >= 0 && CVal <= 65535)
-	    break;
-	return;
+        // Constant suitable for movw, must be between 0 and
+        // 65535.
+        if (Subtarget->hasV6T2Ops())
+          if (CVal >= 0 && CVal <= 65535)
+            break;
+        return;
       case 'I':
         if (Subtarget->isThumb1Only()) {
           // This must be a constant between 0 and 255, for ADD

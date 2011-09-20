@@ -87,7 +87,7 @@ EmitCopyFromReg(SDNode *Node, unsigned ResNo, bool IsClone, bool IsCloned,
          UI != E; ++UI) {
       SDNode *User = *UI;
       bool Match = true;
-      if (User->getOpcode() == ISD::CopyToReg && 
+      if (User->getOpcode() == ISD::CopyToReg &&
           User->getOperand(2).getNode() == Node &&
           User->getOperand(2).getResNo() == ResNo) {
         unsigned DestReg = cast<RegisterSDNode>(User->getOperand(1))->getReg();
@@ -139,7 +139,7 @@ EmitCopyFromReg(SDNode *Node, unsigned ResNo, bool IsClone, bool IsCloned,
   } else {
     DstRC = TLI->getRegClassFor(VT);
   }
-    
+
   // If all uses are reading from the src physical register and copying the
   // register is either impossible or very expensive, then don't create a copy.
   if (MatchReg && SrcRC->getCopyCost() < 0) {
@@ -167,7 +167,7 @@ unsigned InstrEmitter::getDstOfOnlyCopyToRegUse(SDNode *Node,
     return 0;
 
   SDNode *User = *Node->use_begin();
-  if (User->getOpcode() == ISD::CopyToReg && 
+  if (User->getOpcode() == ISD::CopyToReg &&
       User->getOperand(2).getNode() == Node &&
       User->getOperand(2).getResNo() == ResNo) {
     unsigned Reg = cast<RegisterSDNode>(User->getOperand(1))->getReg();
@@ -202,7 +202,7 @@ void InstrEmitter::CreateVirtualRegisters(SDNode *Node, MachineInstr *MI,
       for (SDNode::use_iterator UI = Node->use_begin(), E = Node->use_end();
            UI != E; ++UI) {
         SDNode *User = *UI;
-        if (User->getOpcode() == ISD::CopyToReg && 
+        if (User->getOpcode() == ISD::CopyToReg &&
             User->getOperand(2).getNode() == Node &&
             User->getOperand(2).getResNo() == i) {
           unsigned Reg = cast<RegisterSDNode>(User->getOperand(1))->getReg();
@@ -326,7 +326,7 @@ InstrEmitter::AddRegisterOperand(MachineInstr *MI, SDValue Op,
 
 /// AddOperand - Add the specified operand to the specified machine instr.  II
 /// specifies the instruction information for the node, and IIOpNum is the
-/// operand number (in the II) that we are adding. IIOpNum and II are used for 
+/// operand number (in the II) that we are adding. IIOpNum and II are used for
 /// assertions only.
 void InstrEmitter::AddOperand(MachineInstr *MI, SDValue Op,
                               unsigned IIOpNum,
@@ -365,7 +365,7 @@ void InstrEmitter::AddOperand(MachineInstr *MI, SDValue Op,
         Align = TM->getTargetData()->getTypeAllocSize(Type);
       }
     }
-    
+
     unsigned Idx;
     MachineConstantPool *MCP = MF->getConstantPool();
     if (CP->isMachineConstantPoolEntry())
@@ -406,18 +406,18 @@ getSuperRegisterRegClass(const TargetRegisterClass *TRC,
 
 /// EmitSubregNode - Generate machine code for subreg nodes.
 ///
-void InstrEmitter::EmitSubregNode(SDNode *Node, 
+void InstrEmitter::EmitSubregNode(SDNode *Node,
                                   DenseMap<SDValue, unsigned> &VRBaseMap,
                                   bool IsClone, bool IsCloned) {
   unsigned VRBase = 0;
   unsigned Opc = Node->getMachineOpcode();
-  
+
   // If the node is only used by a CopyToReg and the dest reg is a vreg, use
   // the CopyToReg'd destination register instead of creating a new vreg.
   for (SDNode::use_iterator UI = Node->use_begin(), E = Node->use_end();
        UI != E; ++UI) {
     SDNode *User = *UI;
-    if (User->getOpcode() == ISD::CopyToReg && 
+    if (User->getOpcode() == ISD::CopyToReg &&
         User->getOperand(2).getNode() == Node) {
       unsigned DestReg = cast<RegisterSDNode>(User->getOperand(1))->getReg();
       if (TargetRegisterInfo::isVirtualRegister(DestReg)) {
@@ -426,7 +426,7 @@ void InstrEmitter::EmitSubregNode(SDNode *Node,
       }
     }
   }
-  
+
   if (Opc == TargetOpcode::EXTRACT_SUBREG) {
     // EXTRACT_SUBREG is lowered as %dst = COPY %src:sub
     unsigned SubIdx = cast<ConstantSDNode>(Node->getOperand(1))->getZExtValue();
@@ -498,7 +498,7 @@ void InstrEmitter::EmitSubregNode(SDNode *Node,
     // Create the insert_subreg or subreg_to_reg machine instruction.
     MachineInstr *MI = BuildMI(*MF, Node->getDebugLoc(), TII->get(Opc));
     MI->addOperand(MachineOperand::CreateReg(VRBase, true));
-    
+
     // If creating a subreg_to_reg, then the first input operand
     // is an implicit value immediate, otherwise it's a register
     if (Opc == TargetOpcode::SUBREG_TO_REG) {
@@ -514,7 +514,7 @@ void InstrEmitter::EmitSubregNode(SDNode *Node,
     MBB->insert(InsertPos, MI);
   } else
     llvm_unreachable("Node is not insert_subreg, extract_subreg, or subreg_to_reg");
-     
+
   SDValue Op(Node, 0);
   bool isNew = VRBaseMap.insert(std::make_pair(Op, VRBase)).second;
   (void)isNew; // Silence compiler warning.
@@ -643,9 +643,9 @@ void InstrEmitter::
 EmitMachineNode(SDNode *Node, bool IsClone, bool IsCloned,
                 DenseMap<SDValue, unsigned> &VRBaseMap) {
   unsigned Opc = Node->getMachineOpcode();
-  
+
   // Handle subreg insert/extract specially
-  if (Opc == TargetOpcode::EXTRACT_SUBREG || 
+  if (Opc == TargetOpcode::EXTRACT_SUBREG ||
       Opc == TargetOpcode::INSERT_SUBREG ||
       Opc == TargetOpcode::SUBREG_TO_REG) {
     EmitSubregNode(Node, VRBaseMap, IsClone, IsCloned);
@@ -667,7 +667,7 @@ EmitMachineNode(SDNode *Node, bool IsClone, bool IsCloned,
   if (Opc == TargetOpcode::IMPLICIT_DEF)
     // We want a unique VR for each IMPLICIT_DEF use.
     return;
-  
+
   const MCInstrDesc &II = TII->get(Opc);
   unsigned NumResults = CountResults(Node);
   unsigned NodeOperands = CountOperands(Node);
@@ -712,12 +712,12 @@ EmitMachineNode(SDNode *Node, bool IsClone, bool IsCloned,
     // Then mark unused registers as dead.
     MI->setPhysRegsDeadExcept(UsedRegs, *TRI);
   }
-  
+
   // Add result register values for things that are defined by this
   // instruction.
   if (NumResults)
     CreateVirtualRegisters(Node, MI, II, IsClone, IsCloned, VRBaseMap);
-  
+
   // Emit all of the actual operands of this instruction, adding them to the
   // instruction as appropriate.
   bool HasOptPRefs = II.getNumDefs() > NumResults;
@@ -751,7 +751,7 @@ EmitMachineNode(SDNode *Node, bool IsClone, bool IsCloned,
         MI->addRegisterDead(Reg, TRI);
     }
   }
-  
+
   // If the instruction has implicit defs and the node doesn't, mark the
   // implicit def as dead.  If the node has any glue outputs, we don't do this
   // because we don't know what implicit defs are being used by glued nodes.
@@ -792,7 +792,7 @@ EmitSpecialNode(SDNode *Node, bool IsClone, bool IsCloned,
       SrcReg = R->getReg();
     else
       SrcReg = getVR(SrcVal, VRBaseMap);
-      
+
     unsigned DestReg = cast<RegisterSDNode>(Node->getOperand(1))->getReg();
     if (SrcReg == DestReg) // Coalesced away the copy? Ignore.
       break;
@@ -812,12 +812,12 @@ EmitSpecialNode(SDNode *Node, bool IsClone, bool IsCloned,
             TII->get(TargetOpcode::EH_LABEL)).addSym(S);
     break;
   }
-      
+
   case ISD::INLINEASM: {
     unsigned NumOps = Node->getNumOperands();
     if (Node->getOperand(NumOps-1).getValueType() == MVT::Glue)
       --NumOps;  // Ignore the glue operand.
-      
+
     // Create the inline asm machine instruction.
     MachineInstr *MI = BuildMI(*MF, Node->getDebugLoc(),
                                TII->get(TargetOpcode::INLINEASM));
@@ -826,7 +826,7 @@ EmitSpecialNode(SDNode *Node, bool IsClone, bool IsCloned,
     SDValue AsmStrV = Node->getOperand(InlineAsm::Op_AsmString);
     const char *AsmStr = cast<ExternalSymbolSDNode>(AsmStrV)->getSymbol();
     MI->addOperand(MachineOperand::CreateES(AsmStr));
-      
+
     // Add the HasSideEffect and isAlignStack bits.
     int64_t ExtraInfo =
       cast<ConstantSDNode>(Node->getOperand(InlineAsm::Op_ExtraInfo))->
@@ -838,10 +838,10 @@ EmitSpecialNode(SDNode *Node, bool IsClone, bool IsCloned,
       unsigned Flags =
         cast<ConstantSDNode>(Node->getOperand(i))->getZExtValue();
       unsigned NumVals = InlineAsm::getNumOperandRegisters(Flags);
-        
+
       MI->addOperand(MachineOperand::CreateImm(Flags));
       ++i;  // Skip the ID value.
-        
+
       switch (InlineAsm::getKind(Flags)) {
       default: llvm_unreachable("Bad flags!");
         case InlineAsm::Kind_RegDef:
@@ -877,13 +877,13 @@ EmitSpecialNode(SDNode *Node, bool IsClone, bool IsCloned,
         break;
       }
     }
-    
+
     // Get the mdnode from the asm if it exists and add it to the instruction.
     SDValue MDV = Node->getOperand(InlineAsm::Op_MDNode);
     const MDNode *MD = cast<MDNodeSDNode>(MDV)->getMD();
     if (MD)
       MI->addOperand(MachineOperand::CreateMetadata(MD));
-    
+
     MBB->insert(InsertPos, MI);
     break;
   }
