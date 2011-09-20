@@ -2,14 +2,13 @@ clang_CXCursorSet_contains
 clang_CXCursorSet_insert
 clang_CXXMethod_isStatic
 clang_CXXMethod_isVirtual
-clang_getCursorReferenceNameRange
 clang_annotateTokens
 clang_codeCompleteAt
-clang_codeCompleteGetDiagnostic
-clang_codeCompleteGetNumDiagnostics
 clang_codeCompleteGetContainerKind
 clang_codeCompleteGetContainerUSR
 clang_codeCompleteGetContexts
+clang_codeCompleteGetDiagnostic
+clang_codeCompleteGetNumDiagnostics
 clang_codeCompleteGetObjCSelector
 clang_constructUSR_ObjCCategory
 clang_constructUSR_ObjCClass
@@ -65,6 +64,7 @@ clang_getCursorLanguage
 clang_getCursorLexicalParent
 clang_getCursorLinkage
 clang_getCursorLocation
+clang_getCursorReferenceNameRange
 clang_getCursorReferenced
 clang_getCursorResultType
 clang_getCursorSemanticParent
@@ -106,6 +106,7 @@ clang_getPresumedLocation
 clang_getRange
 clang_getRangeEnd
 clang_getRangeStart
+clang_getRemappings
 clang_getResultType
 clang_getSpecializedCursorTemplate
 clang_getSpellingLocation
@@ -137,6 +138,9 @@ clang_isUnexposed
 clang_isVirtualBase
 clang_isVolatileQualifiedType
 clang_parseTranslationUnit
+clang_remap_dispose
+clang_remap_getFilenames
+clang_remap_getNumFiles
 clang_reparseTranslationUnit
 clang_saveTranslationUnit
 clang_sortCodeCompletionResults
@@ -144,7 +148,3 @@ clang_toggleCrashRecovery
 clang_tokenize
 clang_visitChildren
 clang_visitChildrenWithBlock
-clang_getRemappings
-clang_remap_getNumFiles
-clang_remap_getFilenames
-clang_remap_dispose
