@@ -1536,10 +1536,10 @@ if test "$llvm_cv_os_type" = "Linux" -a "$llvm_cv_target_arch" = "x86_64" ; then
   fi
 fi
 
-dnl Check, whether __dso_handle is present
+dnl Check whether __dso_handle is present
 AC_CHECK_FUNCS([__dso_handle])
 
-dnl Check wether llvm-gcc is based on dragonegg
+dnl Check whether llvm-gcc is based on dragonegg
 AC_CACHE_CHECK([whether llvm-gcc is dragonegg],[llvm_cv_llvmgcc_dragonegg],
 [llvm_cv_llvmgcc_dragonegg="no"
 if test -n "$LLVMGCC" ; then
