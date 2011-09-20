@@ -6964,8 +6964,10 @@ void Sema::AdjustDestructorExceptionSpec(CXXRecordDecl *classDecl,
   ImplicitExceptionSpecification exceptSpec =
       ComputeDefaultedDtorExceptionSpec(classDecl);
 
-  // Replace the destructor's type.
-  FunctionProtoType::ExtProtoInfo epi;
+  // Replace the destructor's type, building off the existing one. Fortunately,
+  // the only thing of interest in the destructor type is its extended info.
+  // The return and arguments are fixed.
+  FunctionProtoType::ExtProtoInfo epi = dtorType->getExtProtoInfo();
   epi.ExceptionSpecType = exceptSpec.getExceptionSpecType();
   epi.NumExceptions = exceptSpec.size();
   epi.Exceptions = exceptSpec.data();

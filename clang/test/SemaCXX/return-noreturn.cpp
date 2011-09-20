@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 %s -fsyntax-only -verify -Wreturn-type -Wmissing-noreturn -Wno-unreachable-code
+// RUN: %clang_cc1 %s -fsyntax-only -std=c++0x -verify -Wreturn-type -Wmissing-noreturn -Wno-unreachable-code
 
 // A destructor may be marked noreturn and should still influence the CFG.
 void pr6884_abort() __attribute__((noreturn));
