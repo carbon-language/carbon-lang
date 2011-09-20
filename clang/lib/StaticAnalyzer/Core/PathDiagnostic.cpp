@@ -351,22 +351,9 @@ void PathDiagnosticLocation::flatten() {
 //===----------------------------------------------------------------------===//
 
 void PathDiagnosticLocation::Profile(llvm::FoldingSetNodeID &ID) const {
-  ID.AddInteger((unsigned) K);
-  switch (K) {
-    case RangeK:
-      ID.AddInteger(R.getBegin().getRawEncoding());
-      ID.AddInteger(R.getEnd().getRawEncoding());
-      break;      
-    case SingleLocK:
-      ID.AddInteger(R.getBegin().getRawEncoding());
-      break;
-    case StmtK:
-      ID.Add(S);
-      break;
-    case DeclK:
-      ID.Add(D);
-      break;
-  }
+  ID.AddInteger(Range.getBegin().getRawEncoding());
+  ID.AddInteger(Range.getEnd().getRawEncoding());
+  ID.AddInteger(Loc.getRawEncoding());
   return;
 }
 
