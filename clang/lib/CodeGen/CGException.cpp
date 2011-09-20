@@ -249,24 +249,22 @@ static bool PersonalityHasOnlyCXXUses(llvm::Constant *Fn) {
       llvm::Value *Val = LPI->getClause(I)->stripPointerCasts();
       if (LPI->isCatch(I)) {
         // Check if the catch value has the ObjC prefix.
-        llvm::GlobalVariable *GV = cast<llvm::GlobalVariable>(Val);
-
-        // ObjC EH selector entries are always global variables with
-        // names starting like this.
-        if (GV->getName().startswith("OBJC_EHTYPE"))
-          return false;
+        if (llvm::GlobalVariable *GV = dyn_cast<llvm::GlobalVariable>(Val))
+          // ObjC EH selector entries are always global variables with
+          // names starting like this.
+          if (GV->getName().startswith("OBJC_EHTYPE"))
+            return false;
       } else {
         // Check if any of the filter values have the ObjC prefix.
         llvm::Constant *CVal = cast<llvm::Constant>(Val);
         for (llvm::User::op_iterator
                II = CVal->op_begin(), IE = CVal->op_end(); II != IE; ++II) {
-          llvm::GlobalVariable *GV =
-            cast<llvm::GlobalVariable>((*II)->stripPointerCasts());
-
-          // ObjC EH selector entries are always global variables with
-          // names starting like this.
-          if (GV->getName().startswith("OBJC_EHTYPE"))
-            return false;
+          if (llvm::GlobalVariable *GV =
+              cast<llvm::GlobalVariable>((*II)->stripPointerCasts()))
+            // ObjC EH selector entries are always global variables with
+            // names starting like this.
+            if (GV->getName().startswith("OBJC_EHTYPE"))
+              return false;
         }
       }
     }
