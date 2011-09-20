@@ -35,7 +35,7 @@ public:
 protected:
 
   enum MipsArchEnum {
-    Mips32, Mips32r2
+    Mips32, Mips32r2, Mips64, Mips64r2
   };
 
   // Mips architecture version
@@ -91,6 +91,8 @@ public:
 
   /// Only O32 and EABI supported right now.
   bool isABI_EABI() const { return MipsABI == EABI; }
+  bool isABI_N64() const { return MipsABI == N64; }
+  bool isABI_N32() const { return MipsABI == N32; }
   bool isABI_O32() const { return MipsABI == O32; }
   unsigned getTargetABI() const { return MipsABI; }
 
@@ -104,7 +106,10 @@ public:
   void ParseSubtargetFeatures(StringRef CPU, StringRef FS);
 
   bool isMips32() const { return MipsArchVersion >= Mips32; }
-  bool isMips32r2() const { return MipsArchVersion == Mips32r2; }
+  bool isMips32r2() const { return MipsArchVersion == Mips32r2 ||
+                                   MipsArchVersion == Mips64r2; }
+  bool isMips64() const { return MipsArchVersion >= Mips64; }
+  bool isMips64r2() const { return MipsArchVersion == Mips64r2; }
 
   bool isLittle() const { return IsLittle; }
   bool isFP64bit() const { return IsFP64bit; }
