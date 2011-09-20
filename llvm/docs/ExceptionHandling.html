@@ -33,9 +33,6 @@
   </ol></li>
   <li><a href="#format_common_intrinsics">Exception Handling Intrinsics</a>
   <ol>
-  	<li><a href="#llvm_eh_exception"><tt>llvm.eh.exception</tt></a></li>
-  	<li><a href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a></li>
-  	<li><a href="#llvm_eh_resume"><tt>llvm.eh.resume</tt></a></li>
   	<li><a href="#llvm_eh_typeid_for"><tt>llvm.eh.typeid.for</tt></a></li>
   	<li><a href="#llvm_eh_sjlj_setjmp"><tt>llvm.eh.sjlj.setjmp</tt></a></li>
   	<li><a href="#llvm_eh_sjlj_longjmp"><tt>llvm.eh.sjlj.longjmp</tt></a></li>
@@ -413,8 +410,8 @@
 
 <p>This intrinsic returns the type info index in the exception table of the
    current function.  This value can be used to compare against the result
-   of <a href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a>.  The single
-   argument is a reference to a type info.</p>
+   of <a href="LangRef.html#i_landingpad"><tt>landingpad</tt> instruction</a>.
+   The single argument is a reference to a type info.</p>
 
 </div>
 
