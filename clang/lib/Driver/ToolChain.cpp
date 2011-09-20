@@ -169,7 +169,8 @@ static const char *getLLVMArchSuffixForARM(StringRef CPU) {
   return "";
 }
 
-std::string ToolChain::ComputeLLVMTriple(const ArgList &Args) const {
+std::string ToolChain::ComputeLLVMTriple(const ArgList &Args, 
+                                         types::ID InputType) const {
   switch (getTriple().getArch()) {
   default:
     return getTripleString();
@@ -187,7 +188,10 @@ std::string ToolChain::ComputeLLVMTriple(const ArgList &Args) const {
     bool ThumbDefault =
       (Suffix == "v7" && getTriple().getOS() == llvm::Triple::Darwin);
     std::string ArchName = "arm";
-    if (Args.hasFlag(options::OPT_mthumb, options::OPT_mno_thumb, ThumbDefault))
+
+    // Assembly files should start in ARM mode.
+    if (InputType != types::TY_PP_Asm &&
+        Args.hasFlag(options::OPT_mthumb, options::OPT_mno_thumb, ThumbDefault))
       ArchName = "thumb";
     Triple.setArchName(ArchName + Suffix.str());
 
@@ -196,7 +200,8 @@ std::string ToolChain::ComputeLLVMTriple(const ArgList &Args) const {
   }
 }
 
-std::string ToolChain::ComputeEffectiveClangTriple(const ArgList &Args) const {
+std::string ToolChain::ComputeEffectiveClangTriple(const ArgList &Args, 
+                                                   types::ID InputType) const {
   // Diagnose use of Darwin OS deployment target arguments on non-Darwin.
   if (Arg *A = Args.getLastArg(options::OPT_mmacosx_version_min_EQ,
                                options::OPT_miphoneos_version_min_EQ,
@@ -204,7 +209,7 @@ std::string ToolChain::ComputeEffectiveClangTriple(const ArgList &Args) const {
     getDriver().Diag(diag::err_drv_clang_unsupported)
       << A->getAsString(Args);
 
-  return ComputeLLVMTriple(Args);
+  return ComputeLLVMTriple(Args, InputType);
 }
 
 ToolChain::CXXStdlibType ToolChain::GetCXXStdlibType(const ArgList &Args) const{

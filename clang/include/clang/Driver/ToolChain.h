@@ -171,14 +171,16 @@ public:
 
   /// ComputeLLVMTriple - Return the LLVM target triple to use, after taking
   /// command line arguments into account.
-  virtual std::string ComputeLLVMTriple(const ArgList &Args) const;
+  virtual std::string ComputeLLVMTriple(const ArgList &Args,
+                                 types::ID InputType = types::TY_INVALID) const;
 
   /// ComputeEffectiveClangTriple - Return the Clang triple to use for this
   /// target, which may take into account the command line arguments. For
   /// example, on Darwin the -mmacosx-version-min= command line argument (which
   /// sets the deployment target) determines the version in the triple passed to
   /// Clang.
-  virtual std::string ComputeEffectiveClangTriple(const ArgList &Args) const;
+  virtual std::string ComputeEffectiveClangTriple(const ArgList &Args,
+                                 types::ID InputType = types::TY_INVALID) const;
 
   /// configureObjCRuntime - Configure the known properties of the
   /// Objective-C runtime for this platform.

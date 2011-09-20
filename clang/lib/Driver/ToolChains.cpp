@@ -189,8 +189,9 @@ Darwin::~Darwin() {
     delete it->second;
 }
 
-std::string Darwin::ComputeEffectiveClangTriple(const ArgList &Args) const {
-  llvm::Triple Triple(ComputeLLVMTriple(Args));
+std::string Darwin::ComputeEffectiveClangTriple(const ArgList &Args,
+                                                types::ID InputType) const {
+  llvm::Triple Triple(ComputeLLVMTriple(Args, InputType));
 
   // If the target isn't initialized (e.g., an unknown Darwin platform, return
   // the default triple).
@@ -958,8 +959,9 @@ bool Darwin::SupportsObjCGC() const {
 }
 
 std::string
-Darwin_Generic_GCC::ComputeEffectiveClangTriple(const ArgList &Args) const {
-  return ComputeLLVMTriple(Args);
+Darwin_Generic_GCC::ComputeEffectiveClangTriple(const ArgList &Args,
+                                                types::ID InputType) const {
+  return ComputeLLVMTriple(Args, InputType);
 }
 
 /// Generic_GCC - A tool chain using the 'gcc' command to perform
