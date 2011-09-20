@@ -2395,7 +2395,7 @@ DWARFExpression::Evaluate
                 if (member_bit_incr % 8)
                 {
                     if (error_ptr)
-                        error_ptr->SetErrorStringWithFormat("Array increment is not byte aligned", index, size);
+                        error_ptr->SetErrorStringWithFormat("Array increment is not byte aligned");
                     return false;
                 }
                 int64_t member_offset = (int64_t)(member_bit_incr / 8) * index;

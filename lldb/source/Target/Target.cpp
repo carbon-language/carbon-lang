@@ -769,7 +769,8 @@ Target::ReadMemory (const Address& addr,
             if (resolved_addr.GetModule() && resolved_addr.GetModule()->GetFileSpec())
                 error.SetErrorStringWithFormat("%s[0x%llx] can't be resolved, %s in not currently loaded.\n", 
                                                resolved_addr.GetModule()->GetFileSpec().GetFilename().AsCString(), 
-                                               resolved_addr.GetFileAddress());
+                                               resolved_addr.GetFileAddress(),
+                                               resolved_addr.GetModule()->GetFileSpec().GetFilename().AsCString());
             else
                 error.SetErrorStringWithFormat("0x%llx can't be resolved.\n", resolved_addr.GetFileAddress());
         }

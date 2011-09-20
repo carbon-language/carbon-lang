@@ -96,7 +96,7 @@ PlatformDarwin::ResolveExecutable (const FileSpec &exe_file,
             if (resolved_exe_file.Exists())
                 error.Clear();
             else
-                error.SetErrorStringWithFormat("the platform is not currently connected, and '%s' doesn't exist in the system root.");
+                error.SetErrorStringWithFormat("the platform is not currently connected, and '%s' doesn't exist in the system root.", resolved_exe_file.GetFilename().AsCString(""));
         }
     }
     

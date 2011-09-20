@@ -865,7 +865,7 @@ ModuleList::GetSharedModule
                 if (arch.IsValid())
                 {
                     if (uuid_cstr[0])
-                        error.SetErrorStringWithFormat("'%s' does not contain the %s architecture and UUID %s.\n", path, arch.GetArchitectureName(), uuid_cstr[0]);
+                        error.SetErrorStringWithFormat("'%s' does not contain the %s architecture and UUID %s.\n", path, arch.GetArchitectureName(), uuid_cstr);
                     else
                         error.SetErrorStringWithFormat("'%s' does not contain the %s architecture.\n", path, arch.GetArchitectureName());
                 }
@@ -941,9 +941,9 @@ ModuleList::GetSharedModule
                         uuid_cstr[0] = '\0';
 
                     if (uuid_cstr[0])
-                        error.SetErrorStringWithFormat("Cannot locate a module for UUID '%s'.\n", uuid_cstr[0]);
+                        error.SetErrorStringWithFormat("Cannot locate a module for UUID '%s'.\n", uuid_cstr);
                     else
-                        error.SetErrorStringWithFormat("Cannot locate a module.\n", path, arch.GetArchitectureName());
+                        error.SetErrorStringWithFormat("Cannot locate a module.\n");
                 }
             }
         }

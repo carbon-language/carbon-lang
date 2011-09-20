@@ -1854,7 +1854,7 @@ ClangExpressionDeclMap::DoMaterializeOneRegister
         Error write_error (reg_ctx.WriteRegisterValueToMemory(&reg_info, addr, register_byte_size, reg_value));
         if (write_error.Fail())
         {
-            err.SetErrorStringWithFormat ("Couldn't write %s to the target: %s", write_error.AsCString());
+            err.SetErrorStringWithFormat ("Couldn't write %s to the target: %s", reg_info.name, write_error.AsCString());
             return false;
         }
     }

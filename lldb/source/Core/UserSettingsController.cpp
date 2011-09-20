@@ -2134,9 +2134,9 @@ UserSettingsController::UpdateBooleanVariable (VarSetOperationType op,
             
             
             if (value_cstr == NULL)
-                err.SetErrorStringWithFormat ("invalid boolean string value (NULL)\n", value_cstr);
+                err.SetErrorStringWithFormat ("invalid boolean string value (NULL)\n");
             else if (value_cstr[0] == '\0')
-                err.SetErrorStringWithFormat ("invalid boolean string value (empty)\n", value_cstr);
+                err.SetErrorStringWithFormat ("invalid boolean string value (empty)\n");
             else
             {
                 bool new_value = Args::StringToBoolean (value_cstr, false, &success);
@@ -2180,9 +2180,9 @@ UserSettingsController::UpdateBooleanOptionValue (const char *value,
             error = option_value.SetValueFromCString(value);
             
             if (value == NULL)
-                error.SetErrorStringWithFormat ("invalid boolean string value (NULL)\n", value);
+                error.SetErrorStringWithFormat ("invalid boolean string value (NULL)\n");
             else if (value[0] == '\0')
-                error.SetErrorStringWithFormat ("invalid boolean string value (empty)\n", value);
+                error.SetErrorStringWithFormat ("invalid boolean string value (empty)\n");
             else
             {
                 bool new_value = Args::StringToBoolean (value, false, &success);

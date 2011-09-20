@@ -3429,7 +3429,7 @@ public:
                     m_one_liner = option_arg;
                 break;
                 default:
-                    error.SetErrorStringWithFormat ("Unrecognized option %c.");
+                    error.SetErrorStringWithFormat ("Unrecognized option %c.", short_option);
                 break;
             }
             return error;

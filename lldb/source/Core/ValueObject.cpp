@@ -1053,7 +1053,7 @@ ValueObject::GetValueAsCString ()
                                 m_value_str.swap(sstr.GetString());
                             else
                             {
-                                m_error.SetErrorStringWithFormat ("unsufficient data for value (only %u of %u bytes available)", 
+                                m_error.SetErrorStringWithFormat ("unsufficient data for value (only %lu of %lu bytes available)", 
                                                                   m_data.GetByteSize(),
                                                                   GetByteSize());
                                 m_value_str.clear();
