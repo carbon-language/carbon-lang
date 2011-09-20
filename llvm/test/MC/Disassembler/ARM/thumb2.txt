@@ -1939,3 +1939,611 @@
 0xff 0xdf
 0x21 0xdf
 
+#------------------------------------------------------------------------------
+# SXTAB
+#------------------------------------------------------------------------------
+# CHECK:  sxtab r2, r3, r4
+# CHECK:  sxtab r4, r5, r6
+# CHECK:  it lt
+# CHECK:  sxtablt r6, r2, r9, ror #8
+# CHECK:  sxtab r5, r1, r4, ror #16
+# CHECK:  sxtab r7, r8, r3, ror #24
+
+0x43 0xfa 0x84 0xf2
+0x45 0xfa 0x86 0xf4
+0xb8 0xbf
+0x42 0xfa 0x99 0xf6
+0x41 0xfa 0xa4 0xf5
+0x48 0xfa 0xb3 0xf7
+
+
+#------------------------------------------------------------------------------
+# SXTAB16
+#------------------------------------------------------------------------------
+# CHECK:  sxtab16 r6, r2, r7
+# CHECK:  sxtab16 r3, r5, r8, ror #8
+# CHECK:  sxtab16 r3, r2, r1, ror #16
+# CHECK:  ite ne
+# CHECK:  sxtab16ne r0, r1, r4
+# CHECK:  sxtab16eq r1, r2, r3, ror #24
+
+0x22 0xfa 0x87 0xf6
+0x25 0xfa 0x98 0xf3
+0x22 0xfa 0xa1 0xf3
+0x14 0xbf
+0x21 0xfa 0x84 0xf0
+0x22 0xfa 0xb3 0xf1
+
+
+#------------------------------------------------------------------------------
+# SXTAH
+#------------------------------------------------------------------------------
+# CHECK:  sxtah r1, r3, r9
+# CHECK:  sxtah r3, r8, r3, ror #8
+# CHECK:  sxtah r9, r3, r3, ror #24
+# CHECK:  ite hi
+# CHECK:  sxtahhi r6, r1, r6
+# CHECK:  sxtahls r2, r2, r4, ror #16
+
+0x03 0xfa 0x89 0xf1
+0x08 0xfa 0x93 0xf3
+0x03 0xfa 0xb3 0xf9
+0x8c 0xbf
+0x01 0xfa 0x86 0xf6
+0x02 0xfa 0xa4 0xf2
+
+
+#------------------------------------------------------------------------------
+# SXTB
+#------------------------------------------------------------------------------
+# CHECK:  sxtb r5, r6
+# CHECK:  sxtb.w r6, r9, ror #8
+# CHECK:  sxtb.w r8, r3, ror #24
+# CHECK:  ite ge
+# CHECK:  sxtbge r2, r4
+# CHECK:  sxtblt.w r5, r1, ror #16
+
+0x75 0xb2
+0x4f 0xfa 0x99 0xf6
+0x4f 0xfa 0xb3 0xf8
+0xac 0xbf
+0x62 0xb2
+0x4f 0xfa 0xa1 0xf5
+
+
+#------------------------------------------------------------------------------
+# SXTB16
+#------------------------------------------------------------------------------
+# CHECK:  sxtb16 r1, r4
+# CHECK:  sxtb16 r6, r7
+# CHECK:  sxtb16 r3, r1, ror #16
+# CHECK:  ite hs
+# CHECK:  sxtb16hs r3, r5, ror #8
+# CHECK:  sxtb16lo r2, r3, ror #24
+
+0x2f 0xfa 0x84 0xf1
+0x2f 0xfa 0x87 0xf6
+0x2f 0xfa 0xa1 0xf3
+0x2c 0xbf
+0x2f 0xfa 0x95 0xf3
+0x2f 0xfa 0xb3 0xf2
+
+
+#------------------------------------------------------------------------------
+# SXTH
+#------------------------------------------------------------------------------
+# CHECK:  sxth r1, r6
+# CHECK:  sxth.w r3, r8, ror #8
+# CHECK:  sxth.w r9, r3, ror #24
+# CHECK:  itt ne
+# CHECK:  sxthne.w r3, r9
+# CHECK:  sxthne.w r2, r2, ror #16
+
+0x31 0xb2
+0x0f 0xfa 0x98 0xf3
+0x0f 0xfa 0xb3 0xf9
+0x1c 0xbf
+0x0f 0xfa 0x89 0xf3
+0x0f 0xfa 0xa2 0xf2
+
+
+#------------------------------------------------------------------------------
+# SXTB
+#------------------------------------------------------------------------------
+# CHECK:  sxtb r5, r6
+# CHECK:  sxtb.w r6, r9, ror #8
+# CHECK:  sxtb.w r8, r3, ror #24
+# CHECK:  ite ge
+# CHECK:  sxtbge r2, r4
+# CHECK:  sxtblt.w r5, r1, ror #16
+
+0x75 0xb2
+0x4f 0xfa 0x99 0xf6
+0x4f 0xfa 0xb3 0xf8
+0xac 0xbf
+0x62 0xb2
+0x4f 0xfa 0xa1 0xf5
+
+
+#------------------------------------------------------------------------------
+# SXTB16
+#------------------------------------------------------------------------------
+# CHECK:  sxtb16 r1, r4
+# CHECK:  sxtb16 r6, r7
+# CHECK:  sxtb16 r3, r1, ror #16
+# CHECK:  ite hs
+# CHECK:  sxtb16hs r3, r5, ror #8
+# CHECK:  sxtb16lo r2, r3, ror #24
+
+0x2f 0xfa 0x84 0xf1
+0x2f 0xfa 0x87 0xf6
+0x2f 0xfa 0xa1 0xf3
+0x2c 0xbf
+0x2f 0xfa 0x95 0xf3
+0x2f 0xfa 0xb3 0xf2
+
+
+#------------------------------------------------------------------------------
+# SXTH
+#------------------------------------------------------------------------------
+# CHECK:  sxth r1, r6
+# CHECK:  sxth.w r3, r8, ror #8
+# CHECK:  sxth.w r9, r3, ror #24
+# CHECK:  itt ne
+# CHECK:  sxthne.w r3, r9
+# CHECK:  sxthne.w r2, r2, ror #16
+
+0x31 0xb2
+0x0f 0xfa 0x98 0xf3
+0x0f 0xfa 0xb3 0xf9
+0x1c 0xbf
+0x0f 0xfa 0x89 0xf3
+0x0f 0xfa 0xa2 0xf2
+
+
+#------------------------------------------------------------------------------
+# TBB/TBH
+#------------------------------------------------------------------------------
+# CHECK:  tbb [r3, r8]
+# CHECK:  tbh [r3, r8, lsl #1]
+# CHECK:  it eq
+# CHECK:  tbbeq [r3, r8]
+# CHECK:  it hs
+# CHECK:  tbhhs [r3, r8, lsl #1]
+
+0xd3 0xe8 0x08 0xf0
+0xd3 0xe8 0x18 0xf0
+0x08 0xbf
+0xd3 0xe8 0x08 0xf0
+0x28 0xbf
+0xd3 0xe8 0x18 0xf0
+
+
+#------------------------------------------------------------------------------
+# TEQ
+#------------------------------------------------------------------------------
+# CHECK:  teq.w r5, #61440
+# CHECK:  teq.w r4, r5
+# CHECK:  teq.w r4, r5, lsl #5
+# CHECK:  teq.w r4, r5, lsr #5
+# CHECK:  teq.w r4, r5, lsr #5
+# CHECK:  teq.w r4, r5, asr #5
+# CHECK:  teq.w r4, r5, ror #5
+
+0x95 0xf4 0x70 0x4f
+0x94 0xea 0x05 0x0f
+0x94 0xea 0x45 0x1f
+0x94 0xea 0x55 0x1f
+0x94 0xea 0x55 0x1f
+0x94 0xea 0x65 0x1f
+0x94 0xea 0x75 0x1f
+
+
+#------------------------------------------------------------------------------
+# TST
+#------------------------------------------------------------------------------
+# CHECK:  tst.w r5, #61440
+# CHECK:  tst r2, r5
+# CHECK:  tst.w r3, r12, lsl #5
+# CHECK:  tst.w r4, r11, lsr #4
+# CHECK:  tst.w r5, r10, lsr #12
+# CHECK:  tst.w r6, r9, asr #30
+# CHECK:  tst.w r7, r8, ror #2
+
+0x15 0xf4 0x70 0x4f
+0x2a 0x42
+0x13 0xea 0x4c 0x1f
+0x14 0xea 0x1b 0x1f
+0x15 0xea 0x1a 0x3f
+0x16 0xea 0xa9 0x7f
+0x17 0xea 0xb8 0x0f
+
+
+#------------------------------------------------------------------------------
+# UADD16/UADD8
+#------------------------------------------------------------------------------
+# CHECK:  uadd16 r1, r2, r3
+# CHECK:  uadd8 r1, r2, r3
+# CHECK:  ite gt
+# CHECK:  uadd16gt r1, r2, r3
+# CHECK:  uadd8le r1, r2, r3
+
+0x92 0xfa 0x43 0xf1
+0x82 0xfa 0x43 0xf1
+0xcc 0xbf
+0x92 0xfa 0x43 0xf1
+0x82 0xfa 0x43 0xf1
+
+
+#------------------------------------------------------------------------------
+# UASX
+#------------------------------------------------------------------------------
+# CHECK:  uasx r9, r12, r0
+# CHECK:  it eq
+# CHECK:  uasxeq r9, r12, r0
+# CHECK:  uasx r9, r12, r0
+# CHECK:  it eq
+# CHECK:  uasxeq r9, r12, r0
+
+0xac 0xfa 0x40 0xf9
+0x08 0xbf
+0xac 0xfa 0x40 0xf9
+0xac 0xfa 0x40 0xf9
+0x08 0xbf
+0xac 0xfa 0x40 0xf9
+
+
+#------------------------------------------------------------------------------
+# UBFX
+#------------------------------------------------------------------------------
+# CHECK:  ubfx r4, r5, #16, #1
+# CHECK:  it gt
+# CHECK:  ubfxgt r4, r5, #16, #16
+
+0xc5 0xf3 0x00 0x44
+0xc8 0xbf
+0xc5 0xf3 0x0f 0x44
+
+
+#------------------------------------------------------------------------------
+# UHADD16/UHADD8
+#------------------------------------------------------------------------------
+# CHECK:  uhadd16 r4, r8, r2
+# CHECK:  uhadd8 r4, r8, r2
+# CHECK:  itt gt
+# CHECK:  uhadd16gt r4, r8, r2
+# CHECK:  uhadd8gt r4, r8, r2
+
+0x98 0xfa 0x62 0xf4
+0x88 0xfa 0x62 0xf4
+0xc4 0xbf
+0x98 0xfa 0x62 0xf4
+0x88 0xfa 0x62 0xf4
+
+
+#------------------------------------------------------------------------------
+# UHASX/UHSAX
+#------------------------------------------------------------------------------
+# CHECK:  uhasx r4, r1, r5
+# CHECK:  uhsax r5, r6, r6
+# CHECK:  itt gt
+# CHECK:  uhasxgt r6, r9, r8
+# CHECK:  uhsaxgt r7, r8, r12
+
+0xa1 0xfa 0x65 0xf4
+0xe6 0xfa 0x66 0xf5
+0xc4 0xbf
+0xa9 0xfa 0x68 0xf6
+0xe8 0xfa 0x6c 0xf7
+
+#------------------------------------------------------------------------------
+# UHSUB16/UHSUB8
+#------------------------------------------------------------------------------
+# CHECK:  uhsub16 r5, r8, r3
+# CHECK:  uhsub8 r1, r7, r6
+# CHECK:  itt lt
+# CHECK:  uhsub16lt r4, r9, r12
+# CHECK:  uhsub8lt r3, r1, r5
+
+0xd8 0xfa 0x63 0xf5
+0xc7 0xfa 0x66 0xf1
+0xbc 0xbf
+0xd9 0xfa 0x6c 0xf4
+0xc1 0xfa 0x65 0xf3
+
+
+#------------------------------------------------------------------------------
+# UMAAL
+#------------------------------------------------------------------------------
+# CHECK:  umaal r3, r4, r5, r6
+# CHECK:  it lt
+# CHECK:  umaallt r3, r4, r5, r6
+
+0xe5 0xfb 0x66 0x34
+0xb8 0xbf
+0xe5 0xfb 0x66 0x34
+
+
+#------------------------------------------------------------------------------
+# UMLAL
+#------------------------------------------------------------------------------
+# CHECK:  umlal r2, r4, r6, r8
+# CHECK:  it gt
+# CHECK:  umlalgt r6, r1, r2, r6
+
+0xe6 0xfb 0x08 0x24
+0xc8 0xbf
+0xe2 0xfb 0x06 0x61
+
+
+#------------------------------------------------------------------------------
+# UMULL
+#------------------------------------------------------------------------------
+# CHECK:  umull r2, r4, r6, r8
+# CHECK:  it gt
+# CHECK:  umullgt r6, r1, r2, r6
+
+0xa6 0xfb 0x08 0x24
+0xc8 0xbf
+0xa2 0xfb 0x06 0x61
+
+
+#------------------------------------------------------------------------------
+# UQADD16/UQADD8
+#------------------------------------------------------------------------------
+# CHECK:  uqadd16 r1, r2, r3
+# CHECK:  uqadd8 r3, r4, r8
+# CHECK:  ite gt
+# CHECK:  uqadd16gt r4, r7, r9
+# CHECK:  uqadd8le r8, r1, r2
+
+0x92 0xfa 0x53 0xf1
+0x84 0xfa 0x58 0xf3
+0xcc 0xbf
+0x97 0xfa 0x59 0xf4
+0x81 0xfa 0x52 0xf8
+
+
+#------------------------------------------------------------------------------
+# UQASX/UQSAX
+#------------------------------------------------------------------------------
+# CHECK:  uqasx r1, r2, r3
+# CHECK:  uqsax r3, r4, r8
+# CHECK:  ite gt
+# CHECK:  uqasxgt r4, r7, r9
+# CHECK:  uqsaxle r8, r1, r2
+
+0xa2 0xfa 0x53 0xf1
+0xe4 0xfa 0x58 0xf3
+0xcc 0xbf
+0xa7 0xfa 0x59 0xf4
+0xe1 0xfa 0x52 0xf8
+
+
+#------------------------------------------------------------------------------
+# UQSUB16/UQSUB8
+#------------------------------------------------------------------------------
+# CHECK:  uqsub8 r8, r2, r9
+# CHECK:  uqsub16 r1, r9, r7
+# CHECK:  ite gt
+# CHECK:  uqsub8gt r3, r1, r6
+# CHECK:  uqsub16le r4, r6, r4
+
+0xc2 0xfa 0x59 0xf8
+0xd9 0xfa 0x57 0xf1
+0xcc 0xbf
+0xc1 0xfa 0x56 0xf3
+0xd6 0xfa 0x54 0xf4
+
+
+#------------------------------------------------------------------------------
+# UQSUB16/UQSUB8
+#------------------------------------------------------------------------------
+# CHECK:  usad8 r1, r9, r7
+# CHECK:  usada8 r8, r2, r9, r12
+# CHECK:  ite gt
+# CHECK:  usada8gt r3, r1, r6, r9
+# CHECK:  usad8le r4, r6, r4
+
+0x79 0xfb 0x07 0xf1
+0x72 0xfb 0x09 0xc8
+0xcc 0xbf
+0x71 0xfb 0x06 0x93
+0x76 0xfb 0x04 0xf4
+
+
+#------------------------------------------------------------------------------
+# USAT
+#------------------------------------------------------------------------------
+# CHECK:  usat r8, #1, r10
+# CHECK:  usat r8, #4, r10
+# CHECK:  usat r8, #5, r10, lsl #31
+# CHECK:  usat r8, #16, r10, asr #1
+
+0x8a 0xf3 0x01 0x08
+0x8a 0xf3 0x04 0x08
+0x8a 0xf3 0xc5 0x78
+0xaa 0xf3 0x50 0x08
+
+
+#------------------------------------------------------------------------------
+# USAT16
+#------------------------------------------------------------------------------
+# CHECK:  usat16	r2, #2, r7
+# CHECK:  usat16	r3, #15, r5
+
+0xa7 0xf3 0x02 0x02
+0xa5 0xf3 0x0f 0x03
+
+
+#------------------------------------------------------------------------------
+# USAX
+#------------------------------------------------------------------------------
+# CHECK:  usax r2, r3, r4
+# CHECK:  it ne
+# CHECK:  usaxne r6, r1, r9
+# CHECK:  usax r2, r3, r4
+# CHECK:  it ne
+# CHECK:  usaxne r6, r1, r9
+
+0xe3 0xfa 0x44 0xf2
+0x18 0xbf
+0xe1 0xfa 0x49 0xf6
+0xe3 0xfa 0x44 0xf2
+0x18 0xbf
+0xe1 0xfa 0x49 0xf6
+
+
+#------------------------------------------------------------------------------
+# USUB16/USUB8
+#------------------------------------------------------------------------------
+# CHECK:  usub16 r4, r2, r7
+# CHECK:  usub8 r1, r8, r5
+# CHECK:  ite hi
+# CHECK:  usub16hi r1, r1, r3
+# CHECK:  usub8ls r9, r2, r3
+
+0xd2 0xfa 0x47 0xf4
+0xc8 0xfa 0x45 0xf1
+0x8c 0xbf
+0xd1 0xfa 0x43 0xf1
+0xc2 0xfa 0x43 0xf9
+
+
+#------------------------------------------------------------------------------
+# UXTAB
+#------------------------------------------------------------------------------
+# CHECK:  uxtab r2, r3, r4
+# CHECK:  uxtab r4, r5, r6
+# CHECK:  it lt
+# CHECK:  uxtablt r6, r2, r9, ror #8
+# CHECK:  uxtab r5, r1, r4, ror #16
+# CHECK:  uxtab r7, r8, r3, ror #24
+
+0x53 0xfa 0x84 0xf2
+0x55 0xfa 0x86 0xf4
+0xb8 0xbf
+0x52 0xfa 0x99 0xf6
+0x51 0xfa 0xa4 0xf5
+0x58 0xfa 0xb3 0xf7
+
+
+#------------------------------------------------------------------------------
+# UXTAB16
+#------------------------------------------------------------------------------
+# CHECK:  it ge
+# CHECK:  uxtab16ge r0, r1, r4
+# CHECK:  uxtab16 r6, r2, r7
+# CHECK:  uxtab16 r3, r5, r8, ror #8
+# CHECK:  uxtab16 r3, r2, r1, ror #16
+# CHECK:  it eq
+# CHECK:  uxtab16eq r1, r2, r3, ror #24
+
+0xa8 0xbf
+0x31 0xfa 0x84 0xf0
+0x32 0xfa 0x87 0xf6
+0x35 0xfa 0x98 0xf3
+0x32 0xfa 0xa1 0xf3
+0x08 0xbf
+0x32 0xfa 0xb3 0xf1
+
+
+#------------------------------------------------------------------------------
+# UXTAH
+#------------------------------------------------------------------------------
+# CHECK:  uxtah r1, r3, r9
+# CHECK:  it hi
+# CHECK:  uxtahhi r6, r1, r6
+# CHECK:  uxtah r3, r8, r3, ror #8
+# CHECK:  it lo
+# CHECK:  uxtahlo r2, r2, r4, ror #16
+# CHECK:  uxtah r9, r3, r3, ror #24
+
+0x13 0xfa 0x89 0xf1
+0x88 0xbf
+0x11 0xfa 0x86 0xf6
+0x18 0xfa 0x93 0xf3
+0x38 0xbf
+0x12 0xfa 0xa4 0xf2
+0x13 0xfa 0xb3 0xf9
+
+
+#------------------------------------------------------------------------------
+# UXTB
+#------------------------------------------------------------------------------
+# CHECK:  it ge
+# CHECK:  uxtbge r2, r4
+# CHECK:  uxtb r5, r6
+# CHECK:  uxtb.w r6, r9, ror #8
+# CHECK:  it lo
+# CHECK:  uxtblo.w r5, r1, ror #16
+# CHECK:  uxtb.w r8, r3, ror #24
+
+0xa8 0xbf
+0xe2 0xb2
+0xf5 0xb2
+0x5f 0xfa 0x99 0xf6
+0x38 0xbf
+0x5f 0xfa 0xa1 0xf5
+0x5f 0xfa 0xb3 0xf8
+
+
+#------------------------------------------------------------------------------
+# UXTB16
+#------------------------------------------------------------------------------
+# CHECK:  uxtb16 r1, r4
+# CHECK:  uxtb16 r6, r7
+# CHECK:  it hs
+# CHECK:  uxtb16hs r3, r5, ror #8
+# CHECK:  uxtb16 r3, r1, ror #16
+# CHECK:  it ge
+# CHECK:  uxtb16ge r2, r3, ror #24
+
+0x3f 0xfa 0x84 0xf1
+0x3f 0xfa 0x87 0xf6
+0x28 0xbf
+0x3f 0xfa 0x95 0xf3
+0x3f 0xfa 0xa1 0xf3
+0xa8 0xbf
+0x3f 0xfa 0xb3 0xf2
+
+
+#------------------------------------------------------------------------------
+# UXTH
+#------------------------------------------------------------------------------
+# CHECK:  it ne
+# CHECK:  uxthne.w r3, r9
+# CHECK:  uxth r1, r6
+# CHECK:  uxth.w r3, r8, ror #8
+# CHECK:  it le
+# CHECK:  uxthle.w r2, r2, ror #16
+# CHECK:  uxth.w r9, r3, ror #24
+
+0x18 0xbf
+0x1f 0xfa 0x89 0xf3
+0xb1 0xb2
+0x1f 0xfa 0x98 0xf3
+0xd8 0xbf
+0x1f 0xfa 0xa2 0xf2
+0x1f 0xfa 0xb3 0xf9
+
+
+#------------------------------------------------------------------------------
+# WFE/WFI/YIELD
+#------------------------------------------------------------------------------
+# CHECK:  wfe
+# CHECK:  wfi
+# CHECK:  yield
+# CHECK:  itet lt
+# CHECK:  wfelt
+# CHECK:  wfige
+# CHECK:  yieldlt
+
+0x20 0xbf
+0x30 0xbf
+0x10 0xbf
+0xb6 0xbf
+0x20 0xbf
+0x30 0xbf
+0x10 0xbf
+
