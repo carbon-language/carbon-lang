@@ -54,11 +54,11 @@ inline static unsigned getDigit(char cdigit, uint8_t radix) {
       return r;
 
     r = cdigit - 'A';
-    if (r <= unsigned(radix - 11U))
+    if (r <= radix - 11U)
       return r + 10;
 
     r = cdigit - 'a';
-    if (r <= unsigned(radix - 11U))
+    if (r <= radix - 11U)
       return r + 10;
     
     radix = 10;
