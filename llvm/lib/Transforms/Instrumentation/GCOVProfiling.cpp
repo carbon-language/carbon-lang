@@ -109,15 +109,6 @@ ModulePass *llvm::createGCOVProfilerPass(bool EmitNotes, bool EmitData,
   return new GCOVProfiler(EmitNotes, EmitData, Use402Format);
 }
 
-static DISubprogram findSubprogram(DIScope Scope) {
-  while (!Scope.isSubprogram()) {
-    assert(Scope.isLexicalBlock() &&
-           "Debug location not lexical block or subprogram");
-    Scope = DILexicalBlock(Scope).getContext();
-  }
-  return DISubprogram(Scope);
-}
-
 namespace {
   class GCOVRecord {
    protected:
@@ -403,7 +394,7 @@ void GCOVProfiler::emitGCNO() {
             if (Loc.isUnknown()) continue;
             if (Line == Loc.getLine()) continue;
             Line = Loc.getLine();
-            if (SP != findSubprogram(DIScope(Loc.getScope(*Ctx)))) continue;
+            if (SP != getDISubprogram(Loc.getScope(*Ctx))) continue;
             
             GCOVLines &Lines = Block.getFile(SP.getFilename());
             Lines.addLine(Loc.getLine());
