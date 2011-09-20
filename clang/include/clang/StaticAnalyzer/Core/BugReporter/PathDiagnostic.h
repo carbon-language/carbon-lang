@@ -98,8 +98,8 @@ private:
   FullSourceLoc Loc;
   PathDiagnosticRange Range;
 
-  FullSourceLoc genLocation(const ParentMap *PM=0) const;
-  PathDiagnosticRange genRange(const ParentMap *PM=0) const;
+  FullSourceLoc genLocation(const LocationContext *LC=0) const;
+  PathDiagnosticRange genRange(const LocationContext *LC=0) const;
 
 public:
   PathDiagnosticLocation()
@@ -119,7 +119,10 @@ public:
 
   PathDiagnosticLocation(const Stmt *s,
                          const SourceManager &sm,
-                         const LocationContext *lc);
+                         const LocationContext *lc)
+    : K(StmtK), S(s), D(0), SM(&sm),
+      Loc(genLocation(lc)), Range(genRange(lc)) {}
+
 
   PathDiagnosticLocation(const Decl *d, const SourceManager &sm)
     : K(DeclK), S(0), D(d), SM(&sm),

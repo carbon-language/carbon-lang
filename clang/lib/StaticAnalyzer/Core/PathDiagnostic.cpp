@@ -131,37 +131,28 @@ void PathDiagnosticClient::HandlePathDiagnostic(const PathDiagnostic *D) {
 //===----------------------------------------------------------------------===//
 
 static SourceLocation getValidSourceLocation(const Stmt* S,
-                                             const ParentMap &PM) {
+                                             const LocationContext *LC) {
   SourceLocation L = S->getLocStart();
 
   // S might be a temporary statement that does not have a location in the
   // source code, so find an enclosing statement and use it's location.
-  while (!L.isValid()) {
-    S = PM.getParent(S);
-    L = S->getLocStart();
+  if (!L.isValid()) {
+    const ParentMap &PM = LC->getParentMap();
+
+    while (!L.isValid()) {
+      S = PM.getParent(S);
+      L = S->getLocStart();
+    }
   }
 
   return L;
-}
-
-PathDiagnosticLocation::PathDiagnosticLocation(const Stmt *s,
-                                               const SourceManager &sm,
-                                               const LocationContext *lc)
-  : K(StmtK), S(s), D(0), SM(&sm)
-{
-  const ParentMap* PM = 0;
-  if (lc)
-    PM = &lc->getParentMap();
-
-  Loc = genLocation(PM);
-  Range = genRange(PM);
 }
 
 PathDiagnosticLocation
   PathDiagnosticLocation::createBeginStmt(const Stmt *S,
                                           const SourceManager &SM,
                                           const LocationContext *LC) {
-  return PathDiagnosticLocation(getValidSourceLocation(S, LC->getParentMap()),
+  return PathDiagnosticLocation(getValidSourceLocation(S, LC),
                                 SM, SingleLocK);
 }
 
@@ -255,7 +246,7 @@ PathDiagnosticLocation PathDiagnosticLocation::createSingleLocation(
 }
 
 FullSourceLoc
-  PathDiagnosticLocation::genLocation(const ParentMap *PM) const {
+  PathDiagnosticLocation::genLocation(const LocationContext *LC) const {
   assert(isValid());
   // Note that we want a 'switch' here so that the compiler can warn us in
   // case we add more cases.
@@ -264,7 +255,7 @@ FullSourceLoc
     case RangeK:
       break;
     case StmtK:
-      return FullSourceLoc(getValidSourceLocation(S, *PM),
+      return FullSourceLoc(getValidSourceLocation(S, LC),
                            const_cast<SourceManager&>(*SM));
     case DeclK:
       return FullSourceLoc(D->getLocation(), const_cast<SourceManager&>(*SM));
@@ -274,7 +265,7 @@ FullSourceLoc
 }
 
 PathDiagnosticRange
-  PathDiagnosticLocation::genRange(const ParentMap *PM) const {
+  PathDiagnosticLocation::genRange(const LocationContext *LC) const {
   assert(isValid());
   // Note that we want a 'switch' here so that the compiler can warn us in
   // case we add more cases.
@@ -309,7 +300,7 @@ PathDiagnosticRange
         case Stmt::BinaryConditionalOperatorClass:
         case Stmt::ConditionalOperatorClass:
         case Stmt::ObjCForCollectionStmtClass: {
-          SourceLocation L = getValidSourceLocation(S, *PM);
+          SourceLocation L = getValidSourceLocation(S, LC);
           return SourceRange(L, L);
         }
       }
