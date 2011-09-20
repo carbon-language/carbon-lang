@@ -216,6 +216,7 @@ namespace {
     SDValue visitEXTRACT_VECTOR_ELT(SDNode *N);
     SDValue visitBUILD_VECTOR(SDNode *N);
     SDValue visitCONCAT_VECTORS(SDNode *N);
+    SDValue visitEXTRACT_SUBVECTOR(SDNode *N);
     SDValue visitVECTOR_SHUFFLE(SDNode *N);
     SDValue visitMEMBARRIER(SDNode *N);
 
@@ -1105,6 +1106,7 @@ SDValue DAGCombiner::visit(SDNode *N) {
   case ISD::EXTRACT_VECTOR_ELT: return visitEXTRACT_VECTOR_ELT(N);
   case ISD::BUILD_VECTOR:       return visitBUILD_VECTOR(N);
   case ISD::CONCAT_VECTORS:     return visitCONCAT_VECTORS(N);
+  case ISD::EXTRACT_SUBVECTOR:  return visitEXTRACT_SUBVECTOR(N);
   case ISD::VECTOR_SHUFFLE:     return visitVECTOR_SHUFFLE(N);
   case ISD::MEMBARRIER:         return visitMEMBARRIER(N);
   }
@@ -7027,6 +7029,36 @@ SDValue DAGCombiner::visitCONCAT_VECTORS(SDNode *N) {
   // If we only have one input vector, we don't need to do any concatenation.
   if (N->getNumOperands() == 1)
     return N->getOperand(0);
+
+  return SDValue();
+}
+
+SDValue DAGCombiner::visitEXTRACT_SUBVECTOR(SDNode* N) {
+  EVT NVT = N->getValueType(0);
+  SDValue V = N->getOperand(0);
+
+  if (V->getOpcode() == ISD::INSERT_SUBVECTOR) {
+    // Handle only simple case where vector being inserted and vector
+    // being extracted are of same type, and are half size of larger vectors.
+    EVT BigVT = V->getOperand(0).getValueType();
+    EVT SmallVT = V->getOperand(1).getValueType();
+    if (NVT != SmallVT || NVT.getSizeInBits()*2 != BigVT.getSizeInBits())
+      return SDValue();
+
+    // Combine:
+    //    (extract_subvec (insert_subvec V1, V2, InsIdx), ExtIdx)
+    // Into:
+    //    indicies are equal => V1
+    //    otherwise => (extract_subvec V1, ExtIdx)
+    //
+    SDValue InsIdx = N->getOperand(1);
+    SDValue ExtIdx = V->getOperand(2);
+
+    if (InsIdx == ExtIdx)
+      return V->getOperand(1);
+    return DAG.getNode(ISD::EXTRACT_SUBVECTOR, N->getDebugLoc(), NVT,
+                       V->getOperand(0), N->getOperand(1));
+  }
 
   return SDValue();
 }
