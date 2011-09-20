@@ -12562,17 +12562,14 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
   // Get the LHS/RHS of the select.
   SDValue LHS = N->getOperand(1);
   SDValue RHS = N->getOperand(2);
+  EVT VT = LHS.getValueType();
 
   // If we have SSE[12] support, try to form min/max nodes. SSE min/max
   // instructions match the semantics of the common C idiom x<y?x:y but not
   // x<=y?x:y, because of how they handle negative zero (which can be
   // ignored in unsafe-math mode).
-  if (Cond.getOpcode() == ISD::SETCC &&
-      ((Subtarget->hasXMMInt() &&
-        (LHS.getValueType() == MVT::f32 || LHS.getValueType() == MVT::v4f32 || 
-         LHS.getValueType() == MVT::f64 || LHS.getValueType() == MVT::v2f64)) ||
-       (Subtarget->hasAVX() &&
-        (LHS.getValueType() == MVT::v8f32 || LHS.getValueType() == MVT::v4f64)))) {
+  if (Cond.getOpcode() == ISD::SETCC && VT.isFloatingPoint() &&
+      VT != MVT::f80 && DAG.getTargetLoweringInfo().isTypeLegal(VT)) {
     ISD::CondCode CC = cast<CondCodeSDNode>(Cond.getOperand(2))->get();
 
     unsigned Opcode = 0;
