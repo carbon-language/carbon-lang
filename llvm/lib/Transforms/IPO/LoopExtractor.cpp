@@ -105,21 +105,30 @@ bool LoopExtractor::runOnLoop(Loop *L, LPPassManager &LPM) {
     ShouldExtractLoop = true;
   } else {
     // Check to see if any exits from the loop are more than just return
-    // blocks. We also must omit landing pads. Landing pads must accompany the
-    // invoke instruction. But this would result in a loop in the extracted
+    // blocks.
+    SmallVector<BasicBlock*, 8> ExitBlocks;
+    L->getExitBlocks(ExitBlocks);
+    for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i)
+      if (!isa<ReturnInst>(ExitBlocks[i]->getTerminator())) {
+        ShouldExtractLoop = true;
+        break;
+      }
+  }
+
+  if (ShouldExtractLoop) {
+    // We must omit landing pads. Landing pads must accompany the invoke
+    // instruction. But this would result in a loop in the extracted
     // function. An infinite cycle occurs when it tries to extract that loop as
     // well.
     SmallVector<BasicBlock*, 8> ExitBlocks;
     L->getExitBlocks(ExitBlocks);
-    for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i) {
-      if (!isa<ReturnInst>(ExitBlocks[i]->getTerminator()))
-        ShouldExtractLoop = true;
+    for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i)
       if (ExitBlocks[i]->isLandingPad()) {
         ShouldExtractLoop = false;
         break;
       }
-    }
   }
+
   if (ShouldExtractLoop) {
     if (NumLoops == 0) return Changed;
     --NumLoops;
