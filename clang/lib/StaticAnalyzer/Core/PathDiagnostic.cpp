@@ -228,7 +228,7 @@ PathDiagnosticLocation PathDiagnosticLocation::createSingleLocation(
 }
 
 FullSourceLoc
-  PathDiagnosticLocation::genLocation(LocationOrAnalysisContext LAC) const {
+  PathDiagnosticLocation::genLocation(SourceLocation L, LocationOrAnalysisContext LAC) const {
   assert(isValid());
   // Note that we want a 'switch' here so that the compiler can warn us in
   // case we add more cases.
@@ -243,17 +243,17 @@ FullSourceLoc
       return FullSourceLoc(D->getLocation(), const_cast<SourceManager&>(*SM));
   }
 
-  return FullSourceLoc(R.getBegin(), const_cast<SourceManager&>(*SM));
+  return FullSourceLoc(L, const_cast<SourceManager&>(*SM));
 }
 
 PathDiagnosticRange
-  PathDiagnosticLocation::genRange(LocationOrAnalysisContext LAC) const {
+  PathDiagnosticLocation::genRange(SourceLocation L, LocationOrAnalysisContext LAC) const {
   assert(isValid());
   // Note that we want a 'switch' here so that the compiler can warn us in
   // case we add more cases.
   switch (K) {
     case SingleLocK:
-      return PathDiagnosticRange(R, true);
+      return PathDiagnosticRange(SourceRange(L,L), true);
     case RangeK:
       break;
     case StmtK: {
@@ -302,19 +302,16 @@ PathDiagnosticRange
       }
   }
 
-  return R;
+  return SourceRange(L,L);
 }
 
 void PathDiagnosticLocation::flatten() {
   if (K == StmtK) {
-    R = asRange();
     K = RangeK;
     S = 0;
     D = 0;
   }
   else if (K == DeclK) {
-    SourceLocation L = D->getLocation();
-    R = SourceRange(L, L);
     K = SingleLocK;
     S = 0;
     D = 0;

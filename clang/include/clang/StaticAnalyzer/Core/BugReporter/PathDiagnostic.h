@@ -95,7 +95,6 @@ typedef llvm::PointerUnion<const LocationContext*, AnalysisContext*>
 class PathDiagnosticLocation {
 private:
   enum Kind { RangeK, SingleLocK, StmtK, DeclK } K;
-  SourceRange R;
   const Stmt *S;
   const Decl *D;
   const SourceManager *SM;
@@ -104,14 +103,16 @@ private:
 
   PathDiagnosticLocation(SourceLocation L, const SourceManager &sm,
                          Kind kind)
-    : K(kind), R(L, L), S(0), D(0), SM(&sm),
-      Loc(genLocation()), Range(genRange()) {
-  }
+    : K(kind), S(0), D(0), SM(&sm),
+      Loc(genLocation(L)), Range(genRange(L)) {}
 
   FullSourceLoc
-    genLocation(LocationOrAnalysisContext LAC = (AnalysisContext*)0) const;
+    genLocation(SourceLocation L = SourceLocation(),
+                LocationOrAnalysisContext LAC = (AnalysisContext*)0) const;
+
   PathDiagnosticRange
-    genRange(LocationOrAnalysisContext LAC = (AnalysisContext*)0) const;
+    genRange(SourceLocation L = SourceLocation(),
+             LocationOrAnalysisContext LAC = (AnalysisContext*)0) const;
 
 public:
   /// Create an invalid location.
@@ -124,7 +125,8 @@ public:
                          const SourceManager &sm,
                          LocationOrAnalysisContext lac)
     : K(StmtK), S(s), D(0), SM(&sm),
-      Loc(genLocation(lac)), Range(genRange(lac)) {}
+      Loc(genLocation(SourceLocation(), lac)),
+      Range(genRange(SourceLocation(), lac)) {}
 
 
   /// Create a location corresponding to the given declaration.
@@ -192,7 +194,7 @@ public:
                                              const PathDiagnosticLocation &PDL);
 
   bool operator==(const PathDiagnosticLocation &X) const {
-    return K == X.K && R == X.R && S == X.S && D == X.D;
+    return K == X.K && Loc == X.Loc && Range == X.Range;
   }
 
   bool operator!=(const PathDiagnosticLocation &X) const {
