@@ -2912,3 +2912,21 @@ _func:
 
 @ CHECK: usat16	r2, #2, r7              @ encoding: [0xa7,0xf3,0x02,0x02]
 @ CHECK: usat16	r3, #15, r5             @ encoding: [0xa5,0xf3,0x0f,0x03]
+
+
+@------------------------------------------------------------------------------
+@ USAX
+@------------------------------------------------------------------------------
+        usax r2, r3, r4
+        it ne
+        usaxne r6, r1, r9
+        usubaddx r2, r3, r4
+        it ne
+        usubaddxne r6, r1, r9
+
+@ CHECK: usax	r2, r3, r4              @ encoding: [0xe3,0xfa,0x44,0xf2]
+@ CHECK: it	ne                      @ encoding: [0x18,0xbf]
+@ CHECK: usaxne	r6, r1, r9              @ encoding: [0xe1,0xfa,0x49,0xf6]
+@ CHECK: usax	r2, r3, r4              @ encoding: [0xe3,0xfa,0x44,0xf2]
+@ CHECK: it	ne                      @ encoding: [0x18,0xbf]
+@ CHECK: usaxne	r6, r1, r9              @ encoding: [0xe1,0xfa,0x49,0xf6]
