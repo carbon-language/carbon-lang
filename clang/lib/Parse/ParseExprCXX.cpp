@@ -75,7 +75,7 @@ static void FixDigraph(Parser &P, Preprocessor &PP, Token &DigraphToken,
 void Parser::CheckForTemplateAndDigraph(Token &Next, ParsedType ObjectType,
                                         bool EnteringContext,
                                         IdentifierInfo &II, CXXScopeSpec &SS) {
-  if (!Next.is(tok::l_square) || !Next.getLength() == 2)
+  if (!Next.is(tok::l_square) || Next.getLength() != 2)
     return;
 
   Token SecondToken = GetLookAheadToken(2);
