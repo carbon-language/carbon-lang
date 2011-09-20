@@ -2930,3 +2930,19 @@ _func:
 @ CHECK: usax	r2, r3, r4              @ encoding: [0xe3,0xfa,0x44,0xf2]
 @ CHECK: it	ne                      @ encoding: [0x18,0xbf]
 @ CHECK: usaxne	r6, r1, r9              @ encoding: [0xe1,0xfa,0x49,0xf6]
+
+
+@------------------------------------------------------------------------------
+@ USUB16/USUB8
+@------------------------------------------------------------------------------
+        usub16 r4, r2, r7
+        usub8 r1, r8, r5
+        ite hi
+        usub16hi r1, r1, r3
+        usub8ls r9, r2, r3
+
+@ CHECK: usub16	r4, r2, r7              @ encoding: [0xd2,0xfa,0x47,0xf4]
+@ CHECK: usub8	r1, r8, r5              @ encoding: [0xc8,0xfa,0x45,0xf1]
+@ CHECK: ite	hi                      @ encoding: [0x8c,0xbf]
+@ CHECK: usub16hi	r1, r1, r3      @ encoding: [0xd1,0xfa,0x43,0xf1]
+@ CHECK: usub8ls	r9, r2, r3      @ encoding: [0xc2,0xfa,0x43,0xf9]
