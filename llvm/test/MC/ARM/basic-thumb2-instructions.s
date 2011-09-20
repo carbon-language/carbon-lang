@@ -2810,3 +2810,19 @@ _func:
 @ CHECK: umull	r2, r4, r6, r8          @ encoding: [0xa6,0xfb,0x08,0x24]
 @ CHECK: it	gt                      @ encoding: [0xc8,0xbf]
 @ CHECK: umullgt	r6, r1, r2, r6  @ encoding: [0xa2,0xfb,0x06,0x61]
+
+
+@------------------------------------------------------------------------------
+@ UQADD16/UQADD8
+@------------------------------------------------------------------------------
+        uqadd16 r1, r2, r3
+        uqadd8 r3, r4, r8
+        ite gt
+        uqadd16gt r4, r7, r9
+        uqadd8le r8, r1, r2
+
+@ CHECK: uqadd16	r1, r2, r3      @ encoding: [0x92,0xfa,0x53,0xf1]
+@ CHECK: uqadd8	r3, r4, r8              @ encoding: [0x84,0xfa,0x58,0xf3]
+@ CHECK: ite	gt                      @ encoding: [0xcc,0xbf]
+@ CHECK: uqadd16gt	r4, r7, r9      @ encoding: [0x97,0xfa,0x59,0xf4]
+@ CHECK: uqadd8le	r8, r1, r2      @ encoding: [0x81,0xfa,0x52,0xf8]
