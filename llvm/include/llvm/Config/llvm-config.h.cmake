@@ -31,6 +31,9 @@
 /* Installation directory for config files */
 #cmakedefine LLVM_ETCDIR "${LLVM_ETCDIR}"
 
+/* Has gcc/MSVC atomic intrinsics */
+#cmakedefine01 LLVM_HAS_ATOMICS
+
 /* Host triple we were built on */
 #cmakedefine LLVM_HOSTTRIPLE "${LLVM_HOSTTRIPLE}"
 
@@ -45,9 +48,6 @@
 
 /* Installation directory for man pages */
 #cmakedefine LLVM_MANDIR "${LLVM_MANDIR}"
-
-/* Has gcc/MSVC atomic intrinsics */
-#cmakedefine01 LLVM_HAS_ATOMICS
 
 /* LLVM architecture name for the native architecture, if available */
 #cmakedefine LLVM_NATIVE_ARCH ${LLVM_NATIVE_ARCH}

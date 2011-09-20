@@ -31,6 +31,9 @@
 /* Installation directory for config files */
 #undef LLVM_ETCDIR
 
+/* Has gcc/MSVC atomic intrinsics */
+#undef LLVM_HAS_ATOMICS
+
 /* Host triple we were built on */
 #undef LLVM_HOSTTRIPLE
 
@@ -45,9 +48,6 @@
 
 /* Installation directory for man pages */
 #undef LLVM_MANDIR
-
-/* Has gcc/MSVC atomic intrinsics */
-#undef LLVM_HAS_ATOMICS
 
 /* LLVM architecture name for the native architecture, if available */
 #undef LLVM_NATIVE_ARCH
