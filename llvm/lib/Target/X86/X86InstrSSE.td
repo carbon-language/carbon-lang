@@ -157,21 +157,6 @@ def : Pat<(insert_subvector undef, (v8i16 VR128:$src), (i32 0)),
 def : Pat<(insert_subvector undef, (v16i8 VR128:$src), (i32 0)),
           (INSERT_SUBREG (v32i8 (IMPLICIT_DEF)), VR128:$src, sub_xmm)>;
 
-// Inserting a 128-bit undef vector into the high part of a 256-bit
-// vector should return the 256-bit vector itself.
-def : Pat<(insert_subvector (v8i32 VR256:$src), undef, (i32 4)),
-          (v8i32 VR256:$src)>;
-def : Pat<(insert_subvector (v8f32 VR256:$src), undef, (i32 4)),
-          (v8f32 VR256:$src)>;
-def : Pat<(insert_subvector (v4i64 VR256:$src), undef, (i32 4)),
-          (v4i64 VR256:$src)>;
-def : Pat<(insert_subvector (v4f64 VR256:$src), undef, (i32 4)),
-          (v4f64 VR256:$src)>;
-def : Pat<(insert_subvector (v16i16 VR256:$src), undef, (i32 4)),
-          (v16i16 VR256:$src)>;
-def : Pat<(insert_subvector (v32i8 VR256:$src), undef, (i32 4)),
-          (v32i8 VR256:$src)>;
-
 // Implicitly promote a 32-bit scalar to a vector.
 def : Pat<(v4f32 (scalar_to_vector FR32:$src)),
           (INSERT_SUBREG (v4f32 (IMPLICIT_DEF)), FR32:$src, sub_ss)>;
