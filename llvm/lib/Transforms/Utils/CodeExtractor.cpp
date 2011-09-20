@@ -770,8 +770,8 @@ bool CodeExtractor::isEligible(const std::vector<BasicBlock*> &code) {
 }
 
 
-/// ExtractCodeRegion - slurp a sequence of basic blocks into a brand new
-/// function
+/// ExtractCodeRegion - Slurp a sequence of basic blocks into a brand new
+/// function.
 ///
 Function* llvm::ExtractCodeRegion(DominatorTree &DT,
                                   const std::vector<BasicBlock*> &code,
@@ -779,13 +779,13 @@ Function* llvm::ExtractCodeRegion(DominatorTree &DT,
   return CodeExtractor(&DT, AggregateArgs).ExtractCodeRegion(code);
 }
 
-/// ExtractBasicBlock - slurp a natural loop into a brand new function
+/// ExtractLoop - Slurp a natural loop into a brand new function.
 ///
 Function* llvm::ExtractLoop(DominatorTree &DT, Loop *L, bool AggregateArgs) {
   return CodeExtractor(&DT, AggregateArgs).ExtractCodeRegion(L->getBlocks());
 }
 
-/// ExtractBasicBlock - slurp a basic block into a brand new function
+/// ExtractBasicBlock - Slurp a basic block into a brand new function.
 ///
 Function* llvm::ExtractBasicBlock(BasicBlock *BB, bool AggregateArgs) {
   std::vector<BasicBlock*> Blocks;
