@@ -190,5 +190,9 @@ return:		; preds = %entry
 	ret void
 
 LongJmpBlkPre:		; preds = %endif.52, %then.40
+        %exn = landingpad { i8*, i32 } personality i32 (...)* @__gcc_personality_v0
+                 catch i8* null
 	ret void
 }
+
+declare i32 @__gcc_personality_v0(...)
