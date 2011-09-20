@@ -209,7 +209,10 @@ public:
                     lldb::DescriptionLevel level);
 
     void
-    ClearAllWatchpointLocations ();
+    SetEnabledAll (bool enabled);
+
+    void
+    RemoveAll ();
     
     //------------------------------------------------------------------
     /// Sets the passed in Locker to hold the Watchpoint Location List mutex.

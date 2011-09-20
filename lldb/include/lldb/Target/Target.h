@@ -180,6 +180,10 @@ private:
             const ArchSpec &target_arch,
             const lldb::PlatformSP &platform_sp);
 
+    // Helper function.
+    bool
+    ProcessIsValid ();
+
 public:
     ~Target();
 
@@ -310,6 +314,24 @@ public:
 
     bool
     RemoveBreakpointByID (lldb::break_id_t break_id);
+
+    bool
+    RemoveAllWatchpointLocations ();
+
+    bool
+    DisableAllWatchpointLocations ();
+
+    bool
+    EnableAllWatchpointLocations ();
+
+    bool
+    DisableWatchpointLocationByID (lldb::watch_id_t watch_id);
+
+    bool
+    EnableWatchpointLocationByID (lldb::watch_id_t watch_id);
+
+    bool
+    RemoveWatchpointLocationByID (lldb::watch_id_t watch_id);
 
     void
     ModulesDidLoad (ModuleList &module_list);

@@ -113,7 +113,8 @@ WatchpointLocation::DumpWithLevel(Stream *s, lldb::DescriptionLevel description_
         s->Printf("\n    declare @ '%s'", m_decl_str.c_str());
 
     if (description_level >= lldb::eDescriptionLevelVerbose)
-        s->Printf("\n    hit_count = %-4u  ignore_count = %-4u  callback = %8p baton = %8p",
+        s->Printf("\n    hw_index = %i  hit_count = %-4u  ignore_count = %-4u  callback = %8p baton = %8p",
+                  GetHardwareIndex(),
                   GetHitCount(),
                   GetIgnoreCount(),
                   m_callback,

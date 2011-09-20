@@ -124,7 +124,7 @@ Target::DeleteCurrentProcess ()
         // clean up needs some help from the process.
         m_breakpoint_list.ClearAllBreakpointSites();
         m_internal_breakpoint_list.ClearAllBreakpointSites();
-        m_watchpoint_location_list.ClearAllWatchpointLocations();
+        m_watchpoint_location_list.RemoveAll();
         m_process_sp.reset();
     }
 }
@@ -331,6 +331,12 @@ Target::CreateBreakpoint (SearchFilterSP &filter_sp, BreakpointResolverSP &resol
     return bp_sp;
 }
 
+bool
+Target::ProcessIsValid()
+{
+    return (m_process_sp && m_process_sp->IsAlive());
+}
+
 // See also WatchpointLocation::SetWatchpointType(uint32_t type) and
 // the OptionGroupWatchpoint::WatchType enum type.
 WatchpointLocationSP
@@ -342,8 +348,7 @@ Target::CreateWatchpointLocation(lldb::addr_t addr, size_t size, uint32_t type)
                     __FUNCTION__, addr, size, type);
 
     WatchpointLocationSP wp_loc_sp;
-    bool process_is_valid = m_process_sp && m_process_sp->IsAlive();
-    if (!process_is_valid)
+    if (!ProcessIsValid())
         return wp_loc_sp;
     if (addr == LLDB_INVALID_ADDRESS || size == 0)
         return wp_loc_sp;
@@ -495,6 +500,148 @@ Target::EnableBreakpointByID (break_id_t break_id)
     if (bp_sp)
     {
         bp_sp->SetEnabled (true);
+        return true;
+    }
+    return false;
+}
+
+// Assumption: caller holds the list mutex lock for m_watchpoint_location_list.
+bool
+Target::RemoveAllWatchpointLocations ()
+{
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
+    if (log)
+        log->Printf ("Target::%s\n", __FUNCTION__);
+
+    if (!ProcessIsValid())
+        return false;
+
+    size_t num_watchpoints = m_watchpoint_location_list.GetSize();
+    for (size_t i = 0; i < num_watchpoints; ++i)
+    {
+        WatchpointLocationSP wp_loc_sp = m_watchpoint_location_list.GetByIndex(i);
+        if (!wp_loc_sp)
+            return false;
+
+        Error rc = m_process_sp->DisableWatchpoint(wp_loc_sp.get());
+        if (rc.Fail())
+            return false;
+    }
+    m_watchpoint_location_list.RemoveAll ();
+    return true; // Success!
+}
+
+// Assumption: caller holds the list mutex lock for m_watchpoint_location_list.
+bool
+Target::DisableAllWatchpointLocations ()
+{
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
+    if (log)
+        log->Printf ("Target::%s\n", __FUNCTION__);
+
+    if (!ProcessIsValid())
+        return false;
+
+    size_t num_watchpoints = m_watchpoint_location_list.GetSize();
+    for (size_t i = 0; i < num_watchpoints; ++i)
+    {
+        WatchpointLocationSP wp_loc_sp = m_watchpoint_location_list.GetByIndex(i);
+        if (!wp_loc_sp)
+            return false;
+
+        Error rc = m_process_sp->DisableWatchpoint(wp_loc_sp.get());
+        if (rc.Fail())
+            return false;
+    }
+    m_watchpoint_location_list.SetEnabledAll (false);
+    return true; // Success!
+}
+
+// Assumption: caller holds the list mutex lock for m_watchpoint_location_list.
+bool
+Target::EnableAllWatchpointLocations ()
+{
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
+    if (log)
+        log->Printf ("Target::%s\n", __FUNCTION__);
+
+    if (!ProcessIsValid())
+        return false;
+
+    size_t num_watchpoints = m_watchpoint_location_list.GetSize();
+    for (size_t i = 0; i < num_watchpoints; ++i)
+    {
+        WatchpointLocationSP wp_loc_sp = m_watchpoint_location_list.GetByIndex(i);
+        if (!wp_loc_sp)
+            return false;
+
+        Error rc = m_process_sp->EnableWatchpoint(wp_loc_sp.get());
+        if (rc.Fail())
+            return false;
+    }
+    m_watchpoint_location_list.SetEnabledAll (true);
+    return true; // Success!
+}
+
+// Assumption: caller holds the list mutex lock for m_watchpoint_location_list.
+bool
+Target::DisableWatchpointLocationByID (lldb::watch_id_t watch_id)
+{
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
+    if (log)
+        log->Printf ("Target::%s (watch_id = %i)\n", __FUNCTION__, watch_id);
+
+    if (!ProcessIsValid())
+        return false;
+
+    WatchpointLocationSP wp_loc_sp = m_watchpoint_location_list.FindByID (watch_id);
+    if (wp_loc_sp)
+    {
+        Error rc = m_process_sp->DisableWatchpoint(wp_loc_sp.get());
+        if (rc.Fail())
+            return false;
+
+        wp_loc_sp->SetEnabled (false);
+        return true;
+    }
+    return false;
+}
+
+// Assumption: caller holds the list mutex lock for m_watchpoint_location_list.
+bool
+Target::EnableWatchpointLocationByID (lldb::watch_id_t watch_id)
+{
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
+    if (log)
+        log->Printf ("Target::%s (watch_id = %i)\n", __FUNCTION__, watch_id);
+
+    if (!ProcessIsValid())
+        return false;
+
+    WatchpointLocationSP wp_loc_sp = m_watchpoint_location_list.FindByID (watch_id);
+    if (wp_loc_sp)
+    {
+        Error rc = m_process_sp->EnableWatchpoint(wp_loc_sp.get());
+        if (rc.Fail())
+            return false;
+
+        wp_loc_sp->SetEnabled (true);
+        return true;
+    }
+    return false;
+}
+
+// Assumption: caller holds the list mutex lock for m_watchpoint_location_list.
+bool
+Target::RemoveWatchpointLocationByID (lldb::watch_id_t watch_id)
+{
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
+    if (log)
+        log->Printf ("Target::%s (watch_id = %i)\n", __FUNCTION__, watch_id);
+
+    if (DisableWatchpointLocationByID (watch_id))
+    {
+        m_watchpoint_location_list.Remove(watch_id);
         return true;
     }
     return false;
@@ -722,8 +869,6 @@ Target::ReadMemory (const Address& addr,
     if (load_addr_ptr)
         *load_addr_ptr = LLDB_INVALID_ADDRESS;
     
-    bool process_is_valid = m_process_sp && m_process_sp->IsAlive();
-
     size_t bytes_read = 0;
 
     addr_t load_addr = LLDB_INVALID_ADDRESS;
@@ -759,7 +904,7 @@ Target::ReadMemory (const Address& addr,
             return bytes_read;
     }
     
-    if (process_is_valid)
+    if (ProcessIsValid())
     {
         if (load_addr == LLDB_INVALID_ADDRESS)
             load_addr = resolved_addr.GetLoadAddress (this);

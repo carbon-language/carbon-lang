@@ -232,13 +232,27 @@ WatchpointLocationList::GetDescription (Stream *s, lldb::DescriptionLevel level)
 }
 
 void
-WatchpointLocationList::ClearAllWatchpointLocations ()
+WatchpointLocationList::SetEnabledAll (bool enabled)
 {
     Mutex::Locker locker(m_mutex);
-    addr_map::iterator pos, end = m_address_to_location.end();
 
+    addr_map::iterator pos, end = m_address_to_location.end();
     for (pos = m_address_to_location.begin(); pos != end; ++pos)
-        m_address_to_location.erase(pos);        
+        pos->second->SetEnabled (enabled);
+}
+
+void
+WatchpointLocationList::RemoveAll ()
+{
+    Mutex::Locker locker(m_mutex);
+
+    addr_map::iterator pos, end = m_address_to_location.end();
+    for (pos = m_address_to_location.begin(); pos != end; ++pos)
+        m_address_to_location.erase(pos);
+
+    collection::iterator p, e = m_locations.end();
+    for (p = m_locations.begin(); p != e; ++pos)
+        m_locations.erase(p);
 }
 
 void
