@@ -101,18 +101,24 @@ bool LoopExtractor::runOnLoop(Loop *L, LPPassManager &LPM) {
     L->getHeader()->getParent()->getEntryBlock().getTerminator();
   if (!isa<BranchInst>(EntryTI) ||
       !cast<BranchInst>(EntryTI)->isUnconditional() ||
-      EntryTI->getSuccessor(0) != L->getHeader())
+      EntryTI->getSuccessor(0) != L->getHeader()) {
     ShouldExtractLoop = true;
-  else {
+  } else {
     // Check to see if any exits from the loop are more than just return
-    // blocks.
+    // blocks. We also must omit landing pads. Landing pads must accompany the
+    // invoke instruction. But this would result in a loop in the extracted
+    // function. An infinite cycle occurs when it tries to extract that loop as
+    // well.
     SmallVector<BasicBlock*, 8> ExitBlocks;
     L->getExitBlocks(ExitBlocks);
-    for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i)
-      if (!isa<ReturnInst>(ExitBlocks[i]->getTerminator())) {
+    for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i) {
+      if (!isa<ReturnInst>(ExitBlocks[i]->getTerminator()))
         ShouldExtractLoop = true;
+      if (ExitBlocks[i]->isLandingPad()) {
+        ShouldExtractLoop = false;
         break;
       }
+    }
   }
   if (ShouldExtractLoop) {
     if (NumLoops == 0) return Changed;
