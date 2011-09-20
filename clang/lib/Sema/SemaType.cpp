@@ -1038,6 +1038,11 @@ static QualType inferARCLifetimeForPointee(Sema &S, QualType type,
   } else if (type->isObjCARCImplicitlyUnretainedType()) {
     implicitLifetime = Qualifiers::OCL_ExplicitNone;
 
+  // If we are in an unevaluated context, like sizeof, assume ExplicitNone and
+  // don't give error.
+  } else if (S.ExprEvalContexts.back().Context == Sema::Unevaluated) {
+    implicitLifetime = Qualifiers::OCL_ExplicitNone;
+
   // If that failed, give an error and recover using __autoreleasing.
   } else {
     // These types can show up in private ivars in system headers, so

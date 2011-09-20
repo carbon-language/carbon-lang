@@ -646,6 +646,8 @@ void test37(Test37 *c) {
   for (id y in c) { // expected-error {{collection expression type 'Test37' is a forward declaration}}
     (void) y;
   }
+
+  (void)sizeof(id*); // no error.
 }
 
 // rdar://problem/9887979
