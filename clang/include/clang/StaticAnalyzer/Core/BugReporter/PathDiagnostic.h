@@ -107,22 +107,19 @@ private:
     : K(kind), R(L, L), S(0), D(0), SM(&sm),
       Loc(genLocation()), Range(genRange()) {
   }
-  
+
   FullSourceLoc
     genLocation(LocationOrAnalysisContext LAC = (AnalysisContext*)0) const;
   PathDiagnosticRange
     genRange(LocationOrAnalysisContext LAC = (AnalysisContext*)0) const;
 
 public:
+  /// Create an invalid location.
   PathDiagnosticLocation()
     : K(SingleLocK), S(0), D(0), SM(0) {
   }
 
-  PathDiagnosticLocation(FullSourceLoc L)
-    : K(SingleLocK), R(L, L), S(0), D(0), SM(&L.getManager()),
-      Loc(genLocation()), Range(genRange()) {
-  }
-
+  /// Create a location corresponding to the given statement.
   PathDiagnosticLocation(const Stmt *s,
                          const SourceManager &sm,
                          LocationOrAnalysisContext lac)
@@ -130,11 +127,13 @@ public:
       Loc(genLocation(lac)), Range(genRange(lac)) {}
 
 
+  /// Create a location corresponding to the given declaration.
   PathDiagnosticLocation(const Decl *d, const SourceManager &sm)
     : K(DeclK), S(0), D(d), SM(&sm),
       Loc(genLocation()), Range(genRange()) {
   }
 
+  /// Create a location corresponding to the given declaration.
   static PathDiagnosticLocation create(const Decl *D,
                                        const SourceManager &SM) {
     return PathDiagnosticLocation(D, SM);
