@@ -29,15 +29,6 @@ using namespace llvm;
 static std::string getOSVersion() {
   struct utsname info;
 
-#ifdef __APPLE__
-  // Recognize UNAME_RELEASE environment variable to match Darwin's uname,
-  // where the value of this variable sets the OS release version
-  // reported by "uname -r".
-  const char *UnameOverride = ::getenv("UNAME_RELEASE");
-  if (UnameOverride && UnameOverride[0] != '\0')
-    return UnameOverride;
-#endif // __APPLE__
-
   if (uname(&info))
     return "";
 
