@@ -75,7 +75,7 @@ int main()
         test<wchar_t> t2;
         t2 = t;
     }
-    std::locale::global(std::locale("en_US"));
+    std::locale::global(std::locale("en_US.UTF-8"));
     {
         test<char> t;
         test<char> t2;

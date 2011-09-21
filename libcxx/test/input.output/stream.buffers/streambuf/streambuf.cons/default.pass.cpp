@@ -42,13 +42,13 @@ int main()
         test<wchar_t> t;
         assert(t.getloc().name() == "C");
     }
-    std::locale::global(std::locale("en_US"));
+    std::locale::global(std::locale("en_US.UTF-8"));
     {
         test<char> t;
-        assert(t.getloc().name() == "en_US");
+        assert(t.getloc().name() == "en_US.UTF-8");
     }
     {
         test<wchar_t> t;
-        assert(t.getloc().name() == "en_US");
+        assert(t.getloc().name() == "en_US.UTF-8");
     }
 }

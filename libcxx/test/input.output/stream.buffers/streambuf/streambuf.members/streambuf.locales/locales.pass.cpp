@@ -26,7 +26,7 @@ struct test
 
     void imbue(const std::locale&)
     {
-        assert(this->getloc().name() == "en_US");
+        assert(this->getloc().name() == "en_US.UTF-8");
     }
 };
 
@@ -36,11 +36,11 @@ int main()
         test<char> t;
         assert(t.getloc().name() == "C");
     }
-    std::locale::global(std::locale("en_US"));
+    std::locale::global(std::locale("en_US.UTF-8"));
     {
         test<char> t;
-        assert(t.getloc().name() == "en_US");
-        assert(t.pubimbue(std::locale("fr_FR")).name() == "en_US");
-        assert(t.getloc().name() == "fr_FR");
+        assert(t.getloc().name() == "en_US.UTF-8");
+        assert(t.pubimbue(std::locale("fr_FR.UTF-8")).name() == "en_US.UTF-8");
+        assert(t.getloc().name() == "fr_FR.UTF-8");
     }
 }
