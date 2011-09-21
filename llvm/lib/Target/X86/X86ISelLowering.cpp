@@ -13564,7 +13564,7 @@ static SDValue PerformSTORECombine(SDNode *N, SelectionDAG &DAG,
     // From, To sizes and ElemCount must be pow of two
     if (!isPowerOf2_32(NumElems * FromSz * ToSz)) return SDValue();
     // We are going to use the original vector elt for storing.
-    // accumulated smaller vector elements must be a multiple of the store size.
+    // Accumulated smaller vector elements must be a multiple of the store size.
     if (0 != (NumElems * FromSz) % ToSz) return SDValue();
 
     unsigned SizeRatio  = FromSz / ToSz;
