@@ -280,7 +280,7 @@ bool Sema::isMicrosoftMissingTypename(const CXXScopeSpec *SS) {
       if (Context.hasSameUnqualifiedType(QualType(Ty, 1), Base->getType()))
         return true;
   } 
-  return false;
+  return CurContext->isFunctionOrMethod();
 }
 
 bool Sema::DiagnoseUnknownTypeName(const IdentifierInfo &II, 
@@ -362,7 +362,7 @@ bool Sema::DiagnoseUnknownTypeName(const IdentifierInfo &II,
       << &II << DC << SS->getRange();
   else if (isDependentScopeSpecifier(*SS)) {
     unsigned DiagID = diag::err_typename_missing;
-    if (getLangOptions().MicrosoftExt && isMicrosoftMissingTypename(SS))
+    if (getLangOptions().MicrosoftMode && isMicrosoftMissingTypename(SS))
       DiagID = diag::warn_typename_missing;
 
     Diag(SS->getRange().getBegin(), DiagID)
