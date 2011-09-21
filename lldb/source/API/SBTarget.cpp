@@ -683,7 +683,7 @@ SBTarget::BreakpointCreateBySourceRegex (const char *source_regex, const lldb::S
         char path[PATH_MAX];
         source_file->GetPath (path, sizeof(path));
         log->Printf ("SBTarget(%p)::BreakpointCreateByRegex (source_regex=\"%s\", file=\"%s\", module_name=\"%s\") => SBBreakpoint(%p)", 
-                     m_opaque_sp.get(), source_regex, path, sb_bp.get());
+                     m_opaque_sp.get(), source_regex, path, module_name, sb_bp.get());
     }
 
     return sb_bp;

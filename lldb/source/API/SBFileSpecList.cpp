@@ -36,7 +36,7 @@ SBFileSpecList::SBFileSpecList (const SBFileSpecList &rhs) :
 
     if (log)
     {
-        log->Printf ("SBFileSpecList::SBFileSpecList (const SBFileSpecList rhs.ap=%p) => SBFileSpecList(%p): %s",
+        log->Printf ("SBFileSpecList::SBFileSpecList (const SBFileSpecList rhs.ap=%p) => SBFileSpecList(%p)",
                      rhs.m_opaque_ap.get(), m_opaque_ap.get());
     }
 }
