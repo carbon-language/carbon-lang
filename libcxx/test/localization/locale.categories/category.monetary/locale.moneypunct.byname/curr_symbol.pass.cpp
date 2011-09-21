@@ -69,70 +69,70 @@ int main()
     }
 
     {
-        Fnf f("en_US", 1);
+        Fnf f("en_US.UTF-8", 1);
         assert(f.curr_symbol() == "$");
     }
     {
-        Fnt f("en_US", 1);
+        Fnt f("en_US.UTF-8", 1);
         assert(f.curr_symbol() == "USD ");
     }
     {
-        Fwf f("en_US", 1);
+        Fwf f("en_US.UTF-8", 1);
         assert(f.curr_symbol() == L"$");
     }
     {
-        Fwt f("en_US", 1);
+        Fwt f("en_US.UTF-8", 1);
         assert(f.curr_symbol() == L"USD ");
     }
 
     {
-        Fnf f("fr_FR", 1);
+        Fnf f("fr_FR.UTF-8", 1);
         assert(f.curr_symbol() == "Eu");
     }
     {
-        Fnt f("fr_FR", 1);
+        Fnt f("fr_FR.UTF-8", 1);
         assert(f.curr_symbol() == "EUR ");
     }
     {
-        Fwf f("fr_FR", 1);
+        Fwf f("fr_FR.UTF-8", 1);
         assert(f.curr_symbol() == L"Eu");
     }
     {
-        Fwt f("fr_FR", 1);
+        Fwt f("fr_FR.UTF-8", 1);
         assert(f.curr_symbol() == L"EUR ");
     }
 
     {
-        Fnf f("ru_RU", 1);
+        Fnf f("ru_RU.UTF-8", 1);
         assert(f.curr_symbol() == "\xD1\x80\xD1\x83\xD0\xB1"".");
     }
     {
-        Fnt f("ru_RU", 1);
-        assert(f.curr_symbol() == "RUR ");
+        Fnt f("ru_RU.UTF-8", 1);
+        assert(f.curr_symbol() == "RUB ");
     }
     {
-        Fwf f("ru_RU", 1);
+        Fwf f("ru_RU.UTF-8", 1);
         assert(f.curr_symbol() == L"\x440\x443\x431"".");
     }
     {
-        Fwt f("ru_RU", 1);
-        assert(f.curr_symbol() == L"RUR ");
+        Fwt f("ru_RU.UTF-8", 1);
+        assert(f.curr_symbol() == L"RUB ");
     }
 
     {
-        Fnf f("zh_CN", 1);
+        Fnf f("zh_CN.UTF-8", 1);
         assert(f.curr_symbol() == "\xEF\xBF\xA5");
     }
     {
-        Fnt f("zh_CN", 1);
+        Fnt f("zh_CN.UTF-8", 1);
         assert(f.curr_symbol() == "CNY ");
     }
     {
-        Fwf f("zh_CN", 1);
+        Fwf f("zh_CN.UTF-8", 1);
         assert(f.curr_symbol() == L"\xFFE5");
     }
     {
-        Fwt f("zh_CN", 1);
+        Fwt f("zh_CN.UTF-8", 1);
         assert(f.curr_symbol() == L"CNY ");
     }
 }

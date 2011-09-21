@@ -36,7 +36,7 @@ int main()
     std::ios_base::iostate err;
     std::tm t;
     {
-        const my_facet f("en_US", 1);
+        const my_facet f("en_US.UTF-8", 1);
         const wchar_t in[] = L"Sat Dec 31 23:55:59 2061";
         err = std::ios_base::goodbit;
         t = std::tm();
@@ -52,7 +52,7 @@ int main()
         assert(err == std::ios_base::eofbit);
     }
     {
-        const my_facet f("en_US", 1);
+        const my_facet f("en_US.UTF-8", 1);
         const wchar_t in[] = L"23:55:59";
         err = std::ios_base::goodbit;
         t = std::tm();
@@ -64,7 +64,7 @@ int main()
         assert(err == std::ios_base::eofbit);
     }
     {
-        const my_facet f("fr_FR", 1);
+        const my_facet f("fr_FR.UTF-8", 1);
         const wchar_t in[] = L"Sam 31 d""\xE9""c 23:55:59 2061";
         err = std::ios_base::goodbit;
         t = std::tm();
@@ -80,7 +80,7 @@ int main()
         assert(err == std::ios_base::eofbit);
     }
     {
-        const my_facet f("fr_FR", 1);
+        const my_facet f("fr_FR.UTF-8", 1);
         const wchar_t in[] = L"23:55:59";
         err = std::ios_base::goodbit;
         t = std::tm();
@@ -91,6 +91,7 @@ int main()
         assert(t.tm_hour == 23);
         assert(err == std::ios_base::eofbit);
     }
+#if __APPLE__
     {
         const my_facet f("ru_RU", 1);
         const wchar_t in[] = L"\x441\x443\x431\x431\x43E\x442\x430"
@@ -112,8 +113,9 @@ int main()
         assert(t.tm_wday == 6);
         assert(err == std::ios_base::eofbit);
     }
+#endif
     {
-        const my_facet f("ru_RU", 1);
+        const my_facet f("ru_RU.UTF-8", 1);
         const wchar_t in[] = L"23:55:59";
         err = std::ios_base::goodbit;
         t = std::tm();
@@ -124,6 +126,7 @@ int main()
         assert(t.tm_hour == 23);
         assert(err == std::ios_base::eofbit);
     }
+#if __APPLE__
     {
         const my_facet f("zh_CN", 1);
         const wchar_t in[] = L"\x516D"
@@ -142,7 +145,7 @@ int main()
         assert(err == std::ios_base::eofbit);
     }
     {
-        const my_facet f("zh_CN", 1);
+        const my_facet f("zh_CN.UTF-8", 1);
         const wchar_t in[] = L"23""\x65F6""55""\x5206""59""\x79D2";
         err = std::ios_base::goodbit;
         t = std::tm();
@@ -153,4 +156,5 @@ int main()
         assert(t.tm_hour == 23);
         assert(err == std::ios_base::eofbit);
     }
+#endif
 }

@@ -32,7 +32,7 @@ int main()
         }
     }
     {
-        std::locale l("en_US");
+        std::locale l("en_US.UTF-8");
         {
             typedef char C;
             const std::numpunct<C>& np = std::use_facet<std::numpunct<C> >(l);
@@ -45,7 +45,7 @@ int main()
         }
     }
     {
-        std::locale l("fr_FR");
+        std::locale l("fr_FR.UTF-8");
         {
             typedef char C;
             const std::numpunct<C>& np = std::use_facet<std::numpunct<C> >(l);

@@ -67,9 +67,9 @@ void check(const std::locale& loc)
 int main()
 {
     {
-        std::locale loc("ru_RU");
+        std::locale loc("ru_RU.UTF-8");
         check(loc);
-        std::locale loc2(loc, "en_US", std::locale::monetary);
+        std::locale loc2(loc, "en_US.UTF-8", std::locale::monetary);
         check(loc2);
     }
     assert(new_called == 0);

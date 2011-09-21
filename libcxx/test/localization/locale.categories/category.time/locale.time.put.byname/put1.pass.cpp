@@ -51,7 +51,7 @@ int main()
     t.tm_isdst = 1;
     std::ios ios(0);
     {
-        const my_facet f("en_US", 1);
+        const my_facet f("en_US.UTF-8", 1);
         std::string pat("Today is %A which is abreviated %a.");
         iter = f.put(output_iterator<char*>(str), ios, '*', &t,
                      pat.data(), pat.data() + pat.size());
@@ -59,11 +59,12 @@ int main()
         assert(ex == "Today is Saturday which is abreviated Sat.");
     }
     {
-        const my_facet f("fr_FR", 1);
+        const my_facet f("fr_FR.UTF-8", 1);
         std::string pat("Today is %A which is abreviated %a.");
         iter = f.put(output_iterator<char*>(str), ios, '*', &t,
                      pat.data(), pat.data() + pat.size());
         std::string ex(str, iter.base());
-        assert(ex == "Today is Samedi which is abreviated Sam.");
+        assert((ex == "Today is Samedi which is abreviated Sam.")||
+               (ex == "Today is samedi which is abreviated sam." ));
     }
 }

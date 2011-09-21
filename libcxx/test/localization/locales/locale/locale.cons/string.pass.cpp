@@ -67,12 +67,12 @@ void check(const std::locale& loc)
 int main()
 {
     {
-        std::locale loc(std::string("ru_RU"));
+        std::locale loc(std::string("ru_RU.UTF-8"));
         check(loc);
-        std::locale loc2(std::string("ru_RU"));
+        std::locale loc2(std::string("ru_RU.UTF-8"));
         check(loc2);
         assert(loc == loc2);
-        std::locale loc3(std::string("zh_CN"));
+        std::locale loc3(std::string("zh_CN.UTF-8"));
         check(loc3);
         assert(!(loc == loc3));
         assert(loc != loc3);

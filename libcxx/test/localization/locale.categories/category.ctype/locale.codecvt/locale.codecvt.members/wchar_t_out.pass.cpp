@@ -51,7 +51,7 @@ int main()
         assert(r == F::ok);
         assert(from_next - from.data() == from.size());
         assert(to_next - to.data() == from.size());
-        assert(to.data() == std::string("some\0text", from.size()));
+        assert(memcmp(to.data(), "some\0text", from.size()) == 0);
     }
     {
         std::basic_string<F::intern_type> from(L"some text");

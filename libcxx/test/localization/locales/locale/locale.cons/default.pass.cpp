@@ -74,13 +74,13 @@ int main()
         assert(new_called == 0);
         check(loc);
         assert(new_called == 0);
-        assert(std::locale::global(std::locale("en_US")) == loc);
+        assert(std::locale::global(std::locale("en_US.UTF-8")) == loc);
         ok = new_called;
         std::locale loc2;
         assert(new_called == ok);
         check(loc2);
         assert(new_called == ok);
-        assert(loc2 == std::locale("en_US"));
+        assert(loc2 == std::locale("en_US.UTF-8"));
         assert(new_called == ok);
     }
     assert(new_called == ok);

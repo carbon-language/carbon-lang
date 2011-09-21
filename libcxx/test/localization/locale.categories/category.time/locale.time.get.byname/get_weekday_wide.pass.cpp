@@ -37,7 +37,7 @@ int main()
     std::ios_base::iostate err;
     std::tm t;
     {
-        const my_facet f("en_US", 1);
+        const my_facet f("en_US.UTF-8", 1);
         const wchar_t in[] = L"Monday";
         err = std::ios_base::goodbit;
         t = std::tm();
@@ -47,7 +47,7 @@ int main()
         assert(err == std::ios_base::eofbit);
     }
     {
-        const my_facet f("fr_FR", 1);
+        const my_facet f("fr_FR.UTF-8", 1);
         const wchar_t in[] = L"Lundi";
         err = std::ios_base::goodbit;
         t = std::tm();
@@ -57,7 +57,7 @@ int main()
         assert(err == std::ios_base::eofbit);
     }
     {
-        const my_facet f("ru_RU", 1);
+        const my_facet f("ru_RU.UTF-8", 1);
         const wchar_t in[] = L"\x43F\x43E\x43D\x435\x434\x435\x43B\x44C\x43D\x438\x43A";
         err = std::ios_base::goodbit;
         t = std::tm();
@@ -67,7 +67,7 @@ int main()
         assert(err == std::ios_base::eofbit);
     }
     {
-        const my_facet f("zh_CN", 1);
+        const my_facet f("zh_CN.UTF-8", 1);
         const wchar_t in[] = L"\x661F\x671F\x4E00";
         err = std::ios_base::goodbit;
         t = std::tm();

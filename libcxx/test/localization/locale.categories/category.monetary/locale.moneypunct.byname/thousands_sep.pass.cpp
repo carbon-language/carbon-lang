@@ -69,70 +69,70 @@ int main()
     }
 
     {
-        Fnf f("en_US", 1);
+        Fnf f("en_US.UTF-8", 1);
         assert(f.thousands_sep() == ',');
     }
     {
-        Fnt f("en_US", 1);
+        Fnt f("en_US.UTF-8", 1);
         assert(f.thousands_sep() == ',');
     }
     {
-        Fwf f("en_US", 1);
+        Fwf f("en_US.UTF-8", 1);
         assert(f.thousands_sep() == L',');
     }
     {
-        Fwt f("en_US", 1);
+        Fwt f("en_US.UTF-8", 1);
         assert(f.thousands_sep() == L',');
     }
 
     {
-        Fnf f("fr_FR", 1);
+        Fnf f("fr_FR.UTF-8", 1);
         assert(f.thousands_sep() == ' ');
     }
     {
-        Fnt f("fr_FR", 1);
+        Fnt f("fr_FR.UTF-8", 1);
         assert(f.thousands_sep() == ' ');
     }
     {
-        Fwf f("fr_FR", 1);
+        Fwf f("fr_FR.UTF-8", 1);
         assert(f.thousands_sep() == L' ');
     }
     {
-        Fwt f("fr_FR", 1);
-        assert(f.thousands_sep() == L' ');
-    }
-
-    {
-        Fnf f("ru_RU", 1);
-        assert(f.thousands_sep() == ' ');
-    }
-    {
-        Fnt f("ru_RU", 1);
-        assert(f.thousands_sep() == ' ');
-    }
-    {
-        Fwf f("ru_RU", 1);
-        assert(f.thousands_sep() == L' ');
-    }
-    {
-        Fwt f("ru_RU", 1);
+        Fwt f("fr_FR.UTF-8", 1);
         assert(f.thousands_sep() == L' ');
     }
 
     {
-        Fnf f("zh_CN", 1);
+        Fnf f("ru_RU.UTF-8", 1);
+        assert(f.thousands_sep() == ' ');
+    }
+    {
+        Fnt f("ru_RU.UTF-8", 1);
+        assert(f.thousands_sep() == ' ');
+    }
+    {
+        Fwf f("ru_RU.UTF-8", 1);
+        assert(f.thousands_sep() == L' ');
+    }
+    {
+        Fwt f("ru_RU.UTF-8", 1);
+        assert(f.thousands_sep() == L' ');
+    }
+
+    {
+        Fnf f("zh_CN.UTF-8", 1);
         assert(f.thousands_sep() == ',');
     }
     {
-        Fnt f("zh_CN", 1);
+        Fnt f("zh_CN.UTF-8", 1);
         assert(f.thousands_sep() == ',');
     }
     {
-        Fwf f("zh_CN", 1);
+        Fwf f("zh_CN.UTF-8", 1);
         assert(f.thousands_sep() == L',');
     }
     {
-        Fwt f("zh_CN", 1);
+        Fwt f("zh_CN.UTF-8", 1);
         assert(f.thousands_sep() == L',');
     }
 }

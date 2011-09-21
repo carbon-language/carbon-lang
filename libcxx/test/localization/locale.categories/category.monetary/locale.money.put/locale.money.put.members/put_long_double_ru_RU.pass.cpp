@@ -43,7 +43,7 @@ public:
 int main()
 {
     std::ios ios(0);
-    std::string loc_name("ru_RU");
+    std::string loc_name("ru_RU.UTF-8");
     ios.imbue(std::locale(ios.getloc(),
                           new std::moneypunct_byname<char, false>(loc_name)));
     ios.imbue(std::locale(ios.getloc(),
@@ -202,7 +202,7 @@ int main()
         output_iterator<char*> iter = f.put(output_iterator<char*>(str),
                                             true, ios, '*', v);
         std::string ex(str, iter.base());
-        assert(ex == "0,00 RUR ");
+        assert(ex == "0,00 RUB ");
     }
     {   // negative one, showbase
         long double v = -1;
@@ -211,7 +211,7 @@ int main()
         output_iterator<char*> iter = f.put(output_iterator<char*>(str),
                                             true, ios, '*', v);
         std::string ex(str, iter.base());
-        assert(ex == "-0,01 RUR ");
+        assert(ex == "-0,01 RUB ");
     }
     {   // positive, showbase
         long double v = 123456789;
@@ -220,7 +220,7 @@ int main()
         output_iterator<char*> iter = f.put(output_iterator<char*>(str),
                                             true, ios, '*', v);
         std::string ex(str, iter.base());
-        assert(ex == "1 234 567,89 RUR ");
+        assert(ex == "1 234 567,89 RUB ");
     }
     {   // negative, showbase
         long double v = -123456789;
@@ -229,7 +229,7 @@ int main()
         output_iterator<char*> iter = f.put(output_iterator<char*>(str),
                                             true, ios, '*', v);
         std::string ex(str, iter.base());
-        assert(ex == "-1 234 567,89 RUR ");
+        assert(ex == "-1 234 567,89 RUB ");
     }
     {   // negative, showbase, left
         long double v = -123456789;
@@ -240,7 +240,7 @@ int main()
         output_iterator<char*> iter = f.put(output_iterator<char*>(str),
                                             true, ios, ' ', v);
         std::string ex(str, iter.base());
-        assert(ex == "-1 234 567,89 RUR   ");
+        assert(ex == "-1 234 567,89 RUB   ");
         assert(ios.width() == 0);
     }
     {   // negative, showbase, internal
@@ -252,7 +252,7 @@ int main()
         output_iterator<char*> iter = f.put(output_iterator<char*>(str),
                                             true, ios, ' ', v);
         std::string ex(str, iter.base());
-        assert(ex == "-1 234 567,89   RUR ");
+        assert(ex == "-1 234 567,89   RUB ");
         assert(ios.width() == 0);
     }
     {   // negative, showbase, right
@@ -264,7 +264,7 @@ int main()
         output_iterator<char*> iter = f.put(output_iterator<char*>(str),
                                             true, ios, ' ', v);
         std::string ex(str, iter.base());
-        assert(ex == "  -1 234 567,89 RUR ");
+        assert(ex == "  -1 234 567,89 RUB ");
         assert(ios.width() == 0);
     }
 }
@@ -420,7 +420,7 @@ int main()
         output_iterator<wchar_t*> iter = f.put(output_iterator<wchar_t*>(str),
                                             true, ios, '*', v);
         std::wstring ex(str, iter.base());
-        assert(ex == L"0,00 RUR ");
+        assert(ex == L"0,00 RUB ");
     }
     {   // negative one, showbase
         long double v = -1;
@@ -429,7 +429,7 @@ int main()
         output_iterator<wchar_t*> iter = f.put(output_iterator<wchar_t*>(str),
                                             true, ios, '*', v);
         std::wstring ex(str, iter.base());
-        assert(ex == L"-0,01 RUR ");
+        assert(ex == L"-0,01 RUB ");
     }
     {   // positive, showbase
         long double v = 123456789;
@@ -438,7 +438,7 @@ int main()
         output_iterator<wchar_t*> iter = f.put(output_iterator<wchar_t*>(str),
                                             true, ios, '*', v);
         std::wstring ex(str, iter.base());
-        assert(ex == L"1 234 567,89 RUR ");
+        assert(ex == L"1 234 567,89 RUB ");
     }
     {   // negative, showbase
         long double v = -123456789;
@@ -447,7 +447,7 @@ int main()
         output_iterator<wchar_t*> iter = f.put(output_iterator<wchar_t*>(str),
                                             true, ios, '*', v);
         std::wstring ex(str, iter.base());
-        assert(ex == L"-1 234 567,89 RUR ");
+        assert(ex == L"-1 234 567,89 RUB ");
     }
     {   // negative, showbase, left
         long double v = -123456789;
@@ -458,7 +458,7 @@ int main()
         output_iterator<wchar_t*> iter = f.put(output_iterator<wchar_t*>(str),
                                             true, ios, ' ', v);
         std::wstring ex(str, iter.base());
-        assert(ex == L"-1 234 567,89 RUR   ");
+        assert(ex == L"-1 234 567,89 RUB   ");
         assert(ios.width() == 0);
     }
     {   // negative, showbase, internal
@@ -470,7 +470,7 @@ int main()
         output_iterator<wchar_t*> iter = f.put(output_iterator<wchar_t*>(str),
                                             true, ios, ' ', v);
         std::wstring ex(str, iter.base());
-        assert(ex == L"-1 234 567,89   RUR ");
+        assert(ex == L"-1 234 567,89   RUB ");
         assert(ios.width() == 0);
     }
     {   // negative, showbase, right
@@ -482,7 +482,7 @@ int main()
         output_iterator<wchar_t*> iter = f.put(output_iterator<wchar_t*>(str),
                                             true, ios, ' ', v);
         std::wstring ex(str, iter.base());
-        assert(ex == L"  -1 234 567,89 RUR ");
+        assert(ex == L"  -1 234 567,89 RUB ");
         assert(ios.width() == 0);
     }
 }

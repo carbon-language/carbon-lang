@@ -67,7 +67,7 @@ void check(const std::locale& loc)
 int main()
 {
     {
-        std::locale loc("ru_RU");
+        std::locale loc("ru_RU.UTF-8");
         std::locale loc2;
         loc2 = loc;
         assert(loc == loc2);

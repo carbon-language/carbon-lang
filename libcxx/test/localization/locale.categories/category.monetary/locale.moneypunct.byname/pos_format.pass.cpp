@@ -85,7 +85,7 @@ int main()
     }
 
     {
-        Fnf f("en_US", 1);
+        Fnf f("en_US.UTF-8", 1);
         std::money_base::pattern p = f.pos_format();
         assert(p.field[0] == std::money_base::sign);
         assert(p.field[1] == std::money_base::symbol);
@@ -93,7 +93,7 @@ int main()
         assert(p.field[3] == std::money_base::value);
     }
     {
-        Fnt f("en_US", 1);
+        Fnt f("en_US.UTF-8", 1);
         std::money_base::pattern p = f.pos_format();
         assert(p.field[0] == std::money_base::sign);
         assert(p.field[1] == std::money_base::symbol);
@@ -101,7 +101,7 @@ int main()
         assert(p.field[3] == std::money_base::value);
     }
     {
-        Fwf f("en_US", 1);
+        Fwf f("en_US.UTF-8", 1);
         std::money_base::pattern p = f.pos_format();
         assert(p.field[0] == std::money_base::sign);
         assert(p.field[1] == std::money_base::symbol);
@@ -109,7 +109,7 @@ int main()
         assert(p.field[3] == std::money_base::value);
     }
     {
-        Fwt f("en_US", 1);
+        Fwt f("en_US.UTF-8", 1);
         std::money_base::pattern p = f.pos_format();
         assert(p.field[0] == std::money_base::sign);
         assert(p.field[1] == std::money_base::symbol);
@@ -118,7 +118,7 @@ int main()
     }
 
     {
-        Fnf f("fr_FR", 1);
+        Fnf f("fr_FR.UTF-8", 1);
         std::money_base::pattern p = f.pos_format();
         assert(p.field[0] == std::money_base::sign);
         assert(p.field[1] == std::money_base::value);
@@ -126,7 +126,7 @@ int main()
         assert(p.field[3] == std::money_base::symbol);
     }
     {
-        Fnt f("fr_FR", 1);
+        Fnt f("fr_FR.UTF-8", 1);
         std::money_base::pattern p = f.pos_format();
         assert(p.field[0] == std::money_base::sign);
         assert(p.field[1] == std::money_base::value);
@@ -134,7 +134,7 @@ int main()
         assert(p.field[3] == std::money_base::symbol);
     }
     {
-        Fwf f("fr_FR", 1);
+        Fwf f("fr_FR.UTF-8", 1);
         std::money_base::pattern p = f.pos_format();
         assert(p.field[0] == std::money_base::sign);
         assert(p.field[1] == std::money_base::value);
@@ -142,40 +142,7 @@ int main()
         assert(p.field[3] == std::money_base::symbol);
     }
     {
-        Fwt f("fr_FR", 1);
-        std::money_base::pattern p = f.pos_format();
-        assert(p.field[0] == std::money_base::sign);
-        assert(p.field[1] == std::money_base::value);
-        assert(p.field[2] == std::money_base::space);
-        assert(p.field[3] == std::money_base::symbol);
-    }
-
-    {
-        Fnf f("ru_RU", 1);
-        std::money_base::pattern p = f.pos_format();
-        assert(p.field[0] == std::money_base::sign);
-        assert(p.field[1] == std::money_base::value);
-        assert(p.field[2] == std::money_base::space);
-        assert(p.field[3] == std::money_base::symbol);
-    }
-    {
-        Fnt f("ru_RU", 1);
-        std::money_base::pattern p = f.pos_format();
-        assert(p.field[0] == std::money_base::sign);
-        assert(p.field[1] == std::money_base::value);
-        assert(p.field[2] == std::money_base::space);
-        assert(p.field[3] == std::money_base::symbol);
-    }
-    {
-        Fwf f("ru_RU", 1);
-        std::money_base::pattern p = f.pos_format();
-        assert(p.field[0] == std::money_base::sign);
-        assert(p.field[1] == std::money_base::value);
-        assert(p.field[2] == std::money_base::space);
-        assert(p.field[3] == std::money_base::symbol);
-    }
-    {
-        Fwt f("ru_RU", 1);
+        Fwt f("fr_FR.UTF-8", 1);
         std::money_base::pattern p = f.pos_format();
         assert(p.field[0] == std::money_base::sign);
         assert(p.field[1] == std::money_base::value);
@@ -184,7 +151,40 @@ int main()
     }
 
     {
-        Fnf f("zh_CN", 1);
+        Fnf f("ru_RU.UTF-8", 1);
+        std::money_base::pattern p = f.pos_format();
+        assert(p.field[0] == std::money_base::sign);
+        assert(p.field[1] == std::money_base::value);
+        assert(p.field[2] == std::money_base::space);
+        assert(p.field[3] == std::money_base::symbol);
+    }
+    {
+        Fnt f("ru_RU.UTF-8", 1);
+        std::money_base::pattern p = f.pos_format();
+        assert(p.field[0] == std::money_base::sign);
+        assert(p.field[1] == std::money_base::value);
+        assert(p.field[2] == std::money_base::space);
+        assert(p.field[3] == std::money_base::symbol);
+    }
+    {
+        Fwf f("ru_RU.UTF-8", 1);
+        std::money_base::pattern p = f.pos_format();
+        assert(p.field[0] == std::money_base::sign);
+        assert(p.field[1] == std::money_base::value);
+        assert(p.field[2] == std::money_base::space);
+        assert(p.field[3] == std::money_base::symbol);
+    }
+    {
+        Fwt f("ru_RU.UTF-8", 1);
+        std::money_base::pattern p = f.pos_format();
+        assert(p.field[0] == std::money_base::sign);
+        assert(p.field[1] == std::money_base::value);
+        assert(p.field[2] == std::money_base::space);
+        assert(p.field[3] == std::money_base::symbol);
+    }
+
+    {
+        Fnf f("zh_CN.UTF-8", 1);
         std::money_base::pattern p = f.pos_format();
         assert(p.field[0] == std::money_base::sign);
         assert(p.field[1] == std::money_base::symbol);
@@ -192,7 +192,7 @@ int main()
         assert(p.field[3] == std::money_base::value);
     }
     {
-        Fnt f("zh_CN", 1);
+        Fnt f("zh_CN.UTF-8", 1);
         std::money_base::pattern p = f.pos_format();
         assert(p.field[0] == std::money_base::sign);
         assert(p.field[1] == std::money_base::symbol);
@@ -200,7 +200,7 @@ int main()
         assert(p.field[3] == std::money_base::value);
     }
     {
-        Fwf f("zh_CN", 1);
+        Fwf f("zh_CN.UTF-8", 1);
         std::money_base::pattern p = f.pos_format();
         assert(p.field[0] == std::money_base::sign);
         assert(p.field[1] == std::money_base::symbol);
@@ -208,7 +208,7 @@ int main()
         assert(p.field[3] == std::money_base::value);
     }
     {
-        Fwt f("zh_CN", 1);
+        Fwt f("zh_CN.UTF-8", 1);
         std::money_base::pattern p = f.pos_format();
         assert(p.field[0] == std::money_base::sign);
         assert(p.field[1] == std::money_base::symbol);

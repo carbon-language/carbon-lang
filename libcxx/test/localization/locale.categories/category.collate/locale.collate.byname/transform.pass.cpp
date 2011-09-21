@@ -21,6 +21,8 @@
 
 int main()
 {
+    // Ensure that the default locale is not C.  If it is, the second tests will fail.
+    setenv("LANG", "en_US", 1);
     {
         std::locale l("en_US");
         {
