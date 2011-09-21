@@ -28,7 +28,7 @@ using namespace llvm;
 void MBlazeInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
                                   StringRef Annot) {
   printInstruction(MI, O);
-  if (CommentStream) printAnnotation(O, Annot);
+  printAnnotation(O, Annot);
 }
 
 void MBlazeInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
