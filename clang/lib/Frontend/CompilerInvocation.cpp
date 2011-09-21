@@ -1492,9 +1492,9 @@ void CompilerInvocation::setLangDefaults(LangOptions &Opts, InputKind IK,
   // OpenCL has some additional defaults.
   if (LangStd == LangStandard::lang_opencl) {
     Opts.OpenCL = 1;
-    Opts.AltiVec = 1;
+    Opts.AltiVec = 0;
     Opts.CXXOperatorNames = 1;
-    Opts.LaxVectorConversions = 1;
+    Opts.LaxVectorConversions = 0;
     Opts.DefaultFPContract = 1;
   }
 

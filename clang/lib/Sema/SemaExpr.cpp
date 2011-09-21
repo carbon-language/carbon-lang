@@ -4248,7 +4248,8 @@ Sema::ActOnCastExpr(Scope *S, SourceLocation LParenLoc,
   // i.e. all the elements are integer constants.
   ParenExpr *PE = dyn_cast<ParenExpr>(CastExpr);
   ParenListExpr *PLE = dyn_cast<ParenListExpr>(CastExpr);
-  if (getLangOptions().AltiVec && castType->isVectorType() && (PE || PLE)) {
+  if ((getLangOptions().AltiVec || getLangOptions().OpenCL)
+       && castType->isVectorType() && (PE || PLE)) {
     if (PLE && PLE->getNumExprs() == 0) {
       Diag(PLE->getExprLoc(), diag::err_altivec_empty_initializer);
       return ExprError();
