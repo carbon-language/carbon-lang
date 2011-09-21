@@ -80,7 +80,16 @@ namespace llvm {
 
   };
 
-/// MipselTargetMachine - Mipsel target machine.
+/// MipsebTargetMachine - Mips32 big endian target machine.
+///
+class MipsebTargetMachine : public MipsTargetMachine {
+public:
+  MipsebTargetMachine(const Target &T, StringRef TT,
+                      StringRef CPU, StringRef FS,
+                      Reloc::Model RM, CodeModel::Model CM);
+};
+
+/// MipselTargetMachine - Mips32 little endian target machine.
 ///
 class MipselTargetMachine : public MipsTargetMachine {
 public:
@@ -89,6 +98,23 @@ public:
                       Reloc::Model RM, CodeModel::Model CM);
 };
 
+/// MipsebTargetMachine - Mips32 big endian target machine.
+///
+class Mips64ebTargetMachine : public MipsTargetMachine {
+public:
+  Mips64ebTargetMachine(const Target &T, StringRef TT,
+                        StringRef CPU, StringRef FS,
+                        Reloc::Model RM, CodeModel::Model CM);
+};
+
+/// MipselTargetMachine - Mips32 little endian target machine.
+///
+class Mips64elTargetMachine : public MipsTargetMachine {
+public:
+  Mips64elTargetMachine(const Target &T, StringRef TT,
+                        StringRef CPU, StringRef FS,
+                        Reloc::Model RM, CodeModel::Model CM);
+};
 } // End llvm namespace
 
 #endif

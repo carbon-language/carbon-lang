@@ -19,8 +19,10 @@ using namespace llvm;
 
 extern "C" void LLVMInitializeMipsTarget() {
   // Register the target.
-  RegisterTargetMachine<MipsTargetMachine> X(TheMipsTarget);
+  RegisterTargetMachine<MipsebTargetMachine> X(TheMipsTarget);
   RegisterTargetMachine<MipselTargetMachine> Y(TheMipselTarget);
+  RegisterTargetMachine<Mips64ebTargetMachine> A(TheMips64Target);
+  RegisterTargetMachine<Mips64elTargetMachine> B(TheMips64elTarget);
 }
 
 // DataLayout --> Big-endian, 32-bit pointer/ABI/alignment
@@ -34,21 +36,43 @@ MipsTargetMachine::
 MipsTargetMachine(const Target &T, StringRef TT,
                   StringRef CPU, StringRef FS,
                   Reloc::Model RM, CodeModel::Model CM,
-                  bool isLittle=false):
+                  bool isLittle):
   LLVMTargetMachine(T, TT, CPU, FS, RM, CM),
   Subtarget(TT, CPU, FS, isLittle),
-  DataLayout(isLittle ? 
-             std::string("e-p:32:32:32-i8:8:32-i16:16:32-i64:64:64-n32") :
-             std::string("E-p:32:32:32-i8:8:32-i16:16:32-i64:64:64-n32")),
+  DataLayout(isLittle ?
+             (Subtarget.isABI_N64() ?
+              "e-p:64:64:64-i8:8:32-i16:16:32-i64:64:64-n32" :
+              "e-p:32:32:32-i8:8:32-i16:16:32-i64:64:64-n32") :
+             (Subtarget.isABI_N64() ?
+              "E-p:64:64:64-i8:8:32-i16:16:32-i64:64:64-n32" :
+              "E-p:32:32:32-i8:8:32-i16:16:32-i64:64:64-n32")),
   InstrInfo(*this),
   FrameLowering(Subtarget),
   TLInfo(*this), TSInfo(*this), JITInfo() {
 }
 
+MipsebTargetMachine::
+MipsebTargetMachine(const Target &T, StringRef TT,
+                    StringRef CPU, StringRef FS,
+                    Reloc::Model RM, CodeModel::Model CM) :
+  MipsTargetMachine(T, TT, CPU, FS, RM, CM, false) {}
+
 MipselTargetMachine::
 MipselTargetMachine(const Target &T, StringRef TT,
                     StringRef CPU, StringRef FS,
                     Reloc::Model RM, CodeModel::Model CM) :
+  MipsTargetMachine(T, TT, CPU, FS, RM, CM, true) {}
+
+Mips64ebTargetMachine::
+Mips64ebTargetMachine(const Target &T, StringRef TT,
+                      StringRef CPU, StringRef FS,
+                      Reloc::Model RM, CodeModel::Model CM) :
+  MipsTargetMachine(T, TT, CPU, FS, RM, CM, false) {}
+
+Mips64elTargetMachine::
+Mips64elTargetMachine(const Target &T, StringRef TT,
+                      StringRef CPU, StringRef FS,
+                      Reloc::Model RM, CodeModel::Model CM) :
   MipsTargetMachine(T, TT, CPU, FS, RM, CM, true) {}
 
 // Install an instruction selector pass using

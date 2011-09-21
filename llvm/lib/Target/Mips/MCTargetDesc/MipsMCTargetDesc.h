@@ -21,6 +21,8 @@ class StringRef;
 
 extern Target TheMipsTarget;
 extern Target TheMipselTarget;
+extern Target TheMips64Target;
+extern Target TheMips64elTarget;
 
 } // End llvm namespace
 

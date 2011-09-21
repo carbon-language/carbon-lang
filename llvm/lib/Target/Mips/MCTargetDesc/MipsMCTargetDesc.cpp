@@ -81,27 +81,49 @@ extern "C" void LLVMInitializeMipsTargetMC() {
   // Register the MC asm info.
   RegisterMCAsmInfoFn X(TheMipsTarget, createMipsMCAsmInfo);
   RegisterMCAsmInfoFn Y(TheMipselTarget, createMipsMCAsmInfo);
+  RegisterMCAsmInfoFn A(TheMips64Target, createMipsMCAsmInfo);
+  RegisterMCAsmInfoFn B(TheMips64elTarget, createMipsMCAsmInfo);
 
   // Register the MC codegen info.
   TargetRegistry::RegisterMCCodeGenInfo(TheMipsTarget,
                                         createMipsMCCodeGenInfo);
   TargetRegistry::RegisterMCCodeGenInfo(TheMipselTarget,
                                         createMipsMCCodeGenInfo);
+  TargetRegistry::RegisterMCCodeGenInfo(TheMips64Target,
+                                        createMipsMCCodeGenInfo);
+  TargetRegistry::RegisterMCCodeGenInfo(TheMips64elTarget,
+                                        createMipsMCCodeGenInfo);
 
   // Register the MC instruction info.
   TargetRegistry::RegisterMCInstrInfo(TheMipsTarget, createMipsMCInstrInfo);
+  TargetRegistry::RegisterMCInstrInfo(TheMipselTarget, createMipsMCInstrInfo);
+  TargetRegistry::RegisterMCInstrInfo(TheMips64Target, createMipsMCInstrInfo);
+  TargetRegistry::RegisterMCInstrInfo(TheMips64elTarget, createMipsMCInstrInfo);
 
   // Register the MC register info.
   TargetRegistry::RegisterMCRegInfo(TheMipsTarget, createMipsMCRegisterInfo);
   TargetRegistry::RegisterMCRegInfo(TheMipselTarget, createMipsMCRegisterInfo);
+  TargetRegistry::RegisterMCRegInfo(TheMips64Target, createMipsMCRegisterInfo);
+  TargetRegistry::RegisterMCRegInfo(TheMips64elTarget,
+                                    createMipsMCRegisterInfo);
 
   // Register the MC subtarget info.
   TargetRegistry::RegisterMCSubtargetInfo(TheMipsTarget,
+                                          createMipsMCSubtargetInfo);
+  TargetRegistry::RegisterMCSubtargetInfo(TheMipselTarget,
+                                          createMipsMCSubtargetInfo);
+  TargetRegistry::RegisterMCSubtargetInfo(TheMips64Target,
+                                          createMipsMCSubtargetInfo);
+  TargetRegistry::RegisterMCSubtargetInfo(TheMips64elTarget,
                                           createMipsMCSubtargetInfo);
 
   // Register the MCInstPrinter.
   TargetRegistry::RegisterMCInstPrinter(TheMipsTarget,
                                         createMipsMCInstPrinter);
   TargetRegistry::RegisterMCInstPrinter(TheMipselTarget,
+                                        createMipsMCInstPrinter);
+  TargetRegistry::RegisterMCInstPrinter(TheMips64Target,
+                                        createMipsMCInstPrinter);
+  TargetRegistry::RegisterMCInstPrinter(TheMips64elTarget,
                                         createMipsMCInstPrinter);
 }
