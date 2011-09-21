@@ -76,30 +76,6 @@
 #error stdout not defined
 #endif
 
-// As an optimisation, these may be defined as macros in the C header.  We want
-// to check the functions, not the macros.
-#ifdef puts
-#undef puts
-#endif
-#ifdef putc
-#undef putc
-#endif
-#ifdef getc
-#undef getc
-#endif
-#ifdef putchar
-#undef putchar
-#endif
-#ifdef clearerr 
-#undef clearerr
-#endif
-#ifdef feof
-#undef feof
-#endif
-#ifdef ferror
-#undef ferror
-#endif
-
 #include <cstdarg>
 
 int main()
