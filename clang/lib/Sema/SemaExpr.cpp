@@ -8936,7 +8936,7 @@ ExprResult Sema::ActOnGNUNullExpr(SourceLocation TokenLoc) {
   else if (pw == Context.getTargetInfo().getLongLongWidth())
     Ty = Context.LongLongTy;
   else {
-    assert(!"I don't know size of pointer!");
+    assert(0 && "I don't know size of pointer!");
     Ty = Context.IntTy;
   }
 
