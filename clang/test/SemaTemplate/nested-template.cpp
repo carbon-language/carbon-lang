@@ -125,4 +125,20 @@ X2<int>::Inner<X2_arg> x2i1;
 X2<float> x2a; // expected-note{{instantiation}}
 X2<long>::Inner<X2_arg> x2i3; // expected-error{{template template argument has different}}
 
+namespace PR10896 {
+  template<typename TN>
+  class Foo {
 
+  public:
+    void foo() {}
+  private:
+	
+    template<typename T>
+    T SomeField; // expected-error {{member 'SomeField' declared as a template}}
+  };
+
+  void g() {
+    Foo<int> f;
+    f.foo();
+  }
+}
