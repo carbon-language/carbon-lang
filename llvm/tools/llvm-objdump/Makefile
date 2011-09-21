@@ -9,7 +9,8 @@
 LEVEL = ../..
 
 TOOLNAME = llvm-objdump
-LINK_COMPONENTS = $(TARGETS_TO_BUILD) MC MCParser MCDisassembler Object
+LINK_COMPONENTS = $(TARGETS_TO_BUILD) DebugInfo MC MCParser MCDisassembler \
+                  Object
 
 # This tool has no plugins, optimize startup time.
 TOOL_NO_EXPORTS = 1

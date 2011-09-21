@@ -18,6 +18,7 @@
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/DebugInfo/DIContext.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCDisassembler.h"
 #include "llvm/MC/MCInst.h"
@@ -43,6 +44,12 @@ using namespace object;
 static cl::opt<bool>
   CFG("cfg", cl::desc("Create a CFG for every symbol in the object file and"
                       "write it to a graphviz file (MachO-only)"));
+
+static cl::opt<bool>
+  UseDbg("g", cl::desc("Print line information from debug info if available"));
+
+static cl::opt<std::string>
+  DSYMFile("dsym", cl::desc("Use .dSYM file for debug info"));
 
 static const Target *GetTarget(const MachOObject *MachOObj) {
   // Figure out the target triple.
@@ -93,7 +100,6 @@ struct Symbol {
   uint8_t SectionIndex;
   bool operator<(const Symbol &RHS) const { return Value < RHS.Value; }
 };
-
 
 template <typename T>
 static Section copySection(const T &Sect) {
@@ -205,6 +211,67 @@ static void emitDOTFile(const char *FileName, const MCFunction &f,
   Out << "}\n";
 }
 
+static void getSectionsAndSymbols(const macho::Header &Header,
+                                  MachOObject *MachOObj,
+                             InMemoryStruct<macho::SymtabLoadCommand> *SymtabLC,
+                                  std::vector<Section> &Sections,
+                                  std::vector<Symbol> &Symbols,
+                                  SmallVectorImpl<uint64_t> &FoundFns) {
+  // Make a list of all symbols in the object file.
+  for (unsigned i = 0; i != Header.NumLoadCommands; ++i) {
+    const MachOObject::LoadCommandInfo &LCI = MachOObj->getLoadCommandInfo(i);
+    if (LCI.Command.Type == macho::LCT_Segment) {
+      InMemoryStruct<macho::SegmentLoadCommand> SegmentLC;
+      MachOObj->ReadSegmentLoadCommand(LCI, SegmentLC);
+
+      // Store the sections in this segment.
+      for (unsigned SectNum = 0; SectNum != SegmentLC->NumSections; ++SectNum) {
+        InMemoryStruct<macho::Section> Sect;
+        MachOObj->ReadSection(LCI, SectNum, Sect);
+        Sections.push_back(copySection(Sect));
+
+        // Store the symbols in this section.
+        if (SymtabLC) {
+          for (unsigned i = 0; i != (*SymtabLC)->NumSymbolTableEntries; ++i) {
+            InMemoryStruct<macho::SymbolTableEntry> STE;
+            MachOObj->ReadSymbolTableEntry((*SymtabLC)->SymbolTableOffset, i,
+                                           STE);
+            Symbols.push_back(copySymbol(STE));
+          }
+        }
+      }
+    } else if (LCI.Command.Type == macho::LCT_Segment64) {
+      InMemoryStruct<macho::Segment64LoadCommand> Segment64LC;
+      MachOObj->ReadSegment64LoadCommand(LCI, Segment64LC);
+
+      // Store the sections in this segment.
+      for (unsigned SectNum = 0; SectNum != Segment64LC->NumSections;
+          ++SectNum) {
+        InMemoryStruct<macho::Section64> Sect64;
+        MachOObj->ReadSection64(LCI, SectNum, Sect64);
+        Sections.push_back(copySection(Sect64));
+
+        // Store the symbols in this section.
+        if (SymtabLC) {
+          for (unsigned i = 0; i != (*SymtabLC)->NumSymbolTableEntries; ++i) {
+            InMemoryStruct<macho::Symbol64TableEntry> STE;
+            MachOObj->ReadSymbol64TableEntry((*SymtabLC)->SymbolTableOffset, i,
+                                             STE);
+            Symbols.push_back(copySymbol(STE));
+          }
+        }
+      }
+    } else if (LCI.Command.Type == macho::LCT_FunctionStarts) {
+      // We found a function starts segment, parse the addresses for later
+      // consumption.
+      InMemoryStruct<macho::LinkeditDataLoadCommand> LLC;
+      MachOObj->ReadLinkeditDataLoadCommand(LCI, LLC);
+
+      MachOObj->ReadULEB128s(LLC->DataOffset, FoundFns);
+    }
+  }
+}
+
 void llvm::DisassembleInputMachO(StringRef Filename) {
   OwningPtr<MemoryBuffer> Buff;
 
@@ -260,60 +327,13 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
 
   std::vector<Section> Sections;
   std::vector<Symbol> Symbols;
-  std::vector<Symbol> UnsortedSymbols; // FIXME: duplication
   SmallVector<uint64_t, 8> FoundFns;
 
-  // Make a list of all symbols in the object file.
-  for (unsigned i = 0; i != Header.NumLoadCommands; ++i) {
-    const MachOObject::LoadCommandInfo &LCI = MachOObj->getLoadCommandInfo(i);
-    if (LCI.Command.Type == macho::LCT_Segment) {
-      InMemoryStruct<macho::SegmentLoadCommand> SegmentLC;
-      MachOObj->ReadSegmentLoadCommand(LCI, SegmentLC);
+  getSectionsAndSymbols(Header, MachOObj.get(), &SymtabLC, Sections, Symbols,
+                        FoundFns);
 
-      // Store the sections in this segment.
-      for (unsigned SectNum = 0; SectNum != SegmentLC->NumSections; ++SectNum) {
-        InMemoryStruct<macho::Section> Sect;
-        MachOObj->ReadSection(LCI, SectNum, Sect);
-        Sections.push_back(copySection(Sect));
-
-        // Store the symbols in this section.
-        for (unsigned i = 0; i != SymtabLC->NumSymbolTableEntries; ++i) {
-          InMemoryStruct<macho::SymbolTableEntry> STE;
-          MachOObj->ReadSymbolTableEntry(SymtabLC->SymbolTableOffset, i, STE);
-          Symbols.push_back(copySymbol(STE));
-          UnsortedSymbols.push_back(Symbols.back());
-        }
-      }
-    } else if (LCI.Command.Type == macho::LCT_Segment64) {
-      InMemoryStruct<macho::Segment64LoadCommand> Segment64LC;
-      MachOObj->ReadSegment64LoadCommand(LCI, Segment64LC);
-
-      // Store the sections in this segment.
-      for (unsigned SectNum = 0; SectNum != Segment64LC->NumSections;
-           ++SectNum) {
-        InMemoryStruct<macho::Section64> Sect64;
-        MachOObj->ReadSection64(LCI, SectNum, Sect64);
-        Sections.push_back(copySection(Sect64));
-
-        // Store the symbols in this section.
-        for (unsigned i = 0; i != SymtabLC->NumSymbolTableEntries; ++i) {
-          InMemoryStruct<macho::Symbol64TableEntry> STE;
-          MachOObj->ReadSymbol64TableEntry(SymtabLC->SymbolTableOffset, i, STE);
-          Symbols.push_back(copySymbol(STE));
-          UnsortedSymbols.push_back(Symbols.back());
-        }
-      }
-    } else if (LCI.Command.Type == macho::LCT_FunctionStarts) {
-      // We found a function starts segment, parse the addresses for later
-      // consumption.
-      InMemoryStruct<macho::LinkeditDataLoadCommand> LLC;
-      MachOObj->ReadLinkeditDataLoadCommand(LCI, LLC);
-
-      MachOObj->ReadULEB128s(LLC->DataOffset, FoundFns);
-    }
-  }
-
-
+  // Make a copy of the unsorted symbol list. FIXME: duplication
+  std::vector<Symbol> UnsortedSymbols(Symbols);
   // Sort the symbols by address, just in case they didn't come in that way.
   array_pod_sort(Symbols.begin(), Symbols.end());
 
@@ -322,6 +342,61 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
 #else
   raw_ostream &DebugOut = nulls();
 #endif
+
+  StringRef DebugAbbrevSection, DebugInfoSection, DebugArangesSection,
+            DebugLineSection, DebugStrSection;
+  OwningPtr<DIContext> diContext;
+  // Try to find debug info and set up the DIContext for it.
+  if (UseDbg) {
+    ArrayRef<Section> DebugSections = Sections;
+    std::vector<Section> DSYMSections;
+    OwningPtr<MachOObject> DSYMObj;
+
+    // A separate DSym file path was specified, parse it as a macho file,
+    // get the sections and supply it to the section name parsing machinery.
+    if (!DSYMFile.empty()) {
+      OwningPtr<MemoryBuffer> Buf;
+      if (error_code ec = MemoryBuffer::getFileOrSTDIN(DSYMFile.c_str(), Buf)) {
+        errs() << "llvm-objdump: " << Filename << ": " << ec.message() << '\n';
+        return;
+      }
+      DSYMObj.reset(MachOObject::LoadFromBuffer(Buf.take()));
+      const macho::Header &Header = DSYMObj->getHeader();
+
+      std::vector<Symbol> Symbols;
+      SmallVector<uint64_t, 8> FoundFns;
+      getSectionsAndSymbols(Header, DSYMObj.get(), 0, DSYMSections, Symbols,
+                            FoundFns);
+      DebugSections = DSYMSections;
+    }
+
+    // Find the named debug info sections.
+    for (unsigned SectIdx = 0; SectIdx != DebugSections.size(); SectIdx++) {
+      if (!strcmp(DebugSections[SectIdx].Name, "__debug_abbrev"))
+        DebugAbbrevSection = DSYMObj->getData(DebugSections[SectIdx].Offset,
+                                              DebugSections[SectIdx].Size);
+      else if (!strcmp(DebugSections[SectIdx].Name, "__debug_info"))
+        DebugInfoSection = DSYMObj->getData(DebugSections[SectIdx].Offset,
+                                            DebugSections[SectIdx].Size);
+      else if (!strcmp(DebugSections[SectIdx].Name, "__debug_aranges"))
+        DebugArangesSection = DSYMObj->getData(DebugSections[SectIdx].Offset,
+                                               DebugSections[SectIdx].Size);
+      else if (!strcmp(DebugSections[SectIdx].Name, "__debug_line"))
+        DebugLineSection = DSYMObj->getData(DebugSections[SectIdx].Offset,
+                                            DebugSections[SectIdx].Size);
+      else if (!strcmp(DebugSections[SectIdx].Name, "__debug_str"))
+        DebugStrSection = DSYMObj->getData(DebugSections[SectIdx].Offset,
+                                           DebugSections[SectIdx].Size);
+    }
+
+    // Setup the DIContext.
+    diContext.reset(DIContext::getDWARFContext(MachOObj->isLittleEndian(),
+                                               DebugInfoSection,
+                                               DebugAbbrevSection,
+                                               DebugArangesSection,
+                                               DebugLineSection,
+                                               DebugStrSection));
+  }
 
   FunctionMapTy FunctionMap;
   FunctionListTy Functions;
@@ -374,6 +449,7 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
         // Normal disassembly, print addresses, bytes and mnemonic form.
         outs() << MachOObj->getStringAtIndex(Symbols[SymIdx].StringIndex)
           << ":\n";
+        DILineInfo lastLine;
         for (uint64_t Index = Start; Index < End; Index += Size) {
           MCInst Inst;
 
@@ -382,6 +458,18 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
             outs() << format("%8llx:\t", Sections[SectIdx].Address + Index);
             DumpBytes(StringRef(Bytes.data() + Index, Size));
             IP->printInst(&Inst, outs(), "");
+
+            // Print debug info.
+            if (diContext) {
+              DILineInfo dli =
+                diContext->getLineInfoForAddress(Sections[SectIdx].Address +
+                                                 Index);
+              // Print valid line info if it changed.
+              if (dli != lastLine && dli.getLine() != 0)
+                outs() << "\t## " << dli.getFileName() << ':'
+                       << dli.getLine() << ':' << dli.getColumn();
+              lastLine = dli;
+            }
             outs() << "\n";
           } else {
             errs() << "llvm-objdump: warning: invalid instruction encoding\n";
@@ -464,6 +552,7 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
           if (fi->second.contains(fi->first)) // Print a header for simple loops
             outs() << "# Loop begin:\n";
 
+          DILineInfo lastLine;
           // Walk over the instructions and print them.
           for (unsigned ii = 0, ie = fi->second.getInsts().size(); ii != ie;
                ++ii) {
@@ -505,6 +594,18 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
                                                           Inst.Size);
             if (targ != -1ULL)
               DumpAddress(targ, Sections, MachOObj.get(), outs());
+
+            // Print debug info.
+            if (diContext) {
+              DILineInfo dli =
+                diContext->getLineInfoForAddress(Sections[SectIdx].Address +
+                                                 Inst.Address);
+              // Print valid line info if it changed.
+              if (dli != lastLine && dli.getLine() != 0)
+                outs() << "\t## " << dli.getFileName() << ':'
+                       << dli.getLine() << ':' << dli.getColumn();
+              lastLine = dli;
+            }
 
             outs() << '\n';
           }
