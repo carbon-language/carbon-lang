@@ -100,12 +100,18 @@ struct PPEntityComp {
 
   explicit PPEntityComp(const SourceManager &SM) : SM(SM) { }
 
-  bool operator()(PreprocessedEntity *L, SourceLocation RHS) {
+  bool operator()(PreprocessedEntity *L, PreprocessedEntity *R) const {
+    SourceLocation LHS = getLoc(L);
+    SourceLocation RHS = getLoc(R);
+    return SM.isBeforeInTranslationUnit(LHS, RHS);
+  }
+
+  bool operator()(PreprocessedEntity *L, SourceLocation RHS) const {
     SourceLocation LHS = getLoc(L);
     return SM.isBeforeInTranslationUnit(LHS, RHS);
   }
 
-  bool operator()(SourceLocation LHS, PreprocessedEntity *R) {
+  bool operator()(SourceLocation LHS, PreprocessedEntity *R) const {
     SourceLocation RHS = getLoc(R);
     return SM.isBeforeInTranslationUnit(LHS, RHS);
   }
