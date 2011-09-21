@@ -230,15 +230,6 @@ static void getSectionsAndSymbols(const macho::Header &Header,
         MachOObj->ReadSection(LCI, SectNum, Sect);
         Sections.push_back(copySection(Sect));
 
-        // Store the symbols in this section.
-        if (SymtabLC) {
-          for (unsigned i = 0; i != (*SymtabLC)->NumSymbolTableEntries; ++i) {
-            InMemoryStruct<macho::SymbolTableEntry> STE;
-            MachOObj->ReadSymbolTableEntry((*SymtabLC)->SymbolTableOffset, i,
-                                           STE);
-            Symbols.push_back(copySymbol(STE));
-          }
-        }
       }
     } else if (LCI.Command.Type == macho::LCT_Segment64) {
       InMemoryStruct<macho::Segment64LoadCommand> Segment64LC;
@@ -250,16 +241,6 @@ static void getSectionsAndSymbols(const macho::Header &Header,
         InMemoryStruct<macho::Section64> Sect64;
         MachOObj->ReadSection64(LCI, SectNum, Sect64);
         Sections.push_back(copySection(Sect64));
-
-        // Store the symbols in this section.
-        if (SymtabLC) {
-          for (unsigned i = 0; i != (*SymtabLC)->NumSymbolTableEntries; ++i) {
-            InMemoryStruct<macho::Symbol64TableEntry> STE;
-            MachOObj->ReadSymbol64TableEntry((*SymtabLC)->SymbolTableOffset, i,
-                                             STE);
-            Symbols.push_back(copySymbol(STE));
-          }
-        }
       }
     } else if (LCI.Command.Type == macho::LCT_FunctionStarts) {
       // We found a function starts segment, parse the addresses for later
@@ -268,6 +249,22 @@ static void getSectionsAndSymbols(const macho::Header &Header,
       MachOObj->ReadLinkeditDataLoadCommand(LCI, LLC);
 
       MachOObj->ReadULEB128s(LLC->DataOffset, FoundFns);
+    }
+  }
+  // Store the symbols.
+  if (SymtabLC) {
+    for (unsigned i = 0; i != (*SymtabLC)->NumSymbolTableEntries; ++i) {
+      if (MachOObj->is64Bit()) {
+        InMemoryStruct<macho::Symbol64TableEntry> STE;
+        MachOObj->ReadSymbol64TableEntry((*SymtabLC)->SymbolTableOffset, i,
+                                         STE);
+        Symbols.push_back(copySymbol(STE));
+      } else {
+        InMemoryStruct<macho::SymbolTableEntry> STE;
+        MachOObj->ReadSymbolTableEntry((*SymtabLC)->SymbolTableOffset, i,
+                                       STE);
+        Symbols.push_back(copySymbol(STE));
+      }
     }
   }
 }
