@@ -297,7 +297,7 @@ template <unsigned> struct __static_assert_check {};
 #define __has_feature(__x) 0
 #endif
 
-#ifdef __APPLE__
+#if __APPLE__ || __FreeBSD__
 #define _LIBCPP_LOCALE__L_EXTENSIONS 1
 #endif
 
@@ -305,7 +305,7 @@ template <unsigned> struct __static_assert_check {};
 #define _LIBCPP_STABLE_APPLE_ABI
 #endif
 
-#ifdef __APPLE__
+#if __APPLE__ || __FreeBSD__
 #define _LIBCPP_WCTYPE_IS_MASK
 #endif
 

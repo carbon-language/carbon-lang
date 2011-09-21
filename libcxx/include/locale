@@ -272,7 +272,7 @@ size_t __mbsnrtowcs_l(wchar_t * __dest, const char **__src, size_t __nms,
                       size_t __len, mbstate_t *__ps, locale_t __l)
 {
 #ifdef _LIBCPP_LOCALE__L_EXTENSIONS
-  return mbsnrtowcs_l(__dest, __src, __nms__len, __ps, __l);
+  return mbsnrtowcs_l(__dest, __src, __nms, __len, __ps, __l);
 #else
   __locale_raii __current(uselocale(__l), uselocale);
   return mbsnrtowcs(__dest, __src, __nms, __len, __ps);
@@ -295,7 +295,7 @@ _LIBCPP_ALWAYS_INLINE inline
 int __mbtowc_l(wchar_t *__pwc, const char *__pmb, size_t __max, locale_t __l)
 {
 #ifdef _LIBCPP_LOCALE__L_EXTENSIONS
-  return mbtowc(__pwc, __pmb, __max, __l);
+  return mbtowc_l(__pwc, __pmb, __max, __l);
 #else
   __locale_raii __current(uselocale(__l), uselocale);
   return mbtowc(__pwc, __pmb, __max);
@@ -1754,13 +1754,13 @@ num_put<_CharT, _OutputIterator>::do_put(iter_type __s, ios_base& __iob,
             __nc = asprintf_l(&__nb, 0, __fmt, (int)__iob.precision(), __v);
 #else
             __nc = __asprintf_l(&__nb, __cloc(), __fmt,
-                              (int)__iob.precision());
+                              (int)__iob.precision(), __v);
 #endif
         else
 #ifdef _LIBCPP_STABLE_APPLE_ABI
             __nc = asprintf_l(&__nb, 0, __fmt, __v);
 #else
-            __nc = __asprintf_l(&__nb, __cloc(), __fmt, (int)__iob.precision());
+            __nc = __asprintf_l(&__nb, __cloc(), __fmt, (int)__iob.precision(), __v);
 #endif
         if (__nb == 0)
             __throw_bad_alloc();
@@ -1823,13 +1823,13 @@ num_put<_CharT, _OutputIterator>::do_put(iter_type __s, ios_base& __iob,
             __nc = asprintf_l(&__nb, 0, __fmt, (int)__iob.precision(), __v);
 #else
             __nc = __asprintf_l(&__nb, __cloc(), __fmt,
-                              (int)__iob.precision());
+                              (int)__iob.precision(), __v);
 #endif
         else
 #ifdef _LIBCPP_STABLE_APPLE_ABI
             __nc = asprintf_l(&__nb, 0, __fmt, __v);
 #else
-            __nc = __asprintf_l(&__nb, __cloc(), __fmt, (int)__iob.precision());
+            __nc = __asprintf_l(&__nb, __cloc(), __fmt, __v);
 #endif
         if (__nb == 0)
             __throw_bad_alloc();

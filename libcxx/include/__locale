@@ -302,24 +302,8 @@ locale::operator()(const basic_string<_CharT, _Traits, _Allocator>& __x,
 class _LIBCPP_VISIBLE ctype_base
 {
 public:
-#ifdef __GLIBC__
+#if __GLIBC__
     typedef unsigned short mask;
-#else
-    typedef __uint32_t mask;
-#endif
-
-#if __APPLE__ || __FreeBSD__
-    static const mask space  = _CTYPE_S;
-    static const mask print  = _CTYPE_R;
-    static const mask cntrl  = _CTYPE_C;
-    static const mask upper  = _CTYPE_U;
-    static const mask lower  = _CTYPE_L;
-    static const mask alpha  = _CTYPE_A;
-    static const mask digit  = _CTYPE_D;
-    static const mask punct  = _CTYPE_P;
-    static const mask xdigit = _CTYPE_X;
-    static const mask blank  = _CTYPE_B;
-#else  // __APPLE__
     static const mask space  = _ISspace;
     static const mask print  = _ISprint;
     static const mask cntrl  = _IScntrl;
@@ -330,7 +314,23 @@ public:
     static const mask punct  = _ISpunct;
     static const mask xdigit = _ISxdigit;
     static const mask blank  = _ISblank;
-#endif  // __APPLE__
+#else  // __GLIBC__
+#if __APPLE__
+    typedef __uint32_t mask;
+#elif __FreeBSD__
+    typedef unsigned long mask;
+#endif
+    static const mask space  = _CTYPE_S;
+    static const mask print  = _CTYPE_R;
+    static const mask cntrl  = _CTYPE_C;
+    static const mask upper  = _CTYPE_U;
+    static const mask lower  = _CTYPE_L;
+    static const mask alpha  = _CTYPE_A;
+    static const mask digit  = _CTYPE_D;
+    static const mask punct  = _CTYPE_P;
+    static const mask xdigit = _CTYPE_X;
+    static const mask blank  = _CTYPE_B;
+#endif  // __GLIBC__ 
     static const mask alnum  = alpha | digit;
     static const mask graph  = alnum | punct;
 

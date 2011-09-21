@@ -13,16 +13,24 @@
 #if __APPLE__
   #include <cxxabi.h>
   using namespace __cxxabiv1;
+  using namespace __cxxabiv1::__cxxabiapple;
   // On Darwin, there are two STL shared libraries and a lower level ABI
   // shared libray.  The globals holding the current terminate handler and
   // current unexpected handler are in the ABI library.
   #define __terminate_handler  __cxxabiapple::__cxa_terminate_handler
   #define __unexpected_handler __cxxabiapple::__cxa_unexpected_handler
+  #define HAVE_DEPENDENT_EH_ABI 1
+#elif defined(LIBCXXRT)
+  #include <cxxabi.h>
+  using namespace __cxxabiv1;
+  #define HAVE_DEPENDENT_EH_ABI 1
 #else  // __APPLE__
   static std::terminate_handler  __terminate_handler;
   static std::unexpected_handler __unexpected_handler;
 #endif  // __APPLE__
 
+#ifndef LIBCXXRT
+// libcxxrt provides implementations of these functions itself.
 std::unexpected_handler
 std::set_unexpected(std::unexpected_handler func) _NOEXCEPT
 {
@@ -76,18 +84,19 @@ std::terminate() _NOEXCEPT
     }
 #endif  // _LIBCPP_NO_EXCEPTIONS
 }
+#endif // LIBCXXRT
 
 bool std::uncaught_exception() _NOEXCEPT
 {
 #if __APPLE__
     // on Darwin, there is a helper function so __cxa_get_globals is private
     return __cxxabiapple::__cxa_uncaught_exception();
+#elif LIBCXXRT
+    __cxa_eh_globals * globals = __cxa_get_globals();
+    return (globals->uncaughtExceptions != 0);
 #else  // __APPLE__
     #warning uncaught_exception not yet implemented
     ::abort();
-    // Not provided by Ubuntu gcc-4.2.4's cxxabi.h.
-    // __cxa_eh_globals * globals = __cxa_get_globals();
-    // return (globals->uncaughtExceptions != 0);
 #endif  // __APPLE__
 }
 
@@ -114,8 +123,8 @@ const char* bad_exception::what() const _NOEXCEPT
 
 exception_ptr::~exception_ptr() _NOEXCEPT
 {
-#if __APPLE__
-    __cxxabiapple::__cxa_decrement_exception_refcount(__ptr_);
+#if HAVE_DEPENDENT_EH_ABI
+    __cxa_decrement_exception_refcount(__ptr_);
 #else
     #warning exception_ptr not yet implemented
     ::abort();
@@ -125,8 +134,8 @@ exception_ptr::~exception_ptr() _NOEXCEPT
 exception_ptr::exception_ptr(const exception_ptr& other) _NOEXCEPT
     : __ptr_(other.__ptr_)
 {
-#if __APPLE__
-    __cxxabiapple::__cxa_increment_exception_refcount(__ptr_);
+#if HAVE_DEPENDENT_EH_ABI
+    __cxa_increment_exception_refcount(__ptr_);
 #else
     #warning exception_ptr not yet implemented
     ::abort();
@@ -135,11 +144,11 @@ exception_ptr::exception_ptr(const exception_ptr& other) _NOEXCEPT
 
 exception_ptr& exception_ptr::operator=(const exception_ptr& other) _NOEXCEPT
 {
-#if __APPLE__
+#if HAVE_DEPENDENT_EH_ABI
     if (__ptr_ != other.__ptr_)
     {
-        __cxxabiapple::__cxa_increment_exception_refcount(other.__ptr_);
-        __cxxabiapple::__cxa_decrement_exception_refcount(__ptr_);
+        __cxa_increment_exception_refcount(other.__ptr_);
+        __cxa_decrement_exception_refcount(__ptr_);
         __ptr_ = other.__ptr_;
     }
     return *this;
@@ -171,12 +180,12 @@ nested_exception::rethrow_nested() const
 
 std::exception_ptr std::current_exception() _NOEXCEPT
 {
-#if __APPLE__
+#if HAVE_DEPENDENT_EH_ABI
     // be nicer if there was a constructor that took a ptr, then
     // this whole function would be just:
     //    return exception_ptr(__cxa_current_primary_exception());
     std::exception_ptr ptr;
-    ptr.__ptr_ = __cxxabiapple::__cxa_current_primary_exception();
+    ptr.__ptr_ = __cxa_current_primary_exception();
     return ptr;
 #else  // __APPLE__
     #warning exception_ptr not yet implemented
@@ -186,8 +195,8 @@ std::exception_ptr std::current_exception() _NOEXCEPT
 
 void std::rethrow_exception(exception_ptr p)
 {
-#if __APPLE__
-    __cxxabiapple::__cxa_rethrow_primary_exception(p.__ptr_);
+#if HAVE_DEPENDENT_EH_ABI
+    __cxa_rethrow_primary_exception(p.__ptr_);
     // if p.__ptr_ is NULL, above returns so we terminate
     terminate();
 #else  // __APPLE__

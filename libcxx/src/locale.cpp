@@ -733,7 +733,7 @@ ctype<wchar_t>::do_scan_not(mask m, const char_type* low, const char_type* high)
 wchar_t
 ctype<wchar_t>::do_toupper(char_type c) const
 {
-#ifndef _LIBCPP_STABLE_APPLE_ABI
+#if !(defined(_LIBCPP_STABLE_APPLE_ABI) || defined(__FreeBSD__))
     return isascii(c) ? ctype<char>::__classic_upper_table()[c] : c;
 #else
     return isascii(c) ? _DefaultRuneLocale.__mapupper[c] : c;
@@ -744,7 +744,7 @@ const wchar_t*
 ctype<wchar_t>::do_toupper(char_type* low, const char_type* high) const
 {
     for (; low != high; ++low)
-#ifndef _LIBCPP_STABLE_APPLE_ABI
+#if !(defined(_LIBCPP_STABLE_APPLE_ABI) || defined(__FreeBSD__))
         *low = isascii(*low) ? ctype<char>::__classic_upper_table()[*low]
                              : *low;
 #else
@@ -908,11 +908,12 @@ ctype<char>::do_narrow(const char_type* low, const char_type* high, char dfault,
 const ctype<char>::mask*
 ctype<char>::classic_table()  _NOEXCEPT
 {
-#ifdef __APPLE__
+#if defined(__APPLE__) || defined(__FreeBSD__)
     return _DefaultRuneLocale.__runetype;
 #elif defined(__GLIBC__)
     return __cloc()->__ctype_b;
-// This is assumed to be safe.
+// This is assumed to be safe, which is a nonsense assumption because we're
+// going to end up dereferencing it later...
 #else
     return NULL;
 #endif
@@ -922,7 +923,7 @@ ctype<char>::classic_table()  _NOEXCEPT
 const int*
 ctype<char>::__classic_lower_table() _NOEXCEPT
 {
-#ifdef __APPLE__
+#if defined(__APPLE__) || defined(__FreeBSD__)
     return _DefaultRuneLocale.__maplower;
 #elif defined(__GLIBC__)
     return __cloc()->__ctype_tolower;
@@ -934,7 +935,7 @@ ctype<char>::__classic_lower_table() _NOEXCEPT
 const int*
 ctype<char>::__classic_upper_table() _NOEXCEPT
 {
-#ifdef __APPLE__
+#if defined(__APPLE__) || defined(__FreeBSD__)
     return _DefaultRuneLocale.__mapupper;
 #elif defined(__GLIBC__)
     return __cloc()->__ctype_toupper;
@@ -1036,6 +1037,7 @@ ctype_byname<wchar_t>::do_is(mask m, char_type c) const
 #ifdef _LIBCPP_WCTYPE_IS_MASK
     return static_cast<bool>(iswctype_l(c, m, __l));
 #else
+	// FIXME: This is broken for things that test more than one flag.
     if (m & space && !iswspace_l(c, __l)) return false;
     if (m & print && !iswprint_l(c, __l)) return false;
     if (m & cntrl && !iswcntrl_l(c, __l)) return false;
