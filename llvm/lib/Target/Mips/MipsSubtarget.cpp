@@ -39,6 +39,15 @@ MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &CPU,
   // Initialize scheduling itinerary for the specified CPU.
   InstrItins = getInstrItineraryForCPU(CPUName);
 
+  // Set MipsABI if it hasn't been set yet.
+  if (MipsABI == UnknownABI)
+    MipsABI = hasMips64() ? N64 : O32; 
+
+  // Check if Architecture and ABI are compatible.
+  assert(((!hasMips64() && (isABI_O32() || isABI_EABI())) ||
+          (hasMips64() && (isABI_N32() || isABI_N64()))) &&
+         "Invalid  Arch & ABI pair.");
+
   // Is the target system Linux ?
   if (TT.find("linux") == std::string::npos)
     IsLinux = false;
