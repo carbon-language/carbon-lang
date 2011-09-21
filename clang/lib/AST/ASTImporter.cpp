@@ -2521,7 +2521,7 @@ Decl *ASTNodeImporter::VisitFunctionDecl(FunctionDecl *D) {
     Parameters[I]->setOwningFunction(ToFunction);
     ToFunction->addDecl(Parameters[I]);
   }
-  ToFunction->setParams(Parameters.data(), Parameters.size());
+  ToFunction->setParams(Parameters);
 
   // FIXME: Other bits to merge?
 

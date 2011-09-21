@@ -7989,7 +7989,7 @@ TreeTransform<Derived>::TransformBlockExpr(BlockExpr *E) {
 
   // Set the parameters on the block decl.
   if (!params.empty())
-    blockScope->TheDecl->setParams(params.data(), params.size());
+    blockScope->TheDecl->setParams(params);
   
   // If the return type wasn't explicitly set, it will have been marked as a 
   // dependent type (DependentTy); clear out the return type setting so 

@@ -465,7 +465,7 @@ void ASTDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
   Params.reserve(NumParams);
   for (unsigned I = 0; I != NumParams; ++I)
     Params.push_back(ReadDeclAs<ParmVarDecl>(Record, Idx));
-  FD->setParams(Reader.getContext(), Params.data(), NumParams);
+  FD->setParams(Reader.getContext(), Params);
 }
 
 void ASTDeclReader::VisitObjCMethodDecl(ObjCMethodDecl *MD) {
@@ -758,7 +758,7 @@ void ASTDeclReader::VisitBlockDecl(BlockDecl *BD) {
   Params.reserve(NumParams);
   for (unsigned I = 0; I != NumParams; ++I)
     Params.push_back(ReadDeclAs<ParmVarDecl>(Record, Idx));
-  BD->setParams(Params.data(), NumParams);
+  BD->setParams(Params);
 
   bool capturesCXXThis = Record[Idx++];
   unsigned numCaptures = Record[Idx++];

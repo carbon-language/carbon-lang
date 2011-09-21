@@ -6835,7 +6835,7 @@ void Sema::DeclareInheritedConstructors(CXXRecordDecl *ClassDecl) {
                                                    /*TInfo=*/0, SC_None,
                                                    SC_None, /*DefaultArg=*/0));
         }
-        NewCtor->setParams(ParamDecls.data(), ParamDecls.size());
+        NewCtor->setParams(ParamDecls);
         NewCtor->setInheritedConstructor(BaseCtor);
 
         PushOnScopeChains(NewCtor, S, false);
@@ -7353,7 +7353,7 @@ CXXMethodDecl *Sema::DeclareImplicitCopyAssignment(CXXRecordDecl *ClassDecl) {
                                                ArgType, /*TInfo=*/0,
                                                SC_None,
                                                SC_None, 0);
-  CopyAssignment->setParams(&FromParam, 1);
+  CopyAssignment->setParams(FromParam);
   
   // Note that we have added this copy-assignment operator.
   ++ASTContext::NumImplicitCopyAssignmentOperatorsDeclared;
@@ -7768,7 +7768,7 @@ CXXMethodDecl *Sema::DeclareImplicitMoveAssignment(CXXRecordDecl *ClassDecl) {
                                                ArgType, /*TInfo=*/0,
                                                SC_None,
                                                SC_None, 0);
-  MoveAssignment->setParams(&FromParam, 1);
+  MoveAssignment->setParams(FromParam);
 
   // Note that we have added this copy-assignment operator.
   ++ASTContext::NumImplicitMoveAssignmentOperatorsDeclared;
@@ -8259,7 +8259,7 @@ CXXConstructorDecl *Sema::DeclareImplicitCopyConstructor(
                                                ArgType, /*TInfo=*/0,
                                                SC_None,
                                                SC_None, 0);
-  CopyConstructor->setParams(&FromParam, 1);
+  CopyConstructor->setParams(FromParam);
 
   if (Scope *S = getScopeForContext(ClassDecl))
     PushOnScopeChains(CopyConstructor, S, false);
@@ -8416,7 +8416,7 @@ CXXConstructorDecl *Sema::DeclareImplicitMoveConstructor(
                                                ArgType, /*TInfo=*/0,
                                                SC_None,
                                                SC_None, 0);
-  MoveConstructor->setParams(&FromParam, 1);
+  MoveConstructor->setParams(FromParam);
 
   // C++0x [class.copy]p9:
   //   If the definition of a class X does not explicitly declare a move

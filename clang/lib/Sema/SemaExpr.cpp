@@ -8710,7 +8710,7 @@ void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
 
   // Set the parameters on the block decl.
   if (!Params.empty()) {
-    CurBlock->TheDecl->setParams(Params.data(), Params.size());
+    CurBlock->TheDecl->setParams(Params);
     CheckParmsForFunctionDef(CurBlock->TheDecl->param_begin(),
                              CurBlock->TheDecl->param_end(),
                              /*CheckParameterNames=*/false);

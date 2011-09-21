@@ -20,6 +20,7 @@
 #include "clang/AST/DeclarationName.h"
 #include "clang/AST/ExternalASTSource.h"
 #include "clang/Basic/Linkage.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/Optional.h"
 
 namespace clang {
@@ -1480,7 +1481,7 @@ private:
   void setInstantiationOfMemberFunction(ASTContext &C, FunctionDecl *FD,
                                         TemplateSpecializationKind TSK);
 
-  void setParams(ASTContext &C, ParmVarDecl **NewParamInfo, unsigned NumParams);
+  void setParams(ASTContext &C, llvm::ArrayRef<ParmVarDecl *> NewParamInfo);
 
 protected:
   FunctionDecl(Kind DK, DeclContext *DC, SourceLocation StartLoc,
@@ -1750,8 +1751,8 @@ public:
     assert(i < getNumParams() && "Illegal param #");
     return ParamInfo[i];
   }
-  void setParams(ParmVarDecl **NewParamInfo, unsigned NumParams) {
-    setParams(getASTContext(), NewParamInfo, NumParams);
+  void setParams(llvm::ArrayRef<ParmVarDecl *> NewParamInfo) {
+    setParams(getASTContext(), NewParamInfo);
   }
 
   /// getMinRequiredArguments - Returns the minimum number of arguments
@@ -2997,7 +2998,7 @@ public:
     assert(i < getNumParams() && "Illegal param #");
     return ParamInfo[i];
   }
-  void setParams(ParmVarDecl **NewParamInfo, unsigned NumParams);
+  void setParams(llvm::ArrayRef<ParmVarDecl *> NewParamInfo);
 
   /// hasCaptures - True if this block (or its nested blocks) captures
   /// anything of local storage from its enclosing scopes.

@@ -1112,7 +1112,7 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
       Params.push_back(Param);
     }
   }
-  Function->setParams(Params.data(), Params.size());
+  Function->setParams(Params);
 
   SourceLocation InstantiateAtPOI;
   if (TemplateParams) {
@@ -1485,7 +1485,7 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
   // Attach the parameters
   for (unsigned P = 0; P < Params.size(); ++P)
     Params[P]->setOwningFunction(Method);
-  Method->setParams(Params.data(), Params.size());
+  Method->setParams(Params);
 
   if (InitMethodInstantiation(Method, D))
     Method->setInvalidDecl();

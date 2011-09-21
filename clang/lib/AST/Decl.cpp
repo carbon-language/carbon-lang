@@ -28,6 +28,8 @@
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/Support/ErrorHandling.h"
 
+#include <algorithm>
+
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -1688,15 +1690,14 @@ unsigned FunctionDecl::getNumParams() const {
 }
 
 void FunctionDecl::setParams(ASTContext &C,
-                             ParmVarDecl **NewParamInfo, unsigned NumParams) {
+                             llvm::ArrayRef<ParmVarDecl *> NewParamInfo) {
   assert(ParamInfo == 0 && "Already has param info!");
-  assert(NumParams == getNumParams() && "Parameter count mismatch!");
+  assert(NewParamInfo.size() == getNumParams() && "Parameter count mismatch!");
 
   // Zero params -> null pointer.
-  if (NumParams) {
-    void *Mem = C.Allocate(sizeof(ParmVarDecl*)*NumParams);
-    ParamInfo = new (Mem) ParmVarDecl*[NumParams];
-    memcpy(ParamInfo, NewParamInfo, sizeof(ParmVarDecl*)*NumParams);
+  if (!NewParamInfo.empty()) {
+    ParamInfo = new (C) ParmVarDecl*[NewParamInfo.size()];
+    std::copy(NewParamInfo.begin(), NewParamInfo.end(), ParamInfo);
   }
 }
 
@@ -2430,16 +2431,14 @@ void RecordDecl::LoadFieldsFromExternalStorage() const {
 // BlockDecl Implementation
 //===----------------------------------------------------------------------===//
 
-void BlockDecl::setParams(ParmVarDecl **NewParamInfo,
-                          unsigned NParms) {
+void BlockDecl::setParams(llvm::ArrayRef<ParmVarDecl *> NewParamInfo) {
   assert(ParamInfo == 0 && "Already has param info!");
 
   // Zero params -> null pointer.
-  if (NParms) {
-    NumParams = NParms;
-    void *Mem = getASTContext().Allocate(sizeof(ParmVarDecl*)*NumParams);
-    ParamInfo = new (Mem) ParmVarDecl*[NumParams];
-    memcpy(ParamInfo, NewParamInfo, sizeof(ParmVarDecl*)*NumParams);
+  if (!NewParamInfo.empty()) {
+    NumParams = NewParamInfo.size();
+    ParamInfo = new (getASTContext()) ParmVarDecl*[NewParamInfo.size()];
+    std::copy(NewParamInfo.begin(), NewParamInfo.end(), ParamInfo);
   }
 }
 

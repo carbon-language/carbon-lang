@@ -1290,7 +1290,7 @@ NamedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid,
       parm->setScopeInfo(0, i);
       Params.push_back(parm);
     }
-    New->setParams(Params.data(), Params.size());
+    New->setParams(Params);
   }
 
   AddKnownFunctionAttributes(New);
@@ -1853,7 +1853,7 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
         Params.push_back(Param);
       }
 
-      New->setParams(Params.data(), Params.size());
+      New->setParams(Params);
     }
 
     return MergeCompatibleFunctionDecls(New, Old);
@@ -4873,7 +4873,7 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
            "Should not need args for typedef of non-prototype fn");
   }
   // Finally, we know we have the right number of parameters, install them.
-  NewFD->setParams(Params.data(), Params.size());
+  NewFD->setParams(Params);
 
   // Process the non-inheritable attributes on this declaration.
   ProcessDeclAttributes(S, NewFD, D,

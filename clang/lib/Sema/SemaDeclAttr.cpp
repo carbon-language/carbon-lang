@@ -3674,7 +3674,7 @@ NamedDecl * Sema::DeclClonePragmaWeak(NamedDecl *ND, IdentifierInfo *II,
         Param->setScopeInfo(0, Params.size());
         Params.push_back(Param);
       }
-      NewFD->setParams(Params.data(), Params.size());
+      NewFD->setParams(Params);
     }
   } else if (VarDecl *VD = dyn_cast<VarDecl>(ND)) {
     NewD = VarDecl::Create(VD->getASTContext(), VD->getDeclContext(),

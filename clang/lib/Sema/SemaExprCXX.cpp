@@ -1671,7 +1671,7 @@ void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
                                            SourceLocation(), 0,
                                            Argument, /*TInfo=*/0,
                                            SC_None, SC_None, 0);
-  Alloc->setParams(&Param, 1);
+  Alloc->setParams(Param);
 
   // FIXME: Also add this declaration to the IdentifierResolver, but
   // make sure it is at the end of the chain to coincide with the
