@@ -16,6 +16,7 @@
 #define CLANG_CODEGEN_TARGETINFO_H
 
 #include "clang/Basic/LLVM.h"
+#include "clang/AST/Type.h"
 #include "llvm/ADT/StringRef.h"
 
 namespace llvm {
@@ -126,6 +127,40 @@ namespace clang {
     virtual StringRef getARCRetainAutoreleasedReturnValueMarker() const {
       return "";
     }
+
+    /// Determine whether a call to an unprototyped functions under
+    /// the given calling convention should use the variadic
+    /// convention or the non-variadic convention.
+    ///
+    /// There's a good reason to make a platform's variadic calling
+    /// convention be different from its non-variadic calling
+    /// convention: the non-variadic arguments can be passed in
+    /// registers (better for performance), and the variadic arguments
+    /// can be passed on the stack (also better for performance).  If
+    /// this is done, however, unprototyped functions *must* use the
+    /// non-variadic convention, because C99 states that a call
+    /// through an unprototyped function type must succeed if the
+    /// function was defined with a non-variadic prototype with
+    /// compatible parameters.  Therefore, splitting the conventions
+    /// makes it impossible to call a variadic function through an
+    /// unprototyped type.  Since function prototypes came out in the
+    /// late 1970s, this is probably an acceptable trade-off.
+    /// Nonetheless, not all platforms are willing to make it, and in
+    /// particularly x86-64 bends over backwards to make the
+    /// conventions compatible.
+    ///
+    /// The default is false.  This is correct whenever:
+    ///   - the conventions are exactly the same, because it does not
+    ///     matter and the resulting IR will be somewhat prettier in
+    ///     certain cases; or
+    ///   - the conventions are substantively different in how they pass
+    ///     arguments, because in this case using the variadic convention
+    ///     will lead to C99 violations.
+    /// It is not necessarily correct when arguments are passed in the
+    /// same way and some out-of-band information is passed for the
+    /// benefit of variadic callees, as is the case for x86-64.
+    /// In this case the ABI should be consulted.
+    virtual bool isNoProtoCallVariadic(CallingConv CC) const;
   };
 }
 

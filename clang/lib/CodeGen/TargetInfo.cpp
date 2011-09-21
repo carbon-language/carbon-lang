@@ -98,6 +98,14 @@ unsigned TargetCodeGenInfo::getSizeOfUnwindException() const {
   return 32;
 }
 
+bool TargetCodeGenInfo::isNoProtoCallVariadic(CallingConv CC) const {
+  // The following conventions are known to require this to be false:
+  //   x86_stdcall
+  //   MIPS
+  // For everything else, we just prefer false unless we opt out.
+  return false;
+}
+
 static bool isEmptyRecord(ASTContext &Context, QualType T, bool AllowArrays);
 
 /// isEmptyField - Return true iff a the field is "empty", that is it
@@ -957,6 +965,15 @@ public:
                                   StringRef Constraint,
                                   llvm::Type* Ty) const {
     return X86AdjustInlineAsmType(CGF, Constraint, Ty);
+  }
+
+  bool isNoProtoCallVariadic(CallingConv CC) const {
+    // The default CC on x86-64 sets %al to the number of SSA
+    // registers used, and GCC sets this when calling an unprototyped
+    // function, so we override the default behavior.
+    if (CC == CC_Default || CC == CC_C) return true;
+
+    return TargetCodeGenInfo::isNoProtoCallVariadic(CC);
   }
 
 };

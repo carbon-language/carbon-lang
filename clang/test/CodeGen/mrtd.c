@@ -4,7 +4,7 @@ void baz(int arg);
 
 // CHECK: define x86_stdcallcc void @foo(i32 %arg) nounwind
 void foo(int arg) {
-// CHECK: call x86_stdcallcc i32 (...)* @bar(i32
+// CHECK: call x86_stdcallcc i32 bitcast (i32 (...)* @bar to i32 (i32)*)(
   bar(arg);
 // CHECK: call x86_stdcallcc void @baz(i32
   baz(arg);
