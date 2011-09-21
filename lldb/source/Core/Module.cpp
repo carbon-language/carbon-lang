@@ -637,6 +637,13 @@ Module::GetObjectFile()
         Timer scoped_timer(__PRETTY_FUNCTION__,
                            "Module::GetObjectFile () module = %s", GetFileSpec().GetFilename().AsCString(""));
         m_objfile_sp = ObjectFile::FindPlugin(this, &m_file, m_object_offset, m_file.GetByteSize());
+        if (m_objfile_sp)
+        {
+			// Once we get the object file, update our module with the object file's 
+			// architecture since it might differ in vendor/os if some parts were
+			// unknown.
+            m_objfile_sp->GetArchitecture (m_arch);
+        }
     }
     return m_objfile_sp.get();
 }

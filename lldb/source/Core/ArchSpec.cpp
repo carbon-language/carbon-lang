@@ -538,7 +538,9 @@ ArchSpec::SetArchitecture (ArchitectureType arch_type, uint32_t cpu, uint32_t su
             {
                 m_core = core_def->core;
                 update_triple = false;
-                m_triple.setArch (core_def->machine);
+                // Always use the architecture name because it might be more descriptive
+                // than the architecture enum ("armv7" -> llvm::Triple::arm).
+                m_triple.setArchName(llvm::StringRef(core_def->name));
                 if (arch_type == eArchTypeMachO)
                 {
                     m_triple.setVendor (llvm::Triple::Apple);
@@ -549,6 +551,9 @@ ArchSpec::SetArchitecture (ArchitectureType arch_type, uint32_t cpu, uint32_t su
                     m_triple.setVendor (llvm::Triple::UnknownVendor);
                     m_triple.setOS (llvm::Triple::UnknownOS);
                 }
+                // Fall back onto setting the machine type if the arch by name failed...
+                if (m_triple.getArch () == llvm::Triple::UnknownArch)
+                    m_triple.setArch (core_def->machine);
             }
         }
     }
@@ -665,13 +670,38 @@ lldb_private::operator== (const ArchSpec& lhs, const ArchSpec& rhs)
     {
         const llvm::Triple &lhs_triple = lhs.GetTriple();
         const llvm::Triple &rhs_triple = rhs.GetTriple();
-        if (lhs_triple.getVendor() != rhs_triple.getVendor()
-            || lhs_triple.getOS() != rhs_triple.getOS()
-            || lhs_triple.getArch() != rhs_triple.getArch()
-            || lhs_triple.getEnvironment() != rhs_triple.getEnvironment())
-            return false;
-        else
-            return true;
+
+        const llvm::Triple::VendorType lhs_triple_vendor = lhs_triple.getVendor();
+        const llvm::Triple::VendorType rhs_triple_vendor = rhs_triple.getVendor();
+        if (lhs_triple_vendor != rhs_triple_vendor)
+        {
+            // Only fail if both vendor types are not unknown
+            if (lhs_triple_vendor != llvm::Triple::UnknownVendor &&
+                rhs_triple_vendor != llvm::Triple::UnknownVendor)
+                return false;
+        }
+        
+        const llvm::Triple::OSType lhs_triple_os = lhs_triple.getOS();
+        const llvm::Triple::OSType rhs_triple_os = rhs_triple.getOS();
+        if (lhs_triple_os != rhs_triple_os)
+        {
+            // Only fail if both os types are not unknown
+            if (lhs_triple_os != llvm::Triple::UnknownOS &&
+                rhs_triple_os != llvm::Triple::UnknownOS)
+                return false;
+        }
+
+        const llvm::Triple::EnvironmentType lhs_triple_env = lhs_triple.getEnvironment();
+        const llvm::Triple::EnvironmentType rhs_triple_env = rhs_triple.getEnvironment();
+            
+        if (lhs_triple_env != rhs_triple_env)
+        {
+            // Only fail if both environment types are not unknown
+            if (lhs_triple_env != llvm::Triple::UnknownEnvironment &&
+                rhs_triple_env != llvm::Triple::UnknownEnvironment)
+                return false;
+        }
+        return true;
     }
 }
 

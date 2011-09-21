@@ -1792,6 +1792,15 @@ ObjectFileMachO::GetArchitecture (ArchSpec &arch)
 {
     lldb_private::Mutex::Locker locker(m_mutex);
     arch.SetArchitecture (eArchTypeMachO, m_header.cputype, m_header.cpusubtype);
+    
+    // Files with type MH_PRELOAD are currently used in cases where the image
+    // debugs at the addresses in the file itself. Below we set the OS to 
+    // unknown to make sure we use the DynamicLoaderStatic()...
+    if (m_header.filetype == HeaderFileTypePreloadedExecutable)
+    {
+        arch.GetTriple().setOS (llvm::Triple::UnknownOS);
+    }
+
     return true;
 }
 
