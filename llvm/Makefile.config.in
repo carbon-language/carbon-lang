@@ -188,30 +188,6 @@ LIBS       := @LIBS@
 # Targets that we should build
 TARGETS_TO_BUILD=@TARGETS_TO_BUILD@
 
-# Path to location for LLVM C/C++ front-end. You can modify this if you
-# want to override the value set by configure.
-LLVMGCCDIR := @LLVMGCCDIR@
-
-# Full pathnames of LLVM C/C++ front-end 'cc1' and 'cc1plus' binaries:
-LLVMGCC  := @LLVMGCC@
-LLVMGXX  := @LLVMGXX@
-LLVMCC1  := @LLVMCC1@
-LLVMCC1PLUS := @LLVMCC1PLUS@
-LLVMGCC_LANGS := @LLVMGCC_LANGS@
-LLVMGCC_DRAGONEGG := @LLVMGCC_DRAGONEGG@
-
-# Information on Clang, if configured.
-CLANGPATH := @CLANGPATH@
-CLANGXXPATH := @CLANGXXPATH@
-ENABLE_BUILT_CLANG := @ENABLE_BUILT_CLANG@
-
-# The LLVM capable compiler to use.
-LLVMCC_OPTION := @LLVMCC_OPTION@
-
-# The flag used to emit LLVM IR.
-LLVMCC_EMITIR_FLAG = @LLVMCC_EMITIR_FLAG@
-LLVMCC_DISABLEOPT_FLAGS := @LLVMCC_DISABLEOPT_FLAGS@
-
 # Path to directory where object files should be stored during a build.
 # Set OBJ_ROOT to "." if you do not want to use a separate place for
 # object files.

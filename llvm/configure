@@ -705,9 +705,6 @@ LLVM_ENUM_ASM_PRINTERS
 LLVM_ENUM_ASM_PARSERS
 LLVM_ENUM_DISASSEMBLERS
 ENABLE_CBE_PRINTF_A
-CLANGPATH
-CLANGXXPATH
-ENABLE_BUILT_CLANG
 OPTIMIZE_OPTION
 EXTRA_OPTIONS
 EXTRA_LD_OPTIONS
@@ -763,7 +760,6 @@ INSTALL_LTDL_FALSE
 CONVENIENCE_LTDL_TRUE
 CONVENIENCE_LTDL_FALSE
 LIBADD_DL
-LLVMCC_OPTION
 NO_VARIADIC_MACROS
 NO_MISSING_FIELD_INITIALIZERS
 USE_UDIS86
@@ -1431,10 +1427,6 @@ Optional Features:
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
-  --with-clang            Specify location of clang compiler (default is
-                          --with-built-clang)
-  --with-built-clang      Use the compiled Clang as the LLVM compiler
-                          (default=check)
   --with-optimize-option  Select the compiler options to use for optimized
                           builds
   --with-extra-options    Specify additional options to compile LLVM with
@@ -1457,8 +1449,6 @@ Optional Packages:
   --with-bug-report-url   Specify the URL where bug reports should be
                           submitted (default=http://llvm.org/bugs/)
   --with-tclinclude       directory where tcl headers are
-  --with-llvmcc=<name>    Choose the LLVM capable compiler to use (llvm-gcc,
-                          clang, or none; default=check)
   --with-udis86=<path>    Use udis86 external x86 disassembler library
   --with-oprofile=<prefix>
                           Tell OProfile >= 0.9.4 how to symbolize JIT output
@@ -5424,69 +5414,6 @@ esac
 cat >>confdefs.h <<_ACEOF
 #define ENABLE_CBE_PRINTF_A $ENABLE_CBE_PRINTF_A
 _ACEOF
-
-
-
-# Check whether --with-clang was given.
-if test "${with_clang+set}" = set; then
-  withval=$with_clang;
-else
-  with_clang=default
-fi
-
-
-
-# Check whether --with-built-clang was given.
-if test "${with_built_clang+set}" = set; then
-  withval=$with_built_clang;
-else
-  with_built_clang=check
-fi
-
-
-{ echo "$as_me:$LINENO: checking clang compiler" >&5
-echo $ECHO_N "checking clang compiler... $ECHO_C" >&6; }
-WITH_CLANGPATH=""
-WITH_BUILT_CLANG=0
-if test "$with_clang" != "default"; then
-   WITH_CLANGPATH="$with_clang"
-   if ! test -x "$WITH_CLANGPATH"; then
-     { { echo "$as_me:$LINENO: error: invalid --with-clang, path does not specify an executable" >&5
-echo "$as_me: error: invalid --with-clang, path does not specify an executable" >&2;}
-   { (exit 1); exit 1; }; }
-   fi
-elif test "$with_built_clang" = "yes"; then
-   WITH_BUILT_CLANG=1
-elif test "$with_built_clang" = "no"; then
-   WITH_BUILT_CLANG=0
-else
-   if test "$with_built_clang" != "check"; then
-      { { echo "$as_me:$LINENO: error: invalid value for --with-built-clang." >&5
-echo "$as_me: error: invalid value for --with-built-clang." >&2;}
-   { (exit 1); exit 1; }; }
-   fi
-
-   if test -f ${srcdir}/tools/clang/README.txt; then
-     WITH_BUILT_CLANG=1
-   fi
-fi
-
-if ! test -z "$WITH_CLANGPATH"; then
-   { echo "$as_me:$LINENO: result: $WITH_CLANGPATH" >&5
-echo "${ECHO_T}$WITH_CLANGPATH" >&6; }
-   WITH_CLANGXXPATH=`"$WITH_CLANGPATH" --print-prog-name=clang++`
-elif test "$WITH_BUILT_CLANG" = "1"; then
-   { echo "$as_me:$LINENO: result: built" >&5
-echo "${ECHO_T}built" >&6; }
-else
-   { echo "$as_me:$LINENO: result: none" >&5
-echo "${ECHO_T}none" >&6; }
-fi
-CLANGPATH=$WITH_CLANGPATH
-
-CLANGXXPATH=$WITH_CLANGXXPATH
-
-ENABLE_BUILT_CLANG=$WITH_BUILT_CLANG
 
 
 
@@ -10526,7 +10453,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10529 "configure"
+#line 10456 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -12184,35 +12111,6 @@ _ACEOF
 fi
 done
 
-
-
-
-# Check whether --with-llvmcc was given.
-if test "${with_llvmcc+set}" = set; then
-  withval=$with_llvmcc;
-else
-  with_llvmcc=check
-fi
-
-{ echo "$as_me:$LINENO: checking LLVM capable compiler" >&5
-echo $ECHO_N "checking LLVM capable compiler... $ECHO_C" >&6; }
-if test "$with_llvmcc" != "check"; then
-   if (test "$with_llvmcc" != "llvm-gcc" &&
-       test "$with_llvmcc" != "clang" &&
-       test "$with_llvmcc" != "none"); then
-      { { echo "$as_me:$LINENO: error: invalid value for --with-llvmcc, expected 'clang', 'llvm-gcc', or 'none'." >&5
-echo "$as_me: error: invalid value for --with-llvmcc, expected 'clang', 'llvm-gcc', or 'none'." >&2;}
-   { (exit 1); exit 1; }; }
-   fi
-   WITH_LLVMCC="$with_llvmcc"
-elif test -n "$WITH_CLANGPATH" || test "$WITH_BUILT_CLANG" -ne "0"; then
-   WITH_LLVMCC=clang
-else
-   WITH_LLVMCC=none
-fi
-{ echo "$as_me:$LINENO: result: $WITH_LLVMCC" >&5
-echo "${ECHO_T}$WITH_LLVMCC" >&6; }
-LLVMCC_OPTION=$WITH_LLVMCC
 
 
 { echo "$as_me:$LINENO: checking tool compatibility" >&5
@@ -22196,9 +22094,6 @@ LLVM_ENUM_ASM_PRINTERS!$LLVM_ENUM_ASM_PRINTERS$ac_delim
 LLVM_ENUM_ASM_PARSERS!$LLVM_ENUM_ASM_PARSERS$ac_delim
 LLVM_ENUM_DISASSEMBLERS!$LLVM_ENUM_DISASSEMBLERS$ac_delim
 ENABLE_CBE_PRINTF_A!$ENABLE_CBE_PRINTF_A$ac_delim
-CLANGPATH!$CLANGPATH$ac_delim
-CLANGXXPATH!$CLANGXXPATH$ac_delim
-ENABLE_BUILT_CLANG!$ENABLE_BUILT_CLANG$ac_delim
 OPTIMIZE_OPTION!$OPTIMIZE_OPTION$ac_delim
 EXTRA_OPTIONS!$EXTRA_OPTIONS$ac_delim
 EXTRA_LD_OPTIONS!$EXTRA_LD_OPTIONS$ac_delim
@@ -22254,7 +22149,6 @@ INSTALL_LTDL_FALSE!$INSTALL_LTDL_FALSE$ac_delim
 CONVENIENCE_LTDL_TRUE!$CONVENIENCE_LTDL_TRUE$ac_delim
 CONVENIENCE_LTDL_FALSE!$CONVENIENCE_LTDL_FALSE$ac_delim
 LIBADD_DL!$LIBADD_DL$ac_delim
-LLVMCC_OPTION!$LLVMCC_OPTION$ac_delim
 NO_VARIADIC_MACROS!$NO_VARIADIC_MACROS$ac_delim
 NO_MISSING_FIELD_INITIALIZERS!$NO_MISSING_FIELD_INITIALIZERS$ac_delim
 USE_UDIS86!$USE_UDIS86$ac_delim
@@ -22284,7 +22178,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 92; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 88; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5

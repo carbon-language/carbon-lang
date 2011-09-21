@@ -724,56 +724,6 @@ esac
 AC_DEFINE_UNQUOTED([ENABLE_CBE_PRINTF_A],$ENABLE_CBE_PRINTF_A,
                    [Define if CBE is enabled for printf %a output])
 
-dnl Allow a specific Clang compiler to be used with this LLVM config.
-AC_ARG_WITH(clang,
-  AS_HELP_STRING([--with-clang],
-    [Specify location of clang compiler (default is --with-built-clang)]),
-    [],[with_clang=default])
-
-dnl Enable use of the built Clang.
-AC_ARG_WITH(built-clang,
-  AS_HELP_STRING([--with-built-clang],
-    [Use the compiled Clang as the LLVM compiler (default=check)]),
-    [],[with_built_clang=check])
-
-dnl Select the Clang compiler option.
-dnl
-dnl If --with-clang is given, always honor that; otherwise honor
-dnl --with-built-clang, or check if we have the clang sources.
-AC_MSG_CHECKING([clang compiler])
-WITH_CLANGPATH=""
-WITH_BUILT_CLANG=0
-if test "$with_clang" != "default"; then
-   WITH_CLANGPATH="$with_clang"
-   if ! test -x "$WITH_CLANGPATH"; then
-     AC_MSG_ERROR([invalid --with-clang, path does not specify an executable])
-   fi
-elif test "$with_built_clang" = "yes"; then
-   WITH_BUILT_CLANG=1
-elif test "$with_built_clang" = "no"; then
-   WITH_BUILT_CLANG=0
-else
-   if test "$with_built_clang" != "check"; then
-      AC_MSG_ERROR([invalid value for --with-built-clang.])
-   fi
-
-   if test -f ${srcdir}/tools/clang/README.txt; then
-     WITH_BUILT_CLANG=1
-   fi
-fi
-
-if ! test -z "$WITH_CLANGPATH"; then
-   AC_MSG_RESULT([$WITH_CLANGPATH])
-   WITH_CLANGXXPATH=`"$WITH_CLANGPATH" --print-prog-name=clang++`
-elif test "$WITH_BUILT_CLANG" = "1"; then
-   AC_MSG_RESULT([built])
-else
-   AC_MSG_RESULT([none])
-fi
-AC_SUBST(CLANGPATH,$WITH_CLANGPATH)
-AC_SUBST(CLANGXXPATH,$WITH_CLANGXXPATH)
-AC_SUBST(ENABLE_BUILT_CLANG,$WITH_BUILT_CLANG)
-
 dnl Override the option to use for optimized builds.
 AC_ARG_WITH(optimize-option,
   AS_HELP_STRING([--with-optimize-option],
@@ -1100,28 +1050,6 @@ dnl before the AC_PROG_LIBTOOL check in order to enable dlopening libraries with
 dnl libtool).
 AC_LIBTOOL_DLOPEN
 AC_LIB_LTDL
-
-dnl Select the LLVM capable compiler to use, we default to using clang if
-dnl found.
-AC_ARG_WITH(llvmcc,
-  AS_HELP_STRING([--with-llvmcc=<name>],
-    [Choose the LLVM capable compiler to use (llvm-gcc, clang, or none; default=check)]),
-    [],[with_llvmcc=check])
-AC_MSG_CHECKING([LLVM capable compiler])
-if test "$with_llvmcc" != "check"; then
-   if (test "$with_llvmcc" != "llvm-gcc" &&
-       test "$with_llvmcc" != "clang" &&
-       test "$with_llvmcc" != "none"); then
-      AC_MSG_ERROR([invalid value for --with-llvmcc, expected 'clang', 'llvm-gcc', or 'none'.])
-   fi
-   WITH_LLVMCC="$with_llvmcc"
-elif test -n "$WITH_CLANGPATH" || test "$WITH_BUILT_CLANG" -ne "0"; then
-   WITH_LLVMCC=clang
-else
-   WITH_LLVMCC=none
-fi
-AC_MSG_RESULT([$WITH_LLVMCC])
-AC_SUBST(LLVMCC_OPTION,$WITH_LLVMCC)
 
 AC_MSG_CHECKING([tool compatibility])
 
