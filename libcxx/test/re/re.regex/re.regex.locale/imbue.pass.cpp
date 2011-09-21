@@ -20,10 +20,10 @@
 int main()
 {
     std::regex r;
-    std::locale loc = r.imbue(std::locale("en_US"));
+    std::locale loc = r.imbue(std::locale("en_US.UTF-8"));
     assert(loc.name() == "C");
-    assert(r.getloc().name() == "en_US");
+    assert(r.getloc().name() == "en_US.UTF-8");
     loc = r.imbue(std::locale("C"));
-    assert(loc.name() == "en_US");
+    assert(loc.name() == "en_US.UTF-8");
     assert(r.getloc().name() == "C");
 }

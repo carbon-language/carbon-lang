@@ -25,10 +25,10 @@ int main()
         assert(t2.getloc().name() == "C");
     }
     {
-        std::locale::global(std::locale("en_US"));
+        std::locale::global(std::locale("en_US.UTF-8"));
         std::regex_traits<char> t1;
-        assert(t1.getloc().name() == "en_US");
+        assert(t1.getloc().name() == "en_US.UTF-8");
         std::regex_traits<wchar_t> t2;
-        assert(t2.getloc().name() == "en_US");
+        assert(t2.getloc().name() == "en_US.UTF-8");
     }
 }
