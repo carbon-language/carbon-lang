@@ -2389,7 +2389,8 @@ llvm::GlobalVariable *CGObjCGNU::ObjCIvarOffsetVariable(
       Offset = ComputeIvarBaseOffset(CGM, ID, Ivar);
 
     llvm::ConstantInt *OffsetGuess =
-      llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), Offset, "ivar");
+      llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), Offset,
+                             /*isSigned*/true);
     // Don't emit the guess in non-PIC code because the linker will not be able
     // to replace it with the real version for a library.  In non-PIC code you
     // must compile with the fragile ABI if you want to use ivars from a
@@ -2457,7 +2458,7 @@ llvm::Value *CGObjCGNU::EmitIvarOffset(CodeGenFunction &CGF,
     return CGF.Builder.CreateLoad(Offset);
   }
   uint64_t Offset = ComputeIvarBaseOffset(CGF.CGM, Interface, Ivar);
-  return llvm::ConstantInt::get(PtrDiffTy, Offset, "ivar");
+  return llvm::ConstantInt::get(PtrDiffTy, Offset, /*isSigned*/true);
 }
 
 CGObjCRuntime *
