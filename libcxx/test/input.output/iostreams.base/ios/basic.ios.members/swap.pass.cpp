@@ -73,7 +73,7 @@ int main()
     ios1.flags(std::ios::boolalpha | std::ios::dec | std::ios::fixed);
     ios1.precision(1);
     ios1.width(11);
-    ios1.imbue(std::locale("en_US"));
+    ios1.imbue(std::locale("en_US.UTF-8"));
     ios1.exceptions(std::ios::failbit);
     ios1.setstate(std::ios::eofbit);
     ios1.register_callback(f1, 4);
@@ -93,7 +93,7 @@ int main()
     ios2.flags(std::ios::showpoint | std::ios::uppercase);
     ios2.precision(2);
     ios2.width(12);
-    ios2.imbue(std::locale("fr_FR"));
+    ios2.imbue(std::locale("fr_FR.UTF-8"));
     ios2.exceptions(std::ios::eofbit);
     ios2.setstate(std::ios::goodbit);
     ios2.register_callback(g1, 7);
@@ -118,7 +118,7 @@ int main()
     assert(ios1.flags() == (std::ios::showpoint | std::ios::uppercase));
     assert(ios1.precision() == 2);
     assert(ios1.width() == 12);
-    assert(ios1.getloc().name() == "fr_FR");
+    assert(ios1.getloc().name() == "fr_FR.UTF-8");
     assert(ios1.exceptions() == std::ios::eofbit);
     assert(!f1_called);
     assert(!f2_called);
@@ -147,7 +147,7 @@ int main()
     assert(ios2.flags() == (std::ios::boolalpha | std::ios::dec | std::ios::fixed));
     assert(ios2.precision() == 1);
     assert(ios2.width() == 11);
-    assert(ios2.getloc().name() == "en_US");
+    assert(ios2.getloc().name() == "en_US.UTF-8");
     assert(ios2.exceptions() == std::ios::failbit);
     assert(ios2.iword(0) == 1);
     assert(ios2.iword(1) == 2);
