@@ -1,4 +1,4 @@
-##===- lib/Target/ARM/AsmParser/Makefile -------------------*- Makefile -*-===##
+##===- lib/Target/MBlaze/AsmParser/Makefile ----------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #

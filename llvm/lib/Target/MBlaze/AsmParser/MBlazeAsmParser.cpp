@@ -519,7 +519,7 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
   return false;
 }
 
-/// ParseDirective parses the arm specific directives
+/// ParseDirective parses the MBlaze specific directives
 bool MBlazeAsmParser::ParseDirective(AsmToken DirectiveID) {
   StringRef IDVal = DirectiveID.getIdentifier();
   if (IDVal == ".word")
