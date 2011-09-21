@@ -57,7 +57,8 @@ public:
         eSetTypeFileAndLine,
         eSetTypeAddress,
         eSetTypeFunctionName,
-        eSetTypeFunctionRegexp
+        eSetTypeFunctionRegexp,
+        eSetTypeSourceRegexp
     } BreakpointSetType;
 
     CommandObjectBreakpointSet (CommandInterpreter &interpreter);
@@ -103,6 +104,7 @@ public:
         std::string m_func_name;
         uint32_t m_func_name_type_mask;
         std::string m_func_regexp;
+        std::string m_source_text_regexp;
         STLStringArray m_modules;
         lldb::addr_t m_load_addr;
         uint32_t m_ignore_count;
@@ -114,6 +116,9 @@ public:
     };
 
 private:
+    bool
+    ChooseFile (Target *target, FileSpec &file, CommandReturnObject &result);
+    
     CommandOptions m_options;
 };
 

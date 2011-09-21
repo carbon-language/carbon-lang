@@ -136,6 +136,18 @@ SBCommandInterpreter::HandleCompletion (const char *current_line,
     return num_completions;
 }
 
+int
+SBCommandInterpreter::HandleCompletion (const char *current_line,
+                  uint32_t cursor_pos,
+                  int match_start_point,
+                  int max_return_elements,
+                  lldb::SBStringList &matches)
+{
+    const char *cursor = current_line + cursor_pos;
+    const char *last_char = current_line + strlen (current_line);
+    return HandleCompletion (current_line, cursor, last_char, match_start_point, max_return_elements, matches);
+}
+
 bool
 SBCommandInterpreter::HasCommands ()
 {

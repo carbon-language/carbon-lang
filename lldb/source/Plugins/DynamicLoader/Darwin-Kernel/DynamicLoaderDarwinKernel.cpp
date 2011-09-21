@@ -985,7 +985,9 @@ DynamicLoaderDarwinKernel::SetNotificationBreakpointIfNeeded ()
         
         const bool internal_bp = false;
         const LazyBool skip_prologue = eLazyBoolNo;
-        Breakpoint *bp = m_process->GetTarget().CreateBreakpoint (&m_kernel.module_sp->GetFileSpec(),
+        FileSpecList module_spec_list;
+        module_spec_list.Append (m_kernel.module_sp->GetFileSpec());
+        Breakpoint *bp = m_process->GetTarget().CreateBreakpoint (&module_spec_list,
                                                                   "OSKextLoadedKextSummariesUpdated",
                                                                   eFunctionNameTypeFull,
                                                                   internal_bp,

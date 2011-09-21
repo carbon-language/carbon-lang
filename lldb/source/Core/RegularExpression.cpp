@@ -19,6 +19,7 @@ RegularExpression::RegularExpression() :
     m_re(),
     m_comp_err (1),
     m_preg(),
+    m_compile_flags(REG_EXTENDED),
     m_matches()
 {
     memset(&m_preg,0,sizeof(m_preg));
@@ -31,12 +32,42 @@ RegularExpression::RegularExpression() :
 RegularExpression::RegularExpression(const char* re, int flags) :
     m_re(),
     m_comp_err (1),
+    m_compile_flags(flags),
     m_preg()
 {
     memset(&m_preg,0,sizeof(m_preg));
-    Compile(re, flags);
+    Compile(re);
 }
 
+//----------------------------------------------------------------------
+// Constructor that compiles "re" using "flags" and stores the
+// resulting compiled regular expression into this object.
+//----------------------------------------------------------------------
+RegularExpression::RegularExpression(const char* re) :
+    m_re(),
+    m_comp_err (1),
+    m_compile_flags(REG_EXTENDED),
+    m_preg()
+{
+    memset(&m_preg,0,sizeof(m_preg));
+    Compile(re);
+}
+
+RegularExpression::RegularExpression(const RegularExpression &rhs)
+{
+    memset(&m_preg,0,sizeof(m_preg));
+    Compile(rhs.GetText(), rhs.GetCompileFlags());
+}
+
+const RegularExpression &
+RegularExpression::operator= (const RegularExpression &rhs)
+{
+    if (&rhs != this)
+    {
+        Compile (rhs.GetText(), rhs.GetCompileFlags());
+    }
+    return *this;
+}
 //----------------------------------------------------------------------
 // Destructor
 //
@@ -61,9 +92,17 @@ RegularExpression::~RegularExpression()
 //  otherwise.
 //----------------------------------------------------------------------
 bool
+RegularExpression::Compile(const char* re)
+{
+    return Compile (re, m_compile_flags);
+}
+
+bool
 RegularExpression::Compile(const char* re, int flags)
 {
     Free();
+    m_compile_flags = flags;
+    
     if (re && re[0])
     {
         m_re = re;

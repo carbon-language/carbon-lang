@@ -59,6 +59,7 @@ public:
 private:
     friend class SBBlock;
     friend class SBCompileUnit;
+    friend class SBFileSpecList;
     friend class SBHostOS;
     friend class SBLineEntry;
     friend class SBModule;

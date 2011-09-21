@@ -214,7 +214,7 @@ public:
 
     // This handles command line completion.  You are given a pointer to the command string buffer, to the current cursor,
     // and to the end of the string (in case it is not NULL terminated).
-    // You also passed in an Args object to fill with the returns.
+    // You also passed in an StringList object to fill with the returns.
     // The first element of the array will be filled with the string that you would need to insert at
     // the cursor point to complete the cursor point to the longest common matching prefix.
     // If you want to limit the number of elements returned, set max_return_elements to the number of elements

@@ -101,6 +101,7 @@
 #define LLDB_OPT_SET_6                  (1 << 5)
 #define LLDB_OPT_SET_7                  (1 << 6)
 #define LLDB_OPT_SET_8                  (1 << 7)
+#define LLDB_OPT_SET_9                  (1 << 8)
 
 #if defined(__cplusplus)
 

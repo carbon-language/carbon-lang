@@ -316,6 +316,9 @@ public:
 
     lldb::SBBreakpoint
     BreakpointCreateByRegex (const char *symbol_name_regex, const char *module_name = NULL);
+    
+    lldb::SBBreakpoint
+    BreakpointCreateBySourceRegex (const char *source_regex, const lldb::SBFileSpec &source_file, const char *module_name = NULL);
 
     lldb::SBBreakpoint
     BreakpointCreateByAddress (addr_t address);

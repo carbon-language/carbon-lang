@@ -40,7 +40,15 @@ public:
                             uint32_t context_before,
                             uint32_t context_after,
                             Stream *s);
+        void
+        FindLinesMatchingRegex (RegularExpression& regex, 
+                                uint32_t start_line, 
+                                uint32_t end_line, 
+                                std::vector<uint32_t> &match_lines);
 
+        bool
+        GetLine (uint32_t line_no, std::string &buffer);
+        
         uint32_t
         GetLineOffset (uint32_t line);
 
@@ -150,6 +158,13 @@ public:
     {
         return (m_last_file_sp.get() != NULL);
     }
+
+    void
+    FindLinesMatchingRegex (FileSpec &file_spec,
+                            RegularExpression& regex, 
+                            uint32_t start_line, 
+                            uint32_t end_line, 
+                            std::vector<uint32_t> &match_lines);
 
 protected:
 

@@ -67,12 +67,22 @@ BreakpointResolverFileLine::SearchCallback
             Address line_start = sc.line_entry.range.GetBaseAddress();
             if (line_start.IsValid())
             {
-                BreakpointLocationSP bp_loc_sp (m_breakpoint->AddLocation(line_start));
-                if (log && bp_loc_sp && !m_breakpoint->IsInternal())
+                if (filter.AddressPasses(line_start))
                 {
-                    StreamString s;
-                    bp_loc_sp->GetDescription (&s, lldb::eDescriptionLevelVerbose);
-                    log->Printf ("Added location: %s\n", s.GetData());
+                    BreakpointLocationSP bp_loc_sp (m_breakpoint->AddLocation(line_start));
+                    if (log && bp_loc_sp && !m_breakpoint->IsInternal())
+                    {
+                        StreamString s;
+                        bp_loc_sp->GetDescription (&s, lldb::eDescriptionLevelVerbose);
+                        log->Printf ("Added location: %s\n", s.GetData());
+                    }
+                }
+                else if (log)
+                {
+                    log->Printf ("Breakpoint at file address 0x%llx for %s:%d didn't pass the filter.\n",
+                                 line_start.GetFileAddress(),
+                                 m_file_spec.GetFilename().AsCString("<Unknown>"),
+                                 m_line_number);
                 }
             }
             else

@@ -321,6 +321,64 @@ private:
     FileSpec m_module_spec;
 };
 
+class SearchFilterByModuleList :
+    public SearchFilter
+{
+public:
+
+    //------------------------------------------------------------------
+    /// The basic constructor takes a Target, which gives the space to search,
+    /// and the module list to restrict the search to.
+    ///
+    /// @param[in] target
+    ///    The Target that provides the module list to search.
+    ///
+    /// @param[in] module
+    ///    The Module that limits the search.
+    //------------------------------------------------------------------
+    SearchFilterByModuleList (lldb::TargetSP &targetSP,
+                          const FileSpecList &module_list);
+
+    SearchFilterByModuleList (const SearchFilterByModuleList& rhs);
+
+    virtual
+    ~SearchFilterByModuleList ();
+
+    const SearchFilterByModuleList&
+    operator=(const SearchFilterByModuleList& rhs);
+
+    virtual bool
+    ModulePasses (const lldb::ModuleSP &module_sp);
+
+    virtual bool
+    ModulePasses (const FileSpec &spec);
+
+    virtual bool
+    SymbolContextPasses (const SymbolContext &context,
+                         lldb::SymbolContextItem scope);
+
+    virtual bool
+    AddressPasses (Address &address);
+
+    virtual bool
+    CompUnitPasses (FileSpec &fileSpec);
+
+    virtual bool
+    CompUnitPasses (CompileUnit &compUnit);
+
+    virtual void
+    GetDescription(Stream *s);
+
+    virtual void
+    Dump (Stream *s) const;
+
+    virtual void
+    Search (Searcher &searcher);
+
+private:
+    FileSpecList m_module_spec_list;
+};
+
 } // namespace lldb_private
 
 #endif  // liblldb_SearchFilter_h_

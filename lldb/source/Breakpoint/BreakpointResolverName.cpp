@@ -104,7 +104,6 @@ BreakpointResolverName::BreakpointResolverName
     m_match_type (Breakpoint::Regexp),
     m_skip_prologue (skip_prologue)
 {
-
 }
 
 BreakpointResolverName::BreakpointResolverName

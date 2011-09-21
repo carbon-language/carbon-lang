@@ -52,7 +52,11 @@ public:
     ///     Flags that are passed the the \c regcomp() function.
     //------------------------------------------------------------------
     explicit
-    RegularExpression (const char* re, int flags = REG_EXTENDED);
+    RegularExpression (const char* re, int flags);
+
+    // This one uses flags = REG_EXTENDED.
+    explicit
+    RegularExpression (const char* re);
 
     //------------------------------------------------------------------
     /// Destructor.
@@ -61,6 +65,10 @@ public:
     /// object will be freed.
     //------------------------------------------------------------------
     ~RegularExpression ();
+    
+    RegularExpression (const RegularExpression &rhs);
+    
+    const RegularExpression & operator=(const RegularExpression &rhs);
 
     //------------------------------------------------------------------
     /// Compile a regular expression.
@@ -84,7 +92,10 @@ public:
     ///     \b false otherwise.
     //------------------------------------------------------------------
     bool
-    Compile (const char* re, int flags = REG_EXTENDED);
+    Compile (const char* re);
+
+    bool
+    Compile (const char* re, int flags);
 
     //------------------------------------------------------------------
     /// Executes a regular expression.
@@ -138,6 +149,12 @@ public:
     //------------------------------------------------------------------
     const char*
     GetText () const;
+    
+    int
+    GetCompileFlags () const
+    {
+        return m_compile_flags;
+    }
 
     //------------------------------------------------------------------
     /// Test if valid.
@@ -161,7 +178,9 @@ private:
     std::string m_re;   ///< A copy of the original regular expression text
     int m_comp_err;     ///< Error code for the regular expression compilation
     regex_t m_preg;     ///< The compiled regular expression
+    int     m_compile_flags; ///< Stores the flags from the last compile.
     mutable std::vector<regmatch_t> m_matches; ///< Where parenthesized subexpressions results are stored
+    
 };
 
 } // namespace lldb_private

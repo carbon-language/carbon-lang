@@ -432,3 +432,178 @@ SearchFilterByModule::Dump (Stream *s) const
 {
 
 }
+//----------------------------------------------------------------------
+//  SearchFilterByModuleList:
+//  Selects a shared library matching a given file spec
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+// SearchFilterByModuleList constructors
+//----------------------------------------------------------------------
+
+SearchFilterByModuleList::SearchFilterByModuleList (lldb::TargetSP &target_sp, const FileSpecList &module_list) :
+    SearchFilter (target_sp),
+    m_module_spec_list (module_list)
+{
+}
+
+
+//----------------------------------------------------------------------
+// SearchFilterByModuleList copy constructor
+//----------------------------------------------------------------------
+SearchFilterByModuleList::SearchFilterByModuleList(const SearchFilterByModuleList& rhs) :
+    SearchFilter (rhs),
+    m_module_spec_list (rhs.m_module_spec_list)
+{
+}
+
+//----------------------------------------------------------------------
+// SearchFilterByModuleList assignment operator
+//----------------------------------------------------------------------
+const SearchFilterByModuleList&
+SearchFilterByModuleList::operator=(const SearchFilterByModuleList& rhs)
+{
+    m_target_sp = rhs.m_target_sp;
+    m_module_spec_list = rhs.m_module_spec_list;
+    return *this;
+}
+
+//----------------------------------------------------------------------
+// Destructor
+//----------------------------------------------------------------------
+SearchFilterByModuleList::~SearchFilterByModuleList()
+{
+}
+
+bool
+SearchFilterByModuleList::ModulePasses (const ModuleSP &module_sp)
+{
+    if (module_sp && m_module_spec_list.FindFileIndex(0, module_sp->GetFileSpec()) != UINT32_MAX)
+        return true;
+    else
+        return false;
+}
+
+bool
+SearchFilterByModuleList::ModulePasses (const FileSpec &spec)
+{
+    if (m_module_spec_list.FindFileIndex(0, spec) != UINT32_MAX)
+        return true;
+    else
+        return false;
+}
+
+bool
+SearchFilterByModuleList::SymbolContextPasses
+(
+ const SymbolContext &context,
+ lldb::SymbolContextItem scope
+ )
+{
+    if (!(scope & eSymbolContextModule))
+        return false;
+
+    if (context.module_sp && m_module_spec_list.FindFileIndex(0, context.module_sp->GetFileSpec()) != UINT32_MAX)
+        return true;
+    else
+        return false;
+}
+
+bool
+SearchFilterByModuleList::AddressPasses (Address &address)
+{
+    // FIXME: Not yet implemented
+    return true;
+}
+
+
+bool
+SearchFilterByModuleList::CompUnitPasses (FileSpec &fileSpec)
+{
+    return true;
+}
+
+bool
+SearchFilterByModuleList::CompUnitPasses (CompileUnit &compUnit)
+{
+    return true;
+}
+
+void
+SearchFilterByModuleList::Search (Searcher &searcher)
+{
+    if (!m_target_sp)
+        return;
+
+    if (searcher.GetDepth() == Searcher::eDepthTarget)
+    {
+        SymbolContext empty_sc;
+        empty_sc.target_sp = m_target_sp;
+        searcher.SearchCallback (*this, empty_sc, NULL, false);
+    }
+
+    // If the module file spec is a full path, then we can just find the one
+    // filespec that passes.  Otherwise, we need to go through all modules and
+    // find the ones that match the file name.
+
+    ModuleList matching_modules;
+    const size_t num_modules = m_target_sp->GetImages().GetSize ();
+    for (size_t i = 0; i < num_modules; i++)
+    {
+        Module* module = m_target_sp->GetImages().GetModulePointerAtIndex(i);
+        if (m_module_spec_list.FindFileIndex(0, module->GetFileSpec()) != UINT32_MAX)
+        {
+            SymbolContext matchingContext(m_target_sp, ModuleSP(module));
+            Searcher::CallbackReturn shouldContinue;
+
+            shouldContinue = DoModuleIteration(matchingContext, searcher);
+            if (shouldContinue == Searcher::eCallbackReturnStop)
+                return;
+        }
+    }
+}
+
+void
+SearchFilterByModuleList::GetDescription (Stream *s)
+{
+    uint32_t num_modules = m_module_spec_list.GetSize();
+    if (num_modules == 1)
+    {
+        s->Printf (", module = ", num_modules);
+        if (s->GetVerbose())
+        {
+            char buffer[2048];
+            m_module_spec_list.GetFileSpecAtIndex(0).GetPath(buffer, 2047);
+            s->PutCString(buffer);
+        }
+        else
+        {
+            s->PutCString(m_module_spec_list.GetFileSpecAtIndex(0).GetFilename().AsCString("<unknown>"));
+        }
+    }
+    else
+    {
+        s->Printf (", modules(%d) = ", num_modules);
+        for (uint32_t i = 0; i < num_modules; i++)
+        {
+            if (s->GetVerbose())
+            {
+                char buffer[2048];
+                m_module_spec_list.GetFileSpecAtIndex(i).GetPath(buffer, 2047);
+                s->PutCString(buffer);
+            }
+            else
+            {
+                s->PutCString(m_module_spec_list.GetFileSpecAtIndex(i).GetFilename().AsCString("<unknown>"));
+            }
+            if (i != num_modules - 1)
+                s->PutCString (", ");
+        }
+    }
+}
+
+void
+SearchFilterByModuleList::Dump (Stream *s) const
+{
+
+}

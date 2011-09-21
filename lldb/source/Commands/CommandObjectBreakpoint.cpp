@@ -56,6 +56,7 @@ CommandObjectBreakpointSet::CommandOptions::CommandOptions(CommandInterpreter &i
     m_func_name (),
     m_func_name_type_mask (0),
     m_func_regexp (),
+    m_source_text_regexp(),
     m_modules (),
     m_load_addr(),
     m_ignore_count (0),
@@ -91,7 +92,7 @@ CommandObjectBreakpointSet::CommandOptions::g_option_table[] =
     { LLDB_OPT_SET_ALL, false, "queue-name", 'q', required_argument, NULL, NULL, eArgTypeQueueName,
         "The breakpoint stops only for threads in the queue whose name is given by this argument."},
 
-    { LLDB_OPT_SET_1, false, "file", 'f', required_argument, NULL, CommandCompletions::eSourceFileCompletion, eArgTypeFilename,
+    { LLDB_OPT_SET_1 | LLDB_OPT_SET_9, false, "file", 'f', required_argument, NULL, CommandCompletions::eSourceFileCompletion, eArgTypeFilename,
         "Set the breakpoint by source location in this particular file."},
 
     { LLDB_OPT_SET_1, true, "line", 'l', required_argument, NULL, 0, eArgTypeLineNum,
@@ -123,6 +124,10 @@ CommandObjectBreakpointSet::CommandOptions::g_option_table[] =
 
     { LLDB_OPT_SET_8, true, "basename", 'b', required_argument, NULL, CommandCompletions::eSymbolCompletion, eArgTypeFunctionName,
         "Set the breakpoint by function basename (C++ namespaces and arguments will be ignored)." },
+
+    { LLDB_OPT_SET_9, true, "source-pattern-regexp", 'p', required_argument, NULL, 0, eArgTypeRegularExpression,
+        "Set the breakpoint specifying a regular expression to match a pattern in the source text in a given source file." },
+
 
     { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
@@ -187,6 +192,10 @@ CommandObjectBreakpointSet::CommandOptions::SetOptionValue (uint32_t option_idx,
             m_func_name_type_mask |= eFunctionNameTypeMethod;
             break;
 
+        case 'p':
+            m_source_text_regexp.assign (option_arg);
+            break;
+            
         case 'r':
             m_func_regexp.assign (option_arg);
             break;
@@ -275,6 +284,52 @@ CommandObjectBreakpointSet::GetOptions ()
 }
 
 bool
+CommandObjectBreakpointSet::ChooseFile (Target *target, FileSpec &file, CommandReturnObject &result)
+{
+    if (m_options.m_filename.empty())
+    {
+        uint32_t default_line;
+        // First use the Source Manager's default file. 
+        // Then use the current stack frame's file.
+        if (!target->GetSourceManager().GetDefaultFileAndLine(file, default_line))
+        {
+            StackFrame *cur_frame = m_interpreter.GetExecutionContext().frame;
+            if (cur_frame == NULL)
+            {
+                result.AppendError ("Attempting to set breakpoint by line number alone with no selected frame.");
+                result.SetStatus (eReturnStatusFailed);
+                return false;
+            }
+            else if (!cur_frame->HasDebugInformation())
+            {
+                result.AppendError ("Attempting to set breakpoint by line number alone but selected frame has no debug info.");
+                result.SetStatus (eReturnStatusFailed);
+                return false;
+            }
+            else
+            {
+                const SymbolContext &sc = cur_frame->GetSymbolContext (eSymbolContextLineEntry);
+                if (sc.line_entry.file)
+                {
+                    file = sc.line_entry.file;
+                }
+                else
+                {
+                    result.AppendError ("Attempting to set breakpoint by line number alone but can't find the file for the selected frame.");
+                    result.SetStatus (eReturnStatusFailed);
+                    return false;
+                }
+            }
+        }
+    }
+    else
+    {
+        file.SetFile(m_options.m_filename.c_str(), false);
+    }
+    return true;
+}
+
+bool
 CommandObjectBreakpointSet::Execute
 (
     Args& command,
@@ -294,6 +349,7 @@ CommandObjectBreakpointSet::Execute
     //   2).  -a  [-s -g]         (setting breakpoint by address)
     //   3).  -n  [-s -g]         (setting breakpoint by function name)
     //   4).  -r  [-s -g]         (setting breakpoint by function name regular expression)
+    //   5).  -p -f               (setting a breakpoint by comparing a reg-exp to source text)
 
     BreakpointSetType break_type = eSetTypeInvalid;
 
@@ -305,94 +361,42 @@ CommandObjectBreakpointSet::Execute
         break_type = eSetTypeFunctionName;
     else if  (!m_options.m_func_regexp.empty())
         break_type = eSetTypeFunctionRegexp;
+    else if (!m_options.m_source_text_regexp.empty())
+        break_type = eSetTypeSourceRegexp;
 
     Breakpoint *bp = NULL;
     FileSpec module_spec;
     bool use_module = false;
     int num_modules = m_options.m_modules.size();
 
+    FileSpecList module_spec_list;
+    FileSpecList *module_spec_list_ptr = NULL;
+
     if ((num_modules > 0) && (break_type != eSetTypeAddress))
         use_module = true;
+
+    if (use_module)
+    {
+        module_spec_list_ptr = &module_spec_list;
+        for (int i = 0; i < num_modules; ++i)
+        {
+            module_spec.SetFile(m_options.m_modules[i].c_str(), false);
+            module_spec_list.AppendIfUnique (module_spec);
+        }
+    }
      
     switch (break_type)
     {
         case eSetTypeFileAndLine: // Breakpoint by source position
             {
                 FileSpec file;
-                if (m_options.m_filename.empty())
-                {
-                    uint32_t default_line;
-                    // First use the Source Manager's default file. 
-                    // Then use the current stack frame's file.
-                    if (!target->GetSourceManager().GetDefaultFileAndLine(file, default_line))
-                    {
-                        StackFrame *cur_frame = m_interpreter.GetExecutionContext().frame;
-                        if (cur_frame == NULL)
-                        {
-                            result.AppendError ("Attempting to set breakpoint by line number alone with no selected frame.");
-                            result.SetStatus (eReturnStatusFailed);
-                            break;
-                        }
-                        else if (!cur_frame->HasDebugInformation())
-                        {
-                            result.AppendError ("Attempting to set breakpoint by line number alone but selected frame has no debug info.");
-                            result.SetStatus (eReturnStatusFailed);
-                            break;
-                        }
-                        else
-                        {
-                            const SymbolContext &sc = cur_frame->GetSymbolContext (eSymbolContextLineEntry);
-                            if (sc.line_entry.file)
-                            {
-                                file = sc.line_entry.file;
-                            }
-                            else
-                            {
-                                result.AppendError ("Attempting to set breakpoint by line number alone but can't find the file for the selected frame.");
-                                result.SetStatus (eReturnStatusFailed);
-                                break;
-                            }
-                        }
-                    }
-                }
-                else
-                {
-                    file.SetFile(m_options.m_filename.c_str(), false);
-                }
-
-                if (use_module)
-                {
-                    for (int i = 0; i < num_modules; ++i)
-                    {
-                        module_spec.SetFile(m_options.m_modules[i].c_str(), false);
-                        bp = target->CreateBreakpoint (&module_spec,
-                                                       file,
-                                                       m_options.m_line_num,
-                                                       m_options.m_check_inlines).get();
-                        if (bp)
-                        {
-                            Stream &output_stream = result.GetOutputStream();
-                            result.AppendMessage ("Breakpoint created: ");
-                            bp->GetDescription(&output_stream, lldb::eDescriptionLevelBrief);
-                            output_stream.EOL();
-                            if (bp->GetNumLocations() == 0)
-                                output_stream.Printf ("WARNING:  Unable to resolve breakpoint to any actual"
-                                                      " locations.\n");
-                            result.SetStatus (eReturnStatusSuccessFinishResult);
-                        }
-                        else
-                        {
-                            result.AppendErrorWithFormat("Breakpoint creation failed: No breakpoint created in module '%s'.\n",
-                                                        m_options.m_modules[i].c_str());
-                            result.SetStatus (eReturnStatusFailed);
-                        }
-                    }
-                }
-                else
-                    bp = target->CreateBreakpoint (NULL,
-                                                   file,
-                                                   m_options.m_line_num,
-                                                   m_options.m_check_inlines).get();
+                if (!ChooseFile (target, file, result))
+                    break;
+                    
+                bp = target->CreateBreakpoint (module_spec_list_ptr,
+                                               file,
+                                               m_options.m_line_num,
+                                               m_options.m_check_inlines).get();
             }
             break;
 
@@ -407,72 +411,47 @@ CommandObjectBreakpointSet::Execute
                 if (name_type_mask == 0)
                     name_type_mask = eFunctionNameTypeAuto;
                                     
-                if (use_module)
-                {
-                    for (int i = 0; i < num_modules; ++i)
-                    {
-                        module_spec.SetFile(m_options.m_modules[i].c_str(), false);
-                        bp = target->CreateBreakpoint (&module_spec, 
-                                                       m_options.m_func_name.c_str(), 
-                                                       name_type_mask, 
-                                                       Breakpoint::Exact).get();
-                        if (bp)
-                        {
-                            Stream &output_stream = result.GetOutputStream();
-                            output_stream.Printf ("Breakpoint created: ");
-                            bp->GetDescription(&output_stream, lldb::eDescriptionLevelBrief);
-                            output_stream.EOL();
-                            if (bp->GetNumLocations() == 0)
-                                output_stream.Printf ("WARNING:  Unable to resolve breakpoint to any actual"
-                                                      " locations.\n");
-                            result.SetStatus (eReturnStatusSuccessFinishResult);
-                        }
-                        else
-                        {
-                            result.AppendErrorWithFormat("Breakpoint creation failed: No breakpoint created in module '%s'.\n",
-                                                        m_options.m_modules[i].c_str());
-                            result.SetStatus (eReturnStatusFailed);
-                        }
-                    }
-                }
-                else
-                    bp = target->CreateBreakpoint (NULL, m_options.m_func_name.c_str(), name_type_mask, Breakpoint::Exact).get();
+                bp = target->CreateBreakpoint (module_spec_list_ptr, 
+                                               m_options.m_func_name.c_str(), 
+                                               name_type_mask, 
+                                               Breakpoint::Exact).get();
             }
             break;
 
         case eSetTypeFunctionRegexp: // Breakpoint by regular expression function name
             {
                 RegularExpression regexp(m_options.m_func_regexp.c_str());
-                if (use_module)
+                if (!regexp.IsValid())
                 {
-                    for (int i = 0; i < num_modules; ++i)
-                    {
-                        module_spec.SetFile(m_options.m_modules[i].c_str(), false);
-                        bp = target->CreateBreakpoint (&module_spec, regexp).get();
-                        if (bp)
-                        {
-                            Stream &output_stream = result.GetOutputStream();
-                            output_stream.Printf ("Breakpoint created: ");
-                            bp->GetDescription(&output_stream, lldb::eDescriptionLevelBrief);
-                            output_stream.EOL();
-                            if (bp->GetNumLocations() == 0)
-                                output_stream.Printf ("WARNING:  Unable to resolve breakpoint to any actual"
-                                                      " locations.\n");
-                            result.SetStatus (eReturnStatusSuccessFinishResult);
-                        }
-                        else
-                        {
-                            result.AppendErrorWithFormat("Breakpoint creation failed: No breakpoint created in module '%s'.\n",
-                                                        m_options.m_modules[i].c_str());
-                            result.SetStatus (eReturnStatusFailed);
-                        }
-                    }
+                    char err_str[1024];
+                    regexp.GetErrorAsCString(err_str, sizeof(err_str));
+                    result.AppendErrorWithFormat("Function name regular expression could not be compiled: \"%s\"",
+                                                 err_str);
+                    result.SetStatus (eReturnStatusFailed);
+                    return false;
                 }
-                else
-                    bp = target->CreateBreakpoint (NULL, regexp).get();
+                bp = target->CreateBreakpoint (module_spec_list_ptr, regexp).get();
             }
             break;
+        case eSetTypeSourceRegexp: // Breakpoint by regexp on source text.
+            {
+                FileSpec file;
+                if (!ChooseFile (target, file, result))
+                    break;
 
+                RegularExpression regexp(m_options.m_source_text_regexp.c_str());
+                if (!regexp.IsValid())
+                {
+                    char err_str[1024];
+                    regexp.GetErrorAsCString(err_str, sizeof(err_str));
+                    result.AppendErrorWithFormat("Source text regular expression could not be compiled: \"%s\"",
+                                                 err_str);
+                    result.SetStatus (eReturnStatusFailed);
+                    return false;
+                }
+                bp = target->CreateBreakpoint (module_spec_list_ptr, file, regexp).get();
+            }
+            break;
         default:
             break;
     }
@@ -496,7 +475,7 @@ CommandObjectBreakpointSet::Execute
             bp->GetOptions()->SetIgnoreCount(m_options.m_ignore_count);
     }
     
-    if (bp && !use_module)
+    if (bp)
     {
         Stream &output_stream = result.GetOutputStream();
         output_stream.Printf ("Breakpoint created: ");

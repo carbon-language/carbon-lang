@@ -231,6 +231,19 @@ SourceManager::GetDefaultFileAndLine (FileSpec &file_spec, uint32_t &line)
         return false;
 }
 
+void
+SourceManager::FindLinesMatchingRegex (FileSpec &file_spec,
+                        RegularExpression& regex, 
+                        uint32_t start_line, 
+                        uint32_t end_line, 
+                        std::vector<uint32_t> &match_lines)
+{
+    match_lines.clear();
+    FileSP file_sp = GetFile (file_spec);
+    if (!file_sp)
+        return;
+    return file_sp->FindLinesMatchingRegex (regex, start_line, end_line, match_lines);
+}
 
 SourceManager::File::File(const FileSpec &file_spec, Target *target) :
     m_file_spec_orig (file_spec),
@@ -368,6 +381,36 @@ SourceManager::File::DisplaySourceLines (uint32_t line, uint32_t context_before,
     return 0;
 }
 
+void
+SourceManager::File::FindLinesMatchingRegex (RegularExpression& regex, uint32_t start_line, uint32_t end_line, std::vector<uint32_t> &match_lines)
+{
+    TimeValue curr_mod_time (m_file_spec.GetModificationTime());
+    if (m_mod_time != curr_mod_time)
+    {
+        m_mod_time = curr_mod_time;
+        m_data_sp = m_file_spec.ReadFileContents ();
+        m_offsets.clear();
+    }
+    
+    match_lines.clear();
+    
+    if (!LineIsValid(start_line) || (end_line != UINT32_MAX && !LineIsValid(end_line)))
+        return;
+    if (start_line > end_line)
+        return;
+        
+    for (uint32_t line_no = start_line; line_no < end_line; line_no++)
+    {
+        std::string buffer;
+        if (!GetLine (line_no, buffer))
+            break;
+        if (regex.Execute(buffer.c_str()))
+        {
+            match_lines.push_back(line_no);
+        }
+    }
+}
+
 bool
 SourceManager::File::FileSpecMatches (const FileSpec &file_spec)
 {
@@ -455,6 +498,23 @@ SourceManager::File::CalculateLineOffsets (uint32_t line)
         assert(!"Not implemented yet");
     }
     return false;
+}
+
+bool
+SourceManager::File::GetLine (uint32_t line_no, std::string &buffer)
+{
+    if (!LineIsValid(line_no))
+        return false;
+
+    uint32_t start_offset = GetLineOffset (line_no);
+    uint32_t end_offset = GetLineOffset (line_no + 1);
+    if (end_offset == UINT32_MAX)
+    {
+        end_offset = m_data_sp->GetByteSize();
+    }
+    buffer.assign((char *) m_data_sp->GetBytes() + start_offset, end_offset - start_offset);
+    
+    return true;
 }
 
 void 

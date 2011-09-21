@@ -120,7 +120,8 @@ public:
     enum ResolverTy {
         FileLineResolver, // This is an instance of BreakpointResolverFileLine
         AddressResolver,  // This is an instance of BreakpointResolverAddress
-        NameResolver      // This is an instance of BreakpointResolverName
+        NameResolver,      // This is an instance of BreakpointResolverName
+        FileRegexResolver
     };
 
     //------------------------------------------------------------------

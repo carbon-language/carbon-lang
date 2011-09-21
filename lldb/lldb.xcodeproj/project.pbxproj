@@ -400,6 +400,8 @@
 		49C8507C1384A786007DB519 /* ProcessDataAllocator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49C850781384A0CA007DB519 /* ProcessDataAllocator.cpp */; };
 		49D8FB3913B5598F00411094 /* ClangASTImporter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49D8FB3513B558DE00411094 /* ClangASTImporter.cpp */; };
 		4C74CB6312288704006A8171 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C74CB6212288704006A8171 /* Carbon.framework */; };
+		4CAA56131422D96A001FFA01 /* BreakpointResolverFileRegex.h in Headers */ = {isa = PBXBuildFile; fileRef = 4CAA56121422D96A001FFA01 /* BreakpointResolverFileRegex.h */; };
+		4CAA56151422D986001FFA01 /* BreakpointResolverFileRegex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CAA56141422D986001FFA01 /* BreakpointResolverFileRegex.cpp */; };
 		4CABA9E0134A8BCD00539BDD /* ValueObjectMemory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CABA9DF134A8BCD00539BDD /* ValueObjectMemory.cpp */; };
 		4CCA644D13B40B82003BDF98 /* ItaniumABILanguageRuntime.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CCA643D13B40B82003BDF98 /* ItaniumABILanguageRuntime.cpp */; };
 		4CCA645013B40B82003BDF98 /* AppleObjCRuntime.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CCA644213B40B82003BDF98 /* AppleObjCRuntime.cpp */; };
@@ -408,6 +410,8 @@
 		4CCA645613B40B82003BDF98 /* AppleObjCTrampolineHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CCA644813B40B82003BDF98 /* AppleObjCTrampolineHandler.cpp */; };
 		4CCA645813B40B82003BDF98 /* AppleThreadPlanStepThroughObjCTrampoline.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CCA644A13B40B82003BDF98 /* AppleThreadPlanStepThroughObjCTrampoline.cpp */; };
 		4CD0BD0F134BFADF00CB44D4 /* ValueObjectDynamicValue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CD0BD0E134BFADF00CB44D4 /* ValueObjectDynamicValue.cpp */; };
+		4CF52AF51428291E0051E832 /* SBFileSpecList.h in Headers */ = {isa = PBXBuildFile; fileRef = 4CF52AF41428291E0051E832 /* SBFileSpecList.h */; };
+		4CF52AF8142829390051E832 /* SBFileSpecList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CF52AF7142829390051E832 /* SBFileSpecList.cpp */; };
 		94031A9E13CF486700DCFF3C /* InputReaderEZ.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94031A9D13CF486600DCFF3C /* InputReaderEZ.cpp */; };
 		9415F61813B2C0EF00A52B36 /* FormatManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9415F61713B2C0EF00A52B36 /* FormatManager.cpp */; };
 		9443B122140C18C40013457C /* SBData.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9443B121140C18C10013457C /* SBData.cpp */; };
@@ -1159,6 +1163,8 @@
 		4C98D3E1118FB98F00E575D0 /* RecordingMemoryManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RecordingMemoryManager.h; path = include/lldb/Expression/RecordingMemoryManager.h; sourceTree = "<group>"; };
 		4CA9637911B6E99A00780E28 /* CommandObjectApropos.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectApropos.cpp; path = source/Commands/CommandObjectApropos.cpp; sourceTree = "<group>"; };
 		4CA9637A11B6E99A00780E28 /* CommandObjectApropos.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectApropos.h; path = source/Commands/CommandObjectApropos.h; sourceTree = "<group>"; };
+		4CAA56121422D96A001FFA01 /* BreakpointResolverFileRegex.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BreakpointResolverFileRegex.h; path = include/lldb/Breakpoint/BreakpointResolverFileRegex.h; sourceTree = "<group>"; };
+		4CAA56141422D986001FFA01 /* BreakpointResolverFileRegex.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = BreakpointResolverFileRegex.cpp; path = source/Breakpoint/BreakpointResolverFileRegex.cpp; sourceTree = "<group>"; };
 		4CABA9DC134A8BA700539BDD /* ValueObjectMemory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ValueObjectMemory.h; path = include/lldb/Core/ValueObjectMemory.h; sourceTree = "<group>"; };
 		4CABA9DF134A8BCD00539BDD /* ValueObjectMemory.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ValueObjectMemory.cpp; path = source/Core/ValueObjectMemory.cpp; sourceTree = "<group>"; };
 		4CAFCE001101216B00CA63DB /* ThreadPlanRunToAddress.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ThreadPlanRunToAddress.h; path = include/lldb/Target/ThreadPlanRunToAddress.h; sourceTree = "<group>"; };
@@ -1186,6 +1192,8 @@
 		4CD0BD0C134BFAB600CB44D4 /* ValueObjectDynamicValue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ValueObjectDynamicValue.h; path = include/lldb/Core/ValueObjectDynamicValue.h; sourceTree = "<group>"; };
 		4CD0BD0E134BFADF00CB44D4 /* ValueObjectDynamicValue.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ValueObjectDynamicValue.cpp; path = source/Core/ValueObjectDynamicValue.cpp; sourceTree = "<group>"; };
 		4CEDAED311754F5E00E875A6 /* ThreadPlanStepUntil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ThreadPlanStepUntil.h; path = include/lldb/Target/ThreadPlanStepUntil.h; sourceTree = "<group>"; };
+		4CF52AF41428291E0051E832 /* SBFileSpecList.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SBFileSpecList.h; path = include/lldb/API/SBFileSpecList.h; sourceTree = "<group>"; };
+		4CF52AF7142829390051E832 /* SBFileSpecList.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBFileSpecList.cpp; path = source/API/SBFileSpecList.cpp; sourceTree = "<group>"; };
 		69A01E1B1236C5D400C660B5 /* Condition.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Condition.cpp; sourceTree = "<group>"; };
 		69A01E1C1236C5D400C660B5 /* Host.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Host.cpp; sourceTree = "<group>"; };
 		69A01E1E1236C5D400C660B5 /* Mutex.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Mutex.cpp; sourceTree = "<group>"; };
@@ -1685,6 +1693,8 @@
 				9A9830FD1125FC5800A56CB0 /* SBEvent.cpp */,
 				26022531115F27FA00A601A2 /* SBFileSpec.h */,
 				26022532115F281400A601A2 /* SBFileSpec.cpp */,
+				4CF52AF41428291E0051E832 /* SBFileSpecList.h */,
+				4CF52AF7142829390051E832 /* SBFileSpecList.cpp */,
 				9A633FE8112DCE3C001A7E43 /* SBFrame.h */,
 				9A633FE7112DCE3C001A7E43 /* SBFrame.cpp */,
 				26DE205211618FAC00A093E2 /* SBFunction.h */,
@@ -2176,6 +2186,8 @@
 				26D0DD5310FE555900271C65 /* BreakpointResolverAddress.cpp */,
 				26D0DD5110FE554D00271C65 /* BreakpointResolverFileLine.h */,
 				26D0DD5410FE555900271C65 /* BreakpointResolverFileLine.cpp */,
+				4CAA56121422D96A001FFA01 /* BreakpointResolverFileRegex.h */,
+				4CAA56141422D986001FFA01 /* BreakpointResolverFileRegex.cpp */,
 				26D0DD5210FE554D00271C65 /* BreakpointResolverName.h */,
 				26D0DD5510FE555900271C65 /* BreakpointResolverName.cpp */,
 				26BC7CF710F1B71400F91463 /* BreakpointSite.h */,
@@ -2754,6 +2766,8 @@
 				9A357583116CFDEE00E8ED2F /* SBValueList.h in Headers */,
 				26D265A2136B40EE002EEE45 /* SharingPtr.h in Headers */,
 				26D265BC136B4269002EEE45 /* lldb-public.h in Headers */,
+				4CAA56131422D96A001FFA01 /* BreakpointResolverFileRegex.h in Headers */,
+				4CF52AF51428291E0051E832 /* SBFileSpecList.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -3037,6 +3051,8 @@
 				26C72C961243229A0068DC16 /* SBStream.cpp in Sources */,
 				26B1FA1413380E61002886E2 /* LLDBWrapPython.cpp in Sources */,
 				9443B122140C18C40013457C /* SBData.cpp in Sources */,
+				4CAA56151422D986001FFA01 /* BreakpointResolverFileRegex.cpp in Sources */,
+				4CF52AF8142829390051E832 /* SBFileSpecList.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

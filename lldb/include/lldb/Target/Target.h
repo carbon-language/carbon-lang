@@ -244,10 +244,17 @@ public:
 
     // Use this to create a file and line breakpoint to a given module or all module it is NULL
     lldb::BreakpointSP
-    CreateBreakpoint (const FileSpec *containingModule,
+    CreateBreakpoint (const FileSpecList *containingModules,
                       const FileSpec &file,
                       uint32_t line_no,
                       bool check_inlines,
+                      bool internal = false);
+
+    // Use this to create breakpoint that matches regex against the source lines in file:
+    lldb::BreakpointSP
+    CreateBreakpoint (const FileSpecList *containingModules,
+                      const FileSpec &file,
+                      RegularExpression &source_regex,
                       bool internal = false);
 
     // Use this to create a breakpoint from a load address
@@ -264,7 +271,7 @@ public:
     // When "skip_prologue is set to eLazyBoolCalculate, we use the current target 
     // setting, else we use the values passed in
     lldb::BreakpointSP
-    CreateBreakpoint (const FileSpec *containingModule,
+    CreateBreakpoint (const FileSpecList *containingModules,
                       RegularExpression &func_regexp,
                       bool internal = false,
                       LazyBool skip_prologue = eLazyBoolCalculate);
@@ -273,7 +280,7 @@ public:
     // When "skip_prologue is set to eLazyBoolCalculate, we use the current target 
     // setting, else we use the values passed in
     lldb::BreakpointSP
-    CreateBreakpoint (const FileSpec *containingModule,
+    CreateBreakpoint (const FileSpecList *containingModules,
                       const char *func_name,
                       uint32_t func_name_type_mask, 
                       bool internal = false,
@@ -879,6 +886,9 @@ protected:
     //------------------------------------------------------------------
     lldb::SearchFilterSP
     GetSearchFilterForModule (const FileSpec *containingModule);
+
+    lldb::SearchFilterSP
+    GetSearchFilterForModuleList (const FileSpecList *containingModuleList);
 
     static void
     ImageSearchPathsChanged (const PathMappingList &path_list,

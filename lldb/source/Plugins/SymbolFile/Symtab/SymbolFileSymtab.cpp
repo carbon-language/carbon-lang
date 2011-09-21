@@ -124,7 +124,7 @@ SymbolFileSymtab::GetNumCompileUnits()
     // If we don't have any source file symbols we will just have one compile unit for
     // the entire object file
     if (m_source_indexes.empty())
-        return 1;
+        return 0;
 
     // If we have any source file symbols we will logically orgnize the object symbols
     // using these.
@@ -138,14 +138,14 @@ SymbolFileSymtab::ParseCompileUnitAtIndex(uint32_t idx)
 
     // If we don't have any source file symbols we will just have one compile unit for
     // the entire object file
-    if (m_source_indexes.empty())
-    {
-        const FileSpec &obj_file_spec = m_obj_file->GetFileSpec();
-        if (obj_file_spec)
-            cu_sp.reset(new CompileUnit(m_obj_file->GetModule(), NULL, obj_file_spec, 0, eLanguageTypeUnknown));
-
-    }
-    else if (idx < m_source_indexes.size())
+//    if (m_source_indexes.empty())
+//    {
+//        const FileSpec &obj_file_spec = m_obj_file->GetFileSpec();
+//        if (obj_file_spec)
+//            cu_sp.reset(new CompileUnit(m_obj_file->GetModule(), NULL, obj_file_spec, 0, eLanguageTypeUnknown));
+//
+//    }
+    /* else */ if (idx < m_source_indexes.size())
     {
         const Symbol *cu_symbol = m_obj_file->GetSymtab()->SymbolAtIndex(m_source_indexes[idx]);
         if (cu_symbol)

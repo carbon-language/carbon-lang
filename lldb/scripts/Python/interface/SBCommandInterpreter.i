@@ -116,8 +116,7 @@ public:
 
     int
     HandleCompletion (const char *current_line,
-                      const char *cursor,
-                      const char *last_char,
+                      uint32_t cursor_pos,
                       int match_start_point,
                       int max_return_elements,
                       lldb::SBStringList &matches);

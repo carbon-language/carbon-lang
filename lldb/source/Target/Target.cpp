@@ -16,6 +16,7 @@
 #include "lldb/Breakpoint/BreakpointResolver.h"
 #include "lldb/Breakpoint/BreakpointResolverAddress.h"
 #include "lldb/Breakpoint/BreakpointResolverFileLine.h"
+#include "lldb/Breakpoint/BreakpointResolverFileRegex.h"
 #include "lldb/Breakpoint/BreakpointResolverName.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/Event.h"
@@ -206,9 +207,21 @@ Target::GetBreakpointByID (break_id_t break_id)
 }
 
 BreakpointSP
-Target::CreateBreakpoint (const FileSpec *containingModule, const FileSpec &file, uint32_t line_no, bool check_inlines, bool internal)
+Target::CreateBreakpoint (const FileSpecList *containingModules,
+                  const FileSpec &file,
+                  RegularExpression &source_regex,
+                  bool internal)
 {
-    SearchFilterSP filter_sp(GetSearchFilterForModule (containingModule));
+    SearchFilterSP filter_sp(GetSearchFilterForModuleList (containingModules));
+    BreakpointResolverSP resolver_sp(new BreakpointResolverFileRegex (NULL, file, source_regex));
+    return CreateBreakpoint (filter_sp, resolver_sp, internal);
+}
+
+
+BreakpointSP
+Target::CreateBreakpoint (const FileSpecList *containingModules, const FileSpec &file, uint32_t line_no, bool check_inlines, bool internal)
+{
+    SearchFilterSP filter_sp(GetSearchFilterForModuleList (containingModules));
     BreakpointResolverSP resolver_sp(new BreakpointResolverFileLine (NULL, file, line_no, check_inlines));
     return CreateBreakpoint (filter_sp, resolver_sp, internal);
 }
@@ -242,7 +255,7 @@ Target::CreateBreakpoint (Address &addr, bool internal)
 }
 
 BreakpointSP
-Target::CreateBreakpoint (const FileSpec *containingModule, 
+Target::CreateBreakpoint (const FileSpecList *containingModules, 
                           const char *func_name, 
                           uint32_t func_name_type_mask, 
                           bool internal,
@@ -251,7 +264,7 @@ Target::CreateBreakpoint (const FileSpec *containingModule,
     BreakpointSP bp_sp;
     if (func_name)
     {
-        SearchFilterSP filter_sp(GetSearchFilterForModule (containingModule));
+        SearchFilterSP filter_sp(GetSearchFilterForModuleList (containingModules));
         
         BreakpointResolverSP resolver_sp (new BreakpointResolverName (NULL, 
                                                                       func_name, 
@@ -284,13 +297,33 @@ Target::GetSearchFilterForModule (const FileSpec *containingModule)
     return filter_sp;
 }
 
+SearchFilterSP
+Target::GetSearchFilterForModuleList (const FileSpecList *containingModules)
+{
+    SearchFilterSP filter_sp;
+    lldb::TargetSP target_sp = this->GetSP();
+    if (containingModules && containingModules->GetSize() != 0)
+    {
+        // TODO: We should look into sharing module based search filters
+        // across many breakpoints like we do for the simple target based one
+        filter_sp.reset (new SearchFilterByModuleList (target_sp, *containingModules));
+    }
+    else
+    {
+        if (m_search_filter_sp.get() == NULL)
+            m_search_filter_sp.reset (new SearchFilter (target_sp));
+        filter_sp = m_search_filter_sp;
+    }
+    return filter_sp;
+}
+
 BreakpointSP
-Target::CreateBreakpoint (const FileSpec *containingModule, 
+Target::CreateBreakpoint (const FileSpecList *containingModules, 
                           RegularExpression &func_regex, 
                           bool internal,
                           LazyBool skip_prologue)
 {
-    SearchFilterSP filter_sp(GetSearchFilterForModule (containingModule));
+    SearchFilterSP filter_sp(GetSearchFilterForModuleList (containingModules));
     BreakpointResolverSP resolver_sp(new BreakpointResolverName (NULL, 
                                                                  func_regex, 
                                                                  skip_prologue == eLazyBoolCalculate ? GetSkipPrologue() : skip_prologue));
