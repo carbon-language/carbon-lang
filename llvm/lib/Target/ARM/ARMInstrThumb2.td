@@ -121,7 +121,6 @@ def t2ldrlabel : Operand<i32> {
 // ADR instruction labels.
 def t2adrlabel : Operand<i32> {
   let EncoderMethod = "getT2AdrLabelOpValue";
-  let PrintMethod = "printT2AdrLabelOperand";
 }
 
 

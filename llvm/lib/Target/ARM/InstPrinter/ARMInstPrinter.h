@@ -128,7 +128,6 @@ public:
 
   void printPCLabel(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printT2LdrLabelOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
-  void printT2AdrLabelOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
 };
 
 } // end namespace llvm
