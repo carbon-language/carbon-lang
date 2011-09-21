@@ -347,6 +347,7 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
             DebugLineSection, DebugStrSection;
   OwningPtr<DIContext> diContext;
   OwningPtr<MachOObject> DSYMObj;
+  MachOObject *DbgInfoObj = MachOObj.get();
   // Try to find debug info and set up the DIContext for it.
   if (UseDbg) {
     ArrayRef<Section> DebugSections = Sections;
@@ -368,29 +369,30 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
       getSectionsAndSymbols(Header, DSYMObj.get(), 0, DSYMSections, Symbols,
                             FoundFns);
       DebugSections = DSYMSections;
+      DbgInfoObj = DSYMObj.get();
     }
 
     // Find the named debug info sections.
     for (unsigned SectIdx = 0; SectIdx != DebugSections.size(); SectIdx++) {
       if (!strcmp(DebugSections[SectIdx].Name, "__debug_abbrev"))
-        DebugAbbrevSection = DSYMObj->getData(DebugSections[SectIdx].Offset,
-                                              DebugSections[SectIdx].Size);
+        DebugAbbrevSection = DbgInfoObj->getData(DebugSections[SectIdx].Offset,
+                                                 DebugSections[SectIdx].Size);
       else if (!strcmp(DebugSections[SectIdx].Name, "__debug_info"))
-        DebugInfoSection = DSYMObj->getData(DebugSections[SectIdx].Offset,
-                                            DebugSections[SectIdx].Size);
-      else if (!strcmp(DebugSections[SectIdx].Name, "__debug_aranges"))
-        DebugArangesSection = DSYMObj->getData(DebugSections[SectIdx].Offset,
+        DebugInfoSection = DbgInfoObj->getData(DebugSections[SectIdx].Offset,
                                                DebugSections[SectIdx].Size);
+      else if (!strcmp(DebugSections[SectIdx].Name, "__debug_aranges"))
+        DebugArangesSection = DbgInfoObj->getData(DebugSections[SectIdx].Offset,
+                                                  DebugSections[SectIdx].Size);
       else if (!strcmp(DebugSections[SectIdx].Name, "__debug_line"))
-        DebugLineSection = DSYMObj->getData(DebugSections[SectIdx].Offset,
-                                            DebugSections[SectIdx].Size);
+        DebugLineSection = DbgInfoObj->getData(DebugSections[SectIdx].Offset,
+                                               DebugSections[SectIdx].Size);
       else if (!strcmp(DebugSections[SectIdx].Name, "__debug_str"))
-        DebugStrSection = DSYMObj->getData(DebugSections[SectIdx].Offset,
-                                           DebugSections[SectIdx].Size);
+        DebugStrSection = DbgInfoObj->getData(DebugSections[SectIdx].Offset,
+                                              DebugSections[SectIdx].Size);
     }
 
     // Setup the DIContext.
-    diContext.reset(DIContext::getDWARFContext(MachOObj->isLittleEndian(),
+    diContext.reset(DIContext::getDWARFContext(DbgInfoObj->isLittleEndian(),
                                                DebugInfoSection,
                                                DebugAbbrevSection,
                                                DebugArangesSection,
