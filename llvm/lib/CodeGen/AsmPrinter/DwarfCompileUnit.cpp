@@ -1081,7 +1081,7 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
              Asm->Mang->getSymbol(GV.getGlobal()));
     // Do not create specification DIE if context is either compile unit
     // or a subprogram.
-    if (GV.isDefinition() && !GVContext.isCompileUnit() &&
+    if (GVContext && GV.isDefinition() && !GVContext.isCompileUnit() &&
         !GVContext.isFile() && !isSubprogramContext(GVContext)) {
       // Create specification DIE.
       DIE *VariableSpecDIE = new DIE(dwarf::DW_TAG_variable);
