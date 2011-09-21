@@ -117,11 +117,15 @@ X86GenericDisassembler::getInstruction(MCInst &instr,
                                        raw_ostream &vStream,
                                        raw_ostream &cStream) const {
   InternalInstruction internalInstr;
+
+  dlog_t loggerFn = logger;
+  if (&vStream == &nulls())
+    loggerFn = 0; // Disable logging completely if it's going to nulls().
   
   int ret = decodeInstruction(&internalInstr,
                               regionReader,
                               (void*)&region,
-                              logger,
+                              loggerFn,
                               (void*)&vStream,
                               address,
                               fMode);
