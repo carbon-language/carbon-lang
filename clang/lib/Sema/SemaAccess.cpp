@@ -1551,8 +1551,7 @@ Sema::AccessResult Sema::CheckMemberOperatorAccess(SourceLocation OpLoc,
       Found.getAccess() == AS_public)
     return AR_accessible;
 
-  const RecordType *RT = ObjectExpr->getType()->getAs<RecordType>();
-  assert(RT && "found member operator but object expr not of record type");
+  const RecordType *RT = ObjectExpr->getType()->castAs<RecordType>();
   CXXRecordDecl *NamingClass = cast<CXXRecordDecl>(RT->getDecl());
 
   AccessTarget Entity(Context, AccessTarget::Member, NamingClass, Found,

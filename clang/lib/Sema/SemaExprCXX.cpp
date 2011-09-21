@@ -2065,7 +2065,7 @@ static ExprResult BuildCXXCastArgument(Sema &S,
                                        QualType Ty,
                                        CastKind Kind,
                                        CXXMethodDecl *Method,
-                                       NamedDecl *FoundDecl,
+                                       DeclAccessPair FoundDecl,
                                        Expr *From) {
   switch (Kind) {
   default: assert(0 && "Unhandled cast kind!");
@@ -2095,6 +2095,8 @@ static ExprResult BuildCXXCastArgument(Sema &S,
     ExprResult Result = S.BuildCXXMemberCallExpr(From, FoundDecl, Method);
     if (Result.isInvalid())
       return ExprError();
+
+    S.CheckMemberOperatorAccess(CastLoc, From, /*arg*/ 0, FoundDecl);
 
     return S.MaybeBindToTemporary(Result.get());
   }

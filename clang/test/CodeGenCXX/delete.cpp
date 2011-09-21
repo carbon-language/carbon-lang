@@ -30,7 +30,7 @@ void t4(T *t) {
 // PR5102
 template <typename T>
 class A {
-  operator T *() const;
+  public: operator T *() const;
 };
 
 void f() {

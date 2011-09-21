@@ -256,7 +256,7 @@ namespace clang {
     /// \brief The declaration that we found via name lookup, which might be
     /// the same as \c ConversionFunction or it might be a using declaration
     /// that refers to \c ConversionFunction.
-    NamedDecl *FoundConversionFunction;
+    DeclAccessPair FoundConversionFunction;
     
     void DebugPrint() const;
   };
