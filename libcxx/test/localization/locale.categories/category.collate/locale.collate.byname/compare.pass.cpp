@@ -27,7 +27,7 @@
 int main()
 {
     {
-        std::locale l("en_US");
+        std::locale l("en_US.UTF-8");
         {
             const std::collate<char>& f = std::use_facet<std::collate<char> >(l);
             std::string s2("aaaaaaA");

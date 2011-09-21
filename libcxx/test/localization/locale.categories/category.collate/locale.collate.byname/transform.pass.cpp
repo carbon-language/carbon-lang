@@ -22,9 +22,9 @@
 int main()
 {
     // Ensure that the default locale is not C.  If it is, the second tests will fail.
-    setenv("LANG", "en_US", 1);
+    setenv("LANG", "en_US.UTF-8", 1);
     {
-        std::locale l("en_US");
+        std::locale l("en_US.UTF-8");
         {
             std::string x("1234");
             const std::collate<char>& f = std::use_facet<std::collate<char> >(l);

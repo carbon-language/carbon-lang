@@ -21,7 +21,7 @@ int main()
         assert(loc.name() == "C");
     }
     {
-        std::locale loc("en_US");
-        assert(loc.name() == "en_US");
+        std::locale loc("en_US.UTF-8");
+        assert(loc.name() == "en_US.UTF-8");
     }
 }

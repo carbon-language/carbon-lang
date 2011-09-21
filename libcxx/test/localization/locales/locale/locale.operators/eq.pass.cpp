@@ -18,8 +18,8 @@ int main()
 {
     std::locale cloc;
     std::locale copy(cloc);
-    std::locale n1("en_US");
-    std::locale n2("en_US");
+    std::locale n1("en_US.UTF-8");
+    std::locale n2("en_US.UTF-8");
     std::locale noname1 = n1.combine<std::ctype<char> >(cloc);
     std::locale nonamec = noname1;
     std::locale noname2 = n1.combine<std::ctype<char> >(cloc);

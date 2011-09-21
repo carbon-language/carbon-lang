@@ -28,7 +28,7 @@
 int main()
 {
     {
-        std::locale l("en_US");
+        std::locale l("en_US.UTF-8");
         {
             assert(std::has_facet<std::ctype_byname<char> >(l));
             assert(&std::use_facet<std::ctype<char> >(l)

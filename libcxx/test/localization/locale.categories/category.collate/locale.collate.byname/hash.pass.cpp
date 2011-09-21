@@ -21,7 +21,7 @@
 
 int main()
 {
-    std::locale l("en_US");
+    std::locale l("en_US.UTF-8");
     {
         std::string x1("1234");
         std::string x2("12345");

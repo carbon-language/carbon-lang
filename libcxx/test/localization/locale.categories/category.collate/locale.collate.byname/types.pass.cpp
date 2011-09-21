@@ -29,7 +29,7 @@
 
 int main()
 {
-    std::locale l("en_US");
+    std::locale l("en_US.UTF-8");
     {
         assert(std::has_facet<std::collate_byname<char> >(l));
         assert(&std::use_facet<std::collate<char> >(l)

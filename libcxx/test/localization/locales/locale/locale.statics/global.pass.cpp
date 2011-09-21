@@ -54,8 +54,8 @@ int main()
     std::locale loc;
     assert(loc.name() == "C");
     check(loc);
-    assert(std::locale::global(std::locale("en_US")) == loc);
+    assert(std::locale::global(std::locale("en_US.UTF-8")) == loc);
     std::locale loc2;
     check(loc2);
-    assert(loc2 == std::locale("en_US"));
+    assert(loc2 == std::locale("en_US.UTF-8"));
 }
