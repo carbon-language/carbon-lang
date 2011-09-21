@@ -500,6 +500,8 @@ SDValue DAGTypeLegalizer::PromoteIntRes_SELECT_CC(SDNode *N) {
 
 SDValue DAGTypeLegalizer::PromoteIntRes_SETCC(SDNode *N) {
   EVT SVT = TLI.getSetCCResultType(N->getOperand(0).getValueType());
+  // Vector setcc result types need to be leglized.
+  SVT = TLI.getTypeToTransformTo(*DAG.getContext(), SVT);
 
   DebugLoc dl = N->getDebugLoc();
   assert(SVT.isVector() == N->getOperand(0).getValueType().isVector() &&
