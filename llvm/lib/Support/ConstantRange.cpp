@@ -55,7 +55,7 @@ ConstantRange ConstantRange::makeICmpRegion(unsigned Pred,
 
   uint32_t W = CR.getBitWidth();
   switch (Pred) {
-    default: assert(!"Invalid ICmp predicate to makeICmpRegion()");
+    default: assert(0 && "Invalid ICmp predicate to makeICmpRegion()");
     case CmpInst::ICMP_EQ:
       return CR;
     case CmpInst::ICMP_NE:

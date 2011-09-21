@@ -105,7 +105,7 @@ Constant *Constant::getNullValue(Type *Ty) {
     return ConstantAggregateZero::get(Ty);
   default:
     // Function, Label, or Opaque type?
-    assert(!"Cannot create a null constant of that type!");
+    assert(0 && "Cannot create a null constant of that type!");
     return 0;
   }
 }
