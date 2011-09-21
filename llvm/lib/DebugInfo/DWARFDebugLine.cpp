@@ -116,17 +116,16 @@ DWARFDebugLine::getLineTable(uint32_t offset) const {
 const DWARFDebugLine::LineTable *
 DWARFDebugLine::getOrParseLineTable(DataExtractor debug_line_data,
                                     uint32_t offset) {
-  LineTableIter pos = LineTableMap.find(offset);
-  if (pos == LineTableMap.end()) {
+  std::pair<LineTableIter, bool> pos =
+    LineTableMap.insert(LineTableMapTy::value_type(offset, LineTable()));
+  if (pos.second) {
     // Parse and cache the line table for at this offset.
     State state;
     if (!parseStatementTable(debug_line_data, &offset, state))
       return 0;
-    // FIXME: double lookup.
-    LineTableMap[offset] = state;
-    return &LineTableMap[offset];
+    pos.first->second = state;
   }
-  return &pos->second;
+  return &pos.first->second;
 }
 
 bool
