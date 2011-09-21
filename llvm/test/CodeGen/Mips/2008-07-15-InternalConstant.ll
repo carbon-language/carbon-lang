@@ -1,25 +1,23 @@
-; DISABLED: llc < %s -march=mips -o %t
-; DISABLED: grep {rodata.str1.4,"aMS",@progbits}  %t | count 1
-; DISABLED: grep {r.data,}  %t | count 1
-; DISABLED: grep {\%hi} %t | count 2
-; DISABLED: grep {\%lo} %t | count 2
-; DISABLED: not grep {gp_rel} %t
-; RUN: false
-+; XFAIL: *
+; RUN: llc -march=mips -relocation-model=static  < %s | FileCheck %s
 
-
-target datalayout = "e-p:32:32:32-i1:8:8-i8:8:32-i16:16:32-i32:32:32-i64:32:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64"
-target triple = "mipsallegrexel-unknown-psp-elf"
 @.str = internal unnamed_addr constant [10 x i8] c"AAAAAAAAA\00"
-@i0 = internal unnamed_addr constant [5 x i32] [ i32 0, i32 1, i32 2, i32 3, i32 4 ] 
+@i0 = internal unnamed_addr constant [5 x i32] [ i32 0, i32 1, i32 2, i32 3, i32 4 ]
 
 define i8* @foo() nounwind {
 entry:
+; CHECK: foo
+; CHECK: %hi(.str)
+; CHECK: %lo(.str)
 	ret i8* getelementptr ([10 x i8]* @.str, i32 0, i32 0)
 }
 
 define i32* @bar() nounwind  {
 entry:
+; CHECK: bar
+; CHECK: %hi(i0)
+; CHECK: %lo(i0)
   ret i32* getelementptr ([5 x i32]* @i0, i32 0, i32 0)
 }
 
+; CHECK: rodata.str1.4,"aMS",@progbits
+; CHECK: rodata,"a",@progbits
