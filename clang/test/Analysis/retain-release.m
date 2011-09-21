@@ -652,6 +652,12 @@ void rdar6704930(unsigned char *s, unsigned int length) {
     [window release];
     [super dealloc];
 }
+
+- (void)radar10102244 {
+ NSMutableDictionary *dict = [[NSMutableDictionary dictionaryWithCapacity:4] retain]; // expected-warning{{leak}} 
+ if (window) 
+   NSLog(@"%@", window);    
+}
 @end
 
 //===----------------------------------------------------------------------===//
@@ -1444,7 +1450,7 @@ static void rdar_8724287(CFErrorRef error)
     while (error_to_dump != ((void*)0)) {
         CFDictionaryRef info;
 
-        info = CFErrorCopyUserInfo(error_to_dump); // expected-warning{{Potential leak of an object allocated on line 1447 and stored into 'info'}}
+        info = CFErrorCopyUserInfo(error_to_dump); // expected-warning{{Potential leak of an object allocated on line}}
 
         if (info != ((void*)0)) {
         }

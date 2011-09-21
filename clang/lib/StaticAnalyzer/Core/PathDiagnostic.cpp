@@ -228,7 +228,8 @@ PathDiagnosticLocation PathDiagnosticLocation::createSingleLocation(
 }
 
 FullSourceLoc
-  PathDiagnosticLocation::genLocation(SourceLocation L, LocationOrAnalysisContext LAC) const {
+  PathDiagnosticLocation::genLocation(SourceLocation L,
+                                      LocationOrAnalysisContext LAC) const {
   assert(isValid());
   // Note that we want a 'switch' here so that the compiler can warn us in
   // case we add more cases.
@@ -247,13 +248,13 @@ FullSourceLoc
 }
 
 PathDiagnosticRange
-  PathDiagnosticLocation::genRange(SourceLocation L, LocationOrAnalysisContext LAC) const {
+  PathDiagnosticLocation::genRange(LocationOrAnalysisContext LAC) const {
   assert(isValid());
   // Note that we want a 'switch' here so that the compiler can warn us in
   // case we add more cases.
   switch (K) {
     case SingleLocK:
-      return PathDiagnosticRange(SourceRange(L,L), true);
+      return PathDiagnosticRange(SourceRange(Loc,Loc), true);
     case RangeK:
       break;
     case StmtK: {
@@ -286,8 +287,10 @@ PathDiagnosticRange
           return SourceRange(L, L);
         }
       }
-
-      return S->getSourceRange();
+      SourceRange R = S->getSourceRange();
+      if (R.isValid())
+        return R;
+      break;  
     }
     case DeclK:
       if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D))
@@ -302,7 +305,7 @@ PathDiagnosticRange
       }
   }
 
-  return SourceRange(L,L);
+  return SourceRange(Loc,Loc);
 }
 
 void PathDiagnosticLocation::flatten() {

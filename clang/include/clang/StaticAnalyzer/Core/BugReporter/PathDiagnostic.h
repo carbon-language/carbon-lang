@@ -104,21 +104,22 @@ private:
   PathDiagnosticLocation(SourceLocation L, const SourceManager &sm,
                          Kind kind)
     : K(kind), S(0), D(0), SM(&sm),
-      Loc(genLocation(L)), Range(genRange(L)) {}
+      Loc(genLocation(L)), Range(genRange()) {
+    assert(Loc.isValid());
+    assert(Range.isValid());
+  }
 
   FullSourceLoc
     genLocation(SourceLocation L = SourceLocation(),
                 LocationOrAnalysisContext LAC = (AnalysisContext*)0) const;
 
   PathDiagnosticRange
-    genRange(SourceLocation L = SourceLocation(),
-             LocationOrAnalysisContext LAC = (AnalysisContext*)0) const;
+    genRange(LocationOrAnalysisContext LAC = (AnalysisContext*)0) const;
 
 public:
   /// Create an invalid location.
   PathDiagnosticLocation()
-    : K(SingleLocK), S(0), D(0), SM(0) {
-  }
+    : K(SingleLocK), S(0), D(0), SM(0) {}
 
   /// Create a location corresponding to the given statement.
   PathDiagnosticLocation(const Stmt *s,
@@ -126,13 +127,17 @@ public:
                          LocationOrAnalysisContext lac)
     : K(StmtK), S(s), D(0), SM(&sm),
       Loc(genLocation(SourceLocation(), lac)),
-      Range(genRange(SourceLocation(), lac)) {}
-
+      Range(genRange(lac)) {
+    assert(Loc.isValid());
+    assert(Range.isValid());
+  }
 
   /// Create a location corresponding to the given declaration.
   PathDiagnosticLocation(const Decl *d, const SourceManager &sm)
     : K(DeclK), S(0), D(d), SM(&sm),
       Loc(genLocation()), Range(genRange()) {
+    assert(Loc.isValid());
+    assert(Range.isValid());
   }
 
   /// Create a location corresponding to the given declaration.
@@ -291,9 +296,15 @@ public:
 
   Kind getKind() const { return kind; }
 
-  void addRange(SourceRange R) { ranges.push_back(R); }
+  void addRange(SourceRange R) {
+    if (!R.isValid())
+      return;
+    ranges.push_back(R);
+  }
 
   void addRange(SourceLocation B, SourceLocation E) {
+    if (!B.isValid() || !E.isValid())
+      return;
     ranges.push_back(SourceRange(B,E));
   }
 
@@ -338,7 +349,7 @@ public:
                           PathDiagnosticPiece::Kind k,
                           bool addPosRange = true)
   : PathDiagnosticPiece(s, k), Pos(pos) {
-    assert(Pos.asLocation().isValid() &&
+    assert(Pos.isValid() && Pos.asLocation().isValid() &&
            "PathDiagnosticSpotPiece's must have a valid location.");
     if (addPosRange && Pos.hasRange()) addRange(Pos.asRange());
   }
