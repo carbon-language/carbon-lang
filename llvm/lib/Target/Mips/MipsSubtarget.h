@@ -108,8 +108,8 @@ public:
   bool hasMips32() const { return MipsArchVersion >= Mips32; }
   bool hasMips32r2() const { return MipsArchVersion == Mips32r2 ||
                                    MipsArchVersion == Mips64r2; }
-  bool hassMips64() const { return MipsArchVersion >= Mips64; }
-  bool hassMips64r2() const { return MipsArchVersion == Mips64r2; }
+  bool hasMips64() const { return MipsArchVersion >= Mips64; }
+  bool hasMips64r2() const { return MipsArchVersion == Mips64r2; }
 
   bool isLittle() const { return IsLittle; }
   bool isFP64bit() const { return IsFP64bit; }
