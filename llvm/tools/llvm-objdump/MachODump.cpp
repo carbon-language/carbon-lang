@@ -346,11 +346,11 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
   StringRef DebugAbbrevSection, DebugInfoSection, DebugArangesSection,
             DebugLineSection, DebugStrSection;
   OwningPtr<DIContext> diContext;
+  OwningPtr<MachOObject> DSYMObj;
   // Try to find debug info and set up the DIContext for it.
   if (UseDbg) {
     ArrayRef<Section> DebugSections = Sections;
     std::vector<Section> DSYMSections;
-    OwningPtr<MachOObject> DSYMObj;
 
     // A separate DSym file path was specified, parse it as a macho file,
     // get the sections and supply it to the section name parsing machinery.
