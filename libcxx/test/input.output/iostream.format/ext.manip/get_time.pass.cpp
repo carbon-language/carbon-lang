@@ -39,7 +39,7 @@ int main()
     {
         testbuf<char> sb("  Sat Dec 31 23:55:59 2061");
         std::istream is(&sb);
-        is.imbue(std::locale("en_US"));
+        is.imbue(std::locale("en_US.UTF-8"));
         std::tm t = {0};
         is >> std::get_time(&t, "%c");
         assert(t.tm_sec == 59);
@@ -55,7 +55,7 @@ int main()
     {
         testbuf<wchar_t> sb(L"  Sat Dec 31 23:55:59 2061");
         std::wistream is(&sb);
-        is.imbue(std::locale("en_US"));
+        is.imbue(std::locale("en_US.UTF-8"));
         std::tm t = {0};
         is >> std::get_time(&t, L"%c");
         assert(t.tm_sec == 59);

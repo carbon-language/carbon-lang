@@ -51,7 +51,7 @@ int main()
     {
         testbuf<char> sb;
         std::ostream os(&sb);
-        os.imbue(std::locale("en_US"));
+        os.imbue(std::locale("en_US.UTF-8"));
         showbase(os);
         long double x = -123456789;
         os << std::put_money(x, false);
@@ -60,7 +60,7 @@ int main()
     {
         testbuf<char> sb;
         std::ostream os(&sb);
-        os.imbue(std::locale("en_US"));
+        os.imbue(std::locale("en_US.UTF-8"));
         showbase(os);
         long double x = -123456789;
         os << std::put_money(x, true);
@@ -69,7 +69,7 @@ int main()
     {
         testbuf<wchar_t> sb;
         std::wostream os(&sb);
-        os.imbue(std::locale("en_US"));
+        os.imbue(std::locale("en_US.UTF-8"));
         showbase(os);
         long double x = -123456789;
         os << std::put_money(x, false);
@@ -78,7 +78,7 @@ int main()
     {
         testbuf<wchar_t> sb;
         std::wostream os(&sb);
-        os.imbue(std::locale("en_US"));
+        os.imbue(std::locale("en_US.UTF-8"));
         showbase(os);
         long double x = -123456789;
         os << std::put_money(x, true);

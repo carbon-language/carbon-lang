@@ -39,7 +39,7 @@ void f1(std::ios_base::event ev, std::ios_base& stream, int index)
         assert(!f1_called);
         assert( f2_called);
         assert( f3_called);
-        assert(stream.getloc().name() == "en_US");
+        assert(stream.getloc().name() == "en_US.UTF-8");
         assert(index == 4);
         f1_called = true;
     }
@@ -52,7 +52,7 @@ void f2(std::ios_base::event ev, std::ios_base& stream, int index)
         assert(!f1_called);
         assert(!f2_called);
         assert( f3_called);
-        assert(stream.getloc().name() == "en_US");
+        assert(stream.getloc().name() == "en_US.UTF-8");
         assert(index == 5);
         f2_called = true;
     }
@@ -65,7 +65,7 @@ void f3(std::ios_base::event ev, std::ios_base& stream, int index)
         assert(!f1_called);
         assert(!f2_called);
         assert(!f3_called);
-        assert(stream.getloc().name() == "en_US");
+        assert(stream.getloc().name() == "en_US.UTF-8");
         assert(index == 6);
         f3_called = true;
     }
@@ -78,9 +78,9 @@ int main()
     b.register_callback(f1, 4);
     b.register_callback(f2, 5);
     b.register_callback(f3, 6);
-    std::locale l = b.imbue(std::locale("en_US"));
+    std::locale l = b.imbue(std::locale("en_US.UTF-8"));
     assert(l.name() == std::string("C"));
-    assert(b.getloc().name() == std::string("en_US"));
+    assert(b.getloc().name() == std::string("en_US.UTF-8"));
     assert(f1_called);
     assert(f2_called);
     assert(f3_called);
