@@ -211,6 +211,29 @@ void ARMInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
   }
 }
 
+void ARMInstPrinter::printT2LdrLabelOperand(const MCInst *MI, unsigned OpNum,
+                                       raw_ostream &O) {
+  const MCOperand &MO1 = MI->getOperand(OpNum);
+  if (MO1.isExpr())
+    O << *MO1.getExpr();
+  else if (MO1.isImm())
+    O << "[pc, #" << MO1.getImm() << "]";
+  else
+    llvm_unreachable("Unknown LDR label operand?");
+}
+
+void ARMInstPrinter::printT2AdrLabelOperand(const MCInst *MI, unsigned OpNum,
+                                       raw_ostream &O) {
+  const MCOperand &MO1 = MI->getOperand(OpNum);
+  if (MO1.isExpr())
+    O << *MO1.getExpr();
+  else if (MO1.isImm())
+    O << "[pc, #" << MO1.getImm() << "]";
+  else
+    llvm_unreachable("Unknown LDR label operand?");
+}
+
+
 // so_reg is a 4-operand unit corresponding to register forms of the A5.1
 // "Addressing Mode 1 - Data-processing operands" forms.  This includes:
 //    REG 0   0           - e.g. R5

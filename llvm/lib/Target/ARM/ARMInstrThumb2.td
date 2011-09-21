@@ -114,12 +114,14 @@ def t2addrmode_imm12 : Operand<i32>,
 // t2ldrlabel  := imm12
 def t2ldrlabel : Operand<i32> {
   let EncoderMethod = "getAddrModeImm12OpValue";
+  let PrintMethod = "printT2LdrLabelOperand";
 }
 
 
 // ADR instruction labels.
 def t2adrlabel : Operand<i32> {
   let EncoderMethod = "getT2AdrLabelOpValue";
+  let PrintMethod = "printT2AdrLabelOperand";
 }
 
 

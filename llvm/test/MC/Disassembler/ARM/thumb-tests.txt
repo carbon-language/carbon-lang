@@ -42,7 +42,7 @@
 # CHECK:	str	r2, [r5, r3]
 0xea 0x50
 
-# CHECK:	ldrb.w	r8, #-24
+# CHECK:	ldrb.w	r8, [pc, #-24]
 0x1f 0xf8 0x18 0x80
 
 # CHECK:	ldrd	r0, r1, [r7, #64]!
