@@ -1167,6 +1167,9 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   if (emitPseudoExpansionLowering(OutStreamer, MI))
     return;
 
+  assert(!convertAddSubFlagsOpcode(MI->getOpcode()) &&
+         "Pseudo flag setting opcode should be expanded early");
+
   // Check for manual lowerings.
   unsigned Opc = MI->getOpcode();
   switch (Opc) {

@@ -5752,40 +5752,39 @@ ARMTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   }
 }
 
-/// Generally, ARM instructions may be optionally encoded with a 's'
-/// bit. However, some opcodes have a compact encoding that forces an implicit
-/// 's' bit. List these exceptions here.
-static bool hasForcedCPSRDef(const MCInstrDesc &MCID) {
-  switch (MCID.getOpcode()) {
-  case ARM::t2ADDSri:
-  case ARM::t2ADDSrr:
-  case ARM::t2ADDSrs:
-  case ARM::t2SUBSri:
-  case ARM::t2SUBSrr:
-  case ARM::t2SUBSrs:
-    return true;
-  }
-  return false;
-}
-
 void ARMTargetLowering::AdjustInstrPostInstrSelection(MachineInstr *MI,
                                                       SDNode *Node) const {
+  const MCInstrDesc &MCID = MI->getDesc();
+  if (!MCID.hasPostISelHook()) {
+    assert(!convertAddSubFlagsOpcode(MI->getOpcode()) &&
+           "Pseudo flag-setting opcodes must be marked with 'hasPostISelHook'");
+    return;
+  }
+
   // Adjust potentially 's' setting instructions after isel, i.e. ADC, SBC, RSB,
   // RSC. Coming out of isel, they have an implicit CPSR def, but the optional
   // operand is still set to noreg. If needed, set the optional operand's
   // register to CPSR, and remove the redundant implicit def.
+  //
+  // e.g. ADCS (...opt:%noreg, CPSR<imp-def>) -> ADC (... opt:CPSR<def>).
 
-  const MCInstrDesc &MCID = MI->getDesc();
+  // Rename pseudo opcodes.
+  unsigned NewOpc = convertAddSubFlagsOpcode(MI->getOpcode());
+  if (NewOpc) {
+    const ARMBaseInstrInfo *TII =
+      static_cast<const ARMBaseInstrInfo*>(getTargetMachine().getInstrInfo());
+    MI->setDesc(TII->get(NewOpc));
+  }
   unsigned ccOutIdx = MCID.getNumOperands() - 1;
-  bool forcedCPSR = hasForcedCPSRDef(MCID);
 
   // Any ARM instruction that sets the 's' bit should specify an optional
   // "cc_out" operand in the last operand position.
   if (!MCID.hasOptionalDef() || !MCID.OpInfo[ccOutIdx].isOptionalDef()) {
-    assert(!forcedCPSR && "Optional cc_out operand required");
+    assert(!NewOpc && "Optional cc_out operand required");
     return;
   }
-  // Look for an implicit def of CPSR added by MachineInstr ctor.
+  // Look for an implicit def of CPSR added by MachineInstr ctor. Remove it
+  // since we already have an optional CPSR def.
   bool definesCPSR = false;
   bool deadCPSR = false;
   for (unsigned i = MCID.getNumOperands(), e = MI->getNumOperands();
@@ -5800,20 +5799,21 @@ void ARMTargetLowering::AdjustInstrPostInstrSelection(MachineInstr *MI,
     }
   }
   if (!definesCPSR) {
-    assert(!forcedCPSR && "Optional cc_out operand required");
+    assert(!NewOpc && "Optional cc_out operand required");
     return;
   }
   assert(deadCPSR == !Node->hasAnyUseOfValue(1) && "inconsistent dead flag");
-
-  // If possible, select the encoding that does not set the 's' bit.
-  if (deadCPSR && !forcedCPSR)
+  if (deadCPSR) {
+    assert(!MI->getOperand(ccOutIdx).getReg() &&
+           "expect uninitialized optional cc_out operand");
     return;
+  }
 
+  // If this instruction was defined with an optional CPSR def and its dag node
+  // had a live implicit CPSR def, then activate the optional CPSR def.
   MachineOperand &MO = MI->getOperand(ccOutIdx);
   MO.setReg(ARM::CPSR);
   MO.setIsDef(true);
-  if (deadCPSR)
-    MO.setIsDead();
 }
 
 //===----------------------------------------------------------------------===//

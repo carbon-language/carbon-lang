@@ -763,7 +763,9 @@ EmitMachineNode(SDNode *Node, bool IsClone, bool IsCloned,
     }
 
   // Run post-isel target hook to adjust this instruction if needed.
+#ifdef NDEBUG
   if (II.hasPostISelHook())
+#endif
     TLI->AdjustInstrPostInstrSelection(MI, Node);
 }
 

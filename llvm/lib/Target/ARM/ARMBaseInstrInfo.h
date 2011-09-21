@@ -246,6 +246,9 @@ private:
   bool hasLowDefLatency(const InstrItineraryData *ItinData,
                         const MachineInstr *DefMI, unsigned DefIdx) const;
 
+  /// verifyInstruction - Perform target specific instruction verification.
+  bool verifyInstruction(const MachineInstr *MI, StringRef &ErrInfo) const;
+
 private:
   /// Modeling special VFP / NEON fp MLA / MLS hazards.
 
@@ -327,6 +330,12 @@ bool isIndirectBranchOpcode(int Opc) {
 ARMCC::CondCodes getInstrPredicate(const MachineInstr *MI, unsigned &PredReg);
 
 int getMatchingCondBranchOpcode(int Opc);
+
+
+/// Map pseudo instructions that imply an 'S' bit onto real opcodes. Whether
+/// the instruction is encoded with an 'S' bit is determined by the optional
+/// CPSR def operand.
+unsigned convertAddSubFlagsOpcode(unsigned OldOpc);
 
 /// emitARMRegPlusImmediate / emitT2RegPlusImmediate - Emits a series of
 /// instructions to materializea destreg = basereg + immediate in ARM / Thumb2

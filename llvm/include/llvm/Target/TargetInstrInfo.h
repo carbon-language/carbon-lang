@@ -49,7 +49,7 @@ public:
     : CallFrameSetupOpcode(CFSetupOpcode),
       CallFrameDestroyOpcode(CFDestroyOpcode) {
   }
-    
+
   virtual ~TargetInstrInfo();
 
   /// getRegClass - Givem a machine instruction descriptor, returns the register
@@ -670,6 +670,12 @@ public:
   virtual
   bool hasLowDefLatency(const InstrItineraryData *ItinData,
                         const MachineInstr *DefMI, unsigned DefIdx) const;
+
+  /// verifyInstruction - Perform target specific instruction verification.
+  virtual
+  bool verifyInstruction(const MachineInstr *MI, StringRef &ErrInfo) const {
+    return true;
+  }
 
 private:
   int CallFrameSetupOpcode, CallFrameDestroyOpcode;

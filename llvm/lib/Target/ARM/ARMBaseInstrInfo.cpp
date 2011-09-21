@@ -1410,6 +1410,57 @@ int llvm::getMatchingCondBranchOpcode(int Opc) {
 }
 
 
+/// Map pseudo instructions that imply an 'S' bit onto real opcodes. Whether the
+/// instruction is encoded with an 'S' bit is determined by the optional CPSR
+/// def operand.
+///
+/// This will go away once we can teach tblgen how to set the optional CPSR def
+/// operand itself.
+struct AddSubFlagsOpcodePair {
+  unsigned PseudoOpc;
+  unsigned MachineOpc;
+};
+
+static AddSubFlagsOpcodePair AddSubFlagsOpcodeMap[] = {
+  {ARM::ADDSri, ARM::ADDri},
+  {ARM::ADDSrr, ARM::ADDrr},
+  {ARM::ADDSrsi, ARM::ADDrsi},
+  {ARM::ADDSrsr, ARM::ADDrsr},
+
+  {ARM::SUBSri, ARM::SUBri},
+  {ARM::SUBSrr, ARM::SUBrr},
+  {ARM::SUBSrsi, ARM::SUBrsi},
+  {ARM::SUBSrsr, ARM::SUBrsr},
+
+  {ARM::RSBSri, ARM::RSBri},
+  {ARM::RSBSrr, ARM::RSBrr},
+  {ARM::RSBSrsi, ARM::RSBrsi},
+  {ARM::RSBSrsr, ARM::RSBrsr},
+
+  {ARM::t2ADDSri, ARM::t2ADDri},
+  {ARM::t2ADDSrr, ARM::t2ADDrr},
+  {ARM::t2ADDSrs, ARM::t2ADDrs},
+
+  {ARM::t2SUBSri, ARM::t2SUBri},
+  {ARM::t2SUBSrr, ARM::t2SUBrr},
+  {ARM::t2SUBSrs, ARM::t2SUBrs},
+
+  {ARM::t2RSBSri, ARM::t2RSBri},
+  {ARM::t2RSBSrs, ARM::t2RSBrs},
+};
+
+unsigned llvm::convertAddSubFlagsOpcode(unsigned OldOpc) {
+  static const int NPairs =
+    sizeof(AddSubFlagsOpcodeMap) / sizeof(AddSubFlagsOpcodePair);
+  for (AddSubFlagsOpcodePair *OpcPair = &AddSubFlagsOpcodeMap[0],
+         *End = &AddSubFlagsOpcodeMap[NPairs]; OpcPair != End; ++OpcPair) {
+    if (OldOpc == OpcPair->PseudoOpc) {
+      return OpcPair->MachineOpc;
+    }
+  }
+  return 0;
+}
+
 void llvm::emitARMRegPlusImmediate(MachineBasicBlock &MBB,
                                MachineBasicBlock::iterator &MBBI, DebugLoc dl,
                                unsigned DestReg, unsigned BaseReg, int NumBytes,
@@ -2643,6 +2694,15 @@ hasLowDefLatency(const InstrItineraryData *ItinData,
     return (DefCycle != -1 && DefCycle <= 2);
   }
   return false;
+}
+
+bool ARMBaseInstrInfo::verifyInstruction(const MachineInstr *MI,
+                                         StringRef &ErrInfo) const {
+  if (convertAddSubFlagsOpcode(MI->getOpcode())) {
+    ErrInfo = "Pseudo flag setting opcodes only exist in Selection DAG";
+    return false;
+  }
+  return true;
 }
 
 bool
