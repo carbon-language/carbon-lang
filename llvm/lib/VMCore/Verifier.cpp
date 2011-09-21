@@ -1167,6 +1167,12 @@ void Verifier::visitCallInst(CallInst &CI) {
 
 void Verifier::visitInvokeInst(InvokeInst &II) {
   VerifyCallSite(&II);
+
+  // Verify that there is a landingpad instruction as the first non-PHI
+  // instruction of the 'unwind' destination.
+  Assert1(II.getUnwindDest()->isLandingPad(),
+          "The unwind destination does not have a landingpad instruction!",&II);
+
   visitTerminatorInst(II);
 }
 
