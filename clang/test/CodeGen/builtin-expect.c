@@ -18,7 +18,7 @@ int main() {
 }
 
 // CHECK: call void @isigprocmask()
-// CHECK: [[C:%.*]] = call i64 bitcast (i64 (...)* @bar to i64 ()*)()
+// CHECK: [[C:%.*]] = call i64 (...)* @bar()
 
 
 // CHECK: @test1
