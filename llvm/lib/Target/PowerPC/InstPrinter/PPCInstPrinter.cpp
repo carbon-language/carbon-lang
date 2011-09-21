@@ -52,7 +52,7 @@ void PPCInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
       printOperand(MI, 1, O);
       O << ", " << (unsigned int)SH;
 
-      if (CommentStream) printAnnotation(*CommentStream, Annot);
+      if (CommentStream) printAnnotation(O, Annot);
       return;
     }
   }
@@ -63,7 +63,7 @@ void PPCInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
     printOperand(MI, 0, O);
     O << ", ";
     printOperand(MI, 1, O);
-    if (CommentStream) printAnnotation(*CommentStream, Annot);
+    if (CommentStream) printAnnotation(O, Annot);
     return;
   }
   
@@ -77,13 +77,13 @@ void PPCInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
       O << ", ";
       printOperand(MI, 1, O);
       O << ", " << (unsigned int)SH;
-      if (CommentStream) printAnnotation(*CommentStream, Annot);
+      if (CommentStream) printAnnotation(O, Annot);
       return;
     }
   }
   
   printInstruction(MI, O);
-  if (CommentStream) printAnnotation(*CommentStream, Annot);
+  if (CommentStream) printAnnotation(O, Annot);
 }
 
 

@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/MC/MCInstPrinter.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
@@ -26,5 +27,10 @@ void MCInstPrinter::printRegName(raw_ostream &OS, unsigned RegNo) const {
 }
 
 void MCInstPrinter::printAnnotation(raw_ostream &OS, StringRef Annot) {
-  if (!Annot.empty()) OS << Annot << "\n";
+  if (!Annot.empty()) {
+    if (CommentStream)
+      (*CommentStream) << Annot << "\n";
+    else
+      OS << " " << MAI.getCommentString() << " " << Annot << "\n";
+  }
 }

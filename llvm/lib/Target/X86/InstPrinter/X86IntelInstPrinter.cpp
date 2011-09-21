@@ -38,7 +38,7 @@ void X86IntelInstPrinter::printInst(const MCInst *MI, raw_ostream &OS,
   
   // If verbose assembly is enabled, we can print some informative comments.
   if (CommentStream) {
-    printAnnotation(*CommentStream, Annot);
+    printAnnotation(OS, Annot);
     EmitAnyX86InstComments(MI, *CommentStream, getRegisterName);
   }
 }

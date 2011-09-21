@@ -72,7 +72,7 @@ void MipsInstPrinter::printRegName(raw_ostream &OS, unsigned RegNo) const {
 void MipsInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
                                 StringRef Annot) {
   printInstruction(MI, O);
-  if (CommentStream) printAnnotation(*CommentStream, Annot);
+  if (CommentStream) printAnnotation(O, Annot);
 }
 
 void MipsInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,

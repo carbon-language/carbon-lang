@@ -82,8 +82,6 @@ LLVMDisasmContextRef LLVMCreateDisasm(const char *TripleName, void *DisInfo,
                                                 Ctx, DisAsm, IP);
   assert(DC && "Allocation failure!");
 
-  IP->setCommentStream(DC->CommentStream);
-
   return DC;
 }
 
