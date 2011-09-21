@@ -109,7 +109,7 @@ namespace {
         State = 1;
 
       case 1:
-        // Find all 'return' and 'unwind' instructions.
+        // Find all 'return', 'resume', and 'unwind' instructions.
         while (StateBB != StateE) {
           BasicBlock *CurBB = StateBB++;
 
@@ -141,9 +141,21 @@ namespace {
           return 0;
 
         // Create a cleanup block.
-        BasicBlock *CleanupBB = BasicBlock::Create(F.getContext(),
-                                                   CleanupBBName, &F);
-        UnwindInst *UI = new UnwindInst(F.getContext(), CleanupBB);
+        LLVMContext &C = F.getContext();
+        BasicBlock *CleanupBB = BasicBlock::Create(C, CleanupBBName, &F);
+        Type *ExnTy = StructType::get(Type::getInt8PtrTy(C),
+                                      Type::getInt32Ty(C), NULL);
+        // FIXME: Assuming the C++ personality function probably isn't the best
+        //        thing in the world.
+        Constant *PersFn =
+          F.getParent()->
+          getOrInsertFunction("__gxx_personality_v0",
+                              FunctionType::get(Type::getInt32Ty(C), true));
+        LandingPadInst *LPad = LandingPadInst::Create(ExnTy, PersFn, 1,
+                                                      "cleanup.lpad",
+                                                      CleanupBB);
+        LPad->setCleanup(true);
+        ResumeInst *RI = ResumeInst::Create(LPad, CleanupBB);
 
         // Transform the 'call' instructions into 'invoke's branching to the
         // cleanup block. Go in reverse order to make prettier BB names.
@@ -174,7 +186,7 @@ namespace {
           delete CI;
         }
 
-        Builder.SetInsertPoint(UI->getParent(), UI);
+        Builder.SetInsertPoint(RI->getParent(), RI);
         return &Builder;
       }
     }
