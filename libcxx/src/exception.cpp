@@ -13,7 +13,7 @@
 #if __APPLE__
   #include <cxxabi.h>
   using namespace __cxxabiv1;
-  using namespace __cxxabiv1::__cxxabiapple;
+  using namespace __cxxabiapple;
   // On Darwin, there are two STL shared libraries and a lower level ABI
   // shared libray.  The globals holding the current terminate handler and
   // current unexpected handler are in the ABI library.
