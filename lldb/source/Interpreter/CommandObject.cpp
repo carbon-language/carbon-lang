@@ -757,7 +757,7 @@ CommandObject::AddIDsArgumentData(CommandArgumentEntry &arg)
     id_range_arg.arg_type = eArgTypeBreakpointIDRange;
     id_range_arg.arg_repetition = eArgRepeatOptional;
 
-    // The first (and only) argument for this command could be either a id or a id_range.
+    // The first (and only) argument for this command could be either an id or an id_range.
     // Push both variants into the entry for the first argument for this command.
     arg.push_back(id_arg);
     arg.push_back(id_range_arg);
