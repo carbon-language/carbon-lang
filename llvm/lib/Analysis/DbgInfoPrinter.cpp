@@ -171,7 +171,7 @@ static bool getLocationInfo(const Value *V, std::string &DisplayName,
 
 void PrintDbgInfo::printVariableDeclaration(const Value *V) {
   std::string DisplayName, File, Directory, Type;
-  unsigned LineNo;
+  unsigned LineNo = 0;
 
   if (!getLocationInfo(V, DisplayName, Type, LineNo, File, Directory))
     return;
