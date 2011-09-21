@@ -405,7 +405,7 @@ ARMBaseInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
   int BccOpc = !AFI->isThumbFunction()
     ? ARM::Bcc : (AFI->isThumb2Function() ? ARM::t2Bcc : ARM::tBcc);
   bool isThumb = AFI->isThumbFunction() || AFI->isThumb2Function();
- 
+
   // Shouldn't be a fall through.
   assert(TBB && "InsertBranch must not be told to insert a fallthrough");
   assert((Cond.size() == 2 || Cond.size() == 0) &&
@@ -693,9 +693,9 @@ void ARMBaseInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
       ARM::QQQQPRRegClass.contains(DestReg, SrcReg)) {
     const TargetRegisterInfo *TRI = &getRegisterInfo();
     assert(ARM::qsub_0 + 3 == ARM::qsub_3 && "Expected contiguous enum.");
-    unsigned EndSubReg = ARM::QQPRRegClass.contains(DestReg, SrcReg) ? 
+    unsigned EndSubReg = ARM::QQPRRegClass.contains(DestReg, SrcReg) ?
       ARM::qsub_1 : ARM::qsub_3;
-    for (unsigned i = ARM::qsub_0, e = EndSubReg + 1; i != e; ++i) { 
+    for (unsigned i = ARM::qsub_0, e = EndSubReg + 1; i != e; ++i) {
       unsigned Dst = TRI->getSubReg(DestReg, i);
       unsigned Src = TRI->getSubReg(SrcReg, i);
       MachineInstrBuilder Mov =
@@ -1369,7 +1369,7 @@ isProfitableToIfCvt(MachineBasicBlock &TMBB,
   // Attempt to estimate the relative costs of predication versus branching.
   unsigned TUnpredCost = Probability.getNumerator() * TCycles;
   TUnpredCost /= Probability.getDenominator();
-    
+
   uint32_t Comp = Probability.getDenominator() - Probability.getNumerator();
   unsigned FUnpredCost = Comp * FCycles;
   FUnpredCost /= Probability.getDenominator();
