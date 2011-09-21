@@ -826,22 +826,7 @@ CommandObjectBreakpointEnable::CommandObjectBreakpointEnable (CommandInterpreter
                    NULL)
 {
     CommandArgumentEntry arg;
-    CommandArgumentData bp_id_arg;
-    CommandArgumentData bp_id_range_arg;
-
-    // Create the first variant for the first (and only) argument for this command.
-    bp_id_arg.arg_type = eArgTypeBreakpointID;
-    bp_id_arg.arg_repetition = eArgRepeatOptional;
-
-    // Create the second variant for the first (and only) argument for this command.
-    bp_id_range_arg.arg_type = eArgTypeBreakpointIDRange;
-    bp_id_range_arg.arg_repetition = eArgRepeatOptional;
-
-    // The first (and only) argument for this command could be either a bp_id or a bp_id_range.
-    // Push both variants into the entry for the first argument for this command.
-    arg.push_back (bp_id_arg);         
-    arg.push_back (bp_id_range_arg);    
-    
+    CommandObject::AddIDsArgumentData(arg);
     // Add the entry for the first argument for this command to the object's arguments vector.
     m_arguments.push_back (arg);   
 }
@@ -942,22 +927,7 @@ CommandObjectBreakpointDisable::CommandObjectBreakpointDisable (CommandInterpret
                    NULL)
 {
     CommandArgumentEntry arg;
-    CommandArgumentData bp_id_arg;
-    CommandArgumentData bp_id_range_arg;
-
-    // Create the first variant for the first (and only) argument for this command.
-    bp_id_arg.arg_type = eArgTypeBreakpointID;
-    bp_id_arg.arg_repetition = eArgRepeatOptional;
-
-    // Create the second variant for the first (and only) argument for this command.
-    bp_id_range_arg.arg_type = eArgTypeBreakpointIDRange;
-    bp_id_range_arg.arg_repetition = eArgRepeatOptional;
-
-    // The first (and only) argument for this command could be either a bp_id or a bp_id_range.
-    // Push both variants into the entry for the first argument for this command.
-    arg.push_back (bp_id_arg);         
-    arg.push_back (bp_id_range_arg);    
-    
+    CommandObject::AddIDsArgumentData(arg);
     // Add the entry for the first argument for this command to the object's arguments vector.
     m_arguments.push_back (arg);   
 }
@@ -1238,22 +1208,7 @@ CommandObjectBreakpointDelete::CommandObjectBreakpointDelete(CommandInterpreter 
                    NULL)
 {
     CommandArgumentEntry arg;
-    CommandArgumentData bp_id_arg;
-    CommandArgumentData bp_id_range_arg;
-
-    // Create the first variant for the first (and only) argument for this command.
-    bp_id_arg.arg_type = eArgTypeBreakpointID;
-    bp_id_arg.arg_repetition = eArgRepeatOptional;
-
-    // Create the second variant for the first (and only) argument for this command.
-    bp_id_range_arg.arg_type = eArgTypeBreakpointIDRange;
-    bp_id_range_arg.arg_repetition = eArgRepeatOptional;
-
-    // The first (and only) argument for this command could be either a bp_id or a bp_id_range.
-    // Push both variants into the entry for the first argument for this command.
-    arg.push_back (bp_id_arg);         
-    arg.push_back (bp_id_range_arg);    
-    
+    CommandObject::AddIDsArgumentData(arg);
     // Add the entry for the first argument for this command to the object's arguments vector.
     m_arguments.push_back (arg);   
 }
@@ -1513,22 +1468,7 @@ CommandObjectBreakpointModify::CommandObjectBreakpointModify (CommandInterpreter
     m_options (interpreter)
 {
     CommandArgumentEntry arg;
-    CommandArgumentData bp_id_arg;
-    CommandArgumentData bp_id_range_arg;
-
-    // Create the first variant for the first (and only) argument for this command.
-    bp_id_arg.arg_type = eArgTypeBreakpointID;
-    bp_id_arg.arg_repetition = eArgRepeatPlain;
-
-    // Create the second variant for the first (and only) argument for this command.
-    bp_id_range_arg.arg_type = eArgTypeBreakpointIDRange;
-    bp_id_range_arg.arg_repetition = eArgRepeatPlain;
-
-    // The first (and only) argument for this command could be either a bp_id or a bp_id_range.
-    // Push both variants into the entry for the first argument for this command.
-    arg.push_back (bp_id_arg);         
-    arg.push_back (bp_id_range_arg);    
-    
+    CommandObject::AddIDsArgumentData(arg);
     // Add the entry for the first argument for this command to the object's arguments vector.
     m_arguments.push_back (arg);   
 }

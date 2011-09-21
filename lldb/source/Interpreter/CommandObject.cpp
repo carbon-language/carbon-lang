@@ -743,6 +743,26 @@ ExprPathHelpTextCallback()
     " meaning of array slicing (taking elements n thru m inside the array or pointed-to memory).";
 }
 
+void
+CommandObject::AddIDsArgumentData(CommandArgumentEntry &arg)
+{
+    CommandArgumentData id_arg;
+    CommandArgumentData id_range_arg;
+
+    // Create the first variant for the first (and only) argument for this command.
+    id_arg.arg_type = eArgTypeBreakpointID;
+    id_arg.arg_repetition = eArgRepeatOptional;
+
+    // Create the second variant for the first (and only) argument for this command.
+    id_range_arg.arg_type = eArgTypeBreakpointIDRange;
+    id_range_arg.arg_repetition = eArgRepeatOptional;
+
+    // The first (and only) argument for this command could be either a id or a id_range.
+    // Push both variants into the entry for the first argument for this command.
+    arg.push_back(id_arg);
+    arg.push_back(id_range_arg);
+}
+
 const char * 
 CommandObject::GetArgumentTypeAsCString (const lldb::CommandArgumentType arg_type)
 {

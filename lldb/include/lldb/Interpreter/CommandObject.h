@@ -361,6 +361,12 @@ protected:
     bool m_is_alias;
     Flags       m_flags;
     std::vector<CommandArgumentEntry> m_arguments;
+
+    // Helper function to populate IDs or ID ranges as the command argument data
+    // to the specified command argument entry.
+    static void
+    AddIDsArgumentData(CommandArgumentEntry &arg);
+
 };
 
 } // namespace lldb_private
