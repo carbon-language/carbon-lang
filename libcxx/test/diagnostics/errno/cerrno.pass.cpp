@@ -180,8 +180,10 @@
 #error ENOBUFS not defined
 #endif
 
+#if (defined(_XOPEN_STREAMS) && _XOPEN_STREAMS != -1)
 #ifndef ENODATA
 #error ENODATA not defined
+#endif
 #endif
 
 #ifndef ENODEV
@@ -220,12 +222,16 @@
 #error ENOSPC not defined
 #endif
 
+#if (defined(_XOPEN_STREAMS) && _XOPEN_STREAMS != -1)
 #ifndef ENOSR
 #error ENOSR not defined
 #endif
+#endif
 
+#if (defined(_XOPEN_STREAMS) && _XOPEN_STREAMS != -1)
 #ifndef ENOSTR
 #error ENOSTR not defined
+#endif
 #endif
 
 #ifndef ENOSYS
@@ -312,8 +318,10 @@
 #error ESRCH not defined
 #endif
 
+#if (defined(_XOPEN_STREAMS) && _XOPEN_STREAMS != -1)
 #ifndef ETIME
 #error ETIME not defined
+#endif
 #endif
 
 #ifndef ETIMEDOUT

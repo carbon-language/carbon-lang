@@ -55,18 +55,24 @@ int main()
     static_assert(std::errc::no_child_process == ECHILD, "");
     static_assert(std::errc::no_link == ENOLINK, "");
     static_assert(std::errc::no_lock_available == ENOLCK, "");
+#if (defined(_XOPEN_STREAMS) && _XOPEN_STREAMS != -1)
     static_assert(std::errc::no_message_available == ENODATA, "");
+#endif
     static_assert(std::errc::no_message == ENOMSG, "");
     static_assert(std::errc::no_protocol_option == ENOPROTOOPT, "");
     static_assert(std::errc::no_space_on_device == ENOSPC, "");
+#if (defined(_XOPEN_STREAMS) && _XOPEN_STREAMS != -1)
     static_assert(std::errc::no_stream_resources == ENOSR, "");
+#endif
     static_assert(std::errc::no_such_device_or_address == ENXIO, "");
     static_assert(std::errc::no_such_device == ENODEV, "");
     static_assert(std::errc::no_such_file_or_directory == ENOENT, "");
     static_assert(std::errc::no_such_process == ESRCH, "");
     static_assert(std::errc::not_a_directory == ENOTDIR, "");
     static_assert(std::errc::not_a_socket == ENOTSOCK, "");
+#if (defined(_XOPEN_STREAMS) && _XOPEN_STREAMS != -1)
     static_assert(std::errc::not_a_stream == ENOSTR, "");
+#endif
     static_assert(std::errc::not_connected == ENOTCONN, "");
     static_assert(std::errc::not_enough_memory == ENOMEM, "");
     static_assert(std::errc::not_supported == ENOTSUP, "");
@@ -84,7 +90,9 @@ int main()
     static_assert(std::errc::resource_unavailable_try_again == EAGAIN, "");
     static_assert(std::errc::result_out_of_range == ERANGE, "");
     static_assert(std::errc::state_not_recoverable == ENOTRECOVERABLE, "");
+#if (defined(_XOPEN_STREAMS) && _XOPEN_STREAMS != -1)
     static_assert(std::errc::stream_timeout == ETIME, "");
+#endif
     static_assert(std::errc::text_file_busy == ETXTBSY, "");
     static_assert(std::errc::timed_out == ETIMEDOUT, "");
     static_assert(std::errc::too_many_files_open_in_system == ENFILE, "");
