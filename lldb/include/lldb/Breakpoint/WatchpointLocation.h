@@ -40,12 +40,14 @@ public:
     void
     SetEnabled (bool enabled);
 
+    virtual bool
+    ShouldStop (StoppointCallbackContext *context);
+
     bool        WatchpointRead () const;
     bool        WatchpointWrite () const;
     uint32_t    GetIgnoreCount () const;
     void        SetIgnoreCount (uint32_t n);
     void        SetWatchpointType (uint32_t type);
-    bool        BreakpointWasHit (StoppointCallbackContext *context);
     bool        SetCallback (WatchpointHitCallback callback, void *callback_baton);
     void        SetDeclInfo (std::string &str);
     void        GetDescription (Stream *s, lldb::DescriptionLevel level);

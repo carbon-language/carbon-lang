@@ -99,6 +99,7 @@ ThreadPlanBase::ShouldStop (Event *event_ptr)
             return false;
 
         case eStopReasonBreakpoint:
+        case eStopReasonWatchpoint:
             if (stop_info_sp->ShouldStop(event_ptr))
             {
                 // If we are going to stop for a breakpoint, then unship the other plans

@@ -53,7 +53,7 @@ public:
     // ----------------------------------------------
     // eStopReasonBreakpoint       BreakpointSiteID
     // eStopReasonSignal           Signal number
-    // eStopReasonWatchpoint       WatchpointSiteID
+    // eStopReasonWatchpoint       WatchpointLocationID
     // eStopReasonPlanComplete     No significance
     
     uint64_t

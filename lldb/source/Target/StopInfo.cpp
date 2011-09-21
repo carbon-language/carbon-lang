@@ -324,8 +324,10 @@ class StopInfoWatchpoint : public StopInfo
 public:
 
     StopInfoWatchpoint (Thread &thread, break_id_t watch_id) :
-        StopInfo (thread, watch_id),
-        m_description()
+        StopInfo(thread, watch_id),
+        m_description(),
+        m_should_stop(false),
+        m_should_stop_is_valid(false)
     {
     }
     
@@ -339,6 +341,40 @@ public:
         return eStopReasonWatchpoint;
     }
 
+    virtual bool
+    ShouldStop (Event *event_ptr)
+    {
+        // ShouldStop() method is idempotent and should not affect hit count.
+        if (m_should_stop_is_valid)
+            return m_should_stop;
+
+        WatchpointLocationSP wp_loc_sp =
+            m_thread.GetProcess().GetTarget().GetWatchpointLocationList().FindByID(GetValue());
+        if (wp_loc_sp)
+        {
+            // Check if we should stop at a watchpoint.
+            StoppointCallbackContext context (event_ptr, 
+                                              &m_thread.GetProcess(), 
+                                              &m_thread, 
+                                              m_thread.GetStackFrameAtIndex(0).get(),
+                                              true);
+                
+            m_should_stop = wp_loc_sp->ShouldStop (&context);
+        }
+        else
+        {
+            LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
+
+            if (log)
+                log->Printf ("Process::%s could not find watchpoint location id: %lld...",
+                             __FUNCTION__, GetValue());
+
+            m_should_stop = true;
+        }
+        m_should_stop_is_valid = true;
+        return m_should_stop;
+    }
+    
     virtual const char *
     GetDescription ()
     {
@@ -351,10 +387,10 @@ public:
         return m_description.c_str();
     }
 
-
-
 private:
     std::string m_description;
+    bool m_should_stop;
+    bool m_should_stop_is_valid;
 };
 
 

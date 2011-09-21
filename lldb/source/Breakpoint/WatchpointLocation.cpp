@@ -62,7 +62,7 @@ WatchpointLocation::SetDeclInfo (std::string &str)
 // should continue.
 
 bool
-WatchpointLocation::BreakpointWasHit (StoppointCallbackContext *context)
+WatchpointLocation::ShouldStop (StoppointCallbackContext *context)
 {
     m_hit_count++;
 
@@ -73,7 +73,11 @@ WatchpointLocation::BreakpointWasHit (StoppointCallbackContext *context)
             access |= LLDB_WATCH_TYPE_READ;
         if (m_watch_was_written)
             access |= LLDB_WATCH_TYPE_WRITE;
-        return m_callback(m_callback_baton, context, GetID(), access);
+
+        if (m_callback)
+            return m_callback(m_callback_baton, context, GetID(), access);
+        else
+            return true;
     }
     return false;
 }
