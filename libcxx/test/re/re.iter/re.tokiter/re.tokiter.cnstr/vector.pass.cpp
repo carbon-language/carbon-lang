@@ -28,7 +28,7 @@ int main()
         std::vector<int> v;
         v.push_back(-1);
         v.push_back(-1);
-        std::cregex_token_iterator i(std::begin(phone_book), std::end(phone_book),
+        std::cregex_token_iterator i(std::begin(phone_book), std::end(phone_book)-1,
                                      phone_numbers, v);
         assert(i != std::cregex_token_iterator());
         assert(i->str() == "start ");
@@ -59,7 +59,7 @@ int main()
         std::vector<int> v;
         v.push_back(-1);
         v.push_back(0);
-        std::cregex_token_iterator i(std::begin(phone_book), std::end(phone_book),
+        std::cregex_token_iterator i(std::begin(phone_book), std::end(phone_book)-1,
                                      phone_numbers, v);
         assert(i != std::cregex_token_iterator());
         assert(i->str() == "start ");
@@ -91,7 +91,7 @@ int main()
         v.push_back(-1);
         v.push_back(0);
         v.push_back(1);
-        std::cregex_token_iterator i(std::begin(phone_book), std::end(phone_book),
+        std::cregex_token_iterator i(std::begin(phone_book), std::end(phone_book)-1,
                                      phone_numbers, v);
         assert(i != std::cregex_token_iterator());
         assert(i->str() == "start ");
