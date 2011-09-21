@@ -2905,12 +2905,18 @@ struct PPEntityComp {
 
   PPEntityComp(const ASTReader &Reader, Module &M) : Reader(Reader), M(M) { }
 
-  bool operator()(const PPEntityOffset &L, SourceLocation RHS) {
+  bool operator()(const PPEntityOffset &L, const PPEntityOffset &R) const {
+    SourceLocation LHS = getLoc(L);
+    SourceLocation RHS = getLoc(R);
+    return Reader.getSourceManager().isBeforeInTranslationUnit(LHS, RHS);
+  }
+
+  bool operator()(const PPEntityOffset &L, SourceLocation RHS) const {
     SourceLocation LHS = getLoc(L);
     return Reader.getSourceManager().isBeforeInTranslationUnit(LHS, RHS);
   }
 
-  bool operator()(SourceLocation LHS, const PPEntityOffset &R) {
+  bool operator()(SourceLocation LHS, const PPEntityOffset &R) const {
     SourceLocation RHS = getLoc(R);
     return Reader.getSourceManager().isBeforeInTranslationUnit(LHS, RHS);
   }
