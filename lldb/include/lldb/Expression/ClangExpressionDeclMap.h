@@ -463,6 +463,10 @@ public:
     /// @param[in] type
     ///     The type of the data.
     ///
+    /// @param[in] transient
+    ///     True if the data should be treated as disappearing after the
+    ///     expression completes.  In that case, it gets no live data.
+    ///
     /// @return
     ///     True on success; false otherwise.
     //------------------------------------------------------------------
@@ -470,7 +474,8 @@ public:
     CompleteResultVariable (lldb::ClangExpressionVariableSP &valobj, 
                             lldb_private::Value &value,
                             const ConstString &name,
-                            lldb_private::TypeFromParser type);
+                            lldb_private::TypeFromParser type,
+                            bool transient);
     
     //------------------------------------------------------------------
     /// [Used by CommandObjectExpression] Materialize the entire struct

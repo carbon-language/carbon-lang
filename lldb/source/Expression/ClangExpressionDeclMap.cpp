@@ -320,7 +320,8 @@ bool
 ClangExpressionDeclMap::CompleteResultVariable (lldb::ClangExpressionVariableSP &valobj, 
                                                 lldb_private::Value &value,
                                                 const ConstString &name,
-                                                lldb_private::TypeFromParser type)
+                                                lldb_private::TypeFromParser type,
+                                                bool transient)
 {
     assert (m_parser_vars.get());
         
@@ -330,7 +331,8 @@ ClangExpressionDeclMap::CompleteResultVariable (lldb::ClangExpressionVariableSP 
         return false;
     
     if (pvar_sp->m_flags & ClangExpressionVariable::EVIsProgramReference &&
-        !pvar_sp->m_live_sp)
+        !pvar_sp->m_live_sp &&
+        !transient)
     {
         // The reference comes from the program.  We need to set up a live SP for it.
         
@@ -927,11 +929,20 @@ ClangExpressionDeclMap::LookupDecl (clang::NamedDecl *decl)
     }
     else if (persistent_var_sp)
     {
-        lldb_private::Value ret;
-        ret.SetValueType(Value::eValueTypeHostAddress);
-        ret.SetContext(Value::eContextTypeInvalid, NULL);
-        ret.GetScalar() = (lldb::addr_t)persistent_var_sp->GetValueBytes();
-        return ret;
+        if ((persistent_var_sp->m_flags & ClangExpressionVariable::EVIsProgramReference ||
+             persistent_var_sp->m_flags & ClangExpressionVariable::EVIsLLDBAllocated) &&
+            persistent_var_sp->m_live_sp)
+        {
+            return persistent_var_sp->m_live_sp->GetValue();
+        }
+        else
+        {
+            lldb_private::Value ret;
+            ret.SetValueType(Value::eValueTypeHostAddress);
+            ret.SetContext(Value::eContextTypeInvalid, NULL);
+            ret.GetScalar() = (lldb::addr_t)persistent_var_sp->GetValueBytes();
+            return ret;
+        }
     }
     else
     {

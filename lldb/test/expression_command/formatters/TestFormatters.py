@@ -18,16 +18,12 @@ class ExprFormattersTestCase(TestBase):
         self.line = line_number('main.cpp',
                                 '// Stop here')
 
-    # rdar://problem/10153585 lldb ToT regression of test suite with r139772 check-in
-    @unittest2.expectedFailure
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_with_dsym(self):
         """Test expr + formatters for good interoperability."""
         self.buildDsym()
         self.do_my_test()
 
-    # rdar://problem/10153585 lldb ToT regression of test suite with r139772 check-in
-    @unittest2.expectedFailure
     def test_with_dwarf_(self):
         """Test expr + formatters for good interoperability."""
         self.buildDsym()

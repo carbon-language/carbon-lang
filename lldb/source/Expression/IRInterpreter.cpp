@@ -717,6 +717,8 @@ public:
         
         lldb_private::Value base;
         
+        bool transient = false;
+        
         if (m_decl_map.ResultIsReference(result_name))
         {
             PointerType *R_ptr_ty = dyn_cast<PointerType>(R_ty);           
@@ -737,6 +739,9 @@ public:
             if (!R_final.m_allocation)
                 return false;
             
+            if (R_final.m_allocation->m_data)
+                transient = true; // this is a stack allocation
+            
             base = R_final.m_allocation->m_origin;
             base.GetScalar() += (R_final.m_base - R_final.m_allocation->m_virtual_address);
         }
@@ -747,7 +752,7 @@ public:
             base.GetScalar() = (unsigned long long)R.m_allocation->m_data->GetBytes() + (R.m_base - R.m_allocation->m_virtual_address);
         }                     
                         
-        return m_decl_map.CompleteResultVariable (result, base, result_name, result_type);
+        return m_decl_map.CompleteResultVariable (result, base, result_name, result_type, transient);
     }
 };
 

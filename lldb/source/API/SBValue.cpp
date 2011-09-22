@@ -379,7 +379,7 @@ SBValue::CreateValueFromExpression (const char *name, const char* expression)
         ValueObjectSP result_valobj_sp;
         m_opaque_sp->GetUpdatePoint().GetTargetSP()->EvaluateExpression (expression,
                                                                          m_opaque_sp->GetUpdatePoint().GetExecutionContextScope()->CalculateStackFrame(),
-                                                                         eExecutionPolicyAlways,
+                                                                         eExecutionPolicyOnlyWhenNeeded,
                                                                          true, // unwind on error
                                                                          true, // keep in memory
                                                                          eNoDynamicValues,
