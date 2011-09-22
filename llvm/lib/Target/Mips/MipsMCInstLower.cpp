@@ -46,6 +46,11 @@ MCOperand MipsMCInstLower::LowerSymbolOperand(const MachineOperand &MO,
   case MipsII::MO_GOTTPREL: Kind = MipsMCSymbolRefExpr::VK_Mips_GOTTPREL; break;
   case MipsII::MO_TPREL_HI: Kind = MipsMCSymbolRefExpr::VK_Mips_TPREL_HI; break;
   case MipsII::MO_TPREL_LO: Kind = MipsMCSymbolRefExpr::VK_Mips_TPREL_LO; break;
+  case MipsII::MO_GPOFF_HI: Kind = MipsMCSymbolRefExpr::VK_Mips_GPOFF_HI; break;
+  case MipsII::MO_GPOFF_LO: Kind = MipsMCSymbolRefExpr::VK_Mips_GPOFF_LO; break;
+  case MipsII::MO_GOT_DISP: Kind = MipsMCSymbolRefExpr::VK_Mips_GOT_DISP; break;
+  case MipsII::MO_GOT_PAGE: Kind = MipsMCSymbolRefExpr::VK_Mips_GOT_PAGE; break;
+  case MipsII::MO_GOT_OFST: Kind = MipsMCSymbolRefExpr::VK_Mips_GOT_OFST; break;
   }
 
   switch (MOTy) {

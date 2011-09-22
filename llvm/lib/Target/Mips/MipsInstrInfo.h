@@ -72,7 +72,14 @@ namespace MipsII {
     /// MO_TPREL_HI/LO - Represents the hi and low part of the offset from
     // the thread pointer (Local Exec TLS).
     MO_TPREL_HI,
-    MO_TPREL_LO
+    MO_TPREL_LO,
+
+    // N32/64 Flags.
+    MO_GPOFF_HI,
+    MO_GPOFF_LO,
+    MO_GOT_DISP,
+    MO_GOT_PAGE,
+    MO_GOT_OFST
   };
 
   enum {
