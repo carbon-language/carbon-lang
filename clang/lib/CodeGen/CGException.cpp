@@ -777,13 +777,9 @@ llvm::BasicBlock *CodeGenFunction::EmitLandingPad() {
       EHFilterScope &filter = cast<EHFilterScope>(*I);
       hasFilter = true;
 
-      // Add all the filter values which we aren't already explicitly
-      // catching.
-      for (unsigned i = 0, e = filter.getNumFilters(); i != e; ++i) {
-        llvm::Value *filterType = filter.getFilter(i);
-        if (!catchTypes.count(filterType))
-          filterTypes.push_back(filterType);
-      }
+      // Add all the filter values.
+      for (unsigned i = 0, e = filter.getNumFilters(); i != e; ++i)
+        filterTypes.push_back(filter.getFilter(i));
       goto done;
     }
 
