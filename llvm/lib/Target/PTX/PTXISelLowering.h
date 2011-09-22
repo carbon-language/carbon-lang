@@ -26,6 +26,8 @@ namespace PTXISD {
     FIRST_NUMBER = ISD::BUILTIN_OP_END,
     LOAD_PARAM,
     STORE_PARAM,
+    READ_PARAM,
+    WRITE_PARAM,
     EXIT,
     RET,
     COPY_ADDRESS,

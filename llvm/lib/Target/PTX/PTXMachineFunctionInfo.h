@@ -20,16 +20,20 @@
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/raw_ostream.h"
 
 namespace llvm {
+
 /// PTXMachineFunctionInfo - This class is derived from MachineFunction and
 /// contains private PTX target-specific information for each MachineFunction.
 ///
 class PTXMachineFunctionInfo : public MachineFunctionInfo {
 private:
   bool is_kernel;
-  std::vector<unsigned> reg_arg, reg_local_var;
-  std::vector<unsigned> reg_ret;
+  DenseSet<unsigned> reg_local_var;
+  DenseSet<unsigned> reg_arg;
+  DenseSet<unsigned> reg_ret;
   std::vector<unsigned> call_params;
   bool _isDoneAddArg;
 
@@ -40,29 +44,28 @@ private:
   RegisterMap usedRegs;
   RegisterNameMap regNames;
 
+  SmallVector<unsigned, 8> argParams;
+
+  unsigned retParamSize;
+
 public:
   PTXMachineFunctionInfo(MachineFunction &MF)
     : is_kernel(false), reg_ret(PTX::NoRegister), _isDoneAddArg(false) {
-      reg_arg.reserve(8);
-      reg_local_var.reserve(32);
-
       usedRegs[PTX::RegPredRegisterClass] = RegisterList();
       usedRegs[PTX::RegI16RegisterClass] = RegisterList();
       usedRegs[PTX::RegI32RegisterClass] = RegisterList();
       usedRegs[PTX::RegI64RegisterClass] = RegisterList();
       usedRegs[PTX::RegF32RegisterClass] = RegisterList();
       usedRegs[PTX::RegF64RegisterClass] = RegisterList();
+
+      retParamSize = 0;
     }
 
   void setKernel(bool _is_kernel=true) { is_kernel = _is_kernel; }
 
-  void addArgReg(unsigned reg) { reg_arg.push_back(reg); }
-  void addLocalVarReg(unsigned reg) { reg_local_var.push_back(reg); }
-  void addRetReg(unsigned reg) {
-    if (!isRetReg(reg)) {
-      reg_ret.push_back(reg);
-    }
-  }
+
+  void addLocalVarReg(unsigned reg) { reg_local_var.insert(reg); }
+
 
   void doneAddArg(void) {
     _isDoneAddArg = true;
@@ -71,17 +74,20 @@ public:
 
   bool isKernel() const { return is_kernel; }
 
-  typedef std::vector<unsigned>::const_iterator         reg_iterator;
-  typedef std::vector<unsigned>::const_reverse_iterator reg_reverse_iterator;
-  typedef std::vector<unsigned>::const_iterator         ret_iterator;
+  typedef DenseSet<unsigned>::const_iterator         reg_iterator;
+  //typedef DenseSet<unsigned>::const_reverse_iterator reg_reverse_iterator;
+  typedef DenseSet<unsigned>::const_iterator         ret_iterator;
   typedef std::vector<unsigned>::const_iterator         param_iterator;
+  typedef SmallVector<unsigned, 8>::const_iterator    argparam_iterator;
 
   bool         argRegEmpty() const { return reg_arg.empty(); }
   int          getNumArg() const { return reg_arg.size(); }
   reg_iterator argRegBegin() const { return reg_arg.begin(); }
   reg_iterator argRegEnd()   const { return reg_arg.end(); }
-  reg_reverse_iterator argRegReverseBegin() const { return reg_arg.rbegin(); }
-  reg_reverse_iterator argRegReverseEnd() const { return reg_arg.rend(); }
+  argparam_iterator argParamBegin() const { return argParams.begin(); }
+  argparam_iterator argParamEnd() const { return argParams.end(); }
+  //reg_reverse_iterator argRegReverseBegin() const { return reg_arg.rbegin(); }
+  //reg_reverse_iterator argRegReverseEnd() const { return reg_arg.rend(); }
 
   bool         localVarRegEmpty() const { return reg_local_var.empty(); }
   reg_iterator localVarRegBegin() const { return reg_local_var.begin(); }
@@ -103,42 +109,75 @@ public:
     return std::find(reg_arg.begin(), reg_arg.end(), reg) != reg_arg.end();
   }
 
-  bool isRetReg(unsigned reg) const {
+  /*bool isRetReg(unsigned reg) const {
     return std::find(reg_ret.begin(), reg_ret.end(), reg) != reg_ret.end();
-  }
+  }*/
 
   bool isLocalVarReg(unsigned reg) const {
     return std::find(reg_local_var.begin(), reg_local_var.end(), reg)
       != reg_local_var.end();
   }
 
-  void addVirtualRegister(const TargetRegisterClass *TRC, unsigned Reg) {
-    usedRegs[TRC].push_back(Reg);
+  void addRetReg(unsigned Reg) {
+    if (!reg_ret.count(Reg)) {
+      reg_ret.insert(Reg);
+      std::string name;
+      name = "%ret";
+      name += utostr(reg_ret.size() - 1);
+      regNames[Reg] = name;
+    }
+  }
 
+  void setRetParamSize(unsigned SizeInBits) {
+    retParamSize = SizeInBits;
+  }
+
+  unsigned getRetParamSize() const {
+    return retParamSize;
+  }
+
+  void addArgReg(unsigned Reg) {
+    reg_arg.insert(Reg);
+    std::string name;
+    name = "%param";
+    name += utostr(reg_arg.size() - 1);
+    regNames[Reg] = name;
+  }
+
+  void addArgParam(unsigned SizeInBits) {
+    argParams.push_back(SizeInBits);
+  }
+
+  void addVirtualRegister(const TargetRegisterClass *TRC, unsigned Reg) {
     std::string name;
 
-    if (TRC == PTX::RegPredRegisterClass)
-      name = "%p";
-    else if (TRC == PTX::RegI16RegisterClass)
-      name = "%rh";
-    else if (TRC == PTX::RegI32RegisterClass)
-      name = "%r";
-    else if (TRC == PTX::RegI64RegisterClass)
-      name = "%rd";
-    else if (TRC == PTX::RegF32RegisterClass)
-      name = "%f";
-    else if (TRC == PTX::RegF64RegisterClass)
-      name = "%fd";
-    else
-      llvm_unreachable("Invalid register class");
+    if (!reg_ret.count(Reg) && !reg_arg.count(Reg)) {
+      usedRegs[TRC].push_back(Reg);
+      if (TRC == PTX::RegPredRegisterClass)
+        name = "%p";
+      else if (TRC == PTX::RegI16RegisterClass)
+        name = "%rh";
+      else if (TRC == PTX::RegI32RegisterClass)
+        name = "%r";
+      else if (TRC == PTX::RegI64RegisterClass)
+        name = "%rd";
+      else if (TRC == PTX::RegF32RegisterClass)
+        name = "%f";
+      else if (TRC == PTX::RegF64RegisterClass)
+        name = "%fd";
+      else
+        llvm_unreachable("Invalid register class");
 
-    name += utostr(usedRegs[TRC].size() - 1);
-    regNames[Reg] = name;
+      name += utostr(usedRegs[TRC].size() - 1);
+      regNames[Reg] = name;
+    }
   }
 
   std::string getRegisterName(unsigned Reg) const {
     if (regNames.count(Reg))
       return regNames.lookup(Reg);
+    else if (Reg == PTX::NoRegister)
+      return "%noreg";
     else
       llvm_unreachable("Register not in register name map");
   }

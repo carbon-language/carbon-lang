@@ -209,6 +209,13 @@ def PTXstoreparam
   : SDNode<"PTXISD::STORE_PARAM", SDTypeProfile<0, 2, [SDTCisVT<0, i32>]>,
            [SDNPHasChain, SDNPOutGlue, SDNPOptInGlue]>;
 
+def PTXreadparam
+  : SDNode<"PTXISD::READ_PARAM", SDTypeProfile<1, 1, [SDTCisVT<1, i32>]>,
+      [SDNPHasChain, SDNPOutGlue, SDNPOptInGlue]>;
+def PTXwriteparam
+  : SDNode<"PTXISD::WRITE_PARAM", SDTypeProfile<0, 1, []>,
+      [SDNPHasChain, SDNPOutGlue, SDNPOptInGlue]>;
+
 //===----------------------------------------------------------------------===//
 // Instruction Class Templates
 //===----------------------------------------------------------------------===//
@@ -617,7 +624,7 @@ defm FMUL : PTX_FLOAT_3OP<"mul.rn", fmul>;
 // SM_13+ defaults to .rn for f32 and f64,
 // SM10 must *not* provide a rounding
 
-// TODO: 
+// TODO:
 //     - Allow user selection of rounding modes for fdiv
 //     - Add support for -prec-div=false (.approx)
 
@@ -1045,7 +1052,7 @@ def CVT_f32_f64
 // Conversion to f64
 
 def CVT_f64_pred
-  : InstPTX<(outs RegF64:$d), (ins RegPred:$a), 
+  : InstPTX<(outs RegF64:$d), (ins RegPred:$a),
             "selp.f64\t$d, 0D3F80000000000000, 0D0000000000000000, $a",  // 1.0
             [(set RegF64:$d, (uint_to_fp RegPred:$a))]>;
 
@@ -1114,6 +1121,27 @@ def STACKLOADF32 : InstPTX<(outs), (ins RegF32:$d, i32imm:$a),
 def STACKLOADF64 : InstPTX<(outs), (ins RegF64:$d, i32imm:$a),
                            "mov.f64\t$d, s$a", []>;
 
+///===- Parameter Passing Pseudo-Instructions -----------------------------===//
+
+def READPARAMPRED : InstPTX<(outs RegPred:$a), (ins i32imm:$b),
+                            "mov.pred\t$a, %param$b", []>;
+def READPARAMI16  : InstPTX<(outs RegI16:$a), (ins i32imm:$b),
+                            "mov.b16\t$a, %param$b", []>;
+def READPARAMI32  : InstPTX<(outs RegI32:$a), (ins i32imm:$b),
+                            "mov.b32\t$a, %param$b", []>;
+def READPARAMI64  : InstPTX<(outs RegI64:$a), (ins i32imm:$b),
+                            "mov.b64\t$a, %param$b", []>;
+def READPARAMF32  : InstPTX<(outs RegF32:$a), (ins i32imm:$b),
+                            "mov.f32\t$a, %param$b", []>;
+def READPARAMF64  : InstPTX<(outs RegF64:$a), (ins i32imm:$b),
+                            "mov.f64\t$a, %param$b", []>;
+
+def WRITEPARAMPRED : InstPTX<(outs), (ins RegPred:$a), "//w", []>;
+def WRITEPARAMI16  : InstPTX<(outs), (ins RegI16:$a), "//w", []>;
+def WRITEPARAMI32  : InstPTX<(outs), (ins RegI32:$a), "//w", []>;
+def WRITEPARAMI64  : InstPTX<(outs), (ins RegI64:$a), "//w", []>;
+def WRITEPARAMF32  : InstPTX<(outs), (ins RegF32:$a), "//w", []>;
+def WRITEPARAMF64  : InstPTX<(outs), (ins RegF64:$a), "//w", []>;
 
 // Call handling
 // def ADJCALLSTACKUP :

@@ -50,11 +50,11 @@ void PTXInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
                                bool KillSrc) const {
 
   const MachineRegisterInfo& MRI = MBB.getParent()->getRegInfo();
-  assert(MRI.getRegClass(SrcReg) == MRI.getRegClass(DstReg) &&
-    "Invalid register copy between two register classes");
+  //assert(MRI.getRegClass(SrcReg) == MRI.getRegClass(DstReg) &&
+  //  "Invalid register copy between two register classes");
 
   for (int i = 0, e = sizeof(map)/sizeof(map[0]); i != e; ++i) {
-    if (map[i].cls == MRI.getRegClass(SrcReg)) {
+    if (map[i].cls == MRI.getRegClass(DstReg)) {
       const MCInstrDesc &MCID = get(map[i].opcode);
       MachineInstr *MI = BuildMI(MBB, I, DL, MCID, DstReg).
         addReg(SrcReg, getKillRegState(KillSrc));

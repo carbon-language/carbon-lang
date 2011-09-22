@@ -46,6 +46,9 @@ class PTXDAGToDAGISel : public SelectionDAGISel {
     // pattern (PTXbrcond bb:$d, ...) in PTXInstrInfo.td
     SDNode *SelectBRCOND(SDNode *Node);
 
+    SDNode *SelectREADPARAM(SDNode *Node);
+    SDNode *SelectWRITEPARAM(SDNode *Node);
+
     bool isImm(const SDValue &operand);
     bool SelectImm(const SDValue &operand, SDValue &imm);
 
@@ -68,6 +71,10 @@ SDNode *PTXDAGToDAGISel::Select(SDNode *Node) {
   switch (Node->getOpcode()) {
     case ISD::BRCOND:
       return SelectBRCOND(Node);
+    case PTXISD::READ_PARAM:
+      return SelectREADPARAM(Node);
+    case PTXISD::WRITE_PARAM:
+      return SelectWRITEPARAM(Node);
     default:
       return SelectCode(Node);
   }
@@ -88,6 +95,82 @@ SDNode *PTXDAGToDAGISel::SelectBRCOND(SDNode *Node) {
   // Emit BRAdp
   SDValue Ops[] = { Target, Pred, PredOp, Chain };
   return CurDAG->getMachineNode(PTX::BRAdp, dl, MVT::Other, Ops, 4);
+}
+
+SDNode *PTXDAGToDAGISel::SelectREADPARAM(SDNode *Node) {
+  SDValue Chain = Node->getOperand(0);
+  SDValue Index = Node->getOperand(1);
+
+  int OpCode;
+
+  // Get the type of parameter we are reading
+  EVT VT = Node->getValueType(0);
+  assert(VT.isSimple() && "READ_PARAM only implemented for MVT types");
+
+  MVT Type = VT.getSimpleVT();
+
+  if (Type == MVT::i1)
+    OpCode = PTX::READPARAMPRED;
+  else if (Type == MVT::i16)
+    OpCode = PTX::READPARAMI16;
+  else if (Type == MVT::i32)
+    OpCode = PTX::READPARAMI32;
+  else if (Type == MVT::i64)
+    OpCode = PTX::READPARAMI64;
+  else if (Type == MVT::f32)
+    OpCode = PTX::READPARAMF32;
+  else if (Type == MVT::f64)
+    OpCode = PTX::READPARAMF64;
+
+  SDValue Pred = CurDAG->getRegister(PTX::NoRegister, MVT::i1);
+  SDValue PredOp = CurDAG->getTargetConstant(PTX::PRED_NORMAL, MVT::i32);
+  DebugLoc dl = Node->getDebugLoc();
+
+  SDValue Ops[] = { Index, Pred, PredOp, Chain };
+  return CurDAG->getMachineNode(OpCode, dl, VT, Ops, 4);
+}
+
+SDNode *PTXDAGToDAGISel::SelectWRITEPARAM(SDNode *Node) {
+
+  SDValue Chain = Node->getOperand(0);
+  SDValue Value = Node->getOperand(1);
+
+  int OpCode;
+
+  //Node->dumpr(CurDAG);
+
+  // Get the type of parameter we are writing
+  EVT VT = Value->getValueType(0);
+  assert(VT.isSimple() && "WRITE_PARAM only implemented for MVT types");
+
+  MVT Type = VT.getSimpleVT();
+
+  if (Type == MVT::i1)
+    OpCode = PTX::WRITEPARAMPRED;
+  else if (Type == MVT::i16)
+    OpCode = PTX::WRITEPARAMI16;
+  else if (Type == MVT::i32)
+    OpCode = PTX::WRITEPARAMI32;
+  else if (Type == MVT::i64)
+    OpCode = PTX::WRITEPARAMI64;
+  else if (Type == MVT::f32)
+    OpCode = PTX::WRITEPARAMF32;
+  else if (Type == MVT::f64)
+    OpCode = PTX::WRITEPARAMF64;
+  else
+    llvm_unreachable("Invalid type in SelectWRITEPARAM");
+
+  SDValue Pred = CurDAG->getRegister(PTX::NoRegister, MVT::i1);
+  SDValue PredOp = CurDAG->getTargetConstant(PTX::PRED_NORMAL, MVT::i32);
+  DebugLoc dl = Node->getDebugLoc();
+
+  SDValue Ops[] = { Value, Pred, PredOp, Chain };
+  SDNode* Ret = CurDAG->getMachineNode(OpCode, dl, MVT::Other, Ops, 4);
+
+  //dbgs() << "SelectWRITEPARAM produced:\n\t";
+  //Ret->dumpr(CurDAG);
+
+  return Ret;
 }
 
 // Match memory operand of the form [reg+reg]
