@@ -44,6 +44,12 @@ class AFPR<bits<5> num, string n, list<Register> subregs>
   let SubRegIndices = [sub_fpeven, sub_fpodd];
 }
 
+class AFPR64<bits<5> num, string n, list<Register> subregs>
+  : MipsRegWithSubRegs<n, subregs> {
+  let Num = num;
+  let SubRegIndices = [sub_fpeven];
+}
+
 // Mips Hardware Registers
 class HWR<bits<5> num, string n> : MipsReg<n> {
   let Num = num;
@@ -141,6 +147,40 @@ let Namespace = "Mips" in {
   def D13 : AFPR<26, "F26", [F26, F27]>;
   def D14 : AFPR<28, "F28", [F28, F29]>;
   def D15 : AFPR<30, "F30", [F30, F31]>;
+
+  /// Mips Double point precision FPU Registers in MFP64 mode.
+  def D0_64  : AFPR64<0, "F0", [F0]>;
+  def D1_64  : AFPR64<1, "F1", [F1]>;
+  def D2_64  : AFPR64<2, "F2", [F2]>;
+  def D3_64  : AFPR64<3, "F3", [F3]>;
+  def D4_64  : AFPR64<4, "F4", [F4]>;
+  def D5_64  : AFPR64<5, "F5", [F5]>;
+  def D6_64  : AFPR64<6, "F6", [F6]>;
+  def D7_64  : AFPR64<7, "F7", [F7]>;
+  def D8_64  : AFPR64<8, "F8", [F8]>;
+  def D9_64  : AFPR64<9, "F9", [F9]>;
+  def D10_64  : AFPR64<10, "F10", [F10]>;
+  def D11_64  : AFPR64<11, "F11", [F11]>;
+  def D12_64  : AFPR64<12, "F12", [F12]>;
+  def D13_64  : AFPR64<13, "F13", [F13]>;
+  def D14_64  : AFPR64<14, "F14", [F14]>;
+  def D15_64  : AFPR64<15, "F15", [F15]>;
+  def D16_64  : AFPR64<16, "F16", [F16]>;
+  def D17_64  : AFPR64<17, "F17", [F17]>;
+  def D18_64  : AFPR64<18, "F18", [F18]>;
+  def D19_64  : AFPR64<19, "F19", [F19]>;
+  def D20_64  : AFPR64<20, "F20", [F20]>;
+  def D21_64  : AFPR64<21, "F21", [F21]>;
+  def D22_64  : AFPR64<22, "F22", [F22]>;
+  def D23_64  : AFPR64<23, "F23", [F23]>;
+  def D24_64  : AFPR64<24, "F24", [F24]>;
+  def D25_64  : AFPR64<25, "F25", [F25]>;
+  def D26_64  : AFPR64<26, "F26", [F26]>;
+  def D27_64  : AFPR64<27, "F27", [F27]>;
+  def D28_64  : AFPR64<28, "F28", [F28]>;
+  def D29_64  : AFPR64<29, "F29", [F29]>;
+  def D30_64  : AFPR64<30, "F30", [F30]>;
+  def D31_64  : AFPR64<31, "F31", [F31]>;
 
   // Hi/Lo registers
   def HI  : Register<"hi">, DwarfRegNum<[64]>;
