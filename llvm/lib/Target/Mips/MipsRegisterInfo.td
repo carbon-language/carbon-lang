@@ -10,6 +10,11 @@
 //===----------------------------------------------------------------------===//
 //  Declarations that describe the MIPS register file
 //===----------------------------------------------------------------------===//
+let Namespace = "Mips" in {
+def sub_fpeven : SubRegIndex;
+def sub_fpodd  : SubRegIndex;
+def sub_32     : SubRegIndex;
+}
 
 // We have banks of 32 registers each.
 class MipsReg<string n> : Register<n> {
@@ -34,10 +39,6 @@ class FPR<bits<5> num, string n> : MipsReg<n> {
 }
 
 // Mips 64-bit (aliased) FPU Registers
-let Namespace = "Mips" in {
-def sub_fpeven : SubRegIndex;
-def sub_fpodd  : SubRegIndex;
-}
 class AFPR<bits<5> num, string n, list<Register> subregs>
   : MipsRegWithSubRegs<n, subregs> {
   let Num = num;
