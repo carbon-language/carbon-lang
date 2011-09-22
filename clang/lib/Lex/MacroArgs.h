@@ -14,6 +14,8 @@
 #ifndef LLVM_CLANG_MACROARGS_H
 #define LLVM_CLANG_MACROARGS_H
 
+#include "llvm/ADT/ArrayRef.h"
+
 #include <vector>
 
 namespace clang {
@@ -58,9 +60,8 @@ public:
   /// MacroArgs ctor function - Create a new MacroArgs object with the specified
   /// macro and argument info.
   static MacroArgs *create(const MacroInfo *MI,
-                           const Token *UnexpArgTokens,
-                           unsigned NumArgTokens, bool VarargsElided,
-                           Preprocessor &PP);
+                           llvm::ArrayRef<Token> UnexpArgTokens,
+                           bool VarargsElided, Preprocessor &PP);
 
   /// destroy - Destroy and deallocate the memory for this object.
   ///

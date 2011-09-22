@@ -15,13 +15,15 @@
 #include "clang/Lex/MacroInfo.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/LexDiagnostic.h"
+
+#include <algorithm>
+
 using namespace clang;
 
 /// MacroArgs ctor function - This destroys the vector passed in.
 MacroArgs *MacroArgs::create(const MacroInfo *MI,
-                             const Token *UnexpArgTokens,
-                             unsigned NumToks, bool VarargsElided,
-                             Preprocessor &PP) {
+                             llvm::ArrayRef<Token> UnexpArgTokens,
+                             bool VarargsElided, Preprocessor &PP) {
   assert(MI->isFunctionLike() &&
          "Can't have args for an object-like macro!");
   MacroArgs **ResultEnt = 0;
@@ -31,12 +33,12 @@ MacroArgs *MacroArgs::create(const MacroInfo *MI,
   // free list.  If so, reuse it.
   for (MacroArgs **Entry = &PP.MacroArgCache; *Entry;
        Entry = &(*Entry)->ArgCache)
-    if ((*Entry)->NumUnexpArgTokens >= NumToks &&
+    if ((*Entry)->NumUnexpArgTokens >= UnexpArgTokens.size() &&
         (*Entry)->NumUnexpArgTokens < ClosestMatch) {
       ResultEnt = Entry;
       
       // If we have an exact match, use it.
-      if ((*Entry)->NumUnexpArgTokens == NumToks)
+      if ((*Entry)->NumUnexpArgTokens == UnexpArgTokens.size())
         break;
       // Otherwise, use the best fit.
       ClosestMatch = (*Entry)->NumUnexpArgTokens;
@@ -45,21 +47,22 @@ MacroArgs *MacroArgs::create(const MacroInfo *MI,
   MacroArgs *Result;
   if (ResultEnt == 0) {
     // Allocate memory for a MacroArgs object with the lexer tokens at the end.
-    Result = (MacroArgs*)malloc(sizeof(MacroArgs) + NumToks*sizeof(Token));
+    Result = (MacroArgs*)malloc(sizeof(MacroArgs) + 
+                                UnexpArgTokens.size() * sizeof(Token));
     // Construct the MacroArgs object.
-    new (Result) MacroArgs(NumToks, VarargsElided);
+    new (Result) MacroArgs(UnexpArgTokens.size(), VarargsElided);
   } else {
     Result = *ResultEnt;
     // Unlink this node from the preprocessors singly linked list.
     *ResultEnt = Result->ArgCache;
-    Result->NumUnexpArgTokens = NumToks;
+    Result->NumUnexpArgTokens = UnexpArgTokens.size();
     Result->VarargsElided = VarargsElided;
   }
 
   // Copy the actual unexpanded tokens to immediately after the result ptr.
-  if (NumToks)
-    memcpy(const_cast<Token*>(Result->getUnexpArgument(0)),
-           UnexpArgTokens, NumToks*sizeof(Token));
+  if (!UnexpArgTokens.empty())
+    std::copy(UnexpArgTokens.begin(), UnexpArgTokens.end(), 
+              const_cast<Token*>(Result->getUnexpArgument(0)));
 
   return Result;
 }
