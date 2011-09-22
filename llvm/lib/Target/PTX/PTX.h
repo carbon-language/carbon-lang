@@ -43,6 +43,8 @@ namespace llvm {
   FunctionPass *createPTXMFInfoExtract(PTXTargetMachine &TM,
                                        CodeGenOpt::Level OptLevel);
 
+  FunctionPass *createPTXRegisterAllocator();
+
 } // namespace llvm;
 
 #endif // PTX_H
