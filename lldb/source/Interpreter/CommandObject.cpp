@@ -744,17 +744,17 @@ ExprPathHelpTextCallback()
 }
 
 void
-CommandObject::AddIDsArgumentData(CommandArgumentEntry &arg)
+CommandObject::AddIDsArgumentData(CommandArgumentEntry &arg, CommandArgumentType ID, CommandArgumentType IDRange)
 {
     CommandArgumentData id_arg;
     CommandArgumentData id_range_arg;
 
     // Create the first variant for the first (and only) argument for this command.
-    id_arg.arg_type = eArgTypeBreakpointID;
+    id_arg.arg_type = ID;
     id_arg.arg_repetition = eArgRepeatOptional;
 
     // Create the second variant for the first (and only) argument for this command.
-    id_range_arg.arg_type = eArgTypeBreakpointIDRange;
+    id_range_arg.arg_type = IDRange;
     id_range_arg.arg_repetition = eArgRepeatOptional;
 
     // The first (and only) argument for this command could be either an id or an id_range.
@@ -850,6 +850,8 @@ CommandObject::g_arguments_data[] =
     { eArgTypeWidth, "width", CommandCompletions::eNoCompletion, { NULL, false }, "Help text goes here." },
     { eArgTypeNone, "none", CommandCompletions::eNoCompletion, { NULL, false }, "No help available for this." },
     { eArgTypePlatform, "platform-name", CommandCompletions::ePlatformPluginCompletion, { NULL, false }, "The name of an installed platform plug-in . Type 'platform list' to see a complete list of installed platforms." },
+    { eArgTypeWatchpointID, "watchpt-id", CommandCompletions::eNoCompletion, { NULL, false }, "Watchpoint IDs are positive integers." },
+    { eArgTypeWatchpointIDRange, "watchpt-id-list", CommandCompletions::eNoCompletion, { NULL, false }, "For example, '1-3' or '1 to 3'." },
     { eArgTypeWatchType, "watch-type", CommandCompletions::eNoCompletion, { NULL, false }, "Specify the type for a watchpoint." }
 };
 

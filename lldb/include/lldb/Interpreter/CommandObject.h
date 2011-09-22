@@ -365,7 +365,7 @@ protected:
     // Helper function to populate IDs or ID ranges as the command argument data
     // to the specified command argument entry.
     static void
-    AddIDsArgumentData(CommandArgumentEntry &arg);
+    AddIDsArgumentData(CommandArgumentEntry &arg, lldb::CommandArgumentType ID, lldb::CommandArgumentType IDRange);
 
 };
 

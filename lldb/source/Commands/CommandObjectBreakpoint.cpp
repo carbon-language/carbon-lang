@@ -805,7 +805,7 @@ CommandObjectBreakpointEnable::CommandObjectBreakpointEnable (CommandInterpreter
                    NULL)
 {
     CommandArgumentEntry arg;
-    CommandObject::AddIDsArgumentData(arg);
+    CommandObject::AddIDsArgumentData(arg, eArgTypeBreakpointID, eArgTypeBreakpointIDRange);
     // Add the entry for the first argument for this command to the object's arguments vector.
     m_arguments.push_back (arg);   
 }
@@ -906,7 +906,7 @@ CommandObjectBreakpointDisable::CommandObjectBreakpointDisable (CommandInterpret
                    NULL)
 {
     CommandArgumentEntry arg;
-    CommandObject::AddIDsArgumentData(arg);
+    CommandObject::AddIDsArgumentData(arg, eArgTypeBreakpointID, eArgTypeBreakpointIDRange);
     // Add the entry for the first argument for this command to the object's arguments vector.
     m_arguments.push_back (arg);   
 }
@@ -1187,7 +1187,7 @@ CommandObjectBreakpointDelete::CommandObjectBreakpointDelete(CommandInterpreter 
                    NULL)
 {
     CommandArgumentEntry arg;
-    CommandObject::AddIDsArgumentData(arg);
+    CommandObject::AddIDsArgumentData(arg, eArgTypeBreakpointID, eArgTypeBreakpointIDRange);
     // Add the entry for the first argument for this command to the object's arguments vector.
     m_arguments.push_back (arg);   
 }
@@ -1447,7 +1447,7 @@ CommandObjectBreakpointModify::CommandObjectBreakpointModify (CommandInterpreter
     m_options (interpreter)
 {
     CommandArgumentEntry arg;
-    CommandObject::AddIDsArgumentData(arg);
+    CommandObject::AddIDsArgumentData(arg, eArgTypeBreakpointID, eArgTypeBreakpointIDRange);
     // Add the entry for the first argument for this command to the object's arguments vector.
     m_arguments.push_back (arg);   
 }

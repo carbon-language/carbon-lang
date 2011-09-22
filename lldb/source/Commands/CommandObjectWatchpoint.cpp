@@ -251,7 +251,7 @@ CommandObjectWatchpointList::CommandObjectWatchpointList(CommandInterpreter &int
     m_options(interpreter)
 {
     CommandArgumentEntry arg;
-    CommandObject::AddIDsArgumentData(arg);
+    CommandObject::AddIDsArgumentData(arg, eArgTypeWatchpointID, eArgTypeWatchpointIDRange);
     // Add the entry for the first argument for this command to the object's arguments vector.
     m_arguments.push_back(arg);
 }
@@ -339,7 +339,7 @@ CommandObjectWatchpointEnable::CommandObjectWatchpointEnable(CommandInterpreter 
                   NULL)
 {
     CommandArgumentEntry arg;
-    CommandObject::AddIDsArgumentData(arg);
+    CommandObject::AddIDsArgumentData(arg, eArgTypeWatchpointID, eArgTypeWatchpointIDRange);
     // Add the entry for the first argument for this command to the object's arguments vector.
     m_arguments.push_back(arg);
 }
@@ -411,7 +411,7 @@ CommandObjectWatchpointDisable::CommandObjectWatchpointDisable(CommandInterprete
                   NULL)
 {
     CommandArgumentEntry arg;
-    CommandObject::AddIDsArgumentData(arg);
+    CommandObject::AddIDsArgumentData(arg, eArgTypeWatchpointID, eArgTypeWatchpointIDRange);
     // Add the entry for the first argument for this command to the object's arguments vector.
     m_arguments.push_back(arg);
 }
@@ -489,7 +489,7 @@ CommandObjectWatchpointDelete::CommandObjectWatchpointDelete(CommandInterpreter 
                   NULL)
 {
     CommandArgumentEntry arg;
-    CommandObject::AddIDsArgumentData(arg);
+    CommandObject::AddIDsArgumentData(arg, eArgTypeWatchpointID, eArgTypeWatchpointIDRange);
     // Add the entry for the first argument for this command to the object's arguments vector.
     m_arguments.push_back(arg);
 }
