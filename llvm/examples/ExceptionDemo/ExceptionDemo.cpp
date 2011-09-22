@@ -62,6 +62,9 @@
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/TargetSelect.h"
 
+// FIXME: See use of UpgradeExceptionHandling(...) below
+#include "llvm/AutoUpgrade.h"
+
 // FIXME: Although all systems tested with (Linux, OS X), do not need this 
 //        header file included. A user on ubuntu reported, undefined symbols 
 //        for stderr, and fprintf, and the addition of this include fixed the
@@ -1341,6 +1344,17 @@ llvm::Function *createCatchWrappedInvokeFunction(llvm::Module &module,
                                 catchBlocks[nextTypeToCatch]);
   }
   
+  // FIXME: This is a hack to get the demo working with the new 3.0 exception
+  //        infrastructure. As this makes the demo no longer a demo, and
+  //        especially not a demo on how to use the llvm exception mechanism,
+  //        this hack will shortly be changed to use the new 3.0 exception
+  //        infrastructure. However for the time being this demo is an 
+  //        example on how to use the AutoUpgrade UpgradeExceptionHandling(...)
+  //        function on < 3.0 exception handling code.
+  //
+  // Must be run before verifier
+  UpgradeExceptionHandling(&module);
+
   llvm::verifyFunction(*ret);
   fpm.run(*ret);
   
@@ -1981,10 +1995,10 @@ int main(int argc, char *argv[]) {
     // Generate test code using function throwCppException(...) as
     // the function which throws foreign exceptions.
     llvm::Function *toRun = 
-    createUnwindExceptionTest(*module, 
-                              theBuilder, 
-                              fpm,
-                              "throwCppException");
+      createUnwindExceptionTest(*module, 
+                                theBuilder, 
+                                fpm,
+                                "throwCppException");
     
     fprintf(stderr, "\nBegin module dump:\n\n");
     
