@@ -513,35 +513,6 @@ const ProgramState *ProgramStateManager::removeGDM(const ProgramState *state, vo
   return getPersistentState(NewState);
 }
 
-//===----------------------------------------------------------------------===//
-// Utility.
-//===----------------------------------------------------------------------===//
-
-namespace {
-class ScanReachableSymbols : public SubRegionMap::Visitor  {
-  typedef llvm::DenseMap<const void*, unsigned> VisitedItems;
-
-  VisitedItems visited;
-  const ProgramState *state;
-  SymbolVisitor &visitor;
-  llvm::OwningPtr<SubRegionMap> SRM;
-public:
-
-  ScanReachableSymbols(const ProgramState *st, SymbolVisitor& v)
-    : state(st), visitor(v) {}
-
-  bool scan(nonloc::CompoundVal val);
-  bool scan(SVal val);
-  bool scan(const MemRegion *R);
-  bool scan(const SymExpr *sym);
-
-  // From SubRegionMap::Visitor.
-  bool Visit(const MemRegion* Parent, const MemRegion* SubRegion) {
-    return scan(SubRegion);
-  }
-};
-}
-
 bool ScanReachableSymbols::scan(nonloc::CompoundVal val) {
   for (nonloc::CompoundVal::iterator I=val.begin(), E=val.end(); I!=E; ++I)
     if (!scan(*I))

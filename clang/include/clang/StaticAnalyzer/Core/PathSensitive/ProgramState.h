@@ -56,6 +56,7 @@ template <typename T> struct ProgramStateTrait {
 
 class ProgramStateManager;
 
+/// \class ProgramState
 /// ProgramState - This class encapsulates:
 ///
 ///    1. A mapping from expressions to values (Environment)
@@ -179,10 +180,7 @@ public:
                                DefinedOrUnknownSVal upperBound,
                                bool assumption) const;
 
-  //==---------------------------------------------------------------------==//
-  // Utility methods for getting regions.
-  //==---------------------------------------------------------------------==//
-
+  /// Utility method for getting regions.
   const VarRegion* getRegion(const VarDecl *D, const LocationContext *LC) const;
 
   //==---------------------------------------------------------------------==//
@@ -262,11 +260,22 @@ public:
 
   SVal getSValAsScalarOrLoc(const MemRegion *R) const;
   
+  /// \brief Visits the symbols reachable from the given SVal using the provided
+  /// SymbolVisitor.
+  ///
+  /// This is a convenience API. Consider using ScanReachableSymbols class
+  /// directly when making multiple scans on the same state with the same
+  /// visitor to avoid repeated initialization cost.
+  /// \sa ScanReachableSymbols
   bool scanReachableSymbols(SVal val, SymbolVisitor& visitor) const;
   
+  /// \brief Visits the symbols reachable from the SVals in the given range
+  /// using the provided SymbolVisitor.
   bool scanReachableSymbols(const SVal *I, const SVal *E,
                             SymbolVisitor &visitor) const;
   
+  /// \brief Visits the symbols reachable from the regions in the given
+  /// MemRegions range using the provided SymbolVisitor.
   bool scanReachableSymbols(const MemRegion * const *I, 
                             const MemRegion * const *E,
                             SymbolVisitor &visitor) const;
@@ -771,6 +780,32 @@ CB ProgramState::scanReachableSymbols(const MemRegion * const *beg,
   scanReachableSymbols(beg, end, cb);
   return cb;
 }
+
+/// \class ScanReachableSymbols
+/// A Utility class that allows to visit the reachable symbols using a custom
+/// SymbolVisitor.
+class ScanReachableSymbols : public SubRegionMap::Visitor  {
+  typedef llvm::DenseMap<const void*, unsigned> VisitedItems;
+
+  VisitedItems visited;
+  const ProgramState *state;
+  SymbolVisitor &visitor;
+  llvm::OwningPtr<SubRegionMap> SRM;
+public:
+
+  ScanReachableSymbols(const ProgramState *st, SymbolVisitor& v)
+    : state(st), visitor(v) {}
+
+  bool scan(nonloc::CompoundVal val);
+  bool scan(SVal val);
+  bool scan(const MemRegion *R);
+  bool scan(const SymExpr *sym);
+
+  // From SubRegionMap::Visitor.
+  bool Visit(const MemRegion* Parent, const MemRegion* SubRegion) {
+    return scan(SubRegion);
+  }
+};
 
 } // end GR namespace
 

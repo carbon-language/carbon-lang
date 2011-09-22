@@ -156,6 +156,9 @@ EnvironmentManager::removeDeadBindings(Environment Env,
   
   SmallVector<std::pair<const Stmt*, SVal>, 10> deferredLocations;
 
+  MarkLiveCallback CB(SymReaper);
+  ScanReachableSymbols RSScaner(ST, CB);
+
   // Iterate over the block-expr bindings.
   for (Environment::iterator I = Env.begin(), E = Env.end();
        I != E; ++I) {
@@ -183,8 +186,7 @@ EnvironmentManager::removeDeadBindings(Environment Env,
       }
 
       // Mark all symbols in the block expr's value live.
-      MarkLiveCallback cb(SymReaper);
-      ST->scanReachableSymbols(X, cb);
+      RSScaner.scan(X);
       continue;
     }
 
