@@ -2158,6 +2158,17 @@ static unsigned CopyToFromAsymmetricReg(unsigned DestReg, unsigned SrcReg,
       return X86::MOV64toSDrr;
   }
 
+  // SrcReg(FR32) -> DestReg(GR32)
+  // SrcReg(GR32) -> DestReg(FR32)
+
+  if (X86::GR32RegClass.contains(DestReg) && X86::FR32RegClass.contains(SrcReg))
+      // Copy from a FR32 register to a GR32 register.
+      return HasAVX ? X86::VMOVSS2DIrr : X86::MOVSS2DIrr;
+
+  if (X86::FR32RegClass.contains(DestReg) && X86::GR32RegClass.contains(SrcReg))
+      // Copy from a GR32 register to a FR32 register.
+      return HasAVX ? X86::VMOVDI2SSrr : X86::MOVDI2SSrr;
+
   return 0;
 }
 
