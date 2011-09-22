@@ -98,7 +98,7 @@ public:
                       Reloc::Model RM, CodeModel::Model CM);
 };
 
-/// MipsebTargetMachine - Mips32 big endian target machine.
+/// Mips64ebTargetMachine - Mips64 big endian target machine.
 ///
 class Mips64ebTargetMachine : public MipsTargetMachine {
 public:
@@ -107,7 +107,7 @@ public:
                         Reloc::Model RM, CodeModel::Model CM);
 };
 
-/// MipselTargetMachine - Mips32 little endian target machine.
+/// Mips64elTargetMachine - Mips64 little endian target machine.
 ///
 class Mips64elTargetMachine : public MipsTargetMachine {
 public:
