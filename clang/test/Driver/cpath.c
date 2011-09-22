@@ -1,7 +1,7 @@
 // RUN: mkdir -p %T/test1 %T/test2
 
-// RUN: env CPATH=%T/test1: %clang -x c -E -v %s 2>&1 | FileCheck %s -check-prefix=CPATH
-// CPATH: -I {{.*}}/test1 -I .
+// RUN: env CPATH=%T/test1 %clang -x c -E -v %s 2>&1 | FileCheck %s -check-prefix=CPATH
+// CPATH: -I {{.*}}/test1
 // CPATH: search starts here
 // CPATH: test1
 
