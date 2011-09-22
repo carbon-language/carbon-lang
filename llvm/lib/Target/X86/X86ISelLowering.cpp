@@ -12568,9 +12568,10 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
   // instructions match the semantics of the common C idiom x<y?x:y but not
   // x<=y?x:y, because of how they handle negative zero (which can be
   // ignored in unsafe-math mode).
-  if (Subtarget->hasXMM() &&
-      Cond.getOpcode() == ISD::SETCC && VT.isFloatingPoint() &&
-      VT != MVT::f80 && DAG.getTargetLoweringInfo().isTypeLegal(VT)) {
+  if (Cond.getOpcode() == ISD::SETCC && VT.isFloatingPoint() &&
+      VT != MVT::f80 && DAG.getTargetLoweringInfo().isTypeLegal(VT) &&
+      (Subtarget->hasXMMInt() ||
+       (Subtarget->hasSSE1() && VT.getScalarType() == MVT::f32))) {
     ISD::CondCode CC = cast<CondCodeSDNode>(Cond.getOperand(2))->get();
 
     unsigned Opcode = 0;
