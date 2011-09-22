@@ -178,6 +178,12 @@ namespace llvm {
       /// BLEND family of opcodes
       BLENDV,
 
+      /// FHADD - Floating point horizontal add.
+      FHADD,
+
+      /// FHSUB - Floating point horizontal sub.
+      FHSUB,
+
       /// FMAX, FMIN - Floating point max and min.
       ///
       FMAX, FMIN,

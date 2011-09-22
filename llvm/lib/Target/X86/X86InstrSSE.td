@@ -4714,62 +4714,122 @@ let Constraints = "$src1 = $dst", Predicates = [HasSSE3],
 
 // Horizontal ops
 multiclass S3D_Int<bits<8> o, string OpcodeStr, ValueType vt, RegisterClass RC,
-                   X86MemOperand x86memop, Intrinsic IntId, bit Is2Addr = 1> {
+                   X86MemOperand x86memop, SDNode OpNode, bit Is2Addr = 1> {
   def rr : S3DI<o, MRMSrcReg, (outs RC:$dst), (ins RC:$src1, RC:$src2),
        !if(Is2Addr,
          !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
          !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
-      [(set RC:$dst, (vt (IntId RC:$src1, RC:$src2)))]>;
+      [(set RC:$dst, (vt (OpNode RC:$src1, RC:$src2)))]>;
 
   def rm : S3DI<o, MRMSrcMem, (outs RC:$dst), (ins RC:$src1, x86memop:$src2),
        !if(Is2Addr,
          !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
          !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
-      [(set RC:$dst, (vt (IntId RC:$src1, (memop addr:$src2))))]>;
+      [(set RC:$dst, (vt (OpNode RC:$src1, (memop addr:$src2))))]>;
 }
 multiclass S3_Int<bits<8> o, string OpcodeStr, ValueType vt, RegisterClass RC,
-                  X86MemOperand x86memop, Intrinsic IntId, bit Is2Addr = 1> {
+                  X86MemOperand x86memop, SDNode OpNode, bit Is2Addr = 1> {
   def rr : S3I<o, MRMSrcReg, (outs RC:$dst), (ins RC:$src1, RC:$src2),
        !if(Is2Addr,
          !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
          !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
-      [(set RC:$dst, (vt (IntId RC:$src1, RC:$src2)))]>;
+      [(set RC:$dst, (vt (OpNode RC:$src1, RC:$src2)))]>;
 
   def rm : S3I<o, MRMSrcMem, (outs RC:$dst), (ins RC:$src1, x86memop:$src2),
        !if(Is2Addr,
          !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
          !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
-      [(set RC:$dst, (vt (IntId RC:$src1, (memop addr:$src2))))]>;
+      [(set RC:$dst, (vt (OpNode RC:$src1, (memop addr:$src2))))]>;
 }
 
 let Predicates = [HasAVX] in {
   defm VHADDPS  : S3D_Int<0x7C, "vhaddps", v4f32, VR128, f128mem,
-                          int_x86_sse3_hadd_ps, 0>, VEX_4V;
+                          X86fhadd, 0>, VEX_4V;
   defm VHADDPD  : S3_Int <0x7C, "vhaddpd", v2f64, VR128, f128mem,
-                          int_x86_sse3_hadd_pd, 0>, VEX_4V;
+                          X86fhadd, 0>, VEX_4V;
   defm VHSUBPS  : S3D_Int<0x7D, "vhsubps", v4f32, VR128, f128mem,
-                          int_x86_sse3_hsub_ps, 0>, VEX_4V;
+                          X86fhsub, 0>, VEX_4V;
   defm VHSUBPD  : S3_Int <0x7D, "vhsubpd", v2f64, VR128, f128mem,
-                          int_x86_sse3_hsub_pd, 0>, VEX_4V;
+                          X86fhsub, 0>, VEX_4V;
   defm VHADDPSY : S3D_Int<0x7C, "vhaddps", v8f32, VR256, f256mem,
-                          int_x86_avx_hadd_ps_256, 0>, VEX_4V;
+                          X86fhadd, 0>, VEX_4V;
   defm VHADDPDY : S3_Int <0x7C, "vhaddpd", v4f64, VR256, f256mem,
-                          int_x86_avx_hadd_pd_256, 0>, VEX_4V;
+                          X86fhadd, 0>, VEX_4V;
   defm VHSUBPSY : S3D_Int<0x7D, "vhsubps", v8f32, VR256, f256mem,
-                          int_x86_avx_hsub_ps_256, 0>, VEX_4V;
+                          X86fhsub, 0>, VEX_4V;
   defm VHSUBPDY : S3_Int <0x7D, "vhsubpd", v4f64, VR256, f256mem,
-                          int_x86_avx_hsub_pd_256, 0>, VEX_4V;
+                          X86fhsub, 0>, VEX_4V;
+}
+
+let Predicates = [HasAVX] in {
+  def : Pat<(int_x86_sse3_hadd_ps (v4f32 VR128:$src1), VR128:$src2),
+            (VHADDPSrr VR128:$src1, VR128:$src2)>;
+  def : Pat<(int_x86_sse3_hadd_ps (v4f32 VR128:$src1), (memop addr:$src2)),
+            (VHADDPSrm VR128:$src1, addr:$src2)>;
+
+  def : Pat<(int_x86_sse3_hadd_pd (v2f64 VR128:$src1), VR128:$src2),
+            (VHADDPDrr VR128:$src1, VR128:$src2)>;
+  def : Pat<(int_x86_sse3_hadd_pd (v2f64 VR128:$src1), (memop addr:$src2)),
+            (VHADDPDrm VR128:$src1, addr:$src2)>;
+
+  def : Pat<(int_x86_sse3_hsub_ps (v4f32 VR128:$src1), VR128:$src2),
+            (VHSUBPSrr VR128:$src1, VR128:$src2)>;
+  def : Pat<(int_x86_sse3_hsub_ps (v4f32 VR128:$src1), (memop addr:$src2)),
+            (VHSUBPSrm VR128:$src1, addr:$src2)>;
+
+  def : Pat<(int_x86_sse3_hsub_pd (v2f64 VR128:$src1), VR128:$src2),
+            (VHSUBPDrr VR128:$src1, VR128:$src2)>;
+  def : Pat<(int_x86_sse3_hsub_pd (v2f64 VR128:$src1), (memop addr:$src2)),
+            (VHSUBPDrm VR128:$src1, addr:$src2)>;
+
+  def : Pat<(int_x86_avx_hadd_ps_256 (v8f32 VR256:$src1), VR256:$src2),
+            (VHADDPSYrr VR256:$src1, VR256:$src2)>;
+  def : Pat<(int_x86_avx_hadd_ps_256 (v8f32 VR256:$src1), (memop addr:$src2)),
+            (VHADDPSYrm VR256:$src1, addr:$src2)>;
+
+  def : Pat<(int_x86_avx_hadd_pd_256 (v4f64 VR256:$src1), VR256:$src2),
+            (VHADDPDYrr VR256:$src1, VR256:$src2)>;
+  def : Pat<(int_x86_avx_hadd_pd_256 (v4f64 VR256:$src1), (memop addr:$src2)),
+            (VHADDPDYrm VR256:$src1, addr:$src2)>;
+
+  def : Pat<(int_x86_avx_hsub_ps_256 (v8f32 VR256:$src1), VR256:$src2),
+            (VHSUBPSYrr VR256:$src1, VR256:$src2)>;
+  def : Pat<(int_x86_avx_hsub_ps_256 (v8f32 VR256:$src1), (memop addr:$src2)),
+            (VHSUBPSYrm VR256:$src1, addr:$src2)>;
+
+  def : Pat<(int_x86_avx_hsub_pd_256 (v4f64 VR256:$src1), VR256:$src2),
+            (VHSUBPDYrr VR256:$src1, VR256:$src2)>;
+  def : Pat<(int_x86_avx_hsub_pd_256 (v4f64 VR256:$src1), (memop addr:$src2)),
+            (VHSUBPDYrm VR256:$src1, addr:$src2)>;
 }
 
 let Constraints = "$src1 = $dst" in {
-  defm HADDPS : S3D_Int<0x7C, "haddps", v4f32, VR128, f128mem,
-                        int_x86_sse3_hadd_ps>;
-  defm HADDPD : S3_Int<0x7C, "haddpd", v2f64, VR128, f128mem,
-                       int_x86_sse3_hadd_pd>;
-  defm HSUBPS : S3D_Int<0x7D, "hsubps", v4f32, VR128, f128mem,
-                        int_x86_sse3_hsub_ps>;
-  defm HSUBPD : S3_Int<0x7D, "hsubpd", v2f64, VR128, f128mem,
-                       int_x86_sse3_hsub_pd>;
+  defm HADDPS : S3D_Int<0x7C, "haddps", v4f32, VR128, f128mem, X86fhadd>;
+  defm HADDPD : S3_Int<0x7C, "haddpd", v2f64, VR128, f128mem, X86fhadd>;
+  defm HSUBPS : S3D_Int<0x7D, "hsubps", v4f32, VR128, f128mem, X86fhsub>;
+  defm HSUBPD : S3_Int<0x7D, "hsubpd", v2f64, VR128, f128mem, X86fhsub>;
+}
+
+let Predicates = [HasSSE3] in {
+  def : Pat<(int_x86_sse3_hadd_ps (v4f32 VR128:$src1), VR128:$src2),
+            (HADDPSrr VR128:$src1, VR128:$src2)>;
+  def : Pat<(int_x86_sse3_hadd_ps (v4f32 VR128:$src1), (memop addr:$src2)),
+            (HADDPSrm VR128:$src1, addr:$src2)>;
+
+  def : Pat<(int_x86_sse3_hadd_pd (v2f64 VR128:$src1), VR128:$src2),
+            (HADDPDrr VR128:$src1, VR128:$src2)>;
+  def : Pat<(int_x86_sse3_hadd_pd (v2f64 VR128:$src1), (memop addr:$src2)),
+            (HADDPDrm VR128:$src1, addr:$src2)>;
+
+  def : Pat<(int_x86_sse3_hsub_ps (v4f32 VR128:$src1), VR128:$src2),
+            (HSUBPSrr VR128:$src1, VR128:$src2)>;
+  def : Pat<(int_x86_sse3_hsub_ps (v4f32 VR128:$src1), (memop addr:$src2)),
+            (HSUBPSrm VR128:$src1, addr:$src2)>;
+
+  def : Pat<(int_x86_sse3_hsub_pd (v2f64 VR128:$src1), VR128:$src2),
+            (HSUBPDrr VR128:$src1, VR128:$src2)>;
+  def : Pat<(int_x86_sse3_hsub_pd (v2f64 VR128:$src1), (memop addr:$src2)),
+            (HSUBPDrm VR128:$src1, addr:$src2)>;
 }
 
 //===---------------------------------------------------------------------===//
