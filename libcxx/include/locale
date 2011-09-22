@@ -186,7 +186,9 @@ template <class charT> class messages_byname;
 #endif
 #include <cstdlib>
 #include <ctime>
+#if !_WIN32
 #include <nl_types.h>
+#endif  // !_WIN32
 
 #pragma GCC system_header
 

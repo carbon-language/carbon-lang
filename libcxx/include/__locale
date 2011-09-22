@@ -19,7 +19,11 @@
 #include <cstdint>
 #include <cctype>
 #include <locale.h>
-#include <xlocale.h>
+#if _WIN32
+# include <support/win32/locale.h>
+#else  // _WIN32
+# include <xlocale.h>
+#endif  // _WIN32
 
 #pragma GCC system_header
 
@@ -314,7 +318,19 @@ public:
     static const mask punct  = _ISpunct;
     static const mask xdigit = _ISxdigit;
     static const mask blank  = _ISblank;
-#else  // __GLIBC__
+#elif _WIN32
+    typedef unsigned __int32 mask;
+    static const mask space  = _SPACE;
+    static const mask print  = _BLANK|_PUNCT|_ALPHA|_DIGIT;
+    static const mask cntrl  = _CONTROL;
+    static const mask upper  = _UPPER;
+    static const mask lower  = _LOWER;
+    static const mask alpha  = _ALPHA;
+    static const mask digit  = _DIGIT;
+    static const mask punct  = _PUNCT;
+    static const mask xdigit = _HEX;
+    static const mask blank  = _BLANK;
+#else  // __GLIBC__ || _WIN32
 #if __APPLE__
     typedef __uint32_t mask;
 #elif __FreeBSD__
@@ -330,7 +346,7 @@ public:
     static const mask punct  = _CTYPE_P;
     static const mask xdigit = _CTYPE_X;
     static const mask blank  = _CTYPE_B;
-#endif  // __GLIBC__ 
+#endif  // __GLIBC__ || _WIN32
     static const mask alnum  = alpha | digit;
     static const mask graph  = alnum | punct;
 

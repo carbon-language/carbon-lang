@@ -24,3 +24,7 @@ D: Initial regex prototype
 N: David Chisnall
 E: theraven at theravensnest dot org
 D: FreeBSD port and libcxxrt support.
+
+N: Ruben Van Boxem
+E: vanboxem dot ruben at gmail dot com
+D: Initial Windows patches.

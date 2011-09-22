@@ -1,9 +1,17 @@
 # Get sources
-file(GLOB_RECURSE sources ../src/*.cpp)
+file(GLOB sources ../src/*.cpp)
+if(WIN32)
+  file(GLOB win32_sources ../src/support/win32/*.cpp)
+  list(APPEND sources ${win32_sources})
+endif()
 
 # Add all the headers to the project for IDEs.
 if (MSVC_IDE OR XCODE)
   file(GLOB_RECURSE headers ../include/*)
+  if(WIN32)
+    file( GLOB win32_headers ../include/support/win32/*.h)
+    list(APPEND headers ${win32_headers})
+  endif()
   # Force them all into the headers dir on MSVC, otherwise they end up at
   # project scope because they don't have extensions.
   if (MSVC_IDE)
