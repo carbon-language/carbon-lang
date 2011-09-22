@@ -129,12 +129,30 @@ unsigned PreprocessingRecord::findBeginLocalPreprocessedEntity(
   if (SourceMgr.isLoadedSourceLocation(Loc))
     return 0;
 
+  size_t Count = PreprocessedEntities.size();
+  size_t Half;
   std::vector<PreprocessedEntity *>::const_iterator
-    I = std::lower_bound(PreprocessedEntities.begin(),
-                         PreprocessedEntities.end(),
-                         Loc,
-                         PPEntityComp<&SourceRange::getEnd>(SourceMgr));
-  return I - PreprocessedEntities.begin();
+    First = PreprocessedEntities.begin();
+  std::vector<PreprocessedEntity *>::const_iterator I;
+
+  // Do a binary search manually instead of using std::lower_bound because
+  // The end locations of entities may be unordered (when a macro expansion
+  // is inside another macro argument), but for this case it is not important
+  // whether we get the first macro expansion or its containing macro.
+  while (Count > 0) {
+    Half = Count/2;
+    I = First;
+    std::advance(I, Half);
+    if (SourceMgr.isBeforeInTranslationUnit((*I)->getSourceRange().getEnd(),
+                                            Loc)){
+      First = I;
+      ++First;
+      Count = Count - Half - 1;
+    } else
+      Count = Half;
+  }
+
+  return First - PreprocessedEntities.begin();
 }
 
 unsigned PreprocessingRecord::findEndLocalPreprocessedEntity(
