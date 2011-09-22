@@ -1,11 +1,11 @@
-// RUN: %clang_cc1 -fdelayed-template-parsing -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fms-extensions -fdelayed-template-parsing -fsyntax-only -verify %s
 
 template <class T>
 class A {
    void foo() {
        undeclared();
    }
-      void foo2();
+   void foo2();
 };
 
 template <class T>
@@ -40,3 +40,22 @@ void undeclared()
 
 template <class T> void foo5() {} //expected-note {{previous definition is here}} 
 template <class T> void foo5() {} // expected-error {{redefinition of 'foo5'}}
+
+              
+
+namespace Inner_Outer_same_template_param_name {              
+
+template <class T>
+class Outmost {
+public:
+    template <class T>
+    class Inner {
+    public:
+        void f() {
+            T* var;
+        }
+   };
+};
+
+}
+

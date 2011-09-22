@@ -1159,6 +1159,7 @@ void Parser::ParseLateTemplatedFuncDef(LateParsedTemplatedFunction &LMT) {
     FD = cast<FunctionDecl>(LMT.D);
   
   // Reinject the template parameters.
+  SmallVector<ParseScope*, 4> TemplateParamScopeStack;
   DeclaratorDecl* Declarator = dyn_cast<DeclaratorDecl>(FD);
   if (Declarator && Declarator->getNumTemplateParameterLists() != 0) {
     Actions.ActOnReenterDeclaratorTemplateScope(getCurScope(), Declarator);
@@ -1166,16 +1167,30 @@ void Parser::ParseLateTemplatedFuncDef(LateParsedTemplatedFunction &LMT) {
   } else {
     Actions.ActOnReenterTemplateScope(getCurScope(), LMT.D);
 
+    // Get the list of DeclContext to reenter.
+    SmallVector<DeclContext*, 4> DeclContextToReenter;
     DeclContext *DD = FD->getLexicalParent();
     while (DD && DD->isRecord()) {
-      if (ClassTemplatePartialSpecializationDecl* MD =
-                  dyn_cast_or_null<ClassTemplatePartialSpecializationDecl>(DD))
-          Actions.ActOnReenterTemplateScope(getCurScope(), MD);
-      else if (CXXRecordDecl* MD = dyn_cast_or_null<CXXRecordDecl>(DD))
-          Actions.ActOnReenterTemplateScope(getCurScope(),
-                                            MD->getDescribedClassTemplate());
-
+      DeclContextToReenter.push_back(DD);
       DD = DD->getLexicalParent();
+    }
+
+    // Reenter the DeclContext from outmost to innermost.
+    SmallVector<DeclContext*, 4>::reverse_iterator II =
+    DeclContextToReenter.rbegin();
+    for (; II != DeclContextToReenter.rend(); ++II) {
+      if (ClassTemplatePartialSpecializationDecl* MD =
+                dyn_cast_or_null<ClassTemplatePartialSpecializationDecl>(*II)) {
+       TemplateParamScopeStack.push_back(new ParseScope(this,
+                                                   Scope::TemplateParamScope));
+        Actions.ActOnReenterTemplateScope(getCurScope(), MD);
+      } else if (CXXRecordDecl* MD = dyn_cast_or_null<CXXRecordDecl>(*II)) {
+        TemplateParamScopeStack.push_back(new ParseScope(this,
+                                                    Scope::TemplateParamScope,
+                                       MD->getDescribedClassTemplate() != 0 ));
+        Actions.ActOnReenterTemplateScope(getCurScope(),
+                                          MD->getDescribedClassTemplate());
+      }
     }
   }
   assert(!LMT.Toks.empty() && "Empty body!");
@@ -1207,21 +1222,25 @@ void Parser::ParseLateTemplatedFuncDef(LateParsedTemplatedFunction &LMT) {
 
   if (Tok.is(tok::kw_try)) {
     ParseFunctionTryBlock(LMT.D, FnScope);
-    return;
-  }
-  if (Tok.is(tok::colon)) {
-    ParseConstructorInitializer(LMT.D);
+  } else {
+    if (Tok.is(tok::colon))
+      ParseConstructorInitializer(LMT.D);
+    else
+      Actions.ActOnDefaultCtorInitializers(LMT.D);
 
-    // Error recovery.
-    if (!Tok.is(tok::l_brace)) {
+    if (Tok.is(tok::l_brace)) {
+      ParseFunctionStatementBody(LMT.D, FnScope);
+      Actions.MarkAsLateParsedTemplate(FD, false);
+    } else
       Actions.ActOnFinishFunctionBody(LMT.D, 0);
-      return;
-    }
-  } else
-    Actions.ActOnDefaultCtorInitializers(LMT.D);
+  }
 
-  ParseFunctionStatementBody(LMT.D, FnScope);
-  Actions.MarkAsLateParsedTemplate(FD, false);
+  // Exit scopes.
+  FnScope.Exit();
+  SmallVector<ParseScope*, 4>::reverse_iterator I =
+   TemplateParamScopeStack.rbegin();
+  for (; I != TemplateParamScopeStack.rend(); ++I)
+    delete *I;
 
   DeclGroupPtrTy grp = Actions.ConvertDeclToDeclGroup(LMT.D);
   if (grp)
