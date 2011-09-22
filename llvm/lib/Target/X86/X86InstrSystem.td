@@ -67,43 +67,43 @@ def IRET64 : RI<0xcf, RawFrm, (outs), (ins), "iretq", []>,
 //
 let Defs = [AL], Uses = [DX] in
 def IN8rr  : I<0xEC, RawFrm, (outs), (ins),
-               "in{b}\t{%dx, %al|%AL, %DX}", []>;
+               "in{b}\t{%dx, %al|AL, DX}", []>;
 let Defs = [AX], Uses = [DX] in
 def IN16rr : I<0xED, RawFrm, (outs), (ins),
-               "in{w}\t{%dx, %ax|%AX, %DX}", []>,  OpSize;
+               "in{w}\t{%dx, %ax|AX, DX}", []>,  OpSize;
 let Defs = [EAX], Uses = [DX] in
 def IN32rr : I<0xED, RawFrm, (outs), (ins),
-               "in{l}\t{%dx, %eax|%EAX, %DX}", []>;
+               "in{l}\t{%dx, %eax|EAX, DX}", []>;
 
 let Defs = [AL] in
 def IN8ri  : Ii8<0xE4, RawFrm, (outs), (ins i8imm:$port),
-                  "in{b}\t{$port, %al|%AL, $port}", []>;
+                  "in{b}\t{$port, %al|AL, $port}", []>;
 let Defs = [AX] in
 def IN16ri : Ii8<0xE5, RawFrm, (outs), (ins i8imm:$port),
-                  "in{w}\t{$port, %ax|%AX, $port}", []>, OpSize;
+                  "in{w}\t{$port, %ax|AX, $port}", []>, OpSize;
 let Defs = [EAX] in
 def IN32ri : Ii8<0xE5, RawFrm, (outs), (ins i8imm:$port),
-                  "in{l}\t{$port, %eax|%EAX, $port}", []>;
+                  "in{l}\t{$port, %eax|EAX, $port}", []>;
 
 let Uses = [DX, AL] in
 def OUT8rr  : I<0xEE, RawFrm, (outs), (ins),
-                "out{b}\t{%al, %dx|%DX, %AL}", []>;
+                "out{b}\t{%al, %dx|DX, AL}", []>;
 let Uses = [DX, AX] in
 def OUT16rr : I<0xEF, RawFrm, (outs), (ins),
-                "out{w}\t{%ax, %dx|%DX, %AX}", []>, OpSize;
+                "out{w}\t{%ax, %dx|DX, AX}", []>, OpSize;
 let Uses = [DX, EAX] in
 def OUT32rr : I<0xEF, RawFrm, (outs), (ins),
-                "out{l}\t{%eax, %dx|%DX, %EAX}", []>;
+                "out{l}\t{%eax, %dx|DX, EAX}", []>;
 
 let Uses = [AL] in
 def OUT8ir  : Ii8<0xE6, RawFrm, (outs), (ins i8imm:$port),
-                   "out{b}\t{%al, $port|$port, %AL}", []>;
+                   "out{b}\t{%al, $port|$port, AL}", []>;
 let Uses = [AX] in
 def OUT16ir : Ii8<0xE7, RawFrm, (outs), (ins i8imm:$port),
-                   "out{w}\t{%ax, $port|$port, %AX}", []>, OpSize;
+                   "out{w}\t{%ax, $port|$port, AX}", []>, OpSize;
 let Uses = [EAX] in
 def OUT32ir : Ii8<0xE7, RawFrm, (outs), (ins i8imm:$port),
-                   "out{l}\t{%eax, $port|$port, %EAX}", []>;
+                   "out{l}\t{%eax, $port|$port, EAX}", []>;
 
 def IN8  : I<0x6C, RawFrm, (outs), (ins), "ins{b}", []>;
 def IN16 : I<0x6D, RawFrm, (outs), (ins), "ins{w}", []>,  OpSize;
@@ -229,65 +229,65 @@ def LTRm : I<0x00, MRM3m, (outs), (ins i16mem:$src),
              "ltr{w}\t{$src}", []>, TB;
              
 def PUSHCS16 : I<0x0E, RawFrm, (outs), (ins),
-                 "push{w}\t%cs", []>, Requires<[In32BitMode]>, OpSize;
+                 "push{w}\t{%cs|CS}", []>, Requires<[In32BitMode]>, OpSize;
 def PUSHCS32 : I<0x0E, RawFrm, (outs), (ins),
-                 "push{l}\t%cs", []>, Requires<[In32BitMode]>;
+                 "push{l}\t{%cs|CS}", []>, Requires<[In32BitMode]>;
 def PUSHSS16 : I<0x16, RawFrm, (outs), (ins),
-                 "push{w}\t%ss", []>, Requires<[In32BitMode]>, OpSize;
+                 "push{w}\t{%ss|SS}", []>, Requires<[In32BitMode]>, OpSize;
 def PUSHSS32 : I<0x16, RawFrm, (outs), (ins),
-                 "push{l}\t%ss", []>, Requires<[In32BitMode]>;
+                 "push{l}\t{%ss|SS}", []>, Requires<[In32BitMode]>;
 def PUSHDS16 : I<0x1E, RawFrm, (outs), (ins),
-                 "push{w}\t%ds", []>, Requires<[In32BitMode]>, OpSize;
+                 "push{w}\t{%ds|DS}", []>, Requires<[In32BitMode]>, OpSize;
 def PUSHDS32 : I<0x1E, RawFrm, (outs), (ins),
-                 "push{l}\t%ds", []>, Requires<[In32BitMode]>;
+                 "push{l}\t{%ds|DS}", []>, Requires<[In32BitMode]>;
 def PUSHES16 : I<0x06, RawFrm, (outs), (ins),
-                 "push{w}\t%es", []>, Requires<[In32BitMode]>, OpSize;
+                 "push{w}\t{%es|ES}", []>, Requires<[In32BitMode]>, OpSize;
 def PUSHES32 : I<0x06, RawFrm, (outs), (ins),
-                 "push{l}\t%es", []>, Requires<[In32BitMode]>;
+                 "push{l}\t{%es|ES}", []>, Requires<[In32BitMode]>;
                  
 def PUSHFS16 : I<0xa0, RawFrm, (outs), (ins),
-                 "push{w}\t%fs", []>, OpSize, TB;
+                 "push{w}\t{%fs|FS}", []>, OpSize, TB;
 def PUSHFS32 : I<0xa0, RawFrm, (outs), (ins),
-                 "push{l}\t%fs", []>, TB, Requires<[In32BitMode]>;
+                 "push{l}\t{%fs|FS}", []>, TB, Requires<[In32BitMode]>;
 def PUSHGS16 : I<0xa8, RawFrm, (outs), (ins),
-                 "push{w}\t%gs", []>, OpSize, TB;
+                 "push{w}\t{%gs|GS}", []>, OpSize, TB;
 def PUSHGS32 : I<0xa8, RawFrm, (outs), (ins),
-                 "push{l}\t%gs", []>, TB, Requires<[In32BitMode]>;
+                 "push{l}\t{%gs|GS}", []>, TB, Requires<[In32BitMode]>;
 
 def PUSHFS64 : I<0xa0, RawFrm, (outs), (ins),
-                 "push{q}\t%fs", []>, TB;
+                 "push{q}\t{%fs|FS}", []>, TB;
 def PUSHGS64 : I<0xa8, RawFrm, (outs), (ins),
-                 "push{q}\t%gs", []>, TB;
+                 "push{q}\t{%gs|GS}", []>, TB;
 
 // No "pop cs" instruction.
 def POPSS16 : I<0x17, RawFrm, (outs), (ins),
-                "pop{w}\t%ss", []>, OpSize, Requires<[In32BitMode]>;
+                "pop{w}\t{%ss|SS}", []>, OpSize, Requires<[In32BitMode]>;
 def POPSS32 : I<0x17, RawFrm, (outs), (ins),
-                "pop{l}\t%ss", []>        , Requires<[In32BitMode]>;
+                "pop{l}\t{%ss|SS}", []>        , Requires<[In32BitMode]>;
                 
 def POPDS16 : I<0x1F, RawFrm, (outs), (ins),
-                "pop{w}\t%ds", []>, OpSize, Requires<[In32BitMode]>;
+                "pop{w}\t{%ds|DS}", []>, OpSize, Requires<[In32BitMode]>;
 def POPDS32 : I<0x1F, RawFrm, (outs), (ins),
-                "pop{l}\t%ds", []>        , Requires<[In32BitMode]>;
+                "pop{l}\t{%ds|DS}", []>        , Requires<[In32BitMode]>;
                 
 def POPES16 : I<0x07, RawFrm, (outs), (ins),
-                "pop{w}\t%es", []>, OpSize, Requires<[In32BitMode]>;
+                "pop{w}\t{%es|ES}", []>, OpSize, Requires<[In32BitMode]>;
 def POPES32 : I<0x07, RawFrm, (outs), (ins),
-                "pop{l}\t%es", []>        , Requires<[In32BitMode]>;
+                "pop{l}\t{%es|ES}", []>        , Requires<[In32BitMode]>;
                 
 def POPFS16 : I<0xa1, RawFrm, (outs), (ins),
-                "pop{w}\t%fs", []>, OpSize, TB;
+                "pop{w}\t{%fs|FS}", []>, OpSize, TB;
 def POPFS32 : I<0xa1, RawFrm, (outs), (ins),
-                "pop{l}\t%fs", []>, TB    , Requires<[In32BitMode]>;
+                "pop{l}\t{%fs|FS}", []>, TB    , Requires<[In32BitMode]>;
 def POPFS64 : I<0xa1, RawFrm, (outs), (ins),
-                "pop{q}\t%fs", []>, TB;
+                "pop{q}\t{%fs|FS}", []>, TB;
                 
 def POPGS16 : I<0xa9, RawFrm, (outs), (ins),
-                "pop{w}\t%gs", []>, OpSize, TB;
+                "pop{w}\t{%gs|GS}", []>, OpSize, TB;
 def POPGS32 : I<0xa9, RawFrm, (outs), (ins),
-                "pop{l}\t%gs", []>, TB    , Requires<[In32BitMode]>;
+                "pop{l}\t{%gs|GS}", []>, TB    , Requires<[In32BitMode]>;
 def POPGS64 : I<0xa9, RawFrm, (outs), (ins),
-                "pop{q}\t%gs", []>, TB;
+                "pop{q}\t{%gs|GS}", []>, TB;
                  
 
 def LDS16rm : I<0xc5, MRMSrcMem, (outs GR16:$dst), (ins opaque32mem:$src),

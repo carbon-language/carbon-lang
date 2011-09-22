@@ -11,3 +11,15 @@
 
 # CHECK: movsq
 0x48 0xa5
+
+# CHECK: pop DS
+0x1f
+
+# CHECK: pop ES
+0x07
+
+# CHECK: pop SS
+0x17
+
+# CHECK: in AL, DX
+0xec
