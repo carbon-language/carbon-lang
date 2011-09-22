@@ -48,8 +48,8 @@ void MipsMCSymbolRefExpr::PrintImpl(raw_ostream &OS) const {
     OS << Offset;
   }
 
-  if (Kind != VK_Mips_None)
-    OS << ')';
+  if (Kind == VK_Mips_GPOFF_HI || Kind == VK_Mips_GPOFF_LO) OS << ")))";
+  else if (Kind != VK_Mips_None)                            OS << ')';
 }
 
 bool
