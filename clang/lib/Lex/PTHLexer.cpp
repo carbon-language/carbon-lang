@@ -575,7 +575,7 @@ IdentifierInfo* PTHManager::LazilyCreateIdentifierInfo(unsigned PersistentID) {
 IdentifierInfo* PTHManager::get(StringRef Name) {
   PTHStringIdLookup& SL = *((PTHStringIdLookup*)StringIdLookup);
   // Double check our assumption that the last character isn't '\0'.
-  assert(Name.empty() || Name.data()[Name.size()-1] != '\0');
+  assert(Name.empty() || Name.back() != '\0');
   PTHStringIdLookup::iterator I = SL.find(std::make_pair(Name.data(),
                                                          Name.size()));
   if (I == SL.end()) // No identifier found?
