@@ -351,7 +351,8 @@ public:
              CommandReturnObject &result)
     {
         ExecutionContext exe_ctx (m_interpreter.GetExecutionContext());
-        if (exe_ctx.target == NULL)
+        Target *target = exe_ctx.GetTargetPtr();
+        if (target == NULL)
         {
             result.AppendError("need at least a target to read memory");
             result.SetStatus(eReturnStatusFailed);
@@ -440,9 +441,10 @@ public:
             }
                     
             ConstString lookup_type_name(type_str.c_str());
-            if (exe_ctx.frame)
+            StackFrame *frame = exe_ctx.GetFramePtr();
+            if (frame)
             {
-                sc = exe_ctx.frame->GetSymbolContext (eSymbolContextModule);
+                sc = frame->GetSymbolContext (eSymbolContextModule);
                 if (sc.module_sp)
                 {
                     sc.module_sp->FindTypes (sc, 
@@ -454,11 +456,11 @@ public:
             }
             if (type_list.GetSize() == 0)
             {
-                exe_ctx.target->GetImages().FindTypes (sc, 
-                                                       lookup_type_name, 
-                                                       append, 
-                                                       1, 
-                                                       type_list);
+                target->GetImages().FindTypes (sc, 
+                                               lookup_type_name, 
+                                               append, 
+                                               1, 
+                                               type_list);
             }
             
             if (type_list.GetSize() == 0)
@@ -502,7 +504,7 @@ public:
         }
         else
         {
-            error = m_memory_options.FinalizeSettings (exe_ctx.target, m_format_options);
+            error = m_memory_options.FinalizeSettings (target, m_format_options);
         }
 
         // Look for invalid combinations of settings
@@ -562,7 +564,7 @@ public:
         {
             data_sp.reset (new DataBufferHeap (total_byte_size, '\0'));
             Address address(NULL, addr);
-            bytes_read = exe_ctx.target->ReadMemory(address, false, data_sp->GetBytes (), data_sp->GetByteSize(), error);
+            bytes_read = target->ReadMemory(address, false, data_sp->GetBytes (), data_sp->GetByteSize(), error);
             if (bytes_read == 0)
             {
                 result.AppendWarningWithFormat("Read from 0x%llx failed.\n", addr);
@@ -677,8 +679,8 @@ public:
 
         result.SetStatus(eReturnStatusSuccessFinishResult);
         DataExtractor data (data_sp, 
-                            exe_ctx.target->GetArchitecture().GetByteOrder(), 
-                            exe_ctx.target->GetArchitecture().GetAddressByteSize());
+                            target->GetArchitecture().GetByteOrder(), 
+                            target->GetArchitecture().GetAddressByteSize());
 
 
         assert (output_stream);
@@ -870,7 +872,7 @@ public:
     Execute (Args& command,
              CommandReturnObject &result)
     {
-        Process *process = m_interpreter.GetExecutionContext().process;
+        Process *process = m_interpreter.GetExecutionContext().GetProcessPtr();
         if (process == NULL)
         {
             result.AppendError("need a process to read memory");

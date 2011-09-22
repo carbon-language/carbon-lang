@@ -65,18 +65,19 @@ AppleObjCRuntime::GetObjectDescription (Stream &strm, Value &value, ExecutionCon
         
     ExecutionContext exe_ctx;
     exe_scope->CalculateExecutionContext(exe_ctx);
-    
-    if (!exe_ctx.process)
+    Process *process = exe_ctx.GetProcessPtr();
+    if (!process)
         return false;
     
     // We need other parts of the exe_ctx, but the processes have to match.
-    assert (m_process == exe_ctx.process);
+    assert (m_process == process);
     
     // Get the function address for the print function.
     const Address *function_address = GetPrintForDebuggerAddr();
     if (!function_address)
         return false;
     
+    Target *target = exe_ctx.GetTargetPtr();
     if (value.GetClangType())
     {
         clang::QualType value_type = clang::QualType::getFromOpaquePtr (value.GetClangType());
@@ -89,7 +90,7 @@ AppleObjCRuntime::GetObjectDescription (Stream &strm, Value &value, ExecutionCon
     else 
     {
         // If it is not a pointer, see if we can make it into a pointer.
-        ClangASTContext *ast_context = exe_ctx.target->GetScratchClangASTContext();
+        ClangASTContext *ast_context = target->GetScratchClangASTContext();
         void *opaque_type_ptr = ast_context->GetBuiltInType_objc_id();
         if (opaque_type_ptr == NULL)
             opaque_type_ptr = ast_context->GetVoidPtrType(false);
@@ -100,7 +101,7 @@ AppleObjCRuntime::GetObjectDescription (Stream &strm, Value &value, ExecutionCon
     arg_value_list.PushValue(value);
     
     // This is the return value:
-    ClangASTContext *ast_context = exe_ctx.target->GetScratchClangASTContext();
+    ClangASTContext *ast_context = target->GetScratchClangASTContext();
     
     void *return_qualtype = ast_context->GetCStringType(true);
     Value ret;
@@ -144,7 +145,7 @@ AppleObjCRuntime::GetObjectDescription (Stream &strm, Value &value, ExecutionCon
     size_t curr_len = full_buffer_len;
     while (curr_len == full_buffer_len)
     {
-        curr_len = exe_ctx.process->ReadCStringFromMemory(result_ptr + cstr_len, buf, sizeof(buf));
+        curr_len = process->ReadCStringFromMemory(result_ptr + cstr_len, buf, sizeof(buf));
         strm.Write (buf, curr_len);
         cstr_len += curr_len;
     }

@@ -185,10 +185,11 @@ ValueObjectMemory::UpdateValue ()
 
     ExecutionContext exe_ctx (GetExecutionContextScope());
     
-    if (exe_ctx.target)
+    Target *target = exe_ctx.GetTargetPtr();
+    if (target)
     {
-        m_data.SetByteOrder(exe_ctx.target->GetArchitecture().GetByteOrder());
-        m_data.SetAddressByteSize(exe_ctx.target->GetArchitecture().GetAddressByteSize());
+        m_data.SetByteOrder(target->GetArchitecture().GetByteOrder());
+        m_data.SetAddressByteSize(target->GetArchitecture().GetAddressByteSize());
     }
 
     Value old_value(m_value);
@@ -220,9 +221,9 @@ ValueObjectMemory::UpdateValue ()
             // Make sure this type has a value before we try and read it
 
             // If we have a file address, convert it to a load address if we can.
-            if (value_type == Value::eValueTypeFileAddress && exe_ctx.process)
+            if (value_type == Value::eValueTypeFileAddress && exe_ctx.GetProcessPtr())
             {
-                lldb::addr_t load_addr = m_address.GetLoadAddress(exe_ctx.target);
+                lldb::addr_t load_addr = m_address.GetLoadAddress(target);
                 if (load_addr != LLDB_INVALID_ADDRESS)
                 {
                     m_value.SetValueType(Value::eValueTypeLoadAddress);

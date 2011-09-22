@@ -174,7 +174,7 @@ public:
         exe_module->GetFileSpec().GetPath(filename, sizeof(filename));
 
         StateType state = eStateInvalid;
-        Process *process = m_interpreter.GetExecutionContext().process;
+        Process *process = m_interpreter.GetExecutionContext().GetProcessPtr();
         if (process)
         {
             state = process->GetState();
@@ -566,7 +566,7 @@ public:
         // and the target actually stopping.  So even if the interpreter is set to be asynchronous, we wait for the stop
         // ourselves here.
         
-        Process *process = m_interpreter.GetExecutionContext().process;
+        Process *process = m_interpreter.GetExecutionContext().GetProcessPtr();
         StateType state = eStateInvalid;
         if (process)
         {
@@ -828,7 +828,7 @@ public:
     Execute (Args& command,
              CommandReturnObject &result)
     {
-        Process *process = m_interpreter.GetExecutionContext().process;
+        Process *process = m_interpreter.GetExecutionContext().GetProcessPtr();
         bool synchronous_execution = m_interpreter.GetSynchronous ();
 
         if (process == NULL)
@@ -915,7 +915,7 @@ public:
     Execute (Args& command,
              CommandReturnObject &result)
     {
-        Process *process = m_interpreter.GetExecutionContext().process;
+        Process *process = m_interpreter.GetExecutionContext().GetProcessPtr();
         if (process == NULL)
         {
             result.AppendError ("must have a valid process in order to detach");
@@ -1025,7 +1025,7 @@ public:
         
         TargetSP target_sp (m_interpreter.GetDebugger().GetSelectedTarget());
         Error error;        
-        Process *process = m_interpreter.GetExecutionContext().process;
+        Process *process = m_interpreter.GetExecutionContext().GetProcessPtr();
         if (process)
         {
             if (process->IsAlive())
@@ -1139,7 +1139,7 @@ public:
     Execute (Args& command,
              CommandReturnObject &result)
     {
-        Process *process = m_interpreter.GetExecutionContext().process;
+        Process *process = m_interpreter.GetExecutionContext().GetProcessPtr();
         if (process == NULL)
         {
             result.AppendError ("must have a valid process in order to load a shared library");
@@ -1198,7 +1198,7 @@ public:
     Execute (Args& command,
              CommandReturnObject &result)
     {
-        Process *process = m_interpreter.GetExecutionContext().process;
+        Process *process = m_interpreter.GetExecutionContext().GetProcessPtr();
         if (process == NULL)
         {
             result.AppendError ("must have a valid process in order to load a shared library");
@@ -1275,7 +1275,7 @@ public:
     Execute (Args& command,
              CommandReturnObject &result)
     {
-        Process *process = m_interpreter.GetExecutionContext().process;
+        Process *process = m_interpreter.GetExecutionContext().GetProcessPtr();
         if (process == NULL)
         {
             result.AppendError ("no process to signal");
@@ -1350,7 +1350,7 @@ public:
     Execute (Args& command,
              CommandReturnObject &result)
     {
-        Process *process = m_interpreter.GetExecutionContext().process;
+        Process *process = m_interpreter.GetExecutionContext().GetProcessPtr();
         if (process == NULL)
         {
             result.AppendError ("no process to halt");
@@ -1412,7 +1412,7 @@ public:
     Execute (Args& command,
              CommandReturnObject &result)
     {
-        Process *process = m_interpreter.GetExecutionContext().process;
+        Process *process = m_interpreter.GetExecutionContext().GetProcessPtr();
         if (process == NULL)
         {
             result.AppendError ("no process to kill");
@@ -1476,18 +1476,19 @@ public:
         Stream &strm = result.GetOutputStream();
         result.SetStatus (eReturnStatusSuccessFinishNoResult);
         ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
-        if (exe_ctx.process)
+        Process *process = exe_ctx.GetProcessPtr();
+        if (process)
         {
             const bool only_threads_with_stop_reason = true;
             const uint32_t start_frame = 0;
             const uint32_t num_frames = 1;
             const uint32_t num_frames_with_source = 1;
-            exe_ctx.process->GetStatus(strm);
-            exe_ctx.process->GetThreadStatus (strm, 
-                                              only_threads_with_stop_reason, 
-                                              start_frame,
-                                              num_frames,
-                                              num_frames_with_source);
+            process->GetStatus(strm);
+            process->GetThreadStatus (strm, 
+                                      only_threads_with_stop_reason, 
+                                      start_frame,
+                                      num_frames,
+                                      num_frames_with_source);
             
         }
         else

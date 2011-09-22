@@ -39,6 +39,10 @@ public:
     //------------------------------------------------------------------
     ExecutionContext();
 
+    ExecutionContext (const ExecutionContext &rhs);
+
+    ExecutionContext &
+    operator =(const ExecutionContext &rhs);
 
     ExecutionContext (Target* t, bool fill_current_process_thread_frame = true);
     //------------------------------------------------------------------
@@ -64,6 +68,7 @@ public:
 
     ExecutionContext (ExecutionContextScope &exe_scope);
 
+    ~ExecutionContext();
     //------------------------------------------------------------------
     /// Clear the object's state.
     ///
@@ -76,20 +81,95 @@ public:
     RegisterContext *
     GetRegisterContext () const;
 
-
     ExecutionContextScope *
     GetBestExecutionContextScope () const;
-    
-    Process *
-    GetProcess () const;
 
+    Target *
+    GetTargetPtr () const;
+
+    Process *
+    GetProcessPtr () const;
+
+    Thread *
+    GetThreadPtr () const
+    {
+        return m_thread_sp.get();
+    }
+    
+    StackFrame *
+    GetFramePtr () const
+    {
+        return m_frame_sp.get();
+    }
+
+    Target &
+    GetTargetRef () const;
+    
+    Process &
+    GetProcessRef () const;
+    
+    Thread &
+    GetThreadRef () const;
+    
+    StackFrame &
+    GetFrameRef () const;
+    
+    const lldb::TargetSP &
+    GetTargetSP ()
+    {
+        return m_target_sp;
+    }
+    
+    const lldb::ProcessSP &
+    GetProcessSP ()
+    {
+        return m_process_sp;
+    }
+
+    const lldb::ThreadSP &
+    GetThreadSP ()
+    {
+        return m_thread_sp;
+    }
+        
+    const lldb::StackFrameSP &
+    GetFrameSP ()
+    {
+        return m_frame_sp;
+    }
+
+    void
+    SetTargetSP (const lldb::TargetSP &target_sp);
+    
+    void
+    SetProcessSP (const lldb::ProcessSP &process_sp);
+    
+    void
+    SetThreadSP (const lldb::ThreadSP &thread_sp);
+    
+    void
+    SetFrameSP (const lldb::StackFrameSP &frame_sp);
+
+    void
+    SetTargetPtr (Target* target);
+    
+    void
+    SetProcessPtr (Process *process);
+    
+    void
+    SetThreadPtr (Thread *thread);
+    
+    void
+    SetFramePtr (StackFrame *frame);
+
+protected:
     //------------------------------------------------------------------
     // Member variables
     //------------------------------------------------------------------
-    Target *target;     ///< The target that owns the process/thread/frame
-    Process *process;   ///< The process that owns the thread/frame
-    Thread *thread;     ///< The thread that owns the frame
-    StackFrame *frame;  ///< The stack frame in thread.
+    lldb::TargetSP m_target_sp;     ///< The target that owns the process/thread/frame
+    lldb::ProcessSP m_process_sp;   ///< The process that owns the thread/frame
+    lldb::ThreadSP m_thread_sp;     ///< The thread that owns the frame
+    lldb::StackFrameSP m_frame_sp;  ///< The stack frame in thread.
 };
 
 } // namespace lldb_private

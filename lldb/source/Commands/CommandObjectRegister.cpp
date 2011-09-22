@@ -99,7 +99,7 @@ public:
                     if (reg_addr != LLDB_INVALID_ADDRESS)
                     {
                         Address so_reg_addr;
-                        if (exe_ctx.target->GetSectionLoadList().ResolveLoadAddress(reg_addr, so_reg_addr))
+                        if (exe_ctx.GetTargetRef().GetSectionLoadList().ResolveLoadAddress(reg_addr, so_reg_addr))
                         {
                             strm.PutCString ("  ");
                             so_reg_addr.Dump(&strm, exe_ctx.GetBestExecutionContextScope(), Address::DumpStyleResolvedDescription);

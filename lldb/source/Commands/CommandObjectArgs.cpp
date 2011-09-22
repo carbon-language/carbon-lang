@@ -105,7 +105,7 @@ CommandObjectArgs::Execute
     ConstString target_triple;
     
     
-    Process *process = m_interpreter.GetExecutionContext().process;
+    Process *process = m_interpreter.GetExecutionContext().GetProcessPtr();
     if (!process)
     {
         result.AppendError ("Args found no process.");
@@ -131,7 +131,7 @@ CommandObjectArgs::Execute
         return false;
     }
     
-    Thread *thread = m_interpreter.GetExecutionContext ().thread;
+    Thread *thread = m_interpreter.GetExecutionContext ().GetThreadPtr();
     
     if (!thread)
     {

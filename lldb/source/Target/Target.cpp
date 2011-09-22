@@ -1177,10 +1177,8 @@ Target::CalculateStackFrame ()
 void
 Target::CalculateExecutionContext (ExecutionContext &exe_ctx)
 {
-    exe_ctx.target = this;
-    exe_ctx.process = NULL; // Do NOT fill in process...
-    exe_ctx.thread = NULL;
-    exe_ctx.frame = NULL;
+    exe_ctx.Clear();
+    exe_ctx.SetTargetPtr(this);
 }
 
 PathMappingList &
@@ -1278,11 +1276,8 @@ Target::GetTargetFromContexts (const ExecutionContext *exe_ctx_ptr, const Symbol
     Target *target = NULL;
     if (sc_ptr != NULL)
         target = sc_ptr->target_sp.get();
-    if (target == NULL)
-    {
-        if (exe_ctx_ptr != NULL && exe_ctx_ptr->process != NULL)
-            target = &exe_ctx_ptr->process->GetTarget();
-    }
+    if (target == NULL && exe_ctx_ptr)
+        target = exe_ctx_ptr->GetTargetPtr();
     return target;
 }
 
@@ -1656,7 +1651,7 @@ Target::RunStopHooks ()
             if ((cur_hook_sp->GetSpecifier () == NULL 
                   || cur_hook_sp->GetSpecifier()->SymbolContextMatches(sym_ctx_with_reasons[i]))
                 && (cur_hook_sp->GetThreadSpecifier() == NULL
-                    || cur_hook_sp->GetThreadSpecifier()->ThreadPassesBasicTests(exc_ctx_with_reasons[i].thread)))
+                    || cur_hook_sp->GetThreadSpecifier()->ThreadPassesBasicTests(exc_ctx_with_reasons[i].GetThreadPtr())))
             {
                 if (!hooks_ran)
                 {
@@ -1670,7 +1665,7 @@ Target::RunStopHooks ()
                 }
                 
                 if (print_thread_header)
-                    result.AppendMessageWithFormat("-- Thread %d\n", exc_ctx_with_reasons[i].thread->GetIndexID());
+                    result.AppendMessageWithFormat("-- Thread %d\n", exc_ctx_with_reasons[i].GetThreadPtr()->GetIndexID());
                 
                 bool stop_on_continue = true; 
                 bool stop_on_error = true; 

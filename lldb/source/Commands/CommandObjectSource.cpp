@@ -280,11 +280,9 @@ public:
         }
 
         ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
-        Target *target = NULL;
+        Target *target = exe_ctx.GetTargetPtr();
 
-        if (exe_ctx.target)
-            target = exe_ctx.target;
-        else
+        if (target == NULL)
             target = m_interpreter.GetDebugger().GetSelectedTarget().get();
             
         if (target == NULL)
@@ -427,7 +425,7 @@ public:
             {
                 const bool show_inlines = true;
                 m_breakpoint_locations.Reset (start_file, 0, show_inlines);
-                SearchFilter target_search_filter (exe_ctx.target->GetSP());
+                SearchFilter target_search_filter (exe_ctx.GetTargetSP());
                 target_search_filter.Search (m_breakpoint_locations);
             }
             else

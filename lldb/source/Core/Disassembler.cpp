@@ -81,15 +81,16 @@ ResolveAddress (const ExecutionContext &exe_ctx,
     {
         // If we weren't passed in a section offset address range,
         // try and resolve it to something
-        if (exe_ctx.target)
+        Target *target = exe_ctx.GetTargetPtr();
+        if (target)
         {
-            if (exe_ctx.target->GetSectionLoadList().IsEmpty())
+            if (target->GetSectionLoadList().IsEmpty())
             {
-                exe_ctx.target->GetImages().ResolveFileAddress (addr.GetOffset(), resolved_addr);
+                target->GetImages().ResolveFileAddress (addr.GetOffset(), resolved_addr);
             }
             else
             {
-                exe_ctx.target->GetSectionLoadList().ResolveLoadAddress (addr.GetOffset(), resolved_addr);
+                target->GetSectionLoadList().ResolveLoadAddress (addr.GetOffset(), resolved_addr);
             }
             // We weren't able to resolve the address, just treat it as a
             // raw address
@@ -174,16 +175,16 @@ Disassembler::Disassemble
                                    true,
                                    sc_list);
         }
-        else if (exe_ctx.target)
+        else if (exe_ctx.GetTargetPtr())
         {
-            exe_ctx.target->GetImages().FindFunctions (name, 
-                                                       eFunctionNameTypeBase | 
-                                                       eFunctionNameTypeFull | 
-                                                       eFunctionNameTypeMethod | 
-                                                       eFunctionNameTypeSelector,
-                                                       include_symbols, 
-                                                       false,
-                                                       sc_list);
+            exe_ctx.GetTargetPtr()->GetImages().FindFunctions (name, 
+                                                               eFunctionNameTypeBase | 
+                                                               eFunctionNameTypeFull | 
+                                                               eFunctionNameTypeMethod | 
+                                                               eFunctionNameTypeSelector,
+                                                               include_symbols, 
+                                                               false,
+                                                               sc_list);
         }
     }
     
@@ -333,8 +334,10 @@ Disassembler::PrintInstructions
     AddressRange sc_range;
     const Address *pc_addr_ptr = NULL;
     ExecutionContextScope *exe_scope = exe_ctx.GetBestExecutionContextScope();
-    if (exe_ctx.frame)
-        pc_addr_ptr = &exe_ctx.frame->GetFrameCodeAddress();
+    StackFrame *frame = exe_ctx.GetFramePtr();
+
+    if (frame)
+        pc_addr_ptr = &frame->GetFrameCodeAddress();
     const uint32_t scope = eSymbolContextLineEntry | eSymbolContextFunction | eSymbolContextSymbol;
     const bool use_inline_block_range = false;
     for (size_t i=0; i<num_instructions_found; ++i)
@@ -364,7 +367,7 @@ Disassembler::PrintInstructions
                                 if (offset != 0)
                                     strm.EOL();
                                 
-                                sc.DumpStopContext(&strm, exe_ctx.process, addr, false, true, false);
+                                sc.DumpStopContext(&strm, exe_ctx.GetProcessPtr(), addr, false, true, false);
                                 strm.EOL();
                                 
                                 if (sc.comp_unit && sc.line_entry.IsValid())
@@ -436,9 +439,10 @@ Disassembler::Disassemble
 )
 {
     AddressRange range;
-    if (exe_ctx.frame)
+    StackFrame *frame = exe_ctx.GetFramePtr();
+    if (frame)
     {
-        SymbolContext sc(exe_ctx.frame->GetSymbolContext(eSymbolContextFunction | eSymbolContextSymbol));
+        SymbolContext sc(frame->GetSymbolContext(eSymbolContextFunction | eSymbolContextSymbol));
         if (sc.function)
         {
             range = sc.function->GetAddressRange();
@@ -449,7 +453,7 @@ Disassembler::Disassemble
         }
         else
         {
-            range.GetBaseAddress() = exe_ctx.frame->GetFrameCodeAddress();
+            range.GetBaseAddress() = frame->GetFrameCodeAddress();
         }
 
         if (range.GetBaseAddress().IsValid() && range.GetByteSize() == 0)
@@ -848,32 +852,34 @@ Disassembler::ParseInstructions
     const AddressRange &range
 )
 {
-    Target *target = exe_ctx->target;
-    const addr_t byte_size = range.GetByteSize();
-    if (target == NULL || byte_size == 0 || !range.GetBaseAddress().IsValid())
-        return 0;
-
-    DataBufferHeap *heap_buffer = new DataBufferHeap (byte_size, '\0');
-    DataBufferSP data_sp(heap_buffer);
-
-    Error error;
-    const bool prefer_file_cache = true;
-    const size_t bytes_read = target->ReadMemory (range.GetBaseAddress(), 
-                                                  prefer_file_cache, 
-                                                  heap_buffer->GetBytes(), 
-                                                  heap_buffer->GetByteSize(), 
-                                                  error);
-    
-    if (bytes_read > 0)
+    if (exe_ctx)
     {
-        if (bytes_read != heap_buffer->GetByteSize())
-            heap_buffer->SetByteSize (bytes_read);
-        DataExtractor data (data_sp, 
-                            m_arch.GetByteOrder(),
-                            m_arch.GetAddressByteSize());
-        return DecodeInstructions (range.GetBaseAddress(), data, 0, UINT32_MAX, false);
-    }
+        Target *target = exe_ctx->GetTargetPtr();
+        const addr_t byte_size = range.GetByteSize();
+        if (target == NULL || byte_size == 0 || !range.GetBaseAddress().IsValid())
+            return 0;
 
+        DataBufferHeap *heap_buffer = new DataBufferHeap (byte_size, '\0');
+        DataBufferSP data_sp(heap_buffer);
+
+        Error error;
+        const bool prefer_file_cache = true;
+        const size_t bytes_read = target->ReadMemory (range.GetBaseAddress(), 
+                                                      prefer_file_cache, 
+                                                      heap_buffer->GetBytes(), 
+                                                      heap_buffer->GetByteSize(), 
+                                                      error);
+        
+        if (bytes_read > 0)
+        {
+            if (bytes_read != heap_buffer->GetByteSize())
+                heap_buffer->SetByteSize (bytes_read);
+            DataExtractor data (data_sp, 
+                                m_arch.GetByteOrder(),
+                                m_arch.GetAddressByteSize());
+            return DecodeInstructions (range.GetBaseAddress(), data, 0, UINT32_MAX, false);
+        }
+    }
     return 0;
 }
 
@@ -887,10 +893,10 @@ Disassembler::ParseInstructions
 {
     m_instruction_list.Clear();
 
-    if (num_instructions == 0 || !start.IsValid())
+    if (exe_ctx == NULL || num_instructions == 0 || !start.IsValid())
         return 0;
         
-    Target *target = exe_ctx->target;
+    Target *target = exe_ctx->GetTargetPtr();
     // Calculate the max buffer size we will need in order to disassemble
     const addr_t byte_size = num_instructions * m_arch.GetMaximumOpcodeByteSize();
     

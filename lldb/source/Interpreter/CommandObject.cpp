@@ -232,7 +232,7 @@ CommandObject::ExecuteWithOptions (Args& args, CommandReturnObject &result)
 
     if (GetFlags().AnySet (CommandObject::eFlagProcessMustBeLaunched | CommandObject::eFlagProcessMustBePaused))
     {
-        Process *process = m_interpreter.GetExecutionContext().process;
+        Process *process = m_interpreter.GetExecutionContext().GetProcessPtr();
         if (process == NULL)
         {
             // A process that is not running is considered paused.

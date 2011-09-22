@@ -113,7 +113,7 @@ UnwindAssemblyInstEmulation::GetNonCallSiteUnwindPlanFromAssembly (AddressRange&
 
                         m_inst_emulator_ap->SetInstruction (inst->GetOpcode(), 
                                                             inst->GetAddress(), 
-                                                            exe_ctx.target);
+                                                            exe_ctx.GetTargetPtr());
 
                         m_inst_emulator_ap->EvaluateInstruction (eEmulateInstructionOptionIgnoreConditions);
                         

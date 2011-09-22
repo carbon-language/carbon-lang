@@ -912,8 +912,8 @@ void
 Thread::CalculateExecutionContext (ExecutionContext &exe_ctx)
 {
     m_process.CalculateExecutionContext (exe_ctx);
-    exe_ctx.thread = this;
-    exe_ctx.frame = NULL;
+    exe_ctx.SetThreadPtr (this);
+    exe_ctx.SetFramePtr (NULL);
 }
 
 
@@ -943,16 +943,17 @@ void
 Thread::DumpUsingSettingsFormat (Stream &strm, uint32_t frame_idx)
 {
     ExecutionContext exe_ctx;
+    StackFrameSP frame_sp;
     SymbolContext frame_sc;
     CalculateExecutionContext (exe_ctx);
 
     if (frame_idx != LLDB_INVALID_INDEX32)
     {
-        StackFrameSP frame_sp(GetStackFrameAtIndex (frame_idx));
+        frame_sp = GetStackFrameAtIndex (frame_idx);
         if (frame_sp)
         {
-            exe_ctx.frame = frame_sp.get();
-            frame_sc = exe_ctx.frame->GetSymbolContext(eSymbolContextEverything);
+            exe_ctx.SetFrameSP(frame_sp);
+            frame_sc = frame_sp->GetSymbolContext(eSymbolContextEverything);
         }
     }
 
@@ -960,7 +961,7 @@ Thread::DumpUsingSettingsFormat (Stream &strm, uint32_t frame_idx)
     assert (thread_format);
     const char *end = NULL;
     Debugger::FormatPrompt (thread_format, 
-                            exe_ctx.frame ? &frame_sc : NULL,
+                            frame_sp ? &frame_sc : NULL,
                             &exe_ctx, 
                             NULL,
                             strm, 

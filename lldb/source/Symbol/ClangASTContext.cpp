@@ -3114,10 +3114,12 @@ ClangASTContext::GetChildClangTypeAtIndex
                                     // the changing size of base classes that are newer than this class.
                                     // So if we have a process around that we can ask about this object, do so.
                                     child_byte_offset = LLDB_INVALID_IVAR_OFFSET;
-                                    
-                                    if (exe_ctx && exe_ctx->process)
+                                    Process *process = NULL;
+                                    if (exe_ctx)
+                                        process = exe_ctx->GetProcessPtr();
+                                    if (process)
                                     {
-                                        ObjCLanguageRuntime *objc_runtime = exe_ctx->process->GetObjCLanguageRuntime();
+                                        ObjCLanguageRuntime *objc_runtime = process->GetObjCLanguageRuntime();
                                         if (objc_runtime != NULL)
                                         {
                                             ClangASTType parent_ast_type (ast, parent_qual_type.getAsOpaquePtr());

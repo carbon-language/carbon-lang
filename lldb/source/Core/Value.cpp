@@ -366,7 +366,7 @@ Value::GetValueAsData (ExecutionContext *exe_ctx,
         }
         else 
         {
-            Process *process = exe_ctx->GetProcess();
+            Process *process = exe_ctx->GetProcessPtr();
             if (process == NULL)
             {
                 error.SetErrorString ("can't read load address (invalid process)");
@@ -386,7 +386,7 @@ Value::GetValueAsData (ExecutionContext *exe_ctx,
         {
             error.SetErrorString ("can't read file address (no execution context)");
         }
-        else if (exe_ctx->target == NULL)
+        else if (exe_ctx->GetTargetPtr() == NULL)
         {
             error.SetErrorString ("can't read file address (invalid target)");
         }
@@ -419,14 +419,14 @@ Value::GetValueAsData (ExecutionContext *exe_ctx,
                     if (objfile)
                     {
                         Address so_addr(address, objfile->GetSectionList());
-                        addr_t load_address = so_addr.GetLoadAddress (exe_ctx->target);
+                        addr_t load_address = so_addr.GetLoadAddress (exe_ctx->GetTargetPtr());
                         if (load_address != LLDB_INVALID_ADDRESS)
                         {
                             resolved = true;
                             address = load_address;
                             address_type = eAddressTypeLoad;
-                            data.SetByteOrder(exe_ctx->target->GetArchitecture().GetByteOrder());
-                            data.SetAddressByteSize(exe_ctx->target->GetArchitecture().GetAddressByteSize());
+                            data.SetByteOrder(exe_ctx->GetTargetRef().GetArchitecture().GetByteOrder());
+                            data.SetAddressByteSize(exe_ctx->GetTargetRef().GetArchitecture().GetAddressByteSize());
                         }
                         else
                         {
@@ -532,7 +532,7 @@ Value::GetValueAsData (ExecutionContext *exe_ctx,
                 // want to read the actual value by setting "prefer_file_cache"
                 // to false. 
                 const bool prefer_file_cache = false;
-                if (exe_ctx->target->ReadMemory(file_so_addr, prefer_file_cache, dst, byte_size, error) != byte_size)
+                if (exe_ctx->GetTargetRef().ReadMemory(file_so_addr, prefer_file_cache, dst, byte_size, error) != byte_size)
                 {
                     error.SetErrorStringWithFormat("read memory from 0x%llx failed", (uint64_t)address);
                 }
@@ -543,7 +543,7 @@ Value::GetValueAsData (ExecutionContext *exe_ctx,
                 // might have a valid process in the exe_ctx->target, so use
                 // the ExecutionContext::GetProcess accessor to ensure we
                 // get the process if there is one.
-                Process *process = exe_ctx->GetProcess();
+                Process *process = exe_ctx->GetProcessPtr();
 
                 if (process)
                 {

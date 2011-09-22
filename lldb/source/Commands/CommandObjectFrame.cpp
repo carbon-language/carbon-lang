@@ -74,9 +74,10 @@ public:
              CommandReturnObject &result)
     {
         ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
-        if (exe_ctx.frame)
+        StackFrame *frame = exe_ctx.GetFramePtr();
+        if (frame)
         {
-            exe_ctx.frame->DumpUsingSettingsFormat (&result.GetOutputStream());
+            frame->DumpUsingSettingsFormat (&result.GetOutputStream());
             result.SetStatus (eReturnStatusSuccessFinishResult);
         }
         else
@@ -192,14 +193,15 @@ public:
              CommandReturnObject &result)
     {
         ExecutionContext exe_ctx (m_interpreter.GetExecutionContext());
-        if (exe_ctx.thread)
+        Thread *thread = exe_ctx.GetThreadPtr();
+        if (thread)
         {
-            const uint32_t num_frames = exe_ctx.thread->GetStackFrameCount();
+            const uint32_t num_frames = thread->GetStackFrameCount();
             uint32_t frame_idx = UINT32_MAX;
             if (m_options.relative_frame_offset != INT32_MIN)
             {
                 // The one and only argument is a signed relative frame index
-                frame_idx = exe_ctx.thread->GetSelectedFrameIndex ();
+                frame_idx = thread->GetSelectedFrameIndex ();
                 if (frame_idx == UINT32_MAX)
                     frame_idx = 0;
                 
@@ -254,13 +256,13 @@ public:
                 
             if (frame_idx < num_frames)
             {
-                exe_ctx.thread->SetSelectedFrameByIndex (frame_idx);
-                exe_ctx.frame = exe_ctx.thread->GetSelectedFrame ().get();
-
-                if (exe_ctx.frame)
+                thread->SetSelectedFrameByIndex (frame_idx);
+                exe_ctx.SetFrameSP(thread->GetSelectedFrame ());
+                StackFrame *frame = exe_ctx.GetFramePtr();
+                if (frame)
                 {
                     bool already_shown = false;
-                    SymbolContext frame_sc(exe_ctx.frame->GetSymbolContext(eSymbolContextLineEntry));
+                    SymbolContext frame_sc(frame->GetSymbolContext(eSymbolContextLineEntry));
                     if (m_interpreter.GetDebugger().GetUseExternalEditor() && frame_sc.line_entry.file && frame_sc.line_entry.line != 0)
                     {
                         already_shown = Host::OpenFileInExternalEditor (frame_sc.line_entry.file, frame_sc.line_entry.line);
@@ -270,11 +272,11 @@ public:
                     bool show_source = !already_shown;
                     uint32_t source_lines_before = 3;
                     uint32_t source_lines_after = 3;
-                    if (exe_ctx.frame->GetStatus(result.GetOutputStream(),
-                                                 show_frame_info,
-                                                 show_source,
-                                                 source_lines_before,
-                                                 source_lines_after))
+                    if (frame->GetStatus (result.GetOutputStream(),
+                                          show_frame_info,
+                                          show_source,
+                                          source_lines_before,
+                                          source_lines_after))
                     {
                         result.SetStatus (eReturnStatusSuccessFinishResult);
                         return result.Succeeded();
@@ -369,7 +371,8 @@ public:
     )
     {
         ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
-        if (exe_ctx.frame == NULL)
+        StackFrame *frame = exe_ctx.GetFramePtr();
+        if (frame == NULL)
         {
             result.AppendError ("you must be stopped in a valid stack frame to view frame variables.");
             result.SetStatus (eReturnStatusFailed);
@@ -383,9 +386,7 @@ public:
         // Be careful about the stack frame, if any summary formatter runs code, it might clear the StackFrameList
         // for the thread.  So hold onto a shared pointer to the frame so it stays alive.
         
-        StackFrameSP frame_sp = exe_ctx.frame->GetSP();
-        
-        VariableList *variable_list = frame_sp->GetVariableList (get_file_globals);
+        VariableList *variable_list = frame->GetVariableList (get_file_globals);
 
         VariableSP var_sp;
         ValueObjectSP valobj_sp;
@@ -458,7 +459,7 @@ public:
                                     var_sp = regex_var_list.GetVariableAtIndex (regex_idx);
                                     if (var_sp)
                                     {
-                                        valobj_sp = frame_sp->GetValueObjectForFrameVariable (var_sp, m_varobj_options.use_dynamic);
+                                        valobj_sp = frame->GetValueObjectForFrameVariable (var_sp, m_varobj_options.use_dynamic);
                                         if (valobj_sp)
                                         {
                                             if (m_option_variable.format != eFormatDefault)
@@ -499,11 +500,11 @@ public:
                         Error error;
                         uint32_t expr_path_options = StackFrame::eExpressionPathOptionCheckPtrVsMember;
                         lldb::VariableSP var_sp;
-                        valobj_sp = frame_sp->GetValueForVariableExpressionPath (name_cstr, 
-                                                                                 m_varobj_options.use_dynamic, 
-                                                                                 expr_path_options,
-                                                                                 var_sp,
-                                                                                 error);
+                        valobj_sp = frame->GetValueForVariableExpressionPath (name_cstr, 
+                                                                              m_varobj_options.use_dynamic, 
+                                                                              expr_path_options,
+                                                                              var_sp,
+                                                                              error);
                         if (valobj_sp)
                         {
                             if (m_option_variable.format != eFormatDefault)
@@ -533,8 +534,7 @@ public:
                                     size = valobj_sp->GetByteSize();
                                 }
                                 uint32_t watch_type = m_option_watchpoint.watch_type;
-                                WatchpointLocation *wp_loc =
-                                    exe_ctx.target->CreateWatchpointLocation(addr, size, watch_type).get();
+                                WatchpointLocation *wp_loc = exe_ctx.GetTargetRef().CreateWatchpointLocation(addr, size, watch_type).get();
                                 if (wp_loc)
                                 {
                                     if (var_sp && var_sp->GetDeclaration().GetFile())
@@ -613,8 +613,8 @@ public:
                             // Use the variable object code to make sure we are
                             // using the same APIs as the the public API will be
                             // using...
-                            valobj_sp = frame_sp->GetValueObjectForFrameVariable (var_sp, 
-                                                                                  m_varobj_options.use_dynamic);
+                            valobj_sp = frame->GetValueObjectForFrameVariable (var_sp, 
+                                                                               m_varobj_options.use_dynamic);
                             if (valobj_sp)
                             {
                                 if (m_option_variable.format != eFormatDefault)

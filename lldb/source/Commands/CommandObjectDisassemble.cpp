@@ -314,15 +314,16 @@ CommandObjectDisassemble::Execute
     else
     {
         AddressRange range;
+        StackFrame *frame = exe_ctx.GetFramePtr();
         if (m_options.frame_line)
         {
-            if (exe_ctx.frame == NULL)
+            if (frame == NULL)
             {
                 result.AppendError ("Cannot disassemble around the current line without a selected frame.\n");
                 result.SetStatus (eReturnStatusFailed);
                 return false;
             }
-            LineEntry pc_line_entry (exe_ctx.frame->GetSymbolContext(eSymbolContextLineEntry).line_entry);
+            LineEntry pc_line_entry (frame->GetSymbolContext(eSymbolContextLineEntry).line_entry);
             if (pc_line_entry.IsValid())
             {
                 range = pc_line_entry.range;
@@ -335,13 +336,13 @@ CommandObjectDisassemble::Execute
         }
         else if (m_options.cur_function)
         {
-            if (exe_ctx.frame == NULL)
+            if (frame == NULL)
             {
                 result.AppendError ("Cannot disassemble around the current function without a selected frame.\n");
                 result.SetStatus (eReturnStatusFailed);
                 return false;
             }
-            Symbol *symbol = exe_ctx.frame->GetSymbolContext(eSymbolContextSymbol).symbol;
+            Symbol *symbol = frame->GetSymbolContext(eSymbolContextSymbol).symbol;
             if (symbol)
                 range = symbol->GetAddressRangeRef();
         }
@@ -352,13 +353,13 @@ CommandObjectDisassemble::Execute
         {
             if (m_options.at_pc)
             {
-                if (exe_ctx.frame == NULL)
+                if (frame == NULL)
                 {
                     result.AppendError ("Cannot disassemble around the current PC without a selected frame.\n");
                     result.SetStatus (eReturnStatusFailed);
                     return false;
                 }
-                range.GetBaseAddress() = exe_ctx.frame->GetFrameCodeAddress();
+                range.GetBaseAddress() = frame->GetFrameCodeAddress();
                 if (m_options.num_instructions == 0)
                 {
                     // Disassembling at the PC always disassembles some number of instructions (not the whole function).
@@ -389,15 +390,15 @@ CommandObjectDisassemble::Execute
             if (!range.GetBaseAddress().IsValid())
             {
                 // The default action is to disassemble the current frame function.
-                if (exe_ctx.frame)
+                if (frame)
                 {
-                    SymbolContext sc(exe_ctx.frame->GetSymbolContext(eSymbolContextFunction | eSymbolContextSymbol));
+                    SymbolContext sc(frame->GetSymbolContext(eSymbolContextFunction | eSymbolContextSymbol));
                     if (sc.function)
                         range.GetBaseAddress() = sc.function->GetAddressRange().GetBaseAddress();
                     else if (sc.symbol && sc.symbol->GetAddressRangePtr())
                         range.GetBaseAddress() = sc.symbol->GetAddressRangePtr()->GetBaseAddress();
                     else
-                        range.GetBaseAddress() = exe_ctx.frame->GetFrameCodeAddress();
+                        range.GetBaseAddress() = frame->GetFrameCodeAddress();
                 }
                 
                 if (!range.GetBaseAddress().IsValid())
@@ -431,15 +432,15 @@ CommandObjectDisassemble::Execute
             if (!range.GetBaseAddress().IsValid())
             {
                 // The default action is to disassemble the current frame function.
-                if (exe_ctx.frame)
+                if (frame)
                 {
-                    SymbolContext sc(exe_ctx.frame->GetSymbolContext(eSymbolContextFunction | eSymbolContextSymbol));
+                    SymbolContext sc(frame->GetSymbolContext(eSymbolContextFunction | eSymbolContextSymbol));
                     if (sc.function)
                         range = sc.function->GetAddressRange();
                     else if (sc.symbol && sc.symbol->GetAddressRangePtr())
                         range = *sc.symbol->GetAddressRangePtr();
                     else
-                        range.GetBaseAddress() = exe_ctx.frame->GetFrameCodeAddress();
+                        range.GetBaseAddress() = frame->GetFrameCodeAddress();
                 }
                 else
                 {

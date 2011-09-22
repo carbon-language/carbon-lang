@@ -373,7 +373,7 @@ public:
         {
             Error error;
             const uint32_t argc = args.GetArgumentCount();
-            Target *target = m_interpreter.GetExecutionContext().target;
+            Target *target = m_interpreter.GetExecutionContext().GetTargetPtr();
             if (target)
             {
                 Module *exe_module = target->GetExecutableModulePointer();

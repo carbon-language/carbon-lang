@@ -357,8 +357,11 @@ Type::DumpValueInMemory
     if (address != LLDB_INVALID_ADDRESS)
     {
         DataExtractor data;
-        if (exe_ctx->target)
-            data.SetByteOrder (exe_ctx->target->GetArchitecture().GetByteOrder());
+        Target *target = NULL;
+        if (exe_ctx)
+            target = exe_ctx->GetTargetPtr();
+        if (target)
+            data.SetByteOrder (target->GetArchitecture().GetByteOrder());
         if (ReadFromMemory (exe_ctx, address, address_type, data))
         {
             DumpValue(exe_ctx, s, data, 0, show_types, show_summary, verbose);
@@ -397,10 +400,14 @@ Type::ReadFromMemory (ExecutionContext *exe_ctx, lldb::addr_t addr, AddressType 
         }
         else
         {
-            if (exe_ctx && exe_ctx->process)
+            if (exe_ctx)
             {
-                Error error;
-                return exe_ctx->process->ReadMemory(addr, dst, byte_size, error) == byte_size;
+                Process *process = exe_ctx->GetProcessPtr();
+                if (process)
+                {
+                    Error error;
+                    return exe_ctx->GetProcessPtr()->ReadMemory(addr, dst, byte_size, error) == byte_size;
+                }
             }
         }
     }

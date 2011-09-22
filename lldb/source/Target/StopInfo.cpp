@@ -225,7 +225,7 @@ public:
                         }
                         else
                         {
-                            Debugger &debugger = context.exe_ctx.target->GetDebugger();
+                            Debugger &debugger = context.exe_ctx.GetTargetRef().GetDebugger();
                             StreamSP error_sp = debugger.GetAsyncErrorStream ();
                             error_sp->Printf ("Stopped due to an error evaluating condition of breakpoint ");
                             bp_loc_sp->GetDescription (error_sp.get(), eDescriptionLevelBrief);

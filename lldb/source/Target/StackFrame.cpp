@@ -1168,7 +1168,7 @@ void
 StackFrame::CalculateExecutionContext (ExecutionContext &exe_ctx)
 {
     m_thread.CalculateExecutionContext (exe_ctx);
-    exe_ctx.frame = this;
+    exe_ctx.SetFramePtr(this);
 }
 
 void

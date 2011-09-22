@@ -126,10 +126,11 @@ ValueObjectVariable::UpdateValue ()
         lldb::addr_t loclist_base_load_addr = LLDB_INVALID_ADDRESS;
         ExecutionContext exe_ctx (GetExecutionContextScope());
         
-        if (exe_ctx.target)
+        Target *target = exe_ctx.GetTargetPtr();
+        if (target)
         {
-            m_data.SetByteOrder(exe_ctx.target->GetArchitecture().GetByteOrder());
-            m_data.SetAddressByteSize(exe_ctx.target->GetArchitecture().GetAddressByteSize());
+            m_data.SetByteOrder(target->GetArchitecture().GetByteOrder());
+            m_data.SetAddressByteSize(target->GetArchitecture().GetAddressByteSize());
         }
 
         if (expr.IsLocationList())
@@ -137,7 +138,7 @@ ValueObjectVariable::UpdateValue ()
             SymbolContext sc;
             variable->CalculateSymbolContext (&sc);
             if (sc.function)
-                loclist_base_load_addr = sc.function->GetAddressRange().GetBaseAddress().GetLoadAddress (exe_ctx.target);
+                loclist_base_load_addr = sc.function->GetAddressRange().GetBaseAddress().GetLoadAddress (target);
         }
         Value old_value(m_value);
         if (expr.Evaluate (&exe_ctx, GetClangAST(), NULL, NULL, NULL, loclist_base_load_addr, NULL, m_value, &m_error))
@@ -187,7 +188,8 @@ ValueObjectVariable::UpdateValue ()
                 // Make sure this type has a value before we try and read it
 
                 // If we have a file address, convert it to a load address if we can.
-                if (value_type == Value::eValueTypeFileAddress && exe_ctx.process && exe_ctx.process->IsAlive())
+                Process *process = exe_ctx.GetProcessPtr();
+                if (value_type == Value::eValueTypeFileAddress && process && process->IsAlive())
                 {
                     lldb::addr_t file_addr = m_value.GetScalar().ULongLong(LLDB_INVALID_ADDRESS);
                     if (file_addr != LLDB_INVALID_ADDRESS)
@@ -200,7 +202,7 @@ ValueObjectVariable::UpdateValue ()
                             if (objfile)
                             {
                                 Address so_addr(file_addr, objfile->GetSectionList());
-                                lldb::addr_t load_addr = so_addr.GetLoadAddress (exe_ctx.target);
+                                lldb::addr_t load_addr = so_addr.GetLoadAddress (target);
                                 if (load_addr != LLDB_INVALID_ADDRESS)
                                 {
                                     m_value.SetValueType(Value::eValueTypeLoadAddress);

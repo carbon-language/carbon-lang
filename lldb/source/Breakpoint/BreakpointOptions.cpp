@@ -180,7 +180,8 @@ BreakpointOptions::GetThreadPlanToTestCondition (ExecutionContext &exe_ctx,
         return NULL;
         
     // FIXME: I shouldn't have to do this, the process should handle it for me:
-    if (!exe_ctx.process->GetDynamicCheckers())
+    Process *process = exe_ctx.GetProcessPtr();
+    if (!process->GetDynamicCheckers())
     {
         DynamicCheckerFunctions *dynamic_checkers = new DynamicCheckerFunctions();
         
@@ -192,11 +193,11 @@ BreakpointOptions::GetThreadPlanToTestCondition (ExecutionContext &exe_ctx,
             return NULL;
         }
         
-        exe_ctx.process->SetDynamicCheckers(dynamic_checkers);
+        process->SetDynamicCheckers(dynamic_checkers);
     }
     
     // Get the boolean type from the process's scratch AST context
-    ClangASTContext *ast_context = exe_ctx.target->GetScratchClangASTContext();
+    ClangASTContext *ast_context = exe_ctx.GetTargetRef().GetScratchClangASTContext();
     TypeFromUser bool_type(ast_context->GetBuiltInType_bool(), ast_context->getASTContext());
 
     const bool keep_in_memory = false;
@@ -209,7 +210,7 @@ BreakpointOptions::GetThreadPlanToTestCondition (ExecutionContext &exe_ctx,
     // FIXME: When we can execute static expressions without running the target, we should check that here,
     // and return something to indicate we should stop or just continue.
 
-    ThreadPlan *new_plan = new ThreadPlanTestCondition (*exe_ctx.thread, 
+    ThreadPlan *new_plan = new ThreadPlanTestCondition (exe_ctx.GetThreadRef(), 
                                                         exe_ctx, 
                                                         m_condition_ap.get(), 
                                                         break_loc_sp, 

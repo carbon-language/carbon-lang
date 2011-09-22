@@ -103,9 +103,12 @@ AddSymbolicInfo(const ExecutionContext *exe_ctx, ExecutionContextScope *exe_scop
                 StreamString &comment, uint64_t operand_value, const Address &inst_addr)
 {
     Address so_addr;
-    if (exe_ctx && exe_ctx->target && !exe_ctx->target->GetSectionLoadList().IsEmpty())
+    Target *target = NULL;
+    if (exe_ctx)
+        target = exe_ctx->GetTargetPtr();
+    if (target && !target->GetSectionLoadList().IsEmpty())
     {
-        if (exe_ctx->target->GetSectionLoadList().ResolveLoadAddress(operand_value, so_addr))
+        if (target->GetSectionLoadList().ResolveLoadAddress(operand_value, so_addr))
             so_addr.Dump(&comment, exe_scope, Address::DumpStyleResolvedDescriptionNoModule, Address::DumpStyleSectionNameOffset);
     }
     else
@@ -223,8 +226,11 @@ InstructionLLVM::Dump
     {
         addr_t base_addr = LLDB_INVALID_ADDRESS;
         
-        if (exe_ctx && exe_ctx->target && !exe_ctx->target->GetSectionLoadList().IsEmpty())
-            base_addr = GetAddress().GetLoadAddress (exe_ctx->target);
+        Target *target = NULL;
+        if (exe_ctx)
+            target = exe_ctx->GetTargetPtr();
+        if (target && !target->GetSectionLoadList().IsEmpty())
+            base_addr = GetAddress().GetLoadAddress (target);
         if (base_addr == LLDB_INVALID_ADDRESS)
             base_addr = GetAddress().GetFileAddress ();
                     

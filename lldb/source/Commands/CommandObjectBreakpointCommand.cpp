@@ -803,10 +803,11 @@ CommandObjectBreakpointCommand::BreakpointOptionsCallbackFunction
     
     if (commands.GetSize() > 0)
     {
-        if (context->exe_ctx.target)
+        Target *target = context->exe_ctx.GetTargetPtr();
+        if (target)
         {
             CommandReturnObject result;
-            Debugger &debugger = context->exe_ctx.target->GetDebugger();
+            Debugger &debugger = target->GetDebugger();
             // Rig up the results secondary output stream to the debugger's, so the output will come out synchronously
             // if the debugger is set up that way.
                 

@@ -163,13 +163,14 @@ public:
         if (command.GetArgumentCount() == 0)
         {
             ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
-            if (exe_ctx.thread)
+            Thread *thread = exe_ctx.GetThreadPtr();
+            if (thread)
             {
                 // Thread::GetStatus() returns the number of frames shown.
-                if (exe_ctx.thread->GetStatus (strm,
-                                               m_options.m_start,
-                                               m_options.m_count,
-                                               num_frames_with_source))
+                if (thread->GetStatus (strm,
+                                       m_options.m_start,
+                                       m_options.m_count,
+                                       num_frames_with_source))
                 {
                     result.SetStatus (eReturnStatusSuccessFinishResult);
                 }
@@ -182,7 +183,7 @@ public:
         }
         else if (command.GetArgumentCount() == 1 && ::strcmp (command.GetArgumentAtIndex(0), "all") == 0)
         {
-            Process *process = m_interpreter.GetExecutionContext().process;
+            Process *process = m_interpreter.GetExecutionContext().GetProcessPtr();
             uint32_t num_threads = process->GetThreadList().GetSize();
             for (uint32_t i = 0; i < num_threads; i++)
             {
@@ -205,7 +206,7 @@ public:
         else
         {
             uint32_t num_args = command.GetArgumentCount();
-            Process *process = m_interpreter.GetExecutionContext().process;
+            Process *process = m_interpreter.GetExecutionContext().GetProcessPtr();
             std::vector<ThreadSP> thread_sps;
 
             for (uint32_t i = 0; i < num_args; i++)
@@ -398,7 +399,7 @@ public:
         CommandReturnObject &result
     )
     {
-        Process *process = m_interpreter.GetExecutionContext().process;
+        Process *process = m_interpreter.GetExecutionContext().GetProcessPtr();
         bool synchronous_execution = m_interpreter.GetSynchronous();
 
         if (process == NULL)
@@ -639,7 +640,7 @@ public:
             return false;
         }
 
-        Process *process = m_interpreter.GetExecutionContext().process;
+        Process *process = m_interpreter.GetExecutionContext().GetProcessPtr();
         if (process == NULL)
         {
             result.AppendError ("no process exists. Cannot continue");
@@ -903,7 +904,7 @@ public:
             return false;
         }
 
-        Process *process = m_interpreter.GetExecutionContext().process;
+        Process *process = m_interpreter.GetExecutionContext().GetProcessPtr();
         if (process == NULL)
         {
             result.AppendError ("need a valid process to step");
@@ -1125,7 +1126,7 @@ public:
         CommandReturnObject &result
     )
     {
-        Process *process = m_interpreter.GetExecutionContext().process;
+        Process *process = m_interpreter.GetExecutionContext().GetProcessPtr();
         if (process == NULL)
         {
             result.AppendError ("no process");
@@ -1198,18 +1199,19 @@ public:
         Stream &strm = result.GetOutputStream();
         result.SetStatus (eReturnStatusSuccessFinishNoResult);
         ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
-        if (exe_ctx.process)
+        Process *process = exe_ctx.GetProcessPtr();
+        if (process)
         {
             const bool only_threads_with_stop_reason = false;
             const uint32_t start_frame = 0;
             const uint32_t num_frames = 0;
             const uint32_t num_frames_with_source = 0;
-            exe_ctx.process->GetStatus(strm);
-            exe_ctx.process->GetThreadStatus (strm, 
-                                              only_threads_with_stop_reason, 
-                                              start_frame,
-                                              num_frames,
-                                              num_frames_with_source);            
+            process->GetStatus(strm);
+            process->GetThreadStatus (strm, 
+                                      only_threads_with_stop_reason, 
+                                      start_frame,
+                                      num_frames,
+                                      num_frames_with_source);            
         }
         else
         {

@@ -487,22 +487,24 @@ SBBreakpoint::PrivateBreakpointHitCallback
     lldb::user_id_t break_loc_id
 )
 {
-    BreakpointSP bp_sp(ctx->exe_ctx.target->GetBreakpointList().FindBreakpointByID(break_id));
+    BreakpointSP bp_sp(ctx->exe_ctx.GetTargetRef().GetBreakpointList().FindBreakpointByID(break_id));
     if (baton && bp_sp)
     {
         CallbackData *data = (CallbackData *)baton;
         lldb_private::Breakpoint *bp = bp_sp.get();
         if (bp && data->callback)
         {
-            if (ctx->exe_ctx.process)
+            Process *process = ctx->exe_ctx.GetProcessPtr();
+            if (process)
             {
-                SBProcess sb_process (ctx->exe_ctx.process->GetSP());
+                SBProcess sb_process (process->GetSP());
                 SBThread sb_thread;
                 SBBreakpointLocation sb_location;
                 assert (bp_sp);
                 sb_location.SetLocation (bp_sp->FindLocationByID (break_loc_id));
-                if (ctx->exe_ctx.thread)
-                    sb_thread.SetThread(ctx->exe_ctx.thread->GetSP());
+                Thread *thread = ctx->exe_ctx.GetThreadPtr();
+                if (thread)
+                    sb_thread.SetThread(thread->GetSP());
 
                 return data->callback (data->callback_baton, 
                                           sb_process, 
@@ -522,7 +524,7 @@ SBBreakpoint::SetCallback (BreakpointHitCallback callback, void *baton)
     if (log)
         log->Printf ("SBBreakpoint(%p)::SetCallback (callback=%p, baton=%p)", m_opaque_sp.get(), callback, baton);
 
-    if (m_opaque_sp.get())
+    if (m_opaque_sp)
     {
         Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
         BatonSP baton_sp(new SBBreakpointCallbackBaton (callback, baton));

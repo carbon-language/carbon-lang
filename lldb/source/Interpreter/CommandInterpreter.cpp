@@ -1856,8 +1856,12 @@ PlatformSP
 CommandInterpreter::GetPlatform (bool prefer_target_platform)
 {
     PlatformSP platform_sp;
-    if (prefer_target_platform && m_exe_ctx.target)
-        platform_sp = m_exe_ctx.target->GetPlatform();
+    if (prefer_target_platform)
+    {
+        Target *target = m_exe_ctx.GetTargetPtr();
+        if (target)
+            platform_sp = target->GetPlatform();
+    }
 
     if (!platform_sp)
         platform_sp = m_debugger.GetPlatformList().GetSelectedPlatform();
@@ -2222,31 +2226,32 @@ CommandInterpreter::UpdateExecutionContext (ExecutionContext *override_context)
     
     if (override_context != NULL)
     {
-        m_exe_ctx.target = override_context->target;
-        m_exe_ctx.process = override_context->process;
-        m_exe_ctx.thread = override_context->thread;
-        m_exe_ctx.frame = override_context->frame;
+        m_exe_ctx = *override_context;
     }
     else
     {
         TargetSP target_sp (m_debugger.GetSelectedTarget());
         if (target_sp)
         {
-            m_exe_ctx.target = target_sp.get();
-            m_exe_ctx.process = target_sp->GetProcessSP().get();
-            if (m_exe_ctx.process && m_exe_ctx.process->IsAlive() && !m_exe_ctx.process->IsRunning())
+            m_exe_ctx.SetTargetSP (target_sp);
+            ProcessSP process_sp (target_sp->GetProcessSP());
+            m_exe_ctx.SetProcessSP (process_sp);
+            if (process_sp && process_sp->IsAlive() && !process_sp->IsRunning())
             {
-                m_exe_ctx.thread = m_exe_ctx.process->GetThreadList().GetSelectedThread().get();
-                if (m_exe_ctx.thread)
+                ThreadSP thread_sp (process_sp->GetThreadList().GetSelectedThread().get());
+                if (thread_sp)
                 {
-                    m_exe_ctx.frame = m_exe_ctx.thread->GetSelectedFrame().get();
-                    if (m_exe_ctx.frame == NULL)
+                    m_exe_ctx.SetThreadSP (thread_sp);
+                    StackFrameSP frame_sp (thread_sp->GetSelectedFrame());
+                    if (!frame_sp)
                     {
-                        m_exe_ctx.frame = m_exe_ctx.thread->GetStackFrameAtIndex (0).get();
+                        frame_sp = thread_sp->GetStackFrameAtIndex (0);
                         // If we didn't have a selected frame select one here.
-                        if (m_exe_ctx.frame != NULL)
-                            m_exe_ctx.thread->SetSelectedFrame(m_exe_ctx.frame);
+                        if (frame_sp)
+                            thread_sp->SetSelectedFrame(frame_sp.get());
                     }
+                    if (frame_sp)
+                        m_exe_ctx.SetFrameSP (frame_sp);
                 }
             }
         }

@@ -505,7 +505,7 @@ DynamicLoaderMacOSXDYLD::NotifyBreakpointHit (void *baton,
     if (dyld_instance->InitializeFromAllImageInfos())
         return dyld_instance->GetStopWhenImagesChange(); 
 
-    Process *process = context->exe_ctx.process;
+    Process *process = context->exe_ctx.GetProcessPtr();
     const lldb::ABISP &abi = process->GetABI();
     if (abi != NULL)
     {
@@ -524,7 +524,7 @@ DynamicLoaderMacOSXDYLD::NotifyBreakpointHit (void *baton,
         input_value.SetContext (Value::eContextTypeClangType, clang_void_ptr_type);
         argument_values.PushValue (input_value);
         
-        if (abi->GetArgumentValues (*context->exe_ctx.thread, argument_values))
+        if (abi->GetArgumentValues (context->exe_ctx.GetThreadRef(), argument_values))
         {
             uint32_t dyld_mode = argument_values.GetValueAtIndex(0)->GetScalar().UInt (-1);
             if (dyld_mode != -1)

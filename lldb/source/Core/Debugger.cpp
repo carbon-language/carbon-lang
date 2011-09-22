@@ -337,22 +337,22 @@ ExecutionContext
 Debugger::GetSelectedExecutionContext ()
 {
     ExecutionContext exe_ctx;
-    exe_ctx.Clear();
-    
-    TargetSP target_sp = GetSelectedTarget();
-    exe_ctx.target = target_sp.get();
+    TargetSP target_sp(GetSelectedTarget());
+    exe_ctx.SetTargetSP (target_sp);
     
     if (target_sp)
     {
-        exe_ctx.process = target_sp->GetProcessSP().get();
-        if (exe_ctx.process && exe_ctx.process->IsRunning() == false)
+        ProcessSP process_sp (target_sp->GetProcessSP());
+        exe_ctx.SetProcessSP (process_sp);
+        if (process_sp && process_sp->IsRunning() == false)
         {
-            exe_ctx.thread = exe_ctx.process->GetThreadList().GetSelectedThread().get();
-            if (exe_ctx.thread)
+            ThreadSP thread_sp (process_sp->GetThreadList().GetSelectedThread());
+            if (thread_sp)
             {
-                exe_ctx.frame = exe_ctx.thread->GetSelectedFrame().get();
-                if (exe_ctx.frame == NULL)
-                    exe_ctx.frame = exe_ctx.thread->GetStackFrameAtIndex (0).get();
+                exe_ctx.SetThreadSP (thread_sp);
+                exe_ctx.SetFrameSP (thread_sp->GetSelectedFrame());
+                if (exe_ctx.GetFramePtr() == NULL)
+                    exe_ctx.SetFrameSP (thread_sp->GetStackFrameAtIndex (0));
             }
         }
     }
@@ -1259,10 +1259,10 @@ Debugger::FormatPrompt
                                     
                                     for (;index_lower<=index_higher;index_lower++)
                                     {
-                                        ValueObject* item = ExpandIndexedExpression(target,
-                                                                                    index_lower,
-                                                                                    exe_ctx->frame,
-                                                                                    false).get();
+                                        ValueObject* item = ExpandIndexedExpression (target,
+                                                                                     index_lower,
+                                                                                     exe_ctx->GetFramePtr(),
+                                                                                     false).get();
                                         
                                         if (!item)
                                         {
@@ -1307,77 +1307,85 @@ Debugger::FormatPrompt
                         case 'p':
                             if (::strncmp (var_name_begin, "process.", strlen("process.")) == 0)
                             {
-                                if (exe_ctx && exe_ctx->process != NULL)
+                                if (exe_ctx)
                                 {
-                                    var_name_begin += ::strlen ("process.");
-                                    if (::strncmp (var_name_begin, "id}", strlen("id}")) == 0)
+                                    Process *process = exe_ctx->GetProcessPtr();
+                                    if (process)
                                     {
-                                        s.Printf("%i", exe_ctx->process->GetID());
-                                        var_success = true;
-                                    }
-                                    else if ((::strncmp (var_name_begin, "name}", strlen("name}")) == 0) ||
-                                             (::strncmp (var_name_begin, "file.basename}", strlen("file.basename}")) == 0) ||
-                                             (::strncmp (var_name_begin, "file.fullpath}", strlen("file.fullpath}")) == 0))
-                                    {
-                                        Module *exe_module = exe_ctx->process->GetTarget().GetExecutableModulePointer();
-                                        if (exe_module)
+                                        var_name_begin += ::strlen ("process.");
+                                        if (::strncmp (var_name_begin, "id}", strlen("id}")) == 0)
                                         {
-                                            if (var_name_begin[0] == 'n' || var_name_begin[5] == 'f')
+                                            s.Printf("%i", process->GetID());
+                                            var_success = true;
+                                        }
+                                        else if ((::strncmp (var_name_begin, "name}", strlen("name}")) == 0) ||
+                                                 (::strncmp (var_name_begin, "file.basename}", strlen("file.basename}")) == 0) ||
+                                                 (::strncmp (var_name_begin, "file.fullpath}", strlen("file.fullpath}")) == 0))
+                                        {
+                                            Module *exe_module = process->GetTarget().GetExecutableModulePointer();
+                                            if (exe_module)
                                             {
-                                                format_file_spec.GetFilename() = exe_module->GetFileSpec().GetFilename();
-                                                var_success = format_file_spec;
-                                            }
-                                            else
-                                            {
-                                                format_file_spec = exe_module->GetFileSpec();
-                                                var_success = format_file_spec;
+                                                if (var_name_begin[0] == 'n' || var_name_begin[5] == 'f')
+                                                {
+                                                    format_file_spec.GetFilename() = exe_module->GetFileSpec().GetFilename();
+                                                    var_success = format_file_spec;
+                                                }
+                                                else
+                                                {
+                                                    format_file_spec = exe_module->GetFileSpec();
+                                                    var_success = format_file_spec;
+                                                }
                                             }
                                         }
                                     }
-                                }                                        
+                                }
                             }
                             break;
                         
                         case 't':
                             if (::strncmp (var_name_begin, "thread.", strlen("thread.")) == 0)
                             {
-                                if (exe_ctx && exe_ctx->thread)
+                                if (exe_ctx)
                                 {
-                                    var_name_begin += ::strlen ("thread.");
-                                    if (::strncmp (var_name_begin, "id}", strlen("id}")) == 0)
+                                    Thread *thread = exe_ctx->GetThreadPtr();
+                                    if (thread)
                                     {
-                                        s.Printf("0x%4.4x", exe_ctx->thread->GetID());
-                                        var_success = true;
-                                    }
-                                    else if (::strncmp (var_name_begin, "index}", strlen("index}")) == 0)
-                                    {
-                                        s.Printf("%u", exe_ctx->thread->GetIndexID());
-                                        var_success = true;
-                                    }
-                                    else if (::strncmp (var_name_begin, "name}", strlen("name}")) == 0)
-                                    {
-                                        cstr = exe_ctx->thread->GetName();
-                                        var_success = cstr && cstr[0];
-                                        if (var_success)
-                                            s.PutCString(cstr);
-                                    }
-                                    else if (::strncmp (var_name_begin, "queue}", strlen("queue}")) == 0)
-                                    {
-                                        cstr = exe_ctx->thread->GetQueueName();
-                                        var_success = cstr && cstr[0];
-                                        if (var_success)
-                                            s.PutCString(cstr);
-                                    }
-                                    else if (::strncmp (var_name_begin, "stop-reason}", strlen("stop-reason}")) == 0)
-                                    {
-                                        StopInfoSP stop_info_sp = exe_ctx->thread->GetStopInfo ();
-                                        if (stop_info_sp)
+                                        var_name_begin += ::strlen ("thread.");
+                                        if (::strncmp (var_name_begin, "id}", strlen("id}")) == 0)
                                         {
-                                            cstr = stop_info_sp->GetDescription();
-                                            if (cstr && cstr[0])
-                                            {
+                                            s.Printf("0x%4.4x", thread->GetID());
+                                            var_success = true;
+                                        }
+                                        else if (::strncmp (var_name_begin, "index}", strlen("index}")) == 0)
+                                        {
+                                            s.Printf("%u", thread->GetIndexID());
+                                            var_success = true;
+                                        }
+                                        else if (::strncmp (var_name_begin, "name}", strlen("name}")) == 0)
+                                        {
+                                            cstr = thread->GetName();
+                                            var_success = cstr && cstr[0];
+                                            if (var_success)
                                                 s.PutCString(cstr);
-                                                var_success = true;
+                                        }
+                                        else if (::strncmp (var_name_begin, "queue}", strlen("queue}")) == 0)
+                                        {
+                                            cstr = thread->GetQueueName();
+                                            var_success = cstr && cstr[0];
+                                            if (var_success)
+                                                s.PutCString(cstr);
+                                        }
+                                        else if (::strncmp (var_name_begin, "stop-reason}", strlen("stop-reason}")) == 0)
+                                        {
+                                            StopInfoSP stop_info_sp = thread->GetStopInfo ();
+                                            if (stop_info_sp)
+                                            {
+                                                cstr = stop_info_sp->GetDescription();
+                                                if (cstr && cstr[0])
+                                                {
+                                                    s.PutCString(cstr);
+                                                    var_success = true;
+                                                }
                                             }
                                         }
                                     }
@@ -1455,50 +1463,54 @@ Debugger::FormatPrompt
                             }
                             else if (::strncmp (var_name_begin, "frame.", strlen("frame.")) == 0)
                             {
-                                if (exe_ctx && exe_ctx->frame)
+                                if (exe_ctx)
                                 {
-                                    var_name_begin += ::strlen ("frame.");
-                                    if (::strncmp (var_name_begin, "index}", strlen("index}")) == 0)
+                                    StackFrame *frame = exe_ctx->GetFramePtr();
+                                    if (frame)
                                     {
-                                        s.Printf("%u", exe_ctx->frame->GetFrameIndex());
-                                        var_success = true;
-                                    }
-                                    else if (::strncmp (var_name_begin, "pc}", strlen("pc}")) == 0)
-                                    {
-                                        reg_kind = eRegisterKindGeneric;
-                                        reg_num = LLDB_REGNUM_GENERIC_PC;
-                                        var_success = true;
-                                    }
-                                    else if (::strncmp (var_name_begin, "sp}", strlen("sp}")) == 0)
-                                    {
-                                        reg_kind = eRegisterKindGeneric;
-                                        reg_num = LLDB_REGNUM_GENERIC_SP;
-                                        var_success = true;
-                                    }
-                                    else if (::strncmp (var_name_begin, "fp}", strlen("fp}")) == 0)
-                                    {
-                                        reg_kind = eRegisterKindGeneric;
-                                        reg_num = LLDB_REGNUM_GENERIC_FP;
-                                        var_success = true;
-                                    }
-                                    else if (::strncmp (var_name_begin, "flags}", strlen("flags}")) == 0)
-                                    {
-                                        reg_kind = eRegisterKindGeneric;
-                                        reg_num = LLDB_REGNUM_GENERIC_FLAGS;
-                                        var_success = true;
-                                    }
-                                    else if (::strncmp (var_name_begin, "reg.", strlen ("reg.")) == 0)
-                                    {
-                                        reg_ctx = exe_ctx->frame->GetRegisterContext().get();
-                                        if (reg_ctx)
+                                        var_name_begin += ::strlen ("frame.");
+                                        if (::strncmp (var_name_begin, "index}", strlen("index}")) == 0)
                                         {
-                                            var_name_begin += ::strlen ("reg.");
-                                            if (var_name_begin < var_name_end)
+                                            s.Printf("%u", frame->GetFrameIndex());
+                                            var_success = true;
+                                        }
+                                        else if (::strncmp (var_name_begin, "pc}", strlen("pc}")) == 0)
+                                        {
+                                            reg_kind = eRegisterKindGeneric;
+                                            reg_num = LLDB_REGNUM_GENERIC_PC;
+                                            var_success = true;
+                                        }
+                                        else if (::strncmp (var_name_begin, "sp}", strlen("sp}")) == 0)
+                                        {
+                                            reg_kind = eRegisterKindGeneric;
+                                            reg_num = LLDB_REGNUM_GENERIC_SP;
+                                            var_success = true;
+                                        }
+                                        else if (::strncmp (var_name_begin, "fp}", strlen("fp}")) == 0)
+                                        {
+                                            reg_kind = eRegisterKindGeneric;
+                                            reg_num = LLDB_REGNUM_GENERIC_FP;
+                                            var_success = true;
+                                        }
+                                        else if (::strncmp (var_name_begin, "flags}", strlen("flags}")) == 0)
+                                        {
+                                            reg_kind = eRegisterKindGeneric;
+                                            reg_num = LLDB_REGNUM_GENERIC_FLAGS;
+                                            var_success = true;
+                                        }
+                                        else if (::strncmp (var_name_begin, "reg.", strlen ("reg.")) == 0)
+                                        {
+                                            reg_ctx = frame->GetRegisterContext().get();
+                                            if (reg_ctx)
                                             {
-                                                std::string reg_name (var_name_begin, var_name_end);
-                                                reg_info = reg_ctx->GetRegisterInfoByName (reg_name.c_str());
-                                                if (reg_info)
-                                                    var_success = true;
+                                                var_name_begin += ::strlen ("reg.");
+                                                if (var_name_begin < var_name_end)
+                                                {
+                                                    std::string reg_name (var_name_begin, var_name_end);
+                                                    reg_info = reg_ctx->GetRegisterInfoByName (reg_name.c_str());
+                                                    if (reg_info)
+                                                        var_success = true;
+                                                }
                                             }
                                         }
                                     }
@@ -1564,10 +1576,11 @@ Debugger::FormatPrompt
                                     }
                                     else if (::strncmp (var_name_begin, "pc-offset}", strlen("pc-offset}")) == 0)
                                     {
-                                        var_success = exe_ctx->frame;
+                                        StackFrame *frame = exe_ctx->GetFramePtr();
+                                        var_success = frame != NULL;
                                         if (var_success)
                                         {
-                                            format_addr = exe_ctx->frame->GetFrameCodeAddress();
+                                            format_addr = frame->GetFrameCodeAddress();
                                             calculate_format_addr_function_offset = true;
                                         }
                                     }
@@ -1622,15 +1635,16 @@ Debugger::FormatPrompt
                             // If format addr is valid, then we need to print an address
                             if (reg_num != LLDB_INVALID_REGNUM)
                             {
+                                StackFrame *frame = exe_ctx->GetFramePtr();
                                 // We have a register value to display...
                                 if (reg_num == LLDB_REGNUM_GENERIC_PC && reg_kind == eRegisterKindGeneric)
                                 {
-                                    format_addr = exe_ctx->frame->GetFrameCodeAddress();
+                                    format_addr = frame->GetFrameCodeAddress();
                                 }
                                 else
                                 {
                                     if (reg_ctx == NULL)
-                                        reg_ctx = exe_ctx->frame->GetRegisterContext().get();
+                                        reg_ctx = frame->GetRegisterContext().get();
 
                                     if (reg_ctx)
                                     {

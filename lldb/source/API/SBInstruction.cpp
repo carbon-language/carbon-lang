@@ -122,7 +122,7 @@ SBInstruction::EmulateWithFrame (lldb::SBFrame &frame, uint32_t evaluate_options
     {
         lldb_private::ExecutionContext exe_ctx;
         frame->CalculateExecutionContext (exe_ctx);
-        lldb_private::Target *target = exe_ctx.target;
+        lldb_private::Target *target = exe_ctx.GetTargetPtr();
         lldb_private::ArchSpec arch = target->GetArchitecture();
         
         return m_opaque_sp->Emulate (arch, 

@@ -108,9 +108,10 @@ ReadAddress (ExecutionContextScope *exe_scope, const Address &address, uint32_t 
         exe_scope->CalculateExecutionContext(exe_ctx);
         // If we have any sections that are loaded, try and resolve using the
         // section load list
-        if (exe_ctx.target && !exe_ctx.target->GetSectionLoadList().IsEmpty())
+        Target *target = exe_ctx.GetTargetPtr();
+        if (target && !target->GetSectionLoadList().IsEmpty())
         {
-            if (exe_ctx.target->GetSectionLoadList().ResolveLoadAddress (deref_addr, deref_so_addr))
+            if (target->GetSectionLoadList().ResolveLoadAddress (deref_addr, deref_so_addr))
                 return true;
         }
         else

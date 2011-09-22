@@ -930,10 +930,14 @@ DWARFExpression::Evaluate
     {
         uint32_t offset = 0;
         addr_t pc;
+        StackFrame *frame = NULL;
         if (reg_ctx)
             pc = reg_ctx->GetPC();
         else
-            pc = exe_ctx->frame->GetRegisterContext()->GetPC();
+        {
+            frame = exe_ctx->GetFramePtr();
+            pc = frame->GetRegisterContext()->GetPC();
+        }
 
         if (loclist_base_load_addr != LLDB_INVALID_ADDRESS)
         {
@@ -1000,8 +1004,16 @@ DWARFExpression::Evaluate
 {
     std::vector<Value> stack;
 
-    if (reg_ctx == NULL && exe_ctx && exe_ctx->frame)
-        reg_ctx = exe_ctx->frame->GetRegisterContext().get();
+    Process *process = NULL;
+    StackFrame *frame = NULL;
+    
+    if (exe_ctx)
+    {
+        process = exe_ctx->GetProcessPtr();
+        frame = exe_ctx->GetFramePtr();
+    }
+    if (reg_ctx == NULL && frame)
+        reg_ctx = frame->GetRegisterContext().get();
 
     if (initial_value_ptr)
         stack.push_back(*initial_value_ptr);
@@ -1110,15 +1122,15 @@ DWARFExpression::Evaluate
                 case Value::eValueTypeLoadAddress:
                     if (exe_ctx)
                     {
-                        if (exe_ctx->process)
+                        if (process)
                         {
                             lldb::addr_t pointer_addr = stack.back().GetScalar().ULongLong(LLDB_INVALID_ADDRESS);
                             uint8_t addr_bytes[sizeof(lldb::addr_t)];
-                            uint32_t addr_size = exe_ctx->process->GetAddressByteSize();
+                            uint32_t addr_size = process->GetAddressByteSize();
                             Error error;
-                            if (exe_ctx->process->ReadMemory(pointer_addr, &addr_bytes, addr_size, error) == addr_size)
+                            if (process->ReadMemory(pointer_addr, &addr_bytes, addr_size, error) == addr_size)
                             {
-                                DataExtractor addr_data(addr_bytes, sizeof(addr_bytes), exe_ctx->process->GetByteOrder(), addr_size);
+                                DataExtractor addr_data(addr_bytes, sizeof(addr_bytes), process->GetByteOrder(), addr_size);
                                 uint32_t addr_data_offset = 0;
                                 stack.back().GetScalar() = addr_data.GetPointer(&addr_data_offset);
                                 stack.back().ClearContext();
@@ -1202,14 +1214,14 @@ DWARFExpression::Evaluate
                 case Value::eValueTypeLoadAddress:
                     if (exe_ctx)
                     {
-                        if (exe_ctx->process)
+                        if (process)
                         {
                             lldb::addr_t pointer_addr = stack.back().GetScalar().ULongLong(LLDB_INVALID_ADDRESS);
                             uint8_t addr_bytes[sizeof(lldb::addr_t)];
                             Error error;
-                            if (exe_ctx->process->ReadMemory(pointer_addr, &addr_bytes, size, error) == size)
+                            if (process->ReadMemory(pointer_addr, &addr_bytes, size, error) == size)
                             {
-                                DataExtractor addr_data(addr_bytes, sizeof(addr_bytes), exe_ctx->process->GetByteOrder(), size);
+                                DataExtractor addr_data(addr_bytes, sizeof(addr_bytes), process->GetByteOrder(), size);
                                 uint32_t addr_data_offset = 0;
                                 switch (size)
                                 {
@@ -2170,25 +2182,35 @@ DWARFExpression::Evaluate
             break;
 
         case DW_OP_fbreg:
-            if (exe_ctx && exe_ctx->frame)
+            if (exe_ctx)
             {
-                Scalar value;
-                if (exe_ctx->frame->GetFrameBaseValue(value, error_ptr))
+                if (frame)
                 {
-                    int64_t fbreg_offset = opcodes.GetSLEB128(&offset);
-                    value += fbreg_offset;
-                    stack.push_back(value);
-                    stack.back().SetValueType (Value::eValueTypeLoadAddress);
+                    Scalar value;
+                    if (frame->GetFrameBaseValue(value, error_ptr))
+                    {
+                        int64_t fbreg_offset = opcodes.GetSLEB128(&offset);
+                        value += fbreg_offset;
+                        stack.push_back(value);
+                        stack.back().SetValueType (Value::eValueTypeLoadAddress);
+                    }
+                    else
+                        return false;
                 }
                 else
+                {
+                    if (error_ptr)
+                        error_ptr->SetErrorString ("Invalid stack frame in context for DW_OP_fbreg opcode.");
                     return false;
+                }
             }
             else
             {
                 if (error_ptr)
-                    error_ptr->SetErrorString ("Invalid stack frame in context for DW_OP_fbreg opcode.");
+                    error_ptr->SetErrorStringWithFormat ("NULL execution context for DW_OP_fbreg.\n");
                 return false;
             }
+
             break;
 
         //----------------------------------------------------------------------
@@ -2474,14 +2496,14 @@ DWARFExpression::Evaluate
                                         data.SetByteSize(byte_size);
                                         
                                         Error error;
-                                        if (exe_ctx->process->ReadMemory (source_addr, data.GetBytes(), byte_size, error) != byte_size)
+                                        if (process->ReadMemory (source_addr, data.GetBytes(), byte_size, error) != byte_size)
                                         {
                                             if (error_ptr)
                                                 error_ptr->SetErrorStringWithFormat ("Couldn't read a composite type from the target: %s", error.AsCString());
                                             return false;
                                         }
                                         
-                                        if (exe_ctx->process->WriteMemory (target_addr, data.GetBytes(), byte_size, error) != byte_size)
+                                        if (process->WriteMemory (target_addr, data.GetBytes(), byte_size, error) != byte_size)
                                         {
                                             if (error_ptr)
                                                 error_ptr->SetErrorStringWithFormat ("Couldn't write a composite type to the target: %s", error.AsCString());
@@ -2490,7 +2512,7 @@ DWARFExpression::Evaluate
                                     }
                                     break;
                                 case Value::eValueTypeHostAddress:
-                                    if (exe_ctx->process->GetByteOrder() != lldb::endian::InlHostByteOrder())
+                                    if (process->GetByteOrder() != lldb::endian::InlHostByteOrder())
                                     {
                                         if (error_ptr)
                                             error_ptr->SetErrorStringWithFormat ("Copy of composite types between incompatible byte orders is unimplemented");
@@ -2499,7 +2521,7 @@ DWARFExpression::Evaluate
                                     else
                                     {
                                         Error error;
-                                        if (exe_ctx->process->ReadMemory (source_addr, (uint8_t*)target_addr, byte_size, error) != byte_size)
+                                        if (process->ReadMemory (source_addr, (uint8_t*)target_addr, byte_size, error) != byte_size)
                                         {
                                             if (error_ptr)
                                                 error_ptr->SetErrorStringWithFormat ("Couldn't read a composite type from the target: %s", error.AsCString());
@@ -2515,7 +2537,7 @@ DWARFExpression::Evaluate
                                 switch (target_value_type)
                                 {
                                 case Value::eValueTypeLoadAddress:
-                                    if (exe_ctx->process->GetByteOrder() != lldb::endian::InlHostByteOrder())
+                                    if (process->GetByteOrder() != lldb::endian::InlHostByteOrder())
                                     {
                                         if (error_ptr)
                                             error_ptr->SetErrorStringWithFormat ("Copy of composite types between incompatible byte orders is unimplemented");
@@ -2524,7 +2546,7 @@ DWARFExpression::Evaluate
                                     else
                                     {
                                         Error error;
-                                        if (exe_ctx->process->WriteMemory (target_addr, (uint8_t*)source_addr, byte_size, error) != byte_size)
+                                        if (process->WriteMemory (target_addr, (uint8_t*)source_addr, byte_size, error) != byte_size)
                                         {
                                             if (error_ptr)
                                                 error_ptr->SetErrorStringWithFormat ("Couldn't write a composite type to the target: %s", error.AsCString());

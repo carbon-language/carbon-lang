@@ -701,8 +701,8 @@ private:
         Target *
         GetTarget()
         {
-            if (m_exe_ctx && m_exe_ctx->target)
-                return m_exe_ctx->target;
+            if (m_exe_ctx && m_exe_ctx->GetTargetPtr())
+                return m_exe_ctx->GetTargetPtr();
             else if (m_sym_ctx.target_sp)
                 m_sym_ctx.target_sp.get();
             return NULL;

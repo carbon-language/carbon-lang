@@ -54,7 +54,7 @@ namespace lldb {
     typedef IntrusiveSharedPtr<lldb_private::ObjectFile>::Type ObjectFileSP;
     typedef SharedPtr<lldb_private::OptionValue>::Type OptionValueSP;
     typedef SharedPtr<lldb_private::Platform>::Type PlatformSP;
-    typedef SharedPtr<lldb_private::Process>::Type ProcessSP;
+    typedef IntrusiveSharedPtr<lldb_private::Process>::Type ProcessSP;
     typedef SharedPtr<lldb_private::RegisterContext>::Type RegisterContextSP;
     typedef SharedPtr<lldb_private::RegularExpression>::Type RegularExpressionSP;
     typedef SharedPtr<lldb_private::Section>::Type SectionSP;

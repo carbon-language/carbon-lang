@@ -80,12 +80,13 @@ ClangUserExpression::ASTTransformer (clang::ASTConsumer *passthrough)
 void
 ClangUserExpression::ScanContext(ExecutionContext &exe_ctx)
 {
-    m_target = exe_ctx.target;
+    m_target = exe_ctx.GetTargetPtr();
     
-    if (!exe_ctx.frame)
+    StackFrame *frame = exe_ctx.GetFramePtr();
+    if (frame == NULL)
         return;
     
-    SymbolContext sym_ctx = exe_ctx.frame->GetSymbolContext(lldb::eSymbolContextFunction);
+    SymbolContext sym_ctx = frame->GetSymbolContext(lldb::eSymbolContextFunction);
     
     if (!sym_ctx.function)
         return;
@@ -246,7 +247,7 @@ ClangUserExpression::Parse (Stream &error_stream,
     // Set up the target and compiler
     //
     
-    Target *target = exe_ctx.target;
+    Target *target = exe_ctx.GetTargetPtr();
     
     if (!target)
     {
@@ -268,7 +269,8 @@ ClangUserExpression::Parse (Stream &error_stream,
         return false;
     }
     
-    ClangExpressionParser parser(exe_ctx.process, *this);
+    Process *process = exe_ctx.GetProcessPtr();
+    ClangExpressionParser parser(process, *this);
     
     unsigned num_errors = parser.Parse (error_stream);
     
@@ -285,8 +287,8 @@ ClangUserExpression::Parse (Stream &error_stream,
     // Prepare the output of the parser for execution, evaluating it statically if possible
     //
         
-    if (execution_policy != eExecutionPolicyNever && exe_ctx.process)
-        m_data_allocator.reset(new ProcessDataAllocator(*exe_ctx.process));
+    if (execution_policy != eExecutionPolicyNever && process)
+        m_data_allocator.reset(new ProcessDataAllocator(*process));
     
     Error jit_error = parser.PrepareForExecution (m_jit_alloc,
                                                   m_jit_start_addr,
@@ -309,8 +311,8 @@ ClangUserExpression::Parse (Stream &error_stream,
     
     if (jit_error.Success())
     {
-        if (exe_ctx.process && m_jit_alloc != LLDB_INVALID_ADDRESS)
-            m_jit_process_sp = exe_ctx.process->GetSP();        
+        if (process && m_jit_alloc != LLDB_INVALID_ADDRESS)
+            m_jit_process_sp = process->GetSP();        
         return true;
     }
     else
@@ -505,7 +507,7 @@ ClangUserExpression::Execute (Stream &error_stream,
         const bool try_all_threads = true;
         
         Address wrapper_address (NULL, m_jit_start_addr);
-        lldb::ThreadPlanSP call_plan_sp(new ThreadPlanCallUserExpression (*(exe_ctx.thread), 
+        lldb::ThreadPlanSP call_plan_sp(new ThreadPlanCallUserExpression (exe_ctx.GetThreadRef(), 
                                                                           wrapper_address, 
                                                                           struct_address, 
                                                                           stop_others, 
@@ -526,13 +528,13 @@ ClangUserExpression::Execute (Stream &error_stream,
         if (log)
             log->Printf("-- [ClangUserExpression::Execute] Execution of expression begins --");
         
-        ExecutionResults execution_result = exe_ctx.process->RunThreadPlan (exe_ctx, 
-                                                                            call_plan_sp, 
-                                                                            stop_others, 
-                                                                            try_all_threads, 
-                                                                            discard_on_error,
-                                                                            single_thread_timeout_usec, 
-                                                                            error_stream);
+        ExecutionResults execution_result = exe_ctx.GetProcessRef().RunThreadPlan (exe_ctx, 
+                                                                                   call_plan_sp, 
+                                                                                   stop_others, 
+                                                                                   try_all_threads, 
+                                                                                   discard_on_error,
+                                                                                   single_thread_timeout_usec, 
+                                                                                   error_stream);
         
         if (log)
             log->Printf("-- [ClangUserExpression::Execute] Execution of expression completed --");
@@ -602,7 +604,9 @@ ClangUserExpression::EvaluateWithError (ExecutionContext &exe_ctx,
 
     ExecutionResults execution_results = eExecutionSetupError;
     
-    if (exe_ctx.process == NULL || exe_ctx.process->GetState() != lldb::eStateStopped)
+    Process *process = exe_ctx.GetProcessPtr();
+
+    if (process == NULL || process->GetState() != lldb::eStateStopped)
     {
         if (execution_policy == eExecutionPolicyAlways)
         {
@@ -615,7 +619,7 @@ ClangUserExpression::EvaluateWithError (ExecutionContext &exe_ctx,
         }
     }
     
-    if (exe_ctx.process == NULL || !exe_ctx.process->CanJIT())
+    if (process == NULL || !process->CanJIT())
         execution_policy = eExecutionPolicyNever;
     
     ClangUserExpressionSP user_expression_sp (new ClangUserExpression (expr_cstr, expr_prefix));

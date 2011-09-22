@@ -3128,10 +3128,10 @@ Process::ProcessEventData::SetUpdateStateOnRemoval (Event *event_ptr)
 void
 Process::CalculateExecutionContext (ExecutionContext &exe_ctx)
 {
-    exe_ctx.target = &m_target;
-    exe_ctx.process = this;
-    exe_ctx.thread = NULL;
-    exe_ctx.frame = NULL;
+    exe_ctx.SetTargetPtr (&m_target);
+    exe_ctx.SetProcessPtr (this);
+    exe_ctx.SetThreadPtr(NULL);
+    exe_ctx.SetFramePtr (NULL);
 }
 
 lldb::ProcessSP
@@ -3368,6 +3368,19 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
         errors.Printf("RunThreadPlan called with empty thread plan.");
         return eExecutionSetupError;
     }
+
+    if (exe_ctx.GetProcessPtr() != this)
+    {
+        errors.Printf("RunThreadPlan called on wrong process.");
+        return eExecutionSetupError;
+    }
+
+    Thread *thread = exe_ctx.GetThreadPtr();
+    if (thread == NULL)
+    {
+        errors.Printf("RunThreadPlan called with invalid thread.");
+        return eExecutionSetupError;
+    }
     
     // We rely on the thread plan we are running returning "PlanCompleted" if when it successfully completes.
     // For that to be true the plan can't be private - since private plans suppress themselves in the
@@ -3383,13 +3396,13 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
     }
     
     // Save the thread & frame from the exe_ctx for restoration after we run
-    const uint32_t thread_idx_id = exe_ctx.thread->GetIndexID();
-    StackID ctx_frame_id = exe_ctx.thread->GetSelectedFrame()->GetStackID();
+    const uint32_t thread_idx_id = thread->GetIndexID();
+    StackID ctx_frame_id = thread->GetSelectedFrame()->GetStackID();
 
     // N.B. Running the target may unset the currently selected thread and frame.  We don't want to do that either, 
     // so we should arrange to reset them as well.
     
-    lldb::ThreadSP selected_thread_sp = exe_ctx.process->GetThreadList().GetSelectedThread();
+    lldb::ThreadSP selected_thread_sp = GetThreadList().GetSelectedThread();
     
     uint32_t selected_tid;
     StackID selected_stack_id;
@@ -3403,7 +3416,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
         selected_tid = LLDB_INVALID_THREAD_ID;
     }
 
-    exe_ctx.thread->QueueThreadPlan(thread_plan_sp, true);
+    thread->QueueThreadPlan(thread_plan_sp, true);
     
     Listener listener("lldb.process.listener.run-thread-plan");
     
@@ -3418,8 +3431,8 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
         StreamString s;
         thread_plan_sp->GetDescription(&s, lldb::eDescriptionLevelVerbose);
         log->Printf ("Process::RunThreadPlan(): Resuming thread %u - 0x%4.4x to run thread plan \"%s\".",  
-                     exe_ctx.thread->GetIndexID(), 
-                     exe_ctx.thread->GetID(), 
+                     thread->GetIndexID(), 
+                     thread->GetID(), 
                      s.GetData());
     }
     
@@ -3443,7 +3456,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
         {
             // Do the initial resume and wait for the running event before going further.
     
-            Error resume_error = exe_ctx.process->Resume ();
+            Error resume_error = Resume ();
             if (!resume_error.Success())
             {
                 errors.Printf("Error resuming inferior: \"%s\".\n", resume_error.AsCString());
@@ -3522,7 +3535,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                 case lldb::eStateStopped:
                     {
                         // Yay, we're done.  Now make sure that our thread plan actually completed.
-                        ThreadSP thread_sp = exe_ctx.process->GetThreadList().FindThreadByIndexID (thread_idx_id);
+                        ThreadSP thread_sp = GetThreadList().FindThreadByIndexID (thread_idx_id);
                         if (!thread_sp)
                         {
                             // Ooh, our thread has vanished.  Unlikely that this was successful execution...
@@ -3614,7 +3627,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                                  single_thread_timeout_usec);
             }
             
-            Error halt_error = exe_ctx.process->Halt();
+            Error halt_error = Halt();
             if (halt_error.Success())
             {
                 if (log)
@@ -3643,7 +3656,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                         // Between the time we initiated the Halt and the time we delivered it, the process could have
                         // already finished its job.  Check that here:
                         
-                        if (exe_ctx.thread->IsThreadPlanDone (thread_plan_sp.get()))
+                        if (thread->IsThreadPlanDone (thread_plan_sp.get()))
                         {
                             if (log)
                                 log->PutCString ("Process::RunThreadPlan(): Even though we timed out, the call plan was done.  "
@@ -3717,7 +3730,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                         // Between the time we initiated the Halt and the time we delivered it, the process could have
                         // already finished its job.  Check that here:
                         
-                        if (exe_ctx.thread->IsThreadPlanDone (thread_plan_sp.get()))
+                        if (thread->IsThreadPlanDone (thread_plan_sp.get()))
                         {
                             if (log)
                                 log->PutCString ("Process::RunThreadPlan(): Even though we timed out, the call plan was done.  "
@@ -3845,7 +3858,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                 
             if (discard_on_error && thread_plan_sp)
             {
-                exe_ctx.thread->DiscardThreadPlansUpToPlan (thread_plan_sp);
+                thread->DiscardThreadPlansUpToPlan (thread_plan_sp);
                 thread_plan_sp->SetPrivate (orig_plan_private);
             }
         }
@@ -3857,19 +3870,19 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
             
         if (discard_on_error && thread_plan_sp)
         {
-            exe_ctx.thread->DiscardThreadPlansUpToPlan (thread_plan_sp);
+            thread->DiscardThreadPlansUpToPlan (thread_plan_sp);
             thread_plan_sp->SetPrivate (orig_plan_private);
         }
     }
     else
     {
-        if (exe_ctx.thread->IsThreadPlanDone (thread_plan_sp.get()))
+        if (thread->IsThreadPlanDone (thread_plan_sp.get()))
         {
             if (log)
                 log->PutCString("Process::RunThreadPlan(): thread plan is done");
             return_value = eExecutionCompleted;
         }
-        else if (exe_ctx.thread->WasThreadPlanDiscarded (thread_plan_sp.get()))
+        else if (thread->WasThreadPlanDiscarded (thread_plan_sp.get()))
         {
             if (log)
                 log->PutCString("Process::RunThreadPlan(): thread plan was discarded");
@@ -3883,7 +3896,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
             {
                 if (log)
                     log->PutCString("Process::RunThreadPlan(): discarding thread plan 'cause discard_on_error is set.");
-                exe_ctx.thread->DiscardThreadPlansUpToPlan (thread_plan_sp);
+                thread->DiscardThreadPlansUpToPlan (thread_plan_sp);
                 thread_plan_sp->SetPrivate (orig_plan_private);
             }
         }
@@ -3892,10 +3905,10 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
     // Thread we ran the function in may have gone away because we ran the target
     // Check that it's still there, and if it is put it back in the context.  Also restore the
     // frame in the context if it is still present.
-    exe_ctx.thread = exe_ctx.process->GetThreadList().FindThreadByIndexID(thread_idx_id, true).get();
-    if (exe_ctx.thread)
+    thread = GetThreadList().FindThreadByIndexID(thread_idx_id, true).get();
+    if (thread)
     {
-        exe_ctx.frame = exe_ctx.thread->GetFrameWithStackID (ctx_frame_id).get();
+        exe_ctx.SetFrameSP (thread->GetFrameWithStackID (ctx_frame_id));
     }
     
     // Also restore the current process'es selected frame & thread, since this function calling may
@@ -3903,12 +3916,12 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
     
     if (selected_tid != LLDB_INVALID_THREAD_ID)
     {
-        if (exe_ctx.process->GetThreadList().SetSelectedThreadByIndexID (selected_tid) && selected_stack_id.IsValid())
+        if (GetThreadList().SetSelectedThreadByIndexID (selected_tid) && selected_stack_id.IsValid())
         {
             // We were able to restore the selected thread, now restore the frame:
-            StackFrameSP old_frame_sp = exe_ctx.process->GetThreadList().GetSelectedThread()->GetFrameWithStackID(selected_stack_id);
+            StackFrameSP old_frame_sp = GetThreadList().GetSelectedThread()->GetFrameWithStackID(selected_stack_id);
             if (old_frame_sp)
-                exe_ctx.process->GetThreadList().GetSelectedThread()->SetSelectedFrame(old_frame_sp.get());
+                GetThreadList().GetSelectedThread()->SetSelectedFrame(old_frame_sp.get());
         }
     }
     

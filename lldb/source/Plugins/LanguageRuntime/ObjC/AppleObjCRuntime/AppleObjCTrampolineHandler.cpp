@@ -398,7 +398,7 @@ AppleObjCTrampolineHandler::AppleObjCVTables::RefreshTrampolines (void *baton,
     {
         // The Update function is called with the address of an added region.  So we grab that address, and
         // feed it into ReadRegions.  Of course, our friend the ABI will get the values for us.
-        Process *process = context->exe_ctx.process;
+        Process *process = context->exe_ctx.GetProcessPtr();
         const ABI *abi = process->GetABI().get();
         
         ClangASTContext *clang_ast_context = process->GetTarget().GetScratchClangASTContext();
@@ -409,7 +409,7 @@ AppleObjCTrampolineHandler::AppleObjCVTables::RefreshTrampolines (void *baton,
         input_value.SetContext (Value::eContextTypeClangType, clang_void_ptr_type);
         argument_values.PushValue(input_value);
         
-        bool success = abi->GetArgumentValues (*(context->exe_ctx.thread), argument_values);
+        bool success = abi->GetArgumentValues (context->exe_ctx.GetThreadRef(), argument_values);
         if (!success)
             return false;
             
@@ -878,7 +878,8 @@ AppleObjCTrampolineHandler::GetStepThroughDispatchPlan (Thread &thread, bool sto
                 {
                     ConstString our_utility_function_name("__lldb_objc_find_implementation_for_selector");
                     SymbolContextList sc_list;
-                    exe_ctx.target->GetImages().FindSymbolsWithNameAndType (our_utility_function_name, eSymbolTypeCode, sc_list);
+                    
+                    exe_ctx.GetTargetRef().GetImages().FindSymbolsWithNameAndType (our_utility_function_name, eSymbolTypeCode, sc_list);
                     if (sc_list.GetSize() == 1)
                     {
                         SymbolContext sc;
@@ -886,7 +887,7 @@ AppleObjCTrampolineHandler::GetStepThroughDispatchPlan (Thread &thread, bool sto
                         if (sc.symbol != NULL)
                             impl_code_address = sc.symbol->GetValue();
                             
-                        //lldb::addr_t addr = impl_code_address.GetOpcodeLoadAddress (exe_ctx.target);
+                        //lldb::addr_t addr = impl_code_address.GetOpcodeLoadAddress (exe_ctx.GetTargetPtr());
                         //printf ("Getting address for our_utility_function: 0x%llx.\n", addr);
                     }
                     else

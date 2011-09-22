@@ -131,7 +131,7 @@ SBFunction::GetInstructions (SBTarget target)
         {
             api_locker.Reset (target->GetAPIMutex().GetMutex());
             target->CalculateExecutionContext (exe_ctx);
-            exe_ctx.process = target->GetProcessSP().get();
+            exe_ctx.SetProcessSP(target->GetProcessSP());
         }
         Module *module = m_opaque_ptr->GetAddressRange().GetBaseAddress().GetModule();
         if (module)

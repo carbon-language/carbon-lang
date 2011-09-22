@@ -463,9 +463,9 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_allocation_addr,
     if (decl_map)
     {
         Stream *error_stream = NULL;
-        
-        if (exe_ctx.target)
-            error_stream = &exe_ctx.target->GetDebugger().GetErrorStream();
+        Target *target = exe_ctx.GetTargetPtr();
+        if (target)
+            error_stream = &target->GetDebugger().GetErrorStream();
     
         IRForTarget ir_for_target(decl_map,
                                   m_expr.NeedsVariableResolution(),
@@ -489,7 +489,9 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_allocation_addr,
             return err;
         }
         
-        if (!exe_ctx.process || execution_policy == eExecutionPolicyNever)
+        Process *process = exe_ctx.GetProcessPtr();
+
+        if (!process || execution_policy == eExecutionPolicyNever)
         {
             err.SetErrorToGenericError();
             err.SetErrorString("Execution needed to run in the target, but the target can't be run");
@@ -498,9 +500,9 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_allocation_addr,
         
         if (execution_policy != eExecutionPolicyNever &&
             m_expr.NeedsValidation() && 
-            exe_ctx.process)
+            process)
         {
-            if (!exe_ctx.process->GetDynamicCheckers())
+            if (!process->GetDynamicCheckers())
             {                
                 DynamicCheckerFunctions *dynamic_checkers = new DynamicCheckerFunctions();
                 
@@ -516,13 +518,13 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_allocation_addr,
                     return err;
                 }
                 
-                exe_ctx.process->SetDynamicCheckers(dynamic_checkers);
+                process->SetDynamicCheckers(dynamic_checkers);
                 
                 if (log)
                     log->Printf("== [ClangUserExpression::Evaluate] Finished installing dynamic checkers ==");
             }
             
-            IRDynamicChecks ir_dynamic_checks(*exe_ctx.process->GetDynamicCheckers(), function_name.c_str());
+            IRDynamicChecks ir_dynamic_checks(*process->GetDynamicCheckers(), function_name.c_str());
         
             if (!ir_dynamic_checks.runOnModule(*module))
             {
@@ -586,9 +588,9 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_allocation_addr,
     
     m_jitted_functions.push_back (ClangExpressionParser::JittedFunction(function_name.c_str(), (lldb::addr_t)fun_ptr));
     
-    ExecutionContext &exc_context(exe_ctx);
-    
-    if (exc_context.process == NULL)
+
+    Process *process = exe_ctx.GetProcessPtr();
+    if (process == NULL)
     {
         err.SetErrorToGenericError();
         err.SetErrorString("Couldn't write the JIT compiled code into the target because there is no target");
@@ -615,7 +617,7 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_allocation_addr,
     }
     
     Error alloc_error;
-    func_allocation_addr = exc_context.process->AllocateMemory (alloc_size, 
+    func_allocation_addr = process->AllocateMemory (alloc_size, 
                                                                 lldb::ePermissionsReadable|lldb::ePermissionsExecutable, 
                                                                 alloc_error);
     
@@ -636,7 +638,7 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_allocation_addr,
         
         Error write_error;
         
-        if (exc_context.process->WriteMemory(cursor, (void *) lstart, size, write_error) != size)
+        if (process->WriteMemory(cursor, (void *) lstart, size, write_error) != size)
         {
             err.SetErrorToGenericError();
             err.SetErrorStringWithFormat("Couldn't copy JIT code for function into the target: %s", write_error.AsCString("unknown error"));
@@ -731,7 +733,8 @@ ClangExpressionParser::DisassembleFunction (Stream &stream, ExecutionContext &ex
     if (log)
         log->Printf("Function's code range is [0x%llx-0x%llx]", func_range.first, func_range.second);
     
-    if (!exe_ctx.target)
+    Target *target = exe_ctx.GetTargetPtr();
+    if (!target)
     {
         ret.SetErrorToGenericError();
         ret.SetErrorString("Couldn't find the target");
@@ -739,8 +742,9 @@ ClangExpressionParser::DisassembleFunction (Stream &stream, ExecutionContext &ex
     
     lldb::DataBufferSP buffer_sp(new DataBufferHeap(func_range.second - func_remote_addr, 0));
     
+    Process *process = exe_ctx.GetProcessPtr();
     Error err;
-    exe_ctx.process->ReadMemory(func_remote_addr, buffer_sp->GetBytes(), buffer_sp->GetByteSize(), err);
+    process->ReadMemory(func_remote_addr, buffer_sp->GetBytes(), buffer_sp->GetByteSize(), err);
     
     if (!err.Success())
     {
@@ -749,7 +753,7 @@ ClangExpressionParser::DisassembleFunction (Stream &stream, ExecutionContext &ex
         return ret;
     }
     
-    ArchSpec arch(exe_ctx.target->GetArchitecture());
+    ArchSpec arch(target->GetArchitecture());
     
     Disassembler *disassembler = Disassembler::FindPlugin(arch, NULL);
     
@@ -760,7 +764,7 @@ ClangExpressionParser::DisassembleFunction (Stream &stream, ExecutionContext &ex
         return ret;
     }
     
-    if (!exe_ctx.process)
+    if (!process)
     {
         ret.SetErrorToGenericError();
         ret.SetErrorString("Couldn't find the process");
@@ -768,8 +772,8 @@ ClangExpressionParser::DisassembleFunction (Stream &stream, ExecutionContext &ex
     }
     
     DataExtractor extractor(buffer_sp, 
-                            exe_ctx.process->GetByteOrder(),
-                            exe_ctx.target->GetArchitecture().GetAddressByteSize());
+                            process->GetByteOrder(),
+                            target->GetArchitecture().GetAddressByteSize());
     
     if (log)
     {

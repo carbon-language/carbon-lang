@@ -56,9 +56,11 @@ DynamicCheckerFunctions::Install(Stream &error_stream,
     if (!m_valid_pointer_check->Install(error_stream, exe_ctx))
         return false;
     
-    if (exe_ctx.process)
+    Process *process = exe_ctx.GetProcessPtr();
+
+    if (process)
     {
-        ObjCLanguageRuntime *objc_language_runtime = exe_ctx.process->GetObjCLanguageRuntime();
+        ObjCLanguageRuntime *objc_language_runtime = process->GetObjCLanguageRuntime();
         
         if (objc_language_runtime)
         {

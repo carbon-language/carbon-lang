@@ -3439,22 +3439,21 @@ ValueObject::EvaluationPoint::EvaluationPoint (ExecutionContextScope *exe_scope,
                                                             // and if so we want to cache that not the original.
     if (exe_scope)                                            
         exe_scope->CalculateExecutionContext(exe_ctx);
-    if (exe_ctx.target != NULL)
+    Target *target = exe_ctx.GetTargetPtr();
+    if (target != NULL)
     {
-        m_target_sp = exe_ctx.target->GetSP();
+        m_target_sp = target;
+        m_process_sp = exe_ctx.GetProcessSP();
+        if (!m_process_sp)
+            m_process_sp = target->GetProcessSP();
         
-        if (exe_ctx.process == NULL)
-            m_process_sp = exe_ctx.target->GetProcessSP();
-        else
-            m_process_sp = exe_ctx.process->GetSP();
-        
-        if (m_process_sp != NULL)
+        if (m_process_sp)
         {
             m_mod_id = m_process_sp->GetModID();
             
-            Thread *thread = NULL;
+            Thread *thread = exe_ctx.GetThreadPtr();
             
-            if (exe_ctx.thread == NULL)
+            if (thread == NULL)
             {
                 if (use_selected)
                 {
@@ -3463,17 +3462,17 @@ ValueObject::EvaluationPoint::EvaluationPoint (ExecutionContextScope *exe_scope,
                         computed_exe_scope = thread;
                 }
             }
-            else 
-                thread = exe_ctx.thread;
                 
             if (thread != NULL)
             {
                 m_thread_id = thread->GetIndexID();
-                if (exe_ctx.frame == NULL)
+                
+                StackFrame *frame = exe_ctx.GetFramePtr();
+                if (frame == NULL)
                 {
                     if (use_selected)
                     {
-                        StackFrame *frame = exe_ctx.thread->GetSelectedFrame().get();
+                        frame = thread->GetSelectedFrame().get();
                         if (frame)
                         {
                             m_stack_id = frame->GetStackID();
@@ -3482,7 +3481,7 @@ ValueObject::EvaluationPoint::EvaluationPoint (ExecutionContextScope *exe_scope,
                     }
                 }
                 else
-                    m_stack_id = exe_ctx.frame->GetStackID();
+                    m_stack_id = frame->GetStackID();
             }
         }
     }

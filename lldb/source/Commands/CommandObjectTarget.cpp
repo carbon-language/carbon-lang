@@ -649,8 +649,8 @@ public:
     Execute (Args& args, CommandReturnObject &result)
     {
         ExecutionContext exe_ctx (m_interpreter.GetExecutionContext());
-
-        if (exe_ctx.target)
+        Target *target = exe_ctx.GetTargetPtr();
+        if (target)
         {
             const size_t argc = args.GetArgumentCount();
             if (argc > 0)
@@ -675,21 +675,21 @@ public:
                             return false;
                         }
                         use_var_name = true;
-                        matches = exe_ctx.target->GetImages().FindGlobalVariables (regex,
-                                                                                   true, 
-                                                                                   UINT32_MAX, 
-                                                                                   variable_list);
+                        matches = target->GetImages().FindGlobalVariables (regex,
+                                                                           true, 
+                                                                           UINT32_MAX, 
+                                                                           variable_list);
                     }
                     else
                     {
                         Error error (Variable::GetValuesForVariableExpressionPath (arg,
                                                                                    exe_ctx.GetBestExecutionContextScope(),
                                                                                    GetVariableCallback,
-                                                                                   exe_ctx.target,
+                                                                                   target,
                                                                                    variable_list,
                                                                                    valobj_list));
                         
-//                        matches = exe_ctx.target->GetImages().FindGlobalVariables (ConstString(arg),
+//                        matches = target->GetImages().FindGlobalVariables (ConstString(arg),
 //                                                                                   true, 
 //                                                                                   UINT32_MAX, 
 //                                                                                   variable_list);
@@ -1170,7 +1170,7 @@ DumpCompileUnitLineTable
                 LineTable *line_table = sc.comp_unit->GetLineTable();
                 if (line_table)
                     line_table->GetDescription (&strm, 
-                                                interpreter.GetExecutionContext().target, 
+                                                interpreter.GetExecutionContext().GetTargetPtr(), 
                                                 lldb::eDescriptionLevelBrief);
                 else
                     strm << "No line table";
@@ -1248,7 +1248,7 @@ DumpModuleSymtab (CommandInterpreter &interpreter, Stream &strm, Module *module,
         {
             Symtab *symtab = objfile->GetSymtab();
             if (symtab)
-                symtab->Dump(&strm, interpreter.GetExecutionContext().target, sort_order);
+                symtab->Dump(&strm, interpreter.GetExecutionContext().GetTargetPtr(), sort_order);
         }
     }
 }
@@ -1270,7 +1270,7 @@ DumpModuleSections (CommandInterpreter &interpreter, Stream &strm, Module *modul
                     strm << '(' << module->GetObjectName() << ')';
                 strm.Printf ("' (%s):\n", module->GetArchitecture().GetArchitectureName());
                 strm.IndentMore();
-                section_list->Dump(&strm, interpreter.GetExecutionContext().target, true, UINT32_MAX);
+                section_list->Dump(&strm, interpreter.GetExecutionContext().GetTargetPtr(), true, UINT32_MAX);
                 strm.IndentLess();
             }
         }
@@ -1309,7 +1309,7 @@ LookupAddressInModule
         lldb::addr_t addr = raw_addr - offset;
         Address so_addr;
         SymbolContext sc;
-        Target *target = interpreter.GetExecutionContext().target;
+        Target *target = interpreter.GetExecutionContext().GetTargetPtr();
         if (target && !target->GetSectionLoadList().IsEmpty())
         {
             if (!target->GetSectionLoadList().ResolveLoadAddress (addr, so_addr))
@@ -1394,7 +1394,7 @@ LookupSymbolInModule (CommandInterpreter &interpreter, Stream &strm, Module *mod
                     {
                         Symbol *symbol = symtab->SymbolAtIndex(match_indexes[i]);
                         strm.Indent ();
-                        symbol->Dump (&strm, interpreter.GetExecutionContext().target, i);
+                        symbol->Dump (&strm, interpreter.GetExecutionContext().GetTargetPtr(), i);
                     }
                     strm.IndentLess ();
                     return num_matches;
@@ -2208,7 +2208,7 @@ public:
                                                           result.GetOutputStream(),
                                                           target->GetImages().GetModulePointerAtIndex(i),
                                                           file_spec,
-                                                          exe_ctx.process != NULL && exe_ctx.process->IsAlive()))
+                                                          exe_ctx.GetProcessPtr() && exe_ctx.GetProcessRef().IsAlive()))
                                 num_dumped++;
                         }
                         if (num_dumped == 0)

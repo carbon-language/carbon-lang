@@ -77,7 +77,7 @@ ClangUtilityFunction::Install (Stream &error_stream,
     // Set up the target and compiler
     //
     
-    Target *target = exe_ctx.target;
+    Target *target = exe_ctx.GetTargetPtr();
     
     if (!target)
     {
@@ -85,7 +85,7 @@ ClangUtilityFunction::Install (Stream &error_stream,
         return false;
     }
     
-    Process *process = exe_ctx.process;
+    Process *process = exe_ctx.GetProcessPtr();
     
     if (!process)
     {
@@ -101,7 +101,7 @@ ClangUtilityFunction::Install (Stream &error_stream,
     
     m_expr_decl_map.reset(new ClangExpressionDeclMap(keep_result_in_memory));
     
-    m_data_allocator.reset(new ProcessDataAllocator(*exe_ctx.process));
+    m_data_allocator.reset(new ProcessDataAllocator(*process));
     
     if (!m_expr_decl_map->WillParse(exe_ctx))
     {
@@ -147,8 +147,8 @@ ClangUtilityFunction::Install (Stream &error_stream,
         log->Printf("Data buffer contents:\n%s", dump_string.GetString().c_str());
     }
     
-    if (exe_ctx.process && m_jit_start_addr != LLDB_INVALID_ADDRESS)
-        m_jit_process_sp = exe_ctx.process->GetSP();
+    if (m_jit_start_addr != LLDB_INVALID_ADDRESS)
+        m_jit_process_sp = process->GetSP();
     
 #if 0
 	// jingham: look here

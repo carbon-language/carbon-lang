@@ -67,9 +67,9 @@ void
 AppleThreadPlanStepThroughObjCTrampoline::DidPush ()
 {
     StreamString errors;
-    ExecutionContext exc_context;
-    m_thread.CalculateExecutionContext(exc_context);
-    m_func_sp.reset(m_impl_function->GetThreadPlanToCallFunction (exc_context, m_args_addr, errors, m_stop_others));
+    ExecutionContext exc_ctx;
+    m_thread.CalculateExecutionContext(exc_ctx);
+    m_func_sp.reset(m_impl_function->GetThreadPlanToCallFunction (exc_ctx, m_args_addr, errors, m_stop_others));
     m_func_sp->SetPrivate(true);
     m_thread.QueueThreadPlan (m_func_sp, false);
 }
@@ -116,13 +116,13 @@ AppleThreadPlanStepThroughObjCTrampoline::ShouldStop (Event *event_ptr)
         if (!m_run_to_sp) 
         {
             Value target_addr_value;
-            ExecutionContext exc_context;
-            m_thread.CalculateExecutionContext(exc_context);
-            m_impl_function->FetchFunctionResults (exc_context, m_args_addr, target_addr_value);
-            m_impl_function->DeallocateFunctionResults(exc_context, m_args_addr);
+            ExecutionContext exc_ctx;
+            m_thread.CalculateExecutionContext(exc_ctx);
+            m_impl_function->FetchFunctionResults (exc_ctx, m_args_addr, target_addr_value);
+            m_impl_function->DeallocateFunctionResults(exc_ctx, m_args_addr);
             lldb::addr_t target_addr = target_addr_value.GetScalar().ULongLong();
             Address target_so_addr;
-            target_so_addr.SetOpcodeLoadAddress(target_addr, exc_context.target);
+            target_so_addr.SetOpcodeLoadAddress(target_addr, exc_ctx.GetTargetPtr());
             LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
             if (target_addr == 0)
             {

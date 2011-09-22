@@ -1132,37 +1132,40 @@ ClangASTType::DumpSummary
     clang::QualType qual_type(clang::QualType::getFromOpaquePtr(clang_type));
     if (ClangASTContext::IsCStringType (clang_type, length))
     {
-
-        if (exe_ctx && exe_ctx->process)
+        if (exe_ctx)
         {
-            uint32_t offset = data_byte_offset;
-            lldb::addr_t pointer_addresss = data.GetMaxU64(&offset, data_byte_size);
-            std::vector<uint8_t> buf;
-            if (length > 0)
-                buf.resize (length);
-            else
-                buf.resize (256);
-
-            lldb_private::DataExtractor cstr_data(&buf.front(), buf.size(), exe_ctx->process->GetByteOrder(), 4);
-            buf.back() = '\0';
-            size_t bytes_read;
-            size_t total_cstr_len = 0;
-            Error error;
-            while ((bytes_read = exe_ctx->process->ReadMemory (pointer_addresss, &buf.front(), buf.size(), error)) > 0)
+            Process *process = exe_ctx->GetProcessPtr();
+            if (process)
             {
-                const size_t len = strlen((const char *)&buf.front());
-                if (len == 0)
-                    break;
-                if (total_cstr_len == 0)
-                    s->PutCString (" \"");
-                cstr_data.Dump(s, 0, lldb::eFormatChar, 1, len, UINT32_MAX, LLDB_INVALID_ADDRESS, 0, 0);
-                total_cstr_len += len;
-                if (len < buf.size())
-                    break;
-                pointer_addresss += total_cstr_len;
+                uint32_t offset = data_byte_offset;
+                lldb::addr_t pointer_addresss = data.GetMaxU64(&offset, data_byte_size);
+                std::vector<uint8_t> buf;
+                if (length > 0)
+                    buf.resize (length);
+                else
+                    buf.resize (256);
+
+                lldb_private::DataExtractor cstr_data(&buf.front(), buf.size(), process->GetByteOrder(), 4);
+                buf.back() = '\0';
+                size_t bytes_read;
+                size_t total_cstr_len = 0;
+                Error error;
+                while ((bytes_read = process->ReadMemory (pointer_addresss, &buf.front(), buf.size(), error)) > 0)
+                {
+                    const size_t len = strlen((const char *)&buf.front());
+                    if (len == 0)
+                        break;
+                    if (total_cstr_len == 0)
+                        s->PutCString (" \"");
+                    cstr_data.Dump(s, 0, lldb::eFormatChar, 1, len, UINT32_MAX, LLDB_INVALID_ADDRESS, 0, 0);
+                    total_cstr_len += len;
+                    if (len < buf.size())
+                        break;
+                    pointer_addresss += total_cstr_len;
+                }
+                if (total_cstr_len > 0)
+                    s->PutChar ('"');
             }
-            if (total_cstr_len > 0)
-                s->PutChar ('"');
         }
     }
 }
@@ -1656,10 +1659,13 @@ ClangASTType::ReadFromMemory
         }
         else
         {
-            if (exe_ctx && exe_ctx->process)
+            Process *process = NULL;
+            if (exe_ctx)
+                process = exe_ctx->GetProcessPtr();
+            if (process)
             {
                 Error error;
-                return exe_ctx->process->ReadMemory(addr, dst, byte_size, error) == byte_size;
+                return process->ReadMemory(addr, dst, byte_size, error) == byte_size;
             }
         }
     }
@@ -1713,10 +1719,13 @@ ClangASTType::WriteToMemory
         }
         else
         {
-            if (exe_ctx && exe_ctx->process)
+            Process *process = NULL;
+            if (exe_ctx)
+                process = exe_ctx->GetProcessPtr();
+            if (process)
             {
                 Error error;
-                return exe_ctx->process->WriteMemory(addr, new_value.GetData(), byte_size, error) == byte_size;
+                return process->WriteMemory(addr, new_value.GetData(), byte_size, error) == byte_size;
             }
         }
     }

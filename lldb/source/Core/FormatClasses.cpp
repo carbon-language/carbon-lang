@@ -84,8 +84,9 @@ StringSummaryFormat::FormatObject(lldb::ValueObjectSP object)
     ExecutionContext exe_ctx;
     object->GetExecutionContextScope()->CalculateExecutionContext(exe_ctx);
     SymbolContext sc;
-    if (exe_ctx.frame)
-        sc = exe_ctx.frame->GetSymbolContext(lldb::eSymbolContextEverything);
+    StackFrame *frame = exe_ctx.GetFramePtr();
+    if (frame)
+        sc = frame->GetSymbolContext(lldb::eSymbolContextEverything);
     
     if (m_show_members_oneliner)
     {

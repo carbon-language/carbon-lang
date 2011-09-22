@@ -271,7 +271,8 @@ CommandObjectExpression::EvaluateExpression
     CommandReturnObject *result
 )
 {
-    if (m_exe_ctx.target)
+    Target *target = m_exe_ctx.GetTargetPtr();
+    if (target)
     {
         lldb::ValueObjectSP result_valobj_sp;
 
@@ -283,7 +284,7 @@ CommandObjectExpression::EvaluateExpression
         switch (m_options.use_dynamic)
         {
         case eLazyBoolCalculate:
-            use_dynamic = m_exe_ctx.target->GetPreferDynamicValue();
+            use_dynamic = target->GetPreferDynamicValue();
             break;
         case eLazyBoolYes:
             use_dynamic = lldb::eDynamicCanRunTarget;
@@ -293,34 +294,39 @@ CommandObjectExpression::EvaluateExpression
             break;
         }
         
-        exe_results = m_exe_ctx.target->EvaluateExpression(expr, 
-                                                           m_exe_ctx.frame,
-                                                           eExecutionPolicyOnlyWhenNeeded,
-                                                           m_options.unwind_on_error,
-                                                           keep_in_memory, 
-                                                           use_dynamic, 
-                                                           result_valobj_sp);
+        exe_results = target->EvaluateExpression (expr, 
+                                                  m_exe_ctx.GetFramePtr(),
+                                                  eExecutionPolicyOnlyWhenNeeded,
+                                                  m_options.unwind_on_error,
+                                                  keep_in_memory, 
+                                                  use_dynamic, 
+                                                  result_valobj_sp);
         
         if (exe_results == eExecutionInterrupted && !m_options.unwind_on_error)
         {
             uint32_t start_frame = 0;
             uint32_t num_frames = 1;
             uint32_t num_frames_with_source = 0;
-            if (m_exe_ctx.thread)
+            Thread *thread = m_exe_ctx.GetThreadPtr();
+            if (thread)
             {
-                m_exe_ctx.thread->GetStatus (result->GetOutputStream(), 
-                                             start_frame, 
-                                             num_frames, 
-                                             num_frames_with_source);
+                thread->GetStatus (result->GetOutputStream(), 
+                                   start_frame, 
+                                   num_frames, 
+                                   num_frames_with_source);
             }
-            else if (m_exe_ctx.process)
+            else 
             {
-                bool only_threads_with_stop_reason = true;
-                m_exe_ctx.process->GetThreadStatus (result->GetOutputStream(), 
-                                                    only_threads_with_stop_reason, 
-                                                    start_frame, 
-                                                    num_frames, 
-                                                    num_frames_with_source);
+                Process *process = m_exe_ctx.GetProcessPtr();
+                if (process)
+                {
+                    bool only_threads_with_stop_reason = true;
+                    process->GetThreadStatus (result->GetOutputStream(), 
+                                              only_threads_with_stop_reason, 
+                                              start_frame, 
+                                              num_frames, 
+                                              num_frames_with_source);
+                }
             }
         }
 

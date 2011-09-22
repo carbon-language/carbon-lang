@@ -127,11 +127,11 @@ ValueObjectDynamicValue::UpdateValue ()
     }
     
     ExecutionContext exe_ctx (GetExecutionContextScope());
-    
-    if (exe_ctx.target)
+    Target *target = exe_ctx.GetTargetPtr();
+    if (target)
     {
-        m_data.SetByteOrder(exe_ctx.target->GetArchitecture().GetByteOrder());
-        m_data.SetAddressByteSize(exe_ctx.target->GetArchitecture().GetAddressByteSize());
+        m_data.SetByteOrder(target->GetArchitecture().GetByteOrder());
+        m_data.SetAddressByteSize(target->GetArchitecture().GetAddressByteSize());
     }
     
     // First make sure our Type and/or Address haven't changed:

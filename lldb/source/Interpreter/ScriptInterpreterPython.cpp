@@ -314,9 +314,9 @@ ScriptInterpreterPython::EnterSession ()
     run_string.Clear();
     
 
-    ExecutionContext exe_ctx = m_interpreter.GetDebugger().GetSelectedExecutionContext();
+    ExecutionContext exe_ctx (m_interpreter.GetDebugger().GetSelectedExecutionContext());
 
-    if (exe_ctx.target)
+    if (exe_ctx.GetTargetPtr())
         run_string.Printf ("run_one_line (%s, 'lldb.target = lldb.debugger.GetSelectedTarget()')", 
                            m_dictionary_name.c_str());
     else
@@ -324,14 +324,14 @@ ScriptInterpreterPython::EnterSession ()
     PyRun_SimpleString (run_string.GetData());
     run_string.Clear();
 
-    if (exe_ctx.process)
+    if (exe_ctx.GetProcessPtr())
         run_string.Printf ("run_one_line (%s, 'lldb.process = lldb.target.GetProcess()')", m_dictionary_name.c_str());
     else
         run_string.Printf ("run_one_line (%s, 'lldb.process = None')", m_dictionary_name.c_str());
     PyRun_SimpleString (run_string.GetData());
     run_string.Clear();
 
-    if (exe_ctx.thread)
+    if (exe_ctx.GetThreadPtr())
         run_string.Printf ("run_one_line (%s, 'lldb.thread = lldb.process.GetSelectedThread ()')", 
                            m_dictionary_name.c_str());
     else
@@ -339,7 +339,7 @@ ScriptInterpreterPython::EnterSession ()
     PyRun_SimpleString (run_string.GetData());
     run_string.Clear();
     
-    if (exe_ctx.frame)
+    if (exe_ctx.GetFramePtr())
         run_string.Printf ("run_one_line (%s, 'lldb.frame = lldb.thread.GetSelectedFrame ()')", 
                            m_dictionary_name.c_str());
     else
@@ -1560,7 +1560,7 @@ ScriptInterpreterPython::BreakpointCallbackFunction
     if (!context)
         return true;
         
-    Target *target = context->exe_ctx.target;
+    Target *target = context->exe_ctx.GetTargetPtr();
     
     if (!target)
         return true;
@@ -1575,8 +1575,7 @@ ScriptInterpreterPython::BreakpointCallbackFunction
     if (python_function_name != NULL 
         && python_function_name[0] != '\0')
     {
-        Thread *thread = context->exe_ctx.thread;
-        const StackFrameSP stop_frame_sp (thread->GetStackFrameSPForStackFramePtr (context->exe_ctx.frame));
+        const StackFrameSP stop_frame_sp (context->exe_ctx.GetFrameSP());
         BreakpointSP breakpoint_sp = target->GetBreakpointByID (break_id);
         if (breakpoint_sp)
         {

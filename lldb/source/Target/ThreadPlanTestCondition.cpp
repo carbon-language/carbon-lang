@@ -102,7 +102,7 @@ ThreadPlanTestCondition::ShouldStop (Event *event_ptr)
             m_did_stop = true;
         }
     }
-    else if (m_exe_ctx.thread->WasThreadPlanDiscarded (m_expression_plan_sp.get()))
+    else if (m_exe_ctx.GetThreadRef().WasThreadPlanDiscarded (m_expression_plan_sp.get()))
     {
         if (log)
             log->Printf("ExecuteExpression thread plan was discarded.\n");

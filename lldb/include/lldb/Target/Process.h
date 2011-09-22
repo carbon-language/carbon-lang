@@ -994,6 +994,7 @@ inline bool operator!= (const ProcessModID &lhs, const ProcessModID &rhs)
 /// @brief A plug-in interface definition class for debugging a process.
 //----------------------------------------------------------------------
 class Process :
+    public ReferenceCountedBaseVirtual<Process>,
     public UserID,
     public Broadcaster,
     public ExecutionContextScope,

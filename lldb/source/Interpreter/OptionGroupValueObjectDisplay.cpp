@@ -138,7 +138,7 @@ OptionGroupValueObjectDisplay::OptionParsingStarting (CommandInterpreter &interp
     be_raw            = false;
     ignore_cap        = false;
     
-    Target *target = interpreter.GetExecutionContext().target;
+    Target *target = interpreter.GetExecutionContext().GetTargetPtr();
     if (target != NULL)
         use_dynamic = target->GetPreferDynamicValue();
     else

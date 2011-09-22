@@ -293,7 +293,7 @@ CommandObjectBreakpointSet::ChooseFile (Target *target, FileSpec &file, CommandR
         // Then use the current stack frame's file.
         if (!target->GetSourceManager().GetDefaultFileAndLine(file, default_line))
         {
-            StackFrame *cur_frame = m_interpreter.GetExecutionContext().frame;
+            StackFrame *cur_frame = m_interpreter.GetExecutionContext().GetFramePtr();
             if (cur_frame == NULL)
             {
                 result.AppendError ("Attempting to set breakpoint by line number alone with no selected frame.");

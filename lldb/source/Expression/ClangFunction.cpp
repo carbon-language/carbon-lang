@@ -237,7 +237,7 @@ ClangFunction::CompileFunction (Stream &errors)
 bool
 ClangFunction::WriteFunctionWrapper (ExecutionContext &exe_ctx, Stream &errors)
 {
-    Process *process = exe_ctx.process;
+    Process *process = exe_ctx.GetProcessPtr();
 
     if (!process)
         return false;
@@ -266,8 +266,8 @@ ClangFunction::WriteFunctionWrapper (ExecutionContext &exe_ctx, Stream &errors)
     
     if (!jit_error.Success())
         return false;
-    if (exe_ctx.process && m_jit_alloc != LLDB_INVALID_ADDRESS)
-        m_jit_process_sp = exe_ctx.process->GetSP();
+    if (process && m_jit_alloc != LLDB_INVALID_ADDRESS)
+        m_jit_process_sp = process->GetSP();
 
     return true;
 }
@@ -299,7 +299,7 @@ ClangFunction::WriteFunctionArguments (ExecutionContext &exe_ctx,
     using namespace clang;
     ExecutionResults return_value = eExecutionSetupError;
 
-    Process *process = exe_ctx.process;
+    Process *process = exe_ctx.GetProcessPtr();
 
     if (process == NULL)
         return return_value;
@@ -324,7 +324,7 @@ ClangFunction::WriteFunctionArguments (ExecutionContext &exe_ctx,
     }
 
     // TODO: verify fun_addr needs to be a callable address
-    Scalar fun_addr (function_address.GetCallableLoadAddress(exe_ctx.target));
+    Scalar fun_addr (function_address.GetCallableLoadAddress(exe_ctx.GetTargetPtr()));
     int first_offset = m_member_offsets[0];
     process->WriteScalarToMemory(args_addr_ref + first_offset, fun_addr, process->GetAddressByteSize(), error);
 
@@ -394,8 +394,8 @@ ClangFunction::GetThreadPlanToCallFunction (ExecutionContext &exe_ctx,
                                             lldb::addr_t *cmd_arg)
 {
     // FIXME: Use the errors Stream for better error reporting.
-
-    if (exe_ctx.thread == NULL)
+    Thread *thread = exe_ctx.GetThreadPtr();
+    if (thread == NULL)
     {
         errors.Printf("Can't call a function without a valid thread.");
         return NULL;
@@ -404,7 +404,7 @@ ClangFunction::GetThreadPlanToCallFunction (ExecutionContext &exe_ctx,
     // Okay, now run the function:
 
     Address wrapper_address (NULL, func_addr);
-    ThreadPlan *new_plan = new ThreadPlanCallFunction (*exe_ctx.thread, 
+    ThreadPlan *new_plan = new ThreadPlanCallFunction (*thread, 
                                                        wrapper_address,
                                                        args_addr,
                                                        stop_others, 
@@ -420,7 +420,7 @@ ClangFunction::FetchFunctionResults (ExecutionContext &exe_ctx, lldb::addr_t arg
     // Read the return value - it is the last field in the struct:
     // FIXME: How does clang tell us there's no return value?  We need to handle that case.
     
-    Process *process = exe_ctx.process;
+    Process *process = exe_ctx.GetProcessPtr();
     
     if (process == NULL)
         return false;
@@ -446,7 +446,7 @@ ClangFunction::DeallocateFunctionResults (ExecutionContext &exe_ctx, lldb::addr_
     if (pos != m_wrapper_args_addrs.end())
         m_wrapper_args_addrs.erase(pos);
     
-    exe_ctx.process->DeallocateMemory(args_addr);
+    exe_ctx.GetProcessRef().DeallocateMemory(args_addr);
 }
 
 ExecutionResults
@@ -490,16 +490,24 @@ ClangFunction::ExecuteFunction (
         Stream &errors,
         lldb::addr_t *this_arg)
 {
-    lldb::ThreadPlanSP call_plan_sp(ClangFunction::GetThreadPlanToCallFunction(exe_ctx, function_address, void_arg, 
-                                                                               errors, stop_others, discard_on_error, 
-                                                                               this_arg));
+    lldb::ThreadPlanSP call_plan_sp (ClangFunction::GetThreadPlanToCallFunction (exe_ctx, 
+                                                                                 function_address, 
+                                                                                 void_arg, 
+                                                                                 errors, 
+                                                                                 stop_others, 
+                                                                                 discard_on_error, 
+                                                                                 this_arg));
     if (call_plan_sp == NULL)
         return eExecutionSetupError;
     
     call_plan_sp->SetPrivate(true);
     
-    return exe_ctx.process->RunThreadPlan (exe_ctx, call_plan_sp, stop_others, try_all_threads, discard_on_error,
-                                            single_thread_timeout_usec, errors);
+    return exe_ctx.GetProcessRef().RunThreadPlan (exe_ctx, call_plan_sp, 
+                                                  stop_others, 
+                                                  try_all_threads, 
+                                                  discard_on_error,
+                                                  single_thread_timeout_usec, 
+                                                  errors);
 }  
 
 ExecutionResults
