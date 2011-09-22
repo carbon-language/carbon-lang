@@ -43,6 +43,8 @@ add_llvm_library(LLVMMC
   SubtargetFeature.cpp
   MCAsmBackend.cpp
   MCTargetAsmLexer.cpp
+  MCAtom.cpp
+  MCModule.cpp
   )
 
 add_llvm_library_dependencies(LLVMMC
