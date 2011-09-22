@@ -280,15 +280,17 @@ InstrEmitter::AddRegisterOperand(MachineInstr *MI, SDValue Op,
     MCID.OpInfo[IIOpNum].isOptionalDef();
 
   // If the instruction requires a register in a different class, create
-  // a new virtual register and copy the value into it.
+  // a new virtual register and copy the value into it, but first attempt to
+  // shrink VReg's register class within reason.  For example, if VReg == GR32
+  // and II requires a GR32_NOSP, just constrain VReg to GR32_NOSP.
+  const unsigned MinRCSize = 4;
   if (II) {
-    const TargetRegisterClass *SrcRC = MRI->getRegClass(VReg);
     const TargetRegisterClass *DstRC = 0;
     if (IIOpNum < II->getNumOperands())
       DstRC = TII->getRegClass(*II, IIOpNum, TRI);
     assert((DstRC || (MCID.isVariadic() && IIOpNum >= MCID.getNumOperands())) &&
            "Don't have operand info for this instruction!");
-    if (DstRC && !SrcRC->hasSuperClassEq(DstRC)) {
+    if (DstRC && !MRI->constrainRegClass(VReg, DstRC, MinRCSize)) {
       unsigned NewVReg = MRI->createVirtualRegister(DstRC);
       BuildMI(*MBB, InsertPos, Op.getNode()->getDebugLoc(),
               TII->get(TargetOpcode::COPY), NewVReg).addReg(VReg);
