@@ -1,4 +1,5 @@
 ; RUN: llc < %s -march=ptx32 -mattr=sm20 | FileCheck %s
+; XFAIL: *
 
 define ptx_device void @test_add(float %x, float %y) {
 ; CHECK: ret;

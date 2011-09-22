@@ -1,4 +1,5 @@
 ; RUN: llc < %s -march=ptx32 -mattr=sm20 | FileCheck %s
+; XFAIL: *
 
 %complex = type { float, float }
 
