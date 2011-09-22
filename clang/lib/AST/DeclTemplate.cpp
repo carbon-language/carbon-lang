@@ -563,6 +563,24 @@ TemplateArgumentList::CreateCopy(ASTContext &Context,
   return new (Mem) TemplateArgumentList(StoredArgs, NumArgs, true);
 }
 
+FunctionTemplateSpecializationInfo *
+FunctionTemplateSpecializationInfo::Create(ASTContext &C, FunctionDecl *FD,
+                                           FunctionTemplateDecl *Template,
+                                           TemplateSpecializationKind TSK,
+                                       const TemplateArgumentList *TemplateArgs,
+                          const TemplateArgumentListInfo *TemplateArgsAsWritten,
+                                           SourceLocation POI) {
+  const ASTTemplateArgumentListInfo *ArgsAsWritten = 0;
+  if (TemplateArgsAsWritten)
+    ArgsAsWritten = ASTTemplateArgumentListInfo::Create(C,
+                                                        *TemplateArgsAsWritten);
+
+  return new (C) FunctionTemplateSpecializationInfo(FD, Template, TSK,
+                                                    TemplateArgs,
+                                                    ArgsAsWritten,
+                                                    POI);
+}
+
 //===----------------------------------------------------------------------===//
 // ClassTemplateSpecializationDecl Implementation
 //===----------------------------------------------------------------------===//

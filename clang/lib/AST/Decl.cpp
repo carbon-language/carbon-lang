@@ -1999,7 +1999,7 @@ FunctionDecl::getTemplateSpecializationArgs() const {
   return 0;
 }
 
-const TemplateArgumentListInfo *
+const ASTTemplateArgumentListInfo *
 FunctionDecl::getTemplateSpecializationArgsAsWritten() const {
   if (FunctionTemplateSpecializationInfo *Info
         = TemplateOrSpecialization

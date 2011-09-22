@@ -264,7 +264,7 @@ class FunctionTemplateSpecializationInfo : public llvm::FoldingSetNode {
                                      FunctionTemplateDecl *Template,
                                      TemplateSpecializationKind TSK,
                                      const TemplateArgumentList *TemplateArgs,
-                          const TemplateArgumentListInfo *TemplateArgsAsWritten,
+                       const ASTTemplateArgumentListInfo *TemplateArgsAsWritten,
                                      SourceLocation POI)
   : Function(FD),
     Template(Template, TSK - 1),
@@ -278,12 +278,7 @@ public:
          TemplateSpecializationKind TSK,
          const TemplateArgumentList *TemplateArgs,
          const TemplateArgumentListInfo *TemplateArgsAsWritten,
-         SourceLocation POI) {
-    return new (C) FunctionTemplateSpecializationInfo(FD, Template, TSK,
-                                                      TemplateArgs,
-                                                      TemplateArgsAsWritten,
-                                                      POI);
-  }
+         SourceLocation POI);
 
   /// \brief The function template specialization that this structure
   /// describes.
@@ -300,7 +295,7 @@ public:
   const TemplateArgumentList *TemplateArguments;
 
   /// \brief The template arguments as written in the sources, if provided.
-  const TemplateArgumentListInfo *TemplateArgumentsAsWritten;
+  const ASTTemplateArgumentListInfo *TemplateArgumentsAsWritten;
 
   /// \brief The point at which this function template specialization was
   /// first instantiated. 

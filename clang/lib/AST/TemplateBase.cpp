@@ -530,3 +530,65 @@ const DiagnosticBuilder &clang::operator<<(const DiagnosticBuilder &DB,
   
   return DB;
 }
+
+const ASTTemplateArgumentListInfo *
+ASTTemplateArgumentListInfo::Create(ASTContext &C,
+                                    const TemplateArgumentListInfo &List) {
+  std::size_t size = sizeof(CXXDependentScopeMemberExpr) +
+                     ASTTemplateArgumentListInfo::sizeFor(List);
+  void *Mem = C.Allocate(size, llvm::alignOf<ASTTemplateArgumentListInfo>());
+  ASTTemplateArgumentListInfo *TAI = new (Mem) ASTTemplateArgumentListInfo();
+  TAI->initializeFrom(List);
+  return TAI;
+}
+
+void ASTTemplateArgumentListInfo::initializeFrom(
+                                      const TemplateArgumentListInfo &Info) {
+  LAngleLoc = Info.getLAngleLoc();
+  RAngleLoc = Info.getRAngleLoc();
+  NumTemplateArgs = Info.size();
+
+  TemplateArgumentLoc *ArgBuffer = getTemplateArgs();
+  for (unsigned i = 0; i != NumTemplateArgs; ++i)
+    new (&ArgBuffer[i]) TemplateArgumentLoc(Info[i]);
+}
+
+void ASTTemplateArgumentListInfo::initializeFrom(
+                                          const TemplateArgumentListInfo &Info,
+                                                  bool &Dependent, 
+                                                  bool &InstantiationDependent,
+                                       bool &ContainsUnexpandedParameterPack) {
+  LAngleLoc = Info.getLAngleLoc();
+  RAngleLoc = Info.getRAngleLoc();
+  NumTemplateArgs = Info.size();
+
+  TemplateArgumentLoc *ArgBuffer = getTemplateArgs();
+  for (unsigned i = 0; i != NumTemplateArgs; ++i) {
+    Dependent = Dependent || Info[i].getArgument().isDependent();
+    InstantiationDependent = InstantiationDependent || 
+                             Info[i].getArgument().isInstantiationDependent();
+    ContainsUnexpandedParameterPack 
+      = ContainsUnexpandedParameterPack || 
+        Info[i].getArgument().containsUnexpandedParameterPack();
+
+    new (&ArgBuffer[i]) TemplateArgumentLoc(Info[i]);
+  }
+}
+
+void ASTTemplateArgumentListInfo::copyInto(
+                                      TemplateArgumentListInfo &Info) const {
+  Info.setLAngleLoc(LAngleLoc);
+  Info.setRAngleLoc(RAngleLoc);
+  for (unsigned I = 0; I != NumTemplateArgs; ++I)
+    Info.addArgument(getTemplateArgs()[I]);
+}
+
+std::size_t ASTTemplateArgumentListInfo::sizeFor(unsigned NumTemplateArgs) {
+  return sizeof(ASTTemplateArgumentListInfo) +
+         sizeof(TemplateArgumentLoc) * NumTemplateArgs;
+}
+
+std::size_t ASTTemplateArgumentListInfo::sizeFor(
+                                      const TemplateArgumentListInfo &Info) {
+  return sizeFor(Info.size());
+}

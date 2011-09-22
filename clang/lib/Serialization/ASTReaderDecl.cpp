@@ -373,7 +373,8 @@ void ASTDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
     // Template args as written.
     SmallVector<TemplateArgumentLoc, 8> TemplArgLocs;
     SourceLocation LAngleLoc, RAngleLoc;
-    if (Record[Idx++]) {  // TemplateArgumentsAsWritten != 0
+    bool HasTemplateArgumentsAsWritten = Record[Idx++];
+    if (HasTemplateArgumentsAsWritten) {
       unsigned NumTemplateArgLocs = Record[Idx++];
       TemplArgLocs.reserve(NumTemplateArgLocs);
       for (unsigned i=0; i != NumTemplateArgLocs; ++i)
@@ -389,14 +390,14 @@ void ASTDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
     ASTContext &C = Reader.getContext();
     TemplateArgumentList *TemplArgList
       = TemplateArgumentList::CreateCopy(C, TemplArgs.data(), TemplArgs.size());
-    TemplateArgumentListInfo *TemplArgsInfo
-      = new (C) TemplateArgumentListInfo(LAngleLoc, RAngleLoc);
+    TemplateArgumentListInfo TemplArgsInfo(LAngleLoc, RAngleLoc);
     for (unsigned i=0, e = TemplArgLocs.size(); i != e; ++i)
-      TemplArgsInfo->addArgument(TemplArgLocs[i]);
+      TemplArgsInfo.addArgument(TemplArgLocs[i]);
     FunctionTemplateSpecializationInfo *FTInfo
         = FunctionTemplateSpecializationInfo::Create(C, FD, Template, TSK,
                                                      TemplArgList,
-                                                     TemplArgsInfo, POI);
+                             HasTemplateArgumentsAsWritten ? &TemplArgsInfo : 0,
+                                                     POI);
     FD->TemplateOrSpecialization = FTInfo;
 
     if (FD->isCanonicalDecl()) { // if canonical add to template's set.

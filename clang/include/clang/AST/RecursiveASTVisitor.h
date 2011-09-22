@@ -1552,10 +1552,10 @@ bool RecursiveASTVisitor<Derived>::TraverseFunctionHelper(FunctionDecl *D) {
         FTSI->getTemplateSpecializationKind() != TSK_ImplicitInstantiation) {
       // A specialization might not have explicit template arguments if it has
       // a templated return type and concrete arguments.
-      if (const TemplateArgumentListInfo *TALI =
+      if (const ASTTemplateArgumentListInfo *TALI =
           FTSI->TemplateArgumentsAsWritten) {
-        TRY_TO(TraverseTemplateArgumentLocsHelper(TALI->getArgumentArray(),
-                                                  TALI->size()));
+        TRY_TO(TraverseTemplateArgumentLocsHelper(TALI->getTemplateArgs(),
+                                                  TALI->NumTemplateArgs));
       }
     }
   }
