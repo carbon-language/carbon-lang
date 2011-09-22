@@ -1,4 +1,6 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin10 %s -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 -std=c++0x -triple x86_64-apple-darwin10 %s -emit-llvm -o %t
+// RUN: FileCheck %s < %t
+// RUN: FileCheck -check-prefix=CHECK-PR10720 %s < %t
 
 extern "C" int printf(...);
 
@@ -149,3 +151,73 @@ template<typename T>
 X<T>::X(const X &other) : start(0), end(0) { }
 
 X<int> get_X(X<int> x) { return x; }
+
+namespace PR10720 {
+  struct X { 
+    X(const X&); 
+    X(X&&); 
+    X& operator=(const X&);
+    X& operator=(X&&);
+    ~X(); 
+  };
+
+  struct pair2 {
+    X second[4];
+
+    // CHECK-PR10720: define linkonce_odr {{.*}} @_ZN7PR107205pair2aSERKS0_
+    // CHECK-PR10720: load
+    // CHECK-PR10720: icmp ne
+    // CHECK-PR10720-NEXT: br i1
+    // CHECK-PR10720: call {{.*}} @_ZN7PR107201XaSERKS0_
+    // CHECK-PR10720: ret
+    pair2 &operator=(const pair2&) = default;
+
+    // CHECK-PR10720: define linkonce_odr {{.*}} @_ZN7PR107205pair2aSEOS0_
+    // CHECK-PR10720: load
+    // CHECK-PR10720: icmp ne
+    // CHECK-PR10720-NEXT: br i1
+    // CHECK-PR10720: call {{.*}} @_ZN7PR107201XaSEOS0_
+    // CHECK-PR10720: ret
+    pair2 &operator=(pair2&&) = default;
+
+    // CHECK-PR10720: define linkonce_odr void @_ZN7PR107205pair2C2EOS0_
+    // CHECK-PR10720-NOT: ret
+    // CHECK-PR10720: load
+    // CHECK-PR10720: icmp ult
+    // CHECK-PR10720-NEXT: br i1
+    // CHECK-PR10720: call void @_ZN7PR107201XC1EOS0_
+    // CHECK-PR10720-NEXT: br label
+    // CHECK-PR10720: ret void
+    pair2(pair2&&) = default;
+
+    // CHECK-PR10720: define linkonce_odr void @_ZN7PR107205pair2C2ERKS0_
+    // CHECK-PR10720-NOT: ret
+    // CHECK-PR10720: load
+    // CHECK-PR10720: icmp ult
+    // CHECK-PR10720-NEXT: br i1
+    // CHECK-PR10720: call void @_ZN7PR107201XC1ERKS0_
+    // CHECK-PR10720-NEXT: br label
+    // CHECK-PR10720: ret void
+    pair2(const pair2&) = default;
+  };
+
+  struct pair {
+    int second[4];
+    // CHECK-PR10720: define linkonce_odr void @_ZN7PR107204pairC2ERKS0_
+    // CHECK-PR10720-NOT: ret
+    // CHECK-PR10720: call void @llvm.memcpy
+    // CHECK-PR10720-NEXT: ret void
+    pair(const pair&) = default;
+  };
+
+  void foo(const pair &x, const pair2 &x2) {
+    pair y(x);
+    pair2 y2(x2);
+    pair2 y2m(static_cast<pair2&&>(y2));
+
+    y2 = x2;
+    y2m = static_cast<pair2&&>(y2);
+  }
+
+}
+
