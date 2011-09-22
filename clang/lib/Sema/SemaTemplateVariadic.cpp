@@ -462,8 +462,7 @@ getDepthAndIndex(NamedDecl *ND) {
 
 bool Sema::CheckParameterPacksForExpansion(SourceLocation EllipsisLoc,
                                            SourceRange PatternRange,
-                                     const UnexpandedParameterPack *Unexpanded,
-                                           unsigned NumUnexpanded,
+                                   ArrayRef<UnexpandedParameterPack> Unexpanded,
                              const MultiLevelTemplateArgumentList &TemplateArgs,
                                            bool &ShouldExpand,
                                            bool &RetainExpansion,
@@ -473,19 +472,21 @@ bool Sema::CheckParameterPacksForExpansion(SourceLocation EllipsisLoc,
   std::pair<IdentifierInfo *, SourceLocation> FirstPack;
   bool HaveFirstPack = false;
   
-  for (unsigned I = 0; I != NumUnexpanded; ++I) {
+  for (ArrayRef<UnexpandedParameterPack>::iterator i = Unexpanded.begin(),
+                                                 end = Unexpanded.end();
+                                                  i != end; ++i) {
     // Compute the depth and index for this parameter pack.
     unsigned Depth = 0, Index = 0;
     IdentifierInfo *Name;
     bool IsFunctionParameterPack = false;
     
     if (const TemplateTypeParmType *TTP
-        = Unexpanded[I].first.dyn_cast<const TemplateTypeParmType *>()) {
+        = i->first.dyn_cast<const TemplateTypeParmType *>()) {
       Depth = TTP->getDepth();
       Index = TTP->getIndex();
       Name = TTP->getIdentifier();
     } else {
-      NamedDecl *ND = Unexpanded[I].first.get<NamedDecl *>();
+      NamedDecl *ND = i->first.get<NamedDecl *>();
       if (isa<ParmVarDecl>(ND))
         IsFunctionParameterPack = true;
       else
@@ -502,7 +503,7 @@ bool Sema::CheckParameterPacksForExpansion(SourceLocation EllipsisLoc,
       
       llvm::PointerUnion<Decl *, DeclArgumentPack *> *Instantiation
         = CurrentInstantiationScope->findInstantiationOf(
-                                        Unexpanded[I].first.get<NamedDecl *>());
+                                        i->first.get<NamedDecl *>());
       if (Instantiation->is<DeclArgumentPack *>()) {
         // We could expand this function parameter pack.
         NewPackSize = Instantiation->get<DeclArgumentPack *>()->size();
@@ -545,7 +546,7 @@ bool Sema::CheckParameterPacksForExpansion(SourceLocation EllipsisLoc,
       // Record it.
       NumExpansions = NewPackSize;
       FirstPack.first = Name;
-      FirstPack.second = Unexpanded[I].second;
+      FirstPack.second = i->second;
       HaveFirstPack = true;
       continue;
     }
@@ -557,11 +558,11 @@ bool Sema::CheckParameterPacksForExpansion(SourceLocation EllipsisLoc,
       if (HaveFirstPack)
         Diag(EllipsisLoc, diag::err_pack_expansion_length_conflict)
           << FirstPack.first << Name << *NumExpansions << NewPackSize
-          << SourceRange(FirstPack.second) << SourceRange(Unexpanded[I].second);
+          << SourceRange(FirstPack.second) << SourceRange(i->second);
       else
         Diag(EllipsisLoc, diag::err_pack_expansion_length_conflict_multilevel)
           << Name << *NumExpansions << NewPackSize
-          << SourceRange(Unexpanded[I].second);
+          << SourceRange(i->second);
       return true;
     }
   }

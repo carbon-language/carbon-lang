@@ -681,14 +681,12 @@ namespace {
 
     bool TryExpandParameterPacks(SourceLocation EllipsisLoc,
                                  SourceRange PatternRange,
-                                 const UnexpandedParameterPack *Unexpanded,
-                                 unsigned NumUnexpanded,
+                             llvm::ArrayRef<UnexpandedParameterPack> Unexpanded,
                                  bool &ShouldExpand,
                                  bool &RetainExpansion,
                                  llvm::Optional<unsigned> &NumExpansions) {
       return getSema().CheckParameterPacksForExpansion(EllipsisLoc, 
                                                        PatternRange, Unexpanded,
-                                                       NumUnexpanded, 
                                                        TemplateArgs, 
                                                        ShouldExpand,
                                                        RetainExpansion,
@@ -1580,7 +1578,7 @@ Sema::SubstBaseSpecifiers(CXXRecordDecl *Instantiation,
       llvm::Optional<unsigned> NumExpansions;
       if (CheckParameterPacksForExpansion(Base->getEllipsisLoc(), 
                                           Base->getSourceRange(),
-                                          Unexpanded.data(), Unexpanded.size(),
+                                          Unexpanded,
                                           TemplateArgs, ShouldExpand, 
                                           RetainExpansion,
                                           NumExpansions)) {

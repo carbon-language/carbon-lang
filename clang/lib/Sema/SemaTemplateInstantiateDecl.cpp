@@ -1633,8 +1633,7 @@ Decl *TemplateDeclInstantiator::VisitNonTypeTemplateParmDecl(
     llvm::Optional<unsigned> NumExpansions = OrigNumExpansions;
     if (SemaRef.CheckParameterPacksForExpansion(Expansion.getEllipsisLoc(),
                                                 Pattern.getSourceRange(),
-                                                Unexpanded.data(),
-                                                Unexpanded.size(),
+                                                Unexpanded,
                                                 TemplateArgs,
                                                 Expand, RetainExpansion, 
                                                 NumExpansions))
@@ -2236,8 +2235,7 @@ TemplateDeclInstantiator::InitFunctionInstantiation(FunctionDecl *New,
                                           = PackExpansion->getNumExpansions();
         if (SemaRef.CheckParameterPacksForExpansion(New->getLocation(), 
                                                     SourceRange(),
-                                                    Unexpanded.data(), 
-                                                    Unexpanded.size(),
+                                                    Unexpanded,
                                                     TemplateArgs,
                                                     Expand, 
                                                     RetainExpansion,
@@ -2709,8 +2707,7 @@ Sema::InstantiateMemInitializers(CXXConstructorDecl *New,
       llvm::Optional<unsigned> NumExpansions;
       if (CheckParameterPacksForExpansion(Init->getEllipsisLoc(), 
                                           BaseTL.getSourceRange(),
-                                          Unexpanded.data(), 
-                                          Unexpanded.size(),
+                                          Unexpanded,
                                           TemplateArgs, ShouldExpand, 
                                           RetainExpansion,
                                           NumExpansions)) {
