@@ -49,15 +49,17 @@ MachineRegisterInfo::setRegClass(unsigned Reg, const TargetRegisterClass *RC) {
 
 const TargetRegisterClass *
 MachineRegisterInfo::constrainRegClass(unsigned Reg,
-                                       const TargetRegisterClass *RC) {
+                                       const TargetRegisterClass *RC,
+                                       unsigned MinNumRegs) {
   const TargetRegisterClass *OldRC = getRegClass(Reg);
   if (OldRC == RC)
     return RC;
   const TargetRegisterClass *NewRC = getCommonSubClass(OldRC, RC);
-  if (!NewRC)
+  if (!NewRC || NewRC == OldRC)
+    return NewRC;
+  if (NewRC->getNumRegs() < MinNumRegs)
     return 0;
-  if (NewRC != OldRC)
-    setRegClass(Reg, NewRC);
+  setRegClass(Reg, NewRC);
   return NewRC;
 }
 
