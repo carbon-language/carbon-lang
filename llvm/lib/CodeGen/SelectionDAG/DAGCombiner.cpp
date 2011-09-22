@@ -7500,10 +7500,13 @@ SDValue DAGCombiner::SimplifySelectCC(DebugLoc DL, SDValue N0, SDValue N1,
         SDValue Cond = DAG.getSetCC(DL,
                                     TLI.getSetCCResultType(N0.getValueType()),
                                     N0, N1, CC);
+        AddToWorkList(Cond.getNode());
         SDValue CstOffset = DAG.getNode(ISD::SELECT, DL, Zero.getValueType(),
                                         Cond, One, Zero);
+        AddToWorkList(CstOffset.getNode());
         CPIdx = DAG.getNode(ISD::ADD, DL, TLI.getPointerTy(), CPIdx,
                             CstOffset);
+        AddToWorkList(CPIdx.getNode());
         return DAG.getLoad(TV->getValueType(0), DL, DAG.getEntryNode(), CPIdx,
                            MachinePointerInfo::getConstantPool(), false,
                            false, Alignment);
