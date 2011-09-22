@@ -977,6 +977,10 @@ DeduceTemplateArguments(Sema &S,
   //     cv-list T
   if (const TemplateTypeParmType *TemplateTypeParm
         = Param->getAs<TemplateTypeParmType>()) {
+    // Just skip any attempts to deduce from a placeholder type.
+    if (Arg->isPlaceholderType())
+      return Sema::TDK_Success;
+    
     unsigned Index = TemplateTypeParm->getIndex();
     bool RecanonicalizeArg = false;
 

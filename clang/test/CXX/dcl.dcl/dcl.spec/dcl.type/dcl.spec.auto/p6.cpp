@@ -83,4 +83,21 @@ struct S {
   }
 };
 
+namespace PR10939 {
+  struct X {
+    int method(int);
+    int method(float); 
+  };
+
+  template<typename T> T g(T);
+
+  void f(X *x) {
+    auto value = x->method; // expected-error{{variable 'value' with type 'auto' has incompatible initializer of type '<bound member function type>'}}
+    if (value) { }
+
+    auto funcptr = &g<int>;
+    int (*funcptr2)(int) = funcptr;
+  }
+}
+
 // TODO: if the initializer is a braced-init-list, deduce auto as std::initializer_list<T>.
