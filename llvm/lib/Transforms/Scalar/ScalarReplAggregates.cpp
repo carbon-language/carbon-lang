@@ -1286,17 +1286,21 @@ static bool isSafePHIToSpeculate(PHINode *PN, const TargetData *TD) {
   // trapping load in the predecessor if it is a critical edge.
   for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
     BasicBlock *Pred = PN->getIncomingBlock(i);
+    Value *InVal = PN->getIncomingValue(i);
+
+    // If the terminator of the predecessor has side-effects (an invoke),
+    // there is no safe place to put a load in the predecessor.
+    if (Pred->getTerminator()->mayHaveSideEffects())
+      return false;
+
+    // If the value is produced by the terminator of the predecessor
+    // (an invoke), there is no valid place to put a load in the predecessor.
+    if (Pred->getTerminator() == InVal)
+      return false;
 
     // If the predecessor has a single successor, then the edge isn't critical.
     if (Pred->getTerminator()->getNumSuccessors() == 1)
       continue;
-    
-    Value *InVal = PN->getIncomingValue(i);
-    
-    // If the InVal is an invoke in the pred, we can't put a load on the edge.
-    if (InvokeInst *II = dyn_cast<InvokeInst>(InVal))
-      if (II->getParent() == Pred)
-        return false;
 
     // If this pointer is always safe to load, or if we can prove that there is
     // already a load in the block, then we can move the load to the pred block.
