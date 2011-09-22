@@ -17,7 +17,7 @@ This test serves two purposes:
 
 The list of warnings below should NEVER grow.  It should gradually shrink to 0.
 
-CHECK: Warnings without flags (311):
+CHECK: Warnings without flags (310):
 CHECK-NEXT:   backslash_newline_space
 CHECK-NEXT:   charize_microsoft_ext
 CHECK-NEXT:   ext_anon_param_requires_type_specifier
@@ -219,7 +219,6 @@ CHECK-NEXT:   warn_instance_method_on_class_found
 CHECK-NEXT:   warn_integer_too_large
 CHECK-NEXT:   warn_integer_too_large_for_signed
 CHECK-NEXT:   warn_invalid_asm_cast_lvalue
-CHECK-NEXT:   warn_ivar_use_hidden
 CHECK-NEXT:   warn_label_attribute_not_unused
 CHECK-NEXT:   warn_many_braces_around_scalar_init
 CHECK-NEXT:   warn_maynot_respond

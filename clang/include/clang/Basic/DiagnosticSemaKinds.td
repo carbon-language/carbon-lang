@@ -4626,7 +4626,8 @@ def note_getter_unavailable : Note<
 def err_invalid_protocol_qualifiers : Error<
   "invalid protocol qualifiers on non-ObjC type">;
 def warn_ivar_use_hidden : Warning<
-  "local declaration of %0 hides instance variable">;
+  "local declaration of %0 hides instance variable">,
+   InGroup<DiagGroup<"shadow-ivar">>;
 def error_ivar_use_in_class_method : Error<
   "instance variable %0 accessed in class method">;
 def error_implicit_ivar_access : Error<
