@@ -145,11 +145,9 @@ namespace {
         BasicBlock *CleanupBB = BasicBlock::Create(C, CleanupBBName, &F);
         Type *ExnTy = StructType::get(Type::getInt8PtrTy(C),
                                       Type::getInt32Ty(C), NULL);
-        // FIXME: Assuming the C++ personality function probably isn't the best
-        //        thing in the world.
         Constant *PersFn =
           F.getParent()->
-          getOrInsertFunction("__gxx_personality_v0",
+          getOrInsertFunction("__gcc_personality_v0",
                               FunctionType::get(Type::getInt32Ty(C), true));
         LandingPadInst *LPad = LandingPadInst::Create(ExnTy, PersFn, 1,
                                                       "cleanup.lpad",
