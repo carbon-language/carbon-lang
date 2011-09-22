@@ -2373,7 +2373,7 @@ bool Sema::SetCtorInitializers(CXXConstructorDecl *Constructor,
                                CXXCtorInitializer **Initializers,
                                unsigned NumInitializers,
                                bool AnyErrors) {
-  if (Constructor->getDeclContext()->isDependentContext()) {
+  if (Constructor->isDependentContext()) {
     // Just store the initializers as written, they will be checked during
     // instantiation.
     if (NumInitializers > 0) {
