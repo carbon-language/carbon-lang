@@ -16,6 +16,7 @@
 
 #include "PTX.h"
 #include "PTXMachineFunctionInfo.h"
+#include "PTXRegisterInfo.h"
 #include "PTXTargetMachine.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
@@ -67,7 +68,7 @@ public:
   void printParamOperand(const MachineInstr *MI, int opNum, raw_ostream &OS,
                          const char *Modifier = 0);
   void printReturnOperand(const MachineInstr *MI, int opNum, raw_ostream &OS,
-                          const char *Modifier = 0); 
+                          const char *Modifier = 0);
   void printPredicateOperand(const MachineInstr *MI, raw_ostream &O);
 
   void printCall(const MachineInstr *MI, raw_ostream &O);
@@ -217,18 +218,60 @@ void PTXAsmPrinter::EmitFunctionBodyStart() {
 
   const PTXMachineFunctionInfo *MFI = MF->getInfo<PTXMachineFunctionInfo>();
 
-  // Print local variable definition
-  for (PTXMachineFunctionInfo::reg_iterator
-       i = MFI->localVarRegBegin(), e = MFI->localVarRegEnd(); i != e; ++ i) {
-    unsigned reg = *i;
+  // Print register definitions
+  std::string regDefs;
+  unsigned numRegs;
 
-    std::string def = "\t.reg .";
-    def += getRegisterTypeName(reg);
-    def += ' ';
-    def += getRegisterName(reg);
-    def += ';';
-    OutStreamer.EmitRawText(Twine(def));
+  // pred
+  numRegs = MFI->getNumRegistersForClass(PTX::RegPredRegisterClass);
+  if(numRegs > 0) {
+    regDefs += "\t.reg .pred %p<";
+    regDefs += utostr(numRegs);
+    regDefs += ">;\n";
   }
+
+  // i16
+  numRegs = MFI->getNumRegistersForClass(PTX::RegI16RegisterClass);
+  if(numRegs > 0) {
+    regDefs += "\t.reg .b16 %rh<";
+    regDefs += utostr(numRegs);
+    regDefs += ">;\n";
+  }
+
+  // i32
+  numRegs = MFI->getNumRegistersForClass(PTX::RegI32RegisterClass);
+  if(numRegs > 0) {
+    regDefs += "\t.reg .b32 %r<";
+    regDefs += utostr(numRegs);
+    regDefs += ">;\n";
+  }
+
+  // i64
+  numRegs = MFI->getNumRegistersForClass(PTX::RegI64RegisterClass);
+  if(numRegs > 0) {
+    regDefs += "\t.reg .b64 %rd<";
+    regDefs += utostr(numRegs);
+    regDefs += ">;\n";
+  }
+
+  // f32
+  numRegs = MFI->getNumRegistersForClass(PTX::RegF32RegisterClass);
+  if(numRegs > 0) {
+    regDefs += "\t.reg .f32 %f<";
+    regDefs += utostr(numRegs);
+    regDefs += ">;\n";
+  }
+
+  // f64
+  numRegs = MFI->getNumRegistersForClass(PTX::RegF64RegisterClass);
+  if(numRegs > 0) {
+    regDefs += "\t.reg .f64 %fd<";
+    regDefs += utostr(numRegs);
+    regDefs += ">;\n";
+  }
+
+  OutStreamer.EmitRawText(Twine(regDefs));
+
 
   const MachineFrameInfo* FrameInfo = MF->getFrameInfo();
   DEBUG(dbgs() << "Have " << FrameInfo->getNumObjects()
@@ -332,6 +375,7 @@ void PTXAsmPrinter::EmitInstruction(const MachineInstr *MI) {
 void PTXAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
                                  raw_ostream &OS) {
   const MachineOperand &MO = MI->getOperand(opNum);
+  const PTXMachineFunctionInfo *MFI = MF->getInfo<PTXMachineFunctionInfo>();
 
   switch (MO.getType()) {
     default:
@@ -347,7 +391,7 @@ void PTXAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
       OS << *MO.getMBB()->getSymbol();
       break;
     case MachineOperand::MO_Register:
-      OS << getRegisterName(MO.getReg());
+      OS << MFI->getRegisterName(MO.getReg());
       break;
     case MachineOperand::MO_FPImmediate:
       APInt constFP = MO.getFPImm()->getValueAPF().bitcastToAPInt();
@@ -466,7 +510,7 @@ void PTXAsmPrinter::EmitVariableDeclaration(const GlobalVariable *gv) {
 
     if (gv->hasInitializer())
     {
-      const Constant *C = gv->getInitializer();  
+      const Constant *C = gv->getInitializer();
       if (const ConstantArray *CA = dyn_cast<ConstantArray>(C))
       {
         decl += " = {";
@@ -577,6 +621,7 @@ printPredicateOperand(const MachineInstr *MI, raw_ostream &O) {
 
   unsigned reg = MI->getOperand(i).getReg();
   int predOp = MI->getOperand(i+1).getImm();
+  const PTXMachineFunctionInfo *MFI = MF->getInfo<PTXMachineFunctionInfo>();
 
   DEBUG(dbgs() << "predicate: (" << reg << ", " << predOp << ")\n");
 
@@ -584,7 +629,7 @@ printPredicateOperand(const MachineInstr *MI, raw_ostream &O) {
     O << '@';
     if (predOp == PTX::PRED_NEGATE)
       O << '!';
-    O << getRegisterName(reg);
+    O << MFI->getRegisterName(reg);
   }
 }
 

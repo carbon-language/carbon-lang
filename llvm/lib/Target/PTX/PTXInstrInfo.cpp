@@ -16,6 +16,7 @@
 #include "PTX.h"
 #include "PTXInstrInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/Support/Debug.h"
@@ -47,8 +48,13 @@ void PTXInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
                                MachineBasicBlock::iterator I, DebugLoc DL,
                                unsigned DstReg, unsigned SrcReg,
                                bool KillSrc) const {
-  for (int i = 0, e = sizeof(map)/sizeof(map[0]); i != e; ++ i) {
-    if (map[i].cls->contains(DstReg, SrcReg)) {
+
+  const MachineRegisterInfo& MRI = MBB.getParent()->getRegInfo();
+  assert(MRI.getRegClass(SrcReg) == MRI.getRegClass(DstReg) &&
+    "Invalid register copy between two register classes");
+
+  for (int i = 0, e = sizeof(map)/sizeof(map[0]); i != e; ++i) {
+    if (map[i].cls == MRI.getRegClass(SrcReg)) {
       const MCInstrDesc &MCID = get(map[i].opcode);
       MachineInstr *MI = BuildMI(MBB, I, DL, MCID, DstReg).
         addReg(SrcReg, getKillRegState(KillSrc));

@@ -83,6 +83,13 @@ bool PTXMFInfoExtract::runOnMachineFunction(MachineFunction &MF) {
              i != e; ++i)
         dbgs() << "Local Var Reg: " << *i << "\n";);
 
+  // Generate list of all virtual registers used in this function
+  for (unsigned i = 0; i < MRI.getNumVirtRegs(); ++i) {
+    unsigned Reg = TargetRegisterInfo::index2VirtReg(i);
+    const TargetRegisterClass *TRC = MRI.getRegClass(Reg);
+    MFI->addVirtualRegister(TRC, Reg);
+  }
+
   return false;
 }
 

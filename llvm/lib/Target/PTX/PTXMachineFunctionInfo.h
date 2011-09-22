@@ -15,7 +15,10 @@
 #define PTX_MACHINE_FUNCTION_INFO_H
 
 #include "PTX.h"
+#include "PTXRegisterInfo.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/CodeGen/MachineFunction.h"
 
 namespace llvm {
@@ -30,11 +33,25 @@ private:
   std::vector<unsigned> call_params;
   bool _isDoneAddArg;
 
+  typedef std::vector<unsigned> RegisterList;
+  typedef DenseMap<const TargetRegisterClass*, RegisterList> RegisterMap;
+  typedef DenseMap<unsigned, std::string> RegisterNameMap;
+
+  RegisterMap usedRegs;
+  RegisterNameMap regNames;
+
 public:
   PTXMachineFunctionInfo(MachineFunction &MF)
     : is_kernel(false), reg_ret(PTX::NoRegister), _isDoneAddArg(false) {
       reg_arg.reserve(8);
       reg_local_var.reserve(32);
+
+      usedRegs[PTX::RegPredRegisterClass] = RegisterList();
+      usedRegs[PTX::RegI16RegisterClass] = RegisterList();
+      usedRegs[PTX::RegI32RegisterClass] = RegisterList();
+      usedRegs[PTX::RegI64RegisterClass] = RegisterList();
+      usedRegs[PTX::RegF32RegisterClass] = RegisterList();
+      usedRegs[PTX::RegF64RegisterClass] = RegisterList();
     }
 
   void setKernel(bool _is_kernel=true) { is_kernel = _is_kernel; }
@@ -94,6 +111,42 @@ public:
     return std::find(reg_local_var.begin(), reg_local_var.end(), reg)
       != reg_local_var.end();
   }
+
+  void addVirtualRegister(const TargetRegisterClass *TRC, unsigned Reg) {
+    usedRegs[TRC].push_back(Reg);
+
+    std::string name;
+
+    if (TRC == PTX::RegPredRegisterClass)
+      name = "%p";
+    else if (TRC == PTX::RegI16RegisterClass)
+      name = "%rh";
+    else if (TRC == PTX::RegI32RegisterClass)
+      name = "%r";
+    else if (TRC == PTX::RegI64RegisterClass)
+      name = "%rd";
+    else if (TRC == PTX::RegF32RegisterClass)
+      name = "%f";
+    else if (TRC == PTX::RegF64RegisterClass)
+      name = "%fd";
+    else
+      llvm_unreachable("Invalid register class");
+
+    name += utostr(usedRegs[TRC].size() - 1);
+    regNames[Reg] = name;
+  }
+
+  std::string getRegisterName(unsigned Reg) const {
+    if (regNames.count(Reg))
+      return regNames.lookup(Reg);
+    else
+      llvm_unreachable("Register not in register name map");
+  }
+
+  unsigned getNumRegistersForClass(const TargetRegisterClass *TRC) const {
+    return usedRegs.lookup(TRC).size();
+  }
+
 }; // class PTXMachineFunctionInfo
 } // namespace llvm
 
