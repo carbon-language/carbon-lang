@@ -27,7 +27,7 @@
 def SDT_MipsFPBrcond : SDTypeProfile<0, 2, [SDTCisInt<0>,
                                             SDTCisVT<1, OtherVT>]>;
 def SDT_MipsFPCmp : SDTypeProfile<0, 3, [SDTCisSameAs<0, 1>, SDTCisFP<1>,
-                                         SDTCisInt<2>]>;
+                                         SDTCisVT<2, i32>]>;
 def SDT_MipsCMovFP : SDTypeProfile<1, 2, [SDTCisSameAs<0, 1>,
                                           SDTCisSameAs<1, 2>]>;
 def SDT_MipsBuildPairF64 : SDTypeProfile<1, 2, [SDTCisVT<0, f64>,
@@ -35,7 +35,7 @@ def SDT_MipsBuildPairF64 : SDTypeProfile<1, 2, [SDTCisVT<0, f64>,
                                                 SDTCisSameAs<1, 2>]>;
 def SDT_MipsExtractElementF64 : SDTypeProfile<1, 2, [SDTCisVT<0, i32>,
                                                      SDTCisVT<1, f64>,
-                                                     SDTCisVT<0, i32>]>;
+                                                     SDTCisVT<2, i32>]>;
 
 def MipsFPCmp : SDNode<"MipsISD::FPCmp", SDT_MipsFPCmp, [SDNPOutGlue]>;
 def MipsCMovFP_T : SDNode<"MipsISD::CMovFP_T", SDT_MipsCMovFP, [SDNPInGlue]>;
