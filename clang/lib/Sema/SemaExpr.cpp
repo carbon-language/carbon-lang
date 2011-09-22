@@ -4194,8 +4194,12 @@ ExprResult Sema::CheckExtVectorCast(SourceRange R, QualType DestTy,
 
   // If SrcTy is a VectorType, the total size must match to explicitly cast to
   // an ExtVectorType.
+  // In OpenCL, casts between vectors of different types are not allowed.
+  // (See OpenCL 6.2).
   if (SrcTy->isVectorType()) {
-    if (Context.getTypeSize(DestTy) != Context.getTypeSize(SrcTy)) {
+    if (Context.getTypeSize(DestTy) != Context.getTypeSize(SrcTy)
+        || (getLangOptions().OpenCL &&
+            (DestTy.getCanonicalType() != SrcTy.getCanonicalType()))) {
       Diag(R.getBegin(),diag::err_invalid_conversion_between_ext_vectors)
         << DestTy << SrcTy << R;
       return ExprError();
