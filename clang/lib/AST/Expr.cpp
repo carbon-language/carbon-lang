@@ -130,7 +130,7 @@ SourceLocation Expr::getExprLoc() const {
 // Primary Expressions.
 //===----------------------------------------------------------------------===//
 
-void ExplicitTemplateArgumentList::initializeFrom(
+void ASTTemplateArgumentListInfo::initializeFrom(
                                       const TemplateArgumentListInfo &Info) {
   LAngleLoc = Info.getLAngleLoc();
   RAngleLoc = Info.getRAngleLoc();
@@ -141,7 +141,7 @@ void ExplicitTemplateArgumentList::initializeFrom(
     new (&ArgBuffer[i]) TemplateArgumentLoc(Info[i]);
 }
 
-void ExplicitTemplateArgumentList::initializeFrom(
+void ASTTemplateArgumentListInfo::initializeFrom(
                                           const TemplateArgumentListInfo &Info,
                                                   bool &Dependent, 
                                                   bool &InstantiationDependent,
@@ -163,7 +163,7 @@ void ExplicitTemplateArgumentList::initializeFrom(
   }
 }
 
-void ExplicitTemplateArgumentList::copyInto(
+void ASTTemplateArgumentListInfo::copyInto(
                                       TemplateArgumentListInfo &Info) const {
   Info.setLAngleLoc(LAngleLoc);
   Info.setRAngleLoc(RAngleLoc);
@@ -171,12 +171,12 @@ void ExplicitTemplateArgumentList::copyInto(
     Info.addArgument(getTemplateArgs()[I]);
 }
 
-std::size_t ExplicitTemplateArgumentList::sizeFor(unsigned NumTemplateArgs) {
-  return sizeof(ExplicitTemplateArgumentList) +
+std::size_t ASTTemplateArgumentListInfo::sizeFor(unsigned NumTemplateArgs) {
+  return sizeof(ASTTemplateArgumentListInfo) +
          sizeof(TemplateArgumentLoc) * NumTemplateArgs;
 }
 
-std::size_t ExplicitTemplateArgumentList::sizeFor(
+std::size_t ASTTemplateArgumentListInfo::sizeFor(
                                       const TemplateArgumentListInfo &Info) {
   return sizeFor(Info.size());
 }
@@ -360,7 +360,7 @@ DeclRefExpr *DeclRefExpr::Create(ASTContext &Context,
   if (FoundD)
     Size += sizeof(NamedDecl *);
   if (TemplateArgs)
-    Size += ExplicitTemplateArgumentList::sizeFor(*TemplateArgs);
+    Size += ASTTemplateArgumentListInfo::sizeFor(*TemplateArgs);
 
   void *Mem = Context.Allocate(Size, llvm::alignOf<DeclRefExpr>());
   return new (Mem) DeclRefExpr(QualifierLoc, D, NameInfo, FoundD, TemplateArgs,
@@ -378,7 +378,7 @@ DeclRefExpr *DeclRefExpr::CreateEmpty(ASTContext &Context,
   if (HasFoundDecl)
     Size += sizeof(NamedDecl *);
   if (HasExplicitTemplateArgs)
-    Size += ExplicitTemplateArgumentList::sizeFor(NumTemplateArgs);
+    Size += ASTTemplateArgumentListInfo::sizeFor(NumTemplateArgs);
 
   void *Mem = Context.Allocate(Size, llvm::alignOf<DeclRefExpr>());
   return new (Mem) DeclRefExpr(EmptyShell());
@@ -952,7 +952,7 @@ MemberExpr *MemberExpr::Create(ASTContext &C, Expr *base, bool isarrow,
     Size += sizeof(MemberNameQualifier);
 
   if (targs)
-    Size += ExplicitTemplateArgumentList::sizeFor(*targs);
+    Size += ASTTemplateArgumentListInfo::sizeFor(*targs);
 
   void *Mem = C.Allocate(Size, llvm::alignOf<MemberExpr>());
   MemberExpr *E = new (Mem) MemberExpr(base, isarrow, memberdecl, nameinfo,

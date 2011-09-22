@@ -310,7 +310,7 @@ private:
   void mangleCXXCtorType(CXXCtorType T);
   void mangleCXXDtorType(CXXDtorType T);
 
-  void mangleTemplateArgs(const ExplicitTemplateArgumentList &TemplateArgs);
+  void mangleTemplateArgs(const ASTTemplateArgumentListInfo &TemplateArgs);
   void mangleTemplateArgs(TemplateName Template,
                           const TemplateArgument *TemplateArgs,
                           unsigned NumTemplateArgs);  
@@ -2817,7 +2817,7 @@ void CXXNameMangler::mangleCXXDtorType(CXXDtorType T) {
 }
 
 void CXXNameMangler::mangleTemplateArgs(
-                          const ExplicitTemplateArgumentList &TemplateArgs) {
+                          const ASTTemplateArgumentListInfo &TemplateArgs) {
   // <template-args> ::= I <template-arg>+ E
   Out << 'I';
   for (unsigned i = 0, e = TemplateArgs.NumTemplateArgs; i != e; ++i)

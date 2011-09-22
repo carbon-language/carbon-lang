@@ -1622,7 +1622,7 @@ DEF_JOB(StmtVisit, Stmt, StmtVisitKind)
 DEF_JOB(MemberExprParts, MemberExpr, MemberExprPartsKind)
 DEF_JOB(DeclRefExprParts, DeclRefExpr, DeclRefExprPartsKind)
 DEF_JOB(OverloadExprParts, OverloadExpr, OverloadExprPartsKind)
-DEF_JOB(ExplicitTemplateArgsVisit, ExplicitTemplateArgumentList, 
+DEF_JOB(ExplicitTemplateArgsVisit, ASTTemplateArgumentListInfo, 
         ExplicitTemplateArgsVisitKind)
 DEF_JOB(SizeOfPackExprParts, SizeOfPackExpr, SizeOfPackExprPartsKind)
 #undef DEF_JOB
@@ -1769,7 +1769,7 @@ public:
 private:
   void AddDeclarationNameInfo(Stmt *S);
   void AddNestedNameSpecifierLoc(NestedNameSpecifierLoc Qualifier);
-  void AddExplicitTemplateArgs(const ExplicitTemplateArgumentList *A);
+  void AddExplicitTemplateArgs(const ASTTemplateArgumentListInfo *A);
   void AddMemberRef(FieldDecl *D, SourceLocation L);
   void AddStmt(Stmt *S);
   void AddDecl(Decl *D, bool isFirst = true);
@@ -1799,10 +1799,10 @@ void EnqueueVisitor::AddDecl(Decl *D, bool isFirst) {
     WL.push_back(DeclVisit(D, Parent, isFirst));
 }
 void EnqueueVisitor::
-  AddExplicitTemplateArgs(const ExplicitTemplateArgumentList *A) {
+  AddExplicitTemplateArgs(const ASTTemplateArgumentListInfo *A) {
   if (A)
     WL.push_back(ExplicitTemplateArgsVisit(
-                        const_cast<ExplicitTemplateArgumentList*>(A), Parent));
+                        const_cast<ASTTemplateArgumentListInfo*>(A), Parent));
 }
 void EnqueueVisitor::AddMemberRef(FieldDecl *D, SourceLocation L) {
   if (D)
@@ -2101,7 +2101,7 @@ bool CursorVisitor::RunVisitorWorkList(VisitorWorkList &WL) {
         continue;
       }
       case VisitorJob::ExplicitTemplateArgsVisitKind: {
-        const ExplicitTemplateArgumentList *ArgList =
+        const ASTTemplateArgumentListInfo *ArgList =
           cast<ExplicitTemplateArgsVisit>(&LI)->get();
         for (const TemplateArgumentLoc *Arg = ArgList->getTemplateArgs(),
                *ArgEnd = Arg + ArgList->NumTemplateArgs;
@@ -2264,7 +2264,7 @@ typedef llvm::SmallVector<SourceRange, 4> RefNamePieces;
 RefNamePieces buildPieces(unsigned NameFlags, bool IsMemberRefExpr, 
                           const DeclarationNameInfo &NI, 
                           const SourceRange &QLoc, 
-                          const ExplicitTemplateArgumentList *TemplateArgs = 0){
+                          const ASTTemplateArgumentListInfo *TemplateArgs = 0){
   const bool WantQualifier = NameFlags & CXNameRange_WantQualifier;
   const bool WantTemplateArgs = NameFlags & CXNameRange_WantTemplateArgs;
   const bool WantSinglePiece = NameFlags & CXNameRange_WantSinglePiece;

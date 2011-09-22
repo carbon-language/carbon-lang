@@ -1842,16 +1842,16 @@ public:
   /// template argument list, e.g. f<int>.
   bool hasExplicitTemplateArgs() const { return HasExplicitTemplateArgs; }
 
-  ExplicitTemplateArgumentList &getExplicitTemplateArgs(); // defined far below
+  ASTTemplateArgumentListInfo &getExplicitTemplateArgs(); // defined far below
 
-  const ExplicitTemplateArgumentList &getExplicitTemplateArgs() const {
+  const ASTTemplateArgumentListInfo &getExplicitTemplateArgs() const {
     return const_cast<OverloadExpr*>(this)->getExplicitTemplateArgs();
   }
 
   /// \brief Retrieves the optional explicit template arguments.
   /// This points to the same data as getExplicitTemplateArgs(), but
   /// returns null if there are no explicit template arguments.
-  const ExplicitTemplateArgumentList *getOptionalExplicitTemplateArgs() {
+  const ASTTemplateArgumentListInfo *getOptionalExplicitTemplateArgs() {
     if (!hasExplicitTemplateArgs()) return 0;
     return &getExplicitTemplateArgs();
   }
@@ -1969,21 +1969,21 @@ public:
   // nodes, users are *forbidden* from calling these methods on objects
   // without explicit template arguments.
 
-  ExplicitTemplateArgumentList &getExplicitTemplateArgs() {
+  ASTTemplateArgumentListInfo &getExplicitTemplateArgs() {
     assert(hasExplicitTemplateArgs());
-    return *reinterpret_cast<ExplicitTemplateArgumentList*>(this + 1);
+    return *reinterpret_cast<ASTTemplateArgumentListInfo*>(this + 1);
   }
 
   /// Gets a reference to the explicit template argument list.
-  const ExplicitTemplateArgumentList &getExplicitTemplateArgs() const {
+  const ASTTemplateArgumentListInfo &getExplicitTemplateArgs() const {
     assert(hasExplicitTemplateArgs());
-    return *reinterpret_cast<const ExplicitTemplateArgumentList*>(this + 1);
+    return *reinterpret_cast<const ASTTemplateArgumentListInfo*>(this + 1);
   }
 
   /// \brief Retrieves the optional explicit template arguments.
   /// This points to the same data as getExplicitTemplateArgs(), but
   /// returns null if there are no explicit template arguments.
-  const ExplicitTemplateArgumentList *getOptionalExplicitTemplateArgs() {
+  const ASTTemplateArgumentListInfo *getOptionalExplicitTemplateArgs() {
     if (!hasExplicitTemplateArgs()) return 0;
     return &getExplicitTemplateArgs();
   }
@@ -2094,21 +2094,21 @@ public:
   // nodes, users are *forbidden* from calling these methods on objects
   // without explicit template arguments.
 
-  ExplicitTemplateArgumentList &getExplicitTemplateArgs() {
+  ASTTemplateArgumentListInfo &getExplicitTemplateArgs() {
     assert(hasExplicitTemplateArgs());
-    return *reinterpret_cast<ExplicitTemplateArgumentList*>(this + 1);
+    return *reinterpret_cast<ASTTemplateArgumentListInfo*>(this + 1);
   }
 
   /// Gets a reference to the explicit template argument list.
-  const ExplicitTemplateArgumentList &getExplicitTemplateArgs() const {
+  const ASTTemplateArgumentListInfo &getExplicitTemplateArgs() const {
     assert(hasExplicitTemplateArgs());
-    return *reinterpret_cast<const ExplicitTemplateArgumentList*>(this + 1);
+    return *reinterpret_cast<const ASTTemplateArgumentListInfo*>(this + 1);
   }
 
   /// \brief Retrieves the optional explicit template arguments.
   /// This points to the same data as getExplicitTemplateArgs(), but
   /// returns null if there are no explicit template arguments.
-  const ExplicitTemplateArgumentList *getOptionalExplicitTemplateArgs() {
+  const ASTTemplateArgumentListInfo *getOptionalExplicitTemplateArgs() {
     if (!hasExplicitTemplateArgs()) return 0;
     return &getExplicitTemplateArgs();
   }
@@ -2470,14 +2470,14 @@ public:
 
   /// \brief Retrieve the explicit template argument list that followed the
   /// member template name, if any.
-  ExplicitTemplateArgumentList &getExplicitTemplateArgs() {
+  ASTTemplateArgumentListInfo &getExplicitTemplateArgs() {
     assert(HasExplicitTemplateArgs);
-    return *reinterpret_cast<ExplicitTemplateArgumentList *>(this + 1);
+    return *reinterpret_cast<ASTTemplateArgumentListInfo *>(this + 1);
   }
 
   /// \brief Retrieve the explicit template argument list that followed the
   /// member template name, if any.
-  const ExplicitTemplateArgumentList &getExplicitTemplateArgs() const {
+  const ASTTemplateArgumentListInfo &getExplicitTemplateArgs() const {
     return const_cast<CXXDependentScopeMemberExpr *>(this)
              ->getExplicitTemplateArgs();
   }
@@ -2485,7 +2485,7 @@ public:
   /// \brief Retrieves the optional explicit template arguments.
   /// This points to the same data as getExplicitTemplateArgs(), but
   /// returns null if there are no explicit template arguments.
-  const ExplicitTemplateArgumentList *getOptionalExplicitTemplateArgs() {
+  const ASTTemplateArgumentListInfo *getOptionalExplicitTemplateArgs() {
     if (!hasExplicitTemplateArgs()) return 0;
     return &getExplicitTemplateArgs();
   }
@@ -2663,22 +2663,22 @@ public:
 
   /// \brief Retrieve the explicit template argument list that followed the
   /// member template name.
-  ExplicitTemplateArgumentList &getExplicitTemplateArgs() {
+  ASTTemplateArgumentListInfo &getExplicitTemplateArgs() {
     assert(hasExplicitTemplateArgs());
-    return *reinterpret_cast<ExplicitTemplateArgumentList *>(this + 1);
+    return *reinterpret_cast<ASTTemplateArgumentListInfo *>(this + 1);
   }
 
   /// \brief Retrieve the explicit template argument list that followed the
   /// member template name, if any.
-  const ExplicitTemplateArgumentList &getExplicitTemplateArgs() const {
+  const ASTTemplateArgumentListInfo &getExplicitTemplateArgs() const {
     assert(hasExplicitTemplateArgs());
-    return *reinterpret_cast<const ExplicitTemplateArgumentList *>(this + 1);
+    return *reinterpret_cast<const ASTTemplateArgumentListInfo *>(this + 1);
   }
 
   /// \brief Retrieves the optional explicit template arguments.
   /// This points to the same data as getExplicitTemplateArgs(), but
   /// returns null if there are no explicit template arguments.
-  const ExplicitTemplateArgumentList *getOptionalExplicitTemplateArgs() {
+  const ASTTemplateArgumentListInfo *getOptionalExplicitTemplateArgs() {
     if (!hasExplicitTemplateArgs()) return 0;
     return &getExplicitTemplateArgs();
   }
@@ -2856,7 +2856,7 @@ public:
   }
 };
   
-inline ExplicitTemplateArgumentList &OverloadExpr::getExplicitTemplateArgs() {
+inline ASTTemplateArgumentListInfo &OverloadExpr::getExplicitTemplateArgs() {
   if (isa<UnresolvedLookupExpr>(this))
     return cast<UnresolvedLookupExpr>(this)->getExplicitTemplateArgs();
   else

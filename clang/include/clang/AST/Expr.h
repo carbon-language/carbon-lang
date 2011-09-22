@@ -690,7 +690,9 @@ public:
 
 /// \brief Represents an explicit template argument list in C++, e.g.,
 /// the "<int>" in "sort<int>".
-struct ExplicitTemplateArgumentList {
+/// This is safe to be used inside an AST node, in contrast with
+/// TemplateArgumentListInfo.
+struct ASTTemplateArgumentListInfo {
   /// \brief The source location of the left angle bracket ('<');
   SourceLocation LAngleLoc;
   
@@ -887,29 +889,29 @@ public:
 
   /// \brief Retrieve the explicit template argument list that followed the
   /// member template name.
-  ExplicitTemplateArgumentList &getExplicitTemplateArgs() {
+  ASTTemplateArgumentListInfo &getExplicitTemplateArgs() {
     assert(hasExplicitTemplateArgs());
     if (hasFoundDecl())
-      return *reinterpret_cast<ExplicitTemplateArgumentList *>(
+      return *reinterpret_cast<ASTTemplateArgumentListInfo *>(
         &getInternalFoundDecl() + 1);
 
     if (hasQualifier())
-      return *reinterpret_cast<ExplicitTemplateArgumentList *>(
+      return *reinterpret_cast<ASTTemplateArgumentListInfo *>(
         &getInternalQualifierLoc() + 1);
 
-    return *reinterpret_cast<ExplicitTemplateArgumentList *>(this + 1);
+    return *reinterpret_cast<ASTTemplateArgumentListInfo *>(this + 1);
   }
 
   /// \brief Retrieve the explicit template argument list that followed the
   /// member template name.
-  const ExplicitTemplateArgumentList &getExplicitTemplateArgs() const {
+  const ASTTemplateArgumentListInfo &getExplicitTemplateArgs() const {
     return const_cast<DeclRefExpr *>(this)->getExplicitTemplateArgs();
   }
 
   /// \brief Retrieves the optional explicit template arguments.
   /// This points to the same data as getExplicitTemplateArgs(), but
   /// returns null if there are no explicit template arguments.
-  const ExplicitTemplateArgumentList *getExplicitTemplateArgsOpt() const {
+  const ASTTemplateArgumentListInfo *getExplicitTemplateArgsOpt() const {
     if (!hasExplicitTemplateArgs()) return 0;
     return &getExplicitTemplateArgs();
   }
@@ -2162,26 +2164,26 @@ public:
   /// \brief Retrieve the explicit template argument list that
   /// follow the member template name.  This must only be called on an
   /// expression with explicit template arguments.
-  ExplicitTemplateArgumentList &getExplicitTemplateArgs() {
+  ASTTemplateArgumentListInfo &getExplicitTemplateArgs() {
     assert(HasExplicitTemplateArgumentList);
     if (!HasQualifierOrFoundDecl)
-      return *reinterpret_cast<ExplicitTemplateArgumentList *>(this + 1);
+      return *reinterpret_cast<ASTTemplateArgumentListInfo *>(this + 1);
 
-    return *reinterpret_cast<ExplicitTemplateArgumentList *>(
+    return *reinterpret_cast<ASTTemplateArgumentListInfo *>(
                                                       getMemberQualifier() + 1);
   }
 
   /// \brief Retrieve the explicit template argument list that
   /// followed the member template name.  This must only be called on
   /// an expression with explicit template arguments.
-  const ExplicitTemplateArgumentList &getExplicitTemplateArgs() const {
+  const ASTTemplateArgumentListInfo &getExplicitTemplateArgs() const {
     return const_cast<MemberExpr *>(this)->getExplicitTemplateArgs();
   }
 
   /// \brief Retrieves the optional explicit template arguments.
   /// This points to the same data as getExplicitTemplateArgs(), but
   /// returns null if there are no explicit template arguments.
-  const ExplicitTemplateArgumentList *getOptionalExplicitTemplateArgs() const {
+  const ASTTemplateArgumentListInfo *getOptionalExplicitTemplateArgs() const {
     if (!hasExplicitTemplateArgs()) return 0;
     return &getExplicitTemplateArgs();
   }
