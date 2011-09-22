@@ -48,7 +48,7 @@ class AFPR<bits<5> num, string n, list<Register> subregs>
 class AFPR64<bits<5> num, string n, list<Register> subregs>
   : MipsRegWithSubRegs<n, subregs> {
   let Num = num;
-  let SubRegIndices = [sub_fpeven];
+  let SubRegIndices = [sub_32];
 }
 
 // Mips Hardware Registers
