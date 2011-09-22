@@ -102,12 +102,19 @@ int getOutFile() {
     {
       int PTy = ArgumentInfo;
       int Zeros = 0;
-      write(OutFile, &PTy, sizeof(int));
-      write(OutFile, &SavedArgsLength, sizeof(unsigned));
-      write(OutFile, SavedArgs, SavedArgsLength);
+      if (write(OutFile, &PTy, sizeof(int)) < 0 ||
+          write(OutFile, &SavedArgsLength, sizeof(unsigned)) < 0 ||
+          write(OutFile, SavedArgs, SavedArgsLength) < 0 ) {
+        fprintf(stderr,"error: unable to write to output file.");
+        exit(0);
+      }
       /* Pad out to a multiple of four bytes */
-      if (SavedArgsLength & 3)
-        write(OutFile, &Zeros, 4-(SavedArgsLength&3));
+      if (SavedArgsLength & 3) {
+        if (write(OutFile, &Zeros, 4-(SavedArgsLength&3)) < 0) {
+          fprintf(stderr,"error: unable to write to output file.");
+          exit(0);
+        }
+      }
     }
   }
   return(OutFile);
