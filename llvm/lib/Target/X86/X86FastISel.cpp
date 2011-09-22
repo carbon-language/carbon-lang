@@ -22,6 +22,7 @@
 #include "llvm/CallingConv.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/GlobalVariable.h"
+#include "llvm/GlobalAlias.h"
 #include "llvm/Instructions.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Operator.h"
@@ -467,13 +468,22 @@ bool X86FastISel::X86SelectAddress(const Value *V, X86AddressMode &AM) {
 
   // Handle constant address.
   if (const GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
-    // Can't handle alternate code models or TLS yet.
+    // Can't handle alternate code models yet.
     if (TM.getCodeModel() != CodeModel::Small)
       return false;
 
+    // Can't handle TLS yet.
     if (const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV))
       if (GVar->isThreadLocal())
         return false;
+
+    // Can't handle TLS yet, part 2 (this is slightly crazy, but this is how
+    // it works...).
+    if (const GlobalAlias *GA = dyn_cast<GlobalAlias>(GV))
+      if (const GlobalVariable *GVar =
+            dyn_cast_or_null<GlobalVariable>(GA->resolveAliasedGlobal(false)))
+        if (GVar->isThreadLocal())
+          return false;
 
     // RIP-relative addresses can't have additional register operands, so if
     // we've already folded stuff into the addressing mode, just force the
