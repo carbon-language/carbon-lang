@@ -6963,7 +6963,7 @@ void Sema::DefineImplicitDestructor(SourceLocation CurrentLocation,
 
   SourceLocation Loc = Destructor->getLocation();
   Destructor->setBody(new (Context) CompoundStmt(Context, 0, 0, Loc, Loc));
-
+  Destructor->setImplicitlyDefined(true);
   Destructor->setUsed();
   MarkVTableUsed(CurrentLocation, ClassDecl);
 
@@ -8301,10 +8301,10 @@ void Sema::DefineImplicitCopyConstructor(SourceLocation CurrentLocation,
                                                MultiStmtArg(*this, 0, 0), 
                                                /*isStmtExpr=*/false)
                                                               .takeAs<Stmt>());
+    CopyConstructor->setImplicitlyDefined(true);
   }
   
   CopyConstructor->setUsed();
-
   if (ASTMutationListener *L = getASTMutationListener()) {
     L->CompletedImplicitDefinition(CopyConstructor);
   }
@@ -8464,6 +8464,7 @@ void Sema::DefineImplicitMoveConstructor(SourceLocation CurrentLocation,
                                                MultiStmtArg(*this, 0, 0), 
                                                /*isStmtExpr=*/false)
                                                               .takeAs<Stmt>());
+    MoveConstructor->setImplicitlyDefined(true);
   }
 
   MoveConstructor->setUsed();
