@@ -569,7 +569,7 @@ SearchFilterByModuleList::GetDescription (Stream *s)
     uint32_t num_modules = m_module_spec_list.GetSize();
     if (num_modules == 1)
     {
-        s->Printf (", module = ", num_modules);
+        s->Printf (", module = ");
         if (s->GetVerbose())
         {
             char buffer[2048];
