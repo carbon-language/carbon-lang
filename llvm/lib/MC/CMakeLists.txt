@@ -5,6 +5,7 @@ add_llvm_library(LLVMMC
   MCAsmInfoDarwin.cpp
   MCAsmStreamer.cpp
   MCAssembler.cpp
+  MCAtom.cpp
   MCCodeEmitter.cpp
   MCCodeGenInfo.cpp
   MCContext.cpp
@@ -21,6 +22,7 @@ add_llvm_library(LLVMMC
   MCLoggingStreamer.cpp
   MCMachOStreamer.cpp
   MCMachObjectTargetWriter.cpp
+  MCModule.cpp
   MCNullStreamer.cpp
   MCObjectFileInfo.cpp
   MCObjectStreamer.cpp
