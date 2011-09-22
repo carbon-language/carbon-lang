@@ -62,8 +62,10 @@
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/TargetSelect.h"
 
-// FIXME: See use of UpgradeExceptionHandling(...) below
+#ifdef OLD_EXC_SYSTEM
+// See use of UpgradeExceptionHandling(...) below                        
 #include "llvm/AutoUpgrade.h"
+#endif
 
 // FIXME: Although all systems tested with (Linux, OS X), do not need this 
 //        header file included. A user on ubuntu reported, undefined symbols 
@@ -185,6 +187,9 @@ static std::vector<std::string> ourTypeInfoNames;
 static std::map<int, std::string> ourTypeInfoNamesIndex;
 
 static llvm::StructType *ourTypeInfoType;
+#ifndef OLD_EXC_SYSTEM
+static llvm::StructType *ourCaughtResultType;
+#endif
 static llvm::StructType *ourExceptionType;
 static llvm::StructType *ourUnwindExceptionType;
 
@@ -1219,8 +1224,7 @@ llvm::Function *createCatchWrappedInvokeFunction(llvm::Module &module,
   
   builder.SetInsertPoint(unwindResumeBlock);
   
-  llvm::Function *resumeOurException = 
-  module.getFunction("_Unwind_Resume");
+  llvm::Function *resumeOurException = module.getFunction("_Unwind_Resume");
   builder.CreateCall(resumeOurException, 
                      builder.CreateLoad(exceptionStorage));
   builder.CreateUnreachable();
@@ -1229,18 +1233,41 @@ llvm::Function *createCatchWrappedInvokeFunction(llvm::Module &module,
   
   builder.SetInsertPoint(exceptionBlock);
   
-  llvm::Function *ehException = module.getFunction("llvm.eh.exception");
+  llvm::Function *personality = module.getFunction("ourPersonality");
   
+#ifndef OLD_EXC_SYSTEM
+  llvm::LandingPadInst *caughtResult = 
+    builder.CreateLandingPad(ourCaughtResultType,
+                             personality,
+                             numExceptionsToCatch,
+                             "landingPad");
+
+  caughtResult->setCleanup(true);
+
+  for (unsigned i = 0; i < numExceptionsToCatch; ++i) {
+    // Set up type infos to be caught
+    caughtResult->addClause(module.getGlobalVariable(
+                             ourTypeInfoNames[exceptionTypesToCatch[i]]));
+  }
+
+  llvm::Value *unwindException = builder.CreateExtractValue(caughtResult, 0);
+  llvm::Value *retTypeInfoIndex = 
+    builder.CreateExtractValue(caughtResult, 1);
+
+  builder.CreateStore(unwindException, exceptionStorage);
+  builder.CreateStore(ourExceptionThrownState, exceptionCaughtFlag);
+
+#else
+  llvm::Function *ehException = module.getFunction("llvm.eh.exception");
+
   // Retrieve thrown exception
   llvm::Value *unwindException = builder.CreateCall(ehException);
   
   // Store exception and flag
   builder.CreateStore(unwindException, exceptionStorage);
   builder.CreateStore(ourExceptionThrownState, exceptionCaughtFlag);
-  llvm::Function *personality = module.getFunction("ourPersonality");
   llvm::Value *functPtr = 
-  builder.CreatePointerCast(personality, 
-                            builder.getInt8PtrTy());
+    builder.CreatePointerCast(personality, builder.getInt8PtrTy());
   
   args.clear();
   args.push_back(unwindException);
@@ -1265,6 +1292,7 @@ llvm::Function *createCatchWrappedInvokeFunction(llvm::Module &module,
   // called either because it nees to cleanup (call finally) or a type 
   // info was found which matched the thrown exception.
   llvm::Value *retTypeInfoIndex = builder.CreateCall(ehSelector, args);
+#endif
   
   // Retrieve exception_class member from thrown exception 
   // (_Unwind_Exception instance). This member tells us whether or not
@@ -1343,18 +1371,13 @@ llvm::Function *createCatchWrappedInvokeFunction(llvm::Module &module,
                                    llvm::Type::getInt32Ty(context), i),
                                 catchBlocks[nextTypeToCatch]);
   }
-  
-  // FIXME: This is a hack to get the demo working with the new 3.0 exception
-  //        infrastructure. As this makes the demo no longer a demo, and
-  //        especially not a demo on how to use the llvm exception mechanism,
-  //        this hack will shortly be changed to use the new 3.0 exception
-  //        infrastructure. However for the time being this demo is an 
-  //        example on how to use the AutoUpgrade UpgradeExceptionHandling(...)
-  //        function on < 3.0 exception handling code.
-  //
-  // Must be run before verifier
-  UpgradeExceptionHandling(&module);
 
+#ifdef OLD_EXC_SYSTEM
+  // Must be run before verifier                                                
+  UpgradeExceptionHandling(&module);
+#endif
+
+  
   llvm::verifyFunction(*ret);
   fpm.run(*ret);
   
@@ -1661,6 +1684,20 @@ static void createStandardUtilityFunctions(unsigned numTypeInfos,
   // Create our type info type
   ourTypeInfoType = llvm::StructType::get(context, 
                       TypeArray(builder.getInt32Ty()));
+
+#ifndef OLD_EXC_SYSTEM
+
+  llvm::Type *caughtResultFieldTypes[] = {
+    builder.getInt8PtrTy(),
+    builder.getInt32Ty()
+  };
+
+  // Create our landingpad result type
+  ourCaughtResultType = llvm::StructType::get(context,
+                                            TypeArray(caughtResultFieldTypes));
+
+#endif
+
   // Create OurException type
   ourExceptionType = llvm::StructType::get(context, 
                                            TypeArray(ourTypeInfoType));
@@ -1677,7 +1714,7 @@ static void createStandardUtilityFunctions(unsigned numTypeInfos,
   
   // Calculate offset of OurException::unwindException member.
   ourBaseFromUnwindOffset = ((uintptr_t) &dummyException) - 
-  ((uintptr_t) &(dummyException.unwindException));
+    ((uintptr_t) &(dummyException.unwindException));
   
 #ifdef DEBUG
   fprintf(stderr,
@@ -1995,10 +2032,10 @@ int main(int argc, char *argv[]) {
     // Generate test code using function throwCppException(...) as
     // the function which throws foreign exceptions.
     llvm::Function *toRun = 
-      createUnwindExceptionTest(*module, 
-                                theBuilder, 
-                                fpm,
-                                "throwCppException");
+    createUnwindExceptionTest(*module, 
+                              theBuilder, 
+                              fpm,
+                              "throwCppException");
     
     fprintf(stderr, "\nBegin module dump:\n\n");
     
