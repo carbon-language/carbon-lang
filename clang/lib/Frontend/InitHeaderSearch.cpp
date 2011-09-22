@@ -81,10 +81,6 @@ public:
   void AddMinGW64CXXPaths(StringRef Base,
                           StringRef Version);
 
-  /// AddDelimitedPaths - Add a list of paths delimited by the system PATH
-  /// separator. The processing follows that of the CPATH variable for gcc.
-  void AddDelimitedPaths(StringRef String);
-
   // AddDefaultCIncludePaths - Add paths that should always be searched.
   void AddDefaultCIncludePaths(const llvm::Triple &triple,
                                const HeaderSearchOptions &HSOpts);
@@ -165,26 +161,6 @@ void InitHeaderSearch::AddPath(const Twine &Path,
   if (Verbose)
     llvm::errs() << "ignoring nonexistent directory \""
                  << MappedPathStr << "\"\n";
-}
-
-
-void InitHeaderSearch::AddDelimitedPaths(StringRef at) {
-  if (at.empty()) // Empty string should not add '.' path.
-    return;
-
-  StringRef::size_type delim;
-  while ((delim = at.find(llvm::sys::PathSeparator)) != StringRef::npos) {
-    if (delim == 0)
-      AddPath(".", Angled, false, true, false);
-    else
-      AddPath(at.substr(0, delim), Angled, false, true, false);
-    at = at.substr(delim + 1);
-  }
-
-  if (at.empty())
-    AddPath(".", Angled, false, true, false);
-  else
-    AddPath(at, Angled, false, true, false);
 }
 
 void InitHeaderSearch::AddGnuCPlusPlusIncludePaths(StringRef Base,
@@ -1094,7 +1070,11 @@ void InitHeaderSearch::Realize(const LangOptions &Lang) {
 
   for (path_iterator it = IncludePath.begin(), ie = IncludePath.end();
        it != ie; ++it) {
-    if (it->first == System || (Lang.CPlusPlus && it->first == CXXSystem))
+    if (it->first == System ||
+        (!Lang.ObjC1 && !Lang.CPlusPlus && it->first == CSystem)    ||
+        (!Lang.ObjC1 && Lang.CPlusPlus  && it->first == CXXSystem)  ||
+        (Lang.ObjC1  && !Lang.CPlusPlus && it->first == ObjCSystem) ||
+        (Lang.ObjC1  && Lang.CPlusPlus  && it->first == ObjCXXSystem))
       SearchList.push_back(it->second);
   }
 
@@ -1146,17 +1126,6 @@ void clang::ApplyHeaderSearchOptions(HeaderSearch &HS,
     Init.AddPath(E.Path, E.Group, false, E.IsUserSupplied, E.IsFramework,
                  E.IgnoreSysRoot);
   }
-
-  // Add entries from CPATH and friends.
-  Init.AddDelimitedPaths(HSOpts.EnvIncPath);
-  if (Lang.CPlusPlus && Lang.ObjC1)
-    Init.AddDelimitedPaths(HSOpts.ObjCXXEnvIncPath);
-  else if (Lang.CPlusPlus)
-    Init.AddDelimitedPaths(HSOpts.CXXEnvIncPath);
-  else if (Lang.ObjC1)
-    Init.AddDelimitedPaths(HSOpts.ObjCEnvIncPath);
-  else
-    Init.AddDelimitedPaths(HSOpts.CEnvIncPath);
 
   if (HSOpts.UseStandardIncludes)
     Init.AddDefaultSystemIncludePaths(Lang, Triple, HSOpts);

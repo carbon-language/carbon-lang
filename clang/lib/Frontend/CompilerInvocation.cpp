@@ -534,8 +534,20 @@ static void HeaderSearchOptsToArgs(const HeaderSearchOptions &Opts,
         Res.push_back(E.IsFramework? "-F" : "-I");
         break;
         
+      case frontend::CSystem:
+        Res.push_back("-c-isystem");
+        break;
+
       case frontend::CXXSystem:
         Res.push_back("-cxx-isystem");
+        break;
+
+      case frontend::ObjCSystem:
+        Res.push_back("-objc-isystem");
+        break;
+
+      case frontend::ObjCXXSystem:
+        Res.push_back("-objcxx-isystem");
         break;
         
       case frontend::Angled:
@@ -551,26 +563,6 @@ static void HeaderSearchOptsToArgs(const HeaderSearchOptions &Opts,
     Res.push_back(E.Path);
   }
 
-  if (!Opts.EnvIncPath.empty()) {
-    // FIXME: Provide an option for this, and move env detection to driver.
-    llvm::report_fatal_error("Not yet implemented!");
-  }
-  if (!Opts.CEnvIncPath.empty()) {
-    // FIXME: Provide an option for this, and move env detection to driver.
-    llvm::report_fatal_error("Not yet implemented!");
-  }
-  if (!Opts.ObjCEnvIncPath.empty()) {
-    // FIXME: Provide an option for this, and move env detection to driver.
-    llvm::report_fatal_error("Not yet implemented!");
-  }
-  if (!Opts.CXXEnvIncPath.empty()) {
-    // FIXME: Provide an option for this, and move env detection to driver.
-    llvm::report_fatal_error("Not yet implemented!");
-  }
-  if (!Opts.ObjCXXEnvIncPath.empty()) {
-    // FIXME: Provide an option for this, and move env detection to driver.
-    llvm::report_fatal_error("Not yet implemented!");
-  }
   if (!Opts.ResourceDir.empty()) {
     Res.push_back("-resource-dir");
     Res.push_back(Opts.ResourceDir);
@@ -1424,14 +1416,25 @@ static void ParseHeaderSearchArgs(HeaderSearchOptions &Opts, ArgList &Args) {
   for (arg_iterator it = Args.filtered_begin(OPT_iquote),
          ie = Args.filtered_end(); it != ie; ++it)
     Opts.AddPath((*it)->getValue(Args), frontend::Quoted, true, false, false);
-  for (arg_iterator it = Args.filtered_begin(OPT_cxx_isystem, OPT_isystem,
+  for (arg_iterator it = Args.filtered_begin(OPT_isystem,
          OPT_iwithsysroot), ie = Args.filtered_end(); it != ie; ++it)
-    Opts.AddPath((*it)->getValue(Args),
-                 ((*it)->getOption().matches(OPT_cxx_isystem) ?
-                   frontend::CXXSystem : frontend::System),
-                 true, false, !(*it)->getOption().matches(OPT_iwithsysroot));
-  
-  // FIXME: Need options for the various environment variables!
+    Opts.AddPath((*it)->getValue(Args), frontend::System, true, false,
+                 !(*it)->getOption().matches(OPT_iwithsysroot));
+
+  // Add the paths for the various language specific isystem flags.
+  for (arg_iterator it = Args.filtered_begin(OPT_c_isystem),
+       ie = Args.filtered_end(); it != ie; ++it)
+    Opts.AddPath((*it)->getValue(Args), frontend::CSystem, true, false, true);
+  for (arg_iterator it = Args.filtered_begin(OPT_cxx_isystem),
+       ie = Args.filtered_end(); it != ie; ++it)
+    Opts.AddPath((*it)->getValue(Args), frontend::CXXSystem, true, false, true);
+  for (arg_iterator it = Args.filtered_begin(OPT_objc_isystem),
+       ie = Args.filtered_end(); it != ie; ++it)
+    Opts.AddPath((*it)->getValue(Args), frontend::ObjCSystem, true, false,true);
+  for (arg_iterator it = Args.filtered_begin(OPT_objcxx_isystem),
+       ie = Args.filtered_end(); it != ie; ++it)
+    Opts.AddPath((*it)->getValue(Args), frontend::ObjCXXSystem, true, false,
+                 true);
 }
 
 void CompilerInvocation::setLangDefaults(LangOptions &Opts, InputKind IK,
