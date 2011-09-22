@@ -100,7 +100,7 @@ getCalleeSavedRegs(const MachineFunction *MF) const
 {
   // Mips callee-save register range is $16-$23, $f20-$f30
   static const unsigned SingleFloatOnlyCalleeSavedRegs[] = {
-    Mips::F30, Mips::F29, Mips::F28, Mips::F27, Mips::F26,
+    Mips::F31, Mips::F30, Mips::F29, Mips::F28, Mips::F27, Mips::F26,
     Mips::F25, Mips::F24, Mips::F23, Mips::F22, Mips::F21, Mips::F20,
     Mips::RA, Mips::FP, Mips::S7, Mips::S6, Mips::S5, Mips::S4,
     Mips::S3, Mips::S2, Mips::S1, Mips::S0, 0
