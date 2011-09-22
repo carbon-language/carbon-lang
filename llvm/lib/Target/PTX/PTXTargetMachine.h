@@ -56,6 +56,35 @@ class PTXTargetMachine : public LLVMTargetMachine {
                                  CodeGenOpt::Level OptLevel);
     virtual bool addPostRegAlloc(PassManagerBase &PM,
                                  CodeGenOpt::Level OptLevel);
+
+    // We override this method to supply our own set of codegen passes.
+    virtual bool addPassesToEmitFile(PassManagerBase &,
+                                     formatted_raw_ostream &,
+                                     CodeGenFileType,
+                                     CodeGenOpt::Level,
+                                     bool = true);
+
+    // Emission of machine code through JITCodeEmitter is not supported.
+    virtual bool addPassesToEmitMachineCode(PassManagerBase &,
+                                            JITCodeEmitter &,
+                                            CodeGenOpt::Level,
+                                            bool = true) {
+      return true;
+    }
+
+    // Emission of machine code through MCJIT is not supported.
+    virtual bool addPassesToEmitMC(PassManagerBase &,
+                                   MCContext *&,
+                                   raw_ostream &,
+                                   CodeGenOpt::Level,
+                                   bool = true) {
+      return true;
+    }
+
+  private:
+
+    bool addCommonCodeGenPasses(PassManagerBase &, CodeGenOpt::Level,
+                                bool DisableVerify, MCContext *&OutCtx);
 }; // class PTXTargetMachine
 
 
