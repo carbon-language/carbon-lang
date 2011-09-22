@@ -586,7 +586,6 @@ Target::DisableAllWatchpointLocations ()
         if (rc.Fail())
             return false;
     }
-    m_watchpoint_location_list.SetEnabledAll (false);
     return true; // Success!
 }
 
@@ -612,7 +611,6 @@ Target::EnableAllWatchpointLocations ()
         if (rc.Fail())
             return false;
     }
-    m_watchpoint_location_list.SetEnabledAll (true);
     return true; // Success!
 }
 
@@ -631,11 +629,10 @@ Target::DisableWatchpointLocationByID (lldb::watch_id_t watch_id)
     if (wp_loc_sp)
     {
         Error rc = m_process_sp->DisableWatchpoint(wp_loc_sp.get());
-        if (rc.Fail())
-            return false;
+        if (rc.Success())
+            return true;
 
-        wp_loc_sp->SetEnabled (false);
-        return true;
+        // Else, fallthrough.
     }
     return false;
 }
@@ -655,11 +652,10 @@ Target::EnableWatchpointLocationByID (lldb::watch_id_t watch_id)
     if (wp_loc_sp)
     {
         Error rc = m_process_sp->EnableWatchpoint(wp_loc_sp.get());
-        if (rc.Fail())
-            return false;
+        if (rc.Success())
+            return true;
 
-        wp_loc_sp->SetEnabled (true);
-        return true;
+        // Else, fallthrough.
     }
     return false;
 }

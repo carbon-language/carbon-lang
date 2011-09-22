@@ -41,6 +41,9 @@ public:
     SetEnabled (bool enabled);
 
     virtual bool
+    IsHardware () const;
+
+    virtual bool
     ShouldStop (StoppointCallbackContext *context);
 
     bool        WatchpointRead () const;
@@ -55,7 +58,8 @@ public:
     void        DumpWithLevel (Stream *s, lldb::DescriptionLevel description_level) const;
 
 private:
-    bool        m_enabled;          // Is this breakpoint enabled
+    bool        m_enabled;          // Is this watchpoint enabled
+    bool        m_is_hardware;      // Is this a hardware watchpoint
     uint32_t    m_watch_read:1,     // 1 if we stop when the watched data is read from
                 m_watch_write:1,    // 1 if we stop when the watched data is written to
                 m_watch_was_read:1, // Set to 1 when watchpoint is hit for a read access

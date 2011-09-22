@@ -20,7 +20,6 @@ using namespace lldb;
 using namespace lldb_private;
 
 WatchpointLocationList::WatchpointLocationList() :
-    m_locations (),
     m_address_to_location (),
     m_mutex (Mutex::eMutexTypeRecursive)
 {
@@ -41,21 +40,10 @@ WatchpointLocationList::Add (const WatchpointLocationSP &wp_loc_sp)
     addr_map::iterator iter = m_address_to_location.find(wp_addr);
 
     if (iter == m_address_to_location.end())
-    {
         m_address_to_location.insert(iter, addr_map::value_type(wp_addr, wp_loc_sp));
-    }
     else
-    {
         m_address_to_location[wp_addr] = wp_loc_sp;
-        collection::iterator pos, end = m_locations.end();
-        for (pos = m_locations.begin(); pos != end; ++pos)
-            if ((*pos)->GetLoadAddress() == wp_addr)
-            {
-                m_locations.erase(pos);
-                break;
-            }
-    }
-    m_locations.push_back(wp_loc_sp);
+
     return wp_loc_sp->GetID();
 }
 
@@ -154,9 +142,12 @@ WatchpointLocationList::GetByIndex (uint32_t i)
 {
     Mutex::Locker locker (m_mutex);
     WatchpointLocationSP wp_loc_sp;
-    if (i < m_locations.size())
-        wp_loc_sp = m_locations[i];
-
+    if (i < m_address_to_location.size())
+    {
+        addr_map::const_iterator pos = m_address_to_location.begin();
+        std::advance(pos, i);
+        wp_loc_sp = pos->second;
+    }
     return wp_loc_sp;
 }
 
@@ -165,9 +156,12 @@ WatchpointLocationList::GetByIndex (uint32_t i) const
 {
     Mutex::Locker locker (m_mutex);
     WatchpointLocationSP wp_loc_sp;
-    if (i < m_locations.size())
-        wp_loc_sp = m_locations[i];
-
+    if (i < m_address_to_location.size())
+    {
+        addr_map::const_iterator pos = m_address_to_location.begin();
+        std::advance(pos, i);
+        wp_loc_sp = pos->second;
+    }
     return wp_loc_sp;
 }
 
@@ -175,17 +169,10 @@ bool
 WatchpointLocationList::Remove (lldb::watch_id_t watch_id)
 {
     Mutex::Locker locker (m_mutex);
-    addr_map::iterator pos = GetIDIterator(watch_id);    // Predicate
+    addr_map::iterator pos = GetIDIterator(watch_id);
     if (pos != m_address_to_location.end())
     {
         m_address_to_location.erase(pos);
-        collection::iterator pos, end = m_locations.end();
-        for (pos = m_locations.begin(); pos != end; ++pos)
-            if ((*pos)->GetID() == watch_id)
-            {
-                m_locations.erase(pos);
-                break;
-            }
         return true;
     }
     return false;
@@ -205,6 +192,7 @@ WatchpointLocationList::GetHitCount () const
 bool
 WatchpointLocationList::ShouldStop (StoppointCallbackContext *context, lldb::watch_id_t watch_id)
 {
+
     WatchpointLocationSP wp_loc_sp = FindByID (watch_id);
     if (wp_loc_sp)
     {
@@ -245,14 +233,7 @@ void
 WatchpointLocationList::RemoveAll ()
 {
     Mutex::Locker locker(m_mutex);
-
-    addr_map::iterator pos, end = m_address_to_location.end();
-    for (pos = m_address_to_location.begin(); pos != end; ++pos)
-        m_address_to_location.erase(pos);
-
-    collection::iterator p, e = m_locations.end();
-    for (p = m_locations.begin(); p != e; ++pos)
-        m_locations.erase(p);
+    m_address_to_location.clear();
 }
 
 void

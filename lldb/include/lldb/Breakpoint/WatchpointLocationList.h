@@ -224,7 +224,6 @@ public:
     GetListMutex (lldb_private::Mutex::Locker &locker);
 
 protected:
-    typedef std::vector<lldb::WatchpointLocationSP> collection;
     typedef std::map<lldb::addr_t, lldb::WatchpointLocationSP> addr_map;
 
     addr_map::iterator
@@ -233,7 +232,6 @@ protected:
     addr_map::const_iterator
     GetIDConstIterator(lldb::watch_id_t watchID) const;
 
-    collection m_locations;
     addr_map m_address_to_location;
     mutable Mutex m_mutex;
 };

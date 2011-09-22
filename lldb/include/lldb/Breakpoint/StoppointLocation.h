@@ -85,7 +85,7 @@ public:
         return m_hw_preferred;
     }
 
-    bool
+    virtual bool
     IsHardware () const
     {
         return m_hw_index != LLDB_INVALID_INDEX32;

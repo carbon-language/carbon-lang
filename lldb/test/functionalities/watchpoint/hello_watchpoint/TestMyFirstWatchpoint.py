@@ -62,6 +62,11 @@ class HelloWatchpointTestCase(TestBase):
             substrs = ['Watchpoint created', 'size = 4', 'type = w',
                        '%s:%d' % (self.source, self.decl)])
 
+        # Use the '-v' option to do verbose listing of the watchpoint.
+        # The hit count should be 0 initially.
+        self.expect("watchpoint list -v",
+            substrs = ['hit_count = 0'])
+
         self.runCmd("process continue")
 
         # We should be stopped again due to the watchpoint (write type), but
@@ -75,6 +80,11 @@ class HelloWatchpointTestCase(TestBase):
         # The process status should be 'exited'.
         self.expect("process status",
             substrs = ['exited'])
+
+        # Use the '-v' option to do verbose listing of the watchpoint.
+        # The hit count should now be 1.
+        self.expect("watchpoint list -v",
+            substrs = ['hit_count = 1'])
 
 
 if __name__ == '__main__':

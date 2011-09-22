@@ -21,6 +21,7 @@ using namespace lldb_private;
 WatchpointLocation::WatchpointLocation (lldb::addr_t addr, size_t size, bool hardware) :
     StoppointLocation (GetNextID(), addr, size, hardware),
     m_enabled(0),
+    m_is_hardware(hardware),
     m_watch_read(0),
     m_watch_write(0),
     m_watch_was_read(0),
@@ -58,28 +59,36 @@ WatchpointLocation::SetDeclInfo (std::string &str)
 }
 
 
+bool
+WatchpointLocation::IsHardware () const
+{
+    return m_is_hardware;
+}
+
 // RETURNS - true if we should stop at this breakpoint, false if we
 // should continue.
 
 bool
 WatchpointLocation::ShouldStop (StoppointCallbackContext *context)
 {
-    m_hit_count++;
+    ++m_hit_count;
 
-    if (m_hit_count > m_ignore_count)
-    {
-        uint32_t access = 0;
-        if (m_watch_was_read)
-            access |= LLDB_WATCH_TYPE_READ;
-        if (m_watch_was_written)
-            access |= LLDB_WATCH_TYPE_WRITE;
+    if (!IsEnabled())
+        return false;
 
-        if (m_callback)
-            return m_callback(m_callback_baton, context, GetID(), access);
-        else
-            return true;
-    }
-    return false;
+    if (m_hit_count <= GetIgnoreCount())
+        return false;
+
+    uint32_t access = 0;
+    if (m_watch_was_read)
+        access |= LLDB_WATCH_TYPE_READ;
+    if (m_watch_was_written)
+        access |= LLDB_WATCH_TYPE_WRITE;
+
+    if (m_callback)
+        return m_callback(m_callback_baton, context, GetID(), access);
+    else
+        return true;
 }
 
 void

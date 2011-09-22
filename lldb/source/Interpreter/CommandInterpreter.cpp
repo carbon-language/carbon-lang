@@ -37,6 +37,7 @@
 #include "../Commands/CommandObjectThread.h"
 #include "../Commands/CommandObjectType.h"
 #include "../Commands/CommandObjectVersion.h"
+#include "../Commands/CommandObjectWatchpoint.h"
 
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Interpreter/Options.h"
@@ -266,6 +267,7 @@ CommandInterpreter::LoadCommandDictionary ()
     m_command_dict["thread"]    = CommandObjectSP (new CommandObjectMultiwordThread (*this));
     m_command_dict["type"]      = CommandObjectSP (new CommandObjectType (*this));
     m_command_dict["version"]   = CommandObjectSP (new CommandObjectVersion (*this));
+    m_command_dict["watchpoint"]= CommandObjectSP (new CommandObjectMultiwordWatchpoint (*this));
 
     std::auto_ptr<CommandObjectRegexCommand>
     break_regex_cmd_ap(new CommandObjectRegexCommand (*this,
