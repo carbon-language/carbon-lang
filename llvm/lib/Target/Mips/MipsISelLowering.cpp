@@ -96,7 +96,6 @@ MipsTargetLowering(MipsTargetMachine &TM)
 
   // When dealing with single precision only, use libcalls
   if (!Subtarget->isSingleFloat())
-    if (!Subtarget->isFP64bit())
       addRegisterClass(MVT::f64, Mips::AFGR64RegisterClass);
 
   // Load extented operations for i1 types must be promoted
