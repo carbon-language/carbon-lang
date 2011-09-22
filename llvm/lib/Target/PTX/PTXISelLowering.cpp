@@ -50,56 +50,56 @@ PTXTargetLowering::PTXTargetLowering(TargetMachine &TM)
   setBooleanContents(ZeroOrOneBooleanContent);
   setBooleanVectorContents(ZeroOrOneBooleanContent); // FIXME: Is this correct?
   setMinFunctionAlignment(2);
-  
+
   ////////////////////////////////////
   /////////// Expansion //////////////
   ////////////////////////////////////
-  
+
   // (any/zero/sign) extload => load + (any/zero/sign) extend
-  
+
   setLoadExtAction(ISD::EXTLOAD, MVT::i16, Expand);
   setLoadExtAction(ISD::ZEXTLOAD, MVT::i16, Expand);
   setLoadExtAction(ISD::SEXTLOAD, MVT::i16, Expand);
-  
+
   // f32 extload => load + fextend
-  
-  setLoadExtAction(ISD::EXTLOAD, MVT::f32, Expand);  
-  
+
+  setLoadExtAction(ISD::EXTLOAD, MVT::f32, Expand);
+
   // f64 truncstore => trunc + store
-  
-  setTruncStoreAction(MVT::f64, MVT::f32, Expand); 
-  
+
+  setTruncStoreAction(MVT::f64, MVT::f32, Expand);
+
   // sign_extend_inreg => sign_extend
-  
+
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Expand);
-  
+
   // br_cc => brcond
-  
+
   setOperationAction(ISD::BR_CC, MVT::Other, Expand);
 
   // select_cc => setcc
-  
+
   setOperationAction(ISD::SELECT_CC, MVT::Other, Expand);
   setOperationAction(ISD::SELECT_CC, MVT::f32, Expand);
   setOperationAction(ISD::SELECT_CC, MVT::f64, Expand);
-  
+
   ////////////////////////////////////
   //////////// Legal /////////////////
   ////////////////////////////////////
-  
+
   setOperationAction(ISD::ConstantFP, MVT::f32, Legal);
   setOperationAction(ISD::ConstantFP, MVT::f64, Legal);
-  
+
   ////////////////////////////////////
   //////////// Custom ////////////////
   ////////////////////////////////////
-  
+
   // customise setcc to use bitwise logic if possible
-  
+
   setOperationAction(ISD::SETCC, MVT::i1, Custom);
 
   // customize translation of memory addresses
-  
+
   setOperationAction(ISD::GlobalAddress, MVT::i32, Custom);
   setOperationAction(ISD::GlobalAddress, MVT::i64, Custom);
 
@@ -153,7 +153,7 @@ SDValue PTXTargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
   DebugLoc dl = Op.getDebugLoc();
   ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(2))->get();
 
-  // Look for X == 0, X == 1, X != 0, or X != 1  
+  // Look for X == 0, X == 1, X != 0, or X != 1
   // We can simplify these to bitwise logic
 
   if (Op1.getOpcode() == ISD::Constant &&

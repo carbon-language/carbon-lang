@@ -248,7 +248,7 @@ bool PTXTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
   // all the per-module stuff we're generating, including MCContext.
   MachineModuleInfo *MMI = new MachineModuleInfo(*getMCAsmInfo(),
                                                  *getRegisterInfo(),
-                                     &getTargetLowering()->getObjFileLowering());
+                                    &getTargetLowering()->getObjFileLowering());
   PM.add(MMI);
   OutContext = &MMI->getContext(); // Return the MCContext specifically by-ref.
 
