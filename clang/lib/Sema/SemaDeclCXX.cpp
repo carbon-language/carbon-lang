@@ -4652,10 +4652,10 @@ void Sema::ActOnFinishCXXMemberSpecification(Scope* S, SourceLocation RLoc,
 
   AdjustDeclIfTemplate(TagDecl);
 
-  ActOnFields(S, RLoc, TagDecl,
+  ActOnFields(S, RLoc, TagDecl, llvm::makeArrayRef(
               // strict aliasing violation!
               reinterpret_cast<Decl**>(FieldCollector->getCurFields()),
-              FieldCollector->getCurNumFields(), LBrac, RBrac, AttrList);
+              FieldCollector->getCurNumFields()), LBrac, RBrac, AttrList);
 
   CheckCompletedCXXClass(
                         dyn_cast_or_null<CXXRecordDecl>(TagDecl));

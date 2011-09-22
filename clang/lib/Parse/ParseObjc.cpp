@@ -1223,7 +1223,7 @@ void Parser::ParseObjCClassInstanceVariables(Decl *interfaceDecl,
   // Call ActOnFields() even if we don't have any decls. This is useful
   // for code rewriting tools that need to be aware of the empty list.
   Actions.ActOnFields(getCurScope(), atLoc, interfaceDecl,
-                      AllIvarDecls.data(), AllIvarDecls.size(),
+                      AllIvarDecls,
                       LBraceLoc, RBraceLoc, 0);
   return;
 }

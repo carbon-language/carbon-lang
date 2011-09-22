@@ -1794,9 +1794,8 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
   }
 
   // Finish checking fields.
-  ActOnFields(0, Instantiation->getLocation(), Instantiation,
-              Fields.data(), Fields.size(), SourceLocation(), SourceLocation(),
-              0);
+  ActOnFields(0, Instantiation->getLocation(), Instantiation, Fields, 
+              SourceLocation(), SourceLocation(), 0);
   CheckCompletedCXXClass(Instantiation);
 
   // Attach any in-class member initializers now the class is complete.

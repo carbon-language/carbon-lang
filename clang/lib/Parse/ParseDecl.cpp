@@ -2642,7 +2642,7 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
   MaybeParseGNUAttributes(attrs);
 
   Actions.ActOnFields(getCurScope(),
-                      RecordLoc, TagDecl, FieldDecls.data(), FieldDecls.size(),
+                      RecordLoc, TagDecl, FieldDecls,
                       LBraceLoc, RBraceLoc,
                       attrs.getList());
   StructScope.Exit();
