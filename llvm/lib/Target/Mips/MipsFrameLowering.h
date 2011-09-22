@@ -27,7 +27,8 @@ protected:
 
 public:
   explicit MipsFrameLowering(const MipsSubtarget &sti)
-    : TargetFrameLowering(StackGrowsDown, 8, 0), STI(sti) {
+    : TargetFrameLowering(StackGrowsDown, sti.hasMips64() ? 16 : 8, 0),
+      STI(sti) {
   }
 
   bool targetHandlesStackFrameRounding() const;
