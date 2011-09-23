@@ -84,6 +84,7 @@ MipsTargetLowering::
 MipsTargetLowering(MipsTargetMachine &TM)
   : TargetLowering(TM, new MipsTargetObjectFile()) {
   Subtarget = &TM.getSubtarget<MipsSubtarget>();
+  bool HasMips64 = Subtarget->hasMips64();
 
   // Mips does not have i1 type, so use i32 for
   // setcc operations results (slt, sgt, ...).
@@ -95,8 +96,12 @@ MipsTargetLowering(MipsTargetMachine &TM)
   addRegisterClass(MVT::f32, Mips::FGR32RegisterClass);
 
   // When dealing with single precision only, use libcalls
-  if (!Subtarget->isSingleFloat())
+  if (!Subtarget->isSingleFloat()) {
+    if (HasMips64)
+      addRegisterClass(MVT::f64, Mips::FGR64RegisterClass);
+    else
       addRegisterClass(MVT::f64, Mips::AFGR64RegisterClass);
+  }
 
   // Load extented operations for i1 types must be promoted
   setLoadExtAction(ISD::EXTLOAD,  MVT::i1,  Promote);
