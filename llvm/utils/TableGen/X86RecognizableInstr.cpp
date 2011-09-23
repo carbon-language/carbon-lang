@@ -231,10 +231,15 @@ RecognizableInstr::RecognizableInstr(DisassemblerTables &tables,
   HasVEX_LPrefix   = has256BitOperands() || Rec->getValueAsBit("hasVEX_L");
   
   // Check for 64-bit inst which does not require REX
+  Is32Bit = false;
   Is64Bit = false;
   // FIXME: Is there some better way to check for In64BitMode?
   std::vector<Record*> Predicates = Rec->getValueAsListOfDefs("Predicates");
   for (unsigned i = 0, e = Predicates.size(); i != e; ++i) {
+    if (Predicates[i]->getName().find("32Bit") != Name.npos) {
+      Is32Bit = true;
+      break;
+    }
     if (Predicates[i]->getName().find("64Bit") != Name.npos) {
       Is64Bit = true;
       break;
@@ -947,7 +952,7 @@ void RecognizableInstr::emitDecodePath(DisassemblerTables &tables) const {
                               insnContext(), 
                               currentOpcode, 
                               *filter, 
-                              UID);
+                              UID, Is32Bit);
     
       Spec->modifierType = MODIFIER_OPCODE;
       Spec->modifierBase = opcodeToSet;
@@ -957,14 +962,14 @@ void RecognizableInstr::emitDecodePath(DisassemblerTables &tables) const {
                             insnContext(), 
                             opcodeToSet, 
                             *filter, 
-                            UID);
+                            UID, Is32Bit);
     }
   } else {
     tables.setTableFields(opcodeType,
                           insnContext(),
                           opcodeToSet,
                           *filter,
-                          UID);
+                          UID, Is32Bit);
     
     Spec->modifierType = MODIFIER_NONE;
     Spec->modifierBase = opcodeToSet;

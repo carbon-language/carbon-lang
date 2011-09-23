@@ -64,8 +64,10 @@ private:
   bool HasLockPrefix;
   /// The isCodeGenOnly filed from the record
   bool IsCodeGenOnly;
-  // Whether the instruction has the predicate "Mode64Bit"
+  // Whether the instruction has the predicate "In64BitMode"
   bool Is64Bit;
+  // Whether the instruction has the predicate "In32BitMode"
+  bool Is32Bit;
   
   /// The instruction name as listed in the tables
   std::string Name;

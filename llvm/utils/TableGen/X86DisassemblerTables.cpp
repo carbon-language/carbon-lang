@@ -642,12 +642,16 @@ void DisassemblerTables::setTableFields(OpcodeType          type,
                                         InstructionContext  insnContext,
                                         uint8_t             opcode,
                                         const ModRMFilter   &filter,
-                                        InstrUID            uid) {
+                                        InstrUID            uid,
+                                        bool                is32bit) {
   unsigned index;
   
   ContextDecision &decision = *Tables[type];
 
   for (index = 0; index < IC_max; ++index) {
+    if (is32bit && inheritsFrom((InstructionContext)index, IC_64BIT))
+      continue;
+
     if (inheritsFrom((InstructionContext)index, 
                      InstructionSpecifiers[uid].insnContext))
       setTableFields(decision.opcodeDecisions[index].modRMDecisions[opcode], 
