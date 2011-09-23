@@ -305,10 +305,10 @@ static bool isOpcWithIntImmediate(SDNode *N, unsigned Opc, unsigned& Imm) {
 /// (N * Scale) where (N in [\arg RangeMin, \arg RangeMax).
 ///
 /// \param ScaledConstant [out] - On success, the pre-scaled constant value.
-static bool isScaledConstantInRange(SDValue Node, unsigned Scale,
+static bool isScaledConstantInRange(SDValue Node, int Scale,
                                     int RangeMin, int RangeMax,
                                     int &ScaledConstant) {
-  assert(Scale && "Invalid scale!");
+  assert(Scale > 0 && "Invalid scale!");
 
   // Check that this is a constant.
   const ConstantSDNode *C = dyn_cast<ConstantSDNode>(Node);
