@@ -1728,8 +1728,15 @@ bool Expr::isOBJCGCCandidate(ASTContext &Ctx) const {
                                                       ->isOBJCGCCandidate(Ctx);
   case CStyleCastExprClass:
     return cast<CStyleCastExpr>(E)->getSubExpr()->isOBJCGCCandidate(Ctx);
+  case BlockDeclRefExprClass:
   case DeclRefExprClass: {
-    const Decl *D = cast<DeclRefExpr>(E)->getDecl();
+    
+    const Decl *D;
+    if (const BlockDeclRefExpr *BDRE = dyn_cast<BlockDeclRefExpr>(E))
+        D = BDRE->getDecl();
+    else 
+        D = cast<DeclRefExpr>(E)->getDecl();
+        
     if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
       if (VD->hasGlobalStorage())
         return true;
