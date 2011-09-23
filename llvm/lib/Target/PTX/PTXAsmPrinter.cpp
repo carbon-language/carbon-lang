@@ -600,8 +600,8 @@ void PTXAsmPrinter::EmitFunctionDeclaration() {
         decl += PM.getParamName(*i);
       }
     } else {
-      for (PTXMachineFunctionInfo::ret_iterator
-           i = MFI->retRegBegin(), e = MFI->retRegEnd(), b = i;
+      for (PTXMachineFunctionInfo::reg_iterator
+           i = MFI->retreg_begin(), e = MFI->retreg_end(), b = i;
            i != e; ++i) {
         if (i != b) {
           decl += ", ";
@@ -638,7 +638,7 @@ void PTXAsmPrinter::EmitFunctionDeclaration() {
     }
   } else {
     for (PTXMachineFunctionInfo::reg_iterator
-         i = MFI->argRegBegin(), e = MFI->argRegEnd(), b = i;
+         i = MFI->argreg_begin(), e = MFI->argreg_end(), b = i;
          i != e; ++i) {
       if (i != b) {
         decl += ", ";

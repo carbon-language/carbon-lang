@@ -228,31 +228,13 @@ SDValue PTXTargetLowering::
       SDValue ArgValue = DAG.getNode(PTXISD::LOAD_PARAM, dl, Ins[i].VT, Chain,
                                      DAG.getTargetConstant(Param, MVT::i32));
       InVals.push_back(ArgValue);
-
-      // Instead of storing a physical register in our argument list, we just
-      // store the total size of the parameter, in bits.  The ASM printer
-      // knows how to process this.
-      MFI->addArgParam(Ins[i].VT.getStoreSizeInBits());
     }
   }
   else {
-    // For device functions, we use the PTX calling convention to do register
-    // assignments then create CopyFromReg ISDs for the allocated registers
-
-    //SmallVector<CCValAssign, 16> ArgLocs;
-    //CCState CCInfo(CallConv, isVarArg, MF, getTargetMachine(), ArgLocs,
-    //               *DAG.getContext());
-
-    //CCInfo.AnalyzeFormalArguments(Ins, CC_PTX);
-
-    //for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
     for (unsigned i = 0, e = Ins.size(); i != e; ++i) {
-
       EVT                  RegVT = Ins[i].VT;
       TargetRegisterClass* TRC   = 0;
       int                  OpCode;
-
-      //assert(VA.isRegLoc() && "CCValAssign must be RegLoc");
 
       // Determine which register class we need
       if (RegVT == MVT::i1) {
@@ -329,12 +311,6 @@ SDValue PTXTargetLowering::
   PTXParamManager &PM = MFI->getParamManager();
 
   SDValue Flag;
-
-  // Even though we could use the .param space for return arguments for
-  // device functions if SM >= 2.0 and the number of return arguments is
-  // only 1, we just always use registers since this makes the codegen
-  // easier.
-
   const PTXSubtarget& ST = getTargetMachine().getSubtarget<PTXSubtarget>();
 
   if (ST.useParamSpaceForDeviceArgs()) {
@@ -346,27 +322,9 @@ SDValue PTXTargetLowering::
       SDValue ParamIndex = DAG.getTargetConstant(Param, MVT::i32);
       Chain = DAG.getNode(PTXISD::STORE_PARAM, dl, MVT::Other, Chain,
                           ParamIndex, OutVals[0]);
-
-
-      //Flag = Chain.getValue(1);
-      //MFI->setRetParamSize(Outs[0].VT.getStoreSizeInBits());
     }
   } else {
-    //SmallVector<CCValAssign, 16> RVLocs;
-    //CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
-    //getTargetMachine(), RVLocs, *DAG.getContext());
-
-    //CCInfo.AnalyzeReturn(Outs, RetCC_PTX);
-
-    //for (unsigned i = 0, e = RVLocs.size(); i != e; ++i) {
-      //CCValAssign& VA  = RVLocs[i];
-
     for (unsigned i = 0, e = Outs.size(); i != e; ++i) {
-
-      //assert(VA.isRegLoc() && "CCValAssign must be RegLoc");
-
-      //unsigned Reg = VA.getLocReg();
-
       EVT                  RegVT = Outs[i].VT;
       TargetRegisterClass* TRC = 0;
 
@@ -395,24 +353,12 @@ SDValue PTXTargetLowering::
 
       unsigned Reg = MF.getRegInfo().createVirtualRegister(TRC);
 
-      //DAG.getMachineFunction().getRegInfo().addLiveOut(Reg);
-
-      //Chain = DAG.getCopyToReg(Chain, dl, Reg, OutVals[i], Flag);
-      //SDValue Copy = DAG.getCopyToReg(Chain, dl, Reg, OutVals[i]/*, Flag*/);
-
-      // Guarantee that all emitted copies are stuck together,
-      // avoiding something bad
-      //Flag = Chain.getValue(1);
-
       SDValue Copy = DAG.getCopyToReg(Chain, dl, Reg, OutVals[i]/*, Flag*/);
       SDValue OutReg = DAG.getRegister(Reg, RegVT);
 
       Chain = DAG.getNode(PTXISD::WRITE_PARAM, dl, MVT::Other, Copy, OutReg);
-      //Flag = Chain.getValue(1);
 
       MFI->addRetReg(Reg);
-
-      //MFI->addRetReg(Reg);
     }
   }
 
@@ -447,6 +393,7 @@ PTXTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
 
   Ops[0] = Chain;
 
+  // Identify the callee function
   if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
     const GlobalValue *GV = G->getGlobal();
     if (const Function *F = dyn_cast<Function>(GV)) {
@@ -461,6 +408,9 @@ PTXTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     assert(false && "Function must be a GlobalAddressSDNode");
   }
 
+  // Generate STORE_PARAM nodes for each function argument.  In PTX, function
+  // arguments are explicitly stored into .param variables and passed as
+  // arguments. There is no register/stack-based calling convention in PTX.
   for (unsigned i = 0; i != OutVals.size(); ++i) {
     unsigned Size = OutVals[i].getValueType().getSizeInBits();
     unsigned Param = PM.addLocalParam(Size);
@@ -472,6 +422,7 @@ PTXTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
 
   std::vector<unsigned> InParams;
 
+  // Generate list of .param variables to hold the return value(s).
   for (unsigned i = 0; i < Ins.size(); ++i) {
     unsigned Size = Ins[i].VT.getStoreSizeInBits();
     unsigned Param = PM.addLocalParam(Size);
@@ -482,8 +433,10 @@ PTXTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
 
   Ops[0] = Chain;
 
+  // Create the CALL node.
   Chain = DAG.getNode(PTXISD::CALL, dl, MVT::Other, &Ops[0], Ops.size());
 
+  // Create the LOAD_PARAM nodes that retrieve the function return value(s).
   for (unsigned i = 0; i < Ins.size(); ++i) {
     SDValue Index = DAG.getTargetConstant(InParams[i], MVT::i32);
     SDValue Load = DAG.getNode(PTXISD::LOAD_PARAM, dl, Ins[i].VT, Chain, Index);

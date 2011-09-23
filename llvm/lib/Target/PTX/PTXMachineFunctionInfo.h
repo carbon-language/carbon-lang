@@ -31,134 +31,79 @@ namespace llvm {
 ///
 class PTXMachineFunctionInfo : public MachineFunctionInfo {
 private:
-  bool is_kernel;
-  DenseSet<unsigned> reg_local_var;
-  DenseSet<unsigned> reg_arg;
-  DenseSet<unsigned> reg_ret;
-  std::vector<unsigned> call_params;
-  bool _isDoneAddArg;
+  bool IsKernel;
+  DenseSet<unsigned> RegArgs;
+  DenseSet<unsigned> RegRets;
 
   typedef std::vector<unsigned> RegisterList;
   typedef DenseMap<const TargetRegisterClass*, RegisterList> RegisterMap;
   typedef DenseMap<unsigned, std::string> RegisterNameMap;
 
-  RegisterMap usedRegs;
-  RegisterNameMap regNames;
-
-  SmallVector<unsigned, 8> argParams;
-
-  unsigned retParamSize;
+  RegisterMap UsedRegs;
+  RegisterNameMap RegNames;
 
   PTXParamManager ParamManager;
 
 public:
-  PTXMachineFunctionInfo(MachineFunction &MF)
-    : is_kernel(false), reg_ret(PTX::NoRegister), _isDoneAddArg(false) {
-      usedRegs[PTX::RegPredRegisterClass] = RegisterList();
-      usedRegs[PTX::RegI16RegisterClass] = RegisterList();
-      usedRegs[PTX::RegI32RegisterClass] = RegisterList();
-      usedRegs[PTX::RegI64RegisterClass] = RegisterList();
-      usedRegs[PTX::RegF32RegisterClass] = RegisterList();
-      usedRegs[PTX::RegF64RegisterClass] = RegisterList();
+  typedef DenseSet<unsigned>::const_iterator reg_iterator;
 
-      retParamSize = 0;
+  PTXMachineFunctionInfo(MachineFunction &MF)
+    : IsKernel(false) {
+      UsedRegs[PTX::RegPredRegisterClass] = RegisterList();
+      UsedRegs[PTX::RegI16RegisterClass] = RegisterList();
+      UsedRegs[PTX::RegI32RegisterClass] = RegisterList();
+      UsedRegs[PTX::RegI64RegisterClass] = RegisterList();
+      UsedRegs[PTX::RegF32RegisterClass] = RegisterList();
+      UsedRegs[PTX::RegF64RegisterClass] = RegisterList();
     }
 
+  /// getParamManager - Returns the PTXParamManager instance for this function.
   PTXParamManager& getParamManager() { return ParamManager; }
   const PTXParamManager& getParamManager() const { return ParamManager; }
 
-  void setKernel(bool _is_kernel=true) { is_kernel = _is_kernel; }
+  /// setKernel/isKernel - Gets/sets a flag that indicates if this function is
+  /// a PTX kernel function.
+  void setKernel(bool _IsKernel=true) { IsKernel = _IsKernel; }
+  bool isKernel() const { return IsKernel; }
 
+  /// argreg_begin/argreg_end - Returns iterators to the set of registers
+  /// containing function arguments.
+  reg_iterator argreg_begin() const { return RegArgs.begin(); }
+  reg_iterator argreg_end()   const { return RegArgs.end(); }
 
-  void addLocalVarReg(unsigned reg) { reg_local_var.insert(reg); }
+  /// retreg_begin/retreg_end - Returns iterators to the set of registers
+  /// containing the function return values.
+  reg_iterator retreg_begin() const { return RegRets.begin(); }
+  reg_iterator retreg_end()   const { return RegRets.end(); }
 
-
-  void doneAddArg(void) {
-    _isDoneAddArg = true;
-  }
-  void doneAddLocalVar(void) {}
-
-  bool isKernel() const { return is_kernel; }
-
-  typedef DenseSet<unsigned>::const_iterator         reg_iterator;
-  //typedef DenseSet<unsigned>::const_reverse_iterator reg_reverse_iterator;
-  typedef DenseSet<unsigned>::const_iterator         ret_iterator;
-  typedef std::vector<unsigned>::const_iterator         param_iterator;
-  typedef SmallVector<unsigned, 8>::const_iterator    argparam_iterator;
-
-  bool         argRegEmpty() const { return reg_arg.empty(); }
-  int          getNumArg() const { return reg_arg.size(); }
-  reg_iterator argRegBegin() const { return reg_arg.begin(); }
-  reg_iterator argRegEnd()   const { return reg_arg.end(); }
-  argparam_iterator argParamBegin() const { return argParams.begin(); }
-  argparam_iterator argParamEnd() const { return argParams.end(); }
-  //reg_reverse_iterator argRegReverseBegin() const { return reg_arg.rbegin(); }
-  //reg_reverse_iterator argRegReverseEnd() const { return reg_arg.rend(); }
-
-  bool         localVarRegEmpty() const { return reg_local_var.empty(); }
-  reg_iterator localVarRegBegin() const { return reg_local_var.begin(); }
-  reg_iterator localVarRegEnd()   const { return reg_local_var.end(); }
-
-  bool         retRegEmpty() const { return reg_ret.empty(); }
-  int          getNumRet() const { return reg_ret.size(); }
-  ret_iterator retRegBegin() const { return reg_ret.begin(); }
-  ret_iterator retRegEnd()   const { return reg_ret.end(); }
-
-  param_iterator paramBegin() const { return call_params.begin(); }
-  param_iterator paramEnd() const { return call_params.end(); }
-  unsigned       getNextParam(unsigned size) {
-    call_params.push_back(size);
-    return call_params.size()-1;
-  }
-
-  bool isArgReg(unsigned reg) const {
-    return std::find(reg_arg.begin(), reg_arg.end(), reg) != reg_arg.end();
-  }
-
-  /*bool isRetReg(unsigned reg) const {
-    return std::find(reg_ret.begin(), reg_ret.end(), reg) != reg_ret.end();
-  }*/
-
-  bool isLocalVarReg(unsigned reg) const {
-    return std::find(reg_local_var.begin(), reg_local_var.end(), reg)
-      != reg_local_var.end();
-  }
-
+  /// addRetReg - Adds a register to the set of return-value registers.
   void addRetReg(unsigned Reg) {
-    if (!reg_ret.count(Reg)) {
-      reg_ret.insert(Reg);
+    if (!RegRets.count(Reg)) {
+      RegRets.insert(Reg);
       std::string name;
       name = "%ret";
-      name += utostr(reg_ret.size() - 1);
-      regNames[Reg] = name;
+      name += utostr(RegRets.size() - 1);
+      RegNames[Reg] = name;
     }
   }
 
-  void setRetParamSize(unsigned SizeInBits) {
-    retParamSize = SizeInBits;
-  }
-
-  unsigned getRetParamSize() const {
-    return retParamSize;
-  }
-
+  /// addArgReg - Adds a register to the set of function argument registers.
   void addArgReg(unsigned Reg) {
-    reg_arg.insert(Reg);
+    RegArgs.insert(Reg);
     std::string name;
     name = "%param";
-    name += utostr(reg_arg.size() - 1);
-    regNames[Reg] = name;
+    name += utostr(RegArgs.size() - 1);
+    RegNames[Reg] = name;
   }
 
-  void addArgParam(unsigned SizeInBits) {
-    argParams.push_back(SizeInBits);
-  }
-
+  /// addVirtualRegister - Adds a virtual register to the set of all used
+  /// registers in the function.
   void addVirtualRegister(const TargetRegisterClass *TRC, unsigned Reg) {
     std::string name;
 
-    if (!reg_ret.count(Reg) && !reg_arg.count(Reg)) {
-      usedRegs[TRC].push_back(Reg);
+    // Do not count registers that are argument/return registers.
+    if (!RegRets.count(Reg) && !RegArgs.count(Reg)) {
+      UsedRegs[TRC].push_back(Reg);
       if (TRC == PTX::RegPredRegisterClass)
         name = "%p";
       else if (TRC == PTX::RegI16RegisterClass)
@@ -174,22 +119,26 @@ public:
       else
         llvm_unreachable("Invalid register class");
 
-      name += utostr(usedRegs[TRC].size() - 1);
-      regNames[Reg] = name;
+      name += utostr(UsedRegs[TRC].size() - 1);
+      RegNames[Reg] = name;
     }
   }
 
+  /// getRegisterName - Returns the name of the specified virtual register. This
+  /// name is used during PTX emission.
   std::string getRegisterName(unsigned Reg) const {
-    if (regNames.count(Reg))
-      return regNames.lookup(Reg);
+    if (RegNames.count(Reg))
+      return RegNames.lookup(Reg);
     else if (Reg == PTX::NoRegister)
       return "%noreg";
     else
       llvm_unreachable("Register not in register name map");
   }
 
+  /// getNumRegistersForClass - Returns the number of virtual registers that are
+  /// used for the specified register class.
   unsigned getNumRegistersForClass(const TargetRegisterClass *TRC) const {
-    return usedRegs.lookup(TRC).size();
+    return UsedRegs.lookup(TRC).size();
   }
 
 }; // class PTXMachineFunctionInfo
