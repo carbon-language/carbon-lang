@@ -31,9 +31,9 @@ using namespace llvm;
 // These routines assume that the Lo/Hi part is stored first in memory on
 // little/big-endian machines, followed by the Hi/Lo part.  This means that
 // they cannot be used as is on vectors, for which Lo is always stored first.
-void DAGTypeLegalizer::ExpandRes_MERGE_VALUES(SDNode *N, 
+void DAGTypeLegalizer::ExpandRes_MERGE_VALUES(SDNode *N, unsigned ResNo,
                                               SDValue &Lo, SDValue &Hi) {
-  SDValue Op = DecomposeMERGE_VALUES(N);
+  SDValue Op = DisintegrateMERGE_VALUES(N, ResNo);
   GetExpandedOp(Op, Lo, Hi);
 }
 
@@ -431,9 +431,9 @@ SDValue DAGTypeLegalizer::ExpandOp_NormalStore(SDNode *N, unsigned OpNo) {
 // bytes; for integers and floats it is Lo first if and only if the machine is
 // little-endian).
 
-void DAGTypeLegalizer::SplitRes_MERGE_VALUES(SDNode *N,
+void DAGTypeLegalizer::SplitRes_MERGE_VALUES(SDNode *N, unsigned ResNo,
                                              SDValue &Lo, SDValue &Hi) {
-  SDValue Op = DecomposeMERGE_VALUES(N);
+  SDValue Op = DisintegrateMERGE_VALUES(N, ResNo);
   GetSplitOp(Op, Lo, Hi);
 }
 

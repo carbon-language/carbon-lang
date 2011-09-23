@@ -55,7 +55,7 @@ void DAGTypeLegalizer::SoftenFloatResult(SDNode *N, unsigned ResNo) {
 #endif
     llvm_unreachable("Do not know how to soften the result of this operator!");
 
-    case ISD::MERGE_VALUES:R = SoftenFloatRes_MERGE_VALUES(N); break;
+    case ISD::MERGE_VALUES:R = SoftenFloatRes_MERGE_VALUES(N, ResNo); break;
     case ISD::BITCAST:     R = SoftenFloatRes_BITCAST(N); break;
     case ISD::BUILD_PAIR:  R = SoftenFloatRes_BUILD_PAIR(N); break;
     case ISD::ConstantFP:
@@ -108,8 +108,9 @@ SDValue DAGTypeLegalizer::SoftenFloatRes_BITCAST(SDNode *N) {
   return BitConvertToInteger(N->getOperand(0));
 }
 
-SDValue DAGTypeLegalizer::SoftenFloatRes_MERGE_VALUES(SDNode *N) {
-  SDValue Op = DecomposeMERGE_VALUES(N);
+SDValue DAGTypeLegalizer::SoftenFloatRes_MERGE_VALUES(SDNode *N,
+                                                      unsigned ResNo) {
+  SDValue Op = DisintegrateMERGE_VALUES(N, ResNo);
   return BitConvertToInteger(Op);
 }
 
@@ -837,7 +838,7 @@ void DAGTypeLegalizer::ExpandFloatResult(SDNode *N, unsigned ResNo) {
   case ISD::SELECT:       SplitRes_SELECT(N, Lo, Hi); break;
   case ISD::SELECT_CC:    SplitRes_SELECT_CC(N, Lo, Hi); break;
 
-  case ISD::MERGE_VALUES:       ExpandRes_MERGE_VALUES(N, Lo, Hi); break;
+  case ISD::MERGE_VALUES:       ExpandRes_MERGE_VALUES(N, ResNo, Lo, Hi); break;
   case ISD::BITCAST:            ExpandRes_BITCAST(N, Lo, Hi); break;
   case ISD::BUILD_PAIR:         ExpandRes_BUILD_PAIR(N, Lo, Hi); break;
   case ISD::EXTRACT_ELEMENT:    ExpandRes_EXTRACT_ELEMENT(N, Lo, Hi); break;

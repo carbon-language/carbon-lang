@@ -47,7 +47,7 @@ void DAGTypeLegalizer::ScalarizeVectorResult(SDNode *N, unsigned ResNo) {
     report_fatal_error("Do not know how to scalarize the result of this "
                        "operator!\n");
 
-  case ISD::MERGE_VALUES:      R = ScalarizeVecRes_MERGE_VALUES(N); break;
+  case ISD::MERGE_VALUES:      R = ScalarizeVecRes_MERGE_VALUES(N, ResNo);break;
   case ISD::BITCAST:           R = ScalarizeVecRes_BITCAST(N); break;
   case ISD::BUILD_VECTOR:      R = N->getOperand(0); break;
   case ISD::CONVERT_RNDSAT:    R = ScalarizeVecRes_CONVERT_RNDSAT(N); break;
@@ -129,8 +129,9 @@ SDValue DAGTypeLegalizer::ScalarizeVecRes_BinOp(SDNode *N) {
                      LHS.getValueType(), LHS, RHS);
 }
 
-SDValue DAGTypeLegalizer::ScalarizeVecRes_MERGE_VALUES(SDNode *N) {
-  SDValue Op = DecomposeMERGE_VALUES(N);
+SDValue DAGTypeLegalizer::ScalarizeVecRes_MERGE_VALUES(SDNode *N,
+                                                       unsigned ResNo) {
+  SDValue Op = DisintegrateMERGE_VALUES(N, ResNo);
   return GetScalarizedVector(Op);
 }
 
@@ -414,7 +415,7 @@ void DAGTypeLegalizer::SplitVectorResult(SDNode *N, unsigned ResNo) {
 #endif
     llvm_unreachable("Do not know how to split the result of this operator!");
 
-  case ISD::MERGE_VALUES: SplitRes_MERGE_VALUES(N, Lo, Hi); break;
+  case ISD::MERGE_VALUES: SplitRes_MERGE_VALUES(N, ResNo, Lo, Hi); break;
   case ISD::VSELECT:
   case ISD::SELECT:       SplitRes_SELECT(N, Lo, Hi); break;
   case ISD::SELECT_CC:    SplitRes_SELECT_CC(N, Lo, Hi); break;
@@ -1227,7 +1228,7 @@ void DAGTypeLegalizer::WidenVectorResult(SDNode *N, unsigned ResNo) {
 #endif
     llvm_unreachable("Do not know how to widen the result of this operator!");
 
-  case ISD::MERGE_VALUES:      Res = WidenVecRes_MERGE_VALUES(N); break;
+  case ISD::MERGE_VALUES:      Res = WidenVecRes_MERGE_VALUES(N, ResNo); break;
   case ISD::BITCAST:           Res = WidenVecRes_BITCAST(N); break;
   case ISD::BUILD_VECTOR:      Res = WidenVecRes_BUILD_VECTOR(N); break;
   case ISD::CONCAT_VECTORS:    Res = WidenVecRes_CONCAT_VECTORS(N); break;
@@ -1576,9 +1577,8 @@ SDValue DAGTypeLegalizer::WidenVecRes_InregOp(SDNode *N) {
                      WidenVT, WidenLHS, DAG.getValueType(ExtVT));
 }
 
-SDValue DAGTypeLegalizer::WidenVecRes_MERGE_VALUES(SDNode *N)
-{
-  SDValue WidenVec = DecomposeMERGE_VALUES(N);
+SDValue DAGTypeLegalizer::WidenVecRes_MERGE_VALUES(SDNode *N, unsigned ResNo) {
+  SDValue WidenVec = DisintegrateMERGE_VALUES(N, ResNo);
   return GetWidenedVector(WidenVec);
 }
 

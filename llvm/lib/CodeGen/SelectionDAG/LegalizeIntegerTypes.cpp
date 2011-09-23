@@ -48,7 +48,7 @@ void DAGTypeLegalizer::PromoteIntegerResult(SDNode *N, unsigned ResNo) {
     N->dump(&DAG); dbgs() << "\n";
 #endif
     llvm_unreachable("Do not know how to promote this operator!");
-  case ISD::MERGE_VALUES:Res = PromoteIntRes_MERGE_VALUES(N); break;
+  case ISD::MERGE_VALUES:Res = PromoteIntRes_MERGE_VALUES(N, ResNo); break;
   case ISD::AssertSext:  Res = PromoteIntRes_AssertSext(N); break;
   case ISD::AssertZext:  Res = PromoteIntRes_AssertZext(N); break;
   case ISD::BITCAST:     Res = PromoteIntRes_BITCAST(N); break;
@@ -143,8 +143,9 @@ void DAGTypeLegalizer::PromoteIntegerResult(SDNode *N, unsigned ResNo) {
     SetPromotedInteger(SDValue(N, ResNo), Res);
 }
 
-SDValue DAGTypeLegalizer::PromoteIntRes_MERGE_VALUES(SDNode *N) {
-  SDValue Op = DecomposeMERGE_VALUES(N);
+SDValue DAGTypeLegalizer::PromoteIntRes_MERGE_VALUES(SDNode *N,
+                                                     unsigned ResNo) {
+  SDValue Op = DisintegrateMERGE_VALUES(N, ResNo);
   return GetPromotedInteger(Op);
 }
 
@@ -1077,7 +1078,7 @@ void DAGTypeLegalizer::ExpandIntegerResult(SDNode *N, unsigned ResNo) {
 #endif
     llvm_unreachable("Do not know how to expand the result of this operator!");
 
-  case ISD::MERGE_VALUES: SplitRes_MERGE_VALUES(N, Lo, Hi); break;
+  case ISD::MERGE_VALUES: SplitRes_MERGE_VALUES(N, ResNo, Lo, Hi); break;
   case ISD::SELECT:       SplitRes_SELECT(N, Lo, Hi); break;
   case ISD::SELECT_CC:    SplitRes_SELECT_CC(N, Lo, Hi); break;
   case ISD::UNDEF:        SplitRes_UNDEF(N, Lo, Hi); break;
@@ -1600,9 +1601,9 @@ void DAGTypeLegalizer::ExpandIntRes_ADDSUBE(SDNode *N,
   ReplaceValueWith(SDValue(N, 1), Hi.getValue(1));
 }
 
-void DAGTypeLegalizer::ExpandIntRes_MERGE_VALUES(SDNode *N, 
+void DAGTypeLegalizer::ExpandIntRes_MERGE_VALUES(SDNode *N, unsigned ResNo,
                                                  SDValue &Lo, SDValue &Hi) {
-  SDValue Res = DecomposeMERGE_VALUES(N);
+  SDValue Res = DisintegrateMERGE_VALUES(N, ResNo);
   SplitInteger(Res, Lo, Hi);
 }
 
