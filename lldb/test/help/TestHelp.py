@@ -112,6 +112,15 @@ class HelpCommandTestCase(TestBase):
         self.expect("help target variable",
             substrs = ['<variable-name> [<variable-name> [...]]'])
 
+    def test_help_watchpoint_and_its_args(self):
+        """Command 'help watchpoint', 'help watchpt-id', and 'help watchpt-id-list' should work."""
+        self.expect("help watchpoint",
+            substrs = ['delete', 'disable', 'enable', 'list'])
+        self.expect("help watchpt-id",
+            substrs = ['<watchpt-id>'])
+        self.expect("help watchpt-id-list",
+            substrs = ['<watchpt-id-list>'])
+
 
 if __name__ == '__main__':
     import atexit
