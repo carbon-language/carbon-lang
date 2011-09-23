@@ -1651,7 +1651,6 @@ Target::RunStopHooks ()
             {
                 if (!hooks_ran)
                 {
-                    result.AppendMessage("\n** Stop Hooks **");
                     hooks_ran = true;
                 }
                 if (print_hook_header && !any_thread_matched)
@@ -1686,9 +1685,7 @@ Target::RunStopHooks ()
             }
         }
     }
-    if (hooks_ran)
-        result.AppendMessage ("\n** End Stop Hooks **\n");
-        
+
     result.GetImmediateOutputStream()->Flush();
     result.GetImmediateErrorStream()->Flush();
 }
