@@ -1072,7 +1072,7 @@ void InitHeaderSearch::Realize(const LangOptions &Lang) {
        it != ie; ++it) {
     if (it->first == System ||
         (!Lang.ObjC1 && !Lang.CPlusPlus && it->first == CSystem)    ||
-        (!Lang.ObjC1 && Lang.CPlusPlus  && it->first == CXXSystem)  ||
+        (/*FIXME !Lang.ObjC1 && */Lang.CPlusPlus  && it->first == CXXSystem)  ||
         (Lang.ObjC1  && !Lang.CPlusPlus && it->first == ObjCSystem) ||
         (Lang.ObjC1  && Lang.CPlusPlus  && it->first == ObjCXXSystem))
       SearchList.push_back(it->second);
