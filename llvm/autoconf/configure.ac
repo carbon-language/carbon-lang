@@ -38,9 +38,8 @@ dnl in the output of --version option of the generated configure script.
 AC_SUBST(LLVM_COPYRIGHT,["Copyright (c) 2003-2011 University of Illinois at Urbana-Champaign."])
 AC_COPYRIGHT([Copyright (c) 2003-2011 University of Illinois at Urbana-Champaign.])
 
-dnl Indicate that we require autoconf 2.59 or later. Ths is needed because we
-dnl use some autoconf macros only available in 2.59.
-AC_PREREQ(2.59)
+dnl Indicate that we require autoconf 2.60 or later.
+AC_PREREQ(2.60)
 
 dnl Verify that the source directory is valid. This makes sure that we are
 dnl configuring LLVM and not some other package (it validates --srcdir argument)
@@ -1215,7 +1214,6 @@ dnl Generally we're looking for POSIX headers.
 AC_HEADER_DIRENT
 AC_HEADER_MMAP_ANONYMOUS
 AC_HEADER_STAT
-AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
 AC_HEADER_TIME
 
