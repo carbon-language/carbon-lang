@@ -77,6 +77,25 @@ class BreakpointCommandTestCase(TestBase):
                           "print >> here",
                           "here.close()"])
 
+        # Next lets try some other breakpoint kinds.  First break with a regular expression
+        # and then specify only one file.  The first time we should get two locations,
+        # the second time only one:
+        self.expect ("break set -r ._MyFunction",
+                     patterns = ["Breakpoint created: [0-9]+: regex = '\._MyFunction', locations = 2"])
+      
+        self.expect ("break set -r ._MyFunction -f a.c",
+                     patterns = ["Breakpoint created: [0-9]+: regex = '\._MyFunction', locations = 1"])
+      
+        self.expect ("break set -r ._MyFunction -f a.c -f b.c",
+                     patterns = ["Breakpoint created: [0-9]+: regex = '\._MyFunction', locations = 2"])
+
+        # Now try a source regex breakpoint:
+        self.expect ("break set -p \"is about to return [12]0\" -f a.c -f b.c",
+                     patterns = ["Breakpoint created: [0-9]+: source regex = \"is about to return \[12\]0\", locations = 2"])
+      
+        self.expect ("break set -p \"is about to return [12]0\" -f a.c",
+                     patterns = ["Breakpoint created: [0-9]+: source regex = \"is about to return \[12\]0\", locations = 1"])
+      
         # Run the program.  Remove 'output.txt' if it exists.
         if os.path.exists('output.txt'):
             os.remove('output.txt')

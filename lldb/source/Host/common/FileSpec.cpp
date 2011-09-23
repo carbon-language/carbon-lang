@@ -506,10 +506,10 @@ FileSpec::Compare(const FileSpec& a, const FileSpec& b, bool full)
 bool
 FileSpec::Equal (const FileSpec& a, const FileSpec& b, bool full)
 {
-    if (full)
-        return a == b;
-    else
+    if (!full && (a.GetDirectory().IsEmpty() || b.GetDirectory().IsEmpty()))
         return a.m_filename == b.m_filename;
+    else
+        return a == b;
 }
 
 

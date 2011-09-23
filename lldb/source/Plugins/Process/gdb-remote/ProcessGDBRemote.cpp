@@ -2534,7 +2534,7 @@ ProcessGDBRemote::StartNoticingNewThreads()
     {
         for (int i = 0; bp_names[i] != NULL; i++)
         {
-            Breakpoint *breakpoint = m_target.CreateBreakpoint (NULL, bp_names[i], eFunctionNameTypeFull, true).get();
+            Breakpoint *breakpoint = m_target.CreateBreakpoint (NULL, NULL, bp_names[i], eFunctionNameTypeFull, true).get();
             if (breakpoint)
             {
                 if (log)

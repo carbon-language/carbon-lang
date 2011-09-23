@@ -575,18 +575,18 @@ SBTarget::BreakpointCreateByName (const char *symbol_name, const char *module_na
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBBreakpoint sb_bp;
-    if (m_opaque_sp.get() && symbol_name && symbol_name[0])
+    if (m_opaque_sp.get())
     {
         Mutex::Locker api_locker (m_opaque_sp->GetAPIMutex());
         if (module_name && module_name[0])
         {
             FileSpecList module_spec_list;
             module_spec_list.Append (FileSpec (module_name, false));
-            *sb_bp = m_opaque_sp->CreateBreakpoint (&module_spec_list, symbol_name, eFunctionNameTypeFull | eFunctionNameTypeBase, false);
+            *sb_bp = m_opaque_sp->CreateBreakpoint (&module_spec_list, NULL, symbol_name, eFunctionNameTypeFull | eFunctionNameTypeBase, false);
         }
         else
         {
-            *sb_bp = m_opaque_sp->CreateBreakpoint (NULL, symbol_name, eFunctionNameTypeFull | eFunctionNameTypeBase, false);
+            *sb_bp = m_opaque_sp->CreateBreakpoint (NULL, NULL, symbol_name, eFunctionNameTypeFull | eFunctionNameTypeBase, false);
         }
     }
     
@@ -598,6 +598,34 @@ SBTarget::BreakpointCreateByName (const char *symbol_name, const char *module_na
 
     return sb_bp;
 }
+
+lldb::SBBreakpoint
+SBTarget::BreakpointCreateByName (const char *symbol_name, 
+                            const SBFileSpecList &module_list, 
+                            const SBFileSpecList &comp_unit_list)
+{
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+
+    SBBreakpoint sb_bp;
+    if (m_opaque_sp.get() && symbol_name && symbol_name[0])
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetAPIMutex());
+        *sb_bp = m_opaque_sp->CreateBreakpoint (module_list.get(), 
+                                                comp_unit_list.get(), 
+                                                symbol_name, 
+                                                eFunctionNameTypeFull | eFunctionNameTypeBase, 
+                                                false);
+    }
+    
+    if (log)
+    {
+        log->Printf ("SBTarget(%p)::BreakpointCreateByName (symbol=\"%s\") => SBBreakpoint(%p)", 
+                     m_opaque_sp.get(), symbol_name, sb_bp.get());
+    }
+
+    return sb_bp;
+}
+
 
 SBBreakpoint
 SBTarget::BreakpointCreateByRegex (const char *symbol_name_regex, const char *module_name)
@@ -615,11 +643,11 @@ SBTarget::BreakpointCreateByRegex (const char *symbol_name_regex, const char *mo
             FileSpecList module_spec_list;
             module_spec_list.Append (FileSpec (module_name, false));
             
-            *sb_bp = m_opaque_sp->CreateBreakpoint (&module_spec_list, regexp, false);
+            *sb_bp = m_opaque_sp->CreateFuncRegexBreakpoint (&module_spec_list, NULL, regexp, false);
         }
         else
         {
-            *sb_bp = m_opaque_sp->CreateBreakpoint (NULL, regexp, false);
+            *sb_bp = m_opaque_sp->CreateFuncRegexBreakpoint (NULL, NULL, regexp, false);
         }
     }
 
@@ -632,7 +660,30 @@ SBTarget::BreakpointCreateByRegex (const char *symbol_name_regex, const char *mo
     return sb_bp;
 }
 
+lldb::SBBreakpoint
+SBTarget::BreakpointCreateByRegex (const char *symbol_name_regex, 
+                         const SBFileSpecList &module_list, 
+                         const SBFileSpecList &comp_unit_list)
+{
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
+    SBBreakpoint sb_bp;
+    if (m_opaque_sp.get() && symbol_name_regex && symbol_name_regex[0])
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetAPIMutex());
+        RegularExpression regexp(symbol_name_regex);
+        
+        *sb_bp = m_opaque_sp->CreateFuncRegexBreakpoint (module_list.get(), comp_unit_list.get(), regexp, false);
+    }
+
+    if (log)
+    {
+        log->Printf ("SBTarget(%p)::BreakpointCreateByRegex (symbol_regex=\"%s\") => SBBreakpoint(%p)", 
+                     m_opaque_sp.get(), symbol_name_regex, sb_bp.get());
+    }
+
+    return sb_bp;
+}
 
 SBBreakpoint
 SBTarget::BreakpointCreateByAddress (addr_t address)
@@ -664,17 +715,19 @@ SBTarget::BreakpointCreateBySourceRegex (const char *source_regex, const lldb::S
     {
         Mutex::Locker api_locker (m_opaque_sp->GetAPIMutex());
         RegularExpression regexp(source_regex);
+        FileSpecList source_file_spec_list;
+        source_file_spec_list.Append (source_file.ref());
         
         if (module_name && module_name[0])
         {
             FileSpecList module_spec_list;
             module_spec_list.Append (FileSpec (module_name, false));
             
-            *sb_bp = m_opaque_sp->CreateBreakpoint (&module_spec_list, source_file.ref(), regexp, false);
+            *sb_bp = m_opaque_sp->CreateSourceRegexBreakpoint (&module_spec_list, &source_file_spec_list, regexp, false);
         }
         else
         {
-            *sb_bp = m_opaque_sp->CreateBreakpoint (NULL, source_file.ref(), regexp, false);
+            *sb_bp = m_opaque_sp->CreateSourceRegexBreakpoint (NULL, &source_file_spec_list, regexp, false);
         }
     }
 
@@ -689,6 +742,29 @@ SBTarget::BreakpointCreateBySourceRegex (const char *source_regex, const lldb::S
     return sb_bp;
 }
 
+lldb::SBBreakpoint
+SBTarget::BreakpointCreateBySourceRegex (const char *source_regex, 
+                               const SBFileSpecList &module_list, 
+                               const lldb::SBFileSpecList &source_file_list)
+{
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+
+    SBBreakpoint sb_bp;
+    if (m_opaque_sp.get() && source_regex && source_regex[0])
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetAPIMutex());
+        RegularExpression regexp(source_regex);
+        *sb_bp = m_opaque_sp->CreateSourceRegexBreakpoint (module_list.get(), source_file_list.get(), regexp, false);
+    }
+
+    if (log)
+    {
+        log->Printf ("SBTarget(%p)::BreakpointCreateByRegex (source_regex=\"%s\") => SBBreakpoint(%p)", 
+                     m_opaque_sp.get(), source_regex, sb_bp.get());
+    }
+
+    return sb_bp;
+}
 
 SBBreakpoint
 SBTarget::FindBreakpointByID (break_id_t bp_id)

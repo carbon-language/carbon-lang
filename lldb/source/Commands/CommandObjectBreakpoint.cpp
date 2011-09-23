@@ -49,7 +49,7 @@ AddBreakpointDescription (Stream *s, Breakpoint *bp, lldb::DescriptionLevel leve
 
 CommandObjectBreakpointSet::CommandOptions::CommandOptions(CommandInterpreter &interpreter) :
     Options (interpreter),
-    m_filename (),
+    m_filenames (),
     m_line_num (0),
     m_column (0),
     m_check_inlines (true),
@@ -70,6 +70,8 @@ CommandObjectBreakpointSet::CommandOptions::CommandOptions(CommandInterpreter &i
 CommandObjectBreakpointSet::CommandOptions::~CommandOptions ()
 {
 }
+
+#define LLDB_OPT_FILE (LLDB_OPT_SET_ALL & ~(LLDB_OPT_SET_2))
 
 OptionDefinition
 CommandObjectBreakpointSet::CommandOptions::g_option_table[] =
@@ -92,11 +94,11 @@ CommandObjectBreakpointSet::CommandOptions::g_option_table[] =
     { LLDB_OPT_SET_ALL, false, "queue-name", 'q', required_argument, NULL, NULL, eArgTypeQueueName,
         "The breakpoint stops only for threads in the queue whose name is given by this argument."},
 
-    { LLDB_OPT_SET_1 | LLDB_OPT_SET_9, false, "file", 'f', required_argument, NULL, CommandCompletions::eSourceFileCompletion, eArgTypeFilename,
-        "Set the breakpoint by source location in this particular file."},
+    { LLDB_OPT_FILE, false, "file", 'f', required_argument, NULL, CommandCompletions::eSourceFileCompletion, eArgTypeFilename,
+        "Specifies the source file in which to set this breakpoint."},
 
     { LLDB_OPT_SET_1, true, "line", 'l', required_argument, NULL, 0, eArgTypeLineNum,
-        "Set the breakpoint by source location at this particular line."},
+        "Specifies the line number on which to set this breakpoint."},
 
     // Comment out this option for the moment, as we don't actually use it, but will in the future.
     // This way users won't see it, but the infrastructure is left in place.
@@ -160,7 +162,7 @@ CommandObjectBreakpointSet::CommandOptions::SetOptionValue (uint32_t option_idx,
             break;
 
         case 'f':
-            m_filename.assign (option_arg);
+            m_filenames.AppendIfUnique (FileSpec(option_arg, false));
             break;
 
         case 'l':
@@ -202,7 +204,7 @@ CommandObjectBreakpointSet::CommandOptions::SetOptionValue (uint32_t option_idx,
 
         case 's':
             {
-                m_modules.push_back (std::string (option_arg));
+                m_modules.AppendIfUnique (FileSpec (option_arg, false));
                 break;
             }
         case 'i':
@@ -244,14 +246,14 @@ CommandObjectBreakpointSet::CommandOptions::SetOptionValue (uint32_t option_idx,
 void
 CommandObjectBreakpointSet::CommandOptions::OptionParsingStarting ()
 {
-    m_filename.clear();
+    m_filenames.Clear();
     m_line_num = 0;
     m_column = 0;
     m_func_name.clear();
     m_func_name_type_mask = 0;
     m_func_regexp.clear();
     m_load_addr = LLDB_INVALID_ADDRESS;
-    m_modules.clear();
+    m_modules.Clear();
     m_ignore_count = 0;
     m_thread_id = LLDB_INVALID_THREAD_ID;
     m_thread_index = UINT32_MAX;
@@ -284,47 +286,40 @@ CommandObjectBreakpointSet::GetOptions ()
 }
 
 bool
-CommandObjectBreakpointSet::ChooseFile (Target *target, FileSpec &file, CommandReturnObject &result)
+CommandObjectBreakpointSet::GetDefaultFile (Target *target, FileSpec &file, CommandReturnObject &result)
 {
-    if (m_options.m_filename.empty())
+    uint32_t default_line;
+    // First use the Source Manager's default file. 
+    // Then use the current stack frame's file.
+    if (!target->GetSourceManager().GetDefaultFileAndLine(file, default_line))
     {
-        uint32_t default_line;
-        // First use the Source Manager's default file. 
-        // Then use the current stack frame's file.
-        if (!target->GetSourceManager().GetDefaultFileAndLine(file, default_line))
+        StackFrame *cur_frame = m_interpreter.GetExecutionContext().GetFramePtr();
+        if (cur_frame == NULL)
         {
-            StackFrame *cur_frame = m_interpreter.GetExecutionContext().GetFramePtr();
-            if (cur_frame == NULL)
+            result.AppendError ("No selected frame to use to find the default file.");
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+        else if (!cur_frame->HasDebugInformation())
+        {
+            result.AppendError ("Cannot use the selected frame to find the default file, it has no debug info.");
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+        else
+        {
+            const SymbolContext &sc = cur_frame->GetSymbolContext (eSymbolContextLineEntry);
+            if (sc.line_entry.file)
             {
-                result.AppendError ("Attempting to set breakpoint by line number alone with no selected frame.");
-                result.SetStatus (eReturnStatusFailed);
-                return false;
-            }
-            else if (!cur_frame->HasDebugInformation())
-            {
-                result.AppendError ("Attempting to set breakpoint by line number alone but selected frame has no debug info.");
-                result.SetStatus (eReturnStatusFailed);
-                return false;
+                file = sc.line_entry.file;
             }
             else
             {
-                const SymbolContext &sc = cur_frame->GetSymbolContext (eSymbolContextLineEntry);
-                if (sc.line_entry.file)
-                {
-                    file = sc.line_entry.file;
-                }
-                else
-                {
-                    result.AppendError ("Attempting to set breakpoint by line number alone but can't find the file for the selected frame.");
-                    result.SetStatus (eReturnStatusFailed);
-                    return false;
-                }
+                result.AppendError ("Can't find the file for the selected frame to use as the default file.");
+                result.SetStatus (eReturnStatusFailed);
+                return false;
             }
         }
-    }
-    else
-    {
-        file.SetFile(m_options.m_filename.c_str(), false);
     }
     return true;
 }
@@ -367,33 +362,36 @@ CommandObjectBreakpointSet::Execute
     Breakpoint *bp = NULL;
     FileSpec module_spec;
     bool use_module = false;
-    int num_modules = m_options.m_modules.size();
-
-    FileSpecList module_spec_list;
-    FileSpecList *module_spec_list_ptr = NULL;
+    int num_modules = m_options.m_modules.GetSize();
 
     if ((num_modules > 0) && (break_type != eSetTypeAddress))
         use_module = true;
 
-    if (use_module)
-    {
-        module_spec_list_ptr = &module_spec_list;
-        for (int i = 0; i < num_modules; ++i)
-        {
-            module_spec.SetFile(m_options.m_modules[i].c_str(), false);
-            module_spec_list.AppendIfUnique (module_spec);
-        }
-    }
-     
     switch (break_type)
     {
         case eSetTypeFileAndLine: // Breakpoint by source position
             {
                 FileSpec file;
-                if (!ChooseFile (target, file, result))
-                    break;
+                uint32_t num_files = m_options.m_filenames.GetSize();
+                if (num_files == 0)
+                {
+                    if (!GetDefaultFile (target, file, result))
+                    {
+                        result.AppendError("No file supplied and no default file available.");
+                        result.SetStatus (eReturnStatusFailed);
+                        return false;
+                    }
+                }
+                else if (num_files > 1)
+                {
+                    result.AppendError("Only one file at a time is allowed for file and line breakpoints.");
+                    result.SetStatus (eReturnStatusFailed);
+                    return false;
+                }
+                else
+                    file = m_options.m_filenames.GetFileSpecAtIndex(0);
                     
-                bp = target->CreateBreakpoint (module_spec_list_ptr,
+                bp = target->CreateBreakpoint (&(m_options.m_modules),
                                                file,
                                                m_options.m_line_num,
                                                m_options.m_check_inlines).get();
@@ -410,8 +408,9 @@ CommandObjectBreakpointSet::Execute
                 
                 if (name_type_mask == 0)
                     name_type_mask = eFunctionNameTypeAuto;
-                                    
-                bp = target->CreateBreakpoint (module_spec_list_ptr, 
+                                                
+                bp = target->CreateBreakpoint (&(m_options.m_modules),
+                                               &(m_options.m_filenames),
                                                m_options.m_func_name.c_str(), 
                                                name_type_mask, 
                                                Breakpoint::Exact).get();
@@ -430,15 +429,29 @@ CommandObjectBreakpointSet::Execute
                     result.SetStatus (eReturnStatusFailed);
                     return false;
                 }
-                bp = target->CreateBreakpoint (module_spec_list_ptr, regexp).get();
+                
+                bp = target->CreateFuncRegexBreakpoint (&(m_options.m_modules), &(m_options.m_filenames), regexp).get();
             }
             break;
         case eSetTypeSourceRegexp: // Breakpoint by regexp on source text.
             {
-                FileSpec file;
-                if (!ChooseFile (target, file, result))
-                    break;
-
+                int num_files = m_options.m_filenames.GetSize();
+                
+                if (num_files == 0)
+                {
+                    FileSpec file;
+                    if (!GetDefaultFile (target, file, result))
+                    {
+                        result.AppendError ("No files provided and could not find default file.");
+                        result.SetStatus (eReturnStatusFailed);
+                        return false;
+                    }
+                    else
+                    {
+                        m_options.m_filenames.Append (file);
+                    }
+                }
+                
                 RegularExpression regexp(m_options.m_source_text_regexp.c_str());
                 if (!regexp.IsValid())
                 {
@@ -449,7 +462,7 @@ CommandObjectBreakpointSet::Execute
                     result.SetStatus (eReturnStatusFailed);
                     return false;
                 }
-                bp = target->CreateBreakpoint (module_spec_list_ptr, file, regexp).get();
+                bp = target->CreateSourceRegexBreakpoint (&(m_options.m_modules), &(m_options.m_filenames), regexp).get();
             }
             break;
         default:

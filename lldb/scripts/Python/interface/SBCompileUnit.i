@@ -71,6 +71,12 @@ public:
                         uint32_t line,
                         lldb::SBFileSpec *inline_file_spec) const;
 
+    uint32_t
+    FindLineEntryIndex (uint32_t start_idx,
+                        uint32_t line,
+                        lldb::SBFileSpec *inline_file_spec,
+			bool exact) const;
+
     bool
     GetDescription (lldb::SBStream &description);
 };

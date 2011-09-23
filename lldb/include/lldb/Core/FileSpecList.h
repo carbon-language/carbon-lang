@@ -116,12 +116,15 @@ public:
     /// @param[in] file
     ///     The file specification to search for.
     ///
+    /// @param[in] full
+    ///     Should FileSpec::Equal be called with "full" true or false.
+    ///
     /// @return
     ///     The index of the file that matches \a file if it is found,
     ///     else UINT32_MAX is returned.
     //------------------------------------------------------------------
     uint32_t
-    FindFileIndex (uint32_t idx, const FileSpec &file) const;
+    FindFileIndex (uint32_t idx, const FileSpec &file, bool full) const;
 
     //------------------------------------------------------------------
     /// Get file at index.

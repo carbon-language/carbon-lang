@@ -217,6 +217,21 @@ public:
     SearchInModuleList (Searcher &searcher, ModuleList &modules);
 
     //------------------------------------------------------------------
+    /// This determines which items are REQUIRED for the filter to pass.
+    /// For instance, if you are filtering by Compilation Unit, obviously
+    /// symbols that have no compilation unit can't pass  So return eSymbolContextCU
+    /// and search callbacks can then short cut the search to avoid looking at
+    /// things that obviously won't pass.
+    ///
+    /// @return
+    ///    The required elements for the search, which is an or'ed together
+    ///    set of lldb:SearchContextItem enum's.
+    ///
+    //------------------------------------------------------------------
+    virtual uint32_t
+    GetFilterRequiredItems ();
+
+    //------------------------------------------------------------------
     /// Prints a canonical description for the search filter to the stream \a s.
     ///
     /// @param[in] s
@@ -311,6 +326,9 @@ public:
     virtual void
     GetDescription(Stream *s);
 
+    virtual uint32_t
+    GetFilterRequiredItems ();
+
     virtual void
     Dump (Stream *s) const;
 
@@ -369,6 +387,65 @@ public:
     virtual void
     GetDescription(Stream *s);
 
+    virtual uint32_t
+    GetFilterRequiredItems ();
+
+    virtual void
+    Dump (Stream *s) const;
+    
+    virtual void
+    Search (Searcher &searcher);
+
+private:
+    FileSpecList m_module_spec_list;
+};
+
+class SearchFilterByModuleListAndCU :
+    public SearchFilterByModuleList
+{
+public:
+
+    //------------------------------------------------------------------
+    /// The basic constructor takes a Target, which gives the space to search,
+    /// and the module list to restrict the search to.
+    ///
+    /// @param[in] target
+    ///    The Target that provides the module list to search.
+    ///
+    /// @param[in] module
+    ///    The Module that limits the search.
+    //------------------------------------------------------------------
+    SearchFilterByModuleListAndCU (lldb::TargetSP &targetSP,
+                          const FileSpecList &module_list,
+                          const FileSpecList &cu_list);
+
+    SearchFilterByModuleListAndCU (const SearchFilterByModuleListAndCU& rhs);
+
+    virtual
+    ~SearchFilterByModuleListAndCU ();
+
+    const SearchFilterByModuleListAndCU&
+    operator=(const SearchFilterByModuleListAndCU& rhs);
+
+    virtual bool
+    SymbolContextPasses (const SymbolContext &context,
+                         lldb::SymbolContextItem scope);
+
+    virtual bool
+    AddressPasses (Address &address);
+
+    virtual bool
+    CompUnitPasses (FileSpec &fileSpec);
+
+    virtual bool
+    CompUnitPasses (CompileUnit &compUnit);
+
+    virtual void
+    GetDescription(Stream *s);
+
+    virtual uint32_t
+    GetFilterRequiredItems ();
+
     virtual void
     Dump (Stream *s) const;
 
@@ -377,6 +454,7 @@ public:
 
 private:
     FileSpecList m_module_spec_list;
+    FileSpecList m_cu_spec_list;
 };
 
 } // namespace lldb_private

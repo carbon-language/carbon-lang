@@ -262,6 +262,7 @@ ItaniumABILanguageRuntime::SetExceptionBreakpoints ()
     
     if (!m_cxx_exception_bp_sp)
         m_cxx_exception_bp_sp = m_process->GetTarget().CreateBreakpoint (NULL,
+                                                                         NULL,
                                                                          "__cxa_throw",
                                                                          eFunctionNameTypeBase, 
                                                                          true);
@@ -270,6 +271,7 @@ ItaniumABILanguageRuntime::SetExceptionBreakpoints ()
     
     if (!m_cxx_exception_alloc_bp_sp)
         m_cxx_exception_alloc_bp_sp = m_process->GetTarget().CreateBreakpoint (NULL,
+                                                                               NULL,
                                                                                "__cxa_allocate",
                                                                                eFunctionNameTypeBase,
                                                                                true);

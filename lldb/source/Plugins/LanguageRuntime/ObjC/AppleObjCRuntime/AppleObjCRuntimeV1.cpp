@@ -114,6 +114,7 @@ AppleObjCRuntimeV1::SetExceptionBreakpoints ()
     if (!m_objc_exception_bp_sp)
     {
         m_objc_exception_bp_sp = m_process->GetTarget().CreateBreakpoint (NULL,
+                                                                          NULL,
                                                                           "objc_exception_throw",
                                                                           eFunctionNameTypeBase, 
                                                                           true);

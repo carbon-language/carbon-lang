@@ -253,13 +253,13 @@ CompileUnit::GetVariableList(bool can_create)
 }
 
 uint32_t
-CompileUnit::FindLineEntry (uint32_t start_idx, uint32_t line, const FileSpec* file_spec_ptr, LineEntry *line_entry_ptr)
+CompileUnit::FindLineEntry (uint32_t start_idx, uint32_t line, const FileSpec* file_spec_ptr, bool exact, LineEntry *line_entry_ptr)
 {
     uint32_t file_idx = 0;
 
     if (file_spec_ptr)
     {
-        file_idx = GetSupportFiles().FindFileIndex (1, *file_spec_ptr);
+        file_idx = GetSupportFiles().FindFileIndex (1, *file_spec_ptr, true);
         if (file_idx == UINT32_MAX)
             return UINT32_MAX;
     }
@@ -269,13 +269,14 @@ CompileUnit::FindLineEntry (uint32_t start_idx, uint32_t line, const FileSpec* f
         // Unit that is in the support files (the one at 0 was artifically added.)
         // So prefer the one further on in the support files if it exists...
         FileSpecList &support_files = GetSupportFiles();
-        file_idx = support_files.FindFileIndex (1, support_files.GetFileSpecAtIndex(0));
+        const bool full = true;
+        file_idx = support_files.FindFileIndex (1, support_files.GetFileSpecAtIndex(0), full);
         if (file_idx == UINT32_MAX)
             file_idx = 0;
     }
     LineTable *line_table = GetLineTable();
     if (line_table)
-        return line_table->FindLineEntryIndexByFileIndex (start_idx, file_idx, line, true, line_entry_ptr);
+        return line_table->FindLineEntryIndexByFileIndex (start_idx, file_idx, line, exact, line_entry_ptr);
     return UINT32_MAX;
 }
 
@@ -304,11 +305,11 @@ CompileUnit::ResolveSymbolContext
     if (file_spec_matches_cu_file_spec == false && check_inlines == false)
         return 0;
 
-    uint32_t file_idx = GetSupportFiles().FindFileIndex (1, file_spec);
+    uint32_t file_idx = GetSupportFiles().FindFileIndex (1, file_spec, true);
     while (file_idx != UINT32_MAX)
     {
         file_indexes.push_back (file_idx);
-        file_idx = GetSupportFiles().FindFileIndex (file_idx + 1, file_spec);
+        file_idx = GetSupportFiles().FindFileIndex (file_idx + 1, file_spec, true);
     }
     
     const size_t num_file_indexes = file_indexes.size();

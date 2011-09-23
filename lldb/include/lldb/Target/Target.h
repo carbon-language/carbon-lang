@@ -250,10 +250,10 @@ public:
                       bool check_inlines,
                       bool internal = false);
 
-    // Use this to create breakpoint that matches regex against the source lines in file:
+    // Use this to create breakpoint that matches regex against the source lines in files given in source_file_list:
     lldb::BreakpointSP
-    CreateBreakpoint (const FileSpecList *containingModules,
-                      const FileSpec &file,
+    CreateSourceRegexBreakpoint (const FileSpecList *containingModules,
+                      const FileSpecList *source_file_list,
                       RegularExpression &source_regex,
                       bool internal = false);
 
@@ -267,11 +267,12 @@ public:
     CreateBreakpoint (Address &addr,
                       bool internal = false);
 
-    // Use this to create a function breakpoint by regexp in containingModule, or all modules if it is NULL
+    // Use this to create a function breakpoint by regexp in containingModule/containingSourceFiles, or all modules if it is NULL
     // When "skip_prologue is set to eLazyBoolCalculate, we use the current target 
     // setting, else we use the values passed in
     lldb::BreakpointSP
-    CreateBreakpoint (const FileSpecList *containingModules,
+    CreateFuncRegexBreakpoint (const FileSpecList *containingModules,
+                      const FileSpecList *containingSourceFiles,
                       RegularExpression &func_regexp,
                       bool internal = false,
                       LazyBool skip_prologue = eLazyBoolCalculate);
@@ -281,6 +282,7 @@ public:
     // setting, else we use the values passed in
     lldb::BreakpointSP
     CreateBreakpoint (const FileSpecList *containingModules,
+                      const FileSpecList *containingSourceFiles,
                       const char *func_name,
                       uint32_t func_name_type_mask, 
                       bool internal = false,
@@ -889,6 +891,10 @@ protected:
 
     lldb::SearchFilterSP
     GetSearchFilterForModuleList (const FileSpecList *containingModuleList);
+    
+    lldb::SearchFilterSP
+    GetSearchFilterForModuleAndCUList (const FileSpecList *containingModules, const FileSpecList *containingSourceFiles);
+
 
     static void
     ImageSearchPathsChanged (const PathMappingList &path_list,

@@ -480,6 +480,7 @@ AppleObjCRuntimeV2::SetExceptionBreakpoints ()
     if (!m_objc_exception_bp_sp)
     {
         m_objc_exception_bp_sp = m_process->GetTarget().CreateBreakpoint (NULL,
+                                                                          NULL,
                                                                           "__cxa_throw",
                                                                           eFunctionNameTypeBase, 
                                                                           true);

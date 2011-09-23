@@ -161,16 +161,22 @@ BreakpointResolverName::SearchCallback
     
     const bool include_symbols = false;
     const bool append = false;
+    bool filter_by_cu = (filter.GetFilterRequiredItems() & eSymbolContextCompUnit) != 0;
+
     switch (m_match_type)
     {
         case Breakpoint::Exact:
             if (context.module_sp)
             {
-                if (context.module_sp->FindFunctions (m_func_name, 
+                uint32_t num_functions = context.module_sp->FindFunctions (m_func_name, 
                                                       m_func_name_type_mask, 
                                                       include_symbols, 
                                                       append, 
-                                                      func_list) == 0)
+                                                      func_list);
+                // If the search filter specifies a Compilation Unit, then we don't need to bother to look in plain
+                // symbols, since all the ones from a set compilation unit will have been found above already.
+                
+                if (num_functions == 0 && !filter_by_cu)
                 {
                     if (m_func_name_type_mask & (eFunctionNameTypeBase | eFunctionNameTypeFull))
                         context.module_sp->FindSymbolsWithNameAndType (m_func_name, eSymbolTypeCode, sym_list);
@@ -180,7 +186,8 @@ BreakpointResolverName::SearchCallback
         case Breakpoint::Regexp:
             if (context.module_sp)
             {
-                context.module_sp->FindSymbolsMatchingRegExAndType (m_regex, eSymbolTypeCode, sym_list);
+                if (!filter_by_cu)
+                    context.module_sp->FindSymbolsMatchingRegExAndType (m_regex, eSymbolTypeCode, sym_list);
                 context.module_sp->FindFunctions (m_regex, 
                                                   include_symbols, 
                                                   append, 
@@ -192,7 +199,26 @@ BreakpointResolverName::SearchCallback
                 log->Warning ("glob is not supported yet.");
             break;
     }
-    
+
+    // If the filter specifies a Compilation Unit, remove the ones that don't pass at this point.
+    if (filter_by_cu)
+    {
+        uint32_t num_functions = func_list.GetSize();
+        
+        for (size_t idx = 0; idx < num_functions; idx++)
+        {
+            SymbolContext sc;
+            func_list.GetContextAtIndex(idx, sc);
+            if (!sc.comp_unit || !filter.CompUnitPasses(*sc.comp_unit))
+            {
+                func_list.RemoveContextAtIndex(idx);
+                num_functions--;
+                idx--;
+            }
+        }
+    }
+                
+
     if (!m_basename_filter.empty())
     {
         // Filter out any matches whose names don't contain the basename filter

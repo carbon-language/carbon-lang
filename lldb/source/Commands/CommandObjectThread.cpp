@@ -999,7 +999,8 @@ public:
                 while (index_ptr <= end_ptr)
                 {
                     LineEntry line_entry;
-                    index_ptr = sc.comp_unit->FindLineEntry(index_ptr, line_number, sc.comp_unit, &line_entry);
+                    const bool exact = false;
+                    index_ptr = sc.comp_unit->FindLineEntry(index_ptr, line_number, sc.comp_unit, exact, &line_entry);
                     if (index_ptr == UINT32_MAX)
                         break;
 

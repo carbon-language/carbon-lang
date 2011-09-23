@@ -29,7 +29,6 @@ class BreakpointResolverFileRegex :
 {
 public:
     BreakpointResolverFileRegex (Breakpoint *bkpt,
-                                const FileSpec &resolver,
                                 RegularExpression &regex);
 
     virtual
@@ -58,8 +57,7 @@ public:
 
 protected:
     friend class Breakpoint;
-    FileSpec m_file_spec; // This is the file spec we are looking for.
-    RegularExpression m_regex; // This is the line number that we are looking for.
+    RegularExpression m_regex; // This is the line expression that we are looking for.
 
 private:
     DISALLOW_COPY_AND_ASSIGN(BreakpointResolverFileRegex);

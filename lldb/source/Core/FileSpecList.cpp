@@ -107,7 +107,7 @@ FileSpecList::Dump(Stream *s, const char *separator_cstr) const
 // it is found, else UINT32_MAX is returned.
 //------------------------------------------------------------------
 uint32_t
-FileSpecList::FindFileIndex (uint32_t start_idx, const FileSpec &file_spec) const
+FileSpecList::FindFileIndex (uint32_t start_idx, const FileSpec &file_spec, bool full) const
 {
     const uint32_t num_files = m_files.size();
     uint32_t idx;
@@ -125,7 +125,7 @@ FileSpecList::FindFileIndex (uint32_t start_idx, const FileSpec &file_spec) cons
         }
         else
         {
-            if (m_files[idx] == file_spec)
+            if (FileSpec::Equal (m_files[idx], file_spec, full))
                 return idx;
         }
     }

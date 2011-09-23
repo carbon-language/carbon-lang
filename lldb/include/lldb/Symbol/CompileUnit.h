@@ -202,6 +202,10 @@ public:
     ///     else if NULL, search for line entries that match the compile
     ///     unit file.
     ///
+    /// @param[in] exact
+    ///     If \btrue match only if there is a line table entry for this line number.
+    ///     If \bfalse, find the line table entry equal to or after this line number.
+    ///
     /// @param[out] line_entry
     ///     If non-NULL, a copy of the line entry that was found.
     ///
@@ -213,6 +217,7 @@ public:
     FindLineEntry (uint32_t start_idx,
                    uint32_t line,
                    const FileSpec* file_spec_ptr,
+                   bool exact,
                    LineEntry *line_entry);
 
     //------------------------------------------------------------------

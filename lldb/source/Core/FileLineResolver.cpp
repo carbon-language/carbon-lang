@@ -52,7 +52,7 @@ FileLineResolver::SearchCallback
     if (m_inlines || m_file_spec.Compare(*cu, m_file_spec, m_file_spec.GetDirectory()))
     {
         uint32_t start_file_idx = 0;
-        uint32_t file_idx = cu->GetSupportFiles().FindFileIndex(start_file_idx, m_file_spec);
+        uint32_t file_idx = cu->GetSupportFiles().FindFileIndex(start_file_idx, m_file_spec, false);
         if (file_idx != UINT32_MAX)
         {
             LineTable *line_table = cu->GetLineTable();
@@ -67,7 +67,7 @@ FileLineResolver::SearchCallback
                         line_table->FineLineEntriesForFileIndex (file_idx, append, m_sc_list);
                         // Get the next file index in case we have multiple file 
                         // entries for the same file
-                        file_idx = cu->GetSupportFiles().FindFileIndex(file_idx + 1, m_file_spec);
+                        file_idx = cu->GetSupportFiles().FindFileIndex(file_idx + 1, m_file_spec, false);
                     }
                 }
                 else

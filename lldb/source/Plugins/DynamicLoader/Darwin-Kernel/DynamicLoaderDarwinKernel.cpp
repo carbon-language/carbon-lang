@@ -988,6 +988,7 @@ DynamicLoaderDarwinKernel::SetNotificationBreakpointIfNeeded ()
         FileSpecList module_spec_list;
         module_spec_list.Append (m_kernel.module_sp->GetFileSpec());
         Breakpoint *bp = m_process->GetTarget().CreateBreakpoint (&module_spec_list,
+                                                                  NULL,
                                                                   "OSKextLoadedKextSummariesUpdated",
                                                                   eFunctionNameTypeFull,
                                                                   internal_bp,

@@ -44,12 +44,14 @@ public:
     Clear();
     
     uint32_t
-    FindFileIndex (uint32_t idx, const SBFileSpec &sb_file);
+    FindFileIndex (uint32_t idx, const SBFileSpec &sb_file, bool full);
     
     const SBFileSpec
     GetFileSpecAtIndex (uint32_t idx) const;
 
 private:
+
+friend class SBTarget;
 
 #ifndef SWIG
 

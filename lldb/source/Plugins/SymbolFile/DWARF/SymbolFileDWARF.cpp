@@ -1804,7 +1804,7 @@ SymbolFileDWARF::ResolveSymbolContext(const FileSpec& file_spec, uint32_t line, 
                     // find it in the support files, we are done.
                     if (check_inlines)
                     {
-                        file_idx = sc.comp_unit->GetSupportFiles().FindFileIndex (1, file_spec);
+                        file_idx = sc.comp_unit->GetSupportFiles().FindFileIndex (1, file_spec, true);
                         if (file_idx == UINT32_MAX)
                             continue;
                     }
@@ -1818,7 +1818,7 @@ SymbolFileDWARF::ResolveSymbolContext(const FileSpec& file_spec, uint32_t line, 
                             // We will have already looked up the file index if
                             // we are searching for inline entries.
                             if (!check_inlines)
-                                file_idx = sc.comp_unit->GetSupportFiles().FindFileIndex (1, file_spec);
+                                file_idx = sc.comp_unit->GetSupportFiles().FindFileIndex (1, file_spec, true);
 
                             if (file_idx != UINT32_MAX)
                             {

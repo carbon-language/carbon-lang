@@ -80,9 +80,9 @@ SBFileSpecList::Clear()
 }
 
 uint32_t
-SBFileSpecList::FindFileIndex (uint32_t idx, const SBFileSpec &sb_file)
+SBFileSpecList::FindFileIndex (uint32_t idx, const SBFileSpec &sb_file, bool full)
 {
-    return m_opaque_ap->FindFileIndex (idx, sb_file.ref());
+    return m_opaque_ap->FindFileIndex (idx, sb_file.ref(), full);
 }
 
 const SBFileSpec

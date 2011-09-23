@@ -14,6 +14,7 @@
 #include "lldb/API/SBAddress.h"
 #include "lldb/API/SBBroadcaster.h"
 #include "lldb/API/SBFileSpec.h"
+#include "lldb/API/SBFileSpecList.h"
 #include "lldb/API/SBType.h"
 
 namespace lldb {
@@ -315,10 +316,27 @@ public:
     BreakpointCreateByName (const char *symbol_name, const char *module_name = NULL);
 
     lldb::SBBreakpoint
+    BreakpointCreateByName (const char *symbol_name, 
+                            const SBFileSpecList &module_list, 
+                            const SBFileSpecList &comp_unit_list);
+
+    lldb::SBBreakpoint
     BreakpointCreateByRegex (const char *symbol_name_regex, const char *module_name = NULL);
     
     lldb::SBBreakpoint
-    BreakpointCreateBySourceRegex (const char *source_regex, const lldb::SBFileSpec &source_file, const char *module_name = NULL);
+    BreakpointCreateByRegex (const char *symbol_name_regex, 
+                             const SBFileSpecList &module_list, 
+                             const SBFileSpecList &comp_unit_list);
+    
+    lldb::SBBreakpoint
+    BreakpointCreateBySourceRegex (const char *source_regex, 
+                                   const lldb::SBFileSpec &source_file, 
+                                   const char *module_name = NULL);
+
+    lldb::SBBreakpoint
+    BreakpointCreateBySourceRegex (const char *source_regex, 
+                                   const SBFileSpecList &module_list, 
+                                   const lldb::SBFileSpecList &source_file);
 
     lldb::SBBreakpoint
     BreakpointCreateByAddress (addr_t address);
