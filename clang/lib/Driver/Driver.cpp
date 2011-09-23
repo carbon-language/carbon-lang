@@ -323,6 +323,13 @@ Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
   if (Args->hasArg(options::OPT_nostdlib))
     UseStdLib = false;
 
+  // Honor --working-directory. Eventually we want to handle this completely
+  // internally to support good use as a library, but for now we just change our
+  // working directory.
+  if (const Arg *A = Args->getLastArg(options::OPT__working_directory)) {
+    ::chdir(A->getValue(*Args));
+  }
+
   Host = GetHostInfo(DefaultHostTriple.c_str());
 
   // Perform the default argument translations.
