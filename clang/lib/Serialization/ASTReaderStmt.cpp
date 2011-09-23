@@ -1061,7 +1061,7 @@ void ASTStmtReader::VisitCXXThrowExpr(CXXThrowExpr *E) {
 void ASTStmtReader::VisitCXXDefaultArgExpr(CXXDefaultArgExpr *E) {
   VisitExpr(E);
 
-  assert(Record[Idx] == E->Param.getInt() && "We messed up at creation ?");
+  assert(Record[Idx] == (unsigned)E->Param.getInt() && "We messed up at creation ?");
   ++Idx; // HasOtherExprStored and SubExpr was handled during creation.
   E->Param.setPointer(ReadDeclAs<ParmVarDecl>(Record, Idx));
   E->Loc = ReadSourceLocation(Record, Idx);
