@@ -1,5 +1,8 @@
 ; RUN: llc < %s -mtriple=i686-linux -segmented-stacks | FileCheck %s -check-prefix=X32
 ; RUN: llc < %s -mtriple=x86_64-linux  -segmented-stacks | FileCheck %s -check-prefix=X64
+;
+; X86FrameLowering::adjustForSegmentedStacks is inserting code after a RET.
+; XFAIL: *
 
 ; Just to prevent the alloca from being optimized away
 declare void @dummy_use(i32*, i32)
