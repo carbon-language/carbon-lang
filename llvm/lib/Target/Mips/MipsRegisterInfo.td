@@ -33,6 +33,13 @@ class MipsGPRReg<bits<5> num, string n> : MipsReg<n> {
   let Num = num;
 }
 
+// Mips 64-bit CPU Registers
+class Mips64GPRReg<bits<5> num, string n, list<Register> subregs>
+  : MipsRegWithSubRegs<n, subregs> {
+  let Num = num;
+  let SubRegIndices = [sub_32];
+}
+
 // Mips 32-bit FPU Registers
 class FPR<bits<5> num, string n> : MipsReg<n> {
   let Num = num;
@@ -95,6 +102,40 @@ let Namespace = "Mips" in {
   def SP   : MipsGPRReg< 29, "SP">,  DwarfRegNum<[29]>;
   def FP   : MipsGPRReg< 30, "FP">,  DwarfRegNum<[30]>;
   def RA   : MipsGPRReg< 31, "RA">,  DwarfRegNum<[31]>;
+
+  // General Purpose 64-bit Registers
+  def ZERO_64 : Mips64GPRReg< 0, "ZERO", [ZERO]>;
+  def AT_64   : Mips64GPRReg< 1, "AT",   [AT]>;
+  def V0_64   : Mips64GPRReg< 2, "2",    [V0]>;
+  def V1_64   : Mips64GPRReg< 3, "3",    [V1]>;
+  def A0_64   : Mips64GPRReg< 4, "4",    [A0]>;
+  def A1_64   : Mips64GPRReg< 5, "5",    [A1]>;
+  def A2_64   : Mips64GPRReg< 6, "6",    [A2]>;
+  def A3_64   : Mips64GPRReg< 7, "7",    [A3]>;
+  def T0_64   : Mips64GPRReg< 8, "8",    [T0]>;
+  def T1_64   : Mips64GPRReg< 9, "9",    [T1]>;
+  def T2_64   : Mips64GPRReg< 10, "10",  [T2]>;   
+  def T3_64   : Mips64GPRReg< 11, "11",  [T3]>;   
+  def T4_64   : Mips64GPRReg< 12, "12",  [T4]>;   
+  def T5_64   : Mips64GPRReg< 13, "13",  [T5]>;   
+  def T6_64   : Mips64GPRReg< 14, "14",  [T6]>;   
+  def T7_64   : Mips64GPRReg< 15, "15",  [T7]>;   
+  def S0_64   : Mips64GPRReg< 16, "16",  [S0]>;   
+  def S1_64   : Mips64GPRReg< 17, "17",  [S1]>;   
+  def S2_64   : Mips64GPRReg< 18, "18",  [S2]>;   
+  def S3_64   : Mips64GPRReg< 19, "19",  [S3]>;   
+  def S4_64   : Mips64GPRReg< 20, "20",  [S4]>;   
+  def S5_64   : Mips64GPRReg< 21, "21",  [S5]>;   
+  def S6_64   : Mips64GPRReg< 22, "22",  [S6]>;   
+  def S7_64   : Mips64GPRReg< 23, "23",  [S7]>;
+  def T8_64   : Mips64GPRReg< 24, "24",  [T8]>;
+  def T9_64   : Mips64GPRReg< 25, "25",  [T9]>;
+  def K0_64   : Mips64GPRReg< 26, "26",  [K0]>;
+  def K1_64   : Mips64GPRReg< 27, "27",  [K1]>;
+  def GP_64   : Mips64GPRReg< 28, "GP",  [GP]>;
+  def SP_64   : Mips64GPRReg< 29, "SP",  [SP]>;
+  def FP_64   : Mips64GPRReg< 30, "FP",  [FP]>;
+  def RA_64   : Mips64GPRReg< 31, "RA",  [RA]>;
 
   /// Mips Single point precision FPU Registers
   def F0  : FPR< 0,  "F0">, DwarfRegNum<[32]>;
