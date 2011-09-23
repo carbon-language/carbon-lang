@@ -4643,7 +4643,7 @@ ExprResult Sema::ActOnFinishFullExpr(Expr *FE) {
   if (FullExpr.isInvalid())
     return ExprError();
 
-  CheckImplicitConversions(FullExpr.get());
+  CheckImplicitConversions(FullExpr.get(), FullExpr.get()->getExprLoc());
   return MaybeCreateExprWithCleanups(FullExpr);
 }
 

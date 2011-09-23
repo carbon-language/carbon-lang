@@ -1474,6 +1474,9 @@ def warn_impcast_literal_float_to_integer : Warning<
   "implicit conversion turns literal floating-point number into integer: "
   "%0 to %1">,
   InGroup<DiagGroup<"literal-conversion">>, DefaultIgnore;
+def warn_impcast_string_literal_to_bool : Warning<
+  "implicit conversion turns string literal into bool: %0 to %1">,
+  InGroup<DiagGroup<"literal-conversion">>, DefaultIgnore;
 def note_fix_integral_float_as_integer : Note<
   "this can be rewritten as an integer literal with the exact same value">;
 def warn_impcast_different_enum_types : Warning<
