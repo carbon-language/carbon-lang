@@ -32,7 +32,7 @@ unsigned PTXParamManager::addArgumentParam(unsigned Size) {
 
   unsigned Index = AllParams.size();
   AllParams[Index] = Param;
-  ArgumentParams.insert(Index);
+  ArgumentParams.push_back(Index);
 
   return Index;
 }
@@ -49,7 +49,7 @@ unsigned PTXParamManager::addReturnParam(unsigned Size) {
 
   unsigned Index = AllParams.size();
   AllParams[Index] = Param;
-  ReturnParams.insert(Index);
+  ReturnParams.push_back(Index);
 
   return Index;
 }
@@ -66,7 +66,7 @@ unsigned PTXParamManager::addLocalParam(unsigned Size) {
 
   unsigned Index = AllParams.size();
   AllParams[Index] = Param;
-  LocalParams.insert(Index);
+  LocalParams.push_back(Index);
 
   return Index;
 }

@@ -16,7 +16,7 @@
 #define PTX_PARAM_MANAGER_H
 
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/SmallVector.h"
 
 namespace llvm {
 
@@ -40,13 +40,13 @@ private:
   };
 
   DenseMap<unsigned, PTXParam> AllParams;
-  DenseSet<unsigned> ArgumentParams;
-  DenseSet<unsigned> ReturnParams;
-  DenseSet<unsigned> LocalParams;
+  SmallVector<unsigned, 4> ArgumentParams;
+  SmallVector<unsigned, 4> ReturnParams;
+  SmallVector<unsigned, 4> LocalParams;
 
 public:
 
-  typedef DenseSet<unsigned>::const_iterator param_iterator;
+  typedef SmallVector<unsigned, 4>::const_iterator param_iterator;
 
   PTXParamManager();
 
