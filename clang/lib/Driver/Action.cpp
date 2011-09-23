@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Driver/Action.h"
+#include "llvm/Support/ErrorHandling.h"
 
 #include <cassert>
 using namespace clang::driver;

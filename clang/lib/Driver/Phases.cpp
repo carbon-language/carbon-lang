@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Driver/Phases.h"
+#include "llvm/Support/ErrorHandling.h"
 
 #include <cassert>
 

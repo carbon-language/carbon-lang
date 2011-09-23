@@ -12,6 +12,7 @@
 #include "clang/Driver/ArgList.h"
 #include "clang/Driver/Option.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/ErrorHandling.h"
 #include <algorithm>
 #include <map>
 using namespace clang::driver;

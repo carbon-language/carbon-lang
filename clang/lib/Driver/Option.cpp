@@ -12,6 +12,7 @@
 #include "clang/Driver/Arg.h"
 #include "clang/Driver/ArgList.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/ErrorHandling.h"
 #include <cassert>
 #include <algorithm>
 using namespace clang::driver;
