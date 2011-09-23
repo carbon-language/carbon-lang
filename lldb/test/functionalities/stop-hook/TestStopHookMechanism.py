@@ -64,12 +64,8 @@ class StopHookMechanismTestCase(TestBase):
         child.sendline('run')
         child.expect_exact(prompt)
         child.sendline('thread step-over')
-        #self.DebugPExpect(child)
-        child.expect_exact(prompt)
-        #self.DebugPExpect(child)
-        # Verify that the 'Stop Hooks' mechanism is fired off.
-        self.expect(child.before, exe=False,
-            substrs = ['(void *) $'])
+        # Expecting to find the output emitted by the firing of our stop hook.
+        child.expect_exact('(void *) $')
 
         # Now continue the inferior, we'll stop at another breakpoint which is outside the stop-hook range.
         child.sendline('process continue')
