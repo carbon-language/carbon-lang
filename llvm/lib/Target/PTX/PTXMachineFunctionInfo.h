@@ -15,6 +15,7 @@
 #define PTX_MACHINE_FUNCTION_INFO_H
 
 #include "PTX.h"
+#include "PTXParamManager.h"
 #include "PTXRegisterInfo.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
@@ -48,6 +49,8 @@ private:
 
   unsigned retParamSize;
 
+  PTXParamManager ParamManager;
+
 public:
   PTXMachineFunctionInfo(MachineFunction &MF)
     : is_kernel(false), reg_ret(PTX::NoRegister), _isDoneAddArg(false) {
@@ -60,6 +63,9 @@ public:
 
       retParamSize = 0;
     }
+
+  PTXParamManager& getParamManager() { return ParamManager; }
+  const PTXParamManager& getParamManager() const { return ParamManager; }
 
   void setKernel(bool _is_kernel=true) { is_kernel = _is_kernel; }
 

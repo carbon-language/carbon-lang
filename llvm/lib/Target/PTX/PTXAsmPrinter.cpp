@@ -16,6 +16,7 @@
 
 #include "PTX.h"
 #include "PTXMachineFunctionInfo.h"
+#include "PTXParamManager.h"
 #include "PTXRegisterInfo.h"
 #include "PTXTargetMachine.h"
 #include "llvm/DerivedTypes.h"
@@ -435,7 +436,9 @@ void PTXAsmPrinter::printMemOperand(const MachineInstr *MI, int opNum,
 
 void PTXAsmPrinter::printParamOperand(const MachineInstr *MI, int opNum,
                                       raw_ostream &OS, const char *Modifier) {
-  OS << PARAM_PREFIX << (int) MI->getOperand(opNum).getImm() + 1;
+  const PTXMachineFunctionInfo *MFI = MI->getParent()->getParent()->
+                                      getInfo<PTXMachineFunctionInfo>();
+  OS << MFI->getParamManager().getParamName(MI->getOperand(opNum).getImm());
 }
 
 void PTXAsmPrinter::printReturnOperand(const MachineInstr *MI, int opNum,
@@ -562,6 +565,7 @@ void PTXAsmPrinter::EmitFunctionDeclaration() {
   }
 
   const PTXMachineFunctionInfo *MFI = MF->getInfo<PTXMachineFunctionInfo>();
+  const PTXParamManager &PM = MFI->getParamManager();
   const bool isKernel = MFI->isKernel();
   const PTXSubtarget& ST = TM.getSubtarget<PTXSubtarget>();
   const MachineRegisterInfo& MRI = MF->getRegInfo();
@@ -572,10 +576,18 @@ void PTXAsmPrinter::EmitFunctionDeclaration() {
 
   if (!isKernel) {
     decl += " (";
-    if (ST.useParamSpaceForDeviceArgs() && MFI->getRetParamSize() != 0) {
-      decl += ".param .b";
-      decl += utostr(MFI->getRetParamSize());
-      decl += " __ret";
+    if (ST.useParamSpaceForDeviceArgs()) {
+      for (PTXParamManager::param_iterator i = PM.ret_begin(), e = PM.ret_end(),
+           b = i; i != e; ++i) {
+        if (i != b) {
+          decl += ", ";
+        }
+
+        decl += ".param .b";
+        decl += utostr(PM.getParamSize(*i));
+        decl += " ";
+        decl += PM.getParamName(*i);
+      }
     } else {
       for (PTXMachineFunctionInfo::ret_iterator
            i = MFI->retRegBegin(), e = MFI->retRegEnd(), b = i;
@@ -602,18 +614,16 @@ void PTXAsmPrinter::EmitFunctionDeclaration() {
 
   // Print parameters
   if (isKernel || ST.useParamSpaceForDeviceArgs()) {
-    for (PTXMachineFunctionInfo::argparam_iterator
-         i = MFI->argParamBegin(), e = MFI->argParamEnd(), b = i;
-         i != e; ++i) {
+    for (PTXParamManager::param_iterator i = PM.arg_begin(), e = PM.arg_end(),
+         b = i; i != e; ++i) {
       if (i != b) {
         decl += ", ";
       }
 
       decl += ".param .b";
-      decl += utostr(*i);
+      decl += utostr(PM.getParamSize(*i));
       decl += " ";
-      decl += PARAM_PREFIX;
-      decl += utostr(++cnt);
+      decl += PM.getParamName(*i);
     }
   } else {
     for (PTXMachineFunctionInfo::reg_iterator

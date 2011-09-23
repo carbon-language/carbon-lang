@@ -873,22 +873,22 @@ let hasSideEffects = 1 in {
                          "ld.param.f64\t$d, [$a]",
                          [(set RegF64:$d, (PTXloadparam timm:$a))]>;
 
-  def STpiPred : InstPTX<(outs), (ins MEMret:$d, RegPred:$a),
+  def STpiPred : InstPTX<(outs), (ins MEMpi:$d, RegPred:$a),
                          "st.param.pred\t[$d], $a",
                          [(PTXstoreparam timm:$d, RegPred:$a)]>;
-  def STpiU16  : InstPTX<(outs), (ins MEMret:$d, RegI16:$a),
+  def STpiU16  : InstPTX<(outs), (ins MEMpi:$d, RegI16:$a),
                          "st.param.u16\t[$d], $a",
                          [(PTXstoreparam timm:$d, RegI16:$a)]>;
-  def STpiU32  : InstPTX<(outs), (ins MEMret:$d, RegI32:$a),
+  def STpiU32  : InstPTX<(outs), (ins MEMpi:$d, RegI32:$a),
                          "st.param.u32\t[$d], $a",
                          [(PTXstoreparam timm:$d, RegI32:$a)]>;
-  def STpiU64  : InstPTX<(outs), (ins MEMret:$d, RegI64:$a),
+  def STpiU64  : InstPTX<(outs), (ins MEMpi:$d, RegI64:$a),
                          "st.param.u64\t[$d], $a",
                          [(PTXstoreparam timm:$d, RegI64:$a)]>;
-  def STpiF32  : InstPTX<(outs), (ins MEMret:$d, RegF32:$a),
+  def STpiF32  : InstPTX<(outs), (ins MEMpi:$d, RegF32:$a),
                          "st.param.f32\t[$d], $a",
                          [(PTXstoreparam timm:$d, RegF32:$a)]>;
-  def STpiF64  : InstPTX<(outs), (ins MEMret:$d, RegF64:$a),
+  def STpiF64  : InstPTX<(outs), (ins MEMpi:$d, RegF64:$a),
                          "st.param.f64\t[$d], $a",
                          [(PTXstoreparam timm:$d, RegF64:$a)]>;
 }
