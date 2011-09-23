@@ -159,6 +159,10 @@ EnvironmentManager::removeDeadBindings(Environment Env,
   MarkLiveCallback CB(SymReaper);
   ScanReachableSymbols RSScaner(ST, CB);
 
+  llvm::ImmutableMapRef<const Stmt*,SVal>
+    EBMapRef(NewEnv.ExprBindings.getRootWithoutRetain(),
+             F.getTreeFactory());
+
   // Iterate over the block-expr bindings.
   for (Environment::iterator I = Env.begin(), E = Env.end();
        I != E; ++I) {
@@ -177,7 +181,7 @@ EnvironmentManager::removeDeadBindings(Environment Env,
 
     if (SymReaper.isLive(BlkExpr)) {
       // Copy the binding to the new map.
-      NewEnv.ExprBindings = F.add(NewEnv.ExprBindings, BlkExpr, X);
+      EBMapRef = EBMapRef.add(BlkExpr, X);
 
       // If the block expr's value is a memory region, then mark that region.
       if (isa<loc::MemRegionVal>(X)) {
@@ -195,7 +199,7 @@ EnvironmentManager::removeDeadBindings(Environment Env,
     // beginning of itself, but we need its UndefinedVal to determine its
     // SVal.
     if (X.isUndef() && cast<UndefinedVal>(X).getData())
-      NewEnv.ExprBindings = F.add(NewEnv.ExprBindings, BlkExpr, X);
+      EBMapRef = EBMapRef.add(BlkExpr, X);
   }
   
   // Go through he deferred locations and add them to the new environment if
@@ -203,9 +207,10 @@ EnvironmentManager::removeDeadBindings(Environment Env,
   for (SmallVectorImpl<std::pair<const Stmt*, SVal> >::iterator
       I = deferredLocations.begin(), E = deferredLocations.end(); I != E; ++I) {
     const Stmt *S = (Stmt*) (((uintptr_t) I->first) & (uintptr_t) ~0x1);
-    if (NewEnv.ExprBindings.lookup(S))
-      NewEnv.ExprBindings = F.add(NewEnv.ExprBindings, I->first, I->second);
+    if (EBMapRef.lookup(S))
+      EBMapRef = EBMapRef.add(I->first, I->second);
   }
 
+  NewEnv.ExprBindings = EBMapRef.asImmutableMap();
   return NewEnv;
 }
