@@ -25,37 +25,63 @@ class PTX_READ_SPECIAL_REGISTER_R32<string regname, Intrinsic intop>
 
 // TODO Add read vector-version of special registers
 
-//def PTX_READ_TID_R64 : PTX_READ_SPECIAL_REGISTER_R64<"tid", int_ptx_read_tid_r64>;
-def PTX_READ_TID_X   : PTX_READ_SPECIAL_REGISTER_R32<"tid.x", int_ptx_read_tid_x>;
-def PTX_READ_TID_Y   : PTX_READ_SPECIAL_REGISTER_R32<"tid.y", int_ptx_read_tid_y>;
-def PTX_READ_TID_Z   : PTX_READ_SPECIAL_REGISTER_R32<"tid.z", int_ptx_read_tid_z>;
-def PTX_READ_TID_W   : PTX_READ_SPECIAL_REGISTER_R32<"tid.w", int_ptx_read_tid_w>;
+//def PTX_READ_TID_R64 : PTX_READ_SPECIAL_REGISTER_R64<"tid",
+//                                                     int_ptx_read_tid_r64>;
+def PTX_READ_TID_X   : PTX_READ_SPECIAL_REGISTER_R32<"tid.x",
+                                                     int_ptx_read_tid_x>;
+def PTX_READ_TID_Y   : PTX_READ_SPECIAL_REGISTER_R32<"tid.y",
+                                                     int_ptx_read_tid_y>;
+def PTX_READ_TID_Z   : PTX_READ_SPECIAL_REGISTER_R32<"tid.z",
+                                                     int_ptx_read_tid_z>;
+def PTX_READ_TID_W   : PTX_READ_SPECIAL_REGISTER_R32<"tid.w",
+                                                     int_ptx_read_tid_w>;
 
-//def PTX_READ_NTID_R64 : PTX_READ_SPECIAL_REGISTER_R64<"ntid", int_ptx_read_ntid_r64>;
-def PTX_READ_NTID_X   : PTX_READ_SPECIAL_REGISTER_R32<"ntid.x", int_ptx_read_ntid_x>;
-def PTX_READ_NTID_Y   : PTX_READ_SPECIAL_REGISTER_R32<"ntid.y", int_ptx_read_ntid_y>;
-def PTX_READ_NTID_Z   : PTX_READ_SPECIAL_REGISTER_R32<"ntid.z", int_ptx_read_ntid_z>;
-def PTX_READ_NTID_W   : PTX_READ_SPECIAL_REGISTER_R32<"ntid.w", int_ptx_read_ntid_w>;
+//def PTX_READ_NTID_R64 : PTX_READ_SPECIAL_REGISTER_R64<"ntid",
+//                                                      int_ptx_read_ntid_r64>;
+def PTX_READ_NTID_X   : PTX_READ_SPECIAL_REGISTER_R32<"ntid.x",
+                                                      int_ptx_read_ntid_x>;
+def PTX_READ_NTID_Y   : PTX_READ_SPECIAL_REGISTER_R32<"ntid.y",
+                                                      int_ptx_read_ntid_y>;
+def PTX_READ_NTID_Z   : PTX_READ_SPECIAL_REGISTER_R32<"ntid.z",
+                                                      int_ptx_read_ntid_z>;
+def PTX_READ_NTID_W   : PTX_READ_SPECIAL_REGISTER_R32<"ntid.w",
+                                                      int_ptx_read_ntid_w>;
 
-def PTX_READ_LANEID  : PTX_READ_SPECIAL_REGISTER_R32<"laneid", int_ptx_read_laneid>;
-def PTX_READ_WARPID  : PTX_READ_SPECIAL_REGISTER_R32<"warpid", int_ptx_read_warpid>;
-def PTX_READ_NWARPID : PTX_READ_SPECIAL_REGISTER_R32<"nwarpid", int_ptx_read_nwarpid>;
+def PTX_READ_LANEID  : PTX_READ_SPECIAL_REGISTER_R32<"laneid",
+                                                     int_ptx_read_laneid>;
+def PTX_READ_WARPID  : PTX_READ_SPECIAL_REGISTER_R32<"warpid",
+                                                     int_ptx_read_warpid>;
+def PTX_READ_NWARPID : PTX_READ_SPECIAL_REGISTER_R32<"nwarpid",
+                                                     int_ptx_read_nwarpid>;
 
-//def PTX_READ_CTAID_R64 : PTX_READ_SPECIAL_REGISTER_R64<"ctaid", int_ptx_read_ctaid_r64>;
-def PTX_READ_CTAID_X   : PTX_READ_SPECIAL_REGISTER_R32<"ctaid.x", int_ptx_read_ctaid_x>;
-def PTX_READ_CTAID_Y   : PTX_READ_SPECIAL_REGISTER_R32<"ctaid.y", int_ptx_read_ctaid_y>;
-def PTX_READ_CTAID_Z   : PTX_READ_SPECIAL_REGISTER_R32<"ctaid.z", int_ptx_read_ctaid_z>;
-def PTX_READ_CTAID_W   : PTX_READ_SPECIAL_REGISTER_R32<"ctaid.w", int_ptx_read_ctaid_w>;
+//def PTX_READ_CTAID_R64 :
+//PTX_READ_SPECIAL_REGISTER_R64<"ctaid", int_ptx_read_ctaid_r64>;
+def PTX_READ_CTAID_X   : PTX_READ_SPECIAL_REGISTER_R32<"ctaid.x",
+                                                       int_ptx_read_ctaid_x>;
+def PTX_READ_CTAID_Y   : PTX_READ_SPECIAL_REGISTER_R32<"ctaid.y",
+                                                       int_ptx_read_ctaid_y>;
+def PTX_READ_CTAID_Z   : PTX_READ_SPECIAL_REGISTER_R32<"ctaid.z",
+                                                       int_ptx_read_ctaid_z>;
+def PTX_READ_CTAID_W   : PTX_READ_SPECIAL_REGISTER_R32<"ctaid.w",
+                                                       int_ptx_read_ctaid_w>;
 
-//def PTX_READ_NCTAID_R64 : PTX_READ_SPECIAL_REGISTER_R64<"nctaid", int_ptx_read_nctaid_r64>;
-def PTX_READ_NCTAID_X   : PTX_READ_SPECIAL_REGISTER_R32<"nctaid.x", int_ptx_read_nctaid_x>;
-def PTX_READ_NCTAID_Y   : PTX_READ_SPECIAL_REGISTER_R32<"nctaid.y", int_ptx_read_nctaid_y>;
-def PTX_READ_NCTAID_Z   : PTX_READ_SPECIAL_REGISTER_R32<"nctaid.z", int_ptx_read_nctaid_z>;
-def PTX_READ_NCTAID_W   : PTX_READ_SPECIAL_REGISTER_R32<"nctaid.w", int_ptx_read_nctaid_w>;
+//def PTX_READ_NCTAID_R64 :
+//PTX_READ_SPECIAL_REGISTER_R64<"nctaid", int_ptx_read_nctaid_r64>;
+def PTX_READ_NCTAID_X   : PTX_READ_SPECIAL_REGISTER_R32<"nctaid.x",
+                                                        int_ptx_read_nctaid_x>;
+def PTX_READ_NCTAID_Y   : PTX_READ_SPECIAL_REGISTER_R32<"nctaid.y",
+                                                        int_ptx_read_nctaid_y>;
+def PTX_READ_NCTAID_Z   : PTX_READ_SPECIAL_REGISTER_R32<"nctaid.z",
+                                                        int_ptx_read_nctaid_z>;
+def PTX_READ_NCTAID_W   : PTX_READ_SPECIAL_REGISTER_R32<"nctaid.w",
+                                                        int_ptx_read_nctaid_w>;
 
-def PTX_READ_SMID  : PTX_READ_SPECIAL_REGISTER_R32<"smid", int_ptx_read_smid>;
-def PTX_READ_NSMID  : PTX_READ_SPECIAL_REGISTER_R32<"nsmid", int_ptx_read_nsmid>;
-def PTX_READ_GRIDID  : PTX_READ_SPECIAL_REGISTER_R32<"gridid", int_ptx_read_gridid>;
+def PTX_READ_SMID  : PTX_READ_SPECIAL_REGISTER_R32<"smid",
+                                                   int_ptx_read_smid>;
+def PTX_READ_NSMID  : PTX_READ_SPECIAL_REGISTER_R32<"nsmid",
+                                                    int_ptx_read_nsmid>;
+def PTX_READ_GRIDID  : PTX_READ_SPECIAL_REGISTER_R32<"gridid",
+                                                     int_ptx_read_gridid>;
 
 def PTX_READ_LANEMASK_EQ
   : PTX_READ_SPECIAL_REGISTER_R32<"lanemask_eq", int_ptx_read_lanemask_eq>;
