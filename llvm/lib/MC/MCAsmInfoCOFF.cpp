@@ -27,7 +27,8 @@ MCAsmInfoCOFF::MCAsmInfoCOFF() {
   LinkOnceDirective = "\t.linkonce discard\n";
   
   // Doesn't support visibility:
-  HiddenVisibilityAttr = ProtectedVisibilityAttr = MCSA_Invalid;
+  HiddenVisibilityAttr = HiddenDeclarationVisibilityAttr = MCSA_Invalid;
+  ProtectedVisibilityAttr = MCSA_Invalid;
 
   // Set up DWARF directives
   HasLEB128 = true;  // Target asm supports leb128 directives (little-endian)
