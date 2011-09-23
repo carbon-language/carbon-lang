@@ -65,7 +65,7 @@ class StopHookMechanismTestCase(TestBase):
         child.expect_exact(prompt)
         child.sendline('thread step-over')
         #self.DebugPExpect(child)
-        child.expect_exact('** End Stop Hooks **')
+        child.expect_exact(prompt)
         #self.DebugPExpect(child)
         # Verify that the 'Stop Hooks' mechanism is fired off.
         self.expect(child.before, exe=False,
