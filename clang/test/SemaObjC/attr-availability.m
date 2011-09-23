@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin9.0.0 -fsyntax-only -verify %s
 @interface A
 - (void)method __attribute__((availability(macosx,introduced=10.1,deprecated=10.2)));
 @end
