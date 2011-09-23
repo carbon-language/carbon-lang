@@ -1175,7 +1175,7 @@ void Parser::ParseLateTemplatedFuncDef(LateParsedTemplatedFunction &LMT) {
       DD = DD->getLexicalParent();
     }
 
-    // Reenter the DeclContext from outmost to innermost.
+    // Reenter template scopes from outmost to innermost.
     SmallVector<DeclContext*, 4>::reverse_iterator II =
     DeclContextToReenter.rbegin();
     for (; II != DeclContextToReenter.rend(); ++II) {
