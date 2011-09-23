@@ -16,6 +16,7 @@
 #include "PTXMachineFunctionInfo.h"
 #include "PTXRegisterInfo.h"
 #include "PTXSubtarget.h"
+#include "llvm/Function.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -440,15 +441,22 @@ PTXTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   assert(getTargetMachine().getSubtarget<PTXSubtarget>().callsAreHandled() &&
          "Calls are not handled for the target device");
 
-  // Is there a more "LLVM"-way to create a variable-length array of values?
-  SDValue* ops = new SDValue[OutVals.size() + 2];
+  std::vector<SDValue> Ops;
+  // The layout of the ops will be [Chain, Ins, Callee, Outs]
+  Ops.resize(Outs.size() + Ins.size() + 2);
 
-  ops[0] = Chain;
+  Ops[0] = Chain;
 
   if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
     const GlobalValue *GV = G->getGlobal();
-    Callee = DAG.getTargetGlobalAddress(GV, dl, getPointerTy());
-    ops[1] = Callee;
+    if (const Function *F = dyn_cast<Function>(GV)) {
+      assert(F->getCallingConv() == CallingConv::PTX_Device &&
+             "PTX function calls must be to PTX device functions");
+      Callee = DAG.getTargetGlobalAddress(GV, dl, getPointerTy());
+      Ops[Ins.size()+1] = Callee;
+    } else {
+      assert(false && "GlobalValue is not a function");
+    }
   } else {
     assert(false && "Function must be a GlobalAddressSDNode");
   }
@@ -459,14 +467,28 @@ PTXTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     SDValue Index = DAG.getTargetConstant(Param, MVT::i32);
     Chain = DAG.getNode(PTXISD::STORE_PARAM, dl, MVT::Other, Chain,
                         Index, OutVals[i]);
-    ops[i+2] = Index;
+    Ops[i+Ins.size()+2] = Index;
   }
 
-  ops[0] = Chain;
+  std::vector<unsigned> InParams;
 
-  Chain = DAG.getNode(PTXISD::CALL, dl, MVT::Other, ops, OutVals.size()+2);
+  for (unsigned i = 0; i < Ins.size(); ++i) {
+    unsigned Size = Ins[i].VT.getStoreSizeInBits();
+    unsigned Param = PM.addLocalParam(Size);
+    SDValue Index = DAG.getTargetConstant(Param, MVT::i32);
+    Ops[i+1] = Index;
+    InParams.push_back(Param);
+  }
 
-  delete [] ops;
+  Ops[0] = Chain;
+
+  Chain = DAG.getNode(PTXISD::CALL, dl, MVT::Other, &Ops[0], Ops.size());
+
+  for (unsigned i = 0; i < Ins.size(); ++i) {
+    SDValue Index = DAG.getTargetConstant(InParams[i], MVT::i32);
+    SDValue Load = DAG.getNode(PTXISD::LOAD_PARAM, dl, Ins[i].VT, Chain, Index);
+    InVals.push_back(Load);
+  }
 
   return Chain;
 }

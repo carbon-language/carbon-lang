@@ -677,21 +677,36 @@ printPredicateOperand(const MachineInstr *MI, raw_ostream &O) {
 
 void PTXAsmPrinter::
 printCall(const MachineInstr *MI, raw_ostream &O) {
-
   O << "\tcall.uni\t";
-
-  const GlobalValue *Address = MI->getOperand(2).getGlobal();
-  O << Address->getName() << ", (";
-
-  // (0,1) : predicate register/flag
-  // (2)   : callee
-  for (unsigned i = 3; i < MI->getNumOperands(); ++i) {
-    //const MachineOperand& MO = MI->getOperand(i);
-
-    printParamOperand(MI, i, O);
-    if (i < MI->getNumOperands()-1) {
+  // The first two operands are the predicate slot
+  unsigned Index = 2;
+  while (!MI->getOperand(Index).isGlobal()) {
+    if (Index == 2) {
+      O << "(";
+    } else {
       O << ", ";
     }
+    printParamOperand(MI, Index, O);
+    Index++;
+  }
+
+  if (Index != 2) {
+    O << "), ";
+  }
+
+  assert(MI->getOperand(Index).isGlobal() &&
+         "A GlobalAddress must follow the return arguments");
+
+  const GlobalValue *Address = MI->getOperand(Index).getGlobal();
+  O << Address->getName() << ", (";
+  Index++;
+
+  while (Index < MI->getNumOperands()) {
+    printParamOperand(MI, Index, O);
+    if (Index < MI->getNumOperands()-1) {
+      O << ", ";
+    }
+    Index++;
   }
 
   O << ")";
