@@ -293,3 +293,7 @@ const char *Process::OutputBold(bool bg) {
 const char *Process::ResetColor() {
   return "\033[0m";
 }
+
+void Process::SetWorkingDirectory(std::string Path) {
+  ::chdir(Path.c_str());
+}
