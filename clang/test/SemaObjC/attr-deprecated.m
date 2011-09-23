@@ -108,3 +108,7 @@ void test(Test2 *foo) {
   foo.test2 = x; // expected-warning {{'test2' is deprecated}}
   [foo setTest2: x]; // expected-warning {{'setTest2:' is deprecated}}
 }
+
+__attribute__((deprecated))
+@interface A(Blah) // expected-error{{attributes may not be specified on a category}}
+@end
