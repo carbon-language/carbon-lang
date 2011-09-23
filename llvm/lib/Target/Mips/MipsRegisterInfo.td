@@ -68,6 +68,7 @@ class HWR<bits<5> num, string n> : MipsReg<n> {
 //===----------------------------------------------------------------------===//
 
 let Namespace = "Mips" in {
+  // FIXME: Fix DwarfRegNum.
 
   // General Purpose Registers
   def ZERO : MipsGPRReg< 0, "ZERO">, DwarfRegNum<[0]>;
@@ -228,6 +229,11 @@ let Namespace = "Mips" in {
   def HI  : Register<"hi">, DwarfRegNum<[64]>;
   def LO  : Register<"lo">, DwarfRegNum<[65]>;
 
+  let SubRegIndices = [sub_32] in {
+  def HI64  : RegisterWithSubRegs<"hi", [HI]>;
+  def LO64  : RegisterWithSubRegs<"lo", [LO]>;
+  }
+
   // Status flags register
   def FCR31 : Register<"31">;
 
@@ -249,6 +255,18 @@ def CPURegs : RegisterClass<"Mips", [i32], 32, (add
   // Reserved
   ZERO, AT, K0, K1, GP, SP, FP, RA)>;
 
+def CPU64Regs : RegisterClass<"Mips", [i64], 64, (add
+  // Return Values and Arguments
+  V0_64, V1_64, A0_64, A1_64, A2_64, A3_64,
+  // Not preserved across procedure calls
+  T0_64, T1_64, T2_64, T3_64, T4_64, T5_64, T6_64, T7_64, T8_64, T9_64,
+  // Callee save
+  S0_64, S1_64, S2_64, S3_64, S4_64, S5_64, S6_64, S7_64,
+  // Reserved
+  ZERO_64, AT_64, K0_64, K1_64, GP_64, SP_64, FP_64, RA_64)> {
+  let SubRegClasses = [(CPURegs sub_32)];
+}
+
 // 64bit fp:
 // * FGR64  - 32 64-bit registers
 // * AFGR64 - 16 32-bit even registers (32-bit FP Mode)
@@ -268,11 +286,18 @@ def AFGR64 : RegisterClass<"Mips", [f64], 64, (add
   let SubRegClasses = [(FGR32 sub_fpeven, sub_fpodd)];
 }
 
+def FGR64 : RegisterClass<"Mips", [f64], 64, (sequence "D%u_64", 0, 31)> {
+  let SubRegClasses = [(FGR32 sub_32)];
+}
+
 // Condition Register for floating point operations
 def CCR  : RegisterClass<"Mips", [i32], 32, (add FCR31)>;
 
 // Hi/Lo Registers
 def HILO : RegisterClass<"Mips", [i32], 32, (add HI, LO)>;
+def HILO64 : RegisterClass<"Mips", [i64], 64, (add HI64, LO64)> {
+  let SubRegClasses = [(HILO sub_32)];
+}
 
 // Hardware registers
 def HWRegs : RegisterClass<"Mips", [i32], 32, (add HWR29)>;

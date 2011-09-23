@@ -112,24 +112,71 @@ getCalleeSavedRegs(const MachineFunction *MF) const
     Mips::S3, Mips::S2, Mips::S1, Mips::S0, 0
   };
 
+  static const unsigned N32CalleeSavedRegs[] = {
+    Mips::D31_64, Mips::D29_64, Mips::D27_64, Mips::D25_64, Mips::D23_64,
+    Mips::D21_64,
+    Mips::RA_64, Mips::FP_64, Mips::GP_64, Mips::S7_64, Mips::S6_64,
+    Mips::S5_64, Mips::S4_64, Mips::S3_64, Mips::S2_64, Mips::S1_64,
+    Mips::S0_64, 0
+  };
+
+  static const unsigned N64CalleeSavedRegs[] = {
+    Mips::D31_64, Mips::D30_64, Mips::D29_64, Mips::D28_64, Mips::D27_64,
+    Mips::D26_64, Mips::D25_64, Mips::D24_64,
+    Mips::RA_64, Mips::FP_64, Mips::GP_64, Mips::S7_64, Mips::S6_64,
+    Mips::S5_64, Mips::S4_64, Mips::S3_64, Mips::S2_64, Mips::S1_64,
+    Mips::S0_64, 0
+  };
+
   if (Subtarget.isSingleFloat())
     return SingleFloatOnlyCalleeSavedRegs;
-  else
+  else if (!Subtarget.hasMips64())
     return Mips32CalleeSavedRegs;
+  else if (Subtarget.isABI_N32())
+    return N32CalleeSavedRegs;
+  
+  assert(Subtarget.isABI_N64());
+  return N64CalleeSavedRegs;  
 }
 
 BitVector MipsRegisterInfo::
 getReservedRegs(const MachineFunction &MF) const {
-  BitVector Reserved(getNumRegs());
-  Reserved.set(Mips::ZERO);
-  Reserved.set(Mips::AT);
-  Reserved.set(Mips::K0);
-  Reserved.set(Mips::K1);
-  Reserved.set(Mips::GP);
-  Reserved.set(Mips::SP);
-  Reserved.set(Mips::FP);
-  Reserved.set(Mips::RA);
+  static const unsigned ReservedCPURegs[] = {
+    Mips::ZERO, Mips::AT, Mips::K0, Mips::K1, 
+    Mips::GP, Mips::SP, Mips::FP, Mips::RA, 0
+  };
 
+  static const unsigned ReservedCPU64Regs[] = {
+    Mips::ZERO_64, Mips::AT_64, Mips::K0_64, Mips::K1_64, 
+    Mips::GP_64, Mips::SP_64, Mips::FP_64, Mips::RA_64, 0
+  };
+
+  BitVector Reserved(getNumRegs());
+  typedef TargetRegisterClass::iterator RegIter;
+
+  for (const unsigned *Reg = ReservedCPURegs; *Reg; ++Reg)
+    Reserved.set(*Reg);
+
+  if (Subtarget.hasMips64()) {
+    for (const unsigned *Reg = ReservedCPU64Regs; *Reg; ++Reg)
+      Reserved.set(*Reg);
+
+    // Reserve all registers in AFGR64.
+    for (RegIter Reg = Mips::AFGR64RegisterClass->begin();
+         Reg != Mips::AFGR64RegisterClass->end(); ++Reg)
+      Reserved.set(*Reg);
+  }
+  else {
+    // Reserve all registers in CPU64Regs & FGR64.
+    for (RegIter Reg = Mips::CPU64RegsRegisterClass->begin();
+         Reg != Mips::CPU64RegsRegisterClass->end(); ++Reg)
+      Reserved.set(*Reg);
+
+    for (RegIter Reg = Mips::FGR64RegisterClass->begin();
+         Reg != Mips::FGR64RegisterClass->end(); ++Reg)
+      Reserved.set(*Reg);
+  }
+  
   return Reserved;
 }
 
