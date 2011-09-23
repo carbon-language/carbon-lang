@@ -186,7 +186,9 @@ template <class charT> class messages_byname;
 #endif
 #include <cstdlib>
 #include <ctime>
-#if !_WIN32
+#if _WIN32
+#include <support/win32/support.h> // vasprintf
+#else // _WIN32
 #include <nl_types.h>
 #endif  // !_WIN32
 
@@ -3711,10 +3713,14 @@ template <class _CharT>
 typename messages<_CharT>::catalog
 messages<_CharT>::do_open(const basic_string<char>& __nm, const locale&) const
 {
+#if _WIN32
+    return -1;
+#else // _WIN32
     catalog __cat = reinterpret_cast<catalog>(catopen(__nm.c_str(), NL_CAT_LOCALE));
     if (__cat != -1)
         __cat = static_cast<catalog>((static_cast<size_t>(__cat) >> 1));
     return __cat;
+#endif // _WIN32
 }
 
 template <class _CharT>
@@ -3722,6 +3728,9 @@ typename messages<_CharT>::string_type
 messages<_CharT>::do_get(catalog __c, int __set, int __msgid,
                          const string_type& __dflt) const
 {
+#if _WIN32
+    return __dflt;
+#else // _WIN32
     string __ndflt;
     __narrow_to_utf8<sizeof(char_type)*__CHAR_BIT__>()(back_inserter(__ndflt),
                                                        __dflt.c_str(),
@@ -3734,16 +3743,19 @@ messages<_CharT>::do_get(catalog __c, int __set, int __msgid,
     __widen_from_utf8<sizeof(char_type)*__CHAR_BIT__>()(back_inserter(__w),
                                                         __n, __n + strlen(__n));
     return __w;
+#endif // _WIN32
 }
 
 template <class _CharT>
 void
 messages<_CharT>::do_close(catalog __c) const
 {
+#if !_WIN32
     if (__c != -1)
         __c <<= 1;
     nl_catd __cat = reinterpret_cast<nl_catd>(__c);
     catclose(__cat);
+#endif // !_WIN32
 }
 
 extern template class messages<char>;

@@ -12,7 +12,9 @@
 #include "vector"
 #include "future"
 #include <sys/types.h>
+#if !_WIN32
 #include <sys/sysctl.h>
+#endif // _WIN32
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 

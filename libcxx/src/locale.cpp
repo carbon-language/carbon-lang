@@ -19,7 +19,11 @@
 #include "cstring"
 #include "cwctype"
 #include "__sso_allocator"
+#if _WIN32
+#include <locale.h>
+#else // _WIN32
 #include <langinfo.h>
+#endif // _!WIN32
 #include <stdlib.h>
 
 #ifdef _LIBCPP_STABLE_APPLE_ABI
@@ -5568,16 +5572,29 @@ moneypunct_byname<char, true>::init(const char* nm)
         __frac_digits_ = lc->int_frac_digits;
     else
         __frac_digits_ = base::do_frac_digits();
+#if _WIN32
+    if (lc->p_sign_posn == 0)
+#else // _WIN32
     if (lc->int_p_sign_posn == 0)
+#endif //_WIN32
         __positive_sign_ = "()";
     else
         __positive_sign_ = lc->positive_sign;
+#if _WIN32
+    if(lc->n_sign_posn == 0)
+#else // _WIN32
     if (lc->int_n_sign_posn == 0)
+#endif // _WIN32
         __negative_sign_ = "()";
     else
         __negative_sign_ = lc->negative_sign;
+#if _WIN32
+    __init_pat(__pos_format_, lc->p_cs_precedes, lc->p_sep_by_space, lc->p_sign_posn);
+    __init_pat(__neg_format_, lc->n_cs_precedes, lc->n_sep_by_space, lc->n_sign_posn);
+#else
     __init_pat(__pos_format_, lc->int_p_cs_precedes, lc->int_p_sep_by_space, lc->int_p_sign_posn);
     __init_pat(__neg_format_, lc->int_n_cs_precedes, lc->int_n_sep_by_space, lc->int_n_sign_posn);
+#endif // _WIN32
 }
 
 template<>
@@ -5698,7 +5715,11 @@ moneypunct_byname<wchar_t, true>::init(const char* nm)
         __frac_digits_ = lc->int_frac_digits;
     else
         __frac_digits_ = base::do_frac_digits();
+#if _WIN32
+    if (lc->p_sign_posn == 0)
+#else // _WIN32
     if (lc->int_p_sign_posn == 0)
+#endif // _WIN32
         __positive_sign_ = L"()";
     else
     {
@@ -5714,7 +5735,11 @@ moneypunct_byname<wchar_t, true>::init(const char* nm)
         wbe = wbuf + j;
         __positive_sign_.assign(wbuf, wbe);
     }
+#if _WIN32
+    if (lc->n_sign_posn == 0)
+#else // _WIN32
     if (lc->int_n_sign_posn == 0)
+#endif // _WIN32
         __negative_sign_ = L"()";
     else
     {
@@ -5730,8 +5755,13 @@ moneypunct_byname<wchar_t, true>::init(const char* nm)
         wbe = wbuf + j;
         __negative_sign_.assign(wbuf, wbe);
     }
+#if _WIN32
+    __init_pat(__pos_format_, lc->p_cs_precedes, lc->p_sep_by_space, lc->p_sign_posn);
+    __init_pat(__neg_format_, lc->n_cs_precedes, lc->n_sep_by_space, lc->n_sign_posn);
+#else // _WIN32
     __init_pat(__pos_format_, lc->int_p_cs_precedes, lc->int_p_sep_by_space, lc->int_p_sign_posn);
     __init_pat(__neg_format_, lc->int_n_cs_precedes, lc->int_n_sep_by_space, lc->int_n_sign_posn);
+#endif // _WIN32
 }
 
 void __do_nothing(void*) {}

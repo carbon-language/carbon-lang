@@ -11,6 +11,9 @@
 #include "cstdlib"
 #include "cwchar"
 #include "cerrno"
+#if _WIN32
+#include "support/win32/support.h"
+#endif // _WIN32
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
