@@ -1796,6 +1796,12 @@ static const unsigned O32IntRegs[] = {
   Mips::A0, Mips::A1, Mips::A2, Mips::A3
 };
 
+// Return next O32 integer argument register.
+static unsigned getNextIntArgReg(unsigned Reg) {
+  assert((Reg == Mips::A0) || (Reg == Mips::A2));
+  return (Reg == Mips::A0) ? Mips::A1 : Mips::A3;
+}
+
 // Write ByVal Arg to arg registers and stack.
 static void
 WriteByValArg(SDValue& ByValChain, SDValue Chain, DebugLoc dl,
@@ -1988,8 +1994,10 @@ MipsTargetLowering::LowerCall(SDValue InChain, SDValue Callee,
                                    Arg, DAG.getConstant(1, MVT::i32));
           if (!Subtarget->isLittle())
             std::swap(Lo, Hi);
-          RegsToPass.push_back(std::make_pair(VA.getLocReg(), Lo));
-          RegsToPass.push_back(std::make_pair(VA.getLocReg()+1, Hi));
+          unsigned LocRegLo = VA.getLocReg(); 
+          unsigned LocRegHigh = getNextIntArgReg(LocRegLo);
+          RegsToPass.push_back(std::make_pair(LocRegLo, Lo));
+          RegsToPass.push_back(std::make_pair(LocRegHigh, Hi));
           continue;
         }
       }
@@ -2281,7 +2289,7 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
           ArgValue = DAG.getNode(ISD::BITCAST, dl, MVT::f32, ArgValue);
         if (RegVT == MVT::i32 && VA.getValVT() == MVT::f64) {
           unsigned Reg2 = AddLiveIn(DAG.getMachineFunction(),
-                                    VA.getLocReg()+1, RC);
+                                    getNextIntArgReg(ArgReg), RC);
           SDValue ArgValue2 = DAG.getCopyFromReg(Chain, dl, Reg2, RegVT);
           if (!Subtarget->isLittle())
             std::swap(ArgValue, ArgValue2);
