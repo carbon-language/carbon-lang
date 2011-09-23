@@ -4761,75 +4761,11 @@ let Predicates = [HasAVX] in {
                           X86fhsub, 0>, VEX_4V;
 }
 
-let Predicates = [HasAVX] in {
-  def : Pat<(int_x86_sse3_hadd_ps (v4f32 VR128:$src1), VR128:$src2),
-            (VHADDPSrr VR128:$src1, VR128:$src2)>;
-  def : Pat<(int_x86_sse3_hadd_ps (v4f32 VR128:$src1), (memop addr:$src2)),
-            (VHADDPSrm VR128:$src1, addr:$src2)>;
-
-  def : Pat<(int_x86_sse3_hadd_pd (v2f64 VR128:$src1), VR128:$src2),
-            (VHADDPDrr VR128:$src1, VR128:$src2)>;
-  def : Pat<(int_x86_sse3_hadd_pd (v2f64 VR128:$src1), (memop addr:$src2)),
-            (VHADDPDrm VR128:$src1, addr:$src2)>;
-
-  def : Pat<(int_x86_sse3_hsub_ps (v4f32 VR128:$src1), VR128:$src2),
-            (VHSUBPSrr VR128:$src1, VR128:$src2)>;
-  def : Pat<(int_x86_sse3_hsub_ps (v4f32 VR128:$src1), (memop addr:$src2)),
-            (VHSUBPSrm VR128:$src1, addr:$src2)>;
-
-  def : Pat<(int_x86_sse3_hsub_pd (v2f64 VR128:$src1), VR128:$src2),
-            (VHSUBPDrr VR128:$src1, VR128:$src2)>;
-  def : Pat<(int_x86_sse3_hsub_pd (v2f64 VR128:$src1), (memop addr:$src2)),
-            (VHSUBPDrm VR128:$src1, addr:$src2)>;
-
-  def : Pat<(int_x86_avx_hadd_ps_256 (v8f32 VR256:$src1), VR256:$src2),
-            (VHADDPSYrr VR256:$src1, VR256:$src2)>;
-  def : Pat<(int_x86_avx_hadd_ps_256 (v8f32 VR256:$src1), (memop addr:$src2)),
-            (VHADDPSYrm VR256:$src1, addr:$src2)>;
-
-  def : Pat<(int_x86_avx_hadd_pd_256 (v4f64 VR256:$src1), VR256:$src2),
-            (VHADDPDYrr VR256:$src1, VR256:$src2)>;
-  def : Pat<(int_x86_avx_hadd_pd_256 (v4f64 VR256:$src1), (memop addr:$src2)),
-            (VHADDPDYrm VR256:$src1, addr:$src2)>;
-
-  def : Pat<(int_x86_avx_hsub_ps_256 (v8f32 VR256:$src1), VR256:$src2),
-            (VHSUBPSYrr VR256:$src1, VR256:$src2)>;
-  def : Pat<(int_x86_avx_hsub_ps_256 (v8f32 VR256:$src1), (memop addr:$src2)),
-            (VHSUBPSYrm VR256:$src1, addr:$src2)>;
-
-  def : Pat<(int_x86_avx_hsub_pd_256 (v4f64 VR256:$src1), VR256:$src2),
-            (VHSUBPDYrr VR256:$src1, VR256:$src2)>;
-  def : Pat<(int_x86_avx_hsub_pd_256 (v4f64 VR256:$src1), (memop addr:$src2)),
-            (VHSUBPDYrm VR256:$src1, addr:$src2)>;
-}
-
 let Constraints = "$src1 = $dst" in {
   defm HADDPS : S3D_Int<0x7C, "haddps", v4f32, VR128, f128mem, X86fhadd>;
   defm HADDPD : S3_Int<0x7C, "haddpd", v2f64, VR128, f128mem, X86fhadd>;
   defm HSUBPS : S3D_Int<0x7D, "hsubps", v4f32, VR128, f128mem, X86fhsub>;
   defm HSUBPD : S3_Int<0x7D, "hsubpd", v2f64, VR128, f128mem, X86fhsub>;
-}
-
-let Predicates = [HasSSE3] in {
-  def : Pat<(int_x86_sse3_hadd_ps (v4f32 VR128:$src1), VR128:$src2),
-            (HADDPSrr VR128:$src1, VR128:$src2)>;
-  def : Pat<(int_x86_sse3_hadd_ps (v4f32 VR128:$src1), (memop addr:$src2)),
-            (HADDPSrm VR128:$src1, addr:$src2)>;
-
-  def : Pat<(int_x86_sse3_hadd_pd (v2f64 VR128:$src1), VR128:$src2),
-            (HADDPDrr VR128:$src1, VR128:$src2)>;
-  def : Pat<(int_x86_sse3_hadd_pd (v2f64 VR128:$src1), (memop addr:$src2)),
-            (HADDPDrm VR128:$src1, addr:$src2)>;
-
-  def : Pat<(int_x86_sse3_hsub_ps (v4f32 VR128:$src1), VR128:$src2),
-            (HSUBPSrr VR128:$src1, VR128:$src2)>;
-  def : Pat<(int_x86_sse3_hsub_ps (v4f32 VR128:$src1), (memop addr:$src2)),
-            (HSUBPSrm VR128:$src1, addr:$src2)>;
-
-  def : Pat<(int_x86_sse3_hsub_pd (v2f64 VR128:$src1), VR128:$src2),
-            (HSUBPDrr VR128:$src1, VR128:$src2)>;
-  def : Pat<(int_x86_sse3_hsub_pd (v2f64 VR128:$src1), (memop addr:$src2)),
-            (HSUBPDrm VR128:$src1, addr:$src2)>;
 }
 
 //===---------------------------------------------------------------------===//

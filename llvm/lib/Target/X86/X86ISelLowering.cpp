@@ -9221,6 +9221,19 @@ X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) const 
                                 DAG.getConstant(X86CC, MVT::i8), Cond);
     return DAG.getNode(ISD::ZERO_EXTEND, dl, MVT::i32, SetCC);
   }
+  // Arithmetic intrinsics.
+  case Intrinsic::x86_sse3_hadd_ps:
+  case Intrinsic::x86_sse3_hadd_pd:
+  case Intrinsic::x86_avx_hadd_ps_256:
+  case Intrinsic::x86_avx_hadd_pd_256:
+    return DAG.getNode(X86ISD::FHADD, dl, Op.getValueType(),
+                       Op.getOperand(1), Op.getOperand(2));
+  case Intrinsic::x86_sse3_hsub_ps:
+  case Intrinsic::x86_sse3_hsub_pd:
+  case Intrinsic::x86_avx_hsub_ps_256:
+  case Intrinsic::x86_avx_hsub_pd_256:
+    return DAG.getNode(X86ISD::FHSUB, dl, Op.getValueType(),
+                       Op.getOperand(1), Op.getOperand(2));
   // ptest and testp intrinsics. The intrinsic these come from are designed to
   // return an integer value, not just an instruction so lower it to the ptest
   // or testp pattern and a setcc for the result.
