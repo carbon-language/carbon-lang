@@ -222,6 +222,7 @@ void PTXAsmPrinter::EmitFunctionBodyStart() {
   OutStreamer.EmitRawText(Twine("{"));
 
   const PTXMachineFunctionInfo *MFI = MF->getInfo<PTXMachineFunctionInfo>();
+  const PTXParamManager &PM = MFI->getParamManager();
 
   // Print register definitions
   std::string regDefs;
@@ -273,6 +274,16 @@ void PTXAsmPrinter::EmitFunctionBodyStart() {
     regDefs += "\t.reg .f64 %fd<";
     regDefs += utostr(numRegs);
     regDefs += ">;\n";
+  }
+
+  // Local params
+  for (PTXParamManager::param_iterator i = PM.local_begin(), e = PM.local_end();
+       i != e; ++i) {
+    regDefs += "\t.param .b";
+    regDefs += utostr(PM.getParamSize(*i));
+    regDefs += " ";
+    regDefs += PM.getParamName(*i);
+    regDefs += ";\n";
   }
 
   OutStreamer.EmitRawText(Twine(regDefs));
@@ -677,7 +688,7 @@ printCall(const MachineInstr *MI, raw_ostream &O) {
   for (unsigned i = 3; i < MI->getNumOperands(); ++i) {
     //const MachineOperand& MO = MI->getOperand(i);
 
-    printReturnOperand(MI, i, O);
+    printParamOperand(MI, i, O);
     if (i < MI->getNumOperands()-1) {
       O << ", ";
     }

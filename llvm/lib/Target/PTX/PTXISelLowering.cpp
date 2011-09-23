@@ -435,6 +435,7 @@ PTXTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
 
   MachineFunction& MF = DAG.getMachineFunction();
   PTXMachineFunctionInfo *MFI = MF.getInfo<PTXMachineFunctionInfo>();
+  PTXParamManager &PM = MFI->getParamManager();
 
   assert(getTargetMachine().getSubtarget<PTXSubtarget>().callsAreHandled() &&
          "Calls are not handled for the target device");
@@ -454,7 +455,8 @@ PTXTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
 
   for (unsigned i = 0; i != OutVals.size(); ++i) {
     unsigned Size = OutVals[i].getValueType().getSizeInBits();
-    SDValue Index = DAG.getTargetConstant(MFI->getNextParam(Size), MVT::i32);
+    unsigned Param = PM.addLocalParam(Size);
+    SDValue Index = DAG.getTargetConstant(Param, MVT::i32);
     Chain = DAG.getNode(PTXISD::STORE_PARAM, dl, MVT::Other, Chain,
                         Index, OutVals[i]);
     ops[i+2] = Index;
