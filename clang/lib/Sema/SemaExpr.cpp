@@ -1702,7 +1702,10 @@ ExprResult Sema::ActOnIdExpression(Scope *S,
       if (ObjCIvarDecl *Ivar = R.getAsSingle<ObjCIvarDecl>()) {
         R.clear();
         ExprResult E(LookupInObjCMethod(R, S, Ivar->getIdentifier()));
-        assert(E.isInvalid() || E.get());
+        // In a hopelessly buggy code, Objective-C instance variable
+        // lookup fails and no expression will be built to reference it.
+        if (!E.isInvalid() && !E.get())
+          return ExprError();
         return move(E);
       }
     }
