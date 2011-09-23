@@ -28,7 +28,8 @@ private:
   llvm::StringMap<struct stat, llvm::BumpPtrAllocator> StatCalls;
 
   void InjectFileOrDirectory(const char *Path, ino_t INode, bool IsFile) {
-    struct stat statBuf = {};
+    struct stat statBuf;
+    memset(&statBuf, 0, sizeof(statBuf));
     statBuf.st_dev = 1;
 #ifndef _WIN32  // struct stat has no st_ino field on Windows.
     statBuf.st_ino = INode;
