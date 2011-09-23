@@ -86,6 +86,8 @@ void DAGTypeLegalizer::PromoteIntegerResult(SDNode *N, unsigned ResNo) {
                          Res = PromoteIntRes_BUILD_VECTOR(N); break;
   case ISD::SCALAR_TO_VECTOR:
                          Res = PromoteIntRes_SCALAR_TO_VECTOR(N); break;
+  case ISD::CONCAT_VECTORS:
+                         Res = PromoteIntRes_CONCAT_VECTORS(N); break;
 
   case ISD::SIGN_EXTEND:
   case ISD::ZERO_EXTEND:
@@ -2914,6 +2916,46 @@ SDValue DAGTypeLegalizer::PromoteIntRes_SCALAR_TO_VECTOR(SDNode *N) {
   SDValue Op = DAG.getNode(ISD::ANY_EXTEND, dl, NOutVTElem, N->getOperand(0));
 
   return DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, NOutVT, Op);
+}
+
+SDValue DAGTypeLegalizer::PromoteIntRes_CONCAT_VECTORS(SDNode *N) {
+  DebugLoc dl = N->getDebugLoc();
+
+  SDValue Op0 = N->getOperand(1);
+  SDValue Op1 = N->getOperand(1);
+  assert(Op0.getValueType() == Op1.getValueType() &&
+         "Invalid input vector types");
+
+  EVT OutVT = N->getValueType(0);
+  EVT NOutVT = TLI.getTypeToTransformTo(*DAG.getContext(), OutVT);
+  assert(NOutVT.isVector() && "This type must be promoted to a vector type");
+
+  EVT OutElemTy = NOutVT.getVectorElementType();
+
+  unsigned NumElem0 = Op0.getValueType().getVectorNumElements();
+  unsigned NumElem1 = Op1.getValueType().getVectorNumElements();
+  unsigned NumOutElem = NOutVT.getVectorNumElements();
+  assert(NumElem0 + NumElem1 == NumOutElem &&
+         "Invalid number of incoming elements");
+
+  // Take the elements from the first vector.
+  SmallVector<SDValue, 8> Ops(NumOutElem);
+  for (unsigned i = 0; i < NumElem0; ++i) {
+    SDValue Ext = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl,
+                              Op0.getValueType().getScalarType(), Op0,
+                              DAG.getIntPtrConstant(i));
+    Ops[i] = DAG.getNode(ISD::ANY_EXTEND, dl, OutElemTy, Ext);
+  }
+
+  // Take the elements from the second vector
+  for (unsigned i = 0; i < NumElem1; ++i) {
+    SDValue Ext = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl,
+                              Op1.getValueType().getScalarType(), Op1,
+                              DAG.getIntPtrConstant(i));
+    Ops[i + NumElem0] = DAG.getNode(ISD::ANY_EXTEND, dl, OutElemTy, Ext);
+  }
+
+  return DAG.getNode(ISD::BUILD_VECTOR, dl, NOutVT, &Ops[0], Ops.size());
 }
 
 SDValue DAGTypeLegalizer::PromoteIntRes_INSERT_VECTOR_ELT(SDNode *N) {
