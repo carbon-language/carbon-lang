@@ -115,20 +115,44 @@ ThreadPlanStepRange::InRange ()
         SymbolContext new_context(frame->GetSymbolContext(eSymbolContextEverything));
         if (m_addr_context.line_entry.IsValid() && new_context.line_entry.IsValid())
         {
-           if ((m_addr_context.line_entry.file == new_context.line_entry.file)
-               && (m_addr_context.line_entry.line == new_context.line_entry.line))
+            if (m_addr_context.line_entry.file == new_context.line_entry.file)
             {
-                m_addr_context = new_context;
-                m_address_range = m_addr_context.line_entry.range;
-                ret_value = true;
-                if (log)
+                if (m_addr_context.line_entry.line == new_context.line_entry.line)
                 {
-                    StreamString s;
-                    m_address_range.Dump (&s, &m_thread.GetProcess().GetTarget(), Address::DumpStyleLoadAddress);
+                    m_addr_context = new_context;
+                    m_address_range = m_addr_context.line_entry.range;
+                    ret_value = true;
+                    if (log)
+                    {
+                        StreamString s;
+                        m_address_range.Dump (&s, &m_thread.GetProcess().GetTarget(), Address::DumpStyleLoadAddress);
 
-                    log->Printf ("Step range plan stepped to another range of same line: %s", s.GetData());
+                        log->Printf ("Step range plan stepped to another range of same line: %s", s.GetData());
+                    }
+                }
+                else if (new_context.line_entry.range.GetBaseAddress().GetLoadAddress(&m_thread.GetProcess().GetTarget())
+                         != pc_load_addr)
+                {
+                    // Another thing that sometimes happens here is that we step out of one line into the MIDDLE of another
+                    // line.  So far I mostly see this due to bugs in the debug information.
+                    // But we probably don't want to be in the middle of a line range, so in that case reset the stepping
+                    // range to the line we've stepped into the middle of and continue.
+                    m_addr_context = new_context;
+                    m_address_range = m_addr_context.line_entry.range;
+                    ret_value = true;
+                    if (log)
+                    {
+                        StreamString s;
+                        m_address_range.Dump (&s, &m_thread.GetProcess().GetTarget(), Address::DumpStyleLoadAddress);
+
+                        log->Printf ("Step range plan stepped to the middle of new line(%d): %s, continuing to clear this line.", 
+                                     new_context.line_entry.line, 
+                                     s.GetData());
+                    }
+                
                 }
             }
+            
         }
         
     }
