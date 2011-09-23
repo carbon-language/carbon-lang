@@ -30,7 +30,7 @@ int b(int val)
     if (!ptr)  // Set breakpoint here to test target stop-hook.
         return -1;
     else
-        printf("ptr=%p\n", ptr);
+        printf("ptr=%p\n", ptr); // We should stop here after stepping.
     return rc; // End of the line range for which stop-hook is to be run.
 }
 
