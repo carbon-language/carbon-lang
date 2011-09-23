@@ -1694,7 +1694,6 @@ static const char *getAccessName(AccessSpecifier AS) {
     default:
     case AS_none:
       llvm_unreachable("Invalid access specifier!");
-      return 0;
     case AS_public:
       return "public";
     case AS_private:

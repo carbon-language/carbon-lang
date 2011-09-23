@@ -1795,7 +1795,6 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
     return EmitFunctionDeclLValue(*this, E, FD);
 
   llvm_unreachable("Unhandled member declaration!");
-  return LValue();
 }
 
 LValue CodeGenFunction::EmitLValueForBitfield(llvm::Value *BaseValue,

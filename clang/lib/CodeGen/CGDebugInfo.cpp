@@ -291,16 +291,12 @@ llvm::DIType CGDebugInfo::CreateType(const BuiltinType *BT) {
   switch (BT->getKind()) {
   case BuiltinType::Dependent:
     llvm_unreachable("Unexpected builtin type Dependent");
-    return llvm::DIType();
   case BuiltinType::Overload:
     llvm_unreachable("Unexpected builtin type Overload");
-    return llvm::DIType();
   case BuiltinType::BoundMember:
     llvm_unreachable("Unexpected builtin type BoundMember");
-    return llvm::DIType();
   case BuiltinType::UnknownAny:
     llvm_unreachable("Unexpected builtin type UnknownAny");
-    return llvm::DIType();
   case BuiltinType::NullPtr:
     return DBuilder.
       createNullPtrType(BT->getName(CGM.getContext().getLangOptions()));

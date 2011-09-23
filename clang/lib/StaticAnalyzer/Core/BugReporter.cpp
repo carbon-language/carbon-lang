@@ -1744,7 +1744,6 @@ FindReportInEquivalenceClass(BugReportEquivClass& EQ,
     if (errorNode->isSink()) {
       llvm_unreachable(
            "BugType::isSuppressSink() should not be 'true' for sink end nodes");
-      return 0;
     }
     // No successors?  By definition this nodes isn't post-dominated by a sink.
     if (errorNode->succ_empty()) {

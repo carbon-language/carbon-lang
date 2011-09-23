@@ -1729,7 +1729,6 @@ public:
 
     default:
       llvm_unreachable("Invalid C++ named cast");
-      break;
     }
 
     return ExprError();
@@ -2682,7 +2681,6 @@ TreeTransform<Derived>
   }
 
   llvm_unreachable("Unknown name kind.");
-  return DeclarationNameInfo();
 }
 
 template<typename Derived>
@@ -8050,7 +8048,6 @@ template<typename Derived>
 ExprResult
 TreeTransform<Derived>::TransformAsTypeExpr(AsTypeExpr *E) {
   llvm_unreachable("Cannot transform asType expressions yet");
-  return SemaRef.Owned(E);
 }
   
 //===----------------------------------------------------------------------===//

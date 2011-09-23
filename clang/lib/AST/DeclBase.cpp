@@ -572,7 +572,6 @@ Decl *Decl::castFromDeclContext (const DeclContext *D) {
         return static_cast<NAME##Decl*>(const_cast<DeclContext*>(D));
 #include "clang/AST/DeclNodes.inc"
       llvm_unreachable("a decl that inherits DeclContext isn't handled");
-      return 0;
   }
 }
 
@@ -592,7 +591,6 @@ DeclContext *Decl::castToDeclContext(const Decl *D) {
         return static_cast<NAME##Decl*>(const_cast<Decl*>(D));
 #include "clang/AST/DeclNodes.inc"
       llvm_unreachable("a decl that inherits DeclContext isn't handled");
-      return 0;
   }
 }
 

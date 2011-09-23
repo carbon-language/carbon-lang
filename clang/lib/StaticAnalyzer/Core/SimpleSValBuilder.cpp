@@ -348,7 +348,6 @@ SVal SimpleSValBuilder::evalBinOpNN(const ProgramState *state,
         case BO_LAnd:
         case BO_LOr:
           llvm_unreachable("Logical operators handled by branching logic.");
-          return UnknownVal();
         case BO_Assign:
         case BO_MulAssign:
         case BO_DivAssign:
@@ -362,11 +361,9 @@ SVal SimpleSValBuilder::evalBinOpNN(const ProgramState *state,
         case BO_OrAssign:
         case BO_Comma:
           llvm_unreachable("'=' and ',' operators handled by ExprEngine.");
-          return UnknownVal();
         case BO_PtrMemD:
         case BO_PtrMemI:
           llvm_unreachable("Pointer arithmetic not handled here.");
-          return UnknownVal();
         case BO_LT:
         case BO_GT:
         case BO_LE:
@@ -557,7 +554,6 @@ SVal SimpleSValBuilder::evalBinOpLL(const ProgramState *state,
     switch (op) {
     default:
       llvm_unreachable("Unimplemented operation for two identical values");
-      return UnknownVal();
     case BO_Sub:
       return makeZeroVal(resultTy);
     case BO_EQ:
@@ -574,7 +570,6 @@ SVal SimpleSValBuilder::evalBinOpLL(const ProgramState *state,
   switch (lhs.getSubKind()) {
   default:
     llvm_unreachable("Ordering not implemented for this Loc.");
-    return UnknownVal();
 
   case loc::GotoLabelKind:
     // The only thing we know about labels is that they're non-null.

@@ -320,7 +320,6 @@ void AggExprEmitter::VisitCastExpr(CastExpr *E) {
   case CK_UncheckedDerivedToBase: {
     llvm_unreachable("cannot perform hierarchy conversion in EmitAggExpr: "
                 "should have been unpacked before we got here");
-    break;
   }
 
   case CK_GetObjCProperty: {

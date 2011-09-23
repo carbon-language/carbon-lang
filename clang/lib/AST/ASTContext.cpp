@@ -3219,7 +3219,6 @@ ASTContext::getCanonicalTemplateArgument(const TemplateArgument &Arg) const {
 
   // Silence GCC warning
   llvm_unreachable("Unhandled template argument kind");
-  return TemplateArgument();
 }
 
 NestedNameSpecifier *
@@ -4919,7 +4918,6 @@ CanQualType ASTContext::getFromTargetType(unsigned Type) const {
   }
 
   llvm_unreachable("Unhandled TargetInfo::IntType value");
-  return CanQualType();
 }
 
 //===----------------------------------------------------------------------===//
@@ -5749,13 +5747,11 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS,
 #define DEPENDENT_TYPE(Class, Base) case Type::Class:
 #include "clang/AST/TypeNodes.def"
     llvm_unreachable("Non-canonical and dependent types shouldn't get here");
-    return QualType();
 
   case Type::LValueReference:
   case Type::RValueReference:
   case Type::MemberPointer:
     llvm_unreachable("C++ should never be in mergeTypes");
-    return QualType();
 
   case Type::ObjCInterface:
   case Type::IncompleteArray:
@@ -5763,7 +5759,6 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS,
   case Type::FunctionProto:
   case Type::ExtVector:
     llvm_unreachable("Types are eliminated above");
-    return QualType();
 
   case Type::Pointer:
   {
@@ -6015,7 +6010,6 @@ QualType ASTContext::getCorrespondingUnsignedType(QualType T) {
     return UnsignedInt128Ty;
   default:
     llvm_unreachable("Unexpected signed integer type");
-    return QualType();
   }
 }
 
@@ -6476,7 +6470,6 @@ MangleContext *ASTContext::createMangleContext() {
     return createMicrosoftMangleContext(*this, getDiagnostics());
   }
   llvm_unreachable("Unsupported ABI");
-  return 0;
 }
 
 CXXABI::~CXXABI() {}

@@ -2938,7 +2938,6 @@ Sema::GetNameFromUnqualifiedId(const UnqualifiedId &Name) {
   } // switch (Name.getKind())
 
   llvm_unreachable("Unknown name kind");
-  return DeclarationNameInfo();
 }
 
 static QualType getCoreType(QualType Ty) {
@@ -8375,7 +8374,6 @@ void Sema::DiagnoseNontrivial(const RecordType* T, CXXSpecialMember member) {
       }
 
       llvm_unreachable("found no user-declared constructors");
-      return;
     }
     break;
 
@@ -8460,7 +8458,7 @@ void Sema::DiagnoseNontrivial(const RecordType* T, CXXSpecialMember member) {
   case CXXDestructor:
     hasTrivial = &CXXRecordDecl::hasTrivialDestructor; break;
   default:
-    llvm_unreachable("unexpected special member"); return;
+    llvm_unreachable("unexpected special member");
   }
 
   // Check for nontrivial bases (and recurse).

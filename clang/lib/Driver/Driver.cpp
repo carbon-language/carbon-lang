@@ -1114,7 +1114,6 @@ Action *Driver::ConstructPhaseAction(const ArgList &Args, phases::ID Phase,
   }
 
   llvm_unreachable("invalid phase in ConstructPhaseAction");
-  return 0;
 }
 
 bool Driver::IsUsingLTO(const ArgList &Args) const {

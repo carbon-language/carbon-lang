@@ -389,7 +389,6 @@ public:
 
   RetTy VisitStmt(const Stmt *) {
     llvm_unreachable("Expression evaluator should not be called on stmts");
-    return DerivedError(0);
   }
   RetTy VisitExpr(const Expr *E) {
     return DerivedError(E);

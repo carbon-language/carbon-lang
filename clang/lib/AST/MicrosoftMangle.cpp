@@ -333,15 +333,12 @@ MicrosoftCXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND,
     case DeclarationName::ObjCOneArgSelector:
     case DeclarationName::ObjCMultiArgSelector:
       llvm_unreachable("Can't mangle Objective-C selector names here!");
-      break;
       
     case DeclarationName::CXXConstructorName:
       llvm_unreachable("Can't mangle constructors yet!");
-      break;
       
     case DeclarationName::CXXDestructorName:
       llvm_unreachable("Can't mangle destructors yet!");
-      break;
       
     case DeclarationName::CXXConversionFunctionName:
       // <operator-name> ::= ?B # (cast)
@@ -356,11 +353,9 @@ MicrosoftCXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND,
     case DeclarationName::CXXLiteralOperatorName:
       // FIXME: Was this added in VS2010? Does MS even know how to mangle this?
       llvm_unreachable("Don't know how to mangle literal operators yet!");
-      break;
       
     case DeclarationName::CXXUsingDirective:
       llvm_unreachable("Can't mangle a using directive name!");
-      break;
   }
 }
 
@@ -514,12 +509,10 @@ void MicrosoftCXXNameMangler::mangleOperatorName(OverloadedOperatorKind OO) {
     
   case OO_Conditional:
     llvm_unreachable("Don't know how to mangle ?:");
-    break;
     
   case OO_None:
   case NUM_OVERLOADED_OPERATORS:
     llvm_unreachable("Not an overloaded operator");
-    break;
   }
 }
 
@@ -714,7 +707,6 @@ void MicrosoftCXXNameMangler::mangleType(const BuiltinType *T) {
   case BuiltinType::BoundMember:
     llvm_unreachable(
            "Overloaded and dependent types shouldn't get to name mangling");
-    break;
   case BuiltinType::ObjCId: Out << "PAUobjc_object@@"; break;
   case BuiltinType::ObjCClass: Out << "PAUobjc_class@@"; break;
   case BuiltinType::ObjCSel: Out << "PAUobjc_selector@@"; break;
@@ -723,7 +715,6 @@ void MicrosoftCXXNameMangler::mangleType(const BuiltinType *T) {
   case BuiltinType::Char32:
   case BuiltinType::NullPtr:
     llvm_unreachable("Don't know how to mangle this type");
-    break;
   }
 }
 

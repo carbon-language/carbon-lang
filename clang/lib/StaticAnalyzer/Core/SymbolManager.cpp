@@ -29,7 +29,6 @@ static void print(raw_ostream &os, BinaryOperator::Opcode Op) {
   switch (Op) {
     default:
       llvm_unreachable("operator printing not implemented");
-      break;
     case BO_Mul: os << '*'  ; break;
     case BO_Div: os << '/'  ; break;
     case BO_Rem: os << '%'  ; break;

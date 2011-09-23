@@ -626,7 +626,6 @@ void ExprEngine::VisitUnaryOperator(const UnaryOperator* U,
         switch (U->getOpcode()) {
           default:
             llvm_unreachable("Invalid Opcode.");
-            break;
             
           case UO_Not:
             // FIXME: Do we need to handle promotions?

@@ -1540,7 +1540,6 @@ DeduceTemplateArguments(Sema &S,
   switch (Param.getKind()) {
   case TemplateArgument::Null:
     llvm_unreachable("Null template argument in parameter list");
-    break;
 
   case TemplateArgument::Type:
     if (Arg.getKind() == TemplateArgument::Type)
@@ -1831,7 +1830,6 @@ static bool isSameTemplateArg(ASTContext &Context,
   switch (X.getKind()) {
     case TemplateArgument::Null:
       llvm_unreachable("Comparing NULL template argument");
-      break;
 
     case TemplateArgument::Type:
       return Context.getCanonicalType(X.getAsType()) ==

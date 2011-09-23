@@ -106,7 +106,7 @@ CXString clang_formatDiagnostic(CXDiagnostic Diagnostic, unsigned Options) {
 
   /* Print warning/error/etc. */
   switch (Severity) {
-  case CXDiagnostic_Ignored: llvm_unreachable("impossible"); break;
+  case CXDiagnostic_Ignored: llvm_unreachable("impossible");
   case CXDiagnostic_Note: Out << "note: "; break;
   case CXDiagnostic_Warning: Out << "warning: "; break;
   case CXDiagnostic_Error: Out << "error: "; break;

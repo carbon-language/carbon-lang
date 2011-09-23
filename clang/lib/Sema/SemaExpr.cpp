@@ -8942,7 +8942,6 @@ ExprResult Sema::ActOnGNUNullExpr(SourceLocation TokenLoc) {
     Ty = Context.LongLongTy;
   else {
     llvm_unreachable("I don't know size of pointer!");
-    Ty = Context.IntTy;
   }
 
   return Owned(new (Context) GNUNullExpr(Ty, TokenLoc));

@@ -61,7 +61,6 @@ SourceRange ASTLocation::getSourceRange() const {
 
   switch (getKind()) {
   default: llvm_unreachable("Invalid Kind");
-    return SourceRange();
   case N_Decl:
     return D->getSourceRange();
   case N_Stmt:

@@ -264,7 +264,6 @@ static BaseOffset ComputeBaseOffset(ASTContext &Context,
   if (!const_cast<CXXRecordDecl *>(DerivedRD)->
       isDerivedFrom(const_cast<CXXRecordDecl *>(BaseRD), Paths)) {
     llvm_unreachable("Class must be derived from the passed in base class!");
-    return BaseOffset();
   }
 
   return ComputeBaseOffset(Context, DerivedRD, Paths.front());
@@ -701,7 +700,6 @@ CharUnits VCallOffsetMap::getVCallOffsetOffset(const CXXMethodDecl *MD) {
   }
   
   llvm_unreachable("Should always find a vcall offset offset!");
-  return CharUnits::Zero();
 }
 
 /// VCallAndVBaseOffsetBuilder - Class for building vcall and vbase offsets.
@@ -1362,7 +1360,6 @@ VTableBuilder::ComputeThisAdjustmentBaseOffset(BaseSubobject Base,
   if (!const_cast<CXXRecordDecl *>(DerivedRD)->
       isDerivedFrom(const_cast<CXXRecordDecl *>(BaseRD), Paths)) {
     llvm_unreachable("Class must be derived from the passed in base class!");
-    return BaseOffset();
   }
 
   // We have to go through all the paths, and see which one leads us to the

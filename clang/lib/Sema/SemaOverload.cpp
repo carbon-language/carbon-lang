@@ -6334,7 +6334,6 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
   case OO_None:
   case NUM_OVERLOADED_OPERATORS:
     llvm_unreachable("Expected an overloaded operator");
-    break;
 
   case OO_New:
   case OO_Delete:
@@ -6343,7 +6342,6 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
   case OO_Call:
     llvm_unreachable(
                     "Special operators don't use AddBuiltinOperatorCandidates");
-    break;
 
   case OO_Comma:
   case OO_Arrow:

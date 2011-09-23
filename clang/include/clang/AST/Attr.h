@@ -68,7 +68,6 @@ protected:
   
   void* operator new(size_t bytes) throw() {
     llvm_unreachable("Attrs cannot be allocated with regular 'new'.");
-    return 0;
   }
   void operator delete(void* data) throw() {
     llvm_unreachable("Attrs cannot be released with regular 'delete'.");

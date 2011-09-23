@@ -194,7 +194,6 @@ DeclarationName::NameKind DeclarationName::getNameKind() const {
 
   // Can't actually get here.
   llvm_unreachable("This should be unreachable!");
-  return Identifier;
 }
 
 bool DeclarationName::isDependentName() const {
@@ -340,7 +339,6 @@ void *DeclarationName::getFETokenInfoAsVoid() const {
   default:
     llvm_unreachable("Declaration name has no FETokenInfo");
   }
-  return 0;
 }
 
 void DeclarationName::setFETokenInfo(void *T) {
@@ -622,5 +620,4 @@ SourceLocation DeclarationNameInfo::getEndLoc() const {
     return NameLoc;
   }
   llvm_unreachable("Unexpected declaration name kind");
-  return SourceLocation();
 }

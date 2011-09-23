@@ -97,7 +97,6 @@ void Sema::InstantiateAttrs(const MultiLevelTemplateArgumentList &TemplateArgs,
 Decl *
 TemplateDeclInstantiator::VisitTranslationUnitDecl(TranslationUnitDecl *D) {
   llvm_unreachable("Translation units cannot be instantiated");
-  return D;
 }
 
 Decl *
@@ -111,7 +110,6 @@ TemplateDeclInstantiator::VisitLabelDecl(LabelDecl *D) {
 Decl *
 TemplateDeclInstantiator::VisitNamespaceDecl(NamespaceDecl *D) {
   llvm_unreachable("Namespaces cannot be instantiated");
-  return D;
 }
 
 Decl *
@@ -702,7 +700,6 @@ Decl *TemplateDeclInstantiator::VisitEnumDecl(EnumDecl *D) {
 
 Decl *TemplateDeclInstantiator::VisitEnumConstantDecl(EnumConstantDecl *D) {
   llvm_unreachable("EnumConstantDecls can only occur within EnumDecls.");
-  return 0;
 }
 
 Decl *TemplateDeclInstantiator::VisitClassTemplateDecl(ClassTemplateDecl *D) {

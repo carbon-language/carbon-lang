@@ -154,7 +154,6 @@ public:
   Value *VisitStmt(Stmt *S) {
     S->dump(CGF.getContext().getSourceManager());
     llvm_unreachable("Stmt can't have complex result type!");
-    return 0;
   }
   Value *VisitExpr(Expr *S);
   
@@ -1264,10 +1263,8 @@ EmitAddConsiderOverflowBehavior(const UnaryOperator *E,
     BinOp.Opcode = BO_Add;
     BinOp.E = E;
     return EmitOverflowCheckedBinOp(BinOp);
-    break;
   }
   llvm_unreachable("Unknown SignedOverflowBehaviorTy");
-  return 0;
 }
 
 llvm::Value *
@@ -2756,7 +2753,6 @@ LValue CodeGenFunction::EmitCompoundAssignmentLValue(
   case BO_Assign:
   case BO_Comma:
     llvm_unreachable("Not valid compound assignment operators");
-    break;
   }
    
   llvm_unreachable("Unhandled compound assignment operator");

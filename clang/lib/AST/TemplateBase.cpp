@@ -69,7 +69,6 @@ bool TemplateArgument::isDependent() const {
   switch (getKind()) {
   case Null:
     llvm_unreachable("Should not have a NULL template argument");
-    return false;
 
   case Type:
     return getAsType()->isDependentType();
@@ -108,7 +107,6 @@ bool TemplateArgument::isInstantiationDependent() const {
   switch (getKind()) {
   case Null:
     llvm_unreachable("Should not have a NULL template argument");
-    return false;
     
   case Type:
     return getAsType()->isInstantiationDependentType();

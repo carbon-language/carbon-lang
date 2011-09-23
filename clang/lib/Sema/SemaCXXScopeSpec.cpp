@@ -138,7 +138,6 @@ DeclContext *Sema::computeDeclContext(const CXXScopeSpec &SS,
   switch (NNS->getKind()) {
   case NestedNameSpecifier::Identifier:
     llvm_unreachable("Dependent nested-name-specifier has no DeclContext");
-    break;
 
   case NestedNameSpecifier::Namespace:
     return NNS->getAsNamespace();

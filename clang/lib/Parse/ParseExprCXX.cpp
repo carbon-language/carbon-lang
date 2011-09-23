@@ -30,7 +30,6 @@ static int SelectDigraphErrorMessage(tok::TokenKind Kind) {
     case tok::kw_static_cast:      return 4;
     default:
       llvm_unreachable("Unknown type for digraph error message.");
-      return -1;
   }
 }
 
@@ -784,7 +783,7 @@ ExprResult Parser::ParseCXXCasts() {
   const char *CastName = 0;     // For error messages
 
   switch (Kind) {
-  default: llvm_unreachable("Unknown C++ cast!"); abort();
+  default: llvm_unreachable("Unknown C++ cast!");
   case tok::kw_const_cast:       CastName = "const_cast";       break;
   case tok::kw_dynamic_cast:     CastName = "dynamic_cast";     break;
   case tok::kw_reinterpret_cast: CastName = "reinterpret_cast"; break;
@@ -1292,7 +1291,6 @@ void Parser::ParseCXXSimpleTypeSpecifier(DeclSpec &DS) {
     llvm_unreachable("Annotation token should already be formed!");
   default:
     llvm_unreachable("Not a simple-type-specifier token!");
-    abort();
 
   // type-name
   case tok::annot_typename: {

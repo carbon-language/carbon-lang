@@ -2683,7 +2683,6 @@ bool Sema::CheckTemplateArgument(NamedDecl *Param,
     switch (Arg.getArgument().getKind()) {
     case TemplateArgument::Null:
       llvm_unreachable("Should never see a NULL template argument here");
-      return true;
 
     case TemplateArgument::Expression: {
       TemplateArgument Result;
@@ -2806,7 +2805,6 @@ bool Sema::CheckTemplateArgument(NamedDecl *Param,
   switch (Arg.getArgument().getKind()) {
   case TemplateArgument::Null:
     llvm_unreachable("Should never see a NULL template argument here");
-    return true;
 
   case TemplateArgument::Template:
   case TemplateArgument::TemplateExpansion:
@@ -5218,7 +5216,6 @@ Sema::CheckSpecializationInstantiationRedecl(SourceLocation NewLoc,
   case TSK_Undeclared:
   case TSK_ImplicitInstantiation:
     llvm_unreachable("Don't check implicit instantiations here");
-    return false;
 
   case TSK_ExplicitSpecialization:
     switch (PrevTSK) {
@@ -5351,8 +5348,6 @@ Sema::CheckSpecializationInstantiationRedecl(SourceLocation NewLoc,
   }
 
   llvm_unreachable("Missing specialization/instantiation case?");
-
-  return false;
 }
 
 /// \brief Perform semantic analysis for the given dependent function

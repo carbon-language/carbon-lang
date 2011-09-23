@@ -1893,7 +1893,6 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, unsigned &neededInt,
   case X87:
   case ComplexX87:
     llvm_unreachable("Invalid classification for hi word.");
-    break;
 
   case NoClass: break;
 

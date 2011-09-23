@@ -1864,7 +1864,6 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
   }
 
   llvm_unreachable("Unhandled ABIArgInfo::Kind");
-  return RValue::get(0);
 }
 
 /* VarArg handling */

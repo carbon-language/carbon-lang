@@ -346,7 +346,6 @@ void ASTDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
   FD->IdentifierNamespace = Record[Idx++];
   switch ((FunctionDecl::TemplatedKind)Record[Idx++]) {
   default: llvm_unreachable("Unhandled TemplatedKind!");
-    break;
   case FunctionDecl::TK_NonTemplate:
     break;
   case FunctionDecl::TK_FunctionTemplate:
@@ -1481,7 +1480,6 @@ Decl *ASTReader::ReadDeclRecord(DeclID ID) {
   case DECL_CONTEXT_LEXICAL:
   case DECL_CONTEXT_VISIBLE:
     llvm_unreachable("Record cannot be de-serialized with ReadDeclRecord");
-    break;
   case DECL_TYPEDEF:
     D = TypedefDecl::Create(Context, 0, SourceLocation(), SourceLocation(),
                             0, 0);

@@ -892,7 +892,6 @@ SVal RegionStoreManager::Retrieve(Store store, Loc L, QualType T) {
 
   if (isa<CodeTextRegion>(MR)) {
     llvm_unreachable("Why load from a code text region?");
-    return UnknownVal();
   }
 
   // FIXME: Perhaps this method should just take a 'const MemRegion*' argument

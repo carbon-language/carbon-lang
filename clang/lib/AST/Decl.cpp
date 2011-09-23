@@ -1891,7 +1891,6 @@ FunctionDecl::TemplatedKind FunctionDecl::getTemplatedKind() const {
     return TK_DependentFunctionTemplateSpecialization;
 
   llvm_unreachable("Did we miss a TemplateOrSpecialization type?");
-  return TK_NonTemplate;
 }
 
 FunctionDecl *FunctionDecl::getInstantiatedFromMemberFunction() const {

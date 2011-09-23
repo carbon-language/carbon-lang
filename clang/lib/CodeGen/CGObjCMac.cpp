@@ -1061,7 +1061,6 @@ public:
   /// class of the given name.
   virtual llvm::GlobalVariable *GetClassGlobal(const std::string &Name) {
     llvm_unreachable("CGObjCMac::GetClassGlobal");
-    return 0;
   }
 };
 

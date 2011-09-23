@@ -781,9 +781,6 @@ public:
       return 0;
 
     llvm_unreachable("Unable to handle InitListExpr");
-    // Get rid of control reaches end of void function warning.
-    // Not reached.
-    return 0;
   }
 
   llvm::Constant *VisitCXXConstructExpr(CXXConstructExpr *E) {
@@ -967,7 +964,6 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
     switch (Result.Val.getKind()) {
     case APValue::Uninitialized:
       llvm_unreachable("Constant expressions should be initialized.");
-      return 0;
     case APValue::LValue: {
       llvm::Type *DestTy = getTypes().ConvertTypeForMem(DestType);
       llvm::Constant *Offset =

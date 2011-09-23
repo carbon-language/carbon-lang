@@ -210,7 +210,6 @@ bool ArgTypeResult::matchesType(ASTContext &C, QualType argTy) const {
   switch (K) {
     case InvalidTy:
       llvm_unreachable("ArgTypeResult must be valid");
-      return true;
 
     case UnknownTy:
       return true;
@@ -313,7 +312,6 @@ QualType ArgTypeResult::getRepresentativeType(ASTContext &C) const {
   switch (K) {
     case InvalidTy:
       llvm_unreachable("No representative type for Invalid ArgTypeResult");
-      // Fall-through.
     case UnknownTy:
       return QualType();
     case SpecificTy:

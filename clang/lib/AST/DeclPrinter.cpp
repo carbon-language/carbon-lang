@@ -192,7 +192,7 @@ void DeclPrinter::ProcessDeclGroup(SmallVectorImpl<Decl*>& Decls) {
 
 void DeclPrinter::Print(AccessSpecifier AS) {
   switch(AS) {
-  case AS_none:      llvm_unreachable("No access specifier!"); break;
+  case AS_none:      llvm_unreachable("No access specifier!");
   case AS_public:    Out << "public"; break;
   case AS_protected: Out << "protected"; break;
   case AS_private:   Out << "private"; break;

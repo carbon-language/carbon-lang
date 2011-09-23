@@ -1526,7 +1526,6 @@ bool Sema::FindAllocationOverload(SourceLocation StartLoc, SourceRange Range,
   }
   }
   llvm_unreachable("Unreachable, bad result from BestViableFunction");
-  return true;
 }
 
 
@@ -2182,7 +2181,6 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
 
   case ImplicitConversionSequence::EllipsisConversion:
     llvm_unreachable("Cannot perform an ellipsis conversion");
-    return Owned(From);
 
   case ImplicitConversionSequence::BadConversion:
     return ExprError();
@@ -2285,7 +2283,6 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
 
   default:
     llvm_unreachable("Improper first standard conversion");
-    break;
   }
 
   // Perform the second implicit conversion
@@ -2525,7 +2522,6 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
   case ICK_Qualification:
   case ICK_Num_Conversion_Kinds:
     llvm_unreachable("Improper second standard conversion");
-    break;
   }
 
   switch (SCS.Third) {
@@ -2551,7 +2547,6 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
 
   default:
     llvm_unreachable("Improper third standard conversion");
-    break;
   }
 
   return Owned(From);
@@ -3561,7 +3556,6 @@ static bool FindConditionalOverload(Sema &Self, ExprResult &LHS, ExprResult &RHS
 
     case OR_Deleted:
       llvm_unreachable("Conditional operator has only built-in overloads");
-      break;
   }
   return true;
 }

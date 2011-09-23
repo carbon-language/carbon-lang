@@ -370,6 +370,5 @@ void Loc::dumpToStream(raw_ostream &os) const {
     }
     default:
       llvm_unreachable("Pretty-printing not implemented for this Loc.");
-      break;
   }
 }

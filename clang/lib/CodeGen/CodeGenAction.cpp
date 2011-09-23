@@ -276,7 +276,6 @@ static raw_ostream *GetOutputStream(CompilerInstance &CI,
   }
 
   llvm_unreachable("Invalid action!");
-  return 0;
 }
 
 ASTConsumer *CodeGenAction::CreateASTConsumer(CompilerInstance &CI,

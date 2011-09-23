@@ -4994,7 +4994,6 @@ ASTReader::ReadTemplateName(Module &F, const RecordData &Record,
   }
 
   llvm_unreachable("Unhandled template name kind!");
-  return TemplateName();
 }
 
 TemplateArgument
@@ -5034,7 +5033,6 @@ ASTReader::ReadTemplateArgument(Module &F,
   }
 
   llvm_unreachable("Unhandled template argument kind!");
-  return TemplateArgument();
 }
 
 TemplateParameterList *
