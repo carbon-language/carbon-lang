@@ -239,7 +239,8 @@ unsigned MBlazeInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
   return 2;
 }
 
-bool MBlazeInstrInfo::ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const {
+bool MBlazeInstrInfo::ReverseBranchCondition(SmallVectorImpl<MachineOperand>
+                                               &Cond) const {
   assert(Cond.size() == 2 && "Invalid MBlaze branch opcode!");
   switch (Cond[0].getImm()) {
   default:            return true;
