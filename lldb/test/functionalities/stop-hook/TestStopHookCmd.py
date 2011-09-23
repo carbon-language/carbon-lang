@@ -12,6 +12,11 @@ class StopHookCmdTestCase(TestBase):
 
     mydir = os.path.join("functionalities", "stop-hook")
 
+    # Regression test.
+    def test_not_crashing_if_no_target(self):
+        """target stop-hook list should not crash if no target has been set."""
+        self.runCmd("target stop-hook list", check=False)
+
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_with_dsym(self):
         """Test a sequence of target stop-hook commands."""
