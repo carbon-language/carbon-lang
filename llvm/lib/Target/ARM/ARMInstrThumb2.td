@@ -2059,13 +2059,13 @@ def t2USAT16: T2SatI<(outs rGPR:$Rd), (ins imm0_15:$sat_imm, rGPR:$Rn),
                      NoItinerary,
                      "usat16", "\t$Rd, $sat_imm, $Rn", []>,
           Requires<[IsThumb2, HasThumb2DSP]> {
-  let Inst{31-27} = 0b11110;
-  let Inst{25-22} = 0b1110;
+  let Inst{31-22} = 0b1111001110;
   let Inst{20} = 0;
   let Inst{15} = 0;
   let Inst{21} = 1;        // sh = '1'
   let Inst{14-12} = 0b000; // imm3 = '000'
   let Inst{7-6} = 0b00;    // imm2 = '00'
+  let Inst{5-4} = 0b00;
 }
 
 def : T2Pat<(int_arm_ssat GPR:$a, imm:$pos), (t2SSAT imm:$pos, GPR:$a, 0)>;
