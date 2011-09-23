@@ -1337,12 +1337,10 @@ LookupAddressInModule
         strm.SetIndentLevel (save_indent + 11);
         so_addr.Dump (&strm, exe_scope, Address::DumpStyleResolvedDescription);
         strm.SetIndentLevel (save_indent);
-        strm.EOL();
         // Print out detailed address information when verbose is enabled
         if (verbose)
         {
-            if (so_addr.Dump (&strm, exe_scope, Address::DumpStyleDetailedSymbolContext))
-                strm.EOL();
+            so_addr.Dump (&strm, exe_scope, Address::DumpStyleDetailedSymbolContext);
         }
         strm.IndentLess();
         return true;
