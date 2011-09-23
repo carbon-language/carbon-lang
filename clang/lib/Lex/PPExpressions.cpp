@@ -23,6 +23,7 @@
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Lex/LexDiagnostic.h"
 #include "llvm/ADT/APSInt.h"
+#include "llvm/Support/ErrorHandling.h"
 using namespace clang;
 
 namespace {

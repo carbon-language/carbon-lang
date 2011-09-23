@@ -17,6 +17,7 @@
 #include "clang/Lex/LexDiagnostic.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/ErrorHandling.h"
 using namespace clang;
 
 /// HexDigitValue - Return the value of the specified hex digit, or -1 if it's

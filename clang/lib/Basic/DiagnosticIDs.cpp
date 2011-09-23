@@ -21,6 +21,7 @@
 #include "clang/Lex/LexDiagnostic.h"
 #include "clang/Parse/ParseDiagnostic.h"
 #include "clang/Sema/SemaDiagnostic.h"
+#include "llvm/Support/ErrorHandling.h"
 
 #include <map>
 using namespace clang;
