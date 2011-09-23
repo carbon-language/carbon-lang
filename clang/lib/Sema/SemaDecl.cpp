@@ -1493,9 +1493,11 @@ static void mergeDeclAttributes(Decl *newDecl, const Decl *oldDecl,
   for (specific_attr_iterator<InheritableAttr>
        i = oldDecl->specific_attr_begin<InheritableAttr>(),
        e = oldDecl->specific_attr_end<InheritableAttr>(); i != e; ++i) {
-    // Ignore deprecated and unavailable attributes if requested.
+    // Ignore deprecated/unavailable/availability attributes if requested.
     if (!mergeDeprecation &&
-        (isa<DeprecatedAttr>(*i) || isa<UnavailableAttr>(*i)))
+        (isa<DeprecatedAttr>(*i) || 
+         isa<UnavailableAttr>(*i) ||
+         isa<AvailabilityAttr>(*i)))
       continue;
 
     if (!DeclHasAttr(newDecl, *i)) {
