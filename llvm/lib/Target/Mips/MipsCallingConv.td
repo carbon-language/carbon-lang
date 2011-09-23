@@ -31,6 +31,55 @@ def RetCC_MipsO32 : CallingConv<[
 ]>;
 
 //===----------------------------------------------------------------------===//
+// Mips N32/64 Calling Convention
+//===----------------------------------------------------------------------===//
+
+def CC_MipsN : CallingConv<[
+  // FIXME: Handle byval, complex and float double parameters.
+
+  // Promote i8/i16/i32 arguments to i64.
+  CCIfType<[i8, i16, i32], CCPromoteToType<i64>>,
+
+  // Integer arguments are passed in integer registers.
+  CCIfType<[i64], CCAssignToRegWithShadow<[A0_64, A1_64, A2_64, A3_64,
+                                           T0_64, T1_64, T2_64, T3_64],
+                                          [D12_64, D13_64, D14_64, D15_64,
+                                           D16_64, D17_64, D18_64, D19_64]>>,
+
+  // f32 arguments are passed in single precision FP registers.
+  CCIfType<[f32], CCAssignToRegWithShadow<[F12, F13, F14, F15,
+                                           F16, F17, F18, F19],
+                                          [A0_64, A1_64, A2_64, A3_64,
+                                           T0_64, T1_64, T2_64, T3_64]>>,
+
+  // f64 arguments are passed in double precision FP registers.
+  CCIfType<[f64], CCAssignToRegWithShadow<[D12_64, D13_64, D14_64, D15_64,
+                                           D16_64, D17_64, D18_64, D19_64],
+                                          [A0_64, A1_64, A2_64, A3_64,
+                                           T0_64, T1_64, T2_64, T3_64]>>,
+
+  // All stack parameter slots become 64-bit doublewords and are 8-byte aligned.
+  CCIfType<[i64, f64], CCAssignToStack<8, 8>>,
+  CCIfType<[f32], CCAssignToStack<4, 8>>
+]>;
+
+def RetCC_MipsN : CallingConv<[
+  // FIXME: Handle complex and float double return values.
+
+  // i32 are returned in registers V0, V1
+  CCIfType<[i32], CCAssignToReg<[V0, V1]>>,
+
+  // i64 are returned in registers V0_64, V1_64
+  CCIfType<[i64], CCAssignToReg<[V0_64, V1_64]>>,
+
+  // f32 are returned in registers F0, F2
+  CCIfType<[f32], CCAssignToReg<[F0, F2]>>,
+
+  // f64 are returned in registers D0, D2
+  CCIfType<[f64], CCAssignToReg<[D0_64, D2_64]>>
+]>;
+
+//===----------------------------------------------------------------------===//
 // Mips EABI Calling Convention
 //===----------------------------------------------------------------------===//
 
@@ -77,10 +126,14 @@ def RetCC_MipsEABI : CallingConv<[
 //===----------------------------------------------------------------------===//
 
 def CC_Mips : CallingConv<[
-  CCIfSubtarget<"isABI_EABI()", CCDelegateTo<CC_MipsEABI>>
+  CCIfSubtarget<"isABI_EABI()", CCDelegateTo<CC_MipsEABI>>,
+  CCIfSubtarget<"isABI_N32()", CCDelegateTo<CC_MipsN>>,
+  CCIfSubtarget<"isABI_N64()", CCDelegateTo<CC_MipsN>>
 ]>;
 
 def RetCC_Mips : CallingConv<[
   CCIfSubtarget<"isABI_EABI()", CCDelegateTo<RetCC_MipsEABI>>,
+  CCIfSubtarget<"isABI_N32()", CCDelegateTo<RetCC_MipsN>>,
+  CCIfSubtarget<"isABI_N64()", CCDelegateTo<RetCC_MipsN>>,
   CCDelegateTo<RetCC_MipsO32>
 ]>;
