@@ -2660,7 +2660,7 @@ static DecodeStatus DecodeT2LoadShift(llvm::MCInst &Inst, unsigned Insn,
       break;
     default: {
       unsigned Rt = fieldFromInstruction32(Insn, 12, 4);
-      if (!Check(S, DecodeGPRRegisterClass(Inst, Rt, Address, Decoder)))
+      if (!Check(S, DecoderGPRRegisterClass(Inst, Rt, Address, Decoder)))
     return MCDisassembler::Fail;
     }
   }
