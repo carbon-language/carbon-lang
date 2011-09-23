@@ -398,6 +398,8 @@ void Parser::ParseLexedMethodDef(LexedMethod &LM) {
     if (!Tok.is(tok::l_brace)) {
       FnScope.Exit();
       Actions.ActOnFinishFunctionBody(LM.D, 0);
+      while (Tok.getLocation() != origLoc && Tok.isNot(tok::eof))
+        ConsumeAnyToken();
       return;
     }
   } else
