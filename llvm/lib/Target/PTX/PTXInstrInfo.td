@@ -612,7 +612,8 @@ multiclass PTX_LD_ALL<string opstr, PatFrag pat_load> {
   defm f64 : PTX_LD<opstr, ".f64", RegF64, pat_load>;
 }
 
-multiclass PTX_ST<string opstr, string typestr, RegisterClass RC, PatFrag pat_store> {
+multiclass PTX_ST<string opstr, string typestr, RegisterClass RC,
+                  PatFrag pat_store> {
   def rr32 : InstPTX<(outs),
                      (ins RC:$d, MEMri32:$a),
                      !strconcat(opstr, !strconcat(typestr, "\t[$a], $d")),
