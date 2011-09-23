@@ -3914,6 +3914,7 @@ public:
         {
             result.AppendError ("invalid target\n");
             result.SetStatus (eReturnStatusFailed);
+            return result.Succeeded();
         }
         
         size_t num_hooks = target->GetNumStopHooks ();
