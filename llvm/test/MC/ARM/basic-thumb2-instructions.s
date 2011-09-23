@@ -2236,6 +2236,7 @@ _func:
         strb lr, [r3], #255
         strb r9, [r2], #4
         strb r3, [sp], #-4
+        strb r4, [r8, #-0]!
 
 @ CHECK: strb	r5, [r5, #-4]           @ encoding: [0x05,0xf8,0x04,0x5c]
 @ CHECK: strb.w	r5, [r6, #32]           @ encoding: [0x86,0xf8,0x20,0x50]
@@ -2248,6 +2249,7 @@ _func:
 @ CHECK: strb	lr, [r3], #255          @ encoding: [0x03,0xf8,0xff,0xeb]
 @ CHECK: strb	r9, [r2], #4            @ encoding: [0x02,0xf8,0x04,0x9b]
 @ CHECK: strb	r3, [sp], #-4           @ encoding: [0x0d,0xf8,0x04,0x39]
+@ CHECK: strb	r4, [r8, #-0]!          @ encoding: [0x08,0xf8,0x00,0x4d]
 
 
 @------------------------------------------------------------------------------

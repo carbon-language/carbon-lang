@@ -780,7 +780,7 @@ public:
     // Immediate offset in range [-255, 255].
     if (!Mem.OffsetImm) return true;
     int64_t Val = Mem.OffsetImm->getValue();
-    return Val > -256 && Val < 256;
+    return (Val == INT32_MIN) || (Val > -256 && Val < 256);
   }
   bool isMemPosImm8Offset() const {
     if (Kind != Memory || Mem.OffsetRegNum != 0)
