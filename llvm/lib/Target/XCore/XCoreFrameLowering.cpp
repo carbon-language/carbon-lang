@@ -100,7 +100,8 @@ void XCoreFrameLowering::emitPrologue(MachineFunction &MF) const {
   DebugLoc dl = MBBI != MBB.end() ? MBBI->getDebugLoc() : DebugLoc();
 
   bool FP = hasFP(MF);
-  bool Nested = MF.getFunction()->getAttributes().hasAttrSomewhere(Attribute::Nest);
+  bool Nested = MF.getFunction()->
+                getAttributes().hasAttrSomewhere(Attribute::Nest);
 
   if (Nested) {
     loadFromStack(MBB, MBBI, XCore::R11, 0, dl, TII);

@@ -766,19 +766,23 @@ def NEG : _F2R<(outs GRRegs:$dst), (ins GRRegs:$b),
 let Constraints = "$src1 = $dst" in {
 def SEXT_rus : _FRUS<(outs GRRegs:$dst), (ins GRRegs:$src1, i32imm:$src2),
                       "sext $dst, $src2",
-                      [(set GRRegs:$dst, (int_xcore_sext GRRegs:$src1, immBitp:$src2))]>;
+                      [(set GRRegs:$dst, (int_xcore_sext GRRegs:$src1,
+                                                         immBitp:$src2))]>;
 
 def SEXT_2r : _FRUS<(outs GRRegs:$dst), (ins GRRegs:$src1, GRRegs:$src2),
                      "sext $dst, $src2",
-                     [(set GRRegs:$dst, (int_xcore_sext GRRegs:$src1, GRRegs:$src2))]>;
+                     [(set GRRegs:$dst, (int_xcore_sext GRRegs:$src1,
+                                                        GRRegs:$src2))]>;
 
 def ZEXT_rus : _FRUS<(outs GRRegs:$dst), (ins GRRegs:$src1, i32imm:$src2),
                       "zext $dst, $src2",
-                      [(set GRRegs:$dst, (int_xcore_zext GRRegs:$src1, immBitp:$src2))]>;
+                      [(set GRRegs:$dst, (int_xcore_zext GRRegs:$src1,
+                                                         immBitp:$src2))]>;
 
 def ZEXT_2r : _FRUS<(outs GRRegs:$dst), (ins GRRegs:$src1, GRRegs:$src2),
                      "zext $dst, $src2",
-                     [(set GRRegs:$dst, (int_xcore_zext GRRegs:$src1, GRRegs:$src2))]>;
+                     [(set GRRegs:$dst, (int_xcore_zext GRRegs:$src1,
+                                                        GRRegs:$src2))]>;
 
 def ANDNOT_2r : _F2R<(outs GRRegs:$dst), (ins GRRegs:$src1, GRRegs:$src2),
                  "andnot $dst, $src2",
@@ -825,7 +829,8 @@ def OUT_2r : _F2R<(outs), (ins GRRegs:$r, GRRegs:$val),
 let Constraints = "$src = $dst" in
 def OUTSHR_2r : _F2R<(outs GRRegs:$dst), (ins GRRegs:$r, GRRegs:$src),
                  "outshr res[$r], $src",
-                 [(set GRRegs:$dst, (int_xcore_outshr GRRegs:$r, GRRegs:$src))]>;
+                 [(set GRRegs:$dst, (int_xcore_outshr GRRegs:$r,
+                                                      GRRegs:$src))]>;
 
 def INCT_2r : _F2R<(outs GRRegs:$dst), (ins GRRegs:$r),
                  "inct $dst, res[$r]",
@@ -842,7 +847,8 @@ def IN_2r : _F2R<(outs GRRegs:$dst), (ins GRRegs:$r),
 let Constraints = "$src = $dst" in
 def INSHR_2r : _F2R<(outs GRRegs:$dst), (ins GRRegs:$r, GRRegs:$src),
                  "inshr $dst, res[$r]",
-                 [(set GRRegs:$dst, (int_xcore_inshr GRRegs:$r, GRRegs:$src))]>;
+                 [(set GRRegs:$dst, (int_xcore_inshr GRRegs:$r,
+                                                     GRRegs:$src))]>;
 
 def CHKCT_2r : _F2R<(outs), (ins GRRegs:$r, GRRegs:$val),
                  "chkct res[$r], $val",
