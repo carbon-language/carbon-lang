@@ -4657,7 +4657,7 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
     break;
 
   default:
-    assert(false &&
+    llvm_unreachable(
            "Can only end up with a standard conversion sequence or failure");
   }
 }
@@ -5039,7 +5039,7 @@ BuiltinCandidateTypeSet::AddPointerWithMoreQualifiedTypeVariants(QualType Ty,
       buildObjCPtr = true;
     }
     else
-      assert(false && "type was not a pointer type!");
+      llvm_unreachable("type was not a pointer type!");
   }
   else
     PointeeTy = PointerTy->getPointeeType();
@@ -6333,7 +6333,7 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
   switch (Op) {
   case OO_None:
   case NUM_OVERLOADED_OPERATORS:
-    assert(false && "Expected an overloaded operator");
+    llvm_unreachable("Expected an overloaded operator");
     break;
 
   case OO_New:
@@ -6341,7 +6341,8 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
   case OO_Array_New:
   case OO_Array_Delete:
   case OO_Call:
-    assert(false && "Special operators don't use AddBuiltinOperatorCandidates");
+    llvm_unreachable(
+                    "Special operators don't use AddBuiltinOperatorCandidates");
     break;
 
   case OO_Comma:
@@ -7310,7 +7311,7 @@ static unsigned
 RankDeductionFailure(const OverloadCandidate::DeductionFailureInfo &DFI) {
   switch ((Sema::TemplateDeductionResult)DFI.Result) {
   case Sema::TDK_Success:
-    assert(0 && "TDK_success while diagnosing bad deduction");
+    llvm_unreachable("TDK_success while diagnosing bad deduction");
 
   case Sema::TDK_Incomplete:
     return 1;
@@ -8368,7 +8369,7 @@ Sema::BuildOverloadedCallExpr(Scope *S, Expr *Fn, UnresolvedLookupExpr *ULE,
     if (ULE->decls_begin() + 1 == ULE->decls_end() &&
         (F = dyn_cast<FunctionDecl>(*ULE->decls_begin())) &&
         F->getBuiltinID() && F->isImplicit())
-      assert(0 && "performing ADL for builtin");
+      llvm_unreachable("performing ADL for builtin");
 
     // We don't perform ADL in C.
     assert(getLangOptions().CPlusPlus && "ADL enabled in C");

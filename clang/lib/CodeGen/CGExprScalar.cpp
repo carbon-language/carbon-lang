@@ -153,7 +153,7 @@ public:
     
   Value *VisitStmt(Stmt *S) {
     S->dump(CGF.getContext().getSourceManager());
-    assert(0 && "Stmt can't have complex result type!");
+    llvm_unreachable("Stmt can't have complex result type!");
     return 0;
   }
   Value *VisitExpr(Expr *S);
@@ -1266,7 +1266,7 @@ EmitAddConsiderOverflowBehavior(const UnaryOperator *E,
     return EmitOverflowCheckedBinOp(BinOp);
     break;
   }
-  assert(false && "Unknown SignedOverflowBehaviorTy");
+  llvm_unreachable("Unknown SignedOverflowBehaviorTy");
   return 0;
 }
 
@@ -1780,7 +1780,7 @@ Value *ScalarExprEmitter::EmitOverflowCheckedBinOp(const BinOpInfo &Ops) {
     IID = llvm::Intrinsic::smul_with_overflow;
     break;
   default:
-    assert(false && "Unsupported operation for overflow detection");
+    llvm_unreachable("Unsupported operation for overflow detection");
     IID = 0;
   }
   OpID <<= 1;
@@ -2076,7 +2076,7 @@ enum IntrinsicType { VCMPEQ, VCMPGT };
 static llvm::Intrinsic::ID GetIntrinsic(IntrinsicType IT,
                                         BuiltinType::Kind ElemKind) {
   switch (ElemKind) {
-  default: assert(0 && "unexpected element type");
+  default: llvm_unreachable("unexpected element type");
   case BuiltinType::Char_U:
   case BuiltinType::UChar:
     return (IT == VCMPEQ) ? llvm::Intrinsic::ppc_altivec_vcmpequb_p :
@@ -2146,7 +2146,7 @@ Value *ScalarExprEmitter::EmitCompare(const BinaryOperator *E,unsigned UICmpOpc,
       BuiltinType::Kind ElementKind = BTy->getKind();
 
       switch(E->getOpcode()) {
-      default: assert(0 && "is not a comparison operation");
+      default: llvm_unreachable("is not a comparison operation");
       case BO_EQ:
         CR6 = CR6_LT;
         ID = GetIntrinsic(VCMPEQ, ElementKind);
@@ -2755,7 +2755,7 @@ LValue CodeGenFunction::EmitCompoundAssignmentLValue(
   case BO_LOr:
   case BO_Assign:
   case BO_Comma:
-    assert(false && "Not valid compound assignment operators");
+    llvm_unreachable("Not valid compound assignment operators");
     break;
   }
    

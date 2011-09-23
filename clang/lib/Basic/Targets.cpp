@@ -2795,7 +2795,7 @@ public:
     else if (ABI == "eabi")
       Builder.defineMacro("__mips_eabi");
     else
-      assert(false && "Invalid ABI for Mips32.");
+      llvm_unreachable("Invalid ABI for Mips32.");
   }
   virtual void getGCCRegAliases(const GCCRegAlias *&Aliases,
                                 unsigned &NumAliases) const {
@@ -2897,7 +2897,7 @@ public:
       Builder.defineMacro("_MIPS_SIM", "_ABI64");
     }
     else
-      assert(false && "Invalid ABI for Mips64.");
+      llvm_unreachable("Invalid ABI for Mips64.");
   }
   virtual void getGCCRegAliases(const GCCRegAlias *&Aliases,
                                 unsigned &NumAliases) const {

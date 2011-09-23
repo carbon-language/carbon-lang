@@ -3205,7 +3205,7 @@ static void handleNSReturnsRetainedAttr(Sema &S, Decl *D,
 
   switch (Attr.getKind()) {
     default:
-      assert(0 && "invalid ownership attribute");
+      llvm_unreachable("invalid ownership attribute");
       return;
     case AttributeList::AT_ns_returns_autoreleased:
       D->addAttr(::new (S.Context) NSReturnsAutoreleasedAttr(Attr.getRange(),

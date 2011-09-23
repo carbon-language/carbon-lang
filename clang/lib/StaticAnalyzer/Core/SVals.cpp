@@ -171,7 +171,7 @@ void SVal::symbol_iterator::expand() {
     return;
   }
 
-  assert(false && "unhandled expansion case");
+  llvm_unreachable("unhandled expansion case");
 }
 
 const void *nonloc::LazyCompoundVal::getStore() const {
@@ -369,7 +369,7 @@ void Loc::dumpToStream(raw_ostream &os) const {
       break;
     }
     default:
-      assert(false && "Pretty-printing not implemented for this Loc.");
+      llvm_unreachable("Pretty-printing not implemented for this Loc.");
       break;
   }
 }

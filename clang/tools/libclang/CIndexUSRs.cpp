@@ -320,7 +320,7 @@ void USRGenerator::VisitObjCForwardProtocolDecl(ObjCForwardProtocolDecl *D) {
 void USRGenerator::VisitObjCContainerDecl(ObjCContainerDecl *D) {
   switch (D->getKind()) {
     default:
-      assert(false && "Invalid ObjC container.");
+      llvm_unreachable("Invalid ObjC container.");
     case Decl::ObjCInterface:
     case Decl::ObjCImplementation:
       GenObjCClass(D->getName());

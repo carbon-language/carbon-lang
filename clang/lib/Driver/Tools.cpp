@@ -2477,7 +2477,7 @@ void gcc::Link::RenderExtraToolArgs(const JobAction &JA,
 const char *darwin::CC1::getCC1Name(types::ID Type) const {
   switch (Type) {
   default:
-    assert(0 && "Unexpected type for Darwin CC1 tool.");
+    llvm_unreachable("Unexpected type for Darwin CC1 tool.");
   case types::TY_Asm:
   case types::TY_C: case types::TY_CHeader:
   case types::TY_PP_C: case types::TY_PP_CHeader:

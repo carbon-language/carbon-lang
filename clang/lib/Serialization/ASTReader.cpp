@@ -4993,7 +4993,7 @@ ASTReader::ReadTemplateName(Module &F, const RecordData &Record,
   }
   }
 
-  assert(0 && "Unhandled template name kind!");
+  llvm_unreachable("Unhandled template name kind!");
   return TemplateName();
 }
 
@@ -5033,7 +5033,7 @@ ASTReader::ReadTemplateArgument(Module &F,
   }
   }
 
-  assert(0 && "Unhandled template argument kind!");
+  llvm_unreachable("Unhandled template argument kind!");
   return TemplateArgument();
 }
 

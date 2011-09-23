@@ -102,7 +102,7 @@ public:
     // Create the analyzer component creators.
     switch (Opts.AnalysisStoreOpt) {
     default:
-      assert(0 && "Unknown store manager.");
+      llvm_unreachable("Unknown store manager.");
 #define ANALYSIS_STORE(NAME, CMDFLAG, DESC, CREATEFN)           \
       case NAME##Model: CreateStoreMgr = CREATEFN; break;
 #include "clang/Frontend/Analyses.def"
@@ -110,7 +110,7 @@ public:
 
     switch (Opts.AnalysisConstraintsOpt) {
     default:
-      assert(0 && "Unknown store manager.");
+      llvm_unreachable("Unknown store manager.");
 #define ANALYSIS_CONSTRAINTS(NAME, CMDFLAG, DESC, CREATEFN)     \
       case NAME##Model: CreateConstraintMgr = CREATEFN; break;
 #include "clang/Frontend/Analyses.def"

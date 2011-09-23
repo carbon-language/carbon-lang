@@ -235,7 +235,7 @@ void clang::FormatASTNodeDiagnosticArgument(
   bool NeedQuotes = true;
   
   switch (Kind) {
-    default: assert(0 && "unknown ArgumentKind");
+    default: llvm_unreachable("unknown ArgumentKind");
     case Diagnostic::ak_qualtype: {
       assert(ModLen == 0 && ArgLen == 0 &&
              "Invalid modifier for QualType argument");

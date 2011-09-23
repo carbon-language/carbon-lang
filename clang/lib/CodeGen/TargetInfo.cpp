@@ -1706,7 +1706,7 @@ classifyReturnType(QualType RetTy) const {
 
   case SSEUp:
   case X87Up:
-    assert(0 && "Invalid classification for lo word.");
+    llvm_unreachable("Invalid classification for lo word.");
 
     // AMD64-ABI 3.2.3p4: Rule 2. Types of class memory are returned via
     // hidden argument.
@@ -1760,7 +1760,7 @@ classifyReturnType(QualType RetTy) const {
     // never occur as a hi class.
   case Memory:
   case X87:
-    assert(0 && "Invalid classification for hi word.");
+    llvm_unreachable("Invalid classification for hi word.");
 
   case ComplexX87: // Previously handled.
   case NoClass:
@@ -1848,7 +1848,7 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, unsigned &neededInt,
 
   case SSEUp:
   case X87Up:
-    assert(0 && "Invalid classification for lo word.");
+    llvm_unreachable("Invalid classification for lo word.");
 
     // AMD64-ABI 3.2.3p3: Rule 2. If the class is INTEGER, the next
     // available register of the sequence %rdi, %rsi, %rdx, %rcx, %r8
@@ -1892,7 +1892,7 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, unsigned &neededInt,
   case Memory:
   case X87:
   case ComplexX87:
-    assert(0 && "Invalid classification for hi word.");
+    llvm_unreachable("Invalid classification for hi word.");
     break;
 
   case NoClass: break;

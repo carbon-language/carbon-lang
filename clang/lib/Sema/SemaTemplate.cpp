@@ -2323,7 +2323,8 @@ TemplateNameKind Sema::ActOnDependentTemplateName(Scope *S,
     return TNK_Dependent_template_name;
 
   case UnqualifiedId::IK_LiteralOperatorId:
-    assert(false && "We don't support these; Parse shouldn't have allowed propagation");
+    llvm_unreachable(
+            "We don't support these; Parse shouldn't have allowed propagation");
 
   default:
     break;
@@ -2681,7 +2682,7 @@ bool Sema::CheckTemplateArgument(NamedDecl *Param,
 
     switch (Arg.getArgument().getKind()) {
     case TemplateArgument::Null:
-      assert(false && "Should never see a NULL template argument here");
+      llvm_unreachable("Should never see a NULL template argument here");
       return true;
 
     case TemplateArgument::Expression: {
@@ -2804,7 +2805,7 @@ bool Sema::CheckTemplateArgument(NamedDecl *Param,
 
   switch (Arg.getArgument().getKind()) {
   case TemplateArgument::Null:
-    assert(false && "Should never see a NULL template argument here");
+    llvm_unreachable("Should never see a NULL template argument here");
     return true;
 
   case TemplateArgument::Template:
@@ -5216,7 +5217,7 @@ Sema::CheckSpecializationInstantiationRedecl(SourceLocation NewLoc,
   switch (NewTSK) {
   case TSK_Undeclared:
   case TSK_ImplicitInstantiation:
-    assert(false && "Don't check implicit instantiations here");
+    llvm_unreachable("Don't check implicit instantiations here");
     return false;
 
   case TSK_ExplicitSpecialization:
@@ -5349,7 +5350,7 @@ Sema::CheckSpecializationInstantiationRedecl(SourceLocation NewLoc,
     break;
   }
 
-  assert(false && "Missing specialization/instantiation case?");
+  llvm_unreachable("Missing specialization/instantiation case?");
 
   return false;
 }

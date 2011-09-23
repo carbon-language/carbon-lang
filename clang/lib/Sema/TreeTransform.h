@@ -1728,7 +1728,7 @@ public:
                                                    SubExpr, RParenLoc);
 
     default:
-      assert(false && "Invalid C++ named cast");
+      llvm_unreachable("Invalid C++ named cast");
       break;
     }
 
@@ -2681,7 +2681,7 @@ TreeTransform<Derived>
   }
   }
 
-  assert(0 && "Unknown name kind.");
+  llvm_unreachable("Unknown name kind.");
   return DeclarationNameInfo();
 }
 
@@ -8049,7 +8049,7 @@ TreeTransform<Derived>::TransformBlockDeclRefExpr(BlockDeclRefExpr *E) {
 template<typename Derived>
 ExprResult
 TreeTransform<Derived>::TransformAsTypeExpr(AsTypeExpr *E) {
-  assert(false && "Cannot transform asType expressions yet");
+  llvm_unreachable("Cannot transform asType expressions yet");
   return SemaRef.Owned(E);
 }
   

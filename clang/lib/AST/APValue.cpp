@@ -93,7 +93,7 @@ static double GetApproxValue(const llvm::APFloat &F) {
 
 void APValue::print(raw_ostream &OS) const {
   switch (getKind()) {
-  default: assert(0 && "Unknown APValue kind!");
+  default: llvm_unreachable("Unknown APValue kind!");
   case Uninitialized:
     OS << "Uninitialized";
     return;
@@ -123,7 +123,7 @@ void APValue::print(raw_ostream &OS) const {
 static void WriteShortAPValueToStream(raw_ostream& Out,
                                       const APValue& V) {
   switch (V.getKind()) {
-  default: assert(0 && "Unknown APValue kind!");
+  default: llvm_unreachable("Unknown APValue kind!");
   case APValue::Uninitialized:
     Out << "Uninitialized";
     break;

@@ -1164,7 +1164,7 @@ static InputKind ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
   if (const Arg *A = Args.getLastArg(OPT_Action_Group)) {
     switch (A->getOption().getID()) {
     default:
-      assert(0 && "Invalid option in group!");
+      llvm_unreachable("Invalid option in group!");
     case OPT_ast_dump:
       Opts.ProgramAction = frontend::ASTDump; break;
     case OPT_ast_dump_xml:
@@ -1457,7 +1457,7 @@ void CompilerInvocation::setLangDefaults(LangOptions &Opts, InputKind IK,
     case IK_None:
     case IK_AST:
     case IK_LLVM_IR:
-      assert(0 && "Invalid input kind!");
+      llvm_unreachable("Invalid input kind!");
     case IK_OpenCL:
       LangStd = LangStandard::lang_opencl;
       break;

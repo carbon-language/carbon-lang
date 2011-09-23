@@ -26,7 +26,8 @@ void TextDiagnosticBuffer::HandleDiagnostic(Diagnostic::Level Level,
   llvm::SmallString<100> Buf;
   Info.FormatDiagnostic(Buf);
   switch (Level) {
-  default: assert(0 && "Diagnostic not handled during diagnostic buffering!");
+  default: llvm_unreachable(
+                         "Diagnostic not handled during diagnostic buffering!");
   case Diagnostic::Note:
     Notes.push_back(std::make_pair(Info.getLocation(), Buf.str()));
     break;

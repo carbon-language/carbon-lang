@@ -891,7 +891,7 @@ SVal RegionStoreManager::Retrieve(Store store, Loc L, QualType T) {
   }
 
   if (isa<CodeTextRegion>(MR)) {
-    assert(0 && "Why load from a code text region?");
+    llvm_unreachable("Why load from a code text region?");
     return UnknownVal();
   }
 
@@ -1130,7 +1130,7 @@ RegionStoreManager::RetrieveDerivedDefaultValue(RegionBindings B,
     if (isa<nonloc::LazyCompoundVal>(val))
       return Optional<SVal>();
 
-    assert(0 && "Unknown default value");
+    llvm_unreachable("Unknown default value");
   }
 
   return Optional<SVal>();

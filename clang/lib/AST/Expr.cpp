@@ -595,7 +595,7 @@ getLocationOfByte(unsigned ByteNo, const SourceManager &SM,
 /// corresponds to, e.g. "sizeof" or "[pre]++".
 const char *UnaryOperator::getOpcodeStr(Opcode Op) {
   switch (Op) {
-  default: assert(0 && "Unknown unary operator");
+  default: llvm_unreachable("Unknown unary operator");
   case UO_PostInc: return "++";
   case UO_PostDec: return "--";
   case UO_PreInc:  return "++";
@@ -615,7 +615,7 @@ const char *UnaryOperator::getOpcodeStr(Opcode Op) {
 UnaryOperatorKind
 UnaryOperator::getOverloadedOpcode(OverloadedOperatorKind OO, bool Postfix) {
   switch (OO) {
-  default: assert(false && "No unary operator for overloaded function");
+  default: llvm_unreachable("No unary operator for overloaded function");
   case OO_PlusPlus:   return Postfix ? UO_PostInc : UO_PreInc;
   case OO_MinusMinus: return Postfix ? UO_PostDec : UO_PreDec;
   case OO_Amp:        return UO_AddrOf;
@@ -1289,7 +1289,7 @@ const char *BinaryOperator::getOpcodeStr(Opcode Op) {
 BinaryOperatorKind
 BinaryOperator::getOverloadedOpcode(OverloadedOperatorKind OO) {
   switch (OO) {
-  default: assert(false && "Not an overloadable binary operator");
+  default: llvm_unreachable("Not an overloadable binary operator");
   case OO_Plus: return BO_Add;
   case OO_Minus: return BO_Sub;
   case OO_Star: return BO_Mul;
@@ -2495,7 +2495,7 @@ Expr::isNullPointerConstant(ASTContext &Ctx,
   if (isValueDependent()) {
     switch (NPC) {
     case NPC_NeverValueDependent:
-      assert(false && "Unexpected value dependent expression!");
+      llvm_unreachable("Unexpected value dependent expression!");
       // If the unthinkable happens, fall through to the safest alternative.
         
     case NPC_ValueDependentIsNull:

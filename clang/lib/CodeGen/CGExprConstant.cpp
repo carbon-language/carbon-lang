@@ -780,7 +780,7 @@ public:
     if (ILE->getType()->isVectorType())
       return 0;
 
-    assert(0 && "Unable to handle InitListExpr");
+    llvm_unreachable("Unable to handle InitListExpr");
     // Get rid of control reaches end of void function warning.
     // Not reached.
     return 0;
@@ -966,7 +966,7 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
   if (Success && !Result.HasSideEffects) {
     switch (Result.Val.getKind()) {
     case APValue::Uninitialized:
-      assert(0 && "Constant expressions should be initialized.");
+      llvm_unreachable("Constant expressions should be initialized.");
       return 0;
     case APValue::LValue: {
       llvm::Type *DestTy = getTypes().ConvertTypeForMem(DestType);

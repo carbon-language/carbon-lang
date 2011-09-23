@@ -1742,7 +1742,7 @@ FindReportInEquivalenceClass(BugReportEquivClass& EQ,
     if (!errorNode)
       continue;
     if (errorNode->isSink()) {
-      assert(false &&
+      llvm_unreachable(
            "BugType::isSuppressSink() should not be 'true' for sink end nodes");
       return 0;
     }

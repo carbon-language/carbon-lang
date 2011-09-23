@@ -74,7 +74,7 @@ void ExprEngine::VisitBinaryOperator(const BinaryOperator* B,
     
     switch (Op) {
       default:
-        assert(0 && "Invalid opcode for compound assignment.");
+        llvm_unreachable("Invalid opcode for compound assignment.");
       case BO_MulAssign: Op = BO_Mul; break;
       case BO_DivAssign: Op = BO_Div; break;
       case BO_RemAssign: Op = BO_Rem; break;
@@ -203,9 +203,9 @@ void ExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
     
     switch (CastE->getCastKind()) {
       case CK_LValueToRValue:
-        assert(false && "LValueToRValue casts handled earlier.");
+        llvm_unreachable("LValueToRValue casts handled earlier.");
       case CK_GetObjCProperty:
-        assert(false && "GetObjCProperty casts handled earlier.");
+        llvm_unreachable("GetObjCProperty casts handled earlier.");
       case CK_ToVoid:
         Dst.Add(Pred);
         continue;
@@ -625,7 +625,7 @@ void ExprEngine::VisitUnaryOperator(const UnaryOperator* U,
         
         switch (U->getOpcode()) {
           default:
-            assert(false && "Invalid Opcode.");
+            llvm_unreachable("Invalid Opcode.");
             break;
             
           case UO_Not:

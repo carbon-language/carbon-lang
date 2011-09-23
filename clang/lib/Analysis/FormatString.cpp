@@ -209,7 +209,7 @@ clang::analyze_format_string::ParseLengthModifier(FormatSpecifier &FS,
 bool ArgTypeResult::matchesType(ASTContext &C, QualType argTy) const {
   switch (K) {
     case InvalidTy:
-      assert(false && "ArgTypeResult must be valid");
+      llvm_unreachable("ArgTypeResult must be valid");
       return true;
 
     case UnknownTy:
@@ -312,7 +312,7 @@ bool ArgTypeResult::matchesType(ASTContext &C, QualType argTy) const {
 QualType ArgTypeResult::getRepresentativeType(ASTContext &C) const {
   switch (K) {
     case InvalidTy:
-      assert(false && "No representative type for Invalid ArgTypeResult");
+      llvm_unreachable("No representative type for Invalid ArgTypeResult");
       // Fall-through.
     case UnknownTy:
       return QualType();

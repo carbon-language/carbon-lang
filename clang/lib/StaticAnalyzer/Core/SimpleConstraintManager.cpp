@@ -125,7 +125,7 @@ static BinaryOperator::Opcode NegateComparison(BinaryOperator::Opcode op) {
   // the only place it's used. (This code was copied from SimpleSValBuilder.cpp.)
   switch (op) {
   default:
-    assert(false && "Invalid opcode.");
+    llvm_unreachable("Invalid opcode.");
   case BO_LT: return BO_GE;
   case BO_GT: return BO_LE;
   case BO_LE: return BO_GT;
@@ -152,7 +152,7 @@ const ProgramState *SimpleConstraintManager::assumeAux(const ProgramState *state
 
   switch (Cond.getSubKind()) {
   default:
-    assert(false && "'Assume' not implemented for this NonLoc");
+    llvm_unreachable("'Assume' not implemented for this NonLoc");
 
   case nonloc::SymbolValKind: {
     nonloc::SymbolVal& SV = cast<nonloc::SymbolVal>(Cond);

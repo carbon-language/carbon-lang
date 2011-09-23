@@ -42,7 +42,7 @@ public:
     // below.
     if (PTR(BinaryOperator) BinOp = dyn_cast<BinaryOperator>(S)) {
       switch (BinOp->getOpcode()) {
-      default: assert(0 && "Unknown binary operator!");
+      default: llvm_unreachable("Unknown binary operator!");
       case BO_PtrMemD:   DISPATCH(BinPtrMemD,   BinaryOperator);
       case BO_PtrMemI:   DISPATCH(BinPtrMemI,   BinaryOperator);
       case BO_Mul:       DISPATCH(BinMul,       BinaryOperator);
@@ -80,7 +80,7 @@ public:
       }
     } else if (PTR(UnaryOperator) UnOp = dyn_cast<UnaryOperator>(S)) {
       switch (UnOp->getOpcode()) {
-      default: assert(0 && "Unknown unary operator!");
+      default: llvm_unreachable("Unknown unary operator!");
       case UO_PostInc:   DISPATCH(UnaryPostInc,   UnaryOperator);
       case UO_PostDec:   DISPATCH(UnaryPostDec,   UnaryOperator);
       case UO_PreInc:    DISPATCH(UnaryPreInc,    UnaryOperator);
@@ -99,7 +99,7 @@ public:
 
     // Top switch stmt: dispatch to VisitFooStmt for each FooStmt.
     switch (S->getStmtClass()) {
-    default: assert(0 && "Unknown stmt kind!");
+    default: llvm_unreachable("Unknown stmt kind!");
 #define ABSTRACT_STMT(STMT)
 #define STMT(CLASS, PARENT)                              \
     case Stmt::CLASS ## Class: DISPATCH(CLASS, CLASS);

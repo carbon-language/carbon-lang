@@ -494,7 +494,7 @@ DiagnosticIDs::getDiagnosticLevel(unsigned DiagID, unsigned DiagClass,
   bool ShouldEmitInSystemHeader = false;
 
   switch (MappingInfo & 7) {
-  default: assert(0 && "Unknown mapping!");
+  default: llvm_unreachable("Unknown mapping!");
   case diag::MAP_IGNORE:
     if (Diag.EnableAllWarnings) {
       // Leave the warning disabled if it was explicitly ignored.

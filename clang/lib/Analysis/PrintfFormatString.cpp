@@ -461,7 +461,7 @@ bool PrintfSpecifier::fixType(QualType QT) {
     HasAlternativeForm = 0;
     HasPlusPrefix = 0;
   } else {
-    assert(0 && "Unexpected type");
+    llvm_unreachable("Unexpected type");
   }
 
   return true;

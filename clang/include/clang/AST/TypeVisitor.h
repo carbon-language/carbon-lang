@@ -28,7 +28,7 @@ public:
   RetTy Visit(const Type *T) {
     // Top switch stmt: dispatch to VisitFooType for each FooType.
     switch (T->getTypeClass()) {
-    default: assert(0 && "Unknown type class!");
+    default: llvm_unreachable("Unknown type class!");
 #define ABSTRACT_TYPE(CLASS, PARENT)
 #define TYPE(CLASS, PARENT) case Type::CLASS: DISPATCH(CLASS##Type);
 #include "clang/AST/TypeNodes.def"

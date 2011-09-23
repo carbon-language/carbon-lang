@@ -114,7 +114,7 @@ static QualType GetBaseType(QualType T) {
     else if (const VectorType *VTy = BaseType->getAs<VectorType>())
       BaseType = VTy->getElementType();
     else
-      assert(0 && "Unknown declarator!");
+      llvm_unreachable("Unknown declarator!");
   }
   return BaseType;
 }
@@ -192,7 +192,7 @@ void DeclPrinter::ProcessDeclGroup(SmallVectorImpl<Decl*>& Decls) {
 
 void DeclPrinter::Print(AccessSpecifier AS) {
   switch(AS) {
-  case AS_none:      assert(0 && "No access specifier!"); break;
+  case AS_none:      llvm_unreachable("No access specifier!"); break;
   case AS_public:    Out << "public"; break;
   case AS_protected: Out << "protected"; break;
   case AS_private:   Out << "private"; break;

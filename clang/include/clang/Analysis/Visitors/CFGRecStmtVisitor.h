@@ -45,7 +45,7 @@ break;
         CONDVAR_CASE(WhileStmt)
 #undef CONDVAR_CASE
       default:
-        assert(false && "Infeasible");
+        llvm_unreachable("Infeasible");
     }    
     static_cast<ImplClass*>(this)->Visit(CondVar->getInit());
   }

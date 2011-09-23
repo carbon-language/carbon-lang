@@ -4730,7 +4730,7 @@ AnnotateTokensWorker::Visit(CXCursor cursor, CXCursor parent) {
       SourceLocation TokLoc = GetTokenLoc(I);
       switch (LocationCompare(SrcMgr, TokLoc, cursorRange)) {
       case RangeBefore:
-        assert(0 && "Infeasible");
+        llvm_unreachable("Infeasible");
       case RangeAfter:
         break;
       case RangeOverlap:

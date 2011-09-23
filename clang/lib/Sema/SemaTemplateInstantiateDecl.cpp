@@ -96,7 +96,7 @@ void Sema::InstantiateAttrs(const MultiLevelTemplateArgumentList &TemplateArgs,
 
 Decl *
 TemplateDeclInstantiator::VisitTranslationUnitDecl(TranslationUnitDecl *D) {
-  assert(false && "Translation units cannot be instantiated");
+  llvm_unreachable("Translation units cannot be instantiated");
   return D;
 }
 
@@ -110,7 +110,7 @@ TemplateDeclInstantiator::VisitLabelDecl(LabelDecl *D) {
 
 Decl *
 TemplateDeclInstantiator::VisitNamespaceDecl(NamespaceDecl *D) {
-  assert(false && "Namespaces cannot be instantiated");
+  llvm_unreachable("Namespaces cannot be instantiated");
   return D;
 }
 
@@ -701,7 +701,7 @@ Decl *TemplateDeclInstantiator::VisitEnumDecl(EnumDecl *D) {
 }
 
 Decl *TemplateDeclInstantiator::VisitEnumConstantDecl(EnumConstantDecl *D) {
-  assert(false && "EnumConstantDecls can only occur within EnumDecls.");
+  llvm_unreachable("EnumConstantDecls can only occur within EnumDecls.");
   return 0;
 }
 
@@ -3308,7 +3308,7 @@ void Sema::PerformPendingInstantiations(bool LocalOnly) {
     // and removed the need for implicit instantiation.
     switch (Var->getMostRecentDeclaration()->getTemplateSpecializationKind()) {
     case TSK_Undeclared:
-      assert(false && "Cannot instantitiate an undeclared specialization.");
+      llvm_unreachable("Cannot instantitiate an undeclared specialization.");
     case TSK_ExplicitInstantiationDeclaration:
     case TSK_ExplicitSpecialization:
       continue;  // No longer need to instantiate this type.

@@ -326,7 +326,7 @@ void CoreEngine::HandleBlockExit(const CFGBlock * B, ExplodedNode *Pred) {
   if (const Stmt *Term = B->getTerminator()) {
     switch (Term->getStmtClass()) {
       default:
-        assert(false && "Analysis for this terminator not implemented.");
+        llvm_unreachable("Analysis for this terminator not implemented.");
         break;
 
       case Stmt::BinaryOperatorClass: // '&&' and '||'
@@ -547,7 +547,7 @@ static ProgramPoint GetProgramPoint(const Stmt *S, ProgramPoint::Kind K,
                                     const ProgramPointTag *tag){
   switch (K) {
     default:
-      assert(false && "Unhandled ProgramPoint kind");    
+      llvm_unreachable("Unhandled ProgramPoint kind");    
     case ProgramPoint::PreStmtKind:
       return PreStmt(S, LC, tag);
     case ProgramPoint::PostStmtKind:

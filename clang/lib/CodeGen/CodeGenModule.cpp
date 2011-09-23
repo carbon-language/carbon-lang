@@ -850,7 +850,7 @@ void CodeGenModule::EmitGlobalDefinition(GlobalDecl GD) {
   if (const VarDecl *VD = dyn_cast<VarDecl>(D))
     return EmitGlobalVarDefinition(VD);
   
-  assert(0 && "Invalid argument to EmitGlobalDefinition()");
+  llvm_unreachable("Invalid argument to EmitGlobalDefinition()");
 }
 
 /// GetOrCreateLLVMFunction - If the specified mangled name is not in the

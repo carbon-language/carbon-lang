@@ -223,7 +223,7 @@ bool Sema::CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New) {
       break;
 
     default:
-      assert(false && "This spec type is compatible with none.");
+      llvm_unreachable("This spec type is compatible with none.");
     }
     OS.flush();
 

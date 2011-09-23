@@ -265,7 +265,7 @@ void Sema::ActOnPragmaPack(PragmaPackKind Kind, IdentifierInfo *Name,
     break;
 
   default:
-    assert(0 && "Invalid #pragma pack kind.");
+    llvm_unreachable("Invalid #pragma pack kind.");
   }
 }
 

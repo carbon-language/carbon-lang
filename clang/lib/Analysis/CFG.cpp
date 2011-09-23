@@ -3373,7 +3373,7 @@ public:
         OS << " && ...";
         return;
       default:
-        assert(false && "Invalid logical operator.");
+        llvm_unreachable("Invalid logical operator.");
     }
   }
 
@@ -3521,7 +3521,7 @@ static void print_block(raw_ostream &OS, const CFG* cfg,
       OS << ")";
 
     } else
-      assert(false && "Invalid label statement in CFGBlock.");
+      llvm_unreachable("Invalid label statement in CFGBlock.");
 
     OS << ":\n";
   }

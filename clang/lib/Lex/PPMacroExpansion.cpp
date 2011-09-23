@@ -1015,7 +1015,7 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
     OS << (int)Value;
     Tok.setKind(tok::numeric_constant);
   } else {
-    assert(0 && "Unknown identifier!");
+    llvm_unreachable("Unknown identifier!");
   }
   CreateString(OS.str().data(), OS.str().size(), Tok, Tok.getLocation());
 }

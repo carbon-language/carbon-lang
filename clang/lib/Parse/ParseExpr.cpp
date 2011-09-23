@@ -1585,7 +1585,7 @@ ExprResult Parser::ParseBuiltinPrimaryExpression() {
   // TODO: Build AST.
 
   switch (T) {
-  default: assert(0 && "Not a builtin primary expression!");
+  default: llvm_unreachable("Not a builtin primary expression!");
   case tok::kw___builtin_va_arg: {
     ExprResult Expr(ParseAssignmentExpression());
 

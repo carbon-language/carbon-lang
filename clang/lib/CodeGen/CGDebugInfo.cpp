@@ -290,16 +290,16 @@ llvm::DIType CGDebugInfo::CreateType(const BuiltinType *BT) {
   const char *BTName = NULL;
   switch (BT->getKind()) {
   case BuiltinType::Dependent:
-    assert(0 && "Unexpected builtin type Dependent");
+    llvm_unreachable("Unexpected builtin type Dependent");
     return llvm::DIType();
   case BuiltinType::Overload:
-    assert(0 && "Unexpected builtin type Overload");
+    llvm_unreachable("Unexpected builtin type Overload");
     return llvm::DIType();
   case BuiltinType::BoundMember:
-    assert(0 && "Unexpected builtin type BoundMember");
+    llvm_unreachable("Unexpected builtin type BoundMember");
     return llvm::DIType();
   case BuiltinType::UnknownAny:
-    assert(0 && "Unexpected builtin type UnknownAny");
+    llvm_unreachable("Unexpected builtin type UnknownAny");
     return llvm::DIType();
   case BuiltinType::NullPtr:
     return DBuilder.
@@ -1543,7 +1543,7 @@ llvm::DIType CGDebugInfo::CreateTypeNode(QualType Ty,
 #define NON_CANONICAL_TYPE(Class, Base)
 #define DEPENDENT_TYPE(Class, Base) case Type::Class:
 #include "clang/AST/TypeNodes.def"
-    assert(false && "Dependent types cannot show up in debug information");
+    llvm_unreachable("Dependent types cannot show up in debug information");
 
   case Type::ExtVector:
   case Type::Vector:

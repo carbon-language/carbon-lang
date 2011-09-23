@@ -193,7 +193,7 @@ DeclarationName::NameKind DeclarationName::getNameKind() const {
   }
 
   // Can't actually get here.
-  assert(0 && "This should be unreachable!");
+  llvm_unreachable("This should be unreachable!");
   return Identifier;
 }
 
@@ -276,7 +276,7 @@ void DeclarationName::printName(raw_ostream &OS) const {
     return;
   }
 
-  assert(false && "Unexpected declaration name kind");
+  llvm_unreachable("Unexpected declaration name kind");
 }
 
 QualType DeclarationName::getCXXNameType() const {
@@ -338,7 +338,7 @@ void *DeclarationName::getFETokenInfoAsVoid() const {
     return getCXXLiteralIdentifier()->getFETokenInfo<void>();
 
   default:
-    assert(false && "Declaration name has no FETokenInfo");
+    llvm_unreachable("Declaration name has no FETokenInfo");
   }
   return 0;
 }
@@ -364,7 +364,7 @@ void DeclarationName::setFETokenInfo(void *T) {
     break;
 
   default:
-    assert(false && "Declaration name has no FETokenInfo");
+    llvm_unreachable("Declaration name has no FETokenInfo");
   }
 }
 
@@ -588,7 +588,7 @@ void DeclarationNameInfo::printName(raw_ostream &OS) const {
       Name.printName(OS);
     return;
   }
-  assert(false && "Unexpected declaration name kind");
+  llvm_unreachable("Unexpected declaration name kind");
 }
 
 SourceLocation DeclarationNameInfo::getEndLoc() const {
@@ -621,6 +621,6 @@ SourceLocation DeclarationNameInfo::getEndLoc() const {
   case DeclarationName::CXXUsingDirective:
     return NameLoc;
   }
-  assert(false && "Unexpected declaration name kind");
+  llvm_unreachable("Unexpected declaration name kind");
   return SourceLocation();
 }

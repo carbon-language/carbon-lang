@@ -1664,7 +1664,7 @@ void Sema::ImplMethodsVsClassMethods(Scope *S, ObjCImplDecl* IMPDecl,
       DiagnoseUnimplementedProperties(S, IMPDecl, CDecl, InsMap);      
     } 
   } else
-    assert(false && "invalid ObjCContainerDecl type.");
+    llvm_unreachable("invalid ObjCContainerDecl type.");
 }
 
 /// ActOnForwardClassDeclaration -

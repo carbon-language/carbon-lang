@@ -30,7 +30,7 @@ static int HexDigitValue(char C) {
 
 static unsigned getCharWidth(tok::TokenKind kind, const TargetInfo &Target) {
   switch (kind) {
-  default: assert(0 && "Unknown token type!");
+  default: llvm_unreachable("Unknown token type!");
   case tok::char_constant:
   case tok::string_literal:
   case tok::utf8_string_literal:

@@ -1803,7 +1803,7 @@ ASTNodeImporter::ImportDeclarationNameLoc(const DeclarationNameInfo &From,
     To.setNamedTypeInfo(Importer.Import(FromTInfo));
     return;
   }
-    assert(0 && "Unknown name kind.");
+    llvm_unreachable("Unknown name kind.");
   }
 }
 

@@ -584,7 +584,7 @@ void StmtPrinter::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *Node) {
 void StmtPrinter::VisitPredefinedExpr(PredefinedExpr *Node) {
   switch (Node->getIdentType()) {
     default:
-      assert(0 && "unknown case");
+      llvm_unreachable("unknown case");
     case PredefinedExpr::Func:
       OS << "__func__";
       break;
@@ -658,7 +658,7 @@ void StmtPrinter::VisitIntegerLiteral(IntegerLiteral *Node) {
 
   // Emit suffixes.  Integer literals are always a builtin integer type.
   switch (Node->getType()->getAs<BuiltinType>()->getKind()) {
-  default: assert(0 && "Unexpected type for integer literal!");
+  default: llvm_unreachable("Unexpected type for integer literal!");
   case BuiltinType::Int:       break; // no suffix.
   case BuiltinType::UInt:      OS << 'U'; break;
   case BuiltinType::Long:      OS << 'L'; break;
@@ -1051,7 +1051,7 @@ void StmtPrinter::VisitCXXOperatorCallExpr(CXXOperatorCallExpr *Node) {
     OS << ' ' << OpStrings[Kind] << ' ';
     PrintExpr(Node->getArg(1));
   } else {
-    assert(false && "unknown overloaded operator");
+    llvm_unreachable("unknown overloaded operator");
   }
 }
 

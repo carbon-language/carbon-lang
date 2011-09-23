@@ -29,7 +29,7 @@ static int SelectDigraphErrorMessage(tok::TokenKind Kind) {
     case tok::kw_reinterpret_cast: return 3;
     case tok::kw_static_cast:      return 4;
     default:
-      assert(0 && "Unknown type for digraph error message.");
+      llvm_unreachable("Unknown type for digraph error message.");
       return -1;
   }
 }
@@ -784,7 +784,7 @@ ExprResult Parser::ParseCXXCasts() {
   const char *CastName = 0;     // For error messages
 
   switch (Kind) {
-  default: assert(0 && "Unknown C++ cast!"); abort();
+  default: llvm_unreachable("Unknown C++ cast!"); abort();
   case tok::kw_const_cast:       CastName = "const_cast";       break;
   case tok::kw_dynamic_cast:     CastName = "dynamic_cast";     break;
   case tok::kw_reinterpret_cast: CastName = "reinterpret_cast"; break;
@@ -1289,9 +1289,9 @@ void Parser::ParseCXXSimpleTypeSpecifier(DeclSpec &DS) {
   switch (Tok.getKind()) {
   case tok::identifier:   // foo::bar
   case tok::coloncolon:   // ::foo::bar
-    assert(0 && "Annotation token should already be formed!");
+    llvm_unreachable("Annotation token should already be formed!");
   default:
-    assert(0 && "Not a simple-type-specifier token!");
+    llvm_unreachable("Not a simple-type-specifier token!");
     abort();
 
   // type-name
@@ -2200,7 +2200,7 @@ Parser::ParseCXXDeleteExpression(bool UseGlobal, SourceLocation Start) {
 
 static UnaryTypeTrait UnaryTypeTraitFromTokKind(tok::TokenKind kind) {
   switch(kind) {
-  default: assert(false && "Not a known unary type trait.");
+  default: llvm_unreachable("Not a known unary type trait.");
   case tok::kw___has_nothrow_assign:      return UTT_HasNothrowAssign;
   case tok::kw___has_nothrow_constructor: return UTT_HasNothrowConstructor;
   case tok::kw___has_nothrow_copy:           return UTT_HasNothrowCopy;
@@ -2268,7 +2268,7 @@ static ArrayTypeTrait ArrayTypeTraitFromTokKind(tok::TokenKind kind) {
 
 static ExpressionTrait ExpressionTraitFromTokKind(tok::TokenKind kind) {
   switch(kind) {
-  default: assert(false && "Not a known unary expression trait.");
+  default: llvm_unreachable("Not a known unary expression trait.");
   case tok::kw___is_lvalue_expr:             return ET_IsLValueExpr;
   case tok::kw___is_rvalue_expr:             return ET_IsRValueExpr;
   }

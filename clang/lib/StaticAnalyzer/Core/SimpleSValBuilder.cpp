@@ -171,7 +171,7 @@ SVal SimpleSValBuilder::evalComplement(NonLoc X) {
 static BinaryOperator::Opcode NegateComparison(BinaryOperator::Opcode op) {
   switch (op) {
   default:
-    assert(false && "Invalid opcode.");
+    llvm_unreachable("Invalid opcode.");
   case BO_LT: return BO_GE;
   case BO_GT: return BO_LE;
   case BO_LE: return BO_GT;
@@ -184,7 +184,7 @@ static BinaryOperator::Opcode NegateComparison(BinaryOperator::Opcode op) {
 static BinaryOperator::Opcode ReverseComparison(BinaryOperator::Opcode op) {
   switch (op) {
   default:
-    assert(false && "Invalid opcode.");
+    llvm_unreachable("Invalid opcode.");
   case BO_LT: return BO_GT;
   case BO_GT: return BO_LT;
   case BO_LE: return BO_GE;
@@ -347,7 +347,7 @@ SVal SimpleSValBuilder::evalBinOpNN(const ProgramState *state,
           break;
         case BO_LAnd:
         case BO_LOr:
-          assert(false && "Logical operators handled by branching logic.");
+          llvm_unreachable("Logical operators handled by branching logic.");
           return UnknownVal();
         case BO_Assign:
         case BO_MulAssign:
@@ -361,11 +361,11 @@ SVal SimpleSValBuilder::evalBinOpNN(const ProgramState *state,
         case BO_XorAssign:
         case BO_OrAssign:
         case BO_Comma:
-          assert(false && "'=' and ',' operators handled by ExprEngine.");
+          llvm_unreachable("'=' and ',' operators handled by ExprEngine.");
           return UnknownVal();
         case BO_PtrMemD:
         case BO_PtrMemI:
-          assert(false && "Pointer arithmetic not handled here.");
+          llvm_unreachable("Pointer arithmetic not handled here.");
           return UnknownVal();
         case BO_LT:
         case BO_GT:
@@ -556,7 +556,7 @@ SVal SimpleSValBuilder::evalBinOpLL(const ProgramState *state,
   if (lhs == rhs) {
     switch (op) {
     default:
-      assert(false && "Unimplemented operation for two identical values");
+      llvm_unreachable("Unimplemented operation for two identical values");
       return UnknownVal();
     case BO_Sub:
       return makeZeroVal(resultTy);
@@ -573,7 +573,7 @@ SVal SimpleSValBuilder::evalBinOpLL(const ProgramState *state,
 
   switch (lhs.getSubKind()) {
   default:
-    assert(false && "Ordering not implemented for this Loc.");
+    llvm_unreachable("Ordering not implemented for this Loc.");
     return UnknownVal();
 
   case loc::GotoLabelKind:
@@ -827,7 +827,7 @@ SVal SimpleSValBuilder::evalBinOpLL(const ProgramState *state,
           return makeTruthVal(!leftFirst, resultTy);
       }
 
-      assert(false && "Fields not found in parent record's definition");
+      llvm_unreachable("Fields not found in parent record's definition");
     }
 
     // If we get here, we have no way of comparing the regions.

@@ -548,7 +548,7 @@ Sema::SemaBuiltinAtomicOverloaded(ExprResult TheCallResult) {
   unsigned BuiltinID = FDecl->getBuiltinID();
   unsigned BuiltinIndex, NumFixed = 1;
   switch (BuiltinID) {
-  default: assert(0 && "Unknown overloaded atomic builtin!");
+  default: llvm_unreachable("Unknown overloaded atomic builtin!");
   case Builtin::BI__sync_fetch_and_add: BuiltinIndex = 0; break;
   case Builtin::BI__sync_fetch_and_sub: BuiltinIndex = 1; break;
   case Builtin::BI__sync_fetch_and_or:  BuiltinIndex = 2; break;

@@ -203,7 +203,7 @@ static bool TypeInfoIsInStandardLibrary(const BuiltinType *Ty) {
     case BuiltinType::ObjCId:
     case BuiltinType::ObjCClass:
     case BuiltinType::ObjCSel:
-      assert(false && "FIXME: Objective-C types are unsupported!");
+      llvm_unreachable("FIXME: Objective-C types are unsupported!");
   }
   
   // Silent gcc.
@@ -393,11 +393,11 @@ void RTTIBuilder::BuildVTablePointer(const Type *Ty) {
 #define NON_CANONICAL_TYPE(Class, Base) case Type::Class:
 #define DEPENDENT_TYPE(Class, Base) case Type::Class:
 #include "clang/AST/TypeNodes.def"
-    assert(false && "Non-canonical and dependent types shouldn't get here");
+    llvm_unreachable("Non-canonical and dependent types shouldn't get here");
 
   case Type::LValueReference:
   case Type::RValueReference:
-    assert(false && "References shouldn't get here");
+    llvm_unreachable("References shouldn't get here");
 
   case Type::Builtin:
   // GCC treats vector and complex types as fundamental types.
@@ -590,7 +590,7 @@ llvm::Constant *RTTIBuilder::BuildTypeInfo(QualType Ty, bool Force) {
 #define NON_CANONICAL_TYPE(Class, Base) case Type::Class:
 #define DEPENDENT_TYPE(Class, Base) case Type::Class:
 #include "clang/AST/TypeNodes.def"
-    assert(false && "Non-canonical and dependent types shouldn't get here");
+    llvm_unreachable("Non-canonical and dependent types shouldn't get here");
 
   // GCC treats vector types as fundamental types.
   case Type::Builtin:
@@ -604,7 +604,7 @@ llvm::Constant *RTTIBuilder::BuildTypeInfo(QualType Ty, bool Force) {
 
   case Type::LValueReference:
   case Type::RValueReference:
-    assert(false && "References shouldn't get here");
+    llvm_unreachable("References shouldn't get here");
 
   case Type::ConstantArray:
   case Type::IncompleteArray:

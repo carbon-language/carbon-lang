@@ -135,7 +135,7 @@ public:
   // This is pretty lame.
   virtual void mangleItaniumGuardVariable(const VarDecl *D,
                                           raw_ostream &) {
-    assert(0 && "Target does not support mangling guard variables");
+    llvm_unreachable("Target does not support mangling guard variables");
   }
   /// @}
 };

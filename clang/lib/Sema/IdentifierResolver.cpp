@@ -73,7 +73,7 @@ void IdentifierResolver::IdDeclInfo::RemoveDecl(NamedDecl *D) {
     }
   }
 
-  assert(0 && "Didn't find this decl on its identifier's chain!");
+  llvm_unreachable("Didn't find this decl on its identifier's chain!");
 }
 
 bool

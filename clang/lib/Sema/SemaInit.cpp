@@ -512,7 +512,7 @@ void InitListChecker::CheckImplicitInitList(const InitializedEntity &Entity,
   else if (T->isVectorType())
     maxElements = T->getAs<VectorType>()->getNumElements();
   else
-    assert(0 && "CheckImplicitInitList(): Illegal type");
+    llvm_unreachable("CheckImplicitInitList(): Illegal type");
 
   if (maxElements == 0) {
     SemaRef.Diag(ParentIList->getInit(Index)->getLocStart(),
@@ -656,7 +656,7 @@ void InitListChecker::CheckListElementTypes(const InitializedEntity &Entity,
                      SubobjectIsDesignatorContext, Index,
                      StructuredList, StructuredIndex);
     } else
-      assert(0 && "Aggregate that isn't a structure or array?!");
+      llvm_unreachable("Aggregate that isn't a structure or array?!");
   } else if (DeclType->isVoidType() || DeclType->isFunctionType()) {
     // This type is invalid, issue a diagnostic.
     ++Index;

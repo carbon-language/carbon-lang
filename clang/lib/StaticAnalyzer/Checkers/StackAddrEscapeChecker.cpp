@@ -82,7 +82,7 @@ SourceRange StackAddrEscapeChecker::GenName(raw_ostream &os,
     range = TOR->getExpr()->getSourceRange();
   }
   else {
-    assert(false && "Invalid region in ReturnStackAddressChecker.");
+    llvm_unreachable("Invalid region in ReturnStackAddressChecker.");
   } 
   
   return range;

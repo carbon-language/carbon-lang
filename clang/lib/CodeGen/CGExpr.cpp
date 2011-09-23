@@ -474,7 +474,8 @@ CodeGenFunction::EmitReferenceBindingToExpr(const Expr *E,
   else {
     switch (ObjCARCReferenceLifetimeType.getObjCLifetime()) {
     case Qualifiers::OCL_None:
-      assert(0 && "Not a reference temporary that needs to be deallocated");
+      llvm_unreachable(
+                      "Not a reference temporary that needs to be deallocated");
     case Qualifiers::OCL_ExplicitNone:
     case Qualifiers::OCL_Autoreleasing:
       // Nothing to do.
@@ -1196,7 +1197,7 @@ void CodeGenFunction::EmitStoreThroughExtVectorComponentLValue(RValue Src,
       Vec = Builder.CreateShuffleVector(Vec, ExtSrcVal, MaskV, "tmp");
     } else {
       // We should never shorten the vector
-      assert(0 && "unexpected shorten vector length");
+      llvm_unreachable("unexpected shorten vector length");
     }
   } else {
     // If the Src is a scalar (not a vector) it must be updating one element.
@@ -1387,7 +1388,7 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
   if (const FunctionDecl *fn = dyn_cast<FunctionDecl>(ND))
     return EmitFunctionDeclLValue(*this, E, fn);
 
-  assert(false && "Unhandled DeclRefExpr");
+  llvm_unreachable("Unhandled DeclRefExpr");
   
   // an invalid LValue, but the assert will
   // ensure that this point is never reached.
@@ -1407,7 +1408,7 @@ LValue CodeGenFunction::EmitUnaryOpLValue(const UnaryOperator *E) {
 
   QualType ExprTy = getContext().getCanonicalType(E->getSubExpr()->getType());
   switch (E->getOpcode()) {
-  default: assert(0 && "Unknown unary operator lvalue!");
+  default: llvm_unreachable("Unknown unary operator lvalue!");
   case UO_Deref: {
     QualType T = E->getSubExpr()->getType()->getPointeeType();
     assert(!T.isNull() && "CodeGenFunction::EmitUnaryOpLValue: Illegal type");
@@ -1483,7 +1484,7 @@ LValue CodeGenFunction::EmitPredefinedLValue(const PredefinedExpr *E) {
     std::string GlobalVarName;
 
     switch (Type) {
-    default: assert(0 && "Invalid type");
+    default: llvm_unreachable("Invalid type");
     case PredefinedExpr::Func:
       GlobalVarName = "__func__.";
       break;
@@ -1793,7 +1794,7 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(ND))
     return EmitFunctionDeclLValue(*this, E, FD);
 
-  assert(false && "Unhandled member declaration!");
+  llvm_unreachable("Unhandled member declaration!");
   return LValue();
 }
 

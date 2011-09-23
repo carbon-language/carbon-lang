@@ -87,7 +87,7 @@ TargetInfo::~TargetInfo() {}
 /// For example, SignedShort -> "short".
 const char *TargetInfo::getTypeName(IntType T) {
   switch (T) {
-  default: assert(0 && "not an integer!");
+  default: llvm_unreachable("not an integer!");
   case SignedShort:      return "short";
   case UnsignedShort:    return "unsigned short";
   case SignedInt:        return "int";
@@ -103,7 +103,7 @@ const char *TargetInfo::getTypeName(IntType T) {
 /// integer type enum. For example, SignedLong -> "L".
 const char *TargetInfo::getTypeConstantSuffix(IntType T) {
   switch (T) {
-  default: assert(0 && "not an integer!");
+  default: llvm_unreachable("not an integer!");
   case SignedShort:
   case SignedInt:        return "";
   case SignedLong:       return "L";
@@ -119,7 +119,7 @@ const char *TargetInfo::getTypeConstantSuffix(IntType T) {
 /// enum. For example, SignedInt -> getIntWidth().
 unsigned TargetInfo::getTypeWidth(IntType T) const {
   switch (T) {
-  default: assert(0 && "not an integer!");
+  default: llvm_unreachable("not an integer!");
   case SignedShort:
   case UnsignedShort:    return getShortWidth();
   case SignedInt:
@@ -135,7 +135,7 @@ unsigned TargetInfo::getTypeWidth(IntType T) const {
 /// enum. For example, SignedInt -> getIntAlign().
 unsigned TargetInfo::getTypeAlign(IntType T) const {
   switch (T) {
-  default: assert(0 && "not an integer!");
+  default: llvm_unreachable("not an integer!");
   case SignedShort:
   case UnsignedShort:    return getShortAlign();
   case SignedInt:
@@ -151,7 +151,7 @@ unsigned TargetInfo::getTypeAlign(IntType T) const {
 /// the type is signed; false otherwise.
 bool TargetInfo::isTypeSigned(IntType T) {
   switch (T) {
-  default: assert(0 && "not an integer!");
+  default: llvm_unreachable("not an integer!");
   case SignedShort:
   case SignedInt:
   case SignedLong:

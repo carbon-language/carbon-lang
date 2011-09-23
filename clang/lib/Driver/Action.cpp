@@ -34,7 +34,7 @@ const char *Action::getClassName(ActionClass AC) {
   case VerifyJobClass: return "verify";
   }
 
-  assert(0 && "invalid class");
+  llvm_unreachable("invalid class");
   return 0;
 }
 

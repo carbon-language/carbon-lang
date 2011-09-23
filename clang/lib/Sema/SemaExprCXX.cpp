@@ -1525,7 +1525,7 @@ bool Sema::FindAllocationOverload(SourceLocation StartLoc, SourceRange Range,
     return true;
   }
   }
-  assert(false && "Unreachable, bad result from BestViableFunction");
+  llvm_unreachable("Unreachable, bad result from BestViableFunction");
   return true;
 }
 
@@ -2068,7 +2068,7 @@ static ExprResult BuildCXXCastArgument(Sema &S,
                                        DeclAccessPair FoundDecl,
                                        Expr *From) {
   switch (Kind) {
-  default: assert(0 && "Unhandled cast kind!");
+  default: llvm_unreachable("Unhandled cast kind!");
   case CK_ConstructorConversion: {
     ASTOwningVector<Expr*> ConstructorArgs(S);
 
@@ -2181,7 +2181,7 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
      return ExprError();
 
   case ImplicitConversionSequence::EllipsisConversion:
-    assert(false && "Cannot perform an ellipsis conversion");
+    llvm_unreachable("Cannot perform an ellipsis conversion");
     return Owned(From);
 
   case ImplicitConversionSequence::BadConversion:
@@ -2284,7 +2284,7 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
     break;
 
   default:
-    assert(false && "Improper first standard conversion");
+    llvm_unreachable("Improper first standard conversion");
     break;
   }
 
@@ -2524,7 +2524,7 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
   case ICK_Function_To_Pointer:
   case ICK_Qualification:
   case ICK_Num_Conversion_Kinds:
-    assert(false && "Improper second standard conversion");
+    llvm_unreachable("Improper second standard conversion");
     break;
   }
 
@@ -2550,7 +2550,7 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
     }
 
   default:
-    assert(false && "Improper third standard conversion");
+    llvm_unreachable("Improper third standard conversion");
     break;
   }
 
@@ -3560,7 +3560,7 @@ static bool FindConditionalOverload(Sema &Self, ExprResult &LHS, ExprResult &RHS
       break;
 
     case OR_Deleted:
-      assert(false && "Conditional operator has only built-in overloads");
+      llvm_unreachable("Conditional operator has only built-in overloads");
       break;
   }
   return true;

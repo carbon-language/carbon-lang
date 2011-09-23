@@ -22,6 +22,6 @@ const char *phases::getPhaseName(ID Id) {
   case Link: return "linker";
   }
 
-  assert(0 && "Invalid phase id.");
+  llvm_unreachable("Invalid phase id.");
   return 0;
 }

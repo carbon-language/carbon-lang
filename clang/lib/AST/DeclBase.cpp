@@ -43,7 +43,7 @@ static bool StatSwitch = false;
 
 const char *Decl::getDeclKindName() const {
   switch (DeclKind) {
-  default: assert(0 && "Declaration not in DeclNodes.inc!");
+  default: llvm_unreachable("Declaration not in DeclNodes.inc!");
 #define DECL(DERIVED, BASE) case DERIVED: return #DERIVED;
 #define ABSTRACT_DECL(DECL)
 #include "clang/AST/DeclNodes.inc"
@@ -62,7 +62,7 @@ void Decl::setInvalidDecl(bool Invalid) {
 
 const char *DeclContext::getDeclKindName() const {
   switch (DeclKind) {
-  default: assert(0 && "Declaration context not in DeclNodes.inc!");
+  default: llvm_unreachable("Declaration context not in DeclNodes.inc!");
 #define DECL(DERIVED, BASE) case Decl::DERIVED: return #DERIVED;
 #define ABSTRACT_DECL(DECL)
 #include "clang/AST/DeclNodes.inc"
@@ -100,7 +100,7 @@ void Decl::PrintStats() {
 
 void Decl::add(Kind k) {
   switch (k) {
-  default: assert(0 && "Declaration not in DeclNodes.inc!");
+  default: llvm_unreachable("Declaration not in DeclNodes.inc!");
 #define DECL(DERIVED, BASE) case DERIVED: ++n##DERIVED##s; break;
 #define ABSTRACT_DECL(DECL)
 #include "clang/AST/DeclNodes.inc"
@@ -571,7 +571,7 @@ Decl *Decl::castFromDeclContext (const DeclContext *D) {
       if (DK >= first##NAME && DK <= last##NAME) \
         return static_cast<NAME##Decl*>(const_cast<DeclContext*>(D));
 #include "clang/AST/DeclNodes.inc"
-      assert(false && "a decl that inherits DeclContext isn't handled");
+      llvm_unreachable("a decl that inherits DeclContext isn't handled");
       return 0;
   }
 }
@@ -591,7 +591,7 @@ DeclContext *Decl::castToDeclContext(const Decl *D) {
       if (DK >= first##NAME && DK <= last##NAME)                  \
         return static_cast<NAME##Decl*>(const_cast<Decl*>(D));
 #include "clang/AST/DeclNodes.inc"
-      assert(false && "a decl that inherits DeclContext isn't handled");
+      llvm_unreachable("a decl that inherits DeclContext isn't handled");
       return 0;
   }
 }

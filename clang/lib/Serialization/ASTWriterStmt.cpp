@@ -1440,7 +1440,7 @@ void ASTWriter::WriteSubStmt(Stmt *S) {
     SourceManager &SrcMgr
       = DeclIDs.begin()->first->getASTContext().getSourceManager();
     S->dump(SrcMgr);
-    assert(0 && "Unhandled sub statement writing AST file");
+    llvm_unreachable("Unhandled sub statement writing AST file");
   }
 #endif
 

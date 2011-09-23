@@ -152,7 +152,7 @@ static Value *EmitFAbs(CodeGenFunction &CGF, Value *V, QualType ValTy) {
   
   StringRef FnName;
   switch (ValTyP->getKind()) {
-  default: assert(0 && "Isn't a scalar fp type!");
+  default: llvm_unreachable("Isn't a scalar fp type!");
   case BuiltinType::Float:      FnName = "fabsf"; break;
   case BuiltinType::Double:     FnName = "fabs"; break;
   case BuiltinType::LongDouble: FnName = "fabsl"; break;
@@ -396,7 +396,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     Value *RHS = EmitScalarExpr(E->getArg(1));
 
     switch (BuiltinID) {
-    default: assert(0 && "Unknown ordered comparison");
+    default: llvm_unreachable("Unknown ordered comparison");
     case Builtin::BI__builtin_isgreater:
       LHS = Builder.CreateFCmpOGT(LHS, RHS, "cmp");
       break;
@@ -775,7 +775,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   case Builtin::BI__sync_lock_test_and_set:
   case Builtin::BI__sync_lock_release:
   case Builtin::BI__sync_swap:
-    assert(0 && "Shouldn't make it through sema");
+    llvm_unreachable("Shouldn't make it through sema");
   case Builtin::BI__sync_fetch_and_add_1:
   case Builtin::BI__sync_fetch_and_add_2:
   case Builtin::BI__sync_fetch_and_add_4:
@@ -1541,7 +1541,7 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
       case ARM::BI__builtin_neon_vld4_dup_v:
         Int = Intrinsic::arm_neon_vld2; 
         break;
-      default: assert(0 && "unknown vld_dup intrinsic?");
+      default: llvm_unreachable("unknown vld_dup intrinsic?");
       }
       Function *F = CGM.getIntrinsic(Int, Ty);
       Value *Align = GetPointeeAlignment(*this, E->getArg(1));
@@ -1560,7 +1560,7 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     case ARM::BI__builtin_neon_vld4_dup_v:
       Int = Intrinsic::arm_neon_vld2lane; 
       break;
-    default: assert(0 && "unknown vld_dup intrinsic?");
+    default: llvm_unreachable("unknown vld_dup intrinsic?");
     }
     Function *F = CGM.getIntrinsic(Int, Ty);
     llvm::StructType *STy = cast<llvm::StructType>(F->getReturnType());
@@ -2013,7 +2013,7 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     Intrinsic::ID ID = Intrinsic::not_intrinsic;
 
     switch (BuiltinID) {
-    default: assert(0 && "Unsupported shift intrinsic!");
+    default: llvm_unreachable("Unsupported shift intrinsic!");
     case X86::BI__builtin_ia32_pslldi128:
       name = "pslldi";
       ID = Intrinsic::x86_sse2_psll_d;
@@ -2073,7 +2073,7 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     Intrinsic::ID ID = Intrinsic::not_intrinsic;
 
     switch (BuiltinID) {
-    default: assert(0 && "Unsupported shift intrinsic!");
+    default: llvm_unreachable("Unsupported shift intrinsic!");
     case X86::BI__builtin_ia32_pslldi:
       name = "pslldi";
       ID = Intrinsic::x86_mmx_psll_d;
@@ -2398,7 +2398,7 @@ Value *CodeGenFunction::EmitPPCBuiltinExpr(unsigned BuiltinID,
     Ops.pop_back();
 
     switch (BuiltinID) {
-    default: assert(0 && "Unsupported ld/lvsl/lvsr intrinsic!");
+    default: llvm_unreachable("Unsupported ld/lvsl/lvsr intrinsic!");
     case PPC::BI__builtin_altivec_lvx:
       ID = Intrinsic::ppc_altivec_lvx;
       break;
@@ -2437,7 +2437,7 @@ Value *CodeGenFunction::EmitPPCBuiltinExpr(unsigned BuiltinID,
     Ops.pop_back();
 
     switch (BuiltinID) {
-    default: assert(0 && "Unsupported st intrinsic!");
+    default: llvm_unreachable("Unsupported st intrinsic!");
     case PPC::BI__builtin_altivec_stvx:
       ID = Intrinsic::ppc_altivec_stvx;
       break;

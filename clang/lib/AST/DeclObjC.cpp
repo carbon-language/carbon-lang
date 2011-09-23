@@ -549,7 +549,7 @@ ObjCInterfaceDecl *ObjCMethodDecl::getClassInterface() {
     return IMD->getClassInterface();
 
   assert(!isa<ObjCProtocolDecl>(getDeclContext()) && "It's a protocol method");
-  assert(false && "unknown method context");
+  llvm_unreachable("unknown method context");
   return 0;
 }
 
@@ -781,7 +781,7 @@ const ObjCInterfaceDecl *ObjCIvarDecl::getContainingInterface() const {
   default:
   case ObjCCategoryImpl:
   case ObjCProtocol:
-    assert(0 && "invalid ivar container!");
+    llvm_unreachable("invalid ivar container!");
     return 0;
 
     // Ivars can only appear in class extension categories.

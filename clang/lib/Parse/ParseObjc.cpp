@@ -761,7 +761,7 @@ void Parser::ParseObjCTypeQualifierList(ObjCDeclSpec &DS,
 
       ObjCDeclSpec::ObjCDeclQualifier Qual;
       switch (i) {
-      default: assert(0 && "Unknown decl qualifier");
+      default: llvm_unreachable("Unknown decl qualifier");
       case objc_in:     Qual = ObjCDeclSpec::DQ_In; break;
       case objc_out:    Qual = ObjCDeclSpec::DQ_Out; break;
       case objc_inout:  Qual = ObjCDeclSpec::DQ_Inout; break;

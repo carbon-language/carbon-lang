@@ -1322,7 +1322,7 @@ bool RecursiveASTVisitor<Derived>::TraverseFunctionInstantiations(
     case TSK_ExplicitSpecialization:
       break;
     default:
-      assert(false && "Unknown specialization kind.");
+      llvm_unreachable("Unknown specialization kind.");
     }
   }
 

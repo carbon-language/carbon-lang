@@ -345,7 +345,7 @@ void ASTDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
   ReadDeclarationNameLoc(FD->DNLoc, FD->getDeclName(), Record, Idx);
   FD->IdentifierNamespace = Record[Idx++];
   switch ((FunctionDecl::TemplatedKind)Record[Idx++]) {
-  default: assert(false && "Unhandled TemplatedKind!");
+  default: llvm_unreachable("Unhandled TemplatedKind!");
     break;
   case FunctionDecl::TK_NonTemplate:
     break;
@@ -955,7 +955,7 @@ void ASTDeclReader::VisitCXXRecordDecl(CXXRecordDecl *D) {
   };
   switch ((CXXRecKind)Record[Idx++]) {
   default:
-    assert(false && "Out of sync with ASTDeclWriter::VisitCXXRecordDecl?");
+    llvm_unreachable("Out of sync with ASTDeclWriter::VisitCXXRecordDecl?");
   case CXXRecNotTemplate:
     break;
   case CXXRecTemplate:
@@ -1306,8 +1306,8 @@ void ASTDeclReader::VisitRedeclarable(Redeclarable<T> *D) {
   RedeclKind Kind = (RedeclKind)Record[Idx++];
   switch (Kind) {
   default:
-    assert(0 && "Out of sync with ASTDeclWriter::VisitRedeclarable or messed up"
-                " reading");
+    llvm_unreachable("Out of sync with ASTDeclWriter::VisitRedeclarable or"
+                     " messed up reading");
   case NoRedeclaration:
     break;
   case PointsToPrevious: {
@@ -1480,7 +1480,7 @@ Decl *ASTReader::ReadDeclRecord(DeclID ID) {
   switch ((DeclCode)DeclsCursor.ReadRecord(Code, Record)) {
   case DECL_CONTEXT_LEXICAL:
   case DECL_CONTEXT_VISIBLE:
-    assert(false && "Record cannot be de-serialized with ReadDeclRecord");
+    llvm_unreachable("Record cannot be de-serialized with ReadDeclRecord");
     break;
   case DECL_TYPEDEF:
     D = TypedefDecl::Create(Context, 0, SourceLocation(), SourceLocation(),

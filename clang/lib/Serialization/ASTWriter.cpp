@@ -91,7 +91,7 @@ namespace {
 }
 
 void ASTTypeWriter::VisitBuiltinType(const BuiltinType *T) {
-  assert(false && "Built-in types are never serialized");
+  llvm_unreachable("Built-in types are never serialized");
 }
 
 void ASTTypeWriter::VisitComplexType(const ComplexType *T) {
@@ -305,7 +305,7 @@ void
 ASTTypeWriter::VisitDependentSizedExtVectorType(
                                         const DependentSizedExtVectorType *T) {
   // FIXME: Serialize this type (C++ only)
-  assert(false && "Cannot serialize dependent sized extended vector types");
+  llvm_unreachable("Cannot serialize dependent sized extended vector types");
 }
 
 void

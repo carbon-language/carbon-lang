@@ -275,7 +275,7 @@ static raw_ostream *GetOutputStream(CompilerInstance &CI,
     return CI.createDefaultOutputFile(true, InFile, "o");
   }
 
-  assert(0 && "Invalid action!");
+  llvm_unreachable("Invalid action!");
   return 0;
 }
 

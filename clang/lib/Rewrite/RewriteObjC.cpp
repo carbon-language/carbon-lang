@@ -1066,7 +1066,7 @@ void RewriteObjC::RewriteProtocolDecl(ObjCProtocolDecl *PDecl) {
 void RewriteObjC::RewriteForwardProtocolDecl(ObjCForwardProtocolDecl *PDecl) {
   SourceLocation LocStart = PDecl->getLocation();
   if (LocStart.isInvalid())
-    assert(false && "Invalid SourceLocation");
+    llvm_unreachable("Invalid SourceLocation");
   // FIXME: handle forward protocol that are declared across multiple lines.
   ReplaceText(LocStart, 0, "// ");
 }
@@ -2063,7 +2063,7 @@ Stmt *RewriteObjC::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
       // declares the @catch parameter).
       ReplaceText(rParenLoc, bodyBuf-rParenBuf+1, " = _caught;");
     } else {
-      assert(false && "@catch rewrite bug");
+      llvm_unreachable("@catch rewrite bug");
     }
   }
   // Complete the catch list...
@@ -3434,7 +3434,7 @@ void RewriteObjC::SynthesizeObjCInternalStruct(ObjCInterfaceDecl *CDecl,
   }
   // Mark this struct as having been generated.
   if (!ObjCSynthesizedStructs.insert(CDecl))
-    assert(false && "struct already synthesize- SynthesizeObjCInternalStruct");
+    llvm_unreachable("struct already synthesize- SynthesizeObjCInternalStruct");
 }
 
 // RewriteObjCMethodsMetaData - Rewrite methods metadata for instance or
@@ -3655,7 +3655,7 @@ RewriteObjCProtocolMetaData(ObjCProtocolDecl *PDecl, StringRef prefix,
 
   // Mark this protocol as having been generated.
   if (!ObjCSynthesizedProtocols.insert(PDecl))
-    assert(false && "protocol already synthesized");
+    llvm_unreachable("protocol already synthesized");
 
 }
 
@@ -5048,7 +5048,7 @@ void RewriteObjC::RewriteBlockPointerDecl(NamedDecl *ND) {
   else if (FieldDecl *FD = dyn_cast<FieldDecl>(ND))
     DeclT = FD->getType();
   else
-    assert(0 && "RewriteBlockPointerDecl(): Decl type not yet handled");
+    llvm_unreachable("RewriteBlockPointerDecl(): Decl type not yet handled");
 
   const char *startBuf = SM->getCharacterData(DeclLoc);
   const char *endBuf = startBuf;
@@ -5966,7 +5966,7 @@ void RewriteObjC::HandleDeclInMainFile(Decl *D) {
   else if (ObjCCategoryImplDecl *CI = dyn_cast<ObjCCategoryImplDecl>(D))
     CategoryImplementation.push_back(CI);
   else if (isa<ObjCClassDecl>(D))
-    assert(false && "RewriteObjC::HandleDeclInMainFile - ObjCClassDecl");
+    llvm_unreachable("RewriteObjC::HandleDeclInMainFile - ObjCClassDecl");
   else if (VarDecl *VD = dyn_cast<VarDecl>(D)) {
     RewriteObjCQualifiedInterfaceTypes(VD);
     if (isTopLevelBlockPointerType(VD->getType()))

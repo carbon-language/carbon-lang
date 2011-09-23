@@ -1083,7 +1083,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
   if (DiagOpts->ShowColors) {
     // Print diagnostic category in bold and color
     switch (Level) {
-    case Diagnostic::Ignored: assert(0 && "Invalid diagnostic type");
+    case Diagnostic::Ignored: llvm_unreachable("Invalid diagnostic type");
     case Diagnostic::Note:    OS.changeColor(noteColor, true); break;
     case Diagnostic::Warning: OS.changeColor(warningColor, true); break;
     case Diagnostic::Error:   OS.changeColor(errorColor, true); break;
@@ -1092,7 +1092,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
   }
 
   switch (Level) {
-  case Diagnostic::Ignored: assert(0 && "Invalid diagnostic type");
+  case Diagnostic::Ignored: llvm_unreachable("Invalid diagnostic type");
   case Diagnostic::Note:    OS << "note: "; break;
   case Diagnostic::Warning: OS << "warning: "; break;
   case Diagnostic::Error:   OS << "error: "; break;

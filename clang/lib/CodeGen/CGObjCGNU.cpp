@@ -2333,7 +2333,7 @@ void CGObjCGNU::EmitObjCGlobalAssign(CodeGenFunction &CGF,
     B.CreateCall2(GlobalAssignFn, src, dst);
   else
     // FIXME. Add threadloca assign API
-    assert(false && "EmitObjCGlobalAssign - Threal Local API NYI");
+    llvm_unreachable("EmitObjCGlobalAssign - Threal Local API NYI");
 }
 
 void CGObjCGNU::EmitObjCIvarAssign(CodeGenFunction &CGF,

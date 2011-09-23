@@ -1060,7 +1060,7 @@ public:
   /// GetClassGlobal - Return the global variable for the Objective-C
   /// class of the given name.
   virtual llvm::GlobalVariable *GetClassGlobal(const std::string &Name) {
-    assert(false && "CGObjCMac::GetClassGlobal");
+    llvm_unreachable("CGObjCMac::GetClassGlobal");
     return 0;
   }
 };

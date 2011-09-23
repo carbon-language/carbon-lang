@@ -69,7 +69,7 @@ public:
         DISPATCH_CASE(UsingDirective)
         DISPATCH_CASE(Using)
       default:
-        assert(false && "Subtype of ScopedDecl not handled.");
+        llvm_unreachable("Subtype of ScopedDecl not handled.");
     }
   }
 

@@ -2252,7 +2252,7 @@ public:
   friend class StmtIteratorBase;
 
   void Profile(llvm::FoldingSetNodeID &ID) {
-    assert(0 && "Cannot unique VariableArrayTypes.");
+    llvm_unreachable("Cannot unique VariableArrayTypes.");
   }
 };
 

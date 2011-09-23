@@ -2390,7 +2390,7 @@ ExprResult Sema::ActOnPredefinedExpr(SourceLocation Loc, tok::TokenKind Kind) {
   PredefinedExpr::IdentType IT;
 
   switch (Kind) {
-  default: assert(0 && "Unknown simple primary expr!");
+  default: llvm_unreachable("Unknown simple primary expr!");
   case tok::kw___func__: IT = PredefinedExpr::Func; break; // [C99 6.4.2.2]
   case tok::kw___FUNCTION__: IT = PredefinedExpr::Function; break;
   case tok::kw___PRETTY_FUNCTION__: IT = PredefinedExpr::PrettyFunction; break;
@@ -2952,7 +2952,7 @@ Sema::ActOnPostfixUnaryOp(Scope *S, SourceLocation OpLoc,
                           tok::TokenKind Kind, Expr *Input) {
   UnaryOperatorKind Opc;
   switch (Kind) {
-  default: assert(0 && "Unknown unary op!");
+  default: llvm_unreachable("Unknown unary op!");
   case tok::plusplus:   Opc = UO_PostInc; break;
   case tok::minusminus: Opc = UO_PostDec; break;
   }
@@ -6511,7 +6511,7 @@ QualType Sema::CheckCompareOperands(ExprResult &LHS, ExprResult &RHS,
       case BO_GE: resultComparison = ") >= 0"; break;
       case BO_EQ: resultComparison = ") == 0"; break;
       case BO_NE: resultComparison = ") != 0"; break;
-      default: assert(false && "Invalid comparison operator");
+      default: llvm_unreachable("Invalid comparison operator");
       }
 
       DiagRuntimeBehavior(Loc, 0,
@@ -7593,7 +7593,7 @@ static QualType CheckAddressOfOperand(Sema &S, Expr *OrigOp,
         }
       }
     } else if (!isa<FunctionDecl>(dcl) && !isa<NonTypeTemplateParmDecl>(dcl))
-      assert(0 && "Unknown/unexpected decl type");
+      llvm_unreachable("Unknown/unexpected decl type");
   }
 
   if (AddressOfError != AO_No_Error) {
@@ -7669,7 +7669,7 @@ static inline BinaryOperatorKind ConvertTokenKindToBinaryOpcode(
   tok::TokenKind Kind) {
   BinaryOperatorKind Opc;
   switch (Kind) {
-  default: assert(0 && "Unknown binop!");
+  default: llvm_unreachable("Unknown binop!");
   case tok::periodstar:           Opc = BO_PtrMemD; break;
   case tok::arrowstar:            Opc = BO_PtrMemI; break;
   case tok::star:                 Opc = BO_Mul; break;
@@ -7710,7 +7710,7 @@ static inline UnaryOperatorKind ConvertTokenKindToUnaryOpcode(
   tok::TokenKind Kind) {
   UnaryOperatorKind Opc;
   switch (Kind) {
-  default: assert(0 && "Unknown unary op!");
+  default: llvm_unreachable("Unknown unary op!");
   case tok::plusplus:     Opc = UO_PreInc; break;
   case tok::minusminus:   Opc = UO_PreDec; break;
   case tok::amp:          Opc = UO_AddrOf; break;
@@ -8941,7 +8941,7 @@ ExprResult Sema::ActOnGNUNullExpr(SourceLocation TokenLoc) {
   else if (pw == Context.getTargetInfo().getLongLongWidth())
     Ty = Context.LongLongTy;
   else {
-    assert(0 && "I don't know size of pointer!");
+    llvm_unreachable("I don't know size of pointer!");
     Ty = Context.IntTy;
   }
 
@@ -8990,7 +8990,7 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
   bool MayHaveConvFixit = false;
 
   switch (ConvTy) {
-  default: assert(0 && "Unknown conversion type");
+  default: llvm_unreachable("Unknown conversion type");
   case Compatible: return false;
   case PointerToInt:
     DiagKind = diag::ext_typecheck_convert_pointer_int;

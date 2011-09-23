@@ -908,7 +908,7 @@ protected:
   // FIXME: This should probably never be called, but it's here as
   TemplateParmPosition()
     : Depth(0), Position(0)
-  { /* assert(0 && "Cannot create positionless template parameter"); */ }
+  { /* llvm_unreachable("Cannot create positionless template parameter"); */ }
 
   TemplateParmPosition(unsigned D, unsigned P)
     : Depth(D), Position(P)

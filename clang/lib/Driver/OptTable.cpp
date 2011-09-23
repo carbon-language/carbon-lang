@@ -116,7 +116,7 @@ OptTable::OptTable(const Info *_OptionInfos, unsigned _NumOptionInfos)
     if (!(getInfo(i) < getInfo(i + 1))) {
       getOption(i)->dump();
       getOption(i + 1)->dump();
-      assert(0 && "Options are not in order!");
+      llvm_unreachable("Options are not in order!");
     }
   }
 #endif
@@ -268,10 +268,10 @@ static std::string getOptionHelpName(const OptTable &Opts, OptSpecifier Id) {
   // Add metavar, if used.
   switch (Opts.getOptionKind(Id)) {
   case Option::GroupClass: case Option::InputClass: case Option::UnknownClass:
-    assert(0 && "Invalid option with help text.");
+    llvm_unreachable("Invalid option with help text.");
 
   case Option::MultiArgClass:
-    assert(0 && "Cannot print metavar for this kind of option.");
+    llvm_unreachable("Cannot print metavar for this kind of option.");
 
   case Option::FlagClass:
     break;

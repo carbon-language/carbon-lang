@@ -535,7 +535,7 @@ static bool EvaluateDirectiveSubExpr(PPValue &LHS, unsigned MinPrec,
 
     bool Overflow = false;
     switch (Operator) {
-    default: assert(0 && "Unknown operator token!");
+    default: llvm_unreachable("Unknown operator token!");
     case tok::percent:
       if (RHS.Val != 0)
         Res = LHS.Val % RHS.Val;

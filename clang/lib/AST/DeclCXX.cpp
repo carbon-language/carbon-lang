@@ -671,7 +671,7 @@ NotASpecialMember:;
     case AS_private:    data().HasPrivateFields = true;   break;
     case AS_protected:  data().HasProtectedFields = true; break;
     case AS_public:     data().HasPublicFields = true;    break;
-    case AS_none:       assert(0 && "Invalid access specifier");
+    case AS_none:       llvm_unreachable("Invalid access specifier");
     };
     if ((data().HasPrivateFields + data().HasProtectedFields +
          data().HasPublicFields) > 1)
@@ -1053,7 +1053,7 @@ CXXRecordDecl::setTemplateSpecializationKind(TemplateSpecializationKind TSK) {
     return;
   }
   
-  assert(false && "Not a class template or member class specialization");
+  llvm_unreachable("Not a class template or member class specialization");
 }
 
 CXXDestructorDecl *CXXRecordDecl::getDestructor() const {
@@ -1693,7 +1693,7 @@ static const char *getAccessName(AccessSpecifier AS) {
   switch (AS) {
     default:
     case AS_none:
-      assert(0 && "Invalid access specifier!");
+      llvm_unreachable("Invalid access specifier!");
       return 0;
     case AS_public:
       return "public";

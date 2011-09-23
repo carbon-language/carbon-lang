@@ -103,7 +103,7 @@ const MemRegion *StoreManager::castRegion(const MemRegion *R, QualType CastToTy)
     case MemRegion::UnknownSpaceRegionKind:
     case MemRegion::NonStaticGlobalSpaceRegionKind:
     case MemRegion::StaticGlobalSpaceRegionKind: {
-      assert(0 && "Invalid region cast");
+      llvm_unreachable("Invalid region cast");
       break;
     }
 
@@ -203,7 +203,7 @@ const MemRegion *StoreManager::castRegion(const MemRegion *R, QualType CastToTy)
     }
   }
 
-  assert(0 && "unreachable");
+  llvm_unreachable("unreachable");
   return 0;
 }
 
@@ -261,7 +261,7 @@ SVal StoreManager::getLValueFieldOrIvar(const Decl *D, SVal Base) {
     return Base;
 
   default:
-    assert(0 && "Unhandled Base.");
+    llvm_unreachable("Unhandled Base.");
     return Base;
   }
 

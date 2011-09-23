@@ -2935,7 +2935,7 @@ Sema::GetNameFromUnqualifiedId(const UnqualifiedId &Name) {
 
   } // switch (Name.getKind())
 
-  assert(false && "Unknown name kind");
+  llvm_unreachable("Unknown name kind");
   return DeclarationNameInfo();
 }
 
@@ -4360,7 +4360,7 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
   DeclarationName Name = NameInfo.getName();
   FunctionDecl::StorageClass SC = SC_None;
   switch (D.getDeclSpec().getStorageClassSpec()) {
-  default: assert(0 && "Unknown storage class!");
+  default: llvm_unreachable("Unknown storage class!");
   case DeclSpec::SCS_auto:
   case DeclSpec::SCS_register:
   case DeclSpec::SCS_mutable:
@@ -8372,7 +8372,7 @@ void Sema::DiagnoseNontrivial(const RecordType* T, CXXSpecialMember member) {
         }
       }
 
-      assert(0 && "found no user-declared constructors");
+      llvm_unreachable("found no user-declared constructors");
       return;
     }
     break;
@@ -8458,7 +8458,7 @@ void Sema::DiagnoseNontrivial(const RecordType* T, CXXSpecialMember member) {
   case CXXDestructor:
     hasTrivial = &CXXRecordDecl::hasTrivialDestructor; break;
   default:
-    assert(0 && "unexpected special member"); return;
+    llvm_unreachable("unexpected special member"); return;
   }
 
   // Check for nontrivial bases (and recurse).
@@ -8506,7 +8506,7 @@ void Sema::DiagnoseNontrivial(const RecordType* T, CXXSpecialMember member) {
     }
   }
 
-  assert(0 && "found no explanation for non-trivial member");
+  llvm_unreachable("found no explanation for non-trivial member");
 }
 
 /// TranslateIvarVisibility - Translate visibility from a token ID to an
@@ -8514,7 +8514,7 @@ void Sema::DiagnoseNontrivial(const RecordType* T, CXXSpecialMember member) {
 static ObjCIvarDecl::AccessControl
 TranslateIvarVisibility(tok::ObjCKeywordKind ivarVisibility) {
   switch (ivarVisibility) {
-  default: assert(0 && "Unknown visitibility kind");
+  default: llvm_unreachable("Unknown visitibility kind");
   case tok::objc_private: return ObjCIvarDecl::Private;
   case tok::objc_public: return ObjCIvarDecl::Public;
   case tok::objc_protected: return ObjCIvarDecl::Protected;

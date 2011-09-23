@@ -332,15 +332,15 @@ MicrosoftCXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND,
     case DeclarationName::ObjCZeroArgSelector:
     case DeclarationName::ObjCOneArgSelector:
     case DeclarationName::ObjCMultiArgSelector:
-      assert(false && "Can't mangle Objective-C selector names here!");
+      llvm_unreachable("Can't mangle Objective-C selector names here!");
       break;
       
     case DeclarationName::CXXConstructorName:
-      assert(false && "Can't mangle constructors yet!");
+      llvm_unreachable("Can't mangle constructors yet!");
       break;
       
     case DeclarationName::CXXDestructorName:
-      assert(false && "Can't mangle destructors yet!");
+      llvm_unreachable("Can't mangle destructors yet!");
       break;
       
     case DeclarationName::CXXConversionFunctionName:
@@ -355,11 +355,11 @@ MicrosoftCXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND,
       
     case DeclarationName::CXXLiteralOperatorName:
       // FIXME: Was this added in VS2010? Does MS even know how to mangle this?
-      assert(false && "Don't know how to mangle literal operators yet!");
+      llvm_unreachable("Don't know how to mangle literal operators yet!");
       break;
       
     case DeclarationName::CXXUsingDirective:
-      assert(false && "Can't mangle a using directive name!");
+      llvm_unreachable("Can't mangle a using directive name!");
       break;
   }
 }
@@ -513,12 +513,12 @@ void MicrosoftCXXNameMangler::mangleOperatorName(OverloadedOperatorKind OO) {
   case OO_Array_Delete: Out << "?_V"; break;
     
   case OO_Conditional:
-    assert(false && "Don't know how to mangle ?:");
+    llvm_unreachable("Don't know how to mangle ?:");
     break;
     
   case OO_None:
   case NUM_OVERLOADED_OPERATORS:
-    assert(false && "Not an overloaded operator");
+    llvm_unreachable("Not an overloaded operator");
     break;
   }
 }
@@ -712,7 +712,7 @@ void MicrosoftCXXNameMangler::mangleType(const BuiltinType *T) {
   case BuiltinType::Dependent:
   case BuiltinType::UnknownAny:
   case BuiltinType::BoundMember:
-    assert(false &&
+    llvm_unreachable(
            "Overloaded and dependent types shouldn't get to name mangling");
     break;
   case BuiltinType::ObjCId: Out << "PAUobjc_object@@"; break;
@@ -722,7 +722,7 @@ void MicrosoftCXXNameMangler::mangleType(const BuiltinType *T) {
   case BuiltinType::Char16:
   case BuiltinType::Char32:
   case BuiltinType::NullPtr:
-    assert(false && "Don't know how to mangle this type");
+    llvm_unreachable("Don't know how to mangle this type");
     break;
   }
 }
@@ -869,7 +869,7 @@ void MicrosoftCXXNameMangler::mangleCallingConvention(const FunctionType *T,
     CC = IsInstMethod ? getASTContext().getDefaultMethodCallConv() : CC_C;
   switch (CC) {
     default:
-      assert(0 && "Unsupported CC for mangling");
+      llvm_unreachable("Unsupported CC for mangling");
     case CC_Default:
     case CC_C: Out << 'A'; break;
     case CC_X86Pascal: Out << 'C'; break;
@@ -890,7 +890,7 @@ void MicrosoftCXXNameMangler::mangleThrowSpecification(
 }
 
 void MicrosoftCXXNameMangler::mangleType(const UnresolvedUsingType *T) {
-  assert(false && "Don't know how to mangle UnresolvedUsingTypes yet!");
+  llvm_unreachable("Don't know how to mangle UnresolvedUsingTypes yet!");
 }
 
 // <type>        ::= <union-type> | <struct-type> | <class-type> | <enum-type>
@@ -962,10 +962,10 @@ void MicrosoftCXXNameMangler::mangleExtraDimensions(QualType ElementTy) {
       Dimensions.push_back(CAT->getSize());
       ElementTy = CAT->getElementType();
     } else if (ElementTy->isVariableArrayType()) {
-      assert(false && "Don't know how to mangle VLAs!");
+      llvm_unreachable("Don't know how to mangle VLAs!");
     } else if (ElementTy->isDependentSizedArrayType()) {
       // The dependent expression has to be folded into a constant (TODO).
-      assert(false && "Don't know how to mangle dependent-sized arrays!");
+      llvm_unreachable("Don't know how to mangle dependent-sized arrays!");
     } else if (ElementTy->isIncompleteArrayType()) continue;
     else break;
   }
@@ -999,12 +999,12 @@ void MicrosoftCXXNameMangler::mangleType(const MemberPointerType *T) {
 }
 
 void MicrosoftCXXNameMangler::mangleType(const TemplateTypeParmType *T) {
-  assert(false && "Don't know how to mangle TemplateTypeParmTypes yet!");
+  llvm_unreachable("Don't know how to mangle TemplateTypeParmTypes yet!");
 }
 
 void MicrosoftCXXNameMangler::mangleType(
                                        const SubstTemplateTypeParmPackType *T) {
-  assert(false && 
+  llvm_unreachable(
          "Don't know how to mangle SubstTemplateTypeParmPackTypes yet!");
 }
 
@@ -1045,21 +1045,22 @@ void MicrosoftCXXNameMangler::mangleType(const LValueReferenceType *T) {
 }
 
 void MicrosoftCXXNameMangler::mangleType(const RValueReferenceType *T) {
-  assert(false && "Don't know how to mangle RValueReferenceTypes yet!");
+  llvm_unreachable("Don't know how to mangle RValueReferenceTypes yet!");
 }
 
 void MicrosoftCXXNameMangler::mangleType(const ComplexType *T) {
-  assert(false && "Don't know how to mangle ComplexTypes yet!");
+  llvm_unreachable("Don't know how to mangle ComplexTypes yet!");
 }
 
 void MicrosoftCXXNameMangler::mangleType(const VectorType *T) {
-  assert(false && "Don't know how to mangle VectorTypes yet!");
+  llvm_unreachable("Don't know how to mangle VectorTypes yet!");
 }
 void MicrosoftCXXNameMangler::mangleType(const ExtVectorType *T) {
-  assert(false && "Don't know how to mangle ExtVectorTypes yet!");
+  llvm_unreachable("Don't know how to mangle ExtVectorTypes yet!");
 }
 void MicrosoftCXXNameMangler::mangleType(const DependentSizedExtVectorType *T) {
-  assert(false && "Don't know how to mangle DependentSizedExtVectorTypes yet!");
+  llvm_unreachable(
+                  "Don't know how to mangle DependentSizedExtVectorTypes yet!");
 }
 
 void MicrosoftCXXNameMangler::mangleType(const ObjCInterfaceType *T) {
@@ -1080,45 +1081,45 @@ void MicrosoftCXXNameMangler::mangleType(const BlockPointerType *T) {
 }
 
 void MicrosoftCXXNameMangler::mangleType(const InjectedClassNameType *T) {
-  assert(false && "Don't know how to mangle InjectedClassNameTypes yet!");
+  llvm_unreachable("Don't know how to mangle InjectedClassNameTypes yet!");
 }
 
 void MicrosoftCXXNameMangler::mangleType(const TemplateSpecializationType *T) {
-  assert(false && "Don't know how to mangle TemplateSpecializationTypes yet!");
+  llvm_unreachable("Don't know how to mangle TemplateSpecializationTypes yet!");
 }
 
 void MicrosoftCXXNameMangler::mangleType(const DependentNameType *T) {
-  assert(false && "Don't know how to mangle DependentNameTypes yet!");
+  llvm_unreachable("Don't know how to mangle DependentNameTypes yet!");
 }
 
 void MicrosoftCXXNameMangler::mangleType(
                                  const DependentTemplateSpecializationType *T) {
-  assert(false &&
+  llvm_unreachable(
          "Don't know how to mangle DependentTemplateSpecializationTypes yet!");
 }
 
 void MicrosoftCXXNameMangler::mangleType(const PackExpansionType *T) {
-  assert(false && "Don't know how to mangle PackExpansionTypes yet!");
+  llvm_unreachable("Don't know how to mangle PackExpansionTypes yet!");
 }
 
 void MicrosoftCXXNameMangler::mangleType(const TypeOfType *T) {
-  assert(false && "Don't know how to mangle TypeOfTypes yet!");
+  llvm_unreachable("Don't know how to mangle TypeOfTypes yet!");
 }
 
 void MicrosoftCXXNameMangler::mangleType(const TypeOfExprType *T) {
-  assert(false && "Don't know how to mangle TypeOfExprTypes yet!");
+  llvm_unreachable("Don't know how to mangle TypeOfExprTypes yet!");
 }
 
 void MicrosoftCXXNameMangler::mangleType(const DecltypeType *T) {
-  assert(false && "Don't know how to mangle DecltypeTypes yet!");
+  llvm_unreachable("Don't know how to mangle DecltypeTypes yet!");
 }
 
 void MicrosoftCXXNameMangler::mangleType(const UnaryTransformType *T) {
-  assert(false && "Don't know how to mangle UnaryTransformationTypes yet!");
+  llvm_unreachable("Don't know how to mangle UnaryTransformationTypes yet!");
 }
 
 void MicrosoftCXXNameMangler::mangleType(const AutoType *T) {
-  assert(false && "Don't know how to mangle AutoTypes yet!");
+  llvm_unreachable("Don't know how to mangle AutoTypes yet!");
 }
 
 void MicrosoftMangleContext::mangleName(const NamedDecl *D,
@@ -1138,17 +1139,17 @@ void MicrosoftMangleContext::mangleName(const NamedDecl *D,
 void MicrosoftMangleContext::mangleThunk(const CXXMethodDecl *MD,
                                          const ThunkInfo &Thunk,
                                          raw_ostream &) {
-  assert(false && "Can't yet mangle thunks!");
+  llvm_unreachable("Can't yet mangle thunks!");
 }
 void MicrosoftMangleContext::mangleCXXDtorThunk(const CXXDestructorDecl *DD,
                                                 CXXDtorType Type,
                                                 const ThisAdjustment &,
                                                 raw_ostream &) {
-  assert(false && "Can't yet mangle destructor thunks!");
+  llvm_unreachable("Can't yet mangle destructor thunks!");
 }
 void MicrosoftMangleContext::mangleCXXVTable(const CXXRecordDecl *RD,
                                              raw_ostream &) {
-  assert(false && "Can't yet mangle virtual tables!");
+  llvm_unreachable("Can't yet mangle virtual tables!");
 }
 void MicrosoftMangleContext::mangleCXXVTT(const CXXRecordDecl *RD,
                                           raw_ostream &) {
@@ -1162,25 +1163,25 @@ void MicrosoftMangleContext::mangleCXXCtorVTable(const CXXRecordDecl *RD,
 }
 void MicrosoftMangleContext::mangleCXXRTTI(QualType T,
                                            raw_ostream &) {
-  assert(false && "Can't yet mangle RTTI!");
+  llvm_unreachable("Can't yet mangle RTTI!");
 }
 void MicrosoftMangleContext::mangleCXXRTTIName(QualType T,
                                                raw_ostream &) {
-  assert(false && "Can't yet mangle RTTI names!");
+  llvm_unreachable("Can't yet mangle RTTI names!");
 }
 void MicrosoftMangleContext::mangleCXXCtor(const CXXConstructorDecl *D,
                                            CXXCtorType Type,
                                            raw_ostream &) {
-  assert(false && "Can't yet mangle constructors!");
+  llvm_unreachable("Can't yet mangle constructors!");
 }
 void MicrosoftMangleContext::mangleCXXDtor(const CXXDestructorDecl *D,
                                            CXXDtorType Type,
                                            raw_ostream &) {
-  assert(false && "Can't yet mangle destructors!");
+  llvm_unreachable("Can't yet mangle destructors!");
 }
 void MicrosoftMangleContext::mangleReferenceTemporary(const clang::VarDecl *,
                                                       raw_ostream &) {
-  assert(false && "Can't yet mangle reference temporaries!");
+  llvm_unreachable("Can't yet mangle reference temporaries!");
 }
 
 MangleContext *clang::createMicrosoftMangleContext(ASTContext &Context,

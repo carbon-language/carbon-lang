@@ -286,7 +286,7 @@ void DeclContextPrinter::PrintDeclContext(const DeclContext* DC,
   }
 
   default:
-    assert(0 && "a decl that inherits DeclContext isn't handled");
+    llvm_unreachable("a decl that inherits DeclContext isn't handled");
   }
 
   Out << "\n";
@@ -392,7 +392,7 @@ void DeclContextPrinter::PrintDeclContext(const DeclContext* DC,
     }
     default:
       Out << "DeclKind: " << DK << '"' << *I << "\"\n";
-      assert(0 && "decl unhandled");
+      llvm_unreachable("decl unhandled");
     }
   }
 }

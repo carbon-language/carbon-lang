@@ -1069,7 +1069,7 @@ void CXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND,
   case DeclarationName::ObjCZeroArgSelector:
   case DeclarationName::ObjCOneArgSelector:
   case DeclarationName::ObjCMultiArgSelector:
-    assert(false && "Can't mangle Objective-C selector names here!");
+    llvm_unreachable("Can't mangle Objective-C selector names here!");
     break;
 
   case DeclarationName::CXXConstructorName:
@@ -1124,7 +1124,7 @@ void CXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND,
     break;
 
   case DeclarationName::CXXUsingDirective:
-    assert(false && "Can't mangle a using directive name!");
+    llvm_unreachable("Can't mangle a using directive name!");
     break;
   }
 }
@@ -1512,7 +1512,7 @@ CXXNameMangler::mangleOperatorName(OverloadedOperatorKind OO, unsigned Arity) {
 
   case OO_None:
   case NUM_OVERLOADED_OPERATORS:
-    assert(false && "Not an overloaded operator");
+    llvm_unreachable("Not an overloaded operator");
     break;
   }
 }

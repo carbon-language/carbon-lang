@@ -9977,7 +9977,7 @@ void Sema::SetDeclDefaulted(Decl *Dcl, SourceLocation DefaultLoc) {
     }
 
     case CXXInvalid:
-      assert(false && "Invalid special member.");
+      llvm_unreachable("Invalid special member.");
       break;
     }
   } else {

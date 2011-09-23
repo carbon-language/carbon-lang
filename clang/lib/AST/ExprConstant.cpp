@@ -388,7 +388,7 @@ public:
   ExprEvaluatorBase(EvalInfo &Info) : Info(Info) {}
 
   RetTy VisitStmt(const Stmt *) {
-    assert(0 && "Expression evaluator should not be called on stmts");
+    llvm_unreachable("Expression evaluator should not be called on stmts");
     return DerivedError(0);
   }
   RetTy VisitExpr(const Expr *E) {
@@ -1218,7 +1218,7 @@ static int EvaluateBuiltinClassifyType(const CallExpr *E) {
   else if (ArgTy->isUnionType())
     return union_type_class;
   else  // FIXME: offset_type_class, method_type_class, & lang_type_class?
-    assert(0 && "CallExpr::isBuiltinClassifyType(): unimplemented type");
+    llvm_unreachable("CallExpr::isBuiltinClassifyType(): unimplemented type");
   return -1;
 }
 
@@ -1427,7 +1427,7 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
 
     switch (E->getOpcode()) {
     default:
-      assert(0 && "Invalid binary operator!");
+      llvm_unreachable("Invalid binary operator!");
     case BO_LT:
       return Success(CR == APFloat::cmpLessThan, E);
     case BO_GT:

@@ -804,7 +804,7 @@ struct PragmaDebugHandler : public PragmaHandler {
     IdentifierInfo *II = Tok.getIdentifierInfo();
 
     if (II->isStr("assert")) {
-      assert(0 && "This is an assertion!");
+      llvm_unreachable("This is an assertion!");
     } else if (II->isStr("crash")) {
       *(volatile int*) 0x11 = 0;
     } else if (II->isStr("llvm_fatal_error")) {

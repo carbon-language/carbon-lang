@@ -68,7 +68,7 @@ TemplateArgument TemplateArgument::CreatePackCopy(ASTContext &Context,
 bool TemplateArgument::isDependent() const {
   switch (getKind()) {
   case Null:
-    assert(false && "Should not have a NULL template argument");
+    llvm_unreachable("Should not have a NULL template argument");
     return false;
 
   case Type:
@@ -107,7 +107,7 @@ bool TemplateArgument::isDependent() const {
 bool TemplateArgument::isInstantiationDependent() const {
   switch (getKind()) {
   case Null:
-    assert(false && "Should not have a NULL template argument");
+    llvm_unreachable("Should not have a NULL template argument");
     return false;
     
   case Type:
