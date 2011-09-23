@@ -117,6 +117,10 @@ public:
       return ImmutableMap(Canonicalize ? F.getCanonicalTree(T): T);
     }
 
+    typename TreeTy::Factory *getTreeFactory() const {
+      return const_cast<typename TreeTy::Factory *>(&F);
+    }
+
   private:
     Factory(const Factory& RHS); // DO NOT IMPLEMENT
     void operator=(const Factory& RHS); // DO NOT IMPLEMENT
