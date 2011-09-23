@@ -1572,7 +1572,6 @@ bool Parser::isCXX0XFinalKeyword() const {
 ///       virt-specifier:
 ///         override
 ///         final
-///         new
 /// 
 ///       pure-specifier:
 ///         '= 0'
