@@ -43,6 +43,12 @@
 
 #include <map>
 
+#if defined(HAVE_UNISTD_H)
+#include <unistd.h>
+#elif defined(_WIN32)
+#include <direct.h>
+#endif
+
 using namespace clang::driver;
 using namespace clang;
 
