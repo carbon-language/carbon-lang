@@ -324,14 +324,17 @@ public:
     bool
     RemoveBreakpointByID (lldb::break_id_t break_id);
 
-    bool
-    RemoveAllWatchpointLocations ();
+    // The flag 'end_to_end', default to true, signifies that the operation is
+    // performed end to end, for both the debugger and the debuggee.
 
     bool
-    DisableAllWatchpointLocations ();
+    RemoveAllWatchpointLocations (bool end_to_end = true);
 
     bool
-    EnableAllWatchpointLocations ();
+    DisableAllWatchpointLocations (bool end_to_end = true);
+
+    bool
+    EnableAllWatchpointLocations (bool end_to_end = true);
 
     bool
     DisableWatchpointLocationByID (lldb::watch_id_t watch_id);

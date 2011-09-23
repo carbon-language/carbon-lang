@@ -125,7 +125,8 @@ Target::DeleteCurrentProcess ()
         // clean up needs some help from the process.
         m_breakpoint_list.ClearAllBreakpointSites();
         m_internal_breakpoint_list.ClearAllBreakpointSites();
-        m_watchpoint_location_list.RemoveAll();
+        // Disable watchpoint locations just on the debugger side.
+        DisableAllWatchpointLocations(false);
         m_process_sp.reset();
     }
 }
@@ -562,13 +563,24 @@ Target::EnableBreakpointByID (break_id_t break_id)
     return false;
 }
 
-// Assumption: caller holds the list mutex lock for m_watchpoint_location_list.
+// The flag 'end_to_end', default to true, signifies that the operation is
+// performed end to end, for both the debugger and the debuggee.
+
+// Assumption: Caller holds the list mutex lock for m_watchpoint_location_list
+// for end to end operations.
 bool
-Target::RemoveAllWatchpointLocations ()
+Target::RemoveAllWatchpointLocations (bool end_to_end)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
     if (log)
         log->Printf ("Target::%s\n", __FUNCTION__);
+
+    if (!end_to_end) {
+        m_watchpoint_location_list.RemoveAll();
+        return true;
+    }
+
+    // Otherwise, it's an end to end operation.
 
     if (!ProcessIsValid())
         return false;
@@ -588,13 +600,21 @@ Target::RemoveAllWatchpointLocations ()
     return true; // Success!
 }
 
-// Assumption: caller holds the list mutex lock for m_watchpoint_location_list.
+// Assumption: Caller holds the list mutex lock for m_watchpoint_location_list
+// for end to end operations.
 bool
-Target::DisableAllWatchpointLocations ()
+Target::DisableAllWatchpointLocations (bool end_to_end)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
     if (log)
         log->Printf ("Target::%s\n", __FUNCTION__);
+
+    if (!end_to_end) {
+        m_watchpoint_location_list.SetEnabledAll(false);
+        return true;
+    }
+
+    // Otherwise, it's an end to end operation.
 
     if (!ProcessIsValid())
         return false;
@@ -613,13 +633,21 @@ Target::DisableAllWatchpointLocations ()
     return true; // Success!
 }
 
-// Assumption: caller holds the list mutex lock for m_watchpoint_location_list.
+// Assumption: Caller holds the list mutex lock for m_watchpoint_location_list
+// for end to end operations.
 bool
-Target::EnableAllWatchpointLocations ()
+Target::EnableAllWatchpointLocations (bool end_to_end)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
     if (log)
         log->Printf ("Target::%s\n", __FUNCTION__);
+
+    if (!end_to_end) {
+        m_watchpoint_location_list.SetEnabledAll(true);
+        return true;
+    }
+
+    // Otherwise, it's an end to end operation.
 
     if (!ProcessIsValid())
         return false;
@@ -638,7 +666,7 @@ Target::EnableAllWatchpointLocations ()
     return true; // Success!
 }
 
-// Assumption: caller holds the list mutex lock for m_watchpoint_location_list.
+// Assumption: Caller holds the list mutex lock for m_watchpoint_location_list.
 bool
 Target::DisableWatchpointLocationByID (lldb::watch_id_t watch_id)
 {
@@ -661,7 +689,7 @@ Target::DisableWatchpointLocationByID (lldb::watch_id_t watch_id)
     return false;
 }
 
-// Assumption: caller holds the list mutex lock for m_watchpoint_location_list.
+// Assumption: Caller holds the list mutex lock for m_watchpoint_location_list.
 bool
 Target::EnableWatchpointLocationByID (lldb::watch_id_t watch_id)
 {
@@ -684,7 +712,7 @@ Target::EnableWatchpointLocationByID (lldb::watch_id_t watch_id)
     return false;
 }
 
-// Assumption: caller holds the list mutex lock for m_watchpoint_location_list.
+// Assumption: Caller holds the list mutex lock for m_watchpoint_location_list.
 bool
 Target::RemoveWatchpointLocationByID (lldb::watch_id_t watch_id)
 {
