@@ -73,10 +73,10 @@ public:
     ///     A shared pointer to a module to add to this collection.
     //------------------------------------------------------------------
     void
-    Append (lldb::ModuleSP &module_sp);
+    Append (const lldb::ModuleSP &module_sp);
 
     bool
-    AppendIfNeeded (lldb::ModuleSP &module_sp);
+    AppendIfNeeded (const lldb::ModuleSP &module_sp);
 
     //------------------------------------------------------------------
     /// Clear the object's state.
@@ -358,7 +358,7 @@ public:
                TypeList& types);
     
     bool
-    Remove (lldb::ModuleSP &module_sp);
+    Remove (const lldb::ModuleSP &module_sp);
 
     size_t
     Remove (ModuleList &module_list);

@@ -21,7 +21,7 @@ using namespace lldb;
 using namespace lldb_private;
 
 PlatformSP 
-OptionGroupPlatform::CreatePlatformWithOptions (CommandInterpreter &interpreter, bool make_selected, Error& error)
+OptionGroupPlatform::CreatePlatformWithOptions (CommandInterpreter &interpreter, bool make_selected, Error& error) const
 {
     PlatformSP platform_sp;
     if (!m_platform_name.empty())

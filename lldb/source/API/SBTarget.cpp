@@ -867,6 +867,52 @@ SBTarget::DeleteAllBreakpoints ()
 }
 
 
+lldb::SBModule
+SBTarget::AddModule (const char *path,
+                     const char *triple,
+                     const char *uuid_cstr)
+{
+    lldb::SBModule sb_module;
+    if (m_opaque_sp)
+    {
+        FileSpec module_file_spec;
+        UUID module_uuid;
+        ArchSpec module_arch;
+
+        if (path)
+            module_file_spec.SetFile(path, false);
+
+        if (uuid_cstr)
+            module_uuid.SetfromCString(uuid_cstr);
+
+        if (triple)
+            module_arch.SetTriple (triple, m_opaque_sp->GetPlatform ().get());
+
+        sb_module.SetModule(m_opaque_sp->GetSharedModule (module_file_spec,
+                                                          module_arch,
+                                                          uuid_cstr ? &module_uuid : NULL));
+    }
+    return sb_module;
+}
+
+bool
+SBTarget::AddModule (lldb::SBModule &module)
+{
+    if (m_opaque_sp)
+    {
+        m_opaque_sp->GetImages().AppendIfNeeded (module.get_sp());
+        return true;
+    }
+    return false;
+}
+
+lldb::SBModule
+AddModule (const char *path,
+           const char *triple,
+           const char *uuid);
+
+
+
 uint32_t
 SBTarget::GetNumModules () const
 {
@@ -928,6 +974,14 @@ SBTarget::GetModuleAtIndex (uint32_t idx)
     }
 
     return sb_module;
+}
+
+bool
+SBTarget::RemoveModule (lldb::SBModule module)
+{
+    if (m_opaque_sp)
+        return m_opaque_sp->GetImages().Remove(module.get_sp());
+    return false;
 }
 
 
@@ -1079,3 +1133,149 @@ SBTarget::GetSourceManager()
     SBSourceManager source_manager (*this);
     return source_manager;
 }
+
+
+SBError
+SBTarget::SetSectionLoadAddress (lldb::SBSection section,
+                                 lldb::addr_t section_base_addr)
+{
+    SBError sb_error;
+    
+    if (IsValid())
+    {
+        if (!section.IsValid())
+        {
+            sb_error.SetErrorStringWithFormat ("invalid section");
+        }
+        else
+        {
+            m_opaque_sp->GetSectionLoadList().SetSectionLoadAddress (section.GetSection(), section_base_addr);
+        }
+    }
+    else
+    {
+        sb_error.SetErrorStringWithFormat ("invalid target");
+    }
+    return sb_error;
+}
+
+SBError
+SBTarget::ClearSectionLoadAddress (lldb::SBSection section)
+{
+    SBError sb_error;
+    
+    if (IsValid())
+    {
+        if (!section.IsValid())
+        {
+            sb_error.SetErrorStringWithFormat ("invalid section");
+        }
+        else
+        {
+            m_opaque_sp->GetSectionLoadList().SetSectionUnloaded (section.GetSection());
+        }
+    }
+    else
+    {
+        sb_error.SetErrorStringWithFormat ("invalid target");
+    }
+    return sb_error;
+}
+
+SBError
+SBTarget::SetModuleLoadAddress (lldb::SBModule module, int64_t slide_offset)
+{
+    SBError sb_error;
+    
+    char path[PATH_MAX];
+    if (IsValid())
+    {
+        if (!module.IsValid())
+        {
+            sb_error.SetErrorStringWithFormat ("invalid module");
+        }
+        else
+        {
+            ObjectFile *objfile = module->GetObjectFile();
+            if (objfile)
+            {
+                SectionList *section_list = objfile->GetSectionList();
+                if (section_list)
+                {
+                    const size_t num_sections = section_list->GetSize();
+                    for (size_t sect_idx = 0; sect_idx < num_sections; ++sect_idx)
+                    {
+                        SectionSP section_sp (section_list->GetSectionAtIndex(sect_idx));
+                        if (section_sp)
+                            m_opaque_sp->GetSectionLoadList().SetSectionLoadAddress (section_sp.get(), section_sp->GetFileAddress() + slide_offset);
+                    }
+                }
+                else
+                {
+                    module->GetFileSpec().GetPath (path, sizeof(path));
+                    sb_error.SetErrorStringWithFormat ("no sections in object file '%s'", path);
+                }
+            }
+            else
+            {
+                module->GetFileSpec().GetPath (path, sizeof(path));
+                sb_error.SetErrorStringWithFormat ("no object file for module '%s'", path);
+            }
+        }
+    }
+    else
+    {
+        sb_error.SetErrorStringWithFormat ("invalid target");
+    }
+    return sb_error;
+}
+
+SBError
+SBTarget::ClearModuleLoadAddress (lldb::SBModule module)
+{
+    SBError sb_error;
+    
+    char path[PATH_MAX];
+    if (IsValid())
+    {
+        if (!module.IsValid())
+        {
+            sb_error.SetErrorStringWithFormat ("invalid module");
+        }
+        else
+        {
+            ObjectFile *objfile = module->GetObjectFile();
+            if (objfile)
+            {
+                SectionList *section_list = objfile->GetSectionList();
+                if (section_list)
+                {
+                    const size_t num_sections = section_list->GetSize();
+                    for (size_t sect_idx = 0; sect_idx < num_sections; ++sect_idx)
+                    {
+                        SectionSP section_sp (section_list->GetSectionAtIndex(sect_idx));
+                        if (section_sp)
+                            m_opaque_sp->GetSectionLoadList().SetSectionUnloaded (section_sp.get());
+                    }
+                }
+                else
+                {
+                    module->GetFileSpec().GetPath (path, sizeof(path));
+                    sb_error.SetErrorStringWithFormat ("no sections in object file '%s'", path);
+                }
+            }
+            else
+            {
+                module->GetFileSpec().GetPath (path, sizeof(path));
+                sb_error.SetErrorStringWithFormat ("no object file for module '%s'", path);
+            }
+        }
+    }
+    else
+    {
+        sb_error.SetErrorStringWithFormat ("invalid target");
+    }
+    return sb_error;
+}
+
+

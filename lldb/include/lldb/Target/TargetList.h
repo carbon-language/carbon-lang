@@ -58,31 +58,55 @@ public:
     /// locate an appropriate target to deliver asynchronous information
     /// to.
     ///
+    /// @param[in] debugger
+    ///     The debugger to associate this target with
+    ///
     /// @param[in] file_spec
     ///     The main executable file for a debug target. This value
     ///     can be NULL and the file can be set later using:
     ///     Target::SetExecutableModule (ModuleSP&)
     ///
-    /// @param[in] arch
-    ///     The architecture to use when launching the \a file_spec for
-    ///     debugging. This can be NULL if the architecture is not known
-    ///     or when attaching to a process.
+    /// @param[in] triple_cstr
+    ///     A target triple string to be used for the target. This can 
+    ///     be NULL if the triple is not known or when attaching to a
+    ///     process.
     ///
-    /// @param[in] uuid_ptr
-    ///     An optional UUID to use when loading a target. When this is
-    ///     specified, plug-ins might be able to track down a different
-    ///     executable than the one on disk specified by "file_spec" in
-    ///     an alternate SDK or build location (such as when doing
-    ///     symbolication on non-native OS builds).
+    /// @param[in] get_dependent_modules
+    ///     Track down the dependent modules for an executable and 
+    ///     load those into the module list.
+    ///
+    /// @param[in] platform_options
+    ///     A pointer to the platform options to use when creating this
+    ///     target. If this value is NULL, then the currently selected 
+    ///     platform will be used.
+    ///
+    /// @param[out] target_sp
+    ///     A shared pointer to a target that will be filled in if 
+    ///     this call is successful.
     ///
     /// @return
-    ///     A shared pointer to a target object.
+    ///     An error object that indicates success or failure
+    //------------------------------------------------------------------
+    Error
+    CreateTarget (Debugger &debugger,
+                  const FileSpec& file_spec,
+                  const char *triple_cstr,
+                  bool get_dependent_modules,
+                  const OptionGroupPlatform *platform_options,
+                  lldb::TargetSP &target_sp);
+
+    //------------------------------------------------------------------
+    /// Create a new Target.
+    ///
+    /// Same as the function above, but used when you already know the
+    /// platform you will be using
     //------------------------------------------------------------------
     Error
     CreateTarget (Debugger &debugger,
                   const FileSpec& file_spec,
                   const ArchSpec& arch,
-                  bool get_dependent_files,
+                  bool get_dependent_modules,
+                  const lldb::PlatformSP &platform_sp,
                   lldb::TargetSP &target_sp);
 
     //------------------------------------------------------------------

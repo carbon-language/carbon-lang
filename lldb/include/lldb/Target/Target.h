@@ -32,8 +32,6 @@
 #include "lldb/Target/PathMappingList.h"
 #include "lldb/Target/SectionLoadList.h"
 
-#include "lldb/API/SBTarget.h"
-
 namespace lldb_private {
 
 //----------------------------------------------------------------------
@@ -854,9 +852,7 @@ public:
     };
     
 
-protected:
-    friend class lldb::SBTarget;
-    
+protected:    
     //------------------------------------------------------------------
     // Member variables.
     //------------------------------------------------------------------

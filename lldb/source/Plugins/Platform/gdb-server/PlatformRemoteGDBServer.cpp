@@ -360,12 +360,12 @@ PlatformRemoteGDBServer::Attach (lldb::pid_t pid,
                 {
                     TargetSP new_target_sp;
                     FileSpec emptyFileSpec;
-                    ArchSpec emptyArchSpec;
                     
                     error = debugger.GetTargetList().CreateTarget (debugger,
                                                                    emptyFileSpec,
-                                                                   emptyArchSpec, 
+                                                                   NULL, 
                                                                    false,
+                                                                   NULL,
                                                                    new_target_sp);
                     target = new_target_sp.get();
                 }

@@ -61,7 +61,7 @@ public:
     lldb::PlatformSP 
     CreatePlatformWithOptions (CommandInterpreter &interpreter, 
                                bool make_selected, 
-                               Error& error);
+                               Error& error) const;
 
     bool
     PlatformWasSpecified () const

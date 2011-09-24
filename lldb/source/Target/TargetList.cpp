@@ -17,6 +17,7 @@
 #include "lldb/Core/State.h"
 #include "lldb/Core/Timer.h"
 #include "lldb/Host/Host.h"
+#include "lldb/Interpreter/OptionGroupPlatform.h"
 #include "lldb/Target/Platform.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/TargetList.h"
@@ -46,12 +47,59 @@ TargetList::~TargetList()
 }
 
 Error
+TargetList::CreateTarget (Debugger &debugger,
+                          const FileSpec& file,
+                          const char *triple_cstr,
+                          bool get_dependent_files,
+                          const OptionGroupPlatform *platform_options,
+                          TargetSP &target_sp)
+{
+    Error error;
+    PlatformSP platform_sp;
+    if (platform_options)
+    {
+        if (platform_options->PlatformWasSpecified ())
+        {
+            const bool select_platform = true;
+            platform_sp = platform_options->CreatePlatformWithOptions (debugger.GetCommandInterpreter(), 
+                                                                       select_platform, 
+                                                                       error);
+            if (!platform_sp)
+                return error;
+        }
+    }
+    
+    if (!platform_sp)
+        platform_sp = debugger.GetPlatformList().GetSelectedPlatform ();
+
+    ArchSpec arch;
+    
+    if (triple_cstr)
+    {
+        arch.SetTriple(triple_cstr, platform_sp.get());
+        if (!arch.IsValid())
+        {
+            error.SetErrorStringWithFormat("invalid triple '%s'\n", triple_cstr);
+            return error;
+        }
+    }
+    error = TargetList::CreateTarget (debugger,
+                                      file,
+                                      arch,
+                                      get_dependent_files,
+                                      platform_sp,
+                                      target_sp);
+    return error;
+}
+
+Error
 TargetList::CreateTarget
 (
     Debugger &debugger,
     const FileSpec& file,
     const ArchSpec& arch,
     bool get_dependent_files,
+    const PlatformSP &platform_sp,
     TargetSP &target_sp
 )
 {
@@ -62,7 +110,6 @@ TargetList::CreateTarget
                         arch.GetArchitectureName());
     Error error;
 
-    PlatformSP platform_sp (debugger.GetPlatformList().GetSelectedPlatform ());
     
     if (file)
     {

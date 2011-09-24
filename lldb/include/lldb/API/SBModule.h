@@ -11,6 +11,8 @@
 #define LLDB_SBModule_h_
 
 #include "lldb/API/SBDefines.h"
+#include "lldb/API/SBError.h"
+#include "lldb/API/SBSection.h"
 #include "lldb/API/SBSymbolContext.h"
 #include "lldb/API/SBValueList.h"
 
@@ -84,10 +86,11 @@ public:
     operator != (const lldb::SBModule &rhs) const;
 
 #endif
+    lldb::SBSection
+    FindSection (const char *sect_name);
 
-    bool
-    ResolveFileAddress (lldb::addr_t vm_addr, 
-                        lldb::SBAddress& addr);
+    lldb::SBAddress
+    ResolveFileAddress (lldb::addr_t vm_addr);
 
     lldb::SBSymbolContext
     ResolveSymbolContextForAddress (const lldb::SBAddress& addr, 
@@ -102,6 +105,11 @@ public:
     lldb::SBSymbol
     GetSymbolAtIndex (size_t idx);
 
+    size_t
+    GetNumSections ();
+    
+    lldb::SBSection
+    GetSectionAtIndex (size_t idx);
     //------------------------------------------------------------------
     /// Find functions by name.
     ///
@@ -162,6 +170,7 @@ public:
 private:
     friend class SBAddress;
     friend class SBFrame;
+    friend class SBSection;
     friend class SBSymbolContext;
     friend class SBTarget;
 
@@ -186,6 +195,10 @@ private:
 
     const lldb_private::Module *
     get() const;
+
+    const lldb::ModuleSP &
+    get_sp() const;
+    
 
 #endif
 

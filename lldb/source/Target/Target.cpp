@@ -782,7 +782,7 @@ Target::SetExecutableModule (ModuleSP& executable_sp, bool get_dependent_files)
             }
         }
 
-        if (executable_objfile)
+        if (executable_objfile && get_dependent_files)
         {
             executable_objfile->GetDependentModules(dependent_files);
             for (uint32_t i=0; i<dependent_files.GetSize(); i++)

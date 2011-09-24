@@ -186,48 +186,18 @@ public:
             const char *file_path = command.GetArgumentAtIndex(0);
             Timer scoped_timer(__PRETTY_FUNCTION__, "(lldb) target create '%s'", file_path);
             FileSpec file_spec (file_path, true);
-            
-            bool select = true;
-            PlatformSP platform_sp;
-            
-            Error error;
-            
-            if (m_platform_options.PlatformWasSpecified ())
-            {
-                platform_sp = m_platform_options.CreatePlatformWithOptions(m_interpreter, select, error);
-                if (!platform_sp)
-                {
-                    result.AppendError(error.AsCString());
-                    result.SetStatus (eReturnStatusFailed);
-                    return false;
-                }
-            }
-            ArchSpec file_arch;
-            
-            const char *arch_cstr = m_arch_option.GetArchitectureName();
-            if (arch_cstr)
-            {        
-                if (!platform_sp)
-                    platform_sp = m_interpreter.GetDebugger().GetPlatformList().GetSelectedPlatform();
-                if (!m_arch_option.GetArchitecture(platform_sp.get(), file_arch))
-                {
-                    result.AppendErrorWithFormat("invalid architecture '%s'\n", arch_cstr);
-                    result.SetStatus (eReturnStatusFailed);
-                    return false;
-                }
-            }
-            
-            if (! file_spec.Exists() && !file_spec.ResolveExecutableLocation())
-            {
-                result.AppendErrorWithFormat ("File '%s' does not exist.\n", file_path);
-                result.SetStatus (eReturnStatusFailed);
-                return false;
-            }
-            
+
             TargetSP target_sp;
             Debugger &debugger = m_interpreter.GetDebugger();
-            error = debugger.GetTargetList().CreateTarget (debugger, file_spec, file_arch, true, target_sp);
-            
+            const char *arch_cstr = m_arch_option.GetArchitectureName();
+            const bool get_dependent_files = true;
+            Error error (debugger.GetTargetList().CreateTarget (debugger,
+                                                                file_spec,
+                                                                arch_cstr,
+                                                                get_dependent_files,
+                                                                &m_platform_options,
+                                                                target_sp));
+
             if (target_sp)
             {
                 debugger.GetTargetList().SetSelectedTarget(target_sp.get());

@@ -100,6 +100,13 @@ public:
                         FILE *err);
 
     lldb::SBTarget
+    CreateTarget (const char *filename,
+                  const char *target_triple,
+                  const char *platform_name,
+                  bool add_dependent_modules,
+                  lldb::SBError& error);
+
+    lldb::SBTarget
     CreateTargetWithFileAndTargetTriple (const char *filename,
                                          const char *target_triple);
 

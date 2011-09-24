@@ -79,8 +79,8 @@ public:
     bool
     GetDescription (lldb::SBStream &description);
 
-    SectionType
-    GetSectionType ();
+    lldb::SBSection
+    GetSection ();
 
     %feature("docstring", "
     //------------------------------------------------------------------

@@ -217,6 +217,11 @@ SBModule::get() const
     return m_opaque_sp.get();
 }
 
+const lldb::ModuleSP &
+SBModule::get_sp() const
+{
+    return m_opaque_sp;
+}
 
 void
 SBModule::SetModule (const lldb::ModuleSP& module_sp)
@@ -225,15 +230,17 @@ SBModule::SetModule (const lldb::ModuleSP& module_sp)
 }
 
 
-bool
-SBModule::ResolveFileAddress (lldb::addr_t vm_addr, SBAddress& addr)
+SBAddress
+SBModule::ResolveFileAddress (lldb::addr_t vm_addr)
 {
-    if (m_opaque_sp && addr.IsValid())
-        return m_opaque_sp->ResolveFileAddress (vm_addr, addr.ref());
-    
-    if (addr.IsValid())
-        addr->Clear();
-    return false;
+    lldb::SBAddress sb_addr;
+    if (m_opaque_sp)
+    {
+        Address addr;
+        if (m_opaque_sp->ResolveFileAddress (vm_addr, addr))
+            sb_addr.ref() = addr;
+    }
+    return sb_addr;
 }
 
 SBSymbolContext
@@ -290,6 +297,40 @@ SBModule::GetSymbolAtIndex (size_t idx)
         }
     }
     return sb_symbol;
+}
+
+size_t
+SBModule::GetNumSections ()
+{
+    if (m_opaque_sp)
+    {
+        ObjectFile *obj_file = m_opaque_sp->GetObjectFile();
+        if (obj_file)
+        {
+            SectionList *section_list = obj_file->GetSectionList ();
+            if (section_list)
+                return section_list->GetSize();
+        }
+    }
+    return 0;
+}
+
+SBSection
+SBModule::GetSectionAtIndex (size_t idx)
+{
+    SBSection sb_section;
+    if (m_opaque_sp)
+    {
+        ObjectFile *obj_file = m_opaque_sp->GetObjectFile();
+        if (obj_file)
+        {
+            SectionList *section_list = obj_file->GetSectionList ();
+
+            if (section_list)
+                sb_section.SetSection(section_list->GetSectionAtIndex (idx).get());
+        }
+    }
+    return sb_section;
 }
 
 uint32_t
@@ -396,3 +437,30 @@ SBModule::FindTypes (const char* type)
 
     return retval;
 }
+
+
+SBSection
+SBModule::FindSection (const char *sect_name)
+{
+    SBSection sb_section;
+    
+    if (IsValid())
+    {
+        ObjectFile *objfile = m_opaque_sp->GetObjectFile();
+        if (objfile)
+        {
+            SectionList *section_list = objfile->GetSectionList();
+            if (section_list)
+            {
+                ConstString const_sect_name(sect_name);
+                SectionSP section_sp (section_list->FindSectionByName(const_sect_name));
+                if (section_sp)
+                {
+                    sb_section.SetSection(section_sp.get());
+                }
+            }
+        }
+    }
+    return sb_section;
+}
+

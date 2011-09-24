@@ -54,9 +54,6 @@ public:
     bool
     GetDescription (lldb::SBStream &description);
 
-    SectionType
-    GetSectionType ();
-
     // The following queries can lookup symbol information for a given address.
     // An address might refer to code or data from an existing module, or it
     // might refer to something on the stack or heap. The following functions
@@ -75,6 +72,9 @@ public:
     //    lldb::SBSymbolContext SBTarget::ResolveSymbolContextForAddress (const SBAddress &addr, uint32_t resolve_scope);
     // One or more bits from the SymbolContextItem enumerations can be logically
     // OR'ed together to more efficiently retrieve multiple symbol objects.
+
+    lldb::SBSection
+    GetSection ();
 
     lldb::SBModule
     GetModule ();
@@ -102,6 +102,7 @@ protected:
     friend class SBLineEntry;
     friend class SBInstruction;
     friend class SBModule;
+    friend class SBSection;
     friend class SBSymbol;
     friend class SBSymbolContext;
     friend class SBTarget;
@@ -135,7 +136,7 @@ protected:
 
 private:
 
-    std::auto_ptr<lldb_private::Address> m_opaque_ap;
+    std::auto_ptr<lldb_private::AddressImpl> m_opaque_ap;
 };
 
 

@@ -19,6 +19,7 @@ namespace lldb_private {
 
 class   ABI;
 class   Address;
+class   AddressImpl;
 class   AddressRange;
 class   AddressResolver;
 class   ArchSpec;
@@ -100,6 +101,8 @@ class   Mutex;
 class   NameSearchContext;
 class   ObjCLanguageRuntime;
 class   ObjectContainer;
+class   OptionGroup;
+class   OptionGroupPlatform;
 class   ObjectFile;
 class   OperatingSystem;
 class   Options;
@@ -125,6 +128,7 @@ class   ScriptInterpreter;
 class   ScriptInterpreterPython;
 class   SearchFilter;
 class   Section;
+class   SectionImpl;
 class   SectionList;
 class   SourceManager;
 class   StackFrame;

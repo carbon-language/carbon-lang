@@ -585,13 +585,13 @@ public:
             // If there isn't a current target create one.
             TargetSP new_target_sp;
             FileSpec emptyFileSpec;
-            ArchSpec emptyArchSpec;
             Error error;
             
             error = m_interpreter.GetDebugger().GetTargetList().CreateTarget (m_interpreter.GetDebugger(), 
                                                                               emptyFileSpec,
-                                                                              emptyArchSpec, 
+                                                                              NULL, 
                                                                               false,
+                                                                              NULL, // No platform options
                                                                               new_target_sp);
             target = new_target_sp.get();
             if (target == NULL || error.Fail())
@@ -1041,12 +1041,12 @@ public:
         {
             // If there isn't a current target create one.
             FileSpec emptyFileSpec;
-            ArchSpec emptyArchSpec;
             
             error = m_interpreter.GetDebugger().GetTargetList().CreateTarget (m_interpreter.GetDebugger(), 
                                                                               emptyFileSpec,
-                                                                              emptyArchSpec, 
+                                                                              NULL, 
                                                                               false,
+                                                                              NULL, // No platform options
                                                                               target_sp);
             if (!target_sp || error.Fail())
             {

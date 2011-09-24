@@ -11,7 +11,7 @@ def fuzz_obj(obj):
     obj.SetLoadAddress(0xffff, lldb.SBTarget())
     obj.OffsetAddress(sys.maxint)
     obj.GetDescription(lldb.SBStream())
-    obj.GetSectionType()
+    obj.GetSection()
     obj.GetSymbolContext(lldb.eSymbolContextEverything)
     obj.GetModule()
     obj.GetCompileUnit()

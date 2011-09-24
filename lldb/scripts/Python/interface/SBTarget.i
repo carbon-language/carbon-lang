@@ -277,17 +277,42 @@ public:
     lldb::SBFileSpec
     GetExecutable ();
 
+    bool
+    AddModule (lldb::SBModule &module);
+
+    lldb::SBModule
+    AddModule (const char *path,
+               const char *triple,
+               const char *uuid);
+
     uint32_t
     GetNumModules () const;
 
     lldb::SBModule
     GetModuleAtIndex (uint32_t idx);
 
+    bool
+    RemoveModule (lldb::SBModule module);
+
     lldb::SBDebugger
     GetDebugger() const;
 
     lldb::SBModule
     FindModule (const lldb::SBFileSpec &file_spec);
+
+    lldb::SBError
+    SetSectionLoadAddress (lldb::SBSection section,
+                           lldb::addr_t section_base_addr);
+
+    lldb::SBError
+    ClearSectionLoadAddress (lldb::SBSection section);
+
+    lldb::SBError
+    SetModuleLoadAddress (lldb::SBModule module,
+                          int64_t sections_offset);
+
+    lldb::SBError
+    ClearModuleLoadAddress (lldb::SBModule module);
 
     %feature("docstring", "
     //------------------------------------------------------------------

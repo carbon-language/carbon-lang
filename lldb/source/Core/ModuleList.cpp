@@ -61,7 +61,7 @@ ModuleList::~ModuleList()
 }
 
 void
-ModuleList::Append (ModuleSP &module_sp)
+ModuleList::Append (const ModuleSP &module_sp)
 {
     if (module_sp)
     {
@@ -71,7 +71,7 @@ ModuleList::Append (ModuleSP &module_sp)
 }
 
 bool
-ModuleList::AppendIfNeeded (ModuleSP &module_sp)
+ModuleList::AppendIfNeeded (const ModuleSP &module_sp)
 {
     if (module_sp)
     {
@@ -90,7 +90,7 @@ ModuleList::AppendIfNeeded (ModuleSP &module_sp)
 }
 
 bool
-ModuleList::Remove (ModuleSP &module_sp)
+ModuleList::Remove (const ModuleSP &module_sp)
 {
     if (module_sp)
     {

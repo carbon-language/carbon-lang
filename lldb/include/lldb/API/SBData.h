@@ -126,7 +126,8 @@ protected:
 
 private:
     friend class SBValue;
-    
+    friend class SBSection;
+
     lldb::DataExtractorSP  m_opaque_sp;
 };
 

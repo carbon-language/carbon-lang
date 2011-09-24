@@ -89,9 +89,11 @@ public:
     const char *
     GetUUIDString () const;
 
-    bool
-    ResolveFileAddress (lldb::addr_t vm_addr, 
-                        lldb::SBAddress& addr);
+    lldb::SBSection
+    FindSection (const char *sect_name);
+
+    lldb::SBAddress
+    ResolveFileAddress (lldb::addr_t vm_addr);
 
     lldb::SBSymbolContext
     ResolveSymbolContextForAddress (const lldb::SBAddress& addr, 
@@ -105,6 +107,13 @@ public:
     
     lldb::SBSymbol
     GetSymbolAtIndex (size_t idx);
+
+    size_t
+    GetNumSections ();
+
+    lldb::SBSection
+    GetSectionAtIndex (size_t idx);
+
 
     %feature("docstring", "
     //------------------------------------------------------------------
