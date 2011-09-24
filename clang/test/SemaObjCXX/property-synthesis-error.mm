@@ -10,7 +10,7 @@
   NSMutableArray * _array;
 }
 
-@property (readonly) NSArray * array;
+@property (readonly) NSMutableArray * array;
 
 @end
 

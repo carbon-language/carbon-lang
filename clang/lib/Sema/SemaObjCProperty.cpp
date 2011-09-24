@@ -235,7 +235,13 @@ Sema::HandlePropertyInClassExtension(Scope *S,
                         /* lexicalDC = */ CDecl);
     return PDecl;
   }
-
+  if (PIDecl->getType().getCanonicalType() 
+      != PDecl->getType().getCanonicalType()) {
+    Diag(AtLoc, 
+         diag::error_type_mismatch_continuation_class) << PDecl->getType();
+    Diag(PIDecl->getLocation(), diag::note_property_declare);
+  }
+    
   // The property 'PIDecl's readonly attribute will be over-ridden
   // with continuation class's readwrite property attribute!
   unsigned PIkind = PIDecl->getPropertyAttributesAsWritten();
