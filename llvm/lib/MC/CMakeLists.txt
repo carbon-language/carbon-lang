@@ -1,5 +1,6 @@
 add_llvm_library(LLVMMC
   ELFObjectWriter.cpp
+  MCAsmBackend.cpp
   MCAsmInfo.cpp
   MCAsmInfoCOFF.cpp
   MCAsmInfoDarwin.cpp
@@ -10,6 +11,7 @@ add_llvm_library(LLVMMC
   MCCodeGenInfo.cpp
   MCContext.cpp
   MCDisassembler.cpp
+  MCDwarf.cpp
   MCELF.cpp
   MCELFObjectTargetWriter.cpp
   MCELFStreamer.cpp
@@ -18,7 +20,6 @@ add_llvm_library(LLVMMC
   MCInstPrinter.cpp
   MCInstrAnalysis.cpp
   MCLabel.cpp
-  MCDwarf.cpp
   MCLoggingStreamer.cpp
   MCMachOStreamer.cpp
   MCMachObjectTargetWriter.cpp
@@ -35,16 +36,13 @@ add_llvm_library(LLVMMC
   MCStreamer.cpp
   MCSubtargetInfo.cpp
   MCSymbol.cpp
+  MCTargetAsmLexer.cpp
   MCValue.cpp
   MCWin64EH.cpp
   MachObjectWriter.cpp
-  WinCOFFStreamer.cpp
-  WinCOFFObjectWriter.cpp
   SubtargetFeature.cpp
-  MCAsmBackend.cpp
-  MCTargetAsmLexer.cpp
-  MCAtom.cpp
-  MCModule.cpp
+  WinCOFFObjectWriter.cpp
+  WinCOFFStreamer.cpp
   )
 
 add_llvm_library_dependencies(LLVMMC
