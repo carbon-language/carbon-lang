@@ -14,6 +14,7 @@
 
 #include "lldb/lldb-types.h"
 
+#include "lldb/Breakpoint/WatchpointLocation.h"
 #include "lldb/Core/Address.h"
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/Log.h"
@@ -403,6 +404,48 @@ SBFrame::FindValue (const char *name, ValueType value_type)
         value = FindValue (name, value_type, use_dynamic);
     }
     return value;
+}
+
+/// Find and watch a variable using the frame as the scope.
+/// You can use LLDB_WATCH_TYPE_READ | LLDB_WATCH_TYPE_WRITE for 'rw' watch.
+SBValue
+SBFrame::WatchValue (const char *name, ValueType value_type, uint32_t watch_type)
+{
+    SBValue sb_value_empty;
+
+    if (!IsValid())
+        return sb_value_empty;
+
+    // Acquire the API locker, to be released at the end of the method call.
+    Mutex::Locker api_locker (m_opaque_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
+
+    switch (value_type) {
+    case eValueTypeVariableGlobal:      // global variable
+    case eValueTypeVariableStatic:      // static variable
+    case eValueTypeVariableArgument:    // function argument variables
+    case eValueTypeVariableLocal:       // function local variables
+        break;
+    default:
+        return sb_value_empty;          // these are not eligible for watching
+    }
+
+    SBValue sb_value = FindValue(name, value_type);
+    // If the SBValue is not valid, there's no point in even trying to watch it.
+    if (!sb_value.IsValid())
+        return sb_value;
+
+    addr_t addr = sb_value.GetLoadAddress();
+    size_t size = sb_value.GetByteSize();
+
+    WatchpointLocationSP wp_loc_sp = m_opaque_sp->GetThread().GetProcess().GetTarget().
+        CreateWatchpointLocation(addr, size, watch_type);
+
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    if (log)
+        log->Printf ("SBFrame(%p)::WatchValue (name=\"%s\", value_type=%i, watch_type=%i) => SBValue(%p) & wp_loc(%p)", 
+                     m_opaque_sp.get(), name, value_type, watch_type, sb_value.get(), wp_loc_sp.get());
+
+    return wp_loc_sp ? sb_value : sb_value_empty;
 }
 
 SBValue
