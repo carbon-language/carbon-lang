@@ -31,7 +31,8 @@ and rich comparion methods which allow the API program to use,
     if thisModule == thatModule:
         print 'This module is the same as that module'
 
-to test module equality."
+to test module equality.  A module also contains object file sections, namely
+SBSection.  SBModule supports section iteration through section_iter()."
 ) SBModule;
 class SBModule
 {

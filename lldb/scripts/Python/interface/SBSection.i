@@ -10,7 +10,10 @@
 namespace lldb {
 
 %feature("docstring",
-"Represents an executable image section."
+"Represents an executable image section.
+
+SBSection supports iteration through its subsection, represented as SBSection
+as well."
 ) SBSection;
 
 class SBSection

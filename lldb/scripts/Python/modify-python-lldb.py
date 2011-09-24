@@ -150,6 +150,7 @@ linked_list_iter_def = '''
 iter_def = "    def __iter__(self): return lldb_iter(self, '%s', '%s')"
 module_iter = "    def module_iter(self): return lldb_iter(self, '%s', '%s')"
 breakpoint_iter = "    def breakpoint_iter(self): return lldb_iter(self, '%s', '%s')"
+section_iter = "    def section_iter(self): return lldb_iter(self, '%s', '%s')"
 
 # Called to implement the built-in function len().
 # Eligible objects are those containers with unambiguous iteration support.
@@ -172,6 +173,7 @@ d = { 'SBBreakpoint':  ('GetNumLocations',   'GetLocationAtIndex'),
       'SBDebugger':    ('GetNumTargets',     'GetTargetAtIndex'),
       'SBModule':      ('GetNumSymbols',     'GetSymbolAtIndex'),
       'SBProcess':     ('GetNumThreads',     'GetThreadAtIndex'),
+      'SBSection':     ('GetNumSubSections', 'GetSubSectionAtIndex'),
       'SBThread':      ('GetNumFrames',      'GetFrameAtIndex'),
 
       'SBInstructionList':   ('GetSize', 'GetInstructionAtIndex'),
@@ -186,7 +188,10 @@ d = { 'SBBreakpoint':  ('GetNumLocations',   'GetLocationAtIndex'),
       # SBTarget needs special processing, see below.
       'SBTarget': {'module':     ('GetNumModules', 'GetModuleAtIndex'),
                    'breakpoint': ('GetNumBreakpoints', 'GetBreakpointAtIndex')
-                   }
+                   },
+
+      # SBModule has an additional section_iter(), see below.
+      'SBModule-extra': ('GetNumSections', 'GetSectionAtIndex')
       }
 
 #
@@ -332,6 +337,9 @@ for line in content.splitlines():
                     new_content.add_line(eq_def % (cls, list_to_frag(e[cls])))
                     new_content.add_line(ne_def)
 
+            # SBModule has an extra SBSection iterator!
+            if cls == "SBModule":
+                new_content.add_line(section_iter % d[cls+'-extra'])
             # This special purpose iterator is for SBValue only!!!
             if cls == "SBValue":
                 new_content.add_line(linked_list_iter_def)
