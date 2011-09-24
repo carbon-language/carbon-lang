@@ -47,8 +47,8 @@ namespace integral {
     { const int a = {1}; static_assert(a == 1, ""); }
     { const int a{1, 2}; } // expected-error {{excess elements}}
     { const int a = {1, 2}; } // expected-error {{excess elements}}
-    { const short a{100000}; } // expected-error {{narrowing conversion}}
-    { const short a = {100000}; } // expected-error {{narrowing conversion}}
+    { const short a{100000}; } // expected-error {{cannot be narrowed}}
+    { const short a = {100000}; } // expected-error {{cannot be narrowed}}
   }
 
   int function_call() {
