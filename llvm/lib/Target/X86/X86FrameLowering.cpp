@@ -1423,7 +1423,7 @@ X86FrameLowering::adjustForSegmentedStacks(MachineFunction &MF) const {
   checkMBB->addSuccessor(allocMBB);
   checkMBB->addSuccessor(&prologueMBB);
 
-#ifndef NDEBUG
+#ifdef XDEBUG
   MF.verify();
 #endif
 }
