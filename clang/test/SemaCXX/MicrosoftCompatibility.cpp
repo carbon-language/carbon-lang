@@ -134,3 +134,25 @@ void function_missing_typename()
 template void function_missing_typename<D>();
 
 }
+
+
+
+namespace lookup_dependent_bases_id_expr {
+
+template<class T> class A {
+public:
+  int var;
+};
+
+
+template<class T>
+class B : public A<T> {
+public:
+  void f() {
+    var = 3;
+  }
+};
+
+template class B<int>;
+
+}
