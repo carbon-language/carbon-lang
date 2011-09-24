@@ -6915,6 +6915,17 @@ void DiagnoseBadConversion(Sema &S, OverloadCandidate *Cand, unsigned I) {
     return;
   }
 
+  // Special diagnostic for failure to convert an initializer list, since
+  // telling the user that it has type void is not useful.
+  if (FromExpr && isa<InitListExpr>(FromExpr)) {
+    S.Diag(Fn->getLocation(), diag::note_ovl_candidate_bad_list_argument)
+      << (unsigned) FnKind << FnDesc
+      << (FromExpr ? FromExpr->getSourceRange() : SourceRange())
+      << FromTy << ToTy << (unsigned) isObjectArgument << I+1;
+    MaybeEmitInheritedConstructorNote(S, Fn);
+    return;
+  }
+
   // Diagnose references or pointers to incomplete types differently,
   // since it's far from impossible that the incompleteness triggered
   // the failure.
