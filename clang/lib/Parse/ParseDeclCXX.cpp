@@ -2292,9 +2292,17 @@ Parser::MemInitResult Parser::ParseMemInitializer(Decl *ConstructorDecl) {
 
   // Parse the '('.
   if (getLang().CPlusPlus0x && Tok.is(tok::l_brace)) {
-    // FIXME: Do something with the braced-init-list.
-    ParseBraceInitializer();
-    return true;
+    ExprResult InitList = ParseBraceInitializer();
+    if (InitList.isInvalid())
+      return true;
+
+    SourceLocation EllipsisLoc;
+    if (Tok.is(tok::ellipsis))
+      EllipsisLoc = ConsumeToken();
+
+    return Actions.ActOnMemInitializer(ConstructorDecl, getCurScope(), SS, II,
+                                       TemplateTypeTy, IdLoc, InitList.take(),
+                                       EllipsisLoc);
   } else if(Tok.is(tok::l_paren)) {
     SourceLocation LParenLoc = ConsumeParen();
 

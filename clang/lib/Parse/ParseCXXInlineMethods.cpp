@@ -125,8 +125,9 @@ Decl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS, ParsingDeclarator &D,
   tok::TokenKind kind = Tok.getKind();
   // We may have a constructor initializer or function-try-block here.
   if (kind == tok::colon || kind == tok::kw_try) {
-    // Consume everything up to (and including) the left brace.
-    if (!ConsumeAndStoreUntil(tok::l_brace, Toks)) {
+    // Consume everything up to (and including) the left brace of the
+    // function body.
+    if (ConsumeAndStoreTryAndInitializers(Toks)) {
       // We didn't find the left-brace we expected after the
       // constructor initializer.
       if (Tok.is(tok::semi)) {
@@ -578,4 +579,51 @@ bool Parser::ConsumeAndStoreUntil(tok::TokenKind T1, tok::TokenKind T2,
     }
     isFirstTokenConsumed = false;
   }
+}
+
+/// \brief Consume tokens and store them in the passed token container until
+/// we've passed the try keyword and constructor initializers and have consumed
+/// the opening brace of the function body.
+///
+/// \return True on error.
+bool Parser::ConsumeAndStoreTryAndInitializers(CachedTokens &Toks) {
+  if (Tok.is(tok::kw_try)) {
+    Toks.push_back(Tok);
+    ConsumeToken();
+  }
+  if (Tok.is(tok::colon)) {
+    // Initializers can contain braces too.
+    Toks.push_back(Tok);
+    ConsumeToken();
+
+    while (Tok.is(tok::identifier) || Tok.is(tok::coloncolon)) {
+      if (Tok.is(tok::eof) || Tok.is(tok::semi))
+        return true;
+
+      // Grab the identifier.
+      if (!ConsumeAndStoreUntil(tok::l_paren, tok::l_brace, Toks,
+                                /*StopAtSemi=*/true,
+                                /*ConsumeFinalToken=*/false))
+        return true;
+
+      tok::TokenKind kind = Tok.getKind();
+      Toks.push_back(Tok);
+      if (kind == tok::l_paren)
+        ConsumeParen();
+      else {
+        assert(kind == tok::l_brace && "Must be left paren or brace here.");
+        ConsumeBrace();
+      }
+
+      // Grab the initializer
+      if (!ConsumeAndStoreUntil(kind == tok::l_paren ? tok::r_paren :
+                                                       tok::r_brace,
+                                Toks, /*StopAtSemi=*/true))
+        return true;
+    }
+  }
+
+  // Grab any remaining garbage to be diagnosed later, and the opening
+  // brace of the function body.
+  return !ConsumeAndStoreUntil(tok::l_brace, Toks, /*StopAtSemi=*/true);
 }

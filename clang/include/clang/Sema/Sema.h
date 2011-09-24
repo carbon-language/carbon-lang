@@ -22,6 +22,7 @@
 #include "clang/Sema/DeclSpec.h"
 #include "clang/Sema/ExternalSemaSource.h"
 #include "clang/Sema/LocInfoType.h"
+#include "clang/Sema/MultiInitializer.h"
 #include "clang/Sema/TypoCorrection.h"
 #include "clang/Sema/Weak.h"
 #include "clang/AST/Expr.h"
@@ -3398,24 +3399,37 @@ public:
                                     SourceLocation RParenLoc,
                                     SourceLocation EllipsisLoc);
 
-  MemInitResult BuildMemberInitializer(ValueDecl *Member, Expr **Args,
-                                       unsigned NumArgs, SourceLocation IdLoc,
-                                       SourceLocation LParenLoc,
-                                       SourceLocation RParenLoc);
+  MemInitResult ActOnMemInitializer(Decl *ConstructorD,
+                                    Scope *S,
+                                    CXXScopeSpec &SS,
+                                    IdentifierInfo *MemberOrBase,
+                                    ParsedType TemplateTypeTy,
+                                    SourceLocation IdLoc,
+                                    Expr *InitList,
+                                    SourceLocation EllipsisLoc);
+
+  MemInitResult BuildMemInitializer(Decl *ConstructorD,
+                                    Scope *S,
+                                    CXXScopeSpec &SS,
+                                    IdentifierInfo *MemberOrBase,
+                                    ParsedType TemplateTypeTy,
+                                    SourceLocation IdLoc,
+                                    const MultiInitializer &Init,
+                                    SourceLocation EllipsisLoc);
+
+  MemInitResult BuildMemberInitializer(ValueDecl *Member,
+                                       const MultiInitializer &Args,
+                                       SourceLocation IdLoc);
 
   MemInitResult BuildBaseInitializer(QualType BaseType,
                                      TypeSourceInfo *BaseTInfo,
-                                     Expr **Args, unsigned NumArgs,
-                                     SourceLocation LParenLoc,
-                                     SourceLocation RParenLoc,
+                                     const MultiInitializer &Args,
                                      CXXRecordDecl *ClassDecl,
                                      SourceLocation EllipsisLoc);
 
   MemInitResult BuildDelegatingInitializer(TypeSourceInfo *TInfo,
-                                           Expr **Args, unsigned NumArgs,
+                                           const MultiInitializer &Args,
                                            SourceLocation BaseLoc,
-                                           SourceLocation RParenLoc,
-                                           SourceLocation LParenLoc,
                                            CXXRecordDecl *ClassDecl);
 
   bool SetDelegatingInitializer(CXXConstructorDecl *Constructor,

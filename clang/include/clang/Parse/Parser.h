@@ -1060,6 +1060,7 @@ private:
   void ParseLexedMemberInitializers(ParsingClass &Class);
   void ParseLexedMemberInitializer(LateParsedMemberInitializer &MI);
   Decl *ParseLexedObjCMethodDefs(LexedMethod &LM);
+  bool ConsumeAndStoreTryAndInitializers(CachedTokens &Toks);
   bool ConsumeAndStoreUntil(tok::TokenKind T1,
                             CachedTokens &Toks,
                             bool StopAtSemi = true,

@@ -1252,7 +1252,7 @@ void Parser::LexTemplateFunctionForLateParsing(CachedTokens &Toks) {
   tok::TokenKind kind = Tok.getKind();
   // We may have a constructor initializer or function-try-block here.
   if (kind == tok::colon || kind == tok::kw_try)
-    ConsumeAndStoreUntil(tok::l_brace, Toks);
+    ConsumeAndStoreTryAndInitializers(Toks);
   else {
     Toks.push_back(Tok);
     ConsumeBrace();
