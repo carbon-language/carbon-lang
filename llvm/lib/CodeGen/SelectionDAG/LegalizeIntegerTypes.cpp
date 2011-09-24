@@ -503,8 +503,15 @@ SDValue DAGTypeLegalizer::PromoteIntRes_SELECT_CC(SDNode *N) {
 
 SDValue DAGTypeLegalizer::PromoteIntRes_SETCC(SDNode *N) {
   EVT SVT = TLI.getSetCCResultType(N->getOperand(0).getValueType());
-  // Vector setcc result types need to be leglized.
-  SVT = TLI.getTypeToTransformTo(*DAG.getContext(), SVT);
+
+  // Convert to the expected type.
+  EVT NVT = TLI.getTypeToTransformTo(*DAG.getContext(), N->getValueType(0));
+
+  // Only use the result of getSetCCResultType if it is legal,
+  // otherwise just use the promoted result type (NVT).
+  if (getTypeAction(SVT) != TargetLowering::TypeLegal) {
+    SVT = NVT;
+  }
 
   DebugLoc dl = N->getDebugLoc();
   assert(SVT.isVector() == N->getOperand(0).getValueType().isVector() &&
@@ -514,8 +521,6 @@ SDValue DAGTypeLegalizer::PromoteIntRes_SETCC(SDNode *N) {
   SDValue SetCC = DAG.getNode(N->getOpcode(), dl, SVT, N->getOperand(0),
                               N->getOperand(1), N->getOperand(2));
 
-  // Convert to the expected type.
-  EVT NVT = TLI.getTypeToTransformTo(*DAG.getContext(), N->getValueType(0));
   assert(NVT.bitsLE(SVT) && "Integer type overpromoted?");
   return DAG.getNode(ISD::TRUNCATE, dl, NVT, SetCC);
 }
