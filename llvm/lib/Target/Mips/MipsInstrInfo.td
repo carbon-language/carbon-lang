@@ -879,4 +879,5 @@ def : Pat<(MipsDynAlloc addr:$f), (DynAlloc addr:$f)>;
 //===----------------------------------------------------------------------===//
 
 include "MipsInstrFPU.td"
+include "Mips64InstrInfo.td"
 

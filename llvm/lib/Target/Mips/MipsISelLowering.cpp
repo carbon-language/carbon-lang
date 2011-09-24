@@ -95,6 +95,9 @@ MipsTargetLowering(MipsTargetMachine &TM)
   addRegisterClass(MVT::i32, Mips::CPURegsRegisterClass);
   addRegisterClass(MVT::f32, Mips::FGR32RegisterClass);
 
+  if (HasMips64)
+    addRegisterClass(MVT::i64, Mips::CPU64RegsRegisterClass);
+
   // When dealing with single precision only, use libcalls
   if (!Subtarget->isSingleFloat()) {
     if (HasMips64)
@@ -2260,6 +2263,8 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
 
       if (RegVT == MVT::i32)
         RC = Mips::CPURegsRegisterClass;
+      else if (RegVT == MVT::i64)
+        RC = Mips::CPU64RegsRegisterClass;
       else if (RegVT == MVT::f32)
         RC = Mips::FGR32RegisterClass;
       else if (RegVT == MVT::f64) {
