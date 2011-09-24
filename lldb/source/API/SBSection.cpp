@@ -128,6 +128,15 @@ SBSection::IsValid () const
     return m_opaque_ap.get() != NULL && m_opaque_ap->IsValid();
 }
 
+const char *
+SBSection::GetName ()
+{
+    if (IsValid())
+        return m_opaque_ap->GetSection()->GetName().GetCString();
+    return NULL;
+}
+
+
 lldb::SBSection
 SBSection::FindSubSection (const char *sect_name)
 {

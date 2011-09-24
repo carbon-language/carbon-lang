@@ -32,6 +32,9 @@ public:
     bool
     IsValid () const;
 
+    const char *
+    GetName ();
+    
     lldb::SBSection
     FindSubSection (const char *sect_name);
 
