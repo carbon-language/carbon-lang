@@ -511,14 +511,14 @@ DynamicLoaderDarwinKernel::ParseKextSummaries (const Address &kext_summary_addr,
             const uint8_t *u = (const uint8_t *)kext_summaries[i].uuid.GetBytes();
             if (u)
             {
-                s->Printf("Loading kext: %2.2X%2.2X%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X%2.2X%2.2X%2.2X%2.2X 0x%16.16llx \"%s\"...\n",
+                s->Printf("Loading kext: %2.2X%2.2X%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X%2.2X%2.2X%2.2X%2.2X 0x%16.16llx \"%s\"...",
                           u[ 0], u[ 1], u[ 2], u[ 3], u[ 4], u[ 5], u[ 6], u[ 7],
                           u[ 8], u[ 9], u[10], u[11], u[12], u[13], u[14], u[15],
                           kext_summaries[i].address, kext_summaries[i].name);
             }   
             else
             {
-                s->Printf("0x%16.16llx \"%s\"...\n", kext_summaries[i].address, kext_summaries[i].name);
+                s->Printf("0x%16.16llx \"%s\"...", kext_summaries[i].address, kext_summaries[i].name);
             }
         }
         
@@ -531,9 +531,11 @@ DynamicLoaderDarwinKernel::ParseKextSummaries (const Address &kext_summary_addr,
         if (s)
         {
             if (kext_summaries[i].module_sp)
-                s->Printf("  found kext: %s/%s\n", 
+                s->Printf("\n  found kext: %s/%s\n", 
                           kext_summaries[i].module_sp->GetFileSpec().GetDirectory().AsCString(),
                           kext_summaries[i].module_sp->GetFileSpec().GetFilename().AsCString());
+            else
+                s->Printf (" failed to locate/load.\n");
         }
             
         if (log)
