@@ -17,13 +17,11 @@
 *.pyc
 # vim swap files
 .*.swp
-*.patch
 
 #==============================================================================#
 # Explicit files to ignore (only matches one).
 #==============================================================================#
 .gitusers
-.svn
 autom4te.cache
 cscope.files
 cscope.out
