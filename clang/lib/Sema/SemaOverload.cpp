@@ -909,20 +909,22 @@ Sema::TryImplicitConversion(Expr *From, QualType ToType,
 /// explicit user-defined conversions are permitted.
 ExprResult
 Sema::PerformImplicitConversion(Expr *From, QualType ToType,
-                                AssignmentAction Action, bool AllowExplicit) {
+                                AssignmentAction Action, bool AllowExplicit,
+                                bool Diagnose) {
   ImplicitConversionSequence ICS;
-  return PerformImplicitConversion(From, ToType, Action, AllowExplicit, ICS);
+  return PerformImplicitConversion(From, ToType, Action, AllowExplicit, ICS,
+                                   Diagnose);
 }
 
 ExprResult
 Sema::PerformImplicitConversion(Expr *From, QualType ToType,
                                 AssignmentAction Action, bool AllowExplicit,
-                                ImplicitConversionSequence& ICS) {
+                                ImplicitConversionSequence& ICS,
+                                bool Diagnose) {
   // Objective-C ARC: Determine whether we will allow the writeback conversion.
   bool AllowObjCWritebackConversion
     = getLangOptions().ObjCAutoRefCount && 
       (Action == AA_Passing || Action == AA_Sending);
-  
 
   ICS = clang::TryImplicitConversion(*this, From, ToType,
                                      /*SuppressUserConversions=*/false,
@@ -930,6 +932,8 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
                                      /*InOverloadResolution=*/false,
                                      /*CStyle=*/false,
                                      AllowObjCWritebackConversion);
+  if (!Diagnose && ICS.isFailure())
+    return ExprError();
   return PerformImplicitConversion(From, ToType, ICS, Action);
 }
 

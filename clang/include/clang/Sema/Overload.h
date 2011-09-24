@@ -464,6 +464,7 @@ namespace clang {
     bool isEllipsis() const { return getKind() == EllipsisConversion; }
     bool isAmbiguous() const { return getKind() == AmbiguousConversion; }
     bool isUserDefined() const { return getKind() == UserDefinedConversion; }
+    bool isFailure() const { return isBad() || isAmbiguous(); }
 
     /// Determines whether this conversion sequence has been
     /// initialized.  Most operations should never need to query

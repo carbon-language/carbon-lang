@@ -169,6 +169,7 @@ namespace {
 class InitListChecker {
   Sema &SemaRef;
   bool hadError;
+  bool VerifyOnly; // no diagnostics, no structure building
   std::map<InitListExpr *, InitListExpr *> SyntacticToSemantic;
   InitListExpr *FullyStructuredList;
 
@@ -257,7 +258,7 @@ class InitListChecker {
                               bool TopLevelObject);
 public:
   InitListChecker(Sema &S, const InitializedEntity &Entity,
-                  InitListExpr *IL, QualType &T);
+                  InitListExpr *IL, QualType &T, bool VerifyOnly);
   bool HadError() { return hadError; }
 
   // @brief Retrieves the fully-structured initializer list used for
@@ -450,8 +451,9 @@ InitListChecker::FillInValueInitializations(const InitializedEntity &Entity,
 
 
 InitListChecker::InitListChecker(Sema &S, const InitializedEntity &Entity,
-                                 InitListExpr *IL, QualType &T)
-  : SemaRef(S) {
+                                 InitListExpr *IL, QualType &T,
+                                 bool VerifyOnly)
+  : SemaRef(S), VerifyOnly(VerifyOnly) {
   hadError = false;
 
   unsigned newIndex = 0;
@@ -462,7 +464,7 @@ InitListChecker::InitListChecker(Sema &S, const InitializedEntity &Entity,
                         FullyStructuredList, newStructuredIndex,
                         /*TopLevelObject=*/true);
 
-  if (!hadError) {
+  if (!hadError && !VerifyOnly) {
     bool RequiresSecondPass = false;
     FillInValueInitializations(Entity, FullyStructuredList, RequiresSecondPass);
     if (RequiresSecondPass && !hadError)
@@ -513,8 +515,9 @@ void InitListChecker::CheckImplicitInitList(const InitializedEntity &Entity,
     llvm_unreachable("CheckImplicitInitList(): Illegal type");
 
   if (maxElements == 0) {
-    SemaRef.Diag(ParentIList->getInit(Index)->getLocStart(),
-                  diag::err_implicit_empty_initializer);
+    if (!VerifyOnly)
+      SemaRef.Diag(ParentIList->getInit(Index)->getLocStart(),
+                   diag::err_implicit_empty_initializer);
     ++Index;
     hadError = true;
     return;
@@ -535,26 +538,29 @@ void InitListChecker::CheckImplicitInitList(const InitializedEntity &Entity,
                         StructuredSubobjectInitList,
                         StructuredSubobjectInitIndex);
   unsigned EndIndex = (Index == StartIndex? StartIndex : Index - 1);
-  StructuredSubobjectInitList->setType(T);
+  if (!VerifyOnly) {
+    StructuredSubobjectInitList->setType(T);
 
-  // Update the structured sub-object initializer so that it's ending
-  // range corresponds with the end of the last initializer it used.
-  if (EndIndex < ParentIList->getNumInits()) {
-    SourceLocation EndLoc
-      = ParentIList->getInit(EndIndex)->getSourceRange().getEnd();
-    StructuredSubobjectInitList->setRBraceLoc(EndLoc);
-  }
+    // Update the structured sub-object initializer so that it's ending
+    // range corresponds with the end of the last initializer it used.
+    if (EndIndex < ParentIList->getNumInits()) {
+      SourceLocation EndLoc
+        = ParentIList->getInit(EndIndex)->getSourceRange().getEnd();
+      StructuredSubobjectInitList->setRBraceLoc(EndLoc);
+    }
 
-  // Warn about missing braces.
-  if (T->isArrayType() || T->isRecordType()) {
-    SemaRef.Diag(StructuredSubobjectInitList->getLocStart(),
-                 diag::warn_missing_braces)
-    << StructuredSubobjectInitList->getSourceRange()
-    << FixItHint::CreateInsertion(StructuredSubobjectInitList->getLocStart(),
-                                  "{")
-    << FixItHint::CreateInsertion(SemaRef.PP.getLocForEndOfToken(
+    // Warn about missing braces.
+    if (T->isArrayType() || T->isRecordType()) {
+      SemaRef.Diag(StructuredSubobjectInitList->getLocStart(),
+                   diag::warn_missing_braces)
+        << StructuredSubobjectInitList->getSourceRange()
+        << FixItHint::CreateInsertion(
+              StructuredSubobjectInitList->getLocStart(), "{")
+        << FixItHint::CreateInsertion(
+              SemaRef.PP.getLocForEndOfToken(
                                       StructuredSubobjectInitList->getLocEnd()),
-                                  "}");
+              "}");
+    }
   }
 }
 
@@ -565,18 +571,31 @@ void InitListChecker::CheckExplicitInitList(const InitializedEntity &Entity,
                                             unsigned &StructuredIndex,
                                             bool TopLevelObject) {
   assert(IList->isExplicit() && "Illegal Implicit InitListExpr");
-  SyntacticToSemantic[IList] = StructuredList;
-  StructuredList->setSyntacticForm(IList);
+  if (!VerifyOnly) {
+    SyntacticToSemantic[IList] = StructuredList;
+    StructuredList->setSyntacticForm(IList);
+  }
   CheckListElementTypes(Entity, IList, T, /*SubobjectIsDesignatorContext=*/true,
                         Index, StructuredList, StructuredIndex, TopLevelObject);
-  QualType ExprTy = T.getNonLValueExprType(SemaRef.Context);
-  IList->setType(ExprTy);
-  StructuredList->setType(ExprTy);
+  if (!VerifyOnly) {
+    QualType ExprTy = T.getNonLValueExprType(SemaRef.Context);
+    IList->setType(ExprTy);
+    StructuredList->setType(ExprTy);
+  }
   if (hadError)
     return;
 
   if (Index < IList->getNumInits()) {
     // We have leftover initializers
+    if (VerifyOnly) {
+      if (SemaRef.getLangOptions().CPlusPlus ||
+          (SemaRef.getLangOptions().OpenCL &&
+           IList->getType()->isVectorType())) {
+        hadError = true;
+      }
+      return;
+    }
+
     if (StructuredIndex == 1 &&
         IsStringInit(StructuredList->getInit(0), T, SemaRef.Context)) {
       unsigned DK = diag::warn_excess_initializers_in_char_array_initializer;
@@ -613,7 +632,8 @@ void InitListChecker::CheckExplicitInitList(const InitializedEntity &Entity,
     }
   }
 
-  if (T->isScalarType() && IList->getNumInits() == 1 && !TopLevelObject)
+  if (!VerifyOnly && T->isScalarType() && IList->getNumInits() == 1 &&
+      !TopLevelObject)
     SemaRef.Diag(IList->getLocStart(), diag::warn_braces_around_scalar_init)
       << IList->getSourceRange()
       << FixItHint::CreateRemoval(IList->getLocStart())
@@ -658,8 +678,9 @@ void InitListChecker::CheckListElementTypes(const InitializedEntity &Entity,
   } else if (DeclType->isVoidType() || DeclType->isFunctionType()) {
     // This type is invalid, issue a diagnostic.
     ++Index;
-    SemaRef.Diag(IList->getLocStart(), diag::err_illegal_initializer_type)
-      << DeclType;
+    if (!VerifyOnly)
+      SemaRef.Diag(IList->getLocStart(), diag::err_illegal_initializer_type)
+        << DeclType;
     hadError = true;
   } else if (DeclType->isRecordType()) {
     // C++ [dcl.init]p14:
@@ -670,19 +691,22 @@ void InitListChecker::CheckListElementTypes(const InitializedEntity &Entity,
     // we have an initializer list and a destination type that is not
     // an aggregate.
     // FIXME: In C++0x, this is yet another form of initialization.
-    SemaRef.Diag(IList->getLocStart(), diag::err_init_non_aggr_init_list)
-      << DeclType << IList->getSourceRange();
+    if (!VerifyOnly)
+      SemaRef.Diag(IList->getLocStart(), diag::err_init_non_aggr_init_list)
+        << DeclType << IList->getSourceRange();
     hadError = true;
   } else if (DeclType->isReferenceType()) {
     CheckReferenceType(Entity, IList, DeclType, Index,
                        StructuredList, StructuredIndex);
   } else if (DeclType->isObjCObjectType()) {
-    SemaRef.Diag(IList->getLocStart(), diag::err_init_objc_class)
-      << DeclType;
+    if (!VerifyOnly)
+      SemaRef.Diag(IList->getLocStart(), diag::err_init_objc_class)
+        << DeclType;
     hadError = true;
   } else {
-    SemaRef.Diag(IList->getLocStart(), diag::err_illegal_initializer_type)
-      << DeclType;
+    if (!VerifyOnly)
+      SemaRef.Diag(IList->getLocStart(), diag::err_illegal_initializer_type)
+        << DeclType;
     hadError = true;
   }
 }
@@ -741,13 +765,15 @@ void InitListChecker::CheckSubElementType(const InitializedEntity &Entity,
     InitializationSequence Seq(SemaRef, Entity, Kind, &expr, 1);
 
     if (Seq) {
-      ExprResult Result =
-        Seq.Perform(SemaRef, Entity, Kind, MultiExprArg(&expr, 1));
-      if (Result.isInvalid())
-        hadError = true;
+      if (!VerifyOnly) {
+        ExprResult Result =
+          Seq.Perform(SemaRef, Entity, Kind, MultiExprArg(&expr, 1));
+        if (Result.isInvalid())
+          hadError = true;
 
-      UpdateStructuredListElement(StructuredList, StructuredIndex,
-                                  Result.takeAs<Expr>());
+        UpdateStructuredListElement(StructuredList, StructuredIndex,
+                                    Result.takeAs<Expr>());
+      }
       ++Index;
       return;
     }
@@ -764,7 +790,8 @@ void InitListChecker::CheckSubElementType(const InitializedEntity &Entity,
     //   that of the expression.
     ExprResult ExprRes = SemaRef.Owned(expr);
     if ((ElemType->isRecordType() || ElemType->isVectorType()) &&
-        SemaRef.CheckSingleAssignmentConstraints(ElemType, ExprRes)
+        SemaRef.CheckSingleAssignmentConstraints(ElemType, ExprRes,
+                                                 !VerifyOnly)
           == Sema::Compatible) {
       if (ExprRes.isInvalid())
         hadError = true;
@@ -794,11 +821,13 @@ void InitListChecker::CheckSubElementType(const InitializedEntity &Entity,
                           StructuredIndex);
     ++StructuredIndex;
   } else {
-    // We cannot initialize this element, so let
-    // PerformCopyInitialization produce the appropriate diagnostic.
-    SemaRef.PerformCopyInitialization(Entity, SourceLocation(),
-                                      SemaRef.Owned(expr),
-                                      /*TopLevelOfInitList=*/true);
+    if (!VerifyOnly) {
+      // We cannot initialize this element, so let
+      // PerformCopyInitialization produce the appropriate diagnostic.
+      SemaRef.PerformCopyInitialization(Entity, SourceLocation(),
+                                        SemaRef.Owned(expr),
+                                        /*TopLevelOfInitList=*/true);
+    }
     hadError = true;
     ++Index;
     ++StructuredIndex;
@@ -825,7 +854,7 @@ void InitListChecker::CheckComplexType(const InitializedEntity &Entity,
 
   // This is an extension in C.  (The builtin _Complex type does not exist
   // in the C++ standard.)
-  if (!SemaRef.getLangOptions().CPlusPlus)
+  if (!SemaRef.getLangOptions().CPlusPlus && !VerifyOnly)
     SemaRef.Diag(IList->getLocStart(), diag::ext_complex_component_init)
       << IList->getSourceRange();
 
@@ -848,8 +877,10 @@ void InitListChecker::CheckScalarType(const InitializedEntity &Entity,
                                       InitListExpr *StructuredList,
                                       unsigned &StructuredIndex) {
   if (Index >= IList->getNumInits()) {
-    SemaRef.Diag(IList->getLocStart(), diag::err_empty_scalar_initializer)
-      << IList->getSourceRange();
+    // FIXME: Allowed in C++11.
+    if (!VerifyOnly)
+      SemaRef.Diag(IList->getLocStart(), diag::err_empty_scalar_initializer)
+        << IList->getSourceRange();
     hadError = true;
     ++Index;
     ++StructuredIndex;
@@ -858,20 +889,29 @@ void InitListChecker::CheckScalarType(const InitializedEntity &Entity,
 
   Expr *expr = IList->getInit(Index);
   if (InitListExpr *SubIList = dyn_cast<InitListExpr>(expr)) {
-    SemaRef.Diag(SubIList->getLocStart(),
-                 diag::warn_many_braces_around_scalar_init)
-      << SubIList->getSourceRange();
+    if (!VerifyOnly)
+      SemaRef.Diag(SubIList->getLocStart(),
+                   diag::warn_many_braces_around_scalar_init)
+        << SubIList->getSourceRange();
 
     CheckScalarType(Entity, SubIList, DeclType, Index, StructuredList,
                     StructuredIndex);
     return;
   } else if (isa<DesignatedInitExpr>(expr)) {
-    SemaRef.Diag(expr->getSourceRange().getBegin(),
-                 diag::err_designator_for_scalar_init)
-      << DeclType << expr->getSourceRange();
+    if (!VerifyOnly)
+      SemaRef.Diag(expr->getSourceRange().getBegin(),
+                   diag::err_designator_for_scalar_init)
+        << DeclType << expr->getSourceRange();
     hadError = true;
     ++Index;
     ++StructuredIndex;
+    return;
+  }
+
+  if (VerifyOnly) {
+    if (!SemaRef.CanPerformCopyInitialization(Entity, SemaRef.Owned(expr)))
+      hadError = true;
+    ++Index;
     return;
   }
 
@@ -904,47 +944,57 @@ void InitListChecker::CheckReferenceType(const InitializedEntity &Entity,
                                          unsigned &Index,
                                          InitListExpr *StructuredList,
                                          unsigned &StructuredIndex) {
-  if (Index < IList->getNumInits()) {
-    Expr *expr = IList->getInit(Index);
-    if (isa<InitListExpr>(expr)) {
-      SemaRef.Diag(IList->getLocStart(), diag::err_init_non_aggr_init_list)
-        << DeclType << IList->getSourceRange();
-      hadError = true;
-      ++Index;
-      ++StructuredIndex;
-      return;
-    }
-
-    ExprResult Result =
-      SemaRef.PerformCopyInitialization(Entity, expr->getLocStart(),
-                                        SemaRef.Owned(expr),
-                                        /*TopLevelOfInitList=*/true);
-
-    if (Result.isInvalid())
-      hadError = true;
-
-    expr = Result.takeAs<Expr>();
-    IList->setInit(Index, expr);
-
-    if (hadError)
-      ++StructuredIndex;
-    else
-      UpdateStructuredListElement(StructuredList, StructuredIndex, expr);
-    ++Index;
-  } else {
+  if (Index >= IList->getNumInits()) {
     // FIXME: It would be wonderful if we could point at the actual member. In
     // general, it would be useful to pass location information down the stack,
     // so that we know the location (or decl) of the "current object" being
     // initialized.
-    SemaRef.Diag(IList->getLocStart(),
-                  diag::err_init_reference_member_uninitialized)
-      << DeclType
-      << IList->getSourceRange();
+    if (!VerifyOnly)
+      SemaRef.Diag(IList->getLocStart(),
+                    diag::err_init_reference_member_uninitialized)
+        << DeclType
+        << IList->getSourceRange();
     hadError = true;
     ++Index;
     ++StructuredIndex;
     return;
   }
+
+  Expr *expr = IList->getInit(Index);
+  if (isa<InitListExpr>(expr)) {
+    // FIXME: Allowed in C++11.
+    if (!VerifyOnly)
+      SemaRef.Diag(IList->getLocStart(), diag::err_init_non_aggr_init_list)
+        << DeclType << IList->getSourceRange();
+    hadError = true;
+    ++Index;
+    ++StructuredIndex;
+    return;
+  }
+
+  if (VerifyOnly) {
+    if (!SemaRef.CanPerformCopyInitialization(Entity, SemaRef.Owned(expr)))
+      hadError = true;
+    ++Index;
+    return;
+  }
+
+  ExprResult Result =
+    SemaRef.PerformCopyInitialization(Entity, expr->getLocStart(),
+                                      SemaRef.Owned(expr),
+                                      /*TopLevelOfInitList=*/true);
+
+  if (Result.isInvalid())
+    hadError = true;
+
+  expr = Result.takeAs<Expr>();
+  IList->setInit(Index, expr);
+
+  if (hadError)
+    ++StructuredIndex;
+  else
+    UpdateStructuredListElement(StructuredList, StructuredIndex, expr);
+  ++Index;
 }
 
 void InitListChecker::CheckVectorType(const InitializedEntity &Entity,
@@ -965,6 +1015,13 @@ void InitListChecker::CheckVectorType(const InitializedEntity &Entity,
     // instead of breaking it apart (which is doomed to failure anyway).
     Expr *Init = IList->getInit(Index);
     if (!isa<InitListExpr>(Init) && Init->getType()->isVectorType()) {
+      if (VerifyOnly) {
+        if (!SemaRef.CanPerformCopyInitialization(Entity, SemaRef.Owned(Init)))
+          hadError = true;
+        ++Index;
+        return;
+      }
+
       ExprResult Result =
         SemaRef.PerformCopyInitialization(Entity, Init->getLocStart(),
                                           SemaRef.Owned(Init),
@@ -984,7 +1041,8 @@ void InitListChecker::CheckVectorType(const InitializedEntity &Entity,
       if (hadError)
         ++StructuredIndex;
       else
-        UpdateStructuredListElement(StructuredList, StructuredIndex, ResultExpr);
+        UpdateStructuredListElement(StructuredList, StructuredIndex,
+                                    ResultExpr);
       ++Index;
       return;
     }
@@ -1037,11 +1095,11 @@ void InitListChecker::CheckVectorType(const InitializedEntity &Entity,
   }
 
   // OpenCL requires all elements to be initialized.
-  if (numEltsInit != maxElements)
-    if (SemaRef.getLangOptions().OpenCL)
-      SemaRef.Diag(IList->getSourceRange().getBegin(),
-                   diag::err_vector_incorrect_num_initializers)
-        << (numEltsInit < maxElements) << maxElements << numEltsInit;
+  // FIXME: Shouldn't this set hadError to true then?
+  if (numEltsInit != maxElements && !VerifyOnly)
+    SemaRef.Diag(IList->getSourceRange().getBegin(),
+                 diag::err_vector_incorrect_num_initializers)
+      << (numEltsInit < maxElements) << maxElements << numEltsInit;
 }
 
 void InitListChecker::CheckArrayType(const InitializedEntity &Entity,
@@ -1063,8 +1121,10 @@ void InitListChecker::CheckArrayType(const InitializedEntity &Entity,
       // of the structured initializer list doesn't match exactly,
       // because doing so would involve allocating one character
       // constant for each string.
-      UpdateStructuredListElement(StructuredList, StructuredIndex, Str);
-      StructuredList->resizeInits(SemaRef.Context, StructuredIndex);
+      if (!VerifyOnly) {
+        UpdateStructuredListElement(StructuredList, StructuredIndex, Str);
+        StructuredList->resizeInits(SemaRef.Context, StructuredIndex);
+      }
       ++Index;
       return;
     }
@@ -1073,9 +1133,10 @@ void InitListChecker::CheckArrayType(const InitializedEntity &Entity,
     // Check for VLAs; in standard C it would be possible to check this
     // earlier, but I don't know where clang accepts VLAs (gcc accepts
     // them in all sorts of strange places).
-    SemaRef.Diag(VAT->getSizeExpr()->getLocStart(),
-                  diag::err_variable_object_no_init)
-      << VAT->getSizeExpr()->getSourceRange();
+    if (!VerifyOnly)
+      SemaRef.Diag(VAT->getSizeExpr()->getLocStart(),
+                    diag::err_variable_object_no_init)
+        << VAT->getSizeExpr()->getSourceRange();
     hadError = true;
     ++Index;
     ++StructuredIndex;
@@ -1145,7 +1206,7 @@ void InitListChecker::CheckArrayType(const InitializedEntity &Entity,
     if (!maxElementsKnown && elementIndex > maxElements)
       maxElements = elementIndex;
   }
-  if (!hadError && DeclType->isIncompleteArrayType()) {
+  if (!hadError && DeclType->isIncompleteArrayType() && !VerifyOnly) {
     // If this is an incomplete array type, the actual type needs to
     // be calculated here.
     llvm::APSInt Zero(maxElements.getBitWidth(), maxElements.isUnsigned());
@@ -1188,12 +1249,14 @@ bool InitListChecker::CheckFlexibleArrayInit(const InitializedEntity &Entity,
     // Allow other cases.
     FlexArrayDiag = diag::ext_flexible_array_init;
   }
-  
-  SemaRef.Diag(InitExpr->getSourceRange().getBegin(),
-               FlexArrayDiag)
-    << InitExpr->getSourceRange().getBegin();
-  SemaRef.Diag(Field->getLocation(), diag::note_flexible_array_member)
-    << Field;
+
+  if (!VerifyOnly) {
+    SemaRef.Diag(InitExpr->getSourceRange().getBegin(),
+                 FlexArrayDiag)
+      << InitExpr->getSourceRange().getBegin();
+    SemaRef.Diag(Field->getLocation(), diag::note_flexible_array_member)
+      << Field;
+  }
 
   return FlexArrayDiag != diag::ext_flexible_array_init;
 }
@@ -1217,13 +1280,15 @@ void InitListChecker::CheckStructUnionTypes(const InitializedEntity &Entity,
   }
 
   if (DeclType->isUnionType() && IList->getNumInits() == 0) {
-    // Value-initialize the first named member of the union.
-    RecordDecl *RD = DeclType->getAs<RecordType>()->getDecl();
-    for (RecordDecl::field_iterator FieldEnd = RD->field_end();
-         Field != FieldEnd; ++Field) {
-      if (Field->getDeclName()) {
-        StructuredList->setInitializedFieldInUnion(*Field);
-        break;
+    if (!VerifyOnly) {
+      // Value-initialize the first named member of the union.
+      RecordDecl *RD = DeclType->getAs<RecordType>()->getDecl();
+      for (RecordDecl::field_iterator FieldEnd = RD->field_end();
+           Field != FieldEnd; ++Field) {
+        if (Field->getDeclName()) {
+          StructuredList->setInitializedFieldInUnion(*Field);
+          break;
+        }
       }
     }
     return;
@@ -1283,13 +1348,18 @@ void InitListChecker::CheckStructUnionTypes(const InitializedEntity &Entity,
     }
 
     // Make sure we can use this declaration.
-    if (SemaRef.DiagnoseUseOfDecl(*Field, 
-                                  IList->getInit(Index)->getLocStart())) {
+    bool InvalidUse;
+    if (VerifyOnly)
+      InvalidUse = !SemaRef.CanUseDecl(*Field);
+    else
+      InvalidUse = SemaRef.DiagnoseUseOfDecl(*Field,
+                                          IList->getInit(Index)->getLocStart());
+    if (InvalidUse) {
       ++Index;
       ++Field;
       hadError = true;
       continue;
-    }        
+    }
 
     InitializedEntity MemberEntity =
       InitializedEntity::InitializeMember(*Field, &Entity);
@@ -1297,7 +1367,7 @@ void InitListChecker::CheckStructUnionTypes(const InitializedEntity &Entity,
                         StructuredList, StructuredIndex);
     InitializedSomething = true;
 
-    if (DeclType->isUnionType()) {
+    if (DeclType->isUnionType() && !VerifyOnly) {
       // Initialize the first field within the union.
       StructuredList->setInitializedFieldInUnion(*Field);
     }
@@ -1306,8 +1376,9 @@ void InitListChecker::CheckStructUnionTypes(const InitializedEntity &Entity,
   }
 
   // Emit warnings for missing struct field initializers.
-  if (InitializedSomething && CheckForMissingFields && Field != FieldEnd &&
-      !Field->getType()->isIncompleteArrayType() && !DeclType->isUnionType()) {
+  if (!VerifyOnly && InitializedSomething && CheckForMissingFields &&
+      Field != FieldEnd && !Field->getType()->isIncompleteArrayType() &&
+      !DeclType->isUnionType()) {
     // It is possible we have one or more unnamed bitfields remaining.
     // Find first (if any) named field and emit warning.
     for (RecordDecl::field_iterator it = Field, end = RD->field_end();
@@ -1388,6 +1459,18 @@ static IndirectFieldDecl *FindIndirectFieldDesignator(FieldDecl *AnonField,
   return 0;
 }
 
+static DesignatedInitExpr *CloneDesignatedInitExpr(Sema &SemaRef,
+                                                   DesignatedInitExpr *DIE) {
+  unsigned NumIndexExprs = DIE->getNumSubExprs() - 1;
+  SmallVector<Expr*, 4> IndexExprs(NumIndexExprs);
+  for (unsigned I = 0; I < NumIndexExprs; ++I)
+    IndexExprs[I] = DIE->getSubExpr(I + 1);
+  return DesignatedInitExpr::Create(SemaRef.Context, DIE->designators_begin(),
+                                    DIE->size(), IndexExprs.data(),
+                                    NumIndexExprs, DIE->getEqualOrColonLoc(),
+                                    DIE->usesGNUSyntax(), DIE->getInit());
+}
+
 /// @brief Check the well-formedness of a C99 designated initializer.
 ///
 /// Determines whether the designated initializer @p DIE, which
@@ -1426,14 +1509,14 @@ static IndirectFieldDecl *FindIndirectFieldDesignator(FieldDecl *AnonField,
 bool
 InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
                                             InitListExpr *IList,
-                                      DesignatedInitExpr *DIE,
-                                      unsigned DesigIdx,
-                                      QualType &CurrentObjectType,
-                                      RecordDecl::field_iterator *NextField,
-                                      llvm::APSInt *NextElementIndex,
-                                      unsigned &Index,
-                                      InitListExpr *StructuredList,
-                                      unsigned &StructuredIndex,
+                                            DesignatedInitExpr *DIE,
+                                            unsigned DesigIdx,
+                                            QualType &CurrentObjectType,
+                                          RecordDecl::field_iterator *NextField,
+                                            llvm::APSInt *NextElementIndex,
+                                            unsigned &Index,
+                                            InitListExpr *StructuredList,
+                                            unsigned &StructuredIndex,
                                             bool FinishSubobjectInit,
                                             bool TopLevelObject) {
   if (DesigIdx == DIE->size()) {
@@ -1458,19 +1541,21 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
     return hadError && !prevHadError;
   }
 
-  bool IsFirstDesignator = (DesigIdx == 0);
-  assert((IsFirstDesignator || StructuredList) &&
-         "Need a non-designated initializer list to start from");
-
   DesignatedInitExpr::Designator *D = DIE->getDesignator(DesigIdx);
-  // Determine the structural initializer list that corresponds to the
-  // current subobject.
-  StructuredList = IsFirstDesignator? SyntacticToSemantic[IList]
-    : getStructuredSubobjectInit(IList, Index, CurrentObjectType,
-                                 StructuredList, StructuredIndex,
-                                 SourceRange(D->getStartLocation(),
-                                             DIE->getSourceRange().getEnd()));
-  assert(StructuredList && "Expected a structured initializer list");
+  bool IsFirstDesignator = (DesigIdx == 0);
+  if (!VerifyOnly) {
+    assert((IsFirstDesignator || StructuredList) &&
+           "Need a non-designated initializer list to start from");
+
+    // Determine the structural initializer list that corresponds to the
+    // current subobject.
+    StructuredList = IsFirstDesignator? SyntacticToSemantic[IList]
+      : getStructuredSubobjectInit(IList, Index, CurrentObjectType,
+                                   StructuredList, StructuredIndex,
+                                   SourceRange(D->getStartLocation(),
+                                               DIE->getSourceRange().getEnd()));
+    assert(StructuredList && "Expected a structured initializer list");
+  }
 
   if (D->isFieldDesignator()) {
     // C99 6.7.8p7:
@@ -1487,8 +1572,9 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
       SourceLocation Loc = D->getDotLoc();
       if (Loc.isInvalid())
         Loc = D->getFieldLoc();
-      SemaRef.Diag(Loc, diag::err_field_designator_non_aggr)
-        << SemaRef.getLangOptions().CPlusPlus << CurrentObjectType;
+      if (!VerifyOnly)
+        SemaRef.Diag(Loc, diag::err_field_designator_non_aggr)
+          << SemaRef.getLangOptions().CPlusPlus << CurrentObjectType;
       ++Index;
       return true;
     }
@@ -1511,6 +1597,9 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
       if (!KnownField && Field->isAnonymousStructOrUnion()) {
         if (IndirectFieldDecl *IF =
             FindIndirectFieldDesignator(*Field, FieldName)) {
+          // In verify mode, don't modify the original.
+          if (VerifyOnly)
+            DIE = CloneDesignatedInitExpr(SemaRef, DIE);
           ExpandAnonymousFieldDesignator(SemaRef, DIE, DesigIdx, IF);
           D = DIE->getDesignator(DesigIdx);
           break;
@@ -1525,6 +1614,9 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
     }
 
     if (Field == FieldEnd) {
+      if (VerifyOnly)
+        return true; // No typo correction when just trying this out.
+
       // There was no normal field in the struct with the designated
       // name. Perform another lookup for this name, which may find
       // something that we can't designate (e.g., a member function),
@@ -1594,22 +1686,30 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
     // the initializer list.
     if (RT->getDecl()->isUnion()) {
       FieldIndex = 0;
-      StructuredList->setInitializedFieldInUnion(*Field);
+      if (!VerifyOnly)
+        StructuredList->setInitializedFieldInUnion(*Field);
     }
 
     // Make sure we can use this declaration.
-    if (SemaRef.DiagnoseUseOfDecl(*Field, D->getFieldLoc())) {
+    bool InvalidUse;
+    if (VerifyOnly)
+      InvalidUse = !SemaRef.CanUseDecl(*Field);
+    else
+      InvalidUse = SemaRef.DiagnoseUseOfDecl(*Field, D->getFieldLoc());
+    if (InvalidUse) {
       ++Index;
       return true;
-    }        
+    }
 
-    // Update the designator with the field declaration.
-    D->setField(*Field);
+    if (!VerifyOnly) {
+      // Update the designator with the field declaration.
+      D->setField(*Field);
 
-    // Make sure that our non-designated initializer list has space
-    // for a subobject corresponding to this field.
-    if (FieldIndex >= StructuredList->getNumInits())
-      StructuredList->resizeInits(SemaRef.Context, FieldIndex + 1);
+      // Make sure that our non-designated initializer list has space
+      // for a subobject corresponding to this field.
+      if (FieldIndex >= StructuredList->getNumInits())
+        StructuredList->resizeInits(SemaRef.Context, FieldIndex + 1);
+    }
 
     // This designator names a flexible array member.
     if (Field->getType()->isIncompleteArrayType()) {
@@ -1617,25 +1717,29 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
       if ((DesigIdx + 1) != DIE->size()) {
         // We can't designate an object within the flexible array
         // member (because GCC doesn't allow it).
-        DesignatedInitExpr::Designator *NextD
-          = DIE->getDesignator(DesigIdx + 1);
-        SemaRef.Diag(NextD->getStartLocation(),
-                      diag::err_designator_into_flexible_array_member)
-          << SourceRange(NextD->getStartLocation(),
-                         DIE->getSourceRange().getEnd());
-        SemaRef.Diag(Field->getLocation(), diag::note_flexible_array_member)
-          << *Field;
+        if (!VerifyOnly) {
+          DesignatedInitExpr::Designator *NextD
+            = DIE->getDesignator(DesigIdx + 1);
+          SemaRef.Diag(NextD->getStartLocation(),
+                        diag::err_designator_into_flexible_array_member)
+            << SourceRange(NextD->getStartLocation(),
+                           DIE->getSourceRange().getEnd());
+          SemaRef.Diag(Field->getLocation(), diag::note_flexible_array_member)
+            << *Field;
+        }
         Invalid = true;
       }
 
       if (!hadError && !isa<InitListExpr>(DIE->getInit()) &&
           !isa<StringLiteral>(DIE->getInit())) {
         // The initializer is not an initializer list.
-        SemaRef.Diag(DIE->getInit()->getSourceRange().getBegin(),
-                      diag::err_flexible_array_init_needs_braces)
-          << DIE->getInit()->getSourceRange();
-        SemaRef.Diag(Field->getLocation(), diag::note_flexible_array_member)
-          << *Field;
+        if (!VerifyOnly) {
+          SemaRef.Diag(DIE->getInit()->getSourceRange().getBegin(),
+                        diag::err_flexible_array_init_needs_braces)
+            << DIE->getInit()->getSourceRange();
+          SemaRef.Diag(Field->getLocation(), diag::note_flexible_array_member)
+            << *Field;
+        }
         Invalid = true;
       }
 
@@ -1729,8 +1833,9 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
   //      [ constant-expression ... constant-expression ]
   const ArrayType *AT = SemaRef.Context.getAsArrayType(CurrentObjectType);
   if (!AT) {
-    SemaRef.Diag(D->getLBracketLoc(), diag::err_array_designator_non_array)
-      << CurrentObjectType;
+    if (!VerifyOnly)
+      SemaRef.Diag(D->getLBracketLoc(), diag::err_array_designator_non_array)
+        << CurrentObjectType;
     ++Index;
     return true;
   }
@@ -1756,7 +1861,7 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
     // elements with something that has a side effect, so codegen can emit an
     // "error unsupported" error instead of miscompiling the app.
     if (DesignatedStartIndex.getZExtValue()!=DesignatedEndIndex.getZExtValue()&&
-        DIE->getInit()->HasSideEffects(SemaRef.Context))
+        DIE->getInit()->HasSideEffects(SemaRef.Context) && !VerifyOnly)
       FullyStructuredList->sawArrayRangeDesignator();
   }
 
@@ -1769,10 +1874,11 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
       = DesignatedEndIndex.extOrTrunc(MaxElements.getBitWidth());
     DesignatedEndIndex.setIsUnsigned(MaxElements.isUnsigned());
     if (DesignatedEndIndex >= MaxElements) {
-      SemaRef.Diag(IndexExpr->getSourceRange().getBegin(),
-                    diag::err_array_designator_too_large)
-        << DesignatedEndIndex.toString(10) << MaxElements.toString(10)
-        << IndexExpr->getSourceRange();
+      if (VerifyOnly)
+        SemaRef.Diag(IndexExpr->getSourceRange().getBegin(),
+                      diag::err_array_designator_too_large)
+          << DesignatedEndIndex.toString(10) << MaxElements.toString(10)
+          << IndexExpr->getSourceRange();
       ++Index;
       return true;
     }
@@ -1791,7 +1897,8 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
 
   // Make sure that our non-designated initializer list has space
   // for a subobject corresponding to this array element.
-  if (DesignatedEndIndex.getZExtValue() >= StructuredList->getNumInits())
+  if (!VerifyOnly &&
+      DesignatedEndIndex.getZExtValue() >= StructuredList->getNumInits())
     StructuredList->resizeInits(SemaRef.Context,
                                 DesignatedEndIndex.getZExtValue() + 1);
 
@@ -1851,6 +1958,8 @@ InitListChecker::getStructuredSubobjectInit(InitListExpr *IList, unsigned Index,
                                             InitListExpr *StructuredList,
                                             unsigned StructuredIndex,
                                             SourceRange InitRange) {
+  if (VerifyOnly)
+    return 0; // No structured list in verification-only mode.
   Expr *ExistingInit = 0;
   if (!StructuredList)
     ExistingInit = SyntacticToSemantic[IList];
@@ -2628,47 +2737,33 @@ static void TryListInitialization(Sema &S,
                                   const InitializationKind &Kind,
                                   InitListExpr *InitList,
                                   InitializationSequence &Sequence) {
-  // FIXME: We only perform rudimentary checking of list
-  // initializations at this point, then assume that any list
-  // initialization of an array, aggregate, or scalar will be
-  // well-formed. When we actually "perform" list initialization, we'll
-  // do all of the necessary checking.  C++0x initializer lists will
-  // force us to perform more checking here.
-
   QualType DestType = Entity.getType();
 
-  // C++ [dcl.init]p13:
-  //   If T is a scalar type, then a declaration of the form
-  //
-  //     T x = { a };
-  //
-  //   is equivalent to
-  //
-  //     T x = a;
-  if (DestType->isAnyComplexType()) {
-    // We allow more than 1 init for complex types in some cases, even though
-    // they are scalar.
-  } else if (DestType->isScalarType()) {
-    if (InitList->getNumInits() > 1 && S.getLangOptions().CPlusPlus) {
-      Sequence.SetFailed(InitializationSequence::FK_TooManyInitsForScalar);
-      return;
-    }
-
-    // Assume scalar initialization from a single value works.
-  } else if (DestType->isAggregateType()) {
-    // Assume aggregate initialization works.
-  } else if (DestType->isVectorType()) {
-    // Assume vector initialization works.
-  } else if (DestType->isReferenceType()) {
-    // FIXME: C++0x defines behavior for this.
+  // C++ doesn't allow scalar initialization with more than one argument.
+  // But C99 complex numbers are scalars and it makes sense there.
+  if (S.getLangOptions().CPlusPlus && DestType->isScalarType() &&
+      !DestType->isAnyComplexType() && InitList->getNumInits() > 1) {
+    Sequence.SetFailed(InitializationSequence::FK_TooManyInitsForScalar);
+    return;
+  }
+  // FIXME: C++0x defines behavior for these two cases.
+  if (DestType->isReferenceType()) {
     Sequence.SetFailed(InitializationSequence::FK_ReferenceBindingToInitList);
     return;
-  } else if (DestType->isRecordType()) {
-    // FIXME: C++0x defines behavior for this
+  }
+  if (DestType->isRecordType() && !DestType->isAggregateType()) {
     Sequence.SetFailed(InitializationSequence::FK_InitListBadDestinationType);
+    return;
   }
 
-  // Add a general "list initialization" step.
+  InitListChecker CheckInitList(S, Entity, InitList,
+          DestType, /*VerifyOnly=*/true);
+  if (CheckInitList.HadError()) {
+    Sequence.SetFailed(InitializationSequence::FK_ListInitializationFailed);
+    return;
+  }
+
+  // Add the list initialization step with the built init list.
   Sequence.AddListInitializationStep(DestType);
 }
 
@@ -4504,13 +4599,13 @@ InitializationSequence::Perform(Sema &S,
     case SK_ListInitialization: {
       InitListExpr *InitList = cast<InitListExpr>(CurInit.get());
       QualType Ty = Step->Type;
-      InitListChecker CheckInitList(S, Entity, InitList,
-          ResultType ? *ResultType : Ty);
-      if (CheckInitList.HadError())
+      InitListChecker PerformInitList(S, Entity, InitList,
+          ResultType ? *ResultType : Ty, /*VerifyOnly=*/false);
+      if (PerformInitList.HadError())
         return ExprError();
 
       CurInit.release();
-      CurInit = S.Owned(CheckInitList.getFullyStructuredList());
+      CurInit = S.Owned(PerformInitList.getFullyStructuredList());
       break;
     }
 
@@ -5022,8 +5117,16 @@ bool InitializationSequence::Diagnose(Sema &S,
                           diag::err_init_incomplete_type);
     break;
 
-  case FK_ListInitializationFailed:
-    assert(false && "Failed list initialization not yet handled.");
+  case FK_ListInitializationFailed: {
+    // Run the init list checker again to emit diagnostics.
+    InitListExpr* InitList = cast<InitListExpr>(Args[0]);
+    QualType DestType = Entity.getType();
+    InitListChecker DiagnoseInitList(S, Entity, InitList,
+            DestType, /*VerifyOnly=*/false);
+    assert(DiagnoseInitList.HadError() &&
+           "Inconsistent init list check result.");
+    break;
+  }
   }
 
   PrintInitLocationNote(S, Entity);
@@ -5120,7 +5223,7 @@ void InitializationSequence::dump(raw_ostream &OS) const {
       break;
 
     case FK_ListInitializationFailed:
-      OS << "list initialization failed";
+      OS << "list initialization checker failure";
     }
     OS << '\n';
     return;

@@ -1383,7 +1383,7 @@ public:
                                              QualType ResultType,
                                              Expr *Value,
                                              bool AllowNRVO = true);
-  
+
   bool CanPerformCopyInitialization(const InitializedEntity &Entity,
                                     ExprResult Init);
   ExprResult PerformCopyInitialization(const InitializedEntity &Entity,
@@ -2217,8 +2217,9 @@ public:
   //===--------------------------------------------------------------------===//
   // Expression Parsing Callbacks: SemaExpr.cpp.
 
-  bool DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc, 
-                         const ObjCInterfaceDecl *UnknownObjCClass=0);
+  bool CanUseDecl(NamedDecl *D);
+  bool DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc,
+                         const ObjCInterfaceDecl *UnknownObjCClass = 0);
   std::string getDeletedOrUnavailableSuffix(const FunctionDecl *FD);
   bool DiagnosePropertyAccessorMismatch(ObjCPropertyDecl *PD,
                                         ObjCMethodDecl *Getter,
@@ -5580,7 +5581,8 @@ public:
   // CheckAssignmentOperands, and ActOnReturnStmt. Prior to type checking,
   // this routine performs the default function/array converions.
   AssignConvertType CheckSingleAssignmentConstraints(QualType LHSType,
-                                                     ExprResult &RHS);
+                                                     ExprResult &RHS,
+                                                     bool Diagnose = true);
 
   // \brief If the lhs type is a transparent union, check whether we
   // can initialize the transparent union with the given expression.
@@ -5593,11 +5595,13 @@ public:
 
   ExprResult PerformImplicitConversion(Expr *From, QualType ToType,
                                        AssignmentAction Action,
-                                       bool AllowExplicit = false);
+                                       bool AllowExplicit = false,
+                                       bool Diagnose = true);
   ExprResult PerformImplicitConversion(Expr *From, QualType ToType,
                                        AssignmentAction Action,
                                        bool AllowExplicit,
-                                       ImplicitConversionSequence& ICS);
+                                       ImplicitConversionSequence& ICS,
+                                       bool Diagnose = true);
   ExprResult PerformImplicitConversion(Expr *From, QualType ToType,
                                        const ImplicitConversionSequence& ICS,
                                        AssignmentAction Action,

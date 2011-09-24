@@ -810,7 +810,7 @@ public:
   void AddConversionSequenceStep(const ImplicitConversionSequence &ICS,
                                  QualType T);
 
-  /// \brief Add a list-initialiation step  
+  /// \brief Add a list-initialiation step.
   void AddListInitializationStep(QualType T);
 
   /// \brief Add a constructor-initialization step.
