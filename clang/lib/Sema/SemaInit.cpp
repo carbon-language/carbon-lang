@@ -7,9 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements semantic analysis for initializers. The main entry
-// point is Sema::CheckInitList(), but all of the work is performed
-// within the InitListChecker class.
+// This file implements semantic analysis for initializers.
 //
 //===----------------------------------------------------------------------===//
 
@@ -733,7 +731,7 @@ void InitListChecker::CheckSubElementType(const InitializedEntity &Entity,
   } else if (SemaRef.getLangOptions().CPlusPlus) {
     // C++ [dcl.init.aggr]p12:
     //   All implicit type conversions (clause 4) are considered when
-    //   initializing the aggregate member with an ini- tializer from
+    //   initializing the aggregate member with an initializer from
     //   an initializer-list. If the initializer can initialize a
     //   member, the member is initialized. [...]
 

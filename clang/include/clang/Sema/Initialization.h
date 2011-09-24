@@ -638,7 +638,7 @@ public:
   };
   
 private:
-  /// \brief The reason why initialization failued.
+  /// \brief The reason why initialization failed.
   FailureKind Failure;
 
   /// \brief The failed result of overload resolution.
@@ -738,13 +738,13 @@ public:
   /// constructor.
   bool isConstructorInitialization() const;
 
-  // \brief Returns whether the last step in this initialization sequence is a
-  // narrowing conversion, defined by C++0x [dcl.init.list]p7.
-  //
-  // If this function returns true, *isInitializerConstant will be set to
-  // describe whether *Initializer was a constant expression.  If
-  // *isInitializerConstant is set to true, *ConstantValue will be set to the
-  // evaluated value of *Initializer.
+  /// \brief Returns whether the last step in this initialization sequence is a
+  /// narrowing conversion, defined by C++0x [dcl.init.list]p7.
+  ///
+  /// If this function returns true, *isInitializerConstant will be set to
+  /// describe whether *Initializer was a constant expression.  If
+  /// *isInitializerConstant is set to true, *ConstantValue will be set to the
+  /// evaluated value of *Initializer.
   bool endsWithNarrowing(ASTContext &Ctx, const Expr *Initializer,
                          bool *isInitializerConstant,
                          APValue *ConstantValue) const;
