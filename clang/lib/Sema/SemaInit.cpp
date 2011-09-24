@@ -2085,15 +2085,6 @@ ExprResult Sema::ActOnDesignatedInitializer(Designation &Desig,
   return Owned(DIE);
 }
 
-bool Sema::CheckInitList(const InitializedEntity &Entity,
-                         InitListExpr *&InitList, QualType &DeclType) {
-  InitListChecker CheckInitList(*this, Entity, InitList, DeclType);
-  if (!CheckInitList.HadError())
-    InitList = CheckInitList.getFullyStructuredList();
-
-  return CheckInitList.HadError();
-}
-
 //===----------------------------------------------------------------------===//
 // Initialization entity
 //===----------------------------------------------------------------------===//
@@ -4510,11 +4501,13 @@ InitializationSequence::Perform(Sema &S,
     case SK_ListInitialization: {
       InitListExpr *InitList = cast<InitListExpr>(CurInit.get());
       QualType Ty = Step->Type;
-      if (S.CheckInitList(Entity, InitList, ResultType? *ResultType : Ty))
+      InitListChecker CheckInitList(S, Entity, InitList,
+          ResultType ? *ResultType : Ty);
+      if (CheckInitList.HadError())
         return ExprError();
 
       CurInit.release();
-      CurInit = S.Owned(InitList);
+      CurInit = S.Owned(CheckInitList.getFullyStructuredList());
       break;
     }
 

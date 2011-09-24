@@ -5680,8 +5680,6 @@ public:
                                       SourceLocation Loc, bool isRelational);
 
   /// type checking declaration initializers (C99 6.7.8)
-  bool CheckInitList(const InitializedEntity &Entity,
-                     InitListExpr *&InitList, QualType &DeclType);
   bool CheckForConstantInitializer(Expr *e, QualType t);
 
   // type checking C++ declaration initializers (C++ [dcl.init]).
