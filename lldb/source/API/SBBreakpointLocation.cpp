@@ -70,6 +70,15 @@ SBBreakpointLocation::IsValid() const
     return m_opaque_sp.get() != NULL;
 }
 
+SBAddress
+SBBreakpointLocation::GetAddress ()
+{
+    if (m_opaque_sp)
+        return SBAddress(&m_opaque_sp->GetAddress());
+    else
+        return SBAddress();
+}
+
 addr_t
 SBBreakpointLocation::GetLoadAddress ()
 {

@@ -1194,6 +1194,42 @@
 		4CCA644913B40B82003BDF98 /* AppleObjCTrampolineHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AppleObjCTrampolineHandler.h; sourceTree = "<group>"; };
 		4CCA644A13B40B82003BDF98 /* AppleThreadPlanStepThroughObjCTrampoline.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AppleThreadPlanStepThroughObjCTrampoline.cpp; sourceTree = "<group>"; };
 		4CCA644B13B40B82003BDF98 /* AppleThreadPlanStepThroughObjCTrampoline.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AppleThreadPlanStepThroughObjCTrampoline.h; sourceTree = "<group>"; };
+		4CCB54F3142D62A40059177B /* SBAddress.i */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c.preprocessed; name = SBAddress.i; path = "../lldb-clean/scripts/Python/interface/SBAddress.i"; sourceTree = "<group>"; };
+		4CCB54F4142D62A40059177B /* SBBlock.i */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c.preprocessed; name = SBBlock.i; path = "../lldb-clean/scripts/Python/interface/SBBlock.i"; sourceTree = "<group>"; };
+		4CCB54F5142D62A50059177B /* SBBreakpoint.i */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c.preprocessed; name = SBBreakpoint.i; path = "../lldb-clean/scripts/Python/interface/SBBreakpoint.i"; sourceTree = "<group>"; };
+		4CCB54F6142D62A50059177B /* SBBreakpointLocation.i */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c.preprocessed; name = SBBreakpointLocation.i; path = "../lldb-clean/scripts/Python/interface/SBBreakpointLocation.i"; sourceTree = "<group>"; };
+		4CCB54F7142D62A60059177B /* SBBroadcaster.i */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c.preprocessed; name = SBBroadcaster.i; path = "../lldb-clean/scripts/Python/interface/SBBroadcaster.i"; sourceTree = "<group>"; };
+		4CCB54F8142D62A60059177B /* SBCommandInterpreter.i */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c.preprocessed; name = SBCommandInterpreter.i; path = "../lldb-clean/scripts/Python/interface/SBCommandInterpreter.i"; sourceTree = "<group>"; };
+		4CCB54F9142D62A60059177B /* SBCommandReturnObject.i */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c.preprocessed; name = SBCommandReturnObject.i; path = "../lldb-clean/scripts/Python/interface/SBCommandReturnObject.i"; sourceTree = "<group>"; };
+		4CCB54FA142D62A60059177B /* SBCommunication.i */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c.preprocessed; name = SBCommunication.i; path = "../lldb-clean/scripts/Python/interface/SBCommunication.i"; sourceTree = "<group>"; };
+		4CCB54FB142D62A70059177B /* SBCompileUnit.i */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c.preprocessed; name = SBCompileUnit.i; path = "../lldb-clean/scripts/Python/interface/SBCompileUnit.i"; sourceTree = "<group>"; };
+		4CCB54FC142D62A80059177B /* SBData.i */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c.preprocessed; name = SBData.i; path = "../lldb-clean/scripts/Python/interface/SBData.i"; sourceTree = "<group>"; };
+		4CCB54FD142D62A80059177B /* SBDebugger.i */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c.preprocessed; name = SBDebugger.i; path = "../lldb-clean/scripts/Python/interface/SBDebugger.i"; sourceTree = "<group>"; };
+		4CCB54FE142D62A80059177B /* SBError.i */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c.preprocessed; name = SBError.i; path = "../lldb-clean/scripts/Python/interface/SBError.i"; sourceTree = "<group>"; };
+		4CCB54FF142D62A80059177B /* SBEvent.i */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c.preprocessed; name = SBEvent.i; path = "../lldb-clean/scripts/Python/interface/SBEvent.i"; sourceTree = "<group>"; };
+		4CCB5500142D62A80059177B /* SBFileSpec.i */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c.preprocessed; name = SBFileSpec.i; path = "../lldb-clean/scripts/Python/interface/SBFileSpec.i"; sourceTree = "<group>"; };
+		4CCB5501142D62AA0059177B /* SBFileSpecList.i */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c.preprocessed; name = SBFileSpecList.i; path = "../lldb-clean/scripts/Python/interface/SBFileSpecList.i"; sourceTree = "<group>"; };
+		4CCB5503142D62AB0059177B /* SBFrame.i */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c.preprocessed; name = SBFrame.i; path = "../lldb-clean/scripts/Python/interface/SBFrame.i"; sourceTree = "<group>"; };
+		4CCB5504142D62AB0059177B /* SBFunction.i */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c.preprocessed; name = SBFunction.i; path = "../lldb-clean/scripts/Python/interface/SBFunction.i"; sourceTree = "<group>"; };
+		4CCB5505142D62AB0059177B /* SBHostOS.i */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c.preprocessed; name = SBHostOS.i; path = "../lldb-clean/scripts/Python/interface/SBHostOS.i"; sourceTree = "<group>"; };
+		4CCB5506142D62AB0059177B /* SBInputReader.i */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c.preprocessed; name = SBInputReader.i; path = "../lldb-clean/scripts/Python/interface/SBInputReader.i"; sourceTree = "<group>"; };
+		4CCB5507142D62AB0059177B /* SBInstruction.i */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c.preprocessed; name = SBInstruction.i; path = "../lldb-clean/scripts/Python/interface/SBInstruction.i"; sourceTree = "<group>"; };
+		4CCB5508142D62AC0059177B /* SBInstructionList.i */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c.preprocessed; name = SBInstructionList.i; path = "../lldb-clean/scripts/Python/interface/SBInstructionList.i"; sourceTree = "<group>"; };
+		4CCB5509142D62AC0059177B /* SBLineEntry.i */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c.preprocessed; name = SBLineEntry.i; path = "../lldb-clean/scripts/Python/interface/SBLineEntry.i"; sourceTree = "<group>"; };
+		4CCB550A142D62AC0059177B /* SBListener.i */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c.preprocessed; name = SBListener.i; path = "../lldb-clean/scripts/Python/interface/SBListener.i"; sourceTree = "<group>"; };
+		4CCB550B142D62AC0059177B /* SBModule.i */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c.preprocessed; name = SBModule.i; path = "../lldb-clean/scripts/Python/interface/SBModule.i"; sourceTree = "<group>"; };
+		4CCB550C142D62AC0059177B /* SBProcess.i */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c.preprocessed; name = SBProcess.i; path = "../lldb-clean/scripts/Python/interface/SBProcess.i"; sourceTree = "<group>"; };
+		4CCB550D142D62AC0059177B /* SBSourceManager.i */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c.preprocessed; name = SBSourceManager.i; path = "../lldb-clean/scripts/Python/interface/SBSourceManager.i"; sourceTree = "<group>"; };
+		4CCB550E142D62AD0059177B /* SBStream.i */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c.preprocessed; name = SBStream.i; path = "../lldb-clean/scripts/Python/interface/SBStream.i"; sourceTree = "<group>"; };
+		4CCB550F142D62B00059177B /* SBStringList.i */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c.preprocessed; name = SBStringList.i; path = "../lldb-clean/scripts/Python/interface/SBStringList.i"; sourceTree = "<group>"; };
+		4CCB5510142D62B10059177B /* SBSymbol.i */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c.preprocessed; name = SBSymbol.i; path = "../lldb-clean/scripts/Python/interface/SBSymbol.i"; sourceTree = "<group>"; };
+		4CCB5511142D62B10059177B /* SBSymbolContext.i */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c.preprocessed; name = SBSymbolContext.i; path = "../lldb-clean/scripts/Python/interface/SBSymbolContext.i"; sourceTree = "<group>"; };
+		4CCB5512142D62B10059177B /* SBSymbolContextList.i */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c.preprocessed; name = SBSymbolContextList.i; path = "../lldb-clean/scripts/Python/interface/SBSymbolContextList.i"; sourceTree = "<group>"; };
+		4CCB5513142D62B20059177B /* SBTarget.i */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c.preprocessed; name = SBTarget.i; path = "../lldb-clean/scripts/Python/interface/SBTarget.i"; sourceTree = "<group>"; };
+		4CCB5514142D62B20059177B /* SBThread.i */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c.preprocessed; name = SBThread.i; path = "../lldb-clean/scripts/Python/interface/SBThread.i"; sourceTree = "<group>"; };
+		4CCB5515142D62B20059177B /* SBType.i */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c.preprocessed; name = SBType.i; path = "../lldb-clean/scripts/Python/interface/SBType.i"; sourceTree = "<group>"; };
+		4CCB5516142D62B20059177B /* SBValue.i */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c.preprocessed; name = SBValue.i; path = "../lldb-clean/scripts/Python/interface/SBValue.i"; sourceTree = "<group>"; };
+		4CCB5517142D62B20059177B /* SBValueList.i */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c.preprocessed; name = SBValueList.i; path = "../lldb-clean/scripts/Python/interface/SBValueList.i"; sourceTree = "<group>"; };
 		4CD0BD0C134BFAB600CB44D4 /* ValueObjectDynamicValue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ValueObjectDynamicValue.h; path = include/lldb/Core/ValueObjectDynamicValue.h; sourceTree = "<group>"; };
 		4CD0BD0E134BFADF00CB44D4 /* ValueObjectDynamicValue.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ValueObjectDynamicValue.cpp; path = source/Core/ValueObjectDynamicValue.cpp; sourceTree = "<group>"; };
 		4CEDAED311754F5E00E875A6 /* ThreadPlanStepUntil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ThreadPlanStepUntil.h; path = include/lldb/Target/ThreadPlanStepUntil.h; sourceTree = "<group>"; };
@@ -1673,79 +1709,115 @@
 				26B42C4C1187ABA50079C8C8 /* LLDB.h */,
 				9A9830FC1125FC5800A56CB0 /* SBDefines.h */,
 				26DE204211618ACA00A093E2 /* SBAddress.h */,
+				4CCB54F3142D62A40059177B /* SBAddress.i */,
 				26DE204411618ADA00A093E2 /* SBAddress.cpp */,
 				26DE205611618FC500A093E2 /* SBBlock.h */,
 				26DE20601161902600A093E2 /* SBBlock.cpp */,
+				4CCB54F4142D62A40059177B /* SBBlock.i */,
 				9AF16A9E11402D69007A7B3F /* SBBreakpoint.h */,
 				9AF16A9C11402D5B007A7B3F /* SBBreakpoint.cpp */,
+				4CCB54F5142D62A50059177B /* SBBreakpoint.i */,
 				9AF16CC611408686007A7B3F /* SBBreakpointLocation.h */,
 				9AF16CC7114086A1007A7B3F /* SBBreakpointLocation.cpp */,
+				4CCB54F6142D62A50059177B /* SBBreakpointLocation.i */,
 				9A9830F31125FC5800A56CB0 /* SBBroadcaster.h */,
 				9A9830F21125FC5800A56CB0 /* SBBroadcaster.cpp */,
+				4CCB54F7142D62A60059177B /* SBBroadcaster.i */,
 				9A9830F71125FC5800A56CB0 /* SBCommandInterpreter.h */,
 				9A9830F61125FC5800A56CB0 /* SBCommandInterpreter.cpp */,
+				4CCB54F8142D62A60059177B /* SBCommandInterpreter.i */,
 				9A9830F91125FC5800A56CB0 /* SBCommandReturnObject.h */,
 				9A9830F81125FC5800A56CB0 /* SBCommandReturnObject.cpp */,
+				4CCB54F9142D62A60059177B /* SBCommandReturnObject.i */,
 				260223E7115F06D500A601A2 /* SBCommunication.h */,
 				260223E8115F06E500A601A2 /* SBCommunication.cpp */,
+				4CCB54FA142D62A60059177B /* SBCommunication.i */,
 				26DE205411618FB800A093E2 /* SBCompileUnit.h */,
 				26DE205E1161901B00A093E2 /* SBCompileUnit.cpp */,
+				4CCB54FB142D62A70059177B /* SBCompileUnit.i */,
 				9443B120140C18A90013457C /* SBData.h */,
 				9443B121140C18C10013457C /* SBData.cpp */,
+				4CCB54FC142D62A80059177B /* SBData.i */,
 				9A9830FB1125FC5800A56CB0 /* SBDebugger.h */,
 				9A9830FA1125FC5800A56CB0 /* SBDebugger.cpp */,
+				4CCB54FD142D62A80059177B /* SBDebugger.i */,
 				2682F286115EF3BD00CCFF99 /* SBError.h */,
 				2682F284115EF3A700CCFF99 /* SBError.cpp */,
+				4CCB54FE142D62A80059177B /* SBError.i */,
 				9A9830FE1125FC5800A56CB0 /* SBEvent.h */,
 				9A9830FD1125FC5800A56CB0 /* SBEvent.cpp */,
+				4CCB54FF142D62A80059177B /* SBEvent.i */,
 				26022531115F27FA00A601A2 /* SBFileSpec.h */,
 				26022532115F281400A601A2 /* SBFileSpec.cpp */,
+				4CCB5500142D62A80059177B /* SBFileSpec.i */,
 				4CF52AF41428291E0051E832 /* SBFileSpecList.h */,
 				4CF52AF7142829390051E832 /* SBFileSpecList.cpp */,
+				4CCB5501142D62AA0059177B /* SBFileSpecList.i */,
 				9A633FE8112DCE3C001A7E43 /* SBFrame.h */,
 				9A633FE7112DCE3C001A7E43 /* SBFrame.cpp */,
+				4CCB5503142D62AB0059177B /* SBFrame.i */,
 				26DE205211618FAC00A093E2 /* SBFunction.h */,
 				26DE205C1161901400A093E2 /* SBFunction.cpp */,
+				4CCB5504142D62AB0059177B /* SBFunction.i */,
 				9A3576A7116E9AB700E8ED2F /* SBHostOS.h */,
 				9A3576A9116E9AC700E8ED2F /* SBHostOS.cpp */,
+				4CCB5505142D62AB0059177B /* SBHostOS.i */,
 				9AA69DAE118A023300D753A0 /* SBInputReader.h */,
 				9AA69DB0118A024600D753A0 /* SBInputReader.cpp */,
+				4CCB5506142D62AB0059177B /* SBInputReader.i */,
 				9AC7038D117674EB0086C050 /* SBInstruction.h */,
 				9AC703AE117675410086C050 /* SBInstruction.cpp */,
+				4CCB5507142D62AB0059177B /* SBInstruction.i */,
 				9AC7038F117675270086C050 /* SBInstructionList.h */,
 				9AC703B0117675490086C050 /* SBInstructionList.cpp */,
+				4CCB5508142D62AC0059177B /* SBInstructionList.i */,
 				26DE205811618FE700A093E2 /* SBLineEntry.h */,
 				26DE20621161904200A093E2 /* SBLineEntry.cpp */,
+				4CCB5509142D62AC0059177B /* SBLineEntry.i */,
 				9A9831021125FC5800A56CB0 /* SBListener.h */,
 				9A9831011125FC5800A56CB0 /* SBListener.cpp */,
+				4CCB550A142D62AC0059177B /* SBListener.i */,
 				26DE204E11618E9800A093E2 /* SBModule.h */,
 				26DE204C11618E7A00A093E2 /* SBModule.cpp */,
+				4CCB550B142D62AC0059177B /* SBModule.i */,
 				9A9831041125FC5800A56CB0 /* SBProcess.h */,
 				9A9831031125FC5800A56CB0 /* SBProcess.cpp */,
+				4CCB550C142D62AC0059177B /* SBProcess.i */,
 				26B8283C142D01E9002DBC64 /* SBSection.h */,
 				26B8283F142D020F002DBC64 /* SBSection.cpp */,
 				9A9831061125FC5800A56CB0 /* SBSourceManager.h */,
 				9A9831051125FC5800A56CB0 /* SBSourceManager.cpp */,
+				4CCB550D142D62AC0059177B /* SBSourceManager.i */,
 				26C72C93124322890068DC16 /* SBStream.h */,
 				26C72C951243229A0068DC16 /* SBStream.cpp */,
+				4CCB550E142D62AD0059177B /* SBStream.i */,
 				9A357670116E7B5200E8ED2F /* SBStringList.h */,
 				9A357672116E7B6400E8ED2F /* SBStringList.cpp */,
+				4CCB550F142D62B00059177B /* SBStringList.i */,
 				26DE205A11618FF600A093E2 /* SBSymbol.h */,
 				26DE20641161904E00A093E2 /* SBSymbol.cpp */,
+				4CCB5510142D62B10059177B /* SBSymbol.i */,
 				26DE204011618AB900A093E2 /* SBSymbolContext.h */,
 				26DE204611618AED00A093E2 /* SBSymbolContext.cpp */,
+				4CCB5511142D62B10059177B /* SBSymbolContext.i */,
 				268F9D52123AA15200B91E9B /* SBSymbolContextList.h */,
 				268F9D54123AA16600B91E9B /* SBSymbolContextList.cpp */,
+				4CCB5512142D62B10059177B /* SBSymbolContextList.i */,
 				9A9831081125FC5800A56CB0 /* SBTarget.h */,
 				9A9831071125FC5800A56CB0 /* SBTarget.cpp */,
+				4CCB5513142D62B20059177B /* SBTarget.i */,
 				9A98310A1125FC5800A56CB0 /* SBThread.h */,
 				9A9831091125FC5800A56CB0 /* SBThread.cpp */,
+				4CCB5514142D62B20059177B /* SBThread.i */,
 				2617447911685869005ADD65 /* SBType.h */,
 				261744771168585B005ADD65 /* SBType.cpp */,
+				4CCB5515142D62B20059177B /* SBType.i */,
 				9A19A6A51163BB7E00E0D453 /* SBValue.h */,
 				9A19A6AD1163BB9800E0D453 /* SBValue.cpp */,
+				4CCB5516142D62B20059177B /* SBValue.i */,
 				9A357582116CFDEE00E8ED2F /* SBValueList.h */,
 				9A35758D116CFE0F00E8ED2F /* SBValueList.cpp */,
+				4CCB5517142D62B20059177B /* SBValueList.i */,
 			);
 			name = API;
 			sourceTree = "<group>";

@@ -33,6 +33,9 @@ public:
     bool
     IsValid() const;
 
+    lldb::SBAddress
+    GetAddress ();
+    
     lldb::addr_t
     GetLoadAddress ();
 
