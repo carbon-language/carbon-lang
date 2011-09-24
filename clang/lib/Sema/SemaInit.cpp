@@ -2216,6 +2216,7 @@ void InitializationSequence::Step::Destroy() {
   case SK_QualificationConversionXValue:
   case SK_QualificationConversionLValue:
   case SK_ListInitialization:
+  case SK_ListConstructorCall:
   case SK_ConstructorInitialization:
   case SK_ZeroInitialization:
   case SK_CAssignment:
@@ -2259,6 +2260,7 @@ bool InitializationSequence::isAmbiguous() const {
   case FK_Incomplete:
   case FK_ArrayTypeMismatch:
   case FK_NonConstantArrayInit:
+  case FK_ListInitializationFailed:
     return false;
 
   case FK_ReferenceInitOverloadFailed:
@@ -4232,6 +4234,7 @@ InitializationSequence::Perform(Sema &S,
   case SK_QualificationConversionXValue:
   case SK_QualificationConversionRValue:
   case SK_ConversionSequence:
+  case SK_ListConstructorCall:
   case SK_ListInitialization:
   case SK_CAssignment:
   case SK_StringInit:
@@ -4510,6 +4513,9 @@ InitializationSequence::Perform(Sema &S,
       CurInit = S.Owned(CheckInitList.getFullyStructuredList());
       break;
     }
+
+    case SK_ListConstructorCall:
+      assert(false && "List constructor calls not yet supported.");
 
     case SK_ConstructorInitialization: {
       unsigned NumArgs = Args.size();
@@ -5011,10 +5017,13 @@ bool InitializationSequence::Diagnose(Sema &S,
     }
     break;
 
-    case FK_Incomplete:
-      S.RequireCompleteType(Kind.getLocation(), DestType,
-                            diag::err_init_incomplete_type);
-      break;
+  case FK_Incomplete:
+    S.RequireCompleteType(Kind.getLocation(), DestType,
+                          diag::err_init_incomplete_type);
+    break;
+
+  case FK_ListInitializationFailed:
+    assert(false && "Failed list initialization not yet handled.");
   }
 
   PrintInitLocationNote(S, Entity);
@@ -5109,6 +5118,9 @@ void InitializationSequence::dump(raw_ostream &OS) const {
     case FK_Incomplete:
       OS << "initialization of incomplete type";
       break;
+
+    case FK_ListInitializationFailed:
+      OS << "list initialization failed";
     }
     OS << '\n';
     return;
@@ -5178,7 +5190,11 @@ void InitializationSequence::dump(raw_ostream &OS) const {
       break;
 
     case SK_ListInitialization:
-      OS << "list initialization";
+      OS << "list aggregate initialization";
+      break;
+
+    case SK_ListConstructorCall:
+      OS << "list initialization via constructor";
       break;
 
     case SK_ConstructorInitialization:

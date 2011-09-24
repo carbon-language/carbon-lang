@@ -526,8 +526,10 @@ public:
     SK_QualificationConversionLValue,
     /// \brief Perform an implicit conversion sequence.
     SK_ConversionSequence,
-    /// \brief Perform list-initialization
+    /// \brief Perform list-initialization without a constructor
     SK_ListInitialization,
+    /// \brief Perform list-initialization with a constructor.
+    SK_ListConstructorCall,
     /// \brief Perform initialization via a constructor.
     SK_ConstructorInitialization,
     /// \brief Zero-initialize the object
@@ -563,6 +565,8 @@ public:
       /// \brief When Kind == SK_ResolvedOverloadedFunction or Kind ==
       /// SK_UserConversion, the function that the expression should be 
       /// resolved to or the conversion function to call, respectively.
+      /// When Kind == SK_ConstructorInitialization or SK_ListConstruction,
+      /// the constructor to be called.
       ///
       /// Always a FunctionDecl.
       /// For conversion decls, the naming class is the source type.
@@ -571,12 +575,12 @@ public:
         FunctionDecl *Function;
         DeclAccessPair FoundDecl;
       } Function;
-      
+
       /// \brief When Kind = SK_ConversionSequence, the implicit conversion
       /// sequence 
       ImplicitConversionSequence *ICS;
     };
-    
+
     void Destroy();
   };
   
@@ -634,7 +638,9 @@ public:
     /// \brief Default-initialization of a 'const' object.
     FK_DefaultInitOfConst,
     /// \brief Initialization of an incomplete type.
-    FK_Incomplete
+    FK_Incomplete,
+    /// \brief List initialization failed at some point.
+    FK_ListInitializationFailed
   };
   
 private:
