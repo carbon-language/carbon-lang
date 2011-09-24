@@ -50,7 +50,7 @@ template <> struct ProgramStateTrait<LockSet> :
   public ProgramStatePartialTrait<llvm::ImmutableList<const MemRegion*> > {
     static void *GDMIndex() { static int x = 0; return &x; }
 };
-} // end GR namespace
+} // end of ento (ProgramState) namespace
 } // end clang namespace
 
 
