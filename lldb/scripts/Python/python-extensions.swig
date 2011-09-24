@@ -118,6 +118,13 @@
                 return PyString_FromString (description.GetData());
         }
 }
+%extend lldb::SBSection {
+        PyObject *lldb::SBSection::__repr__ (){
+                lldb::SBStream description;
+                $self->GetDescription (description);
+                return PyString_FromString (description.GetData());
+        }
+}
 %extend lldb::SBSymbol {
         PyObject *lldb::SBSymbol::__repr__ (){
                 lldb::SBStream description;

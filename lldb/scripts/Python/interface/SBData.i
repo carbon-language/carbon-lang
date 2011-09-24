@@ -75,7 +75,7 @@ public:
     GetString (lldb::SBError& error, uint32_t offset);
 
     bool
-    GetDescription (lldb::SBStream &description);
+    GetDescription (lldb::SBStream &description, lldb::addr_t base_addr);
 
     size_t
     ReadRawData (lldb::SBError& error,

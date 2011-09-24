@@ -412,7 +412,7 @@ SBData::GetString (lldb::SBError& error, uint32_t offset)
 }
 
 bool
-SBData::GetDescription (lldb::SBStream &description)
+SBData::GetDescription (lldb::SBStream &description, lldb::addr_t base_addr)
 {
     if (m_opaque_sp)
     {
@@ -423,7 +423,7 @@ SBData::GetDescription (lldb::SBStream &description)
                           1,
                           m_opaque_sp->GetByteSize(),
                           16,
-                          LLDB_INVALID_ADDRESS,
+                          base_addr,
                           0,
                           0);
     }

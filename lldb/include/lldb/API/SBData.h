@@ -90,7 +90,7 @@ public:
                  size_t size);
     
     bool
-    GetDescription (lldb::SBStream &description);
+    GetDescription (lldb::SBStream &description, lldb::addr_t base_addr = LLDB_INVALID_ADDRESS);
     
     // it would be nice to have SetData(SBError, const void*, size_t) when endianness and address size can be
     // inferred from the existing DataExtractor, but having two SetData() signatures triggers a SWIG bug where

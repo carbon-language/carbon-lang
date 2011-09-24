@@ -57,9 +57,12 @@ public:
     GetFileByteSize ();
     
     lldb::SBData
-    GetSectionData (uint64_t offset = 0,
-                    uint64_t size = UINT64_MAX);
+    GetSectionData ();
 
+    lldb::SBData
+    GetSectionData (uint64_t offset,
+                    uint64_t size);
+    
     SectionType
     GetSectionType ();
 

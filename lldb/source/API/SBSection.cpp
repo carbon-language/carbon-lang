@@ -12,8 +12,9 @@
 #include "lldb/Core/DataBuffer.h"
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/Log.h"
-#include "lldb/Core/Section.h"
 #include "lldb/Core/Module.h"
+#include "lldb/Core/Section.h"
+#include "lldb/Core/StreamString.h"
 
 namespace lldb_private 
 {
@@ -238,6 +239,12 @@ SBSection::GetFileByteSize ()
 }
 
 SBData
+SBSection::GetSectionData ()
+{
+    return GetSectionData (0, UINT64_MAX);
+}
+
+SBData
 SBSection::GetSectionData (uint64_t offset, uint64_t size)
 {
     SBData sb_data;
@@ -319,9 +326,12 @@ SBSection::operator != (const SBSection &rhs)
 bool
 SBSection::GetDescription (SBStream &description)
 {
-    if (m_opaque_ap.get())
+    if (IsValid())
     {
-        description.Printf ("SBSection");
+        const Section *section = m_opaque_ap->GetSection();
+        const addr_t file_addr = section->GetFileAddress();
+        description.Printf ("[0x%16.16llx-0x%16.16llx) ", file_addr, file_addr + section->GetByteSize());
+        section->DumpName(description.get());
     }
     else
     {

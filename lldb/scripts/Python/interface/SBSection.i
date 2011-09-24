@@ -54,6 +54,9 @@ public:
     GetFileByteSize ();
     
     lldb::SBData
+    GetSectionData ();
+
+    lldb::SBData
     GetSectionData (uint64_t offset,
                     uint64_t size);
 

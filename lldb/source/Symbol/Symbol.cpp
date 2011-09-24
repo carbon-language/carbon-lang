@@ -177,6 +177,7 @@ void
 Symbol::GetDescription (Stream *s, lldb::DescriptionLevel level, Target *target) const
 {
     *s << "id = " << (const UserID&)*this << ", name = \"" << m_mangled.GetName() << '"';
+    
     const Section *section = m_addr_range.GetBaseAddress().GetSection();
     if (section != NULL)
     {
@@ -194,12 +195,14 @@ Symbol::GetDescription (Stream *s, lldb::DescriptionLevel level, Target *target)
             }
         }
         else
-        {
-            if (m_size_is_sibling)                
-                s->Printf (", sibling = %5llu", m_addr_range.GetBaseAddress().GetOffset());
-            else
-                s->Printf (", value = 0x%16.16llx", m_addr_range.GetBaseAddress().GetOffset());
-        }
+            s->Printf (", value = 0x%16.16llx", m_addr_range.GetBaseAddress().GetOffset());
+    }
+    else
+    {
+        if (m_size_is_sibling)                
+            s->Printf (", sibling = %5llu", m_addr_range.GetBaseAddress().GetOffset());
+        else
+            s->Printf (", value = 0x%16.16llx", m_addr_range.GetBaseAddress().GetOffset());
     }
 }
 
