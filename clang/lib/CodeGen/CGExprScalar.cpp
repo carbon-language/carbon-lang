@@ -837,9 +837,14 @@ Value *ScalarExprEmitter::VisitInitListExpr(InitListExpr *E) {
   llvm::VectorType *VType =
     dyn_cast<llvm::VectorType>(ConvertType(E->getType()));
   
-  // We have a scalar in braces. Just use the first element.
-  if (!VType)
+  if (!VType) {
+    if (NumInitElements == 0) {
+      // C++11 value-initialization for the scalar.
+      return EmitNullValue(E->getType());
+    }
+    // We have a scalar in braces. Just use the first element.
     return Visit(E->getInit(0));
+  }
   
   unsigned ResElts = VType->getNumElements();
   

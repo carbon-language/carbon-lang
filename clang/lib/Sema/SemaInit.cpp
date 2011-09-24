@@ -877,11 +877,12 @@ void InitListChecker::CheckScalarType(const InitializedEntity &Entity,
                                       InitListExpr *StructuredList,
                                       unsigned &StructuredIndex) {
   if (Index >= IList->getNumInits()) {
-    // FIXME: Allowed in C++11.
-    if (!VerifyOnly)
-      SemaRef.Diag(IList->getLocStart(), diag::err_empty_scalar_initializer)
-        << IList->getSourceRange();
-    hadError = true;
+    if (!SemaRef.getLangOptions().CPlusPlus0x) {
+      if (!VerifyOnly)
+        SemaRef.Diag(IList->getLocStart(), diag::err_empty_scalar_initializer)
+          << IList->getSourceRange();
+      hadError = true;
+    }
     ++Index;
     ++StructuredIndex;
     return;
