@@ -202,17 +202,26 @@ bool ExpandPostRA::runOnMachineFunction(MachineFunction &MF) {
        mbbi != mbbe; ++mbbi) {
     for (MachineBasicBlock::iterator mi = mbbi->begin(), me = mbbi->end();
          mi != me;) {
-      MachineBasicBlock::iterator nmi = llvm::next(mi);
       MachineInstr *MI = mi;
-      assert(!MI->isInsertSubreg() && "INSERT_SUBREG should no longer appear");
-      assert(MI->getOpcode() != TargetOpcode::EXTRACT_SUBREG &&
-             "EXTRACT_SUBREG should no longer appear");
-      if (MI->isSubregToReg()) {
+      // Advance iterator here because MI may be erased.
+      ++mi;
+      switch (MI->getOpcode()) {
+      case TargetOpcode::SUBREG_TO_REG:
         MadeChange |= LowerSubregToReg(MI);
-      } else if (MI->isCopy()) {
+        break;
+      case TargetOpcode::COPY:
         MadeChange |= LowerCopy(MI);
+        break;
+      case TargetOpcode::DBG_VALUE:
+        continue;
+      case TargetOpcode::INSERT_SUBREG:
+      case TargetOpcode::EXTRACT_SUBREG:
+        llvm_unreachable("Sub-register pseudos should have been eliminated.");
+      default:
+        if (MI->getDesc().isPseudo())
+          MadeChange |= TII->expandPostRAPseudo(MI);
+        break;
       }
-      mi = nmi;
     }
   }
 

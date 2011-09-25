@@ -268,6 +268,7 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
      << Inst.TheDef->getName() << "\", 0";
 
   // Emit all of the target indepedent flags...
+  if (Inst.isPseudo)           OS << "|(1<<MCID::Pseudo)";
   if (Inst.isReturn)           OS << "|(1<<MCID::Return)";
   if (Inst.isBranch)           OS << "|(1<<MCID::Branch)";
   if (Inst.isIndirectBranch)   OS << "|(1<<MCID::IndirectBranch)";

@@ -97,6 +97,7 @@ namespace MCID {
   enum {
     Variadic = 0,
     HasOptionalDef,
+    Pseudo,
     Return,
     Call,
     Barrier,
@@ -273,6 +274,13 @@ public:
   /// or zero if the encoding size cannot be known from the opcode.
   unsigned getSize() const {
     return Size;
+  }
+
+  /// isPseudo - Return true if this is a pseudo instruction that doesn't
+  /// correspond to a real machine instruction.
+  ///
+  bool isPseudo() const {
+    return Flags & (1 << MCID::Pseudo);
   }
 
   bool isReturn() const {
