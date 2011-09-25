@@ -213,7 +213,7 @@ struct AllocatedCXCodeCompleteResults : public CXCodeCompleteResults {
   SmallVector<StoredDiagnostic, 8> Diagnostics;
 
   /// \brief Diag object
-  llvm::IntrusiveRefCntPtr<Diagnostic> Diag;
+  llvm::IntrusiveRefCntPtr<DiagnosticsEngine> Diag;
   
   /// \brief Language options used to adjust source locations.
   LangOptions LangOpts;
@@ -270,7 +270,7 @@ static llvm::sys::cas_flag CodeCompletionResultObjects;
 AllocatedCXCodeCompleteResults::AllocatedCXCodeCompleteResults(
                                       const FileSystemOptions& FileSystemOpts)
   : CXCodeCompleteResults(),
-    Diag(new Diagnostic(
+    Diag(new DiagnosticsEngine(
                    llvm::IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs))),
     FileSystemOpts(FileSystemOpts),
     FileMgr(new FileManager(FileSystemOpts)),

@@ -21,8 +21,8 @@ CGCXXABI::~CGCXXABI() { }
 
 static void ErrorUnsupportedABI(CodeGenFunction &CGF,
                                 StringRef S) {
-  Diagnostic &Diags = CGF.CGM.getDiags();
-  unsigned DiagID = Diags.getCustomDiagID(Diagnostic::Error,
+  DiagnosticsEngine &Diags = CGF.CGM.getDiags();
+  unsigned DiagID = Diags.getCustomDiagID(DiagnosticsEngine::Error,
                                           "cannot yet compile %1 in this ABI");
   Diags.Report(CGF.getContext().getFullLoc(CGF.CurCodeDecl->getLocation()),
                DiagID)

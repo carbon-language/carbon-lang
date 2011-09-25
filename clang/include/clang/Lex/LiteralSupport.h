@@ -24,7 +24,7 @@
 
 namespace clang {
 
-class Diagnostic;
+class DiagnosticsEngine;
 class Preprocessor;
 class Token;
 class SourceLocation;
@@ -149,7 +149,7 @@ class StringLiteralParser {
   const SourceManager &SM;
   const LangOptions &Features;
   const TargetInfo &Target;
-  Diagnostic *Diags;
+  DiagnosticsEngine *Diags;
   
   unsigned MaxTokenLength;
   unsigned SizeBound;
@@ -162,7 +162,7 @@ public:
                       Preprocessor &PP, bool Complain = true);
   StringLiteralParser(const Token *StringToks, unsigned NumStringToks,
                       const SourceManager &sm, const LangOptions &features,
-                      const TargetInfo &target, Diagnostic *diags = 0)
+                      const TargetInfo &target, DiagnosticsEngine *diags = 0)
     : SM(sm), Features(features), Target(target), Diags(diags),
       MaxTokenLength(0), SizeBound(0), CharByteWidth(0), Kind(tok::unknown),
       ResultPtr(ResultBuf.data()), hadError(false), Pascal(false) {

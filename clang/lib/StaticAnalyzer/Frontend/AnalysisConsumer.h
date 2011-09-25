@@ -23,7 +23,7 @@ namespace clang {
 class AnalyzerOptions;
 class ASTConsumer;
 class Preprocessor;
-class Diagnostic;
+class DiagnosticsEngine;
 
 namespace ento {
 class CheckerManager;

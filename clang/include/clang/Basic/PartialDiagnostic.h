@@ -195,7 +195,7 @@ public:
   {
     // Copy arguments.
     for (unsigned I = 0, N = Other.getNumArgs(); I != N; ++I) {
-      if (Other.getArgKind(I) == Diagnostic::ak_std_string)
+      if (Other.getArgKind(I) == DiagnosticsEngine::ak_std_string)
         AddString(Other.getArgStdStr(I));
       else
         AddTaggedVal(Other.getRawArg(I), Other.getArgKind(I));
@@ -230,7 +230,7 @@ public:
 
   unsigned getDiagID() const { return DiagID; }
 
-  void AddTaggedVal(intptr_t V, Diagnostic::ArgumentKind Kind) const {
+  void AddTaggedVal(intptr_t V, DiagnosticsEngine::ArgumentKind Kind) const {
     if (!DiagStorage)
       DiagStorage = getStorage();
 
@@ -247,7 +247,7 @@ public:
     assert(DiagStorage->NumDiagArgs < Storage::MaxArguments &&
            "Too many arguments to diagnostic!");
     DiagStorage->DiagArgumentsKind[DiagStorage->NumDiagArgs]
-      = Diagnostic::ak_std_string;
+      = DiagnosticsEngine::ak_std_string;
     DiagStorage->DiagArgumentsStr[DiagStorage->NumDiagArgs++] = V;
   }
 
@@ -257,12 +257,12 @@ public:
     
     // Add all arguments.
     for (unsigned i = 0, e = DiagStorage->NumDiagArgs; i != e; ++i) {
-      if ((Diagnostic::ArgumentKind)DiagStorage->DiagArgumentsKind[i]
-            == Diagnostic::ak_std_string)
+      if ((DiagnosticsEngine::ArgumentKind)DiagStorage->DiagArgumentsKind[i]
+            == DiagnosticsEngine::ak_std_string)
         DB.AddString(DiagStorage->DiagArgumentsStr[i]);
       else
         DB.AddTaggedVal(DiagStorage->DiagArgumentsVal[i],
-                   (Diagnostic::ArgumentKind)DiagStorage->DiagArgumentsKind[i]);
+            (DiagnosticsEngine::ArgumentKind)DiagStorage->DiagArgumentsKind[i]);
     }
     
     // Add all ranges.
@@ -285,19 +285,20 @@ public:
   
   friend const PartialDiagnostic &operator<<(const PartialDiagnostic &PD,
                                              unsigned I) {
-    PD.AddTaggedVal(I, Diagnostic::ak_uint);
+    PD.AddTaggedVal(I, DiagnosticsEngine::ak_uint);
     return PD;
   }
 
   friend const PartialDiagnostic &operator<<(const PartialDiagnostic &PD,
                                              int I) {
-    PD.AddTaggedVal(I, Diagnostic::ak_sint);
+    PD.AddTaggedVal(I, DiagnosticsEngine::ak_sint);
     return PD;
   }
 
   friend inline const PartialDiagnostic &operator<<(const PartialDiagnostic &PD,
                                                     const char *S) {
-    PD.AddTaggedVal(reinterpret_cast<intptr_t>(S), Diagnostic::ak_c_string);
+    PD.AddTaggedVal(reinterpret_cast<intptr_t>(S),
+                    DiagnosticsEngine::ak_c_string);
     return PD;
   }
 

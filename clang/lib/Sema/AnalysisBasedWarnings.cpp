@@ -265,25 +265,25 @@ struct CheckFallThroughDiagnostics {
     return D;
   }
 
-  bool checkDiagnostics(Diagnostic &D, bool ReturnsVoid,
+  bool checkDiagnostics(DiagnosticsEngine &D, bool ReturnsVoid,
                         bool HasNoReturn) const {
     if (funMode) {
       return (ReturnsVoid ||
               D.getDiagnosticLevel(diag::warn_maybe_falloff_nonvoid_function,
-                                   FuncLoc) == Diagnostic::Ignored)
+                                   FuncLoc) == DiagnosticsEngine::Ignored)
         && (!HasNoReturn ||
             D.getDiagnosticLevel(diag::warn_noreturn_function_has_return_expr,
-                                 FuncLoc) == Diagnostic::Ignored)
+                                 FuncLoc) == DiagnosticsEngine::Ignored)
         && (!ReturnsVoid ||
             D.getDiagnosticLevel(diag::warn_suggest_noreturn_block, FuncLoc)
-              == Diagnostic::Ignored);
+              == DiagnosticsEngine::Ignored);
     }
 
     // For blocks.
     return  ReturnsVoid && !HasNoReturn
             && (!ReturnsVoid ||
                 D.getDiagnosticLevel(diag::warn_suggest_noreturn_block, FuncLoc)
-                  == Diagnostic::Ignored);
+                  == DiagnosticsEngine::Ignored);
   }
 };
 
@@ -321,7 +321,7 @@ static void CheckFallThroughForBody(Sema &S, const Decl *D, const Stmt *Body,
     }
   }
 
-  Diagnostic &Diags = S.getDiagnostics();
+  DiagnosticsEngine &Diags = S.getDiagnostics();
 
   // Short circuit for compilation speed.
   if (CD.checkDiagnostics(Diags, ReturnsVoid, HasNoReturn))
@@ -723,13 +723,13 @@ clang::sema::AnalysisBasedWarnings::AnalysisBasedWarnings(Sema &s)
     MaxUninitAnalysisVariablesPerFunction(0),
     NumUninitAnalysisBlockVisits(0),
     MaxUninitAnalysisBlockVisitsPerFunction(0) {
-  Diagnostic &D = S.getDiagnostics();
+  DiagnosticsEngine &D = S.getDiagnostics();
   DefaultPolicy.enableCheckUnreachable = (unsigned)
     (D.getDiagnosticLevel(diag::warn_unreachable, SourceLocation()) !=
-        Diagnostic::Ignored);
+        DiagnosticsEngine::Ignored);
   DefaultPolicy.enableThreadSafetyAnalysis = (unsigned)
     (D.getDiagnosticLevel(diag::warn_double_lock, SourceLocation()) !=
-     Diagnostic::Ignored);
+     DiagnosticsEngine::Ignored);
 
 }
 
@@ -754,7 +754,7 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
   //     don't bother trying.
   // (2) The code already has problems; running the analysis just takes more
   //     time.
-  Diagnostic &Diags = S.getDiagnostics();
+  DiagnosticsEngine &Diags = S.getDiagnostics();
 
   // Do not do any analysis for declarations in system headers if we are
   // going to just ignore them.
@@ -870,9 +870,9 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
   }
 
   if (Diags.getDiagnosticLevel(diag::warn_uninit_var, D->getLocStart())
-      != Diagnostic::Ignored ||
+      != DiagnosticsEngine::Ignored ||
       Diags.getDiagnosticLevel(diag::warn_maybe_uninit_var, D->getLocStart())
-      != Diagnostic::Ignored) {
+      != DiagnosticsEngine::Ignored) {
     if (CFG *cfg = AC.getCFG()) {
       UninitValsDiagReporter reporter(S);
       UninitVariablesAnalysisStats stats;

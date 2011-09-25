@@ -29,7 +29,7 @@ public:
   bool clearDiagnostic(ArrayRef<unsigned> IDs, SourceRange range);
   bool hasDiagnostic(ArrayRef<unsigned> IDs, SourceRange range) const;
 
-  void reportDiagnostics(Diagnostic &diags) const;
+  void reportDiagnostics(DiagnosticsEngine &diags) const;
 
   bool hasErrors() const;
 
@@ -43,13 +43,13 @@ void writeARCDiagsToPlist(const std::string &outPath,
                           SourceManager &SM, const LangOptions &LangOpts);
 
 class TransformActions {
-  Diagnostic &Diags;
+  DiagnosticsEngine &Diags;
   CapturedDiagList &CapturedDiags;
   bool ReportedErrors;
   void *Impl; // TransformActionsImpl.
 
 public:
-  TransformActions(Diagnostic &diag, CapturedDiagList &capturedDiags,
+  TransformActions(DiagnosticsEngine &diag, CapturedDiagList &capturedDiags,
                    ASTContext &ctx, Preprocessor &PP);
   ~TransformActions();
 
@@ -146,7 +146,7 @@ public:
     : Ctx(Ctx), SemaRef(sema), TA(TA), ARCMTMacroLocs(ARCMTMacroLocs) { }
 };
 
-bool isARCDiagnostic(unsigned diagID, Diagnostic &Diag);
+bool isARCDiagnostic(unsigned diagID, DiagnosticsEngine &Diag);
 
 static inline StringRef getARCMTMacroName() {
   return "__IMPL_ARCMT_REMOVED_EXPR__";

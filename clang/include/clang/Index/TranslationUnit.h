@@ -16,7 +16,7 @@
 
 namespace clang {
   class ASTContext;
-  class Diagnostic;
+  class DiagnosticsEngine;
   class Preprocessor;
 
 namespace idx {
@@ -29,7 +29,7 @@ public:
   virtual ~TranslationUnit();
   virtual ASTContext &getASTContext() = 0;
   virtual Preprocessor &getPreprocessor() = 0;
-  virtual Diagnostic &getDiagnostic() = 0;
+  virtual DiagnosticsEngine &getDiagnostic() = 0;
   virtual DeclReferenceMap &getDeclReferenceMap() = 0;
   virtual SelectorMap &getSelectorMap() = 0;
 };

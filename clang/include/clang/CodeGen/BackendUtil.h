@@ -17,7 +17,7 @@ namespace llvm {
 }
 
 namespace clang {
-  class Diagnostic;
+  class DiagnosticsEngine;
   class CodeGenOptions;
   class TargetOptions;
   class LangOptions;
@@ -31,7 +31,7 @@ namespace clang {
     Backend_EmitObj        ///< Emit native object files
   };
   
-  void EmitBackendOutput(Diagnostic &Diags, const CodeGenOptions &CGOpts,
+  void EmitBackendOutput(DiagnosticsEngine &Diags, const CodeGenOptions &CGOpts,
                          const TargetOptions &TOpts, const LangOptions &LOpts,
                          llvm::Module *M,
                          BackendAction Action, raw_ostream *OS);

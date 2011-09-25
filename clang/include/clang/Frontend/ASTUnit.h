@@ -46,7 +46,7 @@ class ASTReader;
 class CodeCompleteConsumer;
 class CompilerInvocation;
 class Decl;
-class Diagnostic;
+class DiagnosticsEngine;
 class FileEntry;
 class FileManager;
 class HeaderSearch;
@@ -69,13 +69,13 @@ class GlobalCodeCompletionAllocator
 ///
 class ASTUnit : public ModuleLoader {
 private:
-  llvm::IntrusiveRefCntPtr<Diagnostic> Diagnostics;
-  llvm::IntrusiveRefCntPtr<FileManager>      FileMgr;
-  llvm::IntrusiveRefCntPtr<SourceManager>    SourceMgr;
-  llvm::OwningPtr<HeaderSearch>     HeaderInfo;
-  llvm::IntrusiveRefCntPtr<TargetInfo>       Target;
-  llvm::IntrusiveRefCntPtr<Preprocessor>     PP;
-  llvm::IntrusiveRefCntPtr<ASTContext>       Ctx;
+  llvm::IntrusiveRefCntPtr<DiagnosticsEngine> Diagnostics;
+  llvm::IntrusiveRefCntPtr<FileManager>       FileMgr;
+  llvm::IntrusiveRefCntPtr<SourceManager>     SourceMgr;
+  llvm::OwningPtr<HeaderSearch>               HeaderInfo;
+  llvm::IntrusiveRefCntPtr<TargetInfo>        Target;
+  llvm::IntrusiveRefCntPtr<Preprocessor>      PP;
+  llvm::IntrusiveRefCntPtr<ASTContext>        Ctx;
 
   FileSystemOptions FileSystemOpts;
 
@@ -240,8 +240,8 @@ private:
 
   /// \brief The number of warnings that occurred while parsing the preamble.
   ///
-  /// This value will be used to restore the state of the \c Diagnostic object
-  /// when re-using the precompiled preamble. Note that only the
+  /// This value will be used to restore the state of the \c DiagnosticsEngine
+  /// object when re-using the precompiled preamble. Note that only the
   /// number of warnings matters, since we will not save the preamble
   /// when any errors are present.
   unsigned NumWarningsInPreamble;
@@ -260,7 +260,7 @@ private:
   /// \brief The language options used when we load an AST file.
   LangOptions ASTFileLangOpts;
 
-  static void ConfigureDiags(llvm::IntrusiveRefCntPtr<Diagnostic> &Diags,
+  static void ConfigureDiags(llvm::IntrusiveRefCntPtr<DiagnosticsEngine> &Diags,
                              const char **ArgBegin, const char **ArgEnd,
                              ASTUnit &AST, bool CaptureDiagnostics);
 
@@ -420,8 +420,8 @@ public:
   bool isUnsafeToFree() const { return UnsafeToFree; }
   void setUnsafeToFree(bool Value) { UnsafeToFree = Value; }
 
-  const Diagnostic &getDiagnostics() const { return *Diagnostics; }
-  Diagnostic &getDiagnostics()             { return *Diagnostics; }
+  const DiagnosticsEngine &getDiagnostics() const { return *Diagnostics; }
+  DiagnosticsEngine &getDiagnostics()             { return *Diagnostics; }
   
   const SourceManager &getSourceManager() const { return *SourceMgr; }
         SourceManager &getSourceManager()       { return *SourceMgr; }
@@ -563,7 +563,7 @@ public:
 
   /// \brief Create a ASTUnit. Gets ownership of the passed CompilerInvocation. 
   static ASTUnit *create(CompilerInvocation *CI,
-                         llvm::IntrusiveRefCntPtr<Diagnostic> Diags);
+                         llvm::IntrusiveRefCntPtr<DiagnosticsEngine> Diags);
 
   /// \brief Create a ASTUnit from an AST file.
   ///
@@ -574,7 +574,7 @@ public:
   ///
   /// \returns - The initialized ASTUnit or null if the AST failed to load.
   static ASTUnit *LoadFromASTFile(const std::string &Filename,
-                                  llvm::IntrusiveRefCntPtr<Diagnostic> Diags,
+                              llvm::IntrusiveRefCntPtr<DiagnosticsEngine> Diags,
                                   const FileSystemOptions &FileSystemOpts,
                                   bool OnlyLocalDecls = false,
                                   RemappedFile *RemappedFiles = 0,
@@ -606,7 +606,7 @@ public:
   /// \param Action - The ASTFrontendAction to invoke. Its ownership is not
   /// transfered.
   static ASTUnit *LoadFromCompilerInvocationAction(CompilerInvocation *CI,
-                                     llvm::IntrusiveRefCntPtr<Diagnostic> Diags,
+                              llvm::IntrusiveRefCntPtr<DiagnosticsEngine> Diags,
                                              ASTFrontendAction *Action = 0);
 
   /// LoadFromCompilerInvocation - Create an ASTUnit from a source file, via a
@@ -621,7 +621,7 @@ public:
   // FIXME: Move OnlyLocalDecls, UseBumpAllocator to setters on the ASTUnit, we
   // shouldn't need to specify them at construction time.
   static ASTUnit *LoadFromCompilerInvocation(CompilerInvocation *CI,
-                                     llvm::IntrusiveRefCntPtr<Diagnostic> Diags,
+                              llvm::IntrusiveRefCntPtr<DiagnosticsEngine> Diags,
                                              bool OnlyLocalDecls = false,
                                              bool CaptureDiagnostics = false,
                                              bool PrecompilePreamble = false,
@@ -645,7 +645,7 @@ public:
   // shouldn't need to specify them at construction time.
   static ASTUnit *LoadFromCommandLine(const char **ArgBegin,
                                       const char **ArgEnd,
-                                    llvm::IntrusiveRefCntPtr<Diagnostic> Diags,
+                              llvm::IntrusiveRefCntPtr<DiagnosticsEngine> Diags,
                                       StringRef ResourceFilesPath,
                                       bool OnlyLocalDecls = false,
                                       bool CaptureDiagnostics = false,
@@ -686,7 +686,7 @@ public:
                     RemappedFile *RemappedFiles, unsigned NumRemappedFiles,
                     bool IncludeMacros, bool IncludeCodePatterns,
                     CodeCompleteConsumer &Consumer,
-                    Diagnostic &Diag, LangOptions &LangOpts,
+                    DiagnosticsEngine &Diag, LangOptions &LangOpts,
                     SourceManager &SourceMgr, FileManager &FileMgr,
                     SmallVectorImpl<StoredDiagnostic> &StoredDiagnostics,
               SmallVectorImpl<const llvm::MemoryBuffer *> &OwnedBuffers);

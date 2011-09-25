@@ -4761,7 +4761,7 @@ inline const Type *Type::getBaseElementTypeUnsafe() const {
 inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
                                            QualType T) {
   DB.AddTaggedVal(reinterpret_cast<intptr_t>(T.getAsOpaquePtr()),
-                  Diagnostic::ak_qualtype);
+                  DiagnosticsEngine::ak_qualtype);
   return DB;
 }
 
@@ -4770,7 +4770,7 @@ inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
 inline const PartialDiagnostic &operator<<(const PartialDiagnostic &PD,
                                            QualType T) {
   PD.AddTaggedVal(reinterpret_cast<intptr_t>(T.getAsOpaquePtr()),
-                  Diagnostic::ak_qualtype);
+                  DiagnosticsEngine::ak_qualtype);
   return PD;
 }
 

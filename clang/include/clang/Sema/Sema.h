@@ -187,7 +187,7 @@ public:
   Preprocessor &PP;
   ASTContext &Context;
   ASTConsumer &Consumer;
-  Diagnostic &Diags;
+  DiagnosticsEngine &Diags;
   SourceManager &SourceMgr;
 
   /// \brief Flag indicating whether or not to collect detailed statistics.
@@ -694,7 +694,7 @@ public:
   OpenCLOptions &getOpenCLOptions() { return OpenCLFeatures; }
   FPOptions     &getFPOptions() { return FPFeatures; }
 
-  Diagnostic &getDiagnostics() const { return Diags; }
+  DiagnosticsEngine &getDiagnostics() const { return Diags; }
   SourceManager &getSourceManager() const { return SourceMgr; }
   const TargetAttributesSema &getTargetAttributesSema() const;
   Preprocessor &getPreprocessor() const { return PP; }

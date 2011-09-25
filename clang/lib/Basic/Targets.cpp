@@ -3293,7 +3293,7 @@ static TargetInfo *AllocateTarget(const std::string &T) {
 
 /// CreateTargetInfo - Return the target info object for the specified target
 /// triple.
-TargetInfo *TargetInfo::CreateTargetInfo(Diagnostic &Diags,
+TargetInfo *TargetInfo::CreateTargetInfo(DiagnosticsEngine &Diags,
                                          TargetOptions &Opts) {
   llvm::Triple Triple(Opts.Triple);
 

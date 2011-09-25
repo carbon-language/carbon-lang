@@ -595,7 +595,7 @@ SourceLocation TransformActionsImpl::getLocForEndOfToken(SourceLocation loc,
 
 TransformActions::RewriteReceiver::~RewriteReceiver() { }
 
-TransformActions::TransformActions(Diagnostic &diag,
+TransformActions::TransformActions(DiagnosticsEngine &diag,
                                    CapturedDiagList &capturedDiags,
                                    ASTContext &ctx, Preprocessor &PP)
   : Diags(diag), CapturedDiags(capturedDiags), ReportedErrors(false) {

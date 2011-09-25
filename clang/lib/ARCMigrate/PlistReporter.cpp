@@ -150,7 +150,7 @@ void arcmt::writeARCDiagsToPlist(const std::string &outPath,
     
     const StoredDiagnostic &D = *DI;
 
-    if (D.getLevel() == Diagnostic::Ignored)
+    if (D.getLevel() == DiagnosticsEngine::Ignored)
       continue;
 
     o << "  <dict>\n";
@@ -162,9 +162,9 @@ void arcmt::writeARCDiagsToPlist(const std::string &outPath,
     EmitString(o, DiagIDs.getCategoryNameFromID(
                           DiagIDs.getCategoryNumberForDiag(D.getID()))) << '\n';
     o << "   <key>type</key>";
-    if (D.getLevel() >= Diagnostic::Error)
+    if (D.getLevel() >= DiagnosticsEngine::Error)
       EmitString(o, "error") << '\n';
-    else if (D.getLevel() == Diagnostic::Warning)
+    else if (D.getLevel() == DiagnosticsEngine::Warning)
       EmitString(o, "warning") << '\n';
     else
       EmitString(o, "note") << '\n';

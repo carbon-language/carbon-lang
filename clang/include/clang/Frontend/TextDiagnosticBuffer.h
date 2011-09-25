@@ -39,12 +39,12 @@ public:
   const_iterator note_begin() const { return Notes.begin(); }
   const_iterator note_end() const   { return Notes.end(); }
 
-  virtual void HandleDiagnostic(Diagnostic::Level DiagLevel,
+  virtual void HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
                                 const DiagnosticInfo &Info);
 
   /// FlushDiagnostics - Flush the buffered diagnostics to an given
   /// diagnostic engine.
-  void FlushDiagnostics(Diagnostic &Diags) const;
+  void FlushDiagnostics(DiagnosticsEngine &Diags) const;
 };
 
 } // end namspace clang

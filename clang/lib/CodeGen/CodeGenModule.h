@@ -62,7 +62,7 @@ namespace clang {
   class VarDecl;
   class LangOptions;
   class CodeGenOptions;
-  class Diagnostic;
+  class DiagnosticsEngine;
   class AnnotateAttr;
   class CXXDestructorDecl;
   class MangleBuffer;
@@ -217,7 +217,7 @@ class CodeGenModule : public CodeGenTypeCache {
   llvm::Module &TheModule;
   const llvm::TargetData &TheTargetData;
   mutable const TargetCodeGenInfo *TheTargetCodeGenInfo;
-  Diagnostic &Diags;
+  DiagnosticsEngine &Diags;
   CGCXXABI &ABI;
   CodeGenTypes Types;
   CodeGenTBAA *TBAA;
@@ -342,7 +342,8 @@ class CodeGenModule : public CodeGenTypeCache {
   /// @}
 public:
   CodeGenModule(ASTContext &C, const CodeGenOptions &CodeGenOpts,
-                llvm::Module &M, const llvm::TargetData &TD, Diagnostic &Diags);
+                llvm::Module &M, const llvm::TargetData &TD,
+                DiagnosticsEngine &Diags);
 
   ~CodeGenModule();
 
@@ -395,7 +396,7 @@ public:
   llvm::Module &getModule() const { return TheModule; }
   CodeGenTypes &getTypes() { return Types; }
   CodeGenVTables &getVTables() { return VTables; }
-  Diagnostic &getDiags() const { return Diags; }
+  DiagnosticsEngine &getDiags() const { return Diags; }
   const llvm::TargetData &getTargetData() const { return TheTargetData; }
   const TargetInfo &getTarget() const { return Context.getTargetInfo(); }
   llvm::LLVMContext &getLLVMContext() { return VMContext; }

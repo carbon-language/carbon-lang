@@ -88,7 +88,7 @@ static void PrintIncludeStackRecursively(raw_ostream &OS,
 /// \param Level The diagnostic level of the message this stack pertains to.
 /// \param Loc   The include location of the current file (not the diagnostic
 ///              location).
-void TextDiagnosticPrinter::PrintIncludeStack(Diagnostic::Level Level,
+void TextDiagnosticPrinter::PrintIncludeStack(DiagnosticsEngine::Level Level,
                                               SourceLocation Loc,
                                               const SourceManager &SM) {
   // Skip redundant include stacks altogether.
@@ -96,7 +96,7 @@ void TextDiagnosticPrinter::PrintIncludeStack(Diagnostic::Level Level,
     return;
   LastWarningLoc = Loc;
 
-  if (!DiagOpts->ShowNoteIncludeStack && Level == Diagnostic::Note)
+  if (!DiagOpts->ShowNoteIncludeStack && Level == DiagnosticsEngine::Note)
     return;
 
   PrintIncludeStackRecursively(OS, SM, Loc, DiagOpts->ShowLocation);
@@ -402,7 +402,8 @@ public:
 
       // If this diagnostic is not in the main file, print out the
       // "included from" lines.
-      Printer.PrintIncludeStack(Diagnostic::Note, PLoc.getIncludeLoc(), SM);
+      Printer.PrintIncludeStack(DiagnosticsEngine::Note, PLoc.getIncludeLoc(), 
+                                SM);
 
       if (DiagOpts.ShowLocation) {
         // Emit the file/line/column that this expansion came from.
@@ -956,7 +957,7 @@ static PresumedLoc getDiagnosticPresumedLoc(const SourceManager &SM,
 /// This includes extracting as much location information as is present for the
 /// diagnostic and printing it, as well as any include stack or source ranges
 /// necessary.
-void TextDiagnosticPrinter::EmitDiagnosticLoc(Diagnostic::Level Level,
+void TextDiagnosticPrinter::EmitDiagnosticLoc(DiagnosticsEngine::Level Level,
                                               const DiagnosticInfo &Info,
                                               const SourceManager &SM,
                                               PresumedLoc PLoc) {
@@ -1058,7 +1059,7 @@ void TextDiagnosticPrinter::EmitDiagnosticLoc(Diagnostic::Level Level,
   OS << ' ';
 }
 
-void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
+void TextDiagnosticPrinter::HandleDiagnostic(DiagnosticsEngine::Level Level,
                                              const DiagnosticInfo &Info) {
   // Default implementation (Warnings/errors count).
   DiagnosticClient::HandleDiagnostic(Level, Info);
@@ -1091,20 +1092,20 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
   if (DiagOpts->ShowColors) {
     // Print diagnostic category in bold and color
     switch (Level) {
-    case Diagnostic::Ignored: llvm_unreachable("Invalid diagnostic type");
-    case Diagnostic::Note:    OS.changeColor(noteColor, true); break;
-    case Diagnostic::Warning: OS.changeColor(warningColor, true); break;
-    case Diagnostic::Error:   OS.changeColor(errorColor, true); break;
-    case Diagnostic::Fatal:   OS.changeColor(fatalColor, true); break;
+    case DiagnosticsEngine::Ignored: llvm_unreachable("Invalid diagnostic type");
+    case DiagnosticsEngine::Note:    OS.changeColor(noteColor, true); break;
+    case DiagnosticsEngine::Warning: OS.changeColor(warningColor, true); break;
+    case DiagnosticsEngine::Error:   OS.changeColor(errorColor, true); break;
+    case DiagnosticsEngine::Fatal:   OS.changeColor(fatalColor, true); break;
     }
   }
 
   switch (Level) {
-  case Diagnostic::Ignored: llvm_unreachable("Invalid diagnostic type");
-  case Diagnostic::Note:    OS << "note: "; break;
-  case Diagnostic::Warning: OS << "warning: "; break;
-  case Diagnostic::Error:   OS << "error: "; break;
-  case Diagnostic::Fatal:   OS << "fatal error: "; break;
+  case DiagnosticsEngine::Ignored: llvm_unreachable("Invalid diagnostic type");
+  case DiagnosticsEngine::Note:    OS << "note: "; break;
+  case DiagnosticsEngine::Warning: OS << "warning: "; break;
+  case DiagnosticsEngine::Error:   OS << "error: "; break;
+  case DiagnosticsEngine::Fatal:   OS << "fatal error: "; break;
   }
 
   if (DiagOpts->ShowColors)
@@ -1123,7 +1124,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
   std::string OptionName;
   if (DiagOpts->ShowOptionNames) {
     // Was this a warning mapped to an error using -Werror or pragma?
-    if (Level == Diagnostic::Error &&
+    if (Level == DiagnosticsEngine::Error &&
         DiagnosticIDs::isBuiltinWarningOrExtension(Info.getID())) {
       diag::Mapping mapping = diag::MAP_IGNORE;
       Info.getDiags()->getDiagnosticLevel(Info.getID(), Info.getLocation(), 
@@ -1183,9 +1184,9 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
   if (DiagOpts->ShowColors) {
     // Print warnings, errors and fatal errors in bold, no color
     switch (Level) {
-    case Diagnostic::Warning: OS.changeColor(savedColor, true); break;
-    case Diagnostic::Error:   OS.changeColor(savedColor, true); break;
-    case Diagnostic::Fatal:   OS.changeColor(savedColor, true); break;
+    case DiagnosticsEngine::Warning: OS.changeColor(savedColor, true); break;
+    case DiagnosticsEngine::Error:   OS.changeColor(savedColor, true); break;
+    case DiagnosticsEngine::Fatal:   OS.changeColor(savedColor, true); break;
     default: break; //don't bold notes
     }
   }
@@ -1211,11 +1212,11 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
   // multiple times if one loc has multiple diagnostics.
   if (DiagOpts->ShowCarets && Info.getLocation().isValid() &&
       ((LastLoc != Info.getLocation()) || Info.getNumRanges() ||
-       (LastCaretDiagnosticWasNote && Level != Diagnostic::Note) ||
+       (LastCaretDiagnosticWasNote && Level != DiagnosticsEngine::Note) ||
        Info.getNumFixItHints())) {
     // Cache the LastLoc, it allows us to omit duplicate source/caret spewage.
     LastLoc = FullSourceLoc(Info.getLocation(), Info.getSourceManager());
-    LastCaretDiagnosticWasNote = (Level == Diagnostic::Note);
+    LastCaretDiagnosticWasNote = (Level == DiagnosticsEngine::Note);
 
     // Get the ranges into a local array we can hack on.
     SmallVector<CharSourceRange, 20> Ranges;

@@ -375,7 +375,7 @@ int main(int argc_, const char **argv_) {
     = new TextDiagnosticPrinter(llvm::errs(), DiagnosticOptions());
   DiagClient->setPrefix(llvm::sys::path::stem(Path.str()));
   llvm::IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
-  Diagnostic Diags(DiagID, DiagClient);
+  DiagnosticsEngine Diags(DiagID, DiagClient);
 
 #ifdef CLANG_IS_PRODUCTION
   const bool IsProduction = true;

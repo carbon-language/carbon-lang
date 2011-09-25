@@ -156,7 +156,7 @@ private:
   DiagnosticErrorTrap ErrorTrap;
   
 public:
-  Scope(Scope *Parent, unsigned ScopeFlags, Diagnostic &Diag)
+  Scope(Scope *Parent, unsigned ScopeFlags, DiagnosticsEngine &Diag)
     : ErrorTrap(Diag) {
     Init(Parent, ScopeFlags);
   }

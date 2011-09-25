@@ -35,17 +35,18 @@ class ClangCheckerRegistry : public CheckerRegistry {
   typedef void (*RegisterCheckersFn)(CheckerRegistry &);
 
   static bool isCompatibleAPIVersion(const char *versionString);
-  static void warnIncompatible(Diagnostic *diags, StringRef pluginPath,
+  static void warnIncompatible(DiagnosticsEngine *diags, StringRef pluginPath,
                                const char *pluginAPIVersion);
 
 public:
-  ClangCheckerRegistry(ArrayRef<std::string> plugins, Diagnostic *diags = 0);
+  ClangCheckerRegistry(ArrayRef<std::string> plugins,
+                       DiagnosticsEngine *diags = 0);
 };
   
 } // end anonymous namespace
 
 ClangCheckerRegistry::ClangCheckerRegistry(ArrayRef<std::string> plugins,
-                                           Diagnostic *diags) {
+                                           DiagnosticsEngine *diags) {
   registerBuiltinCheckers(*this);
 
   for (ArrayRef<std::string>::iterator i = plugins.begin(), e = plugins.end();
@@ -83,7 +84,7 @@ bool ClangCheckerRegistry::isCompatibleAPIVersion(const char *versionString) {
   return false;
 }
 
-void ClangCheckerRegistry::warnIncompatible(Diagnostic *diags,
+void ClangCheckerRegistry::warnIncompatible(DiagnosticsEngine *diags,
                                             StringRef pluginPath,
                                             const char *pluginAPIVersion) {
   if (!diags)
@@ -102,7 +103,7 @@ void ClangCheckerRegistry::warnIncompatible(Diagnostic *diags,
 CheckerManager *ento::createCheckerManager(const AnalyzerOptions &opts,
                                            const LangOptions &langOpts,
                                            ArrayRef<std::string> plugins,
-                                           Diagnostic &diags) {
+                                           DiagnosticsEngine &diags) {
   llvm::OwningPtr<CheckerManager> checkerMgr(new CheckerManager(langOpts));
 
   SmallVector<CheckerOptInfo, 8> checkerOpts;

@@ -19,7 +19,7 @@
 #include "clang/Basic/LLVM.h"
 
 namespace clang {
-  class Diagnostic;
+  class DiagnosticsEngine;
   class SourceLocation;
 
   // Import the diagnostic enums themselves.
@@ -220,16 +220,17 @@ private:
   /// "unknown-pragmas" to have the specified mapping.  This returns true and
   /// ignores the request if "Group" was unknown, false otherwise.
   bool setDiagnosticGroupMapping(StringRef Group, diag::Mapping Map,
-                                 SourceLocation Loc, Diagnostic &Diag) const;
+                                 SourceLocation Loc,
+                                 DiagnosticsEngine &Diag) const;
 
-  /// \brief Based on the way the client configured the Diagnostic
+  /// \brief Based on the way the client configured the DiagnosticsEngine
   /// object, classify the specified diagnostic ID into a Level, consumable by
   /// the DiagnosticClient.
   ///
   /// \param Loc The source location we are interested in finding out the
   /// diagnostic state. Can be null in order to query the latest state.
   DiagnosticIDs::Level getDiagnosticLevel(unsigned DiagID, SourceLocation Loc,
-                                          const Diagnostic &Diag,
+                                          const DiagnosticsEngine &Diag,
                                           diag::Mapping *mapping = 0) const;
 
   /// getDiagnosticLevel - This is an internal implementation helper used when
@@ -237,7 +238,7 @@ private:
   DiagnosticIDs::Level getDiagnosticLevel(unsigned DiagID,
                                           unsigned DiagClass,
                                           SourceLocation Loc,
-                                          const Diagnostic &Diag,
+                                          const DiagnosticsEngine &Diag,
                                           diag::Mapping *mapping = 0) const;
 
   /// ProcessDiag - This is the method used to report a diagnostic that is
@@ -245,13 +246,13 @@ private:
   ///
   /// \returns true if the diagnostic was emitted, false if it was
   /// suppressed.
-  bool ProcessDiag(Diagnostic &Diag) const;
+  bool ProcessDiag(DiagnosticsEngine &Diag) const;
 
   /// \brief Whether the diagnostic may leave the AST in a state where some
   /// invariants can break.
   bool isUnrecoverable(unsigned DiagID) const;
 
-  friend class Diagnostic;
+  friend class DiagnosticsEngine;
 };
 
 }  // end namespace clang

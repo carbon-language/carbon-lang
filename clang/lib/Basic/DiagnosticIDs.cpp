@@ -446,12 +446,12 @@ StringRef DiagnosticIDs::getDescription(unsigned DiagID) const {
   return CustomDiagInfo->getDescription(DiagID);
 }
 
-/// getDiagnosticLevel - Based on the way the client configured the Diagnostic
-/// object, classify the specified diagnostic ID into a Level, consumable by
-/// the DiagnosticClient.
+/// getDiagnosticLevel - Based on the way the client configured the
+/// DiagnosticsEngine object, classify the specified diagnostic ID into a Level,
+/// by consumable the DiagnosticClient.
 DiagnosticIDs::Level
 DiagnosticIDs::getDiagnosticLevel(unsigned DiagID, SourceLocation Loc,
-                                  const Diagnostic &Diag,
+                                  const DiagnosticsEngine &Diag,
                                   diag::Mapping *mapping) const {
   // Handle custom diagnostics, which cannot be mapped.
   if (DiagID >= diag::DIAG_UPPER_LIMIT)
@@ -471,15 +471,15 @@ DiagnosticIDs::getDiagnosticLevel(unsigned DiagID, SourceLocation Loc,
 DiagnosticIDs::Level
 DiagnosticIDs::getDiagnosticLevel(unsigned DiagID, unsigned DiagClass,
                                   SourceLocation Loc,
-                                  const Diagnostic &Diag,
+                                  const DiagnosticsEngine &Diag,
                                   diag::Mapping *mapping) const {
   // Specific non-error diagnostics may be mapped to various levels from ignored
   // to error.  Errors can only be mapped to fatal.
   DiagnosticIDs::Level Result = DiagnosticIDs::Fatal;
 
-  Diagnostic::DiagStatePointsTy::iterator
+  DiagnosticsEngine::DiagStatePointsTy::iterator
     Pos = Diag.GetDiagStatePointForLoc(Loc);
-  Diagnostic::DiagState *State = Pos->State;
+  DiagnosticsEngine::DiagState *State = Pos->State;
 
   // Get the mapping information, if unset, compute it lazily.
   unsigned MappingInfo = Diag.getDiagnosticMappingInfo((diag::kind)DiagID,
@@ -508,7 +508,7 @@ DiagnosticIDs::getDiagnosticLevel(unsigned DiagID, unsigned DiagClass,
     // Otherwise, ignore this diagnostic unless this is an extension diagnostic
     // and we're mapping them onto warnings or errors.
     else if (!isBuiltinExtensionDiag(DiagID) ||  // Not an extension
-             Diag.ExtBehavior == Diagnostic::Ext_Ignore || // Ext ignored
+             Diag.ExtBehavior == DiagnosticsEngine::Ext_Ignore || // Ext ignored
              (MappingInfo & 8) != 0) {           // User explicitly mapped it.
       return DiagnosticIDs::Ignored;
     }
@@ -516,7 +516,7 @@ DiagnosticIDs::getDiagnosticLevel(unsigned DiagID, unsigned DiagClass,
       Result = DiagnosticIDs::Warning;
     }
 
-    if (Diag.ExtBehavior == Diagnostic::Ext_Error)
+    if (Diag.ExtBehavior == DiagnosticsEngine::Ext_Error)
       Result = DiagnosticIDs::Error;
     if (Result == DiagnosticIDs::Error && Diag.ErrorsAsFatal)
       Result = DiagnosticIDs::Fatal;
@@ -541,7 +541,7 @@ DiagnosticIDs::getDiagnosticLevel(unsigned DiagID, unsigned DiagClass,
 
     // If this is an extension diagnostic and we're in -pedantic-error mode, and
     // if the user didn't explicitly map it, upgrade to an error.
-    if (Diag.ExtBehavior == Diagnostic::Ext_Error &&
+    if (Diag.ExtBehavior == DiagnosticsEngine::Ext_Error &&
         (MappingInfo & 8) == 0 &&
         isBuiltinExtensionDiag(DiagID))
       Result = DiagnosticIDs::Error;
@@ -628,7 +628,7 @@ static bool WarningOptionCompare(const WarningOption &LHS,
 }
 
 static void MapGroupMembers(const WarningOption *Group, diag::Mapping Mapping,
-                            SourceLocation Loc, Diagnostic &Diag) {
+                            SourceLocation Loc, DiagnosticsEngine &Diag) {
   // Option exists, poke all the members of its diagnostic set.
   if (const short *Member = Group->Members) {
     for (; *Member != -1; ++Member)
@@ -648,7 +648,7 @@ static void MapGroupMembers(const WarningOption *Group, diag::Mapping Mapping,
 bool DiagnosticIDs::setDiagnosticGroupMapping(StringRef Group,
                                               diag::Mapping Map,
                                               SourceLocation Loc,
-                                              Diagnostic &Diag) const {
+                                              DiagnosticsEngine &Diag) const {
   assert((Loc.isValid() ||
           Diag.DiagStatePoints.empty() ||
           Diag.DiagStatePoints.back().Loc.isInvalid()) &&
@@ -673,7 +673,7 @@ bool DiagnosticIDs::setDiagnosticGroupMapping(StringRef Group,
 
 /// ProcessDiag - This is the method used to report a diagnostic that is
 /// finally fully formed.
-bool DiagnosticIDs::ProcessDiag(Diagnostic &Diag) const {
+bool DiagnosticIDs::ProcessDiag(DiagnosticsEngine &Diag) const {
   DiagnosticInfo Info(&Diag);
 
   if (Diag.SuppressAllDiagnostics)
@@ -770,7 +770,7 @@ bool DiagnosticIDs::ProcessDiag(Diagnostic &Diag) const {
   }
   
   // Finally, report it.
-  Diag.Client->HandleDiagnostic((Diagnostic::Level)DiagLevel, Info);
+  Diag.Client->HandleDiagnostic((DiagnosticsEngine::Level)DiagLevel, Info);
   if (Diag.Client->IncludeInDiagnosticCounts()) {
     if (DiagLevel == DiagnosticIDs::Warning)
       ++Diag.NumWarnings;

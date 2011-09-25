@@ -57,7 +57,7 @@ class ModuleLoader;
 /// like the #include stack, token expansion, etc.
 ///
 class Preprocessor : public llvm::RefCountedBase<Preprocessor> {
-  Diagnostic        *Diags;
+  DiagnosticsEngine        *Diags;
   LangOptions       &Features;
   const TargetInfo  *Target;
   FileManager       &FileMgr;
@@ -322,7 +322,7 @@ private:  // Cached tokens state.
   MacroInfo *getInfoForMacro(IdentifierInfo *II) const;
   
 public:
-  Preprocessor(Diagnostic &diags, LangOptions &opts,
+  Preprocessor(DiagnosticsEngine &diags, LangOptions &opts,
                const TargetInfo *target,
                SourceManager &SM, HeaderSearch &Headers,
                ModuleLoader &TheModuleLoader,
@@ -338,8 +338,8 @@ public:
   /// \param Target Information about the target.
   void Initialize(const TargetInfo &Target);
   
-  Diagnostic &getDiagnostics() const { return *Diags; }
-  void setDiagnostics(Diagnostic &D) { Diags = &D; }
+  DiagnosticsEngine &getDiagnostics() const { return *Diags; }
+  void setDiagnostics(DiagnosticsEngine &D) { Diags = &D; }
 
   const LangOptions &getLangOptions() const { return Features; }
   const TargetInfo &getTargetInfo() const { return *Target; }

@@ -1803,17 +1803,17 @@ void ASTWriter::WritePreprocessorDetail(PreprocessingRecord &PPRec) {
   }
 }
 
-void ASTWriter::WritePragmaDiagnosticMappings(const Diagnostic &Diag) {
+void ASTWriter::WritePragmaDiagnosticMappings(const DiagnosticsEngine &Diag) {
   RecordData Record;
-  for (Diagnostic::DiagStatePointsTy::const_iterator
+  for (DiagnosticsEngine::DiagStatePointsTy::const_iterator
          I = Diag.DiagStatePoints.begin(), E = Diag.DiagStatePoints.end();
          I != E; ++I) {
-    const Diagnostic::DiagStatePoint &point = *I; 
+    const DiagnosticsEngine::DiagStatePoint &point = *I; 
     if (point.Loc.isInvalid())
       continue;
 
     Record.push_back(point.Loc.getRawEncoding());
-    for (Diagnostic::DiagState::iterator
+    for (DiagnosticsEngine::DiagState::iterator
            I = point.State->begin(), E = point.State->end(); I != E; ++I) {
       unsigned diag = I->first, map = I->second;
       if (map & 0x10) { // mapping from a diagnostic pragma.

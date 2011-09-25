@@ -53,7 +53,7 @@ static unsigned getCharWidth(tok::TokenKind kind, const TargetInfo &Target) {
 static unsigned ProcessCharEscape(const char *&ThisTokBuf,
                                   const char *ThisTokEnd, bool &HadError,
                                   FullSourceLoc Loc, unsigned CharWidth,
-                                  Diagnostic *Diags) {
+                                  DiagnosticsEngine *Diags) {
   // Skip the '\' char.
   ++ThisTokBuf;
 
@@ -180,7 +180,7 @@ static unsigned ProcessCharEscape(const char *&ThisTokBuf,
 /// return the UTF32.
 static bool ProcessUCNEscape(const char *&ThisTokBuf, const char *ThisTokEnd,
                              uint32_t &UcnVal, unsigned short &UcnLen,
-                             FullSourceLoc Loc, Diagnostic *Diags, 
+                             FullSourceLoc Loc, DiagnosticsEngine *Diags, 
                              const LangOptions &Features) {
   if (!Features.CPlusPlus && !Features.C99 && Diags)
     Diags->Report(Loc, diag::warn_ucn_not_valid_in_c89);
@@ -234,7 +234,8 @@ static bool ProcessUCNEscape(const char *&ThisTokBuf, const char *ThisTokEnd,
 static void EncodeUCNEscape(const char *&ThisTokBuf, const char *ThisTokEnd,
                             char *&ResultBuf, bool &HadError,
                             FullSourceLoc Loc, unsigned CharByteWidth,
-                            Diagnostic *Diags, const LangOptions &Features) {
+                            DiagnosticsEngine *Diags,
+                            const LangOptions &Features) {
   typedef uint32_t UTF32;
   UTF32 UcnVal = 0;
   unsigned short UcnLen = 0;

@@ -485,7 +485,7 @@ void ASTContext::InitBuiltinTypes(const TargetInfo &Target) {
   InitBuiltinType(NullPtrTy,           BuiltinType::NullPtr);
 }
 
-Diagnostic &ASTContext::getDiagnostics() const {
+DiagnosticsEngine &ASTContext::getDiagnostics() const {
   return SourceMgr.getDiagnostics();
 }
 

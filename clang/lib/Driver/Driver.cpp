@@ -51,7 +51,7 @@ Driver::Driver(StringRef ClangExecutable,
                StringRef DefaultHostTriple,
                StringRef DefaultImageName,
                bool IsProduction, bool CXXIsProduction,
-               Diagnostic &Diags)
+               DiagnosticsEngine &Diags)
   : Opts(createDriverOptTable()), Diags(Diags),
     ClangExecutable(ClangExecutable), UseStdLib(true),
     DefaultHostTriple(DefaultHostTriple), DefaultImageName(DefaultImageName),
@@ -1197,7 +1197,8 @@ void Driver::BuildJobs(Compilation &C) const {
     Arg *A = *it;
 
     // FIXME: It would be nice to be able to send the argument to the
-    // Diagnostic, so that extra values, position, and so on could be printed.
+    // DiagnosticsEngine, so that extra values, position, and so on could be
+    // printed.
     if (!A->isClaimed()) {
       if (A->getOption().hasNoArgumentUnused())
         continue;

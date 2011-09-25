@@ -26,15 +26,15 @@ LogDiagnosticPrinter::~LogDiagnosticPrinter() {
     delete &OS;
 }
 
-static StringRef getLevelName(Diagnostic::Level Level) {
+static StringRef getLevelName(DiagnosticsEngine::Level Level) {
   switch (Level) {
   default:
     return "<unknown>";
-  case Diagnostic::Ignored: return "ignored";
-  case Diagnostic::Note:    return "note";
-  case Diagnostic::Warning: return "warning";
-  case Diagnostic::Error:   return "error";
-  case Diagnostic::Fatal:   return "fatal error";
+  case DiagnosticsEngine::Ignored: return "ignored";
+  case DiagnosticsEngine::Note:    return "note";
+  case DiagnosticsEngine::Warning: return "warning";
+  case DiagnosticsEngine::Error:   return "error";
+  case DiagnosticsEngine::Fatal:   return "fatal error";
   }
 }
 
@@ -93,7 +93,7 @@ void LogDiagnosticPrinter::EndSourceFile() {
   this->OS << OS.str();
 }
 
-void LogDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
+void LogDiagnosticPrinter::HandleDiagnostic(DiagnosticsEngine::Level Level,
                                             const DiagnosticInfo &Info) {
   // Default implementation (Warnings/errors count).
   DiagnosticClient::HandleDiagnostic(Level, Info);

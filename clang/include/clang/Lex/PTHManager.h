@@ -30,7 +30,7 @@ namespace clang {
 
 class FileEntry;
 class PTHLexer;
-class Diagnostic;
+class DiagnosticsEngine;
 class FileSystemStatCache;
 
 class PTHManager : public IdentifierInfoLookup {
@@ -119,7 +119,7 @@ public:
 
   /// Create - This method creates PTHManager objects.  The 'file' argument
   ///  is the name of the PTH file.  This method returns NULL upon failure.
-  static PTHManager *Create(const std::string& file, Diagnostic &Diags);
+  static PTHManager *Create(const std::string& file, DiagnosticsEngine &Diags);
 
   void setPreprocessor(Preprocessor *pp) { PP = pp; }
 

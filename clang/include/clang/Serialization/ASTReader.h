@@ -223,7 +223,7 @@ private:
 
   SourceManager &SourceMgr;
   FileManager &FileMgr;
-  Diagnostic &Diags;
+  DiagnosticsEngine &Diags;
   
   /// \brief The semantic analysis object that will be processing the
   /// AST files and the translation unit that uses it.
@@ -412,7 +412,7 @@ private:
 
   //@}
 
-  /// \name Diagnostic-relevant special data
+  /// \name DiagnosticsEngine-relevant special data
   /// \brief Fields containing data that is used for generating diagnostics
   //@{
 
@@ -783,7 +783,7 @@ public:
   /// the AST file, without actually loading the AST file.
   static std::string getOriginalSourceFile(const std::string &ASTFileName,
                                            FileManager &FileMgr,
-                                           Diagnostic &Diags);
+                                           DiagnosticsEngine &Diags);
 
   /// \brief Returns the suggested contents of the predefines buffer,
   /// which contains a (typically-empty) subset of the predefines
@@ -804,7 +804,7 @@ public:
   /// \brief Read the header file information for the given file entry.
   virtual HeaderFileInfo GetHeaderFileInfo(const FileEntry *FE);
 
-  void ReadPragmaDiagnosticMappings(Diagnostic &Diag);
+  void ReadPragmaDiagnosticMappings(DiagnosticsEngine &Diag);
 
   /// \brief Returns the number of source locations found in the chain.
   unsigned getTotalNumSLocs() const {

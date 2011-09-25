@@ -690,7 +690,8 @@ static bool HasExtension(const Preprocessor &PP, const IdentifierInfo *II) {
 
   // If the use of an extension results in an error diagnostic, extensions are
   // effectively unavailable, so just return false here.
-  if (PP.getDiagnostics().getExtensionHandlingBehavior()==Diagnostic::Ext_Error)
+  if (PP.getDiagnostics().getExtensionHandlingBehavior() ==
+      DiagnosticsEngine::Ext_Error)
     return false;
 
   const LangOptions &LangOpts = PP.getLangOptions();

@@ -66,7 +66,7 @@ public:
       if (const NamedDecl *ND = dyn_cast<NamedDecl>(D))
         if (NamesToCheck.find(ND->getNameAsString()) != NamesToCheck.end()) {
           unsigned DiagID
-            = Ctx.getDiagnostics().getCustomDiagID(Diagnostic::Error,
+            = Ctx.getDiagnostics().getCustomDiagID(DiagnosticsEngine::Error,
                                                    "%0 was deserialized");
           Ctx.getDiagnostics().Report(Ctx.getFullLoc(D->getLocation()), DiagID)
               << ND->getNameAsString();
@@ -142,7 +142,7 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
     assert(hasASTFileSupport() &&
            "This action does not have AST file support!");
 
-    llvm::IntrusiveRefCntPtr<Diagnostic> Diags(&CI.getDiagnostics());
+    llvm::IntrusiveRefCntPtr<DiagnosticsEngine> Diags(&CI.getDiagnostics());
     std::string Error;
     ASTUnit *AST = ASTUnit::LoadFromASTFile(Filename, Diags,
                                             CI.getFileSystemOpts());

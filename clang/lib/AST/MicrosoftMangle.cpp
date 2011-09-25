@@ -78,7 +78,7 @@ private:
 class MicrosoftMangleContext : public MangleContext {
 public:
   MicrosoftMangleContext(ASTContext &Context,
-                         Diagnostic &Diags) : MangleContext(Context, Diags) { }
+                   DiagnosticsEngine &Diags) : MangleContext(Context, Diags) { }
   virtual bool shouldMangleDeclName(const NamedDecl *D);
   virtual void mangleName(const NamedDecl *D, raw_ostream &Out);
   virtual void mangleThunk(const CXXMethodDecl *MD,
@@ -1176,6 +1176,6 @@ void MicrosoftMangleContext::mangleReferenceTemporary(const clang::VarDecl *,
 }
 
 MangleContext *clang::createMicrosoftMangleContext(ASTContext &Context,
-                                                   Diagnostic &Diags) {
+                                                   DiagnosticsEngine &Diags) {
   return new MicrosoftMangleContext(Context, Diags);
 }

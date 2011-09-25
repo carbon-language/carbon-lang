@@ -46,7 +46,7 @@ public:
     return Primary->IncludeInDiagnosticCounts();
   }
 
-  virtual void HandleDiagnostic(Diagnostic::Level DiagLevel,
+  virtual void HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
                                 const DiagnosticInfo &Info) {
     // Default implementation (Warnings/errors count).
     DiagnosticClient::HandleDiagnostic(DiagLevel, Info);

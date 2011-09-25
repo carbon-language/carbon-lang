@@ -9179,7 +9179,7 @@ bool Sema::VerifyIntegerConstantExpression(const Expr *E, llvm::APSInt *Result){
 
   if (EvalResult.Diag &&
       Diags.getDiagnosticLevel(diag::ext_expr_not_ice, EvalResult.DiagLoc)
-          != Diagnostic::Ignored)
+          != DiagnosticsEngine::Ignored)
     Diag(EvalResult.DiagLoc, EvalResult.Diag);
 
   if (Result)

@@ -25,7 +25,7 @@ namespace clang {
   class ASTContext;
   class Decl;
   class DeclContext;
-  class Diagnostic;
+  class DiagnosticsEngine;
   class Expr;
   class FileManager;
   class IdentifierInfo;

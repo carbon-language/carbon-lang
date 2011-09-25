@@ -32,7 +32,7 @@ struct fltSemantics;
 }
 
 namespace clang {
-class Diagnostic;
+class DiagnosticsEngine;
 class LangOptions;
 class MacroBuilder;
 class SourceLocation;
@@ -98,7 +98,8 @@ public:
   /// \param Opts - The options to use to initialize the target. The target may
   /// modify the options to canonicalize the target feature information to match
   /// what the backend expects.
-  static TargetInfo* CreateTargetInfo(Diagnostic &Diags, TargetOptions &Opts);
+  static TargetInfo* CreateTargetInfo(DiagnosticsEngine &Diags,
+                                      TargetOptions &Opts);
 
   virtual ~TargetInfo();
 

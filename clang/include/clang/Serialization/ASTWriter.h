@@ -344,7 +344,7 @@ private:
   void WritePreprocessor(const Preprocessor &PP, bool IsModule);
   void WriteHeaderSearch(HeaderSearch &HS, StringRef isysroot);
   void WritePreprocessorDetail(PreprocessingRecord &PPRec);
-  void WritePragmaDiagnosticMappings(const Diagnostic &Diag);
+  void WritePragmaDiagnosticMappings(const DiagnosticsEngine &Diag);
   void WriteCXXBaseSpecifiersOffsets();
   void WriteType(QualType T);
   uint64_t WriteDeclContextLexicalBlock(ASTContext &Context, DeclContext *DC);

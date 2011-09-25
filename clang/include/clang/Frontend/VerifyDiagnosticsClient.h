@@ -15,7 +15,7 @@
 
 namespace clang {
 
-class Diagnostic;
+class DiagnosticsEngine;
 class TextDiagnosticBuffer;
 
 /// VerifyDiagnosticsClient - Create a diagnostic client which will use markers
@@ -64,7 +64,7 @@ class TextDiagnosticBuffer;
 ///
 class VerifyDiagnosticsClient : public DiagnosticClient {
 public:
-  Diagnostic &Diags;
+  DiagnosticsEngine &Diags;
   DiagnosticClient *PrimaryClient;
   bool OwnsPrimaryClient;
   llvm::OwningPtr<TextDiagnosticBuffer> Buffer;
@@ -78,7 +78,7 @@ public:
   /// Create a new verifying diagnostic client, which will issue errors to \arg
   /// the currently-attached diagnostic client when a diagnostic does not match 
   /// what is expected (as indicated in the source file).
-  VerifyDiagnosticsClient(Diagnostic &Diags);
+  VerifyDiagnosticsClient(DiagnosticsEngine &Diags);
   ~VerifyDiagnosticsClient();
 
   virtual void BeginSourceFile(const LangOptions &LangOpts,
@@ -86,7 +86,7 @@ public:
 
   virtual void EndSourceFile();
 
-  virtual void HandleDiagnostic(Diagnostic::Level DiagLevel,
+  virtual void HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
                                 const DiagnosticInfo &Info);
 };
 

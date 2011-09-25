@@ -95,7 +95,7 @@ public:
           (HasBranchProtectedScope && HasBranchIntoScope);
   }
   
-  FunctionScopeInfo(Diagnostic &Diag)
+  FunctionScopeInfo(DiagnosticsEngine &Diag)
     : IsBlockInfo(false),
       HasBranchProtectedScope(false),
       HasBranchIntoScope(false),
@@ -137,7 +137,7 @@ public:
   /// CapturesCXXThis - Whether this block captures 'this'.
   bool CapturesCXXThis;
 
-  BlockScopeInfo(Diagnostic &Diag, Scope *BlockScope, BlockDecl *Block)
+  BlockScopeInfo(DiagnosticsEngine &Diag, Scope *BlockScope, BlockDecl *Block)
     : FunctionScopeInfo(Diag), TheDecl(Block), TheScope(BlockScope),
       CapturesCXXThis(false)
   {

@@ -48,7 +48,7 @@ std::string FileRemapper::getRemapInfoFile(StringRef outputDir) {
   return infoFile.str();
 }
 
-bool FileRemapper::initFromDisk(StringRef outputDir, Diagnostic &Diag,
+bool FileRemapper::initFromDisk(StringRef outputDir, DiagnosticsEngine &Diag,
                                 bool ignoreIfFilesChanged) {
   assert(FromToMappings.empty() &&
          "initFromDisk should be called before any remap calls");
@@ -102,7 +102,7 @@ bool FileRemapper::initFromDisk(StringRef outputDir, Diagnostic &Diag,
   return false;
 }
 
-bool FileRemapper::flushToDisk(StringRef outputDir, Diagnostic &Diag) {
+bool FileRemapper::flushToDisk(StringRef outputDir, DiagnosticsEngine &Diag) {
   using namespace llvm::sys;
 
   bool existed;
@@ -154,7 +154,7 @@ bool FileRemapper::flushToDisk(StringRef outputDir, Diagnostic &Diag) {
   return false;
 }
 
-bool FileRemapper::overwriteOriginal(Diagnostic &Diag,
+bool FileRemapper::overwriteOriginal(DiagnosticsEngine &Diag,
                                      StringRef outputDir) {
   using namespace llvm::sys;
 
@@ -276,7 +276,7 @@ void FileRemapper::resetTarget(Target &targ) {
   }
 }
 
-bool FileRemapper::report(const Twine &err, Diagnostic &Diag) {
+bool FileRemapper::report(const Twine &err, DiagnosticsEngine &Diag) {
   llvm::SmallString<128> buf;
   unsigned ID = Diag.getDiagnosticIDs()->getCustomDiagID(DiagnosticIDs::Error,
                                                          err.toStringRef(buf));

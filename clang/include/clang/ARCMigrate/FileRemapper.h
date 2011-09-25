@@ -23,7 +23,7 @@ namespace llvm {
 namespace clang {
   class FileManager;
   class FileEntry;
-  class Diagnostic;
+  class DiagnosticsEngine;
   class CompilerInvocation;
 
 namespace arcmt {
@@ -42,11 +42,11 @@ public:
   FileRemapper();
   ~FileRemapper();
   
-  bool initFromDisk(StringRef outputDir, Diagnostic &Diag,
+  bool initFromDisk(StringRef outputDir, DiagnosticsEngine &Diag,
                     bool ignoreIfFilesChanged);
-  bool flushToDisk(StringRef outputDir, Diagnostic &Diag);
+  bool flushToDisk(StringRef outputDir, DiagnosticsEngine &Diag);
 
-  bool overwriteOriginal(Diagnostic &Diag,
+  bool overwriteOriginal(DiagnosticsEngine &Diag,
                          StringRef outputDir = StringRef());
 
   void remap(StringRef filePath, llvm::MemoryBuffer *memBuf);
@@ -65,7 +65,7 @@ private:
   const FileEntry *getOriginalFile(StringRef filePath);
   void resetTarget(Target &targ);
 
-  bool report(const Twine &err, Diagnostic &Diag);
+  bool report(const Twine &err, DiagnosticsEngine &Diag);
 
   std::string getRemapInfoFile(StringRef outputDir);
 };

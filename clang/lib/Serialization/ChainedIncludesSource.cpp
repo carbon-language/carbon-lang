@@ -87,8 +87,8 @@ ChainedIncludesSource *ChainedIncludesSource::create(CompilerInstance &CI) {
     TextDiagnosticPrinter *DiagClient =
       new TextDiagnosticPrinter(llvm::errs(), DiagnosticOptions());
     llvm::IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
-    llvm::IntrusiveRefCntPtr<Diagnostic> Diags(new Diagnostic(DiagID,
-                                                              DiagClient));
+    llvm::IntrusiveRefCntPtr<DiagnosticsEngine> Diags(
+        new DiagnosticsEngine(DiagID, DiagClient));
 
     llvm::OwningPtr<CompilerInstance> Clang(new CompilerInstance());
     Clang->setInvocation(CInvok.take());

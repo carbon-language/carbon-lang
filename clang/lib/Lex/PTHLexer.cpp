@@ -431,11 +431,12 @@ PTHManager::~PTHManager() {
   free(PerIDCache);
 }
 
-static void InvalidPTH(Diagnostic &Diags, const char *Msg) {
-  Diags.Report(Diags.getCustomDiagID(Diagnostic::Error, Msg));
+static void InvalidPTH(DiagnosticsEngine &Diags, const char *Msg) {
+  Diags.Report(Diags.getCustomDiagID(DiagnosticsEngine::Error, Msg));
 }
 
-PTHManager *PTHManager::Create(const std::string &file, Diagnostic &Diags) {
+PTHManager *PTHManager::Create(const std::string &file,
+                               DiagnosticsEngine &Diags) {
   // Memory map the PTH file.
   llvm::OwningPtr<llvm::MemoryBuffer> File;
 

@@ -2567,7 +2567,7 @@ DiagnoseBaseOrMemInitializerOrder(Sema &SemaRef,
     CXXCtorInitializer *Init = Inits[InitIndex];
     if (SemaRef.Diags.getDiagnosticLevel(diag::warn_initializer_out_of_order,
                                          Init->getSourceLocation())
-          != Diagnostic::Ignored) {
+          != DiagnosticsEngine::Ignored) {
       ShouldCheckOrder = true;
       break;
     }
@@ -4597,7 +4597,7 @@ static bool FindHiddenVirtualMethod(const CXXBaseSpecifier *Specifier,
 /// overriding any.
 void Sema::DiagnoseHiddenVirtualMethods(CXXRecordDecl *DC, CXXMethodDecl *MD) {
   if (Diags.getDiagnosticLevel(diag::warn_overloaded_virtual,
-                               MD->getLocation()) == Diagnostic::Ignored)
+                               MD->getLocation()) == DiagnosticsEngine::Ignored)
     return;
   if (MD->getDeclName().getNameKind() != DeclarationName::Identifier)
     return;

@@ -23,7 +23,7 @@ namespace clang {
 
 class ASTConsumer;
 class CodeGenOptions;
-class Diagnostic;
+class DiagnosticsEngine;
 class FileManager;
 class LangOptions;
 class Preprocessor;

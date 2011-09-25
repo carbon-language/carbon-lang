@@ -37,7 +37,7 @@ class LogDiagnosticPrinter : public DiagnosticClient {
     unsigned DiagnosticID;
   
     /// The level of the diagnostic.
-    Diagnostic::Level DiagnosticLevel;
+    DiagnosticsEngine::Level DiagnosticLevel;
   };
   
   raw_ostream &OS;
@@ -68,7 +68,7 @@ public:
 
   void EndSourceFile();
 
-  virtual void HandleDiagnostic(Diagnostic::Level DiagLevel,
+  virtual void HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
                                 const DiagnosticInfo &Info);
 };
 

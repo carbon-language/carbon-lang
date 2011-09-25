@@ -3617,7 +3617,7 @@ void Sema::CheckCastAlign(Expr *Op, QualType T, SourceRange TRange) {
   // cast; don't do it if we're ignoring -Wcast_align (as is the default).
   if (getDiagnostics().getDiagnosticLevel(diag::warn_cast_align,
                                           TRange.getBegin())
-        == Diagnostic::Ignored)
+        == DiagnosticsEngine::Ignored)
     return;
 
   // Ignore dependent types.

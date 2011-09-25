@@ -80,7 +80,7 @@ void ContentCache::replaceBuffer(const llvm::MemoryBuffer *B,
   Buffer.setInt(DoNotFree? DoNotFreeFlag : 0);
 }
 
-const llvm::MemoryBuffer *ContentCache::getBuffer(Diagnostic &Diag,
+const llvm::MemoryBuffer *ContentCache::getBuffer(DiagnosticsEngine &Diag,
                                                   const SourceManager &SM,
                                                   SourceLocation Loc,
                                                   bool *Invalid) const {
@@ -364,7 +364,7 @@ LineTableInfo &SourceManager::getLineTable() {
 // Private 'Create' methods.
 //===----------------------------------------------------------------------===//
 
-SourceManager::SourceManager(Diagnostic &Diag, FileManager &FileMgr)
+SourceManager::SourceManager(DiagnosticsEngine &Diag, FileManager &FileMgr)
   : Diag(Diag), FileMgr(FileMgr), OverridenFilesKeepOriginalName(true),
     ExternalSLocEntries(0), LineTable(0), NumLinearScans(0),
     NumBinaryProbes(0), FakeBufferForRecovery(0) {
@@ -971,10 +971,10 @@ unsigned SourceManager::getPresumedColumnNumber(SourceLocation Loc,
 }
 
 static LLVM_ATTRIBUTE_NOINLINE void
-ComputeLineNumbers(Diagnostic &Diag, ContentCache *FI,
+ComputeLineNumbers(DiagnosticsEngine &Diag, ContentCache *FI,
                    llvm::BumpPtrAllocator &Alloc,
                    const SourceManager &SM, bool &Invalid);
-static void ComputeLineNumbers(Diagnostic &Diag, ContentCache *FI, 
+static void ComputeLineNumbers(DiagnosticsEngine &Diag, ContentCache *FI,
                                llvm::BumpPtrAllocator &Alloc,
                                const SourceManager &SM, bool &Invalid) {
   // Note that calling 'getBuffer()' may lazily page in the file.

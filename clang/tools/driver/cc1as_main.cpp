@@ -121,7 +121,7 @@ public:
   }
 
   static void CreateFromArgs(AssemblerInvocation &Res, const char **ArgBegin,
-                             const char **ArgEnd, Diagnostic &Diags);
+                             const char **ArgEnd, DiagnosticsEngine &Diags);
 };
 
 }
@@ -129,7 +129,7 @@ public:
 void AssemblerInvocation::CreateFromArgs(AssemblerInvocation &Opts,
                                          const char **ArgBegin,
                                          const char **ArgEnd,
-                                         Diagnostic &Diags) {
+                                         DiagnosticsEngine &Diags) {
   using namespace clang::driver::cc1asoptions;
   // Parse the arguments.
   OwningPtr<OptTable> OptTbl(createCC1AsOptTable());
@@ -203,7 +203,7 @@ void AssemblerInvocation::CreateFromArgs(AssemblerInvocation &Opts,
 }
 
 static formatted_raw_ostream *GetOutputStream(AssemblerInvocation &Opts,
-                                              Diagnostic &Diags,
+                                              DiagnosticsEngine &Diags,
                                               bool Binary) {
   if (Opts.OutputPath.empty())
     Opts.OutputPath = "-";
@@ -226,7 +226,8 @@ static formatted_raw_ostream *GetOutputStream(AssemblerInvocation &Opts,
   return new formatted_raw_ostream(*Out, formatted_raw_ostream::DELETE_STREAM);
 }
 
-static bool ExecuteAssembler(AssemblerInvocation &Opts, Diagnostic &Diags) {
+static bool ExecuteAssembler(AssemblerInvocation &Opts,
+                             DiagnosticsEngine &Diags) {
   // Get the target specific parser.
   std::string Error;
   const Target *TheTarget(TargetRegistry::lookupTarget(Opts.Triple, Error));
@@ -329,7 +330,7 @@ static bool ExecuteAssembler(AssemblerInvocation &Opts, Diagnostic &Diags) {
 }
 
 static void LLVMErrorHandler(void *UserData, const std::string &Message) {
-  Diagnostic &Diags = *static_cast<Diagnostic*>(UserData);
+  DiagnosticsEngine &Diags = *static_cast<DiagnosticsEngine*>(UserData);
 
   Diags.Report(diag::err_fe_error_backend) << Message;
 
@@ -354,7 +355,7 @@ int cc1as_main(const char **ArgBegin, const char **ArgEnd,
     = new TextDiagnosticPrinter(errs(), DiagnosticOptions());
   DiagClient->setPrefix("clang -cc1as");
   llvm::IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
-  Diagnostic Diags(DiagID, DiagClient);
+  DiagnosticsEngine Diags(DiagID, DiagClient);
 
   // Set an error handler, so that any LLVM backend diagnostics go through our
   // error handler.

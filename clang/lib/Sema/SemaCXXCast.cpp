@@ -1374,7 +1374,7 @@ void Sema::CheckCompatibleReinterpretCast(QualType SrcType, QualType DestType,
                         diag::warn_undefined_reinterpret_cast;
 
   if (Diags.getDiagnosticLevel(DiagID, Range.getBegin()) ==
-          Diagnostic::Ignored) {
+          DiagnosticsEngine::Ignored) {
     return;
   }
 

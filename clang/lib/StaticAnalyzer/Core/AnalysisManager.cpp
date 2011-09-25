@@ -14,7 +14,7 @@
 using namespace clang;
 using namespace ento;
 
-AnalysisManager::AnalysisManager(ASTContext &ctx, Diagnostic &diags, 
+AnalysisManager::AnalysisManager(ASTContext &ctx, DiagnosticsEngine &diags,
                                  const LangOptions &lang, PathDiagnosticClient *pd,
                                  StoreManagerCreator storemgr,
                                  ConstraintManagerCreator constraintmgr, 

@@ -44,7 +44,7 @@ namespace clang {
   class ASTRecordLayout;
   class BlockExpr;
   class CharUnits;
-  class Diagnostic;
+  class DiagnosticsEngine;
   class Expr;
   class ExternalASTSource;
   class ASTMutationListener;
@@ -374,7 +374,7 @@ public:
   
   const LangOptions& getLangOptions() const { return LangOpts; }
 
-  Diagnostic &getDiagnostics() const;
+  DiagnosticsEngine &getDiagnostics() const;
 
   FullSourceLoc getFullLoc(SourceLocation Loc) const {
     return FullSourceLoc(Loc,SourceMgr);

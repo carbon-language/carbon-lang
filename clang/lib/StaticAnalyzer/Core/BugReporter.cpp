@@ -1880,7 +1880,7 @@ void BugReporter::FlushReport(BugReportEquivClass& EQ) {
   // Emit a summary diagnostic to the regular Diagnostics engine.
   BugReport::ranges_iterator Beg, End;
   llvm::tie(Beg, End) = exampleReport->getRanges();
-  Diagnostic &Diag = getDiagnostic();
+  DiagnosticsEngine &Diag = getDiagnostic();
   
   // Search the description for '%', as that will be interpretted as a
   // format character by FormatDiagnostics.
@@ -1896,7 +1896,7 @@ void BugReporter::FlushReport(BugReportEquivClass& EQ) {
         Out << *I;
     
     Out.flush();
-    ErrorDiag = Diag.getCustomDiagID(Diagnostic::Warning, TmpStr);
+    ErrorDiag = Diag.getCustomDiagID(DiagnosticsEngine::Warning, TmpStr);
   }        
 
   {

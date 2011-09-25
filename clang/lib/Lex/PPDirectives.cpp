@@ -1616,7 +1616,7 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok) {
   // warn-because-unused-macro set. If it gets used it will be removed from set.
   if (isInPrimaryFile() && // don't warn for include'd macros.
       Diags->getDiagnosticLevel(diag::pp_macro_not_used,
-                               MI->getDefinitionLoc()) != Diagnostic::Ignored) {
+          MI->getDefinitionLoc()) != DiagnosticsEngine::Ignored) {
     MI->setIsWarnIfUnused(true);
     WarnUnusedMacroLocs.insert(MI->getDefinitionLoc());
   }

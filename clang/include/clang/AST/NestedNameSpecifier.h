@@ -465,7 +465,7 @@ public:
 inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
                                            NestedNameSpecifier *NNS) {
   DB.AddTaggedVal(reinterpret_cast<intptr_t>(NNS),
-                  Diagnostic::ak_nestednamespec);
+                  DiagnosticsEngine::ak_nestednamespec);
   return DB;
 }
 

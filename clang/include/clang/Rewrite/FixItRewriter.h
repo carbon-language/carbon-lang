@@ -38,7 +38,7 @@ public:
 
 class FixItRewriter : public DiagnosticClient {
   /// \brief The diagnostics machinery.
-  Diagnostic &Diags;
+  DiagnosticsEngine &Diags;
 
   /// \brief The rewriter used to perform the various code
   /// modifications.
@@ -59,7 +59,7 @@ public:
   typedef Rewriter::buffer_iterator iterator;
 
   /// \brief Initialize a new fix-it rewriter.
-  FixItRewriter(Diagnostic &Diags, SourceManager &SourceMgr,
+  FixItRewriter(DiagnosticsEngine &Diags, SourceManager &SourceMgr,
                 const LangOptions &LangOpts, FixItOptions *FixItOpts);
 
   /// \brief Destroy the fix-it rewriter.
@@ -87,12 +87,12 @@ public:
   /// IncludeInDiagnosticCounts - This method (whose default implementation
   /// returns true) indicates whether the diagnostics handled by this
   /// DiagnosticClient should be included in the number of diagnostics
-  /// reported by Diagnostic.
+  /// reported by DiagnosticsEngine.
   virtual bool IncludeInDiagnosticCounts() const;
 
   /// HandleDiagnostic - Handle this diagnostic, reporting it to the user or
   /// capturing it to a log as needed.
-  virtual void HandleDiagnostic(Diagnostic::Level DiagLevel,
+  virtual void HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
                                 const DiagnosticInfo &Info);
 
   /// \brief Emit a diagnostic via the adapted diagnostic client.

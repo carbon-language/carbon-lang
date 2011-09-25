@@ -53,7 +53,7 @@ void CompilerInstance::setInvocation(CompilerInvocation *Value) {
   Invocation = Value;
 }
 
-void CompilerInstance::setDiagnostics(Diagnostic *Value) {
+void CompilerInstance::setDiagnostics(DiagnosticsEngine *Value) {
   Diagnostics = Value;
 }
 
@@ -88,7 +88,7 @@ void CompilerInstance::setCodeCompletionConsumer(CodeCompleteConsumer *Value) {
 // Diagnostics
 static void SetUpBuildDumpLog(const DiagnosticOptions &DiagOpts,
                               unsigned argc, const char* const *argv,
-                              Diagnostic &Diags) {
+                              DiagnosticsEngine &Diags) {
   std::string ErrorInfo;
   llvm::OwningPtr<raw_ostream> OS(
     new llvm::raw_fd_ostream(DiagOpts.DumpBuildInformation.c_str(), ErrorInfo));
@@ -111,7 +111,7 @@ static void SetUpBuildDumpLog(const DiagnosticOptions &DiagOpts,
 
 static void SetUpDiagnosticLog(const DiagnosticOptions &DiagOpts,
                                const CodeGenOptions *CodeGenOpts,
-                               Diagnostic &Diags) {
+                               DiagnosticsEngine &Diags) {
   std::string ErrorInfo;
   bool OwnsStream = false;
   raw_ostream *OS = &llvm::errs();
@@ -146,14 +146,15 @@ void CompilerInstance::createDiagnostics(int Argc, const char* const *Argv,
                                   ShouldOwnClient, &getCodeGenOpts());
 }
 
-llvm::IntrusiveRefCntPtr<Diagnostic> 
+llvm::IntrusiveRefCntPtr<DiagnosticsEngine> 
 CompilerInstance::createDiagnostics(const DiagnosticOptions &Opts,
                                     int Argc, const char* const *Argv,
                                     DiagnosticClient *Client,
                                     bool ShouldOwnClient,
                                     const CodeGenOptions *CodeGenOpts) {
   llvm::IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
-  llvm::IntrusiveRefCntPtr<Diagnostic> Diags(new Diagnostic(DiagID));
+  llvm::IntrusiveRefCntPtr<DiagnosticsEngine>
+      Diags(new DiagnosticsEngine(DiagID));
 
   // Create the diagnostic client for reporting errors or for
   // implementing -verify.
@@ -535,7 +536,7 @@ bool CompilerInstance::InitializeSourceManager(StringRef InputFile) {
 }
 
 bool CompilerInstance::InitializeSourceManager(StringRef InputFile,
-                                               Diagnostic &Diags,
+                                               DiagnosticsEngine &Diags,
                                                FileManager &FileMgr,
                                                SourceManager &SourceMgr,
                                                const FrontendOptions &Opts) {

@@ -16,7 +16,7 @@
 namespace clang {
   class AnalyzerOptions;
   class LangOptions;
-  class Diagnostic;
+  class DiagnosticsEngine;
 
 namespace ento {
   class CheckerManager;
@@ -24,7 +24,7 @@ namespace ento {
 CheckerManager *createCheckerManager(const AnalyzerOptions &opts,
                                      const LangOptions &langOpts,
                                      ArrayRef<std::string> plugins,
-                                     Diagnostic &diags);
+                                     DiagnosticsEngine &diags);
 
 } // end ento namespace
 

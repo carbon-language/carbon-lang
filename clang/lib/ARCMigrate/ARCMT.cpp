@@ -38,7 +38,7 @@ bool CapturedDiagList::clearDiagnostic(ArrayRef<unsigned> IDs,
            diagLoc.isBeforeInTranslationUnitThan(range.getEnd()))) {
       cleared = true;
       ListTy::iterator eraseS = I++;
-      while (I != List.end() && I->getLevel() == Diagnostic::Note)
+      while (I != List.end() && I->getLevel() == DiagnosticsEngine::Note)
         ++I;
       // Clear the diagnostic and any notes following it.
       List.erase(eraseS, I);
@@ -73,14 +73,14 @@ bool CapturedDiagList::hasDiagnostic(ArrayRef<unsigned> IDs,
   return false;
 }
 
-void CapturedDiagList::reportDiagnostics(Diagnostic &Diags) const {
+void CapturedDiagList::reportDiagnostics(DiagnosticsEngine &Diags) const {
   for (ListTy::const_iterator I = List.begin(), E = List.end(); I != E; ++I)
     Diags.Report(*I);
 }
 
 bool CapturedDiagList::hasErrors() const {
   for (ListTy::const_iterator I = List.begin(), E = List.end(); I != E; ++I)
-    if (I->getLevel() >= Diagnostic::Error)
+    if (I->getLevel() >= DiagnosticsEngine::Error)
       return true;
 
   return false;
@@ -89,17 +89,17 @@ bool CapturedDiagList::hasErrors() const {
 namespace {
 
 class CaptureDiagnosticClient : public DiagnosticClient {
-  Diagnostic &Diags;
+  DiagnosticsEngine &Diags;
   CapturedDiagList &CapturedDiags;
 public:
-  CaptureDiagnosticClient(Diagnostic &diags,
+  CaptureDiagnosticClient(DiagnosticsEngine &diags,
                           CapturedDiagList &capturedDiags)
     : Diags(diags), CapturedDiags(capturedDiags) { }
 
-  virtual void HandleDiagnostic(Diagnostic::Level level,
+  virtual void HandleDiagnostic(DiagnosticsEngine::Level level,
                                 const DiagnosticInfo &Info) {
     if (arcmt::isARCDiagnostic(Info.getID(), Diags) ||
-        level >= Diagnostic::Error || level == Diagnostic::Note) {
+        level >= DiagnosticsEngine::Error || level == DiagnosticsEngine::Note) {
       CapturedDiags.push_back(StoredDiagnostic(level, Info));
       return;
     }
@@ -199,8 +199,8 @@ static void emitPremigrationErrors(const CapturedDiagList &arcDiags,
                                    Preprocessor &PP) {
   TextDiagnosticPrinter printer(llvm::errs(), diagOpts);
   llvm::IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
-  llvm::IntrusiveRefCntPtr<Diagnostic> Diags(
-                   new Diagnostic(DiagID, &printer, /*ShouldOwnClient=*/false));
+  llvm::IntrusiveRefCntPtr<DiagnosticsEngine> Diags(
+      new DiagnosticsEngine(DiagID, &printer, /*ShouldOwnClient=*/false));
   Diags->setSourceManager(&PP.getSourceManager());
   
   printer.BeginSourceFile(PP.getLangOptions(), &PP);
@@ -232,8 +232,8 @@ bool arcmt::checkForManualIssues(CompilerInvocation &origCI,
 
   assert(DiagClient);
   llvm::IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
-  llvm::IntrusiveRefCntPtr<Diagnostic> Diags(
-                 new Diagnostic(DiagID, DiagClient, /*ShouldOwnClient=*/false));
+  llvm::IntrusiveRefCntPtr<DiagnosticsEngine> Diags(
+      new DiagnosticsEngine(DiagID, DiagClient, /*ShouldOwnClient=*/false));
 
   // Filter of all diagnostics.
   CaptureDiagnosticClient errRec(*Diags, capturedDiags);
@@ -331,8 +331,8 @@ static bool applyTransforms(CompilerInvocation &origCI,
   }
 
   llvm::IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
-  llvm::IntrusiveRefCntPtr<Diagnostic> Diags(
-                 new Diagnostic(DiagID, DiagClient, /*ShouldOwnClient=*/false));
+  llvm::IntrusiveRefCntPtr<DiagnosticsEngine> Diags(
+      new DiagnosticsEngine(DiagID, DiagClient, /*ShouldOwnClient=*/false));
 
   if (outputDir.empty()) {
     origCI.getLangOpts().ObjCAutoRefCount = true;
@@ -370,8 +370,8 @@ bool arcmt::getFileRemappings(std::vector<std::pair<std::string,std::string> > &
   assert(!outputDir.empty());
 
   llvm::IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
-  llvm::IntrusiveRefCntPtr<Diagnostic> Diags(
-                 new Diagnostic(DiagID, DiagClient, /*ShouldOwnClient=*/false));
+  llvm::IntrusiveRefCntPtr<DiagnosticsEngine> Diags(
+      new DiagnosticsEngine(DiagID, DiagClient, /*ShouldOwnClient=*/false));
 
   FileRemapper remapper;
   bool err = remapper.initFromDisk(outputDir, *Diags,
@@ -473,8 +473,8 @@ MigrationProcess::MigrationProcess(const CompilerInvocation &CI,
   : OrigCI(CI), DiagClient(diagClient) {
   if (!outputDir.empty()) {
     llvm::IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
-    llvm::IntrusiveRefCntPtr<Diagnostic> Diags(
-                 new Diagnostic(DiagID, DiagClient, /*ShouldOwnClient=*/false));
+    llvm::IntrusiveRefCntPtr<DiagnosticsEngine> Diags(
+      new DiagnosticsEngine(DiagID, DiagClient, /*ShouldOwnClient=*/false));
     Remapper.initFromDisk(outputDir, *Diags, /*ignoreIfFilesChanges=*/true);
   }
 }
@@ -492,8 +492,8 @@ bool MigrationProcess::applyTransform(TransformFn trans,
 
   assert(DiagClient);
   llvm::IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
-  llvm::IntrusiveRefCntPtr<Diagnostic> Diags(
-               new Diagnostic(DiagID, DiagClient, /*ShouldOwnClient=*/false));
+  llvm::IntrusiveRefCntPtr<DiagnosticsEngine> Diags(
+      new DiagnosticsEngine(DiagID, DiagClient, /*ShouldOwnClient=*/false));
 
   // Filter of all diagnostics.
   CaptureDiagnosticClient errRec(*Diags, capturedDiags);
@@ -571,7 +571,7 @@ bool MigrationProcess::applyTransform(TransformFn trans,
 // isARCDiagnostic.
 //===----------------------------------------------------------------------===//
 
-bool arcmt::isARCDiagnostic(unsigned diagID, Diagnostic &Diag) {
+bool arcmt::isARCDiagnostic(unsigned diagID, DiagnosticsEngine &Diag) {
   return Diag.getDiagnosticIDs()->getCategoryNumberForDiag(diagID) ==
            diag::DiagCat_Automatic_Reference_Counting_Issue;
 }

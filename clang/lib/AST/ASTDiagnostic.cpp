@@ -152,7 +152,7 @@ break; \
 /// diagnostic message
 static std::string
 ConvertTypeToDiagnosticString(ASTContext &Context, QualType Ty,
-                              const Diagnostic::ArgumentValue *PrevArgs,
+                              const DiagnosticsEngine::ArgumentValue *PrevArgs,
                               unsigned NumPrevArgs,
                               SmallVectorImpl<intptr_t> &QualTypeVals) {
   // FIXME: Playing with std::string is really slow.
@@ -186,7 +186,7 @@ ConvertTypeToDiagnosticString(ASTContext &Context, QualType Ty,
   bool Repeated = false;
   for (unsigned i = 0; i != NumPrevArgs; ++i) {
     // TODO: Handle ak_declcontext case.
-    if (PrevArgs[i].first == Diagnostic::ak_qualtype) {
+    if (PrevArgs[i].first == DiagnosticsEngine::ak_qualtype) {
       void *Ptr = (void*)PrevArgs[i].second;
       QualType PrevTy(QualType::getFromOpaquePtr(Ptr));
       if (PrevTy == Ty) {
@@ -218,13 +218,13 @@ ConvertTypeToDiagnosticString(ASTContext &Context, QualType Ty,
 }
 
 void clang::FormatASTNodeDiagnosticArgument(
-    Diagnostic::ArgumentKind Kind,
+    DiagnosticsEngine::ArgumentKind Kind,
     intptr_t Val,
     const char *Modifier,
     unsigned ModLen,
     const char *Argument,
     unsigned ArgLen,
-    const Diagnostic::ArgumentValue *PrevArgs,
+    const DiagnosticsEngine::ArgumentValue *PrevArgs,
     unsigned NumPrevArgs,
     SmallVectorImpl<char> &Output,
     void *Cookie,
@@ -236,7 +236,7 @@ void clang::FormatASTNodeDiagnosticArgument(
   
   switch (Kind) {
     default: llvm_unreachable("unknown ArgumentKind");
-    case Diagnostic::ak_qualtype: {
+    case DiagnosticsEngine::ak_qualtype: {
       assert(ModLen == 0 && ArgLen == 0 &&
              "Invalid modifier for QualType argument");
       
@@ -246,7 +246,7 @@ void clang::FormatASTNodeDiagnosticArgument(
       NeedQuotes = false;
       break;
     }
-    case Diagnostic::ak_declarationname: {
+    case DiagnosticsEngine::ak_declarationname: {
       DeclarationName N = DeclarationName::getFromOpaqueInteger(Val);
       S = N.getAsString();
       
@@ -260,7 +260,7 @@ void clang::FormatASTNodeDiagnosticArgument(
                "Invalid modifier for DeclarationName argument");
       break;
     }
-    case Diagnostic::ak_nameddecl: {
+    case DiagnosticsEngine::ak_nameddecl: {
       bool Qualified;
       if (ModLen == 1 && Modifier[0] == 'q' && ArgLen == 0)
         Qualified = true;
@@ -273,14 +273,14 @@ void clang::FormatASTNodeDiagnosticArgument(
       ND->getNameForDiagnostic(S, Context.PrintingPolicy, Qualified);
       break;
     }
-    case Diagnostic::ak_nestednamespec: {
+    case DiagnosticsEngine::ak_nestednamespec: {
       llvm::raw_string_ostream OS(S);
       reinterpret_cast<NestedNameSpecifier*>(Val)->print(OS,
                                                         Context.PrintingPolicy);
       NeedQuotes = false;
       break;
     }
-    case Diagnostic::ak_declcontext: {
+    case DiagnosticsEngine::ak_declcontext: {
       DeclContext *DC = reinterpret_cast<DeclContext *> (Val);
       assert(DC && "Should never have a null declaration context");
       

@@ -55,7 +55,7 @@ namespace {
     };
     
     Rewriter Rewrite;
-    Diagnostic &Diags;
+    DiagnosticsEngine &Diags;
     const LangOptions &LangOpts;
     unsigned RewriteFailedDiag;
     unsigned TryFinallyContainsReturnDiag;
@@ -172,7 +172,7 @@ namespace {
     void HandleTopLevelSingleDecl(Decl *D);
     void HandleDeclInMainFile(Decl *D);
     RewriteObjC(std::string inFile, raw_ostream *OS,
-                Diagnostic &D, const LangOptions &LOpts,
+                DiagnosticsEngine &D, const LangOptions &LOpts,
                 bool silenceMacroWarn);
 
     ~RewriteObjC() {}
@@ -523,21 +523,22 @@ static bool IsHeaderFile(const std::string &Filename) {
 }
 
 RewriteObjC::RewriteObjC(std::string inFile, raw_ostream* OS,
-                         Diagnostic &D, const LangOptions &LOpts,
+                         DiagnosticsEngine &D, const LangOptions &LOpts,
                          bool silenceMacroWarn)
       : Diags(D), LangOpts(LOpts), InFileName(inFile), OutFile(OS),
         SilenceRewriteMacroWarning(silenceMacroWarn) {
   IsHeader = IsHeaderFile(inFile);
-  RewriteFailedDiag = Diags.getCustomDiagID(Diagnostic::Warning,
+  RewriteFailedDiag = Diags.getCustomDiagID(DiagnosticsEngine::Warning,
                "rewriting sub-expression within a macro (may not be correct)");
-  TryFinallyContainsReturnDiag = Diags.getCustomDiagID(Diagnostic::Warning,
+  TryFinallyContainsReturnDiag = Diags.getCustomDiagID(
+               DiagnosticsEngine::Warning,
                "rewriter doesn't support user-specified control flow semantics "
                "for @try/@finally (code may not execute properly)");
 }
 
 ASTConsumer *clang::CreateObjCRewriter(const std::string& InFile,
                                        raw_ostream* OS,
-                                       Diagnostic &Diags,
+                                       DiagnosticsEngine &Diags,
                                        const LangOptions &LOpts,
                                        bool SilenceRewriteMacroWarning) {
   return new RewriteObjC(InFile, OS, Diags, LOpts, SilenceRewriteMacroWarning);

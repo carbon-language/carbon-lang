@@ -20,7 +20,7 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace clang;
 
-VerifyDiagnosticsClient::VerifyDiagnosticsClient(Diagnostic &_Diags)
+VerifyDiagnosticsClient::VerifyDiagnosticsClient(DiagnosticsEngine &_Diags)
   : Diags(_Diags), PrimaryClient(Diags.getClient()),
     OwnsPrimaryClient(Diags.ownsClient()),
     Buffer(new TextDiagnosticBuffer()), CurrentPreprocessor(0) 
@@ -55,8 +55,8 @@ void VerifyDiagnosticsClient::EndSourceFile() {
   CurrentPreprocessor = 0;
 }
 
-void VerifyDiagnosticsClient::HandleDiagnostic(Diagnostic::Level DiagLevel,
-                                              const DiagnosticInfo &Info) {
+void VerifyDiagnosticsClient::HandleDiagnostic(
+      DiagnosticsEngine::Level DiagLevel, const DiagnosticInfo &Info) {
   if (FirstErrorFID.isInvalid() && Info.hasSourceManager()) {
     const SourceManager &SM = Info.getSourceManager();
     FirstErrorFID = SM.getFileID(Info.getLocation());
@@ -364,7 +364,7 @@ static void FindExpectedDiags(Preprocessor &PP, ExpectedData &ED, FileID FID) {
 /// happened. Print the map out in a nice format and return "true". If the map
 /// is empty and we're not going to print things, then return "false".
 ///
-static unsigned PrintProblem(Diagnostic &Diags, SourceManager *SourceMgr,
+static unsigned PrintProblem(DiagnosticsEngine &Diags, SourceManager *SourceMgr,
                              const_diag_iterator diag_begin,
                              const_diag_iterator diag_end,
                              const char *Kind, bool Expected) {
@@ -385,7 +385,7 @@ static unsigned PrintProblem(Diagnostic &Diags, SourceManager *SourceMgr,
   return std::distance(diag_begin, diag_end);
 }
 
-static unsigned PrintProblem(Diagnostic &Diags, SourceManager *SourceMgr,
+static unsigned PrintProblem(DiagnosticsEngine &Diags, SourceManager *SourceMgr,
                              DirectiveList &DL, const char *Kind,
                              bool Expected) {
   if (DL.empty())
@@ -410,7 +410,7 @@ static unsigned PrintProblem(Diagnostic &Diags, SourceManager *SourceMgr,
 /// CheckLists - Compare expected to seen diagnostic lists and return the
 /// the difference between them.
 ///
-static unsigned CheckLists(Diagnostic &Diags, SourceManager &SourceMgr,
+static unsigned CheckLists(DiagnosticsEngine &Diags, SourceManager &SourceMgr,
                            const char *Label,
                            DirectiveList &Left,
                            const_diag_iterator d2_begin,
@@ -453,7 +453,7 @@ static unsigned CheckLists(Diagnostic &Diags, SourceManager &SourceMgr,
 /// were actually reported. It emits any discrepencies. Return "true" if there
 /// were problems. Return "false" otherwise.
 ///
-static unsigned CheckResults(Diagnostic &Diags, SourceManager &SourceMgr,
+static unsigned CheckResults(DiagnosticsEngine &Diags, SourceManager &SourceMgr,
                              const TextDiagnosticBuffer &Buffer,
                              ExpectedData &ED) {
   // We want to capture the delta between what was expected and what was

@@ -41,7 +41,7 @@ using namespace llvm;
 namespace {
 
 class EmitAssemblyHelper {
-  Diagnostic &Diags;
+  DiagnosticsEngine &Diags;
   const CodeGenOptions &CodeGenOpts;
   const TargetOptions &TargetOpts;
   const LangOptions &LangOpts;
@@ -86,7 +86,7 @@ private:
   bool AddEmitPasses(BackendAction Action, formatted_raw_ostream &OS);
 
 public:
-  EmitAssemblyHelper(Diagnostic &_Diags,
+  EmitAssemblyHelper(DiagnosticsEngine &_Diags,
                      const CodeGenOptions &CGOpts, const TargetOptions &TOpts,
                      const LangOptions &LOpts,
                      Module *M)
@@ -395,7 +395,8 @@ void EmitAssemblyHelper::EmitAssembly(BackendAction Action, raw_ostream *OS) {
   }
 }
 
-void clang::EmitBackendOutput(Diagnostic &Diags, const CodeGenOptions &CGOpts,
+void clang::EmitBackendOutput(DiagnosticsEngine &Diags,
+                              const CodeGenOptions &CGOpts,
                               const TargetOptions &TOpts,
                               const LangOptions &LOpts,
                               Module *M,

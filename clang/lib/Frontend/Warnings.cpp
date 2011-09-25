@@ -31,12 +31,12 @@
 #include <algorithm>
 using namespace clang;
 
-void clang::ProcessWarningOptions(Diagnostic &Diags,
+void clang::ProcessWarningOptions(DiagnosticsEngine &Diags,
                                   const DiagnosticOptions &Opts) {
   Diags.setSuppressSystemWarnings(true);  // Default to -Wno-system-headers
   Diags.setIgnoreAllWarnings(Opts.IgnoreWarnings);
   Diags.setShowOverloads(
-    static_cast<Diagnostic::OverloadsShown>(Opts.ShowOverloads));
+    static_cast<DiagnosticsEngine::OverloadsShown>(Opts.ShowOverloads));
   
   // Handle -ferror-limit
   if (Opts.ErrorLimit)
@@ -48,11 +48,11 @@ void clang::ProcessWarningOptions(Diagnostic &Diags,
   // extension diagnostics onto WARNING or ERROR unless the user has futz'd
   // around with them explicitly.
   if (Opts.PedanticErrors)
-    Diags.setExtensionHandlingBehavior(Diagnostic::Ext_Error);
+    Diags.setExtensionHandlingBehavior(DiagnosticsEngine::Ext_Error);
   else if (Opts.Pedantic)
-    Diags.setExtensionHandlingBehavior(Diagnostic::Ext_Warn);
+    Diags.setExtensionHandlingBehavior(DiagnosticsEngine::Ext_Warn);
   else
-    Diags.setExtensionHandlingBehavior(Diagnostic::Ext_Ignore);
+    Diags.setExtensionHandlingBehavior(DiagnosticsEngine::Ext_Ignore);
 
   for (unsigned i = 0, e = Opts.Warnings.size(); i != e; ++i) {
     StringRef Opt = Opts.Warnings[i];

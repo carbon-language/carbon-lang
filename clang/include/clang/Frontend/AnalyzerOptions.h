@@ -20,7 +20,7 @@
 
 namespace clang {
 class ASTConsumer;
-class Diagnostic;
+class DiagnosticsEngine;
 class Preprocessor;
 class LangOptions;
 

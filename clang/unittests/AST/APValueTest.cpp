@@ -24,7 +24,7 @@ class DiagnosticOutputGetter {
   class LastDiagnosticString : public DiagnosticClient {
     SmallString<64> LastDiagnostic;
   public:
-    virtual void HandleDiagnostic(Diagnostic::Level DiagLevel,
+    virtual void HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
                                   const DiagnosticInfo &Info) {
       LastDiagnostic.clear();
       Info.FormatDiagnostic(LastDiagnostic);
@@ -36,7 +36,7 @@ class DiagnosticOutputGetter {
   const IntrusiveRefCntPtr<DiagnosticIDs> DiagIDs;
   const unsigned diag_just_format;
   LastDiagnosticString LastDiagnostic;
-  Diagnostic Diag;
+  DiagnosticsEngine Diag;
 
 public:
   DiagnosticOutputGetter()

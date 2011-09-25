@@ -31,7 +31,7 @@ using namespace clang;
 // in which case we emit "#define XXX 1" or "XXX=Y z W" in which case we emit
 // "#define XXX Y z W".  To get a #define with no value, use "XXX=".
 static void DefineBuiltinMacro(MacroBuilder &Builder, StringRef Macro,
-                               Diagnostic &Diags) {
+                               DiagnosticsEngine &Diags) {
   std::pair<StringRef, StringRef> MacroPair = Macro.split('=');
   StringRef MacroName = MacroPair.first;
   StringRef MacroBody = MacroPair.second;
@@ -631,7 +631,7 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
 
 // Initialize the remapping of files to alternative contents, e.g.,
 // those specified through other files.
-static void InitializeFileRemapping(Diagnostic &Diags,
+static void InitializeFileRemapping(DiagnosticsEngine &Diags,
                                     SourceManager &SourceMgr,
                                     FileManager &FileMgr,
                                     const PreprocessorOptions &InitOpts) {

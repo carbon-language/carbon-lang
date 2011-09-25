@@ -456,19 +456,19 @@ public:
                           SmallVectorImpl<StoredDiagnostic> &StoredDiags)
     : StoredDiags(StoredDiags) { }
   
-  virtual void HandleDiagnostic(Diagnostic::Level Level,
+  virtual void HandleDiagnostic(DiagnosticsEngine::Level Level,
                                 const DiagnosticInfo &Info);
 };
 
 /// \brief RAII object that optionally captures diagnostics, if
 /// there is no diagnostic client to capture them already.
 class CaptureDroppedDiagnostics {
-  Diagnostic &Diags;
+  DiagnosticsEngine &Diags;
   StoredDiagnosticClient Client;
   DiagnosticClient *PreviousClient;
 
 public:
-  CaptureDroppedDiagnostics(bool RequestCapture, Diagnostic &Diags, 
+  CaptureDroppedDiagnostics(bool RequestCapture, DiagnosticsEngine &Diags,
                           SmallVectorImpl<StoredDiagnostic> &StoredDiags)
     : Diags(Diags), Client(StoredDiags), PreviousClient(0)
   {
@@ -488,7 +488,7 @@ public:
 
 } // anonymous namespace
 
-void StoredDiagnosticClient::HandleDiagnostic(Diagnostic::Level Level,
+void StoredDiagnosticClient::HandleDiagnostic(DiagnosticsEngine::Level Level,
                                               const DiagnosticInfo &Info) {
   // Default implementation (Warnings/errors count).
   DiagnosticClient::HandleDiagnostic(Level, Info);
@@ -507,7 +507,7 @@ llvm::MemoryBuffer *ASTUnit::getBufferForFile(StringRef Filename,
 }
 
 /// \brief Configure the diagnostics object for use with ASTUnit.
-void ASTUnit::ConfigureDiags(llvm::IntrusiveRefCntPtr<Diagnostic> &Diags,
+void ASTUnit::ConfigureDiags(llvm::IntrusiveRefCntPtr<DiagnosticsEngine> &Diags,
                              const char **ArgBegin, const char **ArgEnd,
                              ASTUnit &AST, bool CaptureDiagnostics) {
   if (!Diags.getPtr()) {
@@ -525,7 +525,7 @@ void ASTUnit::ConfigureDiags(llvm::IntrusiveRefCntPtr<Diagnostic> &Diags,
 }
 
 ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
-                                  llvm::IntrusiveRefCntPtr<Diagnostic> Diags,
+                              llvm::IntrusiveRefCntPtr<DiagnosticsEngine> Diags,
                                   const FileSystemOptions &FileSystemOpts,
                                   bool OnlyLocalDecls,
                                   RemappedFile *RemappedFiles,
@@ -536,8 +536,8 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
   // Recover resources if we crash before exiting this method.
   llvm::CrashRecoveryContextCleanupRegistrar<ASTUnit>
     ASTUnitCleanup(AST.get());
-  llvm::CrashRecoveryContextCleanupRegistrar<Diagnostic,
-    llvm::CrashRecoveryContextReleaseRefCleanup<Diagnostic> >
+  llvm::CrashRecoveryContextCleanupRegistrar<DiagnosticsEngine,
+    llvm::CrashRecoveryContextReleaseRefCleanup<DiagnosticsEngine> >
     DiagCleanup(Diags.getPtr());
 
   ConfigureDiags(Diags, 0, 0, *AST, CaptureDiagnostics);
@@ -1498,7 +1498,7 @@ StringRef ASTUnit::getMainFileName() const {
 }
 
 ASTUnit *ASTUnit::create(CompilerInvocation *CI,
-                         llvm::IntrusiveRefCntPtr<Diagnostic> Diags) {
+                         llvm::IntrusiveRefCntPtr<DiagnosticsEngine> Diags) {
   llvm::OwningPtr<ASTUnit> AST;
   AST.reset(new ASTUnit(false));
   ConfigureDiags(Diags, 0, 0, *AST, /*CaptureDiagnostics=*/false);
@@ -1512,7 +1512,7 @@ ASTUnit *ASTUnit::create(CompilerInvocation *CI,
 }
 
 ASTUnit *ASTUnit::LoadFromCompilerInvocationAction(CompilerInvocation *CI,
-                                   llvm::IntrusiveRefCntPtr<Diagnostic> Diags,
+                              llvm::IntrusiveRefCntPtr<DiagnosticsEngine> Diags,
                                              ASTFrontendAction *Action) {
   assert(CI && "A CompilerInvocation is required");
 
@@ -1530,8 +1530,8 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocationAction(CompilerInvocation *CI,
   // Recover resources if we crash before exiting this method.
   llvm::CrashRecoveryContextCleanupRegistrar<ASTUnit>
     ASTUnitCleanup(AST.get());
-  llvm::CrashRecoveryContextCleanupRegistrar<Diagnostic,
-    llvm::CrashRecoveryContextReleaseRefCleanup<Diagnostic> >
+  llvm::CrashRecoveryContextCleanupRegistrar<DiagnosticsEngine,
+    llvm::CrashRecoveryContextReleaseRefCleanup<DiagnosticsEngine> >
     DiagCleanup(Diags.getPtr());
 
   // We'll manage file buffers ourselves.
@@ -1653,7 +1653,7 @@ bool ASTUnit::LoadFromCompilerInvocation(bool PrecompilePreamble) {
 }
 
 ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
-                                   llvm::IntrusiveRefCntPtr<Diagnostic> Diags,
+                              llvm::IntrusiveRefCntPtr<DiagnosticsEngine> Diags,
                                              bool OnlyLocalDecls,
                                              bool CaptureDiagnostics,
                                              bool PrecompilePreamble,
@@ -1675,8 +1675,8 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
   // Recover resources if we crash before exiting this method.
   llvm::CrashRecoveryContextCleanupRegistrar<ASTUnit>
     ASTUnitCleanup(AST.get());
-  llvm::CrashRecoveryContextCleanupRegistrar<Diagnostic,
-    llvm::CrashRecoveryContextReleaseRefCleanup<Diagnostic> >
+  llvm::CrashRecoveryContextCleanupRegistrar<DiagnosticsEngine,
+    llvm::CrashRecoveryContextReleaseRefCleanup<DiagnosticsEngine> >
     DiagCleanup(Diags.getPtr());
 
   return AST->LoadFromCompilerInvocation(PrecompilePreamble)? 0 : AST.take();
@@ -1684,7 +1684,7 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
 
 ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
                                       const char **ArgEnd,
-                                    llvm::IntrusiveRefCntPtr<Diagnostic> Diags,
+                                    llvm::IntrusiveRefCntPtr<DiagnosticsEngine> Diags,
                                       StringRef ResourceFilesPath,
                                       bool OnlyLocalDecls,
                                       bool CaptureDiagnostics,
@@ -1759,8 +1759,8 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
   llvm::CrashRecoveryContextCleanupRegistrar<CompilerInvocation,
     llvm::CrashRecoveryContextReleaseRefCleanup<CompilerInvocation> >
     CICleanup(CI.getPtr());
-  llvm::CrashRecoveryContextCleanupRegistrar<Diagnostic,
-    llvm::CrashRecoveryContextReleaseRefCleanup<Diagnostic> >
+  llvm::CrashRecoveryContextCleanupRegistrar<DiagnosticsEngine,
+    llvm::CrashRecoveryContextReleaseRefCleanup<DiagnosticsEngine> >
     DiagCleanup(Diags.getPtr());
 
   return AST->LoadFromCompilerInvocation(PrecompilePreamble) ? 0 : AST.take();
@@ -2070,7 +2070,7 @@ void ASTUnit::CodeComplete(StringRef File, unsigned Line, unsigned Column,
                            bool IncludeMacros, 
                            bool IncludeCodePatterns,
                            CodeCompleteConsumer &Consumer,
-                           Diagnostic &Diag, LangOptions &LangOpts,
+                           DiagnosticsEngine &Diag, LangOptions &LangOpts,
                            SourceManager &SourceMgr, FileManager &FileMgr,
                    SmallVectorImpl<StoredDiagnostic> &StoredDiagnostics,
              SmallVectorImpl<const llvm::MemoryBuffer *> &OwnedBuffers) {

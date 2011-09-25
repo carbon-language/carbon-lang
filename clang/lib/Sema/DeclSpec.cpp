@@ -27,7 +27,7 @@
 using namespace clang;
 
 
-static DiagnosticBuilder Diag(Diagnostic &D, SourceLocation Loc,
+static DiagnosticBuilder Diag(DiagnosticsEngine &D, SourceLocation Loc,
                               unsigned DiagID) {
   return D.Report(Loc, DiagID);
 }
@@ -757,7 +757,7 @@ void DeclSpec::SaveStorageSpecifierAsWritten() {
 /// "_Imaginary" (lacking an FP type).  This returns a diagnostic to issue or
 /// diag::NUM_DIAGNOSTICS if there is no error.  After calling this method,
 /// DeclSpec is guaranteed self-consistent, even if an error occurred.
-void DeclSpec::Finish(Diagnostic &D, Preprocessor &PP) {
+void DeclSpec::Finish(DiagnosticsEngine &D, Preprocessor &PP) {
   // Before possibly changing their values, save specs as written.
   SaveWrittenBuiltinSpecs();
   SaveStorageSpecifierAsWritten();

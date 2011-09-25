@@ -444,7 +444,7 @@ namespace {
 /// IgnoringDiagClient - This is a diagnostic client that just ignores all
 /// diags.
 class IgnoringDiagClient : public DiagnosticClient {
-  void HandleDiagnostic(Diagnostic::Level DiagLevel,
+  void HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
                         const DiagnosticInfo &Info) {
     // Just ignore it.
   }
@@ -493,14 +493,14 @@ void html::HighlightMacros(Rewriter &R, FileID FID, const Preprocessor& PP) {
 
   // Temporarily change the diagnostics object so that we ignore any generated
   // diagnostics from this pass.
-  Diagnostic TmpDiags(PP.getDiagnostics().getDiagnosticIDs(),
+  DiagnosticsEngine TmpDiags(PP.getDiagnostics().getDiagnosticIDs(),
                       new IgnoringDiagClient);
 
   // FIXME: This is a huge hack; we reuse the input preprocessor because we want
   // its state, but we aren't actually changing it (we hope). This should really
   // construct a copy of the preprocessor.
   Preprocessor &TmpPP = const_cast<Preprocessor&>(PP);
-  Diagnostic *OldDiags = &TmpPP.getDiagnostics();
+  DiagnosticsEngine *OldDiags = &TmpPP.getDiagnostics();
   TmpPP.setDiagnostics(TmpDiags);
 
   // Inform the preprocessor that we don't want comments.

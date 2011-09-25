@@ -1263,7 +1263,7 @@ NamedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid,
       << R;
     if (Context.BuiltinInfo.getHeaderName(BID) &&
         Diags.getDiagnosticLevel(diag::ext_implicit_lib_function_decl, Loc)
-          != Diagnostic::Ignored)
+          != DiagnosticsEngine::Ignored)
       Diag(Loc, diag::note_please_include_header)
         << Context.BuiltinInfo.getHeaderName(BID)
         << Context.BuiltinInfo.GetName(BID);
@@ -3981,7 +3981,7 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
 void Sema::CheckShadow(Scope *S, VarDecl *D, const LookupResult& R) {
   // Return if warning is ignored.
   if (Diags.getDiagnosticLevel(diag::warn_decl_shadow, R.getNameLoc()) ==
-        Diagnostic::Ignored)
+        DiagnosticsEngine::Ignored)
     return;
 
   // Don't diagnose declarations at file scope.
@@ -4055,7 +4055,7 @@ void Sema::CheckShadow(Scope *S, VarDecl *D, const LookupResult& R) {
 /// \brief Check -Wshadow without the advantage of a previous lookup.
 void Sema::CheckShadow(Scope *S, VarDecl *D) {
   if (Diags.getDiagnosticLevel(diag::warn_decl_shadow, D->getLocation()) ==
-        Diagnostic::Ignored)
+        DiagnosticsEngine::Ignored)
     return;
 
   LookupResult R(*this, D->getDeclName(), D->getLocation(),

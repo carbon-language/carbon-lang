@@ -25,7 +25,7 @@
 
 using namespace clang;
 
-FixItRewriter::FixItRewriter(Diagnostic &Diags, SourceManager &SourceMgr,
+FixItRewriter::FixItRewriter(DiagnosticsEngine &Diags, SourceManager &SourceMgr,
                              const LangOptions &LangOpts,
                              FixItOptions *FixItOpts)
   : Diags(Diags),
@@ -78,7 +78,7 @@ bool FixItRewriter::IncludeInDiagnosticCounts() const {
   return Client ? Client->IncludeInDiagnosticCounts() : true;
 }
 
-void FixItRewriter::HandleDiagnostic(Diagnostic::Level DiagLevel,
+void FixItRewriter::HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
                                      const DiagnosticInfo &Info) {
   // Default implementation (Warnings/errors count).
   DiagnosticClient::HandleDiagnostic(DiagLevel, Info);
@@ -86,7 +86,7 @@ void FixItRewriter::HandleDiagnostic(Diagnostic::Level DiagLevel,
   Client->HandleDiagnostic(DiagLevel, Info);
 
   // Skip over any diagnostics that are ignored or notes.
-  if (DiagLevel <= Diagnostic::Note)
+  if (DiagLevel <= DiagnosticsEngine::Note)
     return;
 
   // Make sure that we can perform all of the modifications we
@@ -107,7 +107,8 @@ void FixItRewriter::HandleDiagnostic(Diagnostic::Level DiagLevel,
       Diag(Info.getLocation(), diag::note_fixit_in_macro);
 
     // If this was an error, refuse to perform any rewriting.
-    if (DiagLevel == Diagnostic::Error || DiagLevel == Diagnostic::Fatal) {
+    if (DiagLevel == DiagnosticsEngine::Error ||
+          DiagLevel == DiagnosticsEngine::Fatal) {
       if (++NumFailures == 1)
         Diag(Info.getLocation(), diag::note_fixit_unfixed_error);
     }

@@ -60,7 +60,7 @@ static CGCXXABI &createCXXABI(CodeGenModule &CGM) {
 
 CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
                              llvm::Module &M, const llvm::TargetData &TD,
-                             Diagnostic &diags)
+                             DiagnosticsEngine &diags)
   : Context(C), Features(C.getLangOptions()), CodeGenOpts(CGO), TheModule(M),
     TheTargetData(TD), TheTargetCodeGenInfo(0), Diags(diags),
     ABI(createCXXABI(*this)), 
@@ -178,7 +178,7 @@ bool CodeGenModule::isTargetDarwin() const {
 }
 
 void CodeGenModule::Error(SourceLocation loc, StringRef error) {
-  unsigned diagID = getDiags().getCustomDiagID(Diagnostic::Error, error);
+  unsigned diagID = getDiags().getCustomDiagID(DiagnosticsEngine::Error, error);
   getDiags().Report(Context.getFullLoc(loc), diagID);
 }
 
@@ -188,7 +188,7 @@ void CodeGenModule::ErrorUnsupported(const Stmt *S, const char *Type,
                                      bool OmitOnError) {
   if (OmitOnError && getDiags().hasErrorOccurred())
     return;
-  unsigned DiagID = getDiags().getCustomDiagID(Diagnostic::Error,
+  unsigned DiagID = getDiags().getCustomDiagID(DiagnosticsEngine::Error,
                                                "cannot compile this %0 yet");
   std::string Msg = Type;
   getDiags().Report(Context.getFullLoc(S->getLocStart()), DiagID)
@@ -201,7 +201,7 @@ void CodeGenModule::ErrorUnsupported(const Decl *D, const char *Type,
                                      bool OmitOnError) {
   if (OmitOnError && getDiags().hasErrorOccurred())
     return;
-  unsigned DiagID = getDiags().getCustomDiagID(Diagnostic::Error,
+  unsigned DiagID = getDiags().getCustomDiagID(DiagnosticsEngine::Error,
                                                "cannot compile this %0 yet");
   std::string Msg = Type;
   getDiags().Report(Context.getFullLoc(D->getLocation()), DiagID) << Msg;

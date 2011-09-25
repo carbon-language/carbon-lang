@@ -520,7 +520,7 @@ public:
 inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
                                            DeclarationName N) {
   DB.AddTaggedVal(N.getAsOpaqueInteger(),
-                  Diagnostic::ak_declarationname);
+                  DiagnosticsEngine::ak_declarationname);
   return DB;
 }
 
@@ -529,7 +529,7 @@ inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
 inline const PartialDiagnostic &operator<<(const PartialDiagnostic &PD,
                                            DeclarationName N) {
   PD.AddTaggedVal(N.getAsOpaqueInteger(),
-                  Diagnostic::ak_declarationname);
+                  DiagnosticsEngine::ak_declarationname);
   return PD;
 }
 

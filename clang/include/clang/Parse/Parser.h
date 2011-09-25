@@ -99,7 +99,7 @@ class Parser : public CodeCompletionHandler {
   /// in the file. 
   Sema &Actions;
 
-  Diagnostic &Diags;
+  DiagnosticsEngine &Diags;
 
   /// ScopeCache - Cache scopes to reduce malloc traffic.
   enum { ScopeCacheSize = 16 };

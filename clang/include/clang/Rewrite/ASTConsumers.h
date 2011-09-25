@@ -20,7 +20,7 @@
 namespace clang {
 
 class ASTConsumer;
-class Diagnostic;
+class DiagnosticsEngine;
 class LangOptions;
 class Preprocessor;
 
@@ -28,7 +28,7 @@ class Preprocessor;
 // This is considered experimental, and only works with Apple's ObjC runtime.
 ASTConsumer *CreateObjCRewriter(const std::string &InFile,
                                 raw_ostream *OS,
-                                Diagnostic &Diags,
+                                DiagnosticsEngine &Diags,
                                 const LangOptions &LOpts,
                                 bool SilenceRewriteMacroWarning);
 

@@ -374,7 +374,7 @@ namespace clang {
     // Base case. FIXME: Remove once we can instantiate everything.
     Decl *VisitDecl(Decl *D) {
       unsigned DiagID = SemaRef.getDiagnostics().getCustomDiagID(
-                                                            Diagnostic::Error,
+                                                   DiagnosticsEngine::Error,
                                                    "cannot instantiate %0 yet");
       SemaRef.Diag(D->getLocation(), DiagID)
         << D->getDeclKindName();

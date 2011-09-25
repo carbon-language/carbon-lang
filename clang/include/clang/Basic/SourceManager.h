@@ -29,7 +29,7 @@
 
 namespace clang {
 
-class Diagnostic;
+class DiagnosticsEngine;
 class SourceManager;
 class FileManager;
 class FileEntry;
@@ -118,7 +118,7 @@ namespace SrcMgr {
     ///     will be emitted at.
     ///
     /// \param Invalid If non-NULL, will be set \c true if an error occurred.
-    const llvm::MemoryBuffer *getBuffer(Diagnostic &Diag,
+    const llvm::MemoryBuffer *getBuffer(DiagnosticsEngine &Diag,
                                         const SourceManager &SM,
                                         SourceLocation Loc = SourceLocation(),
                                         bool *Invalid = 0) const;
@@ -479,8 +479,8 @@ public:
 /// where the expanded token came from and the expansion location specifies
 /// where it was expanded.
 class SourceManager : public llvm::RefCountedBase<SourceManager> {
-  /// \brief Diagnostic object.
-  Diagnostic &Diag;
+  /// \brief DiagnosticsEngine object.
+  DiagnosticsEngine &Diag;
 
   FileManager &FileMgr;
 
@@ -575,12 +575,12 @@ class SourceManager : public llvm::RefCountedBase<SourceManager> {
   explicit SourceManager(const SourceManager&);
   void operator=(const SourceManager&);
 public:
-  SourceManager(Diagnostic &Diag, FileManager &FileMgr);
+  SourceManager(DiagnosticsEngine &Diag, FileManager &FileMgr);
   ~SourceManager();
 
   void clearIDTables();
 
-  Diagnostic &getDiagnostics() const { return Diag; }
+  DiagnosticsEngine &getDiagnostics() const { return Diag; }
 
   FileManager &getFileManager() const { return FileMgr; }
 

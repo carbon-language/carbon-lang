@@ -25,10 +25,10 @@ namespace {
 /// the sequence of events.
 class TextPathDiagnostics : public PathDiagnosticClient {
   const std::string OutputFile;
-  Diagnostic &Diag;
+  DiagnosticsEngine &Diag;
 
 public:
-  TextPathDiagnostics(const std::string& output, Diagnostic &diag)
+  TextPathDiagnostics(const std::string& output, DiagnosticsEngine &diag)
     : OutputFile(output), Diag(diag) {}
 
   void HandlePathDiagnosticImpl(const PathDiagnostic* D);

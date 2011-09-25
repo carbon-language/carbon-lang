@@ -1590,7 +1590,7 @@ llvm::DIType CGDebugInfo::CreateTypeNode(QualType Ty,
   }
   
   assert(Diag && "Fall through without a diagnostic?");
-  unsigned DiagID = CGM.getDiags().getCustomDiagID(Diagnostic::Error,
+  unsigned DiagID = CGM.getDiags().getCustomDiagID(DiagnosticsEngine::Error,
                                "debug information for %0 is not yet supported");
   CGM.getDiags().Report(DiagID)
     << Diag;

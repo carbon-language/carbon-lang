@@ -34,7 +34,7 @@ class AnalysisManager : public BugReporterData {
   LocationContextManager LocCtxMgr;
 
   ASTContext &Ctx;
-  Diagnostic &Diags;
+  DiagnosticsEngine &Diags;
   const LangOptions &LangInfo;
 
   llvm::OwningPtr<PathDiagnosticClient> PD;
@@ -75,7 +75,7 @@ class AnalysisManager : public BugReporterData {
   bool EagerlyTrimEGraph;
 
 public:
-  AnalysisManager(ASTContext &ctx, Diagnostic &diags, 
+  AnalysisManager(ASTContext &ctx, DiagnosticsEngine &diags, 
                   const LangOptions &lang, PathDiagnosticClient *pd,
                   StoreManagerCreator storemgr,
                   ConstraintManagerCreator constraintmgr, 
@@ -118,7 +118,7 @@ public:
     return getASTContext().getSourceManager();
   }
 
-  virtual Diagnostic &getDiagnostic() {
+  virtual DiagnosticsEngine &getDiagnostic() {
     return Diags;
   }
 
