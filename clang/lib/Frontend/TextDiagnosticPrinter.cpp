@@ -292,23 +292,26 @@ static SourceLocation getImmediateMacroCalleeLoc(const SourceManager &SM,
 
 namespace {
 
-/// \brief Class to encapsulate the logic for printing a caret diagnostic
-/// message.
+/// \brief Class to encapsulate the logic for formatting and printing a textual
+/// diagnostic message.
 ///
-/// This class provides an interface for building and emitting a caret
-/// diagnostic, including all of the macro backtrace caret diagnostics, FixIt
-/// Hints, and code snippets. In the presence of macros this turns into
-/// a recursive process and so the class provides common state across the
-/// emission of a particular diagnostic, while each invocation of \see Emit()
-/// walks down the macro stack.
+/// This class provides an interface for building and emitting a textual
+/// diagnostic, including all of the macro backtraces, caret diagnostics, FixIt
+/// Hints, and code snippets. In the presence of macros this involves
+/// a recursive process, synthesizing notes for each macro expansion.
 ///
-/// This logic assumes that the core diagnostic location and text has already
-/// been emitted and focuses on emitting the pretty caret display and macro
-/// backtrace following that.
+/// The purpose of this class is to isolate the implementation of printing
+/// beautiful text diagnostics from any particular interfaces. The Clang
+/// DiagnosticClient is implemented through this class as is diagnostic
+/// printing coming out of libclang.
 ///
-/// FIXME: Hoist helper routines specific to caret diagnostics into class
-/// methods to reduce paramater passing churn.
-class CaretDiagnostic {
+/// A brief worklist:
+/// FIXME: Sink the printing of the diagnostic message itself into this class.
+/// FIXME: Sink the printing of the include stack into this class.
+/// FIXME: Remove the TextDiagnosticPrinter as an input.
+/// FIXME: Sink the recursive printing of template instantiations into this
+/// class.
+class TextDiagnostic {
   TextDiagnosticPrinter &Printer;
   raw_ostream &OS;
   const SourceManager &SM;
@@ -316,7 +319,7 @@ class CaretDiagnostic {
   const DiagnosticOptions &DiagOpts;
 
 public:
-  CaretDiagnostic(TextDiagnosticPrinter &Printer,
+  TextDiagnostic(TextDiagnosticPrinter &Printer,
                   raw_ostream &OS,
                   const SourceManager &SM,
                   const LangOptions &LangOpts,
@@ -769,10 +772,10 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(
   assert(DiagOpts && "Unexpected diagnostic without options set");
 
   // FIXME: Remove this method and have clients directly build and call Emit on
-  // the CaretDiagnostic object.
-  CaretDiagnostic CaretDiag(*this, OS, SM, *LangOpts, *DiagOpts);
+  // the TextDiagnostic object.
+  TextDiagnostic TextDiag(*this, OS, SM, *LangOpts, *DiagOpts);
   unsigned MacroDepth = 0;
-  CaretDiag.Emit(Loc, Ranges, Hints, MacroDepth);
+  TextDiag.Emit(Loc, Ranges, Hints, MacroDepth);
 }
 
 /// \brief Skip over whitespace in the string, starting at the given
