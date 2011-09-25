@@ -2987,8 +2987,13 @@ SDValue DAGTypeLegalizer::PromoteIntOp_EXTRACT_VECTOR_ELT(SDNode *N) {
   SDValue Ext = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl,
     V0->getValueType(0).getScalarType(), V0, V1);
 
-  return DAG.getNode(ISD::TRUNCATE, dl, N->getValueType(0), Ext);
-
+  // EXTRACT_VECTOR_ELT can return types which are wider than the incoming
+  // element types (see PromoteIntRes_EXTRACT_VECTOR_ELT). If this is the case
+  // then we need to expand the outgoing value and not truncate it.
+  bool trunc = (N->getValueType(0).getSizeInBits() <
+                Ext.getValueType().getSizeInBits());
+  return DAG.getNode(trunc ? ISD::TRUNCATE : ISD::ANY_EXTEND,
+                     dl, N->getValueType(0), Ext);
 }
 
 SDValue DAGTypeLegalizer::PromoteIntOp_CONCAT_VECTORS(SDNode *N) {
