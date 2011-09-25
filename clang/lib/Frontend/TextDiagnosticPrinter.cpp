@@ -322,12 +322,9 @@ public:
                   const SourceManager &SM,
                   const LangOptions &LangOpts,
                   const DiagnosticOptions &DiagOpts,
-                  unsigned Columns,
-                  unsigned MacroSkipStart,
-                  unsigned MacroSkipEnd)
+                  unsigned Columns)
     : Printer(Printer), OS(OS), SM(SM), LangOpts(LangOpts), DiagOpts(DiagOpts),
-      Columns(Columns), MacroSkipStart(MacroSkipStart),
-      MacroSkipEnd(MacroSkipEnd) {
+      Columns(Columns), MacroSkipStart(0), MacroSkipEnd(0) {
   }
 
   /// \brief Emit the caret diagnostic text.
@@ -341,22 +338,24 @@ public:
   /// \param Loc The location for this caret.
   /// \param Ranges The underlined ranges for this code snippet.
   /// \param Hints The FixIt hints active for this diagnostic.
+  /// \param MacroSkipEnd The depth to stop skipping macro expansions.
   /// \param OnMacroInst The current depth of the macro expansion stack.
   void Emit(SourceLocation Loc,
             SmallVectorImpl<CharSourceRange>& Ranges,
             ArrayRef<FixItHint> Hints,
+            unsigned &MacroDepth,
             unsigned OnMacroInst = 0) {
     assert(!Loc.isInvalid() && "must have a valid source location here");
 
     // If this is a file source location, directly emit the source snippet and
-    // caret line.
-    if (Loc.isFileID())
-      return EmitSnippetAndCaret(Loc, Ranges, Hints);
+    // caret line. Also record the macro depth reached.
+    if (Loc.isFileID()) {
+      assert(MacroDepth == 0 && "We shouldn't hit a leaf node twice!");
+      MacroDepth = OnMacroInst;
+      EmitSnippetAndCaret(Loc, Ranges, Hints);
+      return;
+    }
     // Otherwise recurse through each macro expansion layer.
-
-    // Whether to suppress printing this macro expansion.
-    bool Suppressed = (OnMacroInst >= MacroSkipStart &&
-                       OnMacroInst < MacroSkipEnd);
 
     // When processing macros, skip over the expansions leading up to
     // a macro argument, and trace the argument's expansion stack instead.
@@ -365,10 +364,21 @@ public:
     SourceLocation OneLevelUp = getImmediateMacroCallerLoc(SM, Loc);
 
     // FIXME: Map ranges?
-    Emit(OneLevelUp, Ranges, Hints, OnMacroInst + 1);
+    Emit(OneLevelUp, Ranges, Hints, MacroDepth, OnMacroInst + 1);
 
     // Map the location.
     Loc = getImmediateMacroCalleeLoc(SM, Loc);
+
+    unsigned MacroSkipStart = 0, MacroSkipEnd = 0;
+    if (MacroDepth > DiagOpts.MacroBacktraceLimit) {
+      MacroSkipStart = DiagOpts.MacroBacktraceLimit / 2 +
+        DiagOpts.MacroBacktraceLimit % 2;
+      MacroSkipEnd = MacroDepth - DiagOpts.MacroBacktraceLimit / 2;
+    }
+
+    // Whether to suppress printing this macro expansion.
+    bool Suppressed = (OnMacroInst >= MacroSkipStart &&
+                       OnMacroInst < MacroSkipEnd);
 
     // Map the ranges.
     for (SmallVectorImpl<CharSourceRange>::iterator I = Ranges.begin(),
@@ -757,16 +767,15 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(
     SmallVectorImpl<CharSourceRange>& Ranges,
     const SourceManager &SM,
     ArrayRef<FixItHint> Hints,
-    unsigned Columns,
-    unsigned MacroSkipStart,
-    unsigned MacroSkipEnd) {
+    unsigned Columns) {
   assert(LangOpts && "Unexpected diagnostic outside source file processing");
   assert(DiagOpts && "Unexpected diagnostic without options set");
+
   // FIXME: Remove this method and have clients directly build and call Emit on
   // the CaretDiagnostic object.
-  CaretDiagnostic CaretDiag(*this, OS, SM, *LangOpts, *DiagOpts,
-                            Columns, MacroSkipStart, MacroSkipEnd);
-  CaretDiag.Emit(Loc, Ranges, Hints);
+  CaretDiagnostic CaretDiag(*this, OS, SM, *LangOpts, *DiagOpts, Columns);
+  unsigned MacroDepth = 0;
+  CaretDiag.Emit(Loc, Ranges, Hints, MacroDepth);
 }
 
 /// \brief Skip over whitespace in the string, starting at the given
@@ -1235,31 +1244,10 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
         Ranges.push_back(Hint.RemoveRange);
     }
 
-    const SourceManager &SM = LastLoc.getManager();
-    unsigned MacroInstSkipStart = 0, MacroInstSkipEnd = 0;
-    if (DiagOpts && DiagOpts->MacroBacktraceLimit && !LastLoc.isFileID()) {
-      // Compute the length of the macro-expansion backtrace, so that we
-      // can establish which steps in the macro backtrace we'll skip.
-      SourceLocation Loc = LastLoc;
-      unsigned Depth = 0;
-      do {
-        ++Depth;
-        Loc = skipToMacroArgExpansion(SM, Loc);
-        Loc = getImmediateMacroCallerLoc(SM, Loc);
-      } while (!Loc.isFileID());
-      
-      if (Depth > DiagOpts->MacroBacktraceLimit) {
-        MacroInstSkipStart = DiagOpts->MacroBacktraceLimit / 2 + 
-                             DiagOpts->MacroBacktraceLimit % 2;
-        MacroInstSkipEnd = Depth - DiagOpts->MacroBacktraceLimit / 2;
-      }
-    }        
-    
     EmitCaretDiagnostic(LastLoc, Ranges, LastLoc.getManager(),
                         llvm::makeArrayRef(Info.getFixItHints(),
                                            Info.getNumFixItHints()),
-                        DiagOpts->MessageLength,
-                        MacroInstSkipStart, MacroInstSkipEnd);
+                        DiagOpts->MessageLength);
   }
 
   OS.flush();

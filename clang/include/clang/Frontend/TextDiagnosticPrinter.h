@@ -68,8 +68,7 @@ private:
   void EmitCaretDiagnostic(SourceLocation Loc,
                            SmallVectorImpl<CharSourceRange> &Ranges,
                            const SourceManager &SM,
-                           ArrayRef<FixItHint> Hints, unsigned Columns,
-                           unsigned MacroSkipStart, unsigned MacroSkipEnd);
+                           ArrayRef<FixItHint> Hints, unsigned Columns);
   
 };
 
