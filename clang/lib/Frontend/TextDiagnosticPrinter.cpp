@@ -348,72 +348,85 @@ public:
             unsigned OnMacroInst = 0) {
     assert(!Loc.isInvalid() && "must have a valid source location here");
 
-    // If this is a macro ID, first emit information about where this was
-    // expanded (recursively) then emit information about where the token was
-    // spelled from.
-    if (!Loc.isFileID()) {
-      // Whether to suppress printing this macro expansion.
-      bool Suppressed 
-        = OnMacroInst >= MacroSkipStart && OnMacroInst < MacroSkipEnd;
+    // If this is a file source location, directly emit the source snippet and
+    // caret line.
+    if (Loc.isFileID())
+      return EmitSnippetAndCaret(Loc, Ranges, Hints);
+    // Otherwise recurse through each macro expansion layer.
 
-      // When processing macros, skip over the expansions leading up to
-      // a macro argument, and trace the argument's expansion stack instead.
-      Loc = skipToMacroArgExpansion(SM, Loc);
+    // Whether to suppress printing this macro expansion.
+    bool Suppressed = (OnMacroInst >= MacroSkipStart &&
+                       OnMacroInst < MacroSkipEnd);
 
-      SourceLocation OneLevelUp = getImmediateMacroCallerLoc(SM, Loc);
+    // When processing macros, skip over the expansions leading up to
+    // a macro argument, and trace the argument's expansion stack instead.
+    Loc = skipToMacroArgExpansion(SM, Loc);
 
-      // FIXME: Map ranges?
-      Emit(OneLevelUp, Ranges, Hints, OnMacroInst + 1);
+    SourceLocation OneLevelUp = getImmediateMacroCallerLoc(SM, Loc);
 
-      // Map the location.
-      Loc = getImmediateMacroCalleeLoc(SM, Loc);
+    // FIXME: Map ranges?
+    Emit(OneLevelUp, Ranges, Hints, OnMacroInst + 1);
 
-      // Map the ranges.
-      for (SmallVectorImpl<CharSourceRange>::iterator I = Ranges.begin(),
-                                                      E = Ranges.end();
-           I != E; ++I) {
-        SourceLocation Start = I->getBegin(), End = I->getEnd();
-        if (Start.isMacroID())
-          I->setBegin(getImmediateMacroCalleeLoc(SM, Start));
-        if (End.isMacroID())
-          I->setEnd(getImmediateMacroCalleeLoc(SM, End));
-      }
+    // Map the location.
+    Loc = getImmediateMacroCalleeLoc(SM, Loc);
 
-      if (!Suppressed) {
-        // Don't print recursive expansion notes from an expansion note.
-        Loc = SM.getSpellingLoc(Loc);
+    // Map the ranges.
+    for (SmallVectorImpl<CharSourceRange>::iterator I = Ranges.begin(),
+                                                    E = Ranges.end();
+         I != E; ++I) {
+      SourceLocation Start = I->getBegin(), End = I->getEnd();
+      if (Start.isMacroID())
+        I->setBegin(getImmediateMacroCalleeLoc(SM, Start));
+      if (End.isMacroID())
+        I->setEnd(getImmediateMacroCalleeLoc(SM, End));
+    }
 
-        // Get the pretty name, according to #line directives etc.
-        PresumedLoc PLoc = SM.getPresumedLoc(Loc);
-        if (PLoc.isInvalid())
-          return;
+    if (!Suppressed) {
+      // Don't print recursive expansion notes from an expansion note.
+      Loc = SM.getSpellingLoc(Loc);
 
-        // If this diagnostic is not in the main file, print out the
-        // "included from" lines.
-        Printer.PrintIncludeStack(Diagnostic::Note, PLoc.getIncludeLoc(), SM);
-
-        if (DiagOpts.ShowLocation) {
-          // Emit the file/line/column that this expansion came from.
-          OS << PLoc.getFilename() << ':' << PLoc.getLine() << ':';
-          if (DiagOpts.ShowColumn)
-            OS << PLoc.getColumn() << ':';
-          OS << ' ';
-        }
-        OS << "note: expanded from:\n";
-
-        Emit(Loc, Ranges, ArrayRef<FixItHint>(), OnMacroInst + 1);
+      // Get the pretty name, according to #line directives etc.
+      PresumedLoc PLoc = SM.getPresumedLoc(Loc);
+      if (PLoc.isInvalid())
         return;
-      }
 
-      if (OnMacroInst == MacroSkipStart) {
-        // Tell the user that we've skipped contexts.
-        OS << "note: (skipping " << (MacroSkipEnd - MacroSkipStart) 
-        << " expansions in backtrace; use -fmacro-backtrace-limit=0 to see "
-        "all)\n";
-      }
+      // If this diagnostic is not in the main file, print out the
+      // "included from" lines.
+      Printer.PrintIncludeStack(Diagnostic::Note, PLoc.getIncludeLoc(), SM);
 
+      if (DiagOpts.ShowLocation) {
+        // Emit the file/line/column that this expansion came from.
+        OS << PLoc.getFilename() << ':' << PLoc.getLine() << ':';
+        if (DiagOpts.ShowColumn)
+          OS << PLoc.getColumn() << ':';
+        OS << ' ';
+      }
+      OS << "note: expanded from:\n";
+
+      EmitSnippetAndCaret(Loc, Ranges, ArrayRef<FixItHint>());
       return;
     }
+
+    if (OnMacroInst == MacroSkipStart) {
+      // Tell the user that we've skipped contexts.
+      OS << "note: (skipping " << (MacroSkipEnd - MacroSkipStart) 
+      << " expansions in backtrace; use -fmacro-backtrace-limit=0 to see "
+      "all)\n";
+    }
+  }
+
+  /// \brief Emit a code snippet and caret line.
+  ///
+  /// This routine emits a single line's code snippet and caret line..
+  ///
+  /// \param Loc The location for the caret.
+  /// \param Ranges The underlined ranges for this code snippet.
+  /// \param Hints The FixIt hints active for this diagnostic.
+  void EmitSnippetAndCaret(SourceLocation Loc,
+                           SmallVectorImpl<CharSourceRange>& Ranges,
+                           ArrayRef<FixItHint> Hints) {
+    assert(!Loc.isInvalid() && "must have a valid source location here");
+    assert(Loc.isFileID() && "must have a file location here");
 
     // Decompose the location into a FID/Offset pair.
     std::pair<FileID, unsigned> LocInfo = SM.getDecomposedLoc(Loc);
