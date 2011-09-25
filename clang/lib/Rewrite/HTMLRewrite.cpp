@@ -441,9 +441,9 @@ void html::SyntaxHighlight(Rewriter &R, FileID FID, const Preprocessor &PP) {
 }
 
 namespace {
-/// IgnoringDiagClient - This is a diagnostic client that just ignores all
+/// IgnoringDiagConsumer - This is a diagnostic client that just ignores all
 /// diags.
-class IgnoringDiagClient : public DiagnosticConsumer {
+class IgnoringDiagConsumer : public DiagnosticConsumer {
   void HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
                         const DiagnosticInfo &Info) {
     // Just ignore it.
@@ -494,7 +494,7 @@ void html::HighlightMacros(Rewriter &R, FileID FID, const Preprocessor& PP) {
   // Temporarily change the diagnostics object so that we ignore any generated
   // diagnostics from this pass.
   DiagnosticsEngine TmpDiags(PP.getDiagnostics().getDiagnosticIDs(),
-                      new IgnoringDiagClient);
+                      new IgnoringDiagConsumer);
 
   // FIXME: This is a huge hack; we reuse the input preprocessor because we want
   // its state, but we aren't actually changing it (we hope). This should really
