@@ -88,11 +88,11 @@ bool CapturedDiagList::hasErrors() const {
 
 namespace {
 
-class CaptureDiagnosticClient : public DiagnosticConsumer {
+class CaptureDiagnosticConsumer : public DiagnosticConsumer {
   DiagnosticsEngine &Diags;
   CapturedDiagList &CapturedDiags;
 public:
-  CaptureDiagnosticClient(DiagnosticsEngine &diags,
+  CaptureDiagnosticConsumer(DiagnosticsEngine &diags,
                           CapturedDiagList &capturedDiags)
     : Diags(diags), CapturedDiags(capturedDiags) { }
 
@@ -236,7 +236,7 @@ bool arcmt::checkForManualIssues(CompilerInvocation &origCI,
       new DiagnosticsEngine(DiagID, DiagClient, /*ShouldOwnClient=*/false));
 
   // Filter of all diagnostics.
-  CaptureDiagnosticClient errRec(*Diags, capturedDiags);
+  CaptureDiagnosticConsumer errRec(*Diags, capturedDiags);
   Diags->setClient(&errRec, /*ShouldOwnClient=*/false);
 
   llvm::OwningPtr<ASTUnit> Unit(
@@ -496,7 +496,7 @@ bool MigrationProcess::applyTransform(TransformFn trans,
       new DiagnosticsEngine(DiagID, DiagClient, /*ShouldOwnClient=*/false));
 
   // Filter of all diagnostics.
-  CaptureDiagnosticClient errRec(*Diags, capturedDiags);
+  CaptureDiagnosticConsumer errRec(*Diags, capturedDiags);
   Diags->setClient(&errRec, /*ShouldOwnClient=*/false);
 
   llvm::OwningPtr<ARCMTMacroTrackerAction> ASTAction;
