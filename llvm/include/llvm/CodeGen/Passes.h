@@ -132,11 +132,10 @@ namespace llvm {
   ///
   FunctionPass *createPrologEpilogCodeInserter();
 
-  /// LowerSubregs Pass - This pass lowers subregs to register-register copies
-  /// which yields suboptimal, but correct code if the register allocator
-  /// cannot coalesce all subreg operations during allocation.
+  /// ExpandPostRAPseudos Pass - This pass expands pseudo instructions after
+  /// register allocation.
   ///
-  FunctionPass *createLowerSubregsPass();
+  FunctionPass *createExpandPostRAPseudosPass();
 
   /// createPostRAScheduler - This pass performs post register allocation
   /// scheduling.

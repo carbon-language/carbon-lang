@@ -1,4 +1,4 @@
-//===-- LowerSubregs.cpp - Subregister Lowering instruction pass ----------===//
+//===-- ExpandPostRAPseudos.cpp - Pseudo instruction expansion pass -------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,14 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines a MachineFunction pass which runs after register
-// allocation that turns subreg insert/extract instructions into register
-// copies, as needed. This ensures correct codegen even if the coalescer
-// isn't able to remove all subreg instructions.
+// This file defines a pass that expands COPY and SUBREG_TO_REG pseudo
+// instructions after register allocation.
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "lowersubregs"
+#define DEBUG_TYPE "postrapseudos"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Function.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -29,52 +27,51 @@
 using namespace llvm;
 
 namespace {
-  struct LowerSubregsInstructionPass : public MachineFunctionPass {
-  private:
-    const TargetRegisterInfo *TRI;
-    const TargetInstrInfo *TII;
+struct ExpandPostRA : public MachineFunctionPass {
+private:
+  const TargetRegisterInfo *TRI;
+  const TargetInstrInfo *TII;
 
-  public:
-    static char ID; // Pass identification, replacement for typeid
-    LowerSubregsInstructionPass() : MachineFunctionPass(ID) {}
+public:
+  static char ID; // Pass identification, replacement for typeid
+  ExpandPostRA() : MachineFunctionPass(ID) {}
 
-    const char *getPassName() const {
-      return "Subregister lowering instruction pass";
-    }
+  const char *getPassName() const {
+    return "Post-RA pseudo instruction expansion pass";
+  }
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.setPreservesCFG();
-      AU.addPreservedID(MachineLoopInfoID);
-      AU.addPreservedID(MachineDominatorsID);
-      MachineFunctionPass::getAnalysisUsage(AU);
-    }
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.setPreservesCFG();
+    AU.addPreservedID(MachineLoopInfoID);
+    AU.addPreservedID(MachineDominatorsID);
+    MachineFunctionPass::getAnalysisUsage(AU);
+  }
 
-    /// runOnMachineFunction - pass entry point
-    bool runOnMachineFunction(MachineFunction&);
+  /// runOnMachineFunction - pass entry point
+  bool runOnMachineFunction(MachineFunction&);
 
-  private:
-    bool LowerSubregToReg(MachineInstr *MI);
-    bool LowerCopy(MachineInstr *MI);
+private:
+  bool LowerSubregToReg(MachineInstr *MI);
+  bool LowerCopy(MachineInstr *MI);
 
-    void TransferDeadFlag(MachineInstr *MI, unsigned DstReg,
-                          const TargetRegisterInfo *TRI);
-    void TransferImplicitDefs(MachineInstr *MI);
-  };
+  void TransferDeadFlag(MachineInstr *MI, unsigned DstReg,
+                        const TargetRegisterInfo *TRI);
+  void TransferImplicitDefs(MachineInstr *MI);
+};
+} // end anonymous namespace
 
-  char LowerSubregsInstructionPass::ID = 0;
-}
+char ExpandPostRA::ID = 0;
 
-FunctionPass *llvm::createLowerSubregsPass() {
-  return new LowerSubregsInstructionPass();
+FunctionPass *llvm::createExpandPostRAPseudosPass() {
+  return new ExpandPostRA();
 }
 
 /// TransferDeadFlag - MI is a pseudo-instruction with DstReg dead,
 /// and the lowered replacement instructions immediately precede it.
 /// Mark the replacement instructions with the dead flag.
 void
-LowerSubregsInstructionPass::TransferDeadFlag(MachineInstr *MI,
-                                              unsigned DstReg,
-                                              const TargetRegisterInfo *TRI) {
+ExpandPostRA::TransferDeadFlag(MachineInstr *MI, unsigned DstReg,
+                               const TargetRegisterInfo *TRI) {
   for (MachineBasicBlock::iterator MII =
         prior(MachineBasicBlock::iterator(MI)); ; --MII) {
     if (MII->addRegisterDead(DstReg, TRI))
@@ -88,7 +85,7 @@ LowerSubregsInstructionPass::TransferDeadFlag(MachineInstr *MI,
 /// replacement instructions immediately precede it.  Copy any implicit-def
 /// operands from MI to the replacement instruction.
 void
-LowerSubregsInstructionPass::TransferImplicitDefs(MachineInstr *MI) {
+ExpandPostRA::TransferImplicitDefs(MachineInstr *MI) {
   MachineBasicBlock::iterator CopyMI = MI;
   --CopyMI;
 
@@ -100,7 +97,7 @@ LowerSubregsInstructionPass::TransferImplicitDefs(MachineInstr *MI) {
   }
 }
 
-bool LowerSubregsInstructionPass::LowerSubregToReg(MachineInstr *MI) {
+bool ExpandPostRA::LowerSubregToReg(MachineInstr *MI) {
   MachineBasicBlock *MBB = MI->getParent();
   assert((MI->getOperand(0).isReg() && MI->getOperand(0).isDef()) &&
          MI->getOperand(1).isImm() &&
@@ -152,7 +149,7 @@ bool LowerSubregsInstructionPass::LowerSubregToReg(MachineInstr *MI) {
   return true;
 }
 
-bool LowerSubregsInstructionPass::LowerCopy(MachineInstr *MI) {
+bool ExpandPostRA::LowerCopy(MachineInstr *MI) {
   MachineOperand &DstMO = MI->getOperand(0);
   MachineOperand &SrcMO = MI->getOperand(1);
 
@@ -191,9 +188,9 @@ bool LowerSubregsInstructionPass::LowerCopy(MachineInstr *MI) {
 /// runOnMachineFunction - Reduce subregister inserts and extracts to register
 /// copies.
 ///
-bool LowerSubregsInstructionPass::runOnMachineFunction(MachineFunction &MF) {
+bool ExpandPostRA::runOnMachineFunction(MachineFunction &MF) {
   DEBUG(dbgs() << "Machine Function\n"
-               << "********** LOWERING SUBREG INSTRS **********\n"
+               << "********** EXPANDING POST-RA PSEUDO INSTRS **********\n"
                << "********** Function: "
                << MF.getFunction()->getName() << '\n');
   TRI = MF.getTarget().getRegisterInfo();

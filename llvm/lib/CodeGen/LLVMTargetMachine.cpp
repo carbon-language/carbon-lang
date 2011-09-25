@@ -444,8 +444,8 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
   if (addPostRegAlloc(PM, OptLevel))
     printAndVerify(PM, "After PostRegAlloc passes");
 
-  PM.add(createLowerSubregsPass());
-  printAndVerify(PM, "After LowerSubregs");
+  PM.add(createExpandPostRAPseudosPass());
+  printAndVerify(PM, "After ExpandPostRAPseudos");
 
   // Insert prolog/epilog code.  Eliminate abstract frame index references...
   PM.add(createPrologEpilogCodeInserter());
