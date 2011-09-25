@@ -1615,8 +1615,10 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
     }
 
     if (Field == FieldEnd) {
-      if (VerifyOnly)
+      if (VerifyOnly) {
+        ++Index;
         return true; // No typo correction when just trying this out.
+      }
 
       // There was no normal field in the struct with the designated
       // name. Perform another lookup for this name, which may find
@@ -1647,6 +1649,7 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
             << FixItHint::CreateReplacement(D->getFieldLoc(), CorrectedStr);
           SemaRef.Diag(ReplacementField->getLocation(),
                        diag::note_previous_decl) << CorrectedQuotedStr;
+          hadError = true;
         } else {
           SemaRef.Diag(D->getFieldLoc(), diag::err_field_designator_unknown)
             << FieldName << CurrentObjectType;
