@@ -35,7 +35,7 @@ VerifyDiagnosticsClient::~VerifyDiagnosticsClient() {
     delete PrimaryClient;
 }
 
-// DiagnosticClient interface.
+// DiagnosticConsumer interface.
 
 void VerifyDiagnosticsClient::BeginSourceFile(const LangOptions &LangOpts,
                                              const Preprocessor *PP) {
@@ -483,7 +483,7 @@ void VerifyDiagnosticsClient::CheckDiagnostics() {
 
   // Ensure any diagnostics go to the primary client.
   bool OwnsCurClient = Diags.ownsClient();
-  DiagnosticClient *CurClient = Diags.takeClient();
+  DiagnosticConsumer *CurClient = Diags.takeClient();
   Diags.setClient(PrimaryClient, false);
 
   // If we have a preprocessor, scan the source for expected diagnostic

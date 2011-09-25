@@ -88,7 +88,7 @@ bool CapturedDiagList::hasErrors() const {
 
 namespace {
 
-class CaptureDiagnosticClient : public DiagnosticClient {
+class CaptureDiagnosticClient : public DiagnosticConsumer {
   DiagnosticsEngine &Diags;
   CapturedDiagList &CapturedDiags;
 public:
@@ -214,7 +214,7 @@ static void emitPremigrationErrors(const CapturedDiagList &arcDiags,
 
 bool arcmt::checkForManualIssues(CompilerInvocation &origCI,
                                  StringRef Filename, InputKind Kind,
-                                 DiagnosticClient *DiagClient,
+                                 DiagnosticConsumer *DiagClient,
                                  bool emitPremigrationARCErrors,
                                  StringRef plistOut) {
   if (!origCI.getLangOpts().ObjC1)
@@ -271,7 +271,7 @@ bool arcmt::checkForManualIssues(CompilerInvocation &origCI,
 
   // After parsing of source files ended, we want to reuse the
   // diagnostics objects to emit further diagnostics.
-  // We call BeginSourceFile because DiagnosticClient requires that 
+  // We call BeginSourceFile because DiagnosticConsumer requires that 
   // diagnostics with source range information are emitted only in between
   // BeginSourceFile() and EndSourceFile().
   DiagClient->BeginSourceFile(Ctx.getLangOptions(), &Unit->getPreprocessor());
@@ -303,7 +303,7 @@ bool arcmt::checkForManualIssues(CompilerInvocation &origCI,
 
 static bool applyTransforms(CompilerInvocation &origCI,
                             StringRef Filename, InputKind Kind,
-                            DiagnosticClient *DiagClient,
+                            DiagnosticConsumer *DiagClient,
                             StringRef outputDir,
                             bool emitPremigrationARCErrors,
                             StringRef plistOut) {
@@ -347,14 +347,14 @@ static bool applyTransforms(CompilerInvocation &origCI,
 
 bool arcmt::applyTransformations(CompilerInvocation &origCI,
                                  StringRef Filename, InputKind Kind,
-                                 DiagnosticClient *DiagClient) {
+                                 DiagnosticConsumer *DiagClient) {
   return applyTransforms(origCI, Filename, Kind, DiagClient,
                          StringRef(), false, StringRef());
 }
 
 bool arcmt::migrateWithTemporaryFiles(CompilerInvocation &origCI,
                                       StringRef Filename, InputKind Kind,
-                                      DiagnosticClient *DiagClient,
+                                      DiagnosticConsumer *DiagClient,
                                       StringRef outputDir,
                                       bool emitPremigrationARCErrors,
                                       StringRef plistOut) {
@@ -366,7 +366,7 @@ bool arcmt::migrateWithTemporaryFiles(CompilerInvocation &origCI,
 bool arcmt::getFileRemappings(std::vector<std::pair<std::string,std::string> > &
                                   remap,
                               StringRef outputDir,
-                              DiagnosticClient *DiagClient) {
+                              DiagnosticConsumer *DiagClient) {
   assert(!outputDir.empty());
 
   llvm::IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
@@ -468,7 +468,7 @@ public:
 MigrationProcess::RewriteListener::~RewriteListener() { }
 
 MigrationProcess::MigrationProcess(const CompilerInvocation &CI,
-                                   DiagnosticClient *diagClient,
+                                   DiagnosticConsumer *diagClient,
                                    StringRef outputDir)
   : OrigCI(CI), DiagClient(diagClient) {
   if (!outputDir.empty()) {
@@ -524,7 +524,7 @@ bool MigrationProcess::applyTransform(TransformFn trans,
 
   // After parsing of source files ended, we want to reuse the
   // diagnostics objects to emit further diagnostics.
-  // We call BeginSourceFile because DiagnosticClient requires that 
+  // We call BeginSourceFile because DiagnosticConsumer requires that 
   // diagnostics with source range information are emitted only in between
   // BeginSourceFile() and EndSourceFile().
   DiagClient->BeginSourceFile(Ctx.getLangOptions(), &Unit->getPreprocessor());

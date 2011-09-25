@@ -21,7 +21,7 @@ using namespace clang;
 namespace {
 
 class DiagnosticOutputGetter {
-  class LastDiagnosticString : public DiagnosticClient {
+  class LastDiagnosticString : public DiagnosticConsumer {
     SmallString<64> LastDiagnostic;
   public:
     virtual void HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,

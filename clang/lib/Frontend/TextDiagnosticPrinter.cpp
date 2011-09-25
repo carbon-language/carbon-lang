@@ -1062,7 +1062,7 @@ void TextDiagnosticPrinter::EmitDiagnosticLoc(DiagnosticsEngine::Level Level,
 void TextDiagnosticPrinter::HandleDiagnostic(DiagnosticsEngine::Level Level,
                                              const DiagnosticInfo &Info) {
   // Default implementation (Warnings/errors count).
-  DiagnosticClient::HandleDiagnostic(Level, Info);
+  DiagnosticConsumer::HandleDiagnostic(Level, Info);
 
   // Keeps track of the the starting position of the location
   // information (e.g., "foo.c:10:4:") that precedes the error

@@ -30,7 +30,7 @@ class ASTConsumer;
 class ASTReader;
 class CodeCompleteConsumer;
 class DiagnosticsEngine;
-class DiagnosticClient;
+class DiagnosticConsumer;
 class ExternalASTSource;
 class FileManager;
 class FrontendAction;
@@ -260,7 +260,7 @@ public:
   /// setDiagnostics - Replace the current diagnostics engine.
   void setDiagnostics(DiagnosticsEngine *Value);
 
-  DiagnosticClient &getDiagnosticClient() const {
+  DiagnosticConsumer &getDiagnosticClient() const {
     assert(Diagnostics && Diagnostics->getClient() && 
            "Compiler instance has no diagnostic client!");
     return *Diagnostics->getClient();
@@ -461,7 +461,7 @@ public:
   /// \param ShouldOwnClient If Client is non-NULL, specifies whether 
   /// the diagnostic object should take ownership of the client.
   void createDiagnostics(int Argc, const char* const *Argv,
-                         DiagnosticClient *Client = 0,
+                         DiagnosticConsumer *Client = 0,
                          bool ShouldOwnClient = true);
 
   /// Create a DiagnosticsEngine object with a the TextDiagnosticPrinter.
@@ -471,7 +471,7 @@ public:
   /// logging information.
   ///
   /// If no diagnostic client is provided, this creates a
-  /// DiagnosticClient that is owned by the returned diagnostic
+  /// DiagnosticConsumer that is owned by the returned diagnostic
   /// object, if using directly the caller is responsible for
   /// releasing the returned DiagnosticsEngine's client eventually.
   ///
@@ -490,7 +490,7 @@ public:
   static llvm::IntrusiveRefCntPtr<DiagnosticsEngine> 
   createDiagnostics(const DiagnosticOptions &Opts, int Argc,
                     const char* const *Argv,
-                    DiagnosticClient *Client = 0,
+                    DiagnosticConsumer *Client = 0,
                     bool ShouldOwnClient = true,
                     const CodeGenOptions *CodeGenOpts = 0);
 

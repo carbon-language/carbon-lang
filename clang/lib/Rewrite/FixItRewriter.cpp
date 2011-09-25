@@ -81,7 +81,7 @@ bool FixItRewriter::IncludeInDiagnosticCounts() const {
 void FixItRewriter::HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
                                      const DiagnosticInfo &Info) {
   // Default implementation (Warnings/errors count).
-  DiagnosticClient::HandleDiagnostic(DiagLevel, Info);
+  DiagnosticConsumer::HandleDiagnostic(DiagLevel, Info);
 
   Client->HandleDiagnostic(DiagLevel, Info);
 

@@ -448,7 +448,7 @@ public:
   }
 };
 
-class StoredDiagnosticClient : public DiagnosticClient {
+class StoredDiagnosticClient : public DiagnosticConsumer {
   SmallVectorImpl<StoredDiagnostic> &StoredDiags;
   
 public:
@@ -465,7 +465,7 @@ public:
 class CaptureDroppedDiagnostics {
   DiagnosticsEngine &Diags;
   StoredDiagnosticClient Client;
-  DiagnosticClient *PreviousClient;
+  DiagnosticConsumer *PreviousClient;
 
 public:
   CaptureDroppedDiagnostics(bool RequestCapture, DiagnosticsEngine &Diags,
@@ -491,7 +491,7 @@ public:
 void StoredDiagnosticClient::HandleDiagnostic(DiagnosticsEngine::Level Level,
                                               const DiagnosticInfo &Info) {
   // Default implementation (Warnings/errors count).
-  DiagnosticClient::HandleDiagnostic(Level, Info);
+  DiagnosticConsumer::HandleDiagnostic(Level, Info);
 
   StoredDiags.push_back(StoredDiagnostic(Level, Info));
 }
@@ -514,7 +514,7 @@ void ASTUnit::ConfigureDiags(llvm::IntrusiveRefCntPtr<DiagnosticsEngine> &Diags,
     // No diagnostics engine was provided, so create our own diagnostics object
     // with the default options.
     DiagnosticOptions DiagOpts;
-    DiagnosticClient *Client = 0;
+    DiagnosticConsumer *Client = 0;
     if (CaptureDiagnostics)
       Client = new StoredDiagnosticClient(AST.StoredDiagnostics);
     Diags = CompilerInstance::createDiagnostics(DiagOpts, ArgEnd- ArgBegin, 

@@ -22,7 +22,7 @@ using namespace clang;
 void TextDiagnosticBuffer::HandleDiagnostic(DiagnosticsEngine::Level Level,
                                             const DiagnosticInfo &Info) {
   // Default implementation (Warnings/errors count).
-  DiagnosticClient::HandleDiagnostic(Level, Info);
+  DiagnosticConsumer::HandleDiagnostic(Level, Info);
 
   llvm::SmallString<100> Buf;
   Info.FormatDiagnostic(Buf);

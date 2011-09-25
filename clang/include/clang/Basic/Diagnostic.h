@@ -26,7 +26,7 @@
 #include <list>
 
 namespace clang {
-  class DiagnosticClient;
+  class DiagnosticConsumer;
   class DiagnosticBuilder;
   class IdentifierInfo;
   class DeclContext;
@@ -102,9 +102,9 @@ public:
 
 /// DiagnosticsEngine - This concrete class is used by the front-end to report
 /// problems and issues.  It massages the diagnostics (e.g. handling things like
-/// "report warnings as errors" and passes them off to the DiagnosticClient for
-/// reporting to the user. DiagnosticsEngine is tied to one translation unit and
-/// one SourceManager.
+/// "report warnings as errors" and passes them off to the DiagnosticConsumer
+/// for reporting to the user. DiagnosticsEngine is tied to one translation unit
+/// and one SourceManager.
 class DiagnosticsEngine : public llvm::RefCountedBase<DiagnosticsEngine> {
 public:
   /// Level - The level of the diagnostic, after it has been through mapping.
@@ -160,7 +160,7 @@ private:
                                    // 0 -> no limit.
   ExtensionHandling ExtBehavior; // Map extensions onto warnings or errors?
   llvm::IntrusiveRefCntPtr<DiagnosticIDs> Diags;
-  DiagnosticClient *Client;
+  DiagnosticConsumer *Client;
   bool OwnsDiagClient;
   SourceManager *SourceMgr;
 
@@ -305,7 +305,7 @@ private:
 public:
   explicit DiagnosticsEngine(
                       const llvm::IntrusiveRefCntPtr<DiagnosticIDs> &Diags,
-                      DiagnosticClient *client = 0,
+                      DiagnosticConsumer *client = 0,
                       bool ShouldOwnClient = true);
   ~DiagnosticsEngine();
 
@@ -313,15 +313,15 @@ public:
     return Diags;
   }
 
-  DiagnosticClient *getClient() { return Client; }
-  const DiagnosticClient *getClient() const { return Client; }
+  DiagnosticConsumer *getClient() { return Client; }
+  const DiagnosticConsumer *getClient() const { return Client; }
 
   /// \brief Determine whether this \c DiagnosticsEngine object own its client.
   bool ownsClient() const { return OwnsDiagClient; }
   
   /// \brief Return the current diagnostic client along with ownership of that
   /// client.
-  DiagnosticClient *takeClient() {
+  DiagnosticConsumer *takeClient() {
     OwnsDiagClient = false;
     return Client;
   }
@@ -352,7 +352,7 @@ public:
   ///
   /// \param ShouldOwnClient true if the diagnostic object should take
   /// ownership of \c client.
-  void setClient(DiagnosticClient *client, bool ShouldOwnClient = true);
+  void setClient(DiagnosticConsumer *client, bool ShouldOwnClient = true);
 
   /// setErrorLimit - Specify a limit for the number of errors we should
   /// emit before giving up.  Zero disables the limit.
@@ -501,7 +501,7 @@ public:
 
   /// \brief Based on the way the client configured the DiagnosticsEngine
   /// object, classify the specified diagnostic ID into a Level, consumable by
-  /// the DiagnosticClient.
+  /// the DiagnosticConsumer.
   ///
   /// \param Loc The source location we are interested in finding out the
   /// diagnostic state. Can be null in order to query the latest state.
@@ -1025,20 +1025,20 @@ public:
   unsigned fixit_size() const { return FixIts.size(); }
 };
 
-/// DiagnosticClient - This is an abstract interface implemented by clients of
+/// DiagnosticConsumer - This is an abstract interface implemented by clients of
 /// the front-end, which formats and prints fully processed diagnostics.
-class DiagnosticClient {
+class DiagnosticConsumer {
 protected:
   unsigned NumWarnings;       // Number of warnings reported
   unsigned NumErrors;         // Number of errors reported
   
 public:
-  DiagnosticClient() : NumWarnings(0), NumErrors(0) { }
+  DiagnosticConsumer() : NumWarnings(0), NumErrors(0) { }
 
   unsigned getNumErrors() const { return NumErrors; }
   unsigned getNumWarnings() const { return NumWarnings; }
 
-  virtual ~DiagnosticClient();
+  virtual ~DiagnosticConsumer();
 
   /// BeginSourceFile - Callback to inform the diagnostic client that processing
   /// of a source file is beginning.
@@ -1061,8 +1061,8 @@ public:
 
   /// IncludeInDiagnosticCounts - This method (whose default implementation
   /// returns true) indicates whether the diagnostics handled by this
-  /// DiagnosticClient should be included in the number of diagnostics reported
-  /// by DiagnosticsEngine.
+  /// DiagnosticConsumer should be included in the number of diagnostics
+  /// reported by DiagnosticsEngine.
   virtual bool IncludeInDiagnosticCounts() const;
 
   /// HandleDiagnostic - Handle this diagnostic, reporting it to the user or

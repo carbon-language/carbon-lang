@@ -36,7 +36,7 @@ public:
   bool FixWhatYouCan;
 };
 
-class FixItRewriter : public DiagnosticClient {
+class FixItRewriter : public DiagnosticConsumer {
   /// \brief The diagnostics machinery.
   DiagnosticsEngine &Diags;
 
@@ -46,7 +46,7 @@ class FixItRewriter : public DiagnosticClient {
 
   /// \brief The diagnostic client that performs the actual formatting
   /// of error messages.
-  DiagnosticClient *Client;
+  DiagnosticConsumer *Client;
 
   /// \brief Turn an input path into an output path. NULL implies overwriting
   /// the original.
@@ -86,7 +86,7 @@ public:
 
   /// IncludeInDiagnosticCounts - This method (whose default implementation
   /// returns true) indicates whether the diagnostics handled by this
-  /// DiagnosticClient should be included in the number of diagnostics
+  /// DiagnosticConsumer should be included in the number of diagnostics
   /// reported by DiagnosticsEngine.
   virtual bool IncludeInDiagnosticCounts() const;
 

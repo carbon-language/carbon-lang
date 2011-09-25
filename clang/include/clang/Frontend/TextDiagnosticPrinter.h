@@ -22,7 +22,7 @@ namespace clang {
 class DiagnosticOptions;
 class LangOptions;
 
-class TextDiagnosticPrinter : public DiagnosticClient {
+class TextDiagnosticPrinter : public DiagnosticConsumer {
   raw_ostream &OS;
   const LangOptions *LangOpts;
   const DiagnosticOptions *DiagOpts;

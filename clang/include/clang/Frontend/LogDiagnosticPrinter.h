@@ -19,7 +19,7 @@ namespace clang {
 class DiagnosticOptions;
 class LangOptions;
 
-class LogDiagnosticPrinter : public DiagnosticClient {
+class LogDiagnosticPrinter : public DiagnosticConsumer {
   struct DiagEntry {
     /// The primary message line of the diagnostic.
     std::string Message;

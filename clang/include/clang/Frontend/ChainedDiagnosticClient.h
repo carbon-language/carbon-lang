@@ -20,13 +20,13 @@ class LangOptions;
 /// go to the first client and then the second. The first diagnostic client
 /// should be the "primary" client, and will be used for computing whether the
 /// diagnostics should be included in counts.
-class ChainedDiagnosticClient : public DiagnosticClient {
-  llvm::OwningPtr<DiagnosticClient> Primary;
-  llvm::OwningPtr<DiagnosticClient> Secondary;
+class ChainedDiagnosticClient : public DiagnosticConsumer {
+  llvm::OwningPtr<DiagnosticConsumer> Primary;
+  llvm::OwningPtr<DiagnosticConsumer> Secondary;
 
 public:
-  ChainedDiagnosticClient(DiagnosticClient *_Primary,
-                          DiagnosticClient *_Secondary) {
+  ChainedDiagnosticClient(DiagnosticConsumer *_Primary,
+                          DiagnosticConsumer *_Secondary) {
     Primary.reset(_Primary);
     Secondary.reset(_Secondary);
   }
@@ -49,7 +49,7 @@ public:
   virtual void HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
                                 const DiagnosticInfo &Info) {
     // Default implementation (Warnings/errors count).
-    DiagnosticClient::HandleDiagnostic(DiagLevel, Info);
+    DiagnosticConsumer::HandleDiagnostic(DiagLevel, Info);
 
     Primary->HandleDiagnostic(DiagLevel, Info);
     Secondary->HandleDiagnostic(DiagLevel, Info);

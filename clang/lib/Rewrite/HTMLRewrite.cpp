@@ -443,7 +443,7 @@ void html::SyntaxHighlight(Rewriter &R, FileID FID, const Preprocessor &PP) {
 namespace {
 /// IgnoringDiagClient - This is a diagnostic client that just ignores all
 /// diags.
-class IgnoringDiagClient : public DiagnosticClient {
+class IgnoringDiagClient : public DiagnosticConsumer {
   void HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
                         const DiagnosticInfo &Info) {
     // Just ignore it.

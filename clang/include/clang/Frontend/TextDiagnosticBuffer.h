@@ -22,7 +22,7 @@ namespace clang {
 class Preprocessor;
 class SourceManager;
 
-class TextDiagnosticBuffer : public DiagnosticClient {
+class TextDiagnosticBuffer : public DiagnosticConsumer {
 public:
   typedef std::vector<std::pair<SourceLocation, std::string> > DiagList;
   typedef DiagList::iterator iterator;

@@ -35,7 +35,7 @@ static void DummyArgToStringFn(DiagnosticsEngine::ArgumentKind AK, intptr_t QT,
 
 DiagnosticsEngine::DiagnosticsEngine(
                        const llvm::IntrusiveRefCntPtr<DiagnosticIDs> &diags,
-                       DiagnosticClient *client, bool ShouldOwnClient)
+                       DiagnosticConsumer *client, bool ShouldOwnClient)
   : Diags(diags), Client(client), OwnsDiagClient(ShouldOwnClient),
     SourceMgr(0) {
   ArgToStringFn = DummyArgToStringFn;
@@ -62,7 +62,7 @@ DiagnosticsEngine::~DiagnosticsEngine() {
     delete Client;
 }
 
-void DiagnosticsEngine::setClient(DiagnosticClient *client,
+void DiagnosticsEngine::setClient(DiagnosticConsumer *client,
                                   bool ShouldOwnClient) {
   if (OwnsDiagClient && Client)
     delete Client;
@@ -245,7 +245,7 @@ void DiagnosticsEngine::Report(const StoredDiagnostic &storedDiag) {
          FE = storedDiag.fixit_end(); FI != FE; ++FI)
     FixItHints[i++] = *FI;
 
-  assert(Client && "DiagnosticClient not set!");
+  assert(Client && "DiagnosticConsumer not set!");
   Level DiagLevel = storedDiag.getLevel();
   DiagnosticInfo Info(this, storedDiag.getMessage());
   Client->HandleDiagnostic(DiagLevel, Info);
@@ -273,7 +273,7 @@ bool DiagnosticBuilder::Emit() {
   FlushCounts();
 
   // Process the diagnostic, sending the accumulated information to the
-  // DiagnosticClient.
+  // DiagnosticConsumer.
   bool Emitted = DiagObj->ProcessDiag();
 
   // Clear out the current diagnostic object.
@@ -291,9 +291,9 @@ bool DiagnosticBuilder::Emit() {
 }
 
 
-DiagnosticClient::~DiagnosticClient() {}
+DiagnosticConsumer::~DiagnosticConsumer() {}
 
-void DiagnosticClient::HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
+void DiagnosticConsumer::HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
                                         const DiagnosticInfo &Info) {
   if (!IncludeInDiagnosticCounts())
     return;
@@ -746,9 +746,9 @@ StoredDiagnostic::~StoredDiagnostic() { }
 
 /// IncludeInDiagnosticCounts - This method (whose default implementation
 ///  returns true) indicates whether the diagnostics handled by this
-///  DiagnosticClient should be included in the number of diagnostics
+///  DiagnosticConsumer should be included in the number of diagnostics
 ///  reported by DiagnosticsEngine.
-bool DiagnosticClient::IncludeInDiagnosticCounts() const { return true; }
+bool DiagnosticConsumer::IncludeInDiagnosticCounts() const { return true; }
 
 PartialDiagnostic::StorageAllocator::StorageAllocator() {
   for (unsigned I = 0; I != NumCached; ++I)

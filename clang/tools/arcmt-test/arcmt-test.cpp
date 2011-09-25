@@ -105,7 +105,7 @@ public:
 
 static bool checkForMigration(StringRef resourcesPath,
                               ArrayRef<const char *> Args) {
-  DiagnosticClient *DiagClient =
+  DiagnosticConsumer *DiagClient =
     new TextDiagnosticPrinter(llvm::errs(), DiagnosticOptions());
   llvm::IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
   llvm::IntrusiveRefCntPtr<DiagnosticsEngine> Diags(
@@ -152,7 +152,7 @@ static bool performTransformations(StringRef resourcesPath,
   if (checkForMigration(resourcesPath, Args))
     return true;
 
-  DiagnosticClient *DiagClient =
+  DiagnosticConsumer *DiagClient =
     new TextDiagnosticPrinter(llvm::errs(), DiagnosticOptions());
   llvm::IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
   llvm::IntrusiveRefCntPtr<DiagnosticsEngine> TopDiags(

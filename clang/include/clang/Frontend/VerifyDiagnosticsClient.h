@@ -62,10 +62,10 @@ class TextDiagnosticBuffer;
 ///   // expected-error-re {{variable has has type 'struct (.*)'}}
 ///   // expected-error-re {{variable has has type 'struct[[:space:]](.*)'}}
 ///
-class VerifyDiagnosticsClient : public DiagnosticClient {
+class VerifyDiagnosticsClient : public DiagnosticConsumer {
 public:
   DiagnosticsEngine &Diags;
-  DiagnosticClient *PrimaryClient;
+  DiagnosticConsumer *PrimaryClient;
   bool OwnsPrimaryClient;
   llvm::OwningPtr<TextDiagnosticBuffer> Buffer;
   Preprocessor *CurrentPreprocessor;

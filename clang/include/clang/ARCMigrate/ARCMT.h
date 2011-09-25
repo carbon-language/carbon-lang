@@ -15,7 +15,7 @@
 
 namespace clang {
   class ASTContext;
-  class DiagnosticClient;
+  class DiagnosticConsumer;
 
 namespace arcmt {
   class MigrationPass;
@@ -38,7 +38,7 @@ namespace arcmt {
 /// \returns false if no error is produced, true otherwise.
 bool checkForManualIssues(CompilerInvocation &CI,
                           StringRef Filename, InputKind Kind,
-                          DiagnosticClient *DiagClient,
+                          DiagnosticConsumer *DiagClient,
                           bool emitPremigrationARCErrors = false,
                           StringRef plistOut = StringRef());
 
@@ -48,7 +48,7 @@ bool checkForManualIssues(CompilerInvocation &CI,
 /// \returns false if no error is produced, true otherwise.
 bool applyTransformations(CompilerInvocation &origCI,
                           StringRef Filename, InputKind Kind,
-                          DiagnosticClient *DiagClient);
+                          DiagnosticConsumer *DiagClient);
 
 /// \brief Applies automatic modifications and produces temporary files
 /// and metadata into the \arg outputDir path.
@@ -63,7 +63,7 @@ bool applyTransformations(CompilerInvocation &origCI,
 /// \returns false if no error is produced, true otherwise.
 bool migrateWithTemporaryFiles(CompilerInvocation &origCI,
                                StringRef Filename, InputKind Kind,
-                               DiagnosticClient *DiagClient,
+                               DiagnosticConsumer *DiagClient,
                                StringRef outputDir,
                                bool emitPremigrationARCErrors,
                                StringRef plistOut);
@@ -74,7 +74,7 @@ bool migrateWithTemporaryFiles(CompilerInvocation &origCI,
 /// \returns false if no error is produced, true otherwise.
 bool getFileRemappings(std::vector<std::pair<std::string,std::string> > &remap,
                        StringRef outputDir,
-                       DiagnosticClient *DiagClient);
+                       DiagnosticConsumer *DiagClient);
 
 typedef void (*TransformFn)(MigrationPass &pass);
 
@@ -82,11 +82,11 @@ std::vector<TransformFn> getAllTransformations();
 
 class MigrationProcess {
   CompilerInvocation OrigCI;
-  DiagnosticClient *DiagClient;
+  DiagnosticConsumer *DiagClient;
   FileRemapper Remapper;
 
 public:
-  MigrationProcess(const CompilerInvocation &CI, DiagnosticClient *diagClient,
+  MigrationProcess(const CompilerInvocation &CI, DiagnosticConsumer *diagClient,
                    StringRef outputDir = StringRef());
 
   class RewriteListener {

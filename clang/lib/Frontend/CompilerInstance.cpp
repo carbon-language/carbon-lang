@@ -104,7 +104,7 @@ static void SetUpBuildDumpLog(const DiagnosticOptions &DiagOpts,
   (*OS) << '\n';
 
   // Chain in a diagnostic client which will log the diagnostics.
-  DiagnosticClient *Logger =
+  DiagnosticConsumer *Logger =
     new TextDiagnosticPrinter(*OS.take(), DiagOpts, /*OwnsOutputStream=*/true);
   Diags.setClient(new ChainedDiagnosticClient(Diags.takeClient(), Logger));
 }
@@ -140,7 +140,7 @@ static void SetUpDiagnosticLog(const DiagnosticOptions &DiagOpts,
 }
 
 void CompilerInstance::createDiagnostics(int Argc, const char* const *Argv,
-                                         DiagnosticClient *Client,
+                                         DiagnosticConsumer *Client,
                                          bool ShouldOwnClient) {
   Diagnostics = createDiagnostics(getDiagnosticOpts(), Argc, Argv, Client,
                                   ShouldOwnClient, &getCodeGenOpts());
@@ -149,7 +149,7 @@ void CompilerInstance::createDiagnostics(int Argc, const char* const *Argv,
 llvm::IntrusiveRefCntPtr<DiagnosticsEngine> 
 CompilerInstance::createDiagnostics(const DiagnosticOptions &Opts,
                                     int Argc, const char* const *Argv,
-                                    DiagnosticClient *Client,
+                                    DiagnosticConsumer *Client,
                                     bool ShouldOwnClient,
                                     const CodeGenOptions *CodeGenOpts) {
   llvm::IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());

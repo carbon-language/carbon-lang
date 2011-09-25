@@ -42,9 +42,9 @@ void LogDiagnosticPrinter::EndSourceFile() {
   // We emit all the diagnostics in EndSourceFile. However, we don't emit any
   // entry if no diagnostics were present.
   //
-  // Note that DiagnosticClient has no "end-of-compilation" callback, so we will
-  // miss any diagnostics which are emitted after and outside the translation
-  // unit processing.
+  // Note that DiagnosticConsumer has no "end-of-compilation" callback, so we
+  // will miss any diagnostics which are emitted after and outside the
+  // translation unit processing.
   if (Entries.empty())
     return;
 
@@ -96,7 +96,7 @@ void LogDiagnosticPrinter::EndSourceFile() {
 void LogDiagnosticPrinter::HandleDiagnostic(DiagnosticsEngine::Level Level,
                                             const DiagnosticInfo &Info) {
   // Default implementation (Warnings/errors count).
-  DiagnosticClient::HandleDiagnostic(Level, Info);
+  DiagnosticConsumer::HandleDiagnostic(Level, Info);
 
   // Initialize the main file name, if we haven't already fetched it.
   if (MainFilename.empty() && Info.hasSourceManager()) {
