@@ -763,21 +763,6 @@ private:
 
 } // end namespace
 
-void TextDiagnosticPrinter::EmitCaretDiagnostic(
-    SourceLocation Loc,
-    SmallVectorImpl<CharSourceRange>& Ranges,
-    const SourceManager &SM,
-    ArrayRef<FixItHint> Hints) {
-  assert(LangOpts && "Unexpected diagnostic outside source file processing");
-  assert(DiagOpts && "Unexpected diagnostic without options set");
-
-  // FIXME: Remove this method and have clients directly build and call Emit on
-  // the TextDiagnostic object.
-  TextDiagnostic TextDiag(*this, OS, SM, *LangOpts, *DiagOpts);
-  unsigned MacroDepth = 0;
-  TextDiag.Emit(Loc, Ranges, Hints, MacroDepth);
-}
-
 /// \brief Skip over whitespace in the string, starting at the given
 /// index.
 ///
@@ -1244,9 +1229,15 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
         Ranges.push_back(Hint.RemoveRange);
     }
 
-    EmitCaretDiagnostic(LastLoc, Ranges, LastLoc.getManager(),
-                        llvm::makeArrayRef(Info.getFixItHints(),
-                                           Info.getNumFixItHints()));
+    assert(LangOpts && "Unexpected diagnostic outside source file processing");
+    assert(DiagOpts && "Unexpected diagnostic without options set");
+
+    TextDiagnostic TextDiag(*this, OS, Info.getSourceManager(),
+                            *LangOpts, *DiagOpts);
+    unsigned MacroDepth = 0;
+    TextDiag.Emit(LastLoc, Ranges, llvm::makeArrayRef(Info.getFixItHints(),
+                                                      Info.getNumFixItHints()),
+                  MacroDepth);
   }
 
   OS.flush();

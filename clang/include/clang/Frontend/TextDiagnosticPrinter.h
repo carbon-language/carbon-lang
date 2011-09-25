@@ -64,12 +64,6 @@ private:
                          const DiagnosticInfo &Info,
                          const SourceManager &SM,
                          PresumedLoc PLoc);
-
-  void EmitCaretDiagnostic(SourceLocation Loc,
-                           SmallVectorImpl<CharSourceRange> &Ranges,
-                           const SourceManager &SM,
-                           ArrayRef<FixItHint> Hints);
-  
 };
 
 } // end namespace clang
