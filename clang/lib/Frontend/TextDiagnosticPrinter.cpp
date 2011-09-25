@@ -1059,6 +1059,33 @@ void TextDiagnosticPrinter::EmitDiagnosticLoc(DiagnosticsEngine::Level Level,
   OS << ' ';
 }
 
+static void PrintDiagnosticLevel(raw_ostream& OS,
+                                 DiagnosticsEngine::Level Level,
+                                 bool ShowColors) {
+  if (ShowColors) {
+    // Print diagnostic category in bold and color
+    switch (Level) {
+    case DiagnosticsEngine::Ignored:
+      llvm_unreachable("Invalid diagnostic type");
+    case DiagnosticsEngine::Note:    OS.changeColor(noteColor, true); break;
+    case DiagnosticsEngine::Warning: OS.changeColor(warningColor, true); break;
+    case DiagnosticsEngine::Error:   OS.changeColor(errorColor, true); break;
+    case DiagnosticsEngine::Fatal:   OS.changeColor(fatalColor, true); break;
+    }
+  }
+
+  switch (Level) {
+  case DiagnosticsEngine::Ignored: llvm_unreachable("Invalid diagnostic type");
+  case DiagnosticsEngine::Note:    OS << "note: "; break;
+  case DiagnosticsEngine::Warning: OS << "warning: "; break;
+  case DiagnosticsEngine::Error:   OS << "error: "; break;
+  case DiagnosticsEngine::Fatal:   OS << "fatal error: "; break;
+  }
+
+  if (ShowColors)
+    OS.resetColor();
+}
+
 void TextDiagnosticPrinter::HandleDiagnostic(DiagnosticsEngine::Level Level,
                                              const DiagnosticInfo &Info) {
   // Default implementation (Warnings/errors count).
@@ -1089,27 +1116,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(DiagnosticsEngine::Level Level,
       OS.resetColor();
   }
 
-  if (DiagOpts->ShowColors) {
-    // Print diagnostic category in bold and color
-    switch (Level) {
-    case DiagnosticsEngine::Ignored: llvm_unreachable("Invalid diagnostic type");
-    case DiagnosticsEngine::Note:    OS.changeColor(noteColor, true); break;
-    case DiagnosticsEngine::Warning: OS.changeColor(warningColor, true); break;
-    case DiagnosticsEngine::Error:   OS.changeColor(errorColor, true); break;
-    case DiagnosticsEngine::Fatal:   OS.changeColor(fatalColor, true); break;
-    }
-  }
-
-  switch (Level) {
-  case DiagnosticsEngine::Ignored: llvm_unreachable("Invalid diagnostic type");
-  case DiagnosticsEngine::Note:    OS << "note: "; break;
-  case DiagnosticsEngine::Warning: OS << "warning: "; break;
-  case DiagnosticsEngine::Error:   OS << "error: "; break;
-  case DiagnosticsEngine::Fatal:   OS << "fatal error: "; break;
-  }
-
-  if (DiagOpts->ShowColors)
-    OS.resetColor();
+  PrintDiagnosticLevel(OS, Level, DiagOpts->ShowColors);
 
   llvm::SmallString<100> OutStr;
   Info.FormatDiagnostic(OutStr);
