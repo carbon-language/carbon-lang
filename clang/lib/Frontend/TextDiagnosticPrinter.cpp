@@ -314,17 +314,14 @@ class CaretDiagnostic {
   const SourceManager &SM;
   const LangOptions &LangOpts;
   const DiagnosticOptions &DiagOpts;
-  const unsigned Columns, MacroSkipStart, MacroSkipEnd;
 
 public:
   CaretDiagnostic(TextDiagnosticPrinter &Printer,
                   raw_ostream &OS,
                   const SourceManager &SM,
                   const LangOptions &LangOpts,
-                  const DiagnosticOptions &DiagOpts,
-                  unsigned Columns)
-    : Printer(Printer), OS(OS), SM(SM), LangOpts(LangOpts), DiagOpts(DiagOpts),
-      Columns(Columns), MacroSkipStart(0), MacroSkipEnd(0) {
+                  const DiagnosticOptions &DiagOpts)
+    : Printer(Printer), OS(OS), SM(SM), LangOpts(LangOpts), DiagOpts(DiagOpts) {
   }
 
   /// \brief Emit the caret diagnostic text.
@@ -506,6 +503,7 @@ public:
 
     // If the source line is too long for our terminal, select only the
     // "interesting" source region within that line.
+    unsigned Columns = DiagOpts.MessageLength;
     if (Columns && SourceLine.size() > Columns)
       SelectInterestingSourceRegion(SourceLine, CaretLine, FixItInsertionLine,
                                     CaretEndColNo, Columns);
@@ -766,14 +764,13 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(
     SourceLocation Loc,
     SmallVectorImpl<CharSourceRange>& Ranges,
     const SourceManager &SM,
-    ArrayRef<FixItHint> Hints,
-    unsigned Columns) {
+    ArrayRef<FixItHint> Hints) {
   assert(LangOpts && "Unexpected diagnostic outside source file processing");
   assert(DiagOpts && "Unexpected diagnostic without options set");
 
   // FIXME: Remove this method and have clients directly build and call Emit on
   // the CaretDiagnostic object.
-  CaretDiagnostic CaretDiag(*this, OS, SM, *LangOpts, *DiagOpts, Columns);
+  CaretDiagnostic CaretDiag(*this, OS, SM, *LangOpts, *DiagOpts);
   unsigned MacroDepth = 0;
   CaretDiag.Emit(Loc, Ranges, Hints, MacroDepth);
 }
@@ -1246,8 +1243,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
 
     EmitCaretDiagnostic(LastLoc, Ranges, LastLoc.getManager(),
                         llvm::makeArrayRef(Info.getFixItHints(),
-                                           Info.getNumFixItHints()),
-                        DiagOpts->MessageLength);
+                                           Info.getNumFixItHints()));
   }
 
   OS.flush();
