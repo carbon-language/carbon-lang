@@ -856,87 +856,6 @@ static unsigned findEndOfWord(unsigned Start,
   return findEndOfWord(Start + 1, Str, Length, Column + 1, Columns);
 }
 
-/// \brief Print the given string to a stream, word-wrapping it to
-/// some number of columns in the process.
-///
-/// \brief OS the stream to which the word-wrapping string will be
-/// emitted.
-///
-/// \brief Str the string to word-wrap and output.
-///
-/// \brief Columns the number of columns to word-wrap to.
-///
-/// \brief Column the column number at which the first character of \p
-/// Str will be printed. This will be non-zero when part of the first
-/// line has already been printed.
-///
-/// \brief Indentation the number of spaces to indent any lines beyond
-/// the first line.
-///
-/// \returns true if word-wrapping was required, or false if the
-/// string fit on the first line.
-static bool PrintWordWrapped(raw_ostream &OS,
-                             const SmallVectorImpl<char> &Str,
-                             unsigned Columns,
-                             unsigned Column = 0,
-                             unsigned Indentation = WordWrapIndentation) {
-  unsigned Length = Str.size();
-
-  // If there is a newline in this message somewhere, find that
-  // newline and split the message into the part before the newline
-  // (which will be word-wrapped) and the part from the newline one
-  // (which will be emitted unchanged).
-  for (unsigned I = 0; I != Length; ++I)
-    if (Str[I] == '\n') {
-      Length = I;
-      break;
-    }
-
-  // The string used to indent each line.
-  llvm::SmallString<16> IndentStr;
-  IndentStr.assign(Indentation, ' ');
-  bool Wrapped = false;
-  for (unsigned WordStart = 0, WordEnd; WordStart < Length;
-       WordStart = WordEnd) {
-    // Find the beginning of the next word.
-    WordStart = skipWhitespace(WordStart, Str, Length);
-    if (WordStart == Length)
-      break;
-
-    // Find the end of this word.
-    WordEnd = findEndOfWord(WordStart, Str, Length, Column, Columns);
-
-    // Does this word fit on the current line?
-    unsigned WordLength = WordEnd - WordStart;
-    if (Column + WordLength < Columns) {
-      // This word fits on the current line; print it there.
-      if (WordStart) {
-        OS << ' ';
-        Column += 1;
-      }
-      OS.write(&Str[WordStart], WordLength);
-      Column += WordLength;
-      continue;
-    }
-
-    // This word does not fit on the current line, so wrap to the next
-    // line.
-    OS << '\n';
-    OS.write(&IndentStr[0], Indentation);
-    OS.write(&Str[WordStart], WordLength);
-    Column = Indentation + WordLength;
-    Wrapped = true;
-  }
-
-  if (Length == Str.size())
-    return Wrapped; // We're done.
-
-  // There is a newline in the message, followed by something that
-  // will not be word-wrapped. Print that.
-  OS.write(&Str[Length], Str.size() - Length);
-  return true;
-}
-
 /// Get the presumed location of a diagnostic message. This computes the
 /// presumed location for the top of any macro backtrace when present.
 static PresumedLoc getDiagnosticPresumedLoc(const SourceManager &SM,
@@ -1162,6 +1081,82 @@ static void printDiagnosticOptions(raw_ostream &OS,
   OS << "]";
 }
 
+/// \brief Print the given string to a stream, word-wrapping it to
+/// some number of columns in the process.
+///
+/// \param OS the stream to which the word-wrapping string will be
+/// emitted.
+/// \param Str the string to word-wrap and output.
+/// \param Columns the number of columns to word-wrap to.
+/// \param Column the column number at which the first character of \p
+/// Str will be printed. This will be non-zero when part of the first
+/// line has already been printed.
+/// \param Indentation the number of spaces to indent any lines beyond
+/// the first line.
+/// \returns true if word-wrapping was required, or false if the
+/// string fit on the first line.
+static bool printWordWrapped(raw_ostream &OS,
+                             const SmallVectorImpl<char> &Str,
+                             unsigned Columns,
+                             unsigned Column = 0,
+                             unsigned Indentation = WordWrapIndentation) {
+  unsigned Length = Str.size();
+
+  // If there is a newline in this message somewhere, find that
+  // newline and split the message into the part before the newline
+  // (which will be word-wrapped) and the part from the newline one
+  // (which will be emitted unchanged).
+  for (unsigned I = 0; I != Length; ++I)
+    if (Str[I] == '\n') {
+      Length = I;
+      break;
+    }
+
+  // The string used to indent each line.
+  llvm::SmallString<16> IndentStr;
+  IndentStr.assign(Indentation, ' ');
+  bool Wrapped = false;
+  for (unsigned WordStart = 0, WordEnd; WordStart < Length;
+       WordStart = WordEnd) {
+    // Find the beginning of the next word.
+    WordStart = skipWhitespace(WordStart, Str, Length);
+    if (WordStart == Length)
+      break;
+
+    // Find the end of this word.
+    WordEnd = findEndOfWord(WordStart, Str, Length, Column, Columns);
+
+    // Does this word fit on the current line?
+    unsigned WordLength = WordEnd - WordStart;
+    if (Column + WordLength < Columns) {
+      // This word fits on the current line; print it there.
+      if (WordStart) {
+        OS << ' ';
+        Column += 1;
+      }
+      OS.write(&Str[WordStart], WordLength);
+      Column += WordLength;
+      continue;
+    }
+
+    // This word does not fit on the current line, so wrap to the next
+    // line.
+    OS << '\n';
+    OS.write(&IndentStr[0], Indentation);
+    OS.write(&Str[WordStart], WordLength);
+    Column = Indentation + WordLength;
+    Wrapped = true;
+  }
+
+  if (Length == Str.size())
+    return Wrapped; // We're done.
+
+  // There is a newline in the message, followed by something that
+  // will not be word-wrapped. Print that.
+  OS.write(&Str[Length], Str.size() - Length);
+  return true;
+}
+
 void TextDiagnosticPrinter::HandleDiagnostic(DiagnosticsEngine::Level Level,
                                              const Diagnostic &Info) {
   // Default implementation (Warnings/errors count).
@@ -1218,7 +1213,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(DiagnosticsEngine::Level Level,
     // column number where we currently are (after printing the
     // location information).
     unsigned Column = OS.tell() - StartOfLocationInfo;
-    PrintWordWrapped(OS, OutStr, DiagOpts->MessageLength, Column);
+    printWordWrapped(OS, OutStr, DiagOpts->MessageLength, Column);
   } else {
     OS.write(OutStr.begin(), OutStr.size());
   }
