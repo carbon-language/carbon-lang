@@ -68,6 +68,8 @@ public:
                        const char *Modifier = 0);
   void printParamOperand(const MachineInstr *MI, int opNum, raw_ostream &OS,
                          const char *Modifier = 0);
+  void printLocalOperand(const MachineInstr *MI, int opNum, raw_ostream &OS,
+                         const char *Modifier = 0);
   void printReturnOperand(const MachineInstr *MI, int opNum, raw_ostream &OS,
                           const char *Modifier = 0);
   void printPredicateOperand(const MachineInstr *MI, raw_ostream &O);
@@ -297,7 +299,7 @@ void PTXAsmPrinter::EmitFunctionBodyStart() {
     if (FrameInfo->getObjectSize(i) > 0) {
       std::string def = "\t.local .b";
       def += utostr(FrameInfo->getObjectSize(i)*8); // Convert to bits
-      def += " __local_";
+      def += " __local";
       def += utostr(i);
       def += ";";
       OutStreamer.EmitRawText(Twine(def));
@@ -456,6 +458,11 @@ void PTXAsmPrinter::printReturnOperand(const MachineInstr *MI, int opNum,
                                        raw_ostream &OS, const char *Modifier) {
   //OS << RETURN_PREFIX << (int) MI->getOperand(opNum).getImm() + 1;
   OS << "__ret";
+}
+
+void PTXAsmPrinter::printLocalOperand(const MachineInstr *MI, int opNum,
+                                      raw_ostream &OS, const char *Modifier) {
+  OS << "__local" << MI->getOperand(opNum).getImm();
 }
 
 void PTXAsmPrinter::EmitVariableDeclaration(const GlobalVariable *gv) {

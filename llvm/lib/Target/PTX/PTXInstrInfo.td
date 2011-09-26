@@ -147,6 +147,14 @@ def MEMri64 : Operand<i64> {
   let PrintMethod = "printMemOperand";
   let MIOperandInfo = (ops RegI64, i64imm);
 }
+def LOCALri32 : Operand<i32> {
+  let PrintMethod = "printLocalOperand";
+  let MIOperandInfo = (ops RegI32, i32imm);
+}
+def LOCALri64 : Operand<i64> {
+  let PrintMethod = "printLocalOperand";
+  let MIOperandInfo = (ops RegI64, i64imm);
+}
 def MEMii32 : Operand<i32> {
   let PrintMethod = "printMemOperand";
   let MIOperandInfo = (ops i32imm, i32imm);
@@ -602,6 +610,21 @@ multiclass PTX_LD<string opstr, string typestr,
                      Requires<[Use64BitAddresses]>;
 }
 
+multiclass PTX_LOCAL_LD_ST<string typestr, RegisterClass RC> {
+  def LDri32 : InstPTX<(outs RC:$d), (ins LOCALri32:$a),
+                      !strconcat("ld.local", !strconcat(typestr, "\t$d, [$a]")),
+                       [(set RC:$d, (load_local ADDRlocal32:$a))]>;
+  def LDri64 : InstPTX<(outs RC:$d), (ins LOCALri64:$a),
+                      !strconcat("ld.local", !strconcat(typestr, "\t$d, [$a]")),
+                       [(set RC:$d, (load_local ADDRlocal64:$a))]>;
+  def STri32 : InstPTX<(outs), (ins RC:$d, LOCALri32:$a),
+                      !strconcat("st.local", !strconcat(typestr, "\t[$a], $d")),
+                       [(store_local RC:$d, ADDRlocal32:$a)]>;
+  def STri64 : InstPTX<(outs), (ins RC:$d, LOCALri64:$a),
+                      !strconcat("st.local", !strconcat(typestr, "\t[$a], $d")),
+                       [(store_local RC:$d, ADDRlocal64:$a)]>;
+}
+
 multiclass PTX_LD_ALL<string opstr, PatFrag pat_load> {
   defm u16 : PTX_LD<opstr, ".u16", RegI16, pat_load>;
   defm u32 : PTX_LD<opstr, ".u32", RegI32, pat_load>;
@@ -960,86 +983,18 @@ let hasSideEffects = 1 in {
                    [(pat_store RC:$d, ADDRri64:$a)]>,
                    Requires<[Use64BitAddresses]>;
                      */
-let hasSideEffects = 1 in {
-  def LDLOCALpiPred : InstPTX<(outs RegPred:$d), (ins MEMri32:$a),
-                              "ld.local.pred\t$d, [__local_$a]",
-                              [(set RegPred:$d, (load_local ADDRlocal32:$a))]>;
-  def LDLOCALpiU16  : InstPTX<(outs RegI16:$d), (ins MEMri32:$a),
-                              "ld.local.u16\t$d, [__local_$a]",
-                              [(set RegI16:$d, (load_local ADDRlocal32:$a))]>;
-  def LDLOCALpiU32  : InstPTX<(outs RegI32:$d), (ins MEMri32:$a),
-                              "ld.local.u32\t$d, [__local_$a]",
-                              [(set RegI32:$d, (load_local ADDRlocal32:$a))]>;
-  def LDLOCALpiU64  : InstPTX<(outs RegI64:$d), (ins MEMri32:$a),
-                              "ld.local.u64\t$d, [__local_$a]",
-                              [(set RegI64:$d, (load_local ADDRlocal32:$a))]>;
-  def LDLOCALpiF32 : InstPTX<(outs RegF32:$d), (ins MEMri32:$a),
-                              "ld.local.f32\t$d, [__local_$a]",
-                              [(set RegF32:$d, (load_local ADDRlocal32:$a))]>;
-  def LDLOCALpiF64 : InstPTX<(outs RegF64:$d), (ins MEMri32:$a),
-                              "ld.local.f64\t$d, [__local_$a]",
-                              [(set RegF64:$d, (load_local ADDRlocal32:$a))]>;
-
-  def STLOCALpiPred : InstPTX<(outs), (ins RegPred:$d, MEMri32:$a),
-                              "st.local.pred\t[__local_$a], $d",
-                              [(store_local RegPred:$d, ADDRlocal32:$a)]>;
-  def STLOCALpiU16 : InstPTX<(outs), (ins RegI16:$d, MEMri32:$a),
-                              "st.local.u16\t[__local_$a], $d",
-                              [(store_local RegI16:$d, ADDRlocal32:$a)]>;
-  def STLOCALpiU32 : InstPTX<(outs), (ins RegI32:$d, MEMri32:$a),
-                              "st.local.u32\t[__local_$a], $d",
-                              [(store_local RegI32:$d, ADDRlocal32:$a)]>;
-  def STLOCALpiU64 : InstPTX<(outs), (ins RegI64:$d, MEMri32:$a),
-                              "st.local.u64\t[__local_$a], $d",
-                              [(store_local RegI64:$d, ADDRlocal32:$a)]>;
-  def STLOCALpiF32 : InstPTX<(outs), (ins RegF32:$d, MEMri32:$a),
-                              "st.local.f32\t[__local_$a], $d",
-                              [(store_local RegF32:$d, ADDRlocal32:$a)]>;
-  def STLOCALpiF64 : InstPTX<(outs), (ins RegF64:$d, MEMri32:$a),
-                              "st.local.f64\t[__local_$a], $d",
-                              [(store_local RegF64:$d, ADDRlocal32:$a)]>;
-
-  /*def LDLOCALpiU16  : InstPTX<(outs RegI16:$d), (ins MEMpi:$a),
-                         "ld.param.u16\t$d, [$a]",
-                         [(set RegI16:$d, (PTXloadparam timm:$a))]>;
-  def LDLOCALpiU32  : InstPTX<(outs RegI32:$d), (ins MEMpi:$a),
-                         "ld.param.u32\t$d, [$a]",
-                         [(set RegI32:$d, (PTXloadparam timm:$a))]>;
-  def LDLOCALpiU64  : InstPTX<(outs RegI64:$d), (ins MEMpi:$a),
-                         "ld.param.u64\t$d, [$a]",
-                         [(set RegI64:$d, (PTXloadparam timm:$a))]>;
-  def LDLOCALpiF32  : InstPTX<(outs RegF32:$d), (ins MEMpi:$a),
-                         "ld.param.f32\t$d, [$a]",
-                         [(set RegF32:$d, (PTXloadparam timm:$a))]>;
-  def LDLOCALpiF64  : InstPTX<(outs RegF64:$d), (ins MEMpi:$a),
-                         "ld.param.f64\t$d, [$a]",
-                         [(set RegF64:$d, (PTXloadparam timm:$a))]>;
-
-  def STLOCALpiPred : InstPTX<(outs), (ins MEMpi:$d, RegPred:$a),
-                         "st.param.pred\t[$d], $a",
-                         [(PTXstoreparam timm:$d, RegPred:$a)]>;
-  def STLOCALpiU16  : InstPTX<(outs), (ins MEMpi:$d, RegI16:$a),
-                         "st.param.u16\t[$d], $a",
-                         [(PTXstoreparam timm:$d, RegI16:$a)]>;
-  def STLOCALpiU32  : InstPTX<(outs), (ins MEMpi:$d, RegI32:$a),
-                         "st.param.u32\t[$d], $a",
-                         [(PTXstoreparam timm:$d, RegI32:$a)]>;
-  def STLOCALpiU64  : InstPTX<(outs), (ins MEMpi:$d, RegI64:$a),
-                         "st.param.u64\t[$d], $a",
-                         [(PTXstoreparam timm:$d, RegI64:$a)]>;
-  def STLOCALpiF32  : InstPTX<(outs), (ins MEMpi:$d, RegF32:$a),
-                         "st.param.f32\t[$d], $a",
-                         [(PTXstoreparam timm:$d, RegF32:$a)]>;
-  def STLOCALpiF64  : InstPTX<(outs), (ins MEMpi:$d, RegF64:$a),
-                         "st.param.f64\t[$d], $a",
-                         [(PTXstoreparam timm:$d, RegF64:$a)]>;*/
-}
 
 // Stores
 defm STg : PTX_ST_ALL<"st.global", store_global>;
 //defm STl : PTX_ST_ALL<"st.local",  store_local>;
 defm STs : PTX_ST_ALL<"st.shared", store_shared>;
 
+defm LOCALPRED : PTX_LOCAL_LD_ST<".pred", RegPred>;
+defm LOCALU16  : PTX_LOCAL_LD_ST<".u16", RegI16>;
+defm LOCALU32  : PTX_LOCAL_LD_ST<".u32", RegI32>;
+defm LOCALU64  : PTX_LOCAL_LD_ST<".u64", RegI64>;
+defm LOCALF32  : PTX_LOCAL_LD_ST<".f32", RegF32>;
+defm LOCALF64  : PTX_LOCAL_LD_ST<".f64", RegF64>;
 
 
 // defm STp : PTX_ST_ALL<"st.param",  store_parameter>;

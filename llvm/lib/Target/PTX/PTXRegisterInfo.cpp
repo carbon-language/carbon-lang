@@ -65,5 +65,5 @@ void PTXRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
 
   // This frame index is post stack slot re-use assignments
   //MI.getOperand(Index).ChangeToRegister(Reg, false);
-  MI.getOperand(Index).ChangeToImmediate(0);
+  MI.getOperand(Index).ChangeToImmediate(FrameIndex);
 }

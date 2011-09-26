@@ -6,9 +6,6 @@
 ;CHECK: .extern .const .b8 array_constant_i16[20];
 @array_constant_i16 = external addrspace(1) constant [10 x i16]
 
-;CHECK: .extern .local .b8 array_local_i16[20];
-@array_local_i16 = external addrspace(2) global [10 x i16]
-
 ;CHECK: .extern .shared .b8 array_shared_i16[20];
 @array_shared_i16 = external addrspace(4) global [10 x i16]
 
@@ -17,9 +14,6 @@
 
 ;CHECK: .extern .const .b8 array_constant_i32[40];
 @array_constant_i32 = external addrspace(1) constant [10 x i32]
-
-;CHECK: .extern .local .b8 array_local_i32[40];
-@array_local_i32 = external addrspace(2) global [10 x i32]
 
 ;CHECK: .extern .shared .b8 array_shared_i32[40];
 @array_shared_i32 = external addrspace(4) global [10 x i32]
@@ -30,9 +24,6 @@
 ;CHECK: .extern .const .b8 array_constant_i64[80];
 @array_constant_i64 = external addrspace(1) constant [10 x i64]
 
-;CHECK: .extern .local .b8 array_local_i64[80];
-@array_local_i64 = external addrspace(2) global [10 x i64]
-
 ;CHECK: .extern .shared .b8 array_shared_i64[80];
 @array_shared_i64 = external addrspace(4) global [10 x i64]
 
@@ -42,9 +33,6 @@
 ;CHECK: .extern .const .b8 array_constant_float[40];
 @array_constant_float = external addrspace(1) constant [10 x float]
 
-;CHECK: .extern .local .b8 array_local_float[40];
-@array_local_float = external addrspace(2) global [10 x float]
-
 ;CHECK: .extern .shared .b8 array_shared_float[40];
 @array_shared_float = external addrspace(4) global [10 x float]
 
@@ -53,9 +41,6 @@
 
 ;CHECK: .extern .const .b8 array_constant_double[80];
 @array_constant_double = external addrspace(1) constant [10 x double]
-
-;CHECK: .extern .local .b8 array_local_double[80];
-@array_local_double = external addrspace(2) global [10 x double]
 
 ;CHECK: .extern .shared .b8 array_shared_double[80];
 @array_shared_double = external addrspace(4) global [10 x double]
@@ -293,56 +278,6 @@ entry:
 ;CHECK: ret;
   %i = getelementptr [10 x double] addrspace(1)* @array_constant_double, i32 0, i32 0
   %x = load double addrspace(1)* %i
-  ret double %x
-}
-
-define ptx_device i16 @t4_local_u16() {
-entry:
-;CHECK: mov.u32 %r[[R0:[0-9]+]], array_local_i16;
-;CHECK: ld.local.u16 %ret{{[0-9]+}}, [%r[[R0]]];
-;CHECK: ret;
-  %i = getelementptr [10 x i16] addrspace(2)* @array_local_i16, i32 0, i32 0
-  %x = load i16 addrspace(2)* %i
-  ret i16 %x
-}
-
-define ptx_device i32 @t4_local_u32() {
-entry:
-;CHECK: mov.u32 %r[[R0:[0-9]+]], array_local_i32;
-;CHECK: ld.local.u32 %ret{{[0-9]+}}, [%r[[R0]]];
-;CHECK: ret;
-  %i = getelementptr [10 x i32] addrspace(2)* @array_local_i32, i32 0, i32 0
-  %x = load i32 addrspace(2)* %i
-  ret i32 %x
-}
-
-define ptx_device i64 @t4_local_u64() {
-entry:
-;CHECK: mov.u32 %r[[R0:[0-9]+]], array_local_i64;
-;CHECK: ld.local.u64 %ret{{[0-9]+}}, [%r[[R0]]];
-;CHECK: ret;
-  %i = getelementptr [10 x i64] addrspace(2)* @array_local_i64, i32 0, i32 0
-  %x = load i64 addrspace(2)* %i
-  ret i64 %x
-}
-
-define ptx_device float @t4_local_f32() {
-entry:
-;CHECK: mov.u32 %r[[R0:[0-9]+]], array_local_float;
-;CHECK: ld.local.f32 %ret{{[0-9]+}}, [%r[[R0]]];
-;CHECK: ret;
-  %i = getelementptr [10 x float] addrspace(2)* @array_local_float, i32 0, i32 0
-  %x = load float addrspace(2)* %i
-  ret float %x
-}
-
-define ptx_device double @t4_local_f64() {
-entry:
-;CHECK: mov.u32 %r[[R0:[0-9]+]], array_local_double;
-;CHECK: ld.local.f64 %ret{{[0-9]+}}, [%r[[R0]]];
-;CHECK: ret;
-  %i = getelementptr [10 x double] addrspace(2)* @array_local_double, i32 0, i32 0
-  %x = load double addrspace(2)* %i
   ret double %x
 }
 
