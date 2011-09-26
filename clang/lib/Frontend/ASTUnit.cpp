@@ -448,11 +448,11 @@ public:
   }
 };
 
-class StoredDiagnosticClient : public DiagnosticConsumer {
+class StoredDiagnosticConsumer : public DiagnosticConsumer {
   SmallVectorImpl<StoredDiagnostic> &StoredDiags;
   
 public:
-  explicit StoredDiagnosticClient(
+  explicit StoredDiagnosticConsumer(
                           SmallVectorImpl<StoredDiagnostic> &StoredDiags)
     : StoredDiags(StoredDiags) { }
   
@@ -464,7 +464,7 @@ public:
 /// there is no diagnostic client to capture them already.
 class CaptureDroppedDiagnostics {
   DiagnosticsEngine &Diags;
-  StoredDiagnosticClient Client;
+  StoredDiagnosticConsumer Client;
   DiagnosticConsumer *PreviousClient;
 
 public:
@@ -488,7 +488,7 @@ public:
 
 } // anonymous namespace
 
-void StoredDiagnosticClient::HandleDiagnostic(DiagnosticsEngine::Level Level,
+void StoredDiagnosticConsumer::HandleDiagnostic(DiagnosticsEngine::Level Level,
                                               const DiagnosticInfo &Info) {
   // Default implementation (Warnings/errors count).
   DiagnosticConsumer::HandleDiagnostic(Level, Info);
@@ -516,11 +516,11 @@ void ASTUnit::ConfigureDiags(llvm::IntrusiveRefCntPtr<DiagnosticsEngine> &Diags,
     DiagnosticOptions DiagOpts;
     DiagnosticConsumer *Client = 0;
     if (CaptureDiagnostics)
-      Client = new StoredDiagnosticClient(AST.StoredDiagnostics);
+      Client = new StoredDiagnosticConsumer(AST.StoredDiagnostics);
     Diags = CompilerInstance::createDiagnostics(DiagOpts, ArgEnd- ArgBegin, 
                                                 ArgBegin, Client);
   } else if (CaptureDiagnostics) {
-    Diags->setClient(new StoredDiagnosticClient(AST.StoredDiagnostics));
+    Diags->setClient(new StoredDiagnosticConsumer(AST.StoredDiagnostics));
   }
 }
 
