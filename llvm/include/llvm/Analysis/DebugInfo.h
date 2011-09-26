@@ -579,6 +579,17 @@ namespace llvm {
       DIFile F = getFieldAs<DIFile>(6); 
       return F.getCompileUnit();
     }
+    StringRef getFilename() const {
+      if (getVersion() <= llvm::LLVMDebugVersion10)
+        return getContext().getFilename();
+      return getFieldAs<DIFile>(6).getFilename();
+    } 
+    StringRef getDirectory() const {
+      if (getVersion() <= llvm::LLVMDebugVersion10)
+        return getContext().getDirectory();
+      return getFieldAs<DIFile>(6).getDirectory();
+
+    } 
 
     unsigned getLineNumber() const      { return getUnsignedField(7); }
     DIType getType() const              { return getFieldAs<DIType>(8); }

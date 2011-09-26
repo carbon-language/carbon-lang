@@ -135,8 +135,8 @@ void CompileUnit::addSourceLine(DIE *Die, DIGlobalVariable G) {
   unsigned Line = G.getLineNumber();
   if (Line == 0)
     return;
-  unsigned FileID = DD->GetOrCreateSourceID(G.getContext().getFilename(),
-                                            G.getContext().getDirectory());
+  unsigned FileID = DD->GetOrCreateSourceID(G.getFilename(),
+                                            G.getDirectory());
   assert(FileID && "Invalid file id");
   addUInt(Die, dwarf::DW_AT_decl_file, 0, FileID);
   addUInt(Die, dwarf::DW_AT_decl_line, 0, Line);
