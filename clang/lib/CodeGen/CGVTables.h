@@ -26,11 +26,16 @@ namespace clang {
 
 namespace CodeGen {
   class CodeGenModule;
-  class CodeGenVTables;
 
 class VTableContext {
   ASTContext &Context;
 
+public:
+  typedef SmallVector<std::pair<uint64_t, ThunkInfo>, 1> 
+    VTableThunksTy;
+  typedef SmallVector<ThunkInfo, 1> ThunkInfoVectorTy;
+  
+private:
   /// MethodVTableIndices - Contains the index (relative to the vtable address
   /// point) where the function pointer for a virtual function is stored.
   typedef llvm::DenseMap<GlobalDecl, int64_t> MethodVTableIndicesTy;
@@ -50,10 +55,87 @@ class VTableContext {
     VirtualBaseClassOffsetOffsetsMapTy;
   VirtualBaseClassOffsetOffsetsMapTy VirtualBaseClassOffsetOffsets;
 
+  // The layout entry.
+  typedef llvm::DenseMap<const CXXRecordDecl *, uint64_t *> VTableLayoutMapTy;
+  
+  /// VTableLayoutMap - Stores the vtable layout for all record decls.
+  /// The layout is stored as an array of 64-bit integers, where the first
+  /// integer is the number of vtable entries in the layout, and the subsequent
+  /// integers are the vtable components.
+  VTableLayoutMapTy VTableLayoutMap;
+
+  typedef llvm::DenseMap<const CXXMethodDecl *, ThunkInfoVectorTy> ThunksMapTy;
+  
+  /// Thunks - Contains all thunks that a given method decl will need.
+  ThunksMapTy Thunks;
+
+  typedef llvm::DenseMap<const CXXRecordDecl *, VTableThunksTy>
+    VTableThunksMapTy;
+  
+  /// VTableThunksMap - Contains thunks needed by vtables.
+  VTableThunksMapTy VTableThunksMap;
+  
+  typedef std::pair<const CXXRecordDecl *, BaseSubobject> BaseSubobjectPairTy;
+  typedef llvm::DenseMap<BaseSubobjectPairTy, uint64_t> AddressPointsMapTy;
+  
+  /// Address points - Address points for all vtables.
+  AddressPointsMapTy AddressPoints;
+
   void ComputeMethodVTableIndices(const CXXRecordDecl *RD);
+
+  /// ComputeVTableRelatedInformation - Compute and store all vtable related
+  /// information (vtable layout, vbase offset offsets, thunks etc) for the
+  /// given record decl.
+  void ComputeVTableRelatedInformation(const CXXRecordDecl *RD);
 
 public:
   VTableContext(ASTContext &Context) : Context(Context) {}
+
+  uint64_t getNumVTableComponents(const CXXRecordDecl *RD) {
+    ComputeVTableRelatedInformation(RD);
+    assert(VTableLayoutMap.count(RD) && "No vtable layout for this class!");
+    
+    return VTableLayoutMap.lookup(RD)[0];
+  }
+
+  const uint64_t *getVTableComponentsData(const CXXRecordDecl *RD) {
+    ComputeVTableRelatedInformation(RD);
+    assert(VTableLayoutMap.count(RD) && "No vtable layout for this class!");
+
+    uint64_t *Components = VTableLayoutMap.lookup(RD);
+    return &Components[1];
+  }
+
+  const ThunkInfoVectorTy *getThunkInfo(const CXXMethodDecl *MD) {
+    ComputeVTableRelatedInformation(MD->getParent());
+
+    ThunksMapTy::const_iterator I = Thunks.find(MD);
+    if (I == Thunks.end()) {
+      // We did not find a thunk for this method.
+      return 0;
+    }
+
+    return &I->second;
+  }
+
+  const VTableThunksTy &getVTableThunks(const CXXRecordDecl *RD) {
+    ComputeVTableRelatedInformation(RD);
+    assert(VTableThunksMap.count(RD) && 
+           "No thunk status for this record decl!");
+    
+    return VTableThunksMap[RD];
+  }
+
+  uint64_t getAddressPoint(BaseSubobject Base, const CXXRecordDecl *RD) {
+    ComputeVTableRelatedInformation(RD);
+    assert(AddressPoints.count(std::make_pair(RD, Base)) &&
+           "Did not find address point!");
+
+    uint64_t AddressPoint = AddressPoints.lookup(std::make_pair(RD, Base));
+    assert(AddressPoint && "Address point must not be zero!");
+
+    return AddressPoint;
+  }
 
   /// getNumVirtualFunctionPointers - Return the number of virtual function
   /// pointers in the vtable for a given record decl.
@@ -71,8 +153,6 @@ public:
   /// base.
   CharUnits getVirtualBaseOffsetOffset(const CXXRecordDecl *RD,
                                        const CXXRecordDecl *VBase);
-
-  friend class CodeGenVTables;
 };
 
 class CodeGenVTables {
@@ -83,52 +163,10 @@ class CodeGenVTables {
   /// VTables - All the vtables which have been defined.
   llvm::DenseMap<const CXXRecordDecl *, llvm::GlobalVariable *> VTables;
   
-  typedef SmallVector<ThunkInfo, 1> ThunkInfoVectorTy;
-  typedef llvm::DenseMap<const CXXMethodDecl *, ThunkInfoVectorTy> ThunksMapTy;
-  
-  /// Thunks - Contains all thunks that a given method decl will need.
-  ThunksMapTy Thunks;
-
-  // The layout entry.
-  typedef llvm::DenseMap<const CXXRecordDecl *, uint64_t *> VTableLayoutMapTy;
-  
-  /// VTableLayoutMap - Stores the vtable layout for all record decls.
-  /// The layout is stored as an array of 64-bit integers, where the first
-  /// integer is the number of vtable entries in the layout, and the subsequent
-  /// integers are the vtable components.
-  VTableLayoutMapTy VTableLayoutMap;
-
-  typedef std::pair<const CXXRecordDecl *, BaseSubobject> BaseSubobjectPairTy;
-  typedef llvm::DenseMap<BaseSubobjectPairTy, uint64_t> AddressPointsMapTy;
-  
-  /// Address points - Address points for all vtables.
-  AddressPointsMapTy AddressPoints;
-
   /// VTableAddressPointsMapTy - Address points for a single vtable.
   typedef llvm::DenseMap<BaseSubobject, uint64_t> VTableAddressPointsMapTy;
 
-  typedef SmallVector<std::pair<uint64_t, ThunkInfo>, 1> 
-    VTableThunksTy;
-  
-  typedef llvm::DenseMap<const CXXRecordDecl *, VTableThunksTy>
-    VTableThunksMapTy;
-  
-  /// VTableThunksMap - Contains thunks needed by vtables.
-  VTableThunksMapTy VTableThunksMap;
-  
-  uint64_t getNumVTableComponents(const CXXRecordDecl *RD) const {
-    assert(VTableLayoutMap.count(RD) && "No vtable layout for this class!");
-    
-    return VTableLayoutMap.lookup(RD)[0];
-  }
-
-  const uint64_t *getVTableComponentsData(const CXXRecordDecl *RD) const {
-    assert(VTableLayoutMap.count(RD) && "No vtable layout for this class!");
-
-    uint64_t *Components = VTableLayoutMap.lookup(RD);
-    return &Components[1];
-  }
-
+  typedef std::pair<const CXXRecordDecl *, BaseSubobject> BaseSubobjectPairTy;
   typedef llvm::DenseMap<BaseSubobjectPairTy, uint64_t> SubVTTIndiciesMapTy;
   
   /// SubVTTIndicies - Contains indices into the various sub-VTTs.
@@ -151,11 +189,6 @@ class CodeGenVTables {
   /// doesn't contain any incomplete types.
   void MaybeEmitThunkAvailableExternally(GlobalDecl GD, const ThunkInfo &Thunk);
 
-  /// ComputeVTableRelatedInformation - Compute and store all vtable related
-  /// information (vtable layout, vbase offset offsets, thunks etc) for the
-  /// given record decl.
-  void ComputeVTableRelatedInformation(const CXXRecordDecl *RD);
-
   /// CreateVTableInitializer - Create a vtable initializer for the given record
   /// decl.
   /// \param Components - The vtable components; this is really an array of
@@ -163,7 +196,7 @@ class CodeGenVTables {
   llvm::Constant *CreateVTableInitializer(const CXXRecordDecl *RD,
                                           const uint64_t *Components, 
                                           unsigned NumComponents,
-                                          const VTableThunksTy &VTableThunks);
+                             const VTableContext::VTableThunksTy &VTableThunks);
 
 public:
   CodeGenVTables(CodeGenModule &CGM);

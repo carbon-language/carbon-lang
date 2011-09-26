@@ -2507,17 +2507,6 @@ VTableContext::getVirtualBaseOffsetOffset(const CXXRecordDecl *RD,
   return I->second;
 }
 
-uint64_t
-CodeGenVTables::getAddressPoint(BaseSubobject Base, const CXXRecordDecl *RD) {
-  assert(AddressPoints.count(std::make_pair(RD, Base)) &&
-         "Did not find address point!");
-
-  uint64_t AddressPoint = AddressPoints.lookup(std::make_pair(RD, Base));
-  assert(AddressPoint && "Address point must not be zero!");
-
-  return AddressPoint;
-}
-
 llvm::Constant *CodeGenModule::GetAddrOfThunk(GlobalDecl GD, 
                                               const ThunkInfo &Thunk) {
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
@@ -2953,36 +2942,30 @@ void CodeGenVTables::EmitThunks(GlobalDecl GD)
   if (isa<CXXDestructorDecl>(MD) && GD.getDtorType() == Dtor_Base)
     return;
 
-  const CXXRecordDecl *RD = MD->getParent();
-  
-  // Compute VTable related info for this class.
-  ComputeVTableRelatedInformation(RD);
-  
-  ThunksMapTy::const_iterator I = Thunks.find(MD);
-  if (I == Thunks.end()) {
-    // We did not find a thunk for this method.
+  const VTableContext::ThunkInfoVectorTy *ThunkInfoVector =
+    VTContext.getThunkInfo(MD);
+  if (!ThunkInfoVector)
     return;
-  }
 
-  const ThunkInfoVectorTy &ThunkInfoVector = I->second;
-  for (unsigned I = 0, E = ThunkInfoVector.size(); I != E; ++I)
-    EmitThunk(GD, ThunkInfoVector[I], /*UseAvailableExternallyLinkage=*/false);
+  for (unsigned I = 0, E = ThunkInfoVector->size(); I != E; ++I)
+    EmitThunk(GD, (*ThunkInfoVector)[I],
+              /*UseAvailableExternallyLinkage=*/false);
 }
 
-void CodeGenVTables::ComputeVTableRelatedInformation(const CXXRecordDecl *RD) {
+void VTableContext::ComputeVTableRelatedInformation(const CXXRecordDecl *RD) {
   uint64_t *&Entry = VTableLayoutMap[RD];
 
   // Check if we've computed this information before.
   if (Entry)
     return;
 
-  VTableBuilder Builder(VTContext, RD, CharUnits::Zero(), 
+  VTableBuilder Builder(*this, RD, CharUnits::Zero(), 
                         /*MostDerivedClassIsVirtual=*/0, RD);
 
   // Add the VTable layout.
   uint64_t NumVTableComponents = Builder.getNumVTableComponents();
   // -fapple-kext adds an extra entry at end of vtbl.
-  bool IsAppleKext = CGM.getContext().getLangOptions().AppleKext;
+  bool IsAppleKext = Context.getLangOptions().AppleKext;
   if (IsAppleKext)
     NumVTableComponents += 1;
 
@@ -3036,17 +3019,16 @@ void CodeGenVTables::ComputeVTableRelatedInformation(const CXXRecordDecl *RD) {
     RD->vbases_begin()->getType()->getAs<RecordType>();
   const CXXRecordDecl *VBase = cast<CXXRecordDecl>(VBaseRT->getDecl());
   
-  if (VTContext.VirtualBaseClassOffsetOffsets.count(std::make_pair(RD, VBase)))
+  if (VirtualBaseClassOffsetOffsets.count(std::make_pair(RD, VBase)))
     return;
   
   for (VTableBuilder::VBaseOffsetOffsetsMapTy::const_iterator I =
        Builder.getVBaseOffsetOffsets().begin(), 
        E = Builder.getVBaseOffsetOffsets().end(); I != E; ++I) {
     // Insert all types.
-    VTableContext::ClassPairTy ClassPair(RD, I->first);
+    ClassPairTy ClassPair(RD, I->first);
     
-    VTContext.VirtualBaseClassOffsetOffsets.insert(
-        std::make_pair(ClassPair, I->second));
+    VirtualBaseClassOffsetOffsets.insert(std::make_pair(ClassPair, I->second));
   }
 }
 
@@ -3054,7 +3036,7 @@ llvm::Constant *
 CodeGenVTables::CreateVTableInitializer(const CXXRecordDecl *RD,
                                         const uint64_t *Components, 
                                         unsigned NumComponents,
-                                        const VTableThunksTy &VTableThunks) {
+                            const VTableContext::VTableThunksTy &VTableThunks) {
   SmallVector<llvm::Constant *, 64> Inits;
 
   llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
@@ -3175,11 +3157,9 @@ llvm::GlobalVariable *CodeGenVTables::GetAddrOfVTable(const CXXRecordDecl *RD) {
   Out.flush();
   StringRef Name = OutName.str();
 
-  ComputeVTableRelatedInformation(RD);
-  
   llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
   llvm::ArrayType *ArrayType = 
-    llvm::ArrayType::get(Int8PtrTy, getNumVTableComponents(RD));
+    llvm::ArrayType::get(Int8PtrTy, VTContext.getNumVTableComponents(RD));
 
   VTable =
     CGM.CreateOrReplaceCXXRuntimeVariable(Name, ArrayType, 
@@ -3200,15 +3180,12 @@ CodeGenVTables::EmitVTableDefinition(llvm::GlobalVariable *VTable,
     Builder.dumpLayout(llvm::errs());
   }
 
-  assert(VTableThunksMap.count(RD) && 
-         "No thunk status for this record decl!");
-  
-  const VTableThunksTy& Thunks = VTableThunksMap[RD];
+  const VTableContext::VTableThunksTy& Thunks = VTContext.getVTableThunks(RD);
   
   // Create and set the initializer.
   llvm::Constant *Init = 
-    CreateVTableInitializer(RD, getVTableComponentsData(RD),
-                            getNumVTableComponents(RD), Thunks);
+    CreateVTableInitializer(RD, VTContext.getVTableComponentsData(RD),
+                            VTContext.getNumVTableComponents(RD), Thunks);
   VTable->setInitializer(Init);
   
   // Set the correct linkage.
@@ -3258,7 +3235,7 @@ CodeGenVTables::GenerateConstructionVTable(const CXXRecordDecl *RD,
   VTable->setUnnamedAddr(true);
 
   // Add the thunks.
-  VTableThunksTy VTableThunks;
+  VTableContext::VTableThunksTy VTableThunks;
   VTableThunks.append(Builder.vtable_thunks_begin(),
                       Builder.vtable_thunks_end());
 
