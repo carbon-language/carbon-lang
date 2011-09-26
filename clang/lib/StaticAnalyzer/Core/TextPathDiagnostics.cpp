@@ -23,7 +23,7 @@ namespace {
 
 /// \brief Simple path diagnostic client used for outputting as diagnostic notes
 /// the sequence of events.
-class TextPathDiagnostics : public PathDiagnosticClient {
+class TextPathDiagnostics : public PathDiagnosticConsumer {
   const std::string OutputFile;
   DiagnosticsEngine &Diag;
 
@@ -47,8 +47,8 @@ public:
 
 } // end anonymous namespace
 
-PathDiagnosticClient*
-ento::createTextPathDiagnosticClient(const std::string& out,
+PathDiagnosticConsumer*
+ento::createTextPathDiagnosticConsumer(const std::string& out,
                                      const Preprocessor &PP) {
   return new TextPathDiagnostics(out, PP.getDiagnostics());
 }

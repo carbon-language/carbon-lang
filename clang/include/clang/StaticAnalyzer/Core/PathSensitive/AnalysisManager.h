@@ -37,7 +37,7 @@ class AnalysisManager : public BugReporterData {
   DiagnosticsEngine &Diags;
   const LangOptions &LangInfo;
 
-  llvm::OwningPtr<PathDiagnosticClient> PD;
+  llvm::OwningPtr<PathDiagnosticConsumer> PD;
 
   // Configurable components creators.
   StoreManagerCreator CreateStoreMgr;
@@ -76,7 +76,7 @@ class AnalysisManager : public BugReporterData {
 
 public:
   AnalysisManager(ASTContext &ctx, DiagnosticsEngine &diags, 
-                  const LangOptions &lang, PathDiagnosticClient *pd,
+                  const LangOptions &lang, PathDiagnosticConsumer *pd,
                   StoreManagerCreator storemgr,
                   ConstraintManagerCreator constraintmgr, 
                   CheckerManager *checkerMgr,
@@ -126,7 +126,7 @@ public:
     return LangInfo;
   }
 
-  virtual PathDiagnosticClient *getPathDiagnosticClient() {
+  virtual PathDiagnosticConsumer *getPathDiagnosticConsumer() {
     return PD.get();
   }
   

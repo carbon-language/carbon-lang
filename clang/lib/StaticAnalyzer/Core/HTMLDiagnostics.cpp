@@ -35,7 +35,7 @@ using namespace ento;
 
 namespace {
 
-class HTMLDiagnostics : public PathDiagnosticClient {
+class HTMLDiagnostics : public PathDiagnosticConsumer {
   llvm::sys::Path Directory, FilePrefix;
   bool createdDir, noDir;
   const Preprocessor &PP;
@@ -78,8 +78,8 @@ HTMLDiagnostics::HTMLDiagnostics(const std::string& prefix,
   FilePrefix.appendComponent("report");
 }
 
-PathDiagnosticClient*
-ento::createHTMLDiagnosticClient(const std::string& prefix,
+PathDiagnosticConsumer*
+ento::createHTMLDiagnosticConsumer(const std::string& prefix,
                                  const Preprocessor &PP) {
   return new HTMLDiagnostics(prefix, PP);
 }

@@ -28,10 +28,10 @@ ANALYSIS_CONSTRAINTS(RangeConstraints, "range", "Use constraint tracking of conc
 #define ANALYSIS_DIAGNOSTICS(NAME, CMDFLAG, DESC, CREATEFN, AUTOCREATE)
 #endif
 
-ANALYSIS_DIAGNOSTICS(HTML,  "html",  "Output analysis results using HTML",   createHTMLDiagnosticClient, false)
-ANALYSIS_DIAGNOSTICS(PLIST, "plist", "Output analysis results using Plists", createPlistDiagnosticClient, true)
-ANALYSIS_DIAGNOSTICS(PLIST_HTML, "plist-html", "Output analysis results using HTML wrapped with Plists", createPlistHTMLDiagnosticClient, true)
-ANALYSIS_DIAGNOSTICS(TEXT, "text", "Text output of analysis results", createTextPathDiagnosticClient, true)
+ANALYSIS_DIAGNOSTICS(HTML,  "html",  "Output analysis results using HTML",   createHTMLDiagnosticConsumer, false)
+ANALYSIS_DIAGNOSTICS(PLIST, "plist", "Output analysis results using Plists", createPlistDiagnosticConsumer, true)
+ANALYSIS_DIAGNOSTICS(PLIST_HTML, "plist-html", "Output analysis results using HTML wrapped with Plists", createPlistHTMLDiagnosticConsumer, true)
+ANALYSIS_DIAGNOSTICS(TEXT, "text", "Text output of analysis results", createTextPathDiagnosticConsumer, true)
 
 #undef ANALYSIS_STORE
 #undef ANALYSIS_CONSTRAINTS

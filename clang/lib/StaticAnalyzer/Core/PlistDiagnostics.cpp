@@ -60,15 +60,15 @@ struct CompareDiagnostics {
 }
 
 namespace {
-  class PlistDiagnostics : public PathDiagnosticClient {
+  class PlistDiagnostics : public PathDiagnosticConsumer {
     std::vector<const PathDiagnostic*> BatchedDiags;
     const std::string OutputFile;
     const LangOptions &LangOpts;
-    llvm::OwningPtr<PathDiagnosticClient> SubPD;
+    llvm::OwningPtr<PathDiagnosticConsumer> SubPD;
     bool flushed;
   public:
     PlistDiagnostics(const std::string& prefix, const LangOptions &LangOpts,
-                     PathDiagnosticClient *subPD);
+                     PathDiagnosticConsumer *subPD);
 
     ~PlistDiagnostics() { FlushDiagnostics(NULL); }
 
@@ -89,18 +89,18 @@ namespace {
 
 PlistDiagnostics::PlistDiagnostics(const std::string& output,
                                    const LangOptions &LO,
-                                   PathDiagnosticClient *subPD)
+                                   PathDiagnosticConsumer *subPD)
   : OutputFile(output), LangOpts(LO), SubPD(subPD), flushed(false) {}
 
-PathDiagnosticClient*
-ento::createPlistDiagnosticClient(const std::string& s, const Preprocessor &PP,
-                                  PathDiagnosticClient *subPD) {
+PathDiagnosticConsumer*
+ento::createPlistDiagnosticConsumer(const std::string& s, const Preprocessor &PP,
+                                  PathDiagnosticConsumer *subPD) {
   return new PlistDiagnostics(s, PP.getLangOptions(), subPD);
 }
 
-PathDiagnosticClient::PathGenerationScheme
+PathDiagnosticConsumer::PathGenerationScheme
 PlistDiagnostics::getGenerationScheme() const {
-  if (const PathDiagnosticClient *PD = SubPD.get())
+  if (const PathDiagnosticConsumer *PD = SubPD.get())
     return PD->getGenerationScheme();
 
   return Extensive;

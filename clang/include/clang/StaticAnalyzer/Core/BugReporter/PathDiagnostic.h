@@ -45,11 +45,11 @@ class ExplodedNode;
 
 class PathDiagnostic;
 
-class PathDiagnosticClient {
+class PathDiagnosticConsumer {
 public:
-  PathDiagnosticClient() {}
+  PathDiagnosticConsumer() {}
 
-  virtual ~PathDiagnosticClient() {}
+  virtual ~PathDiagnosticConsumer() {}
   
   virtual void
   FlushDiagnostics(SmallVectorImpl<std::string> *FilesMade = 0) = 0;
@@ -70,7 +70,7 @@ public:
 
 protected:
   /// The actual logic for handling path diagnostics, as implemented
-  /// by subclasses of PathDiagnosticClient.
+  /// by subclasses of PathDiagnosticConsumer.
   virtual void HandlePathDiagnosticImpl(const PathDiagnostic* D) = 0;
 
 };
@@ -288,7 +288,7 @@ public:
   const std::string& getString() const { return str; }
 
   /// getDisplayHint - Return a hint indicating where the diagnostic should
-  ///  be displayed by the PathDiagnosticClient.
+  ///  be displayed by the PathDiagnosticConsumer.
   DisplayHint getDisplayHint() const { return Hint; }
 
   virtual PathDiagnosticLocation getLocation() const = 0;

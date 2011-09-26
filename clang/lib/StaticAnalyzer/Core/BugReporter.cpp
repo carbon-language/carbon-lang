@@ -127,13 +127,13 @@ public:
 
 class PathDiagnosticBuilder : public BugReporterContext {
   BugReport *R;
-  PathDiagnosticClient *PDC;
+  PathDiagnosticConsumer *PDC;
   llvm::OwningPtr<ParentMap> PM;
   NodeMapClosure NMC;
 public:
   PathDiagnosticBuilder(GRBugReporter &br,
                         BugReport *r, NodeBackMap *Backmap,
-                        PathDiagnosticClient *pdc)
+                        PathDiagnosticConsumer *pdc)
     : BugReporterContext(br),
       R(r), PDC(pdc), NMC(Backmap) {}
 
@@ -160,8 +160,8 @@ public:
 
   PathDiagnosticLocation getEnclosingStmtLocation(const Stmt *S);
 
-  PathDiagnosticClient::PathGenerationScheme getGenerationScheme() const {
-    return PDC ? PDC->getGenerationScheme() : PathDiagnosticClient::Extensive;
+  PathDiagnosticConsumer::PathGenerationScheme getGenerationScheme() const {
+    return PDC ? PDC->getGenerationScheme() : PathDiagnosticConsumer::Extensive;
   }
 
   bool supportsLogicalOpControlFlow() const {
@@ -1631,7 +1631,8 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
   const ExplodedNode *N = GPair.second.first;
 
   // Start building the path diagnostic...
-  PathDiagnosticBuilder PDB(*this, R, BackMap.get(), getPathDiagnosticClient());
+  PathDiagnosticBuilder PDB(*this, R, BackMap.get(),
+                            getPathDiagnosticConsumer());
 
   // Register additional node visitors.
   R->addVisitor(new NilReceiverBRVisitor());
@@ -1656,10 +1657,10 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
     return;
 
   switch (PDB.getGenerationScheme()) {
-    case PathDiagnosticClient::Extensive:
+    case PathDiagnosticConsumer::Extensive:
       GenerateExtensivePathDiagnostic(PD, PDB, N);
       break;
-    case PathDiagnosticClient::Minimal:
+    case PathDiagnosticConsumer::Minimal:
       GenerateMinimalPathDiagnostic(PD, PDB, N);
       break;
   }
@@ -1850,7 +1851,7 @@ void BugReporter::FlushReport(BugReportEquivClass& EQ) {
   if (!exampleReport)
     return;
   
-  PathDiagnosticClient* PD = getPathDiagnosticClient();
+  PathDiagnosticConsumer* PD = getPathDiagnosticConsumer();
 
   // FIXME: Make sure we use the 'R' for the path that was actually used.
   // Probably doesn't make a difference in practice.
@@ -1906,7 +1907,7 @@ void BugReporter::FlushReport(BugReportEquivClass& EQ) {
       diagBuilder << *I;
   }
 
-  // Emit a full diagnostic for the path if we have a PathDiagnosticClient.
+  // Emit a full diagnostic for the path if we have a PathDiagnosticConsumer.
   if (!PD)
     return;
 

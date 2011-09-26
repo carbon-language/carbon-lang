@@ -218,7 +218,7 @@ class BugReporterData {
 public:
   virtual ~BugReporterData();
   virtual DiagnosticsEngine& getDiagnostic() = 0;
-  virtual PathDiagnosticClient* getPathDiagnosticClient() = 0;
+  virtual PathDiagnosticConsumer* getPathDiagnosticConsumer() = 0;
   virtual ASTContext &getASTContext() = 0;
   virtual SourceManager& getSourceManager() = 0;
 };
@@ -264,8 +264,8 @@ public:
     return D.getDiagnostic();
   }
 
-  PathDiagnosticClient* getPathDiagnosticClient() {
-    return D.getPathDiagnosticClient();
+  PathDiagnosticConsumer* getPathDiagnosticConsumer() {
+    return D.getPathDiagnosticConsumer();
   }
 
   /// \brief Iterator over the set of BugTypes tracked by the BugReporter.

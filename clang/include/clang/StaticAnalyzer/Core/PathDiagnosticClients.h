@@ -22,18 +22,18 @@ class Preprocessor;
 
 namespace ento {
 
-class PathDiagnosticClient;
+class PathDiagnosticConsumer;
 
-PathDiagnosticClient*
-createHTMLDiagnosticClient(const std::string& prefix, const Preprocessor &PP);
+PathDiagnosticConsumer*
+createHTMLDiagnosticConsumer(const std::string& prefix, const Preprocessor &PP);
 
-PathDiagnosticClient*
-createPlistDiagnosticClient(const std::string& prefix, const Preprocessor &PP,
-                            PathDiagnosticClient *SubPD = 0);
+PathDiagnosticConsumer*
+createPlistDiagnosticConsumer(const std::string& prefix, const Preprocessor &PP,
+                              PathDiagnosticConsumer *SubPD = 0);
 
-PathDiagnosticClient*
-createTextPathDiagnosticClient(const std::string& prefix,
-                               const Preprocessor &PP);
+PathDiagnosticConsumer*
+createTextPathDiagnosticConsumer(const std::string& prefix,
+                                 const Preprocessor &PP);
 
 } // end GR namespace
 

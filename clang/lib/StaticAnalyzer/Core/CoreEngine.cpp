@@ -786,7 +786,7 @@ void CallEnterNodeBuilder::generateNode(const ProgramState *state) {
     // The Diagnostic is  actually shared when we create ASTUnits from AST files.
     AnalysisManager AMgr(TU->getASTContext(), TU->getDiagnostic(), 
                          OldMgr.getLangOptions(), 
-                         OldMgr.getPathDiagnosticClient(),
+                         OldMgr.getPathDiagnosticConsumer(),
                          OldMgr.getStoreManagerCreator(),
                          OldMgr.getConstraintManagerCreator(),
                          OldMgr.getCheckerManager(),
