@@ -1824,7 +1824,7 @@ void CGDebugInfo::UpdateLineDirectiveRegion(CGBuilderTy &Builder) {
   return;
 }
 /// EmitRegionStart- Constructs the debug code for entering a declarative
-/// region - "llvm.dbg.region.start.".
+/// region - beginning of a DW_TAG_lexical_block.
 void CGDebugInfo::EmitRegionStart(CGBuilderTy &Builder) {
   llvm::DIDescriptor D =
     DBuilder.createLexicalBlock(RegionStack.empty() ? 
@@ -1838,11 +1838,11 @@ void CGDebugInfo::EmitRegionStart(CGBuilderTy &Builder) {
 }
 
 /// EmitRegionEnd - Constructs the debug code for exiting a declarative
-/// region - "llvm.dbg.region.end."
+/// region - end of a DW_TAG_lexical_block.
 void CGDebugInfo::EmitRegionEnd(CGBuilderTy &Builder) {
   assert(!RegionStack.empty() && "Region stack mismatch, stack empty!");
 
-  // Provide an region stop point.
+  // Provide a region stop point.
   EmitStopPoint(Builder);
 
   RegionStack.pop_back();
