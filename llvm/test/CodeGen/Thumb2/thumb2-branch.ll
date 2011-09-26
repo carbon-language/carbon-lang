@@ -11,12 +11,12 @@ entry:
         br i1 %tmp, label %cond_true, label %return
 
 cond_true:              ; preds = %entry
-        call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 false)
+        fence seq_cst
         store i32 0, i32* %v
         ret i32 0
 
 return:         ; preds = %entry
-        call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 false)
+        fence seq_cst
         ret i32 1
 }
 
@@ -28,12 +28,12 @@ entry:
         br i1 %tmp, label %cond_true, label %return
 
 cond_true:              ; preds = %entry
-        call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 false)
+        fence seq_cst
         store i32 0, i32* %v
         ret i32 0
 
 return:         ; preds = %entry
-        call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 false)
+        fence seq_cst
         ret i32 1
 }
 
@@ -45,12 +45,12 @@ entry:
         br i1 %tmp, label %cond_true, label %return
 
 cond_true:              ; preds = %entry
-        call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 false)
+        fence seq_cst
         store i32 0, i32* %v
         ret i32 0
 
 return:         ; preds = %entry
-        call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 false)
+        fence seq_cst
         ret i32 1
 }
 
@@ -62,13 +62,11 @@ entry:
         br i1 %tmp, label %return, label %cond_true
 
 cond_true:              ; preds = %entry
-        call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 false)
+        fence seq_cst
         store i32 0, i32* %v
         ret i32 0
 
 return:         ; preds = %entry
-        call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 false)
+        fence seq_cst
         ret i32 1
 }
-
-declare void @llvm.memory.barrier(i1, i1, i1, i1, i1) nounwind

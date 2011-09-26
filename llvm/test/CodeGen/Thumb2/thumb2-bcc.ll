@@ -6,20 +6,18 @@
 define i32 @t1(i32 %a, i32 %b, i32 %c) {
 ; CHECK: t1:
 ; CHECK: cbz
-	%tmp2 = icmp eq i32 %a, 0
-	br i1 %tmp2, label %cond_false, label %cond_true
+  %tmp2 = icmp eq i32 %a, 0
+  br i1 %tmp2, label %cond_false, label %cond_true
 
 cond_true:
-        call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 false)
-	%tmp5 = add i32 %b, 1
-        %tmp6 = and i32 %tmp5, %c
-	ret i32 %tmp6
+  fence seq_cst
+  %tmp5 = add i32 %b, 1
+  %tmp6 = and i32 %tmp5, %c
+  ret i32 %tmp6
 
 cond_false:
-        call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 false)
-	%tmp7 = add i32 %b, -1
-        %tmp8 = xor i32 %tmp7, %c
-	ret i32 %tmp8
+  fence seq_cst
+  %tmp7 = add i32 %b, -1
+  %tmp8 = xor i32 %tmp7, %c
+  ret i32 %tmp8
 }
-
-declare void @llvm.memory.barrier(i1, i1, i1, i1, i1) nounwind
