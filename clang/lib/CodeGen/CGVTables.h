@@ -49,6 +49,8 @@ public:
     CK_UnusedFunctionPointer
   };
 
+  VTableComponent() { }
+
   static VTableComponent MakeVCallOffset(CharUnits Offset) {
     return VTableComponent(CK_VCallOffset, Offset);
   }
@@ -194,6 +196,69 @@ private:
   int64_t Value;
 };
 
+class VTableLayout {
+public:
+  typedef std::pair<uint64_t, ThunkInfo> VTableThunkTy;
+  typedef llvm::SmallVector<ThunkInfo, 1> ThunkInfoVectorTy;
+
+  typedef const VTableComponent *vtable_component_iterator;
+  typedef const VTableThunkTy *vtable_thunk_iterator;
+
+  typedef llvm::DenseMap<BaseSubobject, uint64_t> AddressPointsMapTy;
+private:
+  uint64_t NumVTableComponents;
+  VTableComponent *VTableComponents;
+
+  /// VTableThunks - Contains thunks needed by vtables.
+  uint64_t NumVTableThunks;
+  VTableThunkTy *VTableThunks;
+  
+  /// Address points - Address points for all vtables.
+  AddressPointsMapTy AddressPoints;
+
+public:
+  VTableLayout(uint64_t NumVTableComponents,
+               const VTableComponent *VTableComponents,
+               uint64_t NumVTableThunks,
+               const VTableThunkTy *VTableThunks,
+               const AddressPointsMapTy &AddressPoints);
+  ~VTableLayout();
+
+  uint64_t getNumVTableComponents() const {
+    return NumVTableComponents;
+  }
+
+  vtable_component_iterator vtable_component_begin() const {
+   return VTableComponents;
+  }
+
+  vtable_component_iterator vtable_component_end() const {
+   return VTableComponents+NumVTableComponents;
+  }
+
+  uint64_t getNumVTableThunks() const {
+    return NumVTableThunks;
+  }
+
+  vtable_thunk_iterator vtable_thunk_begin() const {
+   return VTableThunks;
+  }
+
+  vtable_thunk_iterator vtable_thunk_end() const {
+   return VTableThunks+NumVTableThunks;
+  }
+
+  uint64_t getAddressPoint(BaseSubobject Base) const {
+    assert(AddressPoints.count(Base) &&
+           "Did not find address point!");
+
+    uint64_t AddressPoint = AddressPoints.lookup(Base);
+    assert(AddressPoint && "Address point must not be zero!");
+
+    return AddressPoint;
+  }
+};
+
 class VTableContext {
   ASTContext &Context;
 
@@ -207,6 +272,10 @@ private:
   /// point) where the function pointer for a virtual function is stored.
   typedef llvm::DenseMap<GlobalDecl, int64_t> MethodVTableIndicesTy;
   MethodVTableIndicesTy MethodVTableIndices;
+
+  typedef llvm::DenseMap<const CXXRecordDecl *, const VTableLayout *>
+    VTableLayoutMapTy;
+  VTableLayoutMapTy VTableLayouts;
 
   /// NumVirtualFunctionPointers - Contains the number of virtual function 
   /// pointers in the vtable for a given record decl.
@@ -222,31 +291,10 @@ private:
     VirtualBaseClassOffsetOffsetsMapTy;
   VirtualBaseClassOffsetOffsetsMapTy VirtualBaseClassOffsetOffsets;
 
-  // The layout entry.
-  typedef llvm::DenseMap<const CXXRecordDecl *, uint64_t *> VTableLayoutMapTy;
-  
-  /// VTableLayoutMap - Stores the vtable layout for all record decls.
-  /// The layout is stored as an array of 64-bit integers, where the first
-  /// integer is the number of vtable entries in the layout, and the subsequent
-  /// integers are the vtable components.
-  VTableLayoutMapTy VTableLayoutMap;
-
   typedef llvm::DenseMap<const CXXMethodDecl *, ThunkInfoVectorTy> ThunksMapTy;
   
   /// Thunks - Contains all thunks that a given method decl will need.
   ThunksMapTy Thunks;
-
-  typedef llvm::DenseMap<const CXXRecordDecl *, VTableThunksTy>
-    VTableThunksMapTy;
-  
-  /// VTableThunksMap - Contains thunks needed by vtables.
-  VTableThunksMapTy VTableThunksMap;
-  
-  typedef std::pair<const CXXRecordDecl *, BaseSubobject> BaseSubobjectPairTy;
-  typedef llvm::DenseMap<BaseSubobjectPairTy, uint64_t> AddressPointsMapTy;
-  
-  /// Address points - Address points for all vtables.
-  AddressPointsMapTy AddressPoints;
 
   void ComputeMethodVTableIndices(const CXXRecordDecl *RD);
 
@@ -257,20 +305,13 @@ private:
 
 public:
   VTableContext(ASTContext &Context) : Context(Context) {}
+  ~VTableContext();
 
-  uint64_t getNumVTableComponents(const CXXRecordDecl *RD) {
+  const VTableLayout &getVTableLayout(const CXXRecordDecl *RD) {
     ComputeVTableRelatedInformation(RD);
-    assert(VTableLayoutMap.count(RD) && "No vtable layout for this class!");
+    assert(VTableLayouts.count(RD) && "No layout for this record decl!");
     
-    return VTableLayoutMap.lookup(RD)[0];
-  }
-
-  const uint64_t *getVTableComponentsData(const CXXRecordDecl *RD) {
-    ComputeVTableRelatedInformation(RD);
-    assert(VTableLayoutMap.count(RD) && "No vtable layout for this class!");
-
-    uint64_t *Components = VTableLayoutMap.lookup(RD);
-    return &Components[1];
+    return *VTableLayouts[RD];
   }
 
   const ThunkInfoVectorTy *getThunkInfo(const CXXMethodDecl *MD) {
@@ -283,25 +324,6 @@ public:
     }
 
     return &I->second;
-  }
-
-  const VTableThunksTy &getVTableThunks(const CXXRecordDecl *RD) {
-    ComputeVTableRelatedInformation(RD);
-    assert(VTableThunksMap.count(RD) && 
-           "No thunk status for this record decl!");
-    
-    return VTableThunksMap[RD];
-  }
-
-  uint64_t getAddressPoint(BaseSubobject Base, const CXXRecordDecl *RD) {
-    ComputeVTableRelatedInformation(RD);
-    assert(AddressPoints.count(std::make_pair(RD, Base)) &&
-           "Did not find address point!");
-
-    uint64_t AddressPoint = AddressPoints.lookup(std::make_pair(RD, Base));
-    assert(AddressPoint && "Address point must not be zero!");
-
-    return AddressPoint;
   }
 
   /// getNumVirtualFunctionPointers - Return the number of virtual function
@@ -361,9 +383,10 @@ class CodeGenVTables {
   /// \param Components - The vtable components; this is really an array of
   /// VTableComponents.
   llvm::Constant *CreateVTableInitializer(const CXXRecordDecl *RD,
-                                          const uint64_t *Components, 
+                                          const VTableComponent *Components, 
                                           unsigned NumComponents,
-                             const VTableContext::VTableThunksTy &VTableThunks);
+                                const VTableLayout::VTableThunkTy *VTableThunks,
+                                          unsigned NumVTableThunks);
 
 public:
   CodeGenVTables(CodeGenModule &CGM);

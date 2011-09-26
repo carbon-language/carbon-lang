@@ -1453,7 +1453,7 @@ CodeGenFunction::InitializeVTablePointer(BaseSubobject Base,
     VTableAddressPoint = Builder.CreateLoad(VTT);
   } else {
     uint64_t AddressPoint =
-      CGM.getVTableContext().getAddressPoint(Base, VTableClass);
+      CGM.getVTableContext().getVTableLayout(VTableClass).getAddressPoint(Base);
     VTableAddressPoint =
       Builder.CreateConstInBoundsGEP2_64(VTable, 0, AddressPoint);
   }
