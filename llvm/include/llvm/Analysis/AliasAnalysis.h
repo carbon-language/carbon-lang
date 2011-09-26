@@ -136,6 +136,8 @@ public:
   Location getLocation(const LoadInst *LI);
   Location getLocation(const StoreInst *SI);
   Location getLocation(const VAArgInst *VI);
+  Location getLocation(const AtomicCmpXchgInst *CXI);
+  Location getLocation(const AtomicRMWInst *RMWI);
   static Location getLocationForSource(const MemTransferInst *MTI);
   static Location getLocationForDest(const MemIntrinsic *MI);
 
@@ -426,10 +428,7 @@ public:
 
   /// getModRefInfo (for cmpxchges) - Return whether information about whether
   /// a particular cmpxchg modifies or reads the specified memory location.
-  ModRefResult getModRefInfo(const AtomicCmpXchgInst *CX, const Location &Loc) {
-    // Conservatively correct.  (But there are obvious ways to be smarter.)
-    return ModRef;
-  }
+  ModRefResult getModRefInfo(const AtomicCmpXchgInst *CX, const Location &Loc);
 
   /// getModRefInfo (for cmpxchges) - A convenience wrapper.
   ModRefResult getModRefInfo(const AtomicCmpXchgInst *CX,
@@ -439,10 +438,7 @@ public:
 
   /// getModRefInfo (for atomicrmws) - Return whether information about whether
   /// a particular atomicrmw modifies or reads the specified memory location.
-  ModRefResult getModRefInfo(const AtomicRMWInst *RMW, const Location &Loc) {
-    // Conservatively correct.  (But there are obvious ways to be smarter.)
-    return ModRef;
-  }
+  ModRefResult getModRefInfo(const AtomicRMWInst *RMW, const Location &Loc);
 
   /// getModRefInfo (for atomicrmws) - A convenience wrapper.
   ModRefResult getModRefInfo(const AtomicRMWInst *RMW,

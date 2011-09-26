@@ -237,6 +237,19 @@ AliasAnalysis::Location AliasAnalysis::getLocation(const VAArgInst *VI) {
                   VI->getMetadata(LLVMContext::MD_tbaa));
 }
 
+AliasAnalysis::Location
+AliasAnalysis::getLocation(const AtomicCmpXchgInst *CXI) {
+  return Location(CXI->getPointerOperand(),
+                  getTypeStoreSize(CXI->getCompareOperand()->getType()),
+                  CXI->getMetadata(LLVMContext::MD_tbaa));
+}
+
+AliasAnalysis::Location
+AliasAnalysis::getLocation(const AtomicRMWInst *RMWI) {
+  return Location(RMWI->getPointerOperand(),
+                  getTypeStoreSize(RMWI->getValOperand()->getType()),
+                  RMWI->getMetadata(LLVMContext::MD_tbaa));
+}
 
 AliasAnalysis::Location 
 AliasAnalysis::getLocationForSource(const MemTransferInst *MTI) {
@@ -316,6 +329,33 @@ AliasAnalysis::getModRefInfo(const VAArgInst *V, const Location &Loc) {
   // Otherwise, a va_arg reads and writes.
   return ModRef;
 }
+
+AliasAnalysis::ModRefResult
+AliasAnalysis::getModRefInfo(const AtomicCmpXchgInst *CX, const Location &Loc) {
+  // Acquire/Release cmpxchg has properties that matter for arbitrary addresses.
+  if (CX->getOrdering() > Monotonic)
+    return ModRef;
+
+  // If the cmpxchg address does not alias the location, it does not access it.
+  if (!alias(getLocation(CX), Loc))
+    return NoModRef;
+
+  return ModRef;
+}
+
+AliasAnalysis::ModRefResult
+AliasAnalysis::getModRefInfo(const AtomicRMWInst *RMW, const Location &Loc) {
+  // Acquire/Release atomicrmw has properties that matter for arbitrary addresses.
+  if (RMW->getOrdering() > Monotonic)
+    return ModRef;
+
+  // If the atomicrmw address does not alias the location, it does not access it.
+  if (!alias(getLocation(RMW), Loc))
+    return NoModRef;
+
+  return ModRef;
+}
+
 
 // AliasAnalysis destructor: DO NOT move this to the header file for
 // AliasAnalysis or else clients of the AliasAnalysis class may not depend on

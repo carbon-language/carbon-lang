@@ -6,10 +6,8 @@
 
 define i32 @main() {
   %a = load i32* @flag0
-  %b = tail call i32 @llvm.atomic.swap.i32.p0i32(i32* @turn, i32 1)
+  %b = atomicrmw xchg i32* @turn, i32 1 monotonic
   %c = load i32* @flag0
   %d = sub i32 %a, %c
   ret i32 %d
 }
-
-declare i32 @llvm.atomic.swap.i32.p0i32(i32*, i32) nounwind
