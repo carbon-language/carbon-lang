@@ -3090,6 +3090,7 @@ void ASTReader::ReadPragmaDiagnosticMappings(DiagnosticsEngine &Diag) {
           break; // no more diag/map pairs for this location.
         }
         diag::Mapping Map = (diag::Mapping)F.PragmaDiagMappings[Idx++];
+        // The user bit gets set by WritePragmaDiagnosticMappings.
         Diag.setDiagnosticMapping(DiagID, Map, Loc);
       }
     }
