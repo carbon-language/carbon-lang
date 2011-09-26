@@ -2956,7 +2956,7 @@ void CodeGenVTables::EmitThunks(GlobalDecl GD)
   const CXXRecordDecl *RD = MD->getParent();
   
   // Compute VTable related info for this class.
-  ComputeVTableRelatedInformation(RD, false);
+  ComputeVTableRelatedInformation(RD);
   
   ThunksMapTy::const_iterator I = Thunks.find(MD);
   if (I == Thunks.end()) {
@@ -2969,20 +2969,11 @@ void CodeGenVTables::EmitThunks(GlobalDecl GD)
     EmitThunk(GD, ThunkInfoVector[I], /*UseAvailableExternallyLinkage=*/false);
 }
 
-void CodeGenVTables::ComputeVTableRelatedInformation(const CXXRecordDecl *RD,
-                                                     bool RequireVTable) {
-  VTableLayoutData &Entry = VTableLayoutMap[RD];
+void CodeGenVTables::ComputeVTableRelatedInformation(const CXXRecordDecl *RD) {
+  uint64_t *&Entry = VTableLayoutMap[RD];
 
-  // We may need to generate a definition for this vtable.
-  if (RequireVTable && !Entry.getInt()) {
-    if (ShouldEmitVTableInThisTU(RD))
-      CGM.DeferredVTables.push_back(RD);
-
-    Entry.setInt(true);
-  }
-  
   // Check if we've computed this information before.
-  if (Entry.getPointer())
+  if (Entry)
     return;
 
   VTableBuilder Builder(VTContext, RD, CharUnits::Zero(), 
@@ -2998,7 +2989,7 @@ void CodeGenVTables::ComputeVTableRelatedInformation(const CXXRecordDecl *RD,
   uint64_t *LayoutData = new uint64_t[NumVTableComponents + 1];
   if (IsAppleKext)
     LayoutData[NumVTableComponents] = 0;
-  Entry.setPointer(LayoutData);
+  Entry = LayoutData;
 
   // Store the number of components.
   LayoutData[0] = NumVTableComponents;
@@ -3170,23 +3161,31 @@ CodeGenVTables::CreateVTableInitializer(const CXXRecordDecl *RD,
 }
 
 llvm::GlobalVariable *CodeGenVTables::GetAddrOfVTable(const CXXRecordDecl *RD) {
+  llvm::GlobalVariable *&VTable = VTables[RD];
+  if (VTable)
+    return VTable;
+
+  // We may need to generate a definition for this vtable.
+  if (ShouldEmitVTableInThisTU(RD))
+    CGM.DeferredVTables.push_back(RD);
+
   llvm::SmallString<256> OutName;
   llvm::raw_svector_ostream Out(OutName);
   CGM.getCXXABI().getMangleContext().mangleCXXVTable(RD, Out);
   Out.flush();
   StringRef Name = OutName.str();
 
-  ComputeVTableRelatedInformation(RD, /*VTableRequired=*/true);
+  ComputeVTableRelatedInformation(RD);
   
   llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
   llvm::ArrayType *ArrayType = 
     llvm::ArrayType::get(Int8PtrTy, getNumVTableComponents(RD));
 
-  llvm::GlobalVariable *GV =
+  VTable =
     CGM.CreateOrReplaceCXXRuntimeVariable(Name, ArrayType, 
                                           llvm::GlobalValue::ExternalLinkage);
-  GV->setUnnamedAddr(true);
-  return GV;
+  VTable->setUnnamedAddr(true);
+  return VTable;
 }
 
 void
@@ -3279,13 +3278,10 @@ CodeGenVTables::GenerateConstructionVTable(const CXXRecordDecl *RD,
 void 
 CodeGenVTables::GenerateClassData(llvm::GlobalVariable::LinkageTypes Linkage,
                                   const CXXRecordDecl *RD) {
-  llvm::GlobalVariable *&VTable = VTables[RD];
-  if (VTable) {
-    assert(VTable->getInitializer() && "VTable doesn't have a definition!");
+  llvm::GlobalVariable *VTable = GetAddrOfVTable(RD);
+  if (VTable->hasInitializer())
     return;
-  }
 
-  VTable = GetAddrOfVTable(RD);
   EmitVTableDefinition(VTable, Linkage, RD);
 
   if (RD->getNumVBases()) {

@@ -107,7 +107,8 @@ llvm::GlobalVariable *CodeGenVTables::GetAddrOfVTT(const CXXRecordDecl *RD) {
   Out.flush();
   StringRef Name = OutName.str();
 
-  ComputeVTableRelatedInformation(RD, /*VTableRequired=*/true);
+  // This will also defer the definition of the VTT.
+  (void) GetAddrOfVTable(RD);
 
   VTTBuilder Builder(CGM.getContext(), RD, /*GenerateDefinition=*/false);
 

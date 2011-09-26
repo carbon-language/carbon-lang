@@ -89,11 +89,8 @@ class CodeGenVTables {
   /// Thunks - Contains all thunks that a given method decl will need.
   ThunksMapTy Thunks;
 
-  // The layout entry and a bool indicating whether we've actually emitted
-  // the vtable.
-  typedef llvm::PointerIntPair<uint64_t *, 1, bool> VTableLayoutData;
-  typedef llvm::DenseMap<const CXXRecordDecl *, VTableLayoutData>
-    VTableLayoutMapTy;
+  // The layout entry.
+  typedef llvm::DenseMap<const CXXRecordDecl *, uint64_t *> VTableLayoutMapTy;
   
   /// VTableLayoutMap - Stores the vtable layout for all record decls.
   /// The layout is stored as an array of 64-bit integers, where the first
@@ -122,13 +119,13 @@ class CodeGenVTables {
   uint64_t getNumVTableComponents(const CXXRecordDecl *RD) const {
     assert(VTableLayoutMap.count(RD) && "No vtable layout for this class!");
     
-    return VTableLayoutMap.lookup(RD).getPointer()[0];
+    return VTableLayoutMap.lookup(RD)[0];
   }
 
   const uint64_t *getVTableComponentsData(const CXXRecordDecl *RD) const {
     assert(VTableLayoutMap.count(RD) && "No vtable layout for this class!");
 
-    uint64_t *Components = VTableLayoutMap.lookup(RD).getPointer();
+    uint64_t *Components = VTableLayoutMap.lookup(RD);
     return &Components[1];
   }
 
@@ -157,8 +154,7 @@ class CodeGenVTables {
   /// ComputeVTableRelatedInformation - Compute and store all vtable related
   /// information (vtable layout, vbase offset offsets, thunks etc) for the
   /// given record decl.
-  void ComputeVTableRelatedInformation(const CXXRecordDecl *RD,
-                                       bool VTableRequired);
+  void ComputeVTableRelatedInformation(const CXXRecordDecl *RD);
 
   /// CreateVTableInitializer - Create a vtable initializer for the given record
   /// decl.
