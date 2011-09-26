@@ -58,6 +58,7 @@ PTXSelectionDAGInfo::EmitTargetCodeForMemcpy(SelectionDAG &DAG, DebugLoc dl,
   SDValue TFOps[MAX_LOADS_IN_LDM];
   SDValue Loads[MAX_LOADS_IN_LDM];
   uint64_t SrcOff = 0, DstOff = 0;
+  EVT PointerType = Subtarget->is64Bit() ? MVT::i64 : MVT::i32;
 
   // Emit up to MAX_LOADS_IN_LDM loads, then a TokenFactor barrier, then the
   // same number of stores.  The loads and stores will get combined into
@@ -66,8 +67,8 @@ PTXSelectionDAGInfo::EmitTargetCodeForMemcpy(SelectionDAG &DAG, DebugLoc dl,
     for (i = 0;
          i < MAX_LOADS_IN_LDM && EmittedNumMemOps + i < NumMemOps; ++i) {
       Loads[i] = DAG.getLoad(VT, dl, Chain,
-                             DAG.getNode(ISD::ADD, dl, MVT::i32, Src,
-                                         DAG.getConstant(SrcOff, MVT::i32)),
+                             DAG.getNode(ISD::ADD, dl, PointerType, Src,
+                                         DAG.getConstant(SrcOff, PointerType)),
                              SrcPtrInfo.getWithOffset(SrcOff), isVolatile,
                              false, 0);
       TFOps[i] = Loads[i].getValue(1);
@@ -78,8 +79,8 @@ PTXSelectionDAGInfo::EmitTargetCodeForMemcpy(SelectionDAG &DAG, DebugLoc dl,
     for (i = 0;
          i < MAX_LOADS_IN_LDM && EmittedNumMemOps + i < NumMemOps; ++i) {
       TFOps[i] = DAG.getStore(Chain, dl, Loads[i],
-                              DAG.getNode(ISD::ADD, dl, MVT::i32, Dst,
-                                          DAG.getConstant(DstOff, MVT::i32)),
+                              DAG.getNode(ISD::ADD, dl, PointerType, Dst,
+                                          DAG.getConstant(DstOff, PointerType)),
                               DstPtrInfo.getWithOffset(DstOff),
                               isVolatile, false, 0);
       DstOff += VTSize;
@@ -105,8 +106,8 @@ PTXSelectionDAGInfo::EmitTargetCodeForMemcpy(SelectionDAG &DAG, DebugLoc dl,
     }
 
     Loads[i] = DAG.getLoad(VT, dl, Chain,
-                           DAG.getNode(ISD::ADD, dl, MVT::i32, Src,
-                                       DAG.getConstant(SrcOff, MVT::i32)),
+                           DAG.getNode(ISD::ADD, dl, PointerType, Src,
+                                       DAG.getConstant(SrcOff, PointerType)),
                            SrcPtrInfo.getWithOffset(SrcOff), false, false, 0);
     TFOps[i] = Loads[i].getValue(1);
     ++i;
@@ -127,8 +128,8 @@ PTXSelectionDAGInfo::EmitTargetCodeForMemcpy(SelectionDAG &DAG, DebugLoc dl,
     }
 
     TFOps[i] = DAG.getStore(Chain, dl, Loads[i],
-                            DAG.getNode(ISD::ADD, dl, MVT::i32, Dst,
-                                        DAG.getConstant(DstOff, MVT::i32)),
+                            DAG.getNode(ISD::ADD, dl, PointerType, Dst,
+                                        DAG.getConstant(DstOff, PointerType)),
                             DstPtrInfo.getWithOffset(DstOff), false, false, 0);
     ++i;
     DstOff += VTSize;
