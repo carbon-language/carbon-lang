@@ -2268,7 +2268,7 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
       else if (RegVT == MVT::f32)
         RC = Mips::FGR32RegisterClass;
       else if (RegVT == MVT::f64)
-        RC = Mips::AFGR64RegisterClass;
+        RC = HasMips64 ? Mips::FGR64RegisterClass : Mips::AFGR64RegisterClass;
       else
         llvm_unreachable("RegVT not supported by FormalArguments Lowering");
 
