@@ -996,9 +996,7 @@ static void printDiagnosticOptions(raw_ostream &OS,
 /// \returns The index of the first non-whitespace character that is
 /// greater than or equal to Idx or, if no such character exists,
 /// returns the end of the string.
-static unsigned skipWhitespace(unsigned Idx,
-                               const SmallVectorImpl<char> &Str,
-                               unsigned Length) {
+static unsigned skipWhitespace(unsigned Idx, StringRef Str, unsigned Length) {
   while (Idx < Length && isspace(Str[Idx]))
     ++Idx;
   return Idx;
@@ -1029,8 +1027,7 @@ static inline char findMatchingPunctuation(char c) {
 ///
 /// \returns the index pointing one character past the end of the
 /// word.
-static unsigned findEndOfWord(unsigned Start,
-                              const SmallVectorImpl<char> &Str,
+static unsigned findEndOfWord(unsigned Start, StringRef Str,
                               unsigned Length, unsigned Column,
                               unsigned Columns) {
   assert(Start < Str.size() && "Invalid start position!");
@@ -1096,8 +1093,7 @@ static unsigned findEndOfWord(unsigned Start,
 /// the first line.
 /// \returns true if word-wrapping was required, or false if the
 /// string fit on the first line.
-static bool printWordWrapped(raw_ostream &OS,
-                             const SmallVectorImpl<char> &Str,
+static bool printWordWrapped(raw_ostream &OS, StringRef Str,
                              unsigned Columns,
                              unsigned Column = 0,
                              unsigned Indentation = WordWrapIndentation) {
@@ -1125,7 +1121,7 @@ static bool printWordWrapped(raw_ostream &OS,
         OS << ' ';
         Column += 1;
       }
-      OS.write(&Str[WordStart], WordLength);
+      OS << Str.substr(WordStart, WordLength);
       Column += WordLength;
       continue;
     }
@@ -1134,12 +1130,37 @@ static bool printWordWrapped(raw_ostream &OS,
     // line.
     OS << '\n';
     OS.write(&IndentStr[0], Indentation);
-    OS.write(&Str[WordStart], WordLength);
+    OS << Str.substr(WordStart, WordLength);
     Column = Indentation + WordLength;
     Wrapped = true;
   }
 
   return Wrapped;
+}
+
+static void printDiagnosticMessage(raw_ostream &OS,
+                                   DiagnosticsEngine::Level Level,
+                                   StringRef Message,
+                                   unsigned CurrentColumn, unsigned Columns,
+                                   bool ShowColors) {
+  if (ShowColors) {
+    // Print warnings, errors and fatal errors in bold, no color
+    switch (Level) {
+    case DiagnosticsEngine::Warning: OS.changeColor(savedColor, true); break;
+    case DiagnosticsEngine::Error:   OS.changeColor(savedColor, true); break;
+    case DiagnosticsEngine::Fatal:   OS.changeColor(savedColor, true); break;
+    default: break; //don't bold notes
+    }
+  }
+
+  if (Columns)
+    printWordWrapped(OS, Message, Columns, CurrentColumn);
+  else
+    OS << Message;
+
+  if (ShowColors)
+    OS.resetColor();
+  OS << '\n';
 }
 
 void TextDiagnosticPrinter::HandleDiagnostic(DiagnosticsEngine::Level Level,
@@ -1181,30 +1202,10 @@ void TextDiagnosticPrinter::HandleDiagnostic(DiagnosticsEngine::Level Level,
   if (DiagOpts->ShowNames)
     printDiagnosticName(DiagMessageStream, Info);
   printDiagnosticOptions(DiagMessageStream, Level, Info, *DiagOpts);
-  DiagMessageStream.flush();
 
-  if (DiagOpts->ShowColors) {
-    // Print warnings, errors and fatal errors in bold, no color
-    switch (Level) {
-    case DiagnosticsEngine::Warning: OS.changeColor(savedColor, true); break;
-    case DiagnosticsEngine::Error:   OS.changeColor(savedColor, true); break;
-    case DiagnosticsEngine::Fatal:   OS.changeColor(savedColor, true); break;
-    default: break; //don't bold notes
-    }
-  }
-
-  if (DiagOpts->MessageLength) {
-    // We will be word-wrapping the error message, so compute the
-    // column number where we currently are (after printing the
-    // location information).
-    unsigned Column = OS.tell() - StartOfLocationInfo;
-    printWordWrapped(OS, OutStr, DiagOpts->MessageLength, Column);
-  } else {
-    OS.write(OutStr.begin(), OutStr.size());
-  }
-  OS << '\n';
-  if (DiagOpts->ShowColors)
-    OS.resetColor();
+  printDiagnosticMessage(OS, Level, DiagMessageStream.str(),
+                         OS.tell() - StartOfLocationInfo,
+                         DiagOpts->MessageLength, DiagOpts->ShowColors);
 
   // If caret diagnostics are enabled and we have location, we want to
   // emit the caret.  However, we only do this if the location moved
