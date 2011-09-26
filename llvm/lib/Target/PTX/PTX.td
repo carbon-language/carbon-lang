@@ -52,13 +52,13 @@ def FeatureSM12 : SubtargetFeature<"sm12", "PTXTarget", "PTX_SM_1_2",
 def FeatureSM13 : SubtargetFeature<"sm13", "PTXTarget", "PTX_SM_1_3",
                                    "Use Shader Model 1.3">;
 def FeatureSM20 : SubtargetFeature<"sm20", "PTXTarget", "PTX_SM_2_0",
-                                   "Use Shader Model 2.0">;
+                                   "Use Shader Model 2.0", [FeatureDouble]>;
 def FeatureSM21 : SubtargetFeature<"sm21", "PTXTarget", "PTX_SM_2_1",
-                                   "Use Shader Model 2.1">;
+                                   "Use Shader Model 2.1", [FeatureDouble]>;
 def FeatureSM22 : SubtargetFeature<"sm22", "PTXTarget", "PTX_SM_2_2",
-                                   "Use Shader Model 2.2">;
+                                   "Use Shader Model 2.2", [FeatureDouble]>;
 def FeatureSM23 : SubtargetFeature<"sm23", "PTXTarget", "PTX_SM_2_3",
-                                   "Use Shader Model 2.3">;
+                                   "Use Shader Model 2.3", [FeatureDouble]>;
 
 def FeatureCOMPUTE10 : SubtargetFeature<"compute10", "PTXTarget",
                                         "PTX_COMPUTE_1_0",
@@ -74,7 +74,8 @@ def FeatureCOMPUTE13 : SubtargetFeature<"compute13", "PTXTarget",
                                         "Use Compute Compatibility 1.3">;
 def FeatureCOMPUTE20 : SubtargetFeature<"compute20", "PTXTarget",
                                         "PTX_COMPUTE_2_0",
-                                        "Use Compute Compatibility 2.0">;
+                                        "Use Compute Compatibility 2.0",
+                                        [FeatureDouble]>;
 
 //===----------------------------------------------------------------------===//
 // PTX supported processors
