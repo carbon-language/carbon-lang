@@ -3048,13 +3048,13 @@ CodeGenVTables::GenerateConstructionVTable(const CXXRecordDecl *RD,
                                       bool BaseIsVirtual, 
                                    llvm::GlobalVariable::LinkageTypes Linkage,
                                       VTableAddressPointsMapTy& AddressPoints) {
-  VTableBuilder Builder(VTContext, Base.getBase(), 
-                        Base.getBaseOffset(), 
-                        /*MostDerivedClassIsVirtual=*/BaseIsVirtual, RD);
+  llvm::OwningPtr<VTableLayout> VTLayout(
+    VTContext.createConstructionVTableLayout(Base.getBase(),
+                                             Base.getBaseOffset(),
+                                             BaseIsVirtual, RD));
 
   // Add the address points.
-  AddressPoints.insert(Builder.address_points_begin(),
-                       Builder.address_points_end());
+  AddressPoints = VTLayout->getAddressPoints();
 
   // Get the mangled construction vtable name.
   llvm::SmallString<256> OutName;
@@ -3067,7 +3067,7 @@ CodeGenVTables::GenerateConstructionVTable(const CXXRecordDecl *RD,
 
   llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
   llvm::ArrayType *ArrayType = 
-    llvm::ArrayType::get(Int8PtrTy, Builder.getNumVTableComponents());
+    llvm::ArrayType::get(Int8PtrTy, VTLayout->getNumVTableComponents());
 
   // Create the variable that will hold the construction vtable.
   llvm::GlobalVariable *VTable = 
@@ -3077,21 +3077,13 @@ CodeGenVTables::GenerateConstructionVTable(const CXXRecordDecl *RD,
   // V-tables are always unnamed_addr.
   VTable->setUnnamedAddr(true);
 
-  // Add the thunks.
-  VTableContext::VTableThunksTy VTableThunks;
-  VTableThunks.append(Builder.vtable_thunks_begin(),
-                      Builder.vtable_thunks_end());
-
-  // Sort them.
-  std::sort(VTableThunks.begin(), VTableThunks.end());
-
   // Create and set the initializer.
   llvm::Constant *Init = 
     CreateVTableInitializer(Base.getBase(), 
-                            Builder.vtable_component_begin(), 
-                            Builder.getNumVTableComponents(),
-                            VTableThunks.begin(), 
-                            VTableThunks.size());
+                            VTLayout->vtable_component_begin(), 
+                            VTLayout->getNumVTableComponents(),
+                            VTLayout->vtable_thunk_begin(),
+                            VTLayout->getNumVTableThunks());
   VTable->setInitializer(Init);
   
   return VTable;

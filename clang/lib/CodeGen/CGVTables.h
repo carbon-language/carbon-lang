@@ -257,6 +257,10 @@ public:
 
     return AddressPoint;
   }
+
+  const AddressPointsMapTy &getAddressPoints() const {
+    return AddressPoints;
+  }
 };
 
 class VTableContext {
