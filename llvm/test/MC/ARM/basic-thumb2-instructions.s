@@ -2070,13 +2070,11 @@ _func:
         ssat	r8, #1, r10
         ssat	r8, #1, r10, lsl #0
         ssat	r8, #1, r10, lsl #31
-        ssat	r8, #1, r10, asr #32
         ssat	r8, #1, r10, asr #1
 
 @ CHECK: ssat	r8, #1, r10             @ encoding: [0x0a,0xf3,0x00,0x08]
 @ CHECK: ssat	r8, #1, r10             @ encoding: [0x0a,0xf3,0x00,0x08]
 @ CHECK: ssat	r8, #1, r10, lsl #31    @ encoding: [0x0a,0xf3,0xc0,0x78]
-@ CHECK: ssat	r8, #1, r10, asr #32    @ encoding: [0x2a,0xf3,0x00,0x08]
 @ CHECK: ssat	r8, #1, r10, asr #1     @ encoding: [0x2a,0xf3,0x40,0x08]
 
 
@@ -2898,13 +2896,11 @@ _func:
         usat	r8, #1, r10
         usat	r8, #4, r10, lsl #0
         usat	r8, #5, r10, lsl #31
-        usat	r8, #31, r10, asr #32
         usat	r8, #16, r10, asr #1
 
 @ CHECK: usat	r8, #1, r10             @ encoding: [0x8a,0xf3,0x01,0x08]
 @ CHECK: usat	r8, #4, r10             @ encoding: [0x8a,0xf3,0x04,0x08]
 @ CHECK: usat	r8, #5, r10, lsl #31    @ encoding: [0x8a,0xf3,0xc5,0x78]
-@ CHECK: usat	r8, #31, r10, asr #32   @ encoding: [0xaa,0xf3,0x1f,0x08]
 @ CHECK: usat	r8, #16, r10, asr #1    @ encoding: [0xaa,0xf3,0x50,0x08]
 
 
