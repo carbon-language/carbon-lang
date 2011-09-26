@@ -302,34 +302,7 @@ void PTXInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                      unsigned SrcReg, bool isKill, int FrameIdx,
                                        const TargetRegisterClass *RC,
                                        const TargetRegisterInfo *TRI) const {
-  MachineInstr& MI = *MII;
-  DebugLoc DL = MI.getDebugLoc();
-
-  DEBUG(dbgs() << "storeRegToStackSlot: " << MI);
-
-  int OpCode;
-
-  // Select the appropriate opcode based on the register class
-  if (RC == PTX::RegI16RegisterClass) {
-    OpCode = PTX::STACKSTOREI16;
-  }  else if (RC == PTX::RegI32RegisterClass) {
-    OpCode = PTX::STACKSTOREI32;
-  }  else if (RC == PTX::RegI64RegisterClass) {
-    OpCode = PTX::STACKSTOREI32;
-  }  else if (RC == PTX::RegF32RegisterClass) {
-    OpCode = PTX::STACKSTOREF32;
-  }  else if (RC == PTX::RegF64RegisterClass) {
-    OpCode = PTX::STACKSTOREF64;
-  } else {
-    llvm_unreachable("Unknown PTX register class!");
-  }
-
-  // Build the store instruction (really a mov)
-  MachineInstrBuilder MIB = BuildMI(MBB, MII, DL, get(OpCode));
-  MIB.addFrameIndex(FrameIdx);
-  MIB.addReg(SrcReg);
-
-  AddDefaultPredicate(MIB);
+  assert(false && "storeRegToStackSlot should not be called for PTX");
 }
 
 void PTXInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
@@ -337,34 +310,7 @@ void PTXInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                         unsigned DestReg, int FrameIdx,
                                         const TargetRegisterClass *RC,
                                         const TargetRegisterInfo *TRI) const {
-  MachineInstr& MI = *MII;
-  DebugLoc DL = MI.getDebugLoc();
-
-  DEBUG(dbgs() << "loadRegToStackSlot: " << MI);
-
-  int OpCode;
-
-  // Select the appropriate opcode based on the register class
-  if (RC == PTX::RegI16RegisterClass) {
-    OpCode = PTX::STACKLOADI16;
-  } else if (RC == PTX::RegI32RegisterClass) {
-    OpCode = PTX::STACKLOADI32;
-  } else if (RC == PTX::RegI64RegisterClass) {
-    OpCode = PTX::STACKLOADI32;
-  } else if (RC == PTX::RegF32RegisterClass) {
-    OpCode = PTX::STACKLOADF32;
-  } else if (RC == PTX::RegF64RegisterClass) {
-    OpCode = PTX::STACKLOADF64;
-  } else {
-    llvm_unreachable("Unknown PTX register class!");
-  }
-
-  // Build the load instruction (really a mov)
-  MachineInstrBuilder MIB = BuildMI(MBB, MII, DL, get(OpCode));
-  MIB.addReg(DestReg);
-  MIB.addFrameIndex(FrameIdx);
-
-  AddDefaultPredicate(MIB);
+  assert(false && "loadRegFromStackSlot should not be called for PTX");
 }
 
 // static helper routines
