@@ -1189,6 +1189,9 @@ void TextDiagnosticPrinter::HandleDiagnostic(DiagnosticsEngine::Level Level,
     OS << Prefix << ": ";
 
   // Use a dedicated, simpler path for diagnostics without a valid location.
+  // This is important as if the location is missing, we may be emitting
+  // diagnostics in a context that lacks language options, a source manager, or
+  // other infrastructure necessary when emitting more rich diagnostics.
   if (!Info.getLocation().isValid()) {
     printDiagnosticLevel(OS, Level, DiagOpts->ShowColors);
     printDiagnosticMessage(OS, Level, DiagMessageStream.str(),
@@ -1198,7 +1201,14 @@ void TextDiagnosticPrinter::HandleDiagnostic(DiagnosticsEngine::Level Level,
     return;
   }
 
+  // Assert that the rest of our infrastructure is setup properly.
+  assert(LangOpts && "Unexpected diagnostic outside source file processing");
+  assert(DiagOpts && "Unexpected diagnostic without options set");
+  assert(Info.hasSourceManager() &&
+         "Unexpected diagnostic with no source manager");
   const SourceManager &SM = Info.getSourceManager();
+  TextDiagnostic TextDiag(*this, OS, SM, *LangOpts, *DiagOpts);
+
   PresumedLoc PLoc = getDiagnosticPresumedLoc(SM, Info.getLocation());
 
   // First, if this diagnostic is not in the main file, print out the
@@ -1243,11 +1253,6 @@ void TextDiagnosticPrinter::HandleDiagnostic(DiagnosticsEngine::Level Level,
         Ranges.push_back(Hint.RemoveRange);
     }
 
-    assert(LangOpts && "Unexpected diagnostic outside source file processing");
-    assert(DiagOpts && "Unexpected diagnostic without options set");
-
-    TextDiagnostic TextDiag(*this, OS, Info.getSourceManager(),
-                            *LangOpts, *DiagOpts);
     unsigned MacroDepth = 0;
     TextDiag.Emit(LastLoc, Ranges, llvm::makeArrayRef(Info.getFixItHints(),
                                                       Info.getNumFixItHints()),
