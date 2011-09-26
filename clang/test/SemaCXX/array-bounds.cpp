@@ -226,3 +226,12 @@ void test_pr10771() {
     // TODO: This should probably warn, too.
     *(((char*)foo) + sizeof(foo)) = '\0';  // no-warning
 }
+
+int test_pr11007_aux(const char * restrict, ...);
+  
+// Test checking with varargs.
+void test_pr11007() {
+  double a[5]; // expected-note {{array 'a' declared here}}
+  test_pr11007_aux("foo", a[1000]); // expected-warning {{array index of '1000' indexes past the end of an array}}
+}
+

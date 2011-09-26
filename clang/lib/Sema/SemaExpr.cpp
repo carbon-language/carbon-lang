@@ -3398,6 +3398,10 @@ bool Sema::GatherArgumentsForCall(SourceLocation CallLoc,
         AllArgs.push_back(Arg.take());
       }
     }
+
+    // Check for array bounds violations.
+    for (unsigned i = ArgIx; i != NumArgs; ++i)
+      CheckArrayAccess(Args[i]);
   }
   return Invalid;
 }
