@@ -18,11 +18,9 @@ entry:
 loop:
 ; CHECK: lock
 ; CHECK-NEXT: cmpxchg8b
-  %r = call i64 @llvm.atomic.cmp.swap.i64.p0i64(i64* %ptr, i64 0, i64 1)
+  %r = cmpxchg i64* %ptr, i64 0, i64 1 monotonic
   %stored1  = icmp eq i64 %r, 0
   br i1 %stored1, label %loop, label %continue
 continue:
   ret void
 }
-
-declare i64 @llvm.atomic.cmp.swap.i64.p0i64(i64* nocapture, i64, i64) nounwind

@@ -7,48 +7,38 @@ target triple = "x86_64-apple-darwin10.0.0"
 ; CHECK: addq %{{.*}}, ({{.*}}){{.*}}encoding: [0xf0,0x48,0x01,0x37]
 ; CHECK: ret
 define void @f1(i64* %a, i64 %b) nounwind {
-  call i64 @llvm.atomic.load.add.i64.p0i64(i64* %a, i64 %b) nounwind
+  %1 = atomicrmw add i64* %a, i64 %b monotonic
   ret void
 }
-
-declare i64 @llvm.atomic.load.add.i64.p0i64(i64* nocapture, i64) nounwind
 
 ; CHECK: f2:
 ; CHECK: subq %{{.*}}, ({{.*}}){{.*}}encoding: [0xf0,0x48,0x29,0x37]
 ; CHECK: ret
 define void @f2(i64* %a, i64 %b) nounwind {
-  call i64 @llvm.atomic.load.sub.i64.p0i64(i64* %a, i64 %b) nounwind
+  %1 = atomicrmw sub i64* %a, i64 %b monotonic
   ret void
 }
-
-declare i64 @llvm.atomic.load.sub.i64.p0i64(i64* nocapture, i64) nounwind
 
 ; CHECK: f3:
 ; CHECK: andq %{{.*}}, ({{.*}}){{.*}}encoding: [0xf0,0x48,0x21,0x37]
 ; CHECK: ret
 define void @f3(i64* %a, i64 %b) nounwind {
-  call i64 @llvm.atomic.load.and.i64.p0i64(i64* %a, i64 %b) nounwind
+  %1 = atomicrmw and i64* %a, i64 %b monotonic
   ret void
 }
-
-declare i64 @llvm.atomic.load.and.i64.p0i64(i64* nocapture, i64) nounwind
 
 ; CHECK: f4:
 ; CHECK: orq %{{.*}}, ({{.*}}){{.*}}encoding: [0xf0,0x48,0x09,0x37]
 ; CHECK: ret
 define void @f4(i64* %a, i64 %b) nounwind {
-  call i64 @llvm.atomic.load.or.i64.p0i64(i64* %a, i64 %b) nounwind
+  %1 = atomicrmw or i64* %a, i64 %b monotonic
   ret void
 }
-
-declare i64 @llvm.atomic.load.or.i64.p0i64(i64* nocapture, i64) nounwind
 
 ; CHECK: f5:
 ; CHECK: xorq %{{.*}}, ({{.*}}){{.*}}encoding: [0xf0,0x48,0x31,0x37]
 ; CHECK: ret
 define void @f5(i64* %a, i64 %b) nounwind {
-  call i64 @llvm.atomic.load.xor.i64.p0i64(i64* %a, i64 %b) nounwind
+  %1 = atomicrmw xor i64* %a, i64 %b monotonic
   ret void
 }
-
-declare i64 @llvm.atomic.load.xor.i64.p0i64(i64* nocapture, i64) nounwind

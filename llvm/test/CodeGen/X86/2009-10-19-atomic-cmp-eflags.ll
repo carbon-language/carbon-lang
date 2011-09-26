@@ -36,7 +36,7 @@ lt_init.exit:                                     ; preds = %if.end.i, %if.then.
   call void asm sideeffect "cpuid", "~{ax},~{bx},~{cx},~{dx},~{memory},~{dirflag},~{fpsr},~{flags}"() nounwind
   %4 = call i64 @llvm.readcyclecounter() nounwind ; <i64> [#uses=1]
   %5 = sub i64 %4, %2                             ; <i64> [#uses=1]
-  %6 = call i64 @llvm.atomic.load.add.i64.p0i64(i64* getelementptr inbounds ([1216 x i64]* @__profiling_callsite_timestamps_live, i32 0, i32 51), i64 %5) nounwind ; <i64> [#uses=0]
+  %6 = atomicrmw add i64* getelementptr inbounds ([1216 x i64]* @__profiling_callsite_timestamps_live, i32 0, i32 51), i64 %5 monotonic
 ;CHECK: lock
 ;CHECK-NEXT: {{xadd|addq}} %rdx, __profiling_callsite_timestamps_live
 ;CHECK-NEXT: cmpl $0,
@@ -54,7 +54,7 @@ if.end:                                           ; preds = %if.then, %lt_init.e
   tail call void asm sideeffect "cpuid", "~{ax},~{bx},~{cx},~{dx},~{memory},~{dirflag},~{fpsr},~{flags}"() nounwind
   %8 = tail call i64 @llvm.readcyclecounter() nounwind ; <i64> [#uses=1]
   %9 = sub i64 %8, %0                             ; <i64> [#uses=1]
-  %10 = call i64 @llvm.atomic.load.add.i64.p0i64(i64* getelementptr inbounds ([1216 x i64]* @__profiling_callsite_timestamps_live, i32 0, i32 50), i64 %9) ; <i64> [#uses=0]
+  %10 = atomicrmw add i64* getelementptr inbounds ([1216 x i64]* @__profiling_callsite_timestamps_live, i32 0, i32 50), i64 %9 monotonic
   ret i32 %7
 }
 
@@ -63,7 +63,5 @@ declare void @cli_rarload() nounwind
 declare i32 @lt_dlinit()
 
 declare i32 @warn_dlerror(i8*) nounwind
-
-declare i64 @llvm.atomic.load.add.i64.p0i64(i64* nocapture, i64) nounwind
 
 declare i64 @llvm.readcyclecounter() nounwind

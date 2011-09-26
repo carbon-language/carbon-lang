@@ -18,12 +18,6 @@ entry:
 ; CHECK: lock
 ; CHECK: cmpxchg8b
 ; CHECK: jne
-  tail call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 true)
-  %0 = tail call i64 @llvm.atomic.load.add.i64.p0i64(i64* %p, i64 1) ; <i64> [#uses=0]
-  tail call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 true)
+  %0 = atomicrmw add i64* %p, i64 1 seq_cst
   ret void
 }
-
-declare void @llvm.memory.barrier(i1, i1, i1, i1, i1) nounwind
-
-declare i64 @llvm.atomic.load.add.i64.p0i64(i64* nocapture, i64) nounwind
