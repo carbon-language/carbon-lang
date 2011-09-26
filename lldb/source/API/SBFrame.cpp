@@ -440,6 +440,18 @@ SBFrame::WatchValue (const char *name, ValueType value_type, uint32_t watch_type
     WatchpointLocationSP wp_loc_sp = m_opaque_sp->GetThread().GetProcess().GetTarget().
         CreateWatchpointLocation(addr, size, watch_type);
 
+    if (wp_loc_sp) {
+        // StackFrame::GetInScopeVariableList(true) to get file globals as well.
+        VariableListSP var_list_sp(m_opaque_sp->GetInScopeVariableList(true));
+        VariableSP var_sp = var_list_sp->FindVariable(ConstString(name));
+        if (var_sp && var_sp->GetDeclaration().GetFile()) {
+            StreamString ss;
+            // True to show fullpath for declaration file.
+            var_sp->GetDeclaration().DumpStopContext(&ss, true);
+            wp_loc_sp->SetDeclInfo(ss.GetString());
+        }
+    }
+
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::WatchValue (name=\"%s\", value_type=%i, watch_type=%i) => SBValue(%p) & wp_loc(%p)", 
