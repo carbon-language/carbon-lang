@@ -10,7 +10,7 @@
 #ifndef liblldb_ExpressionSourceCode_h
 #define liblldb_ExpressionSourceCode_h
 
-#include "lldb-enumerations.h"
+#include "lldb/lldb-enumerations.h"
 
 #include <string>
 
