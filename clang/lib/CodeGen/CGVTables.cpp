@@ -1000,6 +1000,9 @@ public:
     Overriders(MostDerivedClass, MostDerivedClassOffset, LayoutClass) {
 
     LayoutVTable();
+
+    if (Context.getLangOptions().DumpVTableLayouts)
+      dumpLayout(llvm::errs());
   }
 
   uint64_t getNumThunks() const {
@@ -3021,14 +3024,6 @@ void
 CodeGenVTables::EmitVTableDefinition(llvm::GlobalVariable *VTable,
                                      llvm::GlobalVariable::LinkageTypes Linkage,
                                      const CXXRecordDecl *RD) {
-  // Dump the vtable layout if necessary.
-  if (CGM.getLangOptions().DumpVTableLayouts) {
-    VTableBuilder Builder(VTContext, RD, CharUnits::Zero(), 
-                          /*MostDerivedClassIsVirtual=*/0, RD);
-
-    Builder.dumpLayout(llvm::errs());
-  }
-
   const VTableLayout &VTLayout = VTContext.getVTableLayout(RD);
 
   // Create and set the initializer.
@@ -3056,10 +3051,6 @@ CodeGenVTables::GenerateConstructionVTable(const CXXRecordDecl *RD,
   VTableBuilder Builder(VTContext, Base.getBase(), 
                         Base.getBaseOffset(), 
                         /*MostDerivedClassIsVirtual=*/BaseIsVirtual, RD);
-
-  // Dump the vtable layout if necessary.
-  if (CGM.getLangOptions().DumpVTableLayouts)
-    Builder.dumpLayout(llvm::errs());
 
   // Add the address points.
   AddressPoints.insert(Builder.address_points_begin(),
