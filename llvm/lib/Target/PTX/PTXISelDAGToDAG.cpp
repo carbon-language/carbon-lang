@@ -37,6 +37,7 @@ class PTXDAGToDAGISel : public SelectionDAGISel {
     bool SelectADDRrr(SDValue &Addr, SDValue &R1, SDValue &R2);
     bool SelectADDRri(SDValue &Addr, SDValue &Base, SDValue &Offset);
     bool SelectADDRii(SDValue &Addr, SDValue &Base, SDValue &Offset);
+    bool SelectADDRlocal(SDValue &Addr, SDValue &Base, SDValue &Offset);
 
     // Include the pieces auto'gened from the target description
 #include "PTXGenDAGISel.inc"
@@ -48,6 +49,7 @@ class PTXDAGToDAGISel : public SelectionDAGISel {
 
     SDNode *SelectREADPARAM(SDNode *Node);
     SDNode *SelectWRITEPARAM(SDNode *Node);
+    SDNode *SelectFrameIndex(SDNode *Node);
 
     bool isImm(const SDValue &operand);
     bool SelectImm(const SDValue &operand, SDValue &imm);
@@ -75,6 +77,8 @@ SDNode *PTXDAGToDAGISel::Select(SDNode *Node) {
       return SelectREADPARAM(Node);
     case PTXISD::WRITE_PARAM:
       return SelectWRITEPARAM(Node);
+    case ISD::FrameIndex:
+      return SelectFrameIndex(Node);
     default:
       return SelectCode(Node);
   }
@@ -173,6 +177,25 @@ SDNode *PTXDAGToDAGISel::SelectWRITEPARAM(SDNode *Node) {
   return Ret;
 }
 
+SDNode *PTXDAGToDAGISel::SelectFrameIndex(SDNode *Node) {
+  int FI = cast<FrameIndexSDNode>(Node)->getIndex();
+  //dbgs() << "Selecting FrameIndex at index " << FI << "\n";
+  SDValue TFI = CurDAG->getTargetFrameIndex(FI, Node->getValueType(0));
+
+  //unsigned OpCode = PTX::LOAD_LOCAL_F32;
+
+  //for (SDNode::use_iterator i = Node->use_begin(), e = Node->use_end();
+  //     i != e; ++i) {
+  //  SDNode *Use = *i;
+  //  dbgs() << "USE: ";
+  //  Use->dumpr(CurDAG);
+  //}
+
+  return Node;
+  //return CurDAG->getMachineNode(OpCode, Node->getDebugLoc(),
+  //                              Node->getValueType(0), TFI);
+}
+
 // Match memory operand of the form [reg+reg]
 bool PTXDAGToDAGISel::SelectADDRrr(SDValue &Addr, SDValue &R1, SDValue &R2) {
   if (Addr.getOpcode() != ISD::ADD || Addr.getNumOperands() < 2 ||
@@ -240,6 +263,41 @@ bool PTXDAGToDAGISel::SelectADDRii(SDValue &Addr, SDValue &Base,
     return true;
   }
 
+  return false;
+}
+
+// Match memory operand of the form [reg], [imm+reg], and [reg+imm]
+bool PTXDAGToDAGISel::SelectADDRlocal(SDValue &Addr, SDValue &Base,
+                                      SDValue &Offset) {
+  if (Addr.getOpcode() != ISD::ADD) {
+    // let SelectADDRii handle the [imm] case
+    if (isImm(Addr))
+      return false;
+    // it is [reg]
+
+    assert(Addr.getValueType().isSimple() && "Type must be simple");
+
+    Base = Addr;
+    Offset = CurDAG->getTargetConstant(0, Addr.getValueType().getSimpleVT());
+
+    return true;
+  }
+
+  if (Addr.getNumOperands() < 2)
+    return false;
+
+  // let SelectADDRii handle the [imm+imm] case
+  if (isImm(Addr.getOperand(0)) && isImm(Addr.getOperand(1)))
+    return false;
+
+  // try [reg+imm] and [imm+reg]
+  for (int i = 0; i < 2; i ++)
+    if (SelectImm(Addr.getOperand(1-i), Offset)) {
+      Base = Addr.getOperand(i);
+      return true;
+    }
+
+  // neither [reg+imm] nor [imm+reg]
   return false;
 }
 

@@ -50,7 +50,9 @@ def DoesNotSupportFMA   : Predicate<"!getSubtarget().supportsFMA()">;
 def load_global : PatFrag<(ops node:$ptr), (load node:$ptr), [{
   const Value *Src;
   const PointerType *PT;
-  if ((Src = cast<LoadSDNode>(N)->getSrcValue()) &&
+  const SDValue &MemOp = N->getOperand(1);
+  if ((MemOp.getOpcode() != ISD::FrameIndex) &&
+      (Src = cast<LoadSDNode>(N)->getSrcValue()) &&
       (PT = dyn_cast<PointerType>(Src->getType())))
     return PT->getAddressSpace() == PTX::GLOBAL;
   return false;
@@ -66,12 +68,8 @@ def load_constant : PatFrag<(ops node:$ptr), (load node:$ptr), [{
 }]>;
 
 def load_local : PatFrag<(ops node:$ptr), (load node:$ptr), [{
-  const Value *Src;
-  const PointerType *PT;
-  if ((Src = cast<LoadSDNode>(N)->getSrcValue()) &&
-      (PT = dyn_cast<PointerType>(Src->getType())))
-    return PT->getAddressSpace() == PTX::LOCAL;
-  return false;
+  const SDValue &MemOp = N->getOperand(1);
+  return MemOp.getOpcode() == ISD::FrameIndex;
 }]>;
 
 def load_parameter : PatFrag<(ops node:$ptr), (load node:$ptr), [{
@@ -96,7 +94,9 @@ def store_global
   : PatFrag<(ops node:$d, node:$ptr), (store node:$d, node:$ptr), [{
   const Value *Src;
   const PointerType *PT;
-  if ((Src = cast<StoreSDNode>(N)->getSrcValue()) &&
+  const SDValue &MemOp = N->getOperand(2);
+  if ((MemOp.getOpcode() != ISD::FrameIndex) &&
+      (Src = cast<StoreSDNode>(N)->getSrcValue()) &&
       (PT = dyn_cast<PointerType>(Src->getType())))
     return PT->getAddressSpace() == PTX::GLOBAL;
   return false;
@@ -104,12 +104,8 @@ def store_global
 
 def store_local
   : PatFrag<(ops node:$d, node:$ptr), (store node:$d, node:$ptr), [{
-  const Value *Src;
-  const PointerType *PT;
-  if ((Src = cast<StoreSDNode>(N)->getSrcValue()) &&
-      (PT = dyn_cast<PointerType>(Src->getType())))
-    return PT->getAddressSpace() == PTX::LOCAL;
-  return false;
+  const SDValue &MemOp = N->getOperand(2);
+  return MemOp.getOpcode() == ISD::FrameIndex;
 }]>;
 
 def store_parameter
@@ -133,12 +129,14 @@ def store_shared
 }]>;
 
 // Addressing modes.
-def ADDRrr32 : ComplexPattern<i32, 2, "SelectADDRrr", [], []>;
-def ADDRrr64 : ComplexPattern<i64, 2, "SelectADDRrr", [], []>;
-def ADDRri32 : ComplexPattern<i32, 2, "SelectADDRri", [], []>;
-def ADDRri64 : ComplexPattern<i64, 2, "SelectADDRri", [], []>;
-def ADDRii32 : ComplexPattern<i32, 2, "SelectADDRii", [], []>;
-def ADDRii64 : ComplexPattern<i64, 2, "SelectADDRii", [], []>;
+def ADDRrr32    : ComplexPattern<i32, 2, "SelectADDRrr", [], []>;
+def ADDRrr64    : ComplexPattern<i64, 2, "SelectADDRrr", [], []>;
+def ADDRri32    : ComplexPattern<i32, 2, "SelectADDRri", [], []>;
+def ADDRri64    : ComplexPattern<i64, 2, "SelectADDRri", [], []>;
+def ADDRii32    : ComplexPattern<i32, 2, "SelectADDRii", [], []>;
+def ADDRii64    : ComplexPattern<i64, 2, "SelectADDRii", [], []>;
+def ADDRlocal32 : ComplexPattern<i32, 2, "SelectADDRlocal", [], []>;
+def ADDRlocal64 : ComplexPattern<i64, 2, "SelectADDRlocal", [], []>;
 
 // Address operands
 def MEMri32 : Operand<i32> {
@@ -903,7 +901,7 @@ let isReMaterializable = 1, isAsCheapAsAMove = 1 in {
 // Loads
 defm LDg : PTX_LD_ALL<"ld.global", load_global>;
 defm LDc : PTX_LD_ALL<"ld.const",  load_constant>;
-defm LDl : PTX_LD_ALL<"ld.local",  load_local>;
+//defm LDl : PTX_LD_ALL<"ld.local",  load_local>;
 defm LDs : PTX_LD_ALL<"ld.shared", load_shared>;
 
 // These instructions are used to load/store from the .param space for
@@ -949,10 +947,100 @@ let hasSideEffects = 1 in {
                          [(PTXstoreparam timm:$d, RegF64:$a)]>;
 }
 
+/*
+  def ri64 : InstPTX<(outs RC:$d),
+                     (ins MEMri64:$a),
+                     !strconcat(opstr, !strconcat(typestr, "\t$d, [$a]")),
+                     [(set RC:$d, (pat_load ADDRri64:$a))]>,
+                     Requires<[Use64BitAddresses]>;
+
+  def ri64 : InstPTX<(outs),
+                   (ins RC:$d, MEMri64:$a),
+                   !strconcat(opstr, !strconcat(typestr, "\t[$a], $d")),
+                   [(pat_store RC:$d, ADDRri64:$a)]>,
+                   Requires<[Use64BitAddresses]>;
+                     */
+let hasSideEffects = 1 in {
+  def LDLOCALpiPred : InstPTX<(outs RegPred:$d), (ins MEMri32:$a),
+                              "ld.local.pred\t$d, [__local_$a]",
+                              [(set RegPred:$d, (load_local ADDRlocal32:$a))]>;
+  def LDLOCALpiU16  : InstPTX<(outs RegI16:$d), (ins MEMri32:$a),
+                              "ld.local.u16\t$d, [__local_$a]",
+                              [(set RegI16:$d, (load_local ADDRlocal32:$a))]>;
+  def LDLOCALpiU32  : InstPTX<(outs RegI32:$d), (ins MEMri32:$a),
+                              "ld.local.u32\t$d, [__local_$a]",
+                              [(set RegI32:$d, (load_local ADDRlocal32:$a))]>;
+  def LDLOCALpiU64  : InstPTX<(outs RegI64:$d), (ins MEMri32:$a),
+                              "ld.local.u64\t$d, [__local_$a]",
+                              [(set RegI64:$d, (load_local ADDRlocal32:$a))]>;
+  def LDLOCALpiF32 : InstPTX<(outs RegF32:$d), (ins MEMri32:$a),
+                              "ld.local.f32\t$d, [__local_$a]",
+                              [(set RegF32:$d, (load_local ADDRlocal32:$a))]>;
+  def LDLOCALpiF64 : InstPTX<(outs RegF64:$d), (ins MEMri32:$a),
+                              "ld.local.f64\t$d, [__local_$a]",
+                              [(set RegF64:$d, (load_local ADDRlocal32:$a))]>;
+
+  def STLOCALpiPred : InstPTX<(outs), (ins RegPred:$d, MEMri32:$a),
+                              "st.local.pred\t[__local_$a], $d",
+                              [(store_local RegPred:$d, ADDRlocal32:$a)]>;
+  def STLOCALpiU16 : InstPTX<(outs), (ins RegI16:$d, MEMri32:$a),
+                              "st.local.u16\t[__local_$a], $d",
+                              [(store_local RegI16:$d, ADDRlocal32:$a)]>;
+  def STLOCALpiU32 : InstPTX<(outs), (ins RegI32:$d, MEMri32:$a),
+                              "st.local.u32\t[__local_$a], $d",
+                              [(store_local RegI32:$d, ADDRlocal32:$a)]>;
+  def STLOCALpiU64 : InstPTX<(outs), (ins RegI64:$d, MEMri32:$a),
+                              "st.local.u64\t[__local_$a], $d",
+                              [(store_local RegI64:$d, ADDRlocal32:$a)]>;
+  def STLOCALpiF32 : InstPTX<(outs), (ins RegF32:$d, MEMri32:$a),
+                              "st.local.f32\t[__local_$a], $d",
+                              [(store_local RegF32:$d, ADDRlocal32:$a)]>;
+  def STLOCALpiF64 : InstPTX<(outs), (ins RegF64:$d, MEMri32:$a),
+                              "st.local.f64\t[__local_$a], $d",
+                              [(store_local RegF64:$d, ADDRlocal32:$a)]>;
+
+  /*def LDLOCALpiU16  : InstPTX<(outs RegI16:$d), (ins MEMpi:$a),
+                         "ld.param.u16\t$d, [$a]",
+                         [(set RegI16:$d, (PTXloadparam timm:$a))]>;
+  def LDLOCALpiU32  : InstPTX<(outs RegI32:$d), (ins MEMpi:$a),
+                         "ld.param.u32\t$d, [$a]",
+                         [(set RegI32:$d, (PTXloadparam timm:$a))]>;
+  def LDLOCALpiU64  : InstPTX<(outs RegI64:$d), (ins MEMpi:$a),
+                         "ld.param.u64\t$d, [$a]",
+                         [(set RegI64:$d, (PTXloadparam timm:$a))]>;
+  def LDLOCALpiF32  : InstPTX<(outs RegF32:$d), (ins MEMpi:$a),
+                         "ld.param.f32\t$d, [$a]",
+                         [(set RegF32:$d, (PTXloadparam timm:$a))]>;
+  def LDLOCALpiF64  : InstPTX<(outs RegF64:$d), (ins MEMpi:$a),
+                         "ld.param.f64\t$d, [$a]",
+                         [(set RegF64:$d, (PTXloadparam timm:$a))]>;
+
+  def STLOCALpiPred : InstPTX<(outs), (ins MEMpi:$d, RegPred:$a),
+                         "st.param.pred\t[$d], $a",
+                         [(PTXstoreparam timm:$d, RegPred:$a)]>;
+  def STLOCALpiU16  : InstPTX<(outs), (ins MEMpi:$d, RegI16:$a),
+                         "st.param.u16\t[$d], $a",
+                         [(PTXstoreparam timm:$d, RegI16:$a)]>;
+  def STLOCALpiU32  : InstPTX<(outs), (ins MEMpi:$d, RegI32:$a),
+                         "st.param.u32\t[$d], $a",
+                         [(PTXstoreparam timm:$d, RegI32:$a)]>;
+  def STLOCALpiU64  : InstPTX<(outs), (ins MEMpi:$d, RegI64:$a),
+                         "st.param.u64\t[$d], $a",
+                         [(PTXstoreparam timm:$d, RegI64:$a)]>;
+  def STLOCALpiF32  : InstPTX<(outs), (ins MEMpi:$d, RegF32:$a),
+                         "st.param.f32\t[$d], $a",
+                         [(PTXstoreparam timm:$d, RegF32:$a)]>;
+  def STLOCALpiF64  : InstPTX<(outs), (ins MEMpi:$d, RegF64:$a),
+                         "st.param.f64\t[$d], $a",
+                         [(PTXstoreparam timm:$d, RegF64:$a)]>;*/
+}
+
 // Stores
 defm STg : PTX_ST_ALL<"st.global", store_global>;
-defm STl : PTX_ST_ALL<"st.local",  store_local>;
+//defm STl : PTX_ST_ALL<"st.local",  store_local>;
 defm STs : PTX_ST_ALL<"st.shared", store_shared>;
+
+
 
 // defm STp : PTX_ST_ALL<"st.param",  store_parameter>;
 // defm LDp : PTX_LD_ALL<"ld.param",  load_parameter>;
@@ -1198,6 +1286,11 @@ def WRITEPARAMI32  : InstPTX<(outs), (ins RegI32:$a), "//w", []>;
 def WRITEPARAMI64  : InstPTX<(outs), (ins RegI64:$a), "//w", []>;
 def WRITEPARAMF32  : InstPTX<(outs), (ins RegF32:$a), "//w", []>;
 def WRITEPARAMF64  : InstPTX<(outs), (ins RegF64:$a), "//w", []>;
+
+///===- Stack Variable Loads/Stores ---------------------------------------===//
+
+def LOAD_LOCAL_F32  : InstPTX<(outs RegF32:$d), (ins MEMpi:$a),
+                              "ld.local.f32\t$d, [%a]", []>;
 
 // Call handling
 // def ADJCALLSTACKUP :

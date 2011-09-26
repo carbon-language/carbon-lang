@@ -118,7 +118,7 @@ bool PTXTargetMachine::addInstSelector(PassManagerBase &PM,
 bool PTXTargetMachine::addPostRegAlloc(PassManagerBase &PM,
                                        CodeGenOpt::Level OptLevel) {
   // PTXMFInfoExtract must after register allocation!
-  PM.add(createPTXMFInfoExtract(*this, OptLevel));
+  //PM.add(createPTXMFInfoExtract(*this, OptLevel));
   return false;
 }
 
@@ -364,6 +364,8 @@ bool PTXTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
 
   if (addPreEmitPass(PM, OptLevel))
     printNoVerify(PM, "After PreEmit passes");
+
+  PM.add(createPTXMFInfoExtract(*this, OptLevel));
 
   return false;
 }

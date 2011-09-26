@@ -295,9 +295,9 @@ void PTXAsmPrinter::EmitFunctionBodyStart() {
   for (unsigned i = 0, e = FrameInfo->getNumObjects(); i != e; ++i) {
     DEBUG(dbgs() << "Size of object: " << FrameInfo->getObjectSize(i) << "\n");
     if (FrameInfo->getObjectSize(i) > 0) {
-      std::string def = "\t.reg .b";
+      std::string def = "\t.local .b";
       def += utostr(FrameInfo->getObjectSize(i)*8); // Convert to bits
-      def += " s";
+      def += " __local_";
       def += utostr(i);
       def += ";";
       OutStreamer.EmitRawText(Twine(def));

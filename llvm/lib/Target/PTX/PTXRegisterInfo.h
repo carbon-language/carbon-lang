@@ -25,8 +25,12 @@ class PTXTargetMachine;
 class MachineFunction;
 
 struct PTXRegisterInfo : public PTXGenRegisterInfo {
+private:
+  const TargetInstrInfo &TII;
+
+public:
   PTXRegisterInfo(PTXTargetMachine &TM,
-                  const TargetInstrInfo &TII);
+                  const TargetInstrInfo &tii);
 
   virtual const unsigned
     *getCalleeSavedRegs(const MachineFunction *MF = 0) const {
