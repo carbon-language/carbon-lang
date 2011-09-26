@@ -1107,20 +1107,6 @@ public:
   ///
   /// If the source file is included multiple times, the source location will
   /// be based upon the first inclusion.
-  ///
-  /// If the location points inside a function macro argument, the returned
-  /// location will be the macro location in which the argument was expanded.
-  /// \sa getMacroArgExpandedLocation
-  SourceLocation getLocation(const FileEntry *SourceFile,
-                             unsigned Line, unsigned Col) {
-    SourceLocation Loc = translateFileLineCol(SourceFile, Line, Col);
-    return getMacroArgExpandedLocation(Loc);
-  }
-
-  /// \brief Get the source location for the given file:line:col triplet.
-  ///
-  /// If the source file is included multiple times, the source location will
-  /// be based upon the first inclusion.
   SourceLocation translateFileLineCol(const FileEntry *SourceFile,
                                       unsigned Line, unsigned Col) const;
 
