@@ -26,14 +26,19 @@ namespace clang {
 
 namespace CodeGen {
   class CodeGenModule;
+  class CodeGenVTables;
 
-class CodeGenVTables {
-  CodeGenModule &CGM;
+class VTableContext {
+  ASTContext &Context;
 
   /// MethodVTableIndices - Contains the index (relative to the vtable address
   /// point) where the function pointer for a virtual function is stored.
   typedef llvm::DenseMap<GlobalDecl, int64_t> MethodVTableIndicesTy;
   MethodVTableIndicesTy MethodVTableIndices;
+
+  /// NumVirtualFunctionPointers - Contains the number of virtual function 
+  /// pointers in the vtable for a given record decl.
+  llvm::DenseMap<const CXXRecordDecl *, uint64_t> NumVirtualFunctionPointers;
 
   typedef std::pair<const CXXRecordDecl *,
                     const CXXRecordDecl *> ClassPairTy;
@@ -45,13 +50,39 @@ class CodeGenVTables {
     VirtualBaseClassOffsetOffsetsMapTy;
   VirtualBaseClassOffsetOffsetsMapTy VirtualBaseClassOffsetOffsets;
 
+  void ComputeMethodVTableIndices(const CXXRecordDecl *RD);
+
+public:
+  VTableContext(ASTContext &Context) : Context(Context) {}
+
+  /// getNumVirtualFunctionPointers - Return the number of virtual function
+  /// pointers in the vtable for a given record decl.
+  uint64_t getNumVirtualFunctionPointers(const CXXRecordDecl *RD);
+  
+  /// getMethodVTableIndex - Return the index (relative to the vtable address
+  /// point) where the function pointer for the given virtual function is
+  /// stored.
+  uint64_t getMethodVTableIndex(GlobalDecl GD);
+
+  /// getVirtualBaseOffsetOffset - Return the offset in chars (relative to the
+  /// vtable address point) where the offset of the virtual base that contains 
+  /// the given base is stored, otherwise, if no virtual base contains the given
+  /// class, return 0.  Base must be a virtual base class or an unambigious
+  /// base.
+  CharUnits getVirtualBaseOffsetOffset(const CXXRecordDecl *RD,
+                                       const CXXRecordDecl *VBase);
+
+  friend class CodeGenVTables;
+};
+
+class CodeGenVTables {
+  CodeGenModule &CGM;
+
+  VTableContext VTContext;
+
   /// VTables - All the vtables which have been defined.
   llvm::DenseMap<const CXXRecordDecl *, llvm::GlobalVariable *> VTables;
   
-  /// NumVirtualFunctionPointers - Contains the number of virtual function 
-  /// pointers in the vtable for a given record decl.
-  llvm::DenseMap<const CXXRecordDecl *, uint64_t> NumVirtualFunctionPointers;
-
   typedef SmallVector<ThunkInfo, 1> ThunkInfoVectorTy;
   typedef llvm::DenseMap<const CXXMethodDecl *, ThunkInfoVectorTy> ThunksMapTy;
   
@@ -113,12 +144,6 @@ class CodeGenVTables {
   /// indices.
   SecondaryVirtualPointerIndicesMapTy SecondaryVirtualPointerIndices;
 
-  /// getNumVirtualFunctionPointers - Return the number of virtual function
-  /// pointers in the vtable for a given record decl.
-  uint64_t getNumVirtualFunctionPointers(const CXXRecordDecl *RD);
-  
-  void ComputeMethodVTableIndices(const CXXRecordDecl *RD);
-
   /// EmitThunk - Emit a single thunk.
   void EmitThunk(GlobalDecl GD, const ThunkInfo &Thunk, 
                  bool UseAvailableExternallyLinkage);
@@ -145,8 +170,9 @@ class CodeGenVTables {
                                           const VTableThunksTy &VTableThunks);
 
 public:
-  CodeGenVTables(CodeGenModule &CGM)
-    : CGM(CGM) { }
+  CodeGenVTables(CodeGenModule &CGM);
+
+  VTableContext &getVTableContext() { return VTContext; }
 
   /// \brief True if the VTable of this record must be emitted in the
   /// translation unit.
@@ -165,19 +191,6 @@ public:
   /// virtual pointer for the given subobject is located.
   uint64_t getSecondaryVirtualPointerIndex(const CXXRecordDecl *RD,
                                            BaseSubobject Base);
-
-  /// getMethodVTableIndex - Return the index (relative to the vtable address
-  /// point) where the function pointer for the given virtual function is
-  /// stored.
-  uint64_t getMethodVTableIndex(GlobalDecl GD);
-
-  /// getVirtualBaseOffsetOffset - Return the offset in chars (relative to the
-  /// vtable address point) where the offset of the virtual base that contains 
-  /// the given base is stored, otherwise, if no virtual base contains the given
-  /// class, return 0.  Base must be a virtual base class or an unambigious
-  /// base.
-  CharUnits getVirtualBaseOffsetOffset(const CXXRecordDecl *RD,
-                                       const CXXRecordDecl *VBase);
 
   /// getAddressPoint - Get the address point of the given subobject in the
   /// class decl.

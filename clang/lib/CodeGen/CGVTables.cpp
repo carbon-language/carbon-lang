@@ -963,7 +963,7 @@ public:
 
 private:
   /// VTables - Global vtable information.
-  CodeGenVTables &VTables;
+  VTableContext &VTables;
   
   /// MostDerivedClass - The most derived class for which we're building this
   /// vtable.
@@ -1156,7 +1156,7 @@ private:
   }
 
 public:
-  VTableBuilder(CodeGenVTables &VTables, const CXXRecordDecl *MostDerivedClass,
+  VTableBuilder(VTableContext &VTables, const CXXRecordDecl *MostDerivedClass,
                 CharUnits MostDerivedClassOffset, 
                 bool MostDerivedClassIsVirtual, const 
                 CXXRecordDecl *LayoutClass)
@@ -2316,7 +2316,7 @@ CollectPrimaryBases(const CXXRecordDecl *RD, ASTContext &Context,
     llvm_unreachable("Found a duplicate primary base!");
 }
 
-void CodeGenVTables::ComputeMethodVTableIndices(const CXXRecordDecl *RD) {
+void VTableContext::ComputeMethodVTableIndices(const CXXRecordDecl *RD) {
   
   // Itanium C++ ABI 2.5.2:
   //   The order of the virtual function pointers in a virtual table is the 
@@ -2329,7 +2329,7 @@ void CodeGenVTables::ComputeMethodVTableIndices(const CXXRecordDecl *RD) {
 
   int64_t CurrentIndex = 0;
   
-  const ASTRecordLayout &Layout = CGM.getContext().getASTRecordLayout(RD);
+  const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
   const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase();
   
   if (PrimaryBase) {
@@ -2344,7 +2344,7 @@ void CodeGenVTables::ComputeMethodVTableIndices(const CXXRecordDecl *RD) {
   // Collect all the primary bases, so we can check whether methods override
   // a method from the base.
   VTableBuilder::PrimaryBasesSetVectorTy PrimaryBases;
-  CollectPrimaryBases(RD, CGM.getContext(), PrimaryBases);
+  CollectPrimaryBases(RD, Context, PrimaryBases);
 
   const CXXDestructorDecl *ImplicitVirtualDtor = 0;
   
@@ -2361,7 +2361,7 @@ void CodeGenVTables::ComputeMethodVTableIndices(const CXXRecordDecl *RD) {
           FindNearestOverriddenMethod(MD, PrimaryBases)) {
       // Check if converting from the return type of the method to the 
       // return type of the overridden method requires conversion.
-      if (ComputeReturnAdjustmentBaseOffset(CGM.getContext(), MD, 
+      if (ComputeReturnAdjustmentBaseOffset(Context, MD, 
                                             OverriddenMD).isEmpty()) {
         // This index is shared between the index in the vtable of the primary
         // base class.
@@ -2419,6 +2419,9 @@ void CodeGenVTables::ComputeMethodVTableIndices(const CXXRecordDecl *RD) {
   NumVirtualFunctionPointers[RD] = CurrentIndex;
 }
 
+CodeGenVTables::CodeGenVTables(CodeGenModule &CGM)
+  : CGM(CGM), VTContext(CGM.getContext()) { }
+
 bool CodeGenVTables::ShouldEmitVTableInThisTU(const CXXRecordDecl *RD) {
   assert(RD->isDynamicClass() && "Non dynamic classes have no VTable.");
 
@@ -2446,7 +2449,7 @@ bool CodeGenVTables::ShouldEmitVTableInThisTU(const CXXRecordDecl *RD) {
   return KeyFunction->hasBody();
 }
 
-uint64_t CodeGenVTables::getNumVirtualFunctionPointers(const CXXRecordDecl *RD) {
+uint64_t VTableContext::getNumVirtualFunctionPointers(const CXXRecordDecl *RD) {
   llvm::DenseMap<const CXXRecordDecl *, uint64_t>::iterator I = 
     NumVirtualFunctionPointers.find(RD);
   if (I != NumVirtualFunctionPointers.end())
@@ -2459,7 +2462,7 @@ uint64_t CodeGenVTables::getNumVirtualFunctionPointers(const CXXRecordDecl *RD) 
   return I->second;
 }
       
-uint64_t CodeGenVTables::getMethodVTableIndex(GlobalDecl GD) {
+uint64_t VTableContext::getMethodVTableIndex(GlobalDecl GD) {
   MethodVTableIndicesTy::iterator I = MethodVTableIndices.find(GD);
   if (I != MethodVTableIndices.end())
     return I->second;
@@ -2474,8 +2477,8 @@ uint64_t CodeGenVTables::getMethodVTableIndex(GlobalDecl GD) {
 }
 
 CharUnits 
-CodeGenVTables::getVirtualBaseOffsetOffset(const CXXRecordDecl *RD, 
-                                           const CXXRecordDecl *VBase) {
+VTableContext::getVirtualBaseOffsetOffset(const CXXRecordDecl *RD, 
+                                          const CXXRecordDecl *VBase) {
   ClassPairTy ClassPair(RD, VBase);
   
   VirtualBaseClassOffsetOffsetsMapTy::iterator I = 
@@ -2982,7 +2985,7 @@ void CodeGenVTables::ComputeVTableRelatedInformation(const CXXRecordDecl *RD,
   if (Entry.getPointer())
     return;
 
-  VTableBuilder Builder(*this, RD, CharUnits::Zero(), 
+  VTableBuilder Builder(VTContext, RD, CharUnits::Zero(), 
                         /*MostDerivedClassIsVirtual=*/0, RD);
 
   // Add the VTable layout.
@@ -3042,16 +3045,16 @@ void CodeGenVTables::ComputeVTableRelatedInformation(const CXXRecordDecl *RD,
     RD->vbases_begin()->getType()->getAs<RecordType>();
   const CXXRecordDecl *VBase = cast<CXXRecordDecl>(VBaseRT->getDecl());
   
-  if (VirtualBaseClassOffsetOffsets.count(std::make_pair(RD, VBase)))
+  if (VTContext.VirtualBaseClassOffsetOffsets.count(std::make_pair(RD, VBase)))
     return;
   
   for (VTableBuilder::VBaseOffsetOffsetsMapTy::const_iterator I =
        Builder.getVBaseOffsetOffsets().begin(), 
        E = Builder.getVBaseOffsetOffsets().end(); I != E; ++I) {
     // Insert all types.
-    ClassPairTy ClassPair(RD, I->first);
+    VTableContext::ClassPairTy ClassPair(RD, I->first);
     
-    VirtualBaseClassOffsetOffsets.insert(
+    VTContext.VirtualBaseClassOffsetOffsets.insert(
         std::make_pair(ClassPair, I->second));
   }
 }
@@ -3192,7 +3195,7 @@ CodeGenVTables::EmitVTableDefinition(llvm::GlobalVariable *VTable,
                                      const CXXRecordDecl *RD) {
   // Dump the vtable layout if necessary.
   if (CGM.getLangOptions().DumpVTableLayouts) {
-    VTableBuilder Builder(*this, RD, CharUnits::Zero(), 
+    VTableBuilder Builder(VTContext, RD, CharUnits::Zero(), 
                           /*MostDerivedClassIsVirtual=*/0, RD);
 
     Builder.dumpLayout(llvm::errs());
@@ -3222,7 +3225,7 @@ CodeGenVTables::GenerateConstructionVTable(const CXXRecordDecl *RD,
                                       bool BaseIsVirtual, 
                                    llvm::GlobalVariable::LinkageTypes Linkage,
                                       VTableAddressPointsMapTy& AddressPoints) {
-  VTableBuilder Builder(*this, Base.getBase(), 
+  VTableBuilder Builder(VTContext, Base.getBase(), 
                         Base.getBaseOffset(), 
                         /*MostDerivedClassIsVirtual=*/BaseIsVirtual, RD);
 

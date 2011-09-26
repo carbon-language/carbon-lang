@@ -762,7 +762,7 @@ CGDebugInfo::CreateCXXMemberFunction(const CXXMethodDecl *Method,
     // It doesn't make sense to give a virtual destructor a vtable index,
     // since a single destructor has two entries in the vtable.
     if (!isa<CXXDestructorDecl>(Method))
-      VIndex = CGM.getVTables().getMethodVTableIndex(Method);
+      VIndex = CGM.getVTableContext().getMethodVTableIndex(Method);
     ContainingType = RecordTy;
   }
 
@@ -855,7 +855,8 @@ CollectCXXBases(const CXXRecordDecl *RD, llvm::DIFile Unit,
       // virtual base offset offset is -ve. The code generator emits dwarf
       // expression where it expects +ve number.
       BaseOffset = 
-        0 - CGM.getVTables().getVirtualBaseOffsetOffset(RD, Base).getQuantity();
+        0 - CGM.getVTableContext()
+               .getVirtualBaseOffsetOffset(RD, Base).getQuantity();
       BFlags = llvm::DIDescriptor::FlagVirtual;
     } else
       BaseOffset = RL.getBaseClassOffsetInBits(Base);
