@@ -1059,7 +1059,10 @@ void TextDiagnosticPrinter::EmitDiagnosticLoc(DiagnosticsEngine::Level Level,
   OS << ' ';
 }
 
-static void PrintDiagnosticLevel(raw_ostream &OS,
+/// \brief Print the diagonstic level to a raw_ostream.
+///
+/// Handles colorizing the level and formatting.
+static void printDiagnosticLevel(raw_ostream &OS,
                                  DiagnosticsEngine::Level Level,
                                  bool ShowColors) {
   if (ShowColors) {
@@ -1086,12 +1089,22 @@ static void PrintDiagnosticLevel(raw_ostream &OS,
     OS.resetColor();
 }
 
-static void PrintDiagnosticName(raw_ostream &OS, const Diagnostic &Info) {
+/// \brief Print the diagnostic name to a raw_ostream.
+///
+/// This prints the diagnostic name to a raw_ostream if it has one. It formats
+/// the name according to the expected diagnostic message formatting:
+///   " [diagnostic_name_here]"
+static void printDiagnosticName(raw_ostream &OS, const Diagnostic &Info) {
   if (!DiagnosticIDs::isBuiltinNote(Info.getID()))
     OS << " [" << DiagnosticIDs::getName(Info.getID()) << "]";
 }
 
-static void PrintDiagnosticOptions(raw_ostream &OS,
+/// \brief Print any diagnostic option information to a raw_ostream.
+///
+/// This implements all of the logic for adding diagnostic options to a message
+/// (via OS). Each relevant option is comma separated and all are enclosed in
+/// the standard bracketing: " [...]".
+static void printDiagnosticOptions(raw_ostream &OS,
                                    DiagnosticsEngine::Level Level,
                                    const Diagnostic &Info,
                                    const DiagnosticOptions &DiagOpts) {
@@ -1179,15 +1192,15 @@ void TextDiagnosticPrinter::HandleDiagnostic(DiagnosticsEngine::Level Level,
       OS.resetColor();
   }
 
-  PrintDiagnosticLevel(OS, Level, DiagOpts->ShowColors);
+  printDiagnosticLevel(OS, Level, DiagOpts->ShowColors);
 
   llvm::SmallString<100> OutStr;
   Info.FormatDiagnostic(OutStr);
 
   llvm::raw_svector_ostream DiagMessageStream(OutStr);
   if (DiagOpts->ShowNames)
-    PrintDiagnosticName(DiagMessageStream, Info);
-  PrintDiagnosticOptions(DiagMessageStream, Level, Info, *DiagOpts);
+    printDiagnosticName(DiagMessageStream, Info);
+  printDiagnosticOptions(DiagMessageStream, Level, Info, *DiagOpts);
   DiagMessageStream.flush();
 
   if (DiagOpts->ShowColors) {
