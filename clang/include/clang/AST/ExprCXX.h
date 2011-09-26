@@ -807,11 +807,11 @@ private:
 
   SourceLocation Loc;
   SourceRange ParenRange;
+  unsigned NumArgs : 16;
   bool Elidable : 1;
   bool ZeroInitialization : 1;
   unsigned ConstructKind : 2;
   Stmt **Args;
-  unsigned NumArgs;
 
 protected:
   CXXConstructExpr(ASTContext &C, StmtClass SC, QualType T,
@@ -824,15 +824,15 @@ protected:
 
   /// \brief Construct an empty C++ construction expression.
   CXXConstructExpr(StmtClass SC, EmptyShell Empty)
-    : Expr(SC, Empty), Constructor(0), Elidable(0), ZeroInitialization(0),
-      ConstructKind(0), Args(0), NumArgs(0) { }
+    : Expr(SC, Empty), Constructor(0), NumArgs(0), Elidable(0), 
+      ZeroInitialization(0), ConstructKind(0), Args(0) { }
 
 public:
   /// \brief Construct an empty C++ construction expression.
   explicit CXXConstructExpr(EmptyShell Empty)
     : Expr(CXXConstructExprClass, Empty), Constructor(0),
-      Elidable(0), ZeroInitialization(0),
-      ConstructKind(0), Args(0), NumArgs(0) { }
+      NumArgs(0), Elidable(0), ZeroInitialization(0),
+      ConstructKind(0), Args(0) { }
 
   static CXXConstructExpr *Create(ASTContext &C, QualType T,
                                   SourceLocation Loc,

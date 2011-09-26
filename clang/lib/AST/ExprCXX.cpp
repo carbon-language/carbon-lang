@@ -665,9 +665,9 @@ CXXConstructExpr::CXXConstructExpr(ASTContext &C, StmtClass SC, QualType T,
          T->isDependentType(), T->isDependentType(),
          T->isInstantiationDependentType(),
          T->containsUnexpandedParameterPack()),
-    Constructor(D), Loc(Loc), ParenRange(ParenRange), Elidable(elidable),
-    ZeroInitialization(ZeroInitialization), ConstructKind(ConstructKind),
-    Args(0), NumArgs(numargs) 
+    Constructor(D), Loc(Loc), ParenRange(ParenRange),  NumArgs(numargs),
+    Elidable(elidable), ZeroInitialization(ZeroInitialization), 
+    ConstructKind(ConstructKind), Args(0)
 {
   if (NumArgs) {
     Args = new (C) Stmt*[NumArgs];
