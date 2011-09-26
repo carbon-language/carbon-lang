@@ -104,11 +104,6 @@ namespace SrcMgr {
     /// if SourceLineCache is non-null.
     unsigned NumLines;
 
-    /// \brief Lazily computed map of macro argument chunks to their expanded
-    /// source location.
-    typedef std::map<unsigned, SourceLocation> MacroArgsMap;
-    MacroArgsMap *MacroArgsCache;
-
     /// getBuffer - Returns the memory buffer for the associated content.
     ///
     /// \param Diag Object through which diagnostics will be emitted if the
@@ -166,11 +161,11 @@ namespace SrcMgr {
 
     ContentCache(const FileEntry *Ent = 0)
       : Buffer(0, false), OrigEntry(Ent), ContentsEntry(Ent),
-        SourceLineCache(0), NumLines(0), MacroArgsCache(0) {}
+        SourceLineCache(0), NumLines(0) {}
 
     ContentCache(const FileEntry *Ent, const FileEntry *contentEnt)
       : Buffer(0, false), OrigEntry(Ent), ContentsEntry(contentEnt),
-        SourceLineCache(0), NumLines(0), MacroArgsCache(0) {}
+        SourceLineCache(0), NumLines(0) {}
 
     ~ContentCache();
 
@@ -178,14 +173,13 @@ namespace SrcMgr {
     ///  a non-NULL Buffer or SourceLineCache.  Ownership of allocated memory
     ///  is not transferred, so this is a logical error.
     ContentCache(const ContentCache &RHS)
-      : Buffer(0, false), SourceLineCache(0), MacroArgsCache(0)
+      : Buffer(0, false), SourceLineCache(0)
     {
       OrigEntry = RHS.OrigEntry;
       ContentsEntry = RHS.ContentsEntry;
 
       assert (RHS.Buffer.getPointer() == 0 && RHS.SourceLineCache == 0 &&
-              RHS.MacroArgsCache == 0
-              && "Passed ContentCache object cannot own a buffer.");
+              "Passed ContentCache object cannot own a buffer.");
 
       NumLines = RHS.NumLines;
     }
@@ -570,6 +564,12 @@ class SourceManager : public llvm::RefCountedBase<SourceManager> {
 
   // Cache for the "fake" buffer used for error-recovery purposes.
   mutable llvm::MemoryBuffer *FakeBufferForRecovery;
+
+  /// \brief Lazily computed map of macro argument chunks to their expanded
+  /// source location.
+  typedef std::map<unsigned, SourceLocation> MacroArgsMap;
+
+  mutable llvm::DenseMap<FileID, MacroArgsMap *> MacroArgsCacheMap; 
 
   // SourceManager doesn't support copy construction.
   explicit SourceManager(const SourceManager&);
@@ -1301,7 +1301,7 @@ private:
   std::pair<FileID, unsigned>
   getDecomposedSpellingLocSlowCase(const SrcMgr::SLocEntry *E,
                                    unsigned Offset) const;
-  void computeMacroArgsCache(SrcMgr::ContentCache *Content, FileID FID) const;
+  void computeMacroArgsCache(MacroArgsMap *&MacroArgsCache, FileID FID) const;
 
   friend class ASTReader;
   friend class ASTWriter;

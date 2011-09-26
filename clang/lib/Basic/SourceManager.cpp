@@ -39,7 +39,6 @@ using llvm::MemoryBuffer;
 ContentCache::~ContentCache() {
   if (shouldFreeBuffer())
     delete Buffer.getPointer();
-  delete MacroArgsCache;
 }
 
 /// getSizeBytesMapped - Returns the number of bytes actually mapped for this
@@ -389,6 +388,11 @@ SourceManager::~SourceManager() {
   }
   
   delete FakeBufferForRecovery;
+
+  for (llvm::DenseMap<FileID, MacroArgsMap *>::iterator
+         I = MacroArgsCacheMap.begin(),E = MacroArgsCacheMap.end(); I!=E; ++I) {
+    delete I->second;
+  }
 }
 
 void SourceManager::clearIDTables() {
@@ -1503,13 +1507,13 @@ SourceLocation SourceManager::translateLineCol(FileID FID,
 ///     0   -> SourceLocation()
 ///     100 -> Expanded macro arg location
 ///     110 -> SourceLocation()
-void SourceManager::computeMacroArgsCache(ContentCache *Content,
+void SourceManager::computeMacroArgsCache(MacroArgsMap *&CachePtr,
                                           FileID FID) const {
-  assert(!Content->MacroArgsCache);
   assert(!FID.isInvalid());
+  assert(!CachePtr);
 
-  Content->MacroArgsCache = new ContentCache::MacroArgsMap();
-  ContentCache::MacroArgsMap &MacroArgsCache = *Content->MacroArgsCache;
+  CachePtr = new MacroArgsMap();
+  MacroArgsMap &MacroArgsCache = *CachePtr;
   // Initially no macro argument chunk is present.
   MacroArgsCache.insert(std::make_pair(0, SourceLocation()));
 
@@ -1566,7 +1570,7 @@ void SourceManager::computeMacroArgsCache(ContentCache *Content,
     // previous chunks, we only need to find where the ending of the new macro
     // chunk is mapped to and update the map with new begin/end mappings.
 
-    ContentCache::MacroArgsMap::iterator I= MacroArgsCache.upper_bound(EndOffs);
+    MacroArgsMap::iterator I = MacroArgsCache.upper_bound(EndOffs);
     --I;
     SourceLocation EndOffsMappedLoc = I->second;
     MacroArgsCache[BeginOffs] = SourceLocation::getMacroLoc(Entry.getOffset());
@@ -1594,15 +1598,12 @@ SourceManager::getMacroArgExpandedLocation(SourceLocation Loc) const {
   if (FID.isInvalid())
     return Loc;
 
-  ContentCache *Content
-    = const_cast<ContentCache *>(getSLocEntry(FID).getFile().getContentCache());
-  if (!Content->MacroArgsCache)
-    computeMacroArgsCache(Content, FID);
+  MacroArgsMap *&MacroArgsCache = MacroArgsCacheMap[FID];
+  if (!MacroArgsCache)
+    computeMacroArgsCache(MacroArgsCache, FID);
 
-  assert(Content->MacroArgsCache);
-  assert(!Content->MacroArgsCache->empty());
-  ContentCache::MacroArgsMap::iterator
-      I = Content->MacroArgsCache->upper_bound(Offset);
+  assert(!MacroArgsCache->empty());
+  MacroArgsMap::iterator I = MacroArgsCache->upper_bound(Offset);
   --I;
   
   unsigned MacroArgBeginOffs = I->first;
@@ -1720,13 +1721,12 @@ void SourceManager::PrintStats() const {
                << "B of Sloc address space used.\n";
   
   unsigned NumLineNumsComputed = 0;
-  unsigned NumMacroArgsComputed = 0;
   unsigned NumFileBytesMapped = 0;
   for (fileinfo_iterator I = fileinfo_begin(), E = fileinfo_end(); I != E; ++I){
     NumLineNumsComputed += I->second->SourceLineCache != 0;
-    NumMacroArgsComputed += I->second->MacroArgsCache != 0;
     NumFileBytesMapped  += I->second->getSizeBytesMapped();
   }
+  unsigned NumMacroArgsComputed = MacroArgsCacheMap.size();
 
   llvm::errs() << NumFileBytesMapped << " bytes of files mapped, "
                << NumLineNumsComputed << " files with line #'s computed, "
