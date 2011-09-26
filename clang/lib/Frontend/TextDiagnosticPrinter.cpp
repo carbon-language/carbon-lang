@@ -1097,7 +1097,7 @@ static bool printWordWrapped(raw_ostream &OS, StringRef Str,
                              unsigned Columns,
                              unsigned Column = 0,
                              unsigned Indentation = WordWrapIndentation) {
-  const unsigned Length = Str.size();
+  const unsigned Length = std::min(Str.find('\n'), Str.size());
 
   // The string used to indent each line.
   llvm::SmallString<16> IndentStr;
@@ -1134,6 +1134,9 @@ static bool printWordWrapped(raw_ostream &OS, StringRef Str,
     Column = Indentation + WordLength;
     Wrapped = true;
   }
+
+  // Append any remaning text from the message with its existing formatting.
+  OS << Str.substr(Length);
 
   return Wrapped;
 }
