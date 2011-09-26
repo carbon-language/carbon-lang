@@ -38,10 +38,10 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 !18 = metadata !{i32 4, i32 23, metadata !16, null}
 !19 = metadata !{i32 5, i32 5, metadata !16, null}
 
-; CHECK: .ascii	 "GLOBAL"               # DW_AT_name
-; CHECK: .byte	1                       # DW_AT_decl_file
-; CHECK: .byte	1                       # DW_AT_decl_line
+; CHECK: .ascii	 "GLOBAL"
+; CHECK: .byte	1
+; CHECK: .byte	1
 
-; CHECK: .ascii	 "LOCAL"                # DW_AT_name
-; CHECK: .byte	1                       # DW_AT_decl_file
-; CHECK: .byte	4                       # DW_AT_decl_line
+; CHECK: .ascii	 "LOCAL"
+; CHECK: .byte	1
+; CHECK: .byte	4
