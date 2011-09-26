@@ -1340,10 +1340,12 @@ ARMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
       SDValue Src = DAG.getNode(ISD::ADD, dl, getPointerTy(), Arg, SrcOffset);
       SDValue SizeNode = DAG.getConstant(Flags.getByValSize() - 4*offset,
                                          MVT::i32);
+      // TODO: Disable AlwaysInline when it becomes possible
+      //       to emit a nested call sequence.
       MemOpChains.push_back(DAG.getMemcpy(Chain, dl, Dst, Src, SizeNode,
                                           Flags.getByValAlign(),
                                           /*isVolatile=*/false,
-                                          /*AlwaysInline=*/false,
+                                          /*AlwaysInline=*/true,
                                           MachinePointerInfo(0),
                                           MachinePointerInfo(0)));
 
