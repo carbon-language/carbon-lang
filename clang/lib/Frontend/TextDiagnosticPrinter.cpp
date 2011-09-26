@@ -20,7 +20,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/ADT/SmallString.h"
-#include "llvm/ADT/StringExtras.h"
 #include <algorithm>
 using namespace clang;
 
@@ -1070,15 +1069,17 @@ static void printDiagnosticOptions(raw_ostream &OS,
       DiagnosticIDs::getCategoryNumberForDiag(Info.getID());
     if (DiagCategory) {
       OS << (Started ? "," : " [");
+      Started = true;
       if (DiagOpts.ShowCategories == 1)
-        OS << llvm::utostr(DiagCategory);
+        OS << DiagCategory;
       else {
         assert(DiagOpts.ShowCategories == 2 && "Invalid ShowCategories value");
         OS << DiagnosticIDs::getCategoryNameFromID(DiagCategory);
       }
     }
   }
-  OS << "]";
+  if (Started)
+    OS << ']';
 }
 
 /// \brief Print the given string to a stream, word-wrapping it to
