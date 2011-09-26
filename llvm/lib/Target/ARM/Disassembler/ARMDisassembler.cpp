@@ -307,6 +307,9 @@ static DecodeStatus DecodeT2Adr(llvm::MCInst &Inst, unsigned Val,
                                 uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeT2LdStPre(llvm::MCInst &Inst, unsigned Val,
                                 uint64_t Address, const void *Decoder);
+static DecodeStatus DecodeT2ShifterImmOperand(llvm::MCInst &Inst, unsigned Val,
+                                uint64_t Address, const void *Decoder);
+
 
 
 #include "ARMGenDisassemblerTables.inc"
@@ -3874,5 +3877,16 @@ static DecodeStatus DecodeT2Adr(llvm::MCInst &Inst, uint32_t Insn,
   Inst.addOperand(MCOperand::CreateImm(SignExtend32<13>(Val)));
 
   return MCDisassembler::Success;
+}
+
+static DecodeStatus DecodeT2ShifterImmOperand(llvm::MCInst &Inst, uint32_t Val,
+                                              uint64_t Address,
+                                              const void *Decoder) {
+  DecodeStatus S = MCDisassembler::Success;
+
+  // Shift of "asr #32" is not allowed in Thumb2 mode.
+  if (Val == 0x20) S = MCDisassembler::SoftFail;
+  Inst.addOperand(MCOperand::CreateImm(Val));
+  return S;
 }
 

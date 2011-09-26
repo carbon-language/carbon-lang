@@ -28,6 +28,18 @@ def it_mask : Operand<i32> {
   let ParserMatchClass = it_mask_asmoperand;
 }
 
+// t2_shift_imm: An integer that encodes a shift amount and the type of shift
+// (asr or lsl). The 6-bit immediate encodes as:
+//    {5}     0 ==> lsl
+//            1     asr
+//    {4-0}   imm5 shift amount.
+//            asr #32 not allowed
+def t2_shift_imm : Operand<i32> {
+  let PrintMethod = "printShiftImmOperand";
+  let ParserMatchClass = ShifterImmAsmOperand;
+  let DecoderMethod = "DecodeT2ShifterImmOperand";
+}
+
 // Shifted operands. No register controlled shifts for Thumb2.
 // Note: We do not support rrx shifted operands yet.
 def t2_so_reg : Operand<i32>,    // reg imm
@@ -2023,7 +2035,8 @@ class T2SatI<dag oops, dag iops, InstrItinClass itin,
 }
 
 def t2SSAT: T2SatI<
-              (outs rGPR:$Rd), (ins imm1_32:$sat_imm, rGPR:$Rn, shift_imm:$sh),
+              (outs rGPR:$Rd),
+              (ins imm1_32:$sat_imm, rGPR:$Rn, t2_shift_imm:$sh),
               NoItinerary, "ssat", "\t$Rd, $sat_imm, $Rn$sh", []> {
   let Inst{31-27} = 0b11110;
   let Inst{25-22} = 0b1100;
@@ -2047,7 +2060,8 @@ def t2SSAT16: T2SatI<
 }
 
 def t2USAT: T2SatI<
-               (outs rGPR:$Rd), (ins imm0_31:$sat_imm, rGPR:$Rn, shift_imm:$sh),
+               (outs rGPR:$Rd),
+               (ins imm0_31:$sat_imm, rGPR:$Rn, t2_shift_imm:$sh),
                 NoItinerary, "usat", "\t$Rd, $sat_imm, $Rn$sh", []> {
   let Inst{31-27} = 0b11110;
   let Inst{25-22} = 0b1110;
@@ -3926,6 +3940,8 @@ def : t2InstAlias<"sxtb${p} $Rd, $Rm",
                 (t2SXTB rGPR:$Rd, rGPR:$Rm, 0, pred:$p)>;
 def : t2InstAlias<"sxtb16${p} $Rd, $Rm",
                 (t2SXTB16 rGPR:$Rd, rGPR:$Rm, 0, pred:$p)>;
+def : t2InstAlias<"sxth${p} $Rd, $Rm",
+                (t2SXTH rGPR:$Rd, rGPR:$Rm, 0, pred:$p)>;
 def : t2InstAlias<"sxth${p} $Rd, $Rm",
                 (t2SXTH rGPR:$Rd, rGPR:$Rm, 0, pred:$p)>;
 

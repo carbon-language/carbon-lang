@@ -2255,7 +2255,11 @@ parseShifterImm(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
       Error(E, "'asr' shift amount must be in range [1,32]");
       return MatchOperand_ParseFail;
     }
-    // asr #32 encoded as asr #0.
+    // asr #32 encoded as asr #0, but is not allowed in Thumb2 mode.
+    if (isThumb() && Val == 32) {
+      Error(E, "'asr #32' shift amount not allowed in Thumb mode");
+      return MatchOperand_ParseFail;
+    }
     if (Val == 32) Val = 0;
   } else {
     // Shift amount must be in [1,32]
