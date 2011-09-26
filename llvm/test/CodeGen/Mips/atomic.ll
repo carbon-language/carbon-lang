@@ -1,24 +1,10 @@
 ; RUN: llc -march=mipsel < %s | FileCheck %s
 
-
-declare i32 @llvm.atomic.load.add.i32.p0i32(i32* nocapture, i32) nounwind
-declare i32 @llvm.atomic.load.nand.i32.p0i32(i32* nocapture, i32) nounwind
-declare i32 @llvm.atomic.swap.i32.p0i32(i32* nocapture, i32) nounwind
-declare i32 @llvm.atomic.cmp.swap.i32.p0i32(i32* nocapture, i32, i32) nounwind
-
-declare i8 @llvm.atomic.load.add.i8.p0i8(i8* nocapture, i8) nounwind
-declare i8 @llvm.atomic.load.sub.i8.p0i8(i8* nocapture, i8) nounwind
-declare i8 @llvm.atomic.load.nand.i8.p0i8(i8* nocapture, i8) nounwind
-declare i8 @llvm.atomic.swap.i8.p0i8(i8* nocapture, i8) nounwind
-declare i8 @llvm.atomic.cmp.swap.i8.p0i8(i8* nocapture, i8, i8) nounwind
-
-declare void @llvm.memory.barrier(i1, i1, i1, i1, i1) nounwind
-
 @x = common global i32 0, align 4
 
 define i32 @AtomicLoadAdd32(i32 %incr) nounwind {
 entry:
-  %0 = call i32 @llvm.atomic.load.add.i32.p0i32(i32* @x, i32 %incr)
+  %0 = atomicrmw add i32* @x, i32 %incr monotonic
   ret i32 %0
 
 ; CHECK:   AtomicLoadAdd32:
@@ -32,7 +18,7 @@ entry:
 
 define i32 @AtomicLoadNand32(i32 %incr) nounwind {
 entry:
-  %0 = call i32 @llvm.atomic.load.nand.i32.p0i32(i32* @x, i32 %incr)
+  %0 = atomicrmw nand i32* @x, i32 %incr monotonic
   ret i32 %0
 
 ; CHECK:   AtomicLoadNand32:
@@ -50,7 +36,7 @@ entry:
   %newval.addr = alloca i32, align 4
   store i32 %newval, i32* %newval.addr, align 4
   %tmp = load i32* %newval.addr, align 4
-  %0 = call i32 @llvm.atomic.swap.i32.p0i32(i32* @x, i32 %tmp)
+  %0 = atomicrmw xchg i32* @x, i32 %tmp monotonic
   ret i32 %0
 
 ; CHECK:   AtomicSwap32:
@@ -66,7 +52,7 @@ entry:
   %newval.addr = alloca i32, align 4
   store i32 %newval, i32* %newval.addr, align 4
   %tmp = load i32* %newval.addr, align 4
-  %0 = call i32 @llvm.atomic.cmp.swap.i32.p0i32(i32* @x, i32 %oldval, i32 %tmp)
+  %0 = cmpxchg i32* @x, i32 %oldval, i32 %tmp monotonic
   ret i32 %0
 
 ; CHECK:   AtomicCmpSwap32:
@@ -85,7 +71,7 @@ entry:
 
 define signext i8 @AtomicLoadAdd8(i8 signext %incr) nounwind {
 entry:
-  %0 = call i8 @llvm.atomic.load.add.i8.p0i8(i8* @y, i8 %incr)
+  %0 = atomicrmw add i8* @y, i8 %incr monotonic
   ret i8 %0
 
 ; CHECK:   AtomicLoadAdd8:
@@ -116,7 +102,7 @@ entry:
 
 define signext i8 @AtomicLoadSub8(i8 signext %incr) nounwind {
 entry:
-  %0 = call i8 @llvm.atomic.load.sub.i8.p0i8(i8* @y, i8 %incr)
+  %0 = atomicrmw sub i8* @y, i8 %incr monotonic
   ret i8 %0
 
 ; CHECK:   AtomicLoadSub8:
@@ -147,7 +133,7 @@ entry:
 
 define signext i8 @AtomicLoadNand8(i8 signext %incr) nounwind {
 entry:
-  %0 = call i8 @llvm.atomic.load.nand.i8.p0i8(i8* @y, i8 %incr)
+  %0 = atomicrmw nand i8* @y, i8 %incr monotonic
   ret i8 %0
 
 ; CHECK:   AtomicLoadNand8:
@@ -179,7 +165,7 @@ entry:
 
 define signext i8 @AtomicSwap8(i8 signext %newval) nounwind {
 entry:
-  %0 = call i8 @llvm.atomic.swap.i8.p0i8(i8* @y, i8 %newval)
+  %0 = atomicrmw xchg i8* @y, i8 %newval monotonic
   ret i8 %0
 
 ; CHECK:   AtomicSwap8:
@@ -208,7 +194,7 @@ entry:
 
 define signext i8 @AtomicCmpSwap8(i8 signext %oldval, i8 signext %newval) nounwind {
 entry:
-  %0 = call i8 @llvm.atomic.cmp.swap.i8.p0i8(i8* @y, i8 %oldval, i8 %newval)
+  %0 = cmpxchg i8* @y, i8 %oldval, i8 %newval monotonic
   ret i8 %0
 
 ; CHECK:   AtomicCmpSwap8:
@@ -245,9 +231,7 @@ entry:
 
 define i32 @CheckSync(i32 %v) nounwind noinline {
 entry:
-  tail call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 true)
-  %0 = tail call i32 @llvm.atomic.load.add.i32.p0i32(i32* @countsint, i32 %v)
-  tail call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 true)
+  %0 = atomicrmw add i32* @countsint, i32 %v seq_cst
   ret i32 %0 
 
 ; CHECK:   CheckSync:
