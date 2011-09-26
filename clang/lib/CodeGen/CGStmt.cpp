@@ -43,8 +43,7 @@ void CodeGenFunction::EmitStopPoint(const Stmt *S) {
 void CodeGenFunction::EmitStmt(const Stmt *S) {
   assert(S && "Null statement?");
 
-  // Check if we can handle this without bothering to generate an
-  // insert point or debug info.
+  // These statements have their own debug info handling.
   if (EmitSimpleStmt(S))
     return;
 
