@@ -1091,6 +1091,70 @@ static void PrintDiagnosticName(raw_ostream &OS, const DiagnosticInfo &Info) {
     OS << " [" << DiagnosticIDs::getName(Info.getID()) << "]";
 }
 
+static void PrintDiagnosticOptions(raw_ostream &OS,
+                                   DiagnosticsEngine::Level Level,
+                                   const DiagnosticInfo &Info,
+                                   const DiagnosticOptions &DiagOpts) {
+  std::string OptionName;
+  if (DiagOpts.ShowOptionNames) {
+    // Was this a warning mapped to an error using -Werror or pragma?
+    if (Level == DiagnosticsEngine::Error &&
+        DiagnosticIDs::isBuiltinWarningOrExtension(Info.getID())) {
+      diag::Mapping mapping = diag::MAP_IGNORE;
+      Info.getDiags()->getDiagnosticLevel(Info.getID(), Info.getLocation(), 
+                                          &mapping);
+      if (mapping == diag::MAP_WARNING)
+        OptionName += "-Werror";
+    }
+
+    StringRef Opt = DiagnosticIDs::getWarningOptionForDiag(Info.getID());
+    if (!Opt.empty()) {
+      if (!OptionName.empty())
+        OptionName += ',';
+      OptionName += "-W";
+      OptionName += Opt;
+    } else if (Info.getID() == diag::fatal_too_many_errors) {
+      OptionName = "-ferror-limit=";
+    } else {
+      // If the diagnostic is an extension diagnostic and not enabled by default
+      // then it must have been turned on with -pedantic.
+      bool EnabledByDefault;
+      if (DiagnosticIDs::isBuiltinExtensionDiag(Info.getID(),
+                                                EnabledByDefault) &&
+          !EnabledByDefault)
+        OptionName = "-pedantic";
+    }
+  }
+  
+  // If the user wants to see category information, include it too.
+  unsigned DiagCategory = 0;
+  if (DiagOpts.ShowCategories)
+    DiagCategory = DiagnosticIDs::getCategoryNumberForDiag(Info.getID());
+
+  // If there is any categorization information, include it.
+  if (!OptionName.empty() || DiagCategory != 0) {
+    bool NeedsComma = false;
+    OS << " [";
+    
+    if (!OptionName.empty()) {
+      OS << OptionName;
+      NeedsComma = true;
+    }
+    
+    if (DiagCategory) {
+      if (NeedsComma) OS << ',';
+      if (DiagOpts.ShowCategories == 1)
+        OS << llvm::utostr(DiagCategory);
+      else {
+        assert(DiagOpts.ShowCategories == 2 && "Invalid ShowCategories value");
+        OS << DiagnosticIDs::getCategoryNameFromID(DiagCategory);
+      }
+    }
+    
+    OS << "]";
+  }
+}
+
 void TextDiagnosticPrinter::HandleDiagnostic(DiagnosticsEngine::Level Level,
                                              const DiagnosticInfo &Info) {
   // Default implementation (Warnings/errors count).
@@ -1129,68 +1193,10 @@ void TextDiagnosticPrinter::HandleDiagnostic(DiagnosticsEngine::Level Level,
   llvm::raw_svector_ostream DiagMessageStream(OutStr);
   if (DiagOpts->ShowNames)
     PrintDiagnosticName(DiagMessageStream, Info);
+  PrintDiagnosticOptions(DiagMessageStream, Level, Info, *DiagOpts);
   DiagMessageStream.flush();
 
-  std::string OptionName;
-  if (DiagOpts->ShowOptionNames) {
-    // Was this a warning mapped to an error using -Werror or pragma?
-    if (Level == DiagnosticsEngine::Error &&
-        DiagnosticIDs::isBuiltinWarningOrExtension(Info.getID())) {
-      diag::Mapping mapping = diag::MAP_IGNORE;
-      Info.getDiags()->getDiagnosticLevel(Info.getID(), Info.getLocation(), 
-                                          &mapping);
-      if (mapping == diag::MAP_WARNING)
-        OptionName += "-Werror";
-    }
 
-    StringRef Opt = DiagnosticIDs::getWarningOptionForDiag(Info.getID());
-    if (!Opt.empty()) {
-      if (!OptionName.empty())
-        OptionName += ',';
-      OptionName += "-W";
-      OptionName += Opt;
-    } else if (Info.getID() == diag::fatal_too_many_errors) {
-      OptionName = "-ferror-limit=";
-    } else {
-      // If the diagnostic is an extension diagnostic and not enabled by default
-      // then it must have been turned on with -pedantic.
-      bool EnabledByDefault;
-      if (DiagnosticIDs::isBuiltinExtensionDiag(Info.getID(),
-                                                EnabledByDefault) &&
-          !EnabledByDefault)
-        OptionName = "-pedantic";
-    }
-  }
-  
-  // If the user wants to see category information, include it too.
-  unsigned DiagCategory = 0;
-  if (DiagOpts->ShowCategories)
-    DiagCategory = DiagnosticIDs::getCategoryNumberForDiag(Info.getID());
-
-  // If there is any categorization information, include it.
-  if (!OptionName.empty() || DiagCategory != 0) {
-    bool NeedsComma = false;
-    OutStr += " [";
-    
-    if (!OptionName.empty()) {
-      OutStr += OptionName;
-      NeedsComma = true;
-    }
-    
-    if (DiagCategory) {
-      if (NeedsComma) OutStr += ',';
-      if (DiagOpts->ShowCategories == 1)
-        OutStr += llvm::utostr(DiagCategory);
-      else {
-        assert(DiagOpts->ShowCategories == 2 && "Invalid ShowCategories value");
-        OutStr += DiagnosticIDs::getCategoryNameFromID(DiagCategory);
-      }
-    }
-    
-    OutStr += "]";
-  }
-
-  
   if (DiagOpts->ShowColors) {
     // Print warnings, errors and fatal errors in bold, no color
     switch (Level) {
