@@ -2267,10 +2267,9 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
         RC = Mips::CPU64RegsRegisterClass;
       else if (RegVT == MVT::f32)
         RC = Mips::FGR32RegisterClass;
-      else if (RegVT == MVT::f64) {
-        if (!Subtarget->isSingleFloat())
-          RC = Mips::AFGR64RegisterClass;
-      } else
+      else if (RegVT == MVT::f64)
+        RC = Mips::AFGR64RegisterClass;
+      else
         llvm_unreachable("RegVT not supported by FormalArguments Lowering");
 
       // Transform the arguments stored on
