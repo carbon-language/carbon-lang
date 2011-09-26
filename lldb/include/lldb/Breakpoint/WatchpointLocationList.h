@@ -19,7 +19,6 @@
 #include "lldb/lldb-private.h"
 #include "lldb/Core/Address.h"
 #include "lldb/Host/Mutex.h"
-#include "lldb/Breakpoint/WatchpointLocation.h"
 
 namespace lldb_private {
 

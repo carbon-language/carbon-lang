@@ -14,7 +14,6 @@
 // Project includes
 #include "lldb/Breakpoint/WatchpointLocationList.h"
 #include "lldb/Breakpoint/WatchpointLocation.h"
-#include "lldb/Target/Target.h"
 
 using namespace lldb;
 using namespace lldb_private;

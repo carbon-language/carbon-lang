@@ -196,6 +196,7 @@ class   ValueObjectList;
 class   Variable;
 class   VariableList;
 class   WatchpointLocation;
+class   WatchpointLocationList;
 struct  LineEntry;
 
 } // namespace lldb_private

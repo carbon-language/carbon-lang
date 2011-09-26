@@ -766,27 +766,6 @@ SBTarget::BreakpointCreateBySourceRegex (const char *source_regex,
     return sb_bp;
 }
 
-SBBreakpoint
-SBTarget::FindBreakpointByID (break_id_t bp_id)
-{
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
-
-    SBBreakpoint sb_breakpoint;
-    if (m_opaque_sp && bp_id != LLDB_INVALID_BREAK_ID)
-    {
-        Mutex::Locker api_locker (m_opaque_sp->GetAPIMutex());
-        *sb_breakpoint = m_opaque_sp->GetBreakpointByID (bp_id);
-    }
-
-    if (log)
-    {
-        log->Printf ("SBTarget(%p)::FindBreakpointByID (bp_id=%d) => SBBreakpoint(%p)", 
-                     m_opaque_sp.get(), (uint32_t) bp_id, sb_breakpoint.get());
-    }
-
-    return sb_breakpoint;
-}
-
 uint32_t
 SBTarget::GetNumBreakpoints () const
 {
@@ -830,6 +809,27 @@ SBTarget::BreakpointDelete (break_id_t bp_id)
     return result;
 }
 
+SBBreakpoint
+SBTarget::FindBreakpointByID (break_id_t bp_id)
+{
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+
+    SBBreakpoint sb_breakpoint;
+    if (m_opaque_sp && bp_id != LLDB_INVALID_BREAK_ID)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetAPIMutex());
+        *sb_breakpoint = m_opaque_sp->GetBreakpointByID (bp_id);
+    }
+
+    if (log)
+    {
+        log->Printf ("SBTarget(%p)::FindBreakpointByID (bp_id=%d) => SBBreakpoint(%p)", 
+                     m_opaque_sp.get(), (uint32_t) bp_id, sb_breakpoint.get());
+    }
+
+    return sb_breakpoint;
+}
+
 bool
 SBTarget::EnableAllBreakpoints ()
 {
@@ -861,6 +861,106 @@ SBTarget::DeleteAllBreakpoints ()
     {
         Mutex::Locker api_locker (m_opaque_sp->GetAPIMutex());
         m_opaque_sp->RemoveAllBreakpoints ();
+        return true;
+    }
+    return false;
+}
+
+uint32_t
+SBTarget::GetNumWatchpointLocations () const
+{
+    if (m_opaque_sp)
+    {
+        // The breakpoint list is thread safe, no need to lock
+        return m_opaque_sp->GetWatchpointLocationList().GetSize();
+    }
+    return 0;
+}
+
+SBWatchpointLocation
+SBTarget::GetWatchpointLocationAtIndex (uint32_t idx) const
+{
+    SBWatchpointLocation sb_watchpoint_location;
+    if (m_opaque_sp)
+    {
+        // The breakpoint list is thread safe, no need to lock
+        *sb_watchpoint_location = m_opaque_sp->GetWatchpointLocationList().GetByIndex(idx);
+    }
+    return sb_watchpoint_location;
+}
+
+bool
+SBTarget::WatchpointLocationDelete (watch_id_t wp_id)
+{
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+
+    bool result = false;
+    if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetAPIMutex());
+        result = m_opaque_sp->RemoveWatchpointLocationByID (wp_id);
+    }
+
+    if (log)
+    {
+        log->Printf ("SBTarget(%p)::WatchpointLocationDelete (wp_id=%d) => %i", m_opaque_sp.get(), (uint32_t) wp_id, result);
+    }
+
+    return result;
+}
+
+SBWatchpointLocation
+SBTarget::FindWatchpointLocationByID (watch_id_t wp_id)
+{
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+
+    SBWatchpointLocation sb_watchpoint_location;
+    if (m_opaque_sp && wp_id != LLDB_INVALID_WATCH_ID)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetAPIMutex());
+        *sb_watchpoint_location = m_opaque_sp->GetWatchpointLocationList().FindByID(wp_id);
+    }
+
+    if (log)
+    {
+        log->Printf ("SBTarget(%p)::FindWatchpointLocationByID (bp_id=%d) => SBWatchpointLocation(%p)", 
+                     m_opaque_sp.get(), (uint32_t) wp_id, sb_watchpoint_location.get());
+    }
+
+    return sb_watchpoint_location;
+}
+
+bool
+SBTarget::EnableAllWatchpointLocations ()
+{
+    if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetAPIMutex());
+        m_opaque_sp->EnableAllWatchpointLocations ();
+        return true;
+    }
+    return false;
+}
+
+bool
+SBTarget::DisableAllWatchpointLocations ()
+{
+    if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetAPIMutex());
+        m_opaque_sp->DisableAllWatchpointLocations ();
+        return true;
+    }
+    return false;
+}
+
+bool
+SBTarget::DeleteAllWatchpointLocations ()
+{
+    if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetAPIMutex());
+        m_opaque_sp->RemoveAllWatchpointLocations ();
         return true;
     }
     return false;

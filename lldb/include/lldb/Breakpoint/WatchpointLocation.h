@@ -20,6 +20,7 @@
 
 // Project includes
 #include "lldb/lldb-private.h"
+#include "lldb/Target/Target.h"
 #include "lldb/Core/UserID.h"
 #include "lldb/Breakpoint/StoppointLocation.h"
 
@@ -56,8 +57,14 @@ public:
     void        GetDescription (Stream *s, lldb::DescriptionLevel level);
     void        Dump (Stream *s) const;
     void        DumpWithLevel (Stream *s, lldb::DescriptionLevel description_level) const;
+    Target      &GetTarget() { return *m_target; }
 
 private:
+    friend class Target;
+
+    void        SetTarget(Target *target_ptr) { m_target = target_ptr; }
+
+    Target      *m_target;
     bool        m_enabled;          // Is this watchpoint enabled
     bool        m_is_hardware;      // Is this a hardware watchpoint
     uint32_t    m_watch_read:1,     // 1 if we stop when the watched data is read from

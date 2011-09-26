@@ -18,6 +18,7 @@
 #include "lldb/Breakpoint/BreakpointResolverFileLine.h"
 #include "lldb/Breakpoint/BreakpointResolverFileRegex.h"
 #include "lldb/Breakpoint/BreakpointResolverName.h"
+#include "lldb/Breakpoint/WatchpointLocation.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/Event.h"
 #include "lldb/Core/Log.h"
@@ -439,6 +440,7 @@ Target::CreateWatchpointLocation(lldb::addr_t addr, size_t size, uint32_t type)
             return wp_loc_sp;
         }
         new_loc->SetWatchpointType(type);
+        new_loc->SetTarget(this);
         wp_loc_sp.reset(new_loc);
         m_watchpoint_location_list.Add(wp_loc_sp);
     }

@@ -20,6 +20,7 @@ using namespace lldb_private;
 
 WatchpointLocation::WatchpointLocation (lldb::addr_t addr, size_t size, bool hardware) :
     StoppointLocation (GetNextID(), addr, size, hardware),
+    m_target(NULL),
     m_enabled(0),
     m_is_hardware(hardware),
     m_watch_read(0),

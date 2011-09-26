@@ -14,6 +14,7 @@
 #include <string>
 // Other libraries and framework includes
 // Project includes
+#include "lldb/Breakpoint/WatchpointLocation.h"
 #include "lldb/Core/DataVisualization.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/Module.h"

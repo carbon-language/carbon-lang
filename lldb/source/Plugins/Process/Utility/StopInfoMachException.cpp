@@ -13,6 +13,7 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
+#include "lldb/Breakpoint/WatchpointLocation.h"
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Target/Process.h"
