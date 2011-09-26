@@ -190,7 +190,7 @@ public:
       *this->DiagStorage = *Other.DiagStorage;
   }
   
-  PartialDiagnostic(const DiagnosticInfo &Other, StorageAllocator &Allocator)
+  PartialDiagnostic(const Diagnostic &Other, StorageAllocator &Allocator)
     : DiagID(Other.getID()), DiagStorage(0), Allocator(&Allocator)
   {
     // Copy arguments.

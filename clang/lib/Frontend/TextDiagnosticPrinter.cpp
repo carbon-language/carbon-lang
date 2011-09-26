@@ -958,7 +958,7 @@ static PresumedLoc getDiagnosticPresumedLoc(const SourceManager &SM,
 /// diagnostic and printing it, as well as any include stack or source ranges
 /// necessary.
 void TextDiagnosticPrinter::EmitDiagnosticLoc(DiagnosticsEngine::Level Level,
-                                              const DiagnosticInfo &Info,
+                                              const Diagnostic &Info,
                                               const SourceManager &SM,
                                               PresumedLoc PLoc) {
   if (PLoc.isInvalid()) {
@@ -1086,14 +1086,14 @@ static void PrintDiagnosticLevel(raw_ostream &OS,
     OS.resetColor();
 }
 
-static void PrintDiagnosticName(raw_ostream &OS, const DiagnosticInfo &Info) {
+static void PrintDiagnosticName(raw_ostream &OS, const Diagnostic &Info) {
   if (!DiagnosticIDs::isBuiltinNote(Info.getID()))
     OS << " [" << DiagnosticIDs::getName(Info.getID()) << "]";
 }
 
 static void PrintDiagnosticOptions(raw_ostream &OS,
                                    DiagnosticsEngine::Level Level,
-                                   const DiagnosticInfo &Info,
+                                   const Diagnostic &Info,
                                    const DiagnosticOptions &DiagOpts) {
   std::string OptionName;
   if (DiagOpts.ShowOptionNames) {
@@ -1156,7 +1156,7 @@ static void PrintDiagnosticOptions(raw_ostream &OS,
 }
 
 void TextDiagnosticPrinter::HandleDiagnostic(DiagnosticsEngine::Level Level,
-                                             const DiagnosticInfo &Info) {
+                                             const Diagnostic &Info) {
   // Default implementation (Warnings/errors count).
   DiagnosticConsumer::HandleDiagnostic(Level, Info);
 

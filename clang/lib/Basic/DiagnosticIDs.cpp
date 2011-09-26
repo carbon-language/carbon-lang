@@ -674,7 +674,7 @@ bool DiagnosticIDs::setDiagnosticGroupMapping(StringRef Group,
 /// ProcessDiag - This is the method used to report a diagnostic that is
 /// finally fully formed.
 bool DiagnosticIDs::ProcessDiag(DiagnosticsEngine &Diag) const {
-  DiagnosticInfo Info(&Diag);
+  Diagnostic Info(&Diag);
 
   if (Diag.SuppressAllDiagnostics)
     return false;

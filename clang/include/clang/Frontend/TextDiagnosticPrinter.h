@@ -57,11 +57,11 @@ public:
                          const SourceManager &SM);
 
   virtual void HandleDiagnostic(DiagnosticsEngine::Level Level,
-                                const DiagnosticInfo &Info);
+                                const Diagnostic &Info);
 
 private:
   void EmitDiagnosticLoc(DiagnosticsEngine::Level Level,
-                         const DiagnosticInfo &Info,
+                         const Diagnostic &Info,
                          const SourceManager &SM,
                          PresumedLoc PLoc);
 };

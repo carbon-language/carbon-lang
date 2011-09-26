@@ -69,7 +69,7 @@ public:
   void EndSourceFile();
 
   virtual void HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
-                                const DiagnosticInfo &Info);
+                                const Diagnostic &Info);
 };
 
 } // end namespace clang

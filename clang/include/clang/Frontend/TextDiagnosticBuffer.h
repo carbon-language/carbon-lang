@@ -40,7 +40,7 @@ public:
   const_iterator note_end() const   { return Notes.end(); }
 
   virtual void HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
-                                const DiagnosticInfo &Info);
+                                const Diagnostic &Info);
 
   /// FlushDiagnostics - Flush the buffered diagnostics to an given
   /// diagnostic engine.

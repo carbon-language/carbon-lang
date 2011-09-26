@@ -457,7 +457,7 @@ public:
     : StoredDiags(StoredDiags) { }
   
   virtual void HandleDiagnostic(DiagnosticsEngine::Level Level,
-                                const DiagnosticInfo &Info);
+                                const Diagnostic &Info);
 };
 
 /// \brief RAII object that optionally captures diagnostics, if
@@ -489,7 +489,7 @@ public:
 } // anonymous namespace
 
 void StoredDiagnosticConsumer::HandleDiagnostic(DiagnosticsEngine::Level Level,
-                                              const DiagnosticInfo &Info) {
+                                              const Diagnostic &Info) {
   // Default implementation (Warnings/errors count).
   DiagnosticConsumer::HandleDiagnostic(Level, Info);
 

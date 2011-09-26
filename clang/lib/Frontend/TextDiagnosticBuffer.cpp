@@ -20,7 +20,7 @@ using namespace clang;
 /// reported.
 ///
 void TextDiagnosticBuffer::HandleDiagnostic(DiagnosticsEngine::Level Level,
-                                            const DiagnosticInfo &Info) {
+                                            const Diagnostic &Info) {
   // Default implementation (Warnings/errors count).
   DiagnosticConsumer::HandleDiagnostic(Level, Info);
 

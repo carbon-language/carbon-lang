@@ -247,7 +247,7 @@ void DiagnosticsEngine::Report(const StoredDiagnostic &storedDiag) {
 
   assert(Client && "DiagnosticConsumer not set!");
   Level DiagLevel = storedDiag.getLevel();
-  DiagnosticInfo Info(this, storedDiag.getMessage());
+  Diagnostic Info(this, storedDiag.getMessage());
   Client->HandleDiagnostic(DiagLevel, Info);
   if (Client->IncludeInDiagnosticCounts()) {
     if (DiagLevel == DiagnosticsEngine::Warning)
@@ -294,7 +294,7 @@ bool DiagnosticBuilder::Emit() {
 DiagnosticConsumer::~DiagnosticConsumer() {}
 
 void DiagnosticConsumer::HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
-                                        const DiagnosticInfo &Info) {
+                                        const Diagnostic &Info) {
   if (!IncludeInDiagnosticCounts())
     return;
 
@@ -343,7 +343,7 @@ static const char *ScanFormat(const char *I, const char *E, char Target) {
 /// "%2" has a value from 0-2.  If the value is 0, the diagnostic prints 'foo'.
 /// If the value is 1, it prints 'bar'.  If it has the value 2, it prints 'baz'.
 /// This is very useful for certain classes of variant diagnostics.
-static void HandleSelectModifier(const DiagnosticInfo &DInfo, unsigned ValNo,
+static void HandleSelectModifier(const Diagnostic &DInfo, unsigned ValNo,
                                  const char *Argument, unsigned ArgumentLen,
                                  SmallVectorImpl<char> &OutStr) {
   const char *ArgumentEnd = Argument+ArgumentLen;
@@ -501,7 +501,7 @@ static bool EvalPluralExpr(unsigned ValNo, const char *Start, const char *End) {
 /// {1:form0|[2,4]:form1|:form2}
 /// Polish (requires repeated form):
 /// {1:form0|%100=[10,20]:form2|%10=[2,4]:form1|:form2}
-static void HandlePluralModifier(const DiagnosticInfo &DInfo, unsigned ValNo,
+static void HandlePluralModifier(const Diagnostic &DInfo, unsigned ValNo,
                                  const char *Argument, unsigned ArgumentLen,
                                  SmallVectorImpl<char> &OutStr) {
   const char *ArgumentEnd = Argument + ArgumentLen;
@@ -529,7 +529,7 @@ static void HandlePluralModifier(const DiagnosticInfo &DInfo, unsigned ValNo,
 /// FormatDiagnostic - Format this diagnostic into a string, substituting the
 /// formal arguments into the %0 slots.  The result is appended onto the Str
 /// array.
-void DiagnosticInfo::
+void Diagnostic::
 FormatDiagnostic(SmallVectorImpl<char> &OutStr) const {
   if (!StoredDiagMessage.empty()) {
     OutStr.append(StoredDiagMessage.begin(), StoredDiagMessage.end());
@@ -542,7 +542,7 @@ FormatDiagnostic(SmallVectorImpl<char> &OutStr) const {
   FormatDiagnostic(Diag.begin(), Diag.end(), OutStr);
 }
 
-void DiagnosticInfo::
+void Diagnostic::
 FormatDiagnostic(const char *DiagStr, const char *DiagEnd,
                  SmallVectorImpl<char> &OutStr) const {
 
@@ -712,7 +712,7 @@ StoredDiagnostic::StoredDiagnostic(DiagnosticsEngine::Level Level, unsigned ID,
   : ID(ID), Level(Level), Loc(), Message(Message) { }
 
 StoredDiagnostic::StoredDiagnostic(DiagnosticsEngine::Level Level, 
-                                   const DiagnosticInfo &Info)
+                                   const Diagnostic &Info)
   : ID(Info.getID()), Level(Level) 
 {
   assert((Info.getLocation().isInvalid() || Info.hasSourceManager()) &&

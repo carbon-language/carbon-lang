@@ -47,7 +47,7 @@ public:
   }
 
   virtual void HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
-                                const DiagnosticInfo &Info) {
+                                const Diagnostic &Info) {
     // Default implementation (Warnings/errors count).
     DiagnosticConsumer::HandleDiagnostic(DiagLevel, Info);
 

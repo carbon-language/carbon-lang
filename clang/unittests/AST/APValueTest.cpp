@@ -25,7 +25,7 @@ class DiagnosticOutputGetter {
     SmallString<64> LastDiagnostic;
   public:
     virtual void HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
-                                  const DiagnosticInfo &Info) {
+                                  const Diagnostic &Info) {
       LastDiagnostic.clear();
       Info.FormatDiagnostic(LastDiagnostic);
     }

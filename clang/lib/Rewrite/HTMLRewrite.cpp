@@ -445,7 +445,7 @@ namespace {
 /// diags.
 class IgnoringDiagConsumer : public DiagnosticConsumer {
   void HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
-                        const DiagnosticInfo &Info) {
+                        const Diagnostic &Info) {
     // Just ignore it.
   }
 };

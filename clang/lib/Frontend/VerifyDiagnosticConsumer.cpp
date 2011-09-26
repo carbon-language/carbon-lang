@@ -56,7 +56,7 @@ void VerifyDiagnosticConsumer::EndSourceFile() {
 }
 
 void VerifyDiagnosticConsumer::HandleDiagnostic(
-      DiagnosticsEngine::Level DiagLevel, const DiagnosticInfo &Info) {
+      DiagnosticsEngine::Level DiagLevel, const Diagnostic &Info) {
   if (FirstErrorFID.isInvalid() && Info.hasSourceManager()) {
     const SourceManager &SM = Info.getSourceManager();
     FirstErrorFID = SM.getFileID(Info.getLocation());

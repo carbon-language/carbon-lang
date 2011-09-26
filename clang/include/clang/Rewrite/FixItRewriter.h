@@ -93,7 +93,7 @@ public:
   /// HandleDiagnostic - Handle this diagnostic, reporting it to the user or
   /// capturing it to a log as needed.
   virtual void HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
-                                const DiagnosticInfo &Info);
+                                const Diagnostic &Info);
 
   /// \brief Emit a diagnostic via the adapted diagnostic client.
   void Diag(SourceLocation Loc, unsigned DiagID);

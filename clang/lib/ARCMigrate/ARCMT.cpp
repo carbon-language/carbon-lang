@@ -97,7 +97,7 @@ public:
     : Diags(diags), CapturedDiags(capturedDiags) { }
 
   virtual void HandleDiagnostic(DiagnosticsEngine::Level level,
-                                const DiagnosticInfo &Info) {
+                                const Diagnostic &Info) {
     if (arcmt::isARCDiagnostic(Info.getID(), Diags) ||
         level >= DiagnosticsEngine::Error || level == DiagnosticsEngine::Note) {
       CapturedDiags.push_back(StoredDiagnostic(level, Info));

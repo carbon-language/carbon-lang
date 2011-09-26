@@ -579,7 +579,7 @@ private:
   // diagnostic is in flight at a time.
   friend class DiagnosticIDs;
   friend class DiagnosticBuilder;
-  friend class DiagnosticInfo;
+  friend class Diagnostic;
   friend class PartialDiagnostic;
   friend class DiagnosticErrorTrap;
   
@@ -874,18 +874,18 @@ inline DiagnosticBuilder DiagnosticsEngine::Report(unsigned DiagID) {
 }
 
 //===----------------------------------------------------------------------===//
-// DiagnosticInfo
+// Diagnostic
 //===----------------------------------------------------------------------===//
 
-/// DiagnosticInfo - This is a little helper class (which is basically a smart
+/// Diagnostic - This is a little helper class (which is basically a smart
 /// pointer that forward info from DiagnosticsEngine) that allows clients to
 /// enquire about the currently in-flight diagnostic.
-class DiagnosticInfo {
+class Diagnostic {
   const DiagnosticsEngine *DiagObj;
   StringRef StoredDiagMessage;
 public:
-  explicit DiagnosticInfo(const DiagnosticsEngine *DO) : DiagObj(DO) {}
-  DiagnosticInfo(const DiagnosticsEngine *DO, StringRef storedDiagMessage)
+  explicit Diagnostic(const DiagnosticsEngine *DO) : DiagObj(DO) {}
+  Diagnostic(const DiagnosticsEngine *DO, StringRef storedDiagMessage)
     : DiagObj(DO), StoredDiagMessage(storedDiagMessage) {}
 
   const DiagnosticsEngine *getDiags() const { return DiagObj; }
@@ -995,7 +995,7 @@ class StoredDiagnostic {
 
 public:
   StoredDiagnostic();
-  StoredDiagnostic(DiagnosticsEngine::Level Level, const DiagnosticInfo &Info);
+  StoredDiagnostic(DiagnosticsEngine::Level Level, const Diagnostic &Info);
   StoredDiagnostic(DiagnosticsEngine::Level Level, unsigned ID, 
                    StringRef Message);
   StoredDiagnostic(DiagnosticsEngine::Level Level, unsigned ID, 
@@ -1071,7 +1071,7 @@ public:
   /// Default implementation just keeps track of the total number of warnings
   /// and errors.
   virtual void HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
-                                const DiagnosticInfo &Info);
+                                const Diagnostic &Info);
 };
 
 }  // end namespace clang

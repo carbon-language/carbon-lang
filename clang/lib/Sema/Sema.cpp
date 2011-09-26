@@ -669,7 +669,7 @@ Sema::SemaDiagnosticBuilder::~SemaDiagnosticBuilder() {
       // Make a copy of this suppressed diagnostic and store it with the
       // template-deduction information;
       FlushCounts();
-      DiagnosticInfo DiagInfo(&SemaRef.Diags);
+      Diagnostic DiagInfo(&SemaRef.Diags);
         
       if (*Info)
         (*Info)->addSuppressedDiagnostic(DiagInfo.getLocation(),
