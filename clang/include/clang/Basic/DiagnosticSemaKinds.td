@@ -517,7 +517,7 @@ def err_use_continuation_class : Error<
   "illegal redeclaration of property in continuation class %0"
   " (attribute must be 'readwrite', while its primary must be 'readonly')">;
 def error_type_mismatch_continuation_class : Error<
-  "type of property %0 in continuation class does not match"
+  "type of property %0 in continuation class does not match "
   "property type in primary class">;
 def err_use_continuation_class_redeclaration_readwrite : Error<
   "illegal redeclaration of 'readwrite' property in continuation class %0"
@@ -555,8 +555,7 @@ def warn_arc_perform_selector_leaks : Warning<
   "performSelector may cause a leak because its selector is unknown">,
   InGroup<DiagGroup<"arc-performSelector-leaks">>;
 def err_gc_weak_property_strong_type : Error<
-  "weak attribute declared on a __strong type property"
-  "in GC mode">;
+  "weak attribute declared on a __strong type property in GC mode">;
 
 def error_synthesized_ivar_yet_not_supported : Error<
   "instance variable synthesis not yet supported"
