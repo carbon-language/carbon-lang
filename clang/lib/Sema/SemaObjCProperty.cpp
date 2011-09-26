@@ -1481,8 +1481,8 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
           Context.VoidTy)
       Diag(SetterMethod->getLocation(), diag::err_setter_type_void);
     if (SetterMethod->param_size() != 1 ||
-        ((*SetterMethod->param_begin())->getType().getUnqualifiedType() 
-         != property->getType().getUnqualifiedType())) {
+        !Context.hasSameUnqualifiedType(
+          (*SetterMethod->param_begin())->getType(), property->getType())) {
       Diag(property->getLocation(),
            diag::warn_accessor_property_type_mismatch)
         << property->getDeclName()
