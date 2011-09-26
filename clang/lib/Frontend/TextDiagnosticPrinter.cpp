@@ -1100,17 +1100,7 @@ static bool printWordWrapped(raw_ostream &OS,
                              unsigned Columns,
                              unsigned Column = 0,
                              unsigned Indentation = WordWrapIndentation) {
-  unsigned Length = Str.size();
-
-  // If there is a newline in this message somewhere, find that
-  // newline and split the message into the part before the newline
-  // (which will be word-wrapped) and the part from the newline one
-  // (which will be emitted unchanged).
-  for (unsigned I = 0; I != Length; ++I)
-    if (Str[I] == '\n') {
-      Length = I;
-      break;
-    }
+  const unsigned Length = Str.size();
 
   // The string used to indent each line.
   llvm::SmallString<16> IndentStr;
@@ -1148,13 +1138,7 @@ static bool printWordWrapped(raw_ostream &OS,
     Wrapped = true;
   }
 
-  if (Length == Str.size())
-    return Wrapped; // We're done.
-
-  // There is a newline in the message, followed by something that
-  // will not be word-wrapped. Print that.
-  OS.write(&Str[Length], Str.size() - Length);
-  return true;
+  return Wrapped;
 }
 
 void TextDiagnosticPrinter::HandleDiagnostic(DiagnosticsEngine::Level Level,
