@@ -17,6 +17,7 @@
 #include "PTXISelLowering.h"
 #include "PTXInstrInfo.h"
 #include "PTXFrameLowering.h"
+#include "PTXSelectionDAGInfo.h"
 #include "PTXSubtarget.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetFrameLowering.h"
@@ -25,11 +26,12 @@
 namespace llvm {
 class PTXTargetMachine : public LLVMTargetMachine {
   private:
-    const TargetData  DataLayout;
-    PTXSubtarget      Subtarget; // has to be initialized before FrameLowering
-    PTXFrameLowering  FrameLowering;
-    PTXInstrInfo      InstrInfo;
-    PTXTargetLowering TLInfo;
+    const TargetData    DataLayout;
+    PTXSubtarget        Subtarget; // has to be initialized before FrameLowering
+    PTXFrameLowering    FrameLowering;
+    PTXInstrInfo        InstrInfo;
+    PTXSelectionDAGInfo TSInfo;
+    PTXTargetLowering   TLInfo;
 
   public:
     PTXTargetMachine(const Target &T, StringRef TT,
@@ -49,6 +51,10 @@ class PTXTargetMachine : public LLVMTargetMachine {
 
     virtual const PTXTargetLowering *getTargetLowering() const {
       return &TLInfo; }
+
+    virtual const PTXSelectionDAGInfo* getSelectionDAGInfo() const {
+      return &TSInfo;
+    }
 
     virtual const PTXSubtarget *getSubtargetImpl() const { return &Subtarget; }
 

@@ -18,6 +18,7 @@ add_llvm_target(PTXCodeGen
   PTXParamManager.cpp
   PTXRegAlloc.cpp
   PTXRegisterInfo.cpp
+  PTXSelectionDAGInfo.cpp
   PTXSubtarget.cpp
   PTXTargetMachine.cpp
   )

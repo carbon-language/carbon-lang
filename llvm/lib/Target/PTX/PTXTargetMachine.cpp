@@ -94,6 +94,7 @@ PTXTargetMachine::PTXTargetMachine(const Target &T,
     Subtarget(TT, CPU, FS, is64Bit),
     FrameLowering(Subtarget),
     InstrInfo(*this),
+    TSInfo(*this),
     TLInfo(*this) {
 }
 
