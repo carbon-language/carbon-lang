@@ -314,6 +314,12 @@ public:
     return *VTableLayouts[RD];
   }
 
+  VTableLayout *
+  createConstructionVTableLayout(const CXXRecordDecl *MostDerivedClass,
+                                 CharUnits MostDerivedClassOffset,
+                                 bool MostDerivedClassIsVirtual,
+                                 const CXXRecordDecl *LayoutClass);
+
   const ThunkInfoVectorTy *getThunkInfo(const CXXMethodDecl *MD) {
     ComputeVTableRelatedInformation(MD->getParent());
 

@@ -2821,6 +2821,18 @@ void CodeGenVTables::EmitThunks(GlobalDecl GD)
               /*UseAvailableExternallyLinkage=*/false);
 }
 
+static VTableLayout *CreateVTableLayout(const VTableBuilder &Builder) {
+  llvm::SmallVector<VTableLayout::VTableThunkTy, 1>
+    VTableThunks(Builder.vtable_thunks_begin(), Builder.vtable_thunks_end());
+  std::sort(VTableThunks.begin(), VTableThunks.end());
+
+  return new VTableLayout(Builder.getNumVTableComponents(),
+                          Builder.vtable_component_begin(),
+                          VTableThunks.size(),
+                          VTableThunks.data(),
+                          Builder.getAddressPoints());
+}
+
 void VTableContext::ComputeVTableRelatedInformation(const CXXRecordDecl *RD) {
   const VTableLayout *&Entry = VTableLayouts[RD];
 
@@ -2830,16 +2842,7 @@ void VTableContext::ComputeVTableRelatedInformation(const CXXRecordDecl *RD) {
 
   VTableBuilder Builder(*this, RD, CharUnits::Zero(), 
                         /*MostDerivedClassIsVirtual=*/0, RD);
-
-  llvm::SmallVector<VTableLayout::VTableThunkTy, 1>
-    VTableThunks(Builder.vtable_thunks_begin(), Builder.vtable_thunks_end());
-  std::sort(VTableThunks.begin(), VTableThunks.end());
-
-  Entry = new VTableLayout(Builder.getNumVTableComponents(),
-                           Builder.vtable_component_begin(),
-                           VTableThunks.size(),
-                           VTableThunks.data(),
-                           Builder.getAddressPoints());
+  Entry = CreateVTableLayout(Builder);
 
   // Add the known thunks.
   Thunks.insert(Builder.thunks_begin(), Builder.thunks_end());
@@ -2865,6 +2868,16 @@ void VTableContext::ComputeVTableRelatedInformation(const CXXRecordDecl *RD) {
     
     VirtualBaseClassOffsetOffsets.insert(std::make_pair(ClassPair, I->second));
   }
+}
+
+VTableLayout *VTableContext::createConstructionVTableLayout(
+                                          const CXXRecordDecl *MostDerivedClass,
+                                          CharUnits MostDerivedClassOffset,
+                                          bool MostDerivedClassIsVirtual,
+                                          const CXXRecordDecl *LayoutClass) {
+  VTableBuilder Builder(*this, MostDerivedClass, MostDerivedClassOffset, 
+                        MostDerivedClassIsVirtual, LayoutClass);
+  return CreateVTableLayout(Builder);
 }
 
 llvm::Constant *
