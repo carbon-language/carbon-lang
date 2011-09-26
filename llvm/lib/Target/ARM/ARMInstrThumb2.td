@@ -3942,8 +3942,6 @@ def : t2InstAlias<"sxtb16${p} $Rd, $Rm",
                 (t2SXTB16 rGPR:$Rd, rGPR:$Rm, 0, pred:$p)>;
 def : t2InstAlias<"sxth${p} $Rd, $Rm",
                 (t2SXTH rGPR:$Rd, rGPR:$Rm, 0, pred:$p)>;
-def : t2InstAlias<"sxth${p} $Rd, $Rm",
-                (t2SXTH rGPR:$Rd, rGPR:$Rm, 0, pred:$p)>;
 
 def : t2InstAlias<"uxtab${p} $Rd, $Rn, $Rm",
                 (t2UXTAB rGPR:$Rd, rGPR:$Rn, rGPR:$Rm, 0, pred:$p)>;
