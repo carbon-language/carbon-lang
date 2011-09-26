@@ -21,6 +21,44 @@ using namespace CodeGen;
 
 namespace {
 
+class VTTVTable {
+  llvm::PointerIntPair<const CXXRecordDecl *, 1, bool> BaseAndIsVirtual;
+  CharUnits BaseOffset;
+
+public:
+  VTTVTable() {}
+  VTTVTable(const CXXRecordDecl *Base, CharUnits BaseOffset, bool BaseIsVirtual)
+    : BaseAndIsVirtual(Base, BaseIsVirtual), BaseOffset(BaseOffset) {}
+  VTTVTable(BaseSubobject Base, bool BaseIsVirtual)
+    : BaseAndIsVirtual(Base.getBase(), BaseIsVirtual),
+      BaseOffset(Base.getBaseOffset()) {}
+
+  const CXXRecordDecl *getBase() const {
+    return BaseAndIsVirtual.getPointer();
+  }
+
+  CharUnits getBaseOffset() const {
+    return BaseOffset;
+  }
+
+  bool isVirtual() const {
+    return BaseAndIsVirtual.getInt();
+  }
+
+  BaseSubobject getBaseSubobject() const {
+    return BaseSubobject(getBase(), getBaseOffset());
+  }
+};
+
+struct VTTComponent {
+  uint64_t VTableIndex;
+  BaseSubobject VTableBase;
+
+  VTTComponent() {}
+  VTTComponent(uint64_t VTableIndex, BaseSubobject VTableBase)
+    : VTableIndex(VTableIndex), VTableBase(VTableBase) {}
+};
+
 /// VTT builder - Class for building VTT layout information.
 class VTTBuilder {
   
@@ -30,7 +68,12 @@ class VTTBuilder {
   /// vtable.
   const CXXRecordDecl *MostDerivedClass;
 
-  typedef SmallVector<llvm::Constant *, 64> VTTComponentsVectorTy;
+  typedef SmallVector<VTTVTable, 64> VTTVTablesVectorTy;
+  
+  /// VTTVTables - The VTT vtables.
+  VTTVTablesVectorTy VTTVTables;
+  
+  typedef SmallVector<VTTComponent, 64> VTTComponentsVectorTy;
   
   /// VTTComponents - The VTT components.
   VTTComponentsVectorTy VTTComponents;
@@ -54,25 +97,12 @@ class VTTBuilder {
   /// the VTT.
   bool GenerateDefinition;
 
-  /// The linkage to use for any construction vtables required by this VTT.
-  /// Only required if we're building a definition.
-  llvm::GlobalVariable::LinkageTypes LinkageForConstructionVTables;
-  
-  /// GetAddrOfVTable - Returns the address of the vtable for the base class in
-  /// the given vtable class.
-  ///
-  /// \param AddressPoints - If the returned vtable is a construction vtable,
-  /// this will hold the address points for it.
-  llvm::Constant *GetAddrOfVTable(BaseSubobject Base, bool BaseIsVirtual,
-                                  AddressPointsMapTy& AddressPoints);
-
   /// AddVTablePointer - Add a vtable pointer to the VTT currently being built.
   ///
   /// \param AddressPoints - If the vtable is a construction vtable, this has
   /// the address points for it.
-  void AddVTablePointer(BaseSubobject Base, llvm::Constant *VTable,
-                        const CXXRecordDecl *VTableClass,
-                        const AddressPointsMapTy& AddressPoints);
+  void AddVTablePointer(BaseSubobject Base, uint64_t VTableIndex,
+                        const CXXRecordDecl *VTableClass);
                         
   /// LayoutSecondaryVTTs - Lay out the secondary VTTs of the given base 
   /// subobject.
@@ -88,9 +118,8 @@ class VTTBuilder {
   /// the address points for it.
   void LayoutSecondaryVirtualPointers(BaseSubobject Base, 
                                       bool BaseIsMorallyVirtual,
-                                      llvm::Constant *VTable,
+                                      uint64_t VTableIndex,
                                       const CXXRecordDecl *VTableClass,
-                                      const AddressPointsMapTy& AddressPoints,
                                       VisitedVirtualBasesSetTy &VBases);
   
   /// LayoutSecondaryVirtualPointers - Lay out the secondary virtual pointers
@@ -99,8 +128,7 @@ class VTTBuilder {
   /// \param AddressPoints - If the vtable is a construction vtable, this has
   /// the address points for it.
   void LayoutSecondaryVirtualPointers(BaseSubobject Base, 
-                                      llvm::Constant *VTable,
-                                      const AddressPointsMapTy& AddressPoints);
+                                      uint64_t VTableIndex);
 
   /// LayoutVirtualVTTs - Lay out the VTTs for the virtual base classes of the
   /// given record decl.
@@ -113,13 +141,16 @@ class VTTBuilder {
   
 public:
   VTTBuilder(CodeGenModule &CGM, const CXXRecordDecl *MostDerivedClass,
-             bool GenerateDefinition,
-             llvm::GlobalVariable::LinkageTypes LinkageForConstructionVTables
-               = (llvm::GlobalVariable::LinkageTypes) -1);
+             bool GenerateDefinition);
 
   // getVTTComponents - Returns a reference to the VTT components.
   const VTTComponentsVectorTy &getVTTComponents() const {
     return VTTComponents;
+  }
+  
+  // getVTTVTables - Returns a reference to the VTT vtables.
+  const VTTVTablesVectorTy &getVTTVTables() const {
+    return VTTVTables;
   }
   
   /// getSubVTTIndicies - Returns a reference to the sub-VTT indices.
@@ -138,43 +169,36 @@ public:
 
 VTTBuilder::VTTBuilder(CodeGenModule &CGM,
                        const CXXRecordDecl *MostDerivedClass,
-                       bool GenerateDefinition,
-          llvm::GlobalVariable::LinkageTypes LinkageForConstructionVTables)
+                       bool GenerateDefinition)
   : CGM(CGM), MostDerivedClass(MostDerivedClass), 
   MostDerivedClassLayout(CGM.getContext().getASTRecordLayout(MostDerivedClass)),
-    GenerateDefinition(GenerateDefinition),
-    LinkageForConstructionVTables(LinkageForConstructionVTables) {
-  assert(!GenerateDefinition ||
-         LinkageForConstructionVTables
-           != (llvm::GlobalVariable::LinkageTypes) -1);
-    
+    GenerateDefinition(GenerateDefinition) {
   // Lay out this VTT.
   LayoutVTT(BaseSubobject(MostDerivedClass, CharUnits::Zero()), 
             /*BaseIsVirtual=*/false);
 }
 
-llvm::Constant *
-VTTBuilder::GetAddrOfVTable(BaseSubobject Base, bool BaseIsVirtual, 
-                            AddressPointsMapTy& AddressPoints) {
-  if (!GenerateDefinition)
-    return 0;
-  
-  if (Base.getBase() == MostDerivedClass) {
-    assert(Base.getBaseOffset().isZero() &&
+llvm::Constant *GetAddrOfVTTVTable(CodeGenVTables &CGVT,
+                                   const CXXRecordDecl *MostDerivedClass,
+                                   const VTTVTable &VTable,
+                                   llvm::GlobalVariable::LinkageTypes Linkage,
+                       llvm::DenseMap<BaseSubobject, uint64_t> &AddressPoints) {
+  if (VTable.getBase() == MostDerivedClass) {
+    assert(VTable.getBaseOffset().isZero() &&
            "Most derived class vtable must have a zero offset!");
     // This is a regular vtable.
-    return CGM.getVTables().GetAddrOfVTable(MostDerivedClass);
+    return CGVT.GetAddrOfVTable(MostDerivedClass);
   }
   
-  return CGM.getVTables().GenerateConstructionVTable(MostDerivedClass, 
-                                                     Base, BaseIsVirtual,
-                                           LinkageForConstructionVTables,
-                                                     AddressPoints);
+  return CGVT.GenerateConstructionVTable(MostDerivedClass, 
+                                         VTable.getBaseSubobject(),
+                                         VTable.isVirtual(),
+                                         Linkage,
+                                         AddressPoints);
 }
 
-void VTTBuilder::AddVTablePointer(BaseSubobject Base, llvm::Constant *VTable,
-                                  const CXXRecordDecl *VTableClass,
-                                  const AddressPointsMapTy& AddressPoints) {
+void VTTBuilder::AddVTablePointer(BaseSubobject Base, uint64_t VTableIndex,
+                                  const CXXRecordDecl *VTableClass) {
   // Store the vtable pointer index if we're generating the primary VTT.
   if (VTableClass == MostDerivedClass) {
     assert(!SecondaryVirtualPointerIndices.count(Base) &&
@@ -183,37 +207,11 @@ void VTTBuilder::AddVTablePointer(BaseSubobject Base, llvm::Constant *VTable,
   }
 
   if (!GenerateDefinition) {
-    VTTComponents.push_back(0);
+    VTTComponents.push_back(VTTComponent());
     return;
   }
 
-  uint64_t AddressPoint;
-  if (VTableClass != MostDerivedClass) {
-    // The vtable is a construction vtable, look in the construction vtable
-    // address points.
-    AddressPoint = AddressPoints.lookup(Base);
-    assert(AddressPoint != 0 && "Did not find ctor vtable address point!");
-  } else {
-    // Just get the address point for the regular vtable.
-    AddressPoint = CGM.getVTables().getAddressPoint(Base, VTableClass);
-    assert(AddressPoint != 0 && "Did not find vtable address point!");
-  }
-
-  if (!AddressPoint) AddressPoint = 0;
-  
-  llvm::Value *Idxs[] = {
-    llvm::ConstantInt::get(llvm::Type::getInt64Ty(CGM.getLLVMContext()), 0),
-    llvm::ConstantInt::get(llvm::Type::getInt64Ty(CGM.getLLVMContext()), 
-                           AddressPoint)
-  };
-  
-  llvm::Constant *Init = 
-    llvm::ConstantExpr::getInBoundsGetElementPtr(VTable, Idxs);
-  
-  llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
-  Init = llvm::ConstantExpr::getBitCast(Init, Int8PtrTy);
-  
-  VTTComponents.push_back(Init);
+  VTTComponents.push_back(VTTComponent(VTableIndex, Base));
 }
 
 void VTTBuilder::LayoutSecondaryVTTs(BaseSubobject Base) {
@@ -240,11 +238,10 @@ void VTTBuilder::LayoutSecondaryVTTs(BaseSubobject Base) {
 
 void
 VTTBuilder::LayoutSecondaryVirtualPointers(BaseSubobject Base, 
-                                        bool BaseIsMorallyVirtual,
-                                        llvm::Constant *VTable,
-                                        const CXXRecordDecl *VTableClass,
-                                        const AddressPointsMapTy& AddressPoints,
-                                        VisitedVirtualBasesSetTy &VBases) {
+                                           bool BaseIsMorallyVirtual,
+                                           uint64_t VTableIndex,
+                                           const CXXRecordDecl *VTableClass,
+                                           VisitedVirtualBasesSetTy &VBases) {
   const CXXRecordDecl *RD = Base.getBase();
   
   // We're not interested in bases that don't have virtual bases, and not
@@ -296,24 +293,23 @@ VTTBuilder::LayoutSecondaryVirtualPointers(BaseSubobject Base,
     if (!BaseDeclIsNonVirtualPrimaryBase &&
         (BaseDecl->getNumVBases() || BaseDeclIsMorallyVirtual)) {
       // Add the vtable pointer.
-      AddVTablePointer(BaseSubobject(BaseDecl, BaseOffset), VTable, 
-                       VTableClass, AddressPoints);
+      AddVTablePointer(BaseSubobject(BaseDecl, BaseOffset), VTableIndex, 
+                       VTableClass);
     }
 
     // And lay out the secondary virtual pointers for the base class.
     LayoutSecondaryVirtualPointers(BaseSubobject(BaseDecl, BaseOffset),
-                                   BaseDeclIsMorallyVirtual, VTable, 
-                                   VTableClass, AddressPoints, VBases);
+                                   BaseDeclIsMorallyVirtual, VTableIndex, 
+                                   VTableClass, VBases);
   }
 }
 
 void 
 VTTBuilder::LayoutSecondaryVirtualPointers(BaseSubobject Base, 
-                                      llvm::Constant *VTable,
-                                      const AddressPointsMapTy& AddressPoints) {
+                                           uint64_t VTableIndex) {
   VisitedVirtualBasesSetTy VBases;
   LayoutSecondaryVirtualPointers(Base, /*BaseIsMorallyVirtual=*/false,
-                                 VTable, Base.getBase(), AddressPoints, VBases);
+                                 VTableIndex, Base.getBase(), VBases);
 }
 
 void VTTBuilder::LayoutVirtualVTTs(const CXXRecordDecl *RD,
@@ -358,17 +354,17 @@ void VTTBuilder::LayoutVTT(BaseSubobject Base, bool BaseIsVirtual) {
     SubVTTIndicies[Base] = VTTComponents.size();
   }
 
-  AddressPointsMapTy AddressPoints;
-  llvm::Constant *VTable = GetAddrOfVTable(Base, BaseIsVirtual, AddressPoints);
+  uint64_t VTableIndex = VTTVTables.size();
+  VTTVTables.push_back(VTTVTable(Base, BaseIsVirtual));
 
   // Add the primary vtable pointer.
-  AddVTablePointer(Base, VTable, RD, AddressPoints);
+  AddVTablePointer(Base, VTableIndex, RD);
 
   // Add the secondary VTTs.
   LayoutSecondaryVTTs(Base);
   
   // Add the secondary virtual pointers.
-  LayoutSecondaryVirtualPointers(Base, VTable, AddressPoints);
+  LayoutSecondaryVirtualPointers(Base, VTableIndex);
   
   // If this is the primary VTT, we want to lay out virtual VTTs as well.
   if (IsPrimaryVTT) {
@@ -383,14 +379,51 @@ void
 CodeGenVTables::EmitVTTDefinition(llvm::GlobalVariable *VTT,
                                   llvm::GlobalVariable::LinkageTypes Linkage,
                                   const CXXRecordDecl *RD) {
-  VTTBuilder Builder(CGM, RD, /*GenerateDefinition=*/true, Linkage);
+  VTTBuilder Builder(CGM, RD, /*GenerateDefinition=*/true);
 
-  llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
+  llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGM.getLLVMContext()),
+             *Int64Ty = llvm::Type::getInt64Ty(CGM.getLLVMContext());
   llvm::ArrayType *ArrayType = 
     llvm::ArrayType::get(Int8PtrTy, Builder.getVTTComponents().size());
   
-  llvm::Constant *Init = 
-    llvm::ConstantArray::get(ArrayType, Builder.getVTTComponents());
+  SmallVector<llvm::Constant *, 8> VTables;
+  SmallVector<VTableAddressPointsMapTy, 8> VTableAddressPoints;
+  for (const VTTVTable *i = Builder.getVTTVTables().begin(),
+                       *e = Builder.getVTTVTables().end(); i != e; ++i) {
+    VTableAddressPoints.push_back(VTableAddressPointsMapTy());
+    VTables.push_back(GetAddrOfVTTVTable(*this, RD, *i, Linkage,
+                                         VTableAddressPoints.back()));
+  }
+
+  SmallVector<llvm::Constant *, 8> VTTComponents;
+  for (const VTTComponent *i = Builder.getVTTComponents().begin(),
+                          *e = Builder.getVTTComponents().end(); i != e; ++i) {
+    const VTTVTable &VTTVT = Builder.getVTTVTables()[i->VTableIndex];
+    llvm::Constant *VTable = VTables[i->VTableIndex];
+    uint64_t AddressPoint;
+    if (VTTVT.getBase() == RD) {
+      // Just get the address point for the regular vtable.
+      AddressPoint = getAddressPoint(i->VTableBase, RD);
+      assert(AddressPoint != 0 && "Did not find vtable address point!");
+    } else {
+      AddressPoint = VTableAddressPoints[i->VTableIndex].lookup(i->VTableBase);
+      assert(AddressPoint != 0 && "Did not find ctor vtable address point!");
+    }
+
+     llvm::Value *Idxs[] = {
+       llvm::ConstantInt::get(Int64Ty, 0),
+       llvm::ConstantInt::get(Int64Ty, AddressPoint)
+     };
+
+     llvm::Constant *Init = 
+       llvm::ConstantExpr::getInBoundsGetElementPtr(VTable, Idxs);
+
+     Init = llvm::ConstantExpr::getBitCast(Init, Int8PtrTy);
+
+     VTTComponents.push_back(Init);
+  }
+
+  llvm::Constant *Init = llvm::ConstantArray::get(ArrayType, VTTComponents);
 
   VTT->setInitializer(Init);
 

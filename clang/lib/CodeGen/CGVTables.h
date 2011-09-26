@@ -37,6 +37,7 @@ class BaseSubobject {
   CharUnits BaseOffset;
   
 public:
+  BaseSubobject() { }
   BaseSubobject(const CXXRecordDecl *Base, CharUnits BaseOffset)
     : Base(Base), BaseOffset(BaseOffset) { }
   
