@@ -1095,54 +1095,49 @@ static void PrintDiagnosticOptions(raw_ostream &OS,
                                    DiagnosticsEngine::Level Level,
                                    const Diagnostic &Info,
                                    const DiagnosticOptions &DiagOpts) {
-  std::string OptionName;
+  bool Started = false;
   if (DiagOpts.ShowOptionNames) {
+    // Handle special cases for non-warnings early.
+    if (Info.getID() == diag::fatal_too_many_errors) {
+      OS << " [-ferror-limit=]";
+      return;
+    }
+
     // Was this a warning mapped to an error using -Werror or pragma?
     if (Level == DiagnosticsEngine::Error &&
         DiagnosticIDs::isBuiltinWarningOrExtension(Info.getID())) {
       diag::Mapping mapping = diag::MAP_IGNORE;
       Info.getDiags()->getDiagnosticLevel(Info.getID(), Info.getLocation(), 
                                           &mapping);
-      if (mapping == diag::MAP_WARNING)
-        OptionName += "-Werror";
+      if (mapping == diag::MAP_WARNING) {
+        OS << " [-Werror";
+        Started = true;
+      }
+    }
+
+    // If the diagnostic is an extension diagnostic and not enabled by default
+    // then it must have been turned on with -pedantic.
+    bool EnabledByDefault;
+    if (DiagnosticIDs::isBuiltinExtensionDiag(Info.getID(),
+                                              EnabledByDefault) &&
+        !EnabledByDefault) {
+      OS << (Started ? "," : " [") << "-pedantic";
+      Started = true;
     }
 
     StringRef Opt = DiagnosticIDs::getWarningOptionForDiag(Info.getID());
     if (!Opt.empty()) {
-      if (!OptionName.empty())
-        OptionName += ',';
-      OptionName += "-W";
-      OptionName += Opt;
-    } else if (Info.getID() == diag::fatal_too_many_errors) {
-      OptionName = "-ferror-limit=";
-    } else {
-      // If the diagnostic is an extension diagnostic and not enabled by default
-      // then it must have been turned on with -pedantic.
-      bool EnabledByDefault;
-      if (DiagnosticIDs::isBuiltinExtensionDiag(Info.getID(),
-                                                EnabledByDefault) &&
-          !EnabledByDefault)
-        OptionName = "-pedantic";
+      OS << (Started ? "," : " [") << "-W" << Opt;
+      Started = true;
     }
   }
-  
-  // If the user wants to see category information, include it too.
-  unsigned DiagCategory = 0;
-  if (DiagOpts.ShowCategories)
-    DiagCategory = DiagnosticIDs::getCategoryNumberForDiag(Info.getID());
 
-  // If there is any categorization information, include it.
-  if (!OptionName.empty() || DiagCategory != 0) {
-    bool NeedsComma = false;
-    OS << " [";
-    
-    if (!OptionName.empty()) {
-      OS << OptionName;
-      NeedsComma = true;
-    }
-    
+  // If the user wants to see category information, include it too.
+  if (DiagOpts.ShowCategories) {
+    unsigned DiagCategory =
+      DiagnosticIDs::getCategoryNumberForDiag(Info.getID());
     if (DiagCategory) {
-      if (NeedsComma) OS << ',';
+      OS << (Started ? "," : " [");
       if (DiagOpts.ShowCategories == 1)
         OS << llvm::utostr(DiagCategory);
       else {
@@ -1150,9 +1145,8 @@ static void PrintDiagnosticOptions(raw_ostream &OS,
         OS << DiagnosticIDs::getCategoryNameFromID(DiagCategory);
       }
     }
-    
-    OS << "]";
   }
+  OS << "]";
 }
 
 void TextDiagnosticPrinter::HandleDiagnostic(DiagnosticsEngine::Level Level,
