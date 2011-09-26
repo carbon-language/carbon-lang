@@ -175,6 +175,7 @@ private:
   /// \brief The file in which the precompiled preamble is stored.
   std::string PreambleFile;
   
+public:
   class PreambleData {
     const FileEntry *File;
     std::vector<char> Buffer;
@@ -203,9 +204,20 @@ private:
       return NumLines;
     }
 
+    SourceRange getSourceRange(const SourceManager &SM) const {
+      SourceLocation FileLoc = SM.getLocForStartOfFile(SM.getPreambleFileID());
+      return SourceRange(FileLoc, FileLoc.getLocWithOffset(size()-1));
+    }
+
   private:
     void countLines() const;
   };
+
+  const PreambleData &getPreambleData() const {
+    return Preamble;
+  }
+
+private:
 
   /// \brief The contents of the preamble that has been precompiled to
   /// \c PreambleFile.
@@ -514,11 +526,29 @@ public:
                              unsigned Line, unsigned Col) const;
 
   /// \brief Get the source location for the given file:offset pair.
-  ///
-  /// The difference with SourceManager::getLocation is that this method checks
-  /// whether the requested location points inside the precompiled preamble
-  /// in which case the returned source location will be a "loaded" one.
   SourceLocation getLocation(const FileEntry *File, unsigned Offset) const;
+
+  /// \brief If \arg Loc is a loaded location from the preamble, returns
+  /// the corresponding local location of the main file, otherwise it returns
+  /// \arg Loc.
+  SourceLocation mapLocationFromPreamble(SourceLocation Loc);
+
+  /// \brief If \arg Loc is a local location of the main file but inside the
+  /// preamble chunk, returns the corresponding loaded location from the
+  /// preamble, otherwise it returns \arg Loc.
+  SourceLocation mapLocationToPreamble(SourceLocation Loc);
+
+  /// \brief \see mapLocationFromPreamble.
+  SourceRange mapRangeFromPreamble(SourceRange R) {
+    return SourceRange(mapLocationFromPreamble(R.getBegin()),
+                       mapLocationFromPreamble(R.getEnd()));
+  }
+
+  /// \brief \see mapLocationToPreamble.
+  SourceRange mapRangeToPreamble(SourceRange R) {
+    return SourceRange(mapLocationToPreamble(R.getBegin()),
+                       mapLocationToPreamble(R.getEnd()));
+  }
   
   // Retrieve the diagnostics associated with this AST
   typedef const StoredDiagnostic *stored_diag_iterator;

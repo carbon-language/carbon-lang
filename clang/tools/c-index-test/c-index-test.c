@@ -1405,6 +1405,17 @@ int perform_token_annotation(int argc, const char **argv) {
   }
   errorCode = 0;
 
+  if (getenv("CINDEXTEST_EDITING")) {
+    for (i = 0; i < 5; ++i) {
+      if (clang_reparseTranslationUnit(TU, num_unsaved_files, unsaved_files,
+                                       clang_defaultReparseOptions(TU))) {
+        fprintf(stderr, "Unable to reparse translation unit!\n");
+        errorCode = -1;
+        goto teardown;
+      }
+    }
+  }
+
   file = clang_getFile(TU, filename);
   if (!file) {
     fprintf(stderr, "file %s is not in this translation unit\n", filename);

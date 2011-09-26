@@ -396,8 +396,9 @@ bool CursorVisitor::visitPreprocessedEntitiesInRegion() {
     = *AU->getPreprocessor().getPreprocessingRecord();
   
   if (RegionOfInterest.isValid()) {
+    SourceRange MappedRange = AU->mapRangeToPreamble(RegionOfInterest);
     std::pair<PreprocessingRecord::iterator, PreprocessingRecord::iterator>
-      Entities = PPRec.getPreprocessedEntitiesInRange(RegionOfInterest);
+      Entities = PPRec.getPreprocessedEntitiesInRange(MappedRange);
     return visitPreprocessedEntities(Entities.first, Entities.second);
   }
 
@@ -3790,14 +3791,23 @@ static SourceRange getRawCursorExtent(CXCursor C) {
   if (C.kind == CXCursor_PreprocessingDirective)
     return cxcursor::getCursorPreprocessingDirective(C);
 
-  if (C.kind == CXCursor_MacroExpansion)
-    return cxcursor::getCursorMacroExpansion(C)->getSourceRange();
+  if (C.kind == CXCursor_MacroExpansion) {
+    ASTUnit *TU = getCursorASTUnit(C);
+    SourceRange Range = cxcursor::getCursorMacroExpansion(C)->getSourceRange();
+    return TU->mapRangeFromPreamble(Range);
+  }
 
-  if (C.kind == CXCursor_MacroDefinition)
-    return cxcursor::getCursorMacroDefinition(C)->getSourceRange();
+  if (C.kind == CXCursor_MacroDefinition) {
+    ASTUnit *TU = getCursorASTUnit(C);
+    SourceRange Range = cxcursor::getCursorMacroDefinition(C)->getSourceRange();
+    return TU->mapRangeFromPreamble(Range);
+  }
 
-  if (C.kind == CXCursor_InclusionDirective)
-    return cxcursor::getCursorInclusionDirective(C)->getSourceRange();
+  if (C.kind == CXCursor_InclusionDirective) {
+    ASTUnit *TU = getCursorASTUnit(C);
+    SourceRange Range = cxcursor::getCursorInclusionDirective(C)->getSourceRange();
+    return TU->mapRangeFromPreamble(Range);
+  }
 
   if (C.kind >= CXCursor_FirstDecl && C.kind <= CXCursor_LastDecl) {
     Decl *D = cxcursor::getCursorDecl(C);
@@ -4395,28 +4405,13 @@ CXSourceRange clang_getTokenExtent(CXTranslationUnit TU, CXToken CXTok) {
                         SourceLocation::getFromRawEncoding(CXTok.int_data[1]));
 }
 
-void clang_tokenize(CXTranslationUnit TU, CXSourceRange Range,
-                    CXToken **Tokens, unsigned *NumTokens) {
-  if (Tokens)
-    *Tokens = 0;
-  if (NumTokens)
-    *NumTokens = 0;
-
-  ASTUnit *CXXUnit = static_cast<ASTUnit *>(TU->TUData);
-  if (!CXXUnit || !Tokens || !NumTokens)
-    return;
-
-  ASTUnit::ConcurrencyCheck Check(*CXXUnit);
-  
-  SourceRange R = cxloc::translateCXSourceRange(Range);
-  if (R.isInvalid())
-    return;
-
+static void getTokens(ASTUnit *CXXUnit, SourceRange Range,
+                      SmallVectorImpl<CXToken> &CXTokens) {
   SourceManager &SourceMgr = CXXUnit->getSourceManager();
   std::pair<FileID, unsigned> BeginLocInfo
-    = SourceMgr.getDecomposedLoc(R.getBegin());
+    = SourceMgr.getDecomposedLoc(Range.getBegin());
   std::pair<FileID, unsigned> EndLocInfo
-    = SourceMgr.getDecomposedLoc(R.getEnd());
+    = SourceMgr.getDecomposedLoc(Range.getEnd());
 
   // Cannot tokenize across files.
   if (BeginLocInfo.first != EndLocInfo.first)
@@ -4436,7 +4431,6 @@ void clang_tokenize(CXTranslationUnit TU, CXSourceRange Range,
 
   // Lex tokens until we hit the end of the range.
   const char *EffectiveBufferEnd = Buffer.data() + EndLocInfo.second;
-  SmallVector<CXToken, 32> CXTokens;
   Token Tok;
   bool previousWasAt = false;
   do {
@@ -4481,6 +4475,27 @@ void clang_tokenize(CXTranslationUnit TU, CXSourceRange Range,
     CXTokens.push_back(CXTok);
     previousWasAt = Tok.is(tok::at);
   } while (Lex.getBufferLocation() <= EffectiveBufferEnd);
+}
+
+void clang_tokenize(CXTranslationUnit TU, CXSourceRange Range,
+                    CXToken **Tokens, unsigned *NumTokens) {
+  if (Tokens)
+    *Tokens = 0;
+  if (NumTokens)
+    *NumTokens = 0;
+
+  ASTUnit *CXXUnit = static_cast<ASTUnit *>(TU->TUData);
+  if (!CXXUnit || !Tokens || !NumTokens)
+    return;
+
+  ASTUnit::ConcurrencyCheck Check(*CXXUnit);
+  
+  SourceRange R = cxloc::translateCXSourceRange(Range);
+  if (R.isInvalid())
+    return;
+
+  SmallVector<CXToken, 32> CXTokens;
+  getTokens(CXXUnit, R, CXTokens);
 
   if (CXTokens.empty())
     return;
@@ -4919,6 +4934,73 @@ namespace {
   };
 }
 
+static void annotatePreprocessorTokens(CXTranslationUnit TU,
+                                       SourceRange RegionOfInterest,
+                                       AnnotateTokensData &Annotated) {
+  ASTUnit *CXXUnit = static_cast<ASTUnit *>(TU->TUData);
+
+  SourceManager &SourceMgr = CXXUnit->getSourceManager();
+  std::pair<FileID, unsigned> BeginLocInfo
+    = SourceMgr.getDecomposedLoc(RegionOfInterest.getBegin());
+  std::pair<FileID, unsigned> EndLocInfo
+    = SourceMgr.getDecomposedLoc(RegionOfInterest.getEnd());
+
+  if (BeginLocInfo.first != EndLocInfo.first)
+    return;
+
+  StringRef Buffer;
+  bool Invalid = false;
+  Buffer = SourceMgr.getBufferData(BeginLocInfo.first, &Invalid);
+  if (Buffer.empty() || Invalid)
+    return;
+
+  Lexer Lex(SourceMgr.getLocForStartOfFile(BeginLocInfo.first),
+            CXXUnit->getASTContext().getLangOptions(),
+            Buffer.begin(), Buffer.data() + BeginLocInfo.second,
+            Buffer.end());
+  Lex.SetCommentRetentionState(true);
+  
+  // Lex tokens in raw mode until we hit the end of the range, to avoid
+  // entering #includes or expanding macros.
+  while (true) {
+    Token Tok;
+    Lex.LexFromRawLexer(Tok);
+    
+  reprocess:
+    if (Tok.is(tok::hash) && Tok.isAtStartOfLine()) {
+      // We have found a preprocessing directive. Gobble it up so that we
+      // don't see it while preprocessing these tokens later, but keep track
+      // of all of the token locations inside this preprocessing directive so
+      // that we can annotate them appropriately.
+      //
+      // FIXME: Some simple tests here could identify macro definitions and
+      // #undefs, to provide specific cursor kinds for those.
+      SmallVector<SourceLocation, 32> Locations;
+      do {
+        Locations.push_back(Tok.getLocation());
+        Lex.LexFromRawLexer(Tok);
+      } while (!Tok.isAtStartOfLine() && !Tok.is(tok::eof));
+      
+      using namespace cxcursor;
+      CXCursor Cursor
+      = MakePreprocessingDirectiveCursor(SourceRange(Locations.front(),
+                                                     Locations.back()),
+                                         TU);
+      for (unsigned I = 0, N = Locations.size(); I != N; ++I) {
+        Annotated[Locations[I].getRawEncoding()] = Cursor;
+      }
+      
+      if (Tok.isAtStartOfLine())
+        goto reprocess;
+      
+      continue;
+    }
+    
+    if (Tok.is(tok::eof))
+      break;
+  }
+}
+
 // This gets run a separate thread to avoid stack blowout.
 static void clang_annotateTokensImpl(void *UserData) {
   CXTranslationUnit TU = ((clang_annotateTokens_Data*)UserData)->TU;
@@ -4938,66 +5020,10 @@ static void clang_annotateTokensImpl(void *UserData) {
   // A mapping from the source locations found when re-lexing or traversing the
   // region of interest to the corresponding cursors.
   AnnotateTokensData Annotated;
-  
+
   // Relex the tokens within the source range to look for preprocessing
   // directives.
-  SourceManager &SourceMgr = CXXUnit->getSourceManager();
-  std::pair<FileID, unsigned> BeginLocInfo
-    = SourceMgr.getDecomposedLoc(RegionOfInterest.getBegin());
-  std::pair<FileID, unsigned> EndLocInfo
-    = SourceMgr.getDecomposedLoc(RegionOfInterest.getEnd());
-  
-  StringRef Buffer;
-  bool Invalid = false;
-  if (BeginLocInfo.first == EndLocInfo.first &&
-      ((Buffer = SourceMgr.getBufferData(BeginLocInfo.first, &Invalid)),true) &&
-      !Invalid) {
-    Lexer Lex(SourceMgr.getLocForStartOfFile(BeginLocInfo.first),
-              CXXUnit->getASTContext().getLangOptions(),
-              Buffer.begin(), Buffer.data() + BeginLocInfo.second,
-              Buffer.end());
-    Lex.SetCommentRetentionState(true);
-    
-    // Lex tokens in raw mode until we hit the end of the range, to avoid
-    // entering #includes or expanding macros.
-    while (true) {
-      Token Tok;
-      Lex.LexFromRawLexer(Tok);
-      
-    reprocess:
-      if (Tok.is(tok::hash) && Tok.isAtStartOfLine()) {
-        // We have found a preprocessing directive. Gobble it up so that we
-        // don't see it while preprocessing these tokens later, but keep track
-        // of all of the token locations inside this preprocessing directive so
-        // that we can annotate them appropriately.
-        //
-        // FIXME: Some simple tests here could identify macro definitions and
-        // #undefs, to provide specific cursor kinds for those.
-        SmallVector<SourceLocation, 32> Locations;
-        do {
-          Locations.push_back(Tok.getLocation());
-          Lex.LexFromRawLexer(Tok);
-        } while (!Tok.isAtStartOfLine() && !Tok.is(tok::eof));
-        
-        using namespace cxcursor;
-        CXCursor Cursor
-        = MakePreprocessingDirectiveCursor(SourceRange(Locations.front(),
-                                                       Locations.back()),
-                                           TU);
-        for (unsigned I = 0, N = Locations.size(); I != N; ++I) {
-          Annotated[Locations[I].getRawEncoding()] = Cursor;
-        }
-        
-        if (Tok.isAtStartOfLine())
-          goto reprocess;
-        
-        continue;
-      }
-      
-      if (Tok.is(tok::eof))
-        break;
-    }
-  }
+  annotatePreprocessorTokens(TU, RegionOfInterest, Annotated);
   
   if (CXXUnit->getPreprocessor().getPreprocessingRecord()) {
     // Search and mark tokens that are macro argument expansions.

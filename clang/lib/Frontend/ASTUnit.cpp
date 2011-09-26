@@ -2342,25 +2342,57 @@ void ASTUnit::TranslateStoredDiagnostics(
 SourceLocation ASTUnit::getLocation(const FileEntry *File,
                                     unsigned Line, unsigned Col) const {
   const SourceManager &SM = getSourceManager();
-  SourceLocation Loc;
-  if (!Preamble.empty() && Line <= Preamble.getNumLines())
-    Loc = SM.translateLineCol(SM.getPreambleFileID(), Line, Col);
-  else
-    Loc = SM.translateFileLineCol(File, Line, Col);
-
+  SourceLocation Loc = SM.translateFileLineCol(File, Line, Col);
   return SM.getMacroArgExpandedLocation(Loc);
 }
 
 SourceLocation ASTUnit::getLocation(const FileEntry *File,
                                     unsigned Offset) const {
   const SourceManager &SM = getSourceManager();
-  SourceLocation FileLoc;
-  if (!Preamble.empty() && Offset < Preamble.size())
-    FileLoc = SM.getLocForStartOfFile(SM.getPreambleFileID());
-  else
-    FileLoc = SM.translateFileLineCol(File, 1, 1);
-
+  SourceLocation FileLoc = SM.translateFileLineCol(File, 1, 1);
   return SM.getMacroArgExpandedLocation(FileLoc.getLocWithOffset(Offset));
+}
+
+/// \brief If \arg Loc is a loaded location from the preamble, returns
+/// the corresponding local location of the main file, otherwise it returns
+/// \arg Loc.
+SourceLocation ASTUnit::mapLocationFromPreamble(SourceLocation Loc) {
+  FileID PreambleID;
+  if (SourceMgr)
+    PreambleID = SourceMgr->getPreambleFileID();
+
+  if (Loc.isInvalid() || Preamble.empty() || PreambleID.isInvalid())
+    return Loc;
+
+  unsigned Offs;
+  if (SourceMgr->isInFileID(Loc, PreambleID, &Offs) && Offs < Preamble.size()) {
+    SourceLocation FileLoc
+        = SourceMgr->getLocForStartOfFile(SourceMgr->getMainFileID());
+    return FileLoc.getLocWithOffset(Offs);
+  }
+
+  return Loc;
+}
+
+/// \brief If \arg Loc is a local location of the main file but inside the
+/// preamble chunk, returns the corresponding loaded location from the
+/// preamble, otherwise it returns \arg Loc.
+SourceLocation ASTUnit::mapLocationToPreamble(SourceLocation Loc) {
+  FileID PreambleID;
+  if (SourceMgr)
+    PreambleID = SourceMgr->getPreambleFileID();
+
+  if (Loc.isInvalid() || Preamble.empty() || PreambleID.isInvalid())
+    return Loc;
+
+  unsigned Offs;
+  if (SourceMgr->isInFileID(Loc, SourceMgr->getMainFileID(), &Offs) &&
+      Offs < Preamble.size()) {
+    SourceLocation FileLoc = SourceMgr->getLocForStartOfFile(PreambleID);
+    return FileLoc.getLocWithOffset(Offs);
+  }
+
+  return Loc;
 }
 
 void ASTUnit::PreambleData::countLines() const {
