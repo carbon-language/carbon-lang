@@ -82,9 +82,9 @@ const char *MipsTargetLowering::getTargetNodeName(unsigned Opcode) const {
 
 MipsTargetLowering::
 MipsTargetLowering(MipsTargetMachine &TM)
-  : TargetLowering(TM, new MipsTargetObjectFile()) {
-  Subtarget = &TM.getSubtarget<MipsSubtarget>();
-  bool HasMips64 = Subtarget->hasMips64();
+  : TargetLowering(TM, new MipsTargetObjectFile()),
+    Subtarget(&TM.getSubtarget<MipsSubtarget>()),
+    HasMips64(Subtarget->hasMips64()) {
 
   // Mips does not have i1 type, so use i32 for
   // setcc operations results (slt, sgt, ...).

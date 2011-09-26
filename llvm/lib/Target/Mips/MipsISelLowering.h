@@ -114,7 +114,8 @@ namespace llvm {
   private:
     // Subtarget Info
     const MipsSubtarget *Subtarget;
-
+    
+    bool HasMips64;
 
     // Lower Operand helpers
     SDValue LowerCallResult(SDValue Chain, SDValue InFlag,
