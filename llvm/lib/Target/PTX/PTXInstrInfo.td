@@ -849,6 +849,18 @@ def CVT_f64_f32
   : InstPTX<(outs RegF64:$d), (ins RegF32:$a), "cvt.f64.f32\t$d, $a",
             [(set RegF64:$d, (fextend RegF32:$a))]>;
 
+// NOTE: These are temporarily here to help test some Clang-generated code.
+// We really need to properly introduce anyext and bitconvert into the back-end.
+// ANY_EXTEND
+def ANY_EXTEND_I64_I32
+  : InstPTX<(outs RegI64:$d), (ins RegI32:$a), "cvt.u64.u32\t$d, $a",
+            [(set RegI64:$d, (anyext RegI32:$a))]>;
+
+// BITCAST
+def BITCAST_I32_F32
+  : InstPTX<(outs RegI32:$d), (ins RegF32:$a), "mov.b32\t$d, $a",
+            [(set RegI32:$d, (bitconvert RegF32:$a))]>;
+
 ///===- Control Flow Instructions -----------------------------------------===//
 
 let isBranch = 1, isTerminator = 1, isBarrier = 1 in {
