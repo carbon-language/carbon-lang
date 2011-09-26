@@ -28,6 +28,7 @@
 #include "lldb/Expression/ClangExpressionParser.h"
 #include "lldb/Expression/ClangFunction.h"
 #include "lldb/Expression/ClangUserExpression.h"
+#include "lldb/Expression/ExpressionSourceCode.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Symbol/VariableList.h"
 #include "lldb/Target/ExecutionContext.h"
@@ -106,6 +107,7 @@ ClangUserExpression::ScanContext(ExecutionContext &exe_ctx)
         if (method_decl->isInstance())
         {
             m_cplusplus = true;
+            m_needs_object_ptr = true;
             
             do {
                 clang::QualType this_type = method_decl->getThisType(decl_context->getParentASTContext());
@@ -122,7 +124,10 @@ ClangUserExpression::ScanContext(ExecutionContext &exe_ctx)
     else if (clang::ObjCMethodDecl *method_decl = llvm::dyn_cast<clang::ObjCMethodDecl>(decl_context))
     {
         if (method_decl->isInstanceMethod())
+        {
             m_objectivec = true;
+            m_needs_object_ptr = true;
+        }
     }
 }
 
@@ -185,60 +190,22 @@ ClangUserExpression::Parse (Stream &error_stream,
     ApplyObjcCastHack(m_expr_text);
     //ApplyUnicharHack(m_expr_text);
 
+    std::auto_ptr <ExpressionSourceCode> source_code (ExpressionSourceCode::CreateWrapped(m_expr_prefix.c_str(), m_expr_text.c_str()));
+    
+    lldb::LanguageType lang_type;
+    
     if (m_cplusplus)
-    {
-        m_transformed_stream.Printf("%s                                     \n"
-                                    "typedef unsigned short unichar;        \n"
-                                    "void                                   \n"
-                                    "$__lldb_class::%s(void *$__lldb_arg) %s\n"
-                                    "{                                      \n"
-                                    "    %s;                                \n" 
-                                    "}                                      \n",
-                                    m_expr_prefix.c_str(),
-                                    FunctionName(),
-                                    (m_const_object ? "const" : ""),
-                                    m_expr_text.c_str());
-        
-        m_needs_object_ptr = true;
-    }
-    else if (m_objectivec)
-    {
-        const char *function_name = FunctionName();
-        
-        m_transformed_stream.Printf("%s                                                     \n"
-                                    "typedef unsigned short unichar;                        \n"
-                                    "@interface $__lldb_objc_class ($__lldb_category)       \n"
-                                    "-(void)%s:(void *)$__lldb_arg;                         \n"
-                                    "@end                                                   \n"
-                                    "@implementation $__lldb_objc_class ($__lldb_category)  \n"
-                                    "-(void)%s:(void *)$__lldb_arg                          \n"
-                                    "{                                                      \n"
-                                    "    %s;                                                \n"
-                                    "}                                                      \n"
-                                    "@end                                                   \n",
-                                    m_expr_prefix.c_str(),
-                                    function_name,
-                                    function_name,
-                                    m_expr_text.c_str());
-        
-        m_needs_object_ptr = true;
-    }
+        lang_type = lldb::eLanguageTypeC_plus_plus;
+    else if(m_objectivec)
+        lang_type = lldb::eLanguageTypeObjC;
     else
+        lang_type = lldb::eLanguageTypeC;
+    
+    if (!source_code->GetText(m_transformed_text, lang_type, m_const_object))
     {
-        m_transformed_stream.Printf("%s                             \n"
-                                    "typedef unsigned short unichar;\n"
-                                    "void                           \n"
-                                    "%s(void *$__lldb_arg)          \n"
-                                    "{                              \n"
-                                    "    %s;                        \n" 
-                                    "}                              \n",
-                                    m_expr_prefix.c_str(),
-                                    FunctionName(),
-                                    m_expr_text.c_str());
+        error_stream.PutCString ("error: couldn't construct expression body");
+        return false;
     }
-    
-    m_transformed_text = m_transformed_stream.GetData();
-    
     
     if (log)
         log->Printf("Parsing the following code:\n%s", m_transformed_text.c_str());
