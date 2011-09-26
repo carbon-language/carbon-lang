@@ -763,98 +763,6 @@ private:
 
 } // end namespace
 
-/// \brief Skip over whitespace in the string, starting at the given
-/// index.
-///
-/// \returns The index of the first non-whitespace character that is
-/// greater than or equal to Idx or, if no such character exists,
-/// returns the end of the string.
-static unsigned skipWhitespace(unsigned Idx,
-                               const SmallVectorImpl<char> &Str,
-                               unsigned Length) {
-  while (Idx < Length && isspace(Str[Idx]))
-    ++Idx;
-  return Idx;
-}
-
-/// \brief If the given character is the start of some kind of
-/// balanced punctuation (e.g., quotes or parentheses), return the
-/// character that will terminate the punctuation.
-///
-/// \returns The ending punctuation character, if any, or the NULL
-/// character if the input character does not start any punctuation.
-static inline char findMatchingPunctuation(char c) {
-  switch (c) {
-  case '\'': return '\'';
-  case '`': return '\'';
-  case '"':  return '"';
-  case '(':  return ')';
-  case '[': return ']';
-  case '{': return '}';
-  default: break;
-  }
-
-  return 0;
-}
-
-/// \brief Find the end of the word starting at the given offset
-/// within a string.
-///
-/// \returns the index pointing one character past the end of the
-/// word.
-static unsigned findEndOfWord(unsigned Start,
-                              const SmallVectorImpl<char> &Str,
-                              unsigned Length, unsigned Column,
-                              unsigned Columns) {
-  assert(Start < Str.size() && "Invalid start position!");
-  unsigned End = Start + 1;
-
-  // If we are already at the end of the string, take that as the word.
-  if (End == Str.size())
-    return End;
-
-  // Determine if the start of the string is actually opening
-  // punctuation, e.g., a quote or parentheses.
-  char EndPunct = findMatchingPunctuation(Str[Start]);
-  if (!EndPunct) {
-    // This is a normal word. Just find the first space character.
-    while (End < Length && !isspace(Str[End]))
-      ++End;
-    return End;
-  }
-
-  // We have the start of a balanced punctuation sequence (quotes,
-  // parentheses, etc.). Determine the full sequence is.
-  llvm::SmallString<16> PunctuationEndStack;
-  PunctuationEndStack.push_back(EndPunct);
-  while (End < Length && !PunctuationEndStack.empty()) {
-    if (Str[End] == PunctuationEndStack.back())
-      PunctuationEndStack.pop_back();
-    else if (char SubEndPunct = findMatchingPunctuation(Str[End]))
-      PunctuationEndStack.push_back(SubEndPunct);
-
-    ++End;
-  }
-
-  // Find the first space character after the punctuation ended.
-  while (End < Length && !isspace(Str[End]))
-    ++End;
-
-  unsigned PunctWordLength = End - Start;
-  if (// If the word fits on this line
-      Column + PunctWordLength <= Columns ||
-      // ... or the word is "short enough" to take up the next line
-      // without too much ugly white space
-      PunctWordLength < Columns/3)
-    return End; // Take the whole thing as a single "word".
-
-  // The whole quoted/parenthesized string is too long to print as a
-  // single "word". Instead, find the "word" that starts just after
-  // the punctuation and use that end-point instead. This will recurse
-  // until it finds something small enough to consider a word.
-  return findEndOfWord(Start + 1, Str, Length, Column + 1, Columns);
-}
-
 /// Get the presumed location of a diagnostic message. This computes the
 /// presumed location for the top of any macro backtrace when present.
 static PresumedLoc getDiagnosticPresumedLoc(const SourceManager &SM,
@@ -1080,6 +988,98 @@ static void printDiagnosticOptions(raw_ostream &OS,
   }
   if (Started)
     OS << ']';
+}
+
+/// \brief Skip over whitespace in the string, starting at the given
+/// index.
+///
+/// \returns The index of the first non-whitespace character that is
+/// greater than or equal to Idx or, if no such character exists,
+/// returns the end of the string.
+static unsigned skipWhitespace(unsigned Idx,
+                               const SmallVectorImpl<char> &Str,
+                               unsigned Length) {
+  while (Idx < Length && isspace(Str[Idx]))
+    ++Idx;
+  return Idx;
+}
+
+/// \brief If the given character is the start of some kind of
+/// balanced punctuation (e.g., quotes or parentheses), return the
+/// character that will terminate the punctuation.
+///
+/// \returns The ending punctuation character, if any, or the NULL
+/// character if the input character does not start any punctuation.
+static inline char findMatchingPunctuation(char c) {
+  switch (c) {
+  case '\'': return '\'';
+  case '`': return '\'';
+  case '"':  return '"';
+  case '(':  return ')';
+  case '[': return ']';
+  case '{': return '}';
+  default: break;
+  }
+
+  return 0;
+}
+
+/// \brief Find the end of the word starting at the given offset
+/// within a string.
+///
+/// \returns the index pointing one character past the end of the
+/// word.
+static unsigned findEndOfWord(unsigned Start,
+                              const SmallVectorImpl<char> &Str,
+                              unsigned Length, unsigned Column,
+                              unsigned Columns) {
+  assert(Start < Str.size() && "Invalid start position!");
+  unsigned End = Start + 1;
+
+  // If we are already at the end of the string, take that as the word.
+  if (End == Str.size())
+    return End;
+
+  // Determine if the start of the string is actually opening
+  // punctuation, e.g., a quote or parentheses.
+  char EndPunct = findMatchingPunctuation(Str[Start]);
+  if (!EndPunct) {
+    // This is a normal word. Just find the first space character.
+    while (End < Length && !isspace(Str[End]))
+      ++End;
+    return End;
+  }
+
+  // We have the start of a balanced punctuation sequence (quotes,
+  // parentheses, etc.). Determine the full sequence is.
+  llvm::SmallString<16> PunctuationEndStack;
+  PunctuationEndStack.push_back(EndPunct);
+  while (End < Length && !PunctuationEndStack.empty()) {
+    if (Str[End] == PunctuationEndStack.back())
+      PunctuationEndStack.pop_back();
+    else if (char SubEndPunct = findMatchingPunctuation(Str[End]))
+      PunctuationEndStack.push_back(SubEndPunct);
+
+    ++End;
+  }
+
+  // Find the first space character after the punctuation ended.
+  while (End < Length && !isspace(Str[End]))
+    ++End;
+
+  unsigned PunctWordLength = End - Start;
+  if (// If the word fits on this line
+      Column + PunctWordLength <= Columns ||
+      // ... or the word is "short enough" to take up the next line
+      // without too much ugly white space
+      PunctWordLength < Columns/3)
+    return End; // Take the whole thing as a single "word".
+
+  // The whole quoted/parenthesized string is too long to print as a
+  // single "word". Instead, find the "word" that starts just after
+  // the punctuation and use that end-point instead. This will recurse
+  // until it finds something small enough to consider a word.
+  return findEndOfWord(Start + 1, Str, Length, Column + 1, Columns);
 }
 
 /// \brief Print the given string to a stream, word-wrapping it to
