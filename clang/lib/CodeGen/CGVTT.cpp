@@ -62,7 +62,7 @@ struct VTTComponent {
 /// VTT builder - Class for building VTT layout information.
 class VTTBuilder {
   
-  CodeGenModule &CGM;
+  ASTContext &Ctx;
 
   /// MostDerivedClass - The most derived class for which we're building this
   /// vtable.
@@ -140,7 +140,7 @@ class VTTBuilder {
   void LayoutVTT(BaseSubobject Base, bool BaseIsVirtual);
   
 public:
-  VTTBuilder(CodeGenModule &CGM, const CXXRecordDecl *MostDerivedClass,
+  VTTBuilder(ASTContext &Ctx, const CXXRecordDecl *MostDerivedClass,
              bool GenerateDefinition);
 
   // getVTTComponents - Returns a reference to the VTT components.
@@ -167,11 +167,11 @@ public:
 
 };
 
-VTTBuilder::VTTBuilder(CodeGenModule &CGM,
+VTTBuilder::VTTBuilder(ASTContext &Ctx,
                        const CXXRecordDecl *MostDerivedClass,
                        bool GenerateDefinition)
-  : CGM(CGM), MostDerivedClass(MostDerivedClass), 
-  MostDerivedClassLayout(CGM.getContext().getASTRecordLayout(MostDerivedClass)),
+  : Ctx(Ctx), MostDerivedClass(MostDerivedClass), 
+  MostDerivedClassLayout(Ctx.getASTRecordLayout(MostDerivedClass)),
     GenerateDefinition(GenerateDefinition) {
   // Lay out this VTT.
   LayoutVTT(BaseSubobject(MostDerivedClass, CharUnits::Zero()), 
@@ -227,7 +227,7 @@ void VTTBuilder::LayoutSecondaryVTTs(BaseSubobject Base) {
     const CXXRecordDecl *BaseDecl =
       cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
 
-    const ASTRecordLayout &Layout = CGM.getContext().getASTRecordLayout(RD);
+    const ASTRecordLayout &Layout = Ctx.getASTRecordLayout(RD);
     CharUnits BaseOffset = Base.getBaseOffset() + 
       Layout.getBaseClassOffset(BaseDecl);
    
@@ -275,7 +275,7 @@ VTTBuilder::LayoutSecondaryVirtualPointers(BaseSubobject Base,
       BaseOffset = MostDerivedClassLayout.getVBaseClassOffset(BaseDecl);
       BaseDeclIsMorallyVirtual = true;
     } else {
-      const ASTRecordLayout &Layout = CGM.getContext().getASTRecordLayout(RD);
+      const ASTRecordLayout &Layout = Ctx.getASTRecordLayout(RD);
       
       BaseOffset = Base.getBaseOffset() + 
         Layout.getBaseClassOffset(BaseDecl);
@@ -379,7 +379,7 @@ void
 CodeGenVTables::EmitVTTDefinition(llvm::GlobalVariable *VTT,
                                   llvm::GlobalVariable::LinkageTypes Linkage,
                                   const CXXRecordDecl *RD) {
-  VTTBuilder Builder(CGM, RD, /*GenerateDefinition=*/true);
+  VTTBuilder Builder(CGM.getContext(), RD, /*GenerateDefinition=*/true);
 
   llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGM.getLLVMContext()),
              *Int64Ty = llvm::Type::getInt64Ty(CGM.getLLVMContext());
@@ -445,7 +445,7 @@ llvm::GlobalVariable *CodeGenVTables::GetAddrOfVTT(const CXXRecordDecl *RD) {
 
   ComputeVTableRelatedInformation(RD, /*VTableRequired=*/true);
 
-  VTTBuilder Builder(CGM, RD, /*GenerateDefinition=*/false);
+  VTTBuilder Builder(CGM.getContext(), RD, /*GenerateDefinition=*/false);
 
   llvm::Type *Int8PtrTy = 
     llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
@@ -485,7 +485,7 @@ uint64_t CodeGenVTables::getSubVTTIndex(const CXXRecordDecl *RD,
   if (I != SubVTTIndicies.end())
     return I->second;
   
-  VTTBuilder Builder(CGM, RD, /*GenerateDefinition=*/false);
+  VTTBuilder Builder(CGM.getContext(), RD, /*GenerateDefinition=*/false);
 
   for (llvm::DenseMap<BaseSubobject, uint64_t>::const_iterator I =
        Builder.getSubVTTIndicies().begin(), 
@@ -511,7 +511,7 @@ CodeGenVTables::getSecondaryVirtualPointerIndex(const CXXRecordDecl *RD,
   if (I != SecondaryVirtualPointerIndices.end())
     return I->second;
 
-  VTTBuilder Builder(CGM, RD, /*GenerateDefinition=*/false);
+  VTTBuilder Builder(CGM.getContext(), RD, /*GenerateDefinition=*/false);
 
   // Insert all secondary vpointer indices.
   for (llvm::DenseMap<BaseSubobject, uint64_t>::const_iterator I = 
