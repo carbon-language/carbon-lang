@@ -77,7 +77,6 @@ class ThreadAPITestCase(TestBase):
         self.step_out_of_malloc_into_function_b(self.exe_name)
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
-    @expectedFailureClang
     @python_api_test
     def test_step_over_3_times_with_dsym(self):
         """Test Python SBThread.StepOver() API."""
@@ -87,7 +86,6 @@ class ThreadAPITestCase(TestBase):
         self.setTearDownCleanup(dictionary=d)
         self.step_over_3_times(self.exe_name)
 
-    @expectedFailureClang
     @python_api_test
     def test_step_over_3_times_with_dwarf(self):
         """Test Python SBThread.StepOver() API."""
@@ -225,6 +223,9 @@ class ThreadAPITestCase(TestBase):
         self.assertTrue(thread.GetStopReason() == lldb.eStopReasonPlanComplete)
         # Expected failure with clang as the compiler.
         # rdar://problem/9223880
+        #
+        # Which has been fixed on the lldb by compensating for inaccurate line
+        # table information with r140416.
         self.assertTrue(lineEntry.GetLine() == self.after_3_step_overs)
 
     def run_to_address(self, exe_name):
