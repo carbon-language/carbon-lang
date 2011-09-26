@@ -365,7 +365,9 @@ bool CursorVisitor::Visit(CXCursor Cursor, bool CheckedRegionOfInterest) {
   if (clang_isDeclaration(Cursor.kind)) {
     Decl *D = getCursorDecl(Cursor);
     assert(D && "Invalid declaration cursor");
-    if (D->isImplicit())
+    // Ignore implicit declarations, unless it's an objc method because
+    // currently we should report implicit methods for properties when indexing.
+    if (D->isImplicit() && !isa<ObjCMethodDecl>(D))
       return false;
   }
 
@@ -3446,6 +3448,13 @@ static enum CXChildVisitResult GetCursorVisitor(CXCursor cursor,
   // cursor.
   if (cursor.kind == CXCursor_MacroExpansion && Data->PointsAtMacroArgExpansion)
     return CXChildVisit_Recurse;
+  
+  if (clang_isDeclaration(cursor.kind)) {
+    // Avoid having the implicit methods override the property decls.
+    if (ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(getCursorDecl(cursor)))
+      if (MD->isImplicit())
+        return CXChildVisit_Break;
+  }
 
   if (clang_isExpression(cursor.kind) &&
       clang_isDeclaration(BestCursor->kind)) {
