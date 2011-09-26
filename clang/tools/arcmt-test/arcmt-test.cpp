@@ -10,7 +10,7 @@
 #include "clang/ARCMigrate/ARCMT.h"
 #include "clang/Frontend/ASTUnit.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
-#include "clang/Frontend/VerifyDiagnosticsClient.h"
+#include "clang/Frontend/VerifyDiagnosticConsumer.h"
 #include "clang/Frontend/Utils.h"
 #include "clang/Lex/Preprocessor.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -111,9 +111,9 @@ static bool checkForMigration(StringRef resourcesPath,
   llvm::IntrusiveRefCntPtr<DiagnosticsEngine> Diags(
       new DiagnosticsEngine(DiagID, DiagClient));
   // Chain in -verify checker, if requested.
-  VerifyDiagnosticsClient *verifyDiag = 0;
+  VerifyDiagnosticConsumer *verifyDiag = 0;
   if (VerifyDiags) {
-    verifyDiag = new VerifyDiagnosticsClient(*Diags);
+    verifyDiag = new VerifyDiagnosticConsumer(*Diags);
     Diags->setClient(verifyDiag);
   }
 

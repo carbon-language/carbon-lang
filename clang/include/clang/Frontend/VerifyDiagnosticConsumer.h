@@ -1,4 +1,4 @@
-//===-- VerifyDiagnosticsClient.h - Verifying Diagnostic Client -*- C++ -*-===//
+//===- VerifyDiagnosticConsumer.h - Verifying Diagnostic Client -*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -18,9 +18,9 @@ namespace clang {
 class DiagnosticsEngine;
 class TextDiagnosticBuffer;
 
-/// VerifyDiagnosticsClient - Create a diagnostic client which will use markers
-/// in the input source to check that all the emitted diagnostics match those
-/// expected.
+/// VerifyDiagnosticConsumer - Create a diagnostic client which will use
+/// markers in the input source to check that all the emitted diagnostics match
+/// those expected.
 ///
 /// USING THE DIAGNOSTIC CHECKER:
 ///
@@ -62,7 +62,7 @@ class TextDiagnosticBuffer;
 ///   // expected-error-re {{variable has has type 'struct (.*)'}}
 ///   // expected-error-re {{variable has has type 'struct[[:space:]](.*)'}}
 ///
-class VerifyDiagnosticsClient : public DiagnosticConsumer {
+class VerifyDiagnosticConsumer: public DiagnosticConsumer {
 public:
   DiagnosticsEngine &Diags;
   DiagnosticConsumer *PrimaryClient;
@@ -78,8 +78,8 @@ public:
   /// Create a new verifying diagnostic client, which will issue errors to \arg
   /// the currently-attached diagnostic client when a diagnostic does not match 
   /// what is expected (as indicated in the source file).
-  VerifyDiagnosticsClient(DiagnosticsEngine &Diags);
-  ~VerifyDiagnosticsClient();
+  VerifyDiagnosticConsumer(DiagnosticsEngine &Diags);
+  ~VerifyDiagnosticConsumer();
 
   virtual void BeginSourceFile(const LangOptions &LangOpts,
                                const Preprocessor *PP);

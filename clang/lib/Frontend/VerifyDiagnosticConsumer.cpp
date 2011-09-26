@@ -1,4 +1,4 @@
-//===--- VerifyDiagnosticsClient.cpp - Verifying Diagnostic Client --------===//
+//===---- VerifyDiagnosticConsumer.cpp - Verifying Diagnostic Client ------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Frontend/VerifyDiagnosticsClient.h"
+#include "clang/Frontend/VerifyDiagnosticConsumer.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/TextDiagnosticBuffer.h"
 #include "clang/Lex/Preprocessor.h"
@@ -20,7 +20,7 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace clang;
 
-VerifyDiagnosticsClient::VerifyDiagnosticsClient(DiagnosticsEngine &_Diags)
+VerifyDiagnosticConsumer::VerifyDiagnosticConsumer(DiagnosticsEngine &_Diags)
   : Diags(_Diags), PrimaryClient(Diags.getClient()),
     OwnsPrimaryClient(Diags.ownsClient()),
     Buffer(new TextDiagnosticBuffer()), CurrentPreprocessor(0) 
@@ -28,7 +28,7 @@ VerifyDiagnosticsClient::VerifyDiagnosticsClient(DiagnosticsEngine &_Diags)
   Diags.takeClient();
 }
 
-VerifyDiagnosticsClient::~VerifyDiagnosticsClient() {
+VerifyDiagnosticConsumer::~VerifyDiagnosticConsumer() {
   CheckDiagnostics();  
   Diags.takeClient();
   if (OwnsPrimaryClient)
@@ -37,7 +37,7 @@ VerifyDiagnosticsClient::~VerifyDiagnosticsClient() {
 
 // DiagnosticConsumer interface.
 
-void VerifyDiagnosticsClient::BeginSourceFile(const LangOptions &LangOpts,
+void VerifyDiagnosticConsumer::BeginSourceFile(const LangOptions &LangOpts,
                                              const Preprocessor *PP) {
   // FIXME: Const hack, we screw up the preprocessor but in practice its ok
   // because it doesn't get reused. It would be better if we could make a copy
@@ -47,7 +47,7 @@ void VerifyDiagnosticsClient::BeginSourceFile(const LangOptions &LangOpts,
   PrimaryClient->BeginSourceFile(LangOpts, PP);
 }
 
-void VerifyDiagnosticsClient::EndSourceFile() {
+void VerifyDiagnosticConsumer::EndSourceFile() {
   CheckDiagnostics();
 
   PrimaryClient->EndSourceFile();
@@ -55,7 +55,7 @@ void VerifyDiagnosticsClient::EndSourceFile() {
   CurrentPreprocessor = 0;
 }
 
-void VerifyDiagnosticsClient::HandleDiagnostic(
+void VerifyDiagnosticConsumer::HandleDiagnostic(
       DiagnosticsEngine::Level DiagLevel, const DiagnosticInfo &Info) {
   if (FirstErrorFID.isInvalid() && Info.hasSourceManager()) {
     const SourceManager &SM = Info.getSourceManager();
@@ -478,7 +478,7 @@ static unsigned CheckResults(DiagnosticsEngine &Diags, SourceManager &SourceMgr,
   return NumProblems;
 }
 
-void VerifyDiagnosticsClient::CheckDiagnostics() {
+void VerifyDiagnosticConsumer::CheckDiagnostics() {
   ExpectedData ED;
 
   // Ensure any diagnostics go to the primary client.

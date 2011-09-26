@@ -29,7 +29,7 @@ add_clang_library(clangFrontend
   PrintPreprocessedOutput.cpp
   TextDiagnosticBuffer.cpp
   TextDiagnosticPrinter.cpp
-  VerifyDiagnosticsClient.cpp
+  VerifyDiagnosticConsumer.cpp
   Warnings.cpp
   )
 

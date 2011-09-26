@@ -25,7 +25,7 @@
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/LogDiagnosticPrinter.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
-#include "clang/Frontend/VerifyDiagnosticsClient.h"
+#include "clang/Frontend/VerifyDiagnosticConsumer.h"
 #include "clang/Frontend/Utils.h"
 #include "clang/Serialization/ASTReader.h"
 #include "clang/Sema/CodeCompleteConsumer.h"
@@ -165,7 +165,7 @@ CompilerInstance::createDiagnostics(const DiagnosticOptions &Opts,
 
   // Chain in -verify checker, if requested.
   if (Opts.VerifyDiagnostics) 
-    Diags->setClient(new VerifyDiagnosticsClient(*Diags));
+    Diags->setClient(new VerifyDiagnosticConsumer(*Diags));
 
   // Chain in -diagnostic-log-file dumper, if requested.
   if (!Opts.DiagnosticLogFile.empty())
