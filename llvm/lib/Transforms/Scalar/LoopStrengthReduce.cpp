@@ -670,6 +670,21 @@ public:
 
   void Loose();
 
+#ifndef NDEBUG
+  // Once any of the metrics loses, they must all remain losers.
+  bool isValid() {
+    return ((NumRegs | AddRecCost | NumIVMuls | NumBaseAdds
+             | ImmCost | SetupCost) != ~0u)
+      || ((NumRegs & AddRecCost & NumIVMuls & NumBaseAdds
+           & ImmCost & SetupCost) == ~0u);
+  }
+#endif
+
+  bool isLoser() {
+    assert(isValid() && "invalid cost");
+    return NumRegs == ~0u;
+  }
+
   void RateFormula(const Formula &F,
                    SmallPtrSet<const SCEV *, 16> &Regs,
                    const DenseSet<const SCEV *> &VisitedRegs,
@@ -710,19 +725,22 @@ void Cost::RateRegister(const SCEV *Reg,
              (!AR->getLoop()->contains(L) &&
               DT.dominates(L->getHeader(), AR->getLoop()->getHeader()))) {
       for (BasicBlock::iterator I = AR->getLoop()->getHeader()->begin();
-           PHINode *PN = dyn_cast<PHINode>(I); ++I)
+           PHINode *PN = dyn_cast<PHINode>(I); ++I) {
         if (SE.isSCEVable(PN->getType()) &&
             (SE.getEffectiveSCEVType(PN->getType()) ==
              SE.getEffectiveSCEVType(AR->getType())) &&
             SE.getSCEV(PN) == AR)
           return;
-
+      }
       // If this isn't one of the addrecs that the loop already has, it
       // would require a costly new phi and add. TODO: This isn't
       // precisely modeled right now.
       ++NumBaseAdds;
-      if (!Regs.count(AR->getStart()))
+      if (!Regs.count(AR->getStart())) {
         RateRegister(AR->getStart(), Regs, L, SE, DT);
+        if (isLoser())
+          return;
+      }
     }
 
     // Add the step value register, if it needs one.
@@ -769,6 +787,8 @@ void Cost::RateFormula(const Formula &F,
       return;
     }
     RatePrimaryRegister(ScaledReg, Regs, L, SE, DT);
+    if (isLoser())
+      return;
   }
   for (SmallVectorImpl<const SCEV *>::const_iterator I = F.BaseRegs.begin(),
        E = F.BaseRegs.end(); I != E; ++I) {
@@ -778,6 +798,8 @@ void Cost::RateFormula(const Formula &F,
       return;
     }
     RatePrimaryRegister(BaseReg, Regs, L, SE, DT);
+    if (isLoser())
+      return;
   }
 
   // Determine how many (unfolded) adds we'll need inside the loop.
@@ -795,6 +817,7 @@ void Cost::RateFormula(const Formula &F,
     else if (Offset != 0)
       ImmCost += APInt(64, Offset, true).getMinSignedBits();
   }
+  assert(isValid() && "invalid cost");
 }
 
 /// Loose - Set this cost to a losing value.
