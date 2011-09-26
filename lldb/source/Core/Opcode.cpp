@@ -14,6 +14,7 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Core/Stream.h"
+#include "lldb/Host/Endian.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -60,5 +61,21 @@ Opcode::Dump (Stream *s, uint32_t min_byte_width)
     if (bytes_written < min_byte_width)
         bytes_written = s->Printf ("%*s", min_byte_width - bytes_written, "");
     return bytes_written;
+}
+
+lldb::ByteOrder
+Opcode::GetDataByteOrder () const
+{
+    switch (m_type)
+    {
+        case Opcode::eTypeInvalid: break;
+        case Opcode::eType8:
+        case Opcode::eType16:
+        case Opcode::eType32:
+        case Opcode::eType64:    return lldb::endian::InlHostByteOrder();
+        case Opcode::eTypeBytes:
+            break;
+    }
+    return eByteOrderInvalid;
 }
 

@@ -18,6 +18,11 @@
 // Project includes
 #include "lldb/lldb-public.h"
 
+namespace lldb
+{
+    class SBInstruction;
+}
+
 namespace lldb_private {
 
     class Opcode
@@ -202,6 +207,26 @@ namespace lldb_private {
 
 
     protected:
+
+        friend class lldb::SBInstruction;
+
+        const void *
+        GetOpcodeDataBytes () const
+        {
+            switch (m_type)
+            {
+                case Opcode::eTypeInvalid: break;
+                case Opcode::eType8:     return &m_data.inst8;
+                case Opcode::eType16:    return &m_data.inst16;
+                case Opcode::eType32:    return &m_data.inst32;
+                case Opcode::eType64:    return &m_data.inst64;
+                case Opcode::eTypeBytes: return m_data.inst.bytes;
+            }
+            return NULL;
+        }
+        
+        lldb::ByteOrder
+        GetDataByteOrder () const;
 
         Opcode::Type m_type;
         union

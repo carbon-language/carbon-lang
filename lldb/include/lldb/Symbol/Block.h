@@ -434,11 +434,17 @@ public:
     Block *
     FindBlockByID (lldb::user_id_t block_id);
 
+    uint32_t
+    GetNumRanges () const
+    {
+        return m_ranges.size();
+    }
+
     bool
     GetRangeContainingOffset (const lldb::addr_t offset, VMRange &range);
 
     bool
-    GetRangeContainingAddress (const Address& addr, AddressRange &range);
+    GetRangeContainingAddress (const Address& addr, AddressRange &range, uint32_t *range_idx_ptr = NULL);
 
     //------------------------------------------------------------------
     // Since blocks might have multiple discontiguous addresss ranges,

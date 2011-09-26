@@ -67,6 +67,16 @@ public:
 
     bool
     GetDescription (lldb::SBStream &description);
+
+    void
+    SetFileSpec (lldb::SBFileSpec filespec);
+    
+    void
+    SetLine (uint32_t line);
+    
+    void
+    SetColumn (uint32_t column);
+
 };
 
 } // namespace lldb

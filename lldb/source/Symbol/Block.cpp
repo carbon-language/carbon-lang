@@ -367,7 +367,7 @@ Block::GetRangeContainingOffset (const addr_t offset, VMRange &range)
 
 
 bool
-Block::GetRangeContainingAddress (const Address& addr, AddressRange &range)
+Block::GetRangeContainingAddress (const Address& addr, AddressRange &range, uint32_t *range_idx_ptr)
 {
     Function *function = CalculateSymbolContextFunction();
     if (function)
@@ -387,11 +387,15 @@ Block::GetRangeContainingAddress (const Address& addr, AddressRange &range)
                     range.GetBaseAddress() = func_range.GetBaseAddress();
                     range.GetBaseAddress().SetOffset(func_offset + m_ranges[range_idx].GetBaseAddress());
                     range.SetByteSize(m_ranges[range_idx].GetByteSize());
+                    if (range_idx_ptr)
+                        *range_idx_ptr = range_idx;
                     return true;
                 }
             }
         }
     }
+    if (range_idx_ptr)
+        *range_idx_ptr = UINT32_MAX;
     range.Clear();
     return false;
 }

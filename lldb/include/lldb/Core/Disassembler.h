@@ -40,6 +40,38 @@ public:
     {
         return m_address;
     }
+    
+    const char *
+    GetOpcodeName (ExecutionContextScope *exe_scope)
+    {
+        if (m_opcode_name.empty())
+            CalculateOpcodeName(exe_scope);
+        return m_opcode_name.c_str();
+    }
+    const char *
+    GetMnemonics (ExecutionContextScope *exe_scope)
+    {
+        if (m_mnemocics.empty())
+            CalculateMnemonics(exe_scope);
+        return m_mnemocics.c_str();
+    }
+    
+    const char *
+    GetComment (ExecutionContextScope *exe_scope)
+    {
+        if (m_comment.empty())
+            CalculateComment(exe_scope);
+        return m_comment.c_str();
+    }
+
+    virtual void
+    CalculateOpcodeName (ExecutionContextScope *exe_scope) = 0;
+    
+    virtual void
+    CalculateMnemonics (ExecutionContextScope *exe_scope) = 0;
+    
+    virtual void
+    CalculateComment (ExecutionContextScope *exe_scope) = 0;
 
     AddressClass
     GetAddressClass ();
@@ -109,6 +141,10 @@ protected:
     // help us to disassemble appropriately.
     AddressClass m_address_class; 
     Opcode m_opcode; // The opcode for this instruction
+    std::string m_opcode_name;
+    std::string m_mnemocics;
+    std::string m_comment;
+
 };
 
 
@@ -161,7 +197,25 @@ public:
     
     virtual bool
     DoesBranch () const;
+
+    virtual void
+    CalculateOpcodeName(ExecutionContextScope *exe_scope)
+    {
+        // TODO: fill this in and put opcode name into Instruction::m_opcode_name
+    }
     
+    virtual void
+    CalculateMnemonics(ExecutionContextScope *exe_scope)
+    {
+        // TODO: fill this in and put opcode name into Instruction::m_mnemonics
+    }
+    
+    virtual void
+    CalculateComment(ExecutionContextScope *exe_scope)
+    {
+        // TODO: fill this in and put opcode name into Instruction::m_comment
+    }
+
     virtual size_t
     Decode (const lldb_private::Disassembler &disassembler,
             const lldb_private::DataExtractor &data,

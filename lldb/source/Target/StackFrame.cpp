@@ -39,15 +39,12 @@ using namespace lldb_private;
 #define RESOLVED_VARIABLES              (GOT_FRAME_BASE << 1)
 #define RESOLVED_GLOBAL_VARIABLES       (RESOLVED_VARIABLES << 1)
 
-StackFrame::StackFrame 
-(
-    user_id_t frame_idx, 
-    user_id_t unwind_frame_index, 
-    Thread &thread, 
-    addr_t cfa, 
-    addr_t pc, 
-    const SymbolContext *sc_ptr
-) :
+StackFrame::StackFrame (user_id_t frame_idx, 
+                        user_id_t unwind_frame_index, 
+                        Thread &thread, 
+                        addr_t cfa, 
+                        addr_t pc, 
+                        const SymbolContext *sc_ptr) :
     m_thread (thread),
     m_frame_index (frame_idx),
     m_concrete_frame_index (unwind_frame_index),    
@@ -69,16 +66,13 @@ StackFrame::StackFrame
     }
 }
 
-StackFrame::StackFrame 
-(
-    user_id_t frame_idx, 
-    user_id_t unwind_frame_index, 
-    Thread &thread, 
-    const RegisterContextSP &reg_context_sp, 
-    addr_t cfa, 
-    addr_t pc, 
-    const SymbolContext *sc_ptr
-) :
+StackFrame::StackFrame (user_id_t frame_idx, 
+                        user_id_t unwind_frame_index, 
+                        Thread &thread, 
+                        const RegisterContextSP &reg_context_sp, 
+                        addr_t cfa, 
+                        addr_t pc, 
+                        const SymbolContext *sc_ptr) :
     m_thread (thread),
     m_frame_index (frame_idx),
     m_concrete_frame_index (unwind_frame_index),    
@@ -106,16 +100,13 @@ StackFrame::StackFrame
     }
 }
 
-StackFrame::StackFrame 
-(
-    user_id_t frame_idx, 
-    user_id_t unwind_frame_index, 
-    Thread &thread, 
-    const RegisterContextSP &reg_context_sp, 
-    addr_t cfa, 
-    const Address& pc_addr,
-    const SymbolContext *sc_ptr
-) :
+StackFrame::StackFrame (user_id_t frame_idx, 
+                        user_id_t unwind_frame_index, 
+                        Thread &thread, 
+                        const RegisterContextSP &reg_context_sp, 
+                        addr_t cfa, 
+                        const Address& pc_addr,
+                        const SymbolContext *sc_ptr) :
     m_thread (thread),
     m_frame_index (frame_idx),
     m_concrete_frame_index (unwind_frame_index),    

@@ -266,6 +266,12 @@ public:
 //                                        const char *line_number,
 //                                        const char *symbol);
 
+    bool
+    GetParentInlinedFrameInfo (const Address &curr_frame_pc, 
+                               bool is_concrete_frame,
+                               SymbolContext &next_frame_sc, 
+                               Address &inlined_frame_addr) const;
+
     //------------------------------------------------------------------
     // Member variables
     //------------------------------------------------------------------

@@ -63,6 +63,10 @@ public:
     lldb::SBBlock
     GetParent ();
     
+    %feature("docstring", "Get the inlined block that is or contains this block.") GetContainingInlinedBlock;
+    lldb::SBBlock
+    GetContainingInlinedBlock ();
+
     %feature("docstring", "Get the sibling block for this block.") GetSibling;
     lldb::SBBlock
     GetSibling ();
@@ -70,6 +74,18 @@ public:
     %feature("docstring", "Get the first child block.") GetFirstChild;
     lldb::SBBlock
     GetFirstChild ();
+    
+    uint32_t
+    GetNumRanges ();
+
+    lldb::SBAddress
+    GetRangeStartAddress (uint32_t idx);
+
+    lldb::SBAddress
+    GetRangeEndAddress (uint32_t idx);
+
+    uint32_t
+    GetRangeIndexForBlockAddress (lldb::SBAddress block_addr);
 
     bool
     GetDescription (lldb::SBStream &description);

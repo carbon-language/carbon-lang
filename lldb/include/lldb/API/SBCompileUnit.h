@@ -81,9 +81,9 @@ private:
     const lldb_private::CompileUnit &
     operator*() const;
     
-    const lldb_private::CompileUnit *
-    get () const;
-
+    lldb_private::CompileUnit *
+    get ();
+    
     void
     reset (lldb_private::CompileUnit *lldb_object_ptr);
 

@@ -56,6 +56,31 @@ public:
     lldb::SBBlock
     GetFirstChild ();
 
+    uint32_t
+    GetNumRanges ();
+
+    lldb::SBAddress
+    GetRangeStartAddress (uint32_t idx);
+
+    lldb::SBAddress
+    GetRangeEndAddress (uint32_t idx);
+
+    uint32_t
+    GetRangeIndexForBlockAddress (lldb::SBAddress block_addr);
+    
+    //------------------------------------------------------------------
+    /// Get the inlined block that contains this block.
+    ///
+    /// @return
+    ///     If this block is inlined, it will return this block, else 
+    ///     parent blocks will be searched to see if any contain this 
+    ///     block and are themselves inlined. An invalid SBBlock will 
+    ///     be returned if this block nor any parent blocks are inlined
+    ///     function blocks.
+    //------------------------------------------------------------------
+    lldb::SBBlock
+    GetContainingInlinedBlock ();
+
     bool
     GetDescription (lldb::SBStream &description);
 
@@ -66,8 +91,8 @@ private:
 
 #ifndef SWIG
 
-    const lldb_private::Block *
-    get () const;
+    lldb_private::Block *
+    get ();
 
     void
     reset (lldb_private::Block *lldb_object_ptr);

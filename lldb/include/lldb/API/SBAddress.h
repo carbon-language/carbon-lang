@@ -97,6 +97,7 @@ public:
 
 protected:
 
+    friend class SBBlock;
     friend class SBBreakpointLocation;
     friend class SBFrame;
     friend class SBFunction;

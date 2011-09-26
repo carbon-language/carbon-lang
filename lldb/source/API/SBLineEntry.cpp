@@ -28,33 +28,33 @@ SBLineEntry::SBLineEntry (const SBLineEntry &rhs) :
     m_opaque_ap ()
 {
     if (rhs.IsValid())
-        m_opaque_ap.reset (new lldb_private::LineEntry (*rhs));
+        ref() = rhs.ref();
 }
-
-
 
 SBLineEntry::SBLineEntry (const lldb_private::LineEntry *lldb_object_ptr) :
     m_opaque_ap ()
 {
     if (lldb_object_ptr)
-        m_opaque_ap.reset (new lldb_private::LineEntry(*lldb_object_ptr));
+        ref() = *lldb_object_ptr;
 }
 
 const SBLineEntry &
 SBLineEntry::operator = (const SBLineEntry &rhs)
 {
-    if (this != &rhs && rhs.IsValid())
-        m_opaque_ap.reset (new lldb_private::LineEntry(*rhs));
+    if (this != &rhs)
+    {
+        if (rhs.IsValid())
+            ref() = rhs.ref();
+        else
+            m_opaque_ap.reset();
+    }
     return *this;
 }
 
 void
 SBLineEntry::SetLineEntry (const lldb_private::LineEntry &lldb_object_ref)
 {
-    if (m_opaque_ap.get())
-        (*m_opaque_ap.get()) = lldb_object_ref;
-    else
-        m_opaque_ap.reset (new lldb_private::LineEntry (lldb_object_ref));
+    ref() = lldb_object_ref;
 }
 
 
@@ -156,6 +156,28 @@ SBLineEntry::GetColumn () const
     return 0;
 }
 
+void
+SBLineEntry::SetFileSpec (lldb::SBFileSpec filespec)
+{
+    if (filespec.IsValid())
+        ref().file = filespec.ref();
+    else
+        ref().file.Clear();
+}
+void
+SBLineEntry::SetLine (uint32_t line)
+{
+    ref().line = line;
+}
+
+void
+SBLineEntry::SetColumn (uint32_t column)
+{
+    ref().line = column;
+}
+
+
+
 bool
 SBLineEntry::operator == (const SBLineEntry &rhs) const
 {
@@ -186,8 +208,16 @@ SBLineEntry::operator->() const
     return m_opaque_ap.get();
 }
 
+lldb_private::LineEntry &
+SBLineEntry::ref()
+{
+    if (m_opaque_ap.get() == NULL)
+        m_opaque_ap.reset (new lldb_private::LineEntry ());
+    return *m_opaque_ap;
+}
+
 const lldb_private::LineEntry &
-SBLineEntry::operator*() const
+SBLineEntry::ref() const
 {
     return *m_opaque_ap;
 }

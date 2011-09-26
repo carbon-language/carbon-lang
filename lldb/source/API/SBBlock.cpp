@@ -8,8 +8,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/API/SBBlock.h"
+#include "lldb/API/SBAddress.h"
 #include "lldb/API/SBFileSpec.h"
 #include "lldb/API/SBStream.h"
+#include "lldb/Core/AddressRange.h"
 #include "lldb/Symbol/Block.h"
 #include "lldb/Symbol/Function.h"
 #include "lldb/Symbol/SymbolContext.h"
@@ -127,6 +129,15 @@ SBBlock::GetParent ()
     return sb_block;
 }
 
+lldb::SBBlock
+SBBlock::GetContainingInlinedBlock  ()
+{
+    SBBlock sb_block;
+    if (m_opaque_ptr)
+        sb_block.m_opaque_ptr = m_opaque_ptr->GetContainingInlinedBlock ();
+    return sb_block;
+}
+
 SBBlock
 SBBlock::GetSibling ()
 {
@@ -145,8 +156,8 @@ SBBlock::GetFirstChild ()
     return sb_block;
 }
 
-const lldb_private::Block *
-SBBlock::get () const
+lldb_private::Block *
+SBBlock::get ()
 {
     return m_opaque_ptr;
 }
@@ -181,3 +192,59 @@ SBBlock::GetDescription (SBStream &description)
     
     return true;
 }
+
+uint32_t
+SBBlock::GetNumRanges ()
+{
+    if (m_opaque_ptr)
+        return m_opaque_ptr->GetNumRanges();
+    return 0;
+}
+
+lldb::SBAddress
+SBBlock::GetRangeStartAddress (uint32_t idx)
+{
+    lldb::SBAddress sb_addr;
+    if (m_opaque_ptr)
+    {
+        AddressRange range;
+        if (m_opaque_ptr->GetRangeAtIndex(idx, range))
+        {
+            sb_addr.ref() = range.GetBaseAddress();
+        }
+    }
+    return sb_addr;
+}
+
+lldb::SBAddress
+SBBlock::GetRangeEndAddress (uint32_t idx)
+{
+    lldb::SBAddress sb_addr;
+    if (m_opaque_ptr)
+    {
+        AddressRange range;
+        if (m_opaque_ptr->GetRangeAtIndex(idx, range))
+        {
+            sb_addr.ref() = range.GetBaseAddress();
+            sb_addr.ref().Slide(range.GetByteSize());
+        }
+    }
+    return sb_addr;
+}
+
+uint32_t
+SBBlock::GetRangeIndexForBlockAddress (lldb::SBAddress block_addr)
+{
+    if (m_opaque_ptr && block_addr.IsValid())
+    {
+        uint32_t range_idx = UINT32_MAX;
+        AddressRange range;
+        if (m_opaque_ptr->GetRangeContainingAddress (block_addr.ref(), range, &range_idx))
+        {
+            return range_idx;
+        }
+    }
+
+    return UINT32_MAX;
+}
+

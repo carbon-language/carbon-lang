@@ -476,6 +476,7 @@ protected:
     friend class SBAddress;
     friend class SBDebugger;
     friend class SBFunction;
+    friend class SBInstruction;
     friend class SBProcess;
     friend class SBSymbol;
     friend class SBModule;

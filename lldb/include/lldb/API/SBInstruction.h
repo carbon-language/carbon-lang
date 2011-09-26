@@ -11,6 +11,7 @@
 #define LLDB_SBInstruction_h_
 
 #include "lldb/API/SBDefines.h"
+#include "lldb/API/SBData.h"
 
 #include <stdio.h>
 
@@ -39,6 +40,18 @@ public:
 
     SBAddress
     GetAddress();
+    
+    const char *
+    GetOpcodeName (lldb::SBTarget target);
+
+    const char *
+    GetMnemonics (lldb::SBTarget target);
+    
+    const char *
+    GetComment (lldb::SBTarget target);
+
+    lldb::SBData
+    GetData (lldb::SBTarget target);
 
     size_t
     GetByteSize ();

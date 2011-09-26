@@ -487,6 +487,95 @@ SymbolContext::FindTypeByName (const ConstString &name) const
     return return_value;
 }
 
+bool
+SymbolContext::GetParentInlinedFrameInfo (const Address &curr_frame_pc, 
+                                          bool is_concrete_frame,
+                                          SymbolContext &next_frame_sc, 
+                                          Address &inlined_frame_addr) const
+{
+    next_frame_sc.Clear();
+    inlined_frame_addr.Clear();
+
+    if (block)
+    {
+        bool concrete_has_inlines = false;
+        Block *curr_inlined_block = NULL;
+        Block *next_inlined_block = NULL;
+        //const addr_t curr_frame_file_addr = curr_frame_pc.GetFileAddress();
+        if (is_concrete_frame)
+        {
+            curr_inlined_block = block->GetContainingInlinedBlock();
+            if (curr_inlined_block)
+            {
+                concrete_has_inlines = true;
+                next_inlined_block = curr_inlined_block->GetInlinedParent();
+            }
+        }
+        else
+        {
+            curr_inlined_block = block;
+            next_inlined_block = block->GetInlinedParent();
+        }
+
+        if (next_inlined_block)
+        {
+            next_inlined_block->CalculateSymbolContext (&next_frame_sc);
+                        
+            AddressRange range;
+            bool got_range = curr_inlined_block->GetRangeContainingAddress (curr_frame_pc, range);
+            assert (got_range);
+            const InlineFunctionInfo* inline_info = next_inlined_block->GetInlinedFunctionInfo();
+            if (inline_info)
+            {
+                inlined_frame_addr = range.GetBaseAddress();
+                next_frame_sc.line_entry.range.GetBaseAddress() = inlined_frame_addr;
+                next_frame_sc.line_entry.file = inline_info->GetCallSite().GetFile();
+                next_frame_sc.line_entry.line = inline_info->GetCallSite().GetLine();
+                next_frame_sc.line_entry.column = inline_info->GetCallSite().GetColumn();
+                return true;
+            }
+        }
+        else if (is_concrete_frame && !concrete_has_inlines)
+        {
+            // This is the symbol context for the frame that was found using the
+            // PC value and there are no inlined blocks so there are no inlined
+            // parent frames.
+            return false;
+        }
+        else            
+        {
+            // We have had inlined frames before and now we are at the function
+            // instance that called the inlined frames.
+            // The SymbolContext object should contain a previous inline symbol
+            // context which we need to use to get the file, line and column info
+            const InlineFunctionInfo* inline_info = curr_inlined_block->GetInlinedFunctionInfo();
+            if (inline_info)
+            {
+                Block *parent_block = curr_inlined_block->GetParent();
+                if (parent_block)
+                {
+                    parent_block->CalculateSymbolContext (&next_frame_sc);
+                    
+                    AddressRange range;
+                    if (curr_inlined_block->GetRangeContainingAddress (curr_frame_pc, range))
+                    {
+                        inlined_frame_addr = range.GetBaseAddress();
+                        //const addr_t range_file_file_addr = inlined_frame_addr.GetFileAddress();
+                        next_frame_sc.line_entry.range.GetBaseAddress() = inlined_frame_addr;
+                        next_frame_sc.line_entry.file = inline_info->GetCallSite().GetFile();
+                        next_frame_sc.line_entry.line = inline_info->GetCallSite().GetLine();
+                        next_frame_sc.line_entry.column = inline_info->GetCallSite().GetColumn();
+                        return true;                                            
+                    }
+                }
+            }
+        }
+    }
+    
+    return false;
+}
+
+
 //----------------------------------------------------------------------
 //
 //  SymbolContextSpecifier

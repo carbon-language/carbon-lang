@@ -16,6 +16,7 @@
 #include "lldb/API/SBTarget.h"
 
 #include "lldb/Core/ArchSpec.h"
+#include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/Disassembler.h"
 #include "lldb/Core/EmulateInstruction.h"
 #include "lldb/Core/StreamFile.h"
@@ -67,6 +68,60 @@ SBInstruction::GetAddress()
     return sb_addr;
 }
 
+const char *
+SBInstruction::GetOpcodeName(SBTarget target)
+{
+    if (m_opaque_sp)
+    {        
+        Mutex::Locker api_locker;
+        ExecutionContext exe_ctx;
+        if (target.IsValid())
+        {
+            api_locker.Reset (target->GetAPIMutex().GetMutex());
+            target->CalculateExecutionContext (exe_ctx);
+            exe_ctx.SetProcessSP(target->GetProcessSP());
+        }
+        return m_opaque_sp->GetOpcodeName(exe_ctx.GetBestExecutionContextScope());
+    }
+    return NULL;
+}
+
+const char *
+SBInstruction::GetMnemonics(SBTarget target)
+{
+    if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker;
+        ExecutionContext exe_ctx;
+        if (target.IsValid())
+        {
+            api_locker.Reset (target->GetAPIMutex().GetMutex());
+            target->CalculateExecutionContext (exe_ctx);
+            exe_ctx.SetProcessSP(target->GetProcessSP());
+        }
+        return m_opaque_sp->GetMnemonics(exe_ctx.GetBestExecutionContextScope());
+    }
+    return NULL;
+}
+
+const char *
+SBInstruction::GetComment(SBTarget target)
+{
+    if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker;
+        ExecutionContext exe_ctx;
+        if (target.IsValid())
+        {
+            api_locker.Reset (target->GetAPIMutex().GetMutex());
+            target->CalculateExecutionContext (exe_ctx);
+            exe_ctx.SetProcessSP(target->GetProcessSP());
+        }
+        return m_opaque_sp->GetComment(exe_ctx.GetBestExecutionContextScope());
+    }
+    return NULL;
+}
+
 size_t
 SBInstruction::GetByteSize ()
 {
@@ -74,6 +129,32 @@ SBInstruction::GetByteSize ()
         return m_opaque_sp->GetOpcode().GetByteSize();
     return 0;
 }
+
+SBData
+SBInstruction::GetData (SBTarget target)
+{
+    lldb::SBData sb_data;
+    if (m_opaque_sp)
+    {
+        const Opcode &opcode = m_opaque_sp->GetOpcode();
+        const void *opcode_data = opcode.GetOpcodeBytes();
+        const uint32_t opcode_data_size = opcode.GetByteSize();
+        if (opcode_data && opcode_data_size > 0)
+        {
+            ByteOrder data_byte_order = opcode.GetDataByteOrder();
+            if (data_byte_order == eByteOrderInvalid)
+                data_byte_order = target->GetArchitecture().GetByteOrder();
+            DataBufferSP data_buffer_sp (new DataBufferHeap (opcode_data, opcode_data_size));
+            DataExtractorSP data_extractor_sp (new DataExtractor (data_buffer_sp, 
+                                                                  data_byte_order,
+                                                                  target.IsValid() ? target->GetArchitecture().GetAddressByteSize() : sizeof(void*)));
+            sb_data.SetOpaque (data_extractor_sp);
+        }
+    }
+    return sb_data;
+}
+
+
 
 bool
 SBInstruction::DoesBranch ()

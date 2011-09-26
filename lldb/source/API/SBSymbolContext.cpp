@@ -10,6 +10,7 @@
 #include "lldb/API/SBSymbolContext.h"
 #include "lldb/API/SBStream.h"
 #include "lldb/Core/Log.h"
+#include "lldb/Core/Module.h"
 #include "lldb/Symbol/Function.h"
 #include "lldb/Symbol/Symbol.h"
 #include "lldb/Symbol/SymbolContext.h"
@@ -173,6 +174,46 @@ SBSymbolContext::GetSymbol ()
     return sb_symbol; 
 }
 
+void
+SBSymbolContext::SetModule (lldb::SBModule module)
+{
+    ref().module_sp = module.get_sp();
+}
+
+void
+SBSymbolContext::SetCompileUnit (lldb::SBCompileUnit compile_unit)
+{
+    ref().comp_unit = compile_unit.get();
+}
+
+void 
+SBSymbolContext::SetFunction (lldb::SBFunction function)
+{
+    ref().function = function.get();
+}
+
+void 
+SBSymbolContext::SetBlock (lldb::SBBlock block)
+{
+    ref().block = block.get();
+}
+
+void 
+SBSymbolContext::SetLineEntry (lldb::SBLineEntry line_entry)
+{
+    if (line_entry.IsValid())
+        ref().line_entry = line_entry.ref();
+    else
+        ref().line_entry.Clear();
+}
+
+void 
+SBSymbolContext::SetSymbol (lldb::SBSymbol symbol)
+{
+    ref().symbol = symbol.get();
+}
+
+
 lldb_private::SymbolContext*
 SBSymbolContext::operator->() const
 {
@@ -223,3 +264,18 @@ SBSymbolContext::GetDescription (SBStream &description)
 
     return true;
 }
+
+SBSymbolContext
+SBSymbolContext::GetParentInlinedFrameInfo (const SBAddress &curr_frame_pc, 
+                                            bool is_concrete_frame,
+                                            SBAddress &parent_frame_addr) const
+{
+    SBSymbolContext sb_sc;
+    if (m_opaque_ap.get() && curr_frame_pc.IsValid())
+    {
+        if (m_opaque_ap->GetParentInlinedFrameInfo (curr_frame_pc.ref(), is_concrete_frame, sb_sc.ref(), parent_frame_addr.ref()))
+            return sb_sc;
+    }
+    return SBSymbolContext();
+}
+

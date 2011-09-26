@@ -173,8 +173,8 @@ SBCompileUnit::operator*() const
     return *m_opaque_ptr;
 }
 
-const lldb_private::CompileUnit *
-SBCompileUnit::get () const
+lldb_private::CompileUnit *
+SBCompileUnit::get ()
 {
     return m_opaque_ptr;
 }

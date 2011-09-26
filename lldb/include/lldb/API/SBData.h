@@ -125,8 +125,9 @@ protected:
     SetOpaque (const lldb::DataExtractorSP &data_sp);
 
 private:
-    friend class SBValue;
+    friend class SBInstruction;
     friend class SBSection;
+    friend class SBValue;
 
     lldb::DataExtractorSP  m_opaque_sp;
 };

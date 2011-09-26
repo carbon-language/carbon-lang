@@ -49,6 +49,15 @@ public:
     uint32_t
     GetColumn () const;
 
+    void
+    SetFileSpec (lldb::SBFileSpec filespec);
+    
+    void
+    SetLine (uint32_t line);
+    
+    void
+    SetColumn (uint32_t column);
+
 #ifndef SWIG
     bool
     operator == (const lldb::SBLineEntry &rhs) const;
@@ -77,8 +86,11 @@ private:
     const lldb_private::LineEntry *
     operator->() const;
 
+    lldb_private::LineEntry &
+    ref();
+
     const lldb_private::LineEntry &
-    operator*() const;
+    ref() const;
 
 #endif
 
