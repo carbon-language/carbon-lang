@@ -25,8 +25,9 @@ class CrashLog:
     """Class that does parses darwin crash logs"""
     thread_state_regex = re.compile('^Thread ([0-9]+) crashed with')
     thread_regex = re.compile('^Thread ([0-9]+)([^:]*):(.*)')
-    frame_regex = re.compile('^([0-9]+).*(0x[0-9a-fA-F]+) +(.*)')
-    image_regex = re.compile('(0x[0-9a-fA-F]+)[- ]+(0x[0-9a-fA-F]+) +([^ ]+) +([\.0-9\?]+) \(([^)]+)\) <([-0-9a-fA-F]+)> (.*)');
+    frame_regex = re.compile('^([0-9]+).*\t(0x[0-9a-fA-F]+) +(.*)')
+    image_regex_uuid = re.compile('(0x[0-9a-fA-F]+)[- ]+(0x[0-9a-fA-F]+) +([^ ]+) +([^<]+)<([-0-9a-fA-F]+)> (.*)');
+    image_regex_no_uuid = re.compile('(0x[0-9a-fA-F]+)[- ]+(0x[0-9a-fA-F]+) +([^ ]+) +([^/]+)/(.*)');
     empty_line_regex = re.compile('^$')
     
     class Thread:
@@ -74,12 +75,11 @@ class CrashLog:
     
     class Image:
         """Class that represents a binary images in a darwin crash log"""
-        def __init__(self, text_addr_lo, text_addr_hi, ident, version, compatability_version, uuid, path):
+        def __init__(self, text_addr_lo, text_addr_hi, ident, version, uuid, path):
             self.text_addr_lo = text_addr_lo
             self.text_addr_hi = text_addr_hi
             self.ident = ident
             self.version = version
-            self.compatability_version = compatability_version
             self.uuid = uuid
             self.path = path
  
@@ -187,18 +187,28 @@ class CrashLog:
                 else:
                     print "error: frame regex failed"
             elif parse_mode == PARSE_MODE_IMAGES:
-                image_match = self.image_regex.search (line)
+                image_match = self.image_regex_uuid.search (line)
                 if image_match:
                     image = CrashLog.Image (int(image_match.group(1),0), 
                                             int(image_match.group(2),0), 
-                                            image_match.group(3), 
-                                            image_match.group(4), 
+                                            image_match.group(3).strip(), 
+                                            image_match.group(4).strip(), 
                                             image_match.group(5), 
-                                            image_match.group(6), 
-                                            image_match.group(7))
+                                            image_match.group(6))
                     self.images.append (image)
                 else:
-                    print "error: image regex failed"
+                    image_match = self.image_regex_no_uuid.search (line)
+                    if image_match:
+                        image = CrashLog.Image (int(image_match.group(1),0), 
+                                                int(image_match.group(2),0), 
+                                                image_match.group(3).strip(), 
+                                                image_match.group(4).strip(), 
+                                                None,
+                                                image_match.group(5))
+                        self.images.append (image)
+                    else:
+                        print "error: image regex failed for: %s" % line
+
             elif parse_mode == PARSE_MODE_THREGS:
                 stripped_line = line.strip()
                 reg_values = stripped_line.split('  ')
@@ -327,22 +337,26 @@ if __name__ == '__main__':
             #crash_log.dump()
             target = debugger.CreateTarget (crash_log.process_path, options.triple, options.platform, options.dependents, error);
             exe_module = target.GetModuleAtIndex(0)
-            loaded_images = list()
+            image_paths = list()
             for image in crash_log.images:
                 if image.path == crash_log.process_path:
                     module = exe_module
                 else:
                     module = target.AddModule (image.path, options.triple, image.uuid)
-                if module in loaded_images:
+                if image.path in image_paths:
                     print "warning: skipping %s loaded at %#16.16x duplicate entry (probably commpage)" % (image.path, image.text_addr_lo)
                 else:
-                    loaded_images.append(module)
-                    if image.uuid != module.GetUUIDString():
-                        print "error: couln't find %s", image.uuid
-                    target.SetSectionLoadAddress (module.FindSection ("__TEXT"), image.text_addr_lo)
+                    image_paths.append(image.path)
+                    
+                    if not module and image.uuid != module.GetUUIDString():
+                        if image.uuid:
+                            print "warning: couldn't locate %s %s" % (image.uuid, image.path)
+                        else:
+                            print "warning: couldn't locate %s" % (image.path)
+                    else:
+                        target.SetSectionLoadAddress (module.FindSection ("__TEXT"), image.text_addr_lo)
             for line in crash_log.info_lines:
                 print line
-            print "fixing up inlined frames"
             # Reconstruct inlined frames for all threads for anything that has debug info
             for thread in crash_log.threads:
                 if options.crashed_only and thread.did_crash() == False:
@@ -417,7 +431,7 @@ if __name__ == '__main__':
                 print "%s" % thread
                 prev_frame_index = -1
                 for frame_idx, frame in enumerate(thread.frames):
-                    details = "[%u] %s (carp)" % (frame_idx, frame)
+                    details = '          %s' % frame.details
                     module = frame.sym_ctx.GetModule()
                     instructions = None
                     if module:
@@ -474,8 +488,6 @@ if __name__ == '__main__':
                                 column = line_entry.GetColumn()
                                 if column > 0:
                                     details += ':%u' % column
-                        else:
-                            print "error: no function name!"
                             
                         
                     # Only print out the concrete frame index if it changes.
