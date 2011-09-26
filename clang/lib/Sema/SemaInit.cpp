@@ -744,8 +744,10 @@ void InitListChecker::CheckSubElementType(const InitializedEntity &Entity,
     // type here, though.
 
     if (Expr *Str = IsStringInit(expr, arrayType, SemaRef.Context)) {
-      CheckStringInit(Str, ElemType, arrayType, SemaRef);
-      UpdateStructuredListElement(StructuredList, StructuredIndex, Str);
+      if (!VerifyOnly) {
+        CheckStringInit(Str, ElemType, arrayType, SemaRef);
+        UpdateStructuredListElement(StructuredList, StructuredIndex, Str);
+      }
       ++Index;
       return;
     }
@@ -1116,13 +1118,13 @@ void InitListChecker::CheckArrayType(const InitializedEntity &Entity,
   if (Index < IList->getNumInits()) {
     if (Expr *Str = IsStringInit(IList->getInit(Index), arrayType,
                                  SemaRef.Context)) {
-      CheckStringInit(Str, DeclType, arrayType, SemaRef);
       // We place the string literal directly into the resulting
       // initializer list. This is the only place where the structure
       // of the structured initializer list doesn't match exactly,
       // because doing so would involve allocating one character
       // constant for each string.
       if (!VerifyOnly) {
+        CheckStringInit(Str, DeclType, arrayType, SemaRef);
         UpdateStructuredListElement(StructuredList, StructuredIndex, Str);
         StructuredList->resizeInits(SemaRef.Context, StructuredIndex);
       }

@@ -144,3 +144,7 @@ int PR4386_b = ((void *) PR4386_foo) != 0; // expected-error{{initializer elemen
 int PR4386_c = ((void *) PR4386_zed) != 0;
 int PR4386_zed() __attribute((weak));
 
+// <rdar://problem/10185490> (derived from SPEC vortex benchmark)
+typedef char strty[10];
+struct vortexstruct { strty s; };
+struct vortexstruct vortexvar = { "asdf" };
