@@ -261,8 +261,8 @@
    and <i>filter</i> clauses. The exception is tested against the clauses
    sequentially from first to last. The selector value is a positive number if
    the exception matched a type info, a negative number if it matched a filter,
-   and zero if it matched a cleanup. If nothing is matched, the behavior of the
-   program is <a href="#restrictions">undefined</a>. If a type info matched,
+   and zero if it matched to a cleanup. If nothing is matched, the behavior of
+   the program is <a href="#restrictions">undefined</a>. If a type info matched,
    then the selector value is the index of the type info in the exception table,
    which can be obtained using the
    <a href="#llvm_eh_typeid_for"><tt>llvm.eh.typeid.for</tt></a> intrinsic.</p>
