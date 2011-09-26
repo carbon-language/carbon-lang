@@ -745,9 +745,13 @@ void Cost::RateRegister(const SCEV *Reg,
 
     // Add the step value register, if it needs one.
     // TODO: The non-affine case isn't precisely modeled here.
-    if (!AR->isAffine() || !isa<SCEVConstant>(AR->getOperand(1)))
-      if (!Regs.count(AR->getOperand(1)))
+    if (!AR->isAffine() || !isa<SCEVConstant>(AR->getOperand(1))) {
+      if (!Regs.count(AR->getOperand(1))) {
         RateRegister(AR->getOperand(1), Regs, L, SE, DT);
+        if (isLoser())
+          return;
+      }
+    }
   }
   ++NumRegs;
 
