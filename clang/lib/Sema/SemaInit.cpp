@@ -1878,7 +1878,7 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
       = DesignatedEndIndex.extOrTrunc(MaxElements.getBitWidth());
     DesignatedEndIndex.setIsUnsigned(MaxElements.isUnsigned());
     if (DesignatedEndIndex >= MaxElements) {
-      if (VerifyOnly)
+      if (!VerifyOnly)
         SemaRef.Diag(IndexExpr->getSourceRange().getBegin(),
                       diag::err_array_designator_too_large)
           << DesignatedEndIndex.toString(10) << MaxElements.toString(10)
