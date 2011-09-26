@@ -1086,9 +1086,39 @@ static void PrintDiagnosticLevel(raw_ostream &OS,
     OS.resetColor();
 }
 
-static void FormatDiagnosticMessage(const Diagnostic &Info,
-                                    const DiagnosticOptions &DiagOpts,
-                                    SmallVectorImpl<char> &OutStr) {
+void TextDiagnosticPrinter::HandleDiagnostic(DiagnosticsEngine::Level Level,
+                                             const DiagnosticInfo &Info) {
+  // Default implementation (Warnings/errors count).
+  DiagnosticConsumer::HandleDiagnostic(Level, Info);
+
+  // Keeps track of the the starting position of the location
+  // information (e.g., "foo.c:10:4:") that precedes the error
+  // message. We use this information to determine how long the
+  // file+line+column number prefix is.
+  uint64_t StartOfLocationInfo = OS.tell();
+
+  if (!Prefix.empty())
+    OS << Prefix << ": ";
+
+  if (Info.getLocation().isValid()) {
+    const SourceManager &SM = Info.getSourceManager();
+    PresumedLoc PLoc = getDiagnosticPresumedLoc(SM, Info.getLocation());
+
+    // First, if this diagnostic is not in the main file, print out the
+    // "included from" lines.
+    PrintIncludeStack(Level, PLoc.getIncludeLoc(), SM);
+    StartOfLocationInfo = OS.tell();
+
+    // Next emit the location of this particular diagnostic.
+    EmitDiagnosticLoc(Level, Info, SM, PLoc);
+
+    if (DiagOpts->ShowColors)
+      OS.resetColor();
+  }
+
+  PrintDiagnosticLevel(OS, Level, DiagOpts->ShowColors);
+
+  llvm::SmallString<100> OutStr;
   Info.FormatDiagnostic(OutStr);
 
   if (DiagOpts->ShowNames &&
@@ -1156,43 +1186,8 @@ static void FormatDiagnosticMessage(const Diagnostic &Info,
     
     OutStr += "]";
   }
-}
 
-void TextDiagnosticPrinter::HandleDiagnostic(DiagnosticsEngine::Level Level,
-                                             const DiagnosticInfo &Info) {
-  // Default implementation (Warnings/errors count).
-  DiagnosticConsumer::HandleDiagnostic(Level, Info);
-
-  // Keeps track of the the starting position of the location
-  // information (e.g., "foo.c:10:4:") that precedes the error
-  // message. We use this information to determine how long the
-  // file+line+column number prefix is.
-  uint64_t StartOfLocationInfo = OS.tell();
-
-  if (!Prefix.empty())
-    OS << Prefix << ": ";
-
-  if (Info.getLocation().isValid()) {
-    const SourceManager &SM = Info.getSourceManager();
-    PresumedLoc PLoc = getDiagnosticPresumedLoc(SM, Info.getLocation());
-
-    // First, if this diagnostic is not in the main file, print out the
-    // "included from" lines.
-    PrintIncludeStack(Level, PLoc.getIncludeLoc(), SM);
-    StartOfLocationInfo = OS.tell();
-
-    // Next emit the location of this particular diagnostic.
-    EmitDiagnosticLoc(Level, Info, SM, PLoc);
-
-    if (DiagOpts->ShowColors)
-      OS.resetColor();
-  }
-
-  PrintDiagnosticLevel(OS, Level, DiagOpts->ShowColors);
-
-  llvm::SmallString<100> OutStr;
-  FormatDiagnosticMessage(Info, *Diagopts, OutStr);
-
+  
   if (DiagOpts->ShowColors) {
     // Print warnings, errors and fatal errors in bold, no color
     switch (Level) {
