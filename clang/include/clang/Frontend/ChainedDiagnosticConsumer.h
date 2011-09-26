@@ -1,4 +1,4 @@
-//===--- ChainedDiagnosticClient.h - Chain Diagnostic Clients ---*- C++ -*-===//
+//===- ChainedDiagnosticConsumer.h - Chain Diagnostic Clients ---*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_FRONTEND_CHAINEDDIAGNOSTICCLIENT_H
-#define LLVM_CLANG_FRONTEND_CHAINEDDIAGNOSTICCLIENT_H
+#ifndef LLVM_CLANG_FRONTEND_CHAINEDDIAGNOSTICCONSUMER_H
+#define LLVM_CLANG_FRONTEND_CHAINEDDIAGNOSTICCONSUMER_H
 
 #include "clang/Basic/Diagnostic.h"
 #include "llvm/ADT/OwningPtr.h"
@@ -16,16 +16,16 @@
 namespace clang {
 class LangOptions;
 
-/// ChainedDiagnosticClient - Chain two diagnostic clients so that diagnostics
+/// ChainedDiagnosticConsumer - Chain two diagnostic clients so that diagnostics
 /// go to the first client and then the second. The first diagnostic client
 /// should be the "primary" client, and will be used for computing whether the
 /// diagnostics should be included in counts.
-class ChainedDiagnosticClient : public DiagnosticConsumer {
+class ChainedDiagnosticConsumer : public DiagnosticConsumer {
   llvm::OwningPtr<DiagnosticConsumer> Primary;
   llvm::OwningPtr<DiagnosticConsumer> Secondary;
 
 public:
-  ChainedDiagnosticClient(DiagnosticConsumer *_Primary,
+  ChainedDiagnosticConsumer(DiagnosticConsumer *_Primary,
                           DiagnosticConsumer *_Secondary) {
     Primary.reset(_Primary);
     Secondary.reset(_Secondary);

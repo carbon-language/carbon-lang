@@ -19,7 +19,7 @@
 #include "clang/Lex/HeaderSearch.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/PTHManager.h"
-#include "clang/Frontend/ChainedDiagnosticClient.h"
+#include "clang/Frontend/ChainedDiagnosticConsumer.h"
 #include "clang/Frontend/FrontendAction.h"
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
@@ -106,7 +106,7 @@ static void SetUpBuildDumpLog(const DiagnosticOptions &DiagOpts,
   // Chain in a diagnostic client which will log the diagnostics.
   DiagnosticConsumer *Logger =
     new TextDiagnosticPrinter(*OS.take(), DiagOpts, /*OwnsOutputStream=*/true);
-  Diags.setClient(new ChainedDiagnosticClient(Diags.takeClient(), Logger));
+  Diags.setClient(new ChainedDiagnosticConsumer(Diags.takeClient(), Logger));
 }
 
 static void SetUpDiagnosticLog(const DiagnosticOptions &DiagOpts,
@@ -136,7 +136,7 @@ static void SetUpDiagnosticLog(const DiagnosticOptions &DiagOpts,
                                                           OwnsStream);
   if (CodeGenOpts)
     Logger->setDwarfDebugFlags(CodeGenOpts->DwarfDebugFlags);
-  Diags.setClient(new ChainedDiagnosticClient(Diags.takeClient(), Logger));
+  Diags.setClient(new ChainedDiagnosticConsumer(Diags.takeClient(), Logger));
 }
 
 void CompilerInstance::createDiagnostics(int Argc, const char* const *Argv,
