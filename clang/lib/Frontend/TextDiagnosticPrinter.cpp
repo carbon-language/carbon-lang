@@ -1059,7 +1059,7 @@ void TextDiagnosticPrinter::EmitDiagnosticLoc(DiagnosticsEngine::Level Level,
   OS << ' ';
 }
 
-static void PrintDiagnosticLevel(raw_ostream& OS,
+static void PrintDiagnosticLevel(raw_ostream &OS,
                                  DiagnosticsEngine::Level Level,
                                  bool ShowColors) {
   if (ShowColors) {
