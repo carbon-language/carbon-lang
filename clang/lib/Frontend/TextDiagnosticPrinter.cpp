@@ -1196,7 +1196,6 @@ void TextDiagnosticPrinter::HandleDiagnostic(DiagnosticsEngine::Level Level,
   PrintDiagnosticOptions(DiagMessageStream, Level, Info, *DiagOpts);
   DiagMessageStream.flush();
 
-
   if (DiagOpts->ShowColors) {
     // Print warnings, errors and fatal errors in bold, no color
     switch (Level) {
