@@ -1086,6 +1086,11 @@ static void PrintDiagnosticLevel(raw_ostream &OS,
     OS.resetColor();
 }
 
+static void PrintDiagnosticName(raw_ostream &OS, const DiagnosticInfo &Info) {
+  if (!DiagnosticIDs::isBuiltinNote(Info.getID()))
+    OS << " [" << DiagnosticIDs::getName(Info.getID()) << "]";
+}
+
 void TextDiagnosticPrinter::HandleDiagnostic(DiagnosticsEngine::Level Level,
                                              const DiagnosticInfo &Info) {
   // Default implementation (Warnings/errors count).
@@ -1121,13 +1126,11 @@ void TextDiagnosticPrinter::HandleDiagnostic(DiagnosticsEngine::Level Level,
   llvm::SmallString<100> OutStr;
   Info.FormatDiagnostic(OutStr);
 
-  if (DiagOpts->ShowNames &&
-      !DiagnosticIDs::isBuiltinNote(Info.getID())) {
-    OutStr += " [";
-    OutStr += DiagnosticIDs::getName(Info.getID());
-    OutStr += "]";
-  }
-  
+  llvm::raw_svector_ostream DiagMessageStream(OutStr);
+  if (DiagOpts->ShowNames)
+    PrintDiagnosticName(DiagMessageStream, Info);
+  DiagMessageStream.flush();
+
   std::string OptionName;
   if (DiagOpts->ShowOptionNames) {
     // Was this a warning mapped to an error using -Werror or pragma?
