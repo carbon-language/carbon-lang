@@ -142,32 +142,15 @@ else
     LLVM_VERSION="$LLVM_SUBMIT_VERSION-$LLVM_SUBMIT_SUBVERSION"
 fi
 
-GCC_VER=`cc --version 2>/dev/null | sed 1q`
-
-if echo "$GCC_VER" | grep GCC > /dev/null; then
-    GCC_VER=`echo $GCC_VER | sed -e 's/.*(GCC) \([0-9.][0-9.]*\).*/\1/'`
-    MAJ_VER=`echo $GCC_VER | sed 's/\..*//'`
-    MIN_VER=`echo $GCC_VER | sed 's/[^.]*\.\([0-9]*\).*/\1/'`
+# Figure out how many make processes to run.
+SYSCTL=`sysctl -n hw.activecpu`
+# sysctl -n hw.* does not work when invoked via B&I chroot /BuildRoot.
+# Builders can default to 2, since even if they are single processor,
+# nothing else is running on the machine.
+if [ -z "$SYSCTL" ]; then
+    SYSCTL=2
 fi
-
-JOBS_FLAG=""
-
-# Note: If compiling with GCC 4.0, don't pass the -jN flag. Building universal
-# already has parallelism and we don't want to make the builders hit swap by
-# firing off too many gccs at the same time.
-if [ "x$MAJ_VER" != "x4" -o "x$MIN_VER" != "x0" ]; then
-    # Figure out how many make processes to run.
-    SYSCTL=`sysctl -n hw.activecpu`
-
-    # sysctl -n hw.* does not work when invoked via B&I chroot /BuildRoot.
-    # Builders can default to 2, since even if they are single processor,
-    # nothing else is running on the machine.
-    if [ -z "$SYSCTL" ]; then
-        SYSCTL=2
-    fi
-
-    JOBS_FLAG="-j $SYSCTL"
-fi
+JOBS_FLAG="-j $SYSCTL"
 
 make $JOBS_FLAG $OPTIMIZE_OPTS UNIVERSAL=1 UNIVERSAL_ARCH="$HOSTS" \
     UNIVERSAL_SDK_PATH=$SDKROOT \
