@@ -297,7 +297,9 @@ void PTXAsmPrinter::EmitFunctionBodyStart() {
   for (unsigned i = 0, e = FrameInfo->getNumObjects(); i != e; ++i) {
     DEBUG(dbgs() << "Size of object: " << FrameInfo->getObjectSize(i) << "\n");
     if (FrameInfo->getObjectSize(i) > 0) {
-      std::string def = "\t.local .b";
+      std::string def = "\t.local .align ";
+      def += utostr(FrameInfo->getObjectAlignment(i));
+      def += " .b";
       def += utostr(FrameInfo->getObjectSize(i)*8); // Convert to bits
       def += " __local";
       def += utostr(i);
