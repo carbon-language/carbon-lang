@@ -4583,8 +4583,9 @@ void ASTContext::getObjCEncodingForStructureImpl(RecordDecl *RDecl,
       if (base->isEmpty())
         continue;
       uint64_t offs = layout.getVBaseClassOffsetInBits(base);
-      FieldOrBaseOffsets.insert(FieldOrBaseOffsets.upper_bound(offs),
-                                std::make_pair(offs, base));
+      if (FieldOrBaseOffsets.find(offs) == FieldOrBaseOffsets.end())
+        FieldOrBaseOffsets.insert(FieldOrBaseOffsets.end(),
+                                  std::make_pair(offs, base));
     }
   }
 

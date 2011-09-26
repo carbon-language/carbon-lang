@@ -167,3 +167,23 @@ _Alloc_hider _M_dataplus;
 
 // CHECK: @_ZL2g5 = internal constant [32 x i8] c"{basic_string={_Alloc_hider=*}}\00"
 const char g5[] = @encode(basic_string);
+
+
+// PR10990
+class CefBase {
+  virtual ~CefBase() {}
+};
+class CefBrowser : public virtual CefBase {};
+class CefBrowserImpl : public CefBrowser {};
+// CHECK: @_ZL2g6 = internal constant [21 x i8] c"{CefBrowserImpl=^^?}\00"
+const char g6[] = @encode(CefBrowserImpl);
+
+// PR10990_2
+class CefBase2 {
+  virtual ~CefBase2() {}
+  int i;
+};
+class CefBrowser2 : public virtual CefBase2 {};
+class CefBrowserImpl2 : public CefBrowser2 {};
+// CHECK: @_ZL2g7 = internal constant [26 x i8] c"{CefBrowserImpl2=^^?^^?i}\00"
+const char g7[] = @encode(CefBrowserImpl2);
