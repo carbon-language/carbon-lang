@@ -391,7 +391,7 @@ static int readPrefixes(struct InternalInstruction* insn) {
       return -1;
     }
     
-    if (insn->mode == MODE_64BIT || byte1 & 0x8) {
+    if (insn->mode == MODE_64BIT || (byte1 & 0xc0) == 0xc0) {
       insn->vexSize = 3;
       insn->necessaryPrefixLocation = insn->readerCursor - 1;
     }
@@ -433,7 +433,7 @@ static int readPrefixes(struct InternalInstruction* insn) {
       return -1;
     }
       
-    if (insn->mode == MODE_64BIT || byte1 & 0x8) {
+    if (insn->mode == MODE_64BIT || (byte1 & 0xc0) == 0xc0) {
       insn->vexSize = 2;
     }
     else {
