@@ -1168,6 +1168,17 @@ void TextDiagnosticPrinter::HandleDiagnostic(DiagnosticsEngine::Level Level,
   // Default implementation (Warnings/errors count).
   DiagnosticConsumer::HandleDiagnostic(Level, Info);
 
+  // Render the diagnostic message into a temporary buffer eagerly. We'll use
+  // this later as we print out the diagnostic to the terminal.
+  llvm::SmallString<100> OutStr;
+  Info.FormatDiagnostic(OutStr);
+
+  llvm::raw_svector_ostream DiagMessageStream(OutStr);
+  if (DiagOpts->ShowNames)
+    printDiagnosticName(DiagMessageStream, Info);
+  printDiagnosticOptions(DiagMessageStream, Level, Info, *DiagOpts);
+
+
   // Keeps track of the the starting position of the location
   // information (e.g., "foo.c:10:4:") that precedes the error
   // message. We use this information to determine how long the
@@ -1177,32 +1188,31 @@ void TextDiagnosticPrinter::HandleDiagnostic(DiagnosticsEngine::Level Level,
   if (!Prefix.empty())
     OS << Prefix << ": ";
 
-  if (Info.getLocation().isValid()) {
-    const SourceManager &SM = Info.getSourceManager();
-    PresumedLoc PLoc = getDiagnosticPresumedLoc(SM, Info.getLocation());
-
-    // First, if this diagnostic is not in the main file, print out the
-    // "included from" lines.
-    PrintIncludeStack(Level, PLoc.getIncludeLoc(), SM);
-    StartOfLocationInfo = OS.tell();
-
-    // Next emit the location of this particular diagnostic.
-    EmitDiagnosticLoc(Level, Info, SM, PLoc);
-
-    if (DiagOpts->ShowColors)
-      OS.resetColor();
+  // Use a dedicated, simpler path for diagnostics without a valid location.
+  if (!Info.getLocation().isValid()) {
+    printDiagnosticLevel(OS, Level, DiagOpts->ShowColors);
+    printDiagnosticMessage(OS, Level, DiagMessageStream.str(),
+                           OS.tell() - StartOfLocationInfo,
+                           DiagOpts->MessageLength, DiagOpts->ShowColors);
+    OS.flush();
+    return;
   }
 
+  const SourceManager &SM = Info.getSourceManager();
+  PresumedLoc PLoc = getDiagnosticPresumedLoc(SM, Info.getLocation());
+
+  // First, if this diagnostic is not in the main file, print out the
+  // "included from" lines.
+  PrintIncludeStack(Level, PLoc.getIncludeLoc(), SM);
+  StartOfLocationInfo = OS.tell();
+
+  // Next emit the location of this particular diagnostic.
+  EmitDiagnosticLoc(Level, Info, SM, PLoc);
+
+  if (DiagOpts->ShowColors)
+    OS.resetColor();
+
   printDiagnosticLevel(OS, Level, DiagOpts->ShowColors);
-
-  llvm::SmallString<100> OutStr;
-  Info.FormatDiagnostic(OutStr);
-
-  llvm::raw_svector_ostream DiagMessageStream(OutStr);
-  if (DiagOpts->ShowNames)
-    printDiagnosticName(DiagMessageStream, Info);
-  printDiagnosticOptions(DiagMessageStream, Level, Info, *DiagOpts);
-
   printDiagnosticMessage(OS, Level, DiagMessageStream.str(),
                          OS.tell() - StartOfLocationInfo,
                          DiagOpts->MessageLength, DiagOpts->ShowColors);
@@ -1213,7 +1223,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(DiagnosticsEngine::Level Level,
   // was part of a different warning or error diagnostic, or if the
   // diagnostic has ranges.  We don't want to emit the same caret
   // multiple times if one loc has multiple diagnostics.
-  if (DiagOpts->ShowCarets && Info.getLocation().isValid() &&
+  if (DiagOpts->ShowCarets &&
       ((LastLoc != Info.getLocation()) || Info.getNumRanges() ||
        (LastCaretDiagnosticWasNote && Level != DiagnosticsEngine::Note) ||
        Info.getNumFixItHints())) {
