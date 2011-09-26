@@ -299,10 +299,12 @@ void PTXAsmPrinter::EmitFunctionBodyStart() {
     if (FrameInfo->getObjectSize(i) > 0) {
       std::string def = "\t.local .align ";
       def += utostr(FrameInfo->getObjectAlignment(i));
-      def += " .b";
-      def += utostr(FrameInfo->getObjectSize(i)*8); // Convert to bits
+      def += " .b8";
       def += " __local";
       def += utostr(i);
+      def += "[";
+      def += utostr(FrameInfo->getObjectSize(i)); // Convert to bits
+      def += "]";
       def += ";";
       OutStreamer.EmitRawText(Twine(def));
     }
@@ -465,6 +467,11 @@ void PTXAsmPrinter::printReturnOperand(const MachineInstr *MI, int opNum,
 void PTXAsmPrinter::printLocalOperand(const MachineInstr *MI, int opNum,
                                       raw_ostream &OS, const char *Modifier) {
   OS << "__local" << MI->getOperand(opNum).getImm();
+
+  if (MI->getOperand(opNum+1).isImm() && MI->getOperand(opNum+1).getImm() != 0){
+    OS << "+";
+    printOperand(MI, opNum+1, OS);
+  }
 }
 
 void PTXAsmPrinter::EmitVariableDeclaration(const GlobalVariable *gv) {

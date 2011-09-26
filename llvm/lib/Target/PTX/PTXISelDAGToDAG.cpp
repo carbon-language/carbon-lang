@@ -213,14 +213,54 @@ bool PTXDAGToDAGISel::SelectADDRrr(SDValue &Addr, SDValue &R1, SDValue &R2) {
 // Match memory operand of the form [reg], [imm+reg], and [reg+imm]
 bool PTXDAGToDAGISel::SelectADDRri(SDValue &Addr, SDValue &Base,
                                    SDValue &Offset) {
-  if (Addr.getOpcode() != ISD::ADD) {
+  // FrameIndex addresses are handled separately
+  //errs() << "SelectADDRri: ";
+  //Addr.getNode()->dumpr();
+  if (isa<FrameIndexSDNode>(Addr)) {
+    //errs() << "Failure\n";
+    return false;
+  }
+
+  if (CurDAG->isBaseWithConstantOffset(Addr)) {
+    Base = Addr.getOperand(0);
+    if (isa<FrameIndexSDNode>(Base)) {
+      //errs() << "Failure\n";
+      return false;
+    }
+    ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Addr.getOperand(1));
+    Offset = CurDAG->getTargetConstant(CN->getZExtValue(), MVT::i32);
+    //errs() << "Success\n";
+    return true;
+  }
+
+  /*if (Addr.getNumOperands() == 1) {
+    Base = Addr;
+    Offset = CurDAG->getTargetConstant(0, Addr.getValueType().getSimpleVT());
+    errs() << "Success\n";
+    return true;
+  }*/
+
+  //errs() << "SelectADDRri fails on: ";
+  //Addr.getNode()->dumpr();
+
+  if (isImm(Addr)) {
+    //errs() << "Failure\n";
+    return false;
+  }
+
+  Base = Addr;
+  Offset = CurDAG->getTargetConstant(0, Addr.getValueType().getSimpleVT());
+
+  //errs() << "Success\n";
+  return true;
+
+  /*if (Addr.getOpcode() != ISD::ADD) {
     // let SelectADDRii handle the [imm] case
     if (isImm(Addr))
       return false;
     // it is [reg]
 
     assert(Addr.getValueType().isSimple() && "Type must be simple");
-
     Base = Addr;
     Offset = CurDAG->getTargetConstant(0, Addr.getValueType().getSimpleVT());
 
@@ -242,7 +282,7 @@ bool PTXDAGToDAGISel::SelectADDRri(SDValue &Addr, SDValue &Base,
     }
 
   // neither [reg+imm] nor [imm+reg]
-  return false;
+  return false;*/
 }
 
 // Match memory operand of the form [imm+imm] and [imm]
@@ -269,35 +309,30 @@ bool PTXDAGToDAGISel::SelectADDRii(SDValue &Addr, SDValue &Base,
 // Match memory operand of the form [reg], [imm+reg], and [reg+imm]
 bool PTXDAGToDAGISel::SelectADDRlocal(SDValue &Addr, SDValue &Base,
                                       SDValue &Offset) {
-  if (Addr.getOpcode() != ISD::ADD) {
-    // let SelectADDRii handle the [imm] case
-    if (isImm(Addr))
-      return false;
-    // it is [reg]
-
-    assert(Addr.getValueType().isSimple() && "Type must be simple");
-
+  //errs() << "SelectADDRlocal: ";
+  //Addr.getNode()->dumpr();
+  if (isa<FrameIndexSDNode>(Addr)) {
     Base = Addr;
     Offset = CurDAG->getTargetConstant(0, Addr.getValueType().getSimpleVT());
-
+    //errs() << "Success\n";
     return true;
   }
 
-  if (Addr.getNumOperands() < 2)
-    return false;
-
-  // let SelectADDRii handle the [imm+imm] case
-  if (isImm(Addr.getOperand(0)) && isImm(Addr.getOperand(1)))
-    return false;
-
-  // try [reg+imm] and [imm+reg]
-  for (int i = 0; i < 2; i ++)
-    if (SelectImm(Addr.getOperand(1-i), Offset)) {
-      Base = Addr.getOperand(i);
-      return true;
+  if (CurDAG->isBaseWithConstantOffset(Addr)) {
+    Base = Addr.getOperand(0);
+    if (!isa<FrameIndexSDNode>(Base)) {
+      //errs() << "Failure\n";
+      return false;
     }
+    ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Addr.getOperand(1));
+    Offset = CurDAG->getTargetConstant(CN->getZExtValue(), MVT::i32);
+    //errs() << "Offset: ";
+    //Offset.getNode()->dumpr();
+    //errs() << "Success\n";
+    return true;
+  }
 
-  // neither [reg+imm] nor [imm+reg]
+  //errs() << "Failure\n";
   return false;
 }
 

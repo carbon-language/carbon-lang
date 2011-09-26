@@ -24,9 +24,7 @@ def Use64BitAddresses : Predicate<"getSubtarget().is64Bit()">;
 def load_global : PatFrag<(ops node:$ptr), (load node:$ptr), [{
   const Value *Src;
   const PointerType *PT;
-  const SDValue &MemOp = N->getOperand(1);
-  if ((MemOp.getOpcode() != ISD::FrameIndex) &&
-      (Src = cast<LoadSDNode>(N)->getSrcValue()) &&
+  if ((Src = cast<LoadSDNode>(N)->getSrcValue()) &&
       (PT = dyn_cast<PointerType>(Src->getType())))
     return PT->getAddressSpace() == PTX::GLOBAL;
   return false;
@@ -39,11 +37,6 @@ def load_constant : PatFrag<(ops node:$ptr), (load node:$ptr), [{
       (PT = dyn_cast<PointerType>(Src->getType())))
     return PT->getAddressSpace() == PTX::CONSTANT;
   return false;
-}]>;
-
-def load_local : PatFrag<(ops node:$ptr), (load node:$ptr), [{
-  const SDValue &MemOp = N->getOperand(1);
-  return MemOp.getOpcode() == ISD::FrameIndex;
 }]>;
 
 def load_shared : PatFrag<(ops node:$ptr), (load node:$ptr), [{
@@ -59,18 +52,10 @@ def store_global
   : PatFrag<(ops node:$d, node:$ptr), (store node:$d, node:$ptr), [{
   const Value *Src;
   const PointerType *PT;
-  const SDValue &MemOp = N->getOperand(2);
-  if ((MemOp.getOpcode() != ISD::FrameIndex) &&
-      (Src = cast<StoreSDNode>(N)->getSrcValue()) &&
+  if ((Src = cast<StoreSDNode>(N)->getSrcValue()) &&
       (PT = dyn_cast<PointerType>(Src->getType())))
     return PT->getAddressSpace() == PTX::GLOBAL;
   return false;
-}]>;
-
-def store_local
-  : PatFrag<(ops node:$d, node:$ptr), (store node:$d, node:$ptr), [{
-  const SDValue &MemOp = N->getOperand(2);
-  return MemOp.getOpcode() == ISD::FrameIndex;
 }]>;
 
 def store_shared
@@ -221,16 +206,16 @@ multiclass PTX_ST<string opstr, string typestr, RegisterClass RC,
 multiclass PTX_LOCAL_LD_ST<string typestr, RegisterClass RC> {
   def LDri32 : InstPTX<(outs RC:$d), (ins LOCALri32:$a),
                       !strconcat("ld.local", !strconcat(typestr, "\t$d, [$a]")),
-                       [(set RC:$d, (load_local ADDRlocal32:$a))]>;
+                       [(set RC:$d, (load_global ADDRlocal32:$a))]>;
   def LDri64 : InstPTX<(outs RC:$d), (ins LOCALri64:$a),
                       !strconcat("ld.local", !strconcat(typestr, "\t$d, [$a]")),
-                       [(set RC:$d, (load_local ADDRlocal64:$a))]>;
+                       [(set RC:$d, (load_global ADDRlocal64:$a))]>;
   def STri32 : InstPTX<(outs), (ins RC:$d, LOCALri32:$a),
                       !strconcat("st.local", !strconcat(typestr, "\t[$a], $d")),
-                       [(store_local RC:$d, ADDRlocal32:$a)]>;
+                       [(store_global RC:$d, ADDRlocal32:$a)]>;
   def STri64 : InstPTX<(outs), (ins RC:$d, LOCALri64:$a),
                       !strconcat("st.local", !strconcat(typestr, "\t[$a], $d")),
-                       [(store_local RC:$d, ADDRlocal64:$a)]>;
+                       [(store_global RC:$d, ADDRlocal64:$a)]>;
 }
 
 multiclass PTX_PARAM_LD_ST<string typestr, RegisterClass RC> {
