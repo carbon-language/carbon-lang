@@ -27,6 +27,173 @@ namespace clang {
 namespace CodeGen {
   class CodeGenModule;
 
+/// VTableComponent - Represents a single component in a vtable.
+class VTableComponent {
+public:
+  enum Kind {
+    CK_VCallOffset,
+    CK_VBaseOffset,
+    CK_OffsetToTop,
+    CK_RTTI,
+    CK_FunctionPointer,
+    
+    /// CK_CompleteDtorPointer - A pointer to the complete destructor.
+    CK_CompleteDtorPointer,
+    
+    /// CK_DeletingDtorPointer - A pointer to the deleting destructor.
+    CK_DeletingDtorPointer,
+    
+    /// CK_UnusedFunctionPointer - In some cases, a vtable function pointer
+    /// will end up never being called. Such vtable function pointers are
+    /// represented as a CK_UnusedFunctionPointer. 
+    CK_UnusedFunctionPointer
+  };
+
+  static VTableComponent MakeVCallOffset(CharUnits Offset) {
+    return VTableComponent(CK_VCallOffset, Offset);
+  }
+
+  static VTableComponent MakeVBaseOffset(CharUnits Offset) {
+    return VTableComponent(CK_VBaseOffset, Offset);
+  }
+
+  static VTableComponent MakeOffsetToTop(CharUnits Offset) {
+    return VTableComponent(CK_OffsetToTop, Offset);
+  }
+  
+  static VTableComponent MakeRTTI(const CXXRecordDecl *RD) {
+    return VTableComponent(CK_RTTI, reinterpret_cast<uintptr_t>(RD));
+  }
+
+  static VTableComponent MakeFunction(const CXXMethodDecl *MD) {
+    assert(!isa<CXXDestructorDecl>(MD) && 
+           "Don't use MakeFunction with destructors!");
+
+    return VTableComponent(CK_FunctionPointer, 
+                           reinterpret_cast<uintptr_t>(MD));
+  }
+  
+  static VTableComponent MakeCompleteDtor(const CXXDestructorDecl *DD) {
+    return VTableComponent(CK_CompleteDtorPointer,
+                           reinterpret_cast<uintptr_t>(DD));
+  }
+
+  static VTableComponent MakeDeletingDtor(const CXXDestructorDecl *DD) {
+    return VTableComponent(CK_DeletingDtorPointer, 
+                           reinterpret_cast<uintptr_t>(DD));
+  }
+
+  static VTableComponent MakeUnusedFunction(const CXXMethodDecl *MD) {
+    assert(!isa<CXXDestructorDecl>(MD) && 
+           "Don't use MakeUnusedFunction with destructors!");
+    return VTableComponent(CK_UnusedFunctionPointer,
+                           reinterpret_cast<uintptr_t>(MD));                           
+  }
+
+  static VTableComponent getFromOpaqueInteger(uint64_t I) {
+    return VTableComponent(I);
+  }
+
+  /// getKind - Get the kind of this vtable component.
+  Kind getKind() const {
+    return (Kind)(Value & 0x7);
+  }
+
+  CharUnits getVCallOffset() const {
+    assert(getKind() == CK_VCallOffset && "Invalid component kind!");
+    
+    return getOffset();
+  }
+
+  CharUnits getVBaseOffset() const {
+    assert(getKind() == CK_VBaseOffset && "Invalid component kind!");
+    
+    return getOffset();
+  }
+
+  CharUnits getOffsetToTop() const {
+    assert(getKind() == CK_OffsetToTop && "Invalid component kind!");
+    
+    return getOffset();
+  }
+  
+  const CXXRecordDecl *getRTTIDecl() const {
+    assert(getKind() == CK_RTTI && "Invalid component kind!");
+    
+    return reinterpret_cast<CXXRecordDecl *>(getPointer());
+  }
+  
+  const CXXMethodDecl *getFunctionDecl() const {
+    assert(getKind() == CK_FunctionPointer);
+    
+    return reinterpret_cast<CXXMethodDecl *>(getPointer());
+  }
+
+  const CXXDestructorDecl *getDestructorDecl() const {
+    assert((getKind() == CK_CompleteDtorPointer ||
+            getKind() == CK_DeletingDtorPointer) && "Invalid component kind!");
+    
+    return reinterpret_cast<CXXDestructorDecl *>(getPointer());
+  }
+
+  const CXXMethodDecl *getUnusedFunctionDecl() const {
+    assert(getKind() == CK_UnusedFunctionPointer);
+    
+    return reinterpret_cast<CXXMethodDecl *>(getPointer());
+  }
+  
+private:
+  VTableComponent(Kind ComponentKind, CharUnits Offset) {
+    assert((ComponentKind == CK_VCallOffset || 
+            ComponentKind == CK_VBaseOffset ||
+            ComponentKind == CK_OffsetToTop) && "Invalid component kind!");
+    assert(Offset.getQuantity() <= ((1LL << 56) - 1) && "Offset is too big!");
+    
+    Value = ((Offset.getQuantity() << 3) | ComponentKind);
+  }
+
+  VTableComponent(Kind ComponentKind, uintptr_t Ptr) {
+    assert((ComponentKind == CK_RTTI || 
+            ComponentKind == CK_FunctionPointer ||
+            ComponentKind == CK_CompleteDtorPointer ||
+            ComponentKind == CK_DeletingDtorPointer ||
+            ComponentKind == CK_UnusedFunctionPointer) &&
+            "Invalid component kind!");
+    
+    assert((Ptr & 7) == 0 && "Pointer not sufficiently aligned!");
+    
+    Value = Ptr | ComponentKind;
+  }
+  
+  CharUnits getOffset() const {
+    assert((getKind() == CK_VCallOffset || getKind() == CK_VBaseOffset ||
+            getKind() == CK_OffsetToTop) && "Invalid component kind!");
+    
+    return CharUnits::fromQuantity(Value >> 3);
+  }
+
+  uintptr_t getPointer() const {
+    assert((getKind() == CK_RTTI || 
+            getKind() == CK_FunctionPointer ||
+            getKind() == CK_CompleteDtorPointer ||
+            getKind() == CK_DeletingDtorPointer ||
+            getKind() == CK_UnusedFunctionPointer) &&
+           "Invalid component kind!");
+    
+    return static_cast<uintptr_t>(Value & ~7ULL);
+  }
+  
+  explicit VTableComponent(uint64_t Value)
+    : Value(Value) { }
+
+  /// The kind is stored in the lower 3 bits of the value. For offsets, we
+  /// make use of the facts that classes can't be larger than 2^55 bytes,
+  /// so we store the offset in the lower part of the 61 bytes that remain.
+  /// (The reason that we're not simply using a PointerIntPair here is that we
+  /// need the offsets to be 64-bit, even when on a 32-bit machine).
+  int64_t Value;
+};
+
 class VTableContext {
   ASTContext &Context;
 
