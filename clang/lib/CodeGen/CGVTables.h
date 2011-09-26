@@ -17,6 +17,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/GlobalVariable.h"
 #include "clang/Basic/ABI.h"
+#include "clang/AST/BaseSubobject.h"
 #include "clang/AST/CharUnits.h"
 #include "clang/AST/GlobalDecl.h"
 
@@ -25,72 +26,6 @@ namespace clang {
 
 namespace CodeGen {
   class CodeGenModule;
-
-// BaseSubobject - Uniquely identifies a direct or indirect base class. 
-// Stores both the base class decl and the offset from the most derived class to
-// the base class.
-class BaseSubobject {
-  /// Base - The base class declaration.
-  const CXXRecordDecl *Base;
-  
-  /// BaseOffset - The offset from the most derived class to the base class.
-  CharUnits BaseOffset;
-  
-public:
-  BaseSubobject() { }
-  BaseSubobject(const CXXRecordDecl *Base, CharUnits BaseOffset)
-    : Base(Base), BaseOffset(BaseOffset) { }
-  
-  /// getBase - Returns the base class declaration.
-  const CXXRecordDecl *getBase() const { return Base; }
-
-  /// getBaseOffset - Returns the base class offset.
-  CharUnits getBaseOffset() const { return BaseOffset; }
-
-  friend bool operator==(const BaseSubobject &LHS, const BaseSubobject &RHS) {
-    return LHS.Base == RHS.Base && LHS.BaseOffset == RHS.BaseOffset;
- }
-};
-
-} // end namespace CodeGen
-} // end namespace clang
-
-namespace llvm {
-
-template<> struct DenseMapInfo<clang::CodeGen::BaseSubobject> {
-  static clang::CodeGen::BaseSubobject getEmptyKey() {
-    return clang::CodeGen::BaseSubobject(
-      DenseMapInfo<const clang::CXXRecordDecl *>::getEmptyKey(),
-      clang::CharUnits::fromQuantity(DenseMapInfo<int64_t>::getEmptyKey()));
-  }
-
-  static clang::CodeGen::BaseSubobject getTombstoneKey() {
-    return clang::CodeGen::BaseSubobject(
-      DenseMapInfo<const clang::CXXRecordDecl *>::getTombstoneKey(),
-      clang::CharUnits::fromQuantity(DenseMapInfo<int64_t>::getTombstoneKey()));
-  }
-
-  static unsigned getHashValue(const clang::CodeGen::BaseSubobject &Base) {
-    return 
-      DenseMapInfo<const clang::CXXRecordDecl *>::getHashValue(Base.getBase()) ^
-      DenseMapInfo<int64_t>::getHashValue(Base.getBaseOffset().getQuantity());
-  }
-
-  static bool isEqual(const clang::CodeGen::BaseSubobject &LHS, 
-                      const clang::CodeGen::BaseSubobject &RHS) {
-    return LHS == RHS;
-  }
-};
-
-// It's OK to treat BaseSubobject as a POD type.
-template <> struct isPodLike<clang::CodeGen::BaseSubobject> {
-  static const bool value = true;
-};
-
-}
-
-namespace clang {
-namespace CodeGen {
 
 class CodeGenVTables {
   CodeGenModule &CGM;
