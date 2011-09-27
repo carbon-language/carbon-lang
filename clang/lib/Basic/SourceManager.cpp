@@ -1333,6 +1333,17 @@ SourceLocation SourceManager::translateFileLineCol(const FileEntry *SourceFile,
   assert(SourceFile && "Null source file!");
   assert(Line && Col && "Line and column should start from 1!");
 
+  FileID FirstFID = translateFile(SourceFile);
+  return translateLineCol(FirstFID, Line, Col);
+}
+
+/// \brief Get the FileID for the given file.
+///
+/// If the source file is included multiple times, the FileID will be the
+/// first inclusion.
+FileID SourceManager::translateFile(const FileEntry *SourceFile) const {
+  assert(SourceFile && "Null source file!");
+
   // Find the first file ID that corresponds to the given file.
   FileID FirstFID;
 
@@ -1344,7 +1355,7 @@ SourceLocation SourceManager::translateFileLineCol(const FileEntry *SourceFile,
     bool Invalid = false;
     const SLocEntry &MainSLoc = getSLocEntry(MainFileID, &Invalid);
     if (Invalid)
-      return SourceLocation();
+      return FileID();
     
     if (MainSLoc.isFile()) {
       const ContentCache *MainContentCache
@@ -1381,7 +1392,7 @@ SourceLocation SourceManager::translateFileLineCol(const FileEntry *SourceFile,
       bool Invalid = false;
       const SLocEntry &SLoc = getLocalSLocEntry(I, &Invalid);
       if (Invalid)
-        return SourceLocation();
+        return FileID();
       
       if (SLoc.isFile() && 
           SLoc.getFile().getContentCache() &&
@@ -1418,7 +1429,7 @@ SourceLocation SourceManager::translateFileLineCol(const FileEntry *SourceFile,
       IFileID.ID = I;
       const SLocEntry &SLoc = getSLocEntry(IFileID, &Invalid);
       if (Invalid)
-        return SourceLocation();
+        return FileID();
       
       if (SLoc.isFile()) { 
         const ContentCache *FileContentCache 
@@ -1437,8 +1448,8 @@ SourceLocation SourceManager::translateFileLineCol(const FileEntry *SourceFile,
       }
     }      
   }
-
-  return translateLineCol(FirstFID, Line, Col);
+  
+  return FirstFID;
 }
 
 /// \brief Get the source location in \arg FID for the given line:col.

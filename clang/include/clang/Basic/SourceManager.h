@@ -1110,6 +1110,12 @@ public:
   SourceLocation translateFileLineCol(const FileEntry *SourceFile,
                                       unsigned Line, unsigned Col) const;
 
+  /// \brief Get the FileID for the given file.
+  ///
+  /// If the source file is included multiple times, the FileID will be the
+  /// first inclusion.
+  FileID translateFile(const FileEntry *SourceFile) const;
+
   /// \brief Get the source location in \arg FID for the given line:col.
   /// Returns null location if \arg FID is not a file SLocEntry.
   SourceLocation translateLineCol(FileID FID,
