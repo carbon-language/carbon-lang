@@ -92,6 +92,9 @@ class WatchpointLocationIteratorTestCase(TestBase):
         print wp_loc
         self.assertTrue(wp_loc.GetHardwareIndex() != -1)
 
+        # SBWatchpointLocation.GetDescription() takes a description level arg.
+        print lldbutil.get_description(wp_loc, lldb.eDescriptionLevelFull)
+
         # Now disable the 'rw' watchpoint.  The program won't stop when it reads
         # 'global' next.
         wp_loc.SetEnabled(False)

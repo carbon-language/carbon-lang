@@ -115,7 +115,8 @@ def get_description(obj, option=None):
     method = getattr(obj, 'GetDescription')
     if not method:
         return None
-    if isinstance(obj, lldb.SBTarget) or isinstance(obj, lldb.SBBreakpointLocation):
+    tuple = (lldb.SBTarget, lldb.SBBreakpointLocation, lldb.SBWatchpointLocation)
+    if isinstance(obj, tuple):
         if option is None:
             option = lldb.eDescriptionLevelBrief
 
