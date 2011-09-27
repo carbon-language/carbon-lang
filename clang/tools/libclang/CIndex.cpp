@@ -3199,7 +3199,7 @@ CXString clang_getCursorDisplayName(CXCursor C) {
   if (!D)
     return createCXString("");
 
-  PrintingPolicy &Policy = getCursorContext(C).PrintingPolicy;
+  PrintingPolicy Policy = getCursorContext(C).getPrintingPolicy();
   if (FunctionTemplateDecl *FunTmpl = dyn_cast<FunctionTemplateDecl>(D))
     D = FunTmpl->getTemplatedDecl();
   

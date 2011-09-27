@@ -205,11 +205,11 @@ void TypePrinter::print(const Type *T, Qualifiers Quals, std::string &buffer) {
 
 void TypePrinter::printBuiltin(const BuiltinType *T, std::string &S) {
   if (S.empty()) {
-    S = T->getName(Policy.LangOpts);
+    S = T->getName(Policy);
   } else {
     // Prefix the basic type, e.g. 'int X'.
     S = ' ' + S;
-    S = T->getName(Policy.LangOpts) + S;
+    S = T->getName(Policy) + S;
   }
 }
 

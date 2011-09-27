@@ -182,7 +182,7 @@ private:
       llvm::SmallString<128> newCast;
       newCast += '(';
       newCast += bridge;
-      newCast += E->getType().getAsString(Pass.Ctx.PrintingPolicy);
+      newCast += E->getType().getAsString(Pass.Ctx.getPrintingPolicy());
       newCast += ')';
 
       if (isa<ParenExpr>(E->getSubExpr())) {
@@ -215,7 +215,7 @@ private:
 
     if (family == OMF_autorelease || family == OMF_release) {
       std::string err = "it is not safe to cast to '";
-      err += E->getType().getAsString(Pass.Ctx.PrintingPolicy);
+      err += E->getType().getAsString(Pass.Ctx.getPrintingPolicy());
       err += "' the result of '";
       err += family == OMF_autorelease ? "autorelease" : "release";
       err += "' message; a __bridge cast may result in a pointer to a "
@@ -230,7 +230,7 @@ private:
       if (ReturnStmt *retS = dyn_cast_or_null<ReturnStmt>(parent)) {
         std::string note = "remove the cast and change return type of function "
             "to '";
-        note += E->getSubExpr()->getType().getAsString(Pass.Ctx.PrintingPolicy);
+        note += E->getSubExpr()->getType().getAsString(Pass.Ctx.getPrintingPolicy());
         note += "' to have the object automatically autoreleased";
         Pass.TA.reportNote(note, retS->getLocStart());
       }

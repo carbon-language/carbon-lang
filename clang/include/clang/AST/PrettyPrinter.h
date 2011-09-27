@@ -38,7 +38,8 @@ struct PrintingPolicy {
       SuppressTagKeyword(false), SuppressTag(false), SuppressScope(false),
       SuppressInitializers(false),
       Dump(false), ConstantArraySizeAsWritten(false),
-      AnonymousTagLocations(true), SuppressStrongLifetime(false) { }
+      AnonymousTagLocations(true), SuppressStrongLifetime(false),
+      Bool(LO.Bool) { }
 
   /// \brief The number of spaces to use to indent each line.
   unsigned Indentation : 8;
@@ -130,6 +131,10 @@ struct PrintingPolicy {
   /// \brief When true, suppress printing of the __strong lifetime qualifier in
   /// ARC.
   unsigned SuppressStrongLifetime : 1;
+  
+  /// \brief Whether we can use 'bool' rather than '_Bool', even if the language
+  /// doesn't actually have 'bool' (because, e.g., it is defined as a macro).
+  unsigned Bool : 1;
 };
 
 } // end namespace clang

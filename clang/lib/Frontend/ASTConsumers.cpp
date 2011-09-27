@@ -39,7 +39,7 @@ namespace {
       : Out(o? *o : llvm::outs()), Dump(Dump) { }
 
     virtual void HandleTranslationUnit(ASTContext &Context) {
-      PrintingPolicy Policy = Context.PrintingPolicy;
+      PrintingPolicy Policy = Context.getPrintingPolicy();
       Policy.Dump = Dump;
       Context.getTranslationUnitDecl()->print(Out, Policy, /*Indentation=*/0,
                                               /*PrintInstantiation=*/true);

@@ -1759,7 +1759,7 @@ public:
   }
 
   Kind getKind() const { return static_cast<Kind>(BuiltinTypeBits.Kind); }
-  const char *getName(const LangOptions &LO) const;
+  const char *getName(const PrintingPolicy &Policy) const;
 
   bool isSugared() const { return false; }
   QualType desugar() const { return QualType(this, 0); }

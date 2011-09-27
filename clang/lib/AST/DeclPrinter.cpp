@@ -90,7 +90,7 @@ namespace {
 
 void Decl::print(raw_ostream &Out, unsigned Indentation,
                  bool PrintInstantiation) const {
-  print(Out, getASTContext().PrintingPolicy, Indentation, PrintInstantiation);
+  print(Out, getASTContext().getPrintingPolicy(), Indentation, PrintInstantiation);
 }
 
 void Decl::print(raw_ostream &Out, const PrintingPolicy &Policy,
@@ -168,7 +168,7 @@ void DeclContext::dumpDeclContext() const {
     DC = DC->getParent();
   
   ASTContext &Ctx = cast<TranslationUnitDecl>(DC)->getASTContext();
-  DeclPrinter Printer(llvm::errs(), Ctx, Ctx.PrintingPolicy, 0);
+  DeclPrinter Printer(llvm::errs(), Ctx, Ctx.getPrintingPolicy(), 0);
   Printer.VisitDeclContext(const_cast<DeclContext *>(this), /*Indent=*/false);
 }
 

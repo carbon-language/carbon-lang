@@ -854,7 +854,7 @@ void RewriteObjC::RewritePropertyImplDecl(ObjCPropertyImplDecl *PID,
           for (unsigned i = 0, e = FT->getNumArgs(); i != e; ++i) {
             if (i) Getr += ", ";
             std::string ParamStr = FT->getArgType(i).getAsString(
-                                                          Context->PrintingPolicy);
+                                                          Context->getPrintingPolicy());
             Getr += ParamStr;
           }
           if (FT->isVariadic()) {
@@ -1088,11 +1088,11 @@ void RewriteObjC::RewriteTypeIntoString(QualType T, std::string &ResultStr,
       PointeeTy = BPT->getPointeeType();
     if ((FPRetType = PointeeTy->getAs<FunctionType>())) {
       ResultStr += FPRetType->getResultType().getAsString(
-        Context->PrintingPolicy);
+        Context->getPrintingPolicy());
       ResultStr += "(*";
     }
   } else
-    ResultStr += T.getAsString(Context->PrintingPolicy);
+    ResultStr += T.getAsString(Context->getPrintingPolicy());
 }
 
 void RewriteObjC::RewriteObjCMethodDecl(const ObjCInterfaceDecl *IDecl,
@@ -1150,10 +1150,10 @@ void RewriteObjC::RewriteObjCMethodDecl(const ObjCInterfaceDecl *IDecl,
   }
   else
     ResultStr += Context->getObjCClassType().getAsString(
-      Context->PrintingPolicy);
+      Context->getPrintingPolicy());
 
   ResultStr += " self, ";
-  ResultStr += Context->getObjCSelType().getAsString(Context->PrintingPolicy);
+  ResultStr += Context->getObjCSelType().getAsString(Context->getPrintingPolicy());
   ResultStr += " _cmd";
 
   // Method arguments.
@@ -1169,9 +1169,9 @@ void RewriteObjC::RewriteObjCMethodDecl(const ObjCInterfaceDecl *IDecl,
       QualType QT = PDecl->getType();
       // Make sure we convert "t (^)(...)" to "t (*)(...)".
       if (convertBlockPointerToFunctionPointer(QT))
-        QT.getAsStringInternal(Name, Context->PrintingPolicy);
+        QT.getAsStringInternal(Name, Context->getPrintingPolicy());
       else
-        PDecl->getType().getAsStringInternal(Name, Context->PrintingPolicy);
+        PDecl->getType().getAsStringInternal(Name, Context->getPrintingPolicy());
       ResultStr += Name;
     }
   }
@@ -1188,7 +1188,7 @@ void RewriteObjC::RewriteObjCMethodDecl(const ObjCInterfaceDecl *IDecl,
       for (unsigned i = 0, e = FT->getNumArgs(); i != e; ++i) {
         if (i) ResultStr += ", ";
         std::string ParamStr = FT->getArgType(i).getAsString(
-          Context->PrintingPolicy);
+          Context->getPrintingPolicy());
         ResultStr += ParamStr;
       }
       if (FT->isVariadic()) {
@@ -1675,7 +1675,7 @@ Stmt *RewriteObjC::RewriteObjCForCollectionStmt(ObjCForCollectionStmt *S,
       // Simply use 'id' for all qualified types.
       elementTypeAsString = "id";
     else
-      elementTypeAsString = ElementType.getAsString(Context->PrintingPolicy);
+      elementTypeAsString = ElementType.getAsString(Context->getPrintingPolicy());
     buf += elementTypeAsString;
     buf += " ";
     elementName = D->getName();
@@ -1691,7 +1691,7 @@ Stmt *RewriteObjC::RewriteObjCForCollectionStmt(ObjCForCollectionStmt *S,
       // Simply use 'id' for all qualified types.
       elementTypeAsString = "id";
     else
-      elementTypeAsString = VD->getType().getAsString(Context->PrintingPolicy);
+      elementTypeAsString = VD->getType().getAsString(Context->getPrintingPolicy());
   }
 
   // struct __objcFastEnumerationState enumState = { 0 };
@@ -2387,7 +2387,7 @@ void RewriteObjC::RewriteTypeOfDecl(VarDecl *ND) {
   }
   // FIXME. This will not work for multiple declarators; as in:
   // __typeof__(a) b,c,d;
-  std::string TypeAsString(QT.getAsString(Context->PrintingPolicy));
+  std::string TypeAsString(QT.getAsString(Context->getPrintingPolicy()));
   SourceLocation DeclLoc = ND->getTypeSpecStartLoc();
   const char *startBuf = SM->getCharacterData(DeclLoc);
   if (ND->getInit()) {
@@ -2437,7 +2437,7 @@ void RewriteObjC::RewriteFunctionDecl(FunctionDecl *FD) {
 }
 
 void RewriteObjC::RewriteBlockPointerType(std::string& Str, QualType Type) {
-  std::string TypeString(Type.getAsString(Context->PrintingPolicy));
+  std::string TypeString(Type.getAsString(Context->getPrintingPolicy()));
   const char *argPtr = TypeString.c_str();
   if (!strchr(argPtr, '^')) {
     Str += TypeString;
@@ -2453,7 +2453,7 @@ void RewriteObjC::RewriteBlockPointerType(std::string& Str, QualType Type) {
 void RewriteObjC::RewriteBlockPointerTypeVariable(std::string& Str,
                                                   ValueDecl *VD) {
   QualType Type = VD->getType();
-  std::string TypeString(Type.getAsString(Context->PrintingPolicy));
+  std::string TypeString(Type.getAsString(Context->getPrintingPolicy()));
   const char *argPtr = TypeString.c_str();
   int paren = 0;
   while (*argPtr) {
@@ -2487,7 +2487,7 @@ void RewriteObjC::RewriteBlockLiteralFunctionDecl(FunctionDecl *FD) {
   if (!proto)
     return;
   QualType Type = proto->getResultType();
-  std::string FdStr = Type.getAsString(Context->PrintingPolicy);
+  std::string FdStr = Type.getAsString(Context->getPrintingPolicy());
   FdStr += " ";
   FdStr += FD->getName();
   FdStr +=  "(";
@@ -4235,7 +4235,7 @@ std::string RewriteObjC::SynthesizeBlockFunc(BlockExpr *CE, int i,
   const FunctionType *AFT = CE->getFunctionType();
   QualType RT = AFT->getResultType();
   std::string StructRef = "struct " + Tag;
-  std::string S = "static " + RT.getAsString(Context->PrintingPolicy) + " __" +
+  std::string S = "static " + RT.getAsString(Context->getPrintingPolicy()) + " __" +
                   funcName.str() + "_" + "block_func_" + utostr(i);
 
   BlockDecl *BD = CE->getBlockDecl();
@@ -4259,9 +4259,9 @@ std::string RewriteObjC::SynthesizeBlockFunc(BlockExpr *CE, int i,
       ParamStr = (*AI)->getNameAsString();
       QualType QT = (*AI)->getType();
       if (convertBlockPointerToFunctionPointer(QT))
-        QT.getAsStringInternal(ParamStr, Context->PrintingPolicy);
+        QT.getAsStringInternal(ParamStr, Context->getPrintingPolicy());
       else
-        QT.getAsStringInternal(ParamStr, Context->PrintingPolicy);      
+        QT.getAsStringInternal(ParamStr, Context->getPrintingPolicy());      
       S += ParamStr;
     }
     if (FT->isVariadic()) {
@@ -4310,7 +4310,7 @@ std::string RewriteObjC::SynthesizeBlockFunc(BlockExpr *CE, int i,
       QualType QT = (*I)->getType();
       if (HasLocalVariableExternalStorage(*I))
         QT = Context->getPointerType(QT);
-      QT.getAsStringInternal(Name, Context->PrintingPolicy);
+      QT.getAsStringInternal(Name, Context->getPrintingPolicy());
       S += Name + " = __cself->" + 
                               (*I)->getNameAsString() + "; // bound by copy\n";
     }
@@ -4408,8 +4408,8 @@ std::string RewriteObjC::SynthesizeBlockImpl(BlockExpr *CE, std::string Tag,
         QualType QT = (*I)->getType();
         if (HasLocalVariableExternalStorage(*I))
           QT = Context->getPointerType(QT);
-        QT.getAsStringInternal(FieldName, Context->PrintingPolicy);
-        QT.getAsStringInternal(ArgName, Context->PrintingPolicy);
+        QT.getAsStringInternal(FieldName, Context->getPrintingPolicy());
+        QT.getAsStringInternal(ArgName, Context->getPrintingPolicy());
         Constructor += ", " + ArgName;
       }
       S += FieldName + ";\n";
@@ -5222,7 +5222,7 @@ void RewriteObjC::RewriteByRefVar(VarDecl *ND) {
 
   QualType T = Ty;
   (void)convertBlockPointerToFunctionPointer(T);
-  T.getAsStringInternal(Name, Context->PrintingPolicy);
+  T.getAsStringInternal(Name, Context->getPrintingPolicy());
     
   ByrefType += " " + Name + ";\n";
   ByrefType += "};\n";

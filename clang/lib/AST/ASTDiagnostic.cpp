@@ -158,8 +158,8 @@ ConvertTypeToDiagnosticString(ASTContext &Context, QualType Ty,
   // FIXME: Playing with std::string is really slow.
   bool ForceAKA = false;
   QualType CanTy = Ty.getCanonicalType();
-  std::string S = Ty.getAsString(Context.PrintingPolicy);
-  std::string CanS = CanTy.getAsString(Context.PrintingPolicy);
+  std::string S = Ty.getAsString(Context.getPrintingPolicy());
+  std::string CanS = CanTy.getAsString(Context.getPrintingPolicy());
 
   for (SmallVectorImpl<intptr_t>::iterator I = QualTypeVals.begin(),
        E = QualTypeVals.end(); I != E; ++I) {
@@ -170,10 +170,10 @@ ConvertTypeToDiagnosticString(ASTContext &Context, QualType Ty,
     QualType CompareCanTy = CompareTy.getCanonicalType();
     if (CompareCanTy == CanTy)
       continue;  // Same canonical types
-    std::string CompareS = CompareTy.getAsString(Context.PrintingPolicy);
+    std::string CompareS = CompareTy.getAsString(Context.getPrintingPolicy());
     if (CompareS != S)
       continue;  // Original strings are different
-    std::string CompareCanS = CompareCanTy.getAsString(Context.PrintingPolicy);
+    std::string CompareCanS = CompareCanTy.getAsString(Context.getPrintingPolicy());
     if (CompareCanS == CanS)
       continue;  // No new info from canonical type
 
@@ -205,7 +205,7 @@ ConvertTypeToDiagnosticString(ASTContext &Context, QualType Ty,
       if (DesugaredTy == Ty) {
         DesugaredTy = Ty.getCanonicalType();
       }
-      std::string akaStr = DesugaredTy.getAsString(Context.PrintingPolicy);
+      std::string akaStr = DesugaredTy.getAsString(Context.getPrintingPolicy());
       if (akaStr != S) {
         S = "'" + S + "' (aka '" + akaStr + "')";
         return S;
@@ -270,13 +270,13 @@ void clang::FormatASTNodeDiagnosticArgument(
         Qualified = false;
       }
       const NamedDecl *ND = reinterpret_cast<const NamedDecl*>(Val);
-      ND->getNameForDiagnostic(S, Context.PrintingPolicy, Qualified);
+      ND->getNameForDiagnostic(S, Context.getPrintingPolicy(), Qualified);
       break;
     }
     case DiagnosticsEngine::ak_nestednamespec: {
       llvm::raw_string_ostream OS(S);
       reinterpret_cast<NestedNameSpecifier*>(Val)->print(OS,
-                                                        Context.PrintingPolicy);
+                                                        Context.getPrintingPolicy());
       NeedQuotes = false;
       break;
     }
@@ -305,7 +305,7 @@ void clang::FormatASTNodeDiagnosticArgument(
           S += "function ";
         
         S += "'";
-        ND->getNameForDiagnostic(S, Context.PrintingPolicy, true);
+        ND->getNameForDiagnostic(S, Context.getPrintingPolicy(), true);
         S += "'";
       }
       NeedQuotes = false;

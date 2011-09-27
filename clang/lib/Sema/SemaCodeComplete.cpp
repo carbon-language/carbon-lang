@@ -1840,6 +1840,14 @@ static void AddOrdinaryNameResults(Sema::ParserCompletionContext CCC,
     Results.AddResult(Result("operator"));
 }
 
+/// \brief Retrieve a printing policy suitable for code completion.
+static PrintingPolicy getCompletionPrintingPolicy(ASTContext &Context) {
+  PrintingPolicy Policy(Context.getPrintingPolicy());
+  Policy.AnonymousTagLocations = false;
+  Policy.SuppressStrongLifetime = true;
+  return Policy;
+}
+
 /// \brief Retrieve the string representation of the given type as a string
 /// that has the appropriate lifetime for code completion.
 ///
@@ -1848,14 +1856,12 @@ static void AddOrdinaryNameResults(Sema::ParserCompletionContext CCC,
 static const char *GetCompletionTypeString(QualType T,
                                            ASTContext &Context,
                                            CodeCompletionAllocator &Allocator) {
-  PrintingPolicy Policy(Context.PrintingPolicy);
-  Policy.AnonymousTagLocations = false;
-  Policy.SuppressStrongLifetime = true;
+  PrintingPolicy Policy = getCompletionPrintingPolicy(Context);
   
   if (!T.getLocalQualifiers()) {
     // Built-in type names are constant strings.
     if (const BuiltinType *BT = dyn_cast<BuiltinType>(T))
-      return BT->getName(Context.getLangOptions());
+      return BT->getName(Policy);
     
     // Anonymous tag types are constant strings.
     if (const TagType *TagT = dyn_cast<TagType>(T))
@@ -1952,10 +1958,7 @@ static std::string formatObjCParamQualifiers(unsigned ObjCQuals) {
 static std::string FormatFunctionParameter(ASTContext &Context,
                                            ParmVarDecl *Param,
                                            bool SuppressName = false) {
-  PrintingPolicy Policy(Context.PrintingPolicy);
-  Policy.AnonymousTagLocations = false;
-  Policy.SuppressStrongLifetime = true;
-
+  PrintingPolicy Policy = getCompletionPrintingPolicy(Context);
   bool ObjCMethodParam = isa<ObjCMethodDecl>(Param->getDeclContext());
   if (Param->getType()->isDependentType() ||
       !Param->getType()->isBlockPointerType()) {
@@ -2118,8 +2121,7 @@ static void AddTemplateParameterChunks(ASTContext &Context,
                                        unsigned MaxParameters = 0,
                                        unsigned Start = 0,
                                        bool InDefaultArg = false) {
-  PrintingPolicy Policy(Context.PrintingPolicy);
-  Policy.AnonymousTagLocations = false;
+  PrintingPolicy Policy = getCompletionPrintingPolicy(Context);
 
   typedef CodeCompletionString::Chunk Chunk;
   bool FirstParameter = true;
@@ -2203,7 +2205,7 @@ AddQualifierToCompletionString(CodeCompletionBuilder &Result,
   std::string PrintedNNS;
   {
     llvm::raw_string_ostream OS(PrintedNNS);
-    Qualifier->print(OS, Context.PrintingPolicy);
+    Qualifier->print(OS, getCompletionPrintingPolicy(Context));
   }
   if (QualifierIsInformative)
     Result.AddInformativeChunk(Result.getAllocator().CopyString(PrintedNNS));
@@ -2335,10 +2337,7 @@ CodeCompletionResult::CreateCodeCompletionString(Sema &S,
   typedef CodeCompletionString::Chunk Chunk;
   CodeCompletionBuilder Result(Allocator, Priority, Availability);
   
-  PrintingPolicy Policy(S.Context.PrintingPolicy);
-  Policy.AnonymousTagLocations = false;
-  Policy.SuppressStrongLifetime = true;
-
+  PrintingPolicy Policy = getCompletionPrintingPolicy(S.Context);
   if (Kind == RK_Pattern) {
     Pattern->Priority = Priority;
     Pattern->Availability = Availability;
@@ -2590,9 +2589,7 @@ CodeCompleteConsumer::OverloadCandidate::CreateSignatureString(
                                                                Sema &S,
                                      CodeCompletionAllocator &Allocator) const {
   typedef CodeCompletionString::Chunk Chunk;
-  PrintingPolicy Policy(S.Context.PrintingPolicy);
-  Policy.AnonymousTagLocations = false;
-  Policy.SuppressStrongLifetime = true;
+  PrintingPolicy Policy = getCompletionPrintingPolicy(S.Context);
 
   // FIXME: Set priority, availability appropriately.
   CodeCompletionBuilder Result(Allocator, 1, CXAvailability_Available);
@@ -2900,7 +2897,7 @@ static void MaybeAddOverrideCalls(Sema &S, DeclContext *InContext,
       if (NNS) {
         std::string Str;
         llvm::raw_string_ostream OS(Str);
-        NNS->print(OS, S.Context.PrintingPolicy);
+        NNS->print(OS, getCompletionPrintingPolicy(S.Context));
         Builder.AddTextChunk(Results.getAllocator().CopyString(OS.str()));
       }
     } else if (!InContext->Equals(Overridden->getDeclContext()))
@@ -3937,10 +3934,7 @@ void Sema::CodeCompleteOperatorName(Scope *S) {
 void Sema::CodeCompleteConstructorInitializer(Decl *ConstructorD,
                                               CXXCtorInitializer** Initializers,
                                               unsigned NumInitializers) {
-  PrintingPolicy Policy(Context.PrintingPolicy);
-  Policy.AnonymousTagLocations = false;
-  Policy.SuppressStrongLifetime = true;
-
+  PrintingPolicy Policy = getCompletionPrintingPolicy(Context);
   CXXConstructorDecl *Constructor
     = static_cast<CXXConstructorDecl *>(ConstructorD);
   if (!Constructor)
@@ -6448,9 +6442,7 @@ void Sema::CodeCompleteObjCMethodDecl(Scope *S,
   ResultBuilder Results(*this, CodeCompleter->getAllocator(),
                         CodeCompletionContext::CCC_Other);
   Results.EnterNewScope();
-  PrintingPolicy Policy(Context.PrintingPolicy);
-  Policy.AnonymousTagLocations = false;
-  Policy.SuppressStrongLifetime = true;
+  PrintingPolicy Policy = getCompletionPrintingPolicy(Context);
   for (KnownMethodsMap::iterator M = KnownMethods.begin(), 
                               MEnd = KnownMethods.end();
        M != MEnd; ++M) {

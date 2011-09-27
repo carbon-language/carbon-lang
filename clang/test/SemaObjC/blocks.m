@@ -1,4 +1,6 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -fblocks %s
+
+#define bool _Bool
 @protocol NSObject;
 
 void bar(id(^)(void));
@@ -22,8 +24,8 @@ void foo4(id (^objectCreationBlock)(int)) {
 }
 
 void bar5(id(^)(void)); // expected-note{{passing argument to parameter here}}
-void foo5(id (^objectCreationBlock)(int)) {
-    return bar5(objectCreationBlock); // expected-error {{incompatible block pointer types passing 'id (^)(int)' to parameter of type 'id (^)(void)'}}
+void foo5(id (^objectCreationBlock)(bool)) {
+    return bar5(objectCreationBlock); // expected-error {{incompatible block pointer types passing 'id (^)(bool)' to parameter of type 'id (^)(void)'}}
 }
 
 void bar6(id(^)(int));
