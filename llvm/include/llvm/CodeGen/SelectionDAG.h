@@ -450,6 +450,10 @@ public:
   SDValue getVectorShuffle(EVT VT, DebugLoc dl, SDValue N1, SDValue N2,
                            const int *MaskElts);
 
+  /// getAnyExtOrTrunc - Convert Op, which must be of integer type, to the
+  /// integer type VT, by either any-extending or truncating it.
+  SDValue getAnyExtOrTrunc(SDValue Op, DebugLoc DL, EVT VT);
+
   /// getSExtOrTrunc - Convert Op, which must be of integer type, to the
   /// integer type VT, by either sign-extending or truncating it.
   SDValue getSExtOrTrunc(SDValue Op, DebugLoc DL, EVT VT);
