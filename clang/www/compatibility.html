@@ -60,6 +60,12 @@
       <li><a href="#param_name_lookup">Parameter name lookup</a></li>
     </ul>
   </li>
+  <li><a href="#c++11">C++11 compatibility</a>
+    <ul>
+      <li><a href="#deleted-special-func">Deleted special member
+  functions</a></li>
+    </ul>
+  </li>
   <li><a href="#objective-c++">Objective-C++ compatibility</a>
     <ul>
       <li><a href="#implicit-downcasts">Implicit downcasts</a></li>
@@ -755,7 +761,39 @@ void f(int a, int a);
 <p>Clang diagnoses this error (where the parameter name has been redeclared). To fix this problem, rename one of the parameters.</p>
 
 <!-- ======================================================================= -->
-<h2 id="objective-c++">Objective-C++ compatibility</h3>
+<h2 id="c++11">C++11 compatibility</h2>
+<!-- ======================================================================= -->
+
+<!-- ======================================================================= -->
+<h3 id="deleted-special-func">Deleted special member functions</h3>
+<!-- ======================================================================= -->
+
+<p>In C++11, the explicit declaration of a move constructor or a move
+assignment operator within a class disables the implicit declaration
+of the copy constructor and copy assignment operator. This change came
+fairly late in the C++11 standardization process, so early
+implementations of C++11 (including Clang before 3.0, GCC before 4.7,
+and Visual Studio 2010) do not implement this rule, leading them to
+accept this ill-formed code:</p>
+
+<pre>
+struct X {
+  X(X&amp;&amp;); <i>// suppresses implicit copy constructor</i>
+};
+
+void f(X x);
+void g(X x) {
+  f(x); <i>// error: X has no copy constructor</i>
+}
+</pre>
+
+<p>This affects some C++11 code, including Boost's popular <a
+href="http://www.boost.org/doc/libs/release/libs/smart_ptr/shared_ptr.htm"><tt>shared_ptr</tt></a>
+up to version 1.47.0. The fix for Boost's <tt>shared_ptr</tt> is
+<a href="https://svn.boost.org/trac/boost/changeset/73202">available here</a>.</p>
+
+<!-- ======================================================================= -->
+<h2 id="objective-c++">Objective-C++ compatibility</h2>
 <!-- ======================================================================= -->
 
 <!-- ======================================================================= -->
