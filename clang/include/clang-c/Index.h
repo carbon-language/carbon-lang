@@ -1965,7 +1965,8 @@ enum CXTypeKind {
   CXType_ObjCInterface = 108,
   CXType_ObjCObjectPointer = 109,
   CXType_FunctionNoProto = 110,
-  CXType_FunctionProto = 111
+  CXType_FunctionProto = 111,
+  CXType_ConstantArray = 112
 };
 
 /**
@@ -2055,6 +2056,20 @@ CINDEX_LINKAGE CXType clang_getCursorResultType(CXCursor C);
  *  otherwise.
  */
 CINDEX_LINKAGE unsigned clang_isPODType(CXType T);
+
+/**
+ * \brief Return the element type of an array type.
+ *
+ * If a non-array type is passed in, an invalid type is returned.
+ */
+CINDEX_LINKAGE CXType clang_getArrayElementType(CXType T);
+
+/**
+ * \brief Return the the array size of a constant array.
+ *
+ * If a non-array type is passed in, -1 is returned.
+ */
+CINDEX_LINKAGE long long clang_getArraySize(CXType T);
 
 /**
  * \brief Returns 1 if the base class specified by the cursor with kind

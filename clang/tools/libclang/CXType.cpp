@@ -84,6 +84,7 @@ static CXTypeKind GetTypeKind(QualType T) {
     TKCASE(ObjCObjectPointer);
     TKCASE(FunctionNoProto);
     TKCASE(FunctionProto);
+    TKCASE(ConstantArray);
     default:
       return CXType_Unexposed;
   }
@@ -330,6 +331,7 @@ CXString clang_getTypeKindSpelling(enum CXTypeKind K) {
     TKIND(ObjCObjectPointer);
     TKIND(FunctionNoProto);
     TKIND(FunctionProto);
+    TKIND(ConstantArray);
   }
 #undef TKIND
   return cxstring::createCXString(s);
@@ -371,6 +373,40 @@ unsigned clang_isPODType(CXType X) {
   ASTUnit *AU = static_cast<ASTUnit*>(TU->TUData);
 
   return T.isPODType(AU->getASTContext()) ? 1 : 0;
+}
+
+CXType clang_getArrayElementType(CXType CT) {
+  QualType ET = QualType();
+  QualType T = GetQualType(CT);
+  const Type *TP = T.getTypePtrOrNull();
+
+  if (TP) {
+    switch (TP->getTypeClass()) {
+    case Type::ConstantArray:
+      ET = cast<ConstantArrayType> (TP)->getElementType();
+      break;
+    default:
+      break;
+    }
+  }
+  return MakeCXType(ET, GetTU(CT));
+}
+
+long long clang_getArraySize(CXType CT) {
+  long long result = -1;
+  QualType T = GetQualType(CT);
+  const Type *TP = T.getTypePtrOrNull();
+
+  if (TP) {
+    switch (TP->getTypeClass()) {
+    case Type::ConstantArray:
+      result = cast<ConstantArrayType> (TP)->getSize().getSExtValue();
+      break;
+    default:
+      break;
+    }
+  }
+  return result;
 }
 
 CXString clang_getDeclObjCTypeEncoding(CXCursor C) {
