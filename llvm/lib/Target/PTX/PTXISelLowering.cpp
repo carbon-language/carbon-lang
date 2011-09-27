@@ -225,8 +225,11 @@ SDValue PTXTargetLowering::
 
       unsigned ParamSize = Ins[i].VT.getStoreSizeInBits();
       unsigned Param = PM.addArgumentParam(ParamSize);
+      std::string ParamName = PM.getParamName(Param);
+      SDValue ParamValue = DAG.getTargetExternalSymbol(ParamName.c_str(),
+                                                       MVT::Other);
       SDValue ArgValue = DAG.getNode(PTXISD::LOAD_PARAM, dl, Ins[i].VT, Chain,
-                                     DAG.getTargetConstant(Param, MVT::i32));
+                                     ParamValue);
       InVals.push_back(ArgValue);
     }
   }
@@ -319,9 +322,11 @@ SDValue PTXTargetLowering::
     if (Outs.size() == 1) {
       unsigned ParamSize = OutVals[0].getValueType().getSizeInBits();
       unsigned Param = PM.addReturnParam(ParamSize);
-      SDValue ParamIndex = DAG.getTargetConstant(Param, MVT::i32);
+      std::string ParamName = PM.getParamName(Param);
+      SDValue ParamValue = DAG.getTargetExternalSymbol(ParamName.c_str(),
+                                                       MVT::Other);
       Chain = DAG.getNode(PTXISD::STORE_PARAM, dl, MVT::Other, Chain,
-                          ParamIndex, OutVals[0]);
+                          ParamValue, OutVals[0]);
     }
   } else {
     for (unsigned i = 0, e = Outs.size(); i != e; ++i) {
@@ -414,21 +419,25 @@ PTXTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   for (unsigned i = 0; i != OutVals.size(); ++i) {
     unsigned Size = OutVals[i].getValueType().getSizeInBits();
     unsigned Param = PM.addLocalParam(Size);
-    SDValue Index = DAG.getTargetConstant(Param, MVT::i32);
+    std::string ParamName = PM.getParamName(Param);
+    SDValue ParamValue = DAG.getTargetExternalSymbol(ParamName.c_str(),
+                                                     MVT::Other);
     Chain = DAG.getNode(PTXISD::STORE_PARAM, dl, MVT::Other, Chain,
-                        Index, OutVals[i]);
-    Ops[i+Ins.size()+2] = Index;
+                        ParamValue, OutVals[i]);
+    Ops[i+Ins.size()+2] = ParamValue;
   }
 
-  std::vector<unsigned> InParams;
+  std::vector<SDValue> InParams;
 
   // Generate list of .param variables to hold the return value(s).
   for (unsigned i = 0; i < Ins.size(); ++i) {
     unsigned Size = Ins[i].VT.getStoreSizeInBits();
     unsigned Param = PM.addLocalParam(Size);
-    SDValue Index = DAG.getTargetConstant(Param, MVT::i32);
-    Ops[i+1] = Index;
-    InParams.push_back(Param);
+    std::string ParamName = PM.getParamName(Param);
+    SDValue ParamValue = DAG.getTargetExternalSymbol(ParamName.c_str(),
+                                                     MVT::Other);
+    Ops[i+1] = ParamValue;
+    InParams.push_back(ParamValue);
   }
 
   Ops[0] = Chain;
@@ -438,8 +447,8 @@ PTXTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
 
   // Create the LOAD_PARAM nodes that retrieve the function return value(s).
   for (unsigned i = 0; i < Ins.size(); ++i) {
-    SDValue Index = DAG.getTargetConstant(InParams[i], MVT::i32);
-    SDValue Load = DAG.getNode(PTXISD::LOAD_PARAM, dl, Ins[i].VT, Chain, Index);
+    SDValue Load = DAG.getNode(PTXISD::LOAD_PARAM, dl, Ins[i].VT, Chain,
+                               InParams[i]);
     InVals.push_back(Load);
   }
 

@@ -66,10 +66,6 @@ public:
   void printOperand(const MachineInstr *MI, int opNum, raw_ostream &OS);
   void printMemOperand(const MachineInstr *MI, int opNum, raw_ostream &OS,
                        const char *Modifier = 0);
-  void printParamOperand(const MachineInstr *MI, int opNum, raw_ostream &OS,
-                         const char *Modifier = 0);
-  void printLocalOperand(const MachineInstr *MI, int opNum, raw_ostream &OS,
-                         const char *Modifier = 0);
   void printReturnOperand(const MachineInstr *MI, int opNum, raw_ostream &OS,
                           const char *Modifier = 0);
   void printPredicateOperand(const MachineInstr *MI, raw_ostream &O);
@@ -415,6 +411,9 @@ void PTXAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
     case MachineOperand::MO_Register:
       OS << MFI->getRegisterName(MO.getReg());
       break;
+    case MachineOperand::MO_ExternalSymbol:
+      OS << MO.getSymbolName();
+      break;
     case MachineOperand::MO_FPImmediate:
       APInt constFP = MO.getFPImm()->getValueAPF().bitcastToAPInt();
       bool  isFloat = MO.getFPImm()->getType()->getTypeID() == Type::FloatTyID;
@@ -451,27 +450,10 @@ void PTXAsmPrinter::printMemOperand(const MachineInstr *MI, int opNum,
   printOperand(MI, opNum+1, OS);
 }
 
-void PTXAsmPrinter::printParamOperand(const MachineInstr *MI, int opNum,
-                                      raw_ostream &OS, const char *Modifier) {
-  const PTXMachineFunctionInfo *MFI = MI->getParent()->getParent()->
-                                      getInfo<PTXMachineFunctionInfo>();
-  OS << MFI->getParamManager().getParamName(MI->getOperand(opNum).getImm());
-}
-
 void PTXAsmPrinter::printReturnOperand(const MachineInstr *MI, int opNum,
                                        raw_ostream &OS, const char *Modifier) {
   //OS << RETURN_PREFIX << (int) MI->getOperand(opNum).getImm() + 1;
   OS << "__ret";
-}
-
-void PTXAsmPrinter::printLocalOperand(const MachineInstr *MI, int opNum,
-                                      raw_ostream &OS, const char *Modifier) {
-  OS << "__local" << MI->getOperand(opNum).getImm();
-
-  if (MI->getOperand(opNum+1).isImm() && MI->getOperand(opNum+1).getImm() != 0){
-    OS << "+";
-    printOperand(MI, opNum+1, OS);
-  }
 }
 
 void PTXAsmPrinter::EmitVariableDeclaration(const GlobalVariable *gv) {
@@ -702,7 +684,7 @@ printCall(const MachineInstr *MI, raw_ostream &O) {
     } else {
       O << ", ";
     }
-    printParamOperand(MI, Index, O);
+    printOperand(MI, Index, O);
     Index++;
   }
 
@@ -718,7 +700,7 @@ printCall(const MachineInstr *MI, raw_ostream &O) {
   Index++;
 
   while (Index < MI->getNumOperands()) {
-    printParamOperand(MI, Index, O);
+    printOperand(MI, Index, O);
     if (Index < MI->getNumOperands()-1) {
       O << ", ";
     }

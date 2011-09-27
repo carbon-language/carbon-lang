@@ -42,6 +42,8 @@ void PTXRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
 
   //unsigned Reg = MRI.createVirtualRegister(PTX::RegF32RegisterClass);
 
+  llvm_unreachable("FrameIndex should have been previously eliminated!");
+
   Index = 0;
   while (!MI.getOperand(Index).isFI()) {
     ++Index;
@@ -63,7 +65,10 @@ void PTXRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   //}
   //MI2->dump();
 
+  //MachineOperand ESOp = MachineOperand::CreateES("__local__");
+
   // This frame index is post stack slot re-use assignments
   //MI.getOperand(Index).ChangeToRegister(Reg, false);
   MI.getOperand(Index).ChangeToImmediate(FrameIndex);
+  //MI.getOperand(Index) = ESOp;
 }

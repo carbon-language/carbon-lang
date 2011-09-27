@@ -12,7 +12,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "PTX.h"
+#include "PTXMachineFunctionInfo.h"
 #include "PTXTargetMachine.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Support/Debug.h"
@@ -180,20 +182,14 @@ SDNode *PTXDAGToDAGISel::SelectWRITEPARAM(SDNode *Node) {
 SDNode *PTXDAGToDAGISel::SelectFrameIndex(SDNode *Node) {
   int FI = cast<FrameIndexSDNode>(Node)->getIndex();
   //dbgs() << "Selecting FrameIndex at index " << FI << "\n";
-  SDValue TFI = CurDAG->getTargetFrameIndex(FI, Node->getValueType(0));
+  //SDValue TFI = CurDAG->getTargetFrameIndex(FI, Node->getValueType(0));
 
-  //unsigned OpCode = PTX::LOAD_LOCAL_F32;
+  PTXMachineFunctionInfo *MFI = MF->getInfo<PTXMachineFunctionInfo>();
 
-  //for (SDNode::use_iterator i = Node->use_begin(), e = Node->use_end();
-  //     i != e; ++i) {
-  //  SDNode *Use = *i;
-  //  dbgs() << "USE: ";
-  //  Use->dumpr(CurDAG);
-  //}
+  SDValue FrameSymbol = CurDAG->getTargetExternalSymbol(MFI->getFrameSymbol(FI),
+                                                        Node->getValueType(0));
 
-  return Node;
-  //return CurDAG->getMachineNode(OpCode, Node->getDebugLoc(),
-  //                              Node->getValueType(0), TFI);
+  return FrameSymbol.getNode();
 }
 
 // Match memory operand of the form [reg+reg]

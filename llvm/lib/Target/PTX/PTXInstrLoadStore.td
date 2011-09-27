@@ -88,12 +88,12 @@ def MEMri64 : Operand<i64> {
   let MIOperandInfo = (ops RegI64, i64imm);
 }
 def LOCALri32 : Operand<i32> {
-  let PrintMethod = "printLocalOperand";
-  let MIOperandInfo = (ops RegI32, i32imm);
+  let PrintMethod = "printMemOperand";
+  let MIOperandInfo = (ops i32imm, i32imm);
 }
 def LOCALri64 : Operand<i64> {
-  let PrintMethod = "printLocalOperand";
-  let MIOperandInfo = (ops RegI64, i64imm);
+  let PrintMethod = "printMemOperand";
+  let MIOperandInfo = (ops i64imm, i64imm);
 }
 def MEMii32 : Operand<i32> {
   let PrintMethod = "printMemOperand";
@@ -117,7 +117,7 @@ def MEMret : Operand<i32> {
 
 // Load/store .param space
 def PTXloadparam
-  : SDNode<"PTXISD::LOAD_PARAM", SDTypeProfile<1, 1, [SDTCisVT<1, i32>]>,
+  : SDNode<"PTXISD::LOAD_PARAM", SDTypeProfile<1, 1, [SDTCisPtrTy<1>]>,
            [SDNPHasChain, SDNPOutGlue, SDNPOptInGlue]>;
 def PTXstoreparam
   : SDNode<"PTXISD::STORE_PARAM", SDTypeProfile<0, 2, [SDTCisVT<0, i32>]>,
@@ -220,12 +220,12 @@ multiclass PTX_LOCAL_LD_ST<string typestr, RegisterClass RC> {
 
 multiclass PTX_PARAM_LD_ST<string typestr, RegisterClass RC> {
   let hasSideEffects = 1 in {
-  def LDpi : InstPTX<(outs RC:$d), (ins MEMpi:$a),
+  def LDpi : InstPTX<(outs RC:$d), (ins i32imm:$a),
                      !strconcat("ld.param", !strconcat(typestr, "\t$d, [$a]")),
-                     [(set RC:$d, (PTXloadparam timm:$a))]>;
-  def STpi : InstPTX<(outs), (ins MEMpi:$d, RC:$a),
+                     [(set RC:$d, (PTXloadparam texternalsym:$a))]>;
+  def STpi : InstPTX<(outs), (ins i32imm:$d, RC:$a),
                      !strconcat("st.param", !strconcat(typestr, "\t[$d], $a")),
-                     [(PTXstoreparam timm:$d, RC:$a)]>;
+                     [(PTXstoreparam texternalsym:$d, RC:$a)]>;
   }
 }
 
