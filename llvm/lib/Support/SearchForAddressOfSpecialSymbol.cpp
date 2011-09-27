@@ -28,21 +28,6 @@ static void *DoSearch(const char* symbolName) {
 
 #ifdef __APPLE__
   {
-    EXPLICIT_SYMBOL(__ashldi3);
-    EXPLICIT_SYMBOL(__ashrdi3);
-    EXPLICIT_SYMBOL(__cmpdi2);
-    EXPLICIT_SYMBOL(__divdi3);
-    EXPLICIT_SYMBOL(__fixdfdi);
-    EXPLICIT_SYMBOL(__fixsfdi);
-    EXPLICIT_SYMBOL(__fixunsdfdi);
-    EXPLICIT_SYMBOL(__fixunssfdi);
-    EXPLICIT_SYMBOL(__floatdidf);
-    EXPLICIT_SYMBOL(__floatdisf);
-    EXPLICIT_SYMBOL(__lshrdi3);
-    EXPLICIT_SYMBOL(__moddi3);
-    EXPLICIT_SYMBOL(__udivdi3);
-    EXPLICIT_SYMBOL(__umoddi3);
-
     // __eprintf is sometimes used for assert() handling on x86.
     //
     // FIXME: Currently disabled when using Clang, as we don't always have our
