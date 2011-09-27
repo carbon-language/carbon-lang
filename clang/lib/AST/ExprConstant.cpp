@@ -616,6 +616,8 @@ public:
       { return Success((Expr*)0); }
   bool VisitCXXNullPtrLiteralExpr(const CXXNullPtrLiteralExpr *E)
       { return Success((Expr*)0); }
+  bool VisitCXXScalarValueInitExpr(const CXXScalarValueInitExpr *E)
+      { return Success((Expr*)0); }
 
   // FIXME: Missing: @protocol, @selector
 };
