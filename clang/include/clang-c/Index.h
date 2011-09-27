@@ -1555,6 +1555,13 @@ CINDEX_LINKAGE CXCursor clang_getTranslationUnitCursor(CXTranslationUnit);
 CINDEX_LINKAGE unsigned clang_equalCursors(CXCursor, CXCursor);
 
 /**
+ * \brief Returns non-zero if \arg cursor is null.
+ */
+static inline int clang_Cursor_isNull(CXCursor cursor) {
+  return clang_equalCursors(cursor, clang_getNullCursor());
+}
+
+/**
  * \brief Compute a hash value for the given cursor.
  */
 CINDEX_LINKAGE unsigned clang_hashCursor(CXCursor);
@@ -1668,6 +1675,11 @@ CINDEX_LINKAGE enum CXLanguageKind {
  * \brief Determine the "language" of the entity referred to by a given cursor.
  */
 CINDEX_LINKAGE enum CXLanguageKind clang_getCursorLanguage(CXCursor cursor);
+
+/**
+ * \brief Returns the translation unit that a cursor originated from.
+ */
+CINDEX_LINKAGE CXTranslationUnit clang_Cursor_getTranslationUnit(CXCursor);
 
 
 /**
