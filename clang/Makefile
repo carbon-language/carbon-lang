@@ -68,7 +68,7 @@ ifeq ($(IS_TOP_LEVEL),1)
 ifneq ($(PROJ_SRC_ROOT),$(PROJ_OBJ_ROOT))
 $(RecursiveTargets)::
 	$(Verb) for dir in test unittests; do \
-	  if [ ! -f $${dir}/Makefile ]; then \
+	  if [ -f $(PROJ_SRC_DIR)/$${dir}/Makefile ] && [ ! -f $${dir}/Makefile ]; then \
 	    $(MKDIR) $${dir}; \
 	    $(CP) $(PROJ_SRC_DIR)/$${dir}/Makefile $${dir}/Makefile; \
 	  fi \
