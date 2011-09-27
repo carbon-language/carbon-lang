@@ -45,9 +45,9 @@ protected:
 
       // Example error handling.
       if (args[i] == "-an-error") {
-        Diagnostic &D = CI.getDiagnostics();
+        DiagnosticsEngine &D = CI.getDiagnostics();
         unsigned DiagID = D.getCustomDiagID(
-          Diagnostic::Error, "invalid argument '" + args[i] + "'");
+          DiagnosticsEngine::Error, "invalid argument '" + args[i] + "'");
         D.Report(DiagID);
         return false;
       }

@@ -74,7 +74,7 @@ int main(int argc, const char **argv, char * const *envp) {
     new TextDiagnosticPrinter(llvm::errs(), DiagnosticOptions());
 
   llvm::IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
-  Diagnostic Diags(DiagID, DiagClient);
+  DiagnosticsEngine Diags(DiagID, DiagClient);
   Driver TheDriver(Path.str(), llvm::sys::getHostTriple(),
                    "a.out", /*IsProduction=*/false, /*CXXIsProduction=*/false,
                    Diags);
