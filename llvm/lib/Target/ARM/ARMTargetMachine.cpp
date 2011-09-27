@@ -15,6 +15,7 @@
 #include "ARM.h"
 #include "llvm/PassManager.h"
 #include "llvm/CodeGen/Passes.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/TargetRegistry.h"
@@ -107,7 +108,8 @@ bool ARMBaseTargetMachine::addPreRegAlloc(PassManagerBase &PM,
     PM.add(createARMLoadStoreOptimizationPass(true));
   if (OptLevel != CodeGenOpt::None && Subtarget.isCortexA9())
     PM.add(createMLxExpansionPass());
-
+  if (getMCAsmInfo()->getExceptionHandlingType() == ExceptionHandling::SjLj)
+    createARMSjLjLoweringPass();
   return true;
 }
 
