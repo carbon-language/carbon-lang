@@ -439,6 +439,9 @@ public:
     GetNumWatchpointLocations () const;
 
     lldb::SBWatchpointLocation
+    GetLastCreatedWatchpointLocation ();
+
+    lldb::SBWatchpointLocation
     GetWatchpointLocationAtIndex (uint32_t idx) const;
 
     bool

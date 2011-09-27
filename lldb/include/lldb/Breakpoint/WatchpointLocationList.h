@@ -187,6 +187,7 @@ public:
     size_t
     GetSize() const
     {
+        Mutex::Locker locker(m_mutex);
         return m_address_to_location.size();
     }
 

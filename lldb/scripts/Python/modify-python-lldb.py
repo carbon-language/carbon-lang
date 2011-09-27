@@ -199,11 +199,12 @@ d = { 'SBBreakpoint':  ('GetNumLocations',   'GetLocationAtIndex'),
 #
 # This dictionary defines a mapping from classname to equality method name(s).
 #
-e = { 'SBAddress':    ['GetFileAddress', 'GetModule'],
-      'SBBreakpoint': ['GetID'],
-      'SBFileSpec':   ['GetFilename', 'GetDirectory'],
-      'SBModule':     ['GetFileSpec', 'GetUUIDString'],
-      'SBType':       ['GetByteSize', 'GetName']
+e = { 'SBAddress':            ['GetFileAddress', 'GetModule'],
+      'SBBreakpoint':         ['GetID'],
+      'SBWatchpointLocation': ['GetID'],
+      'SBFileSpec':           ['GetFilename', 'GetDirectory'],
+      'SBModule':             ['GetFileSpec', 'GetUUIDString'],
+      'SBType':               ['GetByteSize', 'GetName']
       }
 
 def list_to_frag(list):

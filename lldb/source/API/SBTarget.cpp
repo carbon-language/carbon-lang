@@ -871,10 +871,31 @@ SBTarget::GetNumWatchpointLocations () const
 {
     if (m_opaque_sp)
     {
-        // The breakpoint list is thread safe, no need to lock
+        // The watchpoint location list is thread safe, no need to lock
         return m_opaque_sp->GetWatchpointLocationList().GetSize();
     }
     return 0;
+}
+
+SBWatchpointLocation
+SBTarget::GetLastCreatedWatchpointLocation ()
+{
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+
+    SBWatchpointLocation sb_watchpoint_location;
+    if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetAPIMutex());
+        sb_watchpoint_location = m_opaque_sp->GetLastCreatedWatchpointLocation();
+    }
+
+    if (log)
+    {
+        log->Printf ("SBTarget(%p)::GetLastCreateWatchpointLocation () => SBWatchpointLocation(%p)", 
+                     m_opaque_sp.get(), sb_watchpoint_location.get());
+    }
+
+    return sb_watchpoint_location;
 }
 
 SBWatchpointLocation
@@ -883,7 +904,7 @@ SBTarget::GetWatchpointLocationAtIndex (uint32_t idx) const
     SBWatchpointLocation sb_watchpoint_location;
     if (m_opaque_sp)
     {
-        // The breakpoint list is thread safe, no need to lock
+        // The watchpoint location list is thread safe, no need to lock
         *sb_watchpoint_location = m_opaque_sp->GetWatchpointLocationList().GetByIndex(idx);
     }
     return sb_watchpoint_location;

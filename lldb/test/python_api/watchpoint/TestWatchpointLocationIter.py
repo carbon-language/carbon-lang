@@ -65,7 +65,9 @@ class WatchpointLocationIteratorTestCase(TestBase):
 
         # There should be only 1 watchpoint location under the target.
         self.assertTrue(target.GetNumWatchpointLocations() == 1)
-        wp_loc = target.GetWatchpointLocationAtIndex(0) 
+        wp_loc = target.GetWatchpointLocationAtIndex(0)
+        last_created = target.GetLastCreatedWatchpointLocation()
+        self.assertTrue(wp_loc == last_created)
         self.assertTrue(wp_loc.IsEnabled())
         watch_id = wp_loc.GetID()
         self.assertTrue(watch_id != 0)

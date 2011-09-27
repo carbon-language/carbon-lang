@@ -298,6 +298,12 @@ public:
                               size_t size,
                               uint32_t type);
 
+    lldb::WatchpointLocationSP
+    GetLastCreatedWatchpointLocation ()
+    {
+        return m_last_created_watchpoint_location;
+    }
+
     WatchpointLocationList &
     GetWatchpointLocationList()
     {
@@ -866,6 +872,7 @@ protected:
     BreakpointList  m_internal_breakpoint_list;
     lldb::BreakpointSP m_last_created_breakpoint;
     WatchpointLocationList  m_watchpoint_location_list;
+    lldb::WatchpointLocationSP m_last_created_watchpoint_location;
     // We want to tightly control the process destruction process so
     // we can correctly tear down everything that we need to, so the only
     // class that knows about the process lifespan is this target class.

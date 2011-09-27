@@ -167,6 +167,7 @@ Target::Destroy()
     m_breakpoint_list.RemoveAll(notify);
     m_internal_breakpoint_list.RemoveAll(notify);
     m_last_created_breakpoint.reset();
+    m_last_created_watchpoint_location.reset();
     m_search_filter_sp.reset();
     m_image_search_paths.Clear(notify);
     m_scratch_ast_context_ap.reset();
@@ -452,7 +453,10 @@ Target::CreateWatchpointLocation(lldb::addr_t addr, size_t size, uint32_t type)
                         rc.Success() ? "succeeded" : "failed",
                         wp_loc_sp->GetID());
 
-    if (rc.Fail()) wp_loc_sp.reset();
+    if (rc.Fail())
+        wp_loc_sp.reset();
+    else
+        m_last_created_watchpoint_location = wp_loc_sp;
     return wp_loc_sp;
 }
 
