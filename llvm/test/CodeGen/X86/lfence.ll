@@ -1,8 +1,8 @@
 ; RUN: llc < %s -march=x86 -mattr=+sse2 | grep lfence
 
-declare void @llvm.memory.barrier( i1 , i1 , i1 , i1 , i1)
+declare void @llvm.x86.sse2.lfence() nounwind
 
 define void @test() {
-	call void @llvm.memory.barrier( i1 true, i1 false, i1 false, i1 false, i1 true)
-	ret void
+  call void @llvm.x86.sse2.lfence()
+  ret void
 }

@@ -24,87 +24,87 @@ entry:
 	%tmp = load i32* %temp
         ; CHECK: lock
         ; CHECK: xaddl
-	call i32 @llvm.atomic.load.add.i32.p0i32( i32* %val1, i32 %tmp )		; <i32>:0 [#uses=1]
+  %0 = atomicrmw add i32* %val1, i32 %tmp monotonic
 	store i32 %0, i32* %old
         ; CHECK: lock
         ; CHECK: xaddl
-	call i32 @llvm.atomic.load.sub.i32.p0i32( i32* %val2, i32 30 )		; <i32>:1 [#uses=1]
+  %1 = atomicrmw sub i32* %val2, i32 30 monotonic
 	store i32 %1, i32* %old
         ; CHECK: lock
         ; CHECK: xaddl
-	call i32 @llvm.atomic.load.add.i32.p0i32( i32* %val2, i32 1 )		; <i32>:2 [#uses=1]
+  %2 = atomicrmw add i32* %val2, i32 1 monotonic
 	store i32 %2, i32* %old
         ; CHECK: lock
         ; CHECK: xaddl
-	call i32 @llvm.atomic.load.sub.i32.p0i32( i32* %val2, i32 1 )		; <i32>:3 [#uses=1]
+  %3 = atomicrmw sub i32* %val2, i32 1 monotonic
 	store i32 %3, i32* %old
         ; CHECK: andl
         ; CHECK: lock
         ; CHECK: cmpxchgl
-	call i32 @llvm.atomic.load.and.i32.p0i32( i32* %andt, i32 4080 )		; <i32>:4 [#uses=1]
+  %4 = atomicrmw and i32* %andt, i32 4080 monotonic
 	store i32 %4, i32* %old
         ; CHECK: orl
         ; CHECK: lock
         ; CHECK: cmpxchgl
-	call i32 @llvm.atomic.load.or.i32.p0i32( i32* %ort, i32 4080 )		; <i32>:5 [#uses=1]
+  %5 = atomicrmw or i32* %ort, i32 4080 monotonic
 	store i32 %5, i32* %old
         ; CHECK: xorl
         ; CHECK: lock
         ; CHECK: cmpxchgl
-	call i32 @llvm.atomic.load.xor.i32.p0i32( i32* %xort, i32 4080 )		; <i32>:6 [#uses=1]
+  %6 = atomicrmw xor i32* %xort, i32 4080 monotonic
 	store i32 %6, i32* %old
         ; CHECK: cmov
         ; CHECK: lock
         ; CHECK: cmpxchgl
-	call i32 @llvm.atomic.load.min.i32.p0i32( i32* %val2, i32 16 )		; <i32>:7 [#uses=1]
+  %7 = atomicrmw min i32* %val2, i32 16 monotonic
 	store i32 %7, i32* %old
 	%neg = sub i32 0, 1		; <i32> [#uses=1]
         ; CHECK: cmov
         ; CHECK: lock
         ; CHECK: cmpxchgl
-	call i32 @llvm.atomic.load.min.i32.p0i32( i32* %val2, i32 %neg )		; <i32>:8 [#uses=1]
+  %8 = atomicrmw min i32* %val2, i32 %neg monotonic
 	store i32 %8, i32* %old
         ; CHECK: cmov
         ; CHECK: lock
         ; CHECK: cmpxchgl
-	call i32 @llvm.atomic.load.max.i32.p0i32( i32* %val2, i32 1 )		; <i32>:9 [#uses=1]
+  %9 = atomicrmw max i32* %val2, i32 1 monotonic
 	store i32 %9, i32* %old
         ; CHECK: cmov
         ; CHECK: lock
         ; CHECK: cmpxchgl
-	call i32 @llvm.atomic.load.max.i32.p0i32( i32* %val2, i32 0 )		; <i32>:10 [#uses=1]
+  %10 = atomicrmw max i32* %val2, i32 0 monotonic
 	store i32 %10, i32* %old
         ; CHECK: cmov
         ; CHECK: lock
         ; CHECK: cmpxchgl
-	call i32 @llvm.atomic.load.umax.i32.p0i32( i32* %val2, i32 65535 )		; <i32>:11 [#uses=1]
+  %11 = atomicrmw umax i32* %val2, i32 65535 monotonic
 	store i32 %11, i32* %old
         ; CHECK: cmov
         ; CHECK: lock
         ; CHECK: cmpxchgl
-	call i32 @llvm.atomic.load.umax.i32.p0i32( i32* %val2, i32 10 )		; <i32>:12 [#uses=1]
+  %12 = atomicrmw umax i32* %val2, i32 10 monotonic
 	store i32 %12, i32* %old
         ; CHECK: cmov
         ; CHECK: lock
         ; CHECK: cmpxchgl
-	call i32 @llvm.atomic.load.umin.i32.p0i32( i32* %val2, i32 1 )		; <i32>:13 [#uses=1]
+  %13 = atomicrmw umin i32* %val2, i32 1 monotonic
 	store i32 %13, i32* %old
         ; CHECK: cmov
         ; CHECK: lock
         ; CHECK: cmpxchgl
-	call i32 @llvm.atomic.load.umin.i32.p0i32( i32* %val2, i32 10 )		; <i32>:14 [#uses=1]
+  %14 = atomicrmw umin i32* %val2, i32 10 monotonic
 	store i32 %14, i32* %old
         ; CHECK: xchgl   %{{.*}}, {{.*}}(%esp)
-	call i32 @llvm.atomic.swap.i32.p0i32( i32* %val2, i32 1976 )		; <i32>:15 [#uses=1]
+  %15 = atomicrmw xchg i32* %val2, i32 1976 monotonic
 	store i32 %15, i32* %old
 	%neg1 = sub i32 0, 10		; <i32> [#uses=1]
         ; CHECK: lock
         ; CHECK: cmpxchgl
-	call i32 @llvm.atomic.cmp.swap.i32.p0i32( i32* %val2, i32 %neg1, i32 1 )		; <i32>:16 [#uses=1]
+  %16 = cmpxchg i32* %val2, i32 %neg1, i32 1 monotonic
 	store i32 %16, i32* %old
         ; CHECK: lock
         ; CHECK: cmpxchgl
-	call i32 @llvm.atomic.cmp.swap.i32.p0i32( i32* %val2, i32 1976, i32 1 )		; <i32>:17 [#uses=1]
+  %17 = cmpxchg i32* %val2, i32 1976, i32 1 monotonic
 	store i32 %17, i32* %old
 	ret void
 }
@@ -114,30 +114,6 @@ entry:
 ; CHECK: lock
 ; CHECK:	cmpxchgl	%{{.*}}, %gs:(%{{.*}})
 
-  %0 = tail call i32 @llvm.atomic.cmp.swap.i32.p256i32(i32 addrspace(256)* %P, i32 0, i32 1)
+  %0 = cmpxchg i32 addrspace(256)* %P, i32 0, i32 1 monotonic
   ret void
 }
-
-declare i32 @llvm.atomic.cmp.swap.i32.p256i32(i32 addrspace(256)* nocapture, i32, i32) nounwind
-
-declare i32 @llvm.atomic.load.add.i32.p0i32(i32*, i32) nounwind 
-
-declare i32 @llvm.atomic.load.sub.i32.p0i32(i32*, i32) nounwind 
-
-declare i32 @llvm.atomic.load.and.i32.p0i32(i32*, i32) nounwind 
-
-declare i32 @llvm.atomic.load.or.i32.p0i32(i32*, i32) nounwind 
-
-declare i32 @llvm.atomic.load.xor.i32.p0i32(i32*, i32) nounwind 
-
-declare i32 @llvm.atomic.load.min.i32.p0i32(i32*, i32) nounwind 
-
-declare i32 @llvm.atomic.load.max.i32.p0i32(i32*, i32) nounwind 
-
-declare i32 @llvm.atomic.load.umax.i32.p0i32(i32*, i32) nounwind 
-
-declare i32 @llvm.atomic.load.umin.i32.p0i32(i32*, i32) nounwind 
-
-declare i32 @llvm.atomic.swap.i32.p0i32(i32*, i32) nounwind 
-
-declare i32 @llvm.atomic.cmp.swap.i32.p0i32(i32*, i32, i32) nounwind 
