@@ -1180,10 +1180,6 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
       // bytes.  For example, promote EXTLOAD:i20 -> EXTLOAD:i24.
       unsigned NewWidth = SrcVT.getStoreSizeInBits();
       EVT NVT = EVT::getIntegerVT(*DAG.getContext(), NewWidth);
-      if (SrcVT.isVector()) {
-        NVT = EVT::getVectorVT(*DAG.getContext(), NVT,
-                               SrcVT.getVectorNumElements());
-      }
       SDValue Ch;
 
       // The extra bits are guaranteed to be zero, since we stored them that
@@ -1525,12 +1521,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
         // TRUNCSTORE:i1 X -> TRUNCSTORE:i8 (and X, 1)
         EVT NVT = EVT::getIntegerVT(*DAG.getContext(),
                                     StVT.getStoreSizeInBits());
-        if (StVT.isVector()) {
-          NVT = EVT::getVectorVT(*DAG.getContext(), NVT,
-                                 StVT.getVectorNumElements());
-        }
-
-        Tmp3 = DAG.getZeroExtendInReg(Tmp3, dl, StVT.getScalarType());
+        Tmp3 = DAG.getZeroExtendInReg(Tmp3, dl, StVT);
         Result = DAG.getTruncStore(Tmp1, dl, Tmp3, Tmp2, ST->getPointerInfo(),
                                    NVT, isVolatile, isNonTemporal, Alignment);
       } else if (StWidth & (StWidth - 1)) {
