@@ -120,20 +120,18 @@ __libcpp_db::__insert_ic(void* __i, const void* __c)
 {
     WLock _(mut());
     __i_node* i = __insert_iterator(__i);
-    _LIBCPP_ASSERT(__cbeg_ != __cend_, "Container constructed in a translation unit with debug mode disabled."
-                   " But it is being used in a translation unit with debug mode enabled."
-                   " Enable it in the other translation unit with #define _LIBCPP_DEBUG2 1");
+    const char* errmsg =
+        "Container constructed in a translation unit with debug mode disabled."
+        " But it is being used in a translation unit with debug mode enabled."
+        " Enable it in the other translation unit with #define _LIBCPP_DEBUG2 1";
+    _LIBCPP_ASSERT(__cbeg_ != __cend_, errmsg);
     size_t hc = hash<const void*>()(__c) % (__cend_ - __cbeg_);
     __c_node* c = __cbeg_[hc];
-    _LIBCPP_ASSERT(c != nullptr, "Container constructed in a translation unit with debug mode disabled."
-                   " But it is being used in a translation unit with debug mode enabled."
-                   " Enable it in the other translation unit with #define _LIBCPP_DEBUG2 1");
+    _LIBCPP_ASSERT(c != nullptr, errmsg);
     while (c->__c_ != __c)
     {
         c = c->__next_;
-        _LIBCPP_ASSERT(c != nullptr, "Container constructed in a translation unit with debug mode disabled."
-                   " But it is being used in a translation unit with debug mode enabled."
-                   " Enable it in the other translation unit with #define _LIBCPP_DEBUG2 1");
+        _LIBCPP_ASSERT(c != nullptr, errmsg);
     }
     c->__add(i);
     i->__c_ = c;
@@ -237,6 +235,20 @@ __libcpp_db::__find_c_and_lock(void* __c) const
     {
         p = p->__next_;
         _LIBCPP_ASSERT(p != nullptr, "debug mode internal logic error __find_c_and_lock B");
+    }
+    return p;
+}
+
+__c_node*
+__libcpp_db::__find_c(void* __c) const
+{
+    size_t hc = hash<void*>()(__c) % (__cend_ - __cbeg_);
+    __c_node* p = __cbeg_[hc];
+    _LIBCPP_ASSERT(p != nullptr, "debug mode internal logic error __find_c A");
+    while (p->__c_ != __c)
+    {
+        p = p->__next_;
+        _LIBCPP_ASSERT(p != nullptr, "debug mode internal logic error __find_c B");
     }
     return p;
 }
@@ -380,6 +392,27 @@ __libcpp_db::__insert_i(void* __i)
     __insert_iterator(__i);
 }
 
+void
+__c_node::__add(__i_node* i)
+{
+    if (end_ == cap_)
+    {
+        size_t nc = 2*(cap_ - beg_);
+        if (nc == 0)
+            nc = 1;
+        __i_node** beg = (__i_node**)malloc(nc * sizeof(__i_node*));
+        if (beg == nullptr)
+            throw bad_alloc();
+        if (nc > 1)
+            memcpy(beg, beg_, nc/2*sizeof(__i_node*));
+        free(beg_);
+        beg_ = beg;
+        end_ = beg_ + nc/2;
+        cap_ = beg_ + nc;
+    }
+    *end_++ = i;
+}
+
 // private api
 
 _LIBCPP_HIDDEN
@@ -436,28 +469,6 @@ __libcpp_db::__find_iterator(const void* __i) const
         }
     }
     return r;
-}
-
-_LIBCPP_HIDDEN
-void
-__c_node::__add(__i_node* i)
-{
-    if (end_ == cap_)
-    {
-        size_t nc = 2*(cap_ - beg_);
-        if (nc == 0)
-            nc = 1;
-        __i_node** beg = (__i_node**)malloc(nc * sizeof(__i_node*));
-        if (beg == nullptr)
-            throw bad_alloc();
-        if (nc > 1)
-            memcpy(beg, beg_, nc/2*sizeof(__i_node*));
-        free(beg_);
-        beg_ = beg;
-        end_ = beg_ + nc/2;
-        cap_ = beg_ + nc;
-    }
-    *end_++ = i;
 }
 
 _LIBCPP_HIDDEN

@@ -60,7 +60,7 @@ struct _LIBCPP_VISIBLE __c_node
     virtual bool __addable(const void*, ptrdiff_t) const = 0;
     virtual bool __subscriptable(const void*, ptrdiff_t) const = 0;
 
-    _LIBCPP_HIDDEN void __add(__i_node* __i);
+    void __add(__i_node* __i);
     _LIBCPP_HIDDEN void __remove(__i_node* __i);
 };
 
@@ -159,6 +159,7 @@ public:
     void* __find_c_from_i(void* __i) const;
     void __invalidate_all(void* __c);
     __c_node* __find_c_and_lock(void* __c) const;
+    __c_node* __find_c(void* __c) const;
     void unlock() const;
 
     void swap(void* __c1, void* __c2);

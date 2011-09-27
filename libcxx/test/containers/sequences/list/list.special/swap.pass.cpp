@@ -58,6 +58,8 @@ int main()
         assert(c2.empty());
         assert(distance(c2.begin(), c2.end()) == 0);
     }
+#ifndef _LIBCPP_DEBUG_LEVEL
+// This test known to result in undefined behavior detected by _LIBCPP_DEBUG_LEVEL >= 1
     {
         int a1[] = {1, 3, 7, 9, 10};
         int a2[] = {0, 2, 4, 5, 6, 8, 11};
@@ -70,6 +72,7 @@ int main()
         assert((c2 == std::list<int, A>(a1, a1+sizeof(a1)/sizeof(a1[0]))));
         assert(c2.get_allocator() == A(2));
     }
+#endif
     {
         int a1[] = {1, 3, 7, 9, 10};
         int a2[] = {0, 2, 4, 5, 6, 8, 11};
