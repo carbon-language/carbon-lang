@@ -5406,10 +5406,6 @@ public:
   void AddAlignedAttr(SourceRange AttrRange, Decl *D, Expr *E);
   void AddAlignedAttr(SourceRange AttrRange, Decl *D, TypeSourceInfo *T);
 
-  /// CastCategory - Get the correct forwarded implicit cast result category
-  /// from the inner expression.
-  ExprValueKind CastCategory(Expr *E);
-
   /// \brief The kind of conversion being performed.
   enum CheckedConversionKind {
     /// \brief An implicit conversion.

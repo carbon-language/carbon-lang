@@ -274,12 +274,6 @@ CastKind Sema::ScalarTypeToBooleanCastKind(QualType ScalarTy) {
   return CK_Invalid;
 }
 
-ExprValueKind Sema::CastCategory(Expr *E) {
-  Expr::Classification Classification = E->Classify(Context);
-  return Classification.isRValue() ? VK_RValue :
-      (Classification.isLValue() ? VK_LValue : VK_XValue);
-}
-
 /// \brief Used to prune the decls of Sema's UnusedFileScopedDecls vector.
 static bool ShouldRemoveFromUnused(Sema *SemaRef, const DeclaratorDecl *D) {
   if (D->isUsed())

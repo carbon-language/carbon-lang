@@ -325,7 +325,7 @@ ExprResult Sema::BuildCXXTypeId(QualType TypeInfoType,
     QualType UnqualT = Context.getUnqualifiedArrayType(T, Quals);
     if (!Context.hasSameType(T, UnqualT)) {
       T = UnqualT;
-      E = ImpCastExprToType(E, UnqualT, CK_NoOp, CastCategory(E)).take();
+      E = ImpCastExprToType(E, UnqualT, CK_NoOp, E->getValueKind()).take();
     }
   }
 
@@ -545,7 +545,7 @@ ExprResult Sema::CheckCXXThrowOperand(SourceLocation ThrowLoc, Expr *E,
   //   or "pointer to function returning T", [...]
   if (E->getType().hasQualifiers())
     E = ImpCastExprToType(E, E->getType().getUnqualifiedType(), CK_NoOp,
-                      CastCategory(E)).take();
+                          E->getValueKind()).take();
 
   ExprResult Res = DefaultFunctionArrayConversion(E);
   if (Res.isInvalid())
@@ -2430,7 +2430,7 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
       return ExprError();
 
     From = ImpCastExprToType(From, ToType.getNonReferenceType(),
-                      CK_DerivedToBase, CastCategory(From),
+                      CK_DerivedToBase, From->getValueKind(),
                       &BasePath, CCK).take();
     break;
   }
@@ -2533,7 +2533,7 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
     // The qualification keeps the category of the inner expression, unless the
     // target type isn't a reference.
     ExprValueKind VK = ToType->isReferenceType() ?
-                                  CastCategory(From) : VK_RValue;
+                                  From->getValueKind() : VK_RValue;
     From = ImpCastExprToType(From, ToType.getNonLValueExprType(Context),
                              CK_NoOp, VK, /*BasePath=*/0, CCK).take();
 
@@ -3339,8 +3339,7 @@ QualType Sema::CheckPointerToMemberOperands(ExprResult &LHS, ExprResult &RHS,
     }
     // Cast LHS to type of use.
     QualType UseType = isIndirect ? Context.getPointerType(Class) : Class;
-    ExprValueKind VK =
-        isIndirect ? VK_RValue : CastCategory(LHS.get());
+    ExprValueKind VK = isIndirect ? VK_RValue : LHS.get()->getValueKind();
 
     CXXCastPath BasePath;
     BuildBasePathArray(Paths, BasePath);

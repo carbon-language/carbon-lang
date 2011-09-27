@@ -4783,7 +4783,7 @@ InitializationSequence::Perform(Sema &S,
     case SK_ObjCObjectConversion:
       CurInit = S.ImpCastExprToType(CurInit.take(), Step->Type,
                           CK_ObjCObjectLValueCast,
-                          S.CastCategory(CurInit.get()));
+                          CurInit.get()->getValueKind());
       break;
 
     case SK_ArrayInit:
