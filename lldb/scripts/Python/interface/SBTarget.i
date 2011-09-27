@@ -12,7 +12,8 @@ namespace lldb {
 %feature("docstring",
 "Represents the target program running under the debugger.
 
-SBTarget supports module and breakpoint iterations. For example,
+SBTarget supports module, breakpoint, and watchpoint_location iterations. For
+example,
 
     for m in target.module_iter():
         print m
@@ -34,7 +35,18 @@ and,
 produces:
 
 SBBreakpoint: id = 1, file ='main.cpp', line = 66, locations = 1
-SBBreakpoint: id = 2, file ='main.cpp', line = 85, locations = 1"
+SBBreakpoint: id = 2, file ='main.cpp', line = 85, locations = 1
+
+and,
+
+    for wp_loc in target.watchpoint_location_iter():
+        print wp_loc
+
+produces:
+
+WatchpointLocation 1: addr = 0x1034ca048 size = 4 state = enabled type = rw
+    declare @ '/Volumes/data/lldb/svn/trunk/test/python_api/watchpoint/main.c:12'
+    hw_index = 0  hit_count = 2     ignore_count = 0     callback =      0x0 baton =      0x0"
 ) SBTarget;
 class SBTarget
 {
@@ -422,6 +434,27 @@ public:
 
     bool
     DeleteAllBreakpoints ();
+
+    uint32_t
+    GetNumWatchpointLocations () const;
+
+    lldb::SBWatchpointLocation
+    GetWatchpointLocationAtIndex (uint32_t idx) const;
+
+    bool
+    WatchpointLocationDelete (watch_id_t watch_id);
+
+    lldb::SBWatchpointLocation
+    FindWatchpointLocationByID (watch_id_t watch_id);
+
+    bool
+    EnableAllWatchpointLocations ();
+
+    bool
+    DisableAllWatchpointLocations ();
+
+    bool
+    DeleteAllWatchpointLocations ();
 
     lldb::SBBroadcaster
     GetBroadcaster () const;

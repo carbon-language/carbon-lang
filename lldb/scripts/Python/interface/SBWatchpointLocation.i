@@ -1,4 +1,4 @@
-//===-- SBWatchpointLocation.h ----------------------------------*- C++ -*-===//
+//===-- SWIG Interface for SBWatchpointLocation -----------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,13 +7,18 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLDB_SBWatchpointLocation_h_
-#define LLDB_SBWatchpointLocation_h_
-
-#include "lldb/API/SBDefines.h"
-
 namespace lldb {
 
+%feature("docstring",
+"Represents an instance of watchpoint location for a specific target program.
+
+A watchpoint location is determined by the address and the byte size that
+resulted in this particular instantiation.  Each watchpoint location has its
+settable options.
+
+See also SBTarget.watchpoint_location_iter() for for example usage of iterating
+through the watchpoint locations of the target."
+) SBWatchpointLocation;
 class SBWatchpointLocation
 {
 public:
@@ -24,18 +29,17 @@ public:
 
     ~SBWatchpointLocation ();
 
-#ifndef SWIG
-    const lldb::SBWatchpointLocation &
-    operator = (const lldb::SBWatchpointLocation &rhs);
-#endif
-
     watch_id_t
     GetID () const;
 
     bool
     IsValid() const;
 
+    %feature("docstring", "
+    //------------------------------------------------------------------
     /// With -1 representing an invalid hardware index.
+    //------------------------------------------------------------------
+    ") GetHardwareIndex;
     int32_t
     GetHardwareIndex () const;
 
@@ -62,34 +66,6 @@ public:
 
     bool
     GetDescription (lldb::SBStream &description, DescriptionLevel level);
-
-#ifndef SWIG
-    SBWatchpointLocation (const lldb::WatchpointLocationSP &watch_loc_sp);
-#endif
-
-private:
-    friend class SBTarget;
-
-#ifndef SWIG
-
-    lldb_private::WatchpointLocation *
-    operator->() const;
-
-    lldb_private::WatchpointLocation *
-    get() const;
-
-    lldb::WatchpointLocationSP &
-    operator *();
-
-    const lldb::WatchpointLocationSP &
-    operator *() const;
-
-#endif
-
-    lldb::WatchpointLocationSP m_opaque_sp;
-
 };
 
 } // namespace lldb
-
-#endif  // LLDB_SBWatchpointLocation_h_

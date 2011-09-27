@@ -63,10 +63,44 @@ SBWatchpointLocation::~SBWatchpointLocation ()
 {
 }
 
+watch_id_t
+SBWatchpointLocation::GetID () const
+{
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+
+    watch_id_t watch_id = LLDB_INVALID_WATCH_ID;
+    if (m_opaque_sp)
+        watch_id = m_opaque_sp->GetID();
+
+    if (log)
+    {
+        if (watch_id == LLDB_INVALID_WATCH_ID)
+            log->Printf ("SBWatchpointLocation(%p)::GetID () => LLDB_INVALID_WATCH_ID", m_opaque_sp.get());
+        else
+            log->Printf ("SBWatchpointLocation(%p)::GetID () => %u", m_opaque_sp.get(), watch_id);
+    }
+
+    return watch_id;
+}
+
 bool
 SBWatchpointLocation::IsValid() const
 {
     return m_opaque_sp.get() != NULL;
+}
+
+int32_t
+SBWatchpointLocation::GetHardwareIndex () const
+{
+    int32_t hw_index = -1;
+
+    if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
+        hw_index = m_opaque_sp->GetHardwareIndex();
+    }
+
+    return hw_index;
 }
 
 addr_t
@@ -103,7 +137,7 @@ SBWatchpointLocation::SetEnabled (bool enabled)
     if (m_opaque_sp)
     {
         Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
-        m_opaque_sp->SetEnabled (enabled);
+        m_opaque_sp->GetTarget().DisableWatchpointLocationByID(m_opaque_sp->GetID());
     }
 }
 
@@ -117,6 +151,23 @@ SBWatchpointLocation::IsEnabled ()
     }
     else
         return false;
+}
+
+uint32_t
+SBWatchpointLocation::GetHitCount () const
+{
+    uint32_t count = 0;
+    if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
+        count = m_opaque_sp->GetHitCount();
+    }
+
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    if (log)
+        log->Printf ("SBWatchpointLocation(%p)::GetHitCount () => %u", m_opaque_sp.get(), count);
+
+    return count;
 }
 
 uint32_t

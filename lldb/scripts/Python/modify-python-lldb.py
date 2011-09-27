@@ -150,6 +150,7 @@ linked_list_iter_def = '''
 iter_def = "    def __iter__(self): return lldb_iter(self, '%s', '%s')"
 module_iter = "    def module_iter(self): return lldb_iter(self, '%s', '%s')"
 breakpoint_iter = "    def breakpoint_iter(self): return lldb_iter(self, '%s', '%s')"
+watchpoint_location_iter = "    def watchpoint_location_iter(self): return lldb_iter(self, '%s', '%s')"
 section_iter = "    def section_iter(self): return lldb_iter(self, '%s', '%s')"
 
 # Called to implement the built-in function len().
@@ -187,7 +188,8 @@ d = { 'SBBreakpoint':  ('GetNumLocations',   'GetLocationAtIndex'),
 
       # SBTarget needs special processing, see below.
       'SBTarget': {'module':     ('GetNumModules', 'GetModuleAtIndex'),
-                   'breakpoint': ('GetNumBreakpoints', 'GetBreakpointAtIndex')
+                   'breakpoint': ('GetNumBreakpoints', 'GetBreakpointAtIndex'),
+                   'watchpoint_location': ('GetNumWatchpointLocations', 'GetWatchpointLocationAtIndex')
                    },
 
       # SBModule has an additional section_iter(), see below.
@@ -325,10 +327,11 @@ for line in content.splitlines():
             # We found the beginning of the __init__ method definition.
             # This is a good spot to insert the iter and/or eq-ne support.
             #
-            # But note that SBTarget has two types of iterations.
+            # But note that SBTarget has three types of iterations.
             if cls == "SBTarget":
                 new_content.add_line(module_iter % (d[cls]['module']))
                 new_content.add_line(breakpoint_iter % (d[cls]['breakpoint']))
+                new_content.add_line(watchpoint_location_iter % (d[cls]['watchpoint_location']))
             else:
                 if (state & DEFINING_ITERATOR):
                     new_content.add_line(iter_def % d[cls])

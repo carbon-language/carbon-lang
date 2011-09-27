@@ -79,6 +79,7 @@ o SBLineEntry: Specifies an association with a contiguous range of instructions
 #include "lldb/API/SBType.h"
 #include "lldb/API/SBValue.h"
 #include "lldb/API/SBValueList.h"
+#include "lldb/API/SBWatchpointLocation.h"
 %}
 
 /* Various liblldb typedefs that SWIG needs to know about.  */
@@ -131,6 +132,7 @@ o SBLineEntry: Specifies an association with a contiguous range of instructions
 %include "./Python/interface/SBType.i"
 %include "./Python/interface/SBValue.i"
 %include "./Python/interface/SBValueList.i"
+%include "./Python/interface/SBWatchpointLocation.i"
 
 %include "./Python/python-extensions.swig"
 

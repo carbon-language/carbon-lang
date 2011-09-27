@@ -160,4 +160,11 @@
                 return PyString_FromString (description.GetData());
         }
 }
+%extend lldb::SBWatchpointLocation {
+        PyObject *lldb::SBWatchpointLocation::__repr__ (){
+                lldb::SBStream description;
+                $self->GetDescription (description, lldb::eDescriptionLevelVerbose);
+                return PyString_FromString (description.GetData());
+        }
+}
 

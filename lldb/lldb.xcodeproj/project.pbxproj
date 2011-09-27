@@ -1366,6 +1366,7 @@
 		B296983512C2FB2B002D92C3 /* CommandObjectVersion.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectVersion.h; path = source/Commands/CommandObjectVersion.h; sourceTree = "<group>"; };
 		B2A58721143119810092BFBA /* SBWatchpointLocation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SBWatchpointLocation.h; path = include/lldb/API/SBWatchpointLocation.h; sourceTree = "<group>"; };
 		B2A58723143119D50092BFBA /* SBWatchpointLocation.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBWatchpointLocation.cpp; path = source/API/SBWatchpointLocation.cpp; sourceTree = "<group>"; };
+		B2A5872514313B480092BFBA /* SBWatchpointLocation.i */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.h; path = SBWatchpointLocation.i; sourceTree = "<group>"; };
 		B2D3033612EFA5C500F84EB3 /* InstructionUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = InstructionUtils.h; path = Utility/InstructionUtils.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -1727,6 +1728,7 @@
 				2611FF11142D83060017FEA3 /* SBType.i */,
 				2611FF12142D83060017FEA3 /* SBValue.i */,
 				2611FF13142D83060017FEA3 /* SBValueList.i */,
+				B2A5872514313B480092BFBA /* SBWatchpointLocation.i */,
 			);
 			name = interface;
 			path = scripts/Python/interface;

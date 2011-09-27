@@ -95,7 +95,6 @@ WatchpointLocation::ShouldStop (StoppointCallbackContext *context)
 void
 WatchpointLocation::GetDescription (Stream *s, lldb::DescriptionLevel level)
 {
-    s->Printf(" ");
     DumpWithLevel(s, level);
     return;
 }
