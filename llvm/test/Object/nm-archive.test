@@ -1,0 +1,17 @@
+RUN: llvm-nm %p/TestObjectFiles/archive-test.a-coff-i386 \
+RUN:         | FileCheck %s -check-prefix COFF
+RUN: llvm-nm %p/TestObjectFiles/archive-test.a-bitcode \
+RUN:         | FileCheck %s -check-prefix BITCODE
+
+
+COFF: trivial-object-test.coff-i386:
+COFF-NEXT: 00000000 d .data
+COFF-NEXT: 00000000 t .text
+COFF-NEXT: 00000000 d L_.str
+COFF-NEXT:          U _SomeOtherFunction
+COFF-NEXT: 00000000 T _main
+COFF-NEXT:          U _puts
+
+BITCODE:          U SomeOtherFunction
+BITCODE-NEXT:          T main
+BITCODE-NEXT:          U puts
