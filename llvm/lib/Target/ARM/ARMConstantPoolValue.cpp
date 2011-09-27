@@ -87,7 +87,7 @@ ARMConstantPoolValue::~ARMConstantPoolValue() {
 }
 
 void
-ARMConstantPoolValue::AddSelectionDAGCSEId(FoldingSetNodeID &ID) {
+ARMConstantPoolValue::addSelectionDAGCSEId(FoldingSetNodeID &ID) {
   ID.AddPointer(CVal);
   ID.AddPointer(S);
   ID.AddInteger(LabelId);

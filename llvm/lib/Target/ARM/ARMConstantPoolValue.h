@@ -101,7 +101,7 @@ public:
   virtual int getExistingMachineCPValue(MachineConstantPool *CP,
                                         unsigned Alignment);
 
-  virtual void AddSelectionDAGCSEId(FoldingSetNodeID &ID);
+  virtual void addSelectionDAGCSEId(FoldingSetNodeID &ID);
 
   /// hasSameValue - Return true if this ARM constpool value
   /// can share the same constantpool entry as another ARM constpool value.

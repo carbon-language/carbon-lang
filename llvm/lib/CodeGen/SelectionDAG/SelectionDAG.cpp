@@ -403,7 +403,7 @@ static void AddNodeIDCustom(FoldingSetNodeID &ID, const SDNode *N) {
     ID.AddInteger(CP->getAlignment());
     ID.AddInteger(CP->getOffset());
     if (CP->isMachineConstantPoolEntry())
-      CP->getMachineCPVal()->AddSelectionDAGCSEId(ID);
+      CP->getMachineCPVal()->addSelectionDAGCSEId(ID);
     else
       ID.AddPointer(CP->getConstVal());
     ID.AddInteger(CP->getTargetFlags());
@@ -1154,7 +1154,7 @@ SDValue SelectionDAG::getConstantPool(MachineConstantPoolValue *C, EVT VT,
   AddNodeIDNode(ID, Opc, getVTList(VT), 0, 0);
   ID.AddInteger(Alignment);
   ID.AddInteger(Offset);
-  C->AddSelectionDAGCSEId(ID);
+  C->addSelectionDAGCSEId(ID);
   ID.AddInteger(TargetFlags);
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
