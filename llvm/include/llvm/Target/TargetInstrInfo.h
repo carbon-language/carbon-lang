@@ -687,6 +687,37 @@ public:
     return true;
   }
 
+  /// getExecutionDomain - Return the current execution domain and bit mask of
+  /// possible domains for instruction.
+  ///
+  /// Some micro-architectures have multiple execution domains, and multiple
+  /// opcodes that perform the same operation in different domains.  For
+  /// example, the x86 architecture provides the por, orps, and orpd
+  /// instructions that all do the same thing.  There is a latency penalty if a
+  /// register is written in one domain and read in another.
+  ///
+  /// This function returns a pair (domain, mask) containing the execution
+  /// domain of MI, and a bit mask of possible domains.  The setExecutionDomain
+  /// function can be used to change the opcode to one of the domains in the
+  /// bit mask.  Instructions whose execution domain can't be changed should
+  /// return a 0 mask.
+  ///
+  /// The execution domain numbers don't have any special meaning except domain
+  /// 0 is used for instructions that are not associated with any interesting
+  /// execution domain.
+  ///
+  virtual std::pair<uint16_t, uint16_t>
+  getExecutionDomain(const MachineInstr *MI) const {
+    return std::make_pair(0, 0);
+  }
+
+  /// setExecutionDomain - Change the opcode of MI to execute in Domain.
+  ///
+  /// The bit (1 << Domain) must be set in the mask returned from
+  /// getExecutionDomain(MI).
+  ///
+  virtual void setExecutionDomain(MachineInstr *MI, unsigned Domain) const {}
+
 private:
   int CallFrameSetupOpcode, CallFrameDestroyOpcode;
 };

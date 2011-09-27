@@ -3355,13 +3355,13 @@ static const unsigned *lookup(unsigned opcode, unsigned domain) {
 }
 
 std::pair<uint16_t, uint16_t>
-X86InstrInfo::GetSSEDomain(const MachineInstr *MI) const {
+X86InstrInfo::getExecutionDomain(const MachineInstr *MI) const {
   uint16_t domain = (MI->getDesc().TSFlags >> X86II::SSEDomainShift) & 3;
   return std::make_pair(domain,
                         domain && lookup(MI->getOpcode(), domain) ? 0xe : 0);
 }
 
-void X86InstrInfo::SetSSEDomain(MachineInstr *MI, unsigned Domain) const {
+void X86InstrInfo::setExecutionDomain(MachineInstr *MI, unsigned Domain) const {
   assert(Domain>0 && Domain<4 && "Invalid execution domain");
   uint16_t dom = (MI->getDesc().TSFlags >> X86II::SSEDomainShift) & 3;
   assert(dom && "Not an SSE instruction");

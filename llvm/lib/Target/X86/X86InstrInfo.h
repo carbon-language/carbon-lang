@@ -337,12 +337,10 @@ public:
   ///
   unsigned getGlobalBaseReg(MachineFunction *MF) const;
 
-  /// GetSSEDomain - Return the SSE execution domain of MI as the first element,
-  /// and a bitmask of possible arguments to SetSSEDomain ase the second.
-  std::pair<uint16_t, uint16_t> GetSSEDomain(const MachineInstr *MI) const;
+  std::pair<uint16_t, uint16_t>
+  getExecutionDomain(const MachineInstr *MI) const;
 
-  /// SetSSEDomain - Set the SSEDomain of MI.
-  void SetSSEDomain(MachineInstr *MI, unsigned Domain) const;
+  void setExecutionDomain(MachineInstr *MI, unsigned Domain) const;
 
   MachineInstr* foldMemoryOperandImpl(MachineFunction &MF,
                                       MachineInstr* MI,

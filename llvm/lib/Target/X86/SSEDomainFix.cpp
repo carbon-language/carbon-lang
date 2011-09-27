@@ -236,7 +236,7 @@ void SSEDomainFixPass::Collapse(DomainValue *dv, unsigned domain) {
 
   // Collapse all the instructions.
   while (!dv->Instrs.empty())
-    TII->SetSSEDomain(dv->Instrs.pop_back_val(), domain);
+    TII->setExecutionDomain(dv->Instrs.pop_back_val(), domain);
   dv->setSingleDomain(domain);
 
   // If there are multiple users, give them new, unique DomainValues.
@@ -362,7 +362,7 @@ void SSEDomainFixPass::visitSoftInstr(MachineInstr *mi, unsigned mask) {
   // If the collapsed operands force a single domain, propagate the collapse.
   if (isPowerOf2_32(available)) {
     unsigned domain = CountTrailingZeros_32(available);
-    TII->SetSSEDomain(mi, domain);
+    TII->setExecutionDomain(mi, domain);
     visitHardInstr(mi, domain);
     return;
   }
@@ -473,7 +473,7 @@ bool SSEDomainFixPass::runOnMachineFunction(MachineFunction &mf) {
       MachineInstr *mi = I;
       if (mi->isDebugValue()) continue;
       ++Distance;
-      std::pair<uint16_t, uint16_t> domp = TII->GetSSEDomain(mi);
+      std::pair<uint16_t, uint16_t> domp = TII->getExecutionDomain(mi);
       if (domp.first)
         if (domp.second)
           visitSoftInstr(mi, domp.second);
