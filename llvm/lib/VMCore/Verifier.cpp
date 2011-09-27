@@ -1449,6 +1449,17 @@ void Verifier::visitLandingPadInst(LandingPadInst &LPI) {
             "Personality function doesn't match others in function", &LPI);
   PersonalityFn = LPI.getPersonalityFn();
 
+  // All operands must be constants.
+  Assert1(isa<Constant>(PersonalityFn), "Personality function is not constant!",
+          &LPI);
+  for (unsigned i = 0, e = LPI.getNumClauses(); i < e; ++i) {
+    Value *Clause = LPI.getClause(i);
+    Assert1(isa<Constant>(Clause), "Clause is not constant!", &LPI);
+    if (LPI.isFilter(i))
+      Assert1(isa<ConstantArray>(Clause) || isa<ConstantAggregateZero>(Clause),
+              "Filter is not an array of constants!", &LPI);
+  }
+
   visitInstruction(LPI);
 }
 
