@@ -40,8 +40,6 @@ namespace {
     typedef DenseMap<unsigned, const MachineInstr*> RegMap;
 
     bool InsertMoves(MachineBasicBlock &MBB);
-
-    void TransferImpOps(MachineInstr &Old, MachineInstr &New);
   };
   char NEONMoveFixPass::ID = 0;
 }
@@ -49,16 +47,6 @@ namespace {
 static bool inNEONDomain(unsigned Domain, bool isA8) {
   return (Domain & ARMII::DomainNEON) ||
     (isA8 && (Domain & ARMII::DomainNEONA8));
-}
-
-/// Transfer implicit kill and def operands from Old to New.
-void NEONMoveFixPass::TransferImpOps(MachineInstr &Old, MachineInstr &New) {
-  for (unsigned i = 0, e = Old.getNumOperands(); i != e; ++i) {
-    MachineOperand &MO = Old.getOperand(i);
-    if (!MO.isReg() || !MO.isImplicit())
-      continue;
-    New.addOperand(MO);
-  }
 }
 
 bool NEONMoveFixPass::InsertMoves(MachineBasicBlock &MBB) {
@@ -100,7 +88,7 @@ bool NEONMoveFixPass::InsertMoves(MachineBasicBlock &MBB) {
           AddDefaultPred(BuildMI(MBB, *MI, MI->getDebugLoc(),
                                  TII->get(ARM::VORRd), DestReg)
                          .addReg(SrcReg).addReg(SrcReg));
-        TransferImpOps(*MI, *NewMI);
+        NewMI->copyImplicitOps(MI);
         MBB.erase(MI);
         MI = NewMI;
 
