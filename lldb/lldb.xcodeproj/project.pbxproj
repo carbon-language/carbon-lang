@@ -3592,6 +3592,11 @@
 				LLVM_CONFIGURATION = Release;
 				LLVM_SOURCE_DIR = "$(SRCROOT)/llvm";
 				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = (
+					"-flimit-debug-info",
+					"-feliminate-unused-debug-types",
+					"-Wparentheses",
+				);
 				VALID_ARCHS = "x86_64 i386";
 			};
 			name = Debug;
@@ -3622,6 +3627,11 @@
 				LLVM_BUILD_DIR_ARCH = "";
 				LLVM_CONFIGURATION = Release;
 				LLVM_SOURCE_DIR = "$(SRCROOT)/llvm";
+				OTHER_CFLAGS = (
+					"-flimit-debug-info",
+					"-feliminate-unused-debug-types",
+					"-Wparentheses",
+				);
 				VALID_ARCHS = "x86_64 i386";
 			};
 			name = Release;
@@ -3696,7 +3706,6 @@
 					"$(inherited)",
 					"$(LLVM_BUILD_DIR)",
 				);
-				OTHER_CFLAGS = "-Wparentheses";
 				OTHER_CPLUSPLUSFLAGS = (
 					"-fno-rtti",
 					"-Wglobal-constructors",
@@ -3748,7 +3757,6 @@
 					"$(inherited)",
 					"$(LLVM_BUILD_DIR)",
 				);
-				OTHER_CFLAGS = "-Wparentheses";
 				OTHER_CPLUSPLUSFLAGS = (
 					"-fno-rtti",
 					"-Wglobal-constructors",
@@ -3794,7 +3802,6 @@
 				);
 				MACH_O_TYPE = staticlib;
 				MACOSX_DEPLOYMENT_TARGET = 10.6;
-				OTHER_CFLAGS = "-Wparentheses";
 				OTHER_CPLUSPLUSFLAGS = (
 					"-fno-rtti",
 					"-Wglobal-constructors",
@@ -3834,7 +3841,6 @@
 				);
 				MACH_O_TYPE = staticlib;
 				MACOSX_DEPLOYMENT_TARGET = 10.6;
-				OTHER_CFLAGS = "-Wparentheses";
 				OTHER_CPLUSPLUSFLAGS = (
 					"-fno-rtti",
 					"-Wglobal-constructors",
@@ -3874,7 +3880,6 @@
 				);
 				MACH_O_TYPE = staticlib;
 				MACOSX_DEPLOYMENT_TARGET = 10.6;
-				OTHER_CFLAGS = "-Wparentheses";
 				OTHER_CPLUSPLUSFLAGS = (
 					"-fno-rtti",
 					"-Wglobal-constructors",
@@ -3914,6 +3919,11 @@
 				LLVM_BUILD_DIR_ARCH = "$(CURRENT_ARCH)/";
 				LLVM_CONFIGURATION = Release;
 				LLVM_SOURCE_DIR = "$(SRCROOT)/llvm";
+				OTHER_CFLAGS = (
+					"-flimit-debug-info",
+					"-feliminate-unused-debug-types",
+					"-Wparentheses",
+				);
 				VALID_ARCHS = "x86_64 i386";
 			};
 			name = BuildAndIntegration;
@@ -3934,7 +3944,6 @@
 				INFOPLIST_FILE = "lldb-Info.plist";
 				INSTALL_PATH = /Developer/usr/bin;
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
-				OTHER_CFLAGS = "-Wparentheses";
 				OTHER_LDFLAGS = (
 					"-sectcreate",
 					__TEXT,
@@ -3979,7 +3988,6 @@
 					"$(inherited)",
 					"$(LLVM_BUILD_DIR)",
 				);
-				OTHER_CFLAGS = "-Wparentheses";
 				OTHER_CPLUSPLUSFLAGS = (
 					"-fno-rtti",
 					"-Wglobal-constructors",
@@ -4096,7 +4104,6 @@
 				INFOPLIST_FILE = "lldb-Info.plist";
 				INSTALL_PATH = /Developer/usr/bin;
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
-				OTHER_CFLAGS = "-Wparentheses";
 				OTHER_LDFLAGS = (
 					"-sectcreate",
 					__TEXT,
@@ -4126,7 +4133,6 @@
 				INFOPLIST_FILE = "lldb-Info.plist";
 				INSTALL_PATH = /Developer/usr/bin;
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
-				OTHER_CFLAGS = "-Wparentheses";
 				OTHER_LDFLAGS = (
 					"-sectcreate",
 					__TEXT,
