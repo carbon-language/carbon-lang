@@ -222,72 +222,6 @@ static void DefineExactWidthIntType(TargetInfo::IntType Ty,
 }
 
 /// \brief Add definitions required for a smooth interaction between
-/// Objective-C++ automatic reference counting and libc++.
-static void AddObjCXXARCLibcxxDefines(const LangOptions &LangOpts, 
-                                      MacroBuilder &Builder) {
-  Builder.defineMacro("_LIBCPP_PREDEFINED_OBJC_ARC_ADDRESSOF");
-  
-  std::string Result;
-  {
-    // Provide overloads of the function std::__1::addressof() that accept
-    // references to lifetime-qualified objects. libc++'s (more general)
-    // std::__1::addressof() template fails to instantiate with such types,
-    // because it attempts to convert the object to a char& before 
-    // dereferencing.
-    llvm::raw_string_ostream Out(Result);
-    
-    Out << "#pragma clang diagnostic push\n"
-        << "#pragma clang diagnostic ignored \"-Wc++0x-extensions\"\n"
-        << "namespace std { inline namespace __1 {\n"
-        << "\n";
-    
-    Out << "template <class _Tp>\n"
-        << "inline __attribute__ ((__visibility__(\"hidden\"), "
-        << "__always_inline__))\n"
-        << "__attribute__((objc_ownership(strong))) _Tp*\n"
-        << "addressof(__attribute__((objc_ownership(strong))) _Tp& __x) {\n"
-        << "  return &__x;\n"
-        << "}\n"
-        << "\n";
-      
-    if (LangOpts.ObjCRuntimeHasWeak) {
-      Out << "template <class _Tp>\n"
-          << "inline __attribute__ ((__visibility__(\"hidden\"),"
-          << "__always_inline__))\n"
-          << "__attribute__((objc_ownership(weak))) _Tp*\n"
-          << "addressof(__attribute__((objc_ownership(weak))) _Tp& __x) {\n"
-          << "  return &__x;\n"
-          << "};\n"
-          << "\n";
-    }
-      
-    Out << "template <class _Tp>\n"
-        << "inline __attribute__ ((__visibility__(\"hidden\"),"
-        << "__always_inline__))\n"
-        << "__attribute__((objc_ownership(autoreleasing))) _Tp*\n"
-        << "addressof(__attribute__((objc_ownership(autoreleasing))) _Tp& __x) "
-        << "{\n"
-        << " return &__x;\n"
-        << "}\n"
-        << "\n";
-    
-    Out << "template <class _Tp>\n"
-        << "inline __attribute__ ((__visibility__(\"hidden\"), "
-        << "__always_inline__))\n"
-        << "__unsafe_unretained _Tp* addressof(__unsafe_unretained _Tp& __x)"
-        << " {\n"
-        << "  return &__x;\n"
-        << "}\n";
-      
-    Out << "\n"
-        << "} }\n"
-        << "#pragma clang diagnostic pop\n"
-        << "\n";    
-  }
-  Builder.append(Result);
-}
-
-/// \brief Add definitions required for a smooth interaction between
 /// Objective-C++ automated reference counting and libstdc++ (4.2).
 static void AddObjCXXARCLibstdcxxDefines(const LangOptions &LangOpts, 
                                          MacroBuilder &Builder) {
@@ -726,10 +660,7 @@ void clang::InitializePreprocessor(Preprocessor &PP,
     if (LangOpts.ObjC1 && LangOpts.CPlusPlus && LangOpts.ObjCAutoRefCount) {
       switch (InitOpts.ObjCXXARCStandardLibrary) {
       case ARCXX_nolib:
-        break;
-
-      case ARCXX_libcxx:
-        AddObjCXXARCLibcxxDefines(LangOpts, Builder);
+        case ARCXX_libcxx:
         break;
 
       case ARCXX_libstdcxx:
