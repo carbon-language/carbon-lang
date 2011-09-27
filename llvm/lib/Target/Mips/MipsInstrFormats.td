@@ -44,7 +44,9 @@ class MipsInst<dag outs, dag ins, string asmstr, list<dag> pattern,
 
 // Mips Pseudo Instructions Format
 class MipsPseudo<dag outs, dag ins, string asmstr, list<dag> pattern>:
-      MipsInst<outs, ins, asmstr, pattern, IIPseudo>;
+      MipsInst<outs, ins, asmstr, pattern, IIPseudo> {
+  let isPseudo = 1;
+}
 
 //===----------------------------------------------------------------------===//
 // Format R instruction class in Mips : <|opcode|rs|rt|rd|shamt|funct|>
