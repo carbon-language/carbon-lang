@@ -24,6 +24,7 @@ namespace llvm {
   class MachineFunctionPass;
   class PassInfo;
   class TargetLowering;
+  class TargetRegisterClass;
   class raw_ostream;
 
   /// createUnreachableBlockEliminationPass - The LLVM code generator does not
@@ -224,6 +225,14 @@ namespace llvm {
   /// createExpandISelPseudosPass - This pass expands pseudo-instructions.
   ///
   FunctionPass *createExpandISelPseudosPass();
+
+  /// createExecutionDependencyFixPass - This pass fixes execution time
+  /// problems with dependent instructions, such as switching execution
+  /// domains to match.
+  ///
+  /// The pass will examine instructions using and defining registers in RC.
+  ///
+  FunctionPass *createExecutionDependencyFixPass(const TargetRegisterClass *RC);
 
 } // End llvm namespace
 

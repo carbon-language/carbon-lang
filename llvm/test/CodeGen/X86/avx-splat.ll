@@ -47,7 +47,7 @@ entry:
 ;   shuffle (scalar_to_vector (load (ptr + 4))), undef, <0, 0, 0, 0>
 ; To:
 ;   shuffle (vload ptr)), undef, <1, 1, 1, 1>
-; CHECK: vmovaps
+; CHECK: vmovdqa
 ; CHECK-NEXT: vinsertf128  $1
 ; CHECK-NEXT: vpermilps $-1
 define <8 x float> @funcE() nounwind {

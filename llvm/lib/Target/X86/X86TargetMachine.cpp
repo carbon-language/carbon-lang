@@ -133,7 +133,7 @@ bool X86TargetMachine::addPreEmitPass(PassManagerBase &PM,
   bool ShouldPrint = false;
   if (OptLevel != CodeGenOpt::None &&
       (Subtarget.hasSSE2() || Subtarget.hasAVX())) {
-    PM.add(createSSEDomainFixPass());
+    PM.add(createExecutionDependencyFixPass(&X86::VR128RegClass));
     ShouldPrint = true;
   }
 

@@ -18,10 +18,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "sse-domain-fix"
-#include "X86InstrInfo.h"
+#define DEBUG_TYPE "execution-fix"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/Passes.h"
+#include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/Target/TargetMachine.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Debug.h"
@@ -97,25 +99,27 @@ struct DomainValue {
 };
 }
 
-static const unsigned NumRegs = 16;
-
 namespace {
 class SSEDomainFixPass : public MachineFunctionPass {
   static char ID;
   SpecificBumpPtrAllocator<DomainValue> Allocator;
   SmallVector<DomainValue*,16> Avail;
 
+  const TargetRegisterClass *const RC;
   MachineFunction *MF;
-  const X86InstrInfo *TII;
+  const TargetInstrInfo *TII;
   const TargetRegisterInfo *TRI;
   MachineBasicBlock *MBB;
+  std::vector<int> AliasMap;
+  const unsigned NumRegs;
   DomainValue **LiveRegs;
   typedef DenseMap<MachineBasicBlock*,DomainValue**> LiveOutMap;
   LiveOutMap LiveOuts;
   unsigned Distance;
 
 public:
-  SSEDomainFixPass() : MachineFunctionPass(ID) {}
+  SSEDomainFixPass(const TargetRegisterClass *rc)
+    : MachineFunctionPass(ID), RC(rc), NumRegs(RC->getNumRegs()) {}
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
@@ -154,10 +158,9 @@ char SSEDomainFixPass::ID = 0;
 
 /// Translate TRI register number to an index into our smaller tables of
 /// interesting registers. Return -1 for boring registers.
-int SSEDomainFixPass::RegIndex(unsigned reg) {
-  assert(X86::XMM15 == X86::XMM0+NumRegs-1 && "Unexpected sort");
-  reg -= X86::XMM0;
-  return reg < NumRegs ? (int) reg : -1;
+int SSEDomainFixPass::RegIndex(unsigned Reg) {
+  assert(Reg < AliasMap.size() && "Invalid register");
+  return AliasMap[Reg];
 }
 
 DomainValue *SSEDomainFixPass::Alloc(int domain) {
@@ -444,22 +447,32 @@ void SSEDomainFixPass::visitGenericInstr(MachineInstr *mi) {
 
 bool SSEDomainFixPass::runOnMachineFunction(MachineFunction &mf) {
   MF = &mf;
-  TII = static_cast<const X86InstrInfo*>(MF->getTarget().getInstrInfo());
+  TII = MF->getTarget().getInstrInfo();
   TRI = MF->getTarget().getRegisterInfo();
   MBB = 0;
   LiveRegs = 0;
   Distance = 0;
-  assert(NumRegs == X86::VR128RegClass.getNumRegs() && "Bad regclass");
+  assert(NumRegs == RC->getNumRegs() && "Bad regclass");
 
   // If no XMM registers are used in the function, we can skip it completely.
   bool anyregs = false;
-  for (TargetRegisterClass::const_iterator I = X86::VR128RegClass.begin(),
-         E = X86::VR128RegClass.end(); I != E; ++I)
+  for (TargetRegisterClass::const_iterator I = RC->begin(), E = RC->end();
+       I != E; ++I)
     if (MF->getRegInfo().isPhysRegUsed(*I)) {
       anyregs = true;
       break;
     }
   if (!anyregs) return false;
+
+  // Initialize the AliasMap on the first use.
+  if (AliasMap.empty()) {
+    // Given a PhysReg, AliasMap[PhysReg] is either the relevant index into RC,
+    // or -1.
+    AliasMap.resize(TRI->getNumRegs(), -1);
+    for (unsigned i = 0, e = RC->getNumRegs(); i != e; ++i)
+      for (const unsigned *AI = TRI->getOverlaps(RC->getRegister(i)); *AI; ++AI)
+        AliasMap[*AI] = i;
+  }
 
   MachineBasicBlock *Entry = MF->begin();
   SmallPtrSet<MachineBasicBlock*, 16> Visited;
@@ -501,6 +514,7 @@ bool SSEDomainFixPass::runOnMachineFunction(MachineFunction &mf) {
   return false;
 }
 
-FunctionPass *llvm::createSSEDomainFixPass() {
-  return new SSEDomainFixPass();
+FunctionPass *
+llvm::createExecutionDependencyFixPass(const TargetRegisterClass *RC) {
+  return new SSEDomainFixPass(RC);
 }

@@ -44,10 +44,6 @@ FunctionPass* createGlobalBaseRegPass();
 ///
 FunctionPass *createX86FloatingPointStackifierPass();
 
-/// createSSEDomainFixPass - This pass twiddles SSE opcodes to prevent domain
-/// crossings.
-FunctionPass *createSSEDomainFixPass();
-
 /// createX86IssueVZeroUpperPass - This pass inserts AVX vzeroupper instructions
 /// before each call to avoid transition penalty between functions encoded with
 /// AVX and SSE.

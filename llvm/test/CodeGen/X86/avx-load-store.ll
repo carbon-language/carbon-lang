@@ -3,8 +3,8 @@
 
 ; CHECK: vmovaps
 ; CHECK: vmovaps
-; CHECK: vmovapd
-; CHECK: vmovapd
+; CHECK: vmovaps
+; CHECK: vmovaps
 ; CHECK: vmovaps
 ; CHECK: vmovaps
 define void @test_256_load(double* nocapture %d, float* nocapture %f, <4 x i64>* nocapture %i) nounwind uwtable ssp {
