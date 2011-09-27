@@ -96,7 +96,10 @@ addPreEmitPass(PassManagerBase &PM, CodeGenOpt::Level OptLevel)
 
 bool MipsTargetMachine::
 addPreRegAlloc(PassManagerBase &PM, CodeGenOpt::Level OptLevel) {
-  PM.add(createMipsEmitGPRestorePass(*this));
+  // Do not restore $gp if target is Mips64.
+  // In N32/64, $gp is a callee-saved register.
+  if (!Subtarget.hasMips64())
+    PM.add(createMipsEmitGPRestorePass(*this));
   return true;
 }
 
