@@ -826,6 +826,19 @@ def CVT_f32_f64
   : InstPTX<(outs RegF32:$d), (ins RegF64:$a), "cvt.rn.f32.f64\t$d, $a",
             [(set RegF32:$d, (fround RegF64:$a))]>;
 
+def CVT_f32_s16
+  : InstPTX<(outs RegF32:$d), (ins RegI16:$a), "cvt.rn.f32.s16\t$d, $a",
+            [(set RegF32:$d, (sint_to_fp RegI16:$a))]>;
+
+def CVT_f32_s32
+  : InstPTX<(outs RegF32:$d), (ins RegI32:$a), "cvt.rn.f32.s32\t$d, $a",
+            [(set RegF32:$d, (sint_to_fp RegI32:$a))]>;
+
+def CVT_f32_s64
+  : InstPTX<(outs RegF32:$d), (ins RegI64:$a), "cvt.rn.f32.s64\t$d, $a",
+            [(set RegF32:$d, (sint_to_fp RegI64:$a))]>;
+
+
 // Conversion to f64
 
 def CVT_f64_pred
@@ -848,6 +861,18 @@ def CVT_f64_u64
 def CVT_f64_f32
   : InstPTX<(outs RegF64:$d), (ins RegF32:$a), "cvt.f64.f32\t$d, $a",
             [(set RegF64:$d, (fextend RegF32:$a))]>;
+
+def CVT_f64_s16
+  : InstPTX<(outs RegF64:$d), (ins RegI16:$a), "cvt.rn.f64.s16\t$d, $a",
+            [(set RegF64:$d, (sint_to_fp RegI16:$a))]>;
+
+def CVT_f64_s32
+  : InstPTX<(outs RegF64:$d), (ins RegI32:$a), "cvt.rn.f64.s32\t$d, $a",
+            [(set RegF64:$d, (sint_to_fp RegI32:$a))]>;
+
+def CVT_f64_s64
+  : InstPTX<(outs RegF64:$d), (ins RegI64:$a), "cvt.rn.f64.s64\t$d, $a",
+            [(set RegF64:$d, (sint_to_fp RegI64:$a))]>;
 
 // NOTE: These are temporarily here to help test some Clang-generated code.
 // We really need to properly introduce anyext and bitconvert into the back-end.

@@ -206,6 +206,27 @@ define ptx_device float @cvt_f32_f64(double %x) {
 	ret float %a
 }
 
+define ptx_device float @cvt_f32_s16(i16 %x) {
+; CHECK: cvt.rn.f32.s16 %ret{{[0-9]+}}, %rh{{[0-9]+}}
+; CHECK: ret
+  %a = sitofp i16 %x to float
+  ret float %a
+}
+
+define ptx_device float @cvt_f32_s32(i32 %x) {
+; CHECK: cvt.rn.f32.s32 %ret{{[0-9]+}}, %r{{[0-9]+}}
+; CHECK: ret
+  %a = sitofp i32 %x to float
+  ret float %a
+}
+
+define ptx_device float @cvt_f32_s64(i64 %x) {
+; CHECK: cvt.rn.f32.s64 %ret{{[0-9]+}}, %rd{{[0-9]+}}
+; CHECK: ret
+  %a = sitofp i64 %x to float
+  ret float %a
+}
+
 ; f64
 
 define ptx_device double @cvt_f64_preds(i1 %x) {
@@ -241,4 +262,25 @@ define ptx_device double @cvt_f64_f32(float %x) {
 ; CHECK: ret;
 	%a = fpext float %x to double
 	ret double %a
+}
+
+define ptx_device double @cvt_f64_s16(i16 %x) {
+; CHECK: cvt.rn.f64.s16 %ret{{[0-9]+}}, %rh{{[0-9]+}}
+; CHECK: ret
+  %a = sitofp i16 %x to double
+  ret double %a
+}
+
+define ptx_device double @cvt_f64_s32(i32 %x) {
+; CHECK: cvt.rn.f64.s32 %ret{{[0-9]+}}, %r{{[0-9]+}}
+; CHECK: ret
+  %a = sitofp i32 %x to double
+  ret double %a
+}
+
+define ptx_device double @cvt_f64_s64(i64 %x) {
+; CHECK: cvt.rn.f64.s64 %ret{{[0-9]+}}, %rd{{[0-9]+}}
+; CHECK: ret
+  %a = sitofp i64 %x to double
+  ret double %a
 }
