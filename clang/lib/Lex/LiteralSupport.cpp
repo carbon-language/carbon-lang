@@ -784,7 +784,7 @@ CharLiteralParser::CharLiteralParser(const char *begin, const char *end,
 
       // Is this a Universal Character Name escape?
     if (begin[0] != '\\')     // If this is a normal character, consume it.
-      ResultChar = *begin++;
+      ResultChar = (unsigned char)*begin++;
     else {                    // Otherwise, this is an escape character.
       unsigned CharWidth = getCharWidth(Kind, PP.getTargetInfo());
       // Check for UCN.
