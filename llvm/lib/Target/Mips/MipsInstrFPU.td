@@ -177,10 +177,12 @@ let fd = 0 in {
                   "ctc1\t$fs, $rt", []>;
 
   def MFC1  : FFR<0x11, 0x00, 0x00, (outs CPURegs:$rt), (ins FGR32:$fs),
-                  "mfc1\t$rt, $fs", []>;
+                  "mfc1\t$rt, $fs",
+                  [(set CPURegs:$rt, (bitconvert FGR32:$fs))]>;
 
   def MTC1  : FFR<0x11, 0x00, 0x04, (outs FGR32:$fs), (ins CPURegs:$rt),
-                  "mtc1\t$rt, $fs", []>;
+                  "mtc1\t$rt, $fs",
+                  [(set FGR32:$fs, (bitconvert CPURegs:$rt))]>;
 }
 
 def FMOV_S32 : FFR<0x11, 0b000110, 0x0, (outs FGR32:$fd), (ins FGR32:$fs),
@@ -359,9 +361,6 @@ def : Pat<(f64 (sint_to_fp CPURegs:$src)), (CVTD_W32 (MTC1 CPURegs:$src))>;
 
 def : Pat<(i32 (fp_to_sint FGR32:$src)), (MFC1 (TRUNC_W_S32 FGR32:$src))>;
 def : Pat<(i32 (fp_to_sint AFGR64:$src)), (MFC1 (TRUNC_W_D32 AFGR64:$src))>;
-
-def : Pat<(i32 (bitconvert FGR32:$src)),  (MFC1 FGR32:$src)>;
-def : Pat<(f32 (bitconvert CPURegs:$src)), (MTC1 CPURegs:$src)>;
 
 let Predicates = [In32BitMode] in {
   def : Pat<(f32 (fround AFGR64:$src)), (CVTS_D32 AFGR64:$src)>;
