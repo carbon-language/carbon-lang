@@ -213,7 +213,6 @@ void ScoreboardHazardRecognizer::EmitInstruction(SUnit *SU) {
         freeUnits = freeUnit & (freeUnit - 1);
       } while (freeUnits);
 
-      assert(freeUnit && "No function unit available!");
       if (IS->getReservationKind() == InstrStage::Required)
         RequiredScoreboard[cycle + i] |= freeUnit;
       else
