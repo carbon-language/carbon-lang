@@ -1278,18 +1278,13 @@ bool Parser::TryAnnotateTypeOrScopeToken(bool EnteringContext) {
       return true;
 
   if (Tok.is(tok::identifier)) {
-    IdentifierInfo *CorrectedII = 0;
     // Determine whether the identifier is a type name.
     if (ParsedType Ty = Actions.getTypeName(*Tok.getIdentifierInfo(),
                                             Tok.getLocation(), getCurScope(),
                                             &SS, false, 
                                             NextToken().is(tok::period),
                                             ParsedType(),
-                                            /*NonTrivialTypeSourceInfo*/true,
-                                            &CorrectedII)) {
-      // A FixIt was applied as a result of typo correction
-      if (CorrectedII)
-        Tok.setIdentifierInfo(CorrectedII);
+                                            /*NonTrivialTypeSourceInfo*/true)) {
       // This is a typename. Replace the current token in-place with an
       // annotation type token.
       Tok.setKind(tok::annot_typename);
