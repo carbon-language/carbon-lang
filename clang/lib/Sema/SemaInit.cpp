@@ -4482,7 +4482,6 @@ InitializationSequence::Perform(Sema &S,
       FunctionDecl *Fn = Step->Function.Function;
       DeclAccessPair FoundFn = Step->Function.FoundDecl;
       bool CreatedObject = false;
-      bool IsLvalue = false;
       if (CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(Fn)) {
         // Build a call to the selected constructor.
         ASTOwningVector<Expr*> ConstructorArgs(S);
@@ -4520,7 +4519,6 @@ InitializationSequence::Perform(Sema &S,
       } else {
         // Build a call to the conversion function.
         CXXConversionDecl *Conversion = cast<CXXConversionDecl>(Fn);
-        IsLvalue = Conversion->getResultType()->isLValueReferenceType();
         S.CheckMemberOperatorAccess(Kind.getLocation(), CurInit.get(), 0,
                                     FoundFn);
         S.DiagnoseUseOfDecl(FoundFn, Kind.getLocation());
@@ -4560,11 +4558,10 @@ InitializationSequence::Perform(Sema &S,
         }
       }
 
-      // FIXME: xvalues
       CurInit = S.Owned(ImplicitCastExpr::Create(S.Context,
                                                  CurInit.get()->getType(),
                                                  CastKind, CurInit.get(), 0,
-                                           IsLvalue ? VK_LValue : VK_RValue));
+                                                CurInit.get()->getValueKind()));
 
       if (RequiresCopy)
         CurInit = CopyObject(S, Entity.getType().getNonReferenceType(), Entity,
