@@ -114,7 +114,7 @@ if(PYTHONINTERP_FOUND)
                 UnitTests
                 BugpointPasses LLVMHello
                 llc lli llvm-ar llvm-as llvm-dis llvm-extract
-                llvm-ld llvm-link llvm-mc llvm-nm macho-dump opt
+                llvm-ld llvm-link llvm-mc llvm-nm llvm-objdump macho-dump opt
                 FileCheck count not)
   set_target_properties(check.deps PROPERTIES FOLDER "Tests")
 
