@@ -561,10 +561,17 @@ void LoopUnswitch::SplitExitEdges(Loop *L,
     BasicBlock *ExitBlock = ExitBlocks[i];
     SmallVector<BasicBlock *, 4> Preds(pred_begin(ExitBlock),
                                        pred_end(ExitBlock));
+
     // Although SplitBlockPredecessors doesn't preserve loop-simplify in
     // general, if we call it on all predecessors of all exits then it does.
-    SplitBlockPredecessors(ExitBlock, Preds.data(), Preds.size(),
-                           ".us-lcssa", this);
+    if (!ExitBlock->isLandingPad()) {
+      SplitBlockPredecessors(ExitBlock, Preds.data(), Preds.size(),
+                             ".us-lcssa", this);
+    } else {
+      SmallVector<BasicBlock*, 2> NewBBs;
+      SplitLandingPadPredecessors(ExitBlock, Preds, ".us-lcssa", ".us-lcssa",
+                                  this, NewBBs);
+    }
   }
 }
 
@@ -632,7 +639,7 @@ void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val,
     // as well.
     ParentLoop->addBasicBlockToLoop(NewBlocks[0], LI->getBase());
   }
-  
+
   for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i) {
     BasicBlock *NewExit = cast<BasicBlock>(VMap[ExitBlocks[i]]);
     // The new exit block should be in the same loop as the old one.
@@ -652,6 +659,19 @@ void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val,
       ValueToValueMapTy::iterator It = VMap.find(V);
       if (It != VMap.end()) V = It->second;
       PN->addIncoming(V, NewExit);
+    }
+
+    if (LandingPadInst *LPad = NewExit->getLandingPadInst()) {
+      PN = PHINode::Create(LPad->getType(), 0, "",
+                           ExitSucc->getFirstInsertionPt());
+
+      for (pred_iterator I = pred_begin(ExitSucc), E = pred_end(ExitSucc);
+           I != E; ++I) {
+        BasicBlock *BB = *I;
+        LandingPadInst *LPI = BB->getLandingPadInst();
+        LPI->replaceAllUsesWith(PN);
+        PN->addIncoming(LPI, BB);
+      }
     }
   }
 
