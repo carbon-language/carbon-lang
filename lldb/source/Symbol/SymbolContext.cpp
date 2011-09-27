@@ -575,6 +575,29 @@ SymbolContext::GetParentInlinedFrameInfo (const Address &curr_frame_pc,
     return false;
 }
 
+ConstString 
+SymbolContext::GetFunctionName (Mangled::NamePreference preference)
+{
+    if (function)
+    {
+        if (block)
+        {
+            const InlineFunctionInfo *inline_info = block->GetInlinedFunctionInfo();
+            if (inline_info)
+                return inline_info->GetName(); 
+        }
+        return function->GetMangled().GetName(preference);
+    }
+    else if (symbol && symbol->GetAddressRangePtr())
+    {
+        return symbol->GetMangled().GetName(preference);
+    }
+    else
+    {
+        // No function, return an empty string.
+        return ConstString();
+    }
+}
 
 //----------------------------------------------------------------------
 //

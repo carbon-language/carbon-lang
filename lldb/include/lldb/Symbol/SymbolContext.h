@@ -15,6 +15,7 @@
 
 #include "lldb/lldb-private.h"
 #include "lldb/Core/Address.h"
+#include "lldb/Core/Mangled.h"
 #include "lldb/Symbol/ClangASTType.h"
 #include "lldb/Symbol/LineEntry.h"
 
@@ -265,6 +266,23 @@ public:
 //                                        const char *block_spec
 //                                        const char *line_number,
 //                                        const char *symbol);
+
+    //------------------------------------------------------------------
+    /// Find a name of the innermost function for the symbol context.
+    ///
+    /// For instance, if the symbol context contains an inlined block,
+    /// it will return the inlined function name.
+    ///
+    /// @param[in] prefer_mangled
+    ///    if \btrue, then the mangled name will be returned if there
+    ///    is one.  Otherwise the unmangled name will be returned if it
+    ///    is available.
+    ///
+    /// @return
+    ///     The name of the function represented by this symbol context.
+    //------------------------------------------------------------------
+    ConstString
+    GetFunctionName (Mangled::NamePreference preference = Mangled::ePreferDemangled);
 
     bool
     GetParentInlinedFrameInfo (const Address &curr_frame_pc, 

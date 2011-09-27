@@ -627,14 +627,9 @@ CommandCompletions::SymbolCompleter::SearchCallback (
         {
             if (sc_list.GetContextAtIndex(i, sc))
             {
-                if (sc.function)
-                {
-                    m_match_set.insert (sc.function->GetMangled().GetDemangledName());
-                }
-                else if (sc.symbol && sc.symbol->GetAddressRangePtr())
-                {
-                    m_match_set.insert (sc.symbol->GetMangled().GetName());
-                }
+                ConstString func_name = sc.GetFunctionName(Mangled::ePreferDemangled);
+                if (!func_name.IsEmpty())
+                    m_match_set.insert (func_name);
             }
         }
     }
