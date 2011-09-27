@@ -27,7 +27,7 @@
 @dynamic prop3;
 
 - (short)method2 {
-  return prop4;
+  return _prop4;
 }
 
 - (short)method3 {
@@ -43,4 +43,4 @@
 // CHECK: ObjCIvarDecl:{ResultType float}{TypedText _prop2} (35)
 // CHECK-NOT: prop2
 // CHECK-NOT: prop3
-// CHECK: ObjCIvarDecl:{ResultType double}{TypedText prop4} (37)
+// CHECK: ObjCIvarDecl:{ResultType double}{TypedText _prop4} (37)

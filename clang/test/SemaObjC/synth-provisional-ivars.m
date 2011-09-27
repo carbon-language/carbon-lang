@@ -18,7 +18,7 @@ int bar;
 @end
 
 @implementation I
-- (int) Meth { return PROP; }
+- (int) Meth { return _PROP; }
 
 @dynamic PROP1;
 - (int) Meth1 { return PROP1; }  // expected-error {{use of undeclared identifier 'PROP1'}}
@@ -30,12 +30,12 @@ int bar;
 @synthesize PROP3=IVAR;
 
 - (int) Meth4 { return PROP4; }
-@synthesize PROP4=PROP4;
+@synthesize PROP4=PROP4; // expected-note 4 {{'PROP4' declared here}}
 
 - (int) Meth5 { return bar; }
 @synthesize bar = _bar;
 
-- (int) Meth6 { return bar1; }
+- (int) Meth6 { return _bar1; }
 
 @end
 

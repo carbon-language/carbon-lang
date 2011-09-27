@@ -1249,10 +1249,20 @@ ObjCPropertyDecl *Sema::LookupPropertyDecl(const ObjCContainerDecl *CDecl,
   return 0;
 }
 
+static IdentifierInfo * getDefaultSynthIvarName(ObjCPropertyDecl *Prop,
+                                                ASTContext &Ctx) {
+  llvm::SmallString<128> ivarName;
+  {
+    llvm::raw_svector_ostream os(ivarName);
+    os << '_' << Prop->getIdentifier()->getName();
+  }
+  return &Ctx.Idents.get(ivarName.str());
+}
+
 /// DefaultSynthesizeProperties - This routine default synthesizes all
 /// properties which must be synthesized in class's @implementation.
-void Sema::DefaultSynthesizeProperties (Scope *S, ObjCImplDecl* IMPDecl,
-                                        ObjCInterfaceDecl *IDecl) {
+void Sema::DefaultSynthesizeProperties(Scope *S, ObjCImplDecl* IMPDecl,
+                                       ObjCInterfaceDecl *IDecl) {
   
   llvm::DenseMap<IdentifierInfo *, ObjCPropertyDecl*> PropMap;
   CollectClassPropertyImplementations(IDecl, PropMap);
@@ -1289,7 +1299,8 @@ void Sema::DefaultSynthesizeProperties (Scope *S, ObjCImplDecl* IMPDecl,
     // to help users.
     ActOnPropertyImplDecl(S, SourceLocation(), SourceLocation(),
                           true,
-                          Prop->getIdentifier(), Prop->getIdentifier(),
+                          /* property = */ Prop->getIdentifier(),
+                          /* ivar = */ getDefaultSynthIvarName(Prop, Context),
                           SourceLocation());
   }
 }

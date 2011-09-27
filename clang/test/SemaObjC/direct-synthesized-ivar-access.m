@@ -10,6 +10,6 @@
 @end
 
 @implementation I
-- (int) Meth { return IVAR; }
+- (int) Meth { return _IVAR; }
 - (int) OK { return self.IVAR; }
 @end

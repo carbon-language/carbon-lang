@@ -16,7 +16,7 @@
 // @synthesize name, rank, serialNumber;
 // default synthesis allows direct access to property ivars.
 - (id)init {
-        name = rank = serialNumber = 0;
+        _name = _rank = _serialNumber = 0;
 	return self;
 }
 
@@ -41,7 +41,7 @@
 // Test3
 @interface Test3 
 { 
-  id _uid; 
+  id uid; 
 } 
 @property (readwrite, assign) id uid; 
 @end
@@ -50,8 +50,8 @@
 // Oops, forgot to write @synthesize! will be default synthesized
 - (void) myMethod { 
    self.uid = 0; // Use of the “setter” 
-   _uid = 0; // Use of the wrong instance variable
-   uid = 0; // Use of the property instance variable
+   uid = 0; // Use of the wrong instance variable
+   _uid = 0; // Use of the property instance variable
 } 
 @end
 
@@ -65,7 +65,7 @@
 // default synthesize property named 'var'
 @implementation Test4 
 - (id) myMethod {
-  return self->var;  //  compiles because 'var' is synthesized by default
+  return self->_var;  //  compiles because 'var' is synthesized by default
 }
 @end
 
@@ -80,7 +80,7 @@
 @implementation Test5 
 - (id) myMethod {
   Test5 *foo = 0; 
-  return foo->var; // OK
+  return foo->_var; // OK
 } 
 @end
 
@@ -100,19 +100,17 @@
 @synthesize var = _var; 
 @end
 
-int* object;
+int* _object;
 
-@interface Test7 {
-id _object;
-} 
+@interface Test7
 @property (readwrite, assign) id object; 
 @end
 
-// With default synthesis, 'object' is be the synthesized ivar not the global
+// With default synthesis, '_object' is be the synthesized ivar not the global
 // 'int*' object. So no error.
 @implementation Test7 
 - (id) myMethod {
-  return object;
+  return _object;
 } 
 @end
 

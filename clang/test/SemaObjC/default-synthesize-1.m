@@ -25,12 +25,12 @@
 //@synthesize howMany, what;
 
 - (int) howMany {
-    return howMany;
+    return _howMany;
 }
 // - (void) setHowMany: (int) value
 
 - (NSString*) what {
-    return what;
+    return _what;
 }
 // - (void) setWhat: (NSString*) value    
 @end
@@ -46,14 +46,14 @@
 
 // - (int) howMany
 - (void) setHowMany: (int) value {
-    howMany = value;
+    _howMany = value;
 }
 
 // - (NSString*) what
 - (void) setWhat: (NSString*) value {
-    if (what != value) {
-        [what release];
-        what = [value retain];
+    if (_what != value) {
+        [_what release];
+        _what = [value retain];
     }
 }
 @end
