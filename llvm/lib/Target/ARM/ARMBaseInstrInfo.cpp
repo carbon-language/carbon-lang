@@ -2720,3 +2720,56 @@ ARMBaseInstrInfo::isFpMLxInstruction(unsigned Opcode, unsigned &MulOpc,
   HasLane = Entry.HasLane;
   return true;
 }
+
+//===----------------------------------------------------------------------===//
+// Execution domains.
+//===----------------------------------------------------------------------===//
+//
+// Some instructions go down the NEON pipeline, some go down the VFP pipeline,
+// and some can go down both.  The vmov instructions go down the VFP pipeline,
+// but they can be changed to vorr equivalents that are executed by the NEON
+// pipeline.
+//
+// We use the following execution domain numbering:
+//
+//   0: Generic
+//   1: VFP
+//   2: NEON
+//
+// Also see ARMInstrFormats.td and Domain* enums in ARMBaseInfo.h
+//
+std::pair<uint16_t, uint16_t>
+ARMBaseInstrInfo::getExecutionDomain(const MachineInstr *MI) const {
+  // VMOVD is a VFP instruction, but can be changed to NEON if it isn't
+  // predicated.
+  if (MI->getOpcode() == ARM::VMOVD && !isPredicated(MI))
+    return std::make_pair(1, 3);
+
+  // No other instructions can be swizzled, so just determine their domain.
+  unsigned Domain = MI->getDesc().TSFlags & ARMII::DomainMask;
+
+  if (Domain & ARMII::DomainNEON)
+    return std::make_pair(2, 0);
+
+  // Certain instructions can go either way on Cortex-A8.
+  // Treat them as NEON instructions.
+  if ((Domain & ARMII::DomainNEONA8) && Subtarget.isCortexA8())
+    return std::make_pair(2, 0);
+
+  if (Domain & ARMII::DomainVFP)
+    return std::make_pair(1, 0);
+
+  return std::make_pair(0, 0);
+}
+
+void
+ARMBaseInstrInfo::setExecutionDomain(MachineInstr *MI, unsigned Domain) const {
+  // We only know how to change VMOVD into VORR.
+  assert(MI->getOpcode() == ARM::VMOVD && "Can only swizzle VMOVD");
+  if (Domain != 2)
+    return;
+
+  // Change to a VORRd which requires two identical use operands.
+  MI->setDesc(get(ARM::VORRd));
+  MachineInstrBuilder(MI).addReg(MI->getOperand(1).getReg());
+}

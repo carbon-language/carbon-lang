@@ -210,6 +210,12 @@ public:
   int getOperandLatency(const InstrItineraryData *ItinData,
                         SDNode *DefNode, unsigned DefIdx,
                         SDNode *UseNode, unsigned UseIdx) const;
+
+  /// VFP/NEON execution domains.
+  std::pair<uint16_t, uint16_t>
+  getExecutionDomain(const MachineInstr *MI) const;
+  void setExecutionDomain(MachineInstr *MI, unsigned Domain) const;
+
 private:
   int getVLDMDefCycle(const InstrItineraryData *ItinData,
                       const MCInstrDesc &DefMCID,
