@@ -1,5 +1,6 @@
-// RUN: %clang_cc1 -triple x86_64-apple-macosx10.7.0 -analyze -analyzer-checker=experimental.security.MallocOverflow -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=experimental.security.MallocOverflow -verify %s
 
+#define NULL ((void *) 0)
 typedef __typeof__(sizeof(int)) size_t;
 extern void * malloc(size_t);
 
@@ -39,7 +40,6 @@ void * f6(int n)
   return malloc((n + 1) * sizeof(int)); // expected-warning {{the computation of the size of the memory allocation may overflow}}
 }
 
-#include <stddef.h>
 extern void * malloc (size_t);
 
 void * f7(int n)
@@ -111,4 +111,3 @@ void * f14(int n)
     return NULL;
   return malloc(n * sizeof(int));  // expected-warning {{the computation of the size of the memory allocation may overflow}}
 }
-
