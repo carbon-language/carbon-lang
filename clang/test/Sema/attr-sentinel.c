@@ -4,12 +4,14 @@
 
 #define ATTR __attribute__ ((__sentinel__)) 
 
-void foo1 (int x, ...) ATTR; // expected-note 2 {{function has been explicitly marked sentinel here}}
+void foo1 (int x, ...) ATTR; // expected-note 3 {{function has been explicitly marked sentinel here}}
 void foo5 (int x, ...) __attribute__ ((__sentinel__(1))); // expected-note {{function has been explicitly marked sentinel here}}
 void foo6 (int x, ...) __attribute__ ((__sentinel__(5))); // expected-note {{function has been explicitly marked sentinel here}}
 void foo7 (int x, ...) __attribute__ ((__sentinel__(0))); // expected-note {{function has been explicitly marked sentinel here}}
 void foo10 (int x, ...) __attribute__ ((__sentinel__(1,1)));
 void foo12 (int x, ... ) ATTR; // expected-note {{function has been explicitly marked sentinel here}}
+
+#define FOOMACRO(...) foo1(__VA_ARGS__)
 
 void test1() {
   foo1(1, NULL); // OK
@@ -30,6 +32,9 @@ void test1() {
   struct A a, b, c;
   foo1(3, &a, &b, &c); // expected-warning {{missing sentinel in function call}}
   foo1(3, &a, &b, &c, (struct A*) 0);
+
+  // PR11002
+  FOOMACRO(1, 2); // expected-warning {{missing sentinel in function call}}
 }
  
 

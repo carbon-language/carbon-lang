@@ -252,10 +252,13 @@ void Sema::DiagnoseSentinelCalls(NamedDecl *D, SourceLocation Loc,
     NullValue = "NULL";
   else
     NullValue = "(void*) 0";
-  
-  Diag(MissingNilLoc, diag::warn_missing_sentinel) 
-    << calleeType
-    << FixItHint::CreateInsertion(MissingNilLoc, ", " + NullValue);
+
+  if (MissingNilLoc.isInvalid())
+    Diag(Loc, diag::warn_missing_sentinel) << calleeType;
+  else
+    Diag(MissingNilLoc, diag::warn_missing_sentinel) 
+      << calleeType
+      << FixItHint::CreateInsertion(MissingNilLoc, ", " + NullValue);
   Diag(D->getLocation(), diag::note_sentinel_here) << calleeType;
 }
 
