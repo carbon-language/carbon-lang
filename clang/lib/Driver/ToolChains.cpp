@@ -1696,8 +1696,8 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
   // FIXME: This is in here to find crt1.o. It is provided by libc, and
   // libc (like gcc), can be installed in any directory. Once we are
   // fetching this from a config file, we should have a libc prefix.
-  Paths.push_back("/lib/../" + Lib);
-  Paths.push_back("/usr/lib/../" + Lib);
+  Paths.push_back("=/lib/../" + Lib);
+  Paths.push_back("=/usr/lib/../" + Lib);
 
   if (!Suffix.empty())
     Paths.push_back(Base);
