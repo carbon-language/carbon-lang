@@ -31,10 +31,10 @@ public:
     GetAddress();
 
     const char *
-    GetOpcodeName (lldb::SBTarget target);
+    GetMnemonic (lldb::SBTarget target);
     
     const char *
-    GetMnemonics (lldb::SBTarget target);
+    GetOperands (lldb::SBTarget target);
     
     const char *
     GetComment (lldb::SBTarget target);

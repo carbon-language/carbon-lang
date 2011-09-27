@@ -69,7 +69,7 @@ SBInstruction::GetAddress()
 }
 
 const char *
-SBInstruction::GetOpcodeName(SBTarget target)
+SBInstruction::GetMnemonic(SBTarget target)
 {
     if (m_opaque_sp)
     {        
@@ -81,13 +81,13 @@ SBInstruction::GetOpcodeName(SBTarget target)
             target->CalculateExecutionContext (exe_ctx);
             exe_ctx.SetProcessSP(target->GetProcessSP());
         }
-        return m_opaque_sp->GetOpcodeName(exe_ctx.GetBestExecutionContextScope());
+        return m_opaque_sp->GetMnemonic(exe_ctx.GetBestExecutionContextScope());
     }
     return NULL;
 }
 
 const char *
-SBInstruction::GetMnemonics(SBTarget target)
+SBInstruction::GetOperands(SBTarget target)
 {
     if (m_opaque_sp)
     {
@@ -99,7 +99,7 @@ SBInstruction::GetMnemonics(SBTarget target)
             target->CalculateExecutionContext (exe_ctx);
             exe_ctx.SetProcessSP(target->GetProcessSP());
         }
-        return m_opaque_sp->GetMnemonics(exe_ctx.GetBestExecutionContextScope());
+        return m_opaque_sp->GetOperands(exe_ctx.GetBestExecutionContextScope());
     }
     return NULL;
 }

@@ -430,7 +430,7 @@ InstructionLLVM::Dump
 }
 
 void
-InstructionLLVM::CalculateOpcodeName (ExecutionContextScope *exe_scope)
+InstructionLLVM::CalculateMnemonic (ExecutionContextScope *exe_scope)
 {
     const int num_tokens = EDNumTokens(m_inst);
     if (num_tokens > 0)
@@ -554,17 +554,17 @@ InstructionLLVM::CalculateOpcodeName (ExecutionContextScope *exe_scope)
 }
 
 void
-InstructionLLVM::CalculateMnemonics(ExecutionContextScope *exe_scope)
+InstructionLLVM::CalculateOperands(ExecutionContextScope *exe_scope)
 {
-    // Do all of the work in CalculateOpcodeName()
-    CalculateOpcodeName (exe_scope);
+    // Do all of the work in CalculateMnemonic()
+    CalculateMnemonic (exe_scope);
 }
 
 void
 InstructionLLVM::CalculateComment(ExecutionContextScope *exe_scope)
 {
-    // Do all of the work in CalculateOpcodeName()
-    CalculateOpcodeName (exe_scope);    
+    // Do all of the work in CalculateMnemonic()
+    CalculateMnemonic (exe_scope);    
 }
 
 bool

@@ -42,17 +42,17 @@ public:
     }
     
     const char *
-    GetOpcodeName (ExecutionContextScope *exe_scope)
+    GetMnemonic (ExecutionContextScope *exe_scope)
     {
         if (m_opcode_name.empty())
-            CalculateOpcodeName(exe_scope);
+            CalculateMnemonic(exe_scope);
         return m_opcode_name.c_str();
     }
     const char *
-    GetMnemonics (ExecutionContextScope *exe_scope)
+    GetOperands (ExecutionContextScope *exe_scope)
     {
         if (m_mnemocics.empty())
-            CalculateMnemonics(exe_scope);
+            CalculateOperands(exe_scope);
         return m_mnemocics.c_str();
     }
     
@@ -65,10 +65,10 @@ public:
     }
 
     virtual void
-    CalculateOpcodeName (ExecutionContextScope *exe_scope) = 0;
+    CalculateMnemonic (ExecutionContextScope *exe_scope) = 0;
     
     virtual void
-    CalculateMnemonics (ExecutionContextScope *exe_scope) = 0;
+    CalculateOperands (ExecutionContextScope *exe_scope) = 0;
     
     virtual void
     CalculateComment (ExecutionContextScope *exe_scope) = 0;
@@ -199,13 +199,13 @@ public:
     DoesBranch () const;
 
     virtual void
-    CalculateOpcodeName(ExecutionContextScope *exe_scope)
+    CalculateMnemonic(ExecutionContextScope *exe_scope)
     {
         // TODO: fill this in and put opcode name into Instruction::m_opcode_name
     }
     
     virtual void
-    CalculateMnemonics(ExecutionContextScope *exe_scope)
+    CalculateOperands(ExecutionContextScope *exe_scope)
     {
         // TODO: fill this in and put opcode name into Instruction::m_mnemonics
     }

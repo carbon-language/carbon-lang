@@ -236,11 +236,11 @@ def disassemble_instructions (target, instructions, pc, insts_before_pc, insts_a
         inst_pc = inst.GetAddress().GetLoadAddress(target);
         if pc == inst_pc:
             pc_index = inst_idx
-        opcode_name = inst.GetOpcodeName(target)
-        mnemonics =  inst.GetMnemonics(target)
-        comment =  inst.GetComment(target)
-        #data = inst.GetData(target)
-        lines.append ("%#16.16x: %8s %s" % (inst_pc, opcode_name, mnemonics))
+        mnemonic = inst.GetMnemonic (target)
+        operands =  inst.GetOperands (target)
+        comment =  inst.GetComment (target)
+        #data = inst.GetData (target)
+        lines.append ("%#16.16x: %8s %s" % (inst_pc, mnemonic, operands))
         if comment:
             line_len = len(lines[-1])
             if line_len < comment_column:
