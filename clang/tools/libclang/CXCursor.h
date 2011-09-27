@@ -43,6 +43,8 @@ class TemplateName;
 class TypeDecl;
   
 namespace cxcursor {
+
+CXCursor getCursor(CXTranslationUnit, SourceLocation);
   
 CXCursor MakeCXCursor(const clang::Attr *A, clang::Decl *Parent,
                       CXTranslationUnit TU);

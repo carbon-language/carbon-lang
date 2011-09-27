@@ -3489,32 +3489,10 @@ CXCursor clang_getCursor(CXTranslationUnit TU, CXSourceLocation Loc) {
   ASTUnit *CXXUnit = static_cast<ASTUnit *>(TU->TUData);
   ASTUnit::ConcurrencyCheck Check(*CXXUnit);
 
-  // Translate the given source location to make it point at the beginning of
-  // the token under the cursor.
   SourceLocation SLoc = cxloc::translateSourceLocation(Loc);
-
-  // Guard against an invalid SourceLocation, or we may assert in one
-  // of the following calls.
-  if (SLoc.isInvalid())
-    return clang_getNullCursor();
+  CXCursor Result = cxcursor::getCursor(TU, SLoc);
 
   bool Logging = getenv("LIBCLANG_LOGGING");  
-  SLoc = Lexer::GetBeginningOfToken(SLoc, CXXUnit->getSourceManager(),
-                                    CXXUnit->getASTContext().getLangOptions());
-  
-  CXCursor Result = MakeCXCursorInvalid(CXCursor_NoDeclFound);
-  if (SLoc.isValid()) {
-    // FIXME: Would be great to have a "hint" cursor, then walk from that
-    // hint cursor upward until we find a cursor whose source range encloses
-    // the region of interest, rather than starting from the translation unit.
-    GetCursorData ResultData(CXXUnit->getSourceManager(), SLoc, Result);
-    CXCursor Parent = clang_getTranslationUnitCursor(TU);
-    CursorVisitor CursorVis(TU, GetCursorVisitor, &ResultData,
-                            /*VisitPreprocessorLast=*/true, 
-                            SourceLocation(SLoc));
-    CursorVis.VisitChildren(Parent);
-  }
-  
   if (Logging) {
     CXFile SearchFile;
     unsigned SearchLine, SearchColumn;
@@ -3748,6 +3726,37 @@ CXSourceLocation clang_getCursorLocation(CXCursor C) {
 }
 
 } // end extern "C"
+
+CXCursor cxcursor::getCursor(CXTranslationUnit TU, SourceLocation SLoc) {
+  assert(TU);
+
+  // Guard against an invalid SourceLocation, or we may assert in one
+  // of the following calls.
+  if (SLoc.isInvalid())
+    return clang_getNullCursor();
+
+  ASTUnit *CXXUnit = static_cast<ASTUnit *>(TU->TUData);
+
+  // Translate the given source location to make it point at the beginning of
+  // the token under the cursor.
+  SLoc = Lexer::GetBeginningOfToken(SLoc, CXXUnit->getSourceManager(),
+                                    CXXUnit->getASTContext().getLangOptions());
+  
+  CXCursor Result = MakeCXCursorInvalid(CXCursor_NoDeclFound);
+  if (SLoc.isValid()) {
+    // FIXME: Would be great to have a "hint" cursor, then walk from that
+    // hint cursor upward until we find a cursor whose source range encloses
+    // the region of interest, rather than starting from the translation unit.
+    GetCursorData ResultData(CXXUnit->getSourceManager(), SLoc, Result);
+    CXCursor Parent = clang_getTranslationUnitCursor(TU);
+    CursorVisitor CursorVis(TU, GetCursorVisitor, &ResultData,
+                            /*VisitPreprocessorLast=*/true, 
+                            SourceLocation(SLoc));
+    CursorVis.VisitChildren(Parent);
+  }
+
+  return Result;
+}
 
 static SourceRange getRawCursorExtent(CXCursor C) {
   if (clang_isReference(C.kind)) {
