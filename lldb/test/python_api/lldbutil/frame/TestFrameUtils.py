@@ -9,7 +9,7 @@ from lldbtest import *
 
 class FrameUtilsTestCase(TestBase):
 
-    mydir = "python_api/lldbutil/frame"
+    mydir = os.path.join("python_api", "lldbutil", "frame")
 
     def setUp(self):
         # Call super's setUp().
