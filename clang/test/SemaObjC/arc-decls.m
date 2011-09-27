@@ -62,3 +62,22 @@ void func()
 - new {return 0; };
 @end
 
+
+// rdar://10187884
+@interface Super
+- (void)bar:(id)b; // expected-note {{parameter declared here}}
+- (void)bar1:(id) __attribute((ns_consumed)) b;
+- (void)ok:(id) __attribute((ns_consumed)) b;
+- (id)ns_non; // expected-note {{method declared here}}
+- (id)not_ret:(id) b __attribute((ns_returns_not_retained)); // expected-note {{method declared here}}
+- (id)both__returns_not_retained:(id) b __attribute((ns_returns_not_retained));
+@end
+
+@interface Sub : Super
+- (void)bar:(id) __attribute((ns_consumed)) b; // expected-error {{overriding method has mismatched ns_consumed attribute on its parameter}}
+- (void)bar1:(id)b;
+- (void)ok:(id) __attribute((ns_consumed)) b;
+- (id)ns_non __attribute((ns_returns_not_retained)); // expected-error {{overriding method has mismatched ns_returns_not_retained attributes}}
+- (id)not_ret:(id) b __attribute((ns_returns_retained)); // expected-error {{overriding method has mismatched ns_returns_retained attributes}}
+- (id)both__returns_not_retained:(id) b __attribute((ns_returns_not_retained));
+@end

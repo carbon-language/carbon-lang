@@ -106,7 +106,7 @@ bool Sema::checkInitMethod(ObjCMethodDecl *method,
   return true;
 }
 
-bool Sema::CheckObjCMethodOverride(ObjCMethodDecl *NewMethod, 
+void Sema::CheckObjCMethodOverride(ObjCMethodDecl *NewMethod, 
                                    const ObjCMethodDecl *Overridden,
                                    bool IsImplementation) {
   if (Overridden->hasRelatedResultType() && 
@@ -156,8 +156,35 @@ bool Sema::CheckObjCMethodOverride(ObjCMethodDecl *NewMethod,
       Diag(Overridden->getLocation(), 
            diag::note_related_result_type_overridden);
   }
-  
-  return false;
+  if (getLangOptions().ObjCAutoRefCount) {
+    if ((NewMethod->hasAttr<NSReturnsRetainedAttr>() !=
+         Overridden->hasAttr<NSReturnsRetainedAttr>())) {
+        Diag(NewMethod->getLocation(),
+             diag::err_nsreturns_retained_attribute_mismatch) << 1;
+        Diag(Overridden->getLocation(), diag::note_previous_decl) 
+        << "method";
+    }
+    if ((NewMethod->hasAttr<NSReturnsNotRetainedAttr>() !=
+              Overridden->hasAttr<NSReturnsNotRetainedAttr>())) {
+        Diag(NewMethod->getLocation(),
+             diag::err_nsreturns_retained_attribute_mismatch) << 0;
+        Diag(Overridden->getLocation(), diag::note_previous_decl) 
+        << "method";
+    }
+    for (ObjCMethodDecl::param_iterator oi = Overridden->param_begin(),
+         ni = NewMethod->param_begin(), ne = NewMethod->param_end();
+         ni != ne; ++ni, ++oi) {
+      ParmVarDecl *oldDecl = (*oi);
+      ParmVarDecl *newDecl = (*ni);
+      if (newDecl->hasAttr<NSConsumedAttr>() != 
+          oldDecl->hasAttr<NSConsumedAttr>()) {
+        Diag(newDecl->getLocation(),
+             diag::err_nsconsumed_attribute_mismatch);
+        Diag(oldDecl->getLocation(), diag::note_previous_decl) 
+          << "parameter";
+      }
+    }
+  }
 }
 
 /// \brief Check a method declaration for compatibility with the Objective-C

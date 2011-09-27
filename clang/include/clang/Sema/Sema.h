@@ -5301,9 +5301,7 @@ public:
   
   /// \brief Check whether the given new method is a valid override of the
   /// given overridden method, and set any properties that should be inherited.
-  ///
-  /// \returns True if an error occurred.
-  bool CheckObjCMethodOverride(ObjCMethodDecl *NewMethod, 
+  void CheckObjCMethodOverride(ObjCMethodDecl *NewMethod, 
                                const ObjCMethodDecl *Overridden,
                                bool IsImplementation);
 
