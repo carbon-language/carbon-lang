@@ -457,20 +457,18 @@ bool Sema::CheckMessageArgumentTypes(QualType ReceiverType,
   return IsError;
 }
 
-/// GetMethodIfSelfExpr - Check if receiver is an objc 'self' expression
-/// and return its method declaration if so; else return 0.
-const ObjCMethodDecl *Sema::GetMethodIfSelfExpr(Expr *receiver) {
+bool Sema::isSelfExpr(Expr *receiver) {
   // 'self' is objc 'self' in an objc method only.
   DeclContext *DC = CurContext;
   while (isa<BlockDecl>(DC))
     DC = DC->getParent();
   if (DC && !isa<ObjCMethodDecl>(DC))
-    return 0;
+    return false;
   receiver = receiver->IgnoreParenLValueCasts();
   if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(receiver))
     if (DRE->getDecl()->getIdentifier() == &Context.Idents.get("self"))
-      return static_cast<ObjCMethodDecl*>(DC);
-  return 0;
+      return true;
+  return false;
 }
 
 // Helper method for ActOnClassMethod/ActOnInstanceMethod.
@@ -1274,7 +1272,7 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
         }
         if (!Method) {
           // If not messaging 'self', look for any factory method named 'Sel'.
-          if (!Receiver || !GetMethodIfSelfExpr(Receiver)) {
+          if (!Receiver || !isSelfExpr(Receiver)) {
             Method = LookupFactoryMethodInGlobalPool(Sel, 
                                                 SourceRange(LBracLoc, RBracLoc),
                                                      true);
@@ -1338,7 +1336,7 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
             return ExprError();
           }
 
-          if (!Method && (!Receiver || !GetMethodIfSelfExpr(Receiver))) {
+          if (!Method && (!Receiver || !isSelfExpr(Receiver))) {
             // If we still haven't found a method, look in the global pool. This
             // behavior isn't very desirable, however we need it for GCC
             // compatibility. FIXME: should we deviate??
@@ -1509,7 +1507,7 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
   if (getLangOptions().ObjCAutoRefCount) {
     // In ARC, annotate delegate init calls.
     if (Result->getMethodFamily() == OMF_init &&
-        (SuperLoc.isValid() || GetMethodIfSelfExpr(Receiver))) {
+        (SuperLoc.isValid() || isSelfExpr(Receiver))) {
       // Only consider init calls *directly* in init implementations,
       // not within blocks.
       ObjCMethodDecl *method = dyn_cast<ObjCMethodDecl>(CurContext);
