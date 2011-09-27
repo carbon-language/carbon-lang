@@ -1455,9 +1455,14 @@ void Verifier::visitLandingPadInst(LandingPadInst &LPI) {
   for (unsigned i = 0, e = LPI.getNumClauses(); i < e; ++i) {
     Value *Clause = LPI.getClause(i);
     Assert1(isa<Constant>(Clause), "Clause is not constant!", &LPI);
-    if (LPI.isFilter(i))
+    if (LPI.isCatch(i)) {
+      Assert1(isa<PointerType>(Clause->getType()),
+              "Catch operand does not have pointer type!", &LPI);
+    } else {
+      Assert1(LPI.isFilter(i), "Clause is neither catch nor filter!", &LPI);
       Assert1(isa<ConstantArray>(Clause) || isa<ConstantAggregateZero>(Clause),
-              "Filter is not an array of constants!", &LPI);
+              "Filter operand is not an array of constants!", &LPI);
+    }
   }
 
   visitInstruction(LPI);
