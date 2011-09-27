@@ -582,9 +582,14 @@ SymbolContext::GetFunctionName (Mangled::NamePreference preference)
     {
         if (block)
         {
-            const InlineFunctionInfo *inline_info = block->GetInlinedFunctionInfo();
-            if (inline_info)
-                return inline_info->GetName(); 
+            Block *inlined_block = block->GetContainingInlinedBlock();
+            
+            if (inlined_block)
+            {
+                const InlineFunctionInfo *inline_info = inlined_block->GetInlinedFunctionInfo();
+                if (inline_info)
+                    return inline_info->GetName();
+            }
         }
         return function->GetMangled().GetName(preference);
     }
