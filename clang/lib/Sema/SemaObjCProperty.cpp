@@ -1153,7 +1153,8 @@ void Sema::CollectImmediateProperties(ObjCContainerDecl *CDecl,
       ObjCPropertyDecl *PropertyFromSuper = SuperPropMap[Prop->getIdentifier()];
       // Exclude property for protocols which conform to class's super-class, 
       // as super-class has to implement the property.
-      if (!PropertyFromSuper || PropertyFromSuper != Prop) {
+      if (!PropertyFromSuper || 
+          PropertyFromSuper->getIdentifier() != Prop->getIdentifier()) {
         ObjCPropertyDecl *&PropEntry = PropMap[Prop->getIdentifier()];
         if (!PropEntry)
           PropEntry = Prop;
