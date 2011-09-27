@@ -1548,7 +1548,7 @@ CGObjCCommonMac::EmitMessageSend(CodeGen::CodeGenFunction &CGF,
                                  const ObjCCommonTypesHelper &ObjCTypes) {
   CallArgList ActualArgs;
   if (!IsSuper)
-    Arg0 = CGF.Builder.CreateBitCast(Arg0, ObjCTypes.ObjectPtrTy, "tmp");
+    Arg0 = CGF.Builder.CreateBitCast(Arg0, ObjCTypes.ObjectPtrTy);
   ActualArgs.add(RValue::get(Arg0), Arg0Ty);
   ActualArgs.add(RValue::get(Sel), CGF.getContext().getObjCSelType());
   ActualArgs.addFrom(CallArgs);
@@ -3116,8 +3116,7 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
       // Initialize the catch variable.
       llvm::Value *Tmp =
         CGF.Builder.CreateBitCast(Caught,
-                                  CGF.ConvertType(CatchParam->getType()),
-                                  "tmp");
+                                  CGF.ConvertType(CatchParam->getType()));
       CGF.Builder.CreateStore(Tmp, CGF.GetAddrOfLocalVar(CatchParam));
 
       CGF.EmitStmt(CatchStmt->getCatchBody());
@@ -3207,7 +3206,7 @@ void CGObjCMac::EmitThrowStmt(CodeGen::CodeGenFunction &CGF,
   if (const Expr *ThrowExpr = S.getThrowExpr()) {
     llvm::Value *Exception = CGF.EmitScalarExpr(ThrowExpr);
     ExceptionAsObject =
-      CGF.Builder.CreateBitCast(Exception, ObjCTypes.ObjectPtrTy, "tmp");
+      CGF.Builder.CreateBitCast(Exception, ObjCTypes.ObjectPtrTy);
   } else {
     assert((!CGF.ObjCEHValueStack.empty() && CGF.ObjCEHValueStack.back()) &&
            "Unexpected rethrow outside @catch block.");
@@ -3495,7 +3494,7 @@ llvm::Value *CGObjCMac::EmitClassRefFromId(CGBuilderTy &Builder,
                       4, true);
   }
   
-  return Builder.CreateLoad(Entry, "tmp");
+  return Builder.CreateLoad(Entry);
 }
 
 llvm::Value *CGObjCMac::EmitClassRef(CGBuilderTy &Builder,
@@ -3524,7 +3523,7 @@ llvm::Value *CGObjCMac::EmitSelector(CGBuilderTy &Builder, Selector Sel,
 
   if (lvalue)
     return Entry;
-  return Builder.CreateLoad(Entry, "tmp");
+  return Builder.CreateLoad(Entry);
 }
 
 llvm::Constant *CGObjCCommonMac::GetClassName(IdentifierInfo *Ident) {
@@ -4996,7 +4995,7 @@ llvm::Value *CGObjCNonFragileABIMac::GenerateProtocolRef(CGBuilderTy &Builder,
 
   llvm::GlobalVariable *PTGV = CGM.getModule().getGlobalVariable(ProtocolName);
   if (PTGV)
-    return Builder.CreateLoad(PTGV, "tmp");
+    return Builder.CreateLoad(PTGV);
   PTGV = new llvm::GlobalVariable(
     CGM.getModule(),
     Init->getType(), false,
@@ -5006,7 +5005,7 @@ llvm::Value *CGObjCNonFragileABIMac::GenerateProtocolRef(CGBuilderTy &Builder,
   PTGV->setSection("__DATA, __objc_protorefs, coalesced, no_dead_strip");
   PTGV->setVisibility(llvm::GlobalValue::HiddenVisibility);
   CGM.AddUsedGlobal(PTGV);
-  return Builder.CreateLoad(PTGV, "tmp");
+  return Builder.CreateLoad(PTGV);
 }
 
 /// GenerateCategory - Build metadata for a category implementation.
@@ -5690,7 +5689,7 @@ llvm::Value *CGObjCNonFragileABIMac::EmitClassRefFromId(CGBuilderTy &Builder,
     CGM.AddUsedGlobal(Entry);
   }
   
-  return Builder.CreateLoad(Entry, "tmp");
+  return Builder.CreateLoad(Entry);
 }
 
 llvm::Value *CGObjCNonFragileABIMac::EmitClassRef(CGBuilderTy &Builder,
@@ -5724,7 +5723,7 @@ CGObjCNonFragileABIMac::EmitSuperClassRef(CGBuilderTy &Builder,
     CGM.AddUsedGlobal(Entry);
   }
 
-  return Builder.CreateLoad(Entry, "tmp");
+  return Builder.CreateLoad(Entry);
 }
 
 /// EmitMetaClassRef - Return a Value * of the address of _class_t
@@ -5734,7 +5733,7 @@ llvm::Value *CGObjCNonFragileABIMac::EmitMetaClassRef(CGBuilderTy &Builder,
                                                       const ObjCInterfaceDecl *ID) {
   llvm::GlobalVariable * &Entry = MetaClassReferences[ID->getIdentifier()];
   if (Entry)
-    return Builder.CreateLoad(Entry, "tmp");
+    return Builder.CreateLoad(Entry);
 
   std::string MetaClassName(getMetaclassSymbolPrefix() + ID->getNameAsString());
   llvm::GlobalVariable *MetaClassGV = GetClassGlobal(MetaClassName);
@@ -5750,7 +5749,7 @@ llvm::Value *CGObjCNonFragileABIMac::EmitMetaClassRef(CGBuilderTy &Builder,
   Entry->setSection("__DATA, __objc_superrefs, regular, no_dead_strip");
   CGM.AddUsedGlobal(Entry);
 
-  return Builder.CreateLoad(Entry, "tmp");
+  return Builder.CreateLoad(Entry);
 }
 
 /// GetClass - Return a reference to the class for the given interface
@@ -5841,7 +5840,7 @@ llvm::Value *CGObjCNonFragileABIMac::EmitSelector(CGBuilderTy &Builder,
 
   if (lval)
     return Entry;
-  return Builder.CreateLoad(Entry, "tmp");
+  return Builder.CreateLoad(Entry);
 }
 /// EmitObjCIvarAssign - Code gen for assigning to a __strong object.
 /// objc_assign_ivar (id src, id *dst, ptrdiff_t)
@@ -6004,8 +6003,7 @@ void CGObjCNonFragileABIMac::EmitThrowStmt(CodeGen::CodeGenFunction &CGF,
                                            const ObjCAtThrowStmt &S) {
   if (const Expr *ThrowExpr = S.getThrowExpr()) {
     llvm::Value *Exception = CGF.EmitScalarExpr(ThrowExpr);
-    Exception = CGF.Builder.CreateBitCast(Exception, ObjCTypes.ObjectPtrTy,
-                                          "tmp");
+    Exception = CGF.Builder.CreateBitCast(Exception, ObjCTypes.ObjectPtrTy);
     CGF.EmitCallOrInvoke(ObjCTypes.getExceptionThrowFn(), Exception)
       .setDoesNotReturn();
   } else {

@@ -1340,8 +1340,7 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
   EmitBlock(WasMutatedBB);
   llvm::Value *V =
     Builder.CreateBitCast(Collection,
-                          ConvertType(getContext().getObjCIdType()),
-                          "tmp");
+                          ConvertType(getContext().getObjCIdType()));
   CallArgList Args2;
   Args2.add(RValue::get(V), getContext().getObjCIdType());
   // FIXME: We shouldn't need to get the function info here, the runtime already

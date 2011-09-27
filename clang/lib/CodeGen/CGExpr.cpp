@@ -741,7 +741,7 @@ llvm::Value *CodeGenFunction::EmitLoadOfScalar(LValue lvalue) {
 llvm::Value *CodeGenFunction::EmitLoadOfScalar(llvm::Value *Addr, bool Volatile,
                                               unsigned Alignment, QualType Ty,
                                               llvm::MDNode *TBAAInfo) {
-  llvm::LoadInst *Load = Builder.CreateLoad(Addr, "tmp");
+  llvm::LoadInst *Load = Builder.CreateLoad(Addr);
   if (Volatile)
     Load->setVolatile(true);
   if (Alignment)
@@ -822,7 +822,7 @@ RValue CodeGenFunction::EmitLoadOfLValue(LValue LV) {
 
   if (LV.isVectorElt()) {
     llvm::Value *Vec = Builder.CreateLoad(LV.getVectorAddr(),
-                                          LV.isVolatileQualified(), "tmp");
+                                          LV.isVolatileQualified());
     return RValue::get(Builder.CreateExtractElement(Vec, LV.getVectorIdx(),
                                                     "vecext"));
   }
@@ -915,7 +915,7 @@ RValue CodeGenFunction::EmitLoadOfBitfieldLValue(LValue LV) {
 // appropriate shufflevector.
 RValue CodeGenFunction::EmitLoadOfExtVectorElementLValue(LValue LV) {
   llvm::Value *Vec = Builder.CreateLoad(LV.getExtVectorAddr(),
-                                        LV.isVolatileQualified(), "tmp");
+                                        LV.isVolatileQualified());
 
   const llvm::Constant *Elts = LV.getExtVectorElts();
 
@@ -925,7 +925,7 @@ RValue CodeGenFunction::EmitLoadOfExtVectorElementLValue(LValue LV) {
   if (!ExprVT) {
     unsigned InIdx = getAccessedFieldNo(0, Elts);
     llvm::Value *Elt = llvm::ConstantInt::get(Int32Ty, InIdx);
-    return RValue::get(Builder.CreateExtractElement(Vec, Elt, "tmp"));
+    return RValue::get(Builder.CreateExtractElement(Vec, Elt));
   }
 
   // Always use shuffle vector to try to retain the original program structure
@@ -939,7 +939,7 @@ RValue CodeGenFunction::EmitLoadOfExtVectorElementLValue(LValue LV) {
 
   llvm::Value *MaskV = llvm::ConstantVector::get(Mask);
   Vec = Builder.CreateShuffleVector(Vec, llvm::UndefValue::get(Vec->getType()),
-                                    MaskV, "tmp");
+                                    MaskV);
   return RValue::get(Vec);
 }
 
@@ -953,7 +953,7 @@ void CodeGenFunction::EmitStoreThroughLValue(RValue Src, LValue Dst) {
     if (Dst.isVectorElt()) {
       // Read/modify/write the vector, inserting the new element.
       llvm::Value *Vec = Builder.CreateLoad(Dst.getVectorAddr(),
-                                            Dst.isVolatileQualified(), "tmp");
+                                            Dst.isVolatileQualified());
       Vec = Builder.CreateInsertElement(Vec, Src.getScalarVal(),
                                         Dst.getVectorIdx(), "vecins");
       Builder.CreateStore(Vec, Dst.getVectorAddr(),Dst.isVolatileQualified());
@@ -1144,7 +1144,7 @@ void CodeGenFunction::EmitStoreThroughExtVectorComponentLValue(RValue Src,
   // This access turns into a read/modify/write of the vector.  Load the input
   // value now.
   llvm::Value *Vec = Builder.CreateLoad(Dst.getExtVectorAddr(),
-                                        Dst.isVolatileQualified(), "tmp");
+                                        Dst.isVolatileQualified());
   const llvm::Constant *Elts = Dst.getExtVectorElts();
 
   llvm::Value *SrcVal = Src.getScalarVal();
@@ -1166,7 +1166,7 @@ void CodeGenFunction::EmitStoreThroughExtVectorComponentLValue(RValue Src,
       llvm::Value *MaskV = llvm::ConstantVector::get(Mask);
       Vec = Builder.CreateShuffleVector(SrcVal,
                                         llvm::UndefValue::get(Vec->getType()),
-                                        MaskV, "tmp");
+                                        MaskV);
     } else if (NumDstElts > NumSrcElts) {
       // Extended the source vector to the same length and then shuffle it
       // into the destination.
@@ -1182,7 +1182,7 @@ void CodeGenFunction::EmitStoreThroughExtVectorComponentLValue(RValue Src,
       llvm::Value *ExtSrcVal =
         Builder.CreateShuffleVector(SrcVal,
                                     llvm::UndefValue::get(SrcVal->getType()),
-                                    ExtMaskV, "tmp");
+                                    ExtMaskV);
       // build identity
       SmallVector<llvm::Constant*, 4> Mask;
       for (unsigned i = 0; i != NumDstElts; ++i)
@@ -1194,7 +1194,7 @@ void CodeGenFunction::EmitStoreThroughExtVectorComponentLValue(RValue Src,
         Mask[Idx] = llvm::ConstantInt::get(Int32Ty, i+NumDstElts);
       }
       llvm::Value *MaskV = llvm::ConstantVector::get(Mask);
-      Vec = Builder.CreateShuffleVector(Vec, ExtSrcVal, MaskV, "tmp");
+      Vec = Builder.CreateShuffleVector(Vec, ExtSrcVal, MaskV);
     } else {
       // We should never shorten the vector
       llvm_unreachable("unexpected shorten vector length");
@@ -1203,7 +1203,7 @@ void CodeGenFunction::EmitStoreThroughExtVectorComponentLValue(RValue Src,
     // If the Src is a scalar (not a vector) it must be updating one element.
     unsigned InIdx = getAccessedFieldNo(0, Elts);
     llvm::Value *Elt = llvm::ConstantInt::get(Int32Ty, InIdx);
-    Vec = Builder.CreateInsertElement(Vec, SrcVal, Elt, "tmp");
+    Vec = Builder.CreateInsertElement(Vec, SrcVal, Elt);
   }
 
   Builder.CreateStore(Vec, Dst.getExtVectorAddr(), Dst.isVolatileQualified());
@@ -1312,7 +1312,7 @@ static LValue EmitGlobalVarDeclLValue(CodeGenFunction &CGF,
 
   llvm::Value *V = CGF.CGM.GetAddrOfGlobalVar(VD);
   if (VD->getType()->isReferenceType())
-    V = CGF.Builder.CreateLoad(V, "tmp");
+    V = CGF.Builder.CreateLoad(V);
   
   V = EmitBitCastOfLValueToProperType(CGF, V,
                                 CGF.getTypes().ConvertTypeForMem(E->getType()));
@@ -1335,7 +1335,7 @@ static LValue EmitFunctionDeclLValue(CodeGenFunction &CGF,
       QualType NoProtoType =
           CGF.getContext().getFunctionNoProtoType(Proto->getResultType());
       NoProtoType = CGF.getContext().getPointerType(NoProtoType);
-      V = CGF.Builder.CreateBitCast(V, CGF.ConvertType(NoProtoType), "tmp");
+      V = CGF.Builder.CreateBitCast(V, CGF.ConvertType(NoProtoType));
     }
   }
   unsigned Alignment = CGF.getContext().getDeclAlign(FD).getQuantity();
@@ -1371,7 +1371,7 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
       V = BuildBlockByrefAddress(V, VD);
     
     if (VD->getType()->isReferenceType())
-      V = Builder.CreateLoad(V, "tmp");
+      V = Builder.CreateLoad(V);
 
     V = EmitBitCastOfLValueToProperType(*this, V,
                                     getTypes().ConvertTypeForMem(E->getType()));
@@ -1908,7 +1908,7 @@ CodeGenFunction::EmitLValueForFieldInitialization(llvm::Value *BaseValue,
   const CGRecordLayout &RL =
     CGM.getTypes().getCGRecordLayout(Field->getParent());
   unsigned idx = RL.getLLVMFieldNo(Field);
-  llvm::Value *V = Builder.CreateStructGEP(BaseValue, idx, "tmp");
+  llvm::Value *V = Builder.CreateStructGEP(BaseValue, idx);
   assert(!FieldType.getObjCGCAttr() && "fields cannot have GC attrs");
 
   
@@ -2315,7 +2315,7 @@ LValue CodeGenFunction::EmitVAArgExprLValue(const VAArgExpr *E) {
 LValue CodeGenFunction::EmitCXXConstructLValue(const CXXConstructExpr *E) {
   assert(E->getType()->getAsCXXRecordDecl()->hasTrivialDestructor()
          && "binding l-value to type which needs a temporary");
-  AggValueSlot Slot = CreateAggTemp(E->getType(), "tmp");
+  AggValueSlot Slot = CreateAggTemp(E->getType());
   EmitCXXConstructExpr(E, Slot);
   return MakeAddrLValue(Slot.getAddr(), E->getType());
 }

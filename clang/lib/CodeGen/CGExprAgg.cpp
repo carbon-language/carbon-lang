@@ -1114,12 +1114,12 @@ void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
   llvm::PointerType *DPT = cast<llvm::PointerType>(DestPtr->getType());
   llvm::Type *DBP =
     llvm::Type::getInt8PtrTy(getLLVMContext(), DPT->getAddressSpace());
-  DestPtr = Builder.CreateBitCast(DestPtr, DBP, "tmp");
+  DestPtr = Builder.CreateBitCast(DestPtr, DBP);
 
   llvm::PointerType *SPT = cast<llvm::PointerType>(SrcPtr->getType());
   llvm::Type *SBP =
     llvm::Type::getInt8PtrTy(getLLVMContext(), SPT->getAddressSpace());
-  SrcPtr = Builder.CreateBitCast(SrcPtr, SBP, "tmp");
+  SrcPtr = Builder.CreateBitCast(SrcPtr, SBP);
 
   // Don't do any of the memmove_collectable tests if GC isn't set.
   if (CGM.getLangOptions().getGC() == LangOptions::NonGC) {

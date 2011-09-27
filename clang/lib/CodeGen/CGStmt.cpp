@@ -875,7 +875,7 @@ void CodeGenFunction::EmitCaseStmtRange(const CaseStmt &S) {
 
   // Emit range check.
   llvm::Value *Diff =
-    Builder.CreateSub(SwitchInsn->getCondition(), Builder.getInt(LHS),  "tmp");
+    Builder.CreateSub(SwitchInsn->getCondition(), Builder.getInt(LHS));
   llvm::Value *Cond =
     Builder.CreateICmpULE(Diff, Builder.getInt(Range), "inbounds");
   Builder.CreateCondBr(Cond, CaseDest, FalseDest);

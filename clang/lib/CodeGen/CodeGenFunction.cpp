@@ -696,7 +696,7 @@ CodeGenFunction::EmitNullInitialization(llvm::Value *DestPtr, QualType Ty) {
     cast<llvm::PointerType>(DestPtr->getType())->getAddressSpace();
   llvm::Type *BP = Builder.getInt8PtrTy(DestAS);
   if (DestPtr->getType() != BP)
-    DestPtr = Builder.CreateBitCast(DestPtr, BP, "tmp");
+    DestPtr = Builder.CreateBitCast(DestPtr, BP);
 
   // Get size and alignment info for this aggregate.
   std::pair<CharUnits, CharUnits> TypeInfo = 

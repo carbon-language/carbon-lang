@@ -2284,8 +2284,7 @@ void CGObjCGNU::EmitThrowStmt(CodeGenFunction &CGF,
            "Unexpected rethrow outside @catch block.");
     ExceptionAsObject = CGF.ObjCEHValueStack.back();
   }
-  ExceptionAsObject =
-      CGF.Builder.CreateBitCast(ExceptionAsObject, IdTy, "tmp");
+  ExceptionAsObject = CGF.Builder.CreateBitCast(ExceptionAsObject, IdTy);
 
   // Note: This may have to be an invoke, if we want to support constructs like:
   // @try {

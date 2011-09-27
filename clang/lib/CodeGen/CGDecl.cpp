@@ -358,7 +358,7 @@ namespace {
     llvm::Value *Stack;
     CallStackRestore(llvm::Value *Stack) : Stack(Stack) {}
     void Emit(CodeGenFunction &CGF, Flags flags) {
-      llvm::Value *V = CGF.Builder.CreateLoad(Stack, "tmp");
+      llvm::Value *V = CGF.Builder.CreateLoad(Stack);
       llvm::Value *F = CGF.CGM.getIntrinsic(llvm::Intrinsic::stackrestore);
       CGF.Builder.CreateCall(F, V);
     }
@@ -981,7 +981,7 @@ void CodeGenFunction::EmitAutoVarInit(const AutoVarEmission &emission) {
 
   llvm::Type *BP = Int8PtrTy;
   if (Loc->getType() != BP)
-    Loc = Builder.CreateBitCast(Loc, BP, "tmp");
+    Loc = Builder.CreateBitCast(Loc, BP);
 
   // If the initializer is all or mostly zeros, codegen with memset then do
   // a few stores afterward.
@@ -1006,7 +1006,7 @@ void CodeGenFunction::EmitAutoVarInit(const AutoVarEmission &emission) {
 
     llvm::Value *SrcPtr = GV;
     if (SrcPtr->getType() != BP)
-      SrcPtr = Builder.CreateBitCast(SrcPtr, BP, "tmp");
+      SrcPtr = Builder.CreateBitCast(SrcPtr, BP);
 
     Builder.CreateMemCpy(Loc, SrcPtr, SizeVal, alignment.getQuantity(),
                          isVolatile);

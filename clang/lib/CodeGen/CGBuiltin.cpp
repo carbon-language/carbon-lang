@@ -237,7 +237,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     Value *F = CGM.getIntrinsic(Intrinsic::cttz, ArgType);
 
     llvm::Type *ResultType = ConvertType(E->getType());
-    Value *Result = Builder.CreateCall(F, ArgValue, "tmp");
+    Value *Result = Builder.CreateCall(F, ArgValue);
     if (Result->getType() != ResultType)
       Result = Builder.CreateIntCast(Result, ResultType, /*isSigned*/true,
                                      "cast");
@@ -252,7 +252,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     Value *F = CGM.getIntrinsic(Intrinsic::ctlz, ArgType);
 
     llvm::Type *ResultType = ConvertType(E->getType());
-    Value *Result = Builder.CreateCall(F, ArgValue, "tmp");
+    Value *Result = Builder.CreateCall(F, ArgValue);
     if (Result->getType() != ResultType)
       Result = Builder.CreateIntCast(Result, ResultType, /*isSigned*/true,
                                      "cast");
@@ -268,8 +268,8 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     Value *F = CGM.getIntrinsic(Intrinsic::cttz, ArgType);
 
     llvm::Type *ResultType = ConvertType(E->getType());
-    Value *Tmp = Builder.CreateAdd(Builder.CreateCall(F, ArgValue, "tmp"),
-                                   llvm::ConstantInt::get(ArgType, 1), "tmp");
+    Value *Tmp = Builder.CreateAdd(Builder.CreateCall(F, ArgValue),
+                                   llvm::ConstantInt::get(ArgType, 1));
     Value *Zero = llvm::Constant::getNullValue(ArgType);
     Value *IsZero = Builder.CreateICmpEQ(ArgValue, Zero, "iszero");
     Value *Result = Builder.CreateSelect(IsZero, Zero, Tmp, "ffs");
@@ -288,9 +288,8 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     Value *F = CGM.getIntrinsic(Intrinsic::ctpop, ArgType);
 
     llvm::Type *ResultType = ConvertType(E->getType());
-    Value *Tmp = Builder.CreateCall(F, ArgValue, "tmp");
-    Value *Result = Builder.CreateAnd(Tmp, llvm::ConstantInt::get(ArgType, 1),
-                                      "tmp");
+    Value *Tmp = Builder.CreateCall(F, ArgValue);
+    Value *Result = Builder.CreateAnd(Tmp, llvm::ConstantInt::get(ArgType, 1));
     if (Result->getType() != ResultType)
       Result = Builder.CreateIntCast(Result, ResultType, /*isSigned*/true,
                                      "cast");
@@ -305,7 +304,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     Value *F = CGM.getIntrinsic(Intrinsic::ctpop, ArgType);
 
     llvm::Type *ResultType = ConvertType(E->getType());
-    Value *Result = Builder.CreateCall(F, ArgValue, "tmp");
+    Value *Result = Builder.CreateCall(F, ArgValue);
     if (Result->getType() != ResultType)
       Result = Builder.CreateIntCast(Result, ResultType, /*isSigned*/true,
                                      "cast");
@@ -327,7 +326,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     Value *ArgValue = EmitScalarExpr(E->getArg(0));
     llvm::Type *ArgType = ArgValue->getType();
     Value *F = CGM.getIntrinsic(Intrinsic::bswap, ArgType);
-    return RValue::get(Builder.CreateCall(F, ArgValue, "tmp"));
+    return RValue::get(Builder.CreateCall(F, ArgValue));
   }
   case Builtin::BI__builtin_object_size: {
     // We pass this builtin onto the optimizer so that it can
@@ -381,7 +380,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     Value *Exponent = EmitScalarExpr(E->getArg(1));
     llvm::Type *ArgType = Base->getType();
     Value *F = CGM.getIntrinsic(Intrinsic::powi, ArgType);
-    return RValue::get(Builder.CreateCall2(F, Base, Exponent, "tmp"));
+    return RValue::get(Builder.CreateCall2(F, Base, Exponent));
   }
 
   case Builtin::BI__builtin_isgreater:
@@ -417,13 +416,12 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
       break;
     }
     // ZExt bool to int type.
-    return RValue::get(Builder.CreateZExt(LHS, ConvertType(E->getType()),
-                                          "tmp"));
+    return RValue::get(Builder.CreateZExt(LHS, ConvertType(E->getType())));
   }
   case Builtin::BI__builtin_isnan: {
     Value *V = EmitScalarExpr(E->getArg(0));
     V = Builder.CreateFCmpUNO(V, V, "cmp");
-    return RValue::get(Builder.CreateZExt(V, ConvertType(E->getType()), "tmp"));
+    return RValue::get(Builder.CreateZExt(V, ConvertType(E->getType())));
   }
   
   case Builtin::BI__builtin_isinf: {
@@ -432,7 +430,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     V = EmitFAbs(*this, V, E->getArg(0)->getType());
     
     V = Builder.CreateFCmpOEQ(V, ConstantFP::getInfinity(V->getType()),"isinf");
-    return RValue::get(Builder.CreateZExt(V, ConvertType(E->getType()), "tmp"));
+    return RValue::get(Builder.CreateZExt(V, ConvertType(E->getType())));
   }
       
   // TODO: BI__builtin_isinf_sign
@@ -530,7 +528,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   case Builtin::BIalloca:
   case Builtin::BI__builtin_alloca: {
     Value *Size = EmitScalarExpr(E->getArg(0));
-    return RValue::get(Builder.CreateAlloca(Builder.getInt8Ty(), Size, "tmp"));
+    return RValue::get(Builder.CreateAlloca(Builder.getInt8Ty(), Size));
   }
   case Builtin::BIbzero:
   case Builtin::BI__builtin_bzero: {
@@ -640,13 +638,13 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   }
   case Builtin::BI__builtin_return_address: {
     Value *Depth = EmitScalarExpr(E->getArg(0));
-    Depth = Builder.CreateIntCast(Depth, Int32Ty, false, "tmp");
+    Depth = Builder.CreateIntCast(Depth, Int32Ty, false);
     Value *F = CGM.getIntrinsic(Intrinsic::returnaddress);
     return RValue::get(Builder.CreateCall(F, Depth));
   }
   case Builtin::BI__builtin_frame_address: {
     Value *Depth = EmitScalarExpr(E->getArg(0));
-    Depth = Builder.CreateIntCast(Depth, Int32Ty, false, "tmp");
+    Depth = Builder.CreateIntCast(Depth, Int32Ty, false);
     Value *F = CGM.getIntrinsic(Intrinsic::frameaddress);
     return RValue::get(Builder.CreateCall(F, Depth));
   }
@@ -987,7 +985,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     Value *Exponent = EmitScalarExpr(E->getArg(1));
     llvm::Type *ArgType = Base->getType();
     Value *F = CGM.getIntrinsic(Intrinsic::pow, ArgType);
-    return RValue::get(Builder.CreateCall2(F, Base, Exponent, "tmp"));
+    return RValue::get(Builder.CreateCall2(F, Base, Exponent));
   }
 
   case Builtin::BIfma:
@@ -1002,8 +1000,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     Value *F = CGM.getIntrinsic(Intrinsic::fma, ArgType);
     return RValue::get(Builder.CreateCall3(F, FirstArg,
                                               EmitScalarExpr(E->getArg(1)),
-                                              EmitScalarExpr(E->getArg(2)),
-                                              "tmp"));
+                                              EmitScalarExpr(E->getArg(2))));
   }
 
   case Builtin::BI__builtin_signbit:
@@ -1243,7 +1240,7 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     llvm::Type *STy = llvm::StructType::get(Int32Ty, Int32Ty, NULL);
 
     Value *One = llvm::ConstantInt::get(Int32Ty, 1);
-    Value *Tmp = Builder.CreateAlloca(Int64Ty, One, "tmp");
+    Value *Tmp = Builder.CreateAlloca(Int64Ty, One);
     Value *Val = EmitScalarExpr(E->getArg(0));
     Builder.CreateStore(Val, Tmp);
 
@@ -2121,7 +2118,7 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
   case X86::BI__builtin_ia32_ldmxcsr: {
     llvm::Type *PtrTy = Int8PtrTy;
     Value *One = llvm::ConstantInt::get(Int32Ty, 1);
-    Value *Tmp = Builder.CreateAlloca(Int32Ty, One, "tmp");
+    Value *Tmp = Builder.CreateAlloca(Int32Ty, One);
     Builder.CreateStore(Ops[0], Tmp);
     return Builder.CreateCall(CGM.getIntrinsic(Intrinsic::x86_sse_ldmxcsr),
                               Builder.CreateBitCast(Tmp, PtrTy));
@@ -2129,7 +2126,7 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
   case X86::BI__builtin_ia32_stmxcsr: {
     llvm::Type *PtrTy = Int8PtrTy;
     Value *One = llvm::ConstantInt::get(Int32Ty, 1);
-    Value *Tmp = Builder.CreateAlloca(Int32Ty, One, "tmp");
+    Value *Tmp = Builder.CreateAlloca(Int32Ty, One);
     Builder.CreateCall(CGM.getIntrinsic(Intrinsic::x86_sse_stmxcsr),
                        Builder.CreateBitCast(Tmp, PtrTy));
     return Builder.CreateLoad(Tmp, "stmxcsr");
@@ -2394,7 +2391,7 @@ Value *CodeGenFunction::EmitPPCBuiltinExpr(unsigned BuiltinID,
   {
     Ops[1] = Builder.CreateBitCast(Ops[1], Int8PtrTy);
 
-    Ops[0] = Builder.CreateGEP(Ops[1], Ops[0], "tmp");
+    Ops[0] = Builder.CreateGEP(Ops[1], Ops[0]);
     Ops.pop_back();
 
     switch (BuiltinID) {
@@ -2433,7 +2430,7 @@ Value *CodeGenFunction::EmitPPCBuiltinExpr(unsigned BuiltinID,
   case PPC::BI__builtin_altivec_stvewx:
   {
     Ops[2] = Builder.CreateBitCast(Ops[2], Int8PtrTy);
-    Ops[1] = Builder.CreateGEP(Ops[2], Ops[1], "tmp");
+    Ops[1] = Builder.CreateGEP(Ops[2], Ops[1]);
     Ops.pop_back();
 
     switch (BuiltinID) {

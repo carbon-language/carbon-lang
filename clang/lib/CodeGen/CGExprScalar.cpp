@@ -595,7 +595,7 @@ Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
     // Insert the element in element zero of an undef vector
     llvm::Value *UnV = llvm::UndefValue::get(DstTy);
     llvm::Value *Idx = Builder.getInt32(0);
-    UnV = Builder.CreateInsertElement(UnV, Elt, Idx, "tmp");
+    UnV = Builder.CreateInsertElement(UnV, Elt, Idx);
 
     // Splat the element across to all elements
     SmallVector<llvm::Constant*, 16> Args;
@@ -1184,7 +1184,7 @@ Value *ScalarExprEmitter::VisitCastExpr(CastExpr *CE) {
     // Insert the element in element zero of an undef vector
     llvm::Value *UnV = llvm::UndefValue::get(DstTy);
     llvm::Value *Idx = Builder.getInt32(0);
-    UnV = Builder.CreateInsertElement(UnV, Elt, Idx, "tmp");
+    UnV = Builder.CreateInsertElement(UnV, Elt, Idx);
 
     // Splat the element across to all elements
     SmallVector<llvm::Constant*, 16> Args;

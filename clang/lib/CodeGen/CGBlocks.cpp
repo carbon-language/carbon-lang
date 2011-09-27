@@ -727,9 +727,9 @@ RValue CodeGenFunction::EmitBlockCallExpr(const CallExpr* E,
     Builder.CreateBitCast(Callee, BlockLiteralTy, "block.literal");
 
   // Get the function pointer from the literal.
-  llvm::Value *FuncPtr = Builder.CreateStructGEP(BlockLiteral, 3, "tmp");
+  llvm::Value *FuncPtr = Builder.CreateStructGEP(BlockLiteral, 3);
 
-  BlockLiteral = Builder.CreateBitCast(BlockLiteral, VoidPtrTy, "tmp");
+  BlockLiteral = Builder.CreateBitCast(BlockLiteral, VoidPtrTy);
 
   // Add the block literal.
   CallArgList Args;
@@ -742,7 +742,7 @@ RValue CodeGenFunction::EmitBlockCallExpr(const CallExpr* E,
                E->arg_begin(), E->arg_end());
 
   // Load the function.
-  llvm::Value *Func = Builder.CreateLoad(FuncPtr, "tmp");
+  llvm::Value *Func = Builder.CreateLoad(FuncPtr);
 
   const FunctionType *FuncTy = FnType->castAs<FunctionType>();
   const CGFunctionInfo &FnInfo = CGM.getTypes().getFunctionInfo(Args, FuncTy);
