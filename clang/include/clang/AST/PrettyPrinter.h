@@ -45,7 +45,7 @@ struct PrintingPolicy {
   unsigned Indentation : 8;
 
   /// \brief What language we're printing.
-  const LangOptions LangOpts;
+  LangOptions LangOpts;
 
   /// \brief Whether we should suppress printing of the actual specifiers for
   /// the given type or declaration.

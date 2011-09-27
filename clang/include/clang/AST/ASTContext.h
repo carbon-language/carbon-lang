@@ -342,7 +342,7 @@ class ASTContext : public llvm::RefCountedBase<ASTContext> {
   friend class ASTWriter;
   
   const TargetInfo *Target;
-  mutable clang::PrintingPolicy PrintingPolicy;
+  clang::PrintingPolicy PrintingPolicy;
   
 public:
   IdentifierTable &Idents;
@@ -352,7 +352,11 @@ public:
   llvm::OwningPtr<ExternalASTSource> ExternalSource;
   ASTMutationListener *Listener;
 
-  clang::PrintingPolicy getPrintingPolicy() const;
+  clang::PrintingPolicy getPrintingPolicy() const { return PrintingPolicy; }
+
+  void setPrintingPolicy(clang::PrintingPolicy Policy) {
+    PrintingPolicy = Policy;
+  }
   
   SourceManager& getSourceManager() { return SourceMgr; }
   const SourceManager& getSourceManager() const { return SourceMgr; }

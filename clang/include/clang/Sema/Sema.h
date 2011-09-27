@@ -1098,6 +1098,9 @@ public:
                                           SourceLocation ModulePrivateKeyword
                                             = SourceLocation());
   
+  /// \brief Retrieve a suitable printing policy.
+  PrintingPolicy getPrintingPolicy() const;
+
   /// Scope actions.
   void ActOnPopScope(SourceLocation Loc, Scope *S);
   void ActOnTranslationUnitScope(Scope *S);
@@ -4818,7 +4821,7 @@ public:
   };
 
   void PrintInstantiationStack();
-
+  
   /// \brief Determines whether we are currently in a context where
   /// template argument substitution failures are not considered
   /// errors.

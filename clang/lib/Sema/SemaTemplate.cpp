@@ -6729,7 +6729,7 @@ Sema::getTemplateArgumentBindingsText(const TemplateParameterList *Params,
     }
 
     Out << " = ";
-    Args[I].print(Context.getPrintingPolicy(), Out);
+    Args[I].print(getPrintingPolicy(), Out);
   }
 
   Out << ']';

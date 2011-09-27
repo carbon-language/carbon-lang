@@ -55,6 +55,20 @@ void FunctionScopeInfo::Clear() {
 
 BlockScopeInfo::~BlockScopeInfo() { }
 
+PrintingPolicy Sema::getPrintingPolicy() const {
+  PrintingPolicy Policy = Context.getPrintingPolicy();
+  Policy.Bool = getLangOptions().Bool;
+  if (!Policy.Bool) {
+    if (MacroInfo *BoolMacro = PP.getMacroInfo(&Context.Idents.get("bool"))) {
+      Policy.Bool = BoolMacro->isObjectLike() && 
+        BoolMacro->getNumTokens() == 1 &&
+        BoolMacro->getReplacementToken(0).is(tok::kw__Bool);
+    }
+  }
+  
+  return Policy;
+}
+
 void Sema::ActOnTranslationUnitScope(Scope *S) {
   TUScope = S;
   PushDeclContext(S, Context.getTranslationUnitDecl());
@@ -677,6 +691,9 @@ Sema::SemaDiagnosticBuilder::~SemaDiagnosticBuilder() {
       return;
     }
   }
+  
+  // Set up the context's printing policy based on our current state.
+  SemaRef.Context.setPrintingPolicy(SemaRef.getPrintingPolicy());
   
   // Emit the diagnostic.
   if (!this->Emit())

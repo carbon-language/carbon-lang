@@ -23,9 +23,13 @@ void foo4(id (^objectCreationBlock)(int)) {
     return bar4(objectCreationBlock);
 }
 
-void bar5(id(^)(void)); // expected-note{{passing argument to parameter here}}
+void bar5(id(^)(void)); // expected-note 3{{passing argument to parameter here}}
 void foo5(id (^objectCreationBlock)(bool)) {
-    return bar5(objectCreationBlock); // expected-error {{incompatible block pointer types passing 'id (^)(bool)' to parameter of type 'id (^)(void)'}}
+    bar5(objectCreationBlock); // expected-error {{incompatible block pointer types passing 'id (^)(bool)' to parameter of type 'id (^)(void)'}}
+#undef bool
+    bar5(objectCreationBlock); // expected-error {{incompatible block pointer types passing 'id (^)(_Bool)' to parameter of type 'id (^)(void)'}}
+#define bool int
+    bar5(objectCreationBlock); // expected-error {{incompatible block pointer types passing 'id (^)(_Bool)' to parameter of type 'id (^)(void)'}}
 }
 
 void bar6(id(^)(int));

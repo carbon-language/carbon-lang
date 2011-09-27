@@ -484,7 +484,7 @@ void Sema::PrintInstantiationStack() {
         = TemplateSpecializationType::PrintTemplateArgumentList(
                                                          Active->TemplateArgs,
                                                       Active->NumTemplateArgs,
-                                                      Context.getPrintingPolicy());
+                                                      getPrintingPolicy());
       Diags.Report(Active->PointOfInstantiation,
                    diag::note_default_arg_instantiation_here)
         << (Template->getNameAsString() + TemplateArgsStr)
@@ -538,7 +538,7 @@ void Sema::PrintInstantiationStack() {
         = TemplateSpecializationType::PrintTemplateArgumentList(
                                                          Active->TemplateArgs,
                                                       Active->NumTemplateArgs,
-                                                      Context.getPrintingPolicy());
+                                                      getPrintingPolicy());
       Diags.Report(Active->PointOfInstantiation,
                    diag::note_default_function_arg_instantiation_here)
         << (FD->getNameAsString() + TemplateArgsStr)

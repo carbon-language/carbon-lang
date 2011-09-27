@@ -6475,12 +6475,6 @@ MangleContext *ASTContext::createMangleContext() {
 
 CXXABI::~CXXABI() {}
 
-PrintingPolicy ASTContext::getPrintingPolicy() const {
-  PrintingPolicy.Bool 
-    = LangOpts.Bool || Idents.get("bool").hasMacroDefinition();
-  return PrintingPolicy;
-}
-
 size_t ASTContext::getSideTableAllocatedMemory() const {
   return ASTRecordLayouts.getMemorySize()
     + llvm::capacity_in_bytes(ObjCLayouts)

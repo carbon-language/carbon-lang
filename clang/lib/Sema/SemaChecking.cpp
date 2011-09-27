@@ -2140,7 +2140,7 @@ void Sema::CheckStrlcpycatArguments(const CallExpr *Call,
   llvm::SmallString<128> sizeString;
   llvm::raw_svector_ostream OS(sizeString);
   OS << "sizeof(";
-  DstArg->printPretty(OS, Context, 0, Context.getPrintingPolicy());
+  DstArg->printPretty(OS, Context, 0, getPrintingPolicy());
   OS << ")";
   
   Diag(OriginalSizeArg->getLocStart(), diag::note_strlcpycat_wrong_size)

@@ -4049,7 +4049,7 @@ Sema::ConvertToIntegralOrEnumerationType(SourceLocation Loc, Expr *From,
       QualType ConvTy
         = Conversion->getConversionType().getNonReferenceType();
       std::string TypeStr;
-      ConvTy.getAsStringInternal(TypeStr, Context.getPrintingPolicy());
+      ConvTy.getAsStringInternal(TypeStr, getPrintingPolicy());
 
       Diag(Loc, ExplicitConvDiag)
         << T << ConvTy
