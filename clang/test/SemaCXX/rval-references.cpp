@@ -92,11 +92,3 @@ MoveOnly returningNonEligible() {
   else // Construction from different type can't be elided
     return i; // expected-error {{no viable conversion from 'int' to 'MoveOnly'}}
 }
-
-// PR11009
-struct MoveConvertible {
-  operator int&& () const;
-};
-void moveConstruct() {
-  (void)(int)MoveConvertible();
-}

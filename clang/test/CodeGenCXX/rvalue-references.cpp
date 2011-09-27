@@ -101,3 +101,11 @@ namespace test1 {
   // CHECK-NEXT: ret void
   B::B(int i) : a(move(i)) {}
 }
+
+// PR11009
+struct MoveConvertible {
+  operator int&& () const;
+};
+void moveConstruct() {
+  (void)(int)MoveConvertible();
+}
