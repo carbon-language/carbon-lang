@@ -70,11 +70,17 @@
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ValueHandle.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetLowering.h"
 #include <algorithm>
 using namespace llvm;
+
+namespace llvm {
+cl::opt<bool> EnableRetry(
+    "enable-lsr-retry", cl::Hidden, cl::desc("Enable LSR retry"));
+}
 
 namespace {
 
@@ -3309,6 +3315,9 @@ retry:
   skip:;
   }
 
+  if (!EnableRetry && !AnySatisfiedReqRegs)
+    return;
+
   // If none of the formulae had all of the required registers, relax the
   // constraint so that we don't exclude all formulae.
   if (!AnySatisfiedReqRegs) {
@@ -3332,6 +3341,10 @@ void LSRInstance::Solve(SmallVectorImpl<const Formula *> &Solution) const {
   // SolveRecurse does all the work.
   SolveRecurse(Solution, SolutionCost, Workspace, CurCost,
                CurRegs, VisitedRegs);
+  if (Solution.empty()) {
+    DEBUG(dbgs() << "\nNo Satisfactory Solution\n");
+    return;
+  }
 
   // Ok, we've now made all our decisions.
   DEBUG(dbgs() << "\n"
@@ -3810,6 +3823,9 @@ LSRInstance::LSRInstance(const TargetLowering *tli, Loop *l, Pass *P)
   Factors.clear();
   Types.clear();
   RegUses.clear();
+
+  if (Solution.empty())
+    return;
 
 #ifndef NDEBUG
   // Formulae should be legal.
