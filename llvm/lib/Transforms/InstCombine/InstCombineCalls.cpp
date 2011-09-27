@@ -654,15 +654,13 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
           
           if (ExtractedElts[Idx] == 0) {
             ExtractedElts[Idx] = 
-              Builder->CreateExtractElement(Idx < 16 ? Op0 : Op1, 
-                  ConstantInt::get(Type::getInt32Ty(II->getContext()),
-                                   Idx&15, false), "tmp");
+              Builder->CreateExtractElement(Idx < 16 ? Op0 : Op1,
+                                            Builder->getInt32(Idx&15));
           }
         
           // Insert this value into the result vector.
           Result = Builder->CreateInsertElement(Result, ExtractedElts[Idx],
-                         ConstantInt::get(Type::getInt32Ty(II->getContext()),
-                                          i, false), "tmp");
+                                                Builder->getInt32(i));
         }
         return CastInst::Create(Instruction::BitCast, Result, CI.getType());
       }
@@ -1143,7 +1141,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
     } else {
       Instruction::CastOps opcode = CastInst::getCastOpcode(*AI,
           false, ParamTy, false);
-      Args.push_back(Builder->CreateCast(opcode, *AI, ParamTy, "tmp"));
+      Args.push_back(Builder->CreateCast(opcode, *AI, ParamTy));
     }
 
     // Add any parameter attributes.
@@ -1169,7 +1167,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
           // Must promote to pass through va_arg area!
           Instruction::CastOps opcode =
             CastInst::getCastOpcode(*AI, false, PTy, false);
-          Args.push_back(Builder->CreateCast(opcode, *AI, PTy, "tmp"));
+          Args.push_back(Builder->CreateCast(opcode, *AI, PTy));
         } else {
           Args.push_back(*AI);
         }
@@ -1213,7 +1211,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
     if (!NV->getType()->isVoidTy()) {
       Instruction::CastOps opcode =
         CastInst::getCastOpcode(NC, false, OldRetTy, false);
-      NV = NC = CastInst::Create(opcode, NC, OldRetTy, "tmp");
+      NV = NC = CastInst::Create(opcode, NC, OldRetTy);
       NC->setDebugLoc(Caller->getDebugLoc());
 
       // If this is an invoke instruction, we should insert it after the first

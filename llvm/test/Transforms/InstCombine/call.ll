@@ -9,8 +9,8 @@ declare void @test1a(i8*)
 define void @test1(i32* %A) {
         call void bitcast (void (i8*)* @test1a to void (i32*)*)( i32* %A )
         ret void
-; CHECK: %tmp = bitcast i32* %A to i8*
-; CHECK: call void @test1a(i8* %tmp)
+; CHECK: %1 = bitcast i32* %A to i8*
+; CHECK: call void @test1a(i8* %1)
 ; CHECK: ret void
 }
 
@@ -24,8 +24,8 @@ define void @test2a(i8 %A) {
 define i32 @test2(i32 %A) {
         call void bitcast (void (i8)* @test2a to void (i32)*)( i32 %A )
         ret i32 %A
-; CHECK: %tmp = trunc i32 %A to i8
-; CHECK: call void @test2a(i8 %tmp)
+; CHECK: %1 = trunc i32 %A to i8
+; CHECK: call void @test2a(i8 %1)
 ; CHECK: ret i32 %A
 }
 
@@ -38,8 +38,8 @@ define void @test3(i8 %A, i8 %B) {
         call void bitcast (void (i8, ...)* @test3a to void (i8, i8)*)( i8 %A, i8 %B 
 )
         ret void
-; CHECK: %tmp = zext i8 %B to i32
-; CHECK: call void (i8, ...)* @test3a(i8 %A, i32 %tmp)
+; CHECK: %1 = zext i8 %B to i32
+; CHECK: call void (i8, ...)* @test3a(i8 %A, i32 %1)
 ; CHECK: ret void
 }
 
@@ -54,8 +54,8 @@ define i32 @test4() {
         %X = call i32 bitcast (i8 ()* @test4a to i32 ()*)( )            ; <i32> [#uses=1]
         ret i32 %X
 ; CHECK: %X = call i8 @test4a()
-; CHECK: %tmp = zext i8 %X to i32
-; CHECK: ret i32 %tmp
+; CHECK: %1 = zext i8 %X to i32
+; CHECK: ret i32 %1
 }
 
 

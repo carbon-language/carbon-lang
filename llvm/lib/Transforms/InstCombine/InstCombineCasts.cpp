@@ -122,13 +122,13 @@ Instruction *InstCombiner::PromoteCastOfAllocation(BitCastInst &CI,
   } else {
     Amt = ConstantInt::get(AI.getArraySize()->getType(), Scale);
     // Insert before the alloca, not before the cast.
-    Amt = AllocaBuilder.CreateMul(Amt, NumElements, "tmp");
+    Amt = AllocaBuilder.CreateMul(Amt, NumElements);
   }
   
   if (uint64_t Offset = (AllocElTySize*ArrayOffset)/CastElTySize) {
     Value *Off = ConstantInt::get(AI.getArraySize()->getType(),
                                   Offset, true);
-    Amt = AllocaBuilder.CreateAdd(Amt, Off, "tmp");
+    Amt = AllocaBuilder.CreateAdd(Amt, Off);
   }
   
   AllocaInst *New = AllocaBuilder.CreateAlloca(CastElTy, Amt);
@@ -457,7 +457,7 @@ Instruction *InstCombiner::visitTrunc(TruncInst &CI) {
   // Canonicalize trunc x to i1 -> (icmp ne (and x, 1), 0), likewise for vector.
   if (DestTy->getScalarSizeInBits() == 1) {
     Constant *One = ConstantInt::get(Src->getType(), 1);
-    Src = Builder->CreateAnd(Src, One, "tmp");
+    Src = Builder->CreateAnd(Src, One);
     Value *Zero = Constant::getNullValue(Src->getType());
     return new ICmpInst(ICmpInst::ICMP_NE, Src, Zero);
   }
@@ -519,7 +519,7 @@ Instruction *InstCombiner::transformZExtICmp(ICmpInst *ICI, Instruction &CI,
                                    In->getType()->getScalarSizeInBits()-1);
       In = Builder->CreateLShr(In, Sh, In->getName()+".lobit");
       if (In->getType() != CI.getType())
-        In = Builder->CreateIntCast(In, CI.getType(), false/*ZExt*/, "tmp");
+        In = Builder->CreateIntCast(In, CI.getType(), false/*ZExt*/);
 
       if (ICI->getPredicate() == ICmpInst::ICMP_SGT) {
         Constant *One = ConstantInt::get(In->getType(), 1);
@@ -573,7 +573,7 @@ Instruction *InstCombiner::transformZExtICmp(ICmpInst *ICI, Instruction &CI,
           
         if ((Op1CV != 0) == isNE) { // Toggle the low bit.
           Constant *One = ConstantInt::get(In->getType(), 1);
-          In = Builder->CreateXor(In, One, "tmp");
+          In = Builder->CreateXor(In, One);
         }
           
         if (CI.getType() == In->getType())
@@ -821,7 +821,7 @@ Instruction *InstCombiner::visitZExt(ZExtInst &CI) {
                                                            AndValue));
     }
     if (SrcSize > DstSize) {
-      Value *Trunc = Builder->CreateTrunc(A, CI.getType(), "tmp");
+      Value *Trunc = Builder->CreateTrunc(A, CI.getType());
       APInt AndValue(APInt::getLowBitsSet(DstSize, MidSize));
       return BinaryOperator::CreateAnd(Trunc, 
                                        ConstantInt::get(Trunc->getType(),
@@ -868,7 +868,7 @@ Instruction *InstCombiner::visitZExt(ZExtInst &CI) {
             Value *TI0 = TI->getOperand(0);
             if (TI0->getType() == CI.getType()) {
               Constant *ZC = ConstantExpr::getZExt(C, CI.getType());
-              Value *NewAnd = Builder->CreateAnd(TI0, ZC, "tmp");
+              Value *NewAnd = Builder->CreateAnd(TI0, ZC);
               return BinaryOperator::CreateXor(NewAnd, ZC);
             }
           }
@@ -901,7 +901,7 @@ Instruction *InstCombiner::transformSExtICmp(ICmpInst *ICI, Instruction &CI) {
                                    Op0->getType()->getScalarSizeInBits()-1);
       Value *In = Builder->CreateAShr(Op0, Sh, Op0->getName()+".lobit");
       if (In->getType() != CI.getType())
-        In = Builder->CreateIntCast(In, CI.getType(), true/*SExt*/, "tmp");
+        In = Builder->CreateIntCast(In, CI.getType(), true/*SExt*/);
 
       if (Pred == ICmpInst::ICMP_SGT)
         In = Builder->CreateNot(In, In->getName()+".not");
@@ -1307,13 +1307,13 @@ Instruction *InstCombiner::visitIntToPtr(IntToPtrInst &CI) {
     if (CI.getOperand(0)->getType()->getScalarSizeInBits() >
         TD->getPointerSizeInBits()) {
       Value *P = Builder->CreateTrunc(CI.getOperand(0),
-                                      TD->getIntPtrType(CI.getContext()), "tmp");
+                                      TD->getIntPtrType(CI.getContext()));
       return new IntToPtrInst(P, CI.getType());
     }
     if (CI.getOperand(0)->getType()->getScalarSizeInBits() <
         TD->getPointerSizeInBits()) {
       Value *P = Builder->CreateZExt(CI.getOperand(0),
-                                     TD->getIntPtrType(CI.getContext()), "tmp");
+                                     TD->getIntPtrType(CI.getContext()));
       return new IntToPtrInst(P, CI.getType());
     }
   }
@@ -1382,14 +1382,12 @@ Instruction *InstCombiner::visitPtrToInt(PtrToIntInst &CI) {
   if (TD) {
     if (CI.getType()->getScalarSizeInBits() < TD->getPointerSizeInBits()) {
       Value *P = Builder->CreatePtrToInt(CI.getOperand(0),
-                                         TD->getIntPtrType(CI.getContext()),
-                                         "tmp");
+                                         TD->getIntPtrType(CI.getContext()));
       return new TruncInst(P, CI.getType());
     }
     if (CI.getType()->getScalarSizeInBits() > TD->getPointerSizeInBits()) {
       Value *P = Builder->CreatePtrToInt(CI.getOperand(0),
-                                         TD->getIntPtrType(CI.getContext()),
-                                         "tmp");
+                                         TD->getIntPtrType(CI.getContext()));
       return new ZExtInst(P, CI.getType());
     }
   }

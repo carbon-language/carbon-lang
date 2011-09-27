@@ -38,7 +38,7 @@ static Value *simplifyValueKnownNonZero(Value *V, InstCombiner &IC) {
                       m_Value(B))) &&
       // The "1" can be any value known to be a power of 2.
       isPowerOfTwo(PowerOf2, IC.getTargetData())) {
-    A = IC.Builder->CreateSub(A, B, "tmp");
+    A = IC.Builder->CreateSub(A, B);
     return IC.Builder->CreateShl(PowerOf2, A);
   }
   
@@ -131,7 +131,7 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
     { Value *X; ConstantInt *C1;
       if (Op0->hasOneUse() &&
           match(Op0, m_Add(m_Value(X), m_ConstantInt(C1)))) {
-        Value *Add = Builder->CreateMul(X, CI, "tmp");
+        Value *Add = Builder->CreateMul(X, CI);
         return BinaryOperator::CreateAdd(Add, Builder->CreateMul(C1, CI));
       }
     }
@@ -244,7 +244,7 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
 
     if (BoolCast) {
       Value *V = Builder->CreateSub(Constant::getNullValue(I.getType()),
-                                    BoolCast, "tmp");
+                                    BoolCast);
       return BinaryOperator::CreateAnd(V, OtherOp);
     }
   }
@@ -466,8 +466,7 @@ Instruction *InstCombiner::visitUDiv(BinaryOperator &I) {
   { const APInt *CI; Value *N;
     if (match(Op1, m_Shl(m_Power2(CI), m_Value(N)))) {
       if (*CI != 1)
-        N = Builder->CreateAdd(N, ConstantInt::get(I.getType(), CI->logBase2()),
-                               "tmp");
+        N = Builder->CreateAdd(N, ConstantInt::get(I.getType(),CI->logBase2()));
       if (I.isExact())
         return BinaryOperator::CreateExactLShr(Op0, N);
       return BinaryOperator::CreateLShr(Op0, N);
@@ -630,7 +629,7 @@ Instruction *InstCombiner::visitURem(BinaryOperator &I) {
   // Turn A % (C << N), where C is 2^k, into A & ((C << N)-1)  
   if (match(Op1, m_Shl(m_Power2(), m_Value()))) {
     Constant *N1 = Constant::getAllOnesValue(I.getType());
-    Value *Add = Builder->CreateAdd(Op1, N1, "tmp");
+    Value *Add = Builder->CreateAdd(Op1, N1);
     return BinaryOperator::CreateAnd(Op0, Add);
   }
 

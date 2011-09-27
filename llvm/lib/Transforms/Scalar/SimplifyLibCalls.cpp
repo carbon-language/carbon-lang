@@ -874,8 +874,8 @@ struct PowOpt : public LibCallOptimization {
                                          Callee->getAttributes());
       Value *FAbs = EmitUnaryFloatFnCall(Sqrt, "fabs", B,
                                          Callee->getAttributes());
-      Value *FCmp = B.CreateFCmpOEQ(Op1, NegInf, "tmp");
-      Value *Sel = B.CreateSelect(FCmp, Inf, FAbs, "tmp");
+      Value *FCmp = B.CreateFCmpOEQ(Op1, NegInf);
+      Value *Sel = B.CreateSelect(FCmp, Inf, FAbs);
       return Sel;
     }
 
@@ -908,10 +908,10 @@ struct Exp2Opt : public LibCallOptimization {
     Value *LdExpArg = 0;
     if (SIToFPInst *OpC = dyn_cast<SIToFPInst>(Op)) {
       if (OpC->getOperand(0)->getType()->getPrimitiveSizeInBits() <= 32)
-        LdExpArg = B.CreateSExt(OpC->getOperand(0), B.getInt32Ty(), "tmp");
+        LdExpArg = B.CreateSExt(OpC->getOperand(0), B.getInt32Ty());
     } else if (UIToFPInst *OpC = dyn_cast<UIToFPInst>(Op)) {
       if (OpC->getOperand(0)->getType()->getPrimitiveSizeInBits() < 32)
-        LdExpArg = B.CreateZExt(OpC->getOperand(0), B.getInt32Ty(), "tmp");
+        LdExpArg = B.CreateZExt(OpC->getOperand(0), B.getInt32Ty());
     }
 
     if (LdExpArg) {
@@ -996,10 +996,10 @@ struct FFSOpt : public LibCallOptimization {
     Value *F = Intrinsic::getDeclaration(Callee->getParent(),
                                          Intrinsic::cttz, ArgType);
     Value *V = B.CreateCall(F, Op, "cttz");
-    V = B.CreateAdd(V, ConstantInt::get(V->getType(), 1), "tmp");
-    V = B.CreateIntCast(V, B.getInt32Ty(), false, "tmp");
+    V = B.CreateAdd(V, ConstantInt::get(V->getType(), 1));
+    V = B.CreateIntCast(V, B.getInt32Ty(), false);
 
-    Value *Cond = B.CreateICmpNE(Op, Constant::getNullValue(ArgType), "tmp");
+    Value *Cond = B.CreateICmpNE(Op, Constant::getNullValue(ArgType));
     return B.CreateSelect(Cond, V, B.getInt32(0));
   }
 };

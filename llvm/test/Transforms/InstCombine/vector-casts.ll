@@ -7,7 +7,7 @@ define <2 x i1> @test1(<2 x i64> %a) {
 
 ; CHECK: @test1
 ; CHECK:   and <2 x i64> %a, <i64 1, i64 1>
-; CHECK:   icmp ne <2 x i64> %tmp, zeroinitializer
+; CHECK:   icmp ne <2 x i64> %1, zeroinitializer
 }
 
 ; The ashr turns into an lshr.

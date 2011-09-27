@@ -325,8 +325,7 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
       if ((RHSKnownOne & LHSKnownOne) == RHSKnownOne) {
         Constant *AndC = Constant::getIntegerValue(VTy,
                                                    ~RHSKnownOne & DemandedMask);
-        Instruction *And = 
-          BinaryOperator::CreateAnd(I->getOperand(0), AndC, "tmp");
+        Instruction *And = BinaryOperator::CreateAnd(I->getOperand(0), AndC);
         return InsertNewInstWith(And, *I);
       }
     }
@@ -351,14 +350,12 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
         
         Constant *AndC =
           ConstantInt::get(I->getType(), NewMask & AndRHS->getValue());
-        Instruction *NewAnd = 
-          BinaryOperator::CreateAnd(I->getOperand(0), AndC, "tmp");
+        Instruction *NewAnd = BinaryOperator::CreateAnd(I->getOperand(0), AndC);
         InsertNewInstWith(NewAnd, *I);
         
         Constant *XorC =
           ConstantInt::get(I->getType(), NewMask & XorRHS->getValue());
-        Instruction *NewXor =
-          BinaryOperator::CreateXor(NewAnd, XorC, "tmp");
+        Instruction *NewXor = BinaryOperator::CreateXor(NewAnd, XorC);
         return InsertNewInstWith(NewXor, *I);
       }
 

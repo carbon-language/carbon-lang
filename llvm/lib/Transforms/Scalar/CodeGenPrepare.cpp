@@ -822,7 +822,7 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
     DEBUG(dbgs() << "CGP: Reusing nonlocal addrmode: " << AddrMode << " for "
                  << *MemoryInst);
     if (SunkAddr->getType() != Addr->getType())
-      SunkAddr = Builder.CreateBitCast(SunkAddr, Addr->getType(), "tmp");
+      SunkAddr = Builder.CreateBitCast(SunkAddr, Addr->getType());
   } else {
     DEBUG(dbgs() << "CGP: SINKING nonlocal addrmode: " << AddrMode << " for "
                  << *MemoryInst);

@@ -7,9 +7,9 @@
 ; CHECK: define float @foo(float %x) nounwind {
 ; CHECK:   %sqrtf = call float @sqrtf(float %x) nounwind readonly
 ; CHECK:   %fabsf = call float @fabsf(float %sqrtf) nounwind readonly
-; CHECK:   %tmp = fcmp oeq float %x, 0xFFF0000000000000
-; CHECK:   %tmp1 = select i1 %tmp, float 0x7FF0000000000000, float %fabsf
-; CHECK:   ret float %tmp1
+; CHECK:   %1 = fcmp oeq float %x, 0xFFF0000000000000
+; CHECK:   %retval = select i1 %1, float 0x7FF0000000000000, float %fabsf
+; CHECK:   ret float %retval
 
 define float @foo(float %x) nounwind {
   %retval = call float @powf(float %x, float 0.5)
@@ -19,9 +19,9 @@ define float @foo(float %x) nounwind {
 ; CHECK: define double @doo(double %x) nounwind {
 ; CHECK:   %sqrt = call double @sqrt(double %x) nounwind readonly
 ; CHECK:   %fabs = call double @fabs(double %sqrt) nounwind readonly
-; CHECK:   %tmp = fcmp oeq double %x, 0xFFF0000000000000
-; CHECK:   %tmp1 = select i1 %tmp, double 0x7FF0000000000000, double %fabs
-; CHECK:   ret double %tmp1
+; CHECK:   %1 = fcmp oeq double %x, 0xFFF0000000000000
+; CHECK:   %retval = select i1 %1, double 0x7FF0000000000000, double %fabs
+; CHECK:   ret double %retval
 ; CHECK: }
 
 define double @doo(double %x) nounwind {

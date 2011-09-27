@@ -946,10 +946,9 @@ static Value *GetStoreValueForLoad(Value *SrcVal, unsigned Offset,
   // Compute which bits of the stored value are being used by the load.  Convert
   // to an integer type to start with.
   if (SrcVal->getType()->isPointerTy())
-    SrcVal = Builder.CreatePtrToInt(SrcVal, TD.getIntPtrType(Ctx), "tmp");
+    SrcVal = Builder.CreatePtrToInt(SrcVal, TD.getIntPtrType(Ctx));
   if (!SrcVal->getType()->isIntegerTy())
-    SrcVal = Builder.CreateBitCast(SrcVal, IntegerType::get(Ctx, StoreSize*8),
-                                   "tmp");
+    SrcVal = Builder.CreateBitCast(SrcVal, IntegerType::get(Ctx, StoreSize*8));
   
   // Shift the bits to the least significant depending on endianness.
   unsigned ShiftAmt;
@@ -959,11 +958,10 @@ static Value *GetStoreValueForLoad(Value *SrcVal, unsigned Offset,
     ShiftAmt = (StoreSize-LoadSize-Offset)*8;
   
   if (ShiftAmt)
-    SrcVal = Builder.CreateLShr(SrcVal, ShiftAmt, "tmp");
+    SrcVal = Builder.CreateLShr(SrcVal, ShiftAmt);
   
   if (LoadSize != StoreSize)
-    SrcVal = Builder.CreateTrunc(SrcVal, IntegerType::get(Ctx, LoadSize*8),
-                                 "tmp");
+    SrcVal = Builder.CreateTrunc(SrcVal, IntegerType::get(Ctx, LoadSize*8));
   
   return CoerceAvailableValueToLoadType(SrcVal, LoadTy, InsertPt, TD);
 }

@@ -110,7 +110,7 @@ define float @test7(<4 x float> %x) {
 ; CHECK-NOT: alloca
 ; CHECK: bitcast <4 x float> %x to <2 x double>
 ; CHECK-NEXT: extractelement <2 x double>
-; CHECK-NEXT: bitcast double %tmp4 to <2 x float>
+; CHECK-NEXT: bitcast double %2 to <2 x float>
 ; CHECK-NEXT: extractelement <4 x float>
 }
 
@@ -125,7 +125,7 @@ define void @test8(<4 x float> %x, <2 x float> %y) {
 ; CHECK: bitcast <4 x float> %x to <2 x double>
 ; CHECK-NEXT: bitcast <2 x float> %y to double
 ; CHECK-NEXT: insertelement <2 x double>
-; CHECK-NEXT: bitcast <2 x double> %tmp2 to <4 x float>
+; CHECK-NEXT: bitcast <2 x double> %3 to <4 x float>
 }
 
 define i256 @test9(<4 x i256> %x) {
@@ -140,7 +140,7 @@ define i256 @test9(<4 x i256> %x) {
 ; CHECK-NOT: alloca
 ; CHECK: bitcast <4 x i256> %x to <2 x i512>
 ; CHECK-NEXT: extractelement <2 x i512>
-; CHECK-NEXT: bitcast i512 %tmp4 to <2 x i256>
+; CHECK-NEXT: bitcast i512 %2 to <2 x i256>
 ; CHECK-NEXT: extractelement <4 x i256>
 }
 
@@ -155,7 +155,7 @@ define void @test10(<4 x i256> %x, <2 x i256> %y) {
 ; CHECK: bitcast <4 x i256> %x to <2 x i512>
 ; CHECK-NEXT: bitcast <2 x i256> %y to i512
 ; CHECK-NEXT: insertelement <2 x i512>
-; CHECK-NEXT: bitcast <2 x i512> %tmp2 to <4 x i256>
+; CHECK-NEXT: bitcast <2 x i512> %3 to <4 x i256>
 }
 
 %union.v = type { <2 x i64> }
@@ -245,7 +245,7 @@ entry:
   ret void
 ; CHECK: @test15
 ; CHECK-NOT: alloca
-; CHECK: shufflevector <4 x i64> %tmpV2, <4 x i64> undef, <3 x i32> <i32 0, i32 1, i32 2>
+; CHECK: shufflevector <4 x i64> %tmpV1, <4 x i64> undef, <3 x i32> <i32 0, i32 1, i32 2>
 }
 
 define <4 x float> @test16(<4 x float> %x, i64 %y0, i64 %y1) {

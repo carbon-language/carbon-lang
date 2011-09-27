@@ -1197,7 +1197,7 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
         // an endless loop. By checking that A is non-constant we ensure that
         // we will never get to the loop.
         if (A == tmpOp0 && !isa<Constant>(A)) // A&(A^B) -> A & ~B
-          return BinaryOperator::CreateAnd(A, Builder->CreateNot(B, "tmp"));
+          return BinaryOperator::CreateAnd(A, Builder->CreateNot(B));
       }
     }
 
@@ -2228,14 +2228,14 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
       if (A == Op1)                                  // (B|A)^B == (A|B)^B
         std::swap(A, B);
       if (B == Op1)                                  // (A|B)^B == A & ~B
-        return BinaryOperator::CreateAnd(A, Builder->CreateNot(Op1, "tmp"));
+        return BinaryOperator::CreateAnd(A, Builder->CreateNot(Op1));
     } else if (match(Op0I, m_And(m_Value(A), m_Value(B))) && 
                Op0I->hasOneUse()){
       if (A == Op1)                                        // (A&B)^A -> (B&A)^A
         std::swap(A, B);
       if (B == Op1 &&                                      // (B&A)^A == ~B & A
           !isa<ConstantInt>(Op1)) {  // Canonical form is (B&C)^C
-        return BinaryOperator::CreateAnd(Builder->CreateNot(A, "tmp"), Op1);
+        return BinaryOperator::CreateAnd(Builder->CreateNot(A), Op1);
       }
     }
   }

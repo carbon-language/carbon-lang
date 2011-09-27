@@ -1376,8 +1376,7 @@ static GlobalVariable *PerformHeapAllocSRoA(GlobalVariable *GV, CallInst *CI,
   for (unsigned i = 0, e = FieldGlobals.size(); i != e; ++i) {
     Value *GVVal = new LoadInst(FieldGlobals[i], "tmp", NullPtrBlock);
     Value *Cmp = new ICmpInst(*NullPtrBlock, ICmpInst::ICMP_NE, GVVal,
-                              Constant::getNullValue(GVVal->getType()),
-                              "tmp");
+                              Constant::getNullValue(GVVal->getType()));
     BasicBlock *FreeBlock = BasicBlock::Create(Cmp->getContext(), "free_it",
                                                OrigBB->getParent());
     BasicBlock *NextBlock = BasicBlock::Create(Cmp->getContext(), "next",

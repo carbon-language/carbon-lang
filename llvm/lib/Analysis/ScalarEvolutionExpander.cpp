@@ -163,7 +163,7 @@ Value *SCEVExpander::InsertBinop(Instruction::BinaryOps Opcode,
   }
 
   // If we haven't found this binop, insert it.
-  Instruction *BO = cast<Instruction>(Builder.CreateBinOp(Opcode, LHS, RHS, "tmp"));
+  Instruction *BO = cast<Instruction>(Builder.CreateBinOp(Opcode, LHS, RHS));
   BO->setDebugLoc(SaveInsertPt->getDebugLoc());
   rememberInstruction(BO);
 
@@ -980,7 +980,7 @@ SCEVExpander::getAddRecExprPHILiterally(const SCEVAddRecExpr *Normalized,
       const SCEV *const StepArray[1] = { SE.getSCEV(StepV) };
       IncV = expandAddToGEP(StepArray, StepArray+1, GEPPtrTy, IntTy, PN);
       if (IncV->getType() != PN->getType()) {
-        IncV = Builder.CreateBitCast(IncV, PN->getType(), "tmp");
+        IncV = Builder.CreateBitCast(IncV, PN->getType());
         rememberInstruction(IncV);
       }
     } else {
@@ -1222,7 +1222,7 @@ Value *SCEVExpander::visitTruncateExpr(const SCEVTruncateExpr *S) {
   Type *Ty = SE.getEffectiveSCEVType(S->getType());
   Value *V = expandCodeFor(S->getOperand(),
                            SE.getEffectiveSCEVType(S->getOperand()->getType()));
-  Value *I = Builder.CreateTrunc(V, Ty, "tmp");
+  Value *I = Builder.CreateTrunc(V, Ty);
   rememberInstruction(I);
   return I;
 }
@@ -1231,7 +1231,7 @@ Value *SCEVExpander::visitZeroExtendExpr(const SCEVZeroExtendExpr *S) {
   Type *Ty = SE.getEffectiveSCEVType(S->getType());
   Value *V = expandCodeFor(S->getOperand(),
                            SE.getEffectiveSCEVType(S->getOperand()->getType()));
-  Value *I = Builder.CreateZExt(V, Ty, "tmp");
+  Value *I = Builder.CreateZExt(V, Ty);
   rememberInstruction(I);
   return I;
 }
@@ -1240,7 +1240,7 @@ Value *SCEVExpander::visitSignExtendExpr(const SCEVSignExtendExpr *S) {
   Type *Ty = SE.getEffectiveSCEVType(S->getType());
   Value *V = expandCodeFor(S->getOperand(),
                            SE.getEffectiveSCEVType(S->getOperand()->getType()));
-  Value *I = Builder.CreateSExt(V, Ty, "tmp");
+  Value *I = Builder.CreateSExt(V, Ty);
   rememberInstruction(I);
   return I;
 }
@@ -1256,7 +1256,7 @@ Value *SCEVExpander::visitSMaxExpr(const SCEVSMaxExpr *S) {
       LHS = InsertNoopCastOfTo(LHS, Ty);
     }
     Value *RHS = expandCodeFor(S->getOperand(i), Ty);
-    Value *ICmp = Builder.CreateICmpSGT(LHS, RHS, "tmp");
+    Value *ICmp = Builder.CreateICmpSGT(LHS, RHS);
     rememberInstruction(ICmp);
     Value *Sel = Builder.CreateSelect(ICmp, LHS, RHS, "smax");
     rememberInstruction(Sel);
@@ -1280,7 +1280,7 @@ Value *SCEVExpander::visitUMaxExpr(const SCEVUMaxExpr *S) {
       LHS = InsertNoopCastOfTo(LHS, Ty);
     }
     Value *RHS = expandCodeFor(S->getOperand(i), Ty);
-    Value *ICmp = Builder.CreateICmpUGT(LHS, RHS, "tmp");
+    Value *ICmp = Builder.CreateICmpUGT(LHS, RHS);
     rememberInstruction(ICmp);
     Value *Sel = Builder.CreateSelect(ICmp, LHS, RHS, "umax");
     rememberInstruction(Sel);

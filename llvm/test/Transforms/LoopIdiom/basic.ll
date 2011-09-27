@@ -62,8 +62,8 @@ for.end:                                          ; preds = %for.body, %entry
   ret void
 ; CHECK: @test2
 ; CHECK: br i1 %cmp10,
-; CHECK: %tmp = mul i64 %Size, 4
-; CHECK: call void @llvm.memset.p0i8.i64(i8* %Base1, i8 1, i64 %tmp, i32 4, i1 false)
+; CHECK: %0 = mul i64 %Size, 4
+; CHECK: call void @llvm.memset.p0i8.i64(i8* %Base1, i8 1, i64 %0, i32 4, i1 false)
 ; CHECK-NOT: store
 }
 

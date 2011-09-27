@@ -221,8 +221,7 @@ void SimplifyIndvar::eliminateIVRemainder(BinaryOperator *Rem,
       return;
 
     ICmpInst *ICmp = new ICmpInst(Rem, ICmpInst::ICMP_EQ,
-                                  Rem->getOperand(0), Rem->getOperand(1),
-                                  "tmp");
+                                  Rem->getOperand(0), Rem->getOperand(1));
     SelectInst *Sel =
       SelectInst::Create(ICmp,
                          ConstantInt::get(Rem->getType(), 0),

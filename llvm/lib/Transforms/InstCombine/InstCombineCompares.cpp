@@ -1186,10 +1186,10 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
         // Compute C << Y.
         Value *NS;
         if (Shift->getOpcode() == Instruction::LShr) {
-          NS = Builder->CreateShl(AndCST, Shift->getOperand(1), "tmp");
+          NS = Builder->CreateShl(AndCST, Shift->getOperand(1));
         } else {
           // Insert a logical shift.
-          NS = Builder->CreateLShr(AndCST, Shift->getOperand(1), "tmp");
+          NS = Builder->CreateLShr(AndCST, Shift->getOperand(1));
         }
         
         // Compute X & (C << Y).
@@ -2484,7 +2484,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
             match(D, m_ConstantInt(C2)) && Op1->hasOneUse()) {
           Constant *NC = ConstantInt::get(I.getContext(),
                                           C1->getValue() ^ C2->getValue());
-          Value *Xor = Builder->CreateXor(C, NC, "tmp");
+          Value *Xor = Builder->CreateXor(C, NC);
           return new ICmpInst(I.getPredicate(), A, Xor);
         }
         
@@ -2520,8 +2520,8 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
       }
       
       if (X) {   // Build (X^Y) & Z
-        Op1 = Builder->CreateXor(X, Y, "tmp");
-        Op1 = Builder->CreateAnd(Op1, Z, "tmp");
+        Op1 = Builder->CreateXor(X, Y);
+        Op1 = Builder->CreateAnd(Op1, Z);
         I.setOperand(0, Op1);
         I.setOperand(1, Constant::getNullValue(Op1->getType()));
         return &I;
