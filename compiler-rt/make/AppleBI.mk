@@ -61,7 +61,7 @@ $(OBJROOT)/libcompiler_rt-%.dylib : $(OBJROOT)/darwin_bni/Release/%/libcompiler_
 	   $(DYLIB_FLAGS) -Wl,-force_load,$^ -o $@ 
 
 # Rule to make fat dylib
-$(SYMROOT)/libcompiler_rt.dylib: $(foreach arch,$(RC_ARCHS), \
+$(SYMROOT)/libcompiler_rt.dylib: $(foreach arch,$(filter-out armv4t,$(RC_ARCHS)), \
                                         $(OBJROOT)/libcompiler_rt-$(arch).dylib)
 	$(call GetCNAVar,LIPO,Platform.darwin_bni,Release,) -create $^ -o  $@
 
