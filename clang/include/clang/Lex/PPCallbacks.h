@@ -158,6 +158,12 @@ public:
   /// MI is released immediately following this callback.
   virtual void MacroUndefined(const Token &MacroNameTok, const MacroInfo *MI) {
   }
+  
+  /// SourceRangeSkipped - This hook is called when a source range is skipped.
+  /// \param Range The SourceRange that was skipped. The range begins at the
+  /// #if/#else directive and ends after the #endif/#else directive.
+  virtual void SourceRangeSkipped(SourceRange Range) {
+  }
 
   /// If -- This hook is called whenever an #if is seen.
   /// \param Range The SourceRange of the expression being tested.
@@ -284,6 +290,11 @@ public:
   virtual void MacroUndefined(const Token &MacroNameTok, const MacroInfo *MI) {
     First->MacroUndefined(MacroNameTok, MI);
     Second->MacroUndefined(MacroNameTok, MI);
+  }
+
+  virtual void SourceRangeSkipped(SourceRange Range) {
+    First->SourceRangeSkipped(Range);
+    Second->SourceRangeSkipped(Range);
   }
 
   /// If -- This hook is called whenever an #if is seen.

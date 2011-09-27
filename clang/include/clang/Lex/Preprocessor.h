@@ -1057,7 +1057,8 @@ private:
   /// already seen one so a #else directive is a duplicate.  When this returns,
   /// the caller can lex the first valid token.
   void SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
-                                    bool FoundNonSkipPortion, bool FoundElse);
+                                    bool FoundNonSkipPortion, bool FoundElse,
+                                    SourceLocation ElseLoc = SourceLocation());
 
   /// PTHSkipExcludedConditionalBlock - A fast PTH version of
   ///  SkipExcludedConditionalBlock.
