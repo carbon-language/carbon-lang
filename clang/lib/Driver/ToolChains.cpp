@@ -1477,7 +1477,8 @@ static LinuxDistro DetectLinuxDistro(llvm::Triple::ArchType Arch) {
   return UnknownDistro;
 }
 
-static std::string findGCCBaseLibDir(const std::string &GccTriple) {
+static std::string findGCCBaseLibDir(const Driver &D,
+    const std::string &GccTriple) {
   // FIXME: Using CXX_INCLUDE_ROOT is here is a bit of a hack, but
   // avoids adding yet another option to configure/cmake.
   // It would probably be cleaner to break it in two variables
@@ -1510,24 +1511,33 @@ static std::string findGCCBaseLibDir(const std::string &GccTriple) {
                                       "4.2.4", "4.2.3", "4.2.2", "4.2.1",
                                       "4.2", "4.1.1"};
   bool Exists;
-  for (unsigned i = 0; i < sizeof(GccVersions)/sizeof(char*); ++i) {
-    std::string Suffix = GccTriple + "/" + GccVersions[i];
-    std::string t1 = "/usr/lib/gcc/" + Suffix;
-    if (!llvm::sys::fs::exists(t1 + "/crtbegin.o", Exists) && Exists)
-      return t1;
-    std::string t2 = "/usr/lib64/gcc/" + Suffix;
-    if (!llvm::sys::fs::exists(t2 + "/crtbegin.o", Exists) && Exists)
-      return t2;
-    std::string t3 = "/usr/lib/" + GccTriple + "/gcc/" + Suffix;
-    if (!llvm::sys::fs::exists(t3 + "/crtbegin.o", Exists) && Exists)
-      return t3;
-    if (GccTriple == "i386-linux-gnu") {
-      // Ubuntu 11.04 uses an unusual path.
-      std::string t4 =
-          std::string("/usr/lib/i386-linux-gnu/gcc/i686-linux-gnu/") +
-          GccVersions[i];
-      if (!llvm::sys::fs::exists(t4 + "/crtbegin.o", Exists) && Exists)
-        return t4;
+  llvm::SmallVector<std::string, 8> Paths(D.PrefixDirs.begin(),
+      D.PrefixDirs.end());
+  Paths.push_back("/usr/");
+  const std::string *Triples[] = {&GccTriple, &D.DefaultHostTriple};
+  for (llvm::SmallVector<std::string, 8>::const_iterator it = Paths.begin(),
+       ie = Paths.end(); it != ie; ++it) {
+    for (unsigned i = 0; i < sizeof(GccVersions)/sizeof(char*); ++i) {
+      for (unsigned j = 0; j < sizeof(Triples)/sizeof(Triples[0]); ++j) {
+        std::string Suffix = *Triples[j] + "/" + GccVersions[i];
+        std::string t1 = *it + "gcc/" + Suffix;
+        if (!llvm::sys::fs::exists(t1 + "/crtbegin.o", Exists) && Exists)
+          return t1;
+        std::string t2 = *it + "lib64/gcc/" + Suffix;
+        if (!llvm::sys::fs::exists(t2 + "/crtbegin.o", Exists) && Exists)
+          return t2;
+        std::string t3 = *it + "lib/" + GccTriple + "/gcc/" + Suffix;
+        if (!llvm::sys::fs::exists(t3 + "/crtbegin.o", Exists) && Exists)
+          return t3;
+        if (GccTriple == "i386-linux-gnu") {
+          // Ubuntu 11.04 uses an unusual path.
+          std::string t4 =
+              std::string(*it + "lib/i386-linux-gnu/gcc/i686-linux-gnu/") +
+              GccVersions[i];
+          if (!llvm::sys::fs::exists(t4 + "/crtbegin.o", Exists) && Exists)
+            return t4;
+        }
+      }
     }
   }
   return "";
@@ -1628,7 +1638,7 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
       GccTriple = "powerpc64-unknown-linux-gnu";
   }
 
-  std::string Base = findGCCBaseLibDir(GccTriple);
+  std::string Base = findGCCBaseLibDir(getDriver(), GccTriple);
   path_list &Paths = getFilePaths();
   bool Is32Bits = (getArch() == llvm::Triple::x86 ||
                    getArch() == llvm::Triple::ppc);

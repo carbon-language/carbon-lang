@@ -1485,33 +1485,46 @@ std::string Driver::GetFilePath(const char *Name, const ToolChain &TC) const {
   return Name;
 }
 
+static bool isPathExecutable(llvm::sys::Path &P, bool WantFile) {
+    bool Exists;
+    return (WantFile ? !llvm::sys::fs::exists(P.str(), Exists) && Exists
+                 : P.canExecute());
+}
+
 std::string Driver::GetProgramPath(const char *Name, const ToolChain &TC,
                                    bool WantFile) const {
+  std::string TargetSpecificExecutable(DefaultHostTriple + "-" + Name);
   // Respect a limited subset of the '-Bprefix' functionality in GCC by
   // attempting to use this prefix when lokup up program paths.
   for (Driver::prefix_list::const_iterator it = PrefixDirs.begin(),
        ie = PrefixDirs.end(); it != ie; ++it) {
     llvm::sys::Path P(*it);
+    P.appendComponent(TargetSpecificExecutable);
+    if (isPathExecutable(P, WantFile)) return P.str();
+    P.eraseComponent();
     P.appendComponent(Name);
-    bool Exists;
-    if (WantFile ? !llvm::sys::fs::exists(P.str(), Exists) && Exists
-                 : P.canExecute())
-      return P.str();
+    if (isPathExecutable(P, WantFile)) return P.str();
   }
 
   const ToolChain::path_list &List = TC.getProgramPaths();
   for (ToolChain::path_list::const_iterator
          it = List.begin(), ie = List.end(); it != ie; ++it) {
     llvm::sys::Path P(*it);
+    P.appendComponent(TargetSpecificExecutable);
+    if (isPathExecutable(P, WantFile)) return P.str();
+    P.eraseComponent();
     P.appendComponent(Name);
-    bool Exists;
-    if (WantFile ? !llvm::sys::fs::exists(P.str(), Exists) && Exists
-                 : P.canExecute())
-      return P.str();
+    if (isPathExecutable(P, WantFile)) return P.str();
   }
 
   // If all else failed, search the path.
-  llvm::sys::Path P(llvm::sys::Program::FindProgramByName(Name));
+  llvm::sys::Path
+      P(llvm::sys::Program::FindProgramByName(TargetSpecificExecutable));
+  if (!P.empty())
+    return P.str();
+
+  P = llvm::sys::Path(llvm::sys::Program::FindProgramByName(
+            TargetSpecificExecutable));
   if (!P.empty())
     return P.str();
 

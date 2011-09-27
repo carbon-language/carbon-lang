@@ -47,18 +47,6 @@ using namespace clang::driver;
 using namespace clang::driver::tools;
 using namespace clang;
 
-/// FindTargetProgramPath - Return path of the target specific version of
-/// ProgName.  If it doesn't exist, return path of ProgName itself.
-static std::string FindTargetProgramPath(const ToolChain &TheToolChain,
-                                         const std::string TripleString,
-                                         const char *ProgName) {
-  std::string Executable(TripleString + "-" + ProgName);
-  std::string Path(TheToolChain.GetProgramPath(Executable.c_str()));
-  if (Path != Executable)
-    return Path;
-  return TheToolChain.GetProgramPath(ProgName);
-}
-
 /// CheckPreprocessingOptions - Perform some validation of preprocessing
 /// arguments that is shared with gcc.
 static void CheckPreprocessingOptions(const Driver &D, const ArgList &Args) {
@@ -4090,9 +4078,7 @@ void netbsd::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(II.getFilename());
   }
 
-  const char *Exec = Args.MakeArgString(FindTargetProgramPath(getToolChain(),
-                                                      ToolTriple.getTriple(),
-                                                      "as"));
+  const char *Exec = Args.MakeArgString((getToolChain().GetProgramPath("as")));
   C.addCommand(new Command(JA, *this, Exec, CmdArgs));
 }
 
@@ -4208,9 +4194,7 @@ void netbsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
 
   addProfileRT(getToolChain(), Args, CmdArgs, getToolChain().getTriple());
 
-  const char *Exec = Args.MakeArgString(FindTargetProgramPath(getToolChain(),
-                                                      ToolTriple.getTriple(),
-                                                      "ld"));
+  const char *Exec = Args.MakeArgString(getToolChain().GetProgramPath("ld"));
   C.addCommand(new Command(JA, *this, Exec, CmdArgs));
 }
 
