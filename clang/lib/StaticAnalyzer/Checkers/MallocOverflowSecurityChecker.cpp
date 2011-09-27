@@ -244,6 +244,8 @@ void MallocOverflowSecurityChecker::checkASTCodeBody(const Decl *D,
 
           // Get the name of the callee. If it's a builtin, strip off the prefix.
           IdentifierInfo *FnInfo = FD->getIdentifier();
+          if (!FnInfo)
+            return;
 
           if (FnInfo->isStr ("malloc") || FnInfo->isStr ("_MALLOC")) {
             if (TheCall->getNumArgs() == 1)
