@@ -261,7 +261,7 @@
    and <i>filter</i> clauses. The exception is tested against the clauses
    sequentially from first to last. The selector value is a positive number if
    the exception matched a type info, a negative number if it matched a filter,
-   and zero if it matched to a cleanup. If nothing is matched, the behavior of
+   and zero if it matched a cleanup. If nothing is matched, the behavior of
    the program is <a href="#restrictions">undefined</a>. If a type info matched,
    then the selector value is the index of the type info in the exception table,
    which can be obtained using the
@@ -275,11 +275,6 @@
    <a href="#llvm_eh_typeid_for"><tt>llvm.eh.typeid.for</tt></a> intrinsic to
    determine the index for a given type info. If the catch fails to match the
    selector then control is passed on to the next catch.</p>
-
-<p><b>Note:</b> Since the landing pad will not be used if there is no match in
-   the list of type info on the call to the <tt>landingpad</tt> instruction,
-   then neither the last catch nor <i>catch all</i> need to perform the check
-   against the selector.</p>
 
 <p>Finally, the entry and exit of catch code is bracketed with calls to
    <tt>__cxa_begin_catch</tt> and <tt>__cxa_end_catch</tt>.</p>
