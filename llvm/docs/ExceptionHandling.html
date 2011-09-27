@@ -361,14 +361,10 @@
 <div>
 
 <p>The unwinder delegates the decision of whether to stop in a call frame to
-   that call frame's language-specific personality function. Not all personality
-   functions guarantee that they will stop to perform cleanups. For example, the
-   GNU C++ personality function doesn't do so unless the exception is actually
-   caught somewhere further up the stack. When using this personality to
-   implement EH for a language that guarantees that cleanups will always be run
-   (e.g. Ada), be sure to indicate a catch-all in the
-   <a href="LangRef.html#i_landingpad"><tt>landingpad</tt> instruction</a>
-   rather than just cleanups.</p>
+   that call frame's language-specific personality function. Not all unwinders
+   guarantee that they will stop to perform cleanups. For example, the GNU C++
+   unwinder doesn't do so unless the exception is actually caught somewhere
+   further up the stack.</p>
 
 <p>In order for inlining to behave correctly, landing pads must be prepared to
    handle selector results that they did not originally advertise. Suppose that
