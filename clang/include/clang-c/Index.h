@@ -1557,9 +1557,7 @@ CINDEX_LINKAGE unsigned clang_equalCursors(CXCursor, CXCursor);
 /**
  * \brief Returns non-zero if \arg cursor is null.
  */
-static inline int clang_Cursor_isNull(CXCursor cursor) {
-  return clang_equalCursors(cursor, clang_getNullCursor());
-}
+int clang_Cursor_isNull(CXCursor);
 
 /**
  * \brief Compute a hash value for the given cursor.

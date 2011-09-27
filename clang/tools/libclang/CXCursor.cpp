@@ -522,9 +522,17 @@ bool cxcursor::isFirstInDeclGroup(CXCursor C) {
 // libclang CXCursor APIs
 //===----------------------------------------------------------------------===//
 
+extern "C" {
+
+int clang_Cursor_isNull(CXCursor cursor) {
+  return clang_equalCursors(cursor, clang_getNullCursor());
+}
+
 CXTranslationUnit clang_Cursor_getTranslationUnit(CXCursor cursor) {
   return getCursorTU(cursor);
 }
+
+} // end: extern "C"
 
 //===----------------------------------------------------------------------===//
 // CXCursorSet.
