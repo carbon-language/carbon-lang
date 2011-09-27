@@ -17,8 +17,9 @@
 #include "llvm/Support/Path.h"
 
 // Include headers for createBinary.
-#include "llvm/Object/ObjectFile.h"
+#include "llvm/Object/Archive.h"
 #include "llvm/Object/COFF.h"
+#include "llvm/Object/ObjectFile.h"
 
 using namespace llvm;
 using namespace object;
@@ -50,6 +51,12 @@ error_code object::createBinary(MemoryBuffer *Source,
                                 static_cast<unsigned>(Source->getBufferSize()));
   error_code ec;
   switch (type) {
+    case sys::Archive_FileType: {
+      OwningPtr<Binary> ret(new Archive(scopedSource.take(), ec));
+      if (ec) return ec;
+      Result.swap(ret);
+      return object_error::success;
+    }
     case sys::ELF_Relocatable_FileType:
     case sys::ELF_Executable_FileType:
     case sys::ELF_SharedObject_FileType:
