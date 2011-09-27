@@ -339,6 +339,16 @@ class APIDefaultConstructorTestCase(TestBase):
         import sb_valuelist
         sb_valuelist.fuzz_obj(obj)
 
+    @python_api_test
+    def test_SBWatchpointLocation(self):
+        obj = lldb.SBWatchpointLocation()
+        if self.TraceOn():
+            print obj
+        self.assertFalse(obj)
+        # Do fuzz testing on the invalid obj, it should not crash lldb.
+        import sb_watchpointlocation
+        sb_watchpointlocation.fuzz_obj(obj)
+
 
 if __name__ == '__main__':
     import atexit
