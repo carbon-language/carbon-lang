@@ -444,7 +444,7 @@ void PTXAsmPrinter::EmitVariableDeclaration(const GlobalVariable *gv) {
   unsigned alignment = gv->getAlignment();
   if (alignment != 0) {
     decl += ".align ";
-    decl += utostr(std::max(1U, Log2_32(gv->getAlignment())));
+    decl += utostr(gv->getAlignment());
     decl += " ";
   }
 
