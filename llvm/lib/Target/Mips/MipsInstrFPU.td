@@ -217,8 +217,6 @@ defm FSUB : FFR1_4<0x01, "sub", fsub>;
 // They must be kept in synch.
 def MIPS_BRANCH_F  : PatLeaf<(i32 0)>;
 def MIPS_BRANCH_T  : PatLeaf<(i32 1)>;
-def MIPS_BRANCH_FL : PatLeaf<(i32 2)>;
-def MIPS_BRANCH_TL : PatLeaf<(i32 3)>;
 
 /// Floating Point Branch of False/True (Likely)
 let isBranch=1, isTerminator=1, hasDelaySlot=1, base=0x8, Uses=[FCR31] in
@@ -228,8 +226,6 @@ let isBranch=1, isTerminator=1, hasDelaySlot=1, base=0x8, Uses=[FCR31] in
 
 def BC1F  : FBRANCH<MIPS_BRANCH_F,  "bc1f">;
 def BC1T  : FBRANCH<MIPS_BRANCH_T,  "bc1t">;
-def BC1FL : FBRANCH<MIPS_BRANCH_FL, "bc1fl">;
-def BC1TL : FBRANCH<MIPS_BRANCH_TL, "bc1tl">;
 
 //===----------------------------------------------------------------------===//
 // Floating Point Flag Conditions
