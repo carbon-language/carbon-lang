@@ -1662,42 +1662,38 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
     Builder.defineMacro("__i486__");
     Builder.defineMacro("__tune_i486__");
     break;
+  case CK_PentiumMMX:
+    Builder.defineMacro("__pentium_mmx__");
+    Builder.defineMacro("__tune_pentium_mmx__");
+    // Fallthrough
   case CK_i586:
   case CK_Pentium:
-  case CK_PentiumMMX:
     Builder.defineMacro("__i586");
     Builder.defineMacro("__i586__");
     Builder.defineMacro("__tune_i586__");
     Builder.defineMacro("__pentium");
     Builder.defineMacro("__pentium__");
     Builder.defineMacro("__tune_pentium__");
-    if (CPU == CK_PentiumMMX) {
-      Builder.defineMacro("__pentium_mmx__");
-      Builder.defineMacro("__tune_pentium_mmx__");
-    }
     break;
-  case CK_i686:
-  case CK_PentiumPro:
-  case CK_Pentium2:
   case CK_Pentium3:
   case CK_Pentium3M:
   case CK_PentiumM:
+    Builder.defineMacro("__tune_pentium3__");
+    // Fallthrough
+  case CK_Pentium2:
   case CK_C3_2:
+    Builder.defineMacro("__tune_pentium2__");
+    // Fallthrough
+  case CK_PentiumPro:
+    Builder.defineMacro("__tune_i686__");
+    Builder.defineMacro("__tune_pentiumpro__");
+    // Fallthrough
+  case CK_i686:
     Builder.defineMacro("__i686");
     Builder.defineMacro("__i686__");
     // Strangely, __tune_i686__ isn't defined by GCC when CPU == i686.
     Builder.defineMacro("__pentiumpro");
     Builder.defineMacro("__pentiumpro__");
-    if (CPU != CK_i686) {
-      Builder.defineMacro("__tune_i686__");
-      Builder.defineMacro("__tune_pentiumpro__");
-      if (CPU == CK_Pentium2 || CPU == CK_C3_2) {
-        Builder.defineMacro("__tune_pentium2__");
-      } else if (CPU == CK_Pentium3) {
-        Builder.defineMacro("__tune_pentium2__");
-        Builder.defineMacro("__tune_pentium3__");
-      }
-    }
     break;
   case CK_Pentium4:
   case CK_Pentium4M:
@@ -1730,20 +1726,23 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
     Builder.defineMacro("__corei7__");
     Builder.defineMacro("__tune_corei7__");
     break;
-  case CK_K6:
   case CK_K6_2:
+    Builder.defineMacro("__k6_2__");
+    Builder.defineMacro("__tune_k6_2__");
+    // Fallthrough
   case CK_K6_3:
-    Builder.defineMacro("__k6");
-    Builder.defineMacro("__k6__");
-    Builder.defineMacro("__tune_k6__");
-    if (CPU == CK_K6_2) {
-      Builder.defineMacro("__k6_2__");
-      Builder.defineMacro("__tune_k6_2__");
-      break;
-    } else if (CPU == CK_K6_3 || MMX3DNowLevel == AMD3DNow) {
+    if (CPU != CK_K6_2) {  // In case of fallthrough
+      // FIXME: GCC may be enabling these in cases where some other k6
+      // architecture is specified but -m3dnow is explicitly provided. The
+      // exact semantics need to be determined and emulated here.
       Builder.defineMacro("__k6_3__");
       Builder.defineMacro("__tune_k6_3__");
     }
+    // Fallthrough
+  case CK_K6:
+    Builder.defineMacro("__k6");
+    Builder.defineMacro("__k6__");
+    Builder.defineMacro("__tune_k6__");
     break;
   case CK_Athlon:
   case CK_AthlonThunderbird:
