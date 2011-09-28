@@ -714,7 +714,7 @@ BasicAliasAnalysis::getModRefInfo(ImmutableCallSite CS,
       // is impossible to alias the pointer we're checking.  If not, we have to
       // assume that the call could touch the pointer, even though it doesn't
       // escape.
-      if (!isNoAlias(Location(cast<Value>(CI)), Loc)) {
+      if (!isNoAlias(Location(*CI), Location(Object))) {
         PassedAsArg = true;
         break;
       }

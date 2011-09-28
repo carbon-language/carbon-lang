@@ -129,8 +129,23 @@ define i8 @test6(i8* %p, i8* noalias %a) {
 ; CHECK: ret
 }
 
+; PR10628
+declare void @test7decl(i32* nocapture %x)
+define i32 @test7() nounwind uwtable ssp {
+entry:
+  %x = alloca i32, align 4
+  store i32 0, i32* %x, align 4
+  %add.ptr = getelementptr inbounds i32* %x, i64 1
+  call void @test7decl(i32* %add.ptr)
+  %tmp = load i32* %x, align 4
+  ret i32 %tmp
+; CHECK: @test7(
+; CHECK: store i32 0
+; CHECK: call void @test7decl
+; CHECK: load i32*
+}
+
 declare void @llvm.memset.p0i8.i32(i8* nocapture, i8, i32, i32, i1) nounwind
 declare void @llvm.memset.p0i8.i8(i8* nocapture, i8, i8, i32, i1) nounwind
 declare void @llvm.memcpy.p0i8.p0i8.i8(i8* nocapture, i8* nocapture, i8, i32, i1) nounwind
 declare void @llvm.memcpy.p0i8.p0i8.i32(i8* nocapture, i8* nocapture, i32, i32, i1) nounwind
-
