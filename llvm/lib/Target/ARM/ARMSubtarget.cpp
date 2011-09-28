@@ -55,6 +55,7 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &CPU,
   , InThumbMode(false)
   , InNaClMode(false)
   , HasThumb2(false)
+  , IsMClass(false)
   , NoARM(false)
   , PostRAScheduler(false)
   , IsR9Reserved(ReserveR9)

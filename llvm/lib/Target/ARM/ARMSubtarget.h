@@ -76,6 +76,10 @@ protected:
   /// HasThumb2 - True if Thumb2 instructions are supported.
   bool HasThumb2;
 
+  /// IsMClass - True if the subtarget belongs to the 'M' profile of CPUs - 
+  /// v6m, v7m for example.
+  bool IsMClass;
+
   /// NoARM - True if subtarget does not support ARM mode execution.
   bool NoARM;
 
@@ -224,6 +228,8 @@ protected:
   bool isThumb1Only() const { return InThumbMode && !HasThumb2; }
   bool isThumb2() const { return InThumbMode && HasThumb2; }
   bool hasThumb2() const { return HasThumb2; }
+  bool isMClass() const { return IsMClass; }
+  bool isARClass() const { return !IsMClass; }
 
   bool isR9Reserved() const { return IsR9Reserved; }
 

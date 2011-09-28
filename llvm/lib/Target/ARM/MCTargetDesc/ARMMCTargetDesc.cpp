@@ -56,18 +56,21 @@ std::string ARM_MC::ParseARMTriple(StringRef TT) {
     unsigned SubVer = TT[Idx];
     if (SubVer >= '7' && SubVer <= '9') {
       if (Len >= Idx+2 && TT[Idx+1] == 'm') {
-        // v7m: FeatureNoARM, FeatureDB, FeatureHWDiv
-        ARMArchFeature = "+v7,+noarm,+db,+hwdiv";
+        // v7m: FeatureNoARM, FeatureDB, FeatureHWDiv, FeatureMClass
+        ARMArchFeature = "+v7,+noarm,+db,+hwdiv,+mclass";
       } else if (Len >= Idx+3 && TT[Idx+1] == 'e'&& TT[Idx+2] == 'm') {
         // v7em: FeatureNoARM, FeatureDB, FeatureHWDiv, FeatureDSPThumb2,
-        //       FeatureT2XtPk
-        ARMArchFeature = "+v7,+noarm,+db,+hwdiv,+t2dsp,t2xtpk";
+        //       FeatureT2XtPk, FeatureMClass
+        ARMArchFeature = "+v7,+noarm,+db,+hwdiv,+t2dsp,t2xtpk,+mclass";
       } else
         // v7a: FeatureNEON, FeatureDB, FeatureDSPThumb2, FeatureT2XtPk
         ARMArchFeature = "+v7,+neon,+db,+t2dsp,+t2xtpk";
     } else if (SubVer == '6') {
       if (Len >= Idx+3 && TT[Idx+1] == 't' && TT[Idx+2] == '2')
         ARMArchFeature = "+v6t2";
+      else if (Len >= Idx+2 && TT[Idx+1] == 'm')
+        // v6m: FeatureNoARM, FeatureMClass
+        ARMArchFeature = "+v6t2,+noarm,+mclass";
       else
         ARMArchFeature = "+v6";
     } else if (SubVer == '5') {

@@ -3540,30 +3540,55 @@ defm t2STC  : T2LdStCop<0b1111, 0, "stc">;
 // Move between special register and ARM core register -- for disassembly only
 //
 // Move to ARM core register from Special Register
-def t2MRS : T2I<(outs GPR:$Rd), (ins), NoItinerary, "mrs", "\t$Rd, apsr", []> {
+
+// A/R class MRS.
+//
+// A/R class can only move from CPSR or SPSR.
+def t2MRS_AR : T2I<(outs GPR:$Rd), (ins), NoItinerary, "mrs", "\t$Rd, apsr", []>,
+               Requires<[IsThumb2,IsARClass]> {
   bits<4> Rd;
   let Inst{31-12} = 0b11110011111011111000;
   let Inst{11-8} = Rd;
   let Inst{7-0} = 0b0000;
 }
 
-def : t2InstAlias<"mrs${p} $Rd, cpsr", (t2MRS GPR:$Rd, pred:$p)>;
+def : t2InstAlias<"mrs${p} $Rd, cpsr", (t2MRS_AR GPR:$Rd, pred:$p)>;
 
-def t2MRSsys:T2I<(outs GPR:$Rd), (ins), NoItinerary, "mrs", "\t$Rd, spsr", []> {
+def t2MRSsys_AR: T2I<(outs GPR:$Rd), (ins), NoItinerary, "mrs", "\t$Rd, spsr", []>,
+                 Requires<[IsThumb2,IsARClass]> {
   bits<4> Rd;
   let Inst{31-12} = 0b11110011111111111000;
   let Inst{11-8} = Rd;
   let Inst{7-0} = 0b0000;
 }
 
+// M class MRS.
+//
+// This MRS has a mask field in bits 7-0 and can take more values than
+// the A/R class (a full msr_mask).
+def t2MRS_M : T2I<(outs rGPR:$Rd), (ins msr_mask:$mask), NoItinerary,
+                  "mrs", "\t$Rd, $mask", []>,
+              Requires<[IsThumb2,IsMClass]> {
+  bits<4> Rd;
+  bits<8> mask;
+  let Inst{31-12} = 0b11110011111011111000;
+  let Inst{11-8} = Rd;
+  let Inst{19-16} = 0b1111;
+  let Inst{7-0} = mask;
+}
+
+
 // Move from ARM core register to Special Register
+//
+// A/R class MSR.
 //
 // No need to have both system and application versions, the encodings are the
 // same and the assembly parser has no way to distinguish between them. The mask
 // operand contains the special register (R Bit) in bit 4 and bits 3-0 contains
 // the mask with the fields to be accessed in the special register.
-def t2MSR : T2I<(outs), (ins msr_mask:$mask, rGPR:$Rn),
-                NoItinerary, "msr", "\t$mask, $Rn", []> {
+def t2MSR_AR : T2I<(outs), (ins msr_mask:$mask, rGPR:$Rn),
+                   NoItinerary, "msr", "\t$mask, $Rn", []>,
+               Requires<[IsThumb2,IsARClass]> {
   bits<5> mask;
   bits<4> Rn;
   let Inst{31-21} = 0b11110011100;
@@ -3573,6 +3598,22 @@ def t2MSR : T2I<(outs), (ins msr_mask:$mask, rGPR:$Rn),
   let Inst{11-8}  = mask{3-0};
   let Inst{7-0}   = 0;
 }
+
+// M class MSR.
+//
+// Move from ARM core register to Special Register
+def t2MSR_M : T2I<(outs), (ins msr_mask:$SYSm, rGPR:$Rn),
+                  NoItinerary, "msr", "\t$SYSm, $Rn", []>,
+              Requires<[IsThumb2,IsMClass]> {
+  bits<8> SYSm;
+  bits<4> Rn;
+  let Inst{31-21} = 0b11110011100;
+  let Inst{20}    = 0b0;
+  let Inst{19-16} = Rn;
+  let Inst{15-12} = 0b1000;
+  let Inst{7-0}  = SYSm;
+}
+
 
 //===----------------------------------------------------------------------===//
 // Move between coprocessor and ARM core register

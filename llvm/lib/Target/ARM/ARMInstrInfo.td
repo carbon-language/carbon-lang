@@ -205,6 +205,10 @@ def IsThumb          : Predicate<"Subtarget->isThumb()">,
 def IsThumb1Only     : Predicate<"Subtarget->isThumb1Only()">;
 def IsThumb2         : Predicate<"Subtarget->isThumb2()">,
                                  AssemblerPredicate<"ModeThumb,FeatureThumb2">;
+def IsMClass         : Predicate<"Subtarget->isMClass()">,
+                                 AssemblerPredicate<"FeatureMClass">;
+def IsARClass        : Predicate<"!Subtarget->isMClass()">,
+                                 AssemblerPredicate<"!FeatureMClass">;
 def IsARM            : Predicate<"!Subtarget->isThumb()">,
                                  AssemblerPredicate<"!ModeThumb">;
 def IsDarwin         : Predicate<"Subtarget->isTargetDarwin()">;

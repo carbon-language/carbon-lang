@@ -94,6 +94,10 @@ def FeatureDSPThumb2 : SubtargetFeature<"t2dsp", "Thumb2DSP", "true",
 def FeatureMP : SubtargetFeature<"mp", "HasMPExtension", "true",
                                  "Supports Multiprocessing extension">;
 
+// M-series ISA?
+def FeatureMClass : SubtargetFeature<"mclass", "IsMClass", "true",
+                                     "Is microcontroller profile ('M' series)">;
+
 // ARM ISAs.
 def HasV4TOps   : SubtargetFeature<"v4t", "HasV4TOps", "true",
                                    "Support ARM v4T instructions">;
@@ -185,7 +189,7 @@ def : Processor<"mpcore",           ARMV6Itineraries, [HasV6Ops, FeatureVFP2,
 
 // V6M Processors.
 def : Processor<"cortex-m0",        ARMV6Itineraries, [HasV6Ops, FeatureNoARM,
-                                                       FeatureDB]>;
+                                                       FeatureDB, FeatureMClass]>;
 
 // V6T2 Processors.
 def : Processor<"arm1156t2-s",      ARMV6Itineraries, [HasV6T2Ops,
@@ -208,14 +212,14 @@ def : Processor<"cortex-a9-mp",     CortexA9Itineraries,
 // V7M Processors.
 def : ProcNoItin<"cortex-m3",       [HasV7Ops,
                                      FeatureThumb2, FeatureNoARM, FeatureDB,
-                                     FeatureHWDiv]>;
+                                     FeatureHWDiv, FeatureMClass]>;
 
 // V7EM Processors.
 def : ProcNoItin<"cortex-m4",       [HasV7Ops,
                                      FeatureThumb2, FeatureNoARM, FeatureDB,
                                      FeatureHWDiv, FeatureDSPThumb2,
                                      FeatureT2XtPk, FeatureVFP2,
-                                     FeatureVFPOnlySP]>;
+                                     FeatureVFPOnlySP, FeatureMClass]>;
 
 //===----------------------------------------------------------------------===//
 // Register File Description

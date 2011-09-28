@@ -621,6 +621,26 @@ void ARMInstPrinter::printMSRMaskOperand(const MCInst *MI, unsigned OpNum,
   unsigned SpecRegRBit = Op.getImm() >> 4;
   unsigned Mask = Op.getImm() & 0xf;
 
+  if (getAvailableFeatures() & ARM::FeatureMClass) {
+    switch (Op.getImm()) {
+    default: assert(0 && "Unexpected mask value!");
+    case 0: O << "apsr"; return;
+    case 1: O << "iapsr"; return;
+    case 2: O << "eapsr"; return;
+    case 3: O << "xpsr"; return;
+    case 5: O << "ipsr"; return;
+    case 6: O << "epsr"; return;
+    case 7: O << "iepsr"; return;
+    case 8: O << "msp"; return;
+    case 9: O << "psp"; return;
+    case 16: O << "primask"; return;
+    case 17: O << "basepri"; return;
+    case 18: O << "basepri_max"; return;
+    case 19: O << "faultmask"; return;
+    case 20: O << "control"; return;
+    }
+  }
+
   // As special cases, CPSR_f, CPSR_s and CPSR_fs prefer printing as
   // APSR_nzcvq, APSR_g and APSRnzcvqg, respectively.
   if (!SpecRegRBit && (Mask == 8 || Mask == 4 || Mask == 12)) {
