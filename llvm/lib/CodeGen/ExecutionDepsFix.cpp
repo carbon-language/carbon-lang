@@ -1,4 +1,4 @@
-//===- SSEDomainFix.cpp - Use proper int/float domain for SSE ---*- C++ -*-===//
+//===- ExecutionDepsFix.cpp - Fix execution dependecy issues ----*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,12 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the SSEDomainFix pass.
+// This file contains the execution dependency fix pass.
 //
-// Some SSE instructions like mov, and, or, xor are available in different
+// Some X86 SSE instructions like mov, and, or, xor are available in different
 // variants for different operand types. These variant instructions are
 // equivalent, but on Nehalem and newer cpus there is extra latency
-// transferring data between integer and floating point domains.
+// transferring data between integer and floating point domains.  ARM cores
+// have similar issues when they are configured with both VFP and NEON
+// pipelines.
 //
 // This pass changes the variant instructions to minimize domain crossings.
 //
@@ -100,7 +102,7 @@ struct DomainValue {
 }
 
 namespace {
-class SSEDomainFixPass : public MachineFunctionPass {
+class ExeDepsFix : public MachineFunctionPass {
   static char ID;
   SpecificBumpPtrAllocator<DomainValue> Allocator;
   SmallVector<DomainValue*,16> Avail;
@@ -118,7 +120,7 @@ class SSEDomainFixPass : public MachineFunctionPass {
   unsigned Distance;
 
 public:
-  SSEDomainFixPass(const TargetRegisterClass *rc)
+  ExeDepsFix(const TargetRegisterClass *rc)
     : MachineFunctionPass(ID), RC(rc), NumRegs(RC->getNumRegs()) {}
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -154,16 +156,16 @@ private:
 };
 }
 
-char SSEDomainFixPass::ID = 0;
+char ExeDepsFix::ID = 0;
 
 /// Translate TRI register number to an index into our smaller tables of
 /// interesting registers. Return -1 for boring registers.
-int SSEDomainFixPass::RegIndex(unsigned Reg) {
+int ExeDepsFix::RegIndex(unsigned Reg) {
   assert(Reg < AliasMap.size() && "Invalid register");
   return AliasMap[Reg];
 }
 
-DomainValue *SSEDomainFixPass::Alloc(int domain) {
+DomainValue *ExeDepsFix::Alloc(int domain) {
   DomainValue *dv = Avail.empty() ?
                       new(Allocator.Allocate()) DomainValue :
                       Avail.pop_back_val();
@@ -173,14 +175,14 @@ DomainValue *SSEDomainFixPass::Alloc(int domain) {
   return dv;
 }
 
-void SSEDomainFixPass::Recycle(DomainValue *dv) {
+void ExeDepsFix::Recycle(DomainValue *dv) {
   assert(dv && "Cannot recycle NULL");
   dv->clear();
   Avail.push_back(dv);
 }
 
 /// Set LiveRegs[rx] = dv, updating reference counts.
-void SSEDomainFixPass::SetLiveReg(int rx, DomainValue *dv) {
+void ExeDepsFix::SetLiveReg(int rx, DomainValue *dv) {
   assert(unsigned(rx) < NumRegs && "Invalid index");
   if (!LiveRegs) {
     LiveRegs = new DomainValue*[NumRegs];
@@ -198,7 +200,7 @@ void SSEDomainFixPass::SetLiveReg(int rx, DomainValue *dv) {
 }
 
 // Kill register rx, recycle or collapse any DomainValue.
-void SSEDomainFixPass::Kill(int rx) {
+void ExeDepsFix::Kill(int rx) {
   assert(unsigned(rx) < NumRegs && "Invalid index");
   if (!LiveRegs || !LiveRegs[rx]) return;
 
@@ -211,7 +213,7 @@ void SSEDomainFixPass::Kill(int rx) {
 }
 
 /// Force register rx into domain.
-void SSEDomainFixPass::Force(int rx, unsigned domain) {
+void ExeDepsFix::Force(int rx, unsigned domain) {
   assert(unsigned(rx) < NumRegs && "Invalid index");
   DomainValue *dv;
   if (LiveRegs && (dv = LiveRegs[rx])) {
@@ -220,8 +222,8 @@ void SSEDomainFixPass::Force(int rx, unsigned domain) {
     else if (dv->hasDomain(domain))
       Collapse(dv, domain);
     else {
-      // This is an incompatible open DomainValue. Collapse it to whatever and force
-      // the new value into domain. This costs a domain crossing.
+      // This is an incompatible open DomainValue. Collapse it to whatever and
+      // force the new value into domain. This costs a domain crossing.
       Collapse(dv, dv->getFirstDomain());
       assert(LiveRegs[rx] && "Not live after collapse?");
       LiveRegs[rx]->addDomain(domain);
@@ -234,7 +236,7 @@ void SSEDomainFixPass::Force(int rx, unsigned domain) {
 
 /// Collapse open DomainValue into given domain. If there are multiple
 /// registers using dv, they each get a unique collapsed DomainValue.
-void SSEDomainFixPass::Collapse(DomainValue *dv, unsigned domain) {
+void ExeDepsFix::Collapse(DomainValue *dv, unsigned domain) {
   assert(dv->hasDomain(domain) && "Cannot collapse");
 
   // Collapse all the instructions.
@@ -251,7 +253,7 @@ void SSEDomainFixPass::Collapse(DomainValue *dv, unsigned domain) {
 
 /// Merge - All instructions and registers in B are moved to A, and B is
 /// released.
-bool SSEDomainFixPass::Merge(DomainValue *A, DomainValue *B) {
+bool ExeDepsFix::Merge(DomainValue *A, DomainValue *B) {
   assert(!A->isCollapsed() && "Cannot merge into collapsed");
   assert(!B->isCollapsed() && "Cannot merge from collapsed");
   if (A == B)
@@ -269,7 +271,7 @@ bool SSEDomainFixPass::Merge(DomainValue *A, DomainValue *B) {
   return true;
 }
 
-void SSEDomainFixPass::enterBasicBlock() {
+void ExeDepsFix::enterBasicBlock() {
   // Try to coalesce live-out registers from predecessors.
   for (MachineBasicBlock::livein_iterator i = MBB->livein_begin(),
          e = MBB->livein_end(); i != e; ++i) {
@@ -306,7 +308,7 @@ void SSEDomainFixPass::enterBasicBlock() {
 
 // A hard instruction only works in one domain. All input registers will be
 // forced into that domain.
-void SSEDomainFixPass::visitHardInstr(MachineInstr *mi, unsigned domain) {
+void ExeDepsFix::visitHardInstr(MachineInstr *mi, unsigned domain) {
   // Collapse all uses.
   for (unsigned i = mi->getDesc().getNumDefs(),
                 e = mi->getDesc().getNumOperands(); i != e; ++i) {
@@ -329,7 +331,7 @@ void SSEDomainFixPass::visitHardInstr(MachineInstr *mi, unsigned domain) {
 }
 
 // A soft instruction can be changed to work in other domains given by mask.
-void SSEDomainFixPass::visitSoftInstr(MachineInstr *mi, unsigned mask) {
+void ExeDepsFix::visitSoftInstr(MachineInstr *mi, unsigned mask) {
   // Bitmask of available domains for this instruction after taking collapsed
   // operands into account.
   unsigned available = mask;
@@ -434,8 +436,8 @@ void SSEDomainFixPass::visitSoftInstr(MachineInstr *mi, unsigned mask) {
   }
 }
 
-void SSEDomainFixPass::visitGenericInstr(MachineInstr *mi) {
-  // Process explicit defs, kill any XMM registers redefined.
+void ExeDepsFix::visitGenericInstr(MachineInstr *mi) {
+  // Process explicit defs, kill any relevant registers redefined.
   for (unsigned i = 0, e = mi->getDesc().getNumDefs(); i != e; ++i) {
     MachineOperand &mo = mi->getOperand(i);
     if (!mo.isReg()) continue;
@@ -445,7 +447,7 @@ void SSEDomainFixPass::visitGenericInstr(MachineInstr *mi) {
   }
 }
 
-bool SSEDomainFixPass::runOnMachineFunction(MachineFunction &mf) {
+bool ExeDepsFix::runOnMachineFunction(MachineFunction &mf) {
   MF = &mf;
   TII = MF->getTarget().getInstrInfo();
   TRI = MF->getTarget().getRegisterInfo();
@@ -454,7 +456,8 @@ bool SSEDomainFixPass::runOnMachineFunction(MachineFunction &mf) {
   Distance = 0;
   assert(NumRegs == RC->getNumRegs() && "Bad regclass");
 
-  // If no XMM registers are used in the function, we can skip it completely.
+  // If no relevant registers are used in the function, we can skip it
+  // completely.
   bool anyregs = false;
   for (TargetRegisterClass::const_iterator I = RC->begin(), E = RC->end();
        I != E; ++I)
@@ -516,5 +519,5 @@ bool SSEDomainFixPass::runOnMachineFunction(MachineFunction &mf) {
 
 FunctionPass *
 llvm::createExecutionDependencyFixPass(const TargetRegisterClass *RC) {
-  return new SSEDomainFixPass(RC);
+  return new ExeDepsFix(RC);
 }
