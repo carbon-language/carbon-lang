@@ -137,14 +137,14 @@ bool Decl::isTemplateDecl() const {
   return isa<TemplateDecl>(this);
 }
 
-bool Decl::isDefinedOutsideFunctionOrMethod() const {
-  for (const DeclContext *DC = getDeclContext(); 
-       DC && !DC->isTranslationUnit(); 
+const DeclContext *Decl::getParentFunctionOrMethod() const {
+  for (const DeclContext *DC = getDeclContext();
+       DC && !DC->isTranslationUnit() && !DC->isNamespace(); 
        DC = DC->getParent())
     if (DC->isFunctionOrMethod())
-      return false;
+      return DC;
 
-  return true;
+  return 0;
 }
 
 

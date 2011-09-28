@@ -567,7 +567,13 @@ public:
   /// scoped decl is defined outside the current function or method.  This is
   /// roughly global variables and functions, but also handles enums (which
   /// could be defined inside or outside a function etc).
-  bool isDefinedOutsideFunctionOrMethod() const;
+  bool isDefinedOutsideFunctionOrMethod() const {
+    return getParentFunctionOrMethod() == 0;
+  }
+
+  /// \brief If this decl is defined inside a function/method/block it returns
+  /// the corresponding DeclContext, otherwise it returns null.
+  const DeclContext *getParentFunctionOrMethod() const;
 
   /// \brief Retrieves the "canonical" declaration of the given declaration.
   virtual Decl *getCanonicalDecl() { return this; }
