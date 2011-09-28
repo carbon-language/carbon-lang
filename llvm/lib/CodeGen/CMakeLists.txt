@@ -13,6 +13,7 @@ add_llvm_library(LLVMCodeGen
   EdgeBundles.cpp
   ELFCodeEmitter.cpp
   ELFWriter.cpp
+  ExecutionDepsFix.cpp
   ExpandISelPseudos.cpp
   ExpandPostRAPseudos.cpp
   GCMetadata.cpp
