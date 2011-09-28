@@ -45,9 +45,6 @@ namespace llvm {
   bool EnableFastISel;
 }
 
-static cl::opt<bool> DisableOldSjLjEH("disable-old-sjlj-eh", cl::Hidden,
-    cl::desc("Disable the old SjLj EH preparation pass"));
-
 static cl::opt<bool> DisablePostRA("disable-post-ra", cl::Hidden,
     cl::desc("Disable Post Regalloc"));
 static cl::opt<bool> DisableBranchFold("disable-branch-fold", cl::Hidden,
@@ -325,8 +322,7 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
     // removed from the parent invoke(s). This could happen when a landing
     // pad is shared by multiple invokes and is also a target of a normal
     // edge from elsewhere.
-    if (!DisableOldSjLjEH)
-      PM.add(createSjLjEHPass(getTargetLowering()));
+    PM.add(createSjLjEHPass(getTargetLowering()));
     // FALLTHROUGH
   case ExceptionHandling::DwarfCFI:
   case ExceptionHandling::ARM:
