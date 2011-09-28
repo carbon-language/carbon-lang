@@ -109,7 +109,7 @@ bool ARMBaseTargetMachine::addPreRegAlloc(PassManagerBase &PM,
   if (OptLevel != CodeGenOpt::None && Subtarget.isCortexA9())
     PM.add(createMLxExpansionPass());
   if (getMCAsmInfo()->getExceptionHandlingType() == ExceptionHandling::SjLj)
-    createARMSjLjLoweringPass();
+    PM.add(createARMSjLjLoweringPass());
   return true;
 }
 
