@@ -5570,6 +5570,10 @@ QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs,
     if (lproto->getTypeQuals() != rproto->getTypeQuals())
       return QualType();
 
+    if (LangOpts.ObjCAutoRefCount &&
+        !FunctionTypesMatchOnNSConsumedAttrs(rproto, lproto))
+      return QualType();
+      
     // Check argument compatibility
     SmallVector<QualType, 10> types;
     for (unsigned i = 0; i < lproto_nargs; i++) {
@@ -5594,6 +5598,7 @@ QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs,
       if (getCanonicalType(argtype) != getCanonicalType(rargtype))
         allRTypes = false;
     }
+      
     if (allLTypes) return lhs;
     if (allRTypes) return rhs;
 
@@ -5890,6 +5895,26 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS,
   }
 
   return QualType();
+}
+
+bool ASTContext::FunctionTypesMatchOnNSConsumedAttrs(
+                   const FunctionProtoType *FromFunctionType,
+                   const FunctionProtoType *ToFunctionType) {
+  if (FromFunctionType->hasAnyConsumedArgs() != 
+      ToFunctionType->hasAnyConsumedArgs())
+    return false;
+  FunctionProtoType::ExtProtoInfo FromEPI = 
+    FromFunctionType->getExtProtoInfo();
+  FunctionProtoType::ExtProtoInfo ToEPI = 
+    ToFunctionType->getExtProtoInfo();
+  if (FromEPI.ConsumedArguments && ToEPI.ConsumedArguments)
+    for (unsigned ArgIdx = 0, NumArgs = FromFunctionType->getNumArgs();
+         ArgIdx != NumArgs; ++ArgIdx)  {
+      if (FromEPI.ConsumedArguments[ArgIdx] != 
+          ToEPI.ConsumedArguments[ArgIdx])
+        return false;
+    }
+  return true;
 }
 
 /// mergeObjCGCQualifiers - This routine merges ObjC's GC attribute of 'LHS' and
