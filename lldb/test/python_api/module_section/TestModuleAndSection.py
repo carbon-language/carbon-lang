@@ -7,6 +7,7 @@ import re
 import unittest2
 import lldb
 from lldbtest import *
+from lldbutil import symbol_iter, symbol_type_to_str
 
 class ModuleAndSectionAPIsTestCase(TestBase):
 
@@ -39,12 +40,17 @@ class ModuleAndSectionAPIsTestCase(TestBase):
         print "Exe module: %s" % repr(exe_module)
         print "Number of sections: %d" % exe_module.GetNumSections()
         INDENT = ' ' * 4
+        INDENT2 = INDENT * 2
         for sec in exe_module.section_iter():
             print sec
             if sec.GetName() == "__TEXT":
                 print INDENT + "Number of subsections: %d" % sec.GetNumSubSections()
                 for subsec in sec:
                     print INDENT + repr(subsec)
+                    # Now print the symbols belonging to the subsection....
+                    for sym in symbol_iter(exe_module, subsec):
+                        print INDENT2 + repr(sym)
+                        print INDENT2 + "symbol type: %s" % symbol_type_to_str(sym.GetType())
 
 
 if __name__ == '__main__':

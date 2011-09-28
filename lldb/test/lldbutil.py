@@ -44,6 +44,26 @@ def disassemble(target, function_or_symbol):
         print >> buf, i
     return buf.getvalue()
 
+# ======================================================
+# Utilities for iterating a module's section for symbols
+# ======================================================
+
+def in_range(symbol, section):
+    symSA = symbol.GetStartAddress().GetFileAddress()
+    symEA = symbol.GetEndAddress().GetFileAddress()
+    secSA = section.GetFileAddress()
+    secEA = secSA + section.GetByteSize()
+    if (secSA <= symSA and symEA < secEA):
+        return True
+    else:
+        return False
+
+def symbol_iter(module, section):
+    """Given a module and its contained section, returns an iterator on the
+    symbols within the section."""
+    for sym in module:
+        if in_range(sym, section):
+            yield sym
 
 # ==========================================================
 # Integer (byte size 1, 2, 4, and 8) to bytearray conversion
@@ -183,6 +203,59 @@ def stop_reason_to_str(enum):
         return "plancomplete"
     else:
         raise Exception("Unknown StopReason enum")
+
+def symbol_type_to_str(enum):
+    """Returns the symbolType string given an enum."""
+    if enum == lldb.eSymbolTypeInvalid:
+        return "invalid"
+    elif enum == lldb.eSymbolTypeAbsolute:
+        return "absolute"
+    elif enum == lldb.eSymbolTypeExtern:
+        return "extern"
+    elif enum == lldb.eSymbolTypeCode:
+        return "code"
+    elif enum == lldb.eSymbolTypeData:
+        return "data"
+    elif enum == lldb.eSymbolTypeTrampoline:
+        return "trampoline"
+    elif enum == lldb.eSymbolTypeRuntime:
+        return "runtime"
+    elif enum == lldb.eSymbolTypeException:
+        return "exception"
+    elif enum == lldb.eSymbolTypeSourceFile:
+        return "sourcefile"
+    elif enum == lldb.eSymbolTypeHeaderFile:
+        return "headerfile"
+    elif enum == lldb.eSymbolTypeObjectFile:
+        return "objectfile"
+    elif enum == lldb.eSymbolTypeCommonBlock:
+        return "commonblock"
+    elif enum == lldb.eSymbolTypeBlock:
+        return "block"
+    elif enum == lldb.eSymbolTypeLocal:
+        return "local"
+    elif enum == lldb.eSymbolTypeParam:
+        return "param"
+    elif enum == lldb.eSymbolTypeVariable:
+        return "variable"
+    elif enum == lldb.eSymbolTypeVariableType:
+        return "variabletype"
+    elif enum == lldb.eSymbolTypeLineEntry:
+        return "lineentry"
+    elif enum == lldb.eSymbolTypeLineHeader:
+        return "lineheader"
+    elif enum == lldb.eSymbolTypeScopeBegin:
+        return "scopebegin"
+    elif enum == lldb.eSymbolTypeScopeEnd:
+        return "scopeend"
+    elif enum == lldb.eSymbolTypeAdditional:
+        return "additional"
+    elif enum == lldb.eSymbolTypeCompiler:
+        return "compiler"
+    elif enum == lldb.eSymbolTypeInstrumentation:
+        return "instrumentation"
+    elif enum == lldb.eSymbolTypeUndefined:
+        return "undefined"
 
 def value_type_to_str(enum):
     """Returns the valueType string given an enum."""
