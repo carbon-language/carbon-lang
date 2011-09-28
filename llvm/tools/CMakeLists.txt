@@ -28,6 +28,7 @@ add_subdirectory(llc)
 add_subdirectory(llvm-ranlib)
 add_subdirectory(llvm-ar)
 add_subdirectory(llvm-nm)
+add_subdirectory(llvm-size)
 
 add_subdirectory(llvm-ld)
 add_subdirectory(llvm-prof)
