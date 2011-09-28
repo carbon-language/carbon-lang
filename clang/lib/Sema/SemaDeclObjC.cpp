@@ -335,10 +335,11 @@ void Sema::ActOnStartOfObjCMethodDef(Scope *FnBodyScope, Decl *D) {
     // Only do this if the current class actually has a superclass.
     if (IC->getSuperClass()) {
       ObjCShouldCallSuperDealloc = 
-        !Context.getLangOptions().ObjCAutoRefCount &&      
+        !(Context.getLangOptions().ObjCAutoRefCount ||
+          Context.getLangOptions().getGC() == LangOptions::GCOnly) &&
         MDecl->getMethodFamily() == OMF_dealloc;
       ObjCShouldCallSuperFinalize =
-        !Context.getLangOptions().ObjCAutoRefCount &&      
+        Context.getLangOptions().getGC() != LangOptions::NonGC &&
         MDecl->getMethodFamily() == OMF_finalize;
     }
   }
