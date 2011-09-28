@@ -38,6 +38,21 @@ static StringRef getLevelName(DiagnosticsEngine::Level Level) {
   }
 }
 
+// Escape XML characters inside the raw string.
+static void emitString(llvm::raw_svector_ostream &OS, const StringRef Raw) {
+  for (StringRef::iterator I = Raw.begin(), E = Raw.end(); I != E; ++I) {
+    char c = *I;
+    switch (c) {
+    default:   OS << c; break;
+    case '&':  OS << "&amp;"; break;
+    case '<':  OS << "&lt;"; break;
+    case '>':  OS << "&gt;"; break;
+    case '\'': OS << "&apos;"; break;
+    case '\"': OS << "&quot;"; break;
+    }
+  }
+}
+
 void LogDiagnosticPrinter::EndSourceFile() {
   // We emit all the diagnostics in EndSourceFile. However, we don't emit any
   // entry if no diagnostics were present.
@@ -55,11 +70,15 @@ void LogDiagnosticPrinter::EndSourceFile() {
   OS << "<dict>\n";
   if (!MainFilename.empty()) {
     OS << "  <key>main-file</key>\n"
-       << "  <string>" << MainFilename << "</string>\n";
+       << "  <string>";
+    emitString(OS, MainFilename);
+    OS << "</string>\n";
   }
   if (!DwarfDebugFlags.empty()) {
     OS << "  <key>dwarf-debug-flags</key>\n"
-       << "  <string>" << DwarfDebugFlags << "</string>\n";
+       << "  <string>";
+    emitString(OS, DwarfDebugFlags);
+    OS << "</string>\n";
   }
   OS << "  <key>diagnostics</key>\n";
   OS << "  <array>\n";
@@ -68,10 +87,14 @@ void LogDiagnosticPrinter::EndSourceFile() {
 
     OS << "    <dict>\n";
     OS << "      <key>level</key>\n"
-       << "      <string>" << getLevelName(DE.DiagnosticLevel) << "</string>\n";
+       << "      <string>";
+    emitString(OS, getLevelName(DE.DiagnosticLevel));
+    OS << "</string>\n";
     if (!DE.Filename.empty()) {
       OS << "      <key>filename</key>\n"
-         << "      <string>" << DE.Filename << "</string>\n";
+         << "      <string>";
+      emitString(OS, DE.Filename);
+      OS << "</string>\n";
     }
     if (DE.Line != 0) {
       OS << "      <key>line</key>\n"
@@ -83,7 +106,9 @@ void LogDiagnosticPrinter::EndSourceFile() {
     }
     if (!DE.Message.empty()) {
       OS << "      <key>message</key>\n"
-         << "      <string>" << DE.Message << "</string>\n";
+         << "      <string>";
+      emitString(OS, DE.Message);
+      OS << "</string>\n";
     }
     OS << "    </dict>\n";
   }

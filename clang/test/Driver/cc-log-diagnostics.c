@@ -17,7 +17,7 @@ int f0() {}
 // CHECK:       <key>level</key>
 // CHECK:       <string>warning</string>
 // CHECK:       <key>message</key>
-// CHECK:       <string>unknown warning option '-Wfoobar'</string>
+// CHECK:       <string>unknown warning option &apos;-Wfoobar&apos;</string>
 // CHECK:     </dict>
 // CHECK:     <dict>
 // CHECK:       <key>level</key>
