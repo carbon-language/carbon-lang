@@ -649,12 +649,14 @@ void DwarfException::EmitExceptionTable() {
     //   Used by the runtime to match the type of the thrown exception to the
     //   type of the catch clauses or the types in the exception specification.
     if (VerboseAsm) {
-      if (Action.ValueForTypeID >= 0)
+      if (Action.ValueForTypeID > 0)
         Asm->OutStreamer.AddComment(Twine("  Catch TypeInfo ") +
                                     llvm::itostr(Action.ValueForTypeID));
-      else 
+      else if (Action.ValueForTypeID < 0)
         Asm->OutStreamer.AddComment(Twine("  Filter TypeInfo ") +
                                     llvm::itostr(Action.ValueForTypeID));
+      else
+        Asm->OutStreamer.AddComment("  Cleanup");
     }
     Asm->EmitSLEB128(Action.ValueForTypeID);
 
