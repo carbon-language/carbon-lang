@@ -171,12 +171,12 @@ SymbolFileDWARF::SymbolFileDWARF(ObjectFile* objfile) :
     m_data_debug_loc (),
     m_data_debug_ranges (),
     m_data_debug_str (),
-    m_data_debug_names (),
-    m_data_debug_types (),
+    m_data_apple_names (),
+    m_data_apple_types (),
     m_abbr(),
     m_info(),
     m_line(),
-    m_debug_names (this, m_data_debug_names),
+    m_apple_names (this, m_data_apple_names, true),
     m_function_basename_index(),
     m_function_fullname_index(),
     m_function_method_index(),
@@ -190,8 +190,8 @@ SymbolFileDWARF::SymbolFileDWARF(ObjectFile* objfile) :
     m_ranges(),
     m_unique_ast_type_map ()
 {
-    get_debug_names_data();
-    m_debug_names.Initialize();
+    get_apple_names_data();
+    m_apple_names.Initialize();
 }
 
 SymbolFileDWARF::~SymbolFileDWARF()
@@ -455,15 +455,15 @@ SymbolFileDWARF::get_debug_str_data()
 }
 
 const DataExtractor&
-SymbolFileDWARF::get_debug_names_data()
+SymbolFileDWARF::get_apple_names_data()
 {
-    return GetCachedSectionData (flagsGotDebugNamesData, eSectionTypeDWARFDebugNames, m_data_debug_names);
+    return GetCachedSectionData (flagsGotDebugNamesData, eSectionTypeDWARFAppleNames, m_data_apple_names);
 }
 
 const DataExtractor&
-SymbolFileDWARF::get_debug_types_data()
+SymbolFileDWARF::get_apple_types_data()
 {
-    return GetCachedSectionData (flagsGotDebugTypesData, eSectionTypeDWARFDebugTypes, m_data_debug_types);
+    return GetCachedSectionData (flagsGotDebugTypesData, eSectionTypeDWARFAppleTypes, m_data_apple_types);
 }
 
 
@@ -2293,10 +2293,10 @@ SymbolFileDWARF::FindFunctions
     // Remember how many sc_list are in the list before we search in case
     // we are appending the results to a variable list.
 
-    if (m_debug_names.IsValid())
+    if (m_apple_names.IsValid())
     {
         DIEArray die_offsets;
-        const uint32_t num_matches = m_debug_names.Find(name, die_offsets);
+        const uint32_t num_matches = m_apple_names.Find(name.GetCString(), die_offsets);
         if (num_matches > 0)
         {
             return ResolveFunctions (die_offsets, sc_list);

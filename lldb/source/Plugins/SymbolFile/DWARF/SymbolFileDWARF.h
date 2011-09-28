@@ -164,8 +164,8 @@ public:
     const lldb_private::DataExtractor&      get_debug_loc_data ();
     const lldb_private::DataExtractor&      get_debug_ranges_data ();
     const lldb_private::DataExtractor&      get_debug_str_data ();
-    const lldb_private::DataExtractor&      get_debug_names_data ();
-    const lldb_private::DataExtractor&      get_debug_types_data ();
+    const lldb_private::DataExtractor&      get_apple_names_data ();
+    const lldb_private::DataExtractor&      get_apple_types_data ();
 
     DWARFDebugAbbrev*       DebugAbbrev();
     const DWARFDebugAbbrev* DebugAbbrev() const;
@@ -379,15 +379,15 @@ protected:
     lldb_private::DataExtractor     m_data_debug_loc;
     lldb_private::DataExtractor     m_data_debug_ranges;
     lldb_private::DataExtractor     m_data_debug_str;
-    lldb_private::DataExtractor     m_data_debug_names;
-    lldb_private::DataExtractor     m_data_debug_types;
+    lldb_private::DataExtractor     m_data_apple_names;
+    lldb_private::DataExtractor     m_data_apple_types;
 
     // The auto_ptr items below are generated on demand if and when someone accesses
     // them through a non const version of this class.
     std::auto_ptr<DWARFDebugAbbrev>     m_abbr;
     std::auto_ptr<DWARFDebugInfo>       m_info;
     std::auto_ptr<DWARFDebugLine>       m_line;
-    HashedNameToDIE                     m_debug_names;
+    HashedNameToDIE::MemoryTable        m_apple_names;
     NameToDIE                           m_function_basename_index;  // All concrete functions
     NameToDIE                           m_function_fullname_index;  // All concrete functions
     NameToDIE                           m_function_method_index;    // All inlined functions
