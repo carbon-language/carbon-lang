@@ -1691,16 +1691,6 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
     DefineStd(Builder, "i386", Opts);
   }
 
-  if (HasAES)
-    Builder.defineMacro("__AES__");
-
-  if (HasAVX)
-    Builder.defineMacro("__AVX__");
-
-  // Target properties.
-  Builder.defineMacro("__LITTLE_ENDIAN__");
-  Builder.defineMacro("__REGISTER_PREFIX__", "");
-
   // Subtarget options.
   // FIXME: We are hard-coding the tune parameters based on the CPU, but they
   // truly should be based on -mtune options.
@@ -1831,10 +1821,20 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
     break;
   }
 
+  // Target properties.
+  Builder.defineMacro("__LITTLE_ENDIAN__");
+  Builder.defineMacro("__REGISTER_PREFIX__", "");
+
   // Define __NO_MATH_INLINES on linux/x86 so that we don't get inline
   // functions in glibc header files that use FP Stack inline asm which the
   // backend can't deal with (PR879).
   Builder.defineMacro("__NO_MATH_INLINES");
+
+  if (HasAES)
+    Builder.defineMacro("__AES__");
+
+  if (HasAVX)
+    Builder.defineMacro("__AVX__");
 
   // Each case falls through to the previous one here.
   switch (SSELevel) {
