@@ -122,9 +122,20 @@ include "PTXInstrInfo.td"
 def PTXInstrInfo : InstrInfo;
 
 //===----------------------------------------------------------------------===//
+// Assembly printer
+//===----------------------------------------------------------------------===//
+// PTX uses the MC printer for asm output, so make sure the TableGen
+// AsmWriter bits get associated with the correct class.
+def PTXAsmWriter : AsmWriter {
+  string AsmWriterClassName  = "InstPrinter";
+  bit isMCAsmWriter = 1;
+}
+
+//===----------------------------------------------------------------------===//
 // Target Declaration
 //===----------------------------------------------------------------------===//
 
 def PTX : Target {
   let InstructionSet = PTXInstrInfo;
+  let AssemblyWriters = [PTXAsmWriter];
 }

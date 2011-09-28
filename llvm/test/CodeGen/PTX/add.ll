@@ -57,7 +57,7 @@ define ptx_device i64 @t2_u64(i64 %x) {
 }
 
 define ptx_device float @t2_f32(float %x) {
-; CHECK: add.rn.f32 %ret{{[0-9]+}}, %f{{[0-9]+}}, 0F3F800000;
+; CHECK: add.rn.f32 %ret{{[0-9]+}}, %f{{[0-9]+}}, 0D3FF0000000000000;
 ; CHECK: ret;
   %z = fadd float %x, 1.0
   ret float %z

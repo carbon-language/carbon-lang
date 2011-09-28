@@ -25,7 +25,7 @@ define ptx_device double @t1_f64(double %x, double %y) {
 }
 
 define ptx_device float @t2_f32(float %x) {
-; CHECK: mul.rn.f32 %ret{{[0-9]+}}, %f{{[0-9]+}}, 0F40A00000;
+; CHECK: mul.rn.f32 %ret{{[0-9]+}}, %f{{[0-9]+}}, 0D4014000000000000;
 ; CHECK: ret;
   %z = fmul float %x, 5.0
   ret float %z

@@ -19,6 +19,9 @@
 #include "llvm/Target/TargetMachine.h"
 
 namespace llvm {
+  class MachineInstr;
+  class MCInst;
+  class PTXAsmPrinter;
   class PTXTargetMachine;
   class FunctionPass;
 
@@ -33,7 +36,8 @@ namespace llvm {
 
     enum Predicate {
       PRED_NORMAL = 0,
-      PRED_NEGATE = 1
+      PRED_NEGATE = 1,
+      PRED_NONE   = 2
     };
   } // namespace PTX
 
@@ -44,6 +48,9 @@ namespace llvm {
                                        CodeGenOpt::Level OptLevel);
 
   FunctionPass *createPTXRegisterAllocator();
+
+  void LowerPTXMachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI,
+                                    PTXAsmPrinter &AP);
 
 } // namespace llvm;
 

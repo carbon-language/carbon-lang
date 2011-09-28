@@ -19,7 +19,7 @@ define ptx_device i64 @t1_u64() {
 }
 
 define ptx_device float @t1_f32() {
-; CHECK: mov.f32 %ret{{[0-9]+}}, 0F00000000;
+; CHECK: mov.f32 %ret{{[0-9]+}}, 0D0000000000000000;
 ; CHECK: ret;
 	ret float 0.0
 }

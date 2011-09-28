@@ -7,10 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-// PTX Predicate operand, default to (0, 0) = (zero-reg, always).
+// PTX Predicate operand, default to (0, 0) = (zero-reg, none).
 // Leave PrintMethod empty; predicate printing is defined elsewhere.
 def pred : PredicateOperand<OtherVT, (ops RegPred, i32imm),
-                                     (ops (i1 zero_reg), (i32 0))>;
+                                     (ops (i1 zero_reg), (i32 2))>;
 
 let Namespace = "PTX" in {
   class InstPTX<dag oops, dag iops, string asmstr, list<dag> pattern>

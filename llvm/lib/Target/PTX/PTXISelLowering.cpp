@@ -393,8 +393,8 @@ PTXTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
          "Calls are not handled for the target device");
 
   std::vector<SDValue> Ops;
-  // The layout of the ops will be [Chain, Ins, Callee, Outs]
-  Ops.resize(Outs.size() + Ins.size() + 2);
+  // The layout of the ops will be [Chain, #Ins, Ins, Callee, #Outs, Outs]
+  Ops.resize(Outs.size() + Ins.size() + 4);
 
   Ops[0] = Chain;
 
@@ -403,11 +403,12 @@ PTXTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   assert(cast<Function>(GV)->getCallingConv() == CallingConv::PTX_Device &&
          "PTX function calls must be to PTX device functions");
   Callee = DAG.getTargetGlobalAddress(GV, dl, getPointerTy());
-  Ops[Ins.size()+1] = Callee;
+  Ops[Ins.size()+2] = Callee;
 
   // Generate STORE_PARAM nodes for each function argument.  In PTX, function
   // arguments are explicitly stored into .param variables and passed as
   // arguments. There is no register/stack-based calling convention in PTX.
+  Ops[Ins.size()+3] = DAG.getTargetConstant(OutVals.size(), MVT::i32);
   for (unsigned i = 0; i != OutVals.size(); ++i) {
     unsigned Size = OutVals[i].getValueType().getSizeInBits();
     unsigned Param = PM.addLocalParam(Size);
@@ -416,19 +417,20 @@ PTXTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
                                                      MVT::Other);
     Chain = DAG.getNode(PTXISD::STORE_PARAM, dl, MVT::Other, Chain,
                         ParamValue, OutVals[i]);
-    Ops[i+Ins.size()+2] = ParamValue;
+    Ops[i+Ins.size()+4] = ParamValue;
   }
 
   std::vector<SDValue> InParams;
 
   // Generate list of .param variables to hold the return value(s).
+  Ops[1] = DAG.getTargetConstant(Ins.size(), MVT::i32);
   for (unsigned i = 0; i < Ins.size(); ++i) {
     unsigned Size = Ins[i].VT.getStoreSizeInBits();
     unsigned Param = PM.addLocalParam(Size);
     const std::string &ParamName = PM.getParamName(Param);
     SDValue ParamValue = DAG.getTargetExternalSymbol(ParamName.c_str(),
                                                      MVT::Other);
-    Ops[i+1] = ParamValue;
+    Ops[i+2] = ParamValue;
     InParams.push_back(ParamValue);
   }
 

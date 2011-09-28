@@ -128,9 +128,9 @@ public:
 
   /// getRegisterName - Returns the name of the specified virtual register. This
   /// name is used during PTX emission.
-  std::string getRegisterName(unsigned Reg) const {
+  const char *getRegisterName(unsigned Reg) const {
     if (RegNames.count(Reg))
-      return RegNames.lookup(Reg);
+      return RegNames.find(Reg)->second.c_str();
     else if (Reg == PTX::NoRegister)
       return "%noreg";
     else

@@ -499,7 +499,7 @@ bool PTXMCAsmStreamer::EmitDwarfFileDirective(unsigned FileNo,
 void PTXMCAsmStreamer::AddEncodingComment(const MCInst &Inst) {}
 
 void PTXMCAsmStreamer::EmitInstruction(const MCInst &Inst) {
-  assert(getCurrentSection() && "Cannot emit contents before setting section!");
+//assert(getCurrentSection() && "Cannot emit contents before setting section!");
 
   // Show the encoding in a comment if we have a code emitter.
   if (Emitter)

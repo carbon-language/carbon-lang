@@ -167,7 +167,7 @@ DefinesPredicate(MachineInstr *MI,
     return false;
 
   Pred.push_back(MO);
-  Pred.push_back(MachineOperand::CreateImm(PTX::PRED_NORMAL));
+  Pred.push_back(MachineOperand::CreateImm(PTX::PRED_NONE));
   return true;
 }
 
@@ -283,7 +283,7 @@ InsertBranch(MachineBasicBlock &MBB,
     BuildMI(&MBB, DL, get(PTX::BRAdp))
       .addMBB(TBB).addReg(Cond[0].getReg()).addImm(Cond[1].getImm());
     BuildMI(&MBB, DL, get(PTX::BRAd))
-      .addMBB(FBB).addReg(PTX::NoRegister).addImm(PTX::PRED_NORMAL);
+      .addMBB(FBB).addReg(PTX::NoRegister).addImm(PTX::PRED_NONE);
     return 2;
   } else if (Cond.size()) {
     BuildMI(&MBB, DL, get(PTX::BRAdp))
@@ -291,7 +291,7 @@ InsertBranch(MachineBasicBlock &MBB,
     return 1;
   } else {
     BuildMI(&MBB, DL, get(PTX::BRAd))
-      .addMBB(TBB).addReg(PTX::NoRegister).addImm(PTX::PRED_NORMAL);
+      .addMBB(TBB).addReg(PTX::NoRegister).addImm(PTX::PRED_NONE);
     return 1;
   }
 }
@@ -319,7 +319,7 @@ MachineSDNode *PTXInstrInfo::
 GetPTXMachineNode(SelectionDAG *DAG, unsigned Opcode,
                   DebugLoc dl, EVT VT, SDValue Op1) {
   SDValue predReg = DAG->getRegister(PTX::NoRegister, MVT::i1);
-  SDValue predOp = DAG->getTargetConstant(PTX::PRED_NORMAL, MVT::i32);
+  SDValue predOp = DAG->getTargetConstant(PTX::PRED_NONE, MVT::i32);
   SDValue ops[] = { Op1, predReg, predOp };
   return DAG->getMachineNode(Opcode, dl, VT, ops, array_lengthof(ops));
 }
@@ -328,7 +328,7 @@ MachineSDNode *PTXInstrInfo::
 GetPTXMachineNode(SelectionDAG *DAG, unsigned Opcode,
                   DebugLoc dl, EVT VT, SDValue Op1, SDValue Op2) {
   SDValue predReg = DAG->getRegister(PTX::NoRegister, MVT::i1);
-  SDValue predOp = DAG->getTargetConstant(PTX::PRED_NORMAL, MVT::i32);
+  SDValue predOp = DAG->getTargetConstant(PTX::PRED_NONE, MVT::i32);
   SDValue ops[] = { Op1, Op2, predReg, predOp };
   return DAG->getMachineNode(Opcode, dl, VT, ops, array_lengthof(ops));
 }
@@ -336,7 +336,7 @@ GetPTXMachineNode(SelectionDAG *DAG, unsigned Opcode,
 void PTXInstrInfo::AddDefaultPredicate(MachineInstr *MI) {
   if (MI->findFirstPredOperandIdx() == -1) {
     MI->addOperand(MachineOperand::CreateReg(PTX::NoRegister, /*IsDef=*/false));
-    MI->addOperand(MachineOperand::CreateImm(PTX::PRED_NORMAL));
+    MI->addOperand(MachineOperand::CreateImm(PTX::PRED_NONE));
   }
 }
 

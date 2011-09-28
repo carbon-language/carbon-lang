@@ -15,6 +15,7 @@
 #define DEBUG_TYPE "ptx-asm-printer"
 
 #include "PTX.h"
+#include "PTXAsmPrinter.h"
 #include "PTXMachineFunctionInfo.h"
 #include "PTXParamManager.h"
 #include "PTXRegisterInfo.h"
@@ -30,6 +31,8 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCExpr.h"
+#include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Target/Mangler.h"
@@ -43,49 +46,6 @@
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
-
-namespace {
-class PTXAsmPrinter : public AsmPrinter {
-public:
-  explicit PTXAsmPrinter(TargetMachine &TM, MCStreamer &Streamer)
-    : AsmPrinter(TM, Streamer) {}
-
-  const char *getPassName() const { return "PTX Assembly Printer"; }
-
-  bool doFinalization(Module &M);
-
-  virtual void EmitStartOfAsmFile(Module &M);
-
-  virtual bool runOnMachineFunction(MachineFunction &MF);
-
-  virtual void EmitFunctionBodyStart();
-  virtual void EmitFunctionBodyEnd() { OutStreamer.EmitRawText(Twine("}")); }
-
-  virtual void EmitInstruction(const MachineInstr *MI);
-
-  void printOperand(const MachineInstr *MI, int opNum, raw_ostream &OS);
-  void printMemOperand(const MachineInstr *MI, int opNum, raw_ostream &OS,
-                       const char *Modifier = 0);
-  void printReturnOperand(const MachineInstr *MI, int opNum, raw_ostream &OS,
-                          const char *Modifier = 0);
-  void printPredicateOperand(const MachineInstr *MI, raw_ostream &O);
-
-  void printCall(const MachineInstr *MI, raw_ostream &O);
-
-  unsigned GetOrCreateSourceID(StringRef FileName,
-                               StringRef DirName);
-
-  // autogen'd.
-  void printInstruction(const MachineInstr *MI, raw_ostream &OS);
-  static const char *getRegisterName(unsigned RegNo);
-
-private:
-  void EmitVariableDeclaration(const GlobalVariable *gv);
-  void EmitFunctionDeclaration();
-
-  StringMap<unsigned> SourceIdMap;
-}; // class PTXAsmPrinter
-} // namespace
 
 static const char PARAM_PREFIX[] = "__param_";
 static const char RETURN_PREFIX[] = "__ret_";
@@ -320,7 +280,12 @@ void PTXAsmPrinter::EmitFunctionBodyStart() {
   //}
 }
 
+void PTXAsmPrinter::EmitFunctionBodyEnd() {
+  OutStreamer.EmitRawText(Twine("}"));
+}
+
 void PTXAsmPrinter::EmitInstruction(const MachineInstr *MI) {
+#if 0
   std::string str;
   str.reserve(64);
 
@@ -388,6 +353,11 @@ void PTXAsmPrinter::EmitInstruction(const MachineInstr *MI) {
 
   StringRef strref = StringRef(str);
   OutStreamer.EmitRawText(strref);
+#endif
+
+  MCInst TmpInst;
+  LowerPTXMachineInstrToMCInst(MI, TmpInst, *this);
+  OutStreamer.EmitInstruction(TmpInst);
 }
 
 void PTXAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
@@ -737,10 +707,57 @@ unsigned PTXAsmPrinter::GetOrCreateSourceID(StringRef FileName,
   return SrcId;
 }
 
-#include "PTXGenAsmWriter.inc"
+MCOperand PTXAsmPrinter::GetSymbolRef(const MachineOperand &MO,
+                                      const MCSymbol *Symbol) {
+  const MCExpr *Expr;
+  Expr = MCSymbolRefExpr::Create(Symbol, MCSymbolRefExpr::VK_None, OutContext);
+  return MCOperand::CreateExpr(Expr);
+}
+
+bool PTXAsmPrinter::lowerOperand(const MachineOperand &MO, MCOperand &MCOp) {
+  const PTXMachineFunctionInfo *MFI = MF->getInfo<PTXMachineFunctionInfo>();
+  const MCExpr *Expr;
+  const char *RegSymbolName;
+  switch (MO.getType()) {
+  default:
+    llvm_unreachable("Unknown operand type");
+  case MachineOperand::MO_Register:
+    // We create register operands as symbols, since the PTXInstPrinter class
+    // has no way to map virtual registers back to a name without some ugly
+    // hacks.
+    // FIXME: Figure out a better way to handle virtual register naming.
+    RegSymbolName = MFI->getRegisterName(MO.getReg());
+    Expr = MCSymbolRefExpr::Create(RegSymbolName, MCSymbolRefExpr::VK_None,
+                                   OutContext);
+    MCOp = MCOperand::CreateExpr(Expr);
+    break;
+  case MachineOperand::MO_Immediate:
+    MCOp = MCOperand::CreateImm(MO.getImm());
+    break;
+  case MachineOperand::MO_MachineBasicBlock:
+    MCOp = MCOperand::CreateExpr(MCSymbolRefExpr::Create(
+                                 MO.getMBB()->getSymbol(), OutContext));
+    break;
+  case MachineOperand::MO_GlobalAddress:
+    MCOp = GetSymbolRef(MO, Mang->getSymbol(MO.getGlobal()));
+    break;
+  case MachineOperand::MO_ExternalSymbol:
+    MCOp = GetSymbolRef(MO, GetExternalSymbolSymbol(MO.getSymbolName()));
+    break;
+  case MachineOperand::MO_FPImmediate:
+    APFloat Val = MO.getFPImm()->getValueAPF();
+    bool ignored;
+    Val.convert(APFloat::IEEEdouble, APFloat::rmTowardZero, &ignored);
+    MCOp = MCOperand::CreateFPImm(Val.convertToDouble());
+    break;
+  }
+
+  return true;
+}
 
 // Force static initialization.
 extern "C" void LLVMInitializePTXAsmPrinter() {
   RegisterAsmPrinter<PTXAsmPrinter> X(ThePTX32Target);
   RegisterAsmPrinter<PTXAsmPrinter> Y(ThePTX64Target);
 }
+
