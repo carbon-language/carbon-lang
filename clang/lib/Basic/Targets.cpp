@@ -1213,7 +1213,7 @@ class X86TargetInfo : public TargetInfo {
     //@}
 
     /// \name Netburst
-    /// Netburt microarchitecture based processors.
+    /// Netburst microarchitecture based processors.
     //@{
     CK_Pentium4,
     CK_Pentium4M,
