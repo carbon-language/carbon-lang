@@ -10,3 +10,10 @@
 // This file describes Mips64 instructions.
 //
 //===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+// Mips64 Instruction Predicate Definitions.
+//===----------------------------------------------------------------------===//
+def HasMips64    : Predicate<"Subtarget.hasMips64()">;
+def HasMips64r2  : Predicate<"Subtarget.hasMips64r2()">;
+
