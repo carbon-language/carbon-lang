@@ -2074,6 +2074,23 @@ bool Sema::IsBlockPointerConversion(QualType FromType, QualType ToType,
        // Argument types are too different. Abort.
        return false;
    }
+   if (LangOpts.ObjCAutoRefCount) {
+     if (FromFunctionType->hasAnyConsumedArgs() != 
+         ToFunctionType->hasAnyConsumedArgs())
+      return false;
+     FunctionProtoType::ExtProtoInfo FromEPI = 
+      FromFunctionType->getExtProtoInfo();
+     FunctionProtoType::ExtProtoInfo ToEPI = 
+      ToFunctionType->getExtProtoInfo();
+     if (FromEPI.ConsumedArguments && ToEPI.ConsumedArguments)
+       for (unsigned ArgIdx = 0, NumArgs = FromFunctionType->getNumArgs();
+            ArgIdx != NumArgs; ++ArgIdx)  {
+         if (FromEPI.ConsumedArguments[ArgIdx] != 
+             ToEPI.ConsumedArguments[ArgIdx])
+           return false;
+       }
+   }
+   
    ConvertedType = ToType;
    return true;
 }
