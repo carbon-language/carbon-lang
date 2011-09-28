@@ -54,7 +54,8 @@ let PrintMethod = "printFCCOperand" in
 // Feature predicates.
 //===----------------------------------------------------------------------===//
 
-def In32BitMode      : Predicate<"!Subtarget.isFP64bit()">;
+def IsFP64bit        : Predicate<"Subtarget.isFP64bit()">;
+def NotFP64bit       : Predicate<"!Subtarget.isFP64bit()">;
 def IsSingleFloat    : Predicate<"Subtarget.isSingleFloat()">;
 def IsNotSingleFloat : Predicate<"!Subtarget.isSingleFloat()">;
 
@@ -78,7 +79,7 @@ multiclass FFR1_1<bits<6> funct, string asmstr>
       !strconcat(asmstr, ".s\t$fd, $fs"), []>;
 
   def _D32  : FFR<0x11, funct, 0x1, (outs FGR32:$fd), (ins AFGR64:$fs),
-      !strconcat(asmstr, ".d\t$fd, $fs"), []>, Requires<[In32BitMode]>;
+      !strconcat(asmstr, ".d\t$fd, $fs"), []>, Requires<[NotFP64bit]>;
 }
 
 multiclass FFR1_2<bits<6> funct, string asmstr, SDNode FOp>
@@ -89,7 +90,7 @@ multiclass FFR1_2<bits<6> funct, string asmstr, SDNode FOp>
 
   def _D32  : FFR<0x11, funct, 0x1, (outs AFGR64:$fd), (ins AFGR64:$fs),
                  !strconcat(asmstr, ".d\t$fd, $fs"),
-                 [(set AFGR64:$fd, (FOp AFGR64:$fs))]>, Requires<[In32BitMode]>;
+                 [(set AFGR64:$fd, (FOp AFGR64:$fs))]>, Requires<[NotFP64bit]>;
 }
 
 class FFR1_3<bits<6> funct, bits<5> fmt, RegisterClass RcSrc,
@@ -109,7 +110,7 @@ multiclass FFR1_4<bits<6> funct, string asmstr, SDNode FOp, bit isComm = 0> {
                  (ins AFGR64:$fs, AFGR64:$ft),
                  !strconcat(asmstr, ".d\t$fd, $fs, $ft"),
                  [(set AFGR64:$fd, (FOp AFGR64:$fs, AFGR64:$ft))]>,
-                 Requires<[In32BitMode]>;
+                 Requires<[NotFP64bit]>;
   }
 }
 
@@ -258,7 +259,7 @@ let Defs=[FCR31] in {
   def FCMP_D32 : FCC<0x1, (outs), (ins AFGR64:$fs, AFGR64:$ft, condcode:$cc),
                      "c.$cc.d\t$fs, $ft",
                      [(MipsFPCmp AFGR64:$fs, AFGR64:$ft, imm:$cc)]>,
-                     Requires<[In32BitMode]>;
+                     Requires<[NotFP64bit]>;
 }
 
 
@@ -276,7 +277,7 @@ class CondMovIntFP<RegisterClass RC, bits<5> fmt, bits<6> func,
 def MOVZ_S : CondMovIntFP<FGR32, 16, 18, "movz.s">;
 def MOVN_S : CondMovIntFP<FGR32, 16, 19, "movn.s">;
 
-let Predicates = [In32BitMode] in {
+let Predicates = [NotFP64bit] in {
   def MOVZ_D : CondMovIntFP<AFGR64, 17, 18, "movz.d">;
   def MOVN_D : CondMovIntFP<AFGR64, 17, 19, "movn.d">;
 }
@@ -284,7 +285,7 @@ let Predicates = [In32BitMode] in {
 defm : MovzPats<FGR32, MOVZ_S>;
 defm : MovnPats<FGR32, MOVN_S>;
 
-let Predicates = [In32BitMode] in {
+let Predicates = [NotFP64bit] in {
   defm : MovzPats<AFGR64, MOVZ_D>;
   defm : MovnPats<AFGR64, MOVN_D>;
 }
@@ -309,7 +310,7 @@ def MOVF : CondMovFPInt<MipsCMovFP_F, 0, "movf">;
 def MOVT_S : CondMovFPFP<FGR32, MipsCMovFP_T, 16, 1, "movt.s">;
 def MOVF_S : CondMovFPFP<FGR32, MipsCMovFP_F, 16, 0, "movf.s">;
 
-let Predicates = [In32BitMode] in {
+let Predicates = [NotFP64bit] in {
   def MOVT_D : CondMovFPFP<AFGR64, MipsCMovFP_T, 17, 1, "movt.d">;
   def MOVF_D : CondMovFPFP<AFGR64, MipsCMovFP_F, 17, 0, "movf.d">;
 }
@@ -357,7 +358,7 @@ def : Pat<(f64 (sint_to_fp CPURegs:$src)), (CVTD_W32 (MTC1 CPURegs:$src))>;
 def : Pat<(i32 (fp_to_sint FGR32:$src)), (MFC1 (TRUNC_W_S32 FGR32:$src))>;
 def : Pat<(i32 (fp_to_sint AFGR64:$src)), (MFC1 (TRUNC_W_D32 AFGR64:$src))>;
 
-let Predicates = [In32BitMode] in {
+let Predicates = [NotFP64bit] in {
   def : Pat<(f32 (fround AFGR64:$src)), (CVTS_D32 AFGR64:$src)>;
   def : Pat<(f64 (fextend FGR32:$src)), (CVTD_S32 FGR32:$src)>;
 }
