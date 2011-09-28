@@ -1070,14 +1070,26 @@ static const SCEV *getPreStartForSignExtend(const SCEVAddRecExpr *AR,
 
   // Check for a simple looking step prior to loop entry.
   const SCEVAddExpr *SA = dyn_cast<SCEVAddExpr>(Start);
-  if (!SA || SA->getNumOperands() != 2 || SA->getOperand(0) != Step)
+  if (!SA)
+    return 0;
+
+  // Create an AddExpr for "PreStart" after subtracting Step. Full SCEV
+  // subtraction is expensive. For this purpose, perform a quick and dirty
+  // difference, by checking for Step in the operand list.
+  SmallVector<const SCEV *, 4> DiffOps;
+  for (SCEVAddExpr::op_iterator I = SA->op_begin(), E = SA->op_end();
+       I != E; ++I) {
+    if (*I != Step)
+      DiffOps.push_back(*I);
+  }
+  if (DiffOps.size() == SA->getNumOperands())
     return 0;
 
   // This is a postinc AR. Check for overflow on the preinc recurrence using the
   // same three conditions that getSignExtendedExpr checks.
 
   // 1. NSW flags on the step increment.
-  const SCEV *PreStart = SA->getOperand(1);
+  const SCEV *PreStart = SE->getAddExpr(DiffOps, SA->getNoWrapFlags());
   const SCEVAddRecExpr *PreAR = dyn_cast<SCEVAddRecExpr>(
     SE->getAddRecExpr(PreStart, Step, L, SCEV::FlagAnyWrap));
 
