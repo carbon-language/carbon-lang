@@ -201,6 +201,12 @@ _LIBCPP_BEGIN_NAMESPACE_STD
 locale_t __cloc();
 #endif
 
+#if __APPLE__
+#  define _LIBCPP_GET_C_LOCALE 0
+#else
+#  define _LIBCPP_GET_C_LOCALE __cloc()
+#endif
+
 typedef _VSTD::remove_pointer<locale_t>::type __locale_struct;
 typedef _VSTD::unique_ptr<__locale_struct, decltype(&freelocale)> __locale_unique_ptr;
 typedef _VSTD::unique_ptr<__locale_struct, decltype(&uselocale)> __locale_raii;
@@ -810,11 +816,7 @@ __num_get_signed_integral(const char* __a, const char* __a_end,
         int __save_errno = errno;
         errno = 0;
         char *__p2;
-#ifdef _LIBCPP_STABLE_APPLE_ABI
-        long long __ll = strtoll_l(__a, &__p2, __base, 0);
-#else
-        long long __ll = strtoll_l(__a, &__p2, __base, __cloc());
-#endif
+        long long __ll = strtoll_l(__a, &__p2, __base, _LIBCPP_GET_C_LOCALE);
         int __current_errno = errno;
         if (__current_errno == 0)
             errno = __save_errno;
@@ -854,11 +856,7 @@ __num_get_unsigned_integral(const char* __a, const char* __a_end,
         int __save_errno = errno;
         errno = 0;
         char *__p2;
-#ifdef _LIBCPP_STABLE_APPLE_ABI
-        unsigned long long __ll = strtoull_l(__a, &__p2, __base, 0);
-#else
-        unsigned long long __ll = strtoull_l(__a, &__p2, __base, __cloc());
-#endif
+        unsigned long long __ll = strtoull_l(__a, &__p2, __base, _LIBCPP_GET_C_LOCALE);
         int __current_errno = errno;
         if (__current_errno == 0)
             errno = __save_errno;
@@ -886,11 +884,7 @@ __num_get_float(const char* __a, const char* __a_end, ios_base::iostate& __err)
     if (__a != __a_end)
     {
         char *__p2;
-#ifdef _LIBCPP_STABLE_APPLE_ABI
-        long double __ld = strtold_l(__a, &__p2, 0);
-#else
-        long double __ld = strtold_l(__a, &__p2, __cloc());
-#endif
+        long double __ld = strtold_l(__a, &__p2, _LIBCPP_GET_C_LOCALE);
         if (__p2 != __a_end)
         {
             __err = ios_base::failbit;
@@ -1296,7 +1290,7 @@ num_get<_CharT, _InputIterator>::do_get(iter_type __b, iter_type __e,
     // Stage 3
     __a[sizeof(__a)-1] = 0;
 #ifdef _LIBCPP_STABLE_APPLE_ABI
-    if (sscanf_l(__a, 0, "%p", &__v) != 1)
+    if (sscanf_l(__a, _LIBCPP_GET_C_LOCALE, "%p", &__v) != 1)
 #else
     if (__sscanf_l(__a, __cloc(), "%p", &__v) != 1)
 #endif
@@ -1404,21 +1398,13 @@ __num_put<_CharT>::__widen_and_group_float(char* __nb, char* __np, char* __ne,
         *__oe++ = __ct.widen(*__nf++);
         *__oe++ = __ct.widen(*__nf++);
         for (__ns = __nf; __ns < __ne; ++__ns)
-#ifdef _LIBCPP_STABLE_APPLE_ABI
-            if (!isxdigit_l(*__ns, 0))
-#else
-            if (!isxdigit_l(*__ns, __cloc()))
-#endif
+            if (!isxdigit_l(*__ns, _LIBCPP_GET_C_LOCALE))
                 break;
     }
     else
     {
         for (__ns = __nf; __ns < __ne; ++__ns)
-#ifdef _LIBCPP_STABLE_APPLE_ABI
-            if (!isdigit_l(*__ns, 0))
-#else
-            if (!isdigit_l(*__ns, __cloc()))
-#endif
+            if (!isdigit_l(*__ns, _LIBCPP_GET_C_LOCALE))
                 break;
     }
     if (__grouping.empty())
@@ -1617,7 +1603,7 @@ num_put<_CharT, _OutputIterator>::do_put(iter_type __s, ios_base& __iob,
                           + 1;
     char __nar[__nbuf];
 #ifdef _LIBCPP_STABLE_APPLE_ABI
-    int __nc = sprintf_l(__nar, 0, __fmt, __v);
+    int __nc = sprintf_l(__nar, _LIBCPP_GET_C_LOCALE, __fmt, __v);
 #else
     int __nc = __sprintf_l(__nar, __cloc(), __fmt, __v);
 #endif
@@ -1647,7 +1633,7 @@ num_put<_CharT, _OutputIterator>::do_put(iter_type __s, ios_base& __iob,
                           + 1;
     char __nar[__nbuf];
 #ifdef _LIBCPP_STABLE_APPLE_ABI
-    int __nc = sprintf_l(__nar, 0, __fmt, __v);
+    int __nc = sprintf_l(__nar, _LIBCPP_GET_C_LOCALE, __fmt, __v);
 #else
     int __nc = __sprintf_l(__nar, __cloc(), __fmt, __v);
 #endif
@@ -1677,7 +1663,7 @@ num_put<_CharT, _OutputIterator>::do_put(iter_type __s, ios_base& __iob,
                           + 1;
     char __nar[__nbuf];
 #ifdef _LIBCPP_STABLE_APPLE_ABI
-    int __nc = sprintf_l(__nar, 0, __fmt, __v);
+    int __nc = sprintf_l(__nar, _LIBCPP_GET_C_LOCALE, __fmt, __v);
 #else
     int __nc = __sprintf_l(__nar, __cloc(), __fmt, __v);
 #endif
@@ -1707,7 +1693,7 @@ num_put<_CharT, _OutputIterator>::do_put(iter_type __s, ios_base& __iob,
                           + 1;
     char __nar[__nbuf];
 #ifdef _LIBCPP_STABLE_APPLE_ABI
-    int __nc = sprintf_l(__nar, 0, __fmt, __v);
+    int __nc = sprintf_l(__nar, _LIBCPP_GET_C_LOCALE, __fmt, __v);
 #else
     int __nc = __sprintf_l(__nar, __cloc(), __fmt, __v);
 #endif
@@ -1738,7 +1724,7 @@ num_put<_CharT, _OutputIterator>::do_put(iter_type __s, ios_base& __iob,
     int __nc;
     if (__specify_precision)
 #ifdef _LIBCPP_STABLE_APPLE_ABI
-        __nc = snprintf_l(__nb, __nbuf, 0, __fmt,
+        __nc = snprintf_l(__nb, __nbuf, _LIBCPP_GET_C_LOCALE, __fmt,
                                    (int)__iob.precision(), __v);
 #else
         __nc = __snprintf_l(__nb, __nbuf, __cloc(), __fmt,
@@ -1746,7 +1732,7 @@ num_put<_CharT, _OutputIterator>::do_put(iter_type __s, ios_base& __iob,
 #endif
     else
 #ifdef _LIBCPP_STABLE_APPLE_ABI
-        __nc = snprintf_l(__nb, __nbuf, 0, __fmt, __v);
+        __nc = snprintf_l(__nb, __nbuf, _LIBCPP_GET_C_LOCALE, __fmt, __v);
 #else
         __nc = __snprintf_l(__nb, __nbuf, __cloc(), __fmt, __v);
 #endif
@@ -1755,14 +1741,14 @@ num_put<_CharT, _OutputIterator>::do_put(iter_type __s, ios_base& __iob,
     {
         if (__specify_precision)
 #ifdef _LIBCPP_STABLE_APPLE_ABI
-            __nc = asprintf_l(&__nb, 0, __fmt, (int)__iob.precision(), __v);
+            __nc = asprintf_l(&__nb, _LIBCPP_GET_C_LOCALE, __fmt, (int)__iob.precision(), __v);
 #else
             __nc = __asprintf_l(&__nb, __cloc(), __fmt,
                               (int)__iob.precision(), __v);
 #endif
         else
 #ifdef _LIBCPP_STABLE_APPLE_ABI
-            __nc = asprintf_l(&__nb, 0, __fmt, __v);
+            __nc = asprintf_l(&__nb, _LIBCPP_GET_C_LOCALE, __fmt, __v);
 #else
             __nc = __asprintf_l(&__nb, __cloc(), __fmt, (int)__iob.precision(), __v);
 #endif
@@ -1807,7 +1793,7 @@ num_put<_CharT, _OutputIterator>::do_put(iter_type __s, ios_base& __iob,
     int __nc;
     if (__specify_precision)
 #ifdef _LIBCPP_STABLE_APPLE_ABI
-        __nc = snprintf_l(__nb, __nbuf, 0, __fmt,
+        __nc = snprintf_l(__nb, __nbuf, _LIBCPP_GET_C_LOCALE, __fmt,
                                    (int)__iob.precision(), __v);
 #else
         __nc = __snprintf_l(__nb, __nbuf, __cloc(), __fmt,
@@ -1815,7 +1801,7 @@ num_put<_CharT, _OutputIterator>::do_put(iter_type __s, ios_base& __iob,
 #endif
     else
 #ifdef _LIBCPP_STABLE_APPLE_ABI
-        __nc = snprintf_l(__nb, __nbuf, 0, __fmt, __v);
+        __nc = snprintf_l(__nb, __nbuf, _LIBCPP_GET_C_LOCALE, __fmt, __v);
 #else
         __nc = __snprintf_l(__nb, __nbuf, __cloc(), __fmt, __v);
 #endif
@@ -1824,14 +1810,14 @@ num_put<_CharT, _OutputIterator>::do_put(iter_type __s, ios_base& __iob,
     {
         if (__specify_precision)
 #ifdef _LIBCPP_STABLE_APPLE_ABI
-            __nc = asprintf_l(&__nb, 0, __fmt, (int)__iob.precision(), __v);
+            __nc = asprintf_l(&__nb, _LIBCPP_GET_C_LOCALE, __fmt, (int)__iob.precision(), __v);
 #else
             __nc = __asprintf_l(&__nb, __cloc(), __fmt,
                               (int)__iob.precision(), __v);
 #endif
         else
 #ifdef _LIBCPP_STABLE_APPLE_ABI
-            __nc = asprintf_l(&__nb, 0, __fmt, __v);
+            __nc = asprintf_l(&__nb, _LIBCPP_GET_C_LOCALE, __fmt, __v);
 #else
             __nc = __asprintf_l(&__nb, __cloc(), __fmt, __v);
 #endif
@@ -1871,7 +1857,7 @@ num_put<_CharT, _OutputIterator>::do_put(iter_type __s, ios_base& __iob,
     const unsigned __nbuf = 20;
     char __nar[__nbuf];
 #ifdef _LIBCPP_STABLE_APPLE_ABI
-    int __nc = sprintf_l(__nar, 0, __fmt, __v);
+    int __nc = sprintf_l(__nar, _LIBCPP_GET_C_LOCALE, __fmt, __v);
 #else
     int __nc = __sprintf_l(__nar, __cloc(), __fmt, __v);
 #endif
@@ -2651,11 +2637,7 @@ class __time_put
 {
     locale_t __loc_;
 protected:
-#ifdef _LIBCPP_STABLE_APPLE_ABI
-    _LIBCPP_ALWAYS_INLINE __time_put() : __loc_(0) {}
-#else   // _LIBCPP_STABLE_APPLE_ABI
-    _LIBCPP_ALWAYS_INLINE __time_put() : __loc_(__cloc()) {}
-#endif  // _LIBCPP_STABLE_APPLE_ABI
+    _LIBCPP_ALWAYS_INLINE __time_put() : __loc_(_LIBCPP_GET_C_LOCALE) {}
     __time_put(const char* __nm);
     __time_put(const string& __nm);
     ~__time_put();
@@ -3559,7 +3541,7 @@ money_put<_CharT, _OutputIterator>::do_put(iter_type __s, bool __intl,
     if (__n > __bs-1)
     {
 #ifdef _LIBCPP_STABLE_APPLE_ABI
-        __n = asprintf_l(&__bb, 0, "%.0Lf", __units);
+        __n = asprintf_l(&__bb, _LIBCPP_GET_C_LOCALE, "%.0Lf", __units);
 #else
         __n = __asprintf_l(&__bb, __cloc(), "%.0Lf", __units);
 #endif
