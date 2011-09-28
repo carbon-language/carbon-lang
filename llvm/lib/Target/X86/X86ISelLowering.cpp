@@ -8555,6 +8555,13 @@ SDValue X86TargetLowering::LowerVSETCC(SDValue Op, SelectionDAG &DAG) const {
   if (Swap)
     std::swap(Op0, Op1);
 
+  // Check that the operation in question is available (most are plain SSE2,
+  // but PCMPGTQ and PCMPEQQ have different requirements).
+  if (Opc == X86ISD::PCMPGTQ && !Subtarget->hasSSE42() && !Subtarget->hasAVX())
+    return SDValue();
+  if (Opc == X86ISD::PCMPEQQ && !Subtarget->hasSSE41() && !Subtarget->hasAVX())
+    return SDValue();
+
   // Since SSE has no unsigned integer comparisons, we need to flip  the sign
   // bits of the inputs before performing those operations.
   if (FlipSigns) {
