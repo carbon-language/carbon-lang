@@ -13,3 +13,4 @@ set_target_properties(c-index-test
   PROPERTIES
   LINKER_LANGUAGE CXX)
 
+install(TARGETS c-index-test RUNTIME DESTINATION bin)
