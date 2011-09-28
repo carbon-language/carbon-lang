@@ -1799,8 +1799,10 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
     Builder.defineMacro("__athlon");
     Builder.defineMacro("__athlon__");
     Builder.defineMacro("__tune_athlon__");
-    if (SSELevel != NoSSE)
+    if (SSELevel != NoSSE) {
       Builder.defineMacro("__athlon_sse__");
+      Builder.defineMacro("__tune_athlon_sse__");
+    }
     break;
   case CK_K8:
   case CK_K8SSE3:

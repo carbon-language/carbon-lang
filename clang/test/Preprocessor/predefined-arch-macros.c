@@ -441,8 +441,7 @@
 // CHECK_ATHLON_4_M32: #define __i386 1
 // CHECK_ATHLON_4_M32: #define __i386__ 1
 // CHECK_ATHLON_4_M32: #define __tune_athlon__ 1
-// FIXME: This should be defined!
-// CHECK_ATHLON_4_M32-NOT: #define __tune_athlon_sse__ 1
+// CHECK_ATHLON_4_M32: #define __tune_athlon_sse__ 1
 // CHECK_ATHLON_4_M32: #define i386 1
 // RUN: %clang -march=athlon-4 -m64 -E -dM %s -o - 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK_ATHLON_4_M64
@@ -456,8 +455,7 @@
 // CHECK_ATHLON_XP_M32: #define __i386 1
 // CHECK_ATHLON_XP_M32: #define __i386__ 1
 // CHECK_ATHLON_XP_M32: #define __tune_athlon__ 1
-// FIXME: This should be defined!
-// CHECK_ATHLON_XP_M32-NOT: #define __tune_athlon_sse__ 1
+// CHECK_ATHLON_XP_M32: #define __tune_athlon_sse__ 1
 // CHECK_ATHLON_XP_M32: #define i386 1
 // RUN: %clang -march=athlon-xp -m64 -E -dM %s -o - 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK_ATHLON_XP_M64
@@ -471,8 +469,7 @@
 // CHECK_ATHLON_MP_M32: #define __i386 1
 // CHECK_ATHLON_MP_M32: #define __i386__ 1
 // CHECK_ATHLON_MP_M32: #define __tune_athlon__ 1
-// FIXME: This should be defined!
-// CHECK_ATHLON_MP_M32-NOT: #define __tune_athlon_sse__ 1
+// CHECK_ATHLON_MP_M32: #define __tune_athlon_sse__ 1
 // CHECK_ATHLON_MP_M32: #define i386 1
 // RUN: %clang -march=athlon-mp -m64 -E -dM %s -o - 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK_ATHLON_MP_M64
