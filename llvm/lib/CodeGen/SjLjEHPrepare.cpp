@@ -725,7 +725,10 @@ void SjLjEHPass::setupFunctionContext(Function &F,
   // where to look for it.
   CallInst::Create(Intrinsic::getDeclaration(F.getParent(),
                                             Intrinsic::eh_sjlj_functioncontext),
-                   FuncCtx, "", EntryBB->getTerminator());
+                   CastInst::Create(Instruction::BitCast, FuncCtx,
+                                    Type::getInt8PtrTy(F.getContext()), "",
+                                    EntryBB->getTerminator()),
+                   "", EntryBB->getTerminator());
 
   // Fill in the function context structure.
   Value *Idxs[2];
