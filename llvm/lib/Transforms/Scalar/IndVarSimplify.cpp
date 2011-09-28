@@ -834,6 +834,9 @@ public:
   PHINode *CreateWideIV(SCEVExpander &Rewriter);
 
 protected:
+  Value *getExtend(Value *NarrowOper, Type *WideType, bool IsSigned,
+                   Instruction *Use);
+
   Instruction *CloneIVUser(NarrowIVDefUse DU);
 
   const SCEVAddRecExpr *GetWideRecurrence(Instruction *NarrowUse);
@@ -846,8 +849,27 @@ protected:
 };
 } // anonymous namespace
 
-static Value *getExtend( Value *NarrowOper, Type *WideType,
-                               bool IsSigned, IRBuilder<> &Builder) {
+/// isLoopInvariant - Perform a quick domtree based check for loop invariance
+/// assuming that V is used within the loop. LoopInfo::isLoopInvariant() seems
+/// gratuitous for this purpose.
+static bool isLoopInvariant(Value *V, const Loop *L, const DominatorTree *DT) {
+  Instruction *Inst = dyn_cast<Instruction>(V);
+  if (!Inst)
+    return true;
+
+  return DT->properlyDominates(Inst->getParent(), L->getHeader());
+}
+
+Value *WidenIV::getExtend(Value *NarrowOper, Type *WideType, bool IsSigned,
+                          Instruction *Use) {
+  // Set the debug location and conservative insertion point.
+  IRBuilder<> Builder(Use);
+  // Hoist the insertion point into loop preheaders as far as possible.
+  for (const Loop *L = LI->getLoopFor(Use->getParent());
+       L && L->getLoopPreheader() && isLoopInvariant(NarrowOper, L, DT);
+       L = L->getParentLoop())
+    Builder.SetInsertPoint(L->getLoopPreheader()->getTerminator());
+
   return IsSigned ? Builder.CreateSExt(NarrowOper, WideType) :
                     Builder.CreateZExt(NarrowOper, WideType);
 }
@@ -872,22 +894,21 @@ Instruction *WidenIV::CloneIVUser(NarrowIVDefUse DU) {
   case Instruction::AShr:
     DEBUG(dbgs() << "Cloning IVUser: " << *DU.NarrowUse << "\n");
 
-    IRBuilder<> Builder(DU.NarrowUse);
-
     // Replace NarrowDef operands with WideDef. Otherwise, we don't know
     // anything about the narrow operand yet so must insert a [sz]ext. It is
     // probably loop invariant and will be folded or hoisted. If it actually
     // comes from a widened IV, it should be removed during a future call to
     // WidenIVUse.
     Value *LHS = (DU.NarrowUse->getOperand(0) == DU.NarrowDef) ? DU.WideDef :
-      getExtend(DU.NarrowUse->getOperand(0), WideType, IsSigned, Builder);
+      getExtend(DU.NarrowUse->getOperand(0), WideType, IsSigned, DU.NarrowUse);
     Value *RHS = (DU.NarrowUse->getOperand(1) == DU.NarrowDef) ? DU.WideDef :
-      getExtend(DU.NarrowUse->getOperand(1), WideType, IsSigned, Builder);
+      getExtend(DU.NarrowUse->getOperand(1), WideType, IsSigned, DU.NarrowUse);
 
     BinaryOperator *NarrowBO = cast<BinaryOperator>(DU.NarrowUse);
     BinaryOperator *WideBO = BinaryOperator::Create(NarrowBO->getOpcode(),
                                                     LHS, RHS,
                                                     NarrowBO->getName());
+    IRBuilder<> Builder(DU.NarrowUse);
     Builder.Insert(WideBO);
     if (const OverflowingBinaryOperator *OBO =
         dyn_cast<OverflowingBinaryOperator>(NarrowBO)) {
@@ -1389,17 +1410,6 @@ static Type *getBackedgeIVType(Loop *L) {
     return Trunc->getSrcTy();
   }
   return Ty;
-}
-
-/// isLoopInvariant - Perform a quick domtree based check for loop invariance
-/// assuming that V is used within the loop. LoopInfo::isLoopInvariant() seems
-/// gratuitous for this purpose.
-static bool isLoopInvariant(Value *V, Loop *L, DominatorTree *DT) {
-  Instruction *Inst = dyn_cast<Instruction>(V);
-  if (!Inst)
-    return true;
-
-  return DT->properlyDominates(Inst->getParent(), L->getHeader());
 }
 
 /// getLoopPhiForCounter - Return the loop header phi IFF IncV adds a loop
