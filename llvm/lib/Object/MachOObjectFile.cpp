@@ -63,6 +63,8 @@ protected:
   virtual error_code getSectionSize(DataRefImpl Sec, uint64_t &Res) const;
   virtual error_code getSectionContents(DataRefImpl Sec, StringRef &Res) const;
   virtual error_code isSectionText(DataRefImpl Sec, bool &Res) const;
+  virtual error_code isSectionData(DataRefImpl Sec, bool &Res) const;
+  virtual error_code isSectionBSS(DataRefImpl Sec, bool &Res) const;
   virtual error_code sectionContainsSymbol(DataRefImpl DRI, DataRefImpl S,
                                            bool &Result) const;
 
@@ -477,6 +479,20 @@ error_code MachOObjectFile::isSectionText(DataRefImpl DRI,
     getSection(DRI, Sect);
     Result = !strcmp(Sect->Name, "__text");
   }
+  return object_error::success;
+}
+
+error_code MachOObjectFile::isSectionData(DataRefImpl DRI,
+                                          bool &Result) const {
+  // FIXME: Unimplemented.
+  Result = false;
+  return object_error::success;
+}
+
+error_code MachOObjectFile::isSectionBSS(DataRefImpl DRI,
+                                         bool &Result) const {
+  // FIXME: Unimplemented.
+  Result = false;
   return object_error::success;
 }
 

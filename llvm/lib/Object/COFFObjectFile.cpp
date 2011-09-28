@@ -342,6 +342,20 @@ error_code COFFObjectFile::isSectionText(DataRefImpl Sec,
   return object_error::success;
 }
 
+error_code COFFObjectFile::isSectionData(DataRefImpl Sec,
+                                         bool &Result) const {
+  const coff_section *sec = toSec(Sec);
+  Result = sec->Characteristics & COFF::IMAGE_SCN_CNT_INITIALIZED_DATA;
+  return object_error::success;
+}
+
+error_code COFFObjectFile::isSectionBSS(DataRefImpl Sec,
+                                        bool &Result) const {
+  const coff_section *sec = toSec(Sec);
+  Result = sec->Characteristics & COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA;
+  return object_error::success;
+}
+
 error_code COFFObjectFile::sectionContainsSymbol(DataRefImpl Sec,
                                                  DataRefImpl Symb,
                                                  bool &Result) const {

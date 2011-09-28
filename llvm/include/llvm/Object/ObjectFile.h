@@ -131,6 +131,8 @@ public:
 
   // FIXME: Move to the normalization layer when it's created.
   error_code isText(bool &Result) const;
+  error_code isData(bool &Result) const;
+  error_code isBSS(bool &Result) const;
 
   error_code containsSymbol(SymbolRef S, bool &Result) const;
 };
@@ -179,6 +181,8 @@ protected:
   virtual error_code getSectionSize(DataRefImpl Sec, uint64_t &Res) const = 0;
   virtual error_code getSectionContents(DataRefImpl Sec, StringRef &Res)const=0;
   virtual error_code isSectionText(DataRefImpl Sec, bool &Res) const = 0;
+  virtual error_code isSectionData(DataRefImpl Sec, bool &Res) const = 0;
+  virtual error_code isSectionBSS(DataRefImpl Sec, bool &Res) const = 0;
   virtual error_code sectionContainsSymbol(DataRefImpl Sec, DataRefImpl Symb,
                                            bool &Result) const = 0;
 
@@ -347,6 +351,14 @@ inline error_code SectionRef::getContents(StringRef &Result) const {
 
 inline error_code SectionRef::isText(bool &Result) const {
   return OwningObject->isSectionText(SectionPimpl, Result);
+}
+
+inline error_code SectionRef::isData(bool &Result) const {
+  return OwningObject->isSectionData(SectionPimpl, Result);
+}
+
+inline error_code SectionRef::isBSS(bool &Result) const {
+  return OwningObject->isSectionBSS(SectionPimpl, Result);
 }
 
 inline error_code SectionRef::containsSymbol(SymbolRef S, bool &Result) const {
