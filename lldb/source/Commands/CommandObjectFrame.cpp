@@ -322,7 +322,6 @@ public:
                        "argument, local, file static and file global variables. "
                        "Children of aggregate variables can be specified such as "
                        "'var->child.x'. "
-                       "NOTE that '-w' option is not working yet!!! "
                        "You can choose to watch a variable with the '-w' option. "
                        "Note that hardware resources for watching are often limited.",
                        NULL,
