@@ -174,6 +174,10 @@ class MachineFrameInfo {
   /// StackProtectorIdx - The frame index for the stack protector.
   int StackProtectorIdx;
 
+  /// FunctionContextIdx - The frame index for the function context. Used for
+  /// SjLj exceptions.
+  int FunctionContextIdx;
+
   /// MaxCallFrameSize - This contains the size of the largest call frame if the
   /// target uses frame setup/destroy pseudo instructions (as defined in the
   /// TargetFrameInfo class).  This information is important for frame pointer
@@ -220,6 +224,7 @@ public:
     AdjustsStack = false;
     HasCalls = false;
     StackProtectorIdx = -1;
+    FunctionContextIdx = -1;
     MaxCallFrameSize = 0;
     CSIValid = false;
     LocalFrameSize = 0;
@@ -243,6 +248,11 @@ public:
   ///
   int getStackProtectorIndex() const { return StackProtectorIdx; }
   void setStackProtectorIndex(int I) { StackProtectorIdx = I; }
+
+  /// getFunctionContextIndex/setFunctionContextIndex - Return the index for the
+  /// function context object. This object is used for SjLj exceptions.
+  int getFunctionContextIndex() const { return FunctionContextIdx; }
+  void setFunctionContextIndex(int I) { FunctionContextIdx = I; }
 
   /// isFrameAddressTaken - This method may be called any time after instruction
   /// selection is complete to determine if there is a call to

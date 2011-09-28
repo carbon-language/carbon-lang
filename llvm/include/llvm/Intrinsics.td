@@ -322,12 +322,13 @@ def int_eh_unwind_init: Intrinsic<[]>,
 def int_eh_dwarf_cfa  : Intrinsic<[llvm_ptr_ty], [llvm_i32_ty]>;
 
 let Properties = [IntrNoMem] in {
-  def int_eh_sjlj_lsda    : Intrinsic<[llvm_ptr_ty]>;
-  def int_eh_sjlj_callsite: Intrinsic<[], [llvm_i32_ty]>;
+  def int_eh_sjlj_lsda             : Intrinsic<[llvm_ptr_ty]>;
+  def int_eh_sjlj_callsite         : Intrinsic<[], [llvm_i32_ty]>;
+  def int_eh_sjlj_functioncontext  : Intrinsic<[], [llvm_ptr_ty]>;
 }
 def int_eh_sjlj_dispatch_setup : Intrinsic<[], [llvm_i32_ty]>;
-def int_eh_sjlj_setjmp  : Intrinsic<[llvm_i32_ty], [llvm_ptr_ty]>;
-def int_eh_sjlj_longjmp : Intrinsic<[], [llvm_ptr_ty]>;
+def int_eh_sjlj_setjmp         : Intrinsic<[llvm_i32_ty], [llvm_ptr_ty]>;
+def int_eh_sjlj_longjmp        : Intrinsic<[], [llvm_ptr_ty]>;
 
 //===---------------- Generic Variable Attribute Intrinsics----------------===//
 //

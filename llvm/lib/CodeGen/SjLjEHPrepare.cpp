@@ -721,6 +721,12 @@ void SjLjEHPass::setupFunctionContext(Function &F,
   AllocaInst *FuncCtx =
     new AllocaInst(FunctionContextTy, 0, Align, "fn_context", EntryBB->begin());
 
+  // Store a pointer to the function context so that the back-end will know
+  // where to look for it.
+  CallInst::Create(Intrinsic::getDeclaration(F.getParent(),
+                                            Intrinsic::eh_sjlj_functioncontext),
+                   FuncCtx, "", EntryBB->getTerminator());
+
   // Fill in the function context structure.
   Value *Idxs[2];
   Type *Int32Ty = Type::getInt32Ty(F.getContext());

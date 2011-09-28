@@ -4754,6 +4754,14 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     MMI.setCurrentCallSite(CI->getZExtValue());
     return 0;
   }
+  case Intrinsic::eh_sjlj_functioncontext: {
+    // Get and store the index of the function context.
+    MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();
+    AllocaInst *FnCtx = cast<AllocaInst>(I.getArgOperand(0));
+    int FI = FuncInfo.StaticAllocaMap[FnCtx];
+    MFI->setFunctionContextIndex(FI);
+    return 0;
+  }
   case Intrinsic::eh_sjlj_setjmp: {
     setValue(&I, DAG.getNode(ISD::EH_SJLJ_SETJMP, dl, MVT::i32, getRoot(),
                              getValue(I.getArgOperand(0))));
