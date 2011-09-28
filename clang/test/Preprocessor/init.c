@@ -410,9 +410,6 @@
 // I386:#define __WINT_WIDTH__ 32
 // I386:#define __i386 1
 // I386:#define __i386__ 1
-// I386:#define __nocona 1
-// I386:#define __nocona__ 1
-// I386:#define __tune_nocona__ 1
 // I386:#define i386 1
 //
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=i386-pc-linux-gnu < /dev/null | FileCheck -check-prefix I386-LINUX %s
@@ -508,9 +505,6 @@
 // I386-LINUX:#define __WINT_WIDTH__ 32
 // I386-LINUX:#define __i386 1
 // I386-LINUX:#define __i386__ 1
-// I386-LINUX:#define __nocona 1
-// I386-LINUX:#define __nocona__ 1
-// I386-LINUX:#define __tune_nocona__ 1
 // I386-LINUX:#define i386 1
 //
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=msp430-none-none < /dev/null | FileCheck -check-prefix MSP430 %s
@@ -1183,9 +1177,6 @@
 // X86_64:#define __WINT_WIDTH__ 32
 // X86_64:#define __amd64 1
 // X86_64:#define __amd64__ 1
-// X86_64:#define __nocona 1
-// X86_64:#define __nocona__ 1
-// X86_64:#define __tune_nocona__ 1
 // X86_64:#define __x86_64 1
 // X86_64:#define __x86_64__ 1
 //
@@ -1289,9 +1280,6 @@
 // X86_64-LINUX:#define __WINT_WIDTH__ 32
 // X86_64-LINUX:#define __amd64 1
 // X86_64-LINUX:#define __amd64__ 1
-// X86_64-LINUX:#define __nocona 1
-// X86_64-LINUX:#define __nocona__ 1
-// X86_64-LINUX:#define __tune_nocona__ 1
 // X86_64-LINUX:#define __x86_64 1
 // X86_64-LINUX:#define __x86_64__ 1
 //

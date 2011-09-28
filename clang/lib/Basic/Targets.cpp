@@ -1165,6 +1165,9 @@ class X86TargetInfo : public TargetInfo {
   bool HasAES;
   bool HasAVX;
 
+  // FIXME: Make this an enum and parse into the enum when set.
+  std::string CPU;
+
 public:
   X86TargetInfo(const std::string& triple)
     : TargetInfo(triple), SSELevel(NoSSE), MMX3DNowLevel(NoMMX3DNow),
@@ -1207,6 +1210,11 @@ public:
   virtual void HandleTargetFeatures(std::vector<std::string> &Features);
   virtual const char* getABI() const {
     return MMX3DNowLevel == NoMMX3DNow ? "no-mmx" : "";
+  }
+  virtual bool setCPU(const std::string &Name) {
+    // FIXME: Reject invalid CPU names.
+    CPU = Name;
+    return true;
   }
 };
 
@@ -1405,8 +1413,8 @@ void X86TargetInfo::HandleTargetFeatures(std::vector<std::string> &Features) {
     Features.erase(it);
 }
 
-/// X86TargetInfo::getTargetDefines - Return a set of the X86-specific #defines
-/// that are not tied to a specific subtarget.
+/// X86TargetInfo::getTargetDefines - Return the set of the X86-specific macro
+/// definitions for this particular subtarget.
 void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
                                      MacroBuilder &Builder) const {
   // Target identification.
@@ -1429,12 +1437,99 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
 
   // Target properties.
   Builder.defineMacro("__LITTLE_ENDIAN__");
+  Builder.defineMacro("__REGISTER_PREFIX__", "");
 
   // Subtarget options.
-  Builder.defineMacro("__nocona");
-  Builder.defineMacro("__nocona__");
-  Builder.defineMacro("__tune_nocona__");
-  Builder.defineMacro("__REGISTER_PREFIX__", "");
+  // FIXME: We should build an enum for the CPUs to switch on as we do it in
+  // multiple places.
+  // FIXME: We are hard-coding the tune parameters based on the CPU, but they
+  // truly should be based on -mtune options.
+  if (CPU == "i386") {
+    // The rest are coming from the i386 define above.
+    Builder.defineMacro("__tune_i386__");
+  } else if (CPU == "i486" || CPU == "winchip-c6" || CPU == "winchip2" ||
+      CPU == "c3") {
+    Builder.defineMacro("__i486");
+    Builder.defineMacro("__i486__");
+    Builder.defineMacro("__tune_i486__");
+  } else if (CPU == "i586" || CPU == "pentium" || CPU == "pentium-mmx") {
+    Builder.defineMacro("__i586");
+    Builder.defineMacro("__i586__");
+    Builder.defineMacro("__tune_i586__");
+    Builder.defineMacro("__pentium");
+    Builder.defineMacro("__pentium__");
+    Builder.defineMacro("__tune_pentium__");
+    if (CPU == "pentium-mmx") {
+      Builder.defineMacro("__pentium_mmx__");
+      Builder.defineMacro("__tune_pentium_mmx__");
+    }
+  } else if (CPU == "i686" || CPU == "pentiumpro" || CPU == "pentium2" ||
+             CPU == "pentium3" || CPU == "pentium3m" || CPU == "pentium-m" ||
+             CPU == "c3-2") {
+    Builder.defineMacro("__i686");
+    Builder.defineMacro("__i686__");
+    // Strangely, __tune_i686__ isn't defined by GCC when CPU == i686.
+    Builder.defineMacro("__pentiumpro");
+    Builder.defineMacro("__pentiumpro__");
+    if (CPU != "i686") {
+      Builder.defineMacro("__tune_i686__");
+      Builder.defineMacro("__tune_pentiumpro__");
+      if (CPU == "pentium2" || CPU == "c3-2") {
+        Builder.defineMacro("__tune_pentium2__");
+      } else if (CPU == "pentium3") {
+        Builder.defineMacro("__tune_pentium2__");
+        Builder.defineMacro("__tune_pentium3__");
+      }
+    }
+  } else if (CPU == "pentium4" || CPU == "pentium4m") {
+    Builder.defineMacro("__pentium4");
+    Builder.defineMacro("__pentium4__");
+    Builder.defineMacro("__tune_pentium4__");
+  } else if (CPU == "yonah" || CPU == "prescott" || CPU == "nocona") {
+    Builder.defineMacro("__nocona");
+    Builder.defineMacro("__nocona__");
+    Builder.defineMacro("__tune_nocona__");
+  } else if (CPU == "core2" || CPU == "penryn") {
+    Builder.defineMacro("__core2");
+    Builder.defineMacro("__core2__");
+    Builder.defineMacro("__tune_core2__");
+  } else if (CPU == "atom") {
+    Builder.defineMacro("__atom");
+    Builder.defineMacro("__atom__");
+    Builder.defineMacro("__tune_atom__");
+  } else if (CPU == "corei7" || CPU == "corei7-avx" || CPU == "core-avx-i") {
+    Builder.defineMacro("__corei7");
+    Builder.defineMacro("__corei7__");
+    Builder.defineMacro("__tune_corei7__");
+  } else if (CPU == "k6" || CPU == "k6-2" || CPU == "k6-3") {
+    Builder.defineMacro("__k6");
+    Builder.defineMacro("__k6__");
+    Builder.defineMacro("__tune_k6__");
+    if (CPU == "k6-2") {
+      Builder.defineMacro("__k6_2__");
+      Builder.defineMacro("__tune_k6_2__");
+    } else if (CPU == "k6-3" || MMX3DNowLevel == AMD3DNow) {
+      Builder.defineMacro("__k6_3__");
+      Builder.defineMacro("__tune_k6_3__");
+    }
+  } else if (CPU == "athlon" || CPU == "athlon-tbird" || CPU == "athlon-4" ||
+             CPU == "athlon-xp" || CPU == "athlon-mp") {
+    Builder.defineMacro("__athlon");
+    Builder.defineMacro("__athlon__");
+    Builder.defineMacro("__tune_athlon__");
+    if (SSELevel != NoSSE)
+      Builder.defineMacro("__athlon_sse__");
+  } else if (CPU == "k8" || CPU == "k8-sse3" || CPU == "x86-64" ||
+             CPU == "opteron" || CPU == "opteron-sse3" || CPU == "athlon64" ||
+             CPU == "athlon64-sse3" || CPU == "athlon-fx") {
+    Builder.defineMacro("__k8");
+    Builder.defineMacro("__k8__");
+    Builder.defineMacro("__tune_k8__");
+  } else if (CPU == "geode") {
+    Builder.defineMacro("__geode");
+    Builder.defineMacro("__geode__");
+    Builder.defineMacro("__tune_geode__");
+  }
 
   // Define __NO_MATH_INLINES on linux/x86 so that we don't get inline
   // functions in glibc header files that use FP Stack inline asm which the
