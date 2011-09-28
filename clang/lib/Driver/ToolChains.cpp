@@ -1519,7 +1519,7 @@ static std::string findGCCBaseLibDir(const Driver &D,
   bool Exists;
   llvm::SmallVector<std::string, 8> Paths(D.PrefixDirs.begin(),
       D.PrefixDirs.end());
-  Paths.push_back("/usr/");
+  Paths.push_back("/usr/lib/");
   const std::string *Triples[] = {&GccTriple, &D.DefaultHostTriple};
   for (llvm::SmallVector<std::string, 8>::const_iterator it = Paths.begin(),
        ie = Paths.end(); it != ie; ++it) {

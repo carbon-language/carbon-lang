@@ -1523,8 +1523,7 @@ std::string Driver::GetProgramPath(const char *Name, const ToolChain &TC,
   if (!P.empty())
     return P.str();
 
-  P = llvm::sys::Path(llvm::sys::Program::FindProgramByName(
-            TargetSpecificExecutable));
+  P = llvm::sys::Path(llvm::sys::Program::FindProgramByName(Name));
   if (!P.empty())
     return P.str();
 
