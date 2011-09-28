@@ -35,14 +35,14 @@ class ARMSjLjLowering : public MachineFunctionPass {
   LLVMContext *Context;
 
   MachineFunction *MF;
-  const Function *Fn;
+  const Function *F;
   const TargetLowering *TLI;
   const TargetInstrInfo *TII;
   const TargetRegisterInfo *TRI;
 
-  /// createFunctionContext - Create the function context on the stack. This
-  /// returns the nonnegative identifier representing it in the FrameInfo.
-  int createFunctionContext();
+  /// setupFunctionContext - Setup the function context on the stack. Some of
+  /// the fields were set by the SjLj EH prepare pass.
+  int setupFunctionContext();
 
 public:
   static char ID;
@@ -67,19 +67,29 @@ bool ARMSjLjLowering::runOnMachineFunction(MachineFunction &mf) {
   if (!EnableNewSjLjEHPrepare) return false;
 
   MF = &mf;
-  Fn = MF->getFunction();
-  Context = &Fn->getContext();
+  F = MF->getFunction();
+  Context = &F->getContext();
   TLI = MF->getTarget().getTargetLowering();
   TII = MF->getTarget().getInstrInfo();
   TRI = MF->getTarget().getRegisterInfo();
 
-  int FrameIdx = createFunctionContext(); (void)FrameIdx;
+  // Perform the lowering only if there are invokes.
+  bool HasInvokes = false;
+  for (Function::const_iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
+    if (isa<InvokeInst>(BB->getTerminator())) {
+      HasInvokes = true;
+      break;
+    }
+
+  if (!HasInvokes) return false;
+
+  int FrameIdx = setupFunctionContext(); (void)FrameIdx;
 
   return true;
 }
 
-/// createFunctionContext - Create the function context on the stack.
-int ARMSjLjLowering::createFunctionContext() {
+/// setupFunctionContext - Create the function context on the stack.
+int ARMSjLjLowering::setupFunctionContext() {
   // struct _Unwind_FunctionContext {
   //   // next function in stack of handlers.
   //   struct _Unwind_FunctionContext *prev;
