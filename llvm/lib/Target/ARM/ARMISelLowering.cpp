@@ -7344,7 +7344,7 @@ ARMTargetLowering::PerformCMOVCombine(SDNode *N, SelectionDAG &DAG) const {
   //   movne   r0, y
   /// FIXME: Turn this into a target neutral optimization?
   SDValue Res;
-  if (CC == ARMCC::NE && FalseVal == RHS) {
+  if (CC == ARMCC::NE && FalseVal == RHS && FalseVal != LHS) {
     Res = DAG.getNode(ARMISD::CMOV, dl, VT, LHS, TrueVal, ARMcc,
                       N->getOperand(3), Cmp);
   } else if (CC == ARMCC::EQ && TrueVal == RHS) {
