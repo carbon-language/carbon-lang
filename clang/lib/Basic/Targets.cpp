@@ -1165,9 +1165,6 @@ class X86TargetInfo : public TargetInfo {
   bool HasAES;
   bool HasAVX;
 
-  // FIXME: Make this an enum and parse into the enum when set.
-  std::string CPU;
-
   /// \brief Enumeration of all of the X86 CPUs supported by Clang.
   ///
   /// Each enumeration represents a particular CPU supported by Clang. These
@@ -1247,7 +1244,7 @@ class X86TargetInfo : public TargetInfo {
     //@{
     CK_Corei7,
     CK_Corei7AVX,
-    CK_Corei7AVXi,
+    CK_CoreAVXi,
     //@}
 
     /// \name K6
@@ -1275,7 +1272,7 @@ class X86TargetInfo : public TargetInfo {
     CK_Athlon64SSE3,
     CK_AthlonFX,
     CK_K8,
-    CK_K8SSE,
+    CK_K8SSE3,
     CK_Opteron,
     CK_OpteronSSE3,
 
@@ -1290,12 +1287,12 @@ class X86TargetInfo : public TargetInfo {
     //@{
     CK_Geode
     //@}
-  };
+  } CPU;
 
 public:
   X86TargetInfo(const std::string& triple)
     : TargetInfo(triple), SSELevel(NoSSE), MMX3DNowLevel(NoMMX3DNow),
-      HasAES(false), HasAVX(false) {
+      HasAES(false), HasAVX(false), CPU(CK_Generic) {
     LongDoubleFormat = &llvm::APFloat::x87DoubleExtended;
   }
   virtual void getTargetBuiltins(const Builtin::Info *&Records,
@@ -1335,9 +1332,54 @@ public:
     return MMX3DNowLevel == NoMMX3DNow ? "no-mmx" : "";
   }
   virtual bool setCPU(const std::string &Name) {
-    // FIXME: Reject invalid CPU names.
-    CPU = Name;
-    return true;
+    CPU = llvm::StringSwitch<CPUKind>(Name)
+      .Case("i386", CK_i386)
+      .Case("i486", CK_i486)
+      .Case("winchip-c6", CK_WinChipC6)
+      .Case("winchip2", CK_WinChip2)
+      .Case("c3", CK_C3)
+      .Case("i586", CK_i586)
+      .Case("pentium", CK_Pentium)
+      .Case("pentium-mmx", CK_PentiumMMX)
+      .Case("i686", CK_i686)
+      .Case("pentiumpro", CK_PentiumPro)
+      .Case("pentium2", CK_Pentium2)
+      .Case("pentium3", CK_Pentium3)
+      .Case("pentium3m", CK_Pentium3M)
+      .Case("pentium-m", CK_PentiumM)
+      .Case("c3-2", CK_C3_2)
+      .Case("yonah", CK_Yonah)
+      .Case("pentium4", CK_Pentium4)
+      .Case("pentium4m", CK_Pentium4M)
+      .Case("prescott", CK_Prescott)
+      .Case("nocona", CK_Nocona)
+      .Case("core2", CK_Core2)
+      .Case("penryn", CK_Penryn)
+      .Case("atom", CK_Atom)
+      .Case("corei7", CK_Corei7)
+      .Case("corei7-avx", CK_Corei7AVX)
+      .Case("core-avx-i", CK_CoreAVXi)
+      .Case("k6", CK_K6)
+      .Case("k6-2", CK_K6_2)
+      .Case("k6-3", CK_K6_3)
+      .Case("athlon", CK_Athlon)
+      .Case("athlon-tbird", CK_AthlonThunderbird)
+      .Case("athlon-4", CK_Athlon4)
+      .Case("athlon-xp", CK_AthlonXP)
+      .Case("athlon-mp", CK_AthlonMP)
+      .Case("athlon64", CK_Athlon64)
+      .Case("athlon64-sse3", CK_Athlon64SSE3)
+      .Case("athlon-fx", CK_AthlonFX)
+      .Case("k8", CK_K8)
+      .Case("k8-sse3", CK_K8SSE3)
+      .Case("opteron", CK_Opteron)
+      .Case("opteron-sse3", CK_OpteronSSE3)
+      .Case("x86-64", CK_x86_64)
+      .Case("geode", CK_Geode)
+      .Default(CK_Generic);
+
+    // FIXME: When in 64-bit mode, reject 32-bit only CPUs.
+    return CPU != CK_Generic;
   }
 };
 
@@ -1364,57 +1406,98 @@ void X86TargetInfo::getDefaultFeatures(llvm::StringMap<bool> &Features) const {
   if (PointerWidth == 64)
     Features["sse2"] = Features["sse"] = Features["mmx"] = true;
 
-  if (CPU == "generic" || CPU == "i386" || CPU == "i486" || CPU == "i586" ||
-      CPU == "pentium" || CPU == "i686" || CPU == "pentiumpro")
-    ;
-  else if (CPU == "pentium-mmx" || CPU == "pentium2")
+  switch (CPU) {
+  case CK_Generic:
+  case CK_i386:
+  case CK_i486:
+  case CK_i586:
+  case CK_Pentium:
+  case CK_i686:
+  case CK_PentiumPro:
+  case CK_Geode:
+    break;
+  case CK_PentiumMMX:
+  case CK_Pentium2:
     setFeatureEnabled(Features, "mmx", true);
-  else if (CPU == "pentium3") {
+    break;
+  case CK_Pentium3:
+  case CK_Pentium3M:
     setFeatureEnabled(Features, "mmx", true);
     setFeatureEnabled(Features, "sse", true);
-  } else if (CPU == "pentium-m" || CPU == "pentium4" || CPU == "x86-64") {
+    break;
+  case CK_PentiumM:
+  case CK_Pentium4:
+  case CK_Pentium4M:
+  case CK_x86_64:
     setFeatureEnabled(Features, "mmx", true);
     setFeatureEnabled(Features, "sse2", true);
-  } else if (CPU == "yonah" || CPU == "prescott" || CPU == "nocona") {
+    break;
+  case CK_Yonah:
+  case CK_Prescott:
+  case CK_Nocona:
     setFeatureEnabled(Features, "mmx", true);
     setFeatureEnabled(Features, "sse3", true);
-  } else if (CPU == "core2") {
+    break;
+  case CK_Core2:
     setFeatureEnabled(Features, "mmx", true);
     setFeatureEnabled(Features, "ssse3", true);
-  } else if (CPU == "penryn") {
+    break;
+  case CK_Penryn:
     setFeatureEnabled(Features, "mmx", true);
     setFeatureEnabled(Features, "sse4", true);
     Features["sse42"] = false;
-  } else if (CPU == "atom") {
+    break;
+  case CK_Atom:
     setFeatureEnabled(Features, "mmx", true);
     setFeatureEnabled(Features, "sse3", true);
-  } else if (CPU == "corei7") {
+    break;
+  case CK_Corei7:
     setFeatureEnabled(Features, "mmx", true);
     setFeatureEnabled(Features, "sse4", true);
     setFeatureEnabled(Features, "aes", true);
-  } else if (CPU == "corei7-avx") {
+    break;
+  case CK_Corei7AVX:
+  case CK_CoreAVXi:
     setFeatureEnabled(Features, "mmx", true);
     setFeatureEnabled(Features, "sse4", true);
     setFeatureEnabled(Features, "aes", true);
     //setFeatureEnabled(Features, "avx", true);
-  } else if (CPU == "k6" || CPU == "winchip-c6")
+    break;
+  case CK_K6:
+  case CK_WinChipC6:
     setFeatureEnabled(Features, "mmx", true);
-  else if (CPU == "k6-2" || CPU == "k6-3" || CPU == "athlon" ||
-           CPU == "athlon-tbird" || CPU == "winchip2" || CPU == "c3") {
+    break;
+  case CK_K6_2:
+  case CK_K6_3:
+  case CK_Athlon:
+  case CK_AthlonThunderbird:
+  case CK_WinChip2:
+  case CK_C3:
     setFeatureEnabled(Features, "3dnow", true);
-  } else if (CPU == "athlon-4" || CPU == "athlon-xp" || CPU == "athlon-mp") {
+    break;
+  case CK_Athlon4:
+  case CK_AthlonXP:
+  case CK_AthlonMP:
     setFeatureEnabled(Features, "sse", true);
     setFeatureEnabled(Features, "3dnowa", true);
-  } else if (CPU == "k8" || CPU == "opteron" || CPU == "athlon64" ||
-           CPU == "athlon-fx") {
+    break;
+  case CK_K8:
+  case CK_Opteron:
+  case CK_Athlon64:
+  case CK_AthlonFX:
     setFeatureEnabled(Features, "sse2", true);
     setFeatureEnabled(Features, "3dnowa", true);
-  } else if (CPU == "k8-sse3") {
+    break;
+  case CK_K8SSE3:
+  case CK_OpteronSSE3:
+  case CK_Athlon64SSE3:
     setFeatureEnabled(Features, "sse3", true);
     setFeatureEnabled(Features, "3dnowa", true);
-  } else if (CPU == "c3-2") {
+    break;
+  case CK_C3_2:
     setFeatureEnabled(Features, "mmx", true);
     setFeatureEnabled(Features, "sse", true);
+    break;
   }
 }
 
@@ -1562,95 +1645,134 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
   Builder.defineMacro("__REGISTER_PREFIX__", "");
 
   // Subtarget options.
-  // FIXME: We should build an enum for the CPUs to switch on as we do it in
-  // multiple places.
   // FIXME: We are hard-coding the tune parameters based on the CPU, but they
   // truly should be based on -mtune options.
-  if (CPU == "i386") {
+  switch (CPU) {
+  case CK_Generic:
+    break;
+  case CK_i386:
     // The rest are coming from the i386 define above.
     Builder.defineMacro("__tune_i386__");
-  } else if (CPU == "i486" || CPU == "winchip-c6" || CPU == "winchip2" ||
-      CPU == "c3") {
+    break;
+  case CK_i486:
+  case CK_WinChipC6:
+  case CK_WinChip2:
+  case CK_C3:
     Builder.defineMacro("__i486");
     Builder.defineMacro("__i486__");
     Builder.defineMacro("__tune_i486__");
-  } else if (CPU == "i586" || CPU == "pentium" || CPU == "pentium-mmx") {
+    break;
+  case CK_i586:
+  case CK_Pentium:
+  case CK_PentiumMMX:
     Builder.defineMacro("__i586");
     Builder.defineMacro("__i586__");
     Builder.defineMacro("__tune_i586__");
     Builder.defineMacro("__pentium");
     Builder.defineMacro("__pentium__");
     Builder.defineMacro("__tune_pentium__");
-    if (CPU == "pentium-mmx") {
+    if (CPU == CK_PentiumMMX) {
       Builder.defineMacro("__pentium_mmx__");
       Builder.defineMacro("__tune_pentium_mmx__");
     }
-  } else if (CPU == "i686" || CPU == "pentiumpro" || CPU == "pentium2" ||
-             CPU == "pentium3" || CPU == "pentium3m" || CPU == "pentium-m" ||
-             CPU == "c3-2") {
+    break;
+  case CK_i686:
+  case CK_PentiumPro:
+  case CK_Pentium2:
+  case CK_Pentium3:
+  case CK_Pentium3M:
+  case CK_PentiumM:
+  case CK_C3_2:
     Builder.defineMacro("__i686");
     Builder.defineMacro("__i686__");
     // Strangely, __tune_i686__ isn't defined by GCC when CPU == i686.
     Builder.defineMacro("__pentiumpro");
     Builder.defineMacro("__pentiumpro__");
-    if (CPU != "i686") {
+    if (CPU != CK_i686) {
       Builder.defineMacro("__tune_i686__");
       Builder.defineMacro("__tune_pentiumpro__");
-      if (CPU == "pentium2" || CPU == "c3-2") {
+      if (CPU == CK_Pentium2 || CPU == CK_C3_2) {
         Builder.defineMacro("__tune_pentium2__");
-      } else if (CPU == "pentium3") {
+      } else if (CPU == CK_Pentium3) {
         Builder.defineMacro("__tune_pentium2__");
         Builder.defineMacro("__tune_pentium3__");
       }
     }
-  } else if (CPU == "pentium4" || CPU == "pentium4m") {
+    break;
+  case CK_Pentium4:
+  case CK_Pentium4M:
     Builder.defineMacro("__pentium4");
     Builder.defineMacro("__pentium4__");
     Builder.defineMacro("__tune_pentium4__");
-  } else if (CPU == "yonah" || CPU == "prescott" || CPU == "nocona") {
+    break;
+  case CK_Yonah:
+  case CK_Prescott:
+  case CK_Nocona:
     Builder.defineMacro("__nocona");
     Builder.defineMacro("__nocona__");
     Builder.defineMacro("__tune_nocona__");
-  } else if (CPU == "core2" || CPU == "penryn") {
+    break;
+  case CK_Core2:
+  case CK_Penryn:
     Builder.defineMacro("__core2");
     Builder.defineMacro("__core2__");
     Builder.defineMacro("__tune_core2__");
-  } else if (CPU == "atom") {
+    break;
+  case CK_Atom:
     Builder.defineMacro("__atom");
     Builder.defineMacro("__atom__");
     Builder.defineMacro("__tune_atom__");
-  } else if (CPU == "corei7" || CPU == "corei7-avx" || CPU == "core-avx-i") {
+    break;
+  case CK_Corei7:
+  case CK_Corei7AVX:
+  case CK_CoreAVXi:
     Builder.defineMacro("__corei7");
     Builder.defineMacro("__corei7__");
     Builder.defineMacro("__tune_corei7__");
-  } else if (CPU == "k6" || CPU == "k6-2" || CPU == "k6-3") {
+    break;
+  case CK_K6:
+  case CK_K6_2:
+  case CK_K6_3:
     Builder.defineMacro("__k6");
     Builder.defineMacro("__k6__");
     Builder.defineMacro("__tune_k6__");
-    if (CPU == "k6-2") {
+    if (CPU == CK_K6_2) {
       Builder.defineMacro("__k6_2__");
       Builder.defineMacro("__tune_k6_2__");
-    } else if (CPU == "k6-3" || MMX3DNowLevel == AMD3DNow) {
+      break;
+    } else if (CPU == CK_K6_3 || MMX3DNowLevel == AMD3DNow) {
       Builder.defineMacro("__k6_3__");
       Builder.defineMacro("__tune_k6_3__");
     }
-  } else if (CPU == "athlon" || CPU == "athlon-tbird" || CPU == "athlon-4" ||
-             CPU == "athlon-xp" || CPU == "athlon-mp") {
+    break;
+  case CK_Athlon:
+  case CK_AthlonThunderbird:
+  case CK_Athlon4:
+  case CK_AthlonXP:
+  case CK_AthlonMP:
     Builder.defineMacro("__athlon");
     Builder.defineMacro("__athlon__");
     Builder.defineMacro("__tune_athlon__");
     if (SSELevel != NoSSE)
       Builder.defineMacro("__athlon_sse__");
-  } else if (CPU == "k8" || CPU == "k8-sse3" || CPU == "x86-64" ||
-             CPU == "opteron" || CPU == "opteron-sse3" || CPU == "athlon64" ||
-             CPU == "athlon64-sse3" || CPU == "athlon-fx") {
+    break;
+  case CK_K8:
+  case CK_K8SSE3:
+  case CK_x86_64:
+  case CK_Opteron:
+  case CK_OpteronSSE3:
+  case CK_Athlon64:
+  case CK_Athlon64SSE3:
+  case CK_AthlonFX:
     Builder.defineMacro("__k8");
     Builder.defineMacro("__k8__");
     Builder.defineMacro("__tune_k8__");
-  } else if (CPU == "geode") {
+    break;
+  case CK_Geode:
     Builder.defineMacro("__geode");
     Builder.defineMacro("__geode__");
     Builder.defineMacro("__tune_geode__");
+    break;
   }
 
   // Define __NO_MATH_INLINES on linux/x86 so that we don't get inline
