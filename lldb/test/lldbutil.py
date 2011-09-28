@@ -53,10 +53,17 @@ def in_range(symbol, section):
     symEA = symbol.GetEndAddress().GetFileAddress()
     secSA = section.GetFileAddress()
     secEA = secSA + section.GetByteSize()
-    if (secSA <= symSA and symEA < secEA):
-        return True
+
+    if symEA != lldb.LLDB_INVALID_ADDRESS:
+        if secSA <= symSA and symEA <= secEA:
+            return True
+        else:
+            return False
     else:
-        return False
+        if secSA <= symSA and symSA < secEA:
+            return True
+        else:
+            return False
 
 def symbol_iter(module, section):
     """Given a module and its contained section, returns an iterator on the

@@ -43,8 +43,12 @@ class ModuleAndSectionAPIsTestCase(TestBase):
         INDENT2 = INDENT * 2
         for sec in exe_module.section_iter():
             print sec
-            if sec.GetName() == "__TEXT":
-                print INDENT + "Number of subsections: %d" % sec.GetNumSubSections()
+            print INDENT + "Number of subsections: %d" % sec.GetNumSubSections()
+            if sec.GetNumSubSections() == 0:
+                for sym in symbol_iter(exe_module, sec):
+                    print INDENT + repr(sym)
+                    print INDENT + "symbol type: %s" % symbol_type_to_str(sym.GetType())
+            else:
                 for subsec in sec:
                     print INDENT + repr(subsec)
                     # Now print the symbols belonging to the subsection....
