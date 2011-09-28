@@ -479,11 +479,9 @@ public:
   /// language options which change the target configuration.
   virtual void setForcedLangOptions(LangOptions &Opts);
 
-  /// getDefaultFeatures - Get the default set of target features for
-  /// the \args CPU; this should include all legal feature strings on
-  /// the target.
-  virtual void getDefaultFeatures(const std::string &CPU,
-                                  llvm::StringMap<bool> &Features) const {
+  /// getDefaultFeatures - Get the default set of target features for the CPU;
+  /// this should include all legal feature strings on the target.
+  virtual void getDefaultFeatures(llvm::StringMap<bool> &Features) const {
   }
 
   /// getABI - Get the ABI in use.
@@ -499,10 +497,8 @@ public:
   /// setCPU - Target the specific CPU.
   ///
   /// \return - False on error (invalid CPU name).
-  //
-  // FIXME: Remove this.
   virtual bool setCPU(const std::string &Name) {
-    return true;
+    return false;
   }
 
   /// setABI - Use the specific ABI.

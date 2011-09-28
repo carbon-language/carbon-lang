@@ -1205,8 +1205,7 @@ public:
   virtual bool setFeatureEnabled(llvm::StringMap<bool> &Features,
                                  const std::string &Name,
                                  bool Enabled) const;
-  virtual void getDefaultFeatures(const std::string &CPU,
-                                  llvm::StringMap<bool> &Features) const;
+  virtual void getDefaultFeatures(llvm::StringMap<bool> &Features) const;
   virtual void HandleTargetFeatures(std::vector<std::string> &Features);
   virtual const char* getABI() const {
     return MMX3DNowLevel == NoMMX3DNow ? "no-mmx" : "";
@@ -1218,8 +1217,7 @@ public:
   }
 };
 
-void X86TargetInfo::getDefaultFeatures(const std::string &CPU,
-                                       llvm::StringMap<bool> &Features) const {
+void X86TargetInfo::getDefaultFeatures(llvm::StringMap<bool> &Features) const {
   // FIXME: This should not be here.
   Features["3dnow"] = false;
   Features["3dnowa"] = false;
@@ -2131,8 +2129,7 @@ public:
     return true;
   }
 
-  void getDefaultFeatures(const std::string &CPU,
-                          llvm::StringMap<bool> &Features) const {
+  void getDefaultFeatures(llvm::StringMap<bool> &Features) const {
     if (CPU == "arm1136jf-s" || CPU == "arm1176jzf-s" || CPU == "mpcore")
       Features["vfp2"] = true;
     else if (CPU == "cortex-a8" || CPU == "cortex-a9")
@@ -2815,8 +2812,7 @@ public:
     CPU = Name;
     return true;
   }
-  void getDefaultFeatures(const std::string &CPU,
-                          llvm::StringMap<bool> &Features) const {
+  void getDefaultFeatures(llvm::StringMap<bool> &Features) const {
     Features[ABI] = true;
     Features[CPU] = true;
   }
@@ -3106,8 +3102,7 @@ public:
                         "f32:32:32-f64:64:64-p:32:32:32-v128:32:32";
   }
 
-  void getDefaultFeatures(const std::string &CPU,
-                          llvm::StringMap<bool> &Features) const {
+  void getDefaultFeatures(llvm::StringMap<bool> &Features) const {
   }
   virtual void getArchDefines(const LangOptions &Opts,
                               MacroBuilder &Builder) const {
@@ -3420,7 +3415,7 @@ TargetInfo *TargetInfo::CreateTargetInfo(DiagnosticsEngine &Diags,
   // Compute the default target features, we need the target to handle this
   // because features may have dependencies on one another.
   llvm::StringMap<bool> Features;
-  Target->getDefaultFeatures(Opts.CPU, Features);
+  Target->getDefaultFeatures(Features);
 
   // Apply the user specified deltas.
   for (std::vector<std::string>::const_iterator it = Opts.Features.begin(),
