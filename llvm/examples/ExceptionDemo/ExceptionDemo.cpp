@@ -40,7 +40,8 @@
 //
 //     Cases -1 and 7 are caught by a C++ test harness where the validity of
 //         of a C++ catch(...) clause catching a generated exception with a 
-//         type info type of 7 is questionable.
+//         type info type of 7 is explained by: example in rules 1.6.4 in 
+//         http://sourcery.mentor.com/public/cxx-abi/abi-eh.html (v1.22)
 //
 // This code uses code from the llvm compiler-rt project and the llvm 
 // Kaleidoscope project.
@@ -86,7 +87,7 @@
 #endif
 
 // System C++ ABI unwind types from: 
-//     http://refspecs.freestandards.org/abi-eh-1.21.html
+//     http://sourcery.mentor.com/public/cxx-abi/abi-eh.html (v1.22)
 
 extern "C" {
   
@@ -1663,12 +1664,12 @@ void runExceptionThrow(llvm::ExecutionEngine *engine,
             exc.what());
   }
   catch (...) {
-    // Catch all exceptions including our generated ones. I'm not sure
-    // why this latter functionality should work, as it seems that
-    // our exceptions should be foreign to C++ (the _Unwind_Exception::
-    // exception_class should be different from the one used by C++), and
-    // therefore C++ should ignore the generated exceptions. 
-    
+    // Catch all exceptions including our generated ones. This latter 
+    // functionality works according to the example in rules 1.6.4 of
+    // http://sourcery.mentor.com/public/cxx-abi/abi-eh.html (v1.22), 
+    // given that these will be exceptions foreign to C++ 
+    // (the _Unwind_Exception::exception_class should be different from 
+    // the one used by C++).
     fprintf(stderr,
             "\nrunExceptionThrow(...):In C++ catch all.\n");
   }
