@@ -1471,7 +1471,6 @@ void X86TargetInfo::getDefaultFeatures(llvm::StringMap<bool> &Features) const {
   case CK_Pentium:
   case CK_i686:
   case CK_PentiumPro:
-  case CK_Geode:
     break;
   case CK_PentiumMMX:
   case CK_Pentium2:
@@ -1506,7 +1505,7 @@ void X86TargetInfo::getDefaultFeatures(llvm::StringMap<bool> &Features) const {
     break;
   case CK_Atom:
     setFeatureEnabled(Features, "mmx", true);
-    setFeatureEnabled(Features, "sse3", true);
+    setFeatureEnabled(Features, "ssse3", true);
     break;
   case CK_Corei7:
     setFeatureEnabled(Features, "mmx", true);
@@ -1526,11 +1525,14 @@ void X86TargetInfo::getDefaultFeatures(llvm::StringMap<bool> &Features) const {
     break;
   case CK_K6_2:
   case CK_K6_3:
-  case CK_Athlon:
-  case CK_AthlonThunderbird:
   case CK_WinChip2:
   case CK_C3:
     setFeatureEnabled(Features, "3dnow", true);
+    break;
+  case CK_Athlon:
+  case CK_AthlonThunderbird:
+  case CK_Geode:
+    setFeatureEnabled(Features, "3dnowa", true);
     break;
   case CK_Athlon4:
   case CK_AthlonXP:

@@ -57,6 +57,7 @@
 //
 // RUN: %clang -march=pentium-mmx -m32 -E -dM %s -o - 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK_PENTIUM_MMX_M32
+// CHECK_PENTIUM_MMX_M32: #define __MMX__ 1
 // CHECK_PENTIUM_MMX_M32: #define __i386 1
 // CHECK_PENTIUM_MMX_M32: #define __i386__ 1
 // CHECK_PENTIUM_MMX_M32: #define __i586 1
@@ -74,6 +75,7 @@
 //
 // RUN: %clang -march=winchip-c6 -m32 -E -dM %s -o - 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK_WINCHIP_C6_M32
+// CHECK_WINCHIP_C6_M32: #define __MMX__ 1
 // CHECK_WINCHIP_C6_M32: #define __i386 1
 // CHECK_WINCHIP_C6_M32: #define __i386__ 1
 // CHECK_WINCHIP_C6_M32: #define __i486 1
@@ -86,6 +88,8 @@
 //
 // RUN: %clang -march=winchip2 -m32 -E -dM %s -o - 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK_WINCHIP2_M32
+// CHECK_WINCHIP2_M32: #define __3dNOW__ 1
+// CHECK_WINCHIP2_M32: #define __MMX__ 1
 // CHECK_WINCHIP2_M32: #define __i386 1
 // CHECK_WINCHIP2_M32: #define __i386__ 1
 // CHECK_WINCHIP2_M32: #define __i486 1
@@ -98,6 +102,8 @@
 //
 // RUN: %clang -march=c3 -m32 -E -dM %s -o - 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK_C3_M32
+// CHECK_C3_M32: #define __3dNOW__ 1
+// CHECK_C3_M32: #define __MMX__ 1
 // CHECK_C3_M32: #define __i386 1
 // CHECK_C3_M32: #define __i386__ 1
 // CHECK_C3_M32: #define __i486 1
@@ -110,6 +116,8 @@
 //
 // RUN: %clang -march=c3-2 -m32 -E -dM %s -o - 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK_C3_2_M32
+// CHECK_C3_2_M32: #define __MMX__ 1
+// CHECK_C3_2_M32: #define __SSE__ 1
 // CHECK_C3_2_M32: #define __i386 1
 // CHECK_C3_2_M32: #define __i386__ 1
 // CHECK_C3_2_M32: #define __i686 1
@@ -154,6 +162,7 @@
 //
 // RUN: %clang -march=pentium2 -m32 -E -dM %s -o - 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK_PENTIUM2_M32
+// CHECK_PENTIUM2_M32: #define __MMX__ 1
 // CHECK_PENTIUM2_M32: #define __i386 1
 // CHECK_PENTIUM2_M32: #define __i386__ 1
 // CHECK_PENTIUM2_M32: #define __i686 1
@@ -170,6 +179,8 @@
 //
 // RUN: %clang -march=pentium3 -m32 -E -dM %s -o - 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK_PENTIUM3_M32
+// CHECK_PENTIUM3_M32: #define __MMX__ 1
+// CHECK_PENTIUM3_M32: #define __SSE__ 1
 // CHECK_PENTIUM3_M32: #define __i386 1
 // CHECK_PENTIUM3_M32: #define __i386__ 1
 // CHECK_PENTIUM3_M32: #define __i686 1
@@ -187,6 +198,8 @@
 //
 // RUN: %clang -march=pentium3m -m32 -E -dM %s -o - 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK_PENTIUM3M_M32
+// CHECK_PENTIUM3M_M32: #define __MMX__ 1
+// CHECK_PENTIUM3M_M32: #define __SSE__ 1
 // CHECK_PENTIUM3M_M32: #define __i386 1
 // CHECK_PENTIUM3M_M32: #define __i386__ 1
 // CHECK_PENTIUM3M_M32: #define __i686 1
@@ -202,6 +215,9 @@
 //
 // RUN: %clang -march=pentium-m -m32 -E -dM %s -o - 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK_PENTIUM_M_M32
+// CHECK_PENTIUM_M_M32: #define __MMX__ 1
+// CHECK_PENTIUM_M_M32: #define __SSE2__ 1
+// CHECK_PENTIUM_M_M32: #define __SSE__ 1
 // CHECK_PENTIUM_M_M32: #define __i386 1
 // CHECK_PENTIUM_M_M32: #define __i386__ 1
 // CHECK_PENTIUM_M_M32: #define __i686 1
@@ -217,6 +233,9 @@
 //
 // RUN: %clang -march=pentium4 -m32 -E -dM %s -o - 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK_PENTIUM4_M32
+// CHECK_PENTIUM4_M32: #define __MMX__ 1
+// CHECK_PENTIUM4_M32: #define __SSE2__ 1
+// CHECK_PENTIUM4_M32: #define __SSE__ 1
 // CHECK_PENTIUM4_M32: #define __i386 1
 // CHECK_PENTIUM4_M32: #define __i386__ 1
 // CHECK_PENTIUM4_M32: #define __pentium4 1
@@ -229,6 +248,9 @@
 //
 // RUN: %clang -march=pentium4m -m32 -E -dM %s -o - 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK_PENTIUM4M_M32
+// CHECK_PENTIUM4M_M32: #define __MMX__ 1
+// CHECK_PENTIUM4M_M32: #define __SSE2__ 1
+// CHECK_PENTIUM4M_M32: #define __SSE__ 1
 // CHECK_PENTIUM4M_M32: #define __i386 1
 // CHECK_PENTIUM4M_M32: #define __i386__ 1
 // CHECK_PENTIUM4M_M32: #define __pentium4 1
@@ -241,6 +263,10 @@
 //
 // RUN: %clang -march=prescott -m32 -E -dM %s -o - 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK_PRESCOTT_M32
+// CHECK_PRESCOTT_M32: #define __MMX__ 1
+// CHECK_PRESCOTT_M32: #define __SSE2__ 1
+// CHECK_PRESCOTT_M32: #define __SSE3__ 1
+// CHECK_PRESCOTT_M32: #define __SSE__ 1
 // CHECK_PRESCOTT_M32: #define __i386 1
 // CHECK_PRESCOTT_M32: #define __i386__ 1
 // CHECK_PRESCOTT_M32: #define __nocona 1
@@ -253,6 +279,10 @@
 //
 // RUN: %clang -march=nocona -m32 -E -dM %s -o - 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK_NOCONA_M32
+// CHECK_NOCONA_M32: #define __MMX__ 1
+// CHECK_NOCONA_M32: #define __SSE2__ 1
+// CHECK_NOCONA_M32: #define __SSE3__ 1
+// CHECK_NOCONA_M32: #define __SSE__ 1
 // CHECK_NOCONA_M32: #define __i386 1
 // CHECK_NOCONA_M32: #define __i386__ 1
 // CHECK_NOCONA_M32: #define __nocona 1
@@ -261,6 +291,12 @@
 // CHECK_NOCONA_M32: #define i386 1
 // RUN: %clang -march=nocona -m64 -E -dM %s -o - 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK_NOCONA_M64
+// CHECK_NOCONA_M64: #define __MMX__ 1
+// CHECK_NOCONA_M64: #define __SSE2_MATH__ 1
+// CHECK_NOCONA_M64: #define __SSE2__ 1
+// CHECK_NOCONA_M64: #define __SSE3__ 1
+// CHECK_NOCONA_M64: #define __SSE_MATH__ 1
+// CHECK_NOCONA_M64: #define __SSE__ 1
 // CHECK_NOCONA_M64: #define __amd64 1
 // CHECK_NOCONA_M64: #define __amd64__ 1
 // CHECK_NOCONA_M64: #define __nocona 1
@@ -271,6 +307,11 @@
 //
 // RUN: %clang -march=core2 -m32 -E -dM %s -o - 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK_CORE2_M32
+// CHECK_CORE2_M32: #define __MMX__ 1
+// CHECK_CORE2_M32: #define __SSE2__ 1
+// CHECK_CORE2_M32: #define __SSE3__ 1
+// CHECK_CORE2_M32: #define __SSE__ 1
+// CHECK_CORE2_M32: #define __SSSE3__ 1
 // CHECK_CORE2_M32: #define __core2 1
 // CHECK_CORE2_M32: #define __core2__ 1
 // CHECK_CORE2_M32: #define __i386 1
@@ -279,6 +320,13 @@
 // CHECK_CORE2_M32: #define i386 1
 // RUN: %clang -march=core2 -m64 -E -dM %s -o - 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK_CORE2_M64
+// CHECK_CORE2_M64: #define __MMX__ 1
+// CHECK_CORE2_M64: #define __SSE2_MATH__ 1
+// CHECK_CORE2_M64: #define __SSE2__ 1
+// CHECK_CORE2_M64: #define __SSE3__ 1
+// CHECK_CORE2_M64: #define __SSE_MATH__ 1
+// CHECK_CORE2_M64: #define __SSE__ 1
+// CHECK_CORE2_M64: #define __SSSE3__ 1
 // CHECK_CORE2_M64: #define __amd64 1
 // CHECK_CORE2_M64: #define __amd64__ 1
 // CHECK_CORE2_M64: #define __core2 1
@@ -289,6 +337,13 @@
 //
 // RUN: %clang -march=corei7 -m32 -E -dM %s -o - 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK_COREI7_M32
+// CHECK_COREI7_M32: #define __MMX__ 1
+// CHECK_COREI7_M32: #define __SSE2__ 1
+// CHECK_COREI7_M32: #define __SSE3__ 1
+// CHECK_COREI7_M32: #define __SSE4_1__ 1
+// CHECK_COREI7_M32: #define __SSE4_2__ 1
+// CHECK_COREI7_M32: #define __SSE__ 1
+// CHECK_COREI7_M32: #define __SSSE3__ 1
 // CHECK_COREI7_M32: #define __corei7 1
 // CHECK_COREI7_M32: #define __corei7__ 1
 // CHECK_COREI7_M32: #define __i386 1
@@ -297,6 +352,15 @@
 // CHECK_COREI7_M32: #define i386 1
 // RUN: %clang -march=corei7 -m64 -E -dM %s -o - 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK_COREI7_M64
+// CHECK_COREI7_M64: #define __MMX__ 1
+// CHECK_COREI7_M64: #define __SSE2_MATH__ 1
+// CHECK_COREI7_M64: #define __SSE2__ 1
+// CHECK_COREI7_M64: #define __SSE3__ 1
+// CHECK_COREI7_M64: #define __SSE4_1__ 1
+// CHECK_COREI7_M64: #define __SSE4_2__ 1
+// CHECK_COREI7_M64: #define __SSE_MATH__ 1
+// CHECK_COREI7_M64: #define __SSE__ 1
+// CHECK_COREI7_M64: #define __SSSE3__ 1
 // CHECK_COREI7_M64: #define __amd64 1
 // CHECK_COREI7_M64: #define __amd64__ 1
 // CHECK_COREI7_M64: #define __corei7 1
@@ -307,6 +371,16 @@
 //
 // RUN: %clang -march=corei7-avx -m32 -E -dM %s -o - 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK_COREI7_AVX_M32
+// CHECK_COREI7_AVX_M32: #define __AES__ 1
+// FIXME: AVX is not yet enabled with Clang.
+// CHECK_COREI7_AVX_M32-NOT: #define __AVX__ 1
+// CHECK_COREI7_AVX_M32: #define __MMX__ 1
+// CHECK_COREI7_AVX_M32: #define __SSE2__ 1
+// CHECK_COREI7_AVX_M32: #define __SSE3__ 1
+// CHECK_COREI7_AVX_M32: #define __SSE4_1__ 1
+// CHECK_COREI7_AVX_M32: #define __SSE4_2__ 1
+// CHECK_COREI7_AVX_M32: #define __SSE__ 1
+// CHECK_COREI7_AVX_M32: #define __SSSE3__ 1
 // CHECK_COREI7_AVX_M32: #define __corei7 1
 // CHECK_COREI7_AVX_M32: #define __corei7__ 1
 // CHECK_COREI7_AVX_M32: #define __i386 1
@@ -315,6 +389,18 @@
 // CHECK_COREI7_AVX_M32: #define i386 1
 // RUN: %clang -march=corei7-avx -m64 -E -dM %s -o - 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK_COREI7_AVX_M64
+// CHECK_COREI7_AVX_M64: #define __AES__ 1
+// FIXME: AVX is not yet enabled with Clang.
+// CHECK_COREI7_AVX_M64-NOT: #define __AVX__ 1
+// CHECK_COREI7_AVX_M64: #define __MMX__ 1
+// CHECK_COREI7_AVX_M64: #define __SSE2_MATH__ 1
+// CHECK_COREI7_AVX_M64: #define __SSE2__ 1
+// CHECK_COREI7_AVX_M64: #define __SSE3__ 1
+// CHECK_COREI7_AVX_M64: #define __SSE4_1__ 1
+// CHECK_COREI7_AVX_M64: #define __SSE4_2__ 1
+// CHECK_COREI7_AVX_M64: #define __SSE_MATH__ 1
+// CHECK_COREI7_AVX_M64: #define __SSE__ 1
+// CHECK_COREI7_AVX_M64: #define __SSSE3__ 1
 // CHECK_COREI7_AVX_M64: #define __amd64 1
 // CHECK_COREI7_AVX_M64: #define __amd64__ 1
 // CHECK_COREI7_AVX_M64: #define __corei7 1
@@ -325,6 +411,16 @@
 //
 // RUN: %clang -march=core-avx-i -m32 -E -dM %s -o - 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK_CORE_AVX_I_M32
+// CHECK_CORE_AVX_I_M32: #define __AES__ 1
+// FIXME: AVX is not yet enabled with Clang.
+// CHECK_CORE_AVX_I_M32-NOT: #define __AVX__ 1
+// CHECK_CORE_AVX_I_M32: #define __MMX__ 1
+// CHECK_CORE_AVX_I_M32: #define __SSE2__ 1
+// CHECK_CORE_AVX_I_M32: #define __SSE3__ 1
+// CHECK_CORE_AVX_I_M32: #define __SSE4_1__ 1
+// CHECK_CORE_AVX_I_M32: #define __SSE4_2__ 1
+// CHECK_CORE_AVX_I_M32: #define __SSE__ 1
+// CHECK_CORE_AVX_I_M32: #define __SSSE3__ 1
 // CHECK_CORE_AVX_I_M32: #define __corei7 1
 // CHECK_CORE_AVX_I_M32: #define __corei7__ 1
 // CHECK_CORE_AVX_I_M32: #define __i386 1
@@ -333,6 +429,18 @@
 // CHECK_CORE_AVX_I_M32: #define i386 1
 // RUN: %clang -march=core-avx-i -m64 -E -dM %s -o - 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK_CORE_AVX_I_M64
+// CHECK_CORE_AVX_I_M64: #define __AES__ 1
+// FIXME: AVX is not yet enabled with Clang.
+// CHECK_CORE_AVX_I_M64-NOT: #define __AVX__ 1
+// CHECK_CORE_AVX_I_M64: #define __MMX__ 1
+// CHECK_CORE_AVX_I_M64: #define __SSE2_MATH__ 1
+// CHECK_CORE_AVX_I_M64: #define __SSE2__ 1
+// CHECK_CORE_AVX_I_M64: #define __SSE3__ 1
+// CHECK_CORE_AVX_I_M64: #define __SSE4_1__ 1
+// CHECK_CORE_AVX_I_M64: #define __SSE4_2__ 1
+// CHECK_CORE_AVX_I_M64: #define __SSE_MATH__ 1
+// CHECK_CORE_AVX_I_M64: #define __SSE__ 1
+// CHECK_CORE_AVX_I_M64: #define __SSSE3__ 1
 // CHECK_CORE_AVX_I_M64: #define __amd64 1
 // CHECK_CORE_AVX_I_M64: #define __amd64__ 1
 // CHECK_CORE_AVX_I_M64: #define __corei7 1
@@ -343,6 +451,11 @@
 //
 // RUN: %clang -march=atom -m32 -E -dM %s -o - 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK_ATOM_M32
+// CHECK_ATOM_M32: #define __MMX__ 1
+// CHECK_ATOM_M32: #define __SSE2__ 1
+// CHECK_ATOM_M32: #define __SSE3__ 1
+// CHECK_ATOM_M32: #define __SSE__ 1
+// CHECK_ATOM_M32: #define __SSSE3__ 1
 // CHECK_ATOM_M32: #define __atom 1
 // CHECK_ATOM_M32: #define __atom__ 1
 // CHECK_ATOM_M32: #define __i386 1
@@ -351,6 +464,13 @@
 // CHECK_ATOM_M32: #define i386 1
 // RUN: %clang -march=atom -m64 -E -dM %s -o - 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK_ATOM_M64
+// CHECK_ATOM_M64: #define __MMX__ 1
+// CHECK_ATOM_M64: #define __SSE2_MATH__ 1
+// CHECK_ATOM_M64: #define __SSE2__ 1
+// CHECK_ATOM_M64: #define __SSE3__ 1
+// CHECK_ATOM_M64: #define __SSE_MATH__ 1
+// CHECK_ATOM_M64: #define __SSE__ 1
+// CHECK_ATOM_M64: #define __SSSE3__ 1
 // CHECK_ATOM_M64: #define __amd64 1
 // CHECK_ATOM_M64: #define __amd64__ 1
 // CHECK_ATOM_M64: #define __atom 1
@@ -361,6 +481,9 @@
 //
 // RUN: %clang -march=geode -m32 -E -dM %s -o - 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK_GEODE_M32
+// CHECK_GEODE_M32: #define __3dNOW_A__ 1
+// CHECK_GEODE_M32: #define __3dNOW__ 1
+// CHECK_GEODE_M32: #define __MMX__ 1
 // CHECK_GEODE_M32: #define __geode 1
 // CHECK_GEODE_M32: #define __geode__ 1
 // CHECK_GEODE_M32: #define __i386 1
@@ -373,6 +496,7 @@
 //
 // RUN: %clang -march=k6 -m32 -E -dM %s -o - 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK_K6_M32
+// CHECK_K6_M32: #define __MMX__ 1
 // CHECK_K6_M32: #define __i386 1
 // CHECK_K6_M32: #define __i386__ 1
 // CHECK_K6_M32: #define __k6 1
@@ -385,6 +509,8 @@
 //
 // RUN: %clang -march=k6-2 -m32 -E -dM %s -o - 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK_K6_2_M32
+// CHECK_K6_2_M32: #define __3dNOW__ 1
+// CHECK_K6_2_M32: #define __MMX__ 1
 // CHECK_K6_2_M32: #define __i386 1
 // CHECK_K6_2_M32: #define __i386__ 1
 // CHECK_K6_2_M32: #define __k6 1
@@ -399,6 +525,8 @@
 //
 // RUN: %clang -march=k6-3 -m32 -E -dM %s -o - 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK_K6_3_M32
+// CHECK_K6_3_M32: #define __3dNOW__ 1
+// CHECK_K6_3_M32: #define __MMX__ 1
 // CHECK_K6_3_M32: #define __i386 1
 // CHECK_K6_3_M32: #define __i386__ 1
 // CHECK_K6_3_M32: #define __k6 1
@@ -413,6 +541,9 @@
 //
 // RUN: %clang -march=athlon -m32 -E -dM %s -o - 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK_ATHLON_M32
+// CHECK_ATHLON_M32: #define __3dNOW_A__ 1
+// CHECK_ATHLON_M32: #define __3dNOW__ 1
+// CHECK_ATHLON_M32: #define __MMX__ 1
 // CHECK_ATHLON_M32: #define __athlon 1
 // CHECK_ATHLON_M32: #define __athlon__ 1
 // CHECK_ATHLON_M32: #define __i386 1
@@ -425,6 +556,9 @@
 //
 // RUN: %clang -march=athlon-tbird -m32 -E -dM %s -o - 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK_ATHLON_TBIRD_M32
+// CHECK_ATHLON_TBIRD_M32: #define __3dNOW_A__ 1
+// CHECK_ATHLON_TBIRD_M32: #define __3dNOW__ 1
+// CHECK_ATHLON_TBIRD_M32: #define __MMX__ 1
 // CHECK_ATHLON_TBIRD_M32: #define __athlon 1
 // CHECK_ATHLON_TBIRD_M32: #define __athlon__ 1
 // CHECK_ATHLON_TBIRD_M32: #define __i386 1
@@ -437,6 +571,10 @@
 //
 // RUN: %clang -march=athlon-4 -m32 -E -dM %s -o - 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK_ATHLON_4_M32
+// CHECK_ATHLON_4_M32: #define __3dNOW_A__ 1
+// CHECK_ATHLON_4_M32: #define __3dNOW__ 1
+// CHECK_ATHLON_4_M32: #define __MMX__ 1
+// CHECK_ATHLON_4_M32: #define __SSE__ 1
 // CHECK_ATHLON_4_M32: #define __athlon 1
 // CHECK_ATHLON_4_M32: #define __athlon__ 1
 // CHECK_ATHLON_4_M32: #define __athlon_sse__ 1
@@ -451,6 +589,10 @@
 //
 // RUN: %clang -march=athlon-xp -m32 -E -dM %s -o - 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK_ATHLON_XP_M32
+// CHECK_ATHLON_XP_M32: #define __3dNOW_A__ 1
+// CHECK_ATHLON_XP_M32: #define __3dNOW__ 1
+// CHECK_ATHLON_XP_M32: #define __MMX__ 1
+// CHECK_ATHLON_XP_M32: #define __SSE__ 1
 // CHECK_ATHLON_XP_M32: #define __athlon 1
 // CHECK_ATHLON_XP_M32: #define __athlon__ 1
 // CHECK_ATHLON_XP_M32: #define __athlon_sse__ 1
@@ -465,6 +607,10 @@
 //
 // RUN: %clang -march=athlon-mp -m32 -E -dM %s -o - 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK_ATHLON_MP_M32
+// CHECK_ATHLON_MP_M32: #define __3dNOW_A__ 1
+// CHECK_ATHLON_MP_M32: #define __3dNOW__ 1
+// CHECK_ATHLON_MP_M32: #define __MMX__ 1
+// CHECK_ATHLON_MP_M32: #define __SSE__ 1
 // CHECK_ATHLON_MP_M32: #define __athlon 1
 // CHECK_ATHLON_MP_M32: #define __athlon__ 1
 // CHECK_ATHLON_MP_M32: #define __athlon_sse__ 1
@@ -479,6 +625,9 @@
 //
 // RUN: %clang -march=x86-64 -m32 -E -dM %s -o - 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK_X86_64_M32
+// CHECK_X86_64_M32: #define __MMX__ 1
+// CHECK_X86_64_M32: #define __SSE2__ 1
+// CHECK_X86_64_M32: #define __SSE__ 1
 // CHECK_X86_64_M32: #define __i386 1
 // CHECK_X86_64_M32: #define __i386__ 1
 // CHECK_X86_64_M32: #define __k8 1
@@ -486,6 +635,11 @@
 // CHECK_X86_64_M32: #define i386 1
 // RUN: %clang -march=x86-64 -m64 -E -dM %s -o - 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK_X86_64_M64
+// CHECK_X86_64_M64: #define __MMX__ 1
+// CHECK_X86_64_M64: #define __SSE2_MATH__ 1
+// CHECK_X86_64_M64: #define __SSE2__ 1
+// CHECK_X86_64_M64: #define __SSE_MATH__ 1
+// CHECK_X86_64_M64: #define __SSE__ 1
 // CHECK_X86_64_M64: #define __amd64 1
 // CHECK_X86_64_M64: #define __amd64__ 1
 // CHECK_X86_64_M64: #define __k8 1
@@ -495,6 +649,11 @@
 //
 // RUN: %clang -march=k8 -m32 -E -dM %s -o - 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK_K8_M32
+// CHECK_K8_M32: #define __3dNOW_A__ 1
+// CHECK_K8_M32: #define __3dNOW__ 1
+// CHECK_K8_M32: #define __MMX__ 1
+// CHECK_K8_M32: #define __SSE2__ 1
+// CHECK_K8_M32: #define __SSE__ 1
 // CHECK_K8_M32: #define __i386 1
 // CHECK_K8_M32: #define __i386__ 1
 // CHECK_K8_M32: #define __k8 1
@@ -503,6 +662,13 @@
 // CHECK_K8_M32: #define i386 1
 // RUN: %clang -march=k8 -m64 -E -dM %s -o - 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK_K8_M64
+// CHECK_K8_M64: #define __3dNOW_A__ 1
+// CHECK_K8_M64: #define __3dNOW__ 1
+// CHECK_K8_M64: #define __MMX__ 1
+// CHECK_K8_M64: #define __SSE2_MATH__ 1
+// CHECK_K8_M64: #define __SSE2__ 1
+// CHECK_K8_M64: #define __SSE_MATH__ 1
+// CHECK_K8_M64: #define __SSE__ 1
 // CHECK_K8_M64: #define __amd64 1
 // CHECK_K8_M64: #define __amd64__ 1
 // CHECK_K8_M64: #define __k8 1
@@ -513,6 +679,12 @@
 //
 // RUN: %clang -march=k8-sse3 -m32 -E -dM %s -o - 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK_K8_SSE3_M32
+// CHECK_K8_SSE3_M32: #define __3dNOW_A__ 1
+// CHECK_K8_SSE3_M32: #define __3dNOW__ 1
+// CHECK_K8_SSE3_M32: #define __MMX__ 1
+// CHECK_K8_SSE3_M32: #define __SSE2__ 1
+// CHECK_K8_SSE3_M32: #define __SSE3__ 1
+// CHECK_K8_SSE3_M32: #define __SSE__ 1
 // CHECK_K8_SSE3_M32: #define __i386 1
 // CHECK_K8_SSE3_M32: #define __i386__ 1
 // CHECK_K8_SSE3_M32: #define __k8 1
@@ -521,6 +693,14 @@
 // CHECK_K8_SSE3_M32: #define i386 1
 // RUN: %clang -march=k8-sse3 -m64 -E -dM %s -o - 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK_K8_SSE3_M64
+// CHECK_K8_SSE3_M64: #define __3dNOW_A__ 1
+// CHECK_K8_SSE3_M64: #define __3dNOW__ 1
+// CHECK_K8_SSE3_M64: #define __MMX__ 1
+// CHECK_K8_SSE3_M64: #define __SSE2_MATH__ 1
+// CHECK_K8_SSE3_M64: #define __SSE2__ 1
+// CHECK_K8_SSE3_M64: #define __SSE3__ 1
+// CHECK_K8_SSE3_M64: #define __SSE_MATH__ 1
+// CHECK_K8_SSE3_M64: #define __SSE__ 1
 // CHECK_K8_SSE3_M64: #define __amd64 1
 // CHECK_K8_SSE3_M64: #define __amd64__ 1
 // CHECK_K8_SSE3_M64: #define __k8 1
@@ -531,6 +711,11 @@
 //
 // RUN: %clang -march=opteron -m32 -E -dM %s -o - 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK_OPTERON_M32
+// CHECK_OPTERON_M32: #define __3dNOW_A__ 1
+// CHECK_OPTERON_M32: #define __3dNOW__ 1
+// CHECK_OPTERON_M32: #define __MMX__ 1
+// CHECK_OPTERON_M32: #define __SSE2__ 1
+// CHECK_OPTERON_M32: #define __SSE__ 1
 // CHECK_OPTERON_M32: #define __i386 1
 // CHECK_OPTERON_M32: #define __i386__ 1
 // CHECK_OPTERON_M32: #define __k8 1
@@ -539,6 +724,13 @@
 // CHECK_OPTERON_M32: #define i386 1
 // RUN: %clang -march=opteron -m64 -E -dM %s -o - 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK_OPTERON_M64
+// CHECK_OPTERON_M64: #define __3dNOW_A__ 1
+// CHECK_OPTERON_M64: #define __3dNOW__ 1
+// CHECK_OPTERON_M64: #define __MMX__ 1
+// CHECK_OPTERON_M64: #define __SSE2_MATH__ 1
+// CHECK_OPTERON_M64: #define __SSE2__ 1
+// CHECK_OPTERON_M64: #define __SSE_MATH__ 1
+// CHECK_OPTERON_M64: #define __SSE__ 1
 // CHECK_OPTERON_M64: #define __amd64 1
 // CHECK_OPTERON_M64: #define __amd64__ 1
 // CHECK_OPTERON_M64: #define __k8 1
@@ -549,6 +741,12 @@
 //
 // RUN: %clang -march=opteron-sse3 -m32 -E -dM %s -o - 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK_OPTERON_SSE3_M32
+// CHECK_OPTERON_SSE3_M32: #define __3dNOW_A__ 1
+// CHECK_OPTERON_SSE3_M32: #define __3dNOW__ 1
+// CHECK_OPTERON_SSE3_M32: #define __MMX__ 1
+// CHECK_OPTERON_SSE3_M32: #define __SSE2__ 1
+// CHECK_OPTERON_SSE3_M32: #define __SSE3__ 1
+// CHECK_OPTERON_SSE3_M32: #define __SSE__ 1
 // CHECK_OPTERON_SSE3_M32: #define __i386 1
 // CHECK_OPTERON_SSE3_M32: #define __i386__ 1
 // CHECK_OPTERON_SSE3_M32: #define __k8 1
@@ -557,6 +755,14 @@
 // CHECK_OPTERON_SSE3_M32: #define i386 1
 // RUN: %clang -march=opteron-sse3 -m64 -E -dM %s -o - 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK_OPTERON_SSE3_M64
+// CHECK_OPTERON_SSE3_M64: #define __3dNOW_A__ 1
+// CHECK_OPTERON_SSE3_M64: #define __3dNOW__ 1
+// CHECK_OPTERON_SSE3_M64: #define __MMX__ 1
+// CHECK_OPTERON_SSE3_M64: #define __SSE2_MATH__ 1
+// CHECK_OPTERON_SSE3_M64: #define __SSE2__ 1
+// CHECK_OPTERON_SSE3_M64: #define __SSE3__ 1
+// CHECK_OPTERON_SSE3_M64: #define __SSE_MATH__ 1
+// CHECK_OPTERON_SSE3_M64: #define __SSE__ 1
 // CHECK_OPTERON_SSE3_M64: #define __amd64 1
 // CHECK_OPTERON_SSE3_M64: #define __amd64__ 1
 // CHECK_OPTERON_SSE3_M64: #define __k8 1
@@ -567,6 +773,11 @@
 //
 // RUN: %clang -march=athlon64 -m32 -E -dM %s -o - 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK_ATHLON64_M32
+// CHECK_ATHLON64_M32: #define __3dNOW_A__ 1
+// CHECK_ATHLON64_M32: #define __3dNOW__ 1
+// CHECK_ATHLON64_M32: #define __MMX__ 1
+// CHECK_ATHLON64_M32: #define __SSE2__ 1
+// CHECK_ATHLON64_M32: #define __SSE__ 1
 // CHECK_ATHLON64_M32: #define __i386 1
 // CHECK_ATHLON64_M32: #define __i386__ 1
 // CHECK_ATHLON64_M32: #define __k8 1
@@ -575,6 +786,13 @@
 // CHECK_ATHLON64_M32: #define i386 1
 // RUN: %clang -march=athlon64 -m64 -E -dM %s -o - 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK_ATHLON64_M64
+// CHECK_ATHLON64_M64: #define __3dNOW_A__ 1
+// CHECK_ATHLON64_M64: #define __3dNOW__ 1
+// CHECK_ATHLON64_M64: #define __MMX__ 1
+// CHECK_ATHLON64_M64: #define __SSE2_MATH__ 1
+// CHECK_ATHLON64_M64: #define __SSE2__ 1
+// CHECK_ATHLON64_M64: #define __SSE_MATH__ 1
+// CHECK_ATHLON64_M64: #define __SSE__ 1
 // CHECK_ATHLON64_M64: #define __amd64 1
 // CHECK_ATHLON64_M64: #define __amd64__ 1
 // CHECK_ATHLON64_M64: #define __k8 1
@@ -585,6 +803,12 @@
 //
 // RUN: %clang -march=athlon64-sse3 -m32 -E -dM %s -o - 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK_ATHLON64_SSE3_M32
+// CHECK_ATHLON64_SSE3_M32: #define __3dNOW_A__ 1
+// CHECK_ATHLON64_SSE3_M32: #define __3dNOW__ 1
+// CHECK_ATHLON64_SSE3_M32: #define __MMX__ 1
+// CHECK_ATHLON64_SSE3_M32: #define __SSE2__ 1
+// CHECK_ATHLON64_SSE3_M32: #define __SSE3__ 1
+// CHECK_ATHLON64_SSE3_M32: #define __SSE__ 1
 // CHECK_ATHLON64_SSE3_M32: #define __i386 1
 // CHECK_ATHLON64_SSE3_M32: #define __i386__ 1
 // CHECK_ATHLON64_SSE3_M32: #define __k8 1
@@ -593,6 +817,14 @@
 // CHECK_ATHLON64_SSE3_M32: #define i386 1
 // RUN: %clang -march=athlon64-sse3 -m64 -E -dM %s -o - 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK_ATHLON64_SSE3_M64
+// CHECK_ATHLON64_SSE3_M64: #define __3dNOW_A__ 1
+// CHECK_ATHLON64_SSE3_M64: #define __3dNOW__ 1
+// CHECK_ATHLON64_SSE3_M64: #define __MMX__ 1
+// CHECK_ATHLON64_SSE3_M64: #define __SSE2_MATH__ 1
+// CHECK_ATHLON64_SSE3_M64: #define __SSE2__ 1
+// CHECK_ATHLON64_SSE3_M64: #define __SSE3__ 1
+// CHECK_ATHLON64_SSE3_M64: #define __SSE_MATH__ 1
+// CHECK_ATHLON64_SSE3_M64: #define __SSE__ 1
 // CHECK_ATHLON64_SSE3_M64: #define __amd64 1
 // CHECK_ATHLON64_SSE3_M64: #define __amd64__ 1
 // CHECK_ATHLON64_SSE3_M64: #define __k8 1
@@ -603,6 +835,11 @@
 //
 // RUN: %clang -march=athlon-fx -m32 -E -dM %s -o - 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK_ATHLON_FX_M32
+// CHECK_ATHLON_FX_M32: #define __3dNOW_A__ 1
+// CHECK_ATHLON_FX_M32: #define __3dNOW__ 1
+// CHECK_ATHLON_FX_M32: #define __MMX__ 1
+// CHECK_ATHLON_FX_M32: #define __SSE2__ 1
+// CHECK_ATHLON_FX_M32: #define __SSE__ 1
 // CHECK_ATHLON_FX_M32: #define __i386 1
 // CHECK_ATHLON_FX_M32: #define __i386__ 1
 // CHECK_ATHLON_FX_M32: #define __k8 1
@@ -611,6 +848,13 @@
 // CHECK_ATHLON_FX_M32: #define i386 1
 // RUN: %clang -march=athlon-fx -m64 -E -dM %s -o - 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK_ATHLON_FX_M64
+// CHECK_ATHLON_FX_M64: #define __3dNOW_A__ 1
+// CHECK_ATHLON_FX_M64: #define __3dNOW__ 1
+// CHECK_ATHLON_FX_M64: #define __MMX__ 1
+// CHECK_ATHLON_FX_M64: #define __SSE2_MATH__ 1
+// CHECK_ATHLON_FX_M64: #define __SSE2__ 1
+// CHECK_ATHLON_FX_M64: #define __SSE_MATH__ 1
+// CHECK_ATHLON_FX_M64: #define __SSE__ 1
 // CHECK_ATHLON_FX_M64: #define __amd64 1
 // CHECK_ATHLON_FX_M64: #define __amd64__ 1
 // CHECK_ATHLON_FX_M64: #define __k8 1
