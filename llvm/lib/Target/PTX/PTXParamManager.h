@@ -67,15 +67,15 @@ public:
   unsigned addLocalParam(unsigned Size);
 
   /// getParamName - Returns the name of the parameter as a string.
-  std::string getParamName(unsigned Param) const {
+  const std::string &getParamName(unsigned Param) const {
     assert(AllParams.count(Param) == 1 && "Param has not been defined!");
-    return AllParams.lookup(Param).Name;
+    return AllParams.find(Param)->second.Name;
   }
 
   /// getParamSize - Returns the size of the parameter in bits.
   unsigned getParamSize(unsigned Param) const {
     assert(AllParams.count(Param) == 1 && "Param has not been defined!");
-    return AllParams.lookup(Param).Size;
+    return AllParams.find(Param)->second.Size;
   }
 
 };

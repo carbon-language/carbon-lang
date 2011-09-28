@@ -225,7 +225,7 @@ SDValue PTXTargetLowering::
 
       unsigned ParamSize = Ins[i].VT.getStoreSizeInBits();
       unsigned Param = PM.addArgumentParam(ParamSize);
-      std::string ParamName = PM.getParamName(Param);
+      const std::string &ParamName = PM.getParamName(Param);
       SDValue ParamValue = DAG.getTargetExternalSymbol(ParamName.c_str(),
                                                        MVT::Other);
       SDValue ArgValue = DAG.getNode(PTXISD::LOAD_PARAM, dl, Ins[i].VT, Chain,
@@ -322,7 +322,7 @@ SDValue PTXTargetLowering::
     if (Outs.size() == 1) {
       unsigned ParamSize = OutVals[0].getValueType().getSizeInBits();
       unsigned Param = PM.addReturnParam(ParamSize);
-      std::string ParamName = PM.getParamName(Param);
+      const std::string &ParamName = PM.getParamName(Param);
       SDValue ParamValue = DAG.getTargetExternalSymbol(ParamName.c_str(),
                                                        MVT::Other);
       Chain = DAG.getNode(PTXISD::STORE_PARAM, dl, MVT::Other, Chain,
@@ -419,7 +419,7 @@ PTXTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   for (unsigned i = 0; i != OutVals.size(); ++i) {
     unsigned Size = OutVals[i].getValueType().getSizeInBits();
     unsigned Param = PM.addLocalParam(Size);
-    std::string ParamName = PM.getParamName(Param);
+    const std::string &ParamName = PM.getParamName(Param);
     SDValue ParamValue = DAG.getTargetExternalSymbol(ParamName.c_str(),
                                                      MVT::Other);
     Chain = DAG.getNode(PTXISD::STORE_PARAM, dl, MVT::Other, Chain,
@@ -433,7 +433,7 @@ PTXTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   for (unsigned i = 0; i < Ins.size(); ++i) {
     unsigned Size = Ins[i].VT.getStoreSizeInBits();
     unsigned Param = PM.addLocalParam(Size);
-    std::string ParamName = PM.getParamName(Param);
+    const std::string &ParamName = PM.getParamName(Param);
     SDValue ParamValue = DAG.getTargetExternalSymbol(ParamName.c_str(),
                                                      MVT::Other);
     Ops[i+1] = ParamValue;
