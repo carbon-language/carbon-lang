@@ -1437,6 +1437,7 @@ public:
     case CK_x86_64:
       return true;
     }
+    llvm_unreachable("Unhandled CPU kind");
   }
 };
 
