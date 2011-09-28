@@ -34,12 +34,9 @@ public:
   bool doFinalization(Module &M);
 
   virtual void EmitStartOfAsmFile(Module &M);
-
-  virtual bool runOnMachineFunction(MachineFunction &MF);
-
   virtual void EmitFunctionBodyStart();
   virtual void EmitFunctionBodyEnd();
-
+  virtual void EmitFunctionEntryLabel();
   virtual void EmitInstruction(const MachineInstr *MI);
 
   void printOperand(const MachineInstr *MI, int opNum, raw_ostream &OS);

@@ -136,6 +136,7 @@ void PTXAsmPrinter::EmitStartOfAsmFile(Module &M)
 {
   const PTXSubtarget& ST = TM.getSubtarget<PTXSubtarget>();
 
+  // Emit the PTX .version and .target attributes
   OutStreamer.EmitRawText(Twine("\t.version " + ST.getPTXVersionString()));
   OutStreamer.EmitRawText(Twine("\t.target " + ST.getTargetString() +
                                 (ST.supportsDouble() ? ""
@@ -167,13 +168,6 @@ void PTXAsmPrinter::EmitStartOfAsmFile(Module &M)
   for (Module::const_global_iterator i = M.global_begin(), e = M.global_end();
        i != e; ++i)
     EmitVariableDeclaration(i);
-}
-
-bool PTXAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
-  SetupMachineFunction(MF);
-  EmitFunctionDeclaration();
-  EmitFunctionBody();
-  return false;
 }
 
 void PTXAsmPrinter::EmitFunctionBodyStart() {
@@ -534,7 +528,7 @@ void PTXAsmPrinter::EmitVariableDeclaration(const GlobalVariable *gv) {
   OutStreamer.AddBlankLine();
 }
 
-void PTXAsmPrinter::EmitFunctionDeclaration() {
+void PTXAsmPrinter::EmitFunctionEntryLabel() {
   // The function label could have already been emitted if two symbols end up
   // conflicting due to asm renaming.  Detect this and emit an error.
   if (!CurrentFnSym->isUndefined()) {
