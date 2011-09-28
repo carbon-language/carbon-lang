@@ -4757,7 +4757,8 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
   case Intrinsic::eh_sjlj_functioncontext: {
     // Get and store the index of the function context.
     MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();
-    AllocaInst *FnCtx = cast<AllocaInst>(I.getArgOperand(0));
+    AllocaInst *FnCtx =
+      cast<AllocaInst>(I.getArgOperand(0)->stripPointerCasts());
     int FI = FuncInfo.StaticAllocaMap[FnCtx];
     MFI->setFunctionContextIndex(FI);
     return 0;
