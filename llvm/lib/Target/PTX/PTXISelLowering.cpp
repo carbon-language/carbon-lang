@@ -399,19 +399,11 @@ PTXTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   Ops[0] = Chain;
 
   // Identify the callee function
-  if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
-    const GlobalValue *GV = G->getGlobal();
-    if (const Function *F = dyn_cast<Function>(GV)) {
-      assert(F->getCallingConv() == CallingConv::PTX_Device &&
-             "PTX function calls must be to PTX device functions");
-      Callee = DAG.getTargetGlobalAddress(GV, dl, getPointerTy());
-      Ops[Ins.size()+1] = Callee;
-    } else {
-      assert(false && "GlobalValue is not a function");
-    }
-  } else {
-    assert(false && "Function must be a GlobalAddressSDNode");
-  }
+  const GlobalValue *GV = cast<GlobalAddressSDNode>(Callee)->getGlobal();
+  assert(cast<Function>(GV)->getCallingConv() == CallingConv::PTX_Device &&
+         "PTX function calls must be to PTX device functions");
+  Callee = DAG.getTargetGlobalAddress(GV, dl, getPointerTy());
+  Ops[Ins.size()+1] = Callee;
 
   // Generate STORE_PARAM nodes for each function argument.  In PTX, function
   // arguments are explicitly stored into .param variables and passed as
