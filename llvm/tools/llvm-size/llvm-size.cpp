@@ -80,7 +80,7 @@ static bool error(error_code ec) {
 static int getNumLengthAsString(uint64_t num) {
   APInt conv(64, num);
   SmallString<32> result;
-  conv.toString(result, unsigned int(Radix), false, true);
+  conv.toString(result, static_cast<unsigned int>(Radix), false, true);
   return result.size();
 }
 
