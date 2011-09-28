@@ -141,7 +141,7 @@ copyPhysReg(MachineBasicBlock &MBB,
   }
 
   if (Mips::FGR32RegClass.contains(DestReg, SrcReg)) {
-    BuildMI(MBB, I, DL, get(Mips::FMOV_S), DestReg)
+    BuildMI(MBB, I, DL, get(Mips::FMOV_S32), DestReg)
       .addReg(SrcReg, getKillRegState(KillSrc));
     return;
   }
