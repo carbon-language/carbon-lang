@@ -78,6 +78,13 @@ case $TRIPLE in
 			-Wl,-force_symbols_not_weak_list,notweak.exp "
 	fi
     ;;
+  *-*-mingw*)
+    # FIXME: removing libgcc and libsupc++ dependencies means porting libcxxrt and LLVM/compiler-rt
+    SOEXT=dll
+    LDSHARED_FLAGS="-o libc++.dll \
+        -shared -nodefaultlibs -Wl,--export-all-symbols -Wl,--allow-multiple-definition -Wl,--out-implib,libc++.dll.a \
+        -lsupc++ -lpthread -lmingw32 -lgcc_s -lgcc -lmoldname -lmingwex -lmsvcr100 -ladvapi32 -lshell32 -luser32 -lkernel32 -lmingw32 -lgcc_s -lgcc -lmoldname -lmingwex -lmsvcrt"
+	;;
   *)
     RC_CFLAGS="-fPIC"
     SOEXT=so
@@ -97,8 +104,13 @@ set -x
 for FILE in ../src/*.cpp; do
 	$CXX -c -g -Os $RC_CFLAGS $EXTRA_FLAGS -nostdinc++ -I../include $FILE
 done
-
-
+case $TRIPLE in
+  *-*-mingw*)
+  for FILE in ../src/support/win32/*.cpp; do
+    $CXX -c -g -Os $RC_CFLAGS $EXTRA_FLAGS -nostdinc++ -I../include $FILE
+  done
+  ;;
+esac
 $CC *.o $RC_CFLAGS $LDSHARED_FLAGS $EXTRA_FLAGS
 
 #libtool -static -o libc++.a *.o

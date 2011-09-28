@@ -1,5 +1,5 @@
 // -*- C++ -*-
-//===--------------------------- support/win32/support.h --------------------------===//
+//===----------------------- support/win32/support.h ----------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,12 +8,21 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <support/win32/support.h>
+#include <stdarg.h> // va_start, va_end
 #include <stddef.h> // size_t
 #include <stdlib.h> // malloc
 #include <stdio.h>  // vsprintf, vsnprintf
 #include <string.h> // strcpy, wcsncpy
-#include <wchar.h>  // mbstate_t
 
+int asprintf(char **sptr, const char *__restrict__ fmt, ...)
+{
+    va_list ap;
+    va_start(ap, fmt);
+    int result = vasprintf(sptr, fmt, ap);
+    va_end(ap);
+	return result;
+}
 int vasprintf( char **sptr, const char *__restrict__ fmt, va_list ap )
 {
     *sptr = NULL;
