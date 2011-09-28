@@ -58,6 +58,7 @@ namespace {
     Constant *ExceptionFn;
     Constant *CallSiteFn;
     Constant *DispatchSetupFn;
+    Constant *FuncCtxFn;
     Value *CallSite;
     DenseMap<InvokeInst*, BasicBlock*> LPadSuccMap;
   public:
@@ -74,7 +75,8 @@ namespace {
 
   private:
     bool setupEntryBlockAndCallSites(Function &F);
-    void setupFunctionContext(Function &F, ArrayRef<LandingPadInst*> LPads);
+    std::pair<Value*, Value*>
+    setupFunctionContext(Function &F, ArrayRef<LandingPadInst*> LPads);
 
     void insertCallSiteStore(Instruction *I, int Number, Value *CallSite);
     void markInvokeCallSite(InvokeInst *II, int InvokeNo, Value *CallSite,
@@ -125,6 +127,7 @@ bool SjLjEHPass::doInitialization(Module &M) {
   CallSiteFn = Intrinsic::getDeclaration(&M, Intrinsic::eh_sjlj_callsite);
   DispatchSetupFn
     = Intrinsic::getDeclaration(&M, Intrinsic::eh_sjlj_dispatch_setup);
+  FuncCtxFn = Intrinsic::getDeclaration(&M, Intrinsic::eh_sjlj_functioncontext);
   PersonalityFn = 0;
 
   return true;
@@ -709,8 +712,8 @@ bool SjLjEHPass::insertSjLjEHSupport(Function &F) {
 
 /// setupFunctionContext - Allocate the function context on the stack and fill
 /// it with all of the data that we know at this point.
-void SjLjEHPass::setupFunctionContext(Function &F,
-                                      ArrayRef<LandingPadInst*> LPads) {
+std::pair<Value*, Value*> SjLjEHPass::
+setupFunctionContext(Function &F, ArrayRef<LandingPadInst*> LPads) {
   BasicBlock *EntryBB = F.begin();
 
   // Create an alloca for the incoming jump buffer ptr and the new jump buffer
@@ -720,15 +723,6 @@ void SjLjEHPass::setupFunctionContext(Function &F,
     TLI->getTargetData()->getPrefTypeAlignment(FunctionContextTy);
   AllocaInst *FuncCtx =
     new AllocaInst(FunctionContextTy, 0, Align, "fn_context", EntryBB->begin());
-
-  // Store a pointer to the function context so that the back-end will know
-  // where to look for it.
-  CallInst::Create(Intrinsic::getDeclaration(F.getParent(),
-                                            Intrinsic::eh_sjlj_functioncontext),
-                   CastInst::Create(Instruction::BitCast, FuncCtx,
-                                    Type::getInt8PtrTy(F.getContext()), "",
-                                    EntryBB->getTerminator()),
-                   "", EntryBB->getTerminator());
 
   // Fill in the function context structure.
   Value *Idxs[2];
@@ -811,18 +805,46 @@ void SjLjEHPass::setupFunctionContext(Function &F,
                                 EntryBB->getTerminator());
   new StoreInst(Val, FramePtr, true, EntryBB->getTerminator());
 
+  return std::make_pair(FuncCtx, JBufPtr);
+}
+
+/// setupEntryBlockAndCallSites - Setup the entry block by creating and filling
+/// the function context and marking the call sites with the appropriate
+/// values. These values are used by the DWARF EH emitter.
+bool SjLjEHPass::setupEntryBlockAndCallSites(Function &F) {
+  SmallVector<ReturnInst*,     16> Returns;
+  SmallVector<InvokeInst*,     16> Invokes;
+  SmallVector<LandingPadInst*, 16> LPads;
+
+  // Look through the terminators of the basic blocks to find invokes.
+  for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
+    if (InvokeInst *II = dyn_cast<InvokeInst>(BB->getTerminator())) {
+      Invokes.push_back(II);
+      LPads.push_back(II->getUnwindDest()->getLandingPadInst());
+    } else if (ReturnInst *RI = dyn_cast<ReturnInst>(BB->getTerminator())) {
+      Returns.push_back(RI);
+    }
+
+  if (Invokes.empty()) return false;
+
+  std::pair<Value*, Value*> FuncCtx = setupFunctionContext(F, LPads);
+  BasicBlock *EntryBB = F.begin();
+
   // Save the stack pointer.
-  Idxs[1] = ConstantInt::get(Int32Ty, 2);
+  Type *Int32Ty = Type::getInt32Ty(F.getContext());
+  Value *Idxs[2] = {
+    ConstantInt::get(Int32Ty, 0), ConstantInt::get(Int32Ty, 2)
+  };
   Value *StackPtr =
-    GetElementPtrInst::Create(JBufPtr, Idxs, "jbuf_sp_gep",
+    GetElementPtrInst::Create(FuncCtx.second, Idxs, "jbuf_sp_gep",
                               EntryBB->getTerminator());
 
-  Val = CallInst::Create(StackAddrFn, "sp", EntryBB->getTerminator());
+  Value *Val = CallInst::Create(StackAddrFn, "sp", EntryBB->getTerminator());
   new StoreInst(Val, StackPtr, true, EntryBB->getTerminator());
 
   // Call the setjmp instrinsic. It fills in the rest of the jmpbuf.
   Value *SetjmpArg =
-    CastInst::Create(Instruction::BitCast, JBufPtr,
+    CastInst::Create(Instruction::BitCast, FuncCtx.second,
                      Type::getInt8PtrTy(F.getContext()), "",
                      EntryBB->getTerminator());
   Value *DispatchVal = CallInst::Create(BuiltinSetjmpFn, SetjmpArg,
@@ -832,25 +854,14 @@ void SjLjEHPass::setupFunctionContext(Function &F,
   // Add a call to dispatch_setup after the setjmp call. This is expanded to any
   // target-specific setup that needs to be done.
   CallInst::Create(DispatchSetupFn, DispatchVal, "", EntryBB->getTerminator());
-}
 
-/// setupEntryBlockAndCallSites - Setup the entry block by creating and filling
-/// the function context and marking the call sites with the appropriate
-/// values. These values are used by the DWARF EH emitter.
-bool SjLjEHPass::setupEntryBlockAndCallSites(Function &F) {
-  SmallVector<InvokeInst*,     16> Invokes;
-  SmallVector<LandingPadInst*, 16> LPads;
-
-  // Look through the terminators of the basic blocks to find invokes.
-  for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
-    if (InvokeInst *II = dyn_cast<InvokeInst>(BB->getTerminator())) {
-      Invokes.push_back(II);
-      LPads.push_back(II->getUnwindDest()->getLandingPadInst());
-    }
-
-  if (Invokes.empty()) return false;
-
-  setupFunctionContext(F, LPads);
+  // Store a pointer to the function context so that the back-end will know
+  // where to look for it.
+  Value *FuncCtxArg =
+    CastInst::Create(Instruction::BitCast, FuncCtx.first,
+                     Type::getInt8PtrTy(F.getContext()), "",
+                     EntryBB->getTerminator());
+  CallInst::Create(FuncCtxFn, FuncCtxArg, "", EntryBB->getTerminator());
 
   // At this point, we are all set up, update the invoke instructions to mark
   // their call_site values, and fill in the dispatch switch accordingly.
@@ -879,6 +890,16 @@ bool SjLjEHPass::setupEntryBlockAndCallSites(Function &F) {
         insertCallSiteStore(RI, -1, CallSite);
       }
   }
+
+  // Register the function context and make sure it's known to not throw
+  CallInst *Register = CallInst::Create(RegisterFn, FuncCtx.first, "",
+                                        EntryBB->getTerminator());
+  Register->setDoesNotThrow();
+
+  // Finally, for any returns from this function, if this function contains an
+  // invoke, add a call to unregister the function context.
+  for (unsigned I = 0, E = Returns.size(); I != E; ++I)
+    CallInst::Create(UnregisterFn, FuncCtx.first, "", Returns[I]);
 
   return true;
 }
