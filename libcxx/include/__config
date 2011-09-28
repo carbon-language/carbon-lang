@@ -309,8 +309,8 @@ template <unsigned> struct __static_assert_check {};
 #define _LIBCPP_LOCALE__L_EXTENSIONS 1
 #endif
 
-#if __APPLE__ || _WIN32
-#define _LIBCPP_STABLE_APPLE_ABI
+#if __APPLE__ || __FreeBSD__
+#define _LIBCPP_HAS_DEFAULTRUNELOCALE
 #endif
 
 #if __APPLE__ || __FreeBSD__

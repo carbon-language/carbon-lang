@@ -26,32 +26,17 @@
 #endif // _!WIN32
 #include <stdlib.h>
 
-#ifdef _LIBCPP_STABLE_APPLE_ABI
-namespace {
-  decltype(MB_CUR_MAX_L(_VSTD::declval<locale_t>()))
-  inline _LIBCPP_INLINE_VISIBILITY
-  mb_cur_max_l(locale_t loc)
-  {
-    return MB_CUR_MAX_L(loc);
-  }
-}
-#endif
-
 _LIBCPP_BEGIN_NAMESPACE_STD
 
-#ifndef _LIBCPP_STABLE_APPLE_ABI
+#ifdef __cloc_defined
 locale_t __cloc() {
   // In theory this could create a race condition. In practice
   // the race condition is non-fatal since it will just create
   // a little resource leak. Better approach would be appreciated.
-#ifdef __APPLE__
-  return 0;
-#else
   static locale_t result = newlocale(LC_ALL_MASK, "C", 0);
   return result;
-#endif
 }
-#endif // _LIBCPP_STABLE_APPLE_ABI
+#endif // __cloc_defined
 
 namespace {
 
@@ -737,7 +722,7 @@ ctype<wchar_t>::do_scan_not(mask m, const char_type* low, const char_type* high)
 wchar_t
 ctype<wchar_t>::do_toupper(char_type c) const
 {
-#if !(defined(_LIBCPP_STABLE_APPLE_ABI) || defined(__FreeBSD__))
+#ifndef _LIBCPP_HAS_DEFAULTRUNELOCALE
     return isascii(c) ? ctype<char>::__classic_upper_table()[c] : c;
 #else
     return isascii(c) ? _DefaultRuneLocale.__mapupper[c] : c;
@@ -748,7 +733,7 @@ const wchar_t*
 ctype<wchar_t>::do_toupper(char_type* low, const char_type* high) const
 {
     for (; low != high; ++low)
-#if !(defined(_LIBCPP_STABLE_APPLE_ABI) || defined(__FreeBSD__))
+#ifndef _LIBCPP_HAS_DEFAULTRUNELOCALE
         *low = isascii(*low) ? ctype<char>::__classic_upper_table()[*low]
                              : *low;
 #else
@@ -760,7 +745,7 @@ ctype<wchar_t>::do_toupper(char_type* low, const char_type* high) const
 wchar_t
 ctype<wchar_t>::do_tolower(char_type c) const
 {
-#ifndef _LIBCPP_STABLE_APPLE_ABI
+#ifndef _LIBCPP_HAS_DEFAULTRUNELOCALE
     return isascii(c) ? ctype<char>::__classic_lower_table()[c] : c;
 #else
     return isascii(c) ? _DefaultRuneLocale.__maplower[c] : c;
@@ -771,7 +756,7 @@ const wchar_t*
 ctype<wchar_t>::do_tolower(char_type* low, const char_type* high) const
 {
     for (; low != high; ++low)
-#ifndef _LIBCPP_STABLE_APPLE_ABI
+#ifndef _LIBCPP_HAS_DEFAULTRUNELOCALE
         *low = isascii(*low) ? ctype<char>::__classic_lower_table()[*low]
                              : *low;
 #else
@@ -835,7 +820,7 @@ ctype<char>::~ctype()
 char
 ctype<char>::do_toupper(char_type c) const
 {
-#ifndef _LIBCPP_STABLE_APPLE_ABI
+#ifndef _LIBCPP_HAS_DEFAULTRUNELOCALE
     return isascii(c) ? __classic_upper_table()[c] : c;
 #else
     return isascii(c) ? _DefaultRuneLocale.__mapupper[c] : c;
@@ -846,7 +831,7 @@ const char*
 ctype<char>::do_toupper(char_type* low, const char_type* high) const
 {
     for (; low != high; ++low)
-#ifndef _LIBCPP_STABLE_APPLE_ABI
+#ifndef _LIBCPP_HAS_DEFAULTRUNELOCALE
         *low = isascii(*low) ? __classic_upper_table()[*low] : *low;
 #else
         *low = isascii(*low) ? _DefaultRuneLocale.__mapupper[*low] : *low;
@@ -857,7 +842,7 @@ ctype<char>::do_toupper(char_type* low, const char_type* high) const
 char
 ctype<char>::do_tolower(char_type c) const
 {
-#ifndef _LIBCPP_STABLE_APPLE_ABI
+#ifndef _LIBCPP_HAS_DEFAULTRUNELOCALE
     return isascii(c) ? __classic_lower_table()[c] : c;
 #else
     return isascii(c) ? _DefaultRuneLocale.__maplower[c] : c;
@@ -868,7 +853,7 @@ const char*
 ctype<char>::do_tolower(char_type* low, const char_type* high) const
 {
     for (; low != high; ++low)
-#ifndef _LIBCPP_STABLE_APPLE_ABI
+#ifndef _LIBCPP_HAS_DEFAULTRUNELOCALE
         *low = isascii(*low) ? __classic_lower_table()[*low] : *low;
 #else
         *low = isascii(*low) ? _DefaultRuneLocale.__maplower[*low] : *low;
@@ -923,7 +908,7 @@ ctype<char>::classic_table()  _NOEXCEPT
 #endif
 }
 
-#ifndef _LIBCPP_STABLE_APPLE_ABI
+#ifndef _LIBCPP_HAS_DEFAULTRUNELOCALE
 const int*
 ctype<char>::__classic_lower_table() _NOEXCEPT
 {
@@ -947,7 +932,7 @@ ctype<char>::__classic_upper_table() _NOEXCEPT
     return NULL;
 #endif
 }
-#endif // _LIBCPP_STABLE_APPLE_ABI
+#endif // _LIBCPP_HAS_DEFAULTRUNELOCALE
 
 // template <> class ctype_byname<char>
 
@@ -1170,7 +1155,7 @@ ctype_byname<wchar_t>::do_tolower(char_type* low, const char_type* high) const
 wchar_t
 ctype_byname<wchar_t>::do_widen(char c) const
 {
-#ifdef _LIBCPP_STABLE_APPLE_ABI
+#ifdef _LIBCPP_LOCALE__L_EXTENSIONS
     return btowc_l(c, __l);
 #else
     return __btowc_l(c, __l);
@@ -1181,7 +1166,7 @@ const char*
 ctype_byname<wchar_t>::do_widen(const char* low, const char* high, char_type* dest) const
 {
     for (; low != high; ++low, ++dest)
-#ifdef _LIBCPP_STABLE_APPLE_ABI
+#ifdef _LIBCPP_LOCALE__L_EXTENSIONS
         *dest = btowc_l(*low, __l);
 #else
         *dest = __btowc_l(*low, __l);
@@ -1192,7 +1177,7 @@ ctype_byname<wchar_t>::do_widen(const char* low, const char* high, char_type* de
 char
 ctype_byname<wchar_t>::do_narrow(char_type c, char dfault) const
 {
-#ifdef _LIBCPP_STABLE_APPLE_ABI
+#ifdef _LIBCPP_LOCALE__L_EXTENSIONS
     int r = wctob_l(c, __l);
 #else
     int r = __wctob_l(c, __l);
@@ -1205,7 +1190,7 @@ ctype_byname<wchar_t>::do_narrow(const char_type* low, const char_type* high, ch
 {
     for (; low != high; ++low, ++dest)
     {
-#ifdef _LIBCPP_STABLE_APPLE_ABI
+#ifdef _LIBCPP_LOCALE__L_EXTENSIONS
         int r = wctob_l(*low, __l);
 #else
         int r = __wctob_l(*low, __l);
@@ -1319,7 +1304,7 @@ codecvt<wchar_t, char, mbstate_t>::do_out(state_type& st,
     {
         // save state in case needed to reover to_nxt on error
         mbstate_t save_state = st;
-#ifdef _LIBCPP_STABLE_APPLE_ABI
+#ifdef _LIBCPP_LOCALE__L_EXTENSIONS
         size_t n = wcsnrtombs_l(to, &frm_nxt, fend-frm, to_end-to, &st, __l);
 #else
         size_t n = __wcsnrtombs_l(to, &frm_nxt, fend-frm, to_end-to, &st, __l);
@@ -1329,7 +1314,7 @@ codecvt<wchar_t, char, mbstate_t>::do_out(state_type& st,
             // need to recover to_nxt
             for (to_nxt = to; frm != frm_nxt; ++frm)
             {
-#ifdef _LIBCPP_STABLE_APPLE_ABI
+#ifdef _LIBCPP_LOCALE__L_EXTENSIONS
                 n = wcrtomb_l(to_nxt, *frm, &save_state, __l);
 #else
                 n = __wcrtomb_l(to_nxt, *frm, &save_state, __l);
@@ -1350,7 +1335,7 @@ codecvt<wchar_t, char, mbstate_t>::do_out(state_type& st,
         {
             // Try to write the terminating null
             extern_type tmp[MB_LEN_MAX];
-#ifdef _LIBCPP_STABLE_APPLE_ABI
+#ifdef _LIBCPP_LOCALE__L_EXTENSIONS
             n = wcrtomb_l(tmp, intern_type(), &st, __l);
 #else
             n = __wcrtomb_l(tmp, intern_type(), &st, __l);
@@ -1387,7 +1372,7 @@ codecvt<wchar_t, char, mbstate_t>::do_in(state_type& st,
     {
         // save state in case needed to reover to_nxt on error
         mbstate_t save_state = st;
-#ifdef _LIBCPP_STABLE_APPLE_ABI
+#ifdef _LIBCPP_LOCALE__L_EXTENSIONS
         size_t n = mbsnrtowcs_l(to, &frm_nxt, fend-frm, to_end-to, &st, __l);
 #else
         size_t n = __mbsnrtowcs_l(to, &frm_nxt, fend-frm, to_end-to, &st, __l);
@@ -1397,7 +1382,7 @@ codecvt<wchar_t, char, mbstate_t>::do_in(state_type& st,
             // need to recover to_nxt
             for (to_nxt = to; frm != frm_nxt; ++to_nxt)
             {
-#ifdef _LIBCPP_STABLE_APPLE_ABI
+#ifdef _LIBCPP_LOCALE__L_EXTENSIONS
                 n = mbrtowc_l(to_nxt, frm, fend-frm, &save_state, __l);
 #else
                 n = __mbrtowc_l(to_nxt, frm, fend-frm, &save_state, __l);
@@ -1429,7 +1414,7 @@ codecvt<wchar_t, char, mbstate_t>::do_in(state_type& st,
         if (fend != frm_end)  // set up next null terminated sequence
         {
             // Try to write the terminating null
-#ifdef _LIBCPP_STABLE_APPLE_ABI
+#ifdef _LIBCPP_LOCALE__L_EXTENSIONS
             n = mbrtowc_l(to_nxt, frm_nxt, 1, &st, __l);
 #else
             n = __mbrtowc_l(to_nxt, frm_nxt, 1, &st, __l);
@@ -1453,7 +1438,7 @@ codecvt<wchar_t, char, mbstate_t>::do_unshift(state_type& st,
 {
     to_nxt = to;
     extern_type tmp[MB_LEN_MAX];
-#ifdef _LIBCPP_STABLE_APPLE_ABI
+#ifdef _LIBCPP_LOCALE__L_EXTENSIONS
     size_t n = wcrtomb_l(tmp, intern_type(), &st, __l);
 #else
     size_t n = __wcrtomb_l(tmp, intern_type(), &st, __l);
@@ -1471,14 +1456,14 @@ codecvt<wchar_t, char, mbstate_t>::do_unshift(state_type& st,
 int
 codecvt<wchar_t, char, mbstate_t>::do_encoding() const  _NOEXCEPT
 {
-#ifdef _LIBCPP_STABLE_APPLE_ABI
+#ifdef _LIBCPP_LOCALE__L_EXTENSIONS
     if (mbtowc_l((wchar_t*) 0, (const char*) 0, MB_LEN_MAX, __l) == 0)
 #else
     if (__mbtowc_l((wchar_t*) 0, (const char*) 0, MB_LEN_MAX, __l) == 0)
 #endif
     {
         // stateless encoding
-#ifdef _LIBCPP_STABLE_APPLE_ABI
+#ifdef _LIBCPP_LOCALE__L_EXTENSIONS
         if (__l == 0 || MB_CUR_MAX_L(__l) == 1)  // there are no known constant length encodings
 #else
         if (__l == 0 || __mb_cur_max_l(__l) == 1)  // there are no known constant length encodings
@@ -1502,7 +1487,7 @@ codecvt<wchar_t, char, mbstate_t>::do_length(state_type& st,
     int nbytes = 0;
     for (size_t nwchar_t = 0; nwchar_t < mx && frm != frm_end; ++nwchar_t)
     {
-#ifdef _LIBCPP_STABLE_APPLE_ABI
+#ifdef _LIBCPP_LOCALE__L_EXTENSIONS
         size_t n = mbrlen_l(frm, frm_end-frm, &st, __l);
 #else
         size_t n = __mbrlen_l(frm, frm_end-frm, &st, __l);
@@ -1528,7 +1513,7 @@ codecvt<wchar_t, char, mbstate_t>::do_length(state_type& st,
 int
 codecvt<wchar_t, char, mbstate_t>::do_max_length() const  _NOEXCEPT
 {
-#ifdef _LIBCPP_STABLE_APPLE_ABI
+#ifdef _LIBCPP_LOCALE__L_EXTENSIONS
     return __l == 0 ? 1 : MB_CUR_MAX_L(__l);
 #else
     return __l == 0 ? 1 : __mb_cur_max_l(__l);
@@ -4081,7 +4066,7 @@ numpunct_byname<char>::__init(const char* nm)
             throw runtime_error("numpunct_byname<char>::numpunct_byname"
                                 " failed to construct for " + string(nm));
 #endif  // _LIBCPP_NO_EXCEPTIONS
-#ifdef _LIBCPP_STABLE_APPLE_ABI
+#ifdef _LIBCPP_LOCALE__L_EXTENSIONS
         lconv* lc = localeconv_l(loc.get());
 #else
         lconv* lc = __localeconv_l(loc.get());
@@ -4124,7 +4109,7 @@ numpunct_byname<wchar_t>::__init(const char* nm)
             throw runtime_error("numpunct_byname<char>::numpunct_byname"
                                 " failed to construct for " + string(nm));
 #endif  // _LIBCPP_NO_EXCEPTIONS
-#ifdef _LIBCPP_STABLE_APPLE_ABI
+#ifdef _LIBCPP_LOCALE__L_EXTENSIONS
         lconv* lc = localeconv_l(loc.get());
 #else
         lconv* lc = __localeconv_l(loc.get());
@@ -4719,7 +4704,7 @@ __time_get_storage<wchar_t>::__analyze(char fmt, const ctype<wchar_t>& ct)
     wchar_t* wbb = wbuf;
     mbstate_t mb = {0};
     const char* bb = buf;
-#ifdef _LIBCPP_STABLE_APPLE_ABI
+#ifdef _LIBCPP_LOCALE__L_EXTENSIONS
     size_t i = mbsrtowcs_l( wbb, &bb, sizeof(wbuf)/sizeof(wbuf[0]), &mb, __loc_);
 #else
     size_t i = __mbsrtowcs_l( wbb, &bb, sizeof(wbuf)/sizeof(wbuf[0]), &mb, __loc_);
@@ -4904,7 +4889,7 @@ __time_get_storage<wchar_t>::init(const ctype<wchar_t>& ct)
         be = strftime_l(buf, 100, "%A", &t, __loc_);
         mb = mbstate_t();
         const char* bb = buf;
-#ifdef _LIBCPP_STABLE_APPLE_ABI
+#ifdef _LIBCPP_LOCALE__L_EXTENSIONS
         size_t j = mbsrtowcs_l(wbuf, &bb, sizeof(wbuf)/sizeof(wbuf[0]), &mb, __loc_);
 #else
         size_t j = __mbsrtowcs_l(wbuf, &bb, sizeof(wbuf)/sizeof(wbuf[0]), &mb, __loc_);
@@ -4916,7 +4901,7 @@ __time_get_storage<wchar_t>::init(const ctype<wchar_t>& ct)
         be = strftime_l(buf, 100, "%a", &t, __loc_);
         mb = mbstate_t();
         bb = buf;
-#ifdef _LIBCPP_STABLE_APPLE_ABI
+#ifdef _LIBCPP_LOCALE__L_EXTENSIONS
         j = mbsrtowcs_l(wbuf, &bb, sizeof(wbuf)/sizeof(wbuf[0]), &mb, __loc_);
 #else
         j = __mbsrtowcs_l(wbuf, &bb, sizeof(wbuf)/sizeof(wbuf[0]), &mb, __loc_);
@@ -4933,7 +4918,7 @@ __time_get_storage<wchar_t>::init(const ctype<wchar_t>& ct)
         be = strftime_l(buf, 100, "%B", &t, __loc_);
         mb = mbstate_t();
         const char* bb = buf;
-#ifdef _LIBCPP_STABLE_APPLE_ABI
+#ifdef _LIBCPP_LOCALE__L_EXTENSIONS
         size_t j = mbsrtowcs_l(wbuf, &bb, sizeof(wbuf)/sizeof(wbuf[0]), &mb, __loc_);
 #else
         size_t j = __mbsrtowcs_l(wbuf, &bb, sizeof(wbuf)/sizeof(wbuf[0]), &mb, __loc_);
@@ -4945,7 +4930,7 @@ __time_get_storage<wchar_t>::init(const ctype<wchar_t>& ct)
         be = strftime_l(buf, 100, "%b", &t, __loc_);
         mb = mbstate_t();
         bb = buf;
-#ifdef _LIBCPP_STABLE_APPLE_ABI
+#ifdef _LIBCPP_LOCALE__L_EXTENSIONS
         j = mbsrtowcs_l(wbuf, &bb, sizeof(wbuf)/sizeof(wbuf[0]), &mb, __loc_);
 #else
         j = __mbsrtowcs_l(wbuf, &bb, sizeof(wbuf)/sizeof(wbuf[0]), &mb, __loc_);
@@ -4960,7 +4945,7 @@ __time_get_storage<wchar_t>::init(const ctype<wchar_t>& ct)
     be = strftime_l(buf, 100, "%p", &t, __loc_);
     mb = mbstate_t();
     const char* bb = buf;
-#ifdef _LIBCPP_STABLE_APPLE_ABI
+#ifdef _LIBCPP_LOCALE__L_EXTENSIONS
     size_t j = mbsrtowcs_l(wbuf, &bb, sizeof(wbuf)/sizeof(wbuf[0]), &mb, __loc_);
 #else
     size_t j = __mbsrtowcs_l(wbuf, &bb, sizeof(wbuf)/sizeof(wbuf[0]), &mb, __loc_);
@@ -4973,7 +4958,7 @@ __time_get_storage<wchar_t>::init(const ctype<wchar_t>& ct)
     be = strftime_l(buf, 100, "%p", &t, __loc_);
     mb = mbstate_t();
     bb = buf;
-#ifdef _LIBCPP_STABLE_APPLE_ABI
+#ifdef _LIBCPP_LOCALE__L_EXTENSIONS
     j = mbsrtowcs_l(wbuf, &bb, sizeof(wbuf)/sizeof(wbuf[0]), &mb, __loc_);
 #else
     j = __mbsrtowcs_l(wbuf, &bb, sizeof(wbuf)/sizeof(wbuf[0]), &mb, __loc_);
@@ -5252,7 +5237,7 @@ __time_put::__do_put(wchar_t* __wb, wchar_t*& __we, const tm* __tm,
     __do_put(__nar, __ne, __tm, __fmt, __mod);
     mbstate_t mb = {0};
     const char* __nb = __nar;
-#ifdef _LIBCPP_STABLE_APPLE_ABI
+#ifdef _LIBCPP_LOCALE__L_EXTENSIONS
     size_t j = mbsrtowcs_l(__wb, &__nb, 100, &mb, __loc_);
 #else
     size_t j = __mbsrtowcs_l(__wb, &__nb, 100, &mb, __loc_);
@@ -5511,7 +5496,7 @@ moneypunct_byname<char, false>::init(const char* nm)
         throw runtime_error("moneypunct_byname"
                             " failed to construct for " + string(nm));
 #endif  // _LIBCPP_NO_EXCEPTIONS
-#ifdef _LIBCPP_STABLE_APPLE_ABI
+#ifdef _LIBCPP_LOCALE__L_EXTENSIONS
     lconv* lc = localeconv_l(loc.get());
 #else
     lconv* lc = __localeconv_l(loc.get());
@@ -5553,7 +5538,7 @@ moneypunct_byname<char, true>::init(const char* nm)
         throw runtime_error("moneypunct_byname"
                             " failed to construct for " + string(nm));
 #endif  // _LIBCPP_NO_EXCEPTIONS
-#ifdef _LIBCPP_STABLE_APPLE_ABI
+#ifdef _LIBCPP_LOCALE__L_EXTENSIONS
     lconv* lc = localeconv_l(loc.get());
 #else
     lconv* lc = __localeconv_l(loc.get());
@@ -5608,7 +5593,7 @@ moneypunct_byname<wchar_t, false>::init(const char* nm)
         throw runtime_error("moneypunct_byname"
                             " failed to construct for " + string(nm));
 #endif  // _LIBCPP_NO_EXCEPTIONS
-#ifdef _LIBCPP_STABLE_APPLE_ABI
+#ifdef _LIBCPP_LOCALE__L_EXTENSIONS
     lconv* lc = localeconv_l(loc.get());
 #else
     lconv* lc = __localeconv_l(loc.get());
@@ -5625,7 +5610,7 @@ moneypunct_byname<wchar_t, false>::init(const char* nm)
     wchar_t wbuf[100];
     mbstate_t mb = {0};
     const char* bb = lc->currency_symbol;
-#ifdef _LIBCPP_STABLE_APPLE_ABI
+#ifdef _LIBCPP_LOCALE__L_EXTENSIONS
     size_t j = mbsrtowcs_l(wbuf, &bb, sizeof(wbuf)/sizeof(wbuf[0]), &mb, loc.get());
 #else
     size_t j = __mbsrtowcs_l(wbuf, &bb, sizeof(wbuf)/sizeof(wbuf[0]), &mb, loc.get());
@@ -5644,7 +5629,7 @@ moneypunct_byname<wchar_t, false>::init(const char* nm)
     {
         mb = mbstate_t();
         bb = lc->positive_sign;
-#ifdef _LIBCPP_STABLE_APPLE_ABI
+#ifdef _LIBCPP_LOCALE__L_EXTENSIONS
         j = mbsrtowcs_l(wbuf, &bb, sizeof(wbuf)/sizeof(wbuf[0]), &mb, loc.get());
 #else
         j = __mbsrtowcs_l(wbuf, &bb, sizeof(wbuf)/sizeof(wbuf[0]), &mb, loc.get());
@@ -5660,7 +5645,7 @@ moneypunct_byname<wchar_t, false>::init(const char* nm)
     {
         mb = mbstate_t();
         bb = lc->negative_sign;
-#ifdef _LIBCPP_STABLE_APPLE_ABI
+#ifdef _LIBCPP_LOCALE__L_EXTENSIONS
         j = mbsrtowcs_l(wbuf, &bb, sizeof(wbuf)/sizeof(wbuf[0]), &mb, loc.get());
 #else
         j = __mbsrtowcs_l(wbuf, &bb, sizeof(wbuf)/sizeof(wbuf[0]), &mb, loc.get());
@@ -5685,7 +5670,7 @@ moneypunct_byname<wchar_t, true>::init(const char* nm)
         throw runtime_error("moneypunct_byname"
                             " failed to construct for " + string(nm));
 #endif  // _LIBCPP_NO_EXCEPTIONS
-#ifdef _LIBCPP_STABLE_APPLE_ABI
+#ifdef _LIBCPP_LOCALE__L_EXTENSIONS
     lconv* lc = localeconv_l(loc.get());
 #else
     lconv* lc = __localeconv_l(loc.get());
@@ -5702,7 +5687,7 @@ moneypunct_byname<wchar_t, true>::init(const char* nm)
     wchar_t wbuf[100];
     mbstate_t mb = {0};
     const char* bb = lc->int_curr_symbol;
-#ifdef _LIBCPP_STABLE_APPLE_ABI
+#ifdef _LIBCPP_LOCALE__L_EXTENSIONS
     size_t j = mbsrtowcs_l(wbuf, &bb, sizeof(wbuf)/sizeof(wbuf[0]), &mb, loc.get());
 #else
     size_t j = __mbsrtowcs_l(wbuf, &bb, sizeof(wbuf)/sizeof(wbuf[0]), &mb, loc.get());
@@ -5725,7 +5710,7 @@ moneypunct_byname<wchar_t, true>::init(const char* nm)
     {
         mb = mbstate_t();
         bb = lc->positive_sign;
-#ifdef _LIBCPP_STABLE_APPLE_ABI
+#ifdef _LIBCPP_LOCALE__L_EXTENSIONS
         j = mbsrtowcs_l(wbuf, &bb, sizeof(wbuf)/sizeof(wbuf[0]), &mb, loc.get());
 #else
         j = __mbsrtowcs_l(wbuf, &bb, sizeof(wbuf)/sizeof(wbuf[0]), &mb, loc.get());
@@ -5745,7 +5730,7 @@ moneypunct_byname<wchar_t, true>::init(const char* nm)
     {
         mb = mbstate_t();
         bb = lc->negative_sign;
-#ifdef _LIBCPP_STABLE_APPLE_ABI
+#ifdef _LIBCPP_LOCALE__L_EXTENSIONS
         j = mbsrtowcs_l(wbuf, &bb, sizeof(wbuf)/sizeof(wbuf[0]), &mb, loc.get());
 #else
         j = __mbsrtowcs_l(wbuf, &bb, sizeof(wbuf)/sizeof(wbuf[0]), &mb, loc.get());

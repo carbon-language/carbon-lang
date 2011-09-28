@@ -557,7 +557,7 @@ public:
 #endif
     _LIBCPP_ALWAYS_INLINE const mask* table() const  _NOEXCEPT {return __tab_;}
     static const mask* classic_table()  _NOEXCEPT;
-#ifndef _LIBCPP_STABLE_APPLE_ABI
+#ifndef _LIBCPP_HAS_DEFAULTRUNELOCALE
     static const int* __classic_upper_table() _NOEXCEPT;
     static const int* __classic_lower_table() _NOEXCEPT;
 #endif
