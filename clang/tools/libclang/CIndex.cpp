@@ -2758,6 +2758,11 @@ unsigned clang_equalRanges(CXSourceRange range1, CXSourceRange range2)
       && range1.begin_int_data == range2.begin_int_data
       && range1.end_int_data == range2.end_int_data;
 }
+
+int clang_Range_isNull(CXSourceRange range) {
+  return clang_equalRanges(range, clang_getNullRange());
+}
+
 } // end: extern "C"
 
 static void createNullLocation(CXFile *file, unsigned *line,

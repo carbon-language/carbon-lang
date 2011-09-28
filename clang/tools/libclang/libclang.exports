@@ -142,6 +142,7 @@ clang_isUnexposed
 clang_isVirtualBase
 clang_isVolatileQualifiedType
 clang_parseTranslationUnit
+clang_Range_isNull
 clang_remap_dispose
 clang_remap_getFilenames
 clang_remap_getNumFiles
