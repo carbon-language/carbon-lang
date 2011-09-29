@@ -13,6 +13,7 @@ void fn_attr () [[]];
 class [[]] class_attr {};
 extern "C++" [[]] int extern_attr;
 template <typename T> [[]] void template_attr ();
+[[]] [[]] int [[]] [[]] multi_attr [[]] [[]];
 
 int comma_attr [[,]]; // expected-error {{expected identifier}}
 int scope_attr [[foo::]]; // expected-error {{expected identifier}}

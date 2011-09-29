@@ -2556,8 +2556,8 @@ void Parser::PopParsingClass(Sema::ParsingClassState state) {
   Victim->TemplateScope = getCurScope()->getParent()->isTemplateParamScope();
 }
 
-/// ParseCXX0XAttributes - Parse a C++0x attribute-specifier. Currently only
-/// parses standard attributes.
+/// ParseCXX0XAttributeSpecifier - Parse a C++0x attribute-specifier. Currently
+/// only parses standard attributes.
 ///
 /// [C++0x] attribute-specifier:
 ///         '[' '[' attribute-list ']' ']'
@@ -2591,12 +2591,10 @@ void Parser::PopParsingClass(Sema::ParsingClassState state) {
 ///         '[' balanced-token-seq ']'
 ///         '{' balanced-token-seq '}'
 ///         any token but '(', ')', '[', ']', '{', or '}'
-void Parser::ParseCXX0XAttributes(ParsedAttributesWithRange &attrs,
-                                  SourceLocation *endLoc) {
+void Parser::ParseCXX0XAttributeSpecifier(ParsedAttributes &attrs,
+                                          SourceLocation *endLoc) {
   assert(Tok.is(tok::l_square) && NextToken().is(tok::l_square)
       && "Not a C++0x attribute list");
-
-  SourceLocation StartLoc = Tok.getLocation(), Loc;
 
   ConsumeBracket();
   ConsumeBracket();
@@ -2692,11 +2690,27 @@ void Parser::ParseCXX0XAttributes(ParsedAttributesWithRange &attrs,
 
   if (ExpectAndConsume(tok::r_square, diag::err_expected_rsquare))
     SkipUntil(tok::r_square, false);
-  Loc = Tok.getLocation();
+  if (endLoc)
+    *endLoc = Tok.getLocation();
   if (ExpectAndConsume(tok::r_square, diag::err_expected_rsquare))
     SkipUntil(tok::r_square, false);
+}
 
-  attrs.Range = SourceRange(StartLoc, Loc);
+/// ParseCXX0XAttributes - Parse a C++0x attribute-specifier-seq.
+///
+/// attribute-specifier-seq:
+///       attribute-specifier-seq[opt] attribute-specifier
+void Parser::ParseCXX0XAttributes(ParsedAttributesWithRange &attrs,
+                                  SourceLocation *endLoc) {
+  SourceLocation StartLoc = Tok.getLocation(), Loc;
+  if (!endLoc)
+    endLoc = &Loc;
+
+  do
+    ParseCXX0XAttributeSpecifier(attrs, endLoc);
+  while (isCXX0XAttributeSpecifier());
+
+  attrs.Range = SourceRange(StartLoc, *endLoc);
 }
 
 /// ParseCXX0XAlignArgument - Parse the argument to C++0x's [[align]]
