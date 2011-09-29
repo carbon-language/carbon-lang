@@ -607,100 +607,72 @@ void MachineInstr::AddRegOperandsToUseLists(MachineRegisterInfo &RegInfo) {
 /// an explicit operand it is added at the end of the explicit operand list
 /// (before the first implicit operand).
 void MachineInstr::addOperand(const MachineOperand &Op) {
+  assert(MCID && "Cannot add operands before providing an instr descriptor");
   bool isImpReg = Op.isReg() && Op.isImplicit();
-  assert((isImpReg || !OperandsComplete()) &&
-         "Trying to add an operand to a machine instr that is already done!");
-
   MachineRegisterInfo *RegInfo = getRegInfo();
 
-  // If we are adding the operand to the end of the list, our job is simpler.
-  // This is true most of the time, so this is a reasonable optimization.
-  if (isImpReg || NumImplicitOps == 0) {
-    // We can only do this optimization if we know that the operand list won't
-    // reallocate.
-    if (Operands.empty() || Operands.size()+1 <= Operands.capacity()) {
-      Operands.push_back(Op);
+  // If the Operands backing store is reallocated, all register operands must
+  // be removed and re-added to RegInfo.  It is storing pointers to operands.
+  bool Reallocate = RegInfo &&
+    !Operands.empty() && Operands.size() == Operands.capacity();
 
-      // Set the parent of the operand.
-      Operands.back().ParentMI = this;
+  // Find the insert location for the new operand.  Implicit registers go at
+  // the end, everything goes before the implicit regs.
+  unsigned OpNo = Operands.size();
 
-      // If the operand is a register, update the operand's use list.
-      if (Op.isReg()) {
-        Operands.back().AddRegOperandToRegInfo(RegInfo);
-        // If the register operand is flagged as early, mark the operand as such
-        unsigned OpNo = Operands.size() - 1;
-        if (MCID->getOperandConstraint(OpNo, MCOI::EARLY_CLOBBER) != -1)
-          Operands[OpNo].setIsEarlyClobber(true);
-      }
-      return;
+  // Remove all the implicit operands from RegInfo if they need to be shifted.
+  // FIXME: Allow mixed explicit and implicit operands on inline asm.
+  // InstrEmitter::EmitSpecialNode() is marking inline asm clobbers as
+  // implicit-defs, but they must not be moved around.  See the FIXME in
+  // InstrEmitter.cpp.
+  if (!isImpReg && !isInlineAsm()) {
+    while (OpNo && Operands[OpNo-1].isReg() && Operands[OpNo-1].isImplicit()) {
+      --OpNo;
+      if (RegInfo)
+        Operands[OpNo].RemoveRegOperandFromRegInfo();
     }
   }
 
-  // Otherwise, we have to insert a real operand before any implicit ones.
-  unsigned OpNo = Operands.size()-NumImplicitOps;
+  // OpNo now points as the desired insertion point.  Unless this is a variadic
+  // instruction, only implicit regs are allowed beyond MCID->getNumOperands().
+  assert((isImpReg || MCID->isVariadic() || OpNo < MCID->getNumOperands()) &&
+         "Trying to add an operand to a machine instr that is already done!");
 
-  // If this instruction isn't embedded into a function, then we don't need to
-  // update any operand lists.
-  if (RegInfo == 0) {
-    // Simple insertion, no reginfo update needed for other register operands.
-    Operands.insert(Operands.begin()+OpNo, Op);
-    Operands[OpNo].ParentMI = this;
+  // All operands from OpNo have been removed from RegInfo.  If the Operands
+  // backing store needs to be reallocated, we also need to remove any other
+  // register operands.
+  if (Reallocate)
+    for (unsigned i = 0; i != OpNo; ++i)
+      if (Operands[i].isReg())
+        Operands[i].RemoveRegOperandFromRegInfo();
 
-    // Do explicitly set the reginfo for this operand though, to ensure the
-    // next/prev fields are properly nulled out.
-    if (Operands[OpNo].isReg()) {
-      Operands[OpNo].AddRegOperandToRegInfo(0);
-      // If the register operand is flagged as early, mark the operand as such
-      if (MCID->getOperandConstraint(OpNo, MCOI::EARLY_CLOBBER) != -1)
-        Operands[OpNo].setIsEarlyClobber(true);
-    }
+  // Insert the new operand at OpNo.
+  Operands.insert(Operands.begin() + OpNo, Op);
+  Operands[OpNo].ParentMI = this;
 
-  } else if (Operands.size()+1 <= Operands.capacity()) {
-    // Otherwise, we have to remove register operands from their register use
-    // list, add the operand, then add the register operands back to their use
-    // list.  This also must handle the case when the operand list reallocates
-    // to somewhere else.
+  // The Operands backing store has now been reallocated, so we can re-add the
+  // operands before OpNo.
+  if (Reallocate)
+    for (unsigned i = 0; i != OpNo; ++i)
+      if (Operands[i].isReg())
+        Operands[i].AddRegOperandToRegInfo(RegInfo);
 
-    // If insertion of this operand won't cause reallocation of the operand
-    // list, just remove the implicit operands, add the operand, then re-add all
-    // the rest of the operands.
-    for (unsigned i = OpNo, e = Operands.size(); i != e; ++i) {
-      assert(Operands[i].isReg() && "Should only be an implicit reg!");
-      Operands[i].RemoveRegOperandFromRegInfo();
-    }
+  // When adding a register operand, tell RegInfo about it.
+  if (Operands[OpNo].isReg()) {
+    // Add the new operand to RegInfo, even when RegInfo is NULL.
+    // This will initialize the linked list pointers.
+    Operands[OpNo].AddRegOperandToRegInfo(RegInfo);
+    // If the register operand is flagged as early, mark the operand as such.
+    if (MCID->getOperandConstraint(OpNo, MCOI::EARLY_CLOBBER) != -1)
+      Operands[OpNo].setIsEarlyClobber(true);
+  }
 
-    // Add the operand.  If it is a register, add it to the reg list.
-    Operands.insert(Operands.begin()+OpNo, Op);
-    Operands[OpNo].ParentMI = this;
-
-    if (Operands[OpNo].isReg()) {
-      Operands[OpNo].AddRegOperandToRegInfo(RegInfo);
-      // If the register operand is flagged as early, mark the operand as such
-      if (MCID->getOperandConstraint(OpNo, MCOI::EARLY_CLOBBER) != -1)
-        Operands[OpNo].setIsEarlyClobber(true);
-    }
-
-    // Re-add all the implicit ops.
-    for (unsigned i = OpNo+1, e = Operands.size(); i != e; ++i) {
+  // Re-add all the implicit ops.
+  if (RegInfo) {
+    for (unsigned i = OpNo + 1, e = Operands.size(); i != e; ++i) {
       assert(Operands[i].isReg() && "Should only be an implicit reg!");
       Operands[i].AddRegOperandToRegInfo(RegInfo);
     }
-  } else {
-    // Otherwise, we will be reallocating the operand list.  Remove all reg
-    // operands from their list, then readd them after the operand list is
-    // reallocated.
-    RemoveRegOperandsFromUseLists();
-
-    Operands.insert(Operands.begin()+OpNo, Op);
-    Operands[OpNo].ParentMI = this;
-
-    // Re-add all the operands.
-    AddRegOperandsToUseLists(*RegInfo);
-
-      // If the register operand is flagged as early, mark the operand as such
-    if (Operands[OpNo].isReg()
-        && MCID->getOperandConstraint(OpNo, MCOI::EARLY_CLOBBER) != -1)
-      Operands[OpNo].setIsEarlyClobber(true);
   }
 }
 
@@ -1385,7 +1357,7 @@ void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM) const {
   unsigned AsmDescOp = ~0u;
   unsigned AsmOpCount = 0;
 
-  if (isInlineAsm()) {
+  if (isInlineAsm() && e >= InlineAsm::MIOp_FirstOperand) {
     // Print asm string.
     OS << " ";
     getOperand(InlineAsm::MIOp_AsmString).print(OS, TM);
