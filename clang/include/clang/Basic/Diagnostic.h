@@ -515,9 +515,8 @@ public:
   ///
   /// \param Loc The source location we are interested in finding out the
   /// diagnostic state. Can be null in order to query the latest state.
-  Level getDiagnosticLevel(unsigned DiagID, SourceLocation Loc,
-                           diag::Mapping *mapping = 0) const {
-    return (Level)Diags->getDiagnosticLevel(DiagID, Loc, *this, mapping);
+  Level getDiagnosticLevel(unsigned DiagID, SourceLocation Loc) const {
+    return (Level)Diags->getDiagnosticLevel(DiagID, Loc, *this);
   }
 
   /// Report - Issue the message to the client.  @c DiagID is a member of the

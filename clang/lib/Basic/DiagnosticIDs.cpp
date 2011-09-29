@@ -478,15 +478,14 @@ StringRef DiagnosticIDs::getDescription(unsigned DiagID) const {
 /// by consumable the DiagnosticClient.
 DiagnosticIDs::Level
 DiagnosticIDs::getDiagnosticLevel(unsigned DiagID, SourceLocation Loc,
-                                  const DiagnosticsEngine &Diag,
-                                  diag::Mapping *mapping) const {
+                                  const DiagnosticsEngine &Diag) const {
   // Handle custom diagnostics, which cannot be mapped.
   if (DiagID >= diag::DIAG_UPPER_LIMIT)
     return CustomDiagInfo->getLevel(DiagID);
 
   unsigned DiagClass = getBuiltinDiagClass(DiagID);
   assert(DiagClass != CLASS_NOTE && "Cannot get diagnostic level of a note!");
-  return getDiagnosticLevel(DiagID, DiagClass, Loc, Diag, mapping);
+  return getDiagnosticLevel(DiagID, DiagClass, Loc, Diag);
 }
 
 /// \brief Based on the way the client configured the Diagnostic
@@ -498,8 +497,7 @@ DiagnosticIDs::getDiagnosticLevel(unsigned DiagID, SourceLocation Loc,
 DiagnosticIDs::Level
 DiagnosticIDs::getDiagnosticLevel(unsigned DiagID, unsigned DiagClass,
                                   SourceLocation Loc,
-                                  const DiagnosticsEngine &Diag,
-                                  diag::Mapping *mapping) const {
+                                  const DiagnosticsEngine &Diag) const {
   // Specific non-error diagnostics may be mapped to various levels from ignored
   // to error.  Errors can only be mapped to fatal.
   DiagnosticIDs::Level Result = DiagnosticIDs::Fatal;
@@ -515,9 +513,6 @@ DiagnosticIDs::getDiagnosticLevel(unsigned DiagID, unsigned DiagClass,
     MappingInfo = GetDefaultDiagMapping(DiagID);
     Diag.setDiagnosticMappingInternal(DiagID, MappingInfo, State, false, false);
   }
-  
-  if (mapping)
-    *mapping = (diag::Mapping) (MappingInfo & 7);
 
   bool ShouldEmitInSystemHeader = false;
 
