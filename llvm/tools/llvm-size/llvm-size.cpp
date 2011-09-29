@@ -78,7 +78,7 @@ static bool error(error_code ec) {
 
 /// @brief Get the length of the string that represents @p num in Radix
 ///        including the leading 0x or 0 for hexadecimal and octal respectively.
-static unsigned int getNumLengthAsString(uint64_t num) {
+static size_t getNumLengthAsString(uint64_t num) {
   APInt conv(64, num);
   SmallString<32> result;
   conv.toString(result, Radix, false, true);
@@ -127,10 +127,8 @@ static void PrintObjectSectionSizes(ObjectFile *o) {
       if (error(i->getName(name))) return;
       if (error(i->getAddress(addr))) return;
       max_name_len = std::max(max_name_len, name.size());
-      max_size_len = std::max(max_size_len,
-                              (std::size_t) getNumLengthAsString(size));
-      max_addr_len = std::max(max_addr_len,
-                              (std::size_t) getNumLengthAsString(addr));
+      max_size_len = std::max(max_size_len, getNumLengthAsString(size));
+      max_addr_len = std::max(max_addr_len, getNumLengthAsString(addr));
     }
 
     // Add extra padding.
