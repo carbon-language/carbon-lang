@@ -458,6 +458,13 @@ bool DiagnosticIDs::isBuiltinExtensionDiag(unsigned DiagID,
   return true;
 }
 
+bool DiagnosticIDs::isDefaultMappingAsError(unsigned DiagID) {
+  if (DiagID >= diag::DIAG_UPPER_LIMIT)
+    return false;
+
+  return GetDefaultDiagMapping(DiagID) == diag::MAP_ERROR;
+}
+
 /// getDescription - Given a diagnostic ID, return a description of the
 /// issue.
 StringRef DiagnosticIDs::getDescription(unsigned DiagID) const {

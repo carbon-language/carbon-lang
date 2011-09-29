@@ -110,6 +110,10 @@ public:
   /// NOTEs.
   static bool isBuiltinWarningOrExtension(unsigned DiagID);
 
+  /// \brief Return true if the specified diagnostic is mapped to errors by
+  /// default.
+  static bool isDefaultMappingAsError(unsigned DiagID);
+
   /// \brief Determine whether the given built-in diagnostic ID is a
   /// Note.
   static bool isBuiltinNote(unsigned DiagID);

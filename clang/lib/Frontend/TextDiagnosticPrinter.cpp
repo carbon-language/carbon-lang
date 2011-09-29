@@ -942,16 +942,20 @@ static void printDiagnosticOptions(raw_ostream &OS,
       return;
     }
 
-    // Was this a warning mapped to an error using -Werror or pragma?
+    // The code below is somewhat fragile because we are essentially trying to
+    // report to the user what happened by inferring what the diagnostic engine
+    // did. Eventually it might make more sense to have the diagnostic engine
+    // include some "why" information in the diagnostic.
+
+    // If this is a warning which has been mapped to an error by the user (as
+    // inferred by checking whether the default mapping is to an error) then
+    // flag it as such. Note that diagnostics could also have been mapped by a
+    // pragma, but we don't currently have a way to distinguish this.
     if (Level == DiagnosticsEngine::Error &&
-        DiagnosticIDs::isBuiltinWarningOrExtension(Info.getID())) {
-      diag::Mapping mapping = diag::MAP_IGNORE;
-      Info.getDiags()->getDiagnosticLevel(Info.getID(), Info.getLocation(), 
-                                          &mapping);
-      if (mapping == diag::MAP_WARNING) {
-        OS << " [-Werror";
-        Started = true;
-      }
+        DiagnosticIDs::isBuiltinWarningOrExtension(Info.getID()) &&
+        !DiagnosticIDs::isDefaultMappingAsError(Info.getID())) {
+      OS << " [-Werror";
+      Started = true;
     }
 
     // If the diagnostic is an extension diagnostic and not enabled by default
