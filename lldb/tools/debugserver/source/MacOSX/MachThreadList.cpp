@@ -99,25 +99,13 @@ MachThreadList::GetThreadByID (nub_thread_t tid) const
     PTHREAD_MUTEX_LOCKER (locker, m_threads_mutex);
     MachThreadSP thread_sp;
     const size_t num_threads = m_threads.size();
-    if (MachThread::ThreadIDIsValid(tid))
+    for (size_t idx = 0; idx < num_threads; ++idx)
     {
-        for (size_t idx = 0; idx < num_threads; ++idx)
+        if (m_threads[idx]->ThreadID() == tid)
         {
-            if (m_threads[idx]->ThreadID() == tid)
-            {
-                thread_sp = m_threads[idx];
-                break;
-            }
+            thread_sp = m_threads[idx];
+            break;
         }
-    }
-    else if (num_threads > 0)
-    {
-        // See DNBWatchpointSet() -> MachProcess::CreateWatchpoint() -> MachProcess::EnableWatchpoint()
-        // -> MachThreadList::EnableHardwareWatchpoint() for a use case of this branch.
-        if (m_current_thread)
-            thread_sp = m_current_thread;
-        else
-            thread_sp = m_threads[0];
     }
     return thread_sp;
 }
@@ -477,14 +465,22 @@ MachThreadList::DisableHardwareBreakpoint (const DNBBreakpoint* bp) const
     return false;
 }
 
+// DNBWatchpointSet() -> MachProcess::CreateWatchpoint() -> MachProcess::EnableWatchpoint()
+// -> MachThreadList::EnableHardwareWatchpoint().
 uint32_t
 MachThreadList::EnableHardwareWatchpoint (const DNBBreakpoint* wp) const
 {
     if (wp != NULL)
     {
-        MachThreadSP thread_sp (GetThreadByID (wp->ThreadID()));
-        if (thread_sp)
-            return thread_sp->EnableHardwareWatchpoint(wp);
+        uint32_t hw_index;
+        PTHREAD_MUTEX_LOCKER (locker, m_threads_mutex);
+        const uint32_t num_threads = m_threads.size();
+        for (uint32_t idx = 0; idx < num_threads; ++idx)
+        {
+            if ((hw_index = m_threads[idx]->EnableHardwareWatchpoint(wp)) == INVALID_NUB_HW_INDEX)
+                return INVALID_NUB_HW_INDEX;
+        }
+        return hw_index;
     }
     return INVALID_NUB_HW_INDEX;
 }
@@ -494,9 +490,14 @@ MachThreadList::DisableHardwareWatchpoint (const DNBBreakpoint* wp) const
 {
     if (wp != NULL)
     {
-        MachThreadSP thread_sp (GetThreadByID (wp->ThreadID()));
-        if (thread_sp)
-            return thread_sp->DisableHardwareWatchpoint(wp);
+        PTHREAD_MUTEX_LOCKER (locker, m_threads_mutex);
+        const uint32_t num_threads = m_threads.size();
+        for (uint32_t idx = 0; idx < num_threads; ++idx)
+        {
+            if (!m_threads[idx]->DisableHardwareWatchpoint(wp))
+                return false;
+        }
+        return true;
     }
     return false;
 }
