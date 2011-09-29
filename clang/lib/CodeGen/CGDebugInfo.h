@@ -149,6 +149,10 @@ class CGDebugInfo {
                          llvm::DIFile F,
                          SmallVectorImpl<llvm::Value *> &EltTys);
 
+  // UpdateLineDirectiveRegion - Update region stack only if #line directive
+  // has introduced scope change.
+  void UpdateLineDirectiveRegion(CGBuilderTy &Builder);
+
 public:
   CGDebugInfo(CodeGenModule &CGM);
   ~CGDebugInfo();
@@ -169,10 +173,6 @@ public:
 
   /// EmitFunctionEnd - Constructs the debug code for exiting a function.
   void EmitFunctionEnd(CGBuilderTy &Builder);
-
-  /// UpdateLineDirectiveRegion - Update region stack only if #line directive
-  /// has introduced scope change.
-  void UpdateLineDirectiveRegion(CGBuilderTy &Builder);
 
   /// UpdateCompletedType - Update type cache because the type is now
   /// translated.

@@ -1763,6 +1763,10 @@ void CGDebugInfo::EmitStopPoint(CGBuilderTy &Builder) {
     if (!Builder.getCurrentDebugLocation().isUnknown())
       return;
 
+  // The file may have had a line directive change. Process any of
+  // those before updating the state.
+  UpdateLineDirectiveRegion(Builder);
+  
   // Update last state.
   PrevLoc = CurLoc;
 
