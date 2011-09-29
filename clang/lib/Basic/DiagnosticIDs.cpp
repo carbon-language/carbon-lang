@@ -507,8 +507,7 @@ DiagnosticIDs::getDiagnosticLevel(unsigned DiagID, unsigned DiagClass,
   DiagnosticsEngine::DiagState *State = Pos->State;
 
   // Get the mapping information, if unset, compute it lazily.
-  unsigned MappingInfo = Diag.getDiagnosticMappingInfo((diag::kind)DiagID,
-                                                       State);
+  unsigned MappingInfo = State->getMapping((diag::kind) DiagID);
   if (MappingInfo == 0) {
     MappingInfo = GetDefaultDiagMapping(DiagID);
     Diag.setDiagnosticMappingInternal(DiagID, MappingInfo, State, false, false);

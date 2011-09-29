@@ -563,15 +563,6 @@ private:
   /// \brief Report the delayed diagnostic.
   void ReportDelayed();
 
-
-  /// getDiagnosticMappingInfo - Return the mapping info currently set for the
-  /// specified builtin diagnostic.  This returns the high bit encoding, or zero
-  /// if the field is completely uninitialized.
-  diag::Mapping getDiagnosticMappingInfo(diag::kind Diag,
-                                         DiagState *State) const {
-    return State->getMapping(Diag);
-  }
-
   void setDiagnosticMappingInternal(unsigned DiagId, unsigned Map,
                                     DiagState *State,
                                     bool isUser, bool isPragma) const {
