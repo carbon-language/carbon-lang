@@ -453,7 +453,7 @@ void Parser::ParseLexedMemberInitializers(ParsingClass &Class) {
 }
 
 void Parser::ParseLexedMemberInitializer(LateParsedMemberInitializer &MI) {
-  if (MI.Field->isInvalidDecl())
+  if (!MI.Field || MI.Field->isInvalidDecl())
     return;
 
   // Append the current token at the end of the new token stream so that it
