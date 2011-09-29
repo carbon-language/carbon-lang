@@ -2170,7 +2170,7 @@ RValue CodeGenFunction::EmitCallExpr(const CallExpr *E,
                                      ReturnValueSlot ReturnValue) {
   if (CGDebugInfo *DI = getDebugInfo()) {
     DI->setLocation(E->getLocStart());
-    DI->EmitStopPoint(Builder);
+    DI->EmitLocation(Builder);
   }
 
   // Builtins never have block type.

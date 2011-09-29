@@ -1803,7 +1803,9 @@ void CGDebugInfo::UpdateLineDirectiveRegion(CGBuilderTy &Builder) {
   return;
 }
 
-void CGDebugInfo::EmitStopPoint(CGBuilderTy &Builder) {
+/// EmitLocation - Emit metadata to indicate a change in line/column
+/// information in the source file.
+void CGDebugInfo::EmitLocation(CGBuilderTy &Builder) {
   if (CurLoc.isInvalid() || CurLoc.isMacroID()) return;
 
   // Don't bother if things are the same as last time.
@@ -1847,7 +1849,7 @@ void CGDebugInfo::EmitRegionEnd(CGBuilderTy &Builder) {
   assert(!RegionStack.empty() && "Region stack mismatch, stack empty!");
 
   // Provide a region stop point.
-  EmitStopPoint(Builder);
+  EmitLocation(Builder);
 
   RegionStack.pop_back();
 }

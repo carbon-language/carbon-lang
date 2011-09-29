@@ -162,9 +162,9 @@ public:
   /// invalid it is ignored.
   void setLocation(SourceLocation Loc);
 
-  /// EmitStopPoint - Emit a call to llvm.dbg.stoppoint to indicate a change of
-  /// source line.
-  void EmitStopPoint(CGBuilderTy &Builder);
+  /// EmitLocation - Emit metadata to indicate a change in line/column
+  /// information in the source file.
+  void EmitLocation(CGBuilderTy &Builder);
 
   /// EmitFunctionStart - Emit a call to llvm.dbg.function.start to indicate
   /// start of a new function.
