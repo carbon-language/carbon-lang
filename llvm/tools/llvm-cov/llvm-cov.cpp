@@ -40,7 +40,6 @@ int main(int argc, char **argv) {
 
   cl::ParseCommandLineOptions(argc, argv, "llvm cov\n");
 
-
   GCOVFile GF;
   if (InputGCNO.empty())
     errs() << " " << argv[0] << ": No gcov input file!\n";

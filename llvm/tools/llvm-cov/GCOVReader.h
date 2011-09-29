@@ -35,7 +35,7 @@ enum GCOVFormat {
   GCDA_404
 };
 
-/// GCOVBuffer - A wrapper around MemoryBuffer to provid GCOV specific
+/// GCOVBuffer - A wrapper around MemoryBuffer to provide GCOV specific
 /// read operations.
 class GCOVBuffer {
 public:
@@ -152,7 +152,8 @@ private:
   uint64_t Cursor;
 };
 
-/// GCOVFile - Collects file information.
+/// GCOVFile - Collects coverage information for one pair of coverage file
+/// (.gcno and .gcda).
 class GCOVFile {
 public:
   GCOVFile() {}
@@ -217,7 +218,6 @@ public:
 private:
   StringMap<LineCounts> LineInfo;
 };
-
 
 }
 
