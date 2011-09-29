@@ -566,13 +566,6 @@ private:
   /// \brief Report the delayed diagnostic.
   void ReportDelayed();
 
-  void setDiagnosticMappingInternal(unsigned DiagId, diag::Mapping Map,
-                                    DiagState *State,
-                                    bool isUser, bool isPragma) const {
-    State->setMappingInfo((diag::kind)DiagId, DiagnosticMappingInfo::MakeInfo(
-                            Map, isUser, isPragma));
-  }
-
   // This is private state used by DiagnosticBuilder.  We put it here instead of
   // in DiagnosticBuilder in order to keep DiagnosticBuilder a small lightweight
   // object.  This implementation choice means that we can only have one
