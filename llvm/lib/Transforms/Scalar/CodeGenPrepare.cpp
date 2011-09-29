@@ -735,12 +735,10 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
     worklist.pop_back();
     
     // Break use-def graph loops.
-    if (Visited.count(V)) {
+    if (!Visited.insert(V)) {
       Consensus = 0;
       break;
     }
-    
-    Visited.insert(V);
     
     // For a PHI node, push all of its incoming values.
     if (PHINode *P = dyn_cast<PHINode>(V)) {
@@ -752,7 +750,7 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
     // For non-PHIs, determine the addressing mode being computed.
     SmallVector<Instruction*, 16> NewAddrModeInsts;
     ExtAddrMode NewAddrMode =
-      AddressingModeMatcher::Match(V, AccessTy,MemoryInst,
+      AddressingModeMatcher::Match(V, AccessTy, MemoryInst,
                                    NewAddrModeInsts, *TLI);
 
     // This check is broken into two cases with very similar code to avoid using
