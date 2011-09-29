@@ -15,7 +15,7 @@
 #ifndef PTX_H
 #define PTX_H
 
-#include "MCTargetDesc/PTXMCTargetDesc.h"
+#include "MCTargetDesc/PTXBaseInfo.h"
 #include "llvm/Target/TargetMachine.h"
 
 namespace llvm {
@@ -24,22 +24,6 @@ namespace llvm {
   class PTXAsmPrinter;
   class PTXTargetMachine;
   class FunctionPass;
-
-  namespace PTX {
-    enum StateSpace {
-      GLOBAL = 0, // default to global state space
-      CONSTANT = 1,
-      LOCAL = 2,
-      PARAMETER = 3,
-      SHARED = 4
-    };
-
-    enum Predicate {
-      PRED_NORMAL = 0,
-      PRED_NEGATE = 1,
-      PRED_NONE   = 2
-    };
-  } // namespace PTX
 
   FunctionPass *createPTXISelDag(PTXTargetMachine &TM,
                                  CodeGenOpt::Level OptLevel);

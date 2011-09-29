@@ -545,8 +545,6 @@ void PTXAsmPrinter::EmitFunctionEntryLabel() {
 
   std::string decl = isKernel ? ".entry" : ".func";
 
-  unsigned cnt = 0;
-
   if (!isKernel) {
     decl += " (";
     if (ST.useParamSpaceForDeviceArgs()) {
@@ -582,8 +580,6 @@ void PTXAsmPrinter::EmitFunctionEntryLabel() {
   decl += CurrentFnSym->getName().str();
 
   decl += " (";
-
-  cnt = 0;
 
   // Print parameters
   if (isKernel || ST.useParamSpaceForDeviceArgs()) {
