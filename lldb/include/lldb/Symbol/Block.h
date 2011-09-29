@@ -247,10 +247,7 @@ public:
     ///     sibling.
     //------------------------------------------------------------------
     Block *
-    GetSibling () const
-    {
-        return m_sibling;
-    }
+    GetSibling () const;
 
     //------------------------------------------------------------------
     /// Get the first child block.
@@ -398,12 +395,6 @@ public:
         m_parent_scope = parent_scope;
     }
 
-    void
-    SetSibling (Block *block)
-    {
-        m_sibling = block;
-    }
-
     //------------------------------------------------------------------
     /// Set accessor for the variable list.
     ///
@@ -466,7 +457,6 @@ protected:
     // Member variables.
     //------------------------------------------------------------------
     SymbolContextScope *m_parent_scope;
-    Block *m_sibling;
     collection m_children;
     VMRange::collection m_ranges; ///< A list of address offset ranges relative to the function's section/offset address.
     lldb::InlineFunctionInfoSP m_inlineInfoSP; ///< Inlined function information.
@@ -474,6 +464,11 @@ protected:
     bool m_parsed_block_info:1,         ///< Set to true if this block and it's children have all been parsed
          m_parsed_block_variables:1,
          m_parsed_child_blocks:1;
+
+    // A parent of child blocks can be asked to find a sibling block given
+    // one of its child blocks
+    Block *
+    GetSiblingForChild (const Block *child_block) const;
 
 private:
     DISALLOW_COPY_AND_ASSIGN (Block);

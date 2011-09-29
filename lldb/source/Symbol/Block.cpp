@@ -21,7 +21,6 @@ using namespace lldb_private;
 Block::Block(lldb::user_id_t uid) :
     UserID(uid),
     m_parent_scope (NULL),
-    m_sibling (NULL),
     m_children (),
     m_ranges (),
     m_inlineInfoSP (),
@@ -117,10 +116,9 @@ Block::Dump(Stream *s, addr_t base_addr, int32_t depth, bool show_context) const
             m_variable_list_sp->Dump(s, show_context);
         }
 
-        for (Block *child_block = GetFirstChild(); child_block != NULL; child_block = child_block->GetSibling())
-        {
-            child_block->Dump(s, base_addr, depth - 1, show_context);
-        }
+        collection::const_iterator pos, end = m_children.end();
+        for (pos = m_children.begin(); pos != end; ++pos)
+            (*pos)->Dump(s, base_addr, depth - 1, show_context);
 
         s->IndentLess();
     }
@@ -135,9 +133,10 @@ Block::FindBlockByID (user_id_t block_id)
         return this;
 
     Block *matching_block = NULL;
-    for (Block *child_block = GetFirstChild(); child_block != NULL; child_block = child_block->GetSibling())
+    collection::const_iterator pos, end = m_children.end();
+    for (pos = m_children.begin(); pos != end; ++pos)
     {
-        matching_block = child_block->FindBlockByID (block_id);
+        matching_block = (*pos)->FindBlockByID (block_id);
         if (matching_block)
             break;
     }
@@ -458,16 +457,8 @@ Block::AddChild(const BlockSP &child_block_sp)
 {
     if (child_block_sp)
     {
-        Block *block_needs_sibling = NULL;
-
-        if (!m_children.empty())
-            block_needs_sibling = m_children.back().get();
-
         child_block_sp->SetParentScope (this);
         m_children.push_back (child_block_sp);
-
-        if (block_needs_sibling)
-            block_needs_sibling->SetSibling (child_block_sp.get());
     }
 }
 
@@ -512,10 +503,10 @@ Block::AppendBlockVariables (bool can_create,
     
     if (get_child_block_variables)
     {
-        for (Block *child_block = GetFirstChild(); 
-             child_block != NULL; 
-             child_block = child_block->GetSibling())
-        {   
+        collection::const_iterator pos, end = m_children.end();
+        for (pos = m_children.begin(); pos != end; ++pos)
+        {
+            Block *child_block = pos->get();
             if (stop_if_child_block_is_inlined_function == false || 
                 child_block->GetInlinedFunctionInfo() == NULL)
             {
@@ -590,8 +581,9 @@ Block::SetBlockInfoHasBeenParsed (bool b, bool set_children)
     if (set_children)
     {
         m_parsed_child_blocks = true;
-        for (Block *child_block = GetFirstChild(); child_block != NULL; child_block = child_block->GetSibling())
-            child_block->SetBlockInfoHasBeenParsed (b, true);
+        collection::const_iterator pos, end = m_children.end();
+        for (pos = m_children.begin(); pos != end; ++pos)
+            (*pos)->SetBlockInfoHasBeenParsed (b, true);
     }
 }
 
@@ -601,8 +593,42 @@ Block::SetDidParseVariables (bool b, bool set_children)
     m_parsed_block_variables = b;
     if (set_children)
     {
-        for (Block *child_block = GetFirstChild(); child_block != NULL; child_block = child_block->GetSibling())
-            child_block->SetDidParseVariables (b, true);
+        collection::const_iterator pos, end = m_children.end();
+        for (pos = m_children.begin(); pos != end; ++pos)
+            (*pos)->SetDidParseVariables (b, true);
     }
+}
+
+
+Block *
+Block::GetSibling() const
+{
+    if (m_parent_scope)
+    {
+        Block *parent_block = m_parent_scope->CalculateSymbolContextBlock();
+        if (parent_block)
+            return parent_block->GetSiblingForChild (this);
+    }
+    return NULL;
+}
+// A parent of child blocks can be asked to find a sibling block given
+// one of its child blocks
+Block *
+Block::GetSiblingForChild (const Block *child_block) const
+{
+    if (!m_children.empty())
+    {
+        collection::const_iterator pos, end = m_children.end();
+        for (pos = m_children.begin(); pos != end; ++pos)
+        {
+            if (pos->get() == child_block)
+            {
+                if (++pos != end)
+                    return pos->get();
+                break;
+            }
+        }
+    }
+    return NULL;
 }
 
