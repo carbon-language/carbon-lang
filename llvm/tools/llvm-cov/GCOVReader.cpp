@@ -27,6 +27,16 @@ GCOVFile::~GCOVFile() {
   DeleteContainerPointers(Functions);
 }
 
+/// isGCDAFile - Return true if Format identifies a .gcda file.
+static bool isGCDAFile(GCOVFormat Format) {
+  return Format == GCDA_402 || Format == GCDA_404;
+}
+
+/// isGCNOFile - Return true if Format identifies a .gcno file.
+static bool isGCNOFile(GCOVFormat Format) {
+  return Format == GCNO_402 || Format == GCNO_404;
+}
+
 /// read - Read GCOV buffer.
 bool GCOVFile::read(GCOVBuffer &Buffer) {
   GCOVFormat Format = Buffer.readGCOVFormat();
@@ -36,20 +46,16 @@ bool GCOVFile::read(GCOVBuffer &Buffer) {
   unsigned i = 0;
   while (1) {
     GCOVFunction *GFun = NULL;
-    if (Format == GCDA_402 || Format == GCDA_404) {
-      if (i < Functions.size())
-	GFun = Functions[i];
-    } else
+    if (isGCDAFile(Format)) {
+      // Use existing function while reading .gcda file.
+      assert (i < Functions.size() && ".gcda data does not match .gcno data");
+      GFun = Functions[i];
+    } else if (isGCNOFile(Format)){
       GFun = new GCOVFunction();
-
-    if (GFun && GFun->read(Buffer, Format)) {
-      if (Format == GCNO_402 || Format == GCNO_404) 
-	Functions.push_back(GFun);
+      Functions.push_back(GFun);
     }
-    else {
-      delete GFun;
+    if (!GFun || !GFun->read(Buffer, Format))
       break;
-    }
     ++i;
   }
   return true;
