@@ -20,7 +20,7 @@
 #include "cwctype"
 #include "__sso_allocator"
 #if _WIN32
-#include <locale.h>
+#include <support/win32/locale.h>
 #else // _WIN32
 #include <langinfo.h>
 #endif // _!WIN32
@@ -722,10 +722,12 @@ ctype<wchar_t>::do_scan_not(mask m, const char_type* low, const char_type* high)
 wchar_t
 ctype<wchar_t>::do_toupper(char_type c) const
 {
-#ifndef _LIBCPP_HAS_DEFAULTRUNELOCALE
+#ifdef _LIBCPP_HAS_DEFAULTRUNELOCALE
+    return isascii(c) ? _DefaultRuneLocale.__mapupper[c] : c;
+#elif defined(__GLIBC__)
     return isascii(c) ? ctype<char>::__classic_upper_table()[c] : c;
 #else
-    return isascii(c) ? _DefaultRuneLocale.__mapupper[c] : c;
+    return (isascii(c) && iswlower_l(c, __cloc())) ? c-L'a'+L'A' : c;
 #endif
 }
 
@@ -733,11 +735,13 @@ const wchar_t*
 ctype<wchar_t>::do_toupper(char_type* low, const char_type* high) const
 {
     for (; low != high; ++low)
-#ifndef _LIBCPP_HAS_DEFAULTRUNELOCALE
+#ifdef _LIBCPP_HAS_DEFAULTRUNELOCALE
+        *low = isascii(*low) ? _DefaultRuneLocale.__mapupper[*low] : *low;
+#elif defined(__GLIBC__)
         *low = isascii(*low) ? ctype<char>::__classic_upper_table()[*low]
                              : *low;
 #else
-        *low = isascii(*low) ? _DefaultRuneLocale.__mapupper[*low] : *low;
+        *low = (isascii(*low) && islower_l(*low, __cloc())) ? (*low-L'a'+L'A') : *low;
 #endif
     return low;
 }
@@ -745,10 +749,12 @@ ctype<wchar_t>::do_toupper(char_type* low, const char_type* high) const
 wchar_t
 ctype<wchar_t>::do_tolower(char_type c) const
 {
-#ifndef _LIBCPP_HAS_DEFAULTRUNELOCALE
+#ifdef _LIBCPP_HAS_DEFAULTRUNELOCALE
+    return isascii(c) ? _DefaultRuneLocale.__maplower[c] : c;
+#elif defined(__GLIBC__)
     return isascii(c) ? ctype<char>::__classic_lower_table()[c] : c;
 #else
-    return isascii(c) ? _DefaultRuneLocale.__maplower[c] : c;
+    return (isascii(c) && isupper_l(c, __cloc())) ? c-L'A'+'a' : c;
 #endif
 }
 
@@ -756,11 +762,13 @@ const wchar_t*
 ctype<wchar_t>::do_tolower(char_type* low, const char_type* high) const
 {
     for (; low != high; ++low)
-#ifndef _LIBCPP_HAS_DEFAULTRUNELOCALE
+#ifdef _LIBCPP_HAS_DEFAULTRUNELOCALE
+        *low = isascii(*low) ? _DefaultRuneLocale.__maplower[*low] : *low;
+#elif defined(__GLIBC__)
         *low = isascii(*low) ? ctype<char>::__classic_lower_table()[*low]
                              : *low;
 #else
-        *low = isascii(*low) ? _DefaultRuneLocale.__maplower[*low] : *low;
+        *low = (isascii(*low) && isupper_l(*low, __cloc())) ? *low-L'A'+L'a' : *low;
 #endif
     return low;
 }
@@ -820,10 +828,12 @@ ctype<char>::~ctype()
 char
 ctype<char>::do_toupper(char_type c) const
 {
-#ifndef _LIBCPP_HAS_DEFAULTRUNELOCALE
+#ifdef _LIBCPP_HAS_DEFAULTRUNELOCALE
+    return isascii(c) ? _DefaultRuneLocale.__mapupper[c] : c;
+#elif defined(__GLIBC__)
     return isascii(c) ? __classic_upper_table()[c] : c;
 #else
-    return isascii(c) ? _DefaultRuneLocale.__mapupper[c] : c;
+    return (isascii(c) && islower_l(c, __cloc())) ? c-'a'+'A' : c;
 #endif
 }
 
@@ -831,10 +841,12 @@ const char*
 ctype<char>::do_toupper(char_type* low, const char_type* high) const
 {
     for (; low != high; ++low)
-#ifndef _LIBCPP_HAS_DEFAULTRUNELOCALE
+#ifdef _LIBCPP_HAS_DEFAULTRUNELOCALE
+        *low = isascii(*low) ? _DefaultRuneLocale.__mapupper[*low] : *low;
+#elif defined(__GLIBC__)
         *low = isascii(*low) ? __classic_upper_table()[*low] : *low;
 #else
-        *low = isascii(*low) ? _DefaultRuneLocale.__mapupper[*low] : *low;
+        *low = (isascii(*low) && islower_l(*low, __cloc())) ? *low-'a'+'A' : *low;
 #endif
     return low;
 }
@@ -842,10 +854,12 @@ ctype<char>::do_toupper(char_type* low, const char_type* high) const
 char
 ctype<char>::do_tolower(char_type c) const
 {
-#ifndef _LIBCPP_HAS_DEFAULTRUNELOCALE
+#ifdef _LIBCPP_HAS_DEFAULTRUNELOCALE
+    return isascii(c) ? _DefaultRuneLocale.__maplower[c] : c;
+#elif defined(__GLIBC__)
     return isascii(c) ? __classic_lower_table()[c] : c;
 #else
-    return isascii(c) ? _DefaultRuneLocale.__maplower[c] : c;
+    return (isascii(c) && isupper_l(c, __cloc())) ? c-'A'+'a' : c;
 #endif
 }
 
@@ -853,10 +867,12 @@ const char*
 ctype<char>::do_tolower(char_type* low, const char_type* high) const
 {
     for (; low != high; ++low)
-#ifndef _LIBCPP_HAS_DEFAULTRUNELOCALE
+#ifdef _LIBCPP_HAS_DEFAULTRUNELOCALE
+        *low = isascii(*low) ? _DefaultRuneLocale.__maplower[*low] : *low;
+#elif defined(__GLIBC__)
         *low = isascii(*low) ? __classic_lower_table()[*low] : *low;
 #else
-        *low = isascii(*low) ? _DefaultRuneLocale.__maplower[*low] : *low;
+        *low = (isascii(*low) && isupper_l(*low, __cloc())) ? *low-'A'+'a' : *low;
 #endif
     return low;
 }
@@ -901,6 +917,8 @@ ctype<char>::classic_table()  _NOEXCEPT
     return _DefaultRuneLocale.__runetype;
 #elif defined(__GLIBC__)
     return __cloc()->__ctype_b;
+#elif _WIN32
+    return _ctype+1; // internal ctype mask table defined in msvcrt.dll
 // This is assumed to be safe, which is a nonsense assumption because we're
 // going to end up dereferencing it later...
 #else
@@ -908,31 +926,19 @@ ctype<char>::classic_table()  _NOEXCEPT
 #endif
 }
 
-#ifndef _LIBCPP_HAS_DEFAULTRUNELOCALE
+#if defined(__GLIBC__)
 const int*
 ctype<char>::__classic_lower_table() _NOEXCEPT
 {
-#if defined(__APPLE__) || defined(__FreeBSD__)
-    return _DefaultRuneLocale.__maplower;
-#elif defined(__GLIBC__)
     return __cloc()->__ctype_tolower;
-#else
-    return NULL;
-#endif
 }
 
 const int*
 ctype<char>::__classic_upper_table() _NOEXCEPT
 {
-#if defined(__APPLE__) || defined(__FreeBSD__)
-    return _DefaultRuneLocale.__mapupper;
-#elif defined(__GLIBC__)
     return __cloc()->__ctype_toupper;
-#else
-    return NULL;
-#endif
 }
-#endif // _LIBCPP_HAS_DEFAULTRUNELOCALE
+#endif // __GLIBC__
 
 // template <> class ctype_byname<char>
 
@@ -1026,18 +1032,18 @@ ctype_byname<wchar_t>::do_is(mask m, char_type c) const
 #ifdef _LIBCPP_WCTYPE_IS_MASK
     return static_cast<bool>(iswctype_l(c, m, __l));
 #else
-	// FIXME: This is broken for things that test more than one flag.
-    if (m & space && !iswspace_l(c, __l)) return false;
-    if (m & print && !iswprint_l(c, __l)) return false;
-    if (m & cntrl && !iswcntrl_l(c, __l)) return false;
-    if (m & upper && !iswupper_l(c, __l)) return false;
-    if (m & lower && !iswlower_l(c, __l)) return false;
-    if (m & alpha && !iswalpha_l(c, __l)) return false;
-    if (m & digit && !iswdigit_l(c, __l)) return false;
-    if (m & punct && !iswpunct_l(c, __l)) return false;
-    if (m & xdigit && !iswxdigit_l(c, __l)) return false;
-    if (m & blank && !iswblank_l(c, __l)) return false;
-    return true;
+	bool result = true;
+    if (m & space && !iswspace_l(c, __l)) result = false;
+    if (m & print && !iswprint_l(c, __l)) result = false;
+    if (m & cntrl && !iswcntrl_l(c, __l)) result = false;
+    if (m & upper && !iswupper_l(c, __l)) result = false;
+    if (m & lower && !iswlower_l(c, __l)) result = false;
+    if (m & alpha && !iswalpha_l(c, __l)) result = false;
+    if (m & digit && !iswdigit_l(c, __l)) result = false;
+    if (m & punct && !iswpunct_l(c, __l)) result = false;
+    if (m & xdigit && !iswxdigit_l(c, __l)) result = false;
+    if (m & blank && !iswblank_l(c, __l)) result = false;
+    return result;
 #endif
 }
 

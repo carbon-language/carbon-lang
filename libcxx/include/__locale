@@ -319,7 +319,7 @@ public:
     static const mask xdigit = _ISxdigit;
     static const mask blank  = _ISblank;
 #elif _WIN32
-    typedef unsigned __int32 mask;
+    typedef unsigned short mask;
     static const mask space  = _SPACE;
     static const mask print  = _BLANK|_PUNCT|_ALPHA|_DIGIT;
     static const mask cntrl  = _CONTROL;
@@ -557,7 +557,7 @@ public:
 #endif
     _LIBCPP_ALWAYS_INLINE const mask* table() const  _NOEXCEPT {return __tab_;}
     static const mask* classic_table()  _NOEXCEPT;
-#ifndef _LIBCPP_HAS_DEFAULTRUNELOCALE
+#if defined(__GLIBC__)
     static const int* __classic_upper_table() _NOEXCEPT;
     static const int* __classic_lower_table() _NOEXCEPT;
 #endif
