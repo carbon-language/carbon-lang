@@ -1239,14 +1239,8 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
   if (Init)
     AddInitializerToDecl(Member, Init, false,
                          DS.getTypeSpecType() == DeclSpec::TST_auto);
-  else if (DS.getTypeSpecType() == DeclSpec::TST_auto &&
-           DS.getStorageClassSpec() == DeclSpec::SCS_static) {
-    // C++0x [dcl.spec.auto]p4: 'auto' can only be used in the type of a static
-    // data member if a brace-or-equal-initializer is provided.
-    Diag(Loc, diag::err_auto_var_requires_init)
-      << Name << cast<ValueDecl>(Member)->getType();
-    Member->setInvalidDecl();
-  }
+  else if (DS.getStorageClassSpec() == DeclSpec::SCS_static)
+    ActOnUninitializedDecl(Member, DS.getTypeSpecType() == DeclSpec::TST_auto);
 
   FinalizeDeclaration(Member);
 
@@ -8727,10 +8721,21 @@ void Sema::AddCXXDirectInitializerToDecl(Decl *RealDecl,
     return;
   }
 
-  CheckImplicitConversions(Result.get(), LParenLoc);
+  Expr *Init = Result.get();
+  CheckImplicitConversions(Init, LParenLoc);
   
-  Result = MaybeCreateExprWithCleanups(Result);
-  VDecl->setInit(Result.takeAs<Expr>());
+  if (VDecl->isConstexpr() && !VDecl->isInvalidDecl() &&
+      !Init->isValueDependent() &&
+      !Init->isConstantInitializer(Context,
+                                   VDecl->getType()->isReferenceType())) {
+    // FIXME: Improve this diagnostic to explain why the initializer is not
+    // a constant expression.
+    Diag(VDecl->getLocation(), diag::err_constexpr_var_requires_const_init)
+      << VDecl << Init->getSourceRange();
+  }
+
+  Init = MaybeCreateExprWithCleanups(Init);
+  VDecl->setInit(Init);
   VDecl->setCXXDirectInitializer(true);
 
   CheckCompleteVariableDeclaration(VDecl);

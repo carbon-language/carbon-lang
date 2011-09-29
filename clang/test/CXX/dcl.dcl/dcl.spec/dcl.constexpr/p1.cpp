@@ -11,19 +11,22 @@ struct notlit2 {
 constexpr int i1 = 0;
 constexpr int f1() { return 0; }
 struct s1 {
-  constexpr static int mi = 0;
+  constexpr static int mi1 = 0;
+  const static int mi2;
 };
+constexpr int s1::mi2 = 0;
 
 // invalid declarations
 // not a definition of an object
-constexpr extern int i2; // x
+constexpr extern int i2; // expected-error {{constexpr variable declaration must be a definition}}
 // not a literal type
-constexpr notlit nl1; // x
+constexpr notlit nl1; // expected-error {{declaration of constexpr variable 'nl1' requires an initializer}}
 // function parameters
 void f2(constexpr int i) {} // expected-error {{function parameter cannot be constexpr}}
 // non-static member
 struct s2 {
-  constexpr int mi; // expected-error {{non-static data member cannot be constexpr}}
+  constexpr int mi1; // expected-error {{non-static data member cannot be constexpr}}
+  static constexpr int mi2; // expected-error {{requires an initializer}}
 };
 // typedef
 typedef constexpr int CI; // expected-error {{typedef cannot be constexpr}}
@@ -63,7 +66,8 @@ constexpr T ft(T t) { return t; }
 template <>
 notlit ft(notlit nl) { return nl; }
 
-constexpr int i3 = ft(1);
+// FIXME: The initializer is a constant expression.
+constexpr int i3 = ft(1); // unexpected-error {{must be initialized by a constant expression}}
 
 void test() {
   // ignore constexpr when instantiating with non-literal
@@ -85,17 +89,17 @@ constexpr pixel::pixel(int a)
   : x(square(a)), y(square(a))
   { }
 
-constexpr pixel small(2); // x (no definition of square(int) yet, so can't
-                          // constexpr-eval pixel(int))
+constexpr pixel small(2); // expected-error {{must be initialized by a constant expression}}
 
 constexpr int square(int x) {
   return x * x;
 }
 
-constexpr pixel large(4); // now valid
+// FIXME: The initializer is a constant expression.
+constexpr pixel large(4); // unexpected-error {{must be initialized by a constant expression}}
 
 int next(constexpr int x) { // expected-error {{function parameter cannot be constexpr}}
       return x + 1;
 }
 
-extern constexpr int memsz; // x
+extern constexpr int memsz; // expected-error {{constexpr variable declaration must be a definition}}

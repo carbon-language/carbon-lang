@@ -1186,7 +1186,15 @@ def err_constexpr_tag : Error<
 def err_constexpr_dtor : Error<"destructor cannot be marked constexpr">;
 def err_constexpr_no_declarators : Error<
   "constexpr can only be used in variable and function declarations">;
-  
+def err_invalid_constexpr_var_decl : Error<
+  "constexpr variable declaration must be a definition">;
+def err_constexpr_var_requires_init : Error<
+  "declaration of constexpr variable %0 requires an initializer">;
+def err_constexpr_initialized_static_member : Error<
+  "definition of initialized static data member %0 cannot be marked constexpr">;
+def err_constexpr_var_requires_const_init : Error<
+  "constexpr variable %0 must be initialized by a constant expression">;
+ 
 // Objective-C++
 def err_objc_decls_may_only_appear_in_global_scope : Error<
   "Objective-C declarations may only appear in global scope">;
@@ -4072,8 +4080,12 @@ def err_in_class_initializer_non_const : Error<
 def err_in_class_initializer_bad_type : Error<
   "static data member of type %0 must be initialized out of line">;
 def ext_in_class_initializer_float_type : ExtWarn<
-  "in-class initializer for static data member of type %0 "
-  "is a C++0x extension">, InGroup<CXX0xStaticNonIntegralInitializer>;
+  "in-class initializer for static data member of type %0 not allowed, "
+  "accepted as an extension">, InGroup<DiagGroup<"static-member-init">>;
+def ext_in_class_initializer_literal_type : ExtWarn<
+  "in-class initializer for static data member of type %0 requires "
+  "'constexpr' specifier, accepted as an extension">,
+  InGroup<DiagGroup<"static-member-init">>;
 def err_in_class_initializer_non_constant : Error<
   "in-class initializer is not a constant expression">;
 

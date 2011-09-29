@@ -303,9 +303,7 @@ def NonGCC : DiagGroup<"non-gcc",
 
 // A warning group for warnings about using C++0x features as extensions in
 // earlier C++ versions.
-def CXX0xStaticNonIntegralInitializer :
-  DiagGroup<"c++0x-static-nonintegral-init">;
-def CXX0x : DiagGroup<"c++0x-extensions", [CXX0xStaticNonIntegralInitializer]>;
+def CXX0x : DiagGroup<"c++0x-extensions">;
 def DelegatingCtorCycles :
   DiagGroup<"delegating-ctor-cycles">;
 

@@ -100,8 +100,7 @@ void g() {
   for (extern int a : A()) {} // expected-error {{loop variable 'a' may not be declared 'extern'}}
   for (static int a : A()) {} // expected-error {{loop variable 'a' may not be declared 'static'}}
   for (register int a : A()) {} // expected-error {{loop variable 'a' may not be declared 'register'}}
-  // FIXME: when clang supports constexpr, this should be rejected.
-  for (constexpr int a : A()) {} // desired-error {{loop variable 'a' may not be declared 'constexpr'}}
+  for (constexpr int a : A()) {} // expected-error {{loop variable 'a' may not be declared 'constexpr'}}
 
   struct NoBeginADL {
     null_t alt_end();

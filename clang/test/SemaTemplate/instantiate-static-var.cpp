@@ -11,7 +11,7 @@ X<int, 0> xi0; // expected-note{{in instantiation of template class 'X<int, 0>' 
 
 template<typename T>
 class Y {
-  static const T value = 0; // expected-warning{{in-class initializer for static data member of type 'const float' is a C++0x extension}}
+  static const T value = 0; // expected-warning{{in-class initializer for static data member of type 'const float' not allowed, accepted as an extension}}
 };
 
 Y<float> fy; // expected-note{{in instantiation of template class 'Y<float>' requested here}}

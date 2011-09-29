@@ -3833,8 +3833,36 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
     }
 
     if (D.getDeclSpec().isConstexprSpecified()) {
-      // FIXME: check this is a valid use of constexpr.
-      NewVD->setConstexpr(true);
+      // FIXME: once we know whether there's an initializer, apply this to
+      // static data members too.
+      if (!NewVD->isStaticDataMember() &&
+          !NewVD->isThisDeclarationADefinition()) {
+        // 'constexpr' is redundant and ill-formed on a non-defining declaration
+        // of a variable. Suggest replacing it with 'const' if appropriate.
+        SourceLocation ConstexprLoc = D.getDeclSpec().getConstexprSpecLoc();
+        SourceRange ConstexprRange(ConstexprLoc, ConstexprLoc);
+        // If the declarator is complex, we need to move the keyword to the
+        // innermost chunk as we switch it from 'constexpr' to 'const'.
+        int Kind = DeclaratorChunk::Paren;
+        for (unsigned I = 0, E = D.getNumTypeObjects(); I != E; ++I) {
+          Kind = D.getTypeObject(I).Kind;
+          if (Kind != DeclaratorChunk::Paren)
+            break;
+        }
+        if ((D.getDeclSpec().getTypeQualifiers() & DeclSpec::TQ_const) ||
+            Kind == DeclaratorChunk::Reference)
+          Diag(ConstexprLoc, diag::err_invalid_constexpr_var_decl)
+            << FixItHint::CreateRemoval(ConstexprRange);
+        else if (Kind == DeclaratorChunk::Paren)
+          Diag(ConstexprLoc, diag::err_invalid_constexpr_var_decl)
+            << FixItHint::CreateReplacement(ConstexprRange, "const");
+        else
+          Diag(ConstexprLoc, diag::err_invalid_constexpr_var_decl)
+            << FixItHint::CreateRemoval(ConstexprRange)
+            << FixItHint::CreateInsertion(D.getIdentifierLoc(), "const ");
+      } else {
+        NewVD->setConstexpr(true);
+      }
     }
   }
 
@@ -5796,10 +5824,25 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
     //   A member-declarator can contain a constant-initializer only
     //   if it declares a static member (9.4) of const integral or
     //   const enumeration type, see 9.4.2.
+    //
+    // C++0x [class.static.data]p3:
+    //   If a non-volatile const static data member is of integral or
+    //   enumeration type, its declaration in the class definition can
+    //   specify a brace-or-equal-initializer in which every initalizer-clause
+    //   that is an assignment-expression is a constant expression. A static
+    //   data member of literal type can be declared in the class definition
+    //   with the constexpr specifier; if so, its declaration shall specify a
+    //   brace-or-equal-initializer in which every initializer-clause that is
+    //   an assignment-expression is a constant expression.
     QualType T = VDecl->getType();
 
     // Do nothing on dependent types.
     if (T->isDependentType()) {
+
+    // Allow any 'static constexpr' members, whether or not they are of literal
+    // type. We separately check that the initializer is a constant expression,
+    // which implicitly requires the member to be of literal type.
+    } else if (VDecl->isConstexpr()) {
 
     // Require constness.
     } else if (!T.isConstQualified()) {
@@ -5809,6 +5852,9 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
 
     // We allow integer constant expressions in all cases.
     } else if (T->isIntegralOrEnumerationType()) {
+      // FIXME: In C++0x, a non-constexpr const static data member with an
+      // in-class initializer cannot be volatile.
+
       // Check whether the expression is a constant expression.
       SourceLocation Loc;
       if (Init->isValueDependent())
@@ -5828,31 +5874,28 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
         VDecl->setInvalidDecl();
       }
 
-    // We allow floating-point constants as an extension in C++03, and
-    // C++0x has far more complicated rules that we don't really
-    // implement fully.
-    } else {
-      bool Allowed = false;
-      if (getLangOptions().CPlusPlus0x) {
-        Allowed = T->isLiteralType();
-      } else if (T->isFloatingType()) { // also permits complex, which is ok
-        Diag(VDecl->getLocation(), diag::ext_in_class_initializer_float_type)
-          << T << Init->getSourceRange();
-        Allowed = true;
-      }
+    // Suggest adding 'constexpr' in C++0x for literal types.
+    } else if (getLangOptions().CPlusPlus0x && T->isLiteralType()) {
+      Diag(VDecl->getLocation(), diag::ext_in_class_initializer_literal_type)
+        << T << Init->getSourceRange()
+        << FixItHint::CreateInsertion(VDecl->getLocStart(), "constexpr ");
+      VDecl->setConstexpr(true);
 
-      if (!Allowed) {
-        Diag(VDecl->getLocation(), diag::err_in_class_initializer_bad_type)
-          << T << Init->getSourceRange();
-        VDecl->setInvalidDecl();
+    // We allow floating-point constants as an extension.
+    } else if (T->isFloatingType()) { // also permits complex, which is ok
+      Diag(VDecl->getLocation(), diag::ext_in_class_initializer_float_type)
+        << T << Init->getSourceRange();
 
-      // TODO: there are probably expressions that pass here that shouldn't.
-      } else if (!Init->isValueDependent() &&
-                 !Init->isConstantInitializer(Context, false)) {
+      if (!Init->isValueDependent() &&
+          !Init->isConstantInitializer(Context, false)) {
         Diag(Init->getExprLoc(), diag::err_in_class_initializer_non_constant)
           << Init->getSourceRange();
         VDecl->setInvalidDecl();
       }
+    } else {
+      Diag(VDecl->getLocation(), diag::err_in_class_initializer_bad_type)
+        << T << Init->getSourceRange();
+      VDecl->setInvalidDecl();
     }
   } else if (VDecl->isFileVarDecl()) {
     if (VDecl->getStorageClassAsWritten() == SC_Extern && 
@@ -5893,6 +5936,17 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
   
   if (!VDecl->isInvalidDecl())
     checkUnsafeAssigns(VDecl->getLocation(), VDecl->getType(), Init);
+
+  if (VDecl->isConstexpr() && !VDecl->isInvalidDecl() &&
+      !VDecl->getType()->isDependentType() &&
+      !Init->isTypeDependent() && !Init->isValueDependent() &&
+      !Init->isConstantInitializer(Context,
+                                   VDecl->getType()->isReferenceType())) {
+    // FIXME: Improve this diagnostic to explain why the initializer is not
+    // a constant expression.
+    Diag(VDecl->getLocation(), diag::err_constexpr_var_requires_const_init)
+      << VDecl << Init->getSourceRange();
+  }
   
   Init = MaybeCreateExprWithCleanups(Init);
   // Attach the initializer to the decl.
@@ -5954,6 +6008,24 @@ void Sema::ActOnUninitializedDecl(Decl *RealDecl,
     if (TypeMayContainAuto && Type->getContainedAutoType()) {
       Diag(Var->getLocation(), diag::err_auto_var_requires_init)
         << Var->getDeclName() << Type;
+      Var->setInvalidDecl();
+      return;
+    }
+
+    // C++0x [dcl.constexpr]p9: An object or reference declared constexpr must
+    // have an initializer.
+    // C++0x [class.static.data]p3: A static data member can be declared with
+    // the constexpr specifier; if so, its declaration shall specify
+    // a brace-or-equal-initializer.
+    if (Var->isConstexpr()) {
+      // FIXME: Provide fix-its to convert the constexpr to const.
+      if (Var->isStaticDataMember() && Var->getAnyInitializer()) {
+        Diag(Var->getLocation(), diag::err_constexpr_initialized_static_member)
+          << Var->getDeclName();
+      } else {
+        Diag(Var->getLocation(), diag::err_constexpr_var_requires_init)
+          << Var->getDeclName();
+      }
       Var->setInvalidDecl();
       return;
     }
@@ -6151,9 +6223,8 @@ void Sema::ActOnCXXForRangeDecl(Decl *D) {
   case SC_OpenCLWorkGroupLocal:
     llvm_unreachable("Unexpected storage class");
   }
-  // FIXME: constexpr isn't allowed here.
-  //if (DS.isConstexprSpecified())
-  //  Error = 5;
+  if (VD->isConstexpr())
+    Error = 5;
   if (Error != -1) {
     Diag(VD->getOuterLocStart(), diag::err_for_range_storage_class)
       << VD->getDeclName() << Error;
