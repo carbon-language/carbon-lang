@@ -464,7 +464,7 @@ raw_ostream &llvm::operator<<(raw_ostream &OS, const MachineMemOperand &MMO) {
 /// MachineInstr ctor - This constructor creates a dummy MachineInstr with
 /// MCID NULL and no operands.
 MachineInstr::MachineInstr()
-  : MCID(0), NumImplicitOps(0), Flags(0), AsmPrinterFlags(0),
+  : MCID(0), Flags(0), AsmPrinterFlags(0),
     MemRefs(0), MemRefsEnd(0),
     Parent(0) {
   // Make sure that we get added to a machine basicblock
@@ -484,8 +484,9 @@ void MachineInstr::addImplicitDefUseOperands() {
 /// implicit operands. It reserves space for the number of operands specified by
 /// the MCInstrDesc.
 MachineInstr::MachineInstr(const MCInstrDesc &tid, bool NoImp)
-  : MCID(&tid), NumImplicitOps(0), Flags(0), AsmPrinterFlags(0),
+  : MCID(&tid), Flags(0), AsmPrinterFlags(0),
     MemRefs(0), MemRefsEnd(0), Parent(0) {
+  unsigned NumImplicitOps = 0;
   if (!NoImp)
     NumImplicitOps = MCID->getNumImplicitDefs() + MCID->getNumImplicitUses();
   Operands.reserve(NumImplicitOps + MCID->getNumOperands());
@@ -498,8 +499,9 @@ MachineInstr::MachineInstr(const MCInstrDesc &tid, bool NoImp)
 /// MachineInstr ctor - As above, but with a DebugLoc.
 MachineInstr::MachineInstr(const MCInstrDesc &tid, const DebugLoc dl,
                            bool NoImp)
-  : MCID(&tid), NumImplicitOps(0), Flags(0), AsmPrinterFlags(0),
+  : MCID(&tid), Flags(0), AsmPrinterFlags(0),
     MemRefs(0), MemRefsEnd(0), Parent(0), debugLoc(dl) {
+  unsigned NumImplicitOps = 0;
   if (!NoImp)
     NumImplicitOps = MCID->getNumImplicitDefs() + MCID->getNumImplicitUses();
   Operands.reserve(NumImplicitOps + MCID->getNumOperands());
@@ -513,10 +515,11 @@ MachineInstr::MachineInstr(const MCInstrDesc &tid, const DebugLoc dl,
 /// that the MachineInstr is created and added to the end of the specified
 /// basic block.
 MachineInstr::MachineInstr(MachineBasicBlock *MBB, const MCInstrDesc &tid)
-  : MCID(&tid), NumImplicitOps(0), Flags(0), AsmPrinterFlags(0),
+  : MCID(&tid), Flags(0), AsmPrinterFlags(0),
     MemRefs(0), MemRefsEnd(0), Parent(0) {
   assert(MBB && "Cannot use inserting ctor with null basic block!");
-  NumImplicitOps = MCID->getNumImplicitDefs() + MCID->getNumImplicitUses();
+  unsigned NumImplicitOps =
+    MCID->getNumImplicitDefs() + MCID->getNumImplicitUses();
   Operands.reserve(NumImplicitOps + MCID->getNumOperands());
   addImplicitDefUseOperands();
   // Make sure that we get added to a machine basicblock
@@ -528,10 +531,11 @@ MachineInstr::MachineInstr(MachineBasicBlock *MBB, const MCInstrDesc &tid)
 ///
 MachineInstr::MachineInstr(MachineBasicBlock *MBB, const DebugLoc dl,
                            const MCInstrDesc &tid)
-  : MCID(&tid), NumImplicitOps(0), Flags(0), AsmPrinterFlags(0),
+  : MCID(&tid), Flags(0), AsmPrinterFlags(0),
     MemRefs(0), MemRefsEnd(0), Parent(0), debugLoc(dl) {
   assert(MBB && "Cannot use inserting ctor with null basic block!");
-  NumImplicitOps = MCID->getNumImplicitDefs() + MCID->getNumImplicitUses();
+  unsigned NumImplicitOps =
+    MCID->getNumImplicitDefs() + MCID->getNumImplicitUses();
   Operands.reserve(NumImplicitOps + MCID->getNumOperands());
   addImplicitDefUseOperands();
   // Make sure that we get added to a machine basicblock
@@ -542,7 +546,7 @@ MachineInstr::MachineInstr(MachineBasicBlock *MBB, const DebugLoc dl,
 /// MachineInstr ctor - Copies MachineInstr arg exactly
 ///
 MachineInstr::MachineInstr(MachineFunction &MF, const MachineInstr &MI)
-  : MCID(&MI.getDesc()), NumImplicitOps(0), Flags(0), AsmPrinterFlags(0),
+  : MCID(&MI.getDesc()), Flags(0), AsmPrinterFlags(0),
     MemRefs(MI.MemRefs), MemRefsEnd(MI.MemRefsEnd),
     Parent(0), debugLoc(MI.getDebugLoc()) {
   Operands.reserve(MI.getNumOperands());
@@ -550,7 +554,6 @@ MachineInstr::MachineInstr(MachineFunction &MF, const MachineInstr &MI)
   // Add operands
   for (unsigned i = 0; i != MI.getNumOperands(); ++i)
     addOperand(MI.getOperand(i));
-  NumImplicitOps = MI.NumImplicitOps;
 
   // Copy all the flags.
   Flags = MI.Flags;
@@ -798,15 +801,6 @@ void MachineInstr::eraseFromParent() {
   getParent()->erase(this);
 }
 
-
-/// OperandComplete - Return true if it's illegal to add a new operand
-///
-bool MachineInstr::OperandsComplete() const {
-  unsigned short NumOperands = MCID->getNumOperands();
-  if (!MCID->isVariadic() && getNumOperands()-NumImplicitOps >= NumOperands)
-    return true;  // Broken: we have all the operands of this instruction!
-  return false;
-}
 
 /// getNumExplicitOperands - Returns the number of non-implicit operands.
 ///

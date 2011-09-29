@@ -58,8 +58,6 @@ public:
   };
 private:
   const MCInstrDesc *MCID;              // Instruction descriptor.
-  uint16_t NumImplicitOps;              // Number of implicit operands (which
-                                        // are determined at construction time).
 
   uint8_t Flags;                        // Various bits of additional
                                         // information about machine
@@ -77,9 +75,6 @@ private:
   mmo_iterator MemRefsEnd;
   MachineBasicBlock *Parent;            // Pointer to the owning basic block.
   DebugLoc debugLoc;                    // Source line information.
-
-  // OperandComplete - Return true if it's illegal to add a new operand
-  bool OperandsComplete() const;
 
   MachineInstr(const MachineInstr&);   // DO NOT IMPLEMENT
   void operator=(const MachineInstr&); // DO NOT IMPLEMENT
