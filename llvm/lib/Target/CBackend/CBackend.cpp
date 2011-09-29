@@ -2383,22 +2383,29 @@ void CWriter::visitReturnInst(ReturnInst &I) {
 
 void CWriter::visitSwitchInst(SwitchInst &SI) {
 
+  Value* Cond = SI.getCondition();
+
   Out << "  switch (";
-  writeOperand(SI.getOperand(0));
+  writeOperand(Cond);
   Out << ") {\n  default:\n";
   printPHICopiesForSuccessor (SI.getParent(), SI.getDefaultDest(), 2);
   printBranchToBlock(SI.getParent(), SI.getDefaultDest(), 2);
   Out << ";\n";
-  for (unsigned i = 2, e = SI.getNumOperands(); i != e; i += 2) {
+
+  unsigned NumCases = SI.getNumCases();
+  // Skip the first item since that's the default case.
+  for (unsigned i = 1; i < NumCases; ++i) {
+    ConstantInt* CaseVal = SI.getCaseValue(i);
+    BasicBlock* Succ = SI.getSuccessor(i);
     Out << "  case ";
-    writeOperand(SI.getOperand(i));
+    writeOperand(CaseVal);
     Out << ":\n";
-    BasicBlock *Succ = cast<BasicBlock>(SI.getOperand(i+1));
     printPHICopiesForSuccessor (SI.getParent(), Succ, 2);
     printBranchToBlock(SI.getParent(), Succ, 2);
     if (Function::iterator(Succ) == llvm::next(Function::iterator(SI.getParent())))
       Out << "    break;\n";
   }
+
   Out << "  }\n";
 }
 

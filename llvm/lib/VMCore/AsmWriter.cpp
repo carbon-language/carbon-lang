@@ -1702,18 +1702,20 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     writeOperand(BI.getSuccessor(1), true);
 
   } else if (isa<SwitchInst>(I)) {
+    SwitchInst& SI(cast<SwitchInst>(I));
     // Special case switch instruction to get formatting nice and correct.
     Out << ' ';
-    writeOperand(Operand        , true);
+    writeOperand(SI.getCondition(), true);
     Out << ", ";
-    writeOperand(I.getOperand(1), true);
+    writeOperand(SI.getDefaultDest(), true);
     Out << " [";
-
-    for (unsigned op = 2, Eop = I.getNumOperands(); op < Eop; op += 2) {
+    // Skip the first item since that's the default case.
+    unsigned NumCases = SI.getNumCases();
+    for (unsigned i = 1; i < NumCases; ++i) {
       Out << "\n    ";
-      writeOperand(I.getOperand(op  ), true);
+      writeOperand(SI.getCaseValue(i), true);
       Out << ", ";
-      writeOperand(I.getOperand(op+1), true);
+      writeOperand(SI.getSuccessor(i), true);
     }
     Out << "\n  ]";
   } else if (isa<IndirectBrInst>(I)) {

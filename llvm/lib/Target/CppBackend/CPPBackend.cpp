@@ -154,7 +154,7 @@ namespace {
     void printFunctionHead(const Function *F);
     void printFunctionBody(const Function *F);
     void printInstruction(const Instruction *I, const std::string& bbname);
-    std::string getOpName(Value*);
+    std::string getOpName(const Value*);
 
     void printModuleBody();
   };
@@ -979,7 +979,7 @@ void CppWriter::printVariableBody(const GlobalVariable *GV) {
   }
 }
 
-std::string CppWriter::getOpName(Value* V) {
+std::string CppWriter::getOpName(const Value* V) {
   if (!isa<Instruction>(V) || DefinedValues.find(V) != DefinedValues.end())
     return getCppName(V);
 
@@ -1044,14 +1044,17 @@ void CppWriter::printInstruction(const Instruction *I,
   case Instruction::Switch: {
     const SwitchInst *SI = cast<SwitchInst>(I);
     Out << "SwitchInst* " << iName << " = SwitchInst::Create("
-        << opNames[0] << ", "
-        << opNames[1] << ", "
+        << getOpName(SI->getCondition()) << ", "
+        << getOpName(SI->getDefaultDest()) << ", "
         << SI->getNumCases() << ", " << bbname << ");";
     nl(Out);
-    for (unsigned i = 2; i != SI->getNumOperands(); i += 2) {
+    unsigned NumCases = SI->getNumCases();
+    for (unsigned i = 1; i < NumCases; ++i) {
+      const ConstantInt* CaseVal = SI->getCaseValue(i);
+      const BasicBlock* BB = SI->getSuccessor(i);
       Out << iName << "->addCase("
-          << opNames[i] << ", "
-          << opNames[i+1] << ");";
+          << getOpName(CaseVal) << ", "
+          << getOpName(BB) << ");";
       nl(Out);
     }
     break;

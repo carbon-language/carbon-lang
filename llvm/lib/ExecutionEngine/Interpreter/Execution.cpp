@@ -662,18 +662,21 @@ void Interpreter::visitBranchInst(BranchInst &I) {
 
 void Interpreter::visitSwitchInst(SwitchInst &I) {
   ExecutionContext &SF = ECStack.back();
-  GenericValue CondVal = getOperandValue(I.getOperand(0), SF);
-  Type *ElTy = I.getOperand(0)->getType();
+  Value* Cond = I.getCondition();
+  Type *ElTy = Cond->getType();
+  GenericValue CondVal = getOperandValue(Cond, SF);
 
   // Check to see if any of the cases match...
   BasicBlock *Dest = 0;
-  for (unsigned i = 2, e = I.getNumOperands(); i != e; i += 2)
-    if (executeICMP_EQ(CondVal, getOperandValue(I.getOperand(i), SF), ElTy)
-        .IntVal != 0) {
-      Dest = cast<BasicBlock>(I.getOperand(i+1));
+  unsigned NumCases = I.getNumCases();
+  // Skip the first item since that's the default case.
+  for (unsigned i = 1; i < NumCases; ++i) {
+    GenericValue CaseVal = getOperandValue(I.getCaseValue(i), SF);
+    if (executeICMP_EQ(CondVal, CaseVal, ElTy).IntVal != 0) {
+      Dest = cast<BasicBlock>(I.getSuccessor(i));
       break;
     }
-
+  }
   if (!Dest) Dest = I.getDefaultDest();   // No cases matched: use default
   SwitchToNewBasicBlock(Dest, SF);
 }

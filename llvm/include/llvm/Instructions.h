@@ -2509,6 +2509,13 @@ public:
     return reinterpret_cast<ConstantInt*>(getOperand(idx*2));
   }
 
+  // setSuccessorValue - Updates the value associated with the specified
+  // successor.
+  void setSuccessorValue(unsigned idx, ConstantInt* SuccessorValue) {
+    assert(idx < getNumSuccessors() && "Successor # out of range!");
+    setOperand(idx*2, reinterpret_cast<Value*>(SuccessorValue));
+  }
+
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const SwitchInst *) { return true; }
   static inline bool classof(const Instruction *I) {

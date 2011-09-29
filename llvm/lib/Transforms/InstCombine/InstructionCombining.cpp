@@ -1237,11 +1237,17 @@ Instruction *InstCombiner::visitSwitchInst(SwitchInst &SI) {
     if (I->getOpcode() == Instruction::Add)
       if (ConstantInt *AddRHS = dyn_cast<ConstantInt>(I->getOperand(1))) {
         // change 'switch (X+4) case 1:' into 'switch (X) case -3'
-        for (unsigned i = 2, e = SI.getNumOperands(); i != e; i += 2)
-          SI.setOperand(i,
-                   ConstantExpr::getSub(cast<Constant>(SI.getOperand(i)),
-                                                AddRHS));
-        SI.setOperand(0, I->getOperand(0));
+        unsigned NumCases = SI.getNumCases();
+        // Skip the first item since that's the default case.
+        for (unsigned i = 1; i < NumCases; ++i) {
+          ConstantInt* CaseVal = SI.getCaseValue(i);
+          Constant* NewCaseVal = ConstantExpr::getSub(cast<Constant>(CaseVal),
+                                                      AddRHS);
+          assert(isa<ConstantInt>(NewCaseVal) &&
+                 "Result of expression should be constant");
+          SI.setSuccessorValue(i, cast<ConstantInt>(NewCaseVal));
+        }
+        SI.setCondition(I->getOperand(0));
         Worklist.Add(I);
         return &SI;
       }
