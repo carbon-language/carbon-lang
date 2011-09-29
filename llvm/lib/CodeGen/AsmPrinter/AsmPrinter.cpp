@@ -1231,8 +1231,7 @@ void AsmPrinter::EmitLLVMUsedList(const Constant *List) {
 
 typedef std::pair<int, Constant*> Structor;
 
-static bool priority_order(const Structor& lhs, const Structor& rhs)
-{
+static bool priority_order(const Structor& lhs, const Structor& rhs) {
   return lhs.first < rhs.first;
 }
 
