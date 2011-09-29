@@ -83,11 +83,14 @@ class DiagnosticMappingInfo {
   unsigned Mapping : 3;
   unsigned IsUser : 1;
   unsigned IsPragma : 1;
+  unsigned HasShowInSystemHeader : 1;
+  unsigned HasNoWarningAsError : 1;
+  unsigned HasNoErrorAsFatal : 1;
 
 public:
   static DiagnosticMappingInfo MakeUnset() {
     DiagnosticMappingInfo Result;
-    Result.Mapping = Result.IsUser = Result.IsPragma = 0;
+    Result.Mapping = 0;
     return Result;
   }
 
@@ -97,14 +100,28 @@ public:
     Result.Mapping = Mapping;
     Result.IsUser = IsUser;
     Result.IsPragma = IsPragma;
+    Result.HasShowInSystemHeader = 0;
+    Result.HasNoWarningAsError = 0;
+    Result.HasNoErrorAsFatal = 0;
     return Result;
   }
 
+  bool isUnset() const { return Mapping == 0; }
+
   diag::Mapping getMapping() const { return diag::Mapping(Mapping); }
+  void setMapping(diag::Mapping Value) { Mapping = Value; }
+
   bool isUser() const { return IsUser; }
   bool isPragma() const { return IsPragma; }
 
-  bool isUnset() const { return Mapping == 0; }
+  bool hasShowInSystemHeader() const { return HasShowInSystemHeader; }
+  void setShowInSystemHeader(bool Value) { HasShowInSystemHeader = Value; }
+
+  bool hasNoWarningAsError() const { return HasNoWarningAsError; }
+  void setNoWarningAsError(bool Value) { HasNoWarningAsError = Value; }
+
+  bool hasNoErrorAsFatal() const { return HasNoErrorAsFatal; }
+  void setNoErrorAsFatal(bool Value) { HasNoErrorAsFatal = Value; }
 };
 
 /// \brief Used for handling and querying diagnostic IDs. Can be used and shared

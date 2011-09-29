@@ -239,14 +239,56 @@ bool DiagnosticsEngine::setDiagnosticGroupMapping(
 
 bool DiagnosticsEngine::setDiagnosticGroupWarningAsError(StringRef Group,
                                                          bool Enabled) {
-  diag::Mapping Map = Enabled ? diag::MAP_ERROR : diag::MAP_WARNING_NO_WERROR;
-  return setDiagnosticGroupMapping(Group, Map);
+  // If we are enabling this feature, just set the diagnostic mappings to map to
+  // errors.
+  if (Enabled)
+    return setDiagnosticGroupMapping(Group, diag::MAP_ERROR);
+
+  // Otherwise, we want to set the diagnostic mapping's "no Werror" bit, and
+  // potentially downgrade anything already mapped to be a warning.
+
+  // Get the diagnostics in this group.
+  llvm::SmallVector<diag::kind, 8> GroupDiags;
+  if (Diags->getDiagnosticsInGroup(Group, GroupDiags))
+    return true;
+
+  // Perform the mapping change.
+  for (unsigned i = 0, e = GroupDiags.size(); i != e; ++i) {
+    DiagnosticMappingInfo &Info = GetCurDiagState()->getOrAddMappingInfo(
+      GroupDiags[i]);
+
+    Info.setMapping(diag::MAP_WARNING_NO_WERROR);
+    Info.setNoWarningAsError(true);
+  }
+
+  return false;
 }
 
 bool DiagnosticsEngine::setDiagnosticGroupErrorAsFatal(StringRef Group,
                                                        bool Enabled) {
-  diag::Mapping Map = Enabled ? diag::MAP_FATAL : diag::MAP_ERROR_NO_WFATAL;
-  return setDiagnosticGroupMapping(Group, Map);
+  // If we are enabling this feature, just set the diagnostic mappings to map to
+  // fatal errors.
+  if (Enabled)
+    return setDiagnosticGroupMapping(Group, diag::MAP_FATAL);
+
+  // Otherwise, we want to set the diagnostic mapping's "no Werror" bit, and
+  // potentially downgrade anything already mapped to be an error.
+
+  // Get the diagnostics in this group.
+  llvm::SmallVector<diag::kind, 8> GroupDiags;
+  if (Diags->getDiagnosticsInGroup(Group, GroupDiags))
+    return true;
+
+  // Perform the mapping change.
+  for (unsigned i = 0, e = GroupDiags.size(); i != e; ++i) {
+    DiagnosticMappingInfo &Info = GetCurDiagState()->getOrAddMappingInfo(
+      GroupDiags[i]);
+
+    Info.setMapping(diag::MAP_ERROR_NO_WFATAL);
+    Info.setNoErrorAsFatal(true);
+  }
+
+  return false;
 }
 
 void DiagnosticsEngine::Report(const StoredDiagnostic &storedDiag) {

@@ -184,26 +184,29 @@ static const StaticDiagInfoRec *GetDiagInfo(unsigned DiagID) {
   return Found;
 }
 
-static diag::Mapping GetDefaultDiagMapping(unsigned DiagID) {
-  if (const StaticDiagInfoRec *Info = GetDiagInfo(DiagID)) {
-    // Compute the effective mapping based on the extra bits.
-    diag::Mapping Mapping = (diag::Mapping) Info->Mapping;
+static DiagnosticMappingInfo GetDefaultDiagMappingInfo(unsigned DiagID) {
+  DiagnosticMappingInfo Info = DiagnosticMappingInfo::MakeInfo(
+    diag::MAP_FATAL, /*IsUser=*/false, /*IsPragma=*/false);
 
-    if (Info->WarnNoWerror) {
-      assert(Mapping == diag::MAP_WARNING &&
+  if (const StaticDiagInfoRec *StaticInfo = GetDiagInfo(DiagID)) {
+    Info.setMapping((diag::Mapping) StaticInfo->Mapping);
+
+    if (StaticInfo->WarnNoWerror) {
+      assert(Info.getMapping() == diag::MAP_WARNING &&
              "Unexpected mapping with no-Werror bit!");
-      Mapping = diag::MAP_WARNING_NO_WERROR;
+      Info.setMapping(diag::MAP_WARNING_NO_WERROR);
+      Info.setNoWarningAsError(true);
     }
 
-    if (Info->WarnShowInSystemHeader) {
-      assert(Mapping == diag::MAP_WARNING &&
+    if (StaticInfo->WarnShowInSystemHeader) {
+      assert(Info.getMapping() == diag::MAP_WARNING &&
              "Unexpected mapping with show-in-system-header bit!");
-      Mapping = diag::MAP_WARNING_SHOW_IN_SYSTEM_HEADER;
+      Info.setMapping(diag::MAP_WARNING_SHOW_IN_SYSTEM_HEADER);
+      Info.setShowInSystemHeader(true);
     }
-
-    return Mapping;
   }
-  return diag::MAP_FATAL;
+
+  return Info;
 }
 
 /// getWarningOptionForDiag - Return the lowest-level warning option that
@@ -247,8 +250,7 @@ DiagnosticMappingInfo &DiagnosticsEngine::DiagState::getOrAddMappingInfo(
   // Initialize the entry if we added it.
   if (Result.second) {
     assert(Result.first->second.isUnset() && "unexpected unset entry");
-    Result.first->second = DiagnosticMappingInfo::MakeInfo(
-      GetDefaultDiagMapping(Diag), /*IsUser=*/false, /*IsPragma=*/false);
+    Result.first->second = GetDefaultDiagMappingInfo(Diag);
   }
 
   return Result.first->second;
@@ -474,7 +476,8 @@ bool DiagnosticIDs::isBuiltinExtensionDiag(unsigned DiagID,
       getBuiltinDiagClass(DiagID) != CLASS_EXTENSION)
     return false;
   
-  EnabledByDefault = GetDefaultDiagMapping(DiagID) != diag::MAP_IGNORE;
+  EnabledByDefault =
+    GetDefaultDiagMappingInfo(DiagID).getMapping() != diag::MAP_IGNORE;
   return true;
 }
 
@@ -482,7 +485,7 @@ bool DiagnosticIDs::isDefaultMappingAsError(unsigned DiagID) {
   if (DiagID >= diag::DIAG_UPPER_LIMIT)
     return false;
 
-  return GetDefaultDiagMapping(DiagID) == diag::MAP_ERROR;
+  return GetDefaultDiagMappingInfo(DiagID).getMapping() == diag::MAP_ERROR;
 }
 
 /// getDescription - Given a diagnostic ID, return a description of the
