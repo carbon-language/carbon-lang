@@ -1,4 +1,4 @@
-##===- tools/llvm-gcov/Makefile ----------------------------*- Makefile -*-===##
+##===- tools/llvm-cov/Makefile -----------------------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #

@@ -7,9 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//
 // llvm-cov is a command line tools to analyze and report coverage information.
-//
 //
 //===----------------------------------------------------------------------===//
 
@@ -47,27 +45,25 @@ int main(int argc, char **argv) {
   if (InputGCNO.empty())
     errs() << " " << argv[0] << ": No gcov input file!\n";
 
-  OwningPtr<MemoryBuffer> Buff;
-  if (error_code ec = MemoryBuffer::getFileOrSTDIN(InputGCNO, Buff)) {
+  OwningPtr<MemoryBuffer> GCNO_Buff;
+  if (error_code ec = MemoryBuffer::getFileOrSTDIN(InputGCNO, GCNO_Buff)) {
     errs() << InputGCNO << ": " << ec.message() << "\n";
     return 1;
   }
-  GCOVBuffer GB(Buff.take());
-
-  if (!GF.read(GB)) {
+  GCOVBuffer GCNO_GB(GCNO_Buff.take());
+  if (!GF.read(GCNO_GB)) {
     errs() << "Invalid .gcno File!\n";
     return 1;
   }
 
   if (!InputGCDA.empty()) {
-    OwningPtr<MemoryBuffer> Buff2;
-    if (error_code ec = MemoryBuffer::getFileOrSTDIN(InputGCDA, Buff2)) {
+    OwningPtr<MemoryBuffer> GCDA_Buff;
+    if (error_code ec = MemoryBuffer::getFileOrSTDIN(InputGCDA, GCDA_Buff)) {
       errs() << InputGCDA << ": " << ec.message() << "\n";
       return 1;
     }
-    GCOVBuffer GB2(Buff2.take());
-    
-    if (!GF.read(GB2)) {
+    GCOVBuffer GCDA_GB(GCDA_Buff.take());
+    if (!GF.read(GCDA_GB)) {
       errs() << "Invalid .gcda File!\n";
       return 1;
     }

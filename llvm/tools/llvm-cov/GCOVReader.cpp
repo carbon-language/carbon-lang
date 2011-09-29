@@ -10,12 +10,11 @@
 // GCOVReader implements the interface to read coverage files that use 'gcov'
 // format.
 //
-//
 //===----------------------------------------------------------------------===//
 
 #include "GCOVReader.h"
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/MemoryObject.h"
 #include "llvm/Support/system_error.h"
 using namespace llvm;
@@ -35,16 +34,16 @@ bool GCOVFile::read(GCOVBuffer &Buffer) {
     return false;
 
   unsigned i = 0;
-  while(1) {
+  while (1) {
     GCOVFunction *GFun = NULL;
-    if(Format == GCDA_402 || Format == GCDA_404) {
+    if (Format == GCDA_402 || Format == GCDA_404) {
       if (i < Functions.size())
 	GFun = Functions[i];
     } else
       GFun = new GCOVFunction();
 
     if (GFun && GFun->read(Buffer, Format)) {
-      if(Format == GCNO_402 || Format == GCNO_404) 
+      if (Format == GCNO_402 || Format == GCNO_404) 
 	Functions.push_back(GFun);
     }
     else {
@@ -93,10 +92,10 @@ bool GCOVFunction::read(GCOVBuffer &Buff, GCOVFormat Format) {
     Buff.readInt(); // Checksum #2
 
   Name = Buff.readString();
-  if(Format == GCNO_402 || Format == GCNO_404)
+  if (Format == GCNO_402 || Format == GCNO_404)
     Filename = Buff.readString();
 
-  if(Format == GCDA_402 || Format == GCDA_404) {
+  if (Format == GCDA_402 || Format == GCDA_404) {
     Buff.readArcTag();
     uint32_t Count = Buff.readInt() / 2;
     for (unsigned i = 0, e = Count; i != e; ++i) {

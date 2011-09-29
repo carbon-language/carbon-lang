@@ -1,4 +1,4 @@
-//===-- tools/cov/GCOVReader.h - LLVM coverage tool -------------*- C++ -*-===//
+//===-- tools/llvm-cov/GCOVReader.h - LLVM coverage tool --------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
