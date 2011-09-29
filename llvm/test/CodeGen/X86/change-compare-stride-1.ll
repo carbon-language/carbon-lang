@@ -1,4 +1,7 @@
-; RUN: llc < %s -march=x86-64 | FileCheck %s
+; RUN: llc < %s -march=x86-64 -enable-lsr-nested | FileCheck %s
+;
+; Nested LSR is required to optimize this case.
+; We do not expect to see this form of IR without -enable-iv-rewrite.
 
 define void @borf(i8* nocapture %in, i8* nocapture %out) nounwind {
 ; CHECK: borf:

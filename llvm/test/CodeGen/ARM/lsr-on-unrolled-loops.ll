@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=thumbv7-apple-darwin10 -mcpu=cortex-a8 < %s | FileCheck %s
+; RUN: llc -mtriple=thumbv7-apple-darwin10 -mcpu=cortex-a8  -enable-lsr-nested < %s | FileCheck %s
 
 ; LSR should recognize that this is an unrolled loop which can use
 ; constant offset addressing, so that each of the following stores
@@ -7,6 +7,9 @@
 ; CHECK: vstr.32 s{{.*}}, [{{(r[0-9]+)|(lr)}}, #32]
 ; CHECK: vstr.32 s{{.*}}, [{{(r[0-9]+)|(lr)}}, #64]
 ; CHECK: vstr.32 s{{.*}}, [{{(r[0-9]+)|(lr)}}, #96]
+
+; We can also save a register in the outer loop, but that requires
+; performing LSR on the outer loop.
 
 target datalayout = "e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-i64:32:32-f32:32:32-f64:32:32-v64:64:64-v128:128:128-a0:0:32-n32"
 

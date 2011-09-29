@@ -78,6 +78,9 @@
 using namespace llvm;
 
 namespace llvm {
+cl::opt<bool> EnableNested(
+  "enable-lsr-nested", cl::Hidden, cl::desc("Enable LSR on nested loops"));
+
 cl::opt<bool> EnableRetry(
     "enable-lsr-retry", cl::Hidden, cl::desc("Enable LSR retry"));
 }
@@ -723,11 +726,14 @@ void Cost::RateRegister(const SCEV *Reg,
     if (AR->getLoop() == L)
       AddRecCost += 1; /// TODO: This should be a function of the stride.
 
-    // If this is an addrec for a loop that's already been visited by LSR,
-    // don't second-guess its addrec phi nodes. LSR isn't currently smart
-    // enough to reason about more than one loop at a time. Consider these
-    // registers free and leave them alone.
-    else if (L->contains(AR->getLoop()) ||
+    // If this is an addrec for another loop, don't second-guess its addrec phi
+    // nodes. LSR isn't currently smart enough to reason about more than one
+    // loop at a time. LSR has either already run on inner loops, will not run
+    // on other loops, and cannot be expected to change sibling loops. If the
+    // AddRec exists, consider it's register free and leave it alone. Otherwise,
+    // do not consider this formula at all.
+    // FIXME: why do we need to generate such fomulae?
+    else if (!EnableNested || L->contains(AR->getLoop()) ||
              (!AR->getLoop()->contains(L) &&
               DT.dominates(L->getHeader(), AR->getLoop()->getHeader()))) {
       for (BasicBlock::iterator I = AR->getLoop()->getHeader()->begin();
@@ -737,6 +743,10 @@ void Cost::RateRegister(const SCEV *Reg,
              SE.getEffectiveSCEVType(AR->getType())) &&
             SE.getSCEV(PN) == AR)
           return;
+      }
+      if (!EnableNested) {
+        Loose();
+        return;
       }
       // If this isn't one of the addrecs that the loop already has, it
       // would require a costly new phi and add. TODO: This isn't
@@ -3800,6 +3810,12 @@ LSRInstance::LSRInstance(const TargetLowering *tli, Loop *l, Pass *P)
 
   // If loop preparation eliminates all interesting IV users, bail.
   if (IU.empty()) return;
+
+  // Skip nested loops until we can model them better with forulae.
+  if (!EnableNested && !L->empty()) {
+    DEBUG(dbgs() << "LSR skipping outer loop " << *L << "\n");
+    return false;
+  }
 
   // Start collecting data and preparing for the solver.
   CollectInterestingTypesAndFactors();

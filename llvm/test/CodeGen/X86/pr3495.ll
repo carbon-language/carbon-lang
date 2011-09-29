@@ -1,7 +1,9 @@
-; RUN: llc < %s -march=x86 -stats -regalloc=linearscan |& grep {Number of loads added} | grep 2
-; RUN: llc < %s -march=x86 -stats -regalloc=linearscan |& grep {Number of spill slots allocated} | grep 1
-; RUN: llc < %s -march=x86 -stats -regalloc=linearscan |& grep {Number of machine instrs printed} | grep 34
+; RUN: llc < %s -march=x86 -stats -regalloc=linearscan -enable-lsr-nested |& grep {Number of loads added} | grep 2
+; RUN: llc < %s -march=x86 -stats -regalloc=linearscan -enable-lsr-nested |& grep {Number of spill slots allocated} | grep 1
+; RUN: llc < %s -march=x86 -stats -regalloc=linearscan -enable-lsr-nested |& grep {Number of machine instrs printed} | grep 34
 ; PR3495
+;
+; Note: this should not spill at all with either good LSR or good regalloc.
 
 target triple = "i386-pc-linux-gnu"
 @x = external global [8 x i32], align 32		; <[8 x i32]*> [#uses=1]
