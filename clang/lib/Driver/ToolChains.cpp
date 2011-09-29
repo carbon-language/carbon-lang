@@ -1519,14 +1519,14 @@ static std::string findGCCBaseLibDir(const Driver &D,
   bool Exists;
   llvm::SmallVector<std::string, 8> Paths(D.PrefixDirs.begin(),
       D.PrefixDirs.end());
-  Paths.push_back("/usr/lib/");
+  Paths.push_back("/usr/");
   const std::string *Triples[] = {&GccTriple, &D.DefaultHostTriple};
   for (llvm::SmallVector<std::string, 8>::const_iterator it = Paths.begin(),
        ie = Paths.end(); it != ie; ++it) {
     for (unsigned i = 0; i < sizeof(GccVersions)/sizeof(char*); ++i) {
       for (unsigned j = 0; j < sizeof(Triples)/sizeof(Triples[0]); ++j) {
         std::string Suffix = *Triples[j] + "/" + GccVersions[i];
-        std::string t1 = *it + "gcc/" + Suffix;
+        std::string t1 = *it + "lib/gcc/" + Suffix;
         if (!llvm::sys::fs::exists(t1 + "/crtbegin.o", Exists) && Exists)
           return t1;
         std::string t2 = *it + "lib64/gcc/" + Suffix;
