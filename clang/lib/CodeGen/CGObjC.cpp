@@ -1210,7 +1210,7 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
   CGDebugInfo *DI = getDebugInfo();
   if (DI) {
     DI->setLocation(S.getSourceRange().getBegin());
-    DI->EmitRegionStart(Builder);
+    DI->EmitLexicalBlockStart(Builder);
   }
 
   // The local variable comes into scope immediately.
@@ -1467,7 +1467,7 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
 
   if (DI) {
     DI->setLocation(S.getSourceRange().getEnd());
-    DI->EmitRegionEnd(Builder);
+    DI->EmitLexicalBlockEnd(Builder);
   }
 
   // Leave the cleanup we entered in ARC.
@@ -2442,7 +2442,7 @@ void CodeGenFunction::EmitObjCAutoreleasePoolStmt(
   CGDebugInfo *DI = getDebugInfo();
   if (DI) {
     DI->setLocation(S.getLBracLoc());
-    DI->EmitRegionStart(Builder);
+    DI->EmitLexicalBlockStart(Builder);
   }
 
   // Keep track of the current cleanup stack depth.
@@ -2461,7 +2461,7 @@ void CodeGenFunction::EmitObjCAutoreleasePoolStmt(
 
   if (DI) {
     DI->setLocation(S.getRBracLoc());
-    DI->EmitRegionEnd(Builder);
+    DI->EmitLexicalBlockEnd(Builder);
   }
 }
 

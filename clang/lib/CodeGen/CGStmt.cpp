@@ -192,7 +192,7 @@ RValue CodeGenFunction::EmitCompoundStmt(const CompoundStmt &S, bool GetLast,
   CGDebugInfo *DI = getDebugInfo();
   if (DI) {
     DI->setLocation(S.getLBracLoc());
-    DI->EmitRegionStart(Builder);
+    DI->EmitLexicalBlockStart(Builder);
   }
 
   // Keep track of the current cleanup stack depth.
@@ -204,7 +204,7 @@ RValue CodeGenFunction::EmitCompoundStmt(const CompoundStmt &S, bool GetLast,
 
   if (DI) {
     DI->setLocation(S.getRBracLoc());
-    DI->EmitRegionEnd(Builder);
+    DI->EmitLexicalBlockEnd(Builder);
   }
 
   RValue RV;
@@ -572,7 +572,7 @@ void CodeGenFunction::EmitForStmt(const ForStmt &S) {
   CGDebugInfo *DI = getDebugInfo();
   if (DI) {
     DI->setLocation(S.getSourceRange().getBegin());
-    DI->EmitRegionStart(Builder);
+    DI->EmitLexicalBlockStart(Builder);
   }
 
   // Evaluate the first part before the loop.
@@ -654,7 +654,7 @@ void CodeGenFunction::EmitForStmt(const ForStmt &S) {
 
   if (DI) {
     DI->setLocation(S.getSourceRange().getEnd());
-    DI->EmitRegionEnd(Builder);
+    DI->EmitLexicalBlockEnd(Builder);
   }
 
   // Emit the fall-through block.
@@ -669,7 +669,7 @@ void CodeGenFunction::EmitCXXForRangeStmt(const CXXForRangeStmt &S) {
   CGDebugInfo *DI = getDebugInfo();
   if (DI) {
     DI->setLocation(S.getSourceRange().getBegin());
-    DI->EmitRegionStart(Builder);
+    DI->EmitLexicalBlockStart(Builder);
   }
 
   // Evaluate the first pieces before the loop.
@@ -728,7 +728,7 @@ void CodeGenFunction::EmitCXXForRangeStmt(const CXXForRangeStmt &S) {
 
   if (DI) {
     DI->setLocation(S.getSourceRange().getEnd());
-    DI->EmitRegionEnd(Builder);
+    DI->EmitLexicalBlockEnd(Builder);
   }
 
   // Emit the fall-through block.

@@ -46,7 +46,7 @@ CGDebugInfo::CGDebugInfo(CodeGenModule &CGM)
 }
 
 CGDebugInfo::~CGDebugInfo() {
-  assert(RegionStack.empty() && "Region stack mismatch, stack not empty!");
+  assert(LexicalBlockStack.empty() && "Region stack mismatch, stack not empty!");
 }
 
 void CGDebugInfo::setLocation(SourceLocation Loc) {
@@ -1030,7 +1030,7 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty) {
   // it.
   TypeCache[QualType(Ty, 0).getAsOpaquePtr()] = FwdDecl;
   // Push the struct on region stack.
-  RegionStack.push_back(FwdDeclNode);
+  LexicalBlockStack.push_back(FwdDeclNode);
   RegionMap[Ty->getDecl()] = llvm::WeakVH(FwdDecl);
 
   // Convert all the elements.
@@ -1076,7 +1076,7 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty) {
       TParamsArray = CollectCXXTemplateParams(TSpecial, Unit);
   }
 
-  RegionStack.pop_back();
+  LexicalBlockStack.pop_back();
   llvm::DenseMap<const Decl *, llvm::WeakVH>::iterator RI = 
     RegionMap.find(Ty->getDecl());
   if (RI != RegionMap.end())
@@ -1172,7 +1172,7 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
   // it.
   TypeCache[QualType(Ty, 0).getAsOpaquePtr()] = FwdDecl;
   // Push the struct on region stack.
-  RegionStack.push_back(FwdDeclNode);
+  LexicalBlockStack.push_back(FwdDeclNode);
   RegionMap[Ty->getDecl()] = llvm::WeakVH(FwdDecl);
 
   // Convert all the elements.
@@ -1256,7 +1256,7 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
 
   llvm::DIArray Elements = DBuilder.getOrCreateArray(EltTys);
 
-  RegionStack.pop_back();
+  LexicalBlockStack.pop_back();
   llvm::DenseMap<const Decl *, llvm::WeakVH>::iterator RI = 
     RegionMap.find(Ty->getDecl());
   if (RI != RegionMap.end())
@@ -1679,7 +1679,7 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
   StringRef Name;
   StringRef LinkageName;
 
-  FnBeginRegionCount.push_back(RegionStack.size());
+  FnBeginRegionCount.push_back(LexicalBlockStack.size());
 
   const Decl *D = GD.getDecl();
 
@@ -1695,7 +1695,7 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
       llvm::DIDescriptor SP(dyn_cast_or_null<llvm::MDNode>(&*FI->second));
       if (SP.isSubprogram() && llvm::DISubprogram(SP).isDefinition()) {
         llvm::MDNode *SPN = SP;
-        RegionStack.push_back(SPN);
+        LexicalBlockStack.push_back(SPN);
         RegionMap[D] = llvm::WeakVH(SP);
         return;
       }
@@ -1744,7 +1744,7 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
 
   // Push function on region stack.
   llvm::MDNode *SPN = SP;
-  RegionStack.push_back(SPN);
+  LexicalBlockStack.push_back(SPN);
   RegionMap[D] = llvm::WeakVH(SP);
 
   // Clear stack used to keep track of #line directives.
@@ -1767,12 +1767,12 @@ void CGDebugInfo::UpdateLineDirectiveRegion(CGBuilderTy &Builder) {
 
   // If #line directive stack is empty then we are entering a new scope.
   if (LineDirectiveFiles.empty()) {
-    EmitRegionStart(Builder);
+    EmitLexicalBlockStart(Builder);
     LineDirectiveFiles.push_back(PCLoc.getFilename());
     return;
   }
 
-  assert (RegionStack.size() >= LineDirectiveFiles.size()
+  assert (LexicalBlockStack.size() >= LineDirectiveFiles.size()
 	  && "error handling #line regions!");
 
   bool SeenThisFile = false;
@@ -1788,7 +1788,7 @@ void CGDebugInfo::UpdateLineDirectiveRegion(CGBuilderTy &Builder) {
   if (SeenThisFile) {
     while (!LineDirectiveFiles.empty()) {
       const char *LastFile = LineDirectiveFiles.back();
-      RegionStack.pop_back();
+      LexicalBlockStack.pop_back();
       LineDirectiveFiles.pop_back();
       if (!strcmp(PPLoc.getFilename(), LastFile))
 	break;
@@ -1797,7 +1797,7 @@ void CGDebugInfo::UpdateLineDirectiveRegion(CGBuilderTy &Builder) {
   }
 
   // .. otherwise insert new #line region.
-  EmitRegionStart(Builder);
+  EmitLexicalBlockStart(Builder);
   LineDirectiveFiles.push_back(PCLoc.getFilename());
 
   return;
@@ -1823,46 +1823,46 @@ void CGDebugInfo::EmitLocation(CGBuilderTy &Builder) {
   // Update last state.
   PrevLoc = CurLoc;
 
-  llvm::MDNode *Scope = RegionStack.back();
+  llvm::MDNode *Scope = LexicalBlockStack.back();
   Builder.SetCurrentDebugLocation(llvm::DebugLoc::get(getLineNumber(CurLoc),
                                                       getColumnNumber(CurLoc),
                                                       Scope));
 }
 
-/// EmitRegionStart- Constructs the debug code for entering a declarative
+/// EmitLexicalBlockStart - Constructs the debug code for entering a declarative
 /// region - beginning of a DW_TAG_lexical_block.
-void CGDebugInfo::EmitRegionStart(CGBuilderTy &Builder) {
+void CGDebugInfo::EmitLexicalBlockStart(CGBuilderTy &Builder) {
   llvm::DIDescriptor D =
-    DBuilder.createLexicalBlock(RegionStack.empty() ? 
+    DBuilder.createLexicalBlock(LexicalBlockStack.empty() ? 
                                 llvm::DIDescriptor() : 
-                                llvm::DIDescriptor(RegionStack.back()),
+                                llvm::DIDescriptor(LexicalBlockStack.back()),
                                 getOrCreateFile(CurLoc),
                                 getLineNumber(CurLoc), 
                                 getColumnNumber(CurLoc));
   llvm::MDNode *DN = D;
-  RegionStack.push_back(DN);
+  LexicalBlockStack.push_back(DN);
 }
 
-/// EmitRegionEnd - Constructs the debug code for exiting a declarative
+/// EmitLexicalBlockEnd - Constructs the debug code for exiting a declarative
 /// region - end of a DW_TAG_lexical_block.
-void CGDebugInfo::EmitRegionEnd(CGBuilderTy &Builder) {
-  assert(!RegionStack.empty() && "Region stack mismatch, stack empty!");
+void CGDebugInfo::EmitLexicalBlockEnd(CGBuilderTy &Builder) {
+  assert(!LexicalBlockStack.empty() && "Region stack mismatch, stack empty!");
 
   // Provide a region stop point.
   EmitLocation(Builder);
 
-  RegionStack.pop_back();
+  LexicalBlockStack.pop_back();
 }
 
 /// EmitFunctionEnd - Constructs the debug code for exiting a function.
 void CGDebugInfo::EmitFunctionEnd(CGBuilderTy &Builder) {
-  assert(!RegionStack.empty() && "Region stack mismatch, stack empty!");
+  assert(!LexicalBlockStack.empty() && "Region stack mismatch, stack empty!");
   unsigned RCount = FnBeginRegionCount.back();
-  assert(RCount <= RegionStack.size() && "Region stack mismatch");
+  assert(RCount <= LexicalBlockStack.size() && "Region stack mismatch");
 
   // Pop all regions for this function.
-  while (RegionStack.size() != RCount)
-    EmitRegionEnd(Builder);
+  while (LexicalBlockStack.size() != RCount)
+    EmitLexicalBlockEnd(Builder);
   FnBeginRegionCount.pop_back();
 }
 
@@ -1938,7 +1938,7 @@ llvm::DIType CGDebugInfo::EmitTypeForVarWithBlocksAttr(const ValueDecl *VD,
 void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
                               llvm::Value *Storage, 
                               unsigned ArgNo, CGBuilderTy &Builder) {
-  assert(!RegionStack.empty() && "Region stack mismatch, stack empty!");
+  assert(!LexicalBlockStack.empty() && "Region stack mismatch, stack empty!");
 
   llvm::DIFile Unit = getOrCreateFile(VD->getLocation());
   llvm::DIType Ty;
@@ -1973,7 +1973,7 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
   unsigned Flags = 0;
   if (VD->isImplicit())
     Flags |= llvm::DIDescriptor::FlagArtificial;
-  llvm::MDNode *Scope = RegionStack.back();
+  llvm::MDNode *Scope = LexicalBlockStack.back();
     
   StringRef Name = VD->getName();
   if (!Name.empty()) {
@@ -1995,7 +1995,7 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
       // Create the descriptor for the variable.
       llvm::DIVariable D =
         DBuilder.createComplexVariable(Tag, 
-                                       llvm::DIDescriptor(RegionStack.back()),
+                                       llvm::DIDescriptor(LexicalBlockStack.back()),
                                        VD->getName(), Unit, Line, Ty,
                                        addr, ArgNo);
       
@@ -2062,7 +2062,7 @@ void CGDebugInfo::EmitDeclareOfAutoVariable(const VarDecl *VD,
 void CGDebugInfo::EmitDeclareOfBlockDeclRefVariable(
   const VarDecl *VD, llvm::Value *Storage, CGBuilderTy &Builder,
   const CGBlockInfo &blockInfo) {
-  assert(!RegionStack.empty() && "Region stack mismatch, stack empty!");
+  assert(!LexicalBlockStack.empty() && "Region stack mismatch, stack empty!");
   
   if (Builder.GetInsertBlock() == 0)
     return;
@@ -2107,13 +2107,13 @@ void CGDebugInfo::EmitDeclareOfBlockDeclRefVariable(
   // Create the descriptor for the variable.
   llvm::DIVariable D =
     DBuilder.createComplexVariable(llvm::dwarf::DW_TAG_auto_variable, 
-                                   llvm::DIDescriptor(RegionStack.back()),
+                                   llvm::DIDescriptor(LexicalBlockStack.back()),
                                    VD->getName(), Unit, Line, Ty, addr);
   // Insert an llvm.dbg.declare into the current block.
   llvm::Instruction *Call = 
     DBuilder.insertDeclare(Storage, D, Builder.GetInsertPoint());
   
-  llvm::MDNode *Scope = RegionStack.back();
+  llvm::MDNode *Scope = LexicalBlockStack.back();
   Call->setDebugLoc(llvm::DebugLoc::get(Line, Column, Scope));
 }
 
@@ -2261,7 +2261,7 @@ void CGDebugInfo::EmitDeclareOfBlockLiteralArgVariable(const CGBlockInfo &block,
 
   // Get overall information about the block.
   unsigned flags = llvm::DIDescriptor::FlagArtificial;
-  llvm::MDNode *scope = RegionStack.back();
+  llvm::MDNode *scope = LexicalBlockStack.back();
   StringRef name = ".block_descriptor";
 
   // Create the descriptor for the parameter.
