@@ -175,18 +175,21 @@ private:
   /// the state so that we know what is the diagnostic state at any given
   /// source location.
   class DiagState {
-    llvm::DenseMap<unsigned, unsigned> DiagMap;
+    llvm::DenseMap<unsigned, DiagnosticMappingInfo> DiagMap;
 
   public:
-    typedef llvm::DenseMap<unsigned, unsigned>::const_iterator iterator;
+    typedef llvm::DenseMap<unsigned, DiagnosticMappingInfo>::const_iterator
+      iterator;
 
-    void setMapping(diag::kind Diag, unsigned Map) { DiagMap[Diag] = Map; }
+    void setMappingInfo(diag::kind Diag, DiagnosticMappingInfo Info) {
+      DiagMap[Diag] = Info;
+    }
 
-    diag::Mapping getMapping(diag::kind Diag) const {
+    DiagnosticMappingInfo getMappingInfo(diag::kind Diag) const {
       iterator I = DiagMap.find(Diag);
       if (I != DiagMap.end())
-        return (diag::Mapping)I->second;
-      return diag::Mapping();
+        return I->second;
+      return DiagnosticMappingInfo::MakeUnset();
     }
 
     iterator begin() const { return DiagMap.begin(); }
@@ -563,12 +566,11 @@ private:
   /// \brief Report the delayed diagnostic.
   void ReportDelayed();
 
-  void setDiagnosticMappingInternal(unsigned DiagId, unsigned Map,
+  void setDiagnosticMappingInternal(unsigned DiagId, diag::Mapping Map,
                                     DiagState *State,
                                     bool isUser, bool isPragma) const {
-    if (isUser) Map |= 8;  // Set the high bit for user mappings.
-    if (isPragma) Map |= 0x10;  // Set the bit for diagnostic pragma mappings.
-    State->setMapping((diag::kind)DiagId, Map);
+    State->setMappingInfo((diag::kind)DiagId, DiagnosticMappingInfo::MakeInfo(
+                            Map, isUser, isPragma));
   }
 
   // This is private state used by DiagnosticBuilder.  We put it here instead of

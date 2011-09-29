@@ -74,6 +74,34 @@ namespace clang {
     };
   }
 
+class DiagnosticMappingInfo {
+  unsigned Mapping : 3;
+  unsigned IsUser : 1;
+  unsigned IsPragma : 1;
+
+public:
+  static DiagnosticMappingInfo MakeUnset() {
+    DiagnosticMappingInfo Result;
+    Result.Mapping = Result.IsUser = Result.IsPragma = 0;
+    return Result;
+  }
+
+  static DiagnosticMappingInfo MakeInfo(diag::Mapping Mapping,
+                                        bool IsUser, bool IsPragma) {
+    DiagnosticMappingInfo Result;
+    Result.Mapping = Mapping;
+    Result.IsUser = IsUser;
+    Result.IsPragma = IsPragma;
+    return Result;
+  }
+
+  diag::Mapping getMapping() const { return diag::Mapping(Mapping); }
+  bool isUser() const { return IsUser; }
+  bool isPragma() const { return IsPragma; }
+
+  bool isUnset() const { return Mapping == 0; }
+};
+
 /// \brief Used for handling and querying diagnostic IDs. Can be used and shared
 /// by multiple Diagnostics for multiple translation units.
 class DiagnosticIDs : public llvm::RefCountedBase<DiagnosticIDs> {

@@ -1815,10 +1815,9 @@ void ASTWriter::WritePragmaDiagnosticMappings(const DiagnosticsEngine &Diag) {
     Record.push_back(point.Loc.getRawEncoding());
     for (DiagnosticsEngine::DiagState::iterator
            I = point.State->begin(), E = point.State->end(); I != E; ++I) {
-      unsigned diag = I->first, map = I->second;
-      if (map & 0x10) { // mapping from a diagnostic pragma.
-        Record.push_back(diag);
-        Record.push_back(map & 0x7);
+      if (I->second.isPragma()) {
+        Record.push_back(I->first);
+        Record.push_back(I->second.getMapping());
       }
     }
     Record.push_back(-1); // mark the end of the diag/map pairs for this

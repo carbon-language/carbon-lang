@@ -183,10 +183,10 @@ static const StaticDiagInfoRec *GetDiagInfo(unsigned DiagID) {
   return Found;
 }
 
-static unsigned GetDefaultDiagMapping(unsigned DiagID) {
+static diag::Mapping GetDefaultDiagMapping(unsigned DiagID) {
   if (const StaticDiagInfoRec *Info = GetDiagInfo(DiagID)) {
     // Compute the effective mapping based on the extra bits.
-    unsigned Mapping = Info->Mapping;
+    diag::Mapping Mapping = (diag::Mapping) Info->Mapping;
 
     if (Info->WarnNoWerror) {
       assert(Mapping == diag::MAP_WARNING &&
@@ -507,20 +507,21 @@ DiagnosticIDs::getDiagnosticLevel(unsigned DiagID, unsigned DiagClass,
   DiagnosticsEngine::DiagState *State = Pos->State;
 
   // Get the mapping information, if unset, compute it lazily.
-  unsigned MappingInfo = State->getMapping((diag::kind) DiagID);
-  if (MappingInfo == 0) {
-    MappingInfo = GetDefaultDiagMapping(DiagID);
-    Diag.setDiagnosticMappingInternal(DiagID, MappingInfo, State, false, false);
+  DiagnosticMappingInfo MappingInfo = State->getMappingInfo((diag::kind)DiagID);
+  if (MappingInfo.isUnset()) {
+    MappingInfo = DiagnosticMappingInfo::MakeInfo(
+      GetDefaultDiagMapping(DiagID), /*IsUser=*/false, /*IsPragma=*/false);
+    State->setMappingInfo((diag::kind) DiagID, MappingInfo);
   }
 
   bool ShouldEmitInSystemHeader = false;
 
-  switch (MappingInfo & 7) {
+  switch (MappingInfo.getMapping()) {
   default: llvm_unreachable("Unknown mapping!");
   case diag::MAP_IGNORE:
     if (Diag.EnableAllWarnings) {
       // Leave the warning disabled if it was explicitly ignored.
-      if ((MappingInfo & 8) != 0)
+      if (MappingInfo.isUser())
         return DiagnosticIDs::Ignored;
      
       Result = Diag.WarningsAsErrors ? DiagnosticIDs::Error 
@@ -530,7 +531,7 @@ DiagnosticIDs::getDiagnosticLevel(unsigned DiagID, unsigned DiagClass,
     // and we're mapping them onto warnings or errors.
     else if (!isBuiltinExtensionDiag(DiagID) ||  // Not an extension
              Diag.ExtBehavior == DiagnosticsEngine::Ext_Ignore || // Ext ignored
-             (MappingInfo & 8) != 0) {           // User explicitly mapped it.
+             MappingInfo.isUser()) {           // User explicitly mapped it.
       return DiagnosticIDs::Ignored;
     }
     else {
@@ -563,7 +564,7 @@ DiagnosticIDs::getDiagnosticLevel(unsigned DiagID, unsigned DiagClass,
     // If this is an extension diagnostic and we're in -pedantic-error mode, and
     // if the user didn't explicitly map it, upgrade to an error.
     if (Diag.ExtBehavior == DiagnosticsEngine::Ext_Error &&
-        (MappingInfo & 8) == 0 &&
+        !MappingInfo.isUser() &&
         isBuiltinExtensionDiag(DiagID))
       Result = DiagnosticIDs::Error;
 
