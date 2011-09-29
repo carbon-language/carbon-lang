@@ -178,22 +178,26 @@ private:
     llvm::DenseMap<unsigned, DiagnosticMappingInfo> DiagMap;
 
   public:
-    typedef llvm::DenseMap<unsigned, DiagnosticMappingInfo>::const_iterator
+    typedef llvm::DenseMap<unsigned, DiagnosticMappingInfo>::iterator
       iterator;
+    typedef llvm::DenseMap<unsigned, DiagnosticMappingInfo>::const_iterator
+      const_iterator;
 
     void setMappingInfo(diag::kind Diag, DiagnosticMappingInfo Info) {
       DiagMap[Diag] = Info;
     }
 
     DiagnosticMappingInfo getMappingInfo(diag::kind Diag) const {
-      iterator I = DiagMap.find(Diag);
+      const_iterator I = DiagMap.find(Diag);
       if (I != DiagMap.end())
         return I->second;
       return DiagnosticMappingInfo::MakeUnset();
     }
 
-    iterator begin() const { return DiagMap.begin(); }
-    iterator end() const { return DiagMap.end(); }
+    DiagnosticMappingInfo &getOrAddMappingInfo(diag::kind Diag);
+
+    const_iterator begin() const { return DiagMap.begin(); }
+    const_iterator end() const { return DiagMap.end(); }
   };
 
   /// \brief Keeps and automatically disposes all DiagStates that we create.

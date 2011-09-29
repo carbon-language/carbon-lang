@@ -1813,7 +1813,7 @@ void ASTWriter::WritePragmaDiagnosticMappings(const DiagnosticsEngine &Diag) {
       continue;
 
     Record.push_back(point.Loc.getRawEncoding());
-    for (DiagnosticsEngine::DiagState::iterator
+    for (DiagnosticsEngine::DiagState::const_iterator
            I = point.State->begin(), E = point.State->end(); I != E; ++I) {
       if (I->second.isPragma()) {
         Record.push_back(I->first);

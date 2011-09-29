@@ -234,6 +234,25 @@ namespace {
   };
 }
 
+// Unfortunately, the split between DiagnosticIDs and Diagnostic is not
+// particularly clean, but for now we just implement this method here so we can
+// access GetDefaultDiagMapping.
+DiagnosticMappingInfo &DiagnosticsEngine::DiagState::getOrAddMappingInfo(
+  diag::kind Diag)
+{
+  std::pair<iterator, bool> Result = DiagMap.insert(
+    std::make_pair(Diag, DiagnosticMappingInfo::MakeUnset()));
+
+  // Initialize the entry if we added it.
+  if (Result.second) {
+    assert(Result.first->second.isUnset() && "unexpected unset entry");
+    Result.first->second = DiagnosticMappingInfo::MakeInfo(
+      GetDefaultDiagMapping(Diag), /*IsUser=*/false, /*IsPragma=*/false);
+  }
+
+  return Result.first->second;
+}
+
 static const StaticDiagCategoryRec CategoryNameTable[] = {
 #define GET_CATEGORY_TABLE
 #define CATEGORY(X, ENUM) { X, STR_SIZE(X, uint8_t) },
@@ -506,13 +525,9 @@ DiagnosticIDs::getDiagnosticLevel(unsigned DiagID, unsigned DiagClass,
     Pos = Diag.GetDiagStatePointForLoc(Loc);
   DiagnosticsEngine::DiagState *State = Pos->State;
 
-  // Get the mapping information, if unset, compute it lazily.
-  DiagnosticMappingInfo MappingInfo = State->getMappingInfo((diag::kind)DiagID);
-  if (MappingInfo.isUnset()) {
-    MappingInfo = DiagnosticMappingInfo::MakeInfo(
-      GetDefaultDiagMapping(DiagID), /*IsUser=*/false, /*IsPragma=*/false);
-    State->setMappingInfo((diag::kind) DiagID, MappingInfo);
-  }
+  // Get the mapping information, or compute it lazily.
+  DiagnosticMappingInfo &MappingInfo = State->getOrAddMappingInfo(
+    (diag::kind)DiagID);
 
   bool ShouldEmitInSystemHeader = false;
 
