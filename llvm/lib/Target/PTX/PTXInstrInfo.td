@@ -333,7 +333,7 @@ multiclass PTX_SETP_I<RegisterClass RC, string regclsname, Operand immcls,
                                      (not RegPred:$c)))]>;
 }
 
-multiclass PTX_SETP_FP<RegisterClass RC, string regclsname,
+multiclass PTX_SETP_FP<RegisterClass RC, string regclsname, Operand immcls,
                         CondCode ucmp, CondCode ocmp, string cmpstr> {
   // TODO support 5-operand format: p|q, a, b, c
 
@@ -345,6 +345,15 @@ multiclass PTX_SETP_FP<RegisterClass RC, string regclsname,
     : InstPTX<(outs RegPred:$p), (ins RC:$a, RC:$b),
               !strconcat("setp.", cmpstr, ".", regclsname, "\t$p, $a, $b"),
               [(set RegPred:$p, (setcc RC:$a, RC:$b, ocmp))]>;
+
+  def ri_u
+    : InstPTX<(outs RegPred:$p), (ins RC:$a, immcls:$b),
+              !strconcat("setp.", cmpstr, "u.", regclsname, "\t$p, $a, $b"),
+              [(set RegPred:$p, (setcc RC:$a, fpimm:$b, ucmp))]>;
+  def ri_o
+    : InstPTX<(outs RegPred:$p), (ins RC:$a, immcls:$b),
+              !strconcat("setp.", cmpstr, ".", regclsname, "\t$p, $a, $b"),
+              [(set RegPred:$p, (setcc RC:$a, fpimm:$b, ocmp))]>;
 
   def rr_and_r_u
     : InstPTX<(outs RegPred:$p), (ins RC:$a, RC:$b, RegPred:$c),
@@ -423,11 +432,20 @@ multiclass PTX_SETP_FP<RegisterClass RC, string regclsname,
                                      (not RegPred:$c)))]>;
 }
 
-multiclass PTX_SELP<RegisterClass RC, string regclsname> {
+multiclass PTX_SELP<RegisterClass RC, string regclsname, Operand immcls,
+                    SDNode immnode> {
   def rr
     : InstPTX<(outs RC:$r), (ins RegPred:$a, RC:$b, RC:$c),
               !strconcat("selp.", regclsname, "\t$r, $b, $c, $a"),
               [(set RC:$r, (select RegPred:$a, RC:$b, RC:$c))]>;
+  def ri
+    : InstPTX<(outs RC:$r), (ins RegPred:$a, RC:$b, immcls:$c),
+              !strconcat("selp.", regclsname, "\t$r, $b, $c, $a"),
+              [(set RC:$r, (select RegPred:$a, RC:$b, immnode:$c))]>;
+  def ii
+    : InstPTX<(outs RC:$r), (ins RegPred:$a, immcls:$b, immcls:$c),
+              !strconcat("selp.", regclsname, "\t$r, $b, $c, $a"),
+              [(set RC:$r, (select RegPred:$a, immnode:$b, immnode:$c))]>;
 }
 
 
@@ -597,29 +615,29 @@ defm SETPGEs64 : PTX_SETP_I<RegI64, "s64", i64imm, SETGE,  "ge">;
 
 // Compare f32
 
-defm SETPEQf32 : PTX_SETP_FP<RegF32, "f32", SETUEQ, SETOEQ, "eq">;
-defm SETPNEf32 : PTX_SETP_FP<RegF32, "f32", SETUNE, SETONE, "ne">;
-defm SETPLTf32 : PTX_SETP_FP<RegF32, "f32", SETULT, SETOLT, "lt">;
-defm SETPLEf32 : PTX_SETP_FP<RegF32, "f32", SETULE, SETOLE, "le">;
-defm SETPGTf32 : PTX_SETP_FP<RegF32, "f32", SETUGT, SETOGT, "gt">;
-defm SETPGEf32 : PTX_SETP_FP<RegF32, "f32", SETUGE, SETOGE, "ge">;
+defm SETPEQf32 : PTX_SETP_FP<RegF32, "f32", f32imm, SETUEQ, SETOEQ, "eq">;
+defm SETPNEf32 : PTX_SETP_FP<RegF32, "f32", f32imm, SETUNE, SETONE, "ne">;
+defm SETPLTf32 : PTX_SETP_FP<RegF32, "f32", f32imm, SETULT, SETOLT, "lt">;
+defm SETPLEf32 : PTX_SETP_FP<RegF32, "f32", f32imm, SETULE, SETOLE, "le">;
+defm SETPGTf32 : PTX_SETP_FP<RegF32, "f32", f32imm, SETUGT, SETOGT, "gt">;
+defm SETPGEf32 : PTX_SETP_FP<RegF32, "f32", f32imm, SETUGE, SETOGE, "ge">;
 
 // Compare f64
 
-defm SETPEQf64 : PTX_SETP_FP<RegF64, "f64", SETUEQ, SETOEQ, "eq">;
-defm SETPNEf64 : PTX_SETP_FP<RegF64, "f64", SETUNE, SETONE, "ne">;
-defm SETPLTf64 : PTX_SETP_FP<RegF64, "f64", SETULT, SETOLT, "lt">;
-defm SETPLEf64 : PTX_SETP_FP<RegF64, "f64", SETULE, SETOLE, "le">;
-defm SETPGTf64 : PTX_SETP_FP<RegF64, "f64", SETUGT, SETOGT, "gt">;
-defm SETPGEf64 : PTX_SETP_FP<RegF64, "f64", SETUGE, SETOGE, "ge">;
+defm SETPEQf64 : PTX_SETP_FP<RegF64, "f64", f64imm, SETUEQ, SETOEQ, "eq">;
+defm SETPNEf64 : PTX_SETP_FP<RegF64, "f64", f64imm, SETUNE, SETONE, "ne">;
+defm SETPLTf64 : PTX_SETP_FP<RegF64, "f64", f64imm, SETULT, SETOLT, "lt">;
+defm SETPLEf64 : PTX_SETP_FP<RegF64, "f64", f64imm, SETULE, SETOLE, "le">;
+defm SETPGTf64 : PTX_SETP_FP<RegF64, "f64", f64imm, SETUGT, SETOGT, "gt">;
+defm SETPGEf64 : PTX_SETP_FP<RegF64, "f64", f64imm, SETUGE, SETOGE, "ge">;
 
 // .selp
 
-defm PTX_SELPu16 : PTX_SELP<RegI16, "u16">;
-defm PTX_SELPu32 : PTX_SELP<RegI32, "u32">;
-defm PTX_SELPu64 : PTX_SELP<RegI64, "u64">;
-defm PTX_SELPf32 : PTX_SELP<RegF32, "f32">;
-defm PTX_SELPf64 : PTX_SELP<RegF64, "f64">;
+defm SELPi16 : PTX_SELP<RegI16, "u16", i16imm, imm>;
+defm SELPi32 : PTX_SELP<RegI32, "u32", i32imm, imm>;
+defm SELPi64 : PTX_SELP<RegI64, "u64", i64imm, imm>;
+defm SELPf32 : PTX_SELP<RegF32, "f32", f32imm, fpimm>;
+defm SELPf64 : PTX_SELP<RegF64, "f64", f64imm, fpimm>;
 
 ///===- Logic and Shift Instructions --------------------------------------===//
 
@@ -632,6 +650,24 @@ defm OR  : PTX_LOGIC<"or",  or>;
 defm XOR : PTX_LOGIC<"xor", xor>;
 
 ///===- Data Movement and Conversion Instructions -------------------------===//
+
+// any_extend
+// Implement the anyext instruction in terms of the PTX cvt instructions.
+//def : Pat<(i32 (anyext RegI16:$a)), (CVT_u32_u16 RegI16:$a)>;
+//def : Pat<(i64 (anyext RegI16:$a)), (CVT_u64_u16 RegI16:$a)>;
+//def : Pat<(i64 (anyext RegI32:$a)), (CVT_u64_u32 RegI32:$a)>;
+
+// bitconvert
+// These instructions implement the bit-wise conversion between integer and
+// floating-point types.
+def MOVi32f32
+  : InstPTX<(outs RegI32:$d), (ins RegF32:$a), "mov.b32\t$d, $a", []>;
+def MOVf32i32
+  : InstPTX<(outs RegF32:$d), (ins RegI32:$a), "mov.b32\t$d, $a", []>;
+def MOVi64f64
+  : InstPTX<(outs RegI64:$d), (ins RegF64:$a), "mov.b64\t$d, $a", []>;
+def MOVf64i64
+  : InstPTX<(outs RegF64:$d), (ins RegI64:$a), "mov.b64\t$d, $a", []>;
 
 let neverHasSideEffects = 1 in {
   def MOVPREDrr
@@ -678,213 +714,172 @@ let isReMaterializable = 1, isAsCheapAsAMove = 1 in {
               [(set RegI64:$d, (PTXcopyaddress tglobaladdr:$a))]>;
 }
 
+// PTX cvt instructions
+// Note all of these may actually be used, we just define all possible patterns
+// here.
+
+// To i16
+def CVTu16u32
+  : InstPTX<(outs RegI16:$d), (ins RegI32:$a), "cvt.u16.u32\t$d, $a", []>;
+def CVTu16u64
+  : InstPTX<(outs RegI16:$d), (ins RegI64:$a), "cvt.u16.u64\t$d, $a", []>;
+def CVTu16f32
+  : InstPTX<(outs RegI16:$d), (ins RegF32:$a), "cvt.rzi.u16.f32\t$d, $a", []>;
+def CVTs16f32
+  : InstPTX<(outs RegI16:$d), (ins RegF32:$a), "cvt.rzi.s16.f32\t$d, $a", []>;
+def CVTu16f64
+  : InstPTX<(outs RegI16:$d), (ins RegF64:$a), "cvt.rzi.u16.f64\t$d, $a", []>;
+def CVTs16f64
+  : InstPTX<(outs RegI16:$d), (ins RegF64:$a), "cvt.rzi.s16.f64\t$d, $a", []>;
+
+// To i32
+def CVTu32u16
+  : InstPTX<(outs RegI32:$d), (ins RegI16:$a), "cvt.u32.u16\t$d, $a", []>;
+def CVTs32s16
+  : InstPTX<(outs RegI32:$d), (ins RegI16:$a), "cvt.s32.s16\t$d, $a", []>;
+def CVTu32u64
+  : InstPTX<(outs RegI32:$d), (ins RegI64:$a), "cvt.u32.u64\t$d, $a", []>;
+def CVTu32f32
+  : InstPTX<(outs RegI32:$d), (ins RegF32:$a), "cvt.rzi.u32.f32\t$d, $a", []>;
+def CVTs32f32
+  : InstPTX<(outs RegI32:$d), (ins RegF32:$a), "cvt.rzi.s32.f32\t$d, $a", []>;
+def CVTu32f64
+  : InstPTX<(outs RegI32:$d), (ins RegF64:$a), "cvt.rzi.u32.f64\t$d, $a", []>;
+def CVTs32f64
+  : InstPTX<(outs RegI32:$d), (ins RegF64:$a), "cvt.rzi.s32.f64\t$d, $a", []>;
+
+// To i64
+def CVTu64u16
+  : InstPTX<(outs RegI64:$d), (ins RegI16:$a), "cvt.u64.u16\t$d, $a", []>;
+def CVTs64s16
+  : InstPTX<(outs RegI64:$d), (ins RegI16:$a), "cvt.s64.s16\t$d, $a", []>;
+def CVTu64u32
+  : InstPTX<(outs RegI64:$d), (ins RegI32:$a), "cvt.u64.u32\t$d, $a", []>;
+def CVTs64s32
+  : InstPTX<(outs RegI64:$d), (ins RegI32:$a), "cvt.s64.s32\t$d, $a", []>;
+def CVTu64f32
+  : InstPTX<(outs RegI64:$d), (ins RegF32:$a), "cvt.rzi.u64.f32\t$d, $a", []>;
+def CVTs64f32
+  : InstPTX<(outs RegI64:$d), (ins RegF32:$a), "cvt.rzi.s64.f32\t$d, $a", []>;
+def CVTu64f64
+  : InstPTX<(outs RegI64:$d), (ins RegF64:$a), "cvt.rzi.u64.f64\t$d, $a", []>;
+def CVTs64f64
+  : InstPTX<(outs RegI64:$d), (ins RegF64:$a), "cvt.rzi.s64.f64\t$d, $a", []>;
+
+// To f32
+def CVTf32u16
+  : InstPTX<(outs RegF32:$d), (ins RegI16:$a), "cvt.rn.f32.u16\t$d, $a", []>;
+def CVTf32s16
+  : InstPTX<(outs RegF32:$d), (ins RegI16:$a), "cvt.rn.f32.s16\t$d, $a", []>;
+def CVTf32u32
+  : InstPTX<(outs RegF32:$d), (ins RegI32:$a), "cvt.rn.f32.u32\t$d, $a", []>;
+def CVTf32s32
+  : InstPTX<(outs RegF32:$d), (ins RegI32:$a), "cvt.rn.f32.s32\t$d, $a", []>;
+def CVTf32u64
+  : InstPTX<(outs RegF32:$d), (ins RegI64:$a), "cvt.rn.f32.u64\t$d, $a", []>;
+def CVTf32s64
+  : InstPTX<(outs RegF32:$d), (ins RegI64:$a), "cvt.rn.f32.s64\t$d, $a", []>;
+def CVTf32f64
+  : InstPTX<(outs RegF32:$d), (ins RegF64:$a), "cvt.rn.f32.f64\t$d, $a", []>;
+
+// To f64
+def CVTf64u16
+  : InstPTX<(outs RegF64:$d), (ins RegI16:$a), "cvt.rn.f64.u16\t$d, $a", []>;
+def CVTf64s16
+  : InstPTX<(outs RegF64:$d), (ins RegI16:$a), "cvt.rn.f64.s16\t$d, $a", []>;
+def CVTf64u32
+  : InstPTX<(outs RegF64:$d), (ins RegI32:$a), "cvt.rn.f64.u32\t$d, $a", []>;
+def CVTf64s32
+  : InstPTX<(outs RegF64:$d), (ins RegI32:$a), "cvt.rn.f64.s32\t$d, $a", []>;
+def CVTf64u64
+  : InstPTX<(outs RegF64:$d), (ins RegI64:$a), "cvt.rn.f64.u64\t$d, $a", []>;
+def CVTf64s64
+  : InstPTX<(outs RegF64:$d), (ins RegI64:$a), "cvt.rn.f64.s64\t$d, $a", []>;
+def CVTf64f32
+  : InstPTX<(outs RegF64:$d), (ins RegF32:$a), "cvt.f64.f32\t$d, $a", []>;
+
+
+// Type conversion notes:
+// - PTX does not directly support converting a predicate to a value, so we
+//   use a select instruction to select either 0 or 1 (integer or fp) based
+//   on the truth value of the predicate.
+// - PTX does not directly support converting to a predicate type, so we fake it
+//   by performing a greater-than test between the value and zero.  This follows
+//   the C convention that any non-zero value is equivalent to 'true'.
 
 // Conversion to pred
-// PTX does not directly support converting to a predicate type, so we fake it
-// by performing a greater-than test between the value and zero.  This follows
-// the C convention that any non-zero value is equivalent to 'true'.
-def CVT_pred_u16
-  : InstPTX<(outs RegPred:$d), (ins RegI16:$a), "setp.gt.u16\t$d, $a, 0",
-            [(set RegPred:$d, (trunc RegI16:$a))]>;
-
-def CVT_pred_u32
-  : InstPTX<(outs RegPred:$d), (ins RegI32:$a), "setp.gt.u32\t$d, $a, 0",
-            [(set RegPred:$d, (trunc RegI32:$a))]>;
-
-def CVT_pred_u64
-  : InstPTX<(outs RegPred:$d), (ins RegI64:$a), "setp.gt.u64\t$d, $a, 0",
-            [(set RegPred:$d, (trunc RegI64:$a))]>;
-
-def CVT_pred_f32
-  : InstPTX<(outs RegPred:$d), (ins RegF32:$a), "setp.gt.f32\t$d, $a, 0",
-            [(set RegPred:$d, (fp_to_uint RegF32:$a))]>;
-
-def CVT_pred_f64
-  : InstPTX<(outs RegPred:$d), (ins RegF64:$a), "setp.gt.f64\t$d, $a, 0",
-            [(set RegPred:$d, (fp_to_uint RegF64:$a))]>;
+def : Pat<(i1 (trunc RegI16:$a)),      (SETPGTu16ri RegI16:$a, 0)>;
+def : Pat<(i1 (trunc RegI32:$a)),      (SETPGTu32ri RegI32:$a, 0)>;
+def : Pat<(i1 (trunc RegI64:$a)),      (SETPGTu64ri RegI64:$a, 0)>;
+def : Pat<(i1 (fp_to_uint RegF32:$a)), (SETPGTu32ri (MOVi32f32 RegF32:$a), 0)>;
+def : Pat<(i1 (fp_to_uint RegF64:$a)), (SETPGTu64ri (MOVi64f64 RegF64:$a), 0)>;
 
 // Conversion to u16
-// PTX does not directly support converting a predicate to a value, so we
-// use a select instruction to select either 0 or 1 (integer or fp) based
-// on the truth value of the predicate.
-def CVT_u16_preda
-  : InstPTX<(outs RegI16:$d), (ins RegPred:$a), "selp.u16\t$d, 1, 0, $a",
-            [(set RegI16:$d, (anyext RegPred:$a))]>;
-
-def CVT_u16_pred
-  : InstPTX<(outs RegI16:$d), (ins RegPred:$a), "selp.u16\t$d, 1, 0, $a",
-            [(set RegI16:$d, (zext RegPred:$a))]>;
-
-def CVT_u16_preds
-  : InstPTX<(outs RegI16:$d), (ins RegPred:$a), "selp.u16\t$d, 1, 0, $a",
-            [(set RegI16:$d, (sext RegPred:$a))]>;
-
-def CVT_u16_u32
-  : InstPTX<(outs RegI16:$d), (ins RegI32:$a), "cvt.u16.u32\t$d, $a",
-            [(set RegI16:$d, (trunc RegI32:$a))]>;
-
-def CVT_u16_u64
-  : InstPTX<(outs RegI16:$d), (ins RegI64:$a), "cvt.u16.u64\t$d, $a",
-            [(set RegI16:$d, (trunc RegI64:$a))]>;
-
-def CVT_u16_f32
-  : InstPTX<(outs RegI16:$d), (ins RegF32:$a), "cvt.rzi.u16.f32\t$d, $a",
-            [(set RegI16:$d, (fp_to_uint RegF32:$a))]>;
-
-def CVT_u16_f64
-  : InstPTX<(outs RegI16:$d), (ins RegF64:$a), "cvt.rzi.u16.f64\t$d, $a",
-            [(set RegI16:$d, (fp_to_uint RegF64:$a))]>;
+def : Pat<(i16 (anyext RegPred:$a)),    (SELPi16ii RegPred:$a, 1, 0)>;
+def : Pat<(i16 (sext RegPred:$a)),      (SELPi16ii RegPred:$a, 0xFFFF, 0)>;
+def : Pat<(i16 (zext RegPred:$a)),      (SELPi16ii RegPred:$a, 1, 0)>;
+def : Pat<(i16 (trunc RegI32:$a)),      (CVTu16u32 RegI32:$a)>;
+def : Pat<(i16 (trunc RegI64:$a)),      (CVTu16u64 RegI64:$a)>;
+def : Pat<(i16 (fp_to_uint RegF32:$a)), (CVTu16f32 RegF32:$a)>;
+def : Pat<(i16 (fp_to_sint RegF32:$a)), (CVTs16f32 RegF32:$a)>;
+def : Pat<(i16 (fp_to_uint RegF64:$a)), (CVTu16f64 RegF64:$a)>;
+def : Pat<(i16 (fp_to_sint RegF64:$a)), (CVTs16f64 RegF64:$a)>;
 
 // Conversion to u32
-
-def CVT_u32_pred
-  : InstPTX<(outs RegI32:$d), (ins RegPred:$a), "selp.u32\t$d, 1, 0, $a",
-            [(set RegI32:$d, (zext RegPred:$a))]>;
-
-def CVT_u32_b16
-  : InstPTX<(outs RegI32:$d), (ins RegI16:$a), "cvt.u32.u16\t$d, $a",
-            [(set RegI32:$d, (anyext RegI16:$a))]>;
-
-def CVT_u32_u16
-  : InstPTX<(outs RegI32:$d), (ins RegI16:$a), "cvt.u32.u16\t$d, $a",
-            [(set RegI32:$d, (zext RegI16:$a))]>;
-
-def CVT_u32_preds
-  : InstPTX<(outs RegI32:$d), (ins RegPred:$a), "selp.u32\t$d, 1, 0, $a",
-            [(set RegI32:$d, (sext RegPred:$a))]>;
-
-def CVT_u32_s16
-  : InstPTX<(outs RegI32:$d), (ins RegI16:$a), "cvt.u32.s16\t$d, $a",
-            [(set RegI32:$d, (sext RegI16:$a))]>;
-
-def CVT_u32_u64
-  : InstPTX<(outs RegI32:$d), (ins RegI64:$a), "cvt.u32.u64\t$d, $a",
-            [(set RegI32:$d, (trunc RegI64:$a))]>;
-
-def CVT_u32_f32
-  : InstPTX<(outs RegI32:$d), (ins RegF32:$a), "cvt.rzi.u32.f32\t$d, $a",
-            [(set RegI32:$d, (fp_to_uint RegF32:$a))]>;
-
-def CVT_u32_f64
-  : InstPTX<(outs RegI32:$d), (ins RegF64:$a), "cvt.rzi.u32.f64\t$d, $a",
-            [(set RegI32:$d, (fp_to_uint RegF64:$a))]>;
+def : Pat<(i32 (anyext RegPred:$a)),    (SELPi32ii RegPred:$a, 1, 0)>;
+def : Pat<(i32 (sext RegPred:$a)),      (SELPi32ii RegPred:$a, 0xFFFFFFFF, 0)>;
+def : Pat<(i32 (zext RegPred:$a)),      (SELPi32ii RegPred:$a, 1, 0)>;
+def : Pat<(i32 (anyext RegI16:$a)),     (CVTu32u16 RegI16:$a)>;
+def : Pat<(i32 (sext RegI16:$a)),       (CVTs32s16 RegI16:$a)>;
+def : Pat<(i32 (zext RegI16:$a)),       (CVTu32u16 RegI16:$a)>;
+def : Pat<(i32 (trunc RegI64:$a)),      (CVTu32u64 RegI64:$a)>;
+def : Pat<(i32 (fp_to_uint RegF32:$a)), (CVTu32f32 RegF32:$a)>;
+def : Pat<(i32 (fp_to_sint RegF32:$a)), (CVTs32f32 RegF32:$a)>;
+def : Pat<(i32 (fp_to_uint RegF64:$a)), (CVTu32f64 RegF64:$a)>;
+def : Pat<(i32 (fp_to_sint RegF64:$a)), (CVTs32f64 RegF64:$a)>;
+def : Pat<(i32 (bitconvert RegF32:$a)), (MOVi32f32 RegF32:$a)>;
 
 // Conversion to u64
-
-def CVT_u64_pred
-  : InstPTX<(outs RegI64:$d), (ins RegPred:$a), "selp.u64\t$d, 1, 0, $a",
-            [(set RegI64:$d, (zext RegPred:$a))]>;
-
-def CVT_u64_preds
-  : InstPTX<(outs RegI64:$d), (ins RegPred:$a), "selp.u64\t$d, 1, 0, $a",
-            [(set RegI64:$d, (sext RegPred:$a))]>;
-
-def CVT_u64_u16
-  : InstPTX<(outs RegI64:$d), (ins RegI16:$a), "cvt.u64.u16\t$d, $a",
-            [(set RegI64:$d, (zext RegI16:$a))]>;
-
-def CVT_u64_s16
-  : InstPTX<(outs RegI64:$d), (ins RegI16:$a), "cvt.u64.s16\t$d, $a",
-            [(set RegI64:$d, (sext RegI16:$a))]>;
-
-def CVT_u64_u32
-  : InstPTX<(outs RegI64:$d), (ins RegI32:$a), "cvt.u64.u32\t$d, $a",
-            [(set RegI64:$d, (zext RegI32:$a))]>;
-
-def CVT_u64_s32
-  : InstPTX<(outs RegI64:$d), (ins RegI32:$a), "cvt.u64.s32\t$d, $a",
-            [(set RegI64:$d, (sext RegI32:$a))]>;
-
-def CVT_u64_f32
-  : InstPTX<(outs RegI64:$d), (ins RegF32:$a), "cvt.rzi.u64.f32\t$d, $a",
-            [(set RegI64:$d, (fp_to_uint RegF32:$a))]>;
-
-def CVT_u64_f64
-  : InstPTX<(outs RegI64:$d), (ins RegF64:$a), "cvt.rzi.u64.f64\t$d, $a",
-            [(set RegI64:$d, (fp_to_uint RegF64:$a))]>;
+def : Pat<(i64 (anyext RegPred:$a)),    (SELPi64ii RegPred:$a, 1, 0)>;
+def : Pat<(i64 (sext RegPred:$a)),      (SELPi64ii RegPred:$a,
+                                         0xFFFFFFFFFFFFFFFF, 0)>;
+def : Pat<(i64 (zext RegPred:$a)),      (SELPi64ii RegPred:$a, 1, 0)>;
+def : Pat<(i64 (anyext RegI16:$a)),     (CVTu64u16 RegI16:$a)>;
+def : Pat<(i64 (sext RegI16:$a)),       (CVTs64s16 RegI16:$a)>;
+def : Pat<(i64 (zext RegI16:$a)),       (CVTu64u16 RegI16:$a)>;
+def : Pat<(i64 (anyext RegI32:$a)),     (CVTu64u32 RegI32:$a)>;
+def : Pat<(i64 (sext RegI32:$a)),       (CVTs64s32 RegI32:$a)>;
+def : Pat<(i64 (zext RegI32:$a)),       (CVTu64u32 RegI32:$a)>;
+def : Pat<(i64 (fp_to_uint RegF32:$a)), (CVTu64f32 RegF32:$a)>;
+def : Pat<(i64 (fp_to_sint RegF32:$a)), (CVTs64f32 RegF32:$a)>;
+def : Pat<(i64 (fp_to_uint RegF64:$a)), (CVTu64f64 RegF64:$a)>;
+def : Pat<(i64 (fp_to_sint RegF64:$a)), (CVTs64f64 RegF64:$a)>;
+def : Pat<(i64 (bitconvert RegF64:$a)), (MOVi64f64 RegF64:$a)>;
 
 // Conversion to f32
-
-def CVT_f32_pred
-  : InstPTX<(outs RegF32:$d), (ins RegPred:$a),
-            "selp.f32\t$d, 0F3F800000, 0F00000000, $a",  // 1.0
-            [(set RegF32:$d, (uint_to_fp RegPred:$a))]>;
-
-def CVT_f32_u16
-  : InstPTX<(outs RegF32:$d), (ins RegI16:$a), "cvt.rn.f32.u16\t$d, $a",
-            [(set RegF32:$d, (uint_to_fp RegI16:$a))]>;
-
-def CVT_f32_u32
-  : InstPTX<(outs RegF32:$d), (ins RegI32:$a), "cvt.rn.f32.u32\t$d, $a",
-            [(set RegF32:$d, (uint_to_fp RegI32:$a))]>;
-
-def CVT_f32_u64
-  : InstPTX<(outs RegF32:$d), (ins RegI64:$a), "cvt.rn.f32.u64\t$d, $a",
-            [(set RegF32:$d, (uint_to_fp RegI64:$a))]>;
-
-def CVT_f32_f64
-  : InstPTX<(outs RegF32:$d), (ins RegF64:$a), "cvt.rn.f32.f64\t$d, $a",
-            [(set RegF32:$d, (fround RegF64:$a))]>;
-
-def CVT_f32_s16
-  : InstPTX<(outs RegF32:$d), (ins RegI16:$a), "cvt.rn.f32.s16\t$d, $a",
-            [(set RegF32:$d, (sint_to_fp RegI16:$a))]>;
-
-def CVT_f32_s32
-  : InstPTX<(outs RegF32:$d), (ins RegI32:$a), "cvt.rn.f32.s32\t$d, $a",
-            [(set RegF32:$d, (sint_to_fp RegI32:$a))]>;
-
-def CVT_f32_s64
-  : InstPTX<(outs RegF32:$d), (ins RegI64:$a), "cvt.rn.f32.s64\t$d, $a",
-            [(set RegF32:$d, (sint_to_fp RegI64:$a))]>;
-
+def : Pat<(f32 (uint_to_fp RegPred:$a)), (SELPf32rr RegPred:$a,
+                                        (MOVf32i32 0x3F800000), (MOVf32i32 0))>;
+def : Pat<(f32 (uint_to_fp RegI16:$a)),  (CVTf32u16 RegI16:$a)>;
+def : Pat<(f32 (sint_to_fp RegI16:$a)),  (CVTf32s16 RegI16:$a)>;
+def : Pat<(f32 (uint_to_fp RegI32:$a)),  (CVTf32u32 RegI32:$a)>;
+def : Pat<(f32 (sint_to_fp RegI32:$a)),  (CVTf32s32 RegI32:$a)>;
+def : Pat<(f32 (uint_to_fp RegI64:$a)),  (CVTf32u64 RegI64:$a)>;
+def : Pat<(f32 (sint_to_fp RegI64:$a)),  (CVTf32s64 RegI64:$a)>;
+def : Pat<(f32 (fround RegF64:$a)),      (CVTf32f64 RegF64:$a)>;
+def : Pat<(f32 (bitconvert RegI32:$a)),  (MOVf32i32 RegI32:$a)>;
 
 // Conversion to f64
+def : Pat<(f64 (uint_to_fp RegPred:$a)), (SELPf64rr RegPred:$a,
+                                (MOVf64i64 0x3F80000000000000), (MOVf64i64 0))>;
+def : Pat<(f64 (uint_to_fp RegI16:$a)), (CVTf64u16 RegI16:$a)>;
+def : Pat<(f64 (sint_to_fp RegI16:$a)), (CVTf64s16 RegI16:$a)>;
+def : Pat<(f64 (uint_to_fp RegI32:$a)), (CVTf64u32 RegI32:$a)>;
+def : Pat<(f64 (sint_to_fp RegI32:$a)), (CVTf64s32 RegI32:$a)>;
+def : Pat<(f64 (uint_to_fp RegI64:$a)), (CVTf64u64 RegI64:$a)>;
+def : Pat<(f64 (sint_to_fp RegI64:$a)), (CVTf64s64 RegI64:$a)>;
+def : Pat<(f64 (fextend RegF32:$a)),    (CVTf64f32 RegF32:$a)>;
+def : Pat<(f64 (bitconvert RegI64:$a)), (MOVf64i64 RegI64:$a)>;
 
-def CVT_f64_pred
-  : InstPTX<(outs RegF64:$d), (ins RegPred:$a),
-            "selp.f64\t$d, 0D3F80000000000000, 0D0000000000000000, $a",  // 1.0
-            [(set RegF64:$d, (uint_to_fp RegPred:$a))]>;
-
-def CVT_f64_u16
-  : InstPTX<(outs RegF64:$d), (ins RegI16:$a), "cvt.rn.f64.u16\t$d, $a",
-            [(set RegF64:$d, (uint_to_fp RegI16:$a))]>;
-
-def CVT_f64_u32
-  : InstPTX<(outs RegF64:$d), (ins RegI32:$a), "cvt.rn.f64.u32\t$d, $a",
-            [(set RegF64:$d, (uint_to_fp RegI32:$a))]>;
-
-def CVT_f64_u64
-  : InstPTX<(outs RegF64:$d), (ins RegI64:$a), "cvt.rn.f64.u64\t$d, $a",
-            [(set RegF64:$d, (uint_to_fp RegI64:$a))]>;
-
-def CVT_f64_f32
-  : InstPTX<(outs RegF64:$d), (ins RegF32:$a), "cvt.f64.f32\t$d, $a",
-            [(set RegF64:$d, (fextend RegF32:$a))]>;
-
-def CVT_f64_s16
-  : InstPTX<(outs RegF64:$d), (ins RegI16:$a), "cvt.rn.f64.s16\t$d, $a",
-            [(set RegF64:$d, (sint_to_fp RegI16:$a))]>;
-
-def CVT_f64_s32
-  : InstPTX<(outs RegF64:$d), (ins RegI32:$a), "cvt.rn.f64.s32\t$d, $a",
-            [(set RegF64:$d, (sint_to_fp RegI32:$a))]>;
-
-def CVT_f64_s64
-  : InstPTX<(outs RegF64:$d), (ins RegI64:$a), "cvt.rn.f64.s64\t$d, $a",
-            [(set RegF64:$d, (sint_to_fp RegI64:$a))]>;
-
-// NOTE: These are temporarily here to help test some Clang-generated code.
-// We really need to properly introduce anyext and bitconvert into the back-end.
-// ANY_EXTEND
-def ANY_EXTEND_I64_I32
-  : InstPTX<(outs RegI64:$d), (ins RegI32:$a), "cvt.u64.u32\t$d, $a",
-            [(set RegI64:$d, (anyext RegI32:$a))]>;
-
-// BITCAST
-def BITCAST_I32_F32
-  : InstPTX<(outs RegI32:$d), (ins RegF32:$a), "mov.b32\t$d, $a",
-            [(set RegI32:$d, (bitconvert RegF32:$a))]>;
 
 ///===- Control Flow Instructions -----------------------------------------===//
 

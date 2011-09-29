@@ -1,6 +1,6 @@
 ; RUN: llc < %s -march=ptx32 | FileCheck %s
 
-; preds 
+; preds
 ; (note: we convert back to i32 to return)
 
 define ptx_device i32 @cvt_pred_i16(i16 %x, i1 %y) {
@@ -37,7 +37,7 @@ define ptx_device i32 @cvt_pred_i64(i64 %x, i1 %y) {
 }
 
 define ptx_device i32 @cvt_pred_f32(float %x, i1 %y) {
-; CHECK: setp.gt.f32 %p[[P0:[0-9]+]], %f{{[0-9]+}}, 0
+; CHECK: setp.gt.u32 %p[[P0:[0-9]+]], %r{{[0-9]+}}, 0
 ; CHECK: and.pred %p2, %p[[P0:[0-9]+]], %p{{[0-9]+}};
 ; CHECK: selp.u32 %ret{{[0-9]+}}, 1, 0, %p[[P0:[0-9]+]];
 ; CHECK: ret;
@@ -48,7 +48,7 @@ define ptx_device i32 @cvt_pred_f32(float %x, i1 %y) {
 }
 
 define ptx_device i32 @cvt_pred_f64(double %x, i1 %y) {
-; CHECK: setp.gt.f64 %p[[P0:[0-9]+]], %fd{{[0-9]+}}, 0
+; CHECK: setp.gt.u64 %p[[P0:[0-9]+]], %rd{{[0-9]+}}, 0
 ; CHECK: and.pred %p2, %p[[P0:[0-9]+]], %p{{[0-9]+}};
 ; CHECK: selp.u32 %ret{{[0-9]+}}, 1, 0, %p[[P0:[0-9]+]];
 ; CHECK: ret;
@@ -172,7 +172,9 @@ define ptx_device i64 @cvt_i64_f64(double %x) {
 ; f32
 
 define ptx_device float @cvt_f32_preds(i1 %x) {
-; CHECK: selp.f32 %ret{{[0-9]+}}, 0F3F800000, 0F00000000, %p{{[0-9]+}};
+; CHECK: mov.b32 %f0, 1065353216;
+; CHECK: mov.b32 %f1, 0;
+; CHECK: selp.f32 %ret{{[0-9]+}}, %f0, %f1, %p{{[0-9]+}};
 ; CHECK: ret;
 	%a = uitofp i1 %x to float
 	ret float %a
@@ -230,7 +232,9 @@ define ptx_device float @cvt_f32_s64(i64 %x) {
 ; f64
 
 define ptx_device double @cvt_f64_preds(i1 %x) {
-; CHECK: selp.f64 %ret{{[0-9]+}}, 0D3F80000000000000, 0D0000000000000000, %p{{[0-9]+}};
+; CHECK: mov.b64 %fd0, 4575657221408423936;
+; CHECK: mov.b64 %fd1, 0;
+; CHECK: selp.f64 %ret{{[0-9]+}}, %fd0, %fd1, %p{{[0-9]+}};
 ; CHECK: ret;
 	%a = uitofp i1 %x to double
 	ret double %a
