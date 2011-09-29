@@ -458,6 +458,9 @@ protected:
 bool operator== (const SymbolContext& lhs, const SymbolContext& rhs);
 bool operator!= (const SymbolContext& lhs, const SymbolContext& rhs);
 
+bool operator== (const SymbolContextList& lhs, const SymbolContextList& rhs);
+bool operator!= (const SymbolContextList& lhs, const SymbolContextList& rhs);
+
 } // namespace lldb_private
 
 #endif  // liblldb_SymbolContext_h_

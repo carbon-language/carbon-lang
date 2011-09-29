@@ -177,6 +177,7 @@ SymbolFileDWARF::SymbolFileDWARF(ObjectFile* objfile) :
     m_info(),
     m_line(),
     m_apple_names (this, m_data_apple_names, true),
+    m_apple_types (this, m_data_apple_types, true),
     m_function_basename_index(),
     m_function_fullname_index(),
     m_function_method_index(),
@@ -190,8 +191,6 @@ SymbolFileDWARF::SymbolFileDWARF(ObjectFile* objfile) :
     m_ranges(),
     m_unique_ast_type_map ()
 {
-    get_apple_names_data();
-    m_apple_names.Initialize();
 }
 
 SymbolFileDWARF::~SymbolFileDWARF()
@@ -252,6 +251,11 @@ SymbolFileDWARF::InitializeObject()
         if (section)
             section->MemoryMapSectionDataFromObjectFile(m_obj_file, m_dwarf_data);
     }
+    get_apple_names_data();
+    get_apple_types_data();
+    m_apple_names.Initialize();
+    m_apple_types.Initialize();
+
 }
 
 bool
@@ -2293,17 +2297,6 @@ SymbolFileDWARF::FindFunctions
     // Remember how many sc_list are in the list before we search in case
     // we are appending the results to a variable list.
 
-    if (m_apple_names.IsValid())
-    {
-        DIEArray die_offsets;
-        const uint32_t num_matches = m_apple_names.Find(name.GetCString(), die_offsets);
-        if (num_matches > 0)
-        {
-            return ResolveFunctions (die_offsets, sc_list);
-        }
-        return 0;
-    }
-
     const uint32_t original_size = sc_list.GetSize();
 
     // Index the DWARF if we haven't already
@@ -2321,6 +2314,17 @@ SymbolFileDWARF::FindFunctions
 
     if (name_type_mask & eFunctionNameTypeSelector)
         FindFunctions (name, m_function_selector_index, sc_list);
+
+    if (m_apple_names.IsValid())
+    {
+        SymbolContextList sc_list_apple;
+        DIEArray die_offsets;
+        const uint32_t num_matches = m_apple_names.Find(name.GetCString(), die_offsets);
+        if (num_matches > 0)
+            ResolveFunctions (die_offsets, sc_list_apple);
+        if (sc_list != sc_list_apple)
+            assert (!"__apple_names results differ from DWARF index results");
+    }
 
     // Return the number of variable that were appended to the list
     return sc_list.GetSize() - original_size;

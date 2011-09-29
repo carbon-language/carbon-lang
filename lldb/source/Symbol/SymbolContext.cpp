@@ -1044,3 +1044,28 @@ SymbolContextList::NumLineEntriesWithLine (uint32_t line) const
     return match_count;
 }
 
+bool
+lldb_private::operator== (const SymbolContextList& lhs, const SymbolContextList& rhs)
+{
+    const uint32_t size = lhs.GetSize();
+    if (size != rhs.GetSize())
+        return false;
+    
+    SymbolContext lhs_sc;
+    SymbolContext rhs_sc;
+    for (uint32_t i=0; i<size; ++i)
+    {
+        lhs.GetContextAtIndex(i, lhs_sc);
+        rhs.GetContextAtIndex(i, rhs_sc);
+        if (lhs_sc != rhs_sc)
+            return false;
+    }
+    return true;
+}
+
+bool
+lldb_private::operator!= (const SymbolContextList& lhs, const SymbolContextList& rhs)
+{
+    return !(lhs == rhs);
+}
+

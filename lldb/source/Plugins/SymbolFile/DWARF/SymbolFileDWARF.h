@@ -388,6 +388,7 @@ protected:
     std::auto_ptr<DWARFDebugInfo>       m_info;
     std::auto_ptr<DWARFDebugLine>       m_line;
     HashedNameToDIE::MemoryTable        m_apple_names;
+    HashedNameToDIE::MemoryTable        m_apple_types;
     NameToDIE                           m_function_basename_index;  // All concrete functions
     NameToDIE                           m_function_fullname_index;  // All concrete functions
     NameToDIE                           m_function_method_index;    // All inlined functions
