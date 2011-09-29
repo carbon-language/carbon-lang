@@ -158,6 +158,11 @@ public:
 //===----------------------------------------------------------------------===//
 
   /// \brief Run checkers for pre-visiting Stmts.
+  ///
+  /// The notification is performed for every explored CFGElement, which does
+  /// not include the control flow statements such as IfStmt.
+  ///
+  /// \sa runCheckersForBranchCondition, runCheckersForPostStmt
   void runCheckersForPreStmt(ExplodedNodeSet &Dst,
                              const ExplodedNodeSet &Src,
                              const Stmt *S,
@@ -166,6 +171,11 @@ public:
   }
 
   /// \brief Run checkers for post-visiting Stmts.
+  ///
+  /// The notification is performed for every explored CFGElement, which does
+  /// not include the control flow statements such as IfStmt.
+  ///
+  /// \sa runCheckersForBranchCondition, runCheckersForPreStmt
   void runCheckersForPostStmt(ExplodedNodeSet &Dst,
                               const ExplodedNodeSet &Src,
                               const Stmt *S,
@@ -225,10 +235,18 @@ public:
                                      BranchNodeBuilder &B, ExprEngine &Eng);
 
   /// \brief Run checkers for live symbols.
+  ///
+  /// Allows modifying SymbolReaper object. For example, checkers can explicitly
+  /// register symbols of interest as live. These symbols will not be marked
+  /// dead and removed.
   void runCheckersForLiveSymbols(const ProgramState *state,
                                  SymbolReaper &SymReaper);
 
   /// \brief Run checkers for dead symbols.
+  ///
+  /// Notifies checkers when symbols become dead. For example, this allows
+  /// checkers to aggressively clean up/reduce the checker state and produce
+  /// precise diagnostics.
   void runCheckersForDeadSymbols(ExplodedNodeSet &Dst,
                                  const ExplodedNodeSet &Src,
                                  SymbolReaper &SymReaper, const Stmt *S,
