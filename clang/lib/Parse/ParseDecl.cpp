@@ -1541,6 +1541,9 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
     switch (Tok.getKind()) {
     default:
     DoneWithDeclSpec:
+      // [C++0x] decl-specifier-seq: decl-specifier attribute-specifier-seq[opt]
+      MaybeParseCXX0XAttributes(DS.getAttributes());
+
       // If this is not a declaration specifier token, we're done reading decl
       // specifiers.  First verify that DeclSpec's are consistent.
       DS.Finish(Diags, PP);
