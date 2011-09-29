@@ -3811,10 +3811,10 @@ LSRInstance::LSRInstance(const TargetLowering *tli, Loop *l, Pass *P)
   // If loop preparation eliminates all interesting IV users, bail.
   if (IU.empty()) return;
 
-  // Skip nested loops until we can model them better with forulae.
+  // Skip nested loops until we can model them better with formulae.
   if (!EnableNested && !L->empty()) {
     DEBUG(dbgs() << "LSR skipping outer loop " << *L << "\n");
-    return false;
+    return;
   }
 
   // Start collecting data and preparing for the solver.
