@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements SlotIndex and related classes. The purpuse of SlotIndex
+// This file implements SlotIndex and related classes. The purpose of SlotIndex
 // is to describe a position at which a register can become live, or cease to
 // be live.
 //
