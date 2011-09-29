@@ -500,7 +500,7 @@ RegisterContextLLDB::GetFastUnwindPlanForFrame ()
         if (unwind_plan_sp->PlanValidAtAddress (m_current_pc))
         {
             LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND));
-            if (log && IsLogVerbose())
+            if (log && log->GetVerbose())
             {
                 const char *has_fast = "";
                 if (m_fast_unwind_plan_sp)
@@ -603,7 +603,7 @@ RegisterContextLLDB::GetFullUnwindPlanForFrame ()
         unwind_plan_sp = func_unwinders_sp->GetUnwindPlanAtNonCallSite (m_thread);
         if (unwind_plan_sp && unwind_plan_sp->PlanValidAtAddress (m_current_pc))
         {
-            if (log && IsLogVerbose())
+            if (log && log->GetVerbose())
             {
                 log->Printf("%*sFrame %u frame uses %s for full UnwindPlan",
                             m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number,
@@ -617,7 +617,7 @@ RegisterContextLLDB::GetFullUnwindPlanForFrame ()
     unwind_plan_sp = func_unwinders_sp->GetUnwindPlanAtCallSite (m_current_offset_backed_up_one);
     if (unwind_plan_sp && unwind_plan_sp->PlanValidAtAddress (m_current_pc))
     {
-        if (log && IsLogVerbose())
+        if (log && log->GetVerbose())
         {
             log->Printf("%*sFrame %u frame uses %s for full UnwindPlan",
                         m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number,
@@ -631,7 +631,7 @@ RegisterContextLLDB::GetFullUnwindPlanForFrame ()
     unwind_plan_sp = func_unwinders_sp->GetUnwindPlanAtNonCallSite (m_thread);
     if (unwind_plan_sp && unwind_plan_sp->PlanValidAtAddress (m_current_pc))
     {
-        if (log && IsLogVerbose())
+        if (log && log->GetVerbose())
         {
             log->Printf("%*sFrame %u frame uses %s for full UnwindPlan",
                         m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number,
@@ -641,7 +641,7 @@ RegisterContextLLDB::GetFullUnwindPlanForFrame ()
     }
 
     // If nothing else, use the architectural default UnwindPlan and hope that does the job.
-    if (log && IsLogVerbose())
+    if (log && log->GetVerbose())
     {
         log->Printf("%*sFrame %u frame uses %s for full UnwindPlan",
                     m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number,
@@ -906,7 +906,7 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, RegisterLoc
             const RegisterInfo *reg_info = GetRegisterInfoAtIndex(lldb_regnum);
             if (reg_info && abi->RegisterIsVolatile (reg_info))
             {
-                if (log && IsLogVerbose ())
+                if (log && log->GetVerbose ())
                 {
                     log->Printf("%*sFrame %u did not supply reg location for %d because it is volatile",
                                 m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number,
@@ -1126,7 +1126,7 @@ RegisterContextLLDB::ReadRegister (const RegisterInfo *reg_info, RegisterValue &
         return false;
 
     const uint32_t lldb_regnum = reg_info->kinds[eRegisterKindLLDB];
-    if (log && IsLogVerbose ())
+    if (log && log->GetVerbose ())
     {
         log->Printf("%*sFrame %u looking for register saved location for reg %d",
                     m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number,
@@ -1136,7 +1136,7 @@ RegisterContextLLDB::ReadRegister (const RegisterInfo *reg_info, RegisterValue &
     // If this is the 0th frame, hand this over to the live register context
     if (IsFrameZero ())
     {
-        if (log && IsLogVerbose ())
+        if (log && log->GetVerbose ())
         {
             log->Printf("%*sFrame %u passing along to the live register context for reg %d",
                         m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number,
@@ -1161,7 +1161,7 @@ RegisterContextLLDB::WriteRegister (const RegisterInfo *reg_info, const Register
         return false;
 
     const uint32_t lldb_regnum = reg_info->kinds[eRegisterKindLLDB];
-    if (log && IsLogVerbose ())
+    if (log && log->GetVerbose ())
     {
         log->Printf("%*sFrame %u looking for register saved location for reg %d",
                     m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number,
@@ -1171,7 +1171,7 @@ RegisterContextLLDB::WriteRegister (const RegisterInfo *reg_info, const Register
     // If this is the 0th frame, hand this over to the live register context
     if (IsFrameZero ())
     {
-        if (log && IsLogVerbose ())
+        if (log && log->GetVerbose ())
         {
             log->Printf("%*sFrame %u passing along to the live register context for reg %d",
                         m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number,
