@@ -114,7 +114,9 @@ class BlockEntrance : public ProgramPoint {
 public:
   BlockEntrance(const CFGBlock *B, const LocationContext *L,
                 const ProgramPointTag *tag = 0)
-    : ProgramPoint(B, BlockEntranceKind, L, tag) {}
+    : ProgramPoint(B, BlockEntranceKind, L, tag) {    
+    assert(B && "BlockEntrance requires non-null block");
+  }
 
   const CFGBlock *getBlock() const {
     return reinterpret_cast<const CFGBlock*>(getData1());

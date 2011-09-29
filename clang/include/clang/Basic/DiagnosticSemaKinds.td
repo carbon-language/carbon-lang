@@ -1205,11 +1205,6 @@ def err_attribute_too_many_arguments : Error<
   "attribute takes no more than %0 argument%s0">;
 def err_attribute_too_few_arguments : Error<
   "attribute takes at least %0 argument%s0">;
-def err_iboutletcollection_type : Error<
-  "invalid type %0 as argument of iboutletcollection attribute">;
-def err_iboutletcollection_object_type : Error<
-  "%select{ivar|property}1 with iboutletcollection attribute must "
-  "have object type (invalid %0)">;
 def err_attribute_missing_parameter_name : Error<
   "attribute requires unquoted parameter">;
 def err_attribute_invalid_vector_type : Error<"invalid vector element type %0">;
@@ -1558,6 +1553,11 @@ def warn_attribute_iboutlet : Warning<
   "%0 attribute can only be applied to instance variables or properties">;
 def warn_attribute_ibaction: Warning<
   "ibaction attribute can only be applied to Objective-C instance methods">;
+def err_iboutletcollection_type : Error<
+  "invalid type %0 as argument of iboutletcollection attribute">;
+def err_iboutlet_object_type : Error<
+  "%select{ivar|property}2 with %0 attribute must "
+  "be an object type (invalid %1)">;
 def err_attribute_overloadable_not_function : Error<
   "'overloadable' attribute can only be applied to a function">;
 def err_attribute_overloadable_missing : Error<
