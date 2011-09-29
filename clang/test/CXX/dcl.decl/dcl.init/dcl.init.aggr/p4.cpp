@@ -15,4 +15,4 @@ void tf() {
 }
 
 // Allowed by GNU extension
-int a4[] = {}; // expected-warning {{zero size arrays}}
+int a4[] = {}; // expected-error {{zero size arrays}}

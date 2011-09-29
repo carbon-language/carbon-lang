@@ -194,14 +194,12 @@ static DiagnosticMappingInfo GetDefaultDiagMappingInfo(unsigned DiagID) {
     if (StaticInfo->WarnNoWerror) {
       assert(Info.getMapping() == diag::MAP_WARNING &&
              "Unexpected mapping with no-Werror bit!");
-      Info.setMapping(diag::MAP_WARNING_NO_WERROR);
       Info.setNoWarningAsError(true);
     }
 
     if (StaticInfo->WarnShowInSystemHeader) {
       assert(Info.getMapping() == diag::MAP_WARNING &&
              "Unexpected mapping with show-in-system-header bit!");
-      Info.setMapping(diag::MAP_WARNING_SHOW_IN_SYSTEM_HEADER);
       Info.setShowInSystemHeader(true);
     }
   }
@@ -533,89 +531,72 @@ DiagnosticIDs::getDiagnosticLevel(unsigned DiagID, unsigned DiagClass,
   DiagnosticMappingInfo &MappingInfo = State->getOrAddMappingInfo(
     (diag::kind)DiagID);
 
-  bool ShouldEmitInSystemHeader = false;
-
   switch (MappingInfo.getMapping()) {
   default: llvm_unreachable("Unknown mapping!");
   case diag::MAP_IGNORE:
-    if (Diag.EnableAllWarnings) {
-      // Leave the warning disabled if it was explicitly ignored.
-      if (MappingInfo.isUser())
-        return DiagnosticIDs::Ignored;
-     
-      Result = Diag.WarningsAsErrors ? DiagnosticIDs::Error 
-                                     : DiagnosticIDs::Warning;
-    }
-    // Otherwise, ignore this diagnostic unless this is an extension diagnostic
-    // and we're mapping them onto warnings or errors.
-    else if (!isBuiltinExtensionDiag(DiagID) ||  // Not an extension
-             Diag.ExtBehavior == DiagnosticsEngine::Ext_Ignore || // Ext ignored
-             MappingInfo.isUser()) {           // User explicitly mapped it.
-      return DiagnosticIDs::Ignored;
-    }
-    else {
-      Result = DiagnosticIDs::Warning;
-    }
-
-    if (Diag.ExtBehavior == DiagnosticsEngine::Ext_Error)
-      Result = DiagnosticIDs::Error;
-    if (Result == DiagnosticIDs::Error && Diag.ErrorsAsFatal)
-      Result = DiagnosticIDs::Fatal;
+    Result = DiagnosticIDs::Ignored;
+    break;
+  case diag::MAP_WARNING:
+    Result = DiagnosticIDs::Warning;
     break;
   case diag::MAP_ERROR:
     Result = DiagnosticIDs::Error;
-    if (Diag.ErrorsAsFatal)
-      Result = DiagnosticIDs::Fatal;
     break;
   case diag::MAP_FATAL:
     Result = DiagnosticIDs::Fatal;
     break;
-  case diag::MAP_WARNING_SHOW_IN_SYSTEM_HEADER:
-    ShouldEmitInSystemHeader = true;
-    // continue as MAP_WARNING.
-  case diag::MAP_WARNING:
-    // If warnings are globally mapped to ignore or error, do it.
-    if (Diag.IgnoreAllWarnings)
-      return DiagnosticIDs::Ignored;
-
-    Result = DiagnosticIDs::Warning;
-
-    // If this is an extension diagnostic and we're in -pedantic-error mode, and
-    // if the user didn't explicitly map it, upgrade to an error.
-    if (Diag.ExtBehavior == DiagnosticsEngine::Ext_Error &&
-        !MappingInfo.isUser() &&
-        isBuiltinExtensionDiag(DiagID))
-      Result = DiagnosticIDs::Error;
-
-    if (Diag.WarningsAsErrors)
-      Result = DiagnosticIDs::Error;
-    if (Result == DiagnosticIDs::Error && Diag.ErrorsAsFatal)
-      Result = DiagnosticIDs::Fatal;
-    break;
-
-  case diag::MAP_WARNING_NO_WERROR:
-    // Diagnostics specified with -Wno-error=foo should be set to warnings, but
-    // not be adjusted by -Werror or -pedantic-errors.
-    Result = DiagnosticIDs::Warning;
-
-    // If warnings are globally mapped to ignore or error, do it.
-    if (Diag.IgnoreAllWarnings)
-      return DiagnosticIDs::Ignored;
-
-    break;
-
-  case diag::MAP_ERROR_NO_WFATAL:
-    // Diagnostics specified as -Wno-fatal-error=foo should be errors, but
-    // unaffected by -Wfatal-errors.
-    Result = DiagnosticIDs::Error;
-    break;
   }
 
-  // Okay, we're about to return this as a "diagnostic to emit" one last check:
-  // if this is any sort of extension warning, and if we're in an __extension__
-  // block, silence it.
-  if (Diag.AllExtensionsSilenced && isBuiltinExtensionDiag(DiagID))
+  // Upgrade ignored diagnostics if -Weverything is enabled.
+  if (Diag.EnableAllWarnings && Result == DiagnosticIDs::Ignored &&
+      !MappingInfo.isUser())
+    Result = DiagnosticIDs::Warning;
+
+  // Ignore any kind of extension diagnostics inside __extension__ blocks.
+  bool IsExtensionDiag = isBuiltinExtensionDiag(DiagID);
+  if (Diag.AllExtensionsSilenced && IsExtensionDiag)
     return DiagnosticIDs::Ignored;
+
+  // For extension diagnostics that haven't been explicitly mapped, check if we
+  // should upgrade the diagnostic.
+  if (IsExtensionDiag && !MappingInfo.isUser()) {
+    switch (Diag.ExtBehavior) {
+    case DiagnosticsEngine::Ext_Ignore:
+      break; 
+    case DiagnosticsEngine::Ext_Warn:
+      // Upgrade ignored diagnostics to warnings.
+      if (Result == DiagnosticIDs::Ignored)
+        Result = DiagnosticIDs::Warning;
+      break;
+    case DiagnosticsEngine::Ext_Error:
+      // Upgrade ignored or warning diagnostics to errors.
+      if (Result == DiagnosticIDs::Ignored || Result == DiagnosticIDs::Warning)
+        Result = DiagnosticIDs::Error;
+      break;
+    }
+  }
+
+  // At this point, ignored errors can no longer be upgraded.
+  if (Result == DiagnosticIDs::Ignored)
+    return Result;
+
+  // Honor -w, which is lower in priority than pedantic-errors, but higher than
+  // -Werror.
+  if (Result == DiagnosticIDs::Warning && Diag.IgnoreAllWarnings)
+    return DiagnosticIDs::Ignored;
+
+  // If -Werror is enabled, map warnings to errors unless explicitly disabled.
+  if (Result == DiagnosticIDs::Warning) {
+    if (Diag.WarningsAsErrors && !MappingInfo.hasNoWarningAsError())
+      Result = DiagnosticIDs::Error;
+  }
+
+  // If -Wfatal-errors is enabled, map errors to fatal unless explicity
+  // disabled.
+  if (Result == DiagnosticIDs::Error) {
+    if (Diag.ErrorsAsFatal && !MappingInfo.hasNoErrorAsFatal())
+      Result = DiagnosticIDs::Fatal;
+  }
 
   // If we are in a system header, we ignore it.
   // We also want to ignore extensions and warnings in -Werror and
@@ -624,7 +605,7 @@ DiagnosticIDs::getDiagnosticLevel(unsigned DiagID, unsigned DiagClass,
       DiagClass != CLASS_ERROR &&
       // Custom diagnostics always are emitted in system headers.
       DiagID < diag::DIAG_UPPER_LIMIT &&
-      !ShouldEmitInSystemHeader &&
+      !MappingInfo.hasShowInSystemHeader() &&
       Diag.SuppressSystemWarnings &&
       Loc.isValid() &&
       Diag.getSourceManager().isInSystemHeader(

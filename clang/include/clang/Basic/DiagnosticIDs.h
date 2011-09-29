@@ -65,17 +65,7 @@ namespace clang {
       MAP_IGNORE  = 1,     //< Map this diagnostic to nothing, ignore it.
       MAP_WARNING = 2,     //< Map this diagnostic to a warning.
       MAP_ERROR   = 3,     //< Map this diagnostic to an error.
-      MAP_FATAL   = 4,     //< Map this diagnostic to a fatal error.
-
-      /// Map this diagnostic to "warning", but make it immune to -Werror.  This
-      /// happens when you specify -Wno-error=foo.
-      MAP_WARNING_NO_WERROR = 5,
-      /// Map this diagnostic to "warning", but make it immune to
-      /// -Wno-system-headers.
-      MAP_WARNING_SHOW_IN_SYSTEM_HEADER = 6,
-      /// Map this diagnostic to "error", but make it immune to -Wfatal-errors.
-      /// This happens for -Wno-fatal-errors=foo.
-      MAP_ERROR_NO_WFATAL = 7
+      MAP_FATAL   = 4      //< Map this diagnostic to a fatal error.
     };
   }
 

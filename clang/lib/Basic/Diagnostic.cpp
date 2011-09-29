@@ -257,7 +257,10 @@ bool DiagnosticsEngine::setDiagnosticGroupWarningAsError(StringRef Group,
     DiagnosticMappingInfo &Info = GetCurDiagState()->getOrAddMappingInfo(
       GroupDiags[i]);
 
-    Info.setMapping(diag::MAP_WARNING_NO_WERROR);
+    if (Info.getMapping() == diag::MAP_ERROR ||
+        Info.getMapping() == diag::MAP_FATAL)
+      Info.setMapping(diag::MAP_WARNING);
+
     Info.setNoWarningAsError(true);
   }
 
@@ -284,7 +287,9 @@ bool DiagnosticsEngine::setDiagnosticGroupErrorAsFatal(StringRef Group,
     DiagnosticMappingInfo &Info = GetCurDiagState()->getOrAddMappingInfo(
       GroupDiags[i]);
 
-    Info.setMapping(diag::MAP_ERROR_NO_WFATAL);
+    if (Info.getMapping() == diag::MAP_FATAL)
+      Info.setMapping(diag::MAP_ERROR);
+
     Info.setNoErrorAsFatal(true);
   }
 
