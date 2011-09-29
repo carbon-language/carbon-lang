@@ -56,6 +56,41 @@ bool Sema::CanUseDecl(NamedDecl *D) {
   return true;
 }
 
+static AvailabilityResult DiagnoseAvailabilityOfDecl(Sema &S,
+                              NamedDecl *D, SourceLocation Loc,
+                              const ObjCInterfaceDecl *UnknownObjCClass) {
+  // See if this declaration is unavailable or deprecated.
+  std::string Message;
+  AvailabilityResult Result = D->getAvailability(&Message);
+  switch (Result) {
+    case AR_Available:
+    case AR_NotYetIntroduced:
+      break;
+            
+    case AR_Deprecated:
+      S.EmitDeprecationWarning(D, Message, Loc, UnknownObjCClass);
+      break;
+            
+    case AR_Unavailable:
+      if (cast<Decl>(S.CurContext)->getAvailability() != AR_Unavailable) {
+        if (Message.empty()) {
+          if (!UnknownObjCClass)
+            S.Diag(Loc, diag::err_unavailable) << D->getDeclName();
+          else
+            S.Diag(Loc, diag::warn_unavailable_fwdclass_message) 
+              << D->getDeclName();
+        }
+        else 
+          S.Diag(Loc, diag::err_unavailable_message) 
+            << D->getDeclName() << Message;
+          S.Diag(D->getLocation(), diag::note_unavailable_here) 
+          << isa<FunctionDecl>(D) << false;
+      }
+      break;
+    }
+    return Result;
+}
+
 /// \brief Determine whether the use of this declaration is valid, and
 /// emit any corresponding diagnostics.
 ///
@@ -69,8 +104,7 @@ bool Sema::CanUseDecl(NamedDecl *D) {
 /// referenced), false otherwise.
 ///
 bool Sema::DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc,
-                             const ObjCInterfaceDecl *UnknownObjCClass,
-                             const EnumDecl *EnumeratorEnumDecl) {
+                             const ObjCInterfaceDecl *UnknownObjCClass) {
   if (getLangOptions().CPlusPlus && isa<FunctionDecl>(D)) {
     // If there were any diagnostics suppressed by template argument deduction,
     // emit them now.
@@ -104,39 +138,11 @@ bool Sema::DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc,
       return true;
     }
   }
-
-  // See if this declaration is unavailable or deprecated.
-  std::string Message;
-  AvailabilityResult Result = D->getAvailability(&Message);
-  switch (Result) {
-  case AR_Available:
-  case AR_NotYetIntroduced:
-    break;
-          
-  case AR_Deprecated:
-    EmitDeprecationWarning(D, Message, Loc, UnknownObjCClass);
-    break;
-
-  case AR_Unavailable:
-    if (cast<Decl>(CurContext)->getAvailability() != AR_Unavailable) {
-      if (Message.empty()) {
-        if (!UnknownObjCClass)
-          Diag(Loc, diag::err_unavailable) << D->getDeclName();
-        else
-          Diag(Loc, diag::warn_unavailable_fwdclass_message) 
-               << D->getDeclName();
-      }
-      else 
-        Diag(Loc, diag::err_unavailable_message) 
-          << D->getDeclName() << Message;
-      Diag(D->getLocation(), diag::note_unavailable_here) 
-        << isa<FunctionDecl>(D) << false;
-    }
-    break;
-  }
+  AvailabilityResult Result =
+    DiagnoseAvailabilityOfDecl(*this, D, Loc, UnknownObjCClass);
 
   // Warn if this is used but marked unused.
-  if (D->hasAttr<UnusedAttr>() && !EnumeratorEnumDecl)
+  if (D->hasAttr<UnusedAttr>())
     Diag(Loc, diag::warn_used_but_marked_unused) << D->getDeclName();
   // For available enumerator, it will become unavailable/deprecated
   // if its enum declaration is as such.
@@ -144,8 +150,9 @@ bool Sema::DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc,
     if (const EnumConstantDecl *ECD = dyn_cast<EnumConstantDecl>(D)) {
       const DeclContext *DC = ECD->getDeclContext();
       if (const EnumDecl *TheEnumDecl = dyn_cast<EnumDecl>(DC))
-        DiagnoseUseOfDecl(const_cast< EnumDecl *>(TheEnumDecl), 
-                          Loc, UnknownObjCClass, TheEnumDecl);
+        DiagnoseAvailabilityOfDecl(*this,
+                          const_cast< EnumDecl *>(TheEnumDecl), 
+                          Loc, UnknownObjCClass);
     }
   return false;
 }
