@@ -3245,8 +3245,7 @@ void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
       // by a check in AnalyzeImplicitConversions().
       return DiagnoseImpCast(S, E, T, CC,
                              diag::warn_impcast_string_literal_to_bool);
-    else // Other casts to bool are not checked.
-      return;
+    return; // Other casts to bool are not checked.
   }
 
   // Strip vector types.
