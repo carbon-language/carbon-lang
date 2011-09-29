@@ -54,4 +54,6 @@ struct A {
 int foo() { return A::B; }
 }
 
-
+// PR11040
+const int x = 10;
+int* y = reinterpret_cast<const char&>(x); // expected-error {{cannot initialize}}

@@ -3089,11 +3089,17 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
   case Expr::CXXConstCastExprClass: 
   case Expr::ObjCBridgedCastExprClass: {
     const Expr *SubExpr = cast<CastExpr>(E)->getSubExpr();
-    if (SubExpr->getType()->isIntegralOrEnumerationType())
+    switch (cast<CastExpr>(E)->getCastKind()) {
+    case CK_LValueToRValue:
+    case CK_NoOp:
+    case CK_IntegralToBoolean:
+    case CK_IntegralCast:
       return CheckICE(SubExpr, Ctx);
-    if (isa<FloatingLiteral>(SubExpr->IgnoreParens()))
-      return NoDiag();
-    return ICEDiag(2, E->getLocStart());
+    default:
+      if (isa<FloatingLiteral>(SubExpr->IgnoreParens()))
+        return NoDiag();
+      return ICEDiag(2, E->getLocStart());
+    }
   }
   case Expr::BinaryConditionalOperatorClass: {
     const BinaryConditionalOperator *Exp = cast<BinaryConditionalOperator>(E);
