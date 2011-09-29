@@ -362,6 +362,12 @@ def NoThrow : InheritableAttr {
   let Spellings = ["nothrow"];
 }
 
+def NSBridged : InheritableAttr {
+  let Spellings = ["ns_bridged"];
+  let Subjects = [Record];
+  let Args = [IdentifierArgument<"BridgedType">];
+}
+
 def NSReturnsRetained : InheritableAttr {
   let Spellings = ["ns_returns_retained"];
   let Subjects = [ObjCMethod, Function];

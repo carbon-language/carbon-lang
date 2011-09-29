@@ -171,6 +171,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
     .Case("analyzer_noreturn", AT_analyzer_noreturn)
     .Case("warn_unused_result", AT_warn_unused_result)
     .Case("carries_dependency", AT_carries_dependency)
+    .Case("ns_bridged", AT_ns_bridged)
     .Case("ns_consumed", AT_ns_consumed)
     .Case("ns_consumes_self", AT_ns_consumes_self)
     .Case("ns_returns_autoreleased", AT_ns_returns_autoreleased)

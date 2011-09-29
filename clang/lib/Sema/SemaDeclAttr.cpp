@@ -22,6 +22,7 @@
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Sema/DeclSpec.h"
 #include "clang/Sema/DelayedDiagnostic.h"
+#include "clang/Sema/Lookup.h"
 #include "llvm/ADT/StringExtras.h"
 using namespace clang;
 using namespace sema;
@@ -3262,6 +3263,36 @@ static void handleObjCReturnsInnerPointerAttr(Sema &S, Decl *D,
     ::new (S.Context) ObjCReturnsInnerPointerAttr(attr.getRange(), S.Context));
 }
 
+static void handleNSBridgedAttr(Sema &S, Scope *Sc, Decl *D,
+                                const AttributeList &Attr) {
+  RecordDecl *RD = dyn_cast<RecordDecl>(D);
+  if (!RD || RD->isUnion()) {
+    S.Diag(D->getLocStart(), diag::err_attribute_wrong_decl_type)
+      << Attr.getRange() << Attr.getName() << 14 /*struct */;
+  }
+
+  IdentifierInfo *ParmName = Attr.getParameterName();
+
+  // In Objective-C, verify that the type names an Objective-C type.
+  // We don't want to check this outside of ObjC because people sometimes
+  // do crazy C declarations of Objective-C types.
+  if (ParmName && S.getLangOptions().ObjC1) {
+    // Check for an existing type with this name.
+    LookupResult R(S, DeclarationName(ParmName), Attr.getParameterLoc(),
+                   Sema::LookupOrdinaryName);
+    if (S.LookupName(R, Sc)) {
+      NamedDecl *Target = R.getFoundDecl();
+      if (Target && !isa<ObjCInterfaceDecl>(Target)) {
+        S.Diag(D->getLocStart(), diag::err_ns_bridged_not_interface);
+        S.Diag(Target->getLocStart(), diag::note_declared_at);
+      }
+    }
+  }
+
+  D->addAttr(::new (S.Context) NSBridgedAttr(Attr.getRange(), S.Context,
+                                             ParmName));
+}
+
 static void handleObjCOwnershipAttr(Sema &S, Decl *D,
                                     const AttributeList &Attr) {
   if (hasDeclarator(D)) return;
@@ -3464,6 +3495,9 @@ static void ProcessInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
 
   case AttributeList::AT_objc_returns_inner_pointer:
     handleObjCReturnsInnerPointerAttr(S, D, Attr); break;
+
+  case AttributeList::AT_ns_bridged:
+    handleNSBridgedAttr(S, scope, D, Attr); break;
 
   // Checker-specific.
   case AttributeList::AT_cf_consumed:

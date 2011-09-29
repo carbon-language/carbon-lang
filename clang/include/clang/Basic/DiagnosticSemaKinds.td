@@ -1331,7 +1331,7 @@ def err_attribute_wrong_decl_type : Error<
   "variables and functions|functions and methods|parameters|"
   "parameters and methods|functions, methods and blocks|"
   "classes and virtual methods|functions, methods, and parameters|"
-  "classes|virtual methods|class members|variables|methods}1">;
+  "classes|virtual methods|class members|variables|methods|structs}1">;
 def warn_function_attribute_wrong_type : Warning<
   "'%0' only applies to function types; type here is %1">;
 def warn_pointer_attribute_wrong_type : Warning<
@@ -1573,6 +1573,8 @@ def warn_ns_attribute_wrong_return_type : Warning<
 def warn_ns_attribute_wrong_parameter_type : Warning<
   "%0 attribute only applies to %select{Objective-C object|pointer}1 "
   "parameters">;
+def err_ns_bridged_not_interface : Error<
+  "parameter of 'ns_bridged' attribute does not name an Objective-C class">;
 
 // Function Parameter Semantic Analysis.
 def err_param_with_void_type : Error<"argument may not have 'void' type">;
