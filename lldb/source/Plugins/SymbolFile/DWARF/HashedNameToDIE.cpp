@@ -42,10 +42,6 @@ HashedNameToDIE::Header::Dump (Stream &s)
     s.Printf ("header.version            = 0x%4.4x", version);
     s.Printf ("header.addr_bytesize      = 0x%2.2x", addr_bytesize);
     s.Printf ("header.hash_function      = 0x%2.2x", hash_function);
-    s.Printf ("header.hash_count_bitsize = 0x%2.2x", hash_count_bitsize);
-    s.Printf ("header.hash_index_bitsize = 0x%2.2x", hash_index_bitsize);
-    s.Printf ("header.hash_bytesize      = 0x%2.2x", hash_bytesize);
-    s.Printf ("header.offset_bytesize    = 0x%2.2x", offset_bytesize);
     s.Printf ("header.bucket_count       = 0x%8.8x %u", bucket_count, bucket_count);
     s.Printf ("header.hashes_count       = 0x%8.8x %u", hashes_count, hashes_count);
     s.Printf ("header.prologue_length    = 0x%8.8x %u", prologue_length, prologue_length);
@@ -70,10 +66,6 @@ HashedNameToDIE::Header::Read (const DataExtractor &data, uint32_t offset)
     }
     addr_bytesize       = data.GetU8  (&offset);
     hash_function       = data.GetU8  (&offset);
-    hash_count_bitsize  = data.GetU8  (&offset);
-    hash_index_bitsize  = data.GetU8  (&offset);
-    hash_bytesize       = data.GetU8  (&offset);
-    offset_bytesize     = data.GetU8  (&offset);
     bucket_count        = data.GetU32 (&offset);
     hashes_count        = data.GetU32 (&offset);
     prologue_length     = data.GetU32 (&offset);
@@ -154,42 +146,38 @@ HashedNameToDIE::MemoryTable::Find (const char *name_cstr, DIEArray &die_ofsets)
 {
     if (m_header.version == 1)
     {
-        const size_t initial_size = die_ofsets.size();
         if (name_cstr && name_cstr[0])
         {
             // Hash the C string
             const uint32_t name_hash = dl_new_hash (name_cstr);
             
+            const uint32_t bucket_count = m_header.bucket_count;
             // Find the correct bucket for the using the hash value
-            const uint32_t bucket_idx = name_hash % m_header.bucket_count;
+            const uint32_t bucket_idx = name_hash % bucket_count;
             
             // Calculate the offset for the bucket entry for the bucket index
             uint32_t offset = GetOffsetOfBucketEntry (bucket_idx);
             
-            // Extract the bucket entry.
-            const uint32_t bucket_entry = m_data.GetU32 (&offset);
-            if (bucket_entry)
+            // Extract the bucket entry which is a hash index. If the hash index
+            // is UINT32_MAX, then the bucket is empty. If it isn't, it is the
+            // index of the hash in the hashes array. We will then iterate through
+            // all hashes as long as they match "bucket_idx" which was calculated
+            // above
+            uint32_t hash_idx = m_data.GetU32 (&offset);
+            if (hash_idx != UINT32_MAX)
             {
-                // The bucket entry is non-zero which means it isn't empty.
-                // The bucket entry is made up of a hash index whose bit width
-                // is m_header.hash_index_bitsize, and a hash count whose value
-                // is the remaining bits in the 32 bit value. Below we extract
-                // the hash index and the hash count
-                const uint32_t hash_idx = bucket_entry & GetHashIndexMask();
-                const uint32_t hash_count = bucket_entry >> m_header.hash_index_bitsize;
-                const uint32_t hash_end_idx = hash_idx + hash_count;
-                // Figure out the offset to the hash value by index
                 uint32_t hash_offset = GetOffsetOfHashValue (hash_idx);
-                for (uint32_t idx = hash_idx; idx < hash_end_idx; ++idx)
+                
+                const size_t initial_size = die_ofsets.size();
+                uint32_t hash;
+                while (((hash = m_data.GetU32 (&hash_offset)) % bucket_count) == bucket_idx)
                 {
-                    // Extract the hash value and see if it matches our string
-                    const uint32_t hash = m_data.GetU32 (&hash_offset);
                     if (hash == name_hash)
                     {
                         // The hash matches, but we still need to verify that the
                         // C string matches in case we have a hash collision. Figure
                         // out the offset for the data associated with this hash entry
-                        offset = GetOffsetOfHashDataOffset (idx);
+                        offset = GetOffsetOfHashDataOffset (hash_idx);
                         uint32_t hash_data_offset = m_data.GetU32 (&offset);
                         uint32_t str_offset;
                         // Now we have the offset to the data for all strings that match
@@ -219,10 +207,12 @@ HashedNameToDIE::MemoryTable::Find (const char *name_cstr, DIEArray &die_ofsets)
                             }
                         }
                     }
+                    ++hash_idx;
                 }
+                
+                return die_ofsets.size() - initial_size;
             }
         }
-        return die_ofsets.size() - initial_size;
     }
     return 0;
 }
@@ -231,75 +221,67 @@ void
 HashedNameToDIE::MemoryTable::Dump (Stream &s)
 {
     if (m_header.version == 1)
-    {
-
-        bool verbose = s.GetVerbose();
-        
+    {        
         if (m_is_apple_names)
             s.PutCString (".apple_names contents:\n");
         else
             s.PutCString (".apple_types contents:\n");
         
         m_header.Dump (s);
-        uint32_t i,j,k;
         uint32_t empty_bucket_count = 0;
         uint32_t hash_collisions = 0;
-        uint32_t bucket_entry_offset = GetOffsetOfBucketEntry (0);
-        for (i=0; i<m_header.bucket_count; ++i)
+        uint32_t hash_idx_offset = GetOffsetOfBucketEntry (0);
+        const uint32_t bucket_count = m_header.bucket_count;
+        for (uint32_t bucket_idx=0; bucket_idx<bucket_count; ++bucket_idx)
         {
-            const uint32_t bucket_entry = m_data.GetU32 (&bucket_entry_offset);
-            s.Printf("bucket[%u] 0x%8.8x", i, bucket_entry);
-            if (bucket_entry)
-            {
-                const uint32_t hash_idx = bucket_entry & GetHashIndexMask();
-                const uint32_t hash_count = bucket_entry >> m_header.hash_index_bitsize;
+            uint32_t hash_idx = m_data.GetU32 (&hash_idx_offset);
+            s.Printf("bucket[%u] ", bucket_idx);
+
+            if (hash_idx != UINT32_MAX)
+            {                
+                s.Printf(" => hash[%u]\n", hash_idx);
                 
-                s.Printf(" (hash_idx = %u, hash_count = %u)\n", hash_idx, hash_count);
-                
-                const uint32_t hash_end_idx = hash_idx + hash_count;
                 uint32_t hash_offset = GetOffsetOfHashValue (hash_idx);
                 uint32_t data_offset = GetOffsetOfHashDataOffset (hash_idx);
                 
-                for (j=hash_idx; j<hash_end_idx; ++j)
+                uint32_t hash;
+                while (((hash = m_data.GetU32 (&hash_offset)) % bucket_count) == bucket_idx)
                 {
-                    const uint32_t hash = m_data.GetU32 (&hash_offset);
                     uint32_t hash_data_offset = m_data.GetU32 (&data_offset);
-                    if (verbose)
-                        s.Printf("  hash[%u] = 0x%8.8x, offset[%u] = 0x%8.8x\n", j, hash, j, hash_data_offset);
-                    else
-                        s.Printf("  hash[%u] = 0x%8.8x\n", j, hash);
+                    s.Printf("  hash[%u] = 0x%8.8x\n", hash_idx, hash);
 
-                    uint32_t string_idx = 0;
+                    uint32_t string_count = 0;
                     uint32_t strp_offset;
                     while ((strp_offset = m_data.GetU32 (&hash_data_offset)) != 0)
                     {
                         const uint32_t num_die_offsets = m_data.GetU32 (&hash_data_offset);
-                        s.Printf("    string[%u] = 0x%8.8x \"%s\", dies[%u] = {", 
-                                 string_idx, 
+                        s.Printf("   str[%u] = 0x%8.8x \"%s\", dies[%u] = {", 
+                                 string_count, 
                                  strp_offset, 
                                  m_string_table.PeekCStr(strp_offset),
                                  num_die_offsets);
-                        ++string_idx;
+                        ++string_count;
                         
-                        for (k=0; k<num_die_offsets; ++k)
+                        for (uint32_t die_idx=0; die_idx<num_die_offsets; ++die_idx)
                         {
                             const uint32_t die_offset = m_data.GetU32 (&hash_data_offset);
                             s.Printf(" 0x%8.8x", die_offset);
                         }
                         s.PutCString (" }\n");
                     }
-                    if (string_idx > 1)
+                    if (string_count > 1)
                         ++hash_collisions;
                 }
             }
             else
             {
-                s.PutCString(" (empty)\n");
+                s.PutCString(" EMPTY\n");
                 ++empty_bucket_count;
             }
+            s.EOL();
         }
-        
-        s.Printf ("%u of %u buckets empty (%2.1f%%)\n",  empty_bucket_count, m_header.bucket_count, (((float)empty_bucket_count/(float)m_header.bucket_count)*100.0f));
+        s.EOL();
+        s.Printf ("%u of %u buckets empty (%2.1f%%)\n",  empty_bucket_count, bucket_count, (((float)empty_bucket_count/(float)m_header.bucket_count)*100.0f));
         s.Printf ("Average hashes/non-empty bucket = %2.1f%%\n", ((float)m_header.hashes_count/(float)(m_header.bucket_count - empty_bucket_count)));
         s.Printf ("Hash collisions = %u\n", hash_collisions);
     }

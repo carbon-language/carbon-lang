@@ -47,11 +47,6 @@ public:
         uint16_t version;            // Version number
         uint8_t  addr_bytesize;      // Size in bytes of an address
 		uint8_t  hash_function;      // The hash function enumeration that was used
-		uint8_t  hash_count_bitsize; // Size in bits of the hash count in each bucket entry
-		uint8_t  hash_index_bitsize; // Size in bits of the hash index in each bucket entry
-		uint8_t  hash_bytesize;      // Size in bytes of the hash that is stored in the hashes which must be <= 4
-		uint8_t  offset_bytesize;    // Size in bytes of the hash data offsets
-        
 		uint32_t bucket_count;       // The number of buckets in this hash table
 		uint32_t hashes_count;       // The total number of unique hash values and hash data offsets in this table
         uint32_t prologue_length;    // The length of the prologue
@@ -60,11 +55,7 @@ public:
             magic (HASH_MAGIC),
             version (1),
             addr_bytesize (4),
-            hash_count_bitsize (8),
-            hash_index_bitsize (24),
             hash_function (eHashFunctionDJB),
-            hash_bytesize (4),      // Store the entire 32 bit hash by default
-            offset_bytesize (4),    // Store a 4 byte offset for every hash value
             bucket_count (0),
             hashes_count (0),
             prologue_length (_prologue_length)
@@ -83,10 +74,6 @@ public:
             sizeof(version) + 
             sizeof(addr_bytesize) + 
             sizeof(hash_function) +
-            sizeof(hash_count_bitsize) +
-            sizeof(hash_index_bitsize) +
-            sizeof(hash_bytesize) +
-            sizeof(offset_bytesize) +
             sizeof(bucket_count) +
             sizeof(hashes_count) +
             sizeof(prologue_length) +
@@ -233,12 +220,6 @@ public:
         IsValid () const
         {
             return m_header.version > 0;
-        }
-        
-        uint32_t
-        GetHashIndexMask () const
-        {
-            return (1u << m_header.hash_index_bitsize) - 1u;
         }
         
         uint32_t
