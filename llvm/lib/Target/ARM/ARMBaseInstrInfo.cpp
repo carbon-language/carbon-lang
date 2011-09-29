@@ -2732,9 +2732,11 @@ ARMBaseInstrInfo::isFpMLxInstruction(unsigned Opcode, unsigned &MulOpc,
 //
 // We use the following execution domain numbering:
 //
-//   0: Generic
-//   1: VFP
-//   2: NEON
+enum ARMExeDomain {
+  ExeGeneric = 0,
+  ExeVFP = 1,
+  ExeNEON = 2
+};
 //
 // Also see ARMInstrFormats.td and Domain* enums in ARMBaseInfo.h
 //
@@ -2743,33 +2745,41 @@ ARMBaseInstrInfo::getExecutionDomain(const MachineInstr *MI) const {
   // VMOVD is a VFP instruction, but can be changed to NEON if it isn't
   // predicated.
   if (MI->getOpcode() == ARM::VMOVD && !isPredicated(MI))
-    return std::make_pair(1, 3);
+    return std::make_pair(ExeVFP, (1<<ExeVFP) | (1<<ExeNEON));
 
   // No other instructions can be swizzled, so just determine their domain.
   unsigned Domain = MI->getDesc().TSFlags & ARMII::DomainMask;
 
   if (Domain & ARMII::DomainNEON)
-    return std::make_pair(2, 0);
+    return std::make_pair(ExeNEON, 0);
 
   // Certain instructions can go either way on Cortex-A8.
   // Treat them as NEON instructions.
   if ((Domain & ARMII::DomainNEONA8) && Subtarget.isCortexA8())
-    return std::make_pair(2, 0);
+    return std::make_pair(ExeNEON, 0);
 
   if (Domain & ARMII::DomainVFP)
-    return std::make_pair(1, 0);
+    return std::make_pair(ExeVFP, 0);
 
-  return std::make_pair(0, 0);
+  return std::make_pair(ExeGeneric, 0);
 }
 
 void
 ARMBaseInstrInfo::setExecutionDomain(MachineInstr *MI, unsigned Domain) const {
   // We only know how to change VMOVD into VORR.
   assert(MI->getOpcode() == ARM::VMOVD && "Can only swizzle VMOVD");
-  if (Domain != 2)
+  if (Domain != ExeNEON)
     return;
+
+  // Zap the predicate operands.
+  assert(!isPredicated(MI) && "Cannot predicate a VORRd");
+  MI->RemoveOperand(3);
+  MI->RemoveOperand(2);
 
   // Change to a VORRd which requires two identical use operands.
   MI->setDesc(get(ARM::VORRd));
-  MachineInstrBuilder(MI).addReg(MI->getOperand(1).getReg());
+
+  // Add the extra source operand and new predicates.
+  // This will go before any implicit ops.
+  AddDefaultPred(MachineInstrBuilder(MI).addReg(MI->getOperand(1).getReg()));
 }

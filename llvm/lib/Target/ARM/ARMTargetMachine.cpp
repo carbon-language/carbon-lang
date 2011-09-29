@@ -118,7 +118,7 @@ bool ARMBaseTargetMachine::addPreSched2(PassManagerBase &PM,
     if (!Subtarget.isThumb1Only())
       PM.add(createARMLoadStoreOptimizationPass());
     if (Subtarget.hasNEON())
-      PM.add(createNEONMoveFixPass());
+      PM.add(createExecutionDependencyFixPass(&ARM::DPRRegClass));
   }
 
   // Expand some pseudo instructions into multiple instructions to allow
