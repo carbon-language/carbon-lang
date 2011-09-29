@@ -365,7 +365,9 @@ protected:
                             }
     
     void
-    ReportError (const char *format, ...);
+    ReportError (const char *format, ...) __attribute__ ((format (printf, 2, 3)));
+    void
+    ReportWarning (const char *format, ...) __attribute__ ((format (printf, 2, 3)));
     
     SymbolFileDWARFDebugMap *       m_debug_map_symfile;
     clang::TranslationUnitDecl *    m_clang_tu_decl;

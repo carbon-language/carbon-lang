@@ -2372,6 +2372,20 @@ SymbolFileDWARF::ReportError (const char *format, ...)
     va_end (args);
 }
 
+void
+SymbolFileDWARF::ReportWarning (const char *format, ...)
+{
+    ::fprintf (stderr, 
+               "warning: %s/%s ", 
+               m_obj_file->GetFileSpec().GetDirectory().GetCString(),
+               m_obj_file->GetFileSpec().GetFilename().GetCString());
+
+    va_list args;
+    va_start (args, format);
+    vfprintf (stderr, format, args);
+    va_end (args);
+}
+
 uint32_t
 SymbolFileDWARF::FindTypes(const SymbolContext& sc, const ConstString &name, bool append, uint32_t max_matches, TypeList& types)
 {
@@ -2414,7 +2428,7 @@ SymbolFileDWARF::FindTypes(const SymbolContext& sc, const ConstString &name, boo
                 }
                 else
                 {
-                    fprintf (stderr, "error: can't find shared pointer for type 0x%8.8x.\n", matching_type->GetID());
+                    ReportError ("error: can't find shared pointer for type 0x%8.8x.\n", matching_type->GetID());
                 }
             }
         }
@@ -3812,7 +3826,11 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                         DWARFCompileUnitSP spec_cu_sp;
                                         const DWARFDebugInfoEntry* spec_die = DebugInfo()->GetDIEPtr(specification_die_offset, &spec_cu_sp);
                                         if (m_die_to_decl_ctx[spec_die] == NULL)
-                                            fprintf (stderr,"warning: 0x%8.8x: DW_AT_specification(0x%8.8x) has no decl\n", die->GetOffset(), specification_die_offset);
+                                        {
+                                            ReportWarning ("0x%8.8x: DW_AT_specification(0x%8.8x) has no decl\n", 
+                                                die->GetOffset(), 
+                                                specification_die_offset);
+                                        }
                                         type_handled = true;
                                     }
                                     else if (abstract_origin_die_offset != DW_INVALID_OFFSET)
@@ -3820,7 +3838,11 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                         DWARFCompileUnitSP abs_cu_sp;
                                         const DWARFDebugInfoEntry* abs_die = DebugInfo()->GetDIEPtr(abstract_origin_die_offset, &abs_cu_sp);
                                         if (m_die_to_decl_ctx[abs_die] == NULL)
-                                            fprintf (stderr,"warning: 0x%8.8x: DW_AT_abstract_origin(0x%8.8x) has no decl\n", die->GetOffset(), abstract_origin_die_offset);
+                                        {
+                                            ReportWarning ("0x%8.8x: DW_AT_abstract_origin(0x%8.8x) has no decl\n", 
+                                                die->GetOffset(), 
+                                                abstract_origin_die_offset);
+                                        }
                                         type_handled = true;
                                     }
                                     else
@@ -4508,8 +4530,7 @@ SymbolFileDWARF::ParseVariables
                             }
                             else
                             {
-                                fprintf (stderr, 
-                                         "error: parent 0x%8.8x %s with no valid compile unit in symbol context for 0x%8.8x %s.\n",
+                                ReportError ("parent 0x%8.8x %s with no valid compile unit in symbol context for 0x%8.8x %s.\n",
                                          sc_parent_die->GetOffset(),
                                          DW_TAG_value_to_name (parent_tag),
                                          orig_die->GetOffset(),
@@ -4553,8 +4574,7 @@ SymbolFileDWARF::ParseVariables
                             break;
                             
                         default:
-                            fprintf (stderr, 
-                                     "error: didn't find appropriate parent DIE for variable list for 0x%8.8x %s.\n",
+                             ReportError ("didn't find appropriate parent DIE for variable list for 0x%8.8x %s.\n",
                                      orig_die->GetOffset(),
                                      DW_TAG_value_to_name (orig_die->Tag()));
                             break;
