@@ -127,8 +127,10 @@ static void PrintObjectSectionSizes(ObjectFile *o) {
       if (error(i->getName(name))) return;
       if (error(i->getAddress(addr))) return;
       max_name_len = std::max(max_name_len, name.size());
-      max_size_len = std::max(max_size_len, getNumLengthAsString(size));
-      max_addr_len = std::max(max_addr_len, getNumLengthAsString(addr));
+      max_size_len = std::max(max_size_len,
+                              (std::size_t) getNumLengthAsString(size));
+      max_addr_len = std::max(max_addr_len,
+                              (std::size_t) getNumLengthAsString(addr));
     }
 
     // Add extra padding.
