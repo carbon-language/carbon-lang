@@ -4082,12 +4082,11 @@ def err_in_class_initializer_volatile : Error<
 def err_in_class_initializer_bad_type : Error<
   "static data member of type %0 must be initialized out of line">;
 def ext_in_class_initializer_float_type : ExtWarn<
-  "in-class initializer for static data member of type %0 not allowed, "
-  "accepted as an extension">, InGroup<DiagGroup<"static-member-init">>;
-def ext_in_class_initializer_literal_type : ExtWarn<
+  "in-class initializer for static data member of type %0 is a GNU extension">,
+  InGroup<GNU>;
+def err_in_class_initializer_literal_type : Error<
   "in-class initializer for static data member of type %0 requires "
-  "'constexpr' specifier, accepted as an extension">,
-  InGroup<DiagGroup<"static-member-init">>;
+  "'constexpr' specifier">;
 def err_in_class_initializer_non_constant : Error<
   "in-class initializer is not a constant expression">;
 

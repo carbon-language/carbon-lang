@@ -5875,13 +5875,6 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
         VDecl->setInvalidDecl();
       }
 
-    // Suggest adding 'constexpr' in C++0x for literal types.
-    } else if (getLangOptions().CPlusPlus0x && T->isLiteralType()) {
-      Diag(VDecl->getLocation(), diag::ext_in_class_initializer_literal_type)
-        << T << Init->getSourceRange()
-        << FixItHint::CreateInsertion(VDecl->getLocStart(), "constexpr ");
-      VDecl->setConstexpr(true);
-
     // We allow floating-point constants as an extension.
     } else if (T->isFloatingType()) { // also permits complex, which is ok
       Diag(VDecl->getLocation(), diag::ext_in_class_initializer_float_type)
@@ -5893,6 +5886,14 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
           << Init->getSourceRange();
         VDecl->setInvalidDecl();
       }
+
+    // Suggest adding 'constexpr' in C++0x for literal types.
+    } else if (getLangOptions().CPlusPlus0x && T->isLiteralType()) {
+      Diag(VDecl->getLocation(), diag::err_in_class_initializer_literal_type)
+        << T << Init->getSourceRange()
+        << FixItHint::CreateInsertion(VDecl->getLocStart(), "constexpr ");
+      VDecl->setConstexpr(true);
+
     } else {
       Diag(VDecl->getLocation(), diag::err_in_class_initializer_bad_type)
         << T << Init->getSourceRange();

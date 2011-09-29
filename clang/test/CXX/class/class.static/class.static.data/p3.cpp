@@ -12,8 +12,8 @@ struct S {
   static const int d;
 
   static constexpr double e = 0.0; // ok
-  static const double f = 0.0; // expected-warning {{accepted as an extension}}
-  static char *const g = 0; // expected-warning {{accepted as an extension}}
+  static const double f = 0.0; // expected-warning {{extension}}
+  static char *const g = 0; // expected-error {{requires 'constexpr' specifier}}
   static const NonLit h = NonLit(); // expected-error {{must be initialized out of line}}
 };
 

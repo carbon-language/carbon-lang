@@ -20,8 +20,8 @@ namespace rdar8367341 {
   float foo();
 
   struct A {
-    static const float x = 5.0f; // expected-warning {{requires 'constexpr' specifier}}
-    static const float y = foo(); // expected-warning {{requires 'constexpr' specifier}} expected-error {{must be initialized by a constant expression}}
+    static const float x = 5.0f; // expected-warning {{GNU extension}}
+    static const float y = foo(); // expected-warning {{GNU extension}} expected-error {{in-class initializer is not a constant expression}}
     static constexpr float x2 = 5.0f;
     static constexpr float y2 = foo(); // expected-error {{must be initialized by a constant expression}}
   };

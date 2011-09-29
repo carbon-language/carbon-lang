@@ -173,8 +173,8 @@ namespace rdar8367341 {
   float foo();
 
   struct A {
-    static const float x = 5.0f; // expected-warning {{in-class initializer for static data member of type 'const float' not allowed}}
-    static const float y = foo(); // expected-warning {{in-class initializer for static data member of type 'const float' not allowed}} expected-error {{in-class initializer is not a constant expression}}
+    static const float x = 5.0f; // expected-warning {{in-class initializer for static data member of type 'const float' is a GNU extension}}
+    static const float y = foo(); // expected-warning {{in-class initializer for static data member of type 'const float' is a GNU extension}} expected-error {{in-class initializer is not a constant expression}}
   };
 }
 

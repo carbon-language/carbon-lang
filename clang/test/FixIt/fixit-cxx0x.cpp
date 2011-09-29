@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 -verify -std=c++0x %s
 // RUN: cp %s %t
-// RUN: not %clang_cc1 -x c++ -std=c++0x -Werror -fixit %t
+// RUN: not %clang_cc1 -x c++ -std=c++0x -fixit %t
 // RUN: %clang_cc1 -Wall -pedantic -x c++ -std=c++0x %t
 
 /* This is a test of the various code modification hints that only
@@ -53,9 +53,7 @@ namespace Constexpr {
 #endif
 
   struct S {
-    static const double d = 0.0; // expected-warning {{accepted as an extension}}
-    // -> constexpr static const double d = 0.0;
-    static char *const p = 0; // expected-warning {{accepted as an extension}}
+    static char *const p = 0; // expected-error {{requires 'constexpr' specifier}}
     // -> constexpr static char *const p = 0;
   };
 }
