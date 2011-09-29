@@ -752,6 +752,8 @@ ModuleKey CompilerInstance::loadModule(SourceLocation ImportLoc,
       return 0;
     }
     
+    getDiagnostics().Report(ModuleNameLoc, diag::warn_module_build)
+      << ModuleName.getName();
     BuildingModule = true;
     compileModule(*this, ModuleName.getName(), ModuleFileName, UmbrellaHeader);
     ModuleFile = PP->getHeaderSearchInfo().lookupModule(ModuleName.getName());

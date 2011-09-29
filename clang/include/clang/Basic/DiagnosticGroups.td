@@ -85,6 +85,7 @@ def : DiagGroup<"newline-eof">;
 def LongLong : DiagGroup<"long-long">;
 def MismatchedTags : DiagGroup<"mismatched-tags">;
 def MissingFieldInitializers : DiagGroup<"missing-field-initializers">;
+def ModuleBuild : DiagGroup<"module-build">;
 def NullDereference : DiagGroup<"null-dereference">;
 def InitializerOverrides : DiagGroup<"initializer-overrides">;
 def NonNull : DiagGroup<"nonnull">;
