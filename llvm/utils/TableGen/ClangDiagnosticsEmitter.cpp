@@ -149,7 +149,7 @@ void ClangDiagsDefsEmitter::run(raw_ostream &OS) {
     // Filter by component.
     if (!Component.empty() && Component != R.getValueAsString("Component"))
       continue;
-    
+
     OS << "DIAG(" << R.getName() << ", ";
     OS << R.getValueAsDef("Class")->getName();
     OS << ", diag::" << R.getValueAsDef("DefaultMapping")->getName();
@@ -178,6 +178,22 @@ void ClangDiagsDefsEmitter::run(raw_ostream &OS) {
     else
       OS << ", false";
 
+    // FIXME: This condition is just to avoid temporary revlock, it can be
+    // removed.
+    if (R.getValue("WarningNoWerror")) {
+      // Default warning has no Werror bit.
+      if (R.getValueAsBit("WarningNoWerror"))
+        OS << ", true";
+      else
+        OS << ", false";
+  
+      // Default warning show in system header bit.
+      if (R.getValueAsBit("WarningShowInSystemHeader"))
+        OS << ", true";
+      else
+        OS << ", false";
+    }
+  
     // Category number.
     OS << ", " << CategoryIDs.getID(getDiagnosticCategory(&R, DGParentMap));
 
