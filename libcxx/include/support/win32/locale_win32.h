@@ -1,5 +1,5 @@
 // -*- C++ -*-
-//===------------------------ support/win32/locale.h ----------------------===//
+//===--------------------- support/win32/locale_win32.h -------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,8 +8,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef _LIBCPP_SUPPORT_WIN32_LOCALE_H
-#define _LIBCPP_SUPPORT_WIN32_LOCALE_H
+#ifndef _LIBCPP_SUPPORT_WIN32_LOCALE_WIN32_H
+#define _LIBCPP_SUPPORT_WIN32_LOCALE_WIN32_H
 
 // ctype mask table defined in msvcrt.dll
 extern "C" unsigned short  __declspec(dllimport) _ctype[];
@@ -107,4 +107,4 @@ inline int iswblank_l( wint_t c, locale_t /*loc*/ )
     return ( c == L' ' || c == L'\t' );
 }
 
-#endif // _LIBCPP_SUPPORT_WIN32_LOCALE_H
+#endif // _LIBCPP_SUPPORT_WIN32_LOCALE_WIN32_H

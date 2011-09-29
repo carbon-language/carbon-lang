@@ -187,8 +187,7 @@ template <class charT> class messages_byname;
 #include <cstdlib>
 #include <ctime>
 #if _WIN32
-#include <support/win32/support.h>
-#include <support/win32/locale.h>
+#include <support/win32/locale_win32.h>
 #else // _WIN32
 #include <nl_types.h>
 #endif  // !_WIN32

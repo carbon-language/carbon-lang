@@ -20,7 +20,7 @@
 #include "cwctype"
 #include "__sso_allocator"
 #if _WIN32
-#include <support/win32/locale.h>
+#include <support/win32/locale_win32.h>
 #else // _WIN32
 #include <langinfo.h>
 #endif // _!WIN32
