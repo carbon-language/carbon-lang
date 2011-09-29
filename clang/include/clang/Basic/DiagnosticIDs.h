@@ -104,10 +104,10 @@ public:
   /// issue.
   StringRef getDescription(unsigned DiagID) const;
 
-  /// isBuiltinWarningOrExtension - Return true if the unmapped diagnostic
-  /// level of the specified diagnostic ID is a Warning or Extension.
-  /// This only works on builtin diagnostics, not custom ones, and is not legal to
-  /// call on NOTEs.
+  /// isBuiltinWarningOrExtension - Return true if the unmapped diagnostic level
+  /// of the specified diagnostic ID is a Warning or Extension.  This only works
+  /// on builtin diagnostics, not custom ones, and is not legal to call on
+  /// NOTEs.
   static bool isBuiltinWarningOrExtension(unsigned DiagID);
 
   /// \brief Determine whether the given built-in diagnostic ID is a
