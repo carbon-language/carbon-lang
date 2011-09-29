@@ -31,6 +31,10 @@ class DiagnosticOutputGetter {
     }
 
     StringRef get() const { return LastDiagnostic; }
+
+    virtual DiagnosticConsumer *clone(DiagnosticsEngine &Diags) const {
+      return new LastDiagnosticString();
+    }
   };
 
   const IntrusiveRefCntPtr<DiagnosticIDs> DiagIDs;
