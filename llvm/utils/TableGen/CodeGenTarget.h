@@ -107,10 +107,6 @@ public:
     return RegAltNameIndices;
   }
 
-  const std::vector<CodeGenRegisterClass> &getRegisterClasses() const {
-    return getRegBank().getRegClasses();
-  }
-
   const CodeGenRegisterClass &getRegisterClass(Record *R) const {
     return *getRegBank().getRegClass(R);
   }

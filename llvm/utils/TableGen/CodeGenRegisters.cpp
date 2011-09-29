@@ -391,8 +391,11 @@ CodeGenRegBank::CodeGenRegBank(RecordKeeper &Records) : Records(Records) {
     throw std::string("No 'RegisterClass' subclasses defined!");
 
   RegClasses.reserve(RCs.size());
-  for (unsigned i = 0, e = RCs.size(); i != e; ++i)
-    RegClasses.push_back(CodeGenRegisterClass(*this, RCs[i]));
+  for (unsigned i = 0, e = RCs.size(); i != e; ++i) {
+    CodeGenRegisterClass *RC = new CodeGenRegisterClass(*this, RCs[i]);
+    RegClasses.push_back(RC);
+    Def2RC[RCs[i]] = RC;
+  }
 }
 
 CodeGenRegister *CodeGenRegBank::getReg(Record *Def) {
@@ -405,10 +408,6 @@ CodeGenRegister *CodeGenRegBank::getReg(Record *Def) {
 }
 
 CodeGenRegisterClass *CodeGenRegBank::getRegClass(Record *Def) {
-  if (Def2RC.empty())
-    for (unsigned i = 0, e = RegClasses.size(); i != e; ++i)
-      Def2RC[RegClasses[i].TheDef] = &RegClasses[i];
-
   if (CodeGenRegisterClass *RC = Def2RC[Def])
     return RC;
 
@@ -579,10 +578,10 @@ void CodeGenRegBank::computeDerivedInfo() {
 const CodeGenRegisterClass*
 CodeGenRegBank::getRegClassForRegister(Record *R) {
   const CodeGenRegister *Reg = getReg(R);
-  const std::vector<CodeGenRegisterClass> &RCs = getRegClasses();
+  ArrayRef<CodeGenRegisterClass*> RCs = getRegClasses();
   const CodeGenRegisterClass *FoundRC = 0;
   for (unsigned i = 0, e = RCs.size(); i != e; ++i) {
-    const CodeGenRegisterClass &RC = RCs[i];
+    const CodeGenRegisterClass &RC = *RCs[i];
     if (!RC.contains(Reg))
       continue;
 

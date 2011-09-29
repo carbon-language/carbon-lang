@@ -151,7 +151,7 @@ namespace llvm {
     std::vector<CodeGenRegister*> Registers;
     DenseMap<Record*, CodeGenRegister*> Def2Reg;
 
-    std::vector<CodeGenRegisterClass> RegClasses;
+    std::vector<CodeGenRegisterClass*> RegClasses;
     DenseMap<Record*, CodeGenRegisterClass*> Def2RC;
 
     // Composite SubRegIndex instances.
@@ -184,7 +184,7 @@ namespace llvm {
     // Find a register from its Record def.
     CodeGenRegister *getReg(Record*);
 
-    const std::vector<CodeGenRegisterClass> &getRegClasses() {
+    ArrayRef<CodeGenRegisterClass*> getRegClasses() const {
       return RegClasses;
     }
 

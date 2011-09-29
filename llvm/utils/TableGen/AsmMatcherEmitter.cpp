@@ -914,17 +914,17 @@ void AsmMatcherInfo::
 BuildRegisterClasses(SmallPtrSet<Record*, 16> &SingletonRegisters) {
   const std::vector<CodeGenRegister*> &Registers =
     Target.getRegBank().getRegisters();
-  const std::vector<CodeGenRegisterClass> &RegClassList =
-    Target.getRegisterClasses();
+  ArrayRef<CodeGenRegisterClass*> RegClassList =
+    Target.getRegBank().getRegClasses();
 
   // The register sets used for matching.
   std::set< std::set<Record*> > RegisterSets;
 
   // Gather the defined sets.
-  for (std::vector<CodeGenRegisterClass>::const_iterator it =
+  for (ArrayRef<CodeGenRegisterClass*>::const_iterator it =
        RegClassList.begin(), ie = RegClassList.end(); it != ie; ++it)
-    RegisterSets.insert(std::set<Record*>(it->getOrder().begin(),
-                                          it->getOrder().end()));
+    RegisterSets.insert(std::set<Record*>(
+        (*it)->getOrder().begin(), (*it)->getOrder().end()));
 
   // Add any required singleton sets.
   for (SmallPtrSet<Record*, 16>::iterator it = SingletonRegisters.begin(),
@@ -996,18 +996,19 @@ BuildRegisterClasses(SmallPtrSet<Record*, 16> &SingletonRegisters) {
   }
 
   // Name the register classes which correspond to a user defined RegisterClass.
-  for (std::vector<CodeGenRegisterClass>::const_iterator
+  for (ArrayRef<CodeGenRegisterClass*>::const_iterator
        it = RegClassList.begin(), ie = RegClassList.end(); it != ie; ++it) {
-    ClassInfo *CI = RegisterSetClasses[std::set<Record*>(it->getOrder().begin(),
-                                                         it->getOrder().end())];
+    const CodeGenRegisterClass &RC = **it;
+    ClassInfo *CI = RegisterSetClasses[std::set<Record*>(RC.getOrder().begin(),
+                                                         RC.getOrder().end())];
     if (CI->ValueName.empty()) {
-      CI->ClassName = it->getName();
-      CI->Name = "MCK_" + it->getName();
-      CI->ValueName = it->getName();
+      CI->ClassName = RC.getName();
+      CI->Name = "MCK_" + RC.getName();
+      CI->ValueName = RC.getName();
     } else
-      CI->ValueName = CI->ValueName + "," + it->getName();
+      CI->ValueName = CI->ValueName + "," + RC.getName();
 
-    RegisterClassClasses.insert(std::make_pair(it->TheDef, CI));
+    RegisterClassClasses.insert(std::make_pair(RC.TheDef, CI));
   }
 
   // Populate the map for individual registers.
