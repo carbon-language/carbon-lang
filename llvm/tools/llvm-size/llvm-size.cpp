@@ -31,44 +31,43 @@
 using namespace llvm;
 using namespace object;
 
-namespace {
-  enum OutputFormatTy {berkeley, sysv};
-  cl::opt<OutputFormatTy>
-  OutputFormat("format",
-    cl::desc("Specify output format"),
-    cl::values(clEnumVal(sysv, "System V format"),
-               clEnumVal(berkeley, "Berkeley format"),
-               clEnumValEnd),
-    cl::init(berkeley));
+enum OutputFormatTy {berkeley, sysv};
+static cl::opt<OutputFormatTy>
+       OutputFormat("format",
+         cl::desc("Specify output format"),
+         cl::values(clEnumVal(sysv, "System V format"),
+                    clEnumVal(berkeley, "Berkeley format"),
+                    clEnumValEnd),
+         cl::init(berkeley));
 
-  cl::opt<OutputFormatTy>
-  OutputFormatShort(cl::desc("Specify output format"),
-    cl::values(clEnumValN(sysv, "A", "System V format"),
-               clEnumValN(berkeley, "B", "Berkeley format"),
-               clEnumValEnd),
-    cl::init(berkeley));
+static cl::opt<OutputFormatTy>
+       OutputFormatShort(cl::desc("Specify output format"),
+         cl::values(clEnumValN(sysv, "A", "System V format"),
+                    clEnumValN(berkeley, "B", "Berkeley format"),
+                    clEnumValEnd),
+         cl::init(berkeley));
 
-  enum RadixTy {octal = 8, decimal = 10, hexadecimal = 16};
-  cl::opt<int>
-  Radix("-radix",
-    cl::desc("Print size in radix. Only 8, 10, and 16 are valid"),
-    cl::init(decimal));
+enum RadixTy {octal = 8, decimal = 10, hexadecimal = 16};
+static cl::opt<unsigned int>
+       Radix("-radix",
+         cl::desc("Print size in radix. Only 8, 10, and 16 are valid"),
+         cl::init(decimal));
 
-  cl::opt<RadixTy>
-  RadixShort(cl::desc("Print size in radix:"),
-  cl::values(clEnumValN(octal, "o", "Print size in octal"),
-             clEnumValN(decimal, "d", "Print size in decimal"),
-             clEnumValN(hexadecimal, "x", "Print size in hexadecimal"),
-             clEnumValEnd),
-  cl::init(decimal));
+static cl::opt<RadixTy>
+       RadixShort(cl::desc("Print size in radix:"),
+         cl::values(clEnumValN(octal, "o", "Print size in octal"),
+                    clEnumValN(decimal, "d", "Print size in decimal"),
+                    clEnumValN(hexadecimal, "x", "Print size in hexadecimal"),
+                    clEnumValEnd),
+         cl::init(decimal));
 
-  cl::list<std::string>
-  InputFilenames(cl::Positional, cl::desc("<input files>"),
-                 cl::ZeroOrMore);
+static cl::list<std::string>
+       InputFilenames(cl::Positional, cl::desc("<input files>"),
+                      cl::ZeroOrMore);
 
-  std::string ToolName;
-}
+static std::string ToolName;
 
+///  @brief If ec is not success, print the error and return true.
 static bool error(error_code ec) {
   if (!ec) return false;
 
@@ -77,13 +76,18 @@ static bool error(error_code ec) {
   return true;
 }
 
-static int getNumLengthAsString(uint64_t num) {
+/// @brief Get the length of the string that represents @p num in Radix
+///        including the leading 0x or 0 for hexadecimal and octal respectively.
+static unsigned int getNumLengthAsString(uint64_t num) {
   APInt conv(64, num);
   SmallString<32> result;
-  conv.toString(result, static_cast<unsigned int>(Radix), false, true);
+  conv.toString(result, Radix, false, true);
   return result.size();
 }
 
+/// @brief Print the size of each section in @p o.
+///
+/// The format used is determined by @c OutputFormat and @c Radix.
 static void PrintObjectSectionSizes(ObjectFile *o) {
   uint64_t total = 0;
   std::string fmtbuf;
@@ -105,8 +109,8 @@ static void PrintObjectSectionSizes(ObjectFile *o) {
     // Run two passes over all sections. The first gets the lengths needed for
     // formatting the output. The second actually does the output.
     std::size_t max_name_len = strlen("section");
-    int max_size_len = strlen("size");
-    int max_addr_len = strlen("addr");
+    std::size_t max_size_len = strlen("size");
+    std::size_t max_addr_len = strlen("addr");
     error_code ec;
     for (ObjectFile::section_iterator i = o->begin_sections(),
                                       e = o->end_sections(); i != e;
@@ -127,10 +131,12 @@ static void PrintObjectSectionSizes(ObjectFile *o) {
       max_addr_len = std::max(max_addr_len, getNumLengthAsString(addr));
     }
 
+    // Add extra padding.
     max_name_len += 2;
     max_size_len += 2;
     max_addr_len += 2;
 
+    // Setup header format.
     fmt << "%-" << max_name_len << "s "
         << "%" << max_size_len << "s "
         << "%" << max_addr_len << "s\n";
@@ -176,12 +182,14 @@ static void PrintObjectSectionSizes(ObjectFile *o) {
                      static_cast<const char*>("Total"),
                      total);
   } else {
+    // The Berkeley format does not display individual section sizes. It
+    // displays the cumulative size for each section type.
     uint64_t total_text = 0;
     uint64_t total_data = 0;
     uint64_t total_bss = 0;
 
+    // Make one pass over the section table to calculate sizes.
     error_code ec;
-    // Collect section data.
     for (ObjectFile::section_iterator i = o->begin_sections(),
                                       e = o->end_sections(); i != e;
                                       i.increment(ec)) {
@@ -223,6 +231,8 @@ static void PrintObjectSectionSizes(ObjectFile *o) {
   }
 }
 
+/// @brief Print the section sizes for @p file. If @p file is an archive, print
+///        the section sizes for each archive member.
 static void PrintFileSectionSizes(StringRef file) {
   // If file is not stdin, check that it exists.
   if (file != "-") {
@@ -233,6 +243,7 @@ static void PrintFileSectionSizes(StringRef file) {
     }
   }
 
+  // Attempt to open the binary.
   OwningPtr<Binary> binary;
   if (error_code ec = createBinary(file, binary)) {
     errs() << ToolName << ": " << file << ": " << ec.message() << ".\n";
@@ -240,8 +251,9 @@ static void PrintFileSectionSizes(StringRef file) {
   }
 
   if (Archive *a = dyn_cast<Archive>(binary.get())) {
+    // This is an archive. Iterate over each member and display its sizes.
     for (object::Archive::child_iterator i = a->begin_children(),
-                                          e = a->end_children(); i != e; ++i) {
+                                         e = a->end_children(); i != e; ++i) {
       OwningPtr<Binary> child;
       if (error_code ec = i->getAsBinary(child)) {
         errs() << ToolName << ": " << file << ": " << ec.message() << ".\n";
@@ -265,6 +277,7 @@ static void PrintFileSectionSizes(StringRef file) {
   } else {
     errs() << ToolName << ": " << file << ": " << "Unrecognized file type.\n";
   }
+  // System V adds an extra newline at the end of each file.
   if (OutputFormat == sysv)
     outs() << "\n";
 }
@@ -281,14 +294,14 @@ int main(int argc, char **argv) {
   if (OutputFormatShort.getNumOccurrences())
     OutputFormat = OutputFormatShort;
   if (RadixShort.getNumOccurrences())
-    Radix = int(RadixShort);
+    Radix = RadixShort;
 
   if (InputFilenames.size() == 0)
     InputFilenames.push_back("a.out");
 
   if (OutputFormat == berkeley)
     outs() << "   text    data     bss     "
-           << (Radix == int(octal) ? "oct" : "dec")
+           << (Radix == octal ? "oct" : "dec")
            << "     hex filename\n";
 
   std::for_each(InputFilenames.begin(), InputFilenames.end(),
