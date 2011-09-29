@@ -17,7 +17,7 @@ This test serves two purposes:
 
 The list of warnings below should NEVER grow.  It should gradually shrink to 0.
 
-CHECK: Warnings without flags (306):
+CHECK: Warnings without flags (304):
 CHECK-NEXT:   backslash_newline_space
 CHECK-NEXT:   charize_microsoft_ext
 CHECK-NEXT:   ext_anon_param_requires_type_specifier
@@ -25,8 +25,6 @@ CHECK-NEXT:   ext_anonymous_struct_union_qualified
 CHECK-NEXT:   ext_array_init_copy
 CHECK-NEXT:   ext_auto_storage_class
 CHECK-NEXT:   ext_binary_literal
-CHECK-NEXT:   ext_c1x_generic_selection
-CHECK-NEXT:   ext_c1x_static_assert
 CHECK-NEXT:   ext_c99_array_usage
 CHECK-NEXT:   ext_c99_compound_literal
 CHECK-NEXT:   ext_c99_variable_decl_in_for_loop
