@@ -46,6 +46,8 @@ struct StaticDiagInfoRec {
   unsigned Class : 3;
   unsigned SFINAE : 1;
   unsigned AccessControl : 1;
+  unsigned WarnNoWerror : 1;
+  unsigned WarnShowInSystemHeader : 1;
   unsigned Category : 5;
 
   uint8_t  NameLen;
@@ -115,8 +117,10 @@ public:
 
 static const StaticDiagInfoRec StaticDiagInfo[] = {
 #define DIAG(ENUM,CLASS,DEFAULT_MAPPING,DESC,GROUP,               \
-             SFINAE,ACCESS,CATEGORY,BRIEF,FULL)                   \
-  { diag::ENUM, DEFAULT_MAPPING, CLASS, SFINAE, ACCESS, CATEGORY, \
+             SFINAE,ACCESS,NOWERROR,SHOWINSYSHEADER,              \
+             CATEGORY,BRIEF,FULL)                                 \
+  { diag::ENUM, DEFAULT_MAPPING, CLASS, SFINAE, ACCESS,           \
+    NOWERROR, SHOWINSYSHEADER, CATEGORY,                          \
     STR_SIZE(#ENUM, uint8_t), STR_SIZE(GROUP, uint8_t),           \
     STR_SIZE(DESC, uint16_t), STR_SIZE(BRIEF, uint16_t),          \
     STR_SIZE(FULL, uint16_t),                                     \
@@ -130,7 +134,7 @@ static const StaticDiagInfoRec StaticDiagInfo[] = {
 #include "clang/Basic/DiagnosticSemaKinds.inc"
 #include "clang/Basic/DiagnosticAnalysisKinds.inc"
 #undef DIAG
-  { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+  { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 };
 
 static const unsigned StaticDiagInfoSize =
@@ -168,7 +172,7 @@ static const StaticDiagInfoRec *GetDiagInfo(unsigned DiagID) {
 
   // Search the diagnostic table with a binary search.
   StaticDiagInfoRec Find = { static_cast<unsigned short>(DiagID),
-                             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+                             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
   const StaticDiagInfoRec *Found =
     std::lower_bound(StaticDiagInfo, StaticDiagInfo + StaticDiagInfoSize, Find);
@@ -180,8 +184,24 @@ static const StaticDiagInfoRec *GetDiagInfo(unsigned DiagID) {
 }
 
 static unsigned GetDefaultDiagMapping(unsigned DiagID) {
-  if (const StaticDiagInfoRec *Info = GetDiagInfo(DiagID))
-    return Info->Mapping;
+  if (const StaticDiagInfoRec *Info = GetDiagInfo(DiagID)) {
+    // Compute the effective mapping based on the extra bits.
+    unsigned Mapping = Info->Mapping;
+
+    if (Info->WarnNoWerror) {
+      assert(Mapping == diag::MAP_WARNING &&
+             "Unexpected mapping with no-Werror bit!");
+      Mapping = diag::MAP_WARNING_NO_WERROR;
+    }
+
+    if (Info->WarnShowInSystemHeader) {
+      assert(Mapping == diag::MAP_WARNING &&
+             "Unexpected mapping with show-in-system-header bit!");
+      Mapping = diag::MAP_WARNING_SHOW_IN_SYSTEM_HEADER;
+    }
+
+    return Mapping;
+  }
   return diag::MAP_FATAL;
 }
 
