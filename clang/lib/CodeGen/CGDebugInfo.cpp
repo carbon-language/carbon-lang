@@ -1794,7 +1794,7 @@ void CGDebugInfo::UpdateLineDirectiveRegion(CGBuilderTy &Builder) {
   }
 
   assert (RegionStack.size() >= LineDirectiveFiles.size()
-          && "error handling  #line regions!");
+          && "error handling #line regions!");
 
   bool SeenThisFile = false;
   // Chek if current file is already seen earlier.
@@ -1823,6 +1823,7 @@ void CGDebugInfo::UpdateLineDirectiveRegion(CGBuilderTy &Builder) {
 
   return;
 }
+
 /// EmitRegionStart- Constructs the debug code for entering a declarative
 /// region - beginning of a DW_TAG_lexical_block.
 void CGDebugInfo::EmitRegionStart(CGBuilderTy &Builder) {
