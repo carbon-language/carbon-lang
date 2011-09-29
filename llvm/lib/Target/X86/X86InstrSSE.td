@@ -260,26 +260,26 @@ let isReMaterializable = 1, isAsCheapAsAMove = 1, isCodeGenOnly = 1,
 // AVX & SSE - Zero/One Vectors
 //===----------------------------------------------------------------------===//
 
-// Alias instructions that map zero vector to pxor / xorp* for sse.
+// Alias instruction that maps zero vector to pxor / xorp* for sse.
+// This is expanded by ExpandPostRAPseudos to an xorps / vxorps, and then
+// swizzled by ExecutionDepsFix to pxor.
 // We set canFoldAsLoad because this can be converted to a constant-pool
 // load of an all-zeros value if folding it would be beneficial.
-// FIXME: Change encoding to pseudo! This is blocked right now by the x86
-// JIT implementation, it does not expand the instructions below like
-// X86MCInstLower does.
 let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
-    isCodeGenOnly = 1 in {
-def V_SET0PS : PSI<0x57, MRMInitReg, (outs VR128:$dst), (ins), "",
-                 [(set VR128:$dst, (v4f32 immAllZerosV))]>;
-def V_SET0PD : PDI<0x57, MRMInitReg, (outs VR128:$dst), (ins), "",
-                 [(set VR128:$dst, (v2f64 immAllZerosV))]>;
-let ExeDomain = SSEPackedInt in
-def V_SET0PI : PDI<0xEF, MRMInitReg, (outs VR128:$dst), (ins), "",
-                 [(set VR128:$dst, (v4i32 immAllZerosV))]>;
+    isPseudo = 1 in {
+def V_SET0 : I<0, Pseudo, (outs VR128:$dst), (ins), "", []>;
 }
 
-// The same as done above but for AVX. The 128-bit versions are the
-// same, but re-encoded. The 256-bit does not support PI version, and
-// doesn't need it because on sandy bridge the register is set to zero
+def : Pat<(v4f32 immAllZerosV), (V_SET0)>;
+def : Pat<(v2f64 immAllZerosV), (V_SET0)>;
+def : Pat<(v4i32 immAllZerosV), (V_SET0)>;
+def : Pat<(v2i64 immAllZerosV), (V_SET0)>;
+def : Pat<(v8i16 immAllZerosV), (V_SET0)>;
+def : Pat<(v16i8 immAllZerosV), (V_SET0)>;
+
+
+// The same as done above but for AVX.  The 256-bit ISA does not support PI,
+// and doesn't need it because on sandy bridge the register is set to zero
 // at the rename stage without using any execution unit, so SET0PSY
 // and SET0PDY can be used for vector int instructions without penalty
 // FIXME: Change encoding to pseudo! This is blocked right now by the x86
@@ -287,32 +287,22 @@ def V_SET0PI : PDI<0xEF, MRMInitReg, (outs VR128:$dst), (ins), "",
 // X86MCInstLower does.
 let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
     isCodeGenOnly = 1, Predicates = [HasAVX] in {
-def AVX_SET0PS  : PSI<0x57, MRMInitReg, (outs VR128:$dst), (ins), "",
-                   [(set VR128:$dst, (v4f32 immAllZerosV))]>, VEX_4V;
-def AVX_SET0PD  : PDI<0x57, MRMInitReg, (outs VR128:$dst), (ins), "",
-                   [(set VR128:$dst, (v2f64 immAllZerosV))]>, VEX_4V;
 def AVX_SET0PSY : PSI<0x57, MRMInitReg, (outs VR256:$dst), (ins), "",
                    [(set VR256:$dst, (v8f32 immAllZerosV))]>, VEX_4V;
 def AVX_SET0PDY : PDI<0x57, MRMInitReg, (outs VR256:$dst), (ins), "",
                    [(set VR256:$dst, (v4f64 immAllZerosV))]>, VEX_4V;
-let ExeDomain = SSEPackedInt in
-def AVX_SET0PI  : PDI<0xEF, MRMInitReg, (outs VR128:$dst), (ins), "",
-                   [(set VR128:$dst, (v4i32 immAllZerosV))]>;
 }
 
-def : Pat<(v2i64 immAllZerosV), (V_SET0PI)>;
-def : Pat<(v8i16 immAllZerosV), (V_SET0PI)>;
-def : Pat<(v16i8 immAllZerosV), (V_SET0PI)>;
 
 // AVX has no support for 256-bit integer instructions, but since the 128-bit
 // VPXOR instruction writes zero to its upper part, it's safe build zeros.
-def : Pat<(v8i32 immAllZerosV), (SUBREG_TO_REG (i32 0), (AVX_SET0PI), sub_xmm)>;
+def : Pat<(v8i32 immAllZerosV), (SUBREG_TO_REG (i32 0), (V_SET0), sub_xmm)>;
 def : Pat<(bc_v8i32 (v8f32 immAllZerosV)),
-          (SUBREG_TO_REG (i32 0), (AVX_SET0PI), sub_xmm)>;
+          (SUBREG_TO_REG (i32 0), (V_SET0), sub_xmm)>;
 
-def : Pat<(v4i64 immAllZerosV), (SUBREG_TO_REG (i64 0), (AVX_SET0PI), sub_xmm)>;
+def : Pat<(v4i64 immAllZerosV), (SUBREG_TO_REG (i64 0), (V_SET0), sub_xmm)>;
 def : Pat<(bc_v4i64 (v8f32 immAllZerosV)),
-          (SUBREG_TO_REG (i64 0), (AVX_SET0PI), sub_xmm)>;
+          (SUBREG_TO_REG (i64 0), (V_SET0), sub_xmm)>;
 
 // We set canFoldAsLoad because this can be converted to a constant-pool
 // load of an all-ones value if folding it would be beneficial.
@@ -427,12 +417,12 @@ let Predicates = [HasSSE1] in {
   // Move scalar to XMM zero-extended, zeroing a VR128 then do a
   // MOVSS to the lower bits.
   def : Pat<(v4f32 (X86vzmovl (v4f32 (scalar_to_vector FR32:$src)))),
-            (MOVSSrr (v4f32 (V_SET0PS)), FR32:$src)>;
+            (MOVSSrr (v4f32 (V_SET0)), FR32:$src)>;
   def : Pat<(v4f32 (X86vzmovl (v4f32 VR128:$src))),
-            (MOVSSrr (v4f32 (V_SET0PS)),
+            (MOVSSrr (v4f32 (V_SET0)),
                      (f32 (EXTRACT_SUBREG (v4f32 VR128:$src), sub_ss)))>;
   def : Pat<(v4i32 (X86vzmovl (v4i32 VR128:$src))),
-            (MOVSSrr (v4i32 (V_SET0PI)),
+            (MOVSSrr (v4i32 (V_SET0)),
                      (EXTRACT_SUBREG (v4i32 VR128:$src), sub_ss))>;
   }
 
@@ -483,7 +473,7 @@ let Predicates = [HasSSE2] in {
   // Move scalar to XMM zero-extended, zeroing a VR128 then do a
   // MOVSD to the lower bits.
   def : Pat<(v2f64 (X86vzmovl (v2f64 (scalar_to_vector FR64:$src)))),
-            (MOVSDrr (v2f64 (V_SET0PS)), FR64:$src)>;
+            (MOVSDrr (v2f64 (V_SET0)), FR64:$src)>;
   }
 
   let AddedComplexity = 20 in {
@@ -558,15 +548,15 @@ let Predicates = [HasAVX] in {
   // Move scalar to XMM zero-extended, zeroing a VR128 then do a
   // MOVS{S,D} to the lower bits.
   def : Pat<(v4f32 (X86vzmovl (v4f32 (scalar_to_vector FR32:$src)))),
-            (VMOVSSrr (v4f32 (AVX_SET0PS)), FR32:$src)>;
+            (VMOVSSrr (v4f32 (V_SET0)), FR32:$src)>;
   def : Pat<(v4f32 (X86vzmovl (v4f32 VR128:$src))),
-            (VMOVSSrr (v4f32 (AVX_SET0PS)),
+            (VMOVSSrr (v4f32 (V_SET0)),
                       (f32 (EXTRACT_SUBREG (v4f32 VR128:$src), sub_ss)))>;
   def : Pat<(v4i32 (X86vzmovl (v4i32 VR128:$src))),
-            (VMOVSSrr (v4i32 (AVX_SET0PI)),
+            (VMOVSSrr (v4i32 (V_SET0)),
                       (EXTRACT_SUBREG (v4i32 VR128:$src), sub_ss))>;
   def : Pat<(v2f64 (X86vzmovl (v2f64 (scalar_to_vector FR64:$src)))),
-            (VMOVSDrr (v2f64 (AVX_SET0PS)), FR64:$src)>;
+            (VMOVSDrr (v2f64 (V_SET0)), FR64:$src)>;
   }
 
   let AddedComplexity = 20 in {
@@ -604,12 +594,12 @@ let Predicates = [HasAVX] in {
   def : Pat<(v8f32 (X86vzmovl (insert_subvector undef,
                    (v4f32 (scalar_to_vector FR32:$src)), (i32 0)))),
             (SUBREG_TO_REG (i32 0),
-                           (v4f32 (VMOVSSrr (v4f32 (AVX_SET0PS)), FR32:$src)),
+                           (v4f32 (VMOVSSrr (v4f32 (V_SET0)), FR32:$src)),
                            sub_xmm)>;
   def : Pat<(v4f64 (X86vzmovl (insert_subvector undef,
                    (v2f64 (scalar_to_vector FR64:$src)), (i32 0)))),
             (SUBREG_TO_REG (i64 0),
-                           (v2f64 (VMOVSDrr (v2f64 (AVX_SET0PS)), FR64:$src)),
+                           (v2f64 (VMOVSDrr (v2f64 (V_SET0)), FR64:$src)),
                            sub_xmm)>;
 
   // Extract and store.

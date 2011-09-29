@@ -247,6 +247,9 @@ public:
                                MachineInstr::mmo_iterator MMOBegin,
                                MachineInstr::mmo_iterator MMOEnd,
                                SmallVectorImpl<MachineInstr*> &NewMIs) const;
+
+  virtual bool expandPostRAPseudo(MachineBasicBlock::iterator MI) const;
+
   virtual
   MachineInstr *emitFrameIndexDebugValue(MachineFunction &MF,
                                          int FrameIx, uint64_t Offset,

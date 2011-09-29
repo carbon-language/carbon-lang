@@ -392,7 +392,7 @@ public:
   /// into real instructions. The target can edit MI in place, or it can insert
   /// new instructions and erase MI. The function should return true if
   /// anything was changed.
-  bool expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
+  virtual bool expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
     return false;
   }
 
