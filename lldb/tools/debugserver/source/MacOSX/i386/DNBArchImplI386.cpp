@@ -555,7 +555,7 @@ DNBArchImplI386::ThreadWillResume()
 
     // Reset the debug status register, if necessary, before we resume.
     kern_return_t kret = GetDBGState(false);
-    DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchImplX86_64::ThreadWillResume() GetDBGState() => 0x%8.8x.", kret);
+    DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchImplI386::ThreadWillResume() GetDBGState() => 0x%8.8x.", kret);
     if (kret != KERN_SUCCESS)
         return;
 
@@ -570,7 +570,7 @@ DNBArchImplI386::ThreadWillResume()
     {
         ClearWatchpointHits(debug_state);
         kret = SetDBGState();
-        DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchImplX86_64::ThreadWillResume() SetDBGState() => 0x%8.8x.", kret);
+        DNBLogThreadedIf(LOG_WATCHPOINTS,"DNBArchImplI386::ThreadWillResume() SetDBGState() => 0x%8.8x.", kret);
     }
 }
 
@@ -894,6 +894,19 @@ DNBArchImplI386::DisableHardwareWatchpoint (uint32_t hw_index)
     return false;
 }
 
+DNBArchImplI386::DBG DNBArchImplI386::Global_Debug_State = {0,0,0,0,0,0,0,0};
+bool DNBArchImplI386::Valid_Global_Debug_State = false;
+
+// Use this callback from MachThread, which in turn was called from MachThreadList, to update
+// the global view of the hardware watchpoint state, so that when new thread comes along, they
+// get to inherit the existing hardware watchpoint state.
+void
+DNBArchImplI386::HardwareWatchpointStateChanged ()
+{
+    Global_Debug_State = m_state.context.dbg;
+    Valid_Global_Debug_State = true;
+}
+
 // Iterate through the debug status register; return the index of the first hit.
 uint32_t
 DNBArchImplI386::GetHardwareWatchpointHit(nub_addr_t &addr)
@@ -1109,7 +1122,17 @@ const size_t DNBArchImplI386::k_num_register_sets = sizeof(g_reg_sets_no_avx)/si
 DNBArchProtocol *
 DNBArchImplI386::Create (MachThread *thread)
 {
-    return new DNBArchImplI386 (thread);
+    DNBArchImplI386 *obj = new DNBArchImplI386 (thread);
+
+    // When new thread comes along, it tries to inherit from the global debug state, if it is valid.
+    if (Valid_Global_Debug_State)
+    {
+        obj->m_state.context.dbg = Global_Debug_State;
+        kern_return_t kret = obj->SetDBGState();
+        DNBLogThreadedIf(LOG_WATCHPOINTS,
+                         "DNBArchImplX86_64::Create() Inherit and SetDBGState() => 0x%8.8x.", kret);
+    }
+    return obj;
 }
 
 const uint8_t * const

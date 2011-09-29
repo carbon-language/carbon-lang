@@ -821,6 +821,19 @@ DNBArchImplX86_64::DisableHardwareWatchpoint (uint32_t hw_index)
     return false;
 }
 
+DNBArchImplX86_64::DBG DNBArchImplX86_64::Global_Debug_State = {0,0,0,0,0,0,0,0};
+bool DNBArchImplX86_64::Valid_Global_Debug_State = false;
+
+// Use this callback from MachThread, which in turn was called from MachThreadList, to update
+// the global view of the hardware watchpoint state, so that when new thread comes along, they
+// get to inherit the existing hardware watchpoint state.
+void
+DNBArchImplX86_64::HardwareWatchpointStateChanged ()
+{
+    Global_Debug_State = m_state.context.dbg;
+    Valid_Global_Debug_State = true;
+}
+
 // Iterate through the debug status register; return the index of the first hit.
 uint32_t
 DNBArchImplX86_64::GetHardwareWatchpointHit(nub_addr_t &addr)
@@ -1306,7 +1319,17 @@ const size_t DNBArchImplX86_64::k_num_register_sets = sizeof(g_reg_sets_avx)/siz
 DNBArchProtocol *
 DNBArchImplX86_64::Create (MachThread *thread)
 {
-    return new DNBArchImplX86_64 (thread);
+    DNBArchImplX86_64 *obj = new DNBArchImplX86_64 (thread);
+
+    // When new thread comes along, it tries to inherit from the global debug state, if it is valid.
+    if (Valid_Global_Debug_State)
+    {
+        obj->m_state.context.dbg = Global_Debug_State;
+        kern_return_t kret = obj->SetDBGState();
+        DNBLogThreadedIf(LOG_WATCHPOINTS,
+                         "DNBArchImplX86_64::Create() Inherit and SetDBGState() => 0x%8.8x.", kret);
+    }
+    return obj;
 }
 
 const uint8_t * const

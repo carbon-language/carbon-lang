@@ -41,7 +41,8 @@ access_pool (uint32_t flag)
 void *
 thread_func (void *arg)
 {
-    uint32_t thread_index = *((uint32_t *)arg);
+    uint32_t thread_index = *((uint32_t *)arg); // Break here in order to allow the thread
+                                                // to inherit the global watchpoint state.
     printf ("%s (thread index = %u) startng...\n", __FUNCTION__, thread_index);
 
     uint32_t count = 0;
@@ -73,12 +74,12 @@ int main (int argc, char const *argv[])
     uint32_t thread_index_2 = 2;
     uint32_t thread_index_3 = 3;
 
+    printf ("Before turning all three threads loose...\n"); // Set break point at this line,
+                                                            // in order to set our watchpoint.
     // Create 3 threads
     err = ::pthread_create (&g_thread_1, NULL, thread_func, &thread_index_1);
     err = ::pthread_create (&g_thread_2, NULL, thread_func, &thread_index_2);
     err = ::pthread_create (&g_thread_3, NULL, thread_func, &thread_index_3);
-
-    printf ("Before turning all three threads loose...\n"); // Set break point at this line.
 
     // Join all of our threads
     err = ::pthread_join (g_thread_1, &thread_result);

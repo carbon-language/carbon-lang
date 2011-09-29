@@ -480,6 +480,9 @@ MachThreadList::EnableHardwareWatchpoint (const DNBBreakpoint* wp) const
             if ((hw_index = m_threads[idx]->EnableHardwareWatchpoint(wp)) == INVALID_NUB_HW_INDEX)
                 return INVALID_NUB_HW_INDEX;
         }
+        // Use an arbitrary thread to signal the completion of our transaction.
+        if (num_threads)
+            m_threads[0]->HardwareWatchpointStateChanged();
         return hw_index;
     }
     return INVALID_NUB_HW_INDEX;
@@ -497,6 +500,9 @@ MachThreadList::DisableHardwareWatchpoint (const DNBBreakpoint* wp) const
             if (!m_threads[idx]->DisableHardwareWatchpoint(wp))
                 return false;
         }
+        // Use an arbitrary thread to signal the completion of our transaction.
+        if (num_threads)
+            m_threads[0]->HardwareWatchpointStateChanged();
         return true;
     }
     return false;

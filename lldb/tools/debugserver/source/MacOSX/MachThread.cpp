@@ -687,6 +687,13 @@ MachThread::EnableHardwareWatchpoint (const DNBBreakpoint *wp)
     return INVALID_NUB_HW_INDEX;
 }
 
+// Provide a chance to update the global view of the hardware watchpoint state.
+void
+MachThread::HardwareWatchpointStateChanged ()
+{
+    m_arch_ap->HardwareWatchpointStateChanged();
+}
+
 bool
 MachThread::DisableHardwareBreakpoint (const DNBBreakpoint *bp)
 {

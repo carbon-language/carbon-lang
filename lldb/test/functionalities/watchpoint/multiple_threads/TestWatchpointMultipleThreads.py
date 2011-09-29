@@ -30,7 +30,8 @@ class WatchpointForMultipleThreadsTestCase(TestBase):
         # Our simple source filename.
         self.source = 'main.cpp'
         # Find the line number to break inside main().
-        self.line = line_number(self.source, '// Set break point at this line.')
+        self.first_stop = line_number(self.source, '// Set break point at this line')
+        self.thread_function = line_number(self.source, '// Break here in order to allow the thread')
         # Build dictionary to have unique executable names for each test method.
         self.exe_name = self.testMethodName
         self.d = {'CXX_SOURCES': self.source, 'EXE': self.exe_name}
@@ -41,9 +42,14 @@ class WatchpointForMultipleThreadsTestCase(TestBase):
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # Add a breakpoint to set a watchpoint when stopped on the breakpoint.
-        self.expect("breakpoint set -l %d" % self.line, BREAKPOINT_CREATED,
+        self.expect("breakpoint set -l %d" % self.first_stop, BREAKPOINT_CREATED,
             startstr = "Breakpoint created: 1: file ='%s', line = %d, locations = 1" %
-                       (self.source, self.line))
+                       (self.source, self.first_stop))
+
+        # Set this breakpoint to allow newly created thread to inherit the global watchpoint state.
+        self.expect("breakpoint set -l %d" % self.thread_function, BREAKPOINT_CREATED,
+            startstr = "Breakpoint created: 2: file ='%s', line = %d, locations = 1" %
+                       (self.source, self.thread_function))
 
         # Run the program.
         self.runCmd("run", RUN_SUCCEEDED)
@@ -66,21 +72,27 @@ class WatchpointForMultipleThreadsTestCase(TestBase):
         self.expect("watchpoint list -v",
             substrs = ['hit_count = 0'])
 
-        self.runCmd("process continue")
+        breakpoint_stops = 0
+        while True:
+            self.runCmd("process continue")
 
-        # We should be stopped again due to the watchpoint (write type) in a
-        # different work thread.  And the stop reason of the thread should be
-        # watchpoint.
-        self.expect("thread list", STOPPED_DUE_TO_WATCHPOINT,
-            substrs = ['stopped',
-                       'stop reason = watchpoint'])
+            self.runCmd("thread list")
+            if "stop reason = breakpoint" in self.res.GetOutput():
+                breakpoint_stops += 1
+                if breakpoint_stops > 3:
+                    self.fail("Do not expect to break more than 3 times")
+                continue
+            elif "stop reason = watchpoint" in self.res.GetOutput():
+                # Good, we verified that the watchpoint works!
+                self.runCmd("thread backtrace all")
+                break
+            else:
+                self.fail("The stop reason should be either break or watchpoint")
 
         # Use the '-v' option to do verbose listing of the watchpoint.
         # The hit count should now be 1.
         self.expect("watchpoint list -v",
             substrs = ['hit_count = 1'])
-
-        self.runCmd("thread backtrace all")
 
 
 if __name__ == '__main__':

@@ -31,6 +31,7 @@
 
 class DNBBreakpoint;
 class MachProcess;
+class MachThreadList;
 
 class MachThread
 {
@@ -131,6 +132,9 @@ protected:
     std::string                     m_dispatch_queue_name;
 #endif
 
+private:
+    friend class MachThreadList;
+    void HardwareWatchpointStateChanged(); // Provide a chance to update the global view of the hardware watchpoint state
 };
 
 typedef std::tr1::shared_ptr<MachThread> MachThreadSP;

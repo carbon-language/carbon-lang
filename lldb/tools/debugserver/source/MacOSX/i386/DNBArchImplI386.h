@@ -54,6 +54,7 @@ public:
     virtual uint32_t        NumSupportedHardwareWatchpoints();
     virtual uint32_t        EnableHardwareWatchpoint (nub_addr_t addr, nub_size_t size, bool read, bool write);
     virtual bool            DisableHardwareWatchpoint (uint32_t hw_break_index);
+    virtual void            HardwareWatchpointStateChanged ();
     virtual uint32_t        GetHardwareWatchpointHit(nub_addr_t &addr);
 
 protected:
@@ -115,6 +116,10 @@ protected:
         EXC exc;
         DBG dbg;
     };
+
+    // See also HardwareWatchpointStateChanged() which updates this class-wide variable.
+    static DBG Global_Debug_State;
+    static bool Valid_Global_Debug_State;
 
     struct State
     {
