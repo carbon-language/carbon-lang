@@ -78,14 +78,8 @@ class DiagnosticMappingInfo {
   unsigned HasNoErrorAsFatal : 1;
 
 public:
-  static DiagnosticMappingInfo MakeUnset() {
-    DiagnosticMappingInfo Result;
-    Result.Mapping = 0;
-    return Result;
-  }
-
-  static DiagnosticMappingInfo MakeInfo(diag::Mapping Mapping,
-                                        bool IsUser, bool IsPragma) {
+  static DiagnosticMappingInfo Make(diag::Mapping Mapping, bool IsUser,
+                                    bool IsPragma) {
     DiagnosticMappingInfo Result;
     Result.Mapping = Mapping;
     Result.IsUser = IsUser;
@@ -95,8 +89,6 @@ public:
     Result.HasNoErrorAsFatal = 0;
     return Result;
   }
-
-  bool isUnset() const { return Mapping == 0; }
 
   diag::Mapping getMapping() const { return diag::Mapping(Mapping); }
   void setMapping(diag::Mapping Value) { Mapping = Value; }

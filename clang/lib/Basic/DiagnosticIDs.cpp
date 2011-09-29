@@ -185,7 +185,7 @@ static const StaticDiagInfoRec *GetDiagInfo(unsigned DiagID) {
 }
 
 static DiagnosticMappingInfo GetDefaultDiagMappingInfo(unsigned DiagID) {
-  DiagnosticMappingInfo Info = DiagnosticMappingInfo::MakeInfo(
+  DiagnosticMappingInfo Info = DiagnosticMappingInfo::Make(
     diag::MAP_FATAL, /*IsUser=*/false, /*IsPragma=*/false);
 
   if (const StaticDiagInfoRec *StaticInfo = GetDiagInfo(DiagID)) {
@@ -243,13 +243,11 @@ DiagnosticMappingInfo &DiagnosticsEngine::DiagState::getOrAddMappingInfo(
   diag::kind Diag)
 {
   std::pair<iterator, bool> Result = DiagMap.insert(
-    std::make_pair(Diag, DiagnosticMappingInfo::MakeUnset()));
+    std::make_pair(Diag, DiagnosticMappingInfo()));
 
   // Initialize the entry if we added it.
-  if (Result.second) {
-    assert(Result.first->second.isUnset() && "unexpected unset entry");
+  if (Result.second)
     Result.first->second = GetDefaultDiagMappingInfo(Diag);
-  }
 
   return Result.first->second;
 }
@@ -598,8 +596,8 @@ DiagnosticIDs::getDiagnosticLevel(unsigned DiagID, unsigned DiagClass,
       Result = DiagnosticIDs::Fatal;
   }
 
-  // If we are in a system header, we ignore it.
-  // We also want to ignore extensions and warnings in -Werror and
+  // If we are in a system header, we ignore it. We look at the diagnostic class
+  // because we also want to ignore extensions and warnings in -Werror and
   // -pedantic-errors modes, which *map* warnings/extensions to errors.
   if (Result >= DiagnosticIDs::Warning &&
       DiagClass != CLASS_ERROR &&

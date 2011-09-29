@@ -172,7 +172,7 @@ void DiagnosticsEngine::setDiagnosticMapping(diag::kind Diag, diag::Mapping Map,
   bool isPragma = L.isValid();
   FullSourceLoc Loc(L, *SourceMgr);
   FullSourceLoc LastStateChangePos = DiagStatePoints.back().Loc;
-  DiagnosticMappingInfo MappingInfo = DiagnosticMappingInfo::MakeInfo(
+  DiagnosticMappingInfo MappingInfo = DiagnosticMappingInfo::Make(
     Map, /*IsUser=*/true, isPragma);
 
   // Common case; setting all the diagnostics of a group in one place.

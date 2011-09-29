@@ -187,13 +187,6 @@ private:
       DiagMap[Diag] = Info;
     }
 
-    DiagnosticMappingInfo getMappingInfo(diag::kind Diag) const {
-      const_iterator I = DiagMap.find(Diag);
-      if (I != DiagMap.end())
-        return I->second;
-      return DiagnosticMappingInfo::MakeUnset();
-    }
-
     DiagnosticMappingInfo &getOrAddMappingInfo(diag::kind Diag);
 
     const_iterator begin() const { return DiagMap.begin(); }
@@ -457,12 +450,14 @@ public:
   bool setDiagnosticGroupMapping(StringRef Group, diag::Mapping Map,
                                  SourceLocation Loc = SourceLocation());
 
-  /// \brief Set the warning-as-error flag for the given diagnostic group.
+  /// \brief Set the warning-as-error flag for the given diagnostic group. This
+  /// function always only operates on the current diagnostic state.
   ///
   /// \returns True if the given group is unknown, false otherwise.
   bool setDiagnosticGroupWarningAsError(StringRef Group, bool Enabled);
 
-  /// \brief Set the error-as-fatal flag for the given diagnostic group.
+  /// \brief Set the error-as-fatal flag for the given diagnostic group. This
+  /// function always only operates on the current diagnostic state.
   ///
   /// \returns True if the given group is unknown, false otherwise.
   bool setDiagnosticGroupErrorAsFatal(StringRef Group, bool Enabled);
