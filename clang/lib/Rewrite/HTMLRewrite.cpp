@@ -440,17 +440,6 @@ void html::SyntaxHighlight(Rewriter &R, FileID FID, const Preprocessor &PP) {
   }
 }
 
-namespace {
-/// IgnoringDiagConsumer - This is a diagnostic client that just ignores all
-/// diags.
-class IgnoringDiagConsumer : public DiagnosticConsumer {
-  void HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
-                        const Diagnostic &Info) {
-    // Just ignore it.
-  }
-};
-}
-
 /// HighlightMacros - This uses the macro table state from the end of the
 /// file, to re-expand macros and insert (into the HTML) information about the
 /// macro expansions.  This won't be perfectly perfect, but it will be

@@ -93,7 +93,7 @@ class CaptureDiagnosticConsumer : public DiagnosticConsumer {
   CapturedDiagList &CapturedDiags;
 public:
   CaptureDiagnosticConsumer(DiagnosticsEngine &diags,
-                          CapturedDiagList &capturedDiags)
+                           CapturedDiagList &capturedDiags)
     : Diags(diags), CapturedDiags(capturedDiags) { }
 
   virtual void HandleDiagnostic(DiagnosticsEngine::Level level,
@@ -106,6 +106,12 @@ public:
 
     // Non-ARC warnings are ignored.
     Diags.setLastDiagnosticIgnored();
+  }
+  
+  DiagnosticConsumer *clone(DiagnosticsEngine &Diags) const {
+    // Just drop any diagnostics that come from cloned consumers; they'll
+    // have different source managers anyway.
+    return new IgnoringDiagConsumer();
   }
 };
 

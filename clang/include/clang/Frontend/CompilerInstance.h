@@ -460,9 +460,13 @@ public:
   ///
   /// \param ShouldOwnClient If Client is non-NULL, specifies whether 
   /// the diagnostic object should take ownership of the client.
+  ///
+  /// \param ShouldCloneClient If Client is non-NULL, specifies whether that
+  /// client should be cloned.
   void createDiagnostics(int Argc, const char* const *Argv,
                          DiagnosticConsumer *Client = 0,
-                         bool ShouldOwnClient = true);
+                         bool ShouldOwnClient = true,
+                         bool ShouldCloneClient = true);
 
   /// Create a DiagnosticsEngine object with a the TextDiagnosticPrinter.
   ///
@@ -492,6 +496,7 @@ public:
                     const char* const *Argv,
                     DiagnosticConsumer *Client = 0,
                     bool ShouldOwnClient = true,
+                    bool ShouldCloneClient = true,
                     const CodeGenOptions *CodeGenOpts = 0);
 
   /// Create the file manager and replace any existing one with it.

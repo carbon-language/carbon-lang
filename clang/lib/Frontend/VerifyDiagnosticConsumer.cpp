@@ -525,6 +525,14 @@ void VerifyDiagnosticConsumer::CheckDiagnostics() {
   Buffer.reset(new TextDiagnosticBuffer());
 }
 
+DiagnosticConsumer *
+VerifyDiagnosticConsumer::clone(DiagnosticsEngine &Diags) const {
+  if (!Diags.getClient())
+    Diags.setClient(PrimaryClient->clone(Diags));
+  
+  return new VerifyDiagnosticConsumer(Diags);
+}
+
 Directive* Directive::Create(bool RegexKind, const SourceLocation &Location,
                              const std::string &Text, unsigned Count) {
   if (RegexKind)

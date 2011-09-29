@@ -141,9 +141,11 @@ static void SetUpDiagnosticLog(const DiagnosticOptions &DiagOpts,
 
 void CompilerInstance::createDiagnostics(int Argc, const char* const *Argv,
                                          DiagnosticConsumer *Client,
-                                         bool ShouldOwnClient) {
+                                         bool ShouldOwnClient,
+                                         bool ShouldCloneClient) {
   Diagnostics = createDiagnostics(getDiagnosticOpts(), Argc, Argv, Client,
-                                  ShouldOwnClient, &getCodeGenOpts());
+                                  ShouldOwnClient, ShouldCloneClient,
+                                  &getCodeGenOpts());
 }
 
 llvm::IntrusiveRefCntPtr<DiagnosticsEngine> 
@@ -151,6 +153,7 @@ CompilerInstance::createDiagnostics(const DiagnosticOptions &Opts,
                                     int Argc, const char* const *Argv,
                                     DiagnosticConsumer *Client,
                                     bool ShouldOwnClient,
+                                    bool ShouldCloneClient,
                                     const CodeGenOptions *CodeGenOpts) {
   llvm::IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
   llvm::IntrusiveRefCntPtr<DiagnosticsEngine>
@@ -158,9 +161,12 @@ CompilerInstance::createDiagnostics(const DiagnosticOptions &Opts,
 
   // Create the diagnostic client for reporting errors or for
   // implementing -verify.
-  if (Client)
-    Diags->setClient(Client, ShouldOwnClient);
-  else
+  if (Client) {
+    if (ShouldCloneClient)
+      Diags->setClient(Client->clone(*Diags), ShouldOwnClient);
+    else
+      Diags->setClient(Client, ShouldOwnClient);
+  } else
     Diags->setClient(new TextDiagnosticPrinter(llvm::errs(), Opts));
 
   // Chain in -verify checker, if requested.
@@ -691,7 +697,8 @@ static void compileModule(CompilerInstance &ImportingInstance,
   Instance.setInvocation(&*Invocation);
   Instance.createDiagnostics(/*argc=*/0, /*argv=*/0, 
                              &ImportingInstance.getDiagnosticClient(),
-                             /*ShouldOwnClient=*/false);
+                             /*ShouldOwnClient=*/true,
+                             /*ShouldCloneClient=*/true);
 
   // Construct a module-generating action.
   GeneratePCHAction CreateModuleAction(true);
@@ -699,13 +706,6 @@ static void compileModule(CompilerInstance &ImportingInstance,
   // Execute the action to actually build the module in-place.
   // FIXME: Need to synchronize when multiple processes do this.
   Instance.ExecuteAction(CreateModuleAction);
-  
-  // Tell the diagnostic client that it's (re-)starting to process a source
-  // file.
-  // FIXME: This is a hack. We probably want to clone the diagnostic client.
-  ImportingInstance.getDiagnosticClient()
-    .BeginSourceFile(ImportingInstance.getLangOpts(),
-                     &ImportingInstance.getPreprocessor());
 } 
 
 ModuleKey CompilerInstance::loadModule(SourceLocation ImportLoc, 

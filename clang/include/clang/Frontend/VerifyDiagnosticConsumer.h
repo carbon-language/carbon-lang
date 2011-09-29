@@ -88,6 +88,8 @@ public:
 
   virtual void HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
                                 const Diagnostic &Info);
+  
+  virtual DiagnosticConsumer *clone(DiagnosticsEngine &Diags) const;
 };
 
 } // end namspace clang

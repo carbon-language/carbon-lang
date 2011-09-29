@@ -59,6 +59,8 @@ public:
   virtual void HandleDiagnostic(DiagnosticsEngine::Level Level,
                                 const Diagnostic &Info);
 
+  DiagnosticConsumer *clone(DiagnosticsEngine &Diags) const;
+
 private:
   void EmitDiagnosticLoc(DiagnosticsEngine::Level Level,
                          const Diagnostic &Info,

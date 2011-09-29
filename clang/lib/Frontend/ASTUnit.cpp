@@ -458,6 +458,12 @@ public:
   
   virtual void HandleDiagnostic(DiagnosticsEngine::Level Level,
                                 const Diagnostic &Info);
+  
+  DiagnosticConsumer *clone(DiagnosticsEngine &Diags) const {
+    // Just drop any diagnostics that come from cloned consumers; they'll
+    // have different source managers anyway.
+    return new IgnoringDiagConsumer();
+  }
 };
 
 /// \brief RAII object that optionally captures diagnostics, if

@@ -1072,6 +1072,22 @@ public:
   /// and errors.
   virtual void HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
                                 const Diagnostic &Info);
+  
+  /// \brief Clone the diagnostic consumer, producing an equivalent consumer
+  /// that can be used in a different context.
+  virtual DiagnosticConsumer *clone(DiagnosticsEngine &Diags) const = 0;
+};
+
+/// IgnoringDiagConsumer - This is a diagnostic client that just ignores all
+/// diags.
+class IgnoringDiagConsumer : public DiagnosticConsumer {
+  void HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
+                        const Diagnostic &Info) {
+    // Just ignore it.
+  }
+  DiagnosticConsumer *clone(DiagnosticsEngine &Diags) const {
+    return new IgnoringDiagConsumer();
+  }
 };
 
 }  // end namespace clang

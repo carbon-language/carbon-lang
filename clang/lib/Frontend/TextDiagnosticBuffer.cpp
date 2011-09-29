@@ -54,3 +54,7 @@ void TextDiagnosticBuffer::FlushDiagnostics(DiagnosticsEngine &Diags) const {
     Diags.Report(Diags.getCustomDiagID(DiagnosticsEngine::Note,
                  it->second.c_str()));
 }
+
+DiagnosticConsumer *TextDiagnosticBuffer::clone(DiagnosticsEngine &) const {
+  return new TextDiagnosticBuffer();
+}

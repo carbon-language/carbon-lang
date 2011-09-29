@@ -154,8 +154,8 @@ public:
     SourceMgr = &SM;
     LangOpts = &LO;
   }
-  SourceManager &getSourceMgr() { return *SourceMgr; }
-  const LangOptions &getLangOpts() { return *LangOpts; }
+  SourceManager &getSourceMgr() const { return *SourceMgr; }
+  const LangOptions &getLangOpts() const { return *LangOpts; }
 
   /// isRewritable - Return true if this location is a raw file location, which
   /// is rewritable.  Locations from macros, etc are not rewritable.
