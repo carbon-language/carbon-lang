@@ -3198,7 +3198,8 @@ void ObjCARCOpt::OptimizeReturns(Function &F) {
 
         // Check that there is nothing that can affect the reference
         // count between the retain and the call.
-        FindDependencies(CanChangeRetainCount, Arg, BB, Retain,
+        // Note that Retain need not be in BB.
+        FindDependencies(CanChangeRetainCount, Arg, Retain->getParent(), Retain,
                          DependingInstructions, Visited, PA);
         if (DependingInstructions.size() != 1)
           goto next_block;
