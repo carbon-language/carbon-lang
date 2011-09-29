@@ -17,6 +17,7 @@
 #include "llvm/Constants.h"
 #include "llvm/GlobalValue.h"
 #include "llvm/Type.h"
+#include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cstdlib>
 using namespace llvm;
@@ -28,6 +29,17 @@ ARMConstantPoolValue::ARMConstantPoolValue(const Constant *cval, unsigned id,
                                            bool AddCA)
   : MachineConstantPoolValue((Type*)cval->getType()),
     CVal(cval), S(NULL), LabelId(id), Kind(K), PCAdjust(PCAdj),
+    Modifier(Modif), AddCurrentAddress(AddCA) {}
+
+ARMConstantPoolValue::ARMConstantPoolValue(LLVMContext &C,
+                                           const MachineBasicBlock *mbb,
+                                           unsigned id,
+                                           ARMCP::ARMCPKind K,
+                                           unsigned char PCAdj,
+                                           ARMCP::ARMCPModifier Modif,
+                                           bool AddCA)
+  : MachineConstantPoolValue((Type*)Type::getInt8PtrTy(C)),
+    CVal(NULL), MBB(mbb), S(NULL), LabelId(id), Kind(K), PCAdjust(PCAdj),
     Modifier(Modif), AddCurrentAddress(AddCA) {}
 
 ARMConstantPoolValue::ARMConstantPoolValue(LLVMContext &C,
@@ -51,6 +63,10 @@ const GlobalValue *ARMConstantPoolValue::getGV() const {
 
 const BlockAddress *ARMConstantPoolValue::getBlockAddress() const {
   return dyn_cast_or_null<BlockAddress>(CVal);
+}
+
+const MachineBasicBlock *ARMConstantPoolValue::getMBB() const {
+  return MBB;
 }
 
 static bool CPV_streq(const char *S1, const char *S2) {
@@ -119,6 +135,8 @@ void ARMConstantPoolValue::dump() const {
 void ARMConstantPoolValue::print(raw_ostream &O) const {
   if (CVal)
     O << CVal->getName();
+  else if (MBB)
+    O << "";
   else
     O << S;
   if (Modifier) O << "(" << getModifierText() << ")";

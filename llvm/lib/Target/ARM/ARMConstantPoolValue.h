@@ -20,17 +20,19 @@
 
 namespace llvm {
 
-class Constant;
 class BlockAddress;
+class Constant;
 class GlobalValue;
 class LLVMContext;
+class MachineBasicBlock;
 
 namespace ARMCP {
   enum ARMCPKind {
     CPValue,
     CPExtSymbol,
     CPBlockAddress,
-    CPLSDA
+    CPLSDA,
+    CPMachineBasicBlock
   };
 
   enum ARMCPModifier {
@@ -48,6 +50,7 @@ namespace ARMCP {
 /// instruction and the constant being loaded, i.e. (&GV-(LPIC+8)).
 class ARMConstantPoolValue : public MachineConstantPoolValue {
   const Constant *CVal;    // Constant being loaded.
+  const MachineBasicBlock *MBB; // MachineBasicBlock being loaded.
   const char *S;           // ExtSymbol being loaded.
   unsigned LabelId;        // Label id of the load.
   ARMCP::ARMCPKind Kind;   // Kind of constant.
@@ -58,6 +61,11 @@ class ARMConstantPoolValue : public MachineConstantPoolValue {
 
 public:
   ARMConstantPoolValue(const Constant *cval, unsigned id,
+                       ARMCP::ARMCPKind Kind = ARMCP::CPValue,
+                       unsigned char PCAdj = 0,
+                       ARMCP::ARMCPModifier Modifier = ARMCP::no_modifier,
+                       bool AddCurrentAddress = false);
+  ARMConstantPoolValue(LLVMContext &C, const MachineBasicBlock *mbb,unsigned id,
                        ARMCP::ARMCPKind Kind = ARMCP::CPValue,
                        unsigned char PCAdj = 0,
                        ARMCP::ARMCPModifier Modifier = ARMCP::no_modifier,
@@ -73,6 +81,7 @@ public:
   const GlobalValue *getGV() const;
   const char *getSymbol() const { return S; }
   const BlockAddress *getBlockAddress() const;
+  const MachineBasicBlock *getMBB() const;
   ARMCP::ARMCPModifier getModifier() const { return Modifier; }
   const char *getModifierText() const {
     switch (Modifier) {
@@ -95,6 +104,7 @@ public:
   bool isExtSymbol() const { return Kind == ARMCP::CPExtSymbol; }
   bool isBlockAddress() { return Kind == ARMCP::CPBlockAddress; }
   bool isLSDA() { return Kind == ARMCP::CPLSDA; }
+  bool isMachineBasicBlock() { return Kind == ARMCP::CPMachineBasicBlock; }
 
   virtual unsigned getRelocationInfo() const { return 2; }
 
