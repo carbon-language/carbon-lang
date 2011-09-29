@@ -853,6 +853,9 @@ EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV) {
   } else if (ACPV->isGlobalValue()) {
     const GlobalValue *GV = ACPV->getGV();
     MCSym = GetARMGVSymbol(GV);
+  } else if (ACPV->isMachineBasicBlock()) {
+    const MachineBasicBlock *MBB = ACPV->getMBB();
+    MCSym = MBB->getSymbol();
   } else {
     assert(ACPV->isExtSymbol() && "unrecognized constant pool value");
     MCSym = GetExternalSymbolSymbol(ACPV->getSymbol());

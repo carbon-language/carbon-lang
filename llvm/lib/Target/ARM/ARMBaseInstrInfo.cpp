@@ -1065,6 +1065,10 @@ static unsigned duplicateCPV(MachineFunction &MF, unsigned &CPI) {
   else if (ACPV->isLSDA())
     NewCPV = new ARMConstantPoolValue(MF.getFunction(), PCLabelId,
                                       ARMCP::CPLSDA, 4);
+  else if (ACPV->isMachineBasicBlock())
+    NewCPV = new ARMConstantPoolValue(MF.getFunction()->getContext(),
+                                      ACPV->getMBB(), PCLabelId,
+                                      ARMCP::CPMachineBasicBlock, 4);
   else
     llvm_unreachable("Unexpected ARM constantpool value type!!");
   CPI = MCP->getConstantPoolIndex(NewCPV, MCPE.getAlignment());
