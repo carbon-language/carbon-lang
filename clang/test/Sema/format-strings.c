@@ -87,7 +87,12 @@ void check_empty_format_string(char* buf, ...)
   va_list ap;
   va_start(ap,buf);
   vprintf("",ap); // expected-warning {{format string is empty}}
-  sprintf(buf,""); // expected-warning {{format string is empty}}
+  sprintf(buf, "", 1); // expected-warning {{format string is empty}}
+  
+  // Don't warn about empty format strings when there are no data arguments.
+  // This can arise from macro expansions and non-standard format string
+  // functions.
+  sprintf(buf, ""); // no-warning
 }
 
 void check_wide_string(char* b, ...)

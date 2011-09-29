@@ -1880,9 +1880,10 @@ void Sema::CheckFormatString(const StringLiteral *FExpr,
   StringRef StrRef = FExpr->getString();
   const char *Str = StrRef.data();
   unsigned StrLen = StrRef.size();
+  const unsigned numDataArgs = TheCall->getNumArgs() - firstDataArg;
   
   // CHECK: empty format string?
-  if (StrLen == 0) {
+  if (StrLen == 0 && numDataArgs > 0) {
     Diag(FExpr->getLocStart(), diag::warn_empty_format_string)
     << OrigFormatExpr->getSourceRange();
     return;
@@ -1890,18 +1891,16 @@ void Sema::CheckFormatString(const StringLiteral *FExpr,
   
   if (isPrintf) {
     CheckPrintfHandler H(*this, FExpr, OrigFormatExpr, firstDataArg,
-                         TheCall->getNumArgs() - firstDataArg,
-                         isa<ObjCStringLiteral>(OrigFormatExpr), Str,
-                         HasVAListArg, TheCall, format_idx);
+                         numDataArgs, isa<ObjCStringLiteral>(OrigFormatExpr),
+                         Str, HasVAListArg, TheCall, format_idx);
   
     if (!analyze_format_string::ParsePrintfString(H, Str, Str + StrLen))
       H.DoneProcessing();
   }
   else {
     CheckScanfHandler H(*this, FExpr, OrigFormatExpr, firstDataArg,
-                        TheCall->getNumArgs() - firstDataArg,
-                        isa<ObjCStringLiteral>(OrigFormatExpr), Str,
-                        HasVAListArg, TheCall, format_idx);
+                        numDataArgs, isa<ObjCStringLiteral>(OrigFormatExpr),
+                        Str, HasVAListArg, TheCall, format_idx);
     
     if (!analyze_format_string::ParseScanfString(H, Str, Str + StrLen))
       H.DoneProcessing();
