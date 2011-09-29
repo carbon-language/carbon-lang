@@ -39,6 +39,7 @@
 #define LIBLLDB_LOG_SCRIPT              (1u << 17)
 #define LIBLLDB_LOG_COMMANDS            (1U << 18)
 #define LIBLLDB_LOG_TYPES               (1u << 19)
+#define LIBLLDB_LOG_SYMBOLS             (1u << 20)
 #define LIBLLDB_LOG_ALL                 (UINT32_MAX)
 #define LIBLLDB_LOG_DEFAULT             (LIBLLDB_LOG_PROCESS              |\
                                          LIBLLDB_LOG_THREAD               |\
@@ -47,6 +48,7 @@
                                          LIBLLDB_LOG_WATCHPOINTS          |\
                                          LIBLLDB_LOG_STEP                 |\
                                          LIBLLDB_LOG_STATE                |\
+                                         LIBLLDB_LOG_SYMBOLS              |\
                                          LIBLLDB_LOG_COMMANDS)
 
 namespace lldb_private {

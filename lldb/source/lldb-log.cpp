@@ -135,6 +135,7 @@ lldb_private::DisableLog (Args &args, Stream *feedback_strm)
                 else if (0 == ::strncasecmp(arg, "host", 4))    flag_bits &= ~LIBLLDB_LOG_HOST;
                 else if (0 == ::strncasecmp(arg, "unwind", 6))  flag_bits &= ~LIBLLDB_LOG_UNWIND;
                 else if (0 == ::strncasecmp(arg, "types", 5))   flag_bits &= ~LIBLLDB_LOG_TYPES;
+                else if (0 == ::strncasecmp(arg, "symbol", 6))  flag_bits &= ~LIBLLDB_LOG_SYMBOLS;
                 else
                 {
                     feedback_strm->Printf ("error:  unrecognized log category '%s'\n", arg);
@@ -202,6 +203,7 @@ lldb_private::EnableLog (StreamSP &log_stream_sp, uint32_t log_options, Args &ar
             else if (0 == ::strncasecmp(arg, "host", 4))    flag_bits |= LIBLLDB_LOG_HOST;
             else if (0 == ::strncasecmp(arg, "unwind", 6))  flag_bits |= LIBLLDB_LOG_UNWIND;
             else if (0 == ::strncasecmp(arg, "types", 5))   flag_bits |= LIBLLDB_LOG_TYPES;
+            else if (0 == ::strncasecmp(arg, "symbol", 6))  flag_bits |= LIBLLDB_LOG_SYMBOLS;
             else
             {
                 feedback_strm->Printf("error: unrecognized log category '%s'\n", arg);
@@ -241,6 +243,7 @@ lldb_private::ListLogCategories (Stream *strm)
         "  step - log step related activities\n"
         "  unwind - log stack unwind activities\n"
         "  verbose - enable verbose logging\n"
+        "  symbol - log symbol related issues and warnings\n"
         "  watch - log watchpoint related activities\n"
         "  types - log type system related activities\n");
 }

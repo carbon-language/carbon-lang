@@ -8,9 +8,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/Symbol/Block.h"
-#include "lldb/Symbol/Function.h"
+
+#include "lldb/lldb-private-log.h"
+
+#include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/Section.h"
+#include "lldb/Symbol/Function.h"
 #include "lldb/Symbol/SymbolFile.h"
 #include "lldb/Symbol/SymbolVendor.h"
 #include "lldb/Symbol/VariableList.h"
@@ -433,10 +437,53 @@ Block::GetStartAddress (Address &addr)
 }
 
 void
-Block::AddRange(addr_t start_offset, addr_t end_offset)
+Block::AddRange (const VMRange& new_range)
 {
-    m_ranges.resize(m_ranges.size()+1);
-    m_ranges.back().Reset(start_offset, end_offset);
+    Block *parent_block = GetParent ();
+    if (parent_block && !parent_block->Contains(new_range))
+    {
+        LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_SYMBOLS));
+        if (log)
+        {
+            Module *module = m_parent_scope->CalculateSymbolContextModule();
+            Function *function = m_parent_scope->CalculateSymbolContextFunction();
+            const addr_t function_file_addr = function->GetAddressRange().GetBaseAddress().GetFileAddress();
+            const addr_t block_start_addr = function_file_addr + new_range.GetBaseAddress ();
+            const addr_t block_end_addr = function_file_addr + new_range.GetEndAddress ();
+            Type *func_type = function->GetType();
+            
+            const Declaration &func_decl = func_type->GetDeclaration();
+            if (func_decl.GetLine())
+            {
+                log->Printf ("warning: %s/%s:%u block {0x%8.8x} has range[%u] [0x%llx - 0x%llx) which is not contained in parent block {0x%8.8x} in function {0x%8.8x} from %s/%s",
+                             func_decl.GetFile().GetDirectory().GetCString(),
+                             func_decl.GetFile().GetFilename().GetCString(),
+                             func_decl.GetLine(),
+                             GetID(),
+                             (uint32_t)m_ranges.size(),
+                             block_start_addr,
+                             block_end_addr,
+                             parent_block->GetID(),
+                             function->GetID(),
+                             module->GetFileSpec().GetDirectory().GetCString(),
+                             module->GetFileSpec().GetFilename().GetCString());
+            }
+            else
+            {
+                log->Printf ("warning: block {0x%8.8x} has range[%u] [0x%llx - 0x%llx) which is not contained in parent block {0x%8.8x} in function {0x%8.8x} from %s/%s",
+                             GetID(),
+                             (uint32_t)m_ranges.size(),
+                             block_start_addr,
+                             block_end_addr,
+                             parent_block->GetID(),
+                             function->GetID(),
+                             module->GetFileSpec().GetDirectory().GetCString(),
+                             module->GetFileSpec().GetFilename().GetCString());
+            }
+        }
+        parent_block->AddRange (new_range);
+    }
+    m_ranges.push_back(new_range);
 }
 
 // Return the current number of bytes that this object occupies in memory
@@ -605,7 +652,7 @@ Block::GetSibling() const
 {
     if (m_parent_scope)
     {
-        Block *parent_block = m_parent_scope->CalculateSymbolContextBlock();
+        Block *parent_block = GetParent();
         if (parent_block)
             return parent_block->GetSiblingForChild (this);
     }

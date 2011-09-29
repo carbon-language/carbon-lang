@@ -635,7 +635,7 @@ AddRangesToBlock
     const DWARFDebugRanges::Range *debug_range;
     for (range_idx = 0; (debug_range = ranges.RangeAtIndex(range_idx)) != NULL; range_idx++)
     {
-        block.AddRange(debug_range->begin_offset, debug_range->end_offset);
+        block.AddRange(VMRange (debug_range->begin_offset, debug_range->end_offset));
     }
 }
 

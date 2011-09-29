@@ -97,7 +97,7 @@ public:
     ///     describes the end address of a range for this block.
     //------------------------------------------------------------------
     void
-    AddRange(lldb::addr_t start_offset, lldb::addr_t end_offset);
+    AddRange (const VMRange& range);
 
     //------------------------------------------------------------------
     /// @copydoc SymbolContextScope::CalculateSymbolContext(SymbolContext*)
