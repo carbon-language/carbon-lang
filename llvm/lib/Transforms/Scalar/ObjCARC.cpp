@@ -2338,6 +2338,11 @@ ObjCARCOpt::VisitBottomUp(BasicBlock *BB,
       S.SetAtLeastOneRefCount();
       S.DecrementNestCount();
 
+      // An objc_retainBlock call with just a use still needs to be kept,
+      // because it may be copying a block from the stack to the heap.
+      if (Class == IC_RetainBlock && S.GetSeq() == S_Use)
+        S.SetSeq(S_CanRelease);
+
       switch (S.GetSeq()) {
       case S_Stop:
       case S_Release:
@@ -2406,14 +2411,14 @@ ObjCARCOpt::VisitBottomUp(BasicBlock *BB,
       case S_Release:
       case S_MovableRelease:
         if (CanUse(Inst, Ptr, PA, Class)) {
-          S.RRI.ReverseInsertPts.clear();
+          assert(S.RRI.ReverseInsertPts.empty());
           S.RRI.ReverseInsertPts.insert(Inst);
           S.SetSeq(S_Use);
         } else if (Seq == S_Release &&
                    (Class == IC_User || Class == IC_CallOrUser)) {
           // Non-movable releases depend on any possible objc pointer use.
           S.SetSeq(S_Stop);
-          S.RRI.ReverseInsertPts.clear();
+          assert(S.RRI.ReverseInsertPts.empty());
           S.RRI.ReverseInsertPts.insert(Inst);
         }
         break;
@@ -2566,7 +2571,7 @@ ObjCARCOpt::VisitTopDown(BasicBlock *BB,
         switch (Seq) {
         case S_Retain:
           S.SetSeq(S_CanRelease);
-          S.RRI.ReverseInsertPts.clear();
+          assert(S.RRI.ReverseInsertPts.empty());
           S.RRI.ReverseInsertPts.insert(Inst);
 
           // One call can't cause a transition from S_Retain to S_CanRelease
@@ -2590,8 +2595,18 @@ ObjCARCOpt::VisitTopDown(BasicBlock *BB,
         if (CanUse(Inst, Ptr, PA, Class))
           S.SetSeq(S_Use);
         break;
-      case S_Use:
       case S_Retain:
+        // An objc_retainBlock call may be responsible for copying the block
+        // data from the stack to the heap. Model this by moving it straight
+        // from S_Retain to S_Use.
+        if (S.RRI.IsRetainBlock &&
+            CanUse(Inst, Ptr, PA, Class)) {
+          assert(S.RRI.ReverseInsertPts.empty());
+          S.RRI.ReverseInsertPts.insert(Inst);
+          S.SetSeq(S_Use);
+        }
+        break;
+      case S_Use:
       case S_None:
         break;
       case S_Stop:
@@ -2743,17 +2758,23 @@ ObjCARCOpt::PerformCodePlacement(DenseMap<const BasicBlock *, BBState>
   SmallVector<Instruction *, 8> DeadInsts;
 
   for (MapVector<Value *, RRInfo>::const_iterator I = Retains.begin(),
-       E = Retains.end(); I != E; ) {
-    Value *V = (I++)->first;
+       E = Retains.end(); I != E; ++I) {
+    Value *V = I->first;
     if (!V) continue; // blotted
 
     Instruction *Retain = cast<Instruction>(V);
     Value *Arg = GetObjCArg(Retain);
 
-    // If the object being released is in static or stack storage, we know it's
+    // If the object being released is in static storage, we know it's
     // not being managed by ObjC reference counting, so we can delete pairs
     // regardless of what possible decrements or uses lie between them.
-    bool KnownSafe = isa<Constant>(Arg) || isa<AllocaInst>(Arg);
+    bool KnownSafe = isa<Constant>(Arg);
+   
+    // Same for stack storage, unless this is an objc_retainBlock call,
+    // which is responsible for copying the block data from the stack to
+    // the heap.
+    if (!I->second.IsRetainBlock && isa<AllocaInst>(Arg))
+      KnownSafe = true;
 
     // A constant pointer can't be pointing to an object on the heap. It may
     // be reference-counted, but it won't be deleted.
