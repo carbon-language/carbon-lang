@@ -452,7 +452,7 @@ public:
             // more likely because you typed it once, then typed it again
             if (m_options.start_line == 0)
             {
-                if (m_interpreter.GetDebugger().GetSourceManager().DisplayMoreWithLineNumbers (&result.GetOutputStream(),
+                if (target->GetSourceManager().DisplayMoreWithLineNumbers (&result.GetOutputStream(),
                                                                                                GetBreakpointLocations ()))
                 {
                     result.SetStatus (eReturnStatusSuccessFinishResult);
