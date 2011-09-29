@@ -75,6 +75,13 @@ void clang::ProcessWarningOptions(DiagnosticsEngine &Diags,
       Diags.setSuppressSystemWarnings(!isPositive);
       continue;
     }
+    
+    // -Weverything is a special case as well.  It implicitly enables all
+    // warnings, including ones not explicitly in a warning group.
+    if (Opt == "everything") {
+      Diags.setEnableAllWarnings(true);
+      continue;
+    }
 
     // -Werror/-Wno-error is a special case, not controlled by the option table.
     // It also has the "specifier" form of -Werror=foo and -Werror-foo.
@@ -94,15 +101,12 @@ void clang::ProcessWarningOptions(DiagnosticsEngine &Diags,
         continue;
       }
 
-      // -Werror=foo maps foo to Error, -Wno-error=foo maps it to Warning.
-      Mapping = isPositive ? diag::MAP_ERROR : diag::MAP_WARNING_NO_WERROR;
-      Opt = Specifier;
-    }
-    
-    // -Weverything is a special case as well.  It implicitly enables all
-    // warnings, including ones not explicitly in a warning group.
-    if (Opt == "everything") {
-      Diags.setEnableAllWarnings(true);
+      // Set the warning as error flag for this specifier.
+      if (Diags.setDiagnosticGroupWarningAsError(Specifier, isPositive)) {
+        Diags.Report(isPositive ? diag::warn_unknown_warning_option :
+                     diag::warn_unknown_negative_warning_option)
+          << ("-W" + Opt.str());
+      }
       continue;
     }
 
@@ -123,15 +127,19 @@ void clang::ProcessWarningOptions(DiagnosticsEngine &Diags,
         continue;
       }
 
-      // -Wfatal-errors=foo maps foo to Fatal, -Wno-fatal-errors=foo
-      // maps it to Error.
-      Mapping = isPositive ? diag::MAP_FATAL : diag::MAP_ERROR_NO_WFATAL;
-      Opt = Specifier;
+      // Set the error as fatal flag for this specifier.
+      if (Diags.setDiagnosticGroupErrorAsFatal(Specifier, isPositive)) {
+        Diags.Report(isPositive ? diag::warn_unknown_warning_option :
+                     diag::warn_unknown_negative_warning_option)
+          << ("-W" + Opt.str());
+      }
+      continue;
     }
 
-    if (Diags.setDiagnosticGroupMapping(Opt, Mapping))
+    if (Diags.setDiagnosticGroupMapping(Opt, Mapping)) {
       Diags.Report(isPositive ? diag::warn_unknown_warning_option :
                    diag::warn_unknown_negative_warning_option)
           << ("-W" + Opt.str());
+    }
   }
 }

@@ -220,6 +220,18 @@ void DiagnosticsEngine::setDiagnosticMapping(diag::kind Diag, diag::Mapping Map,
                                                FullSourceLoc(Loc, *SourceMgr)));
 }
 
+bool DiagnosticsEngine::setDiagnosticGroupWarningAsError(StringRef Group,
+                                                         bool Enabled) {
+  diag::Mapping Map = Enabled ? diag::MAP_ERROR : diag::MAP_WARNING_NO_WERROR;
+  return setDiagnosticGroupMapping(Group, Map);
+}
+
+bool DiagnosticsEngine::setDiagnosticGroupErrorAsFatal(StringRef Group,
+                                                       bool Enabled) {
+  diag::Mapping Map = Enabled ? diag::MAP_FATAL : diag::MAP_ERROR_NO_WFATAL;
+  return setDiagnosticGroupMapping(Group, Map);
+}
+
 void DiagnosticsEngine::Report(const StoredDiagnostic &storedDiag) {
   assert(CurDiagID == ~0U && "Multiple diagnostics in flight at once!");
 

@@ -452,6 +452,16 @@ public:
     return Diags->setDiagnosticGroupMapping(Group, Map, Loc, *this);
   }
 
+  /// \brief Set the warning-as-error flag for the given diagnostic group.
+  ///
+  /// \returns True if the given group is unknown, false otherwise.
+  bool setDiagnosticGroupWarningAsError(StringRef Group, bool Enabled);
+
+  /// \brief Set the error-as-fatal flag for the given diagnostic group.
+  ///
+  /// \returns True if the given group is unknown, false otherwise.
+  bool setDiagnosticGroupErrorAsFatal(StringRef Group, bool Enabled);
+
   bool hasErrorOccurred() const { return ErrorOccurred; }
   bool hasFatalErrorOccurred() const { return FatalErrorOccurred; }
   
