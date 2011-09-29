@@ -26,3 +26,24 @@ void unavail(void) {
   void (*fp)() = &bar;
   double (*fp4)(double) = dfoo;
 }
+
+// rdar://10201690
+enum foo {
+    a = 1,
+    b __attribute__((deprecated())) = 2,
+    c = 3
+}__attribute__((deprecated()));  
+
+enum fee { // expected-note 2 {{declaration has been explicitly marked unavailable here}}
+    r = 1,
+    s = 2,
+    t = 3
+}__attribute__((unavailable()));  
+
+enum fee f() { // expected-error {{error: 'fee' is unavailable}}
+    int i = a; // expected-warning {{'foo' is deprecated }}
+
+    i = b; // expected-warning {{'b' is deprecated}}
+
+    return r; // expected-error {{'fee' is unavailable}}
+}

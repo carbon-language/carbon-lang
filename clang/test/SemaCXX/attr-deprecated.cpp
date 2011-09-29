@@ -198,7 +198,7 @@ namespace test6 {
   };
   void testA() {
     A x; // expected-warning {{'A' is deprecated}}
-    x = a0;
+    x = a0; // expected-warning {{'A' is deprecated}}
   }
   
   enum B {
@@ -218,7 +218,7 @@ namespace test6 {
   };
   void testC() {
     C<int>::Enum x; // expected-warning {{'Enum' is deprecated}}
-    x = C<int>::c0;
+    x = C<int>::c0; // expected-warning {{'Enum' is deprecated}}
   }
 
   template <class T> struct D {
