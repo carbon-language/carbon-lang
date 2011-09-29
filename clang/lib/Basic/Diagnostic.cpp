@@ -222,6 +222,21 @@ void DiagnosticsEngine::setDiagnosticMapping(diag::kind Diag, diag::Mapping Map,
                                                FullSourceLoc(Loc, *SourceMgr)));
 }
 
+bool DiagnosticsEngine::setDiagnosticGroupMapping(
+  StringRef Group, diag::Mapping Map, SourceLocation Loc)
+{
+  // Get the diagnostics in this group.
+  llvm::SmallVector<diag::kind, 8> GroupDiags;
+  if (Diags->getDiagnosticsInGroup(Group, GroupDiags))
+    return true;
+
+  // Set the mapping.
+  for (unsigned i = 0, e = GroupDiags.size(); i != e; ++i)
+    setDiagnosticMapping(GroupDiags[i], Map, Loc);
+
+  return false;
+}
+
 bool DiagnosticsEngine::setDiagnosticGroupWarningAsError(StringRef Group,
                                                          bool Enabled) {
   diag::Mapping Map = Enabled ? diag::MAP_ERROR : diag::MAP_WARNING_NO_WERROR;

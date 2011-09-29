@@ -21,6 +21,7 @@
 #include "clang/Lex/LexDiagnostic.h"
 #include "clang/Parse/ParseDiagnostic.h"
 #include "clang/Sema/SemaDiagnostic.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/ErrorHandling.h"
 
 #include <map>
@@ -630,21 +631,19 @@ DiagnosticIDs::getDiagnosticLevel(unsigned DiagID, unsigned DiagClass,
   return Result;
 }
 
-namespace {
-  struct WarningOption {
-    // Be safe with the size of 'NameLen' because we don't statically check if
-    // the size will fit in the field; the struct size won't decrease with a
-    // shorter type anyway.
-    size_t NameLen;
-    const char *NameStr;
-    const short *Members;
-    const short *SubGroups;
+struct clang::WarningOption {
+  // Be safe with the size of 'NameLen' because we don't statically check if
+  // the size will fit in the field; the struct size won't decrease with a
+  // shorter type anyway.
+  size_t NameLen;
+  const char *NameStr;
+  const short *Members;
+  const short *SubGroups;
 
-    StringRef getName() const {
-      return StringRef(NameStr, NameLen);
-    }
-  };
-}
+  StringRef getName() const {
+    return StringRef(NameStr, NameLen);
+  }
+};
 
 #define GET_DIAG_ARRAYS
 #include "clang/Basic/DiagnosticGroups.inc"
@@ -664,47 +663,36 @@ static bool WarningOptionCompare(const WarningOption &LHS,
   return LHS.getName() < RHS.getName();
 }
 
-static void MapGroupMembers(const WarningOption *Group, diag::Mapping Mapping,
-                            SourceLocation Loc, DiagnosticsEngine &Diag) {
-  // Option exists, poke all the members of its diagnostic set.
+void DiagnosticIDs::getDiagnosticsInGroup(
+  const WarningOption *Group,
+  llvm::SmallVectorImpl<diag::kind> &Diags) const
+{
+  // Add the members of the option diagnostic set.
   if (const short *Member = Group->Members) {
     for (; *Member != -1; ++Member)
-      Diag.setDiagnosticMapping(*Member, Mapping, Loc);
+      Diags.push_back(*Member);
   }
 
-  // Enable/disable all subgroups along with this one.
+  // Add the members of the subgroups.
   if (const short *SubGroups = Group->SubGroups) {
     for (; *SubGroups != (short)-1; ++SubGroups)
-      MapGroupMembers(&OptionTable[(short)*SubGroups], Mapping, Loc, Diag);
+      getDiagnosticsInGroup(&OptionTable[(short)*SubGroups], Diags);
   }
 }
 
-/// setDiagnosticGroupMapping - Change an entire diagnostic group (e.g.
-/// "unknown-pragmas" to have the specified mapping.  This returns true and
-/// ignores the request if "Group" was unknown, false otherwise.
-bool DiagnosticIDs::setDiagnosticGroupMapping(StringRef Group,
-                                              diag::Mapping Map,
-                                              SourceLocation Loc,
-                                              DiagnosticsEngine &Diag) const {
-  assert((Loc.isValid() ||
-          Diag.DiagStatePoints.empty() ||
-          Diag.DiagStatePoints.back().Loc.isInvalid()) &&
-         "Loc should be invalid only when the mapping comes from command-line");
-  assert((Loc.isInvalid() || Diag.DiagStatePoints.empty() ||
-          Diag.DiagStatePoints.back().Loc.isInvalid() ||
-          !Diag.SourceMgr->isBeforeInTranslationUnit(Loc,
-                                            Diag.DiagStatePoints.back().Loc)) &&
-         "Source location of new mapping is before the previous one!");
-
+bool DiagnosticIDs::getDiagnosticsInGroup(
+  StringRef Group,
+  llvm::SmallVectorImpl<diag::kind> &Diags) const
+{
   WarningOption Key = { Group.size(), Group.data(), 0, 0 };
   const WarningOption *Found =
   std::lower_bound(OptionTable, OptionTable + OptionTableSize, Key,
                    WarningOptionCompare);
   if (Found == OptionTable + OptionTableSize ||
       Found->getName() != Group)
-    return true;  // Option not found.
+    return true; // Option not found.
 
-  MapGroupMembers(Found, Map, Loc, Diag);
+  getDiagnosticsInGroup(Found, Diags);
   return false;
 }
 

@@ -18,9 +18,14 @@
 #include "llvm/ADT/StringRef.h"
 #include "clang/Basic/LLVM.h"
 
+namespace llvm {
+  template<typename T, unsigned> class SmallVector;
+}
+
 namespace clang {
   class DiagnosticsEngine;
   class SourceLocation;
+  struct WarningOption;
 
   // Import the diagnostic enums themselves.
   namespace diag {
@@ -248,13 +253,19 @@ public:
   static diag_iterator diags_end();
 
 private:
-  /// setDiagnosticGroupMapping - Change an entire diagnostic group (e.g.
-  /// "unknown-pragmas" to have the specified mapping.  This returns true and
-  /// ignores the request if "Group" was unknown, false otherwise.
-  bool setDiagnosticGroupMapping(StringRef Group, diag::Mapping Map,
-                                 SourceLocation Loc,
-                                 DiagnosticsEngine &Diag) const;
+  /// \brief Get the set of all diagnostic IDs in the group with the given name.
+  ///
+  /// \param Diags [out] - On return, the diagnostics in the group.
+  /// \returns True if the given group is unknown, false otherwise.
+  bool getDiagnosticsInGroup(StringRef Group,
+                             llvm::SmallVectorImpl<diag::kind> &Diags) const;
 
+  /// \brief Get the set of all diagnostic IDs in the given group.
+  ///
+  /// \param Diags [out] - On return, the diagnostics in the group.
+  void getDiagnosticsInGroup(const WarningOption *Group,
+                             llvm::SmallVectorImpl<diag::kind> &Diags) const;
+ 
   /// \brief Based on the way the client configured the DiagnosticsEngine
   /// object, classify the specified diagnostic ID into a Level, consumable by
   /// the DiagnosticClient.
