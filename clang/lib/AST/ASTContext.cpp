@@ -705,7 +705,7 @@ CharUnits ASTContext::getDeclAlign(const Decl *D, bool RefAsPointee) const {
     // *except* on a struct or struct member, where it only increases
     // alignment unless 'packed' is also specified.
     //
-    // It is an error for [[align]] to decrease alignment, so we can
+    // It is an error for alignas to decrease alignment, so we can
     // ignore that possibility;  Sema should diagnose it.
     if (isa<FieldDecl>(D)) {
       UseAlignAttrOnly = D->hasAttr<PackedAttr>() ||

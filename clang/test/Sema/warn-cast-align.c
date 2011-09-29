@@ -28,7 +28,7 @@ void test1(void *P) {
 }
 
 // Aligned struct.
-__attribute__((align(16))) struct A {
+__attribute__((aligned(16))) struct A {
   char buffer[16];
 };
 void test2(char *P) {

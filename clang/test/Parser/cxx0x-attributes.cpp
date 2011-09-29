@@ -6,7 +6,7 @@ int [[]] between_attr;
 int after_attr [[]];
 int * [[]] ptr_attr;
 int array_attr [1] [[]];
-[[align(8)]] int aligned_attr;
+alignas(8) int aligned_attr;
 [[test::valid(for 42 [very] **** '+' symbols went on a trip; the end.)]]
   int garbage_attr;
 void fn_attr () [[]];
@@ -32,8 +32,8 @@ extern "C++" [[]] { } // expected-error {{an attribute list cannot appear here}}
 [[]] using namespace ns;
 
 // Argument tests
-[[align]] int aligned_no_params; // expected-error {{C++0x attribute 'align' must have an argument list}}
-[[align(i)]] int aligned_nonconst; // expected-error {{'aligned' attribute requires integer constant}}
+alignas int aligned_no_params; // expected-error {{expected '('}}
+alignas(i) int aligned_nonconst; // expected-error {{'aligned' attribute requires integer constant}}
 
 // Statement tests
 void foo () {

@@ -377,6 +377,7 @@ bool Parser::isCXXTypeId(TentativeCXXTypeIdContext Context, bool &isAmbiguous) {
 ///
 /// [C++0x] attribute-specifier:
 ///         '[' '[' attribute-list ']' ']'
+///         alignment-specifier
 ///
 /// [C++0x] attribute-list:
 ///         attribute[opt]
@@ -409,6 +410,9 @@ bool Parser::isCXXTypeId(TentativeCXXTypeIdContext Context, bool &isAmbiguous) {
 ///         any token but '(', ')', '[', ']', '{', or '}'
 bool Parser::isCXX0XAttributeSpecifier (bool CheckClosing,
                                         tok::TokenKind *After) {
+  if (Tok.is(tok::kw_alignas))
+    return true;
+
   if (Tok.isNot(tok::l_square) || NextToken().isNot(tok::l_square))
     return false;
   

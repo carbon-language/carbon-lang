@@ -1775,7 +1775,9 @@ private:
   void ParseDecltypeSpecifier(DeclSpec &DS);
   void ParseUnderlyingTypeSpecifier(DeclSpec &DS);
   
-  ExprResult ParseCXX0XAlignArgument(SourceLocation Start);
+  ExprResult ParseAlignArgument(SourceLocation Start);
+  void ParseAlignmentSpecifier(ParsedAttributes &Attrs,
+                               SourceLocation *endLoc = 0);
 
   VirtSpecifiers::Specifier isCXX0XVirtSpecifier() const;
   void ParseOptionalCXX0XVirtSpecifierSeq(VirtSpecifiers &VS);

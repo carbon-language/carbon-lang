@@ -12,6 +12,7 @@ set(files
   nmmintrin.h
   pmmintrin.h
   smmintrin.h
+  stdalign.h
   stdarg.h
   stdbool.h
   stddef.h

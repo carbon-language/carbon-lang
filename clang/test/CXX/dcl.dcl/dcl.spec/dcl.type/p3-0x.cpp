@@ -33,8 +33,7 @@ void f() {
 void g() throw (struct Ex {}) { // expected-error {{'Ex' can not be defined in a type specifier}}
 }
 
-// FIXME: this currently gives a strange error because alignas is not recognised as a keyword yet.
-int alignas(struct Aa {}) x; // expected-error {{'Aa' can not be defined in a parameter type}} expected-error {{expected function body}}
+int alignas(struct Aa {}) x; // expected-error {{'Aa' can not be defined in a type specifier}}
 
 int a = sizeof(struct So {}); // expected-error {{'So' can not be defined in a type specifier}}
 int b = alignof(struct Ao {}); // expected-error {{'Ao' can not be defined in a type specifier}}

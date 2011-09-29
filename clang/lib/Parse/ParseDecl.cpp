@@ -1314,6 +1314,7 @@ Decl *Parser::ParseDeclarationAfterDeclaratorAndAttributes(Declarator &D,
 void Parser::ParseSpecifierQualifierList(DeclSpec &DS, AccessSpecifier AS) {
   /// specifier-qualifier-list is a subset of declaration-specifiers.  Just
   /// parse declaration-specifiers and complain about extra stuff.
+  /// TODO: diagnose attribute-specifiers and alignment-specifiers.
   ParseDeclarationSpecifiers(DS, ParsedTemplateInfo(), AS);
 
   // Validate declspec for type-name.
@@ -1497,11 +1498,68 @@ Parser::getDeclSpecContextFromDeclaratorContext(unsigned Context) {
   return DSC_normal;
 }
 
+/// ParseAlignArgument - Parse the argument to an alignment-specifier.
+///
+/// FIXME: Simply returns an alignof() expression if the argument is a
+/// type. Ideally, the type should be propagated directly into Sema.
+///
+/// [C1X/C++0x] type-id
+/// [C1X]       constant-expression
+/// [C++0x]     assignment-expression
+ExprResult Parser::ParseAlignArgument(SourceLocation Start) {
+  if (isTypeIdInParens()) {
+    EnterExpressionEvaluationContext Unevaluated(Actions, Sema::Unevaluated);
+    SourceLocation TypeLoc = Tok.getLocation();
+    ParsedType Ty = ParseTypeName().get();
+    SourceRange TypeRange(Start, Tok.getLocation());
+    return Actions.ActOnUnaryExprOrTypeTraitExpr(TypeLoc, UETT_AlignOf, true,
+                                                Ty.getAsOpaquePtr(), TypeRange);
+  } else
+    return ParseConstantExpression();
+}
+
+/// ParseAlignmentSpecifier - Parse an alignment-specifier, and add the
+/// attribute to Attrs.
+///
+/// alignment-specifier:
+/// [C1X]   '_Alignas' '(' type-id ')'
+/// [C1X]   '_Alignas' '(' constant-expression ')'
+/// [C++0x] 'alignas' '(' type-id ')'
+/// [C++0x] 'alignas' '(' assignment-expression ')'
+void Parser::ParseAlignmentSpecifier(ParsedAttributes &Attrs,
+                                     SourceLocation *endLoc) {
+  assert((Tok.is(tok::kw_alignas) || Tok.is(tok::kw__Alignas)) &&
+         "Not an alignment-specifier!");
+
+  SourceLocation KWLoc = Tok.getLocation();
+  ConsumeToken();
+
+  SourceLocation ParamLoc = Tok.getLocation();
+  if (ExpectAndConsume(tok::l_paren, diag::err_expected_lparen))
+    return;
+
+  ExprResult ArgExpr = ParseAlignArgument(ParamLoc);
+  if (ArgExpr.isInvalid()) {
+    SkipUntil(tok::r_paren);
+    return;
+  }
+
+  SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, ParamLoc);
+  if (endLoc)
+    *endLoc = RParenLoc;
+
+  ExprVector ArgExprs(Actions);
+  ArgExprs.push_back(ArgExpr.release());
+  Attrs.addNew(PP.getIdentifierInfo("aligned"), KWLoc, 0, KWLoc,
+               0, ParamLoc, ArgExprs.take(), 1, false, true);
+}
+
 /// ParseDeclarationSpecifiers
 ///       declaration-specifiers: [C99 6.7]
 ///         storage-class-specifier declaration-specifiers[opt]
 ///         type-specifier declaration-specifiers[opt]
 /// [C99]   function-specifier declaration-specifiers[opt]
+/// [C1X]   alignment-specifier declaration-specifiers[opt]
 /// [GNU]   attributes declaration-specifiers[opt]
 /// [Clang] '__module_private__' declaration-specifiers[opt]
 ///
@@ -1945,6 +2003,13 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
     case tok::kw_explicit:
       isInvalid = DS.SetFunctionSpecExplicit(Loc, PrevSpec, DiagID);
       break;
+
+    // alignment-specifier
+    case tok::kw__Alignas:
+      if (!getLang().C1X)
+        Diag(Tok, diag::ext_c1x_alignas);
+      ParseAlignmentSpecifier(DS.getAttributes());
+      continue;
 
     // friend
     case tok::kw_friend:

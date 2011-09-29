@@ -70,6 +70,9 @@ def err_duplicate_default_assoc : Error<
 def note_previous_default_assoc : Note<
   "previous default generic association is here">;
 
+def ext_c1x_alignas : Extension<
+  "_Alignas is a C1X-specific feature">, InGroup<C1X>;
+
 def ext_gnu_indirect_goto : Extension<
   "use of GNU indirect-goto extension">, InGroup<GNU>;
 def ext_gnu_address_of_label : Extension<

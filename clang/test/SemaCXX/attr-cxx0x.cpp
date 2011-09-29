@@ -1,15 +1,15 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -std=c++0x %s
 
-int align_illegal [[align(3)]]; //expected-error {{requested alignment is not a power of 2}}
-char align_big [[align(int)]];
-int align_small [[align(1)]]; // FIXME: this should be rejected
-int align_multiple [[align(1), align(8), align(1)]];
+int align_illegal alignas(3); //expected-error {{requested alignment is not a power of 2}}
+char align_big alignas(int);
+int align_small alignas(1); // FIXME: this should be rejected
+int align_multiple alignas(1) alignas(8) alignas(1);
 
 struct align_member {
-  int member [[align(8)]];
+  int member alignas(8);
 };
 
-typedef char align_typedef [[align(8)]];
+typedef char align_typedef alignas(8);
 template<typename T> using align_alias_template = align_typedef;
 
 static_assert(alignof(align_big) == alignof(int), "k's alignment is wrong");
