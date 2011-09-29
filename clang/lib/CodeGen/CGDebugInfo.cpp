@@ -1751,6 +1751,57 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
   LineDirectiveFiles.clear();
 }
 
+// UpdateLineDirectiveRegion - Update region stack only if #line directive
+// has introduced scope change.
+void CGDebugInfo::UpdateLineDirectiveRegion(CGBuilderTy &Builder) {
+  if (CurLoc.isInvalid() || CurLoc.isMacroID() ||
+      PrevLoc.isInvalid() || PrevLoc.isMacroID())
+    return;
+  SourceManager &SM = CGM.getContext().getSourceManager();
+  PresumedLoc PCLoc = SM.getPresumedLoc(CurLoc);
+  PresumedLoc PPLoc = SM.getPresumedLoc(PrevLoc);
+
+  if (PCLoc.isInvalid() || PPLoc.isInvalid() ||
+      !strcmp(PPLoc.getFilename(), PCLoc.getFilename()))
+    return;
+
+  // If #line directive stack is empty then we are entering a new scope.
+  if (LineDirectiveFiles.empty()) {
+    EmitRegionStart(Builder);
+    LineDirectiveFiles.push_back(PCLoc.getFilename());
+    return;
+  }
+
+  assert (RegionStack.size() >= LineDirectiveFiles.size()
+	  && "error handling #line regions!");
+
+  bool SeenThisFile = false;
+  // Chek if current file is already seen earlier.
+  for(std::vector<const char *>::iterator I = LineDirectiveFiles.begin(),
+	E = LineDirectiveFiles.end(); I != E; ++I)
+    if (!strcmp(PCLoc.getFilename(), *I)) {
+      SeenThisFile = true;
+      break;
+    }
+
+  // If #line for this file is seen earlier then pop out #line regions.
+  if (SeenThisFile) {
+    while (!LineDirectiveFiles.empty()) {
+      const char *LastFile = LineDirectiveFiles.back();
+      RegionStack.pop_back();
+      LineDirectiveFiles.pop_back();
+      if (!strcmp(PPLoc.getFilename(), LastFile))
+	break;
+    }
+    return;
+  }
+
+  // .. otherwise insert new #line region.
+  EmitRegionStart(Builder);
+  LineDirectiveFiles.push_back(PCLoc.getFilename());
+
+  return;
+}
 
 void CGDebugInfo::EmitStopPoint(CGBuilderTy &Builder) {
   if (CurLoc.isInvalid() || CurLoc.isMacroID()) return;
@@ -1774,58 +1825,6 @@ void CGDebugInfo::EmitStopPoint(CGBuilderTy &Builder) {
   Builder.SetCurrentDebugLocation(llvm::DebugLoc::get(getLineNumber(CurLoc),
                                                       getColumnNumber(CurLoc),
                                                       Scope));
-}
-
-/// UpdateLineDirectiveRegion - Update region stack only if #line directive
-/// has introduced scope change.
-void CGDebugInfo::UpdateLineDirectiveRegion(CGBuilderTy &Builder) {
-  if (CurLoc.isInvalid() || CurLoc.isMacroID() ||
-      PrevLoc.isInvalid() || PrevLoc.isMacroID())
-    return;
-  SourceManager &SM = CGM.getContext().getSourceManager();
-  PresumedLoc PCLoc = SM.getPresumedLoc(CurLoc);
-  PresumedLoc PPLoc = SM.getPresumedLoc(PrevLoc);
-
-  if (PCLoc.isInvalid() || PPLoc.isInvalid() ||
-      !strcmp(PPLoc.getFilename(), PCLoc.getFilename()))
-    return;
-
-  // If #line directive stack is empty then we are entering a new scope.
-  if (LineDirectiveFiles.empty()) {
-    EmitRegionStart(Builder);
-    LineDirectiveFiles.push_back(PCLoc.getFilename());
-    return;
-  }
-
-  assert (RegionStack.size() >= LineDirectiveFiles.size()
-          && "error handling #line regions!");
-
-  bool SeenThisFile = false;
-  // Chek if current file is already seen earlier.
-  for(std::vector<const char *>::iterator I = LineDirectiveFiles.begin(),
-        E = LineDirectiveFiles.end(); I != E; ++I)
-    if (!strcmp(PCLoc.getFilename(), *I)) {
-      SeenThisFile = true;
-      break;
-    }
-
-  // If #line for this file is seen earlier then pop out #line regions.
-  if (SeenThisFile) {
-    while (!LineDirectiveFiles.empty()) {
-      const char *LastFile = LineDirectiveFiles.back();
-      RegionStack.pop_back();
-      LineDirectiveFiles.pop_back();
-      if (!strcmp(PPLoc.getFilename(), LastFile))
-        break;
-    }
-    return;
-  } 
-
-  // .. otherwise insert new #line region.
-  EmitRegionStart(Builder);
-  LineDirectiveFiles.push_back(PCLoc.getFilename());
-
-  return;
 }
 
 /// EmitRegionStart- Constructs the debug code for entering a declarative
