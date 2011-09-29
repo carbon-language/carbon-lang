@@ -155,13 +155,12 @@ private:
 /// GCOVFile - Collects file information.
 class GCOVFile {
 public:
-  GCOVFile() : Format(InvalidGCOV) {}
+  GCOVFile() {}
   ~GCOVFile();
   bool read(GCOVBuffer &Buffer);
   void dump();
   void collectLineCounts(FileInfo &FI);
 private:
-  enum GCOVFormat Format;
   SmallVector<GCOVFunction *, 16> Functions;
 };
 

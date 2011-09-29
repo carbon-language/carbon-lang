@@ -29,7 +29,7 @@ GCOVFile::~GCOVFile() {
 
 /// read - Read GCOV buffer.
 bool GCOVFile::read(GCOVBuffer &Buffer) {
-  Format = Buffer.readGCOVFormat();
+  GCOVFormat Format = Buffer.readGCOVFormat();
   if (Format == InvalidGCOV)
     return false;
 
