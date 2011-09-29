@@ -39,6 +39,7 @@ public:
   static const NestedC ci = 0; // expected-error {{static data member of type 'const C::NestedC' must be initialized out of line}}
   static const int nci = vs; // expected-error {{in-class initializer is not a constant expression}}
   static const int vi = 0;
+  static const volatile int cvi = 0; // ok, illegal in C++0x
   static const E evi = 0;
 
   void m() {

@@ -4077,6 +4077,8 @@ def err_not_direct_base_or_virtual : Error<
 
 def err_in_class_initializer_non_const : Error<
   "non-const static data member must be initialized out of line">;
+def err_in_class_initializer_volatile : Error<
+  "static const volatile data member must be initialized out of line">;
 def err_in_class_initializer_bad_type : Error<
   "static data member of type %0 must be initialized out of line">;
 def ext_in_class_initializer_float_type : ExtWarn<

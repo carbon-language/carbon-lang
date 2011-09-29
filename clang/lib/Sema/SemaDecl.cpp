@@ -5852,12 +5852,13 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
 
     // We allow integer constant expressions in all cases.
     } else if (T->isIntegralOrEnumerationType()) {
-      // FIXME: In C++0x, a non-constexpr const static data member with an
-      // in-class initializer cannot be volatile.
-
       // Check whether the expression is a constant expression.
       SourceLocation Loc;
-      if (Init->isValueDependent())
+      if (getLangOptions().CPlusPlus0x && T.isVolatileQualified())
+        // In C++0x, a non-constexpr const static data member with an
+        // in-class initializer cannot be volatile.
+        Diag(VDecl->getLocation(), diag::err_in_class_initializer_volatile);
+      else if (Init->isValueDependent())
         ; // Nothing to check.
       else if (Init->isIntegerConstantExpr(Context, &Loc))
         ; // Ok, it's an ICE!
