@@ -49,6 +49,7 @@
 #include "llvm/Support/ValueHandle.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/StringSwitch.h"
 #include "llvm-c/Initialization.h"
 #include <algorithm>
 #include <climits>
@@ -1410,6 +1411,342 @@ Instruction *InstCombiner::visitExtractValueInst(ExtractValueInst &EV) {
   // and if again single-use then via load (gep (gep)) to load (gep).
   // However, double extracts from e.g. function arguments or return values
   // aren't handled yet.
+  return 0;
+}
+
+enum Personality_Type {
+  Unknown_Personality,
+  GNU_Ada_Personality,
+  GNU_CXX_Personality
+};
+
+/// RecognizePersonality - See if the given exception handling personality
+/// function is one that we understand.  If so, return a description of it;
+/// otherwise return Unknown_Personality.
+static Personality_Type RecognizePersonality(Value *Pers) {
+  Function *F = dyn_cast<Function>(Pers->stripPointerCasts());
+  if (!F)
+    return Unknown_Personality;
+  return StringSwitch<Personality_Type>(F->getName())
+    .Case("__gnat_eh_personality", GNU_Ada_Personality)
+    .Case("__gxx_personality_v0", GNU_CXX_Personality)
+    .Default(Unknown_Personality);
+}
+
+/// isCatchAll - Return 'true' if the given typeinfo will match anything.
+static bool isCatchAll(Personality_Type Personality, Constant *TypeInfo) {
+  switch (Personality) {
+  case Unknown_Personality:
+    return false;
+  case GNU_Ada_Personality:
+    // While __gnat_all_others_value will match any Ada exception, it doesn't
+    // match foreign exceptions (or didn't, before gcc-4.7).
+    return false;
+  case GNU_CXX_Personality:
+    return TypeInfo->isNullValue();
+  }
+  llvm_unreachable("Unknown personality!");
+}
+
+static bool shorter_filter(const Value *LHS, const Value *RHS) {
+  return
+    cast<ArrayType>(LHS->getType())->getNumElements()
+  <
+    cast<ArrayType>(RHS->getType())->getNumElements();
+}
+
+Instruction *InstCombiner::visitLandingPadInst(LandingPadInst &LI) {
+  // The logic here should be correct for any real-world personality function.
+  // However if that turns out not to be true, the offending logic can always
+  // be conditioned on the personality function, like the catch-all logic is.
+  Personality_Type Personality = RecognizePersonality(LI.getPersonalityFn());
+
+  // Simplify the list of clauses, eg by removing repeated catch clauses
+  // (these are often created by inlining).
+  bool MakeNewInstruction = false; // If true, recreate using the following:
+  SmallVector<Value *, 16> NewClauses; // - Clauses for the new instruction;
+  bool CleanupFlag = LI.isCleanup();   // - The new instruction is a cleanup.
+
+  SmallPtrSet<Value *, 16> AlreadyCaught; // Typeinfos known caught already.
+  for (unsigned i = 0, e = LI.getNumClauses(); i != e; ++i) {
+    bool isLastClause = i + 1 == e;
+    if (LI.isCatch(i)) {
+      // A catch clause.
+      Value *CatchClause = LI.getClause(i);
+      Constant *TypeInfo = cast<Constant>(CatchClause->stripPointerCasts());
+
+      // If we already saw this clause, there is no point in having a second
+      // copy of it.
+      if (AlreadyCaught.insert(TypeInfo)) {
+        // This catch clause was not already seen.
+        NewClauses.push_back(CatchClause);
+      } else {
+        // Repeated catch clause - drop the redundant copy.
+        MakeNewInstruction = true;
+      }
+
+      // If this is a catch-all then there is no point in keeping any following
+      // clauses or marking the landingpad as having a cleanup.
+      if (isCatchAll(Personality, TypeInfo)) {
+        if (!isLastClause)
+          MakeNewInstruction = true;
+        CleanupFlag = false;
+        break;
+      }
+    } else {
+      // A filter clause.  If any of the filter elements were already caught
+      // then they can be dropped from the filter.  It is tempting to try to
+      // exploit the filter further by saying that any typeinfo that does not
+      // occur in the filter can't be caught later (and thus can be dropped).
+      // However this would be wrong, since typeinfos can match without being
+      // equal (for example if one represents a C++ class, and the other some
+      // class derived from it).
+      assert(LI.isFilter(i) && "Unsupported landingpad clause!");
+      Value *FilterClause = LI.getClause(i);
+      ArrayType *FilterType = cast<ArrayType>(FilterClause->getType());
+      unsigned NumTypeInfos = FilterType->getNumElements();
+
+      // An empty filter catches everything, so there is no point in keeping any
+      // following clauses or marking the landingpad as having a cleanup.  By
+      // dealing with this case here the following code is made a bit simpler.
+      if (!NumTypeInfos) {
+        NewClauses.push_back(FilterClause);
+        if (!isLastClause)
+          MakeNewInstruction = true;
+        CleanupFlag = false;
+        break;
+      }
+
+      bool MakeNewFilter = false; // If true, make a new filter.
+      SmallVector<Constant *, 16> NewFilterElts; // New elements.
+      if (isa<ConstantAggregateZero>(FilterClause)) {
+        // Not an empty filter - it contains at least one null typeinfo.
+        assert(NumTypeInfos > 0 && "Should have handled empty filter already!");
+        Constant *TypeInfo =
+          Constant::getNullValue(FilterType->getElementType());
+        // If this typeinfo is a catch-all then the filter can never match.
+        if (isCatchAll(Personality, TypeInfo)) {
+          // Throw the filter away.
+          MakeNewInstruction = true;
+          continue;
+        }
+
+        // There is no point in having multiple copies of this typeinfo, so
+        // discard all but the first copy if there is more than one.
+        NewFilterElts.push_back(TypeInfo);
+        if (NumTypeInfos > 1)
+          MakeNewFilter = true;
+      } else {
+        ConstantArray *Filter = cast<ConstantArray>(FilterClause);
+        SmallPtrSet<Value *, 16> SeenInFilter; // For uniquing the elements.
+        NewFilterElts.reserve(NumTypeInfos);
+
+        // Remove any filter elements that were already caught or that already
+        // occurred in the filter.  While there, see if any of the elements are
+        // catch-alls.  If so, the filter can be discarded.
+        bool SawCatchAll = false;
+        for (unsigned j = 0; j != NumTypeInfos; ++j) {
+          Value *Elt = Filter->getOperand(j);
+          Constant *TypeInfo = cast<Constant>(Elt->stripPointerCasts());
+          if (isCatchAll(Personality, TypeInfo)) {
+            // This element is a catch-all.  Bail out, noting this fact.
+            SawCatchAll = true;
+            break;
+          }
+          if (AlreadyCaught.count(TypeInfo))
+            // Already caught by an earlier clause, so having it in the filter
+            // is pointless.
+            continue;
+          // There is no point in having multiple copies of the same typeinfo in
+          // a filter, so only add it if we didn't already.
+          if (SeenInFilter.insert(TypeInfo))
+            NewFilterElts.push_back(cast<Constant>(Elt));
+        }
+        // A filter containing a catch-all cannot match anything by definition.
+        if (SawCatchAll) {
+          // Throw the filter away.
+          MakeNewInstruction = true;
+          continue;
+        }
+
+        // If we dropped something from the filter, make a new one.
+        if (NewFilterElts.size() < NumTypeInfos)
+          MakeNewFilter = true;
+      }
+      if (MakeNewFilter) {
+        FilterType = ArrayType::get(FilterType->getElementType(),
+                                    NewFilterElts.size());
+        FilterClause = ConstantArray::get(FilterType, NewFilterElts);
+        MakeNewInstruction = true;
+      }
+
+      NewClauses.push_back(FilterClause);
+
+      // If the new filter is empty then it will catch everything so there is
+      // no point in keeping any following clauses or marking the landingpad
+      // as having a cleanup.  The case of the original filter being empty was
+      // already handled above.
+      if (MakeNewFilter && !NewFilterElts.size()) {
+        assert(MakeNewInstruction && "New filter but not a new instruction!");
+        CleanupFlag = false;
+        break;
+      }
+    }
+  }
+
+  // If several filters occur in a row then reorder them so that the shortest
+  // filters come first (those with the smallest number of elements).  This is
+  // advantageous because shorter filters are more likely to match, speeding up
+  // unwinding, but mostly because it increases the effectiveness of the other
+  // filter optimizations below.
+  for (unsigned i = 0, e = NewClauses.size(); i + 1 < e; ) {
+    unsigned j;
+    // Find the maximal 'j' s.t. the range [i, j) consists entirely of filters.
+    for (j = i; j != e; ++j)
+      if (!isa<ArrayType>(NewClauses[j]->getType()))
+        break;
+
+    // Check whether the filters are already sorted by length.  We need to know
+    // if sorting them is actually going to do anything so that we only make a
+    // new landingpad instruction if it does.
+    for (unsigned k = i; k + 1 < j; ++k)
+      if (shorter_filter(NewClauses[k+1], NewClauses[k])) {
+        // Not sorted, so sort the filters now.  Doing an unstable sort would be
+        // correct too but reordering filters pointlessly might confuse users.
+        std::stable_sort(NewClauses.begin() + i, NewClauses.begin() + j,
+                         shorter_filter);
+        MakeNewInstruction = true;
+        break;
+      }
+
+    // Look for the next batch of filters.
+    i = j + 1;
+  }
+
+  // If typeinfos matched if and only if equal, then the elements of a filter L
+  // that occurs later than a filter F could be replaced by the intersection of
+  // the elements of F and L.  In reality two typeinfos can match without being
+  // equal (for example if one represents a C++ class, and the other some class
+  // derived from it) so it would be wrong to perform this transform in general.
+  // However the transform is correct and useful if F is a subset of L.  In that
+  // case L can be replaced by F, and thus removed altogether since repeating a
+  // filter is pointless.  So here we look at all pairs of filters F and L where
+  // L follows F in the list of clauses, and remove L if every element of F is
+  // an element of L.  This can occur when inlining C++ functions with exception
+  // specifications.
+  for (unsigned i = 0; i + 1 < NewClauses.size(); ++i) {
+    // Examine each filter in turn.
+    Value *Filter = NewClauses[i];
+    ArrayType *FTy = dyn_cast<ArrayType>(Filter->getType());
+    if (!FTy)
+      // Not a filter - skip it.
+      continue;
+    unsigned FElts = FTy->getNumElements();
+    // Examine each filter following this one.  Doing this backwards means that
+    // we don't have to worry about filters disappearing under us when removed.
+    for (unsigned j = NewClauses.size() - 1; j != i; --j) {
+      Value *LFilter = NewClauses[j];
+      ArrayType *LTy = dyn_cast<ArrayType>(LFilter->getType());
+      if (!LTy)
+        // Not a filter - skip it.
+        continue;
+      // If Filter is a subset of LFilter, i.e. every element of Filter is also
+      // an element of LFilter, then discard LFilter.
+      SmallVector<Value *, 16>::iterator J = NewClauses.begin() + j;
+      // If Filter is empty then it is a subset of LFilter.
+      if (!FElts) {
+        // Discard LFilter.
+        NewClauses.erase(J);
+        MakeNewInstruction = true;
+        // Move on to the next filter.
+        continue;
+      }
+      unsigned LElts = LTy->getNumElements();
+      // If Filter is longer than LFilter then it cannot be a subset of it.
+      if (FElts > LElts)
+        // Move on to the next filter.
+        continue;
+      // At this point we know that LFilter has at least one element.
+      if (isa<ConstantAggregateZero>(LFilter)) { // LFilter only contains zeros.
+        // Filter is a subset of LFilter iff Filter contains only zeros (as we
+        // already know that Filter is not longer than LFilter).
+        if (isa<ConstantAggregateZero>(Filter)) {
+          assert(FElts <= LElts && "Should have handled this case earlier!");
+          // Discard LFilter.
+          NewClauses.erase(J);
+          MakeNewInstruction = true;
+        }
+        // Move on to the next filter.
+        continue;
+      }
+      ConstantArray *LArray = cast<ConstantArray>(LFilter);
+      if (isa<ConstantAggregateZero>(Filter)) { // Filter only contains zeros.
+        // Since Filter is non-empty and contains only zeros, it is a subset of
+        // LFilter iff LFilter contains a zero.
+        assert(FElts > 0 && "Should have eliminated the empty filter earlier!");
+        for (unsigned l = 0; l != LElts; ++l)
+          if (LArray->getOperand(l)->isNullValue()) {
+            // LFilter contains a zero - discard it.
+            NewClauses.erase(J);
+            MakeNewInstruction = true;
+            break;
+          }
+        // Move on to the next filter.
+        continue;
+      }
+      // At this point we know that both filters are ConstantArrays.  Loop over
+      // operands to see whether every element of Filter is also an element of
+      // LFilter.  Since filters tend to be short this is probably faster than
+      // using a method that scales nicely.
+      ConstantArray *FArray = cast<ConstantArray>(Filter);
+      bool AllFound = true;
+      for (unsigned f = 0; f != FElts; ++f) {
+        Value *FTypeInfo = FArray->getOperand(f)->stripPointerCasts();
+        AllFound = false;
+        for (unsigned l = 0; l != LElts; ++l) {
+          Value *LTypeInfo = LArray->getOperand(l)->stripPointerCasts();
+          if (LTypeInfo == FTypeInfo) {
+            AllFound = true;
+            break;
+          }
+        }
+        if (!AllFound)
+          break;
+      }
+      if (AllFound) {
+        // Discard LFilter.
+        NewClauses.erase(J);
+        MakeNewInstruction = true;
+      }
+      // Move on to the next filter.
+    }
+  }
+
+  // If we changed any of the clauses, replace the old landingpad instruction
+  // with a new one.
+  if (MakeNewInstruction) {
+    LandingPadInst *NLI = LandingPadInst::Create(LI.getType(),
+                                                 LI.getPersonalityFn(),
+                                                 NewClauses.size());
+    for (unsigned i = 0, e = NewClauses.size(); i != e; ++i)
+      NLI->addClause(NewClauses[i]);
+    // A landing pad with no clauses must have the cleanup flag set.  It is
+    // theoretically possible, though highly unlikely, that we eliminated all
+    // clauses.  If so, force the cleanup flag to true.
+    if (NewClauses.empty())
+      CleanupFlag = true;
+    NLI->setCleanup(CleanupFlag);
+    return NLI;
+  }
+
+  // Even if none of the clauses changed, we may nonetheless have understood
+  // that the cleanup flag is pointless.  Clear it if so.
+  if (LI.isCleanup() != CleanupFlag) {
+    assert(!CleanupFlag && "Adding a cleanup, not removing one?!");
+    LI.setCleanup(CleanupFlag);
+    return &LI;
+  }
+
   return 0;
 }
 

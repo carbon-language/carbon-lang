@@ -193,6 +193,7 @@ public:
   Instruction *visitExtractElementInst(ExtractElementInst &EI);
   Instruction *visitShuffleVectorInst(ShuffleVectorInst &SVI);
   Instruction *visitExtractValueInst(ExtractValueInst &EV);
+  Instruction *visitLandingPadInst(LandingPadInst &LI);
 
   // visitInstruction - Specify what to return for unhandled instructions...
   Instruction *visitInstruction(Instruction &I) { return 0; }
