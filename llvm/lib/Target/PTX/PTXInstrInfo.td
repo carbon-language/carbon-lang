@@ -655,7 +655,8 @@ let isReMaterializable = 1, isAsCheapAsAMove = 1 in {
 
 // PTX cvt instructions
 // Note all of these may actually be used, we just define all possible patterns
-// here.
+// here (that make sense).
+// FIXME: Can we collapse this somehow into a multiclass def?
 
 // To i16
 def CVTu16u32
@@ -663,13 +664,17 @@ def CVTu16u32
 def CVTu16u64
   : InstPTX<(outs RegI16:$d), (ins RegI64:$a), "cvt.u16.u64\t$d, $a", []>;
 def CVTu16f32
-  : InstPTX<(outs RegI16:$d), (ins RegF32:$a), "cvt.rzi.u16.f32\t$d, $a", []>;
+  : InstPTX<(outs RegI16:$d), (ins RndMode:$r, RegF32:$a),
+            "cvt$r.u16.f32\t$d, $a", []>;
 def CVTs16f32
-  : InstPTX<(outs RegI16:$d), (ins RegF32:$a), "cvt.rzi.s16.f32\t$d, $a", []>;
+  : InstPTX<(outs RegI16:$d), (ins RndMode:$r, RegF32:$a),
+            "cvt$r.s16.f32\t$d, $a", []>;
 def CVTu16f64
-  : InstPTX<(outs RegI16:$d), (ins RegF64:$a), "cvt.rzi.u16.f64\t$d, $a", []>;
+  : InstPTX<(outs RegI16:$d), (ins RndMode:$r, RegF64:$a),
+            "cvt$r.u16.f64\t$d, $a", []>;
 def CVTs16f64
-  : InstPTX<(outs RegI16:$d), (ins RegF64:$a), "cvt.rzi.s16.f64\t$d, $a", []>;
+  : InstPTX<(outs RegI16:$d), (ins RndMode:$r, RegF64:$a),
+            "cvt$r.s16.f64\t$d, $a", []>;
 
 // To i32
 def CVTu32u16
@@ -679,13 +684,17 @@ def CVTs32s16
 def CVTu32u64
   : InstPTX<(outs RegI32:$d), (ins RegI64:$a), "cvt.u32.u64\t$d, $a", []>;
 def CVTu32f32
-  : InstPTX<(outs RegI32:$d), (ins RegF32:$a), "cvt.rzi.u32.f32\t$d, $a", []>;
+  : InstPTX<(outs RegI32:$d), (ins RndMode:$r, RegF32:$a),
+            "cvt$r.u32.f32\t$d, $a", []>;
 def CVTs32f32
-  : InstPTX<(outs RegI32:$d), (ins RegF32:$a), "cvt.rzi.s32.f32\t$d, $a", []>;
+  : InstPTX<(outs RegI32:$d), (ins RndMode:$r, RegF32:$a),
+            "cvt$r.s32.f32\t$d, $a", []>;
 def CVTu32f64
-  : InstPTX<(outs RegI32:$d), (ins RegF64:$a), "cvt.rzi.u32.f64\t$d, $a", []>;
+  : InstPTX<(outs RegI32:$d), (ins RndMode:$r, RegF64:$a),
+            "cvt$r.u32.f64\t$d, $a", []>;
 def CVTs32f64
-  : InstPTX<(outs RegI32:$d), (ins RegF64:$a), "cvt.rzi.s32.f64\t$d, $a", []>;
+  : InstPTX<(outs RegI32:$d), (ins RndMode:$r, RegF64:$a),
+            "cvt$r.s32.f64\t$d, $a", []>;
 
 // To i64
 def CVTu64u16
@@ -697,43 +706,60 @@ def CVTu64u32
 def CVTs64s32
   : InstPTX<(outs RegI64:$d), (ins RegI32:$a), "cvt.s64.s32\t$d, $a", []>;
 def CVTu64f32
-  : InstPTX<(outs RegI64:$d), (ins RegF32:$a), "cvt.rzi.u64.f32\t$d, $a", []>;
+  : InstPTX<(outs RegI64:$d), (ins RndMode:$r, RegF32:$a),
+            "cvt$r.u64.f32\t$d, $a", []>;
 def CVTs64f32
-  : InstPTX<(outs RegI64:$d), (ins RegF32:$a), "cvt.rzi.s64.f32\t$d, $a", []>;
+  : InstPTX<(outs RegI64:$d), (ins RndMode:$r, RegF32:$a),
+            "cvt$r.s64.f32\t$d, $a", []>;
 def CVTu64f64
-  : InstPTX<(outs RegI64:$d), (ins RegF64:$a), "cvt.rzi.u64.f64\t$d, $a", []>;
+  : InstPTX<(outs RegI64:$d), (ins RndMode:$r, RegF64:$a),
+            "cvt$r.u64.f64\t$d, $a", []>;
 def CVTs64f64
-  : InstPTX<(outs RegI64:$d), (ins RegF64:$a), "cvt.rzi.s64.f64\t$d, $a", []>;
+  : InstPTX<(outs RegI64:$d), (ins RndMode:$r, RegF64:$a),
+            "cvt$r.s64.f64\t$d, $a", []>;
 
 // To f32
 def CVTf32u16
-  : InstPTX<(outs RegF32:$d), (ins RegI16:$a), "cvt.rn.f32.u16\t$d, $a", []>;
+  : InstPTX<(outs RegF32:$d), (ins RndMode:$r, RegI16:$a),
+            "cvt$r.f32.u16\t$d, $a", []>;
 def CVTf32s16
-  : InstPTX<(outs RegF32:$d), (ins RegI16:$a), "cvt.rn.f32.s16\t$d, $a", []>;
+  : InstPTX<(outs RegF32:$d), (ins RndMode:$r, RegI16:$a),
+            "cvt$r.f32.s16\t$d, $a", []>;
 def CVTf32u32
-  : InstPTX<(outs RegF32:$d), (ins RegI32:$a), "cvt.rn.f32.u32\t$d, $a", []>;
+  : InstPTX<(outs RegF32:$d), (ins RndMode:$r, RegI32:$a),
+            "cvt$r.f32.u32\t$d, $a", []>;
 def CVTf32s32
-  : InstPTX<(outs RegF32:$d), (ins RegI32:$a), "cvt.rn.f32.s32\t$d, $a", []>;
+  : InstPTX<(outs RegF32:$d), (ins RndMode:$r, RegI32:$a),
+            "cvt$r.f32.s32\t$d, $a", []>;
 def CVTf32u64
-  : InstPTX<(outs RegF32:$d), (ins RegI64:$a), "cvt.rn.f32.u64\t$d, $a", []>;
+  : InstPTX<(outs RegF32:$d), (ins RndMode:$r, RegI64:$a),
+            "cvt$r.f32.u64\t$d, $a", []>;
 def CVTf32s64
-  : InstPTX<(outs RegF32:$d), (ins RegI64:$a), "cvt.rn.f32.s64\t$d, $a", []>;
+  : InstPTX<(outs RegF32:$d), (ins RndMode:$r, RegI64:$a),
+            "cvt$r.f32.s64\t$d, $a", []>;
 def CVTf32f64
-  : InstPTX<(outs RegF32:$d), (ins RegF64:$a), "cvt.rn.f32.f64\t$d, $a", []>;
+  : InstPTX<(outs RegF32:$d), (ins RndMode:$r, RegF64:$a),
+            "cvt$r.f32.f64\t$d, $a", []>;
 
 // To f64
 def CVTf64u16
-  : InstPTX<(outs RegF64:$d), (ins RegI16:$a), "cvt.rn.f64.u16\t$d, $a", []>;
+  : InstPTX<(outs RegF64:$d), (ins RndMode:$r, RegI16:$a),
+            "cvt$r.f64.u16\t$d, $a", []>;
 def CVTf64s16
-  : InstPTX<(outs RegF64:$d), (ins RegI16:$a), "cvt.rn.f64.s16\t$d, $a", []>;
+  : InstPTX<(outs RegF64:$d), (ins RndMode:$r, RegI16:$a),
+            "cvt$r.f64.s16\t$d, $a", []>;
 def CVTf64u32
-  : InstPTX<(outs RegF64:$d), (ins RegI32:$a), "cvt.rn.f64.u32\t$d, $a", []>;
+  : InstPTX<(outs RegF64:$d), (ins RndMode:$r, RegI32:$a),
+            "cvt$r.f64.u32\t$d, $a", []>;
 def CVTf64s32
-  : InstPTX<(outs RegF64:$d), (ins RegI32:$a), "cvt.rn.f64.s32\t$d, $a", []>;
+  : InstPTX<(outs RegF64:$d), (ins RndMode:$r, RegI32:$a),
+            "cvt$r.f64.s32\t$d, $a", []>;
 def CVTf64u64
-  : InstPTX<(outs RegF64:$d), (ins RegI64:$a), "cvt.rn.f64.u64\t$d, $a", []>;
+  : InstPTX<(outs RegF64:$d), (ins RndMode:$r, RegI64:$a),
+            "cvt$r.f64.u64\t$d, $a", []>;
 def CVTf64s64
-  : InstPTX<(outs RegF64:$d), (ins RegI64:$a), "cvt.rn.f64.s64\t$d, $a", []>;
+  : InstPTX<(outs RegF64:$d), (ins RndMode:$r, RegI64:$a),
+            "cvt$r.f64.s64\t$d, $a", []>;
 def CVTf64f32
   : InstPTX<(outs RegF64:$d), (ins RegF32:$a), "cvt.f64.f32\t$d, $a", []>;
 
@@ -889,10 +915,10 @@ def : Pat<(i16 (sext RegPred:$a)),      (SELPi16ii RegPred:$a, 0xFFFF, 0)>;
 def : Pat<(i16 (zext RegPred:$a)),      (SELPi16ii RegPred:$a, 1, 0)>;
 def : Pat<(i16 (trunc RegI32:$a)),      (CVTu16u32 RegI32:$a)>;
 def : Pat<(i16 (trunc RegI64:$a)),      (CVTu16u64 RegI64:$a)>;
-def : Pat<(i16 (fp_to_uint RegF32:$a)), (CVTu16f32 RegF32:$a)>;
-def : Pat<(i16 (fp_to_sint RegF32:$a)), (CVTs16f32 RegF32:$a)>;
-def : Pat<(i16 (fp_to_uint RegF64:$a)), (CVTu16f64 RegF64:$a)>;
-def : Pat<(i16 (fp_to_sint RegF64:$a)), (CVTs16f64 RegF64:$a)>;
+def : Pat<(i16 (fp_to_uint RegF32:$a)), (CVTu16f32 RndDefault, RegF32:$a)>;
+def : Pat<(i16 (fp_to_sint RegF32:$a)), (CVTs16f32 RndDefault, RegF32:$a)>;
+def : Pat<(i16 (fp_to_uint RegF64:$a)), (CVTu16f64 RndDefault, RegF64:$a)>;
+def : Pat<(i16 (fp_to_sint RegF64:$a)), (CVTs16f64 RndDefault, RegF64:$a)>;
 
 // Conversion to u32
 def : Pat<(i32 (anyext RegPred:$a)),    (SELPi32ii RegPred:$a, 1, 0)>;
@@ -902,10 +928,10 @@ def : Pat<(i32 (anyext RegI16:$a)),     (CVTu32u16 RegI16:$a)>;
 def : Pat<(i32 (sext RegI16:$a)),       (CVTs32s16 RegI16:$a)>;
 def : Pat<(i32 (zext RegI16:$a)),       (CVTu32u16 RegI16:$a)>;
 def : Pat<(i32 (trunc RegI64:$a)),      (CVTu32u64 RegI64:$a)>;
-def : Pat<(i32 (fp_to_uint RegF32:$a)), (CVTu32f32 RegF32:$a)>;
-def : Pat<(i32 (fp_to_sint RegF32:$a)), (CVTs32f32 RegF32:$a)>;
-def : Pat<(i32 (fp_to_uint RegF64:$a)), (CVTu32f64 RegF64:$a)>;
-def : Pat<(i32 (fp_to_sint RegF64:$a)), (CVTs32f64 RegF64:$a)>;
+def : Pat<(i32 (fp_to_uint RegF32:$a)), (CVTu32f32 RndDefault, RegF32:$a)>;
+def : Pat<(i32 (fp_to_sint RegF32:$a)), (CVTs32f32 RndDefault, RegF32:$a)>;
+def : Pat<(i32 (fp_to_uint RegF64:$a)), (CVTu32f64 RndDefault, RegF64:$a)>;
+def : Pat<(i32 (fp_to_sint RegF64:$a)), (CVTs32f64 RndDefault, RegF64:$a)>;
 def : Pat<(i32 (bitconvert RegF32:$a)), (MOVi32f32 RegF32:$a)>;
 
 // Conversion to u64
@@ -919,33 +945,33 @@ def : Pat<(i64 (zext RegI16:$a)),       (CVTu64u16 RegI16:$a)>;
 def : Pat<(i64 (anyext RegI32:$a)),     (CVTu64u32 RegI32:$a)>;
 def : Pat<(i64 (sext RegI32:$a)),       (CVTs64s32 RegI32:$a)>;
 def : Pat<(i64 (zext RegI32:$a)),       (CVTu64u32 RegI32:$a)>;
-def : Pat<(i64 (fp_to_uint RegF32:$a)), (CVTu64f32 RegF32:$a)>;
-def : Pat<(i64 (fp_to_sint RegF32:$a)), (CVTs64f32 RegF32:$a)>;
-def : Pat<(i64 (fp_to_uint RegF64:$a)), (CVTu64f64 RegF64:$a)>;
-def : Pat<(i64 (fp_to_sint RegF64:$a)), (CVTs64f64 RegF64:$a)>;
+def : Pat<(i64 (fp_to_uint RegF32:$a)), (CVTu64f32 RndDefault, RegF32:$a)>;
+def : Pat<(i64 (fp_to_sint RegF32:$a)), (CVTs64f32 RndDefault, RegF32:$a)>;
+def : Pat<(i64 (fp_to_uint RegF64:$a)), (CVTu64f64 RndDefault, RegF64:$a)>;
+def : Pat<(i64 (fp_to_sint RegF64:$a)), (CVTs64f64 RndDefault, RegF64:$a)>;
 def : Pat<(i64 (bitconvert RegF64:$a)), (MOVi64f64 RegF64:$a)>;
 
 // Conversion to f32
 def : Pat<(f32 (uint_to_fp RegPred:$a)), (SELPf32rr RegPred:$a,
                                         (MOVf32i32 0x3F800000), (MOVf32i32 0))>;
-def : Pat<(f32 (uint_to_fp RegI16:$a)),  (CVTf32u16 RegI16:$a)>;
-def : Pat<(f32 (sint_to_fp RegI16:$a)),  (CVTf32s16 RegI16:$a)>;
-def : Pat<(f32 (uint_to_fp RegI32:$a)),  (CVTf32u32 RegI32:$a)>;
-def : Pat<(f32 (sint_to_fp RegI32:$a)),  (CVTf32s32 RegI32:$a)>;
-def : Pat<(f32 (uint_to_fp RegI64:$a)),  (CVTf32u64 RegI64:$a)>;
-def : Pat<(f32 (sint_to_fp RegI64:$a)),  (CVTf32s64 RegI64:$a)>;
-def : Pat<(f32 (fround RegF64:$a)),      (CVTf32f64 RegF64:$a)>;
+def : Pat<(f32 (uint_to_fp RegI16:$a)),  (CVTf32u16 RndDefault, RegI16:$a)>;
+def : Pat<(f32 (sint_to_fp RegI16:$a)),  (CVTf32s16 RndDefault, RegI16:$a)>;
+def : Pat<(f32 (uint_to_fp RegI32:$a)),  (CVTf32u32 RndDefault, RegI32:$a)>;
+def : Pat<(f32 (sint_to_fp RegI32:$a)),  (CVTf32s32 RndDefault, RegI32:$a)>;
+def : Pat<(f32 (uint_to_fp RegI64:$a)),  (CVTf32u64 RndDefault, RegI64:$a)>;
+def : Pat<(f32 (sint_to_fp RegI64:$a)),  (CVTf32s64 RndDefault, RegI64:$a)>;
+def : Pat<(f32 (fround RegF64:$a)),      (CVTf32f64 RndDefault, RegF64:$a)>;
 def : Pat<(f32 (bitconvert RegI32:$a)),  (MOVf32i32 RegI32:$a)>;
 
 // Conversion to f64
 def : Pat<(f64 (uint_to_fp RegPred:$a)), (SELPf64rr RegPred:$a,
                                 (MOVf64i64 0x3F80000000000000), (MOVf64i64 0))>;
-def : Pat<(f64 (uint_to_fp RegI16:$a)), (CVTf64u16 RegI16:$a)>;
-def : Pat<(f64 (sint_to_fp RegI16:$a)), (CVTf64s16 RegI16:$a)>;
-def : Pat<(f64 (uint_to_fp RegI32:$a)), (CVTf64u32 RegI32:$a)>;
-def : Pat<(f64 (sint_to_fp RegI32:$a)), (CVTf64s32 RegI32:$a)>;
-def : Pat<(f64 (uint_to_fp RegI64:$a)), (CVTf64u64 RegI64:$a)>;
-def : Pat<(f64 (sint_to_fp RegI64:$a)), (CVTf64s64 RegI64:$a)>;
+def : Pat<(f64 (uint_to_fp RegI16:$a)), (CVTf64u16 RndDefault, RegI16:$a)>;
+def : Pat<(f64 (sint_to_fp RegI16:$a)), (CVTf64s16 RndDefault, RegI16:$a)>;
+def : Pat<(f64 (uint_to_fp RegI32:$a)), (CVTf64u32 RndDefault, RegI32:$a)>;
+def : Pat<(f64 (sint_to_fp RegI32:$a)), (CVTf64s32 RndDefault, RegI32:$a)>;
+def : Pat<(f64 (uint_to_fp RegI64:$a)), (CVTf64u64 RndDefault, RegI64:$a)>;
+def : Pat<(f64 (sint_to_fp RegI64:$a)), (CVTf64s64 RndDefault, RegI64:$a)>;
 def : Pat<(f64 (fextend RegF32:$a)),    (CVTf64f32 RegF32:$a)>;
 def : Pat<(f64 (bitconvert RegI64:$a)), (MOVf64i64 RegI64:$a)>;
 
