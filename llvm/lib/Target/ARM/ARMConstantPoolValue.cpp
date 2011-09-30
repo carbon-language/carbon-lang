@@ -69,6 +69,20 @@ const MachineBasicBlock *ARMConstantPoolValue::getMBB() const {
   return MBB;
 }
 
+const char *ARMConstantPoolValue::getModifierText() const {
+  switch (Modifier) {
+  default: llvm_unreachable("Unknown modifier!");
+    // FIXME: Are these case sensitive? It'd be nice to lower-case all the
+    // strings if that's legal.
+  case ARMCP::no_modifier: return "none";
+  case ARMCP::TLSGD:       return "tlsgd";
+  case ARMCP::GOT:         return "GOT";
+  case ARMCP::GOTOFF:      return "GOTOFF";
+  case ARMCP::GOTTPOFF:    return "gottpoff";
+  case ARMCP::TPOFF:       return "tpoff";
+  }
+}
+
 static bool CPV_streq(const char *S1, const char *S2) {
   if (S1 == S2)
     return true;

@@ -82,28 +82,20 @@ public:
   const char *getSymbol() const { return S; }
   const BlockAddress *getBlockAddress() const;
   const MachineBasicBlock *getMBB() const;
+
   ARMCP::ARMCPModifier getModifier() const { return Modifier; }
-  const char *getModifierText() const {
-    switch (Modifier) {
-    default: llvm_unreachable("Unknown modifier!");
-    // FIXME: Are these case sensitive? It'd be nice to lower-case all the
-    // strings if that's legal.
-    case ARMCP::no_modifier: return "none";
-    case ARMCP::TLSGD:       return "tlsgd";
-    case ARMCP::GOT:         return "GOT";
-    case ARMCP::GOTOFF:      return "GOTOFF";
-    case ARMCP::GOTTPOFF:    return "gottpoff";
-    case ARMCP::TPOFF:       return "tpoff";
-    }
-  }
+  const char *getModifierText() const;
   bool hasModifier() const { return Modifier != ARMCP::no_modifier; }
+
   bool mustAddCurrentAddress() const { return AddCurrentAddress; }
+
   unsigned getLabelId() const { return LabelId; }
   unsigned char getPCAdjustment() const { return PCAdjust; }
+
   bool isGlobalValue() const { return Kind == ARMCP::CPValue; }
   bool isExtSymbol() const { return Kind == ARMCP::CPExtSymbol; }
   bool isBlockAddress() { return Kind == ARMCP::CPBlockAddress; }
-  bool isLSDA() { return Kind == ARMCP::CPLSDA; }
+  bool isLSDA() const { return Kind == ARMCP::CPLSDA; }
   bool isMachineBasicBlock() { return Kind == ARMCP::CPMachineBasicBlock; }
 
   virtual unsigned getRelocationInfo() const { return 2; }
