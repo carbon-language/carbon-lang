@@ -69,14 +69,15 @@ void PTXInstPrinter::printPredicate(const MCInst *MI, raw_ostream &O) {
   }
 
   int PredOp = MI->getOperand(OpIndex).getImm();
-  if (PredOp != PTX::PRED_NONE) {
-    if (PredOp == PTX::PRED_NEGATE) {
-      O << '!';
-    } else {
-      O << '@';
-    }
-    printOperand(MI, RegIndex, O);
-  }
+  if (PredOp == PTXPredicate::None)
+    return;
+
+  if (PredOp == PTXPredicate::Negate)
+    O << '!';
+  else
+    O << '@';
+
+  printOperand(MI, RegIndex, O);
 }
 
 void PTXInstPrinter::printCall(const MCInst *MI, raw_ostream &O) {
@@ -84,29 +85,27 @@ void PTXInstPrinter::printCall(const MCInst *MI, raw_ostream &O) {
   // The first two operands are the predicate slot
   unsigned Index = 2;
   unsigned NumRets = MI->getOperand(Index++).getImm();
-  for (unsigned i = 0; i < NumRets; ++i) {
-    if (i == 0) {
-      O << "(";
-    } else {
-      O << ", ";
-    }
-    printOperand(MI, Index++, O);
-  }
 
   if (NumRets > 0) {
+    O << "(";
+    printOperand(MI, Index++, O);
+    for (unsigned i = 1; i < NumRets; ++i) {
+      O << ", ";
+      printOperand(MI, Index++, O);
+    }
     O << "), ";
   }
 
   O << *(MI->getOperand(Index++).getExpr()) << ", (";
 
   unsigned NumArgs = MI->getOperand(Index++).getImm();
-  for (unsigned i = 0; i < NumArgs; ++i) {
+  if (NumArgs > 0) {
     printOperand(MI, Index++, O);
-    if (i < NumArgs-1) {
+    for (unsigned i = 1; i < NumArgs; ++i) {
       O << ", ";
+      printOperand(MI, Index++, O);
     }
   }
-
   O << ")";
 }
 
@@ -140,11 +139,12 @@ void PTXInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
 
 void PTXInstPrinter::printMemOperand(const MCInst *MI, unsigned OpNo,
                                      raw_ostream &O) {
+  // By definition, operand OpNo+1 is an i32imm
+  const MCOperand &Op2 = MI->getOperand(OpNo+1);
   printOperand(MI, OpNo, O);
-  if (MI->getOperand(OpNo+1).isImm() && MI->getOperand(OpNo+1).getImm() == 0)
+  if (Op2.getImm() == 0)
     return; // don't print "+0"
-  O << "+";
-  printOperand(MI, OpNo+1, O);
+  O << "+" << Op2.getImm();
 }
 
 void PTXInstPrinter::printRoundingMode(const MCInst *MI, unsigned OpNo,

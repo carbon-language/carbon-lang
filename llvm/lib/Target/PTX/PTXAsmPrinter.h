@@ -39,24 +39,11 @@ public:
   virtual void EmitFunctionEntryLabel();
   virtual void EmitInstruction(const MachineInstr *MI);
 
-  void printOperand(const MachineInstr *MI, int opNum, raw_ostream &OS);
-  void printMemOperand(const MachineInstr *MI, int opNum, raw_ostream &OS,
-                       const char *Modifier = 0);
-  void printReturnOperand(const MachineInstr *MI, int opNum, raw_ostream &OS,
-                          const char *Modifier = 0);
-  void printPredicateOperand(const MachineInstr *MI, raw_ostream &O);
-
-  void printCall(const MachineInstr *MI, raw_ostream &O);
-
   unsigned GetOrCreateSourceID(StringRef FileName,
                                StringRef DirName);
 
   MCOperand GetSymbolRef(const MachineOperand &MO, const MCSymbol *Symbol);
-  bool lowerOperand(const MachineOperand &MO, MCOperand &MCOp);
-
-  // autogen'd.
-  void printInstruction(const MachineInstr *MI, raw_ostream &OS);
-  static const char *getRegisterName(unsigned RegNo);
+  MCOperand lowerOperand(const MachineOperand &MO);
 
 private:
   void EmitVariableDeclaration(const GlobalVariable *gv);

@@ -72,11 +72,11 @@ static const char *getRegisterTypeName(unsigned RegNo,
 static const char *getStateSpaceName(unsigned addressSpace) {
   switch (addressSpace) {
   default: llvm_unreachable("Unknown state space");
-  case PTX::GLOBAL:    return "global";
-  case PTX::CONSTANT:  return "const";
-  case PTX::LOCAL:     return "local";
-  case PTX::PARAMETER: return "param";
-  case PTX::SHARED:    return "shared";
+  case PTXStateSpace::Global:    return "global";
+  case PTXStateSpace::Constant:  return "const";
+  case PTXStateSpace::Local:     return "local";
+  case PTXStateSpace::Parameter: return "param";
+  case PTXStateSpace::Shared:    return "shared";
   }
   return NULL;
 }
@@ -279,145 +279,9 @@ void PTXAsmPrinter::EmitFunctionBodyEnd() {
 }
 
 void PTXAsmPrinter::EmitInstruction(const MachineInstr *MI) {
-#if 0
-  std::string str;
-  str.reserve(64);
-
-  raw_string_ostream OS(str);
-
-  DebugLoc DL = MI->getDebugLoc();
-  if (!DL.isUnknown()) {
-
-    const MDNode *S = DL.getScope(MF->getFunction()->getContext());
-
-    // This is taken from DwarfDebug.cpp, which is conveniently not a public
-    // LLVM class.
-    StringRef Fn;
-    StringRef Dir;
-    unsigned Src = 1;
-    if (S) {
-      DIDescriptor Scope(S);
-      if (Scope.isCompileUnit()) {
-        DICompileUnit CU(S);
-        Fn = CU.getFilename();
-        Dir = CU.getDirectory();
-      } else if (Scope.isFile()) {
-        DIFile F(S);
-        Fn = F.getFilename();
-        Dir = F.getDirectory();
-      } else if (Scope.isSubprogram()) {
-        DISubprogram SP(S);
-        Fn = SP.getFilename();
-        Dir = SP.getDirectory();
-      } else if (Scope.isLexicalBlock()) {
-        DILexicalBlock DB(S);
-        Fn = DB.getFilename();
-        Dir = DB.getDirectory();
-      } else
-        assert(0 && "Unexpected scope info");
-
-      Src = GetOrCreateSourceID(Fn, Dir);
-    }
-    OutStreamer.EmitDwarfLocDirective(Src, DL.getLine(), DL.getCol(),
-                                     0, 0, 0, Fn);
-
-    const MCDwarfLoc& MDL = OutContext.getCurrentDwarfLoc();
-
-    OS << "\t.loc ";
-    OS << utostr(MDL.getFileNum());
-    OS << " ";
-    OS << utostr(MDL.getLine());
-    OS << " ";
-    OS << utostr(MDL.getColumn());
-    OS << "\n";
-  }
-
-
-  // Emit predicate
-  printPredicateOperand(MI, OS);
-
-  // Write instruction to str
-  if (MI->getOpcode() == PTX::CALL) {
-    printCall(MI, OS);
-  } else {
-    printInstruction(MI, OS);
-  }
-  OS << ';';
-  OS.flush();
-
-  StringRef strref = StringRef(str);
-  OutStreamer.EmitRawText(strref);
-#endif
-
   MCInst TmpInst;
   LowerPTXMachineInstrToMCInst(MI, TmpInst, *this);
   OutStreamer.EmitInstruction(TmpInst);
-}
-
-void PTXAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
-                                 raw_ostream &OS) {
-  const MachineOperand &MO = MI->getOperand(opNum);
-  const PTXMachineFunctionInfo *MFI = MF->getInfo<PTXMachineFunctionInfo>();
-
-  switch (MO.getType()) {
-    default:
-      llvm_unreachable("<unknown operand type>");
-      break;
-    case MachineOperand::MO_GlobalAddress:
-      OS << *Mang->getSymbol(MO.getGlobal());
-      break;
-    case MachineOperand::MO_Immediate:
-      OS << (long) MO.getImm();
-      break;
-    case MachineOperand::MO_MachineBasicBlock:
-      OS << *MO.getMBB()->getSymbol();
-      break;
-    case MachineOperand::MO_Register:
-      OS << MFI->getRegisterName(MO.getReg());
-      break;
-    case MachineOperand::MO_ExternalSymbol:
-      OS << MO.getSymbolName();
-      break;
-    case MachineOperand::MO_FPImmediate:
-      APInt constFP = MO.getFPImm()->getValueAPF().bitcastToAPInt();
-      bool  isFloat = MO.getFPImm()->getType()->getTypeID() == Type::FloatTyID;
-      // Emit 0F for 32-bit floats and 0D for 64-bit doubles.
-      if (isFloat) {
-        OS << "0F";
-      }
-      else {
-        OS << "0D";
-      }
-      // Emit the encoded floating-point value.
-      if (constFP.getZExtValue() > 0) {
-        OS << constFP.toString(16, false);
-      }
-      else {
-        OS << "00000000";
-        // If We have a double-precision zero, pad to 8-bytes.
-        if (!isFloat) {
-          OS << "00000000";
-        }
-      }
-      break;
-  }
-}
-
-void PTXAsmPrinter::printMemOperand(const MachineInstr *MI, int opNum,
-                                    raw_ostream &OS, const char *Modifier) {
-  printOperand(MI, opNum, OS);
-
-  if (MI->getOperand(opNum+1).isImm() && MI->getOperand(opNum+1).getImm() == 0)
-    return; // don't print "+0"
-
-  OS << "+";
-  printOperand(MI, opNum+1, OS);
-}
-
-void PTXAsmPrinter::printReturnOperand(const MachineInstr *MI, int opNum,
-                                       raw_ostream &OS, const char *Modifier) {
-  //OS << RETURN_PREFIX << (int) MI->getOperand(opNum).getImm() + 1;
-  OS << "__ret";
 }
 
 void PTXAsmPrinter::EmitVariableDeclaration(const GlobalVariable *gv) {
@@ -613,63 +477,6 @@ void PTXAsmPrinter::EmitFunctionEntryLabel() {
   OutStreamer.EmitRawText(Twine(decl));
 }
 
-void PTXAsmPrinter::
-printPredicateOperand(const MachineInstr *MI, raw_ostream &O) {
-  int i = MI->findFirstPredOperandIdx();
-  if (i == -1)
-    llvm_unreachable("missing predicate operand");
-
-  unsigned reg = MI->getOperand(i).getReg();
-  int predOp = MI->getOperand(i+1).getImm();
-  const PTXMachineFunctionInfo *MFI = MF->getInfo<PTXMachineFunctionInfo>();
-
-  DEBUG(dbgs() << "predicate: (" << reg << ", " << predOp << ")\n");
-
-  if (reg != PTX::NoRegister) {
-    O << '@';
-    if (predOp == PTX::PRED_NEGATE)
-      O << '!';
-    O << MFI->getRegisterName(reg);
-  }
-}
-
-void PTXAsmPrinter::
-printCall(const MachineInstr *MI, raw_ostream &O) {
-  O << "\tcall.uni\t";
-  // The first two operands are the predicate slot
-  unsigned Index = 2;
-  while (!MI->getOperand(Index).isGlobal()) {
-    if (Index == 2) {
-      O << "(";
-    } else {
-      O << ", ";
-    }
-    printOperand(MI, Index, O);
-    Index++;
-  }
-
-  if (Index != 2) {
-    O << "), ";
-  }
-
-  assert(MI->getOperand(Index).isGlobal() &&
-         "A GlobalAddress must follow the return arguments");
-
-  const GlobalValue *Address = MI->getOperand(Index).getGlobal();
-  O << Address->getName() << ", (";
-  Index++;
-
-  while (Index < MI->getNumOperands()) {
-    printOperand(MI, Index, O);
-    if (Index < MI->getNumOperands()-1) {
-      O << ", ";
-    }
-    Index++;
-  }
-
-  O << ")";
-}
-
 unsigned PTXAsmPrinter::GetOrCreateSourceID(StringRef FileName,
                                             StringRef DirName) {
   // If FE did not provide a file name, then assume stdin.
@@ -704,7 +511,8 @@ MCOperand PTXAsmPrinter::GetSymbolRef(const MachineOperand &MO,
   return MCOperand::CreateExpr(Expr);
 }
 
-bool PTXAsmPrinter::lowerOperand(const MachineOperand &MO, MCOperand &MCOp) {
+MCOperand PTXAsmPrinter::lowerOperand(const MachineOperand &MO) {
+  MCOperand MCOp;
   const PTXMachineFunctionInfo *MFI = MF->getInfo<PTXMachineFunctionInfo>();
   const MCExpr *Expr;
   const char *RegSymbolName;
@@ -742,7 +550,7 @@ bool PTXAsmPrinter::lowerOperand(const MachineOperand &MO, MCOperand &MCOp) {
     break;
   }
 
-  return true;
+  return MCOp;
 }
 
 // Force static initialization.

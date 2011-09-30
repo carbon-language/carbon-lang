@@ -20,21 +20,23 @@
 #include "PTXMCTargetDesc.h"
 
 namespace llvm {
-  namespace PTX {
-    enum StateSpace {
-      GLOBAL = 0, // default to global state space
-      CONSTANT = 1,
-      LOCAL = 2,
-      PARAMETER = 3,
-      SHARED = 4
+  namespace PTXStateSpace {
+    enum {
+      Global    = 0, // default to global state space
+      Constant  = 1,
+      Local     = 2,
+      Parameter = 3,
+      Shared    = 4
     };
+  } // namespace PTXStateSpace
 
-    enum Predicate {
-      PRED_NORMAL = 0,
-      PRED_NEGATE = 1,
-      PRED_NONE   = 2
+  namespace PTXPredicate {
+    enum {
+      Normal = 0,
+      Negate = 1,
+      None   = 2
     };
-  } // namespace PTX
+  } // namespace PTXPredicate
 
   /// Namespace to hold all target-specific flags.
   namespace PTXRoundingMode {

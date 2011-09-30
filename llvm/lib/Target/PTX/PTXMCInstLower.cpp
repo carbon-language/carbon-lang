@@ -26,8 +26,7 @@ void llvm::LowerPTXMachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI,
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
     MCOperand MCOp;
-    if (AP.lowerOperand(MO, MCOp))
-      OutMI.addOperand(MCOp);
+    OutMI.addOperand(AP.lowerOperand(MO));
   }
 }
 

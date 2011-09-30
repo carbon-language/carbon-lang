@@ -92,7 +92,7 @@ SDNode *PTXDAGToDAGISel::SelectBRCOND(SDNode *Node) {
   SDValue Chain  = Node->getOperand(0);
   SDValue Pred   = Node->getOperand(1);
   SDValue Target = Node->getOperand(2); // branch target
-  SDValue PredOp = CurDAG->getTargetConstant(PTX::PRED_NORMAL, MVT::i32);
+  SDValue PredOp = CurDAG->getTargetConstant(PTXPredicate::Normal, MVT::i32);
   DebugLoc dl = Node->getDebugLoc();
 
   assert(Target.getOpcode()  == ISD::BasicBlock);
@@ -129,7 +129,7 @@ SDNode *PTXDAGToDAGISel::SelectREADPARAM(SDNode *Node) {
     OpCode = PTX::READPARAMF64;
 
   SDValue Pred = CurDAG->getRegister(PTX::NoRegister, MVT::i1);
-  SDValue PredOp = CurDAG->getTargetConstant(PTX::PRED_NONE, MVT::i32);
+  SDValue PredOp = CurDAG->getTargetConstant(PTXPredicate::None, MVT::i32);
   DebugLoc dl = Node->getDebugLoc();
 
   SDValue Ops[] = { Index, Pred, PredOp, Chain };
@@ -167,7 +167,7 @@ SDNode *PTXDAGToDAGISel::SelectWRITEPARAM(SDNode *Node) {
     llvm_unreachable("Invalid type in SelectWRITEPARAM");
 
   SDValue Pred = CurDAG->getRegister(PTX::NoRegister, MVT::i1);
-  SDValue PredOp = CurDAG->getTargetConstant(PTX::PRED_NONE, MVT::i32);
+  SDValue PredOp = CurDAG->getTargetConstant(PTXPredicate::None, MVT::i32);
   DebugLoc dl = Node->getDebugLoc();
 
   SDValue Ops[] = { Value, Pred, PredOp, Chain };

@@ -100,7 +100,7 @@ public:
   /// @{
 
   virtual void ChangeSection(const MCSection *Section);
-  virtual void InitSections() {}
+  virtual void InitSections() { /* PTX does not use sections */ }
 
   virtual void EmitLabel(MCSymbol *Symbol);
 
@@ -235,7 +235,7 @@ void PTXMCAsmStreamer::ChangeSection(const MCSection *Section) {
 void PTXMCAsmStreamer::EmitLabel(MCSymbol *Symbol) {
   assert(Symbol->isUndefined() && "Cannot define a symbol twice!");
   assert(!Symbol->isVariable() && "Cannot emit a variable symbol!");
-  //assert(getCurrentSection() && "Cannot emit before setting section!");
+  assert(getCurrentSection() && "Cannot emit before setting section!");
 
   OS << *Symbol << MAI.getLabelSuffix();
   EmitEOL();
@@ -499,7 +499,7 @@ bool PTXMCAsmStreamer::EmitDwarfFileDirective(unsigned FileNo,
 void PTXMCAsmStreamer::AddEncodingComment(const MCInst &Inst) {}
 
 void PTXMCAsmStreamer::EmitInstruction(const MCInst &Inst) {
-//assert(getCurrentSection() && "Cannot emit contents before setting section!");
+  assert(getCurrentSection() && "Cannot emit contents before setting section!");
 
   // Show the encoding in a comment if we have a code emitter.
   if (Emitter)

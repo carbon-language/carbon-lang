@@ -62,9 +62,8 @@ static MCInstPrinter *createPTXMCInstPrinter(const Target &T,
                                              unsigned SyntaxVariant,
                                              const MCAsmInfo &MAI,
                                              const MCSubtargetInfo &STI) {
-  if (SyntaxVariant == 0)
-    return new PTXInstPrinter(MAI, STI);
-  return 0;
+  assert(SyntaxVariant == 0 && "We only have one syntax variant");
+  return new PTXInstPrinter(MAI, STI);
 }
 
 extern "C" void LLVMInitializePTXTargetMC() {

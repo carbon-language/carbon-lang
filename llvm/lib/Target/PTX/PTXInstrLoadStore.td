@@ -26,7 +26,7 @@ def load_global : PatFrag<(ops node:$ptr), (load node:$ptr), [{
   const PointerType *PT;
   if ((Src = cast<LoadSDNode>(N)->getSrcValue()) &&
       (PT = dyn_cast<PointerType>(Src->getType())))
-    return PT->getAddressSpace() == PTX::GLOBAL;
+    return PT->getAddressSpace() == PTXStateSpace::Global;
   return false;
 }]>;
 
@@ -35,7 +35,7 @@ def load_constant : PatFrag<(ops node:$ptr), (load node:$ptr), [{
   const PointerType *PT;
   if ((Src = cast<LoadSDNode>(N)->getSrcValue()) &&
       (PT = dyn_cast<PointerType>(Src->getType())))
-    return PT->getAddressSpace() == PTX::CONSTANT;
+    return PT->getAddressSpace() == PTXStateSpace::Constant;
   return false;
 }]>;
 
@@ -44,7 +44,7 @@ def load_shared : PatFrag<(ops node:$ptr), (load node:$ptr), [{
   const PointerType *PT;
   if ((Src = cast<LoadSDNode>(N)->getSrcValue()) &&
       (PT = dyn_cast<PointerType>(Src->getType())))
-    return PT->getAddressSpace() == PTX::SHARED;
+    return PT->getAddressSpace() == PTXStateSpace::Shared;
   return false;
 }]>;
 
@@ -54,7 +54,7 @@ def store_global
   const PointerType *PT;
   if ((Src = cast<StoreSDNode>(N)->getSrcValue()) &&
       (PT = dyn_cast<PointerType>(Src->getType())))
-    return PT->getAddressSpace() == PTX::GLOBAL;
+    return PT->getAddressSpace() == PTXStateSpace::Global;
   return false;
 }]>;
 
@@ -64,7 +64,7 @@ def store_shared
   const PointerType *PT;
   if ((Src = cast<StoreSDNode>(N)->getSrcValue()) &&
       (PT = dyn_cast<PointerType>(Src->getType())))
-    return PT->getAddressSpace() == PTX::SHARED;
+    return PT->getAddressSpace() == PTXStateSpace::Shared;
   return false;
 }]>;
 
