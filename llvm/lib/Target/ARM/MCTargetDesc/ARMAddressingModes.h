@@ -14,6 +14,8 @@
 #ifndef LLVM_TARGET_ARM_ARMADDRESSINGMODES_H
 #define LLVM_TARGET_ARM_ARMADDRESSINGMODES_H
 
+#include "llvm/ADT/APFloat.h"
+#include "llvm/ADT/APInt.h"
 #include "llvm/Support/MathExtras.h"
 #include <cassert>
 
@@ -573,6 +575,90 @@ namespace ARM_AM {
   }
 
   AMSubMode getLoadStoreMultipleSubMode(int Opcode);
+
+  //===--------------------------------------------------------------------===//
+  // Floating-point Immediates
+  //
+  static inline float getFPImmFloat(unsigned Imm) {
+    // We expect an 8-bit binary encoding of a floating-point number here.
+    union {
+      uint32_t I;
+      float F;
+    } FPUnion;
+
+    uint8_t Sign = (Imm >> 7) & 0x1;
+    uint8_t Exp = (Imm >> 4) & 0x7;
+    uint8_t Mantissa = Imm & 0xf;
+
+    //   8-bit FP    iEEEE Float Encoding
+    //   abcd efgh   aBbbbbbc defgh000 00000000 00000000
+    //
+    // where B = NOT(b);
+
+    FPUnion.I = 0;
+    FPUnion.I |= Sign << 31;
+    FPUnion.I |= ((Exp & 0x4) != 0 ? 0 : 1) << 30;
+    FPUnion.I |= ((Exp & 0x4) != 0 ? 0x1f : 0) << 25;
+    FPUnion.I |= (Exp & 0x3) << 23;
+    FPUnion.I |= Mantissa << 19;
+    return FPUnion.F;
+  }
+
+  /// getFP32Imm - Return an 8-bit floating-point version of the 32-bit
+  /// floating-point value. If the value cannot be represented as an 8-bit
+  /// floating-point value, then return -1.
+  static inline int getFP32Imm(const APInt &Imm) {
+    uint32_t Sign = Imm.lshr(31).getZExtValue() & 1;
+    int32_t Exp = (Imm.lshr(23).getSExtValue() & 0xff) - 127;  // -126 to 127
+    int64_t Mantissa = Imm.getZExtValue() & 0x7fffff;  // 23 bits
+
+    // We can handle 4 bits of mantissa.
+    // mantissa = (16+UInt(e:f:g:h))/16.
+    if (Mantissa & 0x7ffff)
+      return -1;
+    Mantissa >>= 19;
+    if ((Mantissa & 0xf) != Mantissa)
+      return -1;
+
+    // We can handle 3 bits of exponent: exp == UInt(NOT(b):c:d)-3
+    if (Exp < -3 || Exp > 4)
+      return -1;
+    Exp = ((Exp+3) & 0x7) ^ 4;
+
+    return ((int)Sign << 7) | (Exp << 4) | Mantissa;
+  }
+
+  static inline int getFP32Imm(const APFloat &FPImm) {
+    return getFP32Imm(FPImm.bitcastToAPInt());
+  }
+
+  /// getFP64Imm - Return an 8-bit floating-point version of the 64-bit
+  /// floating-point value. If the value cannot be represented as an 8-bit
+  /// floating-point value, then return -1.
+  static inline int getFP64Imm(const APInt &Imm) {
+    uint64_t Sign = Imm.lshr(63).getZExtValue() & 1;
+    int64_t Exp = (Imm.lshr(52).getSExtValue() & 0x7ff) - 1023;   // -1022 to 1023
+    uint64_t Mantissa = Imm.getZExtValue() & 0xfffffffffffffULL;
+
+    // We can handle 4 bits of mantissa.
+    // mantissa = (16+UInt(e:f:g:h))/16.
+    if (Mantissa & 0xffffffffffffULL)
+      return -1;
+    Mantissa >>= 48;
+    if ((Mantissa & 0xf) != Mantissa)
+      return -1;
+
+    // We can handle 3 bits of exponent: exp == UInt(NOT(b):c:d)-3
+    if (Exp < -3 || Exp > 4)
+      return -1;
+    Exp = ((Exp+3) & 0x7) ^ 4;
+
+    return ((int)Sign << 7) | (Exp << 4) | Mantissa;
+  }
+
+  static inline int getFP64Imm(const APFloat &FPImm) {
+    return getFP64Imm(FPImm.bitcastToAPInt());
+  }
 
 } // end namespace ARM_AM
 } // end namespace llvm

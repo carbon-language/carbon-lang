@@ -120,8 +120,7 @@ public:
   void printNoHashImmediate(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printPImmediate(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printCImmediate(const MCInst *MI, unsigned OpNum, raw_ostream &O);
-  void printVFPf32ImmOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
-  void printVFPf64ImmOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
+  void printFPImmOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printNEONModImmOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printImmPlusOneOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printRotImmOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);

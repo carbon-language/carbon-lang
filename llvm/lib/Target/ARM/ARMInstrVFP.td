@@ -33,18 +33,24 @@ def arm_fmdrr  : SDNode<"ARMISD::VMOVDRR", SDT_VMOVDRR>;
 
 def vfp_f32imm : Operand<f32>,
                  PatLeaf<(f32 fpimm), [{
-      return ARM::getVFPf32Imm(N->getValueAPF()) != -1;
-    }]> {
-  let PrintMethod = "printVFPf32ImmOperand";
-  let DecoderMethod = "DecodeVFPfpImm";
+      return ARM_AM::getFP32Imm(N->getValueAPF()) != -1;
+    }], SDNodeXForm<fpimm, [{
+      APFloat InVal = N->getValueAPF();
+      uint32_t enc = ARM_AM::getFP32Imm(InVal);
+      return CurDAG->getTargetConstant(enc, MVT::i32);
+    }]>> {
+  let PrintMethod = "printFPImmOperand";
 }
 
 def vfp_f64imm : Operand<f64>,
                  PatLeaf<(f64 fpimm), [{
-      return ARM::getVFPf64Imm(N->getValueAPF()) != -1;
-    }]> {
-  let PrintMethod = "printVFPf64ImmOperand";
-  let DecoderMethod = "DecodeVFPfpImm";
+      return ARM_AM::getFP64Imm(N->getValueAPF()) != -1;
+    }], SDNodeXForm<fpimm, [{
+      APFloat InVal = N->getValueAPF();
+      uint32_t enc = ARM_AM::getFP64Imm(InVal);
+      return CurDAG->getTargetConstant(enc, MVT::i32);
+    }]>> {
+  let PrintMethod = "printFPImmOperand";
 }
 
 
@@ -1110,45 +1116,35 @@ def FCONSTD : VFPAI<(outs DPR:$Dd), (ins vfp_f64imm:$imm),
                     VFPMiscFrm, IIC_fpUNA64,
                     "vmov", ".f64\t$Dd, $imm",
                     [(set DPR:$Dd, vfp_f64imm:$imm)]>, Requires<[HasVFP3]> {
-  // Instruction operands.
-  bits<5>  Dd;
-  bits<32> imm;
+  bits<5> Dd;
+  bits<8> imm;
 
-  // Encode instruction operands.
-  let Inst{15-12} = Dd{3-0};
-  let Inst{22}    = Dd{4};
-  let Inst{19}    = imm{31};    // The immediate is handled as a float.
-  let Inst{18-16} = imm{25-23};
-  let Inst{3-0}   = imm{22-19};
-
-  // Encode remaining instruction bits.
   let Inst{27-23} = 0b11101;
+  let Inst{22}    = Dd{4};
   let Inst{21-20} = 0b11;
+  let Inst{19-16} = imm{7-4};
+  let Inst{15-12} = Dd{3-0};
   let Inst{11-9}  = 0b101;
   let Inst{8}     = 1;          // Double precision.
   let Inst{7-4}   = 0b0000;
+  let Inst{3-0}   = imm{3-0};
 }
 
 def FCONSTS : VFPAI<(outs SPR:$Sd), (ins vfp_f32imm:$imm),
                      VFPMiscFrm, IIC_fpUNA32,
                      "vmov", ".f32\t$Sd, $imm",
                      [(set SPR:$Sd, vfp_f32imm:$imm)]>, Requires<[HasVFP3]> {
-  // Instruction operands.
-  bits<5>  Sd;
-  bits<32> imm;
+  bits<5> Sd;
+  bits<8> imm;
 
-  // Encode instruction operands.
-  let Inst{15-12} = Sd{4-1};
-  let Inst{22}    = Sd{0};
-  let Inst{19}    = imm{31};    // The immediate is handled as a float.
-  let Inst{18-16} = imm{25-23};
-  let Inst{3-0}   = imm{22-19};
-
-  // Encode remaining instruction bits.
   let Inst{27-23} = 0b11101;
+  let Inst{22}    = Sd{0};
   let Inst{21-20} = 0b11;
+  let Inst{19-16} = imm{7-4};
+  let Inst{15-12} = Sd{4-1};
   let Inst{11-9}  = 0b101;
   let Inst{8}     = 0;          // Single precision.
   let Inst{7-4}   = 0b0000;
+  let Inst{3-0}   = imm{3-0};
 }
 }

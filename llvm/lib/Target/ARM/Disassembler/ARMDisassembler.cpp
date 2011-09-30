@@ -204,8 +204,6 @@ static DecodeStatus DecodeShiftRight64Imm(llvm::MCInst &Inst, unsigned Val,
                                uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeTBLInstruction(llvm::MCInst &Inst, unsigned Insn,
                                uint64_t Address, const void *Decoder);
-static DecodeStatus DecodeVFPfpImm(llvm::MCInst &Inst, unsigned Val,
-                               uint64_t Address, const void *Decoder);
 static DecodeStatus DecodePostIdxReg(llvm::MCInst &Inst, unsigned Insn,
                                uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeCoprocessor(llvm::MCInst &Inst, unsigned Insn,
@@ -2522,31 +2520,6 @@ static DecodeStatus DecodeTBLInstruction(llvm::MCInst &Inst, unsigned Insn,
     return MCDisassembler::Fail;
 
   return S;
-}
-
-static DecodeStatus DecodeVFPfpImm(llvm::MCInst &Inst, unsigned Val,
-                            uint64_t Address, const void *Decoder) {
-  // The immediate needs to be a fully instantiated float.  However, the
-  // auto-generated decoder is only able to fill in some of the bits
-  // necessary.  For instance, the 'b' bit is replicated multiple times,
-  // and is even present in inverted form in one bit.  We do a little
-  // binary parsing here to fill in those missing bits, and then
-  // reinterpret it all as a float.
-  union {
-    uint32_t integer;
-    float fp;
-  } fp_conv;
-
-  fp_conv.integer = Val;
-  uint32_t b = fieldFromInstruction32(Val, 25, 1);
-  fp_conv.integer |= b << 26;
-  fp_conv.integer |= b << 27;
-  fp_conv.integer |= b << 28;
-  fp_conv.integer |= b << 29;
-  fp_conv.integer |= (~b & 0x1) << 30;
-
-  Inst.addOperand(MCOperand::CreateFPImm(fp_conv.fp));
-  return MCDisassembler::Success;
 }
 
 static DecodeStatus DecodeThumbAddSpecialReg(llvm::MCInst &Inst, uint16_t Insn,

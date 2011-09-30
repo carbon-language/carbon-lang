@@ -227,12 +227,6 @@ namespace llvm {
 
   /// Define some predicates that are used for node matching.
   namespace ARM {
-    /// getVFPf32Imm / getVFPf64Imm - If the given fp immediate can be
-    /// materialized with a VMOV.f32 / VMOV.f64 (i.e. fconsts / fconstd)
-    /// instruction, returns its 8-bit integer representation. Otherwise,
-    /// returns -1.
-    int getVFPf32Imm(const APFloat &FPImm);
-    int getVFPf64Imm(const APFloat &FPImm);
     bool isBitFieldInvertedMask(unsigned v);
   }
 
