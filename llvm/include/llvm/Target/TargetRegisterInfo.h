@@ -40,17 +40,17 @@ public:
 private:
   const MCRegisterClass *MC;
   const vt_iterator VTs;
-  const sc_iterator SubClasses;
+  const unsigned *SubClassMask;
   const sc_iterator SuperClasses;
   const sc_iterator SubRegClasses;
   const sc_iterator SuperRegClasses;
 public:
   TargetRegisterClass(const MCRegisterClass *MC, const EVT *vts,
-                      const TargetRegisterClass * const *subcs,
+                      const unsigned *subcm,
                       const TargetRegisterClass * const *supcs,
                       const TargetRegisterClass * const *subregcs,
                       const TargetRegisterClass * const *superregcs)
-    : MC(MC), VTs(vts), SubClasses(subcs), SuperClasses(supcs),
+    : MC(MC), VTs(vts), SubClassMask(subcm), SuperClasses(supcs),
       SubRegClasses(subregcs), SuperRegClasses(superregcs) {}
 
   virtual ~TargetRegisterClass() {}     // Allow subclasses
@@ -159,57 +159,42 @@ public:
   }
 
   /// hasSubClass - return true if the specified TargetRegisterClass
-  /// is a proper subset of this TargetRegisterClass.
-  bool hasSubClass(const TargetRegisterClass *cs) const {
-    for (int i = 0; SubClasses[i] != NULL; ++i)
-      if (SubClasses[i] == cs)
-        return true;
-    return false;
+  /// is a proper sub-class of this TargetRegisterClass.
+  bool hasSubClass(const TargetRegisterClass *RC) const {
+    return RC != this && hasSubClassEq(RC);
   }
 
-  /// hasSubClassEq - Returns true if RC is a subclass of or equal to this
+  /// hasSubClassEq - Returns true if RC is a sub-class of or equal to this
   /// class.
   bool hasSubClassEq(const TargetRegisterClass *RC) const {
-    return RC == this || hasSubClass(RC);
-  }
-
-  /// subclasses_begin / subclasses_end - Loop over all of the classes
-  /// that are proper subsets of this register class.
-  sc_iterator subclasses_begin() const {
-    return SubClasses;
-  }
-
-  sc_iterator subclasses_end() const {
-    sc_iterator I = SubClasses;
-    while (*I != NULL) ++I;
-    return I;
+    unsigned ID = RC->getID();
+    return (SubClassMask[ID / 32] >> (ID % 32)) & 1;
   }
 
   /// hasSuperClass - return true if the specified TargetRegisterClass is a
-  /// proper superset of this TargetRegisterClass.
-  bool hasSuperClass(const TargetRegisterClass *cs) const {
-    for (int i = 0; SuperClasses[i] != NULL; ++i)
-      if (SuperClasses[i] == cs)
-        return true;
-    return false;
+  /// proper super-class of this TargetRegisterClass.
+  bool hasSuperClass(const TargetRegisterClass *RC) const {
+    return RC->hasSubClass(this);
   }
 
-  /// hasSuperClassEq - Returns true if RC is a superclass of or equal to this
+  /// hasSuperClassEq - Returns true if RC is a super-class of or equal to this
   /// class.
   bool hasSuperClassEq(const TargetRegisterClass *RC) const {
-    return RC == this || hasSuperClass(RC);
+    return RC->hasSubClassEq(this);
   }
 
-  /// superclasses_begin / superclasses_end - Loop over all of the classes
-  /// that are proper supersets of this register class.
-  sc_iterator superclasses_begin() const {
+  /// getSubClassMask - Returns a bit vector of subclasses, including this one.
+  /// The vector is indexed by class IDs, see hasSubClassEq() above for how to
+  /// use it.
+  const unsigned *getSubClassMask() const {
+    return SubClassMask;
+  }
+
+  /// getSuperClasses - Returns a NULL terminated list of super-classes.  The
+  /// classes are ordered by ID which is also a topological ordering from large
+  /// to small classes.  The list does NOT include the current class.
+  sc_iterator getSuperClasses() const {
     return SuperClasses;
-  }
-
-  sc_iterator superclasses_end() const {
-    sc_iterator I = SuperClasses;
-    while (*I != NULL) ++I;
-    return I;
   }
 
   /// isASubClass - return true if this TargetRegisterClass is a subset

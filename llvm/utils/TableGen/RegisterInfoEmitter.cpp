@@ -622,26 +622,9 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
       // Give the register class a legal C name if it's anonymous.
       std::string Name = RC.TheDef->getName();
 
-      OS << "  // " << Name
-         << " Register Class sub-classes...\n"
-         << "  static const TargetRegisterClass* const "
-         << Name << "Subclasses[] = {\n    ";
-
-      bool Empty = true;
-      for (unsigned rc2 = 0, e2 = RegisterClasses.size(); rc2 != e2; ++rc2) {
-        const CodeGenRegisterClass &RC2 = *RegisterClasses[rc2];
-
-        // Sub-classes are used to determine if a virtual register can be used
-        // as an instruction operand, or if it must be copied first.
-        if (rc == rc2 || !RC.hasSubClass(&RC2)) continue;
-
-        if (!Empty) OS << ", ";
-        OS << "&" << getQualifiedName(RC2.TheDef) << "RegClass";
-        Empty = false;
-      }
-
-      OS << (!Empty ? ", " : "") << "NULL";
-      OS << "\n  };\n\n";
+      OS << "  static const unsigned " << Name << "SubclassMask[] = { ";
+      printBitVectorAsHex(OS, RC.getSubClasses(), 32);
+      OS << "};\n\n";
     }
 
     // Emit NULL terminated super-class lists.
@@ -668,7 +651,7 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
          << Target.getName() << "MCRegisterClasses["
          << RC.getName() + "RegClassID" << "], "
          << RC.getName() + "VTs" << ", "
-         << RC.getName() + "Subclasses" << ", ";
+         << RC.getName() + "SubclassMask" << ", ";
       if (RC.getSuperClasses().empty())
         OS << "NullRegClasses, ";
       else

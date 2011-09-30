@@ -235,7 +235,7 @@ X86RegisterInfo::getMatchingSuperRegClass(const TargetRegisterClass *A,
 const TargetRegisterClass*
 X86RegisterInfo::getLargestLegalSuperClass(const TargetRegisterClass *RC) const{
   const TargetRegisterClass *Super = RC;
-  TargetRegisterClass::sc_iterator I = RC->superclasses_begin();
+  TargetRegisterClass::sc_iterator I = RC->getSuperClasses();
   do {
     switch (Super->getID()) {
     case X86::GR8RegClassID:

@@ -353,7 +353,7 @@ const TargetRegisterClass*
 ARMBaseRegisterInfo::getLargestLegalSuperClass(const TargetRegisterClass *RC)
                                                                          const {
   const TargetRegisterClass *Super = RC;
-  TargetRegisterClass::sc_iterator I = RC->superclasses_begin();
+  TargetRegisterClass::sc_iterator I = RC->getSuperClasses();
   do {
     switch (Super->getID()) {
     case ARM::GPRRegClassID:
