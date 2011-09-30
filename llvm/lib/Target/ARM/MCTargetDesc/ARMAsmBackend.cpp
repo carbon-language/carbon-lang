@@ -203,6 +203,7 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
     // inst{26} = i;
     // inst{14-12} = Mid3;
     // inst{7-0} = Lo8;
+    Value = (Hi4 << 16) | (i << 26) | (Mid3 << 12) | (Lo8);
     uint64_t swapped = (Value & 0xFFFF0000) >> 16;
     swapped |= (Value & 0x0000FFFF) << 16;
     return swapped;
