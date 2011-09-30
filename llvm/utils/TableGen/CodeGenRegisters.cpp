@@ -16,6 +16,7 @@
 #include "CodeGenTarget.h"
 #include "Error.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
 
 using namespace llvm;
@@ -255,7 +256,7 @@ struct TupleExpander : SetTheory::Expander {
 //===----------------------------------------------------------------------===//
 
 CodeGenRegisterClass::CodeGenRegisterClass(CodeGenRegBank &RegBank, Record *R)
-  : TheDef(R) {
+  : TheDef(R), EnumValue(-1) {
   // Rename anonymous register classes.
   if (R->getName().size() > 9 && R->getName()[9] == '.') {
     static unsigned AnonCounter = 0;
@@ -349,6 +350,40 @@ bool CodeGenRegisterClass::hasSubClass(const CodeGenRegisterClass *RC) const {
                   CodeGenRegister::Less());
 }
 
+/// Sorting predicate for register classes.  This provides a topological
+/// ordering that arranges all register classes before their sub-classes.
+///
+/// Register classes with the same registers, spill size, and alignment form a
+/// clique.  They will be ordered alphabetically.
+///
+static int TopoOrderRC(const void *PA, const void *PB) {
+  const CodeGenRegisterClass *A = *(const CodeGenRegisterClass* const*)PA;
+  const CodeGenRegisterClass *B = *(const CodeGenRegisterClass* const*)PB;
+  if (A == B)
+    return 0;
+
+  // Order by descending set size.
+  if (A->getOrder().size() > B->getOrder().size())
+    return -1;
+  if (A->getOrder().size() < B->getOrder().size())
+    return 1;
+
+  // Order by ascending spill size.
+  if (A->SpillSize < B->SpillSize)
+    return -1;
+  if (A->SpillSize > B->SpillSize)
+    return 1;
+
+  // Order by ascending spill alignment.
+  if (A->SpillAlignment < B->SpillAlignment)
+    return -1;
+  if (A->SpillAlignment > B->SpillAlignment)
+    return 1;
+
+  // Finally order by name as a tie breaker.
+  return A->getName() < B->getName();
+}
+
 const std::string &CodeGenRegisterClass::getName() const {
   return TheDef->getName();
 }
@@ -396,6 +431,10 @@ CodeGenRegBank::CodeGenRegBank(RecordKeeper &Records) : Records(Records) {
     RegClasses.push_back(RC);
     Def2RC[RCs[i]] = RC;
   }
+  // Order register classes topologically and assign enum values.
+  array_pod_sort(RegClasses.begin(), RegClasses.end(), TopoOrderRC);
+  for (unsigned i = 0, e = RegClasses.size(); i != e; ++i)
+    RegClasses[i]->EnumValue = i;
 }
 
 CodeGenRegister *CodeGenRegBank::getReg(Record *Def) {

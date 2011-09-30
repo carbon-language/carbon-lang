@@ -89,6 +89,7 @@ namespace llvm {
     std::vector<SmallVector<Record*, 16> > AltOrders;
   public:
     Record *TheDef;
+    unsigned EnumValue;
     std::string Namespace;
     std::vector<MVT::SimpleValueType> VTs;
     unsigned SpillSize;
