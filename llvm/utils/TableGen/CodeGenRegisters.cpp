@@ -342,11 +342,12 @@ bool CodeGenRegisterClass::contains(const CodeGenRegister *Reg) const {
 // 2. The RC spill size must not be smaller than our spill size.
 // 3. RC spill alignment must be compatible with ours.
 //
-bool CodeGenRegisterClass::hasSubClass(const CodeGenRegisterClass *RC) const {
-  return SpillAlignment && RC->SpillAlignment % SpillAlignment == 0 &&
-    SpillSize <= RC->SpillSize &&
-    std::includes(Members.begin(), Members.end(),
-                  RC->Members.begin(), RC->Members.end(),
+static bool testSubClass(const CodeGenRegisterClass *A,
+                         const CodeGenRegisterClass *B) {
+  return A->SpillAlignment && B->SpillAlignment % A->SpillAlignment == 0 &&
+    A->SpillSize <= B->SpillSize &&
+    std::includes(A->getMembers().begin(), A->getMembers().end(),
+                  B->getMembers().begin(), B->getMembers().end(),
                   CodeGenRegister::Less());
 }
 
@@ -403,7 +404,7 @@ computeSubClasses(ArrayRef<CodeGenRegisterClass*> RegClasses) {
       if (RC.SubClasses.test(s))
         continue;
       CodeGenRegisterClass *SubRC = RegClasses[s];
-      if (!RC.hasSubClass(SubRC))
+      if (!testSubClass(&RC, SubRC))
         continue;
       // SubRC is a sub-class. Grap all its sub-classes so we won't have to
       // check them again.
@@ -411,7 +412,7 @@ computeSubClasses(ArrayRef<CodeGenRegisterClass*> RegClasses) {
     }
 
     // Sweep up missed clique members.  They will be immediately preceeding RC.
-    for (unsigned s = rci - 1; s && RC.hasSubClass(RegClasses[s - 1]); --s)
+    for (unsigned s = rci - 1; s && testSubClass(&RC, RegClasses[s - 1]); --s)
       RC.SubClasses.set(s - 1);
   }
 

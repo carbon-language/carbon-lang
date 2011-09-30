@@ -129,7 +129,9 @@ namespace llvm {
     // 2. The RC spill size must not be smaller than our spill size.
     // 3. RC spill alignment must be compatible with ours.
     //
-    bool hasSubClass(const CodeGenRegisterClass *RC) const;
+    bool hasSubClass(const CodeGenRegisterClass *RC) const {
+      return SubClasses.test(RC->EnumValue);
+    }
 
     // getSubClasses - Returns a constant BitVector of subclasses indexed by
     // EnumValue.
@@ -154,6 +156,10 @@ namespace llvm {
 
     // Return the total number of allocation orders available.
     unsigned getNumOrders() const { return 1 + AltOrders.size(); }
+
+    // Get the set of registers.  This set contains the same registers as
+    // getOrder(0).
+    const CodeGenRegister::Set &getMembers() const { return Members; }
 
     CodeGenRegisterClass(CodeGenRegBank&, Record *R);
 
