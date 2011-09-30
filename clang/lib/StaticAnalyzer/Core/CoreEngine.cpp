@@ -697,13 +697,18 @@ ExplodedNode*
 SwitchNodeBuilder::generateDefaultCaseNode(const ProgramState *St,
                                            bool isSink) {
   // Get the block for the default case.
-  assert (Src->succ_rbegin() != Src->succ_rend());
+  assert(Src->succ_rbegin() != Src->succ_rend());
   CFGBlock *DefaultBlock = *Src->succ_rbegin();
 
+  // Sanity check for default blocks that are unreachable and not caught
+  // by earlier stages.
+  if (!DefaultBlock)
+    return NULL;
+  
   bool IsNew;
 
   ExplodedNode *Succ = Eng.G->getNode(BlockEdge(Src, DefaultBlock,
-                                       Pred->getLocationContext()), St, &IsNew);
+                                      Pred->getLocationContext()), St, &IsNew);
   Succ->addPredecessor(Pred, *Eng.G);
 
   if (IsNew) {

@@ -301,7 +301,10 @@ public:
 class BlockEdge : public ProgramPoint {
 public:
   BlockEdge(const CFGBlock *B1, const CFGBlock *B2, const LocationContext *L)
-    : ProgramPoint(B1, B2, BlockEdgeKind, L) {}
+    : ProgramPoint(B1, B2, BlockEdgeKind, L) {
+    assert(B1 && "BlockEdge: source block must be non-null");
+    assert(B2 && "BlockEdge: destination block must be non-null");    
+  }
 
   const CFGBlock *getSrc() const {
     return static_cast<const CFGBlock*>(getData1());

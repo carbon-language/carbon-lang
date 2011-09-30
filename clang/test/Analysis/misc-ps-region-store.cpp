@@ -441,3 +441,29 @@ int rdar9948787_positive() {
     return 0;
 }
 
+// Regression test against global constants and switches.
+enum rdar10202899_ValT { rdar10202899_ValTA, rdar10202899_ValTB, rdar10202899_ValTC };
+const rdar10202899_ValT val = rdar10202899_ValTA;
+void rdar10202899_test1() {
+  switch (val) {
+    case rdar10202899_ValTA: {}
+  };
+}
+
+void rdar10202899_test2() {
+  if (val == rdar10202899_ValTA)
+   return;
+  int *p = 0;
+  *p = 0xDEADBEEF;
+}
+
+void rdar10202899_test3() {
+  switch (val) {
+    case rdar10202899_ValTA: return;
+    default: ;
+  };
+  int *p = 0;
+  *p = 0xDEADBEEF;
+}
+
+
