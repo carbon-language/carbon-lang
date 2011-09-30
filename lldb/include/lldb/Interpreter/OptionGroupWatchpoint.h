@@ -55,8 +55,9 @@ namespace lldb_private {
             eWatchReadWrite
         } WatchType;
 
-        bool watch_variable;
         WatchType watch_type;
+        uint32_t watch_size;
+        bool watch_variable;
 
     private:
         DISALLOW_COPY_AND_ASSIGN(OptionGroupWatchpoint);

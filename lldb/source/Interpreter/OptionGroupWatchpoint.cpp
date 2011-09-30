@@ -28,11 +28,21 @@ static OptionEnumValueElement g_watch_type[] =
     { 0, NULL, NULL }
 };
 
+static OptionEnumValueElement g_watch_size[] =
+{
+    { 1, "1", "Watch for byte size of 1"},
+    { 2, "2", "Watch for byte size of 2"},
+    { 4, "4", "Watch for byte size of 4"},
+    { 8, "8", "Watch for byte size of 8"},
+    { 0, NULL, NULL }
+};
+
 // if you add any options here, remember to update the counters in OptionGroupWatchpoint::GetNumDefinitions()
 static OptionDefinition
 g_option_table[] =
 {
-    { LLDB_OPT_SET_1, false, "watch", 'w', required_argument, g_watch_type, 0, eArgTypeWatchType, "Determine how to watch a memory location (read, write, or read/write)."}
+    { LLDB_OPT_SET_1, false, "watch", 'w', required_argument, g_watch_type, 0, eArgTypeWatchType, "Determine how to watch a variable (read, write, or read/write)."},
+    { LLDB_OPT_SET_1, false, "xsize", 'x', required_argument, g_watch_size, 0, eArgTypeByteSize, "Number of bytes to use to watch a location (1, 2, 4, or 8)."}
 };
 
 
@@ -61,6 +71,14 @@ OptionGroupWatchpoint::SetOptionValue (CommandInterpreter &interpreter,
                 error.SetErrorStringWithFormat("Invalid option arg for '-w': '%s'.\n", option_arg);
             break;
         }
+        case 'x': {
+            bool success = false;
+            OptionEnumValueElement *enum_values = g_option_table[option_idx].enum_values;
+            watch_size = (WatchType) Args::StringToOptionEnum(option_arg, enum_values, 0, &success);
+            if (!success)
+                error.SetErrorStringWithFormat("Invalid option arg for '-x': '%s'.\n", option_arg);
+            break;
+        }
         default:
             error.SetErrorStringWithFormat("Invalid short option character '%c'.\n", short_option);
             break;
@@ -74,6 +92,7 @@ OptionGroupWatchpoint::OptionParsingStarting (CommandInterpreter &interpreter)
 {
     watch_variable = false;
     watch_type     = eWatchInvalid;
+    watch_size     = 0;
 }
 
 

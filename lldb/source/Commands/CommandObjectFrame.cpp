@@ -436,7 +436,7 @@ public:
                 }
 
                 // Things have checked out ok...
-                // m_option_watchpoint.watch_mode specifies the mode for watching.
+                // m_option_watchpoint.watch_type specifies the type of watching.
             }
             if (command.GetArgumentCount() > 0)
             {
@@ -532,12 +532,20 @@ public:
                             if (m_option_watchpoint.watch_variable)
                             {
                                 AddressType addr_type;
-                                lldb::addr_t addr = valobj_sp->GetAddressOf(false, &addr_type);
+                                lldb::addr_t addr = 0;
                                 size_t size = 0;
-                                if (addr_type == eAddressTypeLoad) {
-                                    // We're in business.
-                                    // Find out the size of this variable.
-                                    size = valobj_sp->GetByteSize();
+                                if (m_option_watchpoint.watch_size == 0) {
+                                    addr = valobj_sp->GetAddressOf(false, &addr_type);
+                                    if (addr_type == eAddressTypeLoad) {
+                                        // We're in business.
+                                        // Find out the size of this variable.
+                                        size = valobj_sp->GetByteSize();
+                                    }
+                                } else {
+                                    // The '-xsize'/'-x' option means to treat the value object as
+                                    // a pointer and to watch the pointee with the specified size.
+                                    addr = valobj_sp->GetValueAsUnsigned(0);
+                                    size = m_option_watchpoint.watch_size;
                                 }
                                 uint32_t watch_type = m_option_watchpoint.watch_type;
                                 WatchpointLocation *wp_loc = exe_ctx.GetTargetRef().CreateWatchpointLocation(addr, size, watch_type).get();
