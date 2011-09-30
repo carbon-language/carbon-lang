@@ -1572,30 +1572,105 @@ StmtResult Parser::ParseReturnStatement(ParsedAttributes &attrs) {
   return Actions.ActOnReturnStmt(ReturnLoc, R.take());
 }
 
-/// FuzzyParseMicrosoftAsmStatement. When -fms-extensions is enabled, this
-/// routine is called to skip/ignore tokens that comprise the MS asm statement.
-StmtResult Parser::FuzzyParseMicrosoftAsmStatement(SourceLocation AsmLoc) {
-  SourceLocation EndLoc;
-  if (Tok.is(tok::l_brace)) {
-    unsigned short savedBraceCount = BraceCount;
-    do {
-      EndLoc = Tok.getLocation();
-      ConsumeAnyToken();
-    } while (BraceCount > savedBraceCount && Tok.isNot(tok::eof));
-  } else {
-    // From the MS website: If used without braces, the __asm keyword means
-    // that the rest of the line is an assembly-language statement.
-    SourceManager &SrcMgr = PP.getSourceManager();
+/// ParseMicrosoftAsmStatement. When -fms-extensions/-fasm-blocks is enabled,
+/// this routine is called to collect the tokens for an MS asm statement.
+StmtResult Parser::ParseMicrosoftAsmStatement(SourceLocation AsmLoc) {
+  SourceManager &SrcMgr = PP.getSourceManager();
+  SourceLocation EndLoc = AsmLoc;
+  do {
+    bool InBraces = false;
+    unsigned short savedBraceCount;
+    bool InAsmComment = false;
+    FileID FID;
+    unsigned LineNo;
+    unsigned NumTokensRead = 0;
+    SourceLocation LBraceLoc;
+
+    if (Tok.is(tok::l_brace)) {
+      // Braced inline asm: consume the opening brace.
+      InBraces = true;
+      savedBraceCount = BraceCount;
+      EndLoc = LBraceLoc = ConsumeBrace();
+      ++NumTokensRead;
+    } else {
+      // Single-line inline asm; compute which line it is on.
+      std::pair<FileID, unsigned> ExpAsmLoc =
+          SrcMgr.getDecomposedExpansionLoc(EndLoc);
+      FID = ExpAsmLoc.first;
+      LineNo = SrcMgr.getLineNumber(FID, ExpAsmLoc.second);
+    }
+
     SourceLocation TokLoc = Tok.getLocation();
-    unsigned LineNo = SrcMgr.getExpansionLineNumber(TokLoc);
     do {
+      // If we hit EOF, we're done, period.
+      if (Tok.is(tok::eof))
+        break;
+      // When we consume the closing brace, we're done.
+      if (InBraces && BraceCount == savedBraceCount)
+        break;
+
+      if (!InAsmComment && Tok.is(tok::semi)) {
+        // A semicolon in an asm is the start of a comment.
+        InAsmComment = true;
+        if (InBraces) {
+          // Compute which line the comment is on.
+          std::pair<FileID, unsigned> ExpSemiLoc =
+              SrcMgr.getDecomposedExpansionLoc(TokLoc);
+          FID = ExpSemiLoc.first;
+          LineNo = SrcMgr.getLineNumber(FID, ExpSemiLoc.second);
+        }
+      } else if (!InBraces || InAsmComment) {
+        // If end-of-line is significant, check whether this token is on a
+        // new line.
+        std::pair<FileID, unsigned> ExpLoc =
+            SrcMgr.getDecomposedExpansionLoc(TokLoc);
+        if (ExpLoc.first != FID ||
+            SrcMgr.getLineNumber(ExpLoc.first, ExpLoc.second) != LineNo) {
+          // If this is a single-line __asm, we're done.
+          if (!InBraces)
+            break;
+          // We're no longer in a comment.
+          InAsmComment = false;
+        } else if (!InAsmComment && Tok.is(tok::r_brace)) {
+          // Single-line asm always ends when a closing brace is seen.
+          // FIXME: This is compatible with Apple gcc's -fasm-blocks; what
+          // does MSVC do here?
+          break;
+        }
+      }
+
+      // Consume the next token; make sure we don't modify the brace count etc.
+      // if we are in a comment.
       EndLoc = TokLoc;
-      ConsumeAnyToken();
+      if (InAsmComment)
+        PP.Lex(Tok);
+      else
+        ConsumeAnyToken();
       TokLoc = Tok.getLocation();
-    } while ((SrcMgr.getExpansionLineNumber(TokLoc) == LineNo) &&
-             Tok.isNot(tok::r_brace) && Tok.isNot(tok::semi) &&
-             Tok.isNot(tok::eof));
-  }
+      ++NumTokensRead;
+    } while (1);
+
+    if (InBraces && BraceCount != savedBraceCount) {
+      // __asm without closing brace (this can happen at EOF).
+      Diag(Tok, diag::err_expected_rbrace);
+      Diag(LBraceLoc, diag::note_matching) << "{";
+      return StmtError();
+    } else if (NumTokensRead == 0) {
+      // Empty __asm.
+      Diag(Tok, diag::err_expected_lbrace);
+      return StmtError();
+    }
+    // Multiple adjacent asm's form together into a single asm statement
+    // in the AST.
+    if (!Tok.is(tok::kw_asm))
+      break;
+    EndLoc = ConsumeToken();
+  } while (1);
+  // FIXME: Need to actually grab the data and pass it on to Sema.  Ideally,
+  // what Sema wants is a string of the entire inline asm, with one instruction
+  // per line and all the __asm keywords stripped out, and a way of mapping
+  // from any character of that string to its location in the original source
+  // code. I'm not entirely sure how to go about that, though.
   Token t;
   t.setKind(tok::string_literal);
   t.setLiteralData("\"/*FIXME: not done*/\"");
@@ -1631,12 +1706,16 @@ StmtResult Parser::FuzzyParseMicrosoftAsmStatement(SourceLocation AsmLoc) {
 ///         asm-clobbers ',' asm-string-literal
 ///
 /// [MS]  ms-asm-statement:
-///         '__asm' assembly-instruction ';'[opt]
-///         '__asm' '{' assembly-instruction-list '}' ';'[opt]
+///         ms-asm-block
+///         ms-asm-block ms-asm-statement
 ///
-/// [MS]  assembly-instruction-list:
-///         assembly-instruction ';'[opt]
-///         assembly-instruction-list ';' assembly-instruction ';'[opt]
+/// [MS]  ms-asm-block:
+///         '__asm' ms-asm-line '\n'
+///         '__asm' '{' ms-asm-instruction-block[opt] '}' ';'[opt]
+///
+/// [MS]  ms-asm-instruction-block
+///         ms-asm-line
+///         ms-asm-line '\n' ms-asm-instruction-block
 ///
 StmtResult Parser::ParseAsmStatement(bool &msAsm) {
   assert(Tok.is(tok::kw_asm) && "Not an asm stmt");
@@ -1644,7 +1723,7 @@ StmtResult Parser::ParseAsmStatement(bool &msAsm) {
 
   if (getLang().MicrosoftExt && Tok.isNot(tok::l_paren) && !isTypeQualifier()) {
     msAsm = true;
-    return FuzzyParseMicrosoftAsmStatement(AsmLoc);
+    return ParseMicrosoftAsmStatement(AsmLoc);
   }
   DeclSpec DS(AttrFactory);
   SourceLocation Loc = Tok.getLocation();

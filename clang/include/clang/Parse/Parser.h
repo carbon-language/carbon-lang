@@ -1409,7 +1409,7 @@ private:
   StmtResult ParseBreakStatement(ParsedAttributes &Attr);
   StmtResult ParseReturnStatement(ParsedAttributes &Attr);
   StmtResult ParseAsmStatement(bool &msAsm);
-  StmtResult FuzzyParseMicrosoftAsmStatement(SourceLocation AsmLoc);
+  StmtResult ParseMicrosoftAsmStatement(SourceLocation AsmLoc);
   bool ParseMicrosoftIfExistsCondition(bool& Result);
   void ParseMicrosoftIfExistsStatement(StmtVector &Stmts);
   void ParseMicrosoftIfExistsExternalDeclaration();
