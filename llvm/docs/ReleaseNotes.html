@@ -689,6 +689,24 @@ it run faster:</p>
     information in the LLVM IR now expects clients to use <code>DIBuilder::finalize()</code>
     at the end of translation unit to complete debugging information encoding.</li>
 
+<li>The way the type system works has been rewritten: <code>PATypeHolder</code>
+and <code>OpaqueType</code> are gone, and all APIs deal with <code>Type*</code>
+instead of <code>const Type*</code>.
+If you need to create recursive structures, then create a named structure,
+and use <code>setBody()</code> when all its elements are built.
+Type merging and refining is gone too: named structures are not
+merged with other structures, even if their layout is identical.
+(of course anonymous structures are still uniqued by layout).
+</li>
+
+<li>TargetSelect.h moved to Support/ from Target/</li>
+
+<li>UpgradeIntrinsicCall no longer upgrades pre-2.9 intrinsic calls
+(for example <code>llvm.memset.i32</code>).</li>
+
+<li>It is mandatory to initialize all out-of-tree passes too and their dependencies now with
+<code>INITIALIZE_PASS{BEGIN,END,}</code> and <code>INITIALIZE_{PASS,AG}_DEPENDENCY</code>.</li>
+
 </ul>
 </div>
 
