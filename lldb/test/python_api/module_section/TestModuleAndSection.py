@@ -45,14 +45,14 @@ class ModuleAndSectionAPIsTestCase(TestBase):
             print sec
             print INDENT + "Number of subsections: %d" % sec.GetNumSubSections()
             if sec.GetNumSubSections() == 0:
-                for sym in symbol_iter(exe_module, sec):
+                for sym in exe_module.symbol_in_section_iter(sec):
                     print INDENT + repr(sym)
                     print INDENT + "symbol type: %s" % symbol_type_to_str(sym.GetType())
             else:
                 for subsec in sec:
                     print INDENT + repr(subsec)
                     # Now print the symbols belonging to the subsection....
-                    for sym in symbol_iter(exe_module, subsec):
+                    for sym in exe_module.symbol_in_section_iter(subsec):
                         print INDENT2 + repr(sym)
                         print INDENT2 + "symbol type: %s" % symbol_type_to_str(sym.GetType())
 

@@ -44,34 +44,6 @@ def disassemble(target, function_or_symbol):
         print >> buf, i
     return buf.getvalue()
 
-# ======================================================
-# Utilities for iterating a module's section for symbols
-# ======================================================
-
-def in_range(symbol, section):
-    symSA = symbol.GetStartAddress().GetFileAddress()
-    symEA = symbol.GetEndAddress().GetFileAddress()
-    secSA = section.GetFileAddress()
-    secEA = secSA + section.GetByteSize()
-
-    if symEA != lldb.LLDB_INVALID_ADDRESS:
-        if secSA <= symSA and symEA <= secEA:
-            return True
-        else:
-            return False
-    else:
-        if secSA <= symSA and symSA < secEA:
-            return True
-        else:
-            return False
-
-def symbol_iter(module, section):
-    """Given a module and its contained section, returns an iterator on the
-    symbols within the section."""
-    for sym in module:
-        if in_range(sym, section):
-            yield sym
-
 # ==========================================================
 # Integer (byte size 1, 2, 4, and 8) to bytearray conversion
 # ==========================================================
