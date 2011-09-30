@@ -19,6 +19,7 @@
 #include "SetTheory.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SetVector.h"
 #include <cstdlib>
@@ -87,6 +88,8 @@ namespace llvm {
     CodeGenRegister::Set Members;
     const std::vector<Record*> *Elements;
     std::vector<SmallVector<Record*, 16> > AltOrders;
+    // Bit mask of sub-classes including this, indexed by their EnumValue.
+    BitVector SubClasses;
   public:
     Record *TheDef;
     unsigned EnumValue;
@@ -139,6 +142,9 @@ namespace llvm {
     unsigned getNumOrders() const { return 1 + AltOrders.size(); }
 
     CodeGenRegisterClass(CodeGenRegBank&, Record *R);
+
+    // Called by CodeGenRegBank::CodeGenRegBank().
+    static void computeSubClasses(ArrayRef<CodeGenRegisterClass*>);
   };
 
   // CodeGenRegBank - Represent a target's registers and the relations between

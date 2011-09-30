@@ -388,6 +388,34 @@ const std::string &CodeGenRegisterClass::getName() const {
   return TheDef->getName();
 }
 
+// Compute sub-classes of all register classes.
+// Assume the classes are ordered topologically.
+void CodeGenRegisterClass::
+computeSubClasses(ArrayRef<CodeGenRegisterClass*> RegClasses) {
+  // Visit backwards so sub-classes are seen first.
+  for (unsigned rci = RegClasses.size(); rci; --rci) {
+    CodeGenRegisterClass &RC = *RegClasses[rci - 1];
+    RC.SubClasses.resize(RegClasses.size());
+    RC.SubClasses.set(RC.EnumValue);
+
+    // Normally, all subclasses have IDs >= rci, unless RC is part of a clique.
+    for (unsigned s = rci; s != RegClasses.size(); ++s) {
+      if (RC.SubClasses.test(s))
+        continue;
+      CodeGenRegisterClass *SubRC = RegClasses[s];
+      if (!RC.hasSubClass(SubRC))
+        continue;
+      // SubRC is a sub-class. Grap all its sub-classes so we won't have to
+      // check them again.
+      RC.SubClasses |= SubRC->SubClasses;
+    }
+
+    // Sweep up missed clique members.  They will be immediately preceeding RC.
+    for (unsigned s = rci - 1; s && RC.hasSubClass(RegClasses[s - 1]); --s)
+      RC.SubClasses.set(s - 1);
+  }
+}
+
 //===----------------------------------------------------------------------===//
 //                               CodeGenRegBank
 //===----------------------------------------------------------------------===//
@@ -435,6 +463,7 @@ CodeGenRegBank::CodeGenRegBank(RecordKeeper &Records) : Records(Records) {
   array_pod_sort(RegClasses.begin(), RegClasses.end(), TopoOrderRC);
   for (unsigned i = 0, e = RegClasses.size(); i != e; ++i)
     RegClasses[i]->EnumValue = i;
+  CodeGenRegisterClass::computeSubClasses(RegClasses);
 }
 
 CodeGenRegister *CodeGenRegBank::getReg(Record *Def) {
