@@ -37,35 +37,35 @@ entry:
 
 define i64 @f7(i64 %a0) nounwind readnone {
 entry:
-; CHECK: daddiu
+; CHECK: daddiu ${{[0-9]+}}, ${{[0-9]+}}, 20
   %add = add nsw i64 %a0, 20
   ret i64 %add
 }
 
 define i64 @f8(i64 %a0) nounwind readnone {
 entry:
-; CHECK: daddiu
+; CHECK: daddiu ${{[0-9]+}}, ${{[0-9]+}}, -20
   %sub = add nsw i64 %a0, -20
   ret i64 %sub
 }
 
 define i64 @f9(i64 %a0) nounwind readnone {
 entry:
-; CHECK: andi
+; CHECK: andi ${{[0-9]+}}, ${{[0-9]+}}, 20
   %and = and i64 %a0, 20
   ret i64 %and
 }
 
 define i64 @f10(i64 %a0) nounwind readnone {
 entry:
-; CHECK: ori
+; CHECK: ori ${{[0-9]+}}, ${{[0-9]+}}, 20
   %or = or i64 %a0, 20
   ret i64 %or
 }
 
 define i64 @f11(i64 %a0) nounwind readnone {
 entry:
-; CHECK: xori
+; CHECK: xori ${{[0-9]+}}, ${{[0-9]+}}, 20
   %xor = xor i64 %a0, 20
   ret i64 %xor
 }
