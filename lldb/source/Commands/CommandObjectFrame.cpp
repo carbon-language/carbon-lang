@@ -248,11 +248,13 @@ public:
                     const char *frame_idx_cstr = command.GetArgumentAtIndex(0);
                     frame_idx = Args::StringToUInt32 (frame_idx_cstr, UINT32_MAX, 0);
                 }
-                if (command.GetArgumentCount() == 0)
+                else if (command.GetArgumentCount() == 0)
                 {
                     frame_idx = thread->GetSelectedFrameIndex ();
                     if (frame_idx == UINT32_MAX)
+                    {
                         frame_idx = 0;
+                    }
                 }
                 else
                 {
