@@ -18,6 +18,7 @@
 #include "llvm/MC/MCCodeGenInfo.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
+#include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Support/TargetRegistry.h"
 
@@ -77,6 +78,17 @@ static MCInstPrinter *createMipsMCInstPrinter(const Target &T,
   return new MipsInstPrinter(MAI);
 }
 
+static MCStreamer *createMCStreamer(const Target &T, StringRef TT,
+                                    MCContext &Ctx, MCAsmBackend &MAB,
+                                    raw_ostream &_OS,
+                                    MCCodeEmitter *_Emitter,
+                                    bool RelaxAll,
+                                    bool NoExecStack) {
+  Triple TheTriple(TT);
+
+  return createELFStreamer(Ctx, MAB, _OS, _Emitter, RelaxAll, NoExecStack);
+}
+
 extern "C" void LLVMInitializeMipsTargetMC() {
   // Register the MC asm info.
   RegisterMCAsmInfoFn X(TheMipsTarget, createMipsMCAsmInfo);
@@ -115,6 +127,12 @@ extern "C" void LLVMInitializeMipsTargetMC() {
                                         createMipsMCCodeEmitter);
   TargetRegistry::RegisterMCCodeEmitter(TheMips64elTarget,
                                         createMipsMCCodeEmitter);
+
+  // Register the object streamer.
+  TargetRegistry::RegisterMCObjectStreamer(TheMipsTarget, createMCStreamer);
+  TargetRegistry::RegisterMCObjectStreamer(TheMipselTarget, createMCStreamer);
+  TargetRegistry::RegisterMCObjectStreamer(TheMips64Target, createMCStreamer);
+  TargetRegistry::RegisterMCObjectStreamer(TheMips64elTarget, createMCStreamer);
 
   // Register the asm backend.
   TargetRegistry::RegisterMCAsmBackend(TheMipsTarget, createMipsAsmBackend);
