@@ -7,7 +7,7 @@ import re
 import unittest2
 import lldb
 from lldbtest import *
-from lldbutil import symbol_iter, symbol_type_to_str
+from lldbutil import symbol_type_to_str
 
 class ModuleAndSectionAPIsTestCase(TestBase):
 
