@@ -33,8 +33,16 @@ ANALYSIS_DIAGNOSTICS(PLIST, "plist", "Output analysis results using Plists", cre
 ANALYSIS_DIAGNOSTICS(PLIST_HTML, "plist-html", "Output analysis results using HTML wrapped with Plists", createPlistHTMLDiagnosticConsumer, true)
 ANALYSIS_DIAGNOSTICS(TEXT, "text", "Text output of analysis results", createTextPathDiagnosticConsumer, true)
 
+#ifndef ANALYSIS_PURGE
+#define ANALYSIS_PURGE(NAME, CMDFLAG, DESC)
+#endif
+
+ANALYSIS_PURGE(PurgeStmt,  "statement", "Purge symbols, bindings, and constraints before every statement")
+ANALYSIS_PURGE(PurgeBlock, "block", "Purge symbols, bindings, and constraints before every basic block")
+ANALYSIS_PURGE(PurgeNone,  "none", "Do not purge symbols, bindings, or constraints")
+
 #undef ANALYSIS_STORE
 #undef ANALYSIS_CONSTRAINTS
 #undef ANALYSIS_DIAGNOSTICS
-#undef ANALYSIS_STORE
+#undef ANALYSIS_PURGE
 

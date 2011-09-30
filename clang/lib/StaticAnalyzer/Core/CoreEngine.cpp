@@ -784,26 +784,8 @@ void CallEnterNodeBuilder::generateNode(const ProgramState *state) {
     // Create a new AnalysisManager with components of the callee's
     // TranslationUnit.
     // The Diagnostic is  actually shared when we create ASTUnits from AST files.
-    AnalysisManager AMgr(TU->getASTContext(), TU->getDiagnostic(), 
-                         OldMgr.getLangOptions(), 
-                         OldMgr.getPathDiagnosticConsumer(),
-                         OldMgr.getStoreManagerCreator(),
-                         OldMgr.getConstraintManagerCreator(),
-                         OldMgr.getCheckerManager(),
-                         OldMgr.getIndexer(),
-                         OldMgr.getMaxNodes(), OldMgr.getMaxVisit(),
-                         OldMgr.shouldVisualizeGraphviz(),
-                         OldMgr.shouldVisualizeUbigraph(),
-                         OldMgr.shouldPurgeDead(),
-                         OldMgr.shouldEagerlyAssume(),
-                         OldMgr.shouldTrimGraph(),
-                         OldMgr.shouldInlineCall(),
-                     OldMgr.getAnalysisContextManager().getUseUnoptimizedCFG(),
-                     OldMgr.getAnalysisContextManager().
-                         getCFGBuildOptions().AddImplicitDtors,
-                     OldMgr.getAnalysisContextManager().
-                         getCFGBuildOptions().AddInitializers,
-                     OldMgr.shouldEagerlyTrimExplodedGraph());
+    AnalysisManager AMgr(TU->getASTContext(), TU->getDiagnostic(), OldMgr);
+
     // Create the new engine.
     // FIXME: This cast isn't really safe.
     bool GCEnabled = static_cast<ExprEngine&>(Eng.SubEng).isObjCGCEnabled();

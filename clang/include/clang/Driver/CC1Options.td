@@ -57,6 +57,10 @@ def analyzer_output : Separate<"-analyzer-output">,
 def analyzer_output_EQ : Joined<"-analyzer-output=">,
   Alias<analyzer_output>;
 
+def analyzer_purge : Separate<"-analyzer-purge">,
+  HelpText<"Source Code Analysis - Dead Symbol Removal Frequency">;
+def analyzer_purge_EQ : Joined<"-analyzer-purge=">, Alias<analyzer_purge>;
+
 def analyzer_opt_analyze_headers : Flag<"-analyzer-opt-analyze-headers">,
   HelpText<"Force the static analyzer to analyze functions defined in header files">;
 def analyzer_opt_analyze_nested_blocks : Flag<"-analyzer-opt-analyze-nested-blocks">,
@@ -68,8 +72,6 @@ def analyze_function : Separate<"-analyze-function">,
 def analyze_function_EQ : Joined<"-analyze-function=">, Alias<analyze_function>;
 def analyzer_eagerly_assume : Flag<"-analyzer-eagerly-assume">,
   HelpText<"Eagerly assume the truth/falseness of some symbolic constraints">;
-def analyzer_no_purge_dead : Flag<"-analyzer-no-purge-dead">,
-  HelpText<"Don't remove dead symbols, bindings, and constraints before processing a statement">;
 def analyzer_no_eagerly_trim_egraph : Flag<"-analyzer-no-eagerly-trim-egraph">,
   HelpText<"Don't eagerly remove uninteresting ExplodedNodes from the ExplodedGraph">;
 def trim_egraph : Flag<"-trim-egraph">,

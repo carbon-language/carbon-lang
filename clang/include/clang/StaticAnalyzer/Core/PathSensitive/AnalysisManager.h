@@ -16,6 +16,7 @@
 #define LLVM_CLANG_GR_ANALYSISMANAGER_H
 
 #include "clang/Analysis/AnalysisContext.h"
+#include "clang/Frontend/AnalyzerOptions.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugReporter.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/PathDiagnostic.h"
 
@@ -60,7 +61,7 @@ class AnalysisManager : public BugReporterData {
 
   bool VisualizeEGDot;
   bool VisualizeEGUbi;
-  bool PurgeDead;
+  AnalysisPurgeMode PurgeDead;
 
   /// EargerlyAssume - A flag indicating how the engine should handle
   //   expressions such as: 'x = (y != 0)'.  When this flag is true then
@@ -82,10 +83,16 @@ public:
                   CheckerManager *checkerMgr,
                   idx::Indexer *idxer,
                   unsigned maxnodes, unsigned maxvisit,
-                  bool vizdot, bool vizubi, bool purge, bool eager, bool trim,
+                  bool vizdot, bool vizubi, AnalysisPurgeMode purge,
+                  bool eager, bool trim,
                   bool inlinecall, bool useUnoptimizedCFG,
                   bool addImplicitDtors, bool addInitializers,
                   bool eagerlyTrimEGraph);
+
+  /// Construct a clone of the given AnalysisManager with the given ASTContext
+  /// and DiagnosticsEngine.
+  AnalysisManager(ASTContext &ctx, DiagnosticsEngine &diags,
+                  AnalysisManager &ParentAM);
 
   ~AnalysisManager() { FlushDiagnostics(); }
   
@@ -151,7 +158,7 @@ public:
 
   bool shouldTrimGraph() const { return TrimGraph; }
 
-  bool shouldPurgeDead() const { return PurgeDead; }
+  AnalysisPurgeMode getPurgeMode() const { return PurgeDead; }
 
   bool shouldEagerlyAssume() const { return EagerlyAssume; }
 

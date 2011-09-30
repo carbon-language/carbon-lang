@@ -53,6 +53,13 @@ enum AnalysisDiagClients {
 NUM_ANALYSIS_DIAG_CLIENTS
 };
 
+/// AnalysisPurgeModes - Set of available strategies for dead symbol removal.
+enum AnalysisPurgeMode {
+#define ANALYSIS_PURGE(NAME, CMDFLAG, DESC) NAME,
+#include "clang/Frontend/Analyses.def"
+NumPurgeModes
+};
+
 class AnalyzerOptions {
 public:
   /// \brief Pair of checker name and enable/disable.
@@ -60,6 +67,7 @@ public:
   AnalysisStores AnalysisStoreOpt;
   AnalysisConstraints AnalysisConstraintsOpt;
   AnalysisDiagClients AnalysisDiagOpt;
+  AnalysisPurgeMode AnalysisPurgeOpt;
   std::string AnalyzeSpecificFunction;
   unsigned MaxNodes;
   unsigned MaxLoop;
@@ -68,7 +76,6 @@ public:
   unsigned AnalyzerDisplayProgress : 1;
   unsigned AnalyzeNestedBlocks : 1;
   unsigned EagerlyAssume : 1;
-  unsigned PurgeDead : 1;
   unsigned TrimGraph : 1;
   unsigned VisualizeEGDot : 1;
   unsigned VisualizeEGUbi : 1;
@@ -83,12 +90,12 @@ public:
     AnalysisStoreOpt = RegionStoreModel;
     AnalysisConstraintsOpt = RangeConstraintsModel;
     AnalysisDiagOpt = PD_HTML;
+    AnalysisPurgeOpt = PurgeStmt;
     ShowCheckerHelp = 0;
     AnalyzeAll = 0;
     AnalyzerDisplayProgress = 0;
     AnalyzeNestedBlocks = 0;
     EagerlyAssume = 0;
-    PurgeDead = 1;
     TrimGraph = 0;
     VisualizeEGDot = 0;
     VisualizeEGUbi = 0;

@@ -60,6 +60,16 @@ static const char *getAnalysisDiagClientName(AnalysisDiagClients Kind) {
   }
 }
 
+static const char *getAnalysisPurgeModeName(AnalysisPurgeMode Kind) {
+  switch (Kind) {
+  default:
+    llvm_unreachable("Unknown analysis client!");
+#define ANALYSIS_PURGE(NAME, CMDFLAG, DESC) \
+  case NAME: return CMDFLAG;
+#include "clang/Frontend/Analyses.def"
+  }
+}
+
 //===----------------------------------------------------------------------===//
 // Serialization (to args)
 //===----------------------------------------------------------------------===//
@@ -80,6 +90,10 @@ static void AnalyzerOptsToArgs(const AnalyzerOptions &Opts,
     Res.push_back("-analyzer-output");
     Res.push_back(getAnalysisDiagClientName(Opts.AnalysisDiagOpt));
   }
+  if (Opts.AnalysisPurgeOpt != PurgeStmt) {
+    Res.push_back("-analyzer-purge");
+    Res.push_back(getAnalysisPurgeModeName(Opts.AnalysisPurgeOpt));
+  }
   if (!Opts.AnalyzeSpecificFunction.empty()) {
     Res.push_back("-analyze-function");
     Res.push_back(Opts.AnalyzeSpecificFunction);
@@ -92,8 +106,6 @@ static void AnalyzerOptsToArgs(const AnalyzerOptions &Opts,
     Res.push_back("-analyzer-opt-analyze-nested-blocks");
   if (Opts.EagerlyAssume)
     Res.push_back("-analyzer-eagerly-assume");
-  if (!Opts.PurgeDead)
-    Res.push_back("-analyzer-no-purge-dead");
   if (Opts.TrimGraph)
     Res.push_back("-trim-egraph");
   if (Opts.VisualizeEGDot)
@@ -930,6 +942,21 @@ static void ParseAnalyzerArgs(AnalyzerOptions &Opts, ArgList &Args,
       Opts.AnalysisDiagOpt = Value;
   }
 
+  if (Arg *A = Args.getLastArg(OPT_analyzer_purge)) {
+    StringRef Name = A->getValue(Args);
+    AnalysisPurgeMode Value = llvm::StringSwitch<AnalysisPurgeMode>(Name)
+#define ANALYSIS_PURGE(NAME, CMDFLAG, DESC) \
+      .Case(CMDFLAG, NAME)
+#include "clang/Frontend/Analyses.def"
+      .Default(NumPurgeModes);
+    // FIXME: Error handling.
+    if (Value == NumPurgeModes)
+      Diags.Report(diag::err_drv_invalid_value)
+        << A->getAsString(Args) << Name;
+    else
+      Opts.AnalysisPurgeOpt = Value;
+  }
+
   Opts.ShowCheckerHelp = Args.hasArg(OPT_analyzer_checker_help);
   Opts.VisualizeEGDot = Args.hasArg(OPT_analyzer_viz_egraph_graphviz);
   Opts.VisualizeEGUbi = Args.hasArg(OPT_analyzer_viz_egraph_ubigraph);
@@ -937,7 +964,6 @@ static void ParseAnalyzerArgs(AnalyzerOptions &Opts, ArgList &Args,
   Opts.AnalyzerDisplayProgress = Args.hasArg(OPT_analyzer_display_progress);
   Opts.AnalyzeNestedBlocks =
     Args.hasArg(OPT_analyzer_opt_analyze_nested_blocks);
-  Opts.PurgeDead = !Args.hasArg(OPT_analyzer_no_purge_dead);
   Opts.EagerlyAssume = Args.hasArg(OPT_analyzer_eagerly_assume);
   Opts.AnalyzeSpecificFunction = Args.getLastArgValue(OPT_analyze_function);
   Opts.UnoptimizedCFG = Args.hasArg(OPT_analysis_UnoptimizedCFG);

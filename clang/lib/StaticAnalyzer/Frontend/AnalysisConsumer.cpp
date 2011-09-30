@@ -152,7 +152,7 @@ public:
                                   /* Indexer */ 0, 
                                   Opts.MaxNodes, Opts.MaxLoop,
                                   Opts.VisualizeEGDot, Opts.VisualizeEGUbi,
-                                  Opts.PurgeDead, Opts.EagerlyAssume,
+                                  Opts.AnalysisPurgeOpt, Opts.EagerlyAssume,
                                   Opts.TrimGraph, Opts.InlineCall,
                                   Opts.UnoptimizedCFG, Opts.CFGAddImplicitDtors,
                                   Opts.CFGAddInitializers,
