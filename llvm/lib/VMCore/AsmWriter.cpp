@@ -386,7 +386,8 @@ static SlotTracker *createSlotTracker(const Value *V) {
     return new SlotTracker(FA->getParent());
 
   if (const Instruction *I = dyn_cast<Instruction>(V))
-    return new SlotTracker(I->getParent()->getParent());
+    if (I->getParent())
+      return new SlotTracker(I->getParent()->getParent());
 
   if (const BasicBlock *BB = dyn_cast<BasicBlock>(V))
     return new SlotTracker(BB->getParent());
