@@ -114,6 +114,11 @@ LLVMTargetMachine::LLVMTargetMachine(const Target &T, StringRef Triple,
   : TargetMachine(T, Triple, CPU, FS) {
   CodeGenInfo = T.createMCCodeGenInfo(Triple, RM, CM);
   AsmInfo = T.createMCAsmInfo(Triple);
+  // TargetSelect.h moved to different directory between LLVM 2.9 and 3.0,
+  // and if the old one gets included then MCAsmInfo will be NULL and we'd crash
+  // later.
+  // Provide the user a useful error message about whats wrong.
+  assert(AsmInfo && "MCAsmInfo not initialized. Make sure you include the correct TargetSelect.h!");
 }
 
 bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
