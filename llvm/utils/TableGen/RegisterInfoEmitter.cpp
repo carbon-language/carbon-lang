@@ -205,6 +205,21 @@ RegisterInfoEmitter::EmitRegMapping(raw_ostream &OS,
   }
 }
 
+// Print a BitVector as a sequence of hex numbers using a little-endian mapping.
+// Width is the number of bits per hex number.
+static void printBitVectorAsHex(raw_ostream &OS,
+                                const BitVector &Bits,
+                                unsigned Width) {
+  assert(Width <= 32 && "Width too large");
+  unsigned Digits = (Width + 3) / 4;
+  for (unsigned i = 0, e = Bits.size(); i < e; i += Width) {
+    unsigned Value = 0;
+    for (unsigned j = 0; j != Width && i + j != e; ++j)
+      Value |= Bits.test(i + j) << j;
+    OS << format("0x%0*x, ", Digits, Value);
+  }
+}
+
 // Helper to emit a set of bits into a constant byte array.
 class BitVectorEmitter {
   BitVector Values;
@@ -216,13 +231,7 @@ public:
   }
 
   void print(raw_ostream &OS) {
-    for (unsigned i = 0, e = Values.size() / 8; i != e; ++i) {
-      unsigned char out = 0;
-      for (unsigned j = 0; j != 8; ++j)
-        if (Values[i * 8 + j])
-          out |= 1 << j;
-      OS << format("0x%02x, ", out);
-    }
+    printBitVectorAsHex(OS, Values, 8);
   }
 };
 
