@@ -58,3 +58,14 @@ define i1 @test7(float %x) nounwind readnone ssp noredzone {
 ; CHECK: @test7
 ; CHECK-NEXT: fpext float %x to ppc_fp128
 }
+
+define float @test8(float %x) nounwind readnone optsize ssp {
+  %conv = fpext float %x to double
+  %cmp = fcmp olt double %conv, 0.000000e+00
+  %conv1 = zext i1 %cmp to i32
+  %conv2 = sitofp i32 %conv1 to float
+  ret float %conv2
+; Float comparison to zero shouldn't cast to double.
+; CHECK: @test8
+; CHECK-NEXT: fcmp olt float %x, 0.000000e+00
+}

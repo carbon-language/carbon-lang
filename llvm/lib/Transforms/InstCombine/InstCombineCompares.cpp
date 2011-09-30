@@ -2837,10 +2837,13 @@ Instruction *InstCombiner::visitFCmpInst(FCmpInst &I) {
         APFloat F = RHSF->getValueAPF();
         F.convert(*Sem, APFloat::rmNearestTiesToEven, &Lossy);
 
-        // Avoid lossy conversions and denormals.
+        // Avoid lossy conversions and denormals. Zero is a special case
+        // that's OK to convert.
+        F.clearSign();
         if (!Lossy &&
-            F.compare(APFloat::getSmallestNormalized(*Sem)) !=
-                                                           APFloat::cmpLessThan)
+            ((F.compare(APFloat::getSmallestNormalized(*Sem)) !=
+                 APFloat::cmpLessThan) || F.isZero()))
+
           return new FCmpInst(I.getPredicate(), LHSExt->getOperand(0),
                               ConstantFP::get(RHSC->getContext(), F));
         break;
