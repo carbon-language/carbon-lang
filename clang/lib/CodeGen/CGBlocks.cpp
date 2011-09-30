@@ -617,10 +617,9 @@ llvm::Value *CodeGenFunction::EmitBlockLiteral(const BlockExpr *blockExpr) {
       ImplicitCastExpr l2r(ImplicitCastExpr::OnStack, type, CK_LValueToRValue,
                            declRef, VK_RValue);
       EmitExprAsInit(&l2r, &blockFieldPseudoVar,
-                     LValue::MakeAddr(blockField, type,
-                                      getContext().getDeclAlign(variable)
-                                                  .getQuantity(),
-                                      getContext()),
+                     MakeAddrLValue(blockField, type,
+                                    getContext().getDeclAlign(variable)
+                                                .getQuantity()),
                      /*captured by init*/ false);
     }
 
