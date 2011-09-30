@@ -962,6 +962,21 @@ class TestBase(Base):
 
         del self.dbg
 
+    def switch_to_thread_with_stop_reason(self, stop_reason):
+        """
+        Run the 'thread list' command, and select the thread with stop reason as
+        'stop_reason'.  If no such thread exists, no select action is done.
+        """
+        from lldbutil import stop_reason_to_str
+        self.runCmd('thread list')
+        output = self.res.GetOutput()
+        thread_line_pattern = re.compile("^[ *] thread #([0-9]+):.*stop reason = %s" %
+                                         stop_reason_to_str(stop_reason))
+        for line in output.splitlines():
+            matched = thread_line_pattern.match(line)
+            if matched:
+                self.runCmd('thread select %s' % matched.group(1))
+
     def runCmd(self, cmd, msg=None, check=True, trace=False):
         """
         Ask the command interpreter to handle the command and then check its
@@ -1000,7 +1015,7 @@ class TestBase(Base):
             self.assertTrue(self.res.Succeeded(),
                             msg if msg else CMD_MSG(cmd))
 
-    def expect(self, str, msg=None, patterns=None, startstr=None, substrs=None, trace=False, error=False, matching=True, exe=True):
+    def expect(self, str, msg=None, patterns=None, startstr=None, endstr=None, substrs=None, trace=False, error=False, matching=True, exe=True):
         """
         Similar to runCmd; with additional expect style output matching ability.
 
@@ -1054,6 +1069,14 @@ class TestBase(Base):
         if startstr:
             with recording(self, trace) as sbuf:
                 print >> sbuf, "%s start string: %s" % (heading, startstr)
+                print >> sbuf, "Matched" if matched else "Not matched"
+
+        # Look for endstr, if specified.
+        keepgoing = matched if matching else not matched
+        if endstr:
+            matched = output.endswith(endstr)
+            with recording(self, trace) as sbuf:
+                print >> sbuf, "%s end string: %s" % (heading, endstr)
                 print >> sbuf, "Matched" if matched else "Not matched"
 
         # Look for sub strings, if specified.
@@ -1110,14 +1133,15 @@ class TestBase(Base):
 
         err = sys.stderr
         err.write(val.GetName() + ":\n")
-        err.write('\t' + "TypeName      -> " + val.GetTypeName()            + '\n')
-        err.write('\t' + "ByteSize      -> " + str(val.GetByteSize())       + '\n')
-        err.write('\t' + "NumChildren   -> " + str(val.GetNumChildren())    + '\n')
-        err.write('\t' + "Value         -> " + str(val.GetValue())          + '\n')
-        err.write('\t' + "ValueType     -> " + value_type_to_str(val.GetValueType()) + '\n')
-        err.write('\t' + "Summary       -> " + str(val.GetSummary())        + '\n')
-        err.write('\t' + "IsPointerType -> " + str(val.TypeIsPointerType()) + '\n')
-        err.write('\t' + "Location      -> " + val.GetLocation()            + '\n')
+        err.write('\t' + "TypeName         -> " + val.GetTypeName()            + '\n')
+        err.write('\t' + "ByteSize         -> " + str(val.GetByteSize())       + '\n')
+        err.write('\t' + "NumChildren      -> " + str(val.GetNumChildren())    + '\n')
+        err.write('\t' + "Value            -> " + str(val.GetValue())          + '\n')
+        err.write('\t' + "ValueAsUnsigned  -> " + str(val.GetValueAsUnsigned())+ '\n')
+        err.write('\t' + "ValueType        -> " + value_type_to_str(val.GetValueType()) + '\n')
+        err.write('\t' + "Summary          -> " + str(val.GetSummary())        + '\n')
+        err.write('\t' + "IsPointerType    -> " + str(val.TypeIsPointerType()) + '\n')
+        err.write('\t' + "Location         -> " + val.GetLocation()            + '\n')
 
     def DebugSBType(self, type):
         """Debug print a SBType object, if traceAlways is True."""

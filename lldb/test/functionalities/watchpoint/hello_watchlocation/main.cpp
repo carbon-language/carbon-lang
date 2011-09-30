@@ -23,6 +23,8 @@ char *g_char_ptr = NULL;
 void
 do_bad_thing_with_location(char *char_ptr, char new_val)
 {
+    unsigned what = new_val;
+    printf("new value written to location(%p) = %u\n", char_ptr, what);
     *char_ptr = new_val;
 }
 

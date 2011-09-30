@@ -62,6 +62,9 @@ class HelloWatchLocationTestCase(TestBase):
         # incrmenting the global pool by 2.
         self.expect("frame variable -w write -x 1 -g g_char_ptr", WATCHPOINT_CREATED,
             substrs = ['Watchpoint created', 'size = 1', 'type = w'])
+        self.runCmd("expr unsigned val = *g_char_ptr; val")
+        self.expect(self.res.GetOutput().splitlines()[0], exe=False,
+            endstr = ' = 0')
 
         # Use the '-v' option to do verbose listing of the watchpoint.
         # The hit count should be 0 initially.
@@ -76,6 +79,13 @@ class HelloWatchLocationTestCase(TestBase):
             substrs = ['stopped',
                        'stop reason = watchpoint',
                        self.violating_func])
+
+        # Switch to the thread stopped due to watchpoint and issue some commands.
+        self.switch_to_thread_with_stop_reason(lldb.eStopReasonWatchpoint)
+        self.runCmd("thread backtrace")
+        self.runCmd("expr unsigned val = *g_char_ptr; val")
+        self.expect(self.res.GetOutput().splitlines()[0], exe=False,
+            endstr = ' = 1')
 
         # Use the '-v' option to do verbose listing of the watchpoint.
         # The hit count should now be 1.
