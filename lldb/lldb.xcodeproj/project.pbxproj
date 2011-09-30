@@ -3594,7 +3594,6 @@
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"-flimit-debug-info",
-					"-feliminate-unused-debug-types",
 					"-Wparentheses",
 				);
 				VALID_ARCHS = "x86_64 i386";
@@ -3629,7 +3628,6 @@
 				LLVM_SOURCE_DIR = "$(SRCROOT)/llvm";
 				OTHER_CFLAGS = (
 					"-flimit-debug-info",
-					"-feliminate-unused-debug-types",
 					"-Wparentheses",
 				);
 				VALID_ARCHS = "x86_64 i386";
@@ -3921,7 +3919,6 @@
 				LLVM_SOURCE_DIR = "$(SRCROOT)/llvm";
 				OTHER_CFLAGS = (
 					"-flimit-debug-info",
-					"-feliminate-unused-debug-types",
 					"-Wparentheses",
 				);
 				VALID_ARCHS = "x86_64 i386";
