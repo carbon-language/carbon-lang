@@ -1309,8 +1309,10 @@ enum CXCursorKind {
   CXCursor_ObjCSynthesizeDecl            = 37,
   /** \brief An Objective-C @dynamic definition. */
   CXCursor_ObjCDynamicDecl               = 38,
+  /** \brief An access specifier. */
+  CXCursor_CXXAccessSpecifier            = 39,
   CXCursor_FirstDecl                     = CXCursor_UnexposedDecl,
-  CXCursor_LastDecl                      = CXCursor_ObjCDynamicDecl,
+  CXCursor_LastDecl                      = CXCursor_CXXAccessSpecifier,
 
   /* References */
   CXCursor_FirstRef                      = 40, /* Decl references */
@@ -2095,7 +2097,8 @@ enum CX_CXXAccessSpecifier {
 
 /**
  * \brief Returns the access control level for the C++ base specifier
- *  represented by a cursor with kind CX_CXXBaseSpecifier.
+ * represented by a cursor with kind CXCursor_CXXBaseSpecifier or
+ * CXCursor_AccessSpecifier.
  */
 CINDEX_LINKAGE enum CX_CXXAccessSpecifier clang_getCXXAccessSpecifier(CXCursor);
 

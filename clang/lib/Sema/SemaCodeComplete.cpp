@@ -2722,6 +2722,7 @@ CXCursorKind clang::getCursorKindForDecl(Decl *D) {
     case Decl::TemplateTemplateParm:return CXCursor_TemplateTemplateParameter;
     case Decl::FunctionTemplate:   return CXCursor_FunctionTemplate;
     case Decl::ClassTemplate:      return CXCursor_ClassTemplate;
+    case Decl::AccessSpec:         return CXCursor_CXXAccessSpecifier;
     case Decl::ClassTemplatePartialSpecialization:
       return CXCursor_ClassTemplatePartialSpecialization;
     case Decl::UsingDirective:     return CXCursor_UsingDirective;

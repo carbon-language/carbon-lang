@@ -425,8 +425,8 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Keyword: "class" [38:1 - 38:6] ClassDecl=StringRef:38:7 (Definition)
 // CHECK-tokens: Identifier: "StringRef" [38:7 - 38:16] ClassDecl=StringRef:38:7 (Definition)
 // CHECK-tokens: Punctuation: "{" [38:17 - 38:18] ClassDecl=StringRef:38:7 (Definition)
-// CHECK-tokens: Keyword: "public" [39:1 - 39:7] UnexposedDecl=:39:1 (Definition)
-// CHECK-tokens: Punctuation: ":" [39:7 - 39:8] UnexposedDecl=:39:1 (Definition)
+// CHECK-tokens: Keyword: "public" [39:1 - 39:7] CXXAccessSpecifier=:39:1 (Definition)
+// CHECK-tokens: Punctuation: ":" [39:7 - 39:8] CXXAccessSpecifier=:39:1 (Definition)
 // CHECK-tokens: Keyword: "typedef" [40:3 - 40:10] ClassDecl=StringRef:38:7 (Definition)
 // CHECK-tokens: Keyword: "const" [40:11 - 40:16] ClassDecl=StringRef:38:7 (Definition)
 // CHECK-tokens: Keyword: "char" [40:17 - 40:21] TypedefDecl=iterator:40:23 (Definition)
@@ -444,8 +444,8 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Literal: "0" [41:38 - 41:39] UnexposedExpr=
 // CHECK-tokens: Punctuation: ")" [41:39 - 41:40] UnexposedExpr=
 // CHECK-tokens: Punctuation: ";" [41:40 - 41:41] ClassDecl=StringRef:38:7 (Definition)
-// CHECK-tokens: Keyword: "private" [42:1 - 42:8] UnexposedDecl=:42:1 (Definition)
-// CHECK-tokens: Punctuation: ":" [42:8 - 42:9] UnexposedDecl=:42:1 (Definition)
+// CHECK-tokens: Keyword: "private" [42:1 - 42:8] CXXAccessSpecifier=:42:1 (Definition)
+// CHECK-tokens: Punctuation: ":" [42:8 - 42:9] CXXAccessSpecifier=:42:1 (Definition)
 // CHECK-tokens: Keyword: "const" [43:3 - 43:8] ClassDecl=StringRef:38:7 (Definition)
 // CHECK-tokens: Keyword: "char" [43:9 - 43:13] FieldDecl=Data:43:15 (Definition)
 // CHECK-tokens: Punctuation: "*" [43:14 - 43:15] FieldDecl=Data:43:15 (Definition)
@@ -475,8 +475,8 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Identifier: "b" [45:62 - 45:63] DeclRefExpr=b:45:38
 // CHECK-tokens: Punctuation: ";" [45:63 - 45:64] UnexposedStmt=
 // CHECK-tokens: Punctuation: "}" [45:65 - 45:66] UnexposedStmt=
-// CHECK-tokens: Keyword: "public" [46:1 - 46:7] UnexposedDecl=:46:1 (Definition)
-// CHECK-tokens: Punctuation: ":" [46:7 - 46:8] UnexposedDecl=:46:1 (Definition)
+// CHECK-tokens: Keyword: "public" [46:1 - 46:7] CXXAccessSpecifier=:46:1 (Definition)
+// CHECK-tokens: Punctuation: ":" [46:7 - 46:8] CXXAccessSpecifier=:46:1 (Definition)
 // CHECK-tokens: Identifier: "StringRef" [47:3 - 47:12] CXXConstructor=StringRef:47:3 (Definition)
 // CHECK-tokens: Punctuation: "(" [47:12 - 47:13] CXXConstructor=StringRef:47:3 (Definition)
 // CHECK-tokens: Punctuation: ")" [47:13 - 47:14] CXXConstructor=StringRef:47:3 (Definition)
@@ -664,8 +664,8 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Keyword: "class" [66:1 - 66:6] ClassDecl=IdentifierInfo:66:7 (Definition)
 // CHECK-tokens: Identifier: "IdentifierInfo" [66:7 - 66:21] ClassDecl=IdentifierInfo:66:7 (Definition)
 // CHECK-tokens: Punctuation: "{" [66:22 - 66:23] ClassDecl=IdentifierInfo:66:7 (Definition)
-// CHECK-tokens: Keyword: "public" [67:1 - 67:7] UnexposedDecl=:67:1 (Definition)
-// CHECK-tokens: Punctuation: ":" [67:7 - 67:8] UnexposedDecl=:67:1 (Definition)
+// CHECK-tokens: Keyword: "public" [67:1 - 67:7] CXXAccessSpecifier=:67:1 (Definition)
+// CHECK-tokens: Punctuation: ":" [67:7 - 67:8] CXXAccessSpecifier=:67:1 (Definition)
 // CHECK-tokens: Identifier: "IdentifierInfo" [67:8 - 67:22] CXXConstructor=IdentifierInfo:67:8
 // CHECK-tokens: Punctuation: "(" [67:22 - 67:23] CXXConstructor=IdentifierInfo:67:8
 // CHECK-tokens: Punctuation: ")" [67:23 - 67:24] CXXConstructor=IdentifierInfo:67:8
@@ -821,8 +821,8 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Punctuation: "*" [85:11 - 85:12] FieldDecl=Result:85:12 (Definition)
 // CHECK-tokens: Identifier: "Result" [85:12 - 85:18] FieldDecl=Result:85:12 (Definition)
 // CHECK-tokens: Punctuation: ";" [85:18 - 85:19] ClassTemplate=StringSwitch:83:47 (Definition)
-// CHECK-tokens: Keyword: "public" [86:1 - 86:7] UnexposedDecl=:86:1 (Definition)
-// CHECK-tokens: Punctuation: ":" [86:7 - 86:8] UnexposedDecl=:86:1 (Definition)
+// CHECK-tokens: Keyword: "public" [86:1 - 86:7] CXXAccessSpecifier=:86:1 (Definition)
+// CHECK-tokens: Punctuation: ":" [86:7 - 86:8] CXXAccessSpecifier=:86:1 (Definition)
 // CHECK-tokens: Keyword: "explicit" [87:3 - 87:11] CXXConstructor=StringSwitch<T, R>:87:12 (Definition)
 // CHECK-tokens: Identifier: "StringSwitch" [87:12 - 87:24] CXXConstructor=StringSwitch<T, R>:87:12 (Definition)
 // CHECK-tokens: Punctuation: "(" [87:24 - 87:25] CXXConstructor=StringSwitch<T, R>:87:12 (Definition)
@@ -1625,7 +1625,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK: 36:33: ParmDecl=s:36:33 (Definition) Extent=[36:21 - 36:34]
 // CHECK: 37:11: Namespace=llvm:37:11 (Definition) Extent=[37:1 - 64:2]
 // CHECK: 38:7: ClassDecl=StringRef:38:7 (Definition) Extent=[38:1 - 63:2]
-// CHECK: 39:1: UnexposedDecl=:39:1 (Definition) Extent=[39:1 - 39:8]
+// CHECK: 39:1: CXXAccessSpecifier=:39:1 (Definition) Extent=[39:1 - 39:8]
 // CHECK: 40:23: TypedefDecl=iterator:40:23 (Definition) Extent=[40:3 - 40:31]
 // CHECK: 41:23: VarDecl=npos:41:23 Extent=[41:3 - 41:40]
 // CHECK: 41:16: TypeRef=size_t:2:25 Extent=[41:16 - 41:22]
@@ -1634,7 +1634,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK: 41:31: TypeRef=size_t:2:25 Extent=[41:31 - 41:37]
 // CHECK: 41:38: UnexposedExpr= Extent=[41:38 - 41:39]
 // CHECK: 41:38: UnexposedExpr= Extent=[41:38 - 41:39]
-// CHECK: 42:1: UnexposedDecl=:42:1 (Definition) Extent=[42:1 - 42:9]
+// CHECK: 42:1: CXXAccessSpecifier=:42:1 (Definition) Extent=[42:1 - 42:9]
 // CHECK: 43:15: FieldDecl=Data:43:15 (Definition) Extent=[43:3 - 43:19]
 // CHECK: 44:10: FieldDecl=Length:44:10 (Definition) Extent=[44:3 - 44:16]
 // CHECK: 44:3: TypeRef=size_t:2:25 Extent=[44:3 - 44:9]
@@ -1652,7 +1652,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK: 45:54: DeclRefExpr=b:45:38 Extent=[45:54 - 45:55]
 // CHECK: 45:58: DeclRefExpr=a:45:28 Extent=[45:58 - 45:59]
 // CHECK: 45:62: DeclRefExpr=b:45:38 Extent=[45:62 - 45:63]
-// CHECK: 46:1: UnexposedDecl=:46:1 (Definition) Extent=[46:1 - 46:8]
+// CHECK: 46:1: CXXAccessSpecifier=:46:1 (Definition) Extent=[46:1 - 46:8]
 // CHECK: 47:3: CXXConstructor=StringRef:47:3 (Definition) Extent=[47:3 - 47:37]
 // CHECK: 47:16: MemberRef=Data:43:15 Extent=[47:16 - 47:20]
 // CHECK: 47:21: UnexposedExpr= Extent=[47:21 - 47:22]
@@ -1767,7 +1767,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK: 61:52: DeclRefExpr=Start:60:27 Extent=[61:52 - 61:57]
 // CHECK: 65:11: Namespace=clang:65:11 (Definition) Extent=[65:1 - 81:2]
 // CHECK: 66:7: ClassDecl=IdentifierInfo:66:7 (Definition) Extent=[66:1 - 80:2]
-// CHECK: 67:1: UnexposedDecl=:67:1 (Definition) Extent=[67:1 - 67:8]
+// CHECK: 67:1: CXXAccessSpecifier=:67:1 (Definition) Extent=[67:1 - 67:8]
 // CHECK: 67:8: CXXConstructor=IdentifierInfo:67:8 Extent=[67:8 - 67:24]
 // CHECK: 68:15: CXXMethod=getNameStart:68:15 (Definition) Extent=[68:3 - 71:4]
 // CHECK: 68:36: UnexposedStmt= Extent=[68:36 - 71:4]
@@ -1838,7 +1838,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK: 84:13: FieldDecl=Str:84:13 (Definition) Extent=[84:3 - 84:16]
 // CHECK: 84:3: TypeRef=class llvm::StringRef:38:7 Extent=[84:3 - 84:12]
 // CHECK: 85:12: FieldDecl=Result:85:12 (Definition) Extent=[85:3 - 85:18]
-// CHECK: 86:1: UnexposedDecl=:86:1 (Definition) Extent=[86:1 - 86:8]
+// CHECK: 86:1: CXXAccessSpecifier=:86:1 (Definition) Extent=[86:1 - 86:8]
 // CHECK: 87:12: CXXConstructor=StringSwitch<T, R>:87:12 (Definition) Extent=[87:3 - 87:64]
 // CHECK: 87:35: ParmDecl=Str:87:35 (Definition) Extent=[87:25 - 87:38]
 // CHECK: 87:25: TypeRef=class llvm::StringRef:38:7 Extent=[87:25 - 87:34]
