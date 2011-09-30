@@ -46,12 +46,12 @@ int StringRef::compare_lower(StringRef RHS) const {
 /// compare_numeric - Compare strings, handle embedded numbers.
 int StringRef::compare_numeric(StringRef RHS) const {
   for (size_t I = 0, E = min(Length, RHS.Length); I != E; ++I) {
-    if (Data[I] == RHS.Data[I])
-      continue;
+    // Check for sequences of digits.
     if (ascii_isdigit(Data[I]) && ascii_isdigit(RHS.Data[I])) {
-      // The longer sequence of numbers is larger. This doesn't really handle
-      // prefixed zeros well.
-      for (size_t J = I+1; J != E+1; ++J) {
+      // The longer sequence of numbers is considered larger.
+      // This doesn't really handle prefixed zeros well.
+      size_t J;
+      for (J = I + 1; J != E + 1; ++J) {
         bool ld = J < Length && ascii_isdigit(Data[J]);
         bool rd = J < RHS.Length && ascii_isdigit(RHS.Data[J]);
         if (ld != rd)
@@ -59,8 +59,15 @@ int StringRef::compare_numeric(StringRef RHS) const {
         if (!rd)
           break;
       }
+      // The two number sequences have the same length (J-I), just memcmp them.
+      if (int Res = compareMemory(Data + I, RHS.Data + I, J - I))
+        return Res < 0 ? -1 : 1;
+      // Identical number sequences, continue search after the numbers.
+      I = J - 1;
+      continue;
     }
-    return (unsigned char)Data[I] < (unsigned char)RHS.Data[I] ? -1 : 1;
+    if (Data[I] != RHS.Data[I])
+      return (unsigned char)Data[I] < (unsigned char)RHS.Data[I] ? -1 : 1;
   }
   if (Length == RHS.Length)
     return 0;
