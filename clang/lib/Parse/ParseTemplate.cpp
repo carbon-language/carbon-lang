@@ -1250,15 +1250,10 @@ void Parser::ParseLateTemplatedFuncDef(LateParsedTemplatedFunction &LMT) {
 /// \brief Lex a delayed template function for late parsing.
 void Parser::LexTemplateFunctionForLateParsing(CachedTokens &Toks) {
   tok::TokenKind kind = Tok.getKind();
-  // We may have a constructor initializer or function-try-block here.
-  if (kind == tok::colon || kind == tok::kw_try)
-    ConsumeAndStoreTryAndInitializers(Toks);
-  else {
-    Toks.push_back(Tok);
-    ConsumeBrace();
+  if (!ConsumeAndStoreFunctionPrologue(Toks)) {
+    // Consume everything up to (and including) the matching right brace.
+    ConsumeAndStoreUntil(tok::r_brace, Toks, /*StopAtSemi=*/false);
   }
-  // Consume everything up to (and including) the matching right brace.
-  ConsumeAndStoreUntil(tok::r_brace, Toks, /*StopAtSemi=*/false);
 
   // If we're in a function-try-block, we need to store all the catch blocks.
   if (kind == tok::kw_try) {

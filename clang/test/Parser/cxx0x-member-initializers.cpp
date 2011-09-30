@@ -13,3 +13,17 @@ struct T {
   int b = 2;
   int c = b; // expected-error {{undeclared identifier}}
 };
+
+// Test recovery for bad constructor initializers
+
+struct R1 {
+  int a;
+  R1() : a {}
+}; // expected-error {{expected '{' or ','}}
+
+// Test correct parsing.
+
+struct V1 {
+  int a, b;
+  V1() : a(), b{} {}
+};

@@ -8,3 +8,8 @@ struct y {
   int a;
   y() : a(4) ; // expected-error {{expected '{'}}
 };
+
+struct z {
+  int a;
+  z() : a {} // expected-error {{expected '('}}
+};

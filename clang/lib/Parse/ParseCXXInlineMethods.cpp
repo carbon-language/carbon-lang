@@ -123,31 +123,24 @@ Decl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS, ParsingDeclarator &D,
   CachedTokens &Toks = LM->Toks;
 
   tok::TokenKind kind = Tok.getKind();
-  // We may have a constructor initializer or function-try-block here.
-  if (kind == tok::colon || kind == tok::kw_try) {
-    // Consume everything up to (and including) the left brace of the
-    // function body.
-    if (ConsumeAndStoreTryAndInitializers(Toks)) {
-      // We didn't find the left-brace we expected after the
-      // constructor initializer.
-      if (Tok.is(tok::semi)) {
-        // We found a semicolon; complain, consume the semicolon, and
-        // don't try to parse this method later.
-        Diag(Tok.getLocation(), diag::err_expected_lbrace);
-        ConsumeAnyToken();
-        delete getCurrentClass().LateParsedDeclarations.back();
-        getCurrentClass().LateParsedDeclarations.pop_back();
-        return FnD;
-      }
+  // Consume everything up to (and including) the left brace of the
+  // function body.
+  if (ConsumeAndStoreFunctionPrologue(Toks)) {
+    // We didn't find the left-brace we expected after the
+    // constructor initializer.
+    if (Tok.is(tok::semi)) {
+      // We found a semicolon; complain, consume the semicolon, and
+      // don't try to parse this method later.
+      Diag(Tok.getLocation(), diag::err_expected_lbrace);
+      ConsumeAnyToken();
+      delete getCurrentClass().LateParsedDeclarations.back();
+      getCurrentClass().LateParsedDeclarations.pop_back();
+      return FnD;
     }
-
   } else {
-    // Begin by storing the '{' token.
-    Toks.push_back(Tok);
-    ConsumeBrace();
+    // Consume everything up to (and including) the matching right brace.
+    ConsumeAndStoreUntil(tok::r_brace, Toks, /*StopAtSemi=*/false);
   }
-  // Consume everything up to (and including) the matching right brace.
-  ConsumeAndStoreUntil(tok::r_brace, Toks, /*StopAtSemi=*/false);
 
   // If we're in a function-try-block, we need to store all the catch blocks.
   if (kind == tok::kw_try) {
@@ -583,10 +576,11 @@ bool Parser::ConsumeAndStoreUntil(tok::TokenKind T1, tok::TokenKind T2,
 
 /// \brief Consume tokens and store them in the passed token container until
 /// we've passed the try keyword and constructor initializers and have consumed
-/// the opening brace of the function body.
+/// the opening brace of the function body. The opening brace will be consumed
+/// if and only if there was no error.
 ///
-/// \return True on error.
-bool Parser::ConsumeAndStoreTryAndInitializers(CachedTokens &Toks) {
+/// \return True on error. 
+bool Parser::ConsumeAndStoreFunctionPrologue(CachedTokens &Toks) {
   if (Tok.is(tok::kw_try)) {
     Toks.push_back(Tok);
     ConsumeToken();
@@ -613,6 +607,10 @@ bool Parser::ConsumeAndStoreTryAndInitializers(CachedTokens &Toks) {
       else {
         assert(kind == tok::l_brace && "Must be left paren or brace here.");
         ConsumeBrace();
+        // In C++03, this has to be the start of the function body, which
+        // means the initializer is malformed.
+        if (!getLang().CPlusPlus0x)
+          return false;
       }
 
       // Grab the initializer
@@ -620,10 +618,25 @@ bool Parser::ConsumeAndStoreTryAndInitializers(CachedTokens &Toks) {
                                                        tok::r_brace,
                                 Toks, /*StopAtSemi=*/true))
         return true;
+
+      // Grab the separating comma, if any.
+      if (Tok.is(tok::comma)) {
+        Toks.push_back(Tok);
+        ConsumeToken();
+      }
     }
   }
 
-  // Grab any remaining garbage to be diagnosed later, and the opening
-  // brace of the function body.
-  return !ConsumeAndStoreUntil(tok::l_brace, Toks, /*StopAtSemi=*/true);
+  // Grab any remaining garbage to be diagnosed later. We stop when we reach a
+  // brace: an opening one is the function body, while a closing one probably
+  // means we've reached the end of the class.
+  if (!ConsumeAndStoreUntil(tok::l_brace, tok::r_brace, Toks,
+                            /*StopAtSemi=*/true, /*ConsumeFinalToken=*/false))
+    return true;
+  if(Tok.isNot(tok::l_brace))
+    return true;
+
+  Toks.push_back(Tok);
+  ConsumeBrace();
+  return false;
 }
