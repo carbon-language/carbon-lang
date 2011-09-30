@@ -1,6 +1,7 @@
 add_llvm_library(LLVMMipsDesc
-  MipsMCTargetDesc.cpp
   MipsMCAsmInfo.cpp
+  MipsMCCodeEmitter.cpp
+  MipsMCTargetDesc.cpp
   )
 
 add_llvm_library_dependencies(LLVMMipsDesc
