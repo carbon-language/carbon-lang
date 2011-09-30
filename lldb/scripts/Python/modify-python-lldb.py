@@ -63,6 +63,7 @@ one_liner_docstring_pattern = re.compile('^(%s|%s)""".*"""$' % (TWO_SPACES, EIGH
 #
 lldb_helpers = '''
 def in_range(symbol, section):
+    """Test whether a symbol is within the range of a section."""
     symSA = symbol.GetStartAddress().GetFileAddress()
     symEA = symbol.GetEndAddress().GetFileAddress()
     secSA = section.GetFileAddress()
