@@ -71,6 +71,7 @@ td {
 <li><a href="#Howtos">Howto guides</a>
   <ul>
     <li><a href="#AddingAttributes">How to add an attribute</a></li>
+    <li><a href="#AddingExprStmt">How to add a new expression or statement</a></li>
   </ul>
 </li>
 </ul>
@@ -1784,6 +1785,228 @@ Check for the attribute's presence using <tt>Decl::getAttr&lt;YourAttr>()</tt>.<
 
 <p>Update the <a href="LanguageExtensions.html">Clang Language Extensions</a>
 document to describe your new attribute.</p>
+
+<!-- ======================================================================= -->
+<h3 id="AddingExprStmt">How to add an expression or statement</h3>
+<!-- ======================================================================= -->
+
+<p>Expressions and statements are one of the most fundamental constructs within a
+compiler, because they interact with many different parts of the AST,
+semantic analysis, and IR generation. Therefore, adding a new
+expression or statement kind into Clang requires some care. The following list
+details the various places in Clang where an expression or statement needs to be
+introduced, along with patterns to follow to ensure that the new
+expression or statement works well across all of the C languages. We
+focus on expressions, but statements are similar.</p>
+
+<ol>
+  <li>Introduce parsing actions into the parser. Recursive-descent
+  parsing is mostly self-explanatory, but there are a few things that
+  are worth keeping in mind:
+  <ul>
+    <li>Keep as much source location information as possible! You'll
+    want it later to produce great diagnostics and support Clang's
+    various features that map between source code and the AST.</li>
+   <li>Write tests for all of the "bad" parsing cases, to make sure
+    your recovery is good. If you have matched delimiters (e.g.,
+    parentheses, square brackets, etc.), use
+    <tt>Parser::MatchRHSPunctuation</tt> to give nice diagnostics when
+    things go wrong.</li>
+  </ul>
+  </li>
+
+  <li>Introduce semantic analysis actions into <tt>Sema</tt>. Semantic
+  analysis should always involve two functions: an <tt>ActOnXXX</tt>
+  function that will be called directly from the parser, and a
+  <tt>BuildXXX</tt> function that performs the actual semantic
+  analysis and will (eventually!) build the AST node. It's fairly
+  common for the <tt>ActOnCXX</tt> function to do very little (often
+  just some minor translation from the parser's representation to
+  <tt>Sema</tt>'s representation of the same thing), but the separation
+  is still important: C++ template instantiation, for example,
+  should always call the <tt>BuildXXX</tt> variant. Several notes on
+  semantic analysis before we get into construction of the AST:
+  <ul>
+    <li>Your expression probably involves some types and some
+    subexpressions. Make sure to fully check that those types, and the
+    types of those subexpressions, meet your expectations. Add
+    implicit conversions where necessary to make sure that all of the
+    types line up exactly the way you want them. Write extensive tests
+    to check that you're getting good diagnostics for mistakes and
+    that you can use various forms of subexpressions with your
+    expression.</li>
+   <li>When type-checking a type or subexpression, make sure to first
+    check whether the type is "dependent"
+    (<tt>Type::isDependentType()</tt>) or whether a subexpression is
+    type-dependent (<tt>Expr::isTypeDependent()</tt>). If any of these
+    return true, then you're inside a template and you can't do much
+    type-checking now. That's normal, and your AST node (when you get
+    there) will have to deal with this case. At this point, you can
+    write tests that use your expression within templates, but don't
+    try to instantiate the templates.</li>
+   <li>For each subexpression, be sure to call
+    <tt>Sema::CheckPlaceholderExpr()</tt> to deal with "weird"
+    expressions that don't behave well as subexpressions. Then,
+    determine whether you need to perform
+    lvalue-to-rvalue conversions
+    (<tt>Sema::DefaultLvalueConversion</tt>e) or
+    the usual unary conversions
+    (<tt>Sema::UsualUnaryConversions</tt>), for places where the
+    subexpression is producing a value you intend to use.</li>
+    <li>Your <tt>BuildXXX</tt> function will probably just return
+    <tt>ExprError()</tt> at this point, since you don't have an AST.
+    That's perfectly fine, and shouldn't impact your testing.</li>
+  </ul>
+  </li>
+
+  <li>Introduce an AST node for your new expression. This starts with
+  declaring the node in <tt>include/Basic/StmtNodes.td</tt> and
+  creating a new class for your expression in the appropriate
+  <tt>include/AST/Expr*.h</tt> header. It's best to look at the class
+  for a similar expression to get ideas, and there are some specific
+  things to watch for:
+  <ul>
+    <li>If you need to allocate memory, use the <tt>ASTContext</tt>
+    allocator to allocate memory. Never use raw <tt>malloc</tt> or
+    <tt>new</tt>, and never hold any resources in an AST node, because
+    the destructor of an AST node is never called.</li>
+
+    <li>Make sure that <tt>getSourceRange()</tt> covers the exact
+    source range of your expression. This is needed for diagnostics
+    and for IDE support.</li>
+
+    <li>Make sure that <tt>children()</tt> visits all of the
+    subexpressions. This is important for a number of features (e.g., IDE
+    support, C++ variadic templates). If you have sub-types, you'll
+    also need to visit those sub-types in the
+    <tt>RecursiveASTVisitor</tt>.</li>
+
+    <li>Add printing support (<tt>StmtPrinter.cpp</tt>) and dumping
+    support (<tt>StmtDumper.cpp</tt>) for your expression.</li>
+
+    <li>Add profiling support (<tt>StmtProfile.cpp</tt>) for your AST
+    node, noting the distinguishing (non-source location)
+    characteristics of an instance of your expression. Omitting this
+    step will lead to hard-to-diagnose failures regarding matching of
+    template declarations.</li>
+  </ul>
+  </li>
+
+  <li>Teach semantic analysis to build your AST node! At this point,
+  you can wire up your <tt>Sema::BuildXXX</tt> function to actually
+  create your AST. A few things to check at this point:
+  <ul>
+    <li>If your expression can construct a new C++ class or return a
+    new Objective-C object, be sure to update and then call
+    <tt>Sema::MaybeBindToTemporary</tt> for your just-created AST node
+    to be sure that the object gets properly destructed. An easy way
+    to test this is to return a C++ class with a private destructor:
+    semantic analysis should flag an error here with the attempt to
+    call the destructor.</li>
+   <li>Inspect the generated AST by printing it using <tt>clang -cc1
+    -ast-print</tt>, to make sure you're capturing all of the
+    important information about how the AST was written.</li>
+   <li>Inspect the generated AST under <tt>clang -cc1 -ast-dump</tt>
+    to verify that all of the types in the generated AST line up the
+    way you want them. Remember that clients of the AST should never
+    have to "think" to understand what's going on. For example, all
+    implicit conversions should show up explicitly in the AST.</li>
+    <li>Write tests that use your expression as a subexpression of
+    other, well-known expressions. Can you call a function using your
+    expression as an argument? Can you use the ternary operator?</li>
+  </ul>
+  </li>
+
+  <li>Teach code generation to create IR to your AST node. This step
+  is the first (and only) that requires knowledge of LLVM IR. There
+  are several things to keep in mind:
+  <ul>
+    <li>Code generation is separated into scalar/aggregate/complex and
+    lvalue/rvalue paths, depending on what kind of result your
+    expression produces. On occasion, this requires some careful
+    factoring of code to avoid duplication.</li>
+
+    <li><tt>CodeGenFunction</tt> contains functions
+    <tt>ConvertType</tt> and <tt>ConvertTypeForMem</tt> that convert
+    Clang's types (<tt>clang::Type*</tt> or <tt>clang::QualType</tt>)
+    to LLVM types.
+    Use the former for values, and the later for memory locations:
+    test with the C++ "bool" type to check this. If you find
+    that you are having to use LLVM bitcasts to make
+    the subexpressions of your expression have the type that your
+    expression expects, STOP! Go fix semantic analysis and the AST so
+    that you don't need these bitcasts.</li>
+    
+    <li>The <tt>CodeGenFunction</tt> class has a number of helper
+    functions to make certain operations easy, such as generating code
+    to produce an lvalue or an rvalue, or to initialize a memory
+    location with a given value. Prefer to use these functions rather
+    than directly writing loads and stores, because these functions
+    take care of some of the tricky details for you (e.g., for
+    exceptions).</li>
+
+    <li>If your expression requires some special behavior in the event
+    of an exception, look at the <tt>push*Cleanup</tt> functions in
+    <tt>CodeGenFunction</tt> to introduce a cleanup. You shouldn't
+    have to deal with exception-handling directly.</li>
+
+    <li>Testing is extremely important in IR generation. Use <tt>clang
+    -cc1 -emit-llvm</tt> and <a
+    href="http://llvm.org/cmds/FileCheck.html">FileCheck</a> to verify
+    that you're generating the right IR.</li>
+  </ul>
+  </li>
+
+  <li>Teach template instantiation how to cope with your AST
+  node, which requires some fairly simple code:
+  <ul>
+    <li>Make sure that your expression's constructor properly
+    computes the flags for type dependence (i.e., the type your
+    expression produces can change from one instantiation to the
+    next), value dependence (i.e., the constant value your expression
+    produces can change from one instantiation to the next),
+    instantiation dependence (i.e., a template parameter or occurs
+    anywhere in your expression), and whether your expression contains
+    a parameter pack (for variadic templates). Often, computing these
+    flags just means combining the results from the various types and
+    subexpressions.</li>
+    
+    <li>Add <tt>TransformXXX</tt> and <tt>RebuildXXX</tt> functions to
+    the
+    <tt>TreeTransform</tt> class template in <tt>Sema</tt>.
+    <tt>TransformXXX</tt> should (recursively) transform all of the
+    subexpressions and types
+    within your expression, using <tt>getDerived().TransformYYY</tt>.
+    If all of the subexpressions and types transform without error, it
+    will then call the <tt>RebuildXXX</tt> function, which will in
+    turn call <tt>getSema().BuildXXX</tt> to perform semantic analysis
+    and build your expression.</li>
+    
+    <li>To test template instantiation, take those tests you wrote to
+    make sure that you were type checking with type-dependent
+    expressions and dependent types (from step #2) and instantiate
+    those templates with various types, some of which type-check and
+    some that don't, and test the error messages in each case.</li>
+  </ul>
+  </li>
+  
+  <li>There are some "extras" that make other features work better.
+  It's worth handling these extras to give your expression complete
+  integration into Clang:
+  <ul>
+    <li>Add code completion support for your expression in
+    <tt>SemaCodeComplete.cpp</tt>.</li>
+    
+    <li>If your expression has types in it, or has any "interesting"
+    features other than subexpressions, extend libclang's
+    <tt>CursorVisitor</tt> to provide proper visitation for your
+    expression, enabling various IDE features such as syntax
+    highlighting, cross-referencing, and so on. The
+    <tt>c-index-test</tt> helper program can be used to test these
+    features.</li>
+  </ul>
+  </li>
+</ol>
 
 </div>
 </body>
