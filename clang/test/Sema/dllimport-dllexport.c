@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -triple i386-mingw32 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -triple x86_64-mingw32 -fsyntax-only -verify %s
 
 inline void __attribute__((dllexport)) foo1(){} // expected-warning{{dllexport attribute ignored}}
 inline void __attribute__((dllimport)) foo2(){} // expected-warning{{dllimport attribute ignored}}

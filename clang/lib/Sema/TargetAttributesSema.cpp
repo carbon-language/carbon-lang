@@ -248,7 +248,8 @@ namespace {
         default:                          break;
         }
       }
-      if (Attr.getName()->getName() == "force_align_arg_pointer" ||
+      if (Triple.getArch() != llvm::Triple::x86_64 &&
+          Attr.getName()->getName() == "force_align_arg_pointer" ||
           Attr.getName()->getName() == "__force_align_arg_pointer__") {
         HandleX86ForceAlignArgPointerAttr(D, Attr, S);
         return true;
@@ -264,14 +265,14 @@ const TargetAttributesSema &Sema::getTargetAttributesSema() const {
 
   const llvm::Triple &Triple(Context.getTargetInfo().getTriple());
   switch (Triple.getArch()) {
-  default:
-    return *(TheTargetAttributesSema = new TargetAttributesSema);
-
   case llvm::Triple::msp430:
     return *(TheTargetAttributesSema = new MSP430AttributesSema);
   case llvm::Triple::mblaze:
     return *(TheTargetAttributesSema = new MBlazeAttributesSema);
   case llvm::Triple::x86:
+  case llvm::Triple::x86_64:
     return *(TheTargetAttributesSema = new X86AttributesSema);
+  default:
+    return *(TheTargetAttributesSema = new TargetAttributesSema);
   }
 }
