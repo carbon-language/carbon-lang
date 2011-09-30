@@ -289,7 +289,7 @@ bool CoalescerPair::setRegisters(const MachineInstr *MI) {
         return false;
       const TargetRegisterClass *SrcRC = MRI.getRegClass(Src);
       const TargetRegisterClass *DstRC = MRI.getRegClass(Dst);
-      if (!getCommonSubClass(DstRC, SrcRC))
+      if (!TRI.getCommonSubClass(DstRC, SrcRC))
         return false;
       SrcSub = DstSub = 0;
     }
@@ -309,7 +309,7 @@ bool CoalescerPair::setRegisters(const MachineInstr *MI) {
     if (DstSub)
       NewRC = TRI.getMatchingSuperRegClass(DstRC, SrcRC, DstSub);
     else
-      NewRC = getCommonSubClass(DstRC, SrcRC);
+      NewRC = TRI.getCommonSubClass(DstRC, SrcRC);
     if (!NewRC)
       return false;
     CrossClass = NewRC != DstRC || NewRC != SrcRC;

@@ -98,8 +98,8 @@ BitVector TargetRegisterInfo::getAllocatableSet(const MachineFunction &MF,
 }
 
 const TargetRegisterClass *
-llvm::getCommonSubClass(const TargetRegisterClass *A,
-                        const TargetRegisterClass *B) {
+TargetRegisterInfo::getCommonSubClass(const TargetRegisterClass *A,
+                                      const TargetRegisterClass *B) const {
   // First take care of the trivial cases
   if (A == B)
     return A;

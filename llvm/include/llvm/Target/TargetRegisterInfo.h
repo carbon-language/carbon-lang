@@ -481,6 +481,12 @@ public:
     return RegClassBegin[i];
   }
 
+  /// getCommonSubClass - find the largest common subclass of A and B. Return
+  /// NULL if there is no common subclass.
+  const TargetRegisterClass *
+  getCommonSubClass(const TargetRegisterClass *A,
+                    const TargetRegisterClass *B) const;
+
   /// getPointerRegClass - Returns a TargetRegisterClass used for pointer
   /// values.  If a target supports multiple different pointer register classes,
   /// kind specifies which one is indicated.
@@ -700,11 +706,6 @@ struct VirtReg2IndexFunctor : public std::unary_function<unsigned, unsigned> {
     return TargetRegisterInfo::virtReg2Index(Reg);
   }
 };
-
-/// getCommonSubClass - find the largest common subclass of A and B. Return NULL
-/// if there is no common subclass.
-const TargetRegisterClass *getCommonSubClass(const TargetRegisterClass *A,
-                                             const TargetRegisterClass *B);
 
 /// PrintReg - Helper class for printing registers on a raw_ostream.
 /// Prints virtual and physical registers with or without a TRI instance.

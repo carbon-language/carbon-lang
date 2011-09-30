@@ -25,6 +25,8 @@ namespace llvm {
 /// registers, including vreg register classes, use/def chains for registers,
 /// etc.
 class MachineRegisterInfo {
+  const TargetRegisterInfo *const TRI;
+
   /// IsSSA - True when the machine function is in SSA form and virtual
   /// registers have a single def.
   bool IsSSA;
