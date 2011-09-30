@@ -1,9 +1,9 @@
 // RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fobjc-gc -emit-llvm -o %t %s
 // RUN: grep objc_assign_ivar %t | count 0
-// RUN: grep objc_assign_strongCast %t | count 5
+// RUN: grep objc_assign_strongCast %t | count 8
 // RUN: %clang_cc1 -x objective-c++ -triple x86_64-apple-darwin10 -fobjc-gc -emit-llvm -o %t %s
 // RUN: grep objc_assign_ivar %t | count 0
-// RUN: grep objc_assign_strongCast %t | count 5
+// RUN: grep objc_assign_strongCast %t | count 8
 
 @interface TestUnarchiver 
 {
@@ -26,4 +26,21 @@ struct unarchive_list {
     return 0;
 }
 
+@end
+
+// rdar://10191569
+@interface I
+{
+  struct S {
+    id _timer;
+  } *p_animationState;
+}
+@end
+
+@implementation I
+- (void) Meth {
+  p_animationState->_timer = 0;
+  (*p_animationState)._timer = 0;
+  (&(*p_animationState))->_timer = 0;
+}
 @end
