@@ -33,8 +33,7 @@ Symbol::Symbol() :
     m_size_is_synthesized (false),
     m_searched_for_function (false),
     m_addr_range (),
-    m_flags (),
-    m_function (NULL)
+    m_flags ()
 {
 }
 
@@ -66,8 +65,7 @@ Symbol::Symbol
     m_size_is_synthesized (false),
     m_searched_for_function (false),
     m_addr_range (section, offset, size),
-    m_flags (flags),
-    m_function (NULL)
+    m_flags (flags)
 {
 }
 
@@ -97,8 +95,7 @@ Symbol::Symbol
     m_size_is_synthesized (false),
     m_searched_for_function (false),
     m_addr_range (range),
-    m_flags (flags),
-    m_function (NULL)
+    m_flags (flags)
 {
 }
 
@@ -116,8 +113,7 @@ Symbol::Symbol(const Symbol& rhs):
     m_size_is_synthesized (false),
     m_searched_for_function (false),
     m_addr_range (rhs.m_addr_range),
-    m_flags (rhs.m_flags),
-    m_function (NULL)
+    m_flags (rhs.m_flags)
 {
 }
 
@@ -140,7 +136,6 @@ Symbol::operator= (const Symbol& rhs)
         m_searched_for_function = rhs.m_searched_for_function;
         m_addr_range = rhs.m_addr_range;
         m_flags = rhs.m_flags;
-        m_function = rhs.m_function;
     }
     return *this;
 }
@@ -250,23 +245,6 @@ Symbol::Dump(Stream *s, Target *target, uint32_t index) const
                     m_flags,
                     m_mangled.GetName().AsCString(""));
     }
-}
-
-Function *
-Symbol::GetFunction ()
-{
-    if (m_function == NULL && !m_searched_for_function)
-    {
-        m_searched_for_function = true;
-        Module *module = m_addr_range.GetBaseAddress().GetModule();
-        if (module)
-        {
-            SymbolContext sc;
-            if (module->ResolveSymbolContextForAddress(m_addr_range.GetBaseAddress(), eSymbolContextFunction, sc))
-                m_function = sc.function;
-        }
-    }
-    return m_function;
 }
 
 uint32_t

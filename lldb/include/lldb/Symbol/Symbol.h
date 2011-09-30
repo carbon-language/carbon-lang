@@ -114,9 +114,6 @@ public:
     void
     GetDescription (Stream *s, lldb::DescriptionLevel level, Target *target) const;
 
-    Function *
-    GetFunction ();
-
     Address &
     GetValue () { return m_addr_range.GetBaseAddress(); }
 
@@ -203,7 +200,6 @@ protected:
                     m_searched_for_function:1;// non-zero if we have looked for the function associated with this symbol already.
     AddressRange    m_addr_range;           // Contains the value, or the section offset address when the value is an address in a section, and the size (if any)
     uint32_t        m_flags;                // A copy of the flags from the original symbol table, the ObjectFile plug-in can interpret these
-    Function *      m_function;
 };
 
 } // namespace lldb_private

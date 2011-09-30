@@ -659,39 +659,6 @@ SymbolFileDWARF::ParseCompileUnitFunction (const SymbolContext& sc, DWARFCompile
     if (die->Tag() != DW_TAG_subprogram)
         return NULL;
 
-//    clang::DeclContext *containing_decl_ctx = GetClangDeclContextContainingDIE (dwarf_cu, die);
-//    const clang::Decl::Kind containing_decl_kind = containing_decl_ctx->getDeclKind();
-//
-//    switch (containing_decl_kind)
-//    {
-//        case clang::Decl::Record:
-//        case clang::Decl::CXXRecord:
-//        case clang::Decl::ObjCClass:
-//        case clang::Decl::ObjCImplementation:
-//        case clang::Decl::ObjCInterface:
-//            // We have methods of a class or struct
-//            {
-//                const DWARFDebugInfoEntry *containing_decl_die = m_decl_ctx_to_die[containing_decl_ctx];
-//                assert (containing_decl_die);
-//                Type *class_type = ResolveType (dwarf_cu, containing_decl_die);
-//                if (class_type)
-//                    class_type->GetClangFullType();
-//                // Make sure the class definition contains the funciton DIE
-//                // we wanted to parse. If it does, we are done. Else, we need 
-//                // to fall through and parse the function DIE stil...
-//                if (containing_decl_die->Contains (die))
-//                    break; // DIE has been parsed, we are done
-//            }
-//            // Fall through...
-//
-//        default:
-//            // Parse the function prototype as a type that can then be added to concrete function instance
-//            //ParseTypes (sc, dwarf_cu, die, false, false);
-//            break;
-//    }
-    
-    //FixupTypes();
-
     if (die->GetDIENamesAndRanges(this, dwarf_cu, name, mangled, func_ranges, decl_file, decl_line, decl_column, call_file, call_line, call_column, &frame_base))
     {
         // Union of all ranges in the function DIE (if the function is discontiguous)
@@ -720,6 +687,7 @@ SymbolFileDWARF::ParseCompileUnitFunction (const SymbolContext& sc, DWARFCompile
                                                decl_line, 
                                                decl_column));
 
+            // Supply the type _only_ if it has already been parsed
             Type *func_type = m_die_to_type.lookup (die);
 
             assert(func_type == NULL || func_type != DIE_IS_BEING_PARSED);
@@ -735,7 +703,8 @@ SymbolFileDWARF::ParseCompileUnitFunction (const SymbolContext& sc, DWARFCompile
 
             if (func_sp.get() != NULL)
             {
-                func_sp->GetFrameBaseExpression() = frame_base;
+                if (frame_base.IsValid())
+                    func_sp->GetFrameBaseExpression() = frame_base;
                 sc.comp_unit->AddFunction(func_sp);
                 return func_sp.get();
             }
