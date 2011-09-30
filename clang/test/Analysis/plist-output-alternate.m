@@ -992,7 +992,7 @@ void rdar8331641(int x) {
 // CHECK:    </array>
 // CHECK:    <key>description</key><string>Potential leak of an object allocated on line 53 and stored into &apos;value&apos;</string>
 // CHECK:    <key>category</key><string>Memory (Core Foundation/Objective-C)</string>
-// CHECK:    <key>type</key><string>Leak of returned object</string>
+// CHECK:    <key>type</key><string>Leak</string>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>57</integer>

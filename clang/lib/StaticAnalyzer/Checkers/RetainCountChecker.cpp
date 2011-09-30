@@ -3436,7 +3436,7 @@ void RetainCountChecker::checkEndPath(EndOfFunctionNodeBuilder &Builder,
   const ProgramState *state = Builder.getState();
   GenericNodeBuilderRefCount Bd(Builder);
   RefBindings B = state->get<RefBindings>();
-  ExplodedNode *Pred = 0;
+  ExplodedNode *Pred = Builder.getPredecessor();
 
   for (RefBindings::iterator I = B.begin(), E = B.end(); I != E; ++I) {
     llvm::tie(Pred, state) = handleAutoreleaseCounts(state, Bd, Pred, Eng,
