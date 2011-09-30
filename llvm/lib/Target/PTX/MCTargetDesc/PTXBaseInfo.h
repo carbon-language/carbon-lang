@@ -35,6 +35,26 @@ namespace llvm {
       PRED_NONE   = 2
     };
   } // namespace PTX
+
+  /// Namespace to hold all target-specific flags.
+  namespace PTXRoundingMode {
+    // Instruction Flags
+    enum {
+      // Rounding Mode Flags
+      RndMask             = 15,
+      RndDefault          =  0, // ---
+      RndNone             =  1, // <NONE>
+      RndNearestEven      =  2, // .rn
+      RndTowardsZero      =  3, // .rz
+      RndNegInf           =  4, // .rm
+      RndPosInf           =  5, // .rp
+      RndApprox           =  6, // .approx
+      RndNearestEvenInt   =  7, // .rni
+      RndTowardsZeroInt   =  8, // .rzi
+      RndNegInfInt        =  9, // .rmi
+      RndPosInfInt        = 10  // .rpi
+    };
+  } // namespace PTXII
 } // namespace llvm
 
 #endif

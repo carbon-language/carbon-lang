@@ -19,6 +19,7 @@
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
@@ -146,4 +147,46 @@ void PTXInstPrinter::printMemOperand(const MCInst *MI, unsigned OpNo,
   printOperand(MI, OpNo+1, O);
 }
 
+void PTXInstPrinter::printRoundingMode(const MCInst *MI, unsigned OpNo,
+                                       raw_ostream &O) {
+  const MCOperand &Op = MI->getOperand(OpNo);
+  assert (Op.isImm() && "Rounding modes must be immediate values");
+  switch (Op.getImm()) {
+  default:
+    llvm_unreachable("Unknown rounding mode!");
+  case PTXRoundingMode::RndDefault:
+    llvm_unreachable("FP rounding-mode pass did not handle instruction!");
+    break;
+  case PTXRoundingMode::RndNone:
+    // Do not print anything.
+    break;
+  case PTXRoundingMode::RndNearestEven:
+    O << ".rn";
+    break;
+  case PTXRoundingMode::RndTowardsZero:
+    O << ".rz";
+    break;
+  case PTXRoundingMode::RndNegInf:
+    O << ".rm";
+    break;
+  case PTXRoundingMode::RndPosInf:
+    O << ".rp";
+    break;
+  case PTXRoundingMode::RndApprox:
+    O << ".approx";
+    break;
+  case PTXRoundingMode::RndNearestEvenInt:
+    O << ".rni";
+    break;
+  case PTXRoundingMode::RndTowardsZeroInt:
+    O << ".rzi";
+    break;
+  case PTXRoundingMode::RndNegInfInt:
+    O << ".rmi";
+    break;
+  case PTXRoundingMode::RndPosInfInt:
+    O << ".rpi";
+    break;
+  }
+}
 

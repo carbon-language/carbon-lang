@@ -12,6 +12,7 @@ add_llvm_target(PTXCodeGen
   PTXISelDAGToDAG.cpp
   PTXISelLowering.cpp
   PTXInstrInfo.cpp
+  PTXFPRoundingModePass.cpp
   PTXFrameLowering.cpp
   PTXMCAsmStreamer.cpp
   PTXMCInstLower.cpp

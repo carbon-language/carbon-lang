@@ -39,6 +39,7 @@ public:
   void printCall(const MCInst *MI, raw_ostream &O);
   void printOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   void printMemOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O);
+  void printRoundingMode(const MCInst *MI, unsigned OpNo, raw_ostream &O);
 };
 }
 

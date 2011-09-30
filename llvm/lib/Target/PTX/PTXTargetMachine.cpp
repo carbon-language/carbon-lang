@@ -367,6 +367,7 @@ bool PTXTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
     printNoVerify(PM, "After PreEmit passes");
 
   PM.add(createPTXMFInfoExtract(*this, OptLevel));
+  PM.add(createPTXFPRoundingModePass(*this, OptLevel));
 
   return false;
 }

@@ -31,6 +31,9 @@ namespace llvm {
   FunctionPass *createPTXMFInfoExtract(PTXTargetMachine &TM,
                                        CodeGenOpt::Level OptLevel);
 
+  FunctionPass *createPTXFPRoundingModePass(PTXTargetMachine &TM,
+                                            CodeGenOpt::Level OptLevel);
+
   FunctionPass *createPTXRegisterAllocator();
 
   void LowerPTXMachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI,
