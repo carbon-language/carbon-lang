@@ -2249,6 +2249,9 @@ Decl *Sema::ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
     Tag = dyn_cast<TagDecl>(TagD);
   }
 
+  if (Tag)
+    Tag->setFreeStanding();
+
   if (unsigned TypeQuals = DS.getTypeQualifiers()) {
     // Enforce C99 6.7.3p2: "Types other than pointer types derived from object
     // or incomplete types shall not be restrict-qualified."
