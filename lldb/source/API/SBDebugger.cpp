@@ -614,6 +614,7 @@ SBDebugger::DeleteTarget (lldb::SBTarget &target)
     {
         // No need to lock, the target list is thread safe
         result = m_opaque_sp->GetTargetList().DeleteTarget (target.m_opaque_sp);
+        target->Destroy();
         target.Clear();
         ModuleList::RemoveOrphanSharedModules();
     }
