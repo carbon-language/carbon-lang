@@ -1199,7 +1199,7 @@ bool Type::isStandardLayoutType() const {
 }
 
 // This is effectively the intersection of isTrivialType and
-// isStandardLayoutType. We implement it dircetly to avoid redundant
+// isStandardLayoutType. We implement it directly to avoid redundant
 // conversions from a type to a CXXRecordDecl.
 bool QualType::isCXX11PODType(ASTContext &Context) const {
   const Type *ty = getTypePtr();
