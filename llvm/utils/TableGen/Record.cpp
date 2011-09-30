@@ -1443,8 +1443,16 @@ Init *VarListElementInit::resolveBitReference(Record &R, const RecordVal *RV,
 Init *VarListElementInit:: resolveListElementReference(Record &R,
                                                        const RecordVal *RV,
                                                        unsigned Elt) const {
-  // FIXME: This should be implemented, to support references like:
-  // int B = AA[0][1];
+  Init *Result = TI->resolveListElementReference(R, RV, Element);
+  
+  if (Result) {
+    TypedInit *TInit = dynamic_cast<TypedInit *>(Result);
+    if (TInit) {
+      return TInit->resolveListElementReference(R, RV, Elt);
+    }
+    return Result;
+  }
+ 
   return 0;
 }
 
