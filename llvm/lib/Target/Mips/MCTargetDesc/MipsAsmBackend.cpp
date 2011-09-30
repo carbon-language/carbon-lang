@@ -33,6 +33,44 @@ public:
   unsigned getNumFixupKinds() const {
     return 1;   //tbd
   }
+
+  /// ApplyFixup - Apply the \arg Value for given \arg Fixup into the provided
+  /// data fragment, at the offset specified by the fixup and following the
+  /// fixup kind as appropriate.
+  void ApplyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
+                  uint64_t Value) const {
+  }
+
+  /// @name Target Relaxation Interfaces
+  /// @{
+
+  /// MayNeedRelaxation - Check whether the given instruction may need
+  /// relaxation.
+  ///
+  /// \param Inst - The instruction to test.
+  bool MayNeedRelaxation(const MCInst &Inst) const {
+    return false;
+  }
+
+  /// RelaxInstruction - Relax the instruction in the given fragment to the next
+  /// wider instruction.
+  ///
+  /// \param Inst - The instruction to relax, which may be the same as the
+  /// output.
+  /// \parm Res [output] - On return, the relaxed instruction.
+  void RelaxInstruction(const MCInst &Inst, MCInst &Res) const {
+  }
+  
+  /// @}
+
+  /// WriteNopData - Write an (optimal) nop sequence of Count bytes to the given
+  /// output. If the target cannot generate such a sequence, it should return an
+  /// error.
+  ///
+  /// \return - True on success.
+  bool WriteNopData(uint64_t Count, MCObjectWriter *OW) const {
+    return false;
+  }
 };
 
 class MipsEB_AsmBackend : public MipsAsmBackend {
@@ -68,4 +106,12 @@ public:
     return new MipsELFObjectWriter(false, OSType, ELF::EM_MIPS, false);
   }
 };
+}
+
+MCAsmBackend *llvm::createMipsAsmBackend(const Target &T, StringRef TT) {
+  Triple TheTriple(TT);
+
+  // just return little endian for now
+  //
+  return new MipsEL_AsmBackend(T, Triple(TT).getOS());
 }
