@@ -22,7 +22,7 @@ namespace move {
   };
 
   struct ConstAssignment {
-    ConstAssignment& operator=(ConstAssignment&&) const = default; // expected-error {{an explicitly-defaulted move assignment operator may not have 'const' or 'volatile' qualifiers}}
+    ConstAssignment& operator=(ConstAssignment&&) const = default; // expected-error {{an explicitly-defaulted move assignment operator may not have 'const', 'constexpr' or 'volatile' qualifiers}}
   };
 }
 
@@ -57,6 +57,6 @@ namespace copy {
   };
 
   struct ConstAssignment {
-    ConstAssignment& operator=(const ConstAssignment&) const = default; // expected-error {{an explicitly-defaulted copy assignment operator may not have 'const' or 'volatile' qualifiers}}
+    ConstAssignment& operator=(const ConstAssignment&) const = default; // expected-error {{an explicitly-defaulted copy assignment operator may not have 'const', 'constexpr' or 'volatile' qualifiers}}
   };
 }

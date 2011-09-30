@@ -2325,6 +2325,20 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
       FreeFunction = (DC && !DC->isRecord());
     }
 
+    // C++0x [dcl.constexpr]p8: A constexpr specifier for a non-static member
+    // function that is not a constructor declares that function to be const.
+    if (D.getDeclSpec().isConstexprSpecified() && !FreeFunction &&
+        D.getName().getKind() != UnqualifiedId::IK_ConstructorName &&
+        D.getName().getKind() != UnqualifiedId::IK_ConstructorTemplateId &&
+        !(FnTy->getTypeQuals() & DeclSpec::TQ_const)) {
+      // Rebuild function type adding a 'const' qualifier.
+      FunctionProtoType::ExtProtoInfo EPI = FnTy->getExtProtoInfo();
+      EPI.TypeQuals |= DeclSpec::TQ_const;
+      T = Context.getFunctionType(FnTy->getResultType(), 
+                                  FnTy->arg_type_begin(),
+                                  FnTy->getNumArgs(), EPI);
+    }
+
     // C++0x [dcl.fct]p6:
     //   A ref-qualifier shall only be part of the function type for a
     //   non-static member function, the function type to which a pointer to

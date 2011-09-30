@@ -1794,8 +1794,8 @@ public:
   }
 
   /// \brief Determine whether this function should be inlined, because it is
-  /// either marked "inline" or is a member function of a C++ class that
-  /// was defined in the class body.
+  /// either marked "inline" or "constexpr" or is a member function of a class
+  /// that was defined in the class body.
   bool isInlined() const;
 
   bool isInlineDefinitionExternallyVisible() const;

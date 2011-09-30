@@ -4292,8 +4292,8 @@ def err_defaulted_copy_assign_const_param : Error<
   "the parameter for this explicitly-defaulted copy assignment operator is "
   "const, but a member or base requires it to be non-const">;
 def err_defaulted_copy_assign_quals : Error<
-  "an explicitly-defaulted copy assignment operator may not have 'const' "
-  "or 'volatile' qualifiers">;
+  "an explicitly-defaulted copy assignment operator may not have 'const', "
+  "'constexpr' or 'volatile' qualifiers">;
 def err_defaulted_move_ctor_params : Error<
   "an explicitly-defaulted move constructor must have exactly one parameter">;
 def err_defaulted_move_ctor_volatile_param : Error<
@@ -4318,8 +4318,8 @@ def err_defaulted_move_assign_const_param : Error<
   "the parameter for an explicitly-defaulted move assignment operator may not "
   "be const">;
 def err_defaulted_move_assign_quals : Error<
-  "an explicitly-defaulted move assignment operator may not have 'const' "
-  "or 'volatile' qualifiers">;
+  "an explicitly-defaulted move assignment operator may not have 'const', "
+  "'constexpr' or 'volatile' qualifiers">;
 def err_incorrect_defaulted_exception_spec : Error<
   "exception specification of explicitly defaulted %select{default constructor|"
   "copy constructor|move constructor|copy assignment operator|move assignment "
