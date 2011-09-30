@@ -35,6 +35,9 @@ cont.g:
   invoke void @bar()
     to label %cont.h unwind label %lpad.h
 cont.h:
+  invoke void @bar()
+    to label %cont.i unwind label %lpad.i
+cont.i:
   ret void
 
 lpad.a:
@@ -115,6 +118,15 @@ lpad.h:
 ; CHECK: %h = landingpad
 ; CHECK-NEXT: filter [1 x i32*] zeroinitializer
 ; CHECK-NEXT: unreachable
+
+lpad.i:
+  %i = landingpad { i8*, i32 } personality i32 (i32, i64, i8*, i8*)* @generic_personality
+          cleanup
+          filter [0 x i32*] zeroinitializer
+  unreachable
+; CHECK: %i = landingpad
+; CHECK-NEXT: filter
+; CHECK-NEXT: unreachable
 }
 
 define void @foo_cxx() {
@@ -128,6 +140,9 @@ cont.b:
   invoke void @bar()
     to label %cont.c unwind label %lpad.c
 cont.c:
+  invoke void @bar()
+    to label %cont.d unwind label %lpad.d
+cont.d:
   ret void
 
 lpad.a:
@@ -153,5 +168,14 @@ lpad.c:
   unreachable
 ; CHECK: %c = landingpad
 ; CHECK-NEXT: cleanup
+; CHECK-NEXT: unreachable
+
+lpad.d:
+  %d = landingpad { i8*, i32 } personality i32 (i32, i64, i8*, i8*)* @__gxx_personality_v0
+          cleanup
+          catch i32* null
+  unreachable
+; CHECK: %d = landingpad
+; CHECK-NEXT: null
 ; CHECK-NEXT: unreachable
 }
