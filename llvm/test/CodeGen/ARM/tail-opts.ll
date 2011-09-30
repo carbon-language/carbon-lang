@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=arm-apple-darwin -mcpu=cortex-a8 -asm-verbose=false | FileCheck %s
+; RUN: llc < %s -mtriple=arm-apple-darwin -relocation-model=dynamic-no-pic -mcpu=cortex-a8 -asm-verbose=false | FileCheck %s
 
 declare void @bar(i32)
 declare void @car(i32)

@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=arm-apple-darwin | FileCheck %s
+; RUN: llc < %s -relocation-model=dynamic-no-pic -mtriple=arm-apple-darwin | FileCheck %s
 
 @x = weak hidden global i32 0		; <i32*> [#uses=1]
 

@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=thumbv7-apple-darwin -mcpu=cortex-a8 -disable-fp-elim                       | FileCheck %s
+; RUN: llc < %s -mtriple=thumbv7-apple-darwin -mcpu=cortex-a8 -relocation-model=dynamic-no-pic -disable-fp-elim | FileCheck %s
 ; RUN: llc < %s -mtriple=thumbv7-apple-darwin -mcpu=cortex-a8 -relocation-model=pic -disable-fp-elim | FileCheck %s --check-prefix=PIC
 ; rdar://7353541
 ; rdar://7354376
