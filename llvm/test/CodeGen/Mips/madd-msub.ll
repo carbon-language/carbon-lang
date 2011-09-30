@@ -1,6 +1,6 @@
 ; RUN: llc -march=mips < %s | FileCheck %s
 
-; CHECK: madd $5, $4
+; CHECK: madd 
 define i64 @madd1(i32 %a, i32 %b, i32 %c) nounwind readnone {
 entry:
   %conv = sext i32 %a to i64
@@ -11,7 +11,7 @@ entry:
   ret i64 %add
 }
 
-; CHECK: maddu $5, $4
+; CHECK: maddu
 define i64 @madd2(i32 %a, i32 %b, i32 %c) nounwind readnone {
 entry:
   %conv = zext i32 %a to i64
@@ -22,7 +22,7 @@ entry:
   ret i64 %add
 }
 
-; CHECK: madd $5, $4
+; CHECK: madd
 define i64 @madd3(i32 %a, i32 %b, i64 %c) nounwind readnone {
 entry:
   %conv = sext i32 %a to i64
@@ -32,7 +32,7 @@ entry:
   ret i64 %add
 }
 
-; CHECK: msub $5, $4
+; CHECK: msub
 define i64 @msub1(i32 %a, i32 %b, i32 %c) nounwind readnone {
 entry:
   %conv = sext i32 %c to i64
@@ -43,7 +43,7 @@ entry:
   ret i64 %sub
 }
 
-; CHECK: msubu $5, $4
+; CHECK: msubu 
 define i64 @msub2(i32 %a, i32 %b, i32 %c) nounwind readnone {
 entry:
   %conv = zext i32 %c to i64
@@ -54,7 +54,7 @@ entry:
   ret i64 %sub
 }
 
-; CHECK: msub $5, $4
+; CHECK: msub 
 define i64 @msub3(i32 %a, i32 %b, i64 %c) nounwind readnone {
 entry:
   %conv = sext i32 %a to i64
