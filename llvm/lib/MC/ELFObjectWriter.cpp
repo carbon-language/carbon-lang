@@ -1264,6 +1264,8 @@ MCObjectWriter *llvm::createELFObjectWriter(MCELFObjectTargetWriter *MOTW,
     case ELF::EM_PPC:
     case ELF::EM_PPC64:
       return new PPCELFObjectWriter(MOTW, OS, IsLittleEndian); break;
+    case ELF::EM_MIPS:
+      return new MipsELFObjectWriter(MOTW, OS, IsLittleEndian); break;
     default: llvm_unreachable("Unsupported architecture"); break;
   }
 }
@@ -1808,4 +1810,20 @@ unsigned X86ELFObjectWriter::GetRelocType(const MCValue &Target,
     NeedsGOT = true;
 
   return Type;
+}
+
+MipsELFObjectWriter::MipsELFObjectWriter(MCELFObjectTargetWriter *MOTW,
+                                         raw_ostream &_OS,
+                                         bool IsLittleEndian)
+  : ELFObjectWriter(MOTW, _OS, IsLittleEndian) {}
+
+MipsELFObjectWriter::~MipsELFObjectWriter() {}
+
+unsigned MipsELFObjectWriter::GetRelocType(const MCValue &Target,
+                                           const MCFixup &Fixup,
+                                           bool IsPCRel,
+                                           bool IsRelocWithSymbol,
+                                           int64_t Addend) {
+  // tbd
+  return 1;
 }
