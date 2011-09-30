@@ -38,7 +38,6 @@
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Program.h"
-#include "llvm/Support/Process.h"
 
 #include "InputInfo.h"
 
@@ -323,13 +322,6 @@ Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
     SysRoot = A->getValue(*Args);
   if (Args->hasArg(options::OPT_nostdlib))
     UseStdLib = false;
-
-  // Honor --working-directory. Eventually we want to handle this completely
-  // internally to support good use as a library, but for now we just change our
-  // working directory.
-  if (const Arg *A = Args->getLastArg(options::OPT__working_directory)) {
-    llvm::sys::Process::SetWorkingDirectory(A->getValue(*Args));
-  }
 
   Host = GetHostInfo(DefaultHostTriple.c_str());
 

@@ -407,13 +407,6 @@ Print timing summary of each stage of compilation.
 
 Show commands to run and use verbose output.
 
-=item B<--working-directory>
-
-Use the given argument as the effective working directory to run the compiler
-in. This is useful for running the compiler as if in a specific working
-directory without the overhead of having to change directory using an auxiliary
-process.
-
 =back
 
 

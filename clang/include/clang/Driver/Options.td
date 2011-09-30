@@ -855,8 +855,6 @@ def _verbose : Flag<"--verbose">, Alias<v>;
 def _version : Flag<"--version">;
 def _warn__EQ : Joined<"--warn-=">, Alias<W_Joined>;
 def _warn_ : Joined<"--warn-">, Alias<W_Joined>;
-def _working_directory : Separate<"--working-directory">,
-    HelpText<"Use the given argument as the effective working directory">;
 def _write_dependencies : Flag<"--write-dependencies">, Alias<MD>;
 def _write_user_dependencies : Flag<"--write-user-dependencies">, Alias<MMD>;
 def _ : Joined<"--">, Flags<[Unsupported]>;
