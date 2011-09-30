@@ -6537,6 +6537,8 @@ unsigned SelectionDAG::InferPtrAlignment(SDValue Ptr) const {
           Align = TD->getPreferredAlignment(GVar);
         }
       }
+      if (!Align)
+        Align = TLI.getTargetData()->getABITypeAlignment(GV->getType());
     }
     return MinAlign(Align, GVOffset);
   }
