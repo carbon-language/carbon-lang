@@ -2839,10 +2839,11 @@ Instruction *InstCombiner::visitFCmpInst(FCmpInst &I) {
 
         // Avoid lossy conversions and denormals. Zero is a special case
         // that's OK to convert.
-        F.clearSign();
+        APFloat Fabs = F;
+        Fabs.clearSign();
         if (!Lossy &&
-            ((F.compare(APFloat::getSmallestNormalized(*Sem)) !=
-                 APFloat::cmpLessThan) || F.isZero()))
+            ((Fabs.compare(APFloat::getSmallestNormalized(*Sem)) !=
+                 APFloat::cmpLessThan) || Fabs.isZero()))
 
           return new FCmpInst(I.getPredicate(), LHSExt->getOperand(0),
                               ConstantFP::get(RHSC->getContext(), F));
