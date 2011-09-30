@@ -117,3 +117,21 @@ def DSRA32   : LogicR_shift_rotate_imm64<0x3f, 0x00, "dsra32", sra, imm32_63>;
 def DSLLV    : LogicR_shift_rotate_reg64<0x24, 0x00, "dsllv", shl>;
 def DSRLV    : LogicR_shift_rotate_reg64<0x26, 0x00, "dsrlv", srl>;
 def DSRAV    : LogicR_shift_rotate_reg64<0x27, 0x00, "dsrav", sra>;
+
+// Rotate Instructions
+let Predicates = [HasMips64r2] in {
+  def DROTR    : LogicR_shift_rotate_imm64<0x3a, 0x01, "drotr", rotr, immZExt5>;
+  def DROTR32  : LogicR_shift_rotate_imm64<0x3e, 0x01, "drotr32", rotr,
+                                           imm32_63>;
+  def DROTRV   : LogicR_shift_rotate_reg64<0x16, 0x01, "drotrv", rotr>;
+}
+
+//===----------------------------------------------------------------------===//
+//  Arbitrary patterns that map to one or more instructions
+//===----------------------------------------------------------------------===//
+
+// Small immediates
+def : Pat<(i64 immSExt16:$in),
+          (DADDiu ZERO_64, imm:$in)>;
+def : Pat<(i64 immZExt16:$in),
+          (DORi ZERO_64, imm:$in)>;

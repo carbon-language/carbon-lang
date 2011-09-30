@@ -1,4 +1,4 @@
-; RUN: llc -march=mips64el -mcpu=mips64r1 < %s | FileCheck %s
+; RUN: llc -march=mips64el -mcpu=mips64r2 < %s | FileCheck %s
 
 define i64 @f0(i64 %a0, i64 %a1) nounwind readnone {
 entry:
@@ -62,3 +62,43 @@ entry:
   %shr = lshr i64 %a0, 40
   ret i64 %shr
 }
+
+define i64 @f9(i64 %a0, i64 %a1) nounwind readnone {
+entry:
+; CHECK: drotrv
+  %shr = lshr i64 %a0, %a1
+  %sub = sub i64 64, %a1
+  %shl = shl i64 %a0, %sub
+  %or = or i64 %shl, %shr
+  ret i64 %or
+}
+
+define i64 @f10(i64 %a0, i64 %a1) nounwind readnone {
+entry:
+; CHECK: drotrv
+  %shl = shl i64 %a0, %a1
+  %sub = sub i64 64, %a1
+  %shr = lshr i64 %a0, %sub
+  %or = or i64 %shr, %shl
+  ret i64 %or
+}
+
+define i64 @f11(i64 %a0) nounwind readnone {
+entry:
+; CHECK: drotr ${{[0-9]+}}, ${{[0-9]+}}, 10
+  %shr = lshr i64 %a0, 10
+  %shl = shl i64 %a0, 54
+  %or = or i64 %shr, %shl
+  ret i64 %or
+}
+
+define i64 @f12(i64 %a0) nounwind readnone {
+entry:
+; CHECK: drotr32 ${{[0-9]+}}, ${{[0-9]+}}, 22
+  %shl = shl i64 %a0, 10
+  %shr = lshr i64 %a0, 54
+  %or = or i64 %shl, %shr
+  ret i64 %or
+}
+
+
