@@ -195,7 +195,10 @@ public:
 
     clang::DeclContext *
     GetClangDeclContextContainingDIEOffset (dw_offset_t die_offset);
-    
+
+    const DWARFDebugInfoEntry *
+    GetDeclContextDIEContainingDIE (DWARFCompileUnit *cu, const DWARFDebugInfoEntry *die);
+
     void
     SearchDeclContext (const clang::DeclContext *decl_context, 
                        const char *name, 
@@ -309,7 +312,9 @@ protected:
 
     uint32_t                ResolveFunctions (
                                 const DIEArray &die_offsets,
-                                lldb_private::SymbolContextList& sc_list);
+                                lldb_private::SymbolContextList& sc_list,
+                                const lldb_private::ConstString &name,
+                                uint32_t name_type_mask);
 
     void                    FindFunctions(
                                 const lldb_private::ConstString &name, 

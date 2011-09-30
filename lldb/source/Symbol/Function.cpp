@@ -449,6 +449,27 @@ Function::GetClangDeclContext()
 Type*
 Function::GetType()
 {
+    if (m_type == NULL)
+    {
+        SymbolContext sc;
+        
+        CalculateSymbolContext (&sc);
+        
+        if (!sc.module_sp)
+            return NULL;
+        
+        SymbolVendor *sym_vendor = sc.module_sp->GetSymbolVendor();
+        
+        if (sym_vendor == NULL)
+            return NULL;
+        
+        SymbolFile *sym_file = sym_vendor->GetSymbolFile();
+        
+        if (sym_file == NULL)
+            return NULL;
+        
+        return sym_file->ResolveTypeUID(m_type_uid);
+    }
     return m_type;
 }
 

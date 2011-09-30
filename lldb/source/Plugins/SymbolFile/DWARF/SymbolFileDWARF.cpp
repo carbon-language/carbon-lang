@@ -659,36 +659,36 @@ SymbolFileDWARF::ParseCompileUnitFunction (const SymbolContext& sc, DWARFCompile
     if (die->Tag() != DW_TAG_subprogram)
         return NULL;
 
-    clang::DeclContext *containing_decl_ctx = GetClangDeclContextContainingDIE (dwarf_cu, die);
-    const clang::Decl::Kind containing_decl_kind = containing_decl_ctx->getDeclKind();
-
-    switch (containing_decl_kind)
-    {
-        case clang::Decl::Record:
-        case clang::Decl::CXXRecord:
-        case clang::Decl::ObjCClass:
-        case clang::Decl::ObjCImplementation:
-        case clang::Decl::ObjCInterface:
-            // We have methods of a class or struct
-            {
-                const DWARFDebugInfoEntry *containing_decl_die = m_decl_ctx_to_die[containing_decl_ctx];
-                assert (containing_decl_die);
-                Type *class_type = ResolveType (dwarf_cu, containing_decl_die);
-                if (class_type)
-                    class_type->GetClangFullType();
-                // Make sure the class definition contains the funciton DIE
-                // we wanted to parse. If it does, we are done. Else, we need 
-                // to fall through and parse the function DIE stil...
-                if (containing_decl_die->Contains (die))
-                    break; // DIE has been parsed, we are done
-            }
-            // Fall through...
-
-        default:
-            // Parse the function prototype as a type that can then be added to concrete function instance
-            ParseTypes (sc, dwarf_cu, die, false, false);
-            break;
-    }
+//    clang::DeclContext *containing_decl_ctx = GetClangDeclContextContainingDIE (dwarf_cu, die);
+//    const clang::Decl::Kind containing_decl_kind = containing_decl_ctx->getDeclKind();
+//
+//    switch (containing_decl_kind)
+//    {
+//        case clang::Decl::Record:
+//        case clang::Decl::CXXRecord:
+//        case clang::Decl::ObjCClass:
+//        case clang::Decl::ObjCImplementation:
+//        case clang::Decl::ObjCInterface:
+//            // We have methods of a class or struct
+//            {
+//                const DWARFDebugInfoEntry *containing_decl_die = m_decl_ctx_to_die[containing_decl_ctx];
+//                assert (containing_decl_die);
+//                Type *class_type = ResolveType (dwarf_cu, containing_decl_die);
+//                if (class_type)
+//                    class_type->GetClangFullType();
+//                // Make sure the class definition contains the funciton DIE
+//                // we wanted to parse. If it does, we are done. Else, we need 
+//                // to fall through and parse the function DIE stil...
+//                if (containing_decl_die->Contains (die))
+//                    break; // DIE has been parsed, we are done
+//            }
+//            // Fall through...
+//
+//        default:
+//            // Parse the function prototype as a type that can then be added to concrete function instance
+//            //ParseTypes (sc, dwarf_cu, die, false, false);
+//            break;
+//    }
     
     //FixupTypes();
 
@@ -2053,7 +2053,9 @@ SymbolFileDWARF::FindGlobalVariables(const RegularExpression& regex, bool append
 
 uint32_t
 SymbolFileDWARF::ResolveFunctions (const DIEArray &die_offsets,
-                                   SymbolContextList& sc_list)
+                                   SymbolContextList& sc_list,
+                                   const ConstString &name,
+                                   uint32_t name_type_mask)
 {
     DWARFDebugInfo* info = DebugInfo();
     if (info == NULL)
@@ -2071,9 +2073,22 @@ SymbolFileDWARF::ResolveFunctions (const DIEArray &die_offsets,
         const dw_offset_t die_offset = die_offsets[i];
         const DWARFDebugInfoEntry* die = info->GetDIEPtrWithCompileUnitHint (die_offset, &dwarf_cu);
         
+        // If we aren't doing full names, 
+        if ((name_type_mask & eFunctionNameTypeFull) == 0)
+        {
+            const char *name_cstr = name.GetCString();
+            if (ObjCLanguageRuntime::IsPossibleObjCMethodName(name_cstr))
+                continue;
+        }
+        
+
         const DWARFDebugInfoEntry* inlined_die = NULL;
         if (die->Tag() == DW_TAG_inlined_subroutine)
         {
+            // We only are looking for selectors, which disallows anything inlined
+            if (name_type_mask == eFunctionNameTypeSelector)
+                continue;
+        
             inlined_die = die;
             
             while ((die = die->GetParent()) != NULL)
@@ -2278,13 +2293,10 @@ SymbolFileDWARF::FindFunctions
 }
 
 uint32_t
-SymbolFileDWARF::FindFunctions
-(
-    const ConstString &name, 
-    uint32_t name_type_mask, 
-    bool append, 
-    SymbolContextList& sc_list
-)
+SymbolFileDWARF::FindFunctions (const ConstString &name, 
+                                uint32_t name_type_mask, 
+                                bool append, 
+                                SymbolContextList& sc_list)
 {
     Timer scoped_timer (__PRETTY_FUNCTION__,
                         "SymbolFileDWARF::FindFunctions (name = '%s')",
@@ -2321,7 +2333,7 @@ SymbolFileDWARF::FindFunctions
         DIEArray die_offsets;
         const uint32_t num_matches = m_apple_names.Find(name.GetCString(), die_offsets);
         if (num_matches > 0)
-            ResolveFunctions (die_offsets, sc_list_apple);
+            ResolveFunctions (die_offsets, sc_list_apple, name, name_type_mask);
         if (sc_list != sc_list_apple)
             assert (!"__apple_names results differ from DWARF index results");
     }
@@ -2975,103 +2987,119 @@ SymbolFileDWARF::GetClangDeclContextForDIE (const SymbolContext &sc, DWARFCompil
 }
 
 clang::DeclContext *
-SymbolFileDWARF::GetClangDeclContextContainingDIE (DWARFCompileUnit *curr_cu, const DWARFDebugInfoEntry *die)
+SymbolFileDWARF::GetClangDeclContextContainingDIE (DWARFCompileUnit *cu, const DWARFDebugInfoEntry *die)
 {
     if (m_clang_tu_decl == NULL)
         m_clang_tu_decl = GetClangASTContext().getASTContext()->getTranslationUnitDecl();
 
-    //printf ("SymbolFileDWARF::GetClangDeclContextContainingDIE ( die = 0x%8.8x )\n", die->GetOffset());
-    const DWARFDebugInfoEntry * const decl_die = die;
-    clang::DeclContext *decl_ctx = NULL;
-
-    while (die != NULL)
+    const DWARFDebugInfoEntry *decl_ctx_die = GetDeclContextDIEContainingDIE (cu, die);
+    
+    if (decl_ctx_die)
     {
-        // If this is the original DIE that we are searching for a declaration 
-        // for, then don't look in the cache as we don't want our own decl 
-        // context to be our decl context...
-        if (decl_die != die)
+        DIEToDeclContextMap::iterator pos = m_die_to_decl_ctx.find (decl_ctx_die);
+        if (pos != m_die_to_decl_ctx.end())
+            return pos->second;
+
+        switch (decl_ctx_die->Tag())
         {
-            DIEToDeclContextMap::iterator pos = m_die_to_decl_ctx.find(die);
-            if (pos != m_die_to_decl_ctx.end())
-            {
-                //printf ("SymbolFileDWARF::GetClangDeclContextContainingDIE ( die = 0x%8.8x ) => 0x%8.8x\n", decl_die->GetOffset(), die->GetOffset());
-                return pos->second;
-            }
+        case DW_TAG_compile_unit:
+            return m_clang_tu_decl;
 
-            //printf ("SymbolFileDWARF::GetClangDeclContextContainingDIE ( die = 0x%8.8x ) checking parent 0x%8.8x\n", decl_die->GetOffset(), die->GetOffset());
-
-            switch (die->Tag())
+        case DW_TAG_namespace:
             {
-            case DW_TAG_namespace:
+                const char *namespace_name = decl_ctx_die->GetAttributeValueAsString(this, cu, DW_AT_name, NULL);
+                if (namespace_name)
                 {
-                    const char *namespace_name = die->GetAttributeValueAsString(this, curr_cu, DW_AT_name, NULL);
-                    if (namespace_name)
+                    Declaration decl;   // TODO: fill in the decl object
+                    clang::NamespaceDecl *namespace_decl = GetClangASTContext().GetUniqueNamespaceDeclaration (namespace_name, decl, GetClangDeclContextContainingDIE (cu, decl_ctx_die));
+                    if (namespace_decl)
+                        LinkDeclContextToDIE((clang::DeclContext*)namespace_decl, decl_ctx_die);
+                    return namespace_decl;
+                }
+            }
+            break;
+
+        case DW_TAG_structure_type:
+        case DW_TAG_union_type:
+        case DW_TAG_class_type:
+            {
+                Type* type = ResolveType (cu, decl_ctx_die);
+                if (type)
+                {
+                    clang::DeclContext *decl_ctx = ClangASTContext::GetDeclContextForType (type->GetClangForwardType ());
+                    if (decl_ctx)
                     {
-                        Declaration decl;   // TODO: fill in the decl object
-                        clang::NamespaceDecl *namespace_decl = GetClangASTContext().GetUniqueNamespaceDeclaration (namespace_name, decl, GetClangDeclContextContainingDIE (curr_cu, die));
-                        if (namespace_decl)
-                        {
-                            //printf ("SymbolFileDWARF::GetClangDeclContextContainingDIE ( die = 0x%8.8x ) => 0x%8.8x\n", decl_die->GetOffset(), die->GetOffset());
-                            LinkDeclContextToDIE((clang::DeclContext*)namespace_decl, die);
-                        }
-                        return namespace_decl;
+                        LinkDeclContextToDIE (decl_ctx, decl_ctx_die);
+                        if (decl_ctx)
+                            return decl_ctx;
                     }
                 }
-                break;
-
-            case DW_TAG_structure_type:
-            case DW_TAG_union_type:
-            case DW_TAG_class_type:
-                {
-                    Type* type = ResolveType (curr_cu, die);
-                    pos = m_die_to_decl_ctx.find(die);
-                    if (pos != m_die_to_decl_ctx.end())
-                    {
-                        //printf ("SymbolFileDWARF::GetClangDeclContextContainingDIE ( die = 0x%8.8x ) => 0x%8.8x\n", decl_die->GetOffset(), die->GetOffset());
-                        return pos->second;
-                    }
-                    else
-                    {
-                        if (type)
-                        {
-                            decl_ctx = ClangASTContext::GetDeclContextForType (type->GetClangForwardType ());
-                            LinkDeclContextToDIE (decl_ctx, die);
-                            if (decl_ctx)
-                                return decl_ctx;
-                        }
-                    }
-                }
-                break;
-
-            default:
-                break;
             }
-        }
+            break;
 
-        dw_offset_t die_offset = die->GetAttributeValueAsReference(this, curr_cu, DW_AT_specification, DW_INVALID_OFFSET);
-        if (die_offset != DW_INVALID_OFFSET)
-        {
-            //printf ("SymbolFileDWARF::GetClangDeclContextContainingDIE ( die = 0x%8.8x ) check DW_AT_specification 0x%8.8x\n", decl_die->GetOffset(), die_offset);
-            decl_ctx = GetClangDeclContextContainingDIEOffset (die_offset);
-            if (decl_ctx != m_clang_tu_decl)
-                return decl_ctx;
+        default:
+            break;
         }
-
-        die_offset = die->GetAttributeValueAsReference(this, curr_cu, DW_AT_abstract_origin, DW_INVALID_OFFSET);
-        if (die_offset != DW_INVALID_OFFSET)
-        {
-            //printf ("SymbolFileDWARF::GetClangDeclContextContainingDIE ( die = 0x%8.8x ) check DW_AT_abstract_origin 0x%8.8x\n", decl_die->GetOffset(), die_offset);
-            decl_ctx = GetClangDeclContextContainingDIEOffset (die_offset);
-            if (decl_ctx != m_clang_tu_decl)
-                return decl_ctx;
-        }
-
-        die = die->GetParent();
     }
-    // Right now we have only one translation unit per module...
-    //printf ("SymbolFileDWARF::GetClangDeclContextContainingDIE ( die = 0x%8.8x ) => 0x%8.8x\n", decl_die->GetOffset(), curr_cu->GetFirstDIEOffset());
     return m_clang_tu_decl;
 }
+
+
+const DWARFDebugInfoEntry *
+SymbolFileDWARF::GetDeclContextDIEContainingDIE (DWARFCompileUnit *cu, const DWARFDebugInfoEntry *die)
+{
+    if (cu && die)
+    {
+        const DWARFDebugInfoEntry * const decl_die = die;
+    
+        while (die != NULL)
+        {
+            // If this is the original DIE that we are searching for a declaration 
+            // for, then don't look in the cache as we don't want our own decl 
+            // context to be our decl context...
+            if (decl_die != die)
+            {            
+                switch (die->Tag())
+                {
+                    case DW_TAG_compile_unit:
+                    case DW_TAG_namespace:
+                    case DW_TAG_structure_type:
+                    case DW_TAG_union_type:
+                    case DW_TAG_class_type:
+                        return die;
+                        
+                    default:
+                        break;
+                }
+            }
+            
+            dw_offset_t die_offset = die->GetAttributeValueAsReference(this, cu, DW_AT_specification, DW_INVALID_OFFSET);
+            if (die_offset != DW_INVALID_OFFSET)
+            {
+                DWARFCompileUnit *spec_cu = cu;
+                const DWARFDebugInfoEntry *spec_die = DebugInfo()->GetDIEPtrWithCompileUnitHint (die_offset, &spec_cu);
+                const DWARFDebugInfoEntry *spec_die_decl_ctx_die = GetDeclContextDIEContainingDIE (spec_cu, spec_die);
+                if (spec_die_decl_ctx_die)
+                    return spec_die_decl_ctx_die;
+            }
+            
+            die_offset = die->GetAttributeValueAsReference(this, cu, DW_AT_abstract_origin, DW_INVALID_OFFSET);
+            if (die_offset != DW_INVALID_OFFSET)
+            {
+                DWARFCompileUnit *abs_cu = cu;
+                const DWARFDebugInfoEntry *abs_die = DebugInfo()->GetDIEPtrWithCompileUnitHint (die_offset, &abs_cu);
+                const DWARFDebugInfoEntry *abs_die_decl_ctx_die = GetDeclContextDIEContainingDIE (abs_cu, abs_die);
+                if (abs_die_decl_ctx_die)
+                    return abs_die_decl_ctx_die;
+            }
+            
+            die = die->GetParent();
+        }
+    }
+    return NULL;
+}
+
+
 
 // This function can be used when a DIE is found that is a forward declaration
 // DIE and we want to try and find a type that has the complete definition.
