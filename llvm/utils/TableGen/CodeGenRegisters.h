@@ -90,6 +90,9 @@ namespace llvm {
     std::vector<SmallVector<Record*, 16> > AltOrders;
     // Bit mask of sub-classes including this, indexed by their EnumValue.
     BitVector SubClasses;
+    // List of super-classes, topologocally ordered to have the larger classes
+    // first.  This is the same as sorting by EnumValue.
+    SmallVector<CodeGenRegisterClass*, 4> SuperClasses;
   public:
     Record *TheDef;
     unsigned EnumValue;
@@ -127,6 +130,17 @@ namespace llvm {
     // 3. RC spill alignment must be compatible with ours.
     //
     bool hasSubClass(const CodeGenRegisterClass *RC) const;
+
+    // getSubClasses - Returns a constant BitVector of subclasses indexed by
+    // EnumValue.
+    // The SubClasses vector includs an entry for this class.
+    const BitVector &getSubClasses() const { return SubClasses; };
+
+    // getSuperClasses - Returns a list of super classes ordered by EnumValue.
+    // The array does not include an entry for this class.
+    ArrayRef<CodeGenRegisterClass*> getSuperClasses() const {
+      return SuperClasses;
+    }
 
     // Returns an ordered list of class members.
     // The order of registers is the same as in the .td file.

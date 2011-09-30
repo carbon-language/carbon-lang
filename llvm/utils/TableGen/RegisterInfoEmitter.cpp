@@ -527,9 +527,10 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
       OS << "  " << RegisterClasses[i]->getName()  << "Class\t"
          << RegisterClasses[i]->getName() << "RegClass;\n";
 
-    std::map<unsigned, std::set<unsigned> > SuperClassMap;
     std::map<unsigned, std::set<unsigned> > SuperRegClassMap;
-    OS << "\n";
+
+    OS << "\n  static const TargetRegisterClass* const "
+      << "NullRegClasses[] = { NULL };\n\n";
 
     unsigned NumSubRegIndices = RegBank.getSubRegIndices().size();
 
@@ -603,10 +604,6 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
         OS << (!Empty ? ", " : "") << "NULL";
         OS << "\n  };\n\n";
       }
-    } else {
-      // No subregindices in this target
-      OS << "  static const TargetRegisterClass* const "
-         << "NullRegClasses[] = { NULL };\n\n";
     }
 
     // Emit the sub-classes array for each RegisterClass
@@ -632,46 +629,26 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
         if (!Empty) OS << ", ";
         OS << "&" << getQualifiedName(RC2.TheDef) << "RegClass";
         Empty = false;
-
-        std::map<unsigned, std::set<unsigned> >::iterator SCMI =
-          SuperClassMap.find(rc2);
-        if (SCMI == SuperClassMap.end()) {
-          SuperClassMap.insert(std::make_pair(rc2, std::set<unsigned>()));
-          SCMI = SuperClassMap.find(rc2);
-        }
-        SCMI->second.insert(rc);
       }
 
       OS << (!Empty ? ", " : "") << "NULL";
       OS << "\n  };\n\n";
     }
 
+    // Emit NULL terminated super-class lists.
     for (unsigned rc = 0, e = RegisterClasses.size(); rc != e; ++rc) {
       const CodeGenRegisterClass &RC = *RegisterClasses[rc];
+      ArrayRef<CodeGenRegisterClass*> Supers = RC.getSuperClasses();
 
-      // Give the register class a legal C name if it's anonymous.
-      std::string Name = RC.TheDef->getName();
+      // Skip classes without supers.  We can reuse NullRegClasses.
+      if (Supers.empty())
+        continue;
 
-      OS << "  // " << Name
-         << " Register Class super-classes...\n"
-         << "  static const TargetRegisterClass* const "
-         << Name << "Superclasses[] = {\n    ";
-
-      bool Empty = true;
-      std::map<unsigned, std::set<unsigned> >::iterator I =
-        SuperClassMap.find(rc);
-      if (I != SuperClassMap.end()) {
-        for (std::set<unsigned>::iterator II = I->second.begin(),
-               EE = I->second.end(); II != EE; ++II) {
-          const CodeGenRegisterClass &RC2 = *RegisterClasses[*II];
-          if (!Empty) OS << ", ";
-          OS << "&" << getQualifiedName(RC2.TheDef) << "RegClass";
-          Empty = false;
-        }
-      }
-
-      OS << (!Empty ? ", " : "") << "NULL";
-      OS << "\n  };\n\n";
+      OS << "  static const TargetRegisterClass* const "
+         << RC.getName() << "Superclasses[] = {\n";
+      for (unsigned i = 0; i != Supers.size(); ++i)
+        OS << "    &" << getQualifiedName(Supers[i]->TheDef) << "RegClass,\n";
+      OS << "    NULL\n  };\n\n";
     }
 
     // Emit methods.
@@ -682,9 +659,12 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
          << Target.getName() << "MCRegisterClasses["
          << RC.getName() + "RegClassID" << "], "
          << RC.getName() + "VTs" << ", "
-         << RC.getName() + "Subclasses" << ", "
-         << RC.getName() + "Superclasses" << ", "
-         << (NumSubRegIndices ? RC.getName() + "Sub" : std::string("Null"))
+         << RC.getName() + "Subclasses" << ", ";
+      if (RC.getSuperClasses().empty())
+        OS << "NullRegClasses, ";
+      else
+        OS << RC.getName() + "Superclasses, ";
+      OS << (NumSubRegIndices ? RC.getName() + "Sub" : std::string("Null"))
          << "RegClasses, "
          << (NumSubRegIndices ? RC.getName() + "Super" : std::string("Null"))
          << "RegClasses"

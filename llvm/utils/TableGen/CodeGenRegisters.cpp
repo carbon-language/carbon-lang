@@ -414,6 +414,16 @@ computeSubClasses(ArrayRef<CodeGenRegisterClass*> RegClasses) {
     for (unsigned s = rci - 1; s && RC.hasSubClass(RegClasses[s - 1]); --s)
       RC.SubClasses.set(s - 1);
   }
+
+  // Compute the SuperClasses lists from the SubClasses vectors.
+  for (unsigned rci = 0; rci != RegClasses.size(); ++rci) {
+    const BitVector &SC = RegClasses[rci]->getSubClasses();
+    for (int s = SC.find_first(); s >= 0; s = SC.find_next(s)) {
+      if (unsigned(s) == rci)
+        continue;
+      RegClasses[s]->SuperClasses.push_back(RegClasses[rci]);
+    }
+  }
 }
 
 //===----------------------------------------------------------------------===//
