@@ -3263,6 +3263,41 @@ static void handleObjCReturnsInnerPointerAttr(Sema &S, Decl *D,
     ::new (S.Context) ObjCReturnsInnerPointerAttr(attr.getRange(), S.Context));
 }
 
+/// Handle cf_audited_transfer and cf_unknown_transfer.
+static void handleCFTransferAttr(Sema &S, Decl *D, const AttributeList &A) {
+  if (!isa<FunctionDecl>(D)) {
+    S.Diag(D->getLocStart(), diag::err_attribute_wrong_decl_type)
+      << A.getRange() << A.getName() << 0 /*function*/;
+    return;
+  }
+
+  bool IsAudited = (A.getKind() == AttributeList::AT_cf_audited_transfer);
+
+  // Check whether there's a conflicting attribute already present.
+  Attr *Existing;
+  if (IsAudited) {
+    Existing = D->getAttr<CFUnknownTransferAttr>();
+  } else {
+    Existing = D->getAttr<CFAuditedTransferAttr>();
+  }
+  if (Existing) {
+    S.Diag(D->getLocStart(), diag::err_attributes_are_not_compatible)
+      << A.getName()
+      << (IsAudited ? "cf_unknown_transfer" : "cf_audited_transfer")
+      << A.getRange() << Existing->getRange();
+    return;
+  }
+
+  // All clear;  add the attribute.
+  if (IsAudited) {
+    D->addAttr(
+      ::new (S.Context) CFAuditedTransferAttr(A.getRange(), S.Context));
+  } else {
+    D->addAttr(
+      ::new (S.Context) CFUnknownTransferAttr(A.getRange(), S.Context));
+  }
+}
+
 static void handleNSBridgedAttr(Sema &S, Scope *Sc, Decl *D,
                                 const AttributeList &Attr) {
   RecordDecl *RD = dyn_cast<RecordDecl>(D);
@@ -3498,6 +3533,10 @@ static void ProcessInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
 
   case AttributeList::AT_ns_bridged:
     handleNSBridgedAttr(S, scope, D, Attr); break;
+
+  case AttributeList::AT_cf_audited_transfer:
+  case AttributeList::AT_cf_unknown_transfer:
+    handleCFTransferAttr(S, D, Attr); break;
 
   // Checker-specific.
   case AttributeList::AT_cf_consumed:

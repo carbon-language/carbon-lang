@@ -1217,6 +1217,15 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
     return;
   }
 
+  // Complain about attempts to #include files in an audit pragma.
+  if (PragmaARCCFCodeAuditedLoc.isValid()) {
+    Diag(HashLoc, diag::err_pp_include_in_arc_cf_code_audited);
+    Diag(PragmaARCCFCodeAuditedLoc, diag::note_pragma_entered_here);
+
+    // Immediately leave the pragma.
+    PragmaARCCFCodeAuditedLoc = SourceLocation();
+  }
+
   // Search include directories.
   const DirectoryLookup *CurDir;
   llvm::SmallString<1024> SearchPath;

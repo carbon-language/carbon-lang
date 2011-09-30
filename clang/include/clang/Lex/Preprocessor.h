@@ -165,6 +165,10 @@ class Preprocessor : public llvm::RefCountedBase<Preprocessor> {
   /// \brief The source location of the __import_module__ keyword we just
   /// lexed, if any.
   SourceLocation ModuleImportLoc;
+
+  /// \brief The source location of the currently-active
+  /// #pragma clang arc_cf_code_audited begin.
+  SourceLocation PragmaARCCFCodeAuditedLoc;
   
   /// \brief True if we hit the code-completion point.
   bool CodeCompletionReached;
@@ -718,6 +722,19 @@ public:
     CodeCompletionReached = true;
     // Silence any diagnostics that occur after we hit the code-completion.
     getDiagnostics().setSuppressAllDiagnostics(true);
+  }
+
+  /// \brief The location of the currently-active #pragma clang
+  /// arc_cf_code_audited begin.  Returns an invalid location if there
+  /// is no such pragma active.
+  SourceLocation getPragmaARCCFCodeAuditedLoc() const {
+    return PragmaARCCFCodeAuditedLoc;
+  }
+
+  /// \brief Set the location of the currently-active #pragma clang
+  /// arc_cf_code_audited begin.  An invalid location ends the pragma.
+  void setPragmaARCCFCodeAuditedLoc(SourceLocation Loc) {
+    PragmaARCCFCodeAuditedLoc = Loc;
   }
 
   /// \brief Instruct the preprocessor to skip part of the main

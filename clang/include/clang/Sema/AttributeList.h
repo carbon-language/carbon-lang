@@ -166,10 +166,12 @@ public:
     AT_blocks,
     AT_carries_dependency,
     AT_cdecl,
+    AT_cf_audited_transfer,     // Clang-specific.
     AT_cf_consumed,             // Clang-specific.
     AT_cf_returns_autoreleased, // Clang-specific.
     AT_cf_returns_not_retained, // Clang-specific.
     AT_cf_returns_retained,     // Clang-specific.
+    AT_cf_unknown_transfer,     // Clang-specific.
     AT_cleanup,
     AT_common,
     AT_const,

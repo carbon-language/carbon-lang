@@ -300,6 +300,18 @@ void Sema::ActOnPragmaUnused(const Token &IdTok, Scope *curScope,
   VD->addAttr(::new (Context) UnusedAttr(IdTok.getLocation(), Context));
 }
 
+void Sema::AddCFAuditedAttribute(Decl *D) {
+  SourceLocation Loc = PP.getPragmaARCCFCodeAuditedLoc();
+  if (!Loc.isValid()) return;
+
+  // Don't add a redundant or conflicting attribute.
+  if (D->hasAttr<CFAuditedTransferAttr>() ||
+      D->hasAttr<CFUnknownTransferAttr>())
+    return;
+
+  D->addAttr(::new (Context) CFAuditedTransferAttr(Loc, Context));
+}
+
 typedef std::vector<std::pair<unsigned, SourceLocation> > VisStack;
 enum { NoVisibility = (unsigned) -1 };
 

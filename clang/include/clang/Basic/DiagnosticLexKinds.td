@@ -326,4 +326,14 @@ def ext_pp_line_too_big : Extension<
 
 def err_pp_export_non_macro : Error<"no macro named %0 to export">;
 
+def err_pp_arc_cf_code_audited_syntax : Error<"expected 'begin' or 'end'">;
+def err_pp_double_begin_of_arc_cf_code_audited : Error<
+  "already inside '#pragma clang arc_cf_code_audited'">;
+def err_pp_unmatched_end_of_arc_cf_code_audited : Error<
+  "not currently inside '#pragma clang arc_cf_code_audited'">;
+def err_pp_include_in_arc_cf_code_audited : Error<
+  "cannot #include files inside '#pragma clang arc_cf_code_audited'">;
+def err_pp_eof_in_arc_cf_code_audited : Error<
+  "'#pragma clang arc_cf_code_audited' was not ended within this file">;
+
 }

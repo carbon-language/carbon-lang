@@ -5187,6 +5187,10 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
   if (NewFD->getLinkage() == ExternalLinkage && !DC->isRecord())
     AddPushedVisibilityAttribute(NewFD);
 
+  // If there's a #pragma clang arc_cf_code_audited in scope, consider
+  // marking the function.
+  AddCFAuditedAttribute(NewFD);
+
   // If this is a locally-scoped extern C function, update the
   // map of such names.
   if (CurContext->isFunctionOrMethod() && NewFD->isExternC()

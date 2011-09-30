@@ -216,6 +216,14 @@ bool Preprocessor::HandleEndOfFile(Token &Result, bool isEndOfMacro) {
     }
   }
 
+  // Complain about reaching an EOF within arc_cf_code_audited.
+  if (PragmaARCCFCodeAuditedLoc.isValid()) {
+    Diag(PragmaARCCFCodeAuditedLoc, diag::err_pp_eof_in_arc_cf_code_audited);
+
+    // Recover by leaving immediately.
+    PragmaARCCFCodeAuditedLoc = SourceLocation();
+  }
+
   // If this is a #include'd file, pop it off the include stack and continue
   // lexing the #includer file.
   if (!IncludeMacroStack.empty()) {

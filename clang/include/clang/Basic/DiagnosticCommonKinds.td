@@ -65,6 +65,7 @@ def err_module_cycle : Error<"cyclic dependency in module '%0': %1">,
   DefaultFatal;
 def warn_module_build : Warning<"building module '%0' from source">, 
   InGroup<ModuleBuild>, DefaultIgnore;
+def note_pragma_entered_here : Note<"#pragma entered here">;  
 
 // Sema && Lex
 def ext_longlong : Extension<
