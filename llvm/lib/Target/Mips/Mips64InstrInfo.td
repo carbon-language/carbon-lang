@@ -102,7 +102,7 @@ def DXORi    : LogicI64<0x0e, "xori",  xor>;
 
 /// Arithmetic Instructions (3-Operand, R-Type)
 def DADDu    : ArithR64<0x00, 0x2d, "daddu", add, IIAlu, 1>;
-def DSUBu    : ArithR64<0x00, 0x2f, "dsubu", sub, IIAlu, 1>;
+def DSUBu    : ArithR64<0x00, 0x2f, "dsubu", sub, IIAlu>;
 def DAND     : LogicR64<0x24, "and", and>;
 def DOR      : LogicR64<0x25, "or", or>;
 def DXOR     : LogicR64<0x26, "xor", xor>;
