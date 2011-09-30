@@ -2,6 +2,7 @@
 
 set(known_subdirs
   "compiler-rt"
+  "libcxx"
   )
 
 foreach (dir ${known_subdirs})

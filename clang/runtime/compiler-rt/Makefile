@@ -1,4 +1,4 @@
-##===- clang/runtime/Makefile ------------------------------*- Makefile -*-===##
+##===- clang/runtime/compiler-rt/Makefile ------------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
