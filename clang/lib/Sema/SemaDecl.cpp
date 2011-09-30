@@ -5879,6 +5879,10 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
     } else if (T->isFloatingType()) { // also permits complex, which is ok
       Diag(VDecl->getLocation(), diag::ext_in_class_initializer_float_type)
         << T << Init->getSourceRange();
+      if (getLangOptions().CPlusPlus0x)
+        Diag(VDecl->getLocation(),
+             diag::note_in_class_initializer_float_type_constexpr)
+          << FixItHint::CreateInsertion(VDecl->getLocStart(), "constexpr ");
 
       if (!Init->isValueDependent() &&
           !Init->isConstantInitializer(Context, false)) {
