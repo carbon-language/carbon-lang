@@ -58,7 +58,7 @@ static const Module *getModuleFromVal(const Value *V) {
     const Function *M = I->getParent() ? I->getParent()->getParent() : 0;
     return M ? M->getParent() : 0;
   }
-  
+
   if (const GlobalValue *GV = dyn_cast<GlobalValue>(V))
     return GV->getParent();
   return 0;
@@ -142,18 +142,18 @@ public:
 
   /// NamedTypes - The named types that are used by the current module.
   std::vector<StructType*> NamedTypes;
-  
+
   /// NumberedTypes - The numbered types, along with their value.
   DenseMap<StructType*, unsigned> NumberedTypes;
-  
+
 
   TypePrinting() {}
   ~TypePrinting() {}
-  
+
   void incorporateTypes(const Module &M);
-  
+
   void print(Type *Ty, raw_ostream &OS);
-  
+
   void printStructBody(StructType *Ty, raw_ostream &OS);
 };
 } // end anonymous namespace.
@@ -161,25 +161,25 @@ public:
 
 void TypePrinting::incorporateTypes(const Module &M) {
   M.findUsedStructTypes(NamedTypes);
-  
+
   // The list of struct types we got back includes all the struct types, split
   // the unnamed ones out to a numbering and remove the anonymous structs.
   unsigned NextNumber = 0;
-  
+
   std::vector<StructType*>::iterator NextToUse = NamedTypes.begin(), I, E;
   for (I = NamedTypes.begin(), E = NamedTypes.end(); I != E; ++I) {
     StructType *STy = *I;
-    
+
     // Ignore anonymous types.
     if (STy->isLiteral())
       continue;
-    
+
     if (STy->getName().empty())
       NumberedTypes[STy] = NextNumber++;
     else
       *NextToUse++ = STy;
   }
-    
+
   NamedTypes.erase(NextToUse, NamedTypes.end());
 }
 
@@ -220,13 +220,13 @@ void TypePrinting::print(Type *Ty, raw_ostream &OS) {
   }
   case Type::StructTyID: {
     StructType *STy = cast<StructType>(Ty);
-    
+
     if (STy->isLiteral())
       return printStructBody(STy, OS);
 
     if (!STy->getName().empty())
       return PrintLLVMName(OS, STy->getName(), LocalPrefix);
-    
+
     DenseMap<StructType*, unsigned>::iterator I = NumberedTypes.find(STy);
     if (I != NumberedTypes.end())
       OS << '%' << I->second;
@@ -267,10 +267,10 @@ void TypePrinting::printStructBody(StructType *STy, raw_ostream &OS) {
     OS << "opaque";
     return;
   }
-  
+
   if (STy->isPacked())
     OS << '<';
-  
+
   if (STy->getNumElements() == 0) {
     OS << "{}";
   } else {
@@ -281,7 +281,7 @@ void TypePrinting::printStructBody(StructType *STy, raw_ostream &OS) {
       OS << ", ";
       print(*I, OS);
     }
-  
+
     OS << " }";
   }
   if (STy->isPacked())
@@ -419,7 +419,7 @@ static SlotTracker *createSlotTracker(const Value *V) {
 // Module level constructor. Causes the contents of the Module (sans functions)
 // to be added to the slot table.
 SlotTracker::SlotTracker(const Module *M)
-  : TheModule(M), TheFunction(0), FunctionProcessed(false), 
+  : TheModule(M), TheFunction(0), FunctionProcessed(false),
     mNext(0), fNext(0),  mdnNext(0) {
 }
 
@@ -490,12 +490,12 @@ void SlotTracker::processFunction() {
        E = TheFunction->end(); BB != E; ++BB) {
     if (!BB->hasName())
       CreateFunctionSlot(BB);
-    
+
     for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I != E;
          ++I) {
       if (!I->getType()->isVoidTy() && !I->hasName())
         CreateFunctionSlot(I);
-      
+
       // Intrinsics can directly use metadata.  We allow direct calls to any
       // llvm.foo function here, because the target may not be linked into the
       // optimizer.
@@ -809,7 +809,7 @@ static void WriteConstantInternal(raw_ostream &Out, const Constant *CV,
     Out << "zeroinitializer";
     return;
   }
-  
+
   if (const BlockAddress *BA = dyn_cast<BlockAddress>(CV)) {
     Out << "blockaddress(";
     WriteAsOperandInternal(Out, BA->getFunction(), &TypePrinter, Machine,
@@ -956,13 +956,13 @@ static void WriteMDNodeBodyInternal(raw_ostream &Out, const MDNode *Node,
     else {
       TypePrinter->print(V->getType(), Out);
       Out << ' ';
-      WriteAsOperandInternal(Out, Node->getOperand(mi), 
+      WriteAsOperandInternal(Out, Node->getOperand(mi),
                              TypePrinter, Machine, Context);
     }
     if (mi + 1 != me)
       Out << ", ";
   }
-  
+
   Out << "}";
 }
 
@@ -1007,7 +1007,7 @@ static void WriteAsOperandInternal(raw_ostream &Out, const Value *V,
       WriteMDNodeBodyInternal(Out, N, TypePrinter, Machine, Context);
       return;
     }
-  
+
     if (!Machine) {
       if (N->isFunctionLocal())
         Machine = new SlotTracker(N->getFunction());
@@ -1044,7 +1044,7 @@ static void WriteAsOperandInternal(raw_ostream &Out, const Value *V,
       Prefix = '@';
     } else {
       Slot = Machine->getLocalSlot(V);
-      
+
       // If the local value didn't succeed, then we may be referring to a value
       // from a different function.  Translate it, as this can happen when using
       // address of blocks.
@@ -1107,7 +1107,7 @@ class AssemblyWriter {
   const Module *TheModule;
   TypePrinting TypePrinter;
   AssemblyAnnotationWriter *AnnotationWriter;
-  
+
 public:
   inline AssemblyWriter(formatted_raw_ostream &o, SlotTracker &Mac,
                         const Module *M,
@@ -1119,7 +1119,7 @@ public:
 
   void printMDNodeBody(const MDNode *MD);
   void printNamedMDNode(const NamedMDNode *NMD);
-  
+
   void printModule(const Module *M);
 
   void writeOperand(const Value *Op, bool PrintType);
@@ -1265,7 +1265,7 @@ void AssemblyWriter::printModule(const Module *M) {
 
   // Output named metadata.
   if (!M->named_metadata_empty()) Out << '\n';
-  
+
   for (Module::const_named_metadata_iterator I = M->named_metadata_begin(),
        E = M->named_metadata_end(); I != E; ++I)
     printNamedMDNode(I);
@@ -1418,29 +1418,29 @@ void AssemblyWriter::printTypeIdentities() {
   if (TypePrinter.NumberedTypes.empty() &&
       TypePrinter.NamedTypes.empty())
     return;
-  
+
   Out << '\n';
-  
+
   // We know all the numbers that each type is used and we know that it is a
   // dense assignment.  Convert the map to an index table.
   std::vector<StructType*> NumberedTypes(TypePrinter.NumberedTypes.size());
-  for (DenseMap<StructType*, unsigned>::iterator I = 
+  for (DenseMap<StructType*, unsigned>::iterator I =
        TypePrinter.NumberedTypes.begin(), E = TypePrinter.NumberedTypes.end();
        I != E; ++I) {
     assert(I->second < NumberedTypes.size() && "Didn't get a dense numbering?");
     NumberedTypes[I->second] = I->first;
   }
-           
+
   // Emit all numbered types.
   for (unsigned i = 0, e = NumberedTypes.size(); i != e; ++i) {
     Out << '%' << i << " = type ";
-    
+
     // Make sure we print out at least one level of the type structure, so
     // that we do not get %2 = type %2
     TypePrinter.printStructBody(NumberedTypes[i], Out);
     Out << '\n';
   }
-  
+
   for (unsigned i = 0, e = TypePrinter.NamedTypes.size(); i != e; ++i) {
     PrintLLVMName(Out, TypePrinter.NamedTypes[i]->getName(), LocalPrefix);
     Out << " = type ";
@@ -1658,7 +1658,7 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     else
       Out << '%' << SlotNum << " = ";
   }
-  
+
   if (isa<CallInst>(I) && cast<CallInst>(I).isTailCall())
     Out << "tail ";
 
@@ -1723,7 +1723,7 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     Out << ' ';
     writeOperand(Operand, true);
     Out << ", [";
-    
+
     for (unsigned i = 1, e = I.getNumOperands(); i != e; ++i) {
       if (i != 1)
         Out << ", ";
@@ -1989,7 +1989,7 @@ static void WriteMDNodeComment(const MDNode *Node,
   APInt Tag = Val & ~APInt(Val.getBitWidth(), LLVMDebugVersionMask);
   if (Val.ult(LLVMDebugVersion))
     return;
-  
+
   Out.PadToColumn(50);
   if (Tag == dwarf::DW_TAG_user_base)
     Out << "; [ DW_TAG_user_base ]";
@@ -2005,7 +2005,7 @@ void AssemblyWriter::writeAllMDNodes() {
   for (SlotTracker::mdn_iterator I = Machine.mdn_begin(), E = Machine.mdn_end();
        I != E; ++I)
     Nodes[I->second] = cast<MDNode>(I->first);
-  
+
   for (unsigned i = 0, e = Nodes.size(); i != e; ++i) {
     Out << '!' << i << " = metadata ";
     printMDNodeBody(Nodes[i]);
@@ -2043,7 +2043,7 @@ void Type::print(raw_ostream &OS) const {
   }
   TypePrinting TP;
   TP.print(const_cast<Type*>(this), OS);
-  
+
   // If the type is a named struct type, print the body as well.
   if (StructType *STy = dyn_cast<StructType>(const_cast<Type*>(this)))
     if (!STy->isLiteral()) {
