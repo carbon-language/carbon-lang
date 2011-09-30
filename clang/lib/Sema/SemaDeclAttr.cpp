@@ -3250,7 +3250,9 @@ static void handleObjCReturnsInnerPointerAttr(Sema &S, Decl *D,
 
   // Check that the method returns a normal pointer.
   QualType resultType = method->getResultType();
-  if (!resultType->isPointerType() || resultType->isObjCRetainableType()) {
+    
+  if (!resultType->isReferenceType() &&
+      (!resultType->isPointerType() || resultType->isObjCRetainableType())) {
     S.Diag(method->getLocStart(), diag::warn_ns_attribute_wrong_return_type)
       << SourceRange(loc)
       << attr.getName() << /*method*/ 1 << /*non-retainable pointer*/ 2;
