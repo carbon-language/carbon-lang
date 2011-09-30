@@ -57,6 +57,8 @@ OptionGroupUUID::SetOptionValue (CommandInterpreter &interpreter,
     {
         case 'u':
             error = m_uuid.SetValueFromCString (option_arg);
+            if (error.Success())
+                m_uuid.SetOptionWasSet();
             break;
 
         default:
