@@ -137,13 +137,31 @@ class ARMConstantPoolConstant : public ARMConstantPoolValue {
                           unsigned char PCAdj,
                           ARMCP::ARMCPModifier Modifier,
                           bool AddCurrentAddress);
+  ARMConstantPoolConstant(Type *Ty, const Constant *C,
+                          unsigned ID,
+                          ARMCP::ARMCPKind Kind,
+                          unsigned char PCAdj,
+                          ARMCP::ARMCPModifier Modifier,
+                          bool AddCurrentAddress);
+
 public:
   static ARMConstantPoolConstant *Create(const Constant *C, unsigned ID);
+  static ARMConstantPoolConstant *Create(const GlobalValue *GV,
+                                         ARMCP::ARMCPModifier Modifier);
   static ARMConstantPoolConstant *Create(const Constant *C, unsigned ID,
                                          ARMCP::ARMCPKind Kind,
                                          unsigned char PCAdj);
+  static ARMConstantPoolConstant *Create(const Constant *C, unsigned ID,
+                                         ARMCP::ARMCPKind Kind,
+                                         unsigned char PCAdj,
+                                         ARMCP::ARMCPModifier Modifier,
+                                         bool AddCurrentAddress);
 
   const GlobalValue *getGV() const;
+  const BlockAddress *getBlockAddress() const;
+
+  virtual int getExistingMachineCPValue(MachineConstantPool *CP,
+                                        unsigned Alignment);
 
   /// hasSameValue - Return true if this ARM constpool value can share the same
   /// constantpool entry as another ARM constpool value.

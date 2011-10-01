@@ -31,8 +31,9 @@ ARMConstantPoolValue::ARMConstantPoolValue(Type *Ty, unsigned id,
                                            unsigned char PCAdj,
                                            ARMCP::ARMCPModifier modifier,
                                            bool addCurrentAddress)
-  : MachineConstantPoolValue(Ty), LabelId(id), Kind(kind), PCAdjust(PCAdj),
-    Modifier(modifier), AddCurrentAddress(addCurrentAddress) {}
+  : MachineConstantPoolValue(Ty), S(NULL), LabelId(id), Kind(kind),
+    PCAdjust(PCAdj), Modifier(modifier),
+    AddCurrentAddress(addCurrentAddress) {}
 
 ARMConstantPoolValue::ARMConstantPoolValue(const Constant *cval, unsigned id,
                                            ARMCP::ARMCPKind K,
@@ -176,6 +177,16 @@ void ARMConstantPoolValue::print(raw_ostream &O) const {
 // ARMConstantPoolConstant
 //===----------------------------------------------------------------------===//
 
+ARMConstantPoolConstant::ARMConstantPoolConstant(Type *Ty,
+                                                 const Constant *C,
+                                                 unsigned ID,
+                                                 ARMCP::ARMCPKind Kind,
+                                                 unsigned char PCAdj,
+                                                 ARMCP::ARMCPModifier Modifier,
+                                                 bool AddCurrentAddress)
+  : ARMConstantPoolValue(Ty, ID, Kind, PCAdj, Modifier, AddCurrentAddress),
+    CVal(C) {}
+
 ARMConstantPoolConstant::ARMConstantPoolConstant(const Constant *C,
                                                  unsigned ID,
                                                  ARMCP::ARMCPKind Kind,
@@ -193,21 +204,64 @@ ARMConstantPoolConstant::Create(const Constant *C, unsigned ID) {
 }
 
 ARMConstantPoolConstant *
+ARMConstantPoolConstant::Create(const GlobalValue *GV,
+                                ARMCP::ARMCPModifier Modifier) {
+  return new ARMConstantPoolConstant((Type*)Type::getInt32Ty(GV->getContext()),
+                                     GV, 0, ARMCP::CPValue, 0,
+                                     Modifier, false);
+}
+
+ARMConstantPoolConstant *
 ARMConstantPoolConstant::Create(const Constant *C, unsigned ID,
                                 ARMCP::ARMCPKind Kind, unsigned char PCAdj) {
   return new ARMConstantPoolConstant(C, ID, Kind, PCAdj,
                                      ARMCP::no_modifier, false);
 }
 
+ARMConstantPoolConstant *
+ARMConstantPoolConstant::Create(const Constant *C, unsigned ID,
+                                ARMCP::ARMCPKind Kind, unsigned char PCAdj,
+                                ARMCP::ARMCPModifier Modifier,
+                                bool AddCurrentAddress) {
+  return new ARMConstantPoolConstant(C, ID, Kind, PCAdj, Modifier,
+                                     AddCurrentAddress);
+}
+
 const GlobalValue *ARMConstantPoolConstant::getGV() const {
-  return dyn_cast<GlobalValue>(CVal);
+  return dyn_cast_or_null<GlobalValue>(CVal);
+}
+
+const BlockAddress *ARMConstantPoolConstant::getBlockAddress() const {
+  return dyn_cast_or_null<BlockAddress>(CVal);
+}
+
+int ARMConstantPoolConstant::getExistingMachineCPValue(MachineConstantPool *CP,
+                                                       unsigned Alignment) {
+  unsigned AlignMask = Alignment - 1;
+  const std::vector<MachineConstantPoolEntry> Constants = CP->getConstants();
+  for (unsigned i = 0, e = Constants.size(); i != e; ++i) {
+    if (Constants[i].isMachineConstantPoolEntry() &&
+        (Constants[i].getAlignment() & AlignMask) == 0) {
+      ARMConstantPoolValue *CPV =
+        (ARMConstantPoolValue *)Constants[i].Val.MachineCPVal;
+      ARMConstantPoolConstant *APC = dyn_cast<ARMConstantPoolConstant>(CPV);
+      if (!APC) continue;
+
+      if (APC->getGV() == this->CVal &&
+          APC->getLabelId() == this->getLabelId() &&
+          APC->getPCAdjustment() == this->getPCAdjustment() &&
+          CPV_streq(APC->getSymbol(), this->getSymbol()) &&
+          APC->getModifier() == this->getModifier())
+        return i;
+    }
+  }
+
+  return -1;
 }
 
 bool ARMConstantPoolConstant::hasSameValue(ARMConstantPoolValue *ACPV) {
   const ARMConstantPoolConstant *ACPC = dyn_cast<ARMConstantPoolConstant>(ACPV);
-
-  return (ACPC ? ACPC->CVal == CVal : true) &&
-    ARMConstantPoolValue::hasSameValue(ACPV);
+  return ACPC && ACPC->CVal == CVal && ARMConstantPoolValue::hasSameValue(ACPV);
 }
 
 void ARMConstantPoolConstant::addSelectionDAGCSEId(FoldingSetNodeID &ID) {
