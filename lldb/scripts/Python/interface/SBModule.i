@@ -48,7 +48,7 @@ And to iterate the symbols within a SBSection, use symbol_in_section_iter(),
             print INDENT2 + repr(sym)
             print INDENT2 + 'symbol type: %s' % symbol_type_to_str(sym.GetType())
 
-might produce this following output:
+produces this following output:
 
     [0x0000000100001780-0x0000000100001d5c) a.out.__TEXT.__text
         id = {0x00000004}, name = 'mask_access(MaskAction, unsigned int)', range = [0x00000001000017c0-0x0000000100001870)

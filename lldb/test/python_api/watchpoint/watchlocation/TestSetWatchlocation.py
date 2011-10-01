@@ -1,5 +1,5 @@
 """
-Use lldb Python SBFrame API to create a watchpoint for read_write of 'globl' var.
+Use lldb Python SBFrame.WatchLocation() API to create a watchpoint for write of '*g_char_ptr'.
 """
 
 import os, time
@@ -8,33 +8,35 @@ import unittest2
 import lldb, lldbutil
 from lldbtest import *
 
-class SetWatchpointAPITestCase(TestBase):
+class SetWatchlocationAPITestCase(TestBase):
 
-    mydir = os.path.join("python_api", "watchpoint")
+    mydir = os.path.join("python_api", "watchpoint", "watchlocation")
 
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
         # Our simple source filename.
-        self.source = 'main.c'
+        self.source = 'main.cpp'
         # Find the line number to break inside main().
         self.line = line_number(self.source, '// Set break point at this line.')
+        # This is for verifying that watch location works.
+        self.violating_func = "do_bad_thing_with_location";
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
     def test_watch_val_with_dsym(self):
-        """Exercise SBFrame.WatchValue() API to set a watchpoint."""
+        """Exercise SBFrame.WatchLocation() API to set a watchpoint."""
         self.buildDsym()
-        self.do_set_watchpoint()
+        self.do_set_watchlocation()
 
     @python_api_test
     def test_watch_val_with_dwarf(self):
-        """Exercise SBFrame.WatchValue() API to set a watchpoint."""
+        """Exercise SBFrame.WatchLocation() API to set a watchpoint."""
         self.buildDwarf()
-        self.do_set_watchpoint()
+        self.do_set_watchlocation()
 
-    def do_set_watchpoint(self):
-        """Use SBFrame.WatchValue() to set a watchpoint and verify that the program stops later due to the watchpoint."""
+    def do_set_watchlocation(self):
+        """Use SBFrame.WatchLocation() to set a watchpoint and verify that the program stops later due to the watchpoint."""
         exe = os.path.join(os.getcwd(), "a.out")
 
         # Create a target by the debugger.
@@ -57,10 +59,11 @@ class SetWatchpointAPITestCase(TestBase):
         thread = lldbutil.get_stopped_thread(process, lldb.eStopReasonBreakpoint)
         frame0 = thread.GetFrameAtIndex(0)
 
-        value = frame0.WatchValue('global',
-                                  lldb.eValueTypeVariableGlobal,
-                                  lldb.LLDB_WATCH_TYPE_READ|lldb.LLDB_WATCH_TYPE_WRITE)
-        self.assertTrue(value, "Successfully found the variable and set a watchpoint")
+        value = frame0.WatchLocation('g_char_ptr',
+                                     lldb.eValueTypeVariableGlobal,
+                                     lldb.LLDB_WATCH_TYPE_WRITE,
+                                     1)
+        self.assertTrue(value, "Successfully found the location and set a watchpoint")
         self.DebugSBValue(value)
 
         # Continue.  Expect the program to stop due to the variable being written to.
@@ -73,21 +76,10 @@ class SetWatchpointAPITestCase(TestBase):
         self.assertTrue(thread, "The thread stopped due to watchpoint")
         self.DebugSBValue(value)
 
-        # Continue.  Expect the program to stop due to the variable being read from.
-        process.Continue()
+        self.expect(lldbutil.print_stacktrace(thread, string_buffer=True), exe=False,
+            substrs = [self.violating_func])
 
-        if (self.TraceOn()):
-            lldbutil.print_stacktraces(process)
-
-        thread = lldbutil.get_stopped_thread(process, lldb.eStopReasonWatchpoint)
-        self.assertTrue(thread, "The thread stopped due to watchpoint")
-        self.DebugSBValue(value)
-
-        # Continue the process.  We don't expect the program to be stopped again.
-        process.Continue()
-
-        # At this point, the inferior process should have exited.
-        self.assertTrue(process.GetState() == lldb.eStateExited, PROCESS_EXITED)
+        # This finishes our test.
 
 
 if __name__ == '__main__':

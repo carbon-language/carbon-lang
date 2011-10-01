@@ -77,7 +77,7 @@ int main (int argc, char const *argv[])
             ++total;
         t = t->next;
     }
-    printf('We have a total number of %d tasks\n', total);
+    printf('We have a total number of %d tasks\\n', total);
 
     // This corresponds to an empty task list.
     Task *empty_task_head = new Task(-1, NULL);
