@@ -88,7 +88,7 @@ public:
   bool isExtSymbol() const { return Kind == ARMCP::CPExtSymbol; }
   bool isBlockAddress() const { return Kind == ARMCP::CPBlockAddress; }
   bool isLSDA() const { return Kind == ARMCP::CPLSDA; }
-  bool isMachineBasicBlock() { return Kind == ARMCP::CPMachineBasicBlock; }
+  bool isMachineBasicBlock() const{ return Kind == ARMCP::CPMachineBasicBlock; }
 
   virtual unsigned getRelocationInfo() const { return 2; }
 
@@ -195,6 +195,38 @@ public:
     return ACPV->isExtSymbol();
   }
   static bool classof(const ARMConstantPoolSymbol *) { return true; }
+};
+
+/// ARMConstantPoolMBB - ARM-specific constantpool value of a machine basic
+/// block.
+class ARMConstantPoolMBB : public ARMConstantPoolValue {
+  MachineBasicBlock *MBB;       // Machine basic block.
+
+  ARMConstantPoolMBB(LLVMContext &C, MachineBasicBlock *mbb, unsigned id,
+                     unsigned char PCAdj, ARMCP::ARMCPModifier Modifier,
+                     bool AddCurrentAddress);
+
+public:
+  static ARMConstantPoolMBB *Create(LLVMContext &C, MachineBasicBlock *mbb,
+                                    unsigned ID, unsigned char PCAdj);
+
+  const MachineBasicBlock *getMBB() const { return MBB; }
+
+  virtual int getExistingMachineCPValue(MachineConstantPool *CP,
+                                        unsigned Alignment);
+
+  virtual void addSelectionDAGCSEId(FoldingSetNodeID &ID);
+
+  /// hasSameValue - Return true if this ARM constpool value can share the same
+  /// constantpool entry as another ARM constpool value.
+  virtual bool hasSameValue(ARMConstantPoolValue *ACPV);
+
+  virtual void print(raw_ostream &O) const;
+
+  static bool classof(const ARMConstantPoolValue *ACPV) {
+    return ACPV->isMachineBasicBlock();
+  }
+  static bool classof(const ARMConstantPoolMBB *) { return true; }
 };
 
 } // End llvm namespace

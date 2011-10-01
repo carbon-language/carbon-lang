@@ -299,3 +299,60 @@ void ARMConstantPoolSymbol::print(raw_ostream &O) const {
   O << S;
   ARMConstantPoolValue::print(O);
 }
+
+//===----------------------------------------------------------------------===//
+// ARMConstantPoolMBB
+//===----------------------------------------------------------------------===//
+
+ARMConstantPoolMBB::ARMConstantPoolMBB(LLVMContext &C, MachineBasicBlock *mbb,
+                                       unsigned id, unsigned char PCAdj,
+                                       ARMCP::ARMCPModifier Modifier,
+                                       bool AddCurrentAddress)
+  : ARMConstantPoolValue(C, mbb, id, ARMCP::CPMachineBasicBlock, PCAdj,
+                         Modifier, AddCurrentAddress),
+    MBB(mbb) {}
+
+ARMConstantPoolMBB *ARMConstantPoolMBB::Create(LLVMContext &C,
+                                               MachineBasicBlock *mbb,
+                                               unsigned ID,
+                                               unsigned char PCAdj) {
+  return new ARMConstantPoolMBB(C, mbb, ID, PCAdj, ARMCP::no_modifier, false);
+}
+
+int ARMConstantPoolMBB::getExistingMachineCPValue(MachineConstantPool *CP,
+                                                  unsigned Alignment) {
+  unsigned AlignMask = Alignment - 1;
+  const std::vector<MachineConstantPoolEntry> Constants = CP->getConstants();
+  for (unsigned i = 0, e = Constants.size(); i != e; ++i) {
+    if (Constants[i].isMachineConstantPoolEntry() &&
+        (Constants[i].getAlignment() & AlignMask) == 0) {
+      ARMConstantPoolValue *CPV =
+        (ARMConstantPoolValue *)Constants[i].Val.MachineCPVal;
+      ARMConstantPoolMBB *APMBB = dyn_cast<ARMConstantPoolMBB>(CPV);
+      if (!APMBB) continue;
+
+      if (APMBB->getLabelId() == this->getLabelId() &&
+          APMBB->getPCAdjustment() == this->getPCAdjustment() &&
+          APMBB->getMBB() == this->getMBB() &&
+          APMBB->getModifier() == this->getModifier())
+        return i;
+    }
+  }
+
+  return -1;
+}
+
+bool ARMConstantPoolMBB::hasSameValue(ARMConstantPoolValue *ACPV) {
+  const ARMConstantPoolMBB *ACPMBB = dyn_cast<ARMConstantPoolMBB>(ACPV);
+  return ACPMBB && ACPMBB->MBB == MBB &&
+    ARMConstantPoolValue::hasSameValue(ACPV);
+}
+
+void ARMConstantPoolMBB::addSelectionDAGCSEId(FoldingSetNodeID &ID) {
+  ID.AddPointer(MBB);
+  ARMConstantPoolValue::addSelectionDAGCSEId(ID);
+}
+
+void ARMConstantPoolMBB::print(raw_ostream &O) const {
+  ARMConstantPoolValue::print(O);
+}
