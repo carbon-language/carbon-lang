@@ -304,4 +304,14 @@ void test_smartpointer_3() {
   foo.noAdopt(x);
 }
 
+extern CFStringRef ElectronMicroscopyEngage(void);
+void test_microscopy() {
+  NSString *token = (NSString*) ElectronMicroscopyEngage();
+  [token release]; // expected-warning {{object that is not owned}}
+}
 
+extern CFStringRef Scopy(void);
+void test_Scopy() {
+  NSString *token = (NSString*) Scopy();
+  [token release]; // expected-warning {{object that is not owned}}
+}
