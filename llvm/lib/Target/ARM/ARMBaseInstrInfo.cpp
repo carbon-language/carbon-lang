@@ -1058,8 +1058,9 @@ static unsigned duplicateCPV(MachineFunction &MF, unsigned &CPI) {
       Create(cast<ARMConstantPoolConstant>(ACPV)->getGV(), PCLabelId,
              ARMCP::CPValue, 4);
   else if (ACPV->isExtSymbol())
-    NewCPV = new ARMConstantPoolValue(MF.getFunction()->getContext(),
-                                      ACPV->getSymbol(), PCLabelId, 4);
+    NewCPV = ARMConstantPoolSymbol::
+      Create(MF.getFunction()->getContext(),
+             cast<ARMConstantPoolSymbol>(ACPV)->getSymbol(), PCLabelId, 4);
   else if (ACPV->isBlockAddress())
     NewCPV = ARMConstantPoolConstant::
       Create(cast<ARMConstantPoolConstant>(ACPV)->getBlockAddress(), PCLabelId,

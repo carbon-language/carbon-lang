@@ -41,7 +41,7 @@ ARMConstantPoolValue::ARMConstantPoolValue(LLVMContext &C, unsigned id,
                                            ARMCP::ARMCPModifier modifier,
                                            bool addCurrentAddress)
   : MachineConstantPoolValue((Type*)Type::getInt32Ty(C)),
-    LabelId(id), Kind(kind), PCAdjust(PCAdj), Modifier(modifier),
+    S(NULL), LabelId(id), Kind(kind), PCAdjust(PCAdj), Modifier(modifier),
     AddCurrentAddress(addCurrentAddress) {}
 
 ARMConstantPoolValue::ARMConstantPoolValue(LLVMContext &C,
@@ -231,7 +231,6 @@ int ARMConstantPoolConstant::getExistingMachineCPValue(MachineConstantPool *CP,
       if (APC->getGV() == this->CVal &&
           APC->getLabelId() == this->getLabelId() &&
           APC->getPCAdjustment() == this->getPCAdjustment() &&
-          CPV_streq(APC->getSymbol(), this->getSymbol()) &&
           APC->getModifier() == this->getModifier())
         return i;
     }
@@ -270,6 +269,12 @@ ARMConstantPoolSymbol::ARMConstantPoolSymbol(LLVMContext &C, const char *s,
 
 ARMConstantPoolSymbol::~ARMConstantPoolSymbol() {
   free((void*)S);
+}
+
+ARMConstantPoolSymbol *
+ARMConstantPoolSymbol::Create(LLVMContext &C, const char *s,
+                              unsigned ID, unsigned char PCAdj) {
+  return new ARMConstantPoolSymbol(C, s, ID, PCAdj, ARMCP::no_modifier, false);
 }
 
 ARMConstantPoolSymbol *

@@ -860,7 +860,8 @@ EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV) {
     MCSym = MBB->getSymbol();
   } else {
     assert(ACPV->isExtSymbol() && "unrecognized constant pool value");
-    MCSym = GetExternalSymbolSymbol(ACPV->getSymbol());
+    const char *Sym = cast<ARMConstantPoolSymbol>(ACPV)->getSymbol();
+    MCSym = GetExternalSymbolSymbol(Sym);
   }
 
   // Create an MCSymbol for the reference.

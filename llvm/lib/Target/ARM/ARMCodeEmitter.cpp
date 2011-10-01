@@ -643,8 +643,9 @@ void ARMCodeEmitter::emitConstPoolInstruction(const MachineInstr &MI) {
                         isa<Function>(GV),
                         Subtarget->GVIsIndirectSymbol(GV, RelocM),
                         (intptr_t)ACPV);
-     } else  {
-      emitExternalSymbolAddress(ACPV->getSymbol(), ARM::reloc_arm_absolute);
+    } else  {
+      const char *Sym = cast<ARMConstantPoolSymbol>(ACPV)->getSymbol();
+      emitExternalSymbolAddress(Sym, ARM::reloc_arm_absolute);
     }
     emitWordLE(0);
   } else {

@@ -1425,8 +1425,9 @@ ARMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
 
       // Create a constant pool entry for the callee address
       unsigned ARMPCLabelIndex = AFI->createPICLabelUId();
-      ARMConstantPoolValue *CPV = new ARMConstantPoolValue(*DAG.getContext(),
-                                                       Sym, ARMPCLabelIndex, 0);
+      ARMConstantPoolValue *CPV =
+        ARMConstantPoolSymbol::Create(*DAG.getContext(), Sym,
+                                      ARMPCLabelIndex, 0);
       // Get the address of the callee into a register
       SDValue CPAddr = DAG.getTargetConstantPool(CPV, getPointerTy(), 4);
       CPAddr = DAG.getNode(ARMISD::Wrapper, dl, MVT::i32, CPAddr);
@@ -1475,8 +1476,9 @@ ARMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     const char *Sym = S->getSymbol();
     if (isARMFunc && Subtarget->isThumb1Only() && !Subtarget->hasV5TOps()) {
       unsigned ARMPCLabelIndex = AFI->createPICLabelUId();
-      ARMConstantPoolValue *CPV = new ARMConstantPoolValue(*DAG.getContext(),
-                                                       Sym, ARMPCLabelIndex, 4);
+      ARMConstantPoolValue *CPV =
+        ARMConstantPoolSymbol::Create(*DAG.getContext(), Sym,
+                                      ARMPCLabelIndex, 4);
       SDValue CPAddr = DAG.getTargetConstantPool(CPV, getPointerTy(), 4);
       CPAddr = DAG.getNode(ARMISD::Wrapper, dl, MVT::i32, CPAddr);
       Callee = DAG.getLoad(getPointerTy(), dl,
@@ -2176,9 +2178,9 @@ SDValue ARMTargetLowering::LowerGLOBAL_OFFSET_TABLE(SDValue Op,
   EVT PtrVT = getPointerTy();
   DebugLoc dl = Op.getDebugLoc();
   unsigned PCAdj = Subtarget->isThumb() ? 4 : 8;
-  ARMConstantPoolValue *CPV = new ARMConstantPoolValue(*DAG.getContext(),
-                                                       "_GLOBAL_OFFSET_TABLE_",
-                                                       ARMPCLabelIndex, PCAdj);
+  ARMConstantPoolValue *CPV =
+    ARMConstantPoolSymbol::Create(*DAG.getContext(), "_GLOBAL_OFFSET_TABLE_",
+                                  ARMPCLabelIndex, PCAdj);
   SDValue CPAddr = DAG.getTargetConstantPool(CPV, PtrVT, 4);
   CPAddr = DAG.getNode(ARMISD::Wrapper, dl, MVT::i32, CPAddr);
   SDValue Result = DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), CPAddr,

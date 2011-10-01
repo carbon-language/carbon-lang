@@ -182,6 +182,9 @@ public:
   ~ARMConstantPoolSymbol();
 
   static ARMConstantPoolSymbol *Create(LLVMContext &C, const char *s,
+                                       unsigned ID, unsigned char PCAdj);
+
+  static ARMConstantPoolSymbol *Create(LLVMContext &C, const char *s,
                                        unsigned ID, unsigned char PCAdj,
                                        ARMCP::ARMCPModifier Modifier,
                                        bool AddCurrentAddress);
