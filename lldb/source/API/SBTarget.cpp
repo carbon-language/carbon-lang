@@ -499,6 +499,12 @@ SBTarget::get() const
     return m_opaque_sp.get();
 }
 
+const lldb::TargetSP &
+SBTarget::get_sp () const
+{
+    return m_opaque_sp;
+}
+
 void
 SBTarget::reset (const lldb::TargetSP& target_sp)
 {

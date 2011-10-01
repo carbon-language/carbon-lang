@@ -246,8 +246,8 @@ private:
 
     friend class SBInputReader;
     friend class SBProcess;
+    friend class SBSourceManager;
     friend class SBTarget;
-    friend class SBSourceManager_impl;
     
     lldb::SBTarget
     FindTargetWithLLDBProcess (const lldb::ProcessSP &processSP);
@@ -261,6 +261,8 @@ private:
     lldb_private::Debugger &
     ref () const;
 
+    const lldb::DebuggerSP &
+    get_sp () const;
 #endif
     
     lldb::DebuggerSP m_opaque_sp;

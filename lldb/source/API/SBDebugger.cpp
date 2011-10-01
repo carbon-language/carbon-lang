@@ -825,6 +825,11 @@ SBDebugger::ref () const
     return *m_opaque_sp;
 }
 
+const lldb::DebuggerSP &
+SBDebugger::get_sp () const
+{
+    return m_opaque_sp;
+}
 
 SBDebugger
 SBDebugger::FindDebuggerWithID (int id)

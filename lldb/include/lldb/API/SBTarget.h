@@ -502,11 +502,11 @@ protected:
     friend class SBDebugger;
     friend class SBFunction;
     friend class SBInstruction;
-    friend class SBProcess;
-    friend class SBSymbol;
     friend class SBModule;
+    friend class SBProcess;
+    friend class SBSourceManager;
+    friend class SBSymbol;
     friend class SBValue;
-    friend class SBSourceManager_impl;
 
     //------------------------------------------------------------------
     // Constructors are private, use static Target::Create function to
@@ -523,6 +523,9 @@ protected:
 
     lldb_private::Target *
     get() const;
+
+    const lldb::TargetSP &
+    get_sp () const;
 
 private:
     //------------------------------------------------------------------

@@ -16,8 +16,6 @@
 
 namespace lldb {
 
-class SBSourceManager_impl;
-
 class SBSourceManager
 {
 public:
@@ -49,7 +47,7 @@ protected:
 
 private:
 
-    std::auto_ptr<SBSourceManager_impl> m_opaque_ap;
+    std::auto_ptr<lldb_private::SourceManagerImpl> m_opaque_ap;
 };
 
 } // namespace lldb

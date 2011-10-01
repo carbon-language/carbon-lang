@@ -131,6 +131,7 @@ class   Section;
 class   SectionImpl;
 class   SectionList;
 class   SourceManager;
+class   SourceManagerImpl;
 class   StackFrame;
 class   StackFrameList;
 class   StackID;

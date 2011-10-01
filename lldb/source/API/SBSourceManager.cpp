@@ -20,76 +20,76 @@
 
 #include "lldb/Target/Target.h"
 
+namespace lldb_private
+{
+    class SourceManagerImpl
+    {
+    public:
+        SourceManagerImpl (const lldb::DebuggerSP &debugger_sp)
+        {
+            m_debugger_sp = debugger_sp;
+        }
+        
+        SourceManagerImpl (const lldb::TargetSP &target_sp)
+        {
+            m_target_sp = target_sp;
+        }
+        
+        SourceManagerImpl (const SourceManagerImpl &rhs)
+        {
+            if (&rhs == this)
+                return;
+            m_debugger_sp = rhs.m_debugger_sp;
+            m_target_sp   = rhs.m_target_sp;
+        }
+        
+        size_t
+        DisplaySourceLinesWithLineNumbers (const lldb_private::FileSpec &file,
+                                           uint32_t line,
+                                           uint32_t context_before,
+                                           uint32_t context_after,
+                                           const char* current_line_cstr,
+                                           lldb_private::Stream *s)
+        {
+            if (file)
+                return 0;
+            
+            if (m_debugger_sp)
+                return m_debugger_sp->GetSourceManager().DisplaySourceLinesWithLineNumbers (file,
+                                                                                            line,
+                                                                                            context_before,
+                                                                                            context_after,
+                                                                                            current_line_cstr,
+                                                                                            s);
+            else if (m_target_sp)
+                return m_target_sp->GetSourceManager().DisplaySourceLinesWithLineNumbers (file,
+                                                                                          line,
+                                                                                          context_before,
+                                                                                          context_after,
+                                                                                          current_line_cstr,
+                                                                                          s);
+            else
+                return 0;
+        }
+        
+    private:
+        lldb::DebuggerSP m_debugger_sp;
+        lldb::TargetSP   m_target_sp;
+        
+    };
+}
+
 using namespace lldb;
 using namespace lldb_private;
 
-class lldb::SBSourceManager_impl
-{
-public:
-    SBSourceManager_impl (const SBDebugger &debugger)
-    {
-        m_debugger_sp = debugger.m_opaque_sp;
-    }
-    
-    SBSourceManager_impl (const SBTarget &target)
-    {
-        m_target_sp = target.m_opaque_sp;
-    }
-    
-    SBSourceManager_impl (const SBSourceManager_impl &rhs)
-    {
-        if (&rhs == this)
-            return;
-        m_debugger_sp = rhs.m_debugger_sp;
-        m_target_sp   = rhs.m_target_sp;
-    }
-
-    size_t
-    DisplaySourceLinesWithLineNumbers
-    (
-        const SBFileSpec &file,
-        uint32_t line,
-        uint32_t context_before,
-        uint32_t context_after,
-        const char* current_line_cstr,
-        SBStream &s
-    )
-    {
-        if (!file.IsValid())
-            return 0;
-            
-        if (m_debugger_sp)
-            return m_debugger_sp->GetSourceManager().DisplaySourceLinesWithLineNumbers (*file,
-                                                                                        line,
-                                                                                        context_before,
-                                                                                        context_after,
-                                                                                        current_line_cstr,
-                                                                                        s.m_opaque_ap.get());
-        else if (m_target_sp)
-            return m_target_sp->GetSourceManager().DisplaySourceLinesWithLineNumbers (*file,
-                                                                                      line,
-                                                                                      context_before,
-                                                                                      context_after,
-                                                                                      current_line_cstr,
-                                                                                      s.m_opaque_ap.get());
-        else
-            return 0;
-    }
-    
-private:
-    lldb::DebuggerSP m_debugger_sp;
-    lldb::TargetSP   m_target_sp;
-    
-};
-
 SBSourceManager::SBSourceManager (const SBDebugger &debugger)
 {
-    m_opaque_ap.reset(new SBSourceManager_impl (debugger));
+    m_opaque_ap.reset(new SourceManagerImpl (debugger.get_sp()));
 }
 
 SBSourceManager::SBSourceManager (const SBTarget &target)
 {
-    m_opaque_ap.reset(new SBSourceManager_impl (target));
+    m_opaque_ap.reset(new SourceManagerImpl (target.get_sp()));
 }
 
 SBSourceManager::SBSourceManager (const SBSourceManager &rhs)
@@ -97,13 +97,13 @@ SBSourceManager::SBSourceManager (const SBSourceManager &rhs)
     if (&rhs == this)
         return;
         
-    m_opaque_ap.reset(new SBSourceManager_impl (*(rhs.m_opaque_ap.get())));
+    m_opaque_ap.reset(new SourceManagerImpl (*(rhs.m_opaque_ap.get())));
 }
 
 const lldb::SBSourceManager &
 SBSourceManager::operator = (const lldb::SBSourceManager &rhs)
 {
-    m_opaque_ap.reset (new SBSourceManager_impl (*(rhs.m_opaque_ap.get())));
+    m_opaque_ap.reset (new SourceManagerImpl (*(rhs.m_opaque_ap.get())));
     return *this;
 }
 
@@ -125,10 +125,10 @@ SBSourceManager::DisplaySourceLinesWithLineNumbers
     if (m_opaque_ap.get() == NULL)
         return 0;
 
-    return m_opaque_ap->DisplaySourceLinesWithLineNumbers (file,
+    return m_opaque_ap->DisplaySourceLinesWithLineNumbers (file.ref(),
                                                            line,
                                                            context_before,
                                                            context_after,
                                                            current_line_cstr,
-                                                           s);
+                                                           s.get());
 }

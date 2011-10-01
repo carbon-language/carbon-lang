@@ -61,6 +61,7 @@ protected:
     friend class SBBlock;
     friend class SBBreakpoint;
     friend class SBBreakpointLocation;
+    friend class SBCommandReturnObject;
     friend class SBCompileUnit;
     friend class SBData;
     friend class SBEvent;
@@ -70,14 +71,13 @@ protected:
     friend class SBInstructionList;
     friend class SBModule;
     friend class SBSection;
-    friend class SBSourceManager_impl;
+    friend class SBSourceManager;
     friend class SBSymbol;
     friend class SBSymbolContext;
     friend class SBTarget;
     friend class SBThread;
     friend class SBValue;
     friend class SBWatchpointLocation;
-    friend class SBCommandReturnObject;
 
 #ifndef SWIG
 
