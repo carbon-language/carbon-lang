@@ -49,7 +49,6 @@ namespace ARMCP {
 /// represent PC-relative displacement between the address of the load
 /// instruction and the constant being loaded, i.e. (&GV-(LPIC+8)).
 class ARMConstantPoolValue : public MachineConstantPoolValue {
-  const MachineBasicBlock *MBB; // MachineBasicBlock being loaded.
   unsigned LabelId;        // Label id of the load.
   ARMCP::ARMCPKind Kind;   // Kind of constant.
   unsigned char PCAdjust;  // Extra adjustment if constantpool is pc-relative.
@@ -66,14 +65,7 @@ protected:
                        unsigned char PCAdj, ARMCP::ARMCPModifier Modifier,
                        bool AddCurrentAddress);
 public:
-  ARMConstantPoolValue(LLVMContext &C, const MachineBasicBlock *mbb,unsigned id,
-                       ARMCP::ARMCPKind Kind = ARMCP::CPValue,
-                       unsigned char PCAdj = 0,
-                       ARMCP::ARMCPModifier Modifier = ARMCP::no_modifier,
-                       bool AddCurrentAddress = false);
   virtual ~ARMConstantPoolValue();
-
-  const MachineBasicBlock *getMBB() const;
 
   ARMCP::ARMCPModifier getModifier() const { return Modifier; }
   const char *getModifierText() const;
@@ -200,14 +192,15 @@ public:
 /// ARMConstantPoolMBB - ARM-specific constantpool value of a machine basic
 /// block.
 class ARMConstantPoolMBB : public ARMConstantPoolValue {
-  MachineBasicBlock *MBB;       // Machine basic block.
+  const MachineBasicBlock *MBB; // Machine basic block.
 
-  ARMConstantPoolMBB(LLVMContext &C, MachineBasicBlock *mbb, unsigned id,
+  ARMConstantPoolMBB(LLVMContext &C, const MachineBasicBlock *mbb, unsigned id,
                      unsigned char PCAdj, ARMCP::ARMCPModifier Modifier,
                      bool AddCurrentAddress);
 
 public:
-  static ARMConstantPoolMBB *Create(LLVMContext &C, MachineBasicBlock *mbb,
+  static ARMConstantPoolMBB *Create(LLVMContext &C,
+                                    const MachineBasicBlock *mbb,
                                     unsigned ID, unsigned char PCAdj);
 
   const MachineBasicBlock *getMBB() const { return MBB; }

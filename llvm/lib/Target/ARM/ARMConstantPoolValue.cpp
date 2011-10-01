@@ -31,7 +31,7 @@ ARMConstantPoolValue::ARMConstantPoolValue(Type *Ty, unsigned id,
                                            unsigned char PCAdj,
                                            ARMCP::ARMCPModifier modifier,
                                            bool addCurrentAddress)
-  : MachineConstantPoolValue(Ty), MBB(NULL), LabelId(id), Kind(kind),
+  : MachineConstantPoolValue(Ty), LabelId(id), Kind(kind),
     PCAdjust(PCAdj), Modifier(modifier),
     AddCurrentAddress(addCurrentAddress) {}
 
@@ -44,22 +44,7 @@ ARMConstantPoolValue::ARMConstantPoolValue(LLVMContext &C, unsigned id,
     LabelId(id), Kind(kind), PCAdjust(PCAdj), Modifier(modifier),
     AddCurrentAddress(addCurrentAddress) {}
 
-ARMConstantPoolValue::ARMConstantPoolValue(LLVMContext &C,
-                                           const MachineBasicBlock *mbb,
-                                           unsigned id,
-                                           ARMCP::ARMCPKind K,
-                                           unsigned char PCAdj,
-                                           ARMCP::ARMCPModifier Modif,
-                                           bool AddCA)
-  : MachineConstantPoolValue((Type*)Type::getInt8PtrTy(C)),
-    MBB(mbb), LabelId(id), Kind(K), PCAdjust(PCAdj),
-    Modifier(Modif), AddCurrentAddress(AddCA) {}
-
 ARMConstantPoolValue::~ARMConstantPoolValue() {}
-
-const MachineBasicBlock *ARMConstantPoolValue::getMBB() const {
-  return MBB;
-}
 
 const char *ARMConstantPoolValue::getModifierText() const {
   switch (Modifier) {
@@ -120,8 +105,6 @@ void ARMConstantPoolValue::dump() const {
 }
 
 void ARMConstantPoolValue::print(raw_ostream &O) const {
-  if (MBB)
-    O << "";
   if (Modifier) O << "(" << getModifierText() << ")";
   if (PCAdjust != 0) {
     O << "-(LPC" << LabelId << "+" << (unsigned)PCAdjust;
@@ -304,16 +287,17 @@ void ARMConstantPoolSymbol::print(raw_ostream &O) const {
 // ARMConstantPoolMBB
 //===----------------------------------------------------------------------===//
 
-ARMConstantPoolMBB::ARMConstantPoolMBB(LLVMContext &C, MachineBasicBlock *mbb,
+ARMConstantPoolMBB::ARMConstantPoolMBB(LLVMContext &C,
+                                       const MachineBasicBlock *mbb,
                                        unsigned id, unsigned char PCAdj,
                                        ARMCP::ARMCPModifier Modifier,
                                        bool AddCurrentAddress)
-  : ARMConstantPoolValue(C, mbb, id, ARMCP::CPMachineBasicBlock, PCAdj,
+  : ARMConstantPoolValue(C, id, ARMCP::CPMachineBasicBlock, PCAdj,
                          Modifier, AddCurrentAddress),
     MBB(mbb) {}
 
 ARMConstantPoolMBB *ARMConstantPoolMBB::Create(LLVMContext &C,
-                                               MachineBasicBlock *mbb,
+                                               const MachineBasicBlock *mbb,
                                                unsigned ID,
                                                unsigned char PCAdj) {
   return new ARMConstantPoolMBB(C, mbb, ID, PCAdj, ARMCP::no_modifier, false);
