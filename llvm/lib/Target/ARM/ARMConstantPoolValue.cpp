@@ -31,7 +31,7 @@ ARMConstantPoolValue::ARMConstantPoolValue(Type *Ty, unsigned id,
                                            unsigned char PCAdj,
                                            ARMCP::ARMCPModifier modifier,
                                            bool addCurrentAddress)
-  : MachineConstantPoolValue(Ty), MBB(NULL), S(NULL), LabelId(id), Kind(kind),
+  : MachineConstantPoolValue(Ty), MBB(NULL), LabelId(id), Kind(kind),
     PCAdjust(PCAdj), Modifier(modifier),
     AddCurrentAddress(addCurrentAddress) {}
 
@@ -41,7 +41,7 @@ ARMConstantPoolValue::ARMConstantPoolValue(LLVMContext &C, unsigned id,
                                            ARMCP::ARMCPModifier modifier,
                                            bool addCurrentAddress)
   : MachineConstantPoolValue((Type*)Type::getInt32Ty(C)),
-    S(NULL), LabelId(id), Kind(kind), PCAdjust(PCAdj), Modifier(modifier),
+    LabelId(id), Kind(kind), PCAdjust(PCAdj), Modifier(modifier),
     AddCurrentAddress(addCurrentAddress) {}
 
 ARMConstantPoolValue::ARMConstantPoolValue(LLVMContext &C,
@@ -52,21 +52,10 @@ ARMConstantPoolValue::ARMConstantPoolValue(LLVMContext &C,
                                            ARMCP::ARMCPModifier Modif,
                                            bool AddCA)
   : MachineConstantPoolValue((Type*)Type::getInt8PtrTy(C)),
-    MBB(mbb), S(NULL), LabelId(id), Kind(K), PCAdjust(PCAdj),
+    MBB(mbb), LabelId(id), Kind(K), PCAdjust(PCAdj),
     Modifier(Modif), AddCurrentAddress(AddCA) {}
 
-ARMConstantPoolValue::ARMConstantPoolValue(LLVMContext &C,
-                                           const char *s, unsigned id,
-                                           unsigned char PCAdj,
-                                           ARMCP::ARMCPModifier Modif,
-                                           bool AddCA)
-  : MachineConstantPoolValue((Type*)Type::getInt32Ty(C)),
-    S(strdup(s)), LabelId(id), Kind(ARMCP::CPExtSymbol),
-    PCAdjust(PCAdj), Modifier(Modif), AddCurrentAddress(AddCA) {}
-
-ARMConstantPoolValue::~ARMConstantPoolValue() {
-  free((void*)S);
-}
+ARMConstantPoolValue::~ARMConstantPoolValue() {}
 
 const MachineBasicBlock *ARMConstantPoolValue::getMBB() const {
   return MBB;
@@ -86,14 +75,6 @@ const char *ARMConstantPoolValue::getModifierText() const {
   }
 }
 
-static bool CPV_streq(const char *S1, const char *S2) {
-  if (S1 == S2)
-    return true;
-  if (S1 && S2 && strcmp(S1, S2) == 0)
-    return true;
-  return false;
-}
-
 int ARMConstantPoolValue::getExistingMachineCPValue(MachineConstantPool *CP,
                                                     unsigned Alignment) {
   unsigned AlignMask = Alignment - 1;
@@ -105,7 +86,6 @@ int ARMConstantPoolValue::getExistingMachineCPValue(MachineConstantPool *CP,
         (ARMConstantPoolValue *)Constants[i].Val.MachineCPVal;
       if (CPV->LabelId == LabelId &&
           CPV->PCAdjust == PCAdjust &&
-          CPV_streq(CPV->S, S) &&
           CPV->Modifier == Modifier)
         return i;
     }
@@ -116,7 +96,6 @@ int ARMConstantPoolValue::getExistingMachineCPValue(MachineConstantPool *CP,
 
 void
 ARMConstantPoolValue::addSelectionDAGCSEId(FoldingSetNodeID &ID) {
-  ID.AddPointer(S);
   ID.AddInteger(LabelId);
   ID.AddInteger(PCAdjust);
 }
@@ -125,7 +104,6 @@ bool
 ARMConstantPoolValue::hasSameValue(ARMConstantPoolValue *ACPV) {
   if (ACPV->Kind == Kind &&
       ACPV->PCAdjust == PCAdjust &&
-      CPV_streq(ACPV->S, S) &&
       ACPV->Modifier == Modifier) {
     if (ACPV->LabelId == LabelId)
       return true;
@@ -144,8 +122,6 @@ void ARMConstantPoolValue::dump() const {
 void ARMConstantPoolValue::print(raw_ostream &O) const {
   if (MBB)
     O << "";
-  else
-    O << S;
   if (Modifier) O << "(" << getModifierText() << ")";
   if (PCAdjust != 0) {
     O << "-(LPC" << LabelId << "+" << (unsigned)PCAdjust;
@@ -284,6 +260,14 @@ ARMConstantPoolSymbol::Create(LLVMContext &C, const char *s,
                               bool AddCurrentAddress) {
   return new ARMConstantPoolSymbol(C, s, ID, PCAdj, Modifier,
                                    AddCurrentAddress);
+}
+
+static bool CPV_streq(const char *S1, const char *S2) {
+  if (S1 == S2)
+    return true;
+  if (S1 && S2 && strcmp(S1, S2) == 0)
+    return true;
+  return false;
 }
 
 int ARMConstantPoolSymbol::getExistingMachineCPValue(MachineConstantPool *CP,

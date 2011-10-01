@@ -50,7 +50,6 @@ namespace ARMCP {
 /// instruction and the constant being loaded, i.e. (&GV-(LPIC+8)).
 class ARMConstantPoolValue : public MachineConstantPoolValue {
   const MachineBasicBlock *MBB; // MachineBasicBlock being loaded.
-  const char *S;           // ExtSymbol being loaded.
   unsigned LabelId;        // Label id of the load.
   ARMCP::ARMCPKind Kind;   // Kind of constant.
   unsigned char PCAdjust;  // Extra adjustment if constantpool is pc-relative.
@@ -72,13 +71,8 @@ public:
                        unsigned char PCAdj = 0,
                        ARMCP::ARMCPModifier Modifier = ARMCP::no_modifier,
                        bool AddCurrentAddress = false);
-  ARMConstantPoolValue(LLVMContext &C, const char *s, unsigned id,
-                       unsigned char PCAdj = 0,
-                       ARMCP::ARMCPModifier Modifier = ARMCP::no_modifier,
-                       bool AddCurrentAddress = false);
   virtual ~ARMConstantPoolValue();
 
-  const char *getSymbol() const { return S; }
   const MachineBasicBlock *getMBB() const;
 
   ARMCP::ARMCPModifier getModifier() const { return Modifier; }
