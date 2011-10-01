@@ -30,7 +30,7 @@ namespace {
 
   class SimpleInliner : public Inliner {
     // Functions that are never inlined
-    SmallPtrSet<const Function*, 16> NeverInline; 
+    SmallPtrSet<const Function*, 16> NeverInline;
     InlineCostAnalyzer CA;
   public:
     SimpleInliner() : Inliner(ID) {
@@ -68,16 +68,16 @@ INITIALIZE_PASS_END(SimpleInliner, "inline",
 
 Pass *llvm::createFunctionInliningPass() { return new SimpleInliner(); }
 
-Pass *llvm::createFunctionInliningPass(int Threshold) { 
+Pass *llvm::createFunctionInliningPass(int Threshold) {
   return new SimpleInliner(Threshold);
 }
 
 // doInitialization - Initializes the vector of functions that have been
 // annotated with the noinline attribute.
 bool SimpleInliner::doInitialization(CallGraph &CG) {
-  
+
   Module &M = CG.getModule();
-  
+
   for (Module::iterator I = M.begin(), E = M.end();
        I != E; ++I)
     if (!I->isDeclaration() && I->hasFnAttr(Attribute::NoInline))
@@ -85,34 +85,34 @@ bool SimpleInliner::doInitialization(CallGraph &CG) {
 
   // Get llvm.noinline
   GlobalVariable *GV = M.getNamedGlobal("llvm.noinline");
-  
+
   if (GV == 0)
     return false;
 
   // Don't crash on invalid code
   if (!GV->hasDefinitiveInitializer())
     return false;
-  
+
   const ConstantArray *InitList = dyn_cast<ConstantArray>(GV->getInitializer());
-  
+
   if (InitList == 0)
     return false;
 
   // Iterate over each element and add to the NeverInline set
   for (unsigned i = 0, e = InitList->getNumOperands(); i != e; ++i) {
-        
+
     // Get Source
     const Constant *Elt = InitList->getOperand(i);
-        
+
     if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(Elt))
-      if (CE->getOpcode() == Instruction::BitCast) 
+      if (CE->getOpcode() == Instruction::BitCast)
         Elt = CE->getOperand(0);
-    
+
     // Insert into set of functions to never inline
     if (const Function *F = dyn_cast<Function>(Elt))
       NeverInline.insert(F);
   }
-  
+
   return false;
 }
 
