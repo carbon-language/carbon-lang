@@ -15,6 +15,7 @@
 #include "llvm/Support/CallSite.h"
 #include "llvm/CallingConv.h"
 #include "llvm/IntrinsicInst.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/ADT/SmallPtrSet.h"
 
 using namespace llvm;
@@ -52,7 +53,8 @@ bool llvm::callIsSmall(const Function *F) {
 
 /// analyzeBasicBlock - Fill in the current structure with information gleaned
 /// from the specified block.
-void CodeMetrics::analyzeBasicBlock(const BasicBlock *BB) {
+void CodeMetrics::analyzeBasicBlock(const BasicBlock *BB,
+                                    const TargetData *TD) {
   ++NumBlocks;
   unsigned NumInstsBeforeThisBB = NumInsts;
   for (BasicBlock::const_iterator II = BB->begin(), E = BB->end();
@@ -104,6 +106,11 @@ void CodeMetrics::analyzeBasicBlock(const BasicBlock *BB) {
       // Noop casts, including ptr <-> int,  don't count.
       if (CI->isLosslessCast() || isa<IntToPtrInst>(CI) ||
           isa<PtrToIntInst>(CI))
+        continue;
+      // trunc to a native type is free (assuming the target has compare and
+      // shift-right of the same width).
+      if (isa<TruncInst>(CI) && TD &&
+          TD->isLegalInteger(TD->getTypeSizeInBits(CI->getType())))
         continue;
       // Result of a cmp instruction is often extended (to be used by other
       // cmp instructions, logical or return instructions). These are usually
@@ -217,7 +224,7 @@ unsigned CodeMetrics::CountCodeReductionForAlloca(Value *V) {
 
 /// analyzeFunction - Fill in the current structure with information gleaned
 /// from the specified function.
-void CodeMetrics::analyzeFunction(Function *F) {
+void CodeMetrics::analyzeFunction(Function *F, const TargetData *TD) {
   // If this function contains a call to setjmp or _setjmp, never inline
   // it.  This is a hack because we depend on the user marking their local
   // variables as volatile if they are live across a setjmp call, and they
@@ -227,13 +234,14 @@ void CodeMetrics::analyzeFunction(Function *F) {
 
   // Look at the size of the callee.
   for (Function::const_iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
-    analyzeBasicBlock(&*BB);
+    analyzeBasicBlock(&*BB, TD);
 }
 
 /// analyzeFunction - Fill in the current structure with information gleaned
 /// from the specified function.
-void InlineCostAnalyzer::FunctionInfo::analyzeFunction(Function *F) {
-  Metrics.analyzeFunction(F);
+void InlineCostAnalyzer::FunctionInfo::analyzeFunction(Function *F,
+                                                       const TargetData *TD) {
+  Metrics.analyzeFunction(F, TD);
 
   // A function with exactly one return has it removed during the inlining
   // process (see InlineFunction), so don't count it.
@@ -275,7 +283,7 @@ int InlineCostAnalyzer::getSpecializationBonus(Function *Callee,
 
   // If we haven't calculated this information yet, do so now.
   if (CalleeFI->Metrics.NumBlocks == 0)
-    CalleeFI->analyzeFunction(Callee);
+    CalleeFI->analyzeFunction(Callee, TD);
 
   unsigned ArgNo = 0;
   unsigned i = 0;
@@ -365,7 +373,7 @@ int InlineCostAnalyzer::getInlineSize(CallSite CS, Function *Callee) {
 
   // If we haven't calculated this information yet, do so now.
   if (CalleeFI->Metrics.NumBlocks == 0)
-    CalleeFI->analyzeFunction(Callee);
+    CalleeFI->analyzeFunction(Callee, TD);
 
   // InlineCost - This value measures how good of an inline candidate this call
   // site is to inline.  A lower inline cost make is more likely for the call to
@@ -418,7 +426,7 @@ int InlineCostAnalyzer::getInlineBonuses(CallSite CS, Function *Callee) {
 
   // If we haven't calculated this information yet, do so now.
   if (CalleeFI->Metrics.NumBlocks == 0)
-    CalleeFI->analyzeFunction(Callee);
+    CalleeFI->analyzeFunction(Callee, TD);
 
   bool isDirectCall = CS.getCalledFunction() == Callee;
   Instruction *TheCall = CS.getInstruction();
@@ -486,7 +494,7 @@ InlineCost InlineCostAnalyzer::getInlineCost(CallSite CS,
 
   // If we haven't calculated this information yet, do so now.
   if (CalleeFI->Metrics.NumBlocks == 0)
-    CalleeFI->analyzeFunction(Callee);
+    CalleeFI->analyzeFunction(Callee, TD);
 
   // If we should never inline this, return a huge cost.
   if (CalleeFI->NeverInline())
@@ -505,7 +513,7 @@ InlineCost InlineCostAnalyzer::getInlineCost(CallSite CS,
 
     // If we haven't calculated this information yet, do so now.
     if (CallerFI.Metrics.NumBlocks == 0) {
-      CallerFI.analyzeFunction(Caller);
+      CallerFI.analyzeFunction(Caller, TD);
 
       // Recompute the CalleeFI pointer, getting Caller could have invalidated
       // it.
@@ -544,7 +552,7 @@ InlineCost InlineCostAnalyzer::getSpecializationCost(Function *Callee,
 
   // If we haven't calculated this information yet, do so now.
   if (CalleeFI->Metrics.NumBlocks == 0)
-    CalleeFI->analyzeFunction(Callee);
+    CalleeFI->analyzeFunction(Callee, TD);
 
   int Cost = 0;
 
@@ -570,7 +578,7 @@ float InlineCostAnalyzer::getInlineFudgeFactor(CallSite CS) {
 
   // If we haven't calculated this information yet, do so now.
   if (CalleeFI.Metrics.NumBlocks == 0)
-    CalleeFI.analyzeFunction(Callee);
+    CalleeFI.analyzeFunction(Callee, TD);
 
   float Factor = 1.0f;
   // Single BB functions are often written to be inlined.

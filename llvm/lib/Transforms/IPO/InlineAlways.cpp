@@ -23,6 +23,7 @@
 #include "llvm/Support/CallSite.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/IPO/InlinerPass.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/ADT/SmallPtrSet.h"
 
 using namespace llvm;
@@ -74,6 +75,8 @@ Pass *llvm::createAlwaysInlinerPass() { return new AlwaysInliner(); }
 // doInitialization - Initializes the vector of functions that have not
 // been annotated with the "always inline" attribute.
 bool AlwaysInliner::doInitialization(CallGraph &CG) {
+  CA.setTargetData(getAnalysisIfAvailable<TargetData>());
+
   Module &M = CG.getModule();
 
   for (Module::iterator I = M.begin(), E = M.end();

@@ -29,6 +29,7 @@ namespace llvm {
   class CallSite;
   template<class PtrType, unsigned SmallSize>
   class SmallPtrSet;
+  class TargetData;
 
   namespace InlineConstants {
     // Various magic constants used to adjust heuristics.
@@ -113,7 +114,7 @@ namespace llvm {
 
       /// analyzeFunction - Add information about the specified function
       /// to the current structure.
-      void analyzeFunction(Function *F);
+      void analyzeFunction(Function *F, const TargetData *TD);
 
       /// NeverInline - Returns true if the function should never be
       /// inlined into any caller.
@@ -124,11 +125,17 @@ namespace llvm {
     // the ValueMap will update itself when this happens.
     ValueMap<const Function *, FunctionInfo> CachedFunctionInfo;
 
+    // TargetData if available, or null.
+    const TargetData *TD;
+
     int CountBonusForConstant(Value *V, Constant *C = NULL);
     int ConstantFunctionBonus(CallSite CS, Constant *C);
     int getInlineSize(CallSite CS, Function *Callee);
     int getInlineBonuses(CallSite CS, Function *Callee);
   public:
+    InlineCostAnalyzer(): TD(0) {}
+
+    void setTargetData(const TargetData *TData) { TD = TData; }
 
     /// getInlineCost - The heuristic used to determine if we should inline the
     /// function call or not.

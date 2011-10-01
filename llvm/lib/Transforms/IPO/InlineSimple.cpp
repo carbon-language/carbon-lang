@@ -22,6 +22,7 @@
 #include "llvm/Support/CallSite.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/IPO/InlinerPass.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/ADT/SmallPtrSet.h"
 
 using namespace llvm;
@@ -75,6 +76,7 @@ Pass *llvm::createFunctionInliningPass(int Threshold) {
 // doInitialization - Initializes the vector of functions that have been
 // annotated with the noinline attribute.
 bool SimpleInliner::doInitialization(CallGraph &CG) {
+  CA.setTargetData(getAnalysisIfAvailable<TargetData>());
 
   Module &M = CG.getModule();
 

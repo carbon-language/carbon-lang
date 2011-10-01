@@ -18,6 +18,9 @@
 #include "llvm/ADT/DenseMap.h"
 
 namespace llvm {
+
+  class TargetData;
+
   // CodeMetrics - Calculate size and a few similar metrics for a set of
   // basic blocks.
   struct CodeMetrics {
@@ -68,11 +71,11 @@ namespace llvm {
 
     /// analyzeBasicBlock - Add information about the specified basic block
     /// to the current structure.
-    void analyzeBasicBlock(const BasicBlock *BB);
+    void analyzeBasicBlock(const BasicBlock *BB, const TargetData *TD = 0);
 
     /// analyzeFunction - Add information about the specified function
     /// to the current structure.
-    void analyzeFunction(Function *F);
+    void analyzeFunction(Function *F, const TargetData *TD = 0);
 
     /// CountCodeReductionForConstant - Figure out an approximation for how
     /// many instructions will be constant folded if the specified value is

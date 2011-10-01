@@ -22,6 +22,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/UnrollLoop.h"
+#include "llvm/Target/TargetData.h"
 #include <climits>
 
 using namespace llvm;
@@ -107,11 +108,12 @@ Pass *llvm::createLoopUnrollPass(int Threshold, int Count, int AllowPartial) {
 }
 
 /// ApproximateLoopSize - Approximate the size of the loop.
-static unsigned ApproximateLoopSize(const Loop *L, unsigned &NumCalls) {
+static unsigned ApproximateLoopSize(const Loop *L, unsigned &NumCalls,
+                                    const TargetData *TD) {
   CodeMetrics Metrics;
   for (Loop::block_iterator I = L->block_begin(), E = L->block_end();
        I != E; ++I)
-    Metrics.analyzeBasicBlock(*I);
+    Metrics.analyzeBasicBlock(*I, TD);
   NumCalls = Metrics.NumInlineCandidates;
 
   unsigned LoopSize = Metrics.NumInsts;
@@ -174,8 +176,9 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
 
   // Enforce the threshold.
   if (Threshold != NoThreshold) {
+    const TargetData *TD = getAnalysisIfAvailable<TargetData>();
     unsigned NumInlineCandidates;
-    unsigned LoopSize = ApproximateLoopSize(L, NumInlineCandidates);
+    unsigned LoopSize = ApproximateLoopSize(L, NumInlineCandidates, TD);
     DEBUG(dbgs() << "  Loop Size = " << LoopSize << "\n");
     if (NumInlineCandidates != 0) {
       DEBUG(dbgs() << "  Not unrolling loop with inlinable calls.\n");
