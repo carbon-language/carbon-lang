@@ -255,6 +255,8 @@ RecognizableInstr::RecognizableInstr(DisassemblerTables &tables,
              Rec->getName() == "REX64_PREFIX" ||
              Rec->getName().find("VMREAD64") != Name.npos ||
              Rec->getName().find("VMWRITE64") != Name.npos ||
+             Rec->getName().find("INVEPT64") != Name.npos ||
+             Rec->getName().find("INVVPID64") != Name.npos ||
              Rec->getName().find("MOV64") != Name.npos || 
              Rec->getName().find("PUSH64") != Name.npos ||
              Rec->getName().find("POP64") != Name.npos;

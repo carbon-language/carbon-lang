@@ -16,9 +16,15 @@
 // VMX instructions
 
 // 66 0F 38 80
-def INVEPT : I<0x80, RawFrm, (outs), (ins), "invept", []>, OpSize, T8;
+def INVEPT32 : I<0x80, MRMSrcMem, (outs), (ins GR32:$src1, i128mem:$src2),
+               "invept {$src2, $src1|$src1, $src2}", []>, OpSize, T8;
+def INVEPT64 : I<0x80, MRMSrcMem, (outs), (ins GR64:$src1, i128mem:$src2),
+               "invept {$src2, $src1|$src1, $src2}", []>, OpSize, T8;
 // 66 0F 38 81
-def INVVPID : I<0x81, RawFrm, (outs), (ins), "invvpid", []>, OpSize, T8;
+def INVVPID32 : I<0x81, MRMSrcMem, (outs), (ins GR32:$src1, i128mem:$src2),
+                "invvpid {$src2, $src1|$src1, $src2}", []>, OpSize, T8;
+def INVVPID64 : I<0x81, MRMSrcMem, (outs), (ins GR64:$src1, i128mem:$src2),
+                "invvpid {$src2, $src1|$src1, $src2}", []>, OpSize, T8;
 // 0F 01 C1
 def VMCALL : I<0x01, MRM_C1, (outs), (ins), "vmcall", []>, TB;
 def VMCLEARm : I<0xC7, MRM6m, (outs), (ins i64mem:$vmcs),
