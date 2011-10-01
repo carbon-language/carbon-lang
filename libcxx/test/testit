@@ -18,6 +18,15 @@ then
 	OPTIONS="-std=c++0x -stdlib=libc++"
 fi
 
+case $TRIPLE in
+  *-*-mingw* | *-*-cygwin* | *-*-win*)
+	TEST_EXE=test.exe
+    ;;
+  *)
+    TEST_EXE=a.out
+    ;;
+esac
+
 FAIL=0
 PASS=0
 UNIMPLEMENTED=0
@@ -31,9 +40,9 @@ function afunc
 	if (ls *.fail.cpp &> /dev/null)
 	then
 		for FILE in $(ls *.fail.cpp); do
-			if $CC $OPTIONS $HEADER_INCLUDE $SOURCE_LIB $FILE &> /dev/null
+			if $CC $OPTIONS $HEADER_INCLUDE $SOURCE_LIB $FILE $LIBS -o ./$TEST_EXE &> /dev/null
 			then
-				rm ./a.out
+				rm ./$TEST_EXE
 				echo "$FILE should not compile"
 				let "fail+=1"
 			else
@@ -45,16 +54,16 @@ function afunc
 	if (ls *.pass.cpp &> /dev/null)
 	then
 		for FILE in $(ls *.pass.cpp); do
-			if $CC $OPTIONS $HEADER_INCLUDE $SOURCE_LIB $FILE
+			if $CC $OPTIONS $HEADER_INCLUDE $SOURCE_LIB $FILE $LIBS -o ./$TEST_EXE
 			then
-				if ./a.out
+				if ./$TEST_EXE
 				then
-					rm ./a.out
+					rm ./$TEST_EXE
 					let "pass+=1"
 				else
 					echo "$FILE failed at run time"
 					let "fail+=1"
-					rm ./a.out
+					rm ./$TEST_EXE
 				fi
 			else
 				echo "$FILE failed to compile"
