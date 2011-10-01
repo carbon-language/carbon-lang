@@ -156,11 +156,8 @@ ValueObjectVariable::UpdateValue ()
                     SetAddressTypeOfChildren(eAddressTypeHost);
                     break;
                 case Value::eValueTypeLoadAddress:
-                    SetAddressTypeOfChildren(eAddressTypeLoad);
-                    break;
                 case Value::eValueTypeScalar:
-                    // TODO: is this the right thing to do?
-                    SetAddressTypeOfChildren(eAddressTypeInvalid);
+                    SetAddressTypeOfChildren(eAddressTypeLoad);
                     break;
             }
 
