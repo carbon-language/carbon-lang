@@ -3204,7 +3204,7 @@ void CGObjCMac::EmitThrowStmt(CodeGen::CodeGenFunction &CGF,
   llvm::Value *ExceptionAsObject;
 
   if (const Expr *ThrowExpr = S.getThrowExpr()) {
-    llvm::Value *Exception = CGF.EmitScalarExpr(ThrowExpr);
+    llvm::Value *Exception = CGF.EmitObjCThrowOperand(ThrowExpr);
     ExceptionAsObject =
       CGF.Builder.CreateBitCast(Exception, ObjCTypes.ObjectPtrTy);
   } else {
@@ -6002,7 +6002,7 @@ void CGObjCNonFragileABIMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
 void CGObjCNonFragileABIMac::EmitThrowStmt(CodeGen::CodeGenFunction &CGF,
                                            const ObjCAtThrowStmt &S) {
   if (const Expr *ThrowExpr = S.getThrowExpr()) {
-    llvm::Value *Exception = CGF.EmitScalarExpr(ThrowExpr);
+    llvm::Value *Exception = CGF.EmitObjCThrowOperand(ThrowExpr);
     Exception = CGF.Builder.CreateBitCast(Exception, ObjCTypes.ObjectPtrTy);
     CGF.EmitCallOrInvoke(ObjCTypes.getExceptionThrowFn(), Exception)
       .setDoesNotReturn();

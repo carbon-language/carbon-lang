@@ -2141,6 +2141,8 @@ public:
   std::pair<LValue,llvm::Value*>
   EmitARCStoreStrong(const BinaryOperator *e, bool ignored);
 
+  llvm::Value *EmitObjCThrowOperand(const Expr *expr);
+
   llvm::Value *EmitObjCProduceObject(QualType T, llvm::Value *Ptr);
   llvm::Value *EmitObjCConsumeObject(QualType T, llvm::Value *Ptr);
   llvm::Value *EmitObjCExtendObjectLifetime(QualType T, llvm::Value *Ptr);

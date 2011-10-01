@@ -2277,7 +2277,7 @@ void CGObjCGNU::EmitThrowStmt(CodeGenFunction &CGF,
   llvm::Value *ExceptionAsObject;
 
   if (const Expr *ThrowExpr = S.getThrowExpr()) {
-    llvm::Value *Exception = CGF.EmitScalarExpr(ThrowExpr);
+    llvm::Value *Exception = CGF.EmitObjCThrowOperand(ThrowExpr);
     ExceptionAsObject = Exception;
   } else {
     assert((!CGF.ObjCEHValueStack.empty() && CGF.ObjCEHValueStack.back()) &&

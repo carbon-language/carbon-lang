@@ -2386,6 +2386,30 @@ CodeGenFunction::EmitARCRetainAutoreleaseScalarExpr(const Expr *e) {
   return value;
 }
 
+llvm::Value *CodeGenFunction::EmitObjCThrowOperand(const Expr *expr) {
+  // In ARC, retain and autorelease the expression.
+  if (getLangOptions().ObjCAutoRefCount) {
+    // Do so before running any cleanups for the full-expression.
+    // tryEmitARCRetainScalarExpr does make an effort to do things
+    // inside cleanups, but there are crazy cases like
+    //   @throw A().foo;
+    // where a full retain+autorelease is required and would
+    // otherwise happen after the destructor for the temporary.
+    CodeGenFunction::RunCleanupsScope cleanups(*this);
+    if (const ExprWithCleanups *ewc = dyn_cast<ExprWithCleanups>(expr))
+      expr = ewc->getSubExpr();
+
+    return EmitARCRetainAutoreleaseScalarExpr(expr);
+  }
+
+  // Otherwise, use the normal scalar-expression emission.  The
+  // exception machinery doesn't do anything special with the
+  // exception like retaining it, so there's no safety associated with
+  // only running cleanups after the throw has started, and when it
+  // matters it tends to be substantially inferior code.
+  return EmitScalarExpr(expr);
+}
+
 std::pair<LValue,llvm::Value*>
 CodeGenFunction::EmitARCStoreStrong(const BinaryOperator *e,
                                     bool ignored) {
