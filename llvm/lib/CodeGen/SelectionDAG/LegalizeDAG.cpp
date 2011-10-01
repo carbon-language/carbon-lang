@@ -1614,6 +1614,9 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
             unsigned NumElem = StVT.getVectorNumElements();
 
             unsigned ScalarSize = StVT.getScalarType().getSizeInBits();
+            EVT EltVT = EVT::getIntegerVT(*DAG.getContext(), ScalarSize);
+            assert(TLI.isTypeLegal(EltVT) && "Scalar store type must be legal");
+
             // Round odd types to the next pow of two.
             if (!isPowerOf2_32(ScalarSize))
               ScalarSize = NextPowerOf2(ScalarSize);
@@ -1625,17 +1628,14 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
 
             for (unsigned Idx=0; Idx<NumElem; Idx++) {
               SDValue Ex = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl,
-                                       WideScalarVT, Tmp3, DAG.getIntPtrConstant(Idx));
+                                WideScalarVT, Tmp3, DAG.getIntPtrConstant(Idx));
 
-
-              EVT NVT = EVT::getIntegerVT(*DAG.getContext(), ScalarSize);
-
-              Ex = DAG.getNode(ISD::TRUNCATE, dl, NVT, Ex);
+              Ex = DAG.getNode(ISD::TRUNCATE, dl, EltVT, Ex);
               Tmp2 = DAG.getNode(ISD::ADD, dl, Tmp2.getValueType(), Tmp2,
                                  DAG.getIntPtrConstant(Stride));
               SDValue Store = DAG.getStore(Tmp1, dl, Ex, Tmp2,
-                                           ST->getPointerInfo().getWithOffset(Idx*Stride),
-                                           isVolatile, isNonTemporal, Alignment);
+                                 ST->getPointerInfo().getWithOffset(Idx*Stride),
+                                 isVolatile, isNonTemporal, Alignment);
               Stores.push_back(Store);
             }
             Result = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
@@ -1663,7 +1663,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
             for (unsigned Idx=0; Idx<WideNumElem*SizeRatio; Idx++) {
               // Extract elment i
               SDValue Ex = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl,
-                                       NarrowScalarVT, Tmp3, DAG.getIntPtrConstant(Idx));
+                               NarrowScalarVT, Tmp3, DAG.getIntPtrConstant(Idx));
               // bump pointer.
               Tmp2 = DAG.getNode(ISD::ADD, dl, Tmp2.getValueType(), Tmp2,
                                  DAG.getIntPtrConstant(Stride));
@@ -1674,8 +1674,8 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
               if (( TLI.isBigEndian() && (Idx%SizeRatio == 0)) ||
                   ((!TLI.isBigEndian() && (Idx%SizeRatio == SizeRatio-1)))) {
                 SDValue Store = DAG.getStore(Tmp1, dl, Ex, Tmp2,
-                                             ST->getPointerInfo().getWithOffset(Idx*Stride),
-                                             isVolatile, isNonTemporal, Alignment);
+                                  ST->getPointerInfo().getWithOffset(Idx*Stride),
+                                  isVolatile, isNonTemporal, Alignment);
                 Stores.push_back(Store);
               }
             }
