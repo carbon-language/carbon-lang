@@ -139,6 +139,9 @@ class ARMConstantPoolConstant : public ARMConstantPoolValue {
                           bool AddCurrentAddress);
 public:
   static ARMConstantPoolConstant *Create(const Constant *C, unsigned ID);
+  static ARMConstantPoolConstant *Create(const Constant *C, unsigned ID,
+                                         ARMCP::ARMCPKind Kind,
+                                         unsigned char PCAdj);
 
   const GlobalValue *getGV() const;
 

@@ -192,6 +192,13 @@ ARMConstantPoolConstant::Create(const Constant *C, unsigned ID) {
                                      ARMCP::no_modifier, false);
 }
 
+ARMConstantPoolConstant *
+ARMConstantPoolConstant::Create(const Constant *C, unsigned ID,
+                                ARMCP::ARMCPKind Kind, unsigned char PCAdj) {
+  return new ARMConstantPoolConstant(C, ID, Kind, PCAdj,
+                                     ARMCP::no_modifier, false);
+}
+
 const GlobalValue *ARMConstantPoolConstant::getGV() const {
   return dyn_cast<GlobalValue>(CVal);
 }
