@@ -881,12 +881,10 @@ ARMFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
     // for sure what the stack size will be, but for this, an estimate is good
     // enough. If there anything changes it, it'll be a spill, which implies
     // we've used all the registers and so R4 is already used, so not marking
-    // it here will be OK.  Also spill R4 if Thumb1 function requires stack
-    // realignment.
+    // it here will be OK.
     // FIXME: It will be better just to find spare register here.
     unsigned StackSize = estimateStackSize(MF);
-    if (MFI->hasVarSizedObjects() || RegInfo->needsStackRealignment(MF) ||
-        StackSize > 508)
+    if (MFI->hasVarSizedObjects() || StackSize > 508)
       MF.getRegInfo().setPhysRegUsed(ARM::R4);
   }
 
