@@ -253,15 +253,6 @@ ARMConstantPoolSymbol::Create(LLVMContext &C, const char *s,
   return new ARMConstantPoolSymbol(C, s, ID, PCAdj, ARMCP::no_modifier, false);
 }
 
-ARMConstantPoolSymbol *
-ARMConstantPoolSymbol::Create(LLVMContext &C, const char *s,
-                              unsigned ID, unsigned char PCAdj,
-                              ARMCP::ARMCPModifier Modifier,
-                              bool AddCurrentAddress) {
-  return new ARMConstantPoolSymbol(C, s, ID, PCAdj, Modifier,
-                                   AddCurrentAddress);
-}
-
 static bool CPV_streq(const char *S1, const char *S2) {
   if (S1 == S2)
     return true;

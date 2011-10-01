@@ -178,11 +178,6 @@ public:
   static ARMConstantPoolSymbol *Create(LLVMContext &C, const char *s,
                                        unsigned ID, unsigned char PCAdj);
 
-  static ARMConstantPoolSymbol *Create(LLVMContext &C, const char *s,
-                                       unsigned ID, unsigned char PCAdj,
-                                       ARMCP::ARMCPModifier Modifier,
-                                       bool AddCurrentAddress);
-
   const char *getSymbol() const { return S; }
 
   virtual int getExistingMachineCPValue(MachineConstantPool *CP,
