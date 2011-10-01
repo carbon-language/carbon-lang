@@ -22,6 +22,18 @@
 #include <cstdlib>
 using namespace llvm;
 
+//===----------------------------------------------------------------------===//
+// ARMConstantPoolValue
+//===----------------------------------------------------------------------===//
+
+ARMConstantPoolValue::ARMConstantPoolValue(Type *Ty, unsigned id,
+                                           ARMCP::ARMCPKind kind,
+                                           unsigned char PCAdj,
+                                           ARMCP::ARMCPModifier modifier,
+                                           bool addCurrentAddress)
+  : MachineConstantPoolValue(Ty), LabelId(id), Kind(kind), PCAdjust(PCAdj),
+    Modifier(modifier), AddCurrentAddress(addCurrentAddress) {}
+
 ARMConstantPoolValue::ARMConstantPoolValue(const Constant *cval, unsigned id,
                                            ARMCP::ARMCPKind K,
                                            unsigned char PCAdj,
@@ -145,7 +157,6 @@ void ARMConstantPoolValue::dump() const {
   errs() << "  " << *this;
 }
 
-
 void ARMConstantPoolValue::print(raw_ostream &O) const {
   if (CVal)
     O << CVal->getName();
@@ -159,4 +170,45 @@ void ARMConstantPoolValue::print(raw_ostream &O) const {
     if (AddCurrentAddress) O << "-.";
     O << ")";
   }
+}
+
+//===----------------------------------------------------------------------===//
+// ARMConstantPoolConstant
+//===----------------------------------------------------------------------===//
+
+ARMConstantPoolConstant::ARMConstantPoolConstant(const Constant *C,
+                                                 unsigned ID,
+                                                 ARMCP::ARMCPKind Kind,
+                                                 unsigned char PCAdj,
+                                                 ARMCP::ARMCPModifier Modifier,
+                                                 bool AddCurrentAddress)
+  : ARMConstantPoolValue((Type*)C->getType(), ID, Kind, PCAdj, Modifier,
+                         AddCurrentAddress),
+    CVal(C) {}
+
+ARMConstantPoolConstant *
+ARMConstantPoolConstant::Create(const Constant *C, unsigned ID) {
+  return new ARMConstantPoolConstant(C, ID, ARMCP::CPValue, 0,
+                                     ARMCP::no_modifier, false);
+}
+
+const GlobalValue *ARMConstantPoolConstant::getGV() const {
+  return dyn_cast<GlobalValue>(CVal);
+}
+
+bool ARMConstantPoolConstant::hasSameValue(ARMConstantPoolValue *ACPV) {
+  const ARMConstantPoolConstant *ACPC = dyn_cast<ARMConstantPoolConstant>(ACPV);
+
+  return (ACPC ? ACPC->CVal == CVal : true) &&
+    ARMConstantPoolValue::hasSameValue(ACPV);
+}
+
+void ARMConstantPoolConstant::addSelectionDAGCSEId(FoldingSetNodeID &ID) {
+  ID.AddPointer(CVal);
+  ARMConstantPoolValue::addSelectionDAGCSEId(ID);
+}
+
+void ARMConstantPoolConstant::print(raw_ostream &O) const {
+  O << CVal->getName();
+  ARMConstantPoolValue::print(O);
 }

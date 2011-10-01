@@ -59,6 +59,11 @@ class ARMConstantPoolValue : public MachineConstantPoolValue {
   ARMCP::ARMCPModifier Modifier;   // GV modifier i.e. (&GV(modifier)-(LPIC+8))
   bool AddCurrentAddress;
 
+protected:
+  ARMConstantPoolValue(Type *Ty, unsigned id, ARMCP::ARMCPKind Kind,
+                       unsigned char PCAdj, ARMCP::ARMCPModifier Modifier,
+                       bool AddCurrentAddress);
+
 public:
   ARMConstantPoolValue(const Constant *cval, unsigned id,
                        ARMCP::ARMCPKind Kind = ARMCP::CPValue,
@@ -94,7 +99,7 @@ public:
 
   bool isGlobalValue() const { return Kind == ARMCP::CPValue; }
   bool isExtSymbol() const { return Kind == ARMCP::CPExtSymbol; }
-  bool isBlockAddress() { return Kind == ARMCP::CPBlockAddress; }
+  bool isBlockAddress() const { return Kind == ARMCP::CPBlockAddress; }
   bool isLSDA() const { return Kind == ARMCP::CPLSDA; }
   bool isMachineBasicBlock() { return Kind == ARMCP::CPMachineBasicBlock; }
 
@@ -105,19 +110,50 @@ public:
 
   virtual void addSelectionDAGCSEId(FoldingSetNodeID &ID);
 
-  /// hasSameValue - Return true if this ARM constpool value
-  /// can share the same constantpool entry as another ARM constpool value.
-  bool hasSameValue(ARMConstantPoolValue *ACPV);
+  /// hasSameValue - Return true if this ARM constpool value can share the same
+  /// constantpool entry as another ARM constpool value.
+  virtual bool hasSameValue(ARMConstantPoolValue *ACPV);
 
+  virtual void print(raw_ostream &O) const;
   void print(raw_ostream *O) const { if (O) print(*O); }
-  void print(raw_ostream &O) const;
   void dump() const;
+
+  static bool classof(const ARMConstantPoolValue *) { return true; }
 };
 
 inline raw_ostream &operator<<(raw_ostream &O, const ARMConstantPoolValue &V) {
   V.print(O);
   return O;
 }
+
+/// ARMConstantPoolConstant - ARM-specific constant pool values for Constants,
+/// Functions, and BlockAddresses.
+class ARMConstantPoolConstant : public ARMConstantPoolValue {
+  const Constant *CVal;         // Constant being loaded.
+
+  ARMConstantPoolConstant(const Constant *C,
+                          unsigned ID,
+                          ARMCP::ARMCPKind Kind,
+                          unsigned char PCAdj,
+                          ARMCP::ARMCPModifier Modifier,
+                          bool AddCurrentAddress);
+public:
+  static ARMConstantPoolConstant *Create(const Constant *C, unsigned ID);
+
+  const GlobalValue *getGV() const;
+
+  /// hasSameValue - Return true if this ARM constpool value can share the same
+  /// constantpool entry as another ARM constpool value.
+  virtual bool hasSameValue(ARMConstantPoolValue *ACPV);
+
+  virtual void addSelectionDAGCSEId(FoldingSetNodeID &ID);
+
+  virtual void print(raw_ostream &O) const;
+  static bool classof(const ARMConstantPoolValue *APV) {
+    return APV->isGlobalValue() || APV->isBlockAddress() || APV->isLSDA();
+  }
+  static bool classof(const ARMConstantPoolConstant *) { return true; }
+};
 
 } // End llvm namespace
 
