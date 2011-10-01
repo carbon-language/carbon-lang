@@ -69,9 +69,7 @@ int ARMConstantPoolValue::getExistingMachineCPValue(MachineConstantPool *CP,
         (Constants[i].getAlignment() & AlignMask) == 0) {
       ARMConstantPoolValue *CPV =
         (ARMConstantPoolValue *)Constants[i].Val.MachineCPVal;
-      if (CPV->LabelId == LabelId &&
-          CPV->PCAdjust == PCAdjust &&
-          CPV->Modifier == Modifier)
+      if (this->equals(CPV))
         return i;
     }
   }
@@ -186,11 +184,7 @@ int ARMConstantPoolConstant::getExistingMachineCPValue(MachineConstantPool *CP,
         (ARMConstantPoolValue *)Constants[i].Val.MachineCPVal;
       ARMConstantPoolConstant *APC = dyn_cast<ARMConstantPoolConstant>(CPV);
       if (!APC) continue;
-
-      if (APC->getGV() == this->CVal &&
-          APC->getLabelId() == this->getLabelId() &&
-          APC->getPCAdjustment() == this->getPCAdjustment() &&
-          APC->getModifier() == this->getModifier())
+      if (APC->CVal == CVal && equals(APC))
         return i;
     }
   }
@@ -256,10 +250,7 @@ int ARMConstantPoolSymbol::getExistingMachineCPValue(MachineConstantPool *CP,
       ARMConstantPoolSymbol *APS = dyn_cast<ARMConstantPoolSymbol>(CPV);
       if (!APS) continue;
 
-      if (APS->getLabelId() == this->getLabelId() &&
-          APS->getPCAdjustment() == this->getPCAdjustment() &&
-          CPV_streq(APS->getSymbol(), this->getSymbol()) &&
-          APS->getModifier() == this->getModifier())
+      if (CPV_streq(APS->S, S) && equals(APS))
         return i;
     }
   }
@@ -315,10 +306,7 @@ int ARMConstantPoolMBB::getExistingMachineCPValue(MachineConstantPool *CP,
       ARMConstantPoolMBB *APMBB = dyn_cast<ARMConstantPoolMBB>(CPV);
       if (!APMBB) continue;
 
-      if (APMBB->getLabelId() == this->getLabelId() &&
-          APMBB->getPCAdjustment() == this->getPCAdjustment() &&
-          APMBB->getMBB() == this->getMBB() &&
-          APMBB->getModifier() == this->getModifier())
+      if (APMBB->MBB == MBB && equals(APMBB))
         return i;
     }
   }

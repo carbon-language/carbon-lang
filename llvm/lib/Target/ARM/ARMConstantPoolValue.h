@@ -93,6 +93,12 @@ public:
   /// constantpool entry as another ARM constpool value.
   virtual bool hasSameValue(ARMConstantPoolValue *ACPV);
 
+  bool equals(const ARMConstantPoolValue *A) const {
+    return this->LabelId == A->LabelId &&
+      this->PCAdjust == A->PCAdjust &&
+      this->Modifier == A->Modifier;
+  }
+
   virtual void print(raw_ostream &O) const;
   void print(raw_ostream *O) const { if (O) print(*O); }
   void dump() const;
