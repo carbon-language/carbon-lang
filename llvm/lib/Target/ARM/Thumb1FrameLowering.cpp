@@ -155,6 +155,27 @@ void Thumb1FrameLowering::emitPrologue(MachineFunction &MF) const {
   AFI->setGPRCalleeSavedArea2Size(GPRCS2Size);
   AFI->setDPRCalleeSavedAreaSize(DPRCSSize);
 
+  if (RegInfo->needsStackRealignment(MF)) {
+    // We cannot use sp as source/dest register here, thus we're emitting the
+    // following sequence:
+    // mov r4, sp
+    // lsrs r4, r4, Log2MaxAlign
+    // lsls r4, r4, Log2MaxAlign
+    // mov sp, r4
+    unsigned MaxAlign = MFI->getMaxAlignment();
+    unsigned Log2MaxAlign = Log2_32(MaxAlign);
+    AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVr), ARM::R4)
+                   .addReg(ARM::SP, RegState::Kill));
+    AddDefaultPred(AddDefaultT1CC(BuildMI(MBB, MBBI, dl, TII.get(ARM::tLSRri), ARM::R4))
+                   .addReg(ARM::R4, RegState::Kill)
+                   .addImm(Log2MaxAlign));
+    AddDefaultPred(AddDefaultT1CC(BuildMI(MBB, MBBI, dl, TII.get(ARM::tLSLri), ARM::R4))
+                   .addReg(ARM::R4, RegState::Kill)
+                   .addImm(Log2MaxAlign));
+    AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVr), ARM::SP)
+                   .addReg(ARM::R4, RegState::Kill));
+  }
+
   // If we need a base pointer, set it up here. It's whatever the value
   // of the stack pointer is at this point. Any variable size objects
   // will be allocated after this, so we can still use the base pointer
