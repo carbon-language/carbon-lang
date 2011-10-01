@@ -59,9 +59,16 @@ UniqueDWARFASTTypeList::Find
                             case DW_TAG_namespace:
                                 {
                                     const char *parent_arg_die_name = parent_arg_die->GetName(symfile, cu);
-                                    const char *parent_pos_die_name = parend_pos_die->GetName(pos->m_symfile, pos->m_cu);
-                                    if (strcmp (parent_arg_die_name, parent_pos_die_name))
+                                    if (parent_arg_die_name == NULL)  // Anonymous (i.e. no-name) struct
+                                    {
                                         match = false;
+                                    }
+                                    else
+                                    {
+                                        const char *parent_pos_die_name = parend_pos_die->GetName(pos->m_symfile, pos->m_cu);
+                                        if (parent_pos_die_name == NULL || strcmp (parent_arg_die_name, parent_pos_die_name))
+                                            match = false;
+                                    }
                                 }
                                 break;
                             
