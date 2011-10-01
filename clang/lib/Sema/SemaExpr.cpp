@@ -4291,6 +4291,8 @@ Sema::ActOnCastExpr(Scope *S, SourceLocation LParenLoc,
     CheckExtraCXXDefaultArguments(D);
   }
 
+  checkUnusedDeclAttributes(D);
+
   QualType castType = castTInfo->getType();
   Ty = CreateParsedType(castType, castTInfo);
 

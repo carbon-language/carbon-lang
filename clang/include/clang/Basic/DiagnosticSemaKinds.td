@@ -1435,6 +1435,8 @@ def warn_label_attribute_not_unused : Warning<
 def err_invalid_pcs : Error<"Invalid PCS type">;
 def err_attribute_can_be_applied_only_to_value_decl : Error<
   "%0 attribute can only be applied to value declarations">;
+def warn_attribute_not_on_decl : Error<
+  "%0 attribute ignored when parsing type">;
 
 
 // Availability attribute

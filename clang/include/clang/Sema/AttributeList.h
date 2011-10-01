@@ -73,6 +73,9 @@ private:
   /// True if already diagnosed as invalid.
   mutable unsigned Invalid : 1;
 
+  /// True if this attribute was used as a type attribute.
+  mutable unsigned UsedAsTypeAttr : 1;
+
   /// True if this has the extra information associated with an
   /// availability attribute.
   unsigned IsAvailability : 1;
@@ -123,7 +126,8 @@ private:
       AttrRange(attrRange), ScopeLoc(scopeLoc), ParmLoc(parmLoc),
       NumArgs(numArgs),
       DeclspecAttribute(declspec), CXX0XAttribute(cxx0x), Invalid(false),
-      IsAvailability(false), NextInPosition(0), NextInPool(0) {
+      UsedAsTypeAttr(false), IsAvailability(false), 
+      NextInPosition(0), NextInPool(0) {
     if (numArgs) memcpy(getArgsBuffer(), args, numArgs * sizeof(Expr*));
     AttrKind = getKind(getName());
   }
@@ -139,8 +143,8 @@ private:
     : AttrName(attrName), ScopeName(scopeName), ParmName(parmName),
       AttrRange(attrRange), ScopeLoc(scopeLoc), ParmLoc(parmLoc),
       NumArgs(0), DeclspecAttribute(declspec), CXX0XAttribute(cxx0x),
-      Invalid(false), IsAvailability(true), UnavailableLoc(unavailable),
-      NextInPosition(0), NextInPool(0) {
+      Invalid(false), UsedAsTypeAttr(false), IsAvailability(true),
+      UnavailableLoc(unavailable), NextInPosition(0), NextInPool(0) {
     new (&getAvailabilitySlot(IntroducedSlot)) AvailabilityChange(introduced);
     new (&getAvailabilitySlot(DeprecatedSlot)) AvailabilityChange(deprecated);
     new (&getAvailabilitySlot(ObsoletedSlot)) AvailabilityChange(obsoleted);
@@ -286,6 +290,9 @@ public:
 
   bool isInvalid() const { return Invalid; }
   void setInvalid(bool b = true) const { Invalid = b; }
+
+  bool isUsedAsTypeAttr() const { return UsedAsTypeAttr; }
+  void setUsedAsTypeAttr() { UsedAsTypeAttr = true; }
 
   Kind getKind() const { return Kind(AttrKind); }
   static Kind getKind(const IdentifierInfo *Name);
