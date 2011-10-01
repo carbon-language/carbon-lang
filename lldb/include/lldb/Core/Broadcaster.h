@@ -104,6 +104,9 @@ public:
     void
     BroadcastEventIfUnique (uint32_t event_type, EventData *event_data = NULL);
 
+    void
+    Clear();
+
     virtual void
     AddInitialEventsToListener (Listener *listener, uint32_t requested_events);
 

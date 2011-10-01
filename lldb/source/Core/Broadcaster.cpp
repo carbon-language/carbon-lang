@@ -40,22 +40,24 @@ Broadcaster::~Broadcaster()
     if (log)
         log->Printf ("%p Broadcaster::~Broadcaster(\"%s\")", this, m_broadcaster_name.AsCString());
 
-    // Scope for "listeners_locker"
-    {
-        Mutex::Locker listeners_locker(m_listeners_mutex);
-
-        // Make sure the listener forgets about this broadcaster. We do
-        // this in the broadcaster in case the broadcaster object initiates
-        // the removal.
-
-        collection::iterator pos, end = m_listeners.end();
-        for (pos = m_listeners.begin(); pos != end; ++pos)
-            pos->first->BroadcasterWillDestruct (this);
-
-        m_listeners.clear();
-    }
+    Clear();
 }
 
+void
+Broadcaster::Clear()
+{
+    Mutex::Locker listeners_locker(m_listeners_mutex);
+    
+    // Make sure the listener forgets about this broadcaster. We do
+    // this in the broadcaster in case the broadcaster object initiates
+    // the removal.
+    
+    collection::iterator pos, end = m_listeners.end();
+    for (pos = m_listeners.begin(); pos != end; ++pos)
+        pos->first->BroadcasterWillDestruct (this);
+    
+    m_listeners.clear();
+}
 const ConstString &
 Broadcaster::GetBroadcasterName ()
 {

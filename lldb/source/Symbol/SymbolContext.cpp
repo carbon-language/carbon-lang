@@ -138,12 +138,14 @@ SymbolContext::DumpStopContext
 
     if (function != NULL)
     {
+        SymbolContext inline_parent_sc;
+        Address inline_parent_addr;
         if (function->GetMangled().GetName())
         {
             dumped_something = true;
             function->GetMangled().GetName().Dump(s);
         }
-
+        
         if (addr.IsValid())
         {
             const addr_t function_offset = addr.GetOffset() - function->GetAddressRange().GetBaseAddress().GetOffset();
@@ -154,12 +156,34 @@ SymbolContext::DumpStopContext
             }
         }
 
-        if (block != NULL)
+        if (GetParentOfInlinedScope (addr, inline_parent_sc, inline_parent_addr))
         {
-            s->IndentMore();
-            block->DumpStopContext (s, this, NULL, show_fullpaths, show_inlined_frames);
-            s->IndentLess();
             dumped_something = true;
+            Block *inlined_block = block->GetContainingInlinedBlock();
+            const InlineFunctionInfo* inlined_block_info = inlined_block->GetInlinedFunctionInfo();
+            s->Printf (" [inlined] %s", inlined_block_info->GetName().GetCString());
+            
+            lldb_private::AddressRange block_range;
+            if (inlined_block->GetRangeContainingAddress(addr, block_range))
+            {
+                const addr_t inlined_function_offset = addr.GetOffset() - block_range.GetBaseAddress().GetOffset();
+                if (inlined_function_offset)
+                {
+                    s->Printf(" + %llu", inlined_function_offset);                
+                }
+            }
+            const Declaration &call_site = inlined_block_info->GetCallSite();
+            if (call_site.IsValid())
+            {
+                s->PutCString(" at ");
+                call_site.DumpStopContext (s, show_fullpaths);
+            }
+            if (show_inlined_frames)
+            {
+                s->EOL();
+                s->Indent();
+                return inline_parent_sc.DumpStopContext (s, exe_scope, inline_parent_addr, show_fullpaths, show_module, show_inlined_frames);
+            }
         }
         else
         {
@@ -488,87 +512,46 @@ SymbolContext::FindTypeByName (const ConstString &name) const
 }
 
 bool
-SymbolContext::GetParentInlinedFrameInfo (const Address &curr_frame_pc, 
-                                          bool is_concrete_frame,
-                                          SymbolContext &next_frame_sc, 
-                                          Address &inlined_frame_addr) const
+SymbolContext::GetParentOfInlinedScope (const Address &curr_frame_pc, 
+                                        SymbolContext &next_frame_sc, 
+                                        Address &next_frame_pc) const
 {
     next_frame_sc.Clear();
-    inlined_frame_addr.Clear();
+    next_frame_pc.Clear();
 
     if (block)
     {
-        bool concrete_has_inlines = false;
-        Block *curr_inlined_block = NULL;
-        Block *next_inlined_block = NULL;
         //const addr_t curr_frame_file_addr = curr_frame_pc.GetFileAddress();
-        if (is_concrete_frame)
+        
+        // In order to get the parent of an inlined function we first need to
+        // see if we are in an inlined block as "this->block" could be an 
+        // inlined block, or a parent of "block" could be. So lets check if
+        // this block or one of this blocks parents is an inlined function.
+        Block *curr_inlined_block = block->GetContainingInlinedBlock();
+        if (curr_inlined_block)
         {
-            curr_inlined_block = block->GetContainingInlinedBlock();
-            if (curr_inlined_block)
-            {
-                concrete_has_inlines = true;
-                next_inlined_block = curr_inlined_block->GetInlinedParent();
-            }
-        }
-        else
-        {
-            curr_inlined_block = block;
-            next_inlined_block = block->GetInlinedParent();
-        }
-
-        if (next_inlined_block)
-        {
-            next_inlined_block->CalculateSymbolContext (&next_frame_sc);
-                        
+            // "this->block" is contained in an inline function block, so to
+            // get the scope above the inlined block, we get the parent of the
+            // inlined block itself
+            Block *next_frame_block = curr_inlined_block->GetParent();
+            // Now calculate the symbol context of the containing block
+            next_frame_block->CalculateSymbolContext (&next_frame_sc);
+            
+            // If we get here we weren't able to find the return line entry using the nesting of the blocks and
+            // the line table.  So just use the call site info from our inlined block.
+            
             AddressRange range;
             bool got_range = curr_inlined_block->GetRangeContainingAddress (curr_frame_pc, range);
             assert (got_range);
-            const InlineFunctionInfo* inline_info = next_inlined_block->GetInlinedFunctionInfo();
-            if (inline_info)
-            {
-                inlined_frame_addr = range.GetBaseAddress();
-                next_frame_sc.line_entry.range.GetBaseAddress() = inlined_frame_addr;
-                next_frame_sc.line_entry.file = inline_info->GetCallSite().GetFile();
-                next_frame_sc.line_entry.line = inline_info->GetCallSite().GetLine();
-                next_frame_sc.line_entry.column = inline_info->GetCallSite().GetColumn();
-                return true;
-            }
-        }
-        else if (is_concrete_frame && !concrete_has_inlines)
-        {
-            // This is the symbol context for the frame that was found using the
-            // PC value and there are no inlined blocks so there are no inlined
-            // parent frames.
-            return false;
-        }
-        else            
-        {
-            // We have had inlined frames before and now we are at the function
-            // instance that called the inlined frames.
-            // The SymbolContext object should contain a previous inline symbol
-            // context which we need to use to get the file, line and column info
-            const InlineFunctionInfo* inline_info = curr_inlined_block->GetInlinedFunctionInfo();
-            if (inline_info)
-            {
-                Block *parent_block = curr_inlined_block->GetParent();
-                if (parent_block)
-                {
-                    parent_block->CalculateSymbolContext (&next_frame_sc);
-                    
-                    AddressRange range;
-                    if (curr_inlined_block->GetRangeContainingAddress (curr_frame_pc, range))
-                    {
-                        inlined_frame_addr = range.GetBaseAddress();
-                        //const addr_t range_file_file_addr = inlined_frame_addr.GetFileAddress();
-                        next_frame_sc.line_entry.range.GetBaseAddress() = inlined_frame_addr;
-                        next_frame_sc.line_entry.file = inline_info->GetCallSite().GetFile();
-                        next_frame_sc.line_entry.line = inline_info->GetCallSite().GetLine();
-                        next_frame_sc.line_entry.column = inline_info->GetCallSite().GetColumn();
-                        return true;                                            
-                    }
-                }
-            }
+            // To see there this new frame block it, we need to look at the
+            // call site information from 
+            const InlineFunctionInfo* curr_inlined_block_inlined_info = curr_inlined_block->GetInlinedFunctionInfo();
+            next_frame_pc = range.GetBaseAddress();
+            next_frame_sc.line_entry.range.GetBaseAddress() = next_frame_pc;
+            next_frame_sc.line_entry.file = curr_inlined_block_inlined_info->GetCallSite().GetFile();
+            next_frame_sc.line_entry.line = curr_inlined_block_inlined_info->GetCallSite().GetLine();
+            next_frame_sc.line_entry.column = curr_inlined_block_inlined_info->GetCallSite().GetColumn();
+            return true;
         }
     }
     

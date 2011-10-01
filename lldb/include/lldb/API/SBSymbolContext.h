@@ -52,9 +52,8 @@ public:
     void SetSymbol (lldb::SBSymbol symbol);
 
     SBSymbolContext
-    GetParentInlinedFrameInfo (const SBAddress &curr_frame_pc, 
-                               bool is_concrete_frame,
-                               SBAddress &parent_frame_addr) const;
+    GetParentOfInlinedScope (const SBAddress &curr_frame_pc, 
+                             SBAddress &parent_frame_addr) const;
 
     bool
     GetDescription (lldb::SBStream &description);

@@ -284,11 +284,30 @@ public:
     ConstString
     GetFunctionName (Mangled::NamePreference preference = Mangled::ePreferDemangled);
 
+    //------------------------------------------------------------------
+    /// Find the block containing the inlined block that contains this block.
+    /// 
+    /// For instance, if the symbol context contains an inlined block,
+    /// it will return the inlined function name.
+    ///
+    /// @param[in] curr_frame_pc
+    ///    The address within the block of this object.
+    ///
+    /// @param[out] next_frame_sc
+    ///     A new symbol context that does what the title says it does.
+    ///
+    /// @param[out] next_frame_addr
+    ///     This is what you should report as the PC in \a next_frame_sc.
+    ///
+    /// @return
+    ///     \b true if this SymbolContext specifies a block contained in an 
+    ///     inlined block.  If this returns \b true, \a next_frame_sc and 
+    ///     \a next_frame_addr will be filled in correctly.
+    //------------------------------------------------------------------
     bool
-    GetParentInlinedFrameInfo (const Address &curr_frame_pc, 
-                               bool is_concrete_frame,
-                               SymbolContext &next_frame_sc, 
-                               Address &inlined_frame_addr) const;
+    GetParentOfInlinedScope (const Address &curr_frame_pc, 
+                             SymbolContext &next_frame_sc, 
+                             Address &inlined_frame_addr) const;
 
     //------------------------------------------------------------------
     // Member variables

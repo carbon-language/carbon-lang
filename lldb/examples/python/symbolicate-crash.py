@@ -399,7 +399,7 @@ if __name__ == '__main__':
                         # inlined, it will return a valid symbol context for the parent 
                         # frame of the current inlined function
                         parent_pc_addr = lldb.SBAddress()
-                        new_frame.sym_ctx = frame.sym_ctx.GetParentInlinedFrameInfo (pc_addr, True, parent_pc_addr)
+                        new_frame.sym_ctx = frame.sym_ctx.GetParentOfInlinedScope (pc_addr, parent_pc_addr)
 
                         # See if we were able to reconstruct anything?
                         while new_frame.sym_ctx:
@@ -419,7 +419,7 @@ if __name__ == '__main__':
                             new_frame = CrashLog.Frame (frame.index, -1, None)
                             # Swap the addresses so we can try another inlined lookup
                             pc_addr = parent_pc_addr;
-                            new_frame.sym_ctx = prev_new_frame.sym_ctx.GetParentInlinedFrameInfo (pc_addr, False, parent_pc_addr)
+                            new_frame.sym_ctx = prev_new_frame.sym_ctx.GetParentOfInlinedScope (pc_addr, parent_pc_addr)
                 # Replace our thread frames with our new list that includes parent
                 # frames for inlined functions
                 thread.frames = new_thread_frames

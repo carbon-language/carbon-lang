@@ -266,14 +266,13 @@ SBSymbolContext::GetDescription (SBStream &description)
 }
 
 SBSymbolContext
-SBSymbolContext::GetParentInlinedFrameInfo (const SBAddress &curr_frame_pc, 
-                                            bool is_concrete_frame,
-                                            SBAddress &parent_frame_addr) const
+SBSymbolContext::GetParentOfInlinedScope (const SBAddress &curr_frame_pc, 
+                                          SBAddress &parent_frame_addr) const
 {
     SBSymbolContext sb_sc;
     if (m_opaque_ap.get() && curr_frame_pc.IsValid())
     {
-        if (m_opaque_ap->GetParentInlinedFrameInfo (curr_frame_pc.ref(), is_concrete_frame, sb_sc.ref(), parent_frame_addr.ref()))
+        if (m_opaque_ap->GetParentOfInlinedScope (curr_frame_pc.ref(), sb_sc.ref(), parent_frame_addr.ref()))
             return sb_sc;
     }
     return SBSymbolContext();

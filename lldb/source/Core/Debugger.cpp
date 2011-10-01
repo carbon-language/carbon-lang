@@ -249,6 +249,7 @@ void
 Debugger::Clear()
 {
     CleanUpInputReaders();
+    m_listener.Clear();
     int num_targets = m_target_list.GetNumTargets();
     for (int i = 0; i < num_targets; i++)
     {

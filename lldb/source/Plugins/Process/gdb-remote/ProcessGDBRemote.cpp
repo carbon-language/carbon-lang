@@ -152,6 +152,11 @@ ProcessGDBRemote::~ProcessGDBRemote()
     }
     //  m_mach_process.UnregisterNotificationCallbacks (this);
     Clear();
+    // We need to call finalize on the process before destroying ourselves
+    // to make sure all of the broadcaster cleanup goes as planned. If we
+    // destruct this class, then Process::~Process() might have problems
+    // trying to fully destroy the broadcaster.
+    Finalize();
 }
 
 //----------------------------------------------------------------------

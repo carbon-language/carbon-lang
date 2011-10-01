@@ -181,13 +181,6 @@ public:
     void
     Dump (Stream *s, lldb::addr_t base_addr, int32_t depth, bool show_context) const;
 
-    void
-    DumpStopContext (Stream *s, 
-                     const SymbolContext *sc, 
-                     const Declaration *child_inline_call_site,
-                     bool show_fullpaths,
-                     bool show_inline_blocks);
-
     //------------------------------------------------------------------
     /// @copydoc SymbolContextScope::DumpSymbolContext(Stream*)
     ///

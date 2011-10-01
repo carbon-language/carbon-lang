@@ -644,6 +644,9 @@ Process::~Process()
 void
 Process::Finalize()
 {
+    // Clear our broadcaster before we proceed with destroying
+    Broadcaster::Clear();
+
     // Do any cleanup needed prior to being destructed... Subclasses
     // that override this method should call this superclass method as well.
     

@@ -55,6 +55,8 @@ Listener::Clear()
     m_broadcasters.clear();
     m_cond_wait.SetValue (false, eBroadcastNever);
     m_broadcasters.clear();
+    Mutex::Locker event_locker(m_events_mutex);
+    m_events.clear();
 }
 
 uint32_t

@@ -1304,12 +1304,13 @@ LookupAddressInModule
         strm.EOL();
         strm.Indent ("    Summary: ");
         const uint32_t save_indent = strm.GetIndentLevel ();
-        strm.SetIndentLevel (save_indent + 11);
+        strm.SetIndentLevel (save_indent + 13);
         so_addr.Dump (&strm, exe_scope, Address::DumpStyleResolvedDescription);
         strm.SetIndentLevel (save_indent);
         // Print out detailed address information when verbose is enabled
         if (verbose)
         {
+            strm.EOL();
             so_addr.Dump (&strm, exe_scope, Address::DumpStyleDetailedSymbolContext);
         }
         strm.IndentLess();
