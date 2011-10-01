@@ -315,7 +315,7 @@ bugreporter::getTrackNullOrUndefValueVisitor(const ExplodedNode *N,
       if (ps->getStmt() == S)
         break;
     }
-    N = N->pred_empty() ? 0 : *N->pred_begin();
+    N = N->getFirstPred();
   }
 
   if (!N)
