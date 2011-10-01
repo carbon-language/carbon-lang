@@ -62,18 +62,7 @@ const char *ARMConstantPoolValue::getModifierText() const {
 
 int ARMConstantPoolValue::getExistingMachineCPValue(MachineConstantPool *CP,
                                                     unsigned Alignment) {
-  unsigned AlignMask = Alignment - 1;
-  const std::vector<MachineConstantPoolEntry> Constants = CP->getConstants();
-  for (unsigned i = 0, e = Constants.size(); i != e; ++i) {
-    if (Constants[i].isMachineConstantPoolEntry() &&
-        (Constants[i].getAlignment() & AlignMask) == 0) {
-      ARMConstantPoolValue *CPV =
-        (ARMConstantPoolValue *)Constants[i].Val.MachineCPVal;
-      if (this->equals(CPV))
-        return i;
-    }
-  }
-
+  assert(false && "Shouldn't be calling this directly!");
   return -1;
 }
 
