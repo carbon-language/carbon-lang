@@ -309,13 +309,15 @@ InstructionContext RecognizableInstr::insnContext() const {
   } else if (Is64Bit || HasREX_WPrefix) {
     if (HasREX_WPrefix && HasOpSizePrefix)
       insnContext = IC_64BIT_REXW_OPSIZE;
+    else if (HasOpSizePrefix && (Prefix == X86Local::XD || Prefix == X86Local::TF))
+      insnContext = IC_64BIT_XD_OPSIZE;
     else if (HasOpSizePrefix)
       insnContext = IC_64BIT_OPSIZE;
     else if (HasREX_WPrefix && Prefix == X86Local::XS)
       insnContext = IC_64BIT_REXW_XS;
-    else if (HasREX_WPrefix && Prefix == X86Local::XD)
+    else if (HasREX_WPrefix && (Prefix == X86Local::XD || Prefix == X86Local::TF))
       insnContext = IC_64BIT_REXW_XD;
-    else if (Prefix == X86Local::XD)
+    else if (Prefix == X86Local::XD || Prefix == X86Local::TF)
       insnContext = IC_64BIT_XD;
     else if (Prefix == X86Local::XS)
       insnContext = IC_64BIT_XS;
@@ -324,11 +326,12 @@ InstructionContext RecognizableInstr::insnContext() const {
     else
       insnContext = IC_64BIT;
   } else {
-    if (HasOpSizePrefix && Prefix == X86Local::TF)
-      insnContext = IC_XD;
+    if (HasOpSizePrefix &&
+        (Prefix == X86Local::XD || Prefix == X86Local::TF))
+      insnContext = IC_XD_OPSIZE;
     else if (HasOpSizePrefix)
       insnContext = IC_OPSIZE;
-    else if (Prefix == X86Local::XD)
+    else if (Prefix == X86Local::XD || Prefix == X86Local::TF)
       insnContext = IC_XD;
     else if (Prefix == X86Local::XS || Prefix == X86Local::REP)
       insnContext = IC_XS;
@@ -402,7 +405,7 @@ RecognizableInstr::filter_ret RecognizableInstr::filter() const {
   // Filter out alternate forms of AVX instructions
   if (Name.find("_alt") != Name.npos ||
       Name.find("XrYr") != Name.npos ||
-      Name.find("r64r") != Name.npos ||
+      (Name.find("r64r") != Name.npos && Name.find("r64r64") == Name.npos) ||
       Name.find("_64mr") != Name.npos ||
       Name.find("Xrr") != Name.npos ||
       Name.find("rr64") != Name.npos)
