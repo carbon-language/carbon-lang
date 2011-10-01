@@ -2347,6 +2347,9 @@ SymbolFileDWARF::ReportError (const char *format, ...)
                m_obj_file->GetFileSpec().GetDirectory().GetCString(),
                m_obj_file->GetFileSpec().GetFilename().GetCString());
 
+    if (m_obj_file->GetModule()->GetObjectName())
+        ::fprintf (stderr, "(%s) ", m_obj_file->GetModule()->GetObjectName().GetCString());
+
     va_list args;
     va_start (args, format);
     vfprintf (stderr, format, args);
@@ -2360,6 +2363,9 @@ SymbolFileDWARF::ReportWarning (const char *format, ...)
                "warning: %s/%s ", 
                m_obj_file->GetFileSpec().GetDirectory().GetCString(),
                m_obj_file->GetFileSpec().GetFilename().GetCString());
+
+    if (m_obj_file->GetModule()->GetObjectName())
+        ::fprintf (stderr, "(%s) ", m_obj_file->GetModule()->GetObjectName().GetCString());
 
     va_list args;
     va_start (args, format);
