@@ -31,7 +31,7 @@ ARMConstantPoolValue::ARMConstantPoolValue(Type *Ty, unsigned id,
                                            unsigned char PCAdj,
                                            ARMCP::ARMCPModifier modifier,
                                            bool addCurrentAddress)
-  : MachineConstantPoolValue(Ty), S(NULL), LabelId(id), Kind(kind),
+  : MachineConstantPoolValue(Ty), MBB(NULL), S(NULL), LabelId(id), Kind(kind),
     PCAdjust(PCAdj), Modifier(modifier),
     AddCurrentAddress(addCurrentAddress) {}
 
@@ -113,8 +113,7 @@ int ARMConstantPoolValue::getExistingMachineCPValue(MachineConstantPool *CP,
         (Constants[i].getAlignment() & AlignMask) == 0) {
       ARMConstantPoolValue *CPV =
         (ARMConstantPoolValue *)Constants[i].Val.MachineCPVal;
-      if (CPV->CVal == CVal &&
-          CPV->LabelId == LabelId &&
+      if (CPV->LabelId == LabelId &&
           CPV->PCAdjust == PCAdjust &&
           CPV_streq(CPV->S, S) &&
           CPV->Modifier == Modifier)
@@ -131,7 +130,6 @@ ARMConstantPoolValue::~ARMConstantPoolValue() {
 
 void
 ARMConstantPoolValue::addSelectionDAGCSEId(FoldingSetNodeID &ID) {
-  ID.AddPointer(CVal);
   ID.AddPointer(S);
   ID.AddInteger(LabelId);
   ID.AddInteger(PCAdjust);
@@ -140,7 +138,6 @@ ARMConstantPoolValue::addSelectionDAGCSEId(FoldingSetNodeID &ID) {
 bool
 ARMConstantPoolValue::hasSameValue(ARMConstantPoolValue *ACPV) {
   if (ACPV->Kind == Kind &&
-      ACPV->CVal == CVal &&
       ACPV->PCAdjust == PCAdjust &&
       CPV_streq(ACPV->S, S) &&
       ACPV->Modifier == Modifier) {

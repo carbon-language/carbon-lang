@@ -598,8 +598,9 @@ unsigned ARMFastISel::ARMMaterializeGV(const GlobalValue *GV, EVT VT) {
   // Grab index.
   unsigned PCAdj = (RelocM != Reloc::PIC_) ? 0 : (Subtarget->isThumb() ? 4 : 8);
   unsigned Id = AFI->createPICLabelUId();
-  ARMConstantPoolValue *CPV = new ARMConstantPoolValue(GV, Id,
-                                                       ARMCP::CPValue, PCAdj);
+  ARMConstantPoolValue *CPV = ARMConstantPoolConstant::Create(GV, Id,
+                                                              ARMCP::CPValue,
+                                                              PCAdj);
   unsigned Idx = MCP.getConstantPoolIndex(CPV, Align);
 
   // Load value.

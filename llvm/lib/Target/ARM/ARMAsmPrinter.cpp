@@ -849,9 +849,11 @@ EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV) {
     OS << MAI->getPrivateGlobalPrefix() << "_LSDA_" << getFunctionNumber();
     MCSym = OutContext.GetOrCreateSymbol(OS.str());
   } else if (ACPV->isBlockAddress()) {
-    MCSym = GetBlockAddressSymbol(ACPV->getBlockAddress());
+    const BlockAddress *BA =
+      cast<ARMConstantPoolConstant>(ACPV)->getBlockAddress();
+    MCSym = GetBlockAddressSymbol(BA);
   } else if (ACPV->isGlobalValue()) {
-    const GlobalValue *GV = ACPV->getGV();
+    const GlobalValue *GV = cast<ARMConstantPoolConstant>(ACPV)->getGV();
     MCSym = GetARMGVSymbol(GV);
   } else if (ACPV->isMachineBasicBlock()) {
     const MachineBasicBlock *MBB = ACPV->getMBB();

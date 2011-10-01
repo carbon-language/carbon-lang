@@ -1054,17 +1054,19 @@ static unsigned duplicateCPV(MachineFunction &MF, unsigned &CPI) {
   // instructions, so that's probably OK, but is PIC always correct when
   // we get here?
   if (ACPV->isGlobalValue())
-    NewCPV = new ARMConstantPoolValue(ACPV->getGV(), PCLabelId,
-                                      ARMCP::CPValue, 4);
+    NewCPV = ARMConstantPoolConstant::
+      Create(cast<ARMConstantPoolConstant>(ACPV)->getGV(), PCLabelId,
+             ARMCP::CPValue, 4);
   else if (ACPV->isExtSymbol())
     NewCPV = new ARMConstantPoolValue(MF.getFunction()->getContext(),
                                       ACPV->getSymbol(), PCLabelId, 4);
   else if (ACPV->isBlockAddress())
-    NewCPV = new ARMConstantPoolValue(ACPV->getBlockAddress(), PCLabelId,
-                                      ARMCP::CPBlockAddress, 4);
+    NewCPV = ARMConstantPoolConstant::
+      Create(cast<ARMConstantPoolConstant>(ACPV)->getBlockAddress(), PCLabelId,
+             ARMCP::CPBlockAddress, 4);
   else if (ACPV->isLSDA())
-    NewCPV = new ARMConstantPoolValue(MF.getFunction(), PCLabelId,
-                                      ARMCP::CPLSDA, 4);
+    NewCPV = ARMConstantPoolConstant::Create(MF.getFunction(), PCLabelId,
+                                             ARMCP::CPLSDA, 4);
   else if (ACPV->isMachineBasicBlock())
     NewCPV = new ARMConstantPoolValue(MF.getFunction()->getContext(),
                                       ACPV->getMBB(), PCLabelId,

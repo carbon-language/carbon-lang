@@ -636,7 +636,7 @@ void ARMCodeEmitter::emitConstPoolInstruction(const MachineInstr &MI) {
           << (void*)MCE.getCurrentPCValue() << " " << *ACPV << '\n');
 
     assert(ACPV->isGlobalValue() && "unsupported constant pool value");
-    const GlobalValue *GV = ACPV->getGV();
+    const GlobalValue *GV = cast<ARMConstantPoolConstant>(ACPV)->getGV();
     if (GV) {
       Reloc::Model RelocM = TM.getRelocationModel();
       emitGlobalAddress(GV, ARM::reloc_arm_machine_cp_entry,
