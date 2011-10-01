@@ -577,7 +577,7 @@ void FilterChooser::emitTop(raw_ostream &o, unsigned Indentation,
     << "(MCInst &MI, uint" << BitWidth << "_t insn, uint64_t Address, "
     << "const void *Decoder, const MCSubtargetInfo &STI) {\n";
   o.indent(Indentation) << "  unsigned tmp = 0;\n  (void)tmp;\n" << Emitter->Locals << "\n";
-  o.indent(Indentation) << "  unsigned Bits = STI.getFeatureBits();\n";
+  o.indent(Indentation) << "  uint64_t Bits = STI.getFeatureBits();\n";
 
   ++Indentation; ++Indentation;
   // Emits code to decode the instructions.
