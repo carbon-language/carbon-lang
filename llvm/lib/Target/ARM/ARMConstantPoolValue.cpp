@@ -35,15 +35,6 @@ ARMConstantPoolValue::ARMConstantPoolValue(Type *Ty, unsigned id,
     PCAdjust(PCAdj), Modifier(modifier),
     AddCurrentAddress(addCurrentAddress) {}
 
-ARMConstantPoolValue::ARMConstantPoolValue(const Constant *cval, unsigned id,
-                                           ARMCP::ARMCPKind K,
-                                           unsigned char PCAdj,
-                                           ARMCP::ARMCPModifier Modif,
-                                           bool AddCA)
-  : MachineConstantPoolValue((Type*)cval->getType()),
-    CVal(cval), S(NULL), LabelId(id), Kind(K), PCAdjust(PCAdj),
-    Modifier(Modif), AddCurrentAddress(AddCA) {}
-
 ARMConstantPoolValue::ARMConstantPoolValue(LLVMContext &C,
                                            const MachineBasicBlock *mbb,
                                            unsigned id,
@@ -52,7 +43,7 @@ ARMConstantPoolValue::ARMConstantPoolValue(LLVMContext &C,
                                            ARMCP::ARMCPModifier Modif,
                                            bool AddCA)
   : MachineConstantPoolValue((Type*)Type::getInt8PtrTy(C)),
-    CVal(NULL), MBB(mbb), S(NULL), LabelId(id), Kind(K), PCAdjust(PCAdj),
+    MBB(mbb), S(NULL), LabelId(id), Kind(K), PCAdjust(PCAdj),
     Modifier(Modif), AddCurrentAddress(AddCA) {}
 
 ARMConstantPoolValue::ARMConstantPoolValue(LLVMContext &C,
@@ -61,22 +52,8 @@ ARMConstantPoolValue::ARMConstantPoolValue(LLVMContext &C,
                                            ARMCP::ARMCPModifier Modif,
                                            bool AddCA)
   : MachineConstantPoolValue((Type*)Type::getInt32Ty(C)),
-    CVal(NULL), S(strdup(s)), LabelId(id), Kind(ARMCP::CPExtSymbol),
+    S(strdup(s)), LabelId(id), Kind(ARMCP::CPExtSymbol),
     PCAdjust(PCAdj), Modifier(Modif), AddCurrentAddress(AddCA) {}
-
-ARMConstantPoolValue::ARMConstantPoolValue(const GlobalValue *gv,
-                                           ARMCP::ARMCPModifier Modif)
-  : MachineConstantPoolValue((Type*)Type::getInt32Ty(gv->getContext())),
-    CVal(gv), S(NULL), LabelId(0), Kind(ARMCP::CPValue), PCAdjust(0),
-    Modifier(Modif), AddCurrentAddress(false) {}
-
-const GlobalValue *ARMConstantPoolValue::getGV() const {
-  return dyn_cast_or_null<GlobalValue>(CVal);
-}
-
-const BlockAddress *ARMConstantPoolValue::getBlockAddress() const {
-  return dyn_cast_or_null<BlockAddress>(CVal);
-}
 
 const MachineBasicBlock *ARMConstantPoolValue::getMBB() const {
   return MBB;
@@ -156,9 +133,7 @@ void ARMConstantPoolValue::dump() const {
 }
 
 void ARMConstantPoolValue::print(raw_ostream &O) const {
-  if (CVal)
-    O << CVal->getName();
-  else if (MBB)
+  if (MBB)
     O << "";
   else
     O << S;
