@@ -15,7 +15,7 @@
 #define TGPARSER_H
 
 #include "TGLexer.h"
-#include "Error.h"
+#include "llvm/TableGen/Error.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/SourceMgr.h"
 #include <map>

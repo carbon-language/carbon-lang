@@ -13,7 +13,7 @@
 
 #include "DAGISelMatcher.h"
 #include "CodeGenDAGPatterns.h"
-#include "Record.h"
+#include "llvm/TableGen/Record.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringMap.h"

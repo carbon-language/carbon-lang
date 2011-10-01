@@ -14,7 +14,7 @@
 #ifndef CLANGATTR_EMITTER_H
 #define CLANGATTR_EMITTER_H
 
-#include "TableGenBackend.h"
+#include "llvm/TableGen/TableGenBackend.h"
 
 namespace llvm {
 

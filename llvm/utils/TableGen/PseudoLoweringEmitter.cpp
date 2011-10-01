@@ -8,10 +8,10 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "pseudo-lowering"
-#include "Error.h"
 #include "CodeGenInstruction.h"
 #include "PseudoLoweringEmitter.h"
-#include "Record.h"
+#include "llvm/TableGen/Error.h"
+#include "llvm/TableGen/Record.h"
 #include "llvm/ADT/IndexedMap.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/ErrorHandling.h"

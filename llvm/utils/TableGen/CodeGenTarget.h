@@ -19,7 +19,7 @@
 
 #include "CodeGenRegisters.h"
 #include "CodeGenInstruction.h"
-#include "Record.h"
+#include "llvm/TableGen/Record.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 

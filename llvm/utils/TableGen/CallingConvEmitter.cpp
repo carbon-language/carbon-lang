@@ -13,8 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "CallingConvEmitter.h"
-#include "Record.h"
 #include "CodeGenTarget.h"
+#include "llvm/TableGen/Record.h"
 using namespace llvm;
 
 void CallingConvEmitter::run(raw_ostream &O) {

@@ -17,8 +17,8 @@
 
 #include "AsmWriterInst.h"
 #include "CodeGenTarget.h"
-#include "Record.h"
 
+#include "llvm/TableGen/Record.h"
 #include "llvm/MC/EDInstInfo.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"

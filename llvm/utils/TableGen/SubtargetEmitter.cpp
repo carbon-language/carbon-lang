@@ -13,7 +13,7 @@
 
 #include "SubtargetEmitter.h"
 #include "CodeGenTarget.h"
-#include "Record.h"
+#include "llvm/TableGen/Record.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Debug.h"
 #include <algorithm>

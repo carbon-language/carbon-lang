@@ -15,7 +15,7 @@
 #ifndef ASMMATCHER_EMITTER_H
 #define ASMMATCHER_EMITTER_H
 
-#include "TableGenBackend.h"
+#include "llvm/TableGen/TableGenBackend.h"
 #include <cassert>
 
 namespace llvm {

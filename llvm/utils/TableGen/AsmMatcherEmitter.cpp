@@ -98,8 +98,6 @@
 
 #include "AsmMatcherEmitter.h"
 #include "CodeGenTarget.h"
-#include "Error.h"
-#include "Record.h"
 #include "StringMatcher.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/PointerUnion.h"
@@ -109,6 +107,8 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/TableGen/Error.h"
+#include "llvm/TableGen/Record.h"
 #include <map>
 #include <set>
 using namespace llvm;

@@ -25,7 +25,6 @@ add_llvm_utility(tblgen
   DAGISelMatcher.cpp
   DisassemblerEmitter.cpp
   EDEmitter.cpp
-  Error.cpp
   FastISelEmitter.cpp
   FixedLenDecoderEmitter.cpp
   InstrEnumEmitter.cpp
@@ -34,21 +33,16 @@ add_llvm_utility(tblgen
   NeonEmitter.cpp
   OptParserEmitter.cpp
   PseudoLoweringEmitter.cpp
-  Record.cpp
   RegisterInfoEmitter.cpp
   SetTheory.cpp
   StringMatcher.cpp
   SubtargetEmitter.cpp
-  TGLexer.cpp
-  TGParser.cpp
   TGValueTypes.cpp
   TableGen.cpp
-  TableGenBackend.cpp
   X86DisassemblerTables.cpp
   X86RecognizableInstr.cpp
   )
-
-target_link_libraries(tblgen LLVMSupport)
+target_link_libraries(tblgen LLVMSupport LLVMTableGen)
 if( MINGW )
   target_link_libraries(tblgen imagehlp psapi)
   if(CMAKE_SIZEOF_VOID_P MATCHES "8")

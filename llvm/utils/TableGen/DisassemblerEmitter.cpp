@@ -9,12 +9,12 @@
 
 #include "DisassemblerEmitter.h"
 #include "CodeGenTarget.h"
-#include "Error.h"
-#include "Record.h"
 #include "X86DisassemblerTables.h"
 #include "X86RecognizableInstr.h"
 #include "ARMDecoderEmitter.h"
 #include "FixedLenDecoderEmitter.h"
+#include "llvm/TableGen/Error.h"
+#include "llvm/TableGen/Record.h"
 
 using namespace llvm;
 using namespace llvm::X86Disassembler;

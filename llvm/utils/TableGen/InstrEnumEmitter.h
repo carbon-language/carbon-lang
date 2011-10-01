@@ -15,7 +15,7 @@
 #ifndef INSTRENUM_EMITTER_H
 #define INSTRENUM_EMITTER_H
 
-#include "TableGenBackend.h"
+#include "llvm/TableGen/TableGenBackend.h"
 
 namespace llvm {
 

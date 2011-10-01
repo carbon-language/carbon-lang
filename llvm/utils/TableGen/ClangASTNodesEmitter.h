@@ -14,8 +14,8 @@
 #ifndef CLANGAST_EMITTER_H
 #define CLANGAST_EMITTER_H
 
-#include "TableGenBackend.h"
-#include "Record.h"
+#include "llvm/TableGen/TableGenBackend.h"
+#include "llvm/TableGen/Record.h"
 #include <string>
 #include <cctype>
 #include <map>

@@ -14,13 +14,13 @@
 
 #include "AsmWriterEmitter.h"
 #include "AsmWriterInst.h"
-#include "Error.h"
 #include "CodeGenTarget.h"
-#include "Record.h"
 #include "StringToOffsetTable.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/TableGen/Error.h"
+#include "llvm/TableGen/Record.h"
 #include <algorithm>
 using namespace llvm;
 

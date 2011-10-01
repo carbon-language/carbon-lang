@@ -18,8 +18,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "FastISelEmitter.h"
-#include "Error.h"
-#include "Record.h"
+#include "llvm/TableGen/Error.h"
+#include "llvm/TableGen/Record.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/VectorExtras.h"
 #include "llvm/Support/Debug.h"

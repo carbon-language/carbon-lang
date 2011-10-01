@@ -1,5 +1,4 @@
-
-//===- Record.h - Classes to represent Table Records ------------*- C++ -*-===//
+//===- llvm/TableGen/Record.h - Classes for Table Records -------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -13,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef RECORD_H
-#define RECORD_H
+#ifndef LLVM_TABLEGEN_RECORD_H
+#define LLVM_TABLEGEN_RECORD_H
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/FoldingSet.h"

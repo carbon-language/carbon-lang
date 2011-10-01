@@ -14,7 +14,7 @@
 
 #include "InstrInfoEmitter.h"
 #include "CodeGenTarget.h"
-#include "Record.h"
+#include "llvm/TableGen/Record.h"
 #include "llvm/ADT/StringExtras.h"
 #include <algorithm>
 using namespace llvm;

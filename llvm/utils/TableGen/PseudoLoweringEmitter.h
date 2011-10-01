@@ -12,7 +12,7 @@
 
 #include "CodeGenInstruction.h"
 #include "CodeGenTarget.h"
-#include "TableGenBackend.h"
+#include "llvm/TableGen/TableGenBackend.h"
 #include "llvm/ADT/IndexedMap.h"
 #include "llvm/ADT/SmallVector.h"
 

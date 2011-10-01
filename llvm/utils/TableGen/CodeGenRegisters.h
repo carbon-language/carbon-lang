@@ -15,8 +15,8 @@
 #ifndef CODEGEN_REGISTERS_H
 #define CODEGEN_REGISTERS_H
 
-#include "Record.h"
 #include "SetTheory.h"
+#include "llvm/TableGen/Record.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/BitVector.h"

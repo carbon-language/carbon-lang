@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Record.h"
-#include "Error.h"
+#include "llvm/TableGen/Record.h"
+#include "llvm/TableGen/Error.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"

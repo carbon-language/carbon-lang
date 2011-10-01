@@ -16,8 +16,8 @@
 #define FixedLenDECODEREMITTER_H
 
 #include "CodeGenTarget.h"
-#include "TableGenBackend.h"
 
+#include "llvm/TableGen/TableGenBackend.h"
 #include "llvm/Support/DataTypes.h"
 
 namespace llvm {

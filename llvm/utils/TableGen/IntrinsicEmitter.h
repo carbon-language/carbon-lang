@@ -15,7 +15,7 @@
 #define INTRINSIC_EMITTER_H
 
 #include "CodeGenIntrinsics.h"
-#include "TableGenBackend.h"
+#include "llvm/TableGen/TableGenBackend.h"
 
 namespace llvm {
   class IntrinsicEmitter : public TableGenBackend {

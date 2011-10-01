@@ -16,7 +16,7 @@
 #include "RegisterInfoEmitter.h"
 #include "CodeGenTarget.h"
 #include "CodeGenRegisters.h"
-#include "Record.h"
+#include "llvm/TableGen/Record.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/STLExtras.h"

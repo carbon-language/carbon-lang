@@ -14,7 +14,7 @@
 
 #include "CodeGenRegisters.h"
 #include "CodeGenTarget.h"
-#include "Error.h"
+#include "llvm/TableGen/Error.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"

@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangDiagnosticsEmitter.h"
-#include "Record.h"
+#include "llvm/TableGen/Record.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/ADT/DenseSet.h"

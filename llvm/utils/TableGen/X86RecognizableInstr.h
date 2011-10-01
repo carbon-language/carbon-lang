@@ -20,8 +20,8 @@
 #include "X86DisassemblerTables.h"
 
 #include "CodeGenTarget.h"
-#include "Record.h"
 
+#include "llvm/TableGen/Record.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/ADT/SmallVector.h"
 

@@ -15,9 +15,8 @@
 #ifndef ARMDECODEREMITTER_H
 #define ARMDECODEREMITTER_H
 
-#include "TableGenBackend.h"
-
 #include "llvm/Support/DataTypes.h"
+#include "llvm/TableGen/TableGenBackend.h"
 
 namespace llvm {
 

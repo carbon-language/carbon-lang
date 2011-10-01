@@ -195,6 +195,7 @@ endif()
 
 # Put this before tblgen. Else we have a circular dependence.
 add_subdirectory(lib/Support)
+add_subdirectory(lib/TableGen)
 
 set(LLVM_TABLEGEN "tblgen" CACHE
   STRING "Native TableGen executable. Saves building one when cross-compiling.")

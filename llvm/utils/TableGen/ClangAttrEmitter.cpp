@@ -12,8 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangAttrEmitter.h"
-#include "Record.h"
 #include "llvm/ADT/StringSwitch.h"
+#include "llvm/TableGen/Record.h"
 #include <algorithm>
 #include <cctype>
 

@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "OptParserEmitter.h"
-#include "Record.h"
+#include "llvm/TableGen/Record.h"
 #include "llvm/ADT/STLExtras.h"
 using namespace llvm;
 

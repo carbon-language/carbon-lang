@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangSACheckersEmitter.h"
-#include "Record.h"
+#include "llvm/TableGen/Record.h"
 #include "llvm/ADT/DenseSet.h"
 #include <map>
 #include <string>

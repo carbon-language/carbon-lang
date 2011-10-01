@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "TableGenBackend.h"
-#include "Record.h"
+#include "llvm/TableGen/TableGenBackend.h"
+#include "llvm/TableGen/Record.h"
 using namespace llvm;
 
 void TableGenBackend::EmitSourceFileHeader(const std::string &Desc,

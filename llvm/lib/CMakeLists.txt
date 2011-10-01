@@ -1,4 +1,4 @@
-# `Support' library is added on the top-level CMakeLists.txt
+# `Support' and `TableGen' libraries are added on the top-level CMakeLists.txt
 
 add_subdirectory(VMCore)
 add_subdirectory(CodeGen)

@@ -16,7 +16,7 @@
 #ifndef REGISTER_INFO_EMITTER_H
 #define REGISTER_INFO_EMITTER_H
 
-#include "TableGenBackend.h"
+#include "llvm/TableGen/TableGenBackend.h"
 #include <vector>
 
 namespace llvm {

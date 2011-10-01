@@ -17,7 +17,7 @@
 #include "X86DisassemblerShared.h"
 #include "X86DisassemblerTables.h"
 
-#include "TableGenBackend.h"
+#include "llvm/TableGen/TableGenBackend.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"

@@ -10,7 +10,7 @@
 #ifndef UTILS_TABLEGEN_OPTPARSEREMITTER_H
 #define UTILS_TABLEGEN_OPTPARSEREMITTER_H
 
-#include "TableGenBackend.h"
+#include "llvm/TableGen/TableGenBackend.h"
 
 namespace llvm {
   /// OptParserEmitter - This tablegen backend takes an input .td file

@@ -13,7 +13,7 @@
 
 #include "DAGISelEmitter.h"
 #include "DAGISelMatcher.h"
-#include "Record.h"
+#include "llvm/TableGen/Record.h"
 #include "llvm/Support/Debug.h"
 using namespace llvm;
 

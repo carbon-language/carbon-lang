@@ -1,4 +1,4 @@
-//===- TableGenBackend.h - Base class for TableGen Backends -----*- C++ -*-===//
+//===- llvm/TableGen/TableGenBackend.h - Backend base class -----*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef TABLEGENBACKEND_H
-#define TABLEGENBACKEND_H
+#ifndef LLVM_TABLEGEN_TABLEGENBACKEND_H
+#define LLVM_TABLEGEN_TABLEGENBACKEND_H
 
 #include "llvm/Support/raw_ostream.h"
 #include <string>

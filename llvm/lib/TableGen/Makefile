@@ -1,4 +1,4 @@
-##===- utils/TableGen/Makefile -----------------------------*- Makefile -*-===##
+##===- lib/TableGen/Makefile -------------------------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -8,13 +8,11 @@
 ##===----------------------------------------------------------------------===##
 
 LEVEL = ../..
-TOOLNAME = tblgen
-USEDLIBS = LLVMTableGen.a LLVMSupport.a
-REQUIRES_EH := 1
-REQUIRES_RTTI := 1
+LIBRARYNAME = LLVMTableGen
+BUILD_ARCHIVE = 1
 
-# This tool has no plugins, optimize startup time.
-TOOL_NO_EXPORTS = 1
+## FIXME: This only requires RTTI because tblgen uses it.  Fix that.
+REQUIRES_RTTI = 1
+REQUIRES_EH = 1
 
 include $(LEVEL)/Makefile.common
-

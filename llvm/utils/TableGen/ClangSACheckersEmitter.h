@@ -14,7 +14,7 @@
 #ifndef CLANGSACHECKERS_EMITTER_H
 #define CLANGSACHECKERS_EMITTER_H
 
-#include "TableGenBackend.h"
+#include "llvm/TableGen/TableGenBackend.h"
 
 namespace llvm {
 

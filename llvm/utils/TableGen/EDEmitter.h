@@ -16,7 +16,7 @@
 #ifndef SEMANTIC_INFO_EMITTER_H
 #define SEMANTIC_INFO_EMITTER_H
 
-#include "TableGenBackend.h"
+#include "llvm/TableGen/TableGenBackend.h"
 
 namespace llvm {
   

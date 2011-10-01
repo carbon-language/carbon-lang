@@ -14,8 +14,8 @@
 #ifndef FASTISEL_EMITTER_H
 #define FASTISEL_EMITTER_H
 
-#include "TableGenBackend.h"
 #include "CodeGenDAGPatterns.h"
+#include "llvm/TableGen/TableGenBackend.h"
 
 namespace llvm {
 
