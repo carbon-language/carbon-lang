@@ -736,6 +736,7 @@ public:
   const IdentifierInfo *getSetterName() const { return SetterName; }
   IdentifierInfo *getSetterName() { return SetterName; }
   void setSetterName(IdentifierInfo *name) { SetterName = name; }
+
 private:
   // FIXME: These two are unrelated and mutially exclusive. So perhaps
   // we can put them in a union to reflect their mutual exclusiveness
@@ -1368,7 +1369,8 @@ public:
   enum TheContext {
     FileContext,         // File scope declaration.
     PrototypeContext,    // Within a function prototype.
-    ObjCPrototypeContext,// Within a method prototype.
+    ObjCResultContext,   // An ObjC method result type.
+    ObjCParameterContext,// An ObjC method parameter type.
     KNRTypeListContext,  // K&R type definition list for formals.
     TypeNameContext,     // Abstract declarator for types.
     MemberContext,       // Struct/Union field.
@@ -1466,7 +1468,9 @@ public:
   TheContext getContext() const { return Context; }
 
   bool isPrototypeContext() const {
-    return (Context == PrototypeContext || Context == ObjCPrototypeContext);
+    return (Context == PrototypeContext ||
+            Context == ObjCParameterContext ||
+            Context == ObjCResultContext);
   }
 
   /// getSourceRange - Get the source range that spans this declarator.
@@ -1526,7 +1530,8 @@ public:
     case AliasDeclContext:
     case AliasTemplateContext:
     case PrototypeContext:
-    case ObjCPrototypeContext:
+    case ObjCParameterContext:
+    case ObjCResultContext:
     case TemplateParamContext:
     case CXXNewContext:
     case CXXCatchContext:
@@ -1559,7 +1564,8 @@ public:
     case CXXNewContext:
     case AliasDeclContext:
     case AliasTemplateContext:
-    case ObjCPrototypeContext:
+    case ObjCParameterContext:
+    case ObjCResultContext:
     case BlockLiteralContext:
     case TemplateTypeArgContext:
       return false;
@@ -1582,7 +1588,8 @@ public:
     case MemberContext:
     case ConditionContext:
     case PrototypeContext:
-    case ObjCPrototypeContext:
+    case ObjCParameterContext:
+    case ObjCResultContext:
     case TemplateParamContext:
     case CXXCatchContext:
     case ObjCCatchContext:

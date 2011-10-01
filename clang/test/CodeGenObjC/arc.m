@@ -1912,3 +1912,27 @@ void test64b(void) {
 // CHECK:    define internal void @"\01-[Test65 setNblock:]"(
 // CHECK:    call void @objc_setProperty(i8* {{%.*}}, i8* {{%.*}}, i64 {{%.*}}, i8* {{%.*}}, i1 zeroext false, i1 zeroext true)
 @end
+
+// Verify that we successfully parse and preserve this attribute in
+// this position.
+@interface Test66
+- (void) consume: (id __attribute__((ns_consumed))) ptr;
+@end
+void test66(void) {
+  extern Test66 *test66_receiver(void);
+  extern id test66_arg(void);
+  [test66_receiver() consume: test66_arg()];
+}
+// CHECK:    define void @test66()
+// CHECK:      [[T0:%.*]] = call [[TEST66:%.*]]* @test66_receiver()
+// CHECK-NEXT: [[T1:%.*]] = bitcast [[TEST66]]* [[T0]] to i8*
+// CHECK-NEXT: [[T2:%.*]] = call i8* @objc_retainAutoreleasedReturnValue(i8* [[T1]])
+// CHECK-NEXT: [[T3:%.*]] = bitcast i8* [[T2]] to [[TEST66]]*
+// CHECK-NEXT: [[T4:%.*]] = call i8* @test66_arg()
+// CHECK-NEXT: [[T5:%.*]] = call i8* @objc_retainAutoreleasedReturnValue(i8* [[T4]])
+// CHECK-NEXT: [[T6:%.*]] = load i8** @"\01L_OBJC_SELECTOR_REFERENCES
+// CHECK-NEXT: [[T7:%.*]] = bitcast [[TEST66]]* [[T3]] to i8*
+// CHECK-NEXT: call void bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to void (i8*, i8*, i8*)*)(i8* [[T7]], i8* [[T6]], i8* [[T5]])
+// CHECK-NEXT: [[T8:%.*]] = bitcast [[TEST66]]* [[T3]] to i8*
+// CHECK-NEXT: call void @objc_release(i8* [[T8]])
+// CHECK-NEXT: ret void

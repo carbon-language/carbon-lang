@@ -33,12 +33,10 @@ using namespace clang;
 /// Called type-id in C++.
 TypeResult Parser::ParseTypeName(SourceRange *Range,
                                  Declarator::TheContext Context,
-                                 ObjCDeclSpec *objcQuals,
                                  AccessSpecifier AS,
                                  Decl **OwnedType) {
   // Parse the common declaration-specifiers piece.
   DeclSpec DS(AttrFactory);
-  DS.setObjCQualifiers(objcQuals);
   ParseSpecifierQualifierList(DS, AS);
   if (OwnedType)
     *OwnedType = DS.isTypeSpecOwned() ? DS.getRepAsDecl() : 0;

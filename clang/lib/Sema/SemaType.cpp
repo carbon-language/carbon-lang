@@ -1752,7 +1752,8 @@ static QualType GetDeclSpecTypeForDeclarator(TypeProcessingState &state,
     case Declarator::KNRTypeListContext:
       llvm_unreachable("K&R type lists aren't allowed in C++");
       break;
-    case Declarator::ObjCPrototypeContext:
+    case Declarator::ObjCParameterContext:
+    case Declarator::ObjCResultContext:
     case Declarator::PrototypeContext:
       Error = 0; // Function prototype
       break;
@@ -1861,7 +1862,8 @@ static QualType GetDeclSpecTypeForDeclarator(TypeProcessingState &state,
         << SemaRef.Context.getTypeDeclType(OwnedTagDecl);
       break;
     case Declarator::PrototypeContext:
-    case Declarator::ObjCPrototypeContext:
+    case Declarator::ObjCParameterContext:
+    case Declarator::ObjCResultContext:
     case Declarator::KNRTypeListContext:
       // C++ [dcl.fct]p6:
       //   Types shall not be defined in return or parameter types.
@@ -2482,7 +2484,8 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
     
     case Declarator::FileContext:
     case Declarator::KNRTypeListContext:
-    case Declarator::ObjCPrototypeContext: // FIXME: special diagnostic here?
+    case Declarator::ObjCParameterContext:  // FIXME: special diagnostic here?
+    case Declarator::ObjCResultContext:     // FIXME: special diagnostic here?
     case Declarator::TypeNameContext:
     case Declarator::CXXNewContext:
     case Declarator::AliasDeclContext:
@@ -3065,7 +3068,10 @@ TypeResult Sema::ActOnTypeName(Scope *S, Declarator &D) {
     return true;
 
   // Make sure there are no unused decl attributes on the declarator.
-  checkUnusedDeclAttributes(D);
+  // We don't want to do this for ObjC parameters because we're going
+  // to apply them to the actual parameter declaration.
+  if (D.getContext() != Declarator::ObjCParameterContext)
+    checkUnusedDeclAttributes(D);
 
   if (getLangOptions().CPlusPlus) {
     // Check that there are no default arguments (C++ only).

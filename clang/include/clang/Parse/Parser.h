@@ -1138,13 +1138,8 @@ private:
 
   bool isTokIdentifier_in() const;
 
-  /// \brief The context in which we are parsing an Objective-C type name.
-  enum ObjCTypeNameContext {
-    OTN_ResultType,
-    OTN_ParameterType
-  };
-  
-  ParsedType ParseObjCTypeName(ObjCDeclSpec &DS, ObjCTypeNameContext Context);
+  ParsedType ParseObjCTypeName(ObjCDeclSpec &DS, Declarator::TheContext Ctx,
+                               ParsedAttributes *ParamAttrs);
   void ParseObjCMethodRequirement();
   Decl *ParseObjCMethodPrototype(
             tok::ObjCKeywordKind MethodImplKind = tok::objc_not_keyword,
@@ -1508,8 +1503,8 @@ private:
 
   void ParseSpecifierQualifierList(DeclSpec &DS, AccessSpecifier AS = AS_none);
 
-  void ParseObjCTypeQualifierList(ObjCDeclSpec &DS, 
-                                  ObjCTypeNameContext Context);
+  void ParseObjCTypeQualifierList(ObjCDeclSpec &DS,
+                                  Declarator::TheContext Context);
 
   void ParseEnumSpecifier(SourceLocation TagLoc, DeclSpec &DS,
                 const ParsedTemplateInfo &TemplateInfo = ParsedTemplateInfo(),
@@ -1684,7 +1679,6 @@ private:
   TypeResult ParseTypeName(SourceRange *Range = 0,
                            Declarator::TheContext Context
                              = Declarator::TypeNameContext,
-                           ObjCDeclSpec *objcQuals = 0,
                            AccessSpecifier AS = AS_none,
                            Decl **OwnedType = 0);
   void ParseBlockId();
