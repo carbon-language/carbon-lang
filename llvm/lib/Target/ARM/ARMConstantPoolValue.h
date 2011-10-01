@@ -63,6 +63,9 @@ protected:
                        unsigned char PCAdj, ARMCP::ARMCPModifier Modifier,
                        bool AddCurrentAddress);
 
+  ARMConstantPoolValue(LLVMContext &C, unsigned id, ARMCP::ARMCPKind Kind,
+                       unsigned char PCAdj, ARMCP::ARMCPModifier Modifier,
+                       bool AddCurrentAddress);
 public:
   ARMConstantPoolValue(LLVMContext &C, const MachineBasicBlock *mbb,unsigned id,
                        ARMCP::ARMCPKind Kind = ARMCP::CPValue,
@@ -73,7 +76,7 @@ public:
                        unsigned char PCAdj = 0,
                        ARMCP::ARMCPModifier Modifier = ARMCP::no_modifier,
                        bool AddCurrentAddress = false);
-  ~ARMConstantPoolValue();
+  virtual ~ARMConstantPoolValue();
 
   const char *getSymbol() const { return S; }
   const MachineBasicBlock *getMBB() const;
@@ -164,6 +167,42 @@ public:
     return APV->isGlobalValue() || APV->isBlockAddress() || APV->isLSDA();
   }
   static bool classof(const ARMConstantPoolConstant *) { return true; }
+};
+
+/// ARMConstantPoolSymbol - ARM-specific constantpool values for external
+/// symbols.
+class ARMConstantPoolSymbol : public ARMConstantPoolValue {
+  const char *S;                // ExtSymbol being loaded.
+
+  ARMConstantPoolSymbol(LLVMContext &C, const char *s, unsigned id,
+                        unsigned char PCAdj, ARMCP::ARMCPModifier Modifier,
+                        bool AddCurrentAddress);
+
+public:
+  ~ARMConstantPoolSymbol();
+
+  static ARMConstantPoolSymbol *Create(LLVMContext &C, const char *s,
+                                       unsigned ID, unsigned char PCAdj,
+                                       ARMCP::ARMCPModifier Modifier,
+                                       bool AddCurrentAddress);
+
+  const char *getSymbol() const { return S; }
+
+  virtual int getExistingMachineCPValue(MachineConstantPool *CP,
+                                        unsigned Alignment);
+
+  virtual void addSelectionDAGCSEId(FoldingSetNodeID &ID);
+
+  /// hasSameValue - Return true if this ARM constpool value can share the same
+  /// constantpool entry as another ARM constpool value.
+  virtual bool hasSameValue(ARMConstantPoolValue *ACPV);
+
+  virtual void print(raw_ostream &O) const;
+
+  static bool classof(const ARMConstantPoolValue *ACPV) {
+    return ACPV->isExtSymbol();
+  }
+  static bool classof(const ARMConstantPoolSymbol *) { return true; }
 };
 
 } // End llvm namespace

@@ -35,6 +35,15 @@ ARMConstantPoolValue::ARMConstantPoolValue(Type *Ty, unsigned id,
     PCAdjust(PCAdj), Modifier(modifier),
     AddCurrentAddress(addCurrentAddress) {}
 
+ARMConstantPoolValue::ARMConstantPoolValue(LLVMContext &C, unsigned id,
+                                           ARMCP::ARMCPKind kind,
+                                           unsigned char PCAdj,
+                                           ARMCP::ARMCPModifier modifier,
+                                           bool addCurrentAddress)
+  : MachineConstantPoolValue((Type*)Type::getInt32Ty(C)),
+    LabelId(id), Kind(kind), PCAdjust(PCAdj), Modifier(modifier),
+    AddCurrentAddress(addCurrentAddress) {}
+
 ARMConstantPoolValue::ARMConstantPoolValue(LLVMContext &C,
                                            const MachineBasicBlock *mbb,
                                            unsigned id,
@@ -54,6 +63,10 @@ ARMConstantPoolValue::ARMConstantPoolValue(LLVMContext &C,
   : MachineConstantPoolValue((Type*)Type::getInt32Ty(C)),
     S(strdup(s)), LabelId(id), Kind(ARMCP::CPExtSymbol),
     PCAdjust(PCAdj), Modifier(Modif), AddCurrentAddress(AddCA) {}
+
+ARMConstantPoolValue::~ARMConstantPoolValue() {
+  free((void*)S);
+}
 
 const MachineBasicBlock *ARMConstantPoolValue::getMBB() const {
   return MBB;
@@ -99,10 +112,6 @@ int ARMConstantPoolValue::getExistingMachineCPValue(MachineConstantPool *CP,
   }
 
   return -1;
-}
-
-ARMConstantPoolValue::~ARMConstantPoolValue() {
-  free((void*)S);
 }
 
 void
@@ -243,5 +252,70 @@ void ARMConstantPoolConstant::addSelectionDAGCSEId(FoldingSetNodeID &ID) {
 
 void ARMConstantPoolConstant::print(raw_ostream &O) const {
   O << CVal->getName();
+  ARMConstantPoolValue::print(O);
+}
+
+//===----------------------------------------------------------------------===//
+// ARMConstantPoolSymbol
+//===----------------------------------------------------------------------===//
+
+ARMConstantPoolSymbol::ARMConstantPoolSymbol(LLVMContext &C, const char *s,
+                                             unsigned id,
+                                             unsigned char PCAdj,
+                                             ARMCP::ARMCPModifier Modifier,
+                                             bool AddCurrentAddress)
+  : ARMConstantPoolValue(C, id, ARMCP::CPExtSymbol, PCAdj, Modifier,
+                         AddCurrentAddress),
+    S(strdup(s)) {}
+
+ARMConstantPoolSymbol::~ARMConstantPoolSymbol() {
+  free((void*)S);
+}
+
+ARMConstantPoolSymbol *
+ARMConstantPoolSymbol::Create(LLVMContext &C, const char *s,
+                              unsigned ID, unsigned char PCAdj,
+                              ARMCP::ARMCPModifier Modifier,
+                              bool AddCurrentAddress) {
+  return new ARMConstantPoolSymbol(C, s, ID, PCAdj, Modifier,
+                                   AddCurrentAddress);
+}
+
+int ARMConstantPoolSymbol::getExistingMachineCPValue(MachineConstantPool *CP,
+                                                     unsigned Alignment) {
+  unsigned AlignMask = Alignment - 1;
+  const std::vector<MachineConstantPoolEntry> Constants = CP->getConstants();
+  for (unsigned i = 0, e = Constants.size(); i != e; ++i) {
+    if (Constants[i].isMachineConstantPoolEntry() &&
+        (Constants[i].getAlignment() & AlignMask) == 0) {
+      ARMConstantPoolValue *CPV =
+        (ARMConstantPoolValue *)Constants[i].Val.MachineCPVal;
+      ARMConstantPoolSymbol *APS = dyn_cast<ARMConstantPoolSymbol>(CPV);
+      if (!APS) continue;
+
+      if (APS->getLabelId() == this->getLabelId() &&
+          APS->getPCAdjustment() == this->getPCAdjustment() &&
+          CPV_streq(APS->getSymbol(), this->getSymbol()) &&
+          APS->getModifier() == this->getModifier())
+        return i;
+    }
+  }
+
+  return -1;
+}
+
+bool ARMConstantPoolSymbol::hasSameValue(ARMConstantPoolValue *ACPV) {
+  const ARMConstantPoolSymbol *ACPS = dyn_cast<ARMConstantPoolSymbol>(ACPV);
+  return ACPS && CPV_streq(ACPS->S, S) &&
+    ARMConstantPoolValue::hasSameValue(ACPV);
+}
+
+void ARMConstantPoolSymbol::addSelectionDAGCSEId(FoldingSetNodeID &ID) {
+  ID.AddPointer(S);
+  ARMConstantPoolValue::addSelectionDAGCSEId(ID);
+}
+
+void ARMConstantPoolSymbol::print(raw_ostream &O) const {
+  O << S;
   ARMConstantPoolValue::print(O);
 }
