@@ -49,22 +49,41 @@ union U4 {} constexpr u4 = {};
 enum E4 { V4 } constexpr e4 = V4;
 constexpr int; // expected-error {{constexpr can only be used in variable and function declarations}}
 // redeclaration mismatch
-constexpr int f3(); // n
-int f3(); // x
-int f4(); // n
-constexpr int f4(); // x
+constexpr int f3(); // expected-note {{previous declaration is here}}
+int f3(); // expected-error {{non-constexpr declaration of 'f3' follows constexpr declaration}}
+int f4(); // expected-note {{previous declaration is here}}
+constexpr int f4(); // expected-error {{constexpr declaration of 'f4' follows non-constexpr declaration}}
+template<typename T> constexpr T f5(T);
+template<typename T> constexpr T f5(T); // expected-note {{previous}}
+template<typename T> T f5(T); // expected-error {{non-constexpr declaration of 'f5' follows constexpr declaration}}
+template<typename T> T f6(T); // expected-note {{here}}
+template<typename T> constexpr T f6(T); // expected-error {{constexpr declaration of 'f6' follows non-constexpr declaration}}
 // destructor
 struct ConstexprDtor {
   constexpr ~ConstexprDtor() = default; // expected-error {{destructor cannot be marked constexpr}}
 };
 
 // template stuff
-template <typename T>
-constexpr T ft(T t) { return t; }
+template <typename T> constexpr T ft(T t) { return t; }
+template <typename T> T gt(T t) { return t; }
+struct S {
+  template<typename T> constexpr T f();
+  template<typename T> T g() const;
+};
 
-// specialization can differ in constepxr
-template <>
-notlit ft(notlit nl) { return nl; }
+// explicit specialization can differ in constepxr
+// FIXME: When checking the explicit specialization, we implicitly instantiate
+// the primary template then claim a constexpr mismatch.
+template <> notlit ft(notlit nl) { return nl; }
+template <> char ft(char c) { return c; } // desired-note {{previous}} unexpected-error {{follows constexpr declaration}} unexpected-note {{here}}
+template <> constexpr char ft(char nl); // desired-error {{constexpr declaration of 'ft<char>' follows non-constexpr declaration}}
+template <> constexpr int gt(int nl) { return nl; } // unexpected-error {{follows non-constexpr declaration}} unexpected-note {{here}}
+template <> notlit S::f() const { return notlit(); }
+template <> constexpr int S::g() { return 0; } // desired-note {{previous}} unexpected-error {{follows non-constexpr declaration}} unexpected-note {{here}}
+template <> int S::g() const; // desired-error {{non-constexpr declaration of 'g<int>' follows constexpr declaration}}
+// specializations can drop the 'constexpr' but not the implied 'const'.
+template <> char S::g() { return 0; } // expected-error {{no function template matches}}
+template <> double S::g() const { return 0; } // ok
 
 // FIXME: The initializer is a constant expression.
 constexpr int i3 = ft(1); // unexpected-error {{must be initialized by a constant expression}}

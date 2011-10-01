@@ -3992,6 +3992,118 @@ bool Sema::RequireCompleteType(SourceLocation Loc, QualType T,
                              std::make_pair(SourceLocation(), PDiag(0)));
 }
 
+/// @brief Ensure that the type T is a literal type.
+///
+/// This routine checks whether the type @p T is a literal type. If @p T is an
+/// incomplete type, an attempt is made to complete it. If @p T is a literal
+/// type, or @p AllowIncompleteType is true and @p T is an incomplete type,
+/// returns false. Otherwise, this routine issues the diagnostic @p PD (giving
+/// it the type @p T), along with notes explaining why the type is not a
+/// literal type, and returns true.
+///
+/// @param Loc  The location in the source that the non-literal type
+/// diagnostic should refer to.
+///
+/// @param T  The type that this routine is examining for literalness.
+///
+/// @param PD The partial diagnostic that will be printed out if T is not a
+/// literal type.
+///
+/// @param AllowIncompleteType If true, an incomplete type will be considered
+/// acceptable.
+///
+/// @returns @c true if @p T is not a literal type and a diagnostic was emitted,
+/// @c false otherwise.
+bool Sema::RequireLiteralType(SourceLocation Loc, QualType T,
+                              const PartialDiagnostic &PD,
+                              bool AllowIncompleteType) {
+  assert(!T->isDependentType() && "type should not be dependent");
+
+  bool Incomplete = RequireCompleteType(Loc, T, 0);
+  if (T->isLiteralType() || (AllowIncompleteType && Incomplete))
+    return false;
+
+  if (PD.getDiagID() == 0)
+    return true;
+
+  Diag(Loc, PD) << T;
+
+  if (T->isVariableArrayType())
+    return true;
+
+  const RecordType *RT = T->getBaseElementTypeUnsafe()->getAs<RecordType>();
+  if (!RT)
+    return true;
+
+  const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
+
+  // If the class has virtual base classes, then it's not an aggregate, and
+  // cannot have any constexpr constructors, so is non-literal. This is better
+  // to diagnose than the resulting absence of constexpr constructors.
+  if (RD->getNumVBases()) {
+    Diag(RD->getLocation(), diag::note_non_literal_virtual_base)
+      << RD->isStruct() << RD->getNumVBases();
+    for (CXXRecordDecl::base_class_const_iterator I = RD->vbases_begin(),
+           E = RD->vbases_end(); I != E; ++I)
+      Diag(I->getSourceRange().getBegin(),
+           diag::note_constexpr_virtual_base_here) << I->getSourceRange();
+  } else if (!RD->isAggregate() && !RD->hasConstexprNonCopyMoveConstructor()) {
+    Diag(RD->getLocation(), diag::note_non_literal_no_constexpr_ctors) << RD;
+
+    switch (RD->getTemplateSpecializationKind()) {
+    case TSK_Undeclared:
+    case TSK_ExplicitSpecialization:
+      break;
+
+    case TSK_ImplicitInstantiation:
+    case TSK_ExplicitInstantiationDeclaration:
+    case TSK_ExplicitInstantiationDefinition:
+      // If the base template had constexpr constructors which were
+      // instantiated as non-constexpr constructors, explain why.
+      for (CXXRecordDecl::ctor_iterator I = RD->ctor_begin(),
+           E = RD->ctor_end(); I != E; ++I) {
+        if ((*I)->isCopyConstructor() || (*I)->isMoveConstructor())
+          continue;
+
+        FunctionDecl *Base = (*I)->getInstantiatedFromMemberFunction();
+        if (Base && Base->isConstexpr())
+          CheckConstexprFunctionDecl(*I, CCK_NoteNonConstexprInstantiation);
+      }
+    }
+  } else if (RD->hasNonLiteralTypeFieldsOrBases()) {
+    for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
+         E = RD->bases_end(); I != E; ++I) {
+      if (!I->getType()->isLiteralType()) {
+        Diag(I->getSourceRange().getBegin(),
+             diag::note_non_literal_base_class)
+          << RD << I->getType() << I->getSourceRange();
+        return true;
+      }
+    }
+    for (CXXRecordDecl::field_iterator I = RD->field_begin(),
+         E = RD->field_end(); I != E; ++I) {
+      if (!(*I)->getType()->isLiteralType()) {
+        Diag((*I)->getLocation(), diag::note_non_literal_field)
+          << RD << (*I) << (*I)->getType();
+        return true;
+      }
+    }
+  } else if (!RD->hasTrivialDestructor()) {
+    // All fields and bases are of literal types, so have trivial destructors.
+    // If this class's destructor is non-trivial it must be user-declared.
+    CXXDestructorDecl *Dtor = RD->getDestructor();
+    assert(Dtor && "class has literal fields and bases but no dtor?");
+    if (!Dtor)
+      return true;
+
+    Diag(Dtor->getLocation(), Dtor->isUserProvided() ?
+         diag::note_non_literal_user_provided_dtor :
+         diag::note_non_literal_nontrivial_dtor) << RD;
+  }
+
+  return true;
+}
+
 /// \brief Retrieve a version of the type 'T' that is elaborated by Keyword
 /// and qualified by the nested-name-specifier contained in SS.
 QualType Sema::getElaboratedType(ElaboratedTypeKeyword Keyword,

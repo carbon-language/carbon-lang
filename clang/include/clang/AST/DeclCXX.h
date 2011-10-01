@@ -1004,6 +1004,25 @@ public:
     return isTriviallyCopyable() && hasTrivialDefaultConstructor();
   }
 
+  // isLiteral - Whether this class is a literal type.
+  //
+  // C++0x [basic.types]p10
+  //   A class type that has all the following properties:
+  //     -- a trivial destructor
+  //     -- every constructor call and full-expression in the
+  //        brace-or-equal-intializers for non-static data members (if any) is
+  //        a constant expression.
+  //     -- it is an aggregate type or has at least one constexpr constructor or
+  //        constructor template that is not a copy or move constructor, and
+  //     -- all non-static data members and base classes of literal types
+  //
+  // We resolve DR1361 by ignoring the second bullet.
+  bool isLiteral() const {
+    return hasTrivialDestructor() &&
+           (isAggregate() || hasConstexprNonCopyMoveConstructor()) &&
+           !hasNonLiteralTypeFieldsOrBases();
+  }
+
   /// \brief If this record is an instantiation of a member class,
   /// retrieves the member class from which it was instantiated.
   ///

@@ -502,6 +502,20 @@ bool Sema::MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old) {
     }
   }
 
+  // C++0x [dcl.constexpr]p1: If any declaration of a function or function
+  // template has a constexpr specifier then all its declarations shall
+  // contain the constexpr specifier. [Note: An explicit specialization can
+  // differ from the template declaration with respect to the constexpr
+  // specifier. -- end note]
+  //
+  // FIXME: Don't reject changes in constexpr in explicit specializations.
+  if (New->isConstexpr() != Old->isConstexpr()) {
+    Diag(New->getLocation(), diag::err_constexpr_redecl_mismatch)
+      << New << New->isConstexpr();
+    Diag(Old->getLocation(), diag::note_previous_declaration);
+    Invalid = true;
+  }
+
   if (CheckEquivalentExceptionSpec(Old, New))
     Invalid = true;
 
@@ -600,6 +614,359 @@ void Sema::CheckCXXDefaultArguments(FunctionDecl *FD) {
       }
     }
   }
+}
+
+// CheckConstexprParameterTypes - Check whether a function's parameter types
+// are all literal types. If so, return true. If not, produce a suitable
+// diagnostic depending on @p CCK and return false.
+static bool CheckConstexprParameterTypes(Sema &SemaRef, const FunctionDecl *FD,
+                                         Sema::CheckConstexprKind CCK) {
+  unsigned ArgIndex = 0;
+  const FunctionProtoType *FT = FD->getType()->getAs<FunctionProtoType>();
+  for (FunctionProtoType::arg_type_iterator i = FT->arg_type_begin(),
+       e = FT->arg_type_end(); i != e; ++i, ++ArgIndex) {
+    const ParmVarDecl *PD = FD->getParamDecl(ArgIndex);
+    SourceLocation ParamLoc = PD->getLocation();
+    if (!(*i)->isDependentType() &&
+        SemaRef.RequireLiteralType(ParamLoc, *i, CCK == Sema::CCK_Declaration ?
+                            SemaRef.PDiag(diag::err_constexpr_non_literal_param)
+                                     << ArgIndex+1 << PD->getSourceRange()
+                                     << isa<CXXConstructorDecl>(FD) :
+                                   SemaRef.PDiag(),
+                                   /*AllowIncompleteType*/ true)) {
+      if (CCK == Sema::CCK_NoteNonConstexprInstantiation)
+        SemaRef.Diag(ParamLoc, diag::note_constexpr_tmpl_non_literal_param)
+          << ArgIndex+1 << PD->getSourceRange()
+          << isa<CXXConstructorDecl>(FD) << *i;
+      return false;
+    }
+  }
+  return true;
+}
+
+// CheckConstexprFunctionDecl - Check whether a function declaration satisfies
+// the requirements of a constexpr function declaration or a constexpr
+// constructor declaration. Return true if it does, false if not.
+//
+// This implements C++0x [dcl.constexpr]p3,4, as amended by N3308.
+//
+// \param CCK Specifies whether to produce diagnostics if the function does not
+// satisfy the requirements.
+bool Sema::CheckConstexprFunctionDecl(const FunctionDecl *NewFD,
+                                      CheckConstexprKind CCK) {
+  assert((CCK != CCK_NoteNonConstexprInstantiation ||
+          (NewFD->getTemplateInstantiationPattern() &&
+           NewFD->getTemplateInstantiationPattern()->isConstexpr())) &&
+         "only constexpr templates can be instantiated non-constexpr");
+
+  if (const CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(NewFD)) {
+    // C++0x [dcl.constexpr]p4:
+    //  In the definition of a constexpr constructor, each of the parameter
+    //  types shall be a literal type.
+    if (!CheckConstexprParameterTypes(*this, NewFD, CCK))
+      return false;
+
+    //  In addition, either its function-body shall be = delete or = default or
+    //  it shall satisfy the following constraints:
+    //  - the class shall not have any virtual base classes;
+    const CXXRecordDecl *RD = CD->getParent();
+    if (RD->getNumVBases()) {
+      // Note, this is still illegal if the body is = default, since the
+      // implicit body does not satisfy the requirements of a constexpr
+      // constructor. We also reject cases where the body is = delete, as
+      // required by N3308.
+      if (CCK != CCK_Instantiation) {
+        Diag(NewFD->getLocation(),
+             CCK == CCK_Declaration ? diag::err_constexpr_virtual_base
+                                    : diag::note_constexpr_tmpl_virtual_base)
+          << RD->isStruct() << RD->getNumVBases();
+        for (CXXRecordDecl::base_class_const_iterator I = RD->vbases_begin(),
+               E = RD->vbases_end(); I != E; ++I)
+          Diag(I->getSourceRange().getBegin(),
+               diag::note_constexpr_virtual_base_here) << I->getSourceRange();
+      }
+      return false;
+    }
+  } else {
+    // C++0x [dcl.constexpr]p3:
+    //  The definition of a constexpr function shall satisfy the following
+    //  constraints:
+    // - it shall not be virtual;
+    const CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(NewFD);
+    if (Method && Method->isVirtual()) {
+      if (CCK != CCK_Instantiation) {
+        Diag(NewFD->getLocation(),
+             CCK == CCK_Declaration ? diag::err_constexpr_virtual
+                                    : diag::note_constexpr_tmpl_virtual);
+
+        // If it's not obvious why this function is virtual, find an overridden
+        // function which uses the 'virtual' keyword.
+        const CXXMethodDecl *WrittenVirtual = Method;
+        while (!WrittenVirtual->isVirtualAsWritten())
+          WrittenVirtual = *WrittenVirtual->begin_overridden_methods();
+        if (WrittenVirtual != Method)
+          Diag(WrittenVirtual->getLocation(), 
+               diag::note_overridden_virtual_function);
+      }
+      return false;
+    }
+
+    // - its return type shall be a literal type;
+    QualType RT = NewFD->getResultType();
+    if (!RT->isDependentType() &&
+        RequireLiteralType(NewFD->getLocation(), RT, CCK == CCK_Declaration ?
+                           PDiag(diag::err_constexpr_non_literal_return) :
+                           PDiag(),
+                           /*AllowIncompleteType*/ true)) {
+      if (CCK == CCK_NoteNonConstexprInstantiation)
+        Diag(NewFD->getLocation(),
+             diag::note_constexpr_tmpl_non_literal_return) << RT;
+      return false;
+    }
+
+    // - each of its parameter types shall be a literal type;
+    if (!CheckConstexprParameterTypes(*this, NewFD, CCK))
+      return false;
+  }
+
+  return true;
+}
+
+/// Check the given declaration statement is legal within a constexpr function
+/// body. C++0x [dcl.constexpr]p3,p4.
+///
+/// \return true if the body is OK, false if we have diagnosed a problem.
+static bool CheckConstexprDeclStmt(Sema &SemaRef, const FunctionDecl *Dcl,
+                                   DeclStmt *DS) {
+  // C++0x [dcl.constexpr]p3 and p4:
+  //  The definition of a constexpr function(p3) or constructor(p4) [...] shall
+  //  contain only
+  for (DeclStmt::decl_iterator DclIt = DS->decl_begin(),
+         DclEnd = DS->decl_end(); DclIt != DclEnd; ++DclIt) {
+    switch ((*DclIt)->getKind()) {
+    case Decl::StaticAssert:
+    case Decl::Using:
+    case Decl::UsingShadow:
+    case Decl::UsingDirective:
+    case Decl::UnresolvedUsingTypename:
+      //   - static_assert-declarations
+      //   - using-declarations,
+      //   - using-directives,
+      continue;
+
+    case Decl::Typedef:
+    case Decl::TypeAlias: {
+      //   - typedef declarations and alias-declarations that do not define
+      //     classes or enumerations,
+      TypedefNameDecl *TN = cast<TypedefNameDecl>(*DclIt);
+      if (TN->getUnderlyingType()->isVariablyModifiedType()) {
+        // Don't allow variably-modified types in constexpr functions.
+        TypeLoc TL = TN->getTypeSourceInfo()->getTypeLoc();
+        SemaRef.Diag(TL.getBeginLoc(), diag::err_constexpr_vla)
+          << TL.getSourceRange() << TL.getType()
+          << isa<CXXConstructorDecl>(Dcl);
+        return false;
+      }
+      continue;
+    }
+
+    case Decl::Enum:
+    case Decl::CXXRecord:
+      // As an extension, we allow the declaration (but not the definition) of
+      // classes and enumerations in all declarations, not just in typedef and
+      // alias declarations.
+      if (cast<TagDecl>(*DclIt)->isThisDeclarationADefinition()) {
+        SemaRef.Diag(DS->getLocStart(), diag::err_constexpr_type_definition)
+          << isa<CXXConstructorDecl>(Dcl);
+        return false;
+      }
+      continue;
+
+    case Decl::Var:
+      SemaRef.Diag(DS->getLocStart(), diag::err_constexpr_var_declaration)
+        << isa<CXXConstructorDecl>(Dcl);
+      return false;
+
+    default:
+      SemaRef.Diag(DS->getLocStart(), diag::err_constexpr_body_invalid_stmt)
+        << isa<CXXConstructorDecl>(Dcl);
+      return false;
+    }
+  }
+
+  return true;
+}
+
+/// Check that the given field is initialized within a constexpr constructor.
+///
+/// \param Dcl The constexpr constructor being checked.
+/// \param Field The field being checked. This may be a member of an anonymous
+///        struct or union nested within the class being checked.
+/// \param Inits All declarations, including anonymous struct/union members and
+///        indirect members, for which any initialization was provided.
+/// \param Diagnosed Set to true if an error is produced.
+static void CheckConstexprCtorInitializer(Sema &SemaRef,
+                                          const FunctionDecl *Dcl,
+                                          FieldDecl *Field,
+                                          llvm::SmallSet<Decl*, 16> &Inits,
+                                          bool &Diagnosed) {
+  if (!Inits.count(Field)) {
+    if (!Diagnosed) {
+      SemaRef.Diag(Dcl->getLocation(), diag::err_constexpr_ctor_missing_init);
+      Diagnosed = true;
+    }
+    SemaRef.Diag(Field->getLocation(), diag::note_constexpr_ctor_missing_init);
+  } else if (Field->isAnonymousStructOrUnion()) {
+    const RecordDecl *RD = Field->getType()->castAs<RecordType>()->getDecl();
+    for (RecordDecl::field_iterator I = RD->field_begin(), E = RD->field_end();
+         I != E; ++I)
+      // If an anonymous union contains an anonymous struct of which any member
+      // is initialized, all members must be initialized.
+      if (!RD->isUnion() || Inits.count(*I))
+        CheckConstexprCtorInitializer(SemaRef, Dcl, *I, Inits, Diagnosed);
+  }
+}
+
+/// Check the body for the given constexpr function declaration only contains
+/// the permitted types of statement. C++11 [dcl.constexpr]p3,p4.
+///
+/// \return true if the body is OK, false if we have diagnosed a problem.
+bool Sema::CheckConstexprFunctionBody(const FunctionDecl *Dcl, Stmt *Body) {
+  if (isa<CXXTryStmt>(Body)) {
+    // C++0x [dcl.constexpr]p3:
+    //  The definition of a constexpr function shall satisfy the following
+    //  constraints: [...]
+    // - its function-body shall be = delete, = default, or a
+    //   compound-statement
+    //
+    // C++0x [dcl.constexpr]p4:
+    //  In the definition of a constexpr constructor, [...]
+    // - its function-body shall not be a function-try-block;
+    Diag(Body->getLocStart(), diag::err_constexpr_function_try_block)
+      << isa<CXXConstructorDecl>(Dcl);
+    return false;
+  }
+
+  // - its function-body shall be [...] a compound-statement that contains only
+  CompoundStmt *CompBody = cast<CompoundStmt>(Body);
+
+  llvm::SmallVector<SourceLocation, 4> ReturnStmts;
+  for (CompoundStmt::body_iterator BodyIt = CompBody->body_begin(),
+         BodyEnd = CompBody->body_end(); BodyIt != BodyEnd; ++BodyIt) {
+    switch ((*BodyIt)->getStmtClass()) {
+    case Stmt::NullStmtClass:
+      //   - null statements,
+      continue;
+
+    case Stmt::DeclStmtClass:
+      //   - static_assert-declarations
+      //   - using-declarations,
+      //   - using-directives,
+      //   - typedef declarations and alias-declarations that do not define
+      //     classes or enumerations,
+      if (!CheckConstexprDeclStmt(*this, Dcl, cast<DeclStmt>(*BodyIt)))
+        return false;
+      continue;
+
+    case Stmt::ReturnStmtClass:
+      //   - and exactly one return statement;
+      if (isa<CXXConstructorDecl>(Dcl))
+        break;
+
+      ReturnStmts.push_back((*BodyIt)->getLocStart());
+      // FIXME
+      // - every constructor call and implicit conversion used in initializing
+      //   the return value shall be one of those allowed in a constant
+      //   expression.
+      // Deal with this as part of a general check that the function can produce
+      // a constant expression (for [dcl.constexpr]p5).
+      continue;
+
+    default:
+      break;
+    }
+
+    Diag((*BodyIt)->getLocStart(), diag::err_constexpr_body_invalid_stmt)
+      << isa<CXXConstructorDecl>(Dcl);
+    return false;
+  }
+
+  if (const CXXConstructorDecl *Constructor
+        = dyn_cast<CXXConstructorDecl>(Dcl)) {
+    const CXXRecordDecl *RD = Constructor->getParent();
+    // - every non-static data member and base class sub-object shall be
+    //   initialized;
+    if (RD->isUnion()) {
+      // DR1359: Exactly one member of a union shall be initialized.
+      if (Constructor->getNumCtorInitializers() == 0) {
+        Diag(Dcl->getLocation(), diag::err_constexpr_union_ctor_no_init);
+        return false;
+      }
+    } else if (!Constructor->isDelegatingConstructor()) {
+      assert(RD->getNumVBases() == 0 && "constexpr ctor with virtual bases");
+
+      // Skip detailed checking if we have enough initializers, and we would
+      // allow at most one initializer per member.
+      bool AnyAnonStructUnionMembers = false;
+      unsigned Fields = 0;
+      for (CXXRecordDecl::field_iterator I = RD->field_begin(),
+           E = RD->field_end(); I != E; ++I, ++Fields) {
+        if ((*I)->isAnonymousStructOrUnion()) {
+          AnyAnonStructUnionMembers = true;
+          break;
+        }
+      }
+      if (AnyAnonStructUnionMembers ||
+          Constructor->getNumCtorInitializers() != RD->getNumBases() + Fields) {
+        // Check initialization of non-static data members. Base classes are
+        // always initialized so do not need to be checked. Dependent bases
+        // might not have initializers in the member initializer list.
+        llvm::SmallSet<Decl*, 16> Inits;
+        for (CXXConstructorDecl::init_const_iterator
+               I = Constructor->init_begin(), E = Constructor->init_end();
+             I != E; ++I) {
+          if (FieldDecl *FD = (*I)->getMember())
+            Inits.insert(FD);
+          else if (IndirectFieldDecl *ID = (*I)->getIndirectMember())
+            Inits.insert(ID->chain_begin(), ID->chain_end());
+        }
+
+        bool Diagnosed = false;
+        for (CXXRecordDecl::field_iterator I = RD->field_begin(),
+             E = RD->field_end(); I != E; ++I)
+          CheckConstexprCtorInitializer(*this, Dcl, *I, Inits, Diagnosed);
+        if (Diagnosed)
+          return false;
+      }
+    }
+
+    // FIXME
+    // - every constructor involved in initializing non-static data members
+    //   and base class sub-objects shall be a constexpr constructor;
+    // - every assignment-expression that is an initializer-clause appearing
+    //   directly or indirectly within a brace-or-equal-initializer for
+    //   a non-static data member that is not named by a mem-initializer-id
+    //   shall be a constant expression; and
+    // - every implicit conversion used in converting a constructor argument
+    //   to the corresponding parameter type and converting
+    //   a full-expression to the corresponding member type shall be one of
+    //   those allowed in a constant expression.
+    // Deal with these as part of a general check that the function can produce
+    // a constant expression (for [dcl.constexpr]p5).
+  } else {
+    if (ReturnStmts.empty()) {
+      Diag(Dcl->getLocation(), diag::err_constexpr_body_no_return);
+      return false;
+    }
+    if (ReturnStmts.size() > 1) {
+      Diag(ReturnStmts.back(), diag::err_constexpr_body_multiple_return);
+      for (unsigned I = 0; I < ReturnStmts.size() - 1; ++I)
+        Diag(ReturnStmts[I], diag::note_constexpr_body_previous_return);
+      return false;
+    }
+  }
+
+  return true;
 }
 
 /// isCurrentClassName - Determine whether the identifier II is the
@@ -3223,6 +3590,47 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
          M != MEnd; ++M) {
       if (!(*M)->isStatic())
         DiagnoseHiddenVirtualMethods(Record, *M);
+    }
+  }
+
+  // C++0x [dcl.constexpr]p8: A constexpr specifier for a non-static member
+  // function that is not a constructor declares that member function to be
+  // const. [...] The class of which that function is a member shall be
+  // a literal type.
+  //
+  // It's fine to diagnose constructors here too: such constructors cannot
+  // produce a constant expression, so are ill-formed (no diagnostic required).
+  //
+  // If the class has virtual bases, any constexpr members will already have
+  // been diagnosed by the checks performed on the member declaration, so
+  // suppress this (less useful) diagnostic.
+  if (LangOpts.CPlusPlus0x && !Record->isDependentType() &&
+      !Record->isLiteral() && !Record->getNumVBases()) {
+    for (CXXRecordDecl::method_iterator M = Record->method_begin(),
+                                     MEnd = Record->method_end();
+         M != MEnd; ++M) {
+      if ((*M)->isConstexpr()) {
+        switch (Record->getTemplateSpecializationKind()) {
+        case TSK_ImplicitInstantiation:
+        case TSK_ExplicitInstantiationDeclaration:
+        case TSK_ExplicitInstantiationDefinition:
+          // If a template instantiates to a non-literal type, but its members
+          // instantiate to constexpr functions, the template is technically
+          // ill-formed, but we allow it for sanity. Such members are treated as
+          // non-constexpr.
+          (*M)->setConstexpr(false);
+          continue;
+
+        case TSK_Undeclared:
+        case TSK_ExplicitSpecialization:
+          RequireLiteralType((*M)->getLocation(), Context.getRecordType(Record),
+                             PDiag(diag::err_constexpr_method_non_literal));
+          break;
+        }
+
+        // Only produce one error per class.
+        break;
+      }
     }
   }
 

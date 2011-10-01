@@ -842,6 +842,9 @@ public:
                                std::pair<SourceLocation,
                                          PartialDiagnostic> Note);
 
+  bool RequireLiteralType(SourceLocation Loc, QualType T,
+                          const PartialDiagnostic &PD,
+                          bool AllowIncompleteType = false);
 
   QualType getElaboratedType(ElaboratedTypeKeyword Keyword,
                              const CXXScopeSpec &SS, QualType T);
@@ -1010,6 +1013,23 @@ public:
                                      bool &Redeclaration,
                                      bool &AddToScope);
   bool AddOverriddenMethods(CXXRecordDecl *DC, CXXMethodDecl *MD);
+
+  /// \brief The kind of constexpr declaration checking we are performing.
+  ///
+  /// The kind affects which diagnostics (if any) are emitted if the function
+  /// does not satisfy the requirements of a constexpr function declaration.
+  enum CheckConstexprKind {
+    /// \brief Check a constexpr function declaration, and produce errors if it
+    /// does not satisfy the requirements.
+    CCK_Declaration,
+    /// \brief Check a constexpr function template instantiation.
+    CCK_Instantiation,
+    /// \brief Produce notes explaining why an instantiation was not constexpr.
+    CCK_NoteNonConstexprInstantiation
+  };
+  bool CheckConstexprFunctionDecl(const FunctionDecl *FD, CheckConstexprKind CCK);
+  bool CheckConstexprFunctionBody(const FunctionDecl *FD, Stmt *Body);
+
   void DiagnoseHiddenVirtualMethods(CXXRecordDecl *DC, CXXMethodDecl *MD);
   void CheckFunctionDeclaration(Scope *S,
                                 FunctionDecl *NewFD, LookupResult &Previous,

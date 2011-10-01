@@ -1193,6 +1193,69 @@ def err_constexpr_initialized_static_member : Error<
   "definition of initialized static data member %0 cannot be marked constexpr">;
 def err_constexpr_var_requires_const_init : Error<
   "constexpr variable %0 must be initialized by a constant expression">;
+def err_constexpr_redecl_mismatch : Error<
+  "%select{non-constexpr declaration of %0 follows constexpr declaration"
+  "|constexpr declaration of %0 follows non-constexpr declaration}1">;
+def note_constexpr_redecl_mismatch : Note<
+  "previous declaration was %select{not |}0marked constexpr">;
+def err_constexpr_virtual : Error<"virtual function cannot be constexpr">;
+def note_constexpr_tmpl_virtual : Note<"function template instantiation is not "
+  "constexpr because it is virtual">;
+def err_constexpr_virtual_base : Error<"constexpr constructor not allowed in "
+  "%select{class|struct}0 with virtual base %plural{1:class|:classes}1">;
+def note_constexpr_tmpl_virtual_base : Note<"constructor template instantiation is "
+  "not constexpr because %select{class|struct}0 has virtual base "
+  "%plural{1:class|:classes}1">;
+def note_non_literal_virtual_base : Note<"%select{class|struct}0 with virtual "
+  "base %plural{1:class|:classes}1 is not a literal type">;
+def note_constexpr_virtual_base_here : Note<"virtual base class declared here">;
+def err_constexpr_non_literal_return : Error<
+  "constexpr function's return type %0 is not a literal type">;
+def note_constexpr_tmpl_non_literal_return : Note<
+  "function template instantiation is not constexpr because return type %0 is "
+  "not a literal type">;
+def err_constexpr_non_literal_param : Error<
+  "constexpr %select{function|constructor}1's %ordinal0 parameter type %2 is "
+  "not a literal type">;
+def note_constexpr_tmpl_non_literal_param : Note<
+  "%select{function|constructor}1 template instantiation is not constexpr "
+  "because %ordinal0 parameter type %2 is not a literal type">;
+def err_constexpr_body_invalid_stmt : Error<
+  "statement not allowed in constexpr %select{function|constructor}0">;
+def err_constexpr_type_definition : Error<
+  "types cannot be defined in a constexpr %select{function|constructor}0">;
+def err_constexpr_vla : Error<
+  "variably-modified type %0 cannot be used in a constexpr "
+  "%select{function|constructor}1">;
+def err_constexpr_var_declaration : Error<
+  "variables cannot be declared in a constexpr %select{function|constructor}0">;
+def err_constexpr_body_no_return : Error<
+  "no return statement in constexpr function">;
+def err_constexpr_body_multiple_return : Error<
+  "multiple return statements in constexpr function">;
+def note_constexpr_body_previous_return : Note<
+  "previous return statement is here">;
+def err_constexpr_function_try_block : Error<
+  "function try block not allowed in constexpr %select{function|constructor}0">;
+def err_constexpr_union_ctor_no_init : Error<
+  "constexpr union constructor does not initialize any member">;
+def err_constexpr_ctor_missing_init : Error<
+  "constexpr constructor must initialize all members">;
+def note_constexpr_ctor_missing_init : Note<
+  "member not initialized by constructor">;
+def err_constexpr_method_non_literal : Error<
+  "non-literal type %0 cannot have constexpr members">;
+def note_non_literal_no_constexpr_ctors : Note<
+  "%0 is not literal because it is not an aggregate and has no constexpr "
+  "constructors other than copy or move constructors">;
+def note_non_literal_base_class : Note<
+  "%0 is not literal because it has base class %1 of non-literal type">;
+def note_non_literal_field : Note<
+  "%0 is not literal because it has data member %1 of non-literal type %2">;
+def note_non_literal_user_provided_dtor : Note<
+  "%0 is not literal because it has a user-provided destructor">;
+def note_non_literal_nontrivial_dtor : Note<
+  "%0 is not literal because it has a non-trivial destructor">;
  
 // Objective-C++
 def err_objc_decls_may_only_appear_in_global_scope : Error<

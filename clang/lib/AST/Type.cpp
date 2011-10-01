@@ -1134,29 +1134,19 @@ bool Type::isLiteralType() const {
     return true;
   //    -- a class type that has all of the following properties:
   if (const RecordType *RT = BaseTy->getAs<RecordType>()) {
+    //    -- a trivial destructor,
+    //    -- every constructor call and full-expression in the
+    //       brace-or-equal-initializers for non-static data members (if any)
+    //       is a constant expression,
+    //    -- it is an aggregate type or has at least one constexpr
+    //       constructor or constructor template that is not a copy or move
+    //       constructor, and
+    //    -- all non-static data members and base classes of literal types
+    //
+    // We resolve DR1361 by ignoring the second bullet.
     if (const CXXRecordDecl *ClassDecl =
-        dyn_cast<CXXRecordDecl>(RT->getDecl())) {
-      //    -- a trivial destructor,
-      if (!ClassDecl->hasTrivialDestructor())
-        return false;
-
-      //    -- every constructor call and full-expression in the
-      //       brace-or-equal-initializers for non-static data members (if any)
-      //       is a constant expression,
-      // We deliberately do not implement this restriction. It isn't necessary
-      // and doesn't make any sense.
-
-      //    -- it is an aggregate type or has at least one constexpr
-      //       constructor or constructor template that is not a copy or move
-      //       constructor, and
-      if (!ClassDecl->isAggregate() &&
-          !ClassDecl->hasConstexprNonCopyMoveConstructor())
-        return false;
-
-      //    -- all non-static data members and base classes of literal types
-      if (ClassDecl->hasNonLiteralTypeFieldsOrBases())
-        return false;
-    }
+        dyn_cast<CXXRecordDecl>(RT->getDecl()))
+      return ClassDecl->isLiteral();
 
     return true;
   }

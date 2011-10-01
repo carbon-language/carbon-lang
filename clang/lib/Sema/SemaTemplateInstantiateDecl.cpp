@@ -1067,15 +1067,12 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
                                          TemplateArgs);
   }
 
-  bool isConstexpr = D->isConstexpr();
-  // FIXME: check whether the instantiation produces a constexpr function.
-
   FunctionDecl *Function =
       FunctionDecl::Create(SemaRef.Context, DC, D->getInnerLocStart(),
                            D->getLocation(), D->getDeclName(), T, TInfo,
                            D->getStorageClass(), D->getStorageClassAsWritten(),
                            D->isInlineSpecified(), D->hasWrittenPrototype(),
-                           isConstexpr);
+                           /*isConstexpr*/ false);
 
   if (QualifierLoc)
     Function->setQualifierInfo(QualifierLoc);
@@ -1388,9 +1385,6 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
     if (!DC) return 0;
   }
 
-  bool isConstexpr = D->isConstexpr();
-  // FIXME: check whether the instantiation produces a constexpr function.
-
   // Build the instantiated method declaration.
   CXXRecordDecl *Record = cast<CXXRecordDecl>(DC);
   CXXMethodDecl *Method = 0;
@@ -1403,7 +1397,7 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
                                         StartLoc, NameInfo, T, TInfo,
                                         Constructor->isExplicit(),
                                         Constructor->isInlineSpecified(),
-                                        false, isConstexpr);
+                                        false, /*isConstexpr*/ false);
   } else if (CXXDestructorDecl *Destructor = dyn_cast<CXXDestructorDecl>(D)) {
     Method = CXXDestructorDecl::Create(SemaRef.Context, Record,
                                        StartLoc, NameInfo, T, TInfo,
@@ -1414,14 +1408,15 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
                                        StartLoc, NameInfo, T, TInfo,
                                        Conversion->isInlineSpecified(),
                                        Conversion->isExplicit(),
-                                       isConstexpr, Conversion->getLocEnd());
+                                       /*isConstexpr*/ false,
+                                       Conversion->getLocEnd());
   } else {
     Method = CXXMethodDecl::Create(SemaRef.Context, Record,
                                    StartLoc, NameInfo, T, TInfo,
                                    D->isStatic(),
                                    D->getStorageClassAsWritten(),
                                    D->isInlineSpecified(),
-                                   isConstexpr, D->getLocEnd());
+                                   /*isConstexpr*/ false, D->getLocEnd());
   }
 
   if (QualifierLoc)
@@ -2311,6 +2306,13 @@ TemplateDeclInstantiator::InitFunctionInstantiation(FunctionDecl *New,
                                                  NewProto->getNumArgs(),
                                                  EPI));
   }
+
+  // C++0x [dcl.constexpr]p6: If the instantiated template specialization of
+  // a constexpr function template satisfies the requirements for a constexpr
+  // function, then it is a constexpr function.
+  if (Tmpl->isConstexpr() &&
+      SemaRef.CheckConstexprFunctionDecl(New, Sema::CCK_Instantiation))
+    New->setConstexpr(true);
 
   const FunctionDecl* Definition = Tmpl;
 

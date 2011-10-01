@@ -4770,15 +4770,11 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
       // are implicitly inline.
       NewFD->setImplicitlyInline();
 
-      // FIXME: If this is a redeclaration, check the original declaration was
-      // marked constepr.
-
       // C++0x [dcl.constexpr]p3: functions declared constexpr are required to
       // be either constructors or to return a literal type. Therefore,
       // destructors cannot be declared constexpr.
       if (isa<CXXDestructorDecl>(NewFD))
-        Diag(D.getDeclSpec().getConstexprSpecLoc(),
-             diag::err_constexpr_dtor);
+        Diag(D.getDeclSpec().getConstexprSpecLoc(), diag::err_constexpr_dtor);
     }
 
     // If __module_private__ was specified, mark the function accordingly.
@@ -5049,6 +5045,10 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
     assert((NewFD->isInvalidDecl() || !Redeclaration ||
             Previous.getResultKind() != LookupResult::FoundOverloaded) &&
            "previous declaration set still overloaded");
+
+    if (NewFD->isConstexpr() && !NewFD->isInvalidDecl() &&
+        !CheckConstexprFunctionDecl(NewFD, CCK_Declaration))
+      NewFD->setInvalidDecl();
 
     NamedDecl *PrincipalDecl = (FunctionTemplate
                                 ? cast<NamedDecl>(FunctionTemplate)
@@ -6962,6 +6962,10 @@ Decl *Sema::ActOnFinishFunctionBody(Decl *dcl, Stmt *Body,
       // enabled.
       ActivePolicy = &WP;
     }
+
+    if (FD && FD->isConstexpr() && !FD->isInvalidDecl() &&
+        !CheckConstexprFunctionBody(FD, Body))
+      FD->setInvalidDecl();
 
     assert(ExprTemporaries.empty() && "Leftover temporaries in function");
     assert(!ExprNeedsCleanups && "Unaccounted cleanups in function");
