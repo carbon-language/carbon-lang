@@ -29,8 +29,6 @@ CFStringRef SomeOtherFunc() __attribute__((cf_returns_retained));
 id MMM()
 {
   id obj = (id)((CFStringRef) __builtin___CFStringMakeConstantString ("" "Some CF String" ""));
-  if (obj)
-    return (id) SomeOtherFunc();
   return 0;
 }
 
