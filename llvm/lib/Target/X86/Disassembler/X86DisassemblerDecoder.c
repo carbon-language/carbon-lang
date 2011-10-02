@@ -58,8 +58,8 @@ static InstructionContext contextForAttrs(uint8_t attrMask) {
  * @return            - TRUE if the ModR/M byte is required, FALSE otherwise.
  */
 static int modRMRequired(OpcodeType type,
-                                InstructionContext insnContext,
-                                uint8_t opcode) {
+                         InstructionContext insnContext,
+                         uint8_t opcode) {
   const struct ContextDecision* decision = 0;
   
   switch (type) {
@@ -883,6 +883,43 @@ static int getID(struct InternalInstruction* insn) {
       insn->instructionID = instructionID;
       insn->spec = spec;
     }
+    return 0;
+  }
+
+  if (insn->opcodeType == ONEBYTE && insn->opcode == 0x90 &&
+      insn->rexPrefix & 0x01) {
+    /*
+     * NOOP shouldn't decode as NOOP if REX.b is set. Instead
+     * it should decode as XCHG %r8, %eax.
+     */
+
+    const struct InstructionSpecifier *spec;
+    uint16_t instructionIDWithNewOpcode;
+    const struct InstructionSpecifier *specWithNewOpcode;
+
+    spec = specifierForUID(instructionID);
+    
+    // Borrow opcode from one of the other XCHGar opcodes
+    insn->opcode = 0x91;
+   
+    if (getIDWithAttrMask(&instructionIDWithNewOpcode,
+                          insn,
+                          attrMask)) {
+      insn->opcode = 0x90;
+
+      insn->instructionID = instructionID;
+      insn->spec = spec;
+      return 0;
+    }
+
+    specWithNewOpcode = specifierForUID(instructionIDWithNewOpcode);
+
+    // Change back 
+    insn->opcode = 0x90;
+
+    insn->instructionID = instructionIDWithNewOpcode;
+    insn->spec = specWithNewOpcode;
+
     return 0;
   }
   
