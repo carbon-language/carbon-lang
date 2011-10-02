@@ -13,6 +13,7 @@ int h2(int x) { return 1; }
 
 int main(void) {
   g1<<<1, 1>>>(42);
+  g1(42); // expected-error {{call to global function g1 not configured}}
 
   t1(1);
 

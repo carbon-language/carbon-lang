@@ -3655,6 +3655,11 @@ Sema::BuildResolvedCallExpr(Expr *Fn, NamedDecl *NDecl,
       if (!FuncT->getResultType()->isVoidType())
         return ExprError(Diag(LParenLoc, diag::err_kern_type_not_void_return)
             << Fn->getType() << Fn->getSourceRange());
+    } else {
+      // CUDA: Calls to global functions must be configured
+      if (FDecl && FDecl->hasAttr<CUDAGlobalAttr>())
+        return ExprError(Diag(LParenLoc, diag::err_global_call_not_config)
+            << FDecl->getName() << Fn->getSourceRange());
     }
   }
 
