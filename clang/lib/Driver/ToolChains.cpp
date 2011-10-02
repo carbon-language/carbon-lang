@@ -1630,16 +1630,11 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
   bool Is32Bits = (getArch() == llvm::Triple::x86 ||
                    getArch() == llvm::Triple::ppc);
 
-  std::string Suffix32  = "";
-  if (Arch == llvm::Triple::x86_64)
-    Suffix32 = "/32";
-
-  std::string Suffix64  = "";
-  if (Is32Bits)
-    Suffix64 = "/64";
+  const std::string Suffix32 = Arch == llvm::Triple::x86_64 ? "/32" : "";
+  const std::string Suffix64 = Is32Bits ? "/64" : "";
+  const std::string Suffix = Is32Bits ? Suffix32 : Suffix64;
 
   std::string Lib32 = "lib";
-
   if (!llvm::sys::fs::exists("/lib32", Exists) && Exists)
     Lib32 = "lib32";
 
@@ -1649,16 +1644,7 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
       (llvm::sys::fs::is_symlink("/lib64", Symlink) || !Symlink))
     Lib64 = "lib64";
 
-  std::string Suffix;
-  std::string Lib;
-
-  if (Is32Bits) {
-    Suffix = Suffix32;
-    Lib = Lib32;
-  } else {
-    Suffix = Suffix64;
-    Lib = Lib64;
-  }
+  std::string Lib = Is32Bits ? Lib32 : Lib64;
 
   // OpenSuse stores the linker with the compiler, add that to the search
   // path.
