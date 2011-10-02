@@ -482,9 +482,15 @@ Instruction *InstCombiner::visitSelectInstWithICmp(SelectInst &SI,
     if (SimplifyWithOpReplaced(FalseVal, CmpLHS, CmpRHS, TD) == TrueVal ||
         SimplifyWithOpReplaced(FalseVal, CmpRHS, CmpLHS, TD) == TrueVal)
       return ReplaceInstUsesWith(SI, FalseVal);
+    if (SimplifyWithOpReplaced(TrueVal, CmpLHS, CmpRHS, TD) == FalseVal ||
+        SimplifyWithOpReplaced(TrueVal, CmpRHS, CmpLHS, TD) == FalseVal)
+      return ReplaceInstUsesWith(SI, FalseVal);
   } else if (Pred == ICmpInst::ICMP_NE) {
     if (SimplifyWithOpReplaced(TrueVal, CmpLHS, CmpRHS, TD) == FalseVal ||
         SimplifyWithOpReplaced(TrueVal, CmpRHS, CmpLHS, TD) == FalseVal)
+      return ReplaceInstUsesWith(SI, TrueVal);
+    if (SimplifyWithOpReplaced(FalseVal, CmpLHS, CmpRHS, TD) == TrueVal ||
+        SimplifyWithOpReplaced(FalseVal, CmpRHS, CmpLHS, TD) == TrueVal)
       return ReplaceInstUsesWith(SI, TrueVal);
   }
 
