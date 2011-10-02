@@ -877,22 +877,22 @@ def MOV64mi32 : RIi32<0xC7, MRM0m, (outs), (ins i64mem:$dst, i64i32imm:$src),
 /// moffs8, moffs16 and moffs32 versions of moves.  The immediate is a
 /// 32-bit offset from the PC.  These are only valid in x86-32 mode.
 def MOV8o8a : Ii32 <0xA0, RawFrm, (outs), (ins offset8:$src),
-                   "mov{b}\t{$src, %al|%al, $src}", []>,
+                   "mov{b}\t{$src, %al|AL, $src}", []>,
                    Requires<[In32BitMode]>;
 def MOV16o16a : Ii32 <0xA1, RawFrm, (outs), (ins offset16:$src),
-                      "mov{w}\t{$src, %ax|%ax, $src}", []>, OpSize,
+                      "mov{w}\t{$src, %ax|AL, $src}", []>, OpSize,
                      Requires<[In32BitMode]>;
 def MOV32o32a : Ii32 <0xA1, RawFrm, (outs), (ins offset32:$src),
-                      "mov{l}\t{$src, %eax|%eax, $src}", []>,
+                      "mov{l}\t{$src, %eax|EAX, $src}", []>,
                      Requires<[In32BitMode]>;
 def MOV8ao8 : Ii32 <0xA2, RawFrm, (outs offset8:$dst), (ins),
-                   "mov{b}\t{%al, $dst|$dst, %al}", []>,
+                   "mov{b}\t{%al, $dst|$dst, AL}", []>,
                   Requires<[In32BitMode]>;
 def MOV16ao16 : Ii32 <0xA3, RawFrm, (outs offset16:$dst), (ins),
-                      "mov{w}\t{%ax, $dst|$dst, %ax}", []>, OpSize,
+                      "mov{w}\t{%ax, $dst|$dst, AL}", []>, OpSize,
                      Requires<[In32BitMode]>;
 def MOV32ao32 : Ii32 <0xA3, RawFrm, (outs offset32:$dst), (ins),
-                      "mov{l}\t{%eax, $dst|$dst, %eax}", []>,
+                      "mov{l}\t{%eax, $dst|$dst, EAX}", []>,
                      Requires<[In32BitMode]>;
 
 // FIXME: These definitions are utterly broken
@@ -901,13 +901,13 @@ def MOV32ao32 : Ii32 <0xA3, RawFrm, (outs offset32:$dst), (ins),
 // in question.
 /*
 def MOV64o8a : RIi8<0xA0, RawFrm, (outs), (ins offset8:$src),
-                      "mov{q}\t{$src, %rax|%rax, $src}", []>;
+                      "mov{q}\t{$src, %rax|RAX, $src}", []>;
 def MOV64o64a : RIi32<0xA1, RawFrm, (outs), (ins offset64:$src),
-                       "mov{q}\t{$src, %rax|%rax, $src}", []>;
+                       "mov{q}\t{$src, %rax|RAX, $src}", []>;
 def MOV64ao8 : RIi8<0xA2, RawFrm, (outs offset8:$dst), (ins),
-                       "mov{q}\t{%rax, $dst|$dst, %rax}", []>;
+                       "mov{q}\t{%rax, $dst|$dst, RAX}", []>;
 def MOV64ao64 : RIi32<0xA3, RawFrm, (outs offset64:$dst), (ins),
-                       "mov{q}\t{%rax, $dst|$dst, %rax}", []>;
+                       "mov{q}\t{%rax, $dst|$dst, RAX}", []>;
 */
 
 
@@ -1153,11 +1153,11 @@ def XCHG64rr : RI<0x87, MRMSrcReg, (outs GR64:$dst), (ins GR64:$val,GR64:$src),
 }
 
 def XCHG16ar : I<0x90, AddRegFrm, (outs), (ins GR16:$src),
-                  "xchg{w}\t{$src, %ax|%ax, $src}", []>, OpSize;
+                  "xchg{w}\t{$src, %ax|AX, $src}", []>, OpSize;
 def XCHG32ar : I<0x90, AddRegFrm, (outs), (ins GR32:$src),
-                  "xchg{l}\t{$src, %eax|%eax, $src}", []>;
+                  "xchg{l}\t{$src, %eax|EAX, $src}", []>;
 def XCHG64ar : RI<0x90, AddRegFrm, (outs), (ins GR64:$src),
-                  "xchg{q}\t{$src, %rax|%rax, $src}", []>;
+                  "xchg{q}\t{$src, %rax|RAX, $src}", []>;
 
 
 

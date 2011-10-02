@@ -866,11 +866,10 @@ class BinOpMI8_F<string mnemonic, X86TypeInfo typeinfo,
 
 // BinOpAI - Instructions like "add %eax, %eax, imm".
 class BinOpAI<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
-              Register areg>
+              Register areg, string operands>
   : ITy<opcode, RawFrm, typeinfo,
         (outs), (ins typeinfo.ImmOperand:$src),
-        mnemonic, !strconcat("{$src, %", areg.AsmName, "|%",
-                               areg.AsmName, ", $src}"), []> {
+        mnemonic, operands, []> {
   let ImmT = typeinfo.ImmEncoding;
   let Uses = [areg];
   let Defs = [areg];
@@ -935,10 +934,14 @@ multiclass ArithBinOp_RF<bits<8> BaseOpc, bits<8> BaseOpc2, bits<8> BaseOpc4,
     def #NAME#32mi   : BinOpMI_RMW<mnemonic, Xi32, opnode, MemMRM>;
     def #NAME#64mi32 : BinOpMI_RMW<mnemonic, Xi64, opnode, MemMRM>;
 
-    def #NAME#8i8   : BinOpAI<BaseOpc4, mnemonic, Xi8 , AL>;
-    def #NAME#16i16 : BinOpAI<BaseOpc4, mnemonic, Xi16, AX>;
-    def #NAME#32i32 : BinOpAI<BaseOpc4, mnemonic, Xi32, EAX>;
-    def #NAME#64i32 : BinOpAI<BaseOpc4, mnemonic, Xi64, RAX>;
+    def #NAME#8i8   : BinOpAI<BaseOpc4, mnemonic, Xi8 , AL,
+                              "{$src, %al|AL, $src}">;
+    def #NAME#16i16 : BinOpAI<BaseOpc4, mnemonic, Xi16, AX,
+                              "{$src, %ax|AX, $src}">;
+    def #NAME#32i32 : BinOpAI<BaseOpc4, mnemonic, Xi32, EAX,
+                              "{$src, %eax|EAX, $src}">;
+    def #NAME#64i32 : BinOpAI<BaseOpc4, mnemonic, Xi64, RAX,
+                              "{$src, %rax|RAX, $src}">;
   }                          
 }
 
@@ -1002,10 +1005,14 @@ multiclass ArithBinOp_RFF<bits<8> BaseOpc, bits<8> BaseOpc2, bits<8> BaseOpc4,
     def #NAME#32mi   : BinOpMI_RMW_FF<mnemonic, Xi32, opnode, MemMRM>;
     def #NAME#64mi32 : BinOpMI_RMW_FF<mnemonic, Xi64, opnode, MemMRM>;
 
-    def #NAME#8i8   : BinOpAI<BaseOpc4, mnemonic, Xi8 , AL>;
-    def #NAME#16i16 : BinOpAI<BaseOpc4, mnemonic, Xi16, AX>;
-    def #NAME#32i32 : BinOpAI<BaseOpc4, mnemonic, Xi32, EAX>;
-    def #NAME#64i32 : BinOpAI<BaseOpc4, mnemonic, Xi64, RAX>;
+    def #NAME#8i8   : BinOpAI<BaseOpc4, mnemonic, Xi8 , AL,
+                              "{$src, %al|AL, $src}">;
+    def #NAME#16i16 : BinOpAI<BaseOpc4, mnemonic, Xi16, AX,
+                              "{$src, %ax|AX, $src}">;
+    def #NAME#32i32 : BinOpAI<BaseOpc4, mnemonic, Xi32, EAX,
+                              "{$src, %eax|EAX, $src}">;
+    def #NAME#64i32 : BinOpAI<BaseOpc4, mnemonic, Xi64, RAX, 
+                              "{$src, %rax|RAX, $src}">;
   }                          
 }
 
@@ -1065,10 +1072,14 @@ multiclass ArithBinOp_F<bits<8> BaseOpc, bits<8> BaseOpc2, bits<8> BaseOpc4,
     def #NAME#32mi   : BinOpMI_F<mnemonic, Xi32, opnode, MemMRM>;
     def #NAME#64mi32 : BinOpMI_F<mnemonic, Xi64, opnode, MemMRM>;
 
-    def #NAME#8i8   : BinOpAI<BaseOpc4, mnemonic, Xi8 , AL>;
-    def #NAME#16i16 : BinOpAI<BaseOpc4, mnemonic, Xi16, AX>;
-    def #NAME#32i32 : BinOpAI<BaseOpc4, mnemonic, Xi32, EAX>;
-    def #NAME#64i32 : BinOpAI<BaseOpc4, mnemonic, Xi64, RAX>;
+    def #NAME#8i8   : BinOpAI<BaseOpc4, mnemonic, Xi8 , AL,
+                              "{$src, %al|AL, $src}">;
+    def #NAME#16i16 : BinOpAI<BaseOpc4, mnemonic, Xi16, AX,
+                              "{$src, %ax|AX, $src}">;
+    def #NAME#32i32 : BinOpAI<BaseOpc4, mnemonic, Xi32, EAX,
+                              "{$src, %eax|EAX, $src}">;
+    def #NAME#64i32 : BinOpAI<BaseOpc4, mnemonic, Xi64, RAX,
+                              "{$src, %rax|RAX, $src}">;
   }                          
 }
 
@@ -1126,9 +1137,13 @@ let Defs = [EFLAGS] in {
   def TEST32mi   : BinOpMI_F<"test", Xi32, X86testpat, MRM0m, 0xF6>;
   def TEST64mi32 : BinOpMI_F<"test", Xi64, X86testpat, MRM0m, 0xF6>;
                      
-  def TEST8i8    : BinOpAI<0xA8, "test", Xi8 , AL>;
-  def TEST16i16  : BinOpAI<0xA8, "test", Xi16, AX>;
-  def TEST32i32  : BinOpAI<0xA8, "test", Xi32, EAX>;
-  def TEST64i32  : BinOpAI<0xA8, "test", Xi64, RAX>;
+  def TEST8i8    : BinOpAI<0xA8, "test", Xi8 , AL,
+                           "{$src, %al|AL, $src}">;
+  def TEST16i16  : BinOpAI<0xA8, "test", Xi16, AX,
+                           "{$src, %ax|AX, $src}">;
+  def TEST32i32  : BinOpAI<0xA8, "test", Xi32, EAX,
+                           "{$src, %eax|EAX, $src}">;
+  def TEST64i32  : BinOpAI<0xA8, "test", Xi64, RAX,
+                           "{$src, %rax|RAX, $src}">;
 }                          
 
