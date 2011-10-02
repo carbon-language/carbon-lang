@@ -107,22 +107,19 @@ const CXXThisRegion *ExprEngine::getCXXThisRegion(const CXXMethodDecl *decl,
 void ExprEngine::CreateCXXTemporaryObject(const MaterializeTemporaryExpr *ME,
                                           ExplodedNode *Pred,
                                           ExplodedNodeSet &Dst) {
-  ExplodedNodeSet Tmp;
-  Visit(ME->GetTemporaryExpr(), Pred, Tmp);
-  for (ExplodedNodeSet::iterator I = Tmp.begin(), E = Tmp.end(); I != E; ++I) {
-    const ProgramState *state = (*I)->getState();
+  const Expr *tempExpr = ME->GetTemporaryExpr()->IgnoreParens();
+  const ProgramState *state = Pred->getState();
 
-    // Bind the temporary object to the value of the expression. Then bind
-    // the expression to the location of the object.
-    SVal V = state->getSVal(ME->GetTemporaryExpr());
+  // Bind the temporary object to the value of the expression. Then bind
+  // the expression to the location of the object.
+  SVal V = state->getSVal(tempExpr);
 
-    const MemRegion *R =
-      svalBuilder.getRegionManager().getCXXTempObjectRegion(ME,
-                                                   Pred->getLocationContext());
+  const MemRegion *R =
+    svalBuilder.getRegionManager().getCXXTempObjectRegion(ME,
+                                                 Pred->getLocationContext());
 
-    state = state->bindLoc(loc::MemRegionVal(R), V);
-    MakeNode(Dst, ME, Pred, state->BindExpr(ME, loc::MemRegionVal(R)));
-  }
+  state = state->bindLoc(loc::MemRegionVal(R), V);
+  MakeNode(Dst, ME, Pred, state->BindExpr(ME, loc::MemRegionVal(R)));
 }
 
 void ExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *E, 

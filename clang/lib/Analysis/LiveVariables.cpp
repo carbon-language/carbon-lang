@@ -372,10 +372,6 @@ void TransferFunctions::Visit(Stmt *S) {
       S = cast<CXXBindTemporaryExpr>(S)->getSubExpr();
       break;
     }
-    case Stmt::MaterializeTemporaryExprClass: {
-      S = cast<MaterializeTemporaryExpr>(S)->GetTemporaryExpr();
-      break;
-    }
     case Stmt::UnaryExprOrTypeTraitExprClass: {
       // No need to unconditionally visit subexpressions.
       return;

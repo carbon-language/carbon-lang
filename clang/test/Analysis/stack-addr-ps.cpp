@@ -50,7 +50,7 @@ int *f2() {
 int *f3() {
   int x1;
   int *const &x2 = &x1; // expected-note {{binding reference variable 'x2' here}}
-  return x2; // expected-warning {{address of stack memory associated with local variable 'x1' returned}}
+  return x2; // expected-warning {{address of stack memory associated with local variable 'x1' returned}} expected-warning {{Address of stack memory associated with local variable 'x1' returned to caller}}
 }
 
 const int *f4() {
