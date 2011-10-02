@@ -324,9 +324,14 @@ static Value *SimplifyWithOpReplaced(Value *V, Value *Op, Value *RepOp,
     }
 
     // All operands were constants, fold it.
-    if (ConstOps.size() == I->getNumOperands())
+    if (ConstOps.size() == I->getNumOperands()) {
+      if (LoadInst *LI = dyn_cast<LoadInst>(I))
+        if (!LI->isVolatile())
+          return ConstantFoldLoadFromConstPtr(ConstOps[0], TD);
+
       return ConstantFoldInstOperands(I->getOpcode(), I->getType(),
                                       ConstOps, TD);
+    }
   }
 
   return 0;
