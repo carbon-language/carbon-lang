@@ -14,6 +14,8 @@ int h2(int x) { return 1; }
 int main(void) {
   g1<<<1, 1>>>(42);
   g1(42); // expected-error {{call to global function g1 not configured}}
+  g1<<<1>>>(42); // expected-error {{too few execution configuration arguments to kernel function call}}
+  g1<<<1, 1, 0, 0, 0>>>(42); // expected-error {{too many execution configuration arguments to kernel function call}}
 
   t1(1);
 
