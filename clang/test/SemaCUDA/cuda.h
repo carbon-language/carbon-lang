@@ -10,7 +10,7 @@
 
 struct dim3 {
   unsigned x, y, z;
-  dim3(unsigned x, unsigned y = 1, unsigned z = 1) : x(x), y(y), z(z) {}
+  __host__ __device__ dim3(unsigned x, unsigned y = 1, unsigned z = 1) : x(x), y(y), z(z) {}
 };
 
 typedef struct cudaStream *cudaStream_t;

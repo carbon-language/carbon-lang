@@ -1379,6 +1379,20 @@ ExprResult
 Sema::BuildDeclRefExpr(ValueDecl *D, QualType Ty, ExprValueKind VK,
                        const DeclarationNameInfo &NameInfo,
                        const CXXScopeSpec *SS) {
+  if (getLangOptions().CUDA)
+    if (const FunctionDecl *Caller = dyn_cast<FunctionDecl>(CurContext))
+      if (const FunctionDecl *Callee = dyn_cast<FunctionDecl>(D)) {
+        CUDAFunctionTarget CallerTarget = IdentifyCUDATarget(Caller),
+                           CalleeTarget = IdentifyCUDATarget(Callee);
+        if (CheckCUDATarget(CallerTarget, CalleeTarget)) {
+          Diag(NameInfo.getLoc(), diag::err_ref_bad_target)
+            << CalleeTarget << D->getIdentifier() << CallerTarget;
+          Diag(D->getLocation(), diag::note_previous_decl)
+            << D->getIdentifier();
+          return ExprError();
+        }
+      }
+
   MarkDeclarationReferenced(NameInfo.getLoc(), D);
 
   Expr *E = DeclRefExpr::Create(Context,

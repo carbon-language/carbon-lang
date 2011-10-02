@@ -10883,3 +10883,44 @@ void Sema::CheckDelegatingCtorCycles() {
   for (CI = Invalid.begin(), CE = Invalid.end(); CI != CE; ++CI)
     (*CI)->setInvalidDecl();
 }
+
+/// IdentifyCUDATarget - Determine the CUDA compilation target for this function
+Sema::CUDAFunctionTarget Sema::IdentifyCUDATarget(const FunctionDecl *D) {
+  // Implicitly declared functions (e.g. copy constructors) are
+  // __host__ __device__
+  if (D->isImplicit())
+    return CFT_HostDevice;
+
+  if (D->hasAttr<CUDAGlobalAttr>())
+    return CFT_Global;
+
+  if (D->hasAttr<CUDADeviceAttr>()) {
+    if (D->hasAttr<CUDAHostAttr>())
+      return CFT_HostDevice;
+    else
+      return CFT_Device;
+  }
+
+  return CFT_Host;
+}
+
+bool Sema::CheckCUDATarget(CUDAFunctionTarget CallerTarget,
+                           CUDAFunctionTarget CalleeTarget) {
+  // CUDA B.1.1 "The __device__ qualifier declares a function that is...
+  // Callable from the device only."
+  if (CallerTarget == CFT_Host && CalleeTarget == CFT_Device)
+    return true;
+
+  // CUDA B.1.2 "The __global__ qualifier declares a function that is...
+  // Callable from the host only."
+  // CUDA B.1.3 "The __host__ qualifier declares a function that is...
+  // Callable from the host only."
+  if ((CallerTarget == CFT_Device || CallerTarget == CFT_Global) &&
+      (CalleeTarget == CFT_Host || CalleeTarget == CFT_Global))
+    return true;
+
+  if (CallerTarget == CFT_HostDevice && CalleeTarget != CFT_HostDevice)
+    return true;
+
+  return false;
+}

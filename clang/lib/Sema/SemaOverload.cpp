@@ -4220,6 +4220,15 @@ Sema::AddOverloadCandidate(FunctionDecl *Function,
     return;
   }
 
+  // (CUDA B.1): Check for invalid calls between targets.
+  if (getLangOptions().CUDA)
+    if (const FunctionDecl *Caller = dyn_cast<FunctionDecl>(CurContext))
+      if (CheckCUDATarget(Caller, Function)) {
+        Candidate.Viable = false;
+        Candidate.FailureKind = ovl_fail_bad_target;
+        return;
+      }
+
   // Determine the implicit conversion sequences for each of the
   // arguments.
   Candidate.Conversions.resize(NumArgs);
@@ -7189,6 +7198,21 @@ void DiagnoseBadDeduction(Sema &S, OverloadCandidate *Cand,
   }
 }
 
+/// CUDA: diagnose an invalid call across targets.
+void DiagnoseBadTarget(Sema &S, OverloadCandidate *Cand) {
+  FunctionDecl *Caller = cast<FunctionDecl>(S.CurContext);
+  FunctionDecl *Callee = Cand->Function;
+
+  Sema::CUDAFunctionTarget CallerTarget = S.IdentifyCUDATarget(Caller),
+                           CalleeTarget = S.IdentifyCUDATarget(Callee);
+
+  std::string FnDesc;
+  OverloadCandidateKind FnKind = ClassifyOverloadCandidate(S, Callee, FnDesc);
+
+  S.Diag(Callee->getLocation(), diag::note_ovl_candidate_bad_target)
+      << (unsigned) FnKind << CalleeTarget << CallerTarget;
+}
+
 /// Generates a 'note' diagnostic for an overload candidate.  We've
 /// already generated a primary error at the call site.
 ///
@@ -7248,6 +7272,9 @@ void NoteFunctionCandidate(Sema &S, OverloadCandidate *Cand,
     // those conditions and diagnose them well.
     return S.NoteOverloadCandidate(Fn);
   }
+
+  case ovl_fail_bad_target:
+    return DiagnoseBadTarget(S, Cand);
   }
 }
 
@@ -7780,6 +7807,11 @@ private:
       return false;
 
     if (FunctionDecl *FunDecl = dyn_cast<FunctionDecl>(Fn)) {
+      if (S.getLangOptions().CUDA)
+        if (FunctionDecl *Caller = dyn_cast<FunctionDecl>(S.CurContext))
+          if (S.CheckCUDATarget(Caller, FunDecl))
+            return false;
+
       QualType ResultTy;
       if (Context.hasSameUnqualifiedType(TargetFunctionType, 
                                          FunDecl->getType()) ||

@@ -5878,6 +5878,23 @@ public:
                       QualType FieldTy, const Expr *BitWidth,
                       bool *ZeroWidth = 0);
 
+  enum CUDAFunctionTarget {
+    CFT_Device,
+    CFT_Global,
+    CFT_Host,
+    CFT_HostDevice
+  };
+
+  CUDAFunctionTarget IdentifyCUDATarget(const FunctionDecl *D);
+
+  bool CheckCUDATarget(CUDAFunctionTarget CallerTarget,
+                       CUDAFunctionTarget CalleeTarget);
+
+  bool CheckCUDATarget(const FunctionDecl *Caller, const FunctionDecl *Callee) {
+    return CheckCUDATarget(IdentifyCUDATarget(Caller),
+                           IdentifyCUDATarget(Callee));
+  }
+
   /// \name Code completion
   //@{
   /// \brief Describes the context in which code completion occurs.
