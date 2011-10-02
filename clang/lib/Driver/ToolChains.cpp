@@ -1554,26 +1554,7 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
   llvm::Triple::ArchType Arch =
     llvm::Triple(getDriver().DefaultHostTriple).getArch();
 
-  std::string Suffix32  = "";
-  if (Arch == llvm::Triple::x86_64)
-    Suffix32 = "/32";
-
-  std::string Suffix64  = "";
-  if (Arch == llvm::Triple::x86 || Arch == llvm::Triple::ppc)
-    Suffix64 = "/64";
-
-  std::string Lib32 = "lib";
-
   bool Exists;
-  if (!llvm::sys::fs::exists("/lib32", Exists) && Exists)
-    Lib32 = "lib32";
-
-  std::string Lib64 = "lib";
-  bool Symlink;
-  if (!llvm::sys::fs::exists("/lib64", Exists) && Exists &&
-      (llvm::sys::fs::is_symlink("/lib64", Symlink) || !Symlink))
-    Lib64 = "lib64";
-
   std::string GccTriple = "";
   if (Arch == llvm::Triple::arm || Arch == llvm::Triple::thumb) {
     if (!llvm::sys::fs::exists("/usr/lib/gcc/arm-linux-gnueabi", Exists) &&
@@ -1648,6 +1629,25 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
   path_list &Paths = getFilePaths();
   bool Is32Bits = (getArch() == llvm::Triple::x86 ||
                    getArch() == llvm::Triple::ppc);
+
+  std::string Suffix32  = "";
+  if (Arch == llvm::Triple::x86_64)
+    Suffix32 = "/32";
+
+  std::string Suffix64  = "";
+  if (Is32Bits)
+    Suffix64 = "/64";
+
+  std::string Lib32 = "lib";
+
+  if (!llvm::sys::fs::exists("/lib32", Exists) && Exists)
+    Lib32 = "lib32";
+
+  std::string Lib64 = "lib";
+  bool Symlink;
+  if (!llvm::sys::fs::exists("/lib64", Exists) && Exists &&
+      (llvm::sys::fs::is_symlink("/lib64", Symlink) || !Symlink))
+    Lib64 = "lib64";
 
   std::string Suffix;
   std::string Lib;
