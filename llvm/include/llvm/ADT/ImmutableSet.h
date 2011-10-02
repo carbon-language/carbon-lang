@@ -1145,8 +1145,9 @@ public:
     return Root ? Root->contains(V) : false;
   }
   
-  ImmutableSet<ValT> asImmutableSet() const {
-    return ImmutableSet<ValT>(Factory->getCanonicalTree(Root));
+  ImmutableSet<ValT> asImmutableSet(bool canonicalize = true) const {
+    return ImmutableSet<ValT>(canonicalize ?
+                              Factory->getCanonicalTree(Root) : Root);
   }
   
   TreeTy *getRootWithoutRetain() const {
