@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fobjc-nonfragile-abi -fsyntax-only -fobjc-arc -verify %s
+// RUN: %clang_cc1 -fsyntax-only -fobjc-arc -verify %s
 
 typedef const void *CFTypeRef;
 typedef const struct __CFString *CFStringRef;

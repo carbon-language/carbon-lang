@@ -1,4 +1,4 @@
-// RUN: %clang_cc1  -fsyntax-only -fobjc-nonfragile-abi -fobjc-runtime-has-weak -fobjc-arc -verify %s
+// RUN: %clang_cc1  -fsyntax-only -fobjc-runtime-has-weak -fobjc-arc -verify %s
 // rdar://8899430
 
 @interface WeakPropertyTest {

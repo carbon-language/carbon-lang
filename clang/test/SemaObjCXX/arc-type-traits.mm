@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -fobjc-arc -fobjc-nonfragile-abi -fobjc-runtime-has-weak -verify %s
+// RUN: %clang_cc1 -fsyntax-only -fobjc-arc -fobjc-runtime-has-weak -verify %s
 
 // Check the results of the various type-trait query functions on
 // lifetime-qualified types in ARC.

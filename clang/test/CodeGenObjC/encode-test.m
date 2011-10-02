@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple=i686-apple-darwin9 -emit-llvm -o %t %s
+// RUN: %clang_cc1 -triple i686-apple-darwin9 -fobjc-fragile-abi -emit-llvm -o %t %s
 // RUN: FileCheck < %t %s
 //
 // CHECK: @"\01L_OBJC_METH_VAR_TYPE_34" = internal global [16 x i8] c"v12@0:4[3[4@]]8\00"

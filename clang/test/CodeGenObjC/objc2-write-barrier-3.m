@@ -1,7 +1,7 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -fblocks -fobjc-gc -emit-llvm -o %t %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fblocks -fobjc-gc -emit-llvm -o %t %s
 // RUN: grep objc_assign_ivar %t | count 3
 // RUN: grep objc_assign_strongCast %t | count 6
-// RUN: %clang_cc1 -x objective-c++ -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -fblocks -fobjc-gc -emit-llvm -o %t %s
+// RUN: %clang_cc1 -x objective-c++ -triple x86_64-apple-darwin10 -fblocks -fobjc-gc -emit-llvm -o %t %s
 // RUN: grep objc_assign_ivar %t | count 3
 // RUN: grep objc_assign_strongCast %t | count 6
 

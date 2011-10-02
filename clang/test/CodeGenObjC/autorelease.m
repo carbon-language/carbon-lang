@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -emit-llvm -fobjc-arc -fobjc-nonfragile-abi -fobjc-runtime-has-arc -o - %s | FileCheck %s
-// RUN: %clang_cc1 -triple x86_64-apple-darwin11 -emit-llvm -fobjc-nonfragile-abi -fobjc-runtime-has-arc -o - %s | FileCheck %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -emit-llvm -fobjc-arc -fobjc-runtime-has-arc -o - %s | FileCheck %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin11 -emit-llvm -fobjc-runtime-has-arc -o - %s | FileCheck %s
 // rdar://8881826
 // rdar://9412038
 

@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -E %s -fobjc-nonfragile-abi -fobjc-arc "-triple" "x86_64-apple-macosx10.7.0"  -fobjc-runtime-has-weak | FileCheck --check-prefix=CHECK-ARC %s
-// RUN: %clang_cc1 -E %s -fobjc-nonfragile-abi -fobjc-arc "-triple" "x86_64-apple-macosx10.6.0" | FileCheck --check-prefix=CHECK-ARCLITE %s
+// RUN: %clang_cc1 -E %s -fobjc-arc "-triple" "x86_64-apple-macosx10.7.0"  -fobjc-runtime-has-weak | FileCheck --check-prefix=CHECK-ARC %s
+// RUN: %clang_cc1 -E %s -fobjc-arc "-triple" "x86_64-apple-macosx10.6.0" | FileCheck --check-prefix=CHECK-ARCLITE %s
 
 #if __has_feature(objc_arc)
 void has_objc_arc_feature();

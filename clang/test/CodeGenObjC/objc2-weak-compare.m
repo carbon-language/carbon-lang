@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -triple i386-apple-darwin9 -fobjc-gc -emit-llvm -o %t %s
-// RUN: %clang_cc1 -x objective-c++ -triple i386-apple-darwin9 -fobjc-gc -emit-llvm -o %t %s
+// RUN: %clang_cc1 -triple i386-apple-darwin9 -fobjc-fragile-abi -fobjc-gc -emit-llvm -o %t %s
+// RUN: %clang_cc1 -x objective-c++ -triple i386-apple-darwin9 -fobjc-fragile-abi -fobjc-gc -emit-llvm -o %t %s
 
 @interface PBXTarget 
 {

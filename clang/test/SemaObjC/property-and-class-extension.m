@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -fobjc-nonfragile-abi -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 
 /**
 When processing @synthesize, treat ivars in a class extension the same as ivars in the class @interface, 

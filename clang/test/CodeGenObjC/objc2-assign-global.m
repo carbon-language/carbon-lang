@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fobjc-gc -emit-llvm -o %t %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fobjc-fragile-abi -fobjc-gc -emit-llvm -o %t %s
 // RUN: grep -F '@objc_assign_global' %t  | count 26
 
 @class NSObject;

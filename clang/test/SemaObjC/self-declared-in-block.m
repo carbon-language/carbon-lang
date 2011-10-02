@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -fsyntax-only -triple x86_64-apple-darwin10  -fblocks -fobjc-nonfragile-abi -verify %s 
-// RUN: %clang_cc1 -x objective-c++ -fsyntax-only -triple x86_64-apple-darwin10  -fblocks -fobjc-nonfragile-abi -verify %s 
+// RUN: %clang_cc1 -fsyntax-only -triple x86_64-apple-darwin10  -fblocks -verify %s 
+// RUN: %clang_cc1 -x objective-c++ -fsyntax-only -triple x86_64-apple-darwin10  -fblocks -verify %s 
 // rdar://9154582
 
 @interface Blocky @end

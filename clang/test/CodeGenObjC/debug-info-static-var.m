@@ -1,5 +1,5 @@
 // REQUIRES: x86-64-registered-target
-// RUN: %clang_cc1 -g -triple x86_64-apple-darwin10 -S -masm-verbose -o - %s | FileCheck %s
+// RUN: %clang_cc1 -g -triple x86_64-apple-darwin10 -fobjc-fragile-abi -S -masm-verbose -o - %s | FileCheck %s
 // Radar 8801045
 // Do not emit AT_MIPS_linkage_name for static variable i
 

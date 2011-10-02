@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -triple=x86_64-apple-darwin10 -fobjc-nonfragile-abi -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 %s -triple=x86_64-apple-darwin10 -emit-llvm -o - | FileCheck %s
 // CHECK-NOT: callq	_objc_msgSend_stret
 // CHECK: call void @_ZN1SC1ERKS_
 // CHECK: call %class.S* @_ZN1SaSERKS_

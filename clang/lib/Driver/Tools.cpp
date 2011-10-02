@@ -1965,9 +1965,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     }
   }
 
-  if (objcABIVersion == 2 || objcABIVersion == 3) {
-    CmdArgs.push_back("-fobjc-nonfragile-abi");
-
+  if (objcABIVersion == 1) {
+    CmdArgs.push_back("-fobjc-fragile-abi");
+  } else {
     // -fobjc-dispatch-method is only relevant with the nonfragile-abi, and
     // legacy is the default.
     if (!Args.hasFlag(options::OPT_fobjc_legacy_dispatch,

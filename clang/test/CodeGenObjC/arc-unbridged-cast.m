@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin11 -emit-llvm  -fobjc-nonfragile-abi -fobjc-arc -o - %s | FileCheck %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin11 -emit-llvm  -fobjc-arc -o - %s | FileCheck %s
 // rdar://9744349
 
 typedef const struct __CFString * CFStringRef;

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple i386-apple-darwin9  -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -triple i386-apple-darwin9 -fobjc-fragile-abi  -emit-llvm -o - %s | FileCheck %s
 // PR7431
 
 // CHECK: module asm "\09.lazy_reference .objc_class_name_A"

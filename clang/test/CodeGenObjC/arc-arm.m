@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple armv7-apple-darwin10 -emit-llvm -fobjc-nonfragile-abi -fblocks -fobjc-arc -o - %s | FileCheck %s
+// RUN: %clang_cc1 -triple armv7-apple-darwin10 -emit-llvm -fblocks -fobjc-arc -o - %s | FileCheck %s
 
 id test0(void) {
   extern id test0_helper(void);

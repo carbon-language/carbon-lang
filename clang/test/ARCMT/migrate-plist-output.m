@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -arcmt-migrate -arcmt-migrate-directory %t.dir -arcmt-migrate-report-output %t.plist %s -fobjc-nonfragile-abi
+// RUN: %clang_cc1 -arcmt-migrate -arcmt-migrate-directory %t.dir -arcmt-migrate-report-output %t.plist %s 
 // RUN: FileCheck %s -input-file=%t.plist
 // RUN: rm -rf %t.dir
 

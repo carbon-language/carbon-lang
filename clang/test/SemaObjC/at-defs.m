@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple i386-unknown-unknown %s -fsyntax-only
+// RUN: %clang_cc1 -triple i386-unknown-unknown -fobjc-fragile-abi %s -fsyntax-only
 
 @interface Test {
 	double a;

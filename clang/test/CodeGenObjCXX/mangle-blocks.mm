@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm -fblocks -o - -triple x86_64-apple-darwin10 %s | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm -fblocks -o - -triple x86_64-apple-darwin10 -fobjc-fragile-abi %s | FileCheck %s
 
 // CHECK: @_ZGVN3foo20__foo_block_invoke_05valueE = internal global i64 0
 

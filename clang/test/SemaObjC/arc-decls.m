@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -fobjc-arc -fobjc-nonfragile-abi -verify %s
+// RUN: %clang_cc1 -fsyntax-only -fobjc-arc -verify %s
 
 // rdar://8843524
 

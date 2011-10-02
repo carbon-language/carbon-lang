@@ -1,5 +1,5 @@
 // REQUIRES: x86-64-registered-target
-// RUN: %clang_cc1 -triple x86_64-apple-darwin10  -fobjc-nonfragile-abi  -S -o - %s | FileCheck %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10  -S -o - %s | FileCheck %s
 // rdar://9048030
 
 @interface Foo

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple i386-apple-darwin9 -emit-llvm -o %t %s
+// RUN: %clang_cc1 -triple i386-apple-darwin9 -fobjc-fragile-abi -emit-llvm -o %t %s
 // RUNX: llvm-gcc -m32 -emit-llvm -S -o %t %s &&
 
 // RUN: grep '@"\\01L_OBJC_CATEGORY_A_Cat" = internal global .*section "__OBJC,__category,regular,no_dead_strip", align 4' %t

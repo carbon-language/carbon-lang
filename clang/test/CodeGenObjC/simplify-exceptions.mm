@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 -triple x86_64-apple-darwin10 -emit-llvm \
-// RUN:   -fexceptions -fobjc-exceptions -fobjc-nonfragile-abi \
+// RUN:   -fexceptions -fobjc-exceptions \
 // RUN:   -o %t %s
 // RUN: FileCheck < %t %s
 //

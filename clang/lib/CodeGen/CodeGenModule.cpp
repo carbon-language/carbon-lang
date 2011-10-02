@@ -460,12 +460,32 @@ void CodeGenModule::SetLLVMFunctionAttributes(const Decl *D,
   F->setCallingConv(static_cast<llvm::CallingConv::ID>(CallingConv));
 }
 
+/// Determines whether the language options require us to model
+/// unwind exceptions.  We treat -fexceptions as mandating this
+/// except under the fragile ObjC ABI with only ObjC exceptions
+/// enabled.  This means, for example, that C with -fexceptions
+/// enables this.
+static bool hasUnwindExceptions(const LangOptions &Features) {
+  // If exceptions are completely disabled, obviously this is false.
+  if (!Features.Exceptions) return false;
+
+  // If C++ exceptions are enabled, this is true.
+  if (Features.CXXExceptions) return true;
+
+  // If ObjC exceptions are enabled, this depends on the ABI.
+  if (Features.ObjCExceptions) {
+    if (!Features.ObjCNonFragileABI) return false;
+  }
+
+  return true;
+}
+
 void CodeGenModule::SetLLVMFunctionAttributesForDefinition(const Decl *D,
                                                            llvm::Function *F) {
   if (CodeGenOpts.UnwindTables)
     F->setHasUWTable();
 
-  if (!Features.Exceptions && !Features.ObjCNonFragileABI)
+  if (!hasUnwindExceptions(Features))
     F->addFnAttr(llvm::Attribute::NoUnwind);
 
   if (D->hasAttr<NakedAttr>()) {

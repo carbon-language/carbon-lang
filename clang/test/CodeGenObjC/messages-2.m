@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -emit-llvm -o - %s | FileCheck %s -check-prefix=CHECK
-// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -emit-llvm -o - %s | FileCheck %s -check-prefix=CHECK-NF
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fobjc-fragile-abi -emit-llvm -o - %s | FileCheck %s -check-prefix=CHECK
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -emit-llvm -o - %s | FileCheck %s -check-prefix=CHECK-NF
 
 // Most of this test is apparently just verifying that we don't crash.
 

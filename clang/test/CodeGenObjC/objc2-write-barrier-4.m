@@ -1,7 +1,7 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fobjc-gc -emit-llvm -o %t %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fobjc-fragile-abi -fobjc-gc -emit-llvm -o %t %s
 // RUN: grep objc_assign_global %t | count 3
 // RUN: grep objc_assign_strongCast %t | count 2
-// RUN: %clang_cc1 -x objective-c++ -triple x86_64-apple-darwin10 -fobjc-gc -emit-llvm -o %t %s
+// RUN: %clang_cc1 -x objective-c++ -triple x86_64-apple-darwin10 -fobjc-fragile-abi -fobjc-gc -emit-llvm -o %t %s
 // RUN: grep objc_assign_global %t | count 3
 // RUN: grep objc_assign_strongCast %t | count 2
 

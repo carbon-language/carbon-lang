@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++0x -fobjc-nonfragile-abi -fsyntax-only -fobjc-arc -verify -fblocks -fobjc-exceptions %s
+// RUN: %clang_cc1 -std=c++0x -fsyntax-only -fobjc-arc -verify -fblocks -fobjc-exceptions %s
 
 // "Move" semantics, trivial version.
 void move_it(__strong id &&from) {

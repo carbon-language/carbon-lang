@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -fobjc-arc -fobjc-nonfragile-abi -fobjc-runtime-has-weak -verify -fblocks %s
+// RUN: %clang_cc1 -fsyntax-only -fobjc-arc -fobjc-runtime-has-weak -verify -fblocks %s
 
 void * cvt(id arg)
 {

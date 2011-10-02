@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin9 -emit-llvm -fblocks -o %t %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin9 -fobjc-fragile-abi -emit-llvm -fblocks -o %t %s
 
 // 1x for the declaration
 // 1x for the object-pointer byref copy helper

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fobjc-nonfragile-abi -fsyntax-only -fobjc-arc -Warc-abi -verify -fblocks -triple x86_64-apple-darwin10.0.0 %s
+// RUN: %clang_cc1 -fsyntax-only -fobjc-arc -Warc-abi -verify -fblocks -triple x86_64-apple-darwin10.0.0 %s
 
 // Classes that have an Objective-C object pointer.
 struct HasObjectMember0 { // expected-warning{{'HasObjectMember0' cannot be shared between ARC and non-ARC code; add a copy constructor, a copy assignment operator, and a destructor to make it ABI-compatible}}

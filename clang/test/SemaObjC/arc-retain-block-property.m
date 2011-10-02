@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -fblocks -fobjc-arc -fobjc-nonfragile-abi -verify %s
+// RUN: %clang_cc1 -fsyntax-only -fblocks -fobjc-arc -verify %s
 // rdar://9829425
 
 extern void doSomething();

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -fobjc-fragile-abi -verify %s
 @interface I1
 - (int*)method;
 @end

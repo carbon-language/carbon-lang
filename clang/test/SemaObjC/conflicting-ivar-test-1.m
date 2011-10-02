@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fobjc-fragile-abi -fsyntax-only -verify %s
 
 @interface INTF 
 {

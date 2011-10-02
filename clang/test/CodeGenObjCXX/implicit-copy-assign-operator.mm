@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fobjc-gc -emit-llvm -triple x86_64-apple-darwin10.0.0 -o - %s | FileCheck %s
+// RUN: %clang_cc1 -fobjc-gc -emit-llvm -triple x86_64-apple-darwin10.0.0 -fobjc-fragile-abi -o - %s | FileCheck %s
 struct A { 
   A &operator=(const A&);
   A &operator=(A&);

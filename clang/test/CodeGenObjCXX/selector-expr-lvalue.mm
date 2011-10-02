@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin10  -emit-llvm -o - %s 
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fobjc-fragile-abi  -emit-llvm -o - %s 
 // PR7390
 
 @interface NSObject {}

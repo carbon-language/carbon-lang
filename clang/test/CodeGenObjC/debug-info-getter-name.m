@@ -1,5 +1,5 @@
 // REQUIRES: x86-64-registered-target
-// RUN: %clang_cc1 -fno-dwarf2-cfi-asm -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -S -g %s -o - | FileCheck %s
+// RUN: %clang_cc1 -fno-dwarf2-cfi-asm -triple x86_64-apple-darwin10 -fexceptions -fobjc-exceptions -S -g %s -o - | FileCheck %s
 
 //CHECK: "-[InstanceVariablesEverywhereButTheInterface someString]":
 //CHECK: .quad	"-[InstanceVariablesEverywhereButTheInterface someString]"

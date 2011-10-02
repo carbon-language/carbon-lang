@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm -triple=i686-apple-darwin9 -o - %s -O2 | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm -triple i686-apple-darwin9 -fobjc-fragile-abi -o - %s -O2 | FileCheck %s
 
 @interface MyClass
 {

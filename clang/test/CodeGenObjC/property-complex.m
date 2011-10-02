@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -triple i386-apple-darwin9 -emit-llvm -o %t %s
-// RUN: %clang_cc1 -triple x86_64-apple-darwin9 -emit-llvm -o %t %s
+// RUN: %clang_cc1 -triple i386-apple-darwin9 -fobjc-fragile-abi -emit-llvm -o %t %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin9 -fobjc-fragile-abi -emit-llvm -o %t %s
 
 @interface I0 {
 @public

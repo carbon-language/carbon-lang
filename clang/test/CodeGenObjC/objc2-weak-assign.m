@@ -1,6 +1,6 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin9 -fobjc-gc -emit-llvm -o %t %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin9 -fobjc-fragile-abi -fobjc-gc -emit-llvm -o %t %s
 // RUN: grep -e "objc_assign_weak" %t | grep -e "call" | count 6
-// RUN: %clang_cc1 -x objective-c++ -triple x86_64-apple-darwin9 -fobjc-gc -emit-llvm -o %t %s
+// RUN: %clang_cc1 -x objective-c++ -triple x86_64-apple-darwin9 -fobjc-fragile-abi -fobjc-gc -emit-llvm -o %t %s
 // RUN: grep -e "objc_assign_weak" %t | grep -e "call" | count 6
 
 __weak id* x;

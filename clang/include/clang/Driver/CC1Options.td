@@ -524,8 +524,8 @@ def fobjc_default_synthesize_properties : Flag<"-fobjc-default-synthesize-proper
   HelpText<"enable the default synthesis of Objective-C properties">;
 def print_ivar_layout : Flag<"-print-ivar-layout">,
   HelpText<"Enable Objective-C Ivar layout bitmap print trace">;
-def fobjc_nonfragile_abi : Flag<"-fobjc-nonfragile-abi">,
-  HelpText<"enable objective-c's nonfragile abi">;
+def fobjc_fragile_abi : Flag<"-fobjc-fragile-abi">,
+  HelpText<"Use Objective-C's fragile ABI">;
 def fno_objc_infer_related_result_type : Flag<
     "-fno-objc-infer-related-result-type">,
   HelpText<

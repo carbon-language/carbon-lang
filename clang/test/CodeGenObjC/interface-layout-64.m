@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -emit-llvm -o %t %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -emit-llvm -o %t %s
 // RUNX: llvm-gcc -m64 -emit-llvm -S -o %t %s &&
 
 // RUN: grep '@"OBJC_IVAR_$_I3._iv2" = global i64 8, section "__DATA, __objc_ivar", align 8' %t

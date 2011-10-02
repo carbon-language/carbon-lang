@@ -1,7 +1,7 @@
-// RUN: %clang_cc1 -emit-llvm -o - %s | FileCheck %s -check-prefix=CHECK-MAC
-// RUN: %clang_cc1 -emit-llvm -fobjc-nonfragile-abi -o - %s | FileCheck %s -check-prefix=CHECK-MAC-NF
-// RUN: %clang_cc1 -fgnu-runtime -emit-llvm -o - %s | FileCheck %s -check-prefix=CHECK-GNU
-// RUN: %clang_cc1 -fgnu-runtime -fobjc-nonfragile-abi -emit-llvm -o - %s | FileCheck %s -check-prefix CHECK-GNU-NF
+// RUN: %clang_cc1 -fobjc-fragile-abi -emit-llvm -o - %s | FileCheck %s -check-prefix=CHECK-MAC
+// RUN: %clang_cc1 -emit-llvm -o - %s | FileCheck %s -check-prefix=CHECK-MAC-NF
+// RUN: %clang_cc1 -fobjc-fragile-abi -fgnu-runtime -emit-llvm -o - %s | FileCheck %s -check-prefix=CHECK-GNU
+// RUN: %clang_cc1 -fgnu-runtime -emit-llvm -o - %s | FileCheck %s -check-prefix CHECK-GNU-NF
 
 typedef struct {
   int x;

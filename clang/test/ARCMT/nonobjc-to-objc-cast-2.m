@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -arcmt-check -verify -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi %s
+// RUN: %clang_cc1 -arcmt-check -verify -triple x86_64-apple-darwin10 %s
 
 #include "Common.h"
 

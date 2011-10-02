@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin11 -fobjc-nonfragile-abi -fsyntax-only -verify %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin11 -fsyntax-only -verify %s
 // rdar://9636091
 
 @interface I

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fblocks -fobjc-gc -triple x86_64-apple-darwin -O0 -emit-llvm %s -o %t-64.s
+// RUN: %clang_cc1 -fblocks -fobjc-gc -triple x86_64-apple-darwin -fobjc-fragile-abi -O0 -emit-llvm %s -o %t-64.s
 // RUN: FileCheck -check-prefix LP64 --input-file=%t-64.s %s
 
 struct S {

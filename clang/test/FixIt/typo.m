@@ -1,7 +1,7 @@
-// RUN: %clang_cc1 -fsyntax-only -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -DNON_FIXITS -verify %s
+// RUN: %clang_cc1 -fsyntax-only -triple x86_64-apple-darwin10 -DNON_FIXITS -verify %s
 // RUN: cp %s %t
-// RUN: not %clang_cc1 -x objective-c -fsyntax-only -fobjc-nonfragile-abi -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -fixit %t
-// RUN: %clang_cc1 -x objective-c -fsyntax-only -fobjc-nonfragile-abi -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -pedantic -Werror %t
+// RUN: not %clang_cc1 -x objective-c -fsyntax-only -triple x86_64-apple-darwin10 -fixit %t
+// RUN: %clang_cc1 -x objective-c -fsyntax-only -triple x86_64-apple-darwin10 -pedantic -Werror %t
 // RUN: grep "@implementation Sub3" %t
 
 @interface NSString // expected-note 2{{'NSString' declared here}}

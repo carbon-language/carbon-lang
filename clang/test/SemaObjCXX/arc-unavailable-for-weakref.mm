@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -x objective-c++ -triple x86_64-apple-darwin11 -fobjc-nonfragile-abi -fobjc-runtime-has-weak -fsyntax-only -fobjc-arc -verify %s
+// RUN: %clang_cc1 -x objective-c++ -triple x86_64-apple-darwin11 -fobjc-runtime-has-weak -fsyntax-only -fobjc-arc -verify %s
 // rdar://9693477
 
 __attribute__((objc_arc_weak_reference_unavailable))

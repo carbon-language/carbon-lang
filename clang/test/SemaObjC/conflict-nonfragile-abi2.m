@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fobjc-nonfragile-abi -verify -fsyntax-only %s
+// RUN: %clang_cc1 -verify -fsyntax-only %s
 // rdar://8225011
 
 int glob;

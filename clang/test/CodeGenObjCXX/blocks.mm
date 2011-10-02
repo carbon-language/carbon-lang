@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -x objective-c++ -fblocks -triple x86_64-apple-darwin %s -verify -emit-llvm -o %t
+// RUN: %clang_cc1 -x objective-c++ -fblocks -triple x86_64-apple-darwin -fobjc-fragile-abi %s -verify -emit-llvm -o %t
 // rdar://8979379
 
 @interface A

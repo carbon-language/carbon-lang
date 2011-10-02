@@ -1,5 +1,5 @@
 // REQUIRES: x86-64-registered-target
-// RUN: %clang_cc1 -masm-verbose -S -fblocks -g  -triple x86_64-apple-darwin10  %s -o - | FileCheck %s
+// RUN: %clang_cc1 -masm-verbose -S -fblocks -g  -triple x86_64-apple-darwin10 -fobjc-fragile-abi  %s -o - | FileCheck %s
 extern void foo(void(^)(void));
 
 // CHECK:	.ascii	 "__destroy_helper_block_" ## DW_AT_name

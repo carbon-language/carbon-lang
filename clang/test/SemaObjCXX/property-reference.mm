@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -x objective-c++ -triple x86_64-apple-darwin10 -fsyntax-only -verify -fobjc-nonfragile-abi %s
+// RUN: %clang_cc1 -x objective-c++ -triple x86_64-apple-darwin10 -fsyntax-only -verify %s
 // rdar://9070460
 
 class TCPPObject

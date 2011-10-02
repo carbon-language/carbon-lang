@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm -triple=i686-apple-darwin8 -o %t %s
+// RUN: %clang_cc1 -emit-llvm -triple i686-apple-darwin8 -fobjc-fragile-abi -o %t %s
 // RUNX: llvm-gcc -S -emit-llvm -o %t %s &&
 
 // No object generated

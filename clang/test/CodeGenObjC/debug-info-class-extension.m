@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fobjc-nonfragile-abi -masm-verbose -S -g %s -o - | FileCheck %s
+// RUN: %clang_cc1 -masm-verbose -S -g %s -o - | FileCheck %s
 
 // CHECK: AT_APPLE_objc_complete_type
 

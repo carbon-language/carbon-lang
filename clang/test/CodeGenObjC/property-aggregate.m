@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin -fobjc-nonfragile-abi -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin -emit-llvm %s -o - | FileCheck %s
 
 // This structure's size is not a power of two, so the property does
 // not get native atomics, even though x86-64 can do unaligned atomics

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm-only -std=c++0x -fblocks -o - -triple x86_64-apple-darwin10 %s
+// RUN: %clang_cc1 -emit-llvm-only -std=c++0x -fblocks -o - -triple x86_64-apple-darwin10 -fobjc-fragile-abi %s
 // rdar://9362021
 
 @class DYFuture;

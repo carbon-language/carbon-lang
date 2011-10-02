@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin10  -fobjc-nonfragile-abi -emit-llvm -o - %s | FileCheck %s
-// RUN: %clang_cc1 -triple i386-apple-darwin9  -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10  -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -triple i386-apple-darwin9 -fobjc-fragile-abi  -emit-llvm -o - %s | FileCheck %s
 // rdar: //8808439
 
 typedef struct {
