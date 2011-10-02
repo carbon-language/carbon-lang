@@ -3271,14 +3271,17 @@ Sema::ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
   // assignment, to the types of the corresponding parameter, ...
   unsigned NumArgsInProto = Proto->getNumArgs();
   bool Invalid = false;
+  unsigned MinArgs = FDecl ? FDecl->getMinRequiredArguments() : NumArgsInProto;
 
   // If too few arguments are available (and we don't have default
   // arguments for the remaining parameters), don't make the call.
   if (NumArgs < NumArgsInProto) {
-    if (!FDecl || NumArgs < FDecl->getMinRequiredArguments()) {
-      Diag(RParenLoc, diag::err_typecheck_call_too_few_args)
+    if (NumArgs < MinArgs) {
+      Diag(RParenLoc, MinArgs == NumArgsInProto
+                        ? diag::err_typecheck_call_too_few_args
+                        : diag::err_typecheck_call_too_few_args_at_least)
         << Fn->getType()->isBlockPointerType()
-        << NumArgsInProto << NumArgs << Fn->getSourceRange();
+        << MinArgs << NumArgs << Fn->getSourceRange();
 
       // Emit the location of the prototype.
       if (FDecl && !FDecl->getBuiltinID())
@@ -3295,7 +3298,9 @@ Sema::ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
   if (NumArgs > NumArgsInProto) {
     if (!Proto->isVariadic()) {
       Diag(Args[NumArgsInProto]->getLocStart(),
-           diag::err_typecheck_call_too_many_args)
+           MinArgs == NumArgsInProto
+             ? diag::err_typecheck_call_too_many_args
+             : diag::err_typecheck_call_too_many_args_at_most)
         << Fn->getType()->isBlockPointerType()
         << NumArgsInProto << NumArgs << Fn->getSourceRange()
         << SourceRange(Args[NumArgsInProto]->getLocStart(),
