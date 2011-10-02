@@ -205,7 +205,10 @@ public:
   void dumpBlockLiveness(const SourceManager& M);
 
   LiveVariablesImpl(AnalysisContext &ac, bool KillAtAssign)
-    : analysisContext(ac), killAtAssign(KillAtAssign) {}
+    : analysisContext(ac),
+      SSetFact(false), // Do not canonicalize ImmutableSets by default.
+      DSetFact(false), // This is a *major* performance win.
+      killAtAssign(KillAtAssign) {}
 };
 }
 
@@ -255,6 +258,8 @@ LiveVariablesImpl::merge(LiveVariables::LivenessValues valsA,
   SSetRefA = mergeSets(SSetRefA, SSetRefB);
   DSetRefA = mergeSets(DSetRefA, DSetRefB);
   
+  // asImmutableSet() canonicalizes the tree, allowing us to do an easy
+  // comparison afterwards.
   return LiveVariables::LivenessValues(SSetRefA.asImmutableSet(),
                                        DSetRefA.asImmutableSet());  
 }
