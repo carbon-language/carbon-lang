@@ -114,8 +114,10 @@
 @ CHECK: vnmls.f32 s1, s2, s0        @ encoding: [0x00,0x0a,0x51,0xee]
         vnmls.f32       s1, s2, s0
 
-@ FIXME: vmrs apsr_nzcv, fpscr       @ encoding: [0x10,0xfa,0xf1,0xee]
-@        vmrs    apsr_nzcv, fpscr
+@ CHECK: vmrs apsr_nzcv, fpscr       @ encoding: [0x10,0xfa,0xf1,0xee]
+@ CHECK: vmrs apsr_nzcv, fpscr       @ encoding: [0x10,0xfa,0xf1,0xee]
+        vmrs    apsr_nzcv, fpscr
+        fmstat
 
 @ CHECK: vnegne.f64 d16, d16         @ encoding: [0x60,0x0b,0xf1,0x1e]
         vnegne.f64      d16, d16

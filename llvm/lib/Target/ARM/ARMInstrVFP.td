@@ -1148,3 +1148,10 @@ def FCONSTS : VFPAI<(outs SPR:$Sd), (ins vfp_f32imm:$imm),
   let Inst{3-0}   = imm{3-0};
 }
 }
+
+//===----------------------------------------------------------------------===//
+// Assembler aliases.
+//
+
+def : VFP2InstAlias<"fmstat${p}", (FMSTAT pred:$p)>;
+
