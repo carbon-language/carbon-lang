@@ -778,6 +778,8 @@ public:
   void AddFixItHint(const FixItHint &Hint) const {
     assert(NumFixItHints < DiagnosticsEngine::MaxFixItHints &&
            "Too many fix-it hints!");
+    if (NumFixItHints >= DiagnosticsEngine::MaxFixItHints)
+      return;  // Don't crash in release builds
     if (DiagObj)
       DiagObj->FixItHints[NumFixItHints++] = Hint;
   }
