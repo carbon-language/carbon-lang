@@ -2489,7 +2489,7 @@ Decl *Sema::ActOnMethodDeclaration(
     SourceLocation MethodLoc, SourceLocation EndLoc,
     tok::TokenKind MethodType, 
     ObjCDeclSpec &ReturnQT, ParsedType ReturnType,
-    SourceLocation SelectorStartLoc,
+    ArrayRef<SourceLocation> SelectorLocs,
     Selector Sel,
     // optional arguments. The number of types/arguments is obtained
     // from the Sel.getNumArgs().
@@ -2523,11 +2523,12 @@ Decl *Sema::ActOnMethodDeclaration(
   } else { // get the type for "id".
     resultDeclType = Context.getObjCIdType();
     Diag(MethodLoc, diag::warn_missing_method_return_type)
-      << FixItHint::CreateInsertion(SelectorStartLoc, "(id)");
+      << FixItHint::CreateInsertion(SelectorLocs.front(), "(id)");
   }
 
   ObjCMethodDecl* ObjCMethod =
-    ObjCMethodDecl::Create(Context, MethodLoc, EndLoc, Sel, resultDeclType,
+    ObjCMethodDecl::Create(Context, MethodLoc, EndLoc, SelectorLocs, Sel,
+                           resultDeclType,
                            ResultTInfo,
                            CurContext,
                            MethodType == tok::minus, isVariadic,

@@ -1518,6 +1518,7 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
       property->getLocation();
 
     GetterMethod = ObjCMethodDecl::Create(Context, Loc, Loc,
+                             ArrayRef<SourceLocation>(),
                              property->getGetterName(),
                              property->getType(), 0, CD, /*isInstance=*/true,
                              /*isVariadic=*/false, /*isSynthesized=*/true,
@@ -1555,7 +1556,7 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
         property->getLocation();
 
       SetterMethod =
-        ObjCMethodDecl::Create(Context, Loc, Loc,
+        ObjCMethodDecl::Create(Context, Loc, Loc, ArrayRef<SourceLocation>(),
                                property->getSetterName(), Context.VoidTy, 0,
                                CD, /*isInstance=*/true, /*isVariadic=*/false,
                                /*isSynthesized=*/true,

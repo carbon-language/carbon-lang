@@ -2134,6 +2134,7 @@ void CodeGenModule::EmitObjCIvarInitializations(ObjCImplementationDecl *D) {
     Selector cxxSelector = getContext().Selectors.getSelector(0, &II);
     ObjCMethodDecl *DTORMethod =
       ObjCMethodDecl::Create(getContext(), D->getLocation(), D->getLocation(),
+                             ArrayRef<SourceLocation>(),
                              cxxSelector, getContext().VoidTy, 0, D,
                              /*isInstance=*/true, /*isVariadic=*/false,
                           /*isSynthesized=*/true, /*isImplicitlyDeclared=*/true,
@@ -2153,7 +2154,9 @@ void CodeGenModule::EmitObjCIvarInitializations(ObjCImplementationDecl *D) {
   // The constructor returns 'self'.
   ObjCMethodDecl *CTORMethod = ObjCMethodDecl::Create(getContext(), 
                                                 D->getLocation(),
-                                                D->getLocation(), cxxSelector,
+                                                D->getLocation(),
+                                                ArrayRef<SourceLocation>(),
+                                                cxxSelector,
                                                 getContext().getObjCIdType(), 0, 
                                                 D, /*isInstance=*/true,
                                                 /*isVariadic=*/false,

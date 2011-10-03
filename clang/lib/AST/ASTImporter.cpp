@@ -2923,6 +2923,7 @@ Decl *ASTNodeImporter::VisitObjCMethodDecl(ObjCMethodDecl *D) {
     = ObjCMethodDecl::Create(Importer.getToContext(),
                              Loc,
                              Importer.Import(D->getLocEnd()),
+                             /*FIXME:*/ ArrayRef<SourceLocation>(),
                              Name.getObjCSelector(),
                              ResultTy, ResultTInfo, DC,
                              D->isInstanceMethod(),

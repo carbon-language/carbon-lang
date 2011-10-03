@@ -1614,6 +1614,7 @@ Decl *ASTReader::ReadDeclRecord(DeclID ID) {
 
   case DECL_OBJC_METHOD:
     D = ObjCMethodDecl::Create(Context, SourceLocation(), SourceLocation(),
+                               ArrayRef<SourceLocation>(),
                                Selector(), QualType(), 0, 0);
     break;
   case DECL_OBJC_INTERFACE:

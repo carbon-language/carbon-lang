@@ -193,7 +193,9 @@ private:
 public:
   static ObjCMethodDecl *Create(ASTContext &C,
                                 SourceLocation beginLoc,
-                                SourceLocation endLoc, Selector SelInfo,
+                                SourceLocation endLoc,
+                                ArrayRef<SourceLocation> SelLocs,
+                                Selector SelInfo,
                                 QualType T, 
                                 TypeSourceInfo *ResultTInfo,
                                 DeclContext *contextDecl,

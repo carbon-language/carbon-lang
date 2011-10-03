@@ -332,6 +332,7 @@ ObjCMethodDecl *ObjCInterfaceDecl::lookupPrivateMethod(
 ObjCMethodDecl *ObjCMethodDecl::Create(ASTContext &C,
                                        SourceLocation beginLoc,
                                        SourceLocation endLoc,
+                                       ArrayRef<SourceLocation> SelLocs,
                                        Selector SelInfo, QualType T,
                                        TypeSourceInfo *ResultTInfo,
                                        DeclContext *contextDecl,
