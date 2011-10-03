@@ -60,7 +60,7 @@ void NSErrorMethodChecker::checkASTDecl(const ObjCMethodDecl *D,
     II = &D->getASTContext().Idents.get("NSError"); 
 
   bool hasNSError = false;
-  for (ObjCMethodDecl::param_iterator
+  for (ObjCMethodDecl::param_const_iterator
          I = D->param_begin(), E = D->param_end(); I != E; ++I)  {
     if (IsNSError((*I)->getType(), II)) {
       hasNSError = true;

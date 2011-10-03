@@ -2923,7 +2923,6 @@ Decl *ASTNodeImporter::VisitObjCMethodDecl(ObjCMethodDecl *D) {
     = ObjCMethodDecl::Create(Importer.getToContext(),
                              Loc,
                              Importer.Import(D->getLocEnd()),
-                             /*FIXME:*/ ArrayRef<SourceLocation>(),
                              Name.getObjCSelector(),
                              ResultTy, ResultTInfo, DC,
                              D->isInstanceMethod(),
@@ -2955,8 +2954,9 @@ Decl *ASTNodeImporter::VisitObjCMethodDecl(ObjCMethodDecl *D) {
     ToParams[I]->setOwningFunction(ToMethod);
     ToMethod->addDecl(ToParams[I]);
   }
-  ToMethod->setMethodParams(Importer.getToContext(), 
-                            ToParams.data(), ToParams.size());
+  SmallVector<SourceLocation, 12> SelLocs;
+  D->getSelectorLocs(SelLocs);
+  ToMethod->setMethodParams(Importer.getToContext(), ToParams, SelLocs); 
 
   ToMethod->setLexicalDeclContext(LexicalDC);
   Importer.Imported(D, ToMethod);

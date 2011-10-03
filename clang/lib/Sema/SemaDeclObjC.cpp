@@ -171,10 +171,11 @@ void Sema::CheckObjCMethodOverride(ObjCMethodDecl *NewMethod,
         Diag(Overridden->getLocation(), diag::note_previous_decl) 
         << "method";
     }
-    for (ObjCMethodDecl::param_iterator oi = Overridden->param_begin(),
-         ni = NewMethod->param_begin(), ne = NewMethod->param_end();
+    ObjCMethodDecl::param_const_iterator oi = Overridden->param_begin();
+    for (ObjCMethodDecl::param_iterator
+           ni = NewMethod->param_begin(), ne = NewMethod->param_end();
          ni != ne; ++ni, ++oi) {
-      ParmVarDecl *oldDecl = (*oi);
+      const ParmVarDecl *oldDecl = (*oi);
       ParmVarDecl *newDecl = (*ni);
       if (newDecl->hasAttr<NSConsumedAttr>() != 
           oldDecl->hasAttr<NSConsumedAttr>()) {
@@ -1860,12 +1861,12 @@ bool Sema::MatchTwoMethodDeclarations(const ObjCMethodDecl *left,
          != right->hasAttr<NSConsumesSelfAttr>()))
     return false;
 
-  ObjCMethodDecl::param_iterator
+  ObjCMethodDecl::param_const_iterator
     li = left->param_begin(), le = left->param_end(), ri = right->param_begin();
 
   for (; li != le; ++li, ++ri) {
     assert(ri != right->param_end() && "Param mismatch");
-    ParmVarDecl *lparm = *li, *rparm = *ri;
+    const ParmVarDecl *lparm = *li, *rparm = *ri;
 
     if (!matchTypes(Context, strategy, lparm->getType(), rparm->getType()))
       return false;
@@ -2527,7 +2528,7 @@ Decl *Sema::ActOnMethodDeclaration(
   }
 
   ObjCMethodDecl* ObjCMethod =
-    ObjCMethodDecl::Create(Context, MethodLoc, EndLoc, SelectorLocs, Sel,
+    ObjCMethodDecl::Create(Context, MethodLoc, EndLoc, Sel,
                            resultDeclType,
                            ResultTInfo,
                            CurContext,
@@ -2610,7 +2611,7 @@ Decl *Sema::ActOnMethodDeclaration(
     Params.push_back(Param);
   }
   
-  ObjCMethod->setMethodParams(Context, Params.data(), Params.size());
+  ObjCMethod->setMethodParams(Context, Params, SelectorLocs);
   ObjCMethod->setObjCDeclQualifier(
     CvtQTToAstBitMask(ReturnQT.getObjCDeclQualifier()));
 

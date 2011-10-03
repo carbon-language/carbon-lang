@@ -2003,7 +2003,8 @@ void Sema::mergeObjCMethodDecls(ObjCMethodDecl *newMethod,
   mergeDeclAttributes(newMethod, oldMethod, Context, mergeDeprecation);
 
   // Merge attributes from the parameters.
-  for (ObjCMethodDecl::param_iterator oi = oldMethod->param_begin(),
+  ObjCMethodDecl::param_const_iterator oi = oldMethod->param_begin();
+  for (ObjCMethodDecl::param_iterator
          ni = newMethod->param_begin(), ne = newMethod->param_end();
        ni != ne; ++ni, ++oi)
     mergeParamDeclAttributes(*ni, *oi, Context);

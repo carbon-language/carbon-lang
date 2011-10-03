@@ -313,7 +313,7 @@ void CodeGenFunction::StartObjCMethod(const ObjCMethodDecl *OMD,
   args.push_back(OMD->getSelfDecl());
   args.push_back(OMD->getCmdDecl());
 
-  for (ObjCMethodDecl::param_iterator PI = OMD->param_begin(),
+  for (ObjCMethodDecl::param_const_iterator PI = OMD->param_begin(),
        E = OMD->param_end(); PI != E; ++PI)
     args.push_back(*PI);
 

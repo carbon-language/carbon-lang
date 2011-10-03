@@ -52,6 +52,12 @@ SourceLocation getArgLoc<Expr>(Expr *Arg) {
   return Arg->getLocStart();
 }
 
+template <>
+SourceLocation getArgLoc<ParmVarDecl>(ParmVarDecl *Arg) {
+  // -1 to point to left paren of the method parameter's type.
+  return Arg->getLocStart().getLocWithOffset(-1);
+}
+
 template <typename T>
 SourceLocation getArgLoc(unsigned Index, ArrayRef<T*> Args) {
   return Index < Args.size() ? getArgLoc(Args[Index]) : SourceLocation();
@@ -96,6 +102,23 @@ SourceLocation clang::getStandardSelectorLoc(unsigned Index,
                                              Selector Sel,
                                              bool WithArgSpace,
                                              ArrayRef<Expr *> Args,
+                                             SourceLocation EndLoc) {
+  return getStandardSelLoc(Index, Sel, WithArgSpace,
+                           getArgLoc(Index, Args), EndLoc);
+}
+
+SelectorLocationsKind
+clang::hasStandardSelectorLocs(Selector Sel,
+                               ArrayRef<SourceLocation> SelLocs,
+                               ArrayRef<ParmVarDecl *> Args,
+                               SourceLocation EndLoc) {
+  return hasStandardSelLocs(Sel, SelLocs, Args, EndLoc);
+}
+
+SourceLocation clang::getStandardSelectorLoc(unsigned Index,
+                                             Selector Sel,
+                                             bool WithArgSpace,
+                                             ArrayRef<ParmVarDecl *> Args,
                                              SourceLocation EndLoc) {
   return getStandardSelLoc(Index, Sel, WithArgSpace,
                            getArgLoc(Index, Args), EndLoc);

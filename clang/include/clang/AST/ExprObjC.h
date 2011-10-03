@@ -360,12 +360,12 @@ public:
     QualType ArgType;
     if (isImplicitProperty()) {
       const ObjCMethodDecl *Setter = getImplicitPropertySetter();
-      ObjCMethodDecl::param_iterator P = Setter->param_begin(); 
+      ObjCMethodDecl::param_const_iterator P = Setter->param_begin(); 
       ArgType = (*P)->getType();
     } else {
       if (ObjCPropertyDecl *PDecl = getExplicitProperty())
         if (const ObjCMethodDecl *Setter = PDecl->getSetterMethodDecl()) {
-          ObjCMethodDecl::param_iterator P = Setter->param_begin(); 
+          ObjCMethodDecl::param_const_iterator P = Setter->param_begin(); 
           ArgType = (*P)->getType();
         }
       if (ArgType.isNull())

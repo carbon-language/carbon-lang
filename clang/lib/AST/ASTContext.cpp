@@ -3994,7 +3994,7 @@ bool ASTContext::getObjCEncodingForMethodDecl(const ObjCMethodDecl *Decl,
   // The first two arguments (self and _cmd) are pointers; account for
   // their size.
   CharUnits ParmOffset = 2 * PtrSize;
-  for (ObjCMethodDecl::param_iterator PI = Decl->param_begin(),
+  for (ObjCMethodDecl::param_const_iterator PI = Decl->param_begin(),
        E = Decl->sel_param_end(); PI != E; ++PI) {
     QualType PType = (*PI)->getType();
     CharUnits sz = getObjCEncodingTypeSize(PType);
@@ -4011,9 +4011,9 @@ bool ASTContext::getObjCEncodingForMethodDecl(const ObjCMethodDecl *Decl,
 
   // Argument types.
   ParmOffset = 2 * PtrSize;
-  for (ObjCMethodDecl::param_iterator PI = Decl->param_begin(),
+  for (ObjCMethodDecl::param_const_iterator PI = Decl->param_begin(),
        E = Decl->sel_param_end(); PI != E; ++PI) {
-    ParmVarDecl *PVDecl = *PI;
+    const ParmVarDecl *PVDecl = *PI;
     QualType PType = PVDecl->getOriginalType();
     if (const ArrayType *AT =
           dyn_cast<ArrayType>(PType->getCanonicalTypeInternal())) {

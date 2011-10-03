@@ -332,7 +332,6 @@ ObjCMethodDecl *ObjCInterfaceDecl::lookupPrivateMethod(
 ObjCMethodDecl *ObjCMethodDecl::Create(ASTContext &C,
                                        SourceLocation beginLoc,
                                        SourceLocation endLoc,
-                                       ArrayRef<SourceLocation> SelLocs,
                                        Selector SelInfo, QualType T,
                                        TypeSourceInfo *ResultTInfo,
                                        DeclContext *contextDecl,
@@ -350,6 +349,42 @@ ObjCMethodDecl *ObjCMethodDecl::Create(ASTContext &C,
                                 isDefined,
                                 impControl,
                                 HasRelatedResultType);
+}
+
+void ObjCMethodDecl::setParamsAndSelLocs(ASTContext &C,
+                                         ArrayRef<ParmVarDecl*> Params,
+                                         ArrayRef<SourceLocation> SelLocs) {
+  ParamsAndSelLocs = 0;
+  NumParams = Params.size();
+  if (Params.empty() && SelLocs.empty())
+    return;
+
+  unsigned Size = sizeof(ParmVarDecl *) * NumParams +
+                  sizeof(SourceLocation) * SelLocs.size();
+  ParamsAndSelLocs = C.Allocate(Size);
+  std::copy(Params.begin(), Params.end(), getParams());
+  std::copy(SelLocs.begin(), SelLocs.end(), getStoredSelLocs());
+}
+
+void ObjCMethodDecl::getSelectorLocs(
+                               SmallVectorImpl<SourceLocation> &SelLocs) const {
+  for (unsigned i = 0, e = getNumSelectorLocs(); i != e; ++i)
+    SelLocs.push_back(getSelectorLoc(i));
+}
+
+void ObjCMethodDecl::setMethodParams(ASTContext &C,
+                                     ArrayRef<ParmVarDecl*> Params,
+                                     ArrayRef<SourceLocation> SelLocs) {
+  assert((!SelLocs.empty() || isImplicit()) &&
+         "No selector locs for non-implicit method");
+  if (isImplicit())
+    return setParamsAndSelLocs(C, Params, ArrayRef<SourceLocation>());
+
+  SelLocsKind = hasStandardSelectorLocs(getSelector(), SelLocs, Params, EndLoc);
+  if (SelLocsKind != SelLoc_NonStandard)
+    return setParamsAndSelLocs(C, Params, ArrayRef<SourceLocation>());
+
+  setParamsAndSelLocs(C, Params, SelLocs);
 }
 
 /// \brief A definition will return its interface declaration.

@@ -1660,7 +1660,7 @@ llvm::DIType CGDebugInfo::getOrCreateFunctionType(const Decl * D, QualType FnTyp
     // "cmd" pointer is always second argument.
     Elts.push_back(getOrCreateType(OMethod->getCmdDecl()->getType(), F));
     // Get rest of the arguments.
-    for (ObjCMethodDecl::param_iterator PI = OMethod->param_begin(), 
+    for (ObjCMethodDecl::param_const_iterator PI = OMethod->param_begin(), 
            PE = OMethod->param_end(); PI != PE; ++PI)
       Elts.push_back(getOrCreateType((*PI)->getType(), F));
 

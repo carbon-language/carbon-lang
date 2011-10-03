@@ -493,7 +493,15 @@ void ASTDeclReader::VisitObjCMethodDecl(ObjCMethodDecl *MD) {
   Params.reserve(NumParams);
   for (unsigned I = 0; I != NumParams; ++I)
     Params.push_back(ReadDeclAs<ParmVarDecl>(Record, Idx));
-  MD->setMethodParams(Reader.getContext(), Params.data(), NumParams);
+
+  MD->SelLocsKind = Record[Idx++];
+  unsigned NumStoredSelLocs = Record[Idx++];
+  SmallVector<SourceLocation, 16> SelLocs;
+  SelLocs.reserve(NumStoredSelLocs);
+  for (unsigned i = 0; i != NumStoredSelLocs; ++i)
+    SelLocs.push_back(ReadSourceLocation(Record, Idx));
+
+  MD->setParamsAndSelLocs(Reader.getContext(), Params, SelLocs);
 }
 
 void ASTDeclReader::VisitObjCContainerDecl(ObjCContainerDecl *CD) {
@@ -1614,7 +1622,6 @@ Decl *ASTReader::ReadDeclRecord(DeclID ID) {
 
   case DECL_OBJC_METHOD:
     D = ObjCMethodDecl::Create(Context, SourceLocation(), SourceLocation(),
-                               ArrayRef<SourceLocation>(),
                                Selector(), QualType(), 0, 0);
     break;
   case DECL_OBJC_INTERFACE:

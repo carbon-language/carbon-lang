@@ -15,6 +15,7 @@
 #define LLVM_CLANG_AST_DECLOBJC_H
 
 #include "clang/AST/Decl.h"
+#include "clang/AST/SelectorLocationsKind.h"
 #include "llvm/ADT/STLExtras.h"
 
 namespace clang {
@@ -137,6 +138,10 @@ private:
 
   /// \brief Indicates whether this method has a related result type.
   unsigned RelatedResultType : 1;
+  
+  /// \brief Whether the locations of the selector identifiers are in a
+  /// "standard" position, a enum SelectorLocationsKind.
+  unsigned SelLocsKind : 2;
 
   // Result type of this method.
   QualType MethodDeclType;
@@ -144,9 +149,10 @@ private:
   // Type source information for the result type.
   TypeSourceInfo *ResultTInfo;
 
-  /// ParamInfo - List of pointers to VarDecls for the formal parameters of this
-  /// Method.
-  ObjCList<ParmVarDecl> ParamInfo;
+  /// \brief Array of ParmVarDecls for the formal parameters of this method
+  /// and optionally followed by selector locations.
+  void *ParamsAndSelLocs;
+  unsigned NumParams;
 
   /// List of attributes for this method declaration.
   SourceLocation EndLoc; // the location of the ';' or '}'.
@@ -161,6 +167,43 @@ private:
   /// CmdDecl - Decl for the implicit _cmd parameter. This is lazily
   /// constructed by createImplicitParams.
   ImplicitParamDecl *CmdDecl;
+
+  SelectorLocationsKind getSelLocsKind() const {
+    return (SelectorLocationsKind)SelLocsKind;
+  }
+  bool hasStandardSelLocs() const {
+    return getSelLocsKind() != SelLoc_NonStandard;
+  }
+
+  /// \brief Get a pointer to the stored selector identifiers locations array.
+  /// No locations will be stored if HasStandardSelLocs is true.
+  SourceLocation *getStoredSelLocs() {
+    return reinterpret_cast<SourceLocation*>(getParams() + NumParams);
+  }
+  const SourceLocation *getStoredSelLocs() const {
+    return reinterpret_cast<const SourceLocation*>(getParams() + NumParams);
+  }
+
+  /// \brief Get a pointer to the stored selector identifiers locations array.
+  /// No locations will be stored if HasStandardSelLocs is true.
+  ParmVarDecl **getParams() {
+    return reinterpret_cast<ParmVarDecl **>(ParamsAndSelLocs);
+  }
+  const ParmVarDecl *const *getParams() const {
+    return reinterpret_cast<const ParmVarDecl *const *>(ParamsAndSelLocs);
+  }
+
+  /// \brief Get the number of stored selector identifiers locations.
+  /// No locations will be stored if HasStandardSelLocs is true.
+  unsigned getNumStoredSelLocs() const {
+    if (hasStandardSelLocs())
+      return 0;
+    return getNumSelectorLocs();
+  }
+
+  void setParamsAndSelLocs(ASTContext &C,
+                           ArrayRef<ParmVarDecl*> Params,
+                           ArrayRef<SourceLocation> SelLocs);
 
   ObjCMethodDecl(SourceLocation beginLoc, SourceLocation endLoc,
                  Selector SelInfo, QualType T,
@@ -180,7 +223,9 @@ private:
     IsDefined(isDefined),
     DeclImplementation(impControl), objcDeclQualifier(OBJC_TQ_None),
     RelatedResultType(HasRelatedResultType),
+    SelLocsKind(SelLoc_StandardNoSpace),
     MethodDeclType(T), ResultTInfo(ResultTInfo),
+    ParamsAndSelLocs(0), NumParams(0),
     EndLoc(endLoc), Body(0), SelfDecl(0), CmdDecl(0) {
     setImplicit(isImplicitlyDeclared);
   }
@@ -194,7 +239,6 @@ public:
   static ObjCMethodDecl *Create(ASTContext &C,
                                 SourceLocation beginLoc,
                                 SourceLocation endLoc,
-                                ArrayRef<SourceLocation> SelLocs,
                                 Selector SelInfo,
                                 QualType T, 
                                 TypeSourceInfo *ResultTInfo,
@@ -232,6 +276,29 @@ public:
     return SourceRange(getLocation(), EndLoc);
   }
 
+  SourceLocation getSelectorStartLoc() const { return getSelectorLoc(0); }
+  SourceLocation getSelectorLoc(unsigned Index) const {
+    assert(Index < getNumSelectorLocs() && "Index out of range!");
+    if (hasStandardSelLocs())
+      return getStandardSelectorLoc(Index, getSelector(),
+                                   getSelLocsKind() == SelLoc_StandardWithSpace,
+                      llvm::makeArrayRef(const_cast<ParmVarDecl**>(getParams()),
+                                         NumParams),
+                                   EndLoc);
+    return getStoredSelLocs()[Index];
+  }
+
+  void getSelectorLocs(SmallVectorImpl<SourceLocation> &SelLocs) const;
+
+  unsigned getNumSelectorLocs() const {
+    if (isImplicit())
+      return 0;
+    Selector Sel = getSelector();
+    if (Sel.isUnarySelector())
+      return 1;
+    return Sel.getNumArgs();
+  }
+
   ObjCInterfaceDecl *getClassInterface();
   const ObjCInterfaceDecl *getClassInterface() const {
     return const_cast<ObjCMethodDecl*>(this)->getClassInterface();
@@ -252,23 +319,27 @@ public:
   void setResultTypeSourceInfo(TypeSourceInfo *TInfo) { ResultTInfo = TInfo; }
 
   // Iterator access to formal parameters.
-  unsigned param_size() const { return ParamInfo.size(); }
-  typedef ObjCList<ParmVarDecl>::iterator param_iterator;
-  param_iterator param_begin() const { return ParamInfo.begin(); }
-  param_iterator param_end() const { return ParamInfo.end(); }
+  unsigned param_size() const { return NumParams; }
+  typedef const ParmVarDecl *const *param_const_iterator;
+  typedef ParmVarDecl *const *param_iterator;
+  param_const_iterator param_begin() const { return getParams(); }
+  param_const_iterator param_end() const { return getParams() + NumParams; }
+  param_iterator param_begin() { return getParams(); }
+  param_iterator param_end() { return getParams() + NumParams; }
   // This method returns and of the parameters which are part of the selector
   // name mangling requirements.
-  param_iterator sel_param_end() const { 
-    return ParamInfo.begin() + getSelector().getNumArgs(); 
+  param_const_iterator sel_param_end() const { 
+    return param_begin() + getSelector().getNumArgs(); 
   }
 
-  void setMethodParams(ASTContext &C, ParmVarDecl *const *List, unsigned Num) {
-    ParamInfo.set(List, Num, C);
-  }
+  void setMethodParams(ASTContext &C,
+                       ArrayRef<ParmVarDecl*> Params,
+                       ArrayRef<SourceLocation> SelLocs);
 
   // Iterator access to parameter types.
   typedef std::const_mem_fun_t<QualType, ParmVarDecl> deref_fun;
-  typedef llvm::mapped_iterator<param_iterator, deref_fun> arg_type_iterator;
+  typedef llvm::mapped_iterator<param_const_iterator, deref_fun>
+      arg_type_iterator;
 
   arg_type_iterator arg_type_begin() const {
     return llvm::map_iterator(param_begin(), deref_fun(&ParmVarDecl::getType));
@@ -331,6 +402,9 @@ public:
   static ObjCMethodDecl *castFromDeclContext(const DeclContext *DC) {
     return static_cast<ObjCMethodDecl *>(const_cast<DeclContext*>(DC));
   }
+
+  friend class ASTDeclReader;
+  friend class ASTDeclWriter;
 };
 
 /// ObjCContainerDecl - Represents a container for method declarations.
