@@ -637,7 +637,7 @@ namespace ARM_AM {
   /// floating-point value, then return -1.
   static inline int getFP64Imm(const APInt &Imm) {
     uint64_t Sign = Imm.lshr(63).getZExtValue() & 1;
-    int64_t Exp = (Imm.lshr(52).getSExtValue() & 0x7ff) - 1023;   // -1022 to 1023
+    int64_t Exp = (Imm.lshr(52).getSExtValue() & 0x7ff) - 1023; // -1022 to 1023
     uint64_t Mantissa = Imm.getZExtValue() & 0xfffffffffffffULL;
 
     // We can handle 4 bits of mantissa.
