@@ -51,7 +51,7 @@ namespace lldb_private
                                            const char* current_line_cstr,
                                            lldb_private::Stream *s)
         {
-            if (file)
+            if (!file)
                 return 0;
             
             if (m_debugger_sp)
