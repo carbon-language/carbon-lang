@@ -90,6 +90,12 @@ protected:
   /// HasFMA4 - Target has 4-operand fused multiply-add
   bool HasFMA4;
 
+  /// HasMOVBE - True if the processor has the MOVBE instruction;
+  bool HasMOVBE;
+
+  /// HasRDRAND - True if the processor has the RDRAND instruction;
+  bool HasRDRAND;
+
   /// IsBTMemSlow - True if BT (bit test) of memory instructions are slow.
   bool IsBTMemSlow;
 
@@ -172,6 +178,8 @@ public:
   bool hasCLMUL() const { return HasCLMUL; }
   bool hasFMA3() const { return HasFMA3; }
   bool hasFMA4() const { return HasFMA4; }
+  bool hasMOVBE() const { return HasMOVBE; }
+  bool hasRDRAND() const { return HasRDRAND; }
   bool isBTMemSlow() const { return IsBTMemSlow; }
   bool isUnalignedMemAccessFast() const { return IsUAMemFast; }
   bool hasVectorUAMem() const { return HasVectorUAMem; }

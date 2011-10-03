@@ -6748,4 +6748,3 @@ let Defs = [YMM0, YMM1, YMM2, YMM3, YMM4, YMM5, YMM6, YMM7,
   def VZEROUPPER : I<0x77, RawFrm, (outs), (ins), "vzeroupper",
                      [(int_x86_avx_vzeroupper)]>, TB, VEX, Requires<[HasAVX]>;
 }
-

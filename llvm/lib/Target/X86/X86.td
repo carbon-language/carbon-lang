@@ -96,6 +96,10 @@ def FeatureVectorUAMem : SubtargetFeature<"vector-unaligned-mem",
                  "Allow unaligned memory operands on vector/SIMD instructions">;
 def FeatureAES     : SubtargetFeature<"aes", "HasAES", "true",
                                       "Enable AES instructions">;
+def FeatureMOVBE   : SubtargetFeature<"movbe", "HasMOVBE", "true",
+                                      "Support MOVBE instruction">;
+def FeatureRDRAND  : SubtargetFeature<"rdrand", "HasRDRAND", "true",
+                                      "Support RDRAND instruction">;
 
 //===----------------------------------------------------------------------===//
 // X86 processors supported.

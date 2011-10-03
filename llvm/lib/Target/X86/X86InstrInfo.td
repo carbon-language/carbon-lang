@@ -473,6 +473,8 @@ def HasAES       : Predicate<"Subtarget->hasAES()">;
 def HasCLMUL     : Predicate<"Subtarget->hasCLMUL()">;
 def HasFMA3      : Predicate<"Subtarget->hasFMA3()">;
 def HasFMA4      : Predicate<"Subtarget->hasFMA4()">;
+def HasMOVBE     : Predicate<"Subtarget->hasMOVBE()">;
+def HasRDRAND    : Predicate<"Subtarget->hasRDRAND()">;
 def FPStackf32   : Predicate<"!Subtarget->hasXMM()">;
 def FPStackf64   : Predicate<"!Subtarget->hasXMMInt()">;
 def HasCmpxchg16b: Predicate<"Subtarget->hasCmpxchg16b()">;
@@ -1295,6 +1297,36 @@ def ARPL16rr : I<0x63, MRMDestReg, (outs GR16:$src), (ins GR16:$dst),
                  "arpl\t{$src, $dst|$dst, $src}", []>, Requires<[In32BitMode]>;
 def ARPL16mr : I<0x63, MRMSrcMem, (outs GR16:$src), (ins i16mem:$dst),
                  "arpl\t{$src, $dst|$dst, $src}", []>, Requires<[In32BitMode]>;
+
+//===----------------------------------------------------------------------===//
+// MOVBE Instructions
+//
+let Predicates = [HasMOVBE] in {
+  def MOVBE16rm : I<0xF0, MRMSrcMem, (outs GR16:$dst), (ins i16mem:$src),
+                    "movbe{w}\t{$src, $dst|$dst, $src}", []>, OpSize, T8;
+  def MOVBE32rm : I<0xF0, MRMSrcMem, (outs GR32:$dst), (ins i32mem:$src),
+                    "movbe{l}\t{$src, $dst|$dst, $src}", []>, T8;
+  def MOVBE64rm : RI<0xF0, MRMSrcMem, (outs GR64:$dst), (ins i64mem:$src),
+                     "movbe{q}\t{$src, $dst|$dst, $src}", []>, T8;
+  def MOVBE16mr : I<0xF1, MRMDestMem, (outs), (ins i16mem:$dst, GR16:$src),
+                    "movbe{w}\t{$src, $dst|$dst, $src}", []>, OpSize, T8;
+  def MOVBE32mr : I<0xF1, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$src),
+                    "movbe{l}\t{$src, $dst|$dst, $src}", []>, T8;
+  def MOVBE64mr : RI<0xF1, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src),
+                     "movbe{q}\t{$src, $dst|$dst, $src}", []>, T8;
+}
+
+//===----------------------------------------------------------------------===//
+// RDRAND Instruction
+//
+let Predicates = [HasRDRAND], Defs = [EFLAGS] in {
+  def RDRAND16r : I<0xC7, MRM6r, (outs GR16:$dst), (ins),
+                    "rdrand{w}\t$dst", []>, OpSize, TB;
+  def RDRAND32r : I<0xC7, MRM6r, (outs GR32:$dst), (ins),
+                    "rdrand{l}\t$dst", []>, TB;
+  def RDRAND64r : RI<0xC7, MRM6r, (outs GR64:$dst), (ins),
+                     "rdrand{q}\t$dst", []>, TB;
+}
 
 //===----------------------------------------------------------------------===//
 // Subsystems.
