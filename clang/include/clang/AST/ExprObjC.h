@@ -445,6 +445,11 @@ private:
 /// class, and can be distinguished via \c getReceiverKind(). Example:
 ///
 class ObjCMessageExpr : public Expr {
+  /// \brief Stores either the selector that this message is sending
+  /// to (when \c HasMethod is zero) or an \c ObjCMethodDecl pointer
+  /// referring to the method that we type-checked against.
+  uintptr_t SelectorOrMethod;
+
   enum { NumArgsBitWidth = 16 };
 
   /// \brief The number of arguments in the message send, not
@@ -481,18 +486,13 @@ class ObjCMessageExpr : public Expr {
   /// the location of the 'super' keyword.
   SourceLocation SuperLoc;
 
-  /// \brief Stores either the selector that this message is sending
-  /// to (when \c HasMethod is zero) or an \c ObjCMethodDecl pointer
-  /// referring to the method that we type-checked against.
-  uintptr_t SelectorOrMethod;
-
   /// \brief The source locations of the open and close square
   /// brackets ('[' and ']', respectively).
   SourceLocation LBracLoc, RBracLoc;
 
   ObjCMessageExpr(EmptyShell Empty, unsigned NumArgs)
-    : Expr(ObjCMessageExprClass, Empty), Kind(0), 
-      HasMethod(0), IsDelegateInitCall(0), SelectorOrMethod(0) {
+    : Expr(ObjCMessageExprClass, Empty), SelectorOrMethod(0), Kind(0), 
+      HasMethod(0), IsDelegateInitCall(0) {
     setNumArgs(NumArgs);
   }
 

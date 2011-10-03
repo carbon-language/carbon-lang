@@ -2725,10 +2725,10 @@ ObjCMessageExpr::ObjCMessageExpr(QualType T,
          /*TypeDependent=*/false, /*ValueDependent=*/false,
          /*InstantiationDependent=*/false,
          /*ContainsUnexpandedParameterPack=*/false),
-    Kind(IsInstanceSuper? SuperInstance : SuperClass),
-    HasMethod(Method != 0), IsDelegateInitCall(false), SuperLoc(SuperLoc),
     SelectorOrMethod(reinterpret_cast<uintptr_t>(Method? Method
                                                        : Sel.getAsOpaquePtr())),
+    Kind(IsInstanceSuper? SuperInstance : SuperClass),
+    HasMethod(Method != 0), IsDelegateInitCall(false), SuperLoc(SuperLoc),
     LBracLoc(LBracLoc), RBracLoc(RBracLoc) 
 {
   initArgsAndSelLocs(Args, SelLocs, SelLocsK);
@@ -2748,10 +2748,10 @@ ObjCMessageExpr::ObjCMessageExpr(QualType T,
   : Expr(ObjCMessageExprClass, T, VK, OK_Ordinary, T->isDependentType(),
          T->isDependentType(), T->isInstantiationDependentType(),
          T->containsUnexpandedParameterPack()),
-    Kind(Class),
-    HasMethod(Method != 0), IsDelegateInitCall(false),
     SelectorOrMethod(reinterpret_cast<uintptr_t>(Method? Method
                                                        : Sel.getAsOpaquePtr())),
+    Kind(Class),
+    HasMethod(Method != 0), IsDelegateInitCall(false),
     LBracLoc(LBracLoc), RBracLoc(RBracLoc) 
 {
   initArgsAndSelLocs(Args, SelLocs, SelLocsK);
@@ -2772,10 +2772,10 @@ ObjCMessageExpr::ObjCMessageExpr(QualType T,
          Receiver->isTypeDependent(),
          Receiver->isInstantiationDependent(),
          Receiver->containsUnexpandedParameterPack()),
-    Kind(Instance),
-    HasMethod(Method != 0), IsDelegateInitCall(false),
     SelectorOrMethod(reinterpret_cast<uintptr_t>(Method? Method
                                                        : Sel.getAsOpaquePtr())),
+    Kind(Instance),
+    HasMethod(Method != 0), IsDelegateInitCall(false),
     LBracLoc(LBracLoc), RBracLoc(RBracLoc) 
 {
   initArgsAndSelLocs(Args, SelLocs, SelLocsK);
