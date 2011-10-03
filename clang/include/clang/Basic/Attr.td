@@ -338,6 +338,10 @@ def Naked : InheritableAttr {
   let Spellings = ["naked"];
 }
 
+def ReturnsTwice : InheritableAttr {
+  let Spellings = ["returns_twice"];
+}
+
 def NoCommon : InheritableAttr {
   let Spellings = ["nocommon"];
 }

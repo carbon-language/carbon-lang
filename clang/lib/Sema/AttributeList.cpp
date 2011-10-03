@@ -159,7 +159,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
     .Case("address_space", AT_address_space)
     .Case("opencl_image_access", AT_opencl_image_access)
     .Case("always_inline", AT_always_inline)
-    .Case("returns_twice", IgnoredAttribute)
+    .Case("returns_twice", AT_returns_twice)
     .Case("vec_type_hint", IgnoredAttribute)
     .Case("objc_exception", AT_objc_exception)
     .Case("objc_method_family", AT_objc_method_family)

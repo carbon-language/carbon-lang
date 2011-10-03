@@ -1427,6 +1427,23 @@ static void handleUnusedAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   D->addAttr(::new (S.Context) UnusedAttr(Attr.getRange(), S.Context));
 }
 
+static void handleReturnsTwiceAttr(Sema &S, Decl *D,
+                                   const AttributeList &Attr) {
+  // check the attribute arguments.
+  if (Attr.hasParameterOrArguments()) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
+    return;
+  }
+
+  if (!isa<FunctionDecl>(D)) {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+      << Attr.getName() << ExpectedFunction;
+    return;
+  }
+
+  D->addAttr(::new (S.Context) ReturnsTwiceAttr(Attr.getRange(), S.Context));
+}
+
 static void handleUsedAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   // check the attribute arguments.
   if (Attr.hasParameterOrArguments()) {
@@ -3567,6 +3584,9 @@ static void ProcessInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
     handleArcWeakrefUnavailableAttr (S, D, Attr); 
     break;
   case AttributeList::AT_unused:      handleUnusedAttr      (S, D, Attr); break;
+  case AttributeList::AT_returns_twice:
+    handleReturnsTwiceAttr(S, D, Attr);
+    break;
   case AttributeList::AT_used:        handleUsedAttr        (S, D, Attr); break;
   case AttributeList::AT_visibility:  handleVisibilityAttr  (S, D, Attr); break;
   case AttributeList::AT_warn_unused_result: handleWarnUnusedResult(S, D, Attr);

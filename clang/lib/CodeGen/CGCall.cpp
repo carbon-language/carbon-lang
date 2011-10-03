@@ -740,6 +740,9 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
     if (TargetDecl->hasAttr<NoReturnAttr>())
       FuncAttrs |= llvm::Attribute::NoReturn;
 
+    if (TargetDecl->hasAttr<ReturnsTwiceAttr>())
+      FuncAttrs |= llvm::Attribute::ReturnsTwice;
+
     // 'const' and 'pure' attribute functions are also nounwind.
     if (TargetDecl->hasAttr<ConstAttr>()) {
       FuncAttrs |= llvm::Attribute::ReadNone;

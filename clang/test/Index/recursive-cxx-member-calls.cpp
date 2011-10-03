@@ -28,7 +28,7 @@ namespace       clang {
       AT_unavailable, AT_unused, AT_used, AT_vecreturn, AT_vector_size,
       AT_visibility, AT_warn_unused_result, AT_weak, AT_weakref,
       AT_weak_import, AT_reqd_wg_size, AT_init_priority,
-      IgnoredAttribute, UnknownAttribute
+      AT_returns_twice, IgnoredAttribute, UnknownAttribute
     };
     static Kind getKind(const IdentifierInfo * Name);
   };
@@ -157,7 +157,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
     .Case("overloadable", AT_overloadable)
     .Case("address_space", AT_address_space)
     .Case("always_inline", AT_always_inline)
-    .Case("returns_twice", IgnoredAttribute)
+    .Case("returns_twice", AT_returns_twice)
     .Case("vec_type_hint", IgnoredAttribute)
     .Case("objc_exception", AT_objc_exception)
     .Case("ext_vector_type", AT_ext_vector_type)
@@ -392,9 +392,9 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Punctuation: "," [30:38 - 30:39] EnumDecl=Kind:13:10 (Definition)
 // CHECK-tokens: Identifier: "AT_init_priority" [30:40 - 30:56] EnumConstantDecl=AT_init_priority:30:40 (Definition)
 // CHECK-tokens: Punctuation: "," [30:56 - 30:57] EnumDecl=Kind:13:10 (Definition)
-// CHECK-tokens: Identifier: "IgnoredAttribute" [31:7 - 31:23] EnumConstantDecl=IgnoredAttribute:31:7 (Definition)
+// CHECK-tokens: Identifier: "AT_returns_twice" [31:7 - 31:23] EnumConstantDecl=AT_returns_twice:31:7 (Definition)
 // CHECK-tokens: Punctuation: "," [31:23 - 31:24] EnumDecl=Kind:13:10 (Definition)
-// CHECK-tokens: Identifier: "UnknownAttribute" [31:25 - 31:41] EnumConstantDecl=UnknownAttribute:31:25 (Definition)
+// CHECK-tokens: Identifier: "IgnoredAttribute" [31:25 - 31:41] EnumConstantDecl=IgnoredAttribute:31:25 (Definition)
 // CHECK-tokens: Punctuation: "}" [32:5 - 32:6] EnumDecl=Kind:13:10 (Definition)
 // CHECK-tokens: Punctuation: ";" [32:6 - 32:7] ClassDecl=AttributeList:12:9 (Definition)
 // CHECK-tokens: Keyword: "static" [33:5 - 33:11] ClassDecl=AttributeList:12:9 (Definition)
@@ -1240,7 +1240,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Punctuation: "(" [145:10 - 145:11] CallExpr=Case:88:42
 // CHECK-tokens: Literal: ""may_alias"" [145:11 - 145:22] UnexposedExpr=
 // CHECK-tokens: Punctuation: "," [145:22 - 145:23] CallExpr=Case:88:42
-// CHECK-tokens: Identifier: "IgnoredAttribute" [145:24 - 145:40] DeclRefExpr=IgnoredAttribute:31:7
+// CHECK-tokens: Identifier: "IgnoredAttribute" [145:24 - 145:40] DeclRefExpr=IgnoredAttribute:31:25
 // CHECK-tokens: Punctuation: ")" [145:40 - 145:41] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [146:5 - 146:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [146:6 - 146:10] MemberRefExpr=Case:88:42
@@ -1345,14 +1345,14 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Punctuation: "(" [160:10 - 160:11] CallExpr=Case:88:42
 // CHECK-tokens: Literal: ""returns_twice"" [160:11 - 160:26] UnexposedExpr=
 // CHECK-tokens: Punctuation: "," [160:26 - 160:27] CallExpr=Case:88:42
-// CHECK-tokens: Identifier: "IgnoredAttribute" [160:28 - 160:44] DeclRefExpr=IgnoredAttribute:31:7
+// CHECK-tokens: Identifier: "AT_returns_twice" [160:28 - 160:44] DeclRefExpr=AT_returns_twice:31:7
 // CHECK-tokens: Punctuation: ")" [160:44 - 160:45] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [161:5 - 161:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [161:6 - 161:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [161:10 - 161:11] CallExpr=Case:88:42
 // CHECK-tokens: Literal: ""vec_type_hint"" [161:11 - 161:26] UnexposedExpr=
 // CHECK-tokens: Punctuation: "," [161:26 - 161:27] CallExpr=Case:88:42
-// CHECK-tokens: Identifier: "IgnoredAttribute" [161:28 - 161:44] DeclRefExpr=IgnoredAttribute:31:7
+// CHECK-tokens: Identifier: "IgnoredAttribute" [161:28 - 161:44] DeclRefExpr=IgnoredAttribute:31:25
 // CHECK-tokens: Punctuation: ")" [161:44 - 161:45] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [162:5 - 162:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [162:6 - 162:10] MemberRefExpr=Case:88:42
@@ -1518,7 +1518,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Punctuation: "." [185:5 - 185:6] MemberRefExpr=Default:92:5
 // CHECK-tokens: Identifier: "Default" [185:6 - 185:13] MemberRefExpr=Default:92:5
 // CHECK-tokens: Punctuation: "(" [185:13 - 185:14] CallExpr=Default:92:5
-// CHECK-tokens: Identifier: "UnknownAttribute" [185:14 - 185:30] DeclRefExpr=UnknownAttribute:31:25
+// CHECK-tokens: Identifier: "UnknownAttribute" [185:14 - 185:30] DeclRefExpr=UnknownAttribute:31:43
 // CHECK-tokens: Punctuation: ")" [185:30 - 185:31] CallExpr=Default:92:5
 // CHECK-tokens: Punctuation: ";" [185:31 - 185:32] UnexposedStmt=
 // CHECK-tokens: Punctuation: "}" [186:1 - 186:2] UnexposedStmt=
@@ -1614,8 +1614,8 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK: 30:7: EnumConstantDecl=AT_weak_import:30:7 (Definition) Extent=[30:7 - 30:21]
 // CHECK: 30:23: EnumConstantDecl=AT_reqd_wg_size:30:23 (Definition) Extent=[30:23 - 30:38]
 // CHECK: 30:40: EnumConstantDecl=AT_init_priority:30:40 (Definition) Extent=[30:40 - 30:56]
-// CHECK: 31:7: EnumConstantDecl=IgnoredAttribute:31:7 (Definition) Extent=[31:7 - 31:23]
-// CHECK: 31:25: EnumConstantDecl=UnknownAttribute:31:25 (Definition) Extent=[31:25 - 31:41]
+// CHECK: 31:7:  EnumConstantDecl=AT_returns_twice:31:7 (Definition) Extent=[31:7 - 31:23]
+// CHECK: 31:25: EnumConstantDecl=IgnoredAttribute:31:25 (Definition) Extent=[31:25 - 31:41]
 // CHECK: 33:17: CXXMethod=getKind:33:17 (static) Extent=[33:5 - 33:53]
 // CHECK: 33:12: TypeRef=enum clang::AttributeList::Kind:13:10 Extent=[33:12 - 33:16]
 // CHECK: 33:48: ParmDecl=Name:33:48 (Definition) Extent=[33:25 - 33:52]
@@ -2164,7 +2164,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK: 144:11: UnexposedExpr= Extent=[144:11 - 144:22]
 // CHECK: 144:24: DeclRefExpr=AT_dllexport:18:37 Extent=[144:24 - 144:36]
 // CHECK: 145:11: UnexposedExpr= Extent=[145:11 - 145:22]
-// CHECK: 145:24: DeclRefExpr=IgnoredAttribute:31:7 Extent=[145:24 - 145:40]
+// CHECK: 145:24: UnexposedStmt= Extent=[145:24 - 145:40]
 // CHECK: 146:11: UnexposedExpr= Extent=[146:11 - 146:23]
 // CHECK: 146:25: DeclRefExpr=AT_base_check:16:42 Extent=[146:25 - 146:38]
 // CHECK: 147:11: UnexposedExpr= Extent=[147:11 - 147:23]
@@ -2194,9 +2194,9 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK: 159:11: UnexposedExpr= Extent=[159:11 - 159:26]
 // CHECK: 159:28: DeclRefExpr=AT_always_inline:15:47 Extent=[159:28 - 159:44]
 // CHECK: 160:11: UnexposedExpr= Extent=[160:11 - 160:26]
-// CHECK: 160:28: DeclRefExpr=IgnoredAttribute:31:7 Extent=[160:28 - 160:44]
+// CHECK: 160:28: UnexposedStmt= Extent=[160:28 - 160:44]
 // CHECK: 161:11: UnexposedExpr= Extent=[161:11 - 161:26]
-// CHECK: 161:28: DeclRefExpr=IgnoredAttribute:31:7 Extent=[161:28 - 161:44]
+// CHECK: 161:28: UnexposedStmt= Extent=[161:28 - 161:44]
 // CHECK: 162:11: UnexposedExpr= Extent=[162:11 - 162:27]
 // CHECK: 162:29: DeclRefExpr=AT_objc_exception:22:32 Extent=[162:29 - 162:46]
 // CHECK: 163:11: UnexposedExpr= Extent=[163:11 - 163:28]
@@ -2243,5 +2243,5 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK: 183:25: DeclRefExpr=AT_thiscall:27:44 Extent=[183:25 - 183:36]
 // CHECK: 184:11: UnexposedExpr= Extent=[184:11 - 184:21]
 // CHECK: 184:23: DeclRefExpr=AT_pascal:26:38 Extent=[184:23 - 184:32]
-// CHECK: 185:14: DeclRefExpr=UnknownAttribute:31:25 Extent=[185:14 - 185:30]
+// CHECK: 185:14: UnexposedStmt= Extent=[185:14 - 185:30]
 

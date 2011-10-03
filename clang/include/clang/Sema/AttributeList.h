@@ -270,6 +270,7 @@ public:
     AT_weak,
     AT_weak_import,
     AT_weakref,
+    AT_returns_twice,
     IgnoredAttribute,
     UnknownAttribute
   };
