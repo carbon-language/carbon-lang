@@ -1483,8 +1483,12 @@ static LinuxDistro DetectLinuxDistro(llvm::Triple::ArchType Arch) {
   return UnknownDistro;
 }
 
-static std::string findGCCBaseLibDir(const Driver &D,
-    const std::string &GccTriple) {
+/// \brief Find an installed GCC lib base directory.
+///
+/// Tries both the auto-detected GccTriple passed in as well as the
+/// Driver-specified default host triple. Sets the GccTriple to the triple
+/// actually used.
+static std::string findGCCBaseLibDir(const Driver &D, std::string &GccTriple) {
   // FIXME: Using CXX_INCLUDE_ROOT is here is a bit of a hack, but
   // avoids adding yet another option to configure/cmake.
   // It would probably be cleaner to break it in two variables
@@ -1519,13 +1523,14 @@ static std::string findGCCBaseLibDir(const Driver &D,
   bool Exists;
   llvm::SmallVector<std::string, 8> Paths(D.PrefixDirs.begin(),
       D.PrefixDirs.end());
-  Paths.push_back("/usr/");
-  const std::string *Triples[] = {&GccTriple, &D.DefaultHostTriple};
+  Paths.push_back(D.SysRoot + "/usr/");
+  const std::string Triples[] = {GccTriple, D.DefaultHostTriple};
   for (llvm::SmallVector<std::string, 8>::const_iterator it = Paths.begin(),
        ie = Paths.end(); it != ie; ++it) {
     for (unsigned i = 0; i < sizeof(GccVersions)/sizeof(char*); ++i) {
       for (unsigned j = 0; j < sizeof(Triples)/sizeof(Triples[0]); ++j) {
-        std::string Suffix = *Triples[j] + "/" + GccVersions[i];
+        GccTriple = Triples[j];
+        std::string Suffix = Triples[j] + "/" + GccVersions[i];
         std::string t1 = *it + "lib/gcc/" + Suffix;
         if (!llvm::sys::fs::exists(t1 + "/crtbegin.o", Exists) && Exists)
           return t1;
@@ -1546,6 +1551,7 @@ static std::string findGCCBaseLibDir(const Driver &D,
       }
     }
   }
+  GccTriple.clear();
   return "";
 }
 
@@ -1710,7 +1716,7 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
 
   // Add the non-multiplib suffixed paths (if potentially different).
   if (!Base.empty() && !GccTriple.empty()) {
-    if (!Suffix.empty())
+    if (!Suffix.empty() || !HasMultilib(Arch, Distro))
       addPathIfExists(Base, Paths);
     addPathIfExists(Base + "/../../../../" + GccTriple + "/lib", Paths);
     addPathIfExists(Base + "/../../..", Paths);
