@@ -841,6 +841,8 @@ void ASTStmtReader::VisitObjCMessageExpr(ObjCMessageExpr *E) {
   VisitExpr(E);
   assert(Record[Idx] == E->getNumArgs());
   ++Idx;
+  unsigned NumStoredSelLocs = Record[Idx++];
+  E->SelLocsKind = Record[Idx++]; 
   E->setDelegateInitCall(Record[Idx++]);
   ObjCMessageExpr::ReceiverKind Kind
     = static_cast<ObjCMessageExpr::ReceiverKind>(Record[Idx++]);
@@ -871,10 +873,13 @@ void ASTStmtReader::VisitObjCMessageExpr(ObjCMessageExpr *E) {
 
   E->LBracLoc = ReadSourceLocation(Record, Idx);
   E->RBracLoc = ReadSourceLocation(Record, Idx);
-  E->SelectorLoc = ReadSourceLocation(Record, Idx);
 
   for (unsigned I = 0, N = E->getNumArgs(); I != N; ++I)
     E->setArg(I, Reader.ReadSubExpr());
+
+  SourceLocation *Locs = E->getStoredSelLocs();
+  for (unsigned I = 0; I != NumStoredSelLocs; ++I)
+    Locs[I] = ReadSourceLocation(Record, Idx);
 }
 
 void ASTStmtReader::VisitObjCForCollectionStmt(ObjCForCollectionStmt *S) {
@@ -1747,7 +1752,8 @@ Stmt *ASTReader::ReadStmtFromStream(Module &F) {
       break;
     case EXPR_OBJC_MESSAGE_EXPR:
       S = ObjCMessageExpr::CreateEmpty(Context,
-                                     Record[ASTStmtReader::NumExprFields]);
+                                     Record[ASTStmtReader::NumExprFields],
+                                     Record[ASTStmtReader::NumExprFields + 1]);
       break;
     case EXPR_OBJC_ISA:
       S = new (Context) ObjCIsaExpr(Empty);

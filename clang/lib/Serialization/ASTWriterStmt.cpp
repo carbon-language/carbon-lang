@@ -806,6 +806,8 @@ void ASTStmtWriter::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *E) {
 void ASTStmtWriter::VisitObjCMessageExpr(ObjCMessageExpr *E) {
   VisitExpr(E);
   Record.push_back(E->getNumArgs());
+  Record.push_back(E->getNumStoredSelLocs());
+  Record.push_back(E->SelLocsKind);
   Record.push_back(E->isDelegateInitCall());
   Record.push_back((unsigned)E->getReceiverKind()); // FIXME: stable encoding
   switch (E->getReceiverKind()) {
@@ -834,11 +836,15 @@ void ASTStmtWriter::VisitObjCMessageExpr(ObjCMessageExpr *E) {
     
   Writer.AddSourceLocation(E->getLeftLoc(), Record);
   Writer.AddSourceLocation(E->getRightLoc(), Record);
-  Writer.AddSourceLocation(E->getSelectorLoc(), Record);
 
   for (CallExpr::arg_iterator Arg = E->arg_begin(), ArgEnd = E->arg_end();
        Arg != ArgEnd; ++Arg)
     Writer.AddStmt(*Arg);
+
+  SourceLocation *Locs = E->getStoredSelLocs();
+  for (unsigned i = 0, e = E->getNumStoredSelLocs(); i != e; ++i)
+    Writer.AddSourceLocation(Locs[i], Record);
+
   Code = serialization::EXPR_OBJC_MESSAGE_EXPR;
 }
 

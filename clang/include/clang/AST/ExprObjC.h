@@ -16,6 +16,7 @@
 
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/Expr.h"
+#include "clang/AST/SelectorLocationsKind.h"
 #include "clang/Basic/IdentifierTable.h"
 
 namespace clang {
@@ -471,6 +472,10 @@ class ObjCMessageExpr : public Expr {
   /// \brief Whether this message send is a "delegate init call",
   /// i.e. a call of an init method on self from within an init method.
   unsigned IsDelegateInitCall : 1;
+  
+  /// \brief Whether the locations of the selector identifiers are in a
+  /// "standard" position, a enum SelectorLocationsKind.
+  unsigned SelLocsKind : 2;
 
   /// \brief When the message expression is a send to 'super', this is
   /// the location of the 'super' keyword.
@@ -480,9 +485,6 @@ class ObjCMessageExpr : public Expr {
   /// to (when \c HasMethod is zero) or an \c ObjCMethodDecl pointer
   /// referring to the method that we type-checked against.
   uintptr_t SelectorOrMethod;
-
-  /// \brief Location of the selector.
-  SourceLocation SelectorLoc;
 
   /// \brief The source locations of the open and close square
   /// brackets ('[' and ']', respectively).
@@ -500,7 +502,8 @@ class ObjCMessageExpr : public Expr {
                   bool IsInstanceSuper,
                   QualType SuperType,
                   Selector Sel, 
-                  SourceLocation SelLoc,
+                  ArrayRef<SourceLocation> SelLocs,
+                  SelectorLocationsKind SelLocsK,
                   ObjCMethodDecl *Method,
                   ArrayRef<Expr *> Args,
                   SourceLocation RBracLoc);
@@ -508,7 +511,8 @@ class ObjCMessageExpr : public Expr {
                   SourceLocation LBracLoc,
                   TypeSourceInfo *Receiver,
                   Selector Sel, 
-                  SourceLocation SelLoc,
+                  ArrayRef<SourceLocation> SelLocs,
+                  SelectorLocationsKind SelLocsK,
                   ObjCMethodDecl *Method,
                   ArrayRef<Expr *> Args,
                   SourceLocation RBracLoc);
@@ -516,10 +520,15 @@ class ObjCMessageExpr : public Expr {
                   SourceLocation LBracLoc,
                   Expr *Receiver,
                   Selector Sel, 
-                  SourceLocation SelLoc,
+                  ArrayRef<SourceLocation> SelLocs,
+                  SelectorLocationsKind SelLocsK,
                   ObjCMethodDecl *Method,
                   ArrayRef<Expr *> Args,
                   SourceLocation RBracLoc);
+
+  void initArgsAndSelLocs(ArrayRef<Expr *> Args,
+                          ArrayRef<SourceLocation> SelLocs,
+                          SelectorLocationsKind SelLocsK);
 
   /// \brief Retrieve the pointer value of the message receiver.
   void *getReceiverPointer() const {
@@ -531,6 +540,40 @@ class ObjCMessageExpr : public Expr {
   void setReceiverPointer(void *Value) {
     *reinterpret_cast<void **>(this + 1) = Value;
   }
+
+  SelectorLocationsKind getSelLocsKind() const {
+    return (SelectorLocationsKind)SelLocsKind;
+  }
+  bool hasStandardSelLocs() const {
+    return getSelLocsKind() != SelLoc_NonStandard;
+  }
+
+  /// \brief Get a pointer to the stored selector identifiers locations array.
+  /// No locations will be stored if HasStandardSelLocs is true.
+  SourceLocation *getStoredSelLocs() {
+    return reinterpret_cast<SourceLocation*>(getArgs() + getNumArgs());
+  }
+  const SourceLocation *getStoredSelLocs() const {
+    return reinterpret_cast<const SourceLocation*>(getArgs() + getNumArgs());
+  }
+
+  /// \brief Get the number of stored selector identifiers locations.
+  /// No locations will be stored if HasStandardSelLocs is true.
+  unsigned getNumStoredSelLocs() const {
+    if (hasStandardSelLocs())
+      return 0;
+    return getNumSelectorLocs();
+  }
+
+  static ObjCMessageExpr *alloc(ASTContext &C,
+                                ArrayRef<Expr *> Args,
+                                SourceLocation RBraceLoc,
+                                ArrayRef<SourceLocation> SelLocs,
+                                Selector Sel,
+                                SelectorLocationsKind &SelLocsK);
+  static ObjCMessageExpr *alloc(ASTContext &C,
+                                unsigned NumArgs,
+                                unsigned NumStoredSelLocs);
 
 public:
   /// \brief The kind of receiver this message is sending to.
@@ -661,7 +704,9 @@ public:
   ///
   /// \param NumArgs The number of message arguments, not including
   /// the receiver.
-  static ObjCMessageExpr *CreateEmpty(ASTContext &Context, unsigned NumArgs);
+  static ObjCMessageExpr *CreateEmpty(ASTContext &Context,
+                                      unsigned NumArgs,
+                                      unsigned NumStoredSelLocs);
 
   /// \brief Determine the kind of receiver that this message is being
   /// sent to.
@@ -831,7 +876,27 @@ public:
 
   SourceLocation getLeftLoc() const { return LBracLoc; }
   SourceLocation getRightLoc() const { return RBracLoc; }
-  SourceLocation getSelectorLoc() const { return SelectorLoc; }
+
+  SourceLocation getSelectorStartLoc() const { return getSelectorLoc(0); }
+  SourceLocation getSelectorLoc(unsigned Index) const {
+    assert(Index < getNumSelectorLocs() && "Index out of range!");
+    if (hasStandardSelLocs())
+      return getStandardSelectorLoc(Index, getSelector(),
+                                   getSelLocsKind() == SelLoc_StandardWithSpace,
+                               llvm::makeArrayRef(const_cast<Expr**>(getArgs()),
+                                                  getNumArgs()),
+                                   RBracLoc);
+    return getStoredSelLocs()[Index];
+  }
+
+  void getSelectorLocs(SmallVectorImpl<SourceLocation> &SelLocs) const;
+
+  unsigned getNumSelectorLocs() const {
+    Selector Sel = getSelector();
+    if (Sel.isUnarySelector())
+      return 1;
+    return Sel.getNumArgs();
+  }
 
   void setSourceRange(SourceRange R) {
     LBracLoc = R.getBegin();

@@ -35,6 +35,7 @@ add_clang_library(clangAST
   ParentMap.cpp
   RecordLayout.cpp
   RecordLayoutBuilder.cpp
+  SelectorLocationsKind.cpp
   Stmt.cpp
   StmtDumper.cpp
   StmtIterator.cpp
