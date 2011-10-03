@@ -1560,6 +1560,7 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
   : Generic_ELF(Host, Triple) {
   llvm::Triple::ArchType Arch =
     llvm::Triple(getDriver().DefaultHostTriple).getArch();
+  const std::string &SysRoot = getDriver().SysRoot;
 
   bool Exists;
   std::string GccTriple = "";
@@ -1703,8 +1704,8 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
                       Multilib, Paths);
       addPathIfExists(Base + "/../../../../" + Multilib, Paths);
     }
-    addPathIfExists("/lib/../" + Multilib, Paths);
-    addPathIfExists("/usr/lib/../" + Multilib, Paths);
+    addPathIfExists(SysRoot + "/lib/../" + Multilib, Paths);
+    addPathIfExists(SysRoot + "/usr/lib/../" + Multilib, Paths);
   }
 
   // Add the non-multiplib suffixed paths (if potentially different).
@@ -1714,11 +1715,11 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
     addPathIfExists(Base + "/../../../../" + GccTriple + "/lib", Paths);
     addPathIfExists(Base + "/../../..", Paths);
   }
-  addPathIfExists("/lib", Paths);
-  addPathIfExists("/usr/lib", Paths);
+  addPathIfExists(SysRoot + "/lib", Paths);
+  addPathIfExists(SysRoot + "/usr/lib", Paths);
 
   if (Arch == getArch() && IsUbuntu(Distro))
-    Paths.push_back("/usr/lib/" + GccTriple);
+    Paths.push_back(SysRoot + "/usr/lib/" + GccTriple);
 }
 
 bool Linux::HasNativeLLVMSupport() const {
