@@ -201,14 +201,20 @@ RC_ProjectSourceSubversion=`printf "%d" $LLVM_MINOR_VERSION`
 echo "#define LLVM_VERSION ${RC_ProjectSourceVersion}" > $DEST_DIR$DEST_ROOT/include/llvm/Version.h
 echo "#define LLVM_MINOR_VERSION ${RC_ProjectSourceSubversion}" >> $DEST_DIR$DEST_ROOT/include/llvm/Version.h
 
+# Find the right version of strip to use.
+STRIP=strip
+if [ -n "$SDKROOT" ]; then
+  STRIP=`xcrun -sdk $SDKROOT -find strip`
+fi
+
 if [ "x$LLVM_DEBUG" != "x1" ]; then
     # Strip local symbols from llvm libraries.
     #
     # Use '-l' to strip i386 modules. N.B. that flag doesn't work with kext or
     # PPC objects!
-    strip -Sl $DEST_DIR$DEST_ROOT/lib/*.[oa]
+    $STRIP -Sl $DEST_DIR$DEST_ROOT/lib/*.[oa]
     for f in `ls $DEST_DIR$DEST_ROOT/lib/*.so`; do
-        strip -Sxl $f
+        $STRIP -Sxl $f
     done
 fi
 
@@ -297,7 +303,7 @@ if [ "$INSTALL_LIBLTO" = "yes" ]; then
 
   # Use '-l' to strip i386 modules. N.B. that flag doesn't work with kext or
   # PPC objects!
-  strip -arch all -Sl $DT_HOME/lib/libLTO.dylib
+  $STRIP -arch all -Sl $DT_HOME/lib/libLTO.dylib
 
   if [ "x$DISABLE_USR_LINKS" == "x" ]; then
     # Add a symlink in /usr/lib for B&I.
@@ -327,7 +333,7 @@ find $DEST_DIR -name \*.dSYM -print | xargs rm -r || exit 1
 # PPC objects!
 find $DEST_DIR -perm -0111 -type f \
     ! \( -name '*.la' -o -name gccas -o -name gccld -o -name llvm-config \) \
-    -print | xargs -n 1 -P ${SYSCTL} strip -arch all -Sl
+    -print | xargs -n 1 -P ${SYSCTL} $STRIP -arch all -Sl
 
 chgrp -h -R wheel $DEST_DIR
 chgrp -R wheel $DEST_DIR
