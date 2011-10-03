@@ -406,12 +406,14 @@ static int readPrefixes(struct InternalInstruction* insn) {
       consumeByte(insn, &insn->vexPrefix[2]);
 
       /* We simulate the REX prefix for simplicity's sake */
-    
-      insn->rexPrefix = 0x40 
-                      | (wFromVEX3of3(insn->vexPrefix[2]) << 3)
-                      | (rFromVEX2of3(insn->vexPrefix[1]) << 2)
-                      | (xFromVEX2of3(insn->vexPrefix[1]) << 1)
-                      | (bFromVEX2of3(insn->vexPrefix[1]) << 0);
+   
+      if (insn->mode == MODE_64BIT) {
+        insn->rexPrefix = 0x40 
+                        | (wFromVEX3of3(insn->vexPrefix[2]) << 3)
+                        | (rFromVEX2of3(insn->vexPrefix[1]) << 2)
+                        | (xFromVEX2of3(insn->vexPrefix[1]) << 1)
+                        | (bFromVEX2of3(insn->vexPrefix[1]) << 0);
+      }
     
       switch (ppFromVEX3of3(insn->vexPrefix[2]))
       {
@@ -444,8 +446,10 @@ static int readPrefixes(struct InternalInstruction* insn) {
       insn->vexPrefix[0] = byte;
       consumeByte(insn, &insn->vexPrefix[1]);
         
-      insn->rexPrefix = 0x40 
-                      | (rFromVEX2of2(insn->vexPrefix[1]) << 2);
+      if (insn->mode == MODE_64BIT) {
+        insn->rexPrefix = 0x40 
+                        | (rFromVEX2of2(insn->vexPrefix[1]) << 2);
+      }
         
       switch (ppFromVEX2of2(insn->vexPrefix[1]))
       {
@@ -763,7 +767,7 @@ static int getID(struct InternalInstruction* insn) {
         break;
       }
     
-      if (wFromVEX3of3(insn->vexPrefix[2]))
+      if (insn->mode == MODE_64BIT && wFromVEX3of3(insn->vexPrefix[2]))
         attrMask |= ATTR_REXW;
       if (lFromVEX3of3(insn->vexPrefix[2]))
         attrMask |= ATTR_VEXL;
