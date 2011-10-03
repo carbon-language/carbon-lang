@@ -94,70 +94,63 @@ copyPhysReg(MachineBasicBlock &MBB,
             MachineBasicBlock::iterator I, DebugLoc DL,
             unsigned DestReg, unsigned SrcReg,
             bool KillSrc) const {
-  bool DestCPU = Mips::CPURegsRegClass.contains(DestReg);
-  bool SrcCPU  = Mips::CPURegsRegClass.contains(SrcReg);
+  unsigned Opc = 0, ZeroReg = 0;
 
-  // CPU-CPU is the most common.
-  if (DestCPU && SrcCPU) {
-    BuildMI(MBB, I, DL, get(Mips::ADDu), DestReg).addReg(Mips::ZERO)
-      .addReg(SrcReg, getKillRegState(KillSrc));
-    return;
-  }
-
-  // Copy to CPU from other registers.
-  if (DestCPU) {
-    if (Mips::CCRRegClass.contains(SrcReg))
-      BuildMI(MBB, I, DL, get(Mips::CFC1), DestReg)
-        .addReg(SrcReg, getKillRegState(KillSrc));
+  if (Mips::CPURegsRegClass.contains(DestReg)) { // Copy to CPU Reg.
+    if (Mips::CPURegsRegClass.contains(SrcReg))
+      Opc = Mips::ADDu, ZeroReg = Mips::ZERO;
+    else if (Mips::CCRRegClass.contains(SrcReg))
+      Opc = Mips::CFC1;
     else if (Mips::FGR32RegClass.contains(SrcReg))
-      BuildMI(MBB, I, DL, get(Mips::MFC1), DestReg)
-        .addReg(SrcReg, getKillRegState(KillSrc));
+      Opc = Mips::MFC1;
     else if (SrcReg == Mips::HI)
-      BuildMI(MBB, I, DL, get(Mips::MFHI), DestReg);
+      Opc = Mips::MFHI, SrcReg = 0;
     else if (SrcReg == Mips::LO)
-      BuildMI(MBB, I, DL, get(Mips::MFLO), DestReg);
-    else
-      llvm_unreachable("Copy to CPU from invalid register");
-    return;
+      Opc = Mips::MFLO, SrcReg = 0;
   }
-
-  // Copy to other registers from CPU.
-  if (SrcCPU) {
+  else if (Mips::CPURegsRegClass.contains(SrcReg)) { // Copy from CPU Reg.
     if (Mips::CCRRegClass.contains(DestReg))
-      BuildMI(MBB, I, DL, get(Mips::CTC1), DestReg)
-        .addReg(SrcReg, getKillRegState(KillSrc));
+      Opc = Mips::CTC1;
     else if (Mips::FGR32RegClass.contains(DestReg))
-      BuildMI(MBB, I, DL, get(Mips::MTC1), DestReg)
-        .addReg(SrcReg, getKillRegState(KillSrc));
+      Opc = Mips::MTC1;
     else if (DestReg == Mips::HI)
-      BuildMI(MBB, I, DL, get(Mips::MTHI))
-        .addReg(SrcReg, getKillRegState(KillSrc));
+      Opc = Mips::MTHI, DestReg = 0;
     else if (DestReg == Mips::LO)
-      BuildMI(MBB, I, DL, get(Mips::MTLO))
-        .addReg(SrcReg, getKillRegState(KillSrc));
-    else
-      llvm_unreachable("Copy from CPU to invalid register");
-    return;
+      Opc = Mips::MTLO, DestReg = 0;
+  }
+  else if (Mips::FGR32RegClass.contains(DestReg, SrcReg))
+    Opc = Mips::FMOV_S32;
+  else if (Mips::AFGR64RegClass.contains(DestReg, SrcReg))
+    Opc = Mips::FMOV_D32;
+  else if (Mips::CCRRegClass.contains(DestReg, SrcReg))
+    Opc = Mips::MOVCCRToCCR;
+  else if (Mips::CPU64RegsRegClass.contains(DestReg)) { // Copy to CPU64 Reg.
+    if (Mips::CPU64RegsRegClass.contains(SrcReg))
+      Opc = Mips::DADDu, ZeroReg = Mips::ZERO_64;
+    else if (SrcReg == Mips::HI64)
+      Opc = Mips::MFHI64, SrcReg = 0;
+    else if (SrcReg == Mips::LO64)
+      Opc = Mips::MFLO64, SrcReg = 0;
+  }
+  else if (Mips::CPU64RegsRegClass.contains(SrcReg)) { // Copy from CPU64 Reg.
+    if (DestReg == Mips::HI64)
+      Opc = Mips::MTHI64, DestReg = 0;
+    else if (DestReg == Mips::LO64)
+      Opc = Mips::MTLO64, DestReg = 0;
   }
 
-  if (Mips::FGR32RegClass.contains(DestReg, SrcReg)) {
-    BuildMI(MBB, I, DL, get(Mips::FMOV_S32), DestReg)
-      .addReg(SrcReg, getKillRegState(KillSrc));
-    return;
-  }
+  assert(Opc && "Cannot copy registers");
 
-  if (Mips::AFGR64RegClass.contains(DestReg, SrcReg)) {
-    BuildMI(MBB, I, DL, get(Mips::FMOV_D32), DestReg)
-      .addReg(SrcReg, getKillRegState(KillSrc));
-    return;
-  }
+  MachineInstrBuilder MIB = BuildMI(MBB, I, DL, get(Opc));
+  
+  if (DestReg)
+    MIB.addReg(DestReg, RegState::Define);
 
-  if (Mips::CCRRegClass.contains(DestReg, SrcReg)) {
-    BuildMI(MBB, I, DL, get(Mips::MOVCCRToCCR), DestReg)
-      .addReg(SrcReg, getKillRegState(KillSrc));
-    return;
-  }
-  llvm_unreachable("Cannot copy registers");
+  if (ZeroReg)
+    MIB.addReg(ZeroReg);
+
+  if (SrcReg)
+    MIB.addReg(SrcReg, getKillRegState(KillSrc));
 }
 
 void MipsInstrInfo::
