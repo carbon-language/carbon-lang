@@ -96,6 +96,11 @@ let Defs = [HI64, LO64] in {
   class Mul64<bits<6> func, string instr_asm, InstrItinClass itin>:
     FR<0x00, func, (outs), (ins CPU64Regs:$a, CPU64Regs:$b),
        !strconcat(instr_asm, "\t$a, $b"), [], itin>;
+
+  class Div64<SDNode op, bits<6> func, string instr_asm, InstrItinClass itin>:
+              FR<0x00, func, (outs), (ins CPU64Regs:$a, CPU64Regs:$b),
+              !strconcat(instr_asm, "\t$$zero, $a, $b"),
+              [(op CPU64Regs:$a, CPU64Regs:$b)], itin>;
 }
 
 // Move from Hi/Lo
@@ -150,6 +155,8 @@ let Predicates = [HasMips64r2] in {
 /// Multiply and Divide Instructions.
 def DMULT    : Mul64<0x1c, "dmult", IIImul>;
 def DMULTu   : Mul64<0x1d, "dmultu", IIImul>;
+def DSDIV    : Div64<MipsDivRem, 0x1e, "ddiv", IIIdiv>;
+def DUDIV    : Div64<MipsDivRemU, 0x1f, "ddivu", IIIdiv>;
 
 let Defs = [HI64] in
   def MTHI64  : MoveToLOHI64<0x11, "mthi">;

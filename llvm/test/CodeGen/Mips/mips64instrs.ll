@@ -83,3 +83,36 @@ entry:
   %mul = mul i64 %b, %a
   ret i64 %mul
 }
+
+define i64 @f14(i64 %a, i64 %b) nounwind readnone {
+entry:
+; CHECK: ddiv $zero
+; CHECK: mflo
+  %div = sdiv i64 %a, %b
+  ret i64 %div
+}
+
+define i64 @f15(i64 %a, i64 %b) nounwind readnone {
+entry:
+; CHECK: ddivu $zero
+; CHECK: mflo
+  %div = udiv i64 %a, %b
+  ret i64 %div
+}
+
+define i64 @f16(i64 %a, i64 %b) nounwind readnone {
+entry:
+; CHECK: ddiv $zero
+; CHECK: mfhi
+  %rem = srem i64 %a, %b
+  ret i64 %rem
+}
+
+define i64 @f17(i64 %a, i64 %b) nounwind readnone {
+entry:
+; CHECK: ddivu $zero
+; CHECK: mfhi
+  %rem = urem i64 %a, %b
+  ret i64 %rem
+}
+

@@ -138,6 +138,10 @@ MipsTargetLowering(MipsTargetMachine &TM)
   setOperationAction(ISD::SREM, MVT::i32, Expand);
   setOperationAction(ISD::UDIV, MVT::i32, Expand);
   setOperationAction(ISD::UREM, MVT::i32, Expand);
+  setOperationAction(ISD::SDIV, MVT::i64, Expand);
+  setOperationAction(ISD::SREM, MVT::i64, Expand);
+  setOperationAction(ISD::UDIV, MVT::i64, Expand);
+  setOperationAction(ISD::UREM, MVT::i64, Expand);
 
   // Operations not directly supported by Mips.
   setOperationAction(ISD::BR_JT,             MVT::Other, Expand);
@@ -413,6 +417,9 @@ static SDValue PerformDivRemCombine(SDNode *N, SelectionDAG& DAG,
   if (DCI.isBeforeLegalizeOps())
     return SDValue();
 
+  EVT Ty = N->getValueType(0);
+  unsigned LO = (Ty == MVT::i32) ? Mips::LO : Mips::LO64; 
+  unsigned HI = (Ty == MVT::i32) ? Mips::HI : Mips::HI64; 
   unsigned opc = N->getOpcode() == ISD::SDIVREM ? MipsISD::DivRem :
                                                   MipsISD::DivRemU;
   DebugLoc dl = N->getDebugLoc();
@@ -424,7 +431,7 @@ static SDValue PerformDivRemCombine(SDNode *N, SelectionDAG& DAG,
 
   // insert MFLO
   if (N->hasAnyUseOfValue(0)) {
-    SDValue CopyFromLo = DAG.getCopyFromReg(InChain, dl, Mips::LO, MVT::i32,
+    SDValue CopyFromLo = DAG.getCopyFromReg(InChain, dl, LO, Ty,
                                             InGlue);
     DAG.ReplaceAllUsesOfValueWith(SDValue(N, 0), CopyFromLo);
     InChain = CopyFromLo.getValue(1);
@@ -434,7 +441,7 @@ static SDValue PerformDivRemCombine(SDNode *N, SelectionDAG& DAG,
   // insert MFHI
   if (N->hasAnyUseOfValue(1)) {
     SDValue CopyFromHi = DAG.getCopyFromReg(InChain, dl,
-                                            Mips::HI, MVT::i32, InGlue);
+                                            HI, Ty, InGlue);
     DAG.ReplaceAllUsesOfValueWith(SDValue(N, 1), CopyFromHi);
   }
 

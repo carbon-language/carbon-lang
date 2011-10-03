@@ -34,7 +34,7 @@ def SDT_MipsMAddMSub     : SDTypeProfile<0, 4,
                                           SDTCisSameAs<1, 2>,
                                           SDTCisSameAs<2, 3>]>;
 def SDT_MipsDivRem       : SDTypeProfile<0, 2,
-                                         [SDTCisVT<0, i32>,
+                                         [SDTCisInt<0>,
                                           SDTCisSameAs<0, 1>]>;
 
 def SDT_MipsThreadPointer : SDTypeProfile<1, 0, [SDTCisPtrTy<0>]>;
