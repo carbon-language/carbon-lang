@@ -5482,6 +5482,80 @@ ARMTargetLowering::EmitAtomicBinary64(MachineInstr *MI, MachineBasicBlock *BB,
   return BB;
 }
 
+MachineBasicBlock *ARMTargetLowering::
+EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
+  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
+  DebugLoc dl = MI->getDebugLoc();
+  MachineFunction *MF = MBB->getParent();
+  MachineRegisterInfo *MRI = &MF->getRegInfo();
+  MachineConstantPool *MCP = MF->getConstantPool();
+  ARMFunctionInfo *AFI = MF->getInfo<ARMFunctionInfo>();
+  const Function *F = MF->getFunction();
+  MachineFrameInfo *MFI = MF->getFrameInfo();
+  MachineBasicBlock *DispatchBB = MF->CreateMachineBasicBlock();
+  int FI = MFI->getFunctionContextIndex();
+  MachineBasicBlock *Last = &MF->back();
+  MF->insert(MF->end(), DispatchBB);
+  MF->RenumberBlocks(Last);
+
+  // Shove the dispatch's address into the return slot in the function context.
+  DispatchBB->setIsLandingPad();
+  MBB->addSuccessor(DispatchBB);
+
+  BuildMI(DispatchBB, dl, TII->get(ARM::TRAP));
+
+  bool isThumb = Subtarget->isThumb();
+  unsigned PCLabelId = AFI->createPICLabelUId();
+  unsigned PCAdj = isThumb ? 4 : 8;
+  ARMConstantPoolValue *CPV =
+    ARMConstantPoolMBB::Create(F->getContext(), DispatchBB, PCLabelId, PCAdj);
+  unsigned CPI = MCP->getConstantPoolIndex(CPV, 4);
+
+  const TargetRegisterClass *TRC =
+    isThumb ? ARM::tGPRRegisterClass : ARM::GPRRegisterClass;
+
+  MachineMemOperand *CPMMO =
+    MF->getMachineMemOperand(MachinePointerInfo::getConstantPool(),
+                             MachineMemOperand::MOLoad, 4, 4);
+
+  MachineMemOperand *FIMMO =
+    MF->getMachineMemOperand(MachinePointerInfo::getFixedStack(FI),
+                             MachineMemOperand::MOStore, 4, 4);
+
+  // Load the address of the dispatch MBB into the jump buffer.
+  if (isThumb) {
+    unsigned NewVReg = MRI->createVirtualRegister(TRC);
+    BuildMI(*MBB, MI, dl, TII->get(ARM::tLDRpci_pic), NewVReg)
+      .addConstantPoolIndex(CPI)
+      .addImm(1)
+      .addMemOperand(CPMMO);
+    AddDefaultPred(BuildMI(*MBB, MI, dl, TII->get(ARM::tSTRspi))
+                   .addReg(NewVReg, RegState::Kill)
+                   .addFrameIndex(FI)
+                   .addImm(36)  // &jbuf[1] :: pc
+                   .addMemOperand(FIMMO));
+  } else {
+    unsigned NewVReg1 = MRI->createVirtualRegister(TRC);
+    AddDefaultPred(BuildMI(*MBB, MI, dl, TII->get(ARM::LDRi12),  NewVReg1)
+                   .addConstantPoolIndex(CPI)
+                   .addImm(0)
+                   .addMemOperand(CPMMO));
+    unsigned NewVReg2 = MRI->createVirtualRegister(TRC);
+    AddDefaultPred(BuildMI(*MBB, MI, dl, TII->get(ARM::PICADD), NewVReg2)
+                   .addReg(NewVReg1, RegState::Kill)
+                   .addImm(1));
+    AddDefaultPred(BuildMI(*MBB, MI, dl, TII->get(ARM::STRi12))
+                   .addReg(NewVReg2, RegState::Kill)
+                   .addFrameIndex(FI)
+                   .addImm(36)  // &jbuf[1] :: pc
+                   .addMemOperand(FIMMO));
+  }
+
+  MI->eraseFromParent();   // The instruction is gone now.
+
+  return MBB;
+}
+
 static
 MachineBasicBlock *OtherSucc(MachineBasicBlock *MBB, MachineBasicBlock *Succ) {
   for (MachineBasicBlock::succ_iterator I = MBB->succ_begin(),

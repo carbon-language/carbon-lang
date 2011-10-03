@@ -512,6 +512,9 @@ namespace llvm {
                                                bool signExtend,
                                                ARMCC::CondCodes Cond) const;
 
+    MachineBasicBlock *EmitSjLjDispatchBlock(MachineInstr *MI,
+                                             MachineBasicBlock *MBB) const;
+
     bool RemapAddSubWithFlags(MachineInstr *MI, MachineBasicBlock *BB) const;
   };
 
