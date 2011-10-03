@@ -2724,12 +2724,13 @@ ObjCMessageExpr::ObjCMessageExpr(QualType T,
          /*TypeDependent=*/false, /*ValueDependent=*/false,
          /*InstantiationDependent=*/false,
          /*ContainsUnexpandedParameterPack=*/false),
-    NumArgs(NumArgs), Kind(IsInstanceSuper? SuperInstance : SuperClass),
+    Kind(IsInstanceSuper? SuperInstance : SuperClass),
     HasMethod(Method != 0), IsDelegateInitCall(false), SuperLoc(SuperLoc),
     SelectorOrMethod(reinterpret_cast<uintptr_t>(Method? Method
                                                        : Sel.getAsOpaquePtr())),
     SelectorLoc(SelLoc), LBracLoc(LBracLoc), RBracLoc(RBracLoc) 
 {
+  setNumArgs(NumArgs);
   setReceiverPointer(SuperType.getAsOpaquePtr());
   if (NumArgs)
     memcpy(getArgs(), Args, NumArgs * sizeof(Expr *));
@@ -2747,12 +2748,13 @@ ObjCMessageExpr::ObjCMessageExpr(QualType T,
   : Expr(ObjCMessageExprClass, T, VK, OK_Ordinary, T->isDependentType(),
          T->isDependentType(), T->isInstantiationDependentType(),
          T->containsUnexpandedParameterPack()),
-    NumArgs(NumArgs), Kind(Class),
+    Kind(Class),
     HasMethod(Method != 0), IsDelegateInitCall(false),
     SelectorOrMethod(reinterpret_cast<uintptr_t>(Method? Method
                                                        : Sel.getAsOpaquePtr())),
     SelectorLoc(SelLoc), LBracLoc(LBracLoc), RBracLoc(RBracLoc) 
 {
+  setNumArgs(NumArgs);
   setReceiverPointer(Receiver);
   Expr **MyArgs = getArgs();
   for (unsigned I = 0; I != NumArgs; ++I) {
@@ -2782,12 +2784,13 @@ ObjCMessageExpr::ObjCMessageExpr(QualType T,
          Receiver->isTypeDependent(),
          Receiver->isInstantiationDependent(),
          Receiver->containsUnexpandedParameterPack()),
-    NumArgs(NumArgs), Kind(Instance),
+    Kind(Instance),
     HasMethod(Method != 0), IsDelegateInitCall(false),
     SelectorOrMethod(reinterpret_cast<uintptr_t>(Method? Method
                                                        : Sel.getAsOpaquePtr())),
     SelectorLoc(SelLoc), LBracLoc(LBracLoc), RBracLoc(RBracLoc) 
 {
+  setNumArgs(NumArgs);
   setReceiverPointer(Receiver);
   Expr **MyArgs = getArgs();
   for (unsigned I = 0; I != NumArgs; ++I) {

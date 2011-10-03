@@ -444,9 +444,16 @@ private:
 /// class, and can be distinguished via \c getReceiverKind(). Example:
 ///
 class ObjCMessageExpr : public Expr {
+  enum { NumArgsBitWidth = 16 };
+
   /// \brief The number of arguments in the message send, not
   /// including the receiver.
-  unsigned NumArgs : 16;
+  unsigned NumArgs : NumArgsBitWidth;
+  
+  void setNumArgs(unsigned Num) {
+    assert((Num >> NumArgsBitWidth) == 0 && "Num of args is out of range!");
+    NumArgs = Num;
+  }
 
   /// \brief The kind of message send this is, which is one of the
   /// ReceiverKind values.
@@ -482,8 +489,10 @@ class ObjCMessageExpr : public Expr {
   SourceLocation LBracLoc, RBracLoc;
 
   ObjCMessageExpr(EmptyShell Empty, unsigned NumArgs)
-    : Expr(ObjCMessageExprClass, Empty), NumArgs(NumArgs), Kind(0), 
-      HasMethod(0), IsDelegateInitCall(0), SelectorOrMethod(0) { }
+    : Expr(ObjCMessageExprClass, Empty), Kind(0), 
+      HasMethod(0), IsDelegateInitCall(0), SelectorOrMethod(0) {
+    setNumArgs(NumArgs);
+  }
 
   ObjCMessageExpr(QualType T, ExprValueKind VK,
                   SourceLocation LBracLoc,
