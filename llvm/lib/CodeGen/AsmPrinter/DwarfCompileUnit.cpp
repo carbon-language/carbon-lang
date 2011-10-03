@@ -1236,7 +1236,7 @@ DIE *CompileUnit::constructVariableDIE(DbgVariable *DV, bool isScopeAbstract) {
     return VariableDie;
   }
 
-  // Check if variable is described by a  DBG_VALUE instruction.
+  // Check if variable is described by a DBG_VALUE instruction.
   if (const MachineInstr *DVInsn = DV->getMInsn()) {
     bool updated = false;
     if (DVInsn->getNumOperands() == 3) {
