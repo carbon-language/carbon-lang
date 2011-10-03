@@ -27,6 +27,7 @@
 
 using namespace clang;
 using namespace sema;
+using llvm::makeArrayRef;
 
 ExprResult Sema::ParseObjCStringLiteral(SourceLocation *AtLocs,
                                         Expr **strings,
@@ -1065,7 +1066,7 @@ ExprResult Sema::BuildClassMessage(TypeSourceInfo *ReceiverTypeInfo,
     return Owned(ObjCMessageExpr::Create(Context, ReceiverType,
                                          VK_RValue, LBracLoc, ReceiverTypeInfo,
                                          Sel, SelectorLocs, /*Method=*/0,
-                                         Args, NumArgs, RBracLoc));
+                                         makeArrayRef(Args, NumArgs),RBracLoc));
   }
   
   // Find the class to which we are sending this message.
@@ -1127,11 +1128,13 @@ ExprResult Sema::BuildClassMessage(TypeSourceInfo *ReceiverTypeInfo,
     Result = ObjCMessageExpr::Create(Context, ReturnType, VK, LBracLoc, 
                                      SuperLoc, /*IsInstanceSuper=*/false, 
                                      ReceiverType, Sel, SelectorLocs,
-                                     Method, Args, NumArgs, RBracLoc);
+                                     Method, makeArrayRef(Args, NumArgs),
+                                     RBracLoc);
   else
     Result = ObjCMessageExpr::Create(Context, ReturnType, VK, LBracLoc, 
                                      ReceiverTypeInfo, Sel, SelectorLocs,
-                                     Method, Args, NumArgs, RBracLoc);
+                                     Method, makeArrayRef(Args, NumArgs),
+                                     RBracLoc);
   return MaybeBindToTemporary(Result);
 }
 
@@ -1217,7 +1220,8 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
       return Owned(ObjCMessageExpr::Create(Context, Context.DependentTy,
                                            VK_RValue, LBracLoc, Receiver, Sel, 
                                            SelectorLocs, /*Method=*/0,
-                                           Args, NumArgs, RBracLoc));
+                                           makeArrayRef(Args, NumArgs),
+                                           RBracLoc));
     }
 
     // If necessary, apply function/array conversion to the receiver.
@@ -1501,11 +1505,11 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
     Result = ObjCMessageExpr::Create(Context, ReturnType, VK, LBracLoc,
                                      SuperLoc,  /*IsInstanceSuper=*/true,
                                      ReceiverType, Sel, SelectorLocs, Method, 
-                                     Args, NumArgs, RBracLoc);
+                                     makeArrayRef(Args, NumArgs), RBracLoc);
   else
     Result = ObjCMessageExpr::Create(Context, ReturnType, VK, LBracLoc,
                                      Receiver, Sel, SelectorLocs, Method,
-                                     Args, NumArgs, RBracLoc);
+                                     makeArrayRef(Args, NumArgs), RBracLoc);
 
   if (getLangOptions().ObjCAutoRefCount) {
     // In ARC, annotate delegate init calls.

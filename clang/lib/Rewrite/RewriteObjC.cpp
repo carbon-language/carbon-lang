@@ -1316,8 +1316,6 @@ Stmt *RewriteObjC::RewritePropertyOrImplicitSetter(BinaryOperator *BinOp, Expr *
   }
   
   assert(OMD && "RewritePropertyOrImplicitSetter - null OMD");
-  SmallVector<Expr *, 1> ExprVec;
-  ExprVec.push_back(newStmt);
 
   ObjCMessageExpr *MsgExpr;
   if (Super)
@@ -1329,7 +1327,7 @@ Stmt *RewriteObjC::RewritePropertyOrImplicitSetter(BinaryOperator *BinOp, Expr *
                                       /*IsInstanceSuper=*/true,
                                       SuperTy,
                                       Sel, SelectorLoc, OMD,
-                                      &ExprVec[0], 1,
+                                      newStmt,
                                       /*FIXME:*/SourceLocation());
   else {
     // FIXME. Refactor this into common code with that in 
@@ -1346,7 +1344,7 @@ Stmt *RewriteObjC::RewritePropertyOrImplicitSetter(BinaryOperator *BinOp, Expr *
                                       /*FIXME: */SourceLocation(),
                                       cast<Expr>(Receiver),
                                       Sel, SelectorLoc, OMD,
-                                      &ExprVec[0], 1,
+                                      newStmt,
                                       /*FIXME:*/SourceLocation());
   }
   Stmt *ReplacingStmt = SynthMessageExpr(MsgExpr);
@@ -1405,7 +1403,7 @@ Stmt *RewriteObjC::RewritePropertyOrImplicitGetter(Expr *PropOrGetterRefExpr) {
                                       /*IsInstanceSuper=*/true,
                                       SuperTy,
                                       Sel, SelectorLoc, OMD,
-                                      0, 0, 
+                                      ArrayRef<Expr*>(), 
                                       PropOrGetterRefExpr->getLocEnd());
   else {
     assert (Receiver && "RewritePropertyOrImplicitGetter - Receiver is null");
@@ -1419,7 +1417,7 @@ Stmt *RewriteObjC::RewritePropertyOrImplicitGetter(Expr *PropOrGetterRefExpr) {
                                       PropOrGetterRefExpr->getLocStart(),
                                       cast<Expr>(Receiver),
                                       Sel, SelectorLoc, OMD,
-                                      0, 0, 
+                                      ArrayRef<Expr*>(), 
                                       PropOrGetterRefExpr->getLocEnd());
   }
 

@@ -502,7 +502,7 @@ class ObjCMessageExpr : public Expr {
                   Selector Sel, 
                   SourceLocation SelLoc,
                   ObjCMethodDecl *Method,
-                  Expr **Args, unsigned NumArgs,
+                  ArrayRef<Expr *> Args,
                   SourceLocation RBracLoc);
   ObjCMessageExpr(QualType T, ExprValueKind VK,
                   SourceLocation LBracLoc,
@@ -510,7 +510,7 @@ class ObjCMessageExpr : public Expr {
                   Selector Sel, 
                   SourceLocation SelLoc,
                   ObjCMethodDecl *Method,
-                  Expr **Args, unsigned NumArgs,
+                  ArrayRef<Expr *> Args,
                   SourceLocation RBracLoc);
   ObjCMessageExpr(QualType T, ExprValueKind VK,
                   SourceLocation LBracLoc,
@@ -518,7 +518,7 @@ class ObjCMessageExpr : public Expr {
                   Selector Sel, 
                   SourceLocation SelLoc,
                   ObjCMethodDecl *Method,
-                  Expr **Args, unsigned NumArgs,
+                  ArrayRef<Expr *> Args,
                   SourceLocation RBracLoc);
 
   /// \brief Retrieve the pointer value of the message receiver.
@@ -581,7 +581,7 @@ public:
                                  Selector Sel, 
                                  ArrayRef<SourceLocation> SelLocs,
                                  ObjCMethodDecl *Method,
-                                 Expr **Args, unsigned NumArgs,
+                                 ArrayRef<Expr *> Args,
                                  SourceLocation RBracLoc);
 
   /// \brief Create a class message send.
@@ -616,7 +616,7 @@ public:
                                  Selector Sel, 
                                  ArrayRef<SourceLocation> SelLocs,
                                  ObjCMethodDecl *Method,
-                                 Expr **Args, unsigned NumArgs,
+                                 ArrayRef<Expr *> Args,
                                  SourceLocation RBracLoc);
 
   /// \brief Create an instance message send.
@@ -651,7 +651,7 @@ public:
                                  Selector Sel, 
                                  ArrayRef<SourceLocation> SeLocs,
                                  ObjCMethodDecl *Method,
-                                 Expr **Args, unsigned NumArgs,
+                                 ArrayRef<Expr *> Args,
                                  SourceLocation RBracLoc);
 
   /// \brief Create an empty Objective-C message expression, to be
