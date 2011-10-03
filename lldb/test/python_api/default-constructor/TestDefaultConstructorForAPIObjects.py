@@ -228,6 +228,16 @@ class APIDefaultConstructorTestCase(TestBase):
         sb_process.fuzz_obj(obj)
 
     @python_api_test
+    def test_SBSection(self):
+        obj = lldb.SBSection()
+        if self.TraceOn():
+            print obj
+        self.assertFalse(obj)
+        # Do fuzz testing on the invalid obj, it should not crash lldb.
+        import sb_section
+        sb_section.fuzz_obj(obj)
+
+    @python_api_test
     def test_SBStream(self):
         """SBStream object is valid after default construction."""
         obj = lldb.SBStream()
