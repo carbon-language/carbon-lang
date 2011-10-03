@@ -1192,7 +1192,7 @@ APFloat::normalize(roundingMode rounding_mode,
 
   if (omsb) {
     /* OMSB is numbered from 1.  We want to place it in the integer
-       bit numbered PRECISON if possible, with a compensating change in
+       bit numbered PRECISION if possible, with a compensating change in
        the exponent.  */
     exponentChange = omsb - semantics->precision;
 
@@ -2125,7 +2125,7 @@ APFloat::convertFromUnsignedParts(const integerPart *src,
   dstCount = partCount();
   precision = semantics->precision;
 
-  /* We want the most significant PRECISON bits of SRC.  There may not
+  /* We want the most significant PRECISION bits of SRC.  There may not
      be that many; extract what we can.  */
   if (precision <= omsb) {
     exponent = omsb - 1;
