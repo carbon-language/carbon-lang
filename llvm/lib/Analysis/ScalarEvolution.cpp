@@ -5119,7 +5119,7 @@ SolveQuadraticEquation(const SCEVAddRecExpr *AddRec, ScalarEvolution &SE) {
     // Compute the two solutions for the quadratic formula.
     // The divisions must be performed as signed divisions.
     APInt NegB(-B);
-    APInt TwoA( A << 1 );
+    APInt TwoA(A << 1);
     if (TwoA.isMinValue()) {
       const SCEV *CNC = SE.getCouldNotCompute();
       return std::make_pair(CNC, CNC);
@@ -5134,7 +5134,7 @@ SolveQuadraticEquation(const SCEVAddRecExpr *AddRec, ScalarEvolution &SE) {
 
     return std::make_pair(SE.getConstant(Solution1),
                           SE.getConstant(Solution2));
-    } // end APIntOps namespace
+  } // end APIntOps namespace
 }
 
 /// HowFarToZero - Return the number of times a backedge comparing the specified
@@ -5228,8 +5228,12 @@ ScalarEvolution::HowFarToZero(const SCEV *V, const Loop *L) {
   // Handle unitary steps, which cannot wraparound.
   // 1*N = -Start; -1*N = Start (mod 2^BW), so:
   //   N = Distance (as unsigned)
-  if (StepC->getValue()->equalsInt(1) || StepC->getValue()->isAllOnesValue())
-    return Distance;
+  if (StepC->getValue()->equalsInt(1) || StepC->getValue()->isAllOnesValue()) {
+    ConstantRange CR = getUnsignedRange(Start);
+    const SCEV *MaxBECount = getConstant(CountDown ? CR.getUnsignedMax()
+                                                   : ~CR.getUnsignedMin());
+    return ExitLimit(Distance, MaxBECount);
+  }
 
   // If the recurrence is known not to wraparound, unsigned divide computes the
   // back edge count. We know that the value will either become zero (and thus
