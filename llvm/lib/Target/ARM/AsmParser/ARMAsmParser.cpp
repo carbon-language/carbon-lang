@@ -3582,6 +3582,17 @@ bool ARMAsmParser::ParseInstruction(StringRef Name, SMLoc NameLoc,
       delete Op;
     }
   }
+  // VCMP{E} does the same thing, but with a different operand count.
+  if ((Mnemonic == "vcmp" || Mnemonic == "vcmpe") && Operands.size() == 5 &&
+      static_cast<ARMOperand*>(Operands[4])->isImm()) {
+    ARMOperand *Op = static_cast<ARMOperand*>(Operands[4]);
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Op->getImm());
+    if (CE && CE->getValue() == 0) {
+      Operands.erase(Operands.begin() + 4);
+      Operands.push_back(ARMOperand::CreateToken("#0", Op->getStartLoc()));
+      delete Op;
+    }
+  }
   // Similarly, the Thumb1 "RSB" instruction has a literal "#0" on the
   // end. Convert it to a token here.
   if (Mnemonic == "rsb" && isThumb() && Operands.size() == 6 &&

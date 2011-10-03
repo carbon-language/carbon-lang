@@ -36,11 +36,11 @@
 @ CHECK: vcmpe.f32 s1, s0            @ encoding: [0xc0,0x0a,0xf4,0xee]
         vcmpe.f32       s1, s0
 
-@ FIXME: vcmpe.f64 d16, #0           @ encoding: [0xc0,0x0b,0xf5,0xee]
-@        vcmpe.f64       d16, #0
+@ CHECK: vcmpe.f64 d16, #0           @ encoding: [0xc0,0x0b,0xf5,0xee]
+        vcmpe.f64       d16, #0
 
-@ FIXME: vcmpe.f32 s0, #0            @ encoding: [0xc0,0x0a,0xb5,0xee]
-@        vcmpe.f32       s0, #0
+@ CHECK: vcmpe.f32 s0, #0            @ encoding: [0xc0,0x0a,0xb5,0xee]
+        vcmpe.f32       s0, #0
 
 @ CHECK: vabs.f64 d16, d16           @ encoding: [0xe0,0x0b,0xf0,0xee]
         vabs.f64        d16, d16
