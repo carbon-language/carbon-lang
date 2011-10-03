@@ -62,6 +62,9 @@ one_liner_docstring_pattern = re.compile('^(%s|%s)""".*"""$' % (TWO_SPACES, EIGH
 # lldb_helpers and lldb_iter() should appear before our first SB* class definition.
 #
 lldb_helpers = '''
+# ==================================
+# Helper function for SBModule class
+# ==================================
 def in_range(symbol, section):
     """Test whether a symbol is within the range of a section."""
     symSA = symbol.GetStartAddress().GetFileAddress()
