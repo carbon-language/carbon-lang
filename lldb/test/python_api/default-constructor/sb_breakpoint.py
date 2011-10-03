@@ -31,3 +31,5 @@ def fuzz_obj(obj):
     obj.GetNumResolvedLocations()
     obj.GetNumLocations()
     obj.GetDescription(lldb.SBStream())
+    for bp_loc in obj:
+        print bp_loc

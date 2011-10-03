@@ -17,3 +17,10 @@ def fuzz_obj(obj):
     obj.GetSymbolAtIndex(sys.maxint)
     obj.FindFunctions("my_func", 0xffffffff, True, lldb.SBSymbolContextList())
     obj.FindGlobalVariables(lldb.SBTarget(), "my_global_var", 1)
+    for section in obj.section_iter():
+        print section
+    for symbol in obj.symbol_in_section_iter(lldb.SBSection()):
+        print symbol
+    for symbol in obj:
+        print symbol
+

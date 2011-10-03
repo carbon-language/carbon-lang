@@ -11,3 +11,5 @@ def fuzz_obj(obj):
     obj.GetLineEntryAtIndex(0xffffffff)
     obj.FindLineEntryIndex(0, 0xffffffff, None)
     obj.GetDescription(lldb.SBStream())
+    for line_entry in obj:
+        print line_entry

@@ -12,3 +12,5 @@ def fuzz_obj(obj):
     obj.GetSize()
     obj.GetStringAtIndex(0xffffffff)
     obj.Clear()
+    for str in obj:
+        print str

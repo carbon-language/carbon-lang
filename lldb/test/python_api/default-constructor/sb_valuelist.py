@@ -10,3 +10,5 @@ def fuzz_obj(obj):
     obj.GetSize()
     obj.GetValueAtIndex(100)
     obj.FindValueObjectByUID(200)
+    for val in obj:
+        print val

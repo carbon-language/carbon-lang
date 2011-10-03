@@ -33,3 +33,5 @@ def fuzz_obj(obj):
     obj.GetDescription(stream)
     obj.GetExpressionPath(stream)
     obj.GetExpressionPath(stream, True)
+    for child_val in obj:
+        print child_val

@@ -52,3 +52,5 @@ def fuzz_obj(obj):
     obj.SetCloseInputOnEOF(True)
     obj.SetCloseInputOnEOF(False)
     obj.Clear()
+    for target in obj:
+        print target

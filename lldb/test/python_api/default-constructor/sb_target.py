@@ -51,3 +51,7 @@ def fuzz_obj(obj):
     obj.GetBroadcaster()
     obj.GetDescription(lldb.SBStream(), lldb.eDescriptionLevelBrief)
     obj.Clear()
+    for module in obj.module_iter():
+        print module
+    for bp in obj.breakpoint_iter():
+        print bp
