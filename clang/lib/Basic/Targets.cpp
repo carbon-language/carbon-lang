@@ -878,6 +878,11 @@ public:
 } // end anonymous namespace.
 
 namespace {
+  static const unsigned PTXAddrSpaceMap[] = {
+    0,    // opencl_global
+    4,    // opencl_local
+    1     // opencl_constant
+  };
   class PTXTargetInfo : public TargetInfo {
     static const char * const GCCRegNames[];
     static const Builtin::Info BuiltinInfo[];
@@ -886,6 +891,7 @@ namespace {
     PTXTargetInfo(const std::string& triple) : TargetInfo(triple) {
       TLSSupported = false;
       LongWidth = LongAlign = 64;
+      AddrSpaceMap = &PTXAddrSpaceMap;
       // Define available target features
       // These must be defined in sorted order!      
       AvailableFeatures.push_back("compute10");
