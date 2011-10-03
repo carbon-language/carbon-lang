@@ -90,6 +90,14 @@ class LogicR_shift_rotate_reg64<bits<6> func, bits<5> _shamt, string instr_asm,
   let shamt = _shamt;
 }
 
+// Mul, Div
+let Defs = [HI64, LO64] in {
+  let isCommutable = 1 in
+  class Mul64<bits<6> func, string instr_asm, InstrItinClass itin>:
+    FR<0x00, func, (outs), (ins CPU64Regs:$a, CPU64Regs:$b),
+       !strconcat(instr_asm, "\t$a, $b"), [], itin>;
+}
+
 // Move from Hi/Lo
 let shamt = 0 in {
 let rs = 0, rt = 0 in
@@ -138,6 +146,10 @@ let Predicates = [HasMips64r2] in {
                                            imm32_63>;
   def DROTRV   : LogicR_shift_rotate_reg64<0x16, 0x01, "drotrv", rotr>;
 }
+
+/// Multiply and Divide Instructions.
+def DMULT    : Mul64<0x1c, "dmult", IIImul>;
+def DMULTu   : Mul64<0x1d, "dmultu", IIImul>;
 
 let Defs = [HI64] in
   def MTHI64  : MoveToLOHI64<0x11, "mthi">;

@@ -70,3 +70,16 @@ entry:
   ret i64 %xor
 }
 
+define i64 @f12(i64 %a, i64 %b) nounwind readnone {
+entry:
+; CHECK: mult
+  %mul = mul nsw i64 %b, %a
+  ret i64 %mul
+}
+
+define i64 @f13(i64 %a, i64 %b) nounwind readnone {
+entry:
+; CHECK: mult
+  %mul = mul i64 %b, %a
+  ret i64 %mul
+}
