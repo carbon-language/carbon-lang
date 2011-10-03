@@ -1549,6 +1549,13 @@ static std::string findGCCBaseLibDir(const Driver &D,
   return "";
 }
 
+static void addPathIfExists(const std::string &Path,
+                            ToolChain::path_list &Paths) {
+  bool Exists;
+  if (!llvm::sys::fs::exists(Path, Exists) && Exists)
+    Paths.push_back(Path);
+}
+
 Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
   : Generic_ELF(Host, Triple) {
   llvm::Triple::ArchType Arch =
@@ -1626,25 +1633,6 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
   }
 
   std::string Base = findGCCBaseLibDir(getDriver(), GccTriple);
-  path_list &Paths = getFilePaths();
-  bool Is32Bits = (getArch() == llvm::Triple::x86 ||
-                   getArch() == llvm::Triple::ppc);
-
-  const std::string Suffix32 = Arch == llvm::Triple::x86_64 ? "/32" : "";
-  const std::string Suffix64 = Is32Bits ? "/64" : "";
-  const std::string Suffix = Is32Bits ? Suffix32 : Suffix64;
-
-  std::string Lib32 = "lib";
-  if (!llvm::sys::fs::exists("/lib32", Exists) && Exists)
-    Lib32 = "lib32";
-
-  std::string Lib64 = "lib";
-  bool Symlink;
-  if (!llvm::sys::fs::exists("/lib64", Exists) && Exists &&
-      (llvm::sys::fs::is_symlink("/lib64", Symlink) || !Symlink))
-    Lib64 = "lib64";
-
-  std::string Lib = Is32Bits ? Lib32 : Lib64;
 
   // OpenSuse stores the linker with the compiler, add that to the search
   // path.
@@ -1685,27 +1673,50 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
   if (IsOpenSuse(Distro))
     ExtraOpts.push_back("--enable-new-dtags");
 
-  if (Distro == ArchLinux)
-    Lib = "lib";
+  // The selection of paths to try here is designed to match the patterns which
+  // the GCC driver itself uses, as this is part of the GCC-compatible driver.
+  // This was determined by running GCC in a fake filesystem, creating all
+  // possible permutations of these directories, and seeing which ones it added
+  // to the link paths.
+  path_list &Paths = getFilePaths();
+  const bool Is32Bits = (getArch() == llvm::Triple::x86 ||
+                         getArch() == llvm::Triple::ppc);
 
-  Paths.push_back(Base + Suffix);
+  const std::string Suffix32 = Arch == llvm::Triple::x86_64 ? "/32" : "";
+  const std::string Suffix64 = Is32Bits ? "/64" : "";
+  const std::string Suffix = Is32Bits ? Suffix32 : Suffix64;
+  const std::string Multilib = Is32Bits ? "lib32" : "lib64";
+
+  // FIXME: Because we add paths only when they exist on the system, I think we
+  // should remove the concept of 'HasMultilib'. It's more likely to break the
+  // behavior than to preserve any useful invariant on the system.
   if (HasMultilib(Arch, Distro)) {
+    // FIXME: This OpenSuse-specific path shouldn't be needed any more, but
+    // I don't want to remove it without finding someone to test.
     if (IsOpenSuse(Distro) && Is32Bits)
       Paths.push_back(Base + "/../../../../" + GccTriple + "/lib/../lib");
-    Paths.push_back(Base + "/../../../../" + Lib);
+
+    // Add the multilib suffixed paths.
+    if (!Base.empty() && !GccTriple.empty()) {
+      addPathIfExists(Base + Suffix, Paths);
+      addPathIfExists(Base + "/../../../../" + GccTriple + "/lib/../" +
+                      Multilib, Paths);
+      addPathIfExists(Base + "/../../../../" + Multilib, Paths);
+    }
+    addPathIfExists("/lib/../" + Multilib, Paths);
+    addPathIfExists("/usr/lib/../" + Multilib, Paths);
   }
 
-  // FIXME: This is in here to find crt1.o. It is provided by libc, and
-  // libc (like gcc), can be installed in any directory. Once we are
-  // fetching this from a config file, we should have a libc prefix.
-  Paths.push_back("/lib/../" + Lib);
-  Paths.push_back("/usr/lib/../" + Lib);
+  // Add the non-multiplib suffixed paths (if potentially different).
+  if (!Base.empty() && !GccTriple.empty()) {
+    if (!Suffix.empty())
+      addPathIfExists(Base, Paths);
+    addPathIfExists(Base + "/../../../../" + GccTriple + "/lib", Paths);
+    addPathIfExists(Base + "/../../..", Paths);
+  }
+  addPathIfExists("/lib", Paths);
+  addPathIfExists("/usr/lib", Paths);
 
-  if (!Suffix.empty())
-    Paths.push_back(Base);
-  if (IsOpenSuse(Distro))
-    Paths.push_back(Base + "/../../../../" + GccTriple + "/lib");
-  Paths.push_back(Base + "/../../..");
   if (Arch == getArch() && IsUbuntu(Distro))
     Paths.push_back("/usr/lib/" + GccTriple);
 }
