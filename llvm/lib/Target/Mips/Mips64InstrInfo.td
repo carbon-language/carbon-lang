@@ -90,6 +90,19 @@ class LogicR_shift_rotate_reg64<bits<6> func, bits<5> _shamt, string instr_asm,
   let shamt = _shamt;
 }
 
+// Move from Hi/Lo
+let shamt = 0 in {
+let rs = 0, rt = 0 in
+class MoveFromLOHI64<bits<6> func, string instr_asm>:
+  FR<0x00, func, (outs CPU64Regs:$dst), (ins),
+     !strconcat(instr_asm, "\t$dst"), [], IIHiLo>;
+
+let rt = 0, rd = 0 in
+class MoveToLOHI64<bits<6> func, string instr_asm>:
+  FR<0x00, func, (outs), (ins CPU64Regs:$src),
+     !strconcat(instr_asm, "\t$src"), [], IIHiLo>;
+}
+
 //===----------------------------------------------------------------------===//
 // Instruction definition
 //===----------------------------------------------------------------------===//
@@ -125,6 +138,16 @@ let Predicates = [HasMips64r2] in {
                                            imm32_63>;
   def DROTRV   : LogicR_shift_rotate_reg64<0x16, 0x01, "drotrv", rotr>;
 }
+
+let Defs = [HI64] in
+  def MTHI64  : MoveToLOHI64<0x11, "mthi">;
+let Defs = [LO64] in
+  def MTLO64  : MoveToLOHI64<0x13, "mtlo">;
+
+let Uses = [HI64] in
+  def MFHI64  : MoveFromLOHI64<0x10, "mfhi">;
+let Uses = [LO64] in
+  def MFLO64  : MoveFromLOHI64<0x12, "mflo">;
 
 //===----------------------------------------------------------------------===//
 //  Arbitrary patterns that map to one or more instructions

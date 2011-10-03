@@ -359,13 +359,17 @@ let Defs = [HI, LO] in {
 }
 
 // Move from Hi/Lo
+let shamt = 0 in {
+let rs = 0, rt = 0 in
 class MoveFromLOHI<bits<6> func, string instr_asm>:
   FR<0x00, func, (outs CPURegs:$dst), (ins),
      !strconcat(instr_asm, "\t$dst"), [], IIHiLo>;
 
+let rt = 0, rd = 0 in
 class MoveToLOHI<bits<6> func, string instr_asm>:
   FR<0x00, func, (outs), (ins CPURegs:$src),
      !strconcat(instr_asm, "\t$src"), [], IIHiLo>;
+}
 
 class EffectiveAddress<string instr_asm> :
   FI<0x09, (outs CPURegs:$dst), (ins mem_ea:$addr),
