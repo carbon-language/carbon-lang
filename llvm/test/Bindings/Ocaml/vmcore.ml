@@ -834,7 +834,17 @@ let test_builder () =
   
   let bb00 = append_block context "Bb00" fn in
   ignore (build_unreachable (builder_at_end context bb00));
-  
+
+  let bblpad = append_block context "Bblpad" fn in
+  let rt = struct_type context [| pointer_type i8_type; i32_type |] in
+  let ft = var_arg_function_type i32_type  [||] in
+  let personality = declare_function "__gxx_personality_v0" ft m in begin
+      let lp = build_landingpad rt personality 0 "lpad"
+       (builder_at_end context bblpad) in
+      set_cleanup lp true;
+      ignore (build_unreachable (builder_at_end context bblpad));
+  end;
+
   group "ret"; begin
     (* RUN: grep {ret.*P1} < %t.ll
      *)
@@ -891,11 +901,11 @@ let test_builder () =
   
   group "invoke"; begin
     (* RUN: grep {build_invoke.*invoke.*P1.*P2} < %t.ll
-     * RUN: grep {to.*Bb04.*unwind.*Bb00} < %t.ll
+     * RUN: grep {to.*Bb04.*unwind.*Bblpad} < %t.ll
      *)
     let bb04 = append_block context "Bb04" fn in
     let b = builder_at_end context bb04 in
-    ignore (build_invoke fn [| p1; p2 |] bb04 bb00 "build_invoke" b)
+    ignore (build_invoke fn [| p1; p2 |] bb04 bblpad "build_invoke" b)
   end;
   
   group "unreachable"; begin

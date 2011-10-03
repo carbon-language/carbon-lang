@@ -1212,6 +1212,19 @@ CAMLprim LLVMValueRef llvm_build_invoke_bc(value Args[], int NumArgs) {
                                Args[4], Args[5]);
 }
 
+CAMLprim LLVMValueRef llvm_build_landingpad(LLVMTypeRef Ty, LLVMValueRef PersFn,
+                                            value NumClauses,  value Name,
+                                            value B) {
+    return LLVMBuildLandingPad(Builder_val(B), Ty, PersFn, Int_val(NumClauses),
+                               String_val(Name));
+}
+
+CAMLprim value llvm_set_cleanup(LLVMValueRef LandingPadInst, value flag)
+{
+    LLVMSetCleanup(LandingPadInst, Bool_val(flag));
+    return Val_unit;
+}
+
 /* llbuilder -> llvalue */
 CAMLprim LLVMValueRef llvm_build_unreachable(value B) {
   return LLVMBuildUnreachable(Builder_val(B));

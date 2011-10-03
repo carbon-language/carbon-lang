@@ -339,7 +339,7 @@ val ppc_fp128_type : llcontext -> lltype
     See the method [llvm::FunctionType::get]. *)
 val function_type : lltype -> lltype array -> lltype
 
-(** [va_arg_function_type ret_ty param_tys] is just like
+(** [var_arg_function_type ret_ty param_tys] is just like
     [function_type ret_ty param_tys] except that it returns the function type
     which also takes a variable number of arguments.
     See the method [llvm::FunctionType::get]. *)
@@ -1615,6 +1615,16 @@ val add_destination : llvalue -> llbasicblock -> unit
 val build_invoke : llvalue -> llvalue array -> llbasicblock ->
                         llbasicblock -> string -> llbuilder -> llvalue
 
+(** [build_landingpad ty persfn numclauses name b] creates an
+    [landingpad]
+    instruction at the position specified by the instruction builder [b].
+    See the method [llvm::LLVMBuilder::CreateLandingPad]. *)
+val build_landingpad : lltype -> llvalue -> int -> string -> llbuilder ->
+                         llvalue
+
+(** [set_cleanup lp] sets the cleanup flag in the [landingpad]instruction.
+    See the method [llvm::LandingPadInst::setCleanup]. *)
+val set_cleanup : llvalue -> bool -> unit
 
 (** [build_unreachable b] creates an
     [unreachable]
