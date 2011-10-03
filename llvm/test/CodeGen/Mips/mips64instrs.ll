@@ -116,3 +116,20 @@ entry:
   ret i64 %rem
 }
 
+declare i64 @llvm.ctlz.i64(i64) nounwind readnone
+
+; CHECK: dclz $2, $4
+define i64 @f18(i64 %X) nounwind readnone {
+entry:
+  %tmp1 = tail call i64 @llvm.ctlz.i64(i64 %X)
+  ret i64 %tmp1
+}
+
+; CHECK: dclo $2, $4
+define i64 @f19(i64 %X) nounwind readnone {
+entry:
+  %neg = xor i64 %X, -1
+  %tmp1 = tail call i64 @llvm.ctlz.i64(i64 %neg)
+  ret i64 %tmp1
+}
+

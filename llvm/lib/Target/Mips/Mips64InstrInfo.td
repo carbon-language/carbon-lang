@@ -116,6 +116,15 @@ class MoveToLOHI64<bits<6> func, string instr_asm>:
      !strconcat(instr_asm, "\t$src"), [], IIHiLo>;
 }
 
+// Count Leading Ones/Zeros in Word
+class CountLeading64<bits<6> func, string instr_asm, list<dag> pattern>:
+  FR<0x1c, func, (outs CPU64Regs:$dst), (ins CPU64Regs:$src),
+     !strconcat(instr_asm, "\t$dst, $src"), pattern, IIAlu>,
+     Requires<[HasBitCount]> {
+  let shamt = 0;
+  let rt = rd;
+}
+
 //===----------------------------------------------------------------------===//
 // Instruction definition
 //===----------------------------------------------------------------------===//
@@ -167,6 +176,12 @@ let Uses = [HI64] in
   def MFHI64  : MoveFromLOHI64<0x10, "mfhi">;
 let Uses = [LO64] in
   def MFLO64  : MoveFromLOHI64<0x12, "mflo">;
+
+/// Count Leading
+def DCLZ : CountLeading64<0x24, "dclz",
+                          [(set CPU64Regs:$dst, (ctlz CPU64Regs:$src))]>;
+def DCLO : CountLeading64<0x25, "dclo",
+                          [(set CPU64Regs:$dst, (ctlz (not CPU64Regs:$src)))]>;
 
 //===----------------------------------------------------------------------===//
 //  Arbitrary patterns that map to one or more instructions
