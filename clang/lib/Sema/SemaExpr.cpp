@@ -7388,7 +7388,13 @@ ExprResult Sema::ConvertPropertyForRValue(Expr *E) {
             << PRE->getBase()->getType();
     }
   }
-  
+  else {
+    // lvalue-ness of an explicit property is determined by
+    // property type.
+    ObjCPropertyDecl *PDecl = PRE->getExplicitProperty();
+    VK = Expr::getValueKindForType(PDecl->getType());
+  }
+    
   E = ImplicitCastExpr::Create(Context, T, CK_GetObjCProperty,
                                E, 0, VK);
   
