@@ -570,7 +570,7 @@ public:
                                  bool IsInstanceSuper,
                                  QualType SuperType,
                                  Selector Sel, 
-                                 SourceLocation SelLoc,
+                                 ArrayRef<SourceLocation> SelLocs,
                                  ObjCMethodDecl *Method,
                                  Expr **Args, unsigned NumArgs,
                                  SourceLocation RBracLoc);
@@ -605,7 +605,7 @@ public:
                                  SourceLocation LBracLoc,
                                  TypeSourceInfo *Receiver,
                                  Selector Sel, 
-                                 SourceLocation SelLoc,
+                                 ArrayRef<SourceLocation> SelLocs,
                                  ObjCMethodDecl *Method,
                                  Expr **Args, unsigned NumArgs,
                                  SourceLocation RBracLoc);
@@ -640,7 +640,7 @@ public:
                                  SourceLocation LBracLoc,
                                  Expr *Receiver,
                                  Selector Sel, 
-                                 SourceLocation SelLoc,
+                                 ArrayRef<SourceLocation> SeLocs,
                                  ObjCMethodDecl *Method,
                                  Expr **Args, unsigned NumArgs,
                                  SourceLocation RBracLoc);

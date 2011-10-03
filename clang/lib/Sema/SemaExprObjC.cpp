@@ -961,7 +961,7 @@ ExprResult Sema::ActOnSuperMessage(Scope *S,
                                    SourceLocation SuperLoc,
                                    Selector Sel,
                                    SourceLocation LBracLoc,
-                                   SourceLocation SelectorLoc,
+                                   ArrayRef<SourceLocation> SelectorLocs,
                                    SourceLocation RBracLoc,
                                    MultiExprArg Args) {
   // Determine whether we are inside a method or not.
@@ -1000,7 +1000,7 @@ ExprResult Sema::ActOnSuperMessage(Scope *S,
     SuperTy = Context.getObjCObjectPointerType(SuperTy);
     return BuildInstanceMessage(0, SuperTy, SuperLoc,
                                 Sel, /*Method=*/0,
-                                LBracLoc, SelectorLoc, RBracLoc, move(Args));
+                                LBracLoc, SelectorLocs, RBracLoc, move(Args));
   }
   
   // Since we are in a class method, this is a class message to
@@ -1008,7 +1008,7 @@ ExprResult Sema::ActOnSuperMessage(Scope *S,
   return BuildClassMessage(/*ReceiverTypeInfo=*/0,
                            Context.getObjCInterfaceType(Super),
                            SuperLoc, Sel, /*Method=*/0,
-                           LBracLoc, SelectorLoc, RBracLoc, move(Args));
+                           LBracLoc, SelectorLocs, RBracLoc, move(Args));
 }
 
 /// \brief Build an Objective-C class message expression.
@@ -1045,7 +1045,7 @@ ExprResult Sema::BuildClassMessage(TypeSourceInfo *ReceiverTypeInfo,
                                    Selector Sel,
                                    ObjCMethodDecl *Method,
                                    SourceLocation LBracLoc, 
-                                   SourceLocation SelectorLoc,
+                                   ArrayRef<SourceLocation> SelectorLocs,
                                    SourceLocation RBracLoc,
                                    MultiExprArg ArgsIn) {
   SourceLocation Loc = SuperLoc.isValid()? SuperLoc
@@ -1064,7 +1064,7 @@ ExprResult Sema::BuildClassMessage(TypeSourceInfo *ReceiverTypeInfo,
     assert(SuperLoc.isInvalid() && "Message to super with dependent type");
     return Owned(ObjCMessageExpr::Create(Context, ReceiverType,
                                          VK_RValue, LBracLoc, ReceiverTypeInfo,
-                                         Sel, SelectorLoc, /*Method=*/0,
+                                         Sel, SelectorLocs, /*Method=*/0,
                                          Args, NumArgs, RBracLoc));
   }
   
@@ -1126,11 +1126,11 @@ ExprResult Sema::BuildClassMessage(TypeSourceInfo *ReceiverTypeInfo,
   if (SuperLoc.isValid())
     Result = ObjCMessageExpr::Create(Context, ReturnType, VK, LBracLoc, 
                                      SuperLoc, /*IsInstanceSuper=*/false, 
-                                     ReceiverType, Sel, SelectorLoc,
+                                     ReceiverType, Sel, SelectorLocs,
                                      Method, Args, NumArgs, RBracLoc);
   else
     Result = ObjCMessageExpr::Create(Context, ReturnType, VK, LBracLoc, 
-                                     ReceiverTypeInfo, Sel, SelectorLoc,
+                                     ReceiverTypeInfo, Sel, SelectorLocs,
                                      Method, Args, NumArgs, RBracLoc);
   return MaybeBindToTemporary(Result);
 }
@@ -1142,7 +1142,7 @@ ExprResult Sema::ActOnClassMessage(Scope *S,
                                    ParsedType Receiver,
                                    Selector Sel,
                                    SourceLocation LBracLoc,
-                                   SourceLocation SelectorLoc,
+                                   ArrayRef<SourceLocation> SelectorLocs,
                                    SourceLocation RBracLoc,
                                    MultiExprArg Args) {
   TypeSourceInfo *ReceiverTypeInfo;
@@ -1156,7 +1156,7 @@ ExprResult Sema::ActOnClassMessage(Scope *S,
 
   return BuildClassMessage(ReceiverTypeInfo, ReceiverType, 
                            /*SuperLoc=*/SourceLocation(), Sel, /*Method=*/0,
-                           LBracLoc, SelectorLoc, RBracLoc, move(Args));
+                           LBracLoc, SelectorLocs, RBracLoc, move(Args));
 }
 
 /// \brief Build an Objective-C instance message expression.
@@ -1193,7 +1193,7 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
                                       Selector Sel,
                                       ObjCMethodDecl *Method,
                                       SourceLocation LBracLoc, 
-                                      SourceLocation SelectorLoc,
+                                      ArrayRef<SourceLocation> SelectorLocs,
                                       SourceLocation RBracLoc,
                                       MultiExprArg ArgsIn) {
   // The location of the receiver.
@@ -1216,7 +1216,7 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
       assert(SuperLoc.isInvalid() && "Message to super with dependent type");
       return Owned(ObjCMessageExpr::Create(Context, Context.DependentTy,
                                            VK_RValue, LBracLoc, Receiver, Sel, 
-                                           SelectorLoc, /*Method=*/0,
+                                           SelectorLocs, /*Method=*/0,
                                            Args, NumArgs, RBracLoc));
     }
 
@@ -1386,7 +1386,7 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
                                       Sel,
                                       Method,
                                       LBracLoc,
-                                      SelectorLoc,
+                                      SelectorLocs,
                                       RBracLoc,
                                       move(ArgsIn));
         } else {
@@ -1416,6 +1416,8 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
                           diag::err_illegal_message_expr_incomplete_type))
     return ExprError();
 
+  SourceLocation SelLoc = SelectorLocs.front();
+
   // In ARC, forbid the user from sending messages to 
   // retain/release/autorelease/dealloc/retainCount explicitly.
   if (getLangOptions().ObjCAutoRefCount) {
@@ -1441,7 +1443,7 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
     case OMF_autorelease:
     case OMF_retainCount:
       Diag(Loc, diag::err_arc_illegal_explicit_message)
-        << Sel << SelectorLoc;
+        << Sel << SelLoc;
       break;
     
     case OMF_performSelector:
@@ -1467,7 +1469,7 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
                 // Issue error, unless ns_returns_not_retained.
                 if (!SelMethod->hasAttr<NSReturnsNotRetainedAttr>()) {
                   // selector names a +1 method 
-                  Diag(SelectorLoc, 
+                  Diag(SelLoc, 
                        diag::err_arc_perform_selector_retains);
                   Diag(SelMethod->getLocation(), diag::note_method_declared_at);
                 }
@@ -1476,7 +1478,7 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
                 // +0 call. OK. unless ns_returns_retained.
                 if (SelMethod->hasAttr<NSReturnsRetainedAttr>()) {
                   // selector names a +1 method
-                  Diag(SelectorLoc, 
+                  Diag(SelLoc, 
                        diag::err_arc_perform_selector_retains);
                   Diag(SelMethod->getLocation(), diag::note_method_declared_at);
                 }
@@ -1485,7 +1487,7 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
           }
         } else {
           // error (may leak).
-          Diag(SelectorLoc, diag::warn_arc_perform_selector_leaks);
+          Diag(SelLoc, diag::warn_arc_perform_selector_leaks);
           Diag(Args[0]->getExprLoc(), diag::note_used_here);
         }
       }
@@ -1498,11 +1500,11 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
   if (SuperLoc.isValid())
     Result = ObjCMessageExpr::Create(Context, ReturnType, VK, LBracLoc,
                                      SuperLoc,  /*IsInstanceSuper=*/true,
-                                     ReceiverType, Sel, SelectorLoc, Method, 
+                                     ReceiverType, Sel, SelectorLocs, Method, 
                                      Args, NumArgs, RBracLoc);
   else
     Result = ObjCMessageExpr::Create(Context, ReturnType, VK, LBracLoc,
-                                     Receiver, Sel, SelectorLoc, Method,
+                                     Receiver, Sel, SelectorLocs, Method,
                                      Args, NumArgs, RBracLoc);
 
   if (getLangOptions().ObjCAutoRefCount) {
@@ -1535,7 +1537,7 @@ ExprResult Sema::ActOnInstanceMessage(Scope *S,
                                       Expr *Receiver, 
                                       Selector Sel,
                                       SourceLocation LBracLoc,
-                                      SourceLocation SelectorLoc,
+                                      ArrayRef<SourceLocation> SelectorLocs,
                                       SourceLocation RBracLoc,
                                       MultiExprArg Args) {
   if (!Receiver)
@@ -1543,7 +1545,7 @@ ExprResult Sema::ActOnInstanceMessage(Scope *S,
 
   return BuildInstanceMessage(Receiver, Receiver->getType(),
                               /*SuperLoc=*/SourceLocation(), Sel, /*Method=*/0, 
-                              LBracLoc, SelectorLoc, RBracLoc, move(Args));
+                              LBracLoc, SelectorLocs, RBracLoc, move(Args));
 }
 
 enum ARCConversionTypeClass {

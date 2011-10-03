@@ -2811,7 +2811,7 @@ ObjCMessageExpr *ObjCMessageExpr::Create(ASTContext &Context, QualType T,
                                          bool IsInstanceSuper,
                                          QualType SuperType,
                                          Selector Sel, 
-                                         SourceLocation SelLoc,
+                                         ArrayRef<SourceLocation> SelLocs,
                                          ObjCMethodDecl *Method,
                                          Expr **Args, unsigned NumArgs,
                                          SourceLocation RBracLoc) {
@@ -2819,8 +2819,8 @@ ObjCMessageExpr *ObjCMessageExpr::Create(ASTContext &Context, QualType T,
     NumArgs * sizeof(Expr *);
   void *Mem = Context.Allocate(Size, llvm::AlignOf<ObjCMessageExpr>::Alignment);
   return new (Mem) ObjCMessageExpr(T, VK, LBracLoc, SuperLoc, IsInstanceSuper,
-                                   SuperType, Sel, SelLoc, Method, Args,NumArgs, 
-                                   RBracLoc);
+                                   SuperType, Sel, SelLocs.front(), Method,
+                                   Args, NumArgs, RBracLoc);
 }
 
 ObjCMessageExpr *ObjCMessageExpr::Create(ASTContext &Context, QualType T,
@@ -2828,14 +2828,15 @@ ObjCMessageExpr *ObjCMessageExpr::Create(ASTContext &Context, QualType T,
                                          SourceLocation LBracLoc,
                                          TypeSourceInfo *Receiver,
                                          Selector Sel, 
-                                         SourceLocation SelLoc,
+                                         ArrayRef<SourceLocation> SelLocs,
                                          ObjCMethodDecl *Method,
                                          Expr **Args, unsigned NumArgs,
                                          SourceLocation RBracLoc) {
   unsigned Size = sizeof(ObjCMessageExpr) + sizeof(void *) + 
     NumArgs * sizeof(Expr *);
   void *Mem = Context.Allocate(Size, llvm::AlignOf<ObjCMessageExpr>::Alignment);
-  return new (Mem) ObjCMessageExpr(T, VK, LBracLoc, Receiver, Sel, SelLoc,
+  return new (Mem) ObjCMessageExpr(T, VK, LBracLoc, Receiver, Sel,
+                                   SelLocs.front(),
                                    Method, Args, NumArgs, RBracLoc);
 }
 
@@ -2844,14 +2845,15 @@ ObjCMessageExpr *ObjCMessageExpr::Create(ASTContext &Context, QualType T,
                                          SourceLocation LBracLoc,
                                          Expr *Receiver,
                                          Selector Sel,
-                                         SourceLocation SelLoc,
+                                         ArrayRef<SourceLocation> SelLocs,
                                          ObjCMethodDecl *Method,
                                          Expr **Args, unsigned NumArgs,
                                          SourceLocation RBracLoc) {
   unsigned Size = sizeof(ObjCMessageExpr) + sizeof(void *) + 
     NumArgs * sizeof(Expr *);
   void *Mem = Context.Allocate(Size, llvm::AlignOf<ObjCMessageExpr>::Alignment);
-  return new (Mem) ObjCMessageExpr(T, VK, LBracLoc, Receiver, Sel, SelLoc,
+  return new (Mem) ObjCMessageExpr(T, VK, LBracLoc, Receiver, Sel,
+                                   SelLocs.front(),
                                    Method, Args, NumArgs, RBracLoc);
 }
 
