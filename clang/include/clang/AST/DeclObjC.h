@@ -137,9 +137,6 @@ private:
 
   /// \brief Indicates whether this method has a related result type.
   unsigned RelatedResultType : 1;
-  
-  // Number of args separated by ':' in a method declaration.
-  unsigned NumSelectorArgs;
 
   // Result type of this method.
   QualType MethodDeclType;
@@ -175,15 +172,14 @@ private:
                  bool isImplicitlyDeclared = false,
                  bool isDefined = false,
                  ImplementationControl impControl = None,
-                 bool HasRelatedResultType = false,
-                 unsigned numSelectorArgs = 0)
+                 bool HasRelatedResultType = false)
   : NamedDecl(ObjCMethod, contextDecl, beginLoc, SelInfo),
     DeclContext(ObjCMethod), Family(InvalidObjCMethodFamily),
     IsInstance(isInstance), IsVariadic(isVariadic),
     IsSynthesized(isSynthesized),
     IsDefined(isDefined),
     DeclImplementation(impControl), objcDeclQualifier(OBJC_TQ_None),
-    RelatedResultType(HasRelatedResultType), NumSelectorArgs(numSelectorArgs), 
+    RelatedResultType(HasRelatedResultType),
     MethodDeclType(T), ResultTInfo(ResultTInfo),
     EndLoc(endLoc), Body(0), SelfDecl(0), CmdDecl(0) {
     setImplicit(isImplicitlyDeclared);
@@ -207,8 +203,7 @@ public:
                                 bool isImplicitlyDeclared = false,
                                 bool isDefined = false,
                                 ImplementationControl impControl = None,
-                                bool HasRelatedResultType = false,
-                                unsigned numSelectorArgs = 0);
+                                bool HasRelatedResultType = false);
 
   virtual ObjCMethodDecl *getCanonicalDecl();
   const ObjCMethodDecl *getCanonicalDecl() const {
@@ -226,11 +221,6 @@ public:
   
   /// \brief Note whether this method has a related result type.
   void SetRelatedResultType(bool RRT = true) { RelatedResultType = RRT; }
-  
-  unsigned getNumSelectorArgs() const { return NumSelectorArgs; }
-  void setNumSelectorArgs(unsigned numSelectorArgs) { 
-    NumSelectorArgs = numSelectorArgs; 
-  }
   
   // Location information, modeled after the Stmt API.
   SourceLocation getLocStart() const { return getLocation(); }
@@ -267,13 +257,11 @@ public:
   // This method returns and of the parameters which are part of the selector
   // name mangling requirements.
   param_iterator sel_param_end() const { 
-    return ParamInfo.begin() + NumSelectorArgs; 
+    return ParamInfo.begin() + getSelector().getNumArgs(); 
   }
 
-  void setMethodParams(ASTContext &C, ParmVarDecl *const *List, unsigned Num,
-                       unsigned numSelectorArgs) {
+  void setMethodParams(ASTContext &C, ParmVarDecl *const *List, unsigned Num) {
     ParamInfo.set(List, Num, C);
-    NumSelectorArgs = numSelectorArgs; 
   }
 
   // Iterator access to parameter types.

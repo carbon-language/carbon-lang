@@ -1576,7 +1576,7 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
                                                   SC_None,
                                                   SC_None,
                                                   0);
-      SetterMethod->setMethodParams(Context, &Argument, 1, 1);
+      SetterMethod->setMethodParams(Context, &Argument, 1);
 
       AddPropertyAttrs(*this, SetterMethod, property);
 

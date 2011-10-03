@@ -2609,8 +2609,7 @@ Decl *Sema::ActOnMethodDeclaration(
     Params.push_back(Param);
   }
   
-  ObjCMethod->setMethodParams(Context, Params.data(), Params.size(),
-                              Sel.getNumArgs());
+  ObjCMethod->setMethodParams(Context, Params.data(), Params.size());
   ObjCMethod->setObjCDeclQualifier(
     CvtQTToAstBitMask(ReturnQT.getObjCDeclQualifier()));
 

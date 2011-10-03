@@ -341,16 +341,14 @@ ObjCMethodDecl *ObjCMethodDecl::Create(ASTContext &C,
                                        bool isImplicitlyDeclared,
                                        bool isDefined,
                                        ImplementationControl impControl,
-                                       bool HasRelatedResultType,
-                                       unsigned numSelectorArgs) {
+                                       bool HasRelatedResultType) {
   return new (C) ObjCMethodDecl(beginLoc, endLoc,
                                 SelInfo, T, ResultTInfo, contextDecl,
                                 isInstance,
                                 isVariadic, isSynthesized, isImplicitlyDeclared,
                                 isDefined,
                                 impControl,
-                                HasRelatedResultType,
-                                numSelectorArgs);
+                                HasRelatedResultType);
 }
 
 /// \brief A definition will return its interface declaration.
