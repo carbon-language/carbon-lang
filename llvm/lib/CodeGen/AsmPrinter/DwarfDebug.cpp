@@ -386,7 +386,7 @@ DIE *DwarfDebug::constructScopeDIE(CompileUnit *TheCU, LexicalScope *Scope) {
             TheCU->constructVariableDIE(ArgDV, Scope->isAbstractScope()))
           Children.push_back(Arg);
 
-  // Collect lexical scope childrens first.
+  // Collect lexical scope children first.
   const SmallVector<DbgVariable *, 8> &Variables = ScopeVariables.lookup(Scope);
   for (unsigned i = 0, N = Variables.size(); i < N; ++i)
     if (DIE *Variable = 
