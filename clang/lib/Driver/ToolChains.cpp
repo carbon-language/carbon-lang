@@ -1475,83 +1475,184 @@ static LinuxDistro DetectLinuxDistro(llvm::Triple::ArchType Arch) {
   return UnknownDistro;
 }
 
-/// \brief Find an installed GCC lib base directory.
-///
-/// Tries both the auto-detected GccTriple passed in as well as the
-/// Driver-specified default host triple. Sets the GccTriple to the triple
-/// actually used.
-static std::string findGCCBaseLibDir(const Driver &D, std::string &GccTriple) {
-  // FIXME: Using CXX_INCLUDE_ROOT is here is a bit of a hack, but
-  // avoids adding yet another option to configure/cmake.
-  // It would probably be cleaner to break it in two variables
-  // CXX_GCC_ROOT with just /foo/bar
-  // CXX_GCC_VER with 4.5.2
-  // Then we would have
-  // CXX_INCLUDE_ROOT = CXX_GCC_ROOT/include/c++/CXX_GCC_VER
-  // and this function would return
-  // CXX_GCC_ROOT/lib/gcc/CXX_INCLUDE_ARCH/CXX_GCC_VER
-  llvm::SmallString<128> CxxIncludeRoot(CXX_INCLUDE_ROOT);
-  if (CxxIncludeRoot != "") {
-    // This is of the form /foo/bar/include/c++/4.5.2/
-    if (CxxIncludeRoot.back() == '/')
-      llvm::sys::path::remove_filename(CxxIncludeRoot); // remove the /
-    StringRef Version = llvm::sys::path::filename(CxxIncludeRoot);
-    llvm::sys::path::remove_filename(CxxIncludeRoot); // remove the version
-    llvm::sys::path::remove_filename(CxxIncludeRoot); // remove the c++
-    llvm::sys::path::remove_filename(CxxIncludeRoot); // remove the include
-    std::string ret(CxxIncludeRoot.c_str());
-    ret.append("/lib/gcc/");
-    ret.append(CXX_INCLUDE_ARCH);
-    ret.append("/");
-    ret.append(Version);
-    return ret;
-  }
-  static const char* GccVersions[] = {"4.6.1", "4.6.0", "4.6",
-                                      "4.5.3", "4.5.2", "4.5.1", "4.5",
-                                      "4.4.6", "4.4.5", "4.4.4", "4.4.3", "4.4",
-                                      "4.3.4", "4.3.3", "4.3.2", "4.3",
-                                      "4.2.4", "4.2.3", "4.2.2", "4.2.1",
-                                      "4.2", "4.1.1"};
+/// \brief Trivial helper function to simplify code checking path existence.
+static bool PathExists(std::string Path) {
   bool Exists;
-  llvm::SmallVector<std::string, 8> Paths(D.PrefixDirs.begin(),
-      D.PrefixDirs.end());
-  Paths.push_back(D.SysRoot + "/usr/");
-  const std::string Triples[] = {GccTriple, D.DefaultHostTriple};
-  for (llvm::SmallVector<std::string, 8>::const_iterator it = Paths.begin(),
-       ie = Paths.end(); it != ie; ++it) {
-    for (unsigned i = 0; i < sizeof(GccVersions)/sizeof(char*); ++i) {
-      for (unsigned j = 0; j < sizeof(Triples)/sizeof(Triples[0]); ++j) {
-        GccTriple = Triples[j];
-        std::string Suffix = Triples[j] + "/" + GccVersions[i];
-        std::string t1 = *it + "lib/gcc/" + Suffix;
-        if (!llvm::sys::fs::exists(t1 + "/crtbegin.o", Exists) && Exists)
-          return t1;
-        std::string t2 = *it + "lib64/gcc/" + Suffix;
-        if (!llvm::sys::fs::exists(t2 + "/crtbegin.o", Exists) && Exists)
-          return t2;
-        std::string t3 = *it + "lib/" + GccTriple + "/gcc/" + Suffix;
-        if (!llvm::sys::fs::exists(t3 + "/crtbegin.o", Exists) && Exists)
-          return t3;
-        if (GccTriple == "i386-linux-gnu") {
+  if (!llvm::sys::fs::exists(Path, Exists))
+    return Exists;
+  return false;
+}
+
+namespace {
+/// \brief This is a class to find a viable GCC installation for Clang to use.
+///
+/// This class tries to find a GCC installation on the system, and report
+/// information about it. It starts from the host information provided to the
+/// Driver, and has logic for fuzzing that where appropriate.
+class GCCInstallationDetector {
+  bool IsValid;
+  std::string GccTriple;
+
+  // FIXME: These might be better as path objects.
+  std::string GccInstallPath;
+  std::string GccParentLibPath;
+
+  llvm::SmallString<128> CxxIncludeRoot;
+
+public:
+  /// \brief Construct a GCCInstallationDetector from the driver.
+  ///
+  /// This performs all of the autodetection and sets up the various paths.
+  /// Once constructed, a GCCInstallation is esentially immutable.
+  GCCInstallationDetector(const Driver &D)
+    : IsValid(false),
+      GccTriple(D.DefaultHostTriple),
+      CxxIncludeRoot(CXX_INCLUDE_ROOT) {
+    // FIXME: Using CXX_INCLUDE_ROOT is here is a bit of a hack, but
+    // avoids adding yet another option to configure/cmake.
+    // It would probably be cleaner to break it in two variables
+    // CXX_GCC_ROOT with just /foo/bar
+    // CXX_GCC_VER with 4.5.2
+    // Then we would have
+    // CXX_INCLUDE_ROOT = CXX_GCC_ROOT/include/c++/CXX_GCC_VER
+    // and this function would return
+    // CXX_GCC_ROOT/lib/gcc/CXX_INCLUDE_ARCH/CXX_GCC_VER
+    if (CxxIncludeRoot != "") {
+      // This is of the form /foo/bar/include/c++/4.5.2/
+      if (CxxIncludeRoot.back() == '/')
+        llvm::sys::path::remove_filename(CxxIncludeRoot); // remove the /
+      StringRef Version = llvm::sys::path::filename(CxxIncludeRoot);
+      llvm::sys::path::remove_filename(CxxIncludeRoot); // remove the version
+      llvm::sys::path::remove_filename(CxxIncludeRoot); // remove the c++
+      llvm::sys::path::remove_filename(CxxIncludeRoot); // remove the include
+      GccInstallPath = CxxIncludeRoot.str();
+      GccInstallPath.append("/lib/gcc/");
+      GccInstallPath.append(CXX_INCLUDE_ARCH);
+      GccInstallPath.append("/");
+      GccInstallPath.append(Version);
+      GccParentLibPath = GccInstallPath + "/../../../..";
+      IsValid = true;
+      return;
+    }
+
+    llvm::Triple::ArchType HostArch = llvm::Triple(GccTriple).getArch();
+    std::string DetectedGccTriple;
+    if (HostArch == llvm::Triple::arm || HostArch == llvm::Triple::thumb) {
+      if (PathExists("/usr/lib/gcc/arm-linux-gnueabi"))
+        DetectedGccTriple = "arm-linux-gnueabi";
+    } else if (HostArch == llvm::Triple::x86_64) {
+      if (PathExists("/usr/lib/gcc/x86_64-linux-gnu"))
+        DetectedGccTriple = "x86_64-linux-gnu";
+      else if (PathExists("/usr/lib/gcc/x86_64-unknown-linux-gnu"))
+        DetectedGccTriple = "x86_64-unknown-linux-gnu";
+      else if (PathExists("/usr/lib/gcc/x86_64-pc-linux-gnu"))
+        DetectedGccTriple = "x86_64-pc-linux-gnu";
+      else if (PathExists("/usr/lib/gcc/x86_64-redhat-linux6E"))
+        DetectedGccTriple = "x86_64-redhat-linux6E";
+      else if (PathExists("/usr/lib/gcc/x86_64-redhat-linux"))
+        DetectedGccTriple = "x86_64-redhat-linux";
+      else if (PathExists("/usr/lib64/gcc/x86_64-suse-linux"))
+        DetectedGccTriple = "x86_64-suse-linux";
+      else if (PathExists("/usr/lib/gcc/x86_64-manbo-linux-gnu"))
+        DetectedGccTriple = "x86_64-manbo-linux-gnu";
+      else if (PathExists("/usr/lib/x86_64-linux-gnu/gcc"))
+        DetectedGccTriple = "x86_64-linux-gnu";
+      else if (PathExists("/usr/lib64/gcc/x86_64-slackware-linux"))
+        DetectedGccTriple = "x86_64-slackware-linux";
+    } else if (HostArch == llvm::Triple::x86) {
+      if (PathExists("/usr/lib/gcc/i686-linux-gnu"))
+        DetectedGccTriple = "i686-linux-gnu";
+      else if (PathExists("/usr/lib/i386-linux-gnu"))
+        DetectedGccTriple = "i386-linux-gnu";
+      else if (PathExists("/usr/lib/gcc/i686-pc-linux-gnu"))
+        DetectedGccTriple = "i686-pc-linux-gnu";
+      else if (PathExists("/usr/lib/gcc/i486-linux-gnu"))
+        DetectedGccTriple = "i486-linux-gnu";
+      else if (PathExists("/usr/lib/gcc/i686-redhat-linux"))
+        DetectedGccTriple = "i686-redhat-linux";
+      else if (PathExists("/usr/lib/gcc/i586-suse-linux"))
+        DetectedGccTriple = "i586-suse-linux";
+      else if (PathExists("/usr/lib/gcc/i486-slackware-linux"))
+        DetectedGccTriple = "i486-slackware-linux";
+    } else if (HostArch == llvm::Triple::ppc) {
+      if (PathExists("/usr/lib/powerpc-linux-gnu"))
+        DetectedGccTriple = "powerpc-linux-gnu";
+      else if (PathExists("/usr/lib/gcc/powerpc-unknown-linux-gnu"))
+        DetectedGccTriple = "powerpc-unknown-linux-gnu";
+    } else if (HostArch == llvm::Triple::ppc64) {
+      if (PathExists("/usr/lib/gcc/powerpc64-unknown-linux-gnu"))
+        DetectedGccTriple = "powerpc64-unknown-linux-gnu";
+      else if (PathExists("/usr/lib64/gcc/powerpc64-unknown-linux-gnu"))
+        DetectedGccTriple = "powerpc64-unknown-linux-gnu";
+    }
+
+    static const char* GccVersions[] = {
+      "4.6.1", "4.6.0", "4.6",
+      "4.5.3", "4.5.2", "4.5.1", "4.5",
+      "4.4.6", "4.4.5", "4.4.4", "4.4.3", "4.4",
+      "4.3.4", "4.3.3", "4.3.2", "4.3",
+      "4.2.4", "4.2.3", "4.2.2", "4.2.1", "4.2",
+      "4.1.1"};
+    SmallVector<std::string, 8> Paths(D.PrefixDirs.begin(),
+                                      D.PrefixDirs.end());
+    Paths.push_back(D.SysRoot + "/usr/");
+    const std::string Triples[] = {DetectedGccTriple, D.DefaultHostTriple};
+    IsValid = true;  // In case we're able to find a GCC install.
+    for (SmallVector<std::string, 8>::const_iterator I = Paths.begin(),
+                                                     E = Paths.end();
+         I != E; ++I) {
+      for (unsigned i = 0; i < sizeof(GccVersions)/sizeof(char*); ++i) {
+        for (unsigned j = 0; j < sizeof(Triples)/sizeof(Triples[0]); ++j) {
+          GccTriple = Triples[j];
+          std::string Suffix = Triples[j] + "/" + GccVersions[i];
+          GccInstallPath = *I + "lib/gcc/" + Suffix;
+          GccParentLibPath = GccInstallPath + "/../../..";
+          if (PathExists(GccInstallPath + "/crtbegin.o"))
+            return;
+          GccInstallPath = *I + "lib64/gcc/" + Suffix;
+          GccParentLibPath = GccInstallPath + "/../../..";
+          if (PathExists(GccInstallPath + "/crtbegin.o"))
+            return;
+          GccInstallPath = *I + "lib/" + GccTriple + "/gcc/" + Suffix;
+          GccParentLibPath = GccInstallPath + "/../../../..";
+          if (PathExists(GccInstallPath + "/crtbegin.o"))
+            return;
+
+          if (GccTriple != "i386-linux-gnu")
+            continue;
+
           // Ubuntu 11.04 uses an unusual path.
-          std::string t4 =
-              std::string(*it + "lib/i386-linux-gnu/gcc/i686-linux-gnu/") +
-              GccVersions[i];
-          if (!llvm::sys::fs::exists(t4 + "/crtbegin.o", Exists) && Exists)
-            return t4;
+          GccInstallPath = *I + "lib/i386-linux-gnu/gcc/i686-linux-gnu/" +
+            GccVersions[i];
+          GccParentLibPath = GccInstallPath + "/../../../..";
+          if (PathExists(GccInstallPath + "/crtbegin.o"))
+            return;
         }
       }
     }
+    GccTriple.clear();
+    GccInstallPath.clear();
+    GccParentLibPath.clear();
+    IsValid = false;
   }
-  GccTriple.clear();
-  return "";
+
+  /// \brief Check whether we detected a valid GCC install.
+  bool isValid() const { return IsValid; }
+
+  /// \brief Get the GCC triple for the detected install.
+  const std::string &getTriple() const { return GccTriple; }
+
+  /// \brief Get the detected GCC installation path.
+  const std::string &getInstallPath() const { return GccInstallPath; }
+
+  /// \brief Get the detected GCC parent lib path.
+  const std::string &getParentLibPath() const { return GccParentLibPath; }
+};
 }
 
 static void addPathIfExists(const std::string &Path,
                             ToolChain::path_list &Paths) {
-  bool Exists;
-  if (!llvm::sys::fs::exists(Path, Exists) && Exists)
-    Paths.push_back(Path);
+  if (PathExists(Path)) Paths.push_back(Path);
 }
 
 Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
@@ -1559,84 +1660,13 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
   llvm::Triple::ArchType Arch =
     llvm::Triple(getDriver().DefaultHostTriple).getArch();
   const std::string &SysRoot = getDriver().SysRoot;
-
-  bool Exists;
-  std::string GccTriple = "";
-  if (Arch == llvm::Triple::arm || Arch == llvm::Triple::thumb) {
-    if (!llvm::sys::fs::exists("/usr/lib/gcc/arm-linux-gnueabi", Exists) &&
-        Exists)
-      GccTriple = "arm-linux-gnueabi";
-  } else if (Arch == llvm::Triple::x86_64) {
-    if (!llvm::sys::fs::exists("/usr/lib/gcc/x86_64-linux-gnu", Exists) &&
-        Exists)
-      GccTriple = "x86_64-linux-gnu";
-    else if (!llvm::sys::fs::exists("/usr/lib/gcc/x86_64-unknown-linux-gnu",
-             Exists) && Exists)
-      GccTriple = "x86_64-unknown-linux-gnu";
-    else if (!llvm::sys::fs::exists("/usr/lib/gcc/x86_64-pc-linux-gnu",
-             Exists) && Exists)
-      GccTriple = "x86_64-pc-linux-gnu";
-    else if (!llvm::sys::fs::exists("/usr/lib/gcc/x86_64-redhat-linux6E",
-             Exists) && Exists)
-      GccTriple = "x86_64-redhat-linux6E";
-    else if (!llvm::sys::fs::exists("/usr/lib/gcc/x86_64-redhat-linux",
-             Exists) && Exists)
-      GccTriple = "x86_64-redhat-linux";
-    else if (!llvm::sys::fs::exists("/usr/lib64/gcc/x86_64-suse-linux",
-             Exists) && Exists)
-      GccTriple = "x86_64-suse-linux";
-    else if (!llvm::sys::fs::exists("/usr/lib/gcc/x86_64-manbo-linux-gnu",
-             Exists) && Exists)
-      GccTriple = "x86_64-manbo-linux-gnu";
-    else if (!llvm::sys::fs::exists("/usr/lib/x86_64-linux-gnu/gcc",
-             Exists) && Exists)
-      GccTriple = "x86_64-linux-gnu";
-    else if (!llvm::sys::fs::exists("/usr/lib64/gcc/x86_64-slackware-linux", 
-             Exists) && Exists)
-      GccTriple = "x86_64-slackware-linux";
-  } else if (Arch == llvm::Triple::x86) {
-    if (!llvm::sys::fs::exists("/usr/lib/gcc/i686-linux-gnu", Exists) && Exists)
-      GccTriple = "i686-linux-gnu";
-    else if (!llvm::sys::fs::exists("/usr/lib/i386-linux-gnu", Exists) &&
-             Exists)
-      GccTriple = "i386-linux-gnu";
-    else if (!llvm::sys::fs::exists("/usr/lib/gcc/i686-pc-linux-gnu", Exists) &&
-             Exists)
-      GccTriple = "i686-pc-linux-gnu";
-    else if (!llvm::sys::fs::exists("/usr/lib/gcc/i486-linux-gnu", Exists) &&
-             Exists)
-      GccTriple = "i486-linux-gnu";
-    else if (!llvm::sys::fs::exists("/usr/lib/gcc/i686-redhat-linux", Exists) &&
-             Exists)
-      GccTriple = "i686-redhat-linux";
-    else if (!llvm::sys::fs::exists("/usr/lib/gcc/i586-suse-linux", Exists) &&
-             Exists)
-      GccTriple = "i586-suse-linux";
-    else if (!llvm::sys::fs::exists("/usr/lib/gcc/i486-slackware-linux", Exists)
-            && Exists)
-      GccTriple = "i486-slackware-linux";
-  } else if (Arch == llvm::Triple::ppc) {
-    if (!llvm::sys::fs::exists("/usr/lib/powerpc-linux-gnu", Exists) && Exists)
-      GccTriple = "powerpc-linux-gnu";
-    else if (!llvm::sys::fs::exists("/usr/lib/gcc/powerpc-unknown-linux-gnu",
-                                    Exists) && Exists)
-      GccTriple = "powerpc-unknown-linux-gnu";
-  } else if (Arch == llvm::Triple::ppc64) {
-    if (!llvm::sys::fs::exists("/usr/lib/gcc/powerpc64-unknown-linux-gnu",
-                               Exists) && Exists)
-      GccTriple = "powerpc64-unknown-linux-gnu";
-    else if (!llvm::sys::fs::exists("/usr/lib64/gcc/"
-                                    "powerpc64-unknown-linux-gnu", Exists) &&
-             Exists)
-      GccTriple = "powerpc64-unknown-linux-gnu";
-  }
-
-  std::string Base = findGCCBaseLibDir(getDriver(), GccTriple);
+  GCCInstallationDetector GCCInstallation(getDriver());
 
   // OpenSuse stores the linker with the compiler, add that to the search
   // path.
   ToolChain::path_list &PPaths = getProgramPaths();
-  PPaths.push_back(Base + "/../../../../" + GccTriple + "/bin");
+  PPaths.push_back(GCCInstallation.getParentLibPath() + "/../" +
+                   GCCInstallation.getTriple() + "/bin");
 
   Linker = GetProgramPath("ld");
 
@@ -1690,34 +1720,38 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
   // should remove the concept of 'HasMultilib'. It's more likely to break the
   // behavior than to preserve any useful invariant on the system.
   if (HasMultilib(Arch, Distro)) {
-    // FIXME: This OpenSuse-specific path shouldn't be needed any more, but
-    // I don't want to remove it without finding someone to test.
-    if (IsOpenSuse(Distro) && Is32Bits)
-      Paths.push_back(Base + "/../../../../" + GccTriple + "/lib/../lib");
-
     // Add the multilib suffixed paths.
-    if (!Base.empty() && !GccTriple.empty()) {
-      addPathIfExists(Base + Suffix, Paths);
-      addPathIfExists(Base + "/../../../../" + GccTriple + "/lib/../" +
-                      Multilib, Paths);
-      addPathIfExists(Base + "/../../../../" + Multilib, Paths);
+    if (GCCInstallation.isValid()) {
+      const std::string &LibPath = GCCInstallation.getParentLibPath();
+      const std::string &GccTriple = GCCInstallation.getTriple();
+      // FIXME: This OpenSuse-specific path shouldn't be needed any more, but
+      // I don't want to remove it without finding someone to test.
+      if (IsOpenSuse(Distro) && Is32Bits)
+        Paths.push_back(LibPath + "/../" + GccTriple + "/lib/../lib");
+
+      addPathIfExists(GCCInstallation.getInstallPath() + Suffix, Paths);
+      addPathIfExists(LibPath + "/../" + GccTriple + "/lib/../" + Multilib,
+                      Paths);
+      addPathIfExists(LibPath + "/../" + Multilib, Paths);
     }
     addPathIfExists(SysRoot + "/lib/../" + Multilib, Paths);
     addPathIfExists(SysRoot + "/usr/lib/../" + Multilib, Paths);
   }
 
   // Add the non-multiplib suffixed paths (if potentially different).
-  if (!Base.empty() && !GccTriple.empty()) {
+  if (GCCInstallation.isValid()) {
+    const std::string &LibPath = GCCInstallation.getParentLibPath();
+    const std::string &GccTriple = GCCInstallation.getTriple();
     if (!Suffix.empty() || !HasMultilib(Arch, Distro))
-      addPathIfExists(Base, Paths);
-    addPathIfExists(Base + "/../../../../" + GccTriple + "/lib", Paths);
-    addPathIfExists(Base + "/../../..", Paths);
+      addPathIfExists(GCCInstallation.getInstallPath(), Paths);
+    addPathIfExists(LibPath + "/../" + GccTriple + "/lib", Paths);
+    addPathIfExists(LibPath, Paths);
   }
   addPathIfExists(SysRoot + "/lib", Paths);
   addPathIfExists(SysRoot + "/usr/lib", Paths);
 
-  if (Arch == getArch() && IsUbuntu(Distro))
-    Paths.push_back(SysRoot + "/usr/lib/" + GccTriple);
+  if (GCCInstallation.isValid() && Arch == getArch() && IsUbuntu(Distro))
+    Paths.push_back(SysRoot + "/usr/lib/" + GCCInstallation.getTriple());
 }
 
 bool Linux::HasNativeLLVMSupport() const {
