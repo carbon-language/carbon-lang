@@ -61,7 +61,7 @@ void UndefBranchChecker::checkBranchCondition(const Stmt *Condition,
   const ProgramState *state = Builder.getState();
   SVal X = state->getSVal(Condition);
   if (X.isUndef()) {
-    ExplodedNode *N = Builder.generateNode(state, true);
+    ExplodedNode *N = Builder.generateNode(Condition, state);
     if (N) {
       N->markAsSink();
       if (!BT)

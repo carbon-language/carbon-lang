@@ -316,6 +316,8 @@ public:
 
   BlockCounter getBlockCounter() const { return Eng.WList->getBlockCounter();}
 
+  /// This function generates a new ExplodedNode but not a new
+  /// branch(block edge).
   ExplodedNode *generateNode(const Stmt *Condition, const ProgramState *State);
 
   ExplodedNode *generateNode(const ProgramState *State, bool branch);
