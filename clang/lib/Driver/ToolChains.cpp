@@ -1378,25 +1378,17 @@ static bool IsUbuntu(enum LinuxDistro Distro) {
          Distro == UbuntuNatty  || Distro == UbuntuOneiric;
 }
 
-static bool IsDebianBased(enum LinuxDistro Distro) {
-  return IsDebian(Distro) || IsUbuntu(Distro);
-}
-
+// FIXME: This should be deleted. We should assume a multilib environment, and
+// fallback gracefully if any parts of it are absent.
 static bool HasMultilib(llvm::Triple::ArchType Arch, enum LinuxDistro Distro) {
   if (Arch == llvm::Triple::x86_64) {
     bool Exists;
     if (Distro == Exherbo &&
         (llvm::sys::fs::exists("/usr/lib32/libc.so", Exists) || !Exists))
       return false;
-
-    return true;
   }
-  if (Arch == llvm::Triple::ppc64)
-    return true;
-  if ((Arch == llvm::Triple::x86 || Arch == llvm::Triple::ppc) &&
-      IsDebianBased(Distro))
-    return true;
-  return false;
+
+  return true;
 }
 
 static LinuxDistro DetectLinuxDistro(llvm::Triple::ArchType Arch) {
@@ -1690,7 +1682,7 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
                          getArch() == llvm::Triple::ppc);
 
   const std::string Suffix32 = Arch == llvm::Triple::x86_64 ? "/32" : "";
-  const std::string Suffix64 = Is32Bits ? "/64" : "";
+  const std::string Suffix64 = Arch == llvm::Triple::x86_64 ? "" : "/64";
   const std::string Suffix = Is32Bits ? Suffix32 : Suffix64;
   const std::string Multilib = Is32Bits ? "lib32" : "lib64";
 
