@@ -15,6 +15,8 @@
 #include <new>
 #include <cassert>
 
+#include "../../../../platform_support.h" // locale name macros
+
 int new_called = 0;
 
 void* operator new(std::size_t s) throw(std::bad_alloc)
@@ -67,12 +69,12 @@ void check(const std::locale& loc)
 int main()
 {
     {
-        std::locale loc("ru_RU.UTF-8");
+        std::locale loc(LOCALE_ru_RU_UTF_8);
         check(loc);
-        std::locale loc2("ru_RU.UTF-8");
+        std::locale loc2(LOCALE_ru_RU_UTF_8);
         check(loc2);
         assert(loc == loc2);
-        std::locale loc3("zh_CN.UTF-8");
+        std::locale loc3(LOCALE_zh_CN_UTF_8);
         check(loc3);
         assert(!(loc == loc3));
         assert(loc != loc3);

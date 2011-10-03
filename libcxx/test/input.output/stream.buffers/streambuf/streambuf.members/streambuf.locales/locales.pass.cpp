@@ -18,6 +18,8 @@
 #include <streambuf>
 #include <cassert>
 
+#include "../../../../../platform_support.h" // locale name macros
+
 template <class CharT>
 struct test
     : public std::basic_streambuf<CharT>
@@ -26,7 +28,7 @@ struct test
 
     void imbue(const std::locale&)
     {
-        assert(this->getloc().name() == "en_US.UTF-8");
+        assert(this->getloc().name() == LOCALE_en_US_UTF_8);
     }
 };
 
@@ -36,11 +38,11 @@ int main()
         test<char> t;
         assert(t.getloc().name() == "C");
     }
-    std::locale::global(std::locale("en_US.UTF-8"));
+    std::locale::global(std::locale(LOCALE_en_US_UTF_8));
     {
         test<char> t;
-        assert(t.getloc().name() == "en_US.UTF-8");
-        assert(t.pubimbue(std::locale("fr_FR.UTF-8")).name() == "en_US.UTF-8");
-        assert(t.getloc().name() == "fr_FR.UTF-8");
+        assert(t.getloc().name() == LOCALE_en_US_UTF_8);
+        assert(t.pubimbue(std::locale(LOCALE_fr_FR_UTF_8)).name() == "en_US.UTF-8");
+        assert(t.getloc().name() == LOCALE_fr_FR_UTF_8);
     }
 }

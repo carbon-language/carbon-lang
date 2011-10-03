@@ -18,6 +18,8 @@
 #include <cassert>
 #include "iterators.h"
 
+#include "../../../../platform_support.h" // locale name macros
+
 typedef input_iterator<const wchar_t*> I;
 
 typedef std::time_get_byname<wchar_t, I> F;
@@ -36,7 +38,7 @@ int main()
     std::ios_base::iostate err;
     std::tm t;
     {
-        const my_facet f("en_US.UTF-8", 1);
+        const my_facet f(LOCALE_en_US_UTF_8, 1);
         const wchar_t in[] = L"Sat Dec 31 23:55:59 2061";
         err = std::ios_base::goodbit;
         t = std::tm();
@@ -52,7 +54,7 @@ int main()
         assert(err == std::ios_base::eofbit);
     }
     {
-        const my_facet f("en_US.UTF-8", 1);
+        const my_facet f(LOCALE_en_US_UTF_8, 1);
         const wchar_t in[] = L"23:55:59";
         err = std::ios_base::goodbit;
         t = std::tm();
@@ -64,7 +66,7 @@ int main()
         assert(err == std::ios_base::eofbit);
     }
     {
-        const my_facet f("fr_FR.UTF-8", 1);
+        const my_facet f(LOCALE_fr_FR_UTF_8, 1);
         const wchar_t in[] = L"Sam 31 d""\xE9""c 23:55:59 2061";
         err = std::ios_base::goodbit;
         t = std::tm();
@@ -80,7 +82,7 @@ int main()
         assert(err == std::ios_base::eofbit);
     }
     {
-        const my_facet f("fr_FR.UTF-8", 1);
+        const my_facet f(LOCALE_fr_FR_UTF_8, 1);
         const wchar_t in[] = L"23:55:59";
         err = std::ios_base::goodbit;
         t = std::tm();
@@ -115,7 +117,7 @@ int main()
     }
 #endif
     {
-        const my_facet f("ru_RU.UTF-8", 1);
+        const my_facet f(LOCALE_ru_RU_UTF_8, 1);
         const wchar_t in[] = L"23:55:59";
         err = std::ios_base::goodbit;
         t = std::tm();
@@ -144,8 +146,9 @@ int main()
         assert(t.tm_wday == 6);
         assert(err == std::ios_base::eofbit);
     }
+#endif
     {
-        const my_facet f("zh_CN.UTF-8", 1);
+        const my_facet f(LOCALE_zh_CN_UTF_8, 1);
         const wchar_t in[] = L"23""\x65F6""55""\x5206""59""\x79D2";
         err = std::ios_base::goodbit;
         t = std::tm();
@@ -156,5 +159,4 @@ int main()
         assert(t.tm_hour == 23);
         assert(err == std::ios_base::eofbit);
     }
-#endif
 }

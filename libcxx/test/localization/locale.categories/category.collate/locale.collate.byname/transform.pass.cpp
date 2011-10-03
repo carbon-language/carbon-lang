@@ -19,12 +19,14 @@
 
 #include <stdio.h>
 
+#include "../../../../platform_support.h" // locale name macros
+
 int main()
 {
     // Ensure that the default locale is not C.  If it is, the second tests will fail.
-    setenv("LANG", "en_US.UTF-8", 1);
+    putenv(const_cast<char*>("LANG=" LOCALE_en_US_UTF_8));
     {
-        std::locale l("en_US.UTF-8");
+        std::locale l(LOCALE_en_US_UTF_8);
         {
             std::string x("1234");
             const std::collate<char>& f = std::use_facet<std::collate<char> >(l);

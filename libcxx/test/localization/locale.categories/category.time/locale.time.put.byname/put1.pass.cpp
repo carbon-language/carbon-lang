@@ -25,6 +25,8 @@
 #include <cassert>
 #include "iterators.h"
 
+#include "../../../../platform_support.h" // locale name macros
+
 typedef std::time_put_byname<char, output_iterator<char*> > F;
 
 class my_facet
@@ -51,7 +53,7 @@ int main()
     t.tm_isdst = 1;
     std::ios ios(0);
     {
-        const my_facet f("en_US.UTF-8", 1);
+        const my_facet f(LOCALE_en_US_UTF_8, 1);
         std::string pat("Today is %A which is abreviated %a.");
         iter = f.put(output_iterator<char*>(str), ios, '*', &t,
                      pat.data(), pat.data() + pat.size());
@@ -59,7 +61,7 @@ int main()
         assert(ex == "Today is Saturday which is abreviated Sat.");
     }
     {
-        const my_facet f("fr_FR.UTF-8", 1);
+        const my_facet f(LOCALE_fr_FR_UTF_8, 1);
         std::string pat("Today is %A which is abreviated %a.");
         iter = f.put(output_iterator<char*>(str), ios, '*', &t,
                      pat.data(), pat.data() + pat.size());

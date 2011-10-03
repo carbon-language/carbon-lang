@@ -17,6 +17,8 @@
 #include <streambuf>
 #include <cassert>
 
+#include "../../../../platform_support.h" // locale name macros
+
 struct testbuf
     : public std::streambuf
 {
@@ -82,7 +84,7 @@ int main()
     ios2.flags(std::ios::showpoint | std::ios::uppercase);
     ios2.precision(2);
     ios2.width(12);
-    ios2.imbue(std::locale("fr_FR.UTF-8"));
+    ios2.imbue(std::locale(LOCALE_fr_FR_UTF_8));
     ios2.exceptions(std::ios::eofbit);
     ios2.setstate(std::ios::goodbit);
     ios2.register_callback(g1, 7);
@@ -107,7 +109,7 @@ int main()
     assert(ios1.flags() == (std::ios::showpoint | std::ios::uppercase));
     assert(ios1.precision() == 2);
     assert(ios1.width() == 12);
-    assert(ios1.getloc().name() == "fr_FR.UTF-8");
+    assert(ios1.getloc().name() == LOCALE_fr_FR_UTF_8);
     assert(ios1.exceptions() == std::ios::eofbit);
     assert(!f1_called);
     assert(!f2_called);

@@ -18,6 +18,8 @@
 #include <cassert>
 #include "iterators.h"
 
+#include "../../../../platform_support.h" // locale name macros
+
 typedef input_iterator<const char*> I;
 
 typedef std::time_get_byname<char, I> F;
@@ -36,7 +38,7 @@ int main()
     std::ios_base::iostate err;
     std::tm t;
     {
-        const my_facet f("en_US.UTF-8", 1);
+        const my_facet f(LOCALE_en_US_UTF_8, 1);
         const char in[] = "Sat Dec 31 23:55:59 2061";
         err = std::ios_base::goodbit;
         t = std::tm();
@@ -52,7 +54,7 @@ int main()
         assert(err == std::ios_base::eofbit);
     }
     {
-        const my_facet f("en_US.UTF-8", 1);
+        const my_facet f(LOCALE_en_US_UTF_8, 1);
         const char in[] = "23:55:59";
         err = std::ios_base::goodbit;
         t = std::tm();
@@ -64,7 +66,7 @@ int main()
         assert(err == std::ios_base::eofbit);
     }
     {
-        const my_facet f("fr_FR.UTF-8", 1);
+        const my_facet f(LOCALE_fr_FR_UTF_8, 1);
         const char in[] = "Sam 31 d""\xC3\xA9""c 23:55:59 2061";
         err = std::ios_base::goodbit;
         t = std::tm();
@@ -80,7 +82,7 @@ int main()
         assert(err == std::ios_base::eofbit);
     }
     {
-        const my_facet f("fr_FR.UTF-8", 1);
+        const my_facet f(LOCALE_fr_FR_UTF_8, 1);
         const char in[] = "23:55:59";
         err = std::ios_base::goodbit;
         t = std::tm();
@@ -92,7 +94,7 @@ int main()
         assert(err == std::ios_base::eofbit);
     }
     {
-        const my_facet f("ru_RU.UTF-8", 1);
+        const my_facet f(LOCALE_ru_RU_UTF_8, 1);
         const char in[] = "\xD1\x81\xD1\x83\xD0\xB1\xD0\xB1"
                           "\xD0\xBE\xD1\x82\xD0\xB0"
                           ", 31 "
@@ -115,7 +117,7 @@ int main()
         assert(err == std::ios_base::eofbit);
     }
     {
-        const my_facet f("ru_RU.UTF-8", 1);
+        const my_facet f(LOCALE_ru_RU_UTF_8, 1);
         const char in[] = "23:55:59";
         err = std::ios_base::goodbit;
         t = std::tm();
@@ -127,7 +129,7 @@ int main()
         assert(err == std::ios_base::eofbit);
     }
     {
-        const my_facet f("zh_CN.UTF-8", 1);
+        const my_facet f(LOCALE_zh_CN_UTF_8, 1);
         const char in[] = "\xE5\x85\xAD"
                           " 12/31 23:55:59 2061";
         err = std::ios_base::goodbit;
@@ -144,7 +146,7 @@ int main()
         assert(err == std::ios_base::eofbit);
     }
     {
-        const my_facet f("zh_CN.UTF-8", 1);
+        const my_facet f(LOCALE_zh_CN_UTF_8, 1);
         const char in[] = "23""\xE6\x97\xB6""55""\xE5\x88\x86""59""\xE7\xA7\x92";
         err = std::ios_base::goodbit;
         t = std::tm();

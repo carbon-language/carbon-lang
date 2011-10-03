@@ -17,6 +17,8 @@
 #include <cassert>
 #include "iterators.h"
 
+#include "../../../../platform_support.h" // locale name macros
+
 typedef std::time_get_byname<wchar_t, input_iterator<const wchar_t*> > F;
 
 class my_facet
@@ -30,19 +32,19 @@ public:
 int main()
 {
     {
-        const my_facet f("en_US.UTF-8", 1);
+        const my_facet f(LOCALE_en_US_UTF_8, 1);
         assert(f.date_order() == std::time_base::mdy);
     }
     {
-        const my_facet f("fr_FR.UTF-8", 1);
+        const my_facet f(LOCALE_fr_FR_UTF_8, 1);
         assert(f.date_order() == std::time_base::dmy);
     }
     {
-        const my_facet f("ru_RU.UTF-8", 1);
+        const my_facet f(LOCALE_ru_RU_UTF_8, 1);
         assert(f.date_order() == std::time_base::dmy);
     }
     {
-        const my_facet f("zh_CN.UTF-8", 1);
+        const my_facet f(LOCALE_zh_CN_UTF_8, 1);
         assert(f.date_order() == std::time_base::ymd);
     }
 }

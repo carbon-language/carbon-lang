@@ -14,6 +14,8 @@
 #include <iomanip>
 #include <cassert>
 
+#include "../../../platform_support.h" // locale name macros
+
 template <class CharT>
 struct testbuf
     : public std::basic_streambuf<CharT>
@@ -39,7 +41,7 @@ int main()
     {
         testbuf<char> sb("  Sat Dec 31 23:55:59 2061");
         std::istream is(&sb);
-        is.imbue(std::locale("en_US.UTF-8"));
+        is.imbue(std::locale(LOCALE_en_US_UTF_8));
         std::tm t = {0};
         is >> std::get_time(&t, "%c");
         assert(t.tm_sec == 59);
@@ -55,7 +57,7 @@ int main()
     {
         testbuf<wchar_t> sb(L"  Sat Dec 31 23:55:59 2061");
         std::wistream is(&sb);
-        is.imbue(std::locale("en_US.UTF-8"));
+        is.imbue(std::locale(LOCALE_en_US_UTF_8));
         std::tm t = {0};
         is >> std::get_time(&t, L"%c");
         assert(t.tm_sec == 59);

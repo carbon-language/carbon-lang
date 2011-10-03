@@ -17,6 +17,8 @@
 #include <streambuf>
 #include <cassert>
 
+#include "../../../../../platform_support.h" // locale name macros
+
 template <class CharT>
 struct test
     : public std::basic_streambuf<CharT>
@@ -75,7 +77,7 @@ int main()
         test<wchar_t> t2;
         t2 = t;
     }
-    std::locale::global(std::locale("en_US.UTF-8"));
+    std::locale::global(std::locale(LOCALE_en_US_UTF_8));
     {
         test<char> t;
         test<char> t2;

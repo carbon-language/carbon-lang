@@ -17,6 +17,8 @@
 #include <limits>
 #include <cassert>
 
+#include "../../../../platform_support.h" // locale name macros
+
 class Fnf
     : public std::moneypunct_byname<char, false>
 {
@@ -69,70 +71,70 @@ int main()
     }
 
     {
-        Fnf f("en_US.UTF-8", 1);
+        Fnf f(LOCALE_en_US_UTF_8, 1);
         assert(f.positive_sign() == "");
     }
     {
-        Fnt f("en_US.UTF-8", 1);
+        Fnt f(LOCALE_en_US_UTF_8, 1);
         assert(f.positive_sign() == "");
     }
     {
-        Fwf f("en_US.UTF-8", 1);
+        Fwf f(LOCALE_en_US_UTF_8, 1);
         assert(f.positive_sign() == L"");
     }
     {
-        Fwt f("en_US.UTF-8", 1);
-        assert(f.positive_sign() == L"");
-    }
-
-    {
-        Fnf f("fr_FR.UTF-8", 1);
-        assert(f.positive_sign() == "");
-    }
-    {
-        Fnt f("fr_FR.UTF-8", 1);
-        assert(f.positive_sign() == "");
-    }
-    {
-        Fwf f("fr_FR.UTF-8", 1);
-        assert(f.positive_sign() == L"");
-    }
-    {
-        Fwt f("fr_FR.UTF-8", 1);
+        Fwt f(LOCALE_en_US_UTF_8, 1);
         assert(f.positive_sign() == L"");
     }
 
     {
-        Fnf f("ru_RU.UTF-8", 1);
+        Fnf f(LOCALE_fr_FR_UTF_8, 1);
         assert(f.positive_sign() == "");
     }
     {
-        Fnt f("ru_RU.UTF-8", 1);
+        Fnt f(LOCALE_fr_FR_UTF_8, 1);
         assert(f.positive_sign() == "");
     }
     {
-        Fwf f("ru_RU.UTF-8", 1);
+        Fwf f(LOCALE_fr_FR_UTF_8, 1);
         assert(f.positive_sign() == L"");
     }
     {
-        Fwt f("ru_RU.UTF-8", 1);
+        Fwt f(LOCALE_fr_FR_UTF_8, 1);
         assert(f.positive_sign() == L"");
     }
 
     {
-        Fnf f("zh_CN.UTF-8", 1);
+        Fnf f(LOCALE_ru_RU_UTF_8, 1);
         assert(f.positive_sign() == "");
     }
     {
-        Fnt f("zh_CN.UTF-8", 1);
+        Fnt f(LOCALE_ru_RU_UTF_8, 1);
         assert(f.positive_sign() == "");
     }
     {
-        Fwf f("zh_CN.UTF-8", 1);
+        Fwf f(LOCALE_ru_RU_UTF_8, 1);
         assert(f.positive_sign() == L"");
     }
     {
-        Fwt f("zh_CN.UTF-8", 1);
+        Fwt f(LOCALE_ru_RU_UTF_8, 1);
+        assert(f.positive_sign() == L"");
+    }
+
+    {
+        Fnf f(LOCALE_zh_CN_UTF_8, 1);
+        assert(f.positive_sign() == "");
+    }
+    {
+        Fnt f(LOCALE_zh_CN_UTF_8, 1);
+        assert(f.positive_sign() == "");
+    }
+    {
+        Fwf f(LOCALE_zh_CN_UTF_8, 1);
+        assert(f.positive_sign() == L"");
+    }
+    {
+        Fwt f(LOCALE_zh_CN_UTF_8, 1);
         assert(f.positive_sign() == L"");
     }
 }

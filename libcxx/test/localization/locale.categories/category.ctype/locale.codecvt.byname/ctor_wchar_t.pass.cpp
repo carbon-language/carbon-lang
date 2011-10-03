@@ -17,6 +17,8 @@
 #include <locale>
 #include <cassert>
 
+#include "../../../../platform_support.h" // locale name macros
+
 typedef std::codecvt_byname<wchar_t, char, std::mbstate_t> F;
 
 class my_facet
@@ -38,12 +40,12 @@ int my_facet::count = 0;
 int main()
 {
     {
-        std::locale l(std::locale::classic(), new my_facet("en_US.UTF-8"));
+        std::locale l(std::locale::classic(), new my_facet(LOCALE_en_US_UTF_8));
         assert(my_facet::count == 1);
     }
     assert(my_facet::count == 0);
     {
-        my_facet f("en_US.UTF-8", 1);
+        my_facet f(LOCALE_en_US_UTF_8, 1);
         assert(my_facet::count == 1);
         {
             std::locale l(std::locale::classic(), &f);
@@ -53,12 +55,12 @@ int main()
     }
     assert(my_facet::count == 0);
     {
-        std::locale l(std::locale::classic(), new my_facet(std::string("en_US.UTF-8")));
+        std::locale l(std::locale::classic(), new my_facet(std::string(LOCALE_en_US_UTF_8)));
         assert(my_facet::count == 1);
     }
     assert(my_facet::count == 0);
     {
-        my_facet f(std::string("en_US.UTF-8"), 1);
+        my_facet f(std::string(LOCALE_en_US_UTF_8), 1);
         assert(my_facet::count == 1);
         {
             std::locale l(std::locale::classic(), &f);

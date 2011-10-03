@@ -16,6 +16,8 @@
 #include <locale>
 #include <cassert>
 
+#include "../../../../platform_support.h" // locale name macros
+
 int main()
 {
     {
@@ -32,7 +34,7 @@ int main()
         }
     }
     {
-        std::locale l("en_US.UTF-8");
+        std::locale l(LOCALE_en_US_UTF_8);
         {
             typedef char C;
             const std::numpunct<C>& np = std::use_facet<std::numpunct<C> >(l);
@@ -45,7 +47,7 @@ int main()
         }
     }
     {
-        std::locale l("fr_FR.UTF-8");
+        std::locale l(LOCALE_fr_FR_UTF_8);
         {
             typedef char C;
             const std::numpunct<C>& np = std::use_facet<std::numpunct<C> >(l);

@@ -17,6 +17,8 @@
 #include <streambuf>
 #include <cassert>
 
+#include "../../../../platform_support.h" // locale name macros
+
 struct testbuf
     : public std::streambuf
 {
@@ -38,7 +40,7 @@ void f1(std::ios_base::event ev, std::ios_base& stream, int index)
         assert(!g1_called);
         assert(!g2_called);
         assert(!g3_called);
-        assert(stream.getloc().name() == "en_US.UTF-8");
+        assert(stream.getloc().name() == LOCALE_en_US_UTF_8);
         assert(index == 4);
         f1_called = true;
     }
@@ -53,7 +55,7 @@ void f2(std::ios_base::event ev, std::ios_base& stream, int index)
         assert(!g1_called);
         assert(!g2_called);
         assert(!g3_called);
-        assert(stream.getloc().name() == "en_US.UTF-8");
+        assert(stream.getloc().name() == LOCALE_en_US_UTF_8);
         assert(index == 5);
         f2_called = true;
     }
@@ -68,7 +70,7 @@ void g1(std::ios_base::event ev, std::ios_base& stream, int index)
         assert(!g1_called);
         assert( g2_called);
         assert( g3_called);
-        assert(stream.getloc().name() == "fr_FR.UTF-8");
+        assert(stream.getloc().name() == LOCALE_fr_FR_UTF_8);
         assert(index == 7);
         g1_called = true;
     }
@@ -83,7 +85,7 @@ void g2(std::ios_base::event ev, std::ios_base& stream, int index)
         assert(!g1_called);
         assert(!g2_called);
         assert( g3_called);
-        assert(stream.getloc().name() == "fr_FR.UTF-8");
+        assert(stream.getloc().name() == LOCALE_fr_FR_UTF_8);
         assert(index == 8);
         g2_called = true;
     }
@@ -98,7 +100,7 @@ void g3(std::ios_base::event ev, std::ios_base& stream, int index)
         assert(!g1_called);
         assert(!g2_called);
         assert(!g3_called);
-        assert(stream.getloc().name() == "fr_FR.UTF-8");
+        assert(stream.getloc().name() == LOCALE_fr_FR_UTF_8);
         assert(index == 9);
         g3_called = true;
     }
@@ -111,7 +113,7 @@ int main()
     ios1.flags(std::ios::boolalpha | std::ios::dec | std::ios::fixed);
     ios1.precision(1);
     ios1.width(11);
-    ios1.imbue(std::locale("en_US.UTF-8"));
+    ios1.imbue(std::locale(LOCALE_en_US_UTF_8));
     ios1.exceptions(std::ios::failbit);
     ios1.setstate(std::ios::eofbit);
     ios1.register_callback(f1, 4);
@@ -131,7 +133,7 @@ int main()
     ios2.flags(std::ios::showpoint | std::ios::uppercase);
     ios2.precision(2);
     ios2.width(12);
-    ios2.imbue(std::locale("fr_FR.UTF-8"));
+    ios2.imbue(std::locale(LOCALE_fr_FR_UTF_8));
     ios2.exceptions(std::ios::eofbit);
     ios2.setstate(std::ios::goodbit);
     ios2.register_callback(g1, 7);
@@ -165,7 +167,7 @@ int main()
     assert(ios1.flags() == (std::ios::showpoint | std::ios::uppercase));
     assert(ios1.precision() == 2);
     assert(ios1.width() == 12);
-    assert(ios1.getloc().name() == "fr_FR.UTF-8");
+    assert(ios1.getloc().name() == LOCALE_fr_FR_UTF_8);
     assert(ios1.exceptions() == std::ios::eofbit);
     assert(f1_called);
     assert(f2_called);

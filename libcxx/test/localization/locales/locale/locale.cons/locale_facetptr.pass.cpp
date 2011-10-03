@@ -15,6 +15,8 @@
 #include <new>
 #include <cassert>
 
+#include "../../../../platform_support.h" // locale name macros
+
 int new_called = 0;
 
 void* operator new(std::size_t s) throw(std::bad_alloc)
@@ -78,7 +80,7 @@ int main()
 {
 {
     {
-        std::locale loc("ru_RU.UTF-8");
+        std::locale loc(LOCALE_ru_RU_UTF_8);
         check(loc);
         std::locale loc2(loc, new my_facet);
         check(loc2);

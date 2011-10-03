@@ -18,6 +18,8 @@
 #include <locale>
 #include <cassert>
 
+#include "../../../../platform_support.h" // locale name macros
+
 class test
     : public std::ios
 {
@@ -34,7 +36,7 @@ void f1(std::ios_base::event ev, std::ios_base& stream, int index)
 {
     if (ev == std::ios_base::imbue_event)
     {
-        assert(stream.getloc().name() == "en_US.UTF-8");
+        assert(stream.getloc().name() == LOCALE_en_US_UTF_8);
         assert(index == 4);
         ++f1_called;
     }
@@ -47,6 +49,6 @@ int main()
     b.register_callback(f1, 4);
     b.register_callback(f1, 4);
     b.register_callback(f1, 4);
-    std::locale l = b.imbue(std::locale("en_US.UTF-8"));
+    std::locale l = b.imbue(std::locale(LOCALE_en_US_UTF_8));
     assert(f1_called == 3);
 }

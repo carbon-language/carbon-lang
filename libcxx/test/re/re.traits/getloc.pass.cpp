@@ -16,6 +16,8 @@
 #include <regex>
 #include <cassert>
 
+#include "../../platform_support.h" // locale name macros
+
 int main()
 {
     {
@@ -25,10 +27,10 @@ int main()
         assert(t2.getloc().name() == "C");
     }
     {
-        std::locale::global(std::locale("en_US.UTF-8"));
+        std::locale::global(std::locale(LOCALE_en_US_UTF_8));
         std::regex_traits<char> t1;
-        assert(t1.getloc().name() == "en_US.UTF-8");
+        assert(t1.getloc().name() == LOCALE_en_US_UTF_8);
         std::regex_traits<wchar_t> t2;
-        assert(t2.getloc().name() == "en_US.UTF-8");
+        assert(t2.getloc().name() == LOCALE_en_US_UTF_8);
     }
 }

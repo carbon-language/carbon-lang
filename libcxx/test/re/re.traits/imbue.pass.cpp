@@ -17,12 +17,14 @@
 #include <locale>
 #include <cassert>
 
+#include "../../platform_support.h" // locale name macros
+
 int main()
 {
     {
         std::regex_traits<char> t;
-        std::locale loc = t.imbue(std::locale("en_US.UTF-8"));
+        std::locale loc = t.imbue(std::locale(LOCALE_en_US_UTF_8));
         assert(loc.name() == "C");
-        assert(t.getloc().name() == "en_US.UTF-8");
+        assert(t.getloc().name() == LOCALE_en_US_UTF_8);
     }
 }

@@ -14,6 +14,8 @@
 #include <iomanip>
 #include <cassert>
 
+#include "../../../platform_support.h" // locale name macros
+
 template <class CharT>
 class testbuf
     : public std::basic_streambuf<CharT>
@@ -51,7 +53,7 @@ int main()
     {
         testbuf<char> sb;
         std::ostream os(&sb);
-        os.imbue(std::locale("en_US.UTF-8"));
+        os.imbue(std::locale(LOCALE_en_US_UTF_8));
         std::tm t = {0};
         t.tm_sec = 59;
         t.tm_min = 55;
@@ -66,7 +68,7 @@ int main()
     {
         testbuf<wchar_t> sb;
         std::wostream os(&sb);
-        os.imbue(std::locale("en_US.UTF-8"));
+        os.imbue(std::locale(LOCALE_en_US_UTF_8));
         std::tm t = {0};
         t.tm_sec = 59;
         t.tm_min = 55;

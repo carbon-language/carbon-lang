@@ -17,6 +17,8 @@
 #include <streambuf>
 #include <cassert>
 
+#include "../../../../platform_support.h" // locale name macros
+
 struct testbuf
     : public std::streambuf
 {
@@ -33,7 +35,7 @@ void f1(std::ios_base::event ev, std::ios_base& stream, int index)
         assert(!f1_called);
         assert( f2_called);
         assert( f3_called);
-        assert(stream.getloc().name() == "en_US.UTF-8");
+        assert(stream.getloc().name() == LOCALE_en_US_UTF_8);
         assert(index == 4);
         f1_called = true;
     }
@@ -46,7 +48,7 @@ void f2(std::ios_base::event ev, std::ios_base& stream, int index)
         assert(!f1_called);
         assert(!f2_called);
         assert( f3_called);
-        assert(stream.getloc().name() == "en_US.UTF-8");
+        assert(stream.getloc().name() == LOCALE_en_US_UTF_8);
         assert(index == 5);
         f2_called = true;
     }
@@ -59,7 +61,7 @@ void f3(std::ios_base::event ev, std::ios_base& stream, int index)
         assert(!f1_called);
         assert(!f2_called);
         assert(!f3_called);
-        assert(stream.getloc().name() == "en_US.UTF-8");
+        assert(stream.getloc().name() == LOCALE_en_US_UTF_8);
         assert(index == 6);
         f3_called = true;
     }
@@ -72,9 +74,9 @@ int main()
         ios.register_callback(f1, 4);
         ios.register_callback(f2, 5);
         ios.register_callback(f3, 6);
-        std::locale l = ios.imbue(std::locale("en_US.UTF-8"));
+        std::locale l = ios.imbue(std::locale(LOCALE_en_US_UTF_8));
         assert(l.name() == std::string("C"));
-        assert(ios.getloc().name() == std::string("en_US.UTF-8"));
+        assert(ios.getloc().name() == std::string(LOCALE_en_US_UTF_8));
         assert(f1_called);
         assert(f2_called);
         assert(f3_called);
@@ -88,10 +90,10 @@ int main()
         ios.register_callback(f1, 4);
         ios.register_callback(f2, 5);
         ios.register_callback(f3, 6);
-        std::locale l = ios.imbue(std::locale("en_US.UTF-8"));
+        std::locale l = ios.imbue(std::locale(LOCALE_en_US_UTF_8));
         assert(l.name() == std::string("C"));
-        assert(ios.getloc().name() == std::string("en_US.UTF-8"));
-        assert(sb.getloc().name() == std::string("en_US.UTF-8"));
+        assert(ios.getloc().name() == std::string(LOCALE_en_US_UTF_8));
+        assert(sb.getloc().name() == std::string(LOCALE_en_US_UTF_8));
         assert(f1_called);
         assert(f2_called);
         assert(f3_called);

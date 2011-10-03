@@ -17,6 +17,8 @@
 #include <limits>
 #include <cassert>
 
+#include "../../../../platform_support.h" // locale name macros
+
 class Fnf
     : public std::moneypunct_byname<char, false>
 {
@@ -69,70 +71,70 @@ int main()
     }
 
     {
-        Fnf f("en_US.UTF-8", 1);
+        Fnf f(LOCALE_en_US_UTF_8, 1);
         assert(f.frac_digits() == 2);
     }
     {
-        Fnt f("en_US.UTF-8", 1);
+        Fnt f(LOCALE_en_US_UTF_8, 1);
         assert(f.frac_digits() == 2);
     }
     {
-        Fwf f("en_US.UTF-8", 1);
+        Fwf f(LOCALE_en_US_UTF_8, 1);
         assert(f.frac_digits() == 2);
     }
     {
-        Fwt f("en_US.UTF-8", 1);
-        assert(f.frac_digits() == 2);
-    }
-
-    {
-        Fnf f("fr_FR.UTF-8", 1);
-        assert(f.frac_digits() == 2);
-    }
-    {
-        Fnt f("fr_FR.UTF-8", 1);
-        assert(f.frac_digits() == 2);
-    }
-    {
-        Fwf f("fr_FR.UTF-8", 1);
-        assert(f.frac_digits() == 2);
-    }
-    {
-        Fwt f("fr_FR.UTF-8", 1);
+        Fwt f(LOCALE_en_US_UTF_8, 1);
         assert(f.frac_digits() == 2);
     }
 
     {
-        Fnf f("ru_RU.UTF-8", 1);
+        Fnf f(LOCALE_fr_FR_UTF_8, 1);
         assert(f.frac_digits() == 2);
     }
     {
-        Fnt f("ru_RU.UTF-8", 1);
+        Fnt f(LOCALE_fr_FR_UTF_8, 1);
         assert(f.frac_digits() == 2);
     }
     {
-        Fwf f("ru_RU.UTF-8", 1);
+        Fwf f(LOCALE_fr_FR_UTF_8, 1);
         assert(f.frac_digits() == 2);
     }
     {
-        Fwt f("ru_RU.UTF-8", 1);
+        Fwt f(LOCALE_fr_FR_UTF_8, 1);
         assert(f.frac_digits() == 2);
     }
 
     {
-        Fnf f("zh_CN.UTF-8", 1);
+        Fnf f(LOCALE_ru_RU_UTF_8, 1);
         assert(f.frac_digits() == 2);
     }
     {
-        Fnt f("zh_CN.UTF-8", 1);
+        Fnt f(LOCALE_ru_RU_UTF_8, 1);
         assert(f.frac_digits() == 2);
     }
     {
-        Fwf f("zh_CN.UTF-8", 1);
+        Fwf f(LOCALE_ru_RU_UTF_8, 1);
         assert(f.frac_digits() == 2);
     }
     {
-        Fwt f("zh_CN.UTF-8", 1);
+        Fwt f(LOCALE_ru_RU_UTF_8, 1);
+        assert(f.frac_digits() == 2);
+    }
+
+    {
+        Fnf f(LOCALE_zh_CN_UTF_8, 1);
+        assert(f.frac_digits() == 2);
+    }
+    {
+        Fnt f(LOCALE_zh_CN_UTF_8, 1);
+        assert(f.frac_digits() == 2);
+    }
+    {
+        Fwf f(LOCALE_zh_CN_UTF_8, 1);
+        assert(f.frac_digits() == 2);
+    }
+    {
+        Fwt f(LOCALE_zh_CN_UTF_8, 1);
         assert(f.frac_digits() == 2);
     }
 }

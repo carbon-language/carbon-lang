@@ -14,6 +14,8 @@
 #include <locale>
 #include <cassert>
 
+#include "../../../../platform_support.h" // locale name macros
+
 int main()
 {
     {
@@ -21,7 +23,7 @@ int main()
         assert(loc.name() == "C");
     }
     {
-        std::locale loc("en_US.UTF-8");
-        assert(loc.name() == "en_US.UTF-8");
+        std::locale loc(LOCALE_en_US_UTF_8);
+        assert(loc.name() == LOCALE_en_US_UTF_8);
     }
 }

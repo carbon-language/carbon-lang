@@ -19,9 +19,11 @@
 #include <string>
 #include <cassert>
 
+#include "../../../../platform_support.h" // locale name macros
+
 int main()
 {
-    std::locale l("en_US.UTF-8");
+    std::locale l(LOCALE_en_US_UTF_8);
     {
         std::string x1("1234");
         std::string x2("12345");

@@ -20,6 +20,8 @@
 #include <cassert>
 #include "iterators.h"
 
+#include "../../../../../platform_support.h" // locale name macros
+
 typedef std::money_get<char, input_iterator<const char*> > Fn;
 
 class my_facet
@@ -43,7 +45,7 @@ public:
 int main()
 {
     std::ios ios(0);
-    std::string loc_name("zh_CN.UTF-8");
+    std::string loc_name(LOCALE_zh_CN_UTF_8);
     ios.imbue(std::locale(ios.getloc(),
                           new std::moneypunct_byname<char, false>(loc_name)));
     ios.imbue(std::locale(ios.getloc(),

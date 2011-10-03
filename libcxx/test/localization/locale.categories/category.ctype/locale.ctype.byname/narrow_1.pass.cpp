@@ -16,10 +16,12 @@
 #include <locale>
 #include <cassert>
 
+#include "../../../../platform_support.h" // locale name macros
+
 int main()
 {
     {
-        std::locale l(std::string("fr_CA.ISO8859-1"));
+        std::locale l(std::string(LOCALE_fr_CA_ISO8859_1));
         {
             typedef std::ctype<wchar_t> F;
             const F& f = std::use_facet<F>(l);
@@ -34,7 +36,7 @@ int main()
         }
     }
     {
-        std::locale l("en_US.UTF-8");
+        std::locale l(LOCALE_en_US_UTF_8);
         {
             typedef std::ctype<wchar_t> F;
             const F& f = std::use_facet<F>(l);

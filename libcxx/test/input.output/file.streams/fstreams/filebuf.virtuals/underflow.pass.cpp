@@ -16,6 +16,8 @@
 #include <fstream>
 #include <cassert>
 
+#include "../../../../platform_support.h" // locale name macros
+
 template <class CharT>
 struct test_buf
     : public std::basic_filebuf<CharT>
@@ -108,7 +110,7 @@ int main()
     }
     {
         test_buf<wchar_t> f;
-        f.pubimbue(std::locale("en_US.UTF-8"));
+        f.pubimbue(std::locale(LOCALE_en_US_UTF_8));
         assert(f.open("underflow_utf8.dat", std::ios_base::in) != 0);
         assert(f.is_open());
         assert(f.sbumpc() == 0x4E51);

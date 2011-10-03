@@ -14,6 +14,8 @@
 #include <locale>
 #include <cassert>
 
+#include "../../../../platform_support.h" // locale name macros
+
 void check(const std::locale& loc)
 {
     assert(std::has_facet<std::collate<char> >(loc));
@@ -54,8 +56,8 @@ int main()
     std::locale loc;
     assert(loc.name() == "C");
     check(loc);
-    assert(std::locale::global(std::locale("en_US.UTF-8")) == loc);
+    assert(std::locale::global(std::locale(LOCALE_en_US_UTF_8)) == loc);
     std::locale loc2;
     check(loc2);
-    assert(loc2 == std::locale("en_US.UTF-8"));
+    assert(loc2 == std::locale(LOCALE_en_US_UTF_8));
 }
