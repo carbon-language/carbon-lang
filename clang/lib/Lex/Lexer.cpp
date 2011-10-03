@@ -1776,7 +1776,7 @@ bool Lexer::SaveBCPLComment(Token &Result, const char *CurPtr) {
 
   Result.setKind(tok::comment);
   PP->CreateString(&Spelling[0], Spelling.size(), Result,
-                   Result.getLocation());
+                   Result.getLocation(), Result.getLocation());
   return true;
 }
 

@@ -143,16 +143,22 @@ void TokenLexer::ExpandFunctionArguments() {
       int ArgNo = Macro->getArgumentNum(Tokens[i+1].getIdentifierInfo());
       assert(ArgNo != -1 && "Token following # is not an argument?");
 
-      SourceLocation hashInstLoc =
+      SourceLocation ExpansionLocStart =
           getExpansionLocForMacroDefLoc(CurTok.getLocation());
+      SourceLocation ExpansionLocEnd =
+          getExpansionLocForMacroDefLoc(Tokens[i+1].getLocation());
 
       Token Res;
       if (CurTok.is(tok::hash))  // Stringify
-        Res = ActualArgs->getStringifiedArgument(ArgNo, PP, hashInstLoc);
+        Res = ActualArgs->getStringifiedArgument(ArgNo, PP,
+                                                 ExpansionLocStart,
+                                                 ExpansionLocEnd);
       else {
         // 'charify': don't bother caching these.
         Res = MacroArgs::StringifyArgument(ActualArgs->getUnexpArgument(ArgNo),
-                                           PP, true, hashInstLoc);
+                                           PP, true,
+                                           ExpansionLocStart,
+                                           ExpansionLocEnd);
       }
 
       // The stringified/charified string leading space flag gets set to match
@@ -446,6 +452,7 @@ void TokenLexer::Lex(Token &Tok) {
 bool TokenLexer::PasteTokens(Token &Tok) {
   llvm::SmallString<128> Buffer;
   const char *ResultTokStrPtr = 0;
+  SourceLocation StartLoc = Tok.getLocation();
   SourceLocation PasteOpLoc;
   do {
     // Consume the ## operator.
@@ -580,16 +587,19 @@ bool TokenLexer::PasteTokens(Token &Tok) {
     Tok = Result;
   } while (!isAtEnd() && Tokens[CurToken].is(tok::hashhash));
 
+  SourceLocation EndLoc = Tokens[CurToken - 1].getLocation();
+
   // The token's current location indicate where the token was lexed from.  We
   // need this information to compute the spelling of the token, but any
   // diagnostics for the expanded token should appear as if the token was
-  // expanded from the (##) operator. Pull this information together into
+  // expanded from the full ## expression. Pull this information together into
   // a new SourceLocation that captures all of this.
   SourceManager &SM = PP.getSourceManager();
-  SourceLocation pasteLocInst = getExpansionLocForMacroDefLoc(PasteOpLoc);
-  Tok.setLocation(SM.createExpansionLoc(Tok.getLocation(),
-                                        pasteLocInst,
-                                        pasteLocInst,
+  if (StartLoc.isFileID())
+    StartLoc = getExpansionLocForMacroDefLoc(StartLoc);
+  if (EndLoc.isFileID())
+    EndLoc = getExpansionLocForMacroDefLoc(EndLoc);
+  Tok.setLocation(SM.createExpansionLoc(Tok.getLocation(), StartLoc, EndLoc,
                                         Tok.getLength()));
 
   // Now that we got the result token, it will be subject to expansion.  Since

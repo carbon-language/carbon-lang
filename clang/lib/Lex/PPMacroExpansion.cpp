@@ -1019,7 +1019,8 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
   } else {
     llvm_unreachable("Unknown identifier!");
   }
-  CreateString(OS.str().data(), OS.str().size(), Tok, Tok.getLocation());
+  CreateString(OS.str().data(), OS.str().size(), Tok,
+               Tok.getLocation(), Tok.getLocation());
 }
 
 void Preprocessor::markMacroAsUsed(MacroInfo *MI) {

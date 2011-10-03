@@ -89,7 +89,8 @@ public:
   /// getStringifiedArgument - Compute, cache, and return the specified argument
   /// that has been 'stringified' as required by the # operator.
   const Token &getStringifiedArgument(unsigned ArgNo, Preprocessor &PP,
-                                      SourceLocation hashInstLoc);
+                                      SourceLocation ExpansionLocStart,
+                                      SourceLocation ExpansionLocEnd);
 
   /// getNumArguments - Return the number of arguments passed into this macro
   /// invocation.
@@ -110,7 +111,8 @@ public:
   ///
   static Token StringifyArgument(const Token *ArgToks,
                                  Preprocessor &PP, bool Charify,
-                                 SourceLocation hashInstLoc);
+                                 SourceLocation ExpansionLocStart,
+                                 SourceLocation ExpansionLocEnd);
   
   
   /// deallocate - This should only be called by the Preprocessor when managing

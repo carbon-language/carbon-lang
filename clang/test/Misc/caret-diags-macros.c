@@ -113,11 +113,8 @@ void test3() {
   // CHECK: {{.*}}:102:41: note: expanded from:
 
   variadic_pasting_args3a(1, 2, 3, 4);
-  // FIXME: It'd be really nice to retain the start location of the first token
-  // involved in the token paste instead of falling back on the full macro
-  // location in the first two locations here.
-  // CHECK: {{.*}}:115:3: warning: expression result unused
-  // CHECK: {{.*}}:106:44: note: expanded from:
-  // CHECK: {{.*}}:104:72: note: expanded from:
+  // CHECK: {{.*}}:115:30: warning: expression result unused
+  // CHECK: {{.*}}:106:71: note: expanded from:
+  // CHECK: {{.*}}:104:70: note: expanded from:
   // CHECK: {{.*}}:102:41: note: expanded from:
 }
