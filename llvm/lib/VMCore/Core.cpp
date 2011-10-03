@@ -1508,6 +1508,10 @@ LLVMValueRef LLVMGetPreviousInstruction(LLVMValueRef Inst) {
   return wrap(--I);
 }
 
+void LLVMInstructionEraseFromParent(LLVMValueRef Inst) {
+  unwrap<Instruction>(Inst)->eraseFromParent();
+}
+
 /*--.. Call and invoke instructions ........................................--*/
 
 unsigned LLVMGetInstructionCallConv(LLVMValueRef Instr) {
