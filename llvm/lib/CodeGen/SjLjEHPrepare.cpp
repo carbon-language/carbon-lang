@@ -849,13 +849,7 @@ bool SjLjEHPass::setupEntryBlockAndCallSites(Function &F) {
     CastInst::Create(Instruction::BitCast, JBufPtr,
                      Type::getInt8PtrTy(F.getContext()), "",
                      EntryBB->getTerminator());
-  Value *DispatchVal = CallInst::Create(BuiltinSetjmpFn, SetjmpArg,
-                                        "dispatch",
-                                        EntryBB->getTerminator());
-
-  // Add a call to dispatch_setup after the setjmp call. This is expanded to any
-  // target-specific setup that needs to be done.
-  CallInst::Create(DispatchSetupFn, DispatchVal, "", EntryBB->getTerminator());
+  CallInst::Create(BuiltinSetjmpFn, SetjmpArg, "", EntryBB->getTerminator());
 
   // Store a pointer to the function context so that the back-end will know
   // where to look for it.
