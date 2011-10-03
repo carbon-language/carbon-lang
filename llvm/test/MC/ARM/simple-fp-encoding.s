@@ -141,11 +141,15 @@
 @ CHECK: vmsr  fpsid, r0             @ encoding: [0x10,0x0a,0xe0,0xee]
         vmsr  fpsid, r0
 
-@ FIXME: vmov.f64 d16, #3.000000e+00 @ encoding: [0x08,0x0b,0xf0,0xee]
-@        vmov.f64        d16, #3.000000e+00
+        vmov.f64        d16, #3.000000e+00
+        vmov.f32        s0, #3.000000e+00
+        vmov.f64        d16, #-3.000000e+00
+        vmov.f32        s0, #-3.000000e+00
 
-@ FIXME: vmov.f32 s0, #3.000000e+00  @ encoding: [0x08,0x0a,0xb0,0xee]
-@        vmov.f32        s0, #3.000000e+00
+@ CHECK: vmov.f64 d16, #3.000000e+00 @ encoding: [0x08,0x0b,0xf0,0xee]
+@ CHECK: vmov.f32 s0, #3.000000e+00  @ encoding: [0x08,0x0a,0xb0,0xee]
+@ CHECK: vmov.f64 d16, #-3.000000e+00 @ encoding: [0x08,0x0b,0xf8,0xee]
+@ CHECK: vmov.f32 s0, #-3.000000e+00  @ encoding: [0x08,0x0a,0xb8,0xee]
 
 @ CHECK: vmov s0, r0                 @ encoding: [0x10,0x0a,0x00,0xee]
 @ CHECK: vmov s1, r1                 @ encoding: [0x90,0x1a,0x00,0xee]
