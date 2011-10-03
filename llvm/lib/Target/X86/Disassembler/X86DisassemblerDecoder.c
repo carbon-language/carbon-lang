@@ -1491,6 +1491,9 @@ static int readVVVV(struct InternalInstruction* insn) {
   else
     return -1;
 
+  if (insn->mode != MODE_64BIT)
+    insn->vvvv &= 0x7;
+
   return 0;
 }
 
