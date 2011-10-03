@@ -3904,6 +3904,17 @@ static void handleDelayedForbiddenType(Sema &S, DelayedDiagnostic &diag,
                         "this system declaration uses an unsupported type"));
     return;
   }
+  if (S.getLangOptions().ObjCAutoRefCount)
+    if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(decl)) {
+      // FIXME. we may want to supress diagnostics for all
+      // kind of forbidden type messages on unavailable functions. 
+      if (FD->hasAttr<UnavailableAttr>() &&
+          diag.getForbiddenTypeDiagnostic() == 
+          diag::err_arc_array_param_no_ownership) {
+        diag.Triggered = true;
+        return;
+      }
+    }
 
   S.Diag(diag.Loc, diag.getForbiddenTypeDiagnostic())
     << diag.getForbiddenTypeOperand() << diag.getForbiddenTypeArgument();
