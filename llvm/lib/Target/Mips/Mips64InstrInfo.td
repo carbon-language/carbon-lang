@@ -72,6 +72,12 @@ class LogicI64<bits<6> op, string instr_asm, SDNode OpNode>:
      !strconcat(instr_asm, "\t$dst, $b, $c"),
      [(set CPU64Regs:$dst, (OpNode CPU64Regs:$b, immZExt16:$c))], IIAlu>;
 
+let isCommutable = 1 in
+class LogicNOR64<bits<6> op, bits<6> func, string instr_asm>:
+  FR<op, func, (outs CPU64Regs:$dst), (ins CPU64Regs:$b, CPU64Regs:$c),
+     !strconcat(instr_asm, "\t$dst, $b, $c"),
+     [(set CPU64Regs:$dst, (not (or CPU64Regs:$b, CPU64Regs:$c)))], IIAlu>;
+
 // Shifts
 class LogicR_shift_rotate_imm64<bits<6> func, bits<5> _rs, string instr_asm,
                                 SDNode OpNode, PatFrag PF>:
@@ -141,6 +147,7 @@ def DSUBu    : ArithR64<0x00, 0x2f, "dsubu", sub, IIAlu>;
 def DAND     : LogicR64<0x24, "and", and>;
 def DOR      : LogicR64<0x25, "or", or>;
 def DXOR     : LogicR64<0x26, "xor", xor>;
+def DNOR     : LogicNOR64<0x00, 0x27, "nor">;
 
 /// Shift Instructions
 def DSLL     : LogicR_shift_rotate_imm64<0x38, 0x00, "dsll", shl, immZExt5>;

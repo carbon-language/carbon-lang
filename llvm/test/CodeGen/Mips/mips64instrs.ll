@@ -133,3 +133,11 @@ entry:
   ret i64 %tmp1
 }
 
+define i64 @f20(i64 %a, i64 %b) nounwind readnone {
+entry:
+; CHECK: nor
+  %or = or i64 %b, %a
+  %neg = xor i64 %or, -1
+  ret i64 %neg
+}
+
