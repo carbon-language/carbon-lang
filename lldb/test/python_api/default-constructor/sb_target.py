@@ -55,3 +55,5 @@ def fuzz_obj(obj):
         print module
     for bp in obj.breakpoint_iter():
         print bp
+    for wp_loc in obj.watchpoint_location_iter():
+        print wp_loc
