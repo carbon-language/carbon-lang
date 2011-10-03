@@ -90,6 +90,7 @@ namespace lltok {
     kw_readnone,
     kw_readonly,
     kw_uwtable,
+    kw_returns_twice,
 
     kw_inlinehint,
     kw_noinline,

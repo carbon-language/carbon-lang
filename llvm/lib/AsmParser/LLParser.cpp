@@ -911,6 +911,7 @@ bool LLParser::ParseOptionalAttrs(unsigned &Attrs, unsigned AttrKind) {
     case lltok::kw_noreturn:        Attrs |= Attribute::NoReturn; break;
     case lltok::kw_nounwind:        Attrs |= Attribute::NoUnwind; break;
     case lltok::kw_uwtable:         Attrs |= Attribute::UWTable; break;
+    case lltok::kw_returns_twice:   Attrs |= Attribute::ReturnsTwice; break;
     case lltok::kw_noinline:        Attrs |= Attribute::NoInline; break;
     case lltok::kw_readnone:        Attrs |= Attribute::ReadNone; break;
     case lltok::kw_readonly:        Attrs |= Attribute::ReadOnly; break;
@@ -922,7 +923,6 @@ bool LLParser::ParseOptionalAttrs(unsigned &Attrs, unsigned AttrKind) {
     case lltok::kw_noredzone:       Attrs |= Attribute::NoRedZone; break;
     case lltok::kw_noimplicitfloat: Attrs |= Attribute::NoImplicitFloat; break;
     case lltok::kw_naked:           Attrs |= Attribute::Naked; break;
-    case lltok::kw_hotpatch:        Attrs |= Attribute::Hotpatch; break;
     case lltok::kw_nonlazybind:     Attrs |= Attribute::NonLazyBind; break;
 
     case lltok::kw_alignstack: {

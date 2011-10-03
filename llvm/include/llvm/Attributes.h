@@ -65,8 +65,7 @@ const Attributes StackAlignment  = 7<<26; ///< Alignment of stack for
                                           ///of alignment with +1 bias
                                           ///0 means unaligned (different from
                                           ///alignstack(1))
-const Attributes Hotpatch    = 1<<29;     ///< Function should have special
-                                          ///'hotpatch' sequence in prologue
+const Attributes ReturnsTwice    = 1<<29; ///< Function can return twice
 const Attributes UWTable     = 1<<30;     ///< Function must be in a unwind
                                           ///table
 const Attributes NonLazyBind = 1U<<31;    ///< Function is called early and/or
@@ -93,7 +92,7 @@ const Attributes ParameterOnly = ByVal | Nest | StructRet | NoCapture;
 const Attributes FunctionOnly = NoReturn | NoUnwind | ReadNone | ReadOnly |
   NoInline | AlwaysInline | OptimizeForSize | StackProtect | StackProtectReq |
   NoRedZone | NoImplicitFloat | Naked | InlineHint | StackAlignment |
-  Hotpatch | UWTable | NonLazyBind;
+  UWTable | NonLazyBind | ReturnsTwice;
 
 /// @brief Parameter attributes that do not apply to vararg call arguments.
 const Attributes VarArgsIncompatible = StructRet;

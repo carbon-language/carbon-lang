@@ -1262,6 +1262,11 @@ define void @f() optsize { ... }
       the ELF x86-64 abi, but it can be disabled for some compilation
       units.</dd>
 
+  <dt><tt><b><a name="returns_twice">returns_twice</a></b></tt></dt>
+  <dd>This attribute indicates that this function can return
+  twice. The C <code>setjmp</code> is an example of such a function.
+  The compiler disables some optimizations (like tail calls) in the caller of
+  these functions.</dd>
 </dl>
 
 </div>

@@ -558,6 +558,7 @@ lltok::Kind LLLexer::LexIdentifier() {
   KEYWORD(readnone);
   KEYWORD(readonly);
   KEYWORD(uwtable);
+  KEYWORD(returns_twice);
 
   KEYWORD(inlinehint);
   KEYWORD(noinline);

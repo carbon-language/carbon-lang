@@ -11,6 +11,6 @@ bb:
   ret void
 }
 
-declare i32 @setjmp(i32*)
+declare i32 @setjmp(i32*) returns_twice
 
 declare void @bar()

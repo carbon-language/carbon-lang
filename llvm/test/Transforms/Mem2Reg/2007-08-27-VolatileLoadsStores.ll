@@ -42,6 +42,6 @@ return:		; preds = %bb6
 	ret i32 %retval8
 }
 
-declare i32 @_setjmp(%struct.__jmp_buf_tag*)
+declare i32 @_setjmp(%struct.__jmp_buf_tag*) returns_twice
 
 declare void @g()
