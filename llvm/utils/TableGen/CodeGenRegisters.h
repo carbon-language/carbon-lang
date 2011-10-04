@@ -86,8 +86,8 @@ namespace llvm {
 
   class CodeGenRegisterClass {
     CodeGenRegister::Set Members;
-    const std::vector<Record*> *Elements;
-    std::vector<SmallVector<Record*, 16> > AltOrders;
+    // Allocation orders. Order[0] always contains all registers in Members.
+    std::vector<SmallVector<Record*, 16> > Orders;
     // Bit mask of sub-classes including this, indexed by their EnumValue.
     BitVector SubClasses;
     // List of super-classes, topologocally ordered to have the larger classes
@@ -154,14 +154,11 @@ namespace llvm {
     // The order of registers is the same as in the .td file.
     // No = 0 is the default allocation order, No = 1 is the first alternative.
     ArrayRef<Record*> getOrder(unsigned No = 0) const {
-      if (No == 0)
-        return *Elements;
-      else
-        return AltOrders[No - 1];
+        return Orders[No];
     }
 
     // Return the total number of allocation orders available.
-    unsigned getNumOrders() const { return 1 + AltOrders.size(); }
+    unsigned getNumOrders() const { return Orders.size(); }
 
     // Get the set of registers.  This set contains the same registers as
     // getOrder(0).

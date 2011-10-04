@@ -273,18 +273,22 @@ CodeGenRegisterClass::CodeGenRegisterClass(CodeGenRegBank &RegBank, Record *R)
   }
   assert(!VTs.empty() && "RegisterClass must contain at least one ValueType!");
 
+  // Allocation order 0 is the full set. AltOrders provides others.
+  const SetTheory::RecVec *Elements = RegBank.getSets().expand(R);
+  ListInit *AltOrders = R->getValueAsListInit("AltOrders");
+  Orders.resize(1 + AltOrders->size());
+
   // Default allocation order always contains all registers.
-  Elements = RegBank.getSets().expand(R);
-  for (unsigned i = 0, e = Elements->size(); i != e; ++i)
+  for (unsigned i = 0, e = Elements->size(); i != e; ++i) {
+    Orders[0].push_back((*Elements)[i]);
     Members.insert(RegBank.getReg((*Elements)[i]));
+  }
 
   // Alternative allocation orders may be subsets.
-  ListInit *Alts = R->getValueAsListInit("AltOrders");
-  AltOrders.resize(Alts->size());
   SetTheory::RecSet Order;
-  for (unsigned i = 0, e = Alts->size(); i != e; ++i) {
-    RegBank.getSets().evaluate(Alts->getElement(i), Order);
-    AltOrders[i].append(Order.begin(), Order.end());
+  for (unsigned i = 0, e = AltOrders->size(); i != e; ++i) {
+    RegBank.getSets().evaluate(AltOrders->getElement(i), Order);
+    Orders[1 + i].append(Order.begin(), Order.end());
     // Verify that all altorder members are regclass members.
     while (!Order.empty()) {
       CodeGenRegister *Reg = RegBank.getReg(Order.back());
