@@ -77,7 +77,7 @@ void NoReturnFunctionChecker::checkPostStmt(const CallExpr *CE,
   }
 
   if (BuildSinks)
-    C.generateSink(CE);
+    C.generateSink();
 }
 
 static bool END_WITH_NULL isMultiArgSelector(const Selector *Sel, ...) {
