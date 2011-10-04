@@ -2037,9 +2037,6 @@ InitListChecker::getStructuredSubobjectInit(InitListExpr *IList, unsigned Index,
                                   RDecl->field_end());
   }
 
-  if (NumElements < NumInits)
-    NumElements = IList->getNumInits();
-
   Result->reserveInits(SemaRef.Context, NumElements);
 
   // Link this new initializer list into the structured initializer
