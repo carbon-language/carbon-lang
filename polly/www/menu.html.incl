@@ -21,7 +21,7 @@
     </a>
     <a href="http://groups.google.com/group/polly-dev">polly-dev Mailing List</a>
     <a href="/bugs.html">Bug Reports</a>
-    <a href="http://google1.osuosl.org:8011/console">Buildbot</a>
+    <a href="http://pollybot.grosser.es/console">Buildbot</a>
   </div>
 
   <div class="submenu">
