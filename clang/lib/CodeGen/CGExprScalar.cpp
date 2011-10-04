@@ -1128,10 +1128,8 @@ Value *ScalarExprEmitter::VisitCastExpr(CastExpr *CE) {
     value = CGF.EmitARCRetainAutoreleasedReturnValue(value);
     return CGF.EmitObjCConsumeObject(E->getType(), value);
   }
-  case CK_ARCExtendBlockObject: {
-    llvm::Value *value = CGF.EmitARCRetainScalarExpr(E);
-    return CGF.EmitObjCConsumeObject(E->getType(), value);
-  }
+  case CK_ARCExtendBlockObject:
+    return CGF.EmitARCExtendBlockObject(E);
 
   case CK_FloatingRealToComplex:
   case CK_FloatingComplexCast:

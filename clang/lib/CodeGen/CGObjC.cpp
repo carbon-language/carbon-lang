@@ -1658,7 +1658,7 @@ static void emitARCCopyOperation(CodeGenFunction &CGF,
 ///   call i8* @objc_retainBlock(i8* %value)
 llvm::Value *CodeGenFunction::EmitARCRetain(QualType type, llvm::Value *value) {
   if (type->isBlockPointerType())
-    return EmitARCRetainBlock(value);
+    return EmitARCRetainBlock(value, /*mandatory*/ false);
   else
     return EmitARCRetainNonBlock(value);
 }
@@ -1673,10 +1673,32 @@ llvm::Value *CodeGenFunction::EmitARCRetainNonBlock(llvm::Value *value) {
 
 /// Retain the given block, with _Block_copy semantics.
 ///   call i8* @objc_retainBlock(i8* %value)
-llvm::Value *CodeGenFunction::EmitARCRetainBlock(llvm::Value *value) {
-  return emitARCValueOperation(*this, value,
-                               CGM.getARCEntrypoints().objc_retainBlock,
-                               "objc_retainBlock");
+///
+/// \param mandatory - If false, emit the call with metadata
+/// indicating that it's okay for the optimizer to eliminate this call
+/// if it can prove that the block never escapes except down the stack.
+llvm::Value *CodeGenFunction::EmitARCRetainBlock(llvm::Value *value,
+                                                 bool mandatory) {
+  llvm::Value *result
+    = emitARCValueOperation(*this, value,
+                            CGM.getARCEntrypoints().objc_retainBlock,
+                            "objc_retainBlock");
+
+  // If the copy isn't mandatory, add !clang.arc.copy_on_escape to
+  // tell the optimizer that it doesn't need to do this copy if the
+  // block doesn't escape, where being passed as an argument doesn't
+  // count as escaping.
+  if (!mandatory && isa<llvm::Instruction>(result)) {
+    llvm::CallInst *call
+      = cast<llvm::CallInst>(result->stripPointerCasts());
+    assert(call->getCalledValue() == CGM.getARCEntrypoints().objc_retainBlock);
+
+    SmallVector<llvm::Value*,1> args;
+    call->setMetadata("clang.arc.copy_on_escape",
+                      llvm::MDNode::get(Builder.getContext(), args));
+  }
+
+  return result;
 }
 
 /// Retain the given object which is the result of a function call.
@@ -1857,7 +1879,7 @@ llvm::Value *CodeGenFunction::EmitARCRetainAutorelease(QualType type,
 
   llvm::Type *origType = value->getType();
   value = Builder.CreateBitCast(value, Int8PtrTy);
-  value = EmitARCRetainBlock(value);
+  value = EmitARCRetainBlock(value, /*mandatory*/ true);
   value = EmitARCAutorelease(value);
   return Builder.CreateBitCast(value, origType);
 }
@@ -2300,7 +2322,7 @@ tryEmitARCRetainScalarExpr(CodeGenFunction &CGF, const Expr *e) {
         }
 
         // Retain the object as a block, then cast down.
-        result = CGF.EmitARCRetainBlock(result);
+        result = CGF.EmitARCRetainBlock(result, /*mandatory*/ true);
         if (resultType) result = CGF.Builder.CreateBitCast(result, resultType);
         return TryEmitResult(result, true);
       }
@@ -2386,6 +2408,24 @@ CodeGenFunction::EmitARCRetainAutoreleaseScalarExpr(const Expr *e) {
   return value;
 }
 
+llvm::Value *CodeGenFunction::EmitARCExtendBlockObject(const Expr *e) {
+  llvm::Value *result;
+  bool doRetain;
+
+  if (shouldEmitSeparateBlockRetain(e)) {
+    result = EmitScalarExpr(e);
+    doRetain = true;
+  } else {
+    TryEmitResult subresult = tryEmitARCRetainScalarExpr(*this, e);
+    result = subresult.getPointer();
+    doRetain = !subresult.getInt();
+  }
+
+  if (doRetain)
+    result = EmitARCRetainBlock(result, /*mandatory*/ true);
+  return EmitObjCConsumeObject(e->getType(), result);
+}
+
 llvm::Value *CodeGenFunction::EmitObjCThrowOperand(const Expr *expr) {
   // In ARC, retain and autorelease the expression.
   if (getLangOptions().ObjCAutoRefCount) {
@@ -2423,7 +2463,7 @@ CodeGenFunction::EmitARCStoreStrong(const BinaryOperator *e,
   // type, then we need to emit the block-retain immediately in case
   // it invalidates the l-value.
   if (!hasImmediateRetain && e->getType()->isBlockPointerType()) {
-    value = EmitARCRetainBlock(value);
+    value = EmitARCRetainBlock(value, /*mandatory*/ false);
     hasImmediateRetain = true;
   }
 
