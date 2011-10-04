@@ -2983,7 +2983,7 @@ Decl *ASTNodeImporter::VisitObjCCategoryDecl(ObjCCategoryDecl *D) {
   ObjCCategoryDecl *ToCategory = MergeWithCategory;
   if (!ToCategory) {
     ToCategory = ObjCCategoryDecl::Create(Importer.getToContext(), DC,
-                                          Importer.Import(D->getAtLoc()),
+                                          Importer.Import(D->getAtStartLoc()),
                                           Loc, 
                                        Importer.Import(D->getCategoryNameLoc()), 
                                           Name.getAsIdentifierInfo(),
@@ -3056,8 +3056,9 @@ Decl *ASTNodeImporter::VisitObjCProtocolDecl(ObjCProtocolDecl *D) {
   ObjCProtocolDecl *ToProto = MergeWithProtocol;
   if (!ToProto || ToProto->isForwardDecl()) {
     if (!ToProto) {
-      ToProto = ObjCProtocolDecl::Create(Importer.getToContext(), DC, Loc,
-                                         Name.getAsIdentifierInfo());
+      ToProto = ObjCProtocolDecl::Create(Importer.getToContext(), DC,
+                                         Name.getAsIdentifierInfo(), Loc,
+                                         Importer.Import(D->getAtStartLoc()));
       ToProto->setForwardDecl(D->isForwardDecl());
       ToProto->setLexicalDeclContext(LexicalDC);
       LexicalDC->addDecl(ToProto);
@@ -3116,10 +3117,9 @@ Decl *ASTNodeImporter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
   ObjCInterfaceDecl *ToIface = MergeWithIface;
   if (!ToIface || ToIface->isForwardDecl()) {
     if (!ToIface) {
-      ToIface = ObjCInterfaceDecl::Create(Importer.getToContext(),
-                                          DC, Loc,
-                                          Name.getAsIdentifierInfo(),
-                                          Importer.Import(D->getClassLoc()),
+      ToIface = ObjCInterfaceDecl::Create(Importer.getToContext(), DC,
+                                          Importer.Import(D->getAtStartLoc()),
+                                          Name.getAsIdentifierInfo(), Loc,
                                           D->isForwardDecl(),
                                           D->isImplicitInterfaceDecl());
       ToIface->setForwardDecl(D->isForwardDecl());
@@ -3229,9 +3229,10 @@ Decl *ASTNodeImporter::VisitObjCCategoryImplDecl(ObjCCategoryImplDecl *D) {
       return 0;
     
     ToImpl = ObjCCategoryImplDecl::Create(Importer.getToContext(), DC,
-                                          Importer.Import(D->getLocation()),
                                           Importer.Import(D->getIdentifier()),
-                                          Category->getClassInterface());
+                                          Category->getClassInterface(),
+                                          Importer.Import(D->getLocation()),
+                                          Importer.Import(D->getAtStartLoc()));
     
     DeclContext *LexicalDC = DC;
     if (D->getDeclContext() != D->getLexicalDeclContext()) {
@@ -3273,8 +3274,9 @@ Decl *ASTNodeImporter::VisitObjCImplementationDecl(ObjCImplementationDecl *D) {
     // now.
     Impl = ObjCImplementationDecl::Create(Importer.getToContext(),
                                   Importer.ImportContext(D->getDeclContext()),
+                                          Iface, Super,
                                           Importer.Import(D->getLocation()),
-                                          Iface, Super);
+                                          Importer.Import(D->getAtStartLoc()));
     
     if (D->getDeclContext() != D->getLexicalDeclContext()) {
       DeclContext *LexicalDC

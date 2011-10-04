@@ -427,6 +427,7 @@ void ASTDeclWriter::VisitObjCMethodDecl(ObjCMethodDecl *D) {
 
 void ASTDeclWriter::VisitObjCContainerDecl(ObjCContainerDecl *D) {
   VisitNamedDecl(D);
+  Writer.AddSourceLocation(D->getAtStartLoc(), Record);
   Writer.AddSourceRange(D->getAtEndRange(), Record);
   // Abstract class (no need to define a stable serialization::DECL code).
 }
@@ -463,7 +464,6 @@ void ASTDeclWriter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
   Writer.AddDeclRef(D->getCategoryList(), Record);
   Record.push_back(D->isForwardDecl());
   Record.push_back(D->isImplicitInterfaceDecl());
-  Writer.AddSourceLocation(D->getClassLoc(), Record);
   Writer.AddSourceLocation(D->getSuperClassLoc(), Record);
   Writer.AddSourceLocation(D->getLocEnd(), Record);
   Code = serialization::DECL_OBJC_INTERFACE;
@@ -542,7 +542,6 @@ void ASTDeclWriter::VisitObjCCategoryDecl(ObjCCategoryDecl *D) {
     Writer.AddSourceLocation(*PL, Record);
   Writer.AddDeclRef(D->getNextClassCategory(), Record);
   Record.push_back(D->hasSynthBitfield());
-  Writer.AddSourceLocation(D->getAtLoc(), Record);
   Writer.AddSourceLocation(D->getCategoryNameLoc(), Record);
   Code = serialization::DECL_OBJC_CATEGORY;
 }

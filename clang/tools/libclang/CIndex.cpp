@@ -3717,8 +3717,6 @@ CXSourceLocation clang_getCursorLocation(CXCursor C) {
 
   Decl *D = getCursorDecl(C);
   SourceLocation Loc = D->getLocation();
-  if (ObjCInterfaceDecl *Class = dyn_cast<ObjCInterfaceDecl>(D))
-    Loc = Class->getClassLoc();
   // FIXME: Multiple variables declared in a single declaration
   // currently lack the information needed to correctly determine their
   // ranges when accounting for the type-specifier.  We use context

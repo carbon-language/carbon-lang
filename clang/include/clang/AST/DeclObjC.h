@@ -412,14 +412,17 @@ public:
 /// ObjCProtocolDecl, and ObjCImplDecl.
 ///
 class ObjCContainerDecl : public NamedDecl, public DeclContext {
+  SourceLocation AtStart;
+
   // These two locations in the range mark the end of the method container.
   // The first points to the '@' token, and the second to the 'end' token.
   SourceRange AtEnd;
 public:
 
-  ObjCContainerDecl(Kind DK, DeclContext *DC, SourceLocation L,
-                    IdentifierInfo *Id)
-    : NamedDecl(DK, DC, L, Id), DeclContext(DK) {}
+  ObjCContainerDecl(Kind DK, DeclContext *DC,
+                    IdentifierInfo *Id, SourceLocation nameLoc,
+                    SourceLocation atStartLoc)
+    : NamedDecl(DK, DC, nameLoc, Id), DeclContext(DK), AtStart(atStartLoc) {}
 
   // Iterator access to properties.
   typedef specific_decl_iterator<ObjCPropertyDecl> prop_iterator;
@@ -471,6 +474,9 @@ public:
 
   ObjCPropertyDecl *FindPropertyDeclaration(IdentifierInfo *PropertyId) const;
 
+  SourceLocation getAtStartLoc() const { return AtStart; }
+  void setAtStartLoc(SourceLocation Loc) { AtStart = Loc; }
+
   // Marks the end of the container.
   SourceRange getAtEndRange() const {
     return AtEnd;
@@ -480,7 +486,7 @@ public:
   }
 
   virtual SourceRange getSourceRange() const {
-    return SourceRange(getLocation(), getAtEndRange().getEnd());
+    return SourceRange(AtStart, getAtEndRange().getEnd());
   }
 
   // Implement isa/cast/dyncast/etc.
@@ -553,7 +559,6 @@ class ObjCInterfaceDecl : public ObjCContainerDecl {
   /// completed by the external AST source when required.
   mutable bool ExternallyCompleted : 1;
   
-  SourceLocation ClassLoc; // location of the class identifier.
   SourceLocation SuperClassLoc; // location of the super class identifier.
   SourceLocation EndLoc; // marks the '>', '}', or identifier.
 
@@ -748,12 +753,10 @@ public:
   ObjCMethodDecl *lookupPrivateMethod(const Selector &Sel, bool Instance=true);
 
   // Location information, modeled after the Stmt API.
-  SourceLocation getLocStart() const { return getLocation(); } // '@'interface
+  SourceLocation getLocStart() const { return getAtStartLoc(); } // '@'interface
   SourceLocation getLocEnd() const { return EndLoc; }
   void setLocEnd(SourceLocation LE) { EndLoc = LE; }
 
-  void setClassLoc(SourceLocation Loc) { ClassLoc = Loc; }
-  SourceLocation getClassLoc() const { return ClassLoc; }
   void setSuperClassLoc(SourceLocation Loc) { SuperClassLoc = Loc; }
   SourceLocation getSuperClassLoc() const { return SuperClassLoc; }
 
@@ -911,14 +914,17 @@ class ObjCProtocolDecl : public ObjCContainerDecl {
 
   SourceLocation EndLoc; // marks the '>' or identifier.
 
-  ObjCProtocolDecl(DeclContext *DC, SourceLocation L, IdentifierInfo *Id)
-    : ObjCContainerDecl(ObjCProtocol, DC, L, Id),
+  ObjCProtocolDecl(DeclContext *DC, IdentifierInfo *Id,
+                   SourceLocation nameLoc, SourceLocation atStartLoc)
+    : ObjCContainerDecl(ObjCProtocol, DC, Id, nameLoc, atStartLoc),
       isForwardProtoDecl(true) {
   }
 
 public:
   static ObjCProtocolDecl *Create(ASTContext &C, DeclContext *DC,
-                                  SourceLocation L, IdentifierInfo *Id);
+                                  IdentifierInfo *Id,
+                                  SourceLocation nameLoc,
+                                  SourceLocation atStartLoc);
 
   const ObjCProtocolList &getReferencedProtocols() const {
     return ReferencedProtocols;
@@ -958,7 +964,7 @@ public:
   void setForwardDecl(bool val) { isForwardProtoDecl = val; }
 
   // Location information, modeled after the Stmt API.
-  SourceLocation getLocStart() const { return getLocation(); } // '@'protocol
+  SourceLocation getLocStart() const { return getAtStartLoc(); } // '@'protocol
   SourceLocation getLocEnd() const { return EndLoc; }
   void setLocEnd(SourceLocation LE) { EndLoc = LE; }
 
@@ -1081,9 +1087,6 @@ class ObjCCategoryDecl : public ObjCContainerDecl {
 
   /// true of class extension has at least one bitfield ivar.
   bool HasSynthBitfield : 1;
-  
-  /// \brief The location of the '@' in '@interface'
-  SourceLocation AtLoc;
 
   /// \brief The location of the category name in this declaration.
   SourceLocation CategoryNameLoc;
@@ -1091,9 +1094,9 @@ class ObjCCategoryDecl : public ObjCContainerDecl {
   ObjCCategoryDecl(DeclContext *DC, SourceLocation AtLoc, 
                    SourceLocation ClassNameLoc, SourceLocation CategoryNameLoc,
                    IdentifierInfo *Id, ObjCInterfaceDecl *IDecl)
-    : ObjCContainerDecl(ObjCCategory, DC, ClassNameLoc, Id),
+    : ObjCContainerDecl(ObjCCategory, DC, Id, ClassNameLoc, AtLoc),
       ClassInterface(IDecl), NextClassCategory(0), HasSynthBitfield(false),
-      AtLoc(AtLoc), CategoryNameLoc(CategoryNameLoc) {
+      CategoryNameLoc(CategoryNameLoc) {
   }
 public:
 
@@ -1155,16 +1158,9 @@ public:
   bool ivar_empty() const {
     return ivar_begin() == ivar_end();
   }
-  
-  SourceLocation getAtLoc() const { return AtLoc; }
-  void setAtLoc(SourceLocation At) { AtLoc = At; }
 
   SourceLocation getCategoryNameLoc() const { return CategoryNameLoc; }
   void setCategoryNameLoc(SourceLocation Loc) { CategoryNameLoc = Loc; }
-
-  virtual SourceRange getSourceRange() const {
-    return SourceRange(AtLoc, getAtEndRange().getEnd());
-  }
 
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const ObjCCategoryDecl *D) { return true; }
@@ -1179,10 +1175,12 @@ class ObjCImplDecl : public ObjCContainerDecl {
   ObjCInterfaceDecl *ClassInterface;
 
 protected:
-  ObjCImplDecl(Kind DK, DeclContext *DC, SourceLocation L,
-               ObjCInterfaceDecl *classInterface)
-    : ObjCContainerDecl(DK, DC, L,
-                        classInterface? classInterface->getIdentifier() : 0),
+  ObjCImplDecl(Kind DK, DeclContext *DC,
+               ObjCInterfaceDecl *classInterface,
+               SourceLocation nameLoc, SourceLocation atStartLoc)
+    : ObjCContainerDecl(DK, DC,
+                        classInterface? classInterface->getIdentifier() : 0,
+                        nameLoc, atStartLoc),
       ClassInterface(classInterface) {}
 
 public:
@@ -1239,13 +1237,17 @@ class ObjCCategoryImplDecl : public ObjCImplDecl {
   // Category name
   IdentifierInfo *Id;
 
-  ObjCCategoryImplDecl(DeclContext *DC, SourceLocation L, IdentifierInfo *Id,
-                       ObjCInterfaceDecl *classInterface)
-    : ObjCImplDecl(ObjCCategoryImpl, DC, L, classInterface), Id(Id) {}
+  ObjCCategoryImplDecl(DeclContext *DC, IdentifierInfo *Id,
+                       ObjCInterfaceDecl *classInterface,
+                       SourceLocation nameLoc, SourceLocation atStartLoc)
+    : ObjCImplDecl(ObjCCategoryImpl, DC, classInterface, nameLoc, atStartLoc),
+      Id(Id) {}
 public:
   static ObjCCategoryImplDecl *Create(ASTContext &C, DeclContext *DC,
-                                      SourceLocation L, IdentifierInfo *Id,
-                                      ObjCInterfaceDecl *classInterface);
+                                      IdentifierInfo *Id,
+                                      ObjCInterfaceDecl *classInterface,
+                                      SourceLocation nameLoc,
+                                      SourceLocation atStartLoc);
 
   /// getIdentifier - Get the identifier that names the category
   /// interface associated with this implementation.
@@ -1323,17 +1325,19 @@ class ObjCImplementationDecl : public ObjCImplDecl {
   /// true of class extension has at least one bitfield ivar.
   bool HasSynthBitfield : 1;
   
-  ObjCImplementationDecl(DeclContext *DC, SourceLocation L,
+  ObjCImplementationDecl(DeclContext *DC,
                          ObjCInterfaceDecl *classInterface,
-                         ObjCInterfaceDecl *superDecl)
-    : ObjCImplDecl(ObjCImplementation, DC, L, classInterface),
+                         ObjCInterfaceDecl *superDecl,
+                         SourceLocation nameLoc, SourceLocation atStartLoc)
+    : ObjCImplDecl(ObjCImplementation, DC, classInterface, nameLoc, atStartLoc),
        SuperClass(superDecl), IvarInitializers(0), NumIvarInitializers(0),
        HasCXXStructors(false), HasSynthBitfield(false) {}
 public:
   static ObjCImplementationDecl *Create(ASTContext &C, DeclContext *DC,
-                                        SourceLocation L,
                                         ObjCInterfaceDecl *classInterface,
-                                        ObjCInterfaceDecl *superDecl);
+                                        ObjCInterfaceDecl *superDecl,
+                                        SourceLocation nameLoc,
+                                        SourceLocation atStartLoc);
   
   /// init_iterator - Iterates through the ivar initializer list.
   typedef CXXCtorInitializer **init_iterator;

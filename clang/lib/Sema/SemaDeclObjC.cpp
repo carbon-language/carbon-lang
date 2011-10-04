@@ -376,9 +376,9 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
       // FIXME: don't leak the objects passed in!
       return IDecl;
     } else {
-      IDecl->setLocation(AtInterfaceLoc);
+      IDecl->setLocation(ClassLoc);
       IDecl->setForwardDecl(false);
-      IDecl->setClassLoc(ClassLoc);
+      IDecl->setAtStartLoc(AtInterfaceLoc);
       // If the forward decl was in a PCH, we need to write it again in a
       // dependent AST file.
       IDecl->setChangedSinceDeserialization(true);
@@ -595,8 +595,8 @@ Sema::ActOnStartProtocolInterface(SourceLocation AtProtoInterfaceLoc,
     // Repeat in dependent AST files.
     PDecl->setChangedSinceDeserialization(true);
   } else {
-    PDecl = ObjCProtocolDecl::Create(Context, CurContext,
-                                     AtProtoInterfaceLoc,ProtocolName);
+    PDecl = ObjCProtocolDecl::Create(Context, CurContext, ProtocolName,
+                                     ProtocolLoc, AtProtoInterfaceLoc);
     PushOnScopeChains(PDecl, TUScope);
     PDecl->setForwardDecl(false);
   }
@@ -696,8 +696,8 @@ Sema::ActOnForwardProtocolDeclaration(SourceLocation AtProtocolLoc,
     ObjCProtocolDecl *PDecl = LookupProtocol(Ident, IdentList[i].second);
     bool isNew = false;
     if (PDecl == 0) { // Not already seen?
-      PDecl = ObjCProtocolDecl::Create(Context, CurContext,
-                                       IdentList[i].second, Ident);
+      PDecl = ObjCProtocolDecl::Create(Context, CurContext, Ident,
+                                       IdentList[i].second, AtProtocolLoc);
       PushOnScopeChains(PDecl, TUScope, false);
       isNew = true;
     }
@@ -806,8 +806,8 @@ Decl *Sema::ActOnStartCategoryImplementation(
   }
 
   ObjCCategoryImplDecl *CDecl =
-    ObjCCategoryImplDecl::Create(Context, CurContext, AtCatImplLoc, CatName,
-                                 IDecl);
+    ObjCCategoryImplDecl::Create(Context, CurContext, CatName, IDecl,
+                                 ClassLoc, AtCatImplLoc);
   /// Check that class of this category is already completely declared.
   if (!IDecl || IDecl->isForwardDecl()) {
     Diag(ClassLoc, diag::err_undef_interface) << ClassName;
@@ -925,8 +925,8 @@ Decl *Sema::ActOnStartClassImplementation(
   }
 
   ObjCImplementationDecl* IMPDecl =
-    ObjCImplementationDecl::Create(Context, CurContext, AtClassImplLoc,
-                                   IDecl, SDecl);
+    ObjCImplementationDecl::Create(Context, CurContext, IDecl, SDecl,
+                                   ClassLoc, AtClassImplLoc);
 
   if (CheckObjCDeclScope(IMPDecl))
     return IMPDecl;

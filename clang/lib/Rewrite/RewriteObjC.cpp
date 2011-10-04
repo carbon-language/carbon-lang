@@ -3359,7 +3359,7 @@ void RewriteObjC::SynthesizeObjCInternalStruct(ObjCInterfaceDecl *CDecl,
     // This clause is segregated to avoid breaking the common case.
     if (BufferContainsPPDirectives(startBuf, cursor)) {
       SourceLocation L = RCDecl ? CDecl->getSuperClassLoc() :
-                                  CDecl->getClassLoc();
+                                  CDecl->getAtStartLoc();
       const char *endHeader = SM->getCharacterData(L);
       endHeader += Lexer::MeasureTokenLength(L, *SM, LangOpts);
 
