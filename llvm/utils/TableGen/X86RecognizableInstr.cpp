@@ -217,6 +217,7 @@ RecognizableInstr::RecognizableInstr(DisassemblerTables &tables,
   HasVEXPrefix     = Rec->getValueAsBit("hasVEXPrefix");
   HasVEX_4VPrefix  = Rec->getValueAsBit("hasVEX_4VPrefix");
   HasVEX_WPrefix   = Rec->getValueAsBit("hasVEX_WPrefix");
+  IgnoresVEX_L     = Rec->getValueAsBit("ignoresVEX_L");
   HasLockPrefix    = Rec->getValueAsBit("hasLockPrefix");
   IsCodeGenOnly    = Rec->getValueAsBit("isCodeGenOnly");
   
@@ -284,7 +285,9 @@ InstructionContext RecognizableInstr::insnContext() const {
   InstructionContext insnContext;
 
   if (HasVEX_4VPrefix || HasVEXPrefix) {
-    if (HasOpSizePrefix && HasVEX_LPrefix)
+    if (HasVEX_LPrefix && HasVEX_WPrefix)
+      llvm_unreachable("Don't support VEX.L and VEX.W together");
+    else if (HasOpSizePrefix && HasVEX_LPrefix)
       insnContext = IC_VEX_L_OPSIZE;
     else if (HasOpSizePrefix && HasVEX_WPrefix)
       insnContext = IC_VEX_W_OPSIZE;
@@ -957,7 +960,7 @@ void RecognizableInstr::emitDecodePath(DisassemblerTables &tables) const {
                               insnContext(), 
                               currentOpcode, 
                               *filter, 
-                              UID, Is32Bit);
+                              UID, Is32Bit, IgnoresVEX_L);
     
       Spec->modifierType = MODIFIER_OPCODE;
       Spec->modifierBase = opcodeToSet;
@@ -967,14 +970,14 @@ void RecognizableInstr::emitDecodePath(DisassemblerTables &tables) const {
                             insnContext(), 
                             opcodeToSet, 
                             *filter, 
-                            UID, Is32Bit);
+                            UID, Is32Bit, IgnoresVEX_L);
     }
   } else {
     tables.setTableFields(opcodeType,
                           insnContext(),
                           opcodeToSet,
                           *filter,
-                          UID, Is32Bit);
+                          UID, Is32Bit, IgnoresVEX_L);
     
     Spec->modifierType = MODIFIER_NONE;
     Spec->modifierBase = opcodeToSet;

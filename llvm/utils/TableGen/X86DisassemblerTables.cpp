@@ -32,7 +32,8 @@ using namespace X86Disassembler;
 /// @param parent - The class that may be the superset
 /// @return       - True if child is a subset of parent, false otherwise.
 static inline bool inheritsFrom(InstructionContext child,
-                                InstructionContext parent) {
+                                InstructionContext parent,
+                                bool VEX_LIG = false) {
   if (child == parent)
     return true;
   
@@ -68,33 +69,29 @@ static inline bool inheritsFrom(InstructionContext child,
   case IC_64BIT_XD_OPSIZE:
     return false;
   case IC_64BIT_REXW_XD:
-    return false;
   case IC_64BIT_REXW_XS:
-    return false;
   case IC_64BIT_REXW_OPSIZE:
     return false;
   case IC_VEX:
-    return inheritsFrom(child, IC_VEX_W);
+    return inheritsFrom(child, IC_VEX_W) ||
+           (VEX_LIG && inheritsFrom(child, IC_VEX_L));
   case IC_VEX_XS:
-    return inheritsFrom(child, IC_VEX_W_XS);
+    return inheritsFrom(child, IC_VEX_W_XS) ||
+           (VEX_LIG && inheritsFrom(child, IC_VEX_L_XS));
   case IC_VEX_XD:
-    return inheritsFrom(child, IC_VEX_W_XD);
+    return inheritsFrom(child, IC_VEX_W_XD) ||
+           (VEX_LIG && inheritsFrom(child, IC_VEX_L_XD));
   case IC_VEX_OPSIZE:
-    return inheritsFrom(child, IC_VEX_W_OPSIZE);
+    return inheritsFrom(child, IC_VEX_W_OPSIZE) ||
+           (VEX_LIG && inheritsFrom(child, IC_VEX_L_OPSIZE));
   case IC_VEX_W:
-    return false;
   case IC_VEX_W_XS:
-    return false;
   case IC_VEX_W_XD:
-    return false;
   case IC_VEX_W_OPSIZE:
     return false;
   case IC_VEX_L:
-    return false;
   case IC_VEX_L_XS:
-    return false;
   case IC_VEX_L_XD:
-    return false;
   case IC_VEX_L_OPSIZE:
     return false;
   default:
@@ -651,7 +648,8 @@ void DisassemblerTables::setTableFields(OpcodeType          type,
                                         uint8_t             opcode,
                                         const ModRMFilter   &filter,
                                         InstrUID            uid,
-                                        bool                is32bit) {
+                                        bool                is32bit,
+                                        bool                ignoresVEX_L) {
   unsigned index;
   
   ContextDecision &decision = *Tables[type];
@@ -661,7 +659,7 @@ void DisassemblerTables::setTableFields(OpcodeType          type,
       continue;
 
     if (inheritsFrom((InstructionContext)index, 
-                     InstructionSpecifiers[uid].insnContext))
+                     InstructionSpecifiers[uid].insnContext, ignoresVEX_L))
       setTableFields(decision.opcodeDecisions[index].modRMDecisions[opcode], 
                      filter,
                      uid,

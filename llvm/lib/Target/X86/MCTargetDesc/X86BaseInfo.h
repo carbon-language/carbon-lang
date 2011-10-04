@@ -398,13 +398,17 @@ namespace X86II {
     /// field marked when using a f256 memory references.
     VEX_L       = 1U << 4,
 
+    // VEX_LIG - Specifies that this instruction ignores the L-bit in the VEX
+    // prefix. Usually used for scalar instructions. Needed by disassembler.
+    VEX_LIG     = 1U << 5,
+
     /// Has3DNow0F0FOpcode - This flag indicates that the instruction uses the
     /// wacky 0x0F 0x0F prefix for 3DNow! instructions.  The manual documents
     /// this as having a 0x0F prefix with a 0x0F opcode, and each instruction
     /// storing a classifier in the imm8 field.  To simplify our implementation,
     /// we handle this by storeing the classifier in the opcode field and using
     /// this flag to indicate that the encoder should do the wacky 3DNow! thing.
-    Has3DNow0F0FOpcode = 1U << 5
+    Has3DNow0F0FOpcode = 1U << 6
   };
 
   // getBaseOpcodeFor - This function returns the "base" X86 opcode for the

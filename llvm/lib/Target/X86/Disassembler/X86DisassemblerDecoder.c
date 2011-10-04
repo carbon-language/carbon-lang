@@ -767,8 +767,6 @@ static int getID(struct InternalInstruction* insn) {
         break;
       }
     
-      if (insn->mode == MODE_64BIT && wFromVEX3of3(insn->vexPrefix[2]))
-        attrMask |= ATTR_REXW;
       if (lFromVEX3of3(insn->vexPrefix[2]))
         attrMask |= ATTR_VEXL;
     }
@@ -793,23 +791,55 @@ static int getID(struct InternalInstruction* insn) {
     }
   }
   else {
-    if (insn->rexPrefix & 0x08)
-      attrMask |= ATTR_REXW;
-  
     if (isPrefixAtLocation(insn, 0x66, insn->necessaryPrefixLocation))
       attrMask |= ATTR_OPSIZE;
     else if (isPrefixAtLocation(insn, 0xf3, insn->necessaryPrefixLocation))
       attrMask |= ATTR_XS;
     else if (isPrefixAtLocation(insn, 0xf2, insn->necessaryPrefixLocation))
       attrMask |= ATTR_XD;
-    
   }
 
+  if (insn->rexPrefix & 0x08)
+    attrMask |= ATTR_REXW;
+  
   if (getIDWithAttrMask(&instructionID, insn, attrMask))
     return -1;
   
   /* The following clauses compensate for limitations of the tables. */
   
+  if ((attrMask & ATTR_VEXL) && (attrMask & ATTR_REXW)) {
+    /*
+     * Some VEX instructions ignore the L-bit, but use the W-bit. Normally L-bit
+     * has precedence since there are no L-bit with W-bit entries in the tables.
+     * So if the L-bit isn't significant we should use the W-bit instead.
+     */
+
+    const struct InstructionSpecifier *spec;
+    uint16_t instructionIDWithWBit;
+    const struct InstructionSpecifier *specWithWBit;
+
+    spec = specifierForUID(instructionID);
+
+    if (getIDWithAttrMask(&instructionIDWithWBit,
+                          insn,
+                          (attrMask & (~ATTR_VEXL)) | ATTR_REXW)) {
+      insn->instructionID = instructionID;
+      insn->spec = spec;
+      return 0;
+    }
+
+    specWithWBit = specifierForUID(instructionIDWithWBit);
+
+    if (instructionID != instructionIDWithWBit) {
+      insn->instructionID = instructionIDWithWBit;
+      insn->spec = specWithWBit;
+    } else {
+      insn->instructionID = instructionID;
+      insn->spec = spec;
+    }
+    return 0;
+  }
+
   if ((attrMask & ATTR_XD) && (attrMask & ATTR_REXW)) {
     /*
      * Although for SSE instructions it is usually necessary to treat REX.W+F2

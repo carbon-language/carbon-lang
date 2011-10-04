@@ -60,6 +60,8 @@ private:
   bool HasVEX_WPrefix;
   /// Inferred from the operands; indicates whether the L bit in the VEX prefix is set
   bool HasVEX_LPrefix;
+  // The ignoreVEX_L field from the record
+  bool IgnoresVEX_L;
   /// The hasLockPrefix field from the record
   bool HasLockPrefix;
   /// The isCodeGenOnly filed from the record

@@ -261,12 +261,14 @@ public:
   ///                       correspond to the desired instruction.
   /// @param uid          - The unique ID of the instruction.
   /// @param is32bit      - Instructon is only 32-bit
+  /// @param ignoresVEX_L - Instruction ignores VEX.L
   void setTableFields(OpcodeType type,
                       InstructionContext insnContext,
                       uint8_t opcode,
                       const ModRMFilter &filter,
                       InstrUID uid,
-                      bool is32bit);  
+                      bool is32bit,
+                      bool ignoresVEX_L);  
   
   /// specForUID - Returns the instruction specifier for a given unique
   ///   instruction ID.  Used when resolving collisions.
