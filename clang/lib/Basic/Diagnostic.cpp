@@ -175,6 +175,13 @@ void DiagnosticsEngine::setDiagnosticMapping(diag::kind Diag, diag::Mapping Map,
   DiagnosticMappingInfo MappingInfo = DiagnosticMappingInfo::Make(
     Map, /*IsUser=*/true, isPragma);
 
+  // If this is a pragma mapping, then set the diagnostic mapping flags so that
+  // we override command line options.
+  if (isPragma) {
+    MappingInfo.setNoWarningAsError(true);
+    MappingInfo.setNoErrorAsFatal(true);
+  }
+
   // Common case; setting all the diagnostics of a group in one place.
   if (Loc.isInvalid() || Loc == LastStateChangePos) {
     GetCurDiagState()->setMappingInfo(Diag, MappingInfo);
