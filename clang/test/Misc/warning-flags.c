@@ -17,7 +17,7 @@ This test serves two purposes:
 
 The list of warnings below should NEVER grow.  It should gradually shrink to 0.
 
-CHECK: Warnings without flags (305):
+CHECK: Warnings without flags (304):
 CHECK-NEXT:   backslash_newline_space
 CHECK-NEXT:   charize_microsoft_ext
 CHECK-NEXT:   ext_anon_param_requires_type_specifier
@@ -174,7 +174,6 @@ CHECK-NEXT:   warn_drv_assuming_mfloat_abi_is
 CHECK-NEXT:   warn_drv_clang_unsupported
 CHECK-NEXT:   warn_drv_conflicting_deployment_targets
 CHECK-NEXT:   warn_drv_input_file_unused
-CHECK-NEXT:   warn_drv_no_debug_w_integrated_as
 CHECK-NEXT:   warn_drv_not_using_clang_arch
 CHECK-NEXT:   warn_drv_not_using_clang_cpp
 CHECK-NEXT:   warn_drv_not_using_clang_cxx
