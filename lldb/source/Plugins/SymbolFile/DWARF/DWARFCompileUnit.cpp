@@ -675,7 +675,7 @@ DWARFCompileUnit::Index (const uint32_t cu_idx,
         bool has_address = false;
         bool has_location = false;
         bool is_global_or_static_variable = false;
-
+        
         dw_offset_t specification_die_offset = DW_INVALID_OFFSET;
         const size_t num_attributes = die.GetAttributes(m_dwarf2Data, this, fixed_form_sizes, attributes);
         if (num_attributes > 0)
@@ -786,21 +786,20 @@ DWARFCompileUnit::Index (const uint32_t cu_idx,
                     if (ObjCLanguageRuntime::IsPossibleObjCMethodName(name))
                     {
                         ConstString objc_class_name;
-                        ConstString objc_method_name;
-                        ConstString objc_base_name;
+                        ConstString objc_selector_name;
+                        ConstString objc_fullname_no_category_name;
                         if (ObjCLanguageRuntime::ParseMethodName (name,
                                                                   &objc_class_name,
-                                                                  &objc_method_name,
-                                                                  &objc_base_name))
+                                                                  &objc_selector_name,
+                                                                  &objc_fullname_no_category_name))
                         {
                             objc_class_selectors.Insert(objc_class_name, die.GetOffset());
                             
-                            func_selectors.Insert (objc_method_name, die.GetOffset());
-                            
-                            if (!objc_base_name.IsEmpty())
+                            func_selectors.Insert (objc_selector_name, die.GetOffset());
+                            func_fullnames.Insert (ConstString(name), die.GetOffset());
+                            if (objc_fullname_no_category_name)
                             {
-                                func_basenames.Insert (objc_base_name, die.GetOffset());
-                                func_fullnames.Insert (objc_base_name, die.GetOffset());
+                                func_fullnames.Insert (objc_fullname_no_category_name, die.GetOffset());
                             }
                         }
                     }

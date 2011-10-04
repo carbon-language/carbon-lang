@@ -257,6 +257,7 @@ ObjectFileMachO::GetAddressClass (lldb::addr_t file_addr)
                     case eSectionTypeDWARFDebugStr:         return eAddressClassDebug;
                     case eSectionTypeDWARFAppleNames:       return eAddressClassDebug;
                     case eSectionTypeDWARFAppleTypes:       return eAddressClassDebug;
+                    case eSectionTypeDWARFAppleNamespaces:  return eAddressClassDebug;
                     case eSectionTypeEHFrame:               return eAddressClassRuntime;
                     case eSectionTypeOther:                 return eAddressClassUnknown;
                     }
@@ -509,6 +510,7 @@ ObjectFileMachO::ParseSections ()
                         static ConstString g_sect_name_dwarf_debug_str ("__debug_str");
                         static ConstString g_sect_name_dwarf_apple_names ("__apple_names");
                         static ConstString g_sect_name_dwarf_apple_types ("__apple_types");
+                        static ConstString g_sect_name_dwarf_apple_namespaces ("__apple_namespac");
                         static ConstString g_sect_name_eh_frame ("__eh_frame");
                         static ConstString g_sect_name_DATA ("__DATA");
                         static ConstString g_sect_name_TEXT ("__TEXT");
@@ -541,6 +543,8 @@ ObjectFileMachO::ParseSections ()
                             sect_type = eSectionTypeDWARFAppleNames;
                         else if (section_name == g_sect_name_dwarf_apple_types)
                             sect_type = eSectionTypeDWARFAppleTypes;
+                        else if (section_name == g_sect_name_dwarf_apple_namespaces)
+                            sect_type = eSectionTypeDWARFAppleNamespaces;
                         else if (section_name == g_sect_name_objc_selrefs)
                             sect_type = eSectionTypeDataCStringPointers;
                         else if (section_name == g_sect_name_objc_msgrefs)

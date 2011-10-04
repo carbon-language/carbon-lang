@@ -981,7 +981,8 @@ SymbolContextList::Dump(Stream *s, Target *target) const
     collection::const_iterator pos, end = m_symbol_contexts.end();
     for (pos = m_symbol_contexts.begin(); pos != end; ++pos)
     {
-        pos->Dump(s, target);
+        //pos->Dump(s, target);
+        pos->GetDescription(s, eDescriptionLevelVerbose, target);
     }
     s->IndentLess();
 }

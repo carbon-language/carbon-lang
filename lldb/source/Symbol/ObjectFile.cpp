@@ -223,6 +223,7 @@ ObjectFile::GetAddressClass (addr_t file_addr)
                     case eSectionTypeDWARFDebugStr:         return eAddressClassDebug;
                     case eSectionTypeDWARFAppleNames:       return eAddressClassDebug;
                     case eSectionTypeDWARFAppleTypes:       return eAddressClassDebug;
+                    case eSectionTypeDWARFAppleNamespaces:  return eAddressClassDebug;
                     case eSectionTypeEHFrame:               return eAddressClassRuntime;
                     case eSectionTypeOther:                 return eAddressClassUnknown;
                     }

@@ -104,12 +104,12 @@ ObjCLanguageRuntime::GetByteOffsetForIvar (ClangASTType &parent_qual_type, const
 bool
 ObjCLanguageRuntime::ParseMethodName (const char *name, 
                                       ConstString *class_name, 
-                                      ConstString *method_name, 
-                                      ConstString *base_name)
+                                      ConstString *selector_name, 
+                                      ConstString *name_sans_category)
 {
     if (class_name) { class_name->Clear(); }
-    if (method_name) { method_name->Clear(); }
-    if (base_name) { base_name->Clear(); }
+    if (selector_name) { selector_name->Clear(); }
+    if (name_sans_category) { name_sans_category->Clear(); }
     
     if (IsPossibleObjCMethodName (name))
     {
@@ -122,35 +122,35 @@ ObjCLanguageRuntime::ParseMethodName (const char *name,
         //      "]" suffix
         if (name_len >= 6 && name[name_len - 1] == ']')
         {
-            const char *method_name_ptr;
-            method_name_ptr = strchr (name, ' ');
-            if (method_name_ptr)
+            const char *selector_name_ptr;
+            selector_name_ptr = strchr (name, ' ');
+            if (selector_name_ptr)
             {
                 if (class_name)
-                    class_name->SetCStringWithLength (name + 2, method_name_ptr - name - 2);
+                    class_name->SetCStringWithLength (name + 2, selector_name_ptr - name - 2);
                 
                 // Skip the space
-                ++method_name_ptr;
+                ++selector_name_ptr;
                 // Extract the objective C basename and add it to the
                 // accelerator tables
-                size_t method_name_len = name_len - (method_name_ptr - name) - 1;
-                if (method_name)
-                    method_name->SetCStringWithLength (method_name_ptr, method_name_len);                                
+                size_t selector_name_len = name_len - (selector_name_ptr - name) - 1;
+                if (selector_name)
+                    selector_name->SetCStringWithLength (selector_name_ptr, selector_name_len);                                
                 
                 // Also see if this is a "category" on our class.  If so strip off the category name,
                 // and add the class name without it to the basename table. 
                 
-                if (base_name)
+                if (name_sans_category)
                 {
-                    const char *first_paren = (char *) memchr (name, '(', method_name_ptr - name);
+                    const char *first_paren = (char *) memchr (name, '(', selector_name_ptr - name);
                     if (first_paren)
                     {
-                        const char *second_paren = (char *) memchr (first_paren, ')', method_name_ptr - first_paren);
+                        const char *second_paren = (char *) memchr (first_paren, ')', selector_name_ptr - first_paren);
                         if (second_paren)
                         {
                             std::string buffer (name, first_paren - name);
                             buffer.append (second_paren + 1);
-                            base_name->SetCString (buffer.c_str());
+                            name_sans_category->SetCString (buffer.c_str());
 
                         }
                     }

@@ -166,6 +166,8 @@ public:
     const lldb_private::DataExtractor&      get_debug_str_data ();
     const lldb_private::DataExtractor&      get_apple_names_data ();
     const lldb_private::DataExtractor&      get_apple_types_data ();
+    const lldb_private::DataExtractor&      get_apple_namespaces_data ();
+
 
     DWARFDebugAbbrev*       DebugAbbrev();
     const DWARFDebugAbbrev* DebugAbbrev() const;
@@ -326,11 +328,18 @@ protected:
                                 const NameToDIE &name_to_die,
                                 lldb_private::SymbolContextList& sc_list);
 
+    void                    FindFunctions (
+                                const lldb_private::RegularExpression &regex, 
+                                const DWARFMappedHash::MemoryTable &memory_table,
+                                lldb_private::SymbolContextList& sc_list);
+
     lldb::TypeSP            FindDefinitionTypeForDIE (
                                 DWARFCompileUnit* cu, 
                                 const DWARFDebugInfoEntry *die, 
                                 const lldb_private::ConstString &type_name);
     
+    void                    ParseFunctions (const DIEArray &die_offsets,
+                                            lldb_private::SymbolContextList& sc_list);
     lldb::TypeSP            GetTypeForDIE (DWARFCompileUnit *cu, 
                                            const DWARFDebugInfoEntry* die);
 
@@ -388,22 +397,24 @@ protected:
     lldb_private::DataExtractor     m_data_debug_str;
     lldb_private::DataExtractor     m_data_apple_names;
     lldb_private::DataExtractor     m_data_apple_types;
+    lldb_private::DataExtractor     m_data_apple_namespaces;
 
     // The auto_ptr items below are generated on demand if and when someone accesses
     // them through a non const version of this class.
     std::auto_ptr<DWARFDebugAbbrev>     m_abbr;
     std::auto_ptr<DWARFDebugInfo>       m_info;
     std::auto_ptr<DWARFDebugLine>       m_line;
-    HashedNameToDIE::MemoryTable        m_apple_names;
-    HashedNameToDIE::MemoryTable        m_apple_types;
+    std::auto_ptr<DWARFMappedHash::MemoryTable> m_apple_names_ap;
+    std::auto_ptr<DWARFMappedHash::MemoryTable> m_apple_types_ap;
+    std::auto_ptr<DWARFMappedHash::MemoryTable> m_apple_namespaces_ap;
     NameToDIE                           m_function_basename_index;  // All concrete functions
     NameToDIE                           m_function_fullname_index;  // All concrete functions
     NameToDIE                           m_function_method_index;    // All inlined functions
     NameToDIE                           m_function_selector_index;  // All method names for functions of classes
     NameToDIE                           m_objc_class_selectors_index; // Given a class name, find all selectors for the class
-    NameToDIE                           m_global_index;                 // Global and static variables
-    NameToDIE                           m_type_index;                  // All type DIE offsets
-    NameToDIE                           m_namespace_index;              // All type DIE offsets
+    NameToDIE                           m_global_index;             // Global and static variables
+    NameToDIE                           m_type_index;               // All type DIE offsets
+    NameToDIE                           m_namespace_index;          // All type DIE offsets
     bool m_indexed:1,
          m_is_external_ast_source:1;
 

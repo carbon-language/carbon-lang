@@ -477,6 +477,7 @@ namespace lldb {
         eSectionTypeDWARFDebugStr,
         eSectionTypeDWARFAppleNames,
         eSectionTypeDWARFAppleTypes,
+        eSectionTypeDWARFAppleNamespaces,
         eSectionTypeEHFrame,
         eSectionTypeOther
         

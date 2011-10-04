@@ -152,6 +152,7 @@ HashedNameToDIE::MemoryTable::Find (const char *name_cstr, DIEArray &die_ofsets)
             const uint32_t name_hash = dl_new_hash (name_cstr);
             
             const uint32_t bucket_count = m_header.bucket_count;
+            const uint32_t hashes_count = m_header.bucket_count;
             // Find the correct bucket for the using the hash value
             const uint32_t bucket_idx = name_hash % bucket_count;
             
@@ -172,6 +173,9 @@ HashedNameToDIE::MemoryTable::Find (const char *name_cstr, DIEArray &die_ofsets)
                 uint32_t hash;
                 while (((hash = m_data.GetU32 (&hash_offset)) % bucket_count) == bucket_idx)
                 {
+                    if (hash_idx >= hashes_count)
+                        break;
+                    
                     if (hash == name_hash)
                     {
                         // The hash matches, but we still need to verify that the
@@ -232,6 +236,7 @@ HashedNameToDIE::MemoryTable::Dump (Stream &s)
         uint32_t hash_collisions = 0;
         uint32_t hash_idx_offset = GetOffsetOfBucketEntry (0);
         const uint32_t bucket_count = m_header.bucket_count;
+        const uint32_t hashes_count = m_header.hashes_count;
         for (uint32_t bucket_idx=0; bucket_idx<bucket_count; ++bucket_idx)
         {
             uint32_t hash_idx = m_data.GetU32 (&hash_idx_offset);
@@ -247,6 +252,9 @@ HashedNameToDIE::MemoryTable::Dump (Stream &s)
                 uint32_t hash;
                 while (((hash = m_data.GetU32 (&hash_offset)) % bucket_count) == bucket_idx)
                 {
+                    if (hash_idx >= hashes_count)
+                        break;
+                    
                     uint32_t hash_data_offset = m_data.GetU32 (&data_offset);
                     s.Printf("  hash[%u] = 0x%8.8x\n", hash_idx, hash);
 
