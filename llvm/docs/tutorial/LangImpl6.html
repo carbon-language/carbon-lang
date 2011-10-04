@@ -815,6 +815,12 @@ if/then/else and for expressions..  To build this example, use:
 </pre>
 </div>
 
+<p>On some platforms, you will need to specify -rdynamic or -Wl,--export-dynamic
+when linking.  This ensures that symbols defined in the main executable are
+exported to the dynamic linker and so are available for symbol resolution at
+run time.  This is not needed if you compile your support code into a shared
+library, although doing that will cause problems on Windows.</p>
+
 <p>Here is the code:</p>
 
 <div class="doc_code">
