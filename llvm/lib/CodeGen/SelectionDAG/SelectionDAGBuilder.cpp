@@ -5250,6 +5250,8 @@ void SelectionDAGBuilder::LowerCallTo(ImmutableCallSite CS, SDValue Callee,
     unsigned CallSiteIndex = MMI.getCurrentCallSite();
     if (CallSiteIndex) {
       MMI.setCallSiteBeginLabel(BeginLabel, CallSiteIndex);
+      LPadToCallSiteMap[LandingPad] = CallSiteIndex;
+
       // Now that the call site is handled, stop tracking it.
       MMI.setCurrentCallSite(0);
     }

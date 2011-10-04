@@ -320,6 +320,9 @@ public:
   /// GFI - Garbage collection metadata for the function.
   GCFunctionInfo *GFI;
 
+  /// LPadToBeginLabelMap - Map a landing pad to the begin label.
+  DenseMap<MachineBasicBlock*, unsigned> LPadToCallSiteMap;
+
   /// HasTailCall - This is set to true if a call in the current
   /// block has been translated as a tail call. In this case,
   /// no subsequent DAG nodes should be created.
