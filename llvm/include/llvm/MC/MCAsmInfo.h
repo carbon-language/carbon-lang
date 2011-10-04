@@ -177,6 +177,18 @@ namespace llvm {
     const char *Data32bitsDirective;         // Defaults to "\t.long\t"
     const char *Data64bitsDirective;         // Defaults to "\t.quad\t"
 
+    /// [Data|Code]Begin - These magic labels are used to marked a region as
+    /// data or code, and are used to provide additional information for
+    /// correct disassembly on targets that like to mix data and code within
+    /// a segment.  These labels will be implicitly suffixed by the streamer
+    /// to give them unique names.
+    const char *DataBegin;                   // Defaults to "$d."
+    const char *CodeBegin;                   // Defaults to "$a."
+    const char *JT8Begin;                    // Defaults to "$a."
+    const char *JT16Begin;                   // Defaults to "$a."
+    const char *JT32Begin;                   // Defaults to "$a."
+    bool SupportsDataRegions;
+
     /// GPRel32Directive - if non-null, a directive that is used to emit a word
     /// which should be relocated as a 32-bit GP-relative offset, e.g. .gpword
     /// on Mips or .gprel32 on Alpha.
@@ -370,6 +382,14 @@ namespace llvm {
       return AS == 0 ? Data64bitsDirective : getDataASDirective(64, AS);
     }
     const char *getGPRel32Directive() const { return GPRel32Directive; }
+
+    /// [Code|Data]Begin label name accessors.
+    const char *getCodeBeginLabelName() const { return CodeBegin; }
+    const char *getDataBeginLabelName() const { return DataBegin; }
+    const char *getJumpTable8BeginLabelName() const { return JT8Begin; }
+    const char *getJumpTable16BeginLabelName() const { return JT16Begin; }
+    const char *getJumpTable32BeginLabelName() const { return JT32Begin; }
+    bool getSupportsDataRegions() const { return SupportsDataRegions; }
 
     /// getNonexecutableStackSection - Targets can implement this method to
     /// specify a section to switch to if the translation unit doesn't have any

@@ -57,6 +57,12 @@ MCAsmInfo::MCAsmInfo() {
   Data16bitsDirective = "\t.short\t";
   Data32bitsDirective = "\t.long\t";
   Data64bitsDirective = "\t.quad\t";
+  DataBegin = "$d.";
+  CodeBegin = "$a.";
+  JT8Begin = "$d.";
+  JT16Begin = "$d.";
+  JT32Begin = "$d.";
+  SupportsDataRegions = true;
   SunStyleELFSectionSwitchSyntax = false;
   UsesELFSectionDirectiveForBSS = false;
   AlignDirective = "\t.align\t";

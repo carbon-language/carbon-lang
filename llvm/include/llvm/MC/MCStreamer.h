@@ -71,7 +71,22 @@ namespace llvm {
     SmallVector<std::pair<const MCSection *,
                 const MCSection *>, 4> SectionStack;
 
+    unsigned UniqueCodeBeginSuffix;
+    unsigned UniqueDataBeginSuffix;
+
   protected:
+    /// Indicator of whether the previous data-or-code indicator was for
+    /// code or not.  Used to determine when we need to emit a new indicator.
+    enum DataType {
+      Data,
+      Code,
+      JumpTable8,
+      JumpTable16,
+      JumpTable32
+    };
+    DataType RegionIndicator;
+
+
     MCStreamer(MCContext &Ctx);
 
     const MCExpr *BuildSymbolDiff(MCContext &Context, const MCSymbol *A,
@@ -223,6 +238,41 @@ namespace llvm {
     /// emitted as a label once, and symbols emitted as a label should never be
     /// used in an assignment.
     virtual void EmitLabel(MCSymbol *Symbol);
+
+    /// EmitDataRegion - Emit a label that marks the beginning of a data
+    /// region.
+    /// On ELF targets, this corresponds to an assembler statement such as:
+    ///   $d.1:
+    virtual void EmitDataRegion();
+
+    /// EmitJumpTable8Region - Emit a label that marks the beginning of a
+    /// jump table composed of 8-bit offsets.
+    /// On ELF targets, this corresponds to an assembler statement such as:
+    ///   $d.1:
+    virtual void EmitJumpTable8Region();
+
+    /// EmitJumpTable16Region - Emit a label that marks the beginning of a
+    /// jump table composed of 16-bit offsets.
+    /// On ELF targets, this corresponds to an assembler statement such as:
+    ///   $d.1:
+    virtual void EmitJumpTable16Region();
+
+    /// EmitJumpTable32Region - Emit a label that marks the beginning of a
+    /// jump table composed of 32-bit offsets.
+    /// On ELF targets, this corresponds to an assembler statement such as:
+    ///   $d.1:
+    virtual void EmitJumpTable32Region();
+
+    /// EmitCodeRegion - Emit a label that marks the beginning of a code
+    /// region.
+    /// On ELF targets, this corresponds to an assembler statement such as:
+    ///   $a.1:
+    virtual void EmitCodeRegion();
+
+    /// ForceCodeRegion - Forcibly sets the current region mode to code.  Used
+    /// at function entry points.
+    void ForceCodeRegion() { RegionIndicator = Code; }
+
 
     virtual void EmitEHSymAttributes(const MCSymbol *Symbol,
                                      MCSymbol *EHSymbol);

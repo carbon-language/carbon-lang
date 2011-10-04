@@ -290,6 +290,8 @@ void ARMAsmPrinter::EmitDwarfRegOp(const MachineLocation &MLoc) const {
 }
 
 void ARMAsmPrinter::EmitFunctionEntryLabel() {
+  OutStreamer.ForceCodeRegion();
+
   if (AFI->isThumbFunction()) {
     OutStreamer.EmitAssemblerFlag(MCAF_Code16);
     OutStreamer.EmitThumbFunc(CurrentFnSym);
@@ -905,6 +907,9 @@ void ARMAsmPrinter::EmitJumpTable(const MachineInstr *MI) {
   const MachineOperand &MO2 = MI->getOperand(OpNum+1); // Unique Id
   unsigned JTI = MO1.getIndex();
 
+  // Tag the jump table appropriately for precise disassembly.
+  OutStreamer.EmitJumpTable32Region();
+
   // Emit a label for the jump table.
   MCSymbol *JTISymbol = GetARMJTIPICJumpTableLabel2(JTI, MO2.getImm());
   OutStreamer.EmitLabel(JTISymbol);
@@ -947,6 +952,14 @@ void ARMAsmPrinter::EmitJump2Table(const MachineInstr *MI) {
   unsigned JTI = MO1.getIndex();
 
   // Emit a label for the jump table.
+  if (MI->getOpcode() == ARM::t2TBB_JT) {
+    OutStreamer.EmitJumpTable8Region();
+  } else if (MI->getOpcode() == ARM::t2TBH_JT) {
+    OutStreamer.EmitJumpTable16Region();
+  } else {
+    OutStreamer.EmitJumpTable32Region();
+  }
+
   MCSymbol *JTISymbol = GetARMJTIPICJumpTableLabel2(JTI, MO2.getImm());
   OutStreamer.EmitLabel(JTISymbol);
 
@@ -1165,6 +1178,9 @@ extern cl::opt<bool> EnableARMEHABI;
 #include "ARMGenMCPseudoLowering.inc"
 
 void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
+  if (MI->getOpcode() != ARM::CONSTPOOL_ENTRY)
+    OutStreamer.EmitCodeRegion();
+
   // Emit unwinding stuff for frame-related instructions
   if (EnableARMEHABI && MI->getFlag(MachineInstr::FrameSetup))
     EmitUnwindingInstruction(MI);
@@ -1470,6 +1486,10 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     unsigned CPIdx   = (unsigned)MI->getOperand(1).getIndex();
 
     EmitAlignment(2);
+
+    // Mark the constant pool entry as data if we're not already in a data
+    // region.
+    OutStreamer.EmitDataRegion();
     OutStreamer.EmitLabel(GetCPISymbol(LabelId));
 
     const MachineConstantPoolEntry &MCPE = MCP->getConstants()[CPIdx];
@@ -1477,7 +1497,6 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
       EmitMachineConstantPoolValue(MCPE.Val.MachineCPVal);
     else
       EmitGlobalConstant(MCPE.Val.ConstVal);
-
     return;
   }
   case ARM::t2BR_JT: {
