@@ -1576,61 +1576,7 @@ public:
     SmallVector<StringRef, 4> CandidateLibDirs;
     // The compatible GCC triples for this particular architecture.
     SmallVector<StringRef, 10> CandidateTriples;
-    if (HostArch == llvm::Triple::arm || HostArch == llvm::Triple::thumb) {
-      static const char *const LibDirs[] = { "/lib/gcc" };
-      static const char *const Triples[] = { "arm-linux-gnueabi" };
-      CandidateLibDirs.append(LibDirs, LibDirs + llvm::array_lengthof(LibDirs));
-      CandidateTriples.append(Triples, Triples + llvm::array_lengthof(Triples));
-    } else if (HostArch == llvm::Triple::x86_64) {
-      static const char *const LibDirs[] = {
-        "/lib64/gcc", "/lib/gcc", "/lib64", "/lib"
-      };
-      static const char *const Triples[] = {
-        "x86_64-linux-gnu",
-        "x86_64-unknown-linux-gnu",
-        "x86_64-pc-linux-gnu",
-        "x86_64-redhat-linux6E",
-        "x86_64-redhat-linux",
-        "x86_64-suse-linux",
-        "x86_64-manbo-linux-gnu",
-        "x86_64-linux-gnu",
-        "x86_64-slackware-linux"
-      };
-      CandidateLibDirs.append(LibDirs, LibDirs + llvm::array_lengthof(LibDirs));
-      CandidateTriples.append(Triples, Triples + llvm::array_lengthof(Triples));
-    } else if (HostArch == llvm::Triple::x86) {
-      static const char *const LibDirs[] = {
-        "/lib32/gcc", "/lib/gcc", "/lib32", "/lib"
-      };
-      static const char *const Triples[] = {
-        "i686-linux-gnu",
-        "i386-linux-gnu",
-        "i686-pc-linux-gnu",
-        "i486-linux-gnu",
-        "i686-redhat-linux",
-        "i586-suse-linux",
-        "i486-slackware-linux"
-      };
-      CandidateLibDirs.append(LibDirs, LibDirs + llvm::array_lengthof(LibDirs));
-      CandidateTriples.append(Triples, Triples + llvm::array_lengthof(Triples));
-    } else if (HostArch == llvm::Triple::ppc) {
-      static const char *const LibDirs[] = {
-        "/lib32/gcc", "/lib/gcc", "/lib32", "/lib"
-      };
-      static const char *const Triples[] = {
-        "powerpc-linux-gnu",
-        "powerpc-unknown-linux-gnu"
-      };
-      CandidateLibDirs.append(LibDirs, LibDirs + llvm::array_lengthof(LibDirs));
-      CandidateTriples.append(Triples, Triples + llvm::array_lengthof(Triples));
-    } else if (HostArch == llvm::Triple::ppc64) {
-      static const char *const LibDirs[] = {
-        "/lib64/gcc", "/lib/gcc", "/lib64", "/lib"
-      };
-      static const char *const Triples[] = { "powerpc64-unknown-linux-gnu" };
-      CandidateLibDirs.append(LibDirs, LibDirs + llvm::array_lengthof(LibDirs));
-      CandidateTriples.append(Triples, Triples + llvm::array_lengthof(Triples));
-    }
+    CollectLibDirsAndTriples(HostArch, CandidateLibDirs, CandidateTriples);
 
     // Always include the default host triple as the final fallback if no
     // specific triple is detected.
@@ -1710,6 +1656,73 @@ public:
 
   /// \brief Get the detected GCC parent lib path.
   const std::string &getParentLibPath() const { return GccParentLibPath; }
+
+private:
+  static void CollectLibDirsAndTriples(llvm::Triple::ArchType HostArch,
+                                       SmallVectorImpl<StringRef> &LibDirs,
+                                       SmallVectorImpl<StringRef> &Triples) {
+    if (HostArch == llvm::Triple::arm || HostArch == llvm::Triple::thumb) {
+      static const char *const ARMLibDirs[] = { "/lib/gcc" };
+      static const char *const ARMTriples[] = { "arm-linux-gnueabi" };
+      LibDirs.append(ARMLibDirs, ARMLibDirs + llvm::array_lengthof(ARMLibDirs));
+      Triples.append(ARMTriples, ARMTriples + llvm::array_lengthof(ARMTriples));
+    } else if (HostArch == llvm::Triple::x86_64) {
+      static const char *const X86_64LibDirs[] = {
+        "/lib64/gcc", "/lib/gcc", "/lib64", "/lib"
+      };
+      static const char *const X86_64Triples[] = {
+        "x86_64-linux-gnu",
+        "x86_64-unknown-linux-gnu",
+        "x86_64-pc-linux-gnu",
+        "x86_64-redhat-linux6E",
+        "x86_64-redhat-linux",
+        "x86_64-suse-linux",
+        "x86_64-manbo-linux-gnu",
+        "x86_64-linux-gnu",
+        "x86_64-slackware-linux"
+      };
+      LibDirs.append(X86_64LibDirs,
+                     X86_64LibDirs + llvm::array_lengthof(X86_64LibDirs));
+      Triples.append(X86_64Triples,
+                     X86_64Triples + llvm::array_lengthof(X86_64Triples));
+    } else if (HostArch == llvm::Triple::x86) {
+      static const char *const X86LibDirs[] = {
+        "/lib32/gcc", "/lib/gcc", "/lib32", "/lib"
+      };
+      static const char *const X86Triples[] = {
+        "i686-linux-gnu",
+        "i386-linux-gnu",
+        "i686-pc-linux-gnu",
+        "i486-linux-gnu",
+        "i686-redhat-linux",
+        "i586-suse-linux",
+        "i486-slackware-linux"
+      };
+      LibDirs.append(X86LibDirs, X86LibDirs + llvm::array_lengthof(X86LibDirs));
+      Triples.append(X86Triples, X86Triples + llvm::array_lengthof(X86Triples));
+    } else if (HostArch == llvm::Triple::ppc) {
+      static const char *const PPCLibDirs[] = {
+        "/lib32/gcc", "/lib/gcc", "/lib32", "/lib"
+      };
+      static const char *const PPCTriples[] = {
+        "powerpc-linux-gnu",
+        "powerpc-unknown-linux-gnu"
+      };
+      LibDirs.append(PPCLibDirs, PPCLibDirs + llvm::array_lengthof(PPCLibDirs));
+      Triples.append(PPCTriples, PPCTriples + llvm::array_lengthof(PPCTriples));
+    } else if (HostArch == llvm::Triple::ppc64) {
+      static const char *const PPC64LibDirs[] = {
+        "/lib64/gcc", "/lib/gcc", "/lib64", "/lib"
+      };
+      static const char *const PPC64Triples[] = {
+        "powerpc64-unknown-linux-gnu"
+      };
+      LibDirs.append(PPC64LibDirs,
+                     PPC64LibDirs + llvm::array_lengthof(PPC64LibDirs));
+      Triples.append(PPC64Triples,
+                     PPC64Triples + llvm::array_lengthof(PPC64Triples));
+    }
+  }
 };
 }
 
