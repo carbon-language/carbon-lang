@@ -76,8 +76,7 @@ int main(int argc, const char **argv, char * const *envp) {
   llvm::IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
   DiagnosticsEngine Diags(DiagID, DiagClient);
   Driver TheDriver(Path.str(), llvm::sys::getHostTriple(),
-                   "a.out", /*IsProduction=*/false, /*CXXIsProduction=*/false,
-                   Diags);
+                   "a.out", /*IsProduction=*/false, Diags);
   TheDriver.setTitle("clang interpreter");
 
   // FIXME: This is a hack to try to force the driver to do something we can

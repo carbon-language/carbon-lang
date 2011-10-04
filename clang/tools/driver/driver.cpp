@@ -379,18 +379,11 @@ int main(int argc_, const char **argv_) {
 
 #ifdef CLANG_IS_PRODUCTION
   const bool IsProduction = true;
-#  ifdef CLANGXX_IS_PRODUCTION
-  const bool CXXIsProduction = true;
-#  else
-  const bool CXXIsProduction = false;
-#  endif
 #else
   const bool IsProduction = false;
-  const bool CXXIsProduction = false;
 #endif
   Driver TheDriver(Path.str(), llvm::sys::getHostTriple(),
-                   "a.out", IsProduction, CXXIsProduction,
-                   Diags);
+                   "a.out", IsProduction, Diags);
 
   // Attempt to find the original path used to invoke the driver, to determine
   // the installed path. We do this manually, because we want to support that
