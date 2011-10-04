@@ -329,16 +329,22 @@ public:
     return LandingPads;
   }
 
-  /// setCallSiteBeginLabel - Map the begin label for a call site
+  /// setCallSiteBeginLabel - Map the begin label for a call site.
   void setCallSiteBeginLabel(MCSymbol *BeginLabel, unsigned Site) {
     CallSiteMap[BeginLabel] = Site;
   }
 
-  /// getCallSiteBeginLabel - Get the call site number for a begin label
+  /// getCallSiteBeginLabel - Get the call site number for a begin label.
   unsigned getCallSiteBeginLabel(MCSymbol *BeginLabel) {
-    assert(CallSiteMap.count(BeginLabel) &&
+    assert(hasCallSiteBeginLabel(BeginLabel) &&
            "Missing call site number for EH_LABEL!");
     return CallSiteMap[BeginLabel];
+  }
+
+  /// hasCallSiteBeginLabel - Return true if the begin label has a call site
+  /// number associated with it.
+  bool hasCallSiteBeginLabel(MCSymbol *BeginLabel) {
+    return CallSiteMap[BeginLabel] != 0;
   }
 
   /// setCurrentCallSite - Set the call site currently being processed.
