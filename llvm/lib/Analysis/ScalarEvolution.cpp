@@ -1812,6 +1812,38 @@ const SCEV *ScalarEvolution::getAddExpr(SmallVectorImpl<const SCEV *> &Ops,
   return S;
 }
 
+static uint64_t umul_ov(uint64_t i, uint64_t j, bool &Overflow) {
+  uint64_t k = i*j;
+  if (j > 1 && k / j != i) Overflow = true;
+  return k;
+}
+
+/// Compute the result of "n choose k", the binomial coefficient.  If an
+/// intermediate computation overflows, Overflow will be set and the return will
+/// be garbage. Overflow is not cleared on absense of overflow.
+static uint64_t Choose(uint64_t n, uint64_t k, bool &Overflow) {
+  // We use the multiplicative formula:
+  //     n(n-1)(n-2)...(n-(k-1)) / k(k-1)(k-2)...1 .
+  // At each iteration, we take the n-th term of the numeral and divide by the
+  // (k-n)th term of the denominator.  This division will always produce an
+  // integral result, and helps reduce the chance of overflow in the
+  // intermediate computations. However, we can still overflow even when the
+  // final result would fit.
+
+  if (n == 0 || n == k) return 1;
+  if (k > n) return 0;
+
+  if (k > n/2)
+    k = n-k;
+
+  uint64_t r = 1;
+  for (uint64_t i = 1; i <= k; ++i) {
+    r = umul_ov(r, n-(i-1), Overflow);
+    r /= i;
+  }
+  return r;
+}
+
 /// getMulExpr - Get a canonical multiply expression, or something simpler if
 /// possible.
 const SCEV *ScalarEvolution::getMulExpr(SmallVectorImpl<const SCEV *> &Ops,
@@ -1987,53 +2019,61 @@ const SCEV *ScalarEvolution::getMulExpr(SmallVectorImpl<const SCEV *> &Ops,
     for (unsigned OtherIdx = Idx+1;
          OtherIdx < Ops.size() && isa<SCEVAddRecExpr>(Ops[OtherIdx]);
          ++OtherIdx) {
-      bool Retry = false;
       if (AddRecLoop == cast<SCEVAddRecExpr>(Ops[OtherIdx])->getLoop()) {
-        // {A,+,B}<L> * {C,+,D}<L>  -->  {A*C,+,A*D + B*C + B*D,+,2*B*D}<L>
+        // {A1,+,A2,+,...,+,An}<L> * {B1,+,B2,+,...,+,Bn}<L>
+        // = {x=1 in [ sum y=x..2x [ sum z=max(y-x, y-n)..min(x,n) [
+        //       choose(x, 2x)*choose(2x-y, x-z)*A_{y-z}*B_z
+        //   ]]],+,...up to x=2n}.
+        // Note that the arguments to choose() are always integers with values
+        // known at compile time, never SCEV objects.
         //
-        // {A,+,B} * {C,+,D} = A+It*B * C+It*D = A*C + (A*D + B*C)*It + B*D*It^2
-        // Given an equation of the form x + y*It + z*It^2 (above), we want to
-        // express it in terms of {X,+,Y,+,Z}.
-        // {X,+,Y,+,Z} = X + Y*It + Z*(It^2 - It)/2.
-        // Rearranging, X = x, Y = y+z, Z = 2z.
-        //
-        // x = A*C, y = (A*D + B*C), z = B*D.
-        // Therefore X = A*C, Y = A*D + B*C + B*D and Z = 2*B*D.
+        // The implementation avoids pointless extra computations when the two
+        // addrec's are of different length (mathematically, it's equivalent to
+        // an infinite stream of zeros on the right).
+        bool OpsModified = false;
         for (; OtherIdx != Ops.size() && isa<SCEVAddRecExpr>(Ops[OtherIdx]);
              ++OtherIdx)
           if (const SCEVAddRecExpr *OtherAddRec =
                 dyn_cast<SCEVAddRecExpr>(Ops[OtherIdx]))
             if (OtherAddRec->getLoop() == AddRecLoop) {
-              const SCEV *A = AddRec->getStart();
-              const SCEV *B = AddRec->getStepRecurrence(*this);
-              const SCEV *C = OtherAddRec->getStart();
-              const SCEV *D = OtherAddRec->getStepRecurrence(*this);
-              const SCEV *NewStart = getMulExpr(A, C);
-              const SCEV *BD = getMulExpr(B, D);
-              const SCEV *NewStep = getAddExpr(getMulExpr(A, D),
-                                               getMulExpr(B, C), BD);
-              const SCEV *NewSecondOrderStep =
-                  getMulExpr(BD, getConstant(BD->getType(), 2));
-
-              // This can happen when AddRec or OtherAddRec have >3 operands.
-              // TODO: support these add-recs.
-              if (isLoopInvariant(NewStart, AddRecLoop) &&
-                  isLoopInvariant(NewStep, AddRecLoop) &&
-                  isLoopInvariant(NewSecondOrderStep, AddRecLoop)) {
-                SmallVector<const SCEV *, 3> AddRecOps;
-                AddRecOps.push_back(NewStart);
-                AddRecOps.push_back(NewStep);
-                AddRecOps.push_back(NewSecondOrderStep);
+              bool Overflow = false;
+              Type *Ty = AddRec->getType();
+              bool LargerThan64Bits = getTypeSizeInBits(Ty) > 64;
+              SmallVector<const SCEV*, 7> AddRecOps;
+              for (int x = 0, xe = AddRec->getNumOperands() +
+                     OtherAddRec->getNumOperands() - 1;
+                   x != xe && !Overflow; ++x) {
+                const SCEV *Term = getConstant(Ty, 0);
+                for (int y = x, ye = 2*x+1; y != ye && !Overflow; ++y) {
+                  uint64_t Coeff1 = Choose(x, 2*x - y, Overflow);
+                  for (int z = std::max(y-x, y-(int)AddRec->getNumOperands()+1),
+                         ze = std::min(x+1, (int)OtherAddRec->getNumOperands());
+                       z < ze && !Overflow; ++z) {
+                    uint64_t Coeff2 = Choose(2*x - y, x-z, Overflow);
+                    uint64_t Coeff;
+                    if (LargerThan64Bits)
+                      Coeff = umul_ov(Coeff1, Coeff2, Overflow);
+                    else
+                      Coeff = Coeff1*Coeff2;
+                    const SCEV *CoeffTerm = getConstant(Ty, Coeff);
+                    const SCEV *Term1 = AddRec->getOperand(y-z);
+                    const SCEV *Term2 = OtherAddRec->getOperand(z);
+                    Term = getAddExpr(Term, getMulExpr(CoeffTerm, Term1,Term2));
+                  }
+                }
+                AddRecOps.push_back(Term);
+              }
+              if (!Overflow) {
                 const SCEV *NewAddRec = getAddRecExpr(AddRecOps,
                                                       AddRec->getLoop(),
                                                       SCEV::FlagAnyWrap);
                 if (Ops.size() == 2) return NewAddRec;
                 Ops[Idx] = AddRec = cast<SCEVAddRecExpr>(NewAddRec);
                 Ops.erase(Ops.begin() + OtherIdx); --OtherIdx;
-                Retry = true;
+                OpsModified = true;
               }
             }
-        if (Retry)
+        if (OpsModified)
           return getMulExpr(Ops);
       }
     }

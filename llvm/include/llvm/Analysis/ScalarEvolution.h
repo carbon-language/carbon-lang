@@ -588,6 +588,14 @@ namespace llvm {
       Ops.push_back(RHS);
       return getMulExpr(Ops, Flags);
     }
+    const SCEV *getMulExpr(const SCEV *Op0, const SCEV *Op1, const SCEV *Op2,
+                           SCEV::NoWrapFlags Flags = SCEV::FlagAnyWrap) {
+      SmallVector<const SCEV *, 3> Ops;
+      Ops.push_back(Op0);
+      Ops.push_back(Op1);
+      Ops.push_back(Op2);
+      return getMulExpr(Ops, Flags);
+    }
     const SCEV *getUDivExpr(const SCEV *LHS, const SCEV *RHS);
     const SCEV *getAddRecExpr(const SCEV *Start, const SCEV *Step,
                               const Loop *L, SCEV::NoWrapFlags Flags);
