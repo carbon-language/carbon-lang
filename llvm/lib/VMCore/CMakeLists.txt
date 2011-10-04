@@ -8,10 +8,11 @@ add_llvm_library(LLVMCore
   ConstantFold.cpp
   Constants.cpp
   Core.cpp
-  DebugLoc.cpp
   DebugInfoProbe.cpp
+  DebugLoc.cpp
   Dominators.cpp
   Function.cpp
+  GCOV.cpp
   GVMaterializer.cpp
   Globals.cpp
   IRBuilder.cpp
