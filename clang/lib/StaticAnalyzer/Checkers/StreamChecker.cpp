@@ -222,7 +222,7 @@ void StreamChecker::Tmpfile(CheckerContext &C, const CallExpr *CE) const {
 
 void StreamChecker::OpenFileAux(CheckerContext &C, const CallExpr *CE) const {
   const ProgramState *state = C.getState();
-  unsigned Count = C.getNodeBuilder().getCurrentBlockCount();
+  unsigned Count = C.getCurrentBlockCount();
   SValBuilder &svalBuilder = C.getSValBuilder();
   DefinedSVal RetVal =
     cast<DefinedSVal>(svalBuilder.getConjuredSymbolVal(0, CE, Count));

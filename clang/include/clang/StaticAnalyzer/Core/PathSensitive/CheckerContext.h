@@ -83,6 +83,10 @@ public:
   const ProgramState *getState() { return ST ? ST : Pred->getState(); }
   const Stmt *getStmt() const { return statement; }
 
+  /// \brief Returns the number of times the current block has been visited
+  /// along the analyzed path.
+  unsigned getCurrentBlockCount() {return B.getCurrentBlockCount();}
+
   ASTContext &getASTContext() {
     return Eng.getContext();
   }
