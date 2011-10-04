@@ -2542,7 +2542,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 saved_CXXFLAGS=$CXXFLAGS
-CXXFLAGS="$CXXFLAGS $isl_inc"
+CXXFLAGS="$CXXFLAGS $gmp_inc $isl_inc"
 
   ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'

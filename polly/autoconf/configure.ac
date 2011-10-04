@@ -82,7 +82,7 @@ find_lib_and_headers([isl], [isl/config.h], [isl], [required])
 
 dnl Find cloog
 saved_CXXFLAGS=$CXXFLAGS
-CXXFLAGS="$CXXFLAGS $isl_inc"
+CXXFLAGS="$CXXFLAGS $gmp_inc $isl_inc"
 find_lib_and_headers([cloog], [cloog/isl/cloog.h], [cloog-isl], [required])
 CXXFLAGS=$saved_CXXFLAGS
 
