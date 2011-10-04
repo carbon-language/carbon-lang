@@ -238,7 +238,7 @@ Sema::HandlePropertyInClassExtension(Scope *S,
   if (PIDecl->getType().getCanonicalType() 
       != PDecl->getType().getCanonicalType()) {
     Diag(AtLoc, 
-         diag::error_type_mismatch_continuation_class) << PDecl->getType();
+         diag::warn_type_mismatch_continuation_class) << PDecl->getType();
     Diag(PIDecl->getLocation(), diag::note_property_declare);
   }
     
