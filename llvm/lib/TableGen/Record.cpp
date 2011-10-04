@@ -700,12 +700,20 @@ Init *OpInit::resolveBitReference(Record &R, const RecordVal *IRV,
 
 Init *OpInit::resolveListElementReference(Record &R, const RecordVal *IRV,
                                           unsigned Elt) const {
-  Init *Folded = Fold(&R, 0);
+  Init *Resolved = resolveReferences(R, IRV);
+  OpInit *OResolved = dynamic_cast<OpInit *>(Resolved);
+  if (OResolved) {
+    Resolved = OResolved->Fold(&R, 0);
+  }
 
-  if (Folded != this) {
-    TypedInit *Typed = dynamic_cast<TypedInit *>(Folded);
+  if (Resolved != this) {
+    TypedInit *Typed = dynamic_cast<TypedInit *>(Resolved); 
+    assert(Typed && "Expected typed init for list reference");
     if (Typed) {
-      return Typed->resolveListElementReference(R, IRV, Elt);
+      Init *New = Typed->resolveListElementReference(R, IRV, Elt);
+      if (New)
+        return New;
+      return VarListElementInit::get(Typed, Elt);
     }
   }
 
@@ -1332,7 +1340,7 @@ Init *VarInit::resolveListElementReference(Record &R,
   assert(RV && "Reference to a non-existent variable?");
   ListInit *LI = dynamic_cast<ListInit*>(RV->getValue());
   if (!LI) {
-    VarInit *VI = dynamic_cast<VarInit*>(RV->getValue());
+    TypedInit *VI = dynamic_cast<TypedInit*>(RV->getValue());
     assert(VI && "Invalid list element!");
     return VarListElementInit::get(VI, Elt);
   }
