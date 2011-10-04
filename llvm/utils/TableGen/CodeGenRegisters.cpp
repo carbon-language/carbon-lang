@@ -757,11 +757,11 @@ void CodeGenRegBank::computeInferredRegisterClasses() {
 
     // Compute the set of registers supporting each SubRegIndex.
     SubReg2SetMap SRSets;
-    for (CodeGenRegister::Set::iterator RI = RC.getMembers().begin(),
+    for (CodeGenRegister::Set::const_iterator RI = RC.getMembers().begin(),
          RE = RC.getMembers().end(); RI != RE; ++RI) {
-      CodeGenRegister::SubRegMap SRM = (*RI)->getSubRegs();
-      for (CodeGenRegister::SubRegMap::iterator I = SRM.begin(), E = SRM.end();
-           I != E; ++I)
+      const CodeGenRegister::SubRegMap &SRM = (*RI)->getSubRegs();
+      for (CodeGenRegister::SubRegMap::const_iterator I = SRM.begin(),
+           E = SRM.end(); I != E; ++I)
         SRSets[I->first].insert(*RI);
     }
 
