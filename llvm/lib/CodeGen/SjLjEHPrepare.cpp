@@ -638,7 +638,7 @@ bool SjLjEHPass::insertSjLjEHSupport(Function &F) {
                      Type::getInt8PtrTy(F.getContext()), "",
                      EntryBB->getTerminator());
   Value *DispatchVal = CallInst::Create(BuiltinSetjmpFn, SetjmpArg,
-                                        "dispatch",
+                                        "",
                                         EntryBB->getTerminator());
 
   // Add a call to dispatch_setup after the setjmp call. This is expanded to any
@@ -780,9 +780,8 @@ setupFunctionContext(Function &F, ArrayRef<LandingPadInst*> LPads) {
 
   // LSDA address
   Idxs[1] = ConstantInt::get(Int32Ty, 4);
-  Value *LSDAFieldPtr =
-    GetElementPtrInst::Create(FuncCtx, Idxs, "lsda_gep",
-                              EntryBB->getTerminator());
+  Value *LSDAFieldPtr = GetElementPtrInst::Create(FuncCtx, Idxs, "lsda_gep",
+                                                  EntryBB->getTerminator());
   Value *LSDA = CallInst::Create(LSDAAddrFn, "lsda_addr",
                                  EntryBB->getTerminator());
   new StoreInst(LSDA, LSDAFieldPtr, true, EntryBB->getTerminator());
@@ -819,15 +818,13 @@ bool SjLjEHPass::setupEntryBlockAndCallSites(Function &F) {
 
   // Get a reference to the jump buffer.
   Idxs[1] = ConstantInt::get(Int32Ty, 5);
-  Value *JBufPtr =
-    GetElementPtrInst::Create(FuncCtx, Idxs, "jbuf_gep",
-                              EntryBB->getTerminator());
+  Value *JBufPtr = GetElementPtrInst::Create(FuncCtx, Idxs, "jbuf_gep",
+                                             EntryBB->getTerminator());
 
   // Save the frame pointer.
   Idxs[1] = ConstantInt::get(Int32Ty, 0);
-  Value *FramePtr =
-    GetElementPtrInst::Create(JBufPtr, Idxs, "jbuf_fp_gep",
-                              EntryBB->getTerminator());
+  Value *FramePtr = GetElementPtrInst::Create(JBufPtr, Idxs, "jbuf_fp_gep",
+                                              EntryBB->getTerminator());
 
   Value *Val = CallInst::Create(FrameAddrFn,
                                 ConstantInt::get(Int32Ty, 0),
@@ -837,26 +834,23 @@ bool SjLjEHPass::setupEntryBlockAndCallSites(Function &F) {
 
   // Save the stack pointer.
   Idxs[1] = ConstantInt::get(Int32Ty, 2);
-  Value *StackPtr =
-    GetElementPtrInst::Create(JBufPtr, Idxs, "jbuf_sp_gep",
-                              EntryBB->getTerminator());
+  Value *StackPtr = GetElementPtrInst::Create(JBufPtr, Idxs, "jbuf_sp_gep",
+                                              EntryBB->getTerminator());
 
   Val = CallInst::Create(StackAddrFn, "sp", EntryBB->getTerminator());
   new StoreInst(Val, StackPtr, true, EntryBB->getTerminator());
 
   // Call the setjmp instrinsic. It fills in the rest of the jmpbuf.
-  Value *SetjmpArg =
-    CastInst::Create(Instruction::BitCast, JBufPtr,
-                     Type::getInt8PtrTy(F.getContext()), "",
-                     EntryBB->getTerminator());
+  Value *SetjmpArg = CastInst::Create(Instruction::BitCast, JBufPtr,
+                                      Type::getInt8PtrTy(F.getContext()), "",
+                                      EntryBB->getTerminator());
   CallInst::Create(BuiltinSetjmpFn, SetjmpArg, "", EntryBB->getTerminator());
 
   // Store a pointer to the function context so that the back-end will know
   // where to look for it.
-  Value *FuncCtxArg =
-    CastInst::Create(Instruction::BitCast, FuncCtx,
-                     Type::getInt8PtrTy(F.getContext()), "",
-                     EntryBB->getTerminator());
+  Value *FuncCtxArg = CastInst::Create(Instruction::BitCast, FuncCtx,
+                                       Type::getInt8PtrTy(F.getContext()), "",
+                                       EntryBB->getTerminator());
   CallInst::Create(FuncCtxFn, FuncCtxArg, "", EntryBB->getTerminator());
 
   // At this point, we are all set up, update the invoke instructions to mark
@@ -877,7 +871,7 @@ bool SjLjEHPass::setupEntryBlockAndCallSites(Function &F) {
   // created for this function and any unexpected exceptions thrown will go
   // directly to the caller's context, which is what we want anyway, so no need
   // to do anything here.
-  for (Function::iterator BB = F.begin(), E = F.end(); ++BB != E;) {
+  for (Function::iterator BB = F.begin(), E = F.end(); ++BB != E;)
     for (BasicBlock::iterator I = BB->begin(), end = BB->end(); I != end; ++I)
       if (CallInst *CI = dyn_cast<CallInst>(I)) {
         if (!CI->doesNotThrow())
@@ -885,7 +879,6 @@ bool SjLjEHPass::setupEntryBlockAndCallSites(Function &F) {
       } else if (ResumeInst *RI = dyn_cast<ResumeInst>(I)) {
         insertCallSiteStore(RI, -1, CallSite);
       }
-  }
 
   // Register the function context and make sure it's known to not throw
   CallInst *Register = CallInst::Create(RegisterFn, FuncCtx, "",
