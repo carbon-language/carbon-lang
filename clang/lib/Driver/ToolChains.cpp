@@ -1639,6 +1639,7 @@ public:
     // Compute the set of prefixes for our search.
     SmallVector<std::string, 8> Prefixes(D.PrefixDirs.begin(),
                                          D.PrefixDirs.end());
+    Prefixes.push_back(D.SysRoot);
     Prefixes.push_back(D.SysRoot + "/usr");
 
     // Loop over the various components which exist and select the best GCC
