@@ -502,7 +502,8 @@ def warn_atomic_property_rule : Warning<
   "with a user defined setter/getter">;
 def warn_ownin_getter_rule : Warning<
   "property's synthesized getter follows Cocoa naming"
-  " convention for returning 'owned' objects">;
+  " convention for returning 'owned' objects">,
+  InGroup<DiagGroup<"objc-property-matches-cocoa-ownership-rule">>;
 def warn_property_getter_owning_mismatch : Warning<
   "property declared as returning non-retained objects"
   "; getter returning retained objects">;

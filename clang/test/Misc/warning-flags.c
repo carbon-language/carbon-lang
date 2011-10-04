@@ -17,7 +17,7 @@ This test serves two purposes:
 
 The list of warnings below should NEVER grow.  It should gradually shrink to 0.
 
-CHECK: Warnings without flags (303):
+CHECK: Warnings without flags (302):
 CHECK-NEXT:   backslash_newline_space
 CHECK-NEXT:   charize_microsoft_ext
 CHECK-NEXT:   ext_anon_param_requires_type_specifier
@@ -238,7 +238,6 @@ CHECK-NEXT:   warn_objc_protocol_qualifier_missing_id
 CHECK-NEXT:   warn_octal_escape_too_large
 CHECK-NEXT:   warn_odr_tag_type_inconsistent
 CHECK-NEXT:   warn_on_superclass_use
-CHECK-NEXT:   warn_ownin_getter_rule
 CHECK-NEXT:   warn_param_default_argument_redefinition
 CHECK-NEXT:   warn_parens_disambiguated_as_function_decl
 CHECK-NEXT:   warn_partial_specs_not_deducible
