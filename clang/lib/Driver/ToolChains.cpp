@@ -1490,6 +1490,42 @@ namespace {
 /// information about it. It starts from the host information provided to the
 /// Driver, and has logic for fuzzing that where appropriate.
 class GCCInstallationDetector {
+  /// \brief Struct to store and manipulate GCC versions.
+  ///
+  /// We rely on assumptions about the form and structure of GCC version
+  /// numbers: they consist of at most three '.'-separated components, and each
+  /// component is a non-negative integer.
+  struct GCCVersion {
+    unsigned Major, Minor, Patch;
+
+    static GCCVersion Parse(StringRef VersionText) {
+      const GCCVersion BadVersion = {};
+      std::pair<StringRef, StringRef> First = VersionText.split('.');
+      std::pair<StringRef, StringRef> Second = First.second.split('.');
+
+      GCCVersion GoodVersion = {};
+      if (First.first.getAsInteger(10, GoodVersion.Major))
+        return BadVersion;
+      if (Second.first.getAsInteger(10, GoodVersion.Minor))
+        return BadVersion;
+      if (!Second.first.empty())
+        if (Second.first.getAsInteger(10, GoodVersion.Patch))
+          return BadVersion;
+      return GoodVersion;
+    }
+
+    bool operator<(const GCCVersion &RHS) const {
+      if (Major < RHS.Major) return true;
+      if (Major > RHS.Major) return false;
+      if (Minor < RHS.Minor) return true;
+      if (Minor > RHS.Minor) return false;
+      return Patch < RHS.Patch;
+    }
+    bool operator>(const GCCVersion &RHS) const { return RHS < *this; }
+    bool operator<=(const GCCVersion &RHS) const { return !(*this > RHS); }
+    bool operator>=(const GCCVersion &RHS) const { return !(*this < RHS); }
+  };
+
   bool IsValid;
   std::string GccTriple;
 
@@ -1600,63 +1636,62 @@ public:
     // specific triple is detected.
     CandidateTriples.push_back(D.DefaultHostTriple);
 
-    // Loop over the various components which exist and select the best GCC
-    // installation available. GCC installs are ranked based on age, triple
-    // accuracy, and architecture specificity in that order. The inverted walk
-    // requires testing the filesystem more times than is ideal, but shouldn't
-    // matter in practice as this is once on startup.
-    // FIXME: Instead of this, we should walk from the root down through each
-    // layer, and if it is "better" than prior installations found, use it.
-    static const char* GccVersions[] = {
-      "4.6.1", "4.6.0", "4.6",
-      "4.5.3", "4.5.2", "4.5.1", "4.5",
-      "4.4.6", "4.4.5", "4.4.4", "4.4.3", "4.4",
-      "4.3.4", "4.3.3", "4.3.2", "4.3",
-      "4.2.4", "4.2.3", "4.2.2", "4.2.1", "4.2",
-      "4.1.1"};
+    // Compute the set of prefixes for our search.
     SmallVector<std::string, 8> Prefixes(D.PrefixDirs.begin(),
                                          D.PrefixDirs.end());
     Prefixes.push_back(D.SysRoot + "/usr");
-    IsValid = true;
-    for (unsigned i = 0; i < llvm::array_lengthof(GccVersions); ++i) {
-      for (unsigned j = 0, je = CandidateTriples.size(); j < je; ++j) {
-        GccTriple = CandidateTriples[j];
-        for (unsigned k = 0, ke = CandidateLibDirs.size(); k < ke; ++k) {
-          const std::string LibDir = CandidateLibDirs[k].str() + "/";
-          for (unsigned l = 0, le = Prefixes.size(); l < le; ++l) {
-            if (!PathExists(Prefixes[l]))
-              continue;
 
-            const std::string TripleDir = Prefixes[l] + LibDir + GccTriple;
-            GccInstallPath = TripleDir + "/" + GccVersions[i];
-            GccParentLibPath = GccInstallPath + "/../../..";
-            if (PathExists(GccInstallPath + "/crtbegin.o"))
-              return;
+    // Loop over the various components which exist and select the best GCC
+    // installation available. GCC installs are ranked by version number.
+    static const GCCVersion MinVersion = { 4, 1, 1 };
+    GCCVersion BestVersion = {};
+    for (unsigned i = 0, ie = Prefixes.size(); i < ie; ++i) {
+      if (!PathExists(Prefixes[i]))
+        continue;
+      for (unsigned j = 0, je = CandidateLibDirs.size(); j < je; ++j) {
+        const std::string LibDir = Prefixes[i] + CandidateLibDirs[j].str();
+        if (!PathExists(LibDir))
+          continue;
+        for (unsigned k = 0, ke = CandidateTriples.size(); k < ke; ++k) {
+          StringRef CandidateTriple = CandidateTriples[k];
+          const std::string TripleDir = LibDir + "/" + CandidateTriple.str();
+          if (!PathExists(TripleDir))
+            continue;
 
-            // Try an install directory with an extra triple in it.
-            GccInstallPath =
-              TripleDir + "/gcc/" + GccTriple + "/" + GccVersions[i];
-            GccParentLibPath = GccInstallPath + "/../../../..";
-            if (PathExists(GccInstallPath + "/crtbegin.o"))
-              return;
+          // There are various different suffixes on the triple directory we
+          // check for. We also record what is necessary to walk from each back
+          // up to the lib directory.
+          const std::string Suffixes[] = { "", "/gcc/" + CandidateTriple.str(),
+                                           "/gcc/i686-linux-gnu" };
+          const std::string InstallSuffixes[] = { "/../../..", "/../../../..",
+                                                  "/../../../.." };
+          const unsigned NumSuffixes = (llvm::array_lengthof(Suffixes) -
+                                        (CandidateTriple != "i386-linux-gnu"));
+          for (unsigned l = 0; l < NumSuffixes; ++l) {
+            StringRef Suffix = Suffixes[l];
+            llvm::error_code EC;
+            for (llvm::sys::fs::directory_iterator LI(TripleDir + Suffix, EC),
+                                                   LE;
+                 !EC && LI != LE; LI = LI.increment(EC)) {
+              StringRef VersionText = llvm::sys::path::filename(LI->path());
+              GCCVersion CandidateVersion = GCCVersion::Parse(VersionText);
+              if (CandidateVersion < MinVersion)
+                continue;
+              if (CandidateVersion <= BestVersion)
+                continue;
+              if (!PathExists(LI->path() + "/crtbegin.o"))
+                continue;
 
-            if (GccTriple != "i386-linux-gnu")
-              continue;
-
-            // Ubuntu 11.04 uses an unusual path.
-            GccInstallPath =
-              TripleDir + "/gcc/i686-linux-gnu/" + GccVersions[i];
-            GccParentLibPath = GccInstallPath + "/../../../..";
-            if (PathExists(GccInstallPath + "/crtbegin.o"))
-              return;
+              BestVersion = CandidateVersion;
+              GccTriple = CandidateTriple.str();
+              GccInstallPath = LI->path();
+              GccParentLibPath = GccInstallPath + InstallSuffixes[l];
+              IsValid = true;
+            }
           }
         }
       }
     }
-    GccTriple.clear();
-    GccInstallPath.clear();
-    GccParentLibPath.clear();
-    IsValid = false;
   }
 
   /// \brief Check whether we detected a valid GCC install.
