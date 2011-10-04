@@ -24,10 +24,6 @@
 #include <cstdlib>
 #include <cstring>
 
-#ifdef _MSC_VER
-#define snprintf _snprintf
-#endif
-
 namespace llvm {
 typedef std::map<std::string, std::string> TGPPEnvironment;
 
@@ -170,9 +166,10 @@ public:
     if (Kind == tgpprange_list)
       return Vals.at(i);
     else {
-      char buf[32];
-      snprintf(buf, sizeof(buf), "%ld", From + (long int)i);
-      return std::string(buf);
+      std::string Result;
+      raw_string_ostream Tmp(Result);
+      Tmp << (From + (long int)i);
+      return Tmp.str();
     }
   }
 
