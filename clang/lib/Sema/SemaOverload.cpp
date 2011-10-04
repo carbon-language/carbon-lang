@@ -3324,6 +3324,16 @@ FindConversionForRefInit(Sema &S, ImplicitConversionSequence &ICS,
       bool DerivedToBase = false;
       bool ObjCConversion = false;
       bool ObjCLifetimeConversion = false;
+      
+      // If we are initializing an rvalue reference, don't permit conversion
+      // functions that return lvalues.
+      if (!ConvTemplate && DeclType->isRValueReferenceType()) {
+        const ReferenceType *RefType
+          = Conv->getConversionType()->getAs<LValueReferenceType>();
+        if (RefType && !RefType->getPointeeType()->isFunctionType())
+          continue;
+      }
+      
       if (!ConvTemplate &&
           S.CompareReferenceRelationship(
             DeclLoc,
@@ -3643,6 +3653,19 @@ TryReferenceInit(Sema &S, Expr *&Init, QualType DeclType,
     ICS.Standard.BindsImplicitObjectArgumentWithoutRefQualifier = false;
     ICS.Standard.ObjCLifetimeConversionBinding = false;
   } else if (ICS.isUserDefined()) {
+    // Don't allow rvalue references to bind to lvalues.
+    if (DeclType->isRValueReferenceType()) {
+      if (const ReferenceType *RefType
+            = ICS.UserDefined.ConversionFunction->getResultType()
+                ->getAs<LValueReferenceType>()) {
+        if (!RefType->getPointeeType()->isFunctionType()) {
+          ICS.setBad(BadConversionSequence::lvalue_ref_to_rvalue, Init, 
+                     DeclType);
+          return ICS;
+        }
+      }
+    }
+    
     ICS.UserDefined.After.ReferenceBinding = true;
     ICS.UserDefined.After.IsLvalueReference = !isRValRef;
     ICS.UserDefined.After.BindsToFunctionLvalue = T2->isFunctionType();
