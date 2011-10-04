@@ -39,6 +39,7 @@
 #include "llvm/Support/Program.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/system_error.h"
+#include "llvm/Support/CrashRecoveryContext.h"
 #include "llvm/Config/config.h"
 using namespace clang;
 
@@ -655,6 +656,20 @@ static InputKind getSourceInputKindFromOptions(const LangOptions &LangOpts) {
   return LangOpts.CPlusPlus? IK_CXX : IK_C;
 }
 
+namespace {
+  struct CompileModuleData {
+    CompilerInstance &Instance;
+    GeneratePCHAction &CreateModuleAction;
+  };
+}
+
+/// \brief Helper function that executes the module-generating action under
+/// a crash recovery context.
+static void doCompileModule(void *UserData) {
+  CompileModuleData &Data = *reinterpret_cast<CompileModuleData *>(UserData);
+  Data.Instance.ExecuteAction(Data.CreateModuleAction);
+}
+
 /// \brief Compile a module file for the given module name with the given
 /// umbrella header, using the options provided by the importing compiler
 /// instance.
@@ -703,9 +718,12 @@ static void compileModule(CompilerInstance &ImportingInstance,
   // Construct a module-generating action.
   GeneratePCHAction CreateModuleAction(true);
   
-  // Execute the action to actually build the module in-place.
-  // FIXME: Need to synchronize when multiple processes do this.
-  Instance.ExecuteAction(CreateModuleAction);
+  // Execute the action to actually build the module in-place. Use a separate
+  // thread so that we get a stack large enough.
+  const unsigned ThreadStackSize = 8 << 20;
+  llvm::CrashRecoveryContext CRC;
+  CompileModuleData Data = { Instance, CreateModuleAction };
+  CRC.RunSafelyOnThread(&doCompileModule, &Data, ThreadStackSize);
 } 
 
 ModuleKey CompilerInstance::loadModule(SourceLocation ImportLoc, 
