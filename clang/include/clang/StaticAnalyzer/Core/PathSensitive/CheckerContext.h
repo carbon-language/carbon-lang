@@ -121,8 +121,9 @@ public:
   /// Allows checkers to generate a chain of nodes.
   ExplodedNode *generateNode(const ProgramState *state,
                              ExplodedNode *pred,
+                             const ProgramPointTag *tag = 0,
                              bool autoTransition = true) {
-    ExplodedNode *N = generateNodeImpl(state, false, pred);
+    ExplodedNode *N = generateNodeImpl(state, false, pred, tag);
     if (N && autoTransition)
       addTransition(N);
     return N;
