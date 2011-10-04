@@ -2318,7 +2318,11 @@ void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
   // Ignore explicit -force_cpusubtype_ALL option.
   (void) Args.hasArg(options::OPT_force__cpusubtype__ALL);
 
-  // FIXME: Add -g support, once we have it.
+  // FIXME: Add -g support, once we have it.  For now, emit a warning indicating
+  // the integrated assembler doesn't support debug info.
+  if (Args.hasArg(options::OPT_g_Group)) {
+    getToolChain().getDriver().Diag(diag::warn_drv_no_debug_w_integrated_as);
+  }
 
   // FIXME: Add -static support, once we have it.
 
