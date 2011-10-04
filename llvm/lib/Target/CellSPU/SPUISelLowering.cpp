@@ -423,12 +423,14 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
 
     // Custom lower build_vector, constant pool spills, insert and
     // extract vector elements:
-    setOperationAction(ISD::BUILD_VECTOR, VT, Custom);
-    setOperationAction(ISD::ConstantPool, VT, Custom);
-    setOperationAction(ISD::SCALAR_TO_VECTOR, VT, Custom);
-    setOperationAction(ISD::EXTRACT_VECTOR_ELT, VT, Custom);
-    setOperationAction(ISD::INSERT_VECTOR_ELT, VT, Custom);
-    setOperationAction(ISD::VECTOR_SHUFFLE, VT, Custom);
+    if (isTypeLegal(VT)) {
+      setOperationAction(ISD::BUILD_VECTOR, VT, Custom);
+      setOperationAction(ISD::ConstantPool, VT, Custom);
+      setOperationAction(ISD::SCALAR_TO_VECTOR, VT, Custom);
+      setOperationAction(ISD::EXTRACT_VECTOR_ELT, VT, Custom);
+      setOperationAction(ISD::INSERT_VECTOR_ELT, VT, Custom);
+      setOperationAction(ISD::VECTOR_SHUFFLE, VT, Custom);
+    }
   }
 
   setOperationAction(ISD::AND, MVT::v16i8, Custom);
