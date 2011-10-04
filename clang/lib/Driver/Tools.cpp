@@ -2318,21 +2318,7 @@ void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
   // Ignore explicit -force_cpusubtype_ALL option.
   (void) Args.hasArg(options::OPT_force__cpusubtype__ALL);
 
-  // Determine the original source input.
-  const Action *SourceAction = &JA;
-  while (SourceAction->getKind() != Action::InputClass) {
-    assert(!SourceAction->getInputs().empty() && "unexpected root action!");
-    SourceAction = SourceAction->getInputs()[0];
-  }
-
-  // FIXME: Add -g support, once we have it.  For now, emit a warning indicating
-  // the integrated assembler doesn't support debug info.
-  if (SourceAction->getType() == types::TY_Asm ||
-      SourceAction->getType() == types::TY_PP_Asm) {
-    if (Args.hasArg(options::OPT_g_Group)) {
-      getToolChain().getDriver().Diag(diag::warn_drv_no_debug_w_integrated_as);
-    }
-  }
+  // FIXME: Add -g support, once we have it.
 
   // FIXME: Add -static support, once we have it.
 
