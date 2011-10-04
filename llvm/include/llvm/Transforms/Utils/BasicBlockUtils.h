@@ -109,7 +109,8 @@ bool isCriticalEdge(const TerminatorInst *TI, unsigned SuccNum,
 /// to.
 ///
 BasicBlock *SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum,
-                              Pass *P = 0, bool MergeIdenticalEdges = false);
+                              Pass *P = 0, bool MergeIdenticalEdges = false,
+                              bool DontDeleteUselessPHIs = false);
 
 inline BasicBlock *SplitCriticalEdge(BasicBlock *BB, succ_iterator SI,
                                      Pass *P = 0) {
@@ -136,13 +137,15 @@ inline bool SplitCriticalEdge(BasicBlock *Succ, pred_iterator PI, Pass *P = 0) {
 /// described above.
 inline BasicBlock *SplitCriticalEdge(BasicBlock *Src, BasicBlock *Dst,
                                      Pass *P = 0,
-                                     bool MergeIdenticalEdges = false) {
+                                     bool MergeIdenticalEdges = false,
+                                     bool DontDeleteUselessPHIs = false) {
   TerminatorInst *TI = Src->getTerminator();
   unsigned i = 0;
   while (1) {
     assert(i != TI->getNumSuccessors() && "Edge doesn't exist!");
     if (TI->getSuccessor(i) == Dst)
-      return SplitCriticalEdge(TI, i, P, MergeIdenticalEdges);
+      return SplitCriticalEdge(TI, i, P, MergeIdenticalEdges,
+                               DontDeleteUselessPHIs);
     ++i;
   }
 }

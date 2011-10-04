@@ -167,7 +167,8 @@ static void CreatePHIsForSplitLoopExit(SmallVectorImpl<BasicBlock *> &Preds,
 /// to.
 ///
 BasicBlock *llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum,
-                                    Pass *P, bool MergeIdenticalEdges) {
+                                    Pass *P, bool MergeIdenticalEdges,
+                                    bool DontDeleteUselessPhis) {
   if (!isCriticalEdge(TI, SuccNum, MergeIdenticalEdges)) return 0;
 
   assert(!isa<IndirectBrInst>(TI) &&
@@ -224,7 +225,7 @@ BasicBlock *llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum,
       if (TI->getSuccessor(i) != DestBB) continue;
 
       // Remove an entry for TIBB from DestBB phi nodes.
-      DestBB->removePredecessor(TIBB);
+      DestBB->removePredecessor(TIBB, DontDeleteUselessPhis);
 
       // We found another edge to DestBB, go to NewBB instead.
       TI->setSuccessor(i, NewBB);
