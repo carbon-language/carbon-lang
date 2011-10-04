@@ -1,4 +1,4 @@
-//===- tools/llvm-cov/GCOVReader.cpp - LLVM coverage tool -----------------===//
+//===- GCOVr.cpp - LLVM coverage tool -------------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,12 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// GCOVReader implements the interface to read coverage files that use 'gcov'
-// format.
+// GCOV implements the interface to read and write coverage files that use 
+// 'gcov' format.
 //
 //===----------------------------------------------------------------------===//
 
-#include "GCOVReader.h"
+#include "llvm/Support/GCOV.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/MemoryObject.h"

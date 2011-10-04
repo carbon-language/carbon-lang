@@ -1,4 +1,4 @@
-//===-- tools/llvm-cov/GCOVReader.h - LLVM coverage tool --------*- C++ -*-===//
+//===-- llvm/Support/GCOV.h - LLVM coverage tool ----------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,13 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This header provides the interface to read coverage files that use 'gcov'
-// format.
+// This header provides the interface to read and write coverage files that 
+// use 'gcov' format.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef GCOVREADER_H
-#define GCOVREADER_H
+#ifndef LLVM_GCOV_H
+#define LLVM_GCOV_H
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"

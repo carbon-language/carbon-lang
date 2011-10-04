@@ -11,9 +11,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "GCOVReader.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/GCOV.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryObject.h"
 #include "llvm/Support/PrettyStackTrace.h"
