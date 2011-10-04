@@ -107,47 +107,44 @@ class MachineModuleInfo : public ImmutablePass {
   /// want.
   MachineModuleInfoImpl *ObjFileMMI;
 
-  // FrameMoves - List of moves done by a function's prolog.  Used to construct
-  // frame maps by debug and exception handling consumers.
+  /// FrameMoves - List of moves done by a function's prolog.  Used to construct
+  /// frame maps by debug and exception handling consumers.
   std::vector<MachineMove> FrameMoves;
 
-  // CompactUnwindEncoding - If the target supports it, this is the compact
-  // unwind encoding. It replaces a function's CIE and FDE.
+  /// CompactUnwindEncoding - If the target supports it, this is the compact
+  /// unwind encoding. It replaces a function's CIE and FDE.
   uint32_t CompactUnwindEncoding;
 
-  // LandingPads - List of LandingPadInfo describing the landing pad information
-  // in the current function.
+  /// LandingPads - List of LandingPadInfo describing the landing pad
+  /// information in the current function.
   std::vector<LandingPadInfo> LandingPads;
 
-  // Map of invoke call site index values to associated begin EH_LABEL for
-  // the current function.
+  /// CallSiteMap - Map of invoke call site index values to associated begin
+  /// EH_LABEL for the current function.
   DenseMap<MCSymbol*, unsigned> CallSiteMap;
 
-  // The current call site index being processed, if any. 0 if none.
+  /// CurCallSite - The current call site index being processed, if any. 0 if
+  /// none.
   unsigned CurCallSite;
 
-  // TypeInfos - List of C++ TypeInfo used in the current function.
-  //
+  /// TypeInfos - List of C++ TypeInfo used in the current function.
   std::vector<const GlobalVariable *> TypeInfos;
 
-  // FilterIds - List of typeids encoding filters used in the current function.
-  //
+  /// FilterIds - List of typeids encoding filters used in the current function.
   std::vector<unsigned> FilterIds;
 
-  // FilterEnds - List of the indices in FilterIds corresponding to filter
-  // terminators.
-  //
+  /// FilterEnds - List of the indices in FilterIds corresponding to filter
+  /// terminators.
   std::vector<unsigned> FilterEnds;
 
-  // Personalities - Vector of all personality functions ever seen. Used to emit
-  // common EH frames.
+  /// Personalities - Vector of all personality functions ever seen. Used to
+  /// emit common EH frames.
   std::vector<const Function *> Personalities;
 
   /// UsedFunctions - The functions in the @llvm.used list in a more easily
   /// searchable format.  This does not include the functions in
   /// llvm.compiler.used.
   SmallPtrSet<const Function *, 32> UsedFunctions;
-
 
   /// AddrLabelSymbols - This map keeps track of which symbol is being used for
   /// the specified basic block's address of label.
@@ -160,8 +157,9 @@ class MachineModuleInfo : public ImmutablePass {
   /// in this module.
   bool DbgInfoAvailable;
 
-  /// True if this module calls VarArg function with floating point arguments.
-  /// This is used to emit an undefined reference to fltused on Windows targets.
+  /// CallsExternalVAFunctionWithFloatingPointArguments - True if this module
+  /// calls VarArg function with floating point arguments.  This is used to emit
+  /// an undefined reference to fltused on Windows targets.
   bool CallsExternalVAFunctionWithFloatingPointArguments;
 
 public:
