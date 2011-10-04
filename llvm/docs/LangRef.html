@@ -1163,14 +1163,6 @@ define void @f() optsize { ... }
       function into callers whenever possible, ignoring any active inlining size
       threshold for this caller.</dd>
 
-  <dt><tt><b>hotpatch</b></tt></dt>
-  <dd>This attribute indicates that the function should be 'hotpatchable',
-      meaning the function can be patched and/or hooked even while it is
-      loaded into memory. On x86, the function prologue will be preceded
-      by six bytes of padding and will begin with a two-byte instruction.
-      Most of the functions in the Windows system DLLs in Windows XP SP2 or
-      higher were compiled in this fashion.</dd>
-
   <dt><tt><b>nonlazybind</b></tt></dt>
   <dd>This attribute suppresses lazy symbol binding for the function. This
       may make calls to the function faster, at the cost of extra program

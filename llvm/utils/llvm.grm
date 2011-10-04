@@ -172,7 +172,7 @@ FuncAttr      ::= noreturn
  | optsize
  | ssp
  | sspreq
- | hotpatch
+ | returns_twice
  | nonlazybind
  ;
 
