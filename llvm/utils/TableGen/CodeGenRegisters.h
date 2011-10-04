@@ -70,6 +70,7 @@ namespace llvm {
     struct Less {
       bool operator()(const CodeGenRegister *A,
                       const CodeGenRegister *B) const {
+        assert(A && B);
         return A->EnumValue < B->EnumValue;
       }
     };
@@ -95,6 +96,11 @@ namespace llvm {
     SmallVector<CodeGenRegisterClass*, 4> SuperClasses;
     Record *TheDef;
     std::string Name;
+
+    // For a synthesized class, inherit missing properties from the nearest
+    // super-class.
+    void inheritProperties(CodeGenRegBank&);
+
   public:
     unsigned EnumValue;
     std::string Namespace;
@@ -166,8 +172,36 @@ namespace llvm {
 
     CodeGenRegisterClass(CodeGenRegBank&, Record *R);
 
+    // A key representing the parts of a register class used for forming
+    // sub-classes.  Note the ordering provided by this key is not the same as
+    // the topological order used for the EnumValues.
+    struct Key {
+      const CodeGenRegister::Set *Members;
+      unsigned SpillSize;
+      unsigned SpillAlignment;
+
+      Key(const Key &O)
+        : Members(O.Members),
+          SpillSize(O.SpillSize),
+          SpillAlignment(O.SpillAlignment) {}
+
+      Key(const CodeGenRegister::Set *M, unsigned S = 0, unsigned A = 0)
+        : Members(M), SpillSize(S), SpillAlignment(A) {}
+
+      Key(const CodeGenRegisterClass &RC)
+        : Members(&RC.getMembers()),
+          SpillSize(RC.SpillSize),
+          SpillAlignment(RC.SpillAlignment) {}
+
+      // Lexicographical order of (Members, SpillSize, SpillAlignment).
+      bool operator<(const Key&) const;
+    };
+
+    // Create a non-user defined register class.
+    CodeGenRegisterClass(StringRef Name, Key Props);
+
     // Called by CodeGenRegBank::CodeGenRegBank().
-    static void computeSubClasses(ArrayRef<CodeGenRegisterClass*>);
+    static void computeSubClasses(CodeGenRegBank&);
   };
 
   // CodeGenRegBank - Represent a target's registers and the relations between
@@ -181,8 +215,17 @@ namespace llvm {
     std::vector<CodeGenRegister*> Registers;
     DenseMap<Record*, CodeGenRegister*> Def2Reg;
 
+    // Register classes.
     std::vector<CodeGenRegisterClass*> RegClasses;
     DenseMap<Record*, CodeGenRegisterClass*> Def2RC;
+    typedef std::map<CodeGenRegisterClass::Key, CodeGenRegisterClass*> RCKeyMap;
+    RCKeyMap Key2RC;
+
+    // Add RC to *2RC maps.
+    void addToMaps(CodeGenRegisterClass*);
+
+    // Infer missing register classes.
+    void computeInferredRegisterClasses();
 
     // Composite SubRegIndex instances.
     // Map (SubRegIndex, SubRegIndex) -> SubRegIndex.

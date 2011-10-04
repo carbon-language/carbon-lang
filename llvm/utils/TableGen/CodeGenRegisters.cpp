@@ -333,8 +333,69 @@ CodeGenRegisterClass::CodeGenRegisterClass(CodeGenRegBank &RegBank, Record *R)
   AltOrderSelect = R->getValueAsCode("AltOrderSelect");
 }
 
+// Create an inferred register class that was missing from the .td files.
+// Most properties will be inherited from the closest super-class after the
+// class structure has been computed.
+CodeGenRegisterClass::CodeGenRegisterClass(StringRef Name, Key Props)
+  : Members(*Props.Members),
+    TheDef(0),
+    Name(Name),
+    EnumValue(-1),
+    SpillSize(Props.SpillSize),
+    SpillAlignment(Props.SpillAlignment),
+    CopyCost(0),
+    Allocatable(true) {
+}
+
+// Compute inherited propertied for a synthesized register class.
+void CodeGenRegisterClass::inheritProperties(CodeGenRegBank &RegBank) {
+  assert(!getDef() && "Only synthesized classes can inherit properties");
+  assert(!SuperClasses.empty() && "Synthesized class without super class");
+
+  // The last super-class is the smallest one.
+  CodeGenRegisterClass &Super = *SuperClasses.back();
+
+  // Most properties are copied directly.
+  // Exceptions are members, size, and alignment
+  Namespace = Super.Namespace;
+  VTs = Super.VTs;
+  CopyCost = Super.CopyCost;
+  Allocatable = Super.Allocatable;
+  AltOrderSelect = Super.AltOrderSelect;
+
+  // Copy all allocation orders, filter out foreign registers from the larger
+  // super-class.
+  Orders.resize(Super.Orders.size());
+  for (unsigned i = 0, ie = Super.Orders.size(); i != ie; ++i)
+    for (unsigned j = 0, je = Super.Orders[i].size(); j != je; ++j)
+      if (contains(RegBank.getReg(Super.Orders[i][j])))
+        Orders[i].push_back(Super.Orders[i][j]);
+}
+
 bool CodeGenRegisterClass::contains(const CodeGenRegister *Reg) const {
   return Members.count(Reg);
+}
+
+namespace llvm {
+  raw_ostream &operator<<(raw_ostream &OS, const CodeGenRegisterClass::Key &K) {
+    OS << "{ S=" << K.SpillSize << ", A=" << K.SpillAlignment;
+    for (CodeGenRegister::Set::const_iterator I = K.Members->begin(),
+         E = K.Members->end(); I != E; ++I)
+      OS << ", " << (*I)->getName();
+    return OS << " }";
+  }
+}
+
+// This is a simple lexicographical order that can be used to search for sets.
+// It is not the same as the topological order provided by TopoOrderRC.
+bool CodeGenRegisterClass::Key::
+operator<(const CodeGenRegisterClass::Key &B) const {
+  assert(Members && B.Members);
+  if (*Members != *B.Members)
+    return *Members < *B.Members;
+  if (SpillSize != B.SpillSize)
+    return SpillSize < B.SpillSize;
+  return SpillAlignment < B.SpillAlignment;
 }
 
 // Returns true if RC is a strict subclass.
@@ -367,10 +428,11 @@ static int TopoOrderRC(const void *PA, const void *PB) {
   if (A == B)
     return 0;
 
-  // Order by descending set size.
-  if (A->getOrder().size() > B->getOrder().size())
+  // Order by descending set size.  Note that the classes' allocation order may
+  // not have been computed yet.  The Members set is always vaild.
+  if (A->getMembers().size() > B->getMembers().size())
     return -1;
-  if (A->getOrder().size() < B->getOrder().size())
+  if (A->getMembers().size() < B->getMembers().size())
     return 1;
 
   // Order by ascending spill size.
@@ -398,8 +460,9 @@ std::string CodeGenRegisterClass::getQualifiedName() const {
 
 // Compute sub-classes of all register classes.
 // Assume the classes are ordered topologically.
-void CodeGenRegisterClass::
-computeSubClasses(ArrayRef<CodeGenRegisterClass*> RegClasses) {
+void CodeGenRegisterClass::computeSubClasses(CodeGenRegBank &RegBank) {
+  ArrayRef<CodeGenRegisterClass*> RegClasses = RegBank.getRegClasses();
+
   // Visit backwards so sub-classes are seen first.
   for (unsigned rci = RegClasses.size(); rci; --rci) {
     CodeGenRegisterClass &RC = *RegClasses[rci - 1];
@@ -432,6 +495,13 @@ computeSubClasses(ArrayRef<CodeGenRegisterClass*> RegClasses) {
       RegClasses[s]->SuperClasses.push_back(RegClasses[rci]);
     }
   }
+
+  // With the class hierarchy in place, let synthesized register classes inherit
+  // properties from their closest super-class. The iteration order here can
+  // propagate properties down multiple levels.
+  for (unsigned rci = 0; rci != RegClasses.size(); ++rci)
+    if (!RegClasses[rci]->getDef())
+      RegClasses[rci]->inheritProperties(RegBank);
 }
 
 //===----------------------------------------------------------------------===//
@@ -466,22 +536,29 @@ CodeGenRegBank::CodeGenRegBank(RecordKeeper &Records) : Records(Records) {
       getReg((*TupRegs)[j]);
   }
 
+  // Precompute all sub-register maps now all the registers are known.
+  // This will create Composite entries for all inferred sub-register indices.
+  for (unsigned i = 0, e = Registers.size(); i != e; ++i)
+    Registers[i]->getSubRegs(*this);
+
   // Read in register class definitions.
   std::vector<Record*> RCs = Records.getAllDerivedDefinitions("RegisterClass");
   if (RCs.empty())
     throw std::string("No 'RegisterClass' subclasses defined!");
 
+  // Allocate user-defined register classes.
   RegClasses.reserve(RCs.size());
-  for (unsigned i = 0, e = RCs.size(); i != e; ++i) {
-    CodeGenRegisterClass *RC = new CodeGenRegisterClass(*this, RCs[i]);
-    RegClasses.push_back(RC);
-    Def2RC[RCs[i]] = RC;
-  }
+  for (unsigned i = 0, e = RCs.size(); i != e; ++i)
+    addToMaps(new CodeGenRegisterClass(*this, RCs[i]));
+
+  // Infer missing classes to create a full algebra.
+  computeInferredRegisterClasses();
+
   // Order register classes topologically and assign enum values.
   array_pod_sort(RegClasses.begin(), RegClasses.end(), TopoOrderRC);
   for (unsigned i = 0, e = RegClasses.size(); i != e; ++i)
     RegClasses[i]->EnumValue = i;
-  CodeGenRegisterClass::computeSubClasses(RegClasses);
+  CodeGenRegisterClass::computeSubClasses(*this);
 }
 
 CodeGenRegister *CodeGenRegBank::getReg(Record *Def) {
@@ -491,6 +568,18 @@ CodeGenRegister *CodeGenRegBank::getReg(Record *Def) {
   Reg = new CodeGenRegister(Def, Registers.size() + 1);
   Registers.push_back(Reg);
   return Reg;
+}
+
+void CodeGenRegBank::addToMaps(CodeGenRegisterClass *RC) {
+  RegClasses.push_back(RC);
+
+  if (Record *Def = RC->getDef())
+    Def2RC.insert(std::make_pair(Def, RC));
+
+  // Duplicate classes are rejected by insert().
+  // That's OK, we only care about the properties handled by CGRC::Key.
+  CodeGenRegisterClass::Key K(*RC);
+  Key2RC.insert(std::make_pair(K, RC));
 }
 
 CodeGenRegisterClass *CodeGenRegBank::getRegClass(Record *Def) {
@@ -522,11 +611,6 @@ unsigned CodeGenRegBank::getSubRegIndexNo(Record *idx) {
 }
 
 void CodeGenRegBank::computeComposites() {
-  // Precompute all sub-register maps. This will create Composite entries for
-  // all inferred sub-register indices.
-  for (unsigned i = 0, e = Registers.size(); i != e; ++i)
-    Registers[i]->getSubRegs(*this);
-
   for (unsigned i = 0, e = Registers.size(); i != e; ++i) {
     CodeGenRegister *Reg1 = Registers[i];
     const CodeGenRegister::SubRegMap &SRM1 = Reg1->getSubRegs();
@@ -653,6 +737,56 @@ computeOverlaps(std::map<const CodeGenRegister*, CodeGenRegister::Set> &Map) {
 
 void CodeGenRegBank::computeDerivedInfo() {
   computeComposites();
+}
+
+// Infer missing register classes.
+//
+// For every register class RC, make sure that the set of registers in RC with
+// a given SubIxx sub-register form a register class.
+void CodeGenRegBank::computeInferredRegisterClasses() {
+  // When this function is called, the register classes have not been sorted
+  // and assigned EnumValues yet.  That means getSubClasses(),
+  // getSuperClasses(), and hasSubClass() functions are defunct.
+
+  // Map SubRegIndex to register set.
+  typedef std::map<Record*, CodeGenRegister::Set, LessRecord> SubReg2SetMap;
+
+  // Visit all register classes, including the ones being added by the loop.
+  for (unsigned rci = 0; rci != RegClasses.size(); ++rci) {
+    CodeGenRegisterClass &RC = *RegClasses[rci];
+
+    // Compute the set of registers supporting each SubRegIndex.
+    SubReg2SetMap SRSets;
+    for (CodeGenRegister::Set::iterator RI = RC.getMembers().begin(),
+         RE = RC.getMembers().end(); RI != RE; ++RI) {
+      CodeGenRegister::SubRegMap SRM = (*RI)->getSubRegs();
+      for (CodeGenRegister::SubRegMap::iterator I = SRM.begin(), E = SRM.end();
+           I != E; ++I)
+        SRSets[I->first].insert(*RI);
+    }
+
+    // Find matching classes for all SRSets entries.  Iterate in SubRegIndex
+    // numerical order to visit synthetic indices last.
+    for (unsigned sri = 0, sre = SubRegIndices.size(); sri != sre; ++sri) {
+      SubReg2SetMap::const_iterator I = SRSets.find(SubRegIndices[sri]);
+      // Unsupported SubRegIndex. Skip it.
+      if (I == SRSets.end())
+        continue;
+      // In most cases, all RC registers support the SubRegIndex. Skip those.
+      if (I->second.size() == RC.getMembers().size())
+        continue;
+
+      // This is a real subset.  See if we have a matching class.
+      CodeGenRegisterClass::Key K(&I->second, RC.SpillSize, RC.SpillAlignment);
+      RCKeyMap::const_iterator FoundI = Key2RC.find(K);
+      if (FoundI != Key2RC.end())
+        continue;
+
+      // Class doesn't exist.
+      addToMaps(new CodeGenRegisterClass(RC.getName() + "_with_" +
+                                         I->first->getName(), K));
+    }
+  }
 }
 
 /// getRegisterClassForRegister - Find the register class that contains the
