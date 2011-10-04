@@ -713,7 +713,12 @@ AddDefaultCPlusPlusIncludePaths(const llvm::Triple &triple, const HeaderSearchOp
     //===------------------------------------------------------------------===//
     // Redhat based distros.
     //===------------------------------------------------------------------===//
-    // Fedora 15
+    // Fedora 15 (GCC 4.6.1)
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.6.1",
+                                "x86_64-redhat-linux", "32", "", triple);
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.6.1",
+                                "i686-redhat-linux", "", "", triple);
+    // Fedora 15 (GCC 4.6.0)
     AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.6.0",
                                 "x86_64-redhat-linux", "32", "", triple);
     AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.6.0",
