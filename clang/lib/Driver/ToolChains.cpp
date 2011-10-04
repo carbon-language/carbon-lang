@@ -1605,6 +1605,8 @@ public:
     // accuracy, and architecture specificity in that order. The inverted walk
     // requires testing the filesystem more times than is ideal, but shouldn't
     // matter in practice as this is once on startup.
+    // FIXME: Instead of this, we should walk from the root down through each
+    // layer, and if it is "better" than prior installations found, use it.
     static const char* GccVersions[] = {
       "4.6.1", "4.6.0", "4.6",
       "4.5.3", "4.5.2", "4.5.1", "4.5",
