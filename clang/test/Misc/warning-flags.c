@@ -17,7 +17,7 @@ This test serves two purposes:
 
 The list of warnings below should NEVER grow.  It should gradually shrink to 0.
 
-CHECK: Warnings without flags (304):
+CHECK: Warnings without flags (303):
 CHECK-NEXT:   backslash_newline_space
 CHECK-NEXT:   charize_microsoft_ext
 CHECK-NEXT:   ext_anon_param_requires_type_specifier
@@ -81,7 +81,6 @@ CHECK-NEXT:   ext_pp_include_next_directive
 CHECK-NEXT:   ext_pp_line_too_big
 CHECK-NEXT:   ext_pp_macro_redef
 CHECK-NEXT:   ext_pp_warning_directive
-CHECK-NEXT:   ext_predef_outside_function
 CHECK-NEXT:   ext_return_has_void_expr
 CHECK-NEXT:   ext_subscript_non_lvalue
 CHECK-NEXT:   ext_template_arg_extra_parens

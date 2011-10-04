@@ -23,7 +23,8 @@ def ext_expr_not_ice : Extension<
 
 // Semantic analysis of constant literals.
 def ext_predef_outside_function : Warning<
-  "predefined identifier is only valid inside function">;
+  "predefined identifier is only valid inside function">,
+  InGroup<DiagGroup<"predefined-identifier-outside-function">>;
 def warn_float_overflow : Warning<
   "magnitude of floating-point constant too large for type %0; maximum is %1">,
    InGroup<LiteralRange>;
