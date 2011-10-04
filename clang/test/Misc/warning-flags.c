@@ -17,7 +17,7 @@ This test serves two purposes:
 
 The list of warnings below should NEVER grow.  It should gradually shrink to 0.
 
-CHECK: Warnings without flags (302):
+CHECK: Warnings without flags (301):
 CHECK-NEXT:   backslash_newline_space
 CHECK-NEXT:   charize_microsoft_ext
 CHECK-NEXT:   ext_anon_param_requires_type_specifier
@@ -123,7 +123,6 @@ CHECK-NEXT:   w_asm_qualifier_ignored
 CHECK-NEXT:   warn_accessor_property_type_mismatch
 CHECK-NEXT:   warn_anon_bitfield_width_exceeds_type_size
 CHECK-NEXT:   warn_asm_label_on_auto_decl
-CHECK-NEXT:   warn_atomic_property_rule
 CHECK-NEXT:   warn_attribute_ibaction
 CHECK-NEXT:   warn_attribute_iboutlet
 CHECK-NEXT:   warn_attribute_ignored

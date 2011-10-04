@@ -499,7 +499,8 @@ def warn_objc_property_retain_of_block : Warning<
     "- use copy attribute instead">, InGroup<ObjCRetainBlockProperty>;
 def warn_atomic_property_rule : Warning<
   "writable atomic property %0 cannot pair a synthesized setter/getter "
-  "with a user defined setter/getter">;
+  "with a user defined setter/getter">,
+  InGroup<DiagGroup<"atomic-property-with-user-defined-accessor">>;
 def warn_ownin_getter_rule : Warning<
   "property's synthesized getter follows Cocoa naming"
   " convention for returning 'owned' objects">,
