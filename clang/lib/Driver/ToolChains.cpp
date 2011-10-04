@@ -1685,7 +1685,11 @@ public:
 
               BestVersion = CandidateVersion;
               GccTriple = CandidateTriple.str();
-              GccInstallPath = LI->path();
+              // FIXME: We hack together the directory name here instead of
+              // using LI to ensure stable path separators across Windows and
+              // Linux.
+              GccInstallPath = (TripleDir + Suffixes[l] + "/" +
+                                VersionText.str());
               GccParentLibPath = GccInstallPath + InstallSuffixes[l];
               IsValid = true;
             }
