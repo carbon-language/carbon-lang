@@ -9,6 +9,7 @@ add_llvm_library(LLVMTableGen
   TableGenBackend.cpp
   TGLexer.cpp
   TGParser.cpp
+  TGPreprocessor.cpp
   )
 
 add_llvm_library_dependencies(LLVMTableGen
