@@ -334,7 +334,7 @@ PPCInstrInfo::StoreRegToStackSlot(MachineFunction &MF,
                                   const TargetRegisterClass *RC,
                                   SmallVectorImpl<MachineInstr*> &NewMIs) const{
   DebugLoc DL;
-  if (RC == PPC::GPRCRegisterClass) {
+  if (PPC::GPRCRegisterClass->hasSubClassEq(RC)) {
     if (SrcReg != PPC::LR) {
       NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::STW))
                                          .addReg(SrcReg,
@@ -350,7 +350,7 @@ PPCInstrInfo::StoreRegToStackSlot(MachineFunction &MF,
                                                  getKillRegState(isKill)),
                                          FrameIdx));
     }
-  } else if (RC == PPC::G8RCRegisterClass) {
+  } else if (PPC::G8RCRegisterClass->hasSubClassEq(RC)) {
     if (SrcReg != PPC::LR8) {
       NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::STD))
                                          .addReg(SrcReg,
@@ -366,17 +366,17 @@ PPCInstrInfo::StoreRegToStackSlot(MachineFunction &MF,
                                                  getKillRegState(isKill)),
                                          FrameIdx));
     }
-  } else if (RC == PPC::F8RCRegisterClass) {
+  } else if (PPC::F8RCRegisterClass->hasSubClassEq(RC)) {
     NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::STFD))
                                        .addReg(SrcReg,
                                                getKillRegState(isKill)),
                                        FrameIdx));
-  } else if (RC == PPC::F4RCRegisterClass) {
+  } else if (PPC::F4RCRegisterClass->hasSubClassEq(RC)) {
     NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::STFS))
                                        .addReg(SrcReg,
                                                getKillRegState(isKill)),
                                        FrameIdx));
-  } else if (RC == PPC::CRRCRegisterClass) {
+  } else if (PPC::CRRCRegisterClass->hasSubClassEq(RC)) {
     if ((EnablePPC32RS && !TM.getSubtargetImpl()->isPPC64()) ||
         (EnablePPC64RS && TM.getSubtargetImpl()->isPPC64())) {
       // FIXME (64-bit): Enable
@@ -414,7 +414,7 @@ PPCInstrInfo::StoreRegToStackSlot(MachineFunction &MF,
                                                  getKillRegState(isKill)),
                                          FrameIdx));
     }
-  } else if (RC == PPC::CRBITRCRegisterClass) {
+  } else if (PPC::CRBITRCRegisterClass->hasSubClassEq(RC)) {
     // FIXME: We use CRi here because there is no mtcrf on a bit. Since the
     // backend currently only uses CR1EQ as an individual bit, this should
     // not cause any bug. If we need other uses of CR bits, the following
@@ -448,7 +448,7 @@ PPCInstrInfo::StoreRegToStackSlot(MachineFunction &MF,
     return StoreRegToStackSlot(MF, Reg, isKill, FrameIdx,
                                PPC::CRRCRegisterClass, NewMIs);
 
-  } else if (RC == PPC::VRRCRegisterClass) {
+  } else if (PPC::VRRCRegisterClass->hasSubClassEq(RC)) {
     // We don't have indexed addressing for vector loads.  Emit:
     // R0 = ADDI FI#
     // STVX VAL, 0, R0
@@ -499,7 +499,7 @@ PPCInstrInfo::LoadRegFromStackSlot(MachineFunction &MF, DebugLoc DL,
                                    unsigned DestReg, int FrameIdx,
                                    const TargetRegisterClass *RC,
                                    SmallVectorImpl<MachineInstr*> &NewMIs)const{
-  if (RC == PPC::GPRCRegisterClass) {
+  if (PPC::GPRCRegisterClass->hasSubClassEq(RC)) {
     if (DestReg != PPC::LR) {
       NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::LWZ),
                                                  DestReg), FrameIdx));
@@ -508,7 +508,7 @@ PPCInstrInfo::LoadRegFromStackSlot(MachineFunction &MF, DebugLoc DL,
                                                  PPC::R11), FrameIdx));
       NewMIs.push_back(BuildMI(MF, DL, get(PPC::MTLR)).addReg(PPC::R11));
     }
-  } else if (RC == PPC::G8RCRegisterClass) {
+  } else if (PPC::G8RCRegisterClass->hasSubClassEq(RC)) {
     if (DestReg != PPC::LR8) {
       NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::LD), DestReg),
                                          FrameIdx));
@@ -517,13 +517,13 @@ PPCInstrInfo::LoadRegFromStackSlot(MachineFunction &MF, DebugLoc DL,
                                                  PPC::R11), FrameIdx));
       NewMIs.push_back(BuildMI(MF, DL, get(PPC::MTLR8)).addReg(PPC::R11));
     }
-  } else if (RC == PPC::F8RCRegisterClass) {
+  } else if (PPC::F8RCRegisterClass->hasSubClassEq(RC)) {
     NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::LFD), DestReg),
                                        FrameIdx));
-  } else if (RC == PPC::F4RCRegisterClass) {
+  } else if (PPC::F4RCRegisterClass->hasSubClassEq(RC)) {
     NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::LFS), DestReg),
                                        FrameIdx));
-  } else if (RC == PPC::CRRCRegisterClass) {
+  } else if (PPC::CRRCRegisterClass->hasSubClassEq(RC)) {
     // FIXME: We need a scatch reg here.  The trouble with using R0 is that
     // it's possible for the stack frame to be so big the save location is
     // out of range of immediate offsets, necessitating another register.
@@ -546,7 +546,7 @@ PPCInstrInfo::LoadRegFromStackSlot(MachineFunction &MF, DebugLoc DL,
 
     NewMIs.push_back(BuildMI(MF, DL, get(PPC::MTCRF), DestReg)
                      .addReg(ScratchReg));
-  } else if (RC == PPC::CRBITRCRegisterClass) {
+  } else if (PPC::CRBITRCRegisterClass->hasSubClassEq(RC)) {
 
     unsigned Reg = 0;
     if (DestReg == PPC::CR0LT || DestReg == PPC::CR0GT ||
@@ -577,7 +577,7 @@ PPCInstrInfo::LoadRegFromStackSlot(MachineFunction &MF, DebugLoc DL,
     return LoadRegFromStackSlot(MF, DL, Reg, FrameIdx,
                                 PPC::CRRCRegisterClass, NewMIs);
 
-  } else if (RC == PPC::VRRCRegisterClass) {
+  } else if (PPC::VRRCRegisterClass->hasSubClassEq(RC)) {
     // We don't have indexed addressing for vector loads.  Emit:
     // R0 = ADDI FI#
     // Dest = LVX 0, R0
