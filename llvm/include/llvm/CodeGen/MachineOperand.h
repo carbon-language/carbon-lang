@@ -83,8 +83,23 @@ private:
   /// This is only valid on definitions of registers.
   bool IsDead : 1;
 
-  /// IsUndef - True if this is a register def / use of "undef", i.e. register
-  /// defined by an IMPLICIT_DEF. This is only valid on registers.
+  /// IsUndef - True if this register operand reads an "undef" value, i.e. the
+  /// read value doesn't matter.  This flag can be set on both use and def
+  /// operands.  On a sub-register def operand, it refers to the part of the
+  /// register that isn't written.  On a full-register def operand, it is a
+  /// noop.  See readsReg().
+  ///
+  /// This is only valid on registers.
+  ///
+  /// Note that an instruction may have multiple <undef> operands referring to
+  /// the same register.  In that case, the instruction may depend on those
+  /// operands reading the same dont-care value.  For example:
+  ///
+  ///   %vreg1<def> = XOR %vreg2<undef>, %vreg2<undef>
+  ///
+  /// Any register can be used for %vreg2, and its value doesn't matter, but
+  /// the two operands must be the same register.
+  ///
   bool IsUndef : 1;
 
   /// IsEarlyClobber - True if this MO_Register 'def' operand is written to
@@ -251,6 +266,15 @@ public:
   bool isDebug() const {
     assert(isReg() && "Wrong MachineOperand accessor");
     return IsDebug;
+  }
+
+  /// readsReg - Returns true if this operand reads the previous value of its
+  /// register.  A use operand with the <undef> flag set doesn't read its
+  /// register.  A sub-register def implicitly reads the other parts of the
+  /// register being redefined unless the <undef> flag is set.
+  bool readsReg() const {
+    assert(isReg() && "Wrong MachineOperand accessor");
+    return !isUndef() && (isUse() || getSubReg());
   }
 
   /// getNextOperandForReg - Return the next MachineOperand in the function that
