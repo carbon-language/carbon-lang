@@ -1590,7 +1590,6 @@ public:
 
     // Loop over the various components which exist and select the best GCC
     // installation available. GCC installs are ranked by version number.
-    static const GCCVersion MinVersion = { 4, 1, 1 };
     GCCVersion BestVersion = {};
     for (unsigned i = 0, ie = Prefixes.size(); i < ie; ++i) {
       if (!PathExists(Prefixes[i]))
@@ -1599,48 +1598,8 @@ public:
         const std::string LibDir = Prefixes[i] + CandidateLibDirs[j].str();
         if (!PathExists(LibDir))
           continue;
-        for (unsigned k = 0, ke = CandidateTriples.size(); k < ke; ++k) {
-          StringRef CandidateTriple = CandidateTriples[k];
-          const std::string TripleDir = LibDir + "/" + CandidateTriple.str();
-          if (!PathExists(TripleDir))
-            continue;
-
-          // There are various different suffixes on the triple directory we
-          // check for. We also record what is necessary to walk from each back
-          // up to the lib directory.
-          const std::string Suffixes[] = { "", "/gcc/" + CandidateTriple.str(),
-                                           "/gcc/i686-linux-gnu" };
-          const std::string InstallSuffixes[] = { "/../../..", "/../../../..",
-                                                  "/../../../.." };
-          const unsigned NumSuffixes = (llvm::array_lengthof(Suffixes) -
-                                        (CandidateTriple != "i386-linux-gnu"));
-          for (unsigned l = 0; l < NumSuffixes; ++l) {
-            StringRef Suffix = Suffixes[l];
-            llvm::error_code EC;
-            for (llvm::sys::fs::directory_iterator LI(TripleDir + Suffix, EC),
-                                                   LE;
-                 !EC && LI != LE; LI = LI.increment(EC)) {
-              StringRef VersionText = llvm::sys::path::filename(LI->path());
-              GCCVersion CandidateVersion = GCCVersion::Parse(VersionText);
-              if (CandidateVersion < MinVersion)
-                continue;
-              if (CandidateVersion <= BestVersion)
-                continue;
-              if (!PathExists(LI->path() + "/crtbegin.o"))
-                continue;
-
-              BestVersion = CandidateVersion;
-              GccTriple = CandidateTriple.str();
-              // FIXME: We hack together the directory name here instead of
-              // using LI to ensure stable path separators across Windows and
-              // Linux.
-              GccInstallPath = (TripleDir + Suffixes[l] + "/" +
-                                VersionText.str());
-              GccParentLibPath = GccInstallPath + InstallSuffixes[l];
-              IsValid = true;
-            }
-          }
-        }
+        for (unsigned k = 0, ke = CandidateTriples.size(); k < ke; ++k)
+          ScanLibDirForGCCTriple(LibDir, CandidateTriples[k], BestVersion);
       }
     }
   }
@@ -1721,6 +1680,49 @@ private:
                      PPC64LibDirs + llvm::array_lengthof(PPC64LibDirs));
       Triples.append(PPC64Triples,
                      PPC64Triples + llvm::array_lengthof(PPC64Triples));
+    }
+  }
+
+  void ScanLibDirForGCCTriple(const std::string &LibDir,
+                              StringRef CandidateTriple,
+                              GCCVersion &BestVersion) {
+    const std::string TripleDir = LibDir + "/" + CandidateTriple.str();
+    if (!PathExists(TripleDir))
+      return;
+
+    // There are various different suffixes on the triple directory we
+    // check for. We also record what is necessary to walk from each back
+    // up to the lib directory.
+    const std::string Suffixes[] = { "", "/gcc/" + CandidateTriple.str(),
+      "/gcc/i686-linux-gnu" };
+    const std::string InstallSuffixes[] = { "/../../..", "/../../../..",
+      "/../../../.." };
+    const unsigned NumSuffixes = (llvm::array_lengthof(Suffixes) -
+                                  (CandidateTriple != "i386-linux-gnu"));
+    for (unsigned i = 0; i < NumSuffixes; ++i) {
+      StringRef Suffix = Suffixes[i];
+      llvm::error_code EC;
+      for (llvm::sys::fs::directory_iterator LI(TripleDir + Suffix, EC), LE;
+           !EC && LI != LE; LI = LI.increment(EC)) {
+        StringRef VersionText = llvm::sys::path::filename(LI->path());
+        GCCVersion CandidateVersion = GCCVersion::Parse(VersionText);
+        static const GCCVersion MinVersion = { 4, 1, 1 };
+        if (CandidateVersion < MinVersion)
+          continue;
+        if (CandidateVersion <= BestVersion)
+          continue;
+        if (!PathExists(LI->path() + "/crtbegin.o"))
+          continue;
+
+        BestVersion = CandidateVersion;
+        GccTriple = CandidateTriple.str();
+        // FIXME: We hack together the directory name here instead of
+        // using LI to ensure stable path separators across Windows and
+        // Linux.
+        GccInstallPath = TripleDir + Suffixes[i] + "/" + VersionText.str();
+        GccParentLibPath = GccInstallPath + InstallSuffixes[i];
+        IsValid = true;
+      }
     }
   }
 };
