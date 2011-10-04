@@ -29,8 +29,8 @@ void MCInstPrinter::printRegName(raw_ostream &OS, unsigned RegNo) const {
 void MCInstPrinter::printAnnotation(raw_ostream &OS, StringRef Annot) {
   if (!Annot.empty()) {
     if (CommentStream)
-      (*CommentStream) << Annot << "\n";
+      (*CommentStream) << Annot;
     else
-      OS << " " << MAI.getCommentString() << " " << Annot << "\n";
+      OS << " " << MAI.getCommentString() << " " << Annot;
   }
 }

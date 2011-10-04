@@ -2915,6 +2915,7 @@ def MOVi16 : AI1<0b1000, (outs GPR:$Rd), (ins imm0_65535_expr:$imm),
   let Inst{19-16} = imm{15-12};
   let Inst{20} = 0;
   let Inst{25} = 1;
+  let DecoderMethod = "DecodeArmMOVTWInstruction";
 }
 
 def : InstAlias<"mov${p} $Rd, $imm",
@@ -2940,6 +2941,7 @@ def MOVTi16 : AI1<0b1010, (outs GPRnopc:$Rd),
   let Inst{19-16} = imm{15-12};
   let Inst{20} = 0;
   let Inst{25} = 1;
+  let DecoderMethod = "DecodeArmMOVTWInstruction";
 }
 
 def MOVTi16_ga_pcrel : PseudoInst<(outs GPR:$Rd),

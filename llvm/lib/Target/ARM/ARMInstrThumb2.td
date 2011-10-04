@@ -1741,6 +1741,7 @@ def t2MOVi16 : T2I<(outs rGPR:$Rd), (ins imm0_65535_expr:$imm), IIC_iMOVi,
   let Inst{26}    = imm{11};
   let Inst{14-12} = imm{10-8};
   let Inst{7-0}   = imm{7-0};
+  let DecoderMethod = "DecodeT2MOVTWInstruction";
 }
 
 def t2MOVi16_ga_pcrel : PseudoInst<(outs rGPR:$Rd),
@@ -1766,6 +1767,7 @@ def t2MOVTi16 : T2I<(outs rGPR:$Rd),
   let Inst{26}    = imm{11};
   let Inst{14-12} = imm{10-8};
   let Inst{7-0}   = imm{7-0};
+  let DecoderMethod = "DecodeT2MOVTWInstruction";
 }
 
 def t2MOVTi16_ga_pcrel : PseudoInst<(outs rGPR:$Rd),

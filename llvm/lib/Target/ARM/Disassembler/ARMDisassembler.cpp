@@ -13,6 +13,7 @@
 #include "ARMRegisterInfo.h"
 #include "ARMSubtarget.h"
 #include "MCTargetDesc/ARMAddressingModes.h"
+#include "MCTargetDesc/ARMMCExpr.h"
 #include "MCTargetDesc/ARMBaseInfo.h"
 #include "llvm/MC/EDInstInfo.h"
 #include "llvm/MC/MCInst.h"
@@ -160,6 +161,10 @@ static DecodeStatus DecodeMemMultipleWritebackInstruction(llvm::MCInst & Inst,
                                                   unsigned Insn,
                                                   uint64_t Adddress,
                                                   const void *Decoder);
+static DecodeStatus DecodeT2MOVTWInstruction(llvm::MCInst &Inst, unsigned Insn,
+                               uint64_t Address, const void *Decoder);
+static DecodeStatus DecodeArmMOVTWInstruction(llvm::MCInst &Inst, unsigned Insn,
+                               uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeSMLAInstruction(llvm::MCInst &Inst, unsigned Insn,
                                uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeCPSInstruction(llvm::MCInst &Inst, unsigned Insn,
@@ -335,6 +340,8 @@ DecodeStatus ARMDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
                                              uint64_t Address,
                                              raw_ostream &os,
                                              raw_ostream &cs) const {
+  CommentStream = &cs;
+
   uint8_t bytes[4];
 
   assert(!(STI.getFeatureBits() & ARM::ModeThumb) &&
@@ -409,6 +416,146 @@ DecodeStatus ARMDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
 
 namespace llvm {
 extern MCInstrDesc ARMInsts[];
+}
+
+/// tryAddingSymbolicOperand - trys to add a symbolic operand in place of the
+/// immediate Value in the MCInst.  The immediate Value has had any PC
+/// adjustment made by the caller.  If the instruction is a branch instruction
+/// then isBranch is true, else false.  If the getOpInfo() function was set as
+/// part of the setupForSymbolicDisassembly() call then that function is called
+/// to get any symbolic information at the Address for this instruction.  If
+/// that returns non-zero then the symbolic information it returns is used to
+/// create an MCExpr and that is added as an operand to the MCInst.  If
+/// getOpInfo() returns zero and isBranch is true then a symbol look up for
+/// Value is done and if a symbol is found an MCExpr is created with that, else
+/// an MCExpr with Value is created.  This function returns true if it adds an
+/// operand to the MCInst and false otherwise.
+static bool tryAddingSymbolicOperand(uint64_t Address, int32_t Value,
+                                     bool isBranch, uint64_t InstSize,
+                                     MCInst &MI, const void *Decoder) {
+  const MCDisassembler *Dis = static_cast<const MCDisassembler*>(Decoder);
+  LLVMOpInfoCallback getOpInfo = Dis->getLLVMOpInfoCallback();
+  if (!getOpInfo)
+    return false;
+
+  struct LLVMOpInfo1 SymbolicOp;
+  SymbolicOp.Value = Value;
+  void *DisInfo = Dis->getDisInfoBlock();
+  if (!getOpInfo(DisInfo, Address, 0 /* Offset */, InstSize, 1, &SymbolicOp)) {
+    if (isBranch) {
+      LLVMSymbolLookupCallback SymbolLookUp =
+                                            Dis->getLLVMSymbolLookupCallback();
+      if (SymbolLookUp) {
+        uint64_t ReferenceType;
+        ReferenceType = LLVMDisassembler_ReferenceType_In_Branch;
+        const char *ReferenceName;
+        const char *Name = SymbolLookUp(DisInfo, Value, &ReferenceType, Address,
+                                        &ReferenceName);
+        if (Name) {
+          SymbolicOp.AddSymbol.Name = Name;
+          SymbolicOp.AddSymbol.Present = true;
+          SymbolicOp.Value = 0;
+        }
+        else {
+          SymbolicOp.Value = Value;
+        }
+        if(ReferenceType == LLVMDisassembler_ReferenceType_Out_SymbolStub)
+          (*Dis->CommentStream) << "symbol stub for: " << ReferenceName;
+      }
+      else {
+        return false;
+      }
+    }
+    else {
+      return false;
+    }
+  }
+
+  MCContext *Ctx = Dis->getMCContext();
+  const MCExpr *Add = NULL;
+  if (SymbolicOp.AddSymbol.Present) {
+    if (SymbolicOp.AddSymbol.Name) {
+      StringRef Name(SymbolicOp.AddSymbol.Name);
+      MCSymbol *Sym = Ctx->GetOrCreateSymbol(Name);
+      Add = MCSymbolRefExpr::Create(Sym, *Ctx);
+    } else {
+      Add = MCConstantExpr::Create(SymbolicOp.AddSymbol.Value, *Ctx);
+    }
+  }
+
+  const MCExpr *Sub = NULL;
+  if (SymbolicOp.SubtractSymbol.Present) {
+    if (SymbolicOp.SubtractSymbol.Name) {
+      StringRef Name(SymbolicOp.SubtractSymbol.Name);
+      MCSymbol *Sym = Ctx->GetOrCreateSymbol(Name);
+      Sub = MCSymbolRefExpr::Create(Sym, *Ctx);
+    } else {
+      Sub = MCConstantExpr::Create(SymbolicOp.SubtractSymbol.Value, *Ctx);
+    }
+  }
+
+  const MCExpr *Off = NULL;
+  if (SymbolicOp.Value != 0)
+    Off = MCConstantExpr::Create(SymbolicOp.Value, *Ctx);
+
+  const MCExpr *Expr;
+  if (Sub) {
+    const MCExpr *LHS;
+    if (Add)
+      LHS = MCBinaryExpr::CreateSub(Add, Sub, *Ctx);
+    else
+      LHS = MCUnaryExpr::CreateMinus(Sub, *Ctx);
+    if (Off != 0)
+      Expr = MCBinaryExpr::CreateAdd(LHS, Off, *Ctx);
+    else
+      Expr = LHS;
+  } else if (Add) {
+    if (Off != 0)
+      Expr = MCBinaryExpr::CreateAdd(Add, Off, *Ctx);
+    else
+      Expr = Add;
+  } else {
+    if (Off != 0)
+      Expr = Off;
+    else
+      Expr = MCConstantExpr::Create(0, *Ctx);
+  }
+
+  if (SymbolicOp.VariantKind == LLVMDisassembler_VariantKind_ARM_HI16)
+    MI.addOperand(MCOperand::CreateExpr(ARMMCExpr::CreateUpper16(Expr, *Ctx)));
+  else if (SymbolicOp.VariantKind == LLVMDisassembler_VariantKind_ARM_LO16)
+    MI.addOperand(MCOperand::CreateExpr(ARMMCExpr::CreateLower16(Expr, *Ctx)));
+  else if (SymbolicOp.VariantKind == LLVMDisassembler_VariantKind_None)
+    MI.addOperand(MCOperand::CreateExpr(Expr));
+  else 
+    assert("bad SymbolicOp.VariantKind");
+
+  return true;
+}
+
+/// tryAddingPcLoadReferenceComment - trys to add a comment as to what is being
+/// referenced by a load instruction with the base register that is the Pc.
+/// These can often be values in a literal pool near the Address of the
+/// instruction.  The Address of the instruction and its immediate Value are
+/// used as a possible literal pool entry.  The SymbolLookUp call back will
+/// return the name of a symbol referenced by the the literal pool's entry if
+/// the referenced address is that of a symbol.  Or it will return a pointer to
+/// a literal 'C' string if the referenced address of the literal pool's entry
+/// is an address into a section with 'C' string literals.
+static void tryAddingPcLoadReferenceComment(uint64_t Address, int Value,
+					    const void *Decoder) {
+  const MCDisassembler *Dis = static_cast<const MCDisassembler*>(Decoder);
+  LLVMSymbolLookupCallback SymbolLookUp = Dis->getLLVMSymbolLookupCallback();
+  if (SymbolLookUp) {
+    void *DisInfo = Dis->getDisInfoBlock();
+    uint64_t ReferenceType;
+    ReferenceType = LLVMDisassembler_ReferenceType_In_PCrel_Load;
+    const char *ReferenceName;
+    (void)SymbolLookUp(DisInfo, Value, &ReferenceType, Address, &ReferenceName);
+    if(ReferenceType == LLVMDisassembler_ReferenceType_Out_LitPool_SymAddr ||
+       ReferenceType == LLVMDisassembler_ReferenceType_Out_LitPool_CstrAddr)
+      (*Dis->CommentStream) << "literal pool for: " << ReferenceName;
+  }
 }
 
 // Thumb1 instructions don't have explicit S bits.  Rather, they
@@ -542,6 +689,8 @@ DecodeStatus ThumbDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
                                                uint64_t Address,
                                                raw_ostream &os,
                                                raw_ostream &cs) const {
+  CommentStream = &cs;
+
   uint8_t bytes[4];
 
   assert((STI.getFeatureBits() & ARM::ModeThumb) &&
@@ -1624,6 +1773,55 @@ static DecodeStatus DecodeT2CPSInstruction(llvm::MCInst &Inst, unsigned Insn,
   return S;
 }
 
+static DecodeStatus DecodeT2MOVTWInstruction(llvm::MCInst &Inst, unsigned Insn,
+                                 uint64_t Address, const void *Decoder) {
+  DecodeStatus S = MCDisassembler::Success;
+
+  unsigned Rd = fieldFromInstruction32(Insn, 8, 4);
+  unsigned imm = 0;
+
+  imm |= (fieldFromInstruction32(Insn, 0, 8) << 0);
+  imm |= (fieldFromInstruction32(Insn, 12, 3) << 8);
+  imm |= (fieldFromInstruction32(Insn, 16, 4) << 12);
+  imm |= (fieldFromInstruction32(Insn, 26, 1) << 11);
+
+  if (Inst.getOpcode() == ARM::t2MOVTi16)
+    if (!Check(S, DecoderGPRRegisterClass(Inst, Rd, Address, Decoder)))
+      return MCDisassembler::Fail;
+  if (!Check(S, DecoderGPRRegisterClass(Inst, Rd, Address, Decoder)))
+    return MCDisassembler::Fail;
+
+  if (!tryAddingSymbolicOperand(Address, imm, false, 4, Inst, Decoder))
+    Inst.addOperand(MCOperand::CreateImm(imm));
+
+  return S;
+}
+
+static DecodeStatus DecodeArmMOVTWInstruction(llvm::MCInst &Inst, unsigned Insn,
+                                 uint64_t Address, const void *Decoder) {
+  DecodeStatus S = MCDisassembler::Success;
+
+  unsigned Rd = fieldFromInstruction32(Insn, 12, 4);
+  unsigned pred = fieldFromInstruction32(Insn, 28, 4);
+  unsigned imm = 0;
+
+  imm |= (fieldFromInstruction32(Insn, 0, 12) << 0);
+  imm |= (fieldFromInstruction32(Insn, 16, 4) << 12);
+
+  if (Inst.getOpcode() == ARM::MOVTi16)
+    if (!Check(S, DecoderGPRRegisterClass(Inst, Rd, Address, Decoder)))
+      return MCDisassembler::Fail;
+  if (!Check(S, DecoderGPRRegisterClass(Inst, Rd, Address, Decoder)))
+    return MCDisassembler::Fail;
+
+  if (!tryAddingSymbolicOperand(Address, imm, false, 4, Inst, Decoder))
+    Inst.addOperand(MCOperand::CreateImm(imm));
+
+  if (!Check(S, DecodePredicateOperand(Inst, pred, Address, Decoder)))
+    return MCDisassembler::Fail;
+
+  return S;
+}
 
 static DecodeStatus DecodeSMLAInstruction(llvm::MCInst &Inst, unsigned Insn,
                                  uint64_t Address, const void *Decoder) {
@@ -1667,6 +1865,8 @@ static DecodeStatus DecodeAddrModeImm12Operand(llvm::MCInst &Inst, unsigned Val,
   if (!add) imm *= -1;
   if (imm == 0 && !add) imm = INT32_MIN;
   Inst.addOperand(MCOperand::CreateImm(imm));
+  if (Rn == 15)
+    tryAddingPcLoadReferenceComment(Address, Address + imm + 8, Decoder);
 
   return S;
 }
@@ -1710,7 +1910,9 @@ DecodeBranchImmInstruction(llvm::MCInst &Inst, unsigned Insn,
     return S;
   }
 
-  Inst.addOperand(MCOperand::CreateImm(SignExtend32<26>(imm)));
+  if (!tryAddingSymbolicOperand(Address, Address + SignExtend32<26>(imm) + 8, true,
+                                4, Inst, Decoder))
+    Inst.addOperand(MCOperand::CreateImm(SignExtend32<26>(imm)));
   if (!Check(S, DecodePredicateOperand(Inst, pred, Address, Decoder)))
     return MCDisassembler::Fail;
 
@@ -2595,7 +2797,10 @@ static DecodeStatus DecodeThumbAddrModeIS(llvm::MCInst &Inst, unsigned Val,
 
 static DecodeStatus DecodeThumbAddrModePC(llvm::MCInst &Inst, unsigned Val,
                                   uint64_t Address, const void *Decoder) {
-  Inst.addOperand(MCOperand::CreateImm(Val << 2));
+  unsigned imm = Val << 2;
+
+  Inst.addOperand(MCOperand::CreateImm(imm));
+  tryAddingPcLoadReferenceComment(Address, (Address & ~2u) + imm + 4, Decoder);
 
   return MCDisassembler::Success;
 }
@@ -2870,7 +3075,10 @@ static DecodeStatus DecodePostIdxReg(llvm::MCInst &Inst, unsigned Insn,
 
 static DecodeStatus DecodeThumbBLXOffset(llvm::MCInst &Inst, unsigned Val,
                                  uint64_t Address, const void *Decoder) {
-  Inst.addOperand(MCOperand::CreateImm(SignExtend32<22>(Val << 1)));
+  if (!tryAddingSymbolicOperand(Address, 
+                                (Address & ~2u) + SignExtend32<22>(Val << 1) + 4,
+                                true, 4, Inst, Decoder))
+    Inst.addOperand(MCOperand::CreateImm(SignExtend32<22>(Val << 1)));
   return MCDisassembler::Success;
 }
 

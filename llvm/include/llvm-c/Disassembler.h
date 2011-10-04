@@ -66,7 +66,7 @@ typedef int (*LLVMOpInfoCallback)(void *DisInfo, uint64_t PC,
  */
 struct LLVMOpInfoSymbol1 {
   uint64_t Present;  /* 1 if this symbol is present */
-  char *Name;        /* symbol name if not NULL */
+  const char *Name;  /* symbol name if not NULL */
   uint64_t Value;    /* symbol value if name is NULL */
 };
 
@@ -93,11 +93,35 @@ struct LLVMOpInfo1 {
  * disassembler for things like adding a comment for a PC plus a constant
  * offset load instruction to use a symbol name instead of a load address value.
  * It is passed the block information is saved when the disassembler context is
- * created and a value of a symbol to look up.  If no symbol is found NULL is
- * returned.
+ * created and the ReferenceValue to look up as a symbol.  If no symbol is found
+ * for the ReferenceValue NULL is returned.  The ReferenceType of the
+ * instruction is passed indirectly as is the PC of the instruction in
+ * ReferencePC.  If the output reference can be determined its type is returned
+ * indirectly in ReferenceType along with ReferenceName if any, or that is set
+ * to NULL.
  */
 typedef const char *(*LLVMSymbolLookupCallback)(void *DisInfo,
-                                                uint64_t SymbolValue);
+                                                uint64_t ReferenceValue,
+						uint64_t *ReferenceType,
+						uint64_t ReferencePC,
+						const char **ReferenceName);
+/**
+ * The reference types on input and output.
+ */
+/* No input reference type or no output reference type. */
+#define LLVMDisassembler_ReferenceType_InOut_None 0
+
+/* The input reference is from a branch instruction. */
+#define LLVMDisassembler_ReferenceType_In_Branch 1
+/* The input reference is from a PC relative load instruction. */
+#define LLVMDisassembler_ReferenceType_In_PCrel_Load 2
+
+/* The output reference is to as symbol stub. */
+#define LLVMDisassembler_ReferenceType_Out_SymbolStub 1
+/* The output reference is to a symbol address in a literal pool. */
+#define LLVMDisassembler_ReferenceType_Out_LitPool_SymAddr 2
+/* The output reference is to a cstring address in a literal pool. */
+#define LLVMDisassembler_ReferenceType_Out_LitPool_CstrAddr 3
 
 #ifdef __cplusplus
 extern "C" {
