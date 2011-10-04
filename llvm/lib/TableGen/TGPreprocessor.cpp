@@ -24,6 +24,10 @@
 #include <cstdlib>
 #include <cstring>
 
+#ifdef _MSC_VER
+#define snprintf _snprintf
+#endif
+
 namespace llvm {
 typedef std::map<std::string, std::string> TGPPEnvironment;
 
