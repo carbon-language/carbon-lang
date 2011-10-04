@@ -31,8 +31,8 @@ class ReturnInst;
 /// DeleteDeadBlock - Delete the specified block, which must have no
 /// predecessors.
 void DeleteDeadBlock(BasicBlock *BB);
-  
-  
+
+
 /// FoldSingleEntryPHINodes - We know that BB has one predecessor.  If there are
 /// any single-entry PHI nodes in it, fold them away.  This handles the case
 /// when all entries to the PHI nodes in a block are guaranteed equal, such as
@@ -75,7 +75,7 @@ void ReplaceInstWithInst(Instruction *From, Instruction *To);
 /// The output is added to Result, as pairs of <from,to> edge info.
 void FindFunctionBackedges(const Function &F,
       SmallVectorImpl<std::pair<const BasicBlock*,const BasicBlock*> > &Result);
-  
+
 
 /// GetSuccessorNumber - Search for the specified successor of basic block BB
 /// and return its position in the terminator instruction's list of
@@ -97,10 +97,10 @@ bool isCriticalEdge(const TerminatorInst *TI, unsigned SuccNum,
 /// was split, null otherwise.
 ///
 /// If MergeIdenticalEdges is true (not the default), *all* edges from TI to the
-/// specified successor will be merged into the same critical edge block.  
-/// This is most commonly interesting with switch instructions, which may 
+/// specified successor will be merged into the same critical edge block.
+/// This is most commonly interesting with switch instructions, which may
 /// have many edges to any one destination.  This ensures that all edges to that
-/// dest go to one block instead of each going to a different block, but isn't 
+/// dest go to one block instead of each going to a different block, but isn't
 /// the standard definition of a "critical edge".
 ///
 /// It is invalid to call this function on a critical edge that starts at an
@@ -147,8 +147,8 @@ inline BasicBlock *SplitCriticalEdge(BasicBlock *Src, BasicBlock *Dst,
   }
 }
 
-/// SplitEdge -  Split the edge connecting specified block. Pass P must 
-/// not be NULL. 
+/// SplitEdge -  Split the edge connecting specified block. Pass P must
+/// not be NULL.
 BasicBlock *SplitEdge(BasicBlock *From, BasicBlock *To, Pass *P);
 
 /// SplitBlock - Split the specified block at the specified instruction - every
@@ -157,7 +157,7 @@ BasicBlock *SplitEdge(BasicBlock *From, BasicBlock *To, Pass *P);
 /// the loop info is updated.
 ///
 BasicBlock *SplitBlock(BasicBlock *Old, Instruction *SplitPt, Pass *P);
- 
+
 /// SplitBlockPredecessors - This method transforms BB by introducing a new
 /// basic block into the function, and moving some of the predecessors of BB to
 /// be predecessors of the new block.  The new predecessors are indicated by the
@@ -180,13 +180,13 @@ BasicBlock *SplitBlockPredecessors(BasicBlock *BB, BasicBlock *const *Preds,
 /// block gets the remaining predecessors of OrigBB. The landingpad instruction
 /// OrigBB is clone into both of the new basic blocks. The new blocks are given
 /// the suffixes 'Suffix1' and 'Suffix2', and are returned in the NewBBs vector.
-/// 
+///
 /// This currently updates the LLVM IR, AliasAnalysis, DominatorTree,
 /// DominanceFrontier, LoopInfo, and LCCSA but no other analyses. In particular,
 /// it does not preserve LoopSimplify (because it's complicated to handle the
 /// case where one of the edges being split is an exit of a loop with other
 /// exits).
-/// 
+///
 void SplitLandingPadPredecessors(BasicBlock *OrigBB,ArrayRef<BasicBlock*> Preds,
                                  const char *Suffix, const char *Suffix2,
                                  Pass *P, SmallVectorImpl<BasicBlock*> &NewBBs);
@@ -199,7 +199,7 @@ void SplitLandingPadPredecessors(BasicBlock *OrigBB,ArrayRef<BasicBlock*> Preds,
 ReturnInst *FoldReturnIntoUncondBranch(ReturnInst *RI, BasicBlock *BB,
                                        BasicBlock *Pred);
 
-/// GetFirstDebugLocInBasicBlock - Return first valid DebugLoc entry in a 
+/// GetFirstDebugLocInBasicBlock - Return first valid DebugLoc entry in a
 /// given basic block.
 DebugLoc GetFirstDebugLocInBasicBlock(const BasicBlock *BB);
 
