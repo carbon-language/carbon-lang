@@ -639,11 +639,6 @@ tie(_Tp&... __t)
 template <class _Up>
 struct __ignore_t
 {
-    _LIBCPP_INLINE_VISIBILITY
-    __ignore_t() {}
-    template <class _Tp>
-        _LIBCPP_INLINE_VISIBILITY
-        __ignore_t(_Tp&&) {}
     template <class _Tp>
         _LIBCPP_INLINE_VISIBILITY
         const __ignore_t& operator=(_Tp&&) const {return *this;}
