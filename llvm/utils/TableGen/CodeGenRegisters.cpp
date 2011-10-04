@@ -503,7 +503,6 @@ Record *CodeGenRegBank::getCompositeSubRegIndex(Record *A, Record *B,
   // None exists, synthesize one.
   std::string Name = A->getName() + "_then_" + B->getName();
   Comp = new Record(Name, SMLoc(), Records);
-  Records.addDef(Comp);
   SubRegIndices.push_back(Comp);
   return Comp;
 }
