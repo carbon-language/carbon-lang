@@ -256,7 +256,7 @@ struct TupleExpander : SetTheory::Expander {
 //===----------------------------------------------------------------------===//
 
 CodeGenRegisterClass::CodeGenRegisterClass(CodeGenRegBank &RegBank, Record *R)
-  : TheDef(R), EnumValue(-1) {
+  : TheDef(R), Name(R->getName()), EnumValue(-1) {
   // Rename anonymous register classes.
   if (R->getName().size() > 9 && R->getName()[9] == '.') {
     static unsigned AnonCounter = 0;
@@ -385,8 +385,11 @@ static int TopoOrderRC(const void *PA, const void *PB) {
   return A->getName() < B->getName();
 }
 
-const std::string &CodeGenRegisterClass::getName() const {
-  return TheDef->getName();
+std::string CodeGenRegisterClass::getQualifiedName() const {
+  if (Namespace.empty())
+    return getName();
+  else
+    return Namespace + "::" + getName();
 }
 
 // Compute sub-classes of all register classes.

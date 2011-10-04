@@ -93,8 +93,9 @@ namespace llvm {
     // List of super-classes, topologocally ordered to have the larger classes
     // first.  This is the same as sorting by EnumValue.
     SmallVector<CodeGenRegisterClass*, 4> SuperClasses;
-  public:
     Record *TheDef;
+    std::string Name;
+  public:
     unsigned EnumValue;
     std::string Namespace;
     std::vector<MVT::SimpleValueType> VTs;
@@ -106,7 +107,12 @@ namespace llvm {
     DenseMap<Record*,Record*> SubRegClasses;
     std::string AltOrderSelect;
 
-    const std::string &getName() const;
+    // Return the Record that defined this class, or NULL if the class was
+    // created by TableGen.
+    Record *getDef() const { return TheDef; }
+
+    const std::string &getName() const { return Name; }
+    std::string getQualifiedName() const;
     const std::vector<MVT::SimpleValueType> &getValueTypes() const {return VTs;}
     unsigned getNumValueTypes() const { return VTs.size(); }
 

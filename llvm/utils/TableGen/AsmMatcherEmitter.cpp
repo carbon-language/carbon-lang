@@ -999,6 +999,10 @@ BuildRegisterClasses(SmallPtrSet<Record*, 16> &SingletonRegisters) {
   for (ArrayRef<CodeGenRegisterClass*>::const_iterator
        it = RegClassList.begin(), ie = RegClassList.end(); it != ie; ++it) {
     const CodeGenRegisterClass &RC = **it;
+    // Def will be NULL for non-user defined register classes.
+    Record *Def = RC.getDef();
+    if (!Def)
+      continue;
     ClassInfo *CI = RegisterSetClasses[std::set<Record*>(RC.getOrder().begin(),
                                                          RC.getOrder().end())];
     if (CI->ValueName.empty()) {
@@ -1008,7 +1012,7 @@ BuildRegisterClasses(SmallPtrSet<Record*, 16> &SingletonRegisters) {
     } else
       CI->ValueName = CI->ValueName + "," + RC.getName();
 
-    RegisterClassClasses.insert(std::make_pair(RC.TheDef, CI));
+    RegisterClassClasses.insert(std::make_pair(Def, CI));
   }
 
   // Populate the map for individual registers.
