@@ -26,7 +26,7 @@ if [ -z $MACOSX_DEPLOYMENT_TARGET ]
 then
 	if [ -z $IPHONEOS_DEPLOYMENT_TARGET ]
 	then
-		MACOSX_DEPLOYMENT_TARGET=10.6
+		MACOSX_DEPLOYMENT_TARGET=10.7
 	fi
 fi
 
@@ -75,7 +75,8 @@ case $TRIPLE in
 			-lSystem  \
 			-Wl,-unexported_symbols_list,libc++unexp.exp  \
 			${RE_EXPORT_LINE}  \
-			-Wl,-force_symbols_not_weak_list,notweak.exp "
+			-Wl,-force_symbols_not_weak_list,notweak.exp \
+			-Wl,-force_symbols_weak_list,weak.exp"
 	fi
     ;;
   *-*-mingw*)
