@@ -83,6 +83,21 @@ private:  // Parser methods.
   bool ParseObject(MultiClass *MC);
   bool ParseClass();
   bool ParseMultiClass();
+  Record *InstantiateMulticlassDef(MultiClass &MC,
+                                   Record *DefProto,
+                                   const std::string &DefmPrefix,
+                                   SMLoc DefmPrefixLoc);
+  bool ResolveMulticlassDefArgs(MultiClass &MC,
+                                Record *DefProto,
+                                SMLoc DefmPrefixLoc,
+                                SMLoc SubClassLoc,
+                                const std::vector<std::string> &TArgs,
+                                std::vector<Init *> &TemplateVals,
+                                bool DeleteArgs);
+  bool ResolveMulticlassDef(MultiClass &MC,
+                            Record *CurRec,
+                            Record *DefProto,
+                            SMLoc DefmPrefixLoc);
   bool ParseDefm(MultiClass *CurMultiClass);
   bool ParseDef(MultiClass *CurMultiClass);
   bool ParseTopLevelLet(MultiClass *CurMultiClass);

@@ -1919,6 +1919,115 @@ bool TGParser::ParseMultiClass() {
   return false;
 }
 
+Record *TGParser::
+InstantiateMulticlassDef(MultiClass &MC,
+                         Record *DefProto,
+                         const std::string &DefmPrefix,
+                         SMLoc DefmPrefixLoc) {
+  // Add in the defm name.  If the defm prefix is empty, give each
+  // instantiated def a unique name.  Otherwise, if "#NAME#" exists in the
+  // name, substitute the prefix for #NAME#.  Otherwise, use the defm name
+  // as a prefix.
+  std::string DefName = DefProto->getName();
+  if (DefmPrefix.empty()) {
+    DefName = GetNewAnonymousName();
+  } else {
+    std::string::size_type idx = DefName.find("#NAME#");
+    if (idx != std::string::npos) {
+      DefName.replace(idx, 6, DefmPrefix);
+    } else {
+      // Add the suffix to the defm name to get the new name.
+      DefName = DefmPrefix + DefName;
+    }
+  }
+
+  Record *CurRec = new Record(DefName, DefmPrefixLoc, Records);
+
+  SubClassReference Ref;
+  Ref.RefLoc = DefmPrefixLoc;
+  Ref.Rec = DefProto;
+  AddSubClass(CurRec, Ref);
+
+  return CurRec;
+}
+
+bool TGParser::ResolveMulticlassDefArgs(MultiClass &MC,
+                                        Record *CurRec,
+                                        SMLoc DefmPrefixLoc,
+                                        SMLoc SubClassLoc,
+                                        const std::vector<std::string> &TArgs,
+                                        std::vector<Init *> &TemplateVals,
+                                        bool DeleteArgs) {
+  // Loop over all of the template arguments, setting them to the specified
+  // value or leaving them as the default if necessary.
+  for (unsigned i = 0, e = TArgs.size(); i != e; ++i) {
+    // Check if a value is specified for this temp-arg.
+    if (i < TemplateVals.size()) {
+      // Set it now.
+      if (SetValue(CurRec, DefmPrefixLoc, TArgs[i], std::vector<unsigned>(),
+                   TemplateVals[i]))
+        return true;
+        
+      // Resolve it next.
+      CurRec->resolveReferencesTo(CurRec->getValue(TArgs[i]));
+
+      if (DeleteArgs)
+        // Now remove it.
+        CurRec->removeValue(TArgs[i]);
+        
+    } else if (!CurRec->getValue(TArgs[i])->getValue()->isComplete()) {
+      return Error(SubClassLoc, "value not specified for template argument #"+
+                   utostr(i) + " (" + TArgs[i] + ") of multiclassclass '" +
+                   MC.Rec.getName() + "'");
+    }
+  }
+  return false;
+}
+
+bool TGParser::ResolveMulticlassDef(MultiClass &MC,
+                                    Record *CurRec,
+                                    Record *DefProto,
+                                    SMLoc DefmPrefixLoc) {
+  // If the mdef is inside a 'let' expression, add to each def.
+  for (unsigned i = 0, e = LetStack.size(); i != e; ++i)
+    for (unsigned j = 0, e = LetStack[i].size(); j != e; ++j)
+      if (SetValue(CurRec, LetStack[i][j].Loc, LetStack[i][j].Name,
+                   LetStack[i][j].Bits, LetStack[i][j].Value))
+        return Error(DefmPrefixLoc, "when instantiating this defm");
+
+  // Ensure redefinition doesn't happen.
+  if (Records.getDef(CurRec->getName()))
+    return Error(DefmPrefixLoc, "def '" + CurRec->getName() + 
+                 "' already defined, instantiating defm with subdef '" + 
+                 DefProto->getName() + "'");
+
+  // Don't create a top level definition for defm inside multiclasses,
+  // instead, only update the prototypes and bind the template args
+  // with the new created definition.
+  if (CurMultiClass) {
+    for (unsigned i = 0, e = CurMultiClass->DefPrototypes.size();
+         i != e; ++i)
+      if (CurMultiClass->DefPrototypes[i]->getName() == CurRec->getName())
+        return Error(DefmPrefixLoc, "defm '" + CurRec->getName() +
+                     "' already defined in this multiclass!");
+    CurMultiClass->DefPrototypes.push_back(CurRec);
+
+    // Copy the template arguments for the multiclass into the new def.
+    const std::vector<std::string> &TA =
+      CurMultiClass->Rec.getTemplateArgs();
+
+    for (unsigned i = 0, e = TA.size(); i != e; ++i) {
+      const RecordVal *RV = CurMultiClass->Rec.getValue(TA[i]);
+      assert(RV && "Template arg doesn't exist?");
+      CurRec->addValue(*RV);
+    }
+  } else {
+    Records.addDef(CurRec);
+  }
+
+  return false;
+}
+
 /// ParseDefm - Parse the instantiation of a multiclass.
 ///
 ///   DefMInst ::= DEFM ID ':' DefmSubClassRef ';'
@@ -1968,98 +2077,18 @@ bool TGParser::ParseDefm(MultiClass *CurMultiClass) {
     for (unsigned i = 0, e = MC->DefPrototypes.size(); i != e; ++i) {
       Record *DefProto = MC->DefPrototypes[i];
 
-      // Add in the defm name.  If the defm prefix is empty, give each
-      // instantiated def a unique name.  Otherwise, if "#NAME#" exists in the
-      // name, substitute the prefix for #NAME#.  Otherwise, use the defm name
-      // as a prefix.
-      std::string DefName = DefProto->getName();
-      if (DefmPrefix.empty()) {
-        DefName = GetNewAnonymousName();
-      } else {
-        std::string::size_type idx = DefName.find("#NAME#");
-        if (idx != std::string::npos) {
-          DefName.replace(idx, 6, DefmPrefix);
-        } else {
-          // Add the suffix to the defm name to get the new name.
-          DefName = DefmPrefix + DefName;
-        }
-      }
+      Record *CurRec = InstantiateMulticlassDef(*MC, DefProto, DefmPrefix, DefmPrefixLoc);
 
-      Record *CurRec = new Record(DefName, DefmPrefixLoc, Records);
+      if (ResolveMulticlassDefArgs(*MC, CurRec, DefmPrefixLoc, SubClassLoc,
+                                   TArgs, TemplateVals, true/*Delete args*/))
+        return Error(SubClassLoc, "could not instantiate def");
 
-      SubClassReference Ref;
-      Ref.RefLoc = DefmPrefixLoc;
-      Ref.Rec = DefProto;
-      AddSubClass(CurRec, Ref);
-
-      // Loop over all of the template arguments, setting them to the specified
-      // value or leaving them as the default if necessary.
-      for (unsigned i = 0, e = TArgs.size(); i != e; ++i) {
-        // Check if a value is specified for this temp-arg.
-        if (i < TemplateVals.size()) {
-          // Set it now.
-          if (SetValue(CurRec, DefmPrefixLoc, TArgs[i], std::vector<unsigned>(),
-                       TemplateVals[i]))
-            return true;
-
-          // Resolve it next.
-          CurRec->resolveReferencesTo(CurRec->getValue(TArgs[i]));
-
-          // Now remove it.
-          CurRec->removeValue(TArgs[i]);
-
-        } else if (!CurRec->getValue(TArgs[i])->getValue()->isComplete()) {
-          return Error(SubClassLoc,
-                       "value not specified for template argument #"+
-                       utostr(i) + " (" + TArgs[i] + ") of multiclassclass '" +
-                       MC->Rec.getName() + "'");
-        }
-      }
-
-      // If the mdef is inside a 'let' expression, add to each def.
-      for (unsigned i = 0, e = LetStack.size(); i != e; ++i)
-        for (unsigned j = 0, e = LetStack[i].size(); j != e; ++j)
-          if (SetValue(CurRec, LetStack[i][j].Loc, LetStack[i][j].Name,
-                       LetStack[i][j].Bits, LetStack[i][j].Value)) {
-            Error(DefmPrefixLoc, "when instantiating this defm");
-            return true;
-          }
-
-      // Ensure redefinition doesn't happen.
-      if (Records.getDef(CurRec->getName()))
-        return Error(DefmPrefixLoc, "def '" + CurRec->getName() +
-                     "' already defined, instantiating defm with subdef '" +
-                     DefProto->getName() + "'");
-
-      // Don't create a top level definition for defm inside multiclasses,
-      // instead, only update the prototypes and bind the template args
-      // with the new created definition.
-      if (CurMultiClass) {
-        for (unsigned i = 0, e = CurMultiClass->DefPrototypes.size();
-             i != e; ++i) {
-          if (CurMultiClass->DefPrototypes[i]->getName() == CurRec->getName()) {
-            Error(DefmPrefixLoc, "defm '" + CurRec->getName() +
-                  "' already defined in this multiclass!");
-            return 0;
-          }
-        }
-        CurMultiClass->DefPrototypes.push_back(CurRec);
-
-        // Copy the template arguments for the multiclass into the new def.
-        const std::vector<std::string> &TA =
-          CurMultiClass->Rec.getTemplateArgs();
-
-        for (unsigned i = 0, e = TA.size(); i != e; ++i) {
-          const RecordVal *RV = CurMultiClass->Rec.getValue(TA[i]);
-          assert(RV && "Template arg doesn't exist?");
-          CurRec->addValue(*RV);
-        }
-      } else {
-        Records.addDef(CurRec);
-      }
+      if (ResolveMulticlassDef(*MC, CurRec, DefProto, DefmPrefixLoc))
+        return Error(SubClassLoc, "could not instantiate def");
 
       NewRecDefs.push_back(CurRec);
     }
+
 
     if (Lex.getCode() != tgtok::comma) break;
     Lex.Lex(); // eat ','.
