@@ -129,11 +129,7 @@ bool Filler::findDelayInstr(MachineBasicBlock &MBB,
   SmallSet<unsigned, 32> RegDefs;
   SmallSet<unsigned, 32> RegUses;
 
-  // Call's delay filler can def some of call's uses.
-  if (slot->getDesc().isCall())
-    insertCallUses(slot, RegDefs, RegUses);
-  else
-    insertDefsUses(slot, RegDefs, RegUses);
+  insertDefsUses(slot, RegDefs, RegUses);
 
   bool sawLoad = false;
   bool sawStore = false;
@@ -215,39 +211,28 @@ bool Filler::delayHasHazard(MachineBasicBlock::iterator candidate,
   return false;
 }
 
-void Filler::insertCallUses(MachineBasicBlock::iterator MI,
-                            SmallSet<unsigned, 32>& RegDefs,
-                            SmallSet<unsigned, 32>& RegUses) {
-  switch(MI->getOpcode()) {
-  default: llvm_unreachable("Unknown opcode.");
-  case Mips::JAL:
-    RegDefs.insert(31);
-    break;
-  case Mips::JALR:
-    assert(MI->getNumOperands() >= 1);
-    const MachineOperand &Reg = MI->getOperand(0);
-    assert(Reg.isReg() && "JALR first operand is not a register.");
-    RegUses.insert(Reg.getReg());
-    RegDefs.insert(31);
-    break;
-  }
-}
-
 // Insert Defs and Uses of MI into the sets RegDefs and RegUses.
 void Filler::insertDefsUses(MachineBasicBlock::iterator MI,
                             SmallSet<unsigned, 32>& RegDefs,
                             SmallSet<unsigned, 32>& RegUses) {
-  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+  // If MI is a call, just examine the explicit non-variadic operands.
+  // NOTE: $ra is not added to RegDefs, since currently $ra is reserved and
+  //       no instruction that can possibly be put in a delay slot can read or
+  //       write it.
+
+  unsigned e = MI->getDesc().isCall() ? MI->getDesc().getNumOperands() :
+                                        MI->getNumOperands();
+
+  for (unsigned i = 0; i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
-    if (!MO.isReg())
+    unsigned Reg;
+
+    if (!MO.isReg() || !(Reg = MO.getReg()))
       continue;
 
-    unsigned Reg = MO.getReg();
-    if (Reg == 0)
-      continue;
     if (MO.isDef())
       RegDefs.insert(Reg);
-    if (MO.isUse())
+    else if (MO.isUse())
       RegUses.insert(Reg);
   }
 }
