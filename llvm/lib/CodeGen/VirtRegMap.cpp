@@ -285,14 +285,24 @@ void VirtRegMap::rewrite(SlotIndexes *Indexes) {
         // Preserve semantics of sub-register operands.
         if (MO.getSubReg()) {
           // A virtual register kill refers to the whole register, so we may
-          // have to add <imp-use,kill> operands for the super-register.
-          if (MO.isUse()) {
-            if (MO.isKill() && !MO.isUndef())
-              SuperKills.push_back(PhysReg);
-          } else if (MO.isDead())
-            SuperDeads.push_back(PhysReg);
-          else
-            SuperDefs.push_back(PhysReg);
+          // have to add <imp-use,kill> operands for the super-register.  A
+          // partial redef always kills and redefines the super-register.
+          if (MO.readsReg() && (MO.isDef() || MO.isKill()))
+            SuperKills.push_back(PhysReg);
+
+          if (MO.isDef()) {
+            // The <def,undef> flag only makes sense for sub-register defs, and
+            // we are substituting a full physreg.  An <imp-use,kill> operand
+            // from the SuperKills list will represent the partial read of the
+            // super-register.
+            MO.setIsUndef(false);
+
+            // Also add implicit defs for the super-register.
+            if (MO.isDead())
+              SuperDeads.push_back(PhysReg);
+            else
+              SuperDefs.push_back(PhysReg);
+          }
 
           // PhysReg operands cannot have subregister indexes.
           PhysReg = TRI->getSubReg(PhysReg, MO.getSubReg());
