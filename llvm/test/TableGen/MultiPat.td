@@ -85,8 +85,16 @@ def int_x86_sse2_add_ps : Intrinsic<"addps">;
 def int_x86_sse2_add_pd : Intrinsic<"addpd">;
 def INTRINSIC : Intrinsic<"Dummy">;
 def bitconvert;
+def add;
 
-class MakePat<list<dag> patterns> : Pat<patterns[0], patterns[1]>;
+class MakePatImpl<list<dag> patterns> : Pat<patterns[0], patterns[1]>;
+class MakePat<list<dag> patterns,
+              string suffix,
+	      string intr> : MakePatImpl<!foreach(Decls.pattern, patterns,
+                                                         !foreach(Decls.operand, Decls.pattern, 
+			           	                         !subst(INTRINSIC, !cast<Intrinsic>(!subst("SUFFIX", suffix, intr)),
+                                   		    		 !subst(REGCLASS, VR128, 
+                                   		    		 !subst(MNEMONIC, set, Decls.operand)))))>;
 
 class Base<bits<8> opcode, dag opnds, dag iopnds, string asmstr, Intrinsic intr, 
            list<list<dag>> patterns>
@@ -95,12 +103,7 @@ class Base<bits<8> opcode, dag opnds, dag iopnds, string asmstr, Intrinsic intr,
 		      !foreach(Decls.operand, Decls.pattern, 
 			       !subst(INTRINSIC, intr, 
 		               !subst(REGCLASS, VR128, 
-                               !subst(MNEMONIC, set, Decls.operand)))))>,
-        MakePat<!foreach(Decls.pattern, patterns[1], 
-		         !foreach(Decls.operand, Decls.pattern, 
-			          !subst(INTRINSIC, intr, 
-				  !subst(REGCLASS, VR128, 
-                                  !subst(MNEMONIC, set, Decls.operand)))))>;
+                               !subst(MNEMONIC, set, Decls.operand)))))>;
 
 multiclass arith<bits<8> opcode, string asmstr, string intr, list<list<dag>> patterns> {
   def PS : Base<opcode, (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
@@ -108,13 +111,18 @@ multiclass arith<bits<8> opcode, string asmstr, string intr, list<list<dag>> pat
 
   def PD : Base<opcode, (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
                  !strconcat(asmstr, "\t$dst, $src1, $src2"), !cast<Intrinsic>(!subst("SUFFIX", "_pd", intr)), patterns>;
+
+  multidef <patterns, list<dag> pats, 1> : MakePat<pats, "_ps", intr>;
+  multidef <patterns, list<dag> pats, 1> : MakePat<pats, "_pd", intr>;
 }
 
 defm ADD : arith<0x58, "add", "int_x86_sse2_addSUFFIX",
                   // rr Patterns
                  [[(set REGCLASS:$dst, (INTRINSIC REGCLASS:$src1, REGCLASS:$src2))],
                    [(set REGCLASS:$dst, (bitconvert (INTRINSIC REGCLASS:$src1, REGCLASS:$src2))),
-                    (MNEMONIC REGCLASS:$dst, REGCLASS:$src)]]>;
+                    (MNEMONIC REGCLASS:$dst, REGCLASS:$src)],
+                   [(set REGCLASS:$dst, (add (INTRINSIC REGCLASS:$src1, REGCLASS:$src2))),
+                    (MNEMONIC (add REGCLASS:$dst, REGCLASS:$src))]]>;
 
 // CHECK: [(set VR128:$dst, (int_x86_sse2_add_pd VR128:$src1, VR128:$src2))]
 // CHECK: [(set VR128:$dst, (int_x86_sse2_add_ps VR128:$src1, VR128:$src2))]
