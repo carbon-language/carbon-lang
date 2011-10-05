@@ -77,6 +77,12 @@ class InstrEmitter {
                   DenseMap<SDValue, unsigned> &VRBaseMap,
                   bool IsDebug, bool IsClone, bool IsCloned);
 
+  /// ConstrainForSubReg - Try to constrain VReg to a register class that
+  /// supports SubIdx sub-registers.  Emit a copy if that isn't possible.
+  /// Return the virtual register to use.
+  unsigned ConstrainForSubReg(unsigned VReg, unsigned SubIdx,
+                              EVT VT, DebugLoc DL);
+
   /// EmitSubregNode - Generate machine code for subreg nodes.
   ///
   void EmitSubregNode(SDNode *Node, DenseMap<SDValue, unsigned> &VRBaseMap,
