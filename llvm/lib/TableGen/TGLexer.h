@@ -41,7 +41,7 @@ namespace tgtok {
     equal, question,    // = ?
     
     // Keywords.
-    Bit, Bits, Class, Code, Dag, Def, Defm, Field, In, Int, Let, List,
+    Bit, Bits, Class, Code, Dag, Def, MultiDef, Defm, Field, In, Int, Let, List,
     MultiClass, String,
     
     // !keywords.
