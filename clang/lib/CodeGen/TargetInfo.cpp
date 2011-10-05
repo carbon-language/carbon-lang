@@ -2742,6 +2742,9 @@ class PTXTargetCodeGenInfo : public TargetCodeGenInfo {
 public:
   PTXTargetCodeGenInfo(CodeGenTypes &CGT)
     : TargetCodeGenInfo(new PTXABIInfo(CGT)) {}
+    
+  virtual void 	SetTargetAttributes(const Decl *D, llvm::GlobalValue *GV,
+                                    CodeGen::CodeGenModule &M) const;
 };
 
 ABIArgInfo PTXABIInfo::classifyReturnType(QualType RetTy) const {
@@ -2771,19 +2774,51 @@ void PTXABIInfo::computeInfo(CGFunctionInfo &FI) const {
 
   // Calling convention as default by an ABI.
   llvm::CallingConv::ID DefaultCC;
-  StringRef Env = getContext().getTargetInfo().getTriple().getEnvironmentName();
-  if (Env == "device")
+  if (getContext().getLangOptions().OpenCL) {
+    // If we are in OpenCL mode, then default to device functions
     DefaultCC = llvm::CallingConv::PTX_Device;
-  else
-    DefaultCC = llvm::CallingConv::PTX_Kernel;
-
+  } else {
+    // If we are in standard C/C++ mode, use the triple to decide on the default
+    StringRef Env = 
+      getContext().getTargetInfo().getTriple().getEnvironmentName();
+    if (Env == "device")
+      DefaultCC = llvm::CallingConv::PTX_Device;
+    else
+      DefaultCC = llvm::CallingConv::PTX_Kernel;
+  }
   FI.setEffectiveCallingConvention(DefaultCC);
+   
 }
 
 llvm::Value *PTXABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
                                    CodeGenFunction &CFG) const {
   llvm_unreachable("PTX does not support varargs");
   return 0;
+}
+
+void PTXTargetCodeGenInfo::SetTargetAttributes(const Decl *D,
+                                               llvm::GlobalValue *GV,
+                                               CodeGen::CodeGenModule &M) const{
+  const FunctionDecl *FD = dyn_cast<FunctionDecl>(D);
+  if (!FD) return;
+
+  llvm::Function *F = cast<llvm::Function>(GV);
+
+  // Perform special handling in OpenCL mode
+  if (M.getContext().getLangOptions().OpenCL) {
+    // Use OpenCL function attributes to set proper calling conventions
+    // By default, all functions are device functions
+    llvm::CallingConv::ID CC = llvm::CallingConv::PTX_Device;
+    if (FD->hasAttr<OpenCLKernelAttr>()) {
+      // OpenCL __kernel functions get a kernel calling convention
+      CC = llvm::CallingConv::PTX_Kernel;
+      // And kernel functions are not subject to inlining
+      F->addFnAttr(llvm::Attribute::NoInline);
+    }
+
+    // Set the derived calling convention    
+    F->setCallingConv(CC);
+  }
 }
 
 }
