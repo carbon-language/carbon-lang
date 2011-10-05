@@ -40,7 +40,7 @@ class TGPreprocessor {
 
 public:
   TGPreprocessor(SourceMgr &SM, tool_output_file &O)
-    : SrcMgr(SM), Out(O), Lexer(NULL), CurRecords(NULL) {
+    : SrcMgr(SM), Out(O), Lexer(0), CurRecords(0) {
   }
 
   /// PreprocessFile - Main entrypoint for preprocess a tblgen file.  These
