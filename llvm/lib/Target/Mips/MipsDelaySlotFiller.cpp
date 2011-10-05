@@ -174,15 +174,16 @@ bool Filler::delayHasHazard(MachineBasicBlock::iterator candidate,
   if (candidate->isImplicitDef() || candidate->isKill())
     return true;
 
+  MCInstrDesc MCID = candidate->getDesc();
   // Loads or stores cannot be moved past a store to the delay slot
   // and stores cannot be moved past a load. 
-  if (candidate->getDesc().mayLoad()) {
+  if (MCID.mayLoad()) {
     if (sawStore)
       return true;
     sawLoad = true;
   }
 
-  if (candidate->getDesc().mayStore()) {
+  if (MCID.mayStore()) {
     if (sawStore)
       return true;
     sawStore = true;
@@ -190,7 +191,8 @@ bool Filler::delayHasHazard(MachineBasicBlock::iterator candidate,
       return true;
   }
 
-  assert(!candidate->getDesc().isCall() && "Cannot put calls in delay slot.");
+  assert((!MCID.isCall() && !MCID.isReturn()) &&
+         "Cannot put calls in delay slot.");
 
   for (unsigned i = 0, e = candidate->getNumOperands(); i!= e; ++i) {
     const MachineOperand &MO = candidate->getOperand(i);
