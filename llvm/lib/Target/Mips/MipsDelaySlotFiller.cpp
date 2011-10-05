@@ -218,13 +218,13 @@ void Filler::insertDefsUses(MachineBasicBlock::iterator MI,
                             SmallSet<unsigned, 32>& RegDefs,
                             SmallSet<unsigned, 32>& RegUses) {
   // If MI is a call or return, just examine the explicit non-variadic operands.
-  // NOTE: $ra is not added to RegDefs, since currently $ra is reserved and
-  //       no instruction that can possibly be put in a delay slot can read or
-  //       write it.
-
   MCInstrDesc MCID = MI->getDesc();
   unsigned e = MCID.isCall() || MCID.isReturn() ? MCID.getNumOperands() :
                                                   MI->getNumOperands();
+  
+  // Add RA to RegDefs to prevent users of RA from going into delay slot. 
+  if (MCID.isCall())
+    RegDefs.insert(Mips::RA);
 
   for (unsigned i = 0; i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
