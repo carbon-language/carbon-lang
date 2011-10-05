@@ -395,12 +395,13 @@ StackFrameList::SetDefaultFileAndLineToSelectedFrame()
 {
     if (m_thread.GetID() == m_thread.GetProcess().GetThreadList().GetSelectedThread()->GetID())
     {
-        StackFrameSP frame_sp = m_frames[m_selected_frame_idx];
+        StackFrameSP frame_sp (GetFrameAtIndex (GetSelectedFrameIndex()));
         if (frame_sp)
         {
-            SymbolContext sc = frame_sp->GetSymbolContext(eSymbolContextEverything);
+            SymbolContext sc = frame_sp->GetSymbolContext(eSymbolContextLineEntry);
             if (sc.line_entry.file)
-            m_thread.GetProcess().GetTarget().GetSourceManager().SetDefaultFileAndLine (sc.line_entry.file, sc.line_entry.line);
+                m_thread.GetProcess().GetTarget().GetSourceManager().SetDefaultFileAndLine (sc.line_entry.file, 
+                                                                                            sc.line_entry.line);
         }
     }
 }
