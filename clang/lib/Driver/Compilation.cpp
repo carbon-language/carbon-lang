@@ -72,7 +72,7 @@ const DerivedArgList &Compilation::getArgsForToolChain(const ToolChain *TC,
 
 static bool needsQuote(const char *s) {
   for (const char *c = s; *c; ++c)
-    if (*c == ' ')
+    if (*c == ' ' || *c == '"' || *c == '\\' || *c == '$')
       return true;
   return false;
 }
