@@ -1311,6 +1311,7 @@ enum CXCursorKind {
   CXCursor_ObjCDynamicDecl               = 38,
   /** \brief An access specifier. */
   CXCursor_CXXAccessSpecifier            = 39,
+
   CXCursor_FirstDecl                     = CXCursor_UnexposedDecl,
   CXCursor_LastDecl                      = CXCursor_CXXAccessSpecifier,
 
@@ -1451,7 +1452,207 @@ enum CXCursorKind {
   /** \brief An expression that represents a block literal. */
   CXCursor_BlockExpr                     = 105,
 
-  CXCursor_LastExpr                      = 105,
+  /** \brief An integer literal.
+   */
+  CXCursor_IntegerLiteral                = 106,
+
+  /** \brief A floating point number literal.
+   */
+  CXCursor_FloatingLiteral               = 107,
+
+  /** \brief An imaginary number literal.
+   */
+  CXCursor_ImaginaryLiteral              = 108,
+
+  /** \brief A string literal.
+   */
+  CXCursor_StringLiteral                 = 109,
+
+  /** \brief A character literal.
+   */
+  CXCursor_CharacterLiteral              = 110,
+
+  /** \brief A parenthesized expression, e.g. "(1)".
+   *
+   * This AST node is only formed if full location information is requested.
+   */
+  CXCursor_ParenExpr                     = 111,
+
+  /** \brief This represents the unary-expression's (except sizeof and
+   * alignof).
+   */
+  CXCursor_UnaryOperator                 = 112,
+
+  /** \brief [C99 6.5.2.1] Array Subscripting.
+   */
+  CXCursor_ArraySubscriptExpr            = 113,
+
+  /** \brief A builtin binary operation expression such as "x + y" or
+   * "x <= y".
+   */
+  CXCursor_BinaryOperator                = 114,
+
+  /** \brief Compound assignment such as "+=".
+   */
+  CXCursor_CompoundAssignOperator        = 115,
+
+  /** \brief The ?: ternary operator.
+   */
+  CXCursor_ConditionalOperator           = 116,
+
+  /** \brief An explicit cast in C (C99 6.5.4) or a C-style cast in C++
+   * (C++ [expr.cast]), which uses the syntax (Type)expr.
+   *
+   * For example: (int)f.
+   */
+  CXCursor_CStyleCastExpr                = 117,
+
+  /** \brief [C99 6.5.2.5]
+   */
+  CXCursor_CompoundLiteralExpr           = 118,
+
+  /** \brief Describes an C or C++ initializer list.
+   */
+  CXCursor_InitListExpr                  = 119,
+
+  /** \brief The GNU address of label extension, representing &&label.
+   */
+  CXCursor_AddrLabelExpr                 = 120,
+
+  /** \brief This is the GNU Statement Expression extension: ({int X=4; X;})
+   */
+  CXCursor_StmtExpr                      = 121,
+
+  /** \brief Represents a C1X generic selection.
+   */
+  CXCursor_GenericSelectionExpr          = 122,
+
+  /** \brief Implements the GNU __null extension, which is a name for a null
+   * pointer constant that has integral type (e.g., int or long) and is the same
+   * size and alignment as a pointer.
+   *
+   * The __null extension is typically only used by system headers, which define
+   * NULL as __null in C++ rather than using 0 (which is an integer that may not
+   * match the size of a pointer).
+   */
+  CXCursor_GNUNullExpr                   = 123,
+
+  /** \brief C++'s static_cast<> expression.
+   */
+  CXCursor_CXXStaticCastExpr             = 124,
+
+  /** \brief C++'s dynamic_cast<> expression.
+   */
+  CXCursor_CXXDynamicCastExpr            = 125,
+
+  /** \brief C++'s reinterpret_cast<> expression.
+   */
+  CXCursor_CXXReinterpretCastExpr        = 126,
+
+  /** \brief C++'s const_cast<> expression.
+   */
+  CXCursor_CXXConstCastExpr              = 127,
+
+  /** \brief Represents an explicit C++ type conversion that uses "functional"
+   * notion (C++ [expr.type.conv]).
+   *
+   * Example:
+   * \code
+   *   x = int(0.5);
+   * \endcode
+   */
+  CXCursor_CXXFunctionalCastExpr         = 128,
+
+  /** \brief A C++ typeid expression (C++ [expr.typeid]).
+   */
+  CXCursor_CXXTypeidExpr                 = 129,
+
+  /** \brief [C++ 2.13.5] C++ Boolean Literal.
+   */
+  CXCursor_CXXBoolLiteralExpr            = 130,
+
+  /** \brief [C++0x 2.14.7] C++ Pointer Literal.
+   */
+  CXCursor_CXXNullPtrLiteralExpr         = 131,
+
+  /** \brief Represents the "this" expression in C++
+   */
+  CXCursor_CXXThisExpr                   = 132,
+
+  /** \brief [C++ 15] C++ Throw Expression.
+   *
+   * This handles 'throw' and 'throw' assignment-expression. When
+   * assignment-expression isn't present, Op will be null.
+   */
+  CXCursor_CXXThrowExpr                  = 133,
+
+  /** \brief A new expression for memory allocation and constructor calls, e.g:
+   * "new CXXNewExpr(foo)".
+   */
+  CXCursor_CXXNewExpr                    = 134,
+
+  /** \brief A delete expression for memory deallocation and destructor calls,
+   * e.g. "delete[] pArray".
+   */
+  CXCursor_CXXDeleteExpr                 = 135,
+
+  /** \brief A unary expression.
+   */
+  CXCursor_UnaryExpr                     = 136,
+
+  /** \brief ObjCStringLiteral, used for Objective-C string literals i.e. "foo".
+   */
+  CXCursor_ObjCStringLiteral             = 137,
+
+  /** \brief ObjCEncodeExpr, used for in Objective-C.
+   */
+  CXCursor_ObjCEncodeExpr                = 138,
+
+  /** \brief ObjCSelectorExpr used for in Objective-C.
+   */
+  CXCursor_ObjCSelectorExpr              = 139,
+
+  /** \brief Objective-C's protocol expression.
+   */
+  CXCursor_ObjCProtocolExpr              = 140,
+
+  /** \brief An Objective-C "bridged" cast expression, which casts between
+   * Objective-C pointers and C pointers, transferring ownership in the process.
+   *
+   * \code
+   *   NSString *str = (__bridge_transfer NSString *)CFCreateString();
+   * \endcode
+   */
+  CXCursor_ObjCBridgedCastExpr           = 141,
+
+  /** \brief Represents a C++0x pack expansion that produces a sequence of
+   * expressions.
+   *
+   * A pack expansion expression contains a pattern (which itself is an
+   * expression) followed by an ellipsis. For example:
+   *
+   * \code
+   * template<typename F, typename ...Types>
+   * void forward(F f, Types &&...args) {
+   *  f(static_cast<Types&&>(args)...);
+   * }
+   * \endcode
+   */
+  CXCursor_PackExpansionExpr             = 142,
+
+  /** \brief Represents an expression that computes the length of a parameter
+   * pack.
+   *
+   * \code
+   * template<typename ...Types>
+   * struct count {
+   *   static const unsigned value = sizeof...(Types);
+   * };
+   * \endcode
+   */
+  CXCursor_SizeOfPackExpr                = 143,
+
+  CXCursor_LastExpr                      = CXCursor_SizeOfPackExpr,
 
   /* Statements */
   CXCursor_FirstStmt                     = 200,
@@ -1478,8 +1679,130 @@ enum CXCursorKind {
    *
    */
   CXCursor_LabelStmt                     = 201,
-  
-  CXCursor_LastStmt                      = CXCursor_LabelStmt,
+
+  /** \brief A group of statements like { stmt stmt }.
+   *
+   * This cursor kind is used to describe compound statements, e.g. function
+   * bodies.
+   */
+  CXCursor_CompoundStmt                  = 202,
+
+  /** \brief A case statment.
+   */
+  CXCursor_CaseStmt                      = 203,
+
+  /** \brief A default statement.
+   */
+  CXCursor_DefaultStmt                   = 204,
+
+  /** \brief An if statement
+   */
+  CXCursor_IfStmt                        = 205,
+
+  /** \brief A switch statement.
+   */
+  CXCursor_SwitchStmt                    = 206,
+
+  /** \brief A while statement.
+   */
+  CXCursor_WhileStmt                     = 207,
+
+  /** \brief A do statement.
+   */
+  CXCursor_DoStmt                        = 208,
+
+  /** \brief A for statement.
+   */
+  CXCursor_ForStmt                       = 209,
+
+  /** \brief A goto statement.
+   */
+  CXCursor_GotoStmt                      = 210,
+
+  /** \brief An indirect goto statement.
+   */
+  CXCursor_IndirectGotoStmt              = 211,
+
+  /** \brief A continue statement.
+   */
+  CXCursor_ContinueStmt                  = 212,
+
+  /** \brief A break statement.
+   */
+  CXCursor_BreakStmt                     = 213,
+
+  /** \brief A return statement.
+   */
+  CXCursor_ReturnStmt                    = 214,
+
+  /** \brief A GNU inline assembly statement extension.
+   */
+  CXCursor_AsmStmt                       = 215,
+
+  /** \brief Objective-C's overall @try-@catc-@finall statement.
+   */
+  CXCursor_ObjCAtTryStmt                 = 216,
+
+  /** \brief Objective-C's @catch statement.
+   */
+  CXCursor_ObjCAtCatchStmt               = 217,
+
+  /** \brief Objective-C's @finally statement.
+   */
+  CXCursor_ObjCAtFinallyStmt             = 218,
+
+  /** \brief Objective-C's @throw statement.
+   */
+  CXCursor_ObjCAtThrowStmt               = 219,
+
+  /** \brief Objective-C's @synchronized statement.
+   */
+  CXCursor_ObjCAtSynchronizedStmt        = 220,
+
+  /** \brief Objective-C's autorelease pool statement.
+   */
+  CXCursor_ObjCAutoreleasePoolStmt       = 221,
+
+  /** \brief Objective-C's collection statement.
+   */
+  CXCursor_ObjCForCollectionStmt         = 222,
+
+  /** \brief C++'s catch statement.
+   */
+  CXCursor_CXXCatchStmt                  = 223,
+
+  /** \brief C++'s try statement.
+   */
+  CXCursor_CXXTryStmt                    = 224,
+
+  /** \brief C++'s for (* : *) statement.
+   */
+  CXCursor_CXXForRangeStmt               = 225,
+
+  /** \brief Windows Structured Exception Handling's try statement.
+   */
+  CXCursor_SEHTryStmt                    = 226,
+
+  /** \brief Windows Structured Exception Handling's except statement.
+   */
+  CXCursor_SEHExceptStmt                 = 227,
+
+  /** \brief Windows Structured Exception Handling's finally statement.
+   */
+  CXCursor_SEHFinallyStmt                = 228,
+
+  /** \brief The null satement ";": C99 6.8.3p3.
+   *
+   * This cursor kind is used to describe the null statement.
+   */
+  CXCursor_NullStmt                      = 230,
+
+  /** \brief Adaptor class for mixing declarations with statements and
+   * expressions.
+   */
+  CXCursor_DeclStmt                      = 231,
+
+  CXCursor_LastStmt                      = CXCursor_DeclStmt,
 
   /**
    * \brief Cursor that represents the translation unit itself.

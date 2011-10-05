@@ -26,7 +26,7 @@ int main()
 }
 
 // RUN: c-index-test -test-load-source all %s | FileCheck %s
-// CHECK: cursor-ref-names.cpp:17:5: UnexposedStmt= Extent=[17:5 - 17:14]
+// CHECK: cursor-ref-names.cpp:17:5: DeclStmt= Extent=[17:5 - 17:14]
 // CHECK: cursor-ref-names.cpp:17:9: VarDecl=inst:17:9 (Definition) Extent=[17:5 - 17:13]
 // CHECK: cursor-ref-names.cpp:17:5: TypeRef=struct Sub:7:8 Extent=[17:5 - 17:8]
 // CHECK: cursor-ref-names.cpp:17:9: CallExpr=Sub:7:8 Extent=[17:9 - 17:13]

@@ -20,7 +20,7 @@ void function(Foo * arg)
 // CHECK-scan: [10:15 - 10:18] ObjCClassRef=Foo:8:8
 // CHECK-scan: [10:18 - 10:24] ParmDecl=arg:10:21 (Definition)
 // CHECK-scan: [10:24 - 11:1] FunctionDecl=function:10:6 (Definition)
-// CHECK-scan: [11:1 - 13:2] UnexposedStmt=
+// CHECK: [11:1 - 13:2] CompundStmt=
 
 
 

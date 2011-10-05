@@ -438,11 +438,11 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Identifier: "size_t" [41:16 - 41:22] TypeRef=size_t:2:25
 // CHECK-tokens: Identifier: "npos" [41:23 - 41:27] VarDecl=npos:41:23
 // CHECK-tokens: Punctuation: "=" [41:28 - 41:29] VarDecl=npos:41:23
-// CHECK-tokens: Punctuation: "~" [41:30 - 41:31] UnexposedExpr=
+// CHECK-tokens: Punctuation: "~" [41:30 - 41:31] UnaryOperator=
 // CHECK-tokens: Identifier: "size_t" [41:31 - 41:37] TypeRef=size_t:2:25
-// CHECK-tokens: Punctuation: "(" [41:37 - 41:38] UnexposedExpr=
-// CHECK-tokens: Literal: "0" [41:38 - 41:39] UnexposedExpr=
-// CHECK-tokens: Punctuation: ")" [41:39 - 41:40] UnexposedExpr=
+// CHECK-tokens: Punctuation: "(" [41:37 - 41:38] CXXFunctionalCastExpr=
+// CHECK-tokens: Literal: "0" [41:38 - 41:39] IntegerLiteral=
+// CHECK-tokens: Punctuation: ")" [41:39 - 41:40] CXXFunctionalCastExpr
 // CHECK-tokens: Punctuation: ";" [41:40 - 41:41] ClassDecl=StringRef:38:7 (Definition)
 // CHECK-tokens: Keyword: "private" [42:1 - 42:8] CXXAccessSpecifier=:42:1 (Definition)
 // CHECK-tokens: Punctuation: ":" [42:8 - 42:9] CXXAccessSpecifier=:42:1 (Definition)
@@ -464,17 +464,17 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Identifier: "size_t" [45:31 - 45:37] TypeRef=size_t:2:25
 // CHECK-tokens: Identifier: "b" [45:38 - 45:39] ParmDecl=b:45:38 (Definition)
 // CHECK-tokens: Punctuation: ")" [45:39 - 45:40] CXXMethod=min:45:17 (Definition) (static)
-// CHECK-tokens: Punctuation: "{" [45:41 - 45:42] UnexposedStmt=
-// CHECK-tokens: Keyword: "return" [45:43 - 45:49] UnexposedStmt=
+// CHECK-tokens: Punctuation: "{" [45:41 - 45:42] CompoundStmt=
+// CHECK-tokens: Keyword: "return" [45:43 - 45:49] ReturnStmt=
 // CHECK-tokens: Identifier: "a" [45:50 - 45:51] DeclRefExpr=a:45:28
-// CHECK-tokens: Punctuation: "<" [45:52 - 45:53] UnexposedExpr=
+// CHECK-tokens: Punctuation: "<" [45:52 - 45:53] BinaryOperator=
 // CHECK-tokens: Identifier: "b" [45:54 - 45:55] DeclRefExpr=b:45:38
-// CHECK-tokens: Punctuation: "?" [45:56 - 45:57] UnexposedExpr=
+// CHECK-tokens: Punctuation: "?" [45:56 - 45:57] ConditionalOperator=
 // CHECK-tokens: Identifier: "a" [45:58 - 45:59] DeclRefExpr=a:45:28
-// CHECK-tokens: Punctuation: ":" [45:60 - 45:61] UnexposedExpr=
+// CHECK-tokens: Punctuation: ":" [45:60 - 45:61] ConditionalOperator
 // CHECK-tokens: Identifier: "b" [45:62 - 45:63] DeclRefExpr=b:45:38
-// CHECK-tokens: Punctuation: ";" [45:63 - 45:64] UnexposedStmt=
-// CHECK-tokens: Punctuation: "}" [45:65 - 45:66] UnexposedStmt=
+// CHECK-tokens: Punctuation: ";" [45:63 - 45:64] CompoundStmt=
+// CHECK-tokens: Punctuation: "}" [45:65 - 45:66] CompoundStmt=
 // CHECK-tokens: Keyword: "public" [46:1 - 46:7] CXXAccessSpecifier=:46:1 (Definition)
 // CHECK-tokens: Punctuation: ":" [46:7 - 46:8] CXXAccessSpecifier=:46:1 (Definition)
 // CHECK-tokens: Identifier: "StringRef" [47:3 - 47:12] CXXConstructor=StringRef:47:3 (Definition)
@@ -483,15 +483,15 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Punctuation: ":" [47:14 - 47:15] CXXConstructor=StringRef:47:3 (Definition)
 // CHECK-tokens: Identifier: "Data" [47:16 - 47:20] MemberRef=Data:43:15
 // CHECK-tokens: Punctuation: "(" [47:20 - 47:21] CXXConstructor=StringRef:47:3 (Definition)
-// CHECK-tokens: Literal: "0" [47:21 - 47:22] UnexposedExpr=
+// CHECK-tokens: Literal: "0" [47:21 - 47:22] IntegerLiteral=
 // CHECK-tokens: Punctuation: ")" [47:22 - 47:23] CXXConstructor=StringRef:47:3 (Definition)
 // CHECK-tokens: Punctuation: "," [47:23 - 47:24] CXXConstructor=StringRef:47:3 (Definition)
 // CHECK-tokens: Identifier: "Length" [47:25 - 47:31] MemberRef=Length:44:10
 // CHECK-tokens: Punctuation: "(" [47:31 - 47:32] CXXConstructor=StringRef:47:3 (Definition)
-// CHECK-tokens: Literal: "0" [47:32 - 47:33] UnexposedExpr=
+// CHECK-tokens: Literal: "0" [47:32 - 47:33] IntegerLiteral=
 // CHECK-tokens: Punctuation: ")" [47:33 - 47:34] CXXConstructor=StringRef:47:3 (Definition)
-// CHECK-tokens: Punctuation: "{" [47:35 - 47:36] UnexposedStmt=
-// CHECK-tokens: Punctuation: "}" [47:36 - 47:37] UnexposedStmt=
+// CHECK-tokens: Punctuation: "{" [47:35 - 47:36] CompoundStmt=
+// CHECK-tokens: Punctuation: "}" [47:36 - 47:37] CompoundStmt=
 // CHECK-tokens: Identifier: "StringRef" [48:3 - 48:12] CXXConstructor=StringRef:48:3 (Definition)
 // CHECK-tokens: Punctuation: "(" [48:12 - 48:13] CXXConstructor=StringRef:48:3 (Definition)
 // CHECK-tokens: Keyword: "const" [48:13 - 48:18] CXXConstructor=StringRef:48:3 (Definition)
@@ -512,8 +512,8 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Identifier: "Str" [48:63 - 48:66] DeclRefExpr=Str:48:25
 // CHECK-tokens: Punctuation: ")" [48:66 - 48:67] CallExpr=magic_length:36:8
 // CHECK-tokens: Punctuation: ")" [48:67 - 48:68] CXXConstructor=StringRef:48:3 (Definition)
-// CHECK-tokens: Punctuation: "{" [48:69 - 48:70] UnexposedStmt=
-// CHECK-tokens: Punctuation: "}" [48:70 - 48:71] UnexposedStmt=
+// CHECK-tokens: Punctuation: "{" [48:69 - 48:70] CompoundStmt=
+// CHECK-tokens: Punctuation: "}" [48:70 - 48:71] CompoundStmt=
 // CHECK-tokens: Identifier: "StringRef" [49:3 - 49:12] CXXConstructor=StringRef:49:3 (Definition)
 // CHECK-tokens: Punctuation: "(" [49:12 - 49:13] CXXConstructor=StringRef:49:3 (Definition)
 // CHECK-tokens: Keyword: "const" [49:13 - 49:18] CXXConstructor=StringRef:49:3 (Definition)
@@ -534,28 +534,28 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Punctuation: "(" [49:66 - 49:67] CXXConstructor=StringRef:49:3 (Definition)
 // CHECK-tokens: Identifier: "length" [49:67 - 49:73] DeclRefExpr=length:49:38
 // CHECK-tokens: Punctuation: ")" [49:73 - 49:74] CXXConstructor=StringRef:49:3 (Definition)
-// CHECK-tokens: Punctuation: "{" [49:75 - 49:76] UnexposedStmt=
-// CHECK-tokens: Punctuation: "}" [49:76 - 49:77] UnexposedStmt=
+// CHECK-tokens: Punctuation: "{" [49:75 - 49:76] CompoundStmt=
+// CHECK-tokens: Punctuation: "}" [49:76 - 49:77] CompoundStmt=
 // CHECK-tokens: Identifier: "iterator" [50:3 - 50:11] TypeRef=iterator:40:23
 // CHECK-tokens: Identifier: "end" [50:12 - 50:15] CXXMethod=end:50:12 (Definition)
 // CHECK-tokens: Punctuation: "(" [50:15 - 50:16] CXXMethod=end:50:12 (Definition)
 // CHECK-tokens: Punctuation: ")" [50:16 - 50:17] CXXMethod=end:50:12 (Definition)
 // CHECK-tokens: Keyword: "const" [50:18 - 50:23] CXXMethod=end:50:12 (Definition)
-// CHECK-tokens: Punctuation: "{" [50:24 - 50:25] UnexposedStmt=
-// CHECK-tokens: Keyword: "return" [50:26 - 50:32] UnexposedStmt=
+// CHECK-tokens: Punctuation: "{" [50:24 - 50:25] CompoundStmt=
+// CHECK-tokens: Keyword: "return" [50:26 - 50:32] ReturnStmt=
 // CHECK-tokens: Identifier: "Data" [50:33 - 50:37]  MemberRefExpr=Data:43:15
-// CHECK-tokens: Punctuation: ";" [50:37 - 50:38] UnexposedStmt=
-// CHECK-tokens: Punctuation: "}" [50:39 - 50:40] UnexposedStmt=
+// CHECK-tokens: Punctuation: ";" [50:37 - 50:38] CompoundStmt=
+// CHECK-tokens: Punctuation: "}" [50:39 - 50:40] CompoundStmt=
 // CHECK-tokens: Identifier: "size_t" [51:3 - 51:9] TypeRef=size_t:2:25
 // CHECK-tokens: Identifier: "size" [51:10 - 51:14] CXXMethod=size:51:10 (Definition)
 // CHECK-tokens: Punctuation: "(" [51:14 - 51:15] CXXMethod=size:51:10 (Definition)
 // CHECK-tokens: Punctuation: ")" [51:15 - 51:16] CXXMethod=size:51:10 (Definition)
 // CHECK-tokens: Keyword: "const" [51:17 - 51:22] CXXMethod=size:51:10 (Definition)
-// CHECK-tokens: Punctuation: "{" [51:23 - 51:24] UnexposedStmt=
-// CHECK-tokens: Keyword: "return" [51:25 - 51:31] UnexposedStmt=
+// CHECK-tokens: Punctuation: "{" [51:23 - 51:24] CompoundStmt=
+// CHECK-tokens: Keyword: "return" [51:25 - 51:31] ReturnStmt=
 // CHECK-tokens: Identifier: "Length" [51:32 - 51:38] MemberRefExpr=Length:44:10
-// CHECK-tokens: Punctuation: ";" [51:38 - 51:39] UnexposedStmt=
-// CHECK-tokens: Punctuation: "}" [51:40 - 51:41] UnexposedStmt=
+// CHECK-tokens: Punctuation: ";" [51:38 - 51:39] CompoundStmt=
+// CHECK-tokens: Punctuation: "}" [51:40 - 51:41] CompoundStmt=
 // CHECK-tokens: Keyword: "bool" [52:3 - 52:7] CXXMethod=startswith:52:8 (Definition)
 // CHECK-tokens: Identifier: "startswith" [52:8 - 52:18] CXXMethod=startswith:52:8 (Definition)
 // CHECK-tokens: Punctuation: "(" [52:18 - 52:19] CXXMethod=startswith:52:8 (Definition)
@@ -563,14 +563,14 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Identifier: "Prefix" [52:29 - 52:35] ParmDecl=Prefix:52:29 (Definition)
 // CHECK-tokens: Punctuation: ")" [52:35 - 52:36] CXXMethod=startswith:52:8 (Definition)
 // CHECK-tokens: Keyword: "const" [52:37 - 52:42] CXXMethod=startswith:52:8 (Definition)
-// CHECK-tokens: Punctuation: "{" [52:43 - 52:44] UnexposedStmt=
-// CHECK-tokens: Keyword: "return" [53:5 - 53:11] UnexposedStmt=
+// CHECK-tokens: Punctuation: "{" [52:43 - 52:44] CompoundStmt=
+// CHECK-tokens: Keyword: "return" [53:5 - 53:11] ReturnStmt=
 // CHECK-tokens: Identifier: "Length" [53:12 - 53:18] MemberRefExpr=Length:44:10
-// CHECK-tokens: Punctuation: ">=" [53:19 - 53:21] UnexposedExpr=
+// CHECK-tokens: Punctuation: ">=" [53:19 - 53:21] BinaryOperator=
 // CHECK-tokens: Identifier: "Prefix" [53:22 - 53:28] DeclRefExpr=Prefix:52:29
 // CHECK-tokens: Punctuation: "." [53:28 - 53:29] MemberRefExpr=Length:44:10
 // CHECK-tokens: Identifier: "Length" [53:29 - 53:35] MemberRefExpr=Length:44:10
-// CHECK-tokens: Punctuation: "&&" [53:36 - 53:38] UnexposedExpr=
+// CHECK-tokens: Punctuation: "&&" [53:36 - 53:38] BinaryOperator=
 // CHECK-tokens: Identifier: "memcmp" [54:11 - 54:17] DeclRefExpr=memcmp:7:7
 // CHECK-tokens: Punctuation: "(" [54:17 - 54:18] CallExpr=memcmp:7:7
 // CHECK-tokens: Identifier: "Data" [54:18 - 54:22]  MemberRefExpr=Data:43:15
@@ -583,10 +583,10 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Punctuation: "." [54:43 - 54:44] MemberRefExpr=Length:44:10
 // CHECK-tokens: Identifier: "Length" [54:44 - 54:50] MemberRefExpr=Length:44:10
 // CHECK-tokens: Punctuation: ")" [54:50 - 54:51] CallExpr=memcmp:7:7
-// CHECK-tokens: Punctuation: "==" [54:52 - 54:54] UnexposedExpr=
-// CHECK-tokens: Literal: "0" [54:55 - 54:56] UnexposedExpr=
-// CHECK-tokens: Punctuation: ";" [54:56 - 54:57] UnexposedStmt=
-// CHECK-tokens: Punctuation: "}" [55:3 - 55:4] UnexposedStmt=
+// CHECK-tokens: Punctuation: "==" [54:52 - 54:54] BinaryOperator=
+// CHECK-tokens: Literal: "0" [54:55 - 54:56] IntegerLiteral=
+// CHECK-tokens: Punctuation: ";" [54:56 - 54:57] CompoundStmt=
+// CHECK-tokens: Punctuation: "}" [55:3 - 55:4] CompoundStmt=
 // CHECK-tokens: Keyword: "bool" [56:3 - 56:7] CXXMethod=endswith:56:8 (Definition)
 // CHECK-tokens: Identifier: "endswith" [56:8 - 56:16] CXXMethod=endswith:56:8 (Definition)
 // CHECK-tokens: Punctuation: "(" [56:16 - 56:17] CXXMethod=endswith:56:8 (Definition)
@@ -594,20 +594,20 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Identifier: "Suffix" [56:27 - 56:33] ParmDecl=Suffix:56:27 (Definition)
 // CHECK-tokens: Punctuation: ")" [56:33 - 56:34] CXXMethod=endswith:56:8 (Definition)
 // CHECK-tokens: Keyword: "const" [56:35 - 56:40] CXXMethod=endswith:56:8 (Definition)
-// CHECK-tokens: Punctuation: "{" [56:41 - 56:42] UnexposedStmt=
-// CHECK-tokens: Keyword: "return" [57:5 - 57:11] UnexposedStmt=
+// CHECK-tokens: Punctuation: "{" [56:41 - 56:42] CompoundStmt=
+// CHECK-tokens: Keyword: "return" [57:5 - 57:11] ReturnStmt=
 // CHECK-tokens: Identifier: "Length" [57:12 - 57:18] MemberRefExpr=Length:44:10
-// CHECK-tokens: Punctuation: ">=" [57:19 - 57:21] UnexposedExpr=
+// CHECK-tokens: Punctuation: ">=" [57:19 - 57:21] BinaryOperator=
 // CHECK-tokens: Identifier: "Suffix" [57:22 - 57:28] DeclRefExpr=Suffix:56:27
 // CHECK-tokens: Punctuation: "." [57:28 - 57:29] MemberRefExpr=Length:44:10
 // CHECK-tokens: Identifier: "Length" [57:29 - 57:35] MemberRefExpr=Length:44:10
-// CHECK-tokens: Punctuation: "&&" [57:36 - 57:38] UnexposedExpr=
+// CHECK-tokens: Punctuation: "&&" [57:36 - 57:38] BinaryOperator=
 // CHECK-tokens: Identifier: "memcmp" [58:7 - 58:13] DeclRefExpr=memcmp:7:7
 // CHECK-tokens: Punctuation: "(" [58:13 - 58:14] CallExpr=memcmp:7:7
 // CHECK-tokens: Identifier: "end" [58:14 - 58:17] MemberRefExpr=end:50:12
 // CHECK-tokens: Punctuation: "(" [58:17 - 58:18] CallExpr=end:50:12
 // CHECK-tokens: Punctuation: ")" [58:18 - 58:19] CallExpr=end:50:12
-// CHECK-tokens: Punctuation: "-" [58:20 - 58:21] UnexposedExpr=
+// CHECK-tokens: Punctuation: "-" [58:20 - 58:21] BinaryOperator=
 // CHECK-tokens: Identifier: "Suffix" [58:22 - 58:28] DeclRefExpr=Suffix:56:27
 // CHECK-tokens: Punctuation: "." [58:28 - 58:29] MemberRefExpr=Length:44:10
 // CHECK-tokens: Identifier: "Length" [58:29 - 58:35] MemberRefExpr=Length:44:10
@@ -620,10 +620,10 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Punctuation: "." [58:56 - 58:57] MemberRefExpr=Length:44:10
 // CHECK-tokens: Identifier: "Length" [58:57 - 58:63] MemberRefExpr=Length:44:10
 // CHECK-tokens: Punctuation: ")" [58:63 - 58:64] CallExpr=memcmp:7:7
-// CHECK-tokens: Punctuation: "==" [58:65 - 58:67] UnexposedExpr=
-// CHECK-tokens: Literal: "0" [58:68 - 58:69] UnexposedExpr=
-// CHECK-tokens: Punctuation: ";" [58:69 - 58:70] UnexposedStmt=
-// CHECK-tokens: Punctuation: "}" [59:3 - 59:4] UnexposedStmt=
+// CHECK-tokens: Punctuation: "==" [58:65 - 58:67] BinaryOperator=
+// CHECK-tokens: Literal: "0" [58:68 - 58:69] IntegerLiteral=
+// CHECK-tokens: Punctuation: ";" [58:69 - 58:70] CompoundStmt=
+// CHECK-tokens: Punctuation: "}" [59:3 - 59:4] CompoundStmt=
 // CHECK-tokens: Identifier: "StringRef" [60:3 - 60:12] TypeRef=class llvm::StringRef:38:7
 // CHECK-tokens: Identifier: "substr" [60:13 - 60:19] CXXMethod=substr:60:13 (Definition)
 // CHECK-tokens: Punctuation: "(" [60:19 - 60:20] CXXMethod=substr:60:13 (Definition)
@@ -636,12 +636,12 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Identifier: "npos" [60:45 - 60:49] DeclRefExpr=npos:41:23
 // CHECK-tokens: Punctuation: ")" [60:49 - 60:50] CXXMethod=substr:60:13 (Definition)
 // CHECK-tokens: Keyword: "const" [60:51 - 60:56] CXXMethod=substr:60:13 (Definition)
-// CHECK-tokens: Punctuation: "{" [60:57 - 60:58] UnexposedStmt=
-// CHECK-tokens: Keyword: "return" [61:5 - 61:11] UnexposedStmt=
+// CHECK-tokens: Punctuation: "{" [60:57 - 60:58] CompoundStmt=
+// CHECK-tokens: Keyword: "return" [61:5 - 61:11] ReturnStmt=
 // CHECK-tokens: Identifier: "StringRef" [61:12 - 61:21] TypeRef=class llvm::StringRef:38:7
 // CHECK-tokens: Punctuation: "(" [61:21 - 61:22] CallExpr=StringRef:49:3
 // CHECK-tokens: Identifier: "Data" [61:22 - 61:26]  MemberRefExpr=Data:43:15
-// CHECK-tokens: Punctuation: "+" [61:27 - 61:28] UnexposedExpr=
+// CHECK-tokens: Punctuation: "+" [61:27 - 61:28] BinaryOperator=
 // CHECK-tokens: Identifier: "Start" [61:29 - 61:34] DeclRefExpr=Start:60:27
 // CHECK-tokens: Punctuation: "," [61:34 - 61:35] CallExpr=StringRef:49:3
 // CHECK-tokens: Identifier: "min" [61:36 - 61:39] DeclRefExpr=min:45:17
@@ -649,12 +649,12 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Identifier: "N" [61:40 - 61:41] DeclRefExpr=N:60:41
 // CHECK-tokens: Punctuation: "," [61:41 - 61:42] CallExpr=min:45:17
 // CHECK-tokens: Identifier: "Length" [61:43 - 61:49]  MemberRefExpr=Length:44:10
-// CHECK-tokens: Punctuation: "-" [61:50 - 61:51] UnexposedExpr=
+// CHECK-tokens: Punctuation: "-" [61:50 - 61:51] BinaryOperator=
 // CHECK-tokens: Identifier: "Start" [61:52 - 61:57] DeclRefExpr=Start:60:27
 // CHECK-tokens: Punctuation: ")" [61:57 - 61:58] CallExpr=min:45:17
 // CHECK-tokens: Punctuation: ")" [61:58 - 61:59] CallExpr=StringRef:49:3
-// CHECK-tokens: Punctuation: ";" [61:59 - 61:60] UnexposedStmt=
-// CHECK-tokens: Punctuation: "}" [62:3 - 62:4] UnexposedStmt=
+// CHECK-tokens: Punctuation: ";" [61:59 - 61:60] CompoundStmt=
+// CHECK-tokens: Punctuation: "}" [62:3 - 62:4] CompoundStmt=
 // CHECK-tokens: Punctuation: "}" [63:1 - 63:2] ClassDecl=StringRef:38:7 (Definition)
 // CHECK-tokens: Punctuation: ";" [63:2 - 63:3] Namespace=llvm:37:11 (Definition)
 // CHECK-tokens: Punctuation: "}" [64:1 - 64:2] Namespace=llvm:37:11 (Definition)
@@ -677,8 +677,8 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Punctuation: "(" [68:27 - 68:28] CXXMethod=getNameStart:68:15 (Definition)
 // CHECK-tokens: Punctuation: ")" [68:28 - 68:29] CXXMethod=getNameStart:68:15 (Definition)
 // CHECK-tokens: Keyword: "const" [68:30 - 68:35] CXXMethod=getNameStart:68:15 (Definition)
-// CHECK-tokens: Punctuation: "{" [68:36 - 68:37] UnexposedStmt=
-// CHECK-tokens: Keyword: "typedef" [69:5 - 69:12] UnexposedStmt=
+// CHECK-tokens: Punctuation: "{" [68:36 - 68:37] CompoundStmt=
+// CHECK-tokens: Keyword: "typedef" [69:5 - 69:12] DeclStmt=
 // CHECK-tokens: Identifier: "std" [69:13 - 69:16] NamespaceRef=std:3:11
 // CHECK-tokens: Punctuation: "::" [69:16 - 69:18] TypedefDecl=actualtype:69:54 (Definition)
 // CHECK-tokens: Identifier: "pair" [69:18 - 69:22] TemplateRef=pair:4:44
@@ -690,27 +690,27 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Punctuation: "*" [69:52 - 69:53] TypedefDecl=actualtype:69:54 (Definition)
 // CHECK-tokens: Punctuation: ">" [69:53 - 69:54] TypedefDecl=actualtype:69:54 (Definition)
 // CHECK-tokens: Identifier: "actualtype" [69:54 - 69:64] TypedefDecl=actualtype:69:54 (Definition)
-// CHECK-tokens: Punctuation: ";" [69:64 - 69:65] UnexposedStmt=
-// CHECK-tokens: Keyword: "return" [70:5 - 70:11] UnexposedStmt=
-// CHECK-tokens: Punctuation: "(" [70:12 - 70:13] UnexposedExpr=
-// CHECK-tokens: Punctuation: "(" [70:13 - 70:14] UnexposedExpr=
-// CHECK-tokens: Keyword: "const" [70:14 - 70:19] UnexposedExpr=
+// CHECK-tokens: Punctuation: ";" [69:64 - 69:65] DeclStmt=
+// CHECK-tokens: Keyword: "return" [70:5 - 70:11] ReturnStmt=
+// CHECK-tokens: Punctuation: "(" [70:12 - 70:13] ParenExpr=
+// CHECK-tokens: Punctuation: "(" [70:13 - 70:14] CStyleCastExpr=
+// CHECK-tokens: Keyword: "const" [70:14 - 70:19] CStyleCastExpr=
 // CHECK-tokens: Identifier: "actualtype" [70:20 - 70:30] TypeRef=actualtype:69:54
-// CHECK-tokens: Punctuation: "*" [70:31 - 70:32] UnexposedExpr=
-// CHECK-tokens: Punctuation: ")" [70:32 - 70:33] UnexposedExpr=
-// CHECK-tokens: Keyword: "this" [70:34 - 70:38] UnexposedExpr=
-// CHECK-tokens: Punctuation: ")" [70:38 - 70:39] UnexposedExpr=
+// CHECK-tokens: Punctuation: "*" [70:31 - 70:32] CStyleCastExpr=
+// CHECK-tokens: Punctuation: ")" [70:32 - 70:33] CStyleCastExpr=
+// CHECK-tokens: Keyword: "this" [70:34 - 70:38] CXXThisExpr=
+// CHECK-tokens: Punctuation: ")" [70:38 - 70:39] ParenExpr=
 // CHECK-tokens: Punctuation: "->" [70:39 - 70:41] MemberRefExpr=second:4:55
 // CHECK-tokens: Identifier: "second" [70:41 - 70:47] MemberRefExpr=second:4:55
-// CHECK-tokens: Punctuation: ";" [70:47 - 70:48] UnexposedStmt=
-// CHECK-tokens: Punctuation: "}" [71:3 - 71:4] UnexposedStmt=
+// CHECK-tokens: Punctuation: ";" [70:47 - 70:48] CompoundStmt=
+// CHECK-tokens: Punctuation: "}" [71:3 - 71:4] CompoundStmt=
 // CHECK-tokens: Keyword: "unsigned" [72:3 - 72:11] CXXMethod=getLength:72:12 (Definition)
 // CHECK-tokens: Identifier: "getLength" [72:12 - 72:21] CXXMethod=getLength:72:12 (Definition)
 // CHECK-tokens: Punctuation: "(" [72:21 - 72:22] CXXMethod=getLength:72:12 (Definition)
 // CHECK-tokens: Punctuation: ")" [72:22 - 72:23] CXXMethod=getLength:72:12 (Definition)
 // CHECK-tokens: Keyword: "const" [72:24 - 72:29] CXXMethod=getLength:72:12 (Definition)
-// CHECK-tokens: Punctuation: "{" [72:30 - 72:31] UnexposedStmt=
-// CHECK-tokens: Keyword: "typedef" [73:5 - 73:12] UnexposedStmt=
+// CHECK-tokens: Punctuation: "{" [72:30 - 72:31] CompoundStmt=
+// CHECK-tokens: Keyword: "typedef" [73:5 - 73:12] DeclStmt=
 // CHECK-tokens: Identifier: "std" [73:13 - 73:16] NamespaceRef=std:3:11
 // CHECK-tokens: Punctuation: "::" [73:16 - 73:18] TypedefDecl=actualtype:73:54 (Definition)
 // CHECK-tokens: Identifier: "pair" [73:18 - 73:22] TemplateRef=pair:4:44
@@ -722,55 +722,55 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Punctuation: "*" [73:52 - 73:53] TypedefDecl=actualtype:73:54 (Definition)
 // CHECK-tokens: Punctuation: ">" [73:53 - 73:54] TypedefDecl=actualtype:73:54 (Definition)
 // CHECK-tokens: Identifier: "actualtype" [73:54 - 73:64] TypedefDecl=actualtype:73:54 (Definition)
-// CHECK-tokens: Punctuation: ";" [73:64 - 73:65] UnexposedStmt=
-// CHECK-tokens: Keyword: "const" [74:5 - 74:10] UnexposedStmt=
+// CHECK-tokens: Punctuation: ";" [73:64 - 73:65] DeclStmt=
+// CHECK-tokens: Keyword: "const" [74:5 - 74:10] DeclStmt=
 // CHECK-tokens: Keyword: "char" [74:11 - 74:15] VarDecl=p:74:17 (Definition)
 // CHECK-tokens: Punctuation: "*" [74:16 - 74:17] VarDecl=p:74:17 (Definition)
 // CHECK-tokens: Identifier: "p" [74:17 - 74:18] VarDecl=p:74:17 (Definition)
 // CHECK-tokens: Punctuation: "=" [74:19 - 74:20] VarDecl=p:74:17 (Definition)
-// CHECK-tokens: Punctuation: "(" [74:21 - 74:22] UnexposedExpr=
-// CHECK-tokens: Punctuation: "(" [74:22 - 74:23] UnexposedExpr=
-// CHECK-tokens: Keyword: "const" [74:23 - 74:28] UnexposedExpr=
+// CHECK-tokens: Punctuation: "(" [74:21 - 74:22] ParenExpr=
+// CHECK-tokens: Punctuation: "(" [74:22 - 74:23] CStyleCastExpr=
+// CHECK-tokens: Keyword: "const" [74:23 - 74:28] CStyleCastExpr=
 // CHECK-tokens: Identifier: "actualtype" [74:29 - 74:39] TypeRef=actualtype:73:54
-// CHECK-tokens: Punctuation: "*" [74:40 - 74:41] UnexposedExpr=
-// CHECK-tokens: Punctuation: ")" [74:41 - 74:42] UnexposedExpr=
-// CHECK-tokens: Keyword: "this" [74:43 - 74:47] UnexposedExpr=
-// CHECK-tokens: Punctuation: ")" [74:47 - 74:48] UnexposedExpr=
+// CHECK-tokens: Punctuation: "*" [74:40 - 74:41] CStyleCastExpr=
+// CHECK-tokens: Punctuation: ")" [74:41 - 74:42] CStyleCastExpr=
+// CHECK-tokens: Keyword: "this" [74:43 - 74:47] CXXThisExpr=
+// CHECK-tokens: Punctuation: ")" [74:47 - 74:48] ParenExpr=
 // CHECK-tokens: Punctuation: "->" [74:48 - 74:50] MemberRefExpr=second:4:55
 // CHECK-tokens: Identifier: "second" [74:50 - 74:56] MemberRefExpr=second:4:55
-// CHECK-tokens: Punctuation: "-" [74:57 - 74:58] UnexposedExpr=
-// CHECK-tokens: Literal: "2" [74:59 - 74:60] UnexposedExpr=
-// CHECK-tokens: Punctuation: ";" [74:60 - 74:61] UnexposedStmt=
-// CHECK-tokens: Keyword: "return" [75:5 - 75:11] UnexposedStmt=
-// CHECK-tokens: Punctuation: "(" [75:12 - 75:13] UnexposedExpr=
-// CHECK-tokens: Punctuation: "(" [75:13 - 75:14] UnexposedExpr=
-// CHECK-tokens: Punctuation: "(" [75:14 - 75:15] UnexposedExpr=
-// CHECK-tokens: Keyword: "unsigned" [75:15 - 75:23] UnexposedExpr=
-// CHECK-tokens: Punctuation: ")" [75:23 - 75:24] UnexposedExpr=
+// CHECK-tokens: Punctuation: "-" [74:57 - 74:58] BinaryOperator=
+// CHECK-tokens: Literal: "2" [74:59 - 74:60] IntegerLiteral=
+// CHECK-tokens: Punctuation: ";" [74:60 - 74:61] DeclStmt=
+// CHECK-tokens: Keyword: "return" [75:5 - 75:11] ReturnStmt=
+// CHECK-tokens: Punctuation: "(" [75:12 - 75:13] ParenExpr=
+// CHECK-tokens: Punctuation: "(" [75:13 - 75:14] ParenExpr=
+// CHECK-tokens: Punctuation: "(" [75:14 - 75:15] CStyleCastExpr=
+// CHECK-tokens: Keyword: "unsigned" [75:15 - 75:23] CStyleCastExpr=
+// CHECK-tokens: Punctuation: ")" [75:23 - 75:24] CStyleCastExpr=
 // CHECK-tokens: Identifier: "p" [75:25 - 75:26] DeclRefExpr=p:74:17
-// CHECK-tokens: Punctuation: "[" [75:26 - 75:27] UnexposedExpr=
-// CHECK-tokens: Literal: "0" [75:27 - 75:28] UnexposedExpr=
-// CHECK-tokens: Punctuation: "]" [75:28 - 75:29] UnexposedExpr=
-// CHECK-tokens: Punctuation: ")" [75:29 - 75:30] UnexposedExpr=
-// CHECK-tokens: Punctuation: "|" [75:31 - 75:32] UnexposedExpr=
-// CHECK-tokens: Punctuation: "(" [75:33 - 75:34] UnexposedExpr=
-// CHECK-tokens: Punctuation: "(" [75:34 - 75:35] UnexposedExpr=
-// CHECK-tokens: Punctuation: "(" [75:35 - 75:36] UnexposedExpr=
-// CHECK-tokens: Keyword: "unsigned" [75:36 - 75:44] UnexposedExpr=
-// CHECK-tokens: Punctuation: ")" [75:44 - 75:45] UnexposedExpr=
+// CHECK-tokens: Punctuation: "[" [75:26 - 75:27] ArraySubscriptExpr=
+// CHECK-tokens: Literal: "0" [75:27 - 75:28] IntegerLiteral=
+// CHECK-tokens: Punctuation: "]" [75:28 - 75:29] ArraySubscriptExpr=
+// CHECK-tokens: Punctuation: ")" [75:29 - 75:30] ParenExpr=
+// CHECK-tokens: Punctuation: "|" [75:31 - 75:32] BinaryOperator=
+// CHECK-tokens: Punctuation: "(" [75:33 - 75:34] ParenExpr=
+// CHECK-tokens: Punctuation: "(" [75:34 - 75:35] ParenExpr=
+// CHECK-tokens: Punctuation: "(" [75:35 - 75:36] CStyleCastExpr=
+// CHECK-tokens: Keyword: "unsigned" [75:36 - 75:44] CStyleCastExpr=
+// CHECK-tokens: Punctuation: ")" [75:44 - 75:45] CStyleCastExpr=
 // CHECK-tokens: Identifier: "p" [75:46 - 75:47] DeclRefExpr=p:74:17
-// CHECK-tokens: Punctuation: "[" [75:47 - 75:48] UnexposedExpr=
-// CHECK-tokens: Literal: "1" [75:48 - 75:49] UnexposedExpr=
-// CHECK-tokens: Punctuation: "]" [75:49 - 75:50] UnexposedExpr=
-// CHECK-tokens: Punctuation: ")" [75:50 - 75:51] UnexposedExpr=
-// CHECK-tokens: Punctuation: "<<" [75:52 - 75:54] UnexposedExpr=
-// CHECK-tokens: Literal: "8" [75:55 - 75:56] UnexposedExpr=
-// CHECK-tokens: Punctuation: ")" [75:56 - 75:57] UnexposedExpr=
-// CHECK-tokens: Punctuation: ")" [75:57 - 75:58] UnexposedExpr=
-// CHECK-tokens: Punctuation: "-" [75:59 - 75:60] UnexposedExpr=
-// CHECK-tokens: Literal: "1" [75:61 - 75:62] UnexposedExpr=
-// CHECK-tokens: Punctuation: ";" [75:62 - 75:63] UnexposedStmt=
-// CHECK-tokens: Punctuation: "}" [76:3 - 76:4] UnexposedStmt=
+// CHECK-tokens: Punctuation: "[" [75:47 - 75:48] ArraySubscriptExpr=
+// CHECK-tokens: Literal: "1" [75:48 - 75:49] IntegerLiteral=
+// CHECK-tokens: Punctuation: "]" [75:49 - 75:50] ArraySubscriptExpr=
+// CHECK-tokens: Punctuation: ")" [75:50 - 75:51] ParenExpr=
+// CHECK-tokens: Punctuation: "<<" [75:52 - 75:54] BinaryOperator=
+// CHECK-tokens: Literal: "8" [75:55 - 75:56] IntegerLiteral=
+// CHECK-tokens: Punctuation: ")" [75:56 - 75:57] ParenExpr=
+// CHECK-tokens: Punctuation: ")" [75:57 - 75:58] ParenExpr=
+// CHECK-tokens: Punctuation: "-" [75:59 - 75:60] BinaryOperator=
+// CHECK-tokens: Literal: "1" [75:61 - 75:62] IntegerLiteral=
+// CHECK-tokens: Punctuation: ";" [75:62 - 75:63] CompoundStmt=
+// CHECK-tokens: Punctuation: "}" [76:3 - 76:4] CompoundStmt=
 // CHECK-tokens: Identifier: "llvm" [77:3 - 77:7] NamespaceRef=llvm:37:11
 // CHECK-tokens: Punctuation: "::" [77:7 - 77:9] CXXMethod=getName:77:19 (Definition)
 // CHECK-tokens: Identifier: "StringRef" [77:9 - 77:18] TypeRef=class llvm::StringRef:38:7
@@ -778,8 +778,8 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Punctuation: "(" [77:26 - 77:27] CXXMethod=getName:77:19 (Definition)
 // CHECK-tokens: Punctuation: ")" [77:27 - 77:28] CXXMethod=getName:77:19 (Definition)
 // CHECK-tokens: Keyword: "const" [77:29 - 77:34] CXXMethod=getName:77:19 (Definition)
-// CHECK-tokens: Punctuation: "{" [77:35 - 77:36] UnexposedStmt=
-// CHECK-tokens: Keyword: "return" [78:5 - 78:11] UnexposedStmt=
+// CHECK-tokens: Punctuation: "{" [77:35 - 77:36] CompoundStmt=
+// CHECK-tokens: Keyword: "return" [78:5 - 78:11] ReturnStmt=
 // CHECK-tokens: Identifier: "llvm" [78:12 - 78:16] NamespaceRef=llvm:37:11
 // CHECK-tokens: Punctuation: "::" [78:16 - 78:18] CallExpr=StringRef:49:3
 // CHECK-tokens: Identifier: "StringRef" [78:18 - 78:27] TypeRef=class llvm::StringRef:38:7
@@ -792,8 +792,8 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Punctuation: "(" [78:53 - 78:54] CallExpr=getLength:72:12
 // CHECK-tokens: Punctuation: ")" [78:54 - 78:55] CallExpr=getLength:72:12
 // CHECK-tokens: Punctuation: ")" [78:55 - 78:56] CallExpr=StringRef:49:3
-// CHECK-tokens: Punctuation: ";" [78:56 - 78:57] UnexposedStmt=
-// CHECK-tokens: Punctuation: "}" [79:3 - 79:4] UnexposedStmt=
+// CHECK-tokens: Punctuation: ";" [78:56 - 78:57] CompoundStmt=
+// CHECK-tokens: Punctuation: "}" [79:3 - 79:4] CompoundStmt=
 // CHECK-tokens: Punctuation: "}" [80:1 - 80:2] ClassDecl=IdentifierInfo:66:7 (Definition)
 // CHECK-tokens: Punctuation: ";" [80:2 - 80:3] Namespace=clang:65:11 (Definition)
 // CHECK-tokens: Punctuation: "}" [81:1 - 81:2] Namespace=clang:65:11 (Definition)
@@ -837,10 +837,10 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Punctuation: "," [87:50 - 87:51] CXXConstructor=StringSwitch<T, R>:87:12 (Definition)
 // CHECK-tokens: Identifier: "Result" [87:52 - 87:58] MemberRef=Result:85:12
 // CHECK-tokens: Punctuation: "(" [87:58 - 87:59] UnexposedExpr=
-// CHECK-tokens: Literal: "0" [87:59 - 87:60] UnexposedExpr=
+// CHECK-tokens: Literal: "0" [87:59 - 87:60] IntegerLiteral=
 // CHECK-tokens: Punctuation: ")" [87:60 - 87:61] UnexposedExpr=
-// CHECK-tokens: Punctuation: "{" [87:62 - 87:63] UnexposedStmt=
-// CHECK-tokens: Punctuation: "}" [87:63 - 87:64] UnexposedStmt=
+// CHECK-tokens: Punctuation: "{" [87:62 - 87:63] CompoundStmt=
+// CHECK-tokens: Punctuation: "}" [87:63 - 87:64] CompoundStmt=
 // CHECK-tokens: Keyword: "template" [88:3 - 88:11] FunctionTemplate=Case:88:42 (Definition)
 // CHECK-tokens: Punctuation: "<" [88:12 - 88:13] FunctionTemplate=Case:88:42 (Definition)
 // CHECK-tokens: Keyword: "unsigned" [88:14 - 88:22] NonTypeTemplateParameter=N:88:23 (Definition)
@@ -865,12 +865,12 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Punctuation: "&" [89:55 - 89:56] ParmDecl=Value:89:57 (Definition)
 // CHECK-tokens: Identifier: "Value" [89:57 - 89:62] ParmDecl=Value:89:57 (Definition)
 // CHECK-tokens: Punctuation: ")" [89:62 - 89:63] FunctionTemplate=Case:88:42 (Definition)
-// CHECK-tokens: Punctuation: "{" [89:64 - 89:65] UnexposedStmt=
-// CHECK-tokens: Keyword: "return" [90:5 - 90:11] UnexposedStmt=
-// CHECK-tokens: Punctuation: "*" [90:12 - 90:13] UnexposedExpr=
-// CHECK-tokens: Keyword: "this" [90:13 - 90:17] UnexposedExpr=
-// CHECK-tokens: Punctuation: ";" [90:17 - 90:18] UnexposedStmt=
-// CHECK-tokens: Punctuation: "}" [91:3 - 91:4] UnexposedStmt=
+// CHECK-tokens: Punctuation: "{" [89:64 - 89:65] CompoundStmt=
+// CHECK-tokens: Keyword: "return" [90:5 - 90:11] ReturnStmt=
+// CHECK-tokens: Punctuation: "*" [90:12 - 90:13] UnaryOperator=
+// CHECK-tokens: Keyword: "this" [90:13 - 90:17] CXXThisExpr=
+// CHECK-tokens: Punctuation: ";" [90:17 - 90:18] CompoundStmt=
+// CHECK-tokens: Punctuation: "}" [91:3 - 91:4] CompoundStmt=
 // CHECK-tokens: Identifier: "R" [92:3 - 92:4] TypeRef=R:83:33
 // CHECK-tokens: Identifier: "Default" [92:5 - 92:12] CXXMethod=Default:92:5 (Definition)
 // CHECK-tokens: Punctuation: "(" [92:12 - 92:13] CXXMethod=Default:92:5 (Definition)
@@ -880,11 +880,11 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Identifier: "Value" [92:23 - 92:28] ParmDecl=Value:92:23 (Definition)
 // CHECK-tokens: Punctuation: ")" [92:28 - 92:29] CXXMethod=Default:92:5 (Definition)
 // CHECK-tokens: Keyword: "const" [92:30 - 92:35] CXXMethod=Default:92:5 (Definition)
-// CHECK-tokens: Punctuation: "{" [92:36 - 92:37] UnexposedStmt=
-// CHECK-tokens: Keyword: "return" [93:5 - 93:11] UnexposedStmt=
+// CHECK-tokens: Punctuation: "{" [92:36 - 92:37] CompoundStmt=
+// CHECK-tokens: Keyword: "return" [93:5 - 93:11] ReturnStmt=
 // CHECK-tokens: Identifier: "Value" [93:12 - 93:17] DeclRefExpr=Value:92:23
-// CHECK-tokens: Punctuation: ";" [93:17 - 93:18] UnexposedStmt=
-// CHECK-tokens: Punctuation: "}" [94:3 - 94:4] UnexposedStmt=
+// CHECK-tokens: Punctuation: ";" [93:17 - 93:18] CompoundStmt=
+// CHECK-tokens: Punctuation: "}" [94:3 - 94:4] CompoundStmt=
 // CHECK-tokens: Punctuation: "}" [95:1 - 95:2] ClassTemplate=StringSwitch:83:47 (Definition)
 // CHECK-tokens: Punctuation: ";" [95:2 - 95:3] Namespace=llvm:82:11 (Definition)
 // CHECK-tokens: Punctuation: "}" [96:1 - 96:2] Namespace=llvm:82:11 (Definition)
@@ -904,7 +904,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Punctuation: "*" [100:65 - 100:66] ParmDecl=Name:100:67 (Definition)
 // CHECK-tokens: Identifier: "Name" [100:67 - 100:71] ParmDecl=Name:100:67 (Definition)
 // CHECK-tokens: Punctuation: ")" [100:71 - 100:72] CXXMethod=getKind:100:36 (Definition) (static)
-// CHECK-tokens: Punctuation: "{" [100:73 - 100:74] UnexposedStmt=
+// CHECK-tokens: Punctuation: "{" [100:73 - 100:74] CompoundStmt=
 // CHECK-tokens: Identifier: "llvm" [101:3 - 101:7] NamespaceRef=llvm:82:11
 // CHECK-tokens: Punctuation: "::" [101:7 - 101:9] VarDecl=AttrName:101:19 (Definition)
 // CHECK-tokens: Identifier: "StringRef" [101:9 - 101:18] TypeRef=class llvm::StringRef:38:7
@@ -915,603 +915,603 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Identifier: "getName" [101:36 - 101:43] MemberRefExpr=getName:77:19
 // CHECK-tokens: Punctuation: "(" [101:43 - 101:44] CallExpr=getName:77:19
 // CHECK-tokens: Punctuation: ")" [101:44 - 101:45] CallExpr=getName:77:19
-// CHECK-tokens: Punctuation: ";" [101:45 - 101:46] UnexposedStmt=
-// CHECK-tokens: Keyword: "if" [102:3 - 102:5] UnexposedStmt=
-// CHECK-tokens: Punctuation: "(" [102:6 - 102:7] UnexposedStmt=
+// CHECK-tokens: Punctuation: ";" [101:45 - 101:46] DeclStmt=
+// CHECK-tokens: Keyword: "if" [102:3 - 102:5] IfStmt=
+// CHECK-tokens: Punctuation: "(" [102:6 - 102:7] IfStmt=
 // CHECK-tokens: Identifier: "AttrName" [102:7 - 102:15] DeclRefExpr=AttrName:101:19
 // CHECK-tokens: Punctuation: "." [102:15 - 102:16] MemberRefExpr=startswith:52:8
 // CHECK-tokens: Identifier: "startswith" [102:16 - 102:26] MemberRefExpr=startswith:52:8
 // CHECK-tokens: Punctuation: "(" [102:26 - 102:27] CallExpr=startswith:52:8
-// CHECK-tokens: Literal: ""__"" [102:27 - 102:31] UnexposedExpr=
+// CHECK-tokens: Literal: ""__"" [102:27 - 102:31] StringLiteral=
 // CHECK-tokens: Punctuation: ")" [102:31 - 102:32] CallExpr=startswith:52:8
-// CHECK-tokens: Punctuation: "&&" [102:33 - 102:35] UnexposedExpr=
+// CHECK-tokens: Punctuation: "&&" [102:33 - 102:35] BinaryOperator=
 // CHECK-tokens: Identifier: "AttrName" [102:36 - 102:44] DeclRefExpr=AttrName:101:19
 // CHECK-tokens: Punctuation: "." [102:44 - 102:45] MemberRefExpr=endswith:56:8
 // CHECK-tokens: Identifier: "endswith" [102:45 - 102:53] MemberRefExpr=endswith:56:8
 // CHECK-tokens: Punctuation: "(" [102:53 - 102:54] CallExpr=endswith:56:8
-// CHECK-tokens: Literal: ""__"" [102:54 - 102:58] UnexposedExpr=
+// CHECK-tokens: Literal: ""__"" [102:54 - 102:58] StringLiteral=
 // CHECK-tokens: Punctuation: ")" [102:58 - 102:59] CallExpr=endswith:56:8
-// CHECK-tokens: Punctuation: ")" [102:59 - 102:60] UnexposedStmt=
+// CHECK-tokens: Punctuation: ")" [102:59 - 102:60] IfStmt=
 // CHECK-tokens: Identifier: "AttrName" [103:5 - 103:13] DeclRefExpr=AttrName:101:19
 // CHECK-tokens: Punctuation: "=" [103:14 - 103:15] CallExpr=operator=:38:7
 // CHECK-tokens: Identifier: "AttrName" [103:16 - 103:24] DeclRefExpr=AttrName:101:19
 // CHECK-tokens: Punctuation: "." [103:24 - 103:25] MemberRefExpr=substr:60:13
 // CHECK-tokens: Identifier: "substr" [103:25 - 103:31] MemberRefExpr=substr:60:13
 // CHECK-tokens: Punctuation: "(" [103:31 - 103:32] CallExpr=substr:60:13
-// CHECK-tokens: Literal: "2" [103:32 - 103:33] UnexposedExpr=
+// CHECK-tokens: Literal: "2" [103:32 - 103:33] IntegerLiteral=
 // CHECK-tokens: Punctuation: "," [103:33 - 103:34] CallExpr=substr:60:13
 // CHECK-tokens: Identifier: "AttrName" [103:35 - 103:43] DeclRefExpr=AttrName:101:19
 // CHECK-tokens: Punctuation: "." [103:43 - 103:44] MemberRefExpr=size:51:10
 // CHECK-tokens: Identifier: "size" [103:44 - 103:48] MemberRefExpr=size:51:10
 // CHECK-tokens: Punctuation: "(" [103:48 - 103:49] CallExpr=size:51:10
 // CHECK-tokens: Punctuation: ")" [103:49 - 103:50] CallExpr=size:51:10
-// CHECK-tokens: Punctuation: "-" [103:51 - 103:52] UnexposedExpr=
-// CHECK-tokens: Literal: "4" [103:53 - 103:54] UnexposedExpr=
+// CHECK-tokens: Punctuation: "-" [103:51 - 103:52] BinaryOperator=
+// CHECK-tokens: Literal: "4" [103:53 - 103:54] IntegerLiteral=
 // CHECK-tokens: Punctuation: ")" [103:54 - 103:55] CallExpr=substr:60:13
-// CHECK-tokens: Punctuation: ";" [103:55 - 103:56] UnexposedStmt=
-// CHECK-tokens: Keyword: "return" [105:3 - 105:9] UnexposedStmt=
+// CHECK-tokens: Punctuation: ";" [103:55 - 103:56] CompoundStmt=
+// CHECK-tokens: Keyword: "return" [105:3 - 105:9] ReturnStmt=
 // FIXME: Missing "llvm" namespace reference below
 // CHECK-tokens: Identifier: "llvm" [105:10 - 105:14] NamespaceRef=llvm:82:11
-// CHECK-tokens: Punctuation: "::" [105:14 - 105:16] UnexposedExpr=
+// CHECK-tokens: Punctuation: "::" [105:14 - 105:16] CXXFunctionalCastExpr=
 // CHECK-tokens: Identifier: "StringSwitch" [105:16 - 105:28] TemplateRef=StringSwitch:83:47
-// CHECK-tokens: Punctuation: "<" [105:29 - 105:30] UnexposedExpr=
+// CHECK-tokens: Punctuation: "<" [105:29 - 105:30] CXXFunctionalCastExpr=
 // CHECK-tokens: Identifier: "AttributeList" [105:31 - 105:44] TypeRef=class clang::AttributeList:12:9
-// CHECK-tokens: Punctuation: "::" [105:44 - 105:46] UnexposedExpr=
+// CHECK-tokens: Punctuation: "::" [105:44 - 105:46] CXXFunctionalCastExpr=
 // CHECK-tokens: Identifier: "Kind" [105:46 - 105:50] TypeRef=enum clang::AttributeList::Kind:13:10
 // CHECK-tokens: Punctuation: ">" [105:51 - 105:52] CallExpr=StringSwitch:87:12
 // CHECK-tokens: Punctuation: "(" [105:53 - 105:54] CallExpr=StringSwitch:87:12
 // CHECK-tokens: Identifier: "AttrName" [105:54 - 105:62] DeclRefExpr=AttrName:101:19
-// CHECK-tokens: Punctuation: ")" [105:62 - 105:63] UnexposedExpr=
+// CHECK-tokens: Punctuation: ")" [105:62 - 105:63] CXXFunctionalCastExpr=
 // CHECK-tokens: Punctuation: "." [106:5 - 106:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [106:6 - 106:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [106:10 - 106:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""weak"" [106:11 - 106:17] UnexposedExpr=
+// CHECK-tokens: Literal: ""weak"" [106:11 - 106:17] StringLiteral=
 // CHECK-tokens: Punctuation: "," [106:17 - 106:18] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_weak" [106:19 - 106:26] DeclRefExpr=AT_weak:29:45
 // CHECK-tokens: Punctuation: ")" [106:26 - 106:27] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [107:5 - 107:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [107:6 - 107:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [107:10 - 107:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""weakref"" [107:11 - 107:20] UnexposedExpr=
+// CHECK-tokens: Literal: ""weakref"" [107:11 - 107:20] StringLiteral=
 // CHECK-tokens: Punctuation: "," [107:20 - 107:21] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_weakref" [107:22 - 107:32] DeclRefExpr=AT_weakref:29:54
 // CHECK-tokens: Punctuation: ")" [107:32 - 107:33] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [108:5 - 108:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [108:6 - 108:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [108:10 - 108:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""pure"" [108:11 - 108:17] UnexposedExpr=
+// CHECK-tokens: Literal: ""pure"" [108:11 - 108:17] StringLiteral=
 // CHECK-tokens: Punctuation: "," [108:17 - 108:18] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_pure" [108:19 - 108:26] DeclRefExpr=AT_pure:26:49
 // CHECK-tokens: Punctuation: ")" [108:26 - 108:27] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [109:5 - 109:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [109:6 - 109:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [109:10 - 109:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""mode"" [109:11 - 109:17] UnexposedExpr=
+// CHECK-tokens: Literal: ""mode"" [109:11 - 109:17] StringLiteral=
 // CHECK-tokens: Punctuation: "," [109:17 - 109:18] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_mode" [109:19 - 109:26] DeclRefExpr=AT_mode:20:44
 // CHECK-tokens: Punctuation: ")" [109:26 - 109:27] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [110:5 - 110:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [110:6 - 110:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [110:10 - 110:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""used"" [110:11 - 110:17] UnexposedExpr=
+// CHECK-tokens: Literal: ""used"" [110:11 - 110:17] StringLiteral=
 // CHECK-tokens: Punctuation: "," [110:17 - 110:18] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_used" [110:19 - 110:26] DeclRefExpr=AT_used:28:34
 // CHECK-tokens: Punctuation: ")" [110:26 - 110:27] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [111:5 - 111:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [111:6 - 111:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [111:10 - 111:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""alias"" [111:11 - 111:18] UnexposedExpr=
+// CHECK-tokens: Literal: ""alias"" [111:11 - 111:18] StringLiteral=
 // CHECK-tokens: Punctuation: "," [111:18 - 111:19] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_alias" [111:20 - 111:28] DeclRefExpr=AT_alias:15:25
 // CHECK-tokens: Punctuation: ")" [111:28 - 111:29] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [112:5 - 112:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [112:6 - 112:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [112:10 - 112:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""align"" [112:11 - 112:18] UnexposedExpr=
+// CHECK-tokens: Literal: ""align"" [112:11 - 112:18] StringLiteral=
 // CHECK-tokens: Punctuation: "," [112:18 - 112:19] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_aligned" [112:20 - 112:30] DeclRefExpr=AT_aligned:15:35
 // CHECK-tokens: Punctuation: ")" [112:30 - 112:31] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [113:5 - 113:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [113:6 - 113:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [113:10 - 113:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""final"" [113:11 - 113:18] UnexposedExpr=
+// CHECK-tokens: Literal: ""final"" [113:11 - 113:18] StringLiteral=
 // CHECK-tokens: Punctuation: "," [113:18 - 113:19] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_final" [113:20 - 113:28] DeclRefExpr=AT_final:19:40
 // CHECK-tokens: Punctuation: ")" [113:28 - 113:29] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [114:5 - 114:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [114:6 - 114:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [114:10 - 114:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""cdecl"" [114:11 - 114:18] UnexposedExpr=
+// CHECK-tokens: Literal: ""cdecl"" [114:11 - 114:18] StringLiteral=
 // CHECK-tokens: Punctuation: "," [114:18 - 114:19] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_cdecl" [114:20 - 114:28] DeclRefExpr=AT_cdecl:17:30
 // CHECK-tokens: Punctuation: ")" [114:28 - 114:29] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [115:5 - 115:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [115:6 - 115:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [115:10 - 115:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""const"" [115:11 - 115:18] UnexposedExpr=
+// CHECK-tokens: Literal: ""const"" [115:11 - 115:18] StringLiteral=
 // CHECK-tokens: Punctuation: "," [115:18 - 115:19] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_const" [115:20 - 115:28] DeclRefExpr=AT_const:17:52
 // CHECK-tokens: Punctuation: ")" [115:28 - 115:29] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [116:5 - 116:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [116:6 - 116:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [116:10 - 116:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""__const"" [116:11 - 116:20] UnexposedExpr=
+// CHECK-tokens: Literal: ""__const"" [116:11 - 116:20] StringLiteral=
 // CHECK-tokens: Punctuation: "," [116:20 - 116:21] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_const" [116:22 - 116:30] DeclRefExpr=AT_const:17:52
 // CHECK-tokens: Punctuation: ")" [116:30 - 116:31] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [117:5 - 117:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [117:6 - 117:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [117:10 - 117:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""blocks"" [117:11 - 117:19] UnexposedExpr=
+// CHECK-tokens: Literal: ""blocks"" [117:11 - 117:19] StringLiteral=
 // CHECK-tokens: Punctuation: "," [117:19 - 117:20] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_blocks" [117:21 - 117:30] DeclRefExpr=AT_blocks:16:57
 // CHECK-tokens: Punctuation: ")" [117:30 - 117:31] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [118:5 - 118:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [118:6 - 118:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [118:10 - 118:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""format"" [118:11 - 118:19] UnexposedExpr=
+// CHECK-tokens: Literal: ""format"" [118:11 - 118:19] StringLiteral=
 // CHECK-tokens: Punctuation: "," [118:19 - 118:20] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_format" [118:21 - 118:30] DeclRefExpr=AT_format:19:50
 // CHECK-tokens: Punctuation: ")" [118:30 - 118:31] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [119:5 - 119:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [119:6 - 119:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [119:10 - 119:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""hiding"" [119:11 - 119:19] UnexposedExpr=
+// CHECK-tokens: Literal: ""hiding"" [119:11 - 119:19] StringLiteral=
 // CHECK-tokens: Punctuation: "," [119:19 - 119:20] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_hiding" [119:21 - 119:30] DeclRefExpr=AT_hiding:20:22
 // CHECK-tokens: Punctuation: ")" [119:30 - 119:31] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [120:5 - 120:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [120:6 - 120:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [120:10 - 120:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""malloc"" [120:11 - 120:19] UnexposedExpr=
+// CHECK-tokens: Literal: ""malloc"" [120:11 - 120:19] StringLiteral=
 // CHECK-tokens: Punctuation: "," [120:19 - 120:20] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_malloc" [120:21 - 120:30] DeclRefExpr=AT_malloc:20:33
 // CHECK-tokens: Punctuation: ")" [120:30 - 120:31] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [121:5 - 121:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [121:6 - 121:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [121:10 - 121:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""packed"" [121:11 - 121:19] UnexposedExpr=
+// CHECK-tokens: Literal: ""packed"" [121:11 - 121:19] StringLiteral=
 // CHECK-tokens: Punctuation: "," [121:19 - 121:20] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_packed" [121:21 - 121:30] DeclRefExpr=AT_packed:26:27
 // CHECK-tokens: Punctuation: ")" [121:30 - 121:31] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [122:5 - 122:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [122:6 - 122:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [122:10 - 122:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""unused"" [122:11 - 122:19] UnexposedExpr=
+// CHECK-tokens: Literal: ""unused"" [122:11 - 122:19] StringLiteral=
 // CHECK-tokens: Punctuation: "," [122:19 - 122:20] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_unused" [122:21 - 122:30] DeclRefExpr=AT_unused:28:23
 // CHECK-tokens: Punctuation: ")" [122:30 - 122:31] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [123:5 - 123:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [123:6 - 123:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [123:10 - 123:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""aligned"" [123:11 - 123:20] UnexposedExpr=
+// CHECK-tokens: Literal: ""aligned"" [123:11 - 123:20] StringLiteral=
 // CHECK-tokens: Punctuation: "," [123:20 - 123:21] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_aligned" [123:22 - 123:32] DeclRefExpr=AT_aligned:15:35
 // CHECK-tokens: Punctuation: ")" [123:32 - 123:33] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [124:5 - 124:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [124:6 - 124:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [124:10 - 124:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""cleanup"" [124:11 - 124:20] UnexposedExpr=
+// CHECK-tokens: Literal: ""cleanup"" [124:11 - 124:20] StringLiteral=
 // CHECK-tokens: Punctuation: "," [124:20 - 124:21] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_cleanup" [124:22 - 124:32] DeclRefExpr=AT_cleanup:17:40
 // CHECK-tokens: Punctuation: ")" [124:32 - 124:33] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [125:5 - 125:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [125:6 - 125:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [125:10 - 125:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""naked"" [125:11 - 125:18] UnexposedExpr=
+// CHECK-tokens: Literal: ""naked"" [125:11 - 125:18] StringLiteral=
 // CHECK-tokens: Punctuation: "," [125:18 - 125:19] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_naked" [125:20 - 125:28] DeclRefExpr=AT_naked:20:53
 // CHECK-tokens: Punctuation: ")" [125:28 - 125:29] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [126:5 - 126:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [126:6 - 126:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [126:10 - 126:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""nodebug"" [126:11 - 126:20] UnexposedExpr=
+// CHECK-tokens: Literal: ""nodebug"" [126:11 - 126:20] StringLiteral=
 // CHECK-tokens: Punctuation: "," [126:20 - 126:21] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_nodebug" [126:22 - 126:32] DeclRefExpr=AT_nodebug:20:63
 // CHECK-tokens: Punctuation: ")" [126:32 - 126:33] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [127:5 - 127:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [127:6 - 127:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [127:10 - 127:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""nonnull"" [127:11 - 127:20] UnexposedExpr=
+// CHECK-tokens: Literal: ""nonnull"" [127:11 - 127:20] StringLiteral=
 // CHECK-tokens: Punctuation: "," [127:20 - 127:21] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_nonnull" [127:22 - 127:32] DeclRefExpr=AT_nonnull:21:47
 // CHECK-tokens: Punctuation: ")" [127:32 - 127:33] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [128:5 - 128:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [128:6 - 128:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [128:10 - 128:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""nothrow"" [128:11 - 128:20] UnexposedExpr=
+// CHECK-tokens: Literal: ""nothrow"" [128:11 - 128:20] StringLiteral=
 // CHECK-tokens: Punctuation: "," [128:20 - 128:21] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_nothrow" [128:22 - 128:32] DeclRefExpr=AT_nothrow:22:7
 // CHECK-tokens: Punctuation: ")" [128:32 - 128:33] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [129:5 - 129:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [129:6 - 129:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [129:10 - 129:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""objc_gc"" [129:11 - 129:20] UnexposedExpr=
+// CHECK-tokens: Literal: ""objc_gc"" [129:11 - 129:20] StringLiteral=
 // CHECK-tokens: Punctuation: "," [129:20 - 129:21] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_objc_gc" [129:22 - 129:32] DeclRefExpr=AT_objc_gc:24:59
 // CHECK-tokens: Punctuation: ")" [129:32 - 129:33] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [130:5 - 130:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [130:6 - 130:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [130:10 - 130:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""regparm"" [130:11 - 130:20] UnexposedExpr=
+// CHECK-tokens: Literal: ""regparm"" [130:11 - 130:20] StringLiteral=
 // CHECK-tokens: Punctuation: "," [130:20 - 130:21] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_regparm" [130:22 - 130:32] DeclRefExpr=AT_regparm:26:58
 // CHECK-tokens: Punctuation: ")" [130:32 - 130:33] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [131:5 - 131:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [131:6 - 131:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [131:10 - 131:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""section"" [131:11 - 131:20] UnexposedExpr=
+// CHECK-tokens: Literal: ""section"" [131:11 - 131:20] StringLiteral=
 // CHECK-tokens: Punctuation: "," [131:20 - 131:21] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_section" [131:22 - 131:32] DeclRefExpr=AT_section:27:7
 // CHECK-tokens: Punctuation: ")" [131:32 - 131:33] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [132:5 - 132:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [132:6 - 132:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [132:10 - 132:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""stdcall"" [132:11 - 132:20] UnexposedExpr=
+// CHECK-tokens: Literal: ""stdcall"" [132:11 - 132:20] StringLiteral=
 // CHECK-tokens: Punctuation: "," [132:20 - 132:21] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_stdcall" [132:22 - 132:32] DeclRefExpr=AT_stdcall:27:32
 // CHECK-tokens: Punctuation: ")" [132:32 - 132:33] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [133:5 - 133:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [133:6 - 133:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [133:10 - 133:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""annotate"" [133:11 - 133:21] UnexposedExpr=
+// CHECK-tokens: Literal: ""annotate"" [133:11 - 133:21] StringLiteral=
 // CHECK-tokens: Punctuation: "," [133:21 - 133:22] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_annotate" [133:23 - 133:34] DeclRefExpr=AT_annotate:16:29
 // CHECK-tokens: Punctuation: ")" [133:34 - 133:35] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [134:5 - 134:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [134:6 - 134:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [134:10 - 134:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""fastcall"" [134:11 - 134:21] UnexposedExpr=
+// CHECK-tokens: Literal: ""fastcall"" [134:11 - 134:21] StringLiteral=
 // CHECK-tokens: Punctuation: "," [134:21 - 134:22] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_fastcall" [134:23 - 134:34] DeclRefExpr=AT_fastcall:19:27
 // CHECK-tokens: Punctuation: ")" [134:34 - 134:35] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [135:5 - 135:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [135:6 - 135:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [135:10 - 135:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""ibaction"" [135:11 - 135:21] UnexposedExpr=
+// CHECK-tokens: Literal: ""ibaction"" [135:11 - 135:21] StringLiteral=
 // CHECK-tokens: Punctuation: "," [135:21 - 135:22] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_IBAction" [135:23 - 135:34] DeclRefExpr=AT_IBAction:14:7
 // CHECK-tokens: Punctuation: ")" [135:34 - 135:35] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [136:5 - 136:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [136:6 - 136:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [136:10 - 136:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""iboutlet"" [136:11 - 136:21] UnexposedExpr=
+// CHECK-tokens: Literal: ""iboutlet"" [136:11 - 136:21] StringLiteral=
 // CHECK-tokens: Punctuation: "," [136:21 - 136:22] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_IBOutlet" [136:23 - 136:34] DeclRefExpr=AT_IBOutlet:14:20
 // CHECK-tokens: Punctuation: ")" [136:34 - 136:35] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [137:5 - 137:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [137:6 - 137:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [137:10 - 137:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""iboutletcollection"" [137:11 - 137:31] UnexposedExpr=
+// CHECK-tokens: Literal: ""iboutletcollection"" [137:11 - 137:31] StringLiteral=
 // CHECK-tokens: Punctuation: "," [137:31 - 137:32] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_IBOutletCollection" [137:33 - 137:54] DeclRefExpr=AT_IBOutletCollection:14:33
 // CHECK-tokens: Punctuation: ")" [137:54 - 137:55] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [138:5 - 138:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [138:6 - 138:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [138:10 - 138:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""noreturn"" [138:11 - 138:21] UnexposedExpr=
+// CHECK-tokens: Literal: ""noreturn"" [138:11 - 138:21] StringLiteral=
 // CHECK-tokens: Punctuation: "," [138:21 - 138:22] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_noreturn" [138:23 - 138:34] DeclRefExpr=AT_noreturn:21:59
 // CHECK-tokens: Punctuation: ")" [138:34 - 138:35] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [139:5 - 139:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [139:6 - 139:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [139:10 - 139:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""noinline"" [139:11 - 139:21] UnexposedExpr=
+// CHECK-tokens: Literal: ""noinline"" [139:11 - 139:21] StringLiteral=
 // CHECK-tokens: Punctuation: "," [139:21 - 139:22] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_noinline" [139:23 - 139:34] DeclRefExpr=AT_noinline:21:7
 // CHECK-tokens: Punctuation: ")" [139:34 - 139:35] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [140:5 - 140:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [140:6 - 140:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [140:10 - 140:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""override"" [140:11 - 140:21] UnexposedExpr=
+// CHECK-tokens: Literal: ""override"" [140:11 - 140:21] StringLiteral=
 // CHECK-tokens: Punctuation: "," [140:21 - 140:22] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_override" [140:23 - 140:34] DeclRefExpr=AT_override:22:51
 // CHECK-tokens: Punctuation: ")" [140:34 - 140:35] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [141:5 - 141:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [141:6 - 141:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [141:10 - 141:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""sentinel"" [141:11 - 141:21] UnexposedExpr=
+// CHECK-tokens: Literal: ""sentinel"" [141:11 - 141:21] StringLiteral=
 // CHECK-tokens: Punctuation: "," [141:21 - 141:22] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_sentinel" [141:23 - 141:34] DeclRefExpr=AT_sentinel:27:19
 // CHECK-tokens: Punctuation: ")" [141:34 - 141:35] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [142:5 - 142:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [142:6 - 142:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [142:10 - 142:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""NSObject"" [142:11 - 142:21] UnexposedExpr=
+// CHECK-tokens: Literal: ""NSObject"" [142:11 - 142:21] StringLiteral=
 // CHECK-tokens: Punctuation: "," [142:21 - 142:22] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_nsobject" [142:23 - 142:34] DeclRefExpr=AT_nsobject:22:19
 // CHECK-tokens: Punctuation: ")" [142:34 - 142:35] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [143:5 - 143:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [143:6 - 143:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [143:10 - 143:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""dllimport"" [143:11 - 143:22] UnexposedExpr=
+// CHECK-tokens: Literal: ""dllimport"" [143:11 - 143:22] StringLiteral=
 // CHECK-tokens: Punctuation: "," [143:22 - 143:23] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_dllimport" [143:24 - 143:36] DeclRefExpr=AT_dllimport:18:51
 // CHECK-tokens: Punctuation: ")" [143:36 - 143:37] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [144:5 - 144:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [144:6 - 144:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [144:10 - 144:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""dllexport"" [144:11 - 144:22] UnexposedExpr=
+// CHECK-tokens: Literal: ""dllexport"" [144:11 - 144:22] StringLiteral=
 // CHECK-tokens: Punctuation: "," [144:22 - 144:23] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_dllexport" [144:24 - 144:36] DeclRefExpr=AT_dllexport:18:37
 // CHECK-tokens: Punctuation: ")" [144:36 - 144:37] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [145:5 - 145:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [145:6 - 145:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [145:10 - 145:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""may_alias"" [145:11 - 145:22] UnexposedExpr=
+// CHECK-tokens: Literal: ""may_alias"" [145:11 - 145:22] StringLiteral=
 // CHECK-tokens: Punctuation: "," [145:22 - 145:23] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "IgnoredAttribute" [145:24 - 145:40] DeclRefExpr=IgnoredAttribute:31:25
 // CHECK-tokens: Punctuation: ")" [145:40 - 145:41] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [146:5 - 146:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [146:6 - 146:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [146:10 - 146:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""base_check"" [146:11 - 146:23] UnexposedExpr=
+// CHECK-tokens: Literal: ""base_check"" [146:11 - 146:23] StringLiteral=
 // CHECK-tokens: Punctuation: "," [146:23 - 146:24] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_base_check" [146:25 - 146:38] DeclRefExpr=AT_base_check:16:42
 // CHECK-tokens: Punctuation: ")" [146:38 - 146:39] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [147:5 - 147:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [147:6 - 147:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [147:10 - 147:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""deprecated"" [147:11 - 147:23] UnexposedExpr=
+// CHECK-tokens: Literal: ""deprecated"" [147:11 - 147:23] StringLiteral=
 // CHECK-tokens: Punctuation: "," [147:23 - 147:24] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_deprecated" [147:25 - 147:38] DeclRefExpr=AT_deprecated:18:7
 // CHECK-tokens: Punctuation: ")" [147:38 - 147:39] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [148:5 - 148:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [148:6 - 148:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [148:10 - 148:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""visibility"" [148:11 - 148:23] UnexposedExpr=
+// CHECK-tokens: Literal: ""visibility"" [148:11 - 148:23] StringLiteral=
 // CHECK-tokens: Punctuation: "," [148:23 - 148:24] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_visibility" [148:25 - 148:38] DeclRefExpr=AT_visibility:29:7
 // CHECK-tokens: Punctuation: ")" [148:38 - 148:39] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [149:5 - 149:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [149:6 - 149:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [149:10 - 149:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""destructor"" [149:11 - 149:23] UnexposedExpr=
+// CHECK-tokens: Literal: ""destructor"" [149:11 - 149:23] StringLiteral=
 // CHECK-tokens: Punctuation: "," [149:23 - 149:24] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_destructor" [149:25 - 149:38] DeclRefExpr=AT_destructor:18:22
 // CHECK-tokens: Punctuation: ")" [149:38 - 149:39] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [150:5 - 150:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [150:6 - 150:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [150:10 - 150:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""format_arg"" [150:11 - 150:23] UnexposedExpr=
+// CHECK-tokens: Literal: ""format_arg"" [150:11 - 150:23] StringLiteral=
 // CHECK-tokens: Punctuation: "," [150:23 - 150:24] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_format_arg" [150:25 - 150:38] DeclRefExpr=AT_format_arg:19:61
 // CHECK-tokens: Punctuation: ")" [150:38 - 150:39] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [151:5 - 151:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [151:6 - 151:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [151:10 - 151:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""gnu_inline"" [151:11 - 151:23] UnexposedExpr=
+// CHECK-tokens: Literal: ""gnu_inline"" [151:11 - 151:23] StringLiteral=
 // CHECK-tokens: Punctuation: "," [151:23 - 151:24] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_gnu_inline" [151:25 - 151:38] DeclRefExpr=AT_gnu_inline:20:7
 // CHECK-tokens: Punctuation: ")" [151:38 - 151:39] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [152:5 - 152:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [152:6 - 152:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [152:10 - 152:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""weak_import"" [152:11 - 152:24] UnexposedExpr=
+// CHECK-tokens: Literal: ""weak_import"" [152:11 - 152:24] StringLiteral=
 // CHECK-tokens: Punctuation: "," [152:24 - 152:25] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_weak_import" [152:26 - 152:40] DeclRefExpr=AT_weak_import:30:7
 // CHECK-tokens: Punctuation: ")" [152:40 - 152:41] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [153:5 - 153:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [153:6 - 153:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [153:10 - 153:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""vecreturn"" [153:11 - 153:22] UnexposedExpr=
+// CHECK-tokens: Literal: ""vecreturn"" [153:11 - 153:22] StringLiteral=
 // CHECK-tokens: Punctuation: "," [153:22 - 153:23] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_vecreturn" [153:24 - 153:36] DeclRefExpr=AT_vecreturn:28:43
 // CHECK-tokens: Punctuation: ")" [153:36 - 153:37] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [154:5 - 154:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [154:6 - 154:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [154:10 - 154:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""vector_size"" [154:11 - 154:24] UnexposedExpr=
+// CHECK-tokens: Literal: ""vector_size"" [154:11 - 154:24] StringLiteral=
 // CHECK-tokens: Punctuation: "," [154:24 - 154:25] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_vector_size" [154:26 - 154:40] DeclRefExpr=AT_vector_size:28:57
 // CHECK-tokens: Punctuation: ")" [154:40 - 154:41] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [155:5 - 155:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [155:6 - 155:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [155:10 - 155:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""constructor"" [155:11 - 155:24] UnexposedExpr=
+// CHECK-tokens: Literal: ""constructor"" [155:11 - 155:24] StringLiteral=
 // CHECK-tokens: Punctuation: "," [155:24 - 155:25] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_constructor" [155:26 - 155:40] DeclRefExpr=AT_constructor:17:62
 // CHECK-tokens: Punctuation: ")" [155:40 - 155:41] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [156:5 - 156:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [156:6 - 156:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [156:10 - 156:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""unavailable"" [156:11 - 156:24] UnexposedExpr=
+// CHECK-tokens: Literal: ""unavailable"" [156:11 - 156:24] StringLiteral=
 // CHECK-tokens: Punctuation: "," [156:24 - 156:25] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_unavailable" [156:26 - 156:40] DeclRefExpr=AT_unavailable:28:7
 // CHECK-tokens: Punctuation: ")" [156:40 - 156:41] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [157:5 - 157:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [157:6 - 157:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [157:10 - 157:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""overloadable"" [157:11 - 157:25] UnexposedExpr=
+// CHECK-tokens: Literal: ""overloadable"" [157:11 - 157:25] StringLiteral=
 // CHECK-tokens: Punctuation: "," [157:25 - 157:26] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_overloadable" [157:27 - 157:42] DeclRefExpr=AT_overloadable:25:7
 // CHECK-tokens: Punctuation: ")" [157:42 - 157:43] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [158:5 - 158:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [158:6 - 158:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [158:10 - 158:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""address_space"" [158:11 - 158:26] UnexposedExpr=
+// CHECK-tokens: Literal: ""address_space"" [158:11 - 158:26] StringLiteral=
 // CHECK-tokens: Punctuation: "," [158:26 - 158:27] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_address_space" [158:28 - 158:44] DeclRefExpr=AT_address_space:15:7
 // CHECK-tokens: Punctuation: ")" [158:44 - 158:45] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [159:5 - 159:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [159:6 - 159:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [159:10 - 159:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""always_inline"" [159:11 - 159:26] UnexposedExpr=
+// CHECK-tokens: Literal: ""always_inline"" [159:11 - 159:26] StringLiteral=
 // CHECK-tokens: Punctuation: "," [159:26 - 159:27] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_always_inline" [159:28 - 159:44] DeclRefExpr=AT_always_inline:15:47
 // CHECK-tokens: Punctuation: ")" [159:44 - 159:45] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [160:5 - 160:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [160:6 - 160:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [160:10 - 160:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""returns_twice"" [160:11 - 160:26] UnexposedExpr=
+// CHECK-tokens: Literal: ""returns_twice"" [160:11 - 160:26] StringLiteral=
 // CHECK-tokens: Punctuation: "," [160:26 - 160:27] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_returns_twice" [160:28 - 160:44] DeclRefExpr=AT_returns_twice:31:7
 // CHECK-tokens: Punctuation: ")" [160:44 - 160:45] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [161:5 - 161:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [161:6 - 161:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [161:10 - 161:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""vec_type_hint"" [161:11 - 161:26] UnexposedExpr=
+// CHECK-tokens: Literal: ""vec_type_hint"" [161:11 - 161:26] StringLiteral=
 // CHECK-tokens: Punctuation: "," [161:26 - 161:27] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "IgnoredAttribute" [161:28 - 161:44] DeclRefExpr=IgnoredAttribute:31:25
 // CHECK-tokens: Punctuation: ")" [161:44 - 161:45] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [162:5 - 162:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [162:6 - 162:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [162:10 - 162:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""objc_exception"" [162:11 - 162:27] UnexposedExpr=
+// CHECK-tokens: Literal: ""objc_exception"" [162:11 - 162:27] StringLiteral=
 // CHECK-tokens: Punctuation: "," [162:27 - 162:28] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_objc_exception" [162:29 - 162:46] DeclRefExpr=AT_objc_exception:22:32
 // CHECK-tokens: Punctuation: ")" [162:46 - 162:47] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [163:5 - 163:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [163:6 - 163:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [163:10 - 163:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""ext_vector_type"" [163:11 - 163:28] UnexposedExpr=
+// CHECK-tokens: Literal: ""ext_vector_type"" [163:11 - 163:28] StringLiteral=
 // CHECK-tokens: Punctuation: "," [163:28 - 163:29] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_ext_vector_type" [163:30 - 163:48] DeclRefExpr=AT_ext_vector_type:19:7
 // CHECK-tokens: Punctuation: ")" [163:48 - 163:49] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [164:5 - 164:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [164:6 - 164:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [164:10 - 164:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""transparent_union"" [164:11 - 164:30] UnexposedExpr=
+// CHECK-tokens: Literal: ""transparent_union"" [164:11 - 164:30] StringLiteral=
 // CHECK-tokens: Punctuation: "," [164:30 - 164:31] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_transparent_union" [164:32 - 164:52] DeclRefExpr=AT_transparent_union:27:57
 // CHECK-tokens: Punctuation: ")" [164:52 - 164:53] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [165:5 - 165:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [165:6 - 165:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [165:10 - 165:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""analyzer_noreturn"" [165:11 - 165:30] UnexposedExpr=
+// CHECK-tokens: Literal: ""analyzer_noreturn"" [165:11 - 165:30] StringLiteral=
 // CHECK-tokens: Punctuation: "," [165:30 - 165:31] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_analyzer_noreturn" [165:32 - 165:52] DeclRefExpr=AT_analyzer_noreturn:16:7
 // CHECK-tokens: Punctuation: ")" [165:52 - 165:53] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [166:5 - 166:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [166:6 - 166:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [166:10 - 166:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""warn_unused_result"" [166:11 - 166:31] UnexposedExpr=
+// CHECK-tokens: Literal: ""warn_unused_result"" [166:11 - 166:31] StringLiteral=
 // CHECK-tokens: Punctuation: "," [166:31 - 166:32] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_warn_unused_result" [166:33 - 166:54] DeclRefExpr=AT_warn_unused_result:29:22
 // CHECK-tokens: Punctuation: ")" [166:54 - 166:55] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [167:5 - 167:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [167:6 - 167:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [167:10 - 167:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""carries_dependency"" [167:11 - 167:31] UnexposedExpr=
+// CHECK-tokens: Literal: ""carries_dependency"" [167:11 - 167:31] StringLiteral=
 // CHECK-tokens: Punctuation: "," [167:31 - 167:32] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_carries_dependency" [167:33 - 167:54] DeclRefExpr=AT_carries_dependency:17:7
 // CHECK-tokens: Punctuation: ")" [167:54 - 167:55] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [168:5 - 168:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [168:6 - 168:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [168:10 - 168:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""ns_returns_not_retained"" [168:11 - 168:36] UnexposedExpr=
+// CHECK-tokens: Literal: ""ns_returns_not_retained"" [168:11 - 168:36] StringLiteral=
 // CHECK-tokens: Punctuation: "," [168:36 - 168:37] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_ns_returns_not_retained" [168:38 - 168:64] DeclRefExpr=AT_ns_returns_not_retained:24:7
 // CHECK-tokens: Punctuation: ")" [168:64 - 168:65] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [169:5 - 169:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [169:6 - 169:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [169:10 - 169:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""ns_returns_retained"" [169:11 - 169:32] UnexposedExpr=
+// CHECK-tokens: Literal: ""ns_returns_retained"" [169:11 - 169:32] StringLiteral=
 // CHECK-tokens: Punctuation: "," [169:32 - 169:33] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_ns_returns_retained" [169:34 - 169:56] DeclRefExpr=AT_ns_returns_retained:24:35
 // CHECK-tokens: Punctuation: ")" [169:56 - 169:57] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [170:5 - 170:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [170:6 - 170:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [170:10 - 170:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""cf_returns_not_retained"" [170:11 - 170:36] UnexposedExpr=
+// CHECK-tokens: Literal: ""cf_returns_not_retained"" [170:11 - 170:36] StringLiteral=
 // CHECK-tokens: Punctuation: "," [170:36 - 170:37] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_cf_returns_not_retained" [170:38 - 170:64] DeclRefExpr=AT_cf_returns_not_retained:23:7
 // CHECK-tokens: Punctuation: ")" [170:64 - 170:65] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [171:5 - 171:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [171:6 - 171:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [171:10 - 171:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""cf_returns_retained"" [171:11 - 171:32] UnexposedExpr=
+// CHECK-tokens: Literal: ""cf_returns_retained"" [171:11 - 171:32] StringLiteral=
 // CHECK-tokens: Punctuation: "," [171:32 - 171:33] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_cf_returns_retained" [171:34 - 171:56] DeclRefExpr=AT_cf_returns_retained:23:35
 // CHECK-tokens: Punctuation: ")" [171:56 - 171:57] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [172:5 - 172:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [172:6 - 172:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [172:10 - 172:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""ownership_returns"" [172:11 - 172:30] UnexposedExpr=
+// CHECK-tokens: Literal: ""ownership_returns"" [172:11 - 172:30] StringLiteral=
 // CHECK-tokens: Punctuation: "," [172:30 - 172:31] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_ownership_returns" [172:32 - 172:52] DeclRefExpr=AT_ownership_returns:25:44
 // CHECK-tokens: Punctuation: ")" [172:52 - 172:53] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [173:5 - 173:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [173:6 - 173:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [173:10 - 173:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""ownership_holds"" [173:11 - 173:28] UnexposedExpr=
+// CHECK-tokens: Literal: ""ownership_holds"" [173:11 - 173:28] StringLiteral=
 // CHECK-tokens: Punctuation: "," [173:28 - 173:29] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_ownership_holds" [173:30 - 173:48] DeclRefExpr=AT_ownership_holds:25:24
 // CHECK-tokens: Punctuation: ")" [173:48 - 173:49] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [174:5 - 174:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [174:6 - 174:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [174:10 - 174:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""ownership_takes"" [174:11 - 174:28] UnexposedExpr=
+// CHECK-tokens: Literal: ""ownership_takes"" [174:11 - 174:28] StringLiteral=
 // CHECK-tokens: Punctuation: "," [174:28 - 174:29] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_ownership_takes" [174:30 - 174:48] DeclRefExpr=AT_ownership_takes:26:7
 // CHECK-tokens: Punctuation: ")" [174:48 - 174:49] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [175:5 - 175:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [175:6 - 175:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [175:10 - 175:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""reqd_work_group_size"" [175:11 - 175:33] UnexposedExpr=
+// CHECK-tokens: Literal: ""reqd_work_group_size"" [175:11 - 175:33] StringLiteral=
 // CHECK-tokens: Punctuation: "," [175:33 - 175:34] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_reqd_wg_size" [175:35 - 175:50] DeclRefExpr=AT_reqd_wg_size:30:23
 // CHECK-tokens: Punctuation: ")" [175:50 - 175:51] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [176:5 - 176:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [176:6 - 176:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [176:10 - 176:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""init_priority"" [176:11 - 176:26] UnexposedExpr=
+// CHECK-tokens: Literal: ""init_priority"" [176:11 - 176:26] StringLiteral=
 // CHECK-tokens: Punctuation: "," [176:26 - 176:27] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_init_priority" [176:28 - 176:44] DeclRefExpr=AT_init_priority:30:40
 // CHECK-tokens: Punctuation: ")" [176:44 - 176:45] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [177:5 - 177:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [177:6 - 177:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [177:10 - 177:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""no_instrument_function"" [177:11 - 177:35] UnexposedExpr=
+// CHECK-tokens: Literal: ""no_instrument_function"" [177:11 - 177:35] StringLiteral=
 // CHECK-tokens: Punctuation: "," [177:35 - 177:36] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_no_instrument_function" [177:37 - 177:62] DeclRefExpr=AT_no_instrument_function:21:20
 // CHECK-tokens: Punctuation: ")" [177:62 - 177:63] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [178:5 - 178:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [178:6 - 178:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [178:10 - 178:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""thiscall"" [178:11 - 178:21] UnexposedExpr=
+// CHECK-tokens: Literal: ""thiscall"" [178:11 - 178:21] StringLiteral=
 // CHECK-tokens: Punctuation: "," [178:21 - 178:22] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_thiscall" [178:23 - 178:34] DeclRefExpr=AT_thiscall:27:44
 // CHECK-tokens: Punctuation: ")" [178:34 - 178:35] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [179:5 - 179:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [179:6 - 179:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [179:10 - 179:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""pascal"" [179:11 - 179:19] UnexposedExpr=
+// CHECK-tokens: Literal: ""pascal"" [179:11 - 179:19] StringLiteral=
 // CHECK-tokens: Punctuation: "," [179:19 - 179:20] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_pascal" [179:21 - 179:30] DeclRefExpr=AT_pascal:26:38
 // CHECK-tokens: Punctuation: ")" [179:30 - 179:31] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [180:5 - 180:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [180:6 - 180:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [180:10 - 180:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""__cdecl"" [180:11 - 180:20] UnexposedExpr=
+// CHECK-tokens: Literal: ""__cdecl"" [180:11 - 180:20] StringLiteral=
 // CHECK-tokens: Punctuation: "," [180:20 - 180:21] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_cdecl" [180:22 - 180:30] DeclRefExpr=AT_cdecl:17:30
 // CHECK-tokens: Punctuation: ")" [180:30 - 180:31] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [181:5 - 181:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [181:6 - 181:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [181:10 - 181:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""__stdcall"" [181:11 - 181:22] UnexposedExpr=
+// CHECK-tokens: Literal: ""__stdcall"" [181:11 - 181:22] StringLiteral=
 // CHECK-tokens: Punctuation: "," [181:22 - 181:23] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_stdcall" [181:24 - 181:34] DeclRefExpr=AT_stdcall:27:32
 // CHECK-tokens: Punctuation: ")" [181:34 - 181:35] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [182:5 - 182:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [182:6 - 182:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [182:10 - 182:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""__fastcall"" [182:11 - 182:23] UnexposedExpr=
+// CHECK-tokens: Literal: ""__fastcall"" [182:11 - 182:23] StringLiteral=
 // CHECK-tokens: Punctuation: "," [182:23 - 182:24] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_fastcall" [182:25 - 182:36] DeclRefExpr=AT_fastcall:19:27
 // CHECK-tokens: Punctuation: ")" [182:36 - 182:37] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [183:5 - 183:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [183:6 - 183:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [183:10 - 183:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""__thiscall"" [183:11 - 183:23] UnexposedExpr=
+// CHECK-tokens: Literal: ""__thiscall"" [183:11 - 183:23] StringLiteral=
 // CHECK-tokens: Punctuation: "," [183:23 - 183:24] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_thiscall" [183:25 - 183:36] DeclRefExpr=AT_thiscall:27:44
 // CHECK-tokens: Punctuation: ")" [183:36 - 183:37] CallExpr=Case:88:42
 // CHECK-tokens: Punctuation: "." [184:5 - 184:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [184:6 - 184:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [184:10 - 184:11] CallExpr=Case:88:42
-// CHECK-tokens: Literal: ""__pascal"" [184:11 - 184:21] UnexposedExpr=
+// CHECK-tokens: Literal: ""__pascal"" [184:11 - 184:21] StringLiteral=
 // CHECK-tokens: Punctuation: "," [184:21 - 184:22] CallExpr=Case:88:42
 // CHECK-tokens: Identifier: "AT_pascal" [184:23 - 184:32] DeclRefExpr=AT_pascal:26:38
 // CHECK-tokens: Punctuation: ")" [184:32 - 184:33] CallExpr=Case:88:42
@@ -1520,8 +1520,8 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Punctuation: "(" [185:13 - 185:14] CallExpr=Default:92:5
 // CHECK-tokens: Identifier: "UnknownAttribute" [185:14 - 185:30] DeclRefExpr=UnknownAttribute:31:43
 // CHECK-tokens: Punctuation: ")" [185:30 - 185:31] CallExpr=Default:92:5
-// CHECK-tokens: Punctuation: ";" [185:31 - 185:32] UnexposedStmt=
-// CHECK-tokens: Punctuation: "}" [186:1 - 186:2] UnexposedStmt=
+// CHECK-tokens: Punctuation: ";" [185:31 - 185:32] CompoundStmt=
+// CHECK-tokens: Punctuation: "}" [186:1 - 186:2] CompoundStmt=
 
 // RUN: c-index-test -test-load-source all %s 2>&1 | FileCheck %s
 // CHECK: 1:27: TypedefDecl=__darwin_size_t:1:27 (Definition) Extent=[1:1 - 1:42]
@@ -1629,11 +1629,11 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK: 40:23: TypedefDecl=iterator:40:23 (Definition) Extent=[40:3 - 40:31]
 // CHECK: 41:23: VarDecl=npos:41:23 Extent=[41:3 - 41:40]
 // CHECK: 41:16: TypeRef=size_t:2:25 Extent=[41:16 - 41:22]
-// CHECK: 41:30: UnexposedExpr= Extent=[41:30 - 41:40]
-// CHECK: 41:31: UnexposedExpr= Extent=[41:31 - 41:40]
+// CHECK: 41:30: UnaryOperator= Extent=[41:30 - 41:40]
+// CHECK: 41:31: CXXFunctionalCastExpr= Extent=[41:31 - 41:40]
 // CHECK: 41:31: TypeRef=size_t:2:25 Extent=[41:31 - 41:37]
 // CHECK: 41:38: UnexposedExpr= Extent=[41:38 - 41:39]
-// CHECK: 41:38: UnexposedExpr= Extent=[41:38 - 41:39]
+// CHECK: 41:38: IntegerLiteral= Extent=[41:38 - 41:39]
 // CHECK: 42:1: CXXAccessSpecifier=:42:1 (Definition) Extent=[42:1 - 42:9]
 // CHECK: 43:15: FieldDecl=Data:43:15 (Definition) Extent=[43:3 - 43:19]
 // CHECK: 44:10: FieldDecl=Length:44:10 (Definition) Extent=[44:3 - 44:16]
@@ -1644,10 +1644,10 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK: 45:21: TypeRef=size_t:2:25 Extent=[45:21 - 45:27]
 // CHECK: 45:38: ParmDecl=b:45:38 (Definition) Extent=[45:31 - 45:39]
 // CHECK: 45:31: TypeRef=size_t:2:25 Extent=[45:31 - 45:37]
-// CHECK: 45:41: UnexposedStmt= Extent=[45:41 - 45:66]
-// CHECK: 45:43: UnexposedStmt= Extent=[45:43 - 45:63]
-// CHECK: 45:50: UnexposedExpr= Extent=[45:50 - 45:63]
-// CHECK: 45:50: UnexposedExpr= Extent=[45:50 - 45:55]
+// CHECK: 45:41: CompoundStmt= Extent=[45:41 - 45:66]
+// CHECK: 45:43: ReturnStmt= Extent=[45:43 - 45:63]
+// CHECK: 45:50: ConditionalOperator= Extent=[45:50 - 45:63]
+// CHECK: 45:50: BinaryOperator= Extent=[45:50 - 45:55]
 // CHECK: 45:50: DeclRefExpr=a:45:28 Extent=[45:50 - 45:51]
 // CHECK: 45:54: DeclRefExpr=b:45:38 Extent=[45:54 - 45:55]
 // CHECK: 45:58: DeclRefExpr=a:45:28 Extent=[45:58 - 45:59]
@@ -1656,11 +1656,11 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK: 47:3: CXXConstructor=StringRef:47:3 (Definition) Extent=[47:3 - 47:37]
 // CHECK: 47:16: MemberRef=Data:43:15 Extent=[47:16 - 47:20]
 // CHECK: 47:21: UnexposedExpr= Extent=[47:21 - 47:22]
-// CHECK: 47:21: UnexposedExpr= Extent=[47:21 - 47:22]
+// CHECK: 47:21: IntegerLiteral= Extent=[47:21 - 47:22]
 // CHECK: 47:25: MemberRef=Length:44:10 Extent=[47:25 - 47:31]
 // CHECK: 47:32: UnexposedExpr= Extent=[47:32 - 47:33]
-// CHECK: 47:32: UnexposedExpr= Extent=[47:32 - 47:33]
-// CHECK: 47:35: UnexposedStmt= Extent=[47:35 - 47:37]
+// CHECK: 47:32: IntegerLiteral= Extent=[47:32 - 47:33]
+// CHECK: 47:35: CompoundStmt= Extent=[47:35 - 47:37]
 // CHECK: 48:3: CXXConstructor=StringRef:48:3 (Definition) Extent=[48:3 - 48:71]
 // CHECK: 48:25: ParmDecl=Str:48:25 (Definition) Extent=[48:13 - 48:28]
 // CHECK: 48:32: MemberRef=Data:43:15 Extent=[48:32 - 48:36]
@@ -1670,7 +1670,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK: 48:50: UnexposedExpr=magic_length:36:8 Extent=[48:50 - 48:62]
 // CHECK: 48:50: DeclRefExpr=magic_length:36:8 Extent=[48:50 - 48:62]
 // CHECK: 48:63: DeclRefExpr=Str:48:25 Extent=[48:63 - 48:66]
-// CHECK: 48:69: UnexposedStmt= Extent=[48:69 - 48:71]
+// CHECK: 48:69: CompoundStmt= Extent=[48:69 - 48:71]
 // CHECK: 49:3: CXXConstructor=StringRef:49:3 (Definition) Extent=[49:3 - 49:77]
 // CHECK: 49:25: ParmDecl=data:49:25 (Definition) Extent=[49:13 - 49:29]
 // CHECK: 49:38: ParmDecl=length:49:38 (Definition) Extent=[49:31 - 49:44]
@@ -1679,29 +1679,29 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK: 49:53: DeclRefExpr=data:49:25 Extent=[49:53 - 49:57]
 // CHECK: 49:60: MemberRef=Length:44:10 Extent=[49:60 - 49:66]
 // CHECK: 49:67: DeclRefExpr=length:49:38 Extent=[49:67 - 49:73]
-// CHECK: 49:75: UnexposedStmt= Extent=[49:75 - 49:77]
+// CHECK: 49:75: CompoundStmt= Extent=[49:75 - 49:77]
 // CHECK: 50:12: CXXMethod=end:50:12 (Definition) Extent=[50:3 - 50:40]
 // CHECK: 50:3: TypeRef=iterator:40:23 Extent=[50:3 - 50:11]
-// CHECK: 50:24: UnexposedStmt= Extent=[50:24 - 50:40]
-// CHECK: 50:26: UnexposedStmt= Extent=[50:26 - 50:37]
+// CHECK: 50:24: CompoundStmt= Extent=[50:24 - 50:40]
+// CHECK: 50:26: ReturnStmt= Extent=[50:26 - 50:37]
 // CHECK: 50:33: MemberRefExpr=Data:43:15 Extent=[50:33 - 50:37]
 // CHECK: 51:10: CXXMethod=size:51:10 (Definition) Extent=[51:3 - 51:41]
 // CHECK: 51:3: TypeRef=size_t:2:25 Extent=[51:3 - 51:9]
-// CHECK: 51:23: UnexposedStmt= Extent=[51:23 - 51:41]
-// CHECK: 51:25: UnexposedStmt= Extent=[51:25 - 51:38]
+// CHECK: 51:23: CompoundStmt= Extent=[51:23 - 51:41]
+// CHECK: 51:25: ReturnStmt= Extent=[51:25 - 51:38]
 // CHECK: 51:32: MemberRefExpr=Length:44:10 Extent=[51:32 - 51:38]
 // CHECK: 52:8: CXXMethod=startswith:52:8 (Definition) Extent=[52:3 - 55:4]
 // CHECK: 52:29: ParmDecl=Prefix:52:29 (Definition) Extent=[52:19 - 52:35]
 // CHECK: 52:19: TypeRef=class llvm::StringRef:38:7 Extent=[52:19 - 52:28]
-// CHECK: 52:43: UnexposedStmt= Extent=[52:43 - 55:4]
-// CHECK: 53:5: UnexposedStmt= Extent=[53:5 - 54:56]
-// CHECK: 53:12: UnexposedExpr= Extent=[53:12 - 54:56]
-// CHECK: 53:12: UnexposedExpr= Extent=[53:12 - 53:35]
+// CHECK: 52:43: CompoundStmt= Extent=[52:43 - 55:4]
+// CHECK: 53:5: ReturnStmt= Extent=[53:5 - 54:56]
+// CHECK: 53:12: BinaryOperator= Extent=[53:12 - 54:56]
+// CHECK: 53:12: BinaryOperator= Extent=[53:12 - 53:35]
 // CHECK: 53:12: UnexposedExpr=Length:44:10 Extent=[53:12 - 53:18]
 // CHECK: 53:12: MemberRefExpr=Length:44:10 Extent=[53:12 - 53:18]
 // CHECK: 53:29: MemberRefExpr=Length:44:10 SingleRefName=[53:29 - 53:35] RefName=[53:29 - 53:35] Extent=[53:22 - 53:35]
 // CHECK: 53:22: DeclRefExpr=Prefix:52:29 Extent=[53:22 - 53:28]
-// CHECK: 54:11: UnexposedExpr= Extent=[54:11 - 54:56]
+// CHECK: 54:11: BinaryOperator= Extent=[54:11 - 54:56]
 // CHECK: 54:11: CallExpr=memcmp:7:7 Extent=[54:11 - 54:51]
 // CHECK: 54:11: UnexposedExpr=memcmp:7:7 Extent=[54:11 - 54:17]
 // CHECK: 54:11: DeclRefExpr=memcmp:7:7 Extent=[54:11 - 54:17]
@@ -1712,24 +1712,24 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK: 54:24: DeclRefExpr=Prefix:52:29 Extent=[54:24 - 54:30]
 // CHECK: 54:44: MemberRefExpr=Length:44:10 SingleRefName=[54:44 - 54:50] RefName=[54:44 - 54:50] Extent=[54:37 - 54:50]
 // CHECK: 54:37: DeclRefExpr=Prefix:52:29 Extent=[54:37 - 54:43]
-// CHECK: 54:55: UnexposedExpr= Extent=[54:55 - 54:56]
+// CHECK: 54:55: IntegerLiteral= Extent=[54:55 - 54:56]
 // CHECK: 56:8: CXXMethod=endswith:56:8 (Definition) Extent=[56:3 - 59:4]
 // CHECK: 56:27: ParmDecl=Suffix:56:27 (Definition) Extent=[56:17 - 56:33]
 // CHECK: 56:17: TypeRef=class llvm::StringRef:38:7 Extent=[56:17 - 56:26]
-// CHECK: 56:41: UnexposedStmt= Extent=[56:41 - 59:4]
-// CHECK: 57:5: UnexposedStmt= Extent=[57:5 - 58:69]
-// CHECK: 57:12: UnexposedExpr= Extent=[57:12 - 58:69]
-// CHECK: 57:12: UnexposedExpr= Extent=[57:12 - 57:35]
+// CHECK: 56:41: CompoundStmt= Extent=[56:41 - 59:4]
+// CHECK: 57:5: ReturnStmt= Extent=[57:5 - 58:69]
+// CHECK: 57:12: BinaryOperator= Extent=[57:12 - 58:69]
+// CHECK: 57:12: BinaryOperator= Extent=[57:12 - 57:35]
 // CHECK: 57:12: UnexposedExpr=Length:44:10 Extent=[57:12 - 57:18]
 // CHECK: 57:12: MemberRefExpr=Length:44:10 Extent=[57:12 - 57:18]
 // CHECK: 57:29: MemberRefExpr=Length:44:10 SingleRefName=[57:29 - 57:35] RefName=[57:29 - 57:35] Extent=[57:22 - 57:35]
 // CHECK: 57:22: DeclRefExpr=Suffix:56:27 Extent=[57:22 - 57:28]
-// CHECK: 58:7: UnexposedExpr= Extent=[58:7 - 58:69]
+// CHECK: 58:7: BinaryOperator= Extent=[58:7 - 58:69]
 // CHECK: 58:7: CallExpr=memcmp:7:7 Extent=[58:7 - 58:64]
 // CHECK: 58:7: UnexposedExpr=memcmp:7:7 Extent=[58:7 - 58:13]
 // CHECK: 58:7: DeclRefExpr=memcmp:7:7 Extent=[58:7 - 58:13]
 // CHECK: 58:14: UnexposedExpr= Extent=[58:14 - 58:35]
-// CHECK: 58:14: UnexposedExpr= Extent=[58:14 - 58:35]
+// CHECK: 58:14: BinaryOperator= Extent=[58:14 - 58:35]
 // CHECK: 58:14: CallExpr=end:50:12 Extent=[58:14 - 58:19]
 // CHECK: 58:14: MemberRefExpr=end:50:12 Extent=[58:14 - 58:17]
 // CHECK: 58:29: MemberRefExpr=Length:44:10 SingleRefName=[58:29 - 58:35] RefName=[58:29 - 58:35] Extent=[58:22 - 58:35]
@@ -1739,7 +1739,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK: 58:37: DeclRefExpr=Suffix:56:27 Extent=[58:37 - 58:43]
 // CHECK: 58:57: MemberRefExpr=Length:44:10 SingleRefName=[58:57 - 58:63] RefName=[58:57 - 58:63] Extent=[58:50 - 58:63]
 // CHECK: 58:50: DeclRefExpr=Suffix:56:27 Extent=[58:50 - 58:56]
-// CHECK: 58:68: UnexposedExpr= Extent=[58:68 - 58:69]
+// CHECK: 58:68: IntegerLiteral= Extent=[58:68 - 58:69]
 // CHECK: 60:13: CXXMethod=substr:60:13 (Definition) Extent=[60:3 - 62:4]
 // CHECK: 60:3: TypeRef=class llvm::StringRef:38:7 Extent=[60:3 - 60:12]
 // CHECK: 60:27: ParmDecl=Start:60:27 (Definition) Extent=[60:20 - 60:32]
@@ -1747,13 +1747,13 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK: 60:41: ParmDecl=N:60:41 (Definition) Extent=[60:34 - 60:49]
 // CHECK: 60:34: TypeRef=size_t:2:25 Extent=[60:34 - 60:40]
 // CHECK: 60:45: DeclRefExpr=npos:41:23 Extent=[60:45 - 60:49]
-// CHECK: 60:57: UnexposedStmt= Extent=[60:57 - 62:4]
-// CHECK: 61:5: UnexposedStmt= Extent=[61:5 - 61:59]
+// CHECK: 60:57: CompoundStmt= Extent=[60:57 - 62:4]
+// CHECK: 61:5: ReturnStmt= Extent=[61:5 - 61:59]
 // CHECK: 61:12: CallExpr= Extent=[61:12 - 61:59]
 // CHECK: 61:12: UnexposedExpr=StringRef:49:3 Extent=[61:12 - 61:59]
 // CHECK: 61:12: CallExpr=StringRef:49:3 Extent=[61:12 - 61:59]
 // CHECK: 61:12: TypeRef=class llvm::StringRef:38:7 Extent=[61:12 - 61:21]
-// CHECK: 61:22: UnexposedExpr= Extent=[61:22 - 61:34]
+// CHECK: 61:22: BinaryOperator= Extent=[61:22 - 61:34]
 // CHECK: 61:22: UnexposedExpr=Data:43:15 Extent=[61:22 - 61:26]
 // CHECK: 61:22: MemberRefExpr=Data:43:15 Extent=[61:22 - 61:26]
 // CHECK: 61:29: DeclRefExpr=Start:60:27 Extent=[61:29 - 61:34]
@@ -1761,7 +1761,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK: 61:36: UnexposedExpr=min:45:17 Extent=[61:36 - 61:39]
 // CHECK: 61:36: DeclRefExpr=min:45:17 Extent=[61:36 - 61:39]
 // CHECK: 61:40: DeclRefExpr=N:60:41 Extent=[61:40 - 61:41]
-// CHECK: 61:43: UnexposedExpr= Extent=[61:43 - 61:57]
+// CHECK: 61:43: BinaryOperator= Extent=[61:43 - 61:57]
 // CHECK: 61:43: UnexposedExpr=Length:44:10 Extent=[61:43 - 61:49]
 // CHECK: 61:43: MemberRefExpr=Length:44:10 Extent=[61:43 - 61:49]
 // CHECK: 61:52: DeclRefExpr=Start:60:27 Extent=[61:52 - 61:57]
@@ -1770,59 +1770,59 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK: 67:1: CXXAccessSpecifier=:67:1 (Definition) Extent=[67:1 - 67:8]
 // CHECK: 67:8: CXXConstructor=IdentifierInfo:67:8 Extent=[67:8 - 67:24]
 // CHECK: 68:15: CXXMethod=getNameStart:68:15 (Definition) Extent=[68:3 - 71:4]
-// CHECK: 68:36: UnexposedStmt= Extent=[68:36 - 71:4]
-// CHECK: 69:5: UnexposedStmt= Extent=[69:5 - 69:65]
+// CHECK: 68:36: CompoundStmt= Extent=[68:36 - 71:4]
+// CHECK: 69:5: DeclStmt= Extent=[69:5 - 69:65]
 // CHECK: 69:54: TypedefDecl=actualtype:69:54 (Definition) Extent=[69:5 - 69:64]
 // CHECK: 69:18: TemplateRef=pair:4:44 Extent=[69:18 - 69:22]
 // CHECK: 69:25: TypeRef=class clang::IdentifierInfo:66:7 Extent=[69:25 - 69:39]
-// CHECK: 70:5: UnexposedStmt= Extent=[70:5 - 70:47]
+// CHECK: 70:5: ReturnStmt= Extent=[70:5 - 70:47]
 // CHECK: 70:41: MemberRefExpr=second:4:55 SingleRefName=[70:41 - 70:47] RefName=[70:41 - 70:47] Extent=[70:12 - 70:47]
-// CHECK: 70:12: UnexposedExpr= Extent=[70:12 - 70:39]
-// CHECK: 70:13: UnexposedExpr= Extent=[70:13 - 70:38]
+// CHECK: 70:12: ParenExpr= Extent=[70:12 - 70:39]
+// CHECK: 70:13: CStyleCastExpr= Extent=[70:13 - 70:38]
 // CHECK: 70:20: TypeRef=actualtype:69:54 Extent=[70:20 - 70:30]
-// CHECK: 70:34: UnexposedExpr= Extent=[70:34 - 70:38]
+// CHECK: 70:34: CXXThisExpr= Extent=[70:34 - 70:38]
 // CHECK: 72:12: CXXMethod=getLength:72:12 (Definition) Extent=[72:3 - 76:4]
-// CHECK: 72:30: UnexposedStmt= Extent=[72:30 - 76:4]
-// CHECK: 73:5: UnexposedStmt= Extent=[73:5 - 73:65]
+// CHECK: 72:30: CompoundStmt= Extent=[72:30 - 76:4]
+// CHECK: 73:5: DeclStmt= Extent=[73:5 - 73:65]
 // CHECK: 73:54: TypedefDecl=actualtype:73:54 (Definition) Extent=[73:5 - 73:64]
 // CHECK: 73:18: TemplateRef=pair:4:44 Extent=[73:18 - 73:22]
 // CHECK: 73:25: TypeRef=class clang::IdentifierInfo:66:7 Extent=[73:25 - 73:39]
-// CHECK: 74:5: UnexposedStmt= Extent=[74:5 - 74:61]
+// CHECK: 74:5: DeclStmt= Extent=[74:5 - 74:61]
 // CHECK: 74:17: VarDecl=p:74:17 (Definition) Extent=[74:5 - 74:60]
-// CHECK: 74:21: UnexposedExpr= Extent=[74:21 - 74:60]
+// CHECK: 74:21: BinaryOperator= Extent=[74:21 - 74:60]
 // CHECK: 74:50: UnexposedExpr=second:4:55 Extent=[74:21 - 74:56]
 // CHECK: 74:50: MemberRefExpr=second:4:55 SingleRefName=[74:50 - 74:56] RefName=[74:50 - 74:56] Extent=[74:21 - 74:56]
-// CHECK: 74:21: UnexposedExpr= Extent=[74:21 - 74:48]
-// CHECK: 74:22: UnexposedExpr= Extent=[74:22 - 74:47]
+// CHECK: 74:21: ParenExpr= Extent=[74:21 - 74:48]
+// CHECK: 74:22: CStyleCastExpr= Extent=[74:22 - 74:47]
 // CHECK: 74:29: TypeRef=actualtype:73:54 Extent=[74:29 - 74:39]
-// CHECK: 74:43: UnexposedExpr= Extent=[74:43 - 74:47]
-// CHECK: 74:59: UnexposedExpr= Extent=[74:59 - 74:60]
-// CHECK: 75:5: UnexposedStmt= Extent=[75:5 - 75:62]
-// CHECK: 75:12: UnexposedExpr= Extent=[75:12 - 75:62]
-// CHECK: 75:12: UnexposedExpr= Extent=[75:12 - 75:58]
-// CHECK: 75:13: UnexposedExpr= Extent=[75:13 - 75:57]
-// CHECK: 75:13: UnexposedExpr= Extent=[75:13 - 75:30]
-// CHECK: 75:14: UnexposedExpr= Extent=[75:14 - 75:29]
+// CHECK: 74:43: CXXThisExpr= Extent=[74:43 - 74:47]
+// CHECK: 74:59: IntegerLiteral= Extent=[74:59 - 74:60]
+// CHECK: 75:5: ReturnStmt= Extent=[75:5 - 75:62]
+// CHECK: 75:12: BinaryOperator= Extent=[75:12 - 75:62]
+// CHECK: 75:12: ParenExpr= Extent=[75:12 - 75:58]
+// CHECK: 75:13: BinaryOperator= Extent=[75:13 - 75:57]
+// CHECK: 75:13: ParenExpr= Extent=[75:13 - 75:30]
+// CHECK: 75:14: CStyleCastExpr= Extent=[75:14 - 75:29]
 // CHECK: 75:25: UnexposedExpr= Extent=[75:25 - 75:29]
 // CHECK: 75:25: UnexposedExpr= Extent=[75:25 - 75:29]
-// CHECK: 75:25: UnexposedExpr= Extent=[75:25 - 75:29]
+// CHECK: 75:25: ArraySubscriptExpr= Extent=[75:25 - 75:29]
 // CHECK: 75:25: DeclRefExpr=p:74:17 Extent=[75:25 - 75:26]
-// CHECK: 75:27: UnexposedExpr= Extent=[75:27 - 75:28]
-// CHECK: 75:33: UnexposedExpr= Extent=[75:33 - 75:57]
-// CHECK: 75:34: UnexposedExpr= Extent=[75:34 - 75:56]
-// CHECK: 75:34: UnexposedExpr= Extent=[75:34 - 75:51]
-// CHECK: 75:35: UnexposedExpr= Extent=[75:35 - 75:50]
+// CHECK: 75:27: IntegerLiteral= Extent=[75:27 - 75:28]
+// CHECK: 75:33: ParenExpr= Extent=[75:33 - 75:57]
+// CHECK: 75:34: BinaryOperator= Extent=[75:34 - 75:56]
+// CHECK: 75:34: ParenExpr= Extent=[75:34 - 75:51]
+// CHECK: 75:35: CStyleCastExpr= Extent=[75:35 - 75:50]
 // CHECK: 75:46: UnexposedExpr= Extent=[75:46 - 75:50]
 // CHECK: 75:46: UnexposedExpr= Extent=[75:46 - 75:50]
-// CHECK: 75:46: UnexposedExpr= Extent=[75:46 - 75:50]
+// CHECK: 75:46: ArraySubscriptExpr= Extent=[75:46 - 75:50]
 // CHECK: 75:46: DeclRefExpr=p:74:17 Extent=[75:46 - 75:47]
-// CHECK: 75:48: UnexposedExpr= Extent=[75:48 - 75:49]
-// CHECK: 75:55: UnexposedExpr= Extent=[75:55 - 75:56]
+// CHECK: 75:48: IntegerLiteral= Extent=[75:48 - 75:49]
+// CHECK: 75:55: IntegerLiteral= Extent=[75:55 - 75:56]
 // CHECK: 75:61: UnexposedExpr= Extent=[75:61 - 75:62]
-// CHECK: 75:61: UnexposedExpr= Extent=[75:61 - 75:62]
+// CHECK: 75:61: IntegerLiteral= Extent=[75:61 - 75:62]
 // CHECK: 77:19: CXXMethod=getName:77:19 (Definition) Extent=[77:3 - 79:4]
-// CHECK: 77:35: UnexposedStmt= Extent=[77:35 - 79:4]
-// CHECK: 78:5: UnexposedStmt= Extent=[78:5 - 78:56]
+// CHECK: 77:35: CompoundStmt= Extent=[77:35 - 79:4]
+// CHECK: 78:5: ReturnStmt= Extent=[78:5 - 78:56]
 // CHECK: 78:12: CallExpr= Extent=[78:12 - 78:56]
 // CHECK: 78:12: UnexposedExpr=StringRef:49:3 Extent=[78:12 - 78:56]
 // CHECK: 78:12: CallExpr=StringRef:49:3 Extent=[78:12 - 78:56]
@@ -1847,21 +1847,21 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK: 87:46: DeclRefExpr=Str:87:35 Extent=[87:46 - 87:49]
 // CHECK: 87:52: MemberRef=Result:85:12 Extent=[87:52 - 87:58]
 // CHECK: 87:58: UnexposedExpr= Extent=[87:58 - 87:61]
-// CHECK: 87:59: UnexposedExpr= Extent=[87:59 - 87:60]
-// CHECK: 87:62: UnexposedStmt= Extent=[87:62 - 87:64]
+// CHECK: 87:59: IntegerLiteral= Extent=[87:59 - 87:60]
+// CHECK: 87:62: CompoundStmt= Extent=[87:62 - 87:64]
 // CHECK: 88:42: FunctionTemplate=Case:88:42 (Definition) Extent=[88:3 - 91:4]
 // CHECK: 88:23: NonTypeTemplateParameter=N:88:23 (Definition) Extent=[88:14 - 88:24]
 // CHECK: 88:60: ParmDecl=S:88:60 (Definition) Extent=[88:47 - 88:65]
 // CHECK: 88:63: DeclRefExpr=N:88:23 Extent=[88:63 - 88:64]
 // CHECK: 89:57: ParmDecl=Value:89:57 (Definition) Extent=[89:47 - 89:62]
-// CHECK: 89:64: UnexposedStmt= Extent=[89:64 - 91:4]
-// CHECK: 90:5: UnexposedStmt= Extent=[90:5 - 90:17]
-// CHECK: 90:12: UnexposedExpr= Extent=[90:12 - 90:17]
-// CHECK: 90:13: UnexposedExpr= Extent=[90:13 - 90:17]
+// CHECK: 89:64: CompoundStmt= Extent=[89:64 - 91:4]
+// CHECK: 90:5: ReturnStmt= Extent=[90:5 - 90:17]
+// CHECK: 90:12: UnaryOperator= Extent=[90:12 - 90:17]
+// CHECK: 90:13: CXXThisExpr= Extent=[90:13 - 90:17]
 // CHECK: 92:5: CXXMethod=Default:92:5 (Definition) Extent=[92:3 - 94:4]
 // CHECK: 92:23: ParmDecl=Value:92:23 (Definition) Extent=[92:13 - 92:28]
-// CHECK: 92:36: UnexposedStmt= Extent=[92:36 - 94:4]
-// CHECK: 93:5: UnexposedStmt= Extent=[93:5 - 93:17]
+// CHECK: 92:36: CompoundStmt= Extent=[92:36 - 94:4]
+// CHECK: 93:5: ReturnStmt= Extent=[93:5 - 93:17]
 // CHECK: 93:12: DeclRefExpr=Value:92:23 Extent=[93:12 - 93:17]
 // CHECK: 98:17: UsingDirective=:98:17 Extent=[98:1 - 98:22]
 // CHECK: 98:17: NamespaceRef=clang:10:17 Extent=[98:17 - 98:22]
@@ -1869,16 +1869,16 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK: 100:21: TypeRef=class clang::AttributeList:12:9 Extent=[100:21 - 100:34]
 // CHECK: 100:67: ParmDecl=Name:100:67 (Definition) Extent=[100:44 - 100:71]
 // CHECK: 100:50: TypeRef=class clang::IdentifierInfo:66:7 Extent=[100:50 - 100:64]
-// CHECK: 100:73: UnexposedStmt= Extent=[100:73 - 186:2]
-// CHECK: 101:3: UnexposedStmt= Extent=[101:3 - 101:46]
+// CHECK: 100:73: CompoundStmt= Extent=[100:73 - 186:2]
+// CHECK: 101:3: DeclStmt= Extent=[101:3 - 101:46]
 // CHECK: 101:19: VarDecl=AttrName:101:19 (Definition) Extent=[101:3 - 101:45]
 // CHECK: 101:30: CallExpr= Extent=[101:30 - 101:45]
 // CHECK: 101:30: UnexposedExpr=getName:77:19 Extent=[101:30 - 101:45]
 // CHECK: 101:30: CallExpr=getName:77:19 Extent=[101:30 - 101:45]
 // CHECK: 101:36: MemberRefExpr=getName:77:19 SingleRefName=[101:36 - 101:43] RefName=[101:36 - 101:43] Extent=[101:30 - 101:43]
 // CHECK: 101:30: DeclRefExpr=Name:100:67 Extent=[101:30 - 101:34]
-// CHECK: 102:3: UnexposedStmt= Extent=[102:3 - 103:55]
-// CHECK: 102:7: UnexposedExpr= Extent=[102:7 - 102:59]
+// CHECK: 102:3: IfStmt= Extent=[102:3 - 103:55]
+// CHECK: 102:7: BinaryOperator= Extent=[102:7 - 102:59]
 // CHECK: 102:7: CallExpr=startswith:52:8 Extent=[102:7 - 102:32]
 // CHECK: 102:16: MemberRefExpr=startswith:52:8 SingleRefName=[102:16 - 102:26] RefName=[102:16 - 102:26] Extent=[102:7 - 102:26]
 // CHECK: 102:7: UnexposedExpr=AttrName:101:19 Extent=[102:7 - 102:15]
@@ -1888,7 +1888,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK: 102:27: UnexposedExpr=StringRef:48:3 Extent=[102:27 - 102:31]
 // CHECK: 102:27: CallExpr=StringRef:48:3 Extent=[102:27 - 102:31]
 // CHECK: 102:27: UnexposedExpr= Extent=[102:27 - 102:31]
-// CHECK: 102:27: UnexposedExpr= Extent=[102:27 - 102:31]
+// CHECK: 102:27: StringLiteral= Extent=[102:27 - 102:31]
 // CHECK: 102:36: CallExpr=endswith:56:8 Extent=[102:36 - 102:59]
 // CHECK: 102:45: MemberRefExpr=endswith:56:8 SingleRefName=[102:45 - 102:53] RefName=[102:45 - 102:53] Extent=[102:36 - 102:53]
 // CHECK: 102:36: UnexposedExpr=AttrName:101:19 Extent=[102:36 - 102:44]
@@ -1898,7 +1898,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK: 102:54: UnexposedExpr=StringRef:48:3 Extent=[102:54 - 102:58]
 // CHECK: 102:54: CallExpr=StringRef:48:3 Extent=[102:54 - 102:58]
 // CHECK: 102:54: UnexposedExpr= Extent=[102:54 - 102:58]
-// CHECK: 102:54: UnexposedExpr= Extent=[102:54 - 102:58]
+// CHECK: 102:54: StringLiteral= Extent=[102:54 - 102:58]
 // CHECK: 103:5: CallExpr=operator=:38:7 Extent=[103:5 - 103:55]
 // CHECK: 103:5: DeclRefExpr=AttrName:101:19 Extent=[103:5 - 103:13]
 // CHECK: 103:14: UnexposedExpr=operator=:38:7
@@ -1909,15 +1909,15 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK: 103:16: UnexposedExpr=AttrName:101:19 Extent=[103:16 - 103:24]
 // CHECK: 103:16: DeclRefExpr=AttrName:101:19 Extent=[103:16 - 103:24]
 // CHECK: 103:32: UnexposedExpr= Extent=[103:32 - 103:33]
-// CHECK: 103:32: UnexposedExpr= Extent=[103:32 - 103:33]
-// CHECK: 103:35: UnexposedExpr= Extent=[103:35 - 103:54]
+// CHECK: 103:32: IntegerLiteral= Extent=[103:32 - 103:33]
+// CHECK: 103:35: BinaryOperator= Extent=[103:35 - 103:54]
 // CHECK: 103:35: CallExpr=size:51:10 Extent=[103:35 - 103:50]
 // CHECK: 103:44: MemberRefExpr=size:51:10 SingleRefName=[103:44 - 103:48] RefName=[103:44 - 103:48] Extent=[103:35 - 103:48]
 // CHECK: 103:35: UnexposedExpr=AttrName:101:19 Extent=[103:35 - 103:43]
 // CHECK: 103:35: DeclRefExpr=AttrName:101:19 Extent=[103:35 - 103:43]
 // CHECK: 103:53: UnexposedExpr= Extent=[103:53 - 103:54]
-// CHECK: 103:53: UnexposedExpr= Extent=[103:53 - 103:54]
-// CHECK: 105:3: UnexposedStmt= Extent=[105:3 - 185:31]
+// CHECK: 103:53: IntegerLiteral= Extent=[103:53 - 103:54]
+// CHECK: 105:3: ReturnStmt= Extent=[105:3 - 185:31]
 // CHECK: 105:10: CallExpr=Default:92:5 Extent=[105:10 - 185:31]
 // CHECK: 185:6: MemberRefExpr=Default:92:5 SingleRefName=[185:6 - 185:13] RefName=[185:6 - 185:13] Extent=[105:10 - 185:13]
 // CHECK: 105:10: UnexposedExpr=Case:88:42 Extent=[105:10 - 184:33]
@@ -2079,169 +2079,165 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK: 107:6: MemberRefExpr=Case:88:42 SingleRefName=[107:6 - 107:10] RefName=[107:6 - 107:10] Extent=[105:10 - 107:10]
 // CHECK: 105:10: CallExpr=Case:88:42 Extent=[105:10 - 106:27]
 // CHECK: 106:6: MemberRefExpr=Case:88:42 SingleRefName=[106:6 - 106:10] RefName=[106:6 - 106:10] Extent=[105:10 - 106:10]
-// CHECK: 105:10: UnexposedExpr= Extent=[105:10 - 105:63]
+// CHECK: 105:10: CXXFunctionalCastExpr= Extent=[105:10 - 105:63]
 // CHECK: 105:16: TemplateRef=StringSwitch:83:47 Extent=[105:16 - 105:28]
 // CHECK: 105:10: CallExpr=StringSwitch:87:12 Extent=[105:10 - 105:62]
 // CHECK: 105:54: CallExpr=StringRef:38:7 Extent=[105:54 - 105:62]
 // CHECK: 105:54: UnexposedExpr=AttrName:101:19 Extent=[105:54 - 105:62]
 // CHECK: 105:54: DeclRefExpr=AttrName:101:19 Extent=[105:54 - 105:62]
-// CHECK: 106:11: UnexposedExpr= Extent=[106:11 - 106:17]
+// CHECK: 106:11: StringLiteral= Extent=[106:11 - 106:17]
 // CHECK: 106:19: DeclRefExpr=AT_weak:29:45 Extent=[106:19 - 106:26]
-// CHECK: 107:11: UnexposedExpr= Extent=[107:11 - 107:20]
+// CHECK: 107:11: StringLiteral= Extent=[107:11 - 107:20]
 // CHECK: 107:22: DeclRefExpr=AT_weakref:29:54 Extent=[107:22 - 107:32]
-// CHECK: 108:11: UnexposedExpr= Extent=[108:11 - 108:17]
+// CHECK: 108:11: StringLiteral= Extent=[108:11 - 108:17]
 // CHECK: 108:19: DeclRefExpr=AT_pure:26:49 Extent=[108:19 - 108:26]
-// CHECK: 109:11: UnexposedExpr= Extent=[109:11 - 109:17]
+// CHECK: 109:11: StringLiteral= Extent=[109:11 - 109:17]
 // CHECK: 109:19: DeclRefExpr=AT_mode:20:44 Extent=[109:19 - 109:26]
-// CHECK: 110:11: UnexposedExpr= Extent=[110:11 - 110:17]
+// CHECK: 110:11: StringLiteral= Extent=[110:11 - 110:17]
 // CHECK: 110:19: DeclRefExpr=AT_used:28:34 Extent=[110:19 - 110:26]
-// CHECK: 111:11: UnexposedExpr= Extent=[111:11 - 111:18]
+// CHECK: 111:11: StringLiteral= Extent=[111:11 - 111:18]
 // CHECK: 111:20: DeclRefExpr=AT_alias:15:25 Extent=[111:20 - 111:28]
-// CHECK: 112:11: UnexposedExpr= Extent=[112:11 - 112:18]
+// CHECK: 112:11: StringLiteral= Extent=[112:11 - 112:18]
 // CHECK: 112:20: DeclRefExpr=AT_aligned:15:35 Extent=[112:20 - 112:30]
-// CHECK: 113:11: UnexposedExpr= Extent=[113:11 - 113:18]
+// CHECK: 113:11: StringLiteral= Extent=[113:11 - 113:18]
 // CHECK: 113:20: DeclRefExpr=AT_final:19:40 Extent=[113:20 - 113:28]
-// CHECK: 114:11: UnexposedExpr= Extent=[114:11 - 114:18]
+// CHECK: 114:11: StringLiteral= Extent=[114:11 - 114:18]
 // CHECK: 114:20: DeclRefExpr=AT_cdecl:17:30 Extent=[114:20 - 114:28]
-// CHECK: 115:11: UnexposedExpr= Extent=[115:11 - 115:18]
+// CHECK: 115:11: StringLiteral= Extent=[115:11 - 115:18]
 // CHECK: 115:20: DeclRefExpr=AT_const:17:52 Extent=[115:20 - 115:28]
-// CHECK: 116:11: UnexposedExpr= Extent=[116:11 - 116:20]
+// CHECK: 116:11: StringLiteral= Extent=[116:11 - 116:20]
 // CHECK: 116:22: DeclRefExpr=AT_const:17:52 Extent=[116:22 - 116:30]
-// CHECK: 117:11: UnexposedExpr= Extent=[117:11 - 117:19]
+// CHECK: 117:11: StringLiteral= Extent=[117:11 - 117:19]
 // CHECK: 117:21: DeclRefExpr=AT_blocks:16:57 Extent=[117:21 - 117:30]
-// CHECK: 118:11: UnexposedExpr= Extent=[118:11 - 118:19]
+// CHECK: 118:11: StringLiteral= Extent=[118:11 - 118:19]
 // CHECK: 118:21: DeclRefExpr=AT_format:19:50 Extent=[118:21 - 118:30]
-// CHECK: 119:11: UnexposedExpr= Extent=[119:11 - 119:19]
+// CHECK: 119:11: StringLiteral= Extent=[119:11 - 119:19]
 // CHECK: 119:21: DeclRefExpr=AT_hiding:20:22 Extent=[119:21 - 119:30]
-// CHECK: 120:11: UnexposedExpr= Extent=[120:11 - 120:19]
+// CHECK: 120:11: StringLiteral= Extent=[120:11 - 120:19]
 // CHECK: 120:21: DeclRefExpr=AT_malloc:20:33 Extent=[120:21 - 120:30]
-// CHECK: 121:11: UnexposedExpr= Extent=[121:11 - 121:19]
+// CHECK: 121:11: StringLiteral= Extent=[121:11 - 121:19]
 // CHECK: 121:21: DeclRefExpr=AT_packed:26:27 Extent=[121:21 - 121:30]
-// CHECK: 122:11: UnexposedExpr= Extent=[122:11 - 122:19]
+// CHECK: 122:11: StringLiteral= Extent=[122:11 - 122:19]
 // CHECK: 122:21: DeclRefExpr=AT_unused:28:23 Extent=[122:21 - 122:30]
-// CHECK: 123:11: UnexposedExpr= Extent=[123:11 - 123:20]
+// CHECK: 123:11: StringLiteral= Extent=[123:11 - 123:20]
 // CHECK: 123:22: DeclRefExpr=AT_aligned:15:35 Extent=[123:22 - 123:32]
-// CHECK: 124:11: UnexposedExpr= Extent=[124:11 - 124:20]
+// CHECK: 124:11: StringLiteral= Extent=[124:11 - 124:20]
 // CHECK: 124:22: DeclRefExpr=AT_cleanup:17:40 Extent=[124:22 - 124:32]
-// CHECK: 125:11: UnexposedExpr= Extent=[125:11 - 125:18]
+// CHECK: 125:11: StringLiteral= Extent=[125:11 - 125:18]
 // CHECK: 125:20: DeclRefExpr=AT_naked:20:53 Extent=[125:20 - 125:28]
-// CHECK: 126:11: UnexposedExpr= Extent=[126:11 - 126:20]
+// CHECK: 126:11: StringLiteral= Extent=[126:11 - 126:20]
 // CHECK: 126:22: DeclRefExpr=AT_nodebug:20:63 Extent=[126:22 - 126:32]
-// CHECK: 127:11: UnexposedExpr= Extent=[127:11 - 127:20]
+// CHECK: 127:11: StringLiteral= Extent=[127:11 - 127:20]
 // CHECK: 127:22: DeclRefExpr=AT_nonnull:21:47 Extent=[127:22 - 127:32]
-// CHECK: 128:11: UnexposedExpr= Extent=[128:11 - 128:20]
+// CHECK: 128:11: StringLiteral= Extent=[128:11 - 128:20]
 // CHECK: 128:22: DeclRefExpr=AT_nothrow:22:7 Extent=[128:22 - 128:32]
-// CHECK: 129:11: UnexposedExpr= Extent=[129:11 - 129:20]
+// CHECK: 129:11: StringLiteral= Extent=[129:11 - 129:20]
 // CHECK: 129:22: DeclRefExpr=AT_objc_gc:24:59 Extent=[129:22 - 129:32]
-// CHECK: 130:11: UnexposedExpr= Extent=[130:11 - 130:20]
+// CHECK: 130:11: StringLiteral= Extent=[130:11 - 130:20]
 // CHECK: 130:22: DeclRefExpr=AT_regparm:26:58 Extent=[130:22 - 130:32]
-// CHECK: 131:11: UnexposedExpr= Extent=[131:11 - 131:20]
+// CHECK: 131:11: StringLiteral= Extent=[131:11 - 131:20]
 // CHECK: 131:22: DeclRefExpr=AT_section:27:7 Extent=[131:22 - 131:32]
-// CHECK: 132:11: UnexposedExpr= Extent=[132:11 - 132:20]
+// CHECK: 132:11: StringLiteral= Extent=[132:11 - 132:20]
 // CHECK: 132:22: DeclRefExpr=AT_stdcall:27:32 Extent=[132:22 - 132:32]
-// CHECK: 133:11: UnexposedExpr= Extent=[133:11 - 133:21]
+// CHECK: 133:11: StringLiteral= Extent=[133:11 - 133:21]
 // CHECK: 133:23: DeclRefExpr=AT_annotate:16:29 Extent=[133:23 - 133:34]
-// CHECK: 134:11: UnexposedExpr= Extent=[134:11 - 134:21]
+// CHECK: 134:11: StringLiteral= Extent=[134:11 - 134:21]
 // CHECK: 134:23: DeclRefExpr=AT_fastcall:19:27 Extent=[134:23 - 134:34]
-// CHECK: 135:11: UnexposedExpr= Extent=[135:11 - 135:21]
+// CHECK: 135:11: StringLiteral= Extent=[135:11 - 135:21]
 // CHECK: 135:23: DeclRefExpr=AT_IBAction:14:7 Extent=[135:23 - 135:34]
-// CHECK: 136:11: UnexposedExpr= Extent=[136:11 - 136:21]
+// CHECK: 136:11: StringLiteral= Extent=[136:11 - 136:21]
 // CHECK: 136:23: DeclRefExpr=AT_IBOutlet:14:20 Extent=[136:23 - 136:34]
-// CHECK: 137:11: UnexposedExpr= Extent=[137:11 - 137:31]
+// CHECK: 137:11: StringLiteral= Extent=[137:11 - 137:31]
 // CHECK: 137:33: DeclRefExpr=AT_IBOutletCollection:14:33 Extent=[137:33 - 137:54]
-// CHECK: 138:11: UnexposedExpr= Extent=[138:11 - 138:21]
+// CHECK: 138:11: StringLiteral= Extent=[138:11 - 138:21]
 // CHECK: 138:23: DeclRefExpr=AT_noreturn:21:59 Extent=[138:23 - 138:34]
-// CHECK: 139:11: UnexposedExpr= Extent=[139:11 - 139:21]
+// CHECK: 139:11: StringLiteral= Extent=[139:11 - 139:21]
 // CHECK: 139:23: DeclRefExpr=AT_noinline:21:7 Extent=[139:23 - 139:34]
-// CHECK: 140:11: UnexposedExpr= Extent=[140:11 - 140:21]
+// CHECK: 140:11: StringLiteral= Extent=[140:11 - 140:21]
 // CHECK: 140:23: DeclRefExpr=AT_override:22:51 Extent=[140:23 - 140:34]
-// CHECK: 141:11: UnexposedExpr= Extent=[141:11 - 141:21]
+// CHECK: 141:11: StringLiteral= Extent=[141:11 - 141:21]
 // CHECK: 141:23: DeclRefExpr=AT_sentinel:27:19 Extent=[141:23 - 141:34]
-// CHECK: 142:11: UnexposedExpr= Extent=[142:11 - 142:21]
+// CHECK: 142:11: StringLiteral= Extent=[142:11 - 142:21]
 // CHECK: 142:23: DeclRefExpr=AT_nsobject:22:19 Extent=[142:23 - 142:34]
-// CHECK: 143:11: UnexposedExpr= Extent=[143:11 - 143:22]
+// CHECK: 143:11: StringLiteral= Extent=[143:11 - 143:22]
 // CHECK: 143:24: DeclRefExpr=AT_dllimport:18:51 Extent=[143:24 - 143:36]
-// CHECK: 144:11: UnexposedExpr= Extent=[144:11 - 144:22]
+// CHECK: 144:11: StringLiteral= Extent=[144:11 - 144:22]
 // CHECK: 144:24: DeclRefExpr=AT_dllexport:18:37 Extent=[144:24 - 144:36]
-// CHECK: 145:11: UnexposedExpr= Extent=[145:11 - 145:22]
-// CHECK: 145:24: UnexposedStmt= Extent=[145:24 - 145:40]
-// CHECK: 146:11: UnexposedExpr= Extent=[146:11 - 146:23]
+// CHECK: 145:11: StringLiteral= Extent=[145:11 - 145:22]
+// CHECK: 146:11: StringLiteral= Extent=[146:11 - 146:23]
 // CHECK: 146:25: DeclRefExpr=AT_base_check:16:42 Extent=[146:25 - 146:38]
-// CHECK: 147:11: UnexposedExpr= Extent=[147:11 - 147:23]
+// CHECK: 147:11: StringLiteral= Extent=[147:11 - 147:23]
 // CHECK: 147:25: DeclRefExpr=AT_deprecated:18:7 Extent=[147:25 - 147:38]
-// CHECK: 148:11: UnexposedExpr= Extent=[148:11 - 148:23]
+// CHECK: 148:11: StringLiteral= Extent=[148:11 - 148:23]
 // CHECK: 148:25: DeclRefExpr=AT_visibility:29:7 Extent=[148:25 - 148:38]
-// CHECK: 149:11: UnexposedExpr= Extent=[149:11 - 149:23]
+// CHECK: 149:11: StringLiteral= Extent=[149:11 - 149:23]
 // CHECK: 149:25: DeclRefExpr=AT_destructor:18:22 Extent=[149:25 - 149:38]
-// CHECK: 150:11: UnexposedExpr= Extent=[150:11 - 150:23]
+// CHECK: 150:11: StringLiteral= Extent=[150:11 - 150:23]
 // CHECK: 150:25: DeclRefExpr=AT_format_arg:19:61 Extent=[150:25 - 150:38]
-// CHECK: 151:11: UnexposedExpr= Extent=[151:11 - 151:23]
+// CHECK: 151:11: StringLiteral= Extent=[151:11 - 151:23]
 // CHECK: 151:25: DeclRefExpr=AT_gnu_inline:20:7 Extent=[151:25 - 151:38]
-// CHECK: 152:11: UnexposedExpr= Extent=[152:11 - 152:24]
+// CHECK: 152:11: StringLiteral= Extent=[152:11 - 152:24]
 // CHECK: 152:26: DeclRefExpr=AT_weak_import:30:7 Extent=[152:26 - 152:40]
-// CHECK: 153:11: UnexposedExpr= Extent=[153:11 - 153:22]
+// CHECK: 153:11: StringLiteral= Extent=[153:11 - 153:22]
 // CHECK: 153:24: DeclRefExpr=AT_vecreturn:28:43 Extent=[153:24 - 153:36]
-// CHECK: 154:11: UnexposedExpr= Extent=[154:11 - 154:24]
+// CHECK: 154:11: StringLiteral= Extent=[154:11 - 154:24]
 // CHECK: 154:26: DeclRefExpr=AT_vector_size:28:57 Extent=[154:26 - 154:40]
-// CHECK: 155:11: UnexposedExpr= Extent=[155:11 - 155:24]
+// CHECK: 155:11: StringLiteral= Extent=[155:11 - 155:24]
 // CHECK: 155:26: DeclRefExpr=AT_constructor:17:62 Extent=[155:26 - 155:40]
-// CHECK: 156:11: UnexposedExpr= Extent=[156:11 - 156:24]
+// CHECK: 156:11: StringLiteral= Extent=[156:11 - 156:24]
 // CHECK: 156:26: DeclRefExpr=AT_unavailable:28:7 Extent=[156:26 - 156:40]
-// CHECK: 157:11: UnexposedExpr= Extent=[157:11 - 157:25]
+// CHECK: 157:11: StringLiteral= Extent=[157:11 - 157:25]
 // CHECK: 157:27: DeclRefExpr=AT_overloadable:25:7 Extent=[157:27 - 157:42]
-// CHECK: 158:11: UnexposedExpr= Extent=[158:11 - 158:26]
+// CHECK: 158:11: StringLiteral= Extent=[158:11 - 158:26]
 // CHECK: 158:28: DeclRefExpr=AT_address_space:15:7 Extent=[158:28 - 158:44]
-// CHECK: 159:11: UnexposedExpr= Extent=[159:11 - 159:26]
+// CHECK: 159:11: StringLiteral= Extent=[159:11 - 159:26]
 // CHECK: 159:28: DeclRefExpr=AT_always_inline:15:47 Extent=[159:28 - 159:44]
-// CHECK: 160:11: UnexposedExpr= Extent=[160:11 - 160:26]
-// CHECK: 160:28: UnexposedStmt= Extent=[160:28 - 160:44]
-// CHECK: 161:11: UnexposedExpr= Extent=[161:11 - 161:26]
-// CHECK: 161:28: UnexposedStmt= Extent=[161:28 - 161:44]
-// CHECK: 162:11: UnexposedExpr= Extent=[162:11 - 162:27]
+// CHECK: 160:11: StringLiteral= Extent=[160:11 - 160:26]
+// CHECK: 161:11: StringLiteral= Extent=[161:11 - 161:26]
+// CHECK: 162:11: StringLiteral= Extent=[162:11 - 162:27]
 // CHECK: 162:29: DeclRefExpr=AT_objc_exception:22:32 Extent=[162:29 - 162:46]
-// CHECK: 163:11: UnexposedExpr= Extent=[163:11 - 163:28]
+// CHECK: 163:11: StringLiteral= Extent=[163:11 - 163:28]
 // CHECK: 163:30: DeclRefExpr=AT_ext_vector_type:19:7 Extent=[163:30 - 163:48]
-// CHECK: 164:11: UnexposedExpr= Extent=[164:11 - 164:30]
+// CHECK: 164:11: StringLiteral= Extent=[164:11 - 164:30]
 // CHECK: 164:32: DeclRefExpr=AT_transparent_union:27:57 Extent=[164:32 - 164:52]
-// CHECK: 165:11: UnexposedExpr= Extent=[165:11 - 165:30]
+// CHECK: 165:11: StringLiteral= Extent=[165:11 - 165:30]
 // CHECK: 165:32: DeclRefExpr=AT_analyzer_noreturn:16:7 Extent=[165:32 - 165:52]
-// CHECK: 166:11: UnexposedExpr= Extent=[166:11 - 166:31]
+// CHECK: 166:11: StringLiteral= Extent=[166:11 - 166:31]
 // CHECK: 166:33: DeclRefExpr=AT_warn_unused_result:29:22 Extent=[166:33 - 166:54]
-// CHECK: 167:11: UnexposedExpr= Extent=[167:11 - 167:31]
+// CHECK: 167:11: StringLiteral= Extent=[167:11 - 167:31]
 // CHECK: 167:33: DeclRefExpr=AT_carries_dependency:17:7 Extent=[167:33 - 167:54]
-// CHECK: 168:11: UnexposedExpr= Extent=[168:11 - 168:36]
+// CHECK: 168:11: StringLiteral= Extent=[168:11 - 168:36]
 // CHECK: 168:38: DeclRefExpr=AT_ns_returns_not_retained:24:7 Extent=[168:38 - 168:64]
-// CHECK: 169:11: UnexposedExpr= Extent=[169:11 - 169:32]
+// CHECK: 169:11: StringLiteral= Extent=[169:11 - 169:32]
 // CHECK: 169:34: DeclRefExpr=AT_ns_returns_retained:24:35 Extent=[169:34 - 169:56]
-// CHECK: 170:11: UnexposedExpr= Extent=[170:11 - 170:36]
+// CHECK: 170:11: StringLiteral= Extent=[170:11 - 170:36]
 // CHECK: 170:38: DeclRefExpr=AT_cf_returns_not_retained:23:7 Extent=[170:38 - 170:64]
-// CHECK: 171:11: UnexposedExpr= Extent=[171:11 - 171:32]
+// CHECK: 171:11: StringLiteral= Extent=[171:11 - 171:32]
 // CHECK: 171:34: DeclRefExpr=AT_cf_returns_retained:23:35 Extent=[171:34 - 171:56]
-// CHECK: 172:11: UnexposedExpr= Extent=[172:11 - 172:30]
+// CHECK: 172:11: StringLiteral= Extent=[172:11 - 172:30]
 // CHECK: 172:32: DeclRefExpr=AT_ownership_returns:25:44 Extent=[172:32 - 172:52]
-// CHECK: 173:11: UnexposedExpr= Extent=[173:11 - 173:28]
+// CHECK: 173:11: StringLiteral= Extent=[173:11 - 173:28]
 // CHECK: 173:30: DeclRefExpr=AT_ownership_holds:25:24 Extent=[173:30 - 173:48]
-// CHECK: 174:11: UnexposedExpr= Extent=[174:11 - 174:28]
+// CHECK: 174:11: StringLiteral= Extent=[174:11 - 174:28]
 // CHECK: 174:30: DeclRefExpr=AT_ownership_takes:26:7 Extent=[174:30 - 174:48]
-// CHECK: 175:11: UnexposedExpr= Extent=[175:11 - 175:33]
+// CHECK: 175:11: StringLiteral= Extent=[175:11 - 175:33]
 // CHECK: 175:35: DeclRefExpr=AT_reqd_wg_size:30:23 Extent=[175:35 - 175:50]
-// CHECK: 176:11: UnexposedExpr= Extent=[176:11 - 176:26]
+// CHECK: 176:11: StringLiteral= Extent=[176:11 - 176:26]
 // CHECK: 176:28: DeclRefExpr=AT_init_priority:30:40 Extent=[176:28 - 176:44]
-// CHECK: 177:11: UnexposedExpr= Extent=[177:11 - 177:35]
+// CHECK: 177:11: StringLiteral= Extent=[177:11 - 177:35]
 // CHECK: 177:37: DeclRefExpr=AT_no_instrument_function:21:20 Extent=[177:37 - 177:62]
-// CHECK: 178:11: UnexposedExpr= Extent=[178:11 - 178:21]
+// CHECK: 178:11: StringLiteral= Extent=[178:11 - 178:21]
 // CHECK: 178:23: DeclRefExpr=AT_thiscall:27:44 Extent=[178:23 - 178:34]
-// CHECK: 179:11: UnexposedExpr= Extent=[179:11 - 179:19]
+// CHECK: 179:11: StringLiteral= Extent=[179:11 - 179:19]
 // CHECK: 179:21: DeclRefExpr=AT_pascal:26:38 Extent=[179:21 - 179:30]
-// CHECK: 180:11: UnexposedExpr= Extent=[180:11 - 180:20]
+// CHECK: 180:11: StringLiteral= Extent=[180:11 - 180:20]
 // CHECK: 180:22: DeclRefExpr=AT_cdecl:17:30 Extent=[180:22 - 180:30]
-// CHECK: 181:11: UnexposedExpr= Extent=[181:11 - 181:22]
+// CHECK: 181:11: StringLiteral= Extent=[181:11 - 181:22]
 // CHECK: 181:24: DeclRefExpr=AT_stdcall:27:32 Extent=[181:24 - 181:34]
-// CHECK: 182:11: UnexposedExpr= Extent=[182:11 - 182:23]
+// CHECK: 182:11: StringLiteral= Extent=[182:11 - 182:23]
 // CHECK: 182:25: DeclRefExpr=AT_fastcall:19:27 Extent=[182:25 - 182:36]
-// CHECK: 183:11: UnexposedExpr= Extent=[183:11 - 183:23]
+// CHECK: 183:11: StringLiteral= Extent=[183:11 - 183:23]
 // CHECK: 183:25: DeclRefExpr=AT_thiscall:27:44 Extent=[183:25 - 183:36]
-// CHECK: 184:11: UnexposedExpr= Extent=[184:11 - 184:21]
+// CHECK: 184:11: StringLiteral= Extent=[184:11 - 184:21]
 // CHECK: 184:23: DeclRefExpr=AT_pascal:26:38 Extent=[184:23 - 184:32]
-// CHECK: 185:14: UnexposedStmt= Extent=[185:14 - 185:30]
 

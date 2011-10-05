@@ -200,7 +200,7 @@ struct X9 : X8 {
 // CHECK: Punctuation: "::" [35:30 - 35:32] VarDecl=max_size:35:32 (Definition)
 // CHECK: Identifier: "max_size" [35:32 - 35:40] VarDecl=max_size:35:32 (Definition)
 // CHECK: Punctuation: "=" [35:41 - 35:42] VarDecl=max_size:35:32 (Definition)
-// CHECK: Literal: "17" [35:43 - 35:45] UnexposedExpr=
+// CHECK: Literal: "17" [35:43 - 35:45] IntegerLiteral=
 // CHECK: Punctuation: ";" [35:45 - 35:46]
 
 // CHECK: Keyword: "using" [40:3 - 40:8] UsingDeclaration=iterator:40:46
@@ -250,56 +250,56 @@ struct X9 : X8 {
 
 // Pseudo-destructor
 // CHECK: Identifier: "t" [57:5 - 57:6] DeclRefExpr=t:56:13
-// CHECK: Punctuation: "->" [57:6 - 57:8] UnexposedExpr=
-// CHECK: Punctuation: "::" [57:8 - 57:10] UnexposedExpr=
+// CHECK: Punctuation: "->" [57:6 - 57:8] MemberRefExpr=
+// CHECK: Punctuation: "::" [57:8 - 57:10] MemberRefExpr=
 // CHECK: Identifier: "outer_alias" [57:10 - 57:21] NamespaceRef=outer_alias:10:11
-// CHECK: Punctuation: "::" [57:21 - 57:23] UnexposedExpr=
+// CHECK: Punctuation: "::" [57:21 - 57:23] MemberRefExpr=
 // CHECK: Identifier: "inner" [57:23 - 57:28] NamespaceRef=inner:45:13
-// CHECK: Punctuation: "::" [57:28 - 57:30] UnexposedExpr=
-// CHECK: Keyword: "template" [57:30 - 57:38] UnexposedExpr=
+// CHECK: Punctuation: "::" [57:28 - 57:30] MemberRefExpr=
+// CHECK: Keyword: "template" [57:30 - 57:38] MemberRefExpr=
 // CHECK: Identifier: "vector" [57:39 - 57:45] TemplateRef=vector:4:12
-// CHECK: Punctuation: "<" [57:45 - 57:46] UnexposedExpr=
+// CHECK: Punctuation: "<" [57:45 - 57:46] MemberRefExpr=
 // CHECK: Identifier: "T" [57:46 - 57:47] TypeRef=T:54:19
-// CHECK: Punctuation: ">" [57:47 - 57:48] UnexposedExpr=
-// CHECK: Punctuation: "::" [57:48 - 57:50] UnexposedExpr=
-// CHECK: Punctuation: "~" [57:50 - 57:51] UnexposedExpr=
+// CHECK: Punctuation: ">" [57:47 - 57:48] MemberRefExpr=
+// CHECK: Punctuation: "::" [57:48 - 57:50] MemberRefExpr=
+// CHECK: Punctuation: "~" [57:50 - 57:51] MemberRefExpr=
 // CHECK: Identifier: "vector" [57:51 - 57:57] TemplateRef=vector:4:12
-// CHECK: Punctuation: "<" [57:57 - 57:58] UnexposedExpr=
+// CHECK: Punctuation: "<" [57:57 - 57:58] MemberRefExpr=
 // CHECK: Identifier: "T" [57:58 - 57:59] TypeRef=T:54:19
 // CHECK: Punctuation: ">" [57:59 - 57:60] CallExpr=
 // CHECK: Punctuation: "(" [57:60 - 57:61] CallExpr=
 // CHECK: Punctuation: ")" [57:61 - 57:62] CallExpr=
 
 // Unresolved member and non-member references
-// CHECK: Punctuation: "::" [75:5 - 75:7] UnexposedExpr=[63:10, 64:10]
+// CHECK: Punctuation: "::" [75:5 - 75:7] DeclRefExpr=[63:10, 64:10]
 // CHECK: Identifier: "outer_alias" [75:7 - 75:18] NamespaceRef=outer_alias:10:11
-// CHECK: Punctuation: "::" [75:18 - 75:20] UnexposedExpr=[63:10, 64:10]
+// CHECK: Punctuation: "::" [75:18 - 75:20] DeclRefExpr=[63:10, 64:10]
 // CHECK: Identifier: "inner" [75:20 - 75:25] NamespaceRef=inner:62:13
-// CHECK: Punctuation: "::" [75:25 - 75:27] UnexposedExpr=[63:10, 64:10]
+// CHECK: Punctuation: "::" [75:25 - 75:27] DeclRefExpr=[63:10, 64:10]
 // CHECK: Identifier: "f" [75:27 - 75:28] OverloadedDeclRef=f[63:10, 64:10]
 // CHECK: Punctuation: "(" [75:28 - 75:29] CallExpr=
 // CHECK: Identifier: "t" [75:29 - 75:30] DeclRefExpr=t:74:12
 // CHECK: Punctuation: ")" [75:30 - 75:31] CallExpr=
-// CHECK: Punctuation: "::" [76:5 - 76:7] UnexposedExpr=[71:8, 72:8]
+// CHECK: Punctuation: "::" [76:5 - 76:7] MemberRefExpr=[71:8, 72:8]
 // CHECK: Identifier: "X4" [76:7 - 76:9] TemplateRef=X4:69:8
-// CHECK: Punctuation: "<" [76:9 - 76:10] UnexposedExpr=[71:8, 72:8]
+// CHECK: Punctuation: "<" [76:9 - 76:10] MemberRefExpr=[71:8, 72:8]
 // CHECK: Identifier: "type" [76:10 - 76:14] TypeRef=type:70:13
-// CHECK: Punctuation: ">" [76:14 - 76:15] UnexposedExpr=[71:8, 72:8]
-// CHECK: Punctuation: "::" [76:15 - 76:17] UnexposedExpr=[71:8, 72:8]
+// CHECK: Punctuation: ">" [76:14 - 76:15] MemberRefExpr=[71:8, 72:8]
+// CHECK: Punctuation: "::" [76:15 - 76:17] MemberRefExpr=[71:8, 72:8]
 // CHECK: Identifier: "g" [76:17 - 76:18] OverloadedDeclRef=g[71:8, 72:8]
 // CHECK: Punctuation: "(" [76:18 - 76:19] CallExpr=
 // CHECK: Identifier: "t" [76:19 - 76:20] DeclRefExpr=t:74:12
 // CHECK: Punctuation: ")" [76:20 - 76:21] CallExpr=
-// CHECK: Punctuation: ";" [76:21 - 76:22] UnexposedStmt=
-// CHECK: Keyword: "this" [77:5 - 77:9] UnexposedExpr=
-// CHECK: Punctuation: "->" [77:9 - 77:11] UnexposedExpr=
-// CHECK: Punctuation: "::" [77:11 - 77:13] UnexposedExpr=
+// CHECK: Punctuation: ";" [76:21 - 76:22] CompoundStmt=
+// CHECK: Keyword: "this" [77:5 - 77:9] CXXThisExpr=
+// CHECK: Punctuation: "->" [77:9 - 77:11] MemberRefExpr=
+// CHECK: Punctuation: "::" [77:11 - 77:13] MemberRefExpr=
 // CHECK: Identifier: "X4" [77:13 - 77:15] TemplateRef=X4:69:8
-// CHECK: Punctuation: "<" [77:15 - 77:16] UnexposedExpr=
+// CHECK: Punctuation: "<" [77:15 - 77:16] MemberRefExpr=
 // CHECK: Identifier: "type" [77:16 - 77:20] TypeRef=type:70:13
-// CHECK: Punctuation: ">" [77:20 - 77:21] UnexposedExpr=
-// CHECK: Punctuation: "::" [77:21 - 77:23] UnexposedExpr=
-// CHECK: Identifier: "g" [77:23 - 77:24] UnexposedExpr=
+// CHECK: Punctuation: ">" [77:20 - 77:21] MemberRefExpr=
+// CHECK: Punctuation: "::" [77:21 - 77:23] MemberRefExpr=
+// CHECK: Identifier: "g" [77:23 - 77:24] MemberRefExpr=
 // CHECK: Punctuation: "(" [77:24 - 77:25] CallExpr=
 // CHECK: Identifier: "t" [77:25 - 77:26] DeclRefExpr=t:74:12
 // CHECK: Punctuation: ")" [77:26 - 77:27] CallExpr=
@@ -314,7 +314,7 @@ struct X9 : X8 {
 // CHECK: Punctuation: "(" [90:28 - 90:29] CallExpr=f:63:10
 // CHECK: Identifier: "t" [90:29 - 90:30] DeclRefExpr=t:89:15
 // CHECK: Punctuation: ")" [90:30 - 90:31] CallExpr=f:63:10
-// CHECK: Punctuation: ";" [90:31 - 90:32] UnexposedStmt=
+// CHECK: Punctuation: ";" [90:31 - 90:32] CompoundStmt=
 // CHECK: Punctuation: "::" [91:5 - 91:7] MemberRefExpr=g:86:8
 // CHECK: Identifier: "X4" [91:7 - 91:9] TemplateRef=X4:69:8
 // CHECK: Punctuation: "<" [91:9 - 91:10] MemberRefExpr=g:86:8
@@ -325,8 +325,8 @@ struct X9 : X8 {
 // CHECK: Punctuation: "(" [91:18 - 91:19] CallExpr=g:86:8
 // CHECK: Identifier: "t" [91:19 - 91:20] DeclRefExpr=t:89:15
 // CHECK: Punctuation: ")" [91:20 - 91:21] CallExpr=g:86:8
-// CHECK: Punctuation: ";" [91:21 - 91:22] UnexposedStmt=
-// CHECK: Keyword: "this" [92:5 - 92:9] UnexposedExpr=
+// CHECK: Punctuation: ";" [91:21 - 91:22] CompoundStmt=
+// CHECK: Keyword: "this" [92:5 - 92:9] CXXThisExpr=
 // CHECK: Punctuation: "->" [92:9 - 92:11] MemberRefExpr=g:86:8
 // CHECK: Punctuation: "::" [92:11 - 92:13] MemberRefExpr=g:86:8
 // CHECK: Identifier: "X4" [92:13 - 92:15] TemplateRef=X4:69:8

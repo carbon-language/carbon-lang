@@ -14,7 +14,7 @@ void f(void *ptr) {
 // CHECK: Punctuation: "*" [3:13 - 3:14] ParmDecl=ptr:3:14 (Definition)
 // CHECK: Identifier: "ptr" [3:14 - 3:17] ParmDecl=ptr:3:14 (Definition)
 // CHECK: Punctuation: ")" [3:17 - 3:18] FunctionDecl=f:3:6 (Definition)
-// CHECK: Punctuation: "{" [3:19 - 3:20] UnexposedStmt=
-// CHECK: Punctuation: "}" [4:1 - 4:2] UnexposedStmt=
+// CHECK: Punctuation: "{" [3:19 - 3:20] CompoundStmt=
+// CHECK: Punctuation: "}" [4:1 - 4:2] CompoundStmt=
 
 

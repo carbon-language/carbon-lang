@@ -3342,10 +3342,86 @@ CXString clang_getCursorKindSpelling(enum CXCursorKind Kind) {
     return createCXString("LabelRef");
   case CXCursor_OverloadedDeclRef:
     return createCXString("OverloadedDeclRef");
-  case CXCursor_UnexposedExpr:
-      return createCXString("UnexposedExpr");
+  case CXCursor_IntegerLiteral:
+      return createCXString("IntegerLiteral");
+  case CXCursor_FloatingLiteral:
+      return createCXString("FloatingLiteral");
+  case CXCursor_ImaginaryLiteral:
+      return createCXString("ImaginaryLiteral");
+  case CXCursor_StringLiteral:
+      return createCXString("StringLiteral");
+  case CXCursor_CharacterLiteral:
+      return createCXString("CharacterLiteral");
+  case CXCursor_ParenExpr:
+      return createCXString("ParenExpr");
+  case CXCursor_UnaryOperator:
+      return createCXString("UnaryOperator");
+  case CXCursor_ArraySubscriptExpr:
+      return createCXString("ArraySubscriptExpr");
+  case CXCursor_BinaryOperator:
+      return createCXString("BinaryOperator");
+  case CXCursor_CompoundAssignOperator:
+      return createCXString("CompoundAssignOperator");
+  case CXCursor_ConditionalOperator:
+      return createCXString("ConditionalOperator");
+  case CXCursor_CStyleCastExpr:
+      return createCXString("CStyleCastExpr");
+  case CXCursor_CompoundLiteralExpr:
+      return createCXString("CompoundLiteralExpr");
+  case CXCursor_InitListExpr:
+      return createCXString("InitListExpr");
+  case CXCursor_AddrLabelExpr:
+      return createCXString("AddrLabelExpr");
+  case CXCursor_StmtExpr:
+      return createCXString("StmtExpr");
+  case CXCursor_GenericSelectionExpr:
+      return createCXString("GenericSelectionExpr");
+  case CXCursor_GNUNullExpr:
+      return createCXString("GNUNullExpr");
+  case CXCursor_CXXStaticCastExpr:
+      return createCXString("CXXStaticCastExpr");
+  case CXCursor_CXXDynamicCastExpr:
+      return createCXString("CXXDynamicCastExpr");
+  case CXCursor_CXXReinterpretCastExpr:
+      return createCXString("CXXReinterpretCastExpr");
+  case CXCursor_CXXConstCastExpr:
+      return createCXString("CXXConstCastExpr");
+  case CXCursor_CXXFunctionalCastExpr:
+      return createCXString("CXXFunctionalCastExpr");
+  case CXCursor_CXXTypeidExpr:
+      return createCXString("CXXTypeidExpr");
+  case CXCursor_CXXBoolLiteralExpr:
+      return createCXString("CXXBoolLiteralExpr");
+  case CXCursor_CXXNullPtrLiteralExpr:
+      return createCXString("CXXNullPtrLiteralExpr");
+  case CXCursor_CXXThisExpr:
+      return createCXString("CXXThisExpr");
+  case CXCursor_CXXThrowExpr:
+      return createCXString("CXXThrowExpr");
+  case CXCursor_CXXNewExpr:
+      return createCXString("CXXNewExpr");
+  case CXCursor_CXXDeleteExpr:
+      return createCXString("CXXDeleteExpr");
+  case CXCursor_UnaryExpr:
+      return createCXString("UnaryExpr");
+  case CXCursor_ObjCStringLiteral:
+      return createCXString("ObjCStringLiteral");
+  case CXCursor_ObjCEncodeExpr:
+      return createCXString("ObjCEncodeExpr");
+  case CXCursor_ObjCSelectorExpr:
+      return createCXString("ObjCSelectorExpr");
+  case CXCursor_ObjCProtocolExpr:
+      return createCXString("ObjCProtocolExpr");
+  case CXCursor_ObjCBridgedCastExpr:
+      return createCXString("ObjCBridgedCastExpr");
   case CXCursor_BlockExpr:
       return createCXString("BlockExpr");
+  case CXCursor_PackExpansionExpr:
+      return createCXString("PackExpansionExpr");
+  case CXCursor_SizeOfPackExpr:
+      return createCXString("SizeOfPackExpr");
+  case CXCursor_UnexposedExpr:
+      return createCXString("UnexposedExpr");
   case CXCursor_DeclRefExpr:
       return createCXString("DeclRefExpr");
   case CXCursor_MemberRefExpr:
@@ -3356,8 +3432,66 @@ CXString clang_getCursorKindSpelling(enum CXCursorKind Kind) {
       return createCXString("ObjCMessageExpr");
   case CXCursor_UnexposedStmt:
       return createCXString("UnexposedStmt");
+  case CXCursor_DeclStmt:
+      return createCXString("DeclStmt");
   case CXCursor_LabelStmt:
       return createCXString("LabelStmt");
+  case CXCursor_CompoundStmt:
+      return createCXString("CompoundStmt");
+  case CXCursor_CaseStmt:
+      return createCXString("CaseStmt");
+  case CXCursor_DefaultStmt:
+      return createCXString("DefaultStmt");
+  case CXCursor_IfStmt:
+      return createCXString("IfStmt");
+  case CXCursor_SwitchStmt:
+      return createCXString("SwitchStmt");
+  case CXCursor_WhileStmt:
+      return createCXString("WhileStmt");
+  case CXCursor_DoStmt:
+      return createCXString("DoStmt");
+  case CXCursor_ForStmt:
+      return createCXString("ForStmt");
+  case CXCursor_GotoStmt:
+      return createCXString("GotoStmt");
+  case CXCursor_IndirectGotoStmt:
+      return createCXString("IndirectGotoStmt");
+  case CXCursor_ContinueStmt:
+      return createCXString("ContinueStmt");
+  case CXCursor_BreakStmt:
+      return createCXString("BreakStmt");
+  case CXCursor_ReturnStmt:
+      return createCXString("ReturnStmt");
+  case CXCursor_AsmStmt:
+      return createCXString("AsmStmt");
+  case CXCursor_ObjCAtTryStmt:
+      return createCXString("ObjCAtTryStmt");
+  case CXCursor_ObjCAtCatchStmt:
+      return createCXString("ObjCAtCatchStmt");
+  case CXCursor_ObjCAtFinallyStmt:
+      return createCXString("ObjCAtFinallyStmt");
+  case CXCursor_ObjCAtThrowStmt:
+      return createCXString("ObjCAtThrowStmt");
+  case CXCursor_ObjCAtSynchronizedStmt:
+      return createCXString("ObjCAtSynchronizedStmt");
+  case CXCursor_ObjCAutoreleasePoolStmt:
+      return createCXString("ObjCAutoreleasePoolStmt");
+  case CXCursor_ObjCForCollectionStmt:
+      return createCXString("ObjCForCollectionStmt");
+  case CXCursor_CXXCatchStmt:
+      return createCXString("CXXCatchStmt");
+  case CXCursor_CXXTryStmt:
+      return createCXString("CXXTryStmt");
+  case CXCursor_CXXForRangeStmt:
+      return createCXString("CXXForRangeStmt");
+  case CXCursor_SEHTryStmt:
+      return createCXString("SEHTryStmt");
+  case CXCursor_SEHExceptStmt:
+      return createCXString("SEHExceptStmt");
+  case CXCursor_SEHFinallyStmt:
+      return createCXString("SEHFinallyStmt");
+  case CXCursor_NullStmt:
+      return createCXString("NullStmt");
   case CXCursor_InvalidFile:
       return createCXString("InvalidFile");
   case CXCursor_InvalidCode:

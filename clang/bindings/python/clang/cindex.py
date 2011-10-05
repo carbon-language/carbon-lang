@@ -451,6 +451,19 @@ CursorKind.USING_DIRECTIVE = CursorKind(34)
 # A C++ using declaration
 CursorKind.USING_DECLARATION = CursorKind(35)
 
+# A Type alias decl.
+CursorKind.TYPE_ALIAS_DECL = CursorKind(36)
+
+# A Objective-C synthesize decl
+CursorKind.OBJC_SYNTHESIZE_DECL = CursorKind(37)
+
+# A Objective-C dynamic decl
+CursorKind.OBJC_DYNAMIC_DECL = CursorKind(38)
+
+# A C++ access specifier decl.
+CursorKind.CXX_ACCESS_SPEC_DECL = CursorKind(39)
+
+
 ###
 # Reference Kinds
 
@@ -524,6 +537,154 @@ CursorKind.OBJC_MESSAGE_EXPR = CursorKind(104)
 # An expression that represents a block literal.
 CursorKind.BLOCK_EXPR = CursorKind(105)
 
+# An integer literal.
+CursorKind.INTEGER_LITERAL = CursorKind(106)
+
+# A floating point number literal.
+CursorKind.FLOATING_LITERAL = CursorKind(107)
+
+# An imaginary number literal.
+CursorKind.IMAGINARY_LITERAL = CursorKind(108)
+
+# A string literal.
+CursorKind.STRING_LITERAL = CursorKind(109)
+
+# A character literal.
+CursorKind.CHARACTER_LITERAL = CursorKind(110)
+
+# A parenthesized expression, e.g. "(1)".
+#
+# This AST node is only formed if full location information is requested.
+CursorKind.PAREN_EXPR = CursorKind(111)
+
+# This represents the unary-expression's (except sizeof and
+# alignof).
+CursorKind.UNARY_OPERATOR = CursorKind(112)
+
+# [C99 6.5.2.1] Array Subscripting.
+CursorKind.ARRAY_SUBSCRIPT_EXPR = CursorKind(113)
+
+# A builtin binary operation expression such as "x + y" or
+# "x <= y".
+CursorKind.BINARY_OPERATOR = CursorKind(114)
+
+# Compound assignment such as "+=".
+CursorKind.COMPOUND_ASSIGNMENT_OPERATOR = CursorKind(115)
+
+# The ?: ternary operator.
+CursorKind.CONDITONAL_OPERATOR = CursorKind(116)
+
+# An explicit cast in C (C99 6.5.4) or a C-style cast in C++
+# (C++ [expr.cast]), which uses the syntax (Type)expr.
+#
+# For example: (int)f.
+CursorKind.CSTYLE_CAST_EXPR = CursorKind(117)
+
+# [C99 6.5.2.5]
+CursorKind.COMPOUND_LITERAL_EXPR = CursorKind(118)
+
+# Describes an C or C++ initializer list.
+CursorKind.INIT_LIST_EXPR = CursorKind(119)
+
+# The GNU address of label extension, representing &&label.
+CursorKind.ADDR_LABEL_EXPR = CursorKind(120)
+
+# This is the GNU Statement Expression extension: ({int X=4; X;})
+CursorKind.StmtExpr = CursorKind(121)
+
+# Represents a C1X generic selection.
+CursorKind.GENERIC_SELECTION_EXPR = CursorKind(122)
+
+# Implements the GNU __null extension, which is a name for a null
+# pointer constant that has integral type (e.g., int or long) and is the same
+# size and alignment as a pointer.
+#
+# The __null extension is typically only used by system headers, which define
+# NULL as __null in C++ rather than using 0 (which is an integer that may not
+# match the size of a pointer).
+CursorKind.GNU_NULL_EXPR = CursorKind(123)
+
+# C++'s static_cast<> expression.
+CursorKind.CXX_STATIC_CAST_EXPR = CursorKind(124)
+
+# C++'s dynamic_cast<> expression.
+CursorKind.CXX_DYNAMIC_CAST_EXPR = CursorKind(125)
+
+# C++'s reinterpret_cast<> expression.
+CursorKind.CXX_REINTERPRET_CAST_EXPR = CursorKind(126)
+
+# C++'s const_cast<> expression.
+CursorKind.CXX_CONST_CAST_EXPR = CursorKind(127)
+
+# Represents an explicit C++ type conversion that uses "functional"
+# notion (C++ [expr.type.conv]).
+#
+# Example:
+# \code
+#   x = int(0.5);
+# \endcode
+CursorKind.CXX_FUNCTIONAL_CAST_EXPR = CursorKind(128)
+
+# A C++ typeid expression (C++ [expr.typeid]).
+CursorKind.CXX_TYPEID_EXPR = CursorKind(129)
+
+# [C++ 2.13.5] C++ Boolean Literal.
+CursorKind.CXX_BOOL_LITERAL_EXPR = CursorKind(130)
+
+# [C++0x 2.14.7] C++ Pointer Literal.
+CursorKind.CXX_NULL_PTR_LITERAL_EXPR = CursorKind(131)
+
+# Represents the "this" expression in C++
+CursorKind.CXX_THIS_EXPR = CursorKind(132)
+
+# [C++ 15] C++ Throw Expression.
+#
+# This handles 'throw' and 'throw' assignment-expression. When
+# assignment-expression isn't present, Op will be null.
+CursorKind.CXX_THROW_EXPR = CursorKind(133)
+
+# A new expression for memory allocation and constructor calls, e.g:
+# "new CXXNewExpr(foo)".
+CursorKind.CXX_NEW_EXPR = CursorKind(134)
+
+# A delete expression for memory deallocation and destructor calls,
+# e.g. "delete[] pArray".
+CursorKind.CXX_DELETE_EXPR = CursorKind(135)
+
+# Represents a unary expression.
+CursorKind.CXX_UNARY_EXPR = CursorKind(136)
+
+# ObjCStringLiteral, used for Objective-C string literals i.e. "foo".
+CursorKind.OBJC_STRING_LITERAL = CursorKind(137)
+
+# ObjCEncodeExpr, used for in Objective-C.
+CursorKind.OBJC_ENCODE_EXPR = CursorKind(138)
+
+# ObjCSelectorExpr used for in Objective-C.
+CursorKind.OBJC_SELECTOR_EXPR = CursorKind(139)
+
+# Objective-C's protocol expression.
+CursorKind.OBJC_PROTOCOL_EXPR = CursorKind(140)
+
+# An Objective-C "bridged" cast expression, which casts between
+# Objective-C pointers and C pointers, transferring ownership in the process.
+#
+# \code
+#   NSString *str = (__bridge_transfer NSString *)CFCreateString();
+# \endcode
+CursorKind.OBJC_BRIDGE_CAST_EXPR = CursorKind(141)
+
+# Represents a C++0x pack expansion that produces a sequence of
+# expressions.
+#
+# A pack expansion expression contains a pattern (which itself is an
+# expression) followed by an ellipsis. For example:
+CursorKind.PACK_EXPANSION_EXPR = CursorKind(142)
+
+# Represents an expression that computes the length of a parameter
+# pack.
+CursorKind.SIZE_OF_PACK_EXPR = CursorKind(143)
+
 # A statement whose specific kind is not exposed via this interface.
 #
 # Unexposed statements have the same operations as any other kind of statement;
@@ -534,6 +695,92 @@ CursorKind.UNEXPOSED_STMT = CursorKind(200)
 # A labelled statement in a function.
 CursorKind.LABEL_STMT = CursorKind(201)
 
+# A compound statement
+CursorKind.COMPOUND_STMT = CursorKind(202)
+
+# A case statement.
+CursorKind.CASE_STMT = CursorKind(203)
+
+# A default statement.
+CursorKind.DEFAULT_STMT = CursorKind(204)
+
+# An if statement.
+CursorKind.IF_STMT = CursorKind(205)
+
+# A switch statement.
+CursorKind.SWITCH_STMT = CursorKind(206)
+
+# A while statement.
+CursorKind.WHILE_STMT = CursorKind(207)
+
+# A do statement.
+CursorKind.DO_STMT = CursorKind(208)
+
+# A for statement.
+CursorKind.FOR_STMT = CursorKind(209)
+
+# A goto statement.
+CursorKind.GOTO_STMT = CursorKind(210)
+
+# An indirect goto statement.
+CursorKind.INDIRECT_GOTO_STMT = CursorKind(211)
+
+# A continue statement.
+CursorKind.CONTINUE_STMT = CursorKind(212)
+
+# A break statement.
+CursorKind.BREAK_STMT = CursorKind(213)
+
+# A return statement.
+CursorKind.RETURN_STMT = CursorKind(214)
+
+# A GNU-style inline assembler statement.
+CursorKind.ASM_STMT = CursorKind(215)
+
+# Objective-C's overall @try-@catch-@finally statement.
+CursorKind.OBJC_AT_TRY_STMT = CursorKind(216)
+
+# Objective-C's @catch statement.
+CursorKind.OBJC_AT_CATCH_STMT = CursorKind(217)
+
+# Objective-C's @finally statement.
+CursorKind.OBJC_AT_FINALLY_STMT = CursorKind(218)
+
+# Objective-C's @throw statement.
+CursorKind.OBJC_AT_THROW_STMT = CursorKind(219)
+
+# Objective-C's @synchronized statement.
+CursorKind.OBJC_AT_SYNCHRONIZED_STMT = CursorKind(220)
+
+# Objective-C's autorealease pool statement.
+CursorKind.OBJC_AUTORELEASE_POOL_STMT = CursorKind(221)
+
+# Objective-C's for collection statement.
+CursorKind.OBJC_FOR_COLLECTION_STMT = CursorKind(222)
+
+# C++'s catch statement.
+CursorKind.CXX_CATCH_STMT = CursorKind(223)
+
+# C++'s try statement.
+CursorKind.CXX_TRY_STMT = CursorKind(224)
+
+# C++'s for (* : *) statement.
+CursorKind.CXX_FOR_RANGE_STMT = CursorKind(225)
+
+# Windows Structured Exception Handling's try statement.
+CursorKind.SEH_TRY_STMT = CursorKind(226)
+
+# Windows Structured Exception Handling's except statement.
+CursorKind.SEH_EXCEPT_STMT = CursorKind(227)
+
+# Windows Structured Exception Handling's finally statement.
+CursorKind.SEH_FINALLY_STMT = CursorKind(228)
+
+# The null statement.
+CursorKind.NULL_STMT = CursorKind(230)
+
+# Adaptor class for mixing declarations with statements and expressions.
+CursorKind.DECL_STMT = CursorKind(231)
 
 ###
 # Other Kinds
@@ -616,7 +863,9 @@ class Cursor(Structure):
             # FIXME: clang_getCursorSpelling should be fixed to not assert on
             # this, for consistency with clang_getCursorUSR.
             return None
-        return Cursor_spelling(self)
+        if not hasattr(self, '_spelling'):
+            self._spelling = Cursor_spelling(self)
+        return self._spelling
 
     @property
     def displayname(self):
@@ -627,7 +876,9 @@ class Cursor(Structure):
         such as the parameters of a function or template or the arguments of a
         class template specialization.
         """
-        return Cursor_displayname(self)
+        if not hasattr(self, '_displayname'):
+            self._displayname = Cursor_displayname(self)
+        return self._displayname
 
     @property
     def location(self):
@@ -635,7 +886,9 @@ class Cursor(Structure):
         Return the source location (the starting character) of the entity
         pointed at by the cursor.
         """
-        return Cursor_loc(self)
+        if not hasattr(self, '_loc'):
+            self._loc = Cursor_loc(self)
+        return self._loc
 
     @property
     def extent(self):
@@ -643,7 +896,9 @@ class Cursor(Structure):
         Return the source range (the range of text) occupied by the entity
         pointed at by the cursor.
         """
-        return Cursor_extent(self)
+        if not hasattr(self, '_extent'):
+            self._extent = Cursor_extent(self)
+        return self._extent
 
     @property
     def type(self):
@@ -651,7 +906,9 @@ class Cursor(Structure):
         Retrieve the type (if any) of of the entity pointed at by the
         cursor.
         """
-        return Cursor_type(self)
+        if not hasattr(self, '_type'):
+            self._type = Cursor_type(self)
+        return self._type
 
     def get_children(self):
         """Return an iterator for accessing the children of this cursor."""

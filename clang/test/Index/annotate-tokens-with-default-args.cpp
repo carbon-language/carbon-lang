@@ -12,5 +12,5 @@ void Foo::m(Foo *f) {}
 // CHECK: Punctuation: "*" [3:17 - 3:18] ParmDecl=f:3:18 (Definition)
 // CHECK: Identifier: "f" [3:18 - 3:19] ParmDecl=f:3:18 (Definition)
 // CHECK: Punctuation: ")" [3:19 - 3:20] CXXMethod=m:3:11 (Definition)
-// CHECK: Punctuation: "{" [3:21 - 3:22] UnexposedStmt=
-// CHECK: Punctuation: "}" [3:22 - 3:23] UnexposedStmt=
+// CHECK: Punctuation: "{" [3:21 - 3:22] CompoundStmt=
+// CHECK: Punctuation: "}" [3:22 - 3:23] CompoundStmt=

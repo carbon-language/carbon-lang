@@ -35,7 +35,7 @@
 // CHECK: local-symbols.m:13:1: ObjCInstanceMethodDecl=bar:13:1 (Definition) [Overrides @9:1] Extent=[13:1 - 15:2]
 // CHECK: local-symbols.m:13:4: TypeRef=id:0:0 Extent=[13:4 - 13:6]
 // CHECK: local-symbols.m:14:10: UnexposedExpr= Extent=[14:10 - 14:11]
-// CHECK: local-symbols.m:14:10: UnexposedExpr= Extent=[14:10 - 14:11]
+// CHECK: local-symbols.m:14:10: IntegerLiteral= Extent=[14:10 - 14:11]
 // CHECK: local-symbols.m:20:11: ObjCProtocolDecl=Prot8380046:20:11 (Definition) Extent=[20:1 - 21:5]
 // CHECK: local-symbols.m:23:12: ObjCInterfaceDecl=R8380046:23:12 Extent=[23:1 - 24:5]
 // CHECK: local-symbols.m:26:12: ObjCCategoryDecl=:26:12 Extent=[26:1 - 27:5]

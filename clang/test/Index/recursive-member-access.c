@@ -131,8 +131,8 @@ int test_rdar8650865(struct rdar8650865 *s) {
 // CHECK: 6:5: FunctionDecl=test_rdar8650865:6:5 (Definition) Extent=[6:1 - 124:2]
 // CHECK: 6:42: ParmDecl=s:6:42 (Definition) Extent=[6:22 - 6:43]
 // CHECK: 6:29: TypeRef=struct rdar8650865:1:8 Extent=[6:29 - 6:40]
-// CHECK: 6:45: UnexposedStmt= Extent=[6:45 - 124:2]
-// CHECK: 7:3: UnexposedStmt= Extent=[7:3 - 123:8]
+// CHECK: 6:45: CompoundStmt= Extent=[6:45 - 124:2]
+// CHECK: 7:3: ReturnStmt= Extent=[7:3 - 123:8]
 // CHECK: 123:7: MemberRefExpr=x:3:7 SingleRefName=[123:7 - 123:8] RefName=[123:7 - 123:8] Extent=[7:10 - 123:8]
 // CHECK: 122:7: MemberRefExpr=first:2:23 SingleRefName=[122:7 - 122:12] RefName=[122:7 - 122:12] Extent=[7:10 - 122:12]
 // CHECK: 121:7: MemberRefExpr=first:2:23 SingleRefName=[121:7 - 121:12] RefName=[121:7 - 121:12] Extent=[7:10 - 121:12]
@@ -275,33 +275,33 @@ int test_rdar8650865(struct rdar8650865 *s) {
 // CHECK-tokens: Punctuation: "*" [6:41 - 6:42] ParmDecl=s:6:42 (Definition)
 // CHECK-tokens: Identifier: "s" [6:42 - 6:43] ParmDecl=s:6:42 (Definition)
 // CHECK-tokens: Punctuation: ")" [6:43 - 6:44] FunctionDecl=test_rdar8650865:6:5 (Definition)
-// CHECK-tokens: Punctuation: "{" [6:45 - 6:46] UnexposedStmt=
-// CHECK-tokens: Keyword: "return" [7:3 - 7:9] UnexposedStmt=
-// CHECK-tokens: Punctuation: "(" [7:10 - 7:11] UnexposedExpr=
-// CHECK-tokens: Punctuation: "(" [7:11 - 7:12] UnexposedExpr=
-// CHECK-tokens: Punctuation: "(" [7:12 - 7:13] UnexposedExpr=
-// CHECK-tokens: Punctuation: "(" [7:13 - 7:14] UnexposedExpr=
-// CHECK-tokens: Punctuation: "(" [7:14 - 7:15] UnexposedExpr=
-// CHECK-tokens: Punctuation: "(" [7:15 - 7:16] UnexposedExpr=
+// CHECK-tokens: Punctuation: "{" [6:45 - 6:46] CompoundStmt=
+// CHECK-tokens: Keyword: "return" [7:3 - 7:9] ReturnStmt=
+// CHECK-tokens: Punctuation: "(" [7:10 - 7:11] ParenExpr=
+// CHECK-tokens: Punctuation: "(" [7:11 - 7:12] ParenExpr=
+// CHECK-tokens: Punctuation: "(" [7:12 - 7:13] ParenExpr=
+// CHECK-tokens: Punctuation: "(" [7:13 - 7:14] ParenExpr=
+// CHECK-tokens: Punctuation: "(" [7:14 - 7:15] ParenExpr=
+// CHECK-tokens: Punctuation: "(" [7:15 - 7:16] ParenExpr=
 // CHECK-tokens: Identifier: "s" [7:16 - 7:17] DeclRefExpr=s:6:42
 // CHECK-tokens: Punctuation: "->" [7:17 - 7:19] MemberRefExpr=first:2:23
 // CHECK-tokens: Identifier: "first" [7:19 - 7:24] MemberRefExpr=first:2:23
-// CHECK-tokens: Punctuation: ")" [7:24 - 7:25] UnexposedExpr=
+// CHECK-tokens: Punctuation: ")" [7:24 - 7:25] ParenExpr=
 // CHECK-tokens: Punctuation: "->" [7:25 - 7:27] MemberRefExpr=first:2:23
 // CHECK-tokens: Identifier: "first" [7:27 - 7:32] MemberRefExpr=first:2:23
-// CHECK-tokens: Punctuation: ")" [7:32 - 7:33] UnexposedExpr=
+// CHECK-tokens: Punctuation: ")" [7:32 - 7:33] ParenExpr=
 // CHECK-tokens: Punctuation: "->" [8:5 - 8:7] MemberRefExpr=first:2:23
 // CHECK-tokens: Identifier: "first" [8:7 - 8:12] MemberRefExpr=first:2:23
-// CHECK-tokens: Punctuation: ")" [8:12 - 8:13] UnexposedExpr=
+// CHECK-tokens: Punctuation: ")" [8:12 - 8:13] ParenExpr=
 // CHECK-tokens: Punctuation: "->" [9:5 - 9:7] MemberRefExpr=first:2:23
 // CHECK-tokens: Identifier: "first" [9:7 - 9:12] MemberRefExpr=first:2:23
-// CHECK-tokens: Punctuation: ")" [9:12 - 9:13] UnexposedExpr=
+// CHECK-tokens: Punctuation: ")" [9:12 - 9:13] ParenExpr=
 // CHECK-tokens: Punctuation: "->" [10:5 - 10:7] MemberRefExpr=first:2:23
 // CHECK-tokens: Identifier: "first" [10:7 - 10:12] MemberRefExpr=first:2:23
-// CHECK-tokens: Punctuation: ")" [10:12 - 10:13] UnexposedExpr=
+// CHECK-tokens: Punctuation: ")" [10:12 - 10:13] ParenExpr=
 // CHECK-tokens: Punctuation: "->" [11:5 - 11:7] MemberRefExpr=first:2:23
 // CHECK-tokens: Identifier: "first" [11:7 - 11:12] MemberRefExpr=first:2:23
-// CHECK-tokens: Punctuation: ")" [11:12 - 11:13] UnexposedExpr=
+// CHECK-tokens: Punctuation: ")" [11:12 - 11:13] ParenExpr=
 // CHECK-tokens: Punctuation: "->" [12:5 - 12:7] MemberRefExpr=first:2:23
 // CHECK-tokens: Identifier: "first" [12:7 - 12:12] MemberRefExpr=first:2:23
 // CHECK-tokens: Punctuation: "->" [13:5 - 13:7] MemberRefExpr=first:2:23
@@ -526,7 +526,7 @@ int test_rdar8650865(struct rdar8650865 *s) {
 // CHECK-tokens: Identifier: "first" [122:7 - 122:12] MemberRefExpr=first:2:23
 // CHECK-tokens: Punctuation: "->" [123:5 - 123:7] MemberRefExpr=x:3:7
 // CHECK-tokens: Identifier: "x" [123:7 - 123:8] MemberRefExpr=x:3:7
-// CHECK-tokens: Punctuation: ";" [123:8 - 123:9] UnexposedStmt=
-// CHECK-tokens: Punctuation: "}" [124:1 - 124:2] UnexposedStmt=
+// CHECK-tokens: Punctuation: ";" [123:8 - 123:9] CompoundStmt=
+// CHECK-tokens: Punctuation: "}" [124:1 - 124:2] CompoundStmt=
 
 
