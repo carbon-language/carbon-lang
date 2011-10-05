@@ -192,7 +192,7 @@ bool Filler::delayHasHazard(MachineBasicBlock::iterator candidate,
   }
 
   assert((!MCID.isCall() && !MCID.isReturn()) &&
-         "Cannot put calls in delay slot.");
+         "Cannot put calls or returns in delay slot.");
 
   for (unsigned i = 0, e = candidate->getNumOperands(); i!= e; ++i) {
     const MachineOperand &MO = candidate->getOperand(i);
