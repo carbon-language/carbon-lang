@@ -101,6 +101,9 @@ namespace llvm {
     // super-class.
     void inheritProperties(CodeGenRegBank&);
 
+    // Map SubRegIndex -> sub-class
+    DenseMap<Record*, CodeGenRegisterClass*> SubClassWithSubReg;
+
   public:
     unsigned EnumValue;
     std::string Namespace;
@@ -143,6 +146,16 @@ namespace llvm {
     //
     bool hasSubClass(const CodeGenRegisterClass *RC) const {
       return SubClasses.test(RC->EnumValue);
+    }
+
+    // getSubClassWithSubReg - Returns the largest sub-class where all
+    // registers have a SubIdx sub-register.
+    CodeGenRegisterClass *getSubClassWithSubReg(Record *SubIdx) const {
+      return SubClassWithSubReg.lookup(SubIdx);
+    }
+
+    void setSubClassWithSubReg(Record *SubIdx, CodeGenRegisterClass *SubRC) {
+      SubClassWithSubReg[SubIdx] = SubRC;
     }
 
     // getSubClasses - Returns a constant BitVector of subclasses indexed by

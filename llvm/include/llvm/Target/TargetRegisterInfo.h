@@ -429,6 +429,20 @@ public:
     return 0;
   }
 
+  /// getSubClassWithSubReg - Returns the largest legal sub-class of RC that
+  /// supports the sub-register index Idx.
+  /// If no such sub-class exists, return NULL.
+  /// If all registers in RC already have an Idx sub-register, return RC.
+  ///
+  /// TableGen generates a version of this function that is good enough in most
+  /// cases.  Targets can override if they have constraints that TableGen
+  /// doesn't understand.  For example, the x86 sub_8bit sub-register index is
+  /// supported by the full GR32 register class in 64-bit mode, but only by the
+  /// GR32_ABCD regiister class in 32-bit mode.
+  ///
+  virtual const TargetRegisterClass *
+  getSubClassWithSubReg(const TargetRegisterClass *RC, unsigned Idx) const =0;
+
   /// composeSubRegIndices - Return the subregister index you get from composing
   /// two subregister indices.
   ///

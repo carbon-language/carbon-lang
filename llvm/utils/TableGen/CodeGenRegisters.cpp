@@ -768,23 +768,31 @@ void CodeGenRegBank::computeInferredRegisterClasses() {
     // Find matching classes for all SRSets entries.  Iterate in SubRegIndex
     // numerical order to visit synthetic indices last.
     for (unsigned sri = 0, sre = SubRegIndices.size(); sri != sre; ++sri) {
-      SubReg2SetMap::const_iterator I = SRSets.find(SubRegIndices[sri]);
+      Record *SubIdx = SubRegIndices[sri];
+      SubReg2SetMap::const_iterator I = SRSets.find(SubIdx);
       // Unsupported SubRegIndex. Skip it.
       if (I == SRSets.end())
         continue;
-      // In most cases, all RC registers support the SubRegIndex. Skip those.
-      if (I->second.size() == RC.getMembers().size())
+      // In most cases, all RC registers support the SubRegIndex.
+      if (I->second.size() == RC.getMembers().size()) {
+        RC.setSubClassWithSubReg(SubIdx, &RC);
         continue;
+      }
 
       // This is a real subset.  See if we have a matching class.
       CodeGenRegisterClass::Key K(&I->second, RC.SpillSize, RC.SpillAlignment);
       RCKeyMap::const_iterator FoundI = Key2RC.find(K);
-      if (FoundI != Key2RC.end())
+      if (FoundI != Key2RC.end()) {
+        RC.setSubClassWithSubReg(SubIdx, FoundI->second);
         continue;
+      }
 
       // Class doesn't exist.
-      addToMaps(new CodeGenRegisterClass(RC.getName() + "_with_" +
-                                         I->first->getName(), K));
+      CodeGenRegisterClass *NewRC =
+        new CodeGenRegisterClass(RC.getName() + "_with_" +
+                                 I->first->getName(), K);
+      addToMaps(NewRC);
+      RC.setSubClassWithSubReg(SubIdx, NewRC);
     }
   }
 }

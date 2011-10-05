@@ -426,6 +426,8 @@ RegisterInfoEmitter::runTargetHeader(raw_ostream &OS, CodeGenTarget &Target,
      << "  unsigned getSubReg(unsigned RegNo, unsigned Index) const;\n"
      << "  unsigned getSubRegIndex(unsigned RegNo, unsigned SubRegNo) const;\n"
      << "  unsigned composeSubRegIndices(unsigned, unsigned) const;\n"
+     << "  const TargetRegisterClass *"
+        "getSubClassWithSubReg(const TargetRegisterClass*, unsigned) const;\n"
      << "};\n\n";
 
   const std::vector<Record*> &SubRegIndices = RegBank.getSubRegIndices();
@@ -801,6 +803,44 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
       OS << "    }\n";
   }
   OS << "  }\n}\n\n";
+
+  // Emit getSubClassWithSubReg.
+  OS << "const TargetRegisterClass *" << ClassName
+     << "::getSubClassWithSubReg(const TargetRegisterClass *RC, unsigned Idx)"
+        " const {\n";
+  if (SubRegIndices.empty()) {
+    OS << "  assert(Idx == 0 && \"Target has no sub-registers\");\n"
+       << "  return RC;\n";
+  } else {
+    // Use the smallest type that can hold a regclass ID with room for a
+    // sentinel.
+    if (RegisterClasses.size() < UINT8_MAX)
+      OS << "  static const uint8_t Table[";
+    else if (RegisterClasses.size() < UINT16_MAX)
+      OS << "  static const uint16_t Table[";
+    else
+      throw "Too many register classes.";
+    OS << RegisterClasses.size() << "][" << SubRegIndices.size() << "] = {\n";
+    for (unsigned rci = 0, rce = RegisterClasses.size(); rci != rce; ++rci) {
+      const CodeGenRegisterClass &RC = *RegisterClasses[rci];
+      OS << "    {\t// " << RC.getName() << "\n";
+      for (unsigned sri = 0, sre = SubRegIndices.size(); sri != sre; ++sri) {
+        Record *Idx = SubRegIndices[sri];
+        if (CodeGenRegisterClass *SRC = RC.getSubClassWithSubReg(Idx))
+          OS << "      " << SRC->EnumValue + 1 << ",\t// " << Idx->getName()
+             << " -> " << SRC->getName() << "\n";
+        else
+          OS << "      0,\t// " << Idx->getName() << "\n";
+      }
+      OS << "    },\n";
+    }
+    OS << "  };\n  assert(RC && \"Missing regclass\");\n"
+       << "  if (!Idx) return RC;\n  --Idx;\n"
+       << "  assert(Idx < " << SubRegIndices.size() << " && \"Bad subreg\");\n"
+       << "  unsigned TV = Table[RC->getID()][Idx];\n"
+       << "  return TV ? getRegClass(TV - 1) : 0;\n";
+  }
+  OS << "}\n\n";
 
   // Emit the constructor of the class...
   OS << "extern MCRegisterDesc " << TargetName << "RegDesc[];\n";
