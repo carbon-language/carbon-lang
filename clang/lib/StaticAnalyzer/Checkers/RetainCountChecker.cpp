@@ -43,22 +43,20 @@ namespace {
 /// Wrapper around different kinds of node builder, so that helper functions
 /// can have a common interface.
 class GenericNodeBuilderRefCount {
-  StmtNodeBuilder *SNB;
-  const Stmt *S;
+  CheckerContext *C;
   const ProgramPointTag *tag;
   EndOfFunctionNodeBuilder *ENB;
 public:
-  GenericNodeBuilderRefCount(StmtNodeBuilder &snb, const Stmt *s,
-                     const ProgramPointTag *t)
-  : SNB(&snb), S(s), tag(t), ENB(0) {}
+  GenericNodeBuilderRefCount(CheckerContext &c,
+                             const ProgramPointTag *t)
+  : C(&c), tag(t), ENB(0) {}
 
   GenericNodeBuilderRefCount(EndOfFunctionNodeBuilder &enb)
-  : SNB(0), S(0), tag(0), ENB(&enb) {}
+  : C(0), tag(0), ENB(&enb) {}
 
   ExplodedNode *MakeNode(const ProgramState *state, ExplodedNode *Pred) {
-    if (SNB)
-      return SNB->generateNode(PostStmt(S, Pred->getLocationContext(), tag),
-                               state, Pred);
+    if (C)
+      return C->generateNode(state, Pred, tag, false);
 
     assert(ENB);
     return ENB->generateNode(state, Pred);
@@ -3110,7 +3108,7 @@ void RetainCountChecker::checkPreStmt(const ReturnStmt *S,
   // Update the autorelease counts.
   static SimpleProgramPointTag
          AutoreleaseTag("RetainCountChecker : Autorelease");
-  GenericNodeBuilderRefCount Bd(C.getNodeBuilder(), S, &AutoreleaseTag);
+  GenericNodeBuilderRefCount Bd(C, &AutoreleaseTag);
   llvm::tie(Pred, state) = handleAutoreleaseCounts(state, Bd, Pred,
                                                    C.getEngine(), Sym, X);
 
@@ -3463,9 +3461,7 @@ RetainCountChecker::getDeadSymbolTag(SymbolRef sym) const {
 
 void RetainCountChecker::checkDeadSymbols(SymbolReaper &SymReaper,
                                           CheckerContext &C) const {
-  StmtNodeBuilder &Builder = C.getNodeBuilder();
   ExprEngine &Eng = C.getEngine();
-  const Stmt *S = C.getStmt();
   ExplodedNode *Pred = C.getPredecessor();
 
   const ProgramState *state = C.getState();
@@ -3478,7 +3474,7 @@ void RetainCountChecker::checkDeadSymbols(SymbolReaper &SymReaper,
     if (const RefVal *T = B.lookup(Sym)){
       // Use the symbol as the tag.
       // FIXME: This might not be as unique as we would like.
-      GenericNodeBuilderRefCount Bd(Builder, S, getDeadSymbolTag(Sym));
+      GenericNodeBuilderRefCount Bd(C, getDeadSymbolTag(Sym));
       llvm::tie(Pred, state) = handleAutoreleaseCounts(state, Bd, Pred, Eng,
                                                        Sym, *T);
       if (!state)
@@ -3496,7 +3492,7 @@ void RetainCountChecker::checkDeadSymbols(SymbolReaper &SymReaper,
   }
 
   {
-    GenericNodeBuilderRefCount Bd(Builder, S, this);
+    GenericNodeBuilderRefCount Bd(C, this);
     Pred = processLeaks(state, Leaked, Bd, Eng, Pred);
   }
 
