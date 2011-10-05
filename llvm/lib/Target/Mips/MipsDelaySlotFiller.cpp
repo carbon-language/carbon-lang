@@ -78,8 +78,9 @@ namespace {
                         SmallSet<unsigned, 32> &RegDefs,
                         SmallSet<unsigned, 32> &RegUses);
 
-    MachineBasicBlock::iterator
-    findDelayInstr(MachineBasicBlock &MBB, MachineBasicBlock::iterator slot);
+    bool
+    findDelayInstr(MachineBasicBlock &MBB, MachineBasicBlock::iterator slot,
+                   MachineBasicBlock::iterator &Filler);
 
 
   };
@@ -93,19 +94,19 @@ runOnMachineBasicBlock(MachineBasicBlock &MBB) {
   bool Changed = false;
   for (MachineBasicBlock::iterator I = MBB.begin(); I != MBB.end(); ++I)
     if (I->getDesc().hasDelaySlot()) {
-      MachineBasicBlock::iterator D = MBB.end();
-      MachineBasicBlock::iterator J = I;
-
-      if (EnableDelaySlotFiller)
-        D = findDelayInstr(MBB, I);
-
       ++FilledSlots;
       Changed = true;
 
-      if (D == MBB.end())
-        BuildMI(MBB, ++J, I->getDebugLoc(), TII->get(Mips::NOP));
-      else
-        MBB.splice(++J, &MBB, D);
+      MachineBasicBlock::iterator D;
+
+      if (EnableDelaySlotFiller && findDelayInstr(MBB, I, D)) {
+        MBB.splice(llvm::next(I), &MBB, D);
+        ++UsefulSlots;
+      }
+      else 
+        BuildMI(MBB, llvm::next(I), I->getDebugLoc(), TII->get(Mips::NOP));
+
+      ++I; // Skip instruction that has just been moved to delay slot.
      }
   return Changed;
 
@@ -117,9 +118,9 @@ FunctionPass *llvm::createMipsDelaySlotFillerPass(MipsTargetMachine &tm) {
   return new Filler(tm);
 }
 
-MachineBasicBlock::iterator
-Filler::findDelayInstr(MachineBasicBlock &MBB,
-                       MachineBasicBlock::iterator slot) {
+bool Filler::findDelayInstr(MachineBasicBlock &MBB,
+                            MachineBasicBlock::iterator slot,
+                            MachineBasicBlock::iterator &Filler) {
   SmallSet<unsigned, 32> RegDefs;
   SmallSet<unsigned, 32> RegUses;
   bool sawLoad = false;
@@ -162,9 +163,11 @@ Filler::findDelayInstr(MachineBasicBlock &MBB,
       continue;
     }
 
-    return I;
+    Filler = I;
+    return true;
   }
-  return MBB.end();
+
+  return false;
 }
 
 bool Filler::delayHasHazard(MachineBasicBlock::iterator candidate,
