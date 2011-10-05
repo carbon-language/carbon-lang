@@ -668,8 +668,9 @@ void StmtPrinter::VisitIntegerLiteral(IntegerLiteral *Node) {
   }
 }
 void StmtPrinter::VisitFloatingLiteral(FloatingLiteral *Node) {
-  // FIXME: print value more precisely.
-  OS << Node->getValueAsApproximateDouble();
+  llvm::SmallString<16> Str;
+  Node->getValue().toString(Str);
+  OS << Str;
 }
 
 void StmtPrinter::VisitImaginaryLiteral(ImaginaryLiteral *Node) {
