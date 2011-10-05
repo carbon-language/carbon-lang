@@ -28,7 +28,7 @@ using namespace llvm;
 
 STATISTIC(FilledSlots, "Number of delay slots filled");
 STATISTIC(UsefulSlots, "Number of delay slots filled with instructions that"
-                       "are not NOP.");
+                       " are not NOP.");
 
 static cl::opt<bool> EnableDelaySlotFiller(
   "enable-mips-delay-filler",
