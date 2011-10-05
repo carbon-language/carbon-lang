@@ -967,6 +967,14 @@ RegisterCoalescer::UpdateRegDefsUses(const CoalescerPair &CP) {
       Kills |= MO.isKill();
       Deads |= MO.isDead();
 
+      // Make sure we don't create read-modify-write defs accidentally.  We
+      // assume here that a SrcReg def cannot be joined into a live DstReg.  If
+      // RegisterCoalescer starts tracking partially live registers, we will
+      // need to check the actual LiveInterval to determine if DstReg is live
+      // here.
+      if (SubIdx && !Reads)
+        MO.setIsUndef();
+
       if (DstIsPhys)
         MO.substPhysReg(DstReg, *TRI);
       else
