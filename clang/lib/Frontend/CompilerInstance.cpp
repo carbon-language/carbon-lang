@@ -41,6 +41,16 @@
 #include "llvm/Support/system_error.h"
 #include "llvm/Support/CrashRecoveryContext.h"
 #include "llvm/Config/config.h"
+
+// Support for FileLockManager
+#include <fstream>
+#include <sys/types.h>
+#include <sys/stat.h>
+
+#if LLVM_ON_UNIX
+#include <unistd.h>
+#endif
+
 using namespace clang;
 
 CompilerInstance::CompilerInstance()
@@ -670,6 +680,239 @@ static void doCompileModule(void *UserData) {
   Data.Instance.ExecuteAction(Data.CreateModuleAction);
 }
 
+namespace {
+  /// \brief Class that manages the creation of a lock file to aid
+  /// implicit coordination between different processes.
+  ///
+  /// The implicit coordination works by creating a ".lock" file alongside 
+  /// the file that we're coordinating for, using the atomicity of the file
+  /// system to ensure that only a single process can create that ".lock" file.
+  /// When the lock file is removed, the owning process has finished the
+  /// operation.
+  class LockFileManager {
+  public:
+    /// \brief Describes the state of a lock file.
+    enum LockFileState {
+      /// \brief The lock file has been created and is owned by this instance
+      /// of the object.
+      LFS_Owned,
+      /// \brief The lock file already exists and is owned by some other
+      /// instance.
+      LFS_Shared,
+      /// \brief An error occurred while trying to create or find the lock
+      /// file.
+      LFS_Error
+    };
+
+  private:
+    llvm::SmallString<128> LockFileName;
+    llvm::SmallString<128> UniqueLockFileName;
+    
+    llvm::Optional<std::pair<std::string, int> > Owner;
+    llvm::Optional<llvm::error_code> Error;
+    
+    LockFileManager(const LockFileManager &);
+    LockFileManager &operator=(const LockFileManager &);
+    
+    static llvm::Optional<std::pair<std::string, int> > 
+    readLockFile(StringRef LockFileName);
+    
+    static bool processStillExecuting(StringRef Hostname, int PID);
+    
+  public:
+    
+    LockFileManager(StringRef FileName);
+    ~LockFileManager();
+
+    /// \brief Determine the state of the lock file.
+    LockFileState getState() const;
+    
+    operator LockFileState() const { return getState(); }
+    
+    /// \brief For a shared lock, wait until the owner releases the lock.
+    void waitForUnlock();
+  };
+}
+
+/// \brief Attempt to read the lock file with the given name, if it exists.
+///
+/// \param LockFileName The name of the lock file to read.
+///
+/// \returns The process ID of the process that owns this lock file
+llvm::Optional<std::pair<std::string, int> > 
+LockFileManager::readLockFile(StringRef LockFileName) {
+  // Check whether the lock file exists. If not, clearly there's nothing
+  // to read, so we just return.
+  bool Exists = false;
+  if (llvm::sys::fs::exists(LockFileName, Exists) || !Exists)
+    return llvm::Optional<std::pair<std::string, int> >();
+  
+  // Read the owning host and PID out of the lock file. If it appears that the
+  // owning process is dead, the lock file is invalid.
+  int PID = 0;
+  std::string Hostname;
+  std::ifstream Input(LockFileName.str().c_str());
+  if (Input >> Hostname >> PID && PID > 0 &&
+      processStillExecuting(Hostname, PID))
+    return std::make_pair(Hostname, PID);
+
+  // Delete the lock file. It's invalid anyway.
+  bool Existed;
+  llvm::sys::fs::remove(LockFileName, Existed);
+  return llvm::Optional<std::pair<std::string, int> >();
+}
+
+bool LockFileManager::processStillExecuting(StringRef Hostname, int PID) {
+#if LLVM_ON_UNIX
+  char MyHostname[256];
+  MyHostname[255] = 0;
+  MyHostname[0] = 0;
+  gethostname(MyHostname, 255);    
+  // Check whether the process is dead. If so, we're done.
+  if (MyHostname == Hostname && getsid(PID) == -1 && errno == ESRCH)
+    return false;
+#endif
+  
+  return true;
+}
+
+LockFileManager::LockFileManager(StringRef FileName) 
+{
+  LockFileName = FileName;
+  LockFileName += ".lock";
+  
+  // If the lock file already exists, don't bother to try to create our own
+  // lock file; it won't work anyway. Just figure out who owns this lock file.
+  if ((Owner = readLockFile(LockFileName)))
+    return;
+      
+  // Create a lock file that is unique to this instance.
+  UniqueLockFileName = LockFileName;
+  UniqueLockFileName += "-%%%%%%%%";
+  int UniqueLockFileID;
+  if (llvm::error_code EC 
+        = llvm::sys::fs::unique_file(UniqueLockFileName.str(), 
+                                     UniqueLockFileID,
+                                     UniqueLockFileName, 
+                                     /*makeAbsolute=*/false)) {
+    Error = EC;
+    return;
+  }
+  
+  // Write our process ID to our unique lock file.
+  {
+    llvm::raw_fd_ostream Out(UniqueLockFileID, /*shouldClose=*/true);
+    
+#if LLVM_ON_UNIX
+    // FIXME: move getpid() call into LLVM
+    char hostname[256];
+    hostname[255] = 0;
+    hostname[0] = 0;
+    gethostname(hostname, 255);
+    Out << hostname << ' ' << getpid();
+#else
+    Out << "localhost 1";
+#endif
+    Out.close();
+    
+    if (Out.has_error()) {
+      // We failed to write out PID, so make up an excuse, remove the
+      // unique lock file, and fail.
+      Error = llvm::make_error_code(llvm::errc::no_space_on_device);
+      bool Existed;
+      llvm::sys::fs::remove(UniqueLockFileName.c_str(), Existed);
+      return;
+    }
+  }
+  
+  // Create a hard link from the lock file name. If this succeeds, we're done.
+  llvm::error_code EC 
+    = llvm::sys::fs::create_hard_link(UniqueLockFileName.str(), 
+                                      LockFileName.str());
+  if (EC == llvm::errc::success)
+    return;
+
+  // Creating the hard link failed. 
+          
+#ifdef LLVM_ON_UNIX
+  // The creation of the hard link may appear to fail, but if stat'ing the
+  // unique file returns a link count of 2, then we can still declare success.
+  struct stat StatBuf;
+  if (stat(UniqueLockFileName.c_str(), &StatBuf) == 0 &&
+      StatBuf.st_nlink == 2)
+    return;
+#endif
+
+  // Someone else managed to create the lock file first. Wipe out our unique
+  // lock file (it's useless now) and read the process ID from the lock file. 
+  bool Existed;
+  llvm::sys::fs::remove(UniqueLockFileName.str(), Existed);
+  if ((Owner = readLockFile(LockFileName)))
+    return;
+  
+  // There is a lock file that nobody owns; try to clean it up and report
+  // an error.
+  llvm::sys::fs::remove(LockFileName.str(), Existed);
+  Error = EC;
+}
+
+LockFileManager::LockFileState LockFileManager::getState() const {
+  if (Owner)
+    return LFS_Shared;
+
+  if (Error)
+    return LFS_Error;
+  
+  return LFS_Owned;
+}
+
+LockFileManager::~LockFileManager() {
+  if (getState() != LFS_Owned)
+    return;
+  
+  // Since we own the lock, remove the lock file and our own unique lock file.
+  bool Existed;
+  llvm::sys::fs::remove(LockFileName.str(), Existed);
+  llvm::sys::fs::remove(UniqueLockFileName.str(), Existed);
+}
+
+void LockFileManager::waitForUnlock() {
+  if (getState() != LFS_Shared)
+    return;
+  
+  struct timespec Interval;
+  Interval.tv_sec = 0;
+  Interval.tv_nsec = 1000000;
+  
+  // Don't wait more than an hour for the file to appear.
+  const unsigned MaxSeconds = 3600;
+  do {
+    // Sleep for the designated interval, to allow the owning process time to
+    // finish up and 
+    // FIXME: Should we hook in to system APIs to get a notification when the
+    // lock file is deleted?
+    nanosleep(&Interval, NULL);
+    
+    // If the file no longer exists, we're done.
+    bool Exists = false;
+    if (!llvm::sys::fs::exists(LockFileName.str(), Exists) && !Exists)
+      return;
+
+    if (!processStillExecuting((*Owner).first, (*Owner).second))
+      return;
+        
+    // Exponentially increase the time we wait for the lock to be removed.
+    Interval.tv_sec *= 2;
+    Interval.tv_nsec *= 2;
+    if (Interval.tv_nsec >= 1000000000) {
+      ++Interval.tv_sec;
+      Interval.tv_nsec -= 1000000000;
+    }
+  } while (Interval.tv_sec < MaxSeconds);
+  
+  // Give up.
+}
+
 /// \brief Compile a module file for the given module name with the given
 /// umbrella header, using the options provided by the importing compiler
 /// instance.
@@ -677,6 +920,22 @@ static void compileModule(CompilerInstance &ImportingInstance,
                           StringRef ModuleName,
                           StringRef ModuleFileName,
                           StringRef UmbrellaHeader) {
+  LockFileManager Locked(ModuleFileName);
+  switch (Locked) {
+  case LockFileManager::LFS_Error:
+    return;
+      
+  case LockFileManager::LFS_Owned:
+    // We're responsible for building the module ourselves. Do so below.
+    break;
+      
+  case LockFileManager::LFS_Shared:
+    // Someone else is responsible for building the module. Wait for them to
+    // finish.
+    Locked.waitForUnlock();
+    break;
+  }
+  
   // Construct a compiler invocation for creating this module.
   llvm::IntrusiveRefCntPtr<CompilerInvocation> Invocation
     (new CompilerInvocation(ImportingInstance.getInvocation()));
