@@ -1921,14 +1921,39 @@ bool GVN::processInstruction(Instruction *I) {
   
     BasicBlock *TrueSucc = BI->getSuccessor(0);
     BasicBlock *FalseSucc = BI->getSuccessor(1);
-  
-    if (TrueSucc->getSinglePredecessor())
+    BasicBlock *Parent = BI->getParent();
+
+    // If the true and false branches are to the same basic block then the
+    // branch gives no information about the condition.  Eliminating this
+    // here simplifies the rest of the logic.
+    if (TrueSucc == FalseSucc)
+      return false;
+
+    // If the true block can be reached without executing the true edge then we
+    // can't say anything about the value of the condition there.
+    for (pred_iterator PI = pred_begin(TrueSucc), PE = pred_end(TrueSucc);
+         PI != PE; ++PI)
+      if (*PI != Parent && !DT->dominates(TrueSucc, *PI)) {
+        TrueSucc = 0;
+        break;
+      }
+
+    // If the false block can be reached without executing the false edge then
+    // we can't say anything about the value of the condition there.
+    for (pred_iterator PI = pred_begin(FalseSucc), PE = pred_end(FalseSucc);
+         PI != PE; ++PI)
+      if (*PI != Parent && !DT->dominates(FalseSucc, *PI)) {
+        FalseSucc = 0;
+        break;
+      }
+
+    if (TrueSucc)
       addToLeaderTable(CondVN,
                    ConstantInt::getTrue(TrueSucc->getContext()),
                    TrueSucc);
-    if (FalseSucc->getSinglePredecessor())
+    if (FalseSucc)
       addToLeaderTable(CondVN,
-                   ConstantInt::getFalse(TrueSucc->getContext()),
+                   ConstantInt::getFalse(FalseSucc->getContext()),
                    FalseSucc);
     
     return false;

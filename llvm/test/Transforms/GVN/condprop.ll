@@ -53,3 +53,23 @@ bb8:		; preds = %bb7, %bb6, %bb4, %bb2, %bb
 return:		; preds = %bb8
 	ret i32 %.0
 }
+
+declare void @ext(i1)
+
+; CHECK: @bar
+define void @bar(i1 %x, i1 %y) {
+  %z = or i1 %x, %y
+  br i1 %z, label %true, label %false
+true:
+; CHECK: true:
+  %z2 = or i1 %x, %y
+  call void @ext(i1 %z2)
+; CHECK: call void @ext(i1 true)
+  br label %true
+false:
+; CHECK: false:
+  %z3 = or i1 %x, %y
+  call void @ext(i1 %z3)
+; CHECK: call void @ext(i1 false)
+  br label %false
+}
