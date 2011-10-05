@@ -341,6 +341,9 @@ public:
     EnableAllWatchpointLocations (bool end_to_end = true);
 
     bool
+    IgnoreAllWatchpointLocations (uint32_t ignore_count);
+
+    bool
     DisableWatchpointLocationByID (lldb::watch_id_t watch_id);
 
     bool
@@ -348,6 +351,9 @@ public:
 
     bool
     RemoveWatchpointLocationByID (lldb::watch_id_t watch_id);
+
+    bool
+    IgnoreWatchpointLocationByID (lldb::watch_id_t watch_id, uint32_t ignore_count);
 
     void
     ModulesDidLoad (ModuleList &module_list);

@@ -155,16 +155,19 @@ CommandObjectMultiwordWatchpoint::CommandObjectMultiwordWatchpoint(CommandInterp
     CommandObjectSP enable_command_object (new CommandObjectWatchpointEnable (interpreter));
     CommandObjectSP disable_command_object (new CommandObjectWatchpointDisable (interpreter));
     CommandObjectSP delete_command_object (new CommandObjectWatchpointDelete (interpreter));
+    CommandObjectSP ignore_command_object (new CommandObjectWatchpointIgnore (interpreter));
 
     list_command_object->SetCommandName ("watchpoint list");
     enable_command_object->SetCommandName("watchpoint enable");
     disable_command_object->SetCommandName("watchpoint disable");
     delete_command_object->SetCommandName("watchpoint delete");
+    ignore_command_object->SetCommandName("watchpoint ignore");
 
     status = LoadSubCommand ("list",       list_command_object);
     status = LoadSubCommand ("enable",     enable_command_object);
     status = LoadSubCommand ("disable",    disable_command_object);
     status = LoadSubCommand ("delete",     delete_command_object);
+    status = LoadSubCommand ("ignore",     ignore_command_object);
 }
 
 CommandObjectMultiwordWatchpoint::~CommandObjectMultiwordWatchpoint()
@@ -549,6 +552,141 @@ CommandObjectWatchpointDelete::Execute(Args& args, CommandReturnObject &result)
             if (target->RemoveWatchpointLocationByID(wp_ids[i]))
                 ++count;
         result.AppendMessageWithFormat("%d watchpoints deleted.\n",count);
+        result.SetStatus (eReturnStatusSuccessFinishNoResult);
+    }
+
+    return result.Succeeded();
+}
+
+//-------------------------------------------------------------------------
+// CommandObjectWatchpointIgnore::CommandOptions
+//-------------------------------------------------------------------------
+#pragma mark Ignore::CommandOptions
+
+CommandObjectWatchpointIgnore::CommandOptions::CommandOptions(CommandInterpreter &interpreter) :
+    Options (interpreter),
+    m_ignore_count (0)
+{
+}
+
+CommandObjectWatchpointIgnore::CommandOptions::~CommandOptions ()
+{
+}
+
+OptionDefinition
+CommandObjectWatchpointIgnore::CommandOptions::g_option_table[] =
+{
+    { LLDB_OPT_SET_ALL, true, "ignore-count", 'i', required_argument, NULL, NULL, eArgTypeCount, "Set the number of times this watchpoint is skipped before stopping." },
+    { 0,                false, NULL,            0 , 0,                 NULL, 0,    eArgTypeNone, NULL }
+};
+
+const OptionDefinition*
+CommandObjectWatchpointIgnore::CommandOptions::GetDefinitions ()
+{
+    return g_option_table;
+}
+
+Error
+CommandObjectWatchpointIgnore::CommandOptions::SetOptionValue (uint32_t option_idx, const char *option_arg)
+{
+    Error error;
+    char short_option = (char) m_getopt_table[option_idx].val;
+
+    switch (short_option)
+    {
+        case 'i':
+        {
+            m_ignore_count = Args::StringToUInt32(option_arg, UINT32_MAX, 0);
+            if (m_ignore_count == UINT32_MAX)
+               error.SetErrorStringWithFormat ("Invalid ignore count '%s'.\n", option_arg);
+        }
+        break;
+        default:
+            error.SetErrorStringWithFormat ("Unrecognized option '%c'.\n", short_option);
+            break;
+    }
+
+    return error;
+}
+
+void
+CommandObjectWatchpointIgnore::CommandOptions::OptionParsingStarting ()
+{
+    m_ignore_count = 0;
+}
+
+//-------------------------------------------------------------------------
+// CommandObjectWatchpointIgnore
+//-------------------------------------------------------------------------
+#pragma mark Ignore
+
+CommandObjectWatchpointIgnore::CommandObjectWatchpointIgnore(CommandInterpreter &interpreter) :
+    CommandObject(interpreter,
+                  "watchpoint ignore",
+                  "Set ignore count on the specified watchpoint(s).  If no watchpoints are specified, set them all.",
+                  NULL),
+    m_options (interpreter)
+{
+    CommandArgumentEntry arg;
+    CommandObject::AddIDsArgumentData(arg, eArgTypeWatchpointID, eArgTypeWatchpointIDRange);
+    // Add the entry for the first argument for this command to the object's arguments vector.
+    m_arguments.push_back(arg);
+}
+
+CommandObjectWatchpointIgnore::~CommandObjectWatchpointIgnore()
+{
+}
+
+Options *
+CommandObjectWatchpointIgnore::GetOptions ()
+{
+    return &m_options;
+}
+
+bool
+CommandObjectWatchpointIgnore::Execute(Args& args, CommandReturnObject &result)
+{
+    Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
+    if (!CheckTargetForWatchpointOperations(target, result))
+        return false;
+
+    Mutex::Locker locker;
+    target->GetWatchpointLocationList().GetListMutex(locker);
+    
+    const WatchpointLocationList &watchpoints = target->GetWatchpointLocationList();
+
+    size_t num_watchpoints = watchpoints.GetSize();
+
+    if (num_watchpoints == 0)
+    {
+        result.AppendError("No watchpoints exist to be ignored.");
+        result.SetStatus(eReturnStatusFailed);
+        return false;
+    }
+
+    if (args.GetArgumentCount() == 0)
+    {
+        target->IgnoreAllWatchpointLocations(m_options.m_ignore_count);
+        result.AppendMessageWithFormat("All watchpoints ignored. (%lu watchpoints)\n", num_watchpoints);
+        result.SetStatus (eReturnStatusSuccessFinishNoResult);
+    }
+    else
+    {
+        // Particular watchpoints selected; ignore them.
+        std::vector<uint32_t> wp_ids;
+        if (!VerifyWatchpointIDs(args, wp_ids))
+        {
+            result.AppendError("Invalid watchpoints specification.");
+            result.SetStatus(eReturnStatusFailed);
+            return false;
+        }
+
+        int count = 0;
+        const size_t size = wp_ids.size();
+        for (size_t i = 0; i < size; ++i)
+            if (target->IgnoreWatchpointLocationByID(wp_ids[i], m_options.m_ignore_count))
+                ++count;
+        result.AppendMessageWithFormat("%d watchpoints ignored.\n",count);
         result.SetStatus (eReturnStatusSuccessFinishNoResult);
     }
 

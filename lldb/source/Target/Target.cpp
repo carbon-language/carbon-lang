@@ -672,6 +672,30 @@ Target::EnableAllWatchpointLocations (bool end_to_end)
     return true; // Success!
 }
 
+// Assumption: Caller holds the list mutex lock for m_watchpoint_location_list
+// during these operations.
+bool
+Target::IgnoreAllWatchpointLocations (uint32_t ignore_count)
+{
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
+    if (log)
+        log->Printf ("Target::%s\n", __FUNCTION__);
+
+    if (!ProcessIsValid())
+        return false;
+
+    size_t num_watchpoints = m_watchpoint_location_list.GetSize();
+    for (size_t i = 0; i < num_watchpoints; ++i)
+    {
+        WatchpointLocationSP wp_loc_sp = m_watchpoint_location_list.GetByIndex(i);
+        if (!wp_loc_sp)
+            return false;
+
+        wp_loc_sp->SetIgnoreCount(ignore_count);
+    }
+    return true; // Success!
+}
+
 // Assumption: Caller holds the list mutex lock for m_watchpoint_location_list.
 bool
 Target::DisableWatchpointLocationByID (lldb::watch_id_t watch_id)
@@ -729,6 +753,26 @@ Target::RemoveWatchpointLocationByID (lldb::watch_id_t watch_id)
     if (DisableWatchpointLocationByID (watch_id))
     {
         m_watchpoint_location_list.Remove(watch_id);
+        return true;
+    }
+    return false;
+}
+
+// Assumption: Caller holds the list mutex lock for m_watchpoint_location_list.
+bool
+Target::IgnoreWatchpointLocationByID (lldb::watch_id_t watch_id, uint32_t ignore_count)
+{
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
+    if (log)
+        log->Printf ("Target::%s (watch_id = %i)\n", __FUNCTION__, watch_id);
+
+    if (!ProcessIsValid())
+        return false;
+
+    WatchpointLocationSP wp_loc_sp = m_watchpoint_location_list.FindByID (watch_id);
+    if (wp_loc_sp)
+    {
+        wp_loc_sp->SetIgnoreCount(ignore_count);
         return true;
     }
     return false;

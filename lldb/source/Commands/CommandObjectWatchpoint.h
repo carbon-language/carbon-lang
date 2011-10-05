@@ -140,6 +140,56 @@ public:
 private:
 };
 
+//-------------------------------------------------------------------------
+// CommandObjectWatchpointIgnore
+//-------------------------------------------------------------------------
+
+class CommandObjectWatchpointIgnore : public CommandObject
+{
+public:
+    CommandObjectWatchpointIgnore (CommandInterpreter &interpreter);
+
+    virtual
+    ~CommandObjectWatchpointIgnore ();
+
+    virtual bool
+    Execute (Args& command,
+             CommandReturnObject &result);
+
+    virtual Options *
+    GetOptions ();
+
+    class CommandOptions : public Options
+    {
+    public:
+
+        CommandOptions (CommandInterpreter &interpreter);
+
+        virtual
+        ~CommandOptions ();
+
+        virtual Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg);
+
+        void
+        OptionParsingStarting ();
+
+        const OptionDefinition *
+        GetDefinitions ();
+
+        // Options table: Required for subclasses of Options.
+
+        static OptionDefinition g_option_table[];
+
+        // Instance variables to hold the values for command options.
+
+        uint32_t m_ignore_count;
+    };
+
+private:
+    CommandOptions m_options;
+};
+
 } // namespace lldb_private
 
 #endif  // liblldb_CommandObjectWatchpoint_h_

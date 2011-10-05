@@ -15,7 +15,7 @@ int main(int argc, char** argv) {
     int local = 0;
     printf("&global=%p\n", &global);
     printf("about to write to 'global'...\n"); // Set break point at this line.
-                                               // When stopped, watch 'global' for write.
+                                               // When stopped, watch 'global'.
     global = 20;
     local += argc;
     ++local; // Set 2nd break point for disable_then_enable test case.

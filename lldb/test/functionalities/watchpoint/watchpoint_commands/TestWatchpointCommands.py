@@ -52,6 +52,19 @@ class WatchpointCommandsTestCase(TestBase):
         self.delete_read_write_watchpoint()
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    def test_rw_watchpoint_set_ignore_count_with_dsym(self):
+        """Test watchpoint ignore count and expect to not to stop at all."""
+        self.buildDsym(dictionary=self.d)
+        self.setTearDownCleanup(dictionary=self.d)
+        self.ignore_read_write_watchpoint()
+
+    def test_rw_watchpoint_set_ignore_count_with_dwarf(self):
+        """Test watchpoint ignore count and expect to not to stop at all."""
+        self.buildDwarf(dictionary=self.d)
+        self.setTearDownCleanup(dictionary=self.d)
+        self.ignore_read_write_watchpoint()
+
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_rw_disable_after_first_stop_with_dsym(self):
         """Test read_write watchpoint but disable it after the first stop."""
         self.buildDsym(dictionary=self.d)
@@ -174,6 +187,52 @@ class WatchpointCommandsTestCase(TestBase):
         # be 'exited'.
         self.expect("process status",
             substrs = ['exited'])
+
+    def ignore_read_write_watchpoint(self):
+        """Test watchpoint ignore count and expect to not to stop at all."""
+        exe = os.path.join(os.getcwd(), self.exe_name)
+        self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
+
+        # Add a breakpoint to set a watchpoint when stopped on the breakpoint.
+        self.expect("breakpoint set -l %d" % self.line, BREAKPOINT_CREATED,
+            startstr = "Breakpoint created: 1: file ='%s', line = %d, locations = 1" %
+                       (self.source, self.line))
+
+        # Run the program.
+        self.runCmd("run", RUN_SUCCEEDED)
+
+        # We should be stopped again due to the breakpoint.
+        # The stop reason of the thread should be breakpoint.
+        self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
+            substrs = ['stopped',
+                       'stop reason = breakpoint'])
+
+        # Now let's set a read_write-type watchpoint for 'global'.
+        # There should be two watchpoint hits (see main.c).
+        self.expect("frame variable -w read_write -g -L global", WATCHPOINT_CREATED,
+            substrs = ['Watchpoint created', 'size = 4', 'type = rw',
+                       '%s:%d' % (self.source, self.decl)])
+
+        # Set the ignore count of the watchpoint immediately.
+        self.expect("watchpoint ignore -i 2",
+            substrs = ['All watchpoints ignored.'])
+
+        # Use the '-v' option to do verbose listing of the watchpoint.
+        # Expect to find an ignore_count of 2.
+        self.expect("watchpoint list -v",
+            substrs = ['hit_count = 0', 'ignore_count = 2'])
+
+        self.runCmd("process continue")
+
+        # There should be no more watchpoint hit and the process status should
+        # be 'exited'.
+        self.expect("process status",
+            substrs = ['exited'])
+
+        # Use the '-v' option to do verbose listing of the watchpoint.
+        # Expect to find a hit_count of 2 as well.
+        self.expect("watchpoint list -v",
+            substrs = ['hit_count = 2', 'ignore_count = 2'])
 
     def read_write_watchpoint_disable_after_first_stop(self):
         """Do read_write watchpoint but disable it after the first stop."""
