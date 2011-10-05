@@ -41,6 +41,7 @@ namespace {
 
     TargetMachine &TM;
     const TargetInstrInfo *TII;
+    MachineBasicBlock::iterator LastFiller;
 
     static char ID;
     Filler(TargetMachine &tm)
@@ -92,6 +93,8 @@ namespace {
 bool Filler::
 runOnMachineBasicBlock(MachineBasicBlock &MBB) {
   bool Changed = false;
+  LastFiller = MBB.end();
+
   for (MachineBasicBlock::iterator I = MBB.begin(); I != MBB.end(); ++I)
     if (I->getDesc().hasDelaySlot()) {
       ++FilledSlots;
@@ -106,7 +109,9 @@ runOnMachineBasicBlock(MachineBasicBlock &MBB) {
       else 
         BuildMI(MBB, llvm::next(I), I->getDebugLoc(), TII->get(Mips::NOP));
 
-      ++I; // Skip instruction that has just been moved to delay slot.
+      // Record the filler instruction that filled the delay slot.
+      // The instruction after it will be visited in the next iteration.
+      LastFiller = ++I;
      }
   return Changed;
 
@@ -149,7 +154,7 @@ bool Filler::findDelayInstr(MachineBasicBlock &MBB,
     if (I->hasUnmodeledSideEffects()
         || I->isInlineAsm()
         || I->isLabel()
-        || isDelayFiller(MBB, I)
+        || I == LastFiller
         || I->getDesc().isPseudo()
         //
         // Should not allow:
@@ -263,13 +268,4 @@ bool Filler::IsRegInSet(SmallSet<unsigned, 32>& RegSet, unsigned Reg) {
       return true;
 
   return false;
-}
-
-// return true if the candidate is a delay filler.
-bool Filler::isDelayFiller(MachineBasicBlock &MBB,
-                           MachineBasicBlock::iterator candidate) {
-  if (candidate == MBB.begin())
-    return false;
-  const MCInstrDesc &prevdesc = (--candidate)->getDesc();
-  return prevdesc.hasDelaySlot();
 }
