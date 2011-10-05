@@ -794,11 +794,14 @@ strlen_or_inf (const char* str,
                uint32_t maxlen_value)
 {
     uint32_t len = 0;
-    while(*str)
+    if (str)
     {
-        len++;str++;
-        if (len > maxlen)
-            return maxlen_value;
+        while(*str)
+        {
+            len++;str++;
+            if (len > maxlen)
+                return maxlen_value;
+        }
     }
     return len;
 }
@@ -853,11 +856,7 @@ ValueObject::ReadPointedString(Stream& s,
                         // We have a pointer
                         cstr_address = GetPointerValue (&cstr_address_type);
                     }
-                    if (cstr_address == 0 || cstr_address == LLDB_INVALID_ADDRESS)
-                    {
-                        s << "<invalid address for data>";
-                    }
-                    else
+                    if (cstr_address != 0 && cstr_address != LLDB_INVALID_ADDRESS)
                     {
                         Address cstr_so_addr (NULL, cstr_address);
                         DataExtractor data;
@@ -868,7 +867,7 @@ ValueObject::ReadPointedString(Stream& s,
 						    // but the pointed-to data lives in the debuggee, and GetPointeeData() automatically takes care of this
                             GetPointeeData(data, 0, cstr_len);
 
-                            if ( (bytes_read = data.GetByteSize()) > 0)
+                            if ((bytes_read = data.GetByteSize()) > 0)
                             {
                                 s << '"';
                                 data.Dump (&s,
@@ -884,8 +883,6 @@ ValueObject::ReadPointedString(Stream& s,
                                     s << "...";
                                 s << '"';
                             }
-                            else
-                                s << "\"<data not available>\"";
                         }
                         else
                         {
@@ -894,28 +891,29 @@ ValueObject::ReadPointedString(Stream& s,
                                                         
                             size_t offset = 0;
                             
-                            bool any_data = false;
-                            bool finished = false;
+                            int cstr_len_displayed = -1;
+                            bool capped_cstr = false;
 							// I am using GetPointeeData() here to abstract the fact that some ValueObjects are actually frozen pointers in the host
 						    // but the pointed-to data lives in the debuggee, and GetPointeeData() automatically takes care of this
-                            while ( (bytes_read = GetPointeeData(data, offset, k_max_buf_size)) > 0 )
+                            while ((bytes_read = GetPointeeData(data, offset, k_max_buf_size)) > 0)
                             {
-                                size_t len = strlen_or_inf(data.PeekCStr(0), k_max_buf_size, k_max_buf_size+1);
+                                const char *cstr = data.PeekCStr(0);
+                                size_t len = strlen_or_inf (cstr, k_max_buf_size, k_max_buf_size+1);
                                 if (len > k_max_buf_size)
                                     len = k_max_buf_size;
-                                if (!any_data)
-                                {
+                                if (cstr && cstr_len_displayed < 0)
                                     s << '"';
-                                    any_data = true;
-                                }
+
+                                if (cstr_len_displayed < 0)
+                                    cstr_len_displayed = len;
+
                                 if (len == 0)
                                     break;
+                                cstr_len_displayed += len;
                                 if (len > bytes_read)
                                     len = bytes_read;
                                 if (len > cstr_len)
                                     len = cstr_len;
-                                else
-                                    finished = true;
                                 
                                 data.Dump (&s,
                                            0,                 // Start offset in "data"
@@ -931,18 +929,19 @@ ValueObject::ReadPointedString(Stream& s,
                                     break;
                                 
                                 if (len >= cstr_len)
+                                {
+                                    capped_cstr = true;
                                     break;
+                                }
 
                                 cstr_len -= len;
                                 offset += len;
                             }
                             
-                            if (any_data == false)
-                                s << "<data not available>";
-                            else
+                            if (cstr_len_displayed >= 0)
                             {
                                 s << '"';
-                                if (finished == false)
+                                if (capped_cstr)
                                     s << "...";
                             }
                         }
