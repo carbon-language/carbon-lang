@@ -880,10 +880,13 @@ void LockFileManager::waitForUnlock() {
   if (getState() != LFS_Shared)
     return;
   
+#if LLVM_ON_WIN32
+  unsigned long Interval = 1;
+#else
   struct timespec Interval;
   Interval.tv_sec = 0;
   Interval.tv_nsec = 1000000;
-  
+#endif
   // Don't wait more than an hour for the file to appear.
   const unsigned MaxSeconds = 3600;
   do {
@@ -902,13 +905,23 @@ void LockFileManager::waitForUnlock() {
       return;
         
     // Exponentially increase the time we wait for the lock to be removed.
+#if LLVM_ON_WIN32
+    Interval *= 2;
+#else
     Interval.tv_sec *= 2;
     Interval.tv_nsec *= 2;
     if (Interval.tv_nsec >= 1000000000) {
       ++Interval.tv_sec;
       Interval.tv_nsec -= 1000000000;
     }
-  } while (Interval.tv_sec < MaxSeconds);
+#endif
+  } while (
+#if LLVM_ON_WIN32
+           Interval < MaxSeconds * 1000
+#else
+           Interval.tv_sec < MaxSeconds
+#endif
+           );
   
   // Give up.
 }
