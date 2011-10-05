@@ -2085,20 +2085,24 @@ parseProcIFlagsOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   assert(Tok.is(AsmToken::Identifier) && "Token is not an Identifier");
   StringRef IFlagsStr = Tok.getString();
 
+  // An iflags string of "none" is interpreted to mean that none of the AIF
+  // bits are set.  Not a terribly useful instruction, but a valid encoding.
   unsigned IFlags = 0;
-  for (int i = 0, e = IFlagsStr.size(); i != e; ++i) {
-    unsigned Flag = StringSwitch<unsigned>(IFlagsStr.substr(i, 1))
-    .Case("a", ARM_PROC::A)
-    .Case("i", ARM_PROC::I)
-    .Case("f", ARM_PROC::F)
-    .Default(~0U);
+  if (IFlagsStr != "none") {
+        for (int i = 0, e = IFlagsStr.size(); i != e; ++i) {
+      unsigned Flag = StringSwitch<unsigned>(IFlagsStr.substr(i, 1))
+        .Case("a", ARM_PROC::A)
+        .Case("i", ARM_PROC::I)
+        .Case("f", ARM_PROC::F)
+        .Default(~0U);
 
-    // If some specific iflag is already set, it means that some letter is
-    // present more than once, this is not acceptable.
-    if (Flag == ~0U || (IFlags & Flag))
-      return MatchOperand_NoMatch;
+      // If some specific iflag is already set, it means that some letter is
+      // present more than once, this is not acceptable.
+      if (Flag == ~0U || (IFlags & Flag))
+        return MatchOperand_NoMatch;
 
-    IFlags |= Flag;
+      IFlags |= Flag;
+    }
   }
 
   Parser.Lex(); // Eat identifier token.

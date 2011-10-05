@@ -71,3 +71,6 @@
 @ CHECK: ssat16  r0, #7, r0 @ encoding: [0x30,0x0f,0xa6,0xe6]
         ssat16  r0, #7, r0
 
+@ CHECK: cpsie none, #0                @ encoding: [0x00,0x00,0x0a,0xf1]
+        cpsie none, #0
+

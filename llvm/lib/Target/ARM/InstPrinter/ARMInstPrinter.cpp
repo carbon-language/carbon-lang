@@ -624,6 +624,9 @@ void ARMInstPrinter::printCPSIFlag(const MCInst *MI, unsigned OpNum,
   for (int i=2; i >= 0; --i)
     if (IFlags & (1 << i))
       O << ARM_PROC::IFlagsToString(1 << i);
+
+  if (IFlags == 0)
+    O << "none";
 }
 
 void ARMInstPrinter::printMSRMaskOperand(const MCInst *MI, unsigned OpNum,
