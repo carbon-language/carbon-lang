@@ -22,18 +22,28 @@ using namespace ento;
 
 namespace {
 
-class OSAtomicChecker : public Checker<eval::Call> {
+class OSAtomicChecker : public Checker<eval::InlineCall> {
 public:
-  bool evalCall(const CallExpr *CE, CheckerContext &C) const;
+  bool inlineCall(const CallExpr *CE, ExprEngine &Eng,
+                  ExplodedNode *Pred, ExplodedNodeSet &Dst) const;
 
 private:
-  static bool evalOSAtomicCompareAndSwap(CheckerContext &C, const CallExpr *CE);
-};
+  bool evalOSAtomicCompareAndSwap(const CallExpr *CE,
+                                  ExprEngine &Eng,
+                                  ExplodedNode *Pred,
+                                  ExplodedNodeSet &Dst) const;
 
+  ExplodedNode *generateNode(const ProgramState *State,
+                             ExplodedNode *Pred, const CallExpr *Statement,
+                             StmtNodeBuilder &B, ExplodedNodeSet &Dst) const;
+};
 }
 
-bool OSAtomicChecker::evalCall(const CallExpr *CE, CheckerContext &C) const {
-  const ProgramState *state = C.getState();
+bool OSAtomicChecker::inlineCall(const CallExpr *CE,
+                                 ExprEngine &Eng,
+                                 ExplodedNode *Pred,
+                                 ExplodedNodeSet &Dst) const {
+  const ProgramState *state = Pred->getState();
   const Expr *Callee = CE->getCallee();
   SVal L = state->getSVal(Callee);
 
@@ -50,19 +60,33 @@ bool OSAtomicChecker::evalCall(const CallExpr *CE, CheckerContext &C) const {
   // Check for compare and swap.
   if (FName.startswith("OSAtomicCompareAndSwap") ||
       FName.startswith("objc_atomicCompareAndSwap"))
-    return evalOSAtomicCompareAndSwap(C, CE);
+    return evalOSAtomicCompareAndSwap(CE, Eng, Pred, Dst);
 
   // FIXME: Other atomics.
   return false;
 }
 
-bool OSAtomicChecker::evalOSAtomicCompareAndSwap(CheckerContext &C, 
-                                                 const CallExpr *CE) {
+ExplodedNode *OSAtomicChecker::generateNode(const ProgramState *State,
+                                            ExplodedNode *Pred,
+                                            const CallExpr *Statement,
+                                            StmtNodeBuilder &B,
+                                            ExplodedNodeSet &Dst) const {
+  ExplodedNode *N = B.generateNode(Statement, State, Pred, this);
+  if (N)
+    Dst.Add(N);
+  return N;
+}
+
+bool OSAtomicChecker::evalOSAtomicCompareAndSwap(const CallExpr *CE,
+                                                 ExprEngine &Eng,
+                                                 ExplodedNode *Pred,
+                                                 ExplodedNodeSet &Dst) const {
   // Not enough arguments to match OSAtomicCompareAndSwap?
   if (CE->getNumArgs() != 3)
     return false;
 
-  ASTContext &Ctx = C.getASTContext();
+  StmtNodeBuilder &Builder = Eng.getBuilder();
+  ASTContext &Ctx = Eng.getContext();
   const Expr *oldValueExpr = CE->getArg(0);
   QualType oldValueType = Ctx.getCanonicalType(oldValueExpr->getType());
 
@@ -91,8 +115,7 @@ bool OSAtomicChecker::evalOSAtomicCompareAndSwap(CheckerContext &C,
   static SimpleProgramPointTag OSAtomicStoreTag("OSAtomicChecker : Store");
   
   // Load 'theValue'.
-  ExprEngine &Engine = C.getEngine();
-  const ProgramState *state = C.getState();
+  const ProgramState *state = Pred->getState();
   ExplodedNodeSet Tmp;
   SVal location = state->getSVal(theValueExpr);
   // Here we should use the value type of the region as the load type, because
@@ -107,7 +130,7 @@ bool OSAtomicChecker::evalOSAtomicCompareAndSwap(CheckerContext &C,
       dyn_cast_or_null<TypedValueRegion>(location.getAsRegion())) {
     LoadTy = TR->getValueType();
   }
-  Engine.evalLoad(Tmp, theValueExpr, C.getPredecessor(), 
+  Eng.evalLoad(Tmp, theValueExpr, Pred,
                   state, location, &OSAtomicLoadTag, LoadTy);
 
   if (Tmp.empty()) {
@@ -115,7 +138,7 @@ bool OSAtomicChecker::evalOSAtomicCompareAndSwap(CheckerContext &C,
     // since the builder state was restored, we set it manually to prevent 
     // auto transition.
     // FIXME: there should be a better approach.
-    C.getNodeBuilder().BuildSinks = true;
+    Builder.BuildSinks = true;
     return true;
   }
  
@@ -142,7 +165,7 @@ bool OSAtomicChecker::evalOSAtomicCompareAndSwap(CheckerContext &C,
     DefinedOrUnknownSVal oldValueVal =
       cast<DefinedOrUnknownSVal>(oldValueVal_untested);
 
-    SValBuilder &svalBuilder = Engine.getSValBuilder();
+    SValBuilder &svalBuilder = Eng.getSValBuilder();
 
     // Perform the comparison.
     DefinedOrUnknownSVal Cmp =
@@ -162,7 +185,7 @@ bool OSAtomicChecker::evalOSAtomicCompareAndSwap(CheckerContext &C,
         val = svalBuilder.evalCast(val,R->getValueType(), newValueExpr->getType());
       }
 
-      Engine.evalStore(TmpStore, NULL, theValueExpr, N, 
+      Eng.evalStore(TmpStore, NULL, theValueExpr, N,
                        stateEqual, location, val, &OSAtomicStoreTag);
 
       if (TmpStore.empty()) {
@@ -170,7 +193,7 @@ bool OSAtomicChecker::evalOSAtomicCompareAndSwap(CheckerContext &C,
         // since the builder state was restored, we set it manually to prevent 
         // auto transition.
         // FIXME: there should be a better approach.
-        C.getNodeBuilder().BuildSinks = true;
+        Builder.BuildSinks = true;
         return true;
       }
 
@@ -183,8 +206,8 @@ bool OSAtomicChecker::evalOSAtomicCompareAndSwap(CheckerContext &C,
         SVal Res = UnknownVal();
         QualType T = CE->getType();
         if (!T->isVoidType())
-          Res = Engine.getSValBuilder().makeTruthVal(true, T);
-        C.generateNode(stateNew->BindExpr(CE, Res), predNew);
+          Res = Eng.getSValBuilder().makeTruthVal(true, T);
+        generateNode(stateNew->BindExpr(CE, Res), predNew, CE, Builder, Dst);
       }
     }
 
@@ -194,8 +217,8 @@ bool OSAtomicChecker::evalOSAtomicCompareAndSwap(CheckerContext &C,
       SVal Res = UnknownVal();
       QualType T = CE->getType();
       if (!T->isVoidType())
-        Res = Engine.getSValBuilder().makeTruthVal(false, CE->getType());
-      C.generateNode(stateNotEqual->BindExpr(CE, Res), N);
+        Res = Eng.getSValBuilder().makeTruthVal(false, CE->getType());
+      generateNode(stateNotEqual->BindExpr(CE, Res), N, CE, Builder, Dst);
     }
   }
 
