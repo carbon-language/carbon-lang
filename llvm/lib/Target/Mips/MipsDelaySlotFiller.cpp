@@ -140,7 +140,7 @@ bool Filler::findDelayInstr(MachineBasicBlock &MBB,
       continue;
 
     // Convert to forward iterator.
-    MachineBasicBlock::iterator FI(next(I).base());
+    MachineBasicBlock::iterator FI(llvm::next(I).base());
 
     if (I->hasUnmodeledSideEffects()
         || I->isInlineAsm()
