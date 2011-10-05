@@ -144,8 +144,7 @@ namespace {
     /// trivial computation, replace the copy by rematerialize the definition.
     /// If PreserveSrcInt is true, make sure SrcInt is valid after the call.
     bool ReMaterializeTrivialDef(LiveInterval &SrcInt, bool PreserveSrcInt,
-                                 unsigned DstReg, unsigned DstSubIdx,
-                                 MachineInstr *CopyMI);
+                                 unsigned DstReg, MachineInstr *CopyMI);
 
     /// shouldJoinPhys - Return true if a physreg copy should be joined.
     bool shouldJoinPhys(CoalescerPair &CP);
@@ -799,7 +798,6 @@ bool RegisterCoalescer::RemoveCopyByCommutingDef(const CoalescerPair &CP,
 bool RegisterCoalescer::ReMaterializeTrivialDef(LiveInterval &SrcInt,
                                                        bool preserveSrcInt,
                                                        unsigned DstReg,
-                                                       unsigned DstSubIdx,
                                                        MachineInstr *CopyMI) {
   SlotIndex CopyIdx = LIS->getInstructionIndex(CopyMI).getUseIndex();
   LiveInterval::iterator SrcLR = SrcInt.FindLiveRangeContaining(CopyIdx);
@@ -833,28 +831,12 @@ bool RegisterCoalescer::ReMaterializeTrivialDef(LiveInterval &SrcInt,
       return false;
   }
 
-  // If destination register has a sub-register index on it, make sure it
-  // matches the instruction register class.
-  if (DstSubIdx) {
-    const MCInstrDesc &MCID = DefMI->getDesc();
-    if (MCID.getNumDefs() != 1)
-      return false;
-    const TargetRegisterClass *DstRC = MRI->getRegClass(DstReg);
-    const TargetRegisterClass *DstSubRC =
-      DstRC->getSubRegisterRegClass(DstSubIdx);
-    const TargetRegisterClass *DefRC = TII->getRegClass(MCID, 0, TRI);
-    if (DefRC == DstRC)
-      DstSubIdx = 0;
-    else if (DefRC != DstSubRC)
-      return false;
-  }
-
   RemoveCopyFlag(DstReg, CopyMI);
 
   MachineBasicBlock *MBB = CopyMI->getParent();
   MachineBasicBlock::iterator MII =
     llvm::next(MachineBasicBlock::iterator(CopyMI));
-  TII->reMaterialize(*MBB, MII, DstReg, DstSubIdx, DefMI, *TRI);
+  TII->reMaterialize(*MBB, MII, DstReg, 0, DefMI, *TRI);
   MachineInstr *NewMI = prior(MII);
 
   // CopyMI may have implicit operands, transfer them over to the newly
@@ -952,7 +934,7 @@ RegisterCoalescer::UpdateRegDefsUses(const CoalescerPair &CP) {
           UseMI->getOperand(0).getReg() != DstReg &&
           !JoinedCopies.count(UseMI) &&
           ReMaterializeTrivialDef(LIS->getInterval(SrcReg), false,
-                                  UseMI->getOperand(0).getReg(), 0, UseMI))
+                                  UseMI->getOperand(0).getReg(), UseMI))
         continue;
     }
 
@@ -1208,7 +1190,7 @@ bool RegisterCoalescer::JoinCopy(MachineInstr *CopyMI, bool &Again) {
       // trivial computation, try rematerializing it.
       if (!CP.isFlipped() &&
           ReMaterializeTrivialDef(LIS->getInterval(CP.getSrcReg()), true,
-                                  CP.getDstReg(), 0, CopyMI))
+                                  CP.getDstReg(), CopyMI))
         return true;
       return false;
     }
@@ -1247,7 +1229,7 @@ bool RegisterCoalescer::JoinCopy(MachineInstr *CopyMI, bool &Again) {
     // rematerializing it.
     if (!CP.isFlipped() &&
         ReMaterializeTrivialDef(LIS->getInterval(CP.getSrcReg()), true,
-                                CP.getDstReg(), 0, CopyMI))
+                                CP.getDstReg(), CopyMI))
       return true;
 
     // If we can eliminate the copy without merging the live ranges, do so now.
