@@ -37,7 +37,7 @@ void PTXRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   unsigned Index;
   MachineInstr &MI = *II;
   //MachineBasicBlock &MBB = *MI.getParent();
-  DebugLoc dl = MI.getDebugLoc();
+  //DebugLoc dl = MI.getDebugLoc();
   //MachineRegisterInfo &MRI = MI.getParent()->getParent()->getRegInfo();
 
   //unsigned Reg = MRI.createVirtualRegister(PTX::RegF32RegisterClass);
