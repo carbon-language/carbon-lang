@@ -338,7 +338,15 @@ public:
   /// getCallSiteLandingPad - Get the call site indexes for a landing pad EH
   /// symbol.
   SmallVectorImpl<unsigned> &getCallSiteLandingPad(MCSymbol *Sym) {
+    assert(hasCallSiteLandingPad(Sym) &&
+           "missing call site number for landing pad!");
     return LPadToCallSiteMap[Sym];
+  }
+
+  /// hasCallSiteLandingPad - Return true if the landing pad Eh symbol has an
+  /// associated call site.
+  bool hasCallSiteLandingPad(MCSymbol *Sym) {
+    return !LPadToCallSiteMap[Sym].empty();
   }
 
   /// setCallSiteBeginLabel - Map the begin label for a call site.
