@@ -33,3 +33,10 @@ typedef struct objc_class *Class;
 
 Class <SomeProtocol> UnfortunateGCCExtension;
 
+// rdar://10238337
+@protocol Broken @end
+@interface Crash @end
+@implementation Crash
+- (void)crashWith:(<Broken>)a { // expected-warning {{protocol qualifiers without 'id' is archaic}}
+}
+@end

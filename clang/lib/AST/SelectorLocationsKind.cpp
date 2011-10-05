@@ -54,8 +54,11 @@ SourceLocation getArgLoc<Expr>(Expr *Arg) {
 
 template <>
 SourceLocation getArgLoc<ParmVarDecl>(ParmVarDecl *Arg) {
+  SourceLocation Loc = Arg->getLocStart();
+  if (Loc.isInvalid())
+    return Loc;
   // -1 to point to left paren of the method parameter's type.
-  return Arg->getLocStart().getLocWithOffset(-1);
+  return Loc.getLocWithOffset(-1);
 }
 
 template <typename T>
