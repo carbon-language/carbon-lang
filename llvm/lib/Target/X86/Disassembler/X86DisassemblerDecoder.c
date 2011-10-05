@@ -933,7 +933,7 @@ static int getID(struct InternalInstruction* insn) {
 
     spec = specifierForUID(instructionID);
     
-    // Borrow opcode from one of the other XCHGar opcodes
+    /* Borrow opcode from one of the other XCHGar opcodes */
     insn->opcode = 0x91;
    
     if (getIDWithAttrMask(&instructionIDWithNewOpcode,
@@ -948,7 +948,7 @@ static int getID(struct InternalInstruction* insn) {
 
     specWithNewOpcode = specifierForUID(instructionIDWithNewOpcode);
 
-    // Change back 
+    /* Change back */
     insn->opcode = 0x90;
 
     insn->instructionID = instructionIDWithNewOpcode;
