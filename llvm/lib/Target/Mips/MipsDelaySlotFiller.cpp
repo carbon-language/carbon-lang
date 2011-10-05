@@ -146,7 +146,6 @@ Filler::findDelayInstr(MachineBasicBlock &MBB,
     if (I->hasUnmodeledSideEffects()
         || I->isInlineAsm()
         || I->isLabel()
-        || I->getDesc().hasDelaySlot()
         || isDelayFiller(MBB, I)
         || I->getDesc().isPseudo()
         //
