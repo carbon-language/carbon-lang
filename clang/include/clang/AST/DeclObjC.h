@@ -332,9 +332,13 @@ public:
     return param_begin() + getSelector().getNumArgs(); 
   }
 
+  /// \brief Sets the method's parameters and selector source locations.
+  /// If the method is implicit (not coming from source) \arg SelLocs is
+  /// ignored.
   void setMethodParams(ASTContext &C,
                        ArrayRef<ParmVarDecl*> Params,
-                       ArrayRef<SourceLocation> SelLocs);
+                       ArrayRef<SourceLocation> SelLocs =
+                           ArrayRef<SourceLocation>());
 
   // Iterator access to parameter types.
   typedef std::const_mem_fun_t<QualType, ParmVarDecl> deref_fun;
