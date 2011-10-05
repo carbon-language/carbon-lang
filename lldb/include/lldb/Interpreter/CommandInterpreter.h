@@ -147,7 +147,8 @@ public:
                    bool add_to_history, 
                    CommandReturnObject &result, 
                    ExecutionContext *override_context = NULL,
-                   bool repeat_on_empty_command = true);
+                   bool repeat_on_empty_command = true,
+                   bool no_context_switching = false);
     
     //------------------------------------------------------------------
     /// Execute a list of commands in sequence.

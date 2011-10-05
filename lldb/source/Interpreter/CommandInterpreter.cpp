@@ -952,7 +952,8 @@ CommandInterpreter::HandleCommand (const char *command_line,
                                    bool add_to_history,
                                    CommandReturnObject &result,
                                    ExecutionContext *override_context,
-                                   bool repeat_on_empty_command)
+                                   bool repeat_on_empty_command,
+                                   bool no_context_switching)
 
 {
 
@@ -975,7 +976,8 @@ CommandInterpreter::HandleCommand (const char *command_line,
 
     Timer scoped_timer (__PRETTY_FUNCTION__, "Handling command: %s.", command_line);
     
-    UpdateExecutionContext (override_context);
+    if (!no_context_switching)
+        UpdateExecutionContext (override_context);
 
     bool empty_command = false;
     bool comment_command = false;
@@ -1911,7 +1913,12 @@ CommandInterpreter::HandleCommands (const StringList &commands,
         }
 
         CommandReturnObject tmp_result;
-        bool success = HandleCommand(cmd, false, tmp_result, NULL);
+        // If override_context is not NULL, pass no_context_switching = true for
+        // HandleCommand() since we updated our context already.
+        bool success = HandleCommand(cmd, false, tmp_result,
+                                     NULL, /* override_context */
+                                     true, /* repeat_on_empty_command */
+                                     override_context != NULL /* no_context_switching */);
         
         if (print_results)
         {
