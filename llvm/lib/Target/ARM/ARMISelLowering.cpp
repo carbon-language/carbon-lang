@@ -5598,11 +5598,15 @@ EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
       if (!II->isEHLabel()) continue;
 
       MCSymbol *Sym = II->getOperand(0).getMCSymbol();
-      if (!MMI.hasCallSiteBeginLabel(Sym)) continue;
+      if (!MMI.hasCallSiteLandingPad(Sym)) continue;
 
-      unsigned CallSiteNum = MMI.getCallSiteBeginLabel(Sym);
-      CallSiteNumToLPad[CallSiteNum].push_back(BB);
-      MaxCSNum = std::max(MaxCSNum, CallSiteNum);
+      SmallVectorImpl<unsigned> &CallSiteIdxs = MMI.getCallSiteLandingPad(Sym);
+      for (SmallVectorImpl<unsigned>::iterator
+             CSI = CallSiteIdxs.begin(), CSE = CallSiteIdxs.end();
+           CSI != CSE; ++CSI) {
+        CallSiteNumToLPad[*CSI].push_back(BB);
+        MaxCSNum = std::max(MaxCSNum, *CSI);
+      }
       break;
     }
   }
@@ -5616,6 +5620,9 @@ EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
            II = MBBList.begin(), IE = MBBList.end(); II != IE; ++II)
       LPadList.push_back(*II);
   }
+
+  assert(!LPadList.empty() &&
+         "No landing pad destinations for the dispatch jump table!");
 
   MachineJumpTableInfo *JTI =
     MF->getOrCreateJumpTableInfo(MachineJumpTableInfo::EK_Inline);
@@ -5643,16 +5650,21 @@ EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
     .addReg(ARM::CPSR);
 
 /*
-  %vreg11<def> = t2LDRi12 <fi#0>, 4, pred:14, pred:%noreg; mem:Volatile LD4[%sunkaddr131] rGPR:%vreg11
-  t2CMPri %vreg11, 6, pred:14, pred:%noreg, %CPSR<imp-def>; rGPR:%vreg11
-  t2Bcc <BB#33>, pred:8, pred:%CPSR
-*/
 
-/*
-  %vreg11<def> = t2LDRi12 <fi#0>, 4, pred:14, pred:%noreg; mem:Volatile LD4[%sunkaddr131] rGPR:%vreg11
-  %vreg12<def> = t2LEApcrelJT <jt#0>, 0, pred:14, pred:%noreg; rGPR:%vreg12
-  %vreg13<def> = t2ADDrs %vreg12<kill>, %vreg11, 18, pred:14, pred:%noreg, opt:%noreg; GPRnopc:%vreg13 rGPR:%vreg12,%vreg11
-  t2BR_JT %vreg13<kill>, %vreg11, <jt#0>, 0; GPRnopc:%vreg13 rGPR:%vreg11
+BB#32: derived from LLVM BB %eh.sjlj.setjmp.catch
+    Predecessors according to CFG: BB#0
+        %vreg11<def> = t2LDRi12 <fi#0>, 4, pred:14, pred:%noreg; mem:Volatile LD4[%sunkaddr131] rGPR:%vreg11
+        t2CMPri %vreg11, 6, pred:14, pred:%noreg, %CPSR<imp-def>; rGPR:%vreg11
+        t2Bcc <BB#33>, pred:8, pred:%CPSR
+    Successors according to CFG: BB#33 BB#35
+
+BB#35: derived from LLVM BB %eh.sjlj.setjmp.catch
+    Predecessors according to CFG: BB#32
+        %vreg12<def> = t2LEApcrelJT <jt#0>, 0, pred:14, pred:%noreg; rGPR:%vreg12
+        %vreg13<def> = t2ADDrs %vreg12<kill>, %vreg11, 18, pred:14, pred:%noreg, opt:%noreg; GPRnopc:%vreg13 rGPR:%vreg12,%vreg11
+        t2BR_JT %vreg13<kill>, %vreg11, <jt#0>, 0; GPRnopc:%vreg13 rGPR:%vreg11
+    Successors according to CFG: BB#3 BB#28 BB#26 BB#24 BB#22 BB#20 BB#31
+
 */
 
   FIMMO = MF->getMachineMemOperand(MachinePointerInfo::getFixedStack(FI),
@@ -5669,7 +5681,7 @@ EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
       BuildMI(DispContBB, dl, TII->get(ARM::t2ADDrs), NewVReg3)
       .addReg(NewVReg2, RegState::Kill)
       .addReg(NewVReg1)
-      .addImm(18)));
+      .addImm(ARM_AM::getSORegOpc(ARM_AM::lsl, 2))));
 
   BuildMI(DispContBB, dl, TII->get(ARM::t2BR_JT))
     .addReg(NewVReg3, RegState::Kill)
