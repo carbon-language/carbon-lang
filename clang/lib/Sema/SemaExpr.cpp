@@ -4055,26 +4055,27 @@ static CastKind PrepareScalarCast(Sema &S, ExprResult &Src, QualType DestTy) {
   llvm_unreachable("Unhandled scalar cast");
 }
 
-/// CheckCastTypes - Check type constraints for casting between types.
-ExprResult Sema::CheckCastTypes(SourceLocation CastStartLoc,
-                                SourceRange TypeRange, QualType CastType,
-                                Expr *CastExpr, CastKind &Kind,
-                                ExprValueKind &VK, CXXCastPath &BasePath,
-                                bool FunctionalStyle) {
-  if (CastExpr->getType() == Context.UnknownAnyTy)
+/// CheckCastTypes - Check type constraints for casting between types in C.
+ExprResult Sema::CheckCCastTypes(SourceLocation CastStartLoc,
+                                 SourceRange TypeRange, QualType CastType,
+                                 Expr *CastExpr, CastKind &Kind) {
+  assert(!getLangOptions().CPlusPlus);
+
+  if (CastExpr->getType() == Context.UnknownAnyTy) {
+    // We can safely ignore these here because C never has base paths
+    // or casts to l-values.
+    CXXCastPath BasePath;
+    ExprValueKind VK = VK_RValue;
     return checkUnknownAnyCast(TypeRange, CastType, CastExpr, Kind, VK,
                                BasePath);
+  }
 
-  if (getLangOptions().CPlusPlus)
-    return CXXCheckCStyleCast(SourceRange(CastStartLoc,
-                                          CastExpr->getLocEnd()), 
-                              CastType, VK, CastExpr, Kind, BasePath,
-                              FunctionalStyle);
+  ExprResult Result = CheckPlaceholderExpr(CastExpr);
+  if (Result.isInvalid())
+    return ExprError();
+  CastExpr = Result.take();
 
   assert(!CastExpr->getType()->isPlaceholderType());
-
-  // We only support r-value casts in C.
-  VK = VK_RValue;
 
   // C99 6.5.4p2: the cast type needs to be void or scalar and the expression
   // type needs to be scalar.
@@ -4202,9 +4203,9 @@ ExprResult Sema::CheckCastTypes(SourceLocation CastStartLoc,
     }
   }
 
+  // ARC imposes extra restrictions on casts.
   if (getLangOptions().ObjCAutoRefCount) {
-    // Diagnose problems with Objective-C casts involving lifetime qualifiers.
-    CheckObjCARCConversion(SourceRange(CastStartLoc, CastExpr->getLocEnd()), 
+    CheckObjCARCConversion(SourceRange(CastStartLoc, CastExpr->getLocEnd()),
                            CastType, CastExpr, CCK_CStyleCast);
     
     if (const PointerType *CastPtr = CastType->getAs<PointerType>()) {
@@ -4367,19 +4368,20 @@ Sema::ActOnCastExpr(Scope *S, SourceLocation LParenLoc,
 ExprResult
 Sema::BuildCStyleCastExpr(SourceLocation LParenLoc, TypeSourceInfo *Ty,
                           SourceLocation RParenLoc, Expr *CastExpr) {
+  if (getLangOptions().CPlusPlus)
+    return CXXBuildCStyleCastExpr(LParenLoc, Ty, RParenLoc, CastExpr);
+
   CastKind Kind = CK_Invalid;
-  ExprValueKind VK = VK_RValue;
-  CXXCastPath BasePath;
   ExprResult CastResult =
-    CheckCastTypes(LParenLoc, SourceRange(LParenLoc, RParenLoc), Ty->getType(), 
-                   CastExpr, Kind, VK, BasePath);
+    CheckCCastTypes(LParenLoc, SourceRange(LParenLoc, RParenLoc),
+                    Ty->getType(), CastExpr, Kind);
   if (CastResult.isInvalid())
     return ExprError();
   CastExpr = CastResult.take();
 
-  return Owned(CStyleCastExpr::Create(
-    Context, Ty->getType().getNonLValueExprType(Context), VK, Kind, CastExpr,
-    &BasePath, Ty, LParenLoc, RParenLoc));
+  return Owned(CStyleCastExpr::Create(Context, Ty->getType(), VK_RValue, Kind,
+                                      CastExpr, /*base path*/ 0, Ty,
+                                      LParenLoc, RParenLoc));
 }
 
 ExprResult Sema::BuildVectorLiteral(SourceLocation LParenLoc,

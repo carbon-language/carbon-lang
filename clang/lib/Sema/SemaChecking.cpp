@@ -495,6 +495,9 @@ Sema::SemaBuiltinAtomicOverloaded(ExprResult TheCallResult) {
     return ExprError();
   }
 
+  // Strip any qualifiers off ValType.
+  ValType = ValType.getUnqualifiedType();
+
   // The majority of builtins return a value, but a few have special return
   // types, so allow them to override appropriately below.
   QualType ResultType = ValType;
@@ -613,11 +616,10 @@ Sema::SemaBuiltinAtomicOverloaded(ExprResult TheCallResult) {
 
     // GCC does an implicit conversion to the pointer or integer ValType.  This
     // can fail in some cases (1i -> int**), check for this error case now.
-    CastKind Kind = CK_Invalid;
-    ExprValueKind VK = VK_RValue;
-    CXXCastPath BasePath;
-    Arg = CheckCastTypes(Arg.get()->getLocStart(), Arg.get()->getSourceRange(), 
-                         ValType, Arg.take(), Kind, VK, BasePath);
+    // Initialize the argument.
+    InitializedEntity Entity = InitializedEntity::InitializeParameter(Context,
+                                                   ValType, /*consume*/ false);
+    Arg = PerformCopyInitialization(Entity, SourceLocation(), Arg);
     if (Arg.isInvalid())
       return ExprError();
 
@@ -627,8 +629,7 @@ Sema::SemaBuiltinAtomicOverloaded(ExprResult TheCallResult) {
     // pass in 42.  The 42 gets converted to char.  This is even more strange
     // for things like 45.123 -> char, etc.
     // FIXME: Do this check.
-    Arg = ImpCastExprToType(Arg.take(), ValType, Kind, VK, &BasePath);
-    TheCall->setArg(i+1, Arg.get());
+    TheCall->setArg(i+1, Arg.take());
   }
 
   ASTContext& Context = this->getASTContext();

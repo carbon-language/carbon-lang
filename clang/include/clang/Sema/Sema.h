@@ -5754,12 +5754,10 @@ public:
                                                       bool &ObjCConversion,
                                                 bool &ObjCLifetimeConversion);
 
-  /// CheckCastTypes - Check type constraints for casting between types under
-  /// C semantics, or forward to CXXCheckCStyleCast in C++.
-  ExprResult CheckCastTypes(SourceLocation CastStartLoc, SourceRange TypeRange, 
-                            QualType CastType, Expr *CastExpr, CastKind &Kind, 
-                            ExprValueKind &VK, CXXCastPath &BasePath,
-                            bool FunctionalStyle = false);
+  /// CheckCCastTypes - Check type constraints for casting between
+  /// types under C semantics.
+  ExprResult CheckCCastTypes(SourceLocation CastStartLoc, SourceRange TypeRange, 
+                             QualType CastType, Expr *CastExpr, CastKind &Kind);
 
   ExprResult checkUnknownAnyCast(SourceRange TypeRange, QualType CastType,
                                  Expr *CastExpr, CastKind &CastKind,
@@ -5780,12 +5778,17 @@ public:
   ExprResult CheckExtVectorCast(SourceRange R, QualType DestTy, Expr *CastExpr,
                                 CastKind &Kind);
 
-  /// CXXCheckCStyleCast - Check constraints of a C-style or function-style
+  /// CXXBuildCStyleCastExpr - Check constraints of a C-style or function-style
   /// cast under C++ semantics.
-  ExprResult CXXCheckCStyleCast(SourceRange R, QualType CastTy, ExprValueKind &VK,
-                                Expr *CastExpr, CastKind &Kind,
-                                CXXCastPath &BasePath, bool FunctionalStyle);
-    
+  ExprResult CXXBuildCStyleCastExpr(SourceLocation LParenLoc,
+                                    TypeSourceInfo *TInfo,
+                                    SourceLocation RParenLoc,
+                                    Expr *CastExpr);
+  ExprResult BuildCXXFunctionalCastExpr(TypeSourceInfo *TInfo,
+                                        SourceLocation LParenLoc,
+                                        Expr *CastExpr,
+                                        SourceLocation RParenLoc);
+
   /// \brief Checks for invalid conversions and casts between
   /// retainable pointers and other pointer kinds.
   void CheckObjCARCConversion(SourceRange castRange, QualType castType, 

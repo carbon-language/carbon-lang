@@ -739,27 +739,10 @@ Sema::BuildCXXTypeConstructExpr(TypeSourceInfo *TInfo,
   // If the expression list is a single expression, the type conversion
   // expression is equivalent (in definedness, and if defined in meaning) to the
   // corresponding cast expression.
-  //
   if (NumExprs == 1) {
-    CastKind Kind = CK_Invalid;
-    ExprValueKind VK = VK_RValue;
-    CXXCastPath BasePath;
-    ExprResult CastExpr =
-      CheckCastTypes(TInfo->getTypeLoc().getBeginLoc(),
-                     TInfo->getTypeLoc().getSourceRange(), Ty, Exprs[0],
-                     Kind, VK, BasePath,
-                     /*FunctionalStyle=*/true);
-    if (CastExpr.isInvalid())
-      return ExprError();
-    Exprs[0] = CastExpr.take();
-
+    Expr *Arg = Exprs[0];
     exprs.release();
-
-    return Owned(CXXFunctionalCastExpr::Create(Context,
-                                               Ty.getNonLValueExprType(Context),
-                                               VK, TInfo, TyBeginLoc, Kind,
-                                               Exprs[0], &BasePath,
-                                               RParenLoc));
+    return BuildCXXFunctionalCastExpr(TInfo, LParenLoc, Arg, RParenLoc);
   }
 
   InitializedEntity Entity = InitializedEntity::InitializeTemporary(TInfo);
