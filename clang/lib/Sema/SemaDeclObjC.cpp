@@ -586,7 +586,8 @@ Sema::ActOnStartProtocolInterface(SourceLocation AtProtoInterfaceLoc,
             ProtocolName, ProtocolLoc, PDecl->getLocation(), PList);
 
     // Make sure the cached decl gets a valid start location.
-    PDecl->setLocation(AtProtoInterfaceLoc);
+    PDecl->setAtStartLoc(AtProtoInterfaceLoc);
+    PDecl->setLocation(ProtocolLoc);
     PDecl->setForwardDecl(false);
     // Since this ObjCProtocolDecl was created by a forward declaration,
     // we now add it to the DeclContext since it wasn't added before
