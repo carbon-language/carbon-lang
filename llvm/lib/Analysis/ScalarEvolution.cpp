@@ -4667,61 +4667,100 @@ static bool CanConstantFold(const Instruction *I) {
   return false;
 }
 
+/// Determine whether this instruction can constant evolve within this loop
+/// assuming its operands can all constant evolve.
+static bool canConstantEvolve(Instruction *I, const Loop *L) {
+  // An instruction outside of the loop can't be derived from a loop PHI.
+  if (!L->contains(I)) return false;
+
+  if (isa<PHINode>(I)) {
+    if (L->getHeader() == I->getParent())
+      return true;
+    else
+      // We don't currently keep track of the control flow needed to evaluate
+      // PHIs, so we cannot handle PHIs inside of loops.
+      return false;
+  }
+
+  // If we won't be able to constant fold this expression even if the operands
+  // are constants, bail early.
+  return CanConstantFold(I);
+}
+
+/// getConstantEvolvingPHIOperands - Implement getConstantEvolvingPHI by
+/// recursing through each instruction operand until reaching a loop header phi.
+static PHINode *
+getConstantEvolvingPHIOperands(Instruction *UseInst, const Loop *L,
+                               SmallPtrSet<Instruction *, 8> &Visited) {
+
+  // Otherwise, we can evaluate this instruction if all of its operands are
+  // constant or derived from a PHI node themselves.
+  PHINode *PHI = 0;
+  for (Instruction::op_iterator OpI = UseInst->op_begin(),
+         OpE = UseInst->op_end(); OpI != OpE; ++OpI) {
+
+    if (isa<Constant>(*OpI)) continue;
+
+    Instruction *OpInst = dyn_cast<Instruction>(*OpI);
+    if (!OpInst || !canConstantEvolve(OpInst, L)) return 0;
+
+    PHINode *P = dyn_cast<PHINode>(OpInst);
+    if (!P) {
+      // If this operand is already visited, ignore it. It's evolving phi has
+      // already been shown to be consistent on the first path that reached it.
+      if (!Visited.insert(OpInst)) continue;
+
+      P = getConstantEvolvingPHIOperands(OpInst, L, Visited);
+    }
+    if (P == 0) return 0;  // Not evolving from PHI
+    if (PHI == 0)
+      PHI = P;
+    else if (PHI != P)
+      return 0;  // Evolving from multiple different PHIs.
+  }
+  // This is a expression evolving from a constant PHI!
+  return PHI;
+}
+
 /// getConstantEvolvingPHI - Given an LLVM value and a loop, return a PHI node
 /// in the loop that V is derived from.  We allow arbitrary operations along the
 /// way, but the operands of an operation must either be constants or a value
 /// derived from a constant PHI.  If this expression does not fit with these
 /// constraints, return null.
 static PHINode *getConstantEvolvingPHI(Value *V, const Loop *L) {
-  // If this is not an instruction, or if this is an instruction outside of the
-  // loop, it can't be derived from a loop PHI.
   Instruction *I = dyn_cast<Instruction>(V);
-  if (I == 0 || !L->contains(I)) return 0;
+  if (I == 0 || !canConstantEvolve(I, L)) return 0;
 
   if (PHINode *PN = dyn_cast<PHINode>(I)) {
-    if (L->getHeader() == I->getParent())
-      return PN;
-    else
-      // We don't currently keep track of the control flow needed to evaluate
-      // PHIs, so we cannot handle PHIs inside of loops.
-      return 0;
+    return PN;
   }
 
-  // If we won't be able to constant fold this expression even if the operands
-  // are constants, return early.
-  if (!CanConstantFold(I)) return 0;
-
-  // Otherwise, we can evaluate this instruction if all of its operands are
-  // constant or derived from a PHI node themselves.
-  PHINode *PHI = 0;
-  for (unsigned Op = 0, e = I->getNumOperands(); Op != e; ++Op)
-    if (!isa<Constant>(I->getOperand(Op))) {
-      PHINode *P = getConstantEvolvingPHI(I->getOperand(Op), L);
-      if (P == 0) return 0;  // Not evolving from PHI
-      if (PHI == 0)
-        PHI = P;
-      else if (PHI != P)
-        return 0;  // Evolving from multiple different PHIs.
-    }
-
-  // This is a expression evolving from a constant PHI!
-  return PHI;
+  // Record non-constant instructions contained by the loop.
+  SmallPtrSet<Instruction *, 8> Visited;
+  Visited.insert(I);
+  return getConstantEvolvingPHIOperands(I, L, Visited);
 }
 
 /// EvaluateExpression - Given an expression that passes the
 /// getConstantEvolvingPHI predicate, evaluate its value assuming the PHI node
 /// in the loop has the value PHIVal.  If we can't fold this expression for some
 /// reason, return null.
-static Constant *EvaluateExpression(Value *V, Constant *PHIVal,
+static Constant *EvaluateExpression(Value *V, const Loop *L,
+                                    DenseMap<Instruction *, Constant *> &Vals,
                                     const TargetData *TD) {
-  if (isa<PHINode>(V)) return PHIVal;
   if (Constant *C = dyn_cast<Constant>(V)) return C;
+
   Instruction *I = cast<Instruction>(V);
+  if (Constant *C = Vals.lookup(I)) return C;
+
+  assert(!isa<PHINode>(I) && "loop header phis should be mapped to constant");
+  assert(canConstantEvolve(I, L) && "cannot evaluate expression in this loop");
+  (void)L;
 
   std::vector<Constant*> Operands(I->getNumOperands());
 
   for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
-    Operands[i] = EvaluateExpression(I->getOperand(i), PHIVal, TD);
+    Operands[i] = EvaluateExpression(I->getOperand(i), L, Vals, TD);
     if (Operands[i] == 0) return 0;
   }
 
@@ -4749,6 +4788,9 @@ ScalarEvolution::getConstantEvolutionLoopExitValue(PHINode *PN,
 
   Constant *&RetVal = ConstantEvolutionLoopExitValue[PN];
 
+  // FIXME: Nick's fix for PR11034 will seed constants for multiple header phis.
+  DenseMap<Instruction *, Constant *> CurrentIterVals;
+
   // Since the loop is canonicalized, the PHI node must have two entries.  One
   // entry must be a constant (coming in from outside of the loop), and the
   // second must be derived from the same PHI.
@@ -4757,6 +4799,7 @@ ScalarEvolution::getConstantEvolutionLoopExitValue(PHINode *PN,
     dyn_cast<Constant>(PN->getIncomingValue(!SecondIsBackedge));
   if (StartCST == 0)
     return RetVal = 0;  // Must be a constant.
+  CurrentIterVals[PN] = StartCST;
 
   Value *BEValue = PN->getIncomingValue(SecondIsBackedge);
   if (getConstantEvolvingPHI(BEValue, L) != PN &&
@@ -4769,17 +4812,20 @@ ScalarEvolution::getConstantEvolutionLoopExitValue(PHINode *PN,
 
   unsigned NumIterations = BEs.getZExtValue(); // must be in range
   unsigned IterationNum = 0;
-  for (Constant *PHIVal = StartCST; ; ++IterationNum) {
+  for (; ; ++IterationNum) {
     if (IterationNum == NumIterations)
-      return RetVal = PHIVal;  // Got exit value!
+      return RetVal = CurrentIterVals[PN];  // Got exit value!
 
     // Compute the value of the PHI node for the next iteration.
-    Constant *NextPHI = EvaluateExpression(BEValue, PHIVal, TD);
-    if (NextPHI == PHIVal)
+    // EvaluateExpression adds non-phi values to the CurrentIterVals map.
+    Constant *NextPHI = EvaluateExpression(BEValue, L, CurrentIterVals, TD);
+    if (NextPHI == CurrentIterVals[PN])
       return RetVal = NextPHI;  // Stopped evolving!
     if (NextPHI == 0)
       return 0;        // Couldn't evaluate!
-    PHIVal = NextPHI;
+    DenseMap<Instruction *, Constant *> NextIterVals;
+    NextIterVals[PN] = NextPHI;
+    CurrentIterVals.swap(NextIterVals);
   }
 }
 
@@ -4815,10 +4861,12 @@ const SCEV * ScalarEvolution::ComputeExitCountExhaustively(const Loop *L,
   // "ExitWhen".
   unsigned IterationNum = 0;
   unsigned MaxIterations = MaxBruteForceIterations;   // Limit analysis.
+  DenseMap<Instruction *, Constant *> PHIValMap;
   for (Constant *PHIVal = StartCST;
        IterationNum != MaxIterations; ++IterationNum) {
+    PHIValMap[PN] = PHIVal;
     ConstantInt *CondVal =
-      dyn_cast_or_null<ConstantInt>(EvaluateExpression(Cond, PHIVal, TD));
+      dyn_cast_or_null<ConstantInt>(EvaluateExpression(Cond, L, PHIValMap, TD));
 
     // Couldn't symbolically evaluate.
     if (!CondVal) return getCouldNotCompute();
@@ -4829,7 +4877,7 @@ const SCEV * ScalarEvolution::ComputeExitCountExhaustively(const Loop *L,
     }
 
     // Compute the value of the PHI node for the next iteration.
-    Constant *NextPHI = EvaluateExpression(BEValue, PHIVal, TD);
+    Constant *NextPHI = EvaluateExpression(BEValue, L, PHIValMap, TD);
     if (NextPHI == 0 || NextPHI == PHIVal)
       return getCouldNotCompute();// Couldn't evaluate or not making progress...
     PHIVal = NextPHI;
