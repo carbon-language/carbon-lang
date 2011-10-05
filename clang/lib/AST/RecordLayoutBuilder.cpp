@@ -2107,8 +2107,8 @@ const CXXMethodDecl *ASTContext::getKeyFunction(const CXXRecordDecl *RD) {
   return Entry;
 }
 
-/// getInterfaceLayoutImpl - Get or compute information about the
-/// layout of the given interface.
+/// getObjCLayout - Get or compute information about the layout of the
+/// given interface.
 ///
 /// \param Impl - If given, also include the layout of the interface's
 /// implementation. This may differ by including synthesized ivars.
