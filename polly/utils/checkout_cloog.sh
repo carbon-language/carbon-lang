@@ -13,21 +13,21 @@ check_command_line() {
 }
 
 check_cloog_directory() {
-  if not [ -e ${CLOOG_DIR} ]
+  if ! [ -e ${CLOOG_DIR} ]
   then
     echo :: Directory "'${CLOOG_DIR}'" does not exists. Trying to create it.
-    if not mkdir -p "${CLOOG_DIR}"
+    if ! mkdir -p "${CLOOG_DIR}"
     then exit 1
     fi
   fi
 
-  if not [ -d ${CLOOG_DIR} ]
+  if ! [ -d ${CLOOG_DIR} ]
   then
     echo "'${CLOOG_DIR}'" is not a directory
     exit 1
   fi
 
-  if not [ -e "${CLOOG_DIR}/.git" ]
+  if ! [ -e "${CLOOG_DIR}/.git" ]
   then
     IS_GIT=0
     echo ":: No git checkout found"
@@ -66,9 +66,8 @@ cd ${CLOOG_DIR}
 if [ ${IS_GIT} -eq 0 ]
 then
   echo :: Performing initial checkout
-  run git clone git://repo.or.cz/cloog.git .
-  run git submodule init
-  run git submodule update
+  run git clone http://repo.or.cz/r/cloog.git .
+  run git clone http://repo.or.cz/r/isl.git isl
 fi
 
 echo :: Fetch versions required by Polly
@@ -77,6 +76,7 @@ run git reset --hard "${CLOOG_HASH}"
 run cd isl
 run git remote update
 run git reset --hard "${ISL_HASH}"
+run cd ..
 
 echo :: Generating configure
 run ./autogen.sh
