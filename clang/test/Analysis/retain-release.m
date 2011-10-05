@@ -146,7 +146,9 @@ NSFastEnumerationState;
 typedef double NSTimeInterval;
 @interface NSDate : NSObject <NSCopying, NSCoding>  - (NSTimeInterval)timeIntervalSinceReferenceDate;
 @end            typedef unsigned short unichar;
-@interface NSString : NSObject <NSCopying, NSMutableCopying, NSCoding>    - (NSUInteger)length;
+@interface NSString : NSObject <NSCopying, NSMutableCopying, NSCoding>
+- (NSUInteger)length;
+- (NSString *)stringByAppendingString:(NSString *)aString;
 - ( const char *)UTF8String;
 - (id)initWithUTF8String:(const char *)nullTerminatedCString;
 + (id)stringWithUTF8String:(const char *)nullTerminatedCString;
@@ -267,6 +269,12 @@ extern void CGContextDrawLinearGradient(CGContextRef context,
     CGGradientRef gradient, CGPoint startPoint, CGPoint endPoint,
     CGGradientDrawingOptions options);
 extern CGColorSpaceRef CGColorSpaceCreateDeviceRGB(void);
+
+@interface NSMutableArray : NSObject
+- (void)addObject:(id)object;
++ (id)array;
+@end
+
 
 //===----------------------------------------------------------------------===//
 // Test cases.
@@ -1571,3 +1579,28 @@ void rdar6582778_2(void) {
   CFAbsoluteTime t = CFAbsoluteTimeGetCurrent();
   global = CFDateCreate(0, t); // no-warning
 }
+
+// <rdar://problem/10232019> - Test that objects passed to containers
+// are marked "escaped".
+
+void rdar10232019() {
+  NSMutableArray *array = [NSMutableArray array];
+
+  NSString *string = [[NSString alloc] initWithUTF8String:"foo"];
+  [array addObject:string];
+  [string release];
+
+  NSString *otherString = [string stringByAppendingString:@"bar"]; // no-warning
+  NSLog(@"%@", otherString);
+}
+
+void rdar10232019_positive() {
+  NSMutableArray *array = [NSMutableArray array];
+
+  NSString *string = [[NSString alloc] initWithUTF8String:"foo"];
+  [string release];
+
+  NSString *otherString = [string stringByAppendingString:@"bar"]; // expected-warning {{Reference-counted object is used after it is release}}
+  NSLog(@"%@", otherString);
+}
+

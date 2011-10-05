@@ -481,19 +481,19 @@ struct isPodLike<ObjCSummaryKey> { static const bool value = true; };
 
 namespace {
 class ObjCSummaryCache {
-  typedef llvm::DenseMap<ObjCSummaryKey, RetainSummary*> MapTy;
+  typedef llvm::DenseMap<ObjCSummaryKey, const RetainSummary *> MapTy;
   MapTy M;
 public:
   ObjCSummaryCache() {}
 
-  RetainSummary* find(const ObjCInterfaceDecl *D, IdentifierInfo *ClsName,
+  const RetainSummary * find(const ObjCInterfaceDecl *D, IdentifierInfo *ClsName,
                 Selector S) {
     // Lookup the method using the decl for the class @interface.  If we
     // have no decl, lookup using the class name.
     return D ? find(D, S) : find(ClsName, S);
   }
 
-  RetainSummary* find(const ObjCInterfaceDecl *D, Selector S) {
+  const RetainSummary * find(const ObjCInterfaceDecl *D, Selector S) {
     // Do a lookup with the (D,S) pair.  If we find a match return
     // the iterator.
     ObjCSummaryKey K(D, S);
@@ -518,12 +518,12 @@ public:
 
     // Cache the summary with original key to make the next lookup faster
     // and return the iterator.
-    RetainSummary *Summ = I->second;
+    const RetainSummary *Summ = I->second;
     M[K] = Summ;
     return Summ;
   }
 
-  RetainSummary* find(IdentifierInfo* II, Selector S) {
+  const RetainSummary * find(IdentifierInfo* II, Selector S) {
     // FIXME: Class method lookup.  Right now we dont' have a good way
     // of going between IdentifierInfo* and the class hierarchy.
     MapTy::iterator I = M.find(ObjCSummaryKey(II, S));
@@ -534,11 +534,11 @@ public:
     return I == M.end() ? NULL : I->second;
   }
 
-  RetainSummary*& operator[](ObjCSummaryKey K) {
+  const RetainSummary *& operator[](ObjCSummaryKey K) {
     return M[K];
   }
 
-  RetainSummary*& operator[](Selector S) {
+  const RetainSummary *& operator[](Selector S) {
     return M[ ObjCSummaryKey(S) ];
   }
 };
@@ -555,7 +555,7 @@ class RetainSummaryManager {
   //  Typedefs.
   //==-----------------------------------------------------------------==//
 
-  typedef llvm::DenseMap<const FunctionDecl*, RetainSummary*>
+  typedef llvm::DenseMap<const FunctionDecl*, const RetainSummary *>
           FuncSummariesTy;
 
   typedef ObjCSummaryCache ObjCMethodSummariesTy;
@@ -602,7 +602,7 @@ class RetainSummaryManager {
   RetEffect ObjCInitRetE;
 
   RetainSummary DefaultSummary;
-  RetainSummary* StopSummary;
+  const RetainSummary *StopSummary;
 
   //==-----------------------------------------------------------------==//
   //  Methods.
@@ -617,23 +617,28 @@ class RetainSummaryManager {
 public:
   RetEffect getObjAllocRetEffect() const { return ObjCAllocRetE; }
 
-  RetainSummary* getUnarySummary(const FunctionType* FT, UnaryFuncKind func);
+  const RetainSummary *getDefaultSummary() {
+    return &DefaultSummary;
+  }
+  
+  const RetainSummary * getUnarySummary(const FunctionType* FT,
+                                       UnaryFuncKind func);
 
-  RetainSummary* getCFSummaryCreateRule(const FunctionDecl *FD);
-  RetainSummary* getCFSummaryGetRule(const FunctionDecl *FD);
-  RetainSummary* getCFCreateGetRuleSummary(const FunctionDecl *FD);
+  const RetainSummary * getCFSummaryCreateRule(const FunctionDecl *FD);
+  const RetainSummary * getCFSummaryGetRule(const FunctionDecl *FD);
+  const RetainSummary * getCFCreateGetRuleSummary(const FunctionDecl *FD);
 
-  RetainSummary* getPersistentSummary(ArgEffects AE, RetEffect RetEff,
-                                      ArgEffect ReceiverEff = DoNothing,
-                                      ArgEffect DefaultEff = MayEscape);
+  const RetainSummary * getPersistentSummary(ArgEffects AE, RetEffect RetEff,
+                                            ArgEffect ReceiverEff = DoNothing,
+                                            ArgEffect DefaultEff = MayEscape);
 
-  RetainSummary* getPersistentSummary(RetEffect RE,
-                                      ArgEffect ReceiverEff = DoNothing,
-                                      ArgEffect DefaultEff = MayEscape) {
+  const RetainSummary * getPersistentSummary(RetEffect RE,
+                                            ArgEffect ReceiverEff = DoNothing,
+                                            ArgEffect DefaultEff = MayEscape) {
     return getPersistentSummary(getArgEffects(), RE, ReceiverEff, DefaultEff);
   }
 
-  RetainSummary *getPersistentStopSummary() {
+  const RetainSummary *getPersistentStopSummary() {
     if (StopSummary)
       return StopSummary;
 
@@ -643,28 +648,28 @@ public:
     return StopSummary;
   }
 
-  RetainSummary *getInitMethodSummary(QualType RetTy);
+  const RetainSummary *getInitMethodSummary(QualType RetTy);
 
   void InitializeClassMethodSummaries();
   void InitializeMethodSummaries();
 private:
-  void addNSObjectClsMethSummary(Selector S, RetainSummary *Summ) {
+  void addNSObjectClsMethSummary(Selector S, const RetainSummary *Summ) {
     ObjCClassMethodSummaries[S] = Summ;
   }
 
-  void addNSObjectMethSummary(Selector S, RetainSummary *Summ) {
+  void addNSObjectMethSummary(Selector S, const RetainSummary *Summ) {
     ObjCMethodSummaries[S] = Summ;
   }
 
   void addClassMethSummary(const char* Cls, const char* nullaryName,
-                           RetainSummary *Summ) {
+                           const RetainSummary *Summ) {
     IdentifierInfo* ClsII = &Ctx.Idents.get(Cls);
     Selector S = GetNullarySelector(nullaryName, Ctx);
     ObjCClassMethodSummaries[ObjCSummaryKey(ClsII, S)]  = Summ;
   }
 
   void addInstMethSummary(const char* Cls, const char* nullaryName,
-                          RetainSummary *Summ) {
+                          const RetainSummary *Summ) {
     IdentifierInfo* ClsII = &Ctx.Idents.get(Cls);
     Selector S = GetNullarySelector(nullaryName, Ctx);
     ObjCMethodSummaries[ObjCSummaryKey(ClsII, S)]  = Summ;
@@ -680,26 +685,26 @@ private:
   }
 
   void addMethodSummary(IdentifierInfo *ClsII, ObjCMethodSummariesTy& Summaries,
-                        RetainSummary* Summ, va_list argp) {
+                        const RetainSummary * Summ, va_list argp) {
     Selector S = generateSelector(argp);
     Summaries[ObjCSummaryKey(ClsII, S)] = Summ;
   }
 
-  void addInstMethSummary(const char* Cls, RetainSummary* Summ, ...) {
+  void addInstMethSummary(const char* Cls, const RetainSummary * Summ, ...) {
     va_list argp;
     va_start(argp, Summ);
     addMethodSummary(&Ctx.Idents.get(Cls), ObjCMethodSummaries, Summ, argp);
     va_end(argp);
   }
 
-  void addClsMethSummary(const char* Cls, RetainSummary* Summ, ...) {
+  void addClsMethSummary(const char* Cls, const RetainSummary * Summ, ...) {
     va_list argp;
     va_start(argp, Summ);
     addMethodSummary(&Ctx.Idents.get(Cls),ObjCClassMethodSummaries, Summ, argp);
     va_end(argp);
   }
 
-  void addClsMethSummary(IdentifierInfo *II, RetainSummary* Summ, ...) {
+  void addClsMethSummary(IdentifierInfo *II, const RetainSummary * Summ, ...) {
     va_list argp;
     va_start(argp, Summ);
     addMethodSummary(II, ObjCClassMethodSummaries, Summ, argp);
@@ -731,29 +736,31 @@ public:
     InitializeMethodSummaries();
   }
 
-  RetainSummary* getSummary(const FunctionDecl *FD);
+  const RetainSummary * getSummary(const FunctionDecl *FD);
 
-  RetainSummary *getInstanceMethodSummary(const ObjCMessage &msg,
-                                          const ProgramState *state,
-                                          const LocationContext *LC);
+  const RetainSummary *getInstanceMethodSummary(const ObjCMessage &msg,
+                                                const ProgramState *state,
+                                                const LocationContext *LC);
 
-  RetainSummary* getInstanceMethodSummary(const ObjCMessage &msg,
-                                          const ObjCInterfaceDecl *ID) {
+  const RetainSummary * getInstanceMethodSummary(const ObjCMessage &msg,
+                                                const ObjCInterfaceDecl *ID) {
     return getInstanceMethodSummary(msg.getSelector(), 0,
                             ID, msg.getMethodDecl(), msg.getType(Ctx));
   }
 
-  RetainSummary* getInstanceMethodSummary(Selector S, IdentifierInfo *ClsName,
-                                          const ObjCInterfaceDecl *ID,
-                                          const ObjCMethodDecl *MD,
-                                          QualType RetTy);
+  const RetainSummary * getInstanceMethodSummary(Selector S,
+                                                IdentifierInfo *ClsName,
+                                                const ObjCInterfaceDecl *ID,
+                                                const ObjCMethodDecl *MD,
+                                                QualType RetTy);
 
-  RetainSummary *getClassMethodSummary(Selector S, IdentifierInfo *ClsName,
-                                       const ObjCInterfaceDecl *ID,
-                                       const ObjCMethodDecl *MD,
-                                       QualType RetTy);
+  const RetainSummary *getClassMethodSummary(Selector S,
+                                             IdentifierInfo *ClsName,
+                                             const ObjCInterfaceDecl *ID,
+                                             const ObjCMethodDecl *MD,
+                                             QualType RetTy);
 
-  RetainSummary *getClassMethodSummary(const ObjCMessage &msg) {
+  const RetainSummary *getClassMethodSummary(const ObjCMessage &msg) {
     const ObjCInterfaceDecl *Class = 0;
     if (!msg.isInstanceMessage())
       Class = msg.getReceiverInterface();
@@ -766,7 +773,7 @@ public:
 
   /// getMethodSummary - This version of getMethodSummary is used to query
   ///  the summary for the current method being analyzed.
-  RetainSummary *getMethodSummary(const ObjCMethodDecl *MD) {
+  const RetainSummary *getMethodSummary(const ObjCMethodDecl *MD) {
     // FIXME: Eventually this should be unneeded.
     const ObjCInterfaceDecl *ID = MD->getClassInterface();
     Selector S = MD->getSelector();
@@ -779,13 +786,13 @@ public:
       return getClassMethodSummary(S, ClsName, ID, MD, ResultTy);
   }
 
-  RetainSummary* getCommonMethodSummary(const ObjCMethodDecl *MD,
-                                        Selector S, QualType RetTy);
+  const RetainSummary * getCommonMethodSummary(const ObjCMethodDecl *MD,
+                                              Selector S, QualType RetTy);
 
-  void updateSummaryFromAnnotations(RetainSummary *&Summ,
+  void updateSummaryFromAnnotations(const RetainSummary *&Summ,
                                     const ObjCMethodDecl *MD);
 
-  void updateSummaryFromAnnotations(RetainSummary *&Summ,
+  void updateSummaryFromAnnotations(const RetainSummary *&Summ,
                                     const FunctionDecl *FD);
 
   bool isGCEnabled() const { return GCEnabled; }
@@ -794,8 +801,8 @@ public:
   
   bool isARCorGCEnabled() const { return GCEnabled || ARCEnabled; }
 
-  RetainSummary *copySummary(RetainSummary *OldSumm) {
-    RetainSummary *Summ = (RetainSummary*) BPAlloc.Allocate<RetainSummary>();
+  const RetainSummary *copySummary(const RetainSummary *OldSumm) {
+    RetainSummary *Summ = (RetainSummary *) BPAlloc.Allocate<RetainSummary>();
     new (Summ) RetainSummary(*OldSumm);
     return Summ;
   }
@@ -807,28 +814,34 @@ public:
 // and then copied into managed memory.
 class RetainSummaryTemplate {
   RetainSummaryManager &Manager;
-  RetainSummary *&RealSummary;
+  const RetainSummary *&RealSummary;
+  const RetainSummary *BaseSummary;
   RetainSummary ScratchSummary;
   bool Accessed;
 public:
-  RetainSummaryTemplate(RetainSummary *&real, const RetainSummary &base,
+  RetainSummaryTemplate(const RetainSummary *&real, const RetainSummary &base,
                         RetainSummaryManager &manager)
-  : Manager(manager), RealSummary(real), ScratchSummary(base), Accessed(false)
-  {}
+  : Manager(manager),
+    RealSummary(real),
+    BaseSummary(&base),
+    ScratchSummary(base),
+    Accessed(false) {}
 
   ~RetainSummaryTemplate() {
-    if (!RealSummary && Accessed)
+    if (Accessed)
       RealSummary = Manager.copySummary(&ScratchSummary);
+    else if (!RealSummary)
+      RealSummary = BaseSummary;
   }
 
   RetainSummary &operator*() {
     Accessed = true;
-    return RealSummary ? *RealSummary : ScratchSummary;
+    return ScratchSummary;
   }
 
   RetainSummary *operator->() {
     Accessed = true;
-    return RealSummary ? RealSummary : &ScratchSummary;
+    return &ScratchSummary;
   }
 };
 
@@ -844,12 +857,12 @@ ArgEffects RetainSummaryManager::getArgEffects() {
   return AE;
 }
 
-RetainSummary*
+const RetainSummary *
 RetainSummaryManager::getPersistentSummary(ArgEffects AE, RetEffect RetEff,
                                            ArgEffect ReceiverEff,
                                            ArgEffect DefaultEff) {
   // Create the summary and return it.
-  RetainSummary *Summ = (RetainSummary*) BPAlloc.Allocate<RetainSummary>();
+  RetainSummary *Summ = (RetainSummary *) BPAlloc.Allocate<RetainSummary>();
   new (Summ) RetainSummary(AE, RetEff, DefaultEff, ReceiverEff);
   return Summ;
 }
@@ -872,14 +885,14 @@ static bool isMakeCollectable(const FunctionDecl *FD, StringRef FName) {
   return FName.find("MakeCollectable") != StringRef::npos;
 }
 
-RetainSummary* RetainSummaryManager::getSummary(const FunctionDecl *FD) {
+const RetainSummary * RetainSummaryManager::getSummary(const FunctionDecl *FD) {
   // Look up a summary in our cache of FunctionDecls -> Summaries.
   FuncSummariesTy::iterator I = FuncSummaries.find(FD);
   if (I != FuncSummaries.end())
     return I->second;
 
   // No summary?  Generate one.
-  RetainSummary *S = 0;
+  const RetainSummary *S = 0;
 
   do {
     // We generate "stop" summaries for implicitly defined functions.
@@ -1068,7 +1081,7 @@ RetainSummary* RetainSummaryManager::getSummary(const FunctionDecl *FD) {
   return S;
 }
 
-RetainSummary*
+const RetainSummary *
 RetainSummaryManager::getCFCreateGetRuleSummary(const FunctionDecl *FD) {
   if (coreFoundation::followsCreateRule(FD))
     return getCFSummaryCreateRule(FD);
@@ -1076,7 +1089,7 @@ RetainSummaryManager::getCFCreateGetRuleSummary(const FunctionDecl *FD) {
   return getCFSummaryGetRule(FD);
 }
 
-RetainSummary*
+const RetainSummary *
 RetainSummaryManager::getUnarySummary(const FunctionType* FT,
                                       UnaryFuncKind func) {
 
@@ -1100,14 +1113,14 @@ RetainSummaryManager::getUnarySummary(const FunctionType* FT,
   return getPersistentSummary(RetEffect::MakeNoRet(), DoNothing, DoNothing);
 }
 
-RetainSummary* 
+const RetainSummary * 
 RetainSummaryManager::getCFSummaryCreateRule(const FunctionDecl *FD) {
   assert (ScratchArgs.isEmpty());
 
   return getPersistentSummary(RetEffect::MakeOwned(RetEffect::CF, true));
 }
 
-RetainSummary* 
+const RetainSummary * 
 RetainSummaryManager::getCFSummaryGetRule(const FunctionDecl *FD) {
   assert (ScratchArgs.isEmpty());
   return getPersistentSummary(RetEffect::MakeNotOwned(RetEffect::CF),
@@ -1118,7 +1131,7 @@ RetainSummaryManager::getCFSummaryGetRule(const FunctionDecl *FD) {
 // Summary creation for Selectors.
 //===----------------------------------------------------------------------===//
 
-RetainSummary*
+const RetainSummary *
 RetainSummaryManager::getInitMethodSummary(QualType RetTy) {
   assert(ScratchArgs.isEmpty());
   // 'init' methods conceptually return a newly allocated object and claim
@@ -1127,11 +1140,11 @@ RetainSummaryManager::getInitMethodSummary(QualType RetTy) {
       coreFoundation::isCFObjectRef(RetTy))
     return getPersistentSummary(ObjCInitRetE, DecRefMsg);
 
-  return 0;
+  return getDefaultSummary();
 }
 
 void
-RetainSummaryManager::updateSummaryFromAnnotations(RetainSummary *&Summ,
+RetainSummaryManager::updateSummaryFromAnnotations(const RetainSummary *&Summ,
                                                    const FunctionDecl *FD) {
   if (!FD)
     return;
@@ -1179,8 +1192,8 @@ RetainSummaryManager::updateSummaryFromAnnotations(RetainSummary *&Summ,
 }
 
 void
-RetainSummaryManager::updateSummaryFromAnnotations(RetainSummary *&Summ,
-                                                  const ObjCMethodDecl *MD) {
+RetainSummaryManager::updateSummaryFromAnnotations(const RetainSummary *&Summ,
+                                                   const ObjCMethodDecl *MD) {
   if (!MD)
     return;
 
@@ -1233,7 +1246,7 @@ RetainSummaryManager::updateSummaryFromAnnotations(RetainSummary *&Summ,
   }
 }
 
-RetainSummary*
+const RetainSummary *
 RetainSummaryManager::getCommonMethodSummary(const ObjCMethodDecl *MD,
                                              Selector S, QualType RetTy) {
 
@@ -1286,12 +1299,12 @@ RetainSummaryManager::getCommonMethodSummary(const ObjCMethodDecl *MD,
   }
 
   if (ScratchArgs.isEmpty() && ReceiverEff == DoNothing)
-    return 0;
+    return getDefaultSummary();
 
   return getPersistentSummary(RetEffect::MakeNoRet(), ReceiverEff, MayEscape);
 }
 
-RetainSummary*
+const RetainSummary *
 RetainSummaryManager::getInstanceMethodSummary(const ObjCMessage &msg,
                                                const ProgramState *state,
                                                const LocationContext *LC) {
@@ -1334,7 +1347,7 @@ RetainSummaryManager::getInstanceMethodSummary(const ObjCMessage &msg,
   return getInstanceMethodSummary(msg, ID);
 }
 
-RetainSummary*
+const RetainSummary *
 RetainSummaryManager::getInstanceMethodSummary(Selector S,
                                                IdentifierInfo *ClsName,
                                                const ObjCInterfaceDecl *ID,
@@ -1342,7 +1355,7 @@ RetainSummaryManager::getInstanceMethodSummary(Selector S,
                                                QualType RetTy) {
 
   // Look up a summary in our summary cache.
-  RetainSummary *Summ = ObjCMethodSummaries.find(ID, ClsName, S);
+  const RetainSummary *Summ = ObjCMethodSummaries.find(ID, ClsName, S);
 
   if (!Summ) {
     assert(ScratchArgs.isEmpty());
@@ -1363,14 +1376,14 @@ RetainSummaryManager::getInstanceMethodSummary(Selector S,
   return Summ;
 }
 
-RetainSummary*
+const RetainSummary *
 RetainSummaryManager::getClassMethodSummary(Selector S, IdentifierInfo *ClsName,
                                             const ObjCInterfaceDecl *ID,
                                             const ObjCMethodDecl *MD,
                                             QualType RetTy) {
 
   assert(ClsName && "Class name must be specified.");
-  RetainSummary *Summ = ObjCClassMethodSummaries.find(ID, ClsName, S);
+  const RetainSummary *Summ = ObjCClassMethodSummaries.find(ID, ClsName, S);
 
   if (!Summ) {
     Summ = getCommonMethodSummary(MD, S, RetTy);
@@ -1402,7 +1415,7 @@ void RetainSummaryManager::InitializeClassMethodSummaries() {
   // used for delegates that can release the object.  When we have better
   // inter-procedural analysis we can potentially do something better.  This
   // workaround is to remove false positives.
-  RetainSummary *Summ =
+  const RetainSummary *Summ =
     getPersistentSummary(RetEffect::MakeNoRet(), DoNothing, StopTracking);
   IdentifierInfo *NSObjectII = &Ctx.Idents.get("NSObject");
   addClsMethSummary(NSObjectII, Summ, "performSelector", "withObject",
@@ -1427,7 +1440,7 @@ void RetainSummaryManager::InitializeMethodSummaries() {
 
   // Create the "init" selector.  It just acts as a pass-through for the
   // receiver.
-  RetainSummary *InitSumm = getPersistentSummary(ObjCInitRetE, DecRefMsg);
+  const RetainSummary *InitSumm = getPersistentSummary(ObjCInitRetE, DecRefMsg);
   addNSObjectMethSummary(GetNullarySelector("init", Ctx), InitSumm);
 
   // awakeAfterUsingCoder: behaves basically like an 'init' method.  It
@@ -1436,13 +1449,13 @@ void RetainSummaryManager::InitializeMethodSummaries() {
                          InitSumm);
 
   // The next methods are allocators.
-  RetainSummary *AllocSumm = getPersistentSummary(ObjCAllocRetE);
-  RetainSummary *CFAllocSumm =
+  const RetainSummary *AllocSumm = getPersistentSummary(ObjCAllocRetE);
+  const RetainSummary *CFAllocSumm =
     getPersistentSummary(RetEffect::MakeOwned(RetEffect::CF, true));
 
   // Create the "retain" selector.
   RetEffect NoRet = RetEffect::MakeNoRet();
-  RetainSummary *Summ = getPersistentSummary(NoRet, IncRefMsg);
+  const RetainSummary *Summ = getPersistentSummary(NoRet, IncRefMsg);
   addNSObjectMethSummary(GetNullarySelector("retain", Ctx), Summ);
 
   // Create the "release" selector.
@@ -1471,7 +1484,7 @@ void RetainSummaryManager::InitializeMethodSummaries() {
   //  Thus, we need to track an NSWindow's display status.
   //  This is tracked in <rdar://problem/6062711>.
   //  See also http://llvm.org/bugs/show_bug.cgi?id=3714.
-  RetainSummary *NoTrackYet = getPersistentSummary(RetEffect::MakeNoRet(),
+  const RetainSummary *NoTrackYet = getPersistentSummary(RetEffect::MakeNoRet(),
                                                    StopTracking,
                                                    StopTracking);
 
@@ -2561,7 +2574,7 @@ void RetainCountChecker::checkPostStmt(const CallExpr *CE,
   SVal L = state->getSVal(Callee);
 
   RetainSummaryManager &Summaries = getSummaryManager(C);
-  RetainSummary *Summ = 0;
+  const RetainSummary *Summ = 0;
 
   // FIXME: Better support for blocks.  For now we stop tracking anything
   // that is passed to blocks.
@@ -2575,9 +2588,8 @@ void RetainCountChecker::checkPostStmt(const CallExpr *CE,
       Summ = Summaries.getSummary(MD);
   }
 
-  // If we didn't get a summary, this function doesn't affect retain counts.
   if (!Summ)
-    return;
+    Summ = Summaries.getDefaultSummary();
 
   checkSummary(*Summ, CallOrObjCMessage(CE, state), C);
 }
@@ -2589,7 +2601,7 @@ void RetainCountChecker::checkPostStmt(const CXXConstructExpr *CE,
     return;
 
   RetainSummaryManager &Summaries = getSummaryManager(C);
-  RetainSummary *Summ = Summaries.getSummary(Ctor);
+  const RetainSummary *Summ = Summaries.getSummary(Ctor);
 
   // If we didn't get a summary, this constructor doesn't affect retain counts.
   if (!Summ)
@@ -2606,7 +2618,7 @@ void RetainCountChecker::checkPostObjCMessage(const ObjCMessage &Msg,
 
   RetainSummaryManager &Summaries = getSummaryManager(C);
 
-  RetainSummary *Summ;
+  const RetainSummary *Summ;
   if (Msg.isInstanceMessage()) {
     const LocationContext *LC = Pred->getLocationContext();
     Summ = Summaries.getInstanceMethodSummary(Msg, state, LC);
