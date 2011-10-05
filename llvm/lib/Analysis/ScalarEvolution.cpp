@@ -4714,7 +4714,7 @@ getConstantEvolvingPHIOperands(Instruction *UseInst, const Loop *L,
     // If this operand is already visited, reuse the prior result.
     P = PHIMap.lookup(OpInst);
     if (P) {
-      assert(!PHI || P == PHI && "inconsitent data flow");
+      assert((!PHI || P == PHI) && "inconsitent data flow");
       PHI = P;
       continue;
     }
