@@ -691,6 +691,9 @@ void SelectionDAGISel::PrepareEHLandingPad() {
   // landing pad can thus be detected via the MachineModuleInfo.
   MCSymbol *Label = MF->getMMI().addLandingPad(MBB);
 
+  // Assign the call site to the landing pad's begin label.
+  MF->getMMI().setCallSiteLandingPad(Label, SDB->LPadToCallSiteMap[MBB]);
+    
   const MCInstrDesc &II = TM.getInstrInfo()->get(TargetOpcode::EH_LABEL);
   BuildMI(*MBB, FuncInfo->InsertPt, SDB->getCurDebugLoc(), II)
     .addSym(Label);
