@@ -128,10 +128,6 @@ bool Filler::findDelayInstr(MachineBasicBlock &MBB,
                             MachineBasicBlock::iterator &Filler) {
   SmallSet<unsigned, 32> RegDefs;
   SmallSet<unsigned, 32> RegUses;
-  bool sawLoad = false;
-  bool sawStore = false;
-
-  MachineBasicBlock::iterator I = slot;
 
   // Call's delay filler can def some of call's uses.
   if (slot->getDesc().isCall())
@@ -139,22 +135,21 @@ bool Filler::findDelayInstr(MachineBasicBlock &MBB,
   else
     insertDefsUses(slot, RegDefs, RegUses);
 
-  bool done = false;
+  bool sawLoad = false;
+  bool sawStore = false;
 
-  while (!done) {
-    done = (I == MBB.begin());
-
-    if (!done)
-      --I;
-
+  for (MachineBasicBlock::reverse_iterator I(slot); I != MBB.rend(); ++I) {
     // skip debug value
     if (I->isDebugValue())
       continue;
 
+    // Convert to forward iterator.
+    MachineBasicBlock::iterator FI(next(I).base());
+
     if (I->hasUnmodeledSideEffects()
         || I->isInlineAsm()
         || I->isLabel()
-        || I == LastFiller
+        || FI == LastFiller
         || I->getDesc().isPseudo()
         //
         // Should not allow:
@@ -163,12 +158,12 @@ bool Filler::findDelayInstr(MachineBasicBlock &MBB,
         )
       break;
 
-    if (delayHasHazard(I, sawLoad, sawStore, RegDefs, RegUses)) {
-      insertDefsUses(I, RegDefs, RegUses);
+    if (delayHasHazard(FI, sawLoad, sawStore, RegDefs, RegUses)) {
+      insertDefsUses(FI, RegDefs, RegUses);
       continue;
     }
 
-    Filler = I;
+    Filler = FI;
     return true;
   }
 
