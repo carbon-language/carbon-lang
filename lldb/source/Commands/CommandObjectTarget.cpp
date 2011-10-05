@@ -623,9 +623,9 @@ public:
         if (target)
         {
             const size_t argc = args.GetArgumentCount();
+            Stream &s = result.GetOutputStream();
             if (argc > 0)
             {
-                Stream &s = result.GetOutputStream();
 
                 for (size_t idx = 0; idx < argc; ++idx)
                 {
@@ -692,8 +692,56 @@ public:
             }
             else
             {
-                result.AppendError ("'target variable' takes one or more global variable names as arguments\n");
-                result.SetStatus (eReturnStatusFailed);
+                bool success = false;
+                StackFrame *frame = exe_ctx.GetFramePtr();
+                CompileUnit *comp_unit = NULL;
+                if (frame)
+                {
+                    comp_unit = frame->GetSymbolContext (eSymbolContextCompUnit).comp_unit;
+                    if (comp_unit)
+                    {
+                        const bool can_create = true;
+                        VariableListSP comp_unit_varlist_sp (comp_unit->GetVariableList(can_create));
+                        if (comp_unit_varlist_sp)
+                        {
+                            size_t count = comp_unit_varlist_sp->GetSize();
+                            if (count > 0)
+                            {
+                                s.Printf ("Global in %s/%s:\n", 
+                                          comp_unit->GetDirectory().GetCString(),
+                                          comp_unit->GetFilename().GetCString());
+
+                                success = true;
+                                for (uint32_t i=0; i<count; ++i)
+                                {
+                                    VariableSP var_sp (comp_unit_varlist_sp->GetVariableAtIndex(i));
+                                    if (var_sp)
+                                    {
+                                        ValueObjectSP valobj_sp (ValueObjectVariable::Create (exe_ctx.GetBestExecutionContextScope(), var_sp));
+                                        
+                                        if (valobj_sp)
+                                            DumpValueObject (s, var_sp, valobj_sp, var_sp->GetName().GetCString());
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                if (!success)
+                {
+                    if (frame)
+                    {
+                        if (comp_unit)
+                            result.AppendErrorWithFormat ("no global variables in current compile unit: %s/%s\n", 
+                                                          comp_unit->GetDirectory().GetCString(), 
+                                                          comp_unit->GetFilename().GetCString());
+                        else
+                            result.AppendError ("no debug information for frame %u\n", frame->GetFrameIndex());
+                    }                        
+                    else
+                        result.AppendError ("'target variable' takes one or more global variable names as arguments\n");
+                    result.SetStatus (eReturnStatusFailed);
+                }
             }
         }
         else
