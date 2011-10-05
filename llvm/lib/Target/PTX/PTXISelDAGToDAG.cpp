@@ -125,8 +125,10 @@ SDNode *PTXDAGToDAGISel::SelectREADPARAM(SDNode *Node) {
     OpCode = PTX::READPARAMI64;
   else if (Type == MVT::f32)
     OpCode = PTX::READPARAMF32;
-  else if (Type == MVT::f64)
+  else {
+    assert(Type == MVT::f64 && "Unexpected type!");
     OpCode = PTX::READPARAMF64;
+  }
 
   SDValue Pred = CurDAG->getRegister(PTX::NoRegister, MVT::i1);
   SDValue PredOp = CurDAG->getTargetConstant(PTXPredicate::None, MVT::i32);
