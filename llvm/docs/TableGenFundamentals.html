@@ -769,6 +769,65 @@ before them.
 </pre>
 </div>
 
+<p>
+A special "multidef" may be used inside a multiclass to generate
+several defs given a list of values.
+</p>
+
+<div class="doc_code">
+<pre>
+<b>class</b> Base&lt;int i&gt; {
+  int value = i;
+}
+
+<b>multiclass</b> Multi&lt;list&lt;int&gt; values&gt; {
+  <b>def</b> ONE : Base&lt;values[0]&gt;;
+  <b>def</b> TWO : Base&lt;values[1]&gt;;
+
+  <b>multidef</b> COUNT&lt;values, int v, 2&gt; : Base&lt:v&gt;;
+}
+
+<b>defm</b> List : Multi&lt;[1, 2, 3, 4, 5, 6]&lt;;
+...
+
+<i>// Results</i>
+<b>def</b> ListCOUNT {
+  int v = ?;
+  int value = v;
+  list<int> Multi::values = [1, 2, 3, 4, 5, 6];
+}
+<b>def</b> ListONE {
+  int value = 1;
+}
+<b>def</b> ListTWO {
+  int value = 2;
+}
+<b>def</b> MD2.ListCOUNT {
+  int value = 3;
+}
+<b>def</b> MD3.ListCOUNT {
+  int value = 4;
+}
+<b>def</b> MD4.ListCOUNT {
+  int value = 5;
+}
+<b>def</b> MD5.ListCOUNT {
+  int value = 6;
+}
+</pre>
+</div>
+
+<p>
+A multidef takes three "arguments" in the &lt;&gt; notation after the multidef 
+name.  The first is a list of items to process.  The second is a declaration.  
+This declaration creates a temporary name used as an iterator.  It picks up the 
+value of each processed list item as TableGen generates defs from the multidef.  
+This temporary may be named and passed into the multidef body as shown in the 
+example above.  This provides a powerful way to generate defs with various 
+values from a single multidef.  The final "argument" is an integer value 
+indicating where in the list to begin processing.  In the above example we 
+chose to begin list processing with the third item (index 2).
+</p>
 </div>
 
 </div>
