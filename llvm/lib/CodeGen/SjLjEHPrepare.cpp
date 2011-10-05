@@ -854,7 +854,7 @@ bool SjLjEHPass::setupEntryBlockAndCallSites(Function &F) {
   CallInst::Create(FuncCtxFn, FuncCtxArg, "", EntryBB->getTerminator());
 
   // At this point, we are all set up, update the invoke instructions to mark
-  // their call_site values, and fill in the dispatch switch accordingly.
+  // their call_site values.
   for (unsigned I = 0, E = Invokes.size(); I != E; ++I) {
     insertCallSiteStore(Invokes[I], I + 1, CallSite);
 
