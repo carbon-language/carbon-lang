@@ -2031,13 +2031,14 @@ public:
   /// By default, performs semantic analysis to build the new expression.
   /// Subclasses may override this routine to provide different behavior.
   ExprResult RebuildCXXConstructExpr(QualType T,
-                                           SourceLocation Loc,
-                                           CXXConstructorDecl *Constructor,
-                                           bool IsElidable,
-                                           MultiExprArg Args,
-                                           bool RequiresZeroInit,
+                                     SourceLocation Loc,
+                                     CXXConstructorDecl *Constructor,
+                                     bool IsElidable,
+                                     MultiExprArg Args,
+                                     bool HadMultipleCandidates,
+                                     bool RequiresZeroInit,
                              CXXConstructExpr::ConstructionKind ConstructKind,
-                                           SourceRange ParenRange) {
+                                     SourceRange ParenRange) {
     ASTOwningVector<Expr*> ConvertedArgs(SemaRef);
     if (getSema().CompleteConstructorCall(Constructor, move(Args), Loc, 
                                           ConvertedArgs))
@@ -2045,6 +2046,7 @@ public:
     
     return getSema().BuildCXXConstructExpr(Loc, T, Constructor, IsElidable,
                                            move_arg(ConvertedArgs),
+                                           HadMultipleCandidates,
                                            RequiresZeroInit, ConstructKind,
                                            ParenRange);
   }
@@ -7345,6 +7347,7 @@ TreeTransform<Derived>::TransformCXXConstructExpr(CXXConstructExpr *E) {
   return getDerived().RebuildCXXConstructExpr(T, /*FIXME:*/E->getLocStart(),
                                               Constructor, E->isElidable(),
                                               move_arg(Args),
+                                              E->hadMultipleCandidates(),
                                               E->requiresZeroInitialization(),
                                               E->getConstructionKind(),
                                               E->getParenRange());

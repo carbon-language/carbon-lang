@@ -265,6 +265,7 @@ void ASTStmtWriter::VisitDeclRefExpr(DeclRefExpr *E) {
   Record.push_back(E->hasQualifier());
   Record.push_back(E->getDecl() != E->getFoundDecl());
   Record.push_back(E->hasExplicitTemplateArgs());
+  Record.push_back(E->hadMultipleCandidates());
 
   if (E->hasExplicitTemplateArgs()) {
     unsigned NumTemplateArgs = E->getNumTemplateArgs();
@@ -457,7 +458,9 @@ void ASTStmtWriter::VisitMemberExpr(MemberExpr *E) {
     for (unsigned i=0; i != NumTemplateArgs; ++i)
       Writer.AddTemplateArgumentLoc(E->getTemplateArgs()[i], Record);
   }
-  
+
+  Record.push_back(E->hadMultipleCandidates());
+
   DeclAccessPair FoundDecl = E->getFoundDecl();
   Writer.AddDeclRef(FoundDecl.getDecl(), Record);
   Record.push_back(FoundDecl.getAccess());
@@ -958,6 +961,7 @@ void ASTStmtWriter::VisitCXXConstructExpr(CXXConstructExpr *E) {
   Writer.AddDeclRef(E->getConstructor(), Record);
   Writer.AddSourceLocation(E->getLocation(), Record);
   Record.push_back(E->isElidable());
+  Record.push_back(E->hadMultipleCandidates());
   Record.push_back(E->requiresZeroInitialization());
   Record.push_back(E->getConstructionKind()); // FIXME: stable encoding
   Writer.AddSourceRange(E->getParenRange(), Record);
@@ -1077,6 +1081,7 @@ void ASTStmtWriter::VisitCXXNewExpr(CXXNewExpr *E) {
   Record.push_back(E->hasInitializer());
   Record.push_back(E->doesUsualArrayDeleteWantSize());
   Record.push_back(E->isArray());
+  Record.push_back(E->hadMultipleCandidates());
   Record.push_back(E->getNumPlacementArgs());
   Record.push_back(E->getNumConstructorArgs());
   Writer.AddDeclRef(E->getOperatorNew(), Record);

@@ -327,6 +327,7 @@ void ASTStmtReader::VisitDeclRefExpr(DeclRefExpr *E) {
   E->DeclRefExprBits.HasQualifier = Record[Idx++];
   E->DeclRefExprBits.HasFoundDecl = Record[Idx++];
   E->DeclRefExprBits.HasExplicitTemplateArgs = Record[Idx++];
+  E->DeclRefExprBits.HadMultipleCandidates = Record[Idx++];
   unsigned NumTemplateArgs = 0;
   if (E->hasExplicitTemplateArgs())
     NumTemplateArgs = Record[Idx++];
@@ -986,7 +987,8 @@ void ASTStmtReader::VisitCXXConstructExpr(CXXConstructExpr *E) {
     E->setArg(I, Reader.ReadSubExpr());
   E->setConstructor(ReadDeclAs<CXXConstructorDecl>(Record, Idx));
   E->setLocation(ReadSourceLocation(Record, Idx));
-  E->setElidable(Record[Idx++]);  
+  E->setElidable(Record[Idx++]);
+  E->setHadMultipleCandidates(Record[Idx++]);
   E->setRequiresZeroInitialization(Record[Idx++]);
   E->setConstructionKind((CXXConstructExpr::ConstructionKind)Record[Idx++]);
   E->ParenRange = ReadSourceRange(Record, Idx);
@@ -1090,6 +1092,7 @@ void ASTStmtReader::VisitCXXNewExpr(CXXNewExpr *E) {
   E->Initializer = Record[Idx++];
   E->UsualArrayDeleteWantsSize = Record[Idx++];
   bool isArray = Record[Idx++];
+  E->setHadMultipleCandidates(Record[Idx++]);
   unsigned NumPlacementArgs = Record[Idx++];
   unsigned NumCtorArgs = Record[Idx++];
   E->setOperatorNew(ReadDeclAs<FunctionDecl>(Record, Idx));
@@ -1549,7 +1552,7 @@ Stmt *ASTReader::ReadStmtFromStream(Module &F) {
         /*HasFoundDecl=*/Record[ASTStmtReader::NumExprFields + 1],
         /*HasExplicitTemplateArgs=*/Record[ASTStmtReader::NumExprFields + 2],
         /*NumTemplateArgs=*/Record[ASTStmtReader::NumExprFields + 2] ?
-          Record[ASTStmtReader::NumExprFields + 3] : 0);
+          Record[ASTStmtReader::NumExprFields + 4] : 0);
       break;
 
     case EXPR_INTEGER_LITERAL:
@@ -1623,7 +1626,9 @@ Stmt *ASTReader::ReadStmtFromStream(Module &F) {
         for (unsigned i = 0; i != NumTemplateArgs; ++i)
           ArgInfo.addArgument(ReadTemplateArgumentLoc(F, Record, Idx));
       }
-      
+
+      bool HadMultipleCandidates = Record[Idx++];
+
       NamedDecl *FoundD = ReadDeclAs<NamedDecl>(F, Record, Idx);
       AccessSpecifier AS = (AccessSpecifier)Record[Idx++];
       DeclAccessPair FoundDecl = DeclAccessPair::make(FoundD, AS);
@@ -1642,6 +1647,8 @@ Stmt *ASTReader::ReadStmtFromStream(Module &F) {
                              HasExplicitTemplateArgs ? &ArgInfo : 0, T, VK, OK);
       ReadDeclarationNameLoc(F, cast<MemberExpr>(S)->MemberDNLoc,
                              MemberD->getDeclName(), Record, Idx);
+      if (HadMultipleCandidates)
+        cast<MemberExpr>(S)->setHadMultipleCandidates(true);
       break;
     }
 

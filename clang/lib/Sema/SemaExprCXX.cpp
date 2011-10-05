@@ -1062,6 +1062,7 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
   bool Init = ConstructorLParen.isValid();
   // --- Choosing a constructor ---
   CXXConstructorDecl *Constructor = 0;
+  bool HadMultipleCandidates = false;
   Expr **ConsArgs = (Expr**)ConstructorArgs.get();
   unsigned NumConsArgs = ConstructorArgs.size();
   ASTOwningVector<Expr*> ConvertedConstructorArgs(*this);
@@ -1108,6 +1109,7 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
       if (CXXConstructExpr *Construct
                     = dyn_cast<CXXConstructExpr>(FullInitExpr)) {
         Constructor = Construct->getConstructor();
+        HadMultipleCandidates = Construct->hadMultipleCandidates();
         for (CXXConstructExpr::arg_iterator A = Construct->arg_begin(),
                                          AEnd = Construct->arg_end();
              A != AEnd; ++A)
@@ -1149,7 +1151,9 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
   return Owned(new (Context) CXXNewExpr(Context, UseGlobal, OperatorNew,
                                         PlaceArgs, NumPlaceArgs, TypeIdParens,
                                         ArraySize, Constructor, Init,
-                                        ConsArgs, NumConsArgs, OperatorDelete,
+                                        ConsArgs, NumConsArgs,
+                                        HadMultipleCandidates,
+                                        OperatorDelete,
                                         UsualArrayDeleteWantsSize,
                                         ResultType, AllocTypeInfo,
                                         StartLoc,
@@ -2048,6 +2052,7 @@ static ExprResult BuildCXXCastArgument(Sema &S,
                                        CastKind Kind,
                                        CXXMethodDecl *Method,
                                        DeclAccessPair FoundDecl,
+                                       bool HadMultipleCandidates,
                                        Expr *From) {
   switch (Kind) {
   default: llvm_unreachable("Unhandled cast kind!");
@@ -2061,7 +2066,7 @@ static ExprResult BuildCXXCastArgument(Sema &S,
 
     ExprResult Result =
     S.BuildCXXConstructExpr(CastLoc, Ty, cast<CXXConstructorDecl>(Method),
-                            move_arg(ConstructorArgs),
+                            move_arg(ConstructorArgs), HadMultipleCandidates,
                             /*ZeroInit*/ false, CXXConstructExpr::CK_Complete,
                             SourceRange());
     if (Result.isInvalid())
@@ -2074,7 +2079,8 @@ static ExprResult BuildCXXCastArgument(Sema &S,
     assert(!From->getType()->isPointerType() && "Arg can't have pointer type!");
 
     // Create an implicit call expr that calls it.
-    ExprResult Result = S.BuildCXXMemberCallExpr(From, FoundDecl, Method);
+    ExprResult Result = S.BuildCXXMemberCallExpr(From, FoundDecl, Method,
+                                                 HadMultipleCandidates);
     if (Result.isInvalid())
       return ExprError();
 
@@ -2145,6 +2151,7 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
                                ToType.getNonReferenceType(),
                                CastKind, cast<CXXMethodDecl>(FD),
                                ICS.UserDefined.FoundConversionFunction,
+                               ICS.UserDefined.HadMultipleCandidates,
                                From);
 
       if (CastArg.isInvalid())
@@ -2204,6 +2211,7 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
       return BuildCXXConstructExpr(/*FIXME:ConstructLoc*/SourceLocation(),
                                    ToType, SCS.CopyConstructor,
                                    move_arg(ConstructorArgs),
+                                   /*HadMultipleCandidates*/ false,
                                    /*ZeroInit*/ false,
                                    CXXConstructExpr::CK_Complete,
                                    SourceRange());
@@ -2211,6 +2219,7 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
     return BuildCXXConstructExpr(/*FIXME:ConstructLoc*/SourceLocation(),
                                  ToType, SCS.CopyConstructor,
                                  MultiExprArg(*this, &From, 1),
+                                 /*HadMultipleCandidates*/ false,
                                  /*ZeroInit*/ false,
                                  CXXConstructExpr::CK_Complete,
                                  SourceRange());
@@ -4520,7 +4529,8 @@ ExprResult Sema::ActOnPseudoDestructorExpr(Scope *S, Expr *Base,
 }
 
 ExprResult Sema::BuildCXXMemberCallExpr(Expr *E, NamedDecl *FoundDecl,
-                                        CXXMethodDecl *Method) {
+                                        CXXMethodDecl *Method,
+                                        bool HadMultipleCandidates) {
   ExprResult Exp = PerformObjectArgumentInitialization(E, /*Qualifier=*/0,
                                           FoundDecl, Method);
   if (Exp.isInvalid())
@@ -4530,6 +4540,9 @@ ExprResult Sema::BuildCXXMemberCallExpr(Expr *E, NamedDecl *FoundDecl,
       new (Context) MemberExpr(Exp.take(), /*IsArrow=*/false, Method,
                                SourceLocation(), Method->getType(),
                                VK_RValue, OK_Ordinary);
+  if (HadMultipleCandidates)
+    ME->setHadMultipleCandidates(true);
+
   QualType ResultType = Method->getResultType();
   ExprValueKind VK = Expr::getValueKindForType(ResultType);
   ResultType = ResultType.getNonLValueExprType(Context);

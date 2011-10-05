@@ -2685,7 +2685,8 @@ public:
   /// and sets it as the initializer for the the passed in VarDecl.
   bool InitializeVarWithConstructor(VarDecl *VD,
                                     CXXConstructorDecl *Constructor,
-                                    MultiExprArg Exprs);
+                                    MultiExprArg Exprs,
+                                    bool HadMultipleCandidates);
 
   /// BuildCXXConstructExpr - Creates a complete call to a constructor,
   /// including handling of its default argument expressions.
@@ -2694,16 +2695,16 @@ public:
   ExprResult
   BuildCXXConstructExpr(SourceLocation ConstructLoc, QualType DeclInitType,
                         CXXConstructorDecl *Constructor, MultiExprArg Exprs,
-                        bool RequiresZeroInit, unsigned ConstructKind,
-                        SourceRange ParenRange);
+                        bool HadMultipleCandidates, bool RequiresZeroInit,
+                        unsigned ConstructKind, SourceRange ParenRange);
 
   // FIXME: Can re remove this and have the above BuildCXXConstructExpr check if
   // the constructor can be elidable?
   ExprResult
   BuildCXXConstructExpr(SourceLocation ConstructLoc, QualType DeclInitType,
                         CXXConstructorDecl *Constructor, bool Elidable,
-                        MultiExprArg Exprs, bool RequiresZeroInit,
-                        unsigned ConstructKind,
+                        MultiExprArg Exprs, bool HadMultipleCandidates,
+                        bool RequiresZeroInit, unsigned ConstructKind,
                         SourceRange ParenRange);
 
   /// BuildCXXDefaultArgExpr - Creates a CXXDefaultArgExpr, instantiating
@@ -3360,7 +3361,8 @@ public:
                                   TypeSourceInfo *EncodedTypeInfo,
                                   SourceLocation RParenLoc);
   ExprResult BuildCXXMemberCallExpr(Expr *Exp, NamedDecl *FoundDecl,
-                                    CXXMethodDecl *Method);
+                                    CXXMethodDecl *Method,
+                                    bool HadMultipleCandidates);
 
   ExprResult ParseObjCEncodeExpression(SourceLocation AtLoc,
                                        SourceLocation EncodeLoc,

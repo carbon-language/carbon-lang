@@ -3837,14 +3837,17 @@ Expr *ASTNodeImporter::VisitDeclRefExpr(DeclRefExpr *E) {
   QualType T = Importer.Import(E->getType());
   if (T.isNull())
     return 0;
-  
-  return DeclRefExpr::Create(Importer.getToContext(), 
-                             Importer.Import(E->getQualifierLoc()),
-                             ToD,
-                             Importer.Import(E->getLocation()),
-                             T, E->getValueKind(),
-                             FoundD,
-                             /*FIXME:TemplateArgs=*/0);
+
+  DeclRefExpr *DRE = DeclRefExpr::Create(Importer.getToContext(), 
+                                         Importer.Import(E->getQualifierLoc()),
+                                         ToD,
+                                         Importer.Import(E->getLocation()),
+                                         T, E->getValueKind(),
+                                         FoundD,
+                                         /*FIXME:TemplateArgs=*/0);
+  if (E->hadMultipleCandidates())
+    DRE->setHadMultipleCandidates(true);
+  return DRE;
 }
 
 Expr *ASTNodeImporter::VisitIntegerLiteral(IntegerLiteral *E) {
