@@ -1287,7 +1287,6 @@ bool ARMDAGToDAGISel::SelectT2AddrModeSoReg(SDValue N,
 
   if (Subtarget->isCortexA9() && !N.hasOneUse()) {
     // Compute R + (R << [1,2,3]) and reuse it.
-    Base = N;
     return false;
   }
 
