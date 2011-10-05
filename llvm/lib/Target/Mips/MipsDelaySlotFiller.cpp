@@ -190,12 +190,14 @@ bool Filler::delayHasHazard(MachineBasicBlock::iterator candidate,
       return true;
   }
 
+  assert(!candidate->getDesc().isCall() && "Cannot put calls in delay slot.");
+
   for (unsigned i = 0, e = candidate->getNumOperands(); i!= e; ++i) {
     const MachineOperand &MO = candidate->getOperand(i);
-    if (!MO.isReg())
-      continue; // skip
+    unsigned Reg;
 
-    unsigned Reg = MO.getReg();
+    if (!MO.isReg() || !(Reg = MO.getReg()))
+      continue; // skip
 
     if (MO.isDef()) {
       // check whether Reg is defined or used before delay slot.
@@ -215,7 +217,7 @@ bool Filler::delayHasHazard(MachineBasicBlock::iterator candidate,
 void Filler::insertDefsUses(MachineBasicBlock::iterator MI,
                             SmallSet<unsigned, 32>& RegDefs,
                             SmallSet<unsigned, 32>& RegUses) {
-  // If MI is a call, just examine the explicit non-variadic operands.
+  // If MI is a call or return, just examine the explicit non-variadic operands.
   // NOTE: $ra is not added to RegDefs, since currently $ra is reserved and
   //       no instruction that can possibly be put in a delay slot can read or
   //       write it.
