@@ -1267,6 +1267,15 @@ public:
     else removeAttribute(~0, Attribute::NoInline);
   }
 
+  /// @brief Return true if the call can return twice
+  bool canReturnTwice() const {
+    return paramHasAttr(~0, Attribute::ReturnsTwice);
+  }
+  void setCanReturnTwice(bool Value = true) {
+    if (Value) addAttribute(~0, Attribute::ReturnsTwice);
+    else removeAttribute(~0, Attribute::ReturnsTwice);
+  }
+
   /// @brief Determine if the call does not access memory.
   bool doesNotAccessMemory() const {
     return paramHasAttr(~0, Attribute::ReadNone);

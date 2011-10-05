@@ -17,6 +17,7 @@
 #include "llvm/LLVMContext.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/Support/CallSite.h"
+#include "llvm/Support/InstIterator.h"
 #include "llvm/Support/LeakDetector.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/StringPool.h"
@@ -416,7 +417,6 @@ bool Function::hasAddressTaken(const User* *PutOffender) const {
 /// FIXME: Remove after <rdar://problem/8031714> is fixed.
 /// FIXME: Is the above FIXME valid?
 bool Function::callsFunctionThatReturnsTwice() const {
-  const Module *M = this->getParent();
   static const char *ReturnsTwiceFns[] = {
     "_setjmp",
     "setjmp",
@@ -428,16 +428,25 @@ bool Function::callsFunctionThatReturnsTwice() const {
     "getcontext"
   };
 
-  for (unsigned I = 0; I < array_lengthof(ReturnsTwiceFns); ++I)
-    if (const Function *Callee = M->getFunction(ReturnsTwiceFns[I])) {
-      if (!Callee->use_empty())
-        for (Value::const_use_iterator
-               I = Callee->use_begin(), E = Callee->use_end();
-             I != E; ++I)
-          if (const CallInst *CI = dyn_cast<CallInst>(*I))
-            if (CI->getParent()->getParent() == this)
-              return true;
+  for (const_inst_iterator I = inst_begin(this), E = inst_end(this); I != E;
+       ++I) {
+    const CallInst* callInst = dyn_cast<CallInst>(&*I);
+    if (!callInst)
+      continue;
+    if (callInst->canReturnTwice())
+      return true;
+
+    // check for known function names.
+    // FIXME: move this to clang.
+    Function *F = callInst->getCalledFunction();
+    if (!F)
+      continue;
+    StringRef Name = F->getName();
+    for (unsigned J = 0; J < array_lengthof(ReturnsTwiceFns); ++J) {
+      if (Name == ReturnsTwiceFns[J])
+        return true;
     }
+  }
 
   return false;
 }
