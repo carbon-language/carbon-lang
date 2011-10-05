@@ -5277,6 +5277,9 @@ checkPointerTypesForAssignment(Sema &S, QualType LHSType, QualType RHSType) {
     // General pointer incompatibility takes priority over qualifiers.
     return Sema::IncompatiblePointer;
   }
+  if (!S.getLangOptions().CPlusPlus &&
+      S.IsNoReturnConversion(ltrans, rtrans, ltrans))
+    return Sema::IncompatiblePointer;
   return ConvTy;
 }
 
