@@ -21,6 +21,7 @@
         <li><a href="lldb-gdb.html">LLDB and GDB</a></li>
         <li><a href="scripting.html">Python Scripting</a></li>
         <li><a href="tutorial.html">Tutorial</a></li>
+        <li><a href="emacs-integration.html">Emacs Integration</a></li>
       </ul>
     </div>
   </div>

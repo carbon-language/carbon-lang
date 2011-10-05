@@ -1,0 +1,50 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<link href="style.css" rel="stylesheet" type="text/css" />
+<title>LLDB Status</title>
+</head>
+
+<body>
+<div class="www_title">
+  The <strong>Emacs</strong> Integration
+</div>
+    
+<div id="container">
+<div id="content">
+  <!--#include virtual="sidebar.incl"-->
+        
+<div id="middle">
+<div class="post">
+  <h1 class ="postheader">Status</h1>
+<div class="postcontent">
+
+  <p>LLDB supports Emacs integration through customizing the GUD (Grand Unified Debugger) library.
+  Take a look at <a href="http://www.gnu.org/software/libtool/manual/emacs/Debuggers.html#Debuggers">Grand Unified Debugger</a>
+  and the <a href="http://www.emacswiki.org/emacs/GrandUnifiedDebugger">Emacs Wiki Page</a> for more details.</p>
+
+  <p>The lldb-enhanced gud.el is based on the emacs 22.3.1 version from Aquamacs 1.8c distribution.
+  To use it, within emacs, load the gud.el file located under the utils/emacs directory.
+  Type 'M-x lldb' to invoke lldb.  The first time you do this, emacs will ask you to supply the command line to invoke lldb.
+  If lldb is not in your PATH, be sure to specify the full path to the lldb executable.</p>
+
+  <p>This is a screen shot of the gud (with lldb) at work on Aquamacs distribution 2.1 by loading gud.el and 'M-x lldb'
+  on the a.out file in the test/functionalities/conditional_break directory:</p>
+
+  <p>
+  <img src="lldb-gud-window.png">
+  </p>
+
+  <p>We welcome any help fleshing out missing pieces and improving the elisp code.</p>
+
+  <p>Last Update: Oct 05, 2011.</p>
+
+</div>
+<div class="postfooter"></div>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>
