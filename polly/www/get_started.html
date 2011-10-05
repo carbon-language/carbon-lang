@@ -15,47 +15,69 @@
 
 <h1>Getting Started: Building and Installing Polly</h1>
 
+<h2 id="source"> Get the code </h2>
 
+The Polly source code is available in the LLVM SVN repository as well as in an
+official a git mirror. It is added to the <em>tools</em>
+directory of the llvm sources.
+<b>Polly and LLVM need to be checked out at the time. Checkouts
+   from different dates may not work!</b>
+<h4>Set the directory layout:</h4>
+<pre>
+export BASE=`pwd`
+export LLVM_SRC=${BASE}/llvm
+export POLLY_SRC=${LLVM_SRC}/tools/polly
+</pre>
+
+<h4>SVN</h4>
+<pre>
+svn checkout http://llvm.org/svn/llvm-project/llvm/trunk ${LLVM_SRC}
+svn checkout http://llvm.org/svn/llvm-project/polly/trunk ${POLLY_SRC}
+</pre>
+<h4>GIT</h4>
+<pre>
+git clone http://llvm.org/git/llvm.git ${LLVM_SRC}
+git clone http://llvm.org/git/polly.git ${POLLY_SRC}
+</pre>
 <h2 id="prerequisites"> Prerequisites </h2>
-
-The following prerequisites can be installed through the package management
-system of your operating system.
-
 <ul>
-<li>libgmp (library + developer package)</li>
+<li>libgmp</li>
+<li>CLooG/isl</li>
+<li>PoCC (optional)</li>
 </ul>
 
-<h3> Install ISL / CLooG libraries </h3>
+<h3> libgmp </h3>
+Install libgmp (library + developer package) through the package management
+system of your operating system.
 
-Polly requires the latest versions of <a href="http://www.cloog.org">CLooG</a>
-and <a href="http://repo.or.cz/w/isl.git">isl</a> checked out at
-commit cd1939ed06617d00159e8e51b72a804b467e98b4.
+<h3> CLooG/isl</h3>
+
+Polly is tested and works with <a href="http://www.cloog.org">CLooG</a> as of
+commit 225c2ed62fe37a4db22bf4b95c3731dab1a50dde
+and <a href="http://repo.or.cz/w/isl.git">isl</a> as of
+commit cd1939ed06617d00159e8e51b72a804b467e98b4. To get and install the
+relevant cloog version use the following commands:
+
+<h4>Set the directory layout:</h4>
+<pre>
+export CLOOG_SRC=${BASE}/cloog_src
+export CLOOG_INSTALL=${LLVM_SRC}/cloog_install
+</pre>
 
 <h4> First installation</h4>
 <pre>
-git clone git://repo.or.cz/cloog.git
-cd cloog
-git checkout cloog-0.16.3
-./get_submodules.sh
-cd isl
-git remote update
-git checkout cd1939ed06617d00159e8e51b72a804b467e98b4
-cd ..
-./autogen.sh
-./configure --with-gmp-prefix=/path/to/gmp/installation --prefix=/path/to/cloog/installation
+${POLLY_SRC}/utils/checkout_cloog.sh ${CLOOG_SRC}
+${POLLY_SRC}/configure --prefix=${CLOOG_INSTALL}
 make
 make install
 </pre>
 
-<h4> Update an earlier installation</h4>
+<h4> Update the installation</h4>
+
+Updating CLooG may become necessary, if Polly uses a feature
+only available in a recent version of CLooG.
 <pre>
-cd cloog
-git remote update
-git checkout cloog-0.16.3
-cd isl
-git remote update
-git checkout cd1939ed06617d00159e8e51b72a804b467e98b4
-cd ..
+${POLLY_SRC}/utils/checkout_cloog.sh ${CLOOG_SRC}
 make
 make install
 </pre>
@@ -94,59 +116,30 @@ cd scoplib-0.2.0
 make && make install
 </pre>
 
-<h2 id="source"> Get the code </h2>
-
-<p>
-The Polly source code is available in the LLVM SVN repository. For convenience
-we also provide a git mirror. To build Polly we extract its source code into the
-<em>tools</em> directory of the llvm sources.</p>
-<b>A recent LLVM checkout is needed. Older versions may not work!</b>
-
-<h3>SVN</h3>
-<pre>
-export LLVM_SRC=`pwd`/llvm
-svn checkout http://llvm.org/svn/llvm-project/llvm/trunk ${LLVM_SRC}
-cd ${LLVM_SRC}/tools
-svn checkout http://llvm.org/svn/llvm-project/polly/trunk polly
-</pre>
-<h3>GIT</h3>
-<pre>
-export LLVM_SRC=`pwd`/llvm
-git clone http://llvm.org/git/llvm.git ${LLVM_SRC}
-cd ${LLVM_SRC}/tools
-git clone http://llvm.org/git/polly.git
-</pre>
-
-
-
 <h2 id="build">Build Polly</h2>
 
 To build Polly you can either use the autoconf or the cmake build system. At the
 moment only the autoconf build system allows to run the llvm test-suite and only
 the cmake build system allows to run 'make polly-test'.
 
-<h3>CMake</h3>
+<h4>Set the directory layout:</h4>
+<pre>
+export LLVM_BUILD=${BASE}/llvm_build
+mkdir ${LLVM_BUILD}
+cd ${LLVM_BUILD}
+</pre>
+
+<h4>CMake</h4>
 
 <pre>
-mkdir build
-cd build
-cmake ${LLVM_SRC}
-
-# If CMAKE cannot find CLooG and ISL
-cmake -DCMAKE_PREFIX_PATH=/cloog/installation .
-
-# To point CMAKE to the scoplib source
-cmake -DCMAKE_PREFIX_PATH=/scoplib/installation .
-
+cmake -DCMAKE_PREFIX_PATH=${CLOOG_INSTALL} ${LLVM_SRC}
 make
 </pre>
 
-<h3> Autoconf </h2>
+<h4> Autoconf </h4>
 
 <pre>
-mkdir build
-cd build
-${LLVM_SRC}/configure --with-cloog=/cloog/installation --with-isl=/cloog/installation --with-scoplib=/scoplib/installation
+${LLVM_SRC}/configure --with-cloog=${CLOOG_INSTALL} --with-isl=${CLOOG_INSTALL}
 make
 </pre>
 

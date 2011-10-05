@@ -26,9 +26,7 @@
 
   <div class="submenu">
     <label>The Code</label>
-    <a href="/get_started.html#prerequisites">Prerequisites</a>
-    <a href="/get_started.html#source">Download</a>
-    <a href="/get_started.html#build">Build</a>
+    <a href="/get_started.html>Get and Install</a>
     <a href="http://llvm.org/viewvc/llvm-project/polly/trunk/">
       Browse (ViewVC)
     </a>
