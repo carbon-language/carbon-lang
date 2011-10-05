@@ -1718,6 +1718,89 @@ bool TGParser::ParseDef(MultiClass *CurMultiClass) {
 }
 
 
+/// ParseMultiDef - Parse and return a multiclass multidef, return the record
+/// corresponding to it.  This returns null on error.
+///
+///   MultiDefInst ::= MULTIDEF ObjectName '<' Value ',' Declaration ','
+///                                            Value '>' ObjectBody
+///
+bool TGParser::ParseMultiDef(MultiClass *CurMultiClass) {
+  assert(CurMultiClass && "No multiclass for multidef!");
+
+  SMLoc DefLoc = Lex.getLoc();
+  assert(Lex.getCode() == tgtok::MultiDef && "Unknown tok");
+  Lex.Lex();  // Eat the 'multidef' token.  
+
+  // Parse ObjectName and make a record for it.
+  Record *CurRec = new Record(ParseObjectName(), DefLoc, Records);
+  
+  if (Lex.getCode() != tgtok::less)
+    return TokError("multidef init requires a non-empty list of values");
+  Lex.Lex();  // Eat the '<'
+
+  Init *ListI = ParseValue(CurRec, 0);
+  if (ListI == 0)
+    return TokError("First multidef init must be of list type");
+
+  if (Lex.getCode() != tgtok::comma)
+    return TokError("expected comma in multidef");
+  Lex.Lex();  // Eat the comma
+
+  std::string ItemName = ParseDeclaration(CurRec, false/*Not a template arg*/);
+  if (ItemName.empty())
+    return TokError("expected declaration in multidef");
+
+  if (Lex.getCode() != tgtok::comma)
+    return TokError("expected comma in multidef");
+  Lex.Lex();  // Eat the comma
+
+  Init *IntI = ParseValue(CurRec, 0);
+  if (IntI == 0)
+    return TokError("expected integer value in multidef");
+
+  if (Lex.getCode() != tgtok::greater)
+    return TokError("multidef init requires a non-empty list of values");
+  Lex.Lex();  // Eat the '>'
+
+  TypedInit *List = dynamic_cast<TypedInit *>(ListI);
+  if (dynamic_cast<ListRecTy *>(List->getType()) == 0)
+    return TokError("First multidef init must be of list type");
+
+  IntInit *Int = dynamic_cast<IntInit *>(IntI);
+  if (Int == 0)
+    return TokError("Second multidef init must be a constant integer");
+
+  // Add it to the multiclass.
+  for (unsigned i = 0, e = CurMultiClass->MultiDefPrototypes.size();
+       i != e; ++i)
+    if (CurMultiClass->MultiDefPrototypes[i].Rec->getName()
+        == CurRec->getName())
+      return Error(DefLoc, "multidef '" + CurRec->getName() +
+                   "' already defined in this multiclass!");
+
+  CurMultiClass->MultiDefPrototypes.push_back(
+    MultiClass::MultiDef(CurRec, List, Int, ItemName));
+  
+  if (ParseObjectBody(CurRec))
+    return true;
+  
+  // If ObjectBody has template arguments, it's an error.
+  assert(CurRec->getTemplateArgs().empty() && "How'd this get template args?");
+
+  // Copy the template arguments for the multiclass into the
+  // multidef.
+  const std::vector<std::string> &TArgs = CurMultiClass->Rec.getTemplateArgs();
+
+  for (unsigned i = 0, e = TArgs.size(); i != e; ++i) {
+    const RecordVal *RV = CurMultiClass->Rec.getValue(TArgs[i]);
+    assert(RV && "Template arg doesn't exist?");
+    CurRec->addValue(*RV);
+  }
+
+  return false;
+}
+
+
 /// ParseClass - Parse a tblgen class definition.
 ///
 ///   ClassInst ::= CLASS ID TemplateArgList? ObjectBody
@@ -1903,10 +1986,12 @@ bool TGParser::ParseMultiClass() {
     while (Lex.getCode() != tgtok::r_brace) {
       switch (Lex.getCode()) {
         default:
-          return TokError("expected 'let', 'def' or 'defm' in multiclass body");
+          return TokError("expected 'let', 'def', 'defm' or 'multidef'"
+                          "in multiclass body");
         case tgtok::Let:
         case tgtok::Def:
         case tgtok::Defm:
+        case tgtok::MultiDef:
           if (ParseObject(CurMultiClass))
             return true;
          break;
@@ -2153,6 +2238,7 @@ bool TGParser::ParseDefm(MultiClass *CurMultiClass) {
 /// ParseObject
 ///   Object ::= ClassInst
 ///   Object ::= DefInst
+///   Object ::= MultiDefInst
 ///   Object ::= MultiClassInst
 ///   Object ::= DefMInst
 ///   Object ::= LETCommand '{' ObjectList '}'
@@ -2163,6 +2249,7 @@ bool TGParser::ParseObject(MultiClass *MC) {
     return TokError("Expected class, def, defm, multiclass or let definition");
   case tgtok::Let:   return ParseTopLevelLet(MC);
   case tgtok::Def:   return ParseDef(MC);
+  case tgtok::MultiDef:   return ParseMultiDef(MC);
   case tgtok::Defm:  return ParseDefm(MC);
   case tgtok::Class: return ParseClass();
   case tgtok::MultiClass: return ParseMultiClass();
