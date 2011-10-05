@@ -685,21 +685,23 @@ void SelectionDAGISel::DoInstructionSelection() {
 /// PrepareEHLandingPad - Emit an EH_LABEL, set up live-in registers, and
 /// do other setup for EH landing-pad blocks.
 void SelectionDAGISel::PrepareEHLandingPad() {
+  MachineBasicBlock *MBB = FuncInfo->MBB;
+
   // Add a label to mark the beginning of the landing pad.  Deletion of the
   // landing pad can thus be detected via the MachineModuleInfo.
-  MCSymbol *Label = MF->getMMI().addLandingPad(FuncInfo->MBB);
+  MCSymbol *Label = MF->getMMI().addLandingPad(MBB);
 
   const MCInstrDesc &II = TM.getInstrInfo()->get(TargetOpcode::EH_LABEL);
-  BuildMI(*FuncInfo->MBB, FuncInfo->InsertPt, SDB->getCurDebugLoc(), II)
+  BuildMI(*MBB, FuncInfo->InsertPt, SDB->getCurDebugLoc(), II)
     .addSym(Label);
 
   // Mark exception register as live in.
   unsigned Reg = TLI.getExceptionAddressRegister();
-  if (Reg) FuncInfo->MBB->addLiveIn(Reg);
+  if (Reg) MBB->addLiveIn(Reg);
 
   // Mark exception selector register as live in.
   Reg = TLI.getExceptionSelectorRegister();
-  if (Reg) FuncInfo->MBB->addLiveIn(Reg);
+  if (Reg) MBB->addLiveIn(Reg);
 
   // FIXME: Hack around an exception handling flaw (PR1508): the personality
   // function and list of typeids logically belong to the invoke (or, if you
@@ -712,7 +714,7 @@ void SelectionDAGISel::PrepareEHLandingPad() {
   // in exceptions not being caught because no typeids are associated with
   // the invoke.  This may not be the only way things can go wrong, but it
   // is the only way we try to work around for the moment.
-  const BasicBlock *LLVMBB = FuncInfo->MBB->getBasicBlock();
+  const BasicBlock *LLVMBB = MBB->getBasicBlock();
   const BranchInst *Br = dyn_cast<BranchInst>(LLVMBB->getTerminator());
 
   if (Br && Br->isUnconditional()) { // Critical edge?
@@ -726,8 +728,6 @@ void SelectionDAGISel::PrepareEHLandingPad() {
       CopyCatchInfo(Br->getSuccessor(0), LLVMBB, &MF->getMMI(), *FuncInfo);
   }
 }
-
-
 
 /// TryToFoldFastISelLoad - We're checking to see if we can fold the specified
 /// load into the specified FoldInst.  Note that we could have a sequence where
