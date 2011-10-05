@@ -174,10 +174,12 @@ bool Filler::delayHasHazard(MachineBasicBlock::iterator candidate,
   if (candidate->isImplicitDef() || candidate->isKill())
     return true;
 
+  // Loads or stores cannot be moved past a store to the delay slot
+  // and stores cannot be moved past a load. 
   if (candidate->getDesc().mayLoad()) {
-    sawLoad = true;
     if (sawStore)
       return true;
+    sawLoad = true;
   }
 
   if (candidate->getDesc().mayStore()) {
