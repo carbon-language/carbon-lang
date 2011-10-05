@@ -650,6 +650,9 @@ Init *TGParser::ParseIDValue(Record *CurRec,
       return VarInit::get(Name, RV->getType());
 
     std::string TemplateArgName = CurRec->getName()+":"+Name;
+    if (CurMultiClass)
+      TemplateArgName = CurMultiClass->Rec.getName()+"::"+TemplateArgName;
+
     if (CurRec->isTemplateArg(TemplateArgName)) {
       const RecordVal *RV = CurRec->getValue(TemplateArgName);
       assert(RV && "Template arg doesn't exist??");
