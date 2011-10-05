@@ -236,23 +236,7 @@ SDValue PTXTargetLowering::
   else {
     for (unsigned i = 0, e = Ins.size(); i != e; ++i) {
       EVT                  RegVT = Ins[i].VT;
-      TargetRegisterClass* TRC   = 0;
-
-      // Determine which register class we need
-      if (RegVT == MVT::i1)
-        TRC = PTX::RegPredRegisterClass;
-      else if (RegVT == MVT::i16)
-        TRC = PTX::RegI16RegisterClass;
-      else if (RegVT == MVT::i32)
-        TRC = PTX::RegI32RegisterClass;
-      else if (RegVT == MVT::i64)
-        TRC = PTX::RegI64RegisterClass;
-      else if (RegVT == MVT::f32)
-        TRC = PTX::RegF32RegisterClass;
-      else if (RegVT == MVT::f64)
-        TRC = PTX::RegF64RegisterClass;
-      else
-        llvm_unreachable("Unknown parameter type");
+      TargetRegisterClass* TRC   = getRegClassFor(RegVT);
 
       // Use a unique index in the instruction to prevent instruction folding.
       // Yes, this is a hack.
