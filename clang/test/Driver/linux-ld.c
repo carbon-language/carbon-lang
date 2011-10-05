@@ -90,3 +90,23 @@
 // CHECK-64-TO-32: "-L[[SYSROOT]]/usr/lib/gcc/x86_64-unknown-linux/4.6.0/../../.."
 // CHECK-64-TO-32: "-L[[SYSROOT]]/lib"
 // CHECK-64-TO-32: "-L[[SYSROOT]]/usr/lib"
+//
+// RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
+// RUN:     -ccc-host-triple i386-unknown-linux -m32 \
+// RUN:     -ccc-install-dir %S/Inputs/fake_install_tree \
+// RUN:     --sysroot=%S/Inputs/basic_linux_tree \
+// RUN:   | FileCheck --check-prefix=CHECK-INSTALL-DIR-32 %s
+// CHECK-INSTALL-DIR-32: "{{.*}}ld{{(.exe)?}}" "--sysroot=[[SYSROOT:[^"]+]]"
+// CHECK-INSTALL-DIR-32: "{{.*}}/Inputs/fake_install_tree/lib/gcc/i386-unknown-linux/4.7.0/crtbegin.o"
+// CHECK-INSTALL-DIR-32: "-L{{.*}}/Inputs/fake_install_tree/lib/gcc/i386-unknown-linux/4.7.0"
+//
+// Check that with 64-bit builds, we don't actually use the install directory
+// as its version of GCC is lower than our sysrooted version.
+// RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
+// RUN:     -ccc-host-triple x86_64-unknown-linux -m64 \
+// RUN:     -ccc-install-dir %S/Inputs/fake_install_tree \
+// RUN:     --sysroot=%S/Inputs/basic_linux_tree \
+// RUN:   | FileCheck --check-prefix=CHECK-INSTALL-DIR-64 %s
+// CHECK-INSTALL-DIR-64: "{{.*}}ld{{(.exe)?}}" "--sysroot=[[SYSROOT:[^"]+]]"
+// CHECK-INSTALL-DIR-64: "{{.*}}/usr/lib/gcc/x86_64-unknown-linux/4.6.0/crtbegin.o"
+// CHECK-INSTALL-DIR-64: "-L[[SYSROOT]]/usr/lib/gcc/x86_64-unknown-linux/4.6.0"

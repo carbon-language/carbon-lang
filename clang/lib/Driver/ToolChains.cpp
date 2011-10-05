@@ -1587,6 +1587,7 @@ public:
                                          D.PrefixDirs.end());
     Prefixes.push_back(D.SysRoot);
     Prefixes.push_back(D.SysRoot + "/usr");
+    Prefixes.push_back(D.InstalledDir);
 
     // Loop over the various components which exist and select the best GCC
     // installation available. GCC installs are ranked by version number.
