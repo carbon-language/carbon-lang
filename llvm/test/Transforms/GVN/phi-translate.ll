@@ -14,7 +14,7 @@ target datalayout = "e-p:64:64:64"
 @G = external global [100 x i32]
 define i32 @foo(i32 %x, i32 %z) {
 entry:
-  %tobool = icmp eq i32 %x, 0
+  %tobool = icmp eq i32 %z, 0
   br i1 %tobool, label %end, label %then
 
 then:

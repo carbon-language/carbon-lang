@@ -41,12 +41,16 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/IRBuilder.h"
+#include "llvm/Support/PatternMatch.h"
 using namespace llvm;
+using namespace PatternMatch;
 
 STATISTIC(NumGVNInstr,  "Number of instructions deleted");
 STATISTIC(NumGVNLoad,   "Number of loads deleted");
 STATISTIC(NumGVNPRE,    "Number of instructions PRE'd");
 STATISTIC(NumGVNBlocks, "Number of blocks merged");
+STATISTIC(NumGVNSimpl,  "Number of instructions simplified");
+STATISTIC(NumGVNEqProp, "Number of equalities propagated");
 STATISTIC(NumPRELoad,   "Number of loads PRE'd");
 
 static cl::opt<bool> EnablePRE("enable-pre",
@@ -548,6 +552,9 @@ namespace {
     void cleanupGlobalSets();
     void verifyRemoved(const Instruction *I) const;
     bool splitCriticalEdges();
+    unsigned replaceAllDominatedUsesWith(Value *From, Value *To,
+                                         BasicBlock *Root);
+    bool propagateEquality(Value *LHS, Value *RHS, BasicBlock *Root);
   };
 
   char GVN::ID = 0;
@@ -1881,6 +1888,97 @@ Value *GVN::findLeader(BasicBlock *BB, uint32_t num) {
   return Val;
 }
 
+/// replaceAllDominatedUsesWith - Replace all uses of 'From' with 'To' if the
+/// use is dominated by the given basic block.  Returns the number of uses that
+/// were replaced.
+unsigned GVN::replaceAllDominatedUsesWith(Value *From, Value *To,
+                                          BasicBlock *Root) {
+  unsigned Count = 0;
+  for (Value::use_iterator UI = From->use_begin(), UE = From->use_end();
+       UI != UE; ) {
+    Instruction *User = cast<Instruction>(*UI);
+    unsigned OpNum = UI.getOperandNo();
+    ++UI;
+
+    if (DT->dominates(Root, User->getParent())) {
+      User->setOperand(OpNum, To);
+      ++Count;
+    }
+  }
+  return Count;
+}
+
+/// propagateEquality - The given values are known to be equal in every block
+/// dominated by 'Root'.  Exploit this, for example by replacing 'LHS' with
+/// 'RHS' everywhere in the scope.  Returns whether a change was made.
+bool GVN::propagateEquality(Value *LHS, Value *RHS, BasicBlock *Root) {
+  if (LHS == RHS) return false;
+  assert(LHS->getType() == RHS->getType() && "Equal but types differ!");
+
+  // Don't try to propagate equalities between constants.
+  if (isa<Constant>(LHS) && isa<Constant>(RHS))
+    return false;
+
+  // Make sure that any constants are on the right-hand side.  In general the
+  // best results are obtained by placing the longest lived value on the RHS.
+  if (isa<Constant>(LHS))
+    std::swap(LHS, RHS);
+
+  // If neither term is constant then bail out.  This is not for correctness,
+  // it's just that the non-constant case is much less useful: it occurs just
+  // as often as the constant case but handling it hardly ever results in an
+  // improvement.
+  if (!isa<Constant>(RHS))
+    return false;
+
+  // If value numbering later deduces that an instruction in the scope is equal
+  // to 'LHS' then ensure it will be turned into 'RHS'.
+  addToLeaderTable(VN.lookup_or_add(LHS), RHS, Root);
+
+  // Replace all occurrences of 'LHS' with 'RHS' everywhere in the scope.
+  unsigned NumReplacements = replaceAllDominatedUsesWith(LHS, RHS, Root);
+  bool Changed = NumReplacements > 0;
+  NumGVNEqProp += NumReplacements;
+
+  // Now try to deduce additional equalities from this one.  For example, if the
+  // known equality was "(A != B)" == "false" then it follows that A and B are
+  // equal in the scope.  Only boolean equalities with an explicit true or false
+  // RHS are currently supported.
+  if (!RHS->getType()->isIntegerTy(1))
+    // Not a boolean equality - bail out.
+    return Changed;
+  ConstantInt *CI = dyn_cast<ConstantInt>(RHS);
+  if (!CI)
+    // RHS neither 'true' nor 'false' - bail out.
+    return Changed;
+  // Whether RHS equals 'true'.  Otherwise it equals 'false'.
+  bool isKnownTrue = CI->isAllOnesValue();
+  bool isKnownFalse = !isKnownTrue;
+
+  // If "A && B" is known true then both A and B are known true.  If "A || B"
+  // is known false then both A and B are known false.
+  Value *A, *B;
+  if ((isKnownTrue && match(LHS, m_And(m_Value(A), m_Value(B)))) ||
+      (isKnownFalse && match(LHS, m_Or(m_Value(A), m_Value(B))))) {
+    Changed |= propagateEquality(A, RHS, Root);
+    Changed |= propagateEquality(B, RHS, Root);
+    return Changed;
+  }
+
+  // If we are propagating an equality like "(A == B)" == "true" then also
+  // propagate the equality A == B.
+  if (ICmpInst *Cmp = dyn_cast<ICmpInst>(LHS)) {
+    // Only equality comparisons are supported.
+    if ((isKnownTrue && Cmp->getPredicate() == CmpInst::ICMP_EQ) ||
+        (isKnownFalse && Cmp->getPredicate() == CmpInst::ICMP_NE)) {
+      Value *Op0 = Cmp->getOperand(0), *Op1 = Cmp->getOperand(1);
+      Changed |= propagateEquality(Op0, Op1, Root);
+    }
+    return Changed;
+  }
+
+  return Changed;
+}
 
 /// processInstruction - When calculating availability, handle an instruction
 /// by inserting it into the appropriate sets
@@ -1898,6 +1996,7 @@ bool GVN::processInstruction(Instruction *I) {
     if (MD && V->getType()->isPointerTy())
       MD->invalidateCachedPointerInfo(V);
     markInstructionForDeletion(I);
+    ++NumGVNSimpl;
     return true;
   }
 
@@ -1910,15 +2009,15 @@ bool GVN::processInstruction(Instruction *I) {
     return false;
   }
 
-  // For conditions branches, we can perform simple conditional propagation on
+  // For conditional branches, we can perform simple conditional propagation on
   // the condition value itself.
+  // TODO: Add conditional propagation of switch cases.
   if (BranchInst *BI = dyn_cast<BranchInst>(I)) {
     if (!BI->isConditional() || isa<Constant>(BI->getCondition()))
       return false;
-    
+
     Value *BranchCond = BI->getCondition();
-    uint32_t CondVN = VN.lookup_or_add(BranchCond);
-  
+
     BasicBlock *TrueSucc = BI->getSuccessor(0);
     BasicBlock *FalseSucc = BI->getSuccessor(1);
     BasicBlock *Parent = BI->getParent();
@@ -1947,16 +2046,14 @@ bool GVN::processInstruction(Instruction *I) {
         break;
       }
 
-    if (TrueSucc)
-      addToLeaderTable(CondVN,
-                   ConstantInt::getTrue(TrueSucc->getContext()),
-                   TrueSucc);
-    if (FalseSucc)
-      addToLeaderTable(CondVN,
-                   ConstantInt::getFalse(FalseSucc->getContext()),
-                   FalseSucc);
-    
-    return false;
+    // Replace the condition with true/false in basic blocks that can only be
+    // reached via the true/false arm of the branch.
+    return (TrueSucc && propagateEquality(BranchCond,
+                                   ConstantInt::getTrue(TrueSucc->getContext()),
+                                   TrueSucc))
+      || (FalseSucc && propagateEquality(BranchCond,
+                                 ConstantInt::getFalse(FalseSucc->getContext()),
+                                 FalseSucc));
   }
   
   // Instructions with void type don't return a value, so there's
