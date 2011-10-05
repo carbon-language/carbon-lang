@@ -4705,23 +4705,17 @@ getConstantEvolvingPHIOperands(Instruction *UseInst, const Loop *L,
     if (!OpInst || !canConstantEvolve(OpInst, L)) return 0;
 
     PHINode *P = dyn_cast<PHINode>(OpInst);
-    if (P) {
-      if (PHI && PHI != P) return 0; // Evolving from multiple different PHIs.
-      PHI = P;
-      continue;
+    if (!P)
+      // If this operand is already visited, reuse the prior result.
+      // We may have P != PHI if this is the deepest point at which the
+      // inconsistent paths meet.
+      P = PHIMap.lookup(OpInst);
+    if (!P) {
+      // Recurse and memoize the results, whether a phi is found or not.
+      // This recursive call invalidates pointers into PHIMap.
+      P = getConstantEvolvingPHIOperands(OpInst, L, PHIMap);
+      PHIMap[OpInst] = P;
     }
-
-    // If this operand is already visited, reuse the prior result.
-    P = PHIMap.lookup(OpInst);
-    if (P) {
-      assert((!PHI || P == PHI) && "inconsistent data flow");
-      PHI = P;
-      continue;
-    }
-    // Recurse and memoize the results, whether a phi is found or not.
-    // This recursive call invalidates pointers into PHIMap.
-    P = getConstantEvolvingPHIOperands(OpInst, L, PHIMap);
-    PHIMap[OpInst] = P;
     if (P == 0) return 0;        // Not evolving from PHI
     if (PHI && PHI != P) return 0;  // Evolving from multiple different PHIs.
     PHI = P;
