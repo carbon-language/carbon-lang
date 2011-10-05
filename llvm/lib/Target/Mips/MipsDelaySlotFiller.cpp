@@ -31,7 +31,7 @@ STATISTIC(FilledSlots, "Number of delay slots filled");
 static cl::opt<bool> EnableDelaySlotFiller(
   "enable-mips-delay-filler",
   cl::init(false),
-  cl::desc("Fill the Mips delay slots with noop."),
+  cl::desc("Fill the Mips delay slots useful instructions."),
   cl::Hidden);
 
 namespace {
