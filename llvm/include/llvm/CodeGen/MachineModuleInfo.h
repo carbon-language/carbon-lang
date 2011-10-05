@@ -119,6 +119,10 @@ class MachineModuleInfo : public ImmutablePass {
   /// information in the current function.
   std::vector<LandingPadInfo> LandingPads;
 
+  /// LPadToCallSiteMap - Map a landing pad's EH symbol to the call site
+  /// indexes.
+  DenseMap<MCSymbol*, SmallVector<unsigned, 4> > LPadToCallSiteMap;
+
   /// CallSiteMap - Map of invoke call site index values to associated begin
   /// EH_LABEL for the current function.
   DenseMap<MCSymbol*, unsigned> CallSiteMap;
@@ -325,6 +329,16 @@ public:
   /// current function.
   const std::vector<LandingPadInfo> &getLandingPads() const {
     return LandingPads;
+  }
+
+  /// setCallSiteLandingPad - Map the landing pad's EH symbol to the call
+  /// site indexes.
+  void setCallSiteLandingPad(MCSymbol *Sym, ArrayRef<unsigned> Sites);
+
+  /// getCallSiteLandingPad - Get the call site indexes for a landing pad EH
+  /// symbol.
+  SmallVectorImpl<unsigned> &getCallSiteLandingPad(MCSymbol *Sym) {
+    return LPadToCallSiteMap[Sym];
   }
 
   /// setCallSiteBeginLabel - Map the begin label for a call site.

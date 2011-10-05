@@ -499,6 +499,14 @@ void MachineModuleInfo::TidyLandingPads(DenseMap<MCSymbol*, uintptr_t> *LPMap) {
   }
 }
 
+/// setCallSiteLandingPad - Map the landing pad's EH symbol to the call site
+/// indexes.
+void MachineModuleInfo::setCallSiteLandingPad(MCSymbol *Sym,
+                                              ArrayRef<unsigned> Sites) {
+  for (unsigned I = 0, E = Sites.size(); I != E; ++I)
+    LPadToCallSiteMap[Sym].push_back(Sites[I]);
+}
+
 /// getTypeIDFor - Return the type id for the specified typeinfo.  This is
 /// function wide.
 unsigned MachineModuleInfo::getTypeIDFor(const GlobalVariable *TI) {
