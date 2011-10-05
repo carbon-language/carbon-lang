@@ -222,8 +222,9 @@ void Filler::insertDefsUses(MachineBasicBlock::iterator MI,
   //       no instruction that can possibly be put in a delay slot can read or
   //       write it.
 
-  unsigned e = MI->getDesc().isCall() ? MI->getDesc().getNumOperands() :
-                                        MI->getNumOperands();
+  MCInstrDesc MCID = MI->getDesc();
+  unsigned e = MCID.isCall() || MCID.isReturn() ? MCID.getNumOperands() :
+                                                  MI->getNumOperands();
 
   for (unsigned i = 0; i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
