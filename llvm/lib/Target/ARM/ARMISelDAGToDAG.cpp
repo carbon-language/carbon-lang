@@ -555,9 +555,7 @@ bool ARMDAGToDAGISel::SelectLdStSOReg(SDValue N, SDValue &Base, SDValue &Offset,
       if (ConstantSDNode *Sh =
           dyn_cast<ConstantSDNode>(N.getOperand(0).getOperand(1))) {
         ShAmt = Sh->getZExtValue();
-        if (!Subtarget->isCortexA9() ||
-            (N.hasOneUse() &&
-             isShifterOpProfitable(N.getOperand(0), ShOpcVal, ShAmt))) {
+        if (isShifterOpProfitable(N.getOperand(0), ShOpcVal, ShAmt)) {
           Offset = N.getOperand(0).getOperand(0);
           Base = N.getOperand(1);
         } else {
@@ -697,9 +695,7 @@ AddrMode2Type ARMDAGToDAGISel::SelectAddrMode2Worker(SDValue N,
       if (ConstantSDNode *Sh =
           dyn_cast<ConstantSDNode>(N.getOperand(0).getOperand(1))) {
         ShAmt = Sh->getZExtValue();
-        if (!Subtarget->isCortexA9() ||
-            (N.hasOneUse() &&
-             isShifterOpProfitable(N.getOperand(0), ShOpcVal, ShAmt))) {
+        if (isShifterOpProfitable(N.getOperand(0), ShOpcVal, ShAmt)) {
           Offset = N.getOperand(0).getOperand(0);
           Base = N.getOperand(1);
         } else {
