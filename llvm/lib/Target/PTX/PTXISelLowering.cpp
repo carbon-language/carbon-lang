@@ -237,36 +237,22 @@ SDValue PTXTargetLowering::
     for (unsigned i = 0, e = Ins.size(); i != e; ++i) {
       EVT                  RegVT = Ins[i].VT;
       TargetRegisterClass* TRC   = 0;
-      int                  OpCode;
 
       // Determine which register class we need
-      if (RegVT == MVT::i1) {
+      if (RegVT == MVT::i1)
         TRC = PTX::RegPredRegisterClass;
-        OpCode = PTX::READPARAMPRED;
-      }
-      else if (RegVT == MVT::i16) {
+      else if (RegVT == MVT::i16)
         TRC = PTX::RegI16RegisterClass;
-        OpCode = PTX::READPARAMI16;
-      }
-      else if (RegVT == MVT::i32) {
+      else if (RegVT == MVT::i32)
         TRC = PTX::RegI32RegisterClass;
-        OpCode = PTX::READPARAMI32;
-      }
-      else if (RegVT == MVT::i64) {
+      else if (RegVT == MVT::i64)
         TRC = PTX::RegI64RegisterClass;
-        OpCode = PTX::READPARAMI64;
-      }
-      else if (RegVT == MVT::f32) {
+      else if (RegVT == MVT::f32)
         TRC = PTX::RegF32RegisterClass;
-        OpCode = PTX::READPARAMF32;
-      }
-      else if (RegVT == MVT::f64) {
+      else if (RegVT == MVT::f64)
         TRC = PTX::RegF64RegisterClass;
-        OpCode = PTX::READPARAMF64;
-      }
-      else {
+      else
         llvm_unreachable("Unknown parameter type");
-      }
 
       // Use a unique index in the instruction to prevent instruction folding.
       // Yes, this is a hack.
@@ -275,10 +261,6 @@ SDValue PTXTargetLowering::
       SDValue ArgValue = DAG.getNode(PTXISD::READ_PARAM, dl, RegVT, Chain,
                                      Index);
 
-      SDValue Flag = ArgValue.getValue(1);
-
-      SDValue Copy = DAG.getCopyFromReg(Chain, dl, Reg, RegVT);
-      SDValue RegValue = DAG.getRegister(Reg, RegVT);
       InVals.push_back(ArgValue);
 
       MFI->addArgReg(Reg);
