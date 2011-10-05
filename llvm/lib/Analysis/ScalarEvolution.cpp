@@ -4691,7 +4691,7 @@ static bool canConstantEvolve(Instruction *I, const Loop *L) {
 /// recursing through each instruction operand until reaching a loop header phi.
 static PHINode *
 getConstantEvolvingPHIOperands(Instruction *UseInst, const Loop *L,
-                               SmallPtrSet<Instruction *, 8> &Visited) {
+                               DenseMap<Instruction *, PHINode *> &PHIMap) {
 
   // Otherwise, we can evaluate this instruction if all of its operands are
   // constant or derived from a PHI node themselves.
@@ -4705,18 +4705,26 @@ getConstantEvolvingPHIOperands(Instruction *UseInst, const Loop *L,
     if (!OpInst || !canConstantEvolve(OpInst, L)) return 0;
 
     PHINode *P = dyn_cast<PHINode>(OpInst);
-    if (!P) {
-      // If this operand is already visited, ignore it. It's evolving phi has
-      // already been shown to be consistent on the first path that reached it.
-      if (!Visited.insert(OpInst)) continue;
-
-      P = getConstantEvolvingPHIOperands(OpInst, L, Visited);
-    }
-    if (P == 0) return 0;  // Not evolving from PHI
-    if (PHI == 0)
+    if (P) {
+      if (PHI && PHI != P) return 0; // Evolving from multiple different PHIs.
       PHI = P;
-    else if (PHI != P)
-      return 0;  // Evolving from multiple different PHIs.
+      continue;
+    }
+
+    // If this operand is already visited, reuse the prior result.
+    P = PHIMap.lookup(OpInst);
+    if (P) {
+      assert(!PHI || P == PHI && "inconsitent data flow");
+      PHI = P;
+      continue;
+    }
+    // Recurse and memoize the results, whether a phi is found or not.
+    // This recursive call invalidates pointers into PHIMap.
+    P = getConstantEvolvingPHIOperands(OpInst, L, PHIMap);
+    PHIMap[OpInst] = P;
+    if (P == 0) return 0;        // Not evolving from PHI
+    if (PHI && PHI != P) return 0;  // Evolving from multiple different PHIs.
+    PHI = P;
   }
   // This is a expression evolving from a constant PHI!
   return PHI;
@@ -4736,9 +4744,8 @@ static PHINode *getConstantEvolvingPHI(Value *V, const Loop *L) {
   }
 
   // Record non-constant instructions contained by the loop.
-  SmallPtrSet<Instruction *, 8> Visited;
-  Visited.insert(I);
-  return getConstantEvolvingPHIOperands(I, L, Visited);
+  DenseMap<Instruction *, PHINode *> PHIMap;
+  return getConstantEvolvingPHIOperands(I, L, PHIMap);
 }
 
 /// EvaluateExpression - Given an expression that passes the
@@ -4748,6 +4755,7 @@ static PHINode *getConstantEvolvingPHI(Value *V, const Loop *L) {
 static Constant *EvaluateExpression(Value *V, const Loop *L,
                                     DenseMap<Instruction *, Constant *> &Vals,
                                     const TargetData *TD) {
+  // Convenient constant check, but redundant for recursive calls.
   if (Constant *C = dyn_cast<Constant>(V)) return C;
 
   Instruction *I = cast<Instruction>(V);
@@ -4760,8 +4768,15 @@ static Constant *EvaluateExpression(Value *V, const Loop *L,
   std::vector<Constant*> Operands(I->getNumOperands());
 
   for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
-    Operands[i] = EvaluateExpression(I->getOperand(i), L, Vals, TD);
-    if (Operands[i] == 0) return 0;
+    Instruction *Operand = dyn_cast<Instruction>(I->getOperand(i));
+    if (!Operand) {
+      Operands[i] = cast<Constant>(I->getOperand(i));
+      continue;
+    }
+    Constant *C = EvaluateExpression(Operand, L, Vals, TD);
+    Vals[Operand] = C;
+    if (!C) return 0;
+    Operands[i] = C;
   }
 
   if (const CmpInst *CI = dyn_cast<CmpInst>(I))
@@ -4861,9 +4876,9 @@ const SCEV * ScalarEvolution::ComputeExitCountExhaustively(const Loop *L,
   // "ExitWhen".
   unsigned IterationNum = 0;
   unsigned MaxIterations = MaxBruteForceIterations;   // Limit analysis.
-  DenseMap<Instruction *, Constant *> PHIValMap;
   for (Constant *PHIVal = StartCST;
        IterationNum != MaxIterations; ++IterationNum) {
+    DenseMap<Instruction *, Constant *> PHIValMap;
     PHIValMap[PN] = PHIVal;
     ConstantInt *CondVal =
       dyn_cast_or_null<ConstantInt>(EvaluateExpression(Cond, L, PHIValMap, TD));
