@@ -2009,20 +2009,17 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
       ++NumCombined;
       // Should we replace the old instruction with a new one?
       if (Result != I) {
-        DEBUG(errs() << "IC: Old = " << *I << '\n'
-                     << "    New = " << *Result << '\n');
-
         if (!I->getDebugLoc().isUnknown())
           Result->setDebugLoc(I->getDebugLoc());
         // Everything uses the new instruction now.
         I->replaceAllUsesWith(Result);
 
-        // Push the new instruction and any users onto the worklist.
-        Worklist.Add(Result);
-        Worklist.AddUsersToWorkList(*Result);
-
-        // Move the name to the new instruction first.
+        // Move the name to the new instruction.
         Result->takeName(I);
+
+        DEBUG(errs() << "IC: Old = " << *I << '\n'
+                     << "    New = " << *Result << '\n');
+
 
         // Insert the new instruction into the basic block...
         BasicBlock *InstParent = I->getParent();
@@ -2035,6 +2032,10 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
         InstParent->getInstList().insert(InsertPos, Result);
 
         EraseInstFromFunction(*I);
+
+        // Push the new instruction and any users onto the worklist.
+        Worklist.Add(Result);
+        Worklist.AddUsersToWorkList(*Result);
       } else {
 #ifndef NDEBUG
         DEBUG(errs() << "IC: Mod = " << OrigI << '\n'
