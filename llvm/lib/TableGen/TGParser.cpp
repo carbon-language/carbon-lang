@@ -2174,6 +2174,92 @@ bool TGParser::ParseDefm(MultiClass *CurMultiClass) {
       NewRecDefs.push_back(CurRec);
     }
 
+    // Loop over multidefs, instantiating them.
+    for (unsigned i = 0, e = MC->MultiDefPrototypes.size(); i != e; ++i) {
+      // Each multidef generates a set of defs, one per item in the
+      // given list.
+
+      // Resolve the list now.  This record serves as a base class for
+      // the individual records created below.
+ 
+      Record *DefProto = MC->MultiDefPrototypes[i].Rec;
+      TypedInit *List = MC->MultiDefPrototypes[i].List;
+      IntInit *Start = MC->MultiDefPrototypes[i].Start;
+
+      // This is the name of the second item in the multidef <> list.
+      // It is a temporary iterator that holds the current value of
+      // the list element being processed.
+      std::string &ItemName = MC->MultiDefPrototypes[i].ItemName;
+ 
+      Record *BaseRec = InstantiateMulticlassDef(*MC, DefProto, DefmPrefix,
+                                                 DefmPrefixLoc);
+ 
+      // Make the list a member of the base record.
+      RecordVal ListV("__MDListInit__", List->getType(), 0);
+      ListV.setValue(List);
+      BaseRec->addValue(ListV);
+ 
+      // Resolve the base multidef record to template args.  This
+      // should resolve the list.  We don't delete the arguments
+      // values because we want the created defs to inherit them.
+      // Each list item needs to be resolved against these values.
+      // They will be deleted when we do final processing of the
+      // instantiated def.
+      if (ResolveMulticlassDefArgs(*MC, BaseRec, DefmPrefixLoc,
+                                   SubClassLoc, TArgs, TemplateVals,
+                                   false/*Do not delete args*/))
+        return Error(SubClassLoc, "could not instantiate def");
+ 
+      RecordVal *ListVP = BaseRec->getValue("__MDListInit__");
+      ListInit *ListIn = dynamic_cast<ListInit *>(ListVP->getValue());
+      if (ListIn == 0)
+        return Error(SubClassLoc, "multidef init must be of list type");
+ 
+      // Remove the temporary list since we've resolve it and don't
+      // need it to be part of the defs.
+      BaseRec->removeValue("__MDListInit__");
+
+      // For each item in the list, create a def.
+      for(int64_t it = Start->getValue(); it < ListIn->getSize(); ++it) {
+        std::stringstream id;
+        id << it;
+
+        // Create a record prefixed with MD<n>., where <n> is an
+        // incrementing value.  This guarantees that defs created via
+        // multidefs are named uniquely.
+        Record *CurRec = InstantiateMulticlassDef(*MC, BaseRec,
+                                                  "MD" + id.str() + ".",
+                                                  DefmPrefixLoc);
+ 
+        // Get the list item and resolve it.
+        Init *ItemVal = ListIn->resolveListElementReference(*CurRec, 0, it);
+ 
+        if (!ItemVal)
+          return Error(SubClassLoc, "invalid list item");
+ 
+        // Set the temporary item (iterator) value now.
+        if (SetValue(CurRec, SubClassLoc, ItemName, std::vector<unsigned>(), ItemVal)) {
+          Error(DefmPrefixLoc, "when instantiating this defm");
+          return true;
+        }
+  
+        // Resolve it next.
+        CurRec->resolveReferencesTo(CurRec->getValue(ItemName));
+
+        // Remove it.
+        CurRec->removeValue(ItemName);
+
+        // Now instantiate the def as if it had been declared directly
+        // as part of the multicass.
+        if (ResolveMulticlassDefArgs(*MC, CurRec, DefmPrefixLoc,
+                                     SubClassLoc, TArgs, TemplateVals,
+                                     true/*Delete args*/))
+          return Error(SubClassLoc, "could not instantiate def");
+         
+        if (ResolveMulticlassDef(*MC, CurRec, DefProto, DefmPrefixLoc))
+          return Error(SubClassLoc, "could not instantiate def");
+      }
+    }
 
     if (Lex.getCode() != tgtok::comma) break;
     Lex.Lex(); // eat ','.
