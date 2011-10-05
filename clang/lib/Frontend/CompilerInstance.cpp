@@ -47,6 +47,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#if LLVM_ON_WIN32
+#include <windows.h>
+#endif
 #if LLVM_ON_UNIX
 #include <unistd.h>
 #endif
@@ -894,8 +897,11 @@ void LockFileManager::waitForUnlock() {
     // finish up and 
     // FIXME: Should we hook in to system APIs to get a notification when the
     // lock file is deleted?
+#if LLVM_ON_WIN32
+    Sleep(Interval);
+#else
     nanosleep(&Interval, NULL);
-    
+#endif
     // If the file no longer exists, we're done.
     bool Exists = false;
     if (!llvm::sys::fs::exists(LockFileName.str(), Exists) && !Exists)
