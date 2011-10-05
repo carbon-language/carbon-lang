@@ -38,6 +38,7 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/CodeGen/SelectionDAG.h"
@@ -5502,8 +5503,6 @@ EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
   DispatchBB->setIsLandingPad();
   MBB->addSuccessor(DispatchBB);
 
-  BuildMI(DispatchBB, dl, TII->get(ARM::TRAP));
-
   bool isThumb = Subtarget->isThumb();
   bool isThumb2 = Subtarget->isThumb2();
   unsigned PCLabelId = AFI->createPICLabelUId();
@@ -5525,6 +5524,10 @@ EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
 
   // Load the address of the dispatch MBB into the jump buffer.
   if (isThumb2) {
+    // Incoming value: jbuf
+    // ldr.n  r1, LCPI1_4
+    // add    r1, pc
+    // str    r5, [$jbuf, #+4] ; &jbuf[1]
     unsigned NewVReg1 = MRI->createVirtualRegister(TRC);
     AddDefaultPred(BuildMI(*MBB, MI, dl, TII->get(ARM::t2LDRpci), NewVReg1)
                    .addConstantPoolIndex(CPI)
@@ -5542,7 +5545,7 @@ EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
     // Incoming value: jbuf
     // ldr.n  r1, LCPI1_4
     // add    r1, pc
-    // add    r2, sp, #48 ; &jbuf[1]
+    // add    r2, $jbuf, #+4 ; &jbuf[1]
     // str    r1, [r2]
     unsigned NewVReg1 = MRI->createVirtualRegister(TRC);
     AddDefaultPred(BuildMI(*MBB, MI, dl, TII->get(ARM::tLDRpci), NewVReg1)
@@ -5583,6 +5586,75 @@ EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
   }
 
   MI->eraseFromParent();   // The instruction is gone now.
+
+  // Now get a mapping of the call site numbers to all of the landing pads
+  // they're associated with.
+  DenseMap<unsigned, SmallVector<MachineBasicBlock*, 2> > CallSiteNumToLPad;
+  unsigned MaxCSNum = 0;
+  MachineModuleInfo &MMI = MF->getMMI();
+  for (MachineFunction::iterator BB = MF->begin(), E = MF->end(); BB != E; ++BB) {
+    if (!BB->isLandingPad()) continue;
+
+    // FIXME: We should assert that the EH_LABEL is the first MI in the landing
+    // pad.
+    for (MachineBasicBlock::iterator
+           II = BB->begin(), IE = BB->end(); II != IE; ++II) {
+      if (!II->isEHLabel()) continue;
+
+      MCSymbol *Sym = II->getOperand(0).getMCSymbol();
+      if (!MMI.hasCallSiteBeginLabel(Sym)) continue;
+
+      unsigned CallSiteNum = MMI.getCallSiteBeginLabel(Sym);
+      CallSiteNumToLPad[CallSiteNum].push_back(BB);
+      MaxCSNum = std::max(MaxCSNum, CallSiteNum);
+      break;
+    }
+  }
+
+  // Get an ordered list of the machine basic blocks for the jump table.
+  std::vector<MachineBasicBlock*> LPadList;
+  LPadList.reserve(CallSiteNumToLPad.size());
+  for (unsigned I = 1; I <= MaxCSNum; ++I) {
+    SmallVectorImpl<MachineBasicBlock*> &MBBList = CallSiteNumToLPad[I];
+    for (SmallVectorImpl<MachineBasicBlock*>::iterator
+           II = MBBList.begin(), IE = MBBList.end(); II != IE; ++II) {
+      LPadList.push_back(*II);
+      DispatchBB->addSuccessor(*II);
+    }
+  }
+
+  MachineJumpTableInfo *JTI =
+    MF->getOrCreateJumpTableInfo(MachineJumpTableInfo::EK_Inline);
+  unsigned MJTI = JTI->createJumpTableIndex(LPadList);
+  unsigned UId = AFI->createJumpTableUId();
+
+  FIMMO = MF->getMachineMemOperand(MachinePointerInfo::getFixedStack(FI),
+                                   MachineMemOperand::MOLoad, 4, 4);
+
+  unsigned NewVReg1 = MRI->createVirtualRegister(TRC);
+  AddDefaultPred(BuildMI(DispatchBB, dl, TII->get(ARM::t2LDRi12), NewVReg1)
+                 .addFrameIndex(FI)
+                 .addImm(4)
+                 .addMemOperand(FIMMO));
+
+  unsigned NewVReg2 = MRI->createVirtualRegister(TRC);
+  AddDefaultPred(BuildMI(DispatchBB, dl, TII->get(ARM::t2LEApcrelJT), NewVReg2)
+                 .addJumpTableIndex(MJTI)
+                 .addImm(UId));
+
+  unsigned NewVReg3 = MRI->createVirtualRegister(TRC);
+  AddDefaultCC(
+    AddDefaultPred(
+      BuildMI(DispatchBB, dl, TII->get(ARM::t2ADDrs), NewVReg3)
+      .addReg(NewVReg2, RegState::Kill)
+      .addReg(NewVReg1)
+      .addImm(18)));
+
+  BuildMI(DispatchBB, dl, TII->get(ARM::t2BR_JT))
+    .addReg(NewVReg3, RegState::Kill)
+    .addReg(NewVReg1)
+    .addJumpTableIndex(MJTI)
+    .addImm(UId);
 
   return MBB;
 }
