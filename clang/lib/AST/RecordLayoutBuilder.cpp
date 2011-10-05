@@ -1211,6 +1211,11 @@ void RecordLayoutBuilder::InitializeLayout(const Decl *D) {
   
   IsMsStruct = D->hasAttr<MsStructAttr>();
 
+  // Honor the default struct packing maximum alignment flag.
+  if (unsigned DefaultMaxFieldAlignment = Context.getLangOptions().PackStruct) {
+    MaxFieldAlignment = CharUnits::fromQuantity(DefaultMaxFieldAlignment);
+  }
+
   // mac68k alignment supersedes maximum field alignment and attribute aligned,
   // and forces all structures to have 2-byte alignment. The IBM docs on it
   // allude to additional (more complicated) semantics, especially with regard

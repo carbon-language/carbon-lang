@@ -94,6 +94,8 @@ BENIGN_LANGOPT(HeinousExtensions , 1, 0, "Extensions that we really don't like a
 LANGOPT(Optimize          , 1, 0, "__OPTIMIZE__ predefined macro")
 LANGOPT(OptimizeSize      , 1, 0, "__OPTIMIZE_SIZE__ predefined macro")
 LANGOPT(Static            , 1, 0, "__STATIC__ predefined macro (as opposed to __DYNAMIC__)")
+VALUE_LANGOPT(PackStruct  , 32, 0, 
+              "default struct packing maximum alignment")
 VALUE_LANGOPT(PICLevel          , 2, 0, "__PIC__ level")
 LANGOPT(GNUInline         , 1, 0, "GNU inline semantics")
 LANGOPT(NoInline          , 1, 0, "__NO_INLINE__ predefined macro")

@@ -1728,6 +1728,7 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
     Args.hasArg(OPT_fobjc_default_synthesize_properties);
   Opts.CatchUndefined = Args.hasArg(OPT_fcatch_undefined_behavior);
   Opts.EmitAllDecls = Args.hasArg(OPT_femit_all_decls);
+  Opts.PackStruct = Args.getLastArgIntValue(OPT_fpack_struct, 0, Diags);
   Opts.PICLevel = Args.getLastArgIntValue(OPT_pic_level, 0, Diags);
   Opts.Static = Args.hasArg(OPT_static_define);
   Opts.DumpRecordLayouts = Args.hasArg(OPT_fdump_record_layouts);

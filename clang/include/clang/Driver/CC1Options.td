@@ -541,6 +541,8 @@ def pic_level : Separate<"-pic-level">,
   HelpText<"Value for __PIC__">;
 def pthread : Flag<"-pthread">,
   HelpText<"Support POSIX threads in generated code">;
+def fpack_struct : Separate<"-fpack-struct">,
+  HelpText<"Specify the default maximum struct packing alignment">;
 def fpascal_strings : Flag<"-fpascal-strings">,
   HelpText<"Recognize and construct Pascal-style string literals">;
 def fno_rtti : Flag<"-fno-rtti">,
