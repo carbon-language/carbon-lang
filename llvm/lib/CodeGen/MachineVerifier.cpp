@@ -735,20 +735,14 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
       unsigned SubIdx = MO->getSubReg();
 
       if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
-        unsigned sr = Reg;
         if (SubIdx) {
-          unsigned s = TRI->getSubReg(Reg, SubIdx);
-          if (!s) {
-            report("Invalid subregister index for physical register",
-                   MO, MONum);
-            return;
-          }
-          sr = s;
+          report("Illegal subregister index for physical register", MO, MONum);
+          return;
         }
         if (const TargetRegisterClass *DRC = TII->getRegClass(MCID,MONum,TRI)) {
-          if (!DRC->contains(sr)) {
+          if (!DRC->contains(Reg)) {
             report("Illegal physical register for instruction", MO, MONum);
-            *OS << TRI->getName(sr) << " is not a "
+            *OS << TRI->getName(Reg) << " is not a "
                 << DRC->getName() << " register.\n";
           }
         }
@@ -756,16 +750,35 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
         // Virtual register.
         const TargetRegisterClass *RC = MRI->getRegClass(Reg);
         if (SubIdx) {
-          const TargetRegisterClass *SRC = RC->getSubRegisterRegClass(SubIdx);
+          const TargetRegisterClass *SRC =
+            TRI->getSubClassWithSubReg(RC, SubIdx);
           if (!SRC) {
             report("Invalid subregister index for virtual register", MO, MONum);
             *OS << "Register class " << RC->getName()
                 << " does not support subreg index " << SubIdx << "\n";
             return;
           }
-          RC = SRC;
+          if (RC != SRC) {
+            report("Invalid register class for subregister index", MO, MONum);
+            *OS << "Register class " << RC->getName()
+                << " does not fully support subreg index " << SubIdx << "\n";
+            return;
+          }
         }
         if (const TargetRegisterClass *DRC = TII->getRegClass(MCID,MONum,TRI)) {
+          if (SubIdx) {
+            const TargetRegisterClass *SuperRC =
+              TRI->getLargestLegalSuperClass(RC);
+            if (!SuperRC) {
+              report("No largest legal super class exists.", MO, MONum);
+              return;
+            }
+            DRC = TRI->getMatchingSuperRegClass(SuperRC, DRC, SubIdx);
+            if (!DRC) {
+              report("No matching super-reg register class.", MO, MONum);
+              return;
+            }
+          }
           if (!RC->hasSuperClassEq(DRC)) {
             report("Illegal virtual register for instruction", MO, MONum);
             *OS << "Expected a " << DRC->getName() << " register, but got a "
