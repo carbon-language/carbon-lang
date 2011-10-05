@@ -2939,6 +2939,9 @@ bool BitcodeReader::MaterializeModule(Module *M, std::string *ErrInfo) {
   }
   std::vector<std::pair<Function*, Function*> >().swap(UpgradedIntrinsics);
 
+  // Upgrade to new EH scheme. N.B. This will go away in 3.1.
+  UpgradeExceptionHandling(M);
+
   // Check debug info intrinsics.
   CheckDebugInfoIntrinsics(TheModule);
 
