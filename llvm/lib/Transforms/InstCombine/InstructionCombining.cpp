@@ -2017,12 +2017,12 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
         // Everything uses the new instruction now.
         I->replaceAllUsesWith(Result);
 
+        // Move the name to the new instruction first.
+        Result->takeName(I);
+
         // Push the new instruction and any users onto the worklist.
         Worklist.Add(Result);
         Worklist.AddUsersToWorkList(*Result);
-
-        // Move the name to the new instruction first.
-        Result->takeName(I);
 
         // Insert the new instruction into the basic block...
         BasicBlock *InstParent = I->getParent();
