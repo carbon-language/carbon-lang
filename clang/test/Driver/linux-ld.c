@@ -110,3 +110,30 @@
 // CHECK-INSTALL-DIR-64: "{{.*}}ld{{(.exe)?}}" "--sysroot=[[SYSROOT:[^"]+]]"
 // CHECK-INSTALL-DIR-64: "{{.*}}/usr/lib/gcc/x86_64-unknown-linux/4.6.0/crtbegin.o"
 // CHECK-INSTALL-DIR-64: "-L[[SYSROOT]]/usr/lib/gcc/x86_64-unknown-linux/4.6.0"
+//
+// Check that we support unusual patch version formats, including missing that
+// component.
+// RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
+// RUN:     -ccc-host-triple i386-unknown-linux -m32 \
+// RUN:     -ccc-install-dir %S/Inputs/gcc_version_parsing1 \
+// RUN:     --sysroot=%S/Inputs/basic_linux_tree \
+// RUN:   | FileCheck --check-prefix=CHECK-GCC-VERSION1 %s
+// CHECK-GCC-VERSION1: "{{.*}}ld{{(.exe)?}}" "--sysroot=[[SYSROOT:[^"]+]]"
+// CHECK-GCC-VERSION1: "{{.*}}/Inputs/gcc_version_parsing1/lib/gcc/i386-unknown-linux/4.7/crtbegin.o"
+// CHECK-GCC-VERSION1: "-L{{.*}}/Inputs/gcc_version_parsing1/lib/gcc/i386-unknown-linux/4.7"
+// RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
+// RUN:     -ccc-host-triple i386-unknown-linux -m32 \
+// RUN:     -ccc-install-dir %S/Inputs/gcc_version_parsing2 \
+// RUN:     --sysroot=%S/Inputs/basic_linux_tree \
+// RUN:   | FileCheck --check-prefix=CHECK-GCC-VERSION2 %s
+// CHECK-GCC-VERSION2: "{{.*}}ld{{(.exe)?}}" "--sysroot=[[SYSROOT:[^"]+]]"
+// CHECK-GCC-VERSION2: "{{.*}}/Inputs/gcc_version_parsing2/lib/gcc/i386-unknown-linux/4.7.x/crtbegin.o"
+// CHECK-GCC-VERSION2: "-L{{.*}}/Inputs/gcc_version_parsing2/lib/gcc/i386-unknown-linux/4.7.x"
+// RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
+// RUN:     -ccc-host-triple i386-unknown-linux -m32 \
+// RUN:     -ccc-install-dir %S/Inputs/gcc_version_parsing3 \
+// RUN:     --sysroot=%S/Inputs/basic_linux_tree \
+// RUN:   | FileCheck --check-prefix=CHECK-GCC-VERSION3 %s
+// CHECK-GCC-VERSION3: "{{.*}}ld{{(.exe)?}}" "--sysroot=[[SYSROOT:[^"]+]]"
+// CHECK-GCC-VERSION3: "{{.*}}/Inputs/gcc_version_parsing3/lib/gcc/i386-unknown-linux/4.7.99-rc5/crtbegin.o"
+// CHECK-GCC-VERSION3: "-L{{.*}}/Inputs/gcc_version_parsing3/lib/gcc/i386-unknown-linux/4.7.99-rc5"

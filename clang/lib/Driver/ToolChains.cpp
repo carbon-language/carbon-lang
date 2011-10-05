@@ -1508,9 +1508,11 @@ class GCCInstallationDetector {
         return BadVersion;
       if (Second.first.getAsInteger(10, GoodVersion.Minor))
         return BadVersion;
-      if (!Second.first.empty())
-        if (Second.first.getAsInteger(10, GoodVersion.Patch))
-          return BadVersion;
+      // We accept a number, or a string for the patch version, in case there
+      // is a strang suffix, or other mangling: '4.1.x', '4.1.2-rc3'. When it
+      // isn't a number, we just use '0' as the number but accept it.
+      if (Second.first.getAsInteger(10, GoodVersion.Patch))
+        GoodVersion.Patch = 0;
       return GoodVersion;
     }
 
