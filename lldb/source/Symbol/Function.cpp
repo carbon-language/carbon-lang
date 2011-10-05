@@ -468,7 +468,7 @@ Function::GetType()
         if (sym_file == NULL)
             return NULL;
         
-        return sym_file->ResolveTypeUID(m_type_uid);
+        m_type = sym_file->ResolveTypeUID(m_type_uid);
     }
     return m_type;
 }

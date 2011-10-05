@@ -1382,15 +1382,7 @@ SymbolFileDWARF::GetClangDeclContextContainingTypeUID (lldb::user_id_t type_uid)
 clang::DeclContext*
 SymbolFileDWARF::GetClangDeclContextForTypeUID (const lldb_private::SymbolContext &sc, lldb::user_id_t type_uid)
 {
-    DWARFDebugInfo* debug_info = DebugInfo();
-    if (debug_info)
-    {
-        DWARFCompileUnitSP cu_sp;
-        const DWARFDebugInfoEntry* die = debug_info->GetDIEPtr(type_uid, &cu_sp);
-        if (die)
-            return GetClangDeclContextForDIE (sc, cu_sp.get(), die);
-    }
-    return NULL;
+    return GetClangDeclContextForDIEOffset (sc, type_uid);
 }
 
 Type*
@@ -1406,13 +1398,13 @@ SymbolFileDWARF::ResolveTypeUID (lldb::user_id_t type_uid)
             // We might be coming in in the middle of a type tree (a class
             // withing a class, an enum within a class), so parse any needed
             // parent DIEs before we get to this one...
-            const DWARFDebugInfoEntry* parent_die = type_die->GetParent();
-            switch (parent_die->Tag())
+            const DWARFDebugInfoEntry *decl_ctx_die = GetDeclContextDIEContainingDIE (cu_sp.get(), type_die);
+            switch (decl_ctx_die->Tag())
             {
             case DW_TAG_structure_type:
             case DW_TAG_union_type:
             case DW_TAG_class_type:
-                ResolveType(cu_sp.get(), parent_die);
+                ResolveType(cu_sp.get(), decl_ctx_die);
                 break;
             }
             return ResolveType (cu_sp.get(), type_die);
@@ -2953,9 +2945,14 @@ SymbolFileDWARF::GetClangDeclContextForDIEOffset (const SymbolContext &sc, dw_of
 {
     if (die_offset != DW_INVALID_OFFSET)
     {
-        DWARFCompileUnitSP cu_sp;
-        const DWARFDebugInfoEntry* die = DebugInfo()->GetDIEPtr(die_offset, &cu_sp);
-        return GetClangDeclContextForDIE (sc, cu_sp.get(), die);
+        DWARFDebugInfo* debug_info = DebugInfo();
+        if (debug_info)
+        {
+            DWARFCompileUnitSP cu_sp;
+            const DWARFDebugInfoEntry* die = debug_info->GetDIEPtr(die_offset, &cu_sp);
+            if (die)
+                return GetClangDeclContextForDIE (sc, cu_sp.get(), die);
+        }
     }
     return NULL;
 }
@@ -2981,6 +2978,9 @@ SymbolFileDWARF::ResolveNamespaceDIE (DWARFCompileUnit *curr_cu, const DWARFDebu
 clang::DeclContext *
 SymbolFileDWARF::GetClangDeclContextForDIE (const SymbolContext &sc, DWARFCompileUnit *curr_cu, const DWARFDebugInfoEntry *die)
 {
+    clang::DeclContext *clang_decl_ctx = GetCachedClangDeclContextForDIE (die);
+    if (clang_decl_ctx)
+        return clang_decl_ctx;
     // If this DIE has a specification, or an abstract origin, then trace to those.
         
     dw_offset_t die_offset = die->GetAttributeValueAsReference(this, curr_cu, DW_AT_specification, DW_INVALID_OFFSET);
@@ -2995,11 +2995,9 @@ SymbolFileDWARF::GetClangDeclContextForDIE (const SymbolContext &sc, DWARFCompil
         
     ParseType(sc, curr_cu, die, NULL);
     
-    DIEToDeclContextMap::iterator pos = m_die_to_decl_ctx.find(die);
-    if (pos != m_die_to_decl_ctx.end())
-        return pos->second;
-    else
-        return NULL;
+    clang_decl_ctx = GetCachedClangDeclContextForDIE (die);
+
+    return clang_decl_ctx;
 }
 
 clang::DeclContext *
@@ -3880,27 +3878,48 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                 {
                                     if (specification_die_offset != DW_INVALID_OFFSET)
                                     {
+                                        // We have a specification which we are going to base our function
+                                        // prototype off of, so we need this type to be completed so that the
+                                        // m_die_to_decl_ctx for the method in the specification has a valid
+                                        // clang decl context.
+                                        class_type->GetClangFullType();
                                         // If we have a specification, then the function type should have been
                                         // made with the specification and not with this die.
                                         DWARFCompileUnitSP spec_cu_sp;
                                         const DWARFDebugInfoEntry* spec_die = DebugInfo()->GetDIEPtr(specification_die_offset, &spec_cu_sp);
-                                        if (m_die_to_decl_ctx[spec_die] == NULL)
+                                        clang::DeclContext *spec_clang_decl_ctx = GetCachedClangDeclContextForDIE (spec_die);
+                                        if (spec_clang_decl_ctx)
+                                        {
+                                            LinkDeclContextToDIE(spec_clang_decl_ctx, die);
+                                        }
+                                        else
                                         {
                                             ReportWarning ("0x%8.8x: DW_AT_specification(0x%8.8x) has no decl\n", 
-                                                die->GetOffset(), 
-                                                specification_die_offset);
+                                                           die->GetOffset(), 
+                                                           specification_die_offset);
                                         }
                                         type_handled = true;
                                     }
                                     else if (abstract_origin_die_offset != DW_INVALID_OFFSET)
                                     {
+                                        // We have a specification which we are going to base our function
+                                        // prototype off of, so we need this type to be completed so that the
+                                        // m_die_to_decl_ctx for the method in the abstract origin has a valid
+                                        // clang decl context.
+                                        class_type->GetClangFullType();
+
                                         DWARFCompileUnitSP abs_cu_sp;
                                         const DWARFDebugInfoEntry* abs_die = DebugInfo()->GetDIEPtr(abstract_origin_die_offset, &abs_cu_sp);
-                                        if (m_die_to_decl_ctx[abs_die] == NULL)
+                                        clang::DeclContext *abs_clang_decl_ctx = GetCachedClangDeclContextForDIE (abs_die);
+                                        if (abs_clang_decl_ctx)
+                                        {
+                                            LinkDeclContextToDIE (abs_clang_decl_ctx, die);
+                                        }
+                                        else
                                         {
                                             ReportWarning ("0x%8.8x: DW_AT_abstract_origin(0x%8.8x) has no decl\n", 
-                                                die->GetOffset(), 
-                                                abstract_origin_die_offset);
+                                                           die->GetOffset(), 
+                                                           abstract_origin_die_offset);
                                         }
                                         type_handled = true;
                                     }
@@ -4450,30 +4469,46 @@ SymbolFileDWARF::ParseVariableDIE
                     scope = eValueTypeVariableLocal;
 
                 SymbolContextScope * symbol_context_scope = NULL;
-                if (parent_tag == DW_TAG_compile_unit)
+                switch (parent_tag)
                 {
+                case DW_TAG_subprogram:
+                case DW_TAG_inlined_subroutine:
+                case DW_TAG_lexical_block:
+                    if (sc.function)
+                    {
+                        symbol_context_scope = sc.function->GetBlock(true).FindBlockByID(sc_parent_die->GetOffset());
+                        if (symbol_context_scope == NULL)
+                            symbol_context_scope = sc.function;
+                    }
+                    break;
+                
+                default:
                     symbol_context_scope = sc.comp_unit;
-                }
-                else if (sc.function != NULL)
-                {
-                    symbol_context_scope = sc.function->GetBlock(true).FindBlockByID(sc_parent_die->GetOffset());
-                    if (symbol_context_scope == NULL)
-                        symbol_context_scope = sc.function;
+                    break;
                 }
 
-                assert(symbol_context_scope != NULL);
-                var_sp.reset (new Variable(die->GetOffset(), 
-                                           name, 
-                                           mangled,
-                                           var_type, 
-                                           scope, 
-                                           symbol_context_scope, 
-                                           &decl, 
-                                           location, 
-                                           is_external, 
-                                           is_artificial));
-                
-                var_sp->SetLocationIsConstantValueData (location_is_const_value_data);
+                if (symbol_context_scope)
+                {
+                    var_sp.reset (new Variable(die->GetOffset(), 
+                                               name, 
+                                               mangled,
+                                               var_type, 
+                                               scope, 
+                                               symbol_context_scope, 
+                                               &decl, 
+                                               location, 
+                                               is_external, 
+                                               is_artificial));
+                    
+                    var_sp->SetLocationIsConstantValueData (location_is_const_value_data);
+                }
+                else
+                {
+                    // Not ready to parse this variable yet. It might be a global
+                    // or static variable that is in a function scope and the function
+                    // in the symbol context wasn't filled in yet
+                    return var_sp;
+                }
             }
         }
         // Cache var_sp even if NULL (the variable was just a specification or
