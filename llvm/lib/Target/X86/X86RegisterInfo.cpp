@@ -112,6 +112,18 @@ X86RegisterInfo::getSEHRegNum(unsigned i) const {
 }
 
 const TargetRegisterClass *
+X86RegisterInfo::getSubClassWithSubReg(const TargetRegisterClass *RC,
+                                       unsigned Idx) const {
+  // The sub_8bit sub-register index is more constrained in 32-bit mode.
+  // It behaves just like the sub_8bit_hi index.
+  if (!Is64Bit && Idx == X86::sub_8bit)
+    Idx = X86::sub_8bit_hi;
+
+  // Forward to TableGen's default version.
+  return X86GenRegisterInfo::getSubClassWithSubReg(RC, Idx);
+}
+
+const TargetRegisterClass *
 X86RegisterInfo::getMatchingSuperRegClass(const TargetRegisterClass *A,
                                           const TargetRegisterClass *B,
                                           unsigned SubIdx) const {
