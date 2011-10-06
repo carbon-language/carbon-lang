@@ -278,17 +278,12 @@ def print_module_section (section, depth):
             print_module_section (section.GetSubSectionAtIndex(sect_idx), depth - 1)
 
 def print_module_sections (module, depth):
-    num_sections = module.GetNumSections()
-
-    for sect_idx in range(num_sections):
-        section = module.GetSectionAtIndex(sect_idx)
-        print_module_section (section, depth)
+    for sect in module.section_iter():
+        print_module_section (sect, depth)
 
 def print_module_symbols (module):
-    n = module.GetNumSymbols()
-
-    for i in range(n):
-        print module.GetSymbolAtIndex(i)
+    for sym in module:
+        print sym
 
 def usage():
     print "Usage: lldb-symbolicate.py [-n name] executable-image"
