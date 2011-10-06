@@ -336,7 +336,6 @@ void Parser::ParseObjCInterfaceDeclList(tok::ObjCKeywordKind contextKey,
   tok::ObjCKeywordKind MethodImplKind = tok::objc_not_keyword;
 
   SourceRange AtEnd;
-  Actions.ActOnObjCContainerStartDefinition(CDecl);
     
   while (1) {
     // If this is a method prototype, parse it.
@@ -1195,6 +1194,7 @@ void Parser::ParseObjCClassInstanceVariables(Decl *interfaceDecl,
   SmallVector<Decl *, 32> AllIvarDecls;
     
   ParseScope ClassScope(this, Scope::DeclScope|Scope::ClassScope);
+  ObjCDeclContextSwitch ObjCDC(*this);
 
   SourceLocation LBraceLoc = ConsumeBrace(); // the "{"
 
@@ -1441,7 +1441,6 @@ Decl *Parser::ParseObjCAtImplementationDeclaration(
                                     atLoc, nameId, nameLoc, categoryId,
                                     categoryLoc);
 
-    Actions.ActOnObjCContainerStartDefinition(ImplCatType);
     ObjCImpDecl = ImplCatType;
     PendingObjCImpDecl.push_back(ObjCImpDecl);
     return 0;
@@ -1466,7 +1465,6 @@ Decl *Parser::ParseObjCAtImplementationDeclaration(
   if (Tok.is(tok::l_brace)) // we have ivars
     ParseObjCClassInstanceVariables(ImplClsType, tok::objc_private, atLoc);
 
-  Actions.ActOnObjCContainerStartDefinition(ImplClsType);
   ObjCImpDecl = ImplClsType;
   PendingObjCImpDecl.push_back(ObjCImpDecl);
   return 0;

@@ -374,7 +374,7 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
 
       // Return the previous class interface.
       // FIXME: don't leak the objects passed in!
-      return IDecl;
+      return ActOnObjCContainerStartDefinition(IDecl);
     } else {
       IDecl->setLocation(ClassLoc);
       IDecl->setForwardDecl(false);
@@ -482,7 +482,7 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
   }
 
   CheckObjCDeclScope(IDecl);
-  return IDecl;
+  return ActOnObjCContainerStartDefinition(IDecl);
 }
 
 /// ActOnCompatiblityAlias - this action is called after complete parsing of
@@ -578,7 +578,7 @@ Sema::ActOnStartProtocolInterface(SourceLocation AtProtoInterfaceLoc,
       Diag(PDecl->getLocation(), diag::note_previous_definition);
       // Just return the protocol we already had.
       // FIXME: don't leak the objects passed in!
-      return PDecl;
+      return ActOnObjCContainerStartDefinition(PDecl);
     }
     ObjCList<ObjCProtocolDecl> PList;
     PList.set((ObjCProtocolDecl *const*)ProtoRefs, NumProtoRefs, Context);
@@ -611,7 +611,7 @@ Sema::ActOnStartProtocolInterface(SourceLocation AtProtoInterfaceLoc,
   }
 
   CheckObjCDeclScope(PDecl);
-  return PDecl;
+  return ActOnObjCContainerStartDefinition(PDecl);
 }
 
 /// FindProtocolDeclaration - This routine looks up protocols and
@@ -741,7 +741,7 @@ ActOnStartCategoryInterface(SourceLocation AtInterfaceLoc,
                                      ClassLoc, CategoryLoc, CategoryName,IDecl);
     CDecl->setInvalidDecl();
     Diag(ClassLoc, diag::err_undef_interface) << ClassName;
-    return CDecl;
+    return ActOnObjCContainerStartDefinition(CDecl);
   }
 
   if (!CategoryName && IDecl->getImplementation()) {
@@ -783,7 +783,7 @@ ActOnStartCategoryInterface(SourceLocation AtInterfaceLoc,
   }
 
   CheckObjCDeclScope(CDecl);
-  return CDecl;
+  return ActOnObjCContainerStartDefinition(CDecl);
 }
 
 /// ActOnStartCategoryImplementation - Perform semantic checks on the
@@ -836,7 +836,7 @@ Decl *Sema::ActOnStartCategoryImplementation(
   }
 
   CheckObjCDeclScope(CDecl);
-  return CDecl;
+  return ActOnObjCContainerStartDefinition(CDecl);
 }
 
 Decl *Sema::ActOnStartClassImplementation(
@@ -930,7 +930,7 @@ Decl *Sema::ActOnStartClassImplementation(
                                    ClassLoc, AtClassImplLoc);
 
   if (CheckObjCDeclScope(IMPDecl))
-    return IMPDecl;
+    return ActOnObjCContainerStartDefinition(IMPDecl);
 
   // Check that there is no duplicate implementation of this class.
   if (IDecl->getImplementation()) {
@@ -947,7 +947,7 @@ Decl *Sema::ActOnStartClassImplementation(
                                         dyn_cast<NamedDecl>(IDecl), 
                                         IMPDecl->getLocation(), 1);
   }
-  return IMPDecl;
+  return ActOnObjCContainerStartDefinition(IMPDecl);
 }
 
 void Sema::CheckImplementationIvars(ObjCImplementationDecl *ImpDecl,

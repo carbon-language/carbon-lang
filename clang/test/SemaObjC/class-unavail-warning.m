@@ -2,15 +2,23 @@
 // rdar://9092208
 
 __attribute__((unavailable("not available")))
-@interface MyClass { // expected-note 5 {{declaration has been explicitly marked unavailable here}}
+@interface MyClass { // expected-note 7 {{declaration has been explicitly marked unavailable here}}
 @public
     void *_test;
+    MyClass *ivar; // no error.
 }
 
 - (id)self;
 - new;
 + (void)addObject:(id)anObject;
+- (MyClass *)meth; // no error.
 
+@end
+
+@interface Foo {
+  MyClass *ivar; // expected-error {{unavailable}}
+}
+- (MyClass *)meth; // expected-error {{unavailable}}
 @end
 
 int main() {

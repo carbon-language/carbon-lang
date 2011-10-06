@@ -85,8 +85,10 @@ int t5() {
 __attribute ((deprecated))  
 @interface DEPRECATED {
   @public int ivar; 
+  DEPRECATED *ivar2; // no warning.
 } 
 - (int) instancemethod;
+- (DEPRECATED *) meth; // no warning.
 @property  int prop; 
 @end
 

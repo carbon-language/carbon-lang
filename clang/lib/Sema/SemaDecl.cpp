@@ -8004,13 +8004,14 @@ void Sema::ActOnTagStartDefinition(Scope *S, Decl *TagD) {
   PushDeclContext(S, Tag);
 }
 
-void Sema::ActOnObjCContainerStartDefinition(Decl *IDecl) {
+Decl *Sema::ActOnObjCContainerStartDefinition(Decl *IDecl) {
   assert(isa<ObjCContainerDecl>(IDecl) && 
          "ActOnObjCContainerStartDefinition - Not ObjCContainerDecl");
   DeclContext *OCD = cast<DeclContext>(IDecl);
   assert(getContainingDC(OCD) == CurContext &&
       "The next DeclContext should be lexically contained in the current one.");
   CurContext = OCD;
+  return IDecl;
 }
 
 void Sema::ActOnStartCXXMemberDeclarations(Scope *S, Decl *TagD,
@@ -8068,7 +8069,17 @@ void Sema::ActOnObjCContainerFinishDefinition() {
   // Exit this scope of this interface definition.
   PopDeclContext();
 }
-                                          
+
+void Sema::ActOnObjCTemporaryExitContainerContext() {
+  OriginalLexicalContext = CurContext;
+  ActOnObjCContainerFinishDefinition();
+}
+
+void Sema::ActOnObjCReenterContainerContext() {
+  ActOnObjCContainerStartDefinition(cast<Decl>(OriginalLexicalContext));
+  OriginalLexicalContext = 0;
+}
+
 void Sema::ActOnTagDefinitionError(Scope *S, Decl *TagD) {
   AdjustDeclIfTemplate(TagD);
   TagDecl *Tag = cast<TagDecl>(TagD);

@@ -520,11 +520,11 @@ private:
     explicit ObjCDeclContextSwitch(Parser &p) : P(p), 
                DC(p.getObjCDeclContext()) {
       if (DC)
-        P.Actions.ActOnObjCContainerFinishDefinition();
+        P.Actions.ActOnObjCTemporaryExitContainerContext();
     }
     ~ObjCDeclContextSwitch() {
       if (DC)
-        P.Actions.ActOnObjCContainerStartDefinition(DC);
+        P.Actions.ActOnObjCReenterContainerContext();
     }
   };
 

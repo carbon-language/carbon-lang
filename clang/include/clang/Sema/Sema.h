@@ -202,6 +202,10 @@ public:
   /// CurContext - This is the current declaration context of parsing.
   DeclContext *CurContext;
 
+  /// \brief Generally null except when we temporarily switch decl contexts,
+  /// like in \see ActOnObjCTemporaryExitContainerContext.
+  DeclContext *OriginalLexicalContext;
+
   /// VAListTagName - The declaration name corresponding to __va_list_tag.
   /// This is used as part of a hack to omit that class from ADL results.
   DeclarationName VAListTagName;
@@ -1224,7 +1228,7 @@ public:
   /// struct, or union).
   void ActOnTagStartDefinition(Scope *S, Decl *TagDecl);
 
-  void ActOnObjCContainerStartDefinition(Decl *IDecl);
+  Decl *ActOnObjCContainerStartDefinition(Decl *IDecl);
 
   /// ActOnStartCXXMemberDeclarations - Invoked when we have parsed a
   /// C++ record definition's base-specifiers clause and are starting its
@@ -1239,6 +1243,13 @@ public:
                                 SourceLocation RBraceLoc);
 
   void ActOnObjCContainerFinishDefinition();
+
+  /// \brief Invoked when we must temporarily exit the objective-c container
+  /// scope for parsing/looking-up C constructs.
+  ///
+  /// Must be followed by a call to \see ActOnObjCReenterContainerContext
+  void ActOnObjCTemporaryExitContainerContext();
+  void ActOnObjCReenterContainerContext();
 
   /// ActOnTagDefinitionError - Invoked when there was an unrecoverable
   /// error parsing the definition of a tag.
@@ -6150,6 +6161,10 @@ public:
   Scope *getCurScope() const { return CurScope; }
     
   Decl *getObjCDeclContext() const;
+
+  DeclContext *getCurLexicalContext() const {
+    return OriginalLexicalContext ? OriginalLexicalContext : CurContext;
+  }
 };
 
 /// \brief RAII object that enters a new expression evaluation context.
