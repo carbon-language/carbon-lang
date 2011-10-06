@@ -1,14 +1,17 @@
 #!/bin/sh
 
-cloog_hash="0c252c88946b27b7b61a1a8d8fd7f94d2461dbfd"
-isl_hash="56b7d238929980e62218525b4b3be121af386edf"
+CLOOG_HASH="0c252c88946b27b7b61a1a8d8fd7f94d2461dbfd"
+ISL_HASH="56b7d238929980e62218525b4b3be121af386edf"
+
+PWD=`pwd`
 
 check_command_line() {
-  if [ "${1}x" = "x" ] || [ "${2}x" != "x" ]
+  if [ $# -eq 1 ]
   then
-      echo "Usage: " ${0} '<Directory to checkout CLooG>'
-  else
     CLOOG_DIR="${1}"
+  else
+      echo "Usage: " ${0} '<Directory to checkout CLooG>'
+      exit 1
   fi
 }
 
@@ -27,15 +30,14 @@ check_cloog_directory() {
     exit 1
   fi
 
+  # Make it absolute
+  cd ${CLOOG_DIR}
+  CLOOG_DIR=`pwd`
+
   if ! [ -e "${CLOOG_DIR}/.git" ]
   then
-    IS_GIT=0
     echo ":: No git checkout found"
-    if [ `ls -A ${CLOOG_DIR}` ]
-    then
-      echo but directory "'${CLOOG_DIR}'" contains files
-      exit 1
-    fi
+    IS_GIT=0
   else
     echo ":: Existing git repo found"
     IS_GIT=1
@@ -58,27 +60,31 @@ run() {
 check_command_line $@
 check_cloog_directory
 
-cd ${CLOOG_DIR}
-
-
-
+ISL_DIR=${CLOOG_DIR}/isl
 
 if [ ${IS_GIT} -eq 0 ]
 then
   echo :: Performing initial checkout
-  run git clone http://repo.or.cz/r/cloog.git .
-  run git clone http://repo.or.cz/r/isl.git isl
+  run git clone http://repo.or.cz/r/cloog.git ${CLOOG_DIR}
+  run git clone http://repo.or.cz/r/isl.git ${ISL_DIR}
 fi
 
 echo :: Fetch versions required by Polly
+run cd ${CLOOG_DIR}
 run git remote update
-run git reset --hard "${CLOOG_HASH}"
 run cd isl
 run git remote update
+
+echo :: Setting CLooG version
+run cd ${CLOOG_DIR}
+run git reset --hard "${CLOOG_HASH}"
+
+echo :: Setting isl version
+run cd ${ISL_DIR}
 run git reset --hard "${ISL_HASH}"
-run cd ..
 
 echo :: Generating configure
+run cd ${CLOOG_DIR}
 run ./autogen.sh
 
 echo :: If you install cloog/isl the first time run "'./configure'" followed by

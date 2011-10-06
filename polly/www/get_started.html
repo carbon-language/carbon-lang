@@ -17,10 +17,10 @@
 
 <h2 id="source"> Get the code </h2>
 
-The Polly source code is available in the LLVM SVN repository as well as in an
-official a git mirror. It is added to the <em>tools</em>
+The Polly source code is available in the LLVM SVN repository as well as through
+an official git mirror. It is added to the <em>tools</em>
 directory of the llvm sources.
-<b>Polly and LLVM need to be checked out at the time. Checkouts
+<b>Polly and LLVM need to be checked out at the same time. Checkouts
    from different dates may not work!</b>
 <h4>Set the directory layout:</h4>
 <pre>
@@ -52,11 +52,9 @@ system of your operating system.
 
 <h3> CLooG/isl</h3>
 
-Polly is tested and works with <a href="http://www.cloog.org">CLooG</a> as of
-commit 0c252c88946b27b7b61a1a8d8fd7f94d2461dbfd
-and <a href="http://repo.or.cz/w/isl.git">isl</a> as of
-commit 56b7d238929980e62218525b4b3be121af386edf. To get and install the
-relevant cloog version use the following commands:
+Polly is tested with a fixed version of <a href="http://www.cloog.org">CLooG</a>
+and isl. To obtain the source code of CLooG (including isl) use
+checkout_cloog.sh as available in ${POLLY_SRC}/utils/checkout_cloog.sh.
 
 <h4>Set the directory layout:</h4>
 <pre>
