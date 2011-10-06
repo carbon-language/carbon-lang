@@ -822,6 +822,18 @@ let test_builder () =
     let b = builder_at_end context (append_block context "Bb01" fn) in
     ignore (build_ret_void b)
   end;
+
+  group "ret aggregate";
+  begin
+      (* RUN: grep {ret \{ i8, i64 \} \{ i8 4, i64 5 \}} < %t.ll
+       *)
+      let sty = struct_type context [| i8_type; i64_type |] in
+      let fty = function_type sty [| |] in
+      let fn = declare_function "XA6" fty m in
+      let b = builder_at_end context (append_block context "Bb01" fn) in
+      let agg = [| const_int i8_type 4; const_int i64_type 5 |] in
+      ignore (build_aggregate_ret agg b)
+  end;
   
   (* The rest of the tests will use one big function. *)
   let fty = function_type i32_type [| i32_type; i32_type |] in
@@ -835,14 +847,26 @@ let test_builder () =
   let bb00 = append_block context "Bb00" fn in
   ignore (build_unreachable (builder_at_end context bb00));
 
+  (* see test/Feature/exception.ll *)
   let bblpad = append_block context "Bblpad" fn in
   let rt = struct_type context [| pointer_type i8_type; i32_type |] in
   let ft = var_arg_function_type i32_type  [||] in
-  let personality = declare_function "__gxx_personality_v0" ft m in begin
+  let personality = declare_function "__gxx_personality_v0" ft m in
+  let ztic = declare_global (pointer_type i8_type) "_ZTIc" m in
+  let ztid = declare_global (pointer_type i8_type) "_ZTId" m in
+  let ztipkc = declare_global (pointer_type i8_type) "_ZTIPKc" m in
+  begin
+      set_global_constant true ztic;
+      set_global_constant true ztid;
+      set_global_constant true ztipkc;
       let lp = build_landingpad rt personality 0 "lpad"
-       (builder_at_end context bblpad) in
-      set_cleanup lp true;
-      ignore (build_unreachable (builder_at_end context bblpad));
+       (builder_at_end context bblpad) in begin
+           set_cleanup lp true;
+           ignore (build_unreachable (builder_at_end context bblpad));
+      end;
+      (* RUN: grep "landingpad.*personality.*__gxx_personality_v0" < %t.ll
+       * RUN: grep "cleanup" < %t.ll
+       * *)
   end;
 
   group "ret"; begin
@@ -878,8 +902,9 @@ let test_builder () =
     ignore (build_unreachable (builder_at_end context bb2));
     let bb3 = append_block context "SwiBlock3" fn in
     ignore (build_unreachable (builder_at_end context bb3));
-    let si = build_switch p1 bb3 1 (builder_at_end context bb1) in
-    ignore (add_case si (const_int i32_type 2) bb2)
+    let si = build_switch p1 bb3 1 (builder_at_end context bb1) in begin
+        ignore (add_case si (const_int i32_type 2) bb2);
+    end;
   end;
 
   group "indirectbr"; begin
@@ -993,30 +1018,63 @@ let test_builder () =
      * RUN: grep {%build_load = load i32\\* %build_array_alloca} < %t.ll
      * RUN: grep {store i32 %P2, i32\\* %build_alloca} < %t.ll
      * RUN: grep {%build_gep = getelementptr i32\\* %build_array_alloca, i32 %P2} < %t.ll
+     * RUN: grep {%build_in_bounds_gep = getelementptr inbounds i32\\* %build_array_alloca, i32 %P2} < %t.ll
+     * RUN: grep {%build_struct_gep = getelementptr inbounds.*%build_alloca2, i32 0, i32 1} < %t.ll
      *)
     let alloca = build_alloca i32_type "build_alloca" b in
     let array_alloca = build_array_alloca i32_type p2 "build_array_alloca" b in
     ignore(build_load array_alloca "build_load" b);
     ignore(build_store p2 alloca b);
     ignore(build_gep array_alloca [| p2 |] "build_gep" b);
+    ignore(build_in_bounds_gep array_alloca [| p2 |] "build_in_bounds_gep" b);
+
+    let sty = struct_type context [| i32_type; i8_type |] in
+    let alloca2 = build_alloca sty "build_alloca2" b in
+    ignore(build_struct_gep alloca2 1 "build_struct_gep" b);
+
     ignore(build_unreachable b)
   end;
-  
+
+  group "string"; begin
+    let bb09 = append_block context "Bb09" fn in
+    let b = builder_at_end context bb09 in
+    let p = build_alloca (pointer_type i8_type) "p" b in
+    (* RUN: grep "build_global_string.*stringval" < %t.ll
+     * RUN: grep "store.*build_global_string1.*p" < %t.ll
+     * *)
+    ignore (build_global_string "stringval" "build_global_string" b);
+    let g = build_global_stringptr "stringval" "build_global_string1" b in
+    ignore (build_store g p b);
+    ignore(build_unreachable b);
+  end;
+
   group "casts"; begin
     let void_ptr = pointer_type i8_type in
     
     (* RUN: grep {%build_trunc = trunc i32 %P1 to i8} < %t.ll
+     * RUN: grep {%build_trunc2 = trunc i32 %P1 to i8} < %t.ll
+     * RUN: grep {%build_trunc3 = trunc i32 %P1 to i8} < %t.ll
      * RUN: grep {%build_zext = zext i8 %build_trunc to i32} < %t.ll
+     * RUN: grep {%build_zext2 = zext i8 %build_trunc to i32} < %t.ll
      * RUN: grep {%build_sext = sext i32 %build_zext to i64} < %t.ll
+     * RUN: grep {%build_sext2 = sext i32 %build_zext to i64} < %t.ll
+     * RUN: grep {%build_sext3 = sext i32 %build_zext to i64} < %t.ll
      * RUN: grep {%build_uitofp = uitofp i64 %build_sext to float} < %t.ll
      * RUN: grep {%build_sitofp = sitofp i32 %build_zext to double} < %t.ll
      * RUN: grep {%build_fptoui = fptoui float %build_uitofp to i32} < %t.ll
      * RUN: grep {%build_fptosi = fptosi double %build_sitofp to i64} < %t.ll
      * RUN: grep {%build_fptrunc = fptrunc double %build_sitofp to float} < %t.ll
+     * RUN: grep {%build_fptrunc2 = fptrunc double %build_sitofp to float} < %t.ll
      * RUN: grep {%build_fpext = fpext float %build_fptrunc to double} < %t.ll
+     * RUN: grep {%build_fpext2 = fpext float %build_fptrunc to double} < %t.ll
      * RUN: grep {%build_inttoptr = inttoptr i32 %P1 to i8\\*} < %t.ll
      * RUN: grep {%build_ptrtoint = ptrtoint i8\\* %build_inttoptr to i64} < %t.ll
+     * RUN: grep {%build_ptrtoint2 = ptrtoint i8\\* %build_inttoptr to i64} < %t.ll
      * RUN: grep {%build_bitcast = bitcast i64 %build_ptrtoint to double} < %t.ll
+     * RUN: grep {%build_bitcast2 = bitcast i64 %build_ptrtoint to double} < %t.ll
+     * RUN: grep {%build_bitcast3 = bitcast i64 %build_ptrtoint to double} < %t.ll
+     * RUN: grep {%build_bitcast4 = bitcast i64 %build_ptrtoint to double} < %t.ll
+     * RUN: grep {%build_pointercast = bitcast i8\\* %build_inttoptr to i16\\*} < %t.ll
      *)
     let inst28 = build_trunc p1 i8_type "build_trunc" atentry in
     let inst29 = build_zext inst28 i32_type "build_zext" atentry in
@@ -1029,7 +1087,20 @@ let test_builder () =
     ignore(build_fpext inst35 double_type "build_fpext" atentry);
     let inst37 = build_inttoptr p1 void_ptr "build_inttoptr" atentry in
     let inst38 = build_ptrtoint inst37 i64_type "build_ptrtoint" atentry in
-    ignore(build_bitcast inst38 double_type "build_bitcast" atentry)
+    ignore(build_bitcast inst38 double_type "build_bitcast" atentry);
+    ignore(build_zext_or_bitcast inst38 double_type "build_bitcast2" atentry);
+    ignore(build_sext_or_bitcast inst38 double_type "build_bitcast3" atentry);
+    ignore(build_trunc_or_bitcast inst38 double_type "build_bitcast4" atentry);
+    ignore(build_pointercast inst37 (pointer_type i16_type) "build_pointercast" atentry);
+
+    ignore(build_zext_or_bitcast inst28 i32_type "build_zext2" atentry);
+    ignore(build_sext_or_bitcast inst29 i64_type "build_sext2" atentry);
+    ignore(build_trunc_or_bitcast p1 i8_type "build_trunc2" atentry);
+    ignore(build_pointercast inst37 i64_type "build_ptrtoint2" atentry);
+    ignore(build_intcast inst29 i64_type "build_sext3" atentry);
+    ignore(build_intcast p1 i8_type "build_trunc3" atentry);
+    ignore(build_fpcast inst35 double_type "build_fpext2" atentry);
+    ignore(build_fpcast inst32 float_type "build_fptrunc2" atentry);
   end;
   
   group "comparisons"; begin
@@ -1037,11 +1108,21 @@ let test_builder () =
      * RUN: grep {%build_icmp_sle = icmp sle i32 %P2, %P1} < %t.ll
      * RUN: grep {%build_fcmp_false = fcmp false float %F1, %F2} < %t.ll
      * RUN: grep {%build_fcmp_true = fcmp true float %F2, %F1} < %t.ll
+     * RUN: grep {%build_is_null.*= icmp eq.*%X0,.*null} < %t.ll
+     * RUN: grep {%build_is_not_null = icmp ne i8\\* %X1, null} < %t.ll
+     * RUN: grep {%build_ptrdiff} < %t.ll
      *)
     ignore (build_icmp Icmp.Ne    p1 p2 "build_icmp_ne" atentry);
     ignore (build_icmp Icmp.Sle   p2 p1 "build_icmp_sle" atentry);
     ignore (build_fcmp Fcmp.False f1 f2 "build_fcmp_false" atentry);
-    ignore (build_fcmp Fcmp.True  f2 f1 "build_fcmp_true" atentry)
+    ignore (build_fcmp Fcmp.True  f2 f1 "build_fcmp_true" atentry);
+    let g0 = declare_global (pointer_type i8_type) "g0" m in
+    let g1 = declare_global (pointer_type i8_type) "g1" m in
+    let p0 = build_load g0 "X0" atentry in
+    let p1 = build_load g1 "X1" atentry in
+    ignore (build_is_null p0 "build_is_null" atentry);
+    ignore (build_is_not_null p1 "build_is_not_null" atentry);
+    ignore (build_ptrdiff p1 p0 "build_ptrdiff" atentry);
   end;
   
   group "miscellaneous"; begin
@@ -1051,6 +1132,8 @@ let test_builder () =
      * RUN: grep {%build_extractelement = extractelement <4 x i32> %Vec1, i32 %P2} < %t.ll
      * RUN: grep {%build_insertelement = insertelement <4 x i32> %Vec1, i32 %P1, i32 %P2} < %t.ll
      * RUN: grep {%build_shufflevector = shufflevector <4 x i32> %Vec1, <4 x i32> %Vec2, <4 x i32> <i32 1, i32 1, i32 0, i32 0>} < %t.ll
+     * RUN: grep {%build_insertvalue0 = insertvalue.*%bl, i32 1, 0} < %t.ll
+     * RUN: grep {%build_extractvalue = extractvalue.*%build_insertvalue1, 1} < %t.ll
      *)
     let ci = build_call fn [| p2; p1 |] "build_call" atentry in
     insist (CallConv.c = instruction_call_conv ci);
@@ -1077,10 +1160,19 @@ let test_builder () =
     let t3 = const_vector [| one; one; zero; zero |] in
     let vec1 = build_insertelement t1 p1 p2 "Vec1" atentry in
     let vec2 = build_insertelement t2 p1 p2 "Vec2" atentry in
+    let sty = struct_type context [| i32_type; i8_type |] in
     
     ignore (build_extractelement vec1 p2 "build_extractelement" atentry);
     ignore (build_insertelement vec1 p1 p2 "build_insertelement" atentry);
     ignore (build_shufflevector vec1 vec2 t3 "build_shufflevector" atentry);
+
+    let p = build_alloca sty "ba" atentry in
+    let agg = build_load p "bl" atentry in
+    let agg0 = build_insertvalue agg (const_int i32_type 1) 0
+                 "build_insertvalue0" atentry in
+    let agg1 = build_insertvalue agg0 (const_int i8_type 2) 1
+                 "build_insertvalue1" atentry in
+    ignore (build_extractvalue agg1 1 "build_extractvalue" atentry)
   end;
 
   group "metadata"; begin
