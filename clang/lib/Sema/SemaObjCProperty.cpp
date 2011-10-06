@@ -1432,7 +1432,9 @@ Sema::AtomicPropertySetterGetterRules (ObjCImplDecl* IMPDecl,
           (GetterMethod ? GetterMethod->getLocation()
                         : SetterMethod->getLocation());
         Diag(MethodLoc, diag::warn_atomic_property_rule)
-          << Property->getIdentifier();
+          << Property->getIdentifier() << (GetterMethod != 0)
+          << (SetterMethod != 0);
+        Diag(MethodLoc, diag::note_atomic_property_fixup_suggest);
         Diag(Property->getLocation(), diag::note_property_declare);
       }
     }

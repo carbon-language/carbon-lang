@@ -240,8 +240,10 @@
 
 GET(GetSet)
 SET(GetSet)
-GET(Get) // expected-warning {{writable atomic property 'Get' cannot pair a synthesized setter/getter with a user defined setter/getter}}
-SET(Set) // expected-warning {{writable atomic property 'Set' cannot pair a synthesized setter/getter with a user defined setter/getter}}
+GET(Get) // expected-warning {{writable atomic property 'Get' cannot pair a synthesized setter with a user defined getter}} \
+         // expected-note {{setter and getter must both be synthesized}}
+SET(Set) // expected-warning {{writable atomic property 'Set' cannot pair a synthesized getter with a user defined setter}} \
+         // expected-note {{setter and getter must both be synthesized}}
 GET(GetSet_Nonatomic)
 SET(GetSet_Nonatomic)
 GET(Get_Nonatomic)
@@ -258,8 +260,10 @@ SET(Set_Nonatomic_ReadOnly)
 
 GET(GetSet_ReadWriteInExt)
 SET(GetSet_ReadWriteInExt)
-GET(Get_ReadWriteInExt) // expected-warning {{writable atomic property 'Get_ReadWriteInExt' cannot pair a synthesized setter/getter with a user defined setter/getter}}
-SET(Set_ReadWriteInExt) // expected-warning {{writable atomic property 'Set_ReadWriteInExt' cannot pair a synthesized setter/getter with a user defined setter/getter}}
+GET(Get_ReadWriteInExt) // expected-warning {{writable atomic property 'Get_ReadWriteInExt' cannot pair a synthesized setter with a user defined getter}} \
+         // expected-note {{setter and getter must both be synthesized}}
+SET(Set_ReadWriteInExt) // expected-warning {{writable atomic property 'Set_ReadWriteInExt' cannot pair a synthesized getter with a user defined setter}} \
+         // expected-note {{setter and getter must both be synthesized}}
 GET(GetSet_Nonatomic_ReadWriteInExt)
 SET(GetSet_Nonatomic_ReadWriteInExt)
 GET(Get_Nonatomic_ReadWriteInExt)
@@ -268,8 +272,10 @@ SET(Set_Nonatomic_ReadWriteInExt)
 
 GET(GetSet_LateSynthesize)
 SET(GetSet_LateSynthesize)
-GET(Get_LateSynthesize) // expected-warning {{writable atomic property 'Get_LateSynthesize' cannot pair a synthesized setter/getter with a user defined setter/getter}}
-SET(Set_LateSynthesize) // expected-warning {{writable atomic property 'Set_LateSynthesize' cannot pair a synthesized setter/getter with a user defined setter/getter}}
+GET(Get_LateSynthesize) // expected-warning {{writable atomic property 'Get_LateSynthesize' cannot pair a synthesized setter with a user defined getter}} \
+         // expected-note {{setter and getter must both be synthesized}}
+SET(Set_LateSynthesize) // expected-warning {{writable atomic property 'Set_LateSynthesize' cannot pair a synthesized getter with a user defined setter}} \
+         // expected-note {{setter and getter must both be synthesized}}
 GET(GetSet_Nonatomic_LateSynthesize)
 SET(GetSet_Nonatomic_LateSynthesize)
 GET(Get_Nonatomic_LateSynthesize)
@@ -286,8 +292,10 @@ SET(Set_Nonatomic_ReadOnly_LateSynthesize)
 
 GET(GetSet_ReadWriteInExt_LateSynthesize)
 SET(GetSet_ReadWriteInExt_LateSynthesize)
-GET(Get_ReadWriteInExt_LateSynthesize) // expected-warning {{writable atomic property 'Get_ReadWriteInExt_LateSynthesize' cannot pair a synthesized setter/getter with a user defined setter/getter}}
-SET(Set_ReadWriteInExt_LateSynthesize) // expected-warning {{writable atomic property 'Set_ReadWriteInExt_LateSynthesize' cannot pair a synthesized setter/getter with a user defined setter/getter}}
+GET(Get_ReadWriteInExt_LateSynthesize) // expected-warning {{writable atomic property 'Get_ReadWriteInExt_LateSynthesize' cannot pair a synthesized setter with a user defined getter}} \
+         // expected-note {{setter and getter must both be synthesized}}
+SET(Set_ReadWriteInExt_LateSynthesize) // expected-warning {{writable atomic property 'Set_ReadWriteInExt_LateSynthesize' cannot pair a synthesized getter with a user defined setter}} \
+         // expected-note {{setter and getter must both be synthesized}}
 GET(GetSet_Nonatomic_ReadWriteInExt_LateSynthesize)
 SET(GetSet_Nonatomic_ReadWriteInExt_LateSynthesize)
 GET(Get_Nonatomic_ReadWriteInExt_LateSynthesize)

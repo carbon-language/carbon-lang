@@ -498,9 +498,11 @@ def warn_objc_property_retain_of_block : Warning<
     "retain'ed block property does not copy the block "
     "- use copy attribute instead">, InGroup<ObjCRetainBlockProperty>;
 def warn_atomic_property_rule : Warning<
-  "writable atomic property %0 cannot pair a synthesized setter/getter "
-  "with a user defined setter/getter">,
+  "writable atomic property %0 cannot pair a synthesized %select{getter|setter}1 "
+  "with a user defined %select{getter|setter}2">,
   InGroup<DiagGroup<"atomic-property-with-user-defined-accessor">>;
+def note_atomic_property_fixup_suggest : Note<"setter and getter must both be "
+  "synthesized, or both be user defined,or the property must be nonatomic">;
 def warn_atomic_property_nontrivial_assign_op : Warning<
   "atomic property of type %0 synthesizing setter using non-trivial assignment"
   "operator">, InGroup<DiagGroup<"objc-property-atomic-setter-synthesis">>;
