@@ -208,40 +208,38 @@ tgtok::TokKind TGLexer::LexVarName() {
 tgtok::TokKind TGLexer::LexIdentifier() {
   // The first letter is [a-zA-Z_#].
   const char *IdentStart = TokStart;
-  
+
   // Match the rest of the identifier regex: [0-9a-zA-Z_#]*
   while (isalpha(*CurPtr) || isdigit(*CurPtr) || *CurPtr == '_' ||
          *CurPtr == '#')
     ++CurPtr;
-  
-  
+
   // Check to see if this identifier is a keyword.
-  unsigned Len = CurPtr-IdentStart;
-  
-  if (Len == 3 && !memcmp(IdentStart, "int", 3)) return tgtok::Int;
-  if (Len == 3 && !memcmp(IdentStart, "bit", 3)) return tgtok::Bit;
-  if (Len == 4 && !memcmp(IdentStart, "bits", 4)) return tgtok::Bits;
-  if (Len == 6 && !memcmp(IdentStart, "string", 6)) return tgtok::String;
-  if (Len == 4 && !memcmp(IdentStart, "list", 4)) return tgtok::List;
-  if (Len == 4 && !memcmp(IdentStart, "code", 4)) return tgtok::Code;
-  if (Len == 3 && !memcmp(IdentStart, "dag", 3)) return tgtok::Dag;
-  
-  if (Len == 5 && !memcmp(IdentStart, "class", 5)) return tgtok::Class;
-  if (Len == 3 && !memcmp(IdentStart, "def", 3)) return tgtok::Def;
-  if (Len == 8 && !memcmp(IdentStart, "multidef", 8)) return tgtok::MultiDef;
-  if (Len == 4 && !memcmp(IdentStart, "defm", 4)) return tgtok::Defm;
-  if (Len == 10 && !memcmp(IdentStart, "multiclass", 10))
-    return tgtok::MultiClass;
-  if (Len == 5 && !memcmp(IdentStart, "field", 5)) return tgtok::Field;
-  if (Len == 3 && !memcmp(IdentStart, "let", 3)) return tgtok::Let;
-  if (Len == 2 && !memcmp(IdentStart, "in", 2)) return tgtok::In;
-  
-  if (Len == 7 && !memcmp(IdentStart, "include", 7)) {
+  StringRef Str(IdentStart, CurPtr-IdentStart);
+
+  if (Str == "int") return tgtok::Int;
+  if (Str == "bit") return tgtok::Bit;
+  if (Str == "bits") return tgtok::Bits;
+  if (Str == "string") return tgtok::String;
+  if (Str == "list") return tgtok::List;
+  if (Str == "code") return tgtok::Code;
+  if (Str == "dag") return tgtok::Dag;
+
+  if (Str == "class") return tgtok::Class;
+  if (Str == "def") return tgtok::Def;
+  if (Str == "multidef") return tgtok::MultiDef;
+  if (Str == "defm") return tgtok::Defm;
+  if (Str == "multiclass") return tgtok::MultiClass;
+  if (Str == "field") return tgtok::Field;
+  if (Str == "let") return tgtok::Let;
+  if (Str == "in") return tgtok::In;
+
+  if (Str == "include") {
     if (LexInclude()) return tgtok::Error;
     return Lex();
   }
-    
-  CurStrVal.assign(IdentStart, CurPtr);
+
+  CurStrVal.assign(Str.begin(), Str.end());
   return tgtok::Id;
 }
 
