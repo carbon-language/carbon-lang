@@ -60,6 +60,16 @@ endif
 # We can revisit this when LLVM/Clang support it.
 CXX.Flags += -fno-strict-aliasing
 
+# Set up Clang's tblgen.
+ifndef CLANG_TBLGEN
+  ifeq ($(LLVM_CROSS_COMPILING),1)
+    CLANG_TBLGEN := $(BuildLLVMToolDir)/llvm-tblgen$(BUILD_EXEEXT)
+  else
+    CLANG_TBLGEN := $(LLVMToolDir)/llvm-tblgen$(EXEEXT)
+  endif
+endif
+ClangTableGen = $(CLANG_TBLGEN) $(TableGen.Flags)
+
 ###
 # Clang Top Level specific stuff.
 

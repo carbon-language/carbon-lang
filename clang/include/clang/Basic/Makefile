@@ -29,26 +29,26 @@ else
 CLANG_HAS_VERSION_PATCHLEVEL := 1
 endif
 
-$(ObjDir)/Diagnostic%Kinds.inc.tmp : Diagnostic.td Diagnostic%Kinds.td $(TBLGEN) $(ObjDir)/.dir
+$(ObjDir)/Diagnostic%Kinds.inc.tmp : Diagnostic.td Diagnostic%Kinds.td $(CLANG_TBLGEN) $(ObjDir)/.dir
 	$(Echo) "Building Clang $(patsubst Diagnostic%Kinds.inc.tmp,%,$(@F)) diagnostic tables with tblgen"
-	$(Verb) $(TableGen) -gen-clang-diags-defs -clang-component=$(patsubst Diagnostic%Kinds.inc.tmp,%,$(@F)) -o $(call SYSPATH, $@) $<
+	$(Verb) $(ClangTableGen) -gen-clang-diags-defs -clang-component=$(patsubst Diagnostic%Kinds.inc.tmp,%,$(@F)) -o $(call SYSPATH, $@) $<
 
-$(ObjDir)/DiagnosticIndexName.inc.tmp : Diagnostic.td $(INPUT_TDS) $(TBLGEN) $(ObjDir)/.dir
+$(ObjDir)/DiagnosticIndexName.inc.tmp : Diagnostic.td $(INPUT_TDS) $(CLANG_TBLGEN) $(ObjDir)/.dir
 	$(Echo) "Building Clang diagnostic name index with tblgen"
-	$(Verb) $(TableGen) -gen-clang-diags-index-name -o $(call SYSPATH, $@) $<
+	$(Verb) $(ClangTableGen) -gen-clang-diags-index-name -o $(call SYSPATH, $@) $<
 
-$(ObjDir)/DiagnosticGroups.inc.tmp : Diagnostic.td DiagnosticGroups.td $(INPUT_TDS) $(TBLGEN) $(ObjDir)/.dir
+$(ObjDir)/DiagnosticGroups.inc.tmp : Diagnostic.td DiagnosticGroups.td $(INPUT_TDS) $(CLANG_TBLGEN) $(ObjDir)/.dir
 	$(Echo) "Building Clang diagnostic groups with tblgen"
-	$(Verb) $(TableGen) -gen-clang-diag-groups -o $(call SYSPATH, $@) $<
+	$(Verb) $(ClangTableGen) -gen-clang-diag-groups -o $(call SYSPATH, $@) $<
 
-$(ObjDir)/AttrList.inc.tmp : Attr.td $(TBLGEN) $(ObjDir)/.dir
+$(ObjDir)/AttrList.inc.tmp : Attr.td $(CLANG_TBLGEN) $(ObjDir)/.dir
 	$(Echo) "Building Clang attribute list with tblgen"
-	$(Verb) $(TableGen) -gen-clang-attr-list -o $(call SYSPATH, $@) \
+	$(Verb) $(ClangTableGen) -gen-clang-attr-list -o $(call SYSPATH, $@) \
 	  -I $(PROJ_SRC_DIR)/../.. $<
 
-$(ObjDir)/arm_neon.inc.tmp : arm_neon.td $(TBLGEN) $(ObjDir)/.dir
+$(ObjDir)/arm_neon.inc.tmp : arm_neon.td $(CLANG_TBLGEN) $(ObjDir)/.dir
 	$(Echo) "Building Clang arm_neon.inc with tblgen"
-	$(Verb) $(TableGen) -gen-arm-neon-sema -o $(call SYSPATH, $@) $<
+	$(Verb) $(ClangTableGen) -gen-arm-neon-sema -o $(call SYSPATH, $@) $<
 
 $(ObjDir)/Version.inc.tmp : Version.inc.in Makefile $(LLVM_OBJ_ROOT)/Makefile.config $(ObjDir)/.dir
 	$(Echo) "Updating Clang version info."

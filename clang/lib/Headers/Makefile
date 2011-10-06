@@ -49,6 +49,6 @@ $(INSTHEADERS): $(PROJ_headers)/%.h: $(HeaderDir)/%.h | $(PROJ_headers)
 
 install-local:: $(INSTHEADERS)
 
-$(ObjDir)/arm_neon.h.inc.tmp : $(CLANG_LEVEL)/include/clang/Basic/arm_neon.td $(TBLGEN) $(ObjDir)/.dir
+$(ObjDir)/arm_neon.h.inc.tmp : $(CLANG_LEVEL)/include/clang/Basic/arm_neon.td $(CLANG_TBLGEN) $(ObjDir)/.dir
 	$(Echo) "Building Clang arm_neon.h.inc with tblgen"
-	$(Verb) $(TableGen) -gen-arm-neon -o $(call SYSPATH, $@) $<
+	$(Verb) $(ClangTableGen) -gen-arm-neon -o $(call SYSPATH, $@) $<
