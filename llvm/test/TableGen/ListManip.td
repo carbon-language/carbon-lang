@@ -1,4 +1,4 @@
-// RUN: tblgen %s
+// RUN: llvm-tblgen %s
 // XFAIL: vg_leak
 
 class Bli<string _t>

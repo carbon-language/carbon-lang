@@ -1,5 +1,5 @@
 // Test evaluation of set operations in dags.
-// RUN: tblgen -print-sets %s | FileCheck %s
+// RUN: llvm-tblgen -print-sets %s | FileCheck %s
 // XFAIL: vg_leak
 //
 // The -print-sets driver configures a primitive SetTheory instance that

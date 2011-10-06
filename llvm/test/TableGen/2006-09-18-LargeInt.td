@@ -1,4 +1,4 @@
-// RUN: tblgen %s | grep -- 4294901760
+// RUN: llvm-tblgen %s | grep -- 4294901760
 // XFAIL: vg_leak
 
 def X {

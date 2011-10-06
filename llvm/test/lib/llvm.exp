@@ -111,7 +111,7 @@ proc substitute { line test tmpFile } {
   regsub -all {llvm-ranlib } $new_line "$valgrind llvm-ranlib " new_line
   regsub -all {([^a-zA-Z_-])opt } $new_line "\\1$valgrind opt " new_line
   regsub -all {^opt } $new_line "$valgrind opt " new_line
-  regsub -all {tblgen } $new_line "$valgrind tblgen " new_line
+  regsub -all {llvm-tblgen } $new_line "$valgrind llvm-tblgen " new_line
   regsub -all "not $valgrind " $new_line "$valgrind not " new_line
 
   return $new_line

@@ -1,5 +1,5 @@
-// RUN: tblgen %s | FileCheck %s
-// RUN: tblgen %s | FileCheck %s
+// RUN: llvm-tblgen %s | FileCheck %s
+// RUN: llvm-tblgen %s | FileCheck %s
 
 class Base<int i> {
   int value = i;

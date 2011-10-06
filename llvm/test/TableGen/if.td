@@ -1,4 +1,4 @@
-// RUN: tblgen %s | FileCheck %s
+// RUN: llvm-tblgen %s | FileCheck %s
 // XFAIL: vg_leak
 
 // Support for an `!if' operator as part of a `let' statement.

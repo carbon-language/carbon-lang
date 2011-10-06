@@ -1,5 +1,5 @@
 // This tests to make sure we can parse tree patterns.
-// RUN: tblgen %s
+// RUN: llvm-tblgen %s
 // XFAIL: vg_leak
 
 class TreeNode;

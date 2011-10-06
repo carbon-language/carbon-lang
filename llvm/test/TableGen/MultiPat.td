@@ -1,4 +1,4 @@
-// RUN: tblgen %s | FileCheck %s
+// RUN: llvm-tblgen %s | FileCheck %s
 
 class ValueType<int size, int value> {
   int Size = size;

@@ -1,4 +1,4 @@
-// RUN: tblgen %s | FileCheck %s
+// RUN: llvm-tblgen %s | FileCheck %s
 // XFAIL: vg_leak
 
 class A<int k, bits<2> x = 1> {

@@ -1,4 +1,4 @@
-// RUN: tblgen -I %p %s
+// RUN: llvm-tblgen -I %p %s
 // XFAIL: vg_leak
 def BeforeInclude;
 
