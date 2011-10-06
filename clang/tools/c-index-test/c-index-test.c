@@ -596,8 +596,6 @@ static enum CXChildVisitResult PrintLinkage(CXCursor cursor, CXCursor p,
                                             CXClientData d) {
   const char *linkage = 0;
 
-  VisitorData *Data = (VisitorData *)d;
-
   if (clang_isInvalid(clang_getCursorKind(cursor)))
     return CXChildVisit_Recurse;
 
@@ -623,8 +621,6 @@ static enum CXChildVisitResult PrintLinkage(CXCursor cursor, CXCursor p,
 
 static enum CXChildVisitResult PrintTypeKind(CXCursor cursor, CXCursor p,
                                              CXClientData d) {
-  VisitorData *Data = (VisitorData *)d;
-
   if (!clang_isInvalid(clang_getCursorKind(cursor))) {
     CXType T = clang_getCursorType(cursor);
     CXString S = clang_getTypeKindSpelling(T.kind);
@@ -1450,9 +1446,9 @@ static int find_file_refs_at(int argc, const char **argv) {
                                clang_getLocation(TU, file, Locations[Loc].line,
                                                  Locations[Loc].column));
       if (I + 1 == Repeats) {
+        CXCursorAndRangeVisitor visitor = { 0, findFileRefsVisit };
         PrintCursor(Cursor);
         printf("\n");
-        CXCursorAndRangeVisitor visitor = { 0, findFileRefsVisit };
         clang_findReferencesInFile(Cursor, file, visitor);
         free(Locations[Loc].filename);
       }
@@ -1836,7 +1832,8 @@ static void print_usage(void) {
     "       c-index-test -cursor-at=<site> <compiler arguments>\n"
     "       c-index-test -file-refs-at=<site> <compiler arguments>\n"
     "       c-index-test -test-file-scan <AST file> <source file> "
-          "[FileCheck prefix]\n"
+          "[FileCheck prefix]\n");
+  fprintf(stderr,
     "       c-index-test -test-load-tu <AST file> <symbol filter> "
           "[FileCheck prefix]\n"
     "       c-index-test -test-load-tu-usrs <AST file> <symbol filter> "
