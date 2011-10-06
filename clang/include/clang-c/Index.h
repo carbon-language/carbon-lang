@@ -1830,8 +1830,7 @@ enum CXCursorKind {
   CXCursor_IBOutletCollectionAttr        = 403,
   CXCursor_CXXFinalAttr                  = 404,
   CXCursor_CXXOverrideAttr               = 405,
-  CXCursor_AnnotateAttr                  = 406,
-  CXCursor_LastAttr                      = CXCursor_AnnotateAttr,
+  CXCursor_LastAttr                      = CXCursor_CXXOverrideAttr,
      
   /* Preprocessing */
   CXCursor_PreprocessingDirective        = 500,
