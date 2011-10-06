@@ -869,22 +869,18 @@ void ScopStmt::dump() const { print(dbgs()); }
 
 //===----------------------------------------------------------------------===//
 /// Scop class implement
-Scop::Scop(TempScop &tempScop, LoopInfo &LI, ScalarEvolution &ScalarEvolution,
-           isl_ctx *ctx)
-           : SE(&ScalarEvolution), R(tempScop.getMaxRegion()),
-           MaxLoopDepth(tempScop.getMaxLoopDepth()) {
-  ParamSetType &Params = tempScop.getParamSet();
-  Parameters.insert(Parameters.begin(), Params.begin(), Params.end());
 
-  isl_space *Space = isl_space_set_alloc(ctx, getNumParams(), 0);
+void Scop::buildContext(isl_ctx *IslCtx, ParamSetType *ParamSet) {
+  isl_space *Space = isl_space_params_alloc(IslCtx, ParamSet->size());
 
   int i = 0;
-  for (ParamSetType::iterator PI = Params.begin(), PE = Params.end();
+  for (ParamSetType::iterator PI = ParamSet->begin(), PE = ParamSet->end();
        PI != PE; ++PI) {
-    const SCEV *scev = *PI;
-    isl_id *id = isl_id_alloc(ctx,
-                              ("p" + convertInt(i)).c_str(),
-                              (void *) scev);
+    const SCEV *Parameter = *PI;
+    Parameters.push_back(Parameter);
+    std::string ParameterName = "p" + convertInt(i);
+    isl_id *id = isl_id_alloc(IslCtx, ParameterName.c_str(),
+                              (void *) Parameter);
     Space = isl_space_set_dim_id(Space, isl_dim_param, i, id);
     i++;
   }
@@ -892,6 +888,13 @@ Scop::Scop(TempScop &tempScop, LoopInfo &LI, ScalarEvolution &ScalarEvolution,
   // TODO: Insert relations between parameters.
   // TODO: Insert constraints on parameters.
   Context = isl_set_universe (Space);
+}
+
+Scop::Scop(TempScop &tempScop, LoopInfo &LI, ScalarEvolution &ScalarEvolution,
+           isl_ctx *Context)
+           : SE(&ScalarEvolution), R(tempScop.getMaxRegion()),
+           MaxLoopDepth(tempScop.getMaxLoopDepth()) {
+  buildContext(Context, &tempScop.getParamSet());
 
   SmallVector<Loop*, 8> NestLoops;
   SmallVector<unsigned, 8> Scatter;

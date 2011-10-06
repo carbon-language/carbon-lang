@@ -20,6 +20,8 @@
 #ifndef POLLY_SCOP_INFO_H
 #define POLLY_SCOP_INFO_H
 
+#include "polly/ScopDetection.h"
+
 #include "llvm/Analysis/RegionPass.h"
 
 #include "isl/ctx.h"
@@ -39,7 +41,6 @@ namespace llvm {
 struct isl_map;
 struct isl_basic_map;
 struct isl_set;
-struct isl_ctx;
 struct isl_space;
 struct isl_constraint;
 
@@ -417,6 +418,12 @@ class Scop {
   ///
   /// @return True if the basic block is trivial, otherwise false.
   static bool isTrivialBB(BasicBlock *BB, TempScop &tempScop);
+
+  /// @brief Build the Context of the Scop.
+  ///
+  /// @param IslCtx The isl context to use.
+  /// @param ParamSet The list of all parameters in the SCoP.
+  void buildContext(isl_ctx *IslCtx, ParamSetType *ParamSet);
 
   /// Build the Scop and Statement with precalculate scop information.
   void buildScop(TempScop &TempScop, const Region &CurRegion,
