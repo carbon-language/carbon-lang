@@ -1148,8 +1148,8 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
   unsigned Line = getLineNumber(ID->getLocation());
   unsigned RuntimeLang = TheCU.getLanguage();
 
-  // If this is just a forward declaration, return a special forward-declaration
-  // debug type.
+  // If this is just a forward declaration return a special forward-declaration
+  // debug type since we won't be able to lay out the entire type.
   if (ID->isForwardDecl()) {
     llvm::DIType FwdDecl =
       DBuilder.createStructType(Unit, ID->getName(),
@@ -1223,7 +1223,12 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
       FieldAlign =  CGM.getContext().getTypeAlign(FType);
     }
 
-    uint64_t FieldOffset = RL.getFieldOffset(FieldNo);
+    // We can't know the offset of our ivar in the structure if we're using
+    // the non-fragile abi and the debugger should ignore the value anyways.
+    // Call it the FieldNo+1 due to how debuggers use the information,
+    // e.g. negating the value when it needs a lookup in the dynamic table.
+    uint64_t FieldOffset = CGM.getLangOptions().ObjCNonFragileABI ? FieldNo+1
+      : RL.getFieldOffset(FieldNo);
 
     unsigned Flags = 0;
     if (Field->getAccessControl() == ObjCIvarDecl::Protected)
