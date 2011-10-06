@@ -217,30 +217,32 @@ tgtok::TokKind TGLexer::LexIdentifier() {
   // Check to see if this identifier is a keyword.
   StringRef Str(IdentStart, CurPtr-IdentStart);
 
-  if (Str == "int") return tgtok::Int;
-  if (Str == "bit") return tgtok::Bit;
-  if (Str == "bits") return tgtok::Bits;
-  if (Str == "string") return tgtok::String;
-  if (Str == "list") return tgtok::List;
-  if (Str == "code") return tgtok::Code;
-  if (Str == "dag") return tgtok::Dag;
-
-  if (Str == "class") return tgtok::Class;
-  if (Str == "def") return tgtok::Def;
-  if (Str == "multidef") return tgtok::MultiDef;
-  if (Str == "defm") return tgtok::Defm;
-  if (Str == "multiclass") return tgtok::MultiClass;
-  if (Str == "field") return tgtok::Field;
-  if (Str == "let") return tgtok::Let;
-  if (Str == "in") return tgtok::In;
-
   if (Str == "include") {
     if (LexInclude()) return tgtok::Error;
     return Lex();
   }
 
-  CurStrVal.assign(Str.begin(), Str.end());
-  return tgtok::Id;
+  tgtok::TokKind Kind = StringSwitch<tgtok::TokKind>(Str)
+    .Case("int", tgtok::Int)
+    .Case("bit", tgtok::Bit)
+    .Case("bits", tgtok::Bits)
+    .Case("string", tgtok::String)
+    .Case("list", tgtok::List)
+    .Case("code", tgtok::Code)
+    .Case("dag", tgtok::Dag)
+    .Case("class", tgtok::Class)
+    .Case("def", tgtok::Def)
+    .Case("multidef", tgtok::MultiDef)
+    .Case("defm", tgtok::Defm)
+    .Case("multiclass", tgtok::MultiClass)
+    .Case("field", tgtok::Field)
+    .Case("let", tgtok::Let)
+    .Case("in", tgtok::In)
+    .Default(tgtok::Id);
+
+  if (Kind == tgtok::Id)
+    CurStrVal.assign(Str.begin(), Str.end());
+  return Kind;
 }
 
 /// LexInclude - We just read the "include" token.  Get the string token that
