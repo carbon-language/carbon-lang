@@ -1641,6 +1641,27 @@ void Sema::CheckLookupAccess(const LookupResult &R) {
   }
 }
 
+/// Checks access to Decl from the given class. The check will take access
+/// specifiers into account, but no member access expressions and such.
+///
+/// \param Decl the declaration to check if it can be accessed
+/// \param Class the class/context from which to start the search
+/// \return true if the Decl is accessible from the Class, false otherwise.
+bool Sema::IsSimplyAccessible(NamedDecl *Decl, CXXRecordDecl *Class) {
+  if (!Class)
+    return true;
+
+  QualType qType = Class->getTypeForDecl()->getCanonicalTypeInternal();
+  AccessTarget Entity(Context, AccessedEntity::Member, Class,
+                      DeclAccessPair::make(Decl, Decl->getAccess()),
+                      qType);
+  if (Entity.getAccess() == AS_public)
+    return true;
+
+  EffectiveContext EC(CurContext);
+  return ::IsAccessible(*this, EC, Entity) != ::AR_inaccessible;
+}
+
 void Sema::ActOnStartSuppressingAccessChecks() {
   assert(!SuppressAccessChecking &&
          "Tried to start access check suppression when already started.");

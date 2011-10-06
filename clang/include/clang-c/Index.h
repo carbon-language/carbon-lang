@@ -115,7 +115,12 @@ enum CXAvailabilityKind {
   /**
    * \brief The entity is not available; any use of it will be an error.
    */
-  CXAvailability_NotAvailable
+  CXAvailability_NotAvailable,
+  /**
+   * \brief The entity is available, but not accessible; any use of it will be
+   * an error.
+   */
+  CXAvailability_NotAccessible
 };
   
 /**

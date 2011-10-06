@@ -632,14 +632,15 @@ public:
   /// \brief Build a result that refers to a declaration.
   CodeCompletionResult(NamedDecl *Declaration, 
                        NestedNameSpecifier *Qualifier = 0,
-                       bool QualifierIsInformative = false)
+                       bool QualifierIsInformative = false,
+                       bool Accessible = true)
     : Kind(RK_Declaration), Declaration(Declaration), 
       Priority(getPriorityFromDecl(Declaration)), 
       Availability(CXAvailability_Available), StartParameter(0), 
       Hidden(false), QualifierIsInformative(QualifierIsInformative),
       StartsNestedNameSpecifier(false), AllParametersAreInformative(false),
       DeclaringEntity(false), Qualifier(Qualifier) { 
-    computeCursorKindAndAvailability();
+    computeCursorKindAndAvailability(Accessible);
   }
     
   /// \brief Build a result that refers to a keyword or symbol.
@@ -701,7 +702,7 @@ public:
   static unsigned getPriorityFromDecl(NamedDecl *ND);
     
 private:
-  void computeCursorKindAndAvailability();
+  void computeCursorKindAndAvailability(bool Accessible = true);
 };
   
 bool operator<(const CodeCompletionResult &X, const CodeCompletionResult &Y);

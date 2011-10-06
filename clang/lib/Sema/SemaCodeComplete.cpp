@@ -1186,8 +1186,16 @@ namespace {
     CodeCompletionDeclConsumer(ResultBuilder &Results, DeclContext *CurContext)
       : Results(Results), CurContext(CurContext) { }
     
-    virtual void FoundDecl(NamedDecl *ND, NamedDecl *Hiding, bool InBaseClass) {
-      Results.AddResult(ND, CurContext, Hiding, InBaseClass);
+    virtual void FoundDecl(NamedDecl *ND, NamedDecl *Hiding, DeclContext *Ctx,
+                           bool InBaseClass) {
+      bool Accessible = true;
+      if (Ctx) {
+        if (CXXRecordDecl *Class = dyn_cast<CXXRecordDecl>(Ctx))
+          Accessible = Results.getSema().IsSimplyAccessible(ND, Class);
+        // FIXME: ObjC access checks are missing.
+      }
+      ResultBuilder::Result Result(ND, 0, false, Accessible);
+      Results.AddResult(Result, CurContext, Hiding, InBaseClass);
     }
   };
 }

@@ -376,7 +376,7 @@ PrintingCodeCompleteConsumer::ProcessOverloadCandidates(Sema &SemaRef,
   }
 }
 
-void CodeCompletionResult::computeCursorKindAndAvailability() {
+void CodeCompletionResult::computeCursorKindAndAvailability(bool Accessible) {
   switch (Kind) {
   case RK_Declaration:
     // Set the availability based on attributes.
@@ -418,6 +418,9 @@ void CodeCompletionResult::computeCursorKindAndAvailability() {
     // Do nothing: Patterns can come with cursor kinds!
     break;
   }
+
+  if (!Accessible)
+    Availability = CXAvailability_NotAccessible;
 }
 
 /// \brief Retrieve the name that should be used to order a result.

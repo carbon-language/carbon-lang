@@ -238,6 +238,10 @@ static void PrintCursor(CXCursor Cursor) {
       case CXAvailability_NotAvailable:
         printf(" (unavailable)");
         break;
+
+      case CXAvailability_NotAccessible:
+        printf(" (inaccessible)");
+        break;
     }
     
     if (clang_CXXMethod_isStatic(Cursor))
@@ -1050,6 +1054,10 @@ void print_completion_result(CXCompletionResult *completion_result,
     
   case CXAvailability_NotAvailable:
     fprintf(file, " (unavailable)");
+    break;
+
+  case CXAvailability_NotAccessible:
+    fprintf(file, " (inaccessible)");
     break;
   }
   fprintf(file, "\n");
