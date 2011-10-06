@@ -6032,15 +6032,12 @@ void Sema::ActOnUninitializedDecl(Decl *RealDecl,
     // C++0x [class.static.data]p3: A static data member can be declared with
     // the constexpr specifier; if so, its declaration shall specify
     // a brace-or-equal-initializer.
-    if (Var->isConstexpr()) {
-      // FIXME: Provide fix-its to convert the constexpr to const.
-      if (Var->isStaticDataMember() && Var->getAnyInitializer()) {
-        Diag(Var->getLocation(), diag::err_constexpr_initialized_static_member)
-          << Var->getDeclName();
-      } else {
-        Diag(Var->getLocation(), diag::err_constexpr_var_requires_init)
-          << Var->getDeclName();
-      }
+    //
+    // A static data member's definition may inherit an initializer from an
+    // in-class declaration.
+    if (Var->isConstexpr() && !Var->getAnyInitializer()) {
+      Diag(Var->getLocation(), diag::err_constexpr_var_requires_init)
+        << Var->getDeclName();
       Var->setInvalidDecl();
       return;
     }

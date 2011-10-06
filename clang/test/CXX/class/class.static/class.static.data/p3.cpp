@@ -10,6 +10,7 @@ struct S {
 
   static constexpr int c = 0;
   static const int d;
+  static const int d2 = 0;
 
   static constexpr double e = 0.0; // ok
   static const double f = 0.0; // expected-warning {{extension}} expected-note {{use 'constexpr' specifier}}
@@ -17,8 +18,9 @@ struct S {
   static const NonLit h = NonLit(); // expected-error {{must be initialized out of line}}
 };
 
-constexpr int S::a; // expected-error {{definition of initialized static data member 'a' cannot be marked constexpr}}
+constexpr int S::a;
 constexpr int S::b = 0;
 
 const int S::c;
 constexpr int S::d = 0;
+constexpr int S::d2;
