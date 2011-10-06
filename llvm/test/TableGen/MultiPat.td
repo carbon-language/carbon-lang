@@ -83,9 +83,12 @@ def Decls : decls;
 // Define intrinsics
 def int_x86_sse2_add_ps : Intrinsic<"addps">;
 def int_x86_sse2_add_pd : Intrinsic<"addpd">;
+def int_x86_sse2_sub_ps : Intrinsic<"subps">;
+def int_x86_sse2_sub_pd : Intrinsic<"subpd">;
 def INTRINSIC : Intrinsic<"Dummy">;
 def bitconvert;
 def add;
+def sub;
 
 class MakePatImpl<list<dag> patterns> : Pat<patterns[0], patterns[1]>;
 class MakePat<list<dag> patterns,
@@ -126,3 +129,12 @@ defm ADD : arith<0x58, "add", "int_x86_sse2_addSUFFIX",
 
 // CHECK: [(set VR128:$dst, (int_x86_sse2_add_pd VR128:$src1, VR128:$src2))]
 // CHECK: [(set VR128:$dst, (int_x86_sse2_add_ps VR128:$src1, VR128:$src2))]
+// CHECK: (set VR128:$dst, (add (int_x86_sse2_add_ps VR128:$src1, VR128:$src2)))
+// CHECK: (set VR128:$dst, (add (int_x86_sse2_add_pd VR128:$src1, VR128:$src2)))
+
+defm SUB : arith<0x59, "sub", "int_x86_sse2_subSUFFIX",
+                  // rr Patterns
+                 [[(set REGCLASS:$dst, (INTRINSIC REGCLASS:$src1, REGCLASS:$src2))]]>;
+
+// CHECK: [(set VR128:$dst, (int_x86_sse2_sub_pd VR128:$src1, VR128:$src2))]
+// CHECK: [(set VR128:$dst, (int_x86_sse2_sub_ps VR128:$src1, VR128:$src2))]
