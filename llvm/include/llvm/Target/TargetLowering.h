@@ -1532,6 +1532,22 @@ public:
   /// TODO: Handle pre/postinc as well.
   virtual bool isLegalAddressingMode(const AddrMode &AM, Type *Ty) const;
 
+  /// isLegalICmpImmediate - Return true if the specified immediate is legal
+  /// icmp immediate, that is the target has icmp instructions which can compare
+  /// a register against the immediate without having to materialize the
+  /// immediate into a register.
+  virtual bool isLegalICmpImmediate(int64_t Imm) const {
+    return true;
+  }
+
+  /// isLegalAddImmediate - Return true if the specified immediate is legal
+  /// add immediate, that is the target has add instructions which can add
+  /// a register with the immediate without having to materialize the
+  /// immediate into a register.
+  virtual bool isLegalAddImmediate(int64_t Imm) const {
+    return true;
+  }
+
   /// isTruncateFree - Return true if it's free to truncate a value of
   /// type Ty1 to type Ty2. e.g. On x86 it's free to truncate a i32 value in
   /// register EAX to i16 by referencing its sub-register AX.
@@ -1564,22 +1580,6 @@ public:
   /// from i32 to i8 but not from i32 to i16.
   virtual bool isNarrowingProfitable(EVT VT1, EVT VT2) const {
     return false;
-  }
-
-  /// isLegalICmpImmediate - Return true if the specified immediate is legal
-  /// icmp immediate, that is the target has icmp instructions which can compare
-  /// a register against the immediate without having to materialize the
-  /// immediate into a register.
-  virtual bool isLegalICmpImmediate(int64_t Imm) const {
-    return true;
-  }
-
-  /// isLegalAddImmediate - Return true if the specified immediate is legal
-  /// add immediate, that is the target has add instructions which can add
-  /// a register with the immediate without having to materialize the
-  /// immediate into a register.
-  virtual bool isLegalAddImmediate(int64_t Imm) const {
-    return true;
   }
 
   //===--------------------------------------------------------------------===//
