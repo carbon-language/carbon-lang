@@ -191,7 +191,10 @@ Decl *getCursorParentDecl(CXCursor Cursor);
 ASTContext &getCursorContext(CXCursor Cursor);
 ASTUnit *getCursorASTUnit(CXCursor Cursor);
 CXTranslationUnit getCursorTU(CXCursor Cursor);
-  
+
+void getOverriddenCursors(CXCursor cursor,
+                          SmallVectorImpl<CXCursor> &overridden); 
+
 bool operator==(CXCursor X, CXCursor Y);
   
 inline bool operator!=(CXCursor X, CXCursor Y) {

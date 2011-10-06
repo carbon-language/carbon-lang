@@ -5449,62 +5449,6 @@ CXCursor clang_getCursorLexicalParent(CXCursor cursor) {
   return clang_getNullCursor();
 }
 
-static void CollectOverriddenMethods(DeclContext *Ctx, 
-                                     ObjCMethodDecl *Method,
-                            SmallVectorImpl<ObjCMethodDecl *> &Methods) {
-  if (!Ctx)
-    return;
-
-  // If we have a class or category implementation, jump straight to the 
-  // interface.
-  if (ObjCImplDecl *Impl = dyn_cast<ObjCImplDecl>(Ctx))
-    return CollectOverriddenMethods(Impl->getClassInterface(), Method, Methods);
-  
-  ObjCContainerDecl *Container = dyn_cast<ObjCContainerDecl>(Ctx);
-  if (!Container)
-    return;
-
-  // Check whether we have a matching method at this level.
-  if (ObjCMethodDecl *Overridden = Container->getMethod(Method->getSelector(),
-                                                    Method->isInstanceMethod()))
-    if (Method != Overridden) {
-      // We found an override at this level; there is no need to look
-      // into other protocols or categories.
-      Methods.push_back(Overridden);
-      return;
-    }
-
-  if (ObjCProtocolDecl *Protocol = dyn_cast<ObjCProtocolDecl>(Container)) {
-    for (ObjCProtocolDecl::protocol_iterator P = Protocol->protocol_begin(),
-                                          PEnd = Protocol->protocol_end();
-         P != PEnd; ++P)
-      CollectOverriddenMethods(*P, Method, Methods);
-  }
-
-  if (ObjCCategoryDecl *Category = dyn_cast<ObjCCategoryDecl>(Container)) {
-    for (ObjCCategoryDecl::protocol_iterator P = Category->protocol_begin(),
-                                          PEnd = Category->protocol_end();
-         P != PEnd; ++P)
-      CollectOverriddenMethods(*P, Method, Methods);
-  }
-
-  if (ObjCInterfaceDecl *Interface = dyn_cast<ObjCInterfaceDecl>(Container)) {
-    for (ObjCInterfaceDecl::protocol_iterator P = Interface->protocol_begin(),
-                                           PEnd = Interface->protocol_end();
-         P != PEnd; ++P)
-      CollectOverriddenMethods(*P, Method, Methods);
-
-    for (ObjCCategoryDecl *Category = Interface->getCategoryList();
-         Category; Category = Category->getNextClassCategory())
-      CollectOverriddenMethods(Category, Method, Methods);
-
-    // We only look into the superclass if we haven't found anything yet.
-    if (Methods.empty())
-      if (ObjCInterfaceDecl *Super = Interface->getSuperClass())
-        return CollectOverriddenMethods(Super, Method, Methods);
-  }
-}
-
 void clang_getOverriddenCursors(CXCursor cursor, 
                                 CXCursor **overridden,
                                 unsigned *num_overridden) {
@@ -5515,45 +5459,12 @@ void clang_getOverriddenCursors(CXCursor cursor,
   if (!overridden || !num_overridden)
     return;
 
-  if (!clang_isDeclaration(cursor.kind))
-    return;
+  SmallVector<CXCursor, 8> Overridden;
+  cxcursor::getOverriddenCursors(cursor, Overridden);
 
-  Decl *D = getCursorDecl(cursor);
-  if (!D)
-    return;
-
-  // Handle C++ member functions.
-  CXTranslationUnit TU = getCursorTU(cursor);
-  if (CXXMethodDecl *CXXMethod = dyn_cast<CXXMethodDecl>(D)) {
-    *num_overridden = CXXMethod->size_overridden_methods();
-    if (!*num_overridden)
-      return;
-
-    *overridden = new CXCursor [*num_overridden];
-    unsigned I = 0;
-    for (CXXMethodDecl::method_iterator
-              M = CXXMethod->begin_overridden_methods(),
-           MEnd = CXXMethod->end_overridden_methods();
-         M != MEnd; (void)++M, ++I)
-      (*overridden)[I] = MakeCXCursor(const_cast<CXXMethodDecl*>(*M), TU);
-    return;
-  }
-
-  ObjCMethodDecl *Method = dyn_cast<ObjCMethodDecl>(D);
-  if (!Method)
-    return;
-
-  // Handle Objective-C methods.
-  SmallVector<ObjCMethodDecl *, 4> Methods;
-  CollectOverriddenMethods(Method->getDeclContext(), Method, Methods);
-
-  if (Methods.empty())
-    return;
-
-  *num_overridden = Methods.size();
-  *overridden = new CXCursor [Methods.size()];
-  for (unsigned I = 0, N = Methods.size(); I != N; ++I)
-    (*overridden)[I] = MakeCXCursor(Methods[I], TU); 
+  *num_overridden = Overridden.size();
+  *overridden = new CXCursor [Overridden.size()];
+  std::copy(Overridden.begin(), Overridden.end(), *overridden);
 }
 
 void clang_disposeOverriddenCursors(CXCursor *overridden) {
