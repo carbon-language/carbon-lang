@@ -501,6 +501,9 @@ def warn_atomic_property_rule : Warning<
   "writable atomic property %0 cannot pair a synthesized setter/getter "
   "with a user defined setter/getter">,
   InGroup<DiagGroup<"atomic-property-with-user-defined-accessor">>;
+def warn_atomic_property_nontrivial_assign_op : Warning<
+  "atomic property of type %0 synthesizing setter using non-trivial assignment"
+  "operator">, InGroup<DiagGroup<"objc-property-atomic-setter-synthesis">>;
 def warn_ownin_getter_rule : Warning<
   "property's synthesized getter follows Cocoa naming"
   " convention for returning 'owned' objects">,

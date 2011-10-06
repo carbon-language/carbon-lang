@@ -16,6 +16,7 @@
 #include "clang/Sema/Initialization.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/ExprObjC.h"
+#include "clang/AST/ExprCXX.h"
 #include "llvm/ADT/DenseSet.h"
 
 using namespace clang;
@@ -800,6 +801,20 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
                                             VK_LValue, SourceLocation());
       ExprResult Res = BuildBinOp(S, lhs->getLocEnd(), 
                                   BO_Assign, lhs, rhs);
+      if (property->getPropertyAttributes() & 
+          ObjCPropertyDecl::OBJC_PR_atomic) {
+        Expr *callExpr = Res.takeAs<Expr>();
+        if (const CXXOperatorCallExpr *CXXCE = 
+              dyn_cast_or_null<CXXOperatorCallExpr>(callExpr)) {
+          const CallExpr *CE = cast<CallExpr>(CXXCE);
+          if (const FunctionDecl *FuncDecl = CE->getDirectCallee()) {
+            if (!FuncDecl->isTrivial())
+              Diag(PropertyLoc, 
+                   diag::warn_atomic_property_nontrivial_assign_op) 
+                    << property->getType();
+          }
+        }
+      }
       PIDecl->setSetterCXXAssignment(Res.takeAs<Expr>());
     }
   }

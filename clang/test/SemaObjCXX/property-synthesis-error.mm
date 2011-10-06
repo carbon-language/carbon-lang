@@ -30,3 +30,32 @@ int main(void)
 {
   return 0;
 }
+
+// rdar://6137845
+class TCPPObject
+{
+public:
+ TCPPObject(const TCPPObject& inObj);
+ TCPPObject();
+ ~TCPPObject();
+ TCPPObject& operator=(const TCPPObject& inObj);
+private:
+ void* fData;
+};
+
+@interface MyDocument
+{
+@private
+ TCPPObject _cppObject;
+ TCPPObject _ncppObject;
+}
+@property (assign, readwrite) const TCPPObject& cppObject;
+@property (assign, readwrite, nonatomic) const TCPPObject& ncppObject;
+@end
+
+@implementation MyDocument
+
+@synthesize cppObject = _cppObject; // expected-warning {{atomic property of type 'const TCPPObject &' synthesizing setter using non-trivial assignmentoperator}}
+@synthesize ncppObject = _ncppObject;
+
+@end
