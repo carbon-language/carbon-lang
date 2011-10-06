@@ -17,7 +17,7 @@ This test serves two purposes:
 
 The list of warnings below should NEVER grow.  It should gradually shrink to 0.
 
-CHECK: Warnings without flags (301):
+CHECK: Warnings without flags (300):
 CHECK-NEXT:   backslash_newline_space
 CHECK-NEXT:   charize_microsoft_ext
 CHECK-NEXT:   ext_anon_param_requires_type_specifier
@@ -85,7 +85,6 @@ CHECK-NEXT:   ext_return_has_void_expr
 CHECK-NEXT:   ext_subscript_non_lvalue
 CHECK-NEXT:   ext_template_arg_extra_parens
 CHECK-NEXT:   ext_thread_before
-CHECK-NEXT:   ext_token_used
 CHECK-NEXT:   ext_top_level_semi
 CHECK-NEXT:   ext_typecheck_addrof_void
 CHECK-NEXT:   ext_typecheck_cast_nonscalar

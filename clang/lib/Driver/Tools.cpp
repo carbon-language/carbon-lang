@@ -2637,6 +2637,7 @@ void darwin::CC1::RemoveCC1UnsupportedArgs(ArgStringList &CmdArgs) const {
         .Case("initializer-overrides", true)
         .Case("invalid-noreturn", true)
         .Case("invalid-token-paste", true)
+        .Case("language-extension-token", true)
         .Case("literal-conversion", true)
         .Case("literal-range", true)
         .Case("local-type-template-args", true)

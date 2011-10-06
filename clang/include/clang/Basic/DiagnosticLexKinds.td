@@ -43,7 +43,8 @@ def ext_no_newline_eof : Extension<"no newline at end of file">,
 def ext_dollar_in_identifier : Extension<"'$' in identifier">;
 def charize_microsoft_ext : Extension<"@# is a microsoft extension">;
 
-def ext_token_used : Extension<"extension used">;
+def ext_token_used : Extension<"extension used">,
+  InGroup<DiagGroup<"language-extension-token">>;
 
 def warn_unterminated_string : ExtWarn<"missing terminating '\"' character">;
 def warn_unterminated_char : ExtWarn<"missing terminating ' character">;
