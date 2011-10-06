@@ -541,17 +541,35 @@ SymbolContext::GetParentOfInlinedScope (const Address &curr_frame_pc,
             // the line table.  So just use the call site info from our inlined block.
             
             AddressRange range;
-            bool got_range = curr_inlined_block->GetRangeContainingAddress (curr_frame_pc, range);
-            assert (got_range);
-            // To see there this new frame block it, we need to look at the
-            // call site information from 
-            const InlineFunctionInfo* curr_inlined_block_inlined_info = curr_inlined_block->GetInlinedFunctionInfo();
-            next_frame_pc = range.GetBaseAddress();
-            next_frame_sc.line_entry.range.GetBaseAddress() = next_frame_pc;
-            next_frame_sc.line_entry.file = curr_inlined_block_inlined_info->GetCallSite().GetFile();
-            next_frame_sc.line_entry.line = curr_inlined_block_inlined_info->GetCallSite().GetLine();
-            next_frame_sc.line_entry.column = curr_inlined_block_inlined_info->GetCallSite().GetColumn();
-            return true;
+            if (curr_inlined_block->GetRangeContainingAddress (curr_frame_pc, range))
+            {
+                // To see there this new frame block it, we need to look at the
+                // call site information from 
+                const InlineFunctionInfo* curr_inlined_block_inlined_info = curr_inlined_block->GetInlinedFunctionInfo();
+                next_frame_pc = range.GetBaseAddress();
+                next_frame_sc.line_entry.range.GetBaseAddress() = next_frame_pc;
+                next_frame_sc.line_entry.file = curr_inlined_block_inlined_info->GetCallSite().GetFile();
+                next_frame_sc.line_entry.line = curr_inlined_block_inlined_info->GetCallSite().GetLine();
+                next_frame_sc.line_entry.column = curr_inlined_block_inlined_info->GetCallSite().GetColumn();
+                return true;
+            }
+            else
+            {
+                LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_SYMBOLS));
+
+                if (log)
+                {
+                    log->Printf ("warning: inlined block 0x%8.8x doesn't have a range that contains file address 0x%llx", 
+                                 curr_inlined_block->GetID(), curr_frame_pc.GetFileAddress());
+                }
+#ifdef LLDB_CONFIGURATION_DEBUG
+                else
+                {
+                    fprintf (stderr, "warning: inlined block 0x%8.8x doesn't have a range that contains file address 0x%llx\n", 
+                             curr_inlined_block->GetID(), curr_frame_pc.GetFileAddress());
+                }
+#endif
+            }
         }
     }
     
