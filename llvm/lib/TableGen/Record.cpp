@@ -1456,7 +1456,9 @@ Init *VarListElementInit:: resolveListElementReference(Record &R,
   if (Result) {
     TypedInit *TInit = dynamic_cast<TypedInit *>(Result);
     if (TInit) {
-      return TInit->resolveListElementReference(R, RV, Elt);
+      Init *Result2 = TInit->resolveListElementReference(R, RV, Elt);
+      if (Result2) return Result2;
+      return new VarListElementInit(TInit, Elt);
     }
     return Result;
   }
