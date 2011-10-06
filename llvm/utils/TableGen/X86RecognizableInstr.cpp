@@ -1064,6 +1064,9 @@ OperandType RecognizableInstr::typeFromString(const std::string &s,
   TYPE("offset32",            TYPE_MOFFS32)
   TYPE("offset64",            TYPE_MOFFS64)
   TYPE("VR256",               TYPE_XMM256)
+  TYPE("GR16_NOAX",           TYPE_Rv)
+  TYPE("GR32_NOAX",           TYPE_Rv)
+  TYPE("GR64_NOAX",           TYPE_R64)
   errs() << "Unhandled type string " << s << "\n";
   llvm_unreachable("Unhandled type string");
 }
@@ -1205,6 +1208,9 @@ OperandEncoding RecognizableInstr::opcodeModifierEncodingFromString
   ENCODING("GR64",            ENCODING_RO)
   ENCODING("GR16",            ENCODING_Rv)
   ENCODING("GR8",             ENCODING_RB)
+  ENCODING("GR16_NOAX",       ENCODING_Rv)
+  ENCODING("GR32_NOAX",       ENCODING_Rv)
+  ENCODING("GR64_NOAX",       ENCODING_RO)
   errs() << "Unhandled opcode modifier encoding " << s << "\n";
   llvm_unreachable("Unhandled opcode modifier encoding");
 }

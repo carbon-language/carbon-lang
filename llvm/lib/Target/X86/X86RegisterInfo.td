@@ -390,6 +390,23 @@ def GR64_NOREX : RegisterClass<"X86", [i64], 64,
                        (GR32_NOREX sub_32bit)];
 }
 
+// GR16_NOAX - GR16 registers except AX.
+def GR16_NOAX : RegisterClass<"X86", [i16], 16, (sub GR16, AX)> {
+  let SubRegClasses = [(GR8 sub_8bit, sub_8bit_hi)];
+}
+
+// GR32_NOAX - GR32 registers except EAX.
+def GR32_NOAX : RegisterClass<"X86", [i32], 32, (sub GR32, EAX)> {
+  let SubRegClasses = [(GR8 sub_8bit, sub_8bit_hi), (GR16_NOAX sub_16bit)];
+}
+
+// GR64_NOAX - GR64 registers except RAX.
+def GR64_NOAX : RegisterClass<"X86", [i64], 64, (sub GR64, RAX)> {
+  let SubRegClasses = [(GR8 sub_8bit, sub_8bit_hi),
+                       (GR16_NOAX sub_16bit),
+                       (GR32_NOAX sub_32bit)];
+}
+
 // GR32_NOSP - GR32 registers except ESP.
 def GR32_NOSP : RegisterClass<"X86", [i32], 32, (sub GR32, ESP)> {
   let SubRegClasses = [(GR8 sub_8bit, sub_8bit_hi), (GR16 sub_16bit)];

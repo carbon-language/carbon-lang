@@ -1154,11 +1154,11 @@ def XCHG64rr : RI<0x87, MRMSrcReg, (outs GR64:$dst), (ins GR64:$val,GR64:$src),
                   "xchg{q}\t{$val, $src|$src, $val}", []>;
 }
 
-def XCHG16ar : I<0x90, AddRegFrm, (outs), (ins GR16:$src),
+def XCHG16ar : I<0x90, AddRegFrm, (outs), (ins GR16_NOAX:$src),
                   "xchg{w}\t{$src, %ax|AX, $src}", []>, OpSize;
-def XCHG32ar : I<0x90, AddRegFrm, (outs), (ins GR32:$src),
+def XCHG32ar : I<0x90, AddRegFrm, (outs), (ins GR32_NOAX:$src),
                   "xchg{l}\t{$src, %eax|EAX, $src}", []>;
-def XCHG64ar : RI<0x90, AddRegFrm, (outs), (ins GR64:$src),
+def XCHG64ar : RI<0x90, AddRegFrm, (outs), (ins GR64_NOAX:$src),
                   "xchg{q}\t{$src, %rax|RAX, $src}", []>;
 
 
@@ -1714,3 +1714,8 @@ def : InstAlias<"xchgb $mem, $val", (XCHG8rm  GR8 :$val, i8mem :$mem)>;
 def : InstAlias<"xchgw $mem, $val", (XCHG16rm GR16:$val, i16mem:$mem)>;
 def : InstAlias<"xchgl $mem, $val", (XCHG32rm GR32:$val, i32mem:$mem)>;
 def : InstAlias<"xchgq $mem, $val", (XCHG64rm GR64:$val, i64mem:$mem)>;
+
+// xchg: We accept "xchgX <reg>, %eax" and "xchgX %eax, <reg>" as synonyms.
+def : InstAlias<"xchgw %ax, $src", (XCHG16ar GR16_NOAX:$src)>;
+def : InstAlias<"xchgl %eax, $src", (XCHG32ar GR32_NOAX:$src)>;
+def : InstAlias<"xchgq %rax, $src", (XCHG64ar GR64_NOAX:$src)>;

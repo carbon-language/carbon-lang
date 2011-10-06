@@ -1170,3 +1170,24 @@ pclmullqhqdq (%rdi), %xmm1
 // CHECK: pclmulqdq	$0, (%rdi), %xmm1
 // CHECK: encoding: [0x66,0x0f,0x3a,0x44,0x0f,0x00]
 pclmulqdq $0, (%rdi), %xmm1
+
+// PR10345
+// CHECK: xchgq %rax, %rax
+// CHECK: encoding: [0x48,0x87,0xc0]
+xchgq %rax, %rax
+
+// CHECK: xchgl %eax, %eax
+// CHECK: encoding: [0x87,0xc0]
+xchgl %eax, %eax
+
+// CHECK: xchgw %ax, %ax
+// CHECK: encoding: [0x66,0x87,0xc0]
+xchgw %ax, %ax
+
+// CHECK: xchgl %ecx, %eax
+// CHECK: encoding: [0x91]
+xchgl %ecx, %eax
+
+// CHECK: xchgl %ecx, %eax
+// CHECK: encoding: [0x91]
+xchgl %eax, %ecx

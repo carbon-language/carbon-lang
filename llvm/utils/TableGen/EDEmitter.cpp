@@ -256,12 +256,15 @@ static int X86TypeFromOpName(LiteralConstantEmitter *type,
   REG("GR8");
   REG("GR8_NOREX");
   REG("GR16");
+  REG("GR16_NOAX");
   REG("GR32");
+  REG("GR32_NOAX");
   REG("GR32_NOREX");
   REG("GR32_TC");
   REG("FR32");
   REG("RFP32");
   REG("GR64");
+  REG("GR64_NOAX");
   REG("GR64_TC");
   REG("FR64");
   REG("VR64");
