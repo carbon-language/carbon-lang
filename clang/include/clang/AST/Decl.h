@@ -728,6 +728,8 @@ private:
   friend class StmtIteratorBase;
   
 protected:
+  enum { NumParameterIndexBits = 8 };
+  
   class ParmVarDeclBitfields {
     friend class ParmVarDecl;
     friend class ASTDeclReader;
@@ -752,7 +754,7 @@ protected:
 
     /// The number of parameters preceding this parameter in the
     /// function parameter scope in which it was declared.
-    unsigned ParameterIndex : 8;
+    unsigned ParameterIndex : NumParameterIndexBits;
   };
 
   union {
@@ -1218,12 +1220,10 @@ public:
                              Expr *DefArg);
 
   virtual SourceRange getSourceRange() const;
-
+  
   void setObjCMethodScopeInfo(unsigned parameterIndex) {
     ParmVarDeclBits.IsObjCMethodParam = true;
-
-    ParmVarDeclBits.ParameterIndex = parameterIndex;
-    assert(ParmVarDeclBits.ParameterIndex == parameterIndex && "truncation!");
+    setParameterIndex(parameterIndex);
   }
 
   void setScopeInfo(unsigned scopeDepth, unsigned parameterIndex) {
@@ -1232,8 +1232,7 @@ public:
     ParmVarDeclBits.ScopeDepthOrObjCQuals = scopeDepth;
     assert(ParmVarDeclBits.ScopeDepthOrObjCQuals == scopeDepth && "truncation!");
 
-    ParmVarDeclBits.ParameterIndex = parameterIndex;
-    assert(ParmVarDeclBits.ParameterIndex == parameterIndex && "truncation!");
+    setParameterIndex(parameterIndex);
   }
 
   bool isObjCMethodParameter() const {
@@ -1364,6 +1363,13 @@ public:
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const ParmVarDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == ParmVar; }
+  
+private:
+  void setParameterIndex(unsigned parameterIndex) {
+    ParmVarDeclBits.ParameterIndex = parameterIndex;
+    assert(ParmVarDeclBits.ParameterIndex == parameterIndex && "truncation!");
+  }
+
 };
 
 /// FunctionDecl - An instance of this class is created to represent a
