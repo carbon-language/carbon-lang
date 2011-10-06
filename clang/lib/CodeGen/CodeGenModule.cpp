@@ -785,6 +785,23 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
   if (Global->hasAttr<AliasAttr>())
     return EmitAliasDefinition(GD);
 
+  // If this is CUDA, be selective about which declarations we emit.
+  if (Features.CUDA) {
+    if (CodeGenOpts.CUDAIsDevice) {
+      if (!Global->hasAttr<CUDADeviceAttr>() &&
+          !Global->hasAttr<CUDAGlobalAttr>() &&
+          !Global->hasAttr<CUDAConstantAttr>() &&
+          !Global->hasAttr<CUDASharedAttr>())
+        return;
+    } else {
+      if (!Global->hasAttr<CUDAHostAttr>() && (
+            Global->hasAttr<CUDADeviceAttr>() ||
+            Global->hasAttr<CUDAConstantAttr>() ||
+            Global->hasAttr<CUDASharedAttr>()))
+        return;
+    }
+  }
+
   // Ignore declarations, they will be emitted on their first use.
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(Global)) {
     // Forward declarations are emitted lazily on first use.

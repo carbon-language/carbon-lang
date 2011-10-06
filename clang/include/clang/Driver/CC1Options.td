@@ -714,3 +714,10 @@ def cl_mad_enable : Flag<"-cl-mad-enable">,
   HelpText<"OpenCL only. Enable less precise MAD instructions to be generated.">;
 def cl_std_EQ : Joined<"-cl-std=">,
   HelpText<"OpenCL language standard to compile for">;
+
+//===----------------------------------------------------------------------===//
+// CUDA Options
+//===----------------------------------------------------------------------===//
+
+def fcuda_is_device : Flag<"-fcuda-is-device">,
+  HelpText<"Generate code for CUDA device">;
