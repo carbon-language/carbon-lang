@@ -589,8 +589,6 @@ BUILTIN(__sync_swap_16, "LLLiLLLiD*LLLi.", "n")
 
 // Non-overloaded atomic builtins.
 BUILTIN(__sync_synchronize, "v.", "n")
-// LLVM instruction builtin [Clang extension].
-BUILTIN(__builtin_llvm_memory_barrier,"vbbbbb", "n")
 // GCC does not support these, they are a Clang extension.
 BUILTIN(__sync_fetch_and_min, "iiD*i", "n")
 BUILTIN(__sync_fetch_and_max, "iiD*i", "n")
