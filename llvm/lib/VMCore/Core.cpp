@@ -167,6 +167,11 @@ LLVMTypeKind LLVMGetTypeKind(LLVMTypeRef Ty) {
   }
 }
 
+LLVMBool LLVMTypeIsSized(LLVMTypeRef Ty)
+{
+    return unwrap(Ty)->isSized();
+}
+
 LLVMContextRef LLVMGetTypeContext(LLVMTypeRef Ty) {
   return wrap(&unwrap(Ty)->getContext());
 }

@@ -172,6 +172,10 @@ CAMLprim value llvm_classify_type(LLVMTypeRef Ty) {
   return Val_int(LLVMGetTypeKind(Ty));
 }
 
+CAMLprim value llvm_type_is_sized(LLVMTypeRef Ty) {
+    return Val_bool(LLVMTypeIsSized(Ty));
+}
+
 /* lltype -> llcontext */
 CAMLprim LLVMContextRef llvm_type_context(LLVMTypeRef Ty) {
   return LLVMGetTypeContext(Ty);

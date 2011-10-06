@@ -355,6 +355,7 @@ LLVMContextRef LLVMGetModuleContext(LLVMModuleRef M);
 
 /** See llvm::LLVMTypeKind::getTypeID. */
 LLVMTypeKind LLVMGetTypeKind(LLVMTypeRef Ty);
+LLVMBool LLVMTypeIsSized(LLVMTypeRef Ty);
 
 /** See llvm::LLVMType::getContext. */
 LLVMContextRef LLVMGetTypeContext(LLVMTypeRef Ty);

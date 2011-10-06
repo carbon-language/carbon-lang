@@ -167,6 +167,7 @@ external set_module_inline_asm : llmodule -> string -> unit
 (*===-- Types -------------------------------------------------------------===*)
 external classify_type : lltype -> TypeKind.t = "llvm_classify_type"
 external type_context : lltype -> llcontext = "llvm_type_context"
+external type_is_sized : lltype -> bool = "llvm_type_is_sized"
 
 (*--... Operations on integer types ........................................--*)
 external i1_type : llcontext -> lltype = "llvm_i1_type"

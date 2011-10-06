@@ -271,6 +271,11 @@ val set_module_inline_asm : llmodule -> string -> unit
     See the method [llvm::Type::getTypeID]. *)
 val classify_type : lltype -> TypeKind.t
 
+(** [type_is_sized ty] returns whether the type has a size or not.
+ * If it doesn't then it is not safe to call the [TargetData::] methods on it.
+ * *)
+val type_is_sized : lltype -> bool
+
 (** [type_context ty] returns the {!llcontext} corresponding to the type [ty].
     See the method [llvm::Type::getContext]. *)
 val type_context : lltype -> llcontext
