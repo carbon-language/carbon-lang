@@ -24,6 +24,7 @@
 #include "llvm/Config/config.h"
 #include <assert.h>
 #include <stdlib.h>
+#include <string.h>
 
 
 /* Can't use the recommended caml_named_value mechanism for backwards
@@ -468,6 +469,32 @@ CAMLprim LLVMValueRef llvm_mdnode(LLVMContextRef C, value ElementVals) {
                              Wosize_val(ElementVals));
 }
 
+/* llvalue -> string option */
+CAMLprim value llvm_get_mdstring(LLVMValueRef V) {
+    CAMLparam0();
+    const char *S;
+    unsigned Len;
+
+    if ((S = LLVMGetMDString(V, &Len))) {
+	CAMLlocal2(Option, Str);
+
+	Str = caml_alloc_string(Len);
+	memcpy(String_val(Str), S, Len);
+	Option = alloc(1,0);
+	Store_field(Option, 0, Str);
+	CAMLreturn(Option);
+    }
+    CAMLreturn(Val_int(0));
+}
+
+CAMLprim value llvm_get_namedmd(LLVMModuleRef M, value name)
+{
+  CAMLparam1(name);
+  CAMLlocal1(Nodes);
+  Nodes = alloc(LLVMGetNamedMetadataNumOperands(M, String_val(name)), 0);
+  LLVMGetNamedMetadataOperands(M, String_val(name), (LLVMValueRef *) Nodes);
+  CAMLreturn(Nodes);
+}
 /*--... Operations on scalar constants .....................................--*/
 
 /* lltype -> int -> llvalue */

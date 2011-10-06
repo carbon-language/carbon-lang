@@ -571,6 +571,14 @@ val mdstring : llcontext -> string -> llvalue
     See the method [llvm::MDNode::get]. *)
 val mdnode : llcontext -> llvalue array -> llvalue
 
+(** [get_mdstring v] returns the MDString.
+ * See the method [llvm::MDString::getString] *)
+val get_mdstring : llvalue -> string option
+
+(** [get_named_metadata m name] return all the MDNodes belonging to the named
+ * metadata (if any).
+ * See the method [llvm::NamedMDNode::getOperand]. *)
+val get_named_metadata : llmodule -> string -> llvalue array
 
 (** {7 Operations on scalar constants} *)
 

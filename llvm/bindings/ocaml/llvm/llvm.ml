@@ -281,6 +281,8 @@ external clear_metadata : llvalue -> int -> unit = "llvm_clear_metadata"
 (*--... Operations on metadata .......,.....................................--*)
 external mdstring : llcontext -> string -> llvalue = "llvm_mdstring"
 external mdnode : llcontext -> llvalue array -> llvalue = "llvm_mdnode"
+external get_mdstring : llvalue -> string option = "llvm_get_mdstring"
+external get_named_metadata : llmodule -> string -> llvalue array = "llvm_get_namedmd"
 
 (*--... Operations on scalar constants .....................................--*)
 external const_int : lltype -> int -> llvalue = "llvm_const_int"
