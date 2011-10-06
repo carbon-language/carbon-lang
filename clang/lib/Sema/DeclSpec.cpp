@@ -15,6 +15,7 @@
 #include "clang/Sema/DeclSpec.h"
 #include "clang/Sema/LocInfoType.h"
 #include "clang/Sema/ParsedTemplate.h"
+#include "clang/Sema/Sema.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/NestedNameSpecifier.h"
@@ -403,21 +404,24 @@ const char *DeclSpec::getSpecifierName(TQ T) {
   llvm_unreachable("Unknown typespec!");
 }
 
-bool DeclSpec::SetStorageClassSpec(SCS S, SourceLocation Loc,
+bool DeclSpec::SetStorageClassSpec(Sema &S, SCS SC, SourceLocation Loc,
                                    const char *&PrevSpec,
-                                   unsigned &DiagID,
-                                   const LangOptions &Lang) {
-  // OpenCL prohibits extern, auto, register, and static
+                                   unsigned &DiagID) {
+  // OpenCL 1.1 6.8g: "The extern, static, auto and register storage-class
+  // specifiers are not supported."
   // It seems sensible to prohibit private_extern too
-  if (Lang.OpenCL) {
-    switch (S) {
+  // The cl_clang_storage_class_specifiers extension enables support for
+  // these storage-class specifiers.
+  if (S.getLangOptions().OpenCL &&
+      !S.getOpenCLOptions().cl_clang_storage_class_specifiers) {
+    switch (SC) {
     case SCS_extern:
     case SCS_private_extern:
     case SCS_auto:
     case SCS_register:
     case SCS_static:
       DiagID   = diag::err_not_opencl_storage_class_specifier;
-      PrevSpec = getSpecifierName(S);
+      PrevSpec = getSpecifierName(SC);
       return true;
     default:
       break;
@@ -427,8 +431,8 @@ bool DeclSpec::SetStorageClassSpec(SCS S, SourceLocation Loc,
   if (StorageClassSpec != SCS_unspecified) {
     // Maybe this is an attempt to use C++0x 'auto' outside of C++0x mode.
     bool isInvalid = true;
-    if (TypeSpecType == TST_unspecified && Lang.CPlusPlus) {
-      if (S == SCS_auto)
+    if (TypeSpecType == TST_unspecified && S.getLangOptions().CPlusPlus) {
+      if (SC == SCS_auto)
         return SetTypeSpecType(TST_auto, Loc, PrevSpec, DiagID);
       if (StorageClassSpec == SCS_auto) {
         isInvalid = SetTypeSpecType(TST_auto, StorageClassSpecLoc,
@@ -443,12 +447,12 @@ bool DeclSpec::SetStorageClassSpec(SCS S, SourceLocation Loc,
     if (isInvalid &&
         !(SCS_extern_in_linkage_spec &&
           StorageClassSpec == SCS_extern &&
-          S == SCS_typedef))
-      return BadSpecifier(S, (SCS)StorageClassSpec, PrevSpec, DiagID);
+          SC == SCS_typedef))
+      return BadSpecifier(SC, (SCS)StorageClassSpec, PrevSpec, DiagID);
   }
-  StorageClassSpec = S;
+  StorageClassSpec = SC;
   StorageClassSpecLoc = Loc;
-  assert((unsigned)S == StorageClassSpec && "SCS constants overflow bitfield");
+  assert((unsigned)SC == StorageClassSpec && "SCS constants overflow bitfield");
   return false;
 }
 

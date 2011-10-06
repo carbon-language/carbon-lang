@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+// OpenCL 1.1.
 OPENCLEXT(cl_khr_fp64)
 OPENCLEXT(cl_khr_int64_base_atomics)
 OPENCLEXT(cl_khr_int64_extended_atomics)
@@ -24,5 +25,8 @@ OPENCLEXT(cl_khr_local_int32_base_atomics)
 OPENCLEXT(cl_khr_local_int32_extended_atomics)
 OPENCLEXT(cl_khr_byte_addressable_store)
 OPENCLEXT(cl_khr_3d_image_writes)
+
+// Clang Extensions.
+OPENCLEXT(cl_clang_storage_class_specifiers)
 
 #undef OPENCLEXT
