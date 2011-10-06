@@ -5636,6 +5636,16 @@ EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
   MachineBasicBlock *DispContBB = MF->CreateMachineBasicBlock();
   DispatchBB->addSuccessor(DispContBB);
 
+  // Insert and renumber MBBs.
+  MachineBasicBlock *Last = &MF->back();
+  MF->insert(MF->end(), DispatchBB);
+  MF->insert(MF->end(), DispContBB);
+  MF->insert(MF->end(), TrapBB);
+  MF->RenumberBlocks(Last);
+
+  FIMMO = MF->getMachineMemOperand(MachinePointerInfo::getFixedStack(FI),
+                                   MachineMemOperand::MOLoad, 4, 4);
+
   unsigned NewVReg1 = MRI->createVirtualRegister(TRC);
   AddDefaultPred(BuildMI(DispatchBB, dl, TII->get(ARM::t2LDRi12), NewVReg1)
                  .addFrameIndex(FI)
@@ -5648,27 +5658,6 @@ EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
     .addMBB(TrapBB)
     .addImm(ARMCC::HI)
     .addReg(ARM::CPSR);
-
-/*
-
-BB#32: derived from LLVM BB %eh.sjlj.setjmp.catch
-    Predecessors according to CFG: BB#0
-        %vreg11<def> = t2LDRi12 <fi#0>, 4, pred:14, pred:%noreg; mem:Volatile LD4[%sunkaddr131] rGPR:%vreg11
-        t2CMPri %vreg11, 6, pred:14, pred:%noreg, %CPSR<imp-def>; rGPR:%vreg11
-        t2Bcc <BB#33>, pred:8, pred:%CPSR
-    Successors according to CFG: BB#33 BB#35
-
-BB#35: derived from LLVM BB %eh.sjlj.setjmp.catch
-    Predecessors according to CFG: BB#32
-        %vreg12<def> = t2LEApcrelJT <jt#0>, 0, pred:14, pred:%noreg; rGPR:%vreg12
-        %vreg13<def> = t2ADDrs %vreg12<kill>, %vreg11, 18, pred:14, pred:%noreg, opt:%noreg; GPRnopc:%vreg13 rGPR:%vreg12,%vreg11
-        t2BR_JT %vreg13<kill>, %vreg11, <jt#0>, 0; GPRnopc:%vreg13 rGPR:%vreg11
-    Successors according to CFG: BB#3 BB#28 BB#26 BB#24 BB#22 BB#20 BB#31
-
-*/
-
-  FIMMO = MF->getMachineMemOperand(MachinePointerInfo::getFixedStack(FI),
-                                   MachineMemOperand::MOLoad, 4, 4);
 
   unsigned NewVReg2 = MRI->createVirtualRegister(TRC);
   AddDefaultPred(BuildMI(DispContBB, dl, TII->get(ARM::t2LEApcrelJT), NewVReg2)
@@ -5693,13 +5682,6 @@ BB#35: derived from LLVM BB %eh.sjlj.setjmp.catch
   for (std::vector<MachineBasicBlock*>::iterator
          I = LPadList.begin(), E = LPadList.end(); I != E; ++I)
     DispContBB->addSuccessor(*I);
-
-  // Insert and renumber MBBs.
-  MachineBasicBlock *Last = &MF->back();
-  MF->insert(MF->end(), DispatchBB);
-  MF->insert(MF->end(), DispContBB);
-  MF->insert(MF->end(), TrapBB);
-  MF->RenumberBlocks(Last);
 
   // The instruction is gone now.
   MI->eraseFromParent();
