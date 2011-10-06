@@ -8,7 +8,7 @@
 ##===----------------------------------------------------------------------===##
 
 LEVEL := ../../..
-DIRS = scalar
+DIRS = scalar ipo
 
 ocamldoc:
 	$(Verb) for i in $(DIRS) ; do \
