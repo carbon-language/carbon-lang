@@ -40,6 +40,7 @@
 #include "isl/map.h"
 #include "isl/aff.h"
 #include "isl/printer.h"
+#include "isl/local_space.h"
 #include <sstream>
 #include <string>
 #include <vector>
@@ -71,7 +72,7 @@ static std::string convertInt(int number)
 struct SCEVAffinator : public SCEVVisitor<SCEVAffinator, isl_pw_aff*> {
 private:
   isl_ctx *ctx;
-  int NbLoopDims;
+  int NbLoopSpaces;
   const Scop *scop;
 
   /// baseAdress is set if we analyze a memory access. It holds the base address
@@ -97,11 +98,12 @@ public:
       if (*PI == scev) {
         isl_id *ID = isl_id_alloc(ctx, ("p" + convertInt(i)).c_str(),
                                   (void *) scev);
-        isl_dim *Dim = isl_dim_set_alloc(ctx, 1, NbLoopDims);
-        Dim = isl_dim_set_dim_id(Dim, isl_dim_param, 0, ID);
+        isl_space *Space = isl_space_set_alloc(ctx, 1, NbLoopSpaces);
+        Space = isl_space_set_dim_id(Space, isl_dim_param, 0, ID);
 
-        isl_set *Domain = isl_set_universe(isl_dim_copy(Dim));
-        isl_aff *Affine = isl_aff_zero(isl_local_space_from_dim(Dim));
+        isl_set *Domain = isl_set_universe(isl_space_copy(Space));
+        isl_aff *Affine = isl_aff_zero_on_domain(
+          isl_local_space_from_space(Space));
         Affine = isl_aff_add_coefficient_si(Affine, isl_dim_param, 0, 1);
 
         return isl_pw_aff_alloc(Domain, Affine);
@@ -114,7 +116,7 @@ public:
 
   SCEVAffinator(const ScopStmt *stmt, const Value *baseAddress) :
     ctx(stmt->getParent()->getCtx()),
-    NbLoopDims(stmt->getNumIterators()),
+    NbLoopSpaces(stmt->getNumIterators()),
     scop(stmt->getParent()),
     baseAddress(baseAddress) {};
 
@@ -135,10 +137,10 @@ public:
     //    this constant correctly.
     MPZ_from_APInt(v, Value->getValue(), /* isSigned */ true);
 
-    isl_dim *dim = isl_dim_set_alloc(ctx, 0, NbLoopDims);
-    isl_local_space *ls = isl_local_space_from_dim(isl_dim_copy(dim));
-    isl_aff *Affine = isl_aff_zero(ls);
-    isl_set *Domain = isl_set_universe(dim);
+    isl_space *Space = isl_space_set_alloc(ctx, 0, NbLoopSpaces);
+    isl_local_space *ls = isl_local_space_from_space(isl_space_copy(Space));
+    isl_aff *Affine = isl_aff_zero_on_domain(ls);
+    isl_set *Domain = isl_set_universe(Space);
 
     Affine = isl_aff_add_constant(Affine, v);
     isl_int_clear(v);
@@ -207,13 +209,13 @@ public:
 
     isl_pw_aff *Start = visit(Expr->getStart());
     isl_pw_aff *Step = visit(Expr->getOperand(1));
-    isl_dim *Dim = isl_dim_set_alloc (ctx, 0, NbLoopDims);
-    isl_local_space *LocalSpace = isl_local_space_from_dim (Dim);
+    isl_space *Space = isl_space_set_alloc(ctx, 0, NbLoopSpaces);
+    isl_local_space *LocalSpace = isl_local_space_from_space(Space);
 
     int loopDimension = getLoopDepth(Expr->getLoop());
 
-    isl_aff *LAff = isl_aff_set_coefficient_si (isl_aff_zero (LocalSpace),
-                                                isl_dim_set, loopDimension, 1);
+    isl_aff *LAff = isl_aff_set_coefficient_si(
+      isl_aff_zero_on_domain (LocalSpace), isl_dim_in, loopDimension, 1);
     isl_pw_aff *LPwAff = isl_pw_aff_from_aff(LAff);
 
     // TODO: Do we need to check for NSW and NUW?
@@ -238,21 +240,21 @@ public:
   __isl_give isl_pw_aff *visitUnknown(const SCEVUnknown* Expr) {
     Value *Value = Expr->getValue();
 
-    isl_dim *Dim;
+    isl_space *Space;
 
     /// If baseAddress is set, we ignore its Value object in the scev and do not
     /// add it to the isl_pw_aff. This is because it is regarded as defining the
     /// name of an array, in contrast to its array subscript.
     if (baseAddress != Value) {
       isl_id *ID = isl_id_alloc(ctx, Value->getNameStr().c_str(), Value);
-      Dim = isl_dim_set_alloc(ctx, 1, NbLoopDims);
-      Dim = isl_dim_set_dim_id(Dim, isl_dim_param, 0, ID);
+      Space = isl_space_set_alloc(ctx, 1, NbLoopSpaces);
+      Space = isl_space_set_dim_id(Space, isl_dim_param, 0, ID);
     } else {
-      Dim = isl_dim_set_alloc(ctx, 0, NbLoopDims);
+      Space = isl_space_set_alloc(ctx, 0, NbLoopSpaces);
     }
 
-    isl_set *Domain = isl_set_universe(isl_dim_copy(Dim));
-    isl_aff *Affine = isl_aff_zero(isl_local_space_from_dim(Dim));
+    isl_set *Domain = isl_set_universe(isl_space_copy(Space));
+    isl_aff *Affine = isl_aff_zero_on_domain(isl_local_space_from_space(Space));
 
     if (baseAddress != Value)
       Affine = isl_aff_add_coefficient_si(Affine, isl_dim_param, 0, 1);
@@ -298,14 +300,14 @@ std::string MemoryAccess::getAccessFunctionStr() const {
 }
 
 isl_basic_map *MemoryAccess::createBasicAccessMap(ScopStmt *Statement) {
-  isl_dim *dim = isl_dim_alloc(Statement->getIslContext(), 0,
-                               Statement->getNumIterators(), 1);
+  isl_space *Space = isl_space_alloc(Statement->getIslContext(), 0,
+                                    Statement->getNumIterators(), 1);
   setBaseName();
 
-  dim = isl_dim_set_tuple_name(dim, isl_dim_out, getBaseName().c_str());
-  dim = isl_dim_set_tuple_name(dim, isl_dim_in, Statement->getBaseName());
+  Space = isl_space_set_tuple_name(Space, isl_dim_out, getBaseName().c_str());
+  Space = isl_space_set_tuple_name(Space, isl_dim_in, Statement->getBaseName());
 
-  return isl_basic_map_universe(dim);
+  return isl_basic_map_universe(Space);
 }
 
 MemoryAccess::MemoryAccess(const SCEVAffFunc &AffFunc, ScopStmt *Statement) {
@@ -338,7 +340,7 @@ MemoryAccess::MemoryAccess(const SCEVAffFunc &AffFunc, ScopStmt *Statement) {
   AccessRelation = isl_map_set_tuple_name(AccessRelation, isl_dim_out,
                                           getBaseName().c_str());
 
-  isl_dim *Model = isl_set_get_dim(Statement->getParent()->getContext());
+  isl_space *Model = isl_set_get_space(Statement->getParent()->getContext());
   AccessRelation = isl_map_align_params(AccessRelation, Model);
 }
 
@@ -350,7 +352,7 @@ MemoryAccess::MemoryAccess(const Value *BaseAddress, ScopStmt *Statement) {
 
   isl_basic_map *BasicAccessMap = createBasicAccessMap(Statement);
   AccessRelation = isl_map_from_basic_map(BasicAccessMap);
-  isl_dim *Model = isl_set_get_dim(Statement->getParent()->getContext());
+  isl_space *Model = isl_set_get_space(Statement->getParent()->getContext());
   AccessRelation = isl_map_align_params(AccessRelation, Model);
 }
 
@@ -375,9 +377,10 @@ void MemoryAccess::dump() const {
 //   set[i0, i1, ..., iX] -> set[o0, o1, ..., oX]
 //     : i0 = o0, i1 = o1, ..., i(X-1) = o(X-1), iX < oX
 //
-static isl_map *getEqualAndLarger(isl_dim *setDomain) {
-  isl_dim *mapDomain = isl_dim_map_from_set(setDomain);
+static isl_map *getEqualAndLarger(isl_space *setDomain) {
+  isl_space *mapDomain = isl_space_map_from_set(setDomain);
   isl_basic_map *bmap = isl_basic_map_universe(mapDomain);
+  isl_local_space *MapLocalSpace = isl_local_space_from_space(mapDomain);
 
   // Set all but the last dimension to be equal for the input and output
   //
@@ -386,7 +389,7 @@ static isl_map *getEqualAndLarger(isl_dim *setDomain) {
   for (unsigned i = 0; i < isl_basic_map_n_in(bmap) - 1; ++i) {
     isl_int v;
     isl_int_init(v);
-    isl_constraint *c = isl_equality_alloc(isl_basic_map_get_dim(bmap));
+    isl_constraint *c = isl_equality_alloc(isl_local_space_copy(MapLocalSpace));
 
     isl_int_set_si(v, 1);
     isl_constraint_set_coefficient(c, isl_dim_in, i, v);
@@ -406,7 +409,7 @@ static isl_map *getEqualAndLarger(isl_dim *setDomain) {
   unsigned lastDimension = isl_basic_map_n_in(bmap) - 1;
   isl_int v;
   isl_int_init(v);
-  isl_constraint *c = isl_inequality_alloc(isl_basic_map_get_dim(bmap));
+  isl_constraint *c = isl_inequality_alloc(isl_local_space_copy(MapLocalSpace));
   isl_int_set_si(v, -1);
   isl_constraint_set_coefficient(c, isl_dim_in, lastDimension, v);
   isl_int_set_si(v, 1);
@@ -436,7 +439,7 @@ isl_set *MemoryAccess::getStride(const isl_set *domainSubset) const {
   scattering = isl_map_set_tuple_name(scattering, isl_dim_in, "");
   scatteringDomain = isl_set_set_tuple_name(scatteringDomain, "");
 
-  isl_map *nextScatt = getEqualAndLarger(isl_set_get_dim(scatteringDomain));
+  isl_map *nextScatt = getEqualAndLarger(isl_set_get_space(scatteringDomain));
   nextScatt = isl_map_lexmin(nextScatt);
 
   scattering = isl_map_intersect_domain(scattering, scatteringDomain);
@@ -451,7 +454,9 @@ isl_set *MemoryAccess::getStride(const isl_set *domainSubset) const {
 
 bool MemoryAccess::isStrideZero(const isl_set *domainSubset) const {
   isl_set *stride = getStride(domainSubset);
-  isl_constraint *c = isl_equality_alloc(isl_set_get_dim(stride));
+  isl_space *StrideSpace = isl_set_get_space(stride);
+  isl_local_space *StrideLS = isl_local_space_from_space(StrideSpace);
+  isl_constraint *c = isl_equality_alloc(StrideLS);
 
   isl_int v;
   isl_int_init(v);
@@ -461,7 +466,7 @@ bool MemoryAccess::isStrideZero(const isl_set *domainSubset) const {
   isl_constraint_set_constant(c, v);
   isl_int_clear(v);
 
-  isl_basic_set *bset = isl_basic_set_universe(isl_set_get_dim(stride));
+  isl_basic_set *bset = isl_basic_set_universe(isl_set_get_space(stride));
 
   bset = isl_basic_set_add_constraint(bset, c);
   isl_set *strideZero = isl_set_from_basic_set(bset);
@@ -476,7 +481,9 @@ bool MemoryAccess::isStrideZero(const isl_set *domainSubset) const {
 
 bool MemoryAccess::isStrideOne(const isl_set *domainSubset) const {
   isl_set *stride = getStride(domainSubset);
-  isl_constraint *c = isl_equality_alloc(isl_set_get_dim(stride));
+  isl_space *StrideSpace = isl_set_get_space(stride);
+  isl_local_space *StrideLSpace = isl_local_space_from_space(StrideSpace);
+  isl_constraint *c = isl_equality_alloc(StrideLSpace);
 
   isl_int v;
   isl_int_init(v);
@@ -486,7 +493,7 @@ bool MemoryAccess::isStrideOne(const isl_set *domainSubset) const {
   isl_constraint_set_constant(c, v);
   isl_int_clear(v);
 
-  isl_basic_set *bset = isl_basic_set_universe(isl_set_get_dim(stride));
+  isl_basic_set *bset = isl_basic_set_universe(isl_set_get_space(stride));
 
   bset = isl_basic_set_add_constraint(bset, c);
   isl_set *strideOne = isl_set_from_basic_set(bset);
@@ -512,17 +519,19 @@ void ScopStmt::setScattering(isl_map *scattering) {
 
 void ScopStmt::buildScattering(SmallVectorImpl<unsigned> &Scatter) {
   unsigned NumberOfIterators = getNumIterators();
-  unsigned ScatDim = Parent.getMaxLoopDepth() * 2 + 1;
-  isl_dim *dim = isl_dim_alloc(Parent.getCtx(), 0, NumberOfIterators, ScatDim);
-  dim = isl_dim_set_tuple_name(dim, isl_dim_out, "scattering");
-  dim = isl_dim_set_tuple_name(dim, isl_dim_in, getBaseName());
-  isl_basic_map *bmap = isl_basic_map_universe(isl_dim_copy(dim));
+  unsigned ScatSpace = Parent.getMaxLoopDepth() * 2 + 1;
+  isl_space *Space = isl_space_alloc(Parent.getCtx(), 0, NumberOfIterators,
+                                     ScatSpace);
+  Space = isl_space_set_tuple_name(Space, isl_dim_out, "scattering");
+  Space = isl_space_set_tuple_name(Space, isl_dim_in, getBaseName());
+  isl_local_space *LSpace = isl_local_space_from_space(isl_space_copy(Space));
+  isl_basic_map *bmap = isl_basic_map_universe(Space);
   isl_int v;
   isl_int_init(v);
 
   // Loop dimensions.
   for (unsigned i = 0; i < NumberOfIterators; ++i) {
-    isl_constraint *c = isl_equality_alloc(isl_dim_copy(dim));
+    isl_constraint *c = isl_equality_alloc(isl_local_space_copy(LSpace));
     isl_int_set_si(v, 1);
     isl_constraint_set_coefficient(c, isl_dim_out, 2 * i + 1, v);
     isl_int_set_si(v, -1);
@@ -533,7 +542,7 @@ void ScopStmt::buildScattering(SmallVectorImpl<unsigned> &Scatter) {
 
   // Constant dimensions
   for (unsigned i = 0; i < NumberOfIterators + 1; ++i) {
-    isl_constraint *c = isl_equality_alloc(isl_dim_copy(dim));
+    isl_constraint *c = isl_equality_alloc(isl_local_space_copy(LSpace));
     isl_int_set_si(v, -1);
     isl_constraint_set_coefficient(c, isl_dim_out, 2 * i, v);
     isl_int_set_si(v, Scatter[i]);
@@ -543,8 +552,8 @@ void ScopStmt::buildScattering(SmallVectorImpl<unsigned> &Scatter) {
   }
 
   // Fill scattering dimensions.
-  for (unsigned i = 2 * NumberOfIterators + 1; i < ScatDim ; ++i) {
-    isl_constraint *c = isl_equality_alloc(isl_dim_copy(dim));
+  for (unsigned i = 2 * NumberOfIterators + 1; i < ScatSpace ; ++i) {
+    isl_constraint *c = isl_equality_alloc(isl_local_space_copy(LSpace));
     isl_int_set_si(v, 1);
     isl_constraint_set_coefficient(c, isl_dim_out, i, v);
     isl_int_set_si(v, 0);
@@ -554,9 +563,8 @@ void ScopStmt::buildScattering(SmallVectorImpl<unsigned> &Scatter) {
   }
 
   isl_int_clear(v);
-  isl_dim_free(dim);
   Scattering = isl_map_from_basic_map(bmap);
-  isl_dim *Model = isl_set_get_dim(getParent()->getContext());
+  isl_space *Model = isl_set_get_space(getParent()->getContext());
   Scattering = isl_map_align_params(Scattering, Model);
 }
 
@@ -570,7 +578,8 @@ void ScopStmt::buildAccesses(TempScop &tempScop, const Region &CurRegion) {
   }
 }
 
-isl_set *ScopStmt::toConditionSet(const Comparison &Comp, isl_dim *dim) const {
+isl_set *ScopStmt::toConditionSet(const Comparison &Comp,
+                                  isl_space *space) const {
   isl_pw_aff *LHS = SCEVAffinator::getPwAff(this, Comp.getLHS()->OriginalSCEV,
                                             0);
   isl_pw_aff *RHS = SCEVAffinator::getPwAff(this, Comp.getRHS()->OriginalSCEV,
@@ -606,41 +615,45 @@ isl_set *ScopStmt::toConditionSet(const Comparison &Comp, isl_dim *dim) const {
     llvm_unreachable("Non integer predicate not supported");
   }
 
-  set = isl_set_set_tuple_name(set, isl_dim_get_tuple_name(dim, isl_dim_set));
+  set = isl_set_set_tuple_name(set, isl_space_get_tuple_name(space, isl_dim_set));
 
   return set;
 }
 
-isl_set *ScopStmt::toUpperLoopBound(const SCEVAffFunc &UpperBound, isl_dim *Dim,
+isl_set *ScopStmt::toUpperLoopBound(const SCEVAffFunc &UpperBound,
+                                    isl_space *Space,
 				    unsigned BoundedDimension) const {
   // FIXME: We should choose a consistent scheme of when to name the dimensions.
-  isl_dim *UnnamedDim = isl_dim_copy(Dim);
-  UnnamedDim = isl_dim_set_tuple_name(UnnamedDim, isl_dim_set, 0);
-  isl_local_space *LocalSpace = isl_local_space_from_dim (UnnamedDim);
-  isl_aff *LAff = isl_aff_set_coefficient_si (isl_aff_zero (LocalSpace),
-                                              isl_dim_set, BoundedDimension, 1);
-  isl_pw_aff *BoundedDim = isl_pw_aff_from_aff(LAff);
+  isl_space *UnnamedSpace = isl_space_copy(Space);
+  UnnamedSpace = isl_space_set_tuple_name(UnnamedSpace, isl_dim_set, 0);
+  isl_local_space *LocalSpace = isl_local_space_from_space(UnnamedSpace);
+  isl_aff *LAff = isl_aff_set_coefficient_si(isl_aff_zero_on_domain(LocalSpace),
+                                             isl_dim_in, BoundedDimension, 1);
+  isl_pw_aff *BoundedSpace = isl_pw_aff_from_aff(LAff);
   isl_pw_aff *Bound = SCEVAffinator::getPwAff(this, UpperBound.OriginalSCEV, 0);
-  isl_set *set = isl_pw_aff_le_set(BoundedDim, Bound);
-  set = isl_set_set_tuple_name(set, isl_dim_get_tuple_name(Dim, isl_dim_set));
-  isl_dim_free(Dim);
+  isl_set *set = isl_pw_aff_le_set(BoundedSpace, Bound);
+  set = isl_set_set_tuple_name(set, isl_space_get_tuple_name(Space, isl_dim_set));
+  isl_space_free(Space);
   return set;
 }
 
 void ScopStmt::buildIterationDomainFromLoops(TempScop &tempScop) {
-  isl_dim *dim = isl_dim_set_alloc(getIslContext(), 0, getNumIterators());
-  dim = isl_dim_set_tuple_name(dim, isl_dim_set, getBaseName());
+  isl_space *Space = isl_space_set_alloc(getIslContext(), 0, getNumIterators());
+  Space = isl_space_set_tuple_name(Space, isl_dim_set, getBaseName());
 
-  Domain = isl_set_universe(isl_dim_copy(dim));
-  Domain = isl_set_align_params(Domain, isl_set_get_dim(Parent.getContext()));
+  Domain = isl_set_universe(isl_space_copy(Space));
+  Domain = isl_set_align_params(Domain, isl_set_get_space(Parent.getContext()));
 
   isl_int v;
   isl_int_init(v);
 
+  isl_local_space *LocalSpace;
+  LocalSpace = isl_local_space_from_space(isl_space_copy(Space));
+
   for (int i = 0, e = getNumIterators(); i != e; ++i) {
     // Lower bound: IV >= 0.
-    isl_basic_set *bset = isl_basic_set_universe(isl_dim_copy(dim));
-    isl_constraint *c = isl_inequality_alloc(isl_dim_copy(dim));
+    isl_basic_set *bset = isl_basic_set_universe(isl_space_copy(Space));
+    isl_constraint *c = isl_inequality_alloc(isl_local_space_copy(LocalSpace));
     isl_int_set_si(v, 1);
     isl_constraint_set_coefficient(c, isl_dim_set, i, v);
     bset = isl_basic_set_add_constraint(bset, c);
@@ -649,17 +662,19 @@ void ScopStmt::buildIterationDomainFromLoops(TempScop &tempScop) {
     // Upper bound: IV <= NumberOfIterations.
     const Loop *L = getLoopForDimension(i);
     const SCEVAffFunc &UpperBound = tempScop.getLoopBound(L);
-    isl_set *UpperBoundSet = toUpperLoopBound(UpperBound, isl_dim_copy(dim), i);
+    isl_set *UpperBoundSet = toUpperLoopBound(UpperBound, isl_space_copy(Space),
+                                              i);
     Domain = isl_set_intersect(Domain, UpperBoundSet);
   }
 
-  isl_dim_free(dim);
+  isl_local_space_free(LocalSpace);
+  isl_space_free(Space);
   isl_int_clear(v);
 }
 
 void ScopStmt::addConditionsToDomain(TempScop &tempScop,
                                      const Region &CurRegion) {
-  isl_dim *dim = isl_set_get_dim(Domain);
+  isl_space *Space = isl_set_get_space(Domain);
   const Region *TopR = tempScop.getMaxRegion().getParent(),
                *CurR = &CurRegion;
   const BasicBlock *CurEntry = BB;
@@ -672,7 +687,7 @@ void ScopStmt::addConditionsToDomain(TempScop &tempScop,
       if (const BBCond *Cnd = tempScop.getBBCond(CurEntry))
         for (BBCond::const_iterator I = Cnd->begin(), E = Cnd->end();
              I != E; ++I) {
-          isl_set *c = toConditionSet(*I, dim);
+          isl_set *c = toConditionSet(*I, Space);
           Domain = isl_set_intersect(Domain, c);
         }
     }
@@ -680,7 +695,7 @@ void ScopStmt::addConditionsToDomain(TempScop &tempScop,
     CurR = CurR->getParent();
   } while (TopR != CurR);
 
-  isl_dim_free(dim);
+  isl_space_free(Space);
 }
 
 void ScopStmt::buildIterationDomain(TempScop &tempScop, const Region &CurRegion)
@@ -720,22 +735,22 @@ ScopStmt::ScopStmt(Scop &parent, SmallVectorImpl<unsigned> &Scatter)
 
   // Build iteration domain.
   std::string IterationDomainString = "{[i0] : i0 = 0}";
-  Domain = isl_set_read_from_str(Parent.getCtx(), IterationDomainString.c_str(),
-                                 -1);
+  Domain = isl_set_read_from_str(Parent.getCtx(),
+                                 IterationDomainString.c_str());
   Domain = isl_set_set_tuple_name(Domain, getBaseName());
-  isl_dim *Model = isl_set_get_dim(getParent()->getContext());
-  Domain = isl_set_align_params(Domain, isl_dim_copy(Model));
+  isl_space *Model = isl_set_get_space(getParent()->getContext());
+  Domain = isl_set_align_params(Domain, isl_space_copy(Model));
 
   // Build scattering.
-  unsigned ScatDim = Parent.getMaxLoopDepth() * 2 + 1;
-  isl_dim *dim = isl_dim_alloc(Parent.getCtx(), 0, 1, ScatDim);
-  dim = isl_dim_set_tuple_name(dim, isl_dim_out, "scattering");
-  dim = isl_dim_set_tuple_name(dim, isl_dim_in, getBaseName());
-  isl_basic_map *bmap = isl_basic_map_universe(isl_dim_copy(dim));
+  unsigned ScatSpace = Parent.getMaxLoopDepth() * 2 + 1;
+  isl_space *Space = isl_space_alloc(Parent.getCtx(), 0, 1, ScatSpace);
+  Space = isl_space_set_tuple_name(Space, isl_dim_out, "scattering");
+  Space = isl_space_set_tuple_name(Space, isl_dim_in, getBaseName());
+  isl_basic_map *bmap = isl_basic_map_universe(isl_space_copy(Space));
   isl_int v;
   isl_int_init(v);
 
-  isl_constraint *c = isl_equality_alloc(dim);
+  isl_constraint *c = isl_equality_alloc(isl_local_space_from_space(Space));
   isl_int_set_si(v, -1);
   isl_constraint_set_coefficient(c, isl_dim_out, 0, v);
 
@@ -863,7 +878,7 @@ Scop::Scop(TempScop &tempScop, LoopInfo &LI, ScalarEvolution &ScalarEvolution,
   ParamSetType &Params = tempScop.getParamSet();
   Parameters.insert(Parameters.begin(), Params.begin(), Params.end());
 
-  isl_dim *dim = isl_dim_set_alloc(ctx, getNumParams(), 0);
+  isl_space *Space = isl_space_set_alloc(ctx, getNumParams(), 0);
 
   int i = 0;
   for (ParamSetType::iterator PI = Params.begin(), PE = Params.end();
@@ -872,13 +887,13 @@ Scop::Scop(TempScop &tempScop, LoopInfo &LI, ScalarEvolution &ScalarEvolution,
     isl_id *id = isl_id_alloc(ctx,
                               ("p" + convertInt(i)).c_str(),
                               (void *) scev);
-    dim = isl_dim_set_dim_id(dim, isl_dim_param, i, id);
+    Space = isl_space_set_dim_id(Space, isl_dim_param, i, id);
     i++;
   }
 
   // TODO: Insert relations between parameters.
   // TODO: Insert constraints on parameters.
-  Context = isl_set_universe (dim);
+  Context = isl_set_universe (Space);
 
   SmallVector<Loop*, 8> NestLoops;
   SmallVector<unsigned, 8> Scatter;

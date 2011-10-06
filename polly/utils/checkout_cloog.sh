@@ -1,7 +1,7 @@
 #!/bin/sh
 
-CLOOG_HASH="cloog-0.16.3"
-ISL_HASH="cd1939ed06617d00159e8e51b72a804b467e98b4"
+cloog_hash="0c252c88946b27b7b61a1a8d8fd7f94d2461dbfd"
+isl_hash="56b7d238929980e62218525b4b3be121af386edf"
 
 check_command_line() {
   if [ "${1}x" = "x" ] || [ "${2}x" != "x" ]

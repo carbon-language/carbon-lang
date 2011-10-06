@@ -223,9 +223,9 @@ void OpenScop::print(FILE *F) {
 int OpenScop::domainToMatrix_constraint(isl_constraint *c, void *user) {
   openscop_matrix_p m = (openscop_matrix_p) user;
 
-  int nb_params = isl_constraint_dim(c, isl_dim_param);
-  int nb_vars = isl_constraint_dim(c, isl_dim_set);
-  int nb_div = isl_constraint_dim(c, isl_dim_div);
+  int nb_params = isl_constraint_dim(c, isl_space_param);
+  int nb_vars = isl_constraint_dim(c, isl_space_set);
+  int nb_div = isl_constraint_dim(c, isl_space_div);
 
   assert(!nb_div && "Existentially quantified variables not yet supported");
 
@@ -242,13 +242,13 @@ int OpenScop::domainToMatrix_constraint(isl_constraint *c, void *user) {
 
   // Assign variables
   for (int i = 0; i < nb_vars; ++i) {
-    isl_constraint_get_coefficient(c, isl_dim_set, i, &v);
+    isl_constraint_get_coefficient(c, isl_space_set, i, &v);
     isl_int_set(vec->p[i + 1], v);
   }
 
   // Assign parameters
   for (int i = 0; i < nb_params; ++i) {
-    isl_constraint_get_coefficient(c, isl_dim_param, i, &v);
+    isl_constraint_get_coefficient(c, isl_space_param, i, &v);
     isl_int_set(vec->p[nb_vars + i + 1], v);
   }
 
@@ -309,10 +309,10 @@ openscop_matrix_p OpenScop::domainToMatrix(isl_set *PS) {
 int OpenScop::scatteringToMatrix_constraint(isl_constraint *c, void *user) {
   openscop_matrix_p m = (openscop_matrix_p) user;
 
-  int nb_params = isl_constraint_dim(c, isl_dim_param);
-  int nb_in = isl_constraint_dim(c, isl_dim_in);
-  int nb_out = isl_constraint_dim(c, isl_dim_out);
-  int nb_div = isl_constraint_dim(c, isl_dim_div);
+  int nb_params = isl_constraint_dim(c, isl_space_param);
+  int nb_in = isl_constraint_dim(c, isl_space_in);
+  int nb_out = isl_constraint_dim(c, isl_space_out);
+  int nb_div = isl_constraint_dim(c, isl_space_div);
 
   assert(!nb_div && "Existentially quantified variables not yet supported");
 
@@ -330,19 +330,19 @@ int OpenScop::scatteringToMatrix_constraint(isl_constraint *c, void *user) {
 
   // Assign scattering
   for (int i = 0; i < nb_out; ++i) {
-    isl_constraint_get_coefficient(c, isl_dim_out, i, &v);
+    isl_constraint_get_coefficient(c, isl_space_out, i, &v);
     isl_int_set(vec->p[i + 1], v);
   }
 
   // Assign variables
   for (int i = 0; i < nb_in; ++i) {
-    isl_constraint_get_coefficient(c, isl_dim_in, i, &v);
+    isl_constraint_get_coefficient(c, isl_space_in, i, &v);
     isl_int_set(vec->p[nb_out + i + 1], v);
   }
 
   // Assign parameters
   for (int i = 0; i < nb_params; ++i) {
-    isl_constraint_get_coefficient(c, isl_dim_param, i, &v);
+    isl_constraint_get_coefficient(c, isl_space_param, i, &v);
     isl_int_set(vec->p[nb_out + nb_in + i + 1], v);
   }
 
@@ -404,9 +404,9 @@ openscop_matrix_p OpenScop::scatteringToMatrix(isl_map *pmap) {
 int OpenScop::accessToMatrix_constraint(isl_constraint *c, void *user) {
   openscop_matrix_p m = (openscop_matrix_p) user;
 
-  int nb_params = isl_constraint_dim(c, isl_dim_param);
-  int nb_in = isl_constraint_dim(c, isl_dim_in);
-  int nb_div = isl_constraint_dim(c, isl_dim_div);
+  int nb_params = isl_constraint_dim(c, isl_space_param);
+  int nb_in = isl_constraint_dim(c, isl_space_in);
+  int nb_div = isl_constraint_dim(c, isl_space_div);
 
   assert(!nb_div && "Existentially quantified variables not yet supported");
 
@@ -417,13 +417,13 @@ int OpenScop::accessToMatrix_constraint(isl_constraint *c, void *user) {
   isl_int_init(v);
 
   // The access dimension has to be one.
-  isl_constraint_get_coefficient(c, isl_dim_out, 0, &v);
+  isl_constraint_get_coefficient(c, isl_space_out, 0, &v);
   assert(isl_int_is_one(v));
   bool inverse = true ;
 
   // Assign variables
   for (int i = 0; i < nb_in; ++i) {
-    isl_constraint_get_coefficient(c, isl_dim_in, i, &v);
+    isl_constraint_get_coefficient(c, isl_space_in, i, &v);
 
     if (inverse) isl_int_neg(v,v);
 
@@ -432,7 +432,7 @@ int OpenScop::accessToMatrix_constraint(isl_constraint *c, void *user) {
 
   // Assign parameters
   for (int i = 0; i < nb_params; ++i) {
-    isl_constraint_get_coefficient(c, isl_dim_param, i, &v);
+    isl_constraint_get_coefficient(c, isl_space_param, i, &v);
 
     if (inverse) isl_int_neg(v,v);
 

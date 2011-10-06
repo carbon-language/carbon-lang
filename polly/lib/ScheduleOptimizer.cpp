@@ -24,7 +24,7 @@
 #include "polly/Dependences.h"
 #include "polly/ScopInfo.h"
 
-#include "isl/dim.h"
+#include "isl/space.h"
 #include "isl/map.h"
 #include "isl/constraint.h"
 #include "isl/schedule.h"
@@ -75,30 +75,31 @@ static void extendScattering(Scop &S, unsigned scatDimensions) {
       continue;
 
     isl_map *scattering = stmt->getScattering();
-    isl_dim *dim = isl_dim_alloc(isl_map_get_ctx(scattering),
-                                 0, isl_map_n_out(scattering),
-                                 scatDimensions);
-    isl_basic_map *changeScattering = isl_basic_map_universe(isl_dim_copy(dim));
+    isl_space *Space = isl_space_alloc(isl_map_get_ctx(scattering), 0,
+                                       isl_map_n_out(scattering), scatDimensions);
+    isl_basic_map *changeScattering = isl_basic_map_universe(
+      isl_space_copy(Space));
+    isl_local_space *LocalSpace = isl_local_space_from_space(Space);
 
     for (unsigned i = 0; i < isl_map_n_out(scattering); i++) {
-      isl_constraint *c = isl_equality_alloc(isl_dim_copy(dim));
+      isl_constraint *c = isl_equality_alloc(isl_local_space_copy(LocalSpace));
       isl_constraint_set_coefficient_si(c, isl_dim_in, i, 1);
       isl_constraint_set_coefficient_si(c, isl_dim_out, i, -1);
       changeScattering = isl_basic_map_add_constraint(changeScattering, c);
     }
 
     for (unsigned i = isl_map_n_out(scattering); i < scatDimensions; i++) {
-      isl_constraint *c = isl_equality_alloc(isl_dim_copy(dim));
+      isl_constraint *c = isl_equality_alloc(isl_local_space_copy(LocalSpace));
       isl_constraint_set_coefficient_si(c, isl_dim_out, i, 1);
       changeScattering = isl_basic_map_add_constraint(changeScattering, c);
     }
 
     isl_map *changeScatteringMap = isl_map_from_basic_map(changeScattering);
 
-    isl_dim *dimModel = isl_map_get_dim(scattering);
-    changeScatteringMap = isl_map_align_params(changeScatteringMap, dimModel);
+    isl_space *SpaceModel = isl_map_get_space(scattering);
+    changeScatteringMap = isl_map_align_params(changeScatteringMap, SpaceModel);
     stmt->setScattering(isl_map_apply_range(scattering, changeScatteringMap));
-    isl_dim_free(dim);
+    isl_local_space_free(LocalSpace);
   }
 }
 
@@ -129,7 +130,7 @@ static void extendScattering(Scop &S, unsigned scatDimensions) {
 //	    S(i,j)
 //
 static isl_basic_map *getTileMap(isl_ctx *ctx, int scheduleDimensions,
-				 isl_dim *dimModel, int tileSize = 32) {
+				 isl_space *SpaceModel, int tileSize = 32) {
   // We construct
   //
   // tileMap := [p0] -> {[s0, s1] -> [t0, t1, p0, p1, a0, a1]:
@@ -137,9 +138,11 @@ static isl_basic_map *getTileMap(isl_ctx *ctx, int scheduleDimensions,
   //	                  s1 = a1 * 32 and s1 = p1 and t1 <= p1 < t1 + 32}
   //
   // and project out the auxilary dimensions a0 and a1.
-  isl_dim *dim = isl_dim_alloc(ctx, 0, scheduleDimensions,
-                               scheduleDimensions * 3);
-  isl_basic_map *tileMap = isl_basic_map_universe(isl_dim_copy(dim));
+  isl_space *Space = isl_space_alloc(ctx, 0, scheduleDimensions,
+                                     scheduleDimensions * 3);
+  isl_basic_map *tileMap = isl_basic_map_universe(isl_space_copy(Space));
+
+  isl_local_space *LocalSpace = isl_local_space_from_space(Space);
 
   for (int x = 0; x < scheduleDimensions; x++) {
     int sX = x;
@@ -150,25 +153,25 @@ static isl_basic_map *getTileMap(isl_ctx *ctx, int scheduleDimensions,
     isl_constraint *c;
 
     // sX = aX * tileSize;
-    c = isl_equality_alloc(isl_dim_copy(dim));
+    c = isl_equality_alloc(isl_local_space_copy(LocalSpace));
     isl_constraint_set_coefficient_si(c, isl_dim_out, sX, 1);
     isl_constraint_set_coefficient_si(c, isl_dim_out, aX, -tileSize);
     tileMap = isl_basic_map_add_constraint(tileMap, c);
 
     // pX = sX;
-    c = isl_equality_alloc(isl_dim_copy(dim));
+    c = isl_equality_alloc(isl_local_space_copy(LocalSpace));
     isl_constraint_set_coefficient_si(c, isl_dim_out, pX, 1);
     isl_constraint_set_coefficient_si(c, isl_dim_in, sX, -1);
     tileMap = isl_basic_map_add_constraint(tileMap, c);
 
     // tX <= pX
-    c = isl_inequality_alloc(isl_dim_copy(dim));
+    c = isl_inequality_alloc(isl_local_space_copy(LocalSpace));
     isl_constraint_set_coefficient_si(c, isl_dim_out, pX, 1);
     isl_constraint_set_coefficient_si(c, isl_dim_out, tX, -1);
     tileMap = isl_basic_map_add_constraint(tileMap, c);
 
     // pX <= tX + (tileSize - 1)
-    c = isl_inequality_alloc(isl_dim_copy(dim));
+    c = isl_inequality_alloc(isl_local_space_copy(LocalSpace));
     isl_constraint_set_coefficient_si(c, isl_dim_out, tX, 1);
     isl_constraint_set_coefficient_si(c, isl_dim_out, pX, -1);
     isl_constraint_set_constant_si(c, tileSize - 1);
@@ -183,7 +186,7 @@ static isl_basic_map *getTileMap(isl_ctx *ctx, int scheduleDimensions,
   tileMap = isl_basic_map_project_out(tileMap, isl_dim_out,
 				      2 * scheduleDimensions,
 				      scheduleDimensions);
-  isl_dim_free(dim);
+  isl_local_space_free(LocalSpace);
   return tileMap;
 }
 
@@ -191,18 +194,18 @@ isl_union_map *getTiledPartialSchedule(isl_band *band) {
   isl_union_map *partialSchedule;
   int scheduleDimensions;
   isl_ctx *ctx;
-  isl_dim *dim;
+  isl_space *Space;
   isl_basic_map *tileMap;
   isl_union_map *tileUnionMap;
 
   partialSchedule = isl_band_get_partial_schedule(band);
   ctx = isl_union_map_get_ctx(partialSchedule);
-  dim = isl_union_map_get_dim(partialSchedule);
+  Space= isl_union_map_get_space(partialSchedule);
   scheduleDimensions = isl_band_n_member(band);
 
-  tileMap = getTileMap(ctx, scheduleDimensions, dim);
+  tileMap = getTileMap(ctx, scheduleDimensions, Space);
   tileUnionMap = isl_union_map_from_map(isl_map_from_basic_map(tileMap));
-  tileUnionMap = isl_union_map_align_params(tileUnionMap, dim);
+  tileUnionMap = isl_union_map_align_params(tileUnionMap, Space);
   partialSchedule = isl_union_map_apply_range(partialSchedule, tileUnionMap);
 
   return partialSchedule;
@@ -214,21 +217,23 @@ static isl_map *getPrevectorMap(isl_ctx *ctx, int vectorDimension,
 				int vectorWidth = 4) {
   assert (0 <= vectorDimension && vectorDimension < scheduleDimensions);
 
-  isl_dim *dim = isl_dim_alloc(ctx, parameterDimensions, scheduleDimensions,
-			       scheduleDimensions + 2);
-  isl_basic_map *tilingMap = isl_basic_map_universe(isl_dim_copy(dim));
+  isl_space *Space = isl_space_alloc(ctx, parameterDimensions,
+                                     scheduleDimensions, scheduleDimensions + 2);
+  isl_basic_map *tilingMap = isl_basic_map_universe(isl_space_copy(Space));
 
   isl_constraint *c;
 
+  isl_local_space *LocalSpace = isl_local_space_from_space(Space);
+
   for (int i = 0; i < vectorDimension; i++) {
-    c = isl_equality_alloc(isl_dim_copy(dim));
+    c = isl_equality_alloc(isl_local_space_copy(LocalSpace));
     isl_constraint_set_coefficient_si(c, isl_dim_in, i, -1);
     isl_constraint_set_coefficient_si(c, isl_dim_out, i, 1);
     tilingMap = isl_basic_map_add_constraint(tilingMap, c);
   }
 
   for (int i = vectorDimension + 1; i < scheduleDimensions; i++) {
-    c = isl_equality_alloc(isl_dim_copy(dim));
+    c = isl_equality_alloc(isl_local_space_copy(LocalSpace));
     isl_constraint_set_coefficient_si(c, isl_dim_in, i, -1);
     isl_constraint_set_coefficient_si(c, isl_dim_out, i, 1);
     tilingMap = isl_basic_map_add_constraint(tilingMap, c);
@@ -237,23 +242,23 @@ static isl_map *getPrevectorMap(isl_ctx *ctx, int vectorDimension,
   int stepDimension = scheduleDimensions;
   int auxilaryDimension = scheduleDimensions + 1;
 
-  c = isl_equality_alloc(isl_dim_copy(dim));
+  c = isl_equality_alloc(isl_local_space_copy(LocalSpace));
   isl_constraint_set_coefficient_si(c, isl_dim_out, vectorDimension, 1);
   isl_constraint_set_coefficient_si(c, isl_dim_out, auxilaryDimension,
 				    -vectorWidth);
   tilingMap = isl_basic_map_add_constraint(tilingMap, c);
 
-  c = isl_equality_alloc(isl_dim_copy(dim));
+  c = isl_equality_alloc(isl_local_space_copy(LocalSpace));
   isl_constraint_set_coefficient_si(c, isl_dim_in, vectorDimension, -1);
   isl_constraint_set_coefficient_si(c, isl_dim_out, stepDimension, 1);
   tilingMap = isl_basic_map_add_constraint(tilingMap, c);
 
-  c = isl_inequality_alloc(isl_dim_copy(dim));
+  c = isl_inequality_alloc(isl_local_space_copy(LocalSpace));
   isl_constraint_set_coefficient_si(c, isl_dim_out, vectorDimension, -1);
   isl_constraint_set_coefficient_si(c, isl_dim_out, stepDimension, 1);
   tilingMap = isl_basic_map_add_constraint(tilingMap, c);
 
-  c = isl_inequality_alloc(dim);
+  c = isl_inequality_alloc(LocalSpace);
   isl_constraint_set_coefficient_si(c, isl_dim_out, vectorDimension, 1);
   isl_constraint_set_coefficient_si(c, isl_dim_out, stepDimension, -1);
   isl_constraint_set_constant_si(c, vectorWidth- 1);
@@ -285,7 +290,7 @@ static isl_union_map *tileBandList(isl_band_list *blist) {
     band = isl_band_list_get_band(blist, i);
     partialSchedule = getTiledPartialSchedule(band);
     int scheduleDimensions = isl_band_n_member(band);
-    isl_dim *dim = isl_union_map_get_dim(partialSchedule);
+    isl_space *Space = isl_union_map_get_space(partialSchedule);
 
 
     if (isl_band_has_children(band)) {
@@ -306,7 +311,7 @@ static isl_union_map *tileBandList(isl_band_list *blist) {
 				    scheduleDimensions * 2, 0);
 	  tileUnionMap = isl_union_map_from_map(tileMap);
           tileUnionMap = isl_union_map_align_params(tileUnionMap,
-                                                    isl_dim_copy(dim));
+                                                    isl_space_copy(Space));
 	  partialSchedule = isl_union_map_apply_range(partialSchedule,
 						      tileUnionMap);
 	  break;
@@ -320,7 +325,7 @@ static isl_union_map *tileBandList(isl_band_list *blist) {
       finalSchedule = partialSchedule;
 
     isl_band_free(band);
-    isl_dim_free(dim);
+    isl_space_free(Space);
   }
 
   return finalSchedule;

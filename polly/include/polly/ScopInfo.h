@@ -38,7 +38,7 @@ struct isl_map;
 struct isl_basic_map;
 struct isl_set;
 struct isl_ctx;
-struct isl_dim;
+struct isl_space;
 struct isl_constraint;
 
 namespace polly {
@@ -255,9 +255,9 @@ class ScopStmt {
 
   /// Build the statment.
   //@{
-  isl_set *toUpperLoopBound(const SCEVAffFunc &UpperBound, isl_dim *dim,
+  isl_set *toUpperLoopBound(const SCEVAffFunc &UpperBound, isl_space *space,
 			    unsigned BoundedDimension) const;
-  isl_set *toConditionSet(const Comparison &Cmp, isl_dim *dim) const;
+  isl_set *toConditionSet(const Comparison &Cmp, isl_space *space) const;
   void addConditionsToDomain(TempScop &tempScop, const Region &CurRegion);
   void buildIterationDomainFromLoops(TempScop &tempScop);
   void buildIterationDomain(TempScop &tempScop, const Region &CurRegion);

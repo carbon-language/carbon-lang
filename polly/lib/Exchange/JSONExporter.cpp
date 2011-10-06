@@ -236,7 +236,7 @@ bool JSONImporter::runOnScop(Scop &scop) {
       continue;
     Json::Value schedule = jscop["statements"][index]["schedule"];
 
-    isl_map *m = isl_map_read_from_str(S->getCtx(), schedule.asCString(), -1);
+    isl_map *m = isl_map_read_from_str(S->getCtx(), schedule.asCString());
     NewScattering[*SI] = m;
     index++;
   }
@@ -267,9 +267,9 @@ bool JSONImporter::runOnScop(Scop &scop) {
       Json::Value accesses = jscop["statements"][statementIdx]
                                   ["accesses"][memoryAccessIdx]["relation"];
       isl_map *newAccessMap = isl_map_read_from_str(S->getCtx(),
-                                                    accesses.asCString(), -1);
+                                                    accesses.asCString());
       isl_map *currentAccessMap = (*MI)->getAccessFunction();
-      if (!isl_map_has_equal_dim(currentAccessMap, newAccessMap)) {
+      if (!isl_map_has_equal_space(currentAccessMap, newAccessMap)) {
         errs() << "JScop file contains access function with incompatible "
                << "dimensions\n";
         isl_map_free(newAccessMap);

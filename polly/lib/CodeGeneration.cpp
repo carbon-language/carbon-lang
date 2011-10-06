@@ -362,8 +362,8 @@ public:
     isl_map *currentAccessRelation = access.getAccessFunction();
     isl_map *newAccessRelation = access.getNewAccessFunction();
 
-    assert(isl_map_has_equal_dim(currentAccessRelation, newAccessRelation)
-           && "Current and new access function dimensions differ");
+    assert(isl_map_has_equal_space(currentAccessRelation, newAccessRelation)
+           && "Current and new access function use different spaces");
 
     if (!newAccessRelation) {
       Value *newPointer = getOperand(pointer, BBMap);
@@ -1147,10 +1147,11 @@ public:
     // Calculate a map similar to the identity map, but with the last input
     // and output dimension not related.
     //  [i0, i1, i2, i3] -> [i0, i1, i2, o0]
-    isl_dim *dim = isl_set_get_dim(loopDomain);
-    dim = isl_dim_drop_outputs(dim, isl_set_n_dim(loopDomain) - 2, 1);
-    dim = isl_dim_map_from_set(dim);
-    isl_map *identity = isl_map_identity(dim);
+    isl_space *Space = isl_set_get_space(loopDomain);
+    Space = isl_space_drop_outputs(Space,
+                                   isl_set_dim(loopDomain, isl_dim_set) - 2, 1);
+    Space = isl_space_map_from_set(Space);
+    isl_map *identity = isl_map_identity(Space);
     identity = isl_map_add_dims(identity, isl_dim_in, 1);
     identity = isl_map_add_dims(identity, isl_dim_out, 1);
 

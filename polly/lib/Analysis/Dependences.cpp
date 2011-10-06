@@ -52,9 +52,9 @@ Dependences::Dependences() : ScopPass(ID) {
 }
 
 bool Dependences::runOnScop(Scop &S) {
-  isl_dim *dim = isl_dim_alloc(S.getCtx(), 0, 0, 0);
-  isl_dim *Model = isl_set_get_dim(S.getContext());
-  dim = isl_dim_align_params(dim, Model);
+  isl_space *Space = isl_space_alloc(S.getCtx(), 0, 0, 0);
+  isl_space *Model = isl_set_get_dim(S.getContext());
+  Space = isl_space_align_params(Space, Model);
 
   if (sink)
     isl_union_map_free(sink);
@@ -65,10 +65,10 @@ bool Dependences::runOnScop(Scop &S) {
   if (may_source)
     isl_union_map_free(may_source);
 
-  sink = isl_union_map_empty(isl_dim_copy(dim));
-  must_source = isl_union_map_empty(isl_dim_copy(dim));
-  may_source = isl_union_map_empty(isl_dim_copy(dim));
-  isl_union_map *schedule = isl_union_map_empty(dim);
+  sink = isl_union_map_empty(isl_space_copy(Space));
+  must_source = isl_union_map_empty(isl_space_copy(Space));
+  may_source = isl_union_map_empty(isl_space_copy(Space));
+  isl_union_map *schedule = isl_union_map_empty(Space);
 
   if (must_dep)
     isl_union_map_free(must_dep);
@@ -155,11 +155,11 @@ bool Dependences::isValidScattering(StatementToIslMapTy *NewScattering) {
   if (LegalityCheckDisabled)
     return true;
 
-  isl_dim *dim = isl_dim_alloc(S.getCtx(), 0, 0, 0);
+  isl_space *Space = isl_space_alloc(S.getCtx(), 0, 0, 0);
 
-  isl_union_map *schedule = isl_union_map_empty(dim);
+  isl_union_map *schedule = isl_union_map_empty(Space);
 
-  isl_dim *Model = isl_set_get_dim(S.getContext());
+  isl_space *Model = isl_set_get_space(S.getContext());
   schedule = isl_union_map_align_params(schedule, Model);
 
   for (Scop::iterator SI = S.begin(), SE = S.end(); SI != SE; ++SI) {
@@ -241,11 +241,11 @@ bool Dependences::isValidScattering(StatementToIslMapTy *NewScattering) {
   return isValid;
 }
 
-isl_union_map* getCombinedScheduleForDim(Scop *scop, unsigned dimLevel) {
-  isl_dim *dim = isl_dim_alloc(scop->getCtx(), 0, 0, 0);
+isl_union_map* getCombinedScheduleForSpace(Scop *scop, unsigned dimLevel) {
+  isl_space *Space = isl_space_alloc(scop->getCtx(), 0, 0, 0);
 
-  isl_union_map *schedule = isl_union_map_empty(dim);
-  isl_dim *Model = isl_set_get_dim(scop->getContext());
+  isl_union_map *schedule = isl_union_map_empty(Space);
+  isl_space *Model = isl_set_get_space(scop->getContext());
   schedule = isl_union_map_align_params(schedule, Model);
 
   for (Scop::iterator SI = scop->begin(), SE = scop->end(); SI != SE; ++SI) {
@@ -263,8 +263,8 @@ isl_union_map* getCombinedScheduleForDim(Scop *scop, unsigned dimLevel) {
 bool Dependences::isParallelDimension(isl_set *loopDomain,
                                       unsigned parallelDimension) {
   Scop *S = &getCurScop();
-  isl_union_map *schedule = getCombinedScheduleForDim(S, parallelDimension);
-  isl_dim *dimModel = isl_union_map_get_dim(schedule);
+  isl_union_map *schedule = getCombinedScheduleForSpace(S, parallelDimension);
+  isl_space *SpaceModel = isl_union_map_get_space(schedule);
 
   // Calculate distance vector.
   isl_union_set *scheduleSubset;
@@ -311,14 +311,16 @@ bool Dependences::isParallelDimension(isl_set *loopDomain,
 
   isl_union_set *distance_waw = isl_union_map_deltas(restrictedDeps_waw);
 
-  isl_dim *dim = isl_dim_set_alloc(S->getCtx(), 0, parallelDimension);
+  isl_space *Space = isl_space_set_alloc(S->getCtx(), 0, parallelDimension);
 
   // [0, 0, 0, 0] - All zero
-  isl_basic_set *allZeroBS = isl_basic_set_universe(isl_dim_copy(dim));
-  unsigned dimensions = isl_dim_size(dim, isl_dim_set);
+  isl_basic_set *allZeroBS = isl_basic_set_universe(isl_space_copy(Space));
+  unsigned dimensions = isl_space_dim(Space, isl_dim_set);
+  isl_local_space *LocalSpace;
+  LocalSpace = isl_local_space_from_space(isl_space_copy(Space));
 
   for (unsigned i = 0; i < dimensions; i++) {
-    isl_constraint *c = isl_equality_alloc(isl_dim_copy(dim));
+    isl_constraint *c = isl_equality_alloc(isl_local_space_copy(LocalSpace));
     isl_int v;
     isl_int_init(v);
     isl_int_set_si(v, -1);
@@ -328,15 +330,15 @@ bool Dependences::isParallelDimension(isl_set *loopDomain,
   }
 
   isl_set *allZero = isl_set_from_basic_set(allZeroBS);
-  allZero = isl_set_align_params(allZero, isl_dim_copy(dimModel));
+  allZero = isl_set_align_params(allZero, isl_space_copy(SpaceModel));
 
   // All zero, last unknown.
   // [0, 0, 0, ?]
-  isl_basic_set *lastUnknownBS = isl_basic_set_universe(isl_dim_copy(dim));
-  dimensions = isl_dim_size(dim, isl_dim_set);
+  isl_basic_set *lastUnknownBS = isl_basic_set_universe(isl_space_copy(Space));
+  dimensions = isl_space_dim(Space, isl_dim_set);
 
   for (unsigned i = 0; i < dimensions - 1; i++) {
-    isl_constraint *c = isl_equality_alloc(isl_dim_copy(dim));
+    isl_constraint *c = isl_equality_alloc(isl_local_space_copy(LocalSpace));
     isl_int v;
     isl_int_init(v);
     isl_int_set_si(v, -1);
@@ -345,8 +347,10 @@ bool Dependences::isParallelDimension(isl_set *loopDomain,
     isl_int_clear(v);
   }
 
+  isl_local_space_free(LocalSpace);
+
   isl_set *lastUnknown = isl_set_from_basic_set(lastUnknownBS);
-  lastUnknown = isl_set_align_params(lastUnknown, dimModel);
+lastUnknown = isl_set_align_params(lastUnknown, SpaceModel);
 
   // Valid distance vectors
   isl_set *validDistances = isl_set_subtract(lastUnknown, allZero);
@@ -365,7 +369,7 @@ bool Dependences::isParallelDimension(isl_set *loopDomain,
     && isl_union_set_is_empty(nonValid_war)
     && isl_union_set_is_empty(nonValid_waw);
 
-  isl_dim_free(dim);
+  isl_space_free(Space);
   isl_union_set_free(nonValid);
   isl_union_set_free(nonValid_war);
   isl_union_set_free(nonValid_waw);
@@ -430,8 +434,8 @@ void Dependences::releaseMemory() {
 }
 
 isl_union_map *Dependences::getDependences(int type) {
-  isl_dim *dim = isl_union_map_get_dim(must_dep);
-  isl_union_map *dependences = isl_union_map_empty(dim);
+  isl_space *Space = isl_union_map_get_space(must_dep);
+  isl_union_map *dependences = isl_union_map_empty(Space);
 
   if (type & TYPE_RAW)
     dependences = isl_union_map_union(dependences,
