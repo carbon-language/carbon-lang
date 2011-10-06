@@ -343,7 +343,7 @@ CINDEX_LINKAGE unsigned clang_equalRanges(CXSourceRange range1,
 /**
  * \brief Returns non-zero if \arg range is null.
  */
-int clang_Range_isNull(CXSourceRange range);
+CINDEX_LINKAGE int clang_Range_isNull(CXSourceRange range);
 
 /**
  * \brief Retrieve the file, line, column, and offset represented by
@@ -1830,7 +1830,8 @@ enum CXCursorKind {
   CXCursor_IBOutletCollectionAttr        = 403,
   CXCursor_CXXFinalAttr                  = 404,
   CXCursor_CXXOverrideAttr               = 405,
-  CXCursor_LastAttr                      = CXCursor_CXXOverrideAttr,
+  CXCursor_AnnotateAttr                  = 406,
+  CXCursor_LastAttr                      = CXCursor_AnnotateAttr,
      
   /* Preprocessing */
   CXCursor_PreprocessingDirective        = 500,
