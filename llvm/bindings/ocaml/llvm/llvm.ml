@@ -705,6 +705,8 @@ external instr_end : llbasicblock -> (llbasicblock, llvalue) llrev_pos
 external instr_pred : llvalue -> (llbasicblock, llvalue) llrev_pos
                      = "llvm_instr_pred"
 
+external icmp_predicate : llvalue -> Icmp.t option = "llvm_instr_icmp_predicate"
+
 let rec iter_instrs_range f i e =
   if i = e then () else
   match i with

@@ -1552,6 +1552,15 @@ void LLVMInstructionEraseFromParent(LLVMValueRef Inst) {
   unwrap<Instruction>(Inst)->eraseFromParent();
 }
 
+LLVMIntPredicate LLVMGetICmpPredicate(LLVMValueRef Inst) {
+    if (ICmpInst *I = dyn_cast<ICmpInst>(unwrap(Inst)))
+	return (LLVMIntPredicate)I->getPredicate();
+    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(unwrap(Inst)))
+	if (CE->getOpcode() == Instruction::ICmp)
+	    return (LLVMIntPredicate)CE->getPredicate();
+    return (LLVMIntPredicate)0;
+}
+
 /*--.. Call and invoke instructions ........................................--*/
 
 unsigned LLVMGetInstructionCallConv(LLVMValueRef Instr) {

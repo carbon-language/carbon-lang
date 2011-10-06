@@ -1010,6 +1010,19 @@ DEFINE_ITERATORS(instr, Instruction, LLVMBasicBlockRef, LLVMValueRef,
                  LLVMGetInstructionParent)
 
 
+/* llvalue -> ICmp.t */
+CAMLprim value llvm_instr_icmp_predicate(LLVMValueRef Val) {
+    CAMLparam0();
+    int x = LLVMGetICmpPredicate(Val);
+    if (x) {
+	value Option = alloc(1, 0);
+	Field(Option, 0) = Val_int(x - LLVMIntEQ);
+	CAMLreturn(Option);
+    }
+    CAMLreturn(Val_int(0));
+}
+
+
 /*--... Operations on call sites ...........................................--*/
 
 /* llvalue -> int */

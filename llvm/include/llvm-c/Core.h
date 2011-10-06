@@ -783,6 +783,7 @@ LLVMBasicBlockRef LLVMGetInstructionParent(LLVMValueRef Inst);
 LLVMValueRef LLVMGetNextInstruction(LLVMValueRef Inst);
 LLVMValueRef LLVMGetPreviousInstruction(LLVMValueRef Inst);
 void LLVMInstructionEraseFromParent(LLVMValueRef Inst);
+LLVMIntPredicate LLVMGetICmpPredicate(LLVMValueRef Inst);
 
 /* Operations on call sites */
 void LLVMSetInstructionCallConv(LLVMValueRef Instr, unsigned CC);
