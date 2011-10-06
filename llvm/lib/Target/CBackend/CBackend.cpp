@@ -2839,7 +2839,6 @@ void CWriter::lowerIntrinsics(Function &F) {
         if (Function *F = CI->getCalledFunction())
           switch (F->getIntrinsicID()) {
           case Intrinsic::not_intrinsic:
-          case Intrinsic::memory_barrier:
           case Intrinsic::vastart:
           case Intrinsic::vacopy:
           case Intrinsic::vaend:
@@ -3030,9 +3029,6 @@ bool CWriter::visitBuiltinCall(CallInst &I, Intrinsic::ID ID,
     WroteCallee = true;
     return false;
   }
-  case Intrinsic::memory_barrier:
-    Out << "__sync_synchronize()";
-    return true;
   case Intrinsic::vastart:
     Out << "0; ";
 

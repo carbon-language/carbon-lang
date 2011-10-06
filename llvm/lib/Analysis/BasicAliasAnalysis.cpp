@@ -763,26 +763,6 @@ BasicAliasAnalysis::getModRefInfo(ImmutableCallSite CS,
       // We know that memset doesn't load anything.
       Min = Mod;
       break;
-    case Intrinsic::atomic_cmp_swap:
-    case Intrinsic::atomic_swap:
-    case Intrinsic::atomic_load_add:
-    case Intrinsic::atomic_load_sub:
-    case Intrinsic::atomic_load_and:
-    case Intrinsic::atomic_load_nand:
-    case Intrinsic::atomic_load_or:
-    case Intrinsic::atomic_load_xor:
-    case Intrinsic::atomic_load_max:
-    case Intrinsic::atomic_load_min:
-    case Intrinsic::atomic_load_umax:
-    case Intrinsic::atomic_load_umin:
-      if (TD) {
-        Value *Op1 = II->getArgOperand(0);
-        uint64_t Op1Size = TD->getTypeStoreSize(Op1->getType());
-        MDNode *Tag = II->getMetadata(LLVMContext::MD_tbaa);
-        if (isNoAlias(Location(Op1, Op1Size, Tag), Loc))
-          return NoModRef;
-      }
-      break;
     case Intrinsic::lifetime_start:
     case Intrinsic::lifetime_end:
     case Intrinsic::invariant_start: {

@@ -555,7 +555,6 @@ private:
     llvm_unreachable("UserOp2 should not exist at instruction selection time!");
   }
   
-  const char *implVisitBinaryAtomic(const CallInst& I, ISD::NodeType Op);
   const char *implVisitAluOverflow(const CallInst &I, ISD::NodeType Op);
 
   void HandlePHINodesInSuccessorBlocks(const BasicBlock *LLVMBB);
