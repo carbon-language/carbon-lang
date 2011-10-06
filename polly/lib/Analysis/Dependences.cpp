@@ -52,9 +52,7 @@ Dependences::Dependences() : ScopPass(ID) {
 }
 
 bool Dependences::runOnScop(Scop &S) {
-  isl_space *Space = isl_space_alloc(S.getCtx(), 0, 0, 0);
-  isl_space *Model = isl_set_get_dim(S.getContext());
-  Space = isl_space_align_params(Space, Model);
+  isl_space *Space = S.getParamSpace();
 
   if (sink)
     isl_union_map_free(sink);
@@ -155,12 +153,9 @@ bool Dependences::isValidScattering(StatementToIslMapTy *NewScattering) {
   if (LegalityCheckDisabled)
     return true;
 
-  isl_space *Space = isl_space_alloc(S.getCtx(), 0, 0, 0);
+  isl_space *Space = S.getParamSpace();
 
   isl_union_map *schedule = isl_union_map_empty(Space);
-
-  isl_space *Model = isl_set_get_space(S.getContext());
-  schedule = isl_union_map_align_params(schedule, Model);
 
   for (Scop::iterator SI = S.begin(), SE = S.end(); SI != SE; ++SI) {
     ScopStmt *Stmt = *SI;
@@ -242,11 +237,8 @@ bool Dependences::isValidScattering(StatementToIslMapTy *NewScattering) {
 }
 
 isl_union_map* getCombinedScheduleForSpace(Scop *scop, unsigned dimLevel) {
-  isl_space *Space = isl_space_alloc(scop->getCtx(), 0, 0, 0);
-
+  isl_space *Space = scop->getParamSpace();
   isl_union_map *schedule = isl_union_map_empty(Space);
-  isl_space *Model = isl_set_get_space(scop->getContext());
-  schedule = isl_union_map_align_params(schedule, Model);
 
   for (Scop::iterator SI = scop->begin(), SE = scop->end(); SI != SE; ++SI) {
     ScopStmt *Stmt = *SI;
@@ -264,7 +256,6 @@ bool Dependences::isParallelDimension(isl_set *loopDomain,
                                       unsigned parallelDimension) {
   Scop *S = &getCurScop();
   isl_union_map *schedule = getCombinedScheduleForSpace(S, parallelDimension);
-  isl_space *SpaceModel = isl_union_map_get_space(schedule);
 
   // Calculate distance vector.
   isl_union_set *scheduleSubset;
@@ -330,7 +321,7 @@ bool Dependences::isParallelDimension(isl_set *loopDomain,
   }
 
   isl_set *allZero = isl_set_from_basic_set(allZeroBS);
-  allZero = isl_set_align_params(allZero, isl_space_copy(SpaceModel));
+  allZero = isl_set_align_params(allZero, S->getParamSpace());
 
   // All zero, last unknown.
   // [0, 0, 0, ?]
@@ -350,7 +341,7 @@ bool Dependences::isParallelDimension(isl_set *loopDomain,
   isl_local_space_free(LocalSpace);
 
   isl_set *lastUnknown = isl_set_from_basic_set(lastUnknownBS);
-lastUnknown = isl_set_align_params(lastUnknown, SpaceModel);
+  lastUnknown = isl_set_align_params(lastUnknown, S->getParamSpace());
 
   // Valid distance vectors
   isl_set *validDistances = isl_set_subtract(lastUnknown, allZero);

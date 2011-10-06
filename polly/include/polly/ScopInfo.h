@@ -22,6 +22,8 @@
 
 #include "llvm/Analysis/RegionPass.h"
 
+#include "isl/ctx.h"
+
 using namespace llvm;
 
 namespace llvm {
@@ -490,6 +492,7 @@ public:
   ///
   /// @return The constraint on parameter of this Scop.
   inline isl_set *getContext() const { return Context; }
+  __isl_give isl_space  *getParamSpace() const;
 
   /// @brief Get an isl string representing the context.
   std::string getContextStr() const;

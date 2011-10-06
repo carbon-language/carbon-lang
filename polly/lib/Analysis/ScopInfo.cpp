@@ -340,8 +340,8 @@ MemoryAccess::MemoryAccess(const SCEVAffFunc &AffFunc, ScopStmt *Statement) {
   AccessRelation = isl_map_set_tuple_name(AccessRelation, isl_dim_out,
                                           getBaseName().c_str());
 
-  isl_space *Model = isl_set_get_space(Statement->getParent()->getContext());
-  AccessRelation = isl_map_align_params(AccessRelation, Model);
+  isl_space *ParamSpace = Statement->getParent()->getParamSpace();
+  AccessRelation = isl_map_align_params(AccessRelation, ParamSpace);
 }
 
 MemoryAccess::MemoryAccess(const Value *BaseAddress, ScopStmt *Statement) {
@@ -352,8 +352,8 @@ MemoryAccess::MemoryAccess(const Value *BaseAddress, ScopStmt *Statement) {
 
   isl_basic_map *BasicAccessMap = createBasicAccessMap(Statement);
   AccessRelation = isl_map_from_basic_map(BasicAccessMap);
-  isl_space *Model = isl_set_get_space(Statement->getParent()->getContext());
-  AccessRelation = isl_map_align_params(AccessRelation, Model);
+  isl_space *ParamSpace = Statement->getParent()->getParamSpace();
+  AccessRelation = isl_map_align_params(AccessRelation, ParamSpace);
 }
 
 void MemoryAccess::print(raw_ostream &OS) const {
@@ -564,8 +564,7 @@ void ScopStmt::buildScattering(SmallVectorImpl<unsigned> &Scatter) {
 
   isl_int_clear(v);
   Scattering = isl_map_from_basic_map(bmap);
-  isl_space *Model = isl_set_get_space(getParent()->getContext());
-  Scattering = isl_map_align_params(Scattering, Model);
+  Scattering = isl_map_align_params(Scattering, Parent.getParamSpace());
 }
 
 void ScopStmt::buildAccesses(TempScop &tempScop, const Region &CurRegion) {
@@ -642,7 +641,7 @@ void ScopStmt::buildIterationDomainFromLoops(TempScop &tempScop) {
   Space = isl_space_set_tuple_name(Space, isl_dim_set, getBaseName());
 
   Domain = isl_set_universe(isl_space_copy(Space));
-  Domain = isl_set_align_params(Domain, isl_set_get_space(Parent.getContext()));
+  Domain = isl_set_align_params(Domain, Parent.getParamSpace());
 
   isl_int v;
   isl_int_init(v);
@@ -738,8 +737,7 @@ ScopStmt::ScopStmt(Scop &parent, SmallVectorImpl<unsigned> &Scatter)
   Domain = isl_set_read_from_str(Parent.getCtx(),
                                  IterationDomainString.c_str());
   Domain = isl_set_set_tuple_name(Domain, getBaseName());
-  isl_space *Model = isl_set_get_space(getParent()->getContext());
-  Domain = isl_set_align_params(Domain, isl_space_copy(Model));
+  Domain = isl_set_align_params(Domain, parent.getParamSpace());
 
   // Build scattering.
   unsigned ScatSpace = Parent.getMaxLoopDepth() * 2 + 1;
@@ -762,7 +760,7 @@ ScopStmt::ScopStmt(Scop &parent, SmallVectorImpl<unsigned> &Scatter)
   bmap = isl_basic_map_add_constraint(bmap, c);
   isl_int_clear(v);
   Scattering = isl_map_from_basic_map(bmap);
-  Scattering = isl_map_align_params(Scattering, Model);
+  Scattering = isl_map_align_params(Scattering, parent.getParamSpace());
 
   // Build memory accesses, use SetVector to keep the order of memory accesses
   // and prevent the same memory access inserted more than once.
@@ -935,6 +933,10 @@ std::string Scop::getNameStr() const {
     ExitName = "FunctionExit";
 
   return EntryName + "---" + ExitName;
+}
+
+__isl_give isl_space *Scop::getParamSpace() const {
+  return isl_set_get_space(this->Context);
 }
 
 void Scop::printContext(raw_ostream &OS) const {
