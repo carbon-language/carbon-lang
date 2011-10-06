@@ -780,10 +780,7 @@ ScopStmt::ScopStmt(Scop &parent, SmallVectorImpl<unsigned> &Scatter)
 }
 
 std::string ScopStmt::getDomainStr() const {
-  isl_set *domain = getDomain();
-  std::string string = stringFromIslObj(domain);
-  isl_set_free(domain);
-  return string;
+  return stringFromIslObj(Domain);
 }
 
 std::string ScopStmt::getScatteringStr() const {
@@ -917,7 +914,7 @@ Scop::~Scop() {
 }
 
 std::string Scop::getContextStr() const {
-    return stringFromIslObj(getContext());
+    return stringFromIslObj(Context);
 }
 
 std::string Scop::getNameStr() const {
@@ -937,6 +934,9 @@ std::string Scop::getNameStr() const {
   return EntryName + "---" + ExitName;
 }
 
+__isl_give isl_set *Scop::getContext() const {
+  return isl_set_copy(Context);
+}
 __isl_give isl_space *Scop::getParamSpace() const {
   return isl_set_get_space(this->Context);
 }

@@ -498,7 +498,7 @@ public:
   /// @brief Get the constraint on parameter of this Scop.
   ///
   /// @return The constraint on parameter of this Scop.
-  inline isl_set *getContext() const { return Context; }
+  __isl_give isl_set *getContext() const;
   __isl_give isl_space  *getParamSpace() const;
 
   /// @brief Get an isl string representing the context.

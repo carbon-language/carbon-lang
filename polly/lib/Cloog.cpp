@@ -174,10 +174,9 @@ CloogUnionDomain *Cloog::buildCloogUnionDomain() {
 }
 
 CloogInput *Cloog::buildCloogInput() {
-  CloogDomain *Context =
-    cloog_domain_from_isl_set(isl_set_copy(S->getContext()));
+  CloogDomain *Context = cloog_domain_from_isl_set(S->getContext());
   CloogUnionDomain *Statements = buildCloogUnionDomain();
-  CloogInput *Input = cloog_input_alloc (Context, Statements);
+  CloogInput *Input = cloog_input_alloc(Context, Statements);
   return Input;
 }
 } // End namespace polly.
