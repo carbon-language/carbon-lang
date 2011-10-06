@@ -543,40 +543,17 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
     unsigned NumSubRegIndices = RegBank.getSubRegIndices().size();
 
     if (NumSubRegIndices) {
-      // Emit the sub-register classes for each RegisterClass
+      // Compute the super-register classes for each RegisterClass
       for (unsigned rc = 0, e = RegisterClasses.size(); rc != e; ++rc) {
         const CodeGenRegisterClass &RC = *RegisterClasses[rc];
-        std::vector<Record*> SRC(NumSubRegIndices);
         for (DenseMap<Record*,Record*>::const_iterator
              i = RC.SubRegClasses.begin(),
              e = RC.SubRegClasses.end(); i != e; ++i) {
-          // Build SRC array.
-          unsigned idx = RegBank.getSubRegIndexNo(i->first);
-          SRC.at(idx-1) = i->second;
-
           // Find the register class number of i->second for SuperRegClassMap.
           const CodeGenRegisterClass *RC2 = RegBank.getRegClass(i->second);
           assert(RC2 && "Invalid register class in SubRegClasses");
           SuperRegClassMap[RC2->EnumValue].insert(rc);
         }
-
-        // Give the register class a legal C name if it's anonymous.
-        std::string Name = RC.getName();
-
-        OS << "  // " << Name
-           << " Sub-register Classes...\n"
-           << "  static const TargetRegisterClass* const "
-           << Name << "SubRegClasses[] = {\n    ";
-
-        for (unsigned idx = 0; idx != NumSubRegIndices; ++idx) {
-          if (idx)
-            OS << ", ";
-          if (SRC[idx])
-            OS << "&" << getQualifiedName(SRC[idx]) << "RegClass";
-          else
-            OS << "0";
-        }
-        OS << "\n  };\n\n";
       }
 
       // Emit the super-register classes for each RegisterClass
@@ -651,9 +628,7 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
         OS << "NullRegClasses, ";
       else
         OS << RC.getName() + "Superclasses, ";
-      OS << (NumSubRegIndices ? RC.getName() + "Sub" : std::string("Null"))
-         << "RegClasses, "
-         << (NumSubRegIndices ? RC.getName() + "Super" : std::string("Null"))
+      OS << (NumSubRegIndices ? RC.getName() + "Super" : std::string("Null"))
          << "RegClasses"
          << ") {}\n";
       if (!RC.AltOrderSelect.empty()) {

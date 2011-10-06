@@ -42,16 +42,14 @@ private:
   const vt_iterator VTs;
   const unsigned *SubClassMask;
   const sc_iterator SuperClasses;
-  const sc_iterator SubRegClasses;
   const sc_iterator SuperRegClasses;
 public:
   TargetRegisterClass(const MCRegisterClass *MC, const EVT *vts,
                       const unsigned *subcm,
                       const TargetRegisterClass * const *supcs,
-                      const TargetRegisterClass * const *subregcs,
                       const TargetRegisterClass * const *superregcs)
     : MC(MC), VTs(vts), SubClassMask(subcm), SuperClasses(supcs),
-      SubRegClasses(subregcs), SuperRegClasses(superregcs) {}
+      SuperRegClasses(superregcs) {}
 
   virtual ~TargetRegisterClass() {}     // Allow subclasses
 
@@ -125,25 +123,6 @@ public:
     vt_iterator I = VTs;
     while (*I != MVT::Other) ++I;
     return I;
-  }
-
-  /// subregclasses_begin / subregclasses_end - Loop over all of
-  /// the subreg register classes of this register class.
-  sc_iterator subregclasses_begin() const {
-    return SubRegClasses;
-  }
-
-  sc_iterator subregclasses_end() const {
-    sc_iterator I = SubRegClasses;
-    while (*I != NULL) ++I;
-    return I;
-  }
-
-  /// getSubRegisterRegClass - Return the register class of subregisters with
-  /// index SubIdx, or NULL if no such class exists.
-  const TargetRegisterClass* getSubRegisterRegClass(unsigned SubIdx) const {
-    assert(SubIdx>0 && "Invalid subregister index");
-    return SubRegClasses[SubIdx-1];
   }
 
   /// superregclasses_begin / superregclasses_end - Loop over all of
