@@ -146,8 +146,11 @@ openscop_statement_p OpenScop::initializeStatement(ScopStmt *stmt) {
   // Domain & Schedule
   isl_set *domain = stmt->getDomain();
   Stmt->domain = domainToMatrix(domain);
-  Stmt->schedule = scatteringToMatrix(stmt->getScattering());
+  isl_map *Scattering = stmt->getScattering();
+  Stmt->schedule = scatteringToMatrix(Scattering);
   isl_set_free(domain);
+  isl_map_free(Scattering);
+
 
   // Statement name
   const char* entryName = stmt->getBaseName();

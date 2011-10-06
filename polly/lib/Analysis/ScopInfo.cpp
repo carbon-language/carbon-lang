@@ -426,7 +426,7 @@ static isl_map *getEqualAndLarger(isl_space *setDomain) {
 isl_set *MemoryAccess::getStride(const isl_set *domainSubset) const {
   isl_map *accessRelation = isl_map_copy(getAccessFunction());
   isl_set *scatteringDomain = isl_set_copy(const_cast<isl_set*>(domainSubset));
-  isl_map *scattering = isl_map_copy(getStatement()->getScattering());
+  isl_map *scattering = getStatement()->getScattering();
 
   scattering = isl_map_reverse(scattering);
   int difference = isl_map_n_in(scattering) - isl_set_n_dim(scatteringDomain);
@@ -512,9 +512,14 @@ void MemoryAccess::setNewAccessFunction(isl_map *newAccess) {
 }
 
 //===----------------------------------------------------------------------===//
-void ScopStmt::setScattering(isl_map *scattering) {
+
+isl_map *ScopStmt::getScattering() const {
+  return isl_map_copy(Scattering);
+}
+
+void ScopStmt::setScattering(isl_map *NewScattering) {
   isl_map_free(Scattering);
-  Scattering = scattering;
+  Scattering = NewScattering;
 }
 
 void ScopStmt::buildScattering(SmallVectorImpl<unsigned> &Scatter) {
@@ -784,7 +789,7 @@ std::string ScopStmt::getDomainStr() const {
 }
 
 std::string ScopStmt::getScatteringStr() const {
-  return stringFromIslObj(getScattering());
+  return stringFromIslObj(Scattering);
 }
 
 unsigned ScopStmt::getNumParams() const {

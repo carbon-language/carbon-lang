@@ -93,7 +93,9 @@ scoplib_statement_p ScopLib::initializeStatement(ScopStmt *stmt) {
   Stmt->domain = scoplib_matrix_list_malloc();
   Stmt->domain->elt = domainToMatrix(domain);
   Stmt->domain->next = NULL;
-  Stmt->schedule = scatteringToMatrix(stmt->getScattering());
+  isl_map *Scattering = stmt->getScattering;
+  Stmt->schedule = scatteringToMatrix(Scattering);
+  isl_map_free(Scattering);
   isl_set_free(domain);
 
   // Statement name

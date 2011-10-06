@@ -159,10 +159,11 @@ CloogUnionDomain *Cloog::buildCloogUnionDomain() {
     if (Stmt->isFinalRead())
       continue;
 
-    CloogScattering *Scattering=
-      cloog_scattering_from_isl_map(isl_map_copy(Stmt->getScattering()));
-    CloogDomain *Domain =
-      cloog_domain_from_isl_set(Stmt->getDomain());
+    CloogScattering *Scattering;
+    CloogDomain *Domain;
+
+    Scattering = cloog_scattering_from_isl_map(Stmt->getScattering());
+    Domain  = cloog_domain_from_isl_set(Stmt->getDomain());
 
     std::string entryName = Stmt->getBaseName();
 

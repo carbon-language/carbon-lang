@@ -295,7 +295,7 @@ public:
   /// @brief Get the scattering function of this ScopStmt.
   ///
   /// @return The scattering function of this ScopStmt.
-  isl_map *getScattering() const { return Scattering; }
+  isl_map *getScattering() const;
   void setScattering(isl_map *scattering);
 
   /// @brief Get an isl string representing this scattering.

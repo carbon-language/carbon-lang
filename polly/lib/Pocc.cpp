@@ -179,7 +179,7 @@ bool Pocc::runOnScop(Scop &S) {
       if ((*SI)->isFinalRead())
         continue;
 
-      isl_map *scat = isl_map_copy((*SI)->getScattering());
+      isl_map *scat = (*SI)->getScattering();
       isl_map *projected = isl_map_project_out(scat, isl_dim_out, lastLoop,
                                                scatterDims - lastLoop);
 
@@ -199,11 +199,9 @@ bool Pocc::runOnScop(Scop &S) {
   for (Scop::iterator SI = S.begin(), SE = S.end(); SI != SE; ++SI) {
     if ((*SI)->isFinalRead())
       continue;
-    isl_map *scat = (*SI)->getScattering();
-
-    int scatDims = isl_map_n_out(scat);
-    isl_space *Space= isl_space_alloc(S.getCtx(), S.getNumParams(), scatDims,
-                                      scatDims + 1);
+    int scatDims = (*SI)->getNumScattering();
+    isl_space *Space = isl_space_alloc(S.getCtx(), S.getNumParams(), scatDims,
+                                       scatDims + 1);
     isl_basic_map *map = isl_basic_map_universe(isl_space_copy(Space));
 
     for (int i = 0; i <= lastLoop - 1; i++) {

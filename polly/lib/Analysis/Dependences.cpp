@@ -106,8 +106,7 @@ bool Dependences::runOnScop(Scop &S) {
       else
         must_source = isl_union_map_add_map(must_source, accdom);
     }
-    isl_map *scattering = isl_map_copy(Stmt->getScattering());
-    schedule = isl_union_map_add_map(schedule, scattering);
+    schedule = isl_union_map_add_map(schedule, Stmt->getScattering());
   }
 
   DEBUG(
@@ -163,7 +162,7 @@ bool Dependences::isValidScattering(StatementToIslMapTy *NewScattering) {
     isl_map *scattering;
 
     if (NewScattering->find(*SI) == NewScattering->end())
-      scattering = isl_map_copy(Stmt->getScattering());
+      scattering = Stmt->getScattering();
     else
       scattering = isl_map_copy((*NewScattering)[Stmt]);
 
@@ -242,11 +241,11 @@ isl_union_map* getCombinedScheduleForSpace(Scop *scop, unsigned dimLevel) {
 
   for (Scop::iterator SI = scop->begin(), SE = scop->end(); SI != SE; ++SI) {
     ScopStmt *Stmt = *SI;
-    isl_map *scattering = isl_map_copy(Stmt->getScattering());
-    unsigned remainingDimensions = isl_map_n_out(scattering) - dimLevel;
-    scattering = isl_map_project_out(scattering, isl_dim_out, dimLevel,
-                                     remainingDimensions);
-    schedule = isl_union_map_add_map(schedule, scattering);
+    unsigned remainingDimensions = Stmt->getNumScattering() - dimLevel;
+    isl_map *Scattering = isl_map_project_out(Stmt->getScattering(),
+                                              isl_dim_out, dimLevel,
+                                              remainingDimensions);
+    schedule = isl_union_map_add_map(schedule, Scattering);
   }
 
   return schedule;
