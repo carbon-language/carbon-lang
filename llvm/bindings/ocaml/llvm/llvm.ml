@@ -197,6 +197,7 @@ external param_types : lltype -> lltype array = "llvm_param_types"
 external struct_type : llcontext -> lltype array -> lltype = "llvm_struct_type"
 external packed_struct_type : llcontext -> lltype array -> lltype
                             = "llvm_packed_struct_type"
+external struct_name : lltype -> string option = "llvm_struct_name"
 external struct_element_types : lltype -> lltype array
                               = "llvm_struct_element_types"
 external is_packed : lltype -> bool = "llvm_is_packed"

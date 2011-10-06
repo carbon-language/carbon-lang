@@ -302,6 +302,14 @@ LLVMTypeRef LLVMStructCreateNamed(LLVMContextRef C, const char *Name)
   return wrap(StructType::create(*unwrap(C), Name));
 }
 
+const char *LLVMGetStructName(LLVMTypeRef Ty)
+{
+    StructType *Type = unwrap<StructType>(Ty);
+    if (!Type->hasName())
+	return 0;
+    return Type->getName().data();
+}
+
 void LLVMStructSetBody(LLVMTypeRef StructTy, LLVMTypeRef *ElementTypes,
                        unsigned ElementCount, LLVMBool Packed) {
   ArrayRef<Type*> Tys(unwrap(ElementTypes), ElementCount);

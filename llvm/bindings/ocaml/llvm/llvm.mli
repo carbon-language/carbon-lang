@@ -372,6 +372,10 @@ val struct_type : llcontext -> lltype array -> lltype
     [llvm::StructType::get]. *)
 val packed_struct_type : llcontext -> lltype array -> lltype
 
+(** [struct_name ty] returns the name of the named structure type [ty],
+ * or None if the structure type is not named *)
+val struct_name : lltype -> string option
+
 
 (** [struct_element_types sty] returns the constituent types of the struct type
     [sty]. See the method [llvm::StructType::getElementType]. *)

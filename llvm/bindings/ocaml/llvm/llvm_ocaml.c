@@ -287,6 +287,20 @@ CAMLprim LLVMTypeRef llvm_packed_struct_type(LLVMContextRef C,
                                  Wosize_val(ElementTypes), 1);
 }
 
+/* lltype -> string option */
+CAMLprim value llvm_struct_name(LLVMTypeRef Ty)
+{
+    CAMLparam0();
+    const char *C = LLVMGetStructName(Ty);
+    if (C) {
+	CAMLlocal1(result);
+	result = caml_alloc_small(1, 0);
+	Store_field(result, 0, caml_copy_string(C));
+	CAMLreturn(result);
+    }
+    CAMLreturn(Val_int(0));
+}
+
 /* lltype -> lltype array */
 CAMLprim value llvm_struct_element_types(LLVMTypeRef StructTy) {
   value Tys = alloc(LLVMCountStructElementTypes(StructTy), 0);
