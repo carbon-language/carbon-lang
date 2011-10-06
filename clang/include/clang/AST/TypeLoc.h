@@ -1730,6 +1730,62 @@ public:
   }
 };
 
+struct AtomicTypeLocInfo {
+  SourceLocation KWLoc, LParenLoc, RParenLoc;
+};
+
+class AtomicTypeLoc : public ConcreteTypeLoc<UnqualTypeLoc, AtomicTypeLoc,
+                                             AtomicType, AtomicTypeLocInfo> {
+public:  
+  TypeLoc getValueLoc() const {
+    return this->getInnerTypeLoc();
+  }
+
+  SourceRange getLocalSourceRange() const {
+    return SourceRange(getKWLoc(), getRParenLoc());
+  }
+
+  SourceLocation getKWLoc() const {
+    return this->getLocalData()->KWLoc;
+  }
+  void setKWLoc(SourceLocation Loc) {
+    this->getLocalData()->KWLoc = Loc;
+  }
+
+  SourceLocation getLParenLoc() const {
+    return this->getLocalData()->LParenLoc;
+  }
+  void setLParenLoc(SourceLocation Loc) {
+    this->getLocalData()->LParenLoc = Loc;
+  }
+
+  SourceLocation getRParenLoc() const {
+    return this->getLocalData()->RParenLoc;
+  }
+  void setRParenLoc(SourceLocation Loc) {
+    this->getLocalData()->RParenLoc = Loc;
+  }
+
+  SourceRange getParensRange() const {
+    return SourceRange(getLParenLoc(), getRParenLoc());
+  }
+  void setParensRange(SourceRange Range) {
+    setLParenLoc(Range.getBegin());
+    setRParenLoc(Range.getEnd());
+  }
+
+  void initializeLocal(ASTContext &Context, SourceLocation Loc) {
+    setKWLoc(Loc);
+    setLParenLoc(Loc);
+    setRParenLoc(Loc);
+  }
+
+  QualType getInnerType() const {
+    return this->getTypePtr()->getValueType();
+  }
+};
+
+
 }
 
 #endif

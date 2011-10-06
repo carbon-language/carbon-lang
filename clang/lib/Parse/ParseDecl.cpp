@@ -2184,6 +2184,11 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
 
     case tok::kw___underlying_type:
       ParseUnderlyingTypeSpecifier(DS);
+      continue;
+
+    case tok::kw__Atomic:
+      ParseAtomicSpecifier(DS);
+      continue;
 
     // OpenCL qualifiers:
     case tok::kw_private: 
@@ -2458,6 +2463,10 @@ bool Parser::ParseOptionalTypeSpecifier(DeclSpec &DS, bool& isInvalid,
   // C++0x type traits support.
   case tok::kw___underlying_type:
     ParseUnderlyingTypeSpecifier(DS);
+    return true;
+
+  case tok::kw__Atomic:
+    ParseAtomicSpecifier(DS);
     return true;
 
   // OpenCL qualifiers:
@@ -3219,6 +3228,10 @@ bool Parser::isTypeSpecifierQualifier() {
 
   case tok::kw_private:
     return getLang().OpenCL;
+
+  // C1x _Atomic()
+  case tok::kw__Atomic:
+    return true;
   }
 }
 
@@ -3336,6 +3349,10 @@ bool Parser::isDeclarationSpecifier(bool DisambiguatingWithExpression) {
 
     // C++0x decltype.
   case tok::kw_decltype:
+    return true;
+
+    // C1x _Atomic()
+  case tok::kw__Atomic:
     return true;
 
     // GNU ObjC bizarre protocol extension: <proto1,proto2> with implicit 'id'.
@@ -4501,6 +4518,47 @@ void Parser::ParseTypeofSpecifier(DeclSpec &DS) {
   // Check for duplicate type specifiers (e.g. "int typeof(int)").
   if (DS.SetTypeSpecType(DeclSpec::TST_typeofExpr, StartLoc, PrevSpec,
                          DiagID, Operand.get()))
+    Diag(StartLoc, DiagID) << PrevSpec;
+}
+
+/// [C1X]   atomic-specifier:
+///           _Atomic ( type-name )
+///
+void Parser::ParseAtomicSpecifier(DeclSpec &DS) {
+  assert(Tok.is(tok::kw__Atomic) && "Not an atomic specifier");
+
+  SourceLocation StartLoc = ConsumeToken();
+  SourceLocation LParenLoc = Tok.getLocation();
+
+  if (ExpectAndConsume(tok::l_paren, diag::err_expected_lparen_after,
+                       "_Atomic")) {
+    SkipUntil(tok::r_paren);
+    return;
+  }
+
+  TypeResult Result = ParseTypeName();
+  if (Result.isInvalid()) {
+    SkipUntil(tok::r_paren);
+    return;
+  }
+
+  // Match the ')'
+  SourceLocation RParenLoc;
+  if (Tok.is(tok::r_paren))
+    RParenLoc = ConsumeParen();
+  else
+    MatchRHSPunctuation(tok::r_paren, LParenLoc);
+
+  if (RParenLoc.isInvalid())
+    return;
+
+  DS.setTypeofParensRange(SourceRange(LParenLoc, RParenLoc));
+  DS.SetRangeEnd(RParenLoc);
+
+  const char *PrevSpec = 0;
+  unsigned DiagID;
+  if (DS.SetTypeSpecType(DeclSpec::TST_atomic, StartLoc, PrevSpec,
+                         DiagID, Result.release()))
     Diag(StartLoc, DiagID) << PrevSpec;
 }
 

@@ -3526,6 +3526,15 @@ QualType ASTReader::readTypeRecord(unsigned Index) {
     const_cast<Type*>(T.getTypePtr())->setDependent(IsDependent);
     return T;
   }
+
+  case TYPE_ATOMIC: {
+    if (Record.size() != 1) {
+      Error("Incorrect encoding of atomic type");
+      return QualType();
+    }
+    QualType ValueType = readType(*Loc.F, Record, Idx);
+    return Context.getAtomicType(ValueType);
+  }
   }
   // Suppress a GCC warning
   return QualType();
@@ -3759,6 +3768,11 @@ void TypeLocReader::VisitObjCObjectTypeLoc(ObjCObjectTypeLoc TL) {
 }
 void TypeLocReader::VisitObjCObjectPointerTypeLoc(ObjCObjectPointerTypeLoc TL) {
   TL.setStarLoc(ReadSourceLocation(Record, Idx));
+}
+void TypeLocReader::VisitAtomicTypeLoc(AtomicTypeLoc TL) {
+  TL.setKWLoc(ReadSourceLocation(Record, Idx));
+  TL.setLParenLoc(ReadSourceLocation(Record, Idx));
+  TL.setRParenLoc(ReadSourceLocation(Record, Idx));
 }
 
 TypeSourceInfo *ASTReader::GetTypeSourceInfo(Module &F,

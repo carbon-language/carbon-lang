@@ -260,6 +260,7 @@ public:
   static const TST TST_underlyingType = clang::TST_underlyingType;
   static const TST TST_auto = clang::TST_auto;
   static const TST TST_unknown_anytype = clang::TST_unknown_anytype;
+  static const TST TST_atomic = clang::TST_atomic;
   static const TST TST_error = clang::TST_error;
 
   // type-qualifiers
@@ -356,7 +357,7 @@ private:
 
   static bool isTypeRep(TST T) {
     return (T == TST_typename || T == TST_typeofType ||
-            T == TST_underlyingType);
+            T == TST_underlyingType || T == TST_atomic);
   }
   static bool isExprRep(TST T) {
     return (T == TST_typeofExpr || T == TST_decltype);

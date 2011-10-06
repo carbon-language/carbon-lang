@@ -3073,6 +3073,10 @@ def err_block_with_return_type_requires_args : Error<
   "block with explicit return type requires argument list">;
 def err_func_def_incomplete_result : Error<
   "incomplete result type %0 in function definition">;
+def err_atomic_specifier_bad_type : Error<
+  "_Atomic cannot be applied to "
+  "%select{incomplete |array |function |reference |atomic |qualified |}0type "
+  "%1 %select{||||||which is not trivially copyable}0">;
 
 // Expressions.
 def ext_sizeof_function_type : Extension<

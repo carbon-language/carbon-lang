@@ -647,7 +647,9 @@ namespace clang {
       /// \brief A AutoType record.
       TYPE_AUTO                  = 38,
       /// \brief A UnaryTransformType record.
-      TYPE_UNARY_TRANSFORM       = 39
+      TYPE_UNARY_TRANSFORM       = 39,
+      /// \brief An AtomicType record.
+      TYPE_ATOMIC                = 40
     };
 
     /// \brief The type IDs for special types constructed by semantic

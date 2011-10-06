@@ -342,6 +342,10 @@ ExprResult Sema::DefaultLvalueConversion(Expr *E) {
   QualType T = E->getType();
   assert(!T.isNull() && "r-value conversion on typeless expression?");
 
+  // We can't do lvalue-to-rvalue on atomics yet.
+  if (T->getAs<AtomicType>())
+    return Owned(E);
+
   // Create a load out of an ObjCProperty l-value, if necessary.
   if (E->getObjectKind() == OK_ObjCProperty) {
     ExprResult Res = ConvertPropertyForRValue(E);
@@ -5393,6 +5397,10 @@ Sema::CheckAssignmentConstraints(QualType LHSType, ExprResult &RHS,
   LHSType = Context.getCanonicalType(LHSType).getUnqualifiedType();
   RHSType = Context.getCanonicalType(RHSType).getUnqualifiedType();
 
+  // We can't do assignment from/to atomics yet.
+  if (LHSType->isAtomicType())
+    return Incompatible;
+
   // Common case: no conversion required.
   if (LHSType == RHSType) {
     Kind = CK_NoOp;
@@ -5712,7 +5720,7 @@ Sema::AssignConvertType
 Sema::CheckSingleAssignmentConstraints(QualType LHSType, ExprResult &RHS,
                                        bool Diagnose) {
   if (getLangOptions().CPlusPlus) {
-    if (!LHSType->isRecordType()) {
+    if (!LHSType->isRecordType() && !LHSType->isAtomicType()) {
       // C++ 5.17p3: If the left operand is not of class type, the
       // expression is implicitly converted (C++ 4) to the
       // cv-unqualified type of the left operand.
@@ -5732,6 +5740,8 @@ Sema::CheckSingleAssignmentConstraints(QualType LHSType, ExprResult &RHS,
 
     // FIXME: Currently, we fall through and treat C++ classes like C
     // structures.
+    // FIXME: We also fall through for atomics; not sure what should
+    // happen there, though.
   }
 
   // C99 6.5.16.1p1: the left operand is a pointer and the right is

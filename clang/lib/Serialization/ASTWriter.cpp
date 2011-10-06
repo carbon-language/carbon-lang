@@ -388,6 +388,12 @@ ASTTypeWriter::VisitObjCObjectPointerType(const ObjCObjectPointerType *T) {
   Code = TYPE_OBJC_OBJECT_POINTER;
 }
 
+void
+ASTTypeWriter::VisitAtomicType(const AtomicType *T) {
+  Writer.AddTypeRef(T->getValueType(), Record);
+  Code = TYPE_ATOMIC;
+}
+
 namespace {
 
 class TypeLocWriter : public TypeLocVisitor<TypeLocWriter> {
@@ -595,6 +601,11 @@ void TypeLocWriter::VisitObjCObjectTypeLoc(ObjCObjectTypeLoc TL) {
 }
 void TypeLocWriter::VisitObjCObjectPointerTypeLoc(ObjCObjectPointerTypeLoc TL) {
   Writer.AddSourceLocation(TL.getStarLoc(), Record);
+}
+void TypeLocWriter::VisitAtomicTypeLoc(AtomicTypeLoc TL) {
+  Writer.AddSourceLocation(TL.getKWLoc(), Record);
+  Writer.AddSourceLocation(TL.getLParenLoc(), Record);
+  Writer.AddSourceLocation(TL.getRParenLoc(), Record);
 }
 
 //===----------------------------------------------------------------------===//
@@ -840,6 +851,7 @@ void ASTWriter::WriteBlockInfoBlock() {
   RECORD(TYPE_PACK_EXPANSION);
   RECORD(TYPE_ATTRIBUTED);
   RECORD(TYPE_SUBST_TEMPLATE_TYPE_PARM_PACK);
+  RECORD(TYPE_ATOMIC);
   RECORD(DECL_TYPEDEF);
   RECORD(DECL_ENUM);
   RECORD(DECL_RECORD);

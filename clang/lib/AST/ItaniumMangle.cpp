@@ -788,6 +788,7 @@ void CXXNameMangler::mangleUnresolvedPrefix(NestedNameSpecifier *qualifier,
     case Type::ObjCObject:
     case Type::ObjCInterface:
     case Type::ObjCObjectPointer:
+    case Type::Atomic:
       llvm_unreachable("type is illegal as a nested name specifier");
 
     case Type::SubstTemplateTypeParmPack:
@@ -2109,6 +2110,13 @@ void CXXNameMangler::mangleType(const AutoType *T) {
     Out << "Da";
   else
     mangleType(D);
+}
+
+void CXXNameMangler::mangleType(const AtomicType *T) {
+  // <type> ::= U <source-name> <type>	# vendor extended type qualifier
+  // (Until there's a standardized mangling...)
+  Out << "U7_Atomic";
+  mangleType(T->getValueType());
 }
 
 void CXXNameMangler::mangleIntegerLiteral(QualType T,

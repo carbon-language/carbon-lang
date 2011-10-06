@@ -404,6 +404,7 @@ void RTTIBuilder::BuildVTablePointer(const Type *Ty) {
   case Type::Vector:
   case Type::ExtVector:
   case Type::Complex:
+  case Type::Atomic:
   // FIXME: GCC treats block pointers as fundamental types?!
   case Type::BlockPointer:
     // abi::__fundamental_type_info.
@@ -655,6 +656,10 @@ llvm::Constant *RTTIBuilder::BuildTypeInfo(QualType Ty, bool Force) {
 
   case Type::MemberPointer:
     BuildPointerToMemberTypeInfo(cast<MemberPointerType>(Ty));
+    break;
+
+  case Type::Atomic:
+    // No fields, at least for the moment.
     break;
   }
 

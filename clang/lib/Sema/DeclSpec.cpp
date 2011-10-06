@@ -243,6 +243,7 @@ bool Declarator::isDeclarationOfFunction() const {
   }
   
   switch (DS.getTypeSpecType()) {
+    case TST_atomic:
     case TST_auto:
     case TST_bool:
     case TST_char:
@@ -389,6 +390,7 @@ const char *DeclSpec::getSpecifierName(DeclSpec::TST T) {
   case DeclSpec::TST_decltype:    return "(decltype)";
   case DeclSpec::TST_underlyingType: return "__underlying_type";
   case DeclSpec::TST_unknown_anytype: return "__unknown_anytype";
+  case DeclSpec::TST_atomic: return "_Atomic";
   case DeclSpec::TST_error:       return "(error)";
   }
   llvm_unreachable("Unknown typespec!");

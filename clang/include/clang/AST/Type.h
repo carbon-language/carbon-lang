@@ -1449,6 +1449,7 @@ public:
   bool isCARCBridgableType() const;
   bool isTemplateTypeParmType() const;          // C++ template type parameter
   bool isNullPtrType() const;                   // C++0x nullptr_t
+  bool isAtomicType() const;                    // C1X _Atomic()
 
   /// Determines if this type, which must satisfy
   /// isObjCLifetimeType(), is implicitly __unsafe_unretained rather
@@ -4352,6 +4353,37 @@ public:
   static bool classof(const ObjCObjectPointerType *) { return true; }
 };
 
+class AtomicType : public Type, public llvm::FoldingSetNode {
+  QualType ValueType;
+
+  AtomicType(QualType ValTy, QualType Canonical)
+    : Type(Atomic, Canonical, ValTy->isDependentType(),
+           ValTy->isInstantiationDependentType(),
+           ValTy->isVariablyModifiedType(),
+           ValTy->containsUnexpandedParameterPack()),
+      ValueType(ValTy) {}
+  friend class ASTContext;  // ASTContext creates these.
+
+  public:
+  /// getValueType - Gets the type contained by this atomic type, i.e.
+  /// the type returned by performing an atomic load of this atomic type.
+  QualType getValueType() const { return ValueType; }
+
+  bool isSugared() const { return false; }
+  QualType desugar() const { return QualType(this, 0); }
+
+  void Profile(llvm::FoldingSetNodeID &ID) {
+    Profile(ID, getValueType());
+  }
+  static void Profile(llvm::FoldingSetNodeID &ID, QualType T) {
+    ID.AddPointer(T.getAsOpaquePtr());
+  }
+  static bool classof(const Type *T) {
+    return T->getTypeClass() == Atomic;
+  }
+  static bool classof(const AtomicType *) { return true; }
+};
+
 /// A qualifier set is used to build a set of qualifiers.
 class QualifierCollector : public Qualifiers {
 public:
@@ -4676,6 +4708,9 @@ inline bool Type::isObjCObjectType() const {
 inline bool Type::isObjCObjectOrInterfaceType() const {
   return isa<ObjCInterfaceType>(CanonicalType) || 
     isa<ObjCObjectType>(CanonicalType);
+}
+inline bool Type::isAtomicType() const {
+  return isa<AtomicType>(CanonicalType);
 }
 
 inline bool Type::isObjCQualifiedIdType() const {

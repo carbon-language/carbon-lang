@@ -548,6 +548,11 @@ llvm::Type *CodeGenTypes::ConvertType(QualType T) {
       getCXXABI().ConvertMemberPointerType(cast<MemberPointerType>(Ty));
     break;
   }
+
+  case Type::Atomic: {
+    ResultType = ConvertTypeForMem(cast<AtomicType>(Ty)->getValueType());
+    break;
+  }
   }
   
   assert(ResultType && "Didn't convert a type?");

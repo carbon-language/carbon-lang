@@ -2000,6 +2000,12 @@ addAssociatedClassesAndNamespaces(AssociatedLookup &Result, QualType Ty) {
     case Type::ObjCObjectPointer:
       Result.Namespaces.insert(Result.S.Context.getTranslationUnitDecl());
       break;
+
+    // Atomic types are just wrappers; use the associations of the
+    // contained type.
+    case Type::Atomic:
+      T = cast<AtomicType>(T)->getValueType().getTypePtr();
+      continue;
     }
 
     if (Queue.empty()) break;

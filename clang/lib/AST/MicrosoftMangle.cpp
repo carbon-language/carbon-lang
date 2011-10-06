@@ -1113,6 +1113,10 @@ void MicrosoftCXXNameMangler::mangleType(const AutoType *T) {
   llvm_unreachable("Don't know how to mangle AutoTypes yet!");
 }
 
+void MicrosoftCXXNameMangler::mangleType(const AtomicType *T) {
+  llvm_unreachable("Don't know how to mangle AtomicTypes yet!");
+}
+
 void MicrosoftMangleContext::mangleName(const NamedDecl *D,
                                         raw_ostream &Out) {
   assert((isa<FunctionDecl>(D) || isa<VarDecl>(D)) &&

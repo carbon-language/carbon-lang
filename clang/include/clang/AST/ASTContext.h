@@ -120,6 +120,7 @@ class ASTContext : public llvm::RefCountedBase<ASTContext> {
   mutable llvm::FoldingSet<ObjCObjectTypeImpl> ObjCObjectTypes;
   mutable llvm::FoldingSet<ObjCObjectPointerType> ObjCObjectPointerTypes;
   mutable llvm::FoldingSet<AutoType> AutoTypes;
+  mutable llvm::FoldingSet<AtomicType> AtomicTypes;
   llvm::FoldingSet<AttributedType> AttributedTypes;
 
   mutable llvm::FoldingSet<QualifiedTemplateName> QualifiedTemplateNames;
@@ -600,6 +601,10 @@ public:
   CanQualType getPointerType(CanQualType T) const {
     return CanQualType::CreateUnsafe(getPointerType((QualType) T));
   }
+
+  /// getAtomicType - Return the uniqued reference to the atomic type for
+  /// the specified type.
+  QualType getAtomicType(QualType T) const;
 
   /// getBlockPointerType - Return the uniqued reference to the type for a block
   /// of the specified type.

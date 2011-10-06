@@ -1063,6 +1063,11 @@ ASTContext::getTypeInfo(const Type *T) const {
       return getTypeInfo(getCanonicalType(T));
   }
 
+  case Type::Atomic: {
+    // FIXME: The alignment needs to be "fixed".
+    return getTypeInfo(cast<AtomicType>(T)->getValueType());
+  }
+
   }
 
   assert(Align && (Align & (Align-1)) == 0 && "Alignment must be power of 2");
@@ -1704,6 +1709,12 @@ QualType ASTContext::getVariableArrayDecayedType(QualType type) const {
     const RValueReferenceType *lv = cast<RValueReferenceType>(ty);
     result = getRValueReferenceType(
                  getVariableArrayDecayedType(lv->getPointeeType()));
+    break;
+  }
+
+  case Type::Atomic: {
+    const AtomicType *at = cast<AtomicType>(ty);
+    result = getAtomicType(getVariableArrayDecayedType(at->getValueType()));
     break;
   }
 
@@ -2902,6 +2913,34 @@ QualType ASTContext::getAutoType(QualType DeducedType) const {
   if (InsertPos)
     AutoTypes.InsertNode(AT, InsertPos);
   return QualType(AT, 0);
+}
+
+/// getAtomicType - Return the uniqued reference to the atomic type for
+/// the given value type.
+QualType ASTContext::getAtomicType(QualType T) const {
+  // Unique pointers, to guarantee there is only one pointer of a particular
+  // structure.
+  llvm::FoldingSetNodeID ID;
+  AtomicType::Profile(ID, T);
+
+  void *InsertPos = 0;
+  if (AtomicType *AT = AtomicTypes.FindNodeOrInsertPos(ID, InsertPos))
+    return QualType(AT, 0);
+
+  // If the atomic value type isn't canonical, this won't be a canonical type
+  // either, so fill in the canonical type field.
+  QualType Canonical;
+  if (!T.isCanonical()) {
+    Canonical = getAtomicType(getCanonicalType(T));
+
+    // Get the new insert position for the node we care about.
+    AtomicType *NewIP = AtomicTypes.FindNodeOrInsertPos(ID, InsertPos);
+    assert(NewIP == 0 && "Shouldn't be in the map!"); (void)NewIP;
+  }
+  AtomicType *New = new (*this, TypeAlignment) AtomicType(T, Canonical);
+  Types.push_back(New);
+  AtomicTypes.InsertNode(New, InsertPos);
+  return QualType(New, 0);
 }
 
 /// getAutoDeductType - Get type pattern for deducing against 'auto'.
@@ -5801,6 +5840,24 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS,
     if (getCanonicalType(RHSPointee) == getCanonicalType(ResultType))
       return RHS;
     return getBlockPointerType(ResultType);
+  }
+  case Type::Atomic:
+  {
+    // Merge two pointer types, while trying to preserve typedef info
+    QualType LHSValue = LHS->getAs<AtomicType>()->getValueType();
+    QualType RHSValue = RHS->getAs<AtomicType>()->getValueType();
+    if (Unqualified) {
+      LHSValue = LHSValue.getUnqualifiedType();
+      RHSValue = RHSValue.getUnqualifiedType();
+    }
+    QualType ResultType = mergeTypes(LHSValue, RHSValue, false, 
+                                     Unqualified);
+    if (ResultType.isNull()) return QualType();
+    if (getCanonicalType(LHSValue) == getCanonicalType(ResultType))
+      return LHS;
+    if (getCanonicalType(RHSValue) == getCanonicalType(ResultType))
+      return RHS;
+    return getAtomicType(ResultType);
   }
   case Type::ConstantArray:
   {

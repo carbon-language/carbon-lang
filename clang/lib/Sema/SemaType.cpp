@@ -856,6 +856,16 @@ static QualType ConvertDeclSpecToType(TypeProcessingState &state) {
     Result = Context.UnknownAnyTy;
     break;
 
+  case DeclSpec::TST_atomic:
+    Result = S.GetTypeFromParser(DS.getRepAsType());
+    assert(!Result.isNull() && "Didn't get a type for _Atomic?");
+    Result = S.BuildAtomicType(Result, DS.getTypeSpecTypeLoc());
+    if (Result.isNull()) {
+      Result = Context.IntTy;
+      declarator.setInvalidType(true);
+    }
+    break; 
+
   case DeclSpec::TST_error:
     Result = Context.IntTy;
     declarator.setInvalidType(true);
@@ -2872,6 +2882,10 @@ namespace {
     void VisitTagTypeLoc(TagTypeLoc TL) {
       TL.setNameLoc(DS.getTypeSpecTypeNameLoc());
     }
+    void VisitAtomicTypeLoc(AtomicTypeLoc TL) {
+      TL.setKWLoc(DS.getTypeSpecTypeLoc());
+      TL.setParensRange(DS.getTypeofParensRange());
+    }
 
     void VisitTypeLoc(TypeLoc TL) {
       // FIXME: add other typespec types and change this to an assert.
@@ -4182,4 +4196,37 @@ QualType Sema::BuildUnaryTransformType(QualType BaseType,
     }
   }
   llvm_unreachable("unknown unary transform type");
+}
+
+QualType Sema::BuildAtomicType(QualType T, SourceLocation Loc) {
+  if (!T->isDependentType()) {
+    int DisallowedKind = -1;
+    if (T->isIncompleteType())
+      // FIXME: It isn't entirely clear whether incomplete atomic types
+      // are allowed or not; for simplicity, ban them for the moment.
+      DisallowedKind = 0;
+    else if (T->isArrayType())
+      DisallowedKind = 1;
+    else if (T->isFunctionType())
+      DisallowedKind = 2;
+    else if (T->isReferenceType())
+      DisallowedKind = 3;
+    else if (T->isAtomicType())
+      DisallowedKind = 4;
+    else if (T.hasQualifiers())
+      DisallowedKind = 5;
+    else if (!T.isTriviallyCopyableType(Context))
+      // Some other non-trivially-copyable type (probably a C++ class)
+      DisallowedKind = 6;
+
+    if (DisallowedKind != -1) {
+      Diag(Loc, diag::err_atomic_specifier_bad_type) << DisallowedKind << T;
+      return QualType();
+    }
+
+    // FIXME: Do we need any handling for ARC here?
+  }
+
+  // Build the pointer type.
+  return Context.getAtomicType(T);
 }

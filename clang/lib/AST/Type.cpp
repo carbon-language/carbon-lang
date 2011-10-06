@@ -2113,6 +2113,8 @@ static CachedProperties computeCachedProperties(const Type *T) {
     return Cache::get(cast<ObjCObjectType>(T)->getBaseType());
   case Type::ObjCObjectPointer:
     return Cache::get(cast<ObjCObjectPointerType>(T)->getPointeeType());
+  case Type::Atomic:
+    return Cache::get(cast<AtomicType>(T)->getValueType());
   }
 
   llvm_unreachable("unhandled type class");

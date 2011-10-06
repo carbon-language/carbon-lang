@@ -810,7 +810,15 @@ static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
       return false;
     break;
   }
-      
+
+  case Type::Atomic: {
+    if (!IsStructurallyEquivalent(Context,
+                                  cast<AtomicType>(T1)->getValueType(),
+                                  cast<AtomicType>(T2)->getValueType()))
+      return false;
+    break;
+  }
+
   } // end switch
 
   return true;

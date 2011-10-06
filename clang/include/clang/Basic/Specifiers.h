@@ -57,6 +57,7 @@ namespace clang {
     TST_underlyingType, // __underlying_type for C++0x
     TST_auto,         // C++0x auto
     TST_unknown_anytype, // __unknown_anytype extension
+    TST_atomic,       // C1X _Atomic
     TST_error         // erroneous type
   };
   

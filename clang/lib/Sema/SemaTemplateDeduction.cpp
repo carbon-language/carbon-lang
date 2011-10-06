@@ -1116,7 +1116,17 @@ DeduceTemplateArguments(Sema &S,
                                        Info, Deduced, TDF);
 
       return Sema::TDK_NonDeducedMismatch;
-      
+
+    //     _Atomic T   [extension]
+    case Type::Atomic:
+      if (const AtomicType *AtomicArg = Arg->getAs<AtomicType>())
+        return DeduceTemplateArguments(S, TemplateParams,
+                                       cast<AtomicType>(Param)->getValueType(),
+                                       AtomicArg->getValueType(),
+                                       Info, Deduced, TDF);
+
+      return Sema::TDK_NonDeducedMismatch;
+
     //     T *
     case Type::Pointer: {
       QualType PointeeType;
@@ -4123,6 +4133,13 @@ MarkUsedTemplateParameters(Sema &SemaRef, QualType T,
     if (!OnlyDeduced)
       MarkUsedTemplateParameters(SemaRef,
                                  cast<ComplexType>(T)->getElementType(),
+                                 OnlyDeduced, Depth, Used);
+    break;
+
+  case Type::Atomic:
+    if (!OnlyDeduced)
+      MarkUsedTemplateParameters(SemaRef,
+                                 cast<AtomicType>(T)->getValueType(),
                                  OnlyDeduced, Depth, Used);
     break;
 

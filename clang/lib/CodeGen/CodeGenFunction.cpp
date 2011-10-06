@@ -87,6 +87,10 @@ bool CodeGenFunction::hasAggregateLLVMType(QualType type) {
   case Type::ObjCObject:
   case Type::ObjCInterface:
     return true;
+
+  // In IRGen, atomic types are just the underlying type
+  case Type::Atomic:
+    return hasAggregateLLVMType(type->getAs<AtomicType>()->getValueType());
   }
   llvm_unreachable("unknown type kind!");
 }
@@ -982,6 +986,10 @@ void CodeGenFunction::EmitVariablyModifiedType(QualType type) {
     case Type::FunctionProto: 
     case Type::FunctionNoProto:
       type = cast<FunctionType>(ty)->getResultType();
+      break;
+
+    case Type::Atomic:
+      type = cast<AtomicType>(ty)->getValueType();
       break;
     }
   } while (type->isVariablyModifiedType());

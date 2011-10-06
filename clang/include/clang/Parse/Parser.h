@@ -1768,7 +1768,8 @@ private:
   void ParseTypeofSpecifier(DeclSpec &DS);
   void ParseDecltypeSpecifier(DeclSpec &DS);
   void ParseUnderlyingTypeSpecifier(DeclSpec &DS);
-  
+  void ParseAtomicSpecifier(DeclSpec &DS);
+
   ExprResult ParseAlignArgument(SourceLocation Start);
   void ParseAlignmentSpecifier(ParsedAttributes &Attrs,
                                SourceLocation *endLoc = 0);

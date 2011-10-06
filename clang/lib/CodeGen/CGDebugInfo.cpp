@@ -1423,6 +1423,13 @@ llvm::DIType CGDebugInfo::CreateType(const MemberPointerType *Ty,
                                    0, 0, Elements);
 }
 
+llvm::DIType CGDebugInfo::CreateType(const AtomicType *Ty, 
+                                     llvm::DIFile U) {
+  // Ignore the atomic wrapping
+  // FIXME: What is the correct representation?
+  return getOrCreateType(Ty->getValueType(), U);
+}
+
 /// CreateEnumType - get enumeration type.
 llvm::DIType CGDebugInfo::CreateEnumType(const EnumDecl *ED) {
   llvm::DIFile Unit = getOrCreateFile(ED->getLocation());
@@ -1580,6 +1587,9 @@ llvm::DIType CGDebugInfo::CreateTypeNode(QualType Ty,
 
   case Type::MemberPointer:
     return CreateType(cast<MemberPointerType>(Ty), Unit);
+
+  case Type::Atomic:
+    return CreateType(cast<AtomicType>(Ty), Unit);
 
   case Type::Attributed:
   case Type::TemplateSpecialization:

@@ -3419,6 +3419,7 @@ struct CheckAbstractUsage {
   CheckPolymorphic(ReferenceTypeLoc)
   CheckPolymorphic(MemberPointerTypeLoc)
   CheckPolymorphic(BlockPointerTypeLoc)
+  CheckPolymorphic(AtomicTypeLoc)
 
   /// Handle all the types we haven't given a more specific
   /// implementation for above.
