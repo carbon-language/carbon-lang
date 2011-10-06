@@ -295,8 +295,16 @@ void MemoryAccess::setBaseName() {
   BaseName = "MemRef_" + BaseName;
 }
 
-std::string MemoryAccess::getAccessFunctionStr() const {
-  return stringFromIslObj(getAccessFunction());
+isl_map *MemoryAccess::getAccessRelation() const {
+  return isl_map_copy(AccessRelation);
+}
+
+std::string MemoryAccess::getAccessRelationStr() const {
+  return stringFromIslObj(AccessRelation);
+}
+
+isl_map *MemoryAccess::getNewAccessRelation() const {
+  return isl_map_copy(newAccessRelation);
 }
 
 isl_basic_map *MemoryAccess::createBasicAccessMap(ScopStmt *Statement) {
@@ -358,7 +366,7 @@ MemoryAccess::MemoryAccess(const Value *BaseAddress, ScopStmt *Statement) {
 
 void MemoryAccess::print(raw_ostream &OS) const {
   OS.indent(12) << (isRead() ? "Read" : "Write") << "Access := \n";
-  OS.indent(16) << getAccessFunctionStr() << ";\n";
+  OS.indent(16) << getAccessRelationStr() << ";\n";
 }
 
 void MemoryAccess::dump() const {
@@ -424,7 +432,7 @@ static isl_map *getEqualAndLarger(isl_space *setDomain) {
 }
 
 isl_set *MemoryAccess::getStride(const isl_set *domainSubset) const {
-  isl_map *accessRelation = isl_map_copy(getAccessFunction());
+  isl_map *accessRelation = getAccessRelation();
   isl_set *scatteringDomain = isl_set_copy(const_cast<isl_set*>(domainSubset));
   isl_map *scattering = getStatement()->getScattering();
 
@@ -506,7 +514,7 @@ bool MemoryAccess::isStrideOne(const isl_set *domainSubset) const {
   return isStrideOne;
 }
 
-void MemoryAccess::setNewAccessFunction(isl_map *newAccess) {
+void MemoryAccess::setNewAccessRelation(isl_map *newAccess) {
   isl_map_free(newAccessRelation);
   newAccessRelation = newAccess;
 }

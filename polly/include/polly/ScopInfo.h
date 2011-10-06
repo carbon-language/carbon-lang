@@ -119,11 +119,10 @@ public:
   /// @brief Is this a read memory access?
   bool isRead() const { return Type == MemoryAccess::Read; }
 
-  isl_map *getAccessFunction() { return AccessRelation; }
-  isl_map *getAccessFunction() const { return AccessRelation; }
+  isl_map *getAccessRelation() const;
 
   /// @brief Get an isl string representing this access function.
-  std::string getAccessFunctionStr() const;
+  std::string getAccessRelationStr() const;
 
   const Value *getBaseAddr() const {
     return BaseAddr;
@@ -134,9 +133,7 @@ public:
   }
 
   /// @brief Get the new access function imported from JSCOP file
-  isl_map *getNewAccessFunction() {
-    return newAccessRelation;
-  }
+  isl_map *getNewAccessRelation() const;
 
   /// @brief Get the stride of this memory access in the specified domain
   ///        subset.
@@ -154,7 +151,7 @@ public:
   ScopStmt *getStatement() const { return statement; }
 
   /// @brief Set the updated access relation read from JSCOP file.
-  void setNewAccessFunction(isl_map *newAccessRelation);
+  void setNewAccessRelation(isl_map *newAccessRelation);
   /// @brief Print the MemoryAccess.
   ///
   /// @param OS The output stream the MemoryAccess is printed to.

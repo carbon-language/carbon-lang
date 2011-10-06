@@ -358,22 +358,26 @@ public:
   /// @brief Generate the operand address
   Value *generateLocationAccessed(const Instruction *Inst,
                                   const Value *pointer, ValueMapT &BBMap ) {
-    MemoryAccess &access = statement.getAccessFor(Inst);
-    isl_map *currentAccessRelation = access.getAccessFunction();
-    isl_map *newAccessRelation = access.getNewAccessFunction();
+    MemoryAccess &Access = statement.getAccessFor(Inst);
+    isl_map *CurrentAccessRelation = Access.getAccessRelation();
+    isl_map *NewAccessRelation = Access.getNewAccessRelation();
 
-    assert(isl_map_has_equal_space(currentAccessRelation, newAccessRelation)
+    assert(isl_map_has_equal_space(CurrentAccessRelation, NewAccessRelation)
            && "Current and new access function use different spaces");
 
-    if (!newAccessRelation) {
-      Value *newPointer = getOperand(pointer, BBMap);
-      return newPointer;
+    Value *NewPointer;
+
+    if (!NewAccessRelation) {
+      NewPointer = getOperand(pointer, BBMap);
+    } else {
+      Value *BaseAddr = const_cast<Value*>(Access.getBaseAddr());
+      NewPointer = getNewAccessOperand(NewAccessRelation, BaseAddr, pointer,
+                                       BBMap);
     }
 
-    Value *baseAddr = const_cast<Value*>(access.getBaseAddr());
-    Value *newPointer = getNewAccessOperand(newAccessRelation, baseAddr,
-                                            pointer, BBMap);
-    return newPointer;
+    isl_map_free(CurrentAccessRelation);
+    isl_map_free(NewAccessRelation);
+    return NewPointer;
   }
 
   Value *generateScalarLoad(const LoadInst *load, ValueMapT &BBMap) {

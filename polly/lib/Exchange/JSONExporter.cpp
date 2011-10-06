@@ -117,7 +117,7 @@ Json::Value JSONExporter::getJSON(Scop &scop) const {
       Json::Value access;
 
       access["kind"] = (*MI)->isRead() ? "read" : "write";
-      access["relation"] = (*MI)->getAccessFunctionStr();
+      access["relation"] = (*MI)->getAccessRelationStr();
 
       statement["accesses"].append(access);
     }
@@ -247,11 +247,11 @@ bool JSONImporter::runOnScop(Scop &scop) {
     return false;
   }
 
-   for (Scop::iterator SI = S->begin(), SE = S->end(); SI != SE; ++SI) {
-     ScopStmt *Stmt = *SI;
+  for (Scop::iterator SI = S->begin(), SE = S->end(); SI != SE; ++SI) {
+    ScopStmt *Stmt = *SI;
 
-     if (NewScattering.find(Stmt) != NewScattering.end())
-       Stmt->setScattering(NewScattering[Stmt]);
+    if (NewScattering.find(Stmt) != NewScattering.end())
+      Stmt->setScattering(NewScattering[Stmt]);
   }
 
   int statementIdx = 0;
@@ -268,15 +268,17 @@ bool JSONImporter::runOnScop(Scop &scop) {
                                   ["accesses"][memoryAccessIdx]["relation"];
       isl_map *newAccessMap = isl_map_read_from_str(S->getIslCtx(),
                                                     accesses.asCString());
-      isl_map *currentAccessMap = (*MI)->getAccessFunction();
+      isl_map *currentAccessMap = (*MI)->getAccessRelation();
       if (!isl_map_has_equal_space(currentAccessMap, newAccessMap)) {
         errs() << "JScop file contains access function with incompatible "
                << "dimensions\n";
+        isl_map_free(currentAccessMap);
         isl_map_free(newAccessMap);
         return false;
       }
       if (isl_map_dim(newAccessMap, isl_dim_out) != 1) {
         errs() << "New access map in JScop file should be single dimensional\n";
+        isl_map_free(currentAccessMap);
         isl_map_free(newAccessMap);
         return false;
       }
@@ -284,10 +286,11 @@ bool JSONImporter::runOnScop(Scop &scop) {
         // Statistics.
         ++NewAccessMapFound;
         newAccessStrings.push_back(accesses.asCString());
-        (*MI)->setNewAccessFunction(newAccessMap);
+        (*MI)->setNewAccessRelation(newAccessMap);
       } else {
         isl_map_free(newAccessMap);
       }
+      isl_map_free(currentAccessMap);
       memoryAccessIdx++;
     }
     statementIdx++;
