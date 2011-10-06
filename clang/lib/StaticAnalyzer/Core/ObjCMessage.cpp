@@ -148,7 +148,13 @@ SVal CallOrObjCMessage::getCXXCallee() const {
   const CallExpr *ActualCall = CallE.get<const CallExpr *>();
   const Expr *callee =
     cast<CXXMemberCallExpr>(ActualCall)->getImplicitObjectArgument();
-  return State->getSVal(callee);  
+  
+  // FIXME: Will eventually need to cope with member pointers.  This is
+  // a limitation in getImplicitObjectArgument().
+  if (!callee)
+    return UnknownVal();
+  
+  return State->getSVal(callee);
 }
 
 SVal

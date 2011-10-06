@@ -352,9 +352,10 @@ void TransferFunctions::Visit(Stmt *S) {
     case Stmt::CXXMemberCallExprClass: {
       // Include the implicit "this" pointer as being live.
       CXXMemberCallExpr *CE = cast<CXXMemberCallExpr>(S);
-      val.liveStmts =
-        LV.SSetFact.add(val.liveStmts,
-                        CE->getImplicitObjectArgument()->IgnoreParens());
+      if (Expr *ImplicitObj = CE->getImplicitObjectArgument()) {
+        ImplicitObj = ImplicitObj->IgnoreParens();        
+        val.liveStmts = LV.SSetFact.add(val.liveStmts, ImplicitObj);
+      }
       break;
     }
     case Stmt::DeclStmtClass: {
