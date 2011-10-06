@@ -1158,12 +1158,12 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
     return FwdDecl;
   }
 
-  // To handle recursive interface, we
-  // first generate a debug descriptor for the struct as a forward declaration.
-  // Then (if it is a definition) we go through and get debug info for all of
-  // its members.  Finally, we create a descriptor for the complete type (which
-  // may refer to the forward decl if the struct is recursive) and replace all
-  // uses of the forward declaration with the final definition.
+  // To handle a recursive interface, we first generate a debug descriptor
+  // for the struct as a forward declaration. Then (if it is a definition)
+  // we go through and get debug info for all of its members.  Finally, we
+  // create a descriptor for the complete type (which may refer to the
+  // forward decl if the struct is recursive) and replace all uses of the
+  // forward declaration with the final definition.
   llvm::DIType FwdDecl = DBuilder.createTemporaryType(DefUnit);
 
   llvm::MDNode *MN = FwdDecl;
