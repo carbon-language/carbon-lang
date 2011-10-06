@@ -70,13 +70,6 @@ const DerivedArgList &Compilation::getArgsForToolChain(const ToolChain *TC,
   return *Entry;
 }
 
-static bool needsQuote(const char *s) {
-  for (const char *c = s; *c; ++c)
-    if (*c == ' ' || *c == '"' || *c == '\\' || *c == '$')
-      return true;
-  return false;
-}
-
 void Compilation::PrintJob(raw_ostream &OS, const Job &J,
                            const char *Terminator, bool Quote) const {
   if (const Command *C = dyn_cast<Command>(&J)) {
@@ -84,7 +77,7 @@ void Compilation::PrintJob(raw_ostream &OS, const Job &J,
     for (ArgStringList::const_iterator it = C->getArguments().begin(),
            ie = C->getArguments().end(); it != ie; ++it) {
       OS << ' ';
-      if (!Quote && !needsQuote(*it)) {
+      if (!Quote && !std::strpbrk(*it, " \"\\$")) {
         OS << *it;
         continue;
       }
