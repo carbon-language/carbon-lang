@@ -26,7 +26,8 @@ __attribute__((deprecated))
 @implementation CL // expected-warning {{Implementing deprecated class}}
 @end
 
-@implementation CL ( SomeCategory ) // expected-warning {{Implementing deprecated category}}
+@implementation CL ( SomeCategory ) // expected-warning {{'CL' is deprecated}} \
+                                    // expected-warning {{Implementing deprecated category}}
 @end
 
 @interface CL_SUB : CL // expected-warning {{'CL' is deprecated}}

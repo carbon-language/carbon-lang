@@ -72,8 +72,7 @@ static AvailabilityResult DiagnoseAvailabilityOfDecl(Sema &S,
       break;
             
     case AR_Unavailable:
-      if (cast<Decl>(S.getCurLexicalContext())->getAvailability() !=
-            AR_Unavailable) {
+      if (S.getCurContextAvailability() != AR_Unavailable) {
         if (Message.empty()) {
           if (!UnknownObjCClass)
             S.Diag(Loc, diag::err_unavailable) << D->getDeclName();

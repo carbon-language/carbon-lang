@@ -770,9 +770,6 @@ ActOnStartCategoryInterface(SourceLocation AtInterfaceLoc,
   // FIXME: PushOnScopeChains?
   CurContext->addDecl(CDecl);
 
-  // If the interface is deprecated, warn about it.
-  (void)DiagnoseUseOfDecl(IDecl, ClassLoc);
-
   if (NumProtoRefs) {
     CDecl->setProtocolList((ObjCProtocolDecl**)ProtoRefs, NumProtoRefs, 
                            ProtoLocs, Context);
@@ -817,6 +814,10 @@ Decl *Sema::ActOnStartCategoryImplementation(
 
   // FIXME: PushOnScopeChains?
   CurContext->addDecl(CDecl);
+
+  // If the interface is deprecated/unavailable, warn/error about it.
+  if (IDecl)
+    DiagnoseUseOfDecl(IDecl, ClassLoc);
 
   /// Check that CatName, category name, is not used in another implementation.
   if (CatIDecl) {

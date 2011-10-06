@@ -9663,3 +9663,12 @@ void Sema::ActOnPragmaWeakAlias(IdentifierInfo* Name,
 Decl *Sema::getObjCDeclContext() const {
   return (dyn_cast_or_null<ObjCContainerDecl>(CurContext));
 }
+
+AvailabilityResult Sema::getCurContextAvailability() const {
+  const Decl *D = cast<Decl>(getCurLexicalContext());
+  // A category implicitly has the availability of the interface.
+  if (const ObjCCategoryDecl *CatD = dyn_cast<ObjCCategoryDecl>(D))
+    D = CatD->getClassInterface();
+  
+  return D->getAvailability();
+}

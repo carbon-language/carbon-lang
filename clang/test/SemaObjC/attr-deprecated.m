@@ -92,7 +92,14 @@ __attribute ((deprecated))
 @property  int prop; 
 @end
 
-@interface DEPRECATED (Category) // expected-warning {{warning: 'DEPRECATED' is deprecated}}
+@interface DEPRECATED (Category) // no warning.
+- (DEPRECATED *) meth2; // no warning.
+@end
+
+@interface DEPRECATED (Category2) // no warning.
+@end
+
+@implementation DEPRECATED (Category2) // expected-warning {{warning: 'DEPRECATED' is deprecated}}
 @end
 
 @interface NS : DEPRECATED  // expected-warning {{warning: 'DEPRECATED' is deprecated}}

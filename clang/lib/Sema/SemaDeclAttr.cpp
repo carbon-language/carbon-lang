@@ -4002,6 +4002,9 @@ static bool isDeclDeprecated(Decl *D) {
   do {
     if (D->isDeprecated())
       return true;
+    // A category implicitly has the availability of the interface.
+    if (const ObjCCategoryDecl *CatD = dyn_cast<ObjCCategoryDecl>(D))
+      return CatD->getClassInterface()->isDeprecated();
   } while ((D = cast_or_null<Decl>(D->getDeclContext())));
   return false;
 }

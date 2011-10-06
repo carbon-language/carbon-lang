@@ -6165,6 +6165,8 @@ public:
   DeclContext *getCurLexicalContext() const {
     return OriginalLexicalContext ? OriginalLexicalContext : CurContext;
   }
+
+  AvailabilityResult getCurContextAvailability() const;
 };
 
 /// \brief RAII object that enters a new expression evaluation context.
