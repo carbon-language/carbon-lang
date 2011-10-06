@@ -178,6 +178,14 @@ class targetCommandTestCase(TestBase):
         self.runCmd("b main")
         self.runCmd("run")
         
+         # New feature: you don't need to specify the variable(s) to 'target vaiable'.
+        # It will find all the global and static variables in the current compile unit.
+        self.expect("target variable",
+            substrs = ['my_global_char',
+                       'my_global_str',
+                       'my_global_str_ptr',
+                       'my_static_int'])
+
         self.expect("target variable my_global_str", VARIABLES_DISPLAYED_CORRECTLY,
                     substrs = ['my_global_str', '"abc"'])
         self.expect("target variable my_static_int", VARIABLES_DISPLAYED_CORRECTLY,
