@@ -131,9 +131,10 @@ static const char *GetArmArchForMArch(StringRef Value) {
   if (Value == "armv4t")
     return "armv4t";
 
-  if (Value == "armv7" || Value == "armv7-a" || Value == "armv7-r" ||
-      Value == "armv7-m" || Value == "armv7a" || Value == "armv7r" ||
-      Value == "armv7m")
+  if (Value == "armv7" ||
+      Value == "armv7a" || Value == "armv7-a" ||
+      Value == "armv7r" || Value == "armv7-r" ||
+      Value == "armv7m" || Value == "armv7-m")
     return "armv7";
 
   return 0;
