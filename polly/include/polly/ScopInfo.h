@@ -255,8 +255,6 @@ class ScopStmt {
 
   /// Build the statment.
   //@{
-  isl_set *toUpperLoopBound(const SCEVAffFunc &UpperBound, isl_space *space,
-			    unsigned BoundedDimension) const;
   isl_set *toConditionSet(const Comparison &Cmp, isl_space *space) const;
   void addConditionsToDomain(TempScop &tempScop, const Region &CurRegion);
   void buildIterationDomainFromLoops(TempScop &tempScop);

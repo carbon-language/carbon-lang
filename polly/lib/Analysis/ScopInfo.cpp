@@ -81,7 +81,7 @@ private:
 
 public:
   static isl_pw_aff *getPwAff(const ScopStmt *stmt, const SCEV *scev,
-                              const Value *baseAddress) {
+                              const Value *baseAddress = 0) {
     SCEVAffinator Affinator(stmt, baseAddress);
     return Affinator.visit(scev);
   }
@@ -632,56 +632,32 @@ isl_set *ScopStmt::toConditionSet(const Comparison &Comp,
   return set;
 }
 
-isl_set *ScopStmt::toUpperLoopBound(const SCEVAffFunc &UpperBound,
-                                    isl_space *Space,
-				    unsigned BoundedDimension) const {
-  // FIXME: We should choose a consistent scheme of when to name the dimensions.
-  isl_space *UnnamedSpace = isl_space_copy(Space);
-  UnnamedSpace = isl_space_set_tuple_name(UnnamedSpace, isl_dim_set, 0);
-  isl_local_space *LocalSpace = isl_local_space_from_space(UnnamedSpace);
-  isl_aff *LAff = isl_aff_set_coefficient_si(isl_aff_zero_on_domain(LocalSpace),
-                                             isl_dim_in, BoundedDimension, 1);
-  isl_pw_aff *BoundedSpace = isl_pw_aff_from_aff(LAff);
-  isl_pw_aff *Bound = SCEVAffinator::getPwAff(this, UpperBound.OriginalSCEV, 0);
-  isl_set *set = isl_pw_aff_le_set(BoundedSpace, Bound);
-  set = isl_set_set_tuple_name(set, isl_space_get_tuple_name(Space, isl_dim_set));
-  isl_space_free(Space);
-  return set;
-}
-
 void ScopStmt::buildIterationDomainFromLoops(TempScop &tempScop) {
   isl_space *Space = isl_space_set_alloc(getIslCtx(), 0, getNumIterators());
-  Space = isl_space_set_tuple_name(Space, isl_dim_set, getBaseName());
 
   Domain = isl_set_universe(isl_space_copy(Space));
   Domain = isl_set_align_params(Domain, Parent.getParamSpace());
-
-  isl_int v;
-  isl_int_init(v);
-
-  isl_local_space *LocalSpace;
-  LocalSpace = isl_local_space_from_space(isl_space_copy(Space));
+  isl_local_space *LocalSpace = isl_local_space_from_space(Space);
 
   for (int i = 0, e = getNumIterators(); i != e; ++i) {
-    // Lower bound: IV >= 0.
-    isl_basic_set *bset = isl_basic_set_universe(isl_space_copy(Space));
-    isl_constraint *c = isl_inequality_alloc(isl_local_space_copy(LocalSpace));
-    isl_int_set_si(v, 1);
-    isl_constraint_set_coefficient(c, isl_dim_set, i, v);
-    bset = isl_basic_set_add_constraint(bset, c);
-    Domain = isl_set_intersect(Domain, isl_set_from_basic_set(bset));
+    isl_aff *Zero = isl_aff_zero_on_domain(isl_local_space_copy(LocalSpace));
+    isl_pw_aff *IV = isl_pw_aff_from_aff(
+      isl_aff_set_coefficient_si(Zero, isl_dim_in, i, 1));
 
-    // Upper bound: IV <= NumberOfIterations.
+    // 0 <= IV.
+    isl_set *LowerBound = isl_pw_aff_nonneg_set(isl_pw_aff_copy(IV));
+    Domain = isl_set_intersect(Domain, LowerBound);
+
+    // IV <= LatchExecutions.
     const Loop *L = getLoopForDimension(i);
-    const SCEVAffFunc &UpperBound = tempScop.getLoopBound(L);
-    isl_set *UpperBoundSet = toUpperLoopBound(UpperBound, isl_space_copy(Space),
-                                              i);
+    const SCEV *LatchExecutions = tempScop.getLoopBound(L).OriginalSCEV;
+    isl_pw_aff *UpperBound = SCEVAffinator::getPwAff(this, LatchExecutions);
+    isl_set *UpperBoundSet = isl_pw_aff_le_set(IV, UpperBound);
     Domain = isl_set_intersect(Domain, UpperBoundSet);
   }
 
+  Domain = isl_set_set_tuple_name(Domain, getBaseName());
   isl_local_space_free(LocalSpace);
-  isl_space_free(Space);
-  isl_int_clear(v);
 }
 
 void ScopStmt::addConditionsToDomain(TempScop &tempScop,
