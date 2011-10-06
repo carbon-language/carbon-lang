@@ -666,6 +666,7 @@ static LLVMOpcode map_to_llvmopcode(int opcode)
 	default:
 	    assert(false && "Unhandled Opcode.");
     }
+    return static_cast<LLVMOpcode>(0);
 }
 
 static int map_from_llvmopcode(LLVMOpcode code)
@@ -677,6 +678,7 @@ static int map_from_llvmopcode(LLVMOpcode code)
 	default:
 	    assert(false && "Unhandled Opcode.");
     }
+    return 0;
 }
 
 /*--.. Constant expressions ................................................--*/
