@@ -228,7 +228,7 @@ tgtok::TokKind TGLexer::LexIdentifier() {
   
   if (Len == 5 && !memcmp(IdentStart, "class", 5)) return tgtok::Class;
   if (Len == 3 && !memcmp(IdentStart, "def", 3)) return tgtok::Def;
-  if (Len == 8 && !memcmp(IdentStart, "multidef", 3)) return tgtok::MultiDef;
+  if (Len == 8 && !memcmp(IdentStart, "multidef", 8)) return tgtok::MultiDef;
   if (Len == 4 && !memcmp(IdentStart, "defm", 4)) return tgtok::Defm;
   if (Len == 10 && !memcmp(IdentStart, "multiclass", 10))
     return tgtok::MultiClass;
