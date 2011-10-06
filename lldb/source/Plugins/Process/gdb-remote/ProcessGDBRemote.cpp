@@ -345,8 +345,18 @@ ProcessGDBRemote::BuildDynamicRegisterInfo (bool force)
         // We didn't get anything. See if we are debugging ARM and fill with
         // a hard coded register set until we can get an updated debugserver
         // down on the devices.
-        if (GetTarget().GetArchitecture().GetMachine() == llvm::Triple::arm)
+
+        if (!GetTarget().GetArchitecture().IsValid()
+            && m_gdb_comm.GetHostArchitecture().IsValid()
+            && m_gdb_comm.GetHostArchitecture().GetMachine() == llvm::Triple::arm
+            && m_gdb_comm.GetHostArchitecture().GetTriple().getVendor() == llvm::Triple::Apple)
+        {
             m_register_info.HardcodeARMRegisters();
+        }
+        else if (GetTarget().GetArchitecture().GetMachine() == llvm::Triple::arm)
+        {
+            m_register_info.HardcodeARMRegisters();
+        }
     }
     m_register_info.Finalize ();
 }
