@@ -724,15 +724,18 @@ DecodeStatus ThumbDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
   result = decodeThumb2Instruction16(MI, insn16, Address, this, STI);
   if (result != MCDisassembler::Fail) {
     Size = 2;
+
+    // Nested IT blocks are UNPREDICTABLE.  Must be checked before we add
+    // the Thumb predicate.
+    if (MI.getOpcode() == ARM::t2IT && !ITBlock.empty())
+      result = MCDisassembler::SoftFail;
+
     Check(result, AddThumbPredicate(MI));
 
     // If we find an IT instruction, we need to parse its condition
     // code and mask operands so that we can apply them correctly
     // to the subsequent instructions.
     if (MI.getOpcode() == ARM::t2IT) {
-      // Nested IT blocks are UNPREDICTABLE.
-      if (!ITBlock.empty())
-        return MCDisassembler::SoftFail;
 
       // (3 - the number of trailing zeros) is the number of then / else.
       unsigned firstcond = MI.getOperand(0).getImm();
