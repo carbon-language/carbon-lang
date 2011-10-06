@@ -24,6 +24,7 @@
 #include "NameToDIE.h"
 #include "SymbolFileDWARF.h"
 
+using namespace lldb;
 using namespace lldb_private;
 using namespace std;
 
@@ -353,7 +354,7 @@ DWARFCompileUnit::GetFunctionAranges ()
     if (m_func_aranges_ap.get() == NULL)
     {
         m_func_aranges_ap.reset (new DWARFDebugAranges());
-        Log *log = LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_ARANGES);
+        LogSP log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_ARANGES));
 
         if (log)
             log->Printf ("DWARFCompileUnit::GetFunctionAranges() for \"%s/%s\" compile unit at 0x%8.8x",

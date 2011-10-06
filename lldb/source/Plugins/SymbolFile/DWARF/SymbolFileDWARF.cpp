@@ -1943,6 +1943,15 @@ SymbolFileDWARF::Index ()
 uint32_t
 SymbolFileDWARF::FindGlobalVariables (const ConstString &name, bool append, uint32_t max_matches, VariableList& variables)
 {
+    LogSP log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_LOOKUPS));
+
+    if (log)
+    {
+        log->Printf ("SymbolFileDWARF::FindGlobalVariables (file=\"%s/%s\", name=\"%s\", append=%u, max_matches=%u, variables)", 
+                     m_obj_file->GetFileSpec().GetDirectory().GetCString(),
+                     m_obj_file->GetFileSpec().GetFilename().GetCString(),
+                     name.GetCString(), append, max_matches);
+    }
     DWARFDebugInfo* info = DebugInfo();
     if (info == NULL)
         return 0;
@@ -2007,6 +2016,16 @@ SymbolFileDWARF::FindGlobalVariables (const ConstString &name, bool append, uint
 uint32_t
 SymbolFileDWARF::FindGlobalVariables(const RegularExpression& regex, bool append, uint32_t max_matches, VariableList& variables)
 {
+    LogSP log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_LOOKUPS));
+    
+    if (log)
+    {
+        log->Printf ("SymbolFileDWARF::FindGlobalVariables (file=\"%s/%s\", regex=\"%s\", append=%u, max_matches=%u, variables)", 
+                     m_obj_file->GetFileSpec().GetDirectory().GetCString(),
+                     m_obj_file->GetFileSpec().GetFilename().GetCString(),
+                     regex.GetText(), append, max_matches);
+    }
+
     DWARFDebugInfo* info = DebugInfo();
     if (info == NULL)
         return 0;
@@ -2267,6 +2286,16 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
                         "SymbolFileDWARF::FindFunctions (name = '%s')",
                         name.AsCString());
 
+    LogSP log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_LOOKUPS));
+    
+    if (log)
+    {
+        log->Printf ("SymbolFileDWARF::FindFunctions (file=\"%s/%s\", name=\"%s\", name_type_mask=0x%x, append=%u, sc_list)", 
+                     m_obj_file->GetFileSpec().GetDirectory().GetCString(),
+                     m_obj_file->GetFileSpec().GetFilename().GetCString(),
+                     name.GetCString(), name_type_mask, append);
+    }
+
     // If we aren't appending the results to this list, then clear the list
     if (!append)
         sc_list.Clear();
@@ -2314,6 +2343,17 @@ SymbolFileDWARF::FindFunctions(const RegularExpression& regex, bool append, Symb
     Timer scoped_timer (__PRETTY_FUNCTION__,
                         "SymbolFileDWARF::FindFunctions (regex = '%s')",
                         regex.GetText());
+
+    LogSP log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_LOOKUPS));
+    
+    if (log)
+    {
+        log->Printf ("SymbolFileDWARF::FindFunctions (file=\"%s/%s\", regex=\"%s\"append=%u, sc_list)", 
+                     m_obj_file->GetFileSpec().GetDirectory().GetCString(),
+                     m_obj_file->GetFileSpec().GetFilename().GetCString(),
+                     regex.GetText(), append);
+    }
+    
 
     // If we aren't appending the results to this list, then clear the list
     if (!append)
@@ -2383,6 +2423,16 @@ SymbolFileDWARF::FindTypes(const SymbolContext& sc, const ConstString &name, boo
     if (info == NULL)
         return 0;
 
+    LogSP log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_LOOKUPS));
+    
+    if (log)
+    {
+        log->Printf ("SymbolFileDWARF::FindFunctions (file=\"%s/%s\", sc, name=\"%s\", append=%u, max_matches=%u, type_list)", 
+                     m_obj_file->GetFileSpec().GetDirectory().GetCString(),
+                     m_obj_file->GetFileSpec().GetFilename().GetCString(),
+                     name.GetCString(), append, max_matches);
+    }
+
     // If we aren't appending the results to this list, then clear the list
     if (!append)
         types.Clear();
@@ -2447,6 +2497,16 @@ ClangNamespaceDecl
 SymbolFileDWARF::FindNamespace (const SymbolContext& sc, 
                                 const ConstString &name)
 {
+    LogSP log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_LOOKUPS));
+    
+    if (log)
+    {
+        log->Printf ("SymbolFileDWARF::FindNamespace (file=\"%s/%s\", sc, name=\"%s\")", 
+                     m_obj_file->GetFileSpec().GetDirectory().GetCString(),
+                     m_obj_file->GetFileSpec().GetFilename().GetCString(),
+                     name.GetCString());
+    }
+
     ClangNamespaceDecl namespace_decl;
     DWARFDebugInfo* info = DebugInfo();
     if (info)
@@ -3206,7 +3266,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
     AccessType accessibility = eAccessNone;
     if (die != NULL)
     {
-        Log *log = LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_INFO);
+        LogSP log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_INFO));
         if (log && dwarf_cu)
         {
             StreamString s;

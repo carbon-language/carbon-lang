@@ -109,6 +109,7 @@ LogChannelDWARF::Disable (Args &categories, Stream *feedback_strm)
         else if (::strcasecmp (arg, "pubnames")   == 0   ) flag_bits &= ~DWARF_LOG_DEBUG_PUBNAMES;
         else if (::strcasecmp (arg, "pubtypes")   == 0   ) flag_bits &= ~DWARF_LOG_DEBUG_PUBTYPES;
         else if (::strcasecmp (arg, "aranges")    == 0   ) flag_bits &= ~DWARF_LOG_DEBUG_ARANGES;
+        else if (::strcasecmp (arg, "lookups")    == 0   ) flag_bits &= ~DWARF_LOG_LOOKUPS;
         else if (::strcasecmp (arg, "default")    == 0   ) flag_bits &= ~DWARF_LOG_DEFAULT;
         else
         {
@@ -151,6 +152,7 @@ LogChannelDWARF::Enable
         else if (::strcasecmp (arg, "pubnames")   == 0   ) flag_bits |= DWARF_LOG_DEBUG_PUBNAMES;
         else if (::strcasecmp (arg, "pubtypes")   == 0   ) flag_bits |= DWARF_LOG_DEBUG_PUBTYPES;
         else if (::strcasecmp (arg, "aranges")    == 0   ) flag_bits |= DWARF_LOG_DEBUG_ARANGES;
+        else if (::strcasecmp (arg, "lookups")    == 0   ) flag_bits |= DWARF_LOG_LOOKUPS;
         else if (::strcasecmp (arg, "default")    == 0   ) flag_bits |= DWARF_LOG_DEFAULT;
         else
         {
@@ -177,29 +179,29 @@ LogChannelDWARF::ListCategories (Stream *strm)
                   "  info - log the parsing if .debug_info\n"
                   "  line - log the parsing if .debug_line\n"
                   "  pubnames - log the parsing if .debug_pubnames\n"
-                  "  pubtypes - log the parsing if .debug_pubtypes\n\n",
+                  "  pubtypes - log the parsing if .debug_pubtypes\n"
+                  "  lookups - log any lookups that happen by name, regex, or address\n\n",
                   SymbolFileDWARF::GetPluginNameStatic());
 }
 
-Log *
+LogSP
 LogChannelDWARF::GetLog ()
 {
     if (g_log_channel)
-        return g_log_channel->m_log_sp.get();
-    else
-        return NULL;
+        return g_log_channel->m_log_sp;
+
+    return LogSP();
 }
 
-Log *
+LogSP
 LogChannelDWARF::GetLogIfAll (uint32_t mask)
 {
-    Log *log = GetLog();
-    if (log)
+    if (g_log_channel && g_log_channel->m_log_sp)
     {
-        if (log->GetMask().AllSet(mask))
-            return log;
+        if (g_log_channel->m_log_sp->GetMask().AllSet(mask))
+            return g_log_channel->m_log_sp;
     }
-    return NULL;
+    return LogSP();
 }
 
 

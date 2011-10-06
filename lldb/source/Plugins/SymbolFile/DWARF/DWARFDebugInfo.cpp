@@ -24,6 +24,7 @@
 #include "DWARFFormValue.h"
 #include "LogChannelDWARF.h"
 
+using namespace lldb;
 using namespace lldb_private;
 using namespace std;
 
@@ -53,7 +54,7 @@ DWARFDebugInfo::GetCompileUnitAranges ()
 {
     if (m_cu_aranges_ap.get() == NULL && m_dwarf2Data)
     {
-        Log *log = LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_ARANGES);
+        LogSP log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_ARANGES));
 
         m_cu_aranges_ap.reset (new DWARFDebugAranges());
         const DataExtractor &debug_aranges_data = m_dwarf2Data->get_debug_aranges_data();

@@ -19,6 +19,7 @@
 #include "SymbolFileDWARF.h"
 #include "LogChannelDWARF.h"
 
+using namespace lldb;
 using namespace lldb_private;
 using namespace std;
 
@@ -560,7 +561,7 @@ DWARFDebugLine::ParseStatementTable
     void* userData
 )
 {
-    Log *log = LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_LINE);
+    LogSP log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_LINE));
     Prologue::shared_ptr prologue(new Prologue());
 
 
@@ -580,11 +581,11 @@ DWARFDebugLine::ParseStatementTable
     }
 
     if (log)
-        prologue->Dump (log);
+        prologue->Dump (log.get());
 
     const dw_offset_t end_offset = debug_line_offset + prologue->total_length + sizeof(prologue->total_length);
 
-    State state(prologue, log, callback, userData);
+    State state(prologue, log.get(), callback, userData);
 
     while (*offset_ptr < end_offset)
     {

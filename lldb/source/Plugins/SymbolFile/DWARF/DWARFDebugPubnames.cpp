@@ -20,6 +20,7 @@
 #include "SymbolFileDWARF.h"
 
 
+using namespace lldb;
 using namespace lldb_private;
 
 DWARFDebugPubnames::DWARFDebugPubnames() :
@@ -33,7 +34,7 @@ DWARFDebugPubnames::Extract(const DataExtractor& data)
     Timer scoped_timer (__PRETTY_FUNCTION__,
                         "DWARFDebugPubnames::Extract (byte_size = %zu)",
                         data.GetByteSize());
-    Log *log = LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_PUBNAMES);
+    LogSP log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_PUBNAMES));
     if (log)
         log->Printf("DWARFDebugPubnames::Extract (byte_size = %zu)", data.GetByteSize());
 
@@ -53,7 +54,7 @@ DWARFDebugPubnames::Extract(const DataExtractor& data)
                 break;
         }
         if (log)
-            Dump (log);
+            Dump (log.get());
         return true;
     }
     return false;
@@ -67,7 +68,7 @@ DWARFDebugPubnames::GeneratePubnames(SymbolFileDWARF* dwarf2Data)
                         "DWARFDebugPubnames::GeneratePubnames (data = %p)",
                         dwarf2Data);
 
-    Log *log = LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_PUBNAMES);
+    LogSP log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_PUBNAMES));
     if (log)
         log->Printf("DWARFDebugPubnames::GeneratePubnames (data = %p)", dwarf2Data);
 
@@ -207,7 +208,7 @@ DWARFDebugPubnames::GeneratePubnames(SymbolFileDWARF* dwarf2Data)
     if (m_sets.empty())
         return false;
     if (log)
-        Dump (log);
+        Dump (log.get());
     return true;
 }
 

@@ -23,6 +23,7 @@
 #define DWARF_LOG_DEBUG_PUBNAMES    (1u << 3)
 #define DWARF_LOG_DEBUG_PUBTYPES    (1u << 4)
 #define DWARF_LOG_DEBUG_ARANGES     (1u << 5)
+#define DWARF_LOG_LOOKUPS           (1u << 6)
 #define DWARF_LOG_ALL               (UINT32_MAX)
 #define DWARF_LOG_DEFAULT           (DWARF_LOG_DEBUG_INFO)
 
@@ -73,10 +74,10 @@ public:
     virtual void
     ListCategories (lldb_private::Stream *strm);
 
-    static lldb_private::Log *
+    static lldb::LogSP
     GetLog ();
 
-    static lldb_private::Log *
+    static lldb::LogSP
     GetLogIfAll (uint32_t mask);
 
     static void

@@ -23,6 +23,7 @@
 #include "DWARFDebugInfo.h"
 #include "DWARFCompileUnit.h"
 
+using namespace lldb;
 using namespace lldb_private;
 
 //----------------------------------------------------------------------
@@ -261,12 +262,12 @@ DWARFDebugAranges::Sort (bool minimize, uint32_t n)
     Timer scoped_timer(__PRETTY_FUNCTION__, "%s this = %p",
                        __PRETTY_FUNCTION__, this);
 
-    Log *log = LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_ARANGES);
+    LogSP log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_ARANGES));
     const size_t orig_arange_size = m_aranges.size();
     if (log)
     {
         log->Printf ("DWARFDebugAranges::Sort(minimize = %u, n = %u) with %zu entries", minimize, n, orig_arange_size);
-        Dump (log);
+        Dump (log.get());
     }
 
     // Size of one? If so, no sorting is needed
@@ -331,7 +332,7 @@ DWARFDebugAranges::Sort (bool minimize, uint32_t n)
         size_t delta = orig_arange_size - m_aranges.size();
         log->Printf ("DWARFDebugAranges::Sort() %zu entries after minimizing (%zu entries combined for %zu bytes saved)", 
                      m_aranges.size(), delta, delta * sizeof(Range));
-        Dump (log);
+        Dump (log.get());
     }
 }
 
