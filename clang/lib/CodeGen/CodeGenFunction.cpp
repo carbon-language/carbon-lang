@@ -13,6 +13,7 @@
 
 #include "CodeGenFunction.h"
 #include "CodeGenModule.h"
+#include "CGCUDARuntime.h"
 #include "CGCXXABI.h"
 #include "CGDebugInfo.h"
 #include "CGException.h"
@@ -404,6 +405,10 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn,
     EmitDestructorBody(Args);
   else if (isa<CXXConstructorDecl>(FD))
     EmitConstructorBody(Args);
+  else if (getContext().getLangOptions().CUDA &&
+           !CGM.getCodeGenOpts().CUDAIsDevice &&
+           FD->hasAttr<CUDAGlobalAttr>())
+    CGM.getCUDARuntime().EmitDeviceStubBody(*this, Args);
   else
     EmitFunctionBody(Args);
 

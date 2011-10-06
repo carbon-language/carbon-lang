@@ -24,6 +24,7 @@ namespace CodeGen {
 
 class CodeGenFunction;
 class CodeGenModule;
+class FunctionArgList;
 class ReturnValueSlot;
 class RValue;
 
@@ -39,6 +40,9 @@ public:
                                         const CUDAKernelCallExpr *E,
                                         ReturnValueSlot ReturnValue);
   
+  virtual void EmitDeviceStubBody(CodeGenFunction &CGF,
+                                  FunctionArgList &Args) = 0;
+
 };
 
 /// Creates an instance of a CUDA runtime class.
