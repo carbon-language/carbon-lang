@@ -5685,42 +5685,84 @@ EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
   // context.
   SetupEntryBlockForSjLj(MI, MBB, DispatchBB, FI);
 
-  // Grab constant pool and fixed stack memory operands.
   MachineMemOperand *FIMMOLd =
     MF->getMachineMemOperand(MachinePointerInfo::getFixedStack(FI),
                              MachineMemOperand::MOLoad, 4, 4);
 
-  unsigned NewVReg1 = MRI->createVirtualRegister(TRC);
-  AddDefaultPred(BuildMI(DispatchBB, dl, TII->get(ARM::t2LDRi12), NewVReg1)
-                 .addFrameIndex(FI)
-                 .addImm(4)
-                 .addMemOperand(FIMMOLd));
-  AddDefaultPred(BuildMI(DispatchBB, dl, TII->get(ARM::t2CMPri))
-                 .addReg(NewVReg1)
-                 .addImm(LPadList.size()));
-  BuildMI(DispatchBB, dl, TII->get(ARM::t2Bcc))
-    .addMBB(TrapBB)
-    .addImm(ARMCC::HI)
-    .addReg(ARM::CPSR);
+  if (Subtarget->isThumb2()) {
+    unsigned NewVReg1 = MRI->createVirtualRegister(TRC);
+    AddDefaultPred(BuildMI(DispatchBB, dl, TII->get(ARM::t2LDRi12), NewVReg1)
+                   .addFrameIndex(FI)
+                   .addImm(4)
+                   .addMemOperand(FIMMOLd));
+    AddDefaultPred(BuildMI(DispatchBB, dl, TII->get(ARM::t2CMPri))
+                   .addReg(NewVReg1)
+                   .addImm(LPadList.size()));
+    BuildMI(DispatchBB, dl, TII->get(ARM::t2Bcc))
+      .addMBB(TrapBB)
+      .addImm(ARMCC::HI)
+      .addReg(ARM::CPSR);
 
-  unsigned NewVReg2 = MRI->createVirtualRegister(TRC);
-  AddDefaultPred(BuildMI(DispContBB, dl, TII->get(ARM::t2LEApcrelJT), NewVReg2)
-                 .addJumpTableIndex(MJTI)
-                 .addImm(UId));
+    unsigned NewVReg2 = MRI->createVirtualRegister(TRC);
+    AddDefaultPred(BuildMI(DispContBB, dl, TII->get(ARM::t2LEApcrelJT),NewVReg2)
+                   .addJumpTableIndex(MJTI)
+                   .addImm(UId));
 
-  unsigned NewVReg3 = MRI->createVirtualRegister(TRC);
-  AddDefaultCC(
-    AddDefaultPred(
-      BuildMI(DispContBB, dl, TII->get(ARM::t2ADDrs), NewVReg3)
-      .addReg(NewVReg2, RegState::Kill)
+    unsigned NewVReg3 = MRI->createVirtualRegister(TRC);
+    AddDefaultCC(
+      AddDefaultPred(
+        BuildMI(DispContBB, dl, TII->get(ARM::t2ADDrs), NewVReg3)
+        .addReg(NewVReg2, RegState::Kill)
+        .addReg(NewVReg1)
+        .addImm(ARM_AM::getSORegOpc(ARM_AM::lsl, 2))));
+
+    BuildMI(DispContBB, dl, TII->get(ARM::t2BR_JT))
+      .addReg(NewVReg3, RegState::Kill)
       .addReg(NewVReg1)
-      .addImm(ARM_AM::getSORegOpc(ARM_AM::lsl, 2))));
+      .addJumpTableIndex(MJTI)
+      .addImm(UId);
+  } else if (Subtarget->isThumb()) {
+  } else {
+    unsigned NewVReg1 = MRI->createVirtualRegister(TRC);
+    AddDefaultPred(BuildMI(DispatchBB, dl, TII->get(ARM::LDRi12), NewVReg1)
+                   .addFrameIndex(FI)
+                   .addImm(4)
+                   .addMemOperand(FIMMOLd));
+    AddDefaultPred(BuildMI(DispatchBB, dl, TII->get(ARM::CMPri))
+                   .addReg(NewVReg1)
+                   .addImm(LPadList.size()));
+    BuildMI(DispatchBB, dl, TII->get(ARM::Bcc))
+      .addMBB(TrapBB)
+      .addImm(ARMCC::HI)
+      .addReg(ARM::CPSR);
 
-  BuildMI(DispContBB, dl, TII->get(ARM::t2BR_JT))
-    .addReg(NewVReg3, RegState::Kill)
-    .addReg(NewVReg1)
-    .addJumpTableIndex(MJTI)
-    .addImm(UId);
+    unsigned NewVReg2 = MRI->createVirtualRegister(TRC);
+    AddDefaultCC(
+      AddDefaultPred(BuildMI(DispContBB, dl, TII->get(ARM::MOVsi), NewVReg2)
+                     .addReg(NewVReg1)
+                     .addImm(ARM_AM::getSORegOpc(ARM_AM::lsl, 2))));
+    unsigned NewVReg3 = MRI->createVirtualRegister(TRC);
+    AddDefaultPred(BuildMI(DispContBB, dl, TII->get(ARM::LEApcrelJT), NewVReg3)
+                   .addJumpTableIndex(MJTI)
+                   .addImm(UId));
+
+    MachineMemOperand *JTMMOLd =
+      MF->getMachineMemOperand(MachinePointerInfo::getJumpTable(),
+                               MachineMemOperand::MOLoad, 4, 4);
+    unsigned NewVReg4 = MRI->createVirtualRegister(TRC);
+    AddDefaultPred(
+      BuildMI(DispContBB, dl, TII->get(ARM::LDRrs), NewVReg4)
+      .addReg(NewVReg2, RegState::Kill)
+      .addReg(NewVReg3)
+      .addImm(0)
+      .addMemOperand(JTMMOLd));
+
+    BuildMI(DispContBB, dl, TII->get(ARM::BR_JTadd))
+      .addReg(NewVReg4, RegState::Kill)
+      .addReg(NewVReg3)
+      .addJumpTableIndex(MJTI)
+      .addImm(UId);
+  }
 
   // Add the jump table entries as successors to the MBB.
   for (std::vector<MachineBasicBlock*>::iterator
