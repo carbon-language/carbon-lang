@@ -28,7 +28,7 @@ bool ScopPass::runOnRegion(Region *R, RGPassManager &RGM) {
 
 isl_ctx *ScopPass::getIslContext() {
   assert(S && "Not in on a Scop!");
-  return S->getCtx();
+  return S->getIslCtx();
 }
 
 void ScopPass::print(raw_ostream &OS, const Module *M) const {

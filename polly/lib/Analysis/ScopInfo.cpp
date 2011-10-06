@@ -115,7 +115,7 @@ public:
   }
 
   SCEVAffinator(const ScopStmt *stmt, const Value *baseAddress) :
-    ctx(stmt->getParent()->getCtx()),
+    ctx(stmt->getIslCtx()),
     NbLoopSpaces(stmt->getNumIterators()),
     scop(stmt->getParent()),
     baseAddress(baseAddress) {};
@@ -300,7 +300,7 @@ std::string MemoryAccess::getAccessFunctionStr() const {
 }
 
 isl_basic_map *MemoryAccess::createBasicAccessMap(ScopStmt *Statement) {
-  isl_space *Space = isl_space_alloc(Statement->getIslContext(), 0,
+  isl_space *Space = isl_space_alloc(Statement->getIslCtx(), 0,
                                     Statement->getNumIterators(), 1);
   setBaseName();
 
@@ -520,7 +520,7 @@ void ScopStmt::setScattering(isl_map *scattering) {
 void ScopStmt::buildScattering(SmallVectorImpl<unsigned> &Scatter) {
   unsigned NumberOfIterators = getNumIterators();
   unsigned ScatSpace = Parent.getMaxLoopDepth() * 2 + 1;
-  isl_space *Space = isl_space_alloc(Parent.getCtx(), 0, NumberOfIterators,
+  isl_space *Space = isl_space_alloc(getIslCtx(), 0, NumberOfIterators,
                                      ScatSpace);
   Space = isl_space_set_tuple_name(Space, isl_dim_out, "scattering");
   Space = isl_space_set_tuple_name(Space, isl_dim_in, getBaseName());
@@ -637,7 +637,7 @@ isl_set *ScopStmt::toUpperLoopBound(const SCEVAffFunc &UpperBound,
 }
 
 void ScopStmt::buildIterationDomainFromLoops(TempScop &tempScop) {
-  isl_space *Space = isl_space_set_alloc(getIslContext(), 0, getNumIterators());
+  isl_space *Space = isl_space_set_alloc(getIslCtx(), 0, getNumIterators());
   Space = isl_space_set_tuple_name(Space, isl_dim_set, getBaseName());
 
   Domain = isl_set_universe(isl_space_copy(Space));
@@ -734,14 +734,13 @@ ScopStmt::ScopStmt(Scop &parent, SmallVectorImpl<unsigned> &Scatter)
 
   // Build iteration domain.
   std::string IterationDomainString = "{[i0] : i0 = 0}";
-  Domain = isl_set_read_from_str(Parent.getCtx(),
-                                 IterationDomainString.c_str());
+  Domain = isl_set_read_from_str(getIslCtx(), IterationDomainString.c_str());
   Domain = isl_set_set_tuple_name(Domain, getBaseName());
   Domain = isl_set_align_params(Domain, parent.getParamSpace());
 
   // Build scattering.
   unsigned ScatSpace = Parent.getMaxLoopDepth() * 2 + 1;
-  isl_space *Space = isl_space_alloc(Parent.getCtx(), 0, 1, ScatSpace);
+  isl_space *Space = isl_space_alloc(getIslCtx(), 0, 1, ScatSpace);
   Space = isl_space_set_tuple_name(Space, isl_dim_out, "scattering");
   Space = isl_space_set_tuple_name(Space, isl_dim_in, getBaseName());
   isl_basic_map *bmap = isl_basic_map_universe(isl_space_copy(Space));
@@ -825,8 +824,8 @@ const SCEVAddRecExpr *ScopStmt::getSCEVForDimension(unsigned Dimension)
   return cast<SCEVAddRecExpr>(getParent()->getSE()->getSCEV(PN));
 }
 
-isl_ctx *ScopStmt::getIslContext() {
-  return Parent.getCtx();
+isl_ctx *ScopStmt::getIslCtx() const {
+  return Parent.getIslCtx();
 }
 
 isl_set *ScopStmt::getDomain() const {
@@ -970,7 +969,7 @@ void Scop::print(raw_ostream &OS) const {
 
 void Scop::dump() const { print(dbgs()); }
 
-isl_ctx *Scop::getCtx() const { return isl_set_get_ctx(Context); }
+isl_ctx *Scop::getIslCtx() const { return isl_set_get_ctx(Context); }
 
 ScalarEvolution *Scop::getSE() const { return SE; }
 

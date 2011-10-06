@@ -236,7 +236,7 @@ bool JSONImporter::runOnScop(Scop &scop) {
       continue;
     Json::Value schedule = jscop["statements"][index]["schedule"];
 
-    isl_map *m = isl_map_read_from_str(S->getCtx(), schedule.asCString());
+    isl_map *m = isl_map_read_from_str(S->getIslCtx(), schedule.asCString());
     NewScattering[*SI] = m;
     index++;
   }
@@ -266,7 +266,7 @@ bool JSONImporter::runOnScop(Scop &scop) {
          ME = Stmt->memacc_end(); MI != ME; ++MI) {
       Json::Value accesses = jscop["statements"][statementIdx]
                                   ["accesses"][memoryAccessIdx]["relation"];
-      isl_map *newAccessMap = isl_map_read_from_str(S->getCtx(),
+      isl_map *newAccessMap = isl_map_read_from_str(S->getIslCtx(),
                                                     accesses.asCString());
       isl_map *currentAccessMap = (*MI)->getAccessFunction();
       if (!isl_map_has_equal_space(currentAccessMap, newAccessMap)) {

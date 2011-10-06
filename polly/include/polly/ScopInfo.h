@@ -282,7 +282,7 @@ public:
   ~ScopStmt();
 
   /// @brief Get an isl_ctx pointer.
-  isl_ctx *getIslContext();
+  isl_ctx *getIslCtx() const;
 
   /// @brief Get the iteration domain of this ScopStmt.
   ///
@@ -536,7 +536,7 @@ public:
   /// @brief Get the isl context of this static control part.
   ///
   /// @return The isl context of this static control part.
-  isl_ctx *getCtx() const;
+  isl_ctx *getIslCtx() const;
 };
 
 /// @brief Print Scop scop to raw_ostream O.

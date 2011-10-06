@@ -62,7 +62,7 @@ public:
 };
 
 Cloog::Cloog(Scop *Scop) : S(Scop) {
-  State = cloog_isl_state_malloc(Scop->getCtx());
+  State = cloog_isl_state_malloc(Scop->getIslCtx());
   buildCloogOptions();
   ClastRoot = cloog_clast_create_from_input(buildCloogInput(), Options);
 }

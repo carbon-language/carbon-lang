@@ -302,7 +302,7 @@ bool Dependences::isParallelDimension(isl_set *loopDomain,
 
   isl_union_set *distance_waw = isl_union_map_deltas(restrictedDeps_waw);
 
-  isl_space *Space = isl_space_set_alloc(S->getCtx(), 0, parallelDimension);
+  isl_space *Space = isl_space_set_alloc(S->getIslCtx(), 0, parallelDimension);
 
   // [0, 0, 0, 0] - All zero
   isl_basic_set *allZeroBS = isl_basic_set_universe(isl_space_copy(Space));
