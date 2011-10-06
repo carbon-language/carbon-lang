@@ -29,7 +29,8 @@ class DereferenceChecker
   mutable llvm::OwningPtr<BuiltinBug> BT_undef;
 
 public:
-  void checkLocation(SVal location, bool isLoad, CheckerContext &C) const;
+  void checkLocation(SVal location, bool isLoad, const Stmt* S,
+                     CheckerContext &C) const;
 
   static void AddDerefSource(raw_ostream &os,
                              SmallVectorImpl<SourceRange> &Ranges,
@@ -38,7 +39,7 @@ public:
 } // end anonymous namespace
 
 void DereferenceChecker::AddDerefSource(raw_ostream &os,
-                                     SmallVectorImpl<SourceRange> &Ranges,
+                                        SmallVectorImpl<SourceRange> &Ranges,
                                         const Expr *Ex,
                                         bool loadedFrom) {
   Ex = Ex->IgnoreParenLValueCasts();
@@ -65,7 +66,7 @@ void DereferenceChecker::AddDerefSource(raw_ostream &os,
   }
 }
 
-void DereferenceChecker::checkLocation(SVal l, bool isLoad,
+void DereferenceChecker::checkLocation(SVal l, bool isLoad, const Stmt* S,
                                        CheckerContext &C) const {
   // Check for dereference of an undefined value.
   if (l.isUndef()) {
@@ -88,7 +89,6 @@ void DereferenceChecker::checkLocation(SVal l, bool isLoad,
   if (!isa<Loc>(location))
     return;
 
-  const Stmt *S = C.getStmt();
   const ProgramState *state = C.getState();
   const ProgramState *notNullState, *nullState;
   llvm::tie(notNullState, nullState) = state->assume(location);

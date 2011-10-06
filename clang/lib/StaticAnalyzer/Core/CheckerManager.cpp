@@ -219,7 +219,7 @@ namespace {
       CheckerContext C(Dst, Eng.getBuilder(), Eng, Pred, checkFn.Checker,
                        IsLoad ? ProgramPoint::PreLoadKind :
                        ProgramPoint::PreStoreKind, 0, S);
-      checkFn(Loc, IsLoad, C);
+      checkFn(Loc, IsLoad, S, C);
     }
   };
 }
@@ -253,7 +253,7 @@ namespace {
                     ExplodedNodeSet &Dst, ExplodedNode *Pred) {
       CheckerContext C(Dst, Eng.getBuilder(), Eng, Pred, checkFn.Checker,
                        ProgramPoint::PreStmtKind, 0, S);
-      checkFn(Loc, Val, C);
+      checkFn(Loc, Val, S, C);
     }
   };
 }

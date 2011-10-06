@@ -80,7 +80,6 @@ public:
   ExplodedNodeSet &getNodeSet() { return Dst; }
   ExplodedNode *&getPredecessor() { return Pred; }
   const ProgramState *getState() { return ST ? ST : Pred->getState(); }
-  const Stmt *getStmt() const { return statement; }
 
   /// \brief Returns the number of times the current block has been visited
   /// along the analyzed path.

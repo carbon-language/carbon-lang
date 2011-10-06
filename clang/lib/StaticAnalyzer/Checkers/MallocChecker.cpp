@@ -82,8 +82,10 @@ public:
   void checkPreStmt(const ReturnStmt *S, CheckerContext &C) const;
   const ProgramState *evalAssume(const ProgramState *state, SVal Cond,
                             bool Assumption) const;
-  void checkLocation(SVal l, bool isLoad, CheckerContext &C) const;
-  void checkBind(SVal location, SVal val, CheckerContext &C) const;
+  void checkLocation(SVal l, bool isLoad, const Stmt *S,
+                     CheckerContext &C) const;
+  void checkBind(SVal location, SVal val, const Stmt*S,
+                 CheckerContext &C) const;
 
 private:
   static void MallocMem(CheckerContext &C, const CallExpr *CE);
@@ -661,7 +663,8 @@ const ProgramState *MallocChecker::evalAssume(const ProgramState *state, SVal Co
 }
 
 // Check if the location is a freed symbolic region.
-void MallocChecker::checkLocation(SVal l, bool isLoad,CheckerContext &C) const {
+void MallocChecker::checkLocation(SVal l, bool isLoad, const Stmt *S,
+                                  CheckerContext &C) const {
   SymbolRef Sym = l.getLocSymbolInBase();
   if (Sym) {
     const RefState *RS = C.getState()->get<RegionState>(Sym);
@@ -679,7 +682,8 @@ void MallocChecker::checkLocation(SVal l, bool isLoad,CheckerContext &C) const {
   }
 }
 
-void MallocChecker::checkBind(SVal location, SVal val,CheckerContext &C) const {
+void MallocChecker::checkBind(SVal location, SVal val,
+                              const Stmt *BindS, CheckerContext &C) const {
   // The PreVisitBind implements the same algorithm as already used by the 
   // Objective C ownership checker: if the pointer escaped from this scope by 
   // assignment, let it go.  However, assigning to fields of a stack-storage 
@@ -728,7 +732,7 @@ void MallocChecker::checkBind(SVal location, SVal val,CheckerContext &C) const {
           // We no longer own this pointer.
           notNullState =
             notNullState->set<RegionState>(Sym,
-                                        RefState::getRelinquished(C.getStmt()));
+                                        RefState::getRelinquished(BindS));
         }
         while (false);
       }

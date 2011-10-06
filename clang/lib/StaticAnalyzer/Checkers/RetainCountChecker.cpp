@@ -2409,7 +2409,7 @@ public:
   void printState(raw_ostream &Out, const ProgramState *State,
                   const char *NL, const char *Sep) const;
 
-  void checkBind(SVal loc, SVal val, CheckerContext &C) const;
+  void checkBind(SVal loc, SVal val, const Stmt *S, CheckerContext &C) const;
   void checkPostStmt(const BlockExpr *BE, CheckerContext &C) const;
   void checkPostStmt(const CastExpr *CE, CheckerContext &C) const;
 
@@ -3225,7 +3225,7 @@ void RetainCountChecker::checkReturnWithRetEffect(const ReturnStmt *S,
 // Check various ways a symbol can be invalidated.
 //===----------------------------------------------------------------------===//
 
-void RetainCountChecker::checkBind(SVal loc, SVal val,
+void RetainCountChecker::checkBind(SVal loc, SVal val, const Stmt *S,
                                    CheckerContext &C) const {
   // Are we storing to something that causes the value to "escape"?
   bool escapes = true;

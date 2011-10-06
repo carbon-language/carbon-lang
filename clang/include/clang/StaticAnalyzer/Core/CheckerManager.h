@@ -320,11 +320,13 @@ public:
   typedef CheckerFn<void (const ObjCMessage &, CheckerContext &)>
       CheckObjCMessageFunc;
   
-  typedef CheckerFn<void (const SVal &location, bool isLoad, CheckerContext &)>
+  typedef CheckerFn<void (const SVal &location, bool isLoad, const Stmt *S,
+                          CheckerContext &)>
       CheckLocationFunc;
   
-  typedef CheckerFn<void (const SVal &location, const SVal &val,
-                          CheckerContext &)> CheckBindFunc;
+  typedef CheckerFn<void (const SVal &location, const SVal &val, 
+                          const Stmt *S, CheckerContext &)> 
+      CheckBindFunc;
   
   typedef CheckerFn<void (ExplodedGraph &, BugReporter &, ExprEngine &)>
       CheckEndAnalysisFunc;

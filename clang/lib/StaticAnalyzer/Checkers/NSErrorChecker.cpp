@@ -157,7 +157,8 @@ public:
   NSOrCFErrorDerefChecker() : NSErrorII(0), CFErrorII(0),
                               ShouldCheckNSError(0), ShouldCheckCFError(0) { }
 
-  void checkLocation(SVal loc, bool isLoad, CheckerContext &C) const;
+  void checkLocation(SVal loc, bool isLoad, const Stmt *S,
+                     CheckerContext &C) const;
   void checkEvent(ImplicitNullDerefEvent event) const;
 };
 }
@@ -211,6 +212,7 @@ static QualType parameterTypeFromSVal(SVal val, CheckerContext &C) {
 }
 
 void NSOrCFErrorDerefChecker::checkLocation(SVal loc, bool isLoad,
+                                            const Stmt *S,
                                             CheckerContext &C) const {
   if (!isLoad)
     return;

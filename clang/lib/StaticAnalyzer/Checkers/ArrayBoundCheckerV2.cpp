@@ -34,7 +34,8 @@ class ArrayBoundCheckerV2 :
                  OOB_Kind kind) const;
       
 public:
-  void checkLocation(SVal l, bool isLoad, CheckerContext &C) const;
+  void checkLocation(SVal l, bool isLoad, const Stmt*S,
+                     CheckerContext &C) const;
 };
 
 // FIXME: Eventually replace RegionRawOffset with this class.
@@ -79,6 +80,7 @@ static SVal computeExtentBegin(SValBuilder &svalBuilder,
 }
 
 void ArrayBoundCheckerV2::checkLocation(SVal location, bool isLoad,
+                                        const Stmt* LoadS,
                                         CheckerContext &checkerContext) const {
 
   // NOTE: Instead of using ProgramState::assumeInBound(), we are prototyping

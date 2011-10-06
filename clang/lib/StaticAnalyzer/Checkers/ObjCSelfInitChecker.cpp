@@ -77,7 +77,8 @@ public:
   void checkPreStmt(const ReturnStmt *S, CheckerContext &C) const;
   void checkPreStmt(const CallExpr *CE, CheckerContext &C) const;
   void checkPostStmt(const CallExpr *CE, CheckerContext &C) const;
-  void checkLocation(SVal location, bool isLoad, CheckerContext &C) const;
+  void checkLocation(SVal location, bool isLoad, const Stmt *S,
+                     CheckerContext &C) const;
 };
 } // end anonymous namespace
 
@@ -295,6 +296,7 @@ void ObjCSelfInitChecker::checkPostStmt(const CallExpr *CE,
 }
 
 void ObjCSelfInitChecker::checkLocation(SVal location, bool isLoad,
+                                        const Stmt *S,
                                         CheckerContext &C) const {
   // Tag the result of a load from 'self' so that we can easily know that the
   // value is the object that 'self' points to.

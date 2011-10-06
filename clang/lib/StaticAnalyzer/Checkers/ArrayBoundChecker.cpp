@@ -27,11 +27,12 @@ class ArrayBoundChecker :
     public Checker<check::Location> {
   mutable llvm::OwningPtr<BuiltinBug> BT;
 public:
-  void checkLocation(SVal l, bool isLoad, CheckerContext &C) const;
+  void checkLocation(SVal l, bool isLoad, const Stmt* S,
+                     CheckerContext &C) const;
 };
 }
 
-void ArrayBoundChecker::checkLocation(SVal l, bool isLoad,
+void ArrayBoundChecker::checkLocation(SVal l, bool isLoad, const Stmt* LoadS,
                                       CheckerContext &C) const {
   // Check for out of bound array element access.
   const MemRegion *R = l.getAsRegion();
@@ -76,7 +77,7 @@ void ArrayBoundChecker::checkLocation(SVal l, bool isLoad,
     BugReport *report = 
       new BugReport(*BT, BT->getDescription(), N);
 
-    report->addRange(C.getStmt()->getSourceRange());
+    report->addRange(LoadS->getSourceRange());
     C.EmitReport(report);
     return;
   }

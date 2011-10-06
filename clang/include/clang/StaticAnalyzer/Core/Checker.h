@@ -152,9 +152,10 @@ public:
 
 class Location {
   template <typename CHECKER>
-  static void _checkLocation(void *checker, const SVal &location, bool isLoad,
+  static void _checkLocation(void *checker,
+                             const SVal &location, bool isLoad, const Stmt *S,
                              CheckerContext &C) {
-    ((const CHECKER *)checker)->checkLocation(location, isLoad, C);
+    ((const CHECKER *)checker)->checkLocation(location, isLoad, S, C);
   }
 
 public:
@@ -167,9 +168,10 @@ public:
 
 class Bind {
   template <typename CHECKER>
-  static void _checkBind(void *checker, const SVal &location, const SVal &val,
+  static void _checkBind(void *checker,
+                         const SVal &location, const SVal &val, const Stmt *S,
                          CheckerContext &C) {
-    ((const CHECKER *)checker)->checkBind(location, val, C);
+    ((const CHECKER *)checker)->checkBind(location, val, S, C);
   }
 
 public:

@@ -27,11 +27,13 @@ class UndefinedAssignmentChecker
   mutable llvm::OwningPtr<BugType> BT;
 
 public:
-  void checkBind(SVal location, SVal val, CheckerContext &C) const;
+  void checkBind(SVal location, SVal val, const Stmt *S,
+                 CheckerContext &C) const;
 };
 }
 
 void UndefinedAssignmentChecker::checkBind(SVal location, SVal val,
+                                           const Stmt *StoreE,
                                            CheckerContext &C) const {
   if (!val.isUndef())
     return;
@@ -49,7 +51,6 @@ void UndefinedAssignmentChecker::checkBind(SVal location, SVal val,
   // Generate a report for this bug.
   const Expr *ex = 0;
 
-  const Stmt *StoreE = C.getStmt();
   while (StoreE) {
     if (const BinaryOperator *B = dyn_cast<BinaryOperator>(StoreE)) {
       if (B->isCompoundAssignmentOp()) {
