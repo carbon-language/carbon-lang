@@ -491,7 +491,7 @@ bool CursorVisitor::VisitChildren(CXCursor Cursor) {
           for (ASTUnit::top_level_iterator TL = CXXUnit->top_level_begin(),
                                         TLEnd = CXXUnit->top_level_end();
                TL != TLEnd; ++TL) {
-            if (Visit(MakeCXCursor(*TL, tu), true))
+            if (Visit(MakeCXCursor(*TL, tu, RegionOfInterest), true))
               return true;
           }
         } else if (VisitDeclContext(
@@ -534,7 +534,7 @@ bool CursorVisitor::VisitBlockDecl(BlockDecl *B) {
         return true;
 
   if (Stmt *Body = B->getBody())
-    return Visit(MakeCXCursor(Body, StmtParent, TU));
+    return Visit(MakeCXCursor(Body, StmtParent, TU, RegionOfInterest));
 
   return false;
 }
@@ -574,7 +574,7 @@ bool CursorVisitor::VisitDeclContext(DeclContext *DC) {
     Decl *D = *I;
     if (D->getLexicalDeclContext() != DC)
       continue;
-    CXCursor Cursor = MakeCXCursor(D, TU);
+    CXCursor Cursor = MakeCXCursor(D, TU, RegionOfInterest);
     const llvm::Optional<bool> &V = shouldVisitCursor(Cursor);
     if (!V.hasValue())
       continue;
@@ -672,7 +672,7 @@ bool CursorVisitor::VisitTemplateTypeParmDecl(TemplateTypeParmDecl *D) {
 
 bool CursorVisitor::VisitEnumConstantDecl(EnumConstantDecl *D) {
   if (Expr *Init = D->getInitExpr())
-    return Visit(MakeCXCursor(Init, StmtParent, TU));
+    return Visit(MakeCXCursor(Init, StmtParent, TU, RegionOfInterest));
   return false;
 }
 
@@ -767,12 +767,12 @@ bool CursorVisitor::VisitFunctionDecl(FunctionDecl *ND) {
         
         // Visit the initializer value.
         if (Expr *Initializer = Init->getInit())
-          if (Visit(MakeCXCursor(Initializer, ND, TU)))
+          if (Visit(MakeCXCursor(Initializer, ND, TU, RegionOfInterest)))
             return true;
       } 
     }
     
-    if (Visit(MakeCXCursor(ND->getBody(), StmtParent, TU)))
+    if (Visit(MakeCXCursor(ND->getBody(), StmtParent, TU, RegionOfInterest)))
       return true;
   }
 
@@ -784,7 +784,7 @@ bool CursorVisitor::VisitFieldDecl(FieldDecl *D) {
     return true;
 
   if (Expr *BitWidth = D->getBitWidth())
-    return Visit(MakeCXCursor(BitWidth, StmtParent, TU));
+    return Visit(MakeCXCursor(BitWidth, StmtParent, TU, RegionOfInterest));
 
   return false;
 }
@@ -794,7 +794,7 @@ bool CursorVisitor::VisitVarDecl(VarDecl *D) {
     return true;
 
   if (Expr *Init = D->getInit())
-    return Visit(MakeCXCursor(Init, StmtParent, TU));
+    return Visit(MakeCXCursor(Init, StmtParent, TU, RegionOfInterest));
 
   return false;
 }
@@ -805,7 +805,7 @@ bool CursorVisitor::VisitNonTypeTemplateParmDecl(NonTypeTemplateParmDecl *D) {
   
   if (D->hasDefaultArgument() && !D->defaultArgumentWasInherited())
     if (Expr *DefArg = D->getDefaultArgument())
-      return Visit(MakeCXCursor(DefArg, StmtParent, TU));
+      return Visit(MakeCXCursor(DefArg, StmtParent, TU, RegionOfInterest));
   
   return false;  
 }
@@ -847,12 +847,12 @@ bool CursorVisitor::VisitObjCMethodDecl(ObjCMethodDecl *ND) {
   for (ObjCMethodDecl::param_iterator P = ND->param_begin(),
        PEnd = ND->param_end();
        P != PEnd; ++P) {
-    if (Visit(MakeCXCursor(*P, TU)))
+    if (Visit(MakeCXCursor(*P, TU, RegionOfInterest)))
       return true;
   }
 
   if (ND->isThisDeclarationADefinition() &&
-      Visit(MakeCXCursor(ND->getBody(), StmtParent, TU)))
+      Visit(MakeCXCursor(ND->getBody(), StmtParent, TU, RegionOfInterest)))
     return true;
 
   return false;
@@ -926,7 +926,7 @@ bool CursorVisitor::VisitObjCContainerDecl(ObjCContainerDecl *D) {
   // Now visit the decls.
   for (SmallVectorImpl<Decl*>::iterator I = DeclsInContainer.begin(),
          E = DeclsInContainer.end(); I != E; ++I) {
-    CXCursor Cursor = MakeCXCursor(*I, TU);
+    CXCursor Cursor = MakeCXCursor(*I, TU, RegionOfInterest);
     const llvm::Optional<bool> &V = shouldVisitCursor(Cursor);
     if (!V.hasValue())
       continue;
@@ -988,12 +988,12 @@ bool CursorVisitor::VisitObjCPropertyDecl(ObjCPropertyDecl *PD) {
   // the @interface.
   if (ObjCMethodDecl *MD = prevDecl->getGetterMethodDecl())
     if (MD->isSynthesized() && MD->getLexicalDeclContext() == CDecl)
-      if (Visit(MakeCXCursor(MD, TU)))
+      if (Visit(MakeCXCursor(MD, TU, RegionOfInterest)))
         return true;
 
   if (ObjCMethodDecl *MD = prevDecl->getSetterMethodDecl())
     if (MD->isSynthesized() && MD->getLexicalDeclContext() == CDecl)
-      if (Visit(MakeCXCursor(MD, TU)))
+      if (Visit(MakeCXCursor(MD, TU, RegionOfInterest)))
         return true;
 
   return false;
@@ -1246,7 +1246,7 @@ bool CursorVisitor::VisitTemplateParameters(
   for (TemplateParameterList::const_iterator P = Params->begin(),
                                           PEnd = Params->end();
        P != PEnd; ++P) {
-    if (Visit(MakeCXCursor(*P, TU)))
+    if (Visit(MakeCXCursor(*P, TU, RegionOfInterest)))
       return true;
   }
   
@@ -1303,12 +1303,12 @@ bool CursorVisitor::VisitTemplateArgumentLoc(const TemplateArgumentLoc &TAL) {
       
   case TemplateArgument::Declaration:
     if (Expr *E = TAL.getSourceDeclExpression())
-      return Visit(MakeCXCursor(E, StmtParent, TU));
+      return Visit(MakeCXCursor(E, StmtParent, TU, RegionOfInterest));
     return false;
       
   case TemplateArgument::Expression:
     if (Expr *E = TAL.getSourceExpression())
-      return Visit(MakeCXCursor(E, StmtParent, TU));
+      return Visit(MakeCXCursor(E, StmtParent, TU, RegionOfInterest));
     return false;
   
   case TemplateArgument::Template:
@@ -1400,7 +1400,7 @@ bool CursorVisitor::VisitUnresolvedUsingTypeLoc(UnresolvedUsingTypeLoc TL) {
 
 bool CursorVisitor::VisitTagTypeLoc(TagTypeLoc TL) {
   if (TL.isDefinition())
-    return Visit(MakeCXCursor(TL.getDecl(), TU));
+    return Visit(MakeCXCursor(TL.getDecl(), TU, RegionOfInterest));
 
   return Visit(MakeCursorTypeRef(TL.getDecl(), TL.getNameLoc(), TU));
 }
@@ -1468,7 +1468,7 @@ bool CursorVisitor::VisitFunctionTypeLoc(FunctionTypeLoc TL,
 
   for (unsigned I = 0, N = TL.getNumArgs(); I != N; ++I)
     if (Decl *D = TL.getArg(I))
-      if (Visit(MakeCXCursor(D, TU)))
+      if (Visit(MakeCXCursor(D, TU, RegionOfInterest)))
         return true;
 
   return false;
@@ -1479,7 +1479,7 @@ bool CursorVisitor::VisitArrayTypeLoc(ArrayTypeLoc TL) {
     return true;
 
   if (Expr *Size = TL.getSizeExpr())
-    return Visit(MakeCXCursor(Size, StmtParent, TU));
+    return Visit(MakeCXCursor(Size, StmtParent, TU, RegionOfInterest));
 
   return false;
 }
@@ -2070,7 +2070,7 @@ void EnqueueVisitor::VisitSizeOfPackExpr(SizeOfPackExpr *E) {
 }
 
 void CursorVisitor::EnqueueWorkList(VisitorWorkList &WL, Stmt *S) {
-  EnqueueVisitor(WL, MakeCXCursor(S, StmtParent, TU)).Visit(S);
+  EnqueueVisitor(WL, MakeCXCursor(S, StmtParent, TU,RegionOfInterest)).Visit(S);
 }
 
 bool CursorVisitor::IsInRegionOfInterest(CXCursor C) {
@@ -2098,7 +2098,8 @@ bool CursorVisitor::RunVisitorWorkList(VisitorWorkList &WL) {
           continue;
 
         // For now, perform default visitation for Decls.
-        if (Visit(MakeCXCursor(D, TU, cast<DeclVisit>(&LI)->isFirst())))
+        if (Visit(MakeCXCursor(D, TU, RegionOfInterest,
+                               cast<DeclVisit>(&LI)->isFirst())))
             return true;
 
         continue;
@@ -2156,7 +2157,7 @@ bool CursorVisitor::RunVisitorWorkList(VisitorWorkList &WL) {
           continue;
 
         // Update the current cursor.
-        CXCursor Cursor = MakeCXCursor(S, StmtParent, TU);
+        CXCursor Cursor = MakeCXCursor(S, StmtParent, TU, RegionOfInterest);
         if (!IsInRegionOfInterest(Cursor))
           continue;
         switch (Visitor(Cursor, Parent, ClientData)) {
@@ -2674,7 +2675,7 @@ CXString clang_getTranslationUnitSpelling(CXTranslationUnit CTUnit) {
 }
 
 CXCursor clang_getTranslationUnitCursor(CXTranslationUnit TU) {
-  CXCursor Result = { CXCursor_TranslationUnit, { 0, 0, TU } };
+  CXCursor Result = { CXCursor_TranslationUnit, 0, { 0, 0, TU } };
   return Result;
 }
 
@@ -3616,8 +3617,12 @@ static enum CXChildVisitResult GetCursorVisitor(CXCursor cursor,
   // clang_getCursor() to point at the constructor.
   if (clang_isExpression(BestCursor->kind) &&
       isa<CXXTemporaryObjectExpr>(getCursorExpr(*BestCursor)) &&
-      cursor.kind == CXCursor_TypeRef)
+      cursor.kind == CXCursor_TypeRef) {
+    // Keep the cursor pointing at CXXTemporaryObjectExpr but also mark it
+    // as having the actual point on the type reference.
+    *BestCursor = getTypeRefedCallExprCursor(*BestCursor);
     return CXChildVisit_Recurse;
+  }
   
   *BestCursor = cursor;
   return CXChildVisit_Recurse;
@@ -4055,8 +4060,12 @@ CXCursor clang_getCursorReferenced(CXCursor C) {
   if (clang_isExpression(C.kind)) {
     Expr *E = getCursorExpr(C);
     Decl *D = getDeclFromExpr(E);
-    if (D)
-      return MakeCXCursor(D, tu);
+    if (D) {
+      CXCursor declCursor = MakeCXCursor(D, tu);
+      declCursor = getSelectorIdentifierCursor(getSelectorIdentifierIndex(C),
+                                               declCursor);
+      return declCursor;
+    }
     
     if (OverloadExpr *Ovl = dyn_cast_or_null<OverloadExpr>(E))
       return MakeCursorOverloadedDeclRef(Ovl, tu);

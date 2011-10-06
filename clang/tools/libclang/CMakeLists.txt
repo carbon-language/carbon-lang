@@ -21,6 +21,7 @@ set(SOURCES
   CIndexCXX.cpp
   CIndexCodeCompletion.cpp
   CIndexDiagnostic.cpp
+  CIndexHigh.cpp
   CIndexInclusionStack.cpp
   CIndexUSRs.cpp
   CIndexer.cpp

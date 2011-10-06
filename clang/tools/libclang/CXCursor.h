@@ -49,9 +49,11 @@ CXCursor getCursor(CXTranslationUnit, SourceLocation);
 CXCursor MakeCXCursor(const clang::Attr *A, clang::Decl *Parent,
                       CXTranslationUnit TU);
 CXCursor MakeCXCursor(clang::Decl *D, CXTranslationUnit TU,
+                      SourceRange RegionOfInterest = SourceRange(),
                       bool FirstInDeclGroup = true);
 CXCursor MakeCXCursor(clang::Stmt *S, clang::Decl *Parent,
-                      CXTranslationUnit TU);
+                      CXTranslationUnit TU,
+                      SourceRange RegionOfInterest = SourceRange());
 CXCursor MakeCXCursorInvalid(CXCursorKind K);
 
 /// \brief Create an Objective-C superclass reference at the given location.
@@ -194,6 +196,27 @@ CXTranslationUnit getCursorTU(CXCursor Cursor);
 
 void getOverriddenCursors(CXCursor cursor,
                           SmallVectorImpl<CXCursor> &overridden); 
+
+/// \brief Returns a index/location pair for a selector identifier if the cursor
+/// points to one.
+std::pair<int, SourceLocation> getSelectorIdentifierIndexAndLoc(CXCursor);
+static inline int getSelectorIdentifierIndex(CXCursor cursor) {
+  return getSelectorIdentifierIndexAndLoc(cursor).first;
+}
+static inline SourceLocation getSelectorIdentifierLoc(CXCursor cursor) {
+  return getSelectorIdentifierIndexAndLoc(cursor).second;
+}
+
+CXCursor getSelectorIdentifierCursor(int SelIdx, CXCursor cursor);
+
+static inline CXCursor getTypeRefedCallExprCursor(CXCursor cursor) {
+  CXCursor newCursor = cursor;
+  if (cursor.kind == CXCursor_CallExpr)
+    newCursor.xdata = 1;
+  return newCursor;
+}
+
+CXCursor getTypeRefCursor(CXCursor cursor);
 
 bool operator==(CXCursor X, CXCursor Y);
   

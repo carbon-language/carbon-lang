@@ -175,7 +175,8 @@ static void PrintRange(CXSourceRange R, const char *str) {
 
 int want_display_name = 0;
 
-static void PrintCursor(CXTranslationUnit TU, CXCursor Cursor) {
+static void PrintCursor(CXCursor Cursor) {
+  CXTranslationUnit TU = clang_Cursor_getTranslationUnit(Cursor);
   if (clang_isInvalid(Cursor.kind)) {
     CXString ks = clang_getCursorKindSpelling(Cursor.kind);
     printf("Invalid Cursor => %s", clang_getCString(ks));
@@ -463,7 +464,7 @@ enum CXChildVisitResult FilteredPrintingVisitor(CXCursor Cursor,
     clang_getSpellingLocation(Loc, 0, &line, &column, 0);
     printf("// %s: %s:%d:%d: ", FileCheckPrefix,
            GetCursorSource(Cursor), line, column);
-    PrintCursor(Data->TU, Cursor);
+    PrintCursor(Cursor);
     PrintCursorExtent(Cursor);
     printf("\n");
     return CXChildVisit_Recurse;
@@ -516,7 +517,7 @@ static enum CXChildVisitResult FunctionScanVisitor(CXCursor Cursor,
       } else if (Ref.kind != CXCursor_FunctionDecl) {
         printf("// %s: %s:%d:%d: ", FileCheckPrefix, GetCursorSource(Ref),
                curLine, curColumn);
-        PrintCursor(Data->TU, Ref);
+        PrintCursor(Ref);
         printf("\n");
       }
     }
@@ -605,7 +606,7 @@ static enum CXChildVisitResult PrintLinkage(CXCursor cursor, CXCursor p,
   }
 
   if (linkage) {
-    PrintCursor(Data->TU, cursor);
+    PrintCursor(cursor);
     printf("linkage=%s\n", linkage);
   }
 
@@ -623,7 +624,7 @@ static enum CXChildVisitResult PrintTypeKind(CXCursor cursor, CXCursor p,
   if (!clang_isInvalid(clang_getCursorKind(cursor))) {
     CXType T = clang_getCursorType(cursor);
     CXString S = clang_getTypeKindSpelling(T.kind);
-    PrintCursor(Data->TU, cursor);
+    PrintCursor(cursor);
     printf(" typekind=%s", clang_getCString(S));
     if (clang_isConstQualifiedType(T))
       printf(" const");
@@ -836,7 +837,7 @@ static void print_cursor_file_scan(CXTranslationUnit TU, CXCursor cursor,
     printf("-%s", prefix);
   PrintExtent(stdout, start_line, start_col, end_line, end_col);
   printf(" ");
-  PrintCursor(TU, cursor);
+  PrintCursor(cursor);
   printf("\n");
 }
 
@@ -1275,7 +1276,7 @@ typedef struct {
   unsigned column;
 } CursorSourceLocation;
 
-int inspect_cursor_at(int argc, const char **argv) {
+static int inspect_cursor_at(int argc, const char **argv) {
   CXIndex CIdx;
   int errorCode;
   struct CXUnsavedFile *unsaved_files = 0;
@@ -1344,12 +1345,107 @@ int inspect_cursor_at(int argc, const char **argv) {
       if (I + 1 == Repeats) {
         CXCompletionString completionString = clang_getCursorCompletionString(
                                                                         Cursor);
-        PrintCursor(TU, Cursor);
+        PrintCursor(Cursor);
         if (completionString != NULL) {
           printf("\nCompletion string: ");
           print_completion_string(completionString, stdout);
         }
         printf("\n");
+        free(Locations[Loc].filename);
+      }
+    }
+  }
+  
+  PrintDiagnostics(TU);
+  clang_disposeTranslationUnit(TU);
+  clang_disposeIndex(CIdx);
+  free(Locations);
+  free_remapped_files(unsaved_files, num_unsaved_files);
+  return 0;
+}
+
+static enum CXVisitorResult findFileRefsVisit(void *context,
+                                         CXCursor cursor, CXSourceRange range) {
+  if (clang_Range_isNull(range))
+    return CXVisit_Continue;
+
+  PrintCursor(cursor);
+  PrintRange(range, "");
+  printf("\n");
+  return CXVisit_Continue;
+}
+
+static int find_file_refs_at(int argc, const char **argv) {
+  CXIndex CIdx;
+  int errorCode;
+  struct CXUnsavedFile *unsaved_files = 0;
+  int num_unsaved_files = 0;
+  CXTranslationUnit TU;
+  CXCursor Cursor;
+  CursorSourceLocation *Locations = 0;
+  unsigned NumLocations = 0, Loc;
+  unsigned Repeats = 1;
+  unsigned I;
+  
+  /* Count the number of locations. */
+  while (strstr(argv[NumLocations+1], "-file-refs-at=") == argv[NumLocations+1])
+    ++NumLocations;
+
+  /* Parse the locations. */
+  assert(NumLocations > 0 && "Unable to count locations?");
+  Locations = (CursorSourceLocation *)malloc(
+                                  NumLocations * sizeof(CursorSourceLocation));
+  for (Loc = 0; Loc < NumLocations; ++Loc) {
+    const char *input = argv[Loc + 1] + strlen("-file-refs-at=");
+    if ((errorCode = parse_file_line_column(input, &Locations[Loc].filename,
+                                            &Locations[Loc].line,
+                                            &Locations[Loc].column, 0, 0)))
+      return errorCode;
+  }
+
+  if (parse_remapped_files(argc, argv, NumLocations + 1, &unsaved_files,
+                           &num_unsaved_files))
+    return -1;
+
+  if (getenv("CINDEXTEST_EDITING"))
+    Repeats = 5;
+
+  /* Parse the translation unit. When we're testing clang_getCursor() after
+     reparsing, don't remap unsaved files until the second parse. */
+  CIdx = clang_createIndex(1, 1);
+  TU = clang_parseTranslationUnit(CIdx, argv[argc - 1],
+                                  argv + num_unsaved_files + 1 + NumLocations,
+                                  argc - num_unsaved_files - 2 - NumLocations,
+                                  unsaved_files,
+                                  Repeats > 1? 0 : num_unsaved_files,
+                                  getDefaultParsingOptions());
+                                                 
+  if (!TU) {
+    fprintf(stderr, "unable to parse input\n");
+    return -1;
+  }
+
+  for (I = 0; I != Repeats; ++I) {
+    if (Repeats > 1 &&
+        clang_reparseTranslationUnit(TU, num_unsaved_files, unsaved_files, 
+                                     clang_defaultReparseOptions(TU))) {
+      clang_disposeTranslationUnit(TU);
+      return 1;
+    }
+    
+    for (Loc = 0; Loc < NumLocations; ++Loc) {
+      CXFile file = clang_getFile(TU, Locations[Loc].filename);
+      if (!file)
+        continue;
+
+      Cursor = clang_getCursor(TU,
+                               clang_getLocation(TU, file, Locations[Loc].line,
+                                                 Locations[Loc].column));
+      if (I + 1 == Repeats) {
+        PrintCursor(Cursor);
+        printf("\n");
+        CXCursorAndRangeVisitor visitor = { 0, findFileRefsVisit };
+        clang_findReferencesInFile(Cursor, file, visitor);
         free(Locations[Loc].filename);
       }
     }
@@ -1464,7 +1560,7 @@ int perform_token_annotation(int argc, const char **argv) {
     PrintExtent(stdout, start_line, start_column, end_line, end_column);
     if (!clang_isInvalid(cursors[i].kind)) {
       printf(" ");
-      PrintCursor(TU, cursors[i]);
+      PrintCursor(cursors[i]);
     }
     printf("\n");
   }
@@ -1730,6 +1826,7 @@ static void print_usage(void) {
     "usage: c-index-test -code-completion-at=<site> <compiler arguments>\n"
     "       c-index-test -code-completion-timing=<site> <compiler arguments>\n"
     "       c-index-test -cursor-at=<site> <compiler arguments>\n"
+    "       c-index-test -file-refs-at=<site> <compiler arguments>\n"
     "       c-index-test -test-file-scan <AST file> <source file> "
           "[FileCheck prefix]\n"
     "       c-index-test -test-load-tu <AST file> <symbol filter> "
@@ -1776,6 +1873,8 @@ int cindextest_main(int argc, const char **argv) {
     return perform_code_completion(argc, argv, 1);
   if (argc > 2 && strstr(argv[1], "-cursor-at=") == argv[1])
     return inspect_cursor_at(argc, argv);
+  if (argc > 2 && strstr(argv[1], "-file-refs-at=") == argv[1])
+    return find_file_refs_at(argc, argv);
   else if (argc >= 4 && strncmp(argv[1], "-test-load-tu", 13) == 0) {
     CXCursorVisitor I = GetVisitor(argv[1] + 13);
     if (I)
