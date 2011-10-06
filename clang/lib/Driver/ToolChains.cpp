@@ -156,7 +156,8 @@ static const char *GetArmArchForMCpu(StringRef Value) {
       Value == "cortex-m0" )
     return "armv6";
 
-  if (Value == "cortex-a8" || Value == "cortex-r4" || Value == "cortex-m3")
+  if (Value == "cortex-a8" || Value == "cortex-r4" || Value == "cortex-m3" ||
+      Value == "cortex-a9")
     return "armv7";
 
   return 0;
