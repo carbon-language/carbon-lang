@@ -167,6 +167,34 @@ multiclass PTX_INT3<string opcstr, SDNode opnode> {
                      [(set RegI64:$d, (opnode RegI64:$a, imm:$b))]>;
 }
 
+//===- Integer Instructions - 3 Operand Form (Signed) ---------------------===//
+multiclass PTX_INT3_SIGNED<string opcstr, SDNode opnode> {
+  def rr16 : InstPTX<(outs RegI16:$d),
+                     (ins RegI16:$a, RegI16:$b),
+                     !strconcat(opcstr, ".s16\t$d, $a, $b"),
+                     [(set RegI16:$d, (opnode RegI16:$a, RegI16:$b))]>;
+  def ri16 : InstPTX<(outs RegI16:$d),
+                     (ins RegI16:$a, i16imm:$b),
+                     !strconcat(opcstr, ".s16\t$d, $a, $b"),
+                     [(set RegI16:$d, (opnode RegI16:$a, imm:$b))]>;
+  def rr32 : InstPTX<(outs RegI32:$d),
+                     (ins RegI32:$a, RegI32:$b),
+                     !strconcat(opcstr, ".s32\t$d, $a, $b"),
+                     [(set RegI32:$d, (opnode RegI32:$a, RegI32:$b))]>;
+  def ri32 : InstPTX<(outs RegI32:$d),
+                     (ins RegI32:$a, i32imm:$b),
+                     !strconcat(opcstr, ".s32\t$d, $a, $b"),
+                     [(set RegI32:$d, (opnode RegI32:$a, imm:$b))]>;
+  def rr64 : InstPTX<(outs RegI64:$d),
+                     (ins RegI64:$a, RegI64:$b),
+                     !strconcat(opcstr, ".s64\t$d, $a, $b"),
+                     [(set RegI64:$d, (opnode RegI64:$a, RegI64:$b))]>;
+  def ri64 : InstPTX<(outs RegI64:$d),
+                     (ins RegI64:$a, i64imm:$b),
+                     !strconcat(opcstr, ".s64\t$d, $a, $b"),
+                     [(set RegI64:$d, (opnode RegI64:$a, imm:$b))]>;
+}
+
 //===- Bitwise Logic Instructions - 3 Operand Form ------------------------===//
 multiclass PTX_LOGIC<string opcstr, SDNode opnode> {
   def ripreds : InstPTX<(outs RegPred:$d),
@@ -453,11 +481,12 @@ multiclass PTX_SELP<RegisterClass RC, string regclsname, Operand immcls,
 
 ///===- Integer Arithmetic Instructions -----------------------------------===//
 
-defm ADD : PTX_INT3<"add", add>;
-defm SUB : PTX_INT3<"sub", sub>;
-defm MUL : PTX_INT3<"mul.lo", mul>; // FIXME: Allow 32x32 -> 64 multiplies
-defm DIV : PTX_INT3<"div", udiv>;
-defm REM : PTX_INT3<"rem", urem>;
+defm ADD  : PTX_INT3<"add", add>;
+defm SUB  : PTX_INT3<"sub", sub>;
+defm MUL  : PTX_INT3<"mul.lo", mul>; // FIXME: Allow 32x32 -> 64 multiplies
+defm DIV  : PTX_INT3<"div", udiv>;
+defm SDIV : PTX_INT3_SIGNED<"div", sdiv>;
+defm REM  : PTX_INT3<"rem", urem>;
 
 ///===- Floating-Point Arithmetic Instructions ----------------------------===//
 
